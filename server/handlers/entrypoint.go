@@ -3,36 +3,44 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
 type EntryPointHandler struct {
-	services map[string]*ServiceHandler
+	handlers map[string]http.Handler
 }
 
 func NewEntryPointHandler() *EntryPointHandler {
-	handler := &EntryPointHandler{services: make(map[string]*ServiceHandler)}
-
-	return handler
+	return &EntryPointHandler{handlers: make(map[string]http.Handler)}
 }
 
-func (e *EntryPointHandler) AddService(path string, service *ServiceHandler) error {
-	if _, ok := e.services[path]; ok {
-		return fmt.Errorf("Already service defined on path '%v'", path)
+func (e *EntryPointHandler) AddHandler(path string, handler http.Handler) error {
+	if _, ok := e.handlers[path]; ok {
+		return fmt.Errorf("A service is already defined on path '%v'", path)
 	}
 
-	e.services[path] = service
+	e.handlers[path] = handler
 	return nil
 }
 
 func (e *EntryPointHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	for path, service := range e.services {
-		if strings.HasPrefix(r.URL.Path, path) {
-			service.ServeHTTP(w, r)
-			return
+	service, error := e.resolveService(r.URL)
+	if error != nil {
+		w.WriteHeader(404)
+		fmt.Fprint(w, error.Error())
+		return
+	}
+
+	service.ServeHTTP(w, r)
+}
+
+func (e *EntryPointHandler) resolveService(u *url.URL) (http.Handler, error) {
+	for path, handler := range e.handlers {
+		if strings.HasPrefix(u.Path, path) {
+			return handler, nil
 		}
 	}
 
-	w.WriteHeader(404)
-	fmt.Fprintf(w, "No service found %v", r.URL.String())
+	return nil, fmt.Errorf("There was no service listening at %v", u)
 }

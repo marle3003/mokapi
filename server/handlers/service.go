@@ -3,34 +3,44 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
 type ServiceHandler struct {
-	endpoints map[string]*EndpointHandler
+	handlers map[string]http.Handler
 }
 
 func NewServiceHandler() *ServiceHandler {
-	return &ServiceHandler{endpoints: make(map[string]*EndpointHandler)}
+	return &ServiceHandler{handlers: make(map[string]http.Handler)}
 }
 
-func (s *ServiceHandler) AddEndpoint(path string, endpoint *EndpointHandler) error {
-	if _, ok := s.endpoints[path]; ok {
+func (s *ServiceHandler) AddHandler(path string, handler http.Handler) error {
+	if _, ok := s.handlers[path]; ok {
 		return fmt.Errorf("Endpoint is already defined '%v'", path)
 	}
 
-	s.endpoints[path] = endpoint
+	s.handlers[path] = handler
 	return nil
 }
 
 func (s *ServiceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	for path, endpoint := range s.endpoints {
-		if strings.HasPrefix(r.URL.Path, path) {
-			endpoint.ServeHTTP(w, r)
-			return
+	handler, error := s.resolveEndpoint(r.URL)
+	if error != nil {
+		w.WriteHeader(404)
+		fmt.Fprintf(w, error.Error())
+		return
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+func (s *ServiceHandler) resolveEndpoint(u *url.URL) (http.Handler, error) {
+	for path, handler := range s.handlers {
+		if strings.HasPrefix(u.Path, path) {
+			return handler, nil
 		}
 	}
 
-	w.WriteHeader(404)
-	fmt.Fprintf(w, "No endpoint found %v", r.URL.String())
+	return nil, fmt.Errorf("There was no endpoint listening at %s", u)
 }

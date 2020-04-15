@@ -3,4 +3,13 @@ services:
         api:
             file:
                 filename: "demo.yml"
-        
+        data:
+            file:
+                filename: "demo_data.yml"
+    post_sharepoint:
+        api:
+            file:
+                filename: "post_sharepoint.yml"
+        data:
+            file:
+                filename: "post_sharepoint_data.yml"      

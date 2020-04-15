@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"mokapi/config"
 	"mokapi/config/static"
+	"mokapi/providers/data"
 	"mokapi/server/handlers"
 
 	log "github.com/sirupsen/logrus"
@@ -25,26 +26,45 @@ func (m *Manager) Build(cfg *static.Config) map[string]*EntryPoint {
 
 func (m *Manager) buildServices(services map[string]*static.Service) {
 	for _, service := range services {
-		serviceHandler := handlers.NewServiceHandler()
 
-		api, error := service.ApiProviders.File.Provide()
+		api := &config.Api{}
+		error := service.ApiProviders.File.Provide(api)
 		if error != nil {
 			log.WithFields(log.Fields{"service": service, "error": error}).Error("error in provider")
 			continue
 		}
 
-		for path, endpoint := range api.EndPoints {
-			endpointHandler := handlers.NewEndpointHandler(endpoint)
-			serviceHandler.AddEndpoint(path, endpointHandler)
+		dataProvider, error := m.getDataProvider(service)
+		if error != nil {
+			log.WithFields(log.Fields{"service": service, "error": error}).Error("error in provider")
+			continue
 		}
+
+		apiManager := NewApiManager(api, dataProvider)
+		handler := apiManager.Build()
 
 		for _, server := range api.Servers {
 			entryPoint, error := m.GetEntryPoint(server)
 			if error == nil {
-				entryPoint.handler.AddService(server.GetPath(), serviceHandler)
+				entryPoint.handler.AddHandler(server.GetPath(), handler)
 			}
 		}
 	}
+}
+
+func (m *Manager) getDataProvider(service *static.Service) (data.DataProvider, error) {
+	if service.DataProviders != nil {
+		if service.DataProviders.File != nil {
+			store := make(map[interface{}]interface{})
+			error := service.DataProviders.File.Provide(store)
+			if error != nil {
+				return nil, error
+			}
+			return data.NewStaticDataProvider(store), nil
+		}
+	}
+
+	return data.NewRandomDataProvider(), nil
 }
 
 func (m *Manager) GetEntryPoint(server *config.Server) (*EntryPoint, error) {

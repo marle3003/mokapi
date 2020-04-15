@@ -1,0 +1,11 @@
+
+addresses:
+  - &address1
+    id: 1
+    street: test
+users:
+  - id: 1
+    name: Haygreen
+    address: *address1
+  - id: 2
+    name: Postgate

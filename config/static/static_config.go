@@ -20,9 +20,14 @@ type MokApiLog struct {
 }
 
 type Service struct {
-	ApiProviders *ApiProviders `yaml:"api"`
+	ApiProviders  *ApiProviders  `yaml:"api"`
+	DataProviders *DataProviders `yaml:"data"`
 }
 
 type ApiProviders struct {
 	File file.Provider
+}
+
+type DataProviders struct {
+	File *file.Provider
 }

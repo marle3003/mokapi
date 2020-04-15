@@ -98,6 +98,8 @@ type Schema struct {
 	Description string
 	Properties  map[string]*Schema
 	Faker       string `yaml:"x-faker"`
+	Resource    string `yaml:"x-resource"`
+	Items       *Schema
 }
 
 type Response struct {

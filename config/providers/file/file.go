@@ -10,29 +10,28 @@ type Provider struct {
 	Filename string
 }
 
-func (p *Provider) Provide() (*config.Api, error) {
-	return p.LoadConfig()
+func (p *Provider) Provide(element interface{}) error {
+	return p.loadConfig(element)
 }
 
-func (p *Provider) LoadConfig() (*config.Api, error) {
+func (p *Provider) loadConfig(element interface{}) error {
 	if len(p.Filename) > 0 {
-		api, error := p.loadFileConfig(p.Filename)
+		error := p.loadFileConfig(p.Filename, element)
 		if error != nil {
-			return nil, error
+			return error
 		}
 
-		return api, nil
+		return nil
 	}
 
-	return nil, errors.New("error using file configuration provider, but no filename defined")
+	return errors.New("error using file configuration provider, but no filename defined")
 }
 
-func (p *Provider) loadFileConfig(filename string) (*config.Api, error) {
+func (p *Provider) loadFileConfig(filename string, element interface{}) error {
 	configDecoders := []decoders.ConfigDecoder{decoders.NewFileDecoder(p.Filename)}
-	api := &config.Api{}
-	error := config.Load(configDecoders, api)
+	error := config.Load(configDecoders, element)
 	if error != nil {
-		return nil, error
+		return error
 	}
-	return api, nil
+	return nil
 }
