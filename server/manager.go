@@ -1,101 +1,92 @@
 package server
 
-import (
-	"fmt"
-	"mokapi/config"
-	"mokapi/config/static"
-	"mokapi/providers/data"
-	"mokapi/server/handlers"
+// type Manager struct {
+// 	entryPoints map[string]*EntryPoint
+// }
 
-	log "github.com/sirupsen/logrus"
-)
+// func NewManager() *Manager {
+// 	return &Manager{}
+// }
 
-type Manager struct {
-	entryPoints map[string]*EntryPoint
-}
+// func (m *Manager) Build(cfg *static.Config) map[string]*EntryPoint {
+// 	m.entryPoints = make(map[string]*EntryPoint)
+// 	//m.buildServices(cfg.Services)
+// 	return m.entryPoints
+// }
 
-func NewManager() *Manager {
-	return &Manager{}
-}
+// func (m *Manager) buildServices(services map[string]*static.Service) {
+// 	for name, service := range services {
+// 		log.WithFields(log.Fields{"service": name}).Info("Building service")
 
-func (m *Manager) Build(cfg *static.Config) map[string]*EntryPoint {
-	m.entryPoints = make(map[string]*EntryPoint)
-	m.buildServices(cfg.Services)
-	return m.entryPoints
-}
+// 		api := &dynamic.Api{}
+// 		error := service.ApiProviders.File.Provide(api)
+// 		if error != nil {
+// 			log.WithFields(log.Fields{"service": service, "error": error}).Error("error in provider")
+// 			continue
+// 		}
 
-func (m *Manager) buildServices(services map[string]*static.Service) {
-	for _, service := range services {
+// 		dataProvider, error := m.getDataProvider(service)
+// 		if error != nil {
+// 			log.WithFields(log.Fields{"service": service, "error": error}).Error("error in provider")
+// 			continue
+// 		}
 
-		api := &config.Api{}
-		error := service.ApiProviders.File.Provide(api)
-		if error != nil {
-			log.WithFields(log.Fields{"service": service, "error": error}).Error("error in provider")
-			continue
-		}
+// 		apiManager := NewApiManager(api, dataProvider)
+// 		handler := apiManager.Build()
 
-		dataProvider, error := m.getDataProvider(service)
-		if error != nil {
-			log.WithFields(log.Fields{"service": service, "error": error}).Error("error in provider")
-			continue
-		}
+// 		for _, server := range api.Servers {
+// 			entryPoint, error := m.GetEntryPoint(server)
+// 			if error == nil {
+// 				entryPoint.handler.AddHandler(server.GetPath(), handler)
+// 			}
+// 		}
+// 	}
+// }
 
-		apiManager := NewApiManager(api, dataProvider)
-		handler := apiManager.Build()
+// func (m *Manager) getDataProvider(service *static.Service) (data.DataProvider, error) {
+// 	if service.DataProviders != nil {
+// 		if service.DataProviders.File != nil {
+// 			store := make(map[interface{}]interface{})
+// 			error := service.DataProviders.File.Provide(store)
+// 			if error != nil {
+// 				return nil, error
+// 			}
+// 			return data.NewStaticDataProvider(store), nil
+// 		}
+// 	}
 
-		for _, server := range api.Servers {
-			entryPoint, error := m.GetEntryPoint(server)
-			if error == nil {
-				entryPoint.handler.AddHandler(server.GetPath(), handler)
-			}
-		}
-	}
-}
+// 	return data.NewRandomDataProvider(), nil
+// }
 
-func (m *Manager) getDataProvider(service *static.Service) (data.DataProvider, error) {
-	if service.DataProviders != nil {
-		if service.DataProviders.File != nil {
-			store := make(map[interface{}]interface{})
-			error := service.DataProviders.File.Provide(store)
-			if error != nil {
-				return nil, error
-			}
-			return data.NewStaticDataProvider(store), nil
-		}
-	}
+// func (m *Manager) GetEntryPoint(server *dynamic.Server) (*EntryPoint, error) {
+// 	name := fmt.Sprintf("%s:%v", server.GetHost(), server.GetPort())
+// 	if e, ok := m.entryPoints[name]; ok {
+// 		return e, nil
+// 	}
 
-	return data.NewRandomDataProvider(), nil
-}
+// 	entryPoint, error := NewEntryPoint(server)
+// 	if error != nil {
+// 		return nil, error
+// 	}
 
-func (m *Manager) GetEntryPoint(server *config.Server) (*EntryPoint, error) {
-	name := fmt.Sprintf("%s:%v", server.GetHost(), server.GetPort())
-	if e, ok := m.entryPoints[name]; ok {
-		return e, nil
-	}
+// 	m.entryPoints[name] = entryPoint
+// 	return entryPoint, nil
+// }
 
-	entryPoint, error := NewEntryPoint(server)
-	if error != nil {
-		return nil, error
-	}
+// type EntryPoint struct {
+// 	host    string
+// 	port    int
+// 	handler *handlers.EntryPointHandler
+// }
 
-	m.entryPoints[name] = entryPoint
-	return entryPoint, nil
-}
+// func NewEntryPoint(server *dynamic.Server) (*EntryPoint, error) {
+// 	entryPoint := &EntryPoint{host: server.GetHost(), port: server.GetPort()}
 
-type EntryPoint struct {
-	host    string
-	port    int
-	handler *handlers.EntryPointHandler
-}
+// 	if len(entryPoint.host) == 0 || entryPoint.port == -1 {
+// 		return nil, fmt.Errorf("Invalid entrypoint host %s, port %v", entryPoint.host, entryPoint.port)
+// 	}
 
-func NewEntryPoint(server *config.Server) (*EntryPoint, error) {
-	entryPoint := &EntryPoint{host: server.GetHost(), port: server.GetPort()}
+// 	entryPoint.handler = handlers.NewEntryPointHandler()
 
-	if len(entryPoint.host) == 0 || entryPoint.port == -1 {
-		return nil, fmt.Errorf("Invalid entrypoint host %s, port %v", entryPoint.host, entryPoint.port)
-	}
-
-	entryPoint.handler = handlers.NewEntryPointHandler()
-
-	return entryPoint, nil
-}
+// 	return entryPoint, nil
+// }

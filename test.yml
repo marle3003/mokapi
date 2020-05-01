@@ -12,4 +12,11 @@ services:
                 filename: "post_sharepoint.yml"
         data:
             file:
-                filename: "post_sharepoint_data.yml"      
+                filename: "post_sharepoint_data.yml"  
+    post_pressreview:
+        api:
+            file:
+                filename: "post_pressreview.yml"
+        data:
+            file:
+                filename: "post_pressreview_data.yml"      

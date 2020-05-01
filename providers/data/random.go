@@ -3,7 +3,7 @@ package data
 import (
 	"fmt"
 	"math/rand"
-	"mokapi/config"
+	"mokapi/service"
 
 	"github.com/brianvoe/gofakeit/v4"
 )
@@ -15,11 +15,13 @@ func NewRandomDataProvider() *RandomDataProvider {
 	return &RandomDataProvider{}
 }
 
-func (provider *RandomDataProvider) Provide(parameters map[string]string, schema *config.Schema) (interface{}, error) {
+func (provider *RandomDataProvider) Provide(parameters map[string]string, schema *service.Schema) (interface{}, error) {
 	return provider.getRandomObject(schema), nil
 }
 
-func (provider *RandomDataProvider) getRandomObject(schema *config.Schema) interface{} {
+func (provider *RandomDataProvider) Close() {}
+
+func (provider *RandomDataProvider) getRandomObject(schema *service.Schema) interface{} {
 	if schema.Type == "object" {
 		obj := make(map[string]interface{})
 		for name, propSchema := range schema.Properties {

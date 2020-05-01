@@ -2,27 +2,25 @@ package handlers
 
 import (
 	"fmt"
-	"mokapi/config"
-	"net/http"
 )
 
 type EndpointHandler struct {
-	handlers map[string]http.Handler
+	handlers map[string]*OperationHandler
 }
 
-func NewEndpointHandler(endpoint *config.Endpoint) *EndpointHandler {
-	return &EndpointHandler{handlers: make(map[string]http.Handler)}
+func NewEndpointHandler() *EndpointHandler {
+	return &EndpointHandler{handlers: make(map[string]*OperationHandler)}
 }
 
-func (e *EndpointHandler) AddHandler(method string, handler http.Handler) {
+func (e *EndpointHandler) AddHandler(method string, handler *OperationHandler) {
 	e.handlers[method] = handler
 }
 
-func (e *EndpointHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if handler, ok := e.handlers[r.Method]; ok {
-		handler.ServeHTTP(w, r)
+func (e *EndpointHandler) ServeHTTP(context *Context) {
+	if handler, ok := e.handlers[context.Request.Method]; ok {
+		handler.ServeHTTP(context)
 	} else {
-		w.WriteHeader(404)
-		fmt.Fprintf(w, "Method %s on endpoint %v not found", r.Method, r.URL.String())
+		context.Response.WriteHeader(404)
+		fmt.Fprintf(context.Response, "Method %s on endpoint %v not found", context.Request.Method, context.Request.URL.String())
 	}
 }

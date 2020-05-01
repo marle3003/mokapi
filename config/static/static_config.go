@@ -1,11 +1,11 @@
 package static
 
-import "mokapi/config/providers/file"
+import "mokapi/config/dynamic"
 
 type Config struct {
 	Log        *MokApiLog
 	ConfigFile string
-	Services   map[string]*Service
+	Providers  Providers
 }
 
 func NewConfig() *Config {
@@ -19,15 +19,6 @@ type MokApiLog struct {
 	Format string
 }
 
-type Service struct {
-	ApiProviders  *ApiProviders  `yaml:"api"`
-	DataProviders *DataProviders `yaml:"data"`
-}
-
-type ApiProviders struct {
-	File file.Provider
-}
-
-type DataProviders struct {
-	File *file.Provider
+type Providers struct {
+	File dynamic.FileProvider
 }

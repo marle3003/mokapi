@@ -2,20 +2,18 @@ package handlers
 
 import (
 	"fmt"
-	"net/http"
-	"net/url"
 	"strings"
 )
 
 type ServiceHandler struct {
-	handlers map[string]http.Handler
+	handlers map[string]*EndpointHandler
 }
 
 func NewServiceHandler() *ServiceHandler {
-	return &ServiceHandler{handlers: make(map[string]http.Handler)}
+	return &ServiceHandler{handlers: make(map[string]*EndpointHandler)}
 }
 
-func (s *ServiceHandler) AddHandler(path string, handler http.Handler) error {
+func (s *ServiceHandler) AddHandler(path string, handler *EndpointHandler) error {
 	if _, ok := s.handlers[path]; ok {
 		return fmt.Errorf("Endpoint is already defined '%v'", path)
 	}
@@ -24,23 +22,27 @@ func (s *ServiceHandler) AddHandler(path string, handler http.Handler) error {
 	return nil
 }
 
-func (s *ServiceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	handler, error := s.resolveEndpoint(r.URL)
+func (s *ServiceHandler) ServeHTTP(context *Context) {
+	handler, error := s.resolveEndpoint(context)
 	if error != nil {
-		w.WriteHeader(404)
-		fmt.Fprintf(w, error.Error())
+		context.Response.WriteHeader(404)
+		fmt.Fprintf(context.Response, error.Error())
 		return
 	}
 
-	handler.ServeHTTP(w, r)
+	handler.ServeHTTP(context)
 }
 
-func (s *ServiceHandler) resolveEndpoint(u *url.URL) (http.Handler, error) {
+func (s *ServiceHandler) resolveEndpoint(context *Context) (*EndpointHandler, error) {
+	endpointPath := context.Request.URL.Path
+	if context.ServiceUrl != "/" {
+		endpointPath = context.Request.URL.Path[len(context.ServiceUrl):]
+	}
 	for path, handler := range s.handlers {
-		if strings.HasPrefix(u.Path, path) {
+		if strings.HasPrefix(endpointPath, path) {
 			return handler, nil
 		}
 	}
 
-	return nil, fmt.Errorf("There was no endpoint listening at %s", u)
+	return nil, fmt.Errorf("There was no endpoint listening at %s", context.Request.URL)
 }

@@ -3,11 +3,9 @@ package main
 import (
 	"fmt"
 	stdlog "log"
-	"mokapi/config"
 	"mokapi/config/decoders"
 	"mokapi/config/static"
 	"mokapi/server"
-	"net/http"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -17,36 +15,28 @@ func main() {
 
 	cfg := static.NewConfig()
 	configDecoders := []decoders.ConfigDecoder{&decoders.FileDecoder{}, &decoders.FlagDecoder{}}
-	error := config.Load(configDecoders, cfg)
+	error := decoders.Load(configDecoders, cfg)
 	if error != nil {
 		fmt.Println("Error", error)
 	}
 
 	configureLogging(cfg)
 
-	server, error := createServer(cfg)
+	s, error := createServer(cfg)
 	if error != nil {
 		log.WithField("error", error).Error("error creating server")
 	}
 
-	server.Start()
+	s.Start()
 
-	fmt.Println("Hello World")
+	s.Wait()
 }
 
 func createServer(cfg *static.Config) (*server.Server, error) {
-	manager := server.NewManager()
-	entryPoints := manager.Build(cfg)
-
 	api := server.NewApiServer()
-	api.SetRouters(entryPoints)
+	watcher := server.NewConfigWatcher(&cfg.Providers.File)
 
-	return server.NewServer(api), nil
-}
-
-func indexHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello www.example1.com!") // send data to client sid
-	w.Write([]byte("<h1>Hello World!</h1>"))
+	return server.NewServer(api, watcher), nil
 }
 
 func configureLogging(cfg *static.Config) {

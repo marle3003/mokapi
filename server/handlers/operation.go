@@ -2,34 +2,40 @@ package handlers
 
 import (
 	"fmt"
-	"net/http"
+	"mokapi/service"
 	"strings"
 )
 
 type OperationHandler struct {
-	handlers map[string]http.Handler
+	handlers map[string]*ResponseHandler
 }
 
 func NewOperationHandler() *OperationHandler {
-	return &OperationHandler{handlers: make(map[string]http.Handler)}
+	return &OperationHandler{handlers: make(map[string]*ResponseHandler)}
 }
 
-func (o *OperationHandler) AddHandler(contentType string, handler http.Handler) {
-	o.handlers[contentType] = handler
+func (o *OperationHandler) AddHandler(contentType service.ContentType, handler *ResponseHandler) {
+	o.handlers[contentType.String()] = handler
 }
 
-func (o *OperationHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	handler, error := o.resolveHandler(r.Header.Get("accept"))
+func (o *OperationHandler) ServeHTTP(context *Context) {
+	handler, error := o.resolveHandler(context.Request.Header.Get("accept"))
 	if error != nil {
-		w.WriteHeader(500)
-		fmt.Fprintf(w, "No supporting content type found")
+		context.Response.WriteHeader(500)
+		fmt.Fprintf(context.Response, "No supporting content type found")
 		return
 	}
 
-	handler.ServeHTTP(w, r)
+	handler.ServeHTTP(context)
 }
 
-func (o *OperationHandler) resolveHandler(accept string) (http.Handler, error) {
+func (o *OperationHandler) resolveHandler(accept string) (*ResponseHandler, error) {
+	if accept == "" {
+		for _, handler := range o.handlers {
+			// return first element
+			return handler, nil
+		}
+	}
 	for _, s := range strings.Split(accept, ",") {
 		contentType := strings.TrimSpace(s)
 		if handler, ok := o.handlers[contentType]; ok {
