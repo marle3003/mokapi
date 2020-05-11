@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/pkg/errors"
@@ -14,10 +15,16 @@ import (
 type FileProvider struct {
 	Filename  string
 	Directory string
+
+	close chan bool
 }
 
 func (p *FileProvider) ProvideService(channel chan<- ConfigMessage) {
 	p.loadService(channel)
+}
+
+func (p *FileProvider) Close() {
+	p.close <- true
 }
 
 func (p *FileProvider) loadService(channel chan<- ConfigMessage) {
@@ -65,10 +72,17 @@ func (p *FileProvider) loadServiceFromFile(filename string, channel chan<- Confi
 		return
 	}
 
+	if config.Ldap == nil && config.OpenApi == nil {
+		log.Debugf("No expected configuration found in %v", filename)
+		return
+	}
+
 	channel <- ConfigMessage{ProviderName: "file", Config: config, Key: filename}
 }
 
 func (p *FileProvider) addWatcher(directory string, channel chan<- ConfigMessage) {
+	p.close = make(chan bool)
+
 	watcher, error := fsnotify.NewWatcher()
 	if error != nil {
 		log.Error("Error creating file watcher", error)
@@ -79,23 +93,47 @@ func (p *FileProvider) addWatcher(directory string, channel chan<- ConfigMessage
 		log.WithField("watchItem", directory).Error("Error adding watcher")
 	}
 
+	ticker := time.NewTicker(time.Second)
+	events := make([]fsnotify.Event, 0)
+
 	go func() {
+		defer func() {
+			ticker.Stop()
+			watcher.Close()
+		}()
+
 		for {
 			select {
+			case <-p.close:
+				return
 			case evt := <-watcher.Events:
-				log.WithField("item", evt.Name).Info("Item change event received from " + directory)
+				if len(evt.Name) > 0 {
+					events = append(events, evt)
+				}
+			case <-ticker.C:
+				m := make(map[string]struct{})
+				for _, evt := range events {
+					if _, ok := m[evt.Name]; ok {
+						continue
+					}
+					m[evt.Name] = struct{}{}
 
-				fi, error := os.Stat(evt.Name)
-				if error != nil {
-					log.WithFields(log.Fields{"item": evt.Name, "error": error}).Info("Error on watching item")
-					return
+					log.WithField("item", evt.Name).Info("Item change event received from " + directory)
+
+					fi, error := os.Stat(evt.Name)
+					if error != nil {
+						log.WithFields(log.Fields{"item": evt.Name, "error": error}).Info("Error on watching item")
+						return
+					}
+					switch mode := fi.Mode(); {
+					case mode.IsDir():
+						p.loadServiceFromDirectory(evt.Name, channel)
+					case mode.IsRegular():
+						p.loadServiceFromFile(evt.Name, channel)
+					}
 				}
-				switch mode := fi.Mode(); {
-				case mode.IsDir():
-					p.loadServiceFromDirectory(evt.Name, channel)
-				case mode.IsRegular():
-					p.loadServiceFromFile(evt.Name, channel)
-				}
+
+				events = make([]fsnotify.Event, 0)
 			}
 		}
 	}()

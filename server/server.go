@@ -2,24 +2,28 @@ package server
 
 import (
 	"mokapi/config/dynamic"
+	"mokapi/server/http"
 	"mokapi/server/ldap"
 	"mokapi/service"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Server struct {
-	apiServer *ApiServer
-	watcher   *ConfigWatcher
+	httpServer *http.Server
+	watcher    *ConfigWatcher
 
 	stopChannel chan bool
 
 	ldapServers map[string]*ldap.Server
 }
 
-func NewServer(apiServer *ApiServer, watcher *ConfigWatcher) *Server {
-	server := &Server{apiServer: apiServer, stopChannel: make(chan bool), watcher: watcher, ldapServers: make(map[string]*ldap.Server)}
+func NewServer(watcher *ConfigWatcher) *Server {
+	httpServer := http.NewServer()
+	server := &Server{httpServer: httpServer, stopChannel: make(chan bool), watcher: watcher, ldapServers: make(map[string]*ldap.Server)}
 
 	watcher.AddListener(func(s *service.Service) {
-		apiServer.AddOrUpdate(s)
+		httpServer.AddOrUpdate(s)
 	})
 
 	watcher.AddLdapListener(func(key string, config *dynamic.Ldap) {
@@ -35,10 +39,21 @@ func NewServer(apiServer *ApiServer, watcher *ConfigWatcher) *Server {
 	return server
 }
 
-func (server *Server) Start() {
-	server.watcher.Start()
+func (s *Server) Start() {
+	s.watcher.Start()
+
+	log.Error(":::TEST:::")
 }
 
-func (server *Server) Wait() {
-	<-server.stopChannel
+func (s *Server) Wait() {
+	<-s.stopChannel
+}
+
+func (s *Server) Stop() {
+	s.watcher.Stop()
+	s.httpServer.Stop()
+
+	for _, l := range s.ldapServers {
+		l.Stop()
+	}
 }

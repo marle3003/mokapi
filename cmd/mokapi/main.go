@@ -6,7 +6,10 @@ import (
 	"mokapi/config/decoders"
 	"mokapi/config/static"
 	"mokapi/server"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -29,14 +32,23 @@ func main() {
 
 	s.Start()
 
+	exitChannel := make(chan os.Signal, 1)
+	signal.Notify(exitChannel, os.Interrupt)
+	signal.Notify(exitChannel, syscall.SIGTERM)
+	go func() {
+		<-exitChannel
+		fmt.Println("Shutting down")
+		s.Stop()
+		os.Exit(0)
+	}()
+
 	s.Wait()
 }
 
 func createServer(cfg *static.Config) (*server.Server, error) {
-	api := server.NewApiServer()
 	watcher := server.NewConfigWatcher(&cfg.Providers.File)
 
-	return server.NewServer(api, watcher), nil
+	return server.NewServer(watcher), nil
 }
 
 func configureLogging(cfg *static.Config) {

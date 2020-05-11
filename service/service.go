@@ -2,6 +2,8 @@ package service
 
 import (
 	"fmt"
+	"mokapi/providers/parser"
+	"strings"
 )
 
 type ServiceList []*Service
@@ -31,14 +33,39 @@ type Server struct {
 }
 
 type Endpoint struct {
-	Get     *Operation
-	Post    *Operation
-	Put     *Operation
-	Patch   *Operation
-	Delete  *Operation
-	Head    *Operation
-	Options *Operation
-	Trace   *Operation
+	Path       string
+	Get        *Operation
+	Post       *Operation
+	Put        *Operation
+	Patch      *Operation
+	Delete     *Operation
+	Head       *Operation
+	Options    *Operation
+	Trace      *Operation
+	Parameters []*Parameter
+}
+
+func (e *Endpoint) GetOperation(method string) *Operation {
+	switch strings.ToUpper(method) {
+	case "GET":
+		return e.Get
+	case "POST":
+		return e.Post
+	case "Put":
+		return e.Put
+	case "Patch":
+		return e.Patch
+	case "Delete":
+		return e.Delete
+	case "Head":
+		return e.Head
+	case "Options":
+		return e.Options
+	case "Trace":
+		return e.Trace
+	}
+
+	return nil
 }
 
 type Operation struct {
@@ -67,21 +94,36 @@ func IsValidHttpStatus(status HttpStatus) bool {
 
 type Parameter struct {
 	Name        string
-	Type        string
+	Type        ParameterType
 	Schema      *Schema
 	Required    bool
 	Description string
 }
 
+type ParameterType int
+
+const (
+	PathParameter   ParameterType = 1
+	QueryParameter  ParameterType = 2
+	HeaderParameter ParameterType = 3
+	CookieParameter ParameterType = 4
+)
+
 type Schema struct {
-	Type        string
-	Format      string
-	Description string
-	Properties  map[string]*Schema
-	Faker       string
-	Resource    string
-	Items       *Schema
-	Xml         *XmlEncoding
+	Type                 string
+	Format               string
+	Description          string
+	Properties           map[string]*Schema
+	Faker                string
+	Resource             *Resource
+	Items                *Schema
+	Xml                  *XmlEncoding
+	AdditionalProperties string
+}
+
+type Resource struct {
+	Filter *parser.FilterExp
+	Name   string
 }
 
 type Response struct {
@@ -95,10 +137,12 @@ type ResponseContent struct {
 
 type ContentType string
 
+// do we need that as type? Change to simple string?
 const (
 	Json      ContentType = "application/json"
 	Rss       ContentType = "application/rss+xml"
 	JsonOData ContentType = "application/json;odata=verbose"
+	TextXml   ContentType = "text/xml"
 )
 
 func (c ContentType) String() string {
@@ -108,7 +152,7 @@ func (c ContentType) String() string {
 func ParseContentType(s string) (ContentType, error) {
 	c := ContentType(s)
 	switch c {
-	case Json, Rss, JsonOData:
+	case Json, Rss, JsonOData, TextXml:
 		return c, nil
 	default:
 		return c, fmt.Errorf("Unknown content type %v", s)

@@ -1,0 +1,43 @@
+openapi: 3.0.0
+info:
+  title: Sharepoint API used in PostWeb
+  description: Sharepoint Feed Api
+  version: 0.1
+  x-mokapi-resource:
+    file:
+        directory: ./data
+servers:
+  - url: http://mokapi
+    description: Container mokapi
+paths:
+  /postsearch/_vti_bin/sites.asmx:
+    get:
+      responses:
+        '200':
+          content:
+            text/xml:
+              schema:
+                type: string
+                x-mokapi-resource:
+                    name: wsdl.txt
+  /api/v1/search:
+    get:
+      summary: Returns search results
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/SearchResult'
+components:
+  schemas:
+    SearchResult:
+        x-mokapi-resource:
+#          filter: query LIKE param[q]
+          name: search
+          

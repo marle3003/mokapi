@@ -3,9 +3,12 @@ package data
 import (
 	"fmt"
 	"io/ioutil"
+	"mokapi/providers/parser"
 	"mokapi/service"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 
 	"github.com/fsnotify/fsnotify"
 	log "github.com/sirupsen/logrus"
@@ -13,21 +16,27 @@ import (
 )
 
 type StaticDataProvider struct {
-	Path string
-	data map[interface{}]interface{}
-	stop chan bool
+	Path  string
+	data  map[interface{}]interface{}
+	stop  chan bool
+	watch bool
 }
 
-func NewStaticDataProvider(path string) *StaticDataProvider {
-	provider := &StaticDataProvider{Path: path, stop: make(chan bool)}
+func NewStaticDataProvider(path string, watch bool) *StaticDataProvider {
+	provider := &StaticDataProvider{Path: path, stop: make(chan bool), watch: watch}
 	provider.init()
 	return provider
 }
 
 func (provider *StaticDataProvider) Provide(parameters map[string]string, schema *service.Schema) (interface{}, error) {
 	data := provider.getData(schema.Resource)
-	data = filterData(data, parameters)
-	return data, nil
+
+	filtered, error := filterData(data, schema, parameters)
+	if error != nil {
+		return nil, error
+	}
+
+	return filtered, nil
 }
 
 func (p *StaticDataProvider) init() {
@@ -35,7 +44,9 @@ func (p *StaticDataProvider) init() {
 		p.data = make(map[interface{}]interface{})
 		p.loadData()
 
-		p.addWatcher()
+		if p.watch {
+			p.addWatcher()
+		}
 	}()
 }
 
@@ -72,13 +83,6 @@ func (p *StaticDataProvider) readDirectory(directory string) {
 	}
 }
 
-func (p *StaticDataProvider) readFile(file string) {
-	newData := parseFile(file)
-	for k, v := range newData {
-		p.data[k] = v
-	}
-}
-
 func (p *StaticDataProvider) addWatcher() {
 	watcher, error := fsnotify.NewWatcher()
 	if error != nil {
@@ -92,7 +96,6 @@ func (p *StaticDataProvider) addWatcher() {
 
 	go func() {
 		defer func() {
-			log.Debug("Closing StaticDataProvider")
 			watcher.Close()
 		}()
 		for {
@@ -117,9 +120,9 @@ func (p *StaticDataProvider) addWatcher() {
 	}()
 }
 
-func (provider *StaticDataProvider) getData(resource string) interface{} {
-	if resource != "" {
-		return convertData(provider.data[resource])
+func (provider *StaticDataProvider) getData(r *service.Resource) interface{} {
+	if r != nil && r.Name != "" {
+		return convertData(provider.data[r.Name])
 	}
 	return convertData(provider.data)
 }
@@ -149,44 +152,87 @@ func convertObject(o interface{}) interface{} {
 	return o
 }
 
-func filterData(data interface{}, parameters map[string]string) interface{} {
+func filterData(data interface{}, schema *service.Schema, parameters map[string]string) (interface{}, error) {
 	if parameters == nil || len(parameters) == 0 {
-		return data
+		return data, nil
 	}
 
-	if list, ok := data.([]interface{}); ok {
-		result := make([]interface{}, 0)
-		for _, d := range list {
-			match := true
-			o := d.(map[string]interface{})
-			for p, v := range parameters {
-				if o[p] != v {
-					match = false
-					break
+	if schema.Resource != nil && schema.Resource.Filter != nil {
+		filter := schema.Resource.Filter
+		if list, ok := data.([]interface{}); ok {
+			result := make([]interface{}, 0)
+			for _, d := range list {
+				if ok, error := match(d, parameters, filter); ok && error == nil {
+					result = append(result, d)
 				}
 			}
-			if match {
-				result = append(result, o)
+			if len(result) == 0 {
+				return nil, nil
 			}
+			return result, nil
 		}
-		return result
 	}
-	return data
+
+	return data, nil
 }
 
-func parseFile(filename string) map[interface{}]interface{} {
-	data, error := ioutil.ReadFile(filename)
+func match(data interface{}, parameters map[string]string, filter *parser.FilterExp) (bool, error) {
+	switch filter.Tag {
+	case parser.FilterEqualityMatch:
+		left := selectValue(data, parameters, filter.Children[0])
+		right := selectValue(data, parameters, filter.Children[1])
+
+		return left == right, nil
+	case parser.FilterLike:
+		left := selectValue(data, parameters, filter.Children[0])
+		right := selectValue(data, parameters, filter.Children[1])
+
+		s := strings.ReplaceAll(right, "%", ".*")
+		regex := regexp.MustCompile(s)
+		match := regex.FindStringSubmatch(left)
+
+		return len(match) > 0, nil
+	}
+
+	return false, fmt.Errorf("Unsupported filter tag %v", filter.Tag)
+}
+
+func selectValue(data interface{}, parameters map[string]string, filter *parser.FilterExp) string {
+	if filter.Tag == parser.FilterParameter {
+		return parameters[filter.Value]
+	}
+
+	o := data.(map[string]interface{})
+
+	if v, ok := o[filter.Value].(string); ok {
+		return v
+	}
+
+	// todo: what happens if value is a object instead of string
+	return ""
+}
+
+func (p *StaticDataProvider) readFile(file string) {
+	data, error := ioutil.ReadFile(file)
 	if error != nil {
-		log.WithFields(log.Fields{"Error": error, "Filename": filename}).Error("error reading file")
-		return nil
+		log.WithFields(log.Fields{"Error": error, "Filename": file}).Error("error reading file")
+		return
 	}
 
-	newData := make(map[interface{}]interface{})
+	switch filepath.Ext(file) {
+	case ".yml":
+		newData := make(map[interface{}]interface{})
 
-	err := yaml.Unmarshal(data, newData)
-	if err != nil {
-		log.WithFields(log.Fields{"Error": error, "Filename": filename}).Error("error parsing file")
+		err := yaml.Unmarshal(data, newData)
+		if err != nil {
+			log.WithFields(log.Fields{"Error": error, "Filename": file}).Error("error parsing file")
+		}
+
+		for k, v := range newData {
+			p.data[k] = v
+		}
+	default:
+		key := filepath.Base(file)
+		p.data[key] = string(data)
 	}
-
-	return newData
 }

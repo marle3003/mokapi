@@ -1,0 +1,99 @@
+openapi: 3.0.0
+info:
+  title: Sharepoint API used in PostWeb
+  description: Sharepoint Feed Api
+  version: 0.1
+  x-server-configuration:
+    data:
+        file:
+            directory: data
+servers:
+  - url: http://mokapi
+    description: Container mokapi
+paths:
+  /_api/social.feed/my/news(MaxThreadCount=3):
+    get:
+      summary: Returns users news
+      responses:
+        '200':    # status code
+          content:
+            application/json;odata=verbose:
+              schema: 
+                $ref: '#/components/schemas/SocialFeed'
+components:
+  schemas:
+    SocialDataOverlay:
+      type: object
+
+    SocialPost:
+      type: object
+      properties:
+        ModifiedTime:
+          type: string
+          format: date-time
+        Text:
+          type: string
+        AuthorIndex:
+          type: integer
+        Overlays:
+          type: object
+          properties:
+            results:
+              type: array
+              items:
+                $ref: '#/components/schemas/SocialDataOverlay'
+
+
+    SocialActor:
+      type: object
+      properties:
+        Name:
+          type: string
+        ImageUri:
+          type: string
+        
+    SocialThread:
+      type: object
+      properties:
+        RootPost:
+          $ref: '#/components/schemas/SocialPost'
+        Replies:
+          type: object
+          properties:
+            results:
+              type: array
+              items:
+                $ref: '#/components/schemas/SocialPost'
+        Permalink:
+          type: string
+        Actors:
+          type: object
+          properties:
+            results:
+              type: array
+              items:
+                $ref: '#/components/schemas/SocialActor'
+
+    SocialRestFeed:
+      type: object
+      properties:
+        UnreadMentionCount:
+          type: integer
+        Threads:
+          type: object
+          properties:
+            results:
+              type: array
+              items:
+                $ref: '#/components/schemas/SocialThread'
+                
+
+    SocialFeed:
+      type: object
+      properties:
+        d:
+          type: object
+          properties:
+            SocialFeed:
+              $ref: '#/components/schemas/SocialRestFeed'
+          

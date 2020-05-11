@@ -1,8 +1,11 @@
 package service
 
 import (
+	"fmt"
 	"mokapi/config/dynamic"
+	"mokapi/providers/parser"
 	"net/url"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -11,6 +14,7 @@ import (
 
 type ServiceContext struct {
 	schemas map[string]*dynamic.Schema
+	path    string
 }
 
 func CreateService(config *dynamic.OpenApi) *Service {
@@ -19,7 +23,7 @@ func CreateService(config *dynamic.OpenApi) *Service {
 	serverUrls := make(map[string]bool)
 	context := &ServiceContext{schemas: getSchemas(config)}
 
-	for _, part := range config.Parts {
+	for filePath, part := range config.Parts {
 		if len(service.Name) == 0 {
 			service.Name = part.Info.Name
 		}
@@ -29,6 +33,8 @@ func CreateService(config *dynamic.OpenApi) *Service {
 		if part.Info.Version != "" {
 			service.Version = part.Info.Version
 		}
+
+		context.path = filePath
 
 		for _, v := range part.Servers {
 			if _, found := serverUrls[v.Url]; !found {
@@ -43,14 +49,14 @@ func CreateService(config *dynamic.OpenApi) *Service {
 			if e, ok := service.Endpoint[k]; ok {
 				endpoint = e
 			} else {
-				endpoint = &Endpoint{}
+				endpoint = &Endpoint{Path: k}
 				service.Endpoint[k] = endpoint
 			}
 			endpoint.update(v, context)
 
 		}
 
-		dataProviders := part.Info.ServerConfiguration.DataProviders
+		dataProviders := part.Info.DataProviders
 
 		if dataProviders != nil {
 			if dataProviders.File != nil {
@@ -60,6 +66,12 @@ func CreateService(config *dynamic.OpenApi) *Service {
 				} else {
 					provider.Path = dataProviders.File.Directory
 				}
+
+				if strings.HasPrefix(provider.Path, "./") {
+					dir := filepath.Dir(context.path)
+					provider.Path = strings.Replace(provider.Path, ".", dir, 1)
+				}
+
 				service.DataProviders.File = provider
 			}
 		}
@@ -73,25 +85,38 @@ func (e *Endpoint) update(config *dynamic.Endpoint, context *ServiceContext) {
 		e.Get = createOperation(config.Get, context)
 	}
 	if config.Post != nil {
-		e.Get = createOperation(config.Post, context)
+		e.Post = createOperation(config.Post, context)
 	}
 	if config.Put != nil {
-		e.Get = createOperation(config.Put, context)
+		e.Put = createOperation(config.Put, context)
 	}
 	if config.Patch != nil {
-		e.Get = createOperation(config.Patch, context)
+		e.Patch = createOperation(config.Patch, context)
 	}
 	if config.Delete != nil {
-		e.Get = createOperation(config.Delete, context)
+		e.Delete = createOperation(config.Delete, context)
 	}
 	if config.Head != nil {
-		e.Get = createOperation(config.Head, context)
+		e.Head = createOperation(config.Head, context)
 	}
 	if config.Options != nil {
-		e.Get = createOperation(config.Options, context)
+		e.Options = createOperation(config.Options, context)
 	}
 	if config.Trace != nil {
-		e.Get = createOperation(config.Trace, context)
+		e.Trace = createOperation(config.Trace, context)
+	}
+	if config.Parameters != nil {
+		if e.Parameters == nil {
+			e.Parameters = make([]*Parameter, 0)
+		}
+		for _, v := range config.Parameters {
+			p, error := createParameter(v, context)
+			if error != nil {
+				log.Error(error.Error())
+				continue
+			}
+			e.Parameters = append(e.Parameters, p)
+		}
 	}
 }
 
@@ -123,17 +148,39 @@ func createOperation(config *dynamic.Operation, context *ServiceContext) *Operat
 		}
 	}
 
+	if config.Parameters != nil {
+		if o.Parameters == nil {
+			o.Parameters = make([]*Parameter, 0)
+		}
+		for _, v := range config.Parameters {
+			p, error := createParameter(v, context)
+			if error != nil {
+				log.Error(error.Error())
+				continue
+			}
+			o.Parameters = append(o.Parameters, p)
+		}
+	}
+
 	return o
 }
 
 func createSchema(config *dynamic.Schema, context *ServiceContext) *Schema {
+	if config == nil {
+		return nil
+	}
+
+	if config.Type == "array" {
+		fmt.Print("")
+	}
+
 	// todo resolving schema: $ref
 	schema := &Schema{
-		Description: config.Description,
-		Faker:       config.Faker,
-		Format:      config.Format,
-		Resource:    config.Resource,
-		Type:        config.Type,
+		Description:          config.Description,
+		Faker:                config.Faker,
+		Format:               config.Format,
+		Type:                 config.Type,
+		AdditionalProperties: config.AdditionalProperties,
 	}
 
 	if config.Xml != nil {
@@ -145,6 +192,16 @@ func createSchema(config *dynamic.Schema, context *ServiceContext) *Schema {
 			Prefix:    config.Xml.Prefix,
 			Wrapped:   config.Xml.Wrapped,
 		}
+	}
+
+	if config.Resource != nil {
+		r := &Resource{Name: config.Resource.Name}
+		expr, error := parser.ParseFilter(config.Resource.Filter)
+		if error != nil {
+			log.Errorf("Error in parsing filter: %v", error.Error())
+		}
+		r.Filter = expr
+		schema.Resource = r
 	}
 
 	if config.Reference != "" {
@@ -240,4 +297,23 @@ func getPort(s *dynamic.Server) int {
 		}
 		return int(port)
 	}
+}
+
+func createParameter(config *dynamic.Parameter, context *ServiceContext) (*Parameter, error) {
+	p := &Parameter{Name: config.Name, Description: config.Description, Required: config.Required, Schema: createSchema(config.Schema, context)}
+
+	switch strings.ToLower(config.Type) {
+	case "path":
+		p.Type = PathParameter
+	case "query":
+		p.Type = QueryParameter
+	case "header":
+		p.Type = HeaderParameter
+	case "cookie":
+		p.Type = CookieParameter
+	default:
+		return nil, fmt.Errorf("Unsupported parameter type %v", config.Type)
+	}
+
+	return p, nil
 }

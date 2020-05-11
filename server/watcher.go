@@ -3,7 +3,8 @@ package server
 import (
 	"mokapi/config/dynamic"
 	"mokapi/service"
-	"path/filepath"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type RootConfig struct {
@@ -14,14 +15,19 @@ type ConfigWatcher struct {
 	provider      dynamic.Provider
 	configuration *RootConfig
 
-	channel chan dynamic.ConfigMessage
+	channel     chan dynamic.ConfigMessage
+	stopChannel chan bool
 
 	listeners     []func(*service.Service)
 	ldapListeners []func(key string, config *dynamic.Ldap)
 }
 
 func NewConfigWatcher(provider dynamic.Provider) *ConfigWatcher {
-	return &ConfigWatcher{provider: provider, channel: make(chan dynamic.ConfigMessage, 100), configuration: &RootConfig{openApis: make(map[string]*dynamic.OpenApi)}}
+	return &ConfigWatcher{
+		provider:      provider,
+		channel:       make(chan dynamic.ConfigMessage, 100),
+		configuration: &RootConfig{openApis: make(map[string]*dynamic.OpenApi)},
+		stopChannel:   make(chan bool)}
 }
 
 func (w *ConfigWatcher) AddListener(listener func(*service.Service)) {
@@ -38,19 +44,30 @@ func (w *ConfigWatcher) AddLdapListener(listener func(key string, config *dynami
 	w.ldapListeners = append(w.ldapListeners, listener)
 }
 
+func (w *ConfigWatcher) Stop() {
+	w.stopChannel <- true
+}
+
 func (w *ConfigWatcher) Start() {
 	go func() {
 		w.provider.ProvideService(w.channel)
-
 	}()
 
 	go func() {
+		defer func() {
+			w.provider.Close()
+		}()
+
 		for {
 			select {
+			case <-w.stopChannel:
+				return
 			case configMessage, ok := <-w.channel:
 				if !ok {
 					break
 				}
+
+				log.Infof("Processing configuration %v", configMessage.Key)
 
 				if configMessage.Config.OpenApi != nil {
 					part := configMessage.Config.OpenApi
@@ -60,11 +77,6 @@ func (w *ConfigWatcher) Start() {
 
 					if part.Info.Name == "" {
 						part.Info.Name = configMessage.Key
-					}
-
-					serverConfig := part.Info.ServerConfiguration
-					if serverConfig.DataProviders != nil && serverConfig.DataProviders.File != nil {
-						serverConfig.DataProviders.File.UpdatePath(filepath.Dir(configMessage.Key))
 					}
 
 					var config *dynamic.OpenApi

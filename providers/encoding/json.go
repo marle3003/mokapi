@@ -1,16 +1,63 @@
 package encoding
 
 import (
+	"bytes"
 	"encoding/json"
 	"mokapi/service"
 )
+
+type custom map[string]interface{}
 
 func MarshalJSON(obj interface{}, schema *service.Schema) ([]byte, error) {
 	data := selectData(obj, schema)
 	return json.Marshal(data)
 }
 
+func (m custom) MarshalJSON() ([]byte, error) {
+	var b []byte
+	buf := bytes.NewBuffer(b)
+	buf.WriteRune('{')
+	l := len(m)
+	i := 0
+	for k, v := range m {
+		key, error := json.Marshal(k)
+		if error != nil {
+			return nil, error
+		}
+		buf.Write(key)
+		buf.WriteRune(':')
+		value, error := json.Marshal(v)
+		if error != nil {
+			return nil, error
+		}
+		buf.Write(value)
+		if i != l-1 {
+			buf.WriteRune(',')
+		}
+		i++
+	}
+	buf.WriteRune('}')
+	return buf.Bytes(), nil
+}
+
 func selectData(data interface{}, schema *service.Schema) interface{} {
+	if schema == nil || schema.Type == "" {
+		if list, ok := data.([]interface{}); ok {
+			for i, e := range list {
+				list[i] = selectData(e, nil)
+			}
+			return list
+		}
+		if o, ok := data.(map[string]interface{}); ok {
+			selectedData := make(custom)
+			for k, v := range o {
+				selectedData[k] = selectData(v, nil)
+			}
+			return selectedData
+		}
+		return data
+	}
+
 	if schema.Type == "array" {
 		if list, ok := data.([]interface{}); ok {
 			for i, e := range list {
@@ -22,10 +69,13 @@ func selectData(data interface{}, schema *service.Schema) interface{} {
 		return nil
 	} else if schema.Type == "object" {
 		o := data.(map[string]interface{})
-		selectedData := make(map[string]interface{}, 5)
-		for propertyName, propertySchema := range schema.Properties {
-			if p, ok := o[propertyName]; ok {
-				selectedData[propertyName] = selectData(p, propertySchema)
+		selectedData := make(custom)
+
+		for k, v := range o {
+			if p, ok := schema.Properties[k]; ok {
+				selectedData[k] = selectData(v, p)
+			} else if schema.AdditionalProperties == "true" {
+				selectedData[k] = selectData(v, nil)
 			}
 		}
 		return selectedData

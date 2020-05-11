@@ -77,9 +77,15 @@ func (m StringMap) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	} else {
 		value := fmt.Sprint(m.Data)
 		if m.Schema.Xml != nil && m.Schema.Xml.CData {
-			value = fmt.Sprintf("<![CDATA[%s]]>", value)
+			e.EncodeElement(struct {
+				S string `xml:",innerxml"`
+			}{
+				S: "<![CDATA[" + string(fmt.Sprint(m.Data)) + "]]>",
+			}, start)
+		} else {
+			e.EncodeElement(value, start)
 		}
-		e.EncodeElement(value, start)
+
 		e.EncodeToken(xml.EndElement{Name: start.Name})
 	}
 

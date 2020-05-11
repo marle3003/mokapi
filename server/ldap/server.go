@@ -50,8 +50,14 @@ func (s *Server) UpdateConfig(config *dynamic.Ldap) {
 	}
 }
 
+func (s *Server) Stop() {
+	s.stop <- true
+}
+
 func (s *Server) Start() {
 	s.isRunning = true
+
+	s.getSchema()
 
 	l, err := net.Listen("tcp", s.listen)
 	if err != nil {
@@ -147,6 +153,16 @@ func (s *Server) handle(conn net.Conn) {
 			// The abandon operation does not have a response
 		}
 	}
+}
+
+func (s *Server) getEntry(dn string) *dynamic.Entry {
+	for _, e := range s.entries {
+		if dn == e.Dn {
+			return e
+		}
+	}
+
+	return nil
 }
 
 func sendResponse(conn net.Conn, packet *ber.Packet) {
