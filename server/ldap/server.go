@@ -2,9 +2,8 @@ package ldap
 
 import (
 	"io"
-	"mokapi/config/dynamic"
+	"mokapi/models"
 	"net"
-	"os"
 	"reflect"
 
 	log "github.com/sirupsen/logrus"
@@ -13,33 +12,31 @@ import (
 
 type Server struct {
 	stop      chan bool
-	entries   []*dynamic.Entry
+	entries   []*models.Entry
 	listen    string
 	isRunning bool
-	root      *dynamic.Entry
+	root      *models.Entry
+	schema    *Schema
 }
 
-func NewServer(config *dynamic.Ldap) *Server {
+func NewServer(config *models.LdapServer) *Server {
 	s := &Server{stop: make(chan bool)}
 	s.UpdateConfig(config)
 	return s
 }
 
-func (s *Server) UpdateConfig(config *dynamic.Ldap) {
+func (s *Server) UpdateConfig(config *models.LdapServer) {
 	shouldRestart := false
-	if s.listen != "" && s.listen != config.Server.Listen {
+	if s.listen != "" && s.listen != config.Listen {
 		s.stop <- true
 		shouldRestart = true
 	}
 
-	s.root = &dynamic.Entry{Dn: "", Attributes: make(map[string][]string)}
-	for k, v := range config.Server.Config {
-		s.root.Attributes[k] = v
-	}
+	s.root = config.Root
 	s.root.Attributes["supportedLDAPVersion"] = []string{"3"}
 
 	s.entries = config.Entries
-	s.listen = config.Server.Listen
+	s.listen = config.Listen
 
 	if s.isRunning {
 		log.Infof("Updated configuration of ldap server: %v", s.listen)
@@ -57,12 +54,16 @@ func (s *Server) Stop() {
 func (s *Server) Start() {
 	s.isRunning = true
 
-	s.getSchema()
+	schema, error := s.getSchema()
+	if error != nil {
+		log.Errorf("Error in parsing schema: ", error.Error())
+	}
+	s.schema = schema
 
 	l, err := net.Listen("tcp", s.listen)
 	if err != nil {
 		log.Errorf("Error listening: ", err.Error())
-		os.Exit(1)
+		return
 	}
 
 	log.Infof("Started ldap server on %v", s.listen)
@@ -155,7 +156,7 @@ func (s *Server) handle(conn net.Conn) {
 	}
 }
 
-func (s *Server) getEntry(dn string) *dynamic.Entry {
+func (s *Server) getEntry(dn string) *models.Entry {
 	for _, e := range s.entries {
 		if dn == e.Dn {
 			return e

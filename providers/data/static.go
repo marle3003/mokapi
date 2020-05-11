@@ -3,8 +3,8 @@ package data
 import (
 	"fmt"
 	"io/ioutil"
+	"mokapi/models"
 	"mokapi/providers/parser"
-	"mokapi/service"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -28,7 +28,7 @@ func NewStaticDataProvider(path string, watch bool) *StaticDataProvider {
 	return provider
 }
 
-func (provider *StaticDataProvider) Provide(parameters map[string]string, schema *service.Schema) (interface{}, error) {
+func (provider *StaticDataProvider) Provide(parameters map[string]string, schema *models.Schema) (interface{}, error) {
 	data := provider.getData(schema.Resource)
 
 	filtered, error := filterData(data, schema, parameters)
@@ -120,7 +120,7 @@ func (p *StaticDataProvider) addWatcher() {
 	}()
 }
 
-func (provider *StaticDataProvider) getData(r *service.Resource) interface{} {
+func (provider *StaticDataProvider) getData(r *models.Resource) interface{} {
 	if r != nil && r.Name != "" {
 		return convertData(provider.data[r.Name])
 	}
@@ -152,7 +152,7 @@ func convertObject(o interface{}) interface{} {
 	return o
 }
 
-func filterData(data interface{}, schema *service.Schema, parameters map[string]string) (interface{}, error) {
+func filterData(data interface{}, schema *models.Schema, parameters map[string]string) (interface{}, error) {
 	if parameters == nil || len(parameters) == 0 {
 		return data, nil
 	}

@@ -1,10 +1,9 @@
 package server
 
 import (
-	"mokapi/config/dynamic"
+	"mokapi/models"
 	"mokapi/server/http"
 	"mokapi/server/ldap"
-	"mokapi/service"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -22,11 +21,11 @@ func NewServer(watcher *ConfigWatcher) *Server {
 	httpServer := http.NewServer()
 	server := &Server{httpServer: httpServer, stopChannel: make(chan bool), watcher: watcher, ldapServers: make(map[string]*ldap.Server)}
 
-	watcher.AddListener(func(s *service.Service) {
+	watcher.AddListener(func(s *models.Service) {
 		httpServer.AddOrUpdate(s)
 	})
 
-	watcher.AddLdapListener(func(key string, config *dynamic.Ldap) {
+	watcher.AddLdapListener(func(key string, config *models.LdapServer) {
 		if ldapServer, ok := server.ldapServers[key]; ok {
 			ldapServer.UpdateConfig(config)
 		} else {

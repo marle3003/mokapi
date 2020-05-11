@@ -3,9 +3,9 @@ package http
 import (
 	"context"
 	"fmt"
+	"mokapi/models"
 	"mokapi/providers/data"
 	"mokapi/server/http/handlers"
-	"mokapi/service"
 	h "net/http"
 	"time"
 
@@ -15,7 +15,7 @@ import (
 )
 
 type ServiceItem struct {
-	service *service.Service
+	service *models.Service
 	handler *handlers.ServiceHandler
 }
 
@@ -79,7 +79,7 @@ func (s *Server) Stop() {
 	}
 }
 
-func (a *Server) AddOrUpdate(s *service.Service) {
+func (a *Server) AddOrUpdate(s *models.Service) {
 	var item *ServiceItem
 
 	if old, ok := a.services[s.Name]; ok {
@@ -122,14 +122,14 @@ func (a *Server) AddOrUpdate(s *service.Service) {
 	}
 }
 
-func build(service *service.Service) *handlers.ServiceHandler {
+func build(service *models.Service) *handlers.ServiceHandler {
 	dataProvider := getDataProvider(service)
 	serviceHandler := handlers.NewServiceHandler(service, dataProvider)
 
 	return serviceHandler
 }
 
-func getDataProvider(service *service.Service) data.Provider {
+func getDataProvider(service *models.Service) data.Provider {
 	if service.DataProviders.File != nil {
 		return data.NewStaticDataProvider(service.DataProviders.File.Path, true)
 	}

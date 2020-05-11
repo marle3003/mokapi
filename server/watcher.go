@@ -2,7 +2,7 @@ package server
 
 import (
 	"mokapi/config/dynamic"
-	"mokapi/service"
+	"mokapi/models"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -18,8 +18,8 @@ type ConfigWatcher struct {
 	channel     chan dynamic.ConfigMessage
 	stopChannel chan bool
 
-	listeners     []func(*service.Service)
-	ldapListeners []func(key string, config *dynamic.Ldap)
+	listeners     []func(*models.Service)
+	ldapListeners []func(key string, config *models.LdapServer)
 }
 
 func NewConfigWatcher(provider dynamic.Provider) *ConfigWatcher {
@@ -30,16 +30,16 @@ func NewConfigWatcher(provider dynamic.Provider) *ConfigWatcher {
 		stopChannel:   make(chan bool)}
 }
 
-func (w *ConfigWatcher) AddListener(listener func(*service.Service)) {
+func (w *ConfigWatcher) AddListener(listener func(*models.Service)) {
 	if w.listeners == nil {
-		w.listeners = make([]func(*service.Service), 0)
+		w.listeners = make([]func(*models.Service), 0)
 	}
 	w.listeners = append(w.listeners, listener)
 }
 
-func (w *ConfigWatcher) AddLdapListener(listener func(key string, config *dynamic.Ldap)) {
+func (w *ConfigWatcher) AddLdapListener(listener func(key string, config *models.LdapServer)) {
 	if w.ldapListeners == nil {
-		w.ldapListeners = make([]func(string, *dynamic.Ldap), 0)
+		w.ldapListeners = make([]func(string, *models.LdapServer), 0)
 	}
 	w.ldapListeners = append(w.ldapListeners, listener)
 }
@@ -90,7 +90,7 @@ func (w *ConfigWatcher) Start() {
 
 					config.Parts[configMessage.Key] = part
 
-					service := service.CreateService(config)
+					service := models.CreateService(config)
 
 					for _, listener := range w.listeners {
 						listener(service)
@@ -98,8 +98,13 @@ func (w *ConfigWatcher) Start() {
 				}
 
 				if configMessage.Config.Ldap != nil {
+					server, error := models.CreateLdap(configMessage.Config.Ldap, configMessage.Key)
+					if error != nil {
+						log.Error(error.Error())
+						break
+					}
 					for _, listener := range w.ldapListeners {
-						listener(configMessage.Key, configMessage.Config.Ldap)
+						listener(configMessage.Key, server)
 					}
 				}
 			}

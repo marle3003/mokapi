@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"fmt"
+	"mokapi/models"
 	"mokapi/providers/data"
-	"mokapi/service"
 	"net/http"
 	"regexp"
 	"strings"
@@ -15,11 +15,11 @@ type Context struct {
 	ServiceUrl   string
 	Parameters   map[string]string
 	DataProvider data.Provider
-	Responses    map[service.HttpStatus]*service.Response
+	Responses    map[models.HttpStatus]*models.Response
 }
 
 type ContextParameter struct {
-	Parameter *service.Parameter
+	Parameter *models.Parameter
 	Value     string
 }
 
@@ -27,11 +27,11 @@ func NewContext(serviceUrl string, response http.ResponseWriter, request *http.R
 	return &Context{Response: response, Request: request, ServiceUrl: serviceUrl, Parameters: make(map[string]string)}
 }
 
-func NewContextParameter(p *service.Parameter, s string) *ContextParameter {
+func NewContextParameter(p *models.Parameter, s string) *ContextParameter {
 	return &ContextParameter{Parameter: p, Value: s}
 }
 
-func (c *Context) Update(e *service.Endpoint, provider data.Provider) error {
+func (c *Context) Update(e *models.Endpoint, provider data.Provider) error {
 	operation := e.GetOperation(c.Request.Method)
 	c.Responses = operation.Responses
 
@@ -56,12 +56,12 @@ func (c *Context) Update(e *service.Endpoint, provider data.Provider) error {
 		value := ""
 
 		switch p.Type {
-		case service.CookieParameter:
-		case service.QueryParameter:
+		case models.CookieParameter:
+		case models.QueryParameter:
 			value = c.Request.URL.Query().Get(p.Name)
-		case service.HeaderParameter:
+		case models.HeaderParameter:
 			value = c.Request.Header.Get(p.Name)
-		case service.PathParameter:
+		case models.PathParameter:
 			key := fmt.Sprintf("{%v}", p.Name)
 			if i, ok := pathParameterIndex[key]; ok {
 				value = segments[i]

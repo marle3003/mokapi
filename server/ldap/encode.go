@@ -1,6 +1,8 @@
 package ldap
 
-import ber "gopkg.in/go-asn1-ber/asn1-ber.v1"
+import (
+	ber "gopkg.in/go-asn1-ber/asn1-ber.v1"
+)
 
 func encodeBindResponse(messageID int64) *ber.Packet {
 	responsePacket := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "LDAP Response")
@@ -16,7 +18,7 @@ func encodeBindResponse(messageID int64) *ber.Packet {
 	return responsePacket
 }
 
-func encodeSearchResult(messageId int64, result *SearchResult) *ber.Packet {
+func (s *Server) encodeSearchResult(messageId int64, result *SearchResult) *ber.Packet {
 	responsePacket := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "LDAP Response")
 	responsePacket.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimitive, ber.TagInteger, messageId, "Message ID"))
 
@@ -28,7 +30,7 @@ func encodeSearchResult(messageId int64, result *SearchResult) *ber.Packet {
 		if k == "dn" {
 			continue
 		}
-		attrs.AppendChild(encodeSearchAttribute(k, v))
+		attrs.AppendChild(s.encodeSearchAttribute(k, v))
 	}
 
 	searchEntry.AppendChild(attrs)
@@ -37,7 +39,7 @@ func encodeSearchResult(messageId int64, result *SearchResult) *ber.Packet {
 	return responsePacket
 }
 
-func encodeSearchAttribute(name string, values []string) *ber.Packet {
+func (s *Server) encodeSearchAttribute(name string, values []string) *ber.Packet {
 	packet := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "Attribute")
 	packet.AppendChild(ber.NewString(ber.ClassUniversal, ber.TypePrimitive, ber.TagOctetString, name, "Attribute Name"))
 

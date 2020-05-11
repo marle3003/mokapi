@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"fmt"
+	"mokapi/models"
 	"mokapi/providers/data"
-	"mokapi/service"
 	"regexp"
 	"strconv"
 	"strings"
@@ -12,11 +12,11 @@ import (
 )
 
 type ServiceHandler struct {
-	service      *service.Service
+	service      *models.Service
 	dataProvider data.Provider
 }
 
-func NewServiceHandler(s *service.Service, dataProvider data.Provider) *ServiceHandler {
+func NewServiceHandler(s *models.Service, dataProvider data.Provider) *ServiceHandler {
 	return &ServiceHandler{service: s, dataProvider: dataProvider}
 }
 
@@ -53,7 +53,7 @@ func (h *ServiceHandler) resolveEndpoint(context *Context) {
 	log.Infof("No endpoint found %s %v", context.Request.Method, context.Request.URL)
 }
 
-func isMatchingPath(path string, params []*service.Parameter, c *Context) bool {
+func isMatchingPath(path string, params []*models.Parameter, c *Context) bool {
 	pathToValidate := c.Request.URL.Path
 	var parts []string
 	if c.ServiceUrl != "/" {
@@ -61,7 +61,7 @@ func isMatchingPath(path string, params []*service.Parameter, c *Context) bool {
 	}
 	parts = strings.Split(pathToValidate, "/")
 
-	parameters := make(map[string]*service.Parameter)
+	parameters := make(map[string]*models.Parameter)
 	for _, v := range params {
 		parameters[v.Name] = v
 	}
@@ -72,7 +72,7 @@ func isMatchingPath(path string, params []*service.Parameter, c *Context) bool {
 		match := paramRegex.FindStringSubmatch(part)
 		if len(match) > 1 {
 			paramName := match[1]
-			if p, ok := parameters[paramName]; ok && p.Type == service.PathParameter {
+			if p, ok := parameters[paramName]; ok && p.Type == models.PathParameter {
 				if !isValidParameterValue(p, parts[i]) {
 					log.Errorf("Invalid parameter value %v found in path %v", parts[i], path)
 					return false
@@ -92,7 +92,7 @@ func isMatchingPath(path string, params []*service.Parameter, c *Context) bool {
 	return true
 }
 
-func isValidParameterValue(p *service.Parameter, s string) bool {
+func isValidParameterValue(p *models.Parameter, s string) bool {
 	if p.Schema == nil {
 		return true
 	}

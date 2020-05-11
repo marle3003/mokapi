@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"fmt"
+	"mokapi/models"
 	"mokapi/providers/encoding"
-	"mokapi/service"
 	"net/http"
 	"strings"
 
@@ -24,7 +24,7 @@ func (handler *ResponseHandler) ServeHTTP(context *Context) {
 	// In OpenApi each http status code and content type can defined its own schema
 	// Depending on data selection we change http status and schema of that http status code definition
 
-	response, ok := context.Responses[service.Ok]
+	response, ok := context.Responses[models.Ok]
 	if !ok {
 		log.WithFields(log.Fields{"url": context.Request.URL.String()}).Errorf("No 200 response in configuration found")
 		http.Error(context.Response, "No 200 response in configuration found", http.StatusInternalServerError)
@@ -63,7 +63,7 @@ func (handler *ResponseHandler) ServeHTTP(context *Context) {
 	context.Response.Write(bytes)
 }
 
-func (handler *ResponseHandler) Encode(data interface{}, contentType service.ContentType, schema *service.Schema) ([]byte, error) {
+func (handler *ResponseHandler) Encode(data interface{}, contentType models.ContentType, schema *models.Schema) ([]byte, error) {
 	switch contentType {
 	case "application/json", "application/json;odata=verbose":
 		return encoding.MarshalJSON(data, schema)
@@ -77,13 +77,13 @@ func (handler *ResponseHandler) Encode(data interface{}, contentType service.Con
 	}
 }
 
-func getContentType(r *service.Response, c *Context) (service.ContentType, error) {
+func getContentType(r *models.Response, c *Context) (models.ContentType, error) {
 	accept := c.Request.Header.Get("accept")
 
 	// search for a matching content type
 	if accept != "" {
 		for _, s := range strings.Split(accept, ",") {
-			contentType, error := service.ParseContentType(strings.TrimSpace(s))
+			contentType, error := models.ParseContentType(strings.TrimSpace(s))
 			if error != nil {
 				continue
 			}

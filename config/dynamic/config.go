@@ -11,7 +11,8 @@ type Configuration struct {
 	Ldap    *Ldap
 }
 
-type ConfigurationType struct {
+type Meta struct {
+	ConfigFile string
 }
 
 func NewConfiguration() *Configuration {
@@ -41,25 +42,3 @@ func (c *Configuration) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	return nil
 }
-
-// type Message struct {
-// 	ProviderName  string
-// 	Configuration *Configuration
-// }
-
-// type Configuration struct {
-// 	Providers []*Provider
-// }
-
-// type Provider struct {
-// 	ApiProviders  *ApiProviders  `yaml:"api"`
-// 	DataProviders *DataProviders `yaml:"data"`
-// }
-
-// type ApiProviders struct {
-// 	File *FileProvider
-// }
-
-// type DataProviders struct {
-// 	File *FileProvider
-// }

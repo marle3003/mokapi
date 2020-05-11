@@ -2,7 +2,7 @@ package ldap
 
 import (
 	"fmt"
-	"mokapi/config/dynamic"
+	"mokapi/models"
 	"net"
 	"strings"
 
@@ -41,7 +41,7 @@ func (s *Server) handleSearchRequest(conn net.Conn, messageId int64, req *ber.Pa
 			result.attributes[k] = v
 		}
 
-		response := encodeSearchResult(messageId, result)
+		response := s.encodeSearchResult(messageId, result)
 		sendResponse(conn, response)
 		return nil
 	}
@@ -94,7 +94,7 @@ func (s *Server) handleSearchRequest(conn net.Conn, messageId int64, req *ber.Pa
 
 		log.Infof("Found result for message %v: %v", messageId, result.dn)
 
-		response := encodeSearchResult(messageId, result)
+		response := s.encodeSearchResult(messageId, result)
 		sendResponse(conn, response)
 	}
 
@@ -103,7 +103,7 @@ func (s *Server) handleSearchRequest(conn net.Conn, messageId int64, req *ber.Pa
 	return nil
 }
 
-func filter(f *ber.Packet, entry *dynamic.Entry) (bool, error) {
+func filter(f *ber.Packet, entry *models.Entry) (bool, error) {
 	switch f.Tag {
 	case FilterAnd:
 		for _, child := range f.Children {

@@ -1,8 +1,8 @@
 package data
 
-import "mokapi/service"
+import "mokapi/models"
 
 type Provider interface {
-	Provide(parameters map[string]string, schema *service.Schema) (interface{}, error)
+	Provide(parameters map[string]string, schema *models.Schema) (interface{}, error)
 	Close()
 }
