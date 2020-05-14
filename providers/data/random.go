@@ -15,7 +15,7 @@ func NewRandomDataProvider() *RandomDataProvider {
 	return &RandomDataProvider{}
 }
 
-func (provider *RandomDataProvider) Provide(parameters map[string]string, schema *models.Schema) (interface{}, error) {
+func (provider *RandomDataProvider) Provide(name string, schema *models.Schema) (interface{}, error) {
 	return provider.getRandomObject(schema), nil
 }
 

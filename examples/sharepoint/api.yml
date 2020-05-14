@@ -3,10 +3,9 @@ info:
   title: Sharepoint API used in PostWeb
   description: Sharepoint Feed Api
   version: 0.1
-  x-server-configuration:
-    data:
-        file:
-            directory: data
+  x-mokapi-resource:
+    file:
+        directory: ./data
 servers:
   - url: http://mokapi
     description: Container mokapi

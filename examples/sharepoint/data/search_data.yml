@@ -2,17 +2,26 @@ search:
     - SchemaVersion: 15.0.0.0
       LibraryVersion: 15.0.4905.1000
       ErrorInfo: null
-      TraceCorrelationId: a2f5bd59-46e2-4463-9da0-1f4e40ebcf74
+      TraceCorrelationId: 330d509f-8185-1064-5594-9838d2a09e85
     - 2
     - IsNull: false
-    - ResultTables:
-        _ObjectType_: Microsoft
+    - 4
+    - IsNull: false
+    - 8
+    - IsNull: false
+    - 23
+    - IsNull: false
+    - 24
+    - _ObjectType_: Microsoft.SharePoint.Client.Search.Query.ResultTableCollection
+      ResultTables:
+        _ObjectType_: Microsoft.SharePoint.Client.Search.Query.ResultTable
         TableType: RelevantResults
         ResultTitle: null
         TotalRows: 1000
         RowCount: 1
+        QueryId: 16982d28-0524-42c1-9426-1d78b77fcb97
         ResultRows:
-            - Title: "Post Result"
+            - Title: "ONE: une équipe, un objectif"
               Author: null
               Description: "Un esprit d’équipe commun permet <ddd/> Endosse la responsabilité de <strong>tes</strong> décisions \n                Réfléchis\n                à l’impact de <strong>tes</strong> prestations et améliore continuellement ton <ddd/> "
               Path: "https://web.post.ch/fr/postweb/PostFinance/ONE"

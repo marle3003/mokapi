@@ -74,6 +74,8 @@ type Operation struct {
 	OperationId string
 	Parameters  []*Parameter
 	Responses   map[HttpStatus]*Response
+	Middleware  *Middleware
+	Resources   []*Resource
 }
 
 type HttpStatus int
@@ -115,15 +117,14 @@ type Schema struct {
 	Description          string
 	Properties           map[string]*Schema
 	Faker                string
-	Resource             *Resource
 	Items                *Schema
 	Xml                  *XmlEncoding
 	AdditionalProperties string
 }
 
 type Resource struct {
-	Filter *parser.FilterExp
-	Name   string
+	If   *parser.FilterExp
+	Name string
 }
 
 type Response struct {

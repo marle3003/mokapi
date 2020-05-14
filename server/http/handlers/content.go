@@ -2,8 +2,11 @@ package handlers
 
 import (
 	"fmt"
+	"io/ioutil"
+	"mokapi/middlewares"
 	"mokapi/models"
 	"mokapi/providers/encoding"
+	"mokapi/providers/parser"
 	"net/http"
 	"strings"
 
@@ -11,10 +14,12 @@ import (
 )
 
 type ResponseHandler struct {
+	middleware middlewares.Middleware
+	resources  []*models.Resource
 }
 
-func NewResponseHandler() *ResponseHandler {
-	return &ResponseHandler{}
+func NewResponseHandler(middleware middlewares.Middleware, resources []*models.Resource) *ResponseHandler {
+	return &ResponseHandler{middleware: middleware, resources: resources}
 }
 
 func (handler *ResponseHandler) ServeHTTP(context *Context) {
@@ -39,14 +44,49 @@ func (handler *ResponseHandler) ServeHTTP(context *Context) {
 	}
 
 	schema := response.ContentTypes[contentType].Schema
+	dataContext := &middlewares.Context{Parameters: context.Parameters, Schema: schema, Body: &middlewares.Body{Content: "", ContentType: context.Request.Header.Get("content-type")}}
+	if context.Request.ContentLength > 0 {
+		body, err := ioutil.ReadAll(context.Request.Body)
+		if err != nil {
+			log.Errorf("Error reading body: %v", err)
+		} else {
+			dataContext.Body.Content = string(body) // should be dataContext.Body.Content []byte?
+		}
+	}
+
+	r := handler.GetResource(dataContext)
+	resourceName := ""
+	if r != nil {
+		resourceName = r.Name
+	}
 
 	// get content
-	data, error := context.DataProvider.Provide(context.Parameters, schema)
+	raw, error := context.DataProvider.Provide(resourceName, schema)
 	if error != nil {
 		// TODO select correct response from config
 		http.Error(context.Response, error.Error(), http.StatusInternalServerError)
 		return
-	} else if data == nil {
+	} else if raw == nil {
+		context.Response.WriteHeader(404)
+		return
+	}
+
+	data := middlewares.NewData(raw)
+	handler.middleware.ServeData(data, dataContext)
+
+	if a, ok := data.Content.([]interface{}); ok && schema.Type != "array" {
+		if len(a) == 1 {
+			data.Content = a[0]
+		} else if len(a) > 1 {
+			// TODO select correct response from config
+			http.Error(context.Response, "multiple resources found but schema type is not an array", http.StatusInternalServerError)
+			return
+		} else {
+			data.Content = nil
+		}
+	}
+
+	if data.Content == nil {
 		context.Response.WriteHeader(404)
 		return
 	}
@@ -55,15 +95,20 @@ func (handler *ResponseHandler) ServeHTTP(context *Context) {
 	context.Response.Header().Add("Content-Type", contentType.String())
 
 	// write content
-	bytes, error := handler.Encode(data, contentType, schema)
+	bytes, error := handler.Encode(data.Content, contentType, schema)
 	if error != nil {
 		http.Error(context.Response, error.Error(), http.StatusInternalServerError)
 		return
 	}
+	context.Response.Header().Add("Content-Length", fmt.Sprint(len(bytes)))
 	context.Response.Write(bytes)
 }
 
 func (handler *ResponseHandler) Encode(data interface{}, contentType models.ContentType, schema *models.Schema) ([]byte, error) {
+	if s, ok := data.(string); ok {
+		return []byte(s), nil
+	}
+
 	switch contentType {
 	case "application/json", "application/json;odata=verbose":
 		return encoding.MarshalJSON(data, schema)
@@ -100,4 +145,33 @@ func getContentType(r *models.Response, c *Context) (models.ContentType, error) 
 	}
 
 	return "", fmt.Errorf("No content type found")
+}
+
+func (h *ResponseHandler) GetResource(context *middlewares.Context) *models.Resource {
+	for _, r := range h.resources {
+		if r.If == nil {
+			return r
+		}
+		match, error := r.If.IsTrue(func(factor string, tag parser.FilterTag) string {
+			switch tag {
+			case parser.FilterBody:
+				s, error := context.Body.Select(factor)
+				if error != nil {
+					log.Error(error.Error())
+					return ""
+				}
+				return s
+			case parser.FilterParameter:
+				return context.Parameters[factor]
+			default:
+				return factor
+			}
+		})
+		if error != nil {
+			log.Error(error.Error())
+		} else if match {
+			return r
+		}
+	}
+	return nil
 }

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"mokapi/middlewares"
 	"mokapi/models"
 	"mokapi/providers/data"
 	"regexp"
@@ -41,7 +42,7 @@ func (h *ServiceHandler) resolveEndpoint(context *Context) {
 		if isMatchingPath(e.Path, p, context) {
 			context.Update(e, h.dataProvider)
 
-			handler := NewResponseHandler()
+			handler := NewResponseHandler(createMiddleware(o), o.Resources)
 			handler.ServeHTTP(context)
 
 			return
@@ -66,9 +67,19 @@ func isMatchingPath(path string, params []*models.Parameter, c *Context) bool {
 		parameters[v.Name] = v
 	}
 
+	operationParts := strings.Split(path, "/")
+
+	if len(parts) != len(operationParts) {
+		return false
+	}
+
 	i := 0
 	paramRegex := regexp.MustCompile(`\{(?P<name>.+)\}`)
-	for _, part := range strings.Split(path, "/") {
+	for _, part := range operationParts {
+		if len(parts) <= i {
+			return false
+		}
+
 		match := paramRegex.FindStringSubmatch(part)
 		if len(match) > 1 {
 			paramName := match[1]
@@ -121,4 +132,22 @@ func isValidParameterValue(p *models.Parameter, s string) bool {
 	}
 
 	return false
+}
+
+func createMiddleware(o *models.Operation) middlewares.Middleware {
+	m := middlewares.NewEmptyMiddleware()
+
+	if o.Middleware == nil {
+		return m
+	}
+
+	if o.Middleware.ReplaceContent != nil {
+		m = middlewares.NewReplaceContent(o.Middleware.ReplaceContent, m)
+	}
+
+	if o.Middleware.FilterContent != nil {
+		m = middlewares.NewFilterContent(o.Middleware.FilterContent, m)
+	}
+
+	return m
 }

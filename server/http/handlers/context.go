@@ -62,11 +62,10 @@ func (c *Context) Update(e *models.Endpoint, provider data.Provider) error {
 		case models.HeaderParameter:
 			value = c.Request.Header.Get(p.Name)
 		case models.PathParameter:
-			key := fmt.Sprintf("{%v}", p.Name)
-			if i, ok := pathParameterIndex[key]; ok {
+			if i, ok := pathParameterIndex[p.Name]; ok {
 				value = segments[i]
 			} else {
-				return fmt.Errorf("Path parameter %v not found in request %v", key, c.Request.URL)
+				return fmt.Errorf("Path parameter %v not found in request %v", p.Name, c.Request.URL)
 			}
 		}
 

@@ -162,6 +162,23 @@ func createOperation(config *dynamic.Operation, context *ServiceContext) *Operat
 		}
 	}
 
+	if config.Middlewares != nil {
+		o.Middleware = createMiddlewares(config.Middlewares)
+	}
+
+	if config.Resources != nil {
+		o.Resources = make([]*Resource, 0)
+		for _, i := range config.Resources {
+			r := &Resource{Name: i.Name}
+			expr, error := parser.ParseFilter(i.If)
+			if error != nil {
+				log.Errorf("Error in parsing filter: %v", error.Error())
+			}
+			r.If = expr
+			o.Resources = append(o.Resources, r)
+		}
+	}
+
 	return o
 }
 
@@ -192,16 +209,6 @@ func createSchema(config *dynamic.Schema, context *ServiceContext) *Schema {
 			Prefix:    config.Xml.Prefix,
 			Wrapped:   config.Xml.Wrapped,
 		}
-	}
-
-	if config.Resource != nil {
-		r := &Resource{Name: config.Resource.Name}
-		expr, error := parser.ParseFilter(config.Resource.Filter)
-		if error != nil {
-			log.Errorf("Error in parsing filter: %v", error.Error())
-		}
-		r.Filter = expr
-		schema.Resource = r
 	}
 
 	if config.Reference != "" {
@@ -316,4 +323,49 @@ func createParameter(config *dynamic.Parameter, context *ServiceContext) (*Param
 	}
 
 	return p, nil
+}
+
+func createMiddlewares(config []map[string]interface{}) *Middleware {
+	middleware := &Middleware{}
+	for _, c := range config {
+		if t, ok := c["type"]; ok {
+			if s, ok := t.(string); ok {
+				switch strings.ToLower(s) {
+				case "replacecontent":
+					m := &ReplaceContent{}
+					if s, ok := c["regex"].(string); ok {
+						m.Regex = s
+					}
+					if replacement, ok := c["replacement"].(map[interface{}]interface{}); ok {
+						if s, ok := replacement["from"].(string); ok {
+							m.Replacement.From = s
+						}
+						if s, ok := replacement["selector"].(string); ok {
+							m.Replacement.Selector = s
+						}
+					}
+					middleware.ReplaceContent = m
+				case "filtercontent":
+					m := &FilterContent{}
+					if s, ok := c["filter"].(string); ok {
+						filter, error := parser.ParseFilter(s)
+						if error != nil {
+							log.Error(error)
+							continue
+						}
+						m.Filter = filter
+					}
+					middleware.FilterContent = m
+				default:
+					log.Errorf("Unsupported middleware %v", s)
+
+				}
+				continue
+			}
+
+		}
+		log.Errorf("No type definition found in middleware configuration")
+	}
+
+	return middleware
 }

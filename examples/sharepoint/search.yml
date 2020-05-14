@@ -3,9 +3,6 @@ info:
   title: Sharepoint API used in PostWeb
   description: Sharepoint Feed Api
   version: 0.1
-  x-mokapi-resource:
-    file:
-        directory: ./data
 servers:
   - url: http://mokapi
     description: Container mokapi
@@ -19,25 +16,24 @@ paths:
               schema:
                 type: string
                 x-mokapi-resource:
-                    name: wsdl.txt
-  /api/v1/search:
-    get:
+                  - name: wsdl.txt
+  /postsearch/_vti_bin/client.svc/ProcessQuery:
+    post:
       summary: Returns search results
-      parameters:
-        - in: query
-          name: q
-          schema:
-            type: string
+      x-mokapi-middlewares:
+        - type: replaceContent
+          replacement:
+            from: requestBody
+            selector: //Method[@Name='ExecuteQuery']/@Id
+          regex: ___QueryId___
+      x-mokapi-resources:
+        - name: search_po.txt
+          if: body["//SetProperty[@Name='QueryText']/Parameter"] LIKE "p%"
       responses:
         '200':
           content:
             application/json:
               schema: 
-                $ref: '#/components/schemas/SearchResult'
-components:
-  schemas:
-    SearchResult:
-        x-mokapi-resource:
-#          filter: query LIKE param[q]
-          name: search
-          
+                
+  
+        

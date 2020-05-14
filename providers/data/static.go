@@ -4,11 +4,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"mokapi/models"
-	"mokapi/providers/parser"
 	"os"
 	"path/filepath"
-	"regexp"
-	"strings"
 
 	"github.com/fsnotify/fsnotify"
 	log "github.com/sirupsen/logrus"
@@ -17,7 +14,7 @@ import (
 
 type StaticDataProvider struct {
 	Path  string
-	data  map[interface{}]interface{}
+	data  map[string]interface{}
 	stop  chan bool
 	watch bool
 }
@@ -28,20 +25,16 @@ func NewStaticDataProvider(path string, watch bool) *StaticDataProvider {
 	return provider
 }
 
-func (provider *StaticDataProvider) Provide(parameters map[string]string, schema *models.Schema) (interface{}, error) {
-	data := provider.getData(schema.Resource)
-
-	filtered, error := filterData(data, schema, parameters)
-	if error != nil {
-		return nil, error
+func (provider *StaticDataProvider) Provide(name string, schema *models.Schema) (interface{}, error) {
+	if data, ok := provider.data[name]; ok {
+		return convertData(data), nil
 	}
-
-	return filtered, nil
+	return nil, nil
 }
 
 func (p *StaticDataProvider) init() {
 	go func() {
-		p.data = make(map[interface{}]interface{})
+		p.data = make(map[string]interface{})
 		p.loadData()
 
 		if p.watch {
@@ -120,13 +113,6 @@ func (p *StaticDataProvider) addWatcher() {
 	}()
 }
 
-func (provider *StaticDataProvider) getData(r *models.Resource) interface{} {
-	if r != nil && r.Name != "" {
-		return convertData(provider.data[r.Name])
-	}
-	return convertData(provider.data)
-}
-
 func convertData(o interface{}) interface{} {
 	if a, ok := o.([]interface{}); ok {
 		var result []interface{}
@@ -152,65 +138,50 @@ func convertObject(o interface{}) interface{} {
 	return o
 }
 
-func filterData(data interface{}, schema *models.Schema, parameters map[string]string) (interface{}, error) {
-	if parameters == nil || len(parameters) == 0 {
-		return data, nil
-	}
+// func filterData(data interface{}, resource *models.Resource, context *Context) (interface{}, error) {
+// 	if resource != nil && resource.Filter != nil {
+// 		filter := resource.Filter
+// 		if list, ok := data.([]interface{}); ok {
+// 			result := make([]interface{}, 0)
+// 			for _, d := range list {
+// 				if ok, error := match(d, context, filter); ok && error == nil {
+// 					result = append(result, d)
+// 				}
+// 			}
+// 			if len(result) == 0 {
+// 				return nil, nil
+// 			}
+// 			return result, nil
+// 		}
+// 	}
 
-	if schema.Resource != nil && schema.Resource.Filter != nil {
-		filter := schema.Resource.Filter
-		if list, ok := data.([]interface{}); ok {
-			result := make([]interface{}, 0)
-			for _, d := range list {
-				if ok, error := match(d, parameters, filter); ok && error == nil {
-					result = append(result, d)
-				}
-			}
-			if len(result) == 0 {
-				return nil, nil
-			}
-			return result, nil
-		}
-	}
+// 	return data, nil
+// }
 
-	return data, nil
-}
+// func selectValue(data interface{}, context *Context, filter *parser.FilterExp) string {
+// 	if filter.Tag == parser.FilterParameter {
+// 		return context.Parameters[filter.Value]
+// 	} else if filter.Tag == parser.FilterProperty {
+// 		if data != nil {
+// 			o := data.(map[string]interface{})
+// 			if v, ok := o[filter.Value].(string); ok {
+// 				return v
+// 			}
+// 		}
+// 	} else if filter.Tag == parser.FilterBody {
+// 		s, error := context.Body.Select(filter.Value)
+// 		if error != nil {
+// 			log.Error(error.Error())
+// 		}
+// 		return s
 
-func match(data interface{}, parameters map[string]string, filter *parser.FilterExp) (bool, error) {
-	switch filter.Tag {
-	case parser.FilterEqualityMatch:
-		left := selectValue(data, parameters, filter.Children[0])
-		right := selectValue(data, parameters, filter.Children[1])
+// 	} else if filter.Tag == parser.FilterConstant {
+// 		return filter.Value
+// 	}
 
-		return left == right, nil
-	case parser.FilterLike:
-		left := selectValue(data, parameters, filter.Children[0])
-		right := selectValue(data, parameters, filter.Children[1])
-
-		s := strings.ReplaceAll(right, "%", ".*")
-		regex := regexp.MustCompile(s)
-		match := regex.FindStringSubmatch(left)
-
-		return len(match) > 0, nil
-	}
-
-	return false, fmt.Errorf("Unsupported filter tag %v", filter.Tag)
-}
-
-func selectValue(data interface{}, parameters map[string]string, filter *parser.FilterExp) string {
-	if filter.Tag == parser.FilterParameter {
-		return parameters[filter.Value]
-	}
-
-	o := data.(map[string]interface{})
-
-	if v, ok := o[filter.Value].(string); ok {
-		return v
-	}
-
-	// todo: what happens if value is a object instead of string
-	return ""
-}
+// 	// todo: what happens if value is a object instead of string
+// 	return ""
+// }
 
 func (p *StaticDataProvider) readFile(file string) {
 	data, error := ioutil.ReadFile(file)
@@ -229,7 +200,11 @@ func (p *StaticDataProvider) readFile(file string) {
 		}
 
 		for k, v := range newData {
-			p.data[k] = v
+			if s, ok := k.(string); ok {
+				p.data[s] = v
+			} else {
+				log.Errorf("Can not add key %v", k)
+			}
 		}
 	default:
 		key := filepath.Base(file)

@@ -3,10 +3,9 @@ info:
   title: Sample API
   description: Optional multiline or single-line description in [CommonMark](http://commonmark.org/help/) or HTML.
   version: 0.1.9
-  x-server-configuration:
-    data:
-      file:
-        filename: "data.yml"
+  x-mokapi-resource:
+    file:
+      filename: "data.yml"
 
 servers:
   - url: http://demo
@@ -14,27 +13,29 @@ servers:
   - url: http://staging-api.example.com:7001
     description: Optional server description, e.g. Internal staging server for testing
 paths:
-  /users/{userId}:
+  /users/{id}:
     get:
       summary: Returns a list of users.
       description: Optional extended description in CommonMark or HTML.
       parameters:
           - in: path
-            name: userId
+            name: id
             required: true
             schema:
                 type: integer
-            description: Nummeric ID of the user to get
+      x-mokapi-middlewares:
+        - type: filterContent
+          filter: userId = param["id"]
+      x-mokapi-resources:
+        - name: users
       responses:
         '200':    # status code
           description: Success A JSON array of user names
           content:
             application/json:
               schema: 
-                x-resource: users
-                type: array
-                items:
-                  $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/User'
+                  
 components:
   schemas:
     Address:

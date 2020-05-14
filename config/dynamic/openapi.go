@@ -100,6 +100,8 @@ type Operation struct {
 	OperationId string
 	Parameters  []*Parameter
 	Responses   map[string]*Response
+	Middlewares []map[string]interface{} `yaml:"x-mokapi-middlewares"`
+	Resources   []*Resource              `yaml:"x-mokapi-resources"`
 }
 
 type Parameter struct {
@@ -116,16 +118,15 @@ type Schema struct {
 	Reference            string `yaml:"$ref"`
 	Description          string
 	Properties           map[string]*Schema
-	AdditionalProperties string    `yaml:"additionalProperties"` // TODO custom marshal for bool, {} etc. Should it be a schema reference?
-	Faker                string    `yaml:"x-faker"`
-	Resource             *Resource `yaml:"x-mokapi-resource"`
+	AdditionalProperties string `yaml:"additionalProperties"` // TODO custom marshal for bool, {} etc. Should it be a schema reference?
+	Faker                string `yaml:"x-faker"`
 	Items                *Schema
 	Xml                  *Xml
 }
 
 type Resource struct {
-	Filter string
-	Name   string
+	Name string
+	If   string
 }
 
 type Response struct {
