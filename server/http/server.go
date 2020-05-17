@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"mokapi/models"
 	"mokapi/providers/data"
+	"mokapi/server/api"
 	"mokapi/server/http/handlers"
 	h "net/http"
 	"time"
@@ -14,17 +15,19 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// TODO Refactoring Classes
+
 type ServiceItem struct {
 	service *models.Service
 	handler *handlers.ServiceHandler
 }
 
 type Server struct {
-	router      *mux.Router
 	entryPoints map[string]*handlers.EntryPointHandler
 	servers     map[string]*HttpServer
 
 	services map[string]*ServiceItem
+	api      *api.Handler
 }
 
 type HttpServer struct {
@@ -39,14 +42,27 @@ func newHttpServer(address string) *HttpServer {
 	return &HttpServer{server: server, router: router}
 }
 
-func NewServer() *Server {
+func NewServer(api *api.Handler) *Server {
 	apiServer := &Server{
-		router:      mux.NewRouter(),
 		entryPoints: make(map[string]*handlers.EntryPointHandler),
 		servers:     make(map[string]*HttpServer),
 		services:    make(map[string]*ServiceItem),
 	}
+
+	apiServer.startApi(api)
+
 	return apiServer
+}
+
+func (s *Server) startApi(api *api.Handler) {
+	apiRoute := api.CreateRouter()
+
+	apiServer := &HttpServer{router: apiRoute, server: &h.Server{Addr: ":8081", Handler: apiRoute}}
+	s.servers[":8081"] = apiServer
+
+	go func() {
+		apiServer.server.ListenAndServe()
+	}()
 }
 
 func (s *Server) startServer(address string) {

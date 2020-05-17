@@ -1,5 +1,5 @@
 <template>
-  <b-table striped hover :items="parameters" :fields="fields">
+  <b-table small hover head-variant="dark" :items="parameters" :fields="fields">
   </b-table>
 </template>
 
@@ -9,7 +9,7 @@ export default {
     props: ['parameters'],
     data() {
       return {
-        fields: ['name', 'type', 'schema'],
+        fields: ['name', 'in', 'type'],
       }
     }
 }

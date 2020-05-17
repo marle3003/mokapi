@@ -35,6 +35,14 @@ paths:
             application/json:
               schema: 
                 $ref: '#/components/schemas/User'
+        '302':    # status code
+          description: Moved
+          content:
+            application/json:
+        '404':    # status code
+          description: Not found
+        '500':
+          description: Server error
                   
 components:
   schemas:

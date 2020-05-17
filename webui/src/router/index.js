@@ -24,9 +24,13 @@ export default new Router({
       path: '/services/:name',
       name: 'service',
       component: Service,
+      redirect: {
+        name: 'default'
+      },
       children: [
         {
           path: '',
+          name: 'default',
           component: Endpoints
         },
         {

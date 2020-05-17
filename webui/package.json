@@ -13,6 +13,7 @@
     "build": "node build/build.js"
   },
   "dependencies": {
+    "axios": "^0.19.2",
     "bootstrap": "^4.5.0",
     "bootstrap-vue": "^2.14.0",
     "node-sass": "^4.14.1",
@@ -20,6 +21,7 @@
     "portal-vue": "^2.1.7",
     "sass-loader": "^7.3.1",
     "vue": "^2.6.11",
+    "vue-axios": "^2.1.5",
     "vue-router": "^3.0.1"
   },
   "devDependencies": {

@@ -81,13 +81,26 @@ type Operation struct {
 type HttpStatus int
 
 const (
-	Ok      HttpStatus = 200
-	Created HttpStatus = 201
+	Ok                  HttpStatus = 200
+	Created             HttpStatus = 201
+	Accepted            HttpStatus = 202
+	NoContent           HttpStatus = 204
+	MovedPermanently    HttpStatus = 301
+	MovedTemporarily    HttpStatus = 302
+	NotModified         HttpStatus = 304
+	BadRequest          HttpStatus = 400
+	Unauthorized        HttpStatus = 401
+	Forbidden           HttpStatus = 403
+	NotFound            HttpStatus = 404
+	MethodNotAllowed    HttpStatus = 405
+	InternalServerError HttpStatus = 500
 )
 
 func IsValidHttpStatus(status HttpStatus) bool {
 	switch status {
-	case Ok, Created:
+	case Ok, Created, Accepted, NoContent, MovedPermanently,
+		MovedTemporarily, NotModified, BadRequest, Unauthorized,
+		Forbidden, NotFound, MethodNotAllowed, InternalServerError:
 		return true
 	default:
 		return false
@@ -110,6 +123,21 @@ const (
 	HeaderParameter ParameterType = 3
 	CookieParameter ParameterType = 4
 )
+
+func (p ParameterType) String() string {
+	switch p {
+	case PathParameter:
+		return "path"
+	case QueryParameter:
+		return "query"
+	case HeaderParameter:
+		return "header"
+	case CookieParameter:
+		return "cookie"
+	default:
+		return "unknown"
+	}
+}
 
 type Schema struct {
 	Type                 string

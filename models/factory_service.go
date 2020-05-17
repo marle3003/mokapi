@@ -38,6 +38,7 @@ func CreateService(config *dynamic.OpenApi) *Service {
 
 		for _, v := range part.Servers {
 			if _, found := serverUrls[v.Url]; !found {
+				serverUrls[v.Url] = true
 				server := createServers(v)
 				service.Servers = append(service.Servers, server)
 			}
@@ -137,14 +138,19 @@ func createOperation(config *dynamic.Operation, context *ServiceContext) *Operat
 		response := &Response{Description: v.Description, ContentTypes: make(map[ContentType]*ResponseContent)}
 		o.Responses[status] = response
 
-		for t, c := range v.Content {
-			responseContent := &ResponseContent{Schema: createSchema(c.Schema, context)}
-			contentType, error := ParseContentType(t)
-			if error != nil {
-				log.Error("Error in parsing content type", error)
-				continue
+		if v.Content != nil {
+			for t, c := range v.Content {
+				responseContent := &ResponseContent{}
+				if c != nil && c.Schema != nil {
+					responseContent.Schema = createSchema(c.Schema, context)
+				}
+				contentType, error := ParseContentType(t)
+				if error != nil {
+					log.Error("Error in parsing content type", error)
+					continue
+				}
+				response.ContentTypes[contentType] = responseContent
 			}
-			response.ContentTypes[contentType] = responseContent
 		}
 	}
 

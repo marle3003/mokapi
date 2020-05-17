@@ -1,32 +1,32 @@
 <template>
-  <b-card class="w-100">
-    <b-row>
-      <b-col class="col-auto">
-            <img src="@/assets/service.png" />
+      <b-card class="w-100">
+      <b-row v-if="service != null">
+        <b-col class="col-auto">
+              <img src="@/assets/service.png" />
+          </b-col>
+        <b-col>
+          <p class="label">Service Name</p>
+          <p class="title">{{ service.name }}</p>
+          <p class="label">Description</p>
+          <p>{{ service.description }}</p>
         </b-col>
-      <b-col>
-        <p class="label">Service Name</p>
-        <p class="title">Demo</p>
-        <p class="label">Description</p>
-        <p>A demo service</p>
-      </b-col>
-      <b-col>
-        <p class="label">Version</p>
-        <p>1.0.0</p>
-        <p class="label">Base URL</p>
-        <ul class="list-unstyled">
-            <li>http://demo</li>
-            <li>http://staging-api.example.com:7001</li>
-        </ul>
-      </b-col>
-    </b-row>
-  </b-card>
+        <b-col>
+          <p class="label">Version</p>
+          <p>{{ service.version }}</p>
+          <p class="label">Base URL</p>
+          <ul class="list-unstyled">
+              <li v-for="url in service.baseUrls" :key="url.url" v-b-tooltip.hover.left :title="url.description">{{ url.url }}</li>
+          </ul>
+        </b-col>
+      </b-row>
+    </b-card>
 </template>
 
 <script>
 export default {
     name: "serviceInfo",
-    components: {}
+    props: ['service'],
+    components: {},
 }
 </script>
 

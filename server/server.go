@@ -2,6 +2,7 @@ package server
 
 import (
 	"mokapi/models"
+	"mokapi/server/api"
 	"mokapi/server/http"
 	"mokapi/server/ldap"
 
@@ -15,13 +16,25 @@ type Server struct {
 	stopChannel chan bool
 
 	ldapServers map[string]*ldap.Server
+
+	application *models.Application
 }
 
 func NewServer(watcher *ConfigWatcher) *Server {
-	httpServer := http.NewServer()
-	server := &Server{httpServer: httpServer, stopChannel: make(chan bool), watcher: watcher, ldapServers: make(map[string]*ldap.Server)}
+	application := models.NewApplication()
+	api := api.New(application)
+	httpServer := http.NewServer(api)
+
+	server := &Server{
+		httpServer:  httpServer,
+		stopChannel: make(chan bool),
+		watcher:     watcher,
+		ldapServers: make(map[string]*ldap.Server),
+		application: application,
+	}
 
 	watcher.AddListener(func(s *models.Service) {
+		server.application.AddOrUpdateService(s)
 		httpServer.AddOrUpdate(s)
 	})
 

@@ -29,4 +29,22 @@ body{
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+  .operation{
+      text-transform: uppercase;
+  }
+  .put, .patch{
+    background-color: var(--orange);
+  }
+  .get, .options{
+    background-color: var(--blue);
+  }
+  .delete{
+    background-color: var(--red);
+  }
+  .post{
+    background-color: var(--green);
+  }
+  .head, .trace{
+    background-color: var(--yellow);
+  }
 </style>

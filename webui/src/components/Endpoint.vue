@@ -1,8 +1,8 @@
 <template>
-<b-container fluid>
+<b-container fluid v-if="endpoint != null">
   <b-row class="mb-2">
     <b-col cols="auto" class="mr-auto pl-0">
-    <h3>{{ $route.params.path }}</h3>
+    <h3>{{ endpoint.path }}</h3>
     </b-col>
     <b-col cols="auto" class="pr-0">
     <div class="close" @click="$router.go(-1)">
@@ -13,16 +13,29 @@
   <b-row>
   <b-card no-body class="w-100">
     <b-tabs card>
-      <b-tab v-for="item in items" :key="item.method">
+      <b-tab v-for="operation in endpoint.operations" :key="operation.method">
         <template v-slot:title>
-        <b-badge pill :variant="item.variant" >{{ item.method }}</b-badge>
-      </template>
+         <b-badge pill class="operation" :class="operation.method" >{{ operation.method }}</b-badge>
+        </template>
         <b-card-text>
           <p class="label">Summary</p>
-          <p>{{ item.summary }}</p>
+          <p>{{ operation.summary }}</p>
           <p class="label">Description</p>
-          <p>{{ item.description }}</p>
-          <parameters v-bind:parameters="item.parameters" />
+          <p>{{ operation.description }}</p>
+          <h5>Parameters</h5>
+          <parameters v-bind:parameters="operation.parameters" />
+          <hr v-if="operation.requestBody != null" />
+          <h5 v-if="operation.requestBody != null">Request Body</h5>
+          
+          <hr />
+          <h5>Response</h5>
+          <response v-bind:responses="operation.responses" />
+          
+          <hr v-if="operation.middlewares != null" />
+          <h5 v-if="operation.middlewares != null">Middlewares</h5>
+
+          <hr v-if="operation.resources != null" />
+          <h5 v-if="operation.resources != null">Resources</h5>
         </b-card-text>
       </b-tab>
     </b-tabs>
@@ -33,26 +46,33 @@
 
 <script>
 import Parameters from "@/components/Parameters"
+import Schema from "@/components/Schema"
+import Response from "@/components/Response"
 
 export default {
     name: "endpoint",
-    components: {},
-    data() {
-      return {
-        items: [
-          { method: "GET", summary: "Returns a list of users.", description: "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est"
-          , variant:"primary",
-          parameters: [{
-            type: "path",
-            name: "id",
-            schema: "integer"
-          }] }, 
-          { method: "POST", summary: "Hello World", variant:"success" },
-        ]
+    props: ['service'],
+    computed: {
+      endpoint: function(){
+        if (this.service == null){
+          return null;
+        }
+
+        let path = this.$route.params.path;
+
+        for (let i = 0; i < this.service.endpoints.length; i++){
+          let endpoint = this.service.endpoints[i]
+          if (endpoint.path === path){
+            return endpoint
+          }
+        }
+
+        return null
       }
     },
     components: {    
-      "parameters": Parameters,
+      'parameters': Parameters,
+      'response': Response
     },
     methods:{
       doCommand(e) {
