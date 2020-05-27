@@ -43,8 +43,10 @@ func (handler *ResponseHandler) ServeHTTP(context *Context) {
 		return
 	}
 
-	schema := response.ContentTypes[contentType].Schema
-	dataContext := &middlewares.Context{Parameters: context.Parameters, Schema: schema, Body: &middlewares.Body{Content: "", ContentType: context.Request.Header.Get("content-type")}}
+	schema := response.ContentTypes[contentType.Key()].Schema
+	requestContentType := models.NewContentType(context.Request.Header.Get("content-type"))
+
+	dataContext := &middlewares.Context{Parameters: context.Parameters, Schema: schema, Body: &middlewares.Body{ContentType: requestContentType}}
 	if context.Request.ContentLength > 0 {
 		body, err := ioutil.ReadAll(context.Request.Body)
 		if err != nil {
@@ -91,28 +93,34 @@ func (handler *ResponseHandler) ServeHTTP(context *Context) {
 		return
 	}
 
+	//encode
+	var bytes []byte
+	if bytes, ok = data.Content.([]byte); ok {
+		if contentType.Subtype == "*" {
+			s := http.DetectContentType(bytes)
+			contentType = models.NewContentType(s)
+		}
+	} else {
+		bytes, error = handler.Encode(data.Content, contentType, schema)
+		if error != nil {
+			http.Error(context.Response, error.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
 	// set content type
 	context.Response.Header().Add("Content-Type", contentType.String())
 
 	// write content
-	bytes, error := handler.Encode(data.Content, contentType, schema)
-	if error != nil {
-		http.Error(context.Response, error.Error(), http.StatusInternalServerError)
-		return
-	}
 	context.Response.Header().Add("Content-Length", fmt.Sprint(len(bytes)))
 	context.Response.Write(bytes)
 }
 
-func (handler *ResponseHandler) Encode(data interface{}, contentType models.ContentType, schema *models.Schema) ([]byte, error) {
-	if s, ok := data.(string); ok {
-		return []byte(s), nil
-	}
-
-	switch contentType {
-	case "application/json", "application/json;odata=verbose":
+func (handler *ResponseHandler) Encode(data interface{}, contentType *models.ContentType, schema *models.Schema) ([]byte, error) {
+	switch contentType.Subtype {
+	case "json":
 		return encoding.MarshalJSON(data, schema)
-	case "application/rss+xml":
+	case "xml", "rss+xml":
 		return encoding.MarshalXML(data, schema)
 	default:
 		if s, ok := data.(string); ok {
@@ -122,17 +130,14 @@ func (handler *ResponseHandler) Encode(data interface{}, contentType models.Cont
 	}
 }
 
-func getContentType(r *models.Response, c *Context) (models.ContentType, error) {
+func getContentType(r *models.Response, c *Context) (*models.ContentType, error) {
 	accept := c.Request.Header.Get("accept")
 
 	// search for a matching content type
 	if accept != "" {
 		for _, s := range strings.Split(accept, ",") {
-			contentType, error := models.ParseContentType(strings.TrimSpace(s))
-			if error != nil {
-				continue
-			}
-			if _, ok := r.ContentTypes[contentType]; ok {
+			contentType := models.NewContentType(s)
+			if _, ok := r.ContentTypes[contentType.Key()]; ok {
 				return contentType, nil
 			}
 		}
@@ -141,10 +146,10 @@ func getContentType(r *models.Response, c *Context) (models.ContentType, error) 
 	// no matching content found => returning first in list
 	for contentType := range r.ContentTypes {
 		// return first element
-		return contentType, nil
+		return models.NewContentType(contentType), nil
 	}
 
-	return "", fmt.Errorf("No content type found")
+	return nil, fmt.Errorf("No content type found")
 }
 
 func (h *ResponseHandler) GetResource(context *middlewares.Context) *models.Resource {

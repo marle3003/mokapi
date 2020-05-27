@@ -25,17 +25,18 @@
 </template>
 
 <script>
+import Api from '@/mixins/Api'
+
 export default {
     components: {},
+    mixins: [Api],
     data(){
       return {
         services: []
       }
     },
-    mounted(){
-      this.$http.get(
-      'http://localhost:8081/api/services')
-        .then(response => (this.services = response.data))
+    async mounted(){
+      this.services = await this.getServices()
     }
 }
 </script>

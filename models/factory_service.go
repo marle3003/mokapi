@@ -135,7 +135,7 @@ func createOperation(config *dynamic.Operation, context *ServiceContext) *Operat
 			log.Error("Unsupport status code", k)
 		}
 
-		response := &Response{Description: v.Description, ContentTypes: make(map[ContentType]*ResponseContent)}
+		response := &Response{Description: v.Description, ContentTypes: make(map[string]*ResponseContent)}
 		o.Responses[status] = response
 
 		if v.Content != nil {
@@ -144,12 +144,8 @@ func createOperation(config *dynamic.Operation, context *ServiceContext) *Operat
 				if c != nil && c.Schema != nil {
 					responseContent.Schema = createSchema(c.Schema, context)
 				}
-				contentType, error := ParseContentType(t)
-				if error != nil {
-					log.Error("Error in parsing content type", error)
-					continue
-				}
-				response.ContentTypes[contentType] = responseContent
+				contentType := NewContentType(t)
+				response.ContentTypes[contentType.Key()] = responseContent
 			}
 		}
 	}
@@ -169,7 +165,7 @@ func createOperation(config *dynamic.Operation, context *ServiceContext) *Operat
 	}
 
 	if config.Middlewares != nil {
-		o.Middleware = createMiddlewares(config.Middlewares)
+		o.Middleware = createMiddlewares(config.Middlewares, context)
 	}
 
 	if config.Resources != nil {
@@ -204,6 +200,7 @@ func createSchema(config *dynamic.Schema, context *ServiceContext) *Schema {
 		Format:               config.Format,
 		Type:                 config.Type,
 		AdditionalProperties: config.AdditionalProperties,
+		Reference:            config.Reference,
 	}
 
 	if config.Xml != nil {
@@ -220,7 +217,9 @@ func createSchema(config *dynamic.Schema, context *ServiceContext) *Schema {
 	if config.Reference != "" {
 		if strings.HasPrefix(config.Reference, "#/components/schemas/") {
 			key := strings.TrimPrefix(config.Reference, "#/components/schemas/")
-			return createSchema(context.schemas[key], context)
+			ref := createSchema(context.schemas[key], context)
+			ref.Reference = config.Reference
+			return ref
 		} else {
 			// todo
 		}
@@ -331,8 +330,8 @@ func createParameter(config *dynamic.Parameter, context *ServiceContext) (*Param
 	return p, nil
 }
 
-func createMiddlewares(config []map[string]interface{}) *Middleware {
-	middleware := &Middleware{}
+func createMiddlewares(config []map[string]interface{}, context *ServiceContext) []interface{} {
+	middlewares := make([]interface{}, 0)
 	for _, c := range config {
 		if t, ok := c["type"]; ok {
 			if s, ok := t.(string); ok {
@@ -350,7 +349,7 @@ func createMiddlewares(config []map[string]interface{}) *Middleware {
 							m.Replacement.Selector = s
 						}
 					}
-					middleware.ReplaceContent = m
+					middlewares = append(middlewares, m)
 				case "filtercontent":
 					m := &FilterContent{}
 					if s, ok := c["filter"].(string); ok {
@@ -361,7 +360,32 @@ func createMiddlewares(config []map[string]interface{}) *Middleware {
 						}
 						m.Filter = filter
 					}
-					middleware.FilterContent = m
+					middlewares = append(middlewares, m)
+				case "template":
+					m := &Template{}
+					if s, ok := c["filename"].(string); ok {
+						if strings.HasPrefix(s, "./") {
+							dir := filepath.Dir(context.path)
+							s = strings.Replace(s, ".", dir, 1)
+						}
+						m.Filename = s
+					}
+					middlewares = append(middlewares, m)
+				case "selection":
+					m := &Selection{}
+					if slice, ok := c["slice"].(map[interface{}]interface{}); ok {
+						m.Slice = &Slice{Low: 0, High: -1}
+						if s, ok := slice["low"].(int); ok {
+							m.Slice.Low = s
+						}
+						if s, ok := slice["high"].(int); ok {
+							m.Slice.High = s
+						}
+					}
+					if b, ok := c["first"].(bool); ok {
+						m.First = b
+					}
+					middlewares = append(middlewares, m)
 				default:
 					log.Errorf("Unsupported middleware %v", s)
 
@@ -373,5 +397,5 @@ func createMiddlewares(config []map[string]interface{}) *Middleware {
 		log.Errorf("No type definition found in middleware configuration")
 	}
 
-	return middleware
+	return middlewares
 }

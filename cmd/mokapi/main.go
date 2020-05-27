@@ -46,9 +46,7 @@ func main() {
 }
 
 func createServer(cfg *static.Config) (*server.Server, error) {
-	watcher := server.NewConfigWatcher(&cfg.Providers.File)
-
-	return server.NewServer(watcher), nil
+	return server.NewServer(cfg), nil
 }
 
 func configureLogging(cfg *static.Config) {

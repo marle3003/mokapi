@@ -1,7 +1,7 @@
 <template>
 <div>
   <b-navbar toggleable="lg" type="light" class="header">
-  <b-navbar-brand href="/" >MokApi</b-navbar-brand>
+  <b-navbar-brand href="/" >{{title}}</b-navbar-brand>
 
   <b-collapse id="nav-collapse" is-nav>
     <b-navbar-nav>
@@ -21,7 +21,12 @@
 <script>
 export default {
     name: "topHeader",
-    components: {}
+    components: {},
+    data() {
+      return {
+        title: process.env.VUE_APP_TITLE
+      }
+    }
 }
 </script>
 

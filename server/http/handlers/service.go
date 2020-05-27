@@ -42,7 +42,8 @@ func (h *ServiceHandler) resolveEndpoint(context *Context) {
 		if isMatchingPath(e.Path, p, context) {
 			context.Update(e, h.dataProvider)
 
-			handler := NewResponseHandler(createMiddleware(o), o.Resources)
+			middleware := middlewares.Create(o.Middleware)
+			handler := NewResponseHandler(middleware, o.Resources)
 			handler.ServeHTTP(context)
 
 			return
@@ -132,22 +133,4 @@ func isValidParameterValue(p *models.Parameter, s string) bool {
 	}
 
 	return false
-}
-
-func createMiddleware(o *models.Operation) middlewares.Middleware {
-	m := middlewares.NewEmptyMiddleware()
-
-	if o.Middleware == nil {
-		return m
-	}
-
-	if o.Middleware.ReplaceContent != nil {
-		m = middlewares.NewReplaceContent(o.Middleware.ReplaceContent, m)
-	}
-
-	if o.Middleware.FilterContent != nil {
-		m = middlewares.NewFilterContent(o.Middleware.FilterContent, m)
-	}
-
-	return m
 }

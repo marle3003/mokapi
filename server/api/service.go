@@ -29,11 +29,13 @@ type endpoint struct {
 }
 
 type operation struct {
-	Method      string      `json:"method,omitempty"`
-	Summary     string      `json:"summary,omitempty"`
-	Description string      `json:"description,omitempty"`
-	Parameters  []parameter `json:"parameters,omitempty"`
-	Responses   []response  `json:"responses,omitempty"`
+	Method      string        `json:"method,omitempty"`
+	Summary     string        `json:"summary,omitempty"`
+	Description string        `json:"description,omitempty"`
+	Parameters  []parameter   `json:"parameters,omitempty"`
+	Responses   []response    `json:"responses,omitempty"`
+	Resources   []resource    `json:"resources,omitempty"`
+	Middlewares []interface{} `json:"middlewares,omitempty"`
 }
 
 type parameter struct {
@@ -58,6 +60,18 @@ type schema struct {
 	Name       string    `json:"name,omitempty"`
 	Type       string    `json:"type,omitempty"`
 	Properties []*schema `json:"properties,omitempty"`
+	Items      *schema   `json:"items,omitempty"`
+	Ref        string    `json:"ref,omitempty"`
+}
+
+type resource struct {
+	Name      string `json:"name,omitempty"`
+	Condition string `json:"condition,omitempty"`
+}
+
+type filterContent struct {
+	Name   string `json:"name,omitempty"`
+	Filter string `json:"filter,omitempty"`
 }
 
 func newService(s *models.ServiceInfo) service {
@@ -101,7 +115,15 @@ func newEndpoint(e *models.Endpoint) endpoint {
 }
 
 func newOperation(method string, o *models.Operation) operation {
-	v := operation{Method: method, Summary: o.Summary, Description: o.Description, Parameters: make([]parameter, 0), Responses: make([]response, 0)}
+	v := operation{
+		Method:      method,
+		Summary:     o.Summary,
+		Description: o.Description,
+		Parameters:  make([]parameter, 0),
+		Responses:   make([]response, 0),
+		Resources:   make([]resource, 0),
+		Middlewares: make([]interface{}, 0),
+	}
 
 	for _, p := range o.Parameters {
 		v.Parameters = append(v.Parameters, newParameter(p))
@@ -109,6 +131,16 @@ func newOperation(method string, o *models.Operation) operation {
 
 	for s, r := range o.Responses {
 		v.Responses = append(v.Responses, newResponse(s, r))
+	}
+
+	for _, r := range o.Resources {
+		v.Resources = append(v.Resources, newResource(r))
+	}
+
+	for _, m := range o.Middleware {
+		if e := newMiddleware(m); e != nil {
+			v.Middlewares = append(v.Middlewares, e)
+		}
 	}
 
 	return v
@@ -122,7 +154,7 @@ func newResponse(status models.HttpStatus, r *models.Response) response {
 	response := response{Status: int(status), Description: r.Description, ContentTypes: make([]responseContent, 0)}
 
 	for t, c := range r.ContentTypes {
-		response.ContentTypes = append(response.ContentTypes, responseContent{Type: t.String(), Schema: newSchema("", c.Schema)})
+		response.ContentTypes = append(response.ContentTypes, responseContent{Type: t, Schema: newSchema("", c.Schema)})
 	}
 
 	return response
@@ -133,10 +165,14 @@ func newSchema(name string, s *models.Schema) *schema {
 		return nil
 	}
 
-	v := &schema{Name: name, Type: s.Type, Properties: make([]*schema, 0)}
+	v := &schema{Name: name, Type: s.Type, Properties: make([]*schema, 0), Ref: s.Reference}
 
 	for s, p := range s.Properties {
 		v.Properties = append(v.Properties, newSchema(s, p))
+	}
+
+	if s.Items != nil {
+		v.Items = newSchema("", s.Items)
 	}
 
 	return v
@@ -159,5 +195,19 @@ func (h Handler) getService(rw http.ResponseWriter, request *http.Request) {
 	} else {
 		rw.WriteHeader(404)
 	}
+}
 
+func newResource(r *models.Resource) resource {
+	o := resource{Name: r.Name}
+	if r.If != nil {
+		o.Condition = r.If.String()
+	}
+	return o
+}
+
+func newMiddleware(a interface{}) interface{} {
+	if m, ok := a.(*models.FilterContent); ok {
+		return filterContent{Name: "FilterContent", Filter: m.Filter.String()}
+	}
+	return nil
 }

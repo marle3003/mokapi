@@ -10,8 +10,8 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceRoot}/cmd/mokapi/main.go",
-            "env": {"MOKAPI_configFile": "config.yml", "MOKAPI_Log.Level": "debug"},
-            "args": ["--Log.Format=json", "--configFile", "config.yml"],//"--Log.Level=debug", 
+            "env": {"MOKAPI_Log.Level": "debug", "MOKAPI_Providers.File.Directory": "data"}, //"MOKAPI_configFile": "config.yml", 
+            "args": ["--Log.Format=json", "--Api.Port=8081"],//"--Log.Level=debug", , "--configFile", "config.yml"
             "cwd": "${workspaceRoot}"
         }
     ]

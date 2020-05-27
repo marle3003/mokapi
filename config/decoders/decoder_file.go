@@ -22,6 +22,10 @@ func (f *FileDecoder) Decode(flags map[string]string, element interface{}) error
 		}
 	}
 
+	if len(f.filename) == 0 {
+		return nil
+	}
+
 	data, error := loadFile(f.filename)
 	if error != nil {
 		return error

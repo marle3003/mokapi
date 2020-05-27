@@ -19,6 +19,10 @@ type StaticDataProvider struct {
 	watch bool
 }
 
+type file struct {
+	path string
+}
+
 func NewStaticDataProvider(path string, watch bool) *StaticDataProvider {
 	provider := &StaticDataProvider{Path: path, stop: make(chan bool), watch: watch}
 	provider.init()
@@ -27,7 +31,15 @@ func NewStaticDataProvider(path string, watch bool) *StaticDataProvider {
 
 func (provider *StaticDataProvider) Provide(name string, schema *models.Schema) (interface{}, error) {
 	if data, ok := provider.data[name]; ok {
-		return convertData(data), nil
+		if f, ok2 := data.(*file); ok2 {
+			content, error := ioutil.ReadFile(f.path)
+			if error != nil {
+				return nil, fmt.Errorf("Error reading file %v: %v", f.path, error)
+			}
+			return content, nil
+		} else {
+			return convertData(data), nil
+		}
 	}
 	return nil, nil
 }
@@ -138,65 +150,20 @@ func convertObject(o interface{}) interface{} {
 	return o
 }
 
-// func filterData(data interface{}, resource *models.Resource, context *Context) (interface{}, error) {
-// 	if resource != nil && resource.Filter != nil {
-// 		filter := resource.Filter
-// 		if list, ok := data.([]interface{}); ok {
-// 			result := make([]interface{}, 0)
-// 			for _, d := range list {
-// 				if ok, error := match(d, context, filter); ok && error == nil {
-// 					result = append(result, d)
-// 				}
-// 			}
-// 			if len(result) == 0 {
-// 				return nil, nil
-// 			}
-// 			return result, nil
-// 		}
-// 	}
-
-// 	return data, nil
-// }
-
-// func selectValue(data interface{}, context *Context, filter *parser.FilterExp) string {
-// 	if filter.Tag == parser.FilterParameter {
-// 		return context.Parameters[filter.Value]
-// 	} else if filter.Tag == parser.FilterProperty {
-// 		if data != nil {
-// 			o := data.(map[string]interface{})
-// 			if v, ok := o[filter.Value].(string); ok {
-// 				return v
-// 			}
-// 		}
-// 	} else if filter.Tag == parser.FilterBody {
-// 		s, error := context.Body.Select(filter.Value)
-// 		if error != nil {
-// 			log.Error(error.Error())
-// 		}
-// 		return s
-
-// 	} else if filter.Tag == parser.FilterConstant {
-// 		return filter.Value
-// 	}
-
-// 	// todo: what happens if value is a object instead of string
-// 	return ""
-// }
-
-func (p *StaticDataProvider) readFile(file string) {
-	data, error := ioutil.ReadFile(file)
-	if error != nil {
-		log.WithFields(log.Fields{"Error": error, "Filename": file}).Error("error reading file")
-		return
-	}
-
-	switch filepath.Ext(file) {
+func (p *StaticDataProvider) readFile(f string) {
+	switch filepath.Ext(f) {
 	case ".yml":
+		data, error := ioutil.ReadFile(f)
+		if error != nil {
+			log.WithFields(log.Fields{"Error": error, "Filename": f}).Error("error reading file")
+			return
+		}
+
 		newData := make(map[interface{}]interface{})
 
 		err := yaml.Unmarshal(data, newData)
 		if err != nil {
-			log.WithFields(log.Fields{"Error": error, "Filename": file}).Error("error parsing file")
+			log.WithFields(log.Fields{"Error": error, "Filename": f}).Error("error parsing file")
 		}
 
 		for k, v := range newData {
@@ -207,7 +174,7 @@ func (p *StaticDataProvider) readFile(file string) {
 			}
 		}
 	default:
-		key := filepath.Base(file)
-		p.data[key] = string(data)
+		key := filepath.Base(f)
+		p.data[key] = &file{path: f}
 	}
 }

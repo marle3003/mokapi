@@ -26,7 +26,12 @@ func setValue(name string, value string, element interface{}) error {
 	currentElement := reflect.ValueOf(element)
 
 	for _, fieldName := range path {
-		currentElement = currentElement.Elem().FieldByNameFunc(func(f string) bool { return strings.ToLower(f) == fieldName })
+		k := currentElement.Kind()
+		if k != reflect.Struct {
+			currentElement = currentElement.Elem().FieldByNameFunc(func(f string) bool { return strings.ToLower(f) == fieldName })
+		} else {
+			currentElement = currentElement.FieldByNameFunc(func(f string) bool { return strings.ToLower(f) == fieldName })
+		}
 		if !currentElement.IsValid() {
 			return fmt.Errorf("No configuration entry found for %v with value %v", name, value)
 		}

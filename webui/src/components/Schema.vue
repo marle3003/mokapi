@@ -7,8 +7,12 @@
       </div>
     </template> -->
     <template v-slot:cell(type)="data">
-      <span v-if="data.item.rowType === 'root'">{{ data.item.type }}</span>
-      <span v-else v-bind:style="{ paddingLeft: data.item.level * 18 + 'px'}">{{ data.item.name}}: {{data.item.type}}</span>
+      <span v-bind:style="{ paddingLeft: data.item.level * 18 + 'px'}">
+        {{ data.item.text}}
+      </span>
+      <span v-if="data.item.ref != undefined && data.item.ref !== ''">
+        ({{ data.item.ref }})
+      </span>
     </template>
   </b-table>
 </template>
@@ -39,10 +43,29 @@ export default {
       getItems(schema, level){
         let items = []
 
-        if (schema.name == undefined && level === 0) {
-          items.push({type: schema.type, name: '', rowType: 'root'})
+        var item = {}
+
+        if (level === 0) {
+          item = {type: schema.type, level: 0, text: schema.type, ref: schema.ref}
         }else{
-          items.push({type: schema.type, name: schema.name, rowType: 'property', level: level})
+          var text = schema.type
+          if (schema.name != undefined && schema.name !== ''){
+            text = schema.name + ': ' + schema.type
+          }
+          item = {type: schema.type, level: level, text: text, ref: schema.ref}
+        }          
+
+        items.push(item)
+
+        if (schema.type === 'array'){
+          var itemType = schema.items.ref !== '' ? schema.items.ref : schema.items.type;
+          item['text'] = 'array['+itemType+']'
+          item['refText'] = schema.items.ref
+
+          // get all properties but not type => not incrementing level because we remove first level (shift)
+          var arrayItems = this.getItems(schema.items, level)
+          arrayItems.shift() // remove object type
+          items = items.concat(arrayItems)
         }
         
         if (schema.type === 'object' && level < 10 && schema.properties != undefined){

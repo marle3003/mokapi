@@ -74,7 +74,7 @@ type Operation struct {
 	OperationId string
 	Parameters  []*Parameter
 	Responses   map[HttpStatus]*Response
-	Middleware  *Middleware
+	Middleware  []interface{}
 	Resources   []*Resource
 }
 
@@ -148,6 +148,7 @@ type Schema struct {
 	Items                *Schema
 	Xml                  *XmlEncoding
 	AdditionalProperties string
+	Reference            string
 }
 
 type Resource struct {
@@ -157,36 +158,36 @@ type Resource struct {
 
 type Response struct {
 	Description  string
-	ContentTypes map[ContentType]*ResponseContent
+	ContentTypes map[string]*ResponseContent
 }
 
 type ResponseContent struct {
 	Schema *Schema
 }
 
-type ContentType string
+// type ContentType string
 
-// do we need that as type? Change to simple string?
-const (
-	Json      ContentType = "application/json"
-	Rss       ContentType = "application/rss+xml"
-	JsonOData ContentType = "application/json;odata=verbose"
-	TextXml   ContentType = "text/xml"
-)
+// // do we need that as type? Change to simple string?
+// const (
+// 	Json      ContentType = "application/json"
+// 	Rss       ContentType = "application/rss+xml"
+// 	JsonOData ContentType = "application/json;odata=verbose"
+// 	TextXml   ContentType = "text/xml"
+// )
 
-func (c ContentType) String() string {
-	return string(c)
-}
+// func (c ContentType) String() string {
+// 	return string(c)
+// }
 
-func ParseContentType(s string) (ContentType, error) {
-	c := ContentType(s)
-	switch c {
-	case Json, Rss, JsonOData, TextXml:
-		return c, nil
-	default:
-		return c, fmt.Errorf("Unknown content type %v", s)
-	}
-}
+// func ParseContentType(s string) (ContentType, error) {
+// 	c := ContentType(s)
+// 	switch c {
+// 	case Json, Rss, JsonOData, TextXml:
+// 		return c, nil
+// 	default:
+// 		return c, fmt.Errorf("Unknown content type %v", s)
+// 	}
+// }
 
 type XmlEncoding struct {
 	Wrapped   bool
@@ -195,4 +196,46 @@ type XmlEncoding struct {
 	Prefix    string
 	Namespace string
 	CData     bool
+}
+
+type ContentType struct {
+	Type       string
+	Subtype    string
+	Parameters map[string]string
+	raw        string
+}
+
+func NewContentType(s string) *ContentType {
+	c := &ContentType{raw: s, Parameters: make(map[string]string)}
+	a := strings.Split(s, ";")
+	m := strings.Split(a[0], "/")
+	c.Type = strings.ToLower(strings.TrimSpace(m[0]))
+	if len(m) > 1 {
+		c.Subtype = strings.ToLower(strings.TrimSpace(m[1]))
+	}
+	for _, p := range a[1:] {
+		kv := strings.Split(p, "=")
+		if len(kv) > 1 {
+			c.Parameters[strings.TrimSpace(kv[0])] = strings.TrimSpace(kv[1])
+		} else {
+			c.Parameters[kv[0]] = ""
+		}
+	}
+
+	return c
+}
+
+func (c *ContentType) Key() string {
+	if len(c.Subtype) > 0 {
+		return fmt.Sprintf("%v/%v", c.Type, c.Subtype)
+	}
+	return c.Type
+}
+
+func (c *ContentType) String() string {
+	return c.raw
+}
+
+func (c *ContentType) Equals(other *ContentType) bool {
+	return c.Type == other.Type && c.Subtype == other.Subtype
 }

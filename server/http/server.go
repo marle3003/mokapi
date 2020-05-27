@@ -3,12 +3,16 @@ package http
 import (
 	"context"
 	"fmt"
+	"mokapi/config/static"
 	"mokapi/models"
 	"mokapi/providers/data"
 	"mokapi/server/api"
 	"mokapi/server/http/handlers"
+	"net/http"
 	h "net/http"
 	"time"
+
+	assetfs "github.com/elazarl/go-bindata-assetfs"
 
 	"github.com/gorilla/mux"
 
@@ -42,30 +46,28 @@ func newHttpServer(address string) *HttpServer {
 	return &HttpServer{server: server, router: router}
 }
 
-func NewServer(api *api.Handler) *Server {
+func NewServer(api *api.Handler, apiConfig static.Api) *Server {
 	apiServer := &Server{
 		entryPoints: make(map[string]*handlers.EntryPointHandler),
 		servers:     make(map[string]*HttpServer),
 		services:    make(map[string]*ServiceItem),
 	}
 
-	apiServer.startApi(api)
+	apiServer.startApi(api, apiConfig)
 
 	return apiServer
 }
 
-func (s *Server) startApi(api *api.Handler) {
-	apiRoute := api.CreateRouter()
+func (s *Server) startApi(api *api.Handler, config static.Api) {
+	server := s.startServer(":" + config.Port)
+	api.CreateRoutes(server.router)
 
-	apiServer := &HttpServer{router: apiRoute, server: &h.Server{Addr: ":8081", Handler: apiRoute}}
-	s.servers[":8081"] = apiServer
-
-	go func() {
-		apiServer.server.ListenAndServe()
-	}()
+	if config.Dashboard {
+		server.router.PathPrefix("/").Handler(http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir}))
+	}
 }
 
-func (s *Server) startServer(address string) {
+func (s *Server) startServer(address string) *HttpServer {
 	log.Infof("Starting server on %v", address)
 
 	server := newHttpServer(address)
@@ -74,6 +76,8 @@ func (s *Server) startServer(address string) {
 	go func() {
 		server.server.ListenAndServe()
 	}()
+
+	return server
 }
 
 func (s *Server) stopServer(server *h.Server) {

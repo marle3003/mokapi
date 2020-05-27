@@ -33,32 +33,32 @@
 </template>
 
 <script>
-import Schema from "@/components/Schema"
+import Schema from '@/components/Schema'
 
 export default {
-    name: "response",
-    components: { 'schema': Schema,},
-    props: ['responses'],
-    computed: {
-      sorted: function(){
-        if (this.responses == null){
-          return [];
-        }
-        
-        function compare(a, b) {
-          return a.status - b.status;
-        }
-
-        return  this.responses.sort(compare);
+  name: 'response',
+  components: { 'schema': Schema,},
+  props: ['responses'],
+  computed: {
+    sorted: function() {
+      if (this.responses == null) {
+        return []
       }
+      
+      function compare(a, b) {
+        return a.status - b.status
+      }
+
+      return this.responses.sort(compare)
     }
+  }
 }
 </script>
 
 <style scoped>
 .responses .icon{
     vertical-align: middle;
-    font-size: 0.6rem;
+    font-size: 0.5rem;
 }
 .client-error{
     color: var(--orange);

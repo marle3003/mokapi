@@ -1,6 +1,7 @@
 package server
 
 import (
+	"mokapi/config/static"
 	"mokapi/models"
 	"mokapi/server/api"
 	"mokapi/server/http"
@@ -20,10 +21,11 @@ type Server struct {
 	application *models.Application
 }
 
-func NewServer(watcher *ConfigWatcher) *Server {
+func NewServer(config *static.Config) *Server {
 	application := models.NewApplication()
-	api := api.New(application)
-	httpServer := http.NewServer(api)
+	apiHandler := api.New(application)
+	httpServer := http.NewServer(apiHandler, config.Api)
+	watcher := NewConfigWatcher(&config.Providers.File)
 
 	server := &Server{
 		httpServer:  httpServer,

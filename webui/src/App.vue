@@ -8,12 +8,12 @@
 </template>
 
 <script>
-import TopHeader from "@/components/TopHeader.vue"
+import TopHeader from '@/components/TopHeader.vue'
 
 export default {
   name: 'App',
   components: {
-    "top-header": TopHeader,
+    'top-header': TopHeader,
 
   }
 }
@@ -32,19 +32,19 @@ body{
   .operation{
       text-transform: uppercase;
   }
-  .put, .patch{
+  .operation.put, .operation.patch{
     background-color: var(--orange);
   }
-  .get, .options{
+  .operation.get, .operation.options{
     background-color: var(--blue);
   }
-  .delete{
+  .operation.delete{
     background-color: var(--red);
   }
-  .post{
+  .operation.post{
     background-color: var(--green);
   }
-  .head, .trace{
+  .operation.head, .operation.trace{
     background-color: var(--yellow);
   }
 </style>

@@ -4,13 +4,30 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "Build vue app",
+            "type": "shell",
+            "command": "npm run build",
+            "options": {
+                "cwd": "${workspaceFolder}/webui"
+            },
+            "group": "build"
+        },
+        {
+            "label": "Build bindata",
+            "type": "shell",
+            "command": "go-bindata -pkg http -o server/http/dashboard.go -prefix webui/dist/ webui/dist/...",
+            "group": "build",
+            "dependsOn": ["Build vue app"]
+        },
+        {
             "label": "CMD Mokapi Build",
             "type": "shell",
             "command": "go build ./cmd/mokapi",
             "group": {
                 "kind": "build",
                 "isDefault": true
-            }
+            },
+            "dependsOn": ["Build vue app", "Build bindata"]
         }
     ]
 }

@@ -5,6 +5,8 @@ import ServiceList from '@/views/ServiceList'
 import Service from '@/views/Service'
 import Endpoints from '@/components/Endpoints'
 import Endpoint from '@/components/Endpoint'
+import Models from '@/components/Models'
+import ServiceOverview from '@/components/ServiceOverview'
 
 Vue.use(Router)
 
@@ -31,10 +33,10 @@ export default new Router({
         {
           path: '',
           name: 'default',
-          component: Endpoints
+          component: ServiceOverview
         },
         {
-          path: ':path',
+          path: 'endpoint/:path',
           name: 'endpoint',
           component: Endpoint
         }

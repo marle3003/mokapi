@@ -26,6 +26,8 @@ paths:
       x-mokapi-middlewares:
         - type: filterContent
           filter: userId = param["id"]
+        - type: template
+          filename: ./template.txt
       x-mokapi-resources:
         - name: users
       responses:

@@ -2,11 +2,6 @@ package models
 
 import "mokapi/providers/parser"
 
-type Middleware struct {
-	ReplaceContent *ReplaceContent
-	FilterContent  *FilterContent
-}
-
 type ReplaceContent struct {
 	Replacement Replacement
 	Regex       string
@@ -19,4 +14,18 @@ type Replacement struct {
 
 type FilterContent struct {
 	Filter *parser.FilterExp
+}
+
+type Template struct {
+	Filename string
+}
+
+type Selection struct {
+	Slice *Slice
+	First bool
+}
+
+type Slice struct {
+	Low  int
+	High int
 }

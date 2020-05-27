@@ -23,13 +23,9 @@ func New(a *models.Application) *Handler {
 	return &Handler{application: a}
 }
 
-func (h Handler) CreateRouter() *mux.Router {
-	router := mux.NewRouter()
-
+func (h Handler) CreateRoutes(router *mux.Router) {
 	router.Methods(http.MethodGet).Path("/api/services/{name}").HandlerFunc(h.getService)
 	router.Methods(http.MethodGet).Path("/api/services").HandlerFunc(h.getServices)
-
-	return router
 }
 
 func newServiceSummary(s *models.ServiceInfo) serviceSummary {
