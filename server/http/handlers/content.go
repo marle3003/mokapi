@@ -9,6 +9,7 @@ import (
 	"mokapi/providers/parser"
 	"net/http"
 	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -16,14 +17,20 @@ import (
 type ResponseHandler struct {
 	middleware middlewares.Middleware
 	resources  []*models.Resource
+
+	requestChannel chan *models.RequestMetric
+	metric         *models.RequestMetric
 }
 
-func NewResponseHandler(middleware middlewares.Middleware, resources []*models.Resource) *ResponseHandler {
-	return &ResponseHandler{middleware: middleware, resources: resources}
+func NewResponseHandler(middleware middlewares.Middleware, resources []*models.Resource, requestChannel chan *models.RequestMetric) *ResponseHandler {
+	return &ResponseHandler{middleware: middleware, resources: resources, requestChannel: requestChannel, metric: &models.RequestMetric{}}
 }
 
 func (handler *ResponseHandler) ServeHTTP(context *Context) {
+	startTime := time.Now()
 	log.WithFields(log.Fields{"url": context.Request.URL.String(), "host": context.Request.Host, "method": context.Request.Method}).Info("Serve http request")
+	handler.metric.Method = context.Request.Method
+	handler.metric.Url = context.Request.URL.String()
 
 	// first we select the possible response. With that schema we selects the data.
 	// In OpenApi each http status code and content type can defined its own schema
@@ -31,15 +38,13 @@ func (handler *ResponseHandler) ServeHTTP(context *Context) {
 
 	response, ok := context.Responses[models.Ok]
 	if !ok {
-		log.WithFields(log.Fields{"url": context.Request.URL.String()}).Errorf("No 200 response in configuration found")
-		http.Error(context.Response, "No 200 response in configuration found", http.StatusInternalServerError)
+		handler.error("No 200 response in configuration found", context)
 		return
 	}
 
 	contentType, error := getContentType(response, context)
 	if error != nil {
-		log.WithFields(log.Fields{"url": context.Request.URL.String()}).Errorf(error.Error())
-		http.Error(context.Response, error.Error(), http.StatusInternalServerError)
+		handler.error(error.Error(), context)
 		return
 	}
 
@@ -50,7 +55,8 @@ func (handler *ResponseHandler) ServeHTTP(context *Context) {
 	if context.Request.ContentLength > 0 {
 		body, err := ioutil.ReadAll(context.Request.Body)
 		if err != nil {
-			log.Errorf("Error reading body: %v", err)
+			handler.error(fmt.Sprintf("Error while reading body: %v", err.Error()), context)
+			return
 		} else {
 			dataContext.Body.Content = string(body) // should be dataContext.Body.Content []byte?
 		}
@@ -66,10 +72,14 @@ func (handler *ResponseHandler) ServeHTTP(context *Context) {
 	raw, error := context.DataProvider.Provide(resourceName, schema)
 	if error != nil {
 		// TODO select correct response from config
-		http.Error(context.Response, error.Error(), http.StatusInternalServerError)
+		handler.error(error.Error(), context)
 		return
 	} else if raw == nil {
+		log.Infof("No data found responding with 404")
 		context.Response.WriteHeader(404)
+		handler.metric.ResponseTime = time.Now().Sub(startTime)
+		handler.metric.HttpStatus = int(models.Ok)
+		handler.requestChannel <- handler.metric
 		return
 	}
 
@@ -103,7 +113,7 @@ func (handler *ResponseHandler) ServeHTTP(context *Context) {
 	} else {
 		bytes, error = handler.Encode(data.Content, contentType, schema)
 		if error != nil {
-			http.Error(context.Response, error.Error(), http.StatusInternalServerError)
+			handler.error(error.Error(), context)
 			return
 		}
 	}
@@ -114,20 +124,25 @@ func (handler *ResponseHandler) ServeHTTP(context *Context) {
 	// write content
 	context.Response.Header().Add("Content-Length", fmt.Sprint(len(bytes)))
 	context.Response.Write(bytes)
+
+	handler.metric.ResponseTime = time.Now().Sub(startTime)
+	handler.metric.HttpStatus = int(models.Ok)
+	handler.requestChannel <- handler.metric
 }
 
 func (handler *ResponseHandler) Encode(data interface{}, contentType *models.ContentType, schema *models.Schema) ([]byte, error) {
+	if s, ok := data.(string); ok {
+		return []byte(s), nil
+	}
+
 	switch contentType.Subtype {
 	case "json":
 		return encoding.MarshalJSON(data, schema)
 	case "xml", "rss+xml":
 		return encoding.MarshalXML(data, schema)
-	default:
-		if s, ok := data.(string); ok {
-			return []byte(s), nil
-		}
-		return nil, fmt.Errorf("Unspupported encoding for content type %v", contentType)
 	}
+
+	return nil, fmt.Errorf("Unspupported encoding for content type %v", contentType)
 }
 
 func getContentType(r *models.Response, c *Context) (*models.ContentType, error) {
@@ -157,16 +172,22 @@ func (h *ResponseHandler) GetResource(context *middlewares.Context) *models.Reso
 		if r.If == nil {
 			return r
 		}
-		match, error := r.If.IsTrue(func(factor string, tag parser.FilterTag) string {
+
+		if !r.If.IsValid() {
+			log.Infof("Skipping invalid expression: %v", r.If.Raw)
+			continue
+		}
+
+		match, error := r.If.Expr.IsTrue(func(factor string, tag parser.ExpressionTag) string {
 			switch tag {
-			case parser.FilterBody:
+			case parser.Body:
 				s, error := context.Body.Select(factor)
 				if error != nil {
 					log.Error(error.Error())
 					return ""
 				}
 				return s
-			case parser.FilterParameter:
+			case parser.Parameter:
 				return context.Parameters[factor]
 			default:
 				return factor
@@ -179,4 +200,11 @@ func (h *ResponseHandler) GetResource(context *middlewares.Context) *models.Reso
 		}
 	}
 	return nil
+}
+
+func (h *ResponseHandler) error(message string, context *Context) {
+	log.WithFields(log.Fields{"url": context.Request.URL.String()}).Errorf(message)
+	http.Error(context.Response, message, http.StatusInternalServerError)
+	h.metric.Error = message
+	h.requestChannel <- h.metric
 }

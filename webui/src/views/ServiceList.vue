@@ -32,11 +32,23 @@ export default {
     mixins: [Api],
     data(){
       return {
-        services: []
+        services: [],
+        timer: null,
+        loaded: false
       }
     },
-    async mounted(){
-      this.services = await this.getServices()
+    created() {
+      this.getData();
+      this.timer = setInterval(this.getData, 20000)
+    },
+    methods: {
+      async getData() {
+        this.services = await this.getServices()
+        this.loaded = true
+      }
+    },
+    beforeDestroy () {
+      clearInterval(this.timer)
     }
 }
 </script>

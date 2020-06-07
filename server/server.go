@@ -6,15 +6,14 @@ import (
 	"mokapi/server/api"
 	"mokapi/server/http"
 	"mokapi/server/ldap"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type Server struct {
 	httpServer *http.Server
 	watcher    *ConfigWatcher
 
-	stopChannel chan bool
+	stopChannel    chan bool
+	requestChannel chan *models.RequestMetric
 
 	ldapServers map[string]*ldap.Server
 
@@ -24,19 +23,22 @@ type Server struct {
 func NewServer(config *static.Config) *Server {
 	application := models.NewApplication()
 	apiHandler := api.New(application)
-	httpServer := http.NewServer(apiHandler, config.Api)
+	requestChannel := make(chan *models.RequestMetric)
+
+	httpServer := http.NewServer(apiHandler, config.Api, requestChannel)
 	watcher := NewConfigWatcher(&config.Providers.File)
 
 	server := &Server{
-		httpServer:  httpServer,
-		stopChannel: make(chan bool),
-		watcher:     watcher,
-		ldapServers: make(map[string]*ldap.Server),
-		application: application,
+		httpServer:     httpServer,
+		stopChannel:    make(chan bool),
+		watcher:        watcher,
+		ldapServers:    make(map[string]*ldap.Server),
+		application:    application,
+		requestChannel: requestChannel,
 	}
 
-	watcher.AddListener(func(s *models.Service) {
-		server.application.AddOrUpdateService(s)
+	watcher.AddListener(func(s *models.Service, errors []string) {
+		server.application.AddOrUpdateService(s, errors)
 		httpServer.AddOrUpdate(s)
 	})
 
@@ -56,7 +58,17 @@ func NewServer(config *static.Config) *Server {
 func (s *Server) Start() {
 	s.watcher.Start()
 
-	log.Error(":::TEST:::")
+	go func() {
+		for {
+			select {
+			case requestInfo, ok := <-s.requestChannel:
+				if !ok {
+					break
+				}
+				s.application.Metrics.AddRequest(requestInfo)
+			}
+		}
+	}()
 }
 
 func (s *Server) Wait() {

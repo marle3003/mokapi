@@ -16,12 +16,15 @@
     "axios": "^0.19.2",
     "bootstrap": "^4.5.0",
     "bootstrap-vue": "^2.14.0",
+    "chart.js": "^2.9.3",
+    "moment": "^2.26.0",
     "node-sass": "^4.14.1",
     "popper.js": "^1.16.1",
     "portal-vue": "^2.1.7",
     "sass-loader": "^7.3.1",
     "vue": "^2.6.11",
     "vue-axios": "^2.1.5",
+    "vue-chartjs": "^3.5.0",
     "vue-router": "^3.0.1"
   },
   "devDependencies": {

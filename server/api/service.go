@@ -29,13 +29,13 @@ type endpoint struct {
 }
 
 type operation struct {
-	Method      string        `json:"method,omitempty"`
-	Summary     string        `json:"summary,omitempty"`
-	Description string        `json:"description,omitempty"`
-	Parameters  []parameter   `json:"parameters,omitempty"`
-	Responses   []response    `json:"responses,omitempty"`
-	Resources   []resource    `json:"resources,omitempty"`
-	Middlewares []interface{} `json:"middlewares,omitempty"`
+	Method      string       `json:"method,omitempty"`
+	Summary     string       `json:"summary,omitempty"`
+	Description string       `json:"description,omitempty"`
+	Parameters  []parameter  `json:"parameters,omitempty"`
+	Responses   []response   `json:"responses,omitempty"`
+	Resources   []resource   `json:"resources,omitempty"`
+	Middlewares []middleware `json:"middlewares,omitempty"`
 }
 
 type parameter struct {
@@ -67,11 +67,13 @@ type schema struct {
 type resource struct {
 	Name      string `json:"name,omitempty"`
 	Condition string `json:"condition,omitempty"`
+	Error     string `json:"error,omitempty"`
 }
 
-type filterContent struct {
-	Name   string `json:"name,omitempty"`
-	Filter string `json:"filter,omitempty"`
+type middleware struct {
+	Name   string            `json:"name,omitempty"`
+	Config map[string]string `json:"config,omitempty"`
+	Error  string            `json:"error,omitempty"`
 }
 
 func newService(s *models.ServiceInfo) service {
@@ -122,7 +124,7 @@ func newOperation(method string, o *models.Operation) operation {
 		Parameters:  make([]parameter, 0),
 		Responses:   make([]response, 0),
 		Resources:   make([]resource, 0),
-		Middlewares: make([]interface{}, 0),
+		Middlewares: make([]middleware, 0),
 	}
 
 	for _, p := range o.Parameters {
@@ -138,7 +140,7 @@ func newOperation(method string, o *models.Operation) operation {
 	}
 
 	for _, m := range o.Middleware {
-		if e := newMiddleware(m); e != nil {
+		if e := newMiddleware(m); len(e.Name) > 0 {
 			v.Middlewares = append(v.Middlewares, e)
 		}
 	}
@@ -200,14 +202,45 @@ func (h Handler) getService(rw http.ResponseWriter, request *http.Request) {
 func newResource(r *models.Resource) resource {
 	o := resource{Name: r.Name}
 	if r.If != nil {
-		o.Condition = r.If.String()
+		o.Condition = r.If.Raw
+		o.Error = r.If.Error
 	}
 	return o
 }
 
-func newMiddleware(a interface{}) interface{} {
+func newMiddleware(a interface{}) middleware {
 	if m, ok := a.(*models.FilterContent); ok {
-		return filterContent{Name: "FilterContent", Filter: m.Filter.String()}
+		return middleware{Name: "FilterContent", Config: map[string]string{"Filter": m.Filter.Raw}, Error: m.Filter.Error}
 	}
-	return nil
+	if m, ok := a.(*models.ReplaceContent); ok {
+		return middleware{
+			Name: "ReplaceContent",
+			Config: map[string]string{
+				"Replacement.From":     m.Replacement.From,
+				"Replacement.Selector": m.Replacement.Selector,
+				"Regex":                m.Regex,
+			},
+		}
+	}
+	if m, ok := a.(*models.Template); ok {
+		return middleware{
+			Name: "Template",
+			Config: map[string]string{
+				"Filename": m.Filename,
+			},
+		}
+	}
+	if m, ok := a.(*models.Selection); ok {
+		config := map[string]string{"First": fmt.Sprint(m.First)}
+		if m.Slice != nil {
+			config["Slice.Low"] = fmt.Sprint(m.Slice.Low)
+			config["Slice.High"] = fmt.Sprint(m.Slice.High)
+		}
+
+		return middleware{
+			Name:   "Selection",
+			Config: config,
+		}
+	}
+	return middleware{}
 }

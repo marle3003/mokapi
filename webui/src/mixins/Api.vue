@@ -13,6 +13,10 @@ export default {
       async getServices() {
           let response = await this.$http.get(this.baseUrl + '/api/services')
           return response.data
+      },
+      async getDashboard() {
+          let response = await this.$http.get(this.baseUrl + '/api/dashboard')
+          return response.data
       }
   }
 }

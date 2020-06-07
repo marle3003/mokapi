@@ -1,7 +1,5 @@
 package models
 
-import "mokapi/providers/parser"
-
 type ReplaceContent struct {
 	Replacement Replacement
 	Regex       string
@@ -13,7 +11,7 @@ type Replacement struct {
 }
 
 type FilterContent struct {
-	Filter *parser.FilterExp
+	Filter *Filter
 }
 
 type Template struct {

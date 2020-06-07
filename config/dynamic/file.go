@@ -64,6 +64,9 @@ func (p *FileProvider) loadServiceFromDirectory(directory string, channel chan<-
 }
 
 func (p *FileProvider) loadServiceFromFile(filename string, channel chan<- ConfigMessage) {
+	if filepath.Ext(filename) != ".yml" {
+		return
+	}
 
 	config := NewConfiguration()
 	error := loadFileConfig(filename, config)

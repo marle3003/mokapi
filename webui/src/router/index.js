@@ -7,6 +7,7 @@ import Endpoints from '@/components/Endpoints'
 import Endpoint from '@/components/Endpoint'
 import Models from '@/components/Models'
 import ServiceOverview from '@/components/ServiceOverview'
+import Dashboard from '@/views/Dashboard'
 
 Vue.use(Router)
 
@@ -15,7 +16,12 @@ export default new Router({
     {
       path: '/',
       name: 'home',
-      component: Home
+      redirect: '/dashboard'
+    },
+    {
+      path: '/dashboard',
+      name: 'dashboard',
+      component: Dashboard
     },
     {
       path: '/services',

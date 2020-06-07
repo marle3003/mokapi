@@ -32,6 +32,8 @@ type Server struct {
 
 	services map[string]*ServiceItem
 	api      *api.Handler
+
+	requestChannel chan *models.RequestMetric
 }
 
 type HttpServer struct {
@@ -46,11 +48,12 @@ func newHttpServer(address string) *HttpServer {
 	return &HttpServer{server: server, router: router}
 }
 
-func NewServer(api *api.Handler, apiConfig static.Api) *Server {
+func NewServer(api *api.Handler, apiConfig static.Api, requestChannel chan *models.RequestMetric) *Server {
 	apiServer := &Server{
-		entryPoints: make(map[string]*handlers.EntryPointHandler),
-		servers:     make(map[string]*HttpServer),
-		services:    make(map[string]*ServiceItem),
+		entryPoints:    make(map[string]*handlers.EntryPointHandler),
+		servers:        make(map[string]*HttpServer),
+		services:       make(map[string]*ServiceItem),
+		requestChannel: requestChannel,
 	}
 
 	apiServer.startApi(api, apiConfig)
@@ -118,7 +121,7 @@ func (a *Server) AddOrUpdate(s *models.Service) {
 	}
 
 	item.service = s
-	item.handler = build(s)
+	item.handler = build(s, a.requestChannel)
 
 	for _, v := range s.Servers {
 		serverAddress := fmt.Sprintf(":%v", v.Port)
@@ -126,7 +129,7 @@ func (a *Server) AddOrUpdate(s *models.Service) {
 			log.Infof("Adding service %v at %v on %v", item.service.Name, v.Path, serverAddress)
 			entrypoint.AddHandler(v.Path, item.handler)
 		} else {
-			entrypoint = handlers.NewEntryPointHandler(v.Host, v.Port)
+			entrypoint = handlers.NewEntryPointHandler(v.Host, v.Port, a.requestChannel)
 
 			if _, ok := a.servers[serverAddress]; !ok {
 				a.startServer(serverAddress)
@@ -142,9 +145,9 @@ func (a *Server) AddOrUpdate(s *models.Service) {
 	}
 }
 
-func build(service *models.Service) *handlers.ServiceHandler {
+func build(service *models.Service, requestChannel chan *models.RequestMetric) *handlers.ServiceHandler {
 	dataProvider := getDataProvider(service)
-	serviceHandler := handlers.NewServiceHandler(service, dataProvider)
+	serviceHandler := handlers.NewServiceHandler(service, dataProvider, requestChannel)
 
 	return serviceHandler
 }

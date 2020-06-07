@@ -5,6 +5,7 @@ import (
 	"mokapi/middlewares"
 	"mokapi/models"
 	"mokapi/providers/data"
+	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
@@ -13,12 +14,13 @@ import (
 )
 
 type ServiceHandler struct {
-	service      *models.Service
-	dataProvider data.Provider
+	service        *models.Service
+	dataProvider   data.Provider
+	requestChannel chan *models.RequestMetric
 }
 
-func NewServiceHandler(s *models.Service, dataProvider data.Provider) *ServiceHandler {
-	return &ServiceHandler{service: s, dataProvider: dataProvider}
+func NewServiceHandler(s *models.Service, dataProvider data.Provider, requestChannel chan *models.RequestMetric) *ServiceHandler {
+	return &ServiceHandler{service: s, dataProvider: dataProvider, requestChannel: requestChannel}
 }
 
 func (s *ServiceHandler) ServeHTTP(context *Context) {
@@ -43,16 +45,17 @@ func (h *ServiceHandler) resolveEndpoint(context *Context) {
 			context.Update(e, h.dataProvider)
 
 			middleware := middlewares.Create(o.Middleware)
-			handler := NewResponseHandler(middleware, o.Resources)
+			handler := NewResponseHandler(middleware, o.Resources, h.requestChannel)
 			handler.ServeHTTP(context)
 
 			return
 		}
 	}
 
-	context.Response.WriteHeader(404)
-	fmt.Fprintf(context.Response, "No endpoint found %s %s", context.Request.Method, context.Request.URL.String())
-	log.Infof("No endpoint found %s %v", context.Request.Method, context.Request.URL)
+	m := fmt.Sprintf("No endpoint found %s %s", context.Request.Method, context.Request.URL.String())
+	http.Error(context.Response, m, http.StatusInternalServerError)
+	log.Info(m)
+	h.requestChannel <- &models.RequestMetric{Method: context.Request.Method, Url: context.Request.URL.String(), Error: m, HttpStatus: http.StatusInternalServerError}
 }
 
 func isMatchingPath(path string, params []*models.Parameter, c *Context) bool {

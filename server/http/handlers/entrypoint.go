@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"mokapi/models"
 	"net/http"
 	"net/url"
 	"strings"
@@ -13,10 +14,12 @@ type EntryPointHandler struct {
 	handlers map[string]*ServiceHandler
 	Host     string
 	Port     int
+
+	requestChannel chan *models.RequestMetric
 }
 
-func NewEntryPointHandler(host string, port int) *EntryPointHandler {
-	return &EntryPointHandler{handlers: make(map[string]*ServiceHandler), Host: host, Port: port}
+func NewEntryPointHandler(host string, port int, requestChannel chan *models.RequestMetric) *EntryPointHandler {
+	return &EntryPointHandler{handlers: make(map[string]*ServiceHandler), Host: host, Port: port, requestChannel: requestChannel}
 }
 
 func (e *EntryPointHandler) AddHandler(path string, handler *ServiceHandler) error {
@@ -35,8 +38,10 @@ func (e *EntryPointHandler) RemoveHandler(path string) {
 func (e *EntryPointHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	service, path := e.resolveService(r.URL)
 	if service == nil {
-		w.WriteHeader(404)
-		log.Errorf("There was no service listening at %v", r.URL)
+		m := fmt.Sprintf("There was no service listening at %v", r.URL)
+		http.Error(w, m, http.StatusInternalServerError)
+		log.Error(m)
+		e.requestChannel <- &models.RequestMetric{Method: r.Method, Url: r.URL.String(), Error: m, HttpStatus: http.StatusInternalServerError}
 		return
 	}
 

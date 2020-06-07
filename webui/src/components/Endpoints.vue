@@ -5,8 +5,8 @@
     </b-card-title>
     <b-table hover :items="endpoints" :fields="fields" tbody-class="operations" @row-clicked="routerLinkToEndpoint">
         <template v-slot:cell(operations)="data">
-          <span v-for="( operation, index ) in data.value" :key="index" class="mr-1 operation">
-            <b-badge pill :class="operation.method" >{{ operation.method }}</b-badge>
+          <span v-for="( operation, index ) in data.value" :key="index" class="mr-1">
+            <b-badge pill class="operation" :class="operation.method" >{{ operation.method }}</b-badge>
           </span>
         </template>
     </b-table>
@@ -57,8 +57,5 @@ export default {
 <style scoped>
   .card-title{
       font-size: 1.2rem;
-  }
-  .operation{
-      font-size: 1rem;
   }
 </style>

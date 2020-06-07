@@ -35,12 +35,24 @@ export default {
     mixins: [Api],
     data(){
       return {
-        service: null
+        service: null,
+        timer: null,
+        loaded: false
       }
     },
-    async mounted(){
-      let serviceName = this.$route.params.name
-      this.service = await this.getService(serviceName)
+    created() {
+      this.getData();
+      this.timer = setInterval(this.getData, 20000)
+    },
+    methods: {
+      async getData() {
+        let serviceName = this.$route.params.name
+        this.service = await this.getService(serviceName)
+        this.loaded = true
+      }
+    },
+    beforeDestroy () {
+      clearInterval(this.timer)
     }
 }
 </script>

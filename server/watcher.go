@@ -18,7 +18,7 @@ type ConfigWatcher struct {
 	channel     chan dynamic.ConfigMessage
 	stopChannel chan bool
 
-	listeners     []func(*models.Service)
+	listeners     []func(service *models.Service, errors []string)
 	ldapListeners []func(key string, config *models.LdapServer)
 }
 
@@ -30,9 +30,9 @@ func NewConfigWatcher(provider dynamic.Provider) *ConfigWatcher {
 		stopChannel:   make(chan bool)}
 }
 
-func (w *ConfigWatcher) AddListener(listener func(*models.Service)) {
+func (w *ConfigWatcher) AddListener(listener func(service *models.Service, errors []string)) {
 	if w.listeners == nil {
-		w.listeners = make([]func(*models.Service), 0)
+		w.listeners = make([]func(*models.Service, []string), 0)
 	}
 	w.listeners = append(w.listeners, listener)
 }
@@ -90,10 +90,10 @@ func (w *ConfigWatcher) Start() {
 
 					config.Parts[configMessage.Key] = part
 
-					service := models.CreateService(config)
+					service, errors := models.CreateService(config)
 
 					for _, listener := range w.listeners {
-						listener(service)
+						listener(service, errors)
 					}
 				}
 

@@ -2,7 +2,7 @@ package models
 
 import (
 	"fmt"
-	"mokapi/providers/parser"
+	"strconv"
 	"strings"
 )
 
@@ -81,6 +81,7 @@ type Operation struct {
 type HttpStatus int
 
 const (
+	Invalid             HttpStatus = -1
 	Ok                  HttpStatus = 200
 	Created             HttpStatus = 201
 	Accepted            HttpStatus = 202
@@ -96,7 +97,20 @@ const (
 	InternalServerError HttpStatus = 500
 )
 
-func IsValidHttpStatus(status HttpStatus) bool {
+func parseHttpStatus(s string) (HttpStatus, error) {
+	i, error := strconv.Atoi(s)
+	if error != nil {
+		return Invalid, fmt.Errorf("Can not parse status code %v", s)
+	}
+	status := HttpStatus(i)
+	if !isValidHttpStatus(status) {
+		return Invalid, fmt.Errorf("Unsupport status code %v", s)
+	}
+
+	return status, nil
+}
+
+func isValidHttpStatus(status HttpStatus) bool {
 	switch status {
 	case Ok, Created, Accepted, NoContent, MovedPermanently,
 		MovedTemporarily, NotModified, BadRequest, Unauthorized,
@@ -152,7 +166,7 @@ type Schema struct {
 }
 
 type Resource struct {
-	If   *parser.FilterExp
+	If   *Filter
 	Name string
 }
 
@@ -164,30 +178,6 @@ type Response struct {
 type ResponseContent struct {
 	Schema *Schema
 }
-
-// type ContentType string
-
-// // do we need that as type? Change to simple string?
-// const (
-// 	Json      ContentType = "application/json"
-// 	Rss       ContentType = "application/rss+xml"
-// 	JsonOData ContentType = "application/json;odata=verbose"
-// 	TextXml   ContentType = "text/xml"
-// )
-
-// func (c ContentType) String() string {
-// 	return string(c)
-// }
-
-// func ParseContentType(s string) (ContentType, error) {
-// 	c := ContentType(s)
-// 	switch c {
-// 	case Json, Rss, JsonOData, TextXml:
-// 		return c, nil
-// 	default:
-// 		return c, fmt.Errorf("Unknown content type %v", s)
-// 	}
-// }
 
 type XmlEncoding struct {
 	Wrapped   bool

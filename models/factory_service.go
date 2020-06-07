@@ -3,7 +3,6 @@ package models
 import (
 	"fmt"
 	"mokapi/config/dynamic"
-	"mokapi/providers/parser"
 	"net/url"
 	"path/filepath"
 	"strconv"
@@ -15,13 +14,14 @@ import (
 type ServiceContext struct {
 	schemas map[string]*dynamic.Schema
 	path    string
+	Errors  []string
 }
 
-func CreateService(config *dynamic.OpenApi) *Service {
+func CreateService(config *dynamic.OpenApi) (*Service, []string) {
 	service := &Service{Servers: make([]Server, 0), Endpoint: make(map[string]*Endpoint)}
 
 	serverUrls := make(map[string]bool)
-	context := &ServiceContext{schemas: getSchemas(config)}
+	context := &ServiceContext{schemas: getSchemas(config), Errors: make([]string, 0)}
 
 	for filePath, part := range config.Parts {
 		if len(service.Name) == 0 {
@@ -39,7 +39,12 @@ func CreateService(config *dynamic.OpenApi) *Service {
 		for _, v := range part.Servers {
 			if _, found := serverUrls[v.Url]; !found {
 				serverUrls[v.Url] = true
-				server := createServers(v)
+				server, error := createServers(v)
+				if error != nil {
+					log.Error(error.Error())
+					context.Errors = append(context.Errors, error.Error())
+					continue
+				}
 				service.Servers = append(service.Servers, server)
 			}
 
@@ -78,7 +83,7 @@ func CreateService(config *dynamic.OpenApi) *Service {
 		}
 	}
 
-	return service
+	return service, context.Errors
 }
 
 func (e *Endpoint) update(config *dynamic.Endpoint, context *ServiceContext) {
@@ -125,14 +130,11 @@ func createOperation(config *dynamic.Operation, context *ServiceContext) *Operat
 	o := &Operation{Description: config.Description, OperationId: config.OperationId, Summary: config.Summary, Responses: make(map[HttpStatus]*Response)}
 
 	for k, v := range config.Responses {
-		i, error := strconv.Atoi(k)
+		status, error := parseHttpStatus(k)
 		if error != nil {
-			log.Error("Unsupport status code", k)
+			log.Error(error.Error())
+			context.Errors = append(context.Errors, error.Error())
 			continue
-		}
-		status := HttpStatus(i)
-		if !IsValidHttpStatus(status) {
-			log.Error("Unsupport status code", k)
 		}
 
 		response := &Response{Description: v.Description, ContentTypes: make(map[string]*ResponseContent)}
@@ -158,6 +160,7 @@ func createOperation(config *dynamic.Operation, context *ServiceContext) *Operat
 			p, error := createParameter(v, context)
 			if error != nil {
 				log.Error(error.Error())
+				context.Errors = append(context.Errors, error.Error())
 				continue
 			}
 			o.Parameters = append(o.Parameters, p)
@@ -172,11 +175,9 @@ func createOperation(config *dynamic.Operation, context *ServiceContext) *Operat
 		o.Resources = make([]*Resource, 0)
 		for _, i := range config.Resources {
 			r := &Resource{Name: i.Name}
-			expr, error := parser.ParseFilter(i.If)
-			if error != nil {
-				log.Errorf("Error in parsing filter: %v", error.Error())
+			if len(i.If) > 0 {
+				r.If = NewFilter(i.If)
 			}
-			r.If = expr
 			o.Resources = append(o.Resources, r)
 		}
 	}
@@ -247,8 +248,21 @@ func getSchemas(config *dynamic.OpenApi) map[string]*dynamic.Schema {
 	return schemas
 }
 
-func createServers(config *dynamic.Server) Server {
-	return Server{Host: getHost(config), Port: getPort(config), Path: getPath(config), Description: config.Description}
+func createServers(config *dynamic.Server) (Server, error) {
+	host, error := getHost(config)
+	if error != nil {
+		return Server{}, error
+	}
+	port, error := getPort(config)
+	if error != nil {
+		return Server{}, error
+	}
+	path, error := getPath(config)
+	if error != nil {
+		return Server{}, error
+	}
+
+	return Server{Host: host, Port: port, Path: path, Description: config.Description}, nil
 }
 
 func GetEndpoint(config *dynamic.Endpoint) *Endpoint {
@@ -272,42 +286,39 @@ func GetOperation(config *dynamic.Operation) *Operation {
 	return &Operation{Description: config.Description, OperationId: config.OperationId, Summary: config.Summary}
 }
 
-func getHost(s *dynamic.Server) string {
+func getHost(s *dynamic.Server) (string, error) {
 	u, error := url.Parse(s.Url)
 	if error != nil {
-		log.WithField("url", s.Url).Error("Invalid format in url found.")
-		return ""
+		return "", fmt.Errorf("Invalid format in url found: %v", s.Url)
 	}
-	return u.Hostname()
+	return u.Hostname(), nil
 }
 
-func getPath(s *dynamic.Server) string {
+func getPath(s *dynamic.Server) (string, error) {
 	u, error := url.Parse(s.Url)
 	if error != nil {
-		log.WithField("url", s.Url).Error("Invalid format in url found.")
-		return ""
+		return "", fmt.Errorf("Invalid format in url found: %v", s.Url)
 	}
 	if len(u.Path) == 0 {
-		return "/"
+		return "/", nil
 	}
-	return u.Path
+	return u.Path, nil
 }
 
-func getPort(s *dynamic.Server) int {
+func getPort(s *dynamic.Server) (int, error) {
 	u, error := url.Parse(s.Url)
 	if error != nil {
-		log.WithField("url", s.Url).Error("Invalid format in url found.")
-		return -1
+		return -1, fmt.Errorf("Invalid format in url found: %v", s.Url)
 	}
 	portString := u.Port()
 	if len(portString) == 0 {
-		return 80
+		return 80, nil
 	} else {
 		port, error := strconv.ParseInt(portString, 10, 32)
 		if error != nil {
-			log.WithField("url", s.Url).Error("Invalid port format in url found.")
+			return -1, fmt.Errorf("Invalid port format in url found: %v", error.Error())
 		}
-		return int(port)
+		return int(port), nil
 	}
 }
 
@@ -353,12 +364,7 @@ func createMiddlewares(config []map[string]interface{}, context *ServiceContext)
 				case "filtercontent":
 					m := &FilterContent{}
 					if s, ok := c["filter"].(string); ok {
-						filter, error := parser.ParseFilter(s)
-						if error != nil {
-							log.Error(error)
-							continue
-						}
-						m.Filter = filter
+						m.Filter = NewFilter(s)
 					}
 					middlewares = append(middlewares, m)
 				case "template":
@@ -387,14 +393,18 @@ func createMiddlewares(config []map[string]interface{}, context *ServiceContext)
 					}
 					middlewares = append(middlewares, m)
 				default:
-					log.Errorf("Unsupported middleware %v", s)
+					error := fmt.Errorf("Unsupported middleware %v", s)
+					log.Error(error.Error())
+					context.Errors = append(context.Errors, error.Error())
 
 				}
 				continue
 			}
 
 		}
-		log.Errorf("No type definition found in middleware configuration")
+		error := fmt.Errorf("No type definition found in middleware configuration")
+		log.Error(error.Error())
+		context.Errors = append(context.Errors, error.Error())
 	}
 
 	return middlewares
