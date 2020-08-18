@@ -112,15 +112,15 @@ func parseFilter(packet *ber.Packet) (ret string, err error) {
 
 	case FilterSubstrings:
 		ret += ber.DecodeString(packet.Children[0].Data.Bytes())
-		ret += "= TODO"
-		// switch packet.Children[1].Children[0].Tag {
-		// case FilterSubstringsInitial:
-		// 	ret += ber.DecodeString(packet.Children[1].Children[0].Data.Bytes()) + "*"
-		// case FilterSubstringsAny:
-		// 	ret += "*" + ber.DecodeString(packet.Children[1].Children[0].Data.Bytes()) + "*"
-		// case FilterSubstringsFinal:
-		// 	ret += "*" + ber.DecodeString(packet.Children[1].Children[0].Data.Bytes())
-		// }
+		ret += "="
+		switch packet.Children[1].Children[0].Tag {
+		case FilterSubstringsStartWith:
+			ret += ber.DecodeString(packet.Children[1].Children[0].Data.Bytes()) + "*"
+		case FilterSubstringsAny:
+			ret += "*" + ber.DecodeString(packet.Children[1].Children[0].Data.Bytes()) + "*"
+		case FilterSubstringsEndWith:
+			ret += "*" + ber.DecodeString(packet.Children[1].Children[0].Data.Bytes())
+		}
 	case FilterEqualityMatch:
 		ret += ber.DecodeString(packet.Children[0].Data.Bytes())
 		ret += "="

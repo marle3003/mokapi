@@ -12,7 +12,7 @@
               </b-col>
               <b-col>
                 <p class="name">{{ service.name }}</p>
-                <p class="description">{{ service.description }}</p>
+                <vue-simple-markdown :source="service.description" />
               </b-col>
               <b-col>
               <p>{{ service.version }}</p>

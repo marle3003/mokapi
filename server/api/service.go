@@ -16,6 +16,7 @@ type service struct {
 	Version     string     `json:"version,omitempty"`
 	BaseUrls    []baseUrl  `json:"baseUrls,omitempty"`
 	Endpoints   []endpoint `json:"endpoints,omitempty"`
+	Models      []schema   `json:"models,omitempty"`
 }
 
 type baseUrl struct {
@@ -24,8 +25,10 @@ type baseUrl struct {
 }
 
 type endpoint struct {
-	Path       string      `json:"path,omitempty"`
-	Operations []operation `json:"operations,omitempty"`
+	Path        string      `json:"path,omitempty"`
+	Summary     string      `json:"summary,omitempty"`
+	Description string      `json:"description,omitempty"`
+	Operations  []operation `json:"operations,omitempty"`
 }
 
 type operation struct {
@@ -67,7 +70,7 @@ type schema struct {
 type resource struct {
 	Name      string `json:"name,omitempty"`
 	Condition string `json:"condition,omitempty"`
-	Error     string `json:"error,omitempty"`
+	Status    string `json:"status"`
 }
 
 type middleware struct {
@@ -95,7 +98,7 @@ func newBaseUrl(s models.Server) baseUrl {
 }
 
 func newEndpoint(e *models.Endpoint) endpoint {
-	v := endpoint{Path: e.Path, Operations: make([]operation, 0)}
+	v := endpoint{Path: e.Path, Summary: e.Summary, Description: e.Description, Operations: make([]operation, 0)}
 	if e.Get != nil {
 		v.Operations = append(v.Operations, newOperation("get", e.Get))
 	} else if e.Post != nil {
@@ -149,7 +152,11 @@ func newOperation(method string, o *models.Operation) operation {
 }
 
 func newParameter(p *models.Parameter) parameter {
-	return parameter{In: p.Type.String(), Name: p.Name, Type: p.Schema.Type, Description: p.Description}
+	dataType := ""
+	if p.Schema != nil {
+		dataType = p.Schema.Type
+	}
+	return parameter{In: p.Type.String(), Name: p.Name, Type: dataType, Description: p.Description}
 }
 
 func newResponse(status models.HttpStatus, r *models.Response) response {
@@ -203,7 +210,7 @@ func newResource(r *models.Resource) resource {
 	o := resource{Name: r.Name}
 	if r.If != nil {
 		o.Condition = r.If.Raw
-		o.Error = r.If.Error
+		o.Status = r.If.Error
 	}
 	return o
 }

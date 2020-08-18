@@ -109,7 +109,7 @@ export default {
       }
     },
     methods: {
-      async getData() {
+      async getData () {
         this.dashboard = await this.getDashboard()
         this.loaded = true
       }

@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -50,13 +51,13 @@ func CreateService(config *dynamic.OpenApi) (*Service, []string) {
 
 		}
 
-		for k, v := range part.EndPoints {
+		for path, v := range part.EndPoints {
 			var endpoint *Endpoint
-			if e, ok := service.Endpoint[k]; ok {
+			if e, ok := service.Endpoint[path]; ok {
 				endpoint = e
 			} else {
-				endpoint = &Endpoint{Path: k}
-				service.Endpoint[k] = endpoint
+				endpoint = &Endpoint{Path: path}
+				service.Endpoint[path] = endpoint
 			}
 			endpoint.update(v, context)
 
@@ -87,6 +88,13 @@ func CreateService(config *dynamic.OpenApi) (*Service, []string) {
 }
 
 func (e *Endpoint) update(config *dynamic.Endpoint, context *ServiceContext) {
+	if len(config.Summary) > 0 {
+		e.Summary = config.Summary
+	}
+	if len(config.Description) > 0 {
+		e.Description = config.Description
+	}
+
 	if config.Get != nil {
 		e.Get = createOperation(config.Get, context)
 	}
@@ -392,6 +400,72 @@ func createMiddlewares(config []map[string]interface{}, context *ServiceContext)
 						m.First = b
 					}
 					middlewares = append(middlewares, m)
+				case "delay":
+					m := &Delay{}
+					if distribution, ok := c["distribution"].(map[interface{}]interface{}); ok {
+						m.Distribution = DelayDistribution{}
+						if s, ok := distribution["type"].(string); ok {
+							m.Distribution.Type = s
+						}
+						if f, ok := distribution["median"].(float64); ok {
+							m.Distribution.Median = f
+						}
+						if i, ok := distribution["median"].(int); ok {
+							m.Distribution.Median = float64(i)
+						}
+						if f, ok := distribution["sigma"].(float64); ok {
+							m.Distribution.Sigma = f
+						}
+						if i, ok := distribution["upper"].(int); ok {
+							m.Distribution.Upper = i
+						}
+						if i, ok := distribution["lower"].(int); ok {
+							m.Distribution.Lower = i
+						}
+					}
+					if s, ok := c["fixed"].(string); ok {
+						duration, error := time.ParseDuration(s)
+						if error != nil {
+							msg := fmt.Sprintf("Can not parse duration '%v': %v", s, error.Error())
+							log.Error(msg)
+							context.Errors = append(context.Errors, msg)
+							continue
+						}
+						m.Fixed = duration
+					}
+
+					if strings.ToLower(m.Distribution.Type) == "lognormal" {
+						if m.Distribution.Median <= 0 {
+							msg := fmt.Sprintf("middleware delay with type %v needs a median > 0", m.Distribution.Type)
+							log.Error(msg)
+							context.Errors = append(context.Errors, msg)
+							continue
+						}
+						if m.Distribution.Sigma <= 0 {
+							msg := fmt.Sprintf("middleware delay with type %v needs a sigma > 0", m.Distribution.Type)
+							log.Error(msg)
+							context.Errors = append(context.Errors, msg)
+							continue
+						}
+					}
+
+					if strings.ToLower(m.Distribution.Type) == "uniform" {
+						if m.Distribution.Lower < 0 {
+							msg := fmt.Sprintf("middleware delay with type %v needs a lower >= 0", m.Distribution.Type)
+							log.Error(msg)
+							context.Errors = append(context.Errors, msg)
+							continue
+						}
+						if m.Distribution.Upper <= 0 {
+							msg := fmt.Sprintf("middleware delay with type %v needs a upper > 0", m.Distribution.Type)
+							log.Error(msg)
+							context.Errors = append(context.Errors, msg)
+							continue
+						}
+					}
+
+					middlewares = append(middlewares, m)
+
 				default:
 					error := fmt.Errorf("Unsupported middleware %v", s)
 					log.Error(error.Error())

@@ -8,7 +8,7 @@
           <p class="label">Service Name</p>
           <p class="title">{{ service.name }}</p>
           <p class="label">Description</p>
-          <p>{{ service.description }}</p>
+          <vue-simple-markdown :source="service.description" />
         </b-col>
         <b-col>
           <p class="label">Version</p>

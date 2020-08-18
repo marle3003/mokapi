@@ -1,5 +1,5 @@
 <template>
-  <b-row class="ml-4 mr-4">
+  <b-row class="">
     <b-col>
       <b-container fluid v-if="endpoint != null">
         <b-row class="mb-2">
@@ -13,37 +13,56 @@
           </b-col>
         </b-row>
         <b-row>
-        <b-card no-body class="w-100">
-          <b-tabs card>
-            <b-tab v-for="operation in endpoint.operations" :key="operation.method">
-              <template v-slot:title>
-              <b-badge pill class="operation" :class="operation.method" >{{ operation.method }}</b-badge>
-              </template>
-              <b-card-text>
+          <b-card class="w-100 mb-2">
+            <b-row>
+              <b-col class="col-auto">
+                <img src="@/assets/endpoint.png" />
+              </b-col>
+              <b-col>
                 <p class="label">Summary</p>
-                <p>{{ operation.summary }}</p>
+                <p class="title">{{ endpoint.summary }}</p>
+              </b-col>
+              <b-col>
                 <p class="label">Description</p>
-                <p>{{ operation.description }}</p>
-                <h5>Parameters</h5>
-                <parameters v-bind:parameters="operation.parameters" />
-                <hr v-if="operation.requestBody != null" />
-                <h5 v-if="operation.requestBody != null">Request Body</h5>
-                
-                <hr />
-                <h5>Response</h5>
-                <response v-bind:responses="operation.responses" />
-                
-                <hr v-if="operation.middlewares != null" />
-                <h5 v-if="operation.middlewares != null">Middlewares</h5>
-                <middlewares v-if="operation.middlewares != null" v-bind:middlewares="operation.middlewares" />
+                <vue-simple-markdown :source="endpoint.description" />
+              </b-col>
+            </b-row>
+          </b-card>
+        </b-row>
+        <b-row>
+          <b-card no-body class="w-100">
+            <b-tabs card>
+              <b-tab v-for="operation in endpoint.operations" :key="operation.method">
+                <template v-slot:title>
+                <b-badge pill class="operation" :class="operation.method" >{{ operation.method }}</b-badge>
+                </template>
+                <b-card-text>
+                  <p class="label">Summary</p>
+                  <p>{{ operation.summary }}</p>
+                  <p class="label">Description</p>
+                  <p><vue-simple-markdown :source="operation.description" /></p>
 
-                <hr v-if="operation.resources != null" />
-                <h5 v-if="operation.resources != null">Resources</h5>
-                <resources v-if="operation.resources != null" v-bind:resources="operation.resources" />
-              </b-card-text>
-            </b-tab>
-          </b-tabs>
-        </b-card>
+                  <h5>Parameters</h5>
+                  <parameters v-bind:operation="operation" />
+
+                  <hr v-if="operation.requestBody != null" />
+                  <h5 v-if="operation.requestBody != null">Request Body</h5>
+
+                  <hr />
+                  <h5>Response</h5>
+                  <response v-bind:responses="operation.responses" />
+                  
+                  <hr v-if="operation.middlewares != null" />
+                  <h5 v-if="operation.middlewares != null">Middlewares</h5>
+                  <middlewares v-if="operation.middlewares != null" v-bind:middlewares="operation.middlewares" />
+
+                  <hr v-if="operation.resources != null" />
+                  <h5 v-if="operation.resources != null">Resources</h5>
+                  <resources v-if="operation.resources != null" v-bind:resources="operation.resources" />
+                </b-card-text>
+              </b-tab>
+            </b-tabs>
+          </b-card>
         </b-row>
       </b-container>
     </b-col>

@@ -151,7 +151,32 @@ func filter(f *ber.Packet, entry *models.Entry) (bool, error) {
 			}
 		}
 	case FilterSubstrings:
-		return false, fmt.Errorf("Not supported")
+		if len(f.Children) != 2 {
+			return false, fmt.Errorf("Invalid filter operation")
+		}
+		attribute := f.Children[0].Value.(string)
+		bytes := f.Children[1].Children[0].Data.Bytes()
+		value := string(bytes[:])
+		for k, a := range entry.Attributes {
+			if strings.ToLower(attribute) == strings.ToLower(k) {
+				for _, v := range a {
+					switch f.Children[1].Children[0].Tag {
+					case FilterSubstringsStartWith:
+						if strings.HasPrefix(v, value) {
+							return true, nil
+						}
+					case FilterSubstringsAny:
+						if strings.Contains(v, value) {
+							return true, nil
+						}
+					case FilterSubstringsEndWith:
+						if strings.HasSuffix(v, value) {
+							return true, nil
+						}
+					}
+				}
+			}
+		}
 	case FilterGreaterOrEqual:
 		return false, fmt.Errorf("Not supported")
 	case FilterLessOrEqual:

@@ -4,11 +4,14 @@
       <img src="@/assets/endpoint.png" width="24" height="24" /> Endpoints
     </b-card-title>
     <b-table hover :items="endpoints" :fields="fields" tbody-class="operations" @row-clicked="routerLinkToEndpoint">
-        <template v-slot:cell(operations)="data">
-          <span v-for="( operation, index ) in data.value" :key="index" class="mr-1">
-            <b-badge pill class="operation" :class="operation.method" >{{ operation.method }}</b-badge>
-          </span>
-        </template>
+      <template v-slot:cell(summary)="data">
+        <vue-simple-markdown :source="data.value" />
+      </template>
+      <template v-slot:cell(operations)="data">
+        <span v-for="( operation, index ) in data.value" :key="index" class="mr-1">
+          <b-badge pill class="operation" :class="operation.method" >{{ operation.method }}</b-badge>
+        </span>
+      </template>
     </b-table>
   </b-card>
 </template>
@@ -20,7 +23,7 @@ export default {
     components: {},
     data() {
       return {
-        fields: ['path', 'operations'],
+        fields: ['path', 'summary', 'operations'],
       }
     },
     computed: {

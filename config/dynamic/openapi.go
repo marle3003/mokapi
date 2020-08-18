@@ -83,15 +83,17 @@ func (s *Server) GetPort() int {
 }
 
 type Endpoint struct {
-	Get        *Operation
-	Post       *Operation
-	Put        *Operation
-	Patch      *Operation
-	Delete     *Operation
-	Head       *Operation
-	Options    *Operation
-	Trace      *Operation
-	Parameters []*Parameter
+	Summary     string
+	Description string
+	Get         *Operation
+	Post        *Operation
+	Put         *Operation
+	Patch       *Operation
+	Delete      *Operation
+	Head        *Operation
+	Options     *Operation
+	Trace       *Operation
+	Parameters  []*Parameter
 }
 
 type Operation struct {

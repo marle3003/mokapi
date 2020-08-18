@@ -15,6 +15,7 @@ type Service struct {
 	Servers       []Server
 	Endpoint      map[string]*Endpoint
 	DataProviders DataProviders
+	Models        []*Schema
 }
 
 type DataProviders struct {
@@ -33,16 +34,18 @@ type Server struct {
 }
 
 type Endpoint struct {
-	Path       string
-	Get        *Operation
-	Post       *Operation
-	Put        *Operation
-	Patch      *Operation
-	Delete     *Operation
-	Head       *Operation
-	Options    *Operation
-	Trace      *Operation
-	Parameters []*Parameter
+	Path        string
+	Summary     string
+	Description string
+	Get         *Operation
+	Post        *Operation
+	Put         *Operation
+	Patch       *Operation
+	Delete      *Operation
+	Head        *Operation
+	Options     *Operation
+	Trace       *Operation
+	Parameters  []*Parameter
 }
 
 func (e *Endpoint) GetOperation(method string) *Operation {

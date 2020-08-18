@@ -61,7 +61,12 @@ func getValue(path string, element interface{}) (string, error) {
 		if k == reflect.Map {
 			i := currentElement.Interface()
 			m := i.(map[string]interface{})
-			currentElement = reflect.ValueOf(m[property])
+			value := m[property]
+			t := reflect.TypeOf(value)
+			if t == nil {
+				return "null", nil
+			}
+			currentElement = reflect.ValueOf(value)
 		} else if k == reflect.Struct {
 			currentElement = currentElement.FieldByNameFunc(func(f string) bool { return strings.ToLower(f) == property })
 		} else {

@@ -121,7 +121,10 @@ func parseTerm(scanner *bufio.Scanner) (*Expression, error) {
 		return term, nil
 	}
 
-	for strings.ToLower(scanner.Text()) == "and" {
+	for gatter := scanner.Text(); len(gatter) > 0; {
+		if strings.ToLower(gatter) != "and" {
+			return nil, fmt.Errorf("Expected 'and' operator but found '%v'", gatter)
+		}
 		term, error := parseTerm(scanner)
 		if error != nil {
 			return nil, error

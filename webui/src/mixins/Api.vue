@@ -1,6 +1,6 @@
 <script>
 export default {
-  data() {
+  data () {
       return {
           baseUrl: process.env.VUE_APP_ApiBaseUrl
       }

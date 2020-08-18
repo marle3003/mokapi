@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type ReplaceContent struct {
 	Replacement Replacement
 	Regex       string
@@ -26,4 +28,17 @@ type Selection struct {
 type Slice struct {
 	Low  int
 	High int
+}
+
+type Delay struct {
+	Distribution DelayDistribution
+	Fixed        time.Duration
+}
+
+type DelayDistribution struct {
+	Type   string
+	Median float64
+	Sigma  float64
+	Lower  int
+	Upper  int
 }

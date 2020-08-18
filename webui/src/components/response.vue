@@ -37,7 +37,7 @@ import Schema from '@/components/Schema'
 
 export default {
   name: 'response',
-  components: { 'schema': Schema,},
+  components: {'schema': Schema,},
   props: ['responses'],
   computed: {
     sorted: function() {

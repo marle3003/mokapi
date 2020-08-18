@@ -1,8 +1,22 @@
-# mokapi
+# WebUI
 
-> WebUI
+## Prerequisite
+> Node 12.16.3
 
-## Build Setup
+## How to build
+Use msbuild
+
+## How to use (for backend developer)
+Run Visual Studio Code Debugger and use URL http://localhost:8081/
+
+## How to use (for frontend developer)
+* go to directory `webui`
+* Run `npm install`
+* Run `npm run dev`
+* Run Visual Studio Code Debugger for backend services
+* Use URL http://localhost:8080
+
+## Additionals
 
 ``` bash
 # install dependencies

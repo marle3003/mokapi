@@ -20,6 +20,10 @@ const (
 	FilterPresent        = 7
 	FilterApproxMatch    = 8
 
+	FilterSubstringsStartWith = 0
+	FilterSubstringsAny       = 1
+	FilterSubstringsEndWith   = 2
+
 	// https://ldapwiki.com/wiki/SearchRequest
 	ScopeBaseObject   = 0
 	ScopeSingleLevel  = 1

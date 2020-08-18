@@ -32,6 +32,9 @@ func Create(middlewares []interface{}) Middleware {
 		if m, ok := item.(*models.Selection); ok {
 			middleware = NewSelection(m, middleware)
 		}
+		if m, ok := item.(*models.Delay); ok {
+			middleware = NewDelay(m, middleware)
+		}
 	}
 
 	return middleware
