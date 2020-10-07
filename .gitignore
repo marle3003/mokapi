@@ -15,3 +15,5 @@
 # vendor/
 data/*
 examples/*
+
+server/http/dashboard.go

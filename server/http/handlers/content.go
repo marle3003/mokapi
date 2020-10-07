@@ -78,7 +78,7 @@ func (handler *ResponseHandler) ServeHTTP(context *Context) {
 		log.Infof("No data found responding with 404")
 		context.Response.WriteHeader(404)
 		handler.metric.ResponseTime = time.Now().Sub(startTime)
-		handler.metric.HttpStatus = int(models.Ok)
+		handler.metric.HttpStatus = int(models.NotFound)
 		handler.requestChannel <- handler.metric
 		return
 	}
@@ -92,6 +92,9 @@ func (handler *ResponseHandler) ServeHTTP(context *Context) {
 		} else if len(a) > 1 {
 			// TODO select correct response from config
 			http.Error(context.Response, "multiple resources found but schema type is not an array", http.StatusInternalServerError)
+			handler.metric.ResponseTime = time.Now().Sub(startTime)
+			handler.metric.HttpStatus = int(models.NotFound)
+			handler.requestChannel <- handler.metric
 			return
 		} else {
 			data.Content = nil
@@ -99,6 +102,10 @@ func (handler *ResponseHandler) ServeHTTP(context *Context) {
 	}
 
 	if data.Content == nil {
+		log.Errorf("Data content is nil responding with 404")
+		handler.metric.ResponseTime = time.Now().Sub(startTime)
+		handler.metric.HttpStatus = int(models.NotFound)
+		handler.requestChannel <- handler.metric
 		context.Response.WriteHeader(404)
 		return
 	}
@@ -114,6 +121,9 @@ func (handler *ResponseHandler) ServeHTTP(context *Context) {
 		bytes, error = handler.Encode(data.Content, contentType, schema)
 		if error != nil {
 			handler.error(error.Error(), context)
+			handler.metric.ResponseTime = time.Now().Sub(startTime)
+			handler.metric.HttpStatus = int(models.InternalServerError)
+			handler.requestChannel <- handler.metric
 			return
 		}
 	}

@@ -13,6 +13,15 @@
             "group": "build"
         },
         {
+            "label": "Copy markdown files into vue app",
+            "type": "shell",
+            "command": "Copy-Item -Path '../docs' -Destination './dist/static/docs'",
+            "options": {
+                "cwd": "${workspaceFolder}/webui"
+            },
+            "group": "build"
+        },
+        {
             "label": "Build bindata",
             "type": "shell",
             "command": "go-bindata -pkg http -o server/http/dashboard.go -prefix webui/dist/ webui/dist/...",
@@ -27,7 +36,7 @@
                 "kind": "build",
                 "isDefault": true
             },
-            "dependsOn": ["Build vue app", "Build bindata"]
+            "dependsOn": ["Build vue app", "Copy markdown files into vue app", "Build bindata"]
         }
     ]
 }

@@ -43,6 +43,7 @@ type HttpServer struct {
 
 func newHttpServer(address string) *HttpServer {
 	router := mux.NewRouter()
+	router.NotFoundHandler = http.HandlerFunc(notFound)
 	server := &h.Server{Addr: address, Handler: router}
 
 	return &HttpServer{server: server, router: router}
@@ -158,4 +159,9 @@ func getDataProvider(service *models.Service) data.Provider {
 	}
 
 	return data.NewRandomDataProvider()
+}
+
+func notFound(w http.ResponseWriter, r *http.Request) {
+	log.Errorf("No routing found for request host: %v path: %v", r.Host, r.URL.Path)
+	w.WriteHeader(http.StatusNotFound)
 }

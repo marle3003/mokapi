@@ -1,11 +1,15 @@
 package dynamic
 
 import (
+	"bytes"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
+	"text/template"
 	"time"
 
+	"github.com/Masterminds/sprig"
 	"github.com/fsnotify/fsnotify"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -148,9 +152,33 @@ func loadFileConfig(filename string, element interface{}) error {
 		return error
 	}
 
-	err := yaml.Unmarshal(data, element)
+	content := string(data)
+
+	funcMap := sprig.TxtFuncMap()
+	funcMap["extractUsername"] = extractUsername
+	tmpl := template.New(filename).Funcs(funcMap)
+
+	_, error = tmpl.Parse(content)
+	if error != nil {
+		return error
+	}
+
+	var buffer bytes.Buffer
+	error = tmpl.Execute(&buffer, false)
+	if error != nil {
+		return error
+	}
+
+	renderedTemplate := buffer.Bytes()
+
+	err := yaml.Unmarshal(renderedTemplate, element)
 	if err != nil {
 		return errors.Wrapf(err, "parsing YAML file %s", filename)
 	}
 	return nil
+}
+
+func extractUsername(s string) string {
+	slice := strings.Split(s, "\\")
+	return slice[len(slice)-1]
 }
