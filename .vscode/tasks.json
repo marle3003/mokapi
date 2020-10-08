@@ -15,7 +15,7 @@
         {
             "label": "Copy markdown files into vue app",
             "type": "shell",
-            "command": "Copy-Item -Path '../docs' -Destination './dist/static/docs'",
+            "command": "Remove-Item './src/assets/docs' -Recurse; Copy-Item -Path '../docs' -Destination './src/assets' -Recurse",
             "options": {
                 "cwd": "${workspaceFolder}/webui"
             },
@@ -36,7 +36,7 @@
                 "kind": "build",
                 "isDefault": true
             },
-            "dependsOn": ["Build vue app", "Copy markdown files into vue app", "Build bindata"]
+            "dependsOn": ["Copy markdown files into vue app", "Build vue app", "Build bindata"]
         }
     ]
 }

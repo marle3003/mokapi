@@ -1,6 +1,9 @@
+---
+navigation: Middlewares/ReplaceContent
+---
 # ReplaceContent
 
-Filters your content from your resources. The ReplaceContent middleware only replaces string resources and only supports request body.
+Replace a string from resources selected by regex with a value defined by replacement.
 
 ## Request Body
 

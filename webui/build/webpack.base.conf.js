@@ -3,6 +3,9 @@ const path = require('path')
 const utils = require('./utils')
 const config = require('../config')
 const vueLoaderConfig = require('./vue-loader.conf')
+const Mode = require('frontmatter-markdown-loader/mode')
+const markdownIt = require('markdown-it');
+const markdownItPrism = require('markdown-it-prism');
 
 function resolve (dir) {
   return path.join(__dirname, '..', dir)
@@ -73,6 +76,18 @@ module.exports = {
         options: {
           limit: 10000,
           name: utils.assetsPath('fonts/[name].[hash:7].[ext]')
+        }
+      },
+      {
+        test: /\.md$/,
+        loader: 'frontmatter-markdown-loader',
+        options: {
+          mode: [Mode.VUE_COMPONENT],
+          markdownIt: markdownIt({
+            html: true,
+            linkify: true,
+            breaks: true
+          }).use(markdownItPrism)
         }
       }
     ]

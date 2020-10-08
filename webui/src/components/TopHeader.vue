@@ -7,6 +7,7 @@
     <b-navbar-nav>
       <b-nav-item to="/dashboard">Dashboard</b-nav-item>
       <b-nav-item :to="{ name: 'serviceList' }">Services</b-nav-item>
+      <b-nav-item :to="{ name: 'docsStart' }">Docs</b-nav-item>
     </b-navbar-nav>
   </b-collapse>
 

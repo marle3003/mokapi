@@ -1,3 +1,6 @@
+---
+navigation: Middlewares/FilterContent
+---
 # FilterContent
 
 Filters your content from your resources
