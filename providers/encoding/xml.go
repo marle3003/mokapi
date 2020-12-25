@@ -3,10 +3,10 @@ package encoding
 import (
 	"encoding/xml"
 	"fmt"
-	"mokapi/models"
+	"mokapi/providers/data"
 )
 
-func MarshalXML(v interface{}, schema *models.Schema) ([]byte, error) {
+func MarshalXML(v interface{}, schema *data.Schema) ([]byte, error) {
 	m := &StringMap{Data: v, Schema: schema}
 	xmlString, error := xml.Marshal(m)
 	if error != nil {
@@ -17,7 +17,7 @@ func MarshalXML(v interface{}, schema *models.Schema) ([]byte, error) {
 
 type StringMap struct {
 	Data   interface{}
-	Schema *models.Schema
+	Schema *data.Schema
 }
 
 func (m StringMap) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
@@ -102,7 +102,7 @@ func (m StringMap) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	return nil
 }
 
-func encodeObject(e *xml.Encoder, obj map[string]interface{}, schema *models.Schema) {
+func encodeObject(e *xml.Encoder, obj map[string]interface{}, schema *data.Schema) {
 	for propertyName, propertySchema := range schema.Properties {
 		if propertySchema.Xml != nil && propertySchema.Xml.Attribute {
 			continue

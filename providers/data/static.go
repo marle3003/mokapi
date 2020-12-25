@@ -3,7 +3,6 @@ package data
 import (
 	"fmt"
 	"io/ioutil"
-	"mokapi/models"
 	"os"
 	"path/filepath"
 
@@ -29,7 +28,7 @@ func NewStaticDataProvider(path string, watch bool) *StaticDataProvider {
 	return provider
 }
 
-func (provider *StaticDataProvider) Provide(name string, schema *models.Schema) (interface{}, error) {
+func (provider *StaticDataProvider) Provide(name string, schema *Schema) (interface{}, error) {
 	if data, ok := provider.data[name]; ok {
 		if f, ok2 := data.(*file); ok2 {
 			content, error := ioutil.ReadFile(f.path)

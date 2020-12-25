@@ -1,55 +1,41 @@
 package server
 
 import (
+	"fmt"
+	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/models"
-	"mokapi/server/api"
-	"mokapi/server/http"
-	"mokapi/server/ldap"
 )
 
+type Binding interface {
+	Start()
+	Stop()
+	Apply(interface{}) error
+}
+
 type Server struct {
-	httpServer *http.Server
-	watcher    *ConfigWatcher
-
-	stopChannel    chan bool
-	requestChannel chan *models.RequestMetric
-
-	ldapServers map[string]*ldap.Server
-
+	watcher     *ConfigWatcher
 	application *models.Application
+	stopChannel chan bool
+
+	Bindings map[string]Binding
 }
 
 func NewServer(config *static.Config) *Server {
 	application := models.NewApplication()
-	apiHandler := api.New(application)
-	requestChannel := make(chan *models.RequestMetric)
-
-	httpServer := http.NewServer(apiHandler, config.Api, requestChannel)
 	watcher := NewConfigWatcher(&config.Providers.File)
 
 	server := &Server{
-		httpServer:     httpServer,
-		stopChannel:    make(chan bool),
-		watcher:        watcher,
-		ldapServers:    make(map[string]*ldap.Server),
-		application:    application,
-		requestChannel: requestChannel,
+		watcher:     watcher,
+		application: application,
+		stopChannel: make(chan bool),
+		Bindings:    make(map[string]Binding),
 	}
 
-	watcher.AddListener(func(s *models.Service, errors []string) {
-		server.application.AddOrUpdateService(s, errors)
-		httpServer.AddOrUpdate(s)
-	})
-
-	watcher.AddLdapListener(func(key string, config *models.LdapServer) {
-		if ldapServer, ok := server.ldapServers[key]; ok {
-			ldapServer.UpdateConfig(config)
-		} else {
-			ldapServer := ldap.NewServer(config)
-			server.ldapServers[key] = ldapServer
-			go ldapServer.Start()
-		}
+	watcher.AddListener(func(config *dynamic.Configuration) {
+		server.application.Apply(config)
+		server.updateBindings()
+		//httpServer.AddOrUpdate(s)
 	})
 
 	return server
@@ -57,18 +43,6 @@ func NewServer(config *static.Config) *Server {
 
 func (s *Server) Start() {
 	s.watcher.Start()
-
-	go func() {
-		for {
-			select {
-			case requestInfo, ok := <-s.requestChannel:
-				if !ok {
-					break
-				}
-				s.application.Metrics.AddRequest(requestInfo)
-			}
-		}
-	}()
 }
 
 func (s *Server) Wait() {
@@ -77,9 +51,20 @@ func (s *Server) Wait() {
 
 func (s *Server) Stop() {
 	s.watcher.Stop()
-	s.httpServer.Stop()
+}
 
-	for _, l := range s.ldapServers {
-		l.Stop()
+func (s *Server) updateBindings() {
+	for _, webService := range s.application.WebServices {
+		for _, server := range webService.Data.Servers {
+			address := fmt.Sprintf("%v:%v", server.Host, server.Port)
+			binding, found := s.Bindings[address]
+			if !found {
+				binding = NewHttpBinding(address)
+				s.Bindings[address] = binding
+				binding.Start()
+			}
+			binding.Apply(webService.Data)
+		}
+
 	}
 }

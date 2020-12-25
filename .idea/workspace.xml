@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="1a9601df-4cac-4bc9-9e3a-1ba0e84e507f" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/dynamic/config.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/dynamic/config.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/dynamic/file.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/dynamic/file.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/dynamic/ldap.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/dynamic/ldap.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/dynamic/openapi.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/dynamic/openapi.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/demo/api.yml" beforeDir="false" afterPath="$PROJECT_DIR$/examples/demo/api.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/ldap/config.yml" beforeDir="false" afterPath="$PROJECT_DIR$/examples/ldap/config.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/middlewares/delay.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/middlewares/filtercontent.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/middlewares/middleware.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/middlewares/replacecontent.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/middlewares/selection.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/middlewares/template.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/factory_ldap.go" beforeDir="false" afterPath="$PROJECT_DIR$/models/factory_ldap.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/factory_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/models/factory_service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/ldap.go" beforeDir="false" afterPath="$PROJECT_DIR$/models/ldap.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/runtime.go" beforeDir="false" afterPath="$PROJECT_DIR$/models/runtime.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/service.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/data/data.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/data/random.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/data/random.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/data/static.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/data/static.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/encoding/json.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/encoding/json.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/encoding/xml.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/encoding/xml.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/api/dashboard.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/api/dashboard.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/api/handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/api/handler.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/api/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/api/service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/http/handlers/content.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/http/handlers/context.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/http/handlers/entrypoint.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/http/handlers/service.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/http/server.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/ldap/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/ldap/server.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/server.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/watcher.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/watcher.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/webui/build/webpack.base.conf.js" beforeDir="false" afterPath="$PROJECT_DIR$/webui/build/webpack.base.conf.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/webui/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/webui/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/webui/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/webui/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/webui/src/views/Docs.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/views/Docs.vue" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="package.json" />
+      </list>
+    </option>
+  </component>
+  <component name="GOROOT" url="file://C:/Go" />
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GoLibraries">
+    <option name="indexEntireGoPath" value="false" />
+  </component>
+  <component name="ProjectId" id="1m40RSdtdDAxQq3OJ6eyNX6aqtz" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="go.import.settings.migrated" value="true" />
+    <property name="go.sdk.automatically.set" value="true" />
+    <property name="go.tried.to.enable.integration.vgo.integrator" value="true" />
+    <property name="js.buildTools.gulp.gulp_package_dir" value="" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/.vscode/tasks.json" />
+    <property name="node.js.detected.package.eslint" value="true" />
+    <property name="node.js.path.for.package.eslint" value="project" />
+    <property name="node.js.selected.package.eslint" value="(autodetect)" />
+    <property name="nodejs_package_manager_path" value="npm" />
+    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
+  </component>
+  <component name="RunManager">
+    <configuration name="go build mokapi/cmd/mokapi" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
+      <module name="mokapi" />
+      <working_directory value="$PROJECT_DIR$" />
+      <go_parameters value="-i" />
+      <parameters value="--Log.Format=json --Api.Port=8081" />
+      <envs>
+        <env name="MOKAPI_Log.Level" value="debug" />
+        <env name="MOKAPI_Providers.File.Directory" value="data" />
+        <env name="DEVUSER" value="lehmannmar" />
+      </envs>
+      <kind value="PACKAGE" />
+      <filePath value="$PROJECT_DIR$" />
+      <package value="mokapi/cmd/mokapi" />
+      <directory value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
+    <configuration default="true" type="js.build_tools.gulp">
+      <node-interpreter>project</node-interpreter>
+      <node-options />
+      <gulpfile />
+      <tasks />
+      <arguments />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Go Build.go build mokapi/cmd/mokapi" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="UnknownFeatures">
+    <option featureType="com.intellij.fileTypeFactory" implementationName="*.gradle" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="VgoProject">
+    <integration-enabled>true</integration-enabled>
+  </component>
+</project>

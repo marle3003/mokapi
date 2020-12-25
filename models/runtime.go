@@ -1,20 +1,28 @@
 package models
 
 import (
+	"mokapi/config/dynamic"
 	"mokapi/providers/parser"
 
 	log "github.com/sirupsen/logrus"
 )
 
 type Application struct {
-	Services map[string]*ServiceInfo
-	Metrics  *Metrics
+	WebServices  map[string]*WebServiceInfo
+	LdapServices map[string]*LdapServiceInfo
+	Metrics      *Metrics
 }
 
-type ServiceInfo struct {
-	Service *Service
-	Status  string
-	Errors  []string
+type WebServiceInfo struct {
+	Data   *WebService
+	Status string
+	Errors []string
+}
+
+type LdapServiceInfo struct {
+	Data   *LdapServer
+	Status string
+	Errors []string
 }
 
 type Filter struct {
@@ -23,21 +31,29 @@ type Filter struct {
 	Error string
 }
 
-func (a Application) AddOrUpdateService(s *Service, errors []string) {
-	if si, ok := a.Services[s.Name]; ok {
-		si.Service = s
-		si.Errors = errors
-	} else {
-		a.Services[s.Name] = NewServiceInfo(s, errors)
-	}
+func (a Application) Apply(config *dynamic.Configuration) {
+	a.ApplyWebService(config.OpenApi)
+	a.ApplyLdap(config.Ldap)
 }
 
 func NewApplication() *Application {
-	return &Application{Services: make(map[string]*ServiceInfo), Metrics: NewMetrics()}
+	return &Application{
+		WebServices:  make(map[string]*WebServiceInfo),
+		LdapServices: make(map[string]*LdapServiceInfo),
+		Metrics:      NewMetrics(),
+	}
 }
 
-func NewServiceInfo(s *Service, errors []string) *ServiceInfo {
-	return &ServiceInfo{Service: s, Errors: errors}
+func NewServiceInfo() *WebServiceInfo {
+	webService := &WebService{Servers: make([]Server, 0), Endpoint: make(map[string]*Endpoint)}
+
+	return &WebServiceInfo{Data: webService, Errors: make([]string, 0)}
+}
+
+func NewLdapServiceInfo() *LdapServiceInfo {
+	ldapServer := &LdapServer{Root: &Entry{Attributes: make(map[string][]string)}}
+
+	return &LdapServiceInfo{Data: ldapServer, Errors: make([]string, 0)}
 }
 
 func NewFilter(s string) *Filter {

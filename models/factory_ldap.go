@@ -7,17 +7,30 @@ import (
 	"strings"
 )
 
-func CreateLdap(config *dynamic.Ldap, file string) (*LdapServer, error) {
-	server := &LdapServer{Root: &Entry{Attributes: make(map[string][]string)}}
+func (a *Application) ApplyLdap(config map[string]*dynamic.Ldap) {
+	for key, item := range config {
+		if len(item.Info.Name) > 0 {
+			key = item.Info.Name
+		}
+		ldapServiceInfo, found := a.LdapServices[key]
+		if !found {
+			ldapServiceInfo = NewLdapServiceInfo()
+		}
+		ldapServiceInfo.Apply(item, key)
+	}
+}
+
+func (l *LdapServiceInfo) Apply(config *dynamic.Ldap, file string) {
+	l.Data.Name = config.Info.Name
 
 	for k, v := range config.Server {
-		if strings.ToLower(k) == "listen" {
+		if strings.ToLower(k) == "address" {
 			if s, ok := v.(string); ok {
-				server.Listen = s
+				l.Data.Address = s
 			}
 		} else {
 			if s, ok := v.(string); ok {
-				server.Root.Attributes[k] = []string{s}
+				l.Data.Root.Attributes[k] = []string{s}
 			} else if a, ok := v.([]interface{}); ok {
 				list := make([]string, 0)
 				for _, e := range a {
@@ -25,14 +38,14 @@ func CreateLdap(config *dynamic.Ldap, file string) (*LdapServer, error) {
 						list = append(list, s)
 					}
 				}
-				server.Root.Attributes[k] = list
+				l.Data.Root.Attributes[k] = list
 			}
 		}
 	}
 
 	for _, e := range config.Entries {
 		entry := &Entry{Attributes: make(map[string][]string)}
-		server.Entries = append(server.Entries, entry)
+		l.Data.Entries = append(l.Data.Entries, entry)
 		for k, v := range e {
 			if s, ok := v.(string); ok {
 				if strings.ToLower(k) == "dn" {
@@ -68,14 +81,13 @@ func CreateLdap(config *dynamic.Ldap, file string) (*LdapServer, error) {
 						}
 						data, error := ioutil.ReadFile(path)
 						if error != nil {
-							return nil, error
+							l.Errors = append(l.Errors, error.Error())
+						} else {
+							entry.Attributes[k] = []string{string(data)}
 						}
-						entry.Attributes[k] = []string{string(data)}
 					}
 				}
 			}
 		}
 	}
-
-	return server, nil
 }

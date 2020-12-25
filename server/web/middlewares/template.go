@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"mokapi/models"
+	"mokapi/server/web"
 	"reflect"
 	"regexp"
 	"strings"
@@ -21,7 +22,7 @@ func NewTemplate(config *models.Template, next Middleware) Middleware {
 	return m
 }
 
-func (m *template) ServeData(data *Data, context *Context) {
+func (m *template) ServeData(request *Request, context *web.HttpContext) {
 	content, error := ioutil.ReadFile(m.config.Filename)
 	if error != nil {
 		log.WithFields(log.Fields{"Error": error, "Filename": m.config.Filename}).Error("error reading file")
@@ -35,7 +36,7 @@ func (m *template) ServeData(data *Data, context *Context) {
 
 	for _, match := range matches {
 		path := strings.TrimSpace(match[1])
-		value, error := getValue(path, data.Content)
+		value, error := getValue(path, request.Data)
 		if error != nil {
 			log.Errorf("Error in template middleware: %v", error.Error())
 			value = error.Error()
@@ -44,9 +45,9 @@ func (m *template) ServeData(data *Data, context *Context) {
 		template = strings.ReplaceAll(template, match[0], value)
 	}
 
-	data.Content = template
+	request.Data = template
 
-	m.next.ServeData(data, context)
+	m.next.ServeData(request, context)
 }
 
 func getValue(path string, element interface{}) (string, error) {

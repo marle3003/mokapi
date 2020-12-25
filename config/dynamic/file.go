@@ -72,7 +72,7 @@ func (p *FileProvider) loadServiceFromFile(filename string, channel chan<- Confi
 		return
 	}
 
-	config := NewConfiguration()
+	config := NewConfigurationItem()
 	error := loadFileConfig(filename, config)
 	if error != nil {
 		log.WithFields(log.Fields{"file": filename, "error": error}).Error("Error loading configuration")

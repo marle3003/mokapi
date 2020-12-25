@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"mokapi/models"
+	"mokapi/server/web"
 )
 
 type selection struct {
@@ -14,13 +15,13 @@ func NewSelection(config *models.Selection, next Middleware) Middleware {
 	return m
 }
 
-func (m *selection) ServeData(data *Data, context *Context) {
-	if a, ok := data.Content.([]interface{}); ok {
+func (m *selection) ServeData(request *Request, context *web.HttpContext) {
+	if a, ok := request.Data.([]interface{}); ok {
 		if m.config.First {
 			if len(a) > 0 {
-				data.Content = a[0]
+				request.Data = a[0]
 			} else {
-				data.Content = nil
+				request.Data = nil
 			}
 		} else if m.config.Slice != nil {
 			low, high := m.config.Slice.Low, m.config.Slice.High
@@ -30,9 +31,9 @@ func (m *selection) ServeData(data *Data, context *Context) {
 			if high > len(a) {
 				high = len(a)
 			}
-			data.Content = a[low:high]
+			request.Data = a[low:high]
 		}
 	}
 
-	m.next.ServeData(data, context)
+	m.next.ServeData(request, context)
 }

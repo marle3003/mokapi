@@ -1,6 +1,8 @@
 ldap: 1.0.0
+info:
+  title: Sample LDAP
 server: 
-    listen: "0.0.0.0:389"
+    address: "0.0.0.0:389"
     rootDomainNamingContext: dc=postweb,dc=ch
     subSchemaSubentry: cn=schema,dc=postweb,dc=ch
     namingContexts:

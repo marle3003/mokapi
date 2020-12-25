@@ -89,6 +89,10 @@ module.exports = {
             breaks: true
           }).use(markdownItPrism)
         }
+      },
+      {
+        test: /\.ya?ml$/,
+        loader: 'json-loader!yaml-loader'
       }
     ]
   },

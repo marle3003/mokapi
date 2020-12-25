@@ -1,0 +1,21 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  default:
+    deps: [bindata-vueapp]
+    cmds:
+      - go build ./cmd/mokapi
+    silent: true
+  bindata-vueapp:
+    deps: [build-vue-app]
+    cmds:
+      - go-bindata -pkg http -o server/http/dashboard.go -prefix webui/dist/ webui/dist/...
+  build-vue-app:
+    dir: webui
+    cmds:
+      - npm run clean
+      - npm run copy-docs
+      - npm run build
+

@@ -27,7 +27,7 @@ func NewServer(config *models.LdapServer) *Server {
 
 func (s *Server) UpdateConfig(config *models.LdapServer) {
 	shouldRestart := false
-	if s.listen != "" && s.listen != config.Listen {
+	if s.listen != "" && s.listen != config.Address {
 		s.stop <- true
 		shouldRestart = true
 	}
@@ -36,7 +36,7 @@ func (s *Server) UpdateConfig(config *models.LdapServer) {
 	s.root.Attributes["supportedLDAPVersion"] = []string{"3"}
 
 	s.entries = config.Entries
-	s.listen = config.Listen
+	s.listen = config.Address
 
 	if s.isRunning {
 		log.Infof("Updated configuration of ldap server: %v", s.listen)

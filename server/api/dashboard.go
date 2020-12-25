@@ -32,8 +32,8 @@ func newDashboard(app *models.Application) dashboard {
 	dashboard.TotalRequests = app.Metrics.TotalRequests
 	dashboard.RequestsWithError = app.Metrics.RequestsWithError
 
-	dashboard.ServiceStatus.Total = len(app.Services)
-	for _, s := range app.Services {
+	dashboard.ServiceStatus.Total = len(app.WebServices)
+	for _, s := range app.WebServices {
 		if len(s.Errors) > 0 {
 			dashboard.ServiceStatus.Errors++
 		}

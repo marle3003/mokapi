@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"mokapi/models"
 	"mokapi/providers/parser"
+	"mokapi/server/web"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -18,14 +19,14 @@ func NewFilterContent(config *models.FilterContent, next Middleware) Middleware 
 	return m
 }
 
-func (m *filterContent) ServeData(data *Data, context *Context) {
-	if list, ok := data.Content.([]interface{}); ok {
+func (m *filterContent) ServeData(request *Request, context *web.HttpContext) {
+	if list, ok := request.Data.([]interface{}); ok {
 		result := make([]interface{}, 0)
 		for _, d := range list {
 			match, error := m.filter.IsTrue(func(factor string, tag parser.ExpressionTag) string {
 				switch tag {
 				case parser.Body:
-					s, error := context.Body.Select(factor)
+					s, error := context.SelectFromBody(factor)
 					if error != nil {
 						log.Error(error.Error())
 						return ""
@@ -34,7 +35,7 @@ func (m *filterContent) ServeData(data *Data, context *Context) {
 				case parser.Parameter:
 					return context.Parameters[factor]
 				case parser.Property:
-					if data != nil {
+					if request.Data != nil {
 						o := d.(map[string]interface{})
 						if v, ok := o[factor]; ok {
 							return fmt.Sprint(v)
@@ -53,12 +54,12 @@ func (m *filterContent) ServeData(data *Data, context *Context) {
 			}
 		}
 		if len(result) == 0 {
-			data.Content = nil
+			request.Data = nil
 		}
-		data.Content = result
+		request.Data = result
 	}
 
 	if m.next != nil {
-		m.next.ServeData(data, context)
+		m.next.ServeData(request, context)
 	}
 }

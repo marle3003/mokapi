@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"mokapi/config/dynamic"
+	"mokapi/providers/data"
 	"net/url"
 	"path/filepath"
 	"strconv"
@@ -18,73 +19,85 @@ type ServiceContext struct {
 	Errors  []string
 }
 
-func CreateService(config *dynamic.OpenApi) (*Service, []string) {
-	service := &Service{Servers: make([]Server, 0), Endpoint: make(map[string]*Endpoint)}
+func (a *Application) ApplyWebService(config map[string]*dynamic.OpenApi) {
+	for filePath, item := range config {
+		key := filePath
+		if len(item.Info.Name) > 0 {
+			key = item.Info.Name
+		}
+		webServiceInfo, found := a.WebServices[key]
+		if !found {
+			webServiceInfo = NewServiceInfo()
+			a.WebServices[key] = webServiceInfo
+		}
+		webServiceInfo.Apply(item, filePath)
+	}
+}
+
+func (w *WebServiceInfo) Apply(config *dynamic.OpenApi, filePath string) {
 
 	serverUrls := make(map[string]bool)
-	context := &ServiceContext{schemas: getSchemas(config), Errors: make([]string, 0)}
+	context := &ServiceContext{schemas: getSchemas(config), Errors: make([]string, 0), path: filePath}
 
-	for filePath, part := range config.Parts {
-		if len(service.Name) == 0 {
-			service.Name = part.Info.Name
-		}
-		if part.Info.Description != "" {
-			service.Description = part.Info.Description
-		}
-		if part.Info.Version != "" {
-			service.Version = part.Info.Version
-		}
-
-		context.path = filePath
-
-		for _, v := range part.Servers {
-			if _, found := serverUrls[v.Url]; !found {
-				serverUrls[v.Url] = true
-				server, error := createServers(v)
-				if error != nil {
-					log.Error(error.Error())
-					context.Errors = append(context.Errors, error.Error())
-					continue
-				}
-				service.Servers = append(service.Servers, server)
-			}
-
-		}
-
-		for path, v := range part.EndPoints {
-			var endpoint *Endpoint
-			if e, ok := service.Endpoint[path]; ok {
-				endpoint = e
-			} else {
-				endpoint = &Endpoint{Path: path}
-				service.Endpoint[path] = endpoint
-			}
-			endpoint.update(v, context)
-
-		}
-
-		dataProviders := part.Info.DataProviders
-
-		if dataProviders != nil {
-			if dataProviders.File != nil {
-				provider := &FileDataProvider{}
-				if len(dataProviders.File.Filename) > 0 {
-					provider.Path = dataProviders.File.Filename
-				} else {
-					provider.Path = dataProviders.File.Directory
-				}
-
-				if strings.HasPrefix(provider.Path, "./") {
-					dir := filepath.Dir(context.path)
-					provider.Path = strings.Replace(provider.Path, ".", dir, 1)
-				}
-
-				service.DataProviders.File = provider
-			}
-		}
+	if len(w.Data.Name) == 0 {
+		w.Data.Name = config.Info.Name
+	}
+	if config.Info.Description != "" {
+		w.Data.Description = config.Info.Description
+	}
+	if config.Info.Version != "" {
+		w.Data.Version = config.Info.Version
 	}
 
-	return service, context.Errors
+	for _, v := range config.Servers {
+		if _, found := serverUrls[v.Url]; !found {
+			serverUrls[v.Url] = true
+			server, error := createServers(v)
+			if error != nil {
+				log.Error(error.Error())
+				context.Errors = append(context.Errors, error.Error())
+				continue
+			}
+			w.Data.Servers = append(w.Data.Servers, server)
+		}
+
+	}
+
+	for path, v := range config.EndPoints {
+		var endpoint *Endpoint
+		if e, ok := w.Data.Endpoint[path]; ok {
+			endpoint = e
+		} else {
+			endpoint = &Endpoint{Path: path}
+			w.Data.Endpoint[path] = endpoint
+		}
+		endpoint.update(v, context)
+
+	}
+
+	dataProviders := config.Info.DataProviders
+
+	if dataProviders != nil {
+		if dataProviders.File != nil {
+			path := ""
+			if len(dataProviders.File.Filename) > 0 {
+				path = dataProviders.File.Filename
+			} else {
+				path = dataProviders.File.Directory
+			}
+
+			if strings.HasPrefix(path, "./") {
+				dir := filepath.Dir(context.path)
+				path = strings.Replace(path, ".", dir, 1)
+			}
+
+			w.Data.DataProvider = data.NewStaticDataProvider(path, true)
+		}
+	} else if w.Data.DataProvider == nil {
+		w.Data.DataProvider = data.NewRandomDataProvider()
+	}
+
+	w.Errors = append(w.Errors, context.Errors...)
 }
 
 func (e *Endpoint) update(config *dynamic.Endpoint, context *ServiceContext) {
@@ -154,7 +167,7 @@ func createOperation(config *dynamic.Operation, context *ServiceContext) *Operat
 				if c != nil && c.Schema != nil {
 					responseContent.Schema = createSchema(c.Schema, context)
 				}
-				contentType := NewContentType(t)
+				contentType := ParseContentType(t)
 				response.ContentTypes[contentType.Key()] = responseContent
 			}
 		}
@@ -193,7 +206,7 @@ func createOperation(config *dynamic.Operation, context *ServiceContext) *Operat
 	return o
 }
 
-func createSchema(config *dynamic.Schema, context *ServiceContext) *Schema {
+func createSchema(config *dynamic.Schema, context *ServiceContext) *data.Schema {
 	if config == nil {
 		return nil
 	}
@@ -203,7 +216,7 @@ func createSchema(config *dynamic.Schema, context *ServiceContext) *Schema {
 	}
 
 	// todo resolving schema: $ref
-	schema := &Schema{
+	schema := &data.Schema{
 		Description:          config.Description,
 		Faker:                config.Faker,
 		Format:               config.Format,
@@ -213,7 +226,7 @@ func createSchema(config *dynamic.Schema, context *ServiceContext) *Schema {
 	}
 
 	if config.Xml != nil {
-		schema.Xml = &XmlEncoding{
+		schema.Xml = &data.XmlEncoding{
 			Attribute: config.Xml.Attribute,
 			CData:     config.Xml.CData,
 			Name:      config.Xml.Name,
@@ -238,7 +251,7 @@ func createSchema(config *dynamic.Schema, context *ServiceContext) *Schema {
 
 	for i, p := range config.Properties {
 		if schema.Properties == nil {
-			schema.Properties = make(map[string]*Schema)
+			schema.Properties = make(map[string]*data.Schema)
 		}
 		schema.Properties[i] = createSchema(p, context)
 	}
@@ -248,10 +261,8 @@ func createSchema(config *dynamic.Schema, context *ServiceContext) *Schema {
 
 func getSchemas(config *dynamic.OpenApi) map[string]*dynamic.Schema {
 	schemas := make(map[string]*dynamic.Schema)
-	for _, part := range config.Parts {
-		for k, v := range part.Components.Schemas {
-			schemas[k] = v
-		}
+	for k, v := range config.Components.Schemas {
+		schemas[k] = v
 	}
 	return schemas
 }

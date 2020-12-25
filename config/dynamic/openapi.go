@@ -8,10 +8,6 @@ import (
 )
 
 type OpenApi struct {
-	Parts map[string]*OpenApiPart
-}
-
-type OpenApiPart struct {
 	Info       Info
 	Servers    []*Server
 	EndPoints  map[string]*Endpoint `yaml:"paths"`

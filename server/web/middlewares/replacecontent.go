@@ -3,6 +3,7 @@ package middlewares
 import (
 	"fmt"
 	"mokapi/models"
+	"mokapi/server/web"
 	"regexp"
 	"strings"
 
@@ -19,8 +20,8 @@ func NewReplaceContent(config *models.ReplaceContent, next Middleware) Middlewar
 	return m
 }
 
-func (m *replaceContent) ServeData(data *Data, context *Context) {
-	dataString, ok := data.Content.(string)
+func (m *replaceContent) ServeData(request *Request, context *web.HttpContext) {
+	dataString, ok := request.Data.(string)
 	if !ok {
 		log.Errorf("Middleware replaceContent does only support string data")
 		return
@@ -34,7 +35,7 @@ func (m *replaceContent) ServeData(data *Data, context *Context) {
 	replacement := ""
 	switch strings.ToLower(m.config.Replacement.From) {
 	case "requestbody":
-		s, error := context.Body.Select(m.config.Replacement.Selector)
+		s, error := context.SelectFromBody(m.config.Replacement.Selector)
 		if error != nil {
 			log.Errorf("Error in selecting replacement: %v", error.Error())
 			return
@@ -42,8 +43,8 @@ func (m *replaceContent) ServeData(data *Data, context *Context) {
 		replacement = s
 	}
 
-	data.Content = r.ReplaceAllString(dataString, replacement)
-	fmt.Print(data.Content)
+	request.Data = r.ReplaceAllString(dataString, replacement)
+	fmt.Print(request.Data)
 
-	m.next.ServeData(data, context)
+	m.next.ServeData(request, context)
 }

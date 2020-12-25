@@ -2,46 +2,31 @@ package server
 
 import (
 	"mokapi/config/dynamic"
-	"mokapi/models"
-
-	log "github.com/sirupsen/logrus"
 )
-
-type RootConfig struct {
-	openApis map[string]*dynamic.OpenApi
-}
 
 type ConfigWatcher struct {
 	provider      dynamic.Provider
-	configuration *RootConfig
+	configuration *dynamic.Configuration
 
 	channel     chan dynamic.ConfigMessage
 	stopChannel chan bool
 
-	listeners     []func(service *models.Service, errors []string)
-	ldapListeners []func(key string, config *models.LdapServer)
+	listeners []func(config *dynamic.Configuration)
 }
 
 func NewConfigWatcher(provider dynamic.Provider) *ConfigWatcher {
 	return &ConfigWatcher{
 		provider:      provider,
 		channel:       make(chan dynamic.ConfigMessage, 100),
-		configuration: &RootConfig{openApis: make(map[string]*dynamic.OpenApi)},
+		configuration: dynamic.NewConfiguration(),
 		stopChannel:   make(chan bool)}
 }
 
-func (w *ConfigWatcher) AddListener(listener func(service *models.Service, errors []string)) {
+func (w *ConfigWatcher) AddListener(listener func(config *dynamic.Configuration)) {
 	if w.listeners == nil {
-		w.listeners = make([]func(*models.Service, []string), 0)
+		w.listeners = make([]func(*dynamic.Configuration), 0)
 	}
 	w.listeners = append(w.listeners, listener)
-}
-
-func (w *ConfigWatcher) AddLdapListener(listener func(key string, config *models.LdapServer)) {
-	if w.ldapListeners == nil {
-		w.ldapListeners = make([]func(string, *models.LdapServer), 0)
-	}
-	w.ldapListeners = append(w.ldapListeners, listener)
 }
 
 func (w *ConfigWatcher) Stop() {
@@ -63,63 +48,25 @@ func (w *ConfigWatcher) Start() {
 			case <-w.stopChannel:
 				return
 			case configMessage, ok := <-w.channel:
-				if !ok {
+				if !ok || isEmpty(configMessage.Config) {
 					break
 				}
 
-				log.Infof("Processing configuration %v", configMessage.Key)
-
 				if configMessage.Config.OpenApi != nil {
-					part := configMessage.Config.OpenApi
-					if part == nil || isEmpty(part) {
-						break
-					}
-
-					if part.Info.Name == "" {
-						part.Info.Name = configMessage.Key
-					}
-
-					var config *dynamic.OpenApi
-					if s, ok := w.configuration.openApis[part.Info.Name]; ok {
-						config = s
-
-					} else {
-						config = &dynamic.OpenApi{Parts: make(map[string]*dynamic.OpenApiPart)}
-						w.configuration.openApis[part.Info.Name] = config
-					}
-
-					config.Parts[configMessage.Key] = part
-
-					service, errors := models.CreateService(config)
-
-					for _, listener := range w.listeners {
-						listener(service, errors)
-					}
+					w.configuration.OpenApi[configMessage.Key] = configMessage.Config.OpenApi
+				}
+				if configMessage.Config.Ldap != nil {
+					w.configuration.Ldap[configMessage.Key] = configMessage.Config.Ldap
 				}
 
-				if configMessage.Config.Ldap != nil {
-					server, error := models.CreateLdap(configMessage.Config.Ldap, configMessage.Key)
-					if error != nil {
-						log.Error(error.Error())
-						break
-					}
-					for _, listener := range w.ldapListeners {
-						listener(configMessage.Key, server)
-					}
+				for _, listener := range w.listeners {
+					listener(w.configuration)
 				}
 			}
 		}
 	}()
 }
 
-func isEmpty(service *dynamic.OpenApiPart) bool {
-	if service == nil {
-		return true
-	}
-
-	if service.Info.Name == "" {
-		return true
-	}
-
-	return false
+func isEmpty(config *dynamic.ConfigurationItem) bool {
+	return config.OpenApi == nil && config.Ldap == nil
 }

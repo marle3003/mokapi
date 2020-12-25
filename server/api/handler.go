@@ -29,14 +29,14 @@ func (h Handler) CreateRoutes(router *mux.Router) {
 	router.Methods(http.MethodGet).Path("/api/dashboard").HandlerFunc(h.getDashboard)
 }
 
-func newServiceSummary(s *models.ServiceInfo) serviceSummary {
-	return serviceSummary{Name: s.Service.Name, Description: s.Service.Description, Version: s.Service.Version}
+func newServiceSummary(s *models.WebServiceInfo) serviceSummary {
+	return serviceSummary{Name: s.Data.Name, Description: s.Data.Description, Version: s.Data.Version}
 }
 
 func (h Handler) getServices(rw http.ResponseWriter, request *http.Request) {
 	services := make([]serviceSummary, 0)
 
-	for _, s := range h.application.Services {
+	for _, s := range h.application.WebServices {
 		services = append(services, newServiceSummary(s))
 	}
 

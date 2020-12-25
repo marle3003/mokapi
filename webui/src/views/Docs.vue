@@ -5,27 +5,26 @@
         <b-row>
           <b-col cols="2">
             <b-list-group>
-              <b-list-group-item class="menu-item title">Mokapi</b-list-group-item>
-              <div v-for="(item, index) in navigation" :key="item.text">
+              <b-list-group-item class="menu-item title border-0">Mokapi</b-list-group-item>
+              <div v-for="item in navigation" :key="item.label">
                 <b-list-group-item 
-                  :href="item.href"
+                  :to="item.url != undefined ? { path: item.url} : null"
                   class="menu-item"
-
-                  v-b-toggle="item.text.toLowerCase()">
-                  {{item.text}}
+                  v-b-toggle="item.label.toLowerCase()">
+                  {{item.label}}
                   </b-list-group-item>
-                <b-collapse style="padding:0.4rem" :id="item.text.toLowerCase()" v-model="topicState[getNavigationIndex(index)]">
-                <b-list-group-item
-                  v-for="child in item.children"
-                  :to="{ path: child.href}"
-                  class="menu-item"
-                  :key="child.text">{{child.text}}</b-list-group-item>
+                <b-collapse v-if="item.children != undefined" style="padding:0.4rem" :id="item.label.toLowerCase()" v-model="item.isOpen">
+                  <b-list-group-item
+                    v-for="child in item.children"
+                    :to="{ path: child.url}"
+                    class="menu-item"
+                    :key="child.label">{{child.label}}</b-list-group-item>
                 </b-collapse>
               </div>
             </b-list-group>
           </b-col>
           <b-col>
-            <component v-if="current != null" v-bind:is="current.obj.vue.component" class="content"></component>
+            <component v-if="doc != null" v-bind:is="doc.obj.vue.component" class="content"></component>
           </b-col>
         </b-row>
       </b-card>
@@ -36,16 +35,15 @@
 <script>
   import prism from '@/assets/prism.js'
   import styles from '@/assets/prism.css'
+  import config from '@/assets/docs/config.yml'
 
   export default {
 
     data () {
       return {
         files: [],
-        navigation: {},
-        current: null,
-        topicState: [],
-        active: ""
+        navigation: [],
+        doc: null
       }
     },
     watch: {
@@ -55,62 +53,60 @@
     },
     mounted() {
       this.importAll(require.context('@/assets/docs/', true, /\.md$/));
+      this.navigation = this.parseNavigation(config.nav)
       this.init();
     },
     methods: {
-      isActive(url){
-        this.$route.fullPath == url;
-      },
-      getNavigationIndex(key){
-        let index = 0;
-        for(var navItem in this.navigation){
-          if (navItem == key){
-            return index;
+      parseNavigation(list) {
+        var nav = []
+        for (var index in list){
+          var item = list[index]
+          var properties = Object.keys(item);
+          var value = item[properties[0]]
+          var navItem = {label: properties[0], isOpen: false}
+          if (Array.isArray(value)){
+            navItem["children"] = this.parseNavigation(value)
+          }else{
+            navItem["path"] = value
+            navItem["url"] = "/docs/"+value.substring(0, value.length-3);
           }
-          index++
+          nav.push(navItem)
         }
-        return -1;
+        return nav;
+      },
+      setOpen(path) {
+        var navItem = this.navigation.find(x => x.children != undefined && this.hasChild(path, x.children))
+        if (navItem != undefined) {
+          navItem.isOpen = true
+        }
+      },
+      hasChild(path, list) {
+        var navItem = list.find(x => x.path == path)
+        return navItem != undefined
       },
       init() {
-        this.resetTopicState();
+        this.resetNavigation();
 
-        let topic = this.$route.params.topic;
+        let path = this.$route.params.topic;
         let subject = this.$route.params.subject;
-        let navigation = topic;
         if (subject != undefined){
-          navigation += '/' + subject;
+          path += '/' + subject;
         }
-        this.active = navigation;
-        this.current = this.files.find(x => x.navigation.toLowerCase() == navigation.toLowerCase());
-         
-        let index = Object.values(this.navigation).map(function(x) { return x.text; }).indexOf(topic);
-        this.topicState[index] = true;
+        path = path.toLowerCase() + ".md"
+
+        this.doc = this.files.find(x => x.path.toLowerCase() == path);
+        this.setOpen(path)
       },
-      resetTopicState(){
-        this.topicState.fill(false);
+      resetNavigation(){
+        for (var index in this.navigation){
+          this.navigation[index].isOpen = false
+        }
       },
       importAll(r) {
         r.keys().forEach(key => {
           let v = r(key)
-          if (v.attributes.navigation != undefined) {
-            let navigation = v.attributes.navigation;
-
-            let pieces = navigation.split('/');
-            let navi = this.navigation;
-            pieces.forEach((value, index, array) => {
-              if (navi[value] == undefined){
-                navi[value] = {text: value, children:{}}
-                if (index == array.length -1){
-                  navi[value]["href"] = "/docs/" + navigation
-                }else{
-                  this.topicState.push(false);
-                }
-              }
-              navi = navi[value].children
-            })
-
-            this.files.push({navigation: navigation, obj: v});
-          }
+          // key ./index.md
+          this.files.push({path: key.substring(2), obj: v});
         });
       }
     }
@@ -118,21 +114,24 @@
 </script>
 
 <style scoped>
-.doc{
-    width: 90%;
-    margin: auto;
-    margin-top: 42px;
+.doc {
+  width: 90%;
+  margin: auto;
+  margin-top: 42px;
 }
- .card{
-    margin: 15px;
-  }
-.card p{
-    margin-bottom: 0;
+.card {
+  margin: 15px;
 }
-.menu-item{
-border: 0;
-padding: 0.2rem;
-
+.card p {
+  margin-bottom: 0;
+}
+.menu-item {
+  border: 0;
+  padding: 0.2rem;
+}
+.menu-item:focus {
+  outline: none;
+  box-shadow: none;
 }
 .menu-item.title {
   font-weight: 500;

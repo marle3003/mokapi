@@ -2,28 +2,23 @@ package models
 
 import (
 	"fmt"
+	"mokapi/providers/data"
 	"strconv"
 	"strings"
 )
 
-type ServiceList []*Service
-
-type Service struct {
-	Name          string
-	Description   string
-	Version       string
-	Servers       []Server
-	Endpoint      map[string]*Endpoint
-	DataProviders DataProviders
-	Models        []*Schema
+type WebService struct {
+	Name         string
+	Description  string
+	Version      string
+	Servers      []Server
+	Endpoint     map[string]*Endpoint
+	DataProvider data.Provider
+	Models       []*data.Schema
 }
 
-type DataProviders struct {
-	File *FileDataProvider
-}
-
-type FileDataProvider struct {
-	Path string
+func (w *WebService) Key() string {
+	return w.Name
 }
 
 type Server struct {
@@ -127,7 +122,7 @@ func isValidHttpStatus(status HttpStatus) bool {
 type Parameter struct {
 	Name        string
 	Type        ParameterType
-	Schema      *Schema
+	Schema      *data.Schema
 	Required    bool
 	Description string
 }
@@ -156,18 +151,6 @@ func (p ParameterType) String() string {
 	}
 }
 
-type Schema struct {
-	Type                 string
-	Format               string
-	Description          string
-	Properties           map[string]*Schema
-	Faker                string
-	Items                *Schema
-	Xml                  *XmlEncoding
-	AdditionalProperties string
-	Reference            string
-}
-
 type Resource struct {
 	If   *Filter
 	Name string
@@ -179,16 +162,7 @@ type Response struct {
 }
 
 type ResponseContent struct {
-	Schema *Schema
-}
-
-type XmlEncoding struct {
-	Wrapped   bool
-	Name      string
-	Attribute bool
-	Prefix    string
-	Namespace string
-	CData     bool
+	Schema *data.Schema
 }
 
 type ContentType struct {
@@ -198,7 +172,7 @@ type ContentType struct {
 	raw        string
 }
 
-func NewContentType(s string) *ContentType {
+func ParseContentType(s string) *ContentType {
 	c := &ContentType{raw: s, Parameters: make(map[string]string)}
 	a := strings.Split(s, ";")
 	m := strings.Split(a[0], "/")

@@ -79,14 +79,14 @@ type middleware struct {
 	Error  string            `json:"error,omitempty"`
 }
 
-func newService(s *models.ServiceInfo) service {
-	service := service{Name: s.Service.Name, Description: s.Service.Description, Version: s.Service.Version, BaseUrls: make([]baseUrl, 0)}
+func newService(s *models.WebServiceInfo) service {
+	service := service{Name: s.Data.Name, Description: s.Data.Description, Version: s.Data.Version, BaseUrls: make([]baseUrl, 0)}
 
-	for _, server := range s.Service.Servers {
+	for _, server := range s.Data.Servers {
 		service.BaseUrls = append(service.BaseUrls, newBaseUrl(server))
 	}
 
-	for _, e := range s.Service.Endpoint {
+	for _, e := range s.Data.Endpoint {
 		service.Endpoints = append(service.Endpoints, newEndpoint(e))
 	}
 
@@ -192,7 +192,7 @@ func (h Handler) getService(rw http.ResponseWriter, request *http.Request) {
 
 	rw.Header().Set("Access-Control-Allow-Origin", "*")
 
-	if s, ok := h.application.Services[vars["name"]]; ok {
+	if s, ok := h.application.WebServices[vars["name"]]; ok {
 		service := newService(s)
 
 		rw.Header().Set("Content-Type", "application/json")
