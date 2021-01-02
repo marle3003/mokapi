@@ -7,7 +7,7 @@
             <b-list-group>
               <b-list-group-item class="menu-item title border-0">Mokapi</b-list-group-item>
               <div v-for="item in navigation" :key="item.label">
-                <b-list-group-item 
+                <b-list-group-item
                   :to="item.url != undefined ? { path: item.url} : null"
                   class="menu-item"
                   v-b-toggle="item.label.toLowerCase()">
@@ -33,84 +33,82 @@
 </template>
 
 <script>
-  import prism from '@/assets/prism.js'
-  import styles from '@/assets/prism.css'
-  import config from '@/assets/docs/config.yml'
+import config from '@/assets/docs/config.yml'
 
-  export default {
+export default {
 
-    data () {
-      return {
-        files: [],
-        navigation: [],
-        doc: null
+  data () {
+    return {
+      files: [],
+      navigation: [],
+      doc: null
+    }
+  },
+  watch: {
+    $route (to, from) {
+      this.init()
+    }
+  },
+  mounted () {
+    this.importAll(require.context('@/assets/docs/', true, /\.md$/))
+    this.navigation = this.parseNavigation(config.nav)
+    this.init()
+  },
+  methods: {
+    parseNavigation (list) {
+      var nav = []
+      for (var index in list) {
+        var item = list[index]
+        var properties = Object.keys(item)
+        var value = item[properties[0]]
+        var navItem = {label: properties[0], isOpen: false}
+        if (Array.isArray(value)) {
+          navItem['children'] = this.parseNavigation(value)
+        } else {
+          navItem['path'] = value
+          navItem['url'] = '/docs/' + value.substring(0, value.length - 3)
+        }
+        nav.push(navItem)
+      }
+      return nav
+    },
+    setOpen (path) {
+      var navItem = this.navigation.find(x => x.children !== undefined && this.hasChild(path, x.children))
+      if (navItem !== undefined) {
+        navItem.isOpen = true
       }
     },
-    watch: {
-      $route(to, from) {
-        this.init();
+    hasChild (path, list) {
+      var navItem = list.find(x => x.path === path)
+      return navItem !== undefined
+    },
+    init () {
+      this.resetNavigation()
+
+      let path = this.$route.params.topic
+      let subject = this.$route.params.subject
+      if (subject !== undefined) {
+        path += '/' + subject
+      }
+      path = path.toLowerCase() + '.md'
+
+      this.doc = this.files.find(x => x.path.toLowerCase() === path)
+      this.setOpen(path)
+    },
+    resetNavigation () {
+      for (var index in this.navigation) {
+        this.navigation[index].isOpen = false
       }
     },
-    mounted() {
-      this.importAll(require.context('@/assets/docs/', true, /\.md$/));
-      this.navigation = this.parseNavigation(config.nav)
-      this.init();
-    },
-    methods: {
-      parseNavigation(list) {
-        var nav = []
-        for (var index in list){
-          var item = list[index]
-          var properties = Object.keys(item);
-          var value = item[properties[0]]
-          var navItem = {label: properties[0], isOpen: false}
-          if (Array.isArray(value)){
-            navItem["children"] = this.parseNavigation(value)
-          }else{
-            navItem["path"] = value
-            navItem["url"] = "/docs/"+value.substring(0, value.length-3);
-          }
-          nav.push(navItem)
-        }
-        return nav;
-      },
-      setOpen(path) {
-        var navItem = this.navigation.find(x => x.children != undefined && this.hasChild(path, x.children))
-        if (navItem != undefined) {
-          navItem.isOpen = true
-        }
-      },
-      hasChild(path, list) {
-        var navItem = list.find(x => x.path == path)
-        return navItem != undefined
-      },
-      init() {
-        this.resetNavigation();
-
-        let path = this.$route.params.topic;
-        let subject = this.$route.params.subject;
-        if (subject != undefined){
-          path += '/' + subject;
-        }
-        path = path.toLowerCase() + ".md"
-
-        this.doc = this.files.find(x => x.path.toLowerCase() == path);
-        this.setOpen(path)
-      },
-      resetNavigation(){
-        for (var index in this.navigation){
-          this.navigation[index].isOpen = false
-        }
-      },
-      importAll(r) {
-        r.keys().forEach(key => {
-          let v = r(key)
-          // key ./index.md
-          this.files.push({path: key.substring(2), obj: v});
-        });
-      }
+    importAll (r) {
+      r.keys().forEach(key => {
+        let v = r(key)
+        // key ./index.md
+        this.files.push({path: key.substring(2), obj: v})
+      })
     }
   }
+}
 </script>
 
 <style scoped>

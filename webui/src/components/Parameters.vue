@@ -19,28 +19,28 @@
 
 <script>
 export default {
-    name: "parameters",
-    props: ['operation'],
-    data() {
-      return {
-        fields: [{key: 'show_details', label: ''}, 'name', 'in', 'type'],
-      }
-    },
-    computed: {
-      parameters: function () {
-        if (this.operation == null){
-          return [];
-        }
-
-        let result = [];
-
-        this.operation.parameters.forEach((parameter, index) => {
-          result.push(parameter);
-        });
-        
-        return result;
-      }
+  name: 'parameters',
+  props: ['operation'],
+  data () {
+    return {
+      fields: [{key: 'show_details', label: ''}, 'name', 'in', 'type']
     }
+  },
+  computed: {
+    parameters: function () {
+      if (this.operation === null) {
+        return []
+      }
+
+      let result = []
+
+      this.operation.parameters.forEach((parameter, index) => {
+        result.push(parameter)
+      })
+
+      return result
+    }
+  }
 }
 </script>
 

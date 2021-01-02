@@ -21,13 +21,13 @@
 
 <script>
 export default {
-    name: "topHeader",
-    components: {},
-    data() {
-      return {
-        title: process.env.VUE_APP_TITLE
-      }
+  name: 'topHeader',
+  components: {},
+  data () {
+    return {
+      title: process.env.VUE_APP_TITLE
     }
+  }
 }
 </script>
 

@@ -2,19 +2,18 @@ package models
 
 import (
 	"fmt"
-	"mokapi/providers/data"
 	"strconv"
 	"strings"
 )
 
 type WebService struct {
-	Name         string
-	Description  string
-	Version      string
-	Servers      []Server
-	Endpoint     map[string]*Endpoint
-	DataProvider data.Provider
-	Models       []*data.Schema
+	Name        string
+	Description string
+	Version     string
+	Servers     []Server
+	Endpoint    map[string]*Endpoint
+	Models      []*Schema
+	MokapiFile  string
 }
 
 func (w *WebService) Key() string {
@@ -72,8 +71,7 @@ type Operation struct {
 	OperationId string
 	Parameters  []*Parameter
 	Responses   map[HttpStatus]*Response
-	Middleware  []interface{}
-	Resources   []*Resource
+	Pipeline    *string
 }
 
 type HttpStatus int
@@ -122,7 +120,7 @@ func isValidHttpStatus(status HttpStatus) bool {
 type Parameter struct {
 	Name        string
 	Type        ParameterType
-	Schema      *data.Schema
+	Schema      *Schema
 	Required    bool
 	Description string
 }
@@ -151,18 +149,13 @@ func (p ParameterType) String() string {
 	}
 }
 
-type Resource struct {
-	If   *Filter
-	Name string
-}
-
 type Response struct {
 	Description  string
 	ContentTypes map[string]*ResponseContent
 }
 
 type ResponseContent struct {
-	Schema *data.Schema
+	Schema *Schema
 }
 
 type ContentType struct {
@@ -205,4 +198,25 @@ func (c *ContentType) String() string {
 
 func (c *ContentType) Equals(other *ContentType) bool {
 	return c.Type == other.Type && c.Subtype == other.Subtype
+}
+
+type Schema struct {
+	Type                 string
+	Format               string
+	Description          string
+	Properties           map[string]*Schema
+	Faker                string
+	Items                *Schema
+	Xml                  *XmlEncoding
+	AdditionalProperties string
+	Reference            string
+}
+
+type XmlEncoding struct {
+	Wrapped   bool
+	Name      string
+	Attribute bool
+	Prefix    string
+	Namespace string
+	CData     bool
 }

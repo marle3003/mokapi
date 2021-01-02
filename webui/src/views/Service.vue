@@ -28,38 +28,38 @@ import ServiceInfo from '@/components/ServiceInfo'
 import Api from '@/mixins/Api'
 
 export default {
-    name: 'service',
-    components: {   
-      'service-info': ServiceInfo,
-    },
-    mixins: [Api],
-    data(){
-      return {
-        service: null,
-        timer: null,
-        loaded: false
-      }
-    },
-    created() {
-      this.getData();
-      this.timer = setInterval(this.getData, 20000)
-    },
-    methods: {
-      async getData() {
-        let serviceName = this.$route.params.name
-        this.service = await this.getService(serviceName)
-        this.loaded = true
-      },
-      routerLinkToEndpoints(item, index, event){
-        this.$router.push({ name: 'endpoints' });
-      },
-      routerLinkToModels(item, index, event){
-        this.$router.push({ name: 'models' });
-      }
-    },
-    beforeDestroy () {
-      clearInterval(this.timer)
+  name: 'service',
+  components: {
+    'service-info': ServiceInfo
+  },
+  mixins: [Api],
+  data () {
+    return {
+      service: null,
+      timer: null,
+      loaded: false
     }
+  },
+  created () {
+    this.getData()
+    this.timer = setInterval(this.getData, 20000)
+  },
+  methods: {
+    async getData () {
+      let serviceName = this.$route.params.name
+      this.service = await this.getService(serviceName)
+      this.loaded = true
+    },
+    routerLinkToEndpoints (item, index, event) {
+      this.$router.push({ name: 'endpoints' })
+    },
+    routerLinkToModels (item, index, event) {
+      this.$router.push({ name: 'models' })
+    }
+  },
+  beforeDestroy () {
+    clearInterval(this.timer)
+  }
 }
 </script>
 

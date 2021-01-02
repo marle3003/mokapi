@@ -18,36 +18,37 @@
 
 <script>
 export default {
-    name: "endpoints",
-    props: ["service"],
-    components: {},
-    data() {
-      return {
-        fields: ['path', 'summary', 'operations'],
-      }
-    },
-    computed: {
-      endpoints: function () {
-        if (this.service == null){
-          return [];
-        }
-        
-        function compare(a, b) {
-          if (a.path < b.path)
-            return -1;
-          if (a.path > b.path)
-            return 1;
-          return 0;
-        }
-
-        return  this.service.endpoints.sort(compare);
-      }
-    },
-    methods:{
-      routerLinkToEndpoint(item, index, event){
-        this.$router.push({ name: 'endpoint', params: {path: item.path} });
-      }
+  name: 'endpoints',
+  props: ['service'],
+  components: {},
+  data() {
+    return {
+      fields: ['path', 'summary', 'operations'],
+      service: this.service
     }
+  },
+  computed: {
+    endpoints: function () {
+      if (this.service === null){
+        return []
+      }
+      
+      function compare(a, b) {
+        if (a.path < b.path)
+          return -1
+        if (a.path > b.path)
+          return 1
+        return 0
+      }
+
+      return this.service.endpoints.sort(compare)
+    }
+  },
+  methods: {
+    routerLinkToEndpoint (item, index, event) {
+      this.$router.push({ name: 'endpoint', params: {path: item.path} })
+    }
+  }
 }
 </script>
 

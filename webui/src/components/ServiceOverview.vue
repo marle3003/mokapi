@@ -18,11 +18,11 @@ import Operations from '@/components/Endpoints'
 import Models from '@/components/Models'
 
 export default {
-    name: 'serviceOverview',
-    props: ["service"],
-    components: {   
-      'operations': Operations,
-      'models': Models
-    }
+  name: 'serviceOverview',
+  props: ['service'],
+  components: {
+    'operations': Operations,
+    'models': Models
+  }
 }
 </script>

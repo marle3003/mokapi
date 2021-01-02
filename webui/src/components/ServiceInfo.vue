@@ -24,9 +24,9 @@
 
 <script>
 export default {
-    name: "serviceInfo",
-    props: ['service'],
-    components: {},
+  name: 'serviceInfo',
+  props: ['service'],
+  components: {}
 }
 </script>
 

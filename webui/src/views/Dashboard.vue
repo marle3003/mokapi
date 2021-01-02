@@ -9,7 +9,7 @@
         <b-card body-class="info-body">
           <b-card-title class="info">Uptime Since</b-card-title>
           <b-card-text class="text-center value">{{ dashboard.serverUptime | fromNow }}</b-card-text>
-          <b-card-text class="text-right additional">{{ dashboard.serverUptime | moment }}</b-card-text>  
+          <b-card-text class="text-right additional">{{ dashboard.serverUptime | moment }}</b-card-text>
         </b-card>
         <b-card body-class="info-body">
           <b-card-title class="info">Total Requests</b-card-title>
@@ -23,7 +23,7 @@
 
         <b-card-group deck>
           <b-card>
-            <b-card-title class="info">Services</b-card-title>        
+            <b-card-title class="info">Services</b-card-title>
             <b-card-text v-if="loaded">
               <div class="row">
               <div class="col-5 p-0">
@@ -73,50 +73,52 @@ import moment from 'moment'
 import DoughnutChart from '@/components/DoughnutChart'
 
 export default {
-    components: {
-      'doughnut-chart': DoughnutChart
-    },
-    mixins: [Api],
-    data(){
-      return {
-        dashboard: {},
-        loaded: false,
-        timer: null,
-        lastErrorsField: ['method', 'url', 'httpStatus', 'error', 'time'],
-      }
-    },
-    created() {
-      this.getData();
-      this.timer = setInterval(this.getData, 20000)
-    },
-    computed: {
-      serviceStatus: function(){
-        let serviceStatus = this.dashboard.serviceStatus
-        let success = serviceStatus.total - serviceStatus.errors
-         return {datasets: [{ 
-            data: [success, serviceStatus.errors],
-            backgroundColor: ['rgb(110, 181, 110)', 'rgb(186, 86, 86)']
-           }],
-           labels: ["Success", "Errors"]};
-      }
-    },
-    filters: {
-      moment: function (date){
-        return moment(date).format()
-      },
-      fromNow: function (date){
-        return moment(date).fromNow(true);
-      }
-    },
-    methods: {
-      async getData () {
-        this.dashboard = await this.getDashboard()
-        this.loaded = true
-      }
-    },
-    beforeDestroy () {
-      clearInterval(this.timer)
+  components: {
+    'doughnut-chart': DoughnutChart
+  },
+  mixins: [Api],
+  data () {
+    return {
+      dashboard: {},
+      loaded: false,
+      timer: null,
+      lastErrorsField: ['method', 'url', 'httpStatus', 'error', 'time']
     }
+  },
+  created () {
+    this.getData()
+    this.timer = setInterval(this.getData, 20000)
+  },
+  computed: {
+    serviceStatus: function () {
+      let serviceStatus = this.dashboard.serviceStatus
+      let success = serviceStatus.total - serviceStatus.errors
+      return {
+        datasets: [{
+          data: [success, serviceStatus.errors],
+          backgroundColor: ['rgb(110, 181, 110)', 'rgb(186, 86, 86)']
+        }],
+        labels: ['Success', 'Errors']
+      }
+    }
+  },
+  filters: {
+    moment: function (date) {
+      return moment(date).format()
+    },
+    fromNow: function (date) {
+      return moment(date).fromNow(true)
+    }
+  },
+  methods: {
+    async getData () {
+      this.dashboard = await this.getDashboard()
+      this.loaded = true
+    }
+  },
+  beforeDestroy () {
+    clearInterval(this.timer)
+  }
 }
 </script>
 

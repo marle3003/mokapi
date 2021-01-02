@@ -2,15 +2,12 @@ package models
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
-	"mokapi/providers/data"
 	"net/url"
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type ServiceContext struct {
@@ -75,26 +72,13 @@ func (w *WebServiceInfo) Apply(config *dynamic.OpenApi, filePath string) {
 
 	}
 
-	dataProviders := config.Info.DataProviders
-
-	if dataProviders != nil {
-		if dataProviders.File != nil {
-			path := ""
-			if len(dataProviders.File.Filename) > 0 {
-				path = dataProviders.File.Filename
-			} else {
-				path = dataProviders.File.Directory
-			}
-
-			if strings.HasPrefix(path, "./") {
-				dir := filepath.Dir(context.path)
-				path = strings.Replace(path, ".", dir, 1)
-			}
-
-			w.Data.DataProvider = data.NewStaticDataProvider(path, true)
+	if len(config.Info.MokapiFile) > 0 {
+		mokapiFile := config.Info.MokapiFile
+		if strings.HasPrefix(mokapiFile, "./") {
+			dir := filepath.Dir(context.path)
+			mokapiFile = strings.Replace(mokapiFile, ".", dir, 1)
 		}
-	} else if w.Data.DataProvider == nil {
-		w.Data.DataProvider = data.NewRandomDataProvider()
+		w.Data.MokapiFile = mokapiFile
 	}
 
 	w.Errors = append(w.Errors, context.Errors...)
@@ -148,7 +132,12 @@ func (e *Endpoint) update(config *dynamic.Endpoint, context *ServiceContext) {
 }
 
 func createOperation(config *dynamic.Operation, context *ServiceContext) *Operation {
-	o := &Operation{Description: config.Description, OperationId: config.OperationId, Summary: config.Summary, Responses: make(map[HttpStatus]*Response)}
+	o := &Operation{Description: config.Description,
+		OperationId: config.OperationId,
+		Summary:     config.Summary,
+		Responses:   make(map[HttpStatus]*Response),
+		Pipeline:    config.Pipeline,
+	}
 
 	for k, v := range config.Responses {
 		status, error := parseHttpStatus(k)
@@ -188,25 +177,10 @@ func createOperation(config *dynamic.Operation, context *ServiceContext) *Operat
 		}
 	}
 
-	if config.Middlewares != nil {
-		o.Middleware = createMiddlewares(config.Middlewares, context)
-	}
-
-	if config.Resources != nil {
-		o.Resources = make([]*Resource, 0)
-		for _, i := range config.Resources {
-			r := &Resource{Name: i.Name}
-			if len(i.If) > 0 {
-				r.If = NewFilter(i.If)
-			}
-			o.Resources = append(o.Resources, r)
-		}
-	}
-
 	return o
 }
 
-func createSchema(config *dynamic.Schema, context *ServiceContext) *data.Schema {
+func createSchema(config *dynamic.Schema, context *ServiceContext) *Schema {
 	if config == nil {
 		return nil
 	}
@@ -216,7 +190,7 @@ func createSchema(config *dynamic.Schema, context *ServiceContext) *data.Schema 
 	}
 
 	// todo resolving schema: $ref
-	schema := &data.Schema{
+	schema := &Schema{
 		Description:          config.Description,
 		Faker:                config.Faker,
 		Format:               config.Format,
@@ -226,7 +200,7 @@ func createSchema(config *dynamic.Schema, context *ServiceContext) *data.Schema 
 	}
 
 	if config.Xml != nil {
-		schema.Xml = &data.XmlEncoding{
+		schema.Xml = &XmlEncoding{
 			Attribute: config.Xml.Attribute,
 			CData:     config.Xml.CData,
 			Name:      config.Xml.Name,
@@ -251,7 +225,7 @@ func createSchema(config *dynamic.Schema, context *ServiceContext) *data.Schema 
 
 	for i, p := range config.Properties {
 		if schema.Properties == nil {
-			schema.Properties = make(map[string]*data.Schema)
+			schema.Properties = make(map[string]*Schema)
 		}
 		schema.Properties[i] = createSchema(p, context)
 	}
@@ -358,139 +332,4 @@ func createParameter(config *dynamic.Parameter, context *ServiceContext) (*Param
 	}
 
 	return p, nil
-}
-
-func createMiddlewares(config []map[string]interface{}, context *ServiceContext) []interface{} {
-	middlewares := make([]interface{}, 0)
-	for _, c := range config {
-		if t, ok := c["type"]; ok {
-			if s, ok := t.(string); ok {
-				switch strings.ToLower(s) {
-				case "replacecontent":
-					m := &ReplaceContent{}
-					if s, ok := c["regex"].(string); ok {
-						m.Regex = s
-					}
-					if replacement, ok := c["replacement"].(map[interface{}]interface{}); ok {
-						if s, ok := replacement["from"].(string); ok {
-							m.Replacement.From = s
-						}
-						if s, ok := replacement["selector"].(string); ok {
-							m.Replacement.Selector = s
-						}
-					}
-					middlewares = append(middlewares, m)
-				case "filtercontent":
-					m := &FilterContent{}
-					if s, ok := c["filter"].(string); ok {
-						m.Filter = NewFilter(s)
-					}
-					middlewares = append(middlewares, m)
-				case "template":
-					m := &Template{}
-					if s, ok := c["filename"].(string); ok {
-						if strings.HasPrefix(s, "./") {
-							dir := filepath.Dir(context.path)
-							s = strings.Replace(s, ".", dir, 1)
-						}
-						m.Filename = s
-					}
-					middlewares = append(middlewares, m)
-				case "selection":
-					m := &Selection{}
-					if slice, ok := c["slice"].(map[interface{}]interface{}); ok {
-						m.Slice = &Slice{Low: 0, High: -1}
-						if s, ok := slice["low"].(int); ok {
-							m.Slice.Low = s
-						}
-						if s, ok := slice["high"].(int); ok {
-							m.Slice.High = s
-						}
-					}
-					if b, ok := c["first"].(bool); ok {
-						m.First = b
-					}
-					middlewares = append(middlewares, m)
-				case "delay":
-					m := &Delay{}
-					if distribution, ok := c["distribution"].(map[interface{}]interface{}); ok {
-						m.Distribution = DelayDistribution{}
-						if s, ok := distribution["type"].(string); ok {
-							m.Distribution.Type = s
-						}
-						if f, ok := distribution["median"].(float64); ok {
-							m.Distribution.Median = f
-						}
-						if i, ok := distribution["median"].(int); ok {
-							m.Distribution.Median = float64(i)
-						}
-						if f, ok := distribution["sigma"].(float64); ok {
-							m.Distribution.Sigma = f
-						}
-						if i, ok := distribution["upper"].(int); ok {
-							m.Distribution.Upper = i
-						}
-						if i, ok := distribution["lower"].(int); ok {
-							m.Distribution.Lower = i
-						}
-					}
-					if s, ok := c["fixed"].(string); ok {
-						duration, error := time.ParseDuration(s)
-						if error != nil {
-							msg := fmt.Sprintf("Can not parse duration '%v': %v", s, error.Error())
-							log.Error(msg)
-							context.Errors = append(context.Errors, msg)
-							continue
-						}
-						m.Fixed = duration
-					}
-
-					if strings.ToLower(m.Distribution.Type) == "lognormal" {
-						if m.Distribution.Median <= 0 {
-							msg := fmt.Sprintf("middleware delay with type %v needs a median > 0", m.Distribution.Type)
-							log.Error(msg)
-							context.Errors = append(context.Errors, msg)
-							continue
-						}
-						if m.Distribution.Sigma <= 0 {
-							msg := fmt.Sprintf("middleware delay with type %v needs a sigma > 0", m.Distribution.Type)
-							log.Error(msg)
-							context.Errors = append(context.Errors, msg)
-							continue
-						}
-					}
-
-					if strings.ToLower(m.Distribution.Type) == "uniform" {
-						if m.Distribution.Lower < 0 {
-							msg := fmt.Sprintf("middleware delay with type %v needs a lower >= 0", m.Distribution.Type)
-							log.Error(msg)
-							context.Errors = append(context.Errors, msg)
-							continue
-						}
-						if m.Distribution.Upper <= 0 {
-							msg := fmt.Sprintf("middleware delay with type %v needs a upper > 0", m.Distribution.Type)
-							log.Error(msg)
-							context.Errors = append(context.Errors, msg)
-							continue
-						}
-					}
-
-					middlewares = append(middlewares, m)
-
-				default:
-					error := fmt.Errorf("Unsupported middleware %v", s)
-					log.Error(error.Error())
-					context.Errors = append(context.Errors, error.Error())
-
-				}
-				continue
-			}
-
-		}
-		error := fmt.Errorf("No type definition found in middleware configuration")
-		log.Error(error.Error())
-		context.Errors = append(context.Errors, error.Error())
-	}
-
-	return middlewares
 }

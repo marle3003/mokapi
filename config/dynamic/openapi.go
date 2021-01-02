@@ -15,23 +15,10 @@ type OpenApi struct {
 }
 
 type Info struct {
-	Name          string `yaml:"title"`
-	Description   string
-	Version       string
-	DataProviders *DataProviders `yaml:"x-mokapi-resource"`
-}
-
-type ServerConfiguration struct {
-	DataProviders *DataProviders `yaml:"data"`
-}
-
-type DataProviders struct {
-	File *FileDataProvider
-}
-
-type FileDataProvider struct {
-	Filename  string
-	Directory string
+	Name        string `yaml:"title"`
+	Description string
+	Version     string
+	MokapiFile  string `yaml:"x-mokapifile"`
 }
 
 type Server struct {
@@ -98,8 +85,7 @@ type Operation struct {
 	OperationId string
 	Parameters  []*Parameter
 	Responses   map[string]*Response
-	Middlewares []map[string]interface{} `yaml:"x-mokapi-middlewares"`
-	Resources   []*Resource              `yaml:"x-mokapi-resources"`
+	Pipeline    *string `yaml:"x-mokapi-pipeline"`
 }
 
 type Parameter struct {
@@ -120,11 +106,6 @@ type Schema struct {
 	Faker                string `yaml:"x-faker"`
 	Items                *Schema
 	Xml                  *Xml
-}
-
-type Resource struct {
-	Name string
-	If   string
 }
 
 type Response struct {

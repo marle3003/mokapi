@@ -51,14 +51,6 @@
                   <hr />
                   <h5>Response</h5>
                   <response v-bind:responses="operation.responses" />
-                  
-                  <hr v-if="operation.middlewares != null" />
-                  <h5 v-if="operation.middlewares != null">Middlewares</h5>
-                  <middlewares v-if="operation.middlewares != null" v-bind:middlewares="operation.middlewares" />
-
-                  <hr v-if="operation.resources != null" />
-                  <h5 v-if="operation.resources != null">Resources</h5>
-                  <resources v-if="operation.resources != null" v-bind:resources="operation.resources" />
                 </b-card-text>
               </b-tab>
             </b-tabs>
@@ -71,52 +63,47 @@
 
 <script>
 import Parameters from '@/components/Parameters'
-import Schema from '@/components/Schema'
 import Response from '@/components/Response'
-import Resources from '@/components/Resources'
-import Middlewares from '@/components/Middlewares'
 
 export default {
-    name: "endpoint",
-    props: ['service'],
-    computed: {
-      endpoint: function(){
-        if (this.service == null){
-          return null;
-        }
-
-        let path = this.$route.params.path;
-
-        for (let i = 0; i < this.service.endpoints.length; i++){
-          let endpoint = this.service.endpoints[i]
-          if (endpoint.path === path){
-            return endpoint
-          }
-        }
-
+  name: 'endpoint',
+  props: ['service'],
+  computed: {
+    endpoint: function () {
+      if (this.service == null) {
         return null
       }
-    },
-    components: {    
-      'parameters': Parameters,
-      'response': Response,
-      'resources': Resources,
-      'middlewares': Middlewares
-    },
-    methods:{
-      doCommand(e) {
-          let cmd = e.key.toLowerCase();
-          if (cmd == "escape"){
-            this.$router.go(-1)
-          }
+
+      let path = this.$route.params.path
+
+      for (let i = 0; i < this.service.endpoints.length; i++) {
+        let endpoint = this.service.endpoints[i]
+        if (endpoint.path === path) {
+          return endpoint
         }
-    },
-    created() {
-      window.addEventListener('keyup', this.doCommand);
-    },
-    destroyed() {
-      window.removeEventListener('keyup', this.doCommand);
-    },
+      }
+
+      return null
+    }
+  },
+  components: {
+    'parameters': Parameters,
+    'response': Response
+  },
+  methods: {
+    doCommand (e) {
+      let cmd = e.key.toLowerCase()
+      if (cmd === 'escape') {
+        this.$router.go(-1)
+      }
+    }
+  },
+  created () {
+    window.addEventListener('keyup', this.doCommand)
+  },
+  destroyed () {
+    window.removeEventListener('keyup', this.doCommand)
+  }
 }
 </script>
 

@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"mokapi/models"
-	"mokapi/providers/data"
-	"mokapi/providers/parser"
 	"net/http"
 	"regexp"
 	"sort"
@@ -24,18 +22,21 @@ type HttpContext struct {
 	// 3. HeaderParameter
 	// 4. CookieParameter
 	Parameters      map[string]string
-	DataProvider    data.Provider
 	ResponseType    *models.Response
 	ServicPath      string
 	CurrentEndpoint *models.Endpoint
 	ContentType     *models.ContentType
-	Schema          *data.Schema
-
-	body string
+	Schema          *models.Schema
+	MokapiFile      string
+	body            string
 }
 
 func NewHttpContext(request *http.Request, response http.ResponseWriter, servicePath string) *HttpContext {
-	return &HttpContext{Response: response, Request: request, ServicPath: servicePath, Parameters: make(map[string]string)}
+	return &HttpContext{Response: response,
+		Request:    request,
+		ServicPath: servicePath,
+		Parameters: make(map[string]string),
+	}
 }
 
 func (context *HttpContext) Body() string {
@@ -105,47 +106,6 @@ func (context *HttpContext) SetCurrentEndpoint(endpoint *models.Endpoint) error 
 	}
 
 	return nil
-}
-
-func (context *HttpContext) GetMiddleware() []interface{} {
-	operation := context.CurrentEndpoint.GetOperation(context.Request.Method)
-	return operation.Middleware
-}
-
-func (context *HttpContext) GetResourceName() string {
-	operation := context.CurrentEndpoint.GetOperation(context.Request.Method)
-	for _, resource := range operation.Resources {
-		if resource.If == nil {
-			return resource.Name
-		}
-
-		if !resource.If.IsValid() {
-			log.Infof("Skipping invalid expression: %v", resource.If.Raw)
-			continue
-		}
-
-		match, error := resource.If.Expr.IsTrue(func(factor string, tag parser.ExpressionTag) string {
-			switch tag {
-			case parser.Body:
-				s, error := context.SelectFromBody(factor)
-				if error != nil {
-					log.Error(error.Error())
-					return ""
-				}
-				return s
-			case parser.Parameter:
-				return context.Parameters[factor]
-			default:
-				return factor
-			}
-		})
-		if error != nil {
-			log.Error(error.Error())
-		} else if match {
-			return resource.Name
-		}
-	}
-	return ""
 }
 
 func (context *HttpContext) setFirstSuccessResponse(operation *models.Operation) error {

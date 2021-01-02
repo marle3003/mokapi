@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	stdlog "log"
 	"mokapi/config/decoders"
 	"mokapi/config/static"
@@ -10,12 +11,22 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
-
-	log "github.com/sirupsen/logrus"
 )
 
-func main() {
+type Test struct {
+	field string
+}
 
+func (t *Test) Echo(s []string) (int, error) {
+	fmt.Println(s)
+	return 1, nil
+}
+
+func (t *Test) Sum(i1 int, i2 int) int {
+	return i1 + i2
+}
+
+func main() {
 	cfg := static.NewConfig()
 	configDecoders := []decoders.ConfigDecoder{&decoders.FileDecoder{}, &decoders.FlagDecoder{}}
 	error := decoders.Load(configDecoders, cfg)

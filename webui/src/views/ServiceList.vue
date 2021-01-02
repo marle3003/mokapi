@@ -28,47 +28,47 @@
 import Api from '@/mixins/Api'
 
 export default {
-    components: {},
-    mixins: [Api],
-    data(){
-      return {
-        services: [],
-        timer: null,
-        loaded: false
-      }
-    },
-    created() {
-      this.getData();
-      this.timer = setInterval(this.getData, 20000)
-    },
-    methods: {
-      async getData() {
-        this.services = await this.getServices()
-        this.loaded = true
-      }
-    },
-    beforeDestroy () {
-      clearInterval(this.timer)
+  components: {},
+  mixins: [Api],
+  data () {
+    return {
+      services: [],
+      timer: null,
+      loaded: false
     }
+  },
+  created () {
+    this.getData()
+    this.timer = setInterval(this.getData, 20000)
+  },
+  methods: {
+    async getData () {
+      this.services = await this.getServices()
+      this.loaded = true
+    }
+  },
+  beforeDestroy () {
+    clearInterval(this.timer)
+  }
 }
 </script>
 
 <style scoped>
-.service-list{
-    width: 90%;
-    margin: auto;
-    margin-top: 42px;
-}
-.page-header h2{
-    font-weight: 700;
-}
+  .service-list{
+      width: 90%;
+      margin: auto;
+      margin-top: 42px;
+  }
+  .page-header h2{
+      font-weight: 700;
+  }
   .card{
     margin: 15px;
     cursor: pointer;
   }
-.card p{
-    margin-bottom: 0;
-}
+  .card p{
+      margin-bottom: 0;
+  }
   .description{
     color: #a0a1a7;
   }

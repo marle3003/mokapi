@@ -44,7 +44,7 @@ func (handler *WebServiceHandler) ServeHTTP(context *web.HttpContext) {
 		return
 	}
 
-	context.DataProvider = handler.WebService.DataProvider
+	context.MokapiFile = handler.WebService.MokapiFile
 	context.SetCurrentEndpoint(endpoint)
 
 	operationHandler := NewOperationHandler()

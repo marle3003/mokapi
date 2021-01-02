@@ -32,13 +32,11 @@ type endpoint struct {
 }
 
 type operation struct {
-	Method      string       `json:"method,omitempty"`
-	Summary     string       `json:"summary,omitempty"`
-	Description string       `json:"description,omitempty"`
-	Parameters  []parameter  `json:"parameters,omitempty"`
-	Responses   []response   `json:"responses,omitempty"`
-	Resources   []resource   `json:"resources,omitempty"`
-	Middlewares []middleware `json:"middlewares,omitempty"`
+	Method      string      `json:"method,omitempty"`
+	Summary     string      `json:"summary,omitempty"`
+	Description string      `json:"description,omitempty"`
+	Parameters  []parameter `json:"parameters,omitempty"`
+	Responses   []response  `json:"responses,omitempty"`
 }
 
 type parameter struct {
@@ -126,8 +124,6 @@ func newOperation(method string, o *models.Operation) operation {
 		Description: o.Description,
 		Parameters:  make([]parameter, 0),
 		Responses:   make([]response, 0),
-		Resources:   make([]resource, 0),
-		Middlewares: make([]middleware, 0),
 	}
 
 	for _, p := range o.Parameters {
@@ -136,16 +132,6 @@ func newOperation(method string, o *models.Operation) operation {
 
 	for s, r := range o.Responses {
 		v.Responses = append(v.Responses, newResponse(s, r))
-	}
-
-	for _, r := range o.Resources {
-		v.Resources = append(v.Resources, newResource(r))
-	}
-
-	for _, m := range o.Middleware {
-		if e := newMiddleware(m); len(e.Name) > 0 {
-			v.Middlewares = append(v.Middlewares, e)
-		}
 	}
 
 	return v
@@ -204,50 +190,4 @@ func (h Handler) getService(rw http.ResponseWriter, request *http.Request) {
 	} else {
 		rw.WriteHeader(404)
 	}
-}
-
-func newResource(r *models.Resource) resource {
-	o := resource{Name: r.Name}
-	if r.If != nil {
-		o.Condition = r.If.Raw
-		o.Status = r.If.Error
-	}
-	return o
-}
-
-func newMiddleware(a interface{}) middleware {
-	if m, ok := a.(*models.FilterContent); ok {
-		return middleware{Name: "FilterContent", Config: map[string]string{"Filter": m.Filter.Raw}, Error: m.Filter.Error}
-	}
-	if m, ok := a.(*models.ReplaceContent); ok {
-		return middleware{
-			Name: "ReplaceContent",
-			Config: map[string]string{
-				"Replacement.From":     m.Replacement.From,
-				"Replacement.Selector": m.Replacement.Selector,
-				"Regex":                m.Regex,
-			},
-		}
-	}
-	if m, ok := a.(*models.Template); ok {
-		return middleware{
-			Name: "Template",
-			Config: map[string]string{
-				"Filename": m.Filename,
-			},
-		}
-	}
-	if m, ok := a.(*models.Selection); ok {
-		config := map[string]string{"First": fmt.Sprint(m.First)}
-		if m.Slice != nil {
-			config["Slice.Low"] = fmt.Sprint(m.Slice.Low)
-			config["Slice.High"] = fmt.Sprint(m.Slice.High)
-		}
-
-		return middleware{
-			Name:   "Selection",
-			Config: config,
-		}
-	}
-	return middleware{}
 }
