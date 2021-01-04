@@ -32,7 +32,7 @@ func (n *Number) String() string {
 	return fmt.Sprintf("%v", n.value)
 }
 
-func (n *Number) Operator(op ArithmeticOperator, obj Object) (Object, error) {
+func (n *Number) Operator(op Operator, obj Object) (Object, error) {
 	if other, ok := obj.(*Number); ok {
 		switch op {
 		case Addition:
@@ -84,4 +84,11 @@ func (n *Number) CompareTo(obj Object) (int, error) {
 
 func (n *Number) GetType() reflect.Type {
 	return reflect.TypeOf(n.value)
+}
+
+func (n *Number) Invoke(path *Path, _ []Object) (Object, error) {
+	if path.Head() == "" {
+		return n, nil
+	}
+	return nil, errors.Errorf("member '%v' in path '%v' is not defined on type number", path.Head(), path)
 }

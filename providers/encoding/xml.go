@@ -19,9 +19,8 @@ func UnmarshalXml(s string, schema *models.Schema) (interface{}, error) {
 	if len(e.elements) == 0 {
 		return nil, nil
 	}
-	// select root element
-	e = e.elements[0]
-	obj, err := e.parse(schema)
+	// skip root element
+	obj, err := e.elements[0].parse(schema)
 	return obj, err
 }
 

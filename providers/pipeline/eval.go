@@ -112,11 +112,19 @@ func (v *variable) set(operator string, data interface{}, ctx *context) (types.O
 }
 
 func (e *expression) eval(ctx *context) (types.Object, error) {
-	if e.Equality != nil {
-		return e.Equality.eval(ctx)
+	if e.OrCondition != nil {
+		return e.OrCondition.eval(ctx)
 	}
 
 	return nil, nil
+}
+
+func (e *orCondition) eval(ctx *context) (types.Object, error) {
+	return process("||", e.Left, e.Right, ctx)
+}
+
+func (e *andCondition) eval(ctx *context) (types.Object, error) {
+	return process("&&", e.Left, e.Right, ctx)
 }
 
 func (e *equality) eval(ctx *context) (types.Object, error) {
@@ -216,13 +224,13 @@ func (m *memberAccess) eval(ctx *context) (types.Object, error) {
 }
 
 func accessMember(name string, args []types.Object, ctx *context) (types.Object, error) {
-	path := strings.Split(name, ".")
-	obj, ok := ctx.getVar(path[0])
+	segments := strings.SplitN(name, ".", 2)
+	obj, ok := ctx.getVar(segments[0])
 	if !ok {
-		return nil, fmt.Errorf("undefined identifier '%v'", path[0])
+		return nil, fmt.Errorf("undefined identifier '%v'", segments[0])
 	}
 
-	return types.InvokeMember(obj, path[1:], args)
+	return obj.Invoke(types.ParsePath(segments[1]), args)
 }
 
 func (s *step) eval(ctx *context) (types.Object, error) {
@@ -299,11 +307,11 @@ func process(operator string, leftTerm evaluatable, rightTerm evaluatable, ctx *
 		return types.NewBool(!left.Equals(right)), nil
 	default:
 		if value, ok := left.(types.ValueType); ok {
-			return value.Operator(types.ArithmeticOperator(operator), right)
+			return value.Operator(types.Operator(operator), right)
 		}
 	}
 
-	return nil, errors.Errorf("invalid operation '%v' on type %v", left.GetType())
+	return nil, errors.Errorf("invalid operation '%v' on type %v", operator, left.GetType())
 }
 
 type tagOptions map[string]string

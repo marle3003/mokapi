@@ -66,3 +66,10 @@ func (kv *KeyValuePair) Set(name string, value Object) error {
 	}
 	return errors.Errorf("type %v does not contain member %v", kv.GetType(), name)
 }
+
+func (kv *KeyValuePair) Invoke(path *Path, _ []Object) (Object, error) {
+	if path.Head() == "" {
+		return kv, nil
+	}
+	return nil, errors.Errorf("member '%v' in path '%v' is not defined on type keyvaluepair", path.Head(), path)
+}

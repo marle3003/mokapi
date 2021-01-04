@@ -15,14 +15,49 @@ func NewExpando() *Expando {
 	return &Expando{value: map[string]Object{}}
 }
 
-func (e *Expando) Invoke(name string, args []Object) (Object, error) {
-	if result, ok := e.value[name]; ok {
-		if closure, ok := result.(*Closure); ok {
-			return closure.Invoke(args)
+func (e *Expando) Invoke(path *Path, args []Object) (Object, error) {
+	switch path.Head() {
+	case "":
+		return e, nil
+	case "*":
+		if !path.MoveNext() {
+			return e, nil
+		}
+		result := NewArray()
+		for _, v := range e.value {
+			obj, err := v.Invoke(path, args)
+			if err != nil {
+				return nil, err
+			}
+			result.Add(obj)
+		}
+		return result, nil
+	case "**":
+		path.MoveNext()
+		result := NewArray()
+		for o := range e.Iterator() {
+			if len(path.Head()) == 0 {
+				result.Add(o)
+			} else {
+				v, err := o.Invoke(path.Copy(), args)
+				if err != nil {
+					continue
+				}
+				result.Add(v)
+			}
 		}
 		return result, nil
 	}
-	return nil, errors.Errorf("does not contain member %v", name)
+
+	if v, ok := e.value[path.Head()]; ok {
+		if path.MoveNext() {
+			return v.Invoke(path, args)
+		} else {
+			return v, nil
+		}
+	}
+
+	return nil, errors.Errorf("name '%v' in path '%v' not found", path.Head(), path)
 }
 
 func (e *Expando) Set(name string, obj Object) error {
@@ -108,6 +143,23 @@ func (e *Expando) GetType() reflect.Type {
 	return reflect.TypeOf(e.value)
 }
 
-func (e *Expando) Operator(_ ArithmeticOperator, _ Object) (Object, error) {
+func (e *Expando) Operator(_ Operator, _ Object) (Object, error) {
 	return nil, errors.Errorf("not implemented")
+}
+
+func (e *Expando) Iterator() chan Object {
+	ch := make(chan Object)
+	go func() {
+		defer close(ch)
+
+		for _, v := range e.value {
+			if i, ok := v.(Iterator); ok {
+				for o := range i.Iterator() {
+					ch <- o
+				}
+			}
+			ch <- v
+		}
+	}()
+	return ch
 }

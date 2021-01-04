@@ -57,7 +57,7 @@ func convertObject(o interface{}) types.Object {
 	if a, ok := o.([]interface{}); ok {
 		array := types.NewArray()
 		for _, e := range a {
-			array.Append(convertObject(e))
+			array.Add(convertObject(e))
 		}
 		return array
 	} else {

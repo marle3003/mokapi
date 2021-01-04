@@ -52,7 +52,17 @@ type variable struct {
 }
 
 type expression struct {
-	Equality *equality `( @@ | "(" @@ ")" )`
+	OrCondition *orCondition `( @@ | "(" @@ ")" )`
+}
+
+type orCondition struct {
+	Left  *andCondition `@@`
+	Right *orCondition  `( "||" @@)?`
+}
+
+type andCondition struct {
+	Left  *equality     `@@`
+	Right *andCondition `( "&&" @@)?`
 }
 
 type equality struct {

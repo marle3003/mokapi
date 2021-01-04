@@ -2,29 +2,26 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="1a9601df-4cac-4bc9-9e3a-1ba0e84e507f" name="Default Changelist" comment="refactoring but not all features are working">
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/fileExists.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/xmlpath.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/providers/pipeline/types/collection.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/providers/pipeline/types/path.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/providers/pipeline/types/predicate.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/dynamic/file.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/dynamic/file.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/dynamic/openapi.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/dynamic/openapi.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/factory_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/models/factory_service.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/webService.go" beforeDir="false" afterPath="$PROJECT_DIR$/models/webService.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/data/random.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmd/mokapi/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/mokapi/main.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/providers/encoding/xml.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/encoding/xml.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/providers/pipeline/ast.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/ast.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/context.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/context.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/providers/pipeline/eval.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/eval.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/providers/pipeline/parser.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/parser.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/run.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/run.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/types/array.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/types/array.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/types/bool.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/types/bool.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/types/closure.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/types/closure.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/types/expando.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/types/expando.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/types/keyvalue.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/types/keyvalue.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/types/number.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/types/number.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/types/reference.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/types/reference.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/providers/pipeline/types/reflect.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/types/reflect.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/types/string.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/types/string.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/providers/pipeline/types/types.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/types/types.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/httpBinding.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/httpBinding.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/manager.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/manager.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/server.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/web/handlers/operationHandler.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/web/handlers/operationHandler.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/web/handlers/response.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/web/handlers/response.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/web/handlers/webServiceHandler.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/web/handlers/webServiceHandler.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/web/httpContext.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/web/httpContext.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/yaml.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/yaml.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -136,7 +133,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="refactoring but not all features are working" />
     <MESSAGE value="removed features middleware and data provider&#10;introduced feature pipeline&#10;removed examples, must be reworked&#10;fixed some eslint errors" />
-    <option name="LAST_COMMIT_MESSAGE" value="removed features middleware and data provider&#10;introduced feature pipeline&#10;removed examples, must be reworked&#10;fixed some eslint errors" />
+    <MESSAGE value="refactored server bindings&#10;added skippable config files/dirs with prefix '_'&#10;added requestBody property&#10;optimized pipeline name usages&#10;added pipeline steps&#10;added feature when, unary operation to pipeline&#10;added pipeline string format" />
+    <option name="LAST_COMMIT_MESSAGE" value="refactored server bindings&#10;added skippable config files/dirs with prefix '_'&#10;added requestBody property&#10;optimized pipeline name usages&#10;added pipeline steps&#10;added feature when, unary operation to pipeline&#10;added pipeline string format" />
   </component>
   <component name="VgoProject">
     <integration-enabled>true</integration-enabled>

@@ -29,8 +29,8 @@ func (r *Reference) GetType() reflect.Type {
 	return reflect.TypeOf(r)
 }
 
-func (r *Reference) Invoke(name string, args []Object) (Object, error) {
-	return invokeMember(r.value, name, args)
+func (r *Reference) Invoke(path *Path, args []Object) (Object, error) {
+	return invokeMember(r.value, path, args)
 }
 
 func (r *Reference) Set(name string, value Object) error {
@@ -45,6 +45,10 @@ func (r *Reference) SetValue(i interface{}) error {
 	return nil
 }
 
-func (r *Reference) Operator(_ ArithmeticOperator, _ Object) (Object, error) {
+func (r *Reference) Operator(_ Operator, _ Object) (Object, error) {
 	return nil, errors.Errorf("not implemented")
+}
+
+func (r *Reference) Iterator() chan Object {
+	return iterator(r.value)
 }

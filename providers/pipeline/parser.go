@@ -11,11 +11,11 @@ var (
 	lexer = stateful.MustSimple([]stateful.Rule{
 		{"Comment", `(?:#|//)[^\n^\r]*?`, nil},
 		{"Keyword", `pipeline|steps|true|false|stages|stage|when`, nil},
-		{"Member", `[a-zA-Z_]+[a-zA-Z0-9_\[\]]*[.][a-zA-Z_]+[a-zA-Z0-9_.\[\]]*`, nil},
+		{"Member", `[a-zA-Z_]+[a-zA-Z0-9_\[\]]*[.][a-zA-Z_]+[a-zA-Z0-9_.\[\]|'\*'|'\*\*']*`, nil},
 		{"Ident", `[a-zA-Z_][a-zA-Z0-9_]*`, nil},
 		{"Number", `[-+]?\d*\.?\d+([eE][-+]?\d+)?`, nil},
 		{"String", `'[^'|\\']*'|"[^"|\\"]*"`, nil},
-		{"Operators", `:=|==|!=|>=|<=|=>|[{}=:><+-]`, nil},
+		{"Operators", `:=|==|!=|>=|<=|=>|&&|\|\||[{}=:><+-]`, nil},
 		{"Punct", `[:,\(\)!]`, nil},
 		{"whitespace", `\s+`, nil},
 		{"EOL", `[\r\n]+`, nil},

@@ -5,47 +5,38 @@ import (
 	"reflect"
 )
 
-type ArithmeticOperator string
+type Operator string
 
 const (
-	Addition       ArithmeticOperator = "+"
-	Subtraction    ArithmeticOperator = "-"
-	Multiplication ArithmeticOperator = "*"
-	Division       ArithmeticOperator = "/"
-	Remainder      ArithmeticOperator = "%"
+	Addition       Operator = "+"
+	Subtraction    Operator = "-"
+	Multiplication Operator = "*"
+	Division       Operator = "/"
+	Remainder      Operator = "%"
+
+	And Operator = "&&"
+	Or  Operator = "||"
 )
 
 type Object interface {
 	String() string
 	Equals(obj Object) bool
 	GetType() reflect.Type
+	Invoke(path *Path, args []Object) (Object, error)
 }
-
-//type Object interface{
-//	Value() interface{}
-//	Set(interface{}) error
-//	GetMember(member string, args []Object) (Object, error)
-//	Process(operator string, value Object) (Object, error)
-//	String() string
-//}
 
 type ValueType interface {
 	Value() interface{}
 	SetValue(interface{}) error
-	Operator(op ArithmeticOperator, obj Object) (Object, error)
+	Operator(op Operator, obj Object) (Object, error)
 }
 
 type Comparable interface {
 	CompareTo(obj Object) (int, error)
 }
 
-type Predicate func(Object) (bool, error)
-
-type Collection interface {
-	Add(obj Object)
-	Find(match Predicate) (Object, error)
-	GetEnumerator() []Object
-	//FindAll() []Type
+type Iterator interface {
+	Iterator() chan Object
 }
 
 type Dictionary interface {
@@ -53,7 +44,6 @@ type Dictionary interface {
 }
 
 type Class interface {
-	Invoke(name string, args []Object) (Object, error)
 	Set(name string, obj Object) error
 }
 
@@ -85,7 +75,7 @@ func Convert(i interface{}) (Object, error) {
 			if err != nil {
 				return nil, err
 			}
-			a.Append(o)
+			a.Add(o)
 		}
 		return a, nil
 	case map[string]interface{}:
