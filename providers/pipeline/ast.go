@@ -5,16 +5,30 @@ type mokapiFile struct {
 }
 
 type pipeline struct {
-	Name string `"pipeline" ( "(" @String ")" )? "{"`
+	Name string `"pipeline" ( "(" @String? ")" )? "{"`
 	//Parameters []*Parameter `@parameters*`
 	//Options    []*Option `@options*`
-	Block *block `"steps" "{" @@ "}" "}"`
+	Stages []*stage `"stages" "{" @@* "}" "}"`
+}
+
+type stage struct {
+	Name  string      `"stage" "(" @String ")" "{"`
+	When  *expression `("when" "{" @@ "}")?`
+	Steps *block      `"steps" "{" @@ "}" "}"`
+}
+
+func (s *stage) DisplayName() string {
+	return s.Name[1 : len(s.Name)-1]
 }
 
 type parameter struct {
 }
 
 type option struct {
+}
+
+type when struct {
+	Expression *expression `@@?`
 }
 
 type block struct {
@@ -38,13 +52,7 @@ type variable struct {
 }
 
 type expression struct {
-	Equality *equality `@@`
-}
-
-type additive struct {
-	Left     *primary `@@`
-	Operator string   `( @( "+" | "-" )`
-	Right    *primary `@@ )?`
+	Equality *equality `( @@ | "(" @@ ")" )`
 }
 
 type equality struct {
@@ -59,13 +67,31 @@ type relational struct {
 	Right    *additive `@@ )?`
 }
 
+type additive struct {
+	Left     *unary    `@@`
+	Operator string    `( @( "+" | "-" )`
+	Right    *additive `@@ )?`
+}
+
+type unary struct {
+	Operator string   `@('!')?`
+	Primary  *primary `@@`
+}
+
 type primary struct {
-	MemberAccess *memberAccess `( @@`
+	Closure      *closure      `( @@`
+	MemberAccess *memberAccess ` | @@`
 	Step         *step         ` | @@`
-	Literal      *literal      ` | @@ )`
+	Literal      *literal      ` | @@ `
+	Expression   *expression   ` | "(" @@ ")" )`
 }
 
 type Boolean bool
+
+func NewBoolean(b bool) *Boolean {
+	boolean := Boolean(b)
+	return &boolean
+}
 
 func (b *Boolean) Capture(values []string) error {
 	*b = values[0] == "true" || values[0] == ""
@@ -75,7 +101,7 @@ func (b *Boolean) Capture(values []string) error {
 type literal struct {
 	Number *float64 `  @Number`
 	String *string  ` | @String`
-	Bool   *Boolean ` | @("true" | "false" | "")`
+	Bool   *Boolean ` | @("true" | "false")`
 }
 
 type step struct {
@@ -94,10 +120,7 @@ type argument struct {
 }
 
 type argumentValue struct {
-	Closure    *closure      ` ( @@`
-	Member     *memberAccess ` | @@`
-	Identifier string        ` | @Ident`
-	Literal    *literal      ` | @@ )`
+	Expression *expression `@@`
 }
 
 type closure struct {

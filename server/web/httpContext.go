@@ -21,7 +21,7 @@ type HttpContext struct {
 	// 2. QueryParameter
 	// 3. HeaderParameter
 	// 4. CookieParameter
-	Parameters      map[string]string
+	Parameters      map[string]interface{}
 	ResponseType    *models.Response
 	ServicPath      string
 	CurrentEndpoint *models.Endpoint
@@ -35,7 +35,7 @@ func NewHttpContext(request *http.Request, response http.ResponseWriter, service
 	return &HttpContext{Response: response,
 		Request:    request,
 		ServicPath: servicePath,
-		Parameters: make(map[string]string),
+		Parameters: make(map[string]interface{}),
 	}
 }
 
@@ -83,12 +83,12 @@ func (context *HttpContext) SetCurrentEndpoint(endpoint *models.Endpoint) error 
 
 	parameters := append(endpoint.Parameters, operation.Parameters...)
 	sort.SliceStable(parameters, func(i, j int) bool {
-		return parameters[i].Type < parameters[j].Type
+		return parameters[i].Location < parameters[j].Location
 	})
 	for _, parameter := range parameters {
 		value := ""
 
-		switch parameter.Type {
+		switch parameter.Location {
 		case models.CookieParameter:
 		case models.QueryParameter:
 			value = context.Request.URL.Query().Get(parameter.Name)

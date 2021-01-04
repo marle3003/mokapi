@@ -10,11 +10,10 @@ type context struct {
 	outer *context
 	steps map[string]Step
 	vars  map[string]types.Object
-	env   map[string]string
 }
 
 func newContext(modifiers ...contextModifier) *context {
-	c := &context{steps: map[string]Step{}, vars: map[string]types.Object{}, env: map[string]string{}}
+	c := &context{steps: map[string]Step{}, vars: map[string]types.Object{}}
 	for _, m := range modifiers {
 		err := m(c)
 		if err != nil {

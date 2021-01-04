@@ -2,87 +2,29 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="1a9601df-4cac-4bc9-9e3a-1ba0e84e507f" name="Default Changelist" comment="refactoring but not all features are working">
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/ast.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/context.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/delay.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/echo.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/env.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/envvars.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/eval.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/getcontext.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/mustache.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/parser.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/readFile.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/run.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/step.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/types/array.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/types/bool.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/types/closure.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/types/expando.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/types/keyvalue.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/types/number.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/types/reference.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/types/reflect.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/types/string.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/types/types.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/variable.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/yaml.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/web/handlers/response.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/providers/pipeline/fileExists.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/providers/pipeline/xmlpath.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmd/mokapi/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/mokapi/main.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config.yml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/dynamic/file.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/dynamic/file.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/config/dynamic/openapi.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/dynamic/openapi.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/middlewares/filtercontent.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/middlewares/overview.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/middlewares/replacecontent.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/demo/api.yml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/demo/components.yml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/demo/data.yml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/demo/data2.yml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/ldap/config.yml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/pressreview/api.yml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/pressreview/data.yml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/sharepoint/api.yml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/sharepoint/data/feed.yml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/sharepoint/data/search_data.yml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/sharepoint/data/wsdl.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/sharepoint/search.yml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/models/factory_service.go" beforeDir="false" afterPath="$PROJECT_DIR$/models/factory_service.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/middlewares.go" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/models/webService.go" beforeDir="false" afterPath="$PROJECT_DIR$/models/webService.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/data/provider.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/data/random.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/data/random.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/data/static.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/encoding/json.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/encoding/json.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/data/random.go" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/providers/encoding/xml.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/encoding/xml.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/api/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/api/service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/ast.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/ast.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/context.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/context.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/eval.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/eval.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/parser.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/parser.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/run.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/run.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/types/reflect.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/types/reflect.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/types/types.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/types/types.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/httpBinding.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/httpBinding.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/manager.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/manager.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/server.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/web/handlers/operationHandler.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/web/handlers/operationHandler.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/web/handlers/response.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/web/handlers/response.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/web/handlers/webServiceHandler.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/web/handlers/webServiceHandler.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/web/httpContext.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/web/httpContext.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/web/middlewares/delay.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/web/middlewares/filtercontent.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/web/middlewares/middleware.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/web/middlewares/replacecontent.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/web/middlewares/selection.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/web/middlewares/template.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/test.yml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/webui/.eslintignore" beforeDir="false" afterPath="$PROJECT_DIR$/webui/.eslintignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/webui/src/components/Endpoint.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/components/Endpoint.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/webui/src/components/Endpoints.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/components/Endpoints.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/webui/src/components/Middlewares.vue" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/webui/src/components/Parameters.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/components/Parameters.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/webui/src/components/Resources.vue" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/webui/src/components/Schema.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/components/Schema.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/webui/src/components/ServiceInfo.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/components/ServiceInfo.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/webui/src/components/ServiceOverview.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/components/ServiceOverview.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/webui/src/components/TopHeader.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/components/TopHeader.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/webui/src/mixins/Api.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/mixins/Api.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/webui/src/views/Dashboard.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/views/Dashboard.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/webui/src/views/Docs.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/views/Docs.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/webui/src/views/Service.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/views/Service.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/webui/src/views/ServiceList.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/views/ServiceList.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -111,6 +53,7 @@
   </component>
   <component name="PropertiesComponent">
     <property name="DefaultGoTemplateProperty" value="Go File" />
+    <property name="NewWatcherDialog.advanced.open" value="true" />
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
@@ -118,15 +61,19 @@
     <property name="go.sdk.automatically.set" value="true" />
     <property name="go.tried.to.enable.integration.vgo.integrator" value="true" />
     <property name="js.buildTools.gulp.gulp_package_dir" value="" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/.vscode/tasks.json" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/data/feed" />
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.path.for.package.eslint" value="project" />
     <property name="node.js.selected.package.eslint" value="(autodetect)" />
     <property name="nodejs_package_manager_path" value="npm" />
     <property name="restartRequiresConfirmation" value="false" />
-    <property name="settings.editor.selected.configurable" value="preferences.keymap" />
+    <property name="settings.editor.selected.configurable" value="watcher.settings" />
   </component>
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\Projekte\mokapi\data\feed" />
+      <recent name="D:\Projekte\mokapi\providers\pipeline" />
+    </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="D:\Projekte\mokapi\providers\pipeline" />
       <recent name="D:\Projekte\mokapi\providers\pipeline\parser" />
@@ -198,8 +145,14 @@
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/providers/pipeline/types/types.go</url>
-          <option name="timeStamp" value="68" />
+          <url>file://$PROJECT_DIR$/server/api/service.go</url>
+          <line>178</line>
+          <option name="timeStamp" value="102" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/models/factory_service.go</url>
+          <line>353</line>
+          <option name="timeStamp" value="119" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -216,6 +169,7 @@
         <watch expression="*(*&quot;mokapi/providers/pipeline.MokapiFile&quot;)(824633745592)" />
         <watch expression="*(*&quot;map[string]mokapi/providers/pipeline/types.Object&quot;)(824633746656)" />
         <watch expression="*(*&quot;map[interface {}]interface {}&quot;)(824633747816)" />
+        <watch expression="*(*&quot;map[interface {}]interface {}&quot;)(824634445904)" />
       </configuration>
     </watches-manager>
   </component>

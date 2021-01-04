@@ -10,12 +10,6 @@ import (
 	"strings"
 )
 
-type ServiceContext struct {
-	schemas map[string]*dynamic.Schema
-	path    string
-	Errors  []string
-}
-
 func (a *Application) ApplyWebService(config map[string]*dynamic.OpenApi) {
 	for filePath, item := range config {
 		key := filePath
@@ -27,14 +21,12 @@ func (a *Application) ApplyWebService(config map[string]*dynamic.OpenApi) {
 			webServiceInfo = NewServiceInfo()
 			a.WebServices[key] = webServiceInfo
 		}
-		webServiceInfo.Apply(item, filePath)
+		webServiceInfo.apply(item, filePath)
 	}
 }
 
-func (w *WebServiceInfo) Apply(config *dynamic.OpenApi, filePath string) {
-
-	serverUrls := make(map[string]bool)
-	context := &ServiceContext{schemas: getSchemas(config), Errors: make([]string, 0), path: filePath}
+func (w *WebServiceInfo) apply(config *dynamic.OpenApi, filePath string) {
+	context := &serviceContext{config: config, Errors: make([]string, 0), path: filePath}
 
 	if len(w.Data.Name) == 0 {
 		w.Data.Name = config.Info.Name
@@ -47,17 +39,13 @@ func (w *WebServiceInfo) Apply(config *dynamic.OpenApi, filePath string) {
 	}
 
 	for _, v := range config.Servers {
-		if _, found := serverUrls[v.Url]; !found {
-			serverUrls[v.Url] = true
-			server, error := createServers(v)
-			if error != nil {
-				log.Error(error.Error())
-				context.Errors = append(context.Errors, error.Error())
-				continue
-			}
-			w.Data.Servers = append(w.Data.Servers, server)
+		server, err := createServers(v)
+		if err != nil {
+			log.Error(err.Error())
+			context.Errors = append(context.Errors, err.Error())
+			continue
 		}
-
+		w.Data.AddServer(server)
 	}
 
 	for path, v := range config.EndPoints {
@@ -65,7 +53,8 @@ func (w *WebServiceInfo) Apply(config *dynamic.OpenApi, filePath string) {
 		if e, ok := w.Data.Endpoint[path]; ok {
 			endpoint = e
 		} else {
-			endpoint = &Endpoint{Path: path}
+			endpoint = NewEndpoint(path, w.Data)
+			endpoint.Pipeline = v.Pipeline
 			w.Data.Endpoint[path] = endpoint
 		}
 		endpoint.update(v, context)
@@ -77,6 +66,9 @@ func (w *WebServiceInfo) Apply(config *dynamic.OpenApi, filePath string) {
 		if strings.HasPrefix(mokapiFile, "./") {
 			dir := filepath.Dir(context.path)
 			mokapiFile = strings.Replace(mokapiFile, ".", dir, 1)
+		} else if !filepath.IsAbs(mokapiFile) {
+			dir := filepath.Dir(context.path)
+			mokapiFile = filepath.Join(dir, mokapiFile)
 		}
 		w.Data.MokapiFile = mokapiFile
 	}
@@ -84,7 +76,7 @@ func (w *WebServiceInfo) Apply(config *dynamic.OpenApi, filePath string) {
 	w.Errors = append(w.Errors, context.Errors...)
 }
 
-func (e *Endpoint) update(config *dynamic.Endpoint, context *ServiceContext) {
+func (e *Endpoint) update(config *dynamic.Endpoint, context *serviceContext) {
 	if len(config.Summary) > 0 {
 		e.Summary = config.Summary
 	}
@@ -93,37 +85,38 @@ func (e *Endpoint) update(config *dynamic.Endpoint, context *ServiceContext) {
 	}
 
 	if config.Get != nil {
-		e.Get = createOperation(config.Get, context)
+		e.Get = createOperation(config.Get, e, context)
 	}
 	if config.Post != nil {
-		e.Post = createOperation(config.Post, context)
+		e.Post = createOperation(config.Post, e, context)
 	}
 	if config.Put != nil {
-		e.Put = createOperation(config.Put, context)
+		e.Put = createOperation(config.Put, e, context)
 	}
 	if config.Patch != nil {
-		e.Patch = createOperation(config.Patch, context)
+		e.Patch = createOperation(config.Patch, e, context)
 	}
 	if config.Delete != nil {
-		e.Delete = createOperation(config.Delete, context)
+		e.Delete = createOperation(config.Delete, e, context)
 	}
 	if config.Head != nil {
-		e.Head = createOperation(config.Head, context)
+		e.Head = createOperation(config.Head, e, context)
 	}
 	if config.Options != nil {
-		e.Options = createOperation(config.Options, context)
+		e.Options = createOperation(config.Options, e, context)
 	}
 	if config.Trace != nil {
-		e.Trace = createOperation(config.Trace, context)
+		e.Trace = createOperation(config.Trace, e, context)
 	}
 	if config.Parameters != nil {
 		if e.Parameters == nil {
 			e.Parameters = make([]*Parameter, 0)
 		}
 		for _, v := range config.Parameters {
-			p, error := createParameter(v, context)
-			if error != nil {
-				log.Error(error.Error())
+			p, err := createParameter(v, context)
+			if err != nil {
+				log.Error(err.Error())
+				context.Errors = append(context.Errors, err.Error())
 				continue
 			}
 			e.Parameters = append(e.Parameters, p)
@@ -131,35 +124,27 @@ func (e *Endpoint) update(config *dynamic.Endpoint, context *ServiceContext) {
 	}
 }
 
-func createOperation(config *dynamic.Operation, context *ServiceContext) *Operation {
-	o := &Operation{Description: config.Description,
-		OperationId: config.OperationId,
-		Summary:     config.Summary,
-		Responses:   make(map[HttpStatus]*Response),
-		Pipeline:    config.Pipeline,
+func createOperation(config *dynamic.Operation, endpoint *Endpoint, context *serviceContext) *Operation {
+	o := NewOperation(
+		config.Summary,
+		config.Description,
+		config.OperationId,
+		config.Pipeline,
+		endpoint,
+	)
+
+	if config.RequestBody != nil {
+		o.RequestBody = createRequestBody(config.RequestBody, context)
 	}
 
-	for k, v := range config.Responses {
-		status, error := parseHttpStatus(k)
-		if error != nil {
-			log.Error(error.Error())
-			context.Errors = append(context.Errors, error.Error())
+	for k, r := range config.Responses {
+		s, err := parseHttpStatus(k)
+		if err != nil {
+			log.Error(err.Error())
+			context.Errors = append(context.Errors, err.Error())
 			continue
 		}
-
-		response := &Response{Description: v.Description, ContentTypes: make(map[string]*ResponseContent)}
-		o.Responses[status] = response
-
-		if v.Content != nil {
-			for t, c := range v.Content {
-				responseContent := &ResponseContent{}
-				if c != nil && c.Schema != nil {
-					responseContent.Schema = createSchema(c.Schema, context)
-				}
-				contentType := ParseContentType(t)
-				response.ContentTypes[contentType.Key()] = responseContent
-			}
-		}
+		o.Responses[s] = createResponse(r, context)
 	}
 
 	if config.Parameters != nil {
@@ -167,10 +152,10 @@ func createOperation(config *dynamic.Operation, context *ServiceContext) *Operat
 			o.Parameters = make([]*Parameter, 0)
 		}
 		for _, v := range config.Parameters {
-			p, error := createParameter(v, context)
-			if error != nil {
-				log.Error(error.Error())
-				context.Errors = append(context.Errors, error.Error())
+			p, err := createParameter(v, context)
+			if err != nil {
+				log.Error(err.Error())
+				context.Errors = append(context.Errors, err.Error())
 				continue
 			}
 			o.Parameters = append(o.Parameters, p)
@@ -180,16 +165,78 @@ func createOperation(config *dynamic.Operation, context *ServiceContext) *Operat
 	return o
 }
 
-func createSchema(config *dynamic.Schema, context *ServiceContext) *Schema {
+func createRequestBody(config *dynamic.RequestBody, context *serviceContext) *RequestBody {
+	if len(config.Reference) > 0 {
+		if ref, ok := context.getRequestBody(config.Reference); ok {
+			return createRequestBody(ref, context)
+		} else {
+			context.Errors = append(context.Errors, fmt.Sprintf("unable to resolve reference '%v'", config.Reference))
+			return nil
+		}
+	}
+
+	r := &RequestBody{Description: config.Description, ContentTypes: make(map[string]*MediaType), Required: config.Required}
+	if config.Content != nil {
+		for t, c := range config.Content {
+			if c == nil {
+				continue
+			}
+			m := getMediaType(c, context)
+			contentType := ParseContentType(t)
+			r.ContentTypes[contentType.Key()] = m
+		}
+	}
+	return r
+}
+
+func createResponse(config *dynamic.Response, context *serviceContext) *Response {
+	if len(config.Reference) > 0 {
+		if ref, ok := context.getResponse(config.Reference); ok {
+			return createResponse(ref, context)
+		} else {
+			context.Errors = append(context.Errors, fmt.Sprintf("unable to resolve reference '%v'", config.Reference))
+			return nil
+		}
+	}
+
+	r := &Response{Description: config.Description, ContentTypes: make(map[string]*MediaType)}
+	if config.Content != nil {
+		for t, c := range config.Content {
+			if c == nil {
+				continue
+			}
+			m := getMediaType(c, context)
+			contentType := ParseContentType(t)
+			r.ContentTypes[contentType.Key()] = m
+		}
+	}
+	return r
+}
+
+func getMediaType(config *dynamic.MediaType, context *serviceContext) *MediaType {
+	m := &MediaType{}
+	if config.Schema != nil {
+		m.Schema = createSchema(config.Schema, context)
+	}
+	return m
+}
+
+func createSchema(config *dynamic.Schema, context *serviceContext) *Schema {
 	if config == nil {
 		return nil
 	}
 
-	if config.Type == "array" {
-		fmt.Print("")
+	if len(config.Reference) > 0 {
+		schema, ok := context.getSchema(config.Reference)
+		if !ok {
+			context.Errors = append(context.Errors, fmt.Sprintf("unable to resolve reference '%v'", config.Reference))
+			return nil
+		}
+		ref := createSchema(schema, context)
+		ref.Reference = config.Reference
+		return ref
 	}
 
-	// todo resolving schema: $ref
 	schema := &Schema{
 		Description:          config.Description,
 		Faker:                config.Faker,
@@ -197,6 +244,7 @@ func createSchema(config *dynamic.Schema, context *ServiceContext) *Schema {
 		Type:                 config.Type,
 		AdditionalProperties: config.AdditionalProperties,
 		Reference:            config.Reference,
+		Required:             config.Required,
 	}
 
 	if config.Xml != nil {
@@ -210,16 +258,7 @@ func createSchema(config *dynamic.Schema, context *ServiceContext) *Schema {
 		}
 	}
 
-	if config.Reference != "" {
-		if strings.HasPrefix(config.Reference, "#/components/schemas/") {
-			key := strings.TrimPrefix(config.Reference, "#/components/schemas/")
-			ref := createSchema(context.schemas[key], context)
-			ref.Reference = config.Reference
-			return ref
-		} else {
-			// todo
-		}
-	} else if config.Items != nil {
+	if config.Items != nil {
 		schema.Items = createSchema(config.Items, context)
 	}
 
@@ -231,14 +270,6 @@ func createSchema(config *dynamic.Schema, context *ServiceContext) *Schema {
 	}
 
 	return schema
-}
-
-func getSchemas(config *dynamic.OpenApi) map[string]*dynamic.Schema {
-	schemas := make(map[string]*dynamic.Schema)
-	for k, v := range config.Components.Schemas {
-		schemas[k] = v
-	}
-	return schemas
 }
 
 func createServers(config *dynamic.Server) (Server, error) {
@@ -256,27 +287,6 @@ func createServers(config *dynamic.Server) (Server, error) {
 	}
 
 	return Server{Host: host, Port: port, Path: path, Description: config.Description}, nil
-}
-
-func GetEndpoint(config *dynamic.Endpoint) *Endpoint {
-	return &Endpoint{
-		Get:     GetOperation(config.Get),
-		Post:    GetOperation(config.Post),
-		Put:     GetOperation(config.Put),
-		Patch:   GetOperation(config.Patch),
-		Delete:  GetOperation(config.Delete),
-		Head:    GetOperation(config.Head),
-		Options: GetOperation(config.Options),
-		Trace:   GetOperation(config.Trace),
-	}
-
-}
-
-func GetOperation(config *dynamic.Operation) *Operation {
-	if config == nil {
-		return nil
-	}
-	return &Operation{Description: config.Description, OperationId: config.OperationId, Summary: config.Summary}
 }
 
 func getHost(s *dynamic.Server) (string, error) {
@@ -315,21 +325,72 @@ func getPort(s *dynamic.Server) (int, error) {
 	}
 }
 
-func createParameter(config *dynamic.Parameter, context *ServiceContext) (*Parameter, error) {
+func createParameter(config *dynamic.Parameter, context *serviceContext) (*Parameter, error) {
 	p := &Parameter{Name: config.Name, Description: config.Description, Required: config.Required, Schema: createSchema(config.Schema, context)}
 
 	switch strings.ToLower(config.Type) {
 	case "path":
-		p.Type = PathParameter
+		p.Location = PathParameter
 	case "query":
-		p.Type = QueryParameter
+		p.Location = QueryParameter
 	case "header":
-		p.Type = HeaderParameter
+		p.Location = HeaderParameter
 	case "cookie":
-		p.Type = CookieParameter
+		p.Location = CookieParameter
 	default:
 		return nil, fmt.Errorf("Unsupported parameter type %v", config.Type)
 	}
 
 	return p, nil
+}
+
+type serviceContext struct {
+	config *dynamic.OpenApi
+	path   string
+	Errors []string
+}
+
+func (c *serviceContext) getRequestBody(ref string) (*dynamic.RequestBody, bool) {
+	if len(ref) == 0 {
+		return nil, false
+	}
+	if ref[0] == '#' {
+		key := strings.TrimPrefix(ref, "#/components/requestBodies/")
+		if len(key) == 0 {
+			return nil, false
+		}
+		s, ok := c.config.Components.RequestBodies[key]
+		return s, ok
+	}
+	return nil, false
+}
+
+func (c *serviceContext) getSchema(ref string) (*dynamic.Schema, bool) {
+	if len(ref) == 0 {
+		return nil, false
+	}
+	if ref[0] == '#' {
+		key := strings.TrimPrefix(ref, "#/components/schemas/")
+		if len(key) == 0 {
+			return nil, false
+		}
+		s, ok := c.config.Components.Schemas[key]
+		return s, ok
+	}
+	return nil, false
+}
+
+func (c *serviceContext) getResponse(ref string) (*dynamic.Response, bool) {
+	if len(ref) == 0 {
+		return nil, false
+	}
+	if ref[0] == '#' {
+		key := strings.TrimPrefix(ref, "#/components/responses/")
+		if len(key) == 0 {
+			return nil, false
+		}
+		s, ok := c.config.Components.Responses[key]
+		return s, ok
+	}
+	return nil, false
 }

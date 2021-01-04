@@ -28,7 +28,9 @@ func (p *FileProvider) ProvideService(channel chan<- ConfigMessage) {
 }
 
 func (p *FileProvider) Close() {
-	p.close <- true
+	if p.close != nil {
+		p.close <- true
+	}
 }
 
 func (p *FileProvider) loadService(channel chan<- ConfigMessage) {
@@ -57,6 +59,11 @@ func (p *FileProvider) loadServiceFromDirectory(directory string, channel chan<-
 	}
 
 	for _, item := range fileList {
+		// TODO: make skip char configurable
+		if strings.HasPrefix(item.Name(), "_") {
+			log.Infof("skipping config %v", item.Name())
+			continue
+		}
 		if item.IsDir() {
 			p.loadServiceFromDirectory(filepath.Join(directory, item.Name()), channel)
 			continue

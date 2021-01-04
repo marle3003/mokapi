@@ -3,8 +3,10 @@ package pipeline
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"mokapi/providers/pipeline/types"
 	"reflect"
+	"regexp"
 	"strings"
 )
 
@@ -13,7 +15,35 @@ type evaluatable interface {
 }
 
 func (p *pipeline) eval(ctx *context) (types.Object, error) {
-	return p.Block.eval(ctx)
+	var result types.Object = nil
+	var err error = nil
+	for _, s := range p.Stages {
+		result, err = s.eval(ctx)
+	}
+	return result, err
+}
+
+func (s *stage) eval(ctx *context) (types.Object, error) {
+	if s.When != nil {
+		obj, err := s.When.eval(ctx)
+		if err != nil {
+			return nil, errors.Wrapf(err, "stage '%v': when", s.DisplayName())
+		}
+		if b, ok := obj.(*types.Bool); ok {
+			if !b.Value().(bool) {
+				log.Debugf("skipping stage '%v'", s.DisplayName())
+				return nil, nil
+			}
+		} else {
+			return nil, errors.Errorf("expected bool but received value '%v'", obj.GetType())
+		}
+	}
+	result, err := s.Steps.eval(ctx)
+	if err != nil {
+		return nil, errors.Wrapf(err, "stage '%v'", s.DisplayName())
+	}
+
+	return result, nil
 }
 
 func (b *block) eval(ctx *context) (types.Object, error) {
@@ -101,6 +131,16 @@ func (e *additive) eval(ctx *context) (types.Object, error) {
 	return process(e.Operator, e.Left, e.Right, ctx)
 }
 
+func (e *unary) eval(ctx *context) (types.Object, error) {
+	switch e.Operator {
+	case "!":
+		right := &literal{Bool: NewBoolean(true)}
+		return process("!=", e.Primary, right, ctx)
+	default:
+		return e.Primary.eval(ctx)
+	}
+}
+
 func (p *primary) eval(ctx *context) (types.Object, error) {
 	if p.MemberAccess != nil {
 		return p.MemberAccess.eval(ctx)
@@ -108,6 +148,10 @@ func (p *primary) eval(ctx *context) (types.Object, error) {
 		return p.Step.eval(ctx)
 	} else if p.Literal != nil {
 		return p.Literal.eval(ctx)
+	} else if p.Closure != nil {
+		return p.Closure.eval(ctx)
+	} else if p.Expression != nil {
+		return p.Expression.eval(ctx)
 	}
 
 	return nil, nil
@@ -118,6 +162,38 @@ func (l *literal) eval(ctx *context) (types.Object, error) {
 		return types.NewNumber(*l.Number), nil
 	} else if l.String != nil {
 		s := *l.String
+
+		if s[0] == '"' {
+			pat := regexp.MustCompile(`[^\\]((\${(?P<exp>.*)})|(\$(?P<var>[^{^\s]*)))`)
+			matches := pat.FindAllStringSubmatch(s, -1) // matches is [][]string
+			groupNames := pat.SubexpNames()
+			for _, match := range matches {
+				for groupIndex, group := range match {
+					if len(group) == 0 {
+						continue
+					}
+					name := groupNames[groupIndex]
+					if name == "exp" {
+						exp, err := getExpr(group)
+						if err != nil {
+							return nil, err
+						}
+						v, err := exp.eval(ctx)
+						if err != nil {
+							return nil, err
+						}
+						s = strings.ReplaceAll(s, match[1], v.String())
+					} else if name == "var" {
+						v, err := accessMember(group, make([]types.Object, 0), ctx)
+						if err != nil {
+							return nil, err
+						}
+						s = strings.ReplaceAll(s, match[1], v.String())
+					}
+				}
+			}
+		}
+
 		return types.NewString(s[1 : len(s)-1]), nil
 	} else if l.Bool != nil {
 		return types.NewBool(bool(*l.Bool)), nil
@@ -127,12 +203,6 @@ func (l *literal) eval(ctx *context) (types.Object, error) {
 }
 
 func (m *memberAccess) eval(ctx *context) (types.Object, error) {
-	path := strings.Split(m.Name, ".")
-	obj, ok := ctx.getVar(path[0])
-	if !ok {
-		return nil, fmt.Errorf("undefined identifier '%v'", path[0])
-	}
-
 	args := make([]types.Object, len(m.Args))
 	for i, arg := range m.Args {
 		v, err := arg.Value.eval(ctx)
@@ -142,11 +212,26 @@ func (m *memberAccess) eval(ctx *context) (types.Object, error) {
 		args[i] = v
 	}
 
+	return accessMember(m.Name, args, ctx)
+}
+
+func accessMember(name string, args []types.Object, ctx *context) (types.Object, error) {
+	path := strings.Split(name, ".")
+	obj, ok := ctx.getVar(path[0])
+	if !ok {
+		return nil, fmt.Errorf("undefined identifier '%v'", path[0])
+	}
+
 	return types.InvokeMember(obj, path[1:], args)
 }
 
 func (s *step) eval(ctx *context) (types.Object, error) {
-	if step, ok := ctx.getStep(s.Name); ok {
+	if v, ok := ctx.getVar(s.Name); ok {
+		if len(s.Args) > 0 {
+			return nil, errors.Errorf("closure variable not supported")
+		}
+		return v, nil
+	} else if step, ok := ctx.getStep(s.Name); ok {
 		execution := step.Start()
 
 		args := map[string]types.Object{}
@@ -169,25 +254,11 @@ func (s *step) eval(ctx *context) (types.Object, error) {
 		return result, nil
 	}
 
-	return nil, fmt.Errorf("unknown step %v", s.Name)
+	return nil, fmt.Errorf("unknown identifier %v", s.Name)
 }
 
-func (o *argumentValue) eval(ctx *context) (types.Object, error) {
-	if o.Literal != nil {
-		return o.Literal.eval(ctx)
-	} else if o.Member != nil {
-		return o.Member.eval(ctx)
-	} else if len(o.Identifier) > 0 {
-		value, ok := ctx.getVar(o.Identifier)
-		if !ok {
-			return nil, fmt.Errorf("syntax error: undefined identifier '%v'", o.Identifier)
-		}
-		return value, nil
-	} else if o.Closure != nil {
-		return o.Closure.eval(ctx)
-	}
-
-	return nil, fmt.Errorf("error in operand")
+func (v *argumentValue) eval(ctx *context) (types.Object, error) {
+	return v.Expression.eval(ctx)
 }
 
 func (c *closure) eval(ctx *context) (types.Object, error) {

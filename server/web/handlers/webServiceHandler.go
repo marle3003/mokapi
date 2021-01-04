@@ -73,7 +73,7 @@ endpointLoop:
 			match := parameterRegex.FindStringSubmatch(segment)
 			if len(match) > 1 {
 				parameterName := match[1]
-				if parameter, ok := parameters[parameterName]; ok && parameter.Type == models.PathParameter {
+				if parameter, ok := parameters[parameterName]; ok && parameter.Location == models.PathParameter {
 					parameterValue := requestSegments[index]
 					if err := validateParameterValue(parameterValue, parameter); err != nil {
 						log.Debug(err)

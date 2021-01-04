@@ -76,6 +76,8 @@ func Convert(i interface{}) (Object, error) {
 		return NewNumber(float64(v)), nil
 	case string:
 		return NewString(v), nil
+	case bool:
+		return NewBool(v), nil
 	case []interface{}:
 		a := NewArray()
 		for _, e := range v {
@@ -86,6 +88,16 @@ func Convert(i interface{}) (Object, error) {
 			a.Append(o)
 		}
 		return a, nil
+	case map[string]interface{}:
+		e := NewExpando()
+		for k, v := range v {
+			o, err := Convert(v)
+			if err != nil {
+				return nil, err
+			}
+			e.Set(k, o)
+		}
+		return e, nil
 	case interface{}:
 		return NewReference(i), nil
 	}

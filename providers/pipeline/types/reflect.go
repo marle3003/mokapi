@@ -1,7 +1,6 @@
 package types
 
 import (
-	"fmt"
 	"github.com/pkg/errors"
 	"reflect"
 	"strings"
@@ -72,7 +71,11 @@ func invokeMember(i interface{}, name string, args []Object) (Object, error) {
 		m = ptr.MethodByName(memberName)
 	}
 	if m.IsValid() {
-		return invokeMethod(m, args)
+		obj, err := invokeMethod(m, args)
+		if err != nil {
+			return nil, errors.Wrapf(err, "method %v", name)
+		}
+		return obj, nil
 	}
 
 	if class, ok := i.(Class); ok {
@@ -84,13 +87,8 @@ func invokeMember(i interface{}, name string, args []Object) (Object, error) {
 
 func invokeMethod(method reflect.Value, args []Object) (Object, error) {
 	methodInfo := method.Type()
-	if methodInfo.NumIn() > len(args) {
-		return nil, fmt.Errorf("method '%v' call with too few arguments", method.String())
-	} else if methodInfo.NumIn() < len(args) {
-		return nil, fmt.Errorf("method '%v' call with too many arguments", method.String())
-	}
 
-	callArgs, err := convertArgs(methodInfo, args)
+	callArgs, err := createArgs(methodInfo, args)
 	if err != nil {
 		return nil, err
 	}
@@ -110,15 +108,21 @@ func invokeMethod(method reflect.Value, args []Object) (Object, error) {
 	return Convert(result[0].Interface())
 }
 
-func convertArgs(method reflect.Type, args []Object) ([]reflect.Value, error) {
+func createArgs(method reflect.Type, args []Object) ([]reflect.Value, error) {
 	var callArgs []reflect.Value
 	for i := 0; i < method.NumIn(); i++ {
 		t := method.In(i)
 		v := reflect.New(t).Elem()
 
-		value, err := ConvertFrom(args[i], t)
-		if err != nil {
-			return nil, err
+		var value reflect.Value
+		var err error
+		if i < len(args) {
+			value, err = ConvertFrom(args[i], t)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			value = reflect.Zero(t)
 		}
 
 		v.Set(value)

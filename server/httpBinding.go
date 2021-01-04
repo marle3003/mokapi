@@ -3,38 +3,29 @@ package server
 import (
 	"context"
 	"fmt"
+	"github.com/pkg/errors"
 	"mokapi/models"
 	"mokapi/server/web"
 	"mokapi/server/web/handlers"
 	"strings"
-
-	"net/http"
-	"net/url"
 	"time"
 
-	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
+	"net/http"
 )
 
 type HttpBinding struct {
 	Address  string
-	Router   *mux.Router
 	server   *http.Server
-	handlers map[string]*handlers.WebServiceHandler
+	handlers map[string]map[string]*handlers.WebServiceHandler
 }
 
 func NewHttpBinding(address string) *HttpBinding {
-	router := mux.NewRouter()
-	server := &http.Server{Addr: address, Handler: router}
 	httpBinding := &HttpBinding{
 		Address:  address,
-		Router:   router,
-		server:   server,
-		handlers: make(map[string]*handlers.WebServiceHandler),
+		handlers: make(map[string]map[string]*handlers.WebServiceHandler),
 	}
-
-	router.Host(GetHost(address)).Subrouter().NewRoute().Handler(httpBinding)
-	//router.NotFoundHandler
+	httpBinding.server = &http.Server{Addr: address, Handler: httpBinding}
 
 	return httpBinding
 }
@@ -61,32 +52,37 @@ func (binding *HttpBinding) Stop() {
 func (binding *HttpBinding) Apply(data interface{}) error {
 	service, ok := data.(*models.WebService)
 	if !ok {
-		return fmt.Errorf("Unexpected parameter type %T in http binding", data)
+		return errors.Errorf("unexpected parameter type %T in http binding", data)
 	}
 
-	ok, path := binding.getServicePath(service)
-	if !ok {
-		return fmt.Errorf("No matching address (%v) found in service", binding.Address)
-	}
+	for _, server := range service.Servers {
+		address := fmt.Sprintf(":%v", server.Port)
+		if binding.Address != address {
+			continue
+		}
 
-	if handler, found := binding.handlers[path]; found {
-		if service.Name != handler.WebService.Name {
-			return fmt.Errorf("The service '%v' is already defined on path '%v'", handler.WebService.Name, path)
+		host, found := binding.handlers[server.Host]
+		if !found {
+			host = make(map[string]*handlers.WebServiceHandler)
+			binding.handlers[server.Host] = host
+		}
+
+		if handler, found := host[server.Path]; found {
+			if service.Name != handler.WebService.Name {
+				return errors.Errorf("service '%v' is already defined on path '%v'", handler.WebService.Name, server.Path)
+			}
 		} else {
-			return nil
+			log.Infof("Adding service %v at address %v on path %v", service.Name, binding.Address, server.Path)
+			handler = handlers.NewWebServiceHandler(service)
+			host[server.Path] = handler
 		}
 	}
-
-	log.Infof("Adding service %v at address %v on path %v", service.Name, binding.Address, path)
-
-	handler := handlers.NewWebServiceHandler(service)
-	binding.handlers[path] = handler
 
 	return nil
 }
 
 func (binding *HttpBinding) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	service, servicePath := binding.resolveHandler(r.URL)
+	service, servicePath := binding.resolveHandler(r)
 	if service == nil {
 		m := fmt.Sprintf("There was no service listening at %v", r.URL)
 		http.Error(w, m, http.StatusInternalServerError)
@@ -98,14 +94,16 @@ func (binding *HttpBinding) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	service.ServeHTTP(web.NewHttpContext(r, w, servicePath))
 }
 
-func (binding *HttpBinding) resolveHandler(u *url.URL) (*handlers.WebServiceHandler, string) {
+func (binding *HttpBinding) resolveHandler(r *http.Request) (*handlers.WebServiceHandler, string) {
 	var matchedPath string
 	var matchedHandler *handlers.WebServiceHandler
-	for path, handler := range binding.handlers {
-		if strings.HasPrefix(u.Path, path) {
-			if matchedPath == "" || len(matchedPath) < len(path) {
-				matchedPath = path
-				matchedHandler = handler
+	if host, ok := binding.handlers[r.Host]; ok {
+		for path, handler := range host {
+			if strings.HasPrefix(r.URL.Path, path) {
+				if matchedPath == "" || len(matchedPath) < len(path) {
+					matchedPath = path
+					matchedHandler = handler
+				}
 			}
 		}
 	}

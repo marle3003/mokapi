@@ -27,8 +27,8 @@ type Server struct {
 }
 
 func (s *Server) GetHost() string {
-	u, error := url.Parse(s.Url)
-	if error != nil {
+	u, err := url.Parse(s.Url)
+	if err != nil {
 		log.WithField("url", s.Url).Error("Invalid format in url found.")
 		return ""
 	}
@@ -36,8 +36,8 @@ func (s *Server) GetHost() string {
 }
 
 func (s *Server) GetPath() string {
-	u, error := url.Parse(s.Url)
-	if error != nil {
+	u, err := url.Parse(s.Url)
+	if err != nil {
 		log.WithField("url", s.Url).Error("Invalid format in url found.")
 		return ""
 	}
@@ -48,8 +48,8 @@ func (s *Server) GetPath() string {
 }
 
 func (s *Server) GetPort() int {
-	u, error := url.Parse(s.Url)
-	if error != nil {
+	u, err := url.Parse(s.Url)
+	if err != nil {
 		log.WithField("url", s.Url).Error("Invalid format in url found.")
 		return -1
 	}
@@ -57,8 +57,8 @@ func (s *Server) GetPort() int {
 	if len(portString) == 0 {
 		return 80
 	} else {
-		port, error := strconv.ParseInt(portString, 10, 32)
-		if error != nil {
+		port, err := strconv.ParseInt(portString, 10, 32)
+		if err != nil {
 			log.WithField("url", s.Url).Error("Invalid port format in url found.")
 		}
 		return int(port)
@@ -77,6 +77,7 @@ type Endpoint struct {
 	Options     *Operation
 	Trace       *Operation
 	Parameters  []*Parameter
+	Pipeline    string `yaml:"x-mokapi-pipeline"`
 }
 
 type Operation struct {
@@ -84,8 +85,9 @@ type Operation struct {
 	Description string
 	OperationId string
 	Parameters  []*Parameter
+	RequestBody *RequestBody `yaml:"requestBody"`
 	Responses   map[string]*Response
-	Pipeline    *string `yaml:"x-mokapi-pipeline"`
+	Pipeline    string `yaml:"x-mokapi-pipeline"`
 }
 
 type Parameter struct {
@@ -106,11 +108,20 @@ type Schema struct {
 	Faker                string `yaml:"x-faker"`
 	Items                *Schema
 	Xml                  *Xml
+	Required             []string
+}
+
+type RequestBody struct {
+	Description string
+	Content     map[string]*MediaType
+	Required    bool
+	Reference   string `yaml:"$ref"`
 }
 
 type Response struct {
 	Description string
 	Content     map[string]*MediaType
+	Reference   string `yaml:"$ref"`
 }
 
 type MediaType struct {
@@ -118,7 +129,9 @@ type MediaType struct {
 }
 
 type Components struct {
-	Schemas map[string]*Schema
+	Schemas       map[string]*Schema
+	Responses     map[string]*Response
+	RequestBodies map[string]*RequestBody
 }
 
 type Xml struct {
