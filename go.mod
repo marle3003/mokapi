@@ -6,7 +6,6 @@ require (
 	github.com/Masterminds/goutils v1.1.0 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/sprig v2.22.0+incompatible
-	github.com/alecthomas/participle/v2 v2.0.0-alpha3
 	github.com/brianvoe/gofakeit/v4 v4.2.3
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/google/uuid v1.1.1 // indirect

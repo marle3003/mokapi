@@ -6,6 +6,7 @@ import (
 	"mokapi/models"
 	"mokapi/providers/encoding"
 	"mokapi/providers/pipeline"
+	"mokapi/providers/pipeline/lang/types"
 	"mokapi/server/web"
 	"net/http"
 
@@ -60,7 +61,7 @@ func (handler *OperationHandler) ProcessRequest(context *web.HttpContext) {
 	err := pipeline.Run(
 		context.MokapiFile,
 		pipelineName,
-		pipeline.WithGlobalVars(map[pipeline.Type]interface{}{
+		pipeline.WithGlobalVars(map[types.Type]interface{}{
 			"response":  &Response{httpContext: context},
 			"Operation": operation,
 		}),
