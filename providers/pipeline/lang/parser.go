@@ -136,10 +136,14 @@ func (p *parser) parseStage() *Stage {
 	return s
 }
 
-func (p *parser) parseWhen() (expr Expression) {
+func (p *parser) parseWhen() (expr *ExprStatement) {
 	p.expect(WHEN)
 	p.expect(LBRACE)
-	expr = p.parseBinary()
+	p.scanner.UseLineEnd(true)
+	x := p.parseBinary()
+	expr = &ExprStatement{X: x}
+	p.expect(SEMICOLON)
+	p.scanner.UseLineEnd(false)
 	p.expect(RBRACE)
 	return
 }
@@ -184,8 +188,8 @@ func (p *parser) parseBinary() Expression {
 		case ADD, SUB, MUL, QUO, REM, LAND, LOR, EQL, LSS, GTR, NOT, NEQ, LEQ, GEQ:
 			op := p.tok
 			p.next()
-			y := p.parseUnary()
-			return &Binary{Lhs: x, Rhs: y, Op: op}
+			y := p.parseBinary()
+			x = &Binary{Lhs: x, Rhs: y, Op: op, Precedence: op.Precedence()}
 		default:
 			return x
 		}
@@ -212,14 +216,8 @@ L:
 				operand = &Selector{X: operand, Selector: s}
 			case STRING, RSTRING:
 				path := &PathExpr{X: operand}
-				for {
-					path.Path = append(path.Path, p.parseOperand())
-					if p.tok != PERIOD {
-						operand = path
-						break L
-					}
-					p.next()
-				}
+				path = p.parsePath(path)
+				operand = path
 			}
 		case LBRACK:
 			p.next()
@@ -231,13 +229,37 @@ L:
 		}
 	}
 
-	if p.tok != SEMICOLON && p.tok != EOF && !p.tok.isOperator() && !p.inParamList {
+	if p.tok != SEMICOLON && p.tok != EOF && !p.tok.isOperator() && !p.inParamList && p.tok != RPAREN {
 		return p.parseCall(operand)
 	}
 	return operand
 }
 
+func (p *parser) parsePath(path *PathExpr) *PathExpr {
+	current := path
+	for {
+		current.Path = p.parseOperand()
+		if p.tok == PERIOD {
+			current = &PathExpr{X: current}
+			p.next()
+		} else if p.tok != SEMICOLON && p.tok != EOF && !p.tok.isOperator() && !p.inParamList && p.tok != RPAREN {
+			current.Args = p.parseArgList()
+			if p.tok != RPAREN {
+				return current
+			}
+			p.expect(RPAREN)
+		} else {
+			return current
+		}
+	}
+}
+
 func (p *parser) parseCall(call Expression) *Call {
+	list := p.parseArgList()
+	return &Call{Args: list, Func: call}
+}
+
+func (p *parser) parseArgList() []*Argument {
 	var list []*Argument
 	p.inParamList = true
 	for p.tok != SEMICOLON && p.tok != EOF {
@@ -251,7 +273,7 @@ func (p *parser) parseCall(call Expression) *Call {
 		p.next()
 	}
 	p.inParamList = false
-	return &Call{Args: list, Func: call}
+	return list
 }
 
 func (p *parser) parseOperand() (x Expression) {
@@ -265,11 +287,38 @@ func (p *parser) parseOperand() (x Expression) {
 	case NUMBER:
 		x = &Literal{Kind: p.tok, Value: p.lit}
 		p.next()
+	case LBRACE:
+		x = p.parseClosure()
 	default:
 		p.error("expected operand")
 		p.next()
 	}
 	return
+}
+
+func (p *parser) parseClosure() *Closure {
+	p.expect(LBRACE)
+	closure := &Closure{Block: &Block{}}
+	inInput := false
+	for p.tok != RBRACE && p.tok != SEMICOLON && p.tok != EOF {
+		x := p.parseBinary()
+		if p.tok == COMMA {
+			inInput = true
+			closure.Params = append(closure.Params, x.(*Ident))
+			p.next()
+		} else if p.tok == LAMBDA {
+			closure.Params = append(closure.Params, x.(*Ident))
+			inInput = false
+			p.next()
+		} else {
+			closure.Block.Stmts = append(closure.Block.Stmts, &ExprStatement{X: x})
+		}
+	}
+	if inInput {
+		p.expectedError(LAMBDA)
+	}
+	p.expect(RBRACE)
+	return closure
 }
 
 func (p *parser) parseArgument() *Argument {

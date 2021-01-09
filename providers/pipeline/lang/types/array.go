@@ -7,6 +7,7 @@ import (
 )
 
 type Array struct {
+	ObjectImpl
 	value []Object
 }
 
@@ -43,35 +44,27 @@ func (a *Array) String() string {
 	return sb.String()
 }
 
-func (a *Array) Operator(op Operator, obj Object) (Object, error) {
-	return nil, fmt.Errorf("unsupported operation '%v' on type array", op)
-}
-
 func (a *Array) Add(obj Object) {
 	a.value = append(a.value, obj)
 }
 
 func (a *Array) Find(match Predicate) (Object, error) {
 	for _, item := range a.value {
-		if matches, err := match(item); err == nil {
-			if matches {
-				return item, nil
-			}
-		} else {
+		if matches, err := match(item); err == nil && matches {
+			return item, nil
+		} else if err != nil {
 			return nil, err
 		}
 	}
 	return nil, nil
 }
 
-func (a *Array) FindAll(match Predicate) ([]Object, error) {
-	result := make([]Object, 0)
+func (a *Array) FindAll(match Predicate) (*Array, error) {
+	result := NewArray()
 	for _, item := range a.value {
-		if matches, err := match(item); err == nil {
-			if matches {
-				result = append(result, item)
-			}
-		} else {
+		if matches, err := match(item); err == nil && matches {
+			result.Add(item)
+		} else if err != nil {
 			return nil, err
 		}
 	}
@@ -85,20 +78,3 @@ func (a *Array) GetType() reflect.Type {
 func (a *Array) Children() *Array {
 	return a
 }
-
-//func (a *Array) depthFirst() Iterator {
-//	ch := make(chan Object)
-//	go func() {
-//		defer close(ch)
-//
-//		for _, v := range a.value {
-//			if list, ok := v.(Collection); ok {
-//				for o := range list.depthFirst() {
-//					ch <- o
-//				}
-//			}
-//			ch <- v
-//		}
-//	}()
-//	return ch
-//}

@@ -4,6 +4,8 @@ import (
 	"reflect"
 )
 
+type ClosureFunc func(parameters []Object) (Object, error)
+
 type Closure struct {
 	ObjectImpl
 	value ClosureFunc

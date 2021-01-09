@@ -5,38 +5,6 @@ import (
 	"reflect"
 )
 
-type Operator string
-
-const (
-	Addition       Operator = "+"
-	Subtraction    Operator = "-"
-	Multiplication Operator = "*"
-	Division       Operator = "/"
-	Remainder      Operator = "%"
-
-	And Operator = "&&"
-	Or  Operator = "||"
-)
-
-type ValueType interface {
-	Value() interface{}
-	Operator(op Operator, obj Object) (Object, error)
-}
-
-type Comparable interface {
-	CompareTo(obj Object) (int, error)
-}
-
-type Dictionary interface {
-	Get(name string)
-}
-
-type Class interface {
-	Set(name string, obj Object) error
-}
-
-type ClosureFunc func(parameters []Object) (Object, error)
-
 func Convert(i interface{}) (Object, error) {
 	if obj, ok := i.(Object); ok {
 		return obj, nil
@@ -87,6 +55,10 @@ func ConvertFrom(obj Object, t reflect.Type) (reflect.Value, error) {
 		return reflect.Zero(t), nil
 	}
 
+	if p, ok := obj.(*Path); ok {
+		obj = p.value
+	}
+
 	switch t.Kind() {
 	case reflect.String:
 		return reflect.ValueOf(obj.String()), nil
@@ -103,13 +75,6 @@ func ConvertFrom(obj Object, t reflect.Type) (reflect.Value, error) {
 			return reflect.ValueOf(arg.value), nil
 		default:
 			return reflect.New(t), fmt.Errorf("unable to cast type %v to float", obj.GetType())
-		}
-	case reflect.Interface:
-		switch arg := obj.(type) {
-		case ValueType:
-			{
-				return reflect.ValueOf(arg.Value()), nil
-			}
 		}
 	case reflect.Func:
 		switch arg := obj.(type) {
@@ -159,11 +124,6 @@ func ConvertFrom(obj Object, t reflect.Type) (reflect.Value, error) {
 			}
 			// creating the function
 			return reflect.MakeFunc(reflect.FuncOf(ins, outs, false), fn), nil
-		}
-	default:
-		switch arg := obj.(type) {
-		case ValueType:
-			return reflect.ValueOf(arg.Value()), nil
 		}
 	}
 

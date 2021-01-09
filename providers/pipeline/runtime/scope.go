@@ -9,7 +9,7 @@ type Scope struct {
 	symbols map[string]types.Object
 }
 
-func NewContext(symbols map[string]types.Object) *Scope {
+func NewScope(symbols map[string]types.Object) *Scope {
 	return &Scope{symbols: symbols}
 }
 

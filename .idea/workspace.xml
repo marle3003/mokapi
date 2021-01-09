@@ -2,58 +2,39 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="1a9601df-4cac-4bc9-9e3a-1ba0e84e507f" name="Default Changelist" comment="refactoring but not all features are working">
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/lang/ast.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/lang/errors.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/lang/parser.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/lang/scanner.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/lang/token.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/lang/types/step.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/lang/walk.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/pipeline.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/runtime/argument.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/runtime/assign.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/runtime/call.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/runtime/context.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/runtime/expression.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/runtime/index.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/runtime/path.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/runtime/runtime.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/runtime/selector.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/runtime/stack.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/runtime/step.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/runtime/string.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/providers/pipeline/runtime/binary.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/providers/pipeline/runtime/closure.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/providers/pipeline/runtime/stage.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/ast.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/context.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/delay.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/basics/delay.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/echo.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/basics/echo.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/env.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/basics/env.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/envvars.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/runtime/envvars.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/eval.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/eval.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/fileExists.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/basics/fileExists.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/getcontext.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/basics/getcontext.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/mustache.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/basics/mustache.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/parser.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/readFile.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/basics/readFile.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/run.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/step.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/types/array.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/types/bool.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/types/closure.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/types/collection.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/types/expando.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/types/keyvalue.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/types/number.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/types/path.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/types/predicate.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/types/reference.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/types/reflect.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/types/string.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/types/types.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/variable.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/xmlpath.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/basics/xmlpath.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/yaml.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/basics/yaml.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/web/handlers/operationHandler.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/web/handlers/operationHandler.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/eval.go" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/ast.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/ast.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/parser.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/parser.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/scanner.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/scanner.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/token.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/token.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/array.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/types/array.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/bool.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/types/bool.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/closure.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/types/closure.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/collection.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/types/collection.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/expando.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/types/expando.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/node.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/types/node.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/number.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/types/number.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/object.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/types/object.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/path.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/types/path.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/predicate.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/types/predicate.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/reference.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/types/reference.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/reflect.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/types/reflect.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/step.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/types/step.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/string.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/types/string.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/types.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/types/convert.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/walk.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/walk.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/pipeline.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/pipeline.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/runtime/call.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/runtime/call.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/runtime/context.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/runtime/scope.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/runtime/expression.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/runtime/expression.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/runtime/path.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/runtime/path.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/runtime/runtime.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/runtime/runtime.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/runtime/selector.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/runtime/selector.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/runtime/stack.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/runtime/stack.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -167,7 +148,8 @@
     <MESSAGE value="removed features middleware and data provider&#10;introduced feature pipeline&#10;removed examples, must be reworked&#10;fixed some eslint errors" />
     <MESSAGE value="refactored server bindings&#10;added skippable config files/dirs with prefix '_'&#10;added requestBody property&#10;optimized pipeline name usages&#10;added pipeline steps&#10;added feature when, unary operation to pipeline&#10;added pipeline string format" />
     <MESSAGE value="added feature pathing to pipeline&#10;added operators &amp;&amp; and || to pipeline" />
-    <option name="LAST_COMMIT_MESSAGE" value="added feature pathing to pipeline&#10;added operators &amp;&amp; and || to pipeline" />
+    <MESSAGE value="refactored pipeline: replaced participle with own parser" />
+    <option name="LAST_COMMIT_MESSAGE" value="refactored pipeline: replaced participle with own parser" />
   </component>
   <component name="VgoProject">
     <integration-enabled>true</integration-enabled>
@@ -186,16 +168,6 @@
           <option name="timeStamp" value="119" />
         </line-breakpoint>
         <line-breakpoint type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/providers/pipeline/eval.go</url>
-          <line>87</line>
-          <option name="timeStamp" value="211" />
-        </line-breakpoint>
-        <line-breakpoint type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/providers/pipeline/eval.go</url>
-          <line>242</line>
-          <option name="timeStamp" value="217" />
-        </line-breakpoint>
-        <line-breakpoint type="DlvLineBreakpoint">
           <url>file://$USER_HOME$/go/pkg/mod/github.com/alecthomas/participle/v2@v2.0.0-alpha3/parser.go</url>
           <line>188</line>
           <option name="timeStamp" value="225" />
@@ -210,20 +182,10 @@
           <line>65</line>
           <option name="timeStamp" value="487" />
         </line-breakpoint>
-        <line-breakpoint type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/providers/pipeline/runtime/selector.go</url>
-          <line>29</line>
-          <option name="timeStamp" value="506" />
-        </line-breakpoint>
-        <line-breakpoint type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/providers/pipeline/lang/walk.go</url>
-          <line>37</line>
-          <option name="timeStamp" value="510" />
-        </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/providers/pipeline/lang/types/path.go</url>
-          <line>44</line>
-          <option name="timeStamp" value="520" />
+          <line>52</line>
+          <option name="timeStamp" value="607" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>

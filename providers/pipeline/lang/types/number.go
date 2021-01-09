@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"math"
+	"mokapi/providers/pipeline/lang"
 	"reflect"
 )
 
 type Number struct {
+	ObjectImpl
 	value float64
 }
 
@@ -23,27 +25,29 @@ func (n *Number) String() string {
 	return fmt.Sprintf("%v", n.value)
 }
 
-func (n *Number) Operator(op Operator, obj Object) (Object, error) {
+func (n *Number) InvokeOp(op lang.Token, obj Object) (Object, error) {
 	if other, ok := obj.(*Number); ok {
 		switch op {
-		case Addition:
+		case lang.ADD:
 			return NewNumber(n.value + other.value), nil
-		case Subtraction:
+		case lang.SUB:
 			return NewNumber(n.value - other.value), nil
-		case Multiplication:
+		case lang.MUL:
 			return NewNumber(n.value * other.value), nil
-		case Division:
+		case lang.QUO:
 			if other.value == 0 {
 				return nil, errors.New("divide by zero")
 			}
 			return NewNumber(n.value / other.value), nil
-		case Remainder:
+		case lang.REM:
 			if n.value != math.Trunc(n.value) || other.value != math.Trunc(other.value) {
 				return nil, errors.New("unable to use operator '%' on floating number")
 
 			}
 			v := float64(int64(n.value) % int64(other.value))
 			return NewNumber(v), nil
+		case lang.EQL:
+			return NewBool(n.value == other.value), nil
 
 		default:
 			return nil, fmt.Errorf("unsupported operation '%v' on type number", op)
@@ -51,8 +55,4 @@ func (n *Number) Operator(op Operator, obj Object) (Object, error) {
 	}
 	return nil, fmt.Errorf("operator '%v' is not defined on %v", op, reflect.TypeOf(obj))
 
-}
-
-func (n *Number) GetType() reflect.Type {
-	return reflect.TypeOf(n.value)
 }

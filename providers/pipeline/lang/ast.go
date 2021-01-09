@@ -28,11 +28,15 @@ type Pipeline struct {
 type Stage struct {
 	Name  string
 	Steps *StepBlock
-	When  Expression
+	When  *ExprStatement
 }
 
 type StepBlock struct {
 	Statments []Statement
+}
+
+type Block struct {
+	Stmts []Statement
 }
 
 type Assignment struct {
@@ -51,9 +55,10 @@ type Unary struct {
 }
 
 type Binary struct {
-	Lhs Expression
-	Op  Token
-	Rhs Expression
+	Lhs        Expression
+	Op         Token
+	Rhs        Expression
+	Precedence int
 }
 
 type Call struct {
@@ -68,7 +73,8 @@ type IndexExpr struct {
 
 type PathExpr struct {
 	X    Expression
-	Path []Expression
+	Path Expression
+	Args []*Argument
 }
 
 type Argument struct {
@@ -90,6 +96,11 @@ type Literal struct {
 	Value string
 }
 
+type Closure struct {
+	Params []*Ident
+	Block  *Block
+}
+
 // exprNode() ensures only expression nodes can be assigned
 func (*Ident) exprNode()     {}
 func (*Selector) exprNode()  {}
@@ -99,6 +110,7 @@ func (*Binary) exprNode()    {}
 func (*Unary) exprNode()     {}
 func (*IndexExpr) exprNode() {}
 func (*PathExpr) exprNode()  {}
+func (*Closure) exprNode()   {}
 
 // stmtNode() ensures only statement nodes can be assigned
 func (*Assignment) stmtNode()    {}

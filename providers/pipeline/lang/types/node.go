@@ -7,6 +7,7 @@ import (
 )
 
 type Node struct {
+	ObjectImpl
 	attributes map[string]string
 	children   []*Node
 	name       string
@@ -88,19 +89,4 @@ func (n *Node) FindAll(match Predicate) ([]Object, error) {
 
 func (n *Node) GetType() reflect.Type {
 	return reflect.TypeOf(n)
-}
-
-func (n *Node) depthFirst() chan Object {
-	ch := make(chan Object)
-	go func() {
-		defer close(ch)
-
-		for _, c := range n.children {
-			for o := range c.depthFirst() {
-				ch <- o
-			}
-			ch <- c
-		}
-	}()
-	return ch
 }

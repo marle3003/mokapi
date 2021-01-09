@@ -11,11 +11,12 @@ func newStack() *stack {
 }
 
 func (s *stack) Pop() (val types.Object) {
-	if len(s.values) == 0 {
+	n := len(s.values)
+	if n == 0 {
 		return
 	}
-	val = s.values[len(s.values)-1]
-	s.values = s.values[:len(s.values)-1]
+	val = s.values[n-1]
+	s.values = s.values[:n-1]
 	return
 }
 

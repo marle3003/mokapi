@@ -26,6 +26,13 @@ func runExpr(expr lang.Expression, scope *Scope) (result types.Object, err error
 	return
 }
 
+func runBlock(block *lang.Block, scope *Scope) (result types.Object, err error) {
+	v := &exprVisitor{scope: scope, stack: newStack()}
+	err = run(block, v)
+	result = v.stack.Pop()
+	return
+}
+
 func run(n lang.Node, v visitor) (err error) {
 	defer func() {
 		err = v.err()
@@ -41,6 +48,7 @@ type pipelineVisitor struct {
 	scope       *Scope
 	name        string
 	exprVisitor *exprVisitor
+	stack       *stack
 }
 
 func newPipelineVisitor(name string, scope *Scope) *pipelineVisitor {
@@ -48,6 +56,7 @@ func newPipelineVisitor(name string, scope *Scope) *pipelineVisitor {
 	return &pipelineVisitor{
 		scope:       scope,
 		name:        name,
+		stack:       stack,
 		exprVisitor: &exprVisitor{scope: scope, stack: stack},
 	}
 }
@@ -62,6 +71,11 @@ func (v *pipelineVisitor) Visit(node lang.Node) lang.Visitor {
 		if n.Name != v.name {
 			return nil
 		}
+	case *lang.Stage:
+		return &stageVisitor{stack: v.stack, outer: v, stage: n}
+	case *lang.ExprStatement:
+		// case 'when'
+		return v.exprVisitor
 	case *lang.StepBlock:
 		return v.exprVisitor
 	}

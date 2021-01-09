@@ -81,7 +81,7 @@ func Run(file, name string, options ...PipelineOptions) (err error) {
 		return
 	}
 
-	context := runtime.NewContext(builtInFunctions)
+	context := runtime.NewScope(builtInFunctions)
 	err = WithGlobalVars(map[types.Type]interface{}{
 		runtime.EnvVarsType: runtime.NewEnvVars(
 			runtime.FromOS(),

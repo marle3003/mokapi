@@ -6,6 +6,7 @@ import (
 )
 
 type Reference struct {
+	ObjectImpl
 	value interface{}
 }
 
@@ -29,6 +30,6 @@ func (r *Reference) Val() interface{} {
 	return r.value
 }
 
-func (r *Reference) Iterator() chan Object {
-	return iterator(r.value)
+func (r *Reference) InvokeFunc(name string, args map[string]Object) (Object, error) {
+	return invokeFunc(r.value, name, args)
 }

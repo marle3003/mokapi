@@ -32,6 +32,8 @@ const (
 
 	ASSIGN // =
 	DEFINE // :=
+	LAMBDA // =>
+	operatorEnd
 
 	LPAREN // (
 	RPAREN // )
@@ -41,7 +43,6 @@ const (
 
 	LBRACK
 	RBRACK
-	operatorEnd
 
 	RSTRING
 	STRING
@@ -89,6 +90,7 @@ var tokens = []string{
 
 	ASSIGN: "=",
 	DEFINE: ":=",
+	LAMBDA: "=>",
 
 	LPAREN: "(",
 	RPAREN: ")",
@@ -137,4 +139,21 @@ func (t Token) String() string {
 
 func (t Token) isKeyword() bool {
 	return t > keywordsStart && t < keywordsEnd
+}
+
+func (t Token) Precedence() int {
+	switch t {
+	case LOR:
+		return 1
+	case LAND:
+		return 2
+	case EQL, NEQ, LSS, LEQ, GTR, GEQ:
+		return 3
+	case ADD, SUB:
+		return 4
+	case MUL, QUO, REM:
+		return 5
+	default:
+		return 0
+	}
 }

@@ -229,6 +229,8 @@ func (s *Scanner) Scan() (pos Position, tok Token, lit string) {
 			s.next()
 			if s.ch == '=' {
 				tok = EQL
+			} else if s.ch == '>' {
+				tok = LAMBDA
 			} else {
 				s.offset--
 				tok = ASSIGN

@@ -2,10 +2,12 @@ package types
 
 import (
 	"fmt"
+	"mokapi/providers/pipeline/lang"
 	"reflect"
 )
 
 type Bool struct {
+	ObjectImpl
 	value bool
 }
 
@@ -21,16 +23,12 @@ func (b *Bool) Val() bool {
 	return b.value
 }
 
-func (b *Bool) GetField(name string) (Object, error) {
-	return getField(b, name)
-}
-
-func (b *Bool) Operator(op Operator, obj Object) (Object, error) {
+func (b *Bool) InvokeOp(op lang.Token, obj Object) (Object, error) {
 	if other, ok := obj.(*Bool); ok {
 		switch op {
-		case And:
+		case lang.LAND:
 			return NewBool(b.value && other.value), nil
-		case Or:
+		case lang.LOR:
 			return NewBool(b.value || other.value), nil
 		}
 	}

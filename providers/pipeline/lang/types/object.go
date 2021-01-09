@@ -2,16 +2,17 @@ package types
 
 import (
 	"github.com/pkg/errors"
+	"mokapi/providers/pipeline/lang"
 	"reflect"
-	"strconv"
-	"strings"
 )
 
 type Object interface {
 	String() string
 	GetType() reflect.Type
 	GetField(string) (Object, error)
-	//invokeMethod(string, []Object) (Object, error)
+	HasField(string) bool
+	InvokeFunc(string, map[string]Object) (Object, error)
+	InvokeOp(op lang.Token, obj Object) (Object, error)
 }
 
 type ObjectImpl struct{}
@@ -28,53 +29,14 @@ func (o *ObjectImpl) GetField(name string) (Object, error) {
 	return getField(o, name)
 }
 
-func getField(i interface{}, name string) (Object, error) {
-	if len(name) == 0 {
-		if o, ok := i.(Object); ok {
-			return o, nil
-		} else {
-			return Convert(i)
-		}
-	}
-	if obj, ok := i.(Object); ok {
-		return obj.GetField(name)
-	}
+func (o *ObjectImpl) HasField(name string) bool {
+	return hasField(o, name)
+}
 
-	v := reflect.ValueOf(i)
-	var ptr reflect.Value
-	if v.Type().Kind() == reflect.Ptr {
-		ptr = v
-		v = ptr.Elem()
-	} else {
-		ptr = reflect.New(reflect.TypeOf(i))
-		temp := ptr.Elem()
-		temp.Set(v)
-	}
+func (o *ObjectImpl) InvokeFunc(name string, args map[string]Object) (Object, error) {
+	return invokeFunc(o, name, args)
+}
 
-	var fieldValue interface{} = nil
-	if index, err := strconv.Atoi(name); err == nil {
-		if array, ok := i.(*Array); ok {
-			return array.Index(index)
-		}
-		fieldValue = v.Index(index).Interface()
-	} else {
-		fieldName := strings.Title(name)
-
-		f := v.FieldByName(fieldName)
-		if !f.IsValid() {
-			// check for field on pointer
-			f = reflect.Indirect(ptr).FieldByName(fieldName)
-		}
-		if f.IsValid() {
-			fieldValue = f.Interface()
-		} else {
-			return nil, errors.Errorf("field '%v' is not defined on type %v", name, reflect.TypeOf(i))
-		}
-	}
-
-	if o, ok := fieldValue.(Object); ok {
-		return o, nil
-	} else {
-		return Convert(fieldValue)
-	}
+func (o *ObjectImpl) InvokeOp(op lang.Token, _ Object) (Object, error) {
+	return nil, errors.Errorf("type %v does not support operator %v", o.GetType(), op)
 }

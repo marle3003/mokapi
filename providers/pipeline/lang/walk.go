@@ -19,9 +19,16 @@ func Walk(v Visitor, node Node) {
 			Walk(v, s)
 		}
 	case *Stage:
+		if n.When != nil {
+			Walk(v, n.When)
+		}
 		Walk(v, n.Steps)
 	case *StepBlock:
 		for _, s := range n.Statments {
+			Walk(v, s)
+		}
+	case *Block:
+		for _, s := range n.Stmts {
 			Walk(v, s)
 		}
 	case *Assignment:
@@ -50,9 +57,15 @@ func Walk(v Visitor, node Node) {
 		Walk(v, n.Index)
 	case *PathExpr:
 		Walk(v, n.X)
-		for _, p := range n.Path {
+		Walk(v, n.Path)
+		for _, a := range n.Args {
+			Walk(v, a)
+		}
+	case *Closure:
+		for _, p := range n.Params {
 			Walk(v, p)
 		}
+		Walk(v, n.Block)
 	case *Ident:
 	}
 	v.Visit(nil)

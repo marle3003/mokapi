@@ -1,9 +1,5 @@
 package types
 
-import (
-	"reflect"
-)
-
 type Type string
 
 type StepContext interface {
@@ -19,16 +15,5 @@ type StepExecution interface {
 }
 
 type AbstractStep struct {
-}
-
-func (s *AbstractStep) String() string {
-	return s.GetType().String()
-}
-
-func (s *AbstractStep) GetField(name string) (Object, error) {
-	return getField(s, name)
-}
-
-func (s *AbstractStep) GetType() reflect.Type {
-	return reflect.TypeOf(s)
+	ObjectImpl
 }

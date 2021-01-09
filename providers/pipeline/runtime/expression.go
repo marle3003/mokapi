@@ -33,6 +33,10 @@ func (v *exprVisitor) Visit(node lang.Node) lang.Visitor {
 		return &indexVisitor{stack: v.stack, outer: v}
 	case *lang.PathExpr:
 		return &pathVisitor{stack: v.stack, expr: n, outer: v}
+	case *lang.Binary:
+		return newBinaryVisitor(n, v.stack, v)
+	case *lang.Closure:
+		return &closureVisitor{stack: v.stack, scope: v.scope, outer: v, closure: n}
 	case *lang.Ident:
 		if o, ok := v.scope.Symbol(n.Name); ok {
 			v.stack.Push(o)

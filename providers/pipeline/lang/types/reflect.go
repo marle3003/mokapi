@@ -1,124 +1,134 @@
 package types
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"reflect"
+	"strconv"
+	"strings"
 )
 
-func SetField(_ Object, _ []string, _ Object) error {
-	return errors.Errorf("not implemented")
-}
-
-func getMember(obj Object, name string) (Object, error) {
-	v := reflect.ValueOf(obj)
-	f := v.FieldByName(name)
-	if f.IsValid() {
-		i := f.Interface()
-		if o, ok := i.(Object); ok {
-			return o, nil
-		}
-		return Convert(i)
+func hasField(i interface{}, name string) bool {
+	if len(name) == 0 {
+		return false
 	}
 
-	return nil, errors.Errorf("type %v does not container member %v", obj.GetType(), name)
+	v := reflect.ValueOf(i)
+	var ptr reflect.Value
+	if v.Type().Kind() == reflect.Ptr {
+		ptr = v
+		v = ptr.Elem()
+	} else {
+		ptr = reflect.New(reflect.TypeOf(i))
+		temp := ptr.Elem()
+		temp.Set(v)
+	}
+
+	if _, err := strconv.Atoi(name); err == nil {
+		if _, ok := i.(*Array); ok {
+			return true
+		}
+		t := reflect.TypeOf(i)
+		return t.Kind() == reflect.Slice
+	}
+	fieldName := strings.Title(name)
+	f := v.FieldByName(fieldName)
+	if !f.IsValid() {
+		// check for field on pointer
+		f = reflect.Indirect(ptr).FieldByName(fieldName)
+		return f.IsValid()
+	} else {
+		return true
+	}
 }
 
-func iterator(i interface{}) chan Object {
-	ch := make(chan Object)
-	go func() {
-		defer close(ch)
-
-		v := reflect.ValueOf(i)
-		var ptr reflect.Value
-		if v.Type().Kind() == reflect.Ptr {
-			ptr = v
-			v = ptr.Elem()
+func getField(i interface{}, name string) (Object, error) {
+	if len(name) == 0 {
+		if o, ok := i.(Object); ok {
+			return o, nil
 		} else {
-			ptr = reflect.New(reflect.TypeOf(i))
-			temp := ptr.Elem()
-			temp.Set(v)
+			return Convert(i)
 		}
+	}
 
-		for i := 0; i < v.NumField(); i++ {
-			f := v.Field(i)
-			o, err := Convert(f.Interface())
-			if err != nil {
-				log.Errorf("unable to convert %v: %v", reflect.TypeOf(i), err)
-			} else {
-				ch <- o
-			}
+	v := reflect.ValueOf(i)
+	var ptr reflect.Value
+	if v.Type().Kind() == reflect.Ptr {
+		ptr = v
+		v = ptr.Elem()
+	} else {
+		ptr = reflect.New(reflect.TypeOf(i))
+		temp := ptr.Elem()
+		temp.Set(v)
+	}
+
+	var fieldValue interface{} = nil
+	if index, err := strconv.Atoi(name); err == nil {
+		if array, ok := i.(*Array); ok {
+			return array.Index(index)
 		}
-	}()
-	return ch
+		fieldValue = v.Index(index).Interface()
+	} else {
+		fieldName := strings.Title(name)
+
+		f := v.FieldByName(fieldName)
+		if !f.IsValid() {
+			// check for field on pointer
+			f = reflect.Indirect(ptr).FieldByName(fieldName)
+		}
+		if f.IsValid() {
+			fieldValue = f.Interface()
+		} else {
+			return nil, errors.Errorf("field '%v' is not defined on type %v", name, reflect.TypeOf(i))
+		}
+	}
+
+	if o, ok := fieldValue.(Object); ok {
+		return o, nil
+	} else {
+		return Convert(fieldValue)
+	}
 }
 
-//func invokeMember(i interface{}, path *Path, args []Object) (Object, error) {
-//	v := reflect.ValueOf(i)
-//	var ptr reflect.Value
-//	if v.Type().Kind() == reflect.Ptr {
-//		ptr = v
-//		v = ptr.Elem()
-//	} else {
-//		ptr = reflect.New(reflect.TypeOf(i))
-//		temp := ptr.Elem()
-//		temp.Set(v)
-//	}
-//
-//	memberName := strings.Title(path.Head())
-//
-//	// check for field on value
-//	f := v.FieldByName(memberName)
-//	if !f.IsValid() {
-//		// check for field on pointer
-//		f = reflect.Indirect(ptr).FieldByName(memberName)
-//	}
-//	if f.IsValid() {
-//		i := f.Interface()
-//		if o, ok := i.(Object); ok {
-//			if path.MoveNext() {
-//				return path.Resolve(o)
-//			} else {
-//				return o, nil
-//			}
-//		} else {
-//			if path.MoveNext() {
-//				return invokeMember(i, path, args)
-//			} else {
-//				return Convert(i)
-//			}
-//		}
-//	}
-//
-//	//check for method on value
-//	m := v.MethodByName(memberName)
-//	if !m.IsValid() {
-//		m = ptr.MethodByName(memberName)
-//	}
-//	if m.IsValid() {
-//		obj, err := invokeMethod(m, args)
-//		if err != nil {
-//			return nil, errors.Wrapf(err, "method %v", memberName)
-//		}
-//		return obj, nil
-//	}
-//
-//	if o, ok := i.(Object); ok {
-//		return path.Resolve(o)
-//	}
-//
-//	return nil, errors.Errorf("member '%v' in path '%v' is not defined on type %v", path.Head(), path, reflect.TypeOf(i))
-//}
+func invokeFunc(i interface{}, name string, args map[string]Object) (Object, error) {
+	v := reflect.ValueOf(i)
+	var ptr reflect.Value
+	if v.Type().Kind() == reflect.Ptr {
+		ptr = v
+		v = ptr.Elem()
+	} else {
+		ptr = reflect.New(reflect.TypeOf(i))
+		temp := ptr.Elem()
+		temp.Set(v)
+	}
 
-func invokeMethod(method reflect.Value, args []Object) (Object, error) {
-	methodInfo := method.Type()
+	funcName := strings.Title(name)
 
-	callArgs, err := createArgs(methodInfo, args)
+	//check for method on value
+	m := v.MethodByName(funcName)
+	if !m.IsValid() {
+		m = ptr.MethodByName(funcName)
+	}
+	if m.IsValid() {
+		obj, err := invoke(m, args)
+		if err != nil {
+			return nil, errors.Wrapf(err, "func %v", funcName)
+		}
+		return obj, nil
+	}
+
+	return nil, errors.Errorf("func '%v' is not defined on type %v", name, reflect.TypeOf(i))
+}
+
+func invoke(f reflect.Value, args map[string]Object) (Object, error) {
+	fInfo := f.Type()
+
+	callArgs, err := createArgs(fInfo, args)
 	if err != nil {
 		return nil, err
 	}
 
-	result := method.Call(callArgs)
+	result := f.Call(callArgs)
 
 	if len(result) == 0 {
 		return nil, nil
@@ -133,16 +143,19 @@ func invokeMethod(method reflect.Value, args []Object) (Object, error) {
 	return Convert(result[0].Interface())
 }
 
-func createArgs(method reflect.Type, args []Object) ([]reflect.Value, error) {
+func createArgs(f reflect.Type, args map[string]Object) ([]reflect.Value, error) {
 	var callArgs []reflect.Value
-	for i := 0; i < method.NumIn(); i++ {
-		t := method.In(i)
+	for i := 0; i < f.NumIn(); i++ {
+		t := f.In(i)
 		v := reflect.New(t).Elem()
 
 		var value reflect.Value
 		var err error
-		if i < len(args) {
-			value, err = ConvertFrom(args[i], t)
+
+		// todo: add feature named parameter
+		k := fmt.Sprintf("%v", i)
+		if arg, ok := args[k]; ok {
+			value, err = ConvertFrom(arg, t)
 			if err != nil {
 				return nil, err
 			}
