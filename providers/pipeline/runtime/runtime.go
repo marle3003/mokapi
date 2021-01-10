@@ -14,9 +14,18 @@ type visitor interface {
 	err() error
 }
 
-func RunPipeline(f *lang.File, name string, scope *Scope) error {
+func RunPipeline(f *lang.File, name string, scope *Scope) (err error) {
 	v := newPipelineVisitor(name, scope)
-	return run(f, v)
+
+	defer func() {
+		if !v.found {
+			err = errors.Errorf("pipeline '%v' not found", name)
+		}
+	}()
+
+	err = run(f, v)
+
+	return
 }
 
 func runExpr(expr lang.Expression, scope *Scope) (result types.Object, err error) {
@@ -49,6 +58,7 @@ type pipelineVisitor struct {
 	name        string
 	exprVisitor *exprVisitor
 	stack       *stack
+	found       bool
 }
 
 func newPipelineVisitor(name string, scope *Scope) *pipelineVisitor {
@@ -70,6 +80,8 @@ func (v *pipelineVisitor) Visit(node lang.Node) lang.Visitor {
 	case *lang.Pipeline:
 		if n.Name != v.name {
 			return nil
+		} else {
+			v.found = true
 		}
 	case *lang.Stage:
 		return &stageVisitor{stack: v.stack, outer: v, stage: n}

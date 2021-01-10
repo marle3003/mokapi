@@ -17,6 +17,10 @@ func NewNumber(f float64) *Number {
 	return &Number{value: f}
 }
 
+func (n *Number) Elem() interface{} {
+	return n.value
+}
+
 func (n *Number) GetField(name string) (Object, error) {
 	return getField(n, name)
 }

@@ -96,6 +96,8 @@ type Parameter struct {
 	Schema      *Schema
 	Required    bool
 	Description string
+	Style       string
+	Explode     string // parse bool in models to support default value true
 }
 
 type Schema struct {

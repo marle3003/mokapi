@@ -31,6 +31,14 @@ func (e *Expando) String() string {
 	return sb.String()
 }
 
+func (e *Expando) Elem() interface{} {
+	result := map[string]interface{}{}
+	for key, value := range e.value {
+		result[key] = value.Elem()
+	}
+	return result
+}
+
 func (e *Expando) Set(name string, value Object) {
 	e.value[name] = value
 }

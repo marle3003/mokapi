@@ -8,13 +8,26 @@ import (
 )
 
 type pathVisitor struct {
+	scope *Scope
 	stack *stack
 	outer visitor
 	expr  *lang.PathExpr
 }
 
 func (v *pathVisitor) Visit(node lang.Node) lang.Visitor {
-	if node != nil && !v.outer.hasErrors() {
+	if v.outer.hasErrors() {
+		return nil
+	}
+	if node != nil {
+		switch n := node.(type) {
+		case *lang.Ident:
+			if o, ok := v.scope.Symbol(n.Name); ok {
+				v.stack.Push(o)
+			} else {
+				v.stack.Push(types.NewString(n.Name))
+			}
+			return nil
+		}
 		return v.outer.Visit(node)
 	}
 

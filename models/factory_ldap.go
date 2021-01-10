@@ -15,6 +15,7 @@ func (a *Application) ApplyLdap(config map[string]*dynamic.Ldap) {
 		ldapServiceInfo, found := a.LdapServices[key]
 		if !found {
 			ldapServiceInfo = NewLdapServiceInfo()
+			a.LdapServices[key] = ldapServiceInfo
 		}
 		ldapServiceInfo.Apply(item, key)
 	}

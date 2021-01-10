@@ -155,7 +155,12 @@ func createArgs(f reflect.Type, args map[string]Object) ([]reflect.Value, error)
 		// todo: add feature named parameter
 		k := fmt.Sprintf("%v", i)
 		if arg, ok := args[k]; ok {
-			value, err = ConvertFrom(arg, t)
+			o := reflect.TypeOf((*Object)(nil)).Elem()
+			if t.Implements(o) {
+				value = reflect.ValueOf(arg)
+			} else {
+				value, err = ConvertFrom(arg, t)
+			}
 			if err != nil {
 				return nil, err
 			}

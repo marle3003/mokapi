@@ -2,16 +2,37 @@ package web
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"mokapi/models"
 	"net/http"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/xmlpath.v2"
 )
+
+type ParameterParser interface {
+	parse() (interface{}, error)
+}
+
+type Parameter struct {
+	Path   map[string]interface{}
+	Query  map[string]interface{}
+	Header map[string]interface{}
+	Cookie map[string]interface{}
+}
+
+func newParamter() *Parameter {
+	return &Parameter{
+		Path:   make(map[string]interface{}),
+		Query:  make(map[string]interface{}),
+		Header: make(map[string]interface{}),
+		Cookie: make(map[string]interface{}),
+	}
+}
 
 type HttpContext struct {
 	Response http.ResponseWriter
@@ -21,7 +42,7 @@ type HttpContext struct {
 	// 2. QueryParameter
 	// 3. HeaderParameter
 	// 4. CookieParameter
-	Parameters      map[string]interface{}
+	Parameters      *Parameter
 	ResponseType    *models.Response
 	ServicPath      string
 	CurrentEndpoint *models.Endpoint
@@ -35,7 +56,7 @@ func NewHttpContext(request *http.Request, response http.ResponseWriter, service
 	return &HttpContext{Response: response,
 		Request:    request,
 		ServicPath: servicePath,
-		Parameters: make(map[string]interface{}),
+		Parameters: newParamter(),
 	}
 }
 
@@ -81,28 +102,37 @@ func (context *HttpContext) SetCurrentEndpoint(endpoint *models.Endpoint) error 
 		}
 	}
 
-	parameters := append(endpoint.Parameters, operation.Parameters...)
-	sort.SliceStable(parameters, func(i, j int) bool {
-		return parameters[i].Location < parameters[j].Location
+	params := append(endpoint.Parameters, operation.Parameters...)
+	sort.SliceStable(params, func(i, j int) bool {
+		return params[i].Location < params[j].Location
 	})
-	for _, parameter := range parameters {
-		value := ""
-
-		switch parameter.Location {
-		case models.CookieParameter:
-		case models.QueryParameter:
-			value = context.Request.URL.Query().Get(parameter.Name)
-		case models.HeaderParameter:
-			value = context.Request.Header.Get(parameter.Name)
+	for _, p := range params {
+		var parser ParameterParser
+		var store map[string]interface{}
+		switch p.Location {
+		//case models.CookieParameter:
 		case models.PathParameter:
-			if i, ok := pathParameterIndex[parameter.Name]; ok {
-				value = segments[i]
+			if i, ok := pathParameterIndex[p.Name]; ok {
+				parser = newPathParam(p, segments[i], context)
+				store = context.Parameters.Path
 			} else {
-				return fmt.Errorf("Path parameter %v not found in request %v", parameter.Name, context.Request.URL)
+				return fmt.Errorf("path parameter %v not found in request %v", p.Name, context.Request.URL)
 			}
-		}
+		case models.QueryParameter:
+			parser = newQueryParam(p, context)
+			store = context.Parameters.Query
+			//case models.HeaderParameter:
+			//	value = context.Request.Header.Get(p.Name)
+			//case models.PathParameter:
 
-		context.Parameters[parameter.Name] = value
+		}
+		if parser != nil {
+			v, err := parser.parse()
+			if err != nil {
+				return errors.Wrapf(err, "parse param '%v' from location %v", p.Name, p.Location)
+			}
+			store[p.Name] = v
+		}
 	}
 
 	return nil
@@ -150,26 +180,18 @@ func (context *HttpContext) setContentType() error {
 	return fmt.Errorf("No content type found")
 }
 
-func (context *HttpContext) SelectFromBody(selector string) (string, error) {
-	contentType := models.ParseContentType(context.Request.Header.Get("content-type"))
-
-	switch contentType.Subtype {
-	case "xml":
-		path, error := xmlpath.Compile(selector)
-		if error != nil {
-			return "", fmt.Errorf("Expecting xpath as selector with content type %v", contentType)
-		}
-		reader := strings.NewReader(context.Body())
-		node, error := xmlpath.Parse(reader)
-		if error != nil {
-			return "", fmt.Errorf("Error in xml parsing request body: %v", error.Error())
-		}
-		if value, ok := path.String(node); ok {
-			return value, nil
-		}
-	default:
-		return "", fmt.Errorf("Selection of Content type '%v' of request body is not supported", contentType)
+func (ctx *HttpContext) parse(s string, schema *models.Schema) (interface{}, error) {
+	switch schema.Type {
+	case "string":
+		return s, nil
+	case "integer":
+		return strconv.Atoi(s)
+	case "number":
+		return strconv.ParseFloat(s, 64)
+	case "boolean":
+		return strconv.ParseBool(s)
+		//case "array":
+		//case "object":
 	}
-
-	return "", nil
+	return nil, errors.Errorf("unable to parse '%v'", s)
 }

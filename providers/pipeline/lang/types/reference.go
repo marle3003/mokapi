@@ -26,7 +26,7 @@ func (r *Reference) GetField(name string) (Object, error) {
 	return getField(r.value, name)
 }
 
-func (r *Reference) Val() interface{} {
+func (r *Reference) Elem() interface{} {
 	return r.value
 }
 

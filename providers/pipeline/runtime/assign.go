@@ -14,6 +14,7 @@ type assignVisitor struct {
 	outer  visitor
 
 	setValue    func(types.Object)
+	val         types.Object
 	lhsExecuted bool
 }
 
@@ -23,23 +24,46 @@ func (v *assignVisitor) Visit(node lang.Node) lang.Visitor {
 			return v.outer.Visit(node)
 		} else {
 			switch n := node.(type) {
-			case *lang.Ident:
-				if _, ok := v.scope.Symbol(n.Name); !ok && v.assign.Tok == lang.ASSIGN {
-					v.outer.addError(errors.Errorf("undefined identifier '%v'", n.Name))
+			case *lang.SymbolRef:
+				if _, ok := v.scope.Symbol(n.Name); !ok && v.assign.Tok != lang.DEFINE {
+					v.outer.addError(errors.Errorf("unresovled reference '%v'", n.Name))
 					return nil
+				} else if ok {
+					v.val, _ = v.scope.Symbol(n.Name)
 				}
+
 				v.setValue = func(obj types.Object) {
 					v.scope.SetSymbol(n.Name, obj)
 				}
 				v.lhsExecuted = true
+				return nil
 			default:
 				v.outer.addError(errors.Errorf("unsupported operand on lhs %v", reflect.TypeOf(n)))
 			}
-			return v
+			return v.outer.Visit(node)
 		}
 	}
 
 	val := v.stack.Pop()
+
+	var err error
+	switch v.assign.Tok {
+	case lang.ADD_ASSIGN:
+		val, err = v.val.InvokeOp(lang.ADD, val)
+	case lang.SUB_ASSIGN:
+		val, err = v.val.InvokeOp(lang.SUB, val)
+	case lang.MUL_ASSIGN:
+		val, err = v.val.InvokeOp(lang.MUL, val)
+	case lang.QUO_ASSIGN:
+		val, err = v.val.InvokeOp(lang.QUO, val)
+	case lang.REM_ASSIGN:
+		val, err = v.val.InvokeOp(lang.REM, val)
+	}
+	if err != nil {
+		v.outer.addError(err)
+		return nil
+	}
+
 	if v.setValue == nil {
 		v.outer.addError(errors.Errorf("unable to assign value '%v'", val))
 	} else {

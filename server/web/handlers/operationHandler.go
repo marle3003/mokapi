@@ -65,10 +65,13 @@ func (handler *OperationHandler) ProcessRequest(context *web.HttpContext) {
 			"response":  &Response{httpContext: context},
 			"Operation": operation,
 		}),
-		pipeline.WithParams(context.Parameters),
 		pipeline.WithParams(map[string]interface{}{
 			"method": context.Request.Method,
 			"body":   bodyParam,
+			"query":  context.Parameters.Query,
+			"path":   context.Parameters.Path,
+			"header": context.Parameters.Header,
+			"cookie": context.Parameters.Cookie,
 		}),
 	)
 	if err != nil {

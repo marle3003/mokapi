@@ -19,6 +19,10 @@ func (s *String) String() string {
 	return s.value
 }
 
+func (s *String) Elem() interface{} {
+	return s.value
+}
+
 func (s *String) GetField(name string) (Object, error) {
 	return getField(s, name)
 }

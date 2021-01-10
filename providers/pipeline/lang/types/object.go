@@ -13,6 +13,7 @@ type Object interface {
 	HasField(string) bool
 	InvokeFunc(string, map[string]Object) (Object, error)
 	InvokeOp(op lang.Token, obj Object) (Object, error)
+	Elem() interface{}
 }
 
 type ObjectImpl struct{}
@@ -39,4 +40,8 @@ func (o *ObjectImpl) InvokeFunc(name string, args map[string]Object) (Object, er
 
 func (o *ObjectImpl) InvokeOp(op lang.Token, _ Object) (Object, error) {
 	return nil, errors.Errorf("type %v does not support operator %v", o.GetType(), op)
+}
+
+func (o *ObjectImpl) Elem() interface{} {
+	return nil
 }

@@ -35,8 +35,7 @@ func (v *closureVisitor) Visit(node lang.Node) lang.Visitor {
 			}
 			parameters[n] = args[i]
 		}
-		scope := NewScope(parameters)
-		scope.outer = v.scope
+		scope := NewScopeWithOuter(parameters, v.scope)
 		return runBlock(v.closure.Block, scope)
 	}
 

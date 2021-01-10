@@ -326,7 +326,23 @@ func getPort(s *dynamic.Server) (int, error) {
 }
 
 func createParameter(config *dynamic.Parameter, context *serviceContext) (*Parameter, error) {
-	p := &Parameter{Name: config.Name, Description: config.Description, Required: config.Required, Schema: createSchema(config.Schema, context)}
+	p := &Parameter{
+		Name:        config.Name,
+		Description: config.Description,
+		Required:    config.Required,
+		Schema:      createSchema(config.Schema, context),
+		Style:       config.Style,
+	}
+
+	if len(config.Explode) == 0 {
+		p.Explode = true
+	} else {
+		b, err := strconv.ParseBool(config.Explode)
+		if err != nil {
+			return nil, err
+		}
+		p.Explode = b
+	}
 
 	switch strings.ToLower(config.Type) {
 	case "path":

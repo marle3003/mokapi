@@ -10,7 +10,12 @@ type Scope struct {
 }
 
 func NewScope(symbols map[string]types.Object) *Scope {
-	return &Scope{symbols: symbols}
+	outer := &Scope{symbols: symbols}
+	return &Scope{outer: outer, symbols: make(map[string]types.Object)}
+}
+
+func NewScopeWithOuter(symbols map[string]types.Object, outer *Scope) *Scope {
+	return &Scope{outer: outer, symbols: symbols}
 }
 
 func (c *Scope) Symbol(name string) (types.Object, bool) {
@@ -30,7 +35,7 @@ func (c *Scope) SetSymbol(name string, val types.Object) {
 func (c *Scope) Get(t types.Type) interface{} {
 	key := string(t)
 	if v, ok := c.symbols[key]; ok {
-		return v.(*types.Reference).Val()
+		return v.(*types.Reference).Elem()
 	}
 
 	if c.outer != nil {

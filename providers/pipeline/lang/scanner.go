@@ -46,6 +46,8 @@ func (s *Scanner) next() {
 	if s.offset < len(s.src) {
 		if s.ch == '\n' {
 			s.pos.newLine()
+		} else {
+			s.pos.Column++
 		}
 
 		r := rune(s.src[s.offset])
@@ -191,22 +193,48 @@ func (s *Scanner) Scan() (pos Position, tok Token, lit string) {
 		case ']':
 			tok = RBRACK
 		case '+':
-			tok = ADD
+			s.next()
+			if s.ch == '=' {
+				tok = ADD_ASSIGN
+			} else {
+				s.offset--
+				tok = ADD
+			}
 		case '-':
-			tok = SUB
+			s.next()
+			if s.ch == '=' {
+				tok = SUB_ASSIGN
+			} else {
+				s.offset--
+				tok = SUB
+			}
 		case '*':
-			tok = MUL
+			s.next()
+			if s.ch == '=' {
+				tok = MUL_ASSIGN
+			} else {
+				s.offset--
+				tok = MUL
+			}
 		case '/':
 			s.next()
 			if s.ch == '/' {
 				s.skipToLineEnd()
 				return s.Scan()
+			} else if s.ch == '=' {
+				tok = QUO_ASSIGN
 			} else {
 				s.offset--
+				tok = QUO
 			}
-			tok = QUO
 		case '%':
-			tok = REM
+			s.next()
+			if s.ch == '=' {
+				tok = REM_ASSIGN
+			} else {
+				s.offset--
+				tok = REM
+			}
 		case '.':
 			tok = PERIOD
 		case '<':
@@ -263,7 +291,10 @@ func (s *Scanner) Scan() (pos Position, tok Token, lit string) {
 				tok = DEFINE
 			} else {
 				s.offset--
+				tok = COLON
 			}
+		case ',':
+			tok = COMMA
 		default:
 			lit = string(ch)
 		}

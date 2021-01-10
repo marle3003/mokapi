@@ -45,7 +45,12 @@ func (handler *WebServiceHandler) ServeHTTP(context *web.HttpContext) {
 	}
 
 	context.MokapiFile = handler.WebService.MokapiFile
-	context.SetCurrentEndpoint(endpoint)
+	if err := context.SetCurrentEndpoint(endpoint); err != nil {
+		msg := err.Error()
+		http.Error(context.Response, msg, http.StatusBadRequest)
+		log.Infof(msg)
+		return
+	}
 
 	operationHandler := NewOperationHandler()
 	operationHandler.ProcessRequest(context)

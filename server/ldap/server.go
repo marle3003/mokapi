@@ -21,11 +21,12 @@ type Server struct {
 
 func NewServer(config *models.LdapServer) *Server {
 	s := &Server{stop: make(chan bool)}
-	s.UpdateConfig(config)
+	s.Apply(config)
 	return s
 }
 
-func (s *Server) UpdateConfig(config *models.LdapServer) {
+func (s *Server) Apply(data interface{}) error {
+	config, _ := data.(*models.LdapServer)
 	shouldRestart := false
 	if s.listen != "" && s.listen != config.Address {
 		s.stop <- true
@@ -45,6 +46,7 @@ func (s *Server) UpdateConfig(config *models.LdapServer) {
 			go s.Start()
 		}
 	}
+	return nil
 }
 
 func (s *Server) Stop() {

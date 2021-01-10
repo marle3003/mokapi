@@ -40,7 +40,7 @@ func Walk(v Visitor, node Node) {
 		Walk(v, n.Lhs)
 		Walk(v, n.Rhs)
 	case *Unary:
-		Walk(v, n.Operand)
+		Walk(v, n.X)
 	case *Call:
 		Walk(v, n.Func)
 		for _, a := range n.Args {

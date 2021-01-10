@@ -50,8 +50,8 @@ type ExprStatement struct {
 }
 
 type Unary struct {
-	Op      Token
-	Operand Expression
+	Op Token
+	X  Expression
 }
 
 type Binary struct {
@@ -71,6 +71,10 @@ type IndexExpr struct {
 	Index Expression
 }
 
+type ParenExpr struct {
+	X Expression
+}
+
 type PathExpr struct {
 	X    Expression
 	Path Expression
@@ -78,8 +82,12 @@ type PathExpr struct {
 }
 
 type Argument struct {
-	Name  Expression
+	Name  string
 	Value Expression
+}
+
+type SymbolRef struct {
+	Name string
 }
 
 type Ident struct {
@@ -111,6 +119,8 @@ func (*Unary) exprNode()     {}
 func (*IndexExpr) exprNode() {}
 func (*PathExpr) exprNode()  {}
 func (*Closure) exprNode()   {}
+func (*ParenExpr) exprNode() {}
+func (*SymbolRef) exprNode() {}
 
 // stmtNode() ensures only statement nodes can be assigned
 func (*Assignment) stmtNode()    {}

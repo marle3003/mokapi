@@ -2,6 +2,8 @@ package types
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
+	"mokapi/providers/pipeline/lang"
 	"reflect"
 	"strings"
 )
@@ -17,6 +19,14 @@ func NewArray() *Array {
 
 func (a *Array) GetField(name string) (Object, error) {
 	return getField(a, name)
+}
+
+func (a *Array) Elem() interface{} {
+	var r []interface{}
+	for _, i := range a.value {
+		r = append(r, i.Elem())
+	}
+	return r
 }
 
 func (a *Array) Index(index int) (Object, error) {
@@ -48,6 +58,16 @@ func (a *Array) Add(obj Object) {
 	a.value = append(a.value, obj)
 }
 
+func (a *Array) Contains(obj Object) (*Bool, error) {
+	for _, i := range a.value {
+		r, err := i.InvokeOp(lang.EQL, obj)
+		if b, ok := r.(*Bool); err == nil && ok && b.value {
+			return b, nil
+		}
+	}
+	return NewBool(false), nil
+}
+
 func (a *Array) Find(match Predicate) (Object, error) {
 	for _, item := range a.value {
 		if matches, err := match(item); err == nil && matches {
@@ -77,4 +97,12 @@ func (a *Array) GetType() reflect.Type {
 
 func (a *Array) Children() *Array {
 	return a
+}
+
+func (a *Array) InvokeOp(op lang.Token, _ Object) (Object, error) {
+	return nil, errors.Errorf("type array does not support operator %v", op)
+}
+
+func (a *Array) InvokeFunc(name string, args map[string]Object) (Object, error) {
+	return invokeFunc(a, name, args)
 }

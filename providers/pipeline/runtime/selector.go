@@ -6,13 +6,27 @@ import (
 )
 
 type selectorVisitor struct {
+	scope  *Scope
 	stack  *stack
 	outer  visitor
 	inCall bool
 }
 
+func newSelectorVisitor(scope *Scope, stack *stack, inCall bool, root bool, outer visitor) *selectorVisitor {
+	return &selectorVisitor{
+		scope:  scope,
+		stack:  stack,
+		outer:  outer,
+		inCall: inCall,
+	}
+}
+
 func (v *selectorVisitor) Visit(node lang.Node) lang.Visitor {
-	if node != nil && !v.outer.hasErrors() {
+	if v.outer.hasErrors() {
+		return nil
+	}
+
+	if node != nil {
 		return v.outer.Visit(node)
 	}
 
@@ -27,6 +41,14 @@ func (v *selectorVisitor) Visit(node lang.Node) lang.Visitor {
 		v.outer.addError(errors.Errorf("null reference"))
 		return nil
 	}
+	//if v.root {
+	//	var ok bool
+	//	obj, ok = v.scope.Symbol(obj.String())
+	//	if !ok {
+	//		v.outer.addError(errors.Errorf("%v is not defined", obj))
+	//		return nil
+	//	}
+	//}
 
 	name := selector.String()
 	if obj.HasField(name) {
@@ -43,7 +65,7 @@ func (v *selectorVisitor) Visit(node lang.Node) lang.Visitor {
 		} else {
 			val, err := obj.InvokeFunc(name, nil)
 			if err != nil {
-				v.outer.addError(err)
+				v.outer.addError(errors.Errorf("field or function %v not found", name))
 			} else {
 				v.stack.Push(val)
 			}

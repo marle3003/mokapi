@@ -1,6 +1,8 @@
 package lang
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type Token int
 
@@ -18,8 +20,16 @@ const (
 	QUO // /
 	REM // %
 
+	ADD_ASSIGN
+	SUB_ASSIGN
+	MUL_ASSIGN
+	QUO_ASSIGN
+	REM_ASSIGN
+
 	LAND // &&
 	LOR  // ||
+	INC
+	DEC
 
 	EQL // ==
 	LSS // <
@@ -50,6 +60,7 @@ const (
 	COMMA
 	PERIOD
 	SEMICOLON
+	COLON
 
 	COMMENT
 
@@ -76,8 +87,16 @@ var tokens = []string{
 	QUO: "/",
 	REM: "&",
 
+	ADD_ASSIGN: "+=",
+	SUB_ASSIGN: "-=",
+	MUL_ASSIGN: "*=",
+	QUO_ASSIGN: "/=",
+	REM_ASSIGN: "%=",
+
 	LAND: "&&",
 	LOR:  "||",
+	INC:  "++",
+	DEC:  "--",
 
 	EQL: "==",
 	LSS: "<",
@@ -107,6 +126,7 @@ var tokens = []string{
 	COMMA:     ",",
 	PERIOD:    ".",
 	SEMICOLON: ";",
+	COLON:     ":",
 
 	COMMENT: "//",
 
@@ -156,4 +176,8 @@ func (t Token) Precedence() int {
 	default:
 		return 0
 	}
+}
+
+func (t Token) IsExprEnd() bool {
+	return t == SEMICOLON || t == EOF || t == RPAREN || t == RBRACE
 }

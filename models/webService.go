@@ -246,6 +246,14 @@ type Parameter struct {
 	// A brief description of the parameter. This could contain examples
 	// of use. CommonMark syntax MAY be used for rich text representation.
 	Description string
+
+	// Defines how multiple values are delimited. Possible styles depend on
+	// the parameter location
+	Style string
+
+	// specifies whether arrays and objects should generate separate
+	// parameters for each array item or object property
+	Explode bool
 }
 
 type ParameterLocation int

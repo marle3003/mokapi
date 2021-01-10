@@ -6,6 +6,7 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/models"
+	"mokapi/server/ldap"
 )
 
 type Binding interface {
@@ -67,6 +68,17 @@ func (s *Server) updateBindings() {
 			if err != nil {
 				log.Error(err.Error())
 			}
+		}
+
+	}
+
+	for _, config := range s.application.LdapServices {
+		if b, ok := s.Bindings[config.Data.Address]; !ok {
+			lserver := ldap.NewServer(config.Data)
+			s.Bindings[config.Data.Address] = lserver
+			lserver.Start()
+		} else {
+			b.Apply(config.Data)
 		}
 
 	}

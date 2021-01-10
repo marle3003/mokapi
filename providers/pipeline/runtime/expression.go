@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"github.com/pkg/errors"
 	"mokapi/providers/pipeline/lang"
 	"mokapi/providers/pipeline/lang/types"
 	"strconv"
@@ -28,20 +29,23 @@ func (v *exprVisitor) Visit(node lang.Node) lang.Visitor {
 		v.stack.Reset()
 		return &assignVisitor{scope: v.scope, stack: v.stack, assign: n, outer: v}
 	case *lang.Selector:
-		return &selectorVisitor{stack: v.stack, outer: v}
+		return &selectorVisitor{scope: v.scope, stack: v.stack, outer: v}
 	case *lang.IndexExpr:
 		return &indexVisitor{stack: v.stack, outer: v}
 	case *lang.PathExpr:
-		return &pathVisitor{stack: v.stack, expr: n, outer: v}
+		return &pathVisitor{scope: v.scope, stack: v.stack, expr: n, outer: v}
 	case *lang.Binary:
 		return newBinaryVisitor(n, v.stack, v)
 	case *lang.Closure:
 		return &closureVisitor{stack: v.stack, scope: v.scope, outer: v, closure: n}
 	case *lang.Ident:
+		v.stack.Push(types.NewString(n.Name))
+	case *lang.SymbolRef:
 		if o, ok := v.scope.Symbol(n.Name); ok {
 			v.stack.Push(o)
 		} else {
-			v.stack.Push(types.NewString(n.Name))
+			v.addError(errors.Errorf("%v is not defined", n.Name))
+			return nil
 		}
 	case *lang.Literal:
 		switch n.Kind {

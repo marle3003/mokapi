@@ -23,6 +23,10 @@ func (b *Bool) Val() bool {
 	return b.value
 }
 
+func (b *Bool) Elem() interface{} {
+	return b.value
+}
+
 func (b *Bool) InvokeOp(op lang.Token, obj Object) (Object, error) {
 	if other, ok := obj.(*Bool); ok {
 		switch op {

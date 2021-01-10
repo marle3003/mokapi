@@ -22,11 +22,7 @@ func (v *callVisitor) Visit(node lang.Node) lang.Visitor {
 	if node != nil {
 		switch n := node.(type) {
 		case *lang.Selector:
-			return &selectorVisitor{
-				stack:  v.stack,
-				outer:  v,
-				inCall: true,
-			}
+			return newSelectorVisitor(v.scope, v.stack, true, true, v.outer)
 		case *lang.Ident:
 			if o, ok := v.scope.Symbol(n.Name); ok {
 				v.stack.Push(nil)

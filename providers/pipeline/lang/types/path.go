@@ -31,6 +31,10 @@ func (p *Path) String() string {
 	return fmt.Sprintf("%v", p.value)
 }
 
+func (p *Path) Elem() interface{} {
+	return p.value.Elem()
+}
+
 func (p *Path) Resolve(path string, args map[string]Object) (*Path, error) {
 	current := p.value
 	var err error

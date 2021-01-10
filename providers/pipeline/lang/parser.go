@@ -154,10 +154,14 @@ func (p *parser) parseSteps() *StepBlock {
 	p.scanner.UseLineEnd(true)
 	var list []Statement
 	for {
-		list = append(list, p.parseStatement())
+		if p.tok == SEMICOLON {
+			p.next()
+			continue
+		}
 		if p.tok == RBRACE || p.tok == EOF {
 			break
 		}
+		list = append(list, p.parseStatement())
 	}
 	p.scanner.UseLineEnd(false)
 	p.expect(RBRACE)
@@ -167,7 +171,7 @@ func (p *parser) parseSteps() *StepBlock {
 func (p *parser) parseStatement() (stmt Statement) {
 	lhs := p.parseBinary()
 	switch p.tok {
-	case DEFINE, ASSIGN:
+	case DEFINE, ASSIGN, ADD_ASSIGN, SUB_ASSIGN, MUL_ASSIGN, QUO_ASSIGN, REM_ASSIGN:
 		assignTok := p.tok
 		p.next()
 		rhs := p.parseBinary()
@@ -199,11 +203,18 @@ func (p *parser) parseBinary() Expression {
 }
 
 func (p *parser) parseUnary() Expression {
+	switch p.tok {
+	case NOT:
+		op := p.tok
+		p.next()
+		x := p.parseUnary()
+		return &Unary{X: x, Op: op}
+	}
 	return p.parsePrimary()
 }
 
 func (p *parser) parsePrimary() Expression {
-	operand := p.parseOperand()
+	operand := p.parseOperand(true)
 
 L:
 	for {
@@ -212,7 +223,7 @@ L:
 			p.next()
 			switch p.tok {
 			case IDENT:
-				s := p.parseOperand()
+				s := p.parseOperand(false)
 				operand = &Selector{X: operand, Selector: s}
 			case STRING, RSTRING:
 				path := &PathExpr{X: operand}
@@ -221,7 +232,7 @@ L:
 			}
 		case LBRACK:
 			p.next()
-			index := p.parseOperand()
+			index := p.parseOperand(false)
 			operand = &IndexExpr{X: operand, Index: index}
 			p.expect(RBRACK)
 		default:
@@ -229,7 +240,7 @@ L:
 		}
 	}
 
-	if p.tok != SEMICOLON && p.tok != EOF && !p.tok.isOperator() && !p.inParamList && p.tok != RPAREN {
+	if !p.tok.IsExprEnd() && !p.tok.isOperator() && !p.inParamList {
 		return p.parseCall(operand)
 	}
 	return operand
@@ -238,7 +249,7 @@ L:
 func (p *parser) parsePath(path *PathExpr) *PathExpr {
 	current := path
 	for {
-		current.Path = p.parseOperand()
+		current.Path = p.parseOperand(false)
 		if p.tok == PERIOD {
 			current = &PathExpr{X: current}
 			p.next()
@@ -262,10 +273,10 @@ func (p *parser) parseCall(call Expression) *Call {
 func (p *parser) parseArgList() []*Argument {
 	var list []*Argument
 	p.inParamList = true
-	for p.tok != SEMICOLON && p.tok != EOF {
+	for !p.tok.IsExprEnd() {
 		list = append(list, p.parseArgument())
 		if p.tok != COMMA {
-			if p.tok != SEMICOLON {
+			if !p.tok.IsExprEnd() {
 				p.expect(COMMA)
 			}
 			break
@@ -276,10 +287,14 @@ func (p *parser) parseArgList() []*Argument {
 	return list
 }
 
-func (p *parser) parseOperand() (x Expression) {
+func (p *parser) parseOperand(first bool) (x Expression) {
 	switch p.tok {
 	case IDENT:
-		x = &Ident{Name: p.lit}
+		if first {
+			x = &SymbolRef{Name: p.lit}
+		} else {
+			x = &Ident{Name: p.lit}
+		}
 		p.next()
 	case STRING, RSTRING:
 		x = &Literal{Kind: p.tok, Value: p.lit}
@@ -289,6 +304,10 @@ func (p *parser) parseOperand() (x Expression) {
 		p.next()
 	case LBRACE:
 		x = p.parseClosure()
+	case LPAREN:
+		p.next()
+		x = &ParenExpr{X: p.parseBinary()}
+		p.expect(RPAREN)
 	default:
 		p.error("expected operand")
 		p.next()
@@ -298,17 +317,16 @@ func (p *parser) parseOperand() (x Expression) {
 
 func (p *parser) parseClosure() *Closure {
 	p.expect(LBRACE)
+	oldInParamList := p.inParamList
+	p.inParamList = false
 	closure := &Closure{Block: &Block{}}
 	inInput := false
 	for p.tok != RBRACE && p.tok != SEMICOLON && p.tok != EOF {
 		x := p.parseBinary()
-		if p.tok == COMMA {
-			inInput = true
-			closure.Params = append(closure.Params, x.(*Ident))
-			p.next()
-		} else if p.tok == LAMBDA {
-			closure.Params = append(closure.Params, x.(*Ident))
-			inInput = false
+		if p.tok == COMMA || p.tok == LAMBDA {
+			inInput = p.tok == COMMA
+			ident := &Ident{Name: x.(*SymbolRef).Name}
+			closure.Params = append(closure.Params, ident)
 			p.next()
 		} else {
 			closure.Block.Stmts = append(closure.Block.Stmts, &ExprStatement{X: x})
@@ -318,6 +336,7 @@ func (p *parser) parseClosure() *Closure {
 		p.expectedError(LAMBDA)
 	}
 	p.expect(RBRACE)
+	p.inParamList = oldInParamList
 	return closure
 }
 
@@ -325,11 +344,12 @@ func (p *parser) parseArgument() *Argument {
 	arg := &Argument{}
 
 	expr := p.parseBinary()
-	if p.tok != COMMA && p.tok != SEMICOLON {
+	if p.tok != COMMA && !p.tok.IsExprEnd() {
+		p.expect(COLON)
 		arg.Value = p.parseBinary()
-		arg.Name = expr
+		arg.Name = expr.(*SymbolRef).Name
 	} else {
-		arg.Name = &Ident{}
+		arg.Name = ""
 		arg.Value = expr
 	}
 
