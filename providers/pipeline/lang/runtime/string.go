@@ -1,13 +1,14 @@
 package runtime
 
 import (
-	"mokapi/providers/pipeline/lang"
+	"mokapi/providers/pipeline/lang/ast"
+	"mokapi/providers/pipeline/lang/parser"
 	"regexp"
 	"strings"
 )
 
-func format(s string, scope *Scope) (string, error) {
-	pat := regexp.MustCompile(`[^\\]((\${(?P<exp>.*)})|(\$(?P<var>[^{^\s]*)))`)
+func format(s string, scope *ast.Scope) (string, error) {
+	pat := regexp.MustCompile(`[^\\]((\${(?P<exp>[^}]*)})|(\$(?P<var>[^{^\s]*)))`)
 	matches := pat.FindAllStringSubmatch(s, -1) // matches is [][]string
 	groupNames := pat.SubexpNames()
 	for _, match := range matches {
@@ -17,7 +18,7 @@ func format(s string, scope *Scope) (string, error) {
 			}
 			name := groupNames[groupIndex]
 			if name == "exp" || name == "var" {
-				expr, err := lang.ParseExpr([]byte(group))
+				expr, err := parser.ParseExpr([]byte(group), scope)
 				if err != nil {
 					return "", err
 				}

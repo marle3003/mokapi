@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"mokapi/providers/encoding"
 	"reflect"
 )
 
@@ -24,6 +25,8 @@ func Convert(i interface{}) (Object, error) {
 		return NewString(v), nil
 	case bool:
 		return NewBool(v), nil
+	case *encoding.XmlNode:
+		return ParseNode(v), nil
 	case []interface{}:
 		a := NewArray()
 		for _, e := range v {
@@ -41,7 +44,7 @@ func Convert(i interface{}) (Object, error) {
 			if err != nil {
 				return nil, err
 			}
-			e.Set(k, o)
+			e.SetField(k, o)
 		}
 		return e, nil
 	case interface{}:

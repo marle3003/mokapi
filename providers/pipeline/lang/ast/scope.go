@@ -1,29 +1,33 @@
-package runtime
+package ast
 
 import (
 	"mokapi/providers/pipeline/lang/types"
 )
 
 type Scope struct {
-	outer   *Scope
+	Outer   *Scope
 	symbols map[string]types.Object
 }
 
 func NewScope(symbols map[string]types.Object) *Scope {
 	outer := &Scope{symbols: symbols}
-	return &Scope{outer: outer, symbols: make(map[string]types.Object)}
+	return OpenScope(outer)
+}
+
+func OpenScope(outer *Scope) *Scope {
+	return &Scope{Outer: outer, symbols: make(map[string]types.Object)}
 }
 
 func NewScopeWithOuter(symbols map[string]types.Object, outer *Scope) *Scope {
-	return &Scope{outer: outer, symbols: symbols}
+	return &Scope{Outer: outer, symbols: symbols}
 }
 
 func (c *Scope) Symbol(name string) (types.Object, bool) {
 	if v, ok := c.symbols[name]; ok {
 		return v, true
 	}
-	if c.outer != nil {
-		return c.outer.Symbol(name)
+	if c.Outer != nil {
+		return c.Outer.Symbol(name)
 	}
 	return nil, false
 }
@@ -38,8 +42,8 @@ func (c *Scope) Get(t types.Type) interface{} {
 		return v.(*types.Reference).Elem()
 	}
 
-	if c.outer != nil {
-		return c.outer.Get(t)
+	if c.Outer != nil {
+		return c.Outer.Get(t)
 	}
 
 	return nil

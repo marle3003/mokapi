@@ -1,6 +1,7 @@
 package basics
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
 	"io/ioutil"
@@ -9,20 +10,19 @@ import (
 	"path/filepath"
 )
 
-type ReadFileStep struct {
+type JsonStep struct {
 	types.AbstractStep
 }
 
-type ReadFileStepExecution struct {
-	File     string `step:"file,position=0,required"`
-	AsString bool
+type JsonExecution struct {
+	File string `step:"file,required"`
 }
 
-func (e *ReadFileStep) Start() types.StepExecution {
-	return &ReadFileStepExecution{AsString: true}
+func (e *JsonStep) Start() types.StepExecution {
+	return &JsonExecution{}
 }
 
-func (e *ReadFileStepExecution) Run(ctx types.StepContext) (interface{}, error) {
+func (e *JsonExecution) Run(ctx types.StepContext) (interface{}, error) {
 	env, ok := ctx.Get(runtime.EnvVarsType).(runtime.EnvVars)
 	if !ok {
 		return nil, errors.Errorf("env not defined")
@@ -32,14 +32,16 @@ func (e *ReadFileStepExecution) Run(ctx types.StepContext) (interface{}, error) 
 
 	file := filepath.Join(dir, fmt.Sprintf("%v", e.File))
 
-	bytes, err := ioutil.ReadFile(file)
+	data, err := ioutil.ReadFile(file)
 	if err != nil {
 		return nil, err
 	}
 
-	if e.AsString {
-		return string(bytes), nil
+	var m interface{}
+	err = json.Unmarshal(data, &m)
+	if err != nil {
+		return nil, errors.Wrapf(err, "parsing JSON file %s", e.File)
 	}
 
-	return bytes, nil
+	return convertObject(m), nil
 }

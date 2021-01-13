@@ -2,7 +2,7 @@ package runtime
 
 import (
 	"github.com/pkg/errors"
-	"mokapi/providers/pipeline/lang"
+	"mokapi/providers/pipeline/lang/ast"
 )
 
 type indexVisitor struct {
@@ -10,7 +10,7 @@ type indexVisitor struct {
 	outer visitor
 }
 
-func (v *indexVisitor) Visit(node lang.Node) lang.Visitor {
+func (v *indexVisitor) Visit(node ast.Node) ast.Visitor {
 	if node != nil && !v.outer.hasErrors() {
 		return v.outer.Visit(node)
 	}

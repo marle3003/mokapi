@@ -2,63 +2,59 @@ package runtime
 
 import (
 	"github.com/pkg/errors"
-	"mokapi/providers/pipeline/lang"
+	"mokapi/providers/pipeline/lang/ast"
+	"mokapi/providers/pipeline/lang/token"
 	"mokapi/providers/pipeline/lang/types"
 	"strconv"
 )
 
 type exprVisitor struct {
 	visitorImpl
-	scope *Scope
+	scope *ast.Scope
 	stack *stack
 }
 
-func (v *exprVisitor) Visit(node lang.Node) lang.Visitor {
+func (v *exprVisitor) Visit(node ast.Node) ast.Visitor {
 	if v.hasErrors() {
 		return nil
 	}
 
 	switch n := node.(type) {
-	case *lang.Call:
+	case *ast.Call:
 		return &callVisitor{scope: v.scope, stack: v.stack, call: n, outer: v}
-	case *lang.Argument:
+	case *ast.Argument:
 		return &argumentVisitor{scope: v.scope, stack: v.stack, argument: n, outer: v}
-	case *lang.ExprStatement:
+	case *ast.ExprStatement:
 		v.stack.Reset()
-	case *lang.Assignment:
+	case *ast.Assignment:
 		v.stack.Reset()
 		return &assignVisitor{scope: v.scope, stack: v.stack, assign: n, outer: v}
-	case *lang.Selector:
-		return &selectorVisitor{scope: v.scope, stack: v.stack, outer: v}
-	case *lang.IndexExpr:
+	case *ast.IndexExpr:
 		return &indexVisitor{stack: v.stack, outer: v}
-	case *lang.PathExpr:
+	case *ast.PathExpr:
 		return &pathVisitor{scope: v.scope, stack: v.stack, expr: n, outer: v}
-	case *lang.Binary:
+	case *ast.Binary:
 		return newBinaryVisitor(n, v.stack, v)
-	case *lang.Closure:
+	case *ast.Closure:
 		return &closureVisitor{stack: v.stack, scope: v.scope, outer: v, closure: n}
-	case *lang.Ident:
-		v.stack.Push(types.NewString(n.Name))
-	case *lang.SymbolRef:
+	case *ast.Ident:
 		if o, ok := v.scope.Symbol(n.Name); ok {
 			v.stack.Push(o)
 		} else {
-			v.addError(errors.Errorf("%v is not defined", n.Name))
-			return nil
+			v.addError(errors.Errorf("Unresolved symbol '%v'", n.Name))
 		}
-	case *lang.Literal:
+	case *ast.Literal:
 		switch n.Kind {
-		case lang.STRING:
+		case token.STRING:
 			s, err := format(n.Value, v.scope)
 			if err != nil {
 				v.addError(err)
 				return nil
 			}
 			v.stack.Push(types.NewString(s))
-		case lang.RSTRING:
+		case token.RSTRING:
 			v.stack.Push(types.NewString(n.Value))
-		case lang.NUMBER:
+		case token.NUMBER:
 			f, err := strconv.ParseFloat(n.Value, 64)
 			if err != nil {
 				v.addError(err)

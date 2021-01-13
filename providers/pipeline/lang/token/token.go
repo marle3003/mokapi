@@ -1,4 +1,4 @@
-package lang
+package token
 
 import (
 	"fmt"
@@ -71,6 +71,7 @@ const (
 	STAGE
 	STEPS
 	WHEN
+	VAR
 	keywordsEnd
 )
 
@@ -135,18 +136,26 @@ var tokens = []string{
 	STAGE:    "stage",
 	STEPS:    "steps",
 	WHEN:     "when",
+	VAR:      "var",
 }
 
-var keywords map[string]Token
+var Keywords map[string]Token
 
-func lockup(ident string) Token {
-	if tok, b := keywords[ident]; b {
+func Init() {
+	Keywords = make(map[string]Token)
+	for i := keywordsStart + 1; i < keywordsEnd; i++ {
+		Keywords[tokens[i]] = i
+	}
+}
+
+func Loockup(ident string) Token {
+	if tok, b := Keywords[ident]; b {
 		return tok
 	}
 	return IDENT
 }
 
-func (t Token) isOperator() bool {
+func (t Token) IsOperator() bool {
 	return t > operatorStart && t < operatorEnd
 }
 
@@ -157,7 +166,7 @@ func (t Token) String() string {
 	return fmt.Sprintf("token(%v)", int(t))
 }
 
-func (t Token) isKeyword() bool {
+func (t Token) IsKeyword() bool {
 	return t > keywordsStart && t < keywordsEnd
 }
 

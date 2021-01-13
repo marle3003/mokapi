@@ -2,19 +2,19 @@ package runtime
 
 import (
 	"fmt"
-	"mokapi/providers/pipeline/lang"
+	"mokapi/providers/pipeline/lang/ast"
 	"mokapi/providers/pipeline/lang/types"
 )
 
 type closureVisitor struct {
 	visitorImpl
-	scope   *Scope
+	scope   *ast.Scope
 	stack   *stack
-	closure *lang.Closure
+	closure *ast.Closure
 	outer   visitor
 }
 
-func (v *closureVisitor) Visit(node lang.Node) lang.Visitor {
+func (v *closureVisitor) Visit(node ast.Node) ast.Visitor {
 	if v.outer.hasErrors() {
 		return nil
 	}
@@ -35,7 +35,7 @@ func (v *closureVisitor) Visit(node lang.Node) lang.Visitor {
 			}
 			parameters[n] = args[i]
 		}
-		scope := NewScopeWithOuter(parameters, v.scope)
+		scope := ast.NewScopeWithOuter(parameters, v.scope)
 		return runBlock(v.closure.Block, scope)
 	}
 

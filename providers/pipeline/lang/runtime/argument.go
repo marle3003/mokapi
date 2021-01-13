@@ -1,18 +1,18 @@
 package runtime
 
 import (
-	"mokapi/providers/pipeline/lang"
+	"mokapi/providers/pipeline/lang/ast"
 	"mokapi/providers/pipeline/lang/types"
 )
 
 type argumentVisitor struct {
-	scope    *Scope
+	scope    *ast.Scope
 	stack    *stack
-	argument *lang.Argument
+	argument *ast.Argument
 	outer    visitor
 }
 
-func (v *argumentVisitor) Visit(node lang.Node) lang.Visitor {
+func (v *argumentVisitor) Visit(node ast.Node) ast.Visitor {
 	if v.outer.hasErrors() {
 		return nil
 	}

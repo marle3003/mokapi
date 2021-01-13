@@ -3,7 +3,7 @@ package types
 import (
 	"fmt"
 	"github.com/pkg/errors"
-	"mokapi/providers/pipeline/lang"
+	"mokapi/providers/pipeline/lang/token"
 	"reflect"
 	"strings"
 )
@@ -37,10 +37,6 @@ func (a *Array) Index(index int) (Object, error) {
 	return nil, fmt.Errorf("syntax error: index '%v' out of range", index)
 }
 
-func (a *Array) Set(v []Object) {
-	a.value = v
-}
-
 func (a *Array) String() string {
 	sb := strings.Builder{}
 	sb.WriteString("[")
@@ -60,12 +56,21 @@ func (a *Array) Add(obj Object) {
 
 func (a *Array) Contains(obj Object) (*Bool, error) {
 	for _, i := range a.value {
-		r, err := i.InvokeOp(lang.EQL, obj)
+		r, err := i.InvokeOp(token.EQL, obj)
 		if b, ok := r.(*Bool); err == nil && ok && b.value {
 			return b, nil
 		}
 	}
 	return NewBool(false), nil
+}
+
+func (a *Array) Set(o Object) error {
+	if v, isArray := o.(*Array); isArray {
+		a.value = v.value
+		return nil
+	} else {
+		return errors.Errorf("type '%v' can not be set to array", o.GetType())
+	}
 }
 
 func (a *Array) Find(match Predicate) (Object, error) {
@@ -99,7 +104,7 @@ func (a *Array) Children() *Array {
 	return a
 }
 
-func (a *Array) InvokeOp(op lang.Token, _ Object) (Object, error) {
+func (a *Array) InvokeOp(op token.Token, _ Object) (Object, error) {
 	return nil, errors.Errorf("type array does not support operator %v", op)
 }
 

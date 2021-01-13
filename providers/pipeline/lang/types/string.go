@@ -2,7 +2,8 @@ package types
 
 import (
 	"fmt"
-	"mokapi/providers/pipeline/lang"
+	"github.com/pkg/errors"
+	"mokapi/providers/pipeline/lang/token"
 	"reflect"
 )
 
@@ -27,13 +28,22 @@ func (s *String) GetField(name string) (Object, error) {
 	return getField(s, name)
 }
 
-func (s *String) InvokeOp(op lang.Token, obj Object) (Object, error) {
+func (b *String) Set(o Object) error {
+	if v, isString := o.(*String); isString {
+		b.value = v.value
+		return nil
+	} else {
+		return errors.Errorf("type '%v' can not be set to string", o.GetType())
+	}
+}
+
+func (s *String) InvokeOp(op token.Token, obj Object) (Object, error) {
 	switch op {
-	case lang.ADD:
+	case token.ADD:
 		return NewString(s.value + obj.String()), nil
-	case lang.EQL:
+	case token.EQL:
 		return NewBool(s.value == obj.String()), nil
-	case lang.NEQ:
+	case token.NEQ:
 		return NewBool(s.value != obj.String()), nil
 	default:
 		return nil, fmt.Errorf("unsupported operation '%v' on type string", op)

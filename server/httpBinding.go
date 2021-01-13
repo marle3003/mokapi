@@ -32,6 +32,7 @@ func NewHttpBinding(address string) *HttpBinding {
 
 func (binding *HttpBinding) Start() {
 	go func() {
+		log.Infof("Starting web binding %v", binding.Address)
 		binding.server.ListenAndServe()
 	}()
 }
@@ -63,6 +64,7 @@ func (binding *HttpBinding) Apply(data interface{}) error {
 
 		host, found := binding.handlers[server.Host]
 		if !found {
+			log.Infof("Adding new host '%v' on binding %v", server.Host, binding.Address)
 			host = make(map[string]*handlers.WebServiceHandler)
 			binding.handlers[server.Host] = host
 		}
@@ -72,7 +74,7 @@ func (binding *HttpBinding) Apply(data interface{}) error {
 				return errors.Errorf("service '%v' is already defined on path '%v'", handler.WebService.Name, server.Path)
 			}
 		} else {
-			log.Infof("Adding service %v at address %v on path %v", service.Name, binding.Address, server.Path)
+			log.Infof("Adding service %v on binding %v on path %v", service.Name, binding.Address, server.Path)
 			handler = handlers.NewWebServiceHandler(service)
 			host[server.Path] = handler
 		}

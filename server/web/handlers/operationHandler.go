@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
 	"io/ioutil"
 	"mokapi/models"
@@ -48,7 +49,10 @@ func (handler *OperationHandler) ProcessRequest(context *web.HttpContext) {
 				return
 			}
 		} else {
-			respond("content type of request body is not definied", http.StatusInternalServerError, context)
+			respond(
+				fmt.Sprintf("content type '%v' of request body is not defined. Check your service configuration", contentType.String()),
+				http.StatusInternalServerError,
+				context)
 			return
 		}
 	}
@@ -101,6 +105,9 @@ func parseBody(s string, contentType *models.ContentType, schema *models.Schema)
 	switch contentType.Subtype {
 	case "xml":
 		return encoding.UnmarshalXml(s, schema)
+	default:
+		log.Debugf("unsupported content type '%v' from body", contentType)
+		return s, nil
 	}
 
 	return nil, errors.Errorf("unsupported content type '%v' from body", contentType)

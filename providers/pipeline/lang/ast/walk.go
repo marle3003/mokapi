@@ -1,4 +1,4 @@
-package lang
+package ast
 
 type Visitor interface {
 	Visit(n Node) Visitor
@@ -49,9 +49,6 @@ func Walk(v Visitor, node Node) {
 	case *Argument:
 		Walk(v, n.Name)
 		Walk(v, n.Value)
-	case *Selector:
-		Walk(v, n.X)
-		Walk(v, n.Selector)
 	case *IndexExpr:
 		Walk(v, n.X)
 		Walk(v, n.Index)
@@ -66,6 +63,9 @@ func Walk(v Visitor, node Node) {
 			Walk(v, p)
 		}
 		Walk(v, n.Block)
+	case *DeclStmt:
+		Walk(v, n.Name)
+		Walk(v, n.Type)
 	case *Ident:
 	}
 	v.Visit(nil)

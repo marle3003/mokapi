@@ -1,13 +1,14 @@
-package lang
+package parser
 
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"mokapi/providers/pipeline/lang/scanner"
 	"strings"
 )
 
 type Error struct {
-	Pos Position
+	Pos scanner.Position
 	Msg string
 }
 
@@ -17,7 +18,7 @@ func (e Error) String() string {
 
 type ErrorList []*Error
 
-func (l *ErrorList) Add(pos Position, msg string) {
+func (l *ErrorList) Add(pos scanner.Position, msg string) {
 	*l = append(*l, &Error{Pos: pos, Msg: msg})
 }
 

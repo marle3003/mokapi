@@ -16,11 +16,14 @@ func UnmarshalXml(s string, schema *models.Schema) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(e.elements) == 0 {
-		return nil, nil
+	if len(e.Children) == 0 {
+		return e, nil
+	}
+	if schema == nil {
+		return e.Children[0], nil
 	}
 	// skip root element
-	obj, err := e.elements[0].parse(schema)
+	obj, err := e.Children[0].parse(schema)
 	return obj, err
 }
 
@@ -135,30 +138,30 @@ func encodeObject(e *xml.Encoder, obj map[string]interface{}, schema *models.Sch
 	}
 }
 
-type element struct {
-	name       string
-	elements   []*element
-	attributes map[string]string
-	content    string
+type XmlNode struct {
+	Name       string
+	Children   []*XmlNode
+	Attributes map[string]string
+	Content    string
 }
 
-func (e *element) GetFirstElement(name string) *element {
-	for _, c := range e.elements {
-		if c.name == name {
+func (e *XmlNode) GetFirstElement(name string) *XmlNode {
+	for _, c := range e.Children {
+		if c.Name == name {
 			return c
 		}
 	}
 	return nil
 }
 
-func decode(data []byte) (*element, error) {
+func decode(data []byte) (*XmlNode, error) {
 	decoder := xml.NewDecoder(bytes.NewReader(data))
-	e := &element{elements: make([]*element, 0), attributes: make(map[string]string)}
+	e := &XmlNode{Children: make([]*XmlNode, 0), Attributes: make(map[string]string)}
 	err := e.decode(decoder)
 	return e, err
 }
 
-func (e *element) decode(decoder *xml.Decoder) error {
+func (e *XmlNode) decode(decoder *xml.Decoder) error {
 	for {
 		tok, err := decoder.Token()
 		if err != nil && err != io.EOF {
@@ -169,18 +172,18 @@ func (e *element) decode(decoder *xml.Decoder) error {
 
 		switch tokEle := tok.(type) {
 		case xml.StartElement:
-			child := &element{elements: make([]*element, 0), attributes: make(map[string]string)}
-			child.name = tokEle.Name.Local
+			child := &XmlNode{Children: make([]*XmlNode, 0), Attributes: make(map[string]string)}
+			child.Name = tokEle.Name.Local
 			for _, a := range tokEle.Attr {
-				child.attributes[a.Name.Local] = a.Value
+				child.Attributes[a.Name.Local] = a.Value
 			}
 			child.decode(decoder)
-			e.elements = append(e.elements, child)
+			e.Children = append(e.Children, child)
 		case xml.EndElement:
 			return nil
 		case xml.CharData:
 			s := string(tokEle)
-			e.content = s
+			e.Content = s
 			_ = s
 		}
 	}
@@ -188,9 +191,9 @@ func (e *element) decode(decoder *xml.Decoder) error {
 	return nil
 }
 
-func (e *element) parse(s *models.Schema) (interface{}, error) {
+func (e *XmlNode) parse(s *models.Schema) (interface{}, error) {
 	if s == nil || s.Type == "string" {
-		return e.content, nil
+		return e.Content, nil
 	}
 
 	switch s.Type {
@@ -201,7 +204,7 @@ func (e *element) parse(s *models.Schema) (interface{}, error) {
 				name = property.Xml.Name
 			}
 			if property.Xml != nil && property.Xml.Attribute {
-				if v, ok := e.attributes[name]; ok {
+				if v, ok := e.Attributes[name]; ok {
 					props[name] = v
 				} else if s.IsPropertyRequired(name) {
 					return nil, errors.Errorf("required property with name '%v' not found", name)
@@ -220,15 +223,15 @@ func (e *element) parse(s *models.Schema) (interface{}, error) {
 		}
 		return props, nil
 	case "array":
-		elements := e.elements
+		elements := e.Children
 		if s.Xml != nil && s.Xml.Wrapped {
-			if len(e.elements) == 0 {
+			if len(e.Children) == 0 {
 				return make([]interface{}, 0), nil
 			}
-			elements = e.elements[0].elements
+			elements = e.Children[0].Children
 		}
 		array := make([]interface{}, len(elements))
-		for i, item := range e.elements {
+		for i, item := range e.Children {
 			v, err := item.parse(s.Items)
 			if err != nil {
 				return nil, errors.Wrapf(err, "unable to parse array element of type '%v'", s.Items.Type)
@@ -237,21 +240,21 @@ func (e *element) parse(s *models.Schema) (interface{}, error) {
 		}
 		return array, nil
 	case "number":
-		f, err := strconv.ParseFloat(e.content, 64)
+		f, err := strconv.ParseFloat(e.Content, 64)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unable to parse number '%v'", e.content)
+			return nil, errors.Wrapf(err, "unable to parse number '%v'", e.Content)
 		}
 		return f, nil
 	case "integer":
-		i, err := strconv.Atoi(e.content)
+		i, err := strconv.Atoi(e.Content)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unable to parse integer '%v'", e.content)
+			return nil, errors.Wrapf(err, "unable to parse integer '%v'", e.Content)
 		}
 		return i, nil
 	case "boolean":
-		b, err := strconv.ParseBool(e.content)
+		b, err := strconv.ParseBool(e.Content)
 		if err != nil {
-			return nil, errors.Wrapf(err, "unable to parse bool '%v'", e.content)
+			return nil, errors.Wrapf(err, "unable to parse bool '%v'", e.Content)
 		}
 		return b, nil
 	}

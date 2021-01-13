@@ -1,7 +1,8 @@
-package lang
+package scanner
 
 import (
 	"fmt"
+	"mokapi/providers/pipeline/lang/token"
 	"unicode"
 )
 
@@ -16,7 +17,7 @@ type Scanner struct {
 
 	ch            rune // current character
 	offset        int  // character offset
-	insertLineEnd bool
+	InsertLineEnd bool
 }
 
 type Position struct {
@@ -25,10 +26,7 @@ type Position struct {
 }
 
 func NewScanner(src []byte, err ErrorHandler) *Scanner {
-	keywords = make(map[string]Token)
-	for i := keywordsStart + 1; i < keywordsEnd; i++ {
-		keywords[tokens[i]] = i
-	}
+	token.Init()
 	s := &Scanner{
 		pos:        Position{Line: 1, Column: 0},
 		err:        err,
@@ -36,7 +34,7 @@ func NewScanner(src []byte, err ErrorHandler) *Scanner {
 
 		src: src,
 
-		insertLineEnd: false,
+		InsertLineEnd: false,
 	}
 	s.next()
 	return s
@@ -57,6 +55,7 @@ func (s *Scanner) next() {
 		s.ch = r
 		s.offset++
 	} else {
+		s.offset++
 		s.ch = -1 // eof
 	}
 }
@@ -69,7 +68,7 @@ func (s *Scanner) error(pos Position, format string, args ...interface{}) {
 }
 
 func (s *Scanner) skipWhitespace() {
-	for s.ch == ' ' || s.ch == '\t' || s.ch == '\r' || (s.ch == '\n' && !s.insertLineEnd) {
+	for s.ch == ' ' || s.ch == '\t' || s.ch == '\r' || (s.ch == '\n' && !s.InsertLineEnd) {
 		s.next()
 	}
 }
@@ -139,7 +138,7 @@ func (s *Scanner) scanEscaped(quote rune) bool {
 }
 
 func (s *Scanner) UseLineEnd(b bool) {
-	s.insertLineEnd = b
+	s.InsertLineEnd = b
 }
 
 func (s *Scanner) scanNumber() string {
@@ -155,7 +154,7 @@ func (s *Scanner) scanNumber() string {
 	return string(s.src[offs-1 : s.offset-1])
 }
 
-func (s *Scanner) Scan() (pos Position, tok Token, lit string) {
+func (s *Scanner) Scan() (pos Position, tok token.Token, lit string) {
 
 	s.skipWhitespace()
 	pos = s.pos
@@ -163,58 +162,58 @@ func (s *Scanner) Scan() (pos Position, tok Token, lit string) {
 	switch ch := s.ch; {
 	case unicode.IsLetter(ch):
 		lit = s.scanIdentifier()
-		tok = lockup(lit)
+		tok = token.Loockup(lit)
 	case unicode.IsDigit(ch):
 		lit = s.scanNumber()
-		tok = NUMBER
+		tok = token.NUMBER
 	default:
 		switch s.ch {
 		case -1:
-			tok = EOF
+			tok = token.EOF
 		case '\n':
-			tok = SEMICOLON
+			tok = token.SEMICOLON
 			lit = "\\n"
 		case '"':
 			lit = s.scanString()
-			tok = STRING
+			tok = token.STRING
 		case '\'':
 			lit = s.scanRawString()
-			tok = RSTRING
+			tok = token.RSTRING
 		case '(':
-			tok = LPAREN
+			tok = token.LPAREN
 		case ')':
-			tok = RPAREN
+			tok = token.RPAREN
 		case '{':
-			tok = LBRACE
+			tok = token.LBRACE
 		case '}':
-			tok = RBRACE
+			tok = token.RBRACE
 		case '[':
-			tok = LBRACK
+			tok = token.LBRACK
 		case ']':
-			tok = RBRACK
+			tok = token.RBRACK
 		case '+':
 			s.next()
 			if s.ch == '=' {
-				tok = ADD_ASSIGN
+				tok = token.ADD_ASSIGN
 			} else {
 				s.offset--
-				tok = ADD
+				tok = token.ADD
 			}
 		case '-':
 			s.next()
 			if s.ch == '=' {
-				tok = SUB_ASSIGN
+				tok = token.SUB_ASSIGN
 			} else {
 				s.offset--
-				tok = SUB
+				tok = token.SUB
 			}
 		case '*':
 			s.next()
 			if s.ch == '=' {
-				tok = MUL_ASSIGN
+				tok = token.MUL_ASSIGN
 			} else {
 				s.offset--
-				tok = MUL
+				tok = token.MUL
 			}
 		case '/':
 			s.next()
@@ -222,79 +221,79 @@ func (s *Scanner) Scan() (pos Position, tok Token, lit string) {
 				s.skipToLineEnd()
 				return s.Scan()
 			} else if s.ch == '=' {
-				tok = QUO_ASSIGN
+				tok = token.QUO_ASSIGN
 			} else {
 				s.offset--
-				tok = QUO
+				tok = token.QUO
 			}
 		case '%':
 			s.next()
 			if s.ch == '=' {
-				tok = REM_ASSIGN
+				tok = token.REM_ASSIGN
 			} else {
 				s.offset--
-				tok = REM
+				tok = token.REM
 			}
 		case '.':
-			tok = PERIOD
+			tok = token.PERIOD
 		case '<':
 			s.next()
 			if s.ch == '=' {
-				tok = LEQ
+				tok = token.LEQ
 			} else {
 				s.offset--
-				tok = LSS
+				tok = token.LSS
 			}
 		case '>':
 			s.next()
 			if s.ch == '=' {
-				tok = GEQ
+				tok = token.GEQ
 			} else {
 				s.offset--
-				tok = GTR
+				tok = token.GTR
 			}
 		case '=':
 			s.next()
 			if s.ch == '=' {
-				tok = EQL
+				tok = token.EQL
 			} else if s.ch == '>' {
-				tok = LAMBDA
+				tok = token.LAMBDA
 			} else {
 				s.offset--
-				tok = ASSIGN
+				tok = token.ASSIGN
 			}
 		case '!':
 			s.next()
 			if s.ch == '=' {
-				tok = NEQ
+				tok = token.NEQ
 			} else {
 				s.offset--
-				tok = NOT
+				tok = token.NOT
 			}
 		case '&':
 			s.next()
 			if s.ch == '&' {
-				tok = LAND
+				tok = token.LAND
 			} else {
 				s.offset--
 			}
 		case '|':
 			s.next()
 			if s.ch == '|' {
-				tok = LOR
+				tok = token.LOR
 			} else {
 				s.offset--
 			}
 		case ':':
 			s.next()
 			if s.ch == '=' {
-				tok = DEFINE
+				tok = token.DEFINE
 			} else {
 				s.offset--
-				tok = COLON
+				tok = token.COLON
 			}
 		case ',':
-			tok = COMMA
+			tok = token.COMMA
 		default:
 			lit = string(ch)
 		}

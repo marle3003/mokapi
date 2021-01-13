@@ -1,14 +1,15 @@
 package runtime
 
 import (
-	"mokapi/providers/pipeline/lang"
+	"mokapi/providers/pipeline/lang/ast"
+	"mokapi/providers/pipeline/lang/token"
 	"mokapi/providers/pipeline/lang/types"
 )
 
 type treeNode struct {
 	x  *treeNode
 	y  *treeNode
-	op lang.Token
+	op token.Token
 	o  types.Object
 }
 
@@ -30,25 +31,25 @@ func (n treeNode) eval() (types.Object, error) {
 type binaryVisitor struct {
 	stack  *stack
 	outer  visitor
-	binary *lang.Binary
+	binary *ast.Binary
 	tree   *treeNode
-	ops    []lang.Token
+	ops    []token.Token
 	n      int
 }
 
-func newBinaryVisitor(binary *lang.Binary, stack *stack, outer visitor) *binaryVisitor {
+func newBinaryVisitor(binary *ast.Binary, stack *stack, outer visitor) *binaryVisitor {
 	b := &binaryVisitor{stack: stack, outer: outer, binary: binary, n: 1}
 	b.ops = append(b.ops, binary.Op)
 	return b
 }
 
-func (v *binaryVisitor) Visit(node lang.Node) lang.Visitor {
+func (v *binaryVisitor) Visit(node ast.Node) ast.Visitor {
 	if v.outer.hasErrors() {
 		return nil
 	}
 	if node != nil {
 		switch n := node.(type) {
-		case *lang.Binary:
+		case *ast.Binary:
 			v.ops = append(v.ops, n.Op)
 			v.n++
 			return v

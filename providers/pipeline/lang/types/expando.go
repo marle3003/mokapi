@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"reflect"
 	"strings"
 )
@@ -39,8 +40,13 @@ func (e *Expando) Elem() interface{} {
 	return result
 }
 
-func (e *Expando) Set(name string, value Object) {
-	e.value[name] = value
+func (e *Expando) Set(o Object) error {
+	if v, isExp := o.(*Expando); isExp {
+		e.value = v.value
+		return nil
+	} else {
+		return errors.Errorf("type '%v' can not be set to expando", o.GetType())
+	}
 }
 
 func (e *Expando) GetType() reflect.Type {
@@ -59,4 +65,9 @@ func (e *Expando) HasField(name string) bool {
 		return true
 	}
 	return hasField(e, name)
+}
+
+func (e *Expando) SetField(name string, v Object) error {
+	e.value[name] = v
+	return nil
 }

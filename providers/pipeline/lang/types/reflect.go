@@ -67,7 +67,11 @@ func getField(i interface{}, name string) (Object, error) {
 		if array, ok := i.(*Array); ok {
 			return array.Index(index)
 		}
-		fieldValue = v.Index(index).Interface()
+		if v.Kind() == reflect.Slice {
+			fieldValue = v.Index(index).Interface()
+		} else {
+			return nil, errors.Errorf("index operator with '%v' used on %v", index, reflect.TypeOf(i))
+		}
 	} else {
 		fieldName := strings.Title(name)
 
@@ -157,7 +161,11 @@ func createArgs(f reflect.Type, args map[string]Object) ([]reflect.Value, error)
 		if arg, ok := args[k]; ok {
 			o := reflect.TypeOf((*Object)(nil)).Elem()
 			if t.Implements(o) {
-				value = reflect.ValueOf(arg)
+				if p, ok := arg.(*Path); ok {
+					value = reflect.ValueOf(p.value)
+				} else {
+					value = reflect.ValueOf(arg)
+				}
 			} else {
 				value, err = ConvertFrom(arg, t)
 			}

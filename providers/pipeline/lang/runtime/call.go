@@ -3,27 +3,27 @@ package runtime
 import (
 	"fmt"
 	"github.com/pkg/errors"
-	"mokapi/providers/pipeline/lang"
+	"mokapi/providers/pipeline/lang/ast"
 	"mokapi/providers/pipeline/lang/types"
 )
 
 type callVisitor struct {
 	visitorImpl
-	scope *Scope
+	scope *ast.Scope
 	stack *stack
-	call  *lang.Call
+	call  *ast.Call
 	outer visitor
 }
 
-func (v *callVisitor) Visit(node lang.Node) lang.Visitor {
+func (v *callVisitor) Visit(node ast.Node) ast.Visitor {
 	if v.outer.hasErrors() {
 		return nil
 	}
 	if node != nil {
 		switch n := node.(type) {
-		case *lang.Selector:
-			return newSelectorVisitor(v.scope, v.stack, true, true, v.outer)
-		case *lang.Ident:
+		//case *lang.Selector:
+		//	return newSelectorVisitor(v.scope, v.stack, true, true, v.outer)
+		case *ast.Ident:
 			if o, ok := v.scope.Symbol(n.Name); ok {
 				v.stack.Push(nil)
 				v.stack.Push(o)

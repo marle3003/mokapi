@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"math"
-	"mokapi/providers/pipeline/lang"
+	"mokapi/providers/pipeline/lang/token"
 	"reflect"
 )
 
@@ -25,32 +25,41 @@ func (n *Number) GetField(name string) (Object, error) {
 	return getField(n, name)
 }
 
+func (b *Number) Set(o Object) error {
+	if v, isNum := o.(*Number); isNum {
+		b.value = v.value
+		return nil
+	} else {
+		return errors.Errorf("type '%v' can not be set to number", o.GetType())
+	}
+}
+
 func (n *Number) String() string {
 	return fmt.Sprintf("%v", n.value)
 }
 
-func (n *Number) InvokeOp(op lang.Token, obj Object) (Object, error) {
+func (n *Number) InvokeOp(op token.Token, obj Object) (Object, error) {
 	if other, ok := obj.(*Number); ok {
 		switch op {
-		case lang.ADD:
+		case token.ADD:
 			return NewNumber(n.value + other.value), nil
-		case lang.SUB:
+		case token.SUB:
 			return NewNumber(n.value - other.value), nil
-		case lang.MUL:
+		case token.MUL:
 			return NewNumber(n.value * other.value), nil
-		case lang.QUO:
+		case token.QUO:
 			if other.value == 0 {
 				return nil, errors.New("divide by zero")
 			}
 			return NewNumber(n.value / other.value), nil
-		case lang.REM:
+		case token.REM:
 			if n.value != math.Trunc(n.value) || other.value != math.Trunc(other.value) {
 				return nil, errors.New("unable to use operator '%' on floating number")
 
 			}
 			v := float64(int64(n.value) % int64(other.value))
 			return NewNumber(v), nil
-		case lang.EQL:
+		case token.EQL:
 			return NewBool(n.value == other.value), nil
 
 		default:

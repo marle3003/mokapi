@@ -1,4 +1,6 @@
-package lang
+package ast
+
+import "mokapi/providers/pipeline/lang/token"
 
 type Node interface {
 }
@@ -14,6 +16,7 @@ type Statement interface {
 
 type File struct {
 	Pipelines []*Pipeline
+	Scope     *Scope
 }
 
 func (f *File) AddPipeline(p *Pipeline) {
@@ -29,6 +32,7 @@ type Stage struct {
 	Name  string
 	Steps *StepBlock
 	When  *ExprStatement
+	Scope *Scope
 }
 
 type StepBlock struct {
@@ -41,8 +45,13 @@ type Block struct {
 
 type Assignment struct {
 	Lhs Expression
-	Tok Token
+	Tok token.Token
 	Rhs Expression
+}
+
+type DeclStmt struct {
+	Name *Ident
+	Type string
 }
 
 type ExprStatement struct {
@@ -50,13 +59,13 @@ type ExprStatement struct {
 }
 
 type Unary struct {
-	Op Token
+	Op token.Token
 	X  Expression
 }
 
 type Binary struct {
 	Lhs        Expression
-	Op         Token
+	Op         token.Token
 	Rhs        Expression
 	Precedence int
 }
@@ -86,21 +95,12 @@ type Argument struct {
 	Value Expression
 }
 
-type SymbolRef struct {
-	Name string
-}
-
 type Ident struct {
 	Name string
 }
 
-type Selector struct {
-	X        Expression
-	Selector Expression
-}
-
 type Literal struct {
-	Kind  Token
+	Kind  token.Token
 	Value string
 }
 
@@ -110,8 +110,9 @@ type Closure struct {
 }
 
 // exprNode() ensures only expression nodes can be assigned
-func (*Ident) exprNode()     {}
-func (*Selector) exprNode()  {}
+func (*Ident) exprNode() {}
+
+//unc (*Selector) exprNode()  {}
 func (*Literal) exprNode()   {}
 func (*Call) exprNode()      {}
 func (*Binary) exprNode()    {}
@@ -120,8 +121,8 @@ func (*IndexExpr) exprNode() {}
 func (*PathExpr) exprNode()  {}
 func (*Closure) exprNode()   {}
 func (*ParenExpr) exprNode() {}
-func (*SymbolRef) exprNode() {}
 
 // stmtNode() ensures only statement nodes can be assigned
 func (*Assignment) stmtNode()    {}
 func (*ExprStatement) stmtNode() {}
+func (*DeclStmt) stmtNode()      {}

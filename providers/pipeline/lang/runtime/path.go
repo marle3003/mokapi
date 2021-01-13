@@ -3,30 +3,28 @@ package runtime
 import (
 	"fmt"
 	"github.com/pkg/errors"
-	"mokapi/providers/pipeline/lang"
+	"mokapi/providers/pipeline/lang/ast"
 	"mokapi/providers/pipeline/lang/types"
 )
 
 type pathVisitor struct {
-	scope *Scope
+	scope *ast.Scope
 	stack *stack
 	outer visitor
-	expr  *lang.PathExpr
+	expr  *ast.PathExpr
 }
 
-func (v *pathVisitor) Visit(node lang.Node) lang.Visitor {
+func (v *pathVisitor) Visit(node ast.Node) ast.Visitor {
 	if v.outer.hasErrors() {
 		return nil
 	}
 	if node != nil {
 		switch n := node.(type) {
-		case *lang.Ident:
-			if o, ok := v.scope.Symbol(n.Name); ok {
-				v.stack.Push(o)
-			} else {
-				v.stack.Push(types.NewString(n.Name))
-			}
+		case *ast.Ident:
+			v.stack.Push(types.NewString(n.Name))
 			return nil
+		case *ast.IndexExpr:
+			return v
 		}
 		return v.outer.Visit(node)
 	}
@@ -42,12 +40,19 @@ func (v *pathVisitor) Visit(node lang.Node) lang.Visitor {
 		args[argName] = kv.Value
 	}
 
-	path := v.stack.Pop().String()
+	path := v.stack.Pop()
 
 	obj := v.stack.Pop()
 	if obj == nil {
 		v.outer.addError(errors.Errorf("null reference"))
 		return nil
+	}
+	if ident, isIdent := v.expr.X.(*ast.Ident); isIdent {
+		if o, exists := v.scope.Symbol(ident.Name); exists {
+			obj = o
+		} else {
+			v.outer.addError(errors.Errorf("unable to resolve identifier %v", obj.String()))
+		}
 	}
 
 	p, ok := obj.(*types.Path)
@@ -55,9 +60,11 @@ func (v *pathVisitor) Visit(node lang.Node) lang.Visitor {
 		p = types.NewPath(obj)
 	}
 
-	val, err := p.Resolve(path, args)
+	val, err := p.Resolve(path.String(), args)
 	if err != nil {
-		v.outer.addError(err)
+		// we can not resolve, push it back to stack
+		v.stack.Push(obj)
+		v.stack.Push(path)
 	} else {
 		v.stack.Push(val)
 	}

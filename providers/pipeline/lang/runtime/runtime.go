@@ -2,20 +2,21 @@ package runtime
 
 import (
 	"github.com/pkg/errors"
-	"mokapi/providers/pipeline/lang"
+	"mokapi/providers/pipeline/lang/ast"
 	"mokapi/providers/pipeline/lang/types"
 	"strings"
 )
 
 type visitor interface {
-	lang.Visitor
+	ast.Visitor
 	addError(err error)
 	hasErrors() bool
 	err() error
+	closeScope()
 }
 
-func RunPipeline(f *lang.File, name string, scope *Scope) (err error) {
-	v := newPipelineVisitor(name, scope)
+func RunPipeline(f *ast.File, name string) (err error) {
+	v := newPipelineVisitor(name, f.Scope)
 
 	defer func() {
 		if !v.found {
@@ -28,40 +29,40 @@ func RunPipeline(f *lang.File, name string, scope *Scope) (err error) {
 	return
 }
 
-func runExpr(expr lang.Expression, scope *Scope) (result types.Object, err error) {
+func runExpr(expr ast.Expression, scope *ast.Scope) (result types.Object, err error) {
 	v := &exprVisitor{scope: scope, stack: newStack()}
 	err = run(expr, v)
 	result = v.stack.Pop()
 	return
 }
 
-func runBlock(block *lang.Block, scope *Scope) (result types.Object, err error) {
+func runBlock(block *ast.Block, scope *ast.Scope) (result types.Object, err error) {
 	v := &exprVisitor{scope: scope, stack: newStack()}
 	err = run(block, v)
 	result = v.stack.Pop()
 	return
 }
 
-func run(n lang.Node, v visitor) (err error) {
+func run(n ast.Node, v visitor) (err error) {
 	defer func() {
 		err = v.err()
 	}()
 
-	lang.Walk(v, n)
+	ast.Walk(v, n)
 
 	return
 }
 
 type pipelineVisitor struct {
 	visitorImpl
-	scope       *Scope
+	scope       *ast.Scope
 	name        string
 	exprVisitor *exprVisitor
 	stack       *stack
 	found       bool
 }
 
-func newPipelineVisitor(name string, scope *Scope) *pipelineVisitor {
+func newPipelineVisitor(name string, scope *ast.Scope) *pipelineVisitor {
 	stack := newStack()
 	return &pipelineVisitor{
 		scope:       scope,
@@ -71,24 +72,26 @@ func newPipelineVisitor(name string, scope *Scope) *pipelineVisitor {
 	}
 }
 
-func (v *pipelineVisitor) Visit(node lang.Node) lang.Visitor {
+func (v *pipelineVisitor) Visit(node ast.Node) ast.Visitor {
 	if v.hasErrors() {
 		return nil
 	}
 
 	switch n := node.(type) {
-	case *lang.Pipeline:
+	case *ast.Pipeline:
 		if n.Name != v.name {
 			return nil
 		} else {
 			v.found = true
 		}
-	case *lang.Stage:
+	case *ast.Stage:
+		v.scope = n.Scope
+		v.exprVisitor.scope = n.Scope
 		return &stageVisitor{stack: v.stack, outer: v, stage: n}
-	case *lang.ExprStatement:
+	case *ast.ExprStatement:
 		// case 'when'
 		return v.exprVisitor
-	case *lang.StepBlock:
+	case *ast.StepBlock:
 		return v.exprVisitor
 	}
 
@@ -107,6 +110,10 @@ func (v *pipelineVisitor) err() error {
 	}
 }
 
+func (v *pipelineVisitor) closeScope() {
+	v.scope = v.scope.Outer
+}
+
 type visitorImpl struct {
 	errors []error
 }
@@ -117,6 +124,10 @@ func (v *visitorImpl) addError(err error) {
 
 func (v *visitorImpl) hasErrors() bool {
 	return len(v.errors) > 0
+}
+
+func (v *visitorImpl) closeScope() {
+
 }
 
 func (v *visitorImpl) err() error {

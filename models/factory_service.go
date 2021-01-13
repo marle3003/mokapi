@@ -74,6 +74,9 @@ func (w *WebServiceInfo) apply(config *dynamic.OpenApi, filePath string) {
 	}
 
 	w.Errors = append(w.Errors, context.Errors...)
+	for _, err := range context.Errors {
+		log.Errorf("error in config %v: %v", filePath, err)
+	}
 }
 
 func (e *Endpoint) update(config *dynamic.Endpoint, context *serviceContext) {

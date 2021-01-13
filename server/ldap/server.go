@@ -90,16 +90,18 @@ func (s *Server) Start() {
 		}
 	}()
 
-	for {
-		select {
-		case conn := <-connChannl:
-			go s.handle(conn)
-		case <-s.stop:
-			log.Infof("Stopping ldap server on %v", s.listen)
-			close <- true
-			l.Close()
+	go func() {
+		for {
+			select {
+			case conn := <-connChannl:
+				go s.handle(conn)
+			case <-s.stop:
+				log.Infof("Stopping ldap server on %v", s.listen)
+				close <- true
+				l.Close()
+			}
 		}
-	}
+	}()
 }
 
 func (s *Server) handle(conn net.Conn) {

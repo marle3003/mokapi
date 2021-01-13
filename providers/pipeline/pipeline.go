@@ -3,9 +3,10 @@ package pipeline
 import (
 	"io/ioutil"
 	"mokapi/providers/pipeline/basics"
-	"mokapi/providers/pipeline/lang"
+	"mokapi/providers/pipeline/lang/ast"
+	"mokapi/providers/pipeline/lang/parser"
+	"mokapi/providers/pipeline/lang/runtime"
 	"mokapi/providers/pipeline/lang/types"
-	"mokapi/providers/pipeline/runtime"
 	"path/filepath"
 )
 
@@ -19,13 +20,14 @@ var (
 		"delay":      &basics.DelayStep{},
 		"fileExists": &basics.FileExistsStep{},
 		"xmlPath":    &basics.XmlPathStep{},
+		"readJson":   &basics.JsonStep{},
 	}
 )
 
-type PipelineOptions func(scope *runtime.Scope) error
+type PipelineOptions func(scope *ast.Scope) error
 
 func WithGlobalVars(vars map[types.Type]interface{}) PipelineOptions {
-	return func(ctx *runtime.Scope) error {
+	return func(ctx *ast.Scope) error {
 		for t, i := range vars {
 			o, err := types.Convert(i)
 			if err != nil {
@@ -38,7 +40,7 @@ func WithGlobalVars(vars map[types.Type]interface{}) PipelineOptions {
 }
 
 func WithSteps(steps map[string]types.Step) PipelineOptions {
-	return func(ctx *runtime.Scope) error {
+	return func(ctx *ast.Scope) error {
 		for name, step := range steps {
 			ctx.SetSymbol(name, step.(types.Object))
 		}
@@ -47,7 +49,7 @@ func WithSteps(steps map[string]types.Step) PipelineOptions {
 }
 
 func WithParams(params map[string]interface{}) PipelineOptions {
-	return func(ctx *runtime.Scope) error {
+	return func(ctx *ast.Scope) error {
 		var expando *types.Expando
 		if v, ok := ctx.Symbol("params"); !ok {
 			expando = types.NewExpando()
@@ -61,7 +63,7 @@ func WithParams(params map[string]interface{}) PipelineOptions {
 			if err != nil {
 				return err
 			}
-			expando.Set(name, obj)
+			expando.SetField(name, obj)
 		}
 
 		return nil
@@ -75,26 +77,26 @@ func Run(file, name string, options ...PipelineOptions) (err error) {
 		return
 	}
 
-	var f *lang.File
-	f, err = lang.ParseFile(src)
-	if err != nil {
-		return
-	}
-
-	context := runtime.NewScope(builtInFunctions)
+	scope := ast.NewScope(builtInFunctions)
 	err = WithGlobalVars(map[types.Type]interface{}{
 		runtime.EnvVarsType: runtime.NewEnvVars(
 			runtime.FromOS(),
 			runtime.With(map[string]string{
 				"WORKING_DIRECTORY": filepath.Dir(file),
 			})),
-	})(context)
+	})(scope)
 	for _, o := range options {
-		err = o(context)
+		err = o(scope)
 		if err != nil {
 			return err
 		}
 	}
 
-	return runtime.RunPipeline(f, name, context)
+	var f *ast.File
+	f, err = parser.ParseFile(src, scope)
+	if err != nil {
+		return
+	}
+
+	return runtime.RunPipeline(f, name)
 }

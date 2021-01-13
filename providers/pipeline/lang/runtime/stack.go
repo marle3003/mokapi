@@ -27,3 +27,7 @@ func (s *stack) Push(val types.Object) {
 func (s *stack) Reset() {
 	s.values = nil
 }
+
+func (s *stack) Size() int {
+	return len(s.values)
+}

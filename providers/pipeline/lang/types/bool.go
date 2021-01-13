@@ -2,7 +2,8 @@ package types
 
 import (
 	"fmt"
-	"mokapi/providers/pipeline/lang"
+	"github.com/pkg/errors"
+	"mokapi/providers/pipeline/lang/token"
 	"reflect"
 )
 
@@ -23,16 +24,25 @@ func (b *Bool) Val() bool {
 	return b.value
 }
 
+func (b *Bool) Set(o Object) error {
+	if v, isBool := o.(*Bool); isBool {
+		b.value = v.value
+		return nil
+	} else {
+		return errors.Errorf("type '%v' can not be set to bool", o.GetType())
+	}
+}
+
 func (b *Bool) Elem() interface{} {
 	return b.value
 }
 
-func (b *Bool) InvokeOp(op lang.Token, obj Object) (Object, error) {
+func (b *Bool) InvokeOp(op token.Token, obj Object) (Object, error) {
 	if other, ok := obj.(*Bool); ok {
 		switch op {
-		case lang.LAND:
+		case token.LAND:
 			return NewBool(b.value && other.value), nil
-		case lang.LOR:
+		case token.LOR:
 			return NewBool(b.value || other.value), nil
 		}
 	}

@@ -5,8 +5,8 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"mokapi/providers/pipeline/lang/runtime"
 	"mokapi/providers/pipeline/lang/types"
-	"mokapi/providers/pipeline/runtime"
 	"path/filepath"
 )
 
@@ -46,30 +46,35 @@ func (e *YamlExecution) Run(ctx types.StepContext) (interface{}, error) {
 	return convertObject(m), nil
 }
 
-func convertObject(o interface{}) types.Object {
-	if m, ok := o.(map[interface{}]interface{}); ok {
+func convertObject(i interface{}) types.Object {
+	switch o := i.(type) {
+	case map[interface{}]interface{}:
 		obj := types.NewExpando()
-		for k, v := range m {
+		for k, v := range o {
 			propertyName := fmt.Sprint(k)
 			v := convertObject(v)
-			obj.Set(propertyName, v)
+			obj.SetField(propertyName, v)
 		}
 		return obj
-	}
-	if a, ok := o.([]interface{}); ok {
+	case map[string]interface{}:
+		obj := types.NewExpando()
+		for k, v := range o {
+			v := convertObject(v)
+			obj.SetField(k, v)
+		}
+		return obj
+	case []interface{}:
 		array := types.NewArray()
-		for _, e := range a {
+		for _, e := range o {
 			array.Add(convertObject(e))
 		}
 		return array
-	} else {
-		if s, ok := o.(string); ok {
-			return types.NewString(s)
-		} else if f, ok := o.(float64); ok {
-			return types.NewNumber(f)
-		} else if i, ok := o.(int); ok {
-			return types.NewNumber(float64(i))
-		}
-		return types.NewString(fmt.Sprintf("%v", o))
+	case string:
+		return types.NewString(o)
+	case float64:
+		return types.NewNumber(o)
+	case int:
+		return types.NewNumber(float64(o))
 	}
+	return types.NewString(fmt.Sprintf("%v", i))
 }
