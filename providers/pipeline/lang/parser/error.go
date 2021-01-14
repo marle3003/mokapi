@@ -3,12 +3,12 @@ package parser
 import (
 	"fmt"
 	"github.com/pkg/errors"
-	"mokapi/providers/pipeline/lang/scanner"
+	"mokapi/providers/pipeline/lang/token"
 	"strings"
 )
 
 type Error struct {
-	Pos scanner.Position
+	Pos token.Position
 	Msg string
 }
 
@@ -18,8 +18,12 @@ func (e Error) String() string {
 
 type ErrorList []*Error
 
-func (l *ErrorList) Add(pos scanner.Position, msg string) {
+func (l *ErrorList) Add(pos token.Position, msg string) {
 	*l = append(*l, &Error{Pos: pos, Msg: msg})
+}
+
+func (l *ErrorList) Addf(pos token.Position, format string, args ...interface{}) {
+	*l = append(*l, &Error{Pos: pos, Msg: fmt.Sprintf(format, args...)})
 }
 
 func (l ErrorList) Err() error {

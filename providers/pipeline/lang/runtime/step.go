@@ -1,7 +1,6 @@
 package runtime
 
 import (
-	"github.com/pkg/errors"
 	"mokapi/providers/pipeline/lang/types"
 	"reflect"
 	"strings"
@@ -32,7 +31,7 @@ func (v *callVisitor) callStep(step types.Step, args map[string]types.Object) {
 			if arg, ok := args[position]; positionExists && ok {
 				value = arg
 			} else if _, required := options["required"]; required {
-				v.outer.addError(errors.Errorf("missing required argument '%v'", alias))
+				v.outer.AddErrorf(v.call.Pos(), "missing required argument '%v'", alias)
 				return
 			} else {
 				continue
@@ -42,23 +41,23 @@ func (v *callVisitor) callStep(step types.Step, args map[string]types.Object) {
 		field := val.FieldByName(f.Name)
 		fieldValue, err := types.ConvertFrom(value, field.Type())
 		if err != nil {
-			v.outer.addError(err)
+			v.outer.AddError(v.call.Pos(), err.Error())
 			return
 		}
 		field.Set(fieldValue)
 	}
 
-	result, err := exec.Run(v.scope)
+	result, err := exec.Run(v.outer.Scope())
 	if err != nil {
-		v.outer.addError(err)
+		v.outer.AddError(v.call.Pos(), err.Error())
 		return
 	}
 
 	obj, err := types.Convert(result)
 	if err != nil {
-		v.outer.addError(err)
+		v.outer.AddError(v.call.Pos(), err.Error())
 	} else {
-		v.stack.Push(obj)
+		v.outer.Stack().Push(obj)
 	}
 }
 

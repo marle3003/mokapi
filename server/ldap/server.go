@@ -12,7 +12,7 @@ import (
 
 type Server struct {
 	stop      chan bool
-	entries   []*models.Entry
+	entries   map[string]*models.Entry
 	listen    string
 	isRunning bool
 	root      *models.Entry
@@ -161,12 +161,9 @@ func (s *Server) handle(conn net.Conn) {
 }
 
 func (s *Server) getEntry(dn string) *models.Entry {
-	for _, e := range s.entries {
-		if dn == e.Dn {
-			return e
-		}
+	if entry, ok := s.entries[dn]; ok {
+		return entry
 	}
-
 	return nil
 }
 

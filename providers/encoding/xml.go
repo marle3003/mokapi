@@ -43,6 +43,9 @@ type StringMap struct {
 
 func (m StringMap) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	wrapped := false
+	if m.Schema == nil {
+		return errors.Errorf("unable to marshal xml with undefined schema")
+	}
 	if m.Schema.Xml != nil {
 		wrapped = m.Schema.Xml.Wrapped
 		if m.Schema.Xml.Name != "" {

@@ -2,21 +2,21 @@ package runtime
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"mokapi/providers/pipeline/lang/ast"
 	"mokapi/providers/pipeline/lang/types"
 )
 
 type callVisitor struct {
-	visitorImpl
-	scope *ast.Scope
-	stack *stack
 	call  *ast.Call
 	outer visitor
 }
 
+func newCallVisitor(call *ast.Call, outer visitor) *callVisitor {
+	return &callVisitor{call: call, outer: outer}
+}
+
 func (v *callVisitor) Visit(node ast.Node) ast.Visitor {
-	if v.outer.hasErrors() {
+	if v.outer.HasErrors() {
 		return nil
 	}
 	if node != nil {
@@ -24,11 +24,11 @@ func (v *callVisitor) Visit(node ast.Node) ast.Visitor {
 		//case *lang.Selector:
 		//	return newSelectorVisitor(v.scope, v.stack, true, true, v.outer)
 		case *ast.Ident:
-			if o, ok := v.scope.Symbol(n.Name); ok {
-				v.stack.Push(nil)
-				v.stack.Push(o)
+			if o, ok := v.outer.Scope().Symbol(n.Name); ok {
+				v.outer.Stack().Push(nil)
+				v.outer.Stack().Push(o)
 			} else {
-				v.stack.Push(types.NewString(n.Name))
+				v.outer.Stack().Push(types.NewString(n.Name))
 			}
 			return nil
 		default:
@@ -39,7 +39,7 @@ func (v *callVisitor) Visit(node ast.Node) ast.Visitor {
 	n := len(v.call.Args)
 	args := make(map[string]types.Object, n)
 	for i := n - 1; i >= 0; i-- {
-		kv := v.stack.Pop().(*types.KeyValuePair)
+		kv := v.outer.Stack().Pop().(*types.KeyValuePair)
 		argName := kv.Key
 		if len(argName) == 0 {
 			argName = fmt.Sprintf("%v", i)
@@ -47,22 +47,22 @@ func (v *callVisitor) Visit(node ast.Node) ast.Visitor {
 		args[argName] = kv.Value
 	}
 
-	f := v.stack.Pop()
-	target := v.stack.Pop()
+	f := v.outer.Stack().Pop()
+	target := v.outer.Stack().Pop()
 	if target == nil {
 		if step, ok := f.(types.Step); ok {
 			v.callStep(step, args)
 		} else {
-			v.outer.addError(errors.Errorf("unresovled func call '%v'", f))
+			v.outer.AddErrorf(v.call.Pos(), "unresolved func call '%v'", f)
 			return nil
 		}
 	} else {
 		val, err := target.InvokeFunc(f.String(), args)
 		if err != nil {
-			v.outer.addError(err)
+			v.outer.AddError(v.call.Pos(), err.Error())
 			return nil
 		}
-		v.stack.Push(val)
+		v.outer.Stack().Push(val)
 	}
 
 	return nil

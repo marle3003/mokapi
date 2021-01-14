@@ -6,10 +6,10 @@ import (
 	"unicode"
 )
 
-type ErrorHandler func(pos Position, msg string)
+type ErrorHandler func(pos token.Position, msg string)
 
 type Scanner struct {
-	pos Position
+	pos token.Position
 	src []byte
 
 	err        ErrorHandler
@@ -20,15 +20,10 @@ type Scanner struct {
 	InsertLineEnd bool
 }
 
-type Position struct {
-	Line   int
-	Column int
-}
-
 func NewScanner(src []byte, err ErrorHandler) *Scanner {
 	token.Init()
 	s := &Scanner{
-		pos:        Position{Line: 1, Column: 0},
+		pos:        token.Position{Line: 1, Column: 0},
 		err:        err,
 		ErrorCount: 0,
 
@@ -43,7 +38,7 @@ func NewScanner(src []byte, err ErrorHandler) *Scanner {
 func (s *Scanner) next() {
 	if s.offset < len(s.src) {
 		if s.ch == '\n' {
-			s.pos.newLine()
+			s.pos.NewLine()
 		} else {
 			s.pos.Column++
 		}
@@ -60,9 +55,9 @@ func (s *Scanner) next() {
 	}
 }
 
-func (s *Scanner) error(pos Position, format string, args ...interface{}) {
+func (s *Scanner) error(pos token.Position, format string, args ...interface{}) {
 	if s.err != nil {
-		s.err(pos, fmt.Sprintf(format, args))
+		s.err(pos, fmt.Sprintf(format, args...))
 	}
 	s.ErrorCount++
 }
@@ -90,6 +85,10 @@ func (s *Scanner) scanString() string {
 
 	for {
 		s.next()
+		if s.ch == '\n' || s.ch < 0 {
+			s.error(s.pos, "string literal not terminated")
+			break
+		}
 		if s.ch == '"' {
 			break
 		}
@@ -106,6 +105,10 @@ func (s *Scanner) scanRawString() string {
 
 	for {
 		s.next()
+		if s.ch == '\n' || s.ch < 0 {
+			s.error(s.pos, "string literal not terminated")
+			break
+		}
 		if s.ch == '\'' {
 			break
 		}
@@ -154,7 +157,7 @@ func (s *Scanner) scanNumber() string {
 	return string(s.src[offs-1 : s.offset-1])
 }
 
-func (s *Scanner) Scan() (pos Position, tok token.Token, lit string) {
+func (s *Scanner) Scan() (pos token.Position, tok token.Token, lit string) {
 
 	s.skipWhitespace()
 	pos = s.pos
@@ -301,9 +304,4 @@ func (s *Scanner) Scan() (pos Position, tok token.Token, lit string) {
 	}
 
 	return
-}
-
-func (p *Position) newLine() {
-	p.Line++
-	p.Column = 0
 }

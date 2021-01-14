@@ -24,7 +24,7 @@ func Walk(v Visitor, node Node) {
 		}
 		Walk(v, n.Steps)
 	case *StepBlock:
-		for _, s := range n.Statments {
+		for _, s := range n.Stmts {
 			Walk(v, s)
 		}
 	case *Block:
@@ -47,7 +47,6 @@ func Walk(v Visitor, node Node) {
 			Walk(v, a)
 		}
 	case *Argument:
-		Walk(v, n.Name)
 		Walk(v, n.Value)
 	case *IndexExpr:
 		Walk(v, n.X)
@@ -65,7 +64,6 @@ func Walk(v Visitor, node Node) {
 		Walk(v, n.Block)
 	case *DeclStmt:
 		Walk(v, n.Name)
-		Walk(v, n.Type)
 	case *Ident:
 	}
 	v.Visit(nil)

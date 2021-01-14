@@ -7,15 +7,16 @@ import (
 )
 
 type closureVisitor struct {
-	visitorImpl
-	scope   *ast.Scope
-	stack   *stack
 	closure *ast.Closure
 	outer   visitor
 }
 
+func newClosureVisitor(closure *ast.Closure, outer visitor) *closureVisitor {
+	return &closureVisitor{closure: closure, outer: outer}
+}
+
 func (v *closureVisitor) Visit(node ast.Node) ast.Visitor {
-	if v.outer.hasErrors() {
+	if v.outer.HasErrors() {
 		return nil
 	}
 	if node != nil {
@@ -35,11 +36,11 @@ func (v *closureVisitor) Visit(node ast.Node) ast.Visitor {
 			}
 			parameters[n] = args[i]
 		}
-		scope := ast.NewScopeWithOuter(parameters, v.scope)
+		scope := ast.NewScopeWithOuter(parameters, v.outer.Scope())
 		return runBlock(v.closure.Block, scope)
 	}
 
-	v.stack.Push(types.NewClosure(f))
+	v.outer.Stack().Push(types.NewClosure(f))
 
 	return nil
 }

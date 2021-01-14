@@ -23,6 +23,7 @@ func (a *Application) ApplyLdap(config map[string]*dynamic.Ldap) {
 
 func (l *LdapServiceInfo) Apply(config *dynamic.Ldap, file string) {
 	l.Data.Name = config.Info.Name
+	l.Data.Entries = make(map[string]*Entry)
 
 	for k, v := range config.Server {
 		if strings.ToLower(k) == "address" {
@@ -45,50 +46,57 @@ func (l *LdapServiceInfo) Apply(config *dynamic.Ldap, file string) {
 	}
 
 	for _, e := range config.Entries {
-		entry := &Entry{Attributes: make(map[string][]string)}
-		l.Data.Entries = append(l.Data.Entries, entry)
-		for k, v := range e {
-			if s, ok := v.(string); ok {
-				if strings.ToLower(k) == "dn" {
-					entry.Dn = s
-					parts := strings.Split(s, ",")
-					if len(parts) > 0 {
-						kv := strings.Split(parts[0], "=")
-						if len(kv) == 2 && strings.ToLower(kv[0]) == "cn" {
-							entry.Attributes["cn"] = []string{strings.TrimSpace(kv[1])}
-						}
-					} else {
-						entry.Attributes[k] = []string{s}
+		entry := l.createEntry(e, file)
+		if _, found := l.Data.Entries[entry.Dn]; !found {
+			l.Data.Entries[entry.Dn] = entry
+		}
+	}
+}
+
+func (l *LdapServiceInfo) createEntry(e map[string]interface{}, file string) (entry *Entry) {
+	entry = &Entry{Attributes: make(map[string][]string)}
+	for k, v := range e {
+		if s, ok := v.(string); ok {
+			if strings.ToLower(k) == "dn" {
+				entry.Dn = s
+				parts := strings.Split(s, ",")
+				if len(parts) > 0 {
+					kv := strings.Split(parts[0], "=")
+					if len(kv) == 2 && strings.ToLower(kv[0]) == "cn" {
+						entry.Attributes["cn"] = []string{strings.TrimSpace(kv[1])}
 					}
 				} else {
 					entry.Attributes[k] = []string{s}
 				}
-			} else if a, ok := v.([]interface{}); ok {
-				list := make([]string, 0)
-				for _, el := range a {
-					if s, ok := el.(string); ok {
-						list = append(list, s)
-					}
+			} else {
+				entry.Attributes[k] = []string{s}
+			}
+		} else if a, ok := v.([]interface{}); ok {
+			list := make([]string, 0)
+			for _, el := range a {
+				if s, ok := el.(string); ok {
+					list = append(list, s)
 				}
-				entry.Attributes[k] = list
-			} else if ext, ok := v.(map[interface{}]interface{}); ok {
-				for p, o := range ext {
-					name := p.(string)
-					switch strings.ToLower(name) {
-					case "file":
-						path := o.(string)
-						if strings.HasPrefix(path, "./") {
-							path = strings.Replace(path, ".", filepath.Dir(file), 1)
-						}
-						data, error := ioutil.ReadFile(path)
-						if error != nil {
-							l.Errors = append(l.Errors, error.Error())
-						} else {
-							entry.Attributes[k] = []string{string(data)}
-						}
+			}
+			entry.Attributes[k] = list
+		} else if ext, ok := v.(map[interface{}]interface{}); ok {
+			for p, o := range ext {
+				name := p.(string)
+				switch strings.ToLower(name) {
+				case "file":
+					path := o.(string)
+					if strings.HasPrefix(path, "./") {
+						path = strings.Replace(path, ".", filepath.Dir(file), 1)
+					}
+					data, error := ioutil.ReadFile(path)
+					if error != nil {
+						l.Errors = append(l.Errors, error.Error())
+					} else {
+						entry.Attributes[k] = []string{string(data)}
 					}
 				}
 			}
 		}
 	}
+	return
 }

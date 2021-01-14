@@ -3,28 +3,23 @@ package parser
 import (
 	"fmt"
 	"mokapi/providers/pipeline/lang/ast"
-	scanner2 "mokapi/providers/pipeline/lang/scanner"
+	"mokapi/providers/pipeline/lang/scanner"
 	"mokapi/providers/pipeline/lang/token"
 	"mokapi/providers/pipeline/lang/types"
 )
 
 type parser struct {
 	errors  ErrorList
-	scanner *scanner2.Scanner
+	scanner *scanner.Scanner
 	scope   *ast.Scope
 
 	tok token.Token
-	pos scanner2.Position
+	pos token.Position
 	lit string
 }
 
 func ParseFile(src []byte, scope *ast.Scope) (f *ast.File, err error) {
-	parser := &parser{
-		errors:  ErrorList{},
-		scanner: scanner2.NewScanner(src, nil),
-		scope:   scope,
-	}
-	parser.next()
+	parser := newParser(src, scope)
 
 	defer func() {
 		err = parser.errors.Err()
@@ -36,13 +31,8 @@ func ParseFile(src []byte, scope *ast.Scope) (f *ast.File, err error) {
 }
 
 func ParseExpr(b []byte, scope *ast.Scope) (expr ast.Expression, err error) {
-	parser := &parser{
-		errors:  ErrorList{},
-		scanner: scanner2.NewScanner(b, nil),
-		scope:   scope,
-	}
+	parser := newParser(b, scope)
 	parser.scanner.InsertLineEnd = true
-	parser.next()
 
 	defer func() {
 		err = parser.errors.Err()
@@ -51,6 +41,18 @@ func ParseExpr(b []byte, scope *ast.Scope) (expr ast.Expression, err error) {
 	expr = parser.parseBinary()
 
 	return
+}
+
+func newParser(b []byte, scope *ast.Scope) *parser {
+	parser := &parser{
+		errors: ErrorList{},
+		scope:  scope,
+	}
+	eh := func(pos token.Position, msg string) { parser.errors.Add(pos, msg) }
+	parser.scanner = scanner.NewScanner(b, eh)
+	parser.next()
+
+	return parser
 }
 
 func (p *parser) parseFile() (f *ast.File) {
@@ -72,6 +74,7 @@ func (p *parser) parsePipeline() *ast.Pipeline {
 	pipeline := &ast.Pipeline{}
 	p.expect(token.PIPELINE)
 	p.expect(token.LPAREN)
+	pipeline.NamePos = p.pos
 	pipeline.Name = p.parseName()
 	p.expect(token.RPAREN)
 	p.parsePipelineBody(pipeline)
@@ -107,6 +110,7 @@ func (p *parser) parseStage() *ast.Stage {
 	s := &ast.Stage{}
 	p.expect(token.STAGE)
 	p.expect(token.LPAREN)
+	s.NamePos = p.pos
 	s.Name = p.parseName()
 	p.expect(token.RPAREN)
 	p.expect(token.LBRACE)
@@ -151,6 +155,7 @@ func (p *parser) parseWhen() (expr *ast.ExprStatement) {
 
 func (p *parser) parseSteps() *ast.StepBlock {
 	p.expect(token.STEPS)
+	pos := p.pos
 	p.expect(token.LBRACE)
 	p.scanner.UseLineEnd(true)
 	var list []ast.Statement
@@ -166,7 +171,7 @@ func (p *parser) parseSteps() *ast.StepBlock {
 	}
 	p.scanner.UseLineEnd(false)
 	p.expect(token.RBRACE)
-	return &ast.StepBlock{Statments: list}
+	return &ast.StepBlock{Stmts: list, Lbrace: pos}
 }
 
 func (p *parser) parseStatement() (stmt ast.Statement) {
@@ -183,6 +188,13 @@ func (p *parser) parseStatement() (stmt ast.Statement) {
 			if assignTok == token.DEFINE {
 				// we do not know the type of the rhs expression
 				p.varDecl(lhs, "")
+				if _, isPath := lhs.(*ast.PathExpr); isPath {
+					p.error("define operator on path expression")
+				}
+			} else {
+				if path, isPath := lhs.(*ast.PathExpr); isPath {
+					path.Lhs = true
+				}
 			}
 		default:
 			stmt = &ast.ExprStatement{X: lhs}
@@ -253,9 +265,10 @@ func (p *parser) parseUnary() ast.Expression {
 	switch p.tok {
 	case token.NOT:
 		op := p.tok
+		pos := p.pos
 		p.next()
 		x := p.parseUnary()
-		return &ast.Unary{X: x, Op: op}
+		return &ast.Unary{X: x, Op: op, OpPos: pos}
 	}
 	return p.parsePrimary()
 }
@@ -265,7 +278,7 @@ func (p *parser) parsePrimary() ast.Expression {
 
 	if p.tok == token.PERIOD {
 		p.resolve(operand)
-		path := &ast.PathExpr{X: operand}
+		path := &ast.PathExpr{X: operand, StartPos: operand.Pos()}
 		operand = p.parsePath(path)
 	} else if !p.tok.IsExprEnd() && !p.tok.IsOperator() && p.tok != token.COLON && p.tok != token.COMMA {
 		operand = p.parseCall(operand)
@@ -299,17 +312,17 @@ func (p *parser) parsePath(path *ast.PathExpr) ast.Expression {
 		if p.tok != token.PERIOD && p.tok != token.LBRACK {
 			return current
 		}
-		current = &ast.PathExpr{X: current}
+		current = &ast.PathExpr{X: current, StartPos: current.Pos()}
 	}
 }
 
 func (p *parser) parsePathOperand() (x ast.Expression) {
 	switch p.tok {
 	case token.IDENT:
-		x = &ast.Ident{Name: p.lit}
+		x = &ast.Ident{Name: p.lit, NamePos: p.pos}
 		p.next()
 	case token.STRING, token.RSTRING:
-		x = &ast.Literal{Kind: p.tok, Value: p.lit}
+		x = &ast.Literal{Kind: p.tok, Value: p.lit, ValuePos: p.pos}
 		p.next()
 	default:
 		p.error("expected operand")
@@ -322,10 +335,10 @@ func (p *parser) parseIndex() (x ast.Expression) {
 	p.expect(token.LBRACK)
 	switch p.tok {
 	case token.STRING, token.RSTRING:
-		x = &ast.Literal{Kind: p.tok, Value: p.lit}
+		x = &ast.Literal{Kind: p.tok, Value: p.lit, ValuePos: p.pos}
 		p.next()
 	case token.NUMBER:
-		x = &ast.Literal{Kind: p.tok, Value: p.lit}
+		x = &ast.Literal{Kind: p.tok, Value: p.lit, ValuePos: p.pos}
 		p.next()
 	}
 	p.expect(token.RBRACK)
@@ -333,8 +346,9 @@ func (p *parser) parseIndex() (x ast.Expression) {
 }
 
 func (p *parser) parseCall(f ast.Expression) *ast.Call {
+	pos := p.pos
 	list := p.parseArgList()
-	return &ast.Call{Args: list, Func: f}
+	return &ast.Call{Args: list, Func: f, FuncPos: pos}
 }
 
 func (p *parser) parseArgList() []*ast.Argument {
@@ -352,16 +366,16 @@ func (p *parser) parseArgList() []*ast.Argument {
 func (p *parser) parseOperand(lhs bool) (x ast.Expression) {
 	switch p.tok {
 	case token.IDENT:
-		x = &ast.Ident{Name: p.lit}
+		x = &ast.Ident{Name: p.lit, NamePos: p.pos}
 		if !lhs {
 			p.resolve(x)
 		}
 		p.next()
 	case token.STRING, token.RSTRING:
-		x = &ast.Literal{Kind: p.tok, Value: p.lit}
+		x = &ast.Literal{Kind: p.tok, Value: p.lit, ValuePos: p.pos}
 		p.next()
 	case token.NUMBER:
-		x = &ast.Literal{Kind: p.tok, Value: p.lit}
+		x = &ast.Literal{Kind: p.tok, Value: p.lit, ValuePos: p.pos}
 		p.next()
 	case token.LPAREN:
 		p.next()
@@ -375,15 +389,15 @@ func (p *parser) parseOperand(lhs bool) (x ast.Expression) {
 }
 
 func (p *parser) parseClosure() *ast.Closure {
+	closure := &ast.Closure{Block: &ast.Block{}, LbracePos: p.pos}
 	p.expect(token.LBRACE)
-	closure := &ast.Closure{Block: &ast.Block{}}
 	inInput := false
 	p.openScope()
 	for p.tok != token.RBRACE && p.tok != token.SEMICOLON && p.tok != token.EOF {
 		x := p.parseBinary()
 		if p.tok == token.COMMA || p.tok == token.LAMBDA {
 			inInput = p.tok == token.COMMA
-			ident := &ast.Ident{Name: x.(*ast.Ident).Name}
+			ident := x.(*ast.Ident)
 			closure.Params = append(closure.Params, ident)
 			p.varDecl(ident, "")
 			p.next()
@@ -414,8 +428,10 @@ func (p *parser) parseArgument() *ast.Argument {
 		arg.Value = p.parseBinary()
 
 		arg.Name = expr.(*ast.Ident).Name
+		arg.NamePos = expr.Pos()
 	} else {
 		arg.Name = ""
+		arg.NamePos = expr.Pos()
 		arg.Value = expr
 	}
 

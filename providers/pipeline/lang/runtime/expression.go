@@ -1,7 +1,6 @@
 package runtime
 
 import (
-	"github.com/pkg/errors"
 	"mokapi/providers/pipeline/lang/ast"
 	"mokapi/providers/pipeline/lang/token"
 	"mokapi/providers/pipeline/lang/types"
@@ -9,60 +8,76 @@ import (
 )
 
 type exprVisitor struct {
-	visitorImpl
-	scope *ast.Scope
+	visitorErrorHandler
 	stack *stack
+	scope *ast.Scope
+}
+
+func newExprVisitor(stack *stack, scope *ast.Scope) *exprVisitor {
+	return &exprVisitor{stack: stack, scope: scope}
 }
 
 func (v *exprVisitor) Visit(node ast.Node) ast.Visitor {
-	if v.hasErrors() {
+	if v.HasErrors() {
 		return nil
 	}
 
 	switch n := node.(type) {
 	case *ast.Call:
-		return &callVisitor{scope: v.scope, stack: v.stack, call: n, outer: v}
+		return newCallVisitor(n, v)
 	case *ast.Argument:
-		return &argumentVisitor{scope: v.scope, stack: v.stack, argument: n, outer: v}
+		return newArgumentVisitor(n, v)
 	case *ast.ExprStatement:
-		v.stack.Reset()
+		v.Stack().Reset()
 	case *ast.Assignment:
-		v.stack.Reset()
-		return &assignVisitor{scope: v.scope, stack: v.stack, assign: n, outer: v}
+		v.Stack().Reset()
+		return newAssignVisitor(n, v)
 	case *ast.IndexExpr:
-		return &indexVisitor{stack: v.stack, outer: v}
+		return newIndexVisitor(n, v)
 	case *ast.PathExpr:
-		return &pathVisitor{scope: v.scope, stack: v.stack, expr: n, outer: v}
+		return newPathVisitor(n, v)
 	case *ast.Binary:
-		return newBinaryVisitor(n, v.stack, v)
+		return newBinaryVisitor(n, v)
 	case *ast.Closure:
-		return &closureVisitor{stack: v.stack, scope: v.scope, outer: v, closure: n}
+		return newClosureVisitor(n, v)
 	case *ast.Ident:
-		if o, ok := v.scope.Symbol(n.Name); ok {
-			v.stack.Push(o)
+		if o, ok := v.Scope().Symbol(n.Name); ok {
+			v.Stack().Push(o)
 		} else {
-			v.addError(errors.Errorf("Unresolved symbol '%v'", n.Name))
+			v.AddErrorf(n.Pos(), "unresolved symbol '%v'", n.Name)
 		}
 	case *ast.Literal:
 		switch n.Kind {
 		case token.STRING:
-			s, err := format(n.Value, v.scope)
+			s, err := format(n.Value, v.Scope())
 			if err != nil {
-				v.addError(err)
+				v.AddError(n.Pos(), err.Error())
 				return nil
 			}
-			v.stack.Push(types.NewString(s))
+			v.Stack().Push(types.NewString(s))
 		case token.RSTRING:
-			v.stack.Push(types.NewString(n.Value))
+			v.Stack().Push(types.NewString(n.Value))
 		case token.NUMBER:
 			f, err := strconv.ParseFloat(n.Value, 64)
 			if err != nil {
-				v.addError(err)
+				v.AddError(n.Pos(), err.Error())
 				return nil
 			}
-			v.stack.Push(types.NewNumber(f))
+			v.Stack().Push(types.NewNumber(f))
 		}
 	}
 
 	return v
+}
+
+func (v *exprVisitor) Stack() *stack {
+	return v.stack
+}
+
+func (v *exprVisitor) Scope() *ast.Scope {
+	return v.scope
+}
+
+func (v *exprVisitor) CloseScope() {
+	v.scope = v.scope.Outer
 }

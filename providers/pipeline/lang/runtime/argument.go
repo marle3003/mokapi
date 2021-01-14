@@ -6,23 +6,25 @@ import (
 )
 
 type argumentVisitor struct {
-	scope    *ast.Scope
-	stack    *stack
 	argument *ast.Argument
 	outer    visitor
 }
 
+func newArgumentVisitor(arg *ast.Argument, outer visitor) *argumentVisitor {
+	return &argumentVisitor{argument: arg, outer: outer}
+}
+
 func (v *argumentVisitor) Visit(node ast.Node) ast.Visitor {
-	if v.outer.hasErrors() {
+	if v.outer.HasErrors() {
 		return nil
 	}
 	if node != nil {
 		return v.outer.Visit(node)
 	}
 
-	val := v.stack.Pop()
+	val := v.outer.Stack().Pop()
 	kv := types.NewKeyValuePair(v.argument.Name, val)
-	v.stack.Push(kv)
+	v.outer.Stack().Push(kv)
 
 	return nil
 }

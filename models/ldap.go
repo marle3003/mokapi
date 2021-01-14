@@ -4,7 +4,7 @@ type LdapServer struct {
 	Name    string
 	Address string
 	Root    *Entry
-	Entries []*Entry
+	Entries map[string]*Entry
 }
 
 func (l *LdapServer) Key() string {

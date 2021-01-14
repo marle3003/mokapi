@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"github.com/brianvoe/gofakeit/v4"
+	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"mokapi/models"
 	"mokapi/providers/encoding"
@@ -39,6 +40,8 @@ func (r *Response) Write(object interface{}, statusCode int, contentType string)
 	} else {
 		bytes, err = r.encodeData(object)
 		if err != nil {
+			log.WithFields(log.Fields{"url": r.httpContext.Request.URL.String()}).Errorf(err.Error())
+			http.Error(r.httpContext.Response, err.Error(), http.StatusInternalServerError)
 			return err
 		}
 	}

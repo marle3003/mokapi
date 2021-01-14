@@ -29,7 +29,6 @@ func (n treeNode) eval() (types.Object, error) {
 }
 
 type binaryVisitor struct {
-	stack  *stack
 	outer  visitor
 	binary *ast.Binary
 	tree   *treeNode
@@ -37,14 +36,14 @@ type binaryVisitor struct {
 	n      int
 }
 
-func newBinaryVisitor(binary *ast.Binary, stack *stack, outer visitor) *binaryVisitor {
-	b := &binaryVisitor{stack: stack, outer: outer, binary: binary, n: 1}
+func newBinaryVisitor(binary *ast.Binary, outer visitor) *binaryVisitor {
+	b := &binaryVisitor{outer: outer, binary: binary, n: 1}
 	b.ops = append(b.ops, binary.Op)
 	return b
 }
 
 func (v *binaryVisitor) Visit(node ast.Node) ast.Visitor {
-	if v.outer.hasErrors() {
+	if v.outer.HasErrors() {
 		return nil
 	}
 	if node != nil {
@@ -68,16 +67,16 @@ func (v *binaryVisitor) Visit(node ast.Node) ast.Visitor {
 	v.ops = v.ops[:i]
 
 	if v.tree == nil {
-		y := &treeNode{o: v.stack.Pop()}
-		x := &treeNode{o: v.stack.Pop()}
+		y := &treeNode{o: v.outer.Stack().Pop()}
+		x := &treeNode{o: v.outer.Stack().Pop()}
 		v.tree = &treeNode{x: x, y: y, op: op}
 	} else {
 		if v.tree.op.Precedence() < op.Precedence() {
-			x := &treeNode{o: v.stack.Pop()}
+			x := &treeNode{o: v.outer.Stack().Pop()}
 			n := &treeNode{x: x, y: v.tree.x, op: op}
 			v.tree.x = n
 		} else {
-			x := &treeNode{o: v.stack.Pop()}
+			x := &treeNode{o: v.outer.Stack().Pop()}
 			n := &treeNode{x: x, y: v.tree, op: op}
 			v.tree = n
 		}
@@ -87,9 +86,9 @@ func (v *binaryVisitor) Visit(node ast.Node) ast.Visitor {
 		// finished building expression tree
 		val, err := v.tree.eval()
 		if err != nil {
-			v.outer.addError(err)
+			v.outer.AddError(v.binary.Pos(), err.Error())
 		} else {
-			v.stack.Push(val)
+			v.outer.Stack().Push(val)
 		}
 	}
 

@@ -3,16 +3,20 @@ package runtime
 import (
 	"github.com/pkg/errors"
 	"mokapi/providers/pipeline/lang/ast"
+	"mokapi/providers/pipeline/lang/parser"
+	"mokapi/providers/pipeline/lang/token"
 	"mokapi/providers/pipeline/lang/types"
-	"strings"
 )
 
 type visitor interface {
 	ast.Visitor
-	addError(err error)
-	hasErrors() bool
-	err() error
-	closeScope()
+	AddError(pos token.Position, msg string)
+	AddErrorf(pos token.Position, format string, args ...interface{})
+	HasErrors() bool
+	Err() error
+	CloseScope()
+	Stack() *stack
+	Scope() *ast.Scope
 }
 
 func RunPipeline(f *ast.File, name string) (err error) {
@@ -30,7 +34,7 @@ func RunPipeline(f *ast.File, name string) (err error) {
 }
 
 func runExpr(expr ast.Expression, scope *ast.Scope) (result types.Object, err error) {
-	v := &exprVisitor{scope: scope, stack: newStack()}
+	v := newExprVisitor(newStack(), scope)
 	err = run(expr, v)
 	result = v.stack.Pop()
 	return
@@ -45,7 +49,7 @@ func runBlock(block *ast.Block, scope *ast.Scope) (result types.Object, err erro
 
 func run(n ast.Node, v visitor) (err error) {
 	defer func() {
-		err = v.err()
+		err = v.Err()
 	}()
 
 	ast.Walk(v, n)
@@ -54,7 +58,7 @@ func run(n ast.Node, v visitor) (err error) {
 }
 
 type pipelineVisitor struct {
-	visitorImpl
+	visitorErrorHandler
 	scope       *ast.Scope
 	name        string
 	exprVisitor *exprVisitor
@@ -73,7 +77,7 @@ func newPipelineVisitor(name string, scope *ast.Scope) *pipelineVisitor {
 }
 
 func (v *pipelineVisitor) Visit(node ast.Node) ast.Visitor {
-	if v.hasErrors() {
+	if v.HasErrors() {
 		return nil
 	}
 
@@ -87,7 +91,7 @@ func (v *pipelineVisitor) Visit(node ast.Node) ast.Visitor {
 	case *ast.Stage:
 		v.scope = n.Scope
 		v.exprVisitor.scope = n.Scope
-		return &stageVisitor{stack: v.stack, outer: v, stage: n}
+		return newStageVisitor(n, v)
 	case *ast.ExprStatement:
 		// case 'when'
 		return v.exprVisitor
@@ -98,48 +102,46 @@ func (v *pipelineVisitor) Visit(node ast.Node) ast.Visitor {
 	return v
 }
 
-func (v *pipelineVisitor) hasError() bool {
-	return len(v.errors) != 0 || v.exprVisitor.hasErrors()
+func (v *pipelineVisitor) Stack() *stack {
+	return v.stack
 }
 
-func (v *pipelineVisitor) err() error {
-	if v.hasErrors() {
-		return v.err()
+func (v *pipelineVisitor) Scope() *ast.Scope {
+	return v.scope
+}
+
+func (v *pipelineVisitor) HasError() bool {
+	return len(v.errors) != 0 || v.exprVisitor.HasErrors()
+}
+
+func (v *pipelineVisitor) Err() error {
+	if v.HasErrors() {
+		return v.Err()
 	} else {
-		return v.exprVisitor.err()
+		return v.exprVisitor.Err()
 	}
 }
 
-func (v *pipelineVisitor) closeScope() {
+func (v *pipelineVisitor) CloseScope() {
 	v.scope = v.scope.Outer
 }
 
-type visitorImpl struct {
-	errors []error
+type visitorErrorHandler struct {
+	errors parser.ErrorList
 }
 
-func (v *visitorImpl) addError(err error) {
-	v.errors = append(v.errors, err)
+func (v *visitorErrorHandler) AddError(pos token.Position, msg string) {
+	v.errors.Add(pos, msg)
 }
 
-func (v *visitorImpl) hasErrors() bool {
+func (v *visitorErrorHandler) AddErrorf(pos token.Position, format string, args ...interface{}) {
+	v.errors.Addf(pos, format, args...)
+}
+
+func (v *visitorErrorHandler) HasErrors() bool {
 	return len(v.errors) > 0
 }
 
-func (v *visitorImpl) closeScope() {
-
-}
-
-func (v *visitorImpl) err() error {
-	if !v.hasErrors() {
-		return nil
-	}
-	sb := strings.Builder{}
-	for i, e := range v.errors {
-		if i > 0 {
-			sb.WriteString("\n")
-		}
-		sb.WriteString(e.Error())
-	}
-	return errors.New(sb.String())
+func (v *visitorErrorHandler) Err() error {
+	return v.errors.Err()
 }

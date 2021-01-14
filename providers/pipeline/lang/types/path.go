@@ -129,6 +129,9 @@ func (p *Path) Resolve(name string, args map[string]Object) (Object, error) {
 		r, err := p.value.GetField(name)
 		if err != nil {
 			r, err = p.value.InvokeFunc(name, args)
+			if err != nil {
+				return nil, errors.Errorf("field or func '%v' not found on type %v", name, reflect.TypeOf(p.value))
+			}
 		}
 		return p.new(r, false), err
 
