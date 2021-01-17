@@ -27,7 +27,7 @@ type SearchResult struct {
 	attributes map[string][]string
 }
 
-func (s *Server) handleSearchRequest(conn net.Conn, messageId int64, req *ber.Packet) error {
+func (s *Binding) handleSearchRequest(conn net.Conn, messageId int64, req *ber.Packet) error {
 	searchRequest, error := parseSearchRequest(req)
 	if error != nil {
 		return error

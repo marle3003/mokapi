@@ -1,9 +1,5 @@
 <template>
-  <b-card class="w-100">
-    <b-card-title>
-      <img src="@/assets/endpoint.png" width="24" height="24" /> Endpoints
-    </b-card-title>
-    <b-table hover :items="endpoints" :fields="fields" tbody-class="operations" @row-clicked="routerLinkToEndpoint">
+    <b-table hover :items="endpoints" :fields="fields" table-class="endpoints" @row-clicked="routerLinkToEndpoint">
       <template v-slot:cell(summary)="data">
         <vue-simple-markdown :source="data.value" />
       </template>
@@ -13,18 +9,16 @@
         </span>
       </template>
     </b-table>
-  </b-card>
 </template>
 
 <script>
+
 export default {
   name: 'endpoints',
   props: ['service'],
-  components: {},
   data() {
     return {
       fields: ['path', 'summary', 'operations'],
-      service: this.service
     }
   },
   computed: {
@@ -55,13 +49,10 @@ export default {
 </script>
 
 <style>
-  .operations{
+  .endpoints tbody{
     cursor: pointer;
   }
-</style>
-
-<style scoped>
-  .card-title{
-      font-size: 1.2rem;
-  }
+  .endpoints th{
+  border-top: none
+}
 </style>

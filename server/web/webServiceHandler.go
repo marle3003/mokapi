@@ -1,9 +1,8 @@
-package handlers
+package web
 
 import (
 	"fmt"
 	"mokapi/models"
-	"mokapi/server/web"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -20,7 +19,7 @@ func NewWebServiceHandler(service *models.WebService) *WebServiceHandler {
 	return &WebServiceHandler{WebService: service}
 }
 
-func (handler *WebServiceHandler) ServeHTTP(context *web.HttpContext) {
+func (handler *WebServiceHandler) ServeHTTP(context *HttpContext) {
 	endpoint := handler.resolveEndpoint(context)
 	if endpoint == nil {
 		message := fmt.Sprintf("No endpoint found in service %v. Request %v %v",
@@ -56,7 +55,7 @@ func (handler *WebServiceHandler) ServeHTTP(context *web.HttpContext) {
 	operationHandler.ProcessRequest(context)
 }
 
-func (handler *WebServiceHandler) resolveEndpoint(context *web.HttpContext) *models.Endpoint {
+func (handler *WebServiceHandler) resolveEndpoint(context *HttpContext) *models.Endpoint {
 endpointLoop:
 	for _, endpoint := range handler.WebService.Endpoint {
 		operation := endpoint.GetOperation(context.Request.Method)
@@ -100,7 +99,7 @@ endpointLoop:
 	return nil
 }
 
-func getRequestSegments(context *web.HttpContext) []string {
+func getRequestSegments(context *HttpContext) []string {
 	path := context.Request.URL.Path
 	if context.ServicPath != "/" {
 		// remove service path

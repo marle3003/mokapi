@@ -30,7 +30,7 @@ func (s *Schema) getAttribute(name string) *Attribute {
 	return nil
 }
 
-func (s *Server) getSchema() (*Schema, error) {
+func (s *Binding) getSchema() (*Schema, error) {
 	attrList, ok := s.root.Attributes["subSchemaSubentry"]
 	if !ok || len(attrList) == 0 {
 		return nil, nil

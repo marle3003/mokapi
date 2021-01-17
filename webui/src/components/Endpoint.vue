@@ -15,13 +15,16 @@
         <b-row>
           <b-card class="w-100 mb-2">
             <b-row>
-              <b-col class="col-auto">
+              <b-col class="col-image">
                 <img src="@/assets/endpoint.png" />
               </b-col>
               <b-col>
                 <p class="label">Summary</p>
                 <p class="title">{{ endpoint.summary }}</p>
               </b-col>
+              </b-row>
+              <b-row>
+                <b-col class="col-image"></b-col>
               <b-col>
                 <p class="label">Description</p>
                 <vue-simple-markdown :source="endpoint.description" />
@@ -41,6 +44,8 @@
                   <p>{{ operation.summary }}</p>
                   <p class="label">Description</p>
                   <p><vue-simple-markdown :source="operation.description" /></p>
+                  <p class="label">Pipeline</p>
+                  <p><vue-simple-markdown :source="operation.pipeline" /></p>
 
                   <h5>Parameters</h5>
                   <parameters v-bind:operation="operation" />
@@ -75,6 +80,7 @@ export default {
       }
 
       let path = this.$route.params.path
+      path = decodeURIComponent(path)
 
       for (let i = 0; i < this.service.endpoints.length; i++) {
         let endpoint = this.service.endpoints[i]
@@ -116,4 +122,8 @@ export default {
   font-size: 2.2rem;
   cursor: pointer;
 }
+.col-image{
+    width: 100px;
+    flex: 0 0 auto
+  }
 </style>

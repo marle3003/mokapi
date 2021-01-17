@@ -7,7 +7,7 @@ import (
 	ber "gopkg.in/go-asn1-ber/asn1-ber.v1"
 )
 
-func (s *Server) handleBindRequest(conn net.Conn, messageId int64, req *ber.Packet) {
+func (s *Binding) handleBindRequest(conn net.Conn, messageId int64, req *ber.Packet) {
 	ldapVersion, ok := req.Children[0].Value.(int64)
 	if !ok {
 		log.Errorf("Error handling ldapVersion")

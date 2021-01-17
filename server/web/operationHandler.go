@@ -1,4 +1,4 @@
-package handlers
+package web
 
 import (
 	"fmt"
@@ -8,7 +8,6 @@ import (
 	"mokapi/providers/encoding"
 	"mokapi/providers/pipeline"
 	"mokapi/providers/pipeline/lang/types"
-	"mokapi/server/web"
 	"net/http"
 
 	log "github.com/sirupsen/logrus"
@@ -21,7 +20,7 @@ func NewOperationHandler() *OperationHandler {
 	return &OperationHandler{}
 }
 
-func (handler *OperationHandler) ProcessRequest(context *web.HttpContext) {
+func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 	log.WithFields(log.Fields{
 		"url":    context.Request.URL.String(),
 		"host":   context.Request.Host,
@@ -66,7 +65,9 @@ func (handler *OperationHandler) ProcessRequest(context *web.HttpContext) {
 		context.MokapiFile,
 		pipelineName,
 		pipeline.WithGlobalVars(map[types.Type]interface{}{
-			"response":  &Response{httpContext: context},
+			"response": &Response{httpContext: context, err: func(err error, status int) {
+				respond(err.Error(), http.StatusInternalServerError, context)
+			}},
 			"Operation": operation,
 		}),
 		pipeline.WithParams(map[string]interface{}{
@@ -83,7 +84,7 @@ func (handler *OperationHandler) ProcessRequest(context *web.HttpContext) {
 	}
 }
 
-func readBody(ctx *web.HttpContext) (string, error) {
+func readBody(ctx *HttpContext) (string, error) {
 	if ctx.Request.ContentLength == 0 {
 		return "", nil
 	}
@@ -96,9 +97,11 @@ func readBody(ctx *web.HttpContext) (string, error) {
 	return string(data), nil
 }
 
-func respond(message string, status int, context *web.HttpContext) {
-	log.WithFields(log.Fields{"url": context.Request.URL.String()}).Errorf(message)
-	http.Error(context.Response, message, status)
+func respond(message string, status int, ctx *HttpContext) {
+	ctx.metric.Error = message
+	ctx.metric.HttpStatus = status
+	log.WithFields(log.Fields{"url": ctx.Request.URL.String()}).Errorf(message)
+	http.Error(ctx.Response, message, status)
 }
 
 func parseBody(s string, contentType *models.ContentType, schema *models.Schema) (interface{}, error) {

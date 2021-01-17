@@ -10,7 +10,7 @@ import (
 	ber "gopkg.in/go-asn1-ber/asn1-ber.v1"
 )
 
-type Server struct {
+type Binding struct {
 	stop      chan bool
 	entries   map[string]*models.Entry
 	listen    string
@@ -19,13 +19,13 @@ type Server struct {
 	schema    *Schema
 }
 
-func NewServer(config *models.LdapServer) *Server {
-	s := &Server{stop: make(chan bool)}
+func NewServer(config *models.LdapServer) *Binding {
+	s := &Binding{stop: make(chan bool)}
 	s.Apply(config)
 	return s
 }
 
-func (s *Server) Apply(data interface{}) error {
+func (s *Binding) Apply(data interface{}) error {
 	config, _ := data.(*models.LdapServer)
 	shouldRestart := false
 	if s.listen != "" && s.listen != config.Address {
@@ -49,11 +49,11 @@ func (s *Server) Apply(data interface{}) error {
 	return nil
 }
 
-func (s *Server) Stop() {
+func (s *Binding) Stop() {
 	s.stop <- true
 }
 
-func (s *Server) Start() {
+func (s *Binding) Start() {
 	s.isRunning = true
 
 	schema, error := s.getSchema()
@@ -104,7 +104,7 @@ func (s *Server) Start() {
 	}()
 }
 
-func (s *Server) handle(conn net.Conn) {
+func (s *Binding) handle(conn net.Conn) {
 	defer func() {
 		log.Info("Closing connection")
 		conn.Close()
@@ -160,7 +160,7 @@ func (s *Server) handle(conn net.Conn) {
 	}
 }
 
-func (s *Server) getEntry(dn string) *models.Entry {
+func (s *Binding) getEntry(dn string) *models.Entry {
 	if entry, ok := s.entries[dn]; ok {
 		return entry
 	}

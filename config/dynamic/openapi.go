@@ -10,15 +10,15 @@ import (
 type OpenApi struct {
 	Info       Info
 	Servers    []*Server
-	EndPoints  map[string]*Endpoint `yaml:"paths"`
+	EndPoints  map[string]*Endpoint `yaml:"paths" json:"paths"`
 	Components Components
 }
 
 type Info struct {
-	Name        string `yaml:"title"`
+	Name        string `yaml:"title" json:"title"`
 	Description string
 	Version     string
-	MokapiFile  string `yaml:"x-mokapifile"`
+	MokapiFile  string `yaml:"x-mokapifile" json:"x-mokapifile"`
 }
 
 type Server struct {
@@ -77,7 +77,7 @@ type Endpoint struct {
 	Options     *Operation
 	Trace       *Operation
 	Parameters  []*Parameter
-	Pipeline    string `yaml:"x-mokapi-pipeline"`
+	Pipeline    string `yaml:"x-mokapi-pipeline" json:"x-mokapi-pipeline"`
 }
 
 type Operation struct {
@@ -85,14 +85,14 @@ type Operation struct {
 	Description string
 	OperationId string
 	Parameters  []*Parameter
-	RequestBody *RequestBody `yaml:"requestBody"`
+	RequestBody *RequestBody `yaml:"requestBody" json:"requestBody"`
 	Responses   map[string]*Response
-	Pipeline    string `yaml:"x-mokapi-pipeline"`
+	Pipeline    string `yaml:"x-mokapi-pipeline" yaml:"x-mokapi-pipeline"`
 }
 
 type Parameter struct {
 	Name        string
-	Type        string `yaml:"in"`
+	Type        string `yaml:"in" json:"in"`
 	Schema      *Schema
 	Required    bool
 	Description string
@@ -103,27 +103,31 @@ type Parameter struct {
 type Schema struct {
 	Type                 string
 	Format               string
-	Reference            string `yaml:"$ref"`
+	Reference            string `yaml:"$ref" json:"$ref"`
 	Description          string
 	Properties           map[string]*Schema
-	AdditionalProperties string `yaml:"additionalProperties"` // TODO custom marshal for bool, {} etc. Should it be a schema reference?
-	Faker                string `yaml:"x-faker"`
+	AdditionalProperties AdditionalProperties // TODO custom marshal for bool, {} etc. Should it be a schema reference?
+	Faker                string               `yaml:"x-faker" json:"x-faker"`
 	Items                *Schema
 	Xml                  *Xml
 	Required             []string
+}
+
+type AdditionalProperties struct {
+	Schema *Schema
 }
 
 type RequestBody struct {
 	Description string
 	Content     map[string]*MediaType
 	Required    bool
-	Reference   string `yaml:"$ref"`
+	Reference   string `yaml:"$ref" json:"$ref"`
 }
 
 type Response struct {
 	Description string
 	Content     map[string]*MediaType
-	Reference   string `yaml:"$ref"`
+	Reference   string `yaml:"$ref" json:"$ref"`
 }
 
 type MediaType struct {

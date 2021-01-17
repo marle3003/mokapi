@@ -11,7 +11,7 @@ tasks:
   bindata-vueapp:
     deps: [build-vue-app]
     cmds:
-      - go-bindata -pkg http -o server/http/dashboard.go -prefix webui/dist/ webui/dist/...
+      - go-bindata -pkg api -o server/api/dashboard.go -prefix webui/dist/ webui/dist/...
   build-vue-app:
     dir: webui
     cmds:

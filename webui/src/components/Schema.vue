@@ -8,7 +8,7 @@
     </template> -->
     <template v-slot:cell(type)="data">
       <span v-bind:style="{ paddingLeft: data.item.level * 18 + 'px'}">
-        {{ data.item.text}}
+        {{ data.item.text }}
       </span>
       <span v-if="data.item.ref != undefined && data.item.ref !== ''">
         ({{ data.item.ref }})
@@ -43,6 +43,7 @@ export default {
     getItems (schema, level) {
       let items = []
 
+try{
       var item = {}
 
       if (level === 0) {
@@ -56,11 +57,17 @@ export default {
       }
 
       items.push(item)
-
+              
       if (schema.type === 'array') {
-        var itemType = schema.items.ref !== '' ? schema.items.ref : schema.items.type
-        item['text'] = 'array[' + itemType + ']'
+        if (typeof schema.items === undefined) {
+          console.error("field items is undefined in schema type array")
+          return items
+        }
+
+        var itemType = schema.items.ref !== undefined ? schema.items.ref : schema.items.type
+        item['text'] = schema.name + ': array[' + itemType + ']'
         item['refText'] = schema.items.ref
+        //console.log(schema.items)
 
         // get all properties but not type => not incrementing level because we remove first level (shift)
         var arrayItems = this.getItems(schema.items, level)
@@ -68,14 +75,16 @@ export default {
         items = items.concat(arrayItems)
       }
 
-      if (schema.type === 'object' && level < 10 && schema.properties !== undefined) {
-        for (let i = 0; i < schema.properties.length; i++) {
-          let p = schema.properties[i]
-
-          items = items.concat(this.getItems(p, level + 1))
+      if (schema.type === 'object' && level < 2 && schema.properties !== undefined) {
+        for (var i = 0; i < schema.properties.length; i++) {                
+          var prop = this.getItems(schema.properties[i], level + 1)
+          items = items.concat(prop)
         }
       }
 
+}catch (e){
+  console.log(e)
+}
       return items
     }
   }

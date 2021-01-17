@@ -1,14 +1,6 @@
 <template>
   <b-container fluid class="">
     <b-row class="">
-      <b-col class="sidebar p-0 pt-5">
-        <div>
-          <img src="@/assets/endpoint.png" width="36" height="36" title="Endpoints" @click="routerLinkToEndpoints" />
-        </div>
-        <div>
-          <img src="@/assets/models.png"  width="36" height="36" title="Models" @click="routerLinkToModels" />
-        </div>
-      </b-col>
       <b-col>
       <b-container fluid class="mt-5">
         <b-row class="mb-4">

@@ -6,7 +6,9 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/models"
+	"mokapi/server/api"
 	"mokapi/server/ldap"
+	"mokapi/server/web"
 )
 
 type Binding interface {
@@ -39,10 +41,19 @@ func NewServer(config *static.Config) *Server {
 		server.updateBindings()
 	})
 
+	if config.Api.Dashboard {
+		addr := fmt.Sprintf(":%v", config.Api.Port)
+		b := api.NewBinding(addr, server.application)
+		server.Bindings[addr] = b
+	}
+
 	return server
 }
 
 func (s *Server) Start() {
+	for _, b := range s.Bindings {
+		b.Start()
+	}
 	s.watcher.Start()
 }
 
@@ -60,7 +71,7 @@ func (s *Server) updateBindings() {
 			address := fmt.Sprintf(":%v", server.Port)
 			binding, found := s.Bindings[address]
 			if !found {
-				binding = NewHttpBinding(address)
+				binding = web.NewBinding(address, s.application.Metrics.AddRequest)
 				s.Bindings[address] = binding
 				binding.Start()
 			}

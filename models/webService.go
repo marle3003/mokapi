@@ -18,7 +18,7 @@ type WebService struct {
 	Version  string
 	Servers  []Server
 	Endpoint map[string]*Endpoint
-	Models   []*Schema
+	Models   map[string]*Schema
 
 	// The mokapi file used by this service.
 	MokapiFile string
@@ -188,20 +188,74 @@ func NewOperation(summary string, description string, operationId string, pipeli
 type HttpStatus int
 
 const (
-	Invalid             HttpStatus = -1
-	Ok                  HttpStatus = 200
-	Created             HttpStatus = 201
-	Accepted            HttpStatus = 202
-	NoContent           HttpStatus = 204
-	MovedPermanently    HttpStatus = 301
-	MovedTemporarily    HttpStatus = 302
-	NotModified         HttpStatus = 304
-	BadRequest          HttpStatus = 400
-	Unauthorized        HttpStatus = 401
-	Forbidden           HttpStatus = 403
-	NotFound            HttpStatus = 404
-	MethodNotAllowed    HttpStatus = 405
-	InternalServerError HttpStatus = 500
+	Invalid            HttpStatus = -1
+	Continue           HttpStatus = 100 // RFC 7231, 6.2.1
+	SwitchingProtocols HttpStatus = 101 // RFC 7231, 6.2.2
+	Processing         HttpStatus = 102 // RFC 2518, 10.1
+	EarlyHints         HttpStatus = 103 // RFC 8297
+
+	OK                   HttpStatus = 200 // RFC 7231, 6.3.1
+	Created              HttpStatus = 201 // RFC 7231, 6.3.2
+	Accepted             HttpStatus = 202 // RFC 7231, 6.3.3
+	NonAuthoritativeInfo HttpStatus = 203 // RFC 7231, 6.3.4
+	NoContent            HttpStatus = 204 // RFC 7231, 6.3.5
+	ResetContent         HttpStatus = 205 // RFC 7231, 6.3.6
+	PartialContent       HttpStatus = 206 // RFC 7233, 4.1
+	MultiStatus          HttpStatus = 207 // RFC 4918, 11.1
+	AlreadyReported      HttpStatus = 208 // RFC 5842, 7.1
+	IMUsed               HttpStatus = 226 // RFC 3229, 10.4.1
+
+	MultipleChoices   HttpStatus = 300 // RFC 7231, 6.4.1
+	MovedPermanently  HttpStatus = 301 // RFC 7231, 6.4.2
+	Found             HttpStatus = 302 // RFC 7231, 6.4.3
+	SeeOther          HttpStatus = 303 // RFC 7231, 6.4.4
+	NotModified       HttpStatus = 304 // RFC 7232, 4.1
+	UseProxy          HttpStatus = 305 // RFC 7231, 6.4.5
+	_                 HttpStatus = 306 // RFC 7231, 6.4.6 (Unused)
+	TemporaryRedirect HttpStatus = 307 // RFC 7231, 6.4.7
+	PermanentRedirect HttpStatus = 308 // RFC 7538, 3
+
+	BadRequest                   HttpStatus = 400 // RFC 7231, 6.5.1
+	Unauthorized                 HttpStatus = 401 // RFC 7235, 3.1
+	PaymentRequired              HttpStatus = 402 // RFC 7231, 6.5.2
+	Forbidden                    HttpStatus = 403 // RFC 7231, 6.5.3
+	NotFound                     HttpStatus = 404 // RFC 7231, 6.5.4
+	MethodNotAllowed             HttpStatus = 405 // RFC 7231, 6.5.5
+	NotAcceptable                HttpStatus = 406 // RFC 7231, 6.5.6
+	ProxyAuthRequired            HttpStatus = 407 // RFC 7235, 3.2
+	RequestTimeout               HttpStatus = 408 // RFC 7231, 6.5.7
+	Conflict                     HttpStatus = 409 // RFC 7231, 6.5.8
+	Gone                         HttpStatus = 410 // RFC 7231, 6.5.9
+	LengthRequired               HttpStatus = 411 // RFC 7231, 6.5.10
+	PreconditionFailed           HttpStatus = 412 // RFC 7232, 4.2
+	RequestEntityTooLarge        HttpStatus = 413 // RFC 7231, 6.5.11
+	RequestURITooLong            HttpStatus = 414 // RFC 7231, 6.5.12
+	UnsupportedMediaType         HttpStatus = 415 // RFC 7231, 6.5.13
+	RequestedRangeNotSatisfiable HttpStatus = 416 // RFC 7233, 4.4
+	ExpectationFailed            HttpStatus = 417 // RFC 7231, 6.5.14
+	Teapot                       HttpStatus = 418 // RFC 7168, 2.3.3
+	MisdirectedRequest           HttpStatus = 421 // RFC 7540, 9.1.2
+	UnprocessableEntity          HttpStatus = 422 // RFC 4918, 11.2
+	Locked                       HttpStatus = 423 // RFC 4918, 11.3
+	FailedDependency             HttpStatus = 424 // RFC 4918, 11.4
+	TooEarly                     HttpStatus = 425 // RFC 8470, 5.2.
+	UpgradeRequired              HttpStatus = 426 // RFC 7231, 6.5.15
+	PreconditionRequired         HttpStatus = 428 // RFC 6585, 3
+	TooManyRequests              HttpStatus = 429 // RFC 6585, 4
+	RequestHeaderFieldsTooLarge  HttpStatus = 431 // RFC 6585, 5
+	UnavailableForLegalReasons   HttpStatus = 451 // RFC 7725, 3
+
+	InternalServerError           HttpStatus = 500 // RFC 7231, 6.6.1
+	NotImplemented                HttpStatus = 501 // RFC 7231, 6.6.2
+	BadGateway                    HttpStatus = 502 // RFC 7231, 6.6.3
+	ServiceUnavailable            HttpStatus = 503 // RFC 7231, 6.6.4
+	GatewayTimeout                HttpStatus = 504 // RFC 7231, 6.6.5
+	HTTPVersionNotSupported       HttpStatus = 505 // RFC 7231, 6.6.6
+	VariantAlsoNegotiates         HttpStatus = 506 // RFC 2295, 8.1
+	InsufficientStorage           HttpStatus = 507 // RFC 4918, 11.5
+	LoopDetected                  HttpStatus = 508 // RFC 5842, 7.2
+	NotExtended                   HttpStatus = 510 // RFC 2774, 7
+	NetworkAuthenticationRequired HttpStatus = 511 // RFC 6585, 6
 )
 
 func parseHttpStatus(s string) (HttpStatus, error) {
@@ -219,10 +273,24 @@ func parseHttpStatus(s string) (HttpStatus, error) {
 
 func isValidHttpStatus(status HttpStatus) bool {
 	switch status {
-	case Ok, Created, Accepted, NoContent, MovedPermanently,
-		MovedTemporarily, NotModified, BadRequest, Unauthorized,
-		Forbidden, NotFound, MethodNotAllowed, InternalServerError:
+	case
+		// 100
+		Invalid, Continue, SwitchingProtocols, Processing, EarlyHints,
+		// 200
+		OK, Created, Accepted, NonAuthoritativeInfo, NoContent, ResetContent, PartialContent, MultiStatus, AlreadyReported, IMUsed,
+		// 300
+		MultipleChoices, MovedPermanently, Found, SeeOther, NotModified, UseProxy, TemporaryRedirect, PermanentRedirect,
+		// 400
+		BadRequest, Unauthorized, PaymentRequired, Forbidden, NotFound, MethodNotAllowed, NotAcceptable, ProxyAuthRequired,
+		RequestTimeout, Conflict, Gone, LengthRequired, PreconditionFailed, RequestEntityTooLarge, RequestURITooLong,
+		UnsupportedMediaType, RequestedRangeNotSatisfiable, ExpectationFailed, Teapot, MisdirectedRequest,
+		UnprocessableEntity, Locked, FailedDependency, TooEarly, UpgradeRequired, PreconditionRequired,
+		TooManyRequests, RequestHeaderFieldsTooLarge, UnavailableForLegalReasons,
+		// 500
+		InternalServerError, NotImplemented, BadGateway, ServiceUnavailable, GatewayTimeout, HTTPVersionNotSupported,
+		VariantAlsoNegotiates, InsufficientStorage, LoopDetected, NotExtended, NetworkAuthenticationRequired:
 		return true
+
 	default:
 		return false
 	}
@@ -354,6 +422,7 @@ func (c *ContentType) Equals(other *ContentType) bool {
 }
 
 type Schema struct {
+	Name                 string
 	Type                 string
 	Format               string
 	Description          string
@@ -361,9 +430,10 @@ type Schema struct {
 	Faker                string
 	Items                *Schema
 	Xml                  *XmlEncoding
-	AdditionalProperties string
+	AdditionalProperties *Schema
 	Reference            string
 	Required             []string
+	isResolved           bool
 }
 
 func (s *Schema) IsPropertyRequired(name string) bool {

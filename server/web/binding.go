@@ -1,12 +1,10 @@
-package server
+package web
 
 import (
 	"context"
 	"fmt"
 	"github.com/pkg/errors"
 	"mokapi/models"
-	"mokapi/server/web"
-	"mokapi/server/web/handlers"
 	"strings"
 	"time"
 
@@ -14,43 +12,47 @@ import (
 	"net/http"
 )
 
-type HttpBinding struct {
-	Address  string
+type AddRequestMetric func(metric *models.RequestMetric)
+
+type Binding struct {
+	Addr     string
 	server   *http.Server
-	handlers map[string]map[string]*handlers.WebServiceHandler
+	handlers map[string]map[string]*WebServiceHandler
+	mh       AddRequestMetric
 }
 
-func NewHttpBinding(address string) *HttpBinding {
-	httpBinding := &HttpBinding{
-		Address:  address,
-		handlers: make(map[string]map[string]*handlers.WebServiceHandler),
+func NewBinding(addr string, mh AddRequestMetric) *Binding {
+	b := &Binding{
+		Addr:     addr,
+		handlers: make(map[string]map[string]*WebServiceHandler),
+		mh:       mh,
 	}
-	httpBinding.server = &http.Server{Addr: address, Handler: httpBinding}
+	b.server = &http.Server{Addr: addr, Handler: b}
 
-	return httpBinding
+	return b
 }
 
-func (binding *HttpBinding) Start() {
+func (binding *Binding) Start() {
 	go func() {
-		log.Infof("Starting web binding %v", binding.Address)
+		log.Infof("Starting web binding %v", binding.Addr)
 		binding.server.ListenAndServe()
 	}()
 }
 
-func (binding *HttpBinding) Stop() {
+func (binding *Binding) Stop() {
 	go func() {
-		log.Infof("Stopping server on %v", binding.Address)
+		log.Infof("Stopping server on %v", binding.Addr)
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 
 		binding.server.SetKeepAlivesEnabled(false)
 		if error := binding.server.Shutdown(ctx); error != nil {
-			log.Errorf("Could not gracefully shutdown server %v", binding.Address)
+			log.Errorf("Could not gracefully shutdown server %v", binding.Addr)
 		}
 	}()
 }
 
-func (binding *HttpBinding) Apply(data interface{}) error {
+func (binding *Binding) Apply(data interface{}) error {
 	service, ok := data.(*models.WebService)
 	if !ok {
 		return errors.Errorf("unexpected parameter type %T in http binding", data)
@@ -58,14 +60,14 @@ func (binding *HttpBinding) Apply(data interface{}) error {
 
 	for _, server := range service.Servers {
 		address := fmt.Sprintf(":%v", server.Port)
-		if binding.Address != address {
+		if binding.Addr != address {
 			continue
 		}
 
 		host, found := binding.handlers[server.Host]
 		if !found {
-			log.Infof("Adding new host '%v' on binding %v", server.Host, binding.Address)
-			host = make(map[string]*handlers.WebServiceHandler)
+			log.Infof("Adding new host '%v' on binding %v", server.Host, binding.Addr)
+			host = make(map[string]*WebServiceHandler)
 			binding.handlers[server.Host] = host
 		}
 
@@ -74,8 +76,8 @@ func (binding *HttpBinding) Apply(data interface{}) error {
 				return errors.Errorf("service '%v' is already defined on path '%v'", handler.WebService.Name, server.Path)
 			}
 		} else {
-			log.Infof("Adding service %v on binding %v on path %v", service.Name, binding.Address, server.Path)
-			handler = handlers.NewWebServiceHandler(service)
+			log.Infof("Adding service %v on binding %v on path %v", service.Name, binding.Addr, server.Path)
+			handler = NewWebServiceHandler(service)
 			host[server.Path] = handler
 		}
 	}
@@ -83,7 +85,7 @@ func (binding *HttpBinding) Apply(data interface{}) error {
 	return nil
 }
 
-func (binding *HttpBinding) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (binding *Binding) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	service, servicePath := binding.resolveHandler(r)
 	if service == nil {
 		m := fmt.Sprintf("There was no service listening at %v", r.URL)
@@ -93,12 +95,17 @@ func (binding *HttpBinding) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	service.ServeHTTP(web.NewHttpContext(r, w, servicePath))
+	ctx := NewHttpContext(r, w, servicePath)
+	ctx.metric = models.NewRequestMetric(r.Method, r.URL.String())
+
+	service.ServeHTTP(ctx)
+
+	binding.mh(ctx.metric)
 }
 
-func (binding *HttpBinding) resolveHandler(r *http.Request) (*handlers.WebServiceHandler, string) {
+func (binding *Binding) resolveHandler(r *http.Request) (*WebServiceHandler, string) {
 	var matchedPath string
-	var matchedHandler *handlers.WebServiceHandler
+	var matchedHandler *WebServiceHandler
 	if host, ok := binding.handlers[r.Host]; ok {
 		for path, handler := range host {
 			if strings.HasPrefix(r.URL.Path, path) {
@@ -117,15 +124,11 @@ func (binding *HttpBinding) resolveHandler(r *http.Request) (*handlers.WebServic
 	return nil, ""
 }
 
-func (binding *HttpBinding) getServicePath(service *models.WebService) (bool, string) {
+func (binding *Binding) getServicePath(service *models.WebService) (bool, string) {
 	for _, server := range service.Servers {
-		if fmt.Sprintf("%v:%v", server.Host, server.Port) == binding.Address {
+		if fmt.Sprintf("%v:%v", server.Host, server.Port) == binding.Addr {
 			return true, server.Path
 		}
 	}
 	return false, ""
-}
-
-func GetHost(s string) string {
-	return strings.Split(s, ":")[0]
 }

@@ -74,8 +74,8 @@ func selectData(data interface{}, schema *models.Schema) interface{} {
 		for k, v := range o {
 			if p, ok := schema.Properties[k]; ok {
 				selectedData[k] = selectData(v, p)
-			} else if schema.AdditionalProperties == "true" {
-				selectedData[k] = selectData(v, nil)
+			} else if schema.AdditionalProperties != nil {
+				selectedData[k] = selectData(v, schema.AdditionalProperties)
 			}
 		}
 		return selectedData

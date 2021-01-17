@@ -35,13 +35,8 @@ func newParamter() *Parameter {
 }
 
 type HttpContext struct {
-	Response http.ResponseWriter
-	Request  *http.Request
-	// Name-value pairs are added to the collection in the following order:
-	// 1. PathParameter
-	// 2. QueryParameter
-	// 3. HeaderParameter
-	// 4. CookieParameter
+	Response        http.ResponseWriter
+	Request         *http.Request
 	Parameters      *Parameter
 	ResponseType    *models.Response
 	ServicPath      string
@@ -50,6 +45,7 @@ type HttpContext struct {
 	Schema          *models.Schema
 	MokapiFile      string
 	body            string
+	metric          *models.RequestMetric
 }
 
 func NewHttpContext(request *http.Request, response http.ResponseWriter, servicePath string) *HttpContext {

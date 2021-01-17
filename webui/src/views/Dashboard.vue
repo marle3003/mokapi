@@ -48,8 +48,8 @@
 
         <b-card-group deck>
           <b-card class="w-100">
-            <b-card-title class="info">Recent Request Errors</b-card-title>
-            <b-table :items="dashboard.lastErrors" :fields="lastErrorsField">
+            <b-card-title class="info">Last Request Errors</b-card-title>
+            <b-table :items="lastErrors" :fields="lastRequestField">
               <template v-slot:cell(method)="data">
                 <b-badge pill class="operation" :class="data.item.method.toLowerCase()" >{{ data.item.method }}</b-badge>
               </template>
@@ -59,6 +59,36 @@
                 <b-icon icon="circle-fill" class="response icon mr-1 client-error" v-if="data.item.httpStatus >= 400 && data.item.httpStatus < 500"></b-icon>
                 <b-icon icon="circle-fill" class="response icon mr-1" variant="danger" v-if="data.item.httpStatus >= 500 && data.item.httpStatus < 600"></b-icon>
                 {{ data.item.httpStatus }}
+              </template>
+              <template v-slot:cell(time)="data">
+                {{ data.item.time | moment}}
+              </template>
+              <template v-slot:cell(responseTime)="data">
+                {{ data.item.responseTime | duration}}
+              </template>
+            </b-table>
+          </b-card>
+        </b-card-group>
+
+        <b-card-group deck>
+          <b-card class="w-100">
+            <b-card-title class="info">Recent Request</b-card-title>
+            <b-table :items="lastRequests" :fields="lastRequestField">
+              <template v-slot:cell(method)="data">
+                <b-badge pill class="operation" :class="data.item.method.toLowerCase()" >{{ data.item.method }}</b-badge>
+              </template>
+              <template v-slot:cell(httpStatus)="data">
+                <b-icon icon="circle-fill" class="response icon mr-1" variant="success" v-if="data.item.httpStatus >= 200 && data.item.httpStatus < 300"></b-icon>
+                <b-icon icon="circle-fill" class="response icon mr-1" variant="warning" v-if="data.item.httpStatus >= 300 && data.item.httpStatus < 400"></b-icon>
+                <b-icon icon="circle-fill" class="response icon mr-1 client-error" v-if="data.item.httpStatus >= 400 && data.item.httpStatus < 500"></b-icon>
+                <b-icon icon="circle-fill" class="response icon mr-1" variant="danger" v-if="data.item.httpStatus >= 500 && data.item.httpStatus < 600"></b-icon>
+                {{ data.item.httpStatus }}
+              </template>
+              <template v-slot:cell(time)="data">
+                {{ data.item.time | moment}}
+              </template>
+              <template v-slot:cell(responseTime)="data">
+                {{ data.item.responseTime | duration}}
               </template>
             </b-table>
           </b-card>
@@ -82,7 +112,7 @@ export default {
       dashboard: {},
       loaded: false,
       timer: null,
-      lastErrorsField: ['method', 'url', 'httpStatus', 'error', 'time']
+      lastRequestField: ['method', 'url', 'httpStatus', 'error', 'time', 'responseTime']
     }
   },
   created () {
@@ -100,14 +130,36 @@ export default {
         }],
         labels: ['Success', 'Errors']
       }
+    },
+    lastErrors: function() {
+      if (this.dashboard.lastErrors === undefined) {
+        return null
+      }
+      return this.dashboard.lastErrors.reverse()
+    },
+    lastRequests: function() {
+      if (this.dashboard.lastRequests === undefined) {
+        return null
+      }
+      return this.dashboard.lastRequests.reverse()
     }
   },
   filters: {
     moment: function (date) {
-      return moment(date).format()
+      return moment(date).local().format('YYYY-MM-DD HH:mm:ss')
     },
     fromNow: function (date) {
       return moment(date).fromNow(true)
+    },
+    duration: function (time) {
+      let ms = Math.round(time/1000000)
+      let d = moment.duration(ms)
+      if (d.seconds() < 1) {
+        return d.milliseconds() + " [ms]"
+      }else if (d.minutes() < 1) {
+        return d.seconds() +" [sec]"
+      }
+      return moment.duration(d).minutes()
     }
   },
   methods: {

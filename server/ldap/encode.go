@@ -18,7 +18,7 @@ func encodeBindResponse(messageID int64) *ber.Packet {
 	return responsePacket
 }
 
-func (s *Server) encodeSearchResult(messageId int64, result *SearchResult) *ber.Packet {
+func (s *Binding) encodeSearchResult(messageId int64, result *SearchResult) *ber.Packet {
 	responsePacket := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "LDAP Response")
 	responsePacket.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimitive, ber.TagInteger, messageId, "Message ID"))
 
@@ -39,7 +39,7 @@ func (s *Server) encodeSearchResult(messageId int64, result *SearchResult) *ber.
 	return responsePacket
 }
 
-func (s *Server) encodeSearchAttribute(name string, values []string) *ber.Packet {
+func (s *Binding) encodeSearchAttribute(name string, values []string) *ber.Packet {
 	packet := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "Attribute")
 	packet.AppendChild(ber.NewString(ber.ClassUniversal, ber.TypePrimitive, ber.TagOctetString, name, "Attribute Name"))
 

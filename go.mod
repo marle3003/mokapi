@@ -7,6 +7,7 @@ require (
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/brianvoe/gofakeit/v4 v4.2.3
+	github.com/elazarl/go-bindata-assetfs v1.0.0
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/google/uuid v1.1.1 // indirect
 	github.com/gorilla/mux v1.7.4

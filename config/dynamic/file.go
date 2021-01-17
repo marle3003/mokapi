@@ -2,6 +2,7 @@ package dynamic
 
 import (
 	"bytes"
+	"encoding/json"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -75,19 +76,22 @@ func (p *FileProvider) loadServiceFromDirectory(directory string, channel chan<-
 }
 
 func (p *FileProvider) loadServiceFromFile(filename string, channel chan<- ConfigMessage) {
-	if filepath.Ext(filename) != ".yml" {
+	switch filepath.Ext(filename) {
+	case ".yml", ".yaml", ".json":
+		// continue loading from file
+	default:
 		return
 	}
 
 	config := NewConfigurationItem()
 	error := loadFileConfig(filename, config)
 	if error != nil {
-		log.WithFields(log.Fields{"file": filename, "error": error}).Error("Error loading configuration")
+		log.WithFields(log.Fields{"file": filename, "error": error}).Error("error loading configuration")
 		return
 	}
 
 	if config.Ldap == nil && config.OpenApi == nil {
-		log.Debugf("No expected configuration found in %v", filename)
+		log.Debugf("no expected configuration found in %v", filename)
 		return
 	}
 
@@ -99,12 +103,12 @@ func (p *FileProvider) addWatcher(directory string, channel chan<- ConfigMessage
 
 	watcher, error := fsnotify.NewWatcher()
 	if error != nil {
-		log.Error("Error creating file watcher", error)
+		log.Error("error creating file watcher", error)
 	}
 
 	error = watcher.Add(directory)
 	if error != nil {
-		log.WithField("watchItem", directory).Error("Error adding watcher")
+		log.WithField("watchItem", directory).Error("error adding watcher")
 	}
 
 	ticker := time.NewTicker(time.Second)
@@ -132,11 +136,11 @@ func (p *FileProvider) addWatcher(directory string, channel chan<- ConfigMessage
 					}
 					m[evt.Name] = struct{}{}
 
-					log.WithField("item", evt.Name).Info("Item change event received from " + directory)
+					log.WithField("item", evt.Name).Debugf("item change event received from " + directory)
 
 					fi, error := os.Stat(evt.Name)
 					if error != nil {
-						log.WithFields(log.Fields{"item": evt.Name, "error": error}).Info("Error on watching item")
+						log.WithFields(log.Fields{"item": evt.Name, "error": error}).Info("error on watching item")
 						return
 					}
 					switch mode := fi.Mode(); {
@@ -178,10 +182,19 @@ func loadFileConfig(filename string, element interface{}) error {
 
 	renderedTemplate := buffer.Bytes()
 
-	err := yaml.Unmarshal(renderedTemplate, element)
-	if err != nil {
-		return errors.Wrapf(err, "parsing YAML file %s", filename)
+	switch filepath.Ext(filename) {
+	case ".yml", ".yaml":
+		err := yaml.Unmarshal(renderedTemplate, element)
+		if err != nil {
+			return errors.Wrapf(err, "parsing yaml file %s", filename)
+		}
+	case ".json":
+		err := json.Unmarshal(renderedTemplate, element)
+		if err != nil {
+			return errors.Wrapf(err, "parsing json file %s", filename)
+		}
 	}
+
 	return nil
 }
 

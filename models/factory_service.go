@@ -26,7 +26,14 @@ func (a *Application) ApplyWebService(config map[string]*dynamic.OpenApi) {
 }
 
 func (w *WebServiceInfo) apply(config *dynamic.OpenApi, filePath string) {
-	context := &serviceContext{config: config, Errors: make([]string, 0), path: filePath}
+	context := &serviceContext{
+		service: w.Data,
+		error: func(msg string) {
+			log.Errorf("error in config %v: %v", filePath, msg)
+			w.Errors = append(w.Errors, msg)
+		},
+		path: filePath,
+	}
 
 	if len(w.Data.Name) == 0 {
 		w.Data.Name = config.Info.Name
@@ -41,11 +48,14 @@ func (w *WebServiceInfo) apply(config *dynamic.OpenApi, filePath string) {
 	for _, v := range config.Servers {
 		server, err := createServers(v)
 		if err != nil {
-			log.Error(err.Error())
-			context.Errors = append(context.Errors, err.Error())
+			context.error(err.Error())
 			continue
 		}
 		w.Data.AddServer(server)
+	}
+
+	for name, schema := range config.Components.Schemas {
+		w.Data.Models[name] = buildSchemaFromComponents(name, schema, context)
 	}
 
 	for path, v := range config.EndPoints {
@@ -71,11 +81,6 @@ func (w *WebServiceInfo) apply(config *dynamic.OpenApi, filePath string) {
 			mokapiFile = filepath.Join(dir, mokapiFile)
 		}
 		w.Data.MokapiFile = mokapiFile
-	}
-
-	w.Errors = append(w.Errors, context.Errors...)
-	for _, err := range context.Errors {
-		log.Errorf("error in config %v: %v", filePath, err)
 	}
 }
 
@@ -118,8 +123,7 @@ func (e *Endpoint) update(config *dynamic.Endpoint, context *serviceContext) {
 		for _, v := range config.Parameters {
 			p, err := createParameter(v, context)
 			if err != nil {
-				log.Error(err.Error())
-				context.Errors = append(context.Errors, err.Error())
+				context.error(err.Error())
 				continue
 			}
 			e.Parameters = append(e.Parameters, p)
@@ -143,8 +147,7 @@ func createOperation(config *dynamic.Operation, endpoint *Endpoint, context *ser
 	for k, r := range config.Responses {
 		s, err := parseHttpStatus(k)
 		if err != nil {
-			log.Error(err.Error())
-			context.Errors = append(context.Errors, err.Error())
+			context.error(err.Error())
 			continue
 		}
 		o.Responses[s] = createResponse(r, context)
@@ -157,8 +160,7 @@ func createOperation(config *dynamic.Operation, endpoint *Endpoint, context *ser
 		for _, v := range config.Parameters {
 			p, err := createParameter(v, context)
 			if err != nil {
-				log.Error(err.Error())
-				context.Errors = append(context.Errors, err.Error())
+				context.error(err.Error())
 				continue
 			}
 			o.Parameters = append(o.Parameters, p)
@@ -169,14 +171,14 @@ func createOperation(config *dynamic.Operation, endpoint *Endpoint, context *ser
 }
 
 func createRequestBody(config *dynamic.RequestBody, context *serviceContext) *RequestBody {
-	if len(config.Reference) > 0 {
-		if ref, ok := context.getRequestBody(config.Reference); ok {
-			return createRequestBody(ref, context)
-		} else {
-			context.Errors = append(context.Errors, fmt.Sprintf("unable to resolve reference '%v'", config.Reference))
-			return nil
-		}
-	}
+	//if len(config.Reference) > 0 {
+	//	if ref, ok := context.getRequestBody(config.Reference); ok {
+	//		return createRequestBody(ref, context)
+	//	} else {
+	//		context.Errors = append(context.Errors, fmt.Sprintf("unable to resolve reference '%v'", config.Reference))
+	//		return nil
+	//	}
+	//}
 
 	r := &RequestBody{Description: config.Description, ContentTypes: make(map[string]*MediaType), Required: config.Required}
 	if config.Content != nil {
@@ -193,14 +195,14 @@ func createRequestBody(config *dynamic.RequestBody, context *serviceContext) *Re
 }
 
 func createResponse(config *dynamic.Response, context *serviceContext) *Response {
-	if len(config.Reference) > 0 {
-		if ref, ok := context.getResponse(config.Reference); ok {
-			return createResponse(ref, context)
-		} else {
-			context.Errors = append(context.Errors, fmt.Sprintf("unable to resolve reference '%v'", config.Reference))
-			return nil
-		}
-	}
+	//if len(config.Reference) > 0 {
+	//	if ref, ok := context.getResponse(config.Reference); ok {
+	//		return createResponse(ref, context)
+	//	} else {
+	//		context.Errors = append(context.Errors, fmt.Sprintf("unable to resolve reference '%v'", config.Reference))
+	//		return nil
+	//	}
+	//}
 
 	r := &Response{Description: config.Description, ContentTypes: make(map[string]*MediaType)}
 	if config.Content != nil {
@@ -224,57 +226,6 @@ func getMediaType(config *dynamic.MediaType, context *serviceContext) *MediaType
 	return m
 }
 
-func createSchema(config *dynamic.Schema, context *serviceContext) *Schema {
-	if config == nil {
-		return nil
-	}
-
-	if len(config.Reference) > 0 {
-		schema, ok := context.getSchema(config.Reference)
-		if !ok {
-			context.Errors = append(context.Errors, fmt.Sprintf("unable to resolve reference '%v'", config.Reference))
-			return nil
-		}
-		ref := createSchema(schema, context)
-		ref.Reference = config.Reference
-		return ref
-	}
-
-	schema := &Schema{
-		Description:          config.Description,
-		Faker:                config.Faker,
-		Format:               config.Format,
-		Type:                 config.Type,
-		AdditionalProperties: config.AdditionalProperties,
-		Reference:            config.Reference,
-		Required:             config.Required,
-	}
-
-	if config.Xml != nil {
-		schema.Xml = &XmlEncoding{
-			Attribute: config.Xml.Attribute,
-			CData:     config.Xml.CData,
-			Name:      config.Xml.Name,
-			Namespace: config.Xml.Namespace,
-			Prefix:    config.Xml.Prefix,
-			Wrapped:   config.Xml.Wrapped,
-		}
-	}
-
-	if config.Items != nil {
-		schema.Items = createSchema(config.Items, context)
-	}
-
-	for i, p := range config.Properties {
-		if schema.Properties == nil {
-			schema.Properties = make(map[string]*Schema)
-		}
-		schema.Properties[i] = createSchema(p, context)
-	}
-
-	return schema
-}
-
 func createServers(config *dynamic.Server) (Server, error) {
 	host, error := getHost(config)
 	if error != nil {
@@ -295,7 +246,7 @@ func createServers(config *dynamic.Server) (Server, error) {
 func getHost(s *dynamic.Server) (string, error) {
 	u, error := url.Parse(s.Url)
 	if error != nil {
-		return "", fmt.Errorf("Invalid format in url found: %v", s.Url)
+		return "", fmt.Errorf("invalid format in url found: %v", s.Url)
 	}
 	return u.Hostname(), nil
 }
@@ -303,7 +254,7 @@ func getHost(s *dynamic.Server) (string, error) {
 func getPath(s *dynamic.Server) (string, error) {
 	u, error := url.Parse(s.Url)
 	if error != nil {
-		return "", fmt.Errorf("Invalid format in url found: %v", s.Url)
+		return "", fmt.Errorf("invalid format in url found: %v", s.Url)
 	}
 	if len(u.Path) == 0 {
 		return "/", nil
@@ -314,7 +265,7 @@ func getPath(s *dynamic.Server) (string, error) {
 func getPort(s *dynamic.Server) (int, error) {
 	u, error := url.Parse(s.Url)
 	if error != nil {
-		return -1, fmt.Errorf("Invalid format in url found: %v", s.Url)
+		return -1, fmt.Errorf("invalid format in url found: %v", s.Url)
 	}
 	portString := u.Port()
 	if len(portString) == 0 {
@@ -322,7 +273,7 @@ func getPort(s *dynamic.Server) (int, error) {
 	} else {
 		port, error := strconv.ParseInt(portString, 10, 32)
 		if error != nil {
-			return -1, fmt.Errorf("Invalid port format in url found: %v", error.Error())
+			return -1, fmt.Errorf("invalid port format in url found: %v", error.Error())
 		}
 		return int(port), nil
 	}
@@ -364,52 +315,53 @@ func createParameter(config *dynamic.Parameter, context *serviceContext) (*Param
 }
 
 type serviceContext struct {
-	config *dynamic.OpenApi
-	path   string
-	Errors []string
+	service    *WebService
+	unresolved map[string]*dynamic.Schema
+	path       string
+	error      func(msg string)
 }
 
-func (c *serviceContext) getRequestBody(ref string) (*dynamic.RequestBody, bool) {
-	if len(ref) == 0 {
-		return nil, false
-	}
-	if ref[0] == '#' {
-		key := strings.TrimPrefix(ref, "#/components/requestBodies/")
-		if len(key) == 0 {
-			return nil, false
-		}
-		s, ok := c.config.Components.RequestBodies[key]
-		return s, ok
-	}
-	return nil, false
-}
+//func (c *serviceContext) getRequestBody(ref string) (*dynamic.RequestBody, bool) {
+//	if len(ref) == 0 {
+//		return nil, false
+//	}
+//	if ref[0] == '#' {
+//		key := strings.TrimPrefix(ref, "#/components/requestBodies/")
+//		if len(key) == 0 {
+//			return nil, false
+//		}
+//		s, ok := c.config.Components.RequestBodies[key]
+//		return s, ok
+//	}
+//	return nil, false
+//}
 
-func (c *serviceContext) getSchema(ref string) (*dynamic.Schema, bool) {
-	if len(ref) == 0 {
-		return nil, false
-	}
-	if ref[0] == '#' {
-		key := strings.TrimPrefix(ref, "#/components/schemas/")
-		if len(key) == 0 {
-			return nil, false
-		}
-		s, ok := c.config.Components.Schemas[key]
-		return s, ok
-	}
-	return nil, false
-}
+//func (c *serviceContext) getSchema(ref string) (*dynamic.Schema, bool) {
+//	if len(ref) == 0 {
+//		return nil, false
+//	}
+//	if ref[0] == '#' {
+//		key := strings.TrimPrefix(ref, "#/components/schemas/")
+//		if len(key) == 0 {
+//			return nil, false
+//		}
+//		s, ok := c.config.Components.Schemas[key]
+//		return s, ok
+//	}
+//	return nil, false
+//}
 
-func (c *serviceContext) getResponse(ref string) (*dynamic.Response, bool) {
-	if len(ref) == 0 {
-		return nil, false
-	}
-	if ref[0] == '#' {
-		key := strings.TrimPrefix(ref, "#/components/responses/")
-		if len(key) == 0 {
-			return nil, false
-		}
-		s, ok := c.config.Components.Responses[key]
-		return s, ok
-	}
-	return nil, false
-}
+//func (c *serviceContext) getResponse(ref string) (*dynamic.Response, bool) {
+//	if len(ref) == 0 {
+//		return nil, false
+//	}
+//	if ref[0] == '#' {
+//		key := strings.TrimPrefix(ref, "#/components/responses/")
+//		if len(key) == 0 {
+//			return nil, false
+//		}
+//		s, ok := c.config.Components.Responses[key]
+//		return s, ok
+//	}
+//	return nil, false
+//}

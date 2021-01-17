@@ -45,7 +45,7 @@ func NewApplication() *Application {
 }
 
 func NewServiceInfo() *WebServiceInfo {
-	webService := &WebService{Servers: make([]Server, 0), Endpoint: make(map[string]*Endpoint)}
+	webService := &WebService{Servers: make([]Server, 0), Endpoint: make(map[string]*Endpoint), Models: make(map[string]*Schema)}
 
 	return &WebServiceInfo{Data: webService, Errors: make([]string, 0)}
 }

@@ -1,31 +1,30 @@
-package handlers
+package web
 
 import (
 	"fmt"
 	"github.com/brianvoe/gofakeit/v4"
-	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"mokapi/models"
 	"mokapi/providers/encoding"
-	"mokapi/server/web"
 	"net/http"
 )
 
 type Response struct {
-	httpContext *web.HttpContext
+	err         func(err error, statusCode int)
+	httpContext *HttpContext
 }
 
 func (r *Response) AddHeader(key string, value string) {
 	r.httpContext.Response.Header().Add(key, value)
 }
 
-func (r *Response) WriteString(s string, statusCode int, contentType string) error {
+func (r *Response) WriteString(s string, statusCode int, contentType string) {
 	bytes := []byte(s)
 
-	return r.write(bytes, statusCode, contentType)
+	r.write(bytes, statusCode, contentType)
 }
 
-func (r *Response) Write(object interface{}, statusCode int, contentType string) error {
+func (r *Response) Write(object interface{}, statusCode int, contentType string) {
 	bytes, ok := object.([]byte)
 	if len(contentType) == 0 {
 		contentType = r.httpContext.ContentType.String()
@@ -40,21 +39,21 @@ func (r *Response) Write(object interface{}, statusCode int, contentType string)
 	} else {
 		bytes, err = r.encodeData(object)
 		if err != nil {
-			log.WithFields(log.Fields{"url": r.httpContext.Request.URL.String()}).Errorf(err.Error())
-			http.Error(r.httpContext.Response, err.Error(), http.StatusInternalServerError)
-			return err
+			r.err(err, http.StatusInternalServerError)
+			return
 		}
 	}
 
-	return r.write(bytes, statusCode, contentType)
+	r.write(bytes, statusCode, contentType)
 }
 
-func (r *Response) WriteRandom(statusCode int, contentType string) error {
+func (r *Response) WriteRandom(statusCode int, contentType string) {
 	data := getRandomObject(r.httpContext.Schema)
-	return r.Write(data, statusCode, contentType)
+	r.httpContext.metric.HttpStatus = statusCode
+	r.Write(data, statusCode, contentType)
 }
 
-func (r *Response) write(bytes []byte, statusCode int, contentType string) error {
+func (r *Response) write(bytes []byte, statusCode int, contentType string) {
 	if statusCode > 0 {
 		r.httpContext.Response.WriteHeader(statusCode)
 	}
@@ -66,8 +65,11 @@ func (r *Response) write(bytes []byte, statusCode int, contentType string) error
 
 	r.AddHeader("Content-Length", fmt.Sprint(len(bytes)))
 	_, err := r.httpContext.Response.Write(bytes)
-
-	return err
+	if err != nil {
+		r.err(err, http.StatusInternalServerError)
+	} else {
+		r.httpContext.metric.HttpStatus = statusCode
+	}
 }
 
 func (r *Response) encodeData(data interface{}) ([]byte, error) {
