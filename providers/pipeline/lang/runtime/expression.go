@@ -40,11 +40,14 @@ func (v *exprVisitor) Visit(node ast.Node) ast.Visitor {
 		return newBinaryVisitor(n, v)
 	case *ast.Closure:
 		return newClosureVisitor(n, v)
+	case *ast.SequenceExpr:
+		return newSequenceVisitor(n, v)
 	case *ast.Ident:
 		if o, ok := v.Scope().Symbol(n.Name); ok {
-			v.Stack().Push(o)
+			v.stack.Push(o)
 		} else {
-			v.AddErrorf(n.Pos(), "unresolved symbol '%v'", n.Name)
+			// push name onto stack
+			v.stack.Push(types.NewString(n.Name))
 		}
 	case *ast.Literal:
 		switch n.Kind {

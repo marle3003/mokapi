@@ -42,6 +42,61 @@ func hasField(i interface{}, name string) bool {
 	}
 }
 
+func setField(i interface{}, name string, value Object) error {
+	if len(name) == 0 {
+		return errors.Errorf("invalid empty field name")
+	}
+
+	v := reflect.ValueOf(i)
+	var ptr reflect.Value
+	if v.Type().Kind() == reflect.Ptr {
+		ptr = v
+		v = ptr.Elem()
+	} else {
+		ptr = reflect.New(reflect.TypeOf(i))
+		temp := ptr.Elem()
+		temp.Set(v)
+	}
+
+	if index, err := strconv.Atoi(name); err == nil {
+		if array, ok := i.(*Array); ok {
+			array.value[index] = value
+		}
+		if v.Kind() == reflect.Slice {
+			return setValue(v.Index(index), value)
+		} else {
+			return errors.Errorf("index operator with '%v' used on %v", index, reflect.TypeOf(i))
+		}
+	} else {
+		fieldName := strings.Title(name)
+
+		f := v.FieldByName(fieldName)
+		if !f.IsValid() {
+			// check for field on pointer
+			f = reflect.Indirect(ptr).FieldByName(fieldName)
+		}
+		if f.IsValid() {
+			return setValue(f, value)
+		} else {
+			return errors.Errorf("field '%v' is not defined on type %v", name, reflect.TypeOf(i))
+		}
+	}
+}
+
+func setValue(field reflect.Value, value Object) error {
+	o := reflect.TypeOf((*Object)(nil)).Elem()
+	if field.Type().Implements(o) {
+		field.Set(reflect.ValueOf(value))
+	} else {
+		v, err := ConvertFrom(value, field.Type())
+		if err != nil {
+			return err
+		}
+		field.Set(reflect.ValueOf(v))
+	}
+	return nil
+}
+
 func getField(i interface{}, name string) (Object, error) {
 	if len(name) == 0 {
 		if o, ok := i.(Object); ok {
@@ -161,7 +216,7 @@ func createArgs(f reflect.Type, args map[string]Object) ([]reflect.Value, error)
 		if arg, ok := args[k]; ok {
 			o := reflect.TypeOf((*Object)(nil)).Elem()
 			if t.Implements(o) {
-				if p, ok := arg.(*Path); ok {
+				if p, ok := arg.(*PathValue); ok {
 					value = reflect.ValueOf(p.value)
 				} else {
 					value = reflect.ValueOf(arg)

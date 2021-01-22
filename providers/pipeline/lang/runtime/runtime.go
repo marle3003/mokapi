@@ -83,6 +83,8 @@ func (v *pipelineVisitor) Visit(node ast.Node) ast.Visitor {
 
 	switch n := node.(type) {
 	case *ast.Pipeline:
+		v.scope = n.Scope
+		v.exprVisitor.scope = v.scope
 		if n.Name != v.name {
 			return nil
 		} else {
@@ -94,6 +96,8 @@ func (v *pipelineVisitor) Visit(node ast.Node) ast.Visitor {
 		return newStageVisitor(n, v)
 	case *ast.ExprStatement:
 		// case 'when'
+		return v.exprVisitor
+	case *ast.VarsBlock:
 		return v.exprVisitor
 	case *ast.StepBlock:
 		return v.exprVisitor

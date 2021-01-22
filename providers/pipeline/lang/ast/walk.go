@@ -15,10 +15,16 @@ func Walk(v Visitor, node Node) {
 			Walk(v, p)
 		}
 	case *Pipeline:
+		if n.Vars != nil {
+			Walk(v, n.Vars)
+		}
 		for _, s := range n.Stages {
 			Walk(v, s)
 		}
 	case *Stage:
+		if n.Vars != nil {
+			Walk(v, n.Vars)
+		}
 		if n.When != nil {
 			Walk(v, n.When)
 		}
@@ -62,8 +68,17 @@ func Walk(v Visitor, node Node) {
 			Walk(v, p)
 		}
 		Walk(v, n.Block)
-	case *DeclStmt:
-		Walk(v, n.Name)
+	case *VarsBlock:
+		for _, s := range n.Specs {
+			Walk(v, s)
+		}
+	case *SequenceExpr:
+		for _, i := range n.Values {
+			Walk(v, i)
+		}
+	case *KeyValueExpr:
+		Walk(v, n.Key)
+		Walk(v, n.Value)
 	case *Ident:
 	}
 	v.Visit(nil)

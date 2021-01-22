@@ -111,6 +111,7 @@ type Schema struct {
 	Items                *Schema
 	Xml                  *Xml
 	Required             []string
+	Nullable             bool
 }
 
 type AdditionalProperties struct {

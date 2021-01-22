@@ -9,16 +9,11 @@ import (
 )
 
 type Array struct {
-	ObjectImpl
 	value []Object
 }
 
 func NewArray() *Array {
 	return &Array{value: []Object{}}
-}
-
-func (a *Array) GetField(name string) (Object, error) {
-	return getField(a, name)
 }
 
 func (a *Array) Elem() interface{} {
@@ -108,6 +103,18 @@ func (a *Array) InvokeOp(op token.Token, _ Object) (Object, error) {
 	return nil, errors.Errorf("type array does not support operator %v", op)
 }
 
+func (a *Array) GetField(name string) (Object, error) {
+	return getField(a, name)
+}
+
+func (a *Array) HasField(name string) bool {
+	return hasField(a, name)
+}
+
 func (a *Array) InvokeFunc(name string, args map[string]Object) (Object, error) {
 	return invokeFunc(a, name, args)
+}
+
+func (a *Array) SetField(field string, value Object) error {
+	return setField(a, field, value)
 }

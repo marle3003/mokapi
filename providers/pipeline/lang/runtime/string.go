@@ -18,7 +18,7 @@ func format(s string, scope *ast.Scope) (string, error) {
 			}
 			name := groupNames[groupIndex]
 			if name == "exp" || name == "var" {
-				expr, err := parser.ParseExpr([]byte(group), scope)
+				expr, err := parser.ParseExpr(group, scope)
 				if err != nil {
 					return "", err
 				}

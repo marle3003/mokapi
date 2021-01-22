@@ -8,7 +8,6 @@ import (
 )
 
 type Bool struct {
-	ObjectImpl
 	value bool
 }
 
@@ -51,4 +50,20 @@ func (b *Bool) InvokeOp(op token.Token, obj Object) (Object, error) {
 
 func (b *Bool) GetType() reflect.Type {
 	return reflect.TypeOf(b.value)
+}
+
+func (b *Bool) GetField(name string) (Object, error) {
+	return getField(b, name)
+}
+
+func (b *Bool) HasField(name string) bool {
+	return hasField(b, name)
+}
+
+func (b *Bool) InvokeFunc(name string, args map[string]Object) (Object, error) {
+	return invokeFunc(b, name, args)
+}
+
+func (b *Bool) SetField(field string, value Object) error {
+	return setField(b, field, value)
 }

@@ -56,7 +56,7 @@ func (v *pathVisitor) Visit(node ast.Node) ast.Visitor {
 		}
 	}
 
-	p, ok := obj.(*types.Path)
+	p, ok := obj.(types.Path)
 	if !ok {
 		p = types.NewPath(obj)
 	}

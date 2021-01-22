@@ -41,7 +41,7 @@ export default {
   props: ['responses'],
   computed: {
     sorted: function() {
-      if (this.responses == null) {
+      if (!this.responses) {
         return []
       }
       

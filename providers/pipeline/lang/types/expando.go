@@ -3,12 +3,12 @@ package types
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"mokapi/providers/pipeline/lang/token"
 	"reflect"
 	"strings"
 )
 
 type Expando struct {
-	ObjectImpl
 	value map[string]Object
 }
 
@@ -54,9 +54,19 @@ func (e *Expando) GetType() reflect.Type {
 }
 
 func (e *Expando) GetField(name string) (Object, error) {
-	if v, ok := e.value[name]; ok {
-		return v, nil
+	switch name {
+	case "*":
+		a := NewArray()
+		for _, v := range e.value {
+			a.Add(v)
+		}
+		return a, nil
+	default:
+		if v, ok := e.value[name]; ok {
+			return v, nil
+		}
 	}
+
 	return getField(e, name)
 }
 
@@ -70,4 +80,20 @@ func (e *Expando) HasField(name string) bool {
 func (e *Expando) SetField(name string, v Object) error {
 	e.value[name] = v
 	return nil
+}
+
+func (e *Expando) InvokeFunc(name string, args map[string]Object) (Object, error) {
+	return invokeFunc(e, name, args)
+}
+
+func (e *Expando) InvokeOp(op token.Token, _ Object) (Object, error) {
+	return nil, errors.Errorf("type expando does not support operator %v", op)
+}
+
+func (e *Expando) Children() *Array {
+	a := NewArray()
+	for _, c := range e.value {
+		a.Add(c)
+	}
+	return a
 }

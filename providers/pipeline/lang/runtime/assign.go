@@ -16,7 +16,10 @@ func newAssignVisitor(assign *ast.Assignment, outer visitor) *assignVisitor {
 }
 
 func (v *assignVisitor) Visit(node ast.Node) ast.Visitor {
-	if node != nil && !v.outer.HasErrors() {
+	if v.outer.HasErrors() {
+		return nil
+	}
+	if node != nil {
 		return v.outer.Visit(node)
 	}
 	var err error
@@ -29,7 +32,7 @@ func (v *assignVisitor) Visit(node ast.Node) ast.Visitor {
 			v.outer.Scope().SetSymbol(ident.Name, val)
 			return nil
 		} else {
-			v.outer.AddError(v.assign.TokPos, "expected identifier on left side of :=")
+			v.outer.AddError(v.assign.TokPos, "expected identifier on left hand side of :=")
 			return nil
 		}
 	}

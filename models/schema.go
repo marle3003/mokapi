@@ -83,6 +83,7 @@ func newSchema(config *dynamic.Schema) *Schema {
 		Type:        config.Type,
 		Reference:   config.Reference,
 		Required:    config.Required,
+		Nullable:    config.Nullable,
 	}
 
 	if config.Xml != nil {

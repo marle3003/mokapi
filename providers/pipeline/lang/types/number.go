@@ -9,7 +9,6 @@ import (
 )
 
 type Number struct {
-	ObjectImpl
 	value float64
 }
 
@@ -19,10 +18,6 @@ func NewNumber(f float64) *Number {
 
 func (n *Number) Elem() interface{} {
 	return n.value
-}
-
-func (n *Number) GetField(name string) (Object, error) {
-	return getField(n, name)
 }
 
 func (b *Number) Set(o Object) error {
@@ -68,4 +63,24 @@ func (n *Number) InvokeOp(op token.Token, obj Object) (Object, error) {
 	}
 	return nil, fmt.Errorf("operator '%v' is not defined on %v", op, reflect.TypeOf(obj))
 
+}
+
+func (n *Number) GetType() reflect.Type {
+	return reflect.TypeOf(n.value)
+}
+
+func (n *Number) GetField(name string) (Object, error) {
+	return getField(n, name)
+}
+
+func (n *Number) HasField(name string) bool {
+	return hasField(n, name)
+}
+
+func (n *Number) InvokeFunc(name string, args map[string]Object) (Object, error) {
+	return invokeFunc(n, name, args)
+}
+
+func (n *Number) SetField(field string, value Object) error {
+	return setField(n, field, value)
 }

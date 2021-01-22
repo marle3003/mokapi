@@ -54,17 +54,15 @@ func (p *FileProvider) loadService(channel chan<- ConfigMessage) {
 }
 
 func (p *FileProvider) loadServiceFromDirectory(directory string, channel chan<- ConfigMessage) {
+	if skip(directory) {
+		return
+	}
 	fileList, err := ioutil.ReadDir(directory)
 	if err != nil {
 		log.Error("unable to read directory %s: %v", directory, err)
 	}
 
 	for _, item := range fileList {
-		// TODO: make skip char configurable
-		if strings.HasPrefix(item.Name(), "_") {
-			log.Infof("skipping config %v", item.Name())
-			continue
-		}
 		if item.IsDir() {
 			p.loadServiceFromDirectory(filepath.Join(directory, item.Name()), channel)
 			continue
@@ -76,6 +74,9 @@ func (p *FileProvider) loadServiceFromDirectory(directory string, channel chan<-
 }
 
 func (p *FileProvider) loadServiceFromFile(filename string, channel chan<- ConfigMessage) {
+	if skip(filename) {
+		return
+	}
 	switch filepath.Ext(filename) {
 	case ".yml", ".yaml", ".json":
 		// continue loading from file
@@ -201,4 +202,14 @@ func loadFileConfig(filename string, element interface{}) error {
 func extractUsername(s string) string {
 	slice := strings.Split(s, "\\")
 	return slice[len(slice)-1]
+}
+
+func skip(path string) bool {
+	name := filepath.Base(path)
+	// TODO: make skip char configurable
+	if strings.HasPrefix(name, "_") {
+		log.Infof("skipping config %v", name)
+		return true
+	}
+	return false
 }

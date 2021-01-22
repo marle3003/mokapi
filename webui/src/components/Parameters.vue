@@ -19,7 +19,7 @@
         </b-card>
       </template>
       <template v-slot:cell(schema)="data">
-      {{ data.item.schema.type }}
+      {{ data.item.schema ? data.item.schema.type : 'undefined' }}
     </template>
   </b-table>
 </template>
@@ -45,11 +45,13 @@ export default {
 
       let result = []
 
-      this.operation.parameters.forEach((parameter, index) => {
-        parameter['key'] = parameter.name +":"+parameter.location
-        parameter['_showDetails'] = this.detailsShown.indexOf(parameter.key) >= 0
-        result.push(parameter)
-      })
+      if (this.operation.parameters) {
+        this.operation.parameters.forEach((parameter, index) => {
+          parameter['key'] = parameter.name +":"+parameter.location
+          parameter['_showDetails'] = this.detailsShown.indexOf(parameter.key) >= 0
+          result.push(parameter)
+        })
+      }
 
       return result
     }

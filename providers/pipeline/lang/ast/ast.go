@@ -29,6 +29,8 @@ type Pipeline struct {
 	NamePos token.Position
 	Name    string
 	Stages  []*Stage
+	Vars    *VarsBlock
+	Scope   *Scope
 }
 
 type Stage struct {
@@ -37,6 +39,7 @@ type Stage struct {
 	Steps   *StepBlock
 	When    *ExprStatement
 	Scope   *Scope
+	Vars    *VarsBlock
 }
 
 type StepBlock struct {
@@ -56,13 +59,19 @@ type Assignment struct {
 	Rhs    Expression
 }
 
-type DeclStmt struct {
-	Name *Ident
-	Type string
+type VarsBlock struct {
+	Lbrace token.Position
+	Specs  []*Assignment
 }
 
 type ExprStatement struct {
 	X Expression
+}
+
+type SequenceExpr struct {
+	Lbrack token.Position
+	Values []Expression
+	IsMap  bool
 }
 
 type Unary struct {
@@ -126,21 +135,32 @@ type Closure struct {
 	Block     *Block
 }
 
+type KeyValueExpr struct {
+	Key   Expression
+	Value Expression
+}
+
+type MapType struct {
+	Map token.Position
+}
+
 // exprNode() ensures only expression nodes can be assigned
-func (*Ident) exprNode()     {}
-func (*Literal) exprNode()   {}
-func (*Call) exprNode()      {}
-func (*Binary) exprNode()    {}
-func (*Unary) exprNode()     {}
-func (*IndexExpr) exprNode() {}
-func (*PathExpr) exprNode()  {}
-func (*Closure) exprNode()   {}
-func (*ParenExpr) exprNode() {}
+func (*Ident) exprNode()        {}
+func (*Literal) exprNode()      {}
+func (*Call) exprNode()         {}
+func (*Binary) exprNode()       {}
+func (*Unary) exprNode()        {}
+func (*IndexExpr) exprNode()    {}
+func (*PathExpr) exprNode()     {}
+func (*Closure) exprNode()      {}
+func (*ParenExpr) exprNode()    {}
+func (*MapType) exprNode()      {}
+func (*SequenceExpr) exprNode() {}
+func (*KeyValueExpr) exprNode() {}
 
 // stmtNode() ensures only statement nodes can be assigned
 func (*Assignment) stmtNode()    {}
 func (*ExprStatement) stmtNode() {}
-func (*DeclStmt) stmtNode()      {}
 
 // Pos implementations
 func (f *File) Pos() token.Position {
@@ -154,7 +174,7 @@ func (s *Stage) Pos() token.Position         { return s.NamePos }
 func (s *StepBlock) Pos() token.Position     { return s.Lbrace }
 func (s *Block) Pos() token.Position         { return s.Lbrace }
 func (a *Assignment) Pos() token.Position    { return a.Lhs.Pos() }
-func (d *DeclStmt) Pos() token.Position      { return d.Name.Pos() }
+func (d *VarsBlock) Pos() token.Position     { return d.Lbrace }
 func (e *ExprStatement) Pos() token.Position { return e.X.Pos() }
 func (u *Unary) Pos() token.Position         { return u.OpPos }
 func (b *Binary) Pos() token.Position        { return b.Lhs.Pos() }
@@ -166,3 +186,6 @@ func (a *Argument) Pos() token.Position      { return a.NamePos }
 func (l *Literal) Pos() token.Position       { return l.ValuePos }
 func (c *Closure) Pos() token.Position       { return c.LbracePos }
 func (i *Ident) Pos() token.Position         { return i.NamePos }
+func (m *MapType) Pos() token.Position       { return m.Map }
+func (c *SequenceExpr) Pos() token.Position  { return c.Lbrack }
+func (k *KeyValueExpr) Pos() token.Position  { return k.Key.Pos() }

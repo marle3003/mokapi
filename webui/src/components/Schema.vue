@@ -1,12 +1,42 @@
 <template>
-  <b-table ref="table" small :items="itemsProvider" :fields="fields" class="schema" thead-class="hidden_header">
+<div>
+  <div v-for="(row, index) in rows" :key="index" >
+    <b-icon :style="{visibility: row.type === 'prop' ? 'visible' : 'hidden'}" :icon="isOpened(index) ? 'dash-square' : 'plus-square'" font-scale="0.9" @click="toggleDetails(index)" />
+    <pre style="display:inline"><code><span v-html="row.code" /></code></pre>
+    <b-card v-show="isOpened(index)" class="w-100">
+          <b-row class="">
+            <b-col>
+              <p class="label">Required</p>
+              <p>{{ row.required }}</p>
+               <p class="label">Format</p>
+              <p>{{ row.format }}</p>
+            </b-col>
+            <b-col>
+              <p class="label">Faker</p>
+              <p>{{ row.faker }}</p>
+               <p class="label">Nullable</p>
+              <p>{{ row.nullable }}</p>
+            </b-col>
+          </b-row>
+          <b-row>
+             <b-col>
+              <div v-if="row.description != null">
+                <p class="label">Description</p>
+                <vue-simple-markdown :source="row.description" />
+              </div>
+            </b-col>
+          </b-row>
+        </b-card>
+    </div>
+</div>
+  <!-- <b-table ref="table" small :items="itemsProvider" :fields="fields" class="schema" thead-class="hidden_header">
     <!-- Use it for editing <template v-slot:cell(add)="data">
       <div v-b-hover="handleHover" v-if="data.item.type === 'object'" v-on:click="addProperty">
         <b-icon icon="plus" v-if="isHovered" class="hover"></b-icon>
         <b-icon icon="plus" v-else></b-icon>
       </div>
     </template> -->
-    <template v-slot:cell(type)="data">
+    <!-- <template v-slot:cell(type)="data">
       <span v-bind:style="{ paddingLeft: data.item.level * 18 + 'px'}">
         {{ data.item.text }}
       </span>
@@ -14,7 +44,7 @@
         ({{ data.item.ref }})
       </span>
     </template>
-  </b-table>
+  </b-table> --> 
 </template>
 
 <script>
@@ -26,10 +56,27 @@ export default {
       fields: [
         // {key: 'add', tdClass: "schema_add"},
         { key: 'type' }],
-      isHovered: false
+      isHovered: false,
+      opened: []
+    }
+  },
+  computed: {
+    rows: function(){
+      return this.getRows(this.schema, 0, [])
     }
   },
   methods: {
+    isOpened (index){
+      return this.opened.indexOf(index) >= 0
+    },
+    toggleDetails (index) {
+      const i = this.opened.indexOf(index) 
+      if (i >= 0){
+	      this.opened.splice(i, 1)
+      }else{
+        this.opened.push(index)
+      }
+    },
     itemsProvider () {
       return this.getItems(this.schema, 0)
     },
@@ -39,6 +86,88 @@ export default {
     },
     handleHover (hovered) {
       this.isHovered = hovered
+    },
+    getRefOrEmpty (ref) {
+      if (!ref){
+        return ''
+      }
+      return '<span class="ref-type">[' + ref + ']</span>'
+    },
+    truncate (str, n){
+      return (str.length > n) ? str.substr(0, n-1) + '&hellip;' : str;
+    },
+    getRows (schema, level, paths){
+      let rows = []
+      if (!schema){
+        return rows
+      }
+
+      var row = {
+        format: schema.format,
+        description: schema.description,
+        faker: schema.faker,
+        required: false,
+        nullable: schema.nullable
+        //xml: schema.xml
+      }
+      row.format = schema.format
+
+      if (schema.ref !== ''){
+        if (paths.indexOf(schema.ref) >= 0){
+          return rows
+        }
+        paths.push(schema.ref)
+      }
+
+      let ident = " ".repeat(2 * level)
+      if (schema.type === 'object') {
+        row.code = ident
+        if (schema.name !== ''){
+          row.code += schema.name +": "
+        }
+        row.code += this.getRefOrEmpty(schema.ref) + " {"
+        rows.push(row)
+          
+        for (var i = 0; i < schema.properties.length; i++) {                
+          var propRows = this.getRows(schema.properties[i], level + 1, paths)
+          if (propRows.length > 0 && schema.required !== null){
+            propRows[0].required = schema.required.indexOf(schema.properties[i].name)
+          }
+          rows = rows.concat(propRows)
+        }
+        rows.push({code: ident + "}"})
+      } else if (schema.type === 'array') {
+        let s = ident + schema.name + ": "
+        if (schema.items !== undefined && schema.items !== null){
+          s += this.getRefOrEmpty(schema.items.ref)
+        }
+        s += " ["
+        // get all properties but not type => not incrementing level because we remove first level (shift)
+        var arrayRows = this.getRows(schema.items, level, paths)
+        arrayRows.shift() // remove object type
+        arrayRows.pop()
+        if (arrayRows.length === 0){
+          rows.push({code: s + "...]"})
+        } else{
+          rows.push({code: s})
+          rows = rows.concat(arrayRows)
+          rows.push({code: ident + "]"})
+        }
+      } else {
+        let s = '<span class="prop-type">'+schema.type+'</span>'
+        if (schema.name !== ''){
+          s = schema.name + ': ' + s
+        }
+        if (schema.description !== ''){
+          s += '<span class="comment"> ('+this.truncate(schema.description, 50)+')</span>'
+        }
+        row.code = ident + s
+        row.type = 'prop'
+        rows.push(row)
+      }
+
+      return rows
+
     },
     getItems (schema, level) {
       let items = []
@@ -98,9 +227,23 @@ try{
 .schema .schema_add{
   width: 20px;
 }
+.prop-type {
+  color: rgb(76,134,232);
+}
+.ref-type{
+  color: rgb(193,145,255);
+}
+.comment {
+  color: rgb(133,196,108)
+}
+
 </style>
 <style scoped>
 .hover{
 background-color: rgba(0, 0, 0, 0.1);
 }
+.label{
+    color: #a0a1a7;
+    margin-bottom: 0
+  }
 </style>

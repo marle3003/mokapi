@@ -144,14 +144,22 @@ func (s *Scanner) UseLineEnd(b bool) {
 	s.InsertLineEnd = b
 }
 
-func (s *Scanner) scanNumber() string {
-	offs := s.offset
-
+func (s *Scanner) scanDigits() {
 	for {
 		s.next()
 		if !unicode.IsDigit(s.ch) {
 			break
 		}
+	}
+}
+
+func (s *Scanner) scanNumber() string {
+	offs := s.offset
+
+	s.scanDigits()
+
+	if s.ch == '.' {
+		s.scanDigits()
 	}
 
 	return string(s.src[offs-1 : s.offset-1])
@@ -198,6 +206,8 @@ func (s *Scanner) Scan() (pos token.Position, tok token.Token, lit string) {
 			s.next()
 			if s.ch == '=' {
 				tok = token.ADD_ASSIGN
+			} else if s.ch == '+' {
+				tok = token.INC
 			} else {
 				s.offset--
 				tok = token.ADD
@@ -206,6 +216,8 @@ func (s *Scanner) Scan() (pos token.Position, tok token.Token, lit string) {
 			s.next()
 			if s.ch == '=' {
 				tok = token.SUB_ASSIGN
+			} else if s.ch == '-' {
+				tok = token.DEC
 			} else {
 				s.offset--
 				tok = token.SUB
@@ -297,6 +309,8 @@ func (s *Scanner) Scan() (pos token.Position, tok token.Token, lit string) {
 			}
 		case ',':
 			tok = token.COMMA
+		case ';':
+			tok = token.SEMICOLON
 		default:
 			lit = string(ch)
 		}

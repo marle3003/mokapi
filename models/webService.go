@@ -434,6 +434,7 @@ type Schema struct {
 	Reference            string
 	Required             []string
 	isResolved           bool
+	Nullable             bool
 }
 
 func (s *Schema) IsPropertyRequired(name string) bool {

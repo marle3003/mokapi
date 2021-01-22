@@ -30,15 +30,19 @@ func ParseFile(src []byte, scope *ast.Scope) (f *ast.File, err error) {
 	return
 }
 
-func ParseExpr(b []byte, scope *ast.Scope) (expr ast.Expression, err error) {
-	parser := newParser(b, scope)
+func ParseExpr(src string, scope *ast.Scope) (expr ast.Expression, err error) {
+	parser := newParser([]byte(src), scope)
 	parser.scanner.InsertLineEnd = true
 
 	defer func() {
 		err = parser.errors.Err()
 	}()
 
-	expr = parser.parseBinary()
+	parser.openScope()
+	expr = parser.parseBinary(true)
+	parser.closeScope()
+
+	parser.expect(token.EOF)
 
 	return
 }
@@ -83,27 +87,34 @@ func (p *parser) parsePipeline() *ast.Pipeline {
 
 func (p *parser) parsePipelineBody(pipeline *ast.Pipeline) {
 	p.expect(token.LBRACE)
+	p.openScope()
+	defer p.closeScope()
+	pipeline.Scope = p.scope
 	if p.tok == token.STAGES {
-		pipeline.Stages = p.parseStages()
+		pipeline.Stages, pipeline.Vars = p.parseStages()
 	}
 	p.expect(token.RBRACE)
 }
 
-func (p *parser) parseStages() []*ast.Stage {
-	stages := make([]*ast.Stage, 0)
+func (p *parser) parseStages() (stages []*ast.Stage, vars *ast.VarsBlock) {
 	p.expect(token.STAGES)
 	p.expect(token.LBRACE)
 	for p.tok != token.RBRACE && p.tok != token.EOF {
 		switch p.tok {
 		case token.STAGE:
 			stages = append(stages, p.parseStage())
+		case token.VARS:
+			if vars != nil {
+				p.error("redefine vars block")
+			}
+			vars = p.parseVarsBlock()
 		default:
 			p.expectedError(token.STAGE)
 			p.advance(token.STAGE)
 		}
 	}
 	p.expect(token.RBRACE)
-	return stages
+	return
 }
 
 func (p *parser) parseStage() *ast.Stage {
@@ -131,6 +142,11 @@ func (p *parser) parseStage() *ast.Stage {
 				p.error("redefine steps block")
 			}
 			s.When = p.parseWhen()
+		case token.VARS:
+			if s.Vars != nil {
+				p.error("redefine vars block")
+			}
+			s.Vars = p.parseVarsBlock()
 		default:
 			p.error("expected steps or when")
 			p.advance(token.STEPS, token.WHEN)
@@ -145,7 +161,7 @@ func (p *parser) parseWhen() (expr *ast.ExprStatement) {
 	p.expect(token.WHEN)
 	p.expect(token.LBRACE)
 	p.scanner.UseLineEnd(true)
-	x := p.parseBinary()
+	x := p.parseBinary(true)
 	expr = &ast.ExprStatement{X: x}
 	p.expect(token.SEMICOLON)
 	p.scanner.UseLineEnd(false)
@@ -175,31 +191,28 @@ func (p *parser) parseSteps() *ast.StepBlock {
 }
 
 func (p *parser) parseStatement() (stmt ast.Statement) {
-	if p.tok == token.VAR {
-		stmt = p.parseVarDecl()
-	} else {
-		lhs := p.parseBinary()
-		switch p.tok {
-		case token.DEFINE, token.ASSIGN, token.ADD_ASSIGN, token.SUB_ASSIGN, token.MUL_ASSIGN, token.QUO_ASSIGN, token.REM_ASSIGN:
-			assignTok := p.tok
-			p.next()
-			rhs := p.parseBinary()
-			stmt = &ast.Assignment{Lhs: lhs, Tok: assignTok, Rhs: rhs}
-			if assignTok == token.DEFINE {
-				// we do not know the type of the rhs expression
-				p.varDecl(lhs, "")
-				if _, isPath := lhs.(*ast.PathExpr); isPath {
-					p.error("define operator on path expression")
-				}
-			} else {
-				if path, isPath := lhs.(*ast.PathExpr); isPath {
-					path.Lhs = true
-				}
+	lhs := p.parseBinary(true)
+	switch p.tok {
+	case token.DEFINE, token.ASSIGN, token.ADD_ASSIGN, token.SUB_ASSIGN, token.MUL_ASSIGN, token.QUO_ASSIGN, token.REM_ASSIGN:
+		assignTok := p.tok
+		p.next()
+		rhs := p.parseBinary(false)
+		stmt = &ast.Assignment{Lhs: lhs, Tok: assignTok, Rhs: rhs}
+		if assignTok == token.DEFINE {
+			// we do not know the type of the rhs expression
+			p.varDecl(lhs, "")
+			if _, isPath := lhs.(*ast.PathExpr); isPath {
+				p.error("define operator on path expression")
 			}
-		default:
-			stmt = &ast.ExprStatement{X: lhs}
+		} else {
+			if path, isPath := lhs.(*ast.PathExpr); isPath {
+				path.Lhs = true
+			}
 		}
+	default:
+		stmt = &ast.ExprStatement{X: lhs}
 	}
+
 	p.expectStatmentEnd()
 	return
 }
@@ -207,7 +220,7 @@ func (p *parser) parseStatement() (stmt ast.Statement) {
 func (p *parser) varDecl(x ast.Expression, typeName string) {
 	if ident, isIdent := x.(*ast.Ident); isIdent {
 		if _, identExists := p.scope.Symbol(ident.Name); identExists {
-			p.error(fmt.Sprintf("identifier '%v' already defined", identExists))
+			p.error(fmt.Sprintf("identifier '%v' already defined", ident.Name))
 		}
 
 		switch t := typeName; {
@@ -224,34 +237,42 @@ func (p *parser) varDecl(x ast.Expression, typeName string) {
 	}
 }
 
-func (p *parser) parseVarDecl() *ast.DeclStmt {
-	p.expect(token.VAR)
-	if p.tok != token.IDENT {
-		p.expectedError(token.IDENT)
-	}
-	ident := &ast.Ident{Name: p.lit}
-	p.next()
-	if p.tok != token.IDENT {
-		p.expectedError(token.IDENT)
-	}
-	typeName := p.lit
-	p.next()
+func (p *parser) parseVarsBlock() *ast.VarsBlock {
+	p.expect(token.VARS)
+	var list []*ast.Assignment
+	p.expect(token.LBRACE)
+	p.scanner.UseLineEnd(true)
+	for {
+		if p.tok == token.RBRACE || p.tok == token.EOF {
+			break
+		}
+		stmt := p.parseStatement()
+		if a, isAssign := stmt.(*ast.Assignment); isAssign {
+			list = append(list, a)
+		} else {
+			p.error("expected assign statement in vars block")
+		}
 
-	p.varDecl(ident, typeName)
-
-	return &ast.DeclStmt{Name: ident, Type: typeName}
+	}
+	p.scanner.UseLineEnd(false)
+	p.expect(token.RBRACE)
+	return &ast.VarsBlock{Specs: list}
 }
 
-func (p *parser) parseBinary() ast.Expression {
-	x := p.parseUnary()
+func (p *parser) parseBinary(lhs bool) ast.Expression {
+	x := p.parseUnary(lhs)
 
 	// todo: consider correct operator order () before */ before +-...
 	for {
 		switch p.tok {
 		case token.ADD, token.SUB, token.MUL, token.QUO, token.REM, token.LAND, token.LOR, token.EQL, token.LSS, token.GTR, token.NOT, token.NEQ, token.LEQ, token.GEQ:
+			if lhs {
+				p.resolve(x)
+				lhs = false
+			}
 			op := p.tok
 			p.next()
-			y := p.parseBinary()
+			y := p.parseBinary(false)
 			x = &ast.Binary{Lhs: x, Rhs: y, Op: op, Precedence: op.Precedence()}
 		default:
 			return x
@@ -261,30 +282,93 @@ func (p *parser) parseBinary() ast.Expression {
 	return x
 }
 
-func (p *parser) parseUnary() ast.Expression {
+func (p *parser) parseUnary(lhs bool) ast.Expression {
 	switch p.tok {
 	case token.NOT:
 		op := p.tok
 		pos := p.pos
 		p.next()
-		x := p.parseUnary()
+		x := p.parseUnary(false)
 		return &ast.Unary{X: x, Op: op, OpPos: pos}
 	}
-	return p.parsePrimary()
+	return p.parsePrimary(lhs)
 }
 
-func (p *parser) parsePrimary() ast.Expression {
-	operand := p.parseOperand(true)
+func (p *parser) parsePrimary(lhs bool) ast.Expression {
+	x := p.parseOperand(lhs)
 
-	if p.tok == token.PERIOD {
-		p.resolve(operand)
-		path := &ast.PathExpr{X: operand, StartPos: operand.Pos()}
-		operand = p.parsePath(path)
-	} else if !p.tok.IsExprEnd() && !p.tok.IsOperator() && p.tok != token.COLON && p.tok != token.COMMA {
-		operand = p.parseCall(operand)
+	switch p.tok {
+	case token.PERIOD:
+		p.resolve(x)
+		path := &ast.PathExpr{X: x, StartPos: x.Pos()}
+		x = p.parsePath(path)
 	}
 
-	return operand
+	if !p.tok.IsExprEnd() && !p.tok.IsOperator() && p.tok != token.COLON && p.tok != token.COMMA {
+		x = p.parseCall(x)
+	}
+
+	return x
+}
+
+func (p *parser) isLiteralType(x ast.Expression) bool {
+	switch x.(type) {
+	case *ast.MapType:
+		return true
+	}
+	return false
+}
+
+func (p *parser) parseSequence() *ast.SequenceExpr {
+	lbrack := p.pos
+	p.expect(token.LBRACK)
+	var values []ast.Expression
+	isMap := false
+	for p.tok != token.RBRACK && p.tok != token.EOF {
+		el := p.parseElement()
+		values = append(values, el)
+		switch el.(type) {
+		case *ast.KeyValueExpr:
+			if len(values) == 1 {
+				isMap = true
+			} else if !isMap {
+				p.expectedError(token.COLON)
+			}
+		default:
+			if len(values) == 1 {
+				isMap = false
+			} else if isMap {
+				p.expectedError(token.COLON)
+			}
+		}
+		if p.tok != token.COMMA {
+			break
+		}
+		p.expect(token.COMMA)
+	}
+	p.expect(token.RBRACK)
+	return &ast.SequenceExpr{Values: values, Lbrack: lbrack}
+}
+
+func (p *parser) parseElement() ast.Expression {
+	x := p.parseValue()
+	if p.tok == token.COLON {
+		p.next()
+		val := p.parseValue()
+		p.resolve(val)
+		return &ast.KeyValueExpr{Key: x, Value: val}
+	} else {
+		p.resolve(x)
+	}
+	return x
+}
+
+func (p *parser) parseValue() ast.Expression {
+	if p.tok == token.LBRACK {
+		return p.parseSequence()
+	}
+
+	return p.parseBinary(true)
 }
 
 func (p *parser) parsePath(path *ast.PathExpr) ast.Expression {
@@ -366,11 +450,7 @@ func (p *parser) parseArgList() []*ast.Argument {
 func (p *parser) parseOperand(lhs bool) (x ast.Expression) {
 	switch p.tok {
 	case token.IDENT:
-		x = &ast.Ident{Name: p.lit, NamePos: p.pos}
-		if !lhs {
-			p.resolve(x)
-		}
-		p.next()
+		x = p.parseIdent(lhs)
 	case token.STRING, token.RSTRING:
 		x = &ast.Literal{Kind: p.tok, Value: p.lit, ValuePos: p.pos}
 		p.next()
@@ -379,13 +459,25 @@ func (p *parser) parseOperand(lhs bool) (x ast.Expression) {
 		p.next()
 	case token.LPAREN:
 		p.next()
-		x = &ast.ParenExpr{X: p.parseBinary()}
+		x = &ast.ParenExpr{X: p.parseBinary(false)}
 		p.expect(token.RPAREN)
+	case token.LBRACK:
+		x = p.parseSequence()
 	default:
+
 		p.error("expected operand")
 		p.next()
 	}
 	return
+}
+
+func (p *parser) parseIdent(lhs bool) ast.Expression {
+	x := &ast.Ident{Name: p.lit, NamePos: p.pos}
+	if !lhs {
+		p.resolve(x)
+	}
+	p.next()
+	return x
 }
 
 func (p *parser) parseClosure() *ast.Closure {
@@ -394,7 +486,7 @@ func (p *parser) parseClosure() *ast.Closure {
 	inInput := false
 	p.openScope()
 	for p.tok != token.RBRACE && p.tok != token.SEMICOLON && p.tok != token.EOF {
-		x := p.parseBinary()
+		x := p.parseBinary(true)
 		if p.tok == token.COMMA || p.tok == token.LAMBDA {
 			inInput = p.tok == token.COMMA
 			ident := x.(*ast.Ident)
@@ -420,16 +512,17 @@ func (p *parser) parseArgument() *ast.Argument {
 	if p.tok == token.LBRACE {
 		expr = p.parseClosure()
 	} else {
-		expr = p.parseBinary()
+		expr = p.parseBinary(true)
 	}
 
 	if p.tok == token.COLON {
 		p.expect(token.COLON)
-		arg.Value = p.parseBinary()
+		arg.Value = p.parseBinary(false)
 
 		arg.Name = expr.(*ast.Ident).Name
 		arg.NamePos = expr.Pos()
 	} else {
+		p.resolve(expr)
 		arg.Name = ""
 		arg.NamePos = expr.Pos()
 		arg.Value = expr

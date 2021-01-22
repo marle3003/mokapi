@@ -9,9 +9,15 @@ type Token int
 const (
 	ILLEGAL Token = iota
 	EOF
+
+	literalStart
 	IDENT
 
 	NUMBER
+
+	RSTRING
+	STRING
+	literalEnd
 
 	operatorStart
 	ADD // +
@@ -54,9 +60,6 @@ const (
 	LBRACK
 	RBRACK
 
-	RSTRING
-	STRING
-
 	COMMA
 	PERIOD
 	SEMICOLON
@@ -71,16 +74,20 @@ const (
 	STAGE
 	STEPS
 	WHEN
-	VAR
+	VARS
+
 	keywordsEnd
 )
 
-var tokens = []string{
+var tokens = [...]string{
 	ILLEGAL: "ILLEGAL",
 	EOF:     "EOF",
 	IDENT:   "IDENT",
 
 	NUMBER: "NUMBER",
+
+	RSTRING: "RSTRING",
+	STRING:  "STRING",
 
 	ADD: "+",
 	SUB: "-",
@@ -121,9 +128,6 @@ var tokens = []string{
 	LBRACK: "[",
 	RBRACK: "]",
 
-	RSTRING: "RSTRING",
-	STRING:  "STRING",
-
 	COMMA:     ",",
 	PERIOD:    ".",
 	SEMICOLON: ";",
@@ -136,7 +140,7 @@ var tokens = []string{
 	STAGE:    "stage",
 	STEPS:    "steps",
 	WHEN:     "when",
-	VAR:      "var",
+	VARS:     "vars",
 }
 
 var Keywords map[string]Token
@@ -153,6 +157,10 @@ func Loockup(ident string) Token {
 		return tok
 	}
 	return IDENT
+}
+
+func (t Token) IsLiteral() bool {
+	return t > literalStart && t < literalEnd
 }
 
 func (t Token) IsOperator() bool {
@@ -188,5 +196,5 @@ func (t Token) Precedence() int {
 }
 
 func (t Token) IsExprEnd() bool {
-	return t == SEMICOLON || t == EOF || t == RPAREN || t == RBRACE
+	return t == SEMICOLON || t == EOF || t == RPAREN || t == RBRACE || t == RBRACK
 }

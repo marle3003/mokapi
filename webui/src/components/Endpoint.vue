@@ -50,8 +50,7 @@
                   <h5>Parameters</h5>
                   <parameters v-bind:operation="operation" />
 
-                  <hr v-if="operation.requestBody != null" />
-                  <h5 v-if="operation.requestBody != null">Request Body</h5>
+                  <request v-bind:operation="operation" />
 
                   <hr />
                   <h5>Response</h5>
@@ -69,6 +68,7 @@
 <script>
 import Parameters from '@/components/Parameters'
 import Response from '@/components/Response'
+import RequestBody from '@/components/RequestBody'
 
 export default {
   name: 'endpoint',
@@ -94,7 +94,8 @@ export default {
   },
   components: {
     'parameters': Parameters,
-    'response': Response
+    'response': Response,
+    'request': RequestBody
   },
   methods: {
     doCommand (e) {

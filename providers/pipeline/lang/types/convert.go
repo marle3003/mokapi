@@ -58,8 +58,8 @@ func ConvertFrom(obj Object, t reflect.Type) (reflect.Value, error) {
 		return reflect.Zero(t), nil
 	}
 
-	if p, ok := obj.(*Path); ok {
-		obj = p.value
+	if p, ok := obj.(*PathValue); ok {
+		obj = p.Value()
 	}
 
 	switch t.Kind() {

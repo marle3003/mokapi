@@ -30,12 +30,20 @@ type endpoint struct {
 }
 
 type operation struct {
-	Method      string      `json:"method"`
-	Summary     string      `json:"summary"`
-	Description string      `json:"description"`
-	Parameters  []parameter `json:"parameters"`
-	Responses   []response  `json:"responses"`
-	Pipeline    string      `json:"pipeline"`
+	Method        string        `json:"method"`
+	Summary       string        `json:"summary"`
+	Description   string        `json:"description"`
+	Parameters    []parameter   `json:"parameters"`
+	Responses     []response    `json:"responses"`
+	Pipeline      string        `json:"pipeline"`
+	RequestBodies []requestBody `json:"requestBodies"`
+}
+
+type requestBody struct {
+	Description  string  `json:"description"`
+	ContentTypes string  `json:"contentType"`
+	Schema       *schema `json:"schema"`
+	Required     bool    `json:"required"`
 }
 
 type parameter struct {
@@ -60,11 +68,16 @@ type responseContent struct {
 }
 
 type schema struct {
-	Name       string    `json:"name"`
-	Type       string    `json:"type"`
-	Properties []*schema `json:"properties"`
-	Items      *schema   `json:"items"`
-	Ref        string    `json:"ref"`
+	Name        string    `json:"name"`
+	Type        string    `json:"type"`
+	Properties  []*schema `json:"properties"`
+	Items       *schema   `json:"items"`
+	Ref         string    `json:"ref"`
+	Description string    `json:"description"`
+	Required    []string  `json:"required"`
+	Format      string    `json:"format"`
+	Faker       string    `json:"faker"`
+	Nullable    bool      `json:"nullable"`
 }
 
 func newService(s *models.WebServiceInfo) service {
@@ -134,6 +147,17 @@ func newOperation(method string, o *models.Operation, pipeline string) operation
 		v.Parameters = append(v.Parameters, newParameter(p))
 	}
 
+	if o.RequestBody != nil {
+		for c, r := range o.RequestBody.ContentTypes {
+			v.RequestBodies = append(v.RequestBodies,
+				requestBody{
+					Description:  o.RequestBody.Description,
+					Required:     o.RequestBody.Required,
+					ContentTypes: c,
+					Schema:       newSchema("", r.Schema, 0)})
+		}
+	}
+
 	for s, r := range o.Responses {
 		v.Responses = append(v.Responses, newResponse(s, r))
 	}
@@ -168,7 +192,17 @@ func newSchema(name string, s *models.Schema, level int) *schema {
 		return nil
 	}
 
-	v := &schema{Name: name, Type: s.Type, Properties: make([]*schema, 0), Ref: s.Reference}
+	v := &schema{
+		Name:        name,
+		Type:        s.Type,
+		Properties:  make([]*schema, 0),
+		Ref:         s.Reference,
+		Description: s.Description,
+		Required:    s.Required,
+		Format:      s.Format,
+		Faker:       s.Faker,
+		Nullable:    s.Nullable,
+	}
 
 	if s.Items != nil {
 		v.Items = newSchema("", s.Items, level+1)
