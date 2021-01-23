@@ -51,9 +51,9 @@ func (s *Binding) getSchema() (*Schema, error) {
 	}
 
 	for _, attr := range attributeTypes {
-		attribute, error := parseABNF(attr)
-		if error != nil {
-			log.Error(error.Error)
+		attribute, err := parseABNF(attr)
+		if err != nil {
+			log.Error(err.Error())
 			continue
 		}
 		schema.attributes = append(schema.attributes, &attribute)

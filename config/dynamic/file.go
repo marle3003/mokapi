@@ -59,7 +59,7 @@ func (p *FileProvider) loadServiceFromDirectory(directory string, channel chan<-
 	}
 	fileList, err := ioutil.ReadDir(directory)
 	if err != nil {
-		log.Error("unable to read directory %s: %v", directory, err)
+		log.Errorf("unable to read directory %s: %v", directory, err)
 	}
 
 	for _, item := range fileList {

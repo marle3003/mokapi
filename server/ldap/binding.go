@@ -58,13 +58,13 @@ func (s *Binding) Start() {
 
 	schema, error := s.getSchema()
 	if error != nil {
-		log.Errorf("Error in parsing schema: ", error.Error())
+		log.Errorf("Error in parsing schema: %v", error.Error())
 	}
 	s.schema = schema
 
 	l, err := net.Listen("tcp", s.listen)
 	if err != nil {
-		log.Errorf("Error listening: ", err.Error())
+		log.Errorf("Error listening: %v", err.Error())
 		return
 	}
 
@@ -82,7 +82,7 @@ func (s *Binding) Start() {
 				case <-close:
 					return
 				default:
-					log.Errorf("Error accepting: ", err.Error())
+					log.Errorf("Error accepting: %v", err.Error())
 				}
 			}
 			// Handle connections in a new goroutine.

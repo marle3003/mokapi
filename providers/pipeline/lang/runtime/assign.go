@@ -73,7 +73,13 @@ func (v *assignVisitor) Visit(node ast.Node) ast.Visitor {
 				v.outer.AddErrorf(v.assign.TokPos, "unable to assign value '%v'", val)
 				return nil
 			} else {
-				obj.Set(val)
+				if p, isPath := val.(types.Path); isPath {
+					val = p.Value()
+				}
+				err = obj.Set(val)
+				if err != nil {
+					v.outer.AddErrorf(v.assign.TokPos, "unable to assign value '%v' to type %q", val, obj.GetType())
+				}
 			}
 		}
 	}

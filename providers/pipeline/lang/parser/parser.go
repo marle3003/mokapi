@@ -347,7 +347,7 @@ func (p *parser) parseSequence() *ast.SequenceExpr {
 		p.expect(token.COMMA)
 	}
 	p.expect(token.RBRACK)
-	return &ast.SequenceExpr{Values: values, Lbrack: lbrack}
+	return &ast.SequenceExpr{Values: values, Lbrack: lbrack, IsMap: isMap}
 }
 
 func (p *parser) parseElement() ast.Expression {
@@ -554,6 +554,10 @@ func (p *parser) expect(tok token.Token) {
 
 func (p *parser) expectStatmentEnd() {
 	if p.tok != token.SEMICOLON && p.tok != token.EOF {
+		if p.tok == token.RBRACE {
+			// end of block semicolon not needed
+			return
+		}
 		p.expectedError(token.SEMICOLON)
 	}
 	p.next()

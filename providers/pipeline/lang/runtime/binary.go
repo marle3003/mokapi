@@ -94,7 +94,3 @@ func (v *binaryVisitor) Visit(node ast.Node) ast.Visitor {
 
 	return nil
 }
-
-func (v *binaryVisitor) buildTree(x types.Object, y types.Object) {
-
-}

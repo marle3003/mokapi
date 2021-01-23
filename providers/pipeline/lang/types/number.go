@@ -16,8 +16,12 @@ func NewNumber(f float64) *Number {
 	return &Number{value: f}
 }
 
-func (n *Number) Elem() interface{} {
+func (n *Number) Val() float64 {
 	return n.value
+}
+
+func (n *Number) Elem() interface{} {
+	return n.Val()
 }
 
 func (b *Number) Set(o Object) error {
@@ -56,6 +60,16 @@ func (n *Number) InvokeOp(op token.Token, obj Object) (Object, error) {
 			return NewNumber(v), nil
 		case token.EQL:
 			return NewBool(n.value == other.value), nil
+		case token.NEQ:
+			return NewBool(n.value != other.value), nil
+		case token.LSS:
+			return NewBool(n.value < other.value), nil
+		case token.GTR:
+			return NewBool(n.value > other.value), nil
+		case token.LEQ:
+			return NewBool(n.value <= other.value), nil
+		case token.GEQ:
+			return NewBool(n.value >= other.value), nil
 
 		default:
 			return nil, fmt.Errorf("unsupported operation '%v' on type number", op)

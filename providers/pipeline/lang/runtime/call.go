@@ -21,8 +21,6 @@ func (v *callVisitor) Visit(node ast.Node) ast.Visitor {
 	}
 	if node != nil {
 		switch n := node.(type) {
-		//case *lang.Selector:
-		//	return newSelectorVisitor(v.scope, v.stack, true, true, v.outer)
 		case *ast.Ident:
 			if o, ok := v.outer.Scope().Symbol(n.Name); ok {
 				v.outer.Stack().Push(nil)

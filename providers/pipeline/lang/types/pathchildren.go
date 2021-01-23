@@ -174,6 +174,20 @@ func (p *PathChildren) Resolve(name string, args map[string]Object) (Path, error
 			return newPath(NewBool(true)), nil
 		}
 		return &PathChildren{Parent: p}, nil
+	case "select":
+		if p.childTraversing {
+			closure := args["0"].(*Closure)
+			var result []Path
+			for _, path := range p.values {
+				o, err := closure.value([]Object{path})
+				if err != nil {
+					return nil, err
+				}
+				result = append(result, newPath(o))
+			}
+			return &PathChildren{values: result, Parent: p}, nil
+		}
+		return &PathChildren{Parent: p}, nil
 	default:
 		if p.childTraversing {
 			return p.iterate(func(i Path) (Path, error) {

@@ -112,7 +112,7 @@ func (p *PathValue) Resolve(name string, args map[string]Object) (Path, error) {
 		if err != nil {
 			r, err = p.value.InvokeFunc(name, args)
 			if err != nil {
-				return nil, errors.Errorf("field or func '%v' not found on type %v", name, reflect.TypeOf(p.value))
+				return nil, errors.Wrapf(err, "error on field or func %q on type %q", name, reflect.TypeOf(p.value))
 			}
 		}
 		return &PathValue{value: r, Parent: p}, err

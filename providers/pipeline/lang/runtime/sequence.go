@@ -25,7 +25,7 @@ func (v *sequenceVisitor) Visit(node ast.Node) ast.Visitor {
 	if len(v.seq.Values) == 0 {
 		v.outer.Stack().Push(v.getArray())
 	} else {
-		if _, isMap := v.seq.Values[0].(*ast.KeyValueExpr); isMap {
+		if v.seq.IsMap {
 			v.outer.Stack().Push(v.getExpando())
 		} else {
 			v.outer.Stack().Push(v.getArray())
