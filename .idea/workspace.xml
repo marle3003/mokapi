@@ -2,25 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="1a9601df-4cac-4bc9-9e3a-1ba0e84e507f" name="Default Changelist" comment="refactoring but not all features are working">
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/lang/runtime/argument_test.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/lang/runtime/assign_test.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/lang/runtime/binary_test.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/lang/runtime/runtime_test.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/pipeline/lang/runtime/visitor_mock_test.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/providers/pipeline/lang/runtime/string_test.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/providers/pipeline/lang/types/convert_test.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/dynamic/file.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/dynamic/file.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/parser/parser.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/parser/parser.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/parser/parser_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/parser/parser_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/runtime/assign.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/runtime/assign.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/runtime/binary.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/runtime/binary.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/runtime/call.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/runtime/call.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/runtime/runtime.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/runtime/runtime.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/runtime/sequence.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/runtime/sequence.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/convert.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/types/convert.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/number.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/types/number.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/path.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/types/path.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/ldap/binding.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/ldap/binding.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/ldap/schema.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/ldap/schema.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -82,18 +67,7 @@
       <recent name="D:\Projekte\mokapi\providers\pipeline\lang\scanner" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Test.TestRunPipeline in mokapi/providers/pipeline/lang/runtime">
-    <configuration name="TestAddExpr in mokapi/providers/pipeline/lang/parser" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
-      <module name="mokapi" />
-      <working_directory value="$PROJECT_DIR$/providers/pipeline/lang/parser" />
-      <framework value="gotest" />
-      <kind value="PACKAGE" />
-      <package value="mokapi/providers/pipeline/lang/parser" />
-      <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTestAddExpr\E$" />
-      <method v="2" />
-    </configuration>
+  <component name="RunManager" selected="Go Test.TestStringFormat in mokapi/providers/pipeline/lang/runtime">
     <configuration name="TestBinaryVisitor in mokapi/providers/pipeline/lang/runtime (1)" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="mokapi" />
       <working_directory value="$PROJECT_DIR$/providers/pipeline/lang/runtime" />
@@ -105,15 +79,15 @@
       <pattern value="^\QTestBinaryVisitor\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestBinaryVisitor in mokapi/providers/pipeline/lang/runtime" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestConvert in mokapi/providers/pipeline/lang/types" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="mokapi" />
-      <working_directory value="$PROJECT_DIR$/providers/pipeline/lang/runtime" />
+      <working_directory value="$PROJECT_DIR$/providers/pipeline/lang/types" />
       <framework value="gotest" />
       <kind value="PACKAGE" />
-      <package value="mokapi/providers/pipeline/lang/runtime" />
+      <package value="mokapi/providers/pipeline/lang/types" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
-      <pattern value="^\QTestBinaryVisitor\E$" />
+      <pattern value="^\QTestConvert\E$" />
       <method v="2" />
     </configuration>
     <configuration name="TestRunPipeline in mokapi/providers/pipeline/lang/runtime" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
@@ -125,6 +99,17 @@
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
       <pattern value="^\QTestRunPipeline\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestStringFormat in mokapi/providers/pipeline/lang/runtime" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="mokapi" />
+      <working_directory value="$PROJECT_DIR$/providers/pipeline/lang/runtime" />
+      <framework value="gotest" />
+      <kind value="PACKAGE" />
+      <package value="mokapi/providers/pipeline/lang/runtime" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <pattern value="^\QTestStringFormat\E$" />
       <method v="2" />
     </configuration>
     <configuration name="go test mokapi" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
@@ -148,11 +133,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Go Test.TestStringFormat in mokapi/providers/pipeline/lang/runtime" />
+        <item itemvalue="Go Test.TestConvert in mokapi/providers/pipeline/lang/types" />
+        <item itemvalue="Go Test.go test mokapi" />
         <item itemvalue="Go Test.TestRunPipeline in mokapi/providers/pipeline/lang/runtime" />
         <item itemvalue="Go Test.TestBinaryVisitor in mokapi/providers/pipeline/lang/runtime (1)" />
-        <item itemvalue="Go Test.TestBinaryVisitor in mokapi/providers/pipeline/lang/runtime" />
-        <item itemvalue="Go Test.go test mokapi" />
-        <item itemvalue="Go Test.TestAddExpr in mokapi/providers/pipeline/lang/parser" />
       </list>
     </recent_temporary>
   </component>
@@ -187,7 +172,8 @@
     <MESSAGE value="optimized error reporting&#10;fixed some bugs" />
     <MESSAGE value="fixed ldap&#10;added json config support&#10;fixed openapi config&#10;fixed webui" />
     <MESSAGE value="extended pipeline:&#10;- added vars&#10;- optimized pathing&#10;- added tests&#10;extended webui" />
-    <option name="LAST_COMMIT_MESSAGE" value="extended pipeline:&#10;- added vars&#10;- optimized pathing&#10;- added tests&#10;extended webui" />
+    <MESSAGE value="added tests with bugfixes" />
+    <option name="LAST_COMMIT_MESSAGE" value="added tests with bugfixes" />
   </component>
   <component name="VgoProject">
     <integration-enabled>true</integration-enabled>
@@ -237,19 +223,9 @@
           <option name="timeStamp" value="1066" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/providers/pipeline/lang/types/pathchildren.go</url>
-          <line>191</line>
-          <option name="timeStamp" value="1100" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/providers/pipeline/lang/parser/parser.go</url>
           <line>597</line>
-          <option name="timeStamp" value="1152" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/providers/pipeline/lang/parser/parser.go</url>
-          <line>566</line>
-          <option name="timeStamp" value="1181" />
+          <option name="timeStamp" value="1198" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>

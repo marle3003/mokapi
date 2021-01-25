@@ -83,6 +83,12 @@ func ConvertFrom(obj Object, t reflect.Type) (reflect.Value, error) {
 		switch arg := obj.(type) {
 		case *Bool:
 			return reflect.ValueOf(arg.value), nil
+		case *Array:
+			b := len(arg.value) > 0
+			return reflect.ValueOf(b), nil
+		case *Expando:
+			b := len(arg.value) > 0
+			return reflect.ValueOf(b), nil
 		default:
 			return reflect.New(t), fmt.Errorf("unable to cast type %v to float", obj.GetType())
 		}
