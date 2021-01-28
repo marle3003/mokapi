@@ -1,53 +1,56 @@
 package web
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
 	"mokapi/models"
+	"net/url"
 	"strings"
 )
 
-type queryParam struct {
-	ctx   *HttpContext
-	param *models.Parameter
-}
-
-func newQueryParam(param *models.Parameter, ctx *HttpContext) *queryParam {
-	return &queryParam{param: param, ctx: ctx}
-}
-
-func (q *queryParam) parse() (interface{}, error) {
-	switch q.param.Schema.Type {
+func parseQuery(p *models.Parameter, u *url.URL) (interface{}, error) {
+	switch p.Schema.Type {
 	case "array":
-		return q.parseArray()
+		return parseQueryArray(p, u)
 	case "object":
-		return q.parseObject()
+		return parseQueryObject(p, u)
 	}
 
-	s := q.ctx.Request.URL.Query().Get(q.param.Name)
-	if len(s) == 0 && q.param.Required {
+	s := u.Query().Get(p.Name)
+	if len(s) == 0 && p.Required {
 		return nil, errors.Errorf("required parameter not found")
 	}
 
-	return q.ctx.parse(s, q.param.Schema)
+	return parse(s, p.Schema)
 }
 
-func (q *queryParam) parseObject() (obj map[string]interface{}, err error) {
-	switch q.param.Style {
-	case "spaceDelimited", "pipeDelimited":
-		return nil, errors.Errorf("not supported object style '%v'", q.param.Style)
+func parseQueryObject(p *models.Parameter, u *url.URL) (obj map[string]interface{}, err error) {
+	switch s := p.Style; {
+	case s == "spaceDelimited", s == "pipeDelimited":
+		return nil, errors.Errorf("not supported object style '%v'", p.Style)
+	case s == "deepObject" && p.Explode:
+		obj = make(map[string]interface{})
+		for name, prop := range p.Schema.Properties {
+			s := u.Query().Get(fmt.Sprintf("%v[%v]", p.Name, name))
+			if v, err := parse(s, prop); err == nil {
+				obj[name] = v
+			} else {
+				return nil, err
+			}
+		}
 	default:
 		obj = make(map[string]interface{})
-		if q.param.Explode {
-			for name, p := range q.param.Schema.Properties {
-				s := q.ctx.Request.URL.Query().Get(name)
-				if v, err := q.ctx.parse(s, p); err == nil {
+		if p.Explode {
+			for name, prop := range p.Schema.Properties {
+				s := u.Query().Get(name)
+				if v, err := parse(s, prop); err == nil {
 					obj[name] = v
 				} else {
 					return nil, err
 				}
 			}
 		} else {
-			s := q.ctx.Request.URL.Query().Get(q.param.Name)
+			s := u.Query().Get(p.Name)
 			elements := strings.Split(s, ",")
 			i := 0
 			for {
@@ -55,7 +58,7 @@ func (q *queryParam) parseObject() (obj map[string]interface{}, err error) {
 					break
 				}
 				key := elements[i]
-				p, ok := q.param.Schema.Properties[key]
+				p, ok := p.Schema.Properties[key]
 				if !ok {
 					return nil, errors.Errorf("property '%v' not defined in schema", key)
 				}
@@ -63,43 +66,56 @@ func (q *queryParam) parseObject() (obj map[string]interface{}, err error) {
 				if i >= len(elements) {
 					return nil, errors.Errorf("invalid number of property pairs")
 				}
-				if v, err := q.ctx.parse(elements[i], p); err == nil {
+				if v, err := parse(elements[i], p); err == nil {
 					obj[key] = v
 				} else {
 					return nil, err
 				}
+				i++
 			}
 		}
 	}
 	return
 }
 
-func (q *queryParam) parseArray() (result []interface{}, err error) {
-	switch q.param.Style {
-	case "spaceDelimited", "pipeDelimited", "deepObject":
-		return nil, errors.Errorf("not supported arrray style '%v'", q.param.Style)
+func parseQueryArray(p *models.Parameter, u *url.URL) (result []interface{}, err error) {
+	var values []string
+	switch s := p.Style; {
+	case s == "spaceDelimited" && !p.Explode:
+		v, ok := u.Query()[p.Name]
+		if !ok && p.Required {
+			return nil, errors.Errorf("required parameter not found")
+		}
+		values = strings.Split(v[0], " ")
+	case s == "pipeDelimited" && !p.Explode:
+		v, ok := u.Query()[p.Name]
+		if !ok && p.Required {
+			return nil, errors.Errorf("required parameter not found")
+		}
+		values = strings.Split(v[0], "|")
+	case s == "deepObject":
 	default:
-		var values []string
-		if q.param.Explode {
+		if p.Explode {
 			var ok bool
-			values, ok = q.ctx.Request.URL.Query()[q.param.Name]
-			if !ok && q.param.Required {
+			values, ok = u.Query()[p.Name]
+			if !ok && p.Required {
 				return nil, errors.Errorf("required parameter not found")
 			}
-
 		} else {
-			s := q.ctx.Request.URL.Query().Get(q.param.Name)
-			if len(s) == 0 && q.param.Required {
+			s := u.Query().Get(p.Name)
+			if len(s) == 0 && p.Required {
 				return nil, errors.Errorf("required parameter not found")
 			}
 			values = strings.Split(s, ",")
 		}
-		for _, v := range values {
-			if i, err := q.ctx.parse(v, q.param.Schema.Items); err != nil {
-				return nil, err
-			} else {
-				result = append(result, i)
-			}
+
+	}
+
+	for _, v := range values {
+		if i, err := parse(v, p.Schema.Items); err != nil {
+			return nil, err
+		} else {
+			result = append(result, i)
 		}
 	}
 	return

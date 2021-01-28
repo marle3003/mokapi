@@ -117,6 +117,7 @@ func (p *FileProvider) addWatcher(directory string, channel chan<- ConfigMessage
 
 	go func() {
 		defer func() {
+			log.Error("Closing file watcher. Restart is required...")
 			ticker.Stop()
 			watcher.Close()
 		}()
@@ -126,7 +127,8 @@ func (p *FileProvider) addWatcher(directory string, channel chan<- ConfigMessage
 			case <-p.close:
 				return
 			case evt := <-watcher.Events:
-				if len(evt.Name) > 0 {
+				// temporary files ends with '~' in name
+				if len(evt.Name) > 0 && !strings.HasSuffix(evt.Name, "~") {
 					events = append(events, evt)
 				}
 			case <-ticker.C:
@@ -142,13 +144,13 @@ func (p *FileProvider) addWatcher(directory string, channel chan<- ConfigMessage
 					fi, error := os.Stat(evt.Name)
 					if error != nil {
 						log.WithFields(log.Fields{"item": evt.Name, "error": error}).Info("error on watching item")
-						return
-					}
-					switch mode := fi.Mode(); {
-					case mode.IsDir():
-						p.loadServiceFromDirectory(evt.Name, channel)
-					case mode.IsRegular():
-						p.loadServiceFromFile(evt.Name, channel)
+					} else {
+						switch mode := fi.Mode(); {
+						case mode.IsDir():
+							p.loadServiceFromDirectory(evt.Name, channel)
+						case mode.IsRegular():
+							p.loadServiceFromFile(evt.Name, channel)
+						}
 					}
 				}
 

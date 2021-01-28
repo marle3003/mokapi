@@ -49,6 +49,12 @@ func (a *Array) Add(obj Object) {
 	a.value = append(a.value, obj)
 }
 
+func (a *Array) AddRange(o *Array) {
+	for _, i := range o.value {
+		a.value = append(a.value, i)
+	}
+}
+
 func (a *Array) Contains(obj Object) (*Bool, error) {
 	for _, i := range a.value {
 		r, err := i.InvokeOp(token.EQL, obj)

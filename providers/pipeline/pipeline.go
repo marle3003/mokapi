@@ -21,6 +21,7 @@ var (
 		"fileExists": &basics.FileExistsStep{},
 		"xmlPath":    &basics.XmlPathStep{},
 		"readJson":   &basics.JsonStep{},
+		"random":     &basics.RandomStep{},
 	}
 )
 

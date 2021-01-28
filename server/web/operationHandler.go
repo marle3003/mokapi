@@ -2,7 +2,6 @@ package web
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"mokapi/models"
 	"mokapi/providers/encoding"
@@ -27,7 +26,7 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 		"method": context.Request.Method,
 	}).Info("Processing http request")
 
-	operation := context.CurrentEndpoint.GetOperation(context.Request.Method)
+	operation := context.Operation
 
 	var bodyParam interface{} = nil
 	if operation.RequestBody != nil {
@@ -41,7 +40,7 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 			respond("request body expected", http.StatusBadRequest, context)
 			return
 		}
-		if mediaType, ok := operation.RequestBody.ContentTypes[contentType.String()]; ok {
+		if mediaType, ok := operation.RequestBody.ContentTypes[contentType.Key()]; ok {
 			bodyParam, err = parseBody(body, contentType, mediaType.Schema)
 			if err != nil {
 				respond(err.Error(), http.StatusBadRequest, context)
@@ -61,6 +60,11 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 		pipelineName = operation.Pipeline
 	}
 
+	if len(context.MokapiFile) == 0 {
+		respond("missing mokapifile", 503, context)
+		return
+	}
+
 	err := pipeline.Run(
 		context.MokapiFile,
 		pipelineName,
@@ -73,10 +77,10 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 		pipeline.WithParams(map[string]interface{}{
 			"method": context.Request.Method,
 			"body":   bodyParam,
-			"query":  context.Parameters.Query,
-			"path":   context.Parameters.Path,
-			"header": context.Parameters.Header,
-			"cookie": context.Parameters.Cookie,
+			"query":  context.Parameters[models.QueryParameter],
+			"path":   context.Parameters[models.PathParameter],
+			"header": context.Parameters[models.HeaderParameter],
+			"cookie": context.Parameters[models.CookieParameter],
 		}),
 	)
 	if err != nil {
@@ -112,6 +116,4 @@ func parseBody(s string, contentType *models.ContentType, schema *models.Schema)
 		log.Debugf("unsupported content type '%v' from body", contentType)
 		return s, nil
 	}
-
-	return nil, errors.Errorf("unsupported content type '%v' from body", contentType)
 }

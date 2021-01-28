@@ -64,7 +64,6 @@ func (w *WebServiceInfo) apply(config *dynamic.OpenApi, filePath string) {
 			endpoint = e
 		} else {
 			endpoint = NewEndpoint(path, w.Data)
-			endpoint.Pipeline = v.Pipeline
 			w.Data.Endpoint[path] = endpoint
 		}
 		endpoint.update(v, context)
@@ -90,6 +89,10 @@ func (e *Endpoint) update(config *dynamic.Endpoint, context *serviceContext) {
 	}
 	if len(config.Description) > 0 {
 		e.Description = config.Description
+	}
+
+	if len(config.Pipeline) > 0 {
+		e.Pipeline = config.Pipeline
 	}
 
 	if config.Get != nil {

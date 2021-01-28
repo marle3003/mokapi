@@ -17,14 +17,14 @@ type AddRequestMetric func(metric *models.RequestMetric)
 type Binding struct {
 	Addr     string
 	server   *http.Server
-	handlers map[string]map[string]*WebServiceHandler
+	handlers map[string]map[string]*ServiceHandler
 	mh       AddRequestMetric
 }
 
 func NewBinding(addr string, mh AddRequestMetric) *Binding {
 	b := &Binding{
 		Addr:     addr,
-		handlers: make(map[string]map[string]*WebServiceHandler),
+		handlers: make(map[string]map[string]*ServiceHandler),
 		mh:       mh,
 	}
 	b.server = &http.Server{Addr: addr, Handler: b}
@@ -67,7 +67,7 @@ func (binding *Binding) Apply(data interface{}) error {
 		host, found := binding.handlers[server.Host]
 		if !found {
 			log.Infof("Adding new host '%v' on binding %v", server.Host, binding.Addr)
-			host = make(map[string]*WebServiceHandler)
+			host = make(map[string]*ServiceHandler)
 			binding.handlers[server.Host] = host
 		}
 
@@ -103,12 +103,12 @@ func (binding *Binding) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	binding.mh(ctx.metric)
 }
 
-func (binding *Binding) resolveHandler(r *http.Request) (*WebServiceHandler, string) {
+func (binding *Binding) resolveHandler(r *http.Request) (*ServiceHandler, string) {
 	var matchedPath string
-	var matchedHandler *WebServiceHandler
+	var matchedHandler *ServiceHandler
 	if host, ok := binding.handlers[r.Host]; ok {
 		for path, handler := range host {
-			if strings.HasPrefix(r.URL.Path, path) {
+			if strings.HasPrefix(strings.ToLower(r.URL.Path), strings.ToLower(path)) {
 				if matchedPath == "" || len(matchedPath) < len(path) {
 					matchedPath = path
 					matchedHandler = handler

@@ -42,6 +42,8 @@ func (v *exprVisitor) Visit(node ast.Node) ast.Visitor {
 		return newClosureVisitor(n, v)
 	case *ast.SequenceExpr:
 		return newSequenceVisitor(n, v)
+	case *ast.RangeExpr:
+		return newRangeVisitor(n, v)
 	case *ast.Ident:
 		if o, ok := v.Scope().Symbol(n.Name); ok {
 			v.stack.Push(o)

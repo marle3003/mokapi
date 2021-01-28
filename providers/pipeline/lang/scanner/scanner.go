@@ -21,7 +21,6 @@ type Scanner struct {
 }
 
 func NewScanner(src []byte, err ErrorHandler) *Scanner {
-	token.Init()
 	s := &Scanner{
 		pos:        token.Position{Line: 1, Column: 0},
 		err:        err,
@@ -70,7 +69,7 @@ func (s *Scanner) skipWhitespace() {
 
 func (s *Scanner) scanIdentifier() string {
 	offs := s.offset - 1
-	for unicode.IsLetter(s.ch) || unicode.IsDigit(s.ch) {
+	for unicode.IsLetter(s.ch) || unicode.IsDigit(s.ch) || s.ch == '_' {
 		s.next()
 	}
 	l := s.offset - 1 - offs
@@ -158,8 +157,12 @@ func (s *Scanner) scanNumber() string {
 
 	s.scanDigits()
 
+	intPart := s.offset
 	if s.ch == '.' {
 		s.scanDigits()
+		if intPart == (s.offset - 1) {
+			s.offset -= 1
+		}
 	}
 
 	return string(s.src[offs-1 : s.offset-1])

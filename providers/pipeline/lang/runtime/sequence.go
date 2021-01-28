@@ -40,12 +40,17 @@ func (v *sequenceVisitor) getArray() *types.Array {
 	for range v.seq.Values {
 		val := v.outer.Stack().Pop()
 		values = append(values, val)
+
 	}
-	a := types.NewArray()
+	result := types.NewArray()
 	for _, i := range reverse(values) {
-		a.Add(i)
+		if a, isArray := i.(*types.Array); isArray {
+			result.AddRange(a)
+		} else {
+			result.Add(i)
+		}
 	}
-	return a
+	return result
 }
 
 func (v *sequenceVisitor) getExpando() *types.Expando {

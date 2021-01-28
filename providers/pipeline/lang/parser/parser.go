@@ -380,6 +380,10 @@ func (p *parser) parsePath(path *ast.PathExpr) ast.Expression {
 			current.Path = p.parseIndex()
 		} else {
 			p.next()
+			if p.tok == token.PERIOD {
+				p.next()
+				return &ast.RangeExpr{Start: path.X, End: p.parseOperand(false)}
+			}
 			current.Path = p.parsePathOperand()
 		}
 
@@ -387,7 +391,7 @@ func (p *parser) parsePath(path *ast.PathExpr) ast.Expression {
 			// if index used like list[0]
 			current = &ast.PathExpr{X: current}
 			current.Path = p.parseIndex()
-		} else if !p.tok.IsExprEnd() && p.tok != token.PERIOD && !p.tok.IsOperator() {
+		} else if !p.tok.IsExprEnd() && p.tok != token.PERIOD && !p.tok.IsOperator() && p.tok != token.COMMA {
 			c := p.parseCall(current.Path)
 			current.Path = c.Func
 			current.Args = c.Args

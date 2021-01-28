@@ -27,7 +27,7 @@ func NewRequestMetric(method string, url string) *RequestMetric {
 	}
 }
 
-func NewMetrics() *Metrics {
+func newMetrics() *Metrics {
 	return &Metrics{LastRequests: make([]*RequestMetric, 0), Start: time.Now()}
 }
 

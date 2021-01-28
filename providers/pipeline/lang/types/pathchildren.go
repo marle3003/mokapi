@@ -132,7 +132,7 @@ func (p *PathChildren) Resolve(name string, args map[string]Object) (Path, error
 			match := newPredicate(closure)
 			for _, path := range p.values {
 				if matches, err := match(path.Value()); err == nil && matches {
-					return p, nil
+					return path, nil
 				}
 			}
 		}
@@ -194,8 +194,14 @@ func (p *PathChildren) Resolve(name string, args map[string]Object) (Path, error
 				r, err := i.GetField(name)
 				if err != nil {
 					r, err = i.InvokeFunc(name, args)
+					if err != nil {
+						return nil, err
+					}
 				}
-				return newPathFromParent(r, i), nil
+				if r != nil {
+					return r.(Path), nil
+				}
+				return nil, nil
 			})
 		} else if index, err := strconv.Atoi(name); err == nil {
 			return p.values[index], nil
@@ -216,7 +222,7 @@ func (p *PathChildren) iterate(action func(Path) (Path, error)) (Path, error) {
 		r, err := action(o)
 		if err != nil {
 			log.Debugf("ignored error during iteration over path: %v", err.Error())
-		} else {
+		} else if r != nil {
 			v = append(v, r)
 		}
 	}

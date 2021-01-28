@@ -64,6 +64,20 @@ func TestRunPipeline(t *testing.T) {
 			},
 			func() {},
 		},
+		{"pipeline(){stages{stage(){steps{test [1..4]}}}}",
+			func(t *testing.T, src string) {
+				e := []float64{1.0, 2.0, 3.0, 4.0}
+				x := s[0].([]interface{})
+				result := make([]float64, len(e))
+				for i := range result {
+					result[i] = x[i].(float64)
+				}
+				if !reflect.DeepEqual(e, result) {
+					t.Errorf("source(%q): got %v, expected %v", src, x, e)
+				}
+			},
+			func() {},
+		},
 		{"pipeline(){stages{stage(){steps{x := [1,2,3,4]; x = x.findAll {y => y > 2}; test x}}}}",
 			func(t *testing.T, src string) {
 				e := []float64{3.0, 4.0}
@@ -79,6 +93,16 @@ func TestRunPipeline(t *testing.T) {
 			func() {},
 		},
 		{"pipeline(){stages{stage(){steps{x := [a: 1,b: 2,c: 3, d: 4]; test x}}}}",
+			func(t *testing.T, src string) {
+				e := map[string]interface{}{"a": 1.0, "b": 2.0, "c": 3.0, "d": 4.0}
+				x := s[0]
+				if !reflect.DeepEqual(e, x) {
+					t.Errorf("source(%q): got %v, expected %v", src, x, e)
+				}
+			},
+			func() {},
+		},
+		{"pipeline(){stages{stage(){steps{test ['a': 1,'b': 2,'c': 3, 'd': 4]}}}}",
 			func(t *testing.T, src string) {
 				e := map[string]interface{}{"a": 1.0, "b": 2.0, "c": 3.0, "d": 4.0}
 				x := s[0]
@@ -119,6 +143,21 @@ func TestRunPipeline(t *testing.T) {
 					result[i] = x[i].(string)
 				}
 				if !reflect.DeepEqual(e, result) {
+					t.Errorf("source(%q): got %v, expected %v", src, result, e)
+				}
+			},
+			func() {
+			},
+		},
+		{"pipeline(){stages{stage(){steps{users := [[name: 'bob'],[name: 'sarah']]; r := users.'*'.select {x => [d: x.name]}; test r}}}}",
+			func(t *testing.T, src string) {
+				e := []map[string]interface{}{{"d": "bob"}, {"d": "sarah"}}
+				x := s[0].([]interface{})
+				result := make([]map[string]interface{}, len(e))
+				for i := range result {
+					result[i] = x[i].(map[string]interface{})
+				}
+				if !reflect.DeepEqual(result, e) {
 					t.Errorf("source(%q): got %v, expected %v", src, result, e)
 				}
 			},

@@ -40,11 +40,7 @@ func (p *PathValue) Value() Object {
 }
 
 func (p *PathValue) GetField(name string) (Object, error) {
-	v, err := p.Resolve(name, nil)
-	if err != nil {
-		return nil, err
-	}
-	return p.new(v, false), nil
+	return p.Resolve(name, nil)
 }
 
 func (p *PathValue) Set(o Object) error {
@@ -140,24 +136,20 @@ func (p *PathValue) depthFirst(ch chan Path) {
 		for _, i := range o.value {
 			path := &PathValue{value: i, Parent: p}
 			path.depthFirst(ch)
-			ch <- path
 		}
 	case *Expando:
 		for _, i := range o.value {
 			path := &PathValue{value: i, Parent: p}
 			path.depthFirst(ch)
-			ch <- path
 		}
 	case *Node:
 		for _, i := range o.attributes.value {
 			path := &PathValue{value: i, Parent: p}
 			path.depthFirst(ch)
-			ch <- path
 		}
 		for _, i := range o.children.value {
 			path := &PathValue{value: i, Parent: p}
 			path.depthFirst(ch)
-			ch <- path
 		}
 		ch <- &PathValue{value: NewString(o.content), Parent: p}
 	}

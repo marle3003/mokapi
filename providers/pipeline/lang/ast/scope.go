@@ -10,7 +10,8 @@ type Scope struct {
 }
 
 func NewScope(symbols map[string]types.Object) *Scope {
-	outer := &Scope{symbols: symbols}
+	base := &Scope{symbols: map[string]types.Object{"true": types.NewBool(true), "false": types.NewBool(false)}}
+	outer := &Scope{symbols: symbols, Outer: base}
 	return OpenScope(outer)
 }
 

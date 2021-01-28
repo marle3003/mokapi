@@ -13,6 +13,7 @@ func TestStringFormat(t *testing.T) {
 		scope  *ast.Scope
 	}{
 		{"foobar", "foobar", ast.NewScope(map[string]types.Object{})},
+		{"${foo}bar", "foobar", ast.NewScope(map[string]types.Object{"foo": types.NewString("foo")})},
 		{"foo $bar", "foo bar", ast.NewScope(map[string]types.Object{"bar": types.NewString("bar")})},
 		{"foo ${bar}", "foo bar", ast.NewScope(map[string]types.Object{"bar": types.NewString("bar")})},
 		{"foo ${pi}", "foo 3.141", ast.NewScope(map[string]types.Object{"pi": types.NewNumber(3.141)})},
@@ -20,6 +21,12 @@ func TestStringFormat(t *testing.T) {
 			e := types.NewExpando()
 			e.SetField("pi", types.NewNumber(3.141))
 			return ast.NewScope(map[string]types.Object{"math": e})
+		}()},
+		{"${x.foo} ${x.bar}", "foo bar", func() *ast.Scope {
+			e := types.NewExpando()
+			e.SetField("foo", types.NewString("foo"))
+			e.SetField("bar", types.NewString("bar"))
+			return ast.NewScope(map[string]types.Object{"x": e})
 		}()},
 	}
 

@@ -140,6 +140,11 @@ type KeyValueExpr struct {
 	Value Expression
 }
 
+type RangeExpr struct {
+	Start Expression
+	End   Expression
+}
+
 type MapType struct {
 	Map token.Position
 }
@@ -157,6 +162,7 @@ func (*ParenExpr) exprNode()    {}
 func (*MapType) exprNode()      {}
 func (*SequenceExpr) exprNode() {}
 func (*KeyValueExpr) exprNode() {}
+func (*RangeExpr) exprNode()    {}
 
 // stmtNode() ensures only statement nodes can be assigned
 func (*Assignment) stmtNode()    {}
@@ -189,3 +195,4 @@ func (i *Ident) Pos() token.Position         { return i.NamePos }
 func (m *MapType) Pos() token.Position       { return m.Map }
 func (c *SequenceExpr) Pos() token.Position  { return c.Lbrack }
 func (k *KeyValueExpr) Pos() token.Position  { return k.Key.Pos() }
+func (r *RangeExpr) Pos() token.Position     { return r.Start.Pos() }

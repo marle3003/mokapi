@@ -68,17 +68,21 @@ func selectData(data interface{}, schema *models.Schema) interface{} {
 		// todo error handling
 		return nil
 	} else if schema.Type == "object" {
-		o := data.(map[string]interface{})
-		selectedData := make(custom)
+		if o, isObject := data.(map[string]interface{}); !isObject {
+			// todo error handling
+			return nil
+		} else {
+			selectedData := make(custom)
 
-		for k, v := range o {
-			if p, ok := schema.Properties[k]; ok {
-				selectedData[k] = selectData(v, p)
-			} else if schema.AdditionalProperties != nil {
-				selectedData[k] = selectData(v, schema.AdditionalProperties)
+			for k, v := range o {
+				if p, ok := schema.Properties[k]; ok {
+					selectedData[k] = selectData(v, p)
+				} else if schema.AdditionalProperties != nil {
+					selectedData[k] = selectData(v, schema.AdditionalProperties)
+				}
 			}
+			return selectedData
 		}
-		return selectedData
 	}
 	return data
 }

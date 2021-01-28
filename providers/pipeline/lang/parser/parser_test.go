@@ -67,6 +67,29 @@ func TestPath(t *testing.T) {
 	}
 }
 
+func TestIndex(t *testing.T) {
+	src := "a[0]"
+	x, err := ParseExpr(src, ast.NewScope(map[string]types.Object{"a": types.NewString("")}))
+	if err != nil {
+		t.Errorf("ParseExpr(%q):%v", src, err)
+	} else {
+		if n, ok := x.(*ast.IndexExpr); !ok {
+			t.Errorf("ParseExpr(%q): got %T, expected *ast.IndexExpr", src, x)
+		} else {
+			if i, isIdent := n.X.(*ast.Ident); !isIdent {
+				t.Errorf("ParseExpr(%q): got %v, expected ident", src, reflect.TypeOf(n.X))
+			} else if i.Name != "a" {
+				t.Errorf("ParseExpr(%q): got %v, expected ident 'a'", src, i.Name)
+			}
+			if l, isLit := n.Index.(*ast.Literal); !isLit {
+				t.Errorf("ParseExpr(%q): got %v, expected literal", src, reflect.TypeOf(n.Index))
+			} else if l.Value != "0" {
+				t.Errorf("ParseExpr(%q): got %v, expected ident 'a'", src, l.Value)
+			}
+		}
+	}
+}
+
 func TestPathChildren(t *testing.T) {
 	src := "a.'*'"
 	x, err := ParseExpr(src, ast.NewScope(map[string]types.Object{"a": types.NewString(""), "b": types.NewString("")}))
@@ -215,6 +238,42 @@ func TestList(t *testing.T) {
 	}
 }
 
+func TestListRange(t *testing.T) {
+	src := "[1..4]"
+	scope := ast.NewScope(map[string]types.Object{})
+	p := newParser([]byte(src), scope)
+	p.scanner.InsertLineEnd = true
+
+	x := p.parseSequence()
+	if p.errors.Err() != nil {
+		t.Errorf("ParseExpr(%q):%v", src, p.errors.Err())
+
+	}
+	if x.IsMap {
+		t.Errorf("ParseExpr(%q):expected not a map", src)
+	}
+	for _, v := range x.Values {
+		if r, isRange := v.(*ast.RangeExpr); !isRange {
+			t.Errorf("ParseExpr(%q): got %T, expected *ast.RangeExpr", src, v)
+		} else {
+			if l, isLit := r.Start.(*ast.Literal); !isLit {
+				t.Errorf("ParseExpr(%q): got %T, expected *ast.Literal", src, r.Start)
+			} else {
+				if l.Value != "1" {
+					t.Errorf("ParseExpr(%q): got %v, expected 1", src, l.Value)
+				}
+			}
+			if l, isLit := r.End.(*ast.Literal); !isLit {
+				t.Errorf("ParseExpr(%q): got %T, expected *ast.Literal", src, r.Start)
+			} else {
+				if l.Value != "4" {
+					t.Errorf("ParseExpr(%q): got %v, expected 4", src, l.Value)
+				}
+			}
+		}
+	}
+}
+
 func TestMap(t *testing.T) {
 	e := map[string]string{"a": "1", "b": "2", "c": "3", "z": "4"}
 	src := "[a: 1, b: 2, c: 3, z: 4]"
@@ -243,6 +302,33 @@ func TestMap(t *testing.T) {
 					t.Errorf("ParseExpr(%q): got %v, expected value as *ast.Literal", src, kv.Value)
 				} else if l.Value != val {
 					t.Errorf("ParseExpr(%q): got %v, expected value is %v", src, l.Value, val)
+				}
+			}
+		}
+	}
+}
+
+func TestArgList(t *testing.T) {
+	e := []string{"1", "2", "3", "4"}
+	src := "[1, 2, 3, 4]"
+	scope := ast.NewScope(map[string]types.Object{})
+	p := newParser([]byte(src), scope)
+	p.scanner.InsertLineEnd = true
+
+	x := p.parseArgument()
+	if p.errors.Err() != nil {
+		t.Errorf("ParseExpr(%q):%v", src, p.errors.Err())
+
+	}
+	if seq, isSeq := x.Value.(*ast.SequenceExpr); !isSeq {
+		t.Errorf("ParseExpr(%q): got %T, expected *ast.SequenceExpr", src, x)
+	} else {
+		for i, v := range seq.Values {
+			if l, isLit := v.(*ast.Literal); !isLit {
+				t.Errorf("ParseExpr(%q): got %T, expected *ast.Literal", src, v)
+			} else {
+				if l.Value != e[i] {
+					t.Errorf("ParseExpr(%q): got %v, expected %v", src, l.Value, e[i])
 				}
 			}
 		}

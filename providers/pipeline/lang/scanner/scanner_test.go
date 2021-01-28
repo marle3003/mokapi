@@ -32,6 +32,8 @@ type data struct {
 
 var tokens = [...]data{
 	{token.IDENT, "foobar", literal},
+	{token.IDENT, "foo_bar", literal},
+	{token.IDENT, "foobar12", literal},
 	{token.NUMBER, "3", literal},
 	{token.NUMBER, "3.141", literal},
 	{token.RSTRING, "'foobar'", literal},

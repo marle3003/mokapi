@@ -79,6 +79,9 @@ func Walk(v Visitor, node Node) {
 	case *KeyValueExpr:
 		Walk(v, n.Key)
 		Walk(v, n.Value)
+	case *RangeExpr:
+		Walk(v, n.Start)
+		Walk(v, n.End)
 	case *Ident:
 	}
 	v.Visit(nil)

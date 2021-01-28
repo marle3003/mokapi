@@ -145,7 +145,7 @@ var tokens = [...]string{
 
 var Keywords map[string]Token
 
-func Init() {
+func init() {
 	Keywords = make(map[string]Token)
 	for i := keywordsStart + 1; i < keywordsEnd; i++ {
 		Keywords[tokens[i]] = i
