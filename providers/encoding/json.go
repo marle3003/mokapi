@@ -3,6 +3,7 @@ package encoding
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"mokapi/models"
 )
 
@@ -68,21 +69,32 @@ func selectData(data interface{}, schema *models.Schema) interface{} {
 		// todo error handling
 		return nil
 	} else if schema.Type == "object" {
-		if o, isObject := data.(map[string]interface{}); !isObject {
-			// todo error handling
-			return nil
+		var obj map[string]interface{}
+		if o, isObject := data.(map[string]interface{}); isObject {
+			obj = o
 		} else {
-			selectedData := make(custom)
-
-			for k, v := range o {
-				if p, ok := schema.Properties[k]; ok {
-					selectedData[k] = selectData(v, p)
-				} else if schema.AdditionalProperties != nil {
-					selectedData[k] = selectData(v, schema.AdditionalProperties)
-				}
+			s := fmt.Sprintf("%v", data)
+			err := json.Unmarshal([]byte(s), &obj)
+			if err != nil {
+				// todo error handling
+				return nil
 			}
-			return selectedData
 		}
+
+		if len(schema.Properties) == 0 {
+			return obj
+		}
+
+		selectedData := make(custom)
+
+		for k, v := range obj {
+			if p, ok := schema.Properties[k]; ok {
+				selectedData[k] = selectData(v, p)
+			} else if schema.AdditionalProperties != nil {
+				selectedData[k] = selectData(v, schema.AdditionalProperties)
+			}
+		}
+		return selectedData
 	}
 	return data
 }

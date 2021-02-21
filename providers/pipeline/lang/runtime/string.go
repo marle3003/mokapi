@@ -8,7 +8,7 @@ import (
 )
 
 func format(s string, scope *ast.Scope) (string, error) {
-	pat := regexp.MustCompile(`[^\\]?((\${(?P<exp>[^}]*)})|(\$(?P<var>[^{^\s]*)))`)
+	pat := regexp.MustCompile(`(^|[^\\])((\${(?P<exp>[^}]*)})|(\$(?P<var>[^{^\s]*)))`)
 	matches := pat.FindAllStringSubmatch(s, -1) // matches is [][]string
 	groupNames := pat.SubexpNames()
 	for _, match := range matches {
@@ -30,9 +30,10 @@ func format(s string, scope *ast.Scope) (string, error) {
 				if obj != nil {
 					r = obj.String()
 				}
-				s = strings.ReplaceAll(s, match[1], r)
+				s = strings.ReplaceAll(s, match[2], r)
 			}
 		}
 	}
-	return s, nil
+
+	return strings.ReplaceAll(s, "\\$", "$"), nil
 }

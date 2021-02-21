@@ -196,7 +196,6 @@ try{
         var itemType = schema.items.ref !== undefined ? schema.items.ref : schema.items.type
         item['text'] = schema.name + ': array[' + itemType + ']'
         item['refText'] = schema.items.ref
-        //console.log(schema.items)
 
         // get all properties but not type => not incrementing level because we remove first level (shift)
         var arrayItems = this.getItems(schema.items, level)

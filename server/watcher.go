@@ -58,6 +58,9 @@ func (w *ConfigWatcher) Start() {
 				if configMessage.Config.Ldap != nil {
 					w.configuration.Ldap[configMessage.Key] = configMessage.Config.Ldap
 				}
+				if configMessage.Config.AsyncApi != nil {
+					w.configuration.AsyncApi[configMessage.Key] = configMessage.Config.AsyncApi
+				}
 
 				for _, listener := range w.listeners {
 					listener(w.configuration)
@@ -68,5 +71,5 @@ func (w *ConfigWatcher) Start() {
 }
 
 func isEmpty(config *dynamic.ConfigurationItem) bool {
-	return config.OpenApi == nil && config.Ldap == nil
+	return config.OpenApi == nil && config.Ldap == nil && config.AsyncApi == nil
 }

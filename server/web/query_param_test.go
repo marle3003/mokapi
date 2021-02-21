@@ -22,6 +22,15 @@ func TestParseQuery(t *testing.T) {
 			},
 			5,
 		},
+		{&url.URL{RawQuery: ""},
+			&models.Parameter{
+				Name:    "id",
+				Schema:  &models.Schema{Type: "integer"},
+				Style:   "",
+				Explode: false,
+			},
+			nil,
+		},
 		{&url.URL{RawQuery: "id=3&id=4&id=5"},
 			&models.Parameter{
 				Name:    "id",

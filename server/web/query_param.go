@@ -9,16 +9,22 @@ import (
 )
 
 func parseQuery(p *models.Parameter, u *url.URL) (interface{}, error) {
-	switch p.Schema.Type {
-	case "array":
-		return parseQueryArray(p, u)
-	case "object":
-		return parseQueryObject(p, u)
+	if p.Schema != nil {
+		switch p.Schema.Type {
+		case "array":
+			return parseQueryArray(p, u)
+		case "object":
+			return parseQueryObject(p, u)
+		}
 	}
 
 	s := u.Query().Get(p.Name)
-	if len(s) == 0 && p.Required {
-		return nil, errors.Errorf("required parameter not found")
+	if len(s) == 0 {
+		if p.Required {
+			return nil, errors.Errorf("required parameter not found")
+		} else {
+			return nil, nil
+		}
 	}
 
 	return parse(s, p.Schema)

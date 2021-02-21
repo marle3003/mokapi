@@ -6,7 +6,9 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/models"
+	event "mokapi/models/eventService"
 	"mokapi/server/api"
+	"mokapi/server/kafka"
 	"mokapi/server/ldap"
 	"mokapi/server/web"
 )
@@ -92,5 +94,22 @@ func (s *Server) updateBindings() {
 			b.Apply(config.Data)
 		}
 
+	}
+
+	for _, e := range s.application.EventServices {
+		for _, server := range e.Servers {
+			switch server.Type {
+			case event.Kafka:
+				b, ok := s.Bindings["0.0.0.0:9092"]
+				if !ok {
+					b = kafka.NewServer("0.0.0.0:9092")
+					b.Start()
+					s.Bindings["0.0.0.0:9092"] = b
+				}
+				b.Apply(e)
+			default:
+				log.Errorf("server type %v not supported", server.Type)
+			}
+		}
 	}
 }

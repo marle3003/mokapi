@@ -2,6 +2,7 @@ package web
 
 import (
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"mokapi/models"
 	"net/http"
 	"regexp"
@@ -9,16 +10,14 @@ import (
 	"strings"
 )
 
-type Parameters map[string]interface{}
-
-type RequestParameters map[models.ParameterLocation]Parameters
+type RequestParameters map[models.ParameterLocation]map[string]interface{}
 
 func newRequestParameters() RequestParameters {
 	p := make(RequestParameters)
-	p[models.PathParameter] = make(Parameters)
-	p[models.QueryParameter] = make(Parameters)
-	p[models.HeaderParameter] = make(Parameters)
-	p[models.CookieParameter] = make(Parameters)
+	p[models.PathParameter] = make(map[string]interface{})
+	p[models.QueryParameter] = make(map[string]interface{})
+	p[models.HeaderParameter] = make(map[string]interface{})
+	p[models.CookieParameter] = make(map[string]interface{})
 	return p
 }
 
@@ -61,8 +60,10 @@ func parseParams(params []*models.Parameter, route string, r *http.Request) (Req
 			//case models.PathParameter:
 
 		}
-		if err != nil {
+		if err != nil && p.Required {
 			return nil, errors.Wrapf(err, "parse %v parameter %q", p.Location, p.Name)
+		} else if err != nil {
+			log.Infof("parse %v parameter %q: %v", p.Location, p.Name, err.Error())
 		}
 		if store != nil {
 			store[p.Name] = v
@@ -73,6 +74,9 @@ func parseParams(params []*models.Parameter, route string, r *http.Request) (Req
 }
 
 func parse(s string, schema *models.Schema) (interface{}, error) {
+	if schema == nil {
+		return s, nil
+	}
 	switch schema.Type {
 	case "string":
 		return s, nil
@@ -98,5 +102,5 @@ func parse(s string, schema *models.Schema) (interface{}, error) {
 	case "boolean":
 		return strconv.ParseBool(s)
 	}
-	return nil, errors.Errorf("unable to parse '%v'", s)
+	return nil, errors.Errorf("unable to parse '%v'; schema type %q is not supported", s, schema.Type)
 }

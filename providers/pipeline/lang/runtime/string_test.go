@@ -17,6 +17,10 @@ func TestStringFormat(t *testing.T) {
 		{"foo $bar", "foo bar", ast.NewScope(map[string]types.Object{"bar": types.NewString("bar")})},
 		{"foo ${bar}", "foo bar", ast.NewScope(map[string]types.Object{"bar": types.NewString("bar")})},
 		{"foo ${pi}", "foo 3.141", ast.NewScope(map[string]types.Object{"pi": types.NewNumber(3.141)})},
+		{"foo \\${pi}", "foo ${pi}", ast.NewScope(map[string]types.Object{"pi": types.NewNumber(3.141)})},
+		{"\\${pi}", "${pi}", ast.NewScope(map[string]types.Object{"pi": types.NewNumber(3.141)})},
+		{"\\$", "$", ast.NewScope(map[string]types.Object{"pi": types.NewNumber(3.141)})},
+		{"\\$pi", "$pi", ast.NewScope(map[string]types.Object{"pi": types.NewNumber(3.141)})},
 		{"foo ${math.pi}", "foo 3.141", func() *ast.Scope {
 			e := types.NewExpando()
 			e.SetField("pi", types.NewNumber(3.141))
@@ -33,10 +37,10 @@ func TestStringFormat(t *testing.T) {
 	for _, d := range data {
 		s, err := format(d.format, d.scope)
 		if err != nil {
-			t.Errorf("convert(%q):%v", d.format, err.Error())
+			t.Errorf("convert(%v):%v", d.format, err.Error())
 		}
 		if s != d.out {
-			t.Errorf("format(%q): got %q, expected %q", d.format, s, d.out)
+			t.Errorf("format(%v): got %v, expected %v", d.format, s, d.out)
 		}
 	}
 }

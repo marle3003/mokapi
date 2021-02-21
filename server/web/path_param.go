@@ -7,6 +7,10 @@ import (
 )
 
 func parsePath(s string, p *models.Parameter) (interface{}, error) {
+	if len(s) == 0 && p.Required {
+		return nil, errors.Errorf("required parameter not found")
+	}
+
 	switch p.Style {
 	case "label":
 		s = s[1:]
@@ -14,15 +18,13 @@ func parsePath(s string, p *models.Parameter) (interface{}, error) {
 		s = s[1:]
 	}
 
-	switch p.Schema.Type {
-	case "array":
-		return parsePathArray(s, p)
-	case "object":
-		return parsePathObject(s, p)
-	}
-
-	if len(s) == 0 && p.Required {
-		return nil, errors.Errorf("required parameter not found")
+	if p.Schema != nil {
+		switch p.Schema.Type {
+		case "array":
+			return parsePathArray(s, p)
+		case "object":
+			return parsePathObject(s, p)
+		}
 	}
 
 	return parse(s, p.Schema)

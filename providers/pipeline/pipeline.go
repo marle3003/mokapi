@@ -19,7 +19,6 @@ var (
 		"mustache":   &basics.MustacheStep{},
 		"delay":      &basics.DelayStep{},
 		"fileExists": &basics.FileExistsStep{},
-		"xmlPath":    &basics.XmlPathStep{},
 		"readJson":   &basics.JsonStep{},
 		"random":     &basics.RandomStep{},
 	}

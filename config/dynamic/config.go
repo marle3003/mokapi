@@ -1,6 +1,9 @@
 package dynamic
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"mokapi/config/dynamic/asyncApi"
+)
 
 type ConfigMessage struct {
 	ProviderName string
@@ -9,17 +12,19 @@ type ConfigMessage struct {
 }
 
 type Configuration struct {
-	OpenApi map[string]*OpenApi
-	Ldap    map[string]*Ldap
+	OpenApi  map[string]*OpenApi
+	Ldap     map[string]*Ldap
+	AsyncApi map[string]*asyncApi.Config
 }
 
 func NewConfiguration() *Configuration {
-	return &Configuration{OpenApi: make(map[string]*OpenApi), Ldap: make(map[string]*Ldap)}
+	return &Configuration{OpenApi: make(map[string]*OpenApi), Ldap: make(map[string]*Ldap), AsyncApi: make(map[string]*asyncApi.Config)}
 }
 
 type ConfigurationItem struct {
-	OpenApi *OpenApi
-	Ldap    *Ldap
+	OpenApi  *OpenApi
+	Ldap     *Ldap
+	AsyncApi *asyncApi.Config
 }
 
 func NewConfigurationItem() *ConfigurationItem {
@@ -32,19 +37,26 @@ func (c *ConfigurationItem) UnmarshalYAML(unmarshal func(interface{}) error) err
 
 	if _, ok := data["openapi"]; ok {
 		openapi := &OpenApi{}
-		error := unmarshal(openapi)
-		if error != nil {
-			return error
+		err := unmarshal(openapi)
+		if err != nil {
+			return err
 		}
 
 		c.OpenApi = openapi
 	} else if _, ok := data["ldap"]; ok {
 		ldap := &Ldap{}
-		error := unmarshal(ldap)
-		if error != nil {
-			return error
+		err := unmarshal(ldap)
+		if err != nil {
+			return err
 		}
 		c.Ldap = ldap
+	} else if _, ok := data["asyncapi"]; ok {
+		config := &asyncApi.Config{}
+		err := unmarshal(config)
+		if err != nil {
+			return err
+		}
+		c.AsyncApi = config
 	}
 
 	return nil
@@ -69,6 +81,13 @@ func (c *ConfigurationItem) UnmarshalJSON(b []byte) error {
 			return err
 		}
 		c.Ldap = ldap
+	} else if _, ok := data["asyncapi"]; ok {
+		config := &asyncApi.Config{}
+		err := json.Unmarshal(b, config)
+		if err != nil {
+			return err
+		}
+		c.AsyncApi = config
 	}
 
 	return nil

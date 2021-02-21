@@ -91,7 +91,7 @@ func (p *FileProvider) loadServiceFromFile(filename string, channel chan<- Confi
 		return
 	}
 
-	if config.Ldap == nil && config.OpenApi == nil {
+	if config.Ldap == nil && config.OpenApi == nil && config.AsyncApi == nil {
 		log.Debugf("no expected configuration found in %v", filename)
 		return
 	}
