@@ -6,10 +6,11 @@ func init() {
 	protocol.Register(
 		protocol.ApiReg{
 			ApiKey:     protocol.FindCoordinator,
-			MinVersion: 1,
+			MinVersion: 0,
 			MaxVersion: 3},
 		&Request{},
 		&Response{},
+		3,
 	)
 }
 

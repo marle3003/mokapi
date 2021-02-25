@@ -2,12 +2,25 @@ package protocol
 
 import (
 	"encoding/binary"
+	"hash/crc32"
 	"io"
 	"reflect"
 	"sync"
 )
 
 type encodeFunc func(*Encoder, reflect.Value)
+
+type BufferWriter interface {
+	io.Writer
+	WriteAt([]byte, int)
+	WriteSizeAt(size int, offset int)
+	Size() int
+	Checksum(start, end int64) uint32
+}
+
+type WriterTo interface {
+	WriteTo(e *Encoder)
+}
 
 type page struct {
 	offset int
@@ -20,37 +33,58 @@ func (p *page) Write(b []byte) (n int, err error) {
 	return
 }
 
+func (p *page) WriteSizeAt(size int, offset int) {
+	binary.BigEndian.PutUint32(p.buffer[offset:offset+4], uint32(size))
+}
+
 func (p *page) WriteAt(b []byte, offset int) {
 	copy(p.buffer[offset:], b)
 }
 
+func (p *page) Size() int {
+	return p.offset
+}
+
+func (p *page) Checksum(start, end int64) uint32 {
+	table := crc32.MakeTable(crc32.Castagnoli)
+	return crc32.Checksum(p.buffer[start:end], table)
+}
+
 var (
 	pagePool = sync.Pool{New: func() interface{} { return new(page) }}
+	writerTo = reflect.TypeOf((*WriterTo)(nil)).Elem()
 )
 
 type Encoder struct {
-	writer io.Writer
+	writer BufferWriter
 	buffer [32]byte
 }
 
-func NewEncoder(w io.Writer) *Encoder {
+func NewEncoder(w BufferWriter) *Encoder {
 	return &Encoder{writer: w}
 }
 
 func newEncodeFunc(t reflect.Type, version int16, tag kafkaTag) encodeFunc {
+	if reflect.PtrTo(t).Implements(writerTo) {
+		return func(e *Encoder, v reflect.Value) {
+			v.Addr().Interface().(WriterTo).WriteTo(e)
+		}
+	}
 
 	switch t.Kind() {
 	case reflect.Struct:
 		return newStructEncodeFunc(t, version, tag)
 	case reflect.String:
-		if tag.compact <= version && tag.nullable {
+		if version >= tag.compact && tag.nullable {
 			return (*Encoder).encodeCompactNullString
-		} else if tag.compact <= version {
+		} else if version >= tag.compact {
 			return (*Encoder).encodeCompactString
 		} else if tag.nullable {
 			return (*Encoder).encodeNullString
 		}
 		return (*Encoder).encodeString
+	case reflect.Int64:
+		return (*Encoder).encodeInt64
 	case reflect.Int32:
 		return (*Encoder).encodeInt32
 	case reflect.Int16:
@@ -66,7 +100,7 @@ func newEncodeFunc(t reflect.Type, version int16, tag kafkaTag) encodeFunc {
 		panic("unsupported map: " + t.String())
 	case reflect.Slice:
 		if t.Elem().Kind() == reflect.Uint8 { // []byte
-			return newBytesEncodeFunc()
+			return newBytesEncodeFunc(version, tag)
 		}
 		return newEncodeArray(t, version, tag)
 	default:
@@ -74,8 +108,17 @@ func newEncodeFunc(t reflect.Type, version int16, tag kafkaTag) encodeFunc {
 	}
 }
 
-func newBytesEncodeFunc() encodeFunc {
-	return (*Encoder).encodeCompactBytes
+func newBytesEncodeFunc(version int16, tag kafkaTag) encodeFunc {
+	switch {
+	case version >= tag.compact && tag.nullable:
+		return (*Encoder).encodeCompactNullBytes
+	case version >= tag.compact:
+		return (*Encoder).encodeCompactBytes
+	case tag.nullable:
+		return (*Encoder).encodeNullBytes
+	default:
+		return (*Encoder).encodeBytes
+	}
 }
 
 func newEncodeArray(t reflect.Type, version int16, tag kafkaTag) encodeFunc {
@@ -135,6 +178,18 @@ func (e *Encoder) encodeCompactBytes(v reflect.Value) {
 	e.writeCompactBytes(v.Bytes())
 }
 
+func (e *Encoder) encodeCompactNullBytes(v reflect.Value) {
+	e.writeCompactNullBytes(v.Bytes())
+}
+
+func (e *Encoder) encodeNullBytes(v reflect.Value) {
+	e.writeNullBytes(v.Bytes())
+}
+
+func (e *Encoder) encodeBytes(v reflect.Value) {
+	e.writeBytes(v.Bytes())
+}
+
 func (e *Encoder) encodeCompactString(v reflect.Value) {
 	e.writeCompactString(v.String())
 }
@@ -167,17 +222,63 @@ func (e *Encoder) encodeInt32(v reflect.Value) {
 	e.writeInt32(int32(v.Int()))
 }
 
+func (e *Encoder) encodeInt64(v reflect.Value) {
+	e.writeInt64(v.Int())
+}
+
 func (e *Encoder) writeCompactBytes(b []byte) {
 	e.writeUVarInt(uint64(len(b)) + 1)
-	_, err := e.writer.Write(b)
-	if err != nil {
-		panic(err)
+	e.write(b)
+}
+
+func (e *Encoder) writeNullBytes(b []byte) {
+	if b == nil {
+		e.writeInt32(-1)
+	} else {
+		e.writeInt32(int32(len(b)))
+		e.write(b)
 	}
+}
+
+func (e *Encoder) writeCompactNullBytes(b []byte) {
+	if b == nil {
+		e.writeUVarInt(0)
+	} else {
+		e.writeUVarInt(uint64(len(b)) + 1)
+		e.write(b)
+	}
+}
+
+func (e *Encoder) writeVarNullBytes(b []byte) {
+	if b == nil {
+		e.writeVarInt(-1)
+	} else {
+		e.writeVarInt(int64(len(b)))
+		e.write(b)
+	}
+}
+
+func (e *Encoder) writeBytes(b []byte) {
+	e.writeInt32(int32(len(b)))
+	e.write(b)
 }
 
 func (e *Encoder) writeCompactString(s string) {
 	e.writeUVarInt(uint64(len(s)) + 1)
 	e.writeString(s)
+}
+
+func (e *Encoder) writeVarString(s string) {
+	e.writeVarInt(int64(len(s)))
+	e.writeString(s)
+}
+
+func (e *Encoder) writeInt64(i int64) {
+	binary.BigEndian.PutUint64(e.buffer[:8], uint64(i))
+	_, err := e.writer.Write(e.buffer[:8])
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (e *Encoder) writeInt32(i int32) {
@@ -239,6 +340,23 @@ func (e *Encoder) writeString(s string) {
 		}
 		s = s[n:]
 	}
+}
+
+func (e *Encoder) write(b []byte) {
+	_, err := e.writer.Write(b)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (e *Encoder) writeVarInt(i int64) {
+	n := binary.PutVarint(e.buffer[:], i)
+
+	_, err := e.writer.Write(e.buffer[:n])
+	if err != nil {
+		panic(err)
+	}
+
 }
 
 func (e *Encoder) writeUVarInt(i uint64) {

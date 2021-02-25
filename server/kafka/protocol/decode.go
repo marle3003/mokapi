@@ -9,25 +9,42 @@ import (
 
 type decodeFunc func(*Decoder, reflect.Value)
 
-type Decoder struct {
-	reader io.Reader
-	buffer [8]byte
-	err    error
+type ReaderFrom interface {
+	ReadFrom(e *Decoder)
 }
 
-func NewDecoder(reader io.Reader) *Decoder {
-	return &Decoder{reader: reader}
+type Decoder struct {
+	reader   io.Reader
+	buffer   [8]byte
+	err      error
+	leftSize int
+}
+
+var (
+	readerFrom = reflect.TypeOf((*ReaderFrom)(nil)).Elem()
+)
+
+func NewDecoder(reader io.Reader, size int) *Decoder {
+	return &Decoder{reader: reader, leftSize: size}
 }
 
 func newDecodeFunc(t reflect.Type, version int16, tag kafkaTag) decodeFunc {
+	if reflect.PtrTo(t).Implements(readerFrom) {
+		return func(e *Decoder, v reflect.Value) {
+			v.Addr().Interface().(ReaderFrom).ReadFrom(e)
+		}
+	}
+
 	switch t.Kind() {
 	case reflect.Struct:
 		return newStructDecodeFunc(t, version, tag)
 	case reflect.String:
-		if tag.nullable && tag.compact > version {
-			return (*Decoder).decodeString
+		if version >= tag.compact {
+			return (*Decoder).decodeCompactString
 		}
-		return (*Decoder).decodeCompactString
+		return (*Decoder).decodeString
+	case reflect.Int64:
+		return (*Decoder).decodeInt64
 	case reflect.Int32:
 		return (*Decoder).decodeInt32
 	case reflect.Int16:
@@ -43,19 +60,29 @@ func newDecodeFunc(t reflect.Type, version int16, tag kafkaTag) decodeFunc {
 		panic("unsupported map: " + t.String())
 	case reflect.Slice:
 		if t.Elem().Kind() == reflect.Uint8 { // []byte
-			return (*Decoder).decodeCompactBytes
+			return newBytesDecodeFunc(version, tag)
 		}
-		return newArayDecodeFunc(t, version)
+		return newArayDecodeFunc(t, version, tag)
 	default:
 		panic("unsupported type: " + t.String())
 	}
 }
 
-func newArayDecodeFunc(t reflect.Type, version int16) decodeFunc {
+func newBytesDecodeFunc(version int16, tag kafkaTag) decodeFunc {
+	if version >= tag.compact {
+		return (*Decoder).decodeCompactBytes
+	}
+	return (*Decoder).decodeBytes
+}
+
+func newArayDecodeFunc(t reflect.Type, version int16, tag kafkaTag) decodeFunc {
 	elemType := t.Elem()
 	elemFunc := newDecodeFunc(elemType, version, kafkaTag{})
 
-	return func(d *Decoder, v reflect.Value) { d.decodeCompactArray(v, elemFunc) }
+	if version >= tag.compact {
+		return func(d *Decoder, v reflect.Value) { d.decodeCompactArray(v, elemFunc) }
+	}
+	return func(d *Decoder, v reflect.Value) { d.decodeArray(v, elemFunc) }
 }
 
 func newStructDecodeFunc(t reflect.Type, version int16, tag kafkaTag) decodeFunc {
@@ -79,6 +106,11 @@ func newStructDecodeFunc(t reflect.Type, version int16, tag kafkaTag) decodeFunc
 			f.decode(d, v.Field(f.index))
 		}
 	}
+}
+
+func (d *Decoder) decodeBytes(v reflect.Value) {
+	b := d.readBytes()
+	v.Set(reflect.ValueOf(b))
 }
 
 func (d *Decoder) decodeCompactBytes(v reflect.Value) {
@@ -116,6 +148,11 @@ func (d *Decoder) decodeInt32(v reflect.Value) {
 	v.Set(reflect.ValueOf(i))
 }
 
+func (d *Decoder) decodeInt64(v reflect.Value) {
+	i := d.readInt64()
+	v.Set(reflect.ValueOf(i))
+}
+
 func (d *Decoder) decodeTagBuffer(v reflect.Value) {
 	m := d.readTagFields()
 	v.Set(reflect.ValueOf(m))
@@ -131,6 +168,14 @@ func (d *Decoder) readCompactString() string {
 		}
 	}
 	return ""
+}
+
+func (d *Decoder) readInt64() int64 {
+	if d.readFull(d.buffer[:8]) {
+		i := binary.BigEndian.Uint64(d.buffer[:8])
+		return int64(i)
+	}
+	return 0
 }
 
 func (d *Decoder) readInt32() int32 {
@@ -159,7 +204,7 @@ func (d *Decoder) readBool() bool {
 }
 
 func (d *Decoder) readString() string {
-	if n := d.readInt16(); n == 0 {
+	if n := d.readInt16(); n < 0 {
 		return ""
 	} else {
 		b := make([]byte, n)
@@ -214,15 +259,40 @@ func (d *Decoder) decodeCompactArray(v reflect.Value, decodeElem decodeFunc) {
 	}
 }
 
+func (d *Decoder) decodeArray(v reflect.Value, decodeElem decodeFunc) {
+	if n := d.readInt32(); n < 0 {
+		a := reflect.MakeSlice(v.Type(), 0, 0)
+		v.Set(a)
+	} else {
+		a := reflect.MakeSlice(v.Type(), int(n), int(n))
+		for i := 0; i < int(n) && d.leftSize > 0; i++ {
+			decodeElem(d, a.Index(i))
+		}
+		v.Set(a)
+	}
+}
+
 func (d *Decoder) readByte() byte {
 	if d.err != nil {
 		return 0
 	}
-	if _, err := d.reader.Read(d.buffer[:1]); err != nil {
+	n, err := d.reader.Read(d.buffer[:1])
+	if err != nil {
 		d.err = err
 		return 0
 	}
+	d.leftSize -= n
 	return d.buffer[0]
+}
+
+func (d *Decoder) readBytes() []byte {
+	if n := d.readInt32(); n < 0 {
+		return nil
+	} else {
+		b := make([]byte, n)
+		d.readFull(b)
+		return b
+	}
 }
 
 //func (d *Decoder) read(b []byte) bool {
@@ -241,11 +311,21 @@ func (d *Decoder) readFull(b []byte) bool {
 		return false
 	}
 
-	if _, err := io.ReadFull(d.reader, b); err != nil {
+	n, err := io.ReadFull(d.reader, b)
+	if err != nil {
 		d.err = err
 		return false
 	}
+	d.leftSize -= n
+
 	return true
+}
+
+func (d *Decoder) readDiscard() {
+	//for d.leftSize > 0 {
+	//	n, err := io.ReadFull(d.reader, d.buffer[:])
+	//	s = s[n:]
+	//}
 }
 
 func (d *Decoder) readTagFields() map[int64]string {

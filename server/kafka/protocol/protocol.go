@@ -13,9 +13,21 @@ import (
 type ApiKey int16
 
 const (
+	Produce         ApiKey = 0
+	Fetch           ApiKey = 1
 	Metadata        ApiKey = 3
+	OffsetFetch     ApiKey = 9
 	FindCoordinator ApiKey = 10
+	JoinGroup       ApiKey = 11
+	Heartbeat       ApiKey = 12
+	SyncGroup       ApiKey = 14
 	ApiVersions     ApiKey = 18
+)
+
+type ErrorCode int16
+
+const (
+	UnknownTopicOrPartition = 3
 )
 
 var (
@@ -43,6 +55,8 @@ type ApiType struct {
 	MaxVersion int16
 	decode     decodeMsg
 	encode     encodeMsg
+	// https://cwiki.apache.org/confluence/display/KAFKA/KIP-482%3A+The+Kafka+Protocol+should+Support+Optional+Tagged+Fields
+	flexibleHeader int16
 }
 
 type kafkaTag struct {
@@ -67,7 +81,7 @@ type Header struct {
 	TagFields     map[int64]string `kafka:"type=TAG_BUFFER"`
 }
 
-func Register(reg ApiReg, req, res Message) {
+func Register(reg ApiReg, req, res Message, flexible int16) {
 	val := reflect.ValueOf(req).Elem()
 	t := val.Type()
 
@@ -91,11 +105,12 @@ func Register(reg ApiReg, req, res Message) {
 		func(e *Encoder, version int16, msg Message) {
 			encode[version](e, reflect.ValueOf(msg).Elem())
 		},
+		flexible,
 	}
 }
 
 func ReadMessage(r io.Reader) (h *Header, msg Message, err error) {
-	d := NewDecoder(r)
+	d := NewDecoder(r, 4)
 	h = readHeader(d)
 
 	if h.Size == 0 {
@@ -126,7 +141,7 @@ func WriteMessage(w io.Writer, k ApiKey, version int16, correlationId int32, msg
 	t.encode(e, version, msg)
 
 	var size [4]byte
-	binary.BigEndian.PutUint32(size[:], uint32(p.offset-4))
+	binary.BigEndian.PutUint32(size[:], uint32(p.Size()-4))
 	p.WriteAt(size[:], 0)
 
 	w.Write(p.buffer[0:p.offset])
@@ -173,12 +188,14 @@ func readHeader(d *Decoder) (h *Header) {
 		return
 	}
 
+	d.leftSize = int(h.Size)
+
 	h.ApiKey = ApiKey(d.readInt16())
 	h.ApiVersion = d.readInt16()
 	h.CorrelationId = d.readInt32()
 	h.ClientId = d.readString()
 
-	if h.ApiVersion > 1 {
+	if h.ApiVersion >= ApiTypes[h.ApiKey].flexibleHeader {
 		h.TagFields = d.readTagFields()
 	}
 

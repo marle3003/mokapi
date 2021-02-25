@@ -1,15 +1,23 @@
 package kafka
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"io"
 	event "mokapi/models/eventService"
 	"mokapi/server/kafka/protocol"
 	"mokapi/server/kafka/protocol/apiVersion"
+	"mokapi/server/kafka/protocol/fetch"
 	"mokapi/server/kafka/protocol/findCoordinator"
+	"mokapi/server/kafka/protocol/heartbeat"
+	"mokapi/server/kafka/protocol/joinGroup"
 	"mokapi/server/kafka/protocol/metaData"
+	"mokapi/server/kafka/protocol/offsetFetch"
+	"mokapi/server/kafka/protocol/produce"
+	"mokapi/server/kafka/protocol/syncGroup"
 	"net"
+	"time"
 )
 
 type Binding struct {
@@ -17,6 +25,7 @@ type Binding struct {
 	listen    string
 	isRunning bool
 	service   *event.Service
+	brokers   []broker
 }
 
 func NewServer(addr string) *Binding {
@@ -30,6 +39,9 @@ func (s *Binding) Apply(data interface{}) error {
 		return errors.Errorf("unexpected parameter type %T in kafka binding", data)
 	}
 	s.service = service
+
+	b := broker{Id: 0}
+	s.brokers = append(s.brokers, b)
 
 	shouldRestart := false
 	//if s.listen != "" && s.listen != config.Address {
@@ -117,16 +129,28 @@ func (s *Binding) handle(conn net.Conn) {
 
 		switch h.ApiKey {
 		case protocol.ApiVersions:
-			handleApiVersion(h, msg.(*apiVersion.Request), conn)
+			s.handleApiVersion(h, msg.(*apiVersion.Request), conn)
 		case protocol.Metadata:
-			handleMetadata(h, msg.(*metaData.Request), conn)
+			s.handleMetadata(h, msg.(*metaData.Request), conn)
 		case protocol.FindCoordinator:
-			_ = msg.(*findCoordinator.Request)
+			s.handleFindCoordinator(h, msg.(*findCoordinator.Request), conn)
+		case protocol.JoinGroup:
+			s.handleJoinGroup(h, msg.(*joinGroup.Request), conn)
+		case protocol.SyncGroup:
+			s.handleSyncGroup(h, msg.(*syncGroup.Request), conn)
+		case protocol.OffsetFetch:
+			s.handleOffSetFetch(h, msg.(*offsetFetch.Request), conn)
+		case protocol.Fetch:
+			s.handleFetch(h, msg.(*fetch.Request), conn)
+		case protocol.Heartbeat:
+			protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, &heartbeat.Response{})
+		case protocol.Produce:
+			_ = msg.(*produce.Request)
 		}
 	}
 }
 
-func handleApiVersion(h *protocol.Header, msg *apiVersion.Request, w io.Writer) {
+func (s *Binding) handleApiVersion(h *protocol.Header, req *apiVersion.Request, w io.Writer) {
 	apiKeys := make([]apiVersion.ApiKeyResponse, len(protocol.ApiTypes))
 	i := 0
 	for k, t := range protocol.ApiTypes {
@@ -134,52 +158,165 @@ func handleApiVersion(h *protocol.Header, msg *apiVersion.Request, w io.Writer) 
 		i++
 	}
 
-	res := &apiVersion.Response{
-		ErrorCode:      0,
-		ApiKeys:        apiKeys,
-		ThrottleTimeMs: 0,
-		TagFields:      nil,
-	}
+	res := &apiVersion.Response{ApiKeys: apiKeys}
 
 	protocol.WriteMessage(w, h.ApiKey, h.ApiVersion, h.CorrelationId, res)
 }
 
-func handleMetadata(h *protocol.Header, msg *metaData.Request, w io.Writer) {
+func (s *Binding) handleMetadata(h *protocol.Header, req *metaData.Request, w io.Writer) {
+	var brokers []metaData.ResponseBroker
+	for _, b := range s.brokers {
+		brokers = append(brokers, metaData.ResponseBroker{
+			NodeId: int32(b.Id),
+			Host:   "localhost",
+			Port:   9092,
+		})
+	}
 	res := &metaData.Response{
-		ThrottleTimeMs: 0,
-		Brokers: []metaData.ResponseBroker{
-			{
-				NodeId:    0,
-				Host:      "localhost",
-				Port:      9092,
-				Rack:      "",
-				TagFields: nil,
-			},
-		},
-		ClusterId:    "",
-		ControllerId: 0,
-		Topics: []metaData.ResponseTopic{
-			{
+		ThrottleTimeMs:              0,
+		Brokers:                     brokers,
+		Topics:                      make([]metaData.ResponseTopic, 0),
+		ClusterId:                   "mokapi",
+		ControllerId:                1,
+		ClusterAuthorizedOperations: 0,
+	}
+
+	for _, t := range req.Topics {
+		name := fmt.Sprintf("/%v", t.Name)
+		if _, ok := s.service.Channels[name]; ok {
+			res.Topics = append(res.Topics, metaData.ResponseTopic{
 				ErrorCode:  0,
-				Name:       "message",
+				Name:       t.Name,
 				IsInternal: false,
 				Partitions: []metaData.ResponsePartition{
 					{
 						ErrorCode:       0,
 						PartitionIndex:  0,
-						LeaderId:        0,
+						LeaderId:        1,
 						LeaderEpoch:     0,
-						ReplicaNodes:    make([]int32, 0),
-						IsrNodes:        make([]int32, 0),
+						ReplicaNodes:    []int32{1},
+						IsrNodes:        []int32{1},
 						OfflineReplicas: make([]int32, 0),
 						TagFields:       nil,
 					},
 				},
 				TopicAuthorizedOperations: 0,
 				TagFields:                 nil,
+			})
+		} else {
+			res.Topics = append(res.Topics, metaData.ResponseTopic{
+				ErrorCode: protocol.UnknownTopicOrPartition,
+				Name:      t.Name,
+			})
+		}
+	}
+
+	protocol.WriteMessage(w, h.ApiKey, h.ApiVersion, h.CorrelationId, res)
+}
+
+func (s *Binding) handleFindCoordinator(h *protocol.Header, req *findCoordinator.Request, w io.Writer) {
+	res := &findCoordinator.Response{
+		ThrottleTimeMs: 0,
+		ErrorCode:      0,
+		ErrorMessage:   "",
+		NodeId:         1,
+		Host:           "localhost",
+		Port:           9092,
+		TagFields:      nil,
+	}
+
+	protocol.WriteMessage(w, h.ApiKey, h.ApiVersion, h.CorrelationId, res)
+}
+
+func (s *Binding) handleJoinGroup(h *protocol.Header, req *joinGroup.Request, w io.Writer) {
+	res := &joinGroup.Response{
+		ThrottleTimeMs: 0,
+		ErrorCode:      0,
+		GenerationId:   -1,
+		ProtocolName:   "range",
+		Leader:         "1",
+		MemberId:       "1",
+		Members: []joinGroup.Member{
+			{
+				MemberId:        "1",
+				GroupInstanceId: "",
+				MetaData:        req.Protocols[0].MetaData,
 			},
 		},
-		ClusterAuthorizedOperations: 0,
+	}
+
+	protocol.WriteMessage(w, h.ApiKey, h.ApiVersion, h.CorrelationId, res)
+}
+
+func (s *Binding) handleSyncGroup(h *protocol.Header, req *syncGroup.Request, w io.Writer) {
+	res := &syncGroup.Response{
+		ThrottleTimeMs: 0,
+		ErrorCode:      0,
+		Assignment:     req.GroupAssignments[0].Assignment,
+	}
+
+	protocol.WriteMessage(w, h.ApiKey, h.ApiVersion, h.CorrelationId, res)
+}
+
+func (s *Binding) handleOffSetFetch(h *protocol.Header, req *offsetFetch.Request, w io.Writer) {
+	res := &offsetFetch.Response{
+		ThrottleTimeMs: 0,
+		Topics: []offsetFetch.ResponseTopic{
+			{
+				Name: "message",
+				Partitions: []offsetFetch.Partition{
+					{
+						Index:           0,
+						CommittedOffset: 0,
+						Metadata:        "",
+						ErrorCode:       0,
+					},
+				},
+			},
+		},
+		ErrorCode: 0,
+	}
+
+	protocol.WriteMessage(w, h.ApiKey, h.ApiVersion, h.CorrelationId, res)
+}
+
+func (s *Binding) handleFetch(h *protocol.Header, req *fetch.Request, w io.Writer) {
+	time.Sleep(time.Millisecond * time.Duration(req.MaxWaitMs-50))
+	res := &fetch.Response{
+		Topics: []fetch.ResponseTopic{
+			{
+				Name: "message",
+				Partitions: []fetch.ResponsePartition{
+					{
+						Index:                0,
+						ErrorCode:            0,
+						HighWatermark:        1,
+						LastStableOffset:     1,
+						PreferredReadReplica: -1,
+						RecordSet: protocol.RecordSet{
+							Batches: []protocol.RecordBatch{
+								{
+									Attributes: 0,
+									ProducerId: 0,
+									Records: []protocol.Record{
+										{
+											Key:     nil,
+											Value:   []byte("Test"),
+											Headers: nil,
+										},
+										{
+											Key:     nil,
+											Value:   []byte("Test2"),
+											Headers: nil,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	protocol.WriteMessage(w, h.ApiKey, h.ApiVersion, h.CorrelationId, res)

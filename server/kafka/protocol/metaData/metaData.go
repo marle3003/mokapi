@@ -6,15 +6,16 @@ func init() {
 	protocol.Register(
 		protocol.ApiReg{
 			ApiKey:     protocol.Metadata,
-			MinVersion: 1,
+			MinVersion: 0,
 			MaxVersion: 9},
 		&Request{},
 		&Response{},
+		9,
 	)
 }
 
 type Request struct {
-	Topics                             []TopicName `kafka:"min=9"`
+	Topics                             []TopicName `kafka:""`
 	AllowAutoTopicCreation             bool        `kafka:"min=4"`
 	IncludeClusterAuthorizedOperations bool        `kafka:"min=8"`
 	IncludeTopicAuthorizedOperations   bool        `kafka:"min=8"`
