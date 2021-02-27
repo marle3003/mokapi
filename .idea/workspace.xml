@@ -2,22 +2,12 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="1a9601df-4cac-4bc9-9e3a-1ba0e84e507f" name="Default Changelist" comment="refactoring but not all features are working">
-      <change afterPath="$PROJECT_DIR$/server/kafka/broker.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/kafka/protocol/fetch/fetch.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/kafka/protocol/heartbeat/heartbeat.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/kafka/protocol/joinGroup/joinGroup.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/kafka/protocol/offsetFetch/offsetFetch.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/kafka/protocol/produce/produce.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/kafka/protocol/record.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/server/kafka/protocol/syncGroup/syncGroup.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/kafka/group.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/kafka/rebalancer.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/kafka/binding.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/kafka/binding.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/kafka/broker.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/kafka/broker.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/kafka/protocol/apiVersion/apiVersion.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/kafka/protocol/apiVersion/apiVersion.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/kafka/protocol/decode.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/kafka/protocol/decode.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/kafka/protocol/encode.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/kafka/protocol/encode.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/kafka/protocol/findCoordinator/findCoordinator.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/kafka/protocol/findCoordinator/findCoordinator.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/kafka/protocol/metaData/metaData.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/kafka/protocol/metaData/metaData.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/kafka/protocol/protocol.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/kafka/protocol/protocol.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -172,7 +162,8 @@
     <MESSAGE value="added tests&#10;extended convert" />
     <MESSAGE value="bugfixes&#10;added tests&#10;added range expression" />
     <MESSAGE value="started kafka implementation" />
-    <option name="LAST_COMMIT_MESSAGE" value="started kafka implementation" />
+    <MESSAGE value="extended kafka implementation" />
+    <option name="LAST_COMMIT_MESSAGE" value="extended kafka implementation" />
   </component>
   <component name="VgoProject">
     <integration-enabled>true</integration-enabled>

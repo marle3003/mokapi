@@ -35,3 +35,11 @@ type ApiKeyResponse struct {
 	MaxVersion int16            `kafka:""`
 	TagFields  map[int64]string `kafka:"type=TAG_BUFFER"`
 }
+
+func NewApiKeyResponse(k protocol.ApiKey, t protocol.ApiType) ApiKeyResponse {
+	return ApiKeyResponse{
+		ApiKey:     k,
+		MinVersion: t.MinVersion,
+		MaxVersion: t.MaxVersion,
+	}
+}

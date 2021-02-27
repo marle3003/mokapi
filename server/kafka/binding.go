@@ -26,10 +26,21 @@ type Binding struct {
 	isRunning bool
 	service   *event.Service
 	brokers   []broker
+	groups    map[string]*group
+	topics    map[string]topic
 }
 
 func NewServer(addr string) *Binding {
-	s := &Binding{stop: make(chan bool), listen: addr}
+	s := &Binding{
+		stop:   make(chan bool),
+		listen: addr,
+		groups: make(map[string]*group),
+		topics: make(map[string]topic),
+	}
+
+	b := newBroker(1, "localhost", 9092) // id is 1 based
+	s.brokers = append(s.brokers, b)
+
 	return s
 }
 
@@ -40,8 +51,12 @@ func (s *Binding) Apply(data interface{}) error {
 	}
 	s.service = service
 
-	b := broker{Id: 0}
-	s.brokers = append(s.brokers, b)
+	for n, _ := range service.Channels {
+		name := n[1:] // remove leading slash from name
+		s.topics[name] = topic{partitions: map[int]partition{
+			0: {leader: s.brokers[0]}},
+		}
+	}
 
 	shouldRestart := false
 	//if s.listen != "" && s.listen != config.Address {
@@ -127,135 +142,185 @@ func (s *Binding) handle(conn net.Conn) {
 			return
 		}
 
-		switch h.ApiKey {
-		case protocol.ApiVersions:
-			s.handleApiVersion(h, msg.(*apiVersion.Request), conn)
-		case protocol.Metadata:
-			s.handleMetadata(h, msg.(*metaData.Request), conn)
-		case protocol.FindCoordinator:
-			s.handleFindCoordinator(h, msg.(*findCoordinator.Request), conn)
-		case protocol.JoinGroup:
-			s.handleJoinGroup(h, msg.(*joinGroup.Request), conn)
-		case protocol.SyncGroup:
-			s.handleSyncGroup(h, msg.(*syncGroup.Request), conn)
-		case protocol.OffsetFetch:
-			s.handleOffSetFetch(h, msg.(*offsetFetch.Request), conn)
-		case protocol.Fetch:
-			s.handleFetch(h, msg.(*fetch.Request), conn)
-		case protocol.Heartbeat:
-			protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, &heartbeat.Response{})
-		case protocol.Produce:
-			_ = msg.(*produce.Request)
-		}
+		go func() {
+			switch h.ApiKey {
+			case protocol.ApiVersions:
+				r := s.processApiVersion()
+				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, r)
+			case protocol.Metadata:
+				r := s.processMetadata(msg.(*metaData.Request))
+				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, r)
+			case protocol.FindCoordinator:
+				r := s.processFindCoordinator(msg.(*findCoordinator.Request))
+				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, r)
+			case protocol.JoinGroup:
+				errorCode := s.processJoinGroup(h, msg.(*joinGroup.Request), conn)
+				if errorCode != 0 {
+					protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, &joinGroup.Response{ErrorCode: errorCode})
+				}
+			case protocol.SyncGroup:
+				s.handleSyncGroup(h, msg.(*syncGroup.Request), conn)
+			case protocol.OffsetFetch:
+				s.handleOffSetFetch(h, msg.(*offsetFetch.Request), conn)
+			case protocol.Fetch:
+				s.handleFetch(h, msg.(*fetch.Request), conn)
+			case protocol.Heartbeat:
+				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, &heartbeat.Response{})
+			case protocol.Produce:
+				_ = msg.(*produce.Request)
+			}
+		}()
 	}
 }
 
-func (s *Binding) handleApiVersion(h *protocol.Header, req *apiVersion.Request, w io.Writer) {
-	apiKeys := make([]apiVersion.ApiKeyResponse, len(protocol.ApiTypes))
-	i := 0
+func (s *Binding) processApiVersion() *apiVersion.Response {
+	r := &apiVersion.Response{
+		ApiKeys: make([]apiVersion.ApiKeyResponse, 0, len(protocol.ApiTypes)),
+	}
 	for k, t := range protocol.ApiTypes {
-		apiKeys[i] = apiVersion.ApiKeyResponse{ApiKey: k, MinVersion: t.MinVersion, MaxVersion: t.MaxVersion}
-		i++
+		r.ApiKeys = append(r.ApiKeys, apiVersion.NewApiKeyResponse(k, t))
 	}
-
-	res := &apiVersion.Response{ApiKeys: apiKeys}
-
-	protocol.WriteMessage(w, h.ApiKey, h.ApiVersion, h.CorrelationId, res)
+	return r
 }
 
-func (s *Binding) handleMetadata(h *protocol.Header, req *metaData.Request, w io.Writer) {
-	var brokers []metaData.ResponseBroker
+func (s *Binding) processMetadata(req *metaData.Request) *metaData.Response {
+	r := &metaData.Response{
+		Brokers:   make([]metaData.ResponseBroker, 0, len(s.brokers)),
+		Topics:    make([]metaData.ResponseTopic, 0, len(req.Topics)),
+		ClusterId: "mokapi",
+	}
+
 	for _, b := range s.brokers {
-		brokers = append(brokers, metaData.ResponseBroker{
-			NodeId: int32(b.Id),
+		r.Brokers = append(r.Brokers, metaData.ResponseBroker{
+			NodeId: int32(b.id),
 			Host:   "localhost",
 			Port:   9092,
 		})
 	}
-	res := &metaData.Response{
-		ThrottleTimeMs:              0,
-		Brokers:                     brokers,
-		Topics:                      make([]metaData.ResponseTopic, 0),
-		ClusterId:                   "mokapi",
-		ControllerId:                1,
-		ClusterAuthorizedOperations: 0,
-	}
 
-	for _, t := range req.Topics {
-		name := fmt.Sprintf("/%v", t.Name)
-		if _, ok := s.service.Channels[name]; ok {
-			res.Topics = append(res.Topics, metaData.ResponseTopic{
-				ErrorCode:  0,
-				Name:       t.Name,
-				IsInternal: false,
-				Partitions: []metaData.ResponsePartition{
-					{
-						ErrorCode:       0,
-						PartitionIndex:  0,
-						LeaderId:        1,
-						LeaderEpoch:     0,
-						ReplicaNodes:    []int32{1},
-						IsrNodes:        []int32{1},
-						OfflineReplicas: make([]int32, 0),
-						TagFields:       nil,
-					},
-				},
-				TopicAuthorizedOperations: 0,
-				TagFields:                 nil,
-			})
+	r.ControllerId = r.Brokers[0].NodeId // using first broker as controller
+
+	for _, reqT := range req.Topics {
+		if t, ok := s.topics[reqT.Name]; ok {
+			resT := metaData.ResponseTopic{
+				Name:       reqT.Name,
+				Partitions: make([]metaData.ResponsePartition, 0, len(t.partitions)),
+			}
+
+			for _, p := range t.partitions {
+				resT.Partitions = append(resT.Partitions, metaData.ResponsePartition{
+					PartitionIndex: 0,
+					LeaderId:       int32(p.leader.id),
+					ReplicaNodes:   []int32{1},
+					IsrNodes:       []int32{1},
+				})
+			}
+
+			r.Topics = append(r.Topics, resT)
 		} else {
-			res.Topics = append(res.Topics, metaData.ResponseTopic{
+			r.Topics = append(r.Topics, metaData.ResponseTopic{
 				ErrorCode: protocol.UnknownTopicOrPartition,
-				Name:      t.Name,
+				Name:      reqT.Name,
 			})
 		}
 	}
 
-	protocol.WriteMessage(w, h.ApiKey, h.ApiVersion, h.CorrelationId, res)
+	return r
+
 }
 
-func (s *Binding) handleFindCoordinator(h *protocol.Header, req *findCoordinator.Request, w io.Writer) {
-	res := &findCoordinator.Response{
-		ThrottleTimeMs: 0,
-		ErrorCode:      0,
-		ErrorMessage:   "",
-		NodeId:         1,
-		Host:           "localhost",
-		Port:           9092,
-		TagFields:      nil,
+func (s *Binding) processFindCoordinator(req *findCoordinator.Request) *findCoordinator.Response {
+	r := &findCoordinator.Response{}
+
+	switch req.KeyType {
+	case 0: // group
+		var g *group
+		if e, ok := s.groups[req.Key]; ok {
+			g = e
+		} else {
+			g = &group{
+				coordinator: s.brokers[0],
+			}
+			g.balancer = newGroupBalancer(g)
+			s.groups[req.Key] = g
+		}
+
+		r.NodeId = int32(g.coordinator.id)
+		r.Host = g.coordinator.host
+		r.Port = int32(g.coordinator.port)
+	default:
+		msg := fmt.Sprintf("unsupported key type '%v' in find coordinator request", req.KeyType)
+		log.Error(msg)
+		r.ErrorCode = -1
+		r.ErrorMessage = msg
+		return r
+	}
+	return r
+}
+
+func (s *Binding) processJoinGroup(h *protocol.Header, req *joinGroup.Request, w io.Writer) int16 {
+	var g *group
+	var exists bool
+	if g, exists = s.groups[req.GroupId]; !exists {
+		return -1
+	} else if g.state == syncing {
+		return 27 // RebalanceInProgressCode
+	} else if g.state == empty {
+		g.state = joining
+		go g.balancer.startJoin()
 	}
 
-	protocol.WriteMessage(w, h.ApiKey, h.ApiVersion, h.CorrelationId, res)
-}
+	consumer := consumer{id: req.MemberId}
 
-func (s *Binding) handleJoinGroup(h *protocol.Header, req *joinGroup.Request, w io.Writer) {
-	res := &joinGroup.Response{
-		ThrottleTimeMs: 0,
-		ErrorCode:      0,
-		GenerationId:   -1,
-		ProtocolName:   "range",
-		Leader:         "1",
-		MemberId:       "1",
-		Members: []joinGroup.Member{
-			{
-				MemberId:        "1",
-				GroupInstanceId: "",
-				MetaData:        req.Protocols[0].MetaData,
-			},
+	if len(consumer.id) == 0 {
+		consumer.id = fmt.Sprintf("%v-%v", h.ClientId, createGuid())
+	}
+
+	j := join{
+		consumer:  consumer,
+		protocols: make([]groupAssignmentStrategy, 0, len(req.Protocols)),
+		write: func(msg protocol.Message) {
+			protocol.WriteMessage(w, h.ApiKey, h.ApiVersion, h.CorrelationId, msg)
 		},
 	}
 
-	protocol.WriteMessage(w, h.ApiKey, h.ApiVersion, h.CorrelationId, res)
-}
-
-func (s *Binding) handleSyncGroup(h *protocol.Header, req *syncGroup.Request, w io.Writer) {
-	res := &syncGroup.Response{
-		ThrottleTimeMs: 0,
-		ErrorCode:      0,
-		Assignment:     req.GroupAssignments[0].Assignment,
+	for _, p := range req.Protocols {
+		j.protocols = append(j.protocols, groupAssignmentStrategy{
+			assignmentStrategy: p.Name,
+			metadata:           p.MetaData,
+		})
 	}
 
-	protocol.WriteMessage(w, h.ApiKey, h.ApiVersion, h.CorrelationId, res)
+	g.balancer.join <- j
+
+	return 0
+}
+
+func (s *Binding) handleSyncGroup(h *protocol.Header, req *syncGroup.Request, w io.Writer) int {
+	var g *group
+	var exists bool
+	if g, exists = s.groups[req.GroupId]; !exists {
+		return -1
+	}
+
+	sync := sync{
+		consumer:     consumer{id: req.MemberId},
+		generationId: int(req.GenerationId),
+		write: func(msg protocol.Message) {
+			protocol.WriteMessage(w, h.ApiKey, h.ApiVersion, h.CorrelationId, msg)
+		},
+	}
+
+	if req.GroupAssignments != nil {
+		sync.assignments = make(map[string][]byte)
+		for _, a := range req.GroupAssignments {
+			sync.assignments[a.MemberId] = a.Assignment
+		}
+	}
+
+	g.balancer.sync <- sync
+
+	return 0
 }
 
 func (s *Binding) handleOffSetFetch(h *protocol.Header, req *offsetFetch.Request, w io.Writer) {
