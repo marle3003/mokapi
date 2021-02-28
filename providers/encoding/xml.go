@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"io"
-	"mokapi/models"
+	"mokapi/models/schemas"
 	"strconv"
 )
 
-func UnmarshalXml(s string, schema *models.Schema) (interface{}, error) {
+func UnmarshalXml(s string, schema *schemas.Schema) (interface{}, error) {
 	data := []byte(s)
 	e, err := decode(data)
 	if err != nil {
@@ -27,7 +27,7 @@ func UnmarshalXml(s string, schema *models.Schema) (interface{}, error) {
 	return obj, err
 }
 
-func MarshalXML(v interface{}, schema *models.Schema) ([]byte, error) {
+func MarshalXML(v interface{}, schema *schemas.Schema) ([]byte, error) {
 	m := &StringMap{Data: v, Schema: schema}
 	xmlString, error := xml.Marshal(m)
 	if error != nil {
@@ -38,7 +38,7 @@ func MarshalXML(v interface{}, schema *models.Schema) ([]byte, error) {
 
 type StringMap struct {
 	Data   interface{}
-	Schema *models.Schema
+	Schema *schemas.Schema
 }
 
 func (m StringMap) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
@@ -126,7 +126,7 @@ func (m StringMap) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	return nil
 }
 
-func encodeObject(e *xml.Encoder, obj map[string]interface{}, schema *models.Schema) {
+func encodeObject(e *xml.Encoder, obj map[string]interface{}, schema *schemas.Schema) {
 	for propertyName, propertySchema := range schema.Properties {
 		if propertySchema.Xml != nil && propertySchema.Xml.Attribute {
 			continue
@@ -194,7 +194,7 @@ func (e *XmlNode) decode(decoder *xml.Decoder) error {
 	return nil
 }
 
-func (e *XmlNode) parse(s *models.Schema) (interface{}, error) {
+func (e *XmlNode) parse(s *schemas.Schema) (interface{}, error) {
 	if s == nil || s.Type == "string" {
 		return e.Content, nil
 	}

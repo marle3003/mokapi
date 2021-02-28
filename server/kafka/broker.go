@@ -22,11 +22,12 @@ func newBroker(id int, host string, port int) broker {
 }
 
 type topic struct {
-	partitions map[int]partition
+	partitions map[int]*partition
 }
 
 type partition struct {
 	leader broker
+	log    *batchLog
 }
 
 type consumer struct {
@@ -34,8 +35,15 @@ type consumer struct {
 }
 
 type batchLog struct {
-	offset  int64
-	batches []protocol.RecordBatch
+	offset    int64
+	committed int64
+	batches   []*protocol.RecordBatch
+}
+
+func (l *batchLog) Append(batch *protocol.RecordBatch) {
+	l.batches = append(l.batches, batch)
+	batch.Offset = l.offset
+	l.offset++
 }
 
 type groupAssignmentStrategy struct {

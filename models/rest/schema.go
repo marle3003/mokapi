@@ -1,13 +1,14 @@
-package event
+package rest
 
 import (
 	"fmt"
-	"mokapi/config/dynamic/asyncApi"
+	"mokapi/config/dynamic"
+	"mokapi/models/schemas"
 	"strings"
 )
 
-func buildSchemaFromComponents(name string, config *asyncApi.Schema, ctx *context) (schema *Schema) {
-	if s, exists := ctx.service.Models[name]; exists && s.isResolved {
+func buildSchemaFromComponents(name string, config *dynamic.Schema, ctx *serviceContext) (schema *schemas.Schema) {
+	if s, exists := ctx.service.Models[name]; exists && s.IsResolved {
 		return s
 	} else if exists {
 		schema = s
@@ -17,14 +18,14 @@ func buildSchemaFromComponents(name string, config *asyncApi.Schema, ctx *contex
 	} else {
 		schema = newSchema(config)
 		schema.Name = name
-		ctx.service.Models[name] = schema
+		ctx.service.Models[name] = s
 	}
 
 	schema.Reference = "#/components/schemas/" + name
 
 	for n, p := range config.Properties {
 		if schema.Properties == nil {
-			schema.Properties = make(map[string]*Schema)
+			schema.Properties = make(map[string]*schemas.Schema)
 		}
 		schema.Properties[n] = createSchema(p, ctx)
 	}
@@ -36,7 +37,7 @@ func buildSchemaFromComponents(name string, config *asyncApi.Schema, ctx *contex
 	return
 }
 
-func createSchema(config *asyncApi.Schema, ctx *context) *Schema {
+func createSchema(config *dynamic.Schema, ctx *serviceContext) *schemas.Schema {
 	if config == nil {
 		return nil
 	}
@@ -49,7 +50,7 @@ func createSchema(config *asyncApi.Schema, ctx *context) *Schema {
 			if s, exists := ctx.service.Models[name]; exists {
 				return s
 			} else {
-				s := &Schema{Reference: r, isResolved: false}
+				s := &schemas.Schema{Reference: r, IsResolved: false}
 				ctx.service.Models[name] = s
 				return s
 			}
@@ -67,7 +68,7 @@ func createSchema(config *asyncApi.Schema, ctx *context) *Schema {
 
 	for n, p := range config.Properties {
 		if s.Properties == nil {
-			s.Properties = make(map[string]*Schema)
+			s.Properties = make(map[string]*schemas.Schema)
 		}
 		s.Properties[n] = createSchema(p, ctx)
 	}
@@ -75,12 +76,26 @@ func createSchema(config *asyncApi.Schema, ctx *context) *Schema {
 	return s
 }
 
-func newSchema(config *asyncApi.Schema) *Schema {
-	schema := &Schema{
+func newSchema(config *dynamic.Schema) *schemas.Schema {
+	schema := &schemas.Schema{
 		Description: config.Description,
+		Faker:       config.Faker,
+		Format:      config.Format,
 		Type:        config.Type,
 		Reference:   config.Reference,
+		Required:    config.Required,
+		Nullable:    config.Nullable,
 	}
 
+	if config.Xml != nil {
+		schema.Xml = &schemas.XmlEncoding{
+			Attribute: config.Xml.Attribute,
+			CData:     config.Xml.CData,
+			Name:      config.Xml.Name,
+			Namespace: config.Xml.Namespace,
+			Prefix:    config.Xml.Prefix,
+			Wrapped:   config.Xml.Wrapped,
+		}
+	}
 	return schema
 }

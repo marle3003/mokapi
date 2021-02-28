@@ -1,10 +1,17 @@
-package models
+package rest
 
 import (
 	"fmt"
+	"mokapi/models/schemas"
 	"strconv"
 	"strings"
 )
+
+type WebServiceInfo struct {
+	Data   *WebService
+	Status string
+	Errors []string
+}
 
 type WebService struct {
 	// The title of the service
@@ -18,7 +25,7 @@ type WebService struct {
 	Version  string
 	Servers  []Server
 	Endpoint map[string]*Endpoint
-	Models   map[string]*Schema
+	Models   map[string]*schemas.Schema
 
 	// The mokapi file used by this service.
 	MokapiFile string
@@ -304,7 +311,7 @@ type Parameter struct {
 	Location ParameterLocation
 
 	// The schema defining the type used for the parameter
-	Schema *Schema
+	Schema *schemas.Schema
 
 	// Determines whether the parameter is mandatory.
 	// If the location of the parameter is "path", this property
@@ -364,7 +371,7 @@ type RequestBody struct {
 
 type MediaType struct {
 	// The schema defining the content of the request, response.
-	Schema *Schema
+	Schema *schemas.Schema
 }
 
 type Response struct {
@@ -377,83 +384,4 @@ type Response struct {
 	// it. For responses that match multiple keys, only the most specific
 	// key is applicable. e.g. text/plain overrides text/*
 	ContentTypes map[string]*MediaType
-}
-
-type ContentType struct {
-	Type       string
-	Subtype    string
-	Parameters map[string]string
-	raw        string
-}
-
-func ParseContentType(s string) *ContentType {
-	c := &ContentType{raw: s, Parameters: make(map[string]string)}
-	a := strings.Split(s, ";")
-	m := strings.Split(a[0], "/")
-	c.Type = strings.ToLower(strings.TrimSpace(m[0]))
-	if len(m) > 1 {
-		c.Subtype = strings.ToLower(strings.TrimSpace(m[1]))
-	}
-	for _, p := range a[1:] {
-		kv := strings.Split(p, "=")
-		if len(kv) > 1 {
-			c.Parameters[strings.TrimSpace(kv[0])] = strings.TrimSpace(kv[1])
-		} else {
-			c.Parameters[kv[0]] = ""
-		}
-	}
-
-	return c
-}
-
-func (c *ContentType) Key() string {
-	if len(c.Subtype) > 0 {
-		return fmt.Sprintf("%v/%v", c.Type, c.Subtype)
-	}
-	return c.Type
-}
-
-func (c *ContentType) String() string {
-	return c.raw
-}
-
-func (c *ContentType) Equals(other *ContentType) bool {
-	return c.Type == other.Type && c.Subtype == other.Subtype
-}
-
-type Schema struct {
-	Name                 string
-	Type                 string
-	Format               string
-	Description          string
-	Properties           map[string]*Schema
-	Faker                string
-	Items                *Schema
-	Xml                  *XmlEncoding
-	AdditionalProperties *Schema
-	Reference            string
-	Required             []string
-	isResolved           bool
-	Nullable             bool
-}
-
-func (s *Schema) IsPropertyRequired(name string) bool {
-	if s.Required == nil {
-		return false
-	}
-	for _, p := range s.Required {
-		if p == name {
-			return true
-		}
-	}
-	return false
-}
-
-type XmlEncoding struct {
-	Wrapped   bool
-	Name      string
-	Attribute bool
-	Prefix    string
-	Namespace string
-	CData     bool
 }

@@ -4,17 +4,17 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"mokapi/models"
+	"mokapi/models/rest"
 	"net/http"
 	"regexp"
 	"strings"
 )
 
 type ServiceHandler struct {
-	WebService *models.WebService
+	WebService *rest.WebService
 }
 
-func NewWebServiceHandler(service *models.WebService) *ServiceHandler {
+func NewWebServiceHandler(service *rest.WebService) *ServiceHandler {
 	return &ServiceHandler{WebService: service}
 }
 

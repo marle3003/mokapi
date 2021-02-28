@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"mokapi/models"
+	"mokapi/models/rest"
 	"strings"
 	"time"
 
@@ -53,7 +54,7 @@ func (binding *Binding) Stop() {
 }
 
 func (binding *Binding) Apply(data interface{}) error {
-	service, ok := data.(*models.WebService)
+	service, ok := data.(*rest.WebService)
 	if !ok {
 		return errors.Errorf("unexpected parameter type %T in http binding", data)
 	}
@@ -124,7 +125,7 @@ func (binding *Binding) resolveHandler(r *http.Request) (*ServiceHandler, string
 	return nil, ""
 }
 
-func (binding *Binding) getServicePath(service *models.WebService) (bool, string) {
+func (binding *Binding) getServicePath(service *rest.WebService) (bool, string) {
 	for _, server := range service.Servers {
 		if fmt.Sprintf("%v:%v", server.Host, server.Port) == binding.Addr {
 			return true, server.Path

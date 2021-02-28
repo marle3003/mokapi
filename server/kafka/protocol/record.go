@@ -29,6 +29,7 @@ func (rs *RecordSet) WriteTo(e *Encoder) {
 }
 
 type RecordBatch struct {
+	Offset     int64
 	Attributes Attributes
 	ProducerId int64
 	Records    []Record
@@ -47,11 +48,19 @@ type RecordHeader struct {
 	Value []byte
 }
 
+func (rb *RecordBatch) Size() (s int32) {
+	for _, r := range rb.Records {
+		s += int32(len(r.Key))
+		s += int32(len(r.Value))
+	}
+	return
+}
+
 func (rb *RecordBatch) WriteTo(e *Encoder) {
 	offset := e.writer.Size()
 	buffer := make([]byte, 8)
 
-	e.writeInt64(0)                      // offset
+	e.writeInt64(rb.Offset)              // offset
 	e.writeInt32(0)                      // size: 8
 	e.writeInt32(-1)                     // leader epoch
 	e.writeInt8(2)                       // magic
@@ -71,9 +80,9 @@ func (rb *RecordBatch) WriteTo(e *Encoder) {
 
 	// records must be sorted by time
 	for i, r := range rb.Records {
-		t := timestamp(r.Time)
+		t := Timestamp(r.Time)
 		if t == 0 {
-			t = timestamp(time.Now())
+			t = Timestamp(time.Now())
 		}
 		if i == 0 {
 			firstTimestamp = t
@@ -138,7 +147,7 @@ func (rb *RecordBatch) WriteTo(e *Encoder) {
 	e.writer.WriteAt(buffer[:4], offset+17)
 }
 
-func timestamp(t time.Time) int64 {
+func Timestamp(t time.Time) int64 {
 	if t.IsZero() {
 		return 0
 	}

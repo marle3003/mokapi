@@ -1,7 +1,7 @@
 package web
 
 import (
-	"mokapi/models"
+	"mokapi/models/rest"
 	"net/url"
 	"reflect"
 	"testing"
@@ -10,70 +10,70 @@ import (
 func TestParseQuery(t *testing.T) {
 	data := []struct {
 		u *url.URL
-		p *models.Parameter
+		p *rest.Parameter
 		e interface{}
 	}{
 		{&url.URL{RawQuery: "id=5"},
-			&models.Parameter{
+			&rest.Parameter{
 				Name:    "id",
-				Schema:  &models.Schema{Type: "integer"},
+				Schema:  &rest.Schema{Type: "integer"},
 				Style:   "",
 				Explode: false,
 			},
 			5,
 		},
 		{&url.URL{RawQuery: ""},
-			&models.Parameter{
+			&rest.Parameter{
 				Name:    "id",
-				Schema:  &models.Schema{Type: "integer"},
+				Schema:  &rest.Schema{Type: "integer"},
 				Style:   "",
 				Explode: false,
 			},
 			nil,
 		},
 		{&url.URL{RawQuery: "id=3&id=4&id=5"},
-			&models.Parameter{
+			&rest.Parameter{
 				Name:    "id",
-				Schema:  &models.Schema{Type: "array", Items: &models.Schema{Type: "integer"}},
+				Schema:  &rest.Schema{Type: "array", Items: &rest.Schema{Type: "integer"}},
 				Style:   "",
 				Explode: true,
 			},
 			[]interface{}{3, 4, 5},
 		},
 		{&url.URL{RawQuery: "id=3,4,5"},
-			&models.Parameter{
+			&rest.Parameter{
 				Name:    "id",
-				Schema:  &models.Schema{Type: "array", Items: &models.Schema{Type: "integer"}},
+				Schema:  &rest.Schema{Type: "array", Items: &rest.Schema{Type: "integer"}},
 				Style:   "",
 				Explode: false,
 			},
 			[]interface{}{3, 4, 5},
 		},
 		{&url.URL{RawQuery: "id=3%204%205"},
-			&models.Parameter{
+			&rest.Parameter{
 				Name:    "id",
-				Schema:  &models.Schema{Type: "array", Items: &models.Schema{Type: "integer"}},
+				Schema:  &rest.Schema{Type: "array", Items: &rest.Schema{Type: "integer"}},
 				Style:   "spaceDelimited",
 				Explode: false,
 			},
 			[]interface{}{3, 4, 5},
 		},
 		{&url.URL{RawQuery: "id=3|4|5"},
-			&models.Parameter{
+			&rest.Parameter{
 				Name:    "id",
-				Schema:  &models.Schema{Type: "array", Items: &models.Schema{Type: "integer"}},
+				Schema:  &rest.Schema{Type: "array", Items: &rest.Schema{Type: "integer"}},
 				Style:   "pipeDelimited",
 				Explode: false,
 			},
 			[]interface{}{3, 4, 5},
 		},
 		{&url.URL{RawQuery: "role=admin&firstName=Alex"},
-			&models.Parameter{
+			&rest.Parameter{
 				Name: "id",
-				Schema: &models.Schema{Type: "object",
-					Properties: map[string]*models.Schema{
-						"role":      &models.Schema{Type: "string"},
-						"firstName": &models.Schema{Type: "string"},
+				Schema: &rest.Schema{Type: "object",
+					Properties: map[string]*rest.Schema{
+						"role":      &rest.Schema{Type: "string"},
+						"firstName": &rest.Schema{Type: "string"},
 					}},
 				Style:   "",
 				Explode: true,
@@ -81,12 +81,12 @@ func TestParseQuery(t *testing.T) {
 			map[string]interface{}{"role": "admin", "firstName": "Alex"},
 		},
 		{&url.URL{RawQuery: "id=role,admin,firstName,Alex"},
-			&models.Parameter{
+			&rest.Parameter{
 				Name: "id",
-				Schema: &models.Schema{Type: "object",
-					Properties: map[string]*models.Schema{
-						"role":      &models.Schema{Type: "string"},
-						"firstName": &models.Schema{Type: "string"},
+				Schema: &rest.Schema{Type: "object",
+					Properties: map[string]*rest.Schema{
+						"role":      &rest.Schema{Type: "string"},
+						"firstName": &rest.Schema{Type: "string"},
 					}},
 				Style:   "",
 				Explode: false,
@@ -94,12 +94,12 @@ func TestParseQuery(t *testing.T) {
 			map[string]interface{}{"role": "admin", "firstName": "Alex"},
 		},
 		{&url.URL{RawQuery: "id[role]=admin&id[firstName]=Alex"},
-			&models.Parameter{
+			&rest.Parameter{
 				Name: "id",
-				Schema: &models.Schema{Type: "object",
-					Properties: map[string]*models.Schema{
-						"role":      &models.Schema{Type: "string"},
-						"firstName": &models.Schema{Type: "string"},
+				Schema: &rest.Schema{Type: "object",
+					Properties: map[string]*rest.Schema{
+						"role":      &rest.Schema{Type: "string"},
+						"firstName": &rest.Schema{Type: "string"},
 					}},
 				Style:   "deepObject",
 				Explode: true,

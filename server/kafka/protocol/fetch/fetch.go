@@ -1,16 +1,20 @@
 package fetch
 
-import "mokapi/server/kafka/protocol"
+import (
+	"math"
+	"mokapi/server/kafka/protocol"
+)
 
 func init() {
 	protocol.Register(
 		protocol.ApiReg{
 			ApiKey:     protocol.Fetch,
 			MinVersion: 0,
-			MaxVersion: 11},
+			MaxVersion: 9},
 		&Request{},
 		&Response{},
 		12,
+		math.MaxInt16,
 	)
 }
 
@@ -47,13 +51,13 @@ type Response struct {
 	ThrottleTimeMs int32            `kafka:"min=1"`
 	ErrorCode      int16            `kafka:"min=7"`
 	SessionId      int32            `kafka:"min=7"`
-	Topics         []ResponseTopic  `kafka:""`
+	Topics         []ResponseTopic  `kafka:"compact=12"`
 	TagFields      map[int64]string `kafka:"type=TAG_BUFFER,min=12"`
 }
 
 type ResponseTopic struct {
-	Name       string              `kafka:""`
-	Partitions []ResponsePartition `kafka:""`
+	Name       string              `kafka:"compact=12"`
+	Partitions []ResponsePartition `kafka:"compact=12"`
 	TagFields  map[int64]string    `kafka:"type=TAG_BUFFER,min=12"`
 }
 
@@ -63,7 +67,7 @@ type ResponsePartition struct {
 	HighWatermark        int64                `kafka:""`
 	LastStableOffset     int64                `kafka:"min=4"`
 	LogStartOffset       int64                `kafka:"min=5"`
-	AbortedTransactions  []AbortedTransaction `kafka:"min=4"`
+	AbortedTransactions  []AbortedTransaction `kafka:"min=4,compact=12"`
 	PreferredReadReplica int32                `kafka:"min=11"`
 	RecordSet            protocol.RecordSet   `kafka:""`
 	TagFields            map[int64]string     `kafka:"type=TAG_BUFFER,min=12"`

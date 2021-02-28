@@ -1,5 +1,10 @@
 package event
 
+import (
+	"mokapi/models/media"
+	"mokapi/models/schemas"
+)
+
 type Service struct {
 	Name        string
 	Description string
@@ -7,7 +12,7 @@ type Service struct {
 	Servers     []Server
 	Channels    map[string]*Channel
 	Messages    map[string]*Message
-	Models      map[string]*Schema
+	Models      map[string]*schemas.Schema
 	Errors      []string
 }
 
@@ -15,7 +20,7 @@ func NewService() *Service {
 	return &Service{
 		Channels: make(map[string]*Channel),
 		Messages: make(map[string]*Message),
-		Models:   make(map[string]*Schema),
+		Models:   make(map[string]*schemas.Schema),
 	}
 }
 
@@ -60,18 +65,8 @@ type Message struct {
 	Title       string
 	Summary     string
 	Description string
-	ContentType string
-	Payload     *Schema
+	ContentType *media.ContentType
+	Payload     *schemas.Schema
 	Reference   string
-	isResolved  bool
-}
-
-type Schema struct {
-	Name        string
-	Type        string
-	Reference   string
-	Description string
-	Properties  map[string]*Schema
-	Items       *Schema
 	isResolved  bool
 }

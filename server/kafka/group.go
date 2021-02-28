@@ -80,25 +80,29 @@ func newGroupBalancer(g *group) *groupBalancer {
 func (b *groupBalancer) startSync() {
 	members := make([]sync, 0)
 	assigments := make(map[string][]byte)
-	select {
-	case s := <-b.sync:
-		members = append(members, s)
-		if b.g.generationId == s.generationId {
 
-			if s.assignments != nil {
-				assigments = s.assignments
+StopWaitingForConsumers:
+	for {
+		select {
+		case s := <-b.sync:
+			members = append(members, s)
+			if b.g.generationId == s.generationId {
+
+				if s.assignments != nil {
+					assigments = s.assignments
+				}
+				if len(members) == len(b.g.consumers) {
+					break StopWaitingForConsumers
+				}
+			} else {
+				r := &syncGroup.Response{
+					ErrorCode: 22, // IllegalGenerationCode
+				}
+				s.write(r)
 			}
-			if len(members) == len(b.g.consumers) {
-				break
-			}
-		} else {
-			r := &syncGroup.Response{
-				ErrorCode: 22, // IllegalGenerationCode
-			}
-			s.write(r)
+		case <-time.After(2 * time.Second):
+			panic("timeout") // todo
 		}
-	case <-time.After(2 * time.Second):
-		panic("timeout") // todo
 	}
 
 	for _, m := range members {
@@ -108,16 +112,21 @@ func (b *groupBalancer) startSync() {
 		}
 		m.write(r)
 	}
+
+	b.g.state = stable
 }
 
 func (b *groupBalancer) startJoin() {
 
 	members := make([]join, 0)
-	select {
-	case j := <-b.join:
-		members = append(members, j)
-	case <-time.After(2 * time.Second):
-		break
+StopWaitingForConsumers:
+	for {
+		select {
+		case j := <-b.join:
+			members = append(members, j)
+		case <-time.After(2 * time.Second):
+			break StopWaitingForConsumers
+		}
 	}
 
 	// switch to syncing state

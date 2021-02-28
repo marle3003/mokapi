@@ -6,7 +6,7 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/models"
-	event "mokapi/models/eventService"
+	"mokapi/models/event"
 	"mokapi/server/api"
 	"mokapi/server/kafka"
 	"mokapi/server/ldap"

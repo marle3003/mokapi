@@ -1,6 +1,7 @@
 package apiVersion
 
 import (
+	"math"
 	"mokapi/server/kafka/protocol"
 )
 
@@ -13,6 +14,7 @@ func init() {
 		&Request{},
 		&Response{},
 		3,
+		math.MaxInt16,
 	)
 }
 

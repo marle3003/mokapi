@@ -3,6 +3,7 @@ package event
 import (
 	"fmt"
 	"mokapi/config/dynamic/asyncApi"
+	"mokapi/models/media"
 	"strings"
 )
 
@@ -59,6 +60,7 @@ func newMessage(config *asyncApi.Message) *Message {
 	msg := &Message{
 		Description: config.Description,
 		Reference:   config.Reference,
+		ContentType: media.ParseContentType(config.ContentType),
 	}
 
 	return msg

@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"github.com/brianvoe/gofakeit/v4"
 	"math/rand"
-	"mokapi/models"
+	"mokapi/models/media"
+	"mokapi/models/schemas"
 	"mokapi/providers/encoding"
 	"net/http"
 )
@@ -34,7 +35,7 @@ func (r *Response) Write(object interface{}, statusCode int, contentType string)
 	if ok {
 		if r.httpContext.ContentType.Subtype == "*" {
 			// detect content type by data
-			contentType = models.ParseContentType(http.DetectContentType(bytes)).String()
+			contentType = media.ParseContentType(http.DetectContentType(bytes)).String()
 		}
 	} else {
 		bytes, err = r.encodeData(object)
@@ -86,7 +87,7 @@ func (r *Response) encodeData(data interface{}) ([]byte, error) {
 	}
 }
 
-func getRandomObject(schema *models.Schema) interface{} {
+func getRandomObject(schema *schemas.Schema) interface{} {
 	if schema.Type == "object" {
 		obj := make(map[string]interface{})
 		for name, propSchema := range schema.Properties {

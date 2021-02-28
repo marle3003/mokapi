@@ -3,25 +3,26 @@ package web
 import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"mokapi/models"
+	"mokapi/models/rest"
+	"mokapi/models/schemas"
 	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
 )
 
-type RequestParameters map[models.ParameterLocation]map[string]interface{}
+type RequestParameters map[rest.ParameterLocation]map[string]interface{}
 
 func newRequestParameters() RequestParameters {
 	p := make(RequestParameters)
-	p[models.PathParameter] = make(map[string]interface{})
-	p[models.QueryParameter] = make(map[string]interface{})
-	p[models.HeaderParameter] = make(map[string]interface{})
-	p[models.CookieParameter] = make(map[string]interface{})
+	p[rest.PathParameter] = make(map[string]interface{})
+	p[rest.QueryParameter] = make(map[string]interface{})
+	p[rest.HeaderParameter] = make(map[string]interface{})
+	p[rest.CookieParameter] = make(map[string]interface{})
 	return p
 }
 
-func parseParams(params []*models.Parameter, route string, r *http.Request) (RequestParameters, error) {
+func parseParams(params []*rest.Parameter, route string, r *http.Request) (RequestParameters, error) {
 	segments := strings.Split(r.URL.Path, "/")
 
 	path := map[string]string{}
@@ -42,19 +43,19 @@ func parseParams(params []*models.Parameter, route string, r *http.Request) (Req
 		var err error
 		var store map[string]interface{}
 		switch p.Location {
-		case models.CookieParameter:
+		case rest.CookieParameter:
 			v, err = parseCookie(p, r)
-			store = parameters[models.CookieParameter]
-		case models.PathParameter:
+			store = parameters[rest.CookieParameter]
+		case rest.PathParameter:
 			if s, ok := path[p.Name]; ok {
 				v, err = parsePath(s, p)
-				store = parameters[models.PathParameter]
+				store = parameters[rest.PathParameter]
 			} else {
 				return nil, errors.Errorf("required %v paramter %q not found in request %v", p.Location, p.Name, r.URL)
 			}
-		case models.QueryParameter:
+		case rest.QueryParameter:
 			v, err = parseQuery(p, r.URL)
-			store = parameters[models.QueryParameter]
+			store = parameters[rest.QueryParameter]
 			//case models.HeaderParameter:
 			//	value = context.Request.Header.Get(p.Name)
 			//case models.PathParameter:
@@ -73,7 +74,7 @@ func parseParams(params []*models.Parameter, route string, r *http.Request) (Req
 	return parameters, nil
 }
 
-func parse(s string, schema *models.Schema) (interface{}, error) {
+func parse(s string, schema *schemas.Schema) (interface{}, error) {
 	if schema == nil {
 		return s, nil
 	}

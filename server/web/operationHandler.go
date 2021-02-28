@@ -3,7 +3,9 @@ package web
 import (
 	"fmt"
 	"io/ioutil"
-	"mokapi/models"
+	"mokapi/models/media"
+	"mokapi/models/rest"
+	"mokapi/models/schemas"
 	"mokapi/providers/encoding"
 	"mokapi/providers/pipeline"
 	"mokapi/providers/pipeline/lang/types"
@@ -30,7 +32,7 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 
 	var bodyParam interface{} = nil
 	if operation.RequestBody != nil {
-		contentType := models.ParseContentType(context.Request.Header.Get("content-type"))
+		contentType := media.ParseContentType(context.Request.Header.Get("content-type"))
 		body, err := readBody(context)
 		if err != nil {
 			respond(err.Error(), http.StatusInternalServerError, context)
@@ -77,10 +79,10 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 		pipeline.WithParams(map[string]interface{}{
 			"method": context.Request.Method,
 			"body":   bodyParam,
-			"query":  context.Parameters[models.QueryParameter],
-			"path":   context.Parameters[models.PathParameter],
-			"header": context.Parameters[models.HeaderParameter],
-			"cookie": context.Parameters[models.CookieParameter],
+			"query":  context.Parameters[rest.QueryParameter],
+			"path":   context.Parameters[rest.PathParameter],
+			"header": context.Parameters[rest.HeaderParameter],
+			"cookie": context.Parameters[rest.CookieParameter],
 		}),
 	)
 	if err != nil {
@@ -108,7 +110,7 @@ func respond(message string, status int, ctx *HttpContext) {
 	http.Error(ctx.Response, message, status)
 }
 
-func parseBody(s string, contentType *models.ContentType, schema *models.Schema) (interface{}, error) {
+func parseBody(s string, contentType *media.ContentType, schema *schemas.Schema) (interface{}, error) {
 	switch contentType.Subtype {
 	case "xml":
 		return encoding.UnmarshalXml(s, schema)

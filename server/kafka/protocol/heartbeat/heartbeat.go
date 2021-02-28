@@ -1,6 +1,9 @@
 package heartbeat
 
-import "mokapi/server/kafka/protocol"
+import (
+	"math"
+	"mokapi/server/kafka/protocol"
+)
 
 func init() {
 	protocol.Register(
@@ -11,6 +14,7 @@ func init() {
 		&Request{},
 		&Response{},
 		4,
+		math.MaxInt16,
 	)
 }
 

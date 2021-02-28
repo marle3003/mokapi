@@ -71,6 +71,7 @@ type Schema struct {
 	Description string
 	Properties  map[string]*Schema
 	Items       *Schema
+	Faker       string `yaml:"x-faker" json:"x-faker"`
 }
 
 type Components struct {

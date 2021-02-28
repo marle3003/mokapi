@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"mokapi/models"
+	"mokapi/models/media"
+	"mokapi/models/rest"
+	"mokapi/models/schemas"
 	"net/http"
 	"sort"
 	"strings"
@@ -19,11 +22,11 @@ type HttpContext struct {
 	Response     http.ResponseWriter
 	Request      *http.Request
 	Parameters   RequestParameters
-	ResponseType *models.Response
+	ResponseType *rest.Response
 	ServicPath   string
-	Operation    *models.Operation
-	ContentType  *models.ContentType
-	Schema       *models.Schema
+	Operation    *rest.Operation
+	ContentType  *media.ContentType
+	Schema       *schemas.Schema
 	MokapiFile   string
 	body         string
 	metric       *models.RequestMetric
@@ -67,8 +70,8 @@ func (context *HttpContext) Init() error {
 	return nil
 }
 
-func (context *HttpContext) setFirstSuccessResponse(operation *models.Operation) error {
-	successStatus := make([]models.HttpStatus, 0, 1)
+func (context *HttpContext) setFirstSuccessResponse(operation *rest.Operation) error {
+	successStatus := make([]rest.HttpStatus, 0, 1)
 	for httpStatus := range operation.Responses {
 		if httpStatus >= 200 && httpStatus < 300 {
 			successStatus = append(successStatus, httpStatus)
@@ -91,7 +94,7 @@ func (context *HttpContext) setContentType() error {
 	// search for a matching content type
 	if accept != "" {
 		for _, mimeType := range strings.Split(accept, ",") {
-			contentType := models.ParseContentType(mimeType)
+			contentType := media.ParseContentType(mimeType)
 			if _, ok := context.ResponseType.ContentTypes[contentType.Key()]; ok {
 				context.ContentType = contentType
 				return nil
@@ -102,7 +105,7 @@ func (context *HttpContext) setContentType() error {
 	// no matching content found => returning first in list
 	for contentType := range context.ResponseType.ContentTypes {
 		// return first element
-		context.ContentType = models.ParseContentType(contentType)
+		context.ContentType = media.ParseContentType(contentType)
 		return nil
 	}
 

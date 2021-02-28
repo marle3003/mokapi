@@ -14,6 +14,7 @@ func init() {
 		&Request{},
 		&Response{},
 		math.MaxInt16,
+		math.MaxInt16,
 	)
 }
 

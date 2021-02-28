@@ -5,19 +5,19 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"io"
-	event "mokapi/models/eventService"
+	"mokapi/models/event"
 	"mokapi/server/kafka/protocol"
 	"mokapi/server/kafka/protocol/apiVersion"
 	"mokapi/server/kafka/protocol/fetch"
 	"mokapi/server/kafka/protocol/findCoordinator"
 	"mokapi/server/kafka/protocol/heartbeat"
 	"mokapi/server/kafka/protocol/joinGroup"
+	"mokapi/server/kafka/protocol/listOffsets"
 	"mokapi/server/kafka/protocol/metaData"
 	"mokapi/server/kafka/protocol/offsetFetch"
 	"mokapi/server/kafka/protocol/produce"
 	"mokapi/server/kafka/protocol/syncGroup"
 	"net"
-	"time"
 )
 
 type Binding struct {
@@ -27,7 +27,7 @@ type Binding struct {
 	service   *event.Service
 	brokers   []broker
 	groups    map[string]*group
-	topics    map[string]topic
+	topics    map[string]*topic
 }
 
 func NewServer(addr string) *Binding {
@@ -35,7 +35,7 @@ func NewServer(addr string) *Binding {
 		stop:   make(chan bool),
 		listen: addr,
 		groups: make(map[string]*group),
-		topics: make(map[string]topic),
+		topics: make(map[string]*topic),
 	}
 
 	b := newBroker(1, "localhost", 9092) // id is 1 based
@@ -51,10 +51,17 @@ func (s *Binding) Apply(data interface{}) error {
 	}
 	s.service = service
 
-	for n, _ := range service.Channels {
+	for n, c := range service.Channels {
 		name := n[1:] // remove leading slash from name
-		s.topics[name] = topic{partitions: map[int]partition{
-			0: {leader: s.brokers[0]}},
+		if _, ok := s.topics[name]; !ok {
+			s.topics[name] = &topic{partitions: map[int]*partition{
+				0: {leader: s.brokers[0], log: &batchLog{
+					batches: make([]*protocol.RecordBatch, 0, 10),
+				}}},
+			}
+			if c.Publish != nil && c.Publish.Message != nil {
+				go producer(s.topics[name], c.Publish.Message.ContentType, c.Publish.Message.Payload, s.stop)
+			}
 		}
 	}
 
@@ -142,7 +149,7 @@ func (s *Binding) handle(conn net.Conn) {
 			return
 		}
 
-		go func() {
+		func() {
 			switch h.ApiKey {
 			case protocol.ApiVersions:
 				r := s.processApiVersion()
@@ -161,16 +168,62 @@ func (s *Binding) handle(conn net.Conn) {
 			case protocol.SyncGroup:
 				s.handleSyncGroup(h, msg.(*syncGroup.Request), conn)
 			case protocol.OffsetFetch:
-				s.handleOffSetFetch(h, msg.(*offsetFetch.Request), conn)
+				r := s.processOffSetFetch(msg.(*offsetFetch.Request))
+				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, r)
 			case protocol.Fetch:
-				s.handleFetch(h, msg.(*fetch.Request), conn)
+				r := s.processFetch(msg.(*fetch.Request))
+				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, r)
 			case protocol.Heartbeat:
 				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, &heartbeat.Response{})
 			case protocol.Produce:
 				_ = msg.(*produce.Request)
+			case protocol.ListOffsets:
+				r := s.processListOffsets(msg.(*listOffsets.Request))
+				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, r)
 			}
 		}()
 	}
+}
+
+func (s *Binding) processListOffsets(req *listOffsets.Request) *listOffsets.Response {
+	r := &listOffsets.Response{Topics: make([]listOffsets.ResponseTopic, 0)}
+
+	for _, rt := range req.Topics {
+		if t, ok := s.topics[rt.Name]; ok {
+			partitions := make([]listOffsets.ResponsePartition, 0)
+			for _, rp := range rt.Partitions {
+				p := t.partitions[int(rp.Index)]
+				part := listOffsets.ResponsePartition{
+					Index:     rp.Index,
+					ErrorCode: 0,
+					Timestamp: 0,
+				}
+
+				if rp.Timestamp == -2 { // latest
+					if len(p.log.batches) == 0 {
+						part.Offset = -1
+					} else {
+						part.Offset = 0
+					}
+
+				} else if rp.Timestamp == -1 { // earliest
+					part.Offset = p.log.offset - 1
+				}
+
+				if part.Offset >= 0 {
+					part.Timestamp = protocol.Timestamp(p.log.batches[0].Records[0].Time)
+				}
+
+				partitions = append(partitions, part)
+			}
+			r.Topics = append(r.Topics, listOffsets.ResponseTopic{
+				Name:       rt.Name,
+				Partitions: partitions,
+			})
+		}
+	}
+
+	return r
 }
 
 func (s *Binding) processApiVersion() *apiVersion.Response {
@@ -199,6 +252,27 @@ func (s *Binding) processMetadata(req *metaData.Request) *metaData.Response {
 	}
 
 	r.ControllerId = r.Brokers[0].NodeId // using first broker as controller
+
+	if len(req.Topics) == 0 {
+		for n, t := range s.topics {
+			resT := metaData.ResponseTopic{
+				Name:       n,
+				Partitions: make([]metaData.ResponsePartition, 0, len(t.partitions)),
+			}
+
+			for _, p := range t.partitions {
+				resT.Partitions = append(resT.Partitions, metaData.ResponsePartition{
+					PartitionIndex: 0,
+					LeaderId:       int32(p.leader.id),
+					ReplicaNodes:   []int32{1},
+					IsrNodes:       []int32{1},
+				})
+			}
+
+			r.Topics = append(r.Topics, resT)
+		}
+		return r
+	}
 
 	for _, reqT := range req.Topics {
 		if t, ok := s.topics[reqT.Name]; ok {
@@ -265,7 +339,7 @@ func (s *Binding) processJoinGroup(h *protocol.Header, req *joinGroup.Request, w
 		return -1
 	} else if g.state == syncing {
 		return 27 // RebalanceInProgressCode
-	} else if g.state == empty {
+	} else if g.state == empty || g.state == stable {
 		g.state = joining
 		go g.balancer.startJoin()
 	}
@@ -323,66 +397,66 @@ func (s *Binding) handleSyncGroup(h *protocol.Header, req *syncGroup.Request, w 
 	return 0
 }
 
-func (s *Binding) handleOffSetFetch(h *protocol.Header, req *offsetFetch.Request, w io.Writer) {
-	res := &offsetFetch.Response{
-		ThrottleTimeMs: 0,
-		Topics: []offsetFetch.ResponseTopic{
-			{
-				Name: "message",
-				Partitions: []offsetFetch.Partition{
-					{
-						Index:           0,
-						CommittedOffset: 0,
-						Metadata:        "",
-						ErrorCode:       0,
-					},
-				},
-			},
-		},
-		ErrorCode: 0,
+func (s *Binding) processOffSetFetch(req *offsetFetch.Request) *offsetFetch.Response {
+	r := &offsetFetch.Response{
+		Topics: make([]offsetFetch.ResponseTopic, 0, len(req.Topics)),
 	}
 
-	protocol.WriteMessage(w, h.ApiKey, h.ApiVersion, h.CorrelationId, res)
+	// currently offset is not separated by groups
+	for _, rt := range req.Topics {
+		t := s.topics[rt.Name]
+		resTopic := offsetFetch.ResponseTopic{Name: rt.Name, Partitions: make([]offsetFetch.Partition, 0, len(rt.PartitionIndexes))}
+		for _, rp := range rt.PartitionIndexes {
+			p := t.partitions[int(rp)]
+			resTopic.Partitions = append(resTopic.Partitions, offsetFetch.Partition{
+				Index:           rp,
+				CommittedOffset: p.log.committed,
+			})
+		}
+		r.Topics = append(r.Topics, resTopic)
+	}
+
+	return r
 }
 
-func (s *Binding) handleFetch(h *protocol.Header, req *fetch.Request, w io.Writer) {
-	time.Sleep(time.Millisecond * time.Duration(req.MaxWaitMs-50))
-	res := &fetch.Response{
-		Topics: []fetch.ResponseTopic{
-			{
-				Name: "message",
-				Partitions: []fetch.ResponsePartition{
-					{
-						Index:                0,
-						ErrorCode:            0,
-						HighWatermark:        1,
-						LastStableOffset:     1,
-						PreferredReadReplica: -1,
-						RecordSet: protocol.RecordSet{
-							Batches: []protocol.RecordBatch{
-								{
-									Attributes: 0,
-									ProducerId: 0,
-									Records: []protocol.Record{
-										{
-											Key:     nil,
-											Value:   []byte("Test"),
-											Headers: nil,
-										},
-										{
-											Key:     nil,
-											Value:   []byte("Test2"),
-											Headers: nil,
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
+func (s *Binding) processFetch(req *fetch.Request) *fetch.Response {
+	r := &fetch.Response{Topics: make([]fetch.ResponseTopic, 0)}
+
+	// currently offset is not separated by groups
+	for _, rt := range req.Topics {
+		t := s.topics[rt.Name]
+		resTopic := fetch.ResponseTopic{Name: rt.Name, Partitions: make([]fetch.ResponsePartition, 0, len(rt.Partitions))}
+		for _, rp := range rt.Partitions {
+			p := t.partitions[int(rp.Index)]
+			resPar := fetch.ResponsePartition{
+				Index:                rp.Index,
+				HighWatermark:        p.log.offset - 1,
+				LastStableOffset:     p.log.offset - 1,
+				LogStartOffset:       0,
+				PreferredReadReplica: 1,
+			}
+
+			//set := protocol.RecordSet{Batches: make([]protocol.RecordBatch, 0)}
+			//if len(p.log.batches) > int(rp.FetchOffset) {
+			//	batch := p.log.batches[rp.FetchOffset]
+			//
+			//	set.Batches = append(set.Batches, *batch)
+			//}
+
+			size := int32(0)
+			set := protocol.RecordSet{Batches: make([]protocol.RecordBatch, 0)}
+			for _, b := range p.log.batches[rp.FetchOffset:] {
+				set.Batches = append(set.Batches, *b)
+				size += b.Size()
+				if size > rp.MaxBytes {
+					break
+				}
+			}
+			resPar.RecordSet = set
+			resTopic.Partitions = append(resTopic.Partitions, resPar)
+		}
+		r.Topics = append(r.Topics, resTopic)
 	}
 
-	protocol.WriteMessage(w, h.ApiKey, h.ApiVersion, h.CorrelationId, res)
+	return r
 }

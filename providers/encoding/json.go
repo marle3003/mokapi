@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"mokapi/models"
+	"mokapi/models/schemas"
 )
 
 type custom map[string]interface{}
 
-func MarshalJSON(obj interface{}, schema *models.Schema) ([]byte, error) {
+func MarshalJSON(obj interface{}, schema *schemas.Schema) ([]byte, error) {
 	data := selectData(obj, schema)
 	return json.Marshal(data)
 }
@@ -41,7 +41,7 @@ func (m custom) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func selectData(data interface{}, schema *models.Schema) interface{} {
+func selectData(data interface{}, schema *schemas.Schema) interface{} {
 	if schema == nil || schema.Type == "" {
 		if list, ok := data.([]interface{}); ok {
 			for i, e := range list {

@@ -2,7 +2,8 @@ package api
 
 import (
 	"fmt"
-	"mokapi/models"
+	"mokapi/models/rest"
+	"mokapi/models/schemas"
 	"sort"
 	"strings"
 )
@@ -80,7 +81,7 @@ type schema struct {
 	Nullable    bool      `json:"nullable"`
 }
 
-func newService(s *models.WebServiceInfo) service {
+func newService(s *rest.WebServiceInfo) service {
 	service := service{
 		Name:        s.Data.Name,
 		Description: s.Data.Description,
@@ -103,11 +104,11 @@ func newService(s *models.WebServiceInfo) service {
 	return service
 }
 
-func newBaseUrl(s models.Server) baseUrl {
+func newBaseUrl(s rest.Server) baseUrl {
 	return baseUrl{Url: fmt.Sprintf("http://%v:%v%v", s.Host, s.Port, s.Path), Description: s.Description}
 }
 
-func newEndpoint(e *models.Endpoint) endpoint {
+func newEndpoint(e *rest.Endpoint) endpoint {
 	v := endpoint{Path: e.Path, Summary: e.Summary, Description: e.Description, Operations: make([]operation, 0)}
 	if e.Get != nil {
 		v.Operations = append(v.Operations, newOperation("get", e.Get, e.Pipeline))
@@ -129,7 +130,7 @@ func newEndpoint(e *models.Endpoint) endpoint {
 	return v
 }
 
-func newOperation(method string, o *models.Operation, pipeline string) operation {
+func newOperation(method string, o *rest.Operation, pipeline string) operation {
 	v := operation{
 		Method:      method,
 		Summary:     o.Summary,
@@ -165,7 +166,7 @@ func newOperation(method string, o *models.Operation, pipeline string) operation
 	return v
 }
 
-func newParameter(p *models.Parameter) parameter {
+func newParameter(p *rest.Parameter) parameter {
 	return parameter{
 		Location:    p.Location.String(),
 		Name:        p.Name,
@@ -177,7 +178,7 @@ func newParameter(p *models.Parameter) parameter {
 	}
 }
 
-func newResponse(status models.HttpStatus, r *models.Response) response {
+func newResponse(status rest.HttpStatus, r *rest.Response) response {
 	response := response{Status: int(status), Description: r.Description, ContentTypes: make([]responseContent, 0)}
 
 	for t, c := range r.ContentTypes {
@@ -187,7 +188,7 @@ func newResponse(status models.HttpStatus, r *models.Response) response {
 	return response
 }
 
-func newSchema(name string, s *models.Schema, level int) *schema {
+func newSchema(name string, s *schemas.Schema, level int) *schema {
 	if s == nil {
 		return nil
 	}
@@ -223,7 +224,7 @@ func newSchema(name string, s *models.Schema, level int) *schema {
 	return v
 }
 
-func newModel(name string, s *models.Schema) *schema {
+func newModel(name string, s *schemas.Schema) *schema {
 	if s == nil {
 		return nil
 	}
@@ -259,6 +260,6 @@ func newModel(name string, s *models.Schema) *schema {
 	return v
 }
 
-func newServiceSummary(s *models.WebServiceInfo) serviceSummary {
+func newServiceSummary(s *rest.WebServiceInfo) serviceSummary {
 	return serviceSummary{Name: s.Data.Name, Description: s.Data.Description, Version: s.Data.Version}
 }

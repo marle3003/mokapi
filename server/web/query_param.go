@@ -3,12 +3,12 @@ package web
 import (
 	"fmt"
 	"github.com/pkg/errors"
-	"mokapi/models"
+	"mokapi/models/rest"
 	"net/url"
 	"strings"
 )
 
-func parseQuery(p *models.Parameter, u *url.URL) (interface{}, error) {
+func parseQuery(p *rest.Parameter, u *url.URL) (interface{}, error) {
 	if p.Schema != nil {
 		switch p.Schema.Type {
 		case "array":
@@ -30,7 +30,7 @@ func parseQuery(p *models.Parameter, u *url.URL) (interface{}, error) {
 	return parse(s, p.Schema)
 }
 
-func parseQueryObject(p *models.Parameter, u *url.URL) (obj map[string]interface{}, err error) {
+func parseQueryObject(p *rest.Parameter, u *url.URL) (obj map[string]interface{}, err error) {
 	switch s := p.Style; {
 	case s == "spaceDelimited", s == "pipeDelimited":
 		return nil, errors.Errorf("not supported object style '%v'", p.Style)
@@ -84,7 +84,7 @@ func parseQueryObject(p *models.Parameter, u *url.URL) (obj map[string]interface
 	return
 }
 
-func parseQueryArray(p *models.Parameter, u *url.URL) (result []interface{}, err error) {
+func parseQueryArray(p *rest.Parameter, u *url.URL) (result []interface{}, err error) {
 	var values []string
 	switch s := p.Style; {
 	case s == "spaceDelimited" && !p.Explode:

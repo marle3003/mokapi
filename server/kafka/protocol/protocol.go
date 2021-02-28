@@ -15,6 +15,7 @@ type ApiKey int16
 const (
 	Produce         ApiKey = 0
 	Fetch           ApiKey = 1
+	ListOffsets     ApiKey = 2
 	Metadata        ApiKey = 3
 	OffsetFetch     ApiKey = 9
 	FindCoordinator ApiKey = 10
@@ -56,7 +57,8 @@ type ApiType struct {
 	decode     decodeMsg
 	encode     encodeMsg
 	// https://cwiki.apache.org/confluence/display/KAFKA/KIP-482%3A+The+Kafka+Protocol+should+Support+Optional+Tagged+Fields
-	flexibleHeader int16
+	flexibleRequest  int16
+	flexibleResponse int16
 }
 
 type kafkaTag struct {
@@ -81,7 +83,7 @@ type Header struct {
 	TagFields     map[int64]string `kafka:"type=TAG_BUFFER"`
 }
 
-func Register(reg ApiReg, req, res Message, flexible int16) {
+func Register(reg ApiReg, req, res Message, flexibleRequest int16, flexibleResponse int16) {
 	val := reflect.ValueOf(req).Elem()
 	t := val.Type()
 
@@ -105,7 +107,8 @@ func Register(reg ApiReg, req, res Message, flexible int16) {
 		func(e *Encoder, version int16, msg Message) {
 			encode[version](e, reflect.ValueOf(msg).Elem())
 		},
-		flexible,
+		flexibleRequest,
+		flexibleResponse,
 	}
 }
 
@@ -137,7 +140,9 @@ func WriteMessage(w io.Writer, k ApiKey, version int16, correlationId int32, msg
 
 	e.writeInt32(0)
 	e.writeInt32(correlationId)
-	//e.writeUVarInt(0) // tag_buffer
+	if version >= t.flexibleResponse {
+		e.writeUVarInt(0) // tag_buffer
+	}
 	t.encode(e, version, msg)
 
 	var size [4]byte
@@ -195,7 +200,7 @@ func readHeader(d *Decoder) (h *Header) {
 	h.CorrelationId = d.readInt32()
 	h.ClientId = d.readString()
 
-	if h.ApiVersion >= ApiTypes[h.ApiKey].flexibleHeader {
+	if h.ApiVersion >= ApiTypes[h.ApiKey].flexibleRequest {
 		h.TagFields = d.readTagFields()
 	}
 

@@ -1,7 +1,7 @@
 package web
 
 import (
-	"mokapi/models"
+	"mokapi/models/rest"
 	"reflect"
 	"testing"
 )
@@ -9,63 +9,63 @@ import (
 func TestParsePath(t *testing.T) {
 	data := []struct {
 		s string
-		p *models.Parameter
+		p *rest.Parameter
 		e interface{}
 	}{
 		{"foo",
-			&models.Parameter{
-				Schema:  &models.Schema{Type: "string"},
+			&rest.Parameter{
+				Schema:  &rest.Schema{Type: "string"},
 				Style:   "",
 				Explode: false,
 			},
 			"foo",
 		},
 		{".foo",
-			&models.Parameter{
-				Schema:  &models.Schema{Type: "string"},
+			&rest.Parameter{
+				Schema:  &rest.Schema{Type: "string"},
 				Style:   "label",
 				Explode: false,
 			},
 			"foo",
 		},
 		{";foo",
-			&models.Parameter{
-				Schema:  &models.Schema{Type: "string"},
+			&rest.Parameter{
+				Schema:  &rest.Schema{Type: "string"},
 				Style:   "matrix",
 				Explode: false,
 			},
 			"foo",
 		},
 		{"3,4,5",
-			&models.Parameter{
-				Schema:  &models.Schema{Type: "array", Items: &models.Schema{Type: "integer"}},
+			&rest.Parameter{
+				Schema:  &rest.Schema{Type: "array", Items: &rest.Schema{Type: "integer"}},
 				Style:   "",
 				Explode: false,
 			},
 			[]interface{}{3, 4, 5},
 		},
 		{".3,4,5",
-			&models.Parameter{
-				Schema:  &models.Schema{Type: "array", Items: &models.Schema{Type: "integer"}},
+			&rest.Parameter{
+				Schema:  &rest.Schema{Type: "array", Items: &rest.Schema{Type: "integer"}},
 				Style:   "label",
 				Explode: false,
 			},
 			[]interface{}{3, 4, 5},
 		},
 		{";3,4,5",
-			&models.Parameter{
-				Schema:  &models.Schema{Type: "array", Items: &models.Schema{Type: "integer"}},
+			&rest.Parameter{
+				Schema:  &rest.Schema{Type: "array", Items: &rest.Schema{Type: "integer"}},
 				Style:   "matrix",
 				Explode: false,
 			},
 			[]interface{}{3, 4, 5},
 		},
 		{"role,admin,firstName,Alex",
-			&models.Parameter{
-				Schema: &models.Schema{Type: "object",
-					Properties: map[string]*models.Schema{
-						"role":      &models.Schema{Type: "string"},
-						"firstName": &models.Schema{Type: "string"},
+			&rest.Parameter{
+				Schema: &rest.Schema{Type: "object",
+					Properties: map[string]*rest.Schema{
+						"role":      &rest.Schema{Type: "string"},
+						"firstName": &rest.Schema{Type: "string"},
 					}},
 				Style:   "",
 				Explode: false,
@@ -73,11 +73,11 @@ func TestParsePath(t *testing.T) {
 			map[string]interface{}{"role": "admin", "firstName": "Alex"},
 		},
 		{"role=admin,firstName=Alex",
-			&models.Parameter{
-				Schema: &models.Schema{Type: "object",
-					Properties: map[string]*models.Schema{
-						"role":      &models.Schema{Type: "string"},
-						"firstName": &models.Schema{Type: "string"},
+			&rest.Parameter{
+				Schema: &rest.Schema{Type: "object",
+					Properties: map[string]*rest.Schema{
+						"role":      &rest.Schema{Type: "string"},
+						"firstName": &rest.Schema{Type: "string"},
 					}},
 				Style:   "",
 				Explode: true,
@@ -85,11 +85,11 @@ func TestParsePath(t *testing.T) {
 			map[string]interface{}{"role": "admin", "firstName": "Alex"},
 		},
 		{".role,admin,firstName,Alex",
-			&models.Parameter{
-				Schema: &models.Schema{Type: "object",
-					Properties: map[string]*models.Schema{
-						"role":      &models.Schema{Type: "string"},
-						"firstName": &models.Schema{Type: "string"},
+			&rest.Parameter{
+				Schema: &rest.Schema{Type: "object",
+					Properties: map[string]*rest.Schema{
+						"role":      &rest.Schema{Type: "string"},
+						"firstName": &rest.Schema{Type: "string"},
 					}},
 				Style:   "label",
 				Explode: false,
@@ -97,11 +97,11 @@ func TestParsePath(t *testing.T) {
 			map[string]interface{}{"role": "admin", "firstName": "Alex"},
 		},
 		{";role=admin,firstName=Alex",
-			&models.Parameter{
-				Schema: &models.Schema{Type: "object",
-					Properties: map[string]*models.Schema{
-						"role":      &models.Schema{Type: "string"},
-						"firstName": &models.Schema{Type: "string"},
+			&rest.Parameter{
+				Schema: &rest.Schema{Type: "object",
+					Properties: map[string]*rest.Schema{
+						"role":      &rest.Schema{Type: "string"},
+						"firstName": &rest.Schema{Type: "string"},
 					}},
 				Style:   "matrix",
 				Explode: true,

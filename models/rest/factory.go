@@ -1,31 +1,24 @@
-package models
+package rest
 
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
+	"mokapi/models/media"
+	"mokapi/models/schemas"
 	"net/url"
 	"path/filepath"
 	"strconv"
 	"strings"
 )
 
-func (a *Application) ApplyWebService(config map[string]*dynamic.OpenApi) {
-	for filePath, item := range config {
-		key := filePath
-		if len(item.Info.Name) > 0 {
-			key = item.Info.Name
-		}
-		webServiceInfo, found := a.WebServices[key]
-		if !found {
-			webServiceInfo = NewServiceInfo()
-			a.WebServices[key] = webServiceInfo
-		}
-		webServiceInfo.apply(item, filePath)
-	}
+func NewServiceInfo() *WebServiceInfo {
+	webService := &WebService{Servers: make([]Server, 0), Endpoint: make(map[string]*Endpoint), Models: make(map[string]*schemas.Schema)}
+
+	return &WebServiceInfo{Data: webService, Errors: make([]string, 0)}
 }
 
-func (w *WebServiceInfo) apply(config *dynamic.OpenApi, filePath string) {
+func (w *WebServiceInfo) Apply(config *dynamic.OpenApi, filePath string) {
 	context := &serviceContext{
 		service: w.Data,
 		error: func(msg string) {
@@ -190,7 +183,7 @@ func createRequestBody(config *dynamic.RequestBody, context *serviceContext) *Re
 				continue
 			}
 			m := getMediaType(c, context)
-			contentType := ParseContentType(t)
+			contentType := media.ParseContentType(t)
 			r.ContentTypes[contentType.Key()] = m
 		}
 	}
@@ -214,7 +207,7 @@ func createResponse(config *dynamic.Response, context *serviceContext) *Response
 				continue
 			}
 			m := getMediaType(c, context)
-			contentType := ParseContentType(t)
+			contentType := media.ParseContentType(t)
 			r.ContentTypes[contentType.Key()] = m
 		}
 	}
