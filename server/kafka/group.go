@@ -10,9 +10,9 @@ import (
 type groupState int
 
 var (
-	empty   groupState = 0
-	joining groupState = 1
-	syncing groupState = 2
+	empty               groupState = 0
+	preparingRebalance  groupState = 1
+	completingRebalance groupState = 2
 	// The rebalancing already took place and consumers are happily consuming
 	stable groupState = 3
 )
@@ -29,15 +29,17 @@ type group struct {
 	// member does not rejoin before a rebalance completes, then it will have an
 	// old generationId, which will cause ILLEGAL_GENERATION errors when included
 	// in new requests.
-	generationId int
-	state        groupState
-	balancer     *groupBalancer
+	generationId     int
+	state            groupState
+	balancer         *groupBalancer
+	rebalanceTimeout int
 }
 
 type groupBalancer struct {
-	g    *group
-	join chan join
-	sync chan sync
+	g              *group
+	join           chan join
+	sync           chan sync
+	rebalanceDelay int
 }
 
 type strategyCounter struct {
@@ -49,8 +51,9 @@ type join struct {
 	consumer consumer
 	write    func(protocol.Message)
 	// assignment strategy, ordered by consumer's preference
-	protocols    []groupAssignmentStrategy
-	generationId int
+	protocols        []groupAssignmentStrategy
+	generationId     int
+	rebalanceTimeout int
 }
 
 func (j join) getMetadata(strategy string) []byte {
@@ -69,11 +72,12 @@ type sync struct {
 	generationId int
 }
 
-func newGroupBalancer(g *group) *groupBalancer {
+func newGroupBalancer(g *group, rebalanceDelay int) *groupBalancer {
 	return &groupBalancer{
-		g:    g,
-		join: make(chan join),
-		sync: make(chan sync),
+		g:              g,
+		join:           make(chan join),
+		sync:           make(chan sync),
+		rebalanceDelay: rebalanceDelay,
 	}
 }
 
@@ -100,8 +104,15 @@ StopWaitingForConsumers:
 				}
 				s.write(r)
 			}
-		case <-time.After(2 * time.Second):
-			panic("timeout") // todo
+		case <-time.After(time.Duration(b.g.rebalanceTimeout) * time.Millisecond):
+			b.g.state = preparingRebalance
+			for _, m := range members {
+				r := &syncGroup.Response{
+					ErrorCode: 27, // REBALANCE_IN_PROGRESS
+				}
+				m.write(r)
+			}
+			return
 		}
 	}
 
@@ -124,13 +135,13 @@ StopWaitingForConsumers:
 		select {
 		case j := <-b.join:
 			members = append(members, j)
-		case <-time.After(2 * time.Second):
+		case <-time.After(10 * time.Second):
 			break StopWaitingForConsumers
 		}
 	}
 
 	// switch to syncing state
-	b.g.state = syncing
+	b.g.state = completingRebalance
 
 	strategies := make([]strategyCounter, 0)
 	for _, m := range members {
@@ -181,6 +192,7 @@ StopWaitingForConsumers:
 			send = append(send, func() { m.write(r) })
 		} else {
 			send = append(send, func() { m.write(rLeader) })
+			b.g.rebalanceTimeout = m.rebalanceTimeout
 		}
 		rLeader.Members = append(rLeader.Members, joinGroup.Member{
 			MemberId:        m.consumer.id,

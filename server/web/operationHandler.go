@@ -3,9 +3,8 @@ package web
 import (
 	"fmt"
 	"io/ioutil"
+	"mokapi/config/dynamic/openapi"
 	"mokapi/models/media"
-	"mokapi/models/rest"
-	"mokapi/models/schemas"
 	"mokapi/providers/encoding"
 	"mokapi/providers/pipeline"
 	"mokapi/providers/pipeline/lang/types"
@@ -42,7 +41,7 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 			respond("request body expected", http.StatusBadRequest, context)
 			return
 		}
-		if mediaType, ok := operation.RequestBody.ContentTypes[contentType.Key()]; ok {
+		if mediaType, ok := operation.RequestBody.Content[contentType.Key()]; ok {
 			bodyParam, err = parseBody(body, contentType, mediaType.Schema)
 			if err != nil {
 				respond(err.Error(), http.StatusBadRequest, context)
@@ -62,14 +61,9 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 		pipelineName = operation.Pipeline
 	}
 
-	if len(context.MokapiFile) == 0 {
-		respond("missing mokapifile", 503, context)
-		return
-	}
-
-	err := pipeline.Run(
-		context.MokapiFile,
+	err := pipeline.RunConfig(
 		pipelineName,
+		context.Mokapi,
 		pipeline.WithGlobalVars(map[types.Type]interface{}{
 			"response": &Response{httpContext: context, err: func(err error, status int) {
 				respond(err.Error(), http.StatusInternalServerError, context)
@@ -79,10 +73,10 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 		pipeline.WithParams(map[string]interface{}{
 			"method": context.Request.Method,
 			"body":   bodyParam,
-			"query":  context.Parameters[rest.QueryParameter],
-			"path":   context.Parameters[rest.PathParameter],
-			"header": context.Parameters[rest.HeaderParameter],
-			"cookie": context.Parameters[rest.CookieParameter],
+			"query":  context.Parameters[openapi.QueryParameter],
+			"path":   context.Parameters[openapi.PathParameter],
+			"header": context.Parameters[openapi.HeaderParameter],
+			"cookie": context.Parameters[openapi.CookieParameter],
 		}),
 	)
 	if err != nil {
@@ -110,7 +104,7 @@ func respond(message string, status int, ctx *HttpContext) {
 	http.Error(ctx.Response, message, status)
 }
 
-func parseBody(s string, contentType *media.ContentType, schema *schemas.Schema) (interface{}, error) {
+func parseBody(s string, contentType *media.ContentType, schema *openapi.Schema) (interface{}, error) {
 	switch contentType.Subtype {
 	case "xml":
 		return encoding.UnmarshalXml(s, schema)

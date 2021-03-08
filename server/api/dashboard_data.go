@@ -28,24 +28,24 @@ type request struct {
 	ResponseTime time.Duration `json:"responseTime"`
 }
 
-func newDashboard(app *models.Application) dashboard {
+func newDashboard(runtime *models.Runtime) dashboard {
 	dashboard := dashboard{ServiceStatus: serviceStatus{}, LastErrors: make([]request, 0)}
-	dashboard.ServerUptime = app.Metrics.Start
-	dashboard.TotalRequests = app.Metrics.TotalRequests
-	dashboard.RequestsWithError = app.Metrics.RequestsWithError
+	dashboard.ServerUptime = runtime.Metrics.Start
+	dashboard.TotalRequests = runtime.Metrics.TotalRequests
+	dashboard.RequestsWithError = runtime.Metrics.RequestsWithError
 
-	dashboard.ServiceStatus.Total = len(app.WebServices)
-	for _, s := range app.WebServices {
-		if len(s.Errors) > 0 {
-			dashboard.ServiceStatus.Errors++
-		}
-	}
+	dashboard.ServiceStatus.Total = len(runtime.OpenApi)
+	//for _, s := range app.OpenApi {
+	//	if len(s.Errors) > 0 {
+	//		dashboard.ServiceStatus.Errors++
+	//	}
+	//}
 
-	for _, r := range app.Metrics.LastErrorRequests {
+	for _, r := range runtime.Metrics.LastErrorRequests {
 		dashboard.LastErrors = append(dashboard.LastErrors, newRequest(r))
 	}
 
-	for _, r := range app.Metrics.LastRequests {
+	for _, r := range runtime.Metrics.LastRequests {
 		dashboard.LastRequests = append(dashboard.LastRequests, newRequest(r))
 	}
 

@@ -4,25 +4,25 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"mokapi/models/rest"
+	"mokapi/config/dynamic/openapi"
 	"net/http"
 	"regexp"
 	"strings"
 )
 
 type ServiceHandler struct {
-	WebService *rest.WebService
+	config *openapi.Config
 }
 
-func NewWebServiceHandler(service *rest.WebService) *ServiceHandler {
-	return &ServiceHandler{WebService: service}
+func NewWebServiceHandler(config *openapi.Config) *ServiceHandler {
+	return &ServiceHandler{config: config}
 }
 
 func (handler *ServiceHandler) ServeHTTP(ctx *HttpContext) {
 	err := handler.resolveEndpoint(ctx)
 	if err != nil {
 		message := fmt.Sprintf("No endpoint found in service %v. Request %v %v",
-			handler.WebService.Name,
+			handler.config.Info.Name,
 			ctx.Request.Method,
 			ctx.Request.URL.String())
 		http.Error(ctx.Response, message, http.StatusNotFound)
@@ -30,7 +30,7 @@ func (handler *ServiceHandler) ServeHTTP(ctx *HttpContext) {
 		return
 	}
 
-	ctx.MokapiFile = handler.WebService.MokapiFile
+	ctx.Mokapi = handler.config.Info.Mokapi
 	if err := ctx.Init(); err != nil {
 		msg := err.Error()
 		http.Error(ctx.Response, msg, http.StatusBadRequest)
@@ -47,13 +47,13 @@ func (handler *ServiceHandler) resolveEndpoint(ctx *HttpContext) error {
 	reqSeg := strings.Split(ctx.Request.URL.Path, "/")
 
 endpointLoop:
-	for _, endpoint := range handler.WebService.Endpoint {
-		op := endpoint.GetOperation(ctx.Request.Method)
+	for path, endpoint := range handler.config.EndPoints {
+		op := getOperation(ctx.Request.Method, endpoint)
 		if op == nil {
 			continue
 		}
 
-		routePath := endpoint.Path
+		routePath := path
 		if ctx.ServicPath != "/" {
 			routePath = ctx.ServicPath + routePath
 		}
@@ -82,4 +82,28 @@ endpointLoop:
 	}
 
 	return errors.Errorf("no matching endpoint found")
+}
+
+// Gets the operation for the given method name
+func getOperation(method string, e *openapi.Endpoint) *openapi.Operation {
+	switch strings.ToUpper(method) {
+	case "GET":
+		return e.Get
+	case "POST":
+		return e.Post
+	case "Put":
+		return e.Put
+	case "Patch":
+		return e.Patch
+	case "Delete":
+		return e.Delete
+	case "Head":
+		return e.Head
+	case "Options":
+		return e.Options
+	case "Trace":
+		return e.Trace
+	}
+
+	return nil
 }

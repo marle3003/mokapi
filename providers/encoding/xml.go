@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"io"
-	"mokapi/models/schemas"
+	"mokapi/config/dynamic/openapi"
 	"strconv"
 )
 
-func UnmarshalXml(s string, schema *schemas.Schema) (interface{}, error) {
+func UnmarshalXml(s string, schema *openapi.Schema) (interface{}, error) {
 	data := []byte(s)
 	e, err := decode(data)
 	if err != nil {
@@ -27,7 +27,7 @@ func UnmarshalXml(s string, schema *schemas.Schema) (interface{}, error) {
 	return obj, err
 }
 
-func MarshalXML(v interface{}, schema *schemas.Schema) ([]byte, error) {
+func MarshalXML(v interface{}, schema *openapi.Schema) ([]byte, error) {
 	m := &StringMap{Data: v, Schema: schema}
 	xmlString, error := xml.Marshal(m)
 	if error != nil {
@@ -38,7 +38,7 @@ func MarshalXML(v interface{}, schema *schemas.Schema) ([]byte, error) {
 
 type StringMap struct {
 	Data   interface{}
-	Schema *schemas.Schema
+	Schema *openapi.Schema
 }
 
 func (m StringMap) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
@@ -126,7 +126,7 @@ func (m StringMap) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	return nil
 }
 
-func encodeObject(e *xml.Encoder, obj map[string]interface{}, schema *schemas.Schema) {
+func encodeObject(e *xml.Encoder, obj map[string]interface{}, schema *openapi.Schema) {
 	for propertyName, propertySchema := range schema.Properties {
 		if propertySchema.Xml != nil && propertySchema.Xml.Attribute {
 			continue
@@ -194,7 +194,7 @@ func (e *XmlNode) decode(decoder *xml.Decoder) error {
 	return nil
 }
 
-func (e *XmlNode) parse(s *schemas.Schema) (interface{}, error) {
+func (e *XmlNode) parse(s *openapi.Schema) (interface{}, error) {
 	if s == nil || s.Type == "string" {
 		return e.Content, nil
 	}
@@ -209,12 +209,12 @@ func (e *XmlNode) parse(s *schemas.Schema) (interface{}, error) {
 			if property.Xml != nil && property.Xml.Attribute {
 				if v, ok := e.Attributes[name]; ok {
 					props[name] = v
-				} else if s.IsPropertyRequired(name) {
+				} else if isPropertyRequired(name, s) {
 					return nil, errors.Errorf("required property with name '%v' not found", name)
 				}
 			} else {
 				c := e.GetFirstElement(name)
-				if c == nil && s.IsPropertyRequired(name) {
+				if c == nil && isPropertyRequired(name, s) {
 					return nil, errors.Errorf("required property with name '%v' not found", name)
 				}
 				v, err := c.parse(property)
@@ -263,4 +263,16 @@ func (e *XmlNode) parse(s *schemas.Schema) (interface{}, error) {
 	}
 
 	return nil, nil
+}
+
+func isPropertyRequired(name string, s *openapi.Schema) bool {
+	if s.Required == nil {
+		return false
+	}
+	for _, p := range s.Required {
+		if p == name {
+			return true
+		}
+	}
+	return false
 }

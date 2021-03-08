@@ -3,6 +3,7 @@ package ldap
 import (
 	"bufio"
 	"fmt"
+	"github.com/pkg/errors"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -38,9 +39,9 @@ func (s *Binding) getSchema() (*Schema, error) {
 
 	dn := attrList[0]
 
-	schemaEntry := s.getEntry(dn)
-	if schemaEntry == nil {
-		return nil, fmt.Errorf("No entry with dn %v found", dn)
+	schemaEntry, err := s.getEntry(dn)
+	if err != nil {
+		return nil, errors.Wrapf(err, "schema not found")
 	}
 
 	schema := &Schema{attributes: make([]*Attribute, 0)}

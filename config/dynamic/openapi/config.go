@@ -1,59 +1,69 @@
-package rest
+package openapi
 
 import (
-	"fmt"
-	"mokapi/models/schemas"
+	log "github.com/sirupsen/logrus"
+	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/mokapi"
+	"net/url"
+	"path/filepath"
 	"strconv"
-	"strings"
 )
 
-type WebServiceInfo struct {
-	Data   *WebService
-	Status string
-	Errors []string
+func init() {
+	dynamic.Register("openapi", &Config{}, func(path string, o dynamic.Config, r dynamic.ConfigReader) (bool, dynamic.Config) {
+		dir := filepath.Dir(path)
+		eh := dynamic.NewEmptyEventHandler(o)
+		switch c := o.(type) {
+		case *Config:
+			if c.Info.Mokapi != nil && len(c.Info.Mokapi.Reference) > 0 {
+				ref := c.Info.Mokapi.Reference
+				if !filepath.IsAbs(ref) {
+					ref = filepath.Join(dir, ref)
+				}
+				updated, err := r.Read(ref, c.Info.Mokapi, eh)
+				if err == nil {
+					if m, ok := updated.(*mokapi.Config); ok {
+						c.Info.Mokapi = m
+					}
+				}
+			}
+
+			for _, e := range c.EndPoints {
+				updateOperations(e)
+			}
+
+			resolveSchemas(c.Components.Schemas, dir, r, eh)
+		}
+		return false, nil
+	})
 }
 
-type WebService struct {
+type Config struct {
+	Info    Info
+	Servers []*Server
+
+	// A relative path to an individual endpoint. The path MUST begin
+	// with a forward slash ('/'). The path is appended to the url from
+	// server objects url field in order to construct the full URL
+	EndPoints  map[string]*Endpoint `yaml:"paths" json:"paths"`
+	Components Components
+}
+
+type Info struct {
 	// The title of the service
-	Name string
+	Name string `yaml:"title" json:"title"`
 
 	// A short description of the API. CommonMark syntax MAY be
 	// used for rich text representation.
 	Description string
 
 	// The version of the service
-	Version  string
-	Servers  []Server
-	Endpoint map[string]*Endpoint
-	Models   map[string]*schemas.Schema
-
-	// The mokapi file used by this service.
-	MokapiFile string
-}
-
-func (s *WebService) AddServer(server Server) {
-	for _, v := range s.Servers {
-		if v.Host == server.Host && v.Port == server.Port && v.Path == server.Path {
-			return
-		}
-	}
-	s.Servers = append(s.Servers, server)
-}
-
-func (w *WebService) Key() string {
-	return w.Name
+	Version string
+	Mokapi  *mokapi.Config `yaml:"x-mokapi" json:"x-mokapi"`
 }
 
 type Server struct {
-	// The server host name
-	Host string
-
-	// The server port number
-	Port int
-
-	// A relative path to the location where the OpenAPI definition
-	// is being served
-	Path string
+	Url string
 
 	// An optional string describing the host designated by the URL.
 	// CommonMark syntax MAY be used for rich text representation.
@@ -61,11 +71,6 @@ type Server struct {
 }
 
 type Endpoint struct {
-	// A relative path to an individual endpoint. The path MUST begin
-	// with a forward slash ('/'). The path is appended to the url from
-	// server objects url field in order to construct the full URL
-	Path string
-
 	// An optional, string summary, intended to apply to all operations
 	// in this path.
 	Summary string
@@ -98,7 +103,6 @@ type Endpoint struct {
 	// A definition of a TRACE operation on this path.
 	Trace *Operation
 
-	// TODO: implementing
 	// A list of parameters that are applicable for all
 	// the operations described under this path. These
 	// parameters can be overridden at the operation level,
@@ -109,38 +113,7 @@ type Endpoint struct {
 	// under this path. This pipeline name can be overridden
 	// at the operation level, but cannot reset to the default
 	// empty pipeline name.
-	Pipeline string
-
-	// The service which this endpoint belongs to
-	Service *WebService
-}
-
-func NewEndpoint(path string, service *WebService) *Endpoint {
-	return &Endpoint{Path: path, Service: service}
-}
-
-// Gets the operation for the given method name
-func (e *Endpoint) GetOperation(method string) *Operation {
-	switch strings.ToUpper(method) {
-	case "GET":
-		return e.Get
-	case "POST":
-		return e.Post
-	case "Put":
-		return e.Put
-	case "Patch":
-		return e.Patch
-	case "Delete":
-		return e.Delete
-	case "Head":
-		return e.Head
-	case "Options":
-		return e.Options
-	case "Trace":
-		return e.Trace
-	}
-
-	return nil
+	Pipeline string `yaml:"x-mokapi-pipeline" json:"x-mokapi-pipeline"`
 }
 
 type Operation struct {
@@ -158,7 +131,6 @@ type Operation struct {
 	// programming naming conventions.
 	OperationId string
 
-	// todo: implement feature overridable
 	// A list of parameters that are applicable for this operation.
 	// If a parameter is already defined at the Path Item, the new definition
 	// will override it but can never remove it. The list MUST NOT include
@@ -166,35 +138,136 @@ type Operation struct {
 	// of a name and location
 	Parameters []*Parameter
 
-	RequestBody *RequestBody
+	RequestBody *RequestBody `yaml:"requestBody" json:"requestBody"`
 
 	// The list of possible responses as they are returned from executing this
 	// operation.
-	Responses map[HttpStatus]*Response
+	Responses Responses `yaml:"responses" json:"responses"`
 
 	// The pipeline name used to identify the pipeline in the mokapi file.
 	// If pipeline name is already defined at the Path Item, the new definition
 	// will override it but can not set to empty pipeline name.
-	Pipeline string
+	Pipeline string `yaml:"x-mokapi-pipeline" yaml:"x-mokapi-pipeline"`
 
-	// The endpoint which this operation belongs to
-	Endpoint *Endpoint
+	Endpoint *Endpoint `yaml:"-" json:"-"`
 }
 
-func NewOperation(summary string, description string, operationId string, pipeline string, endpoint *Endpoint) *Operation {
-	return &Operation{
-		Summary:     summary,
-		Description: description,
-		OperationId: operationId,
-		Endpoint:    endpoint,
-		Pipeline:    pipeline,
-		Responses:   make(map[HttpStatus]*Response),
-	}
+type Responses map[HttpStatus]*Response
+
+type Parameter struct {
+	// The name of the parameter. Parameter names are case sensitive.
+	Name string
+
+	// The location of the parameter
+	Type ParameterLocation `yaml:"in" json:"in"`
+
+	// The schema defining the type used for the parameter
+	Schema *Schema
+
+	// Determines whether the parameter is mandatory.
+	// If the location of the parameter is "path", this property
+	// is required and its value MUST be true
+	Required bool
+
+	// A brief description of the parameter. This could contain examples
+	// of use. CommonMark syntax MAY be used for rich text representation.
+	Description string
+
+	// Defines how multiple values are delimited. Possible styles depend on
+	// the parameter location
+	Style string
+
+	// specifies whether arrays and objects should generate separate
+	// parameters for each array item or object property
+	Explode bool
 }
+
+type ParameterLocation string
 
 type HttpStatus int
 
+type SchemaRef struct {
+	Ref   string `yaml:"$ref" json:"$ref"`
+	Value *Schema
+}
+
+type Schema struct {
+	Type                 string
+	Format               string
+	Reference            string `yaml:"$ref" json:"$ref"`
+	Description          string
+	Properties           map[string]*Schema
+	AdditionalProperties *Schema // TODO custom marshal for bool, {} etc. Should it be a schema reference?
+	Faker                string  `yaml:"x-faker" json:"x-faker"`
+	Items                *Schema
+	Xml                  *Xml
+	Required             []string
+	Nullable             bool
+}
+
+type AdditionalProperties struct {
+	Schema *Schema
+}
+
+type RequestBody struct {
+	// A brief description of the request body. This could contain
+	// examples of use. CommonMark syntax MAY be used for rich text representation.
+	Description string
+
+	// The content of the request body. The key is a media type or media type range
+	// and the value describes it. For requests that match multiple keys, only the
+	// most specific key is applicable. e.g. text/plain overrides text/*
+	Content map[string]*MediaType
+
+	// Determines if the request body is required in the request. Defaults to false.
+	Required  bool
+	Reference string `yaml:"$ref" json:"$ref"`
+}
+
+type Response struct {
+	// A short description of the response. CommonMark syntax
+	// MAY be used for rich text representation.
+	Description string
+
+	// A map containing descriptions of potential response payloads.
+	// The key is a media type or media type range and the value describes
+	// it. For responses that match multiple keys, only the most specific
+	// key is applicable. e.g. text/plain overrides text/*
+	Content   map[string]*MediaType
+	Reference string `yaml:"$ref" json:"$ref"`
+}
+
+type MediaType struct {
+	// The schema defining the content of the request, response.
+	Schema *Schema
+}
+
+type Components struct {
+	Schemas       *Schemas
+	Responses     map[string]*Response
+	RequestBodies map[string]*RequestBody
+}
+
+type Schemas struct {
+	Ref   string
+	Value map[string]*SchemaRef
+}
+
+type Xml struct {
+	Wrapped   bool
+	Name      string
+	Attribute bool
+	Prefix    string
+	Namespace string
+	CData     bool
+}
+
 const (
+	PathParameter   ParameterLocation = "path"
+	QueryParameter  ParameterLocation = "query"
+	HeaderParameter ParameterLocation = "header"
+	CookieParameter ParameterLocation = "cookie"
+
 	Invalid            HttpStatus = -1
 	Continue           HttpStatus = 100 // RFC 7231, 6.2.1
 	SwitchingProtocols HttpStatus = 101 // RFC 7231, 6.2.2
@@ -265,123 +338,81 @@ const (
 	NetworkAuthenticationRequired HttpStatus = 511 // RFC 6585, 6
 )
 
-func parseHttpStatus(s string) (HttpStatus, error) {
-	i, error := strconv.Atoi(s)
-	if error != nil {
-		return Invalid, fmt.Errorf("Can not parse status code %v", s)
+func updateOperations(e *Endpoint) {
+	if e.Get != nil {
+		e.Get.Endpoint = e
 	}
-	status := HttpStatus(i)
-	if !isValidHttpStatus(status) {
-		return Invalid, fmt.Errorf("Unsupport status code %v", s)
+	if e.Post != nil {
+		e.Post.Endpoint = e
 	}
-
-	return status, nil
-}
-
-func isValidHttpStatus(status HttpStatus) bool {
-	switch status {
-	case
-		// 100
-		Invalid, Continue, SwitchingProtocols, Processing, EarlyHints,
-		// 200
-		OK, Created, Accepted, NonAuthoritativeInfo, NoContent, ResetContent, PartialContent, MultiStatus, AlreadyReported, IMUsed,
-		// 300
-		MultipleChoices, MovedPermanently, Found, SeeOther, NotModified, UseProxy, TemporaryRedirect, PermanentRedirect,
-		// 400
-		BadRequest, Unauthorized, PaymentRequired, Forbidden, NotFound, MethodNotAllowed, NotAcceptable, ProxyAuthRequired,
-		RequestTimeout, Conflict, Gone, LengthRequired, PreconditionFailed, RequestEntityTooLarge, RequestURITooLong,
-		UnsupportedMediaType, RequestedRangeNotSatisfiable, ExpectationFailed, Teapot, MisdirectedRequest,
-		UnprocessableEntity, Locked, FailedDependency, TooEarly, UpgradeRequired, PreconditionRequired,
-		TooManyRequests, RequestHeaderFieldsTooLarge, UnavailableForLegalReasons,
-		// 500
-		InternalServerError, NotImplemented, BadGateway, ServiceUnavailable, GatewayTimeout, HTTPVersionNotSupported,
-		VariantAlsoNegotiates, InsufficientStorage, LoopDetected, NotExtended, NetworkAuthenticationRequired:
-		return true
-
-	default:
-		return false
+	if e.Put != nil {
+		e.Put.Endpoint = e
+	}
+	if e.Patch != nil {
+		e.Patch.Endpoint = e
+	}
+	if e.Delete != nil {
+		e.Delete.Endpoint = e
+	}
+	if e.Head != nil {
+		e.Head.Endpoint = e
+	}
+	if e.Options != nil {
+		e.Options.Endpoint = e
+	}
+	if e.Trace != nil {
+		e.Trace.Endpoint = e
 	}
 }
 
-type Parameter struct {
-	// The name of the parameter. Parameter names are case sensitive.
-	Name string
-
-	// The location of the parameter
-	Location ParameterLocation
-
-	// The schema defining the type used for the parameter
-	Schema *schemas.Schema
-
-	// Determines whether the parameter is mandatory.
-	// If the location of the parameter is "path", this property
-	// is required and its value MUST be true
-	Required bool
-
-	// A brief description of the parameter. This could contain examples
-	// of use. CommonMark syntax MAY be used for rich text representation.
-	Description string
-
-	// Defines how multiple values are delimited. Possible styles depend on
-	// the parameter location
-	Style string
-
-	// specifies whether arrays and objects should generate separate
-	// parameters for each array item or object property
-	Explode bool
-}
-
-type ParameterLocation int
-
-const (
-	PathParameter   ParameterLocation = 1
-	QueryParameter  ParameterLocation = 2
-	HeaderParameter ParameterLocation = 3
-	CookieParameter ParameterLocation = 4
-)
-
-func (p ParameterLocation) String() string {
-	switch p {
-	case PathParameter:
-		return "path"
-	case QueryParameter:
-		return "query"
-	case HeaderParameter:
-		return "header"
-	case CookieParameter:
-		return "cookie"
-	default:
-		return "unknown"
+func (s *Server) GetPort() int {
+	u, err := url.Parse(s.Url)
+	if err != nil {
+		log.WithField("url", s.Url).Error("Invalid format in url found.")
+		return -1
+	}
+	portString := u.Port()
+	if len(portString) == 0 {
+		return 80
+	} else {
+		port, err := strconv.ParseInt(portString, 10, 32)
+		if err != nil {
+			log.WithField("url", s.Url).Error("Invalid port format in url found.")
+		}
+		return int(port)
 	}
 }
 
-type RequestBody struct {
-	// A brief description of the request body. This could contain
-	// examples of use. CommonMark syntax MAY be used for rich text representation.
-	Description string
-
-	// The content of the request body. The key is a media type or media type range
-	// and the value describes it. For requests that match multiple keys, only the
-	// most specific key is applicable. e.g. text/plain overrides text/*
-	ContentTypes map[string]*MediaType
-
-	// Determines if the request body is required in the request. Defaults to false.
-	Required bool
+func (s *Server) GetHost() string {
+	u, err := url.Parse(s.Url)
+	if err != nil {
+		log.WithField("url", s.Url).Error("Invalid format in url found.")
+		return ""
+	}
+	return u.Hostname()
 }
 
-type MediaType struct {
-	// The schema defining the content of the request, response.
-	Schema *schemas.Schema
+func (s *Server) GetPath() string {
+	u, err := url.Parse(s.Url)
+	if err != nil {
+		log.WithField("url", s.Url).Error("Invalid format in url found.")
+		return ""
+	}
+	if len(u.Path) == 0 {
+		return "/"
+	}
+	return u.Path
 }
 
-type Response struct {
-	// A short description of the response. CommonMark syntax
-	// MAY be used for rich text representation.
-	Description string
-
-	// A map containing descriptions of potential response payloads.
-	// The key is a media type or media type range and the value describes
-	// it. For responses that match multiple keys, only the most specific
-	// key is applicable. e.g. text/plain overrides text/*
-	ContentTypes map[string]*MediaType
+func resolveSchemas(s *Schemas, dir string, r dynamic.ConfigReader, e dynamic.ChangeEventHandler) {
+	ref := s.Ref
+	if !filepath.IsAbs(ref) {
+		ref = filepath.Join(dir, ref)
+	}
+	config, err := r.Read(ref, s, e)
+	if err == nil {
+		if schemas, ok := config.(*Schemas); ok {
+			s = schemas
+		}
+	}
 }

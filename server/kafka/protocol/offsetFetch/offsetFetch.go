@@ -20,7 +20,7 @@ func init() {
 
 type Request struct {
 	GroupId       string           `kafka:"compact=6"`
-	Topics        []RequestTopic   `kafka:""`
+	Topics        []RequestTopic   `kafka:"compact=6"`
 	RequireStable bool             `kafka:"min=7"`
 	TagFields     map[int64]string `kafka:"type=TAG_BUFFER,min=6"`
 }
@@ -39,8 +39,9 @@ type Response struct {
 }
 
 type ResponseTopic struct {
-	Name       string      `kafka:"compact=6"`
-	Partitions []Partition `kafka:"compact=6"`
+	Name       string           `kafka:"compact=6"`
+	Partitions []Partition      `kafka:"compact=6"`
+	TagFields  map[int64]string `kafka:"type=TAG_BUFFER,min=6"`
 }
 
 type Partition struct {

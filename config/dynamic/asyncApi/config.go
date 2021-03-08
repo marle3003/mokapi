@@ -33,6 +33,7 @@ type Server struct {
 	Protocol        string
 	ProtocolVersion string
 	Description     string
+	Bindings        Bindings
 	Variables       map[string]*ServerVariable
 }
 
@@ -47,6 +48,7 @@ type Channel struct {
 	Description string
 	Subscribe   *Operation
 	Publish     *Operation
+	Bindings    Bindings
 }
 
 type Operation struct {
@@ -77,4 +79,8 @@ type Schema struct {
 type Components struct {
 	Schemas  map[string]*Schema
 	Messages map[string]*Message
+}
+
+type Bindings struct {
+	Kafka map[string]string
 }

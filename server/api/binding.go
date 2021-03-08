@@ -14,7 +14,7 @@ import (
 )
 
 type Binding struct {
-	appl       *models.Application
+	runtime    *models.Runtime
 	server     *http.Server
 	Addr       string
 	fileServer http.Handler
@@ -26,8 +26,8 @@ type serviceSummary struct {
 	Version     string `json:"version,omitempty"`
 }
 
-func NewBinding(addr string, a *models.Application) *Binding {
-	b := &Binding{appl: a, Addr: addr}
+func NewBinding(addr string, r *models.Runtime) *Binding {
+	b := &Binding{runtime: r, Addr: addr}
 	b.server = &http.Server{Addr: addr, Handler: b}
 	b.fileServer = http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir})
 	return b
@@ -79,7 +79,7 @@ func (b *Binding) getService(w http.ResponseWriter, r *http.Request) {
 	segments := strings.Split(r.URL.Path, "/")
 	name := segments[3]
 
-	if s, ok := b.appl.WebServices[name]; ok {
+	if s, ok := b.runtime.OpenApi[name]; ok {
 		service := newService(s)
 
 		w.Header().Set("Content-Type", "application/json")
@@ -96,7 +96,7 @@ func (b *Binding) getService(w http.ResponseWriter, r *http.Request) {
 func (b *Binding) getServices(w http.ResponseWriter, r *http.Request) {
 	services := make([]serviceSummary, 0)
 
-	for _, s := range b.appl.WebServices {
+	for _, s := range b.runtime.OpenApi {
 		services = append(services, newServiceSummary(s))
 	}
 
@@ -109,7 +109,7 @@ func (b *Binding) getServices(w http.ResponseWriter, r *http.Request) {
 }
 
 func (b *Binding) getDashboard(w http.ResponseWriter, r *http.Request) {
-	dashboard := newDashboard(b.appl)
+	dashboard := newDashboard(b.runtime)
 
 	w.Header().Set("Content-Type", "application/json")
 

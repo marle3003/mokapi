@@ -6,6 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"io"
 	"mokapi/models/event"
+	"mokapi/models/event/kafka"
 	"mokapi/server/kafka/protocol"
 	"mokapi/server/kafka/protocol/apiVersion"
 	"mokapi/server/kafka/protocol/fetch"
@@ -28,14 +29,16 @@ type Binding struct {
 	brokers   []broker
 	groups    map[string]*group
 	topics    map[string]*topic
+	config    kafka.Binding
 }
 
-func NewServer(addr string) *Binding {
+func NewServer(addr string, c kafka.Binding) *Binding {
 	s := &Binding{
 		stop:   make(chan bool),
 		listen: addr,
 		groups: make(map[string]*group),
 		topics: make(map[string]*topic),
+		config: c,
 	}
 
 	b := newBroker(1, "localhost", 9092) // id is 1 based
@@ -315,7 +318,7 @@ func (s *Binding) processFindCoordinator(req *findCoordinator.Request) *findCoor
 			g = &group{
 				coordinator: s.brokers[0],
 			}
-			g.balancer = newGroupBalancer(g)
+			g.balancer = newGroupBalancer(g, s.config.Group.RebalanceDelay)
 			s.groups[req.Key] = g
 		}
 
@@ -337,10 +340,10 @@ func (s *Binding) processJoinGroup(h *protocol.Header, req *joinGroup.Request, w
 	var exists bool
 	if g, exists = s.groups[req.GroupId]; !exists {
 		return -1
-	} else if g.state == syncing {
+	} else if g.state == completingRebalance {
 		return 27 // RebalanceInProgressCode
 	} else if g.state == empty || g.state == stable {
-		g.state = joining
+		g.state = preparingRebalance
 		go g.balancer.startJoin()
 	}
 
@@ -356,6 +359,7 @@ func (s *Binding) processJoinGroup(h *protocol.Header, req *joinGroup.Request, w
 		write: func(msg protocol.Message) {
 			protocol.WriteMessage(w, h.ApiKey, h.ApiVersion, h.CorrelationId, msg)
 		},
+		rebalanceTimeout: int(req.RebalanceTimeoutMs),
 	}
 
 	for _, p := range req.Protocols {

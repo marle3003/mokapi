@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/brianvoe/gofakeit/v4"
 	"math/rand"
+	"mokapi/config/dynamic/openapi"
 	"mokapi/models/media"
-	"mokapi/models/schemas"
 	"mokapi/providers/encoding"
 	"net/http"
 )
@@ -87,7 +87,7 @@ func (r *Response) encodeData(data interface{}) ([]byte, error) {
 	}
 }
 
-func getRandomObject(schema *schemas.Schema) interface{} {
+func getRandomObject(schema *openapi.Schema) interface{} {
 	if schema.Type == "object" {
 		obj := make(map[string]interface{})
 		for name, propSchema := range schema.Properties {

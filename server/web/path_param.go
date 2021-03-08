@@ -2,11 +2,11 @@ package web
 
 import (
 	"github.com/pkg/errors"
-	"mokapi/models/rest"
+	"mokapi/config/dynamic/openapi"
 	"strings"
 )
 
-func parsePath(s string, p *rest.Parameter) (interface{}, error) {
+func parsePath(s string, p *openapi.Parameter) (interface{}, error) {
 	if len(s) == 0 && p.Required {
 		return nil, errors.Errorf("required parameter not found")
 	}
@@ -30,7 +30,7 @@ func parsePath(s string, p *rest.Parameter) (interface{}, error) {
 	return parse(s, p.Schema)
 }
 
-func parsePathObject(s string, p *rest.Parameter) (obj map[string]interface{}, err error) {
+func parsePathObject(s string, p *openapi.Parameter) (obj map[string]interface{}, err error) {
 	obj = make(map[string]interface{})
 	values := strings.Split(s, ",")
 	if p.Explode {
@@ -77,7 +77,7 @@ func parsePathObject(s string, p *rest.Parameter) (obj map[string]interface{}, e
 	return
 }
 
-func parsePathArray(s string, p *rest.Parameter) (result []interface{}, err error) {
+func parsePathArray(s string, p *openapi.Parameter) (result []interface{}, err error) {
 	values := strings.Split(s, ",")
 
 	for _, v := range values {

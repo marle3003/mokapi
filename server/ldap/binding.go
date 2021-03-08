@@ -1,8 +1,9 @@
 package ldap
 
 import (
+	"github.com/pkg/errors"
 	"io"
-	"mokapi/models"
+	ldapConfig "mokapi/config/dynamic/ldap"
 	"net"
 	"reflect"
 
@@ -12,21 +13,21 @@ import (
 
 type Binding struct {
 	stop      chan bool
-	entries   map[string]*models.Entry
+	entries   map[string]ldapConfig.Entry
 	listen    string
 	isRunning bool
-	root      *models.Entry
+	root      ldapConfig.Entry
 	schema    *Schema
 }
 
-func NewServer(config *models.LdapServer) *Binding {
+func NewServer(config *ldapConfig.Config) *Binding {
 	s := &Binding{stop: make(chan bool)}
 	s.Apply(config)
 	return s
 }
 
 func (s *Binding) Apply(data interface{}) error {
-	config, _ := data.(*models.LdapServer)
+	config, _ := data.(*ldapConfig.Config)
 	shouldRestart := false
 	if s.listen != "" && s.listen != config.Address {
 		s.stop <- true
@@ -160,11 +161,11 @@ func (s *Binding) handle(conn net.Conn) {
 	}
 }
 
-func (s *Binding) getEntry(dn string) *models.Entry {
+func (s *Binding) getEntry(dn string) (ldapConfig.Entry, error) {
 	if entry, ok := s.entries[dn]; ok {
-		return entry
+		return entry, nil
 	}
-	return nil
+	return ldapConfig.Entry{}, errors.Errorf("entry with dn %v not found", dn)
 }
 
 func sendResponse(conn net.Conn, packet *ber.Packet) {

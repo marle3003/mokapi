@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/pkg/errors"
+	"mokapi/config/dynamic/openapi"
 	"mokapi/models"
-	"mokapi/models/rest"
 	"strings"
 	"time"
 
@@ -54,32 +54,34 @@ func (binding *Binding) Stop() {
 }
 
 func (binding *Binding) Apply(data interface{}) error {
-	service, ok := data.(*rest.WebService)
+	service, ok := data.(*openapi.Config)
 	if !ok {
 		return errors.Errorf("unexpected parameter type %T in http binding", data)
 	}
 
 	for _, server := range service.Servers {
-		address := fmt.Sprintf(":%v", server.Port)
+		hostName, port, path := server.GetHost(), server.GetPort(), server.GetPath()
+
+		address := fmt.Sprintf(":%v", port)
 		if binding.Addr != address {
 			continue
 		}
 
-		host, found := binding.handlers[server.Host]
+		host, found := binding.handlers[hostName]
 		if !found {
-			log.Infof("Adding new host '%v' on binding %v", server.Host, binding.Addr)
+			log.Infof("Adding new host '%v' on binding %v", hostName, binding.Addr)
 			host = make(map[string]*ServiceHandler)
-			binding.handlers[server.Host] = host
+			binding.handlers[hostName] = host
 		}
 
-		if handler, found := host[server.Path]; found {
-			if service.Name != handler.WebService.Name {
-				return errors.Errorf("service '%v' is already defined on path '%v'", handler.WebService.Name, server.Path)
+		if handler, found := host[path]; found {
+			if service.Info.Name != handler.config.Info.Name {
+				return errors.Errorf("service '%v' is already defined on path '%v'", handler.config.Info.Name, path)
 			}
 		} else {
-			log.Infof("Adding service %v on binding %v on path %v", service.Name, binding.Addr, server.Path)
+			log.Infof("Adding service %v on binding %v on path %v", service.Info.Name, binding.Addr, path)
 			handler = NewWebServiceHandler(service)
-			host[server.Path] = handler
+			host[path] = handler
 		}
 	}
 
@@ -123,13 +125,4 @@ func (binding *Binding) resolveHandler(r *http.Request) (*ServiceHandler, string
 	}
 
 	return nil, ""
-}
-
-func (binding *Binding) getServicePath(service *rest.WebService) (bool, string) {
-	for _, server := range service.Servers {
-		if fmt.Sprintf("%v:%v", server.Host, server.Port) == binding.Addr {
-			return true, server.Path
-		}
-	}
-	return false, ""
 }

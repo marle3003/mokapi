@@ -1,7 +1,5 @@
 package static
 
-import "mokapi/config/dynamic"
-
 type Config struct {
 	Log        *MokApiLog
 	ConfigFile string
@@ -23,10 +21,15 @@ type MokApiLog struct {
 }
 
 type Providers struct {
-	File dynamic.FileProvider
+	File FileProvider
 }
 
 type Api struct {
 	Port      string
 	Dashboard bool
+}
+
+type FileProvider struct {
+	Filename  string
+	Directory string
 }

@@ -2,12 +2,12 @@ package web
 
 import (
 	"github.com/pkg/errors"
-	"mokapi/models/rest"
+	"mokapi/config/dynamic/openapi"
 	"net/http"
 	"strings"
 )
 
-func parseCookie(p *rest.Parameter, r *http.Request) (interface{}, error) {
+func parseCookie(p *openapi.Parameter, r *http.Request) (interface{}, error) {
 	switch p.Schema.Type {
 	case "array":
 		return parseCookieArray(p, r)
@@ -26,7 +26,7 @@ func parseCookie(p *rest.Parameter, r *http.Request) (interface{}, error) {
 	return parse(c.Value, p.Schema)
 }
 
-func parseCookieObject(p *rest.Parameter, r *http.Request) (obj map[string]interface{}, err error) {
+func parseCookieObject(p *openapi.Parameter, r *http.Request) (obj map[string]interface{}, err error) {
 	c, err := r.Cookie(p.Name)
 	if err != nil {
 		return nil, err
@@ -60,7 +60,7 @@ func parseCookieObject(p *rest.Parameter, r *http.Request) (obj map[string]inter
 	return
 }
 
-func parseCookieArray(p *rest.Parameter, r *http.Request) (result []interface{}, err error) {
+func parseCookieArray(p *openapi.Parameter, r *http.Request) (result []interface{}, err error) {
 	c, err := r.Cookie(p.Name)
 	if err != nil {
 		return nil, err

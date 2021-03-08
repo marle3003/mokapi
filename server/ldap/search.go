@@ -2,7 +2,7 @@ package ldap
 
 import (
 	"fmt"
-	"mokapi/models"
+	ldapConfig "mokapi/config/dynamic/ldap"
 	"net"
 	"strings"
 
@@ -103,7 +103,7 @@ func (s *Binding) handleSearchRequest(conn net.Conn, messageId int64, req *ber.P
 	return nil
 }
 
-func filter(f *ber.Packet, entry *models.Entry) (bool, error) {
+func filter(f *ber.Packet, entry ldapConfig.Entry) (bool, error) {
 	switch f.Tag {
 	case FilterAnd:
 		for _, child := range f.Children {

@@ -3,26 +3,25 @@ package web
 import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"mokapi/models/rest"
-	"mokapi/models/schemas"
+	"mokapi/config/dynamic/openapi"
 	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
 )
 
-type RequestParameters map[rest.ParameterLocation]map[string]interface{}
+type RequestParameters map[openapi.ParameterLocation]map[string]interface{}
 
 func newRequestParameters() RequestParameters {
 	p := make(RequestParameters)
-	p[rest.PathParameter] = make(map[string]interface{})
-	p[rest.QueryParameter] = make(map[string]interface{})
-	p[rest.HeaderParameter] = make(map[string]interface{})
-	p[rest.CookieParameter] = make(map[string]interface{})
+	p[openapi.PathParameter] = make(map[string]interface{})
+	p[openapi.QueryParameter] = make(map[string]interface{})
+	p[openapi.HeaderParameter] = make(map[string]interface{})
+	p[openapi.CookieParameter] = make(map[string]interface{})
 	return p
 }
 
-func parseParams(params []*rest.Parameter, route string, r *http.Request) (RequestParameters, error) {
+func parseParams(params []*openapi.Parameter, route string, r *http.Request) (RequestParameters, error) {
 	segments := strings.Split(r.URL.Path, "/")
 
 	path := map[string]string{}
@@ -42,29 +41,29 @@ func parseParams(params []*rest.Parameter, route string, r *http.Request) (Reque
 		var v interface{}
 		var err error
 		var store map[string]interface{}
-		switch p.Location {
-		case rest.CookieParameter:
+		switch p.Type {
+		case openapi.CookieParameter:
 			v, err = parseCookie(p, r)
-			store = parameters[rest.CookieParameter]
-		case rest.PathParameter:
+			store = parameters[openapi.CookieParameter]
+		case openapi.PathParameter:
 			if s, ok := path[p.Name]; ok {
 				v, err = parsePath(s, p)
-				store = parameters[rest.PathParameter]
+				store = parameters[openapi.PathParameter]
 			} else {
-				return nil, errors.Errorf("required %v paramter %q not found in request %v", p.Location, p.Name, r.URL)
+				return nil, errors.Errorf("required %v paramter %q not found in request %v", p.Type, p.Name, r.URL)
 			}
-		case rest.QueryParameter:
+		case openapi.QueryParameter:
 			v, err = parseQuery(p, r.URL)
-			store = parameters[rest.QueryParameter]
+			store = parameters[openapi.QueryParameter]
 			//case models.HeaderParameter:
 			//	value = context.Request.Header.Get(p.Name)
 			//case models.PathParameter:
 
 		}
 		if err != nil && p.Required {
-			return nil, errors.Wrapf(err, "parse %v parameter %q", p.Location, p.Name)
+			return nil, errors.Wrapf(err, "parse %v parameter %q", p.Type, p.Name)
 		} else if err != nil {
-			log.Infof("parse %v parameter %q: %v", p.Location, p.Name, err.Error())
+			log.Infof("parse %v parameter %q: %v", p.Type, p.Name, err.Error())
 		}
 		if store != nil {
 			store[p.Name] = v
@@ -74,7 +73,7 @@ func parseParams(params []*rest.Parameter, route string, r *http.Request) (Reque
 	return parameters, nil
 }
 
-func parse(s string, schema *schemas.Schema) (interface{}, error) {
+func parse(s string, schema *openapi.Schema) (interface{}, error) {
 	if schema == nil {
 		return s, nil
 	}

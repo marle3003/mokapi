@@ -2,8 +2,7 @@ package api
 
 import (
 	"fmt"
-	"mokapi/models/rest"
-	"mokapi/models/schemas"
+	"mokapi/config/dynamic/openapi"
 	"sort"
 	"strings"
 )
@@ -81,35 +80,35 @@ type schema struct {
 	Nullable    bool      `json:"nullable"`
 }
 
-func newService(s *rest.WebServiceInfo) service {
+func newService(s *openapi.Config) service {
 	service := service{
-		Name:        s.Data.Name,
-		Description: s.Data.Description,
-		Version:     s.Data.Version,
-		MokapiFile:  s.Data.MokapiFile,
+		Name:        s.Info.Name,
+		Description: s.Info.Description,
+		Version:     s.Info.Version,
+		MokapiFile:  s.Info.Mokapi.ConfigPath,
 	}
 
-	for _, server := range s.Data.Servers {
+	for _, server := range s.Servers {
 		service.BaseUrls = append(service.BaseUrls, newBaseUrl(server))
 	}
 
-	for _, e := range s.Data.Endpoint {
-		service.Endpoints = append(service.Endpoints, newEndpoint(e))
+	for path, e := range s.EndPoints {
+		service.Endpoints = append(service.Endpoints, newEndpoint(path, e))
 	}
 
-	for name, model := range s.Data.Models {
-		service.Models = append(service.Models, newModel(name, model))
-	}
+	//for name, model := range s.Components.Schemas {
+	//	service.Models = append(service.Models, newModel(name, model))
+	//}
 
 	return service
 }
 
-func newBaseUrl(s rest.Server) baseUrl {
-	return baseUrl{Url: fmt.Sprintf("http://%v:%v%v", s.Host, s.Port, s.Path), Description: s.Description}
+func newBaseUrl(s *openapi.Server) baseUrl {
+	return baseUrl{Url: s.Url, Description: s.Description}
 }
 
-func newEndpoint(e *rest.Endpoint) endpoint {
-	v := endpoint{Path: e.Path, Summary: e.Summary, Description: e.Description, Operations: make([]operation, 0)}
+func newEndpoint(path string, e *openapi.Endpoint) endpoint {
+	v := endpoint{Path: path, Summary: e.Summary, Description: e.Description, Operations: make([]operation, 0)}
 	if e.Get != nil {
 		v.Operations = append(v.Operations, newOperation("get", e.Get, e.Pipeline))
 	} else if e.Post != nil {
@@ -130,7 +129,7 @@ func newEndpoint(e *rest.Endpoint) endpoint {
 	return v
 }
 
-func newOperation(method string, o *rest.Operation, pipeline string) operation {
+func newOperation(method string, o *openapi.Operation, pipeline string) operation {
 	v := operation{
 		Method:      method,
 		Summary:     o.Summary,
@@ -149,7 +148,7 @@ func newOperation(method string, o *rest.Operation, pipeline string) operation {
 	}
 
 	if o.RequestBody != nil {
-		for c, r := range o.RequestBody.ContentTypes {
+		for c, r := range o.RequestBody.Content {
 			v.RequestBodies = append(v.RequestBodies,
 				requestBody{
 					Description:  o.RequestBody.Description,
@@ -166,9 +165,9 @@ func newOperation(method string, o *rest.Operation, pipeline string) operation {
 	return v
 }
 
-func newParameter(p *rest.Parameter) parameter {
+func newParameter(p *openapi.Parameter) parameter {
 	return parameter{
-		Location:    p.Location.String(),
+		Location:    string(p.Type),
 		Name:        p.Name,
 		Schema:      newSchema("", p.Schema, 0),
 		Description: p.Description,
@@ -178,17 +177,17 @@ func newParameter(p *rest.Parameter) parameter {
 	}
 }
 
-func newResponse(status rest.HttpStatus, r *rest.Response) response {
+func newResponse(status openapi.HttpStatus, r *openapi.Response) response {
 	response := response{Status: int(status), Description: r.Description, ContentTypes: make([]responseContent, 0)}
 
-	for t, c := range r.ContentTypes {
+	for t, c := range r.Content {
 		response.ContentTypes = append(response.ContentTypes, responseContent{Type: t, Schema: newSchema("", c.Schema, 0)})
 	}
 
 	return response
 }
 
-func newSchema(name string, s *schemas.Schema, level int) *schema {
+func newSchema(name string, s *openapi.Schema, level int) *schema {
 	if s == nil {
 		return nil
 	}
@@ -224,7 +223,7 @@ func newSchema(name string, s *schemas.Schema, level int) *schema {
 	return v
 }
 
-func newModel(name string, s *schemas.Schema) *schema {
+func newModel(name string, s *openapi.Schema) *schema {
 	if s == nil {
 		return nil
 	}
@@ -260,6 +259,6 @@ func newModel(name string, s *schemas.Schema) *schema {
 	return v
 }
 
-func newServiceSummary(s *rest.WebServiceInfo) serviceSummary {
-	return serviceSummary{Name: s.Data.Name, Description: s.Data.Description, Version: s.Data.Version}
+func newServiceSummary(s *openapi.Config) serviceSummary {
+	return serviceSummary{Name: s.Info.Name, Description: s.Info.Description, Version: s.Info.Version}
 }

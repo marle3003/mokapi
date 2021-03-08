@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"io/ioutil"
+	"mokapi/config/dynamic/mokapi"
 	"mokapi/providers/pipeline/basics"
 	"mokapi/providers/pipeline/lang/ast"
 	"mokapi/providers/pipeline/lang/parser"
@@ -94,6 +95,31 @@ func Run(file, name string, options ...PipelineOptions) (err error) {
 
 	var f *ast.File
 	f, err = parser.ParseFile(src, scope)
+	if err != nil {
+		return
+	}
+
+	return runtime.RunPipeline(f, name)
+}
+
+func RunConfig(name string, config *mokapi.Config, options ...PipelineOptions) (err error) {
+	scope := ast.NewScope(builtInFunctions)
+	err = WithGlobalVars(map[types.Type]interface{}{
+		runtime.EnvVarsType: runtime.NewEnvVars(
+			runtime.FromOS(),
+			runtime.With(map[string]string{
+				"WORKING_DIRECTORY": filepath.Dir(config.ConfigPath),
+			})),
+	})(scope)
+	for _, o := range options {
+		err = o(scope)
+		if err != nil {
+			return err
+		}
+	}
+
+	var f *ast.File
+	f, err = parser.ParseConfig(config, scope)
 	if err != nil {
 		return
 	}
