@@ -11,17 +11,21 @@ type refProp struct {
 }
 
 func (o *Responses) UnmarshalYAML(value *yaml.Node) error {
-	data := make(map[string]*Response)
+	data := make(map[string]*ResponseRef)
 	value.Decode(data)
 
-	*o = make(map[HttpStatus]*Response)
+	*o = make(map[HttpStatus]*ResponseRef)
 	for k, n := range data {
-		key, err := strconv.Atoi(k)
-		if err != nil {
-			log.Errorf("unable to parse http status %v", k)
-			continue
+		if k == "default" {
+			(*o)[Undefined] = n
+		} else {
+			key, err := strconv.Atoi(k)
+			if err != nil {
+				log.Errorf("unable to parse http status %v", k)
+				continue
+			}
+			(*o)[HttpStatus(key)] = n
 		}
-		(*o)[HttpStatus(key)] = n
 	}
 
 	return nil
@@ -30,7 +34,7 @@ func (o *Responses) UnmarshalYAML(value *yaml.Node) error {
 type parameter struct {
 	Name        string
 	Type        ParameterLocation `yaml:"in" json:"in"`
-	Schema      *Schema
+	Schema      *SchemaRef
 	Required    bool
 	Description string
 	Style       string
@@ -64,4 +68,46 @@ func (s *Schemas) UnmarshalYAML(value *yaml.Node) error {
 	}
 
 	return nil
+}
+
+func (s *ResponseRef) UnmarshalYAML(node *yaml.Node) error {
+	return unmarshalRef(node, &s.Ref, &s.Value)
+}
+
+func (r *RequestBodyRef) UnmarshalYAML(node *yaml.Node) error {
+	return unmarshalRef(node, &r.Ref, &r.Value)
+}
+
+func (s *SchemaRef) UnmarshalYAML(node *yaml.Node) error {
+	return unmarshalRef(node, &s.Ref, &s.Value)
+}
+
+func (r *NamedResponses) UnmarshalYAML(node *yaml.Node) error {
+	return unmarshalRef(node, &r.Ref, &r.Value)
+}
+
+func (r *RequestBodies) UnmarshalYAML(node *yaml.Node) error {
+	return unmarshalRef(node, &r.Ref, &r.Value)
+}
+
+func (r *EndpointRef) UnmarshalYAML(node *yaml.Node) error {
+	return unmarshalRef(node, &r.Ref, &r.Value)
+}
+
+func (r *ParameterRef) UnmarshalYAML(node *yaml.Node) error {
+	return unmarshalRef(node, &r.Ref, &r.Value)
+}
+
+func (r *MokapiRef) UnmarshalYAML(node *yaml.Node) error {
+	return unmarshalRef(node, &r.Ref, &r.Value)
+}
+
+func unmarshalRef(node *yaml.Node, ref *string, val interface{}) error {
+	r := &refProp{}
+	if err := node.Decode(r); err == nil && len(r.Ref) > 0 {
+		*ref = r.Ref
+		return nil
+	}
+
+	return node.Decode(val)
 }

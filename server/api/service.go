@@ -85,7 +85,7 @@ func newService(s *openapi.Config) service {
 		Name:        s.Info.Name,
 		Description: s.Info.Description,
 		Version:     s.Info.Version,
-		MokapiFile:  s.Info.Mokapi.ConfigPath,
+		MokapiFile:  s.Info.Mokapi.Value.ConfigPath,
 	}
 
 	for _, server := range s.Servers {
@@ -93,7 +93,9 @@ func newService(s *openapi.Config) service {
 	}
 
 	for path, e := range s.EndPoints {
-		service.Endpoints = append(service.Endpoints, newEndpoint(path, e))
+		if e.Value != nil {
+			service.Endpoints = append(service.Endpoints, newEndpoint(path, e.Value))
+		}
 	}
 
 	//for name, model := range s.Components.Schemas {
@@ -144,15 +146,17 @@ func newOperation(method string, o *openapi.Operation, pipeline string) operatio
 	}
 
 	for _, p := range o.Parameters {
-		v.Parameters = append(v.Parameters, newParameter(p))
+		if p.Value != nil {
+			v.Parameters = append(v.Parameters, newParameter(p.Value))
+		}
 	}
 
 	if o.RequestBody != nil {
-		for c, r := range o.RequestBody.Content {
+		for c, r := range o.RequestBody.Value.Content {
 			v.RequestBodies = append(v.RequestBodies,
 				requestBody{
-					Description:  o.RequestBody.Description,
-					Required:     o.RequestBody.Required,
+					Description:  o.RequestBody.Value.Description,
+					Required:     o.RequestBody.Value.Required,
 					ContentTypes: c,
 					Schema:       newSchema("", r.Schema, 0)})
 		}
@@ -177,42 +181,42 @@ func newParameter(p *openapi.Parameter) parameter {
 	}
 }
 
-func newResponse(status openapi.HttpStatus, r *openapi.Response) response {
-	response := response{Status: int(status), Description: r.Description, ContentTypes: make([]responseContent, 0)}
+func newResponse(status openapi.HttpStatus, r *openapi.ResponseRef) response {
+	response := response{Status: int(status), Description: r.Value.Description, ContentTypes: make([]responseContent, 0)}
 
-	for t, c := range r.Content {
+	for t, c := range r.Value.Content {
 		response.ContentTypes = append(response.ContentTypes, responseContent{Type: t, Schema: newSchema("", c.Schema, 0)})
 	}
 
 	return response
 }
 
-func newSchema(name string, s *openapi.Schema, level int) *schema {
+func newSchema(name string, s *openapi.SchemaRef, level int) *schema {
 	if s == nil {
 		return nil
 	}
 
 	v := &schema{
 		Name:        name,
-		Type:        s.Type,
+		Type:        s.Value.Type,
 		Properties:  make([]*schema, 0),
-		Ref:         s.Reference,
-		Description: s.Description,
-		Required:    s.Required,
-		Format:      s.Format,
-		Faker:       s.Faker,
-		Nullable:    s.Nullable,
+		Ref:         s.Ref,
+		Description: s.Value.Description,
+		Required:    s.Value.Required,
+		Format:      s.Value.Format,
+		Faker:       s.Value.Faker,
+		Nullable:    s.Value.Nullable,
 	}
 
-	if s.Items != nil {
-		v.Items = newSchema("", s.Items, level+1)
+	if s.Value.Items != nil {
+		v.Items = newSchema("", s.Value.Items, level+1)
 	}
 
 	if level > 10 {
 		return v
 	}
 
-	for s, p := range s.Properties {
+	for s, p := range s.Value.Properties.Value {
 		v.Properties = append(v.Properties, newSchema(s, p, level+1))
 	}
 
@@ -223,23 +227,23 @@ func newSchema(name string, s *openapi.Schema, level int) *schema {
 	return v
 }
 
-func newModel(name string, s *openapi.Schema) *schema {
+func newModel(name string, s *openapi.SchemaRef) *schema {
 	if s == nil {
 		return nil
 	}
 
-	v := &schema{Name: name, Type: s.Type, Properties: make([]*schema, 0), Ref: s.Reference}
+	v := &schema{Name: name, Type: s.Value.Type, Properties: make([]*schema, 0), Ref: s.Ref}
 
-	for s, p := range s.Properties {
-		if p.Type == "array" && p.Items != nil {
-			tName := p.Items.Type
-			if len(p.Items.Reference) > 0 {
-				seg := strings.Split(p.Items.Reference, "/")
+	for s, p := range s.Value.Properties.Value {
+		if p.Value.Type == "array" && p.Value.Items != nil {
+			tName := p.Value.Items.Value.Type
+			if len(p.Value.Items.Ref) > 0 {
+				seg := strings.Split(p.Value.Items.Ref, "/")
 				tName = seg[len(seg)-1]
 			}
 			v.Properties = append(v.Properties, &schema{Name: s, Type: fmt.Sprintf("array[%v]", tName)})
-		} else if len(p.Reference) > 0 {
-			seg := strings.Split(p.Reference, "/")
+		} else if len(p.Ref) > 0 {
+			seg := strings.Split(p.Ref, "/")
 			tName := seg[len(seg)-1]
 			v.Properties = append(v.Properties, &schema{Name: s, Type: tName})
 		} else {
@@ -247,10 +251,10 @@ func newModel(name string, s *openapi.Schema) *schema {
 		}
 	}
 
-	if s.Type == "array" && s.Items != nil {
-		tName := s.Items.Type
-		if len(s.Items.Reference) > 0 {
-			seg := strings.Split(s.Items.Reference, "/")
+	if s.Value.Type == "array" && s.Value.Items != nil {
+		tName := s.Value.Items.Value.Type
+		if len(s.Value.Items.Ref) > 0 {
+			seg := strings.Split(s.Value.Items.Ref, "/")
 			tName = seg[len(seg)-1]
 		}
 		v.Type = fmt.Sprintf("array[%v]", tName)

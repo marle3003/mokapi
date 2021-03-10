@@ -17,23 +17,30 @@ func init() {
 type Config struct {
 	Name       string
 	Pipelines  []Pipeline
-	Reference  string `yaml:"$ref" json:"$ref"`
 	ConfigPath string `yaml:"-" json:"-"`
-	Schedules  []*Schedule
+	Schedules  []Schedule
+}
+
+type ConfigRef struct {
+	Ref   string
+	Value Config
 }
 
 type Pipeline struct {
 	Name   string
-	Stages []Stage
+	Stages []*Stage
+	Stage  *Stage
 	Steps  string
 }
 
 type Stage struct {
-	Steps string
+	Name      string
+	Steps     string
+	Condition string
 }
 
 type Schedule struct {
 	Name     string
-	Cron     string
+	Every    string
 	Pipeline string
 }

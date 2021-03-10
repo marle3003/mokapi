@@ -8,7 +8,7 @@ import (
 )
 
 func parseCookie(p *openapi.Parameter, r *http.Request) (interface{}, error) {
-	switch p.Schema.Type {
+	switch p.Schema.Value.Type {
 	case "array":
 		return parseCookieArray(p, r)
 	case "object":
@@ -42,7 +42,7 @@ func parseCookieObject(p *openapi.Parameter, r *http.Request) (obj map[string]in
 			break
 		}
 		key := elements[i]
-		p, ok := p.Schema.Properties[key]
+		p, ok := p.Schema.Value.Properties.Value[key]
 		if !ok {
 			return nil, errors.Errorf("property '%v' not defined in schema", key)
 		}
@@ -72,7 +72,7 @@ func parseCookieArray(p *openapi.Parameter, r *http.Request) (result []interface
 	values := strings.Split(c.Value, ",")
 
 	for _, v := range values {
-		if i, err := parse(v, p.Schema.Items); err != nil {
+		if i, err := parse(v, p.Schema.Value.Items); err != nil {
 			return nil, err
 		} else {
 			result = append(result, i)

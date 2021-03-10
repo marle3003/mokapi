@@ -1,5 +1,28 @@
 package asyncApi
 
+import (
+	log "github.com/sirupsen/logrus"
+	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/mokapi"
+	"net/url"
+	"strconv"
+)
+
+func init() {
+	dynamic.Register("asyncapi", &Config{}, func(path string, o dynamic.Config, r dynamic.ConfigReader) (bool, dynamic.Config) {
+		eh := dynamic.NewEmptyEventHandler(o)
+		switch c := o.(type) {
+		case *Config:
+			r := refResolver{reader: r, path: path, config: c, eh: eh}
+
+			if err := r.resolveConfig(); err != nil {
+				log.Errorf("error in resolving references in config %q: %v", path, err)
+			}
+		}
+		return false, nil
+	})
+}
+
 type Config struct {
 	Info       Info
 	Servers    map[string]Server
@@ -14,7 +37,12 @@ type Info struct {
 	TermsOfService string
 	Contact        *Contact
 	License        *License
-	MokapiFile     string `yaml:"x-mokapifile" json:"x-mokapifile"`
+	Mokapi         *MokapiRef `yaml:"x-mokapi" json:"x-mokapi"`
+}
+
+type MokapiRef struct {
+	Ref   string
+	Value *mokapi.Config
 }
 
 type Contact struct {
@@ -48,7 +76,6 @@ type Channel struct {
 	Description string
 	Subscribe   *Operation
 	Publish     *Operation
-	Bindings    Bindings
 }
 
 type Operation struct {
@@ -82,5 +109,32 @@ type Components struct {
 }
 
 type Bindings struct {
-	Kafka map[string]string
+	Kafka KafkaBinding
+}
+
+func (s *Server) GetPort() int {
+	u, err := url.Parse("//" + s.Url)
+	if err != nil {
+		log.WithField("url", s.Url).Error("Invalid format in url found.")
+		return -1
+	}
+	portString := u.Port()
+	if len(portString) == 0 {
+		return 80
+	} else {
+		port, err := strconv.ParseInt(portString, 10, 32)
+		if err != nil {
+			log.WithField("url", s.Url).Error("Invalid port format in url found.")
+		}
+		return int(port)
+	}
+}
+
+func (s *Server) GetHost() string {
+	u, err := url.Parse("//" + s.Url)
+	if err != nil {
+		log.WithField("url", s.Url).Error("Invalid format in url found.")
+		return ""
+	}
+	return u.Hostname()
 }

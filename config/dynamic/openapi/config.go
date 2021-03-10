@@ -4,35 +4,25 @@ import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/mokapi"
+	"net/http"
 	"net/url"
-	"path/filepath"
 	"strconv"
 )
 
 func init() {
 	dynamic.Register("openapi", &Config{}, func(path string, o dynamic.Config, r dynamic.ConfigReader) (bool, dynamic.Config) {
-		dir := filepath.Dir(path)
 		eh := dynamic.NewEmptyEventHandler(o)
 		switch c := o.(type) {
 		case *Config:
-			if c.Info.Mokapi != nil && len(c.Info.Mokapi.Reference) > 0 {
-				ref := c.Info.Mokapi.Reference
-				if !filepath.IsAbs(ref) {
-					ref = filepath.Join(dir, ref)
-				}
-				updated, err := r.Read(ref, c.Info.Mokapi, eh)
-				if err == nil {
-					if m, ok := updated.(*mokapi.Config); ok {
-						c.Info.Mokapi = m
-					}
-				}
-			}
-
 			for _, e := range c.EndPoints {
 				updateOperations(e)
 			}
 
-			resolveSchemas(c.Components.Schemas, dir, r, eh)
+			r := refResolver{reader: r, path: path, config: c, eh: eh}
+
+			if err := r.resolveConfig(); err != nil {
+				log.Errorf("error in resolving references in config %q: %v", path, err)
+			}
 		}
 		return false, nil
 	})
@@ -45,7 +35,7 @@ type Config struct {
 	// A relative path to an individual endpoint. The path MUST begin
 	// with a forward slash ('/'). The path is appended to the url from
 	// server objects url field in order to construct the full URL
-	EndPoints  map[string]*Endpoint `yaml:"paths" json:"paths"`
+	EndPoints  map[string]*EndpointRef `yaml:"paths" json:"paths"`
 	Components Components
 }
 
@@ -59,7 +49,12 @@ type Info struct {
 
 	// The version of the service
 	Version string
-	Mokapi  *mokapi.Config `yaml:"x-mokapi" json:"x-mokapi"`
+	Mokapi  *MokapiRef `yaml:"x-mokapi" json:"x-mokapi"`
+}
+
+type MokapiRef struct {
+	Ref   string
+	Value *mokapi.Config
 }
 
 type Server struct {
@@ -68,6 +63,11 @@ type Server struct {
 	// An optional string describing the host designated by the URL.
 	// CommonMark syntax MAY be used for rich text representation.
 	Description string
+}
+
+type EndpointRef struct {
+	Ref   string
+	Value *Endpoint
 }
 
 type Endpoint struct {
@@ -107,7 +107,7 @@ type Endpoint struct {
 	// the operations described under this path. These
 	// parameters can be overridden at the operation level,
 	// but cannot be removed there
-	Parameters []*Parameter
+	Parameters Parameters
 
 	// The pipeline name used for all the operation described
 	// under this path. This pipeline name can be overridden
@@ -136,9 +136,9 @@ type Operation struct {
 	// will override it but can never remove it. The list MUST NOT include
 	// duplicated parameters. A unique parameter is defined by a combination
 	// of a name and location
-	Parameters []*Parameter
+	Parameters Parameters
 
-	RequestBody *RequestBody `yaml:"requestBody" json:"requestBody"`
+	RequestBody *RequestBodyRef `yaml:"requestBody" json:"requestBody"`
 
 	// The list of possible responses as they are returned from executing this
 	// operation.
@@ -152,7 +152,12 @@ type Operation struct {
 	Endpoint *Endpoint `yaml:"-" json:"-"`
 }
 
-type Responses map[HttpStatus]*Response
+type Parameters []*ParameterRef
+
+type ParameterRef struct {
+	Ref   string
+	Value *Parameter
+}
 
 type Parameter struct {
 	// The name of the parameter. Parameter names are case sensitive.
@@ -162,7 +167,7 @@ type Parameter struct {
 	Type ParameterLocation `yaml:"in" json:"in"`
 
 	// The schema defining the type used for the parameter
-	Schema *Schema
+	Schema *SchemaRef
 
 	// Determines whether the parameter is mandatory.
 	// If the location of the parameter is "path", this property
@@ -194,12 +199,11 @@ type SchemaRef struct {
 type Schema struct {
 	Type                 string
 	Format               string
-	Reference            string `yaml:"$ref" json:"$ref"`
 	Description          string
-	Properties           map[string]*Schema
-	AdditionalProperties *Schema // TODO custom marshal for bool, {} etc. Should it be a schema reference?
-	Faker                string  `yaml:"x-faker" json:"x-faker"`
-	Items                *Schema
+	Properties           *Schemas
+	AdditionalProperties *SchemaRef // TODO custom marshal for bool, {} etc. Should it be a schema reference?
+	Faker                string     `yaml:"x-faker" json:"x-faker"`
+	Items                *SchemaRef
 	Xml                  *Xml
 	Required             []string
 	Nullable             bool
@@ -207,6 +211,11 @@ type Schema struct {
 
 type AdditionalProperties struct {
 	Schema *Schema
+}
+
+type RequestBodyRef struct {
+	Ref   string `yaml:"$ref" json:"$ref"`
+	Value *RequestBody
 }
 
 type RequestBody struct {
@@ -220,8 +229,14 @@ type RequestBody struct {
 	Content map[string]*MediaType
 
 	// Determines if the request body is required in the request. Defaults to false.
-	Required  bool
-	Reference string `yaml:"$ref" json:"$ref"`
+	Required bool
+}
+
+type Responses map[HttpStatus]*ResponseRef
+
+type ResponseRef struct {
+	Ref   string `yaml:"$ref" json:"$ref"`
+	Value *Response
 }
 
 type Response struct {
@@ -233,24 +248,33 @@ type Response struct {
 	// The key is a media type or media type range and the value describes
 	// it. For responses that match multiple keys, only the most specific
 	// key is applicable. e.g. text/plain overrides text/*
-	Content   map[string]*MediaType
-	Reference string `yaml:"$ref" json:"$ref"`
+	Content map[string]*MediaType
 }
 
 type MediaType struct {
 	// The schema defining the content of the request, response.
-	Schema *Schema
+	Schema *SchemaRef
 }
 
 type Components struct {
 	Schemas       *Schemas
-	Responses     map[string]*Response
-	RequestBodies map[string]*RequestBody
+	Responses     *NamedResponses
+	RequestBodies *RequestBodies
 }
 
 type Schemas struct {
 	Ref   string
 	Value map[string]*SchemaRef
+}
+
+type NamedResponses struct {
+	Ref   string
+	Value map[string]*ResponseRef
+}
+
+type RequestBodies struct {
+	Ref   string
+	Value map[string]*RequestBodyRef
 }
 
 type Xml struct {
@@ -269,6 +293,7 @@ const (
 	CookieParameter ParameterLocation = "cookie"
 
 	Invalid            HttpStatus = -1
+	Undefined          HttpStatus = 0
 	Continue           HttpStatus = 100 // RFC 7231, 6.2.1
 	SwitchingProtocols HttpStatus = 101 // RFC 7231, 6.2.2
 	Processing         HttpStatus = 102 // RFC 2518, 10.1
@@ -338,7 +363,11 @@ const (
 	NetworkAuthenticationRequired HttpStatus = 511 // RFC 6585, 6
 )
 
-func updateOperations(e *Endpoint) {
+func updateOperations(r *EndpointRef) {
+	if r.Value == nil {
+		return
+	}
+	e := r.Value
 	if e.Get != nil {
 		e.Get.Endpoint = e
 	}
@@ -404,15 +433,32 @@ func (s *Server) GetPath() string {
 	return u.Path
 }
 
-func resolveSchemas(s *Schemas, dir string, r dynamic.ConfigReader, e dynamic.ChangeEventHandler) {
-	ref := s.Ref
-	if !filepath.IsAbs(ref) {
-		ref = filepath.Join(dir, ref)
+func (e *Endpoint) Operations() map[string]*Operation {
+	operations := make(map[string]*Operation, 4)
+	if v := e.Get; v != nil {
+		operations[http.MethodGet] = v
 	}
-	config, err := r.Read(ref, s, e)
-	if err == nil {
-		if schemas, ok := config.(*Schemas); ok {
-			s = schemas
-		}
+	if v := e.Patch; v != nil {
+		operations[http.MethodPatch] = v
 	}
+	if v := e.Post; v != nil {
+		operations[http.MethodPost] = v
+	}
+	if v := e.Put; v != nil {
+		operations[http.MethodPut] = v
+	}
+	if v := e.Delete; v != nil {
+		operations[http.MethodDelete] = v
+	}
+	if v := e.Head; v != nil {
+		operations[http.MethodHead] = v
+	}
+	if v := e.Options; v != nil {
+		operations[http.MethodOptions] = v
+	}
+	if v := e.Trace; v != nil {
+		operations[http.MethodTrace] = v
+	}
+
+	return operations
 }

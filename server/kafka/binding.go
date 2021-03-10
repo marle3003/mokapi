@@ -5,8 +5,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"io"
-	"mokapi/models/event"
-	"mokapi/models/event/kafka"
+	"mokapi/config/dynamic/asyncApi"
 	"mokapi/server/kafka/protocol"
 	"mokapi/server/kafka/protocol/apiVersion"
 	"mokapi/server/kafka/protocol/fetch"
@@ -25,20 +24,21 @@ type Binding struct {
 	stop      chan bool
 	listen    string
 	isRunning bool
-	service   *event.Service
 	brokers   []broker
 	groups    map[string]*group
 	topics    map[string]*topic
-	config    kafka.Binding
+	config    *asyncApi.Config
+	binding   asyncApi.KafkaBinding
 }
 
-func NewServer(addr string, c kafka.Binding) *Binding {
+func NewBinding(addr string, binding asyncApi.KafkaBinding, c *asyncApi.Config) *Binding {
 	s := &Binding{
-		stop:   make(chan bool),
-		listen: addr,
-		groups: make(map[string]*group),
-		topics: make(map[string]*topic),
-		config: c,
+		stop:    make(chan bool),
+		listen:  addr,
+		groups:  make(map[string]*group),
+		topics:  make(map[string]*topic),
+		config:  c,
+		binding: binding,
 	}
 
 	b := newBroker(1, "localhost", 9092) // id is 1 based
@@ -48,22 +48,19 @@ func NewServer(addr string, c kafka.Binding) *Binding {
 }
 
 func (s *Binding) Apply(data interface{}) error {
-	service, ok := data.(*event.Service)
+	config, ok := data.(*asyncApi.Config)
 	if !ok {
 		return errors.Errorf("unexpected parameter type %T in kafka binding", data)
 	}
-	s.service = service
+	s.config = config
 
-	for n, c := range service.Channels {
+	for n := range config.Channels {
 		name := n[1:] // remove leading slash from name
 		if _, ok := s.topics[name]; !ok {
 			s.topics[name] = &topic{partitions: map[int]*partition{
 				0: {leader: s.brokers[0], log: &batchLog{
 					batches: make([]*protocol.RecordBatch, 0, 10),
 				}}},
-			}
-			if c.Publish != nil && c.Publish.Message != nil {
-				go producer(s.topics[name], c.Publish.Message.ContentType, c.Publish.Message.Payload, s.stop)
 			}
 		}
 	}
@@ -78,7 +75,7 @@ func (s *Binding) Apply(data interface{}) error {
 	//s.listen = "0.0.0.0:9092"
 
 	if s.isRunning {
-		log.Infof("Updated configuration of ldap server: %v", s.listen)
+		log.Infof("Updated configuration of kafka server: %v", s.listen)
 
 		if shouldRestart {
 			go s.Start()
@@ -318,7 +315,7 @@ func (s *Binding) processFindCoordinator(req *findCoordinator.Request) *findCoor
 			g = &group{
 				coordinator: s.brokers[0],
 			}
-			g.balancer = newGroupBalancer(g, s.config.Group.RebalanceDelay)
+			g.balancer = newGroupBalancer(g, s.binding.Group.Initial.Rebalance.Delay)
 			s.groups[req.Key] = g
 		}
 

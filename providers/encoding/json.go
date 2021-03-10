@@ -9,7 +9,7 @@ import (
 
 type custom map[string]interface{}
 
-func MarshalJSON(obj interface{}, schema *openapi.Schema) ([]byte, error) {
+func MarshalJSON(obj interface{}, schema *openapi.SchemaRef) ([]byte, error) {
 	data := selectData(obj, schema)
 	return json.Marshal(data)
 }
@@ -41,34 +41,21 @@ func (m custom) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func selectData(data interface{}, schema *openapi.Schema) interface{} {
-	if schema == nil || schema.Type == "" {
-		if list, ok := data.([]interface{}); ok {
-			for i, e := range list {
-				list[i] = selectData(e, nil)
-			}
-			return list
-		}
-		if o, ok := data.(map[string]interface{}); ok {
-			selectedData := make(custom)
-			for k, v := range o {
-				selectedData[k] = selectData(v, nil)
-			}
-			return selectedData
-		}
+func selectData(data interface{}, schema *openapi.SchemaRef) interface{} {
+	if schema.Value == nil || schema.Value.Type == "" {
 		return data
 	}
 
-	if schema.Type == "array" {
+	if schema.Value.Type == "array" {
 		if list, ok := data.([]interface{}); ok {
 			for i, e := range list {
-				list[i] = selectData(e, schema.Items)
+				list[i] = selectData(e, schema.Value.Items)
 			}
 			return list
 		}
 		// todo error handling
 		return nil
-	} else if schema.Type == "object" {
+	} else if schema.Value.Type == "object" {
 		var obj map[string]interface{}
 		if o, isObject := data.(map[string]interface{}); isObject {
 			obj = o
@@ -81,17 +68,17 @@ func selectData(data interface{}, schema *openapi.Schema) interface{} {
 			}
 		}
 
-		if len(schema.Properties) == 0 {
+		if len(schema.Value.Properties.Value) == 0 {
 			return obj
 		}
 
 		selectedData := make(custom)
 
 		for k, v := range obj {
-			if p, ok := schema.Properties[k]; ok {
+			if p, ok := schema.Value.Properties.Value[k]; ok {
 				selectedData[k] = selectData(v, p)
-			} else if schema.AdditionalProperties != nil {
-				selectedData[k] = selectData(v, schema.AdditionalProperties)
+			} else if schema.Value.AdditionalProperties != nil {
+				selectedData[k] = selectData(v, schema.Value.AdditionalProperties)
 			}
 		}
 		return selectedData

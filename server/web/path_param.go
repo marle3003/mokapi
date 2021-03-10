@@ -19,7 +19,7 @@ func parsePath(s string, p *openapi.Parameter) (interface{}, error) {
 	}
 
 	if p.Schema != nil {
-		switch p.Schema.Type {
+		switch p.Schema.Value.Type {
 		case "array":
 			return parsePathArray(s, p)
 		case "object":
@@ -39,7 +39,7 @@ func parsePathObject(s string, p *openapi.Parameter) (obj map[string]interface{}
 			if len(kv) != 2 {
 				return nil, errors.Errorf("invalid format")
 			}
-			p, ok := p.Schema.Properties[kv[0]]
+			p, ok := p.Schema.Value.Properties.Value[kv[0]]
 			if !ok {
 				return nil, errors.Errorf("property '%v' not defined in schema", kv[0])
 			}
@@ -57,7 +57,7 @@ func parsePathObject(s string, p *openapi.Parameter) (obj map[string]interface{}
 				break
 			}
 			key := values[i]
-			p, ok := p.Schema.Properties[key]
+			p, ok := p.Schema.Value.Properties.Value[key]
 			if !ok {
 				return nil, errors.Errorf("property '%v' not defined in schema", key)
 			}
@@ -81,7 +81,7 @@ func parsePathArray(s string, p *openapi.Parameter) (result []interface{}, err e
 	values := strings.Split(s, ",")
 
 	for _, v := range values {
-		if i, err := parse(v, p.Schema.Items); err != nil {
+		if i, err := parse(v, p.Schema.Value.Items); err != nil {
 			return nil, err
 		} else {
 			result = append(result, i)

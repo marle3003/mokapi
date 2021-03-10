@@ -38,13 +38,33 @@ func (p *configParser) parsePipeline(c mokapi.Pipeline) *ast.Pipeline {
 	p.openScope()
 	defer p.closeScope()
 	pipeline.Scope = p.scope
-	if len(c.Stages) == 0 {
+	if c.Stages != nil {
+		s, _ := p.parseStages(c.Stages)
+		pipeline.Stages = s
+	} else if c.Stage != nil {
+		s := p.parseStage(c.Stage)
+		pipeline.Stages = append(pipeline.Stages, s)
+	} else {
 		s := &ast.Stage{Scope: p.scope}
 		s.Steps = p.parseSteps(c.Steps)
 		pipeline.Stages = append(pipeline.Stages, s)
 	}
 
 	return pipeline
+}
+
+func (p *configParser) parseStages(s []*mokapi.Stage) (stages []*ast.Stage, vars *ast.VarsBlock) {
+	for _, stage := range s {
+		stages = append(stages, p.parseStage(stage))
+	}
+
+	return
+}
+
+func (p *configParser) parseStage(s *mokapi.Stage) *ast.Stage {
+	src := fmt.Sprintf("stage('%v') { when { %v } steps { %v }", s.Name, s.Condition, s.Steps)
+	parser := newParser([]byte(src), p.scope)
+	return parser.parseStage()
 }
 
 func (p *configParser) parseSteps(steps string) *ast.StepBlock {

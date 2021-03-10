@@ -37,11 +37,11 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 			respond(err.Error(), http.StatusInternalServerError, context)
 			return
 		}
-		if operation.RequestBody.Required && len(body) == 0 {
+		if operation.RequestBody.Value.Required && len(body) == 0 {
 			respond("request body expected", http.StatusBadRequest, context)
 			return
 		}
-		if mediaType, ok := operation.RequestBody.Content[contentType.Key()]; ok {
+		if mediaType, ok := operation.RequestBody.Value.Content[contentType.Key()]; ok {
 			bodyParam, err = parseBody(body, contentType, mediaType.Schema)
 			if err != nil {
 				respond(err.Error(), http.StatusBadRequest, context)
@@ -104,7 +104,7 @@ func respond(message string, status int, ctx *HttpContext) {
 	http.Error(ctx.Response, message, status)
 }
 
-func parseBody(s string, contentType *media.ContentType, schema *openapi.Schema) (interface{}, error) {
+func parseBody(s string, contentType *media.ContentType, schema *openapi.SchemaRef) (interface{}, error) {
 	switch contentType.Subtype {
 	case "xml":
 		return encoding.UnmarshalXml(s, schema)

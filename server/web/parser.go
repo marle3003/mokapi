@@ -21,7 +21,7 @@ func newRequestParameters() RequestParameters {
 	return p
 }
 
-func parseParams(params []*openapi.Parameter, route string, r *http.Request) (RequestParameters, error) {
+func parseParams(params openapi.Parameters, route string, r *http.Request) (RequestParameters, error) {
 	segments := strings.Split(r.URL.Path, "/")
 
 	path := map[string]string{}
@@ -37,7 +37,11 @@ func parseParams(params []*openapi.Parameter, route string, r *http.Request) (Re
 
 	parameters := newRequestParameters()
 
-	for _, p := range params {
+	for _, ref := range params {
+		if ref.Value == nil {
+			continue
+		}
+		p := ref.Value
 		var v interface{}
 		var err error
 		var store map[string]interface{}
@@ -73,15 +77,15 @@ func parseParams(params []*openapi.Parameter, route string, r *http.Request) (Re
 	return parameters, nil
 }
 
-func parse(s string, schema *openapi.Schema) (interface{}, error) {
+func parse(s string, schema *openapi.SchemaRef) (interface{}, error) {
 	if schema == nil {
 		return s, nil
 	}
-	switch schema.Type {
+	switch schema.Value.Type {
 	case "string":
 		return s, nil
 	case "integer":
-		switch schema.Format {
+		switch schema.Value.Format {
 		case "int64":
 			return strconv.ParseInt(s, 10, 64)
 		default:
@@ -89,7 +93,7 @@ func parse(s string, schema *openapi.Schema) (interface{}, error) {
 		}
 
 	case "number":
-		switch schema.Format {
+		switch schema.Value.Format {
 		case "double":
 			return strconv.ParseFloat(s, 64)
 		default:
@@ -102,5 +106,5 @@ func parse(s string, schema *openapi.Schema) (interface{}, error) {
 	case "boolean":
 		return strconv.ParseBool(s)
 	}
-	return nil, errors.Errorf("unable to parse '%v'; schema type %q is not supported", s, schema.Type)
+	return nil, errors.Errorf("unable to parse '%v'; schema type %q is not supported", s, schema.Value.Type)
 }

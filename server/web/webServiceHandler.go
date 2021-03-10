@@ -30,7 +30,7 @@ func (handler *ServiceHandler) ServeHTTP(ctx *HttpContext) {
 		return
 	}
 
-	ctx.Mokapi = handler.config.Info.Mokapi
+	ctx.Mokapi = handler.config.Info.Mokapi.Value
 	if err := ctx.Init(); err != nil {
 		msg := err.Error()
 		http.Error(ctx.Response, msg, http.StatusBadRequest)
@@ -47,7 +47,11 @@ func (handler *ServiceHandler) resolveEndpoint(ctx *HttpContext) error {
 	reqSeg := strings.Split(ctx.Request.URL.Path, "/")
 
 endpointLoop:
-	for path, endpoint := range handler.config.EndPoints {
+	for path, ref := range handler.config.EndPoints {
+		if ref.Value == nil {
+			continue
+		}
+		endpoint := ref.Value
 		op := getOperation(ctx.Request.Method, endpoint)
 		if op == nil {
 			continue

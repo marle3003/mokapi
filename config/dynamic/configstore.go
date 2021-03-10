@@ -25,7 +25,7 @@ type Config interface {
 }
 
 type ConfigReader interface {
-	Read(path string, c Config, h ChangeEventHandler) (Config, error)
+	Read(path string, c Config, h ChangeEventHandler) error
 }
 
 type fileHandler struct {
@@ -60,7 +60,7 @@ func Register(header string, c Config, h ChangeEventHandler) {
 	configTypes = append(configTypes, configType{header, val.Type(), h})
 }
 
-func (fw *FileWatcher) Read(path string, config Config, h ChangeEventHandler) (Config, error) {
+func (fw *FileWatcher) Read(path string, config Config, h ChangeEventHandler) error {
 	fh, ok := fw.Path[path]
 	if !ok {
 		fh = newFileHandler(config)
@@ -68,7 +68,19 @@ func (fw *FileWatcher) Read(path string, config Config, h ChangeEventHandler) (C
 		fw.watcher.Add(path)
 	}
 	fh.events = append(fh.events, h)
-	return fh.f(path)
+	v, err := fh.f(path)
+	if err != nil {
+		return err
+	}
+
+	vConfig := reflect.ValueOf(config).Elem()
+	if vConfig.Kind() == reflect.Ptr {
+		vConfig.Set(reflect.ValueOf(v))
+	} else {
+		vConfig.Set(reflect.ValueOf(v).Elem())
+	}
+
+	return nil
 }
 
 func (fw *FileWatcher) Add(path string, config Config, h ChangeEventHandler) {
@@ -139,10 +151,10 @@ func (fw *FileWatcher) Start() {
 }
 
 func newFileHandler(config interface{}) fileHandler {
-
+	val := reflect.ValueOf(config).Interface()
 	return fileHandler{f: func(path string) (Config, error) {
 		//c := reflect.New(t).Interface()
-		err := loadFileConfig(path, config)
+		err := loadFileConfig(path, val)
 		return config, err
 		//if err != nil {
 		//	panic(err)

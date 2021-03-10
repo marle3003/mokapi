@@ -3,6 +3,7 @@ package web
 import (
 	"fmt"
 	"github.com/brianvoe/gofakeit/v4"
+	"github.com/pkg/errors"
 	"math/rand"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/models/media"
@@ -40,6 +41,7 @@ func (r *Response) Write(object interface{}, statusCode int, contentType string)
 	} else {
 		bytes, err = r.encodeData(object)
 		if err != nil {
+			err = errors.Wrapf(err, "unable to encode to %q", contentType)
 			r.err(err, http.StatusInternalServerError)
 			return
 		}
@@ -87,32 +89,32 @@ func (r *Response) encodeData(data interface{}) ([]byte, error) {
 	}
 }
 
-func getRandomObject(schema *openapi.Schema) interface{} {
-	if schema.Type == "object" {
+func getRandomObject(schema *openapi.SchemaRef) interface{} {
+	if schema.Value.Type == "object" {
 		obj := make(map[string]interface{})
-		for name, propSchema := range schema.Properties {
+		for name, propSchema := range schema.Value.Properties.Value {
 			value := getRandomObject(propSchema)
 			obj[name] = value
 		}
 		return obj
-	} else if schema.Type == "array" {
+	} else if schema.Value.Type == "array" {
 		length := rand.Intn(5)
 		obj := make([]interface{}, length)
 		for i := range obj {
-			obj[i] = getRandomObject(schema.Items)
+			obj[i] = getRandomObject(schema.Value.Items)
 		}
 		return obj
 	} else {
-		if len(schema.Faker) > 0 {
-			switch schema.Faker {
+		if len(schema.Value.Faker) > 0 {
+			switch schema.Value.Faker {
 			case "numbers.uint32":
 				return gofakeit.Uint32()
 			default:
-				return gofakeit.Generate(fmt.Sprintf("{%s}", schema.Faker))
+				return gofakeit.Generate(fmt.Sprintf("{%s}", schema.Value.Faker))
 			}
-		} else if schema.Type == "integer" {
+		} else if schema.Value.Type == "integer" {
 			return gofakeit.Int32()
-		} else if schema.Type == "string" {
+		} else if schema.Value.Type == "string" {
 			return gofakeit.Lexify("???????????????")
 		}
 	}

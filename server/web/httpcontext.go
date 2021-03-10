@@ -23,11 +23,11 @@ type HttpContext struct {
 	Response     http.ResponseWriter
 	Request      *http.Request
 	Parameters   RequestParameters
-	ResponseType *openapi.Response
+	ResponseType *openapi.ResponseRef
 	ServicPath   string
 	Operation    *openapi.Operation
 	ContentType  *media.ContentType
-	Schema       *openapi.Schema
+	Schema       *openapi.SchemaRef
 	Mokapi       *mokapi.Config
 	body         string
 	metric       *models.RequestMetric
@@ -66,7 +66,7 @@ func (context *HttpContext) Init() error {
 	if error != nil {
 		return error
 	}
-	context.Schema = context.ResponseType.Content[context.ContentType.Key()].Schema
+	context.Schema = context.ResponseType.Value.Content[context.ContentType.Key()].Schema
 
 	return nil
 }
@@ -96,7 +96,7 @@ func (context *HttpContext) setContentType() error {
 	if accept != "" {
 		for _, mimeType := range strings.Split(accept, ",") {
 			contentType := media.ParseContentType(mimeType)
-			if _, ok := context.ResponseType.Content[contentType.Key()]; ok {
+			if _, ok := context.ResponseType.Value.Content[contentType.Key()]; ok {
 				context.ContentType = contentType
 				return nil
 			}
@@ -106,7 +106,7 @@ func (context *HttpContext) setContentType() error {
 	// no matching content found => returning first in list
 	// The iteration order over maps is not specified and is not
 	// guaranteed to be the same from one iteration to the next
-	for i, _ := range context.ResponseType.Content {
+	for i, _ := range context.ResponseType.Value.Content {
 		// return first element
 		context.ContentType = media.ParseContentType(i)
 		return nil
