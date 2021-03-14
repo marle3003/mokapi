@@ -38,6 +38,24 @@ func (p *configParser) parsePipeline(c mokapi.Pipeline) *ast.Pipeline {
 	p.openScope()
 	defer p.closeScope()
 	pipeline.Scope = p.scope
+
+	if len(c.Variables) > 0 {
+		var vars strings.Builder
+		for _, v := range c.Variables {
+			if len(v.Expr) > 0 {
+				vars.WriteString(v.Expr)
+			} else {
+				vars.WriteString(v.Name)
+				vars.WriteString(" := ")
+				vars.WriteString(v.Value)
+			}
+			vars.WriteRune('\n')
+		}
+
+		parser := newParser([]byte(fmt.Sprintf("vars ( %v )", vars.String())), p.scope)
+		pipeline.Vars = parser.parseVarsBlock()
+	}
+
 	if c.Stages != nil {
 		s, _ := p.parseStages(c.Stages)
 		pipeline.Stages = s

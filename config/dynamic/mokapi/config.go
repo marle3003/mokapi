@@ -27,10 +27,11 @@ type ConfigRef struct {
 }
 
 type Pipeline struct {
-	Name   string
-	Stages []*Stage
-	Stage  *Stage
-	Steps  string
+	Name      string
+	Stages    []*Stage
+	Stage     *Stage
+	Steps     string
+	Variables Variables
 }
 
 type Stage struct {
@@ -40,7 +41,18 @@ type Stage struct {
 }
 
 type Schedule struct {
-	Name     string
-	Every    string
-	Pipeline string
+	Name  string
+	Every string
+
+	// Number of iterations, or less than 1 for unlimited
+	Iterations int
+	Pipeline   string
+}
+
+type Variables []Variable
+
+type Variable struct {
+	Name  string
+	Value string
+	Expr  string
 }

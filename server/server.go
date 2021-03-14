@@ -6,11 +6,9 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/ldap"
-	"mokapi/config/dynamic/mokapi"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/config/static"
 	"mokapi/models"
-	"mokapi/providers/pipeline"
 	"mokapi/server/api"
 	"mokapi/server/kafka"
 	ldapServer "mokapi/server/ldap"
@@ -28,8 +26,7 @@ type Server struct {
 	runtime     *models.Runtime
 	stopChannel chan bool
 
-	Bindings   map[string]Binding
-	Schedulers map[string]*pipeline.Scheduler
+	Bindings map[string]Binding
 }
 
 func NewServer(config *static.Config) *Server {
@@ -41,7 +38,6 @@ func NewServer(config *static.Config) *Server {
 		runtime:     runtime,
 		stopChannel: make(chan bool),
 		Bindings:    make(map[string]Binding),
-		Schedulers:  make(map[string]*pipeline.Scheduler),
 	}
 
 	watcher.AddListener(func(o dynamic.Config) {
@@ -111,19 +107,6 @@ func (s *Server) updateBindings(config dynamic.Config) {
 			err := binding.Apply(c)
 			if err != nil {
 				log.Error(err.Error())
-			}
-		}
-	case *mokapi.Config:
-		if scheduler, ok := s.Schedulers[c.ConfigPath]; ok {
-			scheduler.Stop()
-			if err := scheduler.Start(); err != nil {
-				log.Errorf("unable to start scheduler with config %q: %v", c.ConfigPath, err)
-			}
-		} else {
-			scheduler = pipeline.NewScheduler(c)
-			s.Schedulers[c.ConfigPath] = scheduler
-			if err := scheduler.Start(); err != nil {
-				log.Errorf("unable to start scheduler with config %q: %v", c.ConfigPath, err)
 			}
 		}
 	}

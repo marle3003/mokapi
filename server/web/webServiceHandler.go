@@ -30,7 +30,9 @@ func (handler *ServiceHandler) ServeHTTP(ctx *HttpContext) {
 		return
 	}
 
-	ctx.Mokapi = handler.config.Info.Mokapi.Value
+	if handler.config.Info.Mokapi != nil {
+		ctx.Mokapi = handler.config.Info.Mokapi.Value
+	}
 	if err := ctx.Init(); err != nil {
 		msg := err.Error()
 		http.Error(ctx.Response, msg, http.StatusBadRequest)

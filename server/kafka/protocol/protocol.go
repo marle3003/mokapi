@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 type ApiKey int16
@@ -25,16 +26,12 @@ const (
 	ApiVersions     ApiKey = 18
 )
 
-type ErrorCode int16
-
 const (
 	UnknownTopicOrPartition = 3
 )
 
 var (
-	apiNames = map[ApiKey]string{
-		ApiVersions: "ApiVersions",
-	}
+	pagePool = sync.Pool{New: func() interface{} { return new(page) }}
 )
 
 var ApiTypes = map[ApiKey]ApiType{}
@@ -134,7 +131,12 @@ func ReadMessage(r io.Reader) (h *Header, msg Message, err error) {
 }
 
 func WriteMessage(w io.Writer, k ApiKey, version int16, correlationId int32, msg Message) {
-	p := &page{}
+	p := pagePool.Get().(*page)
+	defer func() {
+		p.Reset()
+		pagePool.Put(p)
+	}()
+
 	e := NewEncoder(p)
 	t := ApiTypes[k]
 

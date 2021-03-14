@@ -32,10 +32,10 @@ type RequestTopic struct {
 }
 
 type Response struct {
-	ThrottleTimeMs int32            `kafka:"min=3"`
-	Topics         []ResponseTopic  `kafka:""`
-	ErrorCode      int16            `kafka:"min=2"`
-	TagFields      map[int64]string `kafka:"type=TAG_BUFFER,min=6"`
+	ThrottleTimeMs int32              `kafka:"min=3"`
+	Topics         []ResponseTopic    `kafka:""`
+	ErrorCode      protocol.ErrorCode `kafka:"min=2"`
+	TagFields      map[int64]string   `kafka:"type=TAG_BUFFER,min=6"`
 }
 
 type ResponseTopic struct {

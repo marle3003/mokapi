@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"sync"
 	"text/template"
 	"time"
 )
@@ -34,10 +35,11 @@ type fileHandler struct {
 }
 
 type FileWatcher struct {
-	Path    map[string]fileHandler
+	Path    map[string]*fileHandler
 	watcher *fsnotify.Watcher
 	close   chan bool
 	update  chan Config
+	lock    sync.RWMutex
 }
 
 type configType struct {
@@ -61,6 +63,8 @@ func Register(header string, c Config, h ChangeEventHandler) {
 }
 
 func (fw *FileWatcher) Read(path string, config Config, h ChangeEventHandler) error {
+	fw.lock.Lock()
+	defer fw.lock.Unlock()
 	fh, ok := fw.Path[path]
 	if !ok {
 		fh = newFileHandler(config)
@@ -83,11 +87,27 @@ func (fw *FileWatcher) Read(path string, config Config, h ChangeEventHandler) er
 	return nil
 }
 
-func (fw *FileWatcher) Add(path string, config Config, h ChangeEventHandler) {
-	fh := newFileHandler(config)
-	fh.events = append(fh.events, h)
-	fw.Path[path] = fh
-	fw.watcher.Add(path)
+func (fw *FileWatcher) add(path string) {
+	fw.lock.Lock()
+	defer fw.lock.Unlock()
+
+	if fh, ok := fw.Path[path]; !ok {
+		ci := &configItem{}
+		if err := loadFileConfig(path, ci); err != nil {
+			log.Errorf("unable to read config %v: %v", path, err.Error())
+		}
+		if ci.item != nil {
+			fh = newFileHandler(ci.item)
+			fh.events = append(fh.events, ci.handler)
+			fw.Path[path] = fh
+			fw.watcher.Add(path)
+			go func() {
+				ci.handler(path, ci.item, fw)
+				fw.update <- ci.item
+			}()
+
+		}
+	}
 }
 
 func (fw *FileWatcher) Start() {
@@ -135,12 +155,7 @@ func (fw *FileWatcher) Start() {
 					if config, err := handler.f(evt.Name); err != nil {
 						log.Errorf("unable to read %v: %v", evt.Name, err.Error())
 					} else {
-
-						for _, e := range handler.events {
-							if b, c := e(evt.Name, config, fw); b {
-								fw.update <- c
-							}
-						}
+						fw.onChanged(handler, evt.Name, config)
 					}
 				}
 
@@ -150,24 +165,28 @@ func (fw *FileWatcher) Start() {
 	}()
 }
 
-func newFileHandler(config interface{}) fileHandler {
+func (fw *FileWatcher) onChanged(h *fileHandler, path string, config Config) {
+	for _, e := range h.events {
+		if b, c := e(path, config, fw); b {
+			fw.update <- c
+		}
+	}
+}
+
+func newFileHandler(config interface{}) *fileHandler {
 	val := reflect.ValueOf(config).Interface()
-	return fileHandler{f: func(path string) (Config, error) {
-		//c := reflect.New(t).Interface()
+	return &fileHandler{f: func(path string) (Config, error) {
 		err := loadFileConfig(path, val)
 		return config, err
-		//if err != nil {
-		//	panic(err)
-		//}
-		//return h(path, config, r)
 	}}
 }
 
 func NewFileWatcher(update chan Config, close chan bool) *FileWatcher {
 	return &FileWatcher{
-		Path:   make(map[string]fileHandler),
+		Path:   make(map[string]*fileHandler),
 		close:  close,
 		update: update,
+		lock:   sync.RWMutex{},
 	}
 }
 
@@ -252,8 +271,8 @@ func (cw *ConfigWatcher) Start() error {
 						log.Errorf("unable to read event from %v: %v", evt.Name, err)
 					} else if b && !skipPath(evt.Name) {
 						cw.watcher.Add(evt.Name)
-					} else if _, ok := cw.fw.Path[evt.Name]; !ok && isValidConfigFile(evt.Name) {
-						go cw.readFile(evt.Name)
+					} else if isValidConfigFile(evt.Name) {
+						go cw.fw.add(evt.Name)
 					}
 				}
 
@@ -278,22 +297,10 @@ func (cw *ConfigWatcher) walkDir(path string, fi os.FileInfo, _ error) error {
 		}
 		return cw.watcher.Add(path)
 	} else if isValidConfigFile(path) {
-		go cw.readFile(path)
+		go cw.fw.add(path)
 	}
 
 	return nil
-}
-
-func (cw *ConfigWatcher) readFile(path string) {
-	ci := &configItem{}
-	if err := loadFileConfig(path, ci); err != nil {
-		log.Errorf("unable to read config %v: %v", path, err.Error())
-	}
-	if ci.item != nil {
-		cw.fw.Add(path, ci.item, ci.handler)
-		ci.handler(path, ci.item, cw.fw)
-		cw.onConfigChanged(ci.item)
-	}
 }
 
 type configItem struct {
@@ -342,6 +349,7 @@ func skipPath(path string) bool {
 }
 
 func loadFileConfig(filename string, element interface{}) error {
+	log.Infof("reading config %q", filename)
 	data, error := ioutil.ReadFile(filename)
 	if error != nil {
 		return error

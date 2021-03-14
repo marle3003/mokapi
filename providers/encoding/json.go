@@ -46,6 +46,21 @@ func selectData(data interface{}, schema *openapi.SchemaRef) interface{} {
 		return data
 	}
 
+	if data == nil {
+		return nil
+	}
+
+	switch data.(type) {
+	case []interface{}:
+		if schema.Value.Type != "array" {
+			return fmt.Errorf("expected %q but found array", schema.Value.Type)
+		}
+	case map[string]interface{}:
+		if schema.Value.Type != "object" {
+			return fmt.Errorf("expected %q but found object", schema.Value.Type)
+		}
+	}
+
 	if schema.Value.Type == "array" {
 		if list, ok := data.([]interface{}); ok {
 			for i, e := range list {
@@ -68,7 +83,7 @@ func selectData(data interface{}, schema *openapi.SchemaRef) interface{} {
 			}
 		}
 
-		if len(schema.Value.Properties.Value) == 0 {
+		if schema.Value.Properties == nil || len(schema.Value.Properties.Value) == 0 {
 			return obj
 		}
 

@@ -23,6 +23,8 @@ func init() {
 			if err := r.resolveConfig(); err != nil {
 				log.Errorf("error in resolving references in config %q: %v", path, err)
 			}
+
+			return true, c
 		}
 		return false, nil
 	})

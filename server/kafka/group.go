@@ -1,6 +1,7 @@
 package kafka
 
 import (
+	log "github.com/sirupsen/logrus"
 	"mokapi/server/kafka/protocol"
 	"mokapi/server/kafka/protocol/joinGroup"
 	"mokapi/server/kafka/protocol/syncGroup"
@@ -18,8 +19,9 @@ var (
 )
 
 type group struct {
+	name string
 	// leader is at index 0, followed by the followers
-	consumers   []consumer
+	members     []groupMember
 	coordinator broker
 	// Upon every completion of the join group phase, the coordinator
 	// increments a GenerationId for the group. This is returned as a field
@@ -33,12 +35,19 @@ type group struct {
 	state            groupState
 	balancer         *groupBalancer
 	rebalanceTimeout int
+	sessionTimeout   int
+}
+
+type groupMember struct {
+	consumer *client
+	memberId string
 }
 
 type groupBalancer struct {
 	g              *group
 	join           chan join
-	sync           chan sync
+	sync           chan syncData
+	stop           chan bool
 	rebalanceDelay int
 }
 
@@ -48,12 +57,53 @@ type strategyCounter struct {
 }
 
 type join struct {
-	consumer consumer
+	consumer *client
 	write    func(protocol.Message)
 	// assignment strategy, ordered by consumer's preference
 	protocols        []groupAssignmentStrategy
 	generationId     int
 	rebalanceTimeout int
+	sessionTimeout   int
+}
+
+func (b *groupBalancer) startGroupWatcher() {
+	ticker := time.NewTicker(time.Duration(b.g.sessionTimeout) * time.Millisecond)
+	for {
+		select {
+		case <-b.stop:
+			return
+		case <-ticker.C:
+			if b.g.state != stable {
+				continue
+			}
+			i := 0
+			t := time.Now()
+			timeout := int64(b.g.sessionTimeout)
+			needRebalance := false
+			for _, m := range b.g.members {
+
+				d := t.Sub(m.consumer.lastHeartbeat)
+				if d.Milliseconds() < timeout {
+					b.g.members[i] = m
+					i++
+				} else {
+					needRebalance = true
+					log.Infof("kafka: session timeout of consumer %q in group %q", m.consumer.id, b.g.name)
+				}
+			}
+
+			b.g.members = b.g.members[:i]
+
+			if needRebalance {
+				if len(b.g.members) == 0 {
+					b.g.state = empty
+				} else {
+					b.g.state = preparingRebalance
+					go b.startJoin()
+				}
+			}
+		}
+	}
 }
 
 func (j join) getMetadata(strategy string) []byte {
@@ -65,8 +115,8 @@ func (j join) getMetadata(strategy string) []byte {
 	return nil
 }
 
-type sync struct {
-	consumer     consumer
+type syncData struct {
+	consumer     *client
 	assignments  map[string][]byte
 	write        func(protocol.Message)
 	generationId int
@@ -76,13 +126,14 @@ func newGroupBalancer(g *group, rebalanceDelay int) *groupBalancer {
 	return &groupBalancer{
 		g:              g,
 		join:           make(chan join),
-		sync:           make(chan sync),
+		sync:           make(chan syncData),
+		stop:           make(chan bool),
 		rebalanceDelay: rebalanceDelay,
 	}
 }
 
 func (b *groupBalancer) startSync() {
-	members := make([]sync, 0)
+	members := make([]syncData, 0)
 	assigments := make(map[string][]byte)
 
 StopWaitingForConsumers:
@@ -95,7 +146,7 @@ StopWaitingForConsumers:
 				if s.assignments != nil {
 					assigments = s.assignments
 				}
-				if len(members) == len(b.g.consumers) {
+				if len(members) == len(b.g.members) {
 					break StopWaitingForConsumers
 				}
 			} else {
@@ -122,9 +173,11 @@ StopWaitingForConsumers:
 			Assignment: assigments[m.consumer.id],
 		}
 		m.write(r)
+		m.consumer.group = b.g
 	}
 
 	b.g.state = stable
+	b.startGroupWatcher()
 }
 
 func (b *groupBalancer) startJoin() {
@@ -133,19 +186,37 @@ func (b *groupBalancer) startJoin() {
 StopWaitingForConsumers:
 	for {
 		select {
+		case <-b.stop:
+			return
 		case j := <-b.join:
 			members = append(members, j)
-		case <-time.After(10 * time.Second):
+		case <-time.After(5 * time.Second):
 			break StopWaitingForConsumers
 		}
+	}
+
+	if len(members) == 0 {
+		b.g.state = empty
+		return
 	}
 
 	// switch to syncing state
 	b.g.state = completingRebalance
 
+	i := 0
+	for _, m := range b.g.members {
+		if hasJoined(m.consumer, members) {
+			b.g.members[i] = m
+			i++
+		}
+	}
+	b.g.members = b.g.members[:i]
+
 	strategies := make([]strategyCounter, 0)
 	for _, m := range members {
-		b.g.consumers = append(b.g.consumers, m.consumer)
+		if !isMember(m.consumer, b.g.members) {
+			b.g.members = append(b.g.members, groupMember{consumer: m.consumer})
+		}
 		for _, p := range m.protocols {
 			shouldAdd := true
 			for _, s := range strategies {
@@ -162,7 +233,7 @@ StopWaitingForConsumers:
 
 	chosenStrategy := ""
 	for _, s := range strategies {
-		if s.counter == len(b.g.consumers) {
+		if s.counter == len(b.g.members) {
 			chosenStrategy = s.name
 			break
 		}
@@ -175,12 +246,12 @@ StopWaitingForConsumers:
 	rLeader := &joinGroup.Response{
 		GenerationId: int32(b.g.generationId),
 		ProtocolName: chosenStrategy,
-		Leader:       b.g.consumers[0].id,
-		MemberId:     b.g.consumers[0].id,
-		Members:      make([]joinGroup.Member, 0, len(b.g.consumers)),
+		Leader:       b.g.members[0].consumer.id,
+		MemberId:     b.g.members[0].consumer.id,
+		Members:      make([]joinGroup.Member, 0, len(b.g.members)),
 	}
 
-	send := make([]func(), 0, len(b.g.consumers))
+	send := make([]func(), 0, len(b.g.members))
 	for i, m := range members {
 		if i > 0 {
 			r := &joinGroup.Response{
@@ -192,6 +263,7 @@ StopWaitingForConsumers:
 			send = append(send, func() { m.write(r) })
 		} else {
 			send = append(send, func() { m.write(rLeader) })
+			b.g.sessionTimeout = m.sessionTimeout
 			b.g.rebalanceTimeout = m.rebalanceTimeout
 		}
 		rLeader.Members = append(rLeader.Members, joinGroup.Member{
@@ -206,4 +278,22 @@ StopWaitingForConsumers:
 	}
 
 	b.startSync()
+}
+
+func isMember(c *client, members []groupMember) bool {
+	for _, m := range members {
+		if m.consumer.id == c.id {
+			return true
+		}
+	}
+	return false
+}
+
+func hasJoined(c *client, members []join) bool {
+	for _, m := range members {
+		if m.consumer.id == c.id {
+			return true
+		}
+	}
+	return false
 }

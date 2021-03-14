@@ -36,14 +36,14 @@ type Protocol struct {
 }
 
 type Response struct {
-	ThrottleTimeMs int32            `kafka:"min=2"`
-	ErrorCode      int16            `kafka:""`
-	GenerationId   int32            `kafka:""`
-	ProtocolName   string           `kafka:"compact=6"`
-	Leader         string           `kafka:"compact=6"`
-	MemberId       string           `kafka:"compact=6"`
-	Members        []Member         `kafka:""`
-	TagFields      map[int64]string `kafka:"type=TAG_BUFFER,min=6"`
+	ThrottleTimeMs int32              `kafka:"min=2"`
+	ErrorCode      protocol.ErrorCode `kafka:""`
+	GenerationId   int32              `kafka:""`
+	ProtocolName   string             `kafka:"compact=6"`
+	Leader         string             `kafka:"compact=6"`
+	MemberId       string             `kafka:"compact=6"`
+	Members        []Member           `kafka:""`
+	TagFields      map[int64]string   `kafka:"type=TAG_BUFFER,min=6"`
 }
 
 type Member struct {

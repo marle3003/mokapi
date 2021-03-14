@@ -58,14 +58,21 @@ func (context *HttpContext) Body() string {
 }
 
 func (context *HttpContext) Init() error {
-	error := context.setFirstSuccessResponse(context.Operation)
-	if error != nil {
-		return error
+	err := context.setFirstSuccessResponse(context.Operation)
+	if err != nil {
+		return err
 	}
-	error = context.setContentType()
-	if error != nil {
-		return error
+	err = context.setContentType()
+	if err != nil {
+		return err
 	}
+
+	if mt, ok := context.ResponseType.Value.Content[context.ContentType.Key()]; !ok {
+		return fmt.Errorf("no matching content type %q found", context.ContentType.Key())
+	} else {
+		context.Schema = mt.Schema
+	}
+
 	context.Schema = context.ResponseType.Value.Content[context.ContentType.Key()].Schema
 
 	return nil

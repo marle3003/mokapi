@@ -70,7 +70,7 @@ func (r refResolver) resolveMokapiRef(m *MokapiRef) error {
 				return err
 			}
 		} else {
-			err := r.resolve(u.Fragment, r.config, &m.Value)
+			err := r.resolve(u.Fragment, r.config, m.Value)
 			if err != nil {
 				return err
 			}
@@ -105,6 +105,16 @@ func (r refResolver) resolveSchemas(s *Schemas) error {
 			if err != nil {
 				return err
 			}
+		}
+	}
+
+	if s.Value == nil {
+		return nil
+	}
+
+	for _, child := range s.Value {
+		if err := r.resolveSchemaRef(child); err != nil {
+			return err
 		}
 	}
 
@@ -355,10 +365,12 @@ func (r refResolver) resolveSchemaRef(s *SchemaRef) error {
 			}
 
 		} else {
-			err := r.resolve(s.Ref, r.config, &s)
+			schema := &SchemaRef{}
+			err := r.resolve(u.Fragment, r.config, &schema)
 			if err != nil {
 				return err
 			}
+			s.Value = schema.Value
 		}
 	}
 
@@ -382,10 +394,10 @@ func (r refResolver) resolveSchemaRef(s *SchemaRef) error {
 }
 
 func (r refResolver) resolve(ref string, node interface{}, val interface{}) (err error) {
-	tokens := strings.Split(ref[1:], "/")
+	tokens := strings.Split(ref, "/")
 
 	i := node
-	for _, t := range tokens {
+	for _, t := range tokens[1:] {
 		i, err = get(t, i)
 	}
 
@@ -407,7 +419,7 @@ func get(token string, node interface{}) (interface{}, error) {
 
 	switch rValue.Kind() {
 	case reflect.Struct:
-		f := rValue.FieldByName(token)
+		f := caseInsenstiveFieldByName(rValue, token)
 		if f.IsValid() {
 			return f.Interface(), nil
 		}
@@ -441,4 +453,13 @@ func isLocalRef(s string) bool {
 
 func isSingleElem(s string) bool {
 	return strings.Contains(s, "#")
+}
+
+func (s *Schemas) resolve(token string) (interface{}, error) {
+	return get(token, s.Value)
+}
+
+func caseInsenstiveFieldByName(v reflect.Value, name string) reflect.Value {
+	name = strings.ToLower(name)
+	return v.FieldByNameFunc(func(n string) bool { return strings.ToLower(n) == name })
 }

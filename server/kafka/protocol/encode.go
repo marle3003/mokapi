@@ -5,7 +5,6 @@ import (
 	"hash/crc32"
 	"io"
 	"reflect"
-	"sync"
 )
 
 type encodeFunc func(*Encoder, reflect.Value)
@@ -45,13 +44,16 @@ func (p *page) Size() int {
 	return p.offset
 }
 
+func (p *page) Reset() {
+	p.offset = 0
+}
+
 func (p *page) Checksum(start, end int64) uint32 {
 	table := crc32.MakeTable(crc32.Castagnoli)
 	return crc32.Checksum(p.buffer[start:end], table)
 }
 
 var (
-	pagePool = sync.Pool{New: func() interface{} { return new(page) }}
 	writerTo = reflect.TypeOf((*WriterTo)(nil)).Elem()
 )
 

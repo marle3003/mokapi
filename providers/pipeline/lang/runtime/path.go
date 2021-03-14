@@ -67,7 +67,7 @@ func (v *pathVisitor) Visit(node ast.Node) ast.Visitor {
 			v.outer.Stack().Push(obj)
 			v.outer.Stack().Push(path)
 		} else {
-			v.outer.AddError(v.path.Path.Pos(), err.Error())
+			v.outer.AddError(v.path.Path.Pos(), fmt.Sprintf("error in expression %q: %v", path.String(), err))
 		}
 	} else {
 		v.outer.Stack().Push(val)

@@ -38,6 +38,10 @@ func (n *Number) String() string {
 }
 
 func (n *Number) InvokeOp(op token.Token, obj Object) (Object, error) {
+	if p, ok := obj.(*PathValue); ok {
+		return n.InvokeOp(op, p.value)
+	}
+
 	if other, ok := obj.(*Number); ok {
 		switch op {
 		case token.ADD:
@@ -75,7 +79,7 @@ func (n *Number) InvokeOp(op token.Token, obj Object) (Object, error) {
 			return nil, fmt.Errorf("unsupported operation '%v' on type number", op)
 		}
 	}
-	return nil, fmt.Errorf("operator '%v' is not defined on %v", op, reflect.TypeOf(obj))
+	return nil, fmt.Errorf("number operation '%v' with operand type %v not supported", op, reflect.TypeOf(obj))
 
 }
 

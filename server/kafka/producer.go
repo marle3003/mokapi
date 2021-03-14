@@ -1,5 +1,52 @@
 package kafka
 
+import (
+	"fmt"
+	"mokapi/providers/pipeline/lang/types"
+	"mokapi/server/kafka/protocol"
+	"time"
+)
+
+type ProducerStep struct {
+	types.AbstractStep
+	topics map[string]*topic
+}
+
+type ProducerStepExecution struct {
+	Topic   string `step:"topic,required"`
+	Key     string `step:"key"`
+	Message string `step:"message"`
+
+	step *ProducerStep
+}
+
+func (s *ProducerStep) Start() types.StepExecution {
+	return &ProducerStepExecution{step: s}
+}
+
+func (e *ProducerStepExecution) Run(_ types.StepContext) (interface{}, error) {
+	if len(e.Topic) == 0 {
+		return nil, fmt.Errorf("missing topic")
+	}
+	if t, ok := e.step.topics[e.Topic]; !ok {
+		return nil, fmt.Errorf("topic %q not found", e.Topic)
+	} else {
+		record := &protocol.RecordBatch{
+			Records: []protocol.Record{
+				{
+					Offset:  0,
+					Time:    time.Now(),
+					Key:     nil,
+					Value:   []byte(e.Message),
+					Headers: nil,
+				},
+			},
+		}
+		err := t.addRecord(0, record)
+		return nil, err
+	}
+}
+
 //func producer(topic *topic, contentType *media.ContentType, schema string, stop chan bool) {
 //	defer log.Info("producer stopped")
 //

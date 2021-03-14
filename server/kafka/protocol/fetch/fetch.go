@@ -48,11 +48,11 @@ type RequestPartition struct {
 }
 
 type Response struct {
-	ThrottleTimeMs int32            `kafka:"min=1"`
-	ErrorCode      int16            `kafka:"min=7"`
-	SessionId      int32            `kafka:"min=7"`
-	Topics         []ResponseTopic  `kafka:"compact=12"`
-	TagFields      map[int64]string `kafka:"type=TAG_BUFFER,min=12"`
+	ThrottleTimeMs int32              `kafka:"min=1"`
+	ErrorCode      protocol.ErrorCode `kafka:"min=7"`
+	SessionId      int32              `kafka:"min=7"`
+	Topics         []ResponseTopic    `kafka:"compact=12"`
+	TagFields      map[int64]string   `kafka:"type=TAG_BUFFER,min=12"`
 }
 
 type ResponseTopic struct {

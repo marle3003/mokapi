@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"github.com/go-co-op/gocron"
+	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/mokapi"
 	"mokapi/providers/pipeline/lang/ast"
 	"mokapi/providers/pipeline/lang/parser"
@@ -12,22 +13,25 @@ import (
 )
 
 type Scheduler struct {
-	config *mokapi.Config
-	cron   *gocron.Scheduler
-	jobs   []*gocron.Job
+	cron *gocron.Scheduler
+	jobs []*gocron.Job
 }
 
-func NewScheduler(config *mokapi.Config) *Scheduler {
-	return &Scheduler{config: config, cron: gocron.NewScheduler(time.UTC)}
+func NewScheduler() *Scheduler {
+	return &Scheduler{cron: gocron.NewScheduler(time.UTC)}
 }
 
-func (s *Scheduler) Start(options ...PipelineOptions) (err error) {
+func (s *Scheduler) Start(config *mokapi.Config, options ...PipelineOptions) (err error) {
+	if config == nil || len(config.Schedules) == 0 {
+		return
+	}
+
 	scope := ast.NewScope(builtInFunctions)
 	err = WithGlobalVars(map[types.Type]interface{}{
 		runtime.EnvVarsType: runtime.NewEnvVars(
 			runtime.FromOS(),
 			runtime.With(map[string]string{
-				"WORKING_DIRECTORY": filepath.Dir(s.config.ConfigPath),
+				"WORKING_DIRECTORY": filepath.Dir(config.ConfigPath),
 			})),
 	})(scope)
 	if err != nil {
@@ -42,14 +46,20 @@ func (s *Scheduler) Start(options ...PipelineOptions) (err error) {
 	}
 
 	var f *ast.File
-	f, err = parser.ParseConfig(s.config, scope)
+	f, err = parser.ParseConfig(config, scope)
 	if err != nil {
 		return
 	}
 
-	for _, c := range s.config.Schedules {
-		j, err := s.cron.Every(c.Every).Do(func() {
-			runtime.RunPipeline(f, c.Pipeline)
+	for _, c := range config.Schedules {
+		t := s.cron.Every(c.Every)
+		if c.Iterations >= 1 {
+			t.LimitRunsTo(c.Iterations)
+		}
+		j, err := t.Do(func() {
+			if err := runtime.RunPipeline(f, c.Pipeline); err != nil {
+				log.Errorf("error in pipeline %q: %v", c.Pipeline, err)
+			}
 		})
 		if err != nil {
 			return err
@@ -64,6 +74,6 @@ func (s *Scheduler) Start(options ...PipelineOptions) (err error) {
 
 func (s *Scheduler) Stop() {
 	for _, j := range s.jobs {
-		s.cron.Remove(j)
+		s.cron.RemoveByReference(j)
 	}
 }
