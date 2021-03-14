@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/mokapi"
 	"mokapi/providers/pipeline/lang/ast"
 	"strings"
@@ -79,10 +80,15 @@ func (p *configParser) parseStages(s []*mokapi.Stage) (stages []*ast.Stage, vars
 	return
 }
 
-func (p *configParser) parseStage(s *mokapi.Stage) *ast.Stage {
-	src := fmt.Sprintf("stage('%v') { when { %v } steps { %v }", s.Name, s.Condition, s.Steps)
+func (p *configParser) parseStage(s *mokapi.Stage) (stage *ast.Stage) {
+	src := fmt.Sprintf("stage('%v') { when { %v \n } steps { %v \n }", s.Name, s.Condition, s.Steps)
 	parser := newParser([]byte(src), p.scope)
-	return parser.parseStage()
+	stage = parser.parseStage()
+	err := parser.errors.Err()
+	if err != nil {
+		log.Errorf(err.Error())
+	}
+	return
 }
 
 func (p *configParser) parseSteps(steps string) *ast.StepBlock {

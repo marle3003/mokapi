@@ -2,7 +2,6 @@ package web
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"io/ioutil"
 	"mokapi/config/dynamic/mokapi"
 	"mokapi/config/dynamic/openapi"
@@ -67,13 +66,13 @@ func (context *HttpContext) Init() error {
 		return err
 	}
 
-	if mt, ok := context.ResponseType.Value.Content[context.ContentType.Key()]; !ok {
-		return fmt.Errorf("no matching content type %q found", context.ContentType.Key())
-	} else {
-		context.Schema = mt.Schema
+	for k, content := range context.ResponseType.Value.Content {
+		ct := media.ParseContentType(k)
+		if ct.Key() == context.ContentType.Key() {
+			context.Schema = content.Schema
+			break
+		}
 	}
-
-	context.Schema = context.ResponseType.Value.Content[context.ContentType.Key()].Schema
 
 	return nil
 }
@@ -103,8 +102,9 @@ func (context *HttpContext) setContentType() error {
 	if accept != "" {
 		for _, mimeType := range strings.Split(accept, ",") {
 			contentType := media.ParseContentType(mimeType)
-			if _, ok := context.ResponseType.Value.Content[contentType.Key()]; ok {
+			if c, ok := context.ResponseType.Value.Content[contentType.Key()]; ok {
 				context.ContentType = contentType
+				context.Schema = c.Schema
 				return nil
 			}
 		}
@@ -113,11 +113,12 @@ func (context *HttpContext) setContentType() error {
 	// no matching content found => returning first in list
 	// The iteration order over maps is not specified and is not
 	// guaranteed to be the same from one iteration to the next
-	for i, _ := range context.ResponseType.Value.Content {
+	for i, c := range context.ResponseType.Value.Content {
 		// return first element
 		context.ContentType = media.ParseContentType(i)
+		context.Schema = c.Schema
 		return nil
 	}
 
-	return errors.New("no content type found")
+	return fmt.Errorf("no content type found for accept header %q", accept)
 }

@@ -63,7 +63,7 @@ endpointLoop:
 		if ctx.ServicPath != "/" {
 			routePath = ctx.ServicPath + routePath
 		}
-		routeSeg := strings.Split(routePath, "/")
+		routeSeg := strings.Split(strings.TrimSuffix(routePath, "/"), "/")
 
 		if len(reqSeg) != len(routeSeg) {
 			continue
@@ -80,6 +80,7 @@ endpointLoop:
 		params := append(endpoint.Parameters, op.Parameters...)
 		p, err := parseParams(params, routePath, ctx.Request)
 		if err != nil {
+			log.Infof("error on resolving endpoint: %v", err)
 			continue
 		}
 		ctx.Parameters = p

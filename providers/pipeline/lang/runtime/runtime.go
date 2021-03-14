@@ -114,13 +114,13 @@ func (v *pipelineVisitor) Scope() *ast.Scope {
 	return v.scope
 }
 
-func (v *pipelineVisitor) HasError() bool {
+func (v *pipelineVisitor) HasErrors() bool {
 	return len(v.errors) != 0 || v.exprVisitor.HasErrors()
 }
 
 func (v *pipelineVisitor) Err() error {
-	if v.HasErrors() {
-		return v.Err()
+	if len(v.errors) > 0 {
+		return v.errors.Err()
 	} else {
 		return v.exprVisitor.Err()
 	}

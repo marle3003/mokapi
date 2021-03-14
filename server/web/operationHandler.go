@@ -61,26 +61,28 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 		pipelineName = operation.Pipeline
 	}
 
-	err := pipeline.RunConfig(
-		pipelineName,
-		context.Mokapi,
-		pipeline.WithGlobalVars(map[types.Type]interface{}{
-			"response": &Response{httpContext: context, err: func(err error, status int) {
-				respond(err.Error(), http.StatusInternalServerError, context)
-			}},
-			"Operation": operation,
-		}),
-		pipeline.WithParams(map[string]interface{}{
-			"method": context.Request.Method,
-			"body":   bodyParam,
-			"query":  context.Parameters[openapi.QueryParameter],
-			"path":   context.Parameters[openapi.PathParameter],
-			"header": context.Parameters[openapi.HeaderParameter],
-			"cookie": context.Parameters[openapi.CookieParameter],
-		}),
-	)
-	if err != nil {
-		respond(err.Error(), http.StatusInternalServerError, context)
+	if context.Mokapi != nil {
+		err := pipeline.RunConfig(
+			pipelineName,
+			context.Mokapi,
+			pipeline.WithGlobalVars(map[types.Type]interface{}{
+				"response": &Response{httpContext: context, err: func(err error, status int) {
+					respond(err.Error(), http.StatusInternalServerError, context)
+				}},
+				"Operation": operation,
+			}),
+			pipeline.WithParams(map[string]interface{}{
+				"method": context.Request.Method,
+				"body":   bodyParam,
+				"query":  context.Parameters[openapi.QueryParameter],
+				"path":   context.Parameters[openapi.PathParameter],
+				"header": context.Parameters[openapi.HeaderParameter],
+				"cookie": context.Parameters[openapi.CookieParameter],
+			}),
+		)
+		if err != nil {
+			respond(err.Error(), http.StatusInternalServerError, context)
+		}
 	}
 }
 

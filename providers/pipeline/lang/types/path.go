@@ -104,11 +104,14 @@ func (p *PathValue) Resolve(name string, args map[string]Object) (Path, error) {
 	case "**":
 		return &PathChildren{values: p.depthFirstIterator(), Parent: p, childTraversing: true}, nil
 	default:
+		if p.value == nil {
+			return nil, fmt.Errorf("unable to resolve '%v' on nil", name)
+		}
 		r, err := p.value.GetField(name)
 		if err != nil {
 			r, err = p.value.InvokeFunc(name, args)
 			if err != nil {
-				return nil, errors.Wrapf(err, "error on field or func %q on type %q", name, reflect.TypeOf(p.value))
+				return nil, fmt.Errorf("error on field or func %q on type %q", name, reflect.TypeOf(p.value))
 			}
 		}
 		return &PathValue{value: r, Parent: p}, err

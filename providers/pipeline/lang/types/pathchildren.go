@@ -133,8 +133,6 @@ func (p *PathChildren) Resolve(name string, args map[string]Object) (Path, error
 			for _, path := range p.values {
 				if matches, err := match(path.Value()); err == nil && matches {
 					return path, nil
-				} else if err != nil {
-					log.Debugf(err.Error())
 				}
 			}
 		}
@@ -207,7 +205,7 @@ func (p *PathChildren) Resolve(name string, args map[string]Object) (Path, error
 			})
 		} else if index, err := strconv.Atoi(name); err == nil {
 			if index >= len(p.values) {
-				return nil, fmt.Errorf("index '%q' out of range", index)
+				return nil, fmt.Errorf("index '%v' out of range", index)
 			}
 			return p.values[index], nil // index error
 		}

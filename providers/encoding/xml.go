@@ -19,7 +19,7 @@ func UnmarshalXml(s string, schema *openapi.SchemaRef) (interface{}, error) {
 	if len(e.Children) == 0 {
 		return e, nil
 	}
-	if schema == nil {
+	if !isTypeDefined(schema) {
 		return e.Children[0], nil
 	}
 	// skip root element
@@ -287,4 +287,8 @@ func isPropertyRequired(name string, s *openapi.SchemaRef) bool {
 		}
 	}
 	return false
+}
+
+func isTypeDefined(s *openapi.SchemaRef) bool {
+	return s != nil && s.Value != nil && len(s.Value.Type) > 0
 }
