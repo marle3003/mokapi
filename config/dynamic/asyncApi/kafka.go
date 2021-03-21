@@ -4,10 +4,15 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 	"math"
+	"mokapi/config/dynamic/openapi"
 	"strconv"
 )
 
-type KafkaBinding struct {
+type KafkaMessageBinding struct {
+	Key *openapi.SchemaRef
+}
+
+type Kafka struct {
 	Group Group
 	Log   Log
 }
@@ -43,7 +48,7 @@ type Retention struct {
 	CheckIntervalMs int64
 }
 
-func (b *KafkaBinding) UnmarshalYAML(value *yaml.Node) error {
+func (b *Kafka) UnmarshalYAML(value *yaml.Node) error {
 	m := make(map[string]string)
 	value.Decode(m)
 

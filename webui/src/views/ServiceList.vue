@@ -1,8 +1,6 @@
 <template>
   <div class="service-list">
-      <div class="page-header">
-          <h2>Services</h2>
-      </div>
+      <h1>Services</h1>
       <div class="page-body">
         <b-link :to="{ name: 'service', params: {name: service.name} }" router-tag="div" v-for="service in services" :key="service.name">
           <b-card>
@@ -71,21 +69,17 @@ export default {
       margin: auto;
       margin-top: 42px;
   }
-  .page-header h2{
-      font-weight: 700;
-  }
   .card{
     margin: 15px;
+    margin-left: 0;
     cursor: pointer;
   }
   .card p{
       margin-bottom: 0;
   }
-  .description{
-    color: #a0a1a7;
-  }
   .name{
-    font-size: 1.5rem;
-    font-weight: 600;
+    font-size: 1.25rem;
+    font-weight: 500;
+    padding-bottom: 0.5rem;
   }
 </style>

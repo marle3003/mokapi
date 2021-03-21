@@ -4,9 +4,9 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/asyncApi"
+	"mokapi/models"
 	"mokapi/providers/pipeline"
 	"mokapi/providers/pipeline/lang/types"
-	"net"
 	"time"
 )
 
@@ -15,30 +15,33 @@ type Binding struct {
 	stopCleaner chan bool
 	listen      string
 	isRunning   bool
-	brokers     []broker
+	brokers     []*broker
 	groups      map[string]*group
 	topics      map[string]*topic
 	config      *asyncApi.Config
-	binding     asyncApi.KafkaBinding
+	kafka       asyncApi.Kafka
 	scheduler   *pipeline.Scheduler
 	clients     map[string]*client
 }
 
-func NewBinding(addr string, binding asyncApi.KafkaBinding, c *asyncApi.Config) *Binding {
+func NewBinding(c *asyncApi.Config) *Binding {
 	s := &Binding{
 		stop:        make(chan bool),
 		stopCleaner: make(chan bool),
-		listen:      addr,
 		groups:      make(map[string]*group),
 		topics:      make(map[string]*topic),
 		config:      c,
-		binding:     binding,
+		kafka:       c.Info.Kafka,
 		clients:     make(map[string]*client),
 		scheduler:   pipeline.NewScheduler(),
 	}
 
-	b := newBroker(1, "localhost", 9092) // id is 1 based
-	s.brokers = append(s.brokers, b)
+	brokerId := 0
+	for name, b := range c.Servers {
+		b := newBroker(name, brokerId, b.GetHost(), b.GetPort()) // id is 1 based
+		s.brokers = append(s.brokers, b)
+		brokerId++
+	}
 
 	return s
 }
@@ -49,34 +52,31 @@ func (s *Binding) Apply(data interface{}) error {
 		return errors.Errorf("unexpected parameter type %T in kafka binding", data)
 	}
 	s.config = config
+	s.kafka = config.Info.Kafka
 
 	s.scheduler.Stop()
 	if config.Info.Mokapi != nil {
 		err := s.scheduler.Start(config.Info.Mokapi.Value, pipeline.WithSteps(map[string]types.Step{
-			"producer": &ProducerStep{topics: s.topics},
+			"producer": newProducerStep(s.topics),
 		}))
 		if err != nil {
 			return err
 		}
 	}
 
-	for n := range config.Channels {
+	for n, c := range config.Channels {
 		name := n[1:] // remove leading slash from name
 		if _, ok := s.topics[name]; !ok {
 			log.Infof("kafka: adding topic %q", name)
-			s.topics[name] = newTopic(name, s.brokers[0], s.binding.Log)
+			var msg *asyncApi.Message
+			if c.Publish.Message != nil {
+				msg = c.Publish.Message.Value
+			}
+			s.topics[name] = newTopic(name, s.brokers[0], s.kafka.Log, msg)
 		}
 	}
 
 	shouldRestart := false
-	//if s.listen != "" && s.listen != config.Address {
-	//	s.stop <- true
-	//	shouldRestart = true
-	//}
-	//
-	//s.listen = config.Address
-	//s.listen = "0.0.0.0:9092"
-
 	if s.isRunning {
 		log.Infof("Updated configuration of kafka server: %v", s.listen)
 
@@ -95,64 +95,45 @@ func (s *Binding) Stop() {
 func (s *Binding) Start() {
 	s.isRunning = true
 
-	l, err := net.Listen("tcp", s.listen)
-	if err != nil {
-		log.Errorf("Error listening: %v", err.Error())
-		return
+	for _, b := range s.brokers {
+		b.start(s.handle)
 	}
-
-	log.Infof("Started kafka server on %v", s.listen)
-
-	// Close the listener when the application closes.
-	connChannl := make(chan net.Conn)
-	close := make(chan bool)
-	go func() {
-		for {
-			// Listen for an incoming connection.
-			conn, err := l.Accept()
-			if err != nil {
-				select {
-				case <-close:
-					return
-				default:
-					log.Errorf("Error accepting: %v", err.Error())
-				}
-			}
-			// Handle connections in a new goroutine.
-			connChannl <- conn
-		}
-	}()
-
-	go func() {
-		for {
-			select {
-			case conn := <-connChannl:
-				log.Infof("kafka: new client connected")
-				go s.handle(conn)
-			case <-s.stop:
-				log.Infof("Stopping ldap server on %v", s.listen)
-				close <- true
-				l.Close()
-			}
-		}
-	}()
 	s.startCleaner()
+}
+
+func (s *Binding) UpdateMetrics(m *models.KafkaMetrics) {
+	m.Topics = len(s.topics)
+	m.Partitions = 0
+	m.Segments = 0
+	m.Messages = 0
+	for _, t := range s.topics {
+		m.Partitions += len(t.partitions)
+		var size int64
+		for _, p := range t.partitions {
+			m.Segments += len(p.segments)
+			m.Messages += p.offset
+			for _, seg := range p.segments {
+				size += seg.Size
+			}
+		}
+		m.TopicSizes[t.name] = size
+	}
 }
 
 func (s *Binding) startCleaner() {
 	retentionTime := time.Duration(0)
-	if s.binding.Log.Retention.Hours > 0 {
-		retentionTime = time.Duration(s.binding.Log.Retention.Hours) * time.Hour
-	} else if s.binding.Log.Retention.Minutes > 0 {
-		retentionTime = time.Duration(s.binding.Log.Retention.Minutes) * time.Minute
-	} else if s.binding.Log.Retention.Ms > 0 {
-		retentionTime = time.Duration(s.binding.Log.Retention.Ms) * time.Millisecond
+	if s.kafka.Log.Retention.Hours > 0 {
+		retentionTime = time.Duration(s.kafka.Log.Retention.Hours) * time.Hour
+	} else if s.kafka.Log.Retention.Minutes > 0 {
+		retentionTime = time.Duration(s.kafka.Log.Retention.Minutes) * time.Minute
+	} else if s.kafka.Log.Retention.Ms > 0 {
+		retentionTime = time.Duration(s.kafka.Log.Retention.Ms) * time.Millisecond
 	} else {
 		return // no time limit defined
 	}
 
 	go func() {
-		ticker := time.NewTicker(time.Duration(s.binding.Log.CleanerBackoffMs) * time.Millisecond)
+		ticker := time.NewTicker(time.Duration(s.kafka.Log.CleanerBackoffMs) * time.Millisecond)
 
 		for {
 			select {
@@ -172,7 +153,7 @@ func (s *Binding) startCleaner() {
 							}
 						}
 
-						if s.binding.Log.Retention.Bytes > 0 && partitionSize >= s.binding.Log.Retention.Bytes {
+						if s.kafka.Log.Retention.Bytes > 0 && partitionSize >= s.kafka.Log.Retention.Bytes {
 							log.Infof("Maximum partition size reached. Cleanup partition %v from topic %q", i, t.name)
 							p.addNewSegment()
 							p.deleteAllInactiveSegments()

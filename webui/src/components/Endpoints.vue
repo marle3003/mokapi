@@ -1,5 +1,5 @@
 <template>
-    <b-table hover :items="endpoints" :fields="fields" table-class="endpoints" @row-clicked="routerLinkToEndpoint">
+    <b-table hover :items="endpoints" :fields="fields" table-class="dataTable endpoints" @row-clicked="routerLinkToEndpoint">
       <template v-slot:cell(summary)="data">
         <vue-simple-markdown :source="data.value" />
       </template>
@@ -52,7 +52,7 @@ export default {
   .endpoints tbody{
     cursor: pointer;
   }
-  .endpoints th{
-  border-top: none
-}
+  .endpoints a:hover{
+    color: var(--var-color-primary)
+  }
 </style>

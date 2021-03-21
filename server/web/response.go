@@ -2,18 +2,27 @@ package web
 
 import (
 	"fmt"
-	"github.com/brianvoe/gofakeit/v4"
 	"github.com/pkg/errors"
-	"math/rand"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/models/media"
 	"mokapi/providers/encoding"
 	"net/http"
 )
 
+type ErrorHandler func(error, int)
+
 type Response struct {
-	err         func(err error, statusCode int)
+	eh          ErrorHandler
 	httpContext *HttpContext
+	g           *openapi.Generator
+}
+
+func newResponse(ctx *HttpContext, eh ErrorHandler) *Response {
+	return &Response{
+		eh:          eh,
+		httpContext: ctx,
+		g:           openapi.NewGenerator(),
+	}
 }
 
 func (r *Response) AddHeader(key string, value string) {
@@ -42,7 +51,7 @@ func (r *Response) Write(object interface{}, statusCode int, contentType string)
 		bytes, err = r.encodeData(object)
 		if err != nil {
 			err = errors.Wrapf(err, "unable to encode to %q", contentType)
-			r.err(err, http.StatusInternalServerError)
+			r.eh(err, http.StatusInternalServerError)
 			return
 		}
 	}
@@ -51,7 +60,7 @@ func (r *Response) Write(object interface{}, statusCode int, contentType string)
 }
 
 func (r *Response) WriteRandom(statusCode int, contentType string) {
-	data := getRandomObject(r.httpContext.Schema)
+	data := r.g.New(r.httpContext.Schema)
 	r.httpContext.metric.HttpStatus = statusCode
 	r.Write(data, statusCode, contentType)
 }
@@ -69,7 +78,7 @@ func (r *Response) write(bytes []byte, statusCode int, contentType string) {
 	r.AddHeader("Content-Length", fmt.Sprint(len(bytes)))
 	_, err := r.httpContext.Response.Write(bytes)
 	if err != nil {
-		r.err(err, http.StatusInternalServerError)
+		r.eh(err, http.StatusInternalServerError)
 	} else {
 		r.httpContext.metric.HttpStatus = statusCode
 	}
@@ -87,36 +96,4 @@ func (r *Response) encodeData(data interface{}) ([]byte, error) {
 		}
 		return nil, fmt.Errorf("unspupported encoding for content type %v", r.httpContext.ContentType)
 	}
-}
-
-func getRandomObject(schema *openapi.SchemaRef) interface{} {
-	if schema.Value.Type == "object" {
-		obj := make(map[string]interface{})
-		for name, propSchema := range schema.Value.Properties.Value {
-			value := getRandomObject(propSchema)
-			obj[name] = value
-		}
-		return obj
-	} else if schema.Value.Type == "array" {
-		length := rand.Intn(5)
-		obj := make([]interface{}, length)
-		for i := range obj {
-			obj[i] = getRandomObject(schema.Value.Items)
-		}
-		return obj
-	} else {
-		if len(schema.Value.Faker) > 0 {
-			switch schema.Value.Faker {
-			case "numbers.uint32":
-				return gofakeit.Uint32()
-			default:
-				return gofakeit.Generate(fmt.Sprintf("{%s}", schema.Value.Faker))
-			}
-		} else if schema.Value.Type == "integer" {
-			return gofakeit.Int32()
-		} else if schema.Value.Type == "string" {
-			return gofakeit.Lexify("???????????????")
-		}
-	}
-	return nil
 }

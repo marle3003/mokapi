@@ -1,7 +1,7 @@
 <template>
 <div>
   <div v-for="(row, index) in rows" :key="index" >
-    <b-icon :style="{visibility: row.type === 'prop' ? 'visible' : 'hidden'}" :icon="isOpened(index) ? 'dash-square' : 'plus-square'" font-scale="0.9" @click="toggleDetails(index)" />
+    <b-icon :style="{visibility: row.type === 'prop' ? 'visible' : 'hidden'}" :icon="isOpened(index) ? 'dash-square' : 'plus-square'" font-scale="0.7" @click="toggleDetails(index)" />
     <pre style="display:inline"><code><span v-html="row.code" /></code></pre>
     <b-card v-show="isOpened(index)" class="w-100">
           <b-row class="">
@@ -29,22 +29,6 @@
         </b-card>
     </div>
 </div>
-  <!-- <b-table ref="table" small :items="itemsProvider" :fields="fields" class="schema" thead-class="hidden_header">
-    <!-- Use it for editing <template v-slot:cell(add)="data">
-      <div v-b-hover="handleHover" v-if="data.item.type === 'object'" v-on:click="addProperty">
-        <b-icon icon="plus" v-if="isHovered" class="hover"></b-icon>
-        <b-icon icon="plus" v-else></b-icon>
-      </div>
-    </template> -->
-    <!-- <template v-slot:cell(type)="data">
-      <span v-bind:style="{ paddingLeft: data.item.level * 18 + 'px'}">
-        {{ data.item.text }}
-      </span>
-      <span v-if="data.item.ref != undefined && data.item.ref !== ''">
-        ({{ data.item.ref }})
-      </span>
-    </template>
-  </b-table> --> 
 </template>
 
 <script>
@@ -172,47 +156,47 @@ export default {
     getItems (schema, level) {
       let items = []
 
-try{
-      var item = {}
+      try {
+        var item = {}
 
-      if (level === 0) {
-        item = {type: schema.type, level: 0, text: schema.type, ref: schema.ref}
-      } else {
-        var text = schema.type
-        if (schema.name !== undefined && schema.name !== '') {
-          text = schema.name + ': ' + schema.type
-        }
-        item = {type: schema.type, level: level, text: text, ref: schema.ref}
-      }
-
-      items.push(item)
-              
-      if (schema.type === 'array') {
-        if (typeof schema.items === undefined) {
-          console.error("field items is undefined in schema type array")
-          return items
+        if (level === 0) {
+          item = {type: schema.type, level: 0, text: schema.type, ref: schema.ref}
+        } else {
+          var text = schema.type
+          if (schema.name !== undefined && schema.name !== '') {
+            text = schema.name + ': ' + schema.type
+          }
+          item = {type: schema.type, level: level, text: text, ref: schema.ref}
         }
 
-        var itemType = schema.items.ref !== undefined ? schema.items.ref : schema.items.type
-        item['text'] = schema.name + ': array[' + itemType + ']'
-        item['refText'] = schema.items.ref
+        items.push(item)
+                
+        if (schema.type === 'array') {
+          if (typeof schema.items === undefined) {
+            console.error("field items is undefined in schema type array")
+            return items
+          }
 
-        // get all properties but not type => not incrementing level because we remove first level (shift)
-        var arrayItems = this.getItems(schema.items, level)
-        arrayItems.shift() // remove object type
-        items = items.concat(arrayItems)
-      }
+          var itemType = schema.items.ref !== undefined ? schema.items.ref : schema.items.type
+          item['text'] = schema.name + ': array[' + itemType + ']'
+          item['refText'] = schema.items.ref
 
-      if (schema.type === 'object' && level < 2 && schema.properties !== undefined) {
-        for (var i = 0; i < schema.properties.length; i++) {                
-          var prop = this.getItems(schema.properties[i], level + 1)
-          items = items.concat(prop)
+          // get all properties but not type => not incrementing level because we remove first level (shift)
+          var arrayItems = this.getItems(schema.items, level)
+          arrayItems.shift() // remove object type
+          items = items.concat(arrayItems)
+        }
+
+        if (schema.type === 'object' && level < 2 && schema.properties !== undefined) {
+          for (var i = 0; i < schema.properties.length; i++) {                
+            var prop = this.getItems(schema.properties[i], level + 1)
+            items = items.concat(prop)
+          }
         }
       }
-
-}catch (e){
-  console.log(e)
-}
+      catch (e) {
+        console.log(e)
+      }
       return items
     }
   }
@@ -220,29 +204,24 @@ try{
 </script>
 
 <style>
-.schema .hidden_header{
-    display: none;
-}
-.schema .schema_add{
-  width: 20px;
-}
-.prop-type {
-  color: rgb(76,134,232);
-}
-.ref-type{
-  color: rgb(193,145,255);
-}
-.comment {
-  color: rgb(133,196,108)
-}
-
+  .schema .hidden_header{
+      display: none;
+  }
+  .schema .schema_add{
+    width: 20px;
+  }
+  .prop-type {
+    color: var(--blue);
+  }
+  .ref-type{
+    color: var(--purple);
+  }
+  .comment {
+    color: var(--orange);
+  }
 </style>
 <style scoped>
-.hover{
-background-color: rgba(0, 0, 0, 0.1);
-}
-.label{
-    color: #a0a1a7;
-    margin-bottom: 0
+  .hover{
+    background-color: rgba(0, 0, 0, 0.1);
   }
 </style>

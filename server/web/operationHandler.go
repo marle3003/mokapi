@@ -41,8 +41,24 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 			respond("request body expected", http.StatusBadRequest, context)
 			return
 		}
-		if mediaType, ok := operation.RequestBody.Value.Content[contentType.Key()]; ok {
-			bodyParam, err = parseBody(body, contentType, mediaType.Schema)
+
+		var bodySchema *openapi.SchemaRef
+		if c, ok := operation.RequestBody.Value.Content[contentType.String()]; ok {
+			if c.Schema == nil {
+				respond(fmt.Sprintf("schema of response %q is not defined", contentType.String()), http.StatusInternalServerError, context)
+				return
+			}
+			bodySchema = c.Schema
+		} else if c, ok := operation.RequestBody.Value.Content[contentType.Key()]; ok {
+			if c.Schema == nil {
+				respond(fmt.Sprintf("schema of response %q is not defined", contentType.String()), http.StatusInternalServerError, context)
+				return
+			}
+			bodySchema = c.Schema
+		}
+
+		if bodySchema != nil {
+			bodyParam, err = parseBody(body, contentType, bodySchema)
 			if err != nil {
 				respond(err.Error(), http.StatusBadRequest, context)
 				return
@@ -61,14 +77,16 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 		pipelineName = operation.Pipeline
 	}
 
-	if context.Mokapi != nil {
+	r := newResponse(context, func(err error, status int) {
+		respond(err.Error(), http.StatusInternalServerError, context)
+	})
+
+	if context.Mokapi != nil && len(pipelineName) > 0 {
 		err := pipeline.RunConfig(
 			pipelineName,
 			context.Mokapi,
 			pipeline.WithGlobalVars(map[types.Type]interface{}{
-				"response": &Response{httpContext: context, err: func(err error, status int) {
-					respond(err.Error(), http.StatusInternalServerError, context)
-				}},
+				"response":  r,
 				"Operation": operation,
 			}),
 			pipeline.WithParams(map[string]interface{}{
@@ -83,6 +101,8 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 		if err != nil {
 			respond(err.Error(), http.StatusInternalServerError, context)
 		}
+	} else {
+		r.WriteRandom(int(context.statusCode), context.ContentType.String())
 	}
 }
 
@@ -102,7 +122,7 @@ func readBody(ctx *HttpContext) (string, error) {
 func respond(message string, status int, ctx *HttpContext) {
 	ctx.metric.Error = message
 	ctx.metric.HttpStatus = status
-	log.WithFields(log.Fields{"url": ctx.Request.URL.String()}).Errorf(message)
+	log.WithFields(log.Fields{"url": ctx.Request.URL.String()}).Errorf("path %q, operation %q: %v", ctx.Request.URL, ctx.Request.Method, message)
 	http.Error(ctx.Response, message, status)
 }
 

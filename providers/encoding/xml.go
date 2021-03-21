@@ -8,6 +8,7 @@ import (
 	"io"
 	"mokapi/config/dynamic/openapi"
 	"strconv"
+	"strings"
 )
 
 func UnmarshalXml(s string, schema *openapi.SchemaRef) (interface{}, error) {
@@ -198,7 +199,7 @@ func (e *XmlNode) decode(decoder *xml.Decoder) error {
 			return nil
 		case xml.CharData:
 			s := string(tokEle)
-			e.Content = s
+			e.Content = strings.TrimSuffix(strings.TrimSpace(s), "\n")
 			_ = s
 		}
 	}

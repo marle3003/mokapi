@@ -2,11 +2,22 @@
   <b-tabs content-class="mt-3 ml-2" class="responses" align="left">
     <b-tab v-for="response in sorted" :key="response.status">
       <template v-slot:title>
-        <b-icon icon="circle-fill" class="icon mr-1" variant="success" v-if="response.status >= 200 && response.status < 300"></b-icon>
-        <b-icon icon="circle-fill" class="icon mr-1" variant="warning" v-if="response.status >= 300 && response.status < 400"></b-icon>
-        <b-icon icon="circle-fill" class="icon mr-1 client-error" v-if="response.status >= 400 && response.status < 500"></b-icon>
-        <b-icon icon="circle-fill" class="icon mr-1" variant="danger" v-if="response.status >= 500 && response.status < 600"></b-icon>
-        {{ response.status }}
+        <span v-if="response.status >= 200 && response.status < 300" class="success">
+          <b-icon icon="circle-fill" class="icon mr-1" ></b-icon>
+          {{ response.status }}
+        </span>
+        <span v-if="response.status >= 300 && response.status < 400" class="warning">
+          <b-icon icon="circle-fill" class="icon mr-1" ></b-icon>
+          {{ response.status }}
+        </span>
+        <span v-if="response.status >= 400 && response.status < 500" class="client-error">
+          <b-icon icon="circle-fill" class="icon mr-1" ></b-icon>
+          {{ response.status }}
+        </span>
+        <span v-if="response.status >= 500 && response.status < 600" class="danger">
+          <b-icon icon="circle-fill" class="icon mr-1" ></b-icon>
+          {{ response.status }}
+        </span>
       </template>
       <p class="label">Description</p>
       <p>{{ response.description }}</p>
@@ -18,15 +29,18 @@
             <schema v-if="content.schema != null" v-bind:schema="content.schema"></schema>
           </div>
       </div>
-      <b-card no-body v-if="response.contentTypes != null && response.contentTypes.length > 1">
-        <b-tabs pills card vertical nav-class="p-0">
-          <b-tab v-for="content in response.contentTypes" :key="content.type" :title="content.type" >
-            <b-card-text>
-              <p class="label">Schema</p>
-              <schema v-bind:schema="content.schema"></schema>
-            </b-card-text>
-          </b-tab>
-        </b-tabs>
+      <b-card v-if="response.contentTypes != null && response.contentTypes.length > 1">
+        <template #header>
+          <b-dropdown>
+            <b-dropdown-item  v-for="content in response.contentTypes" :key="content.type">
+              {{ content.type }}
+            </b-dropdown-item>
+          </b-dropdown>
+        </template>
+        <b-card-text v-for="content in response.contentTypes" :key="content.type">
+          <p class="label">Schema</p>
+          <schema v-bind:schema="content.schema"></schema>
+        </b-card-text>
       </b-card>
     </b-tab>
   </b-tabs>
@@ -56,15 +70,8 @@ export default {
 </script>
 
 <style scoped>
-.responses .icon{
-    vertical-align: middle;
-    font-size: 0.5rem;
-}
-.client-error{
-    color: var(--orange);
-}
-.label{
-    color: #a0a1a7;
-    margin-bottom: 0
+  .responses .icon{
+      vertical-align: middle;
+      font-size: 0.5rem;
   }
 </style>

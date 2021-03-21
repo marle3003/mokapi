@@ -62,7 +62,7 @@ func (rb *RecordBatch) WriteTo(e *Encoder) {
 
 	e.writeInt64(rb.Offset)              // offset
 	e.writeInt32(0)                      // size: 8
-	e.writeInt32(-1)                     // leader epoch
+	e.writeInt32(0)                      // leader epoch
 	e.writeInt8(2)                       // magic
 	e.writeInt32(0)                      // checksum: 17
 	e.writeInt16(int16(rb.Attributes))   // 21
@@ -138,11 +138,12 @@ func (rb *RecordBatch) WriteTo(e *Encoder) {
 	binary.BigEndian.PutUint64(buffer[:8], uint64(maxTimestamp))
 	e.writer.WriteAt(buffer[:8], offset+35)
 
-	size := e.writer.Size() - offset - 12 // offset(8) + size(4)
-	binary.BigEndian.PutUint32(buffer[:4], uint32(size))
+	totalLength := e.writer.Size() - offset
+	batchSize := totalLength - 12 // offset(8) + size(4)
+	binary.BigEndian.PutUint32(buffer[:4], uint32(batchSize))
 	e.writer.WriteAt(buffer[:4], offset+8)
 
-	checksum := e.writer.Checksum(int64(offset+21), int64(offset+size)) // checksum from attributes to end
+	checksum := e.writer.Checksum(int64(offset+21), int64(offset+totalLength)) // checksum from attributes to end
 	binary.BigEndian.PutUint32(buffer[:4], checksum)
 	e.writer.WriteAt(buffer[:4], offset+17)
 }

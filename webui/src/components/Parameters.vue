@@ -1,5 +1,5 @@
 <template>
-  <b-table small hover head-variant="dark" :items="parameters" :fields="fields">
+  <b-table small hover class="dataTable" :items="parameters" :fields="fields">
     <template v-slot:cell(show_details)="row">
         <div @click="toggleDetails(row)">
             <b-icon v-if="row.detailsShowing" icon="dash-square"></b-icon>

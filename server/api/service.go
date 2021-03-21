@@ -14,7 +14,7 @@ type service struct {
 	BaseUrls    []baseUrl  `json:"baseUrls"`
 	Endpoints   []endpoint `json:"endpoints"`
 	Models      []*schema  `json:"models"`
-	MokapiFile  string     `json:"mokapifile"`
+	Mokapi      string     `json:"mokapifile"`
 }
 
 type baseUrl struct {
@@ -85,8 +85,11 @@ func newService(s *openapi.Config) service {
 		Name:        s.Info.Name,
 		Description: s.Info.Description,
 		Version:     s.Info.Version,
-		MokapiFile:  s.Info.Mokapi.Value.ConfigPath,
 	}
+
+	//if s.Info.Mokapi.Value != nil{
+	//	service.Mokapi = s.Info.Mokapi.Value
+	//}
 
 	for _, server := range s.Servers {
 		service.BaseUrls = append(service.BaseUrls, newBaseUrl(server))
@@ -98,9 +101,11 @@ func newService(s *openapi.Config) service {
 		}
 	}
 
-	//for name, model := range s.Components.Schemas {
-	//	service.Models = append(service.Models, newModel(name, model))
-	//}
+	if s.Components.Schemas != nil {
+		for name, model := range s.Components.Schemas.Value {
+			service.Models = append(service.Models, newModel(name, model))
+		}
+	}
 
 	return service
 }
@@ -216,8 +221,10 @@ func newSchema(name string, s *openapi.SchemaRef, level int) *schema {
 		return v
 	}
 
-	for s, p := range s.Value.Properties.Value {
-		v.Properties = append(v.Properties, newSchema(s, p, level+1))
+	if s.Value.Properties != nil {
+		for s, p := range s.Value.Properties.Value {
+			v.Properties = append(v.Properties, newSchema(s, p, level+1))
+		}
 	}
 
 	sort.Slice(v.Properties, func(i int, j int) bool {

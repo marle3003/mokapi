@@ -2,16 +2,50 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="1a9601df-4cac-4bc9-9e3a-1ba0e84e507f" name="Default Changelist" comment="refactoring but not all features are working">
+      <change afterPath="$PROJECT_DIR$/config/dynamic/openapi/generator.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/decoders/decoder_file.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/decoders/decoder_file.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/dynamic/asyncApi/config.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/dynamic/asyncApi/config.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/dynamic/asyncApi/kafka.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/dynamic/asyncApi/kafka.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/dynamic/asyncApi/refs.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/dynamic/asyncApi/refs.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/dynamic/asyncApi/unmarshal.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/dynamic/asyncApi/unmarshal.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/config/dynamic/configstore.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/dynamic/configstore.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/dynamic/openapi/config.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/dynamic/openapi/config.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/dynamic/openapi/refs.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/dynamic/openapi/refs.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/metric.go" beforeDir="false" afterPath="$PROJECT_DIR$/models/metric.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/runtime.go" beforeDir="false" afterPath="$PROJECT_DIR$/models/runtime.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/providers/encoding/xml.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/encoding/xml.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/parser/config_parser.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/parser/config_parser.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/basics/json.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/basics/json.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/basics/readFile.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/basics/readFile.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/basics/yaml.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/basics/yaml.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/runtime/runtime.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/runtime/runtime.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/path.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/types/path.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/pathchildren.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/lang/types/pathchildren.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/pipeline/scheduler.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/scheduler.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/api/dashboard_data.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/api/dashboard_data.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/api/service.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/api/service.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/kafka/binding.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/kafka/binding.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/kafka/broker.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/kafka/broker.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/kafka/client_handler.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/kafka/client_handler.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/kafka/group.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/kafka/group.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/kafka/producer.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/kafka/producer.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/kafka/protocol/fetch/fetch.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/kafka/protocol/fetch/fetch.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/kafka/protocol/offsetFetch/offsetFetch.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/kafka/protocol/offsetFetch/offsetFetch.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/kafka/protocol/record.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/kafka/protocol/record.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/server.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/web/httpcontext.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/web/httpcontext.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/web/operationHandler.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/web/operationHandler.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/web/webServiceHandler.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/web/webServiceHandler.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/web/response.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/web/response.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/webui/src/App.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/App.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/webui/src/components/Endpoint.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/components/Endpoint.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/webui/src/components/Endpoints.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/components/Endpoints.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/webui/src/components/Parameters.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/components/Parameters.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/webui/src/components/Schema.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/components/Schema.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/webui/src/components/ServiceInfo.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/components/ServiceInfo.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/webui/src/components/ServiceOverview.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/components/ServiceOverview.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/webui/src/components/TopHeader.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/components/TopHeader.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/webui/src/views/Dashboard.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/views/Dashboard.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/webui/src/views/ServiceList.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/views/ServiceList.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -29,6 +63,14 @@
   <component name="GOROOT" url="file://C:/Go" />
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitSEFilterConfiguration">
+    <file-type-list>
+      <filtered-out-file-type name="LOCAL_BRANCH" />
+      <filtered-out-file-type name="REMOTE_BRANCH" />
+      <filtered-out-file-type name="TAG" />
+      <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
+    </file-type-list>
   </component>
   <component name="GoLibraries">
     <option name="indexEntireGoPath" value="false" />
@@ -180,7 +222,8 @@
     <MESSAGE value="refactored mainly config package" />
     <MESSAGE value="refactored asyncapi&#10;added scheduler support&#10;added $ref support in openapi" />
     <MESSAGE value="extended kafka supporting retention policy&#10;some bugfixes" />
-    <option name="LAST_COMMIT_MESSAGE" value="extended kafka supporting retention policy&#10;some bugfixes" />
+    <MESSAGE value="some bugfixes" />
+    <option name="LAST_COMMIT_MESSAGE" value="some bugfixes" />
   </component>
   <component name="VgoProject">
     <integration-enabled>true</integration-enabled>
@@ -205,53 +248,24 @@
           <option name="timeStamp" value="1066" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/providers/encoding/xml.go</url>
-          <line>85</line>
-          <option name="timeStamp" value="1674" />
+          <url>file://$PROJECT_DIR$/providers/pipeline/lang/types/pathchildren.go</url>
+          <line>127</line>
+          <option name="timeStamp" value="1733" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/server/web/operationHandler.go</url>
-          <line>64</line>
-          <option name="timeStamp" value="1724" />
+          <url>file://$PROJECT_DIR$/providers/encoding/xml.go</url>
+          <line>210</line>
+          <option name="timeStamp" value="1747" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$USER_HOME$/go/pkg/mod/github.com/brianvoe/gofakeit/v4@v4.2.3/generate.go</url>
+          <line>19</line>
+          <option name="timeStamp" value="1762" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
         <breakpoint type="DlvErrorBreakpoint" />
       </default-breakpoints>
     </breakpoint-manager>
-    <watches-manager>
-      <configuration name="GoApplicationRunConfiguration">
-        <watch expression="*(*&quot;mokapi/providers/pipeline.Command&quot;)(824634431152)" />
-        <watch expression="*(*&quot;mokapi/providers/pipeline.Expression&quot;)(824636258080)" />
-        <watch expression="*(*&quot;github.com/alecthomas/participle/v2.UnexpectedTokenError&quot;)(824634380992)" />
-        <watch expression="*(*&quot;mokapi/providers/pipeline.Pipeline&quot;)(824634369504)" />
-        <watch expression="*(*&quot;[]*mokapi/providers/pipeline.Expression&quot;)(824634369504)" />
-        <watch expression="*(*&quot;mokapi/providers/pipeline.MokapiFile&quot;)(824633745592)" />
-        <watch expression="*(*&quot;map[string]mokapi/providers/pipeline/types.Object&quot;)(824633746656)" />
-        <watch expression="*(*&quot;map[interface {}]interface {}&quot;)(824633747816)" />
-        <watch expression="*(*&quot;map[interface {}]interface {}&quot;)(824634445904)" />
-        <watch expression="*(*&quot;string&quot;)(824633742560)" />
-        <watch expression="*(*&quot;mokapi/providers/pipeline.String&quot;)(824633742560)" />
-        <watch expression="*(*&quot;mokapi/providers/pipeline.String&quot;)(824633742560)" />
-        <watch expression="*(*&quot;mokapi/providers/pipeline/runtime.Scope&quot;)(824634466448)" />
-        <watch expression="*(*&quot;mokapi/providers/pipeline/lang.File&quot;)(824636877920)" />
-        <watch expression="*(*&quot;mokapi/providers/pipeline/lang.PathExpr&quot;)(824638194048)" />
-        <watch expression="node" />
-        <watch expression="*(*&quot;void&quot;)(0)" />
-        <watch expression="*(*&quot;[]*mokapi/providers/pipeline/lang/ast.Ident&quot;)(824638450080)" />
-        <watch expression="*(*&quot;reflect.Value&quot;)(824634121288)" />
-        <watch expression="*(*&quot;map[string]*mokapi/server/kafka.topic&quot;)(824639070520)" />
-        <watch expression="*(*&quot;map[string]*mokapi/server/kafka.topic&quot;)(824639070520)" />
-        <watch expression="*(*&quot;mokapi/config/dynamic/openapi.Config&quot;)(824636440800)" />
-        <watch expression="s" />
-        <watch expression="*(*&quot;mokapi/config/dynamic/openapi.Config&quot;)(824635318272)" />
-        <watch expression="*(*&quot;mokapi/config/dynamic/openapi.Config&quot;)(824635318272)" />
-        <watch expression="*(*&quot;mokapi/config/dynamic/openapi.Components&quot;)(824634851528)" />
-        <watch expression="*(*&quot;mokapi/config/dynamic/openapi.Config&quot;)(824635031552)" />
-        <watch expression="*(*&quot;mokapi/config/dynamic/asyncApi.KafkaBinding&quot;)(824638814160)" />
-        <watch expression="*(*&quot;map[string]*mokapi/config/dynamic/openapi.SchemaRef&quot;)(824638965360)" />
-        <watch expression="*(*&quot;[]mokapi/config/dynamic/mokapi.Variable&quot;)(824635562912)" />
-      </configuration>
-    </watches-manager>
   </component>
 </project>

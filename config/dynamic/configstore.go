@@ -275,6 +275,9 @@ func (cw *ConfigWatcher) Start() error {
 						log.Errorf("unable to read event from %v: %v", evt.Name, err)
 					} else if b && !skipPath(evt.Name) {
 						cw.watcher.Add(evt.Name)
+						if err := filepath.Walk(cw.config.File.Directory, cw.walkDir); err != nil {
+							fmt.Println("ERROR", err)
+						}
 					} else if isValidConfigFile(evt.Name) {
 						go cw.fw.add(evt.Name)
 					}
@@ -353,7 +356,7 @@ func skipPath(path string) bool {
 }
 
 func loadFileConfig(filename string, element interface{}) error {
-	log.Infof("reading config %q", filename)
+	log.Debugf("reading config %q", filename)
 	data, error := ioutil.ReadFile(filename)
 	if error != nil {
 		return error

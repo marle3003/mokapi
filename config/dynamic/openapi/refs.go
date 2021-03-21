@@ -17,7 +17,7 @@ type refResolver struct {
 }
 
 type resolver interface {
-	resolve(token string) (interface{}, error)
+	Resolve(token string) (interface{}, error)
 }
 
 func (r refResolver) resolveConfig() error {
@@ -206,7 +206,7 @@ func (r refResolver) resolveEndpointRef(e *EndpointRef) error {
 	}
 
 	for _, o := range e.Value.Operations() {
-
+		o.Endpoint = e.Value
 		for _, p := range o.Parameters {
 			if err := r.resolveParameter(p); err != nil {
 				return err
@@ -414,7 +414,7 @@ func get(token string, node interface{}) (interface{}, error) {
 	rValue := reflect.Indirect(reflect.ValueOf(node))
 
 	if r, ok := node.(resolver); ok {
-		return r.resolve(token)
+		return r.Resolve(token)
 	}
 
 	switch rValue.Kind() {
@@ -451,11 +451,7 @@ func isLocalRef(s string) bool {
 	return strings.HasPrefix(s, "#")
 }
 
-func isSingleElem(s string) bool {
-	return strings.Contains(s, "#")
-}
-
-func (s *Schemas) resolve(token string) (interface{}, error) {
+func (s *Schemas) Resolve(token string) (interface{}, error) {
 	return get(token, s.Value)
 }
 

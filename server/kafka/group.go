@@ -22,7 +22,7 @@ type group struct {
 	name string
 	// leader is at index 0, followed by the followers
 	members     []groupMember
-	coordinator broker
+	coordinator *broker
 	// Upon every completion of the join group phase, the coordinator
 	// increments a GenerationId for the group. This is returned as a field
 	// in the response to each member, and is sent in heartbeats and offset

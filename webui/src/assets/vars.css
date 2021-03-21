@@ -1,0 +1,21 @@
+:root{
+    --var-bg-color: #161718;
+    --var-bg-color-secondary: #2e2e31;
+    --var-color-primary: #d3d4d5;
+
+    --red: #ff2e4a;
+    --blue: #027bff;
+    --orange: #ffc347;
+    --green: #30a72d;
+    --yellow: #eab839;
+    --purple: #b644a4;
+
+    --var-border-color: #161718;
+
+    --var-table-header-bg-color: #2e2e31;
+    --var-table-border-color: #161718; 
+    --var-table-header-color: #30acd8;
+
+    --var-tab-bg-color: #3a3e45
+
+}

@@ -10,7 +10,7 @@ func init() {
 		protocol.ApiReg{
 			ApiKey:     protocol.Fetch,
 			MinVersion: 0,
-			MaxVersion: 9},
+			MaxVersion: 11},
 		&Request{},
 		&Response{},
 		12,

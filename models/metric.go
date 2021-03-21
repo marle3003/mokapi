@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"runtime"
+	"time"
+)
 
 type Metrics struct {
 	Start             time.Time
@@ -8,6 +11,8 @@ type Metrics struct {
 	RequestsWithError int64
 	LastRequests      []*RequestMetric
 	LastErrorRequests []*RequestMetric
+	Memory            int64
+	Kafka             map[string]*KafkaMetrics
 }
 
 type RequestMetric struct {
@@ -19,6 +24,14 @@ type RequestMetric struct {
 	Time         time.Time
 }
 
+type KafkaMetrics struct {
+	Topics     int
+	Partitions int
+	Segments   int
+	Messages   int64
+	TopicSizes map[string]int64
+}
+
 func NewRequestMetric(method string, url string) *RequestMetric {
 	return &RequestMetric{
 		Method: method,
@@ -28,7 +41,7 @@ func NewRequestMetric(method string, url string) *RequestMetric {
 }
 
 func newMetrics() *Metrics {
-	return &Metrics{LastRequests: make([]*RequestMetric, 0), Start: time.Now()}
+	return &Metrics{LastRequests: make([]*RequestMetric, 0), Start: time.Now(), Kafka: make(map[string]*KafkaMetrics)}
 }
 
 func (m *Metrics) AddRequest(r *RequestMetric) {
@@ -48,4 +61,10 @@ func (m *Metrics) AddRequest(r *RequestMetric) {
 		r.HttpStatus = 200
 	}
 	m.LastRequests = append(m.LastRequests, r)
+}
+
+func (m *Metrics) Update() {
+	var stats runtime.MemStats
+	runtime.ReadMemStats(&stats)
+	m.Memory = int64(stats.Alloc)
 }

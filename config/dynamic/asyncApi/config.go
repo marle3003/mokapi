@@ -4,6 +4,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/mokapi"
+	"mokapi/config/dynamic/openapi"
 	"net/url"
 	"strconv"
 )
@@ -40,6 +41,7 @@ type Info struct {
 	Contact        *Contact
 	License        *License
 	Mokapi         *MokapiRef `yaml:"x-mokapi" json:"x-mokapi"`
+	Kafka          Kafka      `yaml:"x-kafka" json:"x-kafka"`
 }
 
 type MokapiRef struct {
@@ -63,7 +65,6 @@ type Server struct {
 	Protocol        string
 	ProtocolVersion string
 	Description     string
-	Bindings        Bindings
 	Variables       map[string]*ServerVariable
 }
 
@@ -84,34 +85,31 @@ type Operation struct {
 	Id          string `yaml:"operationId" json:"operationId"`
 	Summary     string
 	Description string
-	Message     *Message
+	Message     *MessageRef
 }
+
+type MessageRef struct {
+	Ref   string
+	Value *Message
+}
+
 type Message struct {
 	Name        string
 	Title       string
 	Summary     string
 	Description string
 	ContentType string
-	Payload     *Schema
-	Reference   string `yaml:"$ref" json:"$ref"`
+	Payload     *openapi.SchemaRef
+	Bindings    MessageBinding
 }
 
-type Schema struct {
-	Type        string
-	Reference   string `yaml:"$ref" json:"$ref"`
-	Description string
-	Properties  map[string]*Schema
-	Items       *Schema
-	Faker       string `yaml:"x-faker" json:"x-faker"`
+type MessageBinding struct {
+	Kafka KafkaMessageBinding
 }
 
 type Components struct {
-	Schemas  map[string]*Schema
+	Schemas  *openapi.Schemas
 	Messages map[string]*Message
-}
-
-type Bindings struct {
-	Kafka KafkaBinding
 }
 
 func (s *Server) GetPort() int {

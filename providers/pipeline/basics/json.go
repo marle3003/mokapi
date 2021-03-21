@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
-	"io/ioutil"
 	"mokapi/providers/pipeline/lang/runtime"
 	"mokapi/providers/pipeline/lang/types"
 	"path/filepath"
@@ -15,7 +14,8 @@ type JsonStep struct {
 }
 
 type JsonExecution struct {
-	File string `step:"file,required"`
+	File       string `step:"file,required"`
+	AsTemplate bool
 }
 
 func (e *JsonStep) Start() types.StepExecution {
@@ -32,7 +32,7 @@ func (e *JsonExecution) Run(ctx types.StepContext) (interface{}, error) {
 
 	file := filepath.Join(dir, fmt.Sprintf("%v", e.File))
 
-	data, err := ioutil.ReadFile(file)
+	data, err := readFile(file, e.AsTemplate)
 	if err != nil {
 		return nil, err
 	}

@@ -6,30 +6,36 @@ import (
 	"math/rand"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/server/kafka/protocol"
+	"net"
 	"sync"
 	"time"
 )
 
 type broker struct {
+	name string
 	id   int
 	host string
 	port int
+
+	stopCh chan bool
 }
 
-func newBroker(id int, host string, port int) broker {
-	return broker{id, host, port}
+func newBroker(name string, id int, host string, port int) *broker {
+	return &broker{name: name, id: id, host: host, port: port, stopCh: make(chan bool)}
 }
 
 type topic struct {
 	name       string
 	partitions map[int]*partition
+	config     *asyncApi.Message
 }
 
 type partition struct {
-	leader        broker
+	leader        *broker
 	segments      map[int64]*segment
 	activeSegment int64
 	offset        int64
+	startOffset   int64
 	committed     int64
 	lock          sync.RWMutex
 	config        asyncApi.Log
@@ -49,8 +55,56 @@ type segment struct {
 	lastWritten time.Time
 }
 
-func (p *partition) read(offset int64, maxBytes int) (set protocol.RecordSet) {
-	size := 0
+func (b *broker) start(handler func(net.Conn)) {
+	listen := fmt.Sprintf(":%v", b.port)
+	l, err := net.Listen("tcp", listen)
+	if err != nil {
+		log.Errorf("Error listening: %v", err.Error())
+		return
+	}
+
+	log.Infof("Started kafka broker %q with id %v on %v", b.name, b.id, listen)
+
+	// Close the listener when the application closes.
+	connChannl := make(chan net.Conn)
+	closeListener := make(chan bool)
+	go func() {
+		for {
+			// Listen for an incoming connection.
+			conn, err := l.Accept()
+			if err != nil {
+				select {
+				case <-closeListener:
+					return
+				default:
+					log.Errorf("Error accepting: %v", err.Error())
+				}
+			}
+			// Handle connections in a new goroutine.
+			connChannl <- conn
+		}
+	}()
+
+	go func() {
+		for {
+			select {
+			case conn := <-connChannl:
+				log.Debugf("kafka: new client connected")
+				go handler(conn)
+			case <-b.stopCh:
+				log.Infof("Stopping kafka broker %q with id %v on %v", b.name, b.id, listen)
+				closeListener <- true
+				l.Close()
+			}
+		}
+	}()
+}
+
+func (b *broker) stop() {
+	b.stopCh <- true
+}
+
+func (p *partition) read(offset int64, maxBytes int32) (set protocol.RecordSet, size int32) {
 	set = protocol.RecordSet{Batches: make([]protocol.RecordBatch, 0)}
 
 	for {
@@ -62,7 +116,7 @@ func (p *partition) read(offset int64, maxBytes int) (set protocol.RecordSet) {
 		i := offset - s.head
 		for _, b := range s.log[i:] {
 			set.Batches = append(set.Batches, *b)
-			size += int(b.Size())
+			size += b.Size()
 			if size > maxBytes {
 				return
 			}
@@ -92,6 +146,12 @@ func (p *partition) deleteSegment(key int64) {
 
 	p.lock.Lock()
 	defer p.lock.Unlock()
+
+	seg := p.segments[key]
+	if p.startOffset <= seg.tail {
+		p.startOffset = seg.tail + 1
+	}
+
 	delete(p.segments, key)
 }
 
@@ -148,13 +208,14 @@ func newSegment(offset int64) *segment {
 	return &segment{head: offset}
 }
 
-func newTopic(name string, leader broker, config asyncApi.Log) *topic {
+func newTopic(name string, leader *broker, config asyncApi.Log, msg *asyncApi.Message) *topic {
 	return &topic{name: name, partitions: map[int]*partition{
-		0: newPartition(leader, config)}}
+		0: newPartition(leader, config)},
+		config: msg}
 }
 
-func newPartition(leader broker, config asyncApi.Log) *partition {
-	return &partition{leader: leader, config: config, activeSegment: 0, segments: map[int64]*segment{0: newSegment(0)}}
+func newPartition(leader *broker, config asyncApi.Log) *partition {
+	return &partition{leader: leader, config: config, activeSegment: 0, segments: map[int64]*segment{0: newSegment(0)}, startOffset: 0}
 }
 
 func (t *topic) addRecord(pi int, record *protocol.RecordBatch) error {

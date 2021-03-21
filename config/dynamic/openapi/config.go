@@ -14,10 +14,6 @@ func init() {
 		eh := dynamic.NewEmptyEventHandler(o)
 		switch c := o.(type) {
 		case *Config:
-			for _, e := range c.EndPoints {
-				updateOperations(e)
-			}
-
 			r := refResolver{reader: r, path: path, config: c, eh: eh}
 
 			if err := r.resolveConfig(); err != nil {
@@ -209,6 +205,8 @@ type Schema struct {
 	Xml                  *Xml
 	Required             []string
 	Nullable             bool
+	Example              interface{}
+	Enum                 []interface{}
 }
 
 type AdditionalProperties struct {
@@ -364,37 +362,6 @@ const (
 	NotExtended                   HttpStatus = 510 // RFC 2774, 7
 	NetworkAuthenticationRequired HttpStatus = 511 // RFC 6585, 6
 )
-
-func updateOperations(r *EndpointRef) {
-	if r.Value == nil {
-		return
-	}
-	e := r.Value
-	if e.Get != nil {
-		e.Get.Endpoint = e
-	}
-	if e.Post != nil {
-		e.Post.Endpoint = e
-	}
-	if e.Put != nil {
-		e.Put.Endpoint = e
-	}
-	if e.Patch != nil {
-		e.Patch.Endpoint = e
-	}
-	if e.Delete != nil {
-		e.Delete.Endpoint = e
-	}
-	if e.Head != nil {
-		e.Head.Endpoint = e
-	}
-	if e.Options != nil {
-		e.Options.Endpoint = e
-	}
-	if e.Trace != nil {
-		e.Trace.Endpoint = e
-	}
-}
 
 func (s *Server) GetPort() int {
 	u, err := url.Parse(s.Url)

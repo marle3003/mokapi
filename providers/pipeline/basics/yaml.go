@@ -3,8 +3,7 @@ package basics
 import (
 	"fmt"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
+	"gopkg.in/yaml.v3"
 	"mokapi/providers/pipeline/lang/runtime"
 	"mokapi/providers/pipeline/lang/types"
 	"path/filepath"
@@ -15,7 +14,8 @@ type YamlStep struct {
 }
 
 type YamlExecution struct {
-	File string `step:"file,required"`
+	File       string `step:"file,required"`
+	AsTemplate bool
 }
 
 func (e *YamlStep) Start() types.StepExecution {
@@ -32,7 +32,7 @@ func (e *YamlExecution) Run(ctx types.StepContext) (interface{}, error) {
 
 	file := filepath.Join(dir, fmt.Sprintf("%v", e.File))
 
-	data, err := ioutil.ReadFile(file)
+	data, err := readFile(file, e.AsTemplate)
 	if err != nil {
 		return nil, err
 	}

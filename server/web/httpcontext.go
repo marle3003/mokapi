@@ -30,6 +30,7 @@ type HttpContext struct {
 	Mokapi       *mokapi.Config
 	body         string
 	metric       *models.RequestMetric
+	statusCode   openapi.HttpStatus
 }
 
 func NewHttpContext(request *http.Request, response http.ResponseWriter, servicePath string) *HttpContext {
@@ -92,6 +93,7 @@ func (context *HttpContext) setFirstSuccessResponse(operation *openapi.Operation
 	sort.SliceStable(successStatus, func(i, j int) bool { return i < j })
 
 	context.ResponseType = operation.Responses[successStatus[0]]
+	context.statusCode = successStatus[0]
 	return nil
 }
 
@@ -102,7 +104,11 @@ func (context *HttpContext) setContentType() error {
 	if accept != "" {
 		for _, mimeType := range strings.Split(accept, ",") {
 			contentType := media.ParseContentType(mimeType)
-			if c, ok := context.ResponseType.Value.Content[contentType.Key()]; ok {
+			if c, ok := context.ResponseType.Value.Content[mimeType]; ok {
+				context.ContentType = contentType
+				context.Schema = c.Schema
+				return nil
+			} else if c, ok := context.ResponseType.Value.Content[contentType.Key()]; ok {
 				context.ContentType = contentType
 				context.Schema = c.Schema
 				return nil

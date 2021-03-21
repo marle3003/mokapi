@@ -1,21 +1,18 @@
 <template>
-<div>
-  <b-navbar toggleable="lg" type="light" class="header">
-  <b-navbar-brand href="/" >{{title}}</b-navbar-brand>
+  <div>
+    <b-navbar toggleable="lg" type="light"  class="topHeader">
+      <b-navbar-brand href="/" >{{title}}</b-navbar-brand>
 
-  <b-collapse id="nav-collapse" is-nav>
-    <b-navbar-nav>
-      <b-nav-item to="/dashboard">Dashboard</b-nav-item>
-      <b-nav-item :to="{ name: 'serviceList' }">Services</b-nav-item>
-      <b-nav-item :to="{ name: 'docsStart' }">Docs</b-nav-item>
-    </b-navbar-nav>
-  </b-collapse>
+      <b-collapse id="nav-collapse" is-nav>
+        <b-navbar-nav>
+        <b-nav-item to="/dashboard">Dashboard</b-nav-item>
+        <b-nav-item :to="{ name: 'serviceList' }">Services</b-nav-item>
+        <b-nav-item :to="{ name: 'docsStart' }">Docs</b-nav-item>
+        </b-navbar-nav>
+      </b-collapse>
 
-  <b-navbar-toggle target="nav-collapse">
-
-  </b-navbar-toggle>
-
-  </b-navbar>
+      <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
+    </b-navbar>
   </div>
 </template>
 
@@ -32,24 +29,36 @@ export default {
 </script>
 
 <style scoped>
-.header{
-  background-color: white;
-  box-shadow: 0 3px 8px 0;
+.topHeader.navbar {
+    padding-bottom: 0;
+    padding-top: 0;
+    margin-top: 8px;
+}
+.topHeader .navbar-brand{
+  color: var(--var-color-primary);
+  font-size: 1.0rem;
+  font-weight: 500;
+}
+.topHeader .navbar-nav::before{
+  content: '';
+  display: inline-block;
+  border-left: 2px solid var(--var-color-primary);
+  margin-left: 0.5rem;
+  margin-right: 1rem;
 }
 #nav-collapse .nav-link{
-  color: #212529;
-  font-weight: 600;
+  color: var(--var-color-primary);
+  font-weight: 500;
+  font-size: 1.0rem;
 }
 
 #nav-collapse .nav-link:hover{
-  color: #007bff;
-  border-bottom: 4px solid #007bff;
-  margin-bottom: -4px
+  border-bottom: 4px solid var(--var-color-primary);
+  margin-bottom: -4px;
 }
 
 #nav-collapse .nav-link.router-link-active{
-  color: #007bff;
-  border-bottom: 4px solid #007bff;
-  margin-bottom: -4px
+  border-bottom: 4px solid var(--var-color-primary);
+  margin-bottom: -4px;
 }
 </style>

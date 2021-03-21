@@ -30,6 +30,10 @@ func RunPipeline(f *ast.File, name string) (err error) {
 
 	err = run(f, v)
 
+	if err != nil {
+		err = errors.Wrapf(err, "in pipeline %q", name)
+	}
+
 	return
 }
 

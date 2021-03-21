@@ -1,7 +1,6 @@
 package offsetFetch
 
 import (
-	"math"
 	"mokapi/server/kafka/protocol"
 )
 
@@ -14,7 +13,7 @@ func init() {
 		&Request{},
 		&Response{},
 		6,
-		math.MaxInt16,
+		7,
 	)
 }
 
@@ -33,7 +32,7 @@ type RequestTopic struct {
 
 type Response struct {
 	ThrottleTimeMs int32              `kafka:"min=3"`
-	Topics         []ResponseTopic    `kafka:""`
+	Topics         []ResponseTopic    `kafka:"compact=6"`
 	ErrorCode      protocol.ErrorCode `kafka:"min=2"`
 	TagFields      map[int64]string   `kafka:"type=TAG_BUFFER,min=6"`
 }

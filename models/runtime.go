@@ -4,7 +4,6 @@ import (
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/ldap"
 	"mokapi/config/dynamic/openapi"
-	"time"
 )
 
 type Runtime struct {
@@ -19,8 +18,6 @@ func NewRuntime() *Runtime {
 		OpenApi:  make(map[string]*openapi.Config),
 		Ldap:     make(map[string]*ldap.Config),
 		AsyncApi: make(map[string]*asyncApi.Config),
-		Metrics: &Metrics{
-			Start: time.Time{},
-		},
+		Metrics:  newMetrics(),
 	}
 }

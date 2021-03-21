@@ -1,27 +1,70 @@
 <template>
-  <div class="dashboard">
+  <div class="dashboard" v-if="dashboard !== null">
       <div class="page-header">
           <h2>Dashboard</h2>
       </div>
       <div class="page-body">
 
         <b-card-group deck>
-        <b-card body-class="info-body">
-          <b-card-title class="info">Uptime Since</b-card-title>
-          <b-card-text class="text-center value">{{ dashboard.serverUptime | fromNow }}</b-card-text>
-          <b-card-text class="text-right additional">{{ dashboard.serverUptime | moment }}</b-card-text>
-        </b-card>
-        <b-card body-class="info-body">
-          <b-card-title class="info">Total Requests</b-card-title>
-          <b-card-text class="text-center value">{{ dashboard.totalRequests }}</b-card-text>
-        </b-card>
-        <b-card body-class="info-body">
-          <b-card-title class="info">Request Errors</b-card-title>
-          <b-card-text class="text-center value text-danger">{{ dashboard.requestsWithError }}</b-card-text>
-        </b-card>
+          <b-card body-class="info-body" class="text-center">
+            <b-card-title class="info">Uptime Since</b-card-title>
+            <b-card-text class="text-center value">{{ dashboard.serverUptime | fromNow }}</b-card-text>
+            <b-card-text class="text-right additional">{{ dashboard.serverUptime | moment }}</b-card-text>
+          </b-card>
+          <b-card body-class="info-body" class="text-center">
+            <b-card-title class="info">Memory Usage</b-card-title>
+            <b-card-text class="text-center value">{{ dashboard.memoryUsage | prettyBytes }}</b-card-text>
+            </b-card>
         </b-card-group>
 
         <b-card-group deck>
+          <b-card body-class="info-body" class="text-center">
+            <b-card-title class="info">Services Up</b-card-title>
+            <b-card-text class="text-center value">{{ dashboard.totalServices }}</b-card-text>
+          </b-card>
+          <b-card body-class="info-body" class="text-center">
+            <b-card-title class="info">Total Web Requests</b-card-title>
+            <b-card-text class="text-center value">{{ dashboard.totalRequests }}</b-card-text>
+          </b-card>
+          <b-card body-class="info-body" class="text-center">
+            <b-card-title class="info">Web Request Errors</b-card-title>
+            <b-card-text class="text-center value text-danger">{{ dashboard.requestsWithError }}</b-card-text>
+          </b-card>
+        </b-card-group>
+
+        <b-card-group deck>
+          <b-card body-class="info-body" class="text-center">
+            <b-card-title class="info">Kafka Clusters</b-card-title>
+            <b-card-text class="text-center value">{{ dashboard.kafka.totalClusters }}</b-card-text>
+          </b-card>
+          <b-card body-class="info-body" class="text-center">
+            <b-card-title class="info">Kafka Topics</b-card-title>
+            <b-card-text class="text-center value">{{ dashboard.kafka.totalTopics }}</b-card-text>
+          </b-card>
+          <b-card body-class="info-body" class="text-center">
+            <b-card-title class="info">Kafka Partitions</b-card-title>
+            <b-card-text class="text-center value">{{ dashboard.kafka.totalPartitions }}</b-card-text>
+          </b-card>
+          <b-card body-class="info-body" class="text-center">
+            <b-card-title class="info">Kafka Segments</b-card-title>
+            <b-card-text class="text-center value">{{ dashboard.kafka.totalSegments }}</b-card-text>
+          </b-card>
+          <b-card body-class="info-body" class="text-center">
+            <b-card-title class="info">Received Kafka Messages</b-card-title>
+            <b-card-text class="text-center value">{{ dashboard.kafka.totalMessages }}</b-card-text>
+          </b-card>
+        </b-card-group>
+
+        <!-- <b-card-group deck>
+          <b-card body-class="info-body">
+           <b-card-title class="info">Topic Memory Usage</b-card-title>
+           <b-card-text class="text-center value">
+             <time-chart :chart-data="chartTopicSize" :height="250" />
+           </b-card-text>
+          </b-card>
+        </b-card-group> -->
+
+        <!-- <b-card-group deck>
           <b-card>
             <b-card-title class="info">Services</b-card-title>
             <b-card-text v-if="loaded">
@@ -44,12 +87,12 @@
               </div>
             </b-card-text>
           </b-card>
-        </b-card-group>
+        </b-card-group> -->
 
         <b-card-group deck>
           <b-card class="w-100">
-            <b-card-title class="info">Last Request Errors</b-card-title>
-            <b-table :items="lastErrors" :fields="lastRequestField">
+            <b-card-title class="info text-center">Last Request Errors</b-card-title>
+            <b-table :items="lastErrors" :fields="lastRequestField" table-class="dataTable">
               <template v-slot:cell(method)="data">
                 <b-badge pill class="operation" :class="data.item.method.toLowerCase()" >{{ data.item.method }}</b-badge>
               </template>
@@ -72,8 +115,8 @@
 
         <b-card-group deck>
           <b-card class="w-100">
-            <b-card-title class="info">Recent Request</b-card-title>
-            <b-table :items="lastRequests" :fields="lastRequestField">
+            <b-card-title class="info text-center">Recent Request</b-card-title>
+            <b-table :items="lastRequests" :fields="lastRequestField" table-class="dataTable">
               <template v-slot:cell(method)="data">
                 <b-badge pill class="operation" :class="data.item.method.toLowerCase()" >{{ data.item.method }}</b-badge>
               </template>
@@ -101,23 +144,27 @@
 import Api from '@/mixins/Api'
 import moment from 'moment'
 import DoughnutChart from '@/components/DoughnutChart'
+import TimeChart from '@/components/TimeChart'
 
 export default {
   components: {
-    'doughnut-chart': DoughnutChart
+    'doughnut-chart': DoughnutChart,
+    'time-chart': TimeChart
   },
   mixins: [Api],
   data () {
     return {
-      dashboard: {},
+      dashboard: null,
       loaded: false,
       timer: null,
-      lastRequestField: ['method', 'url', 'httpStatus', 'error', 'time', 'responseTime']
+      lastRequestField: ['method', 'url', 'httpStatus', 'error', 'time', 'responseTime'],
+      topicSizes: {},
+      chartTopicSize: {},
     }
   },
   created () {
     this.getData()
-    this.timer = setInterval(this.getData, 20000)
+    this.timer = setInterval(this.getData, 2000)
   },
   computed: {
     serviceStatus: function () {
@@ -160,12 +207,65 @@ export default {
         return d.seconds() +" [sec]"
       }
       return moment.duration(d).minutes()
+    },
+    prettyBytes: function (num){
+      // jacked from: https://github.com/sindresorhus/pretty-bytes
+      if (typeof num !== 'number' || isNaN(num)) {
+        return 0
+      }
+
+      var exponent;
+      var unit;
+      var neg = num < 0;
+      var units = ['B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+
+      if (neg) {
+        num = -num;
+      }
+
+      if (num < 1) {
+        return (neg ? '-' : '') + num + ' B';
+      }
+
+      exponent = Math.min(Math.floor(Math.log(num) / Math.log(1000)), units.length - 1);
+      num = (num / Math.pow(1000, exponent)).toFixed(2) * 1;
+      unit = units[exponent];
+
+      return (neg ? '-' : '') + num + ' ' + unit;
     }
   },
   methods: {
     async getData () {
       this.dashboard = await this.getDashboard()
+      // var topicSizes = this.dashboard.kafka.topicSizes
+      // var now = new Date()
+      // for (var key in topicSizes){
+      //   if (!(key in this.topicSizes)){
+      //     this.topicSizes[key] = []
+      //   }
+      //   this.topicSizes[key].push({x: now, y: topicSizes[key]})
+      //   if (this.topicSizes[key].length > 1000) {
+      //     this.topicSizes[key].shift()
+      //   }
+      // }
+      // var datasets = []
+      // for (var key in this.topicSizes){
+      //   datasets.push({
+      //     label: key,
+      //     data: this.topicSizes[key],
+      //     fill: false,
+      //     borderColor: '#34b5e3',
+      //     pointRadius: 0,
+      //     lineTension: 0
+      //   })
+      // }
+      // this.chartTopicSize = {
+      //   datasets: datasets
+      // }
       this.loaded = true
+    },
+  getRandomInt () {
+      return Math.floor(Math.random() * (50 - 5 + 1)) + 5
     }
   },
   beforeDestroy () {
@@ -175,42 +275,41 @@ export default {
 </script>
 
 <style scoped>
-.dashboard{
+  .dashboard{
     width: 90%;
     margin: auto;
     margin-top: 42px;
-}
-.page-header h2{
+  }
+  .page-header h2{
     font-weight: 700;
-}
+  }
   .card{
-    margin: 15px;
+    margin: 7px;
   }
-.card p{
+  .card p{
     margin-bottom: 0;
-}
-.info{
-    color: #a0a1a7;
-    font-size: 1.2rem;
   }
-.info-body{
-  padding: 0.8rem;
-}
-.value {
-  font-size: 1.8rem;
+  .info{
+    font-size: 0.7rem;
+    font-weight: 500;
+  }
+  .info-body{
+    padding: 0.8rem;
+  }
+  .value {
+    font-size: 1.8rem;
     font-weight: 600;
-    color: #007bff;
-}
-.additional{
-  color: #a0a1a7;
-  font-size: 0.8rem;
-}
-.legend-item {
-  border: 0 none;
-  font-weight: 600;
-}
-.response.icon{
+  }
+  .additional{
+    color: #a0a1a7;
+    font-size: 0.8rem;
+  }
+  .legend-item {
+    border: 0 none;
+    font-weight: 600;
+  }
+  .response.icon{
     vertical-align: middle;
     font-size: 0.5rem;
-}
+  }
 </style>

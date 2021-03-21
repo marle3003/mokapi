@@ -41,11 +41,6 @@ export default {
 </script>
 
 <style scoped>
-
-  .label{
-    color: #a0a1a7;
-    margin-bottom: 0
-  }
   .title{
     font-size: 1.5rem;
     font-weight: 600;

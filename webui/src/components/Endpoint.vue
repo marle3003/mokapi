@@ -1,5 +1,5 @@
 <template>
-  <b-row class="">
+  <b-row>
     <b-col>
       <b-container fluid v-if="endpoint != null">
         <b-row class="mb-2">
@@ -47,13 +47,13 @@
                   <p class="label">Pipeline</p>
                   <p><vue-simple-markdown :source="operation.pipeline" /></p>
 
-                  <h5>Parameters</h5>
+                  <h2>Parameters</h2>
                   <parameters v-bind:operation="operation" />
 
                   <request v-bind:operation="operation" />
 
                   <hr />
-                  <h5>Response</h5>
+                  <h2>Response</h2>
                   <response v-bind:responses="operation.responses" />
                 </b-card-text>
               </b-tab>
@@ -115,16 +115,17 @@ export default {
 </script>
 
 <style scoped>
-.label{
-    color: #a0a1a7;
-    margin-bottom: 0
-  }
 .close {
   font-size: 2.2rem;
   cursor: pointer;
+  border-color: var(--var-border-color);
+  color: var(--var-color-primary);
 }
 .col-image{
     width: 100px;
     flex: 0 0 auto
   }
+</style>
+<style>
+
 </style>

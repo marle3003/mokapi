@@ -4,6 +4,7 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"io"
+	"math"
 	"mokapi/server/kafka/protocol"
 	"mokapi/server/kafka/protocol/apiVersion"
 	"mokapi/server/kafka/protocol/fetch"
@@ -63,7 +64,7 @@ func (s *Binding) handle(conn net.Conn) {
 			r := s.processOffSetFetch(msg.(*offsetFetch.Request))
 			protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, r)
 		case protocol.Fetch:
-			if c.group.state != stable {
+			if c.group != nil && c.group.state != stable {
 				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, &fetch.Response{ErrorCode: protocol.RebalanceInProgress})
 			} else {
 				r := s.processFetch(msg.(*fetch.Request))
@@ -92,23 +93,23 @@ func (s *Binding) processListOffsets(req *listOffsets.Request) *listOffsets.Resp
 				part := listOffsets.ResponsePartition{
 					Index:     rp.Index,
 					ErrorCode: 0,
-					Timestamp: 0,
+					Timestamp: -1,
+					Offset:    -1,
 				}
 
-				if rp.Timestamp == -2 { // latest
-					if p.offset == 0 {
+				if rp.Timestamp == -2 { // first offset
+					if p.offset <= 0 {
 						part.Offset = -1
 					} else {
-						part.Offset = 0
+						part.Offset = p.startOffset
 					}
-
-				} else if rp.Timestamp == -1 { // earliest
-					part.Offset = p.offset - 1
+				} else if rp.Timestamp == -1 { // lastOffset
+					part.Offset = p.offset
 				}
 
-				if part.Offset >= 0 {
-					part.Timestamp = protocol.Timestamp(p.segments[p.activeSegment].log[0].Records[0].Time)
-				}
+				//if part.Offset >= 0 {
+				//	part.Timestamp = protocol.Timestamp(p.segments[p.activeSegment].log[0].Records[0].Time)
+				//}
 
 				partitions = append(partitions, part)
 			}
@@ -142,8 +143,8 @@ func (s *Binding) processMetadata(req *metaData.Request) *metaData.Response {
 	for _, b := range s.brokers {
 		r.Brokers = append(r.Brokers, metaData.ResponseBroker{
 			NodeId: int32(b.id),
-			Host:   "localhost",
-			Port:   9092,
+			Host:   b.host,
+			Port:   int32(b.port),
 		})
 	}
 
@@ -212,7 +213,7 @@ func (s *Binding) processFindCoordinator(req *findCoordinator.Request) *findCoor
 				name:        req.Key,
 				coordinator: s.brokers[0],
 			}
-			g.balancer = newGroupBalancer(g, s.binding.Group.Initial.Rebalance.Delay)
+			g.balancer = newGroupBalancer(g, s.kafka.Group.Initial.Rebalance.Delay)
 			s.groups[req.Key] = g
 		}
 
@@ -328,25 +329,35 @@ func (s *Binding) processOffSetFetch(req *offsetFetch.Request) *offsetFetch.Resp
 func (s *Binding) processFetch(req *fetch.Request) *fetch.Response {
 	r := &fetch.Response{Topics: make([]fetch.ResponseTopic, 0)}
 
-	// currently offset is not separated by groups
-	for _, rt := range req.Topics {
-		t := s.topics[rt.Name]
-		resTopic := fetch.ResponseTopic{Name: rt.Name, Partitions: make([]fetch.ResponsePartition, 0, len(rt.Partitions))}
-		for _, rp := range rt.Partitions {
-			p := t.partitions[int(rp.Index)]
-			resPar := fetch.ResponsePartition{
-				Index:                rp.Index,
-				HighWatermark:        p.offset - 1,
-				LastStableOffset:     p.offset - 1,
-				LogStartOffset:       0,
-				PreferredReadReplica: 1,
+	start := time.Now().Add(time.Duration(req.MaxWaitMs-200) * time.Millisecond) // -200: working load time
+	size := int32(0)
+	for {
+		// currently offset is not separated by groups
+		for _, rt := range req.Topics {
+			t := s.topics[rt.Name]
+			resTopic := fetch.ResponseTopic{Name: rt.Name, Partitions: make([]fetch.ResponsePartition, 0, len(rt.Partitions))}
+			for _, rp := range rt.Partitions {
+				p := t.partitions[int(rp.Index)]
+				resPar := fetch.ResponsePartition{
+					Index:                rp.Index,
+					HighWatermark:        p.offset,
+					LastStableOffset:     p.offset,
+					LogStartOffset:       0,
+					PreferredReadReplica: -1,
+				}
+
+				record, recordSize := p.read(rp.FetchOffset, rp.MaxBytes)
+				resPar.RecordSet = record
+				size += recordSize
+				resTopic.Partitions = append(resTopic.Partitions, resPar)
 			}
-
-			resPar.RecordSet = p.read(rp.FetchOffset, int(rp.MaxBytes))
-			resTopic.Partitions = append(resTopic.Partitions, resPar)
+			r.Topics = append(r.Topics, resTopic)
 		}
-		r.Topics = append(r.Topics, resTopic)
-	}
 
-	return r
+		if time.Now().After(start) || size > req.MinBytes {
+			return r
+		}
+
+		time.Sleep(time.Duration(math.Floor(0.2*float64(req.MaxWaitMs))) * time.Millisecond)
+	}
 }
