@@ -29,7 +29,7 @@ func init() {
 type Config struct {
 	Info       Info
 	Servers    map[string]Server
-	Channels   map[string]*Channel
+	Channels   map[string]*ChannelRef
 	Components Components
 }
 
@@ -41,7 +41,6 @@ type Info struct {
 	Contact        *Contact
 	License        *License
 	Mokapi         *MokapiRef `yaml:"x-mokapi" json:"x-mokapi"`
-	Kafka          Kafka      `yaml:"x-kafka" json:"x-kafka"`
 }
 
 type MokapiRef struct {
@@ -65,20 +64,27 @@ type Server struct {
 	Protocol        string
 	ProtocolVersion string
 	Description     string
-	Variables       map[string]*ServerVariable
+	Bindings        ServerBindings
 }
 
-type ServerVariable struct {
-	Enum        []string
-	Default     string
-	Description string
-	Examples    []string
+type ServerBindings struct {
+	Kafka Kafka
+}
+
+type ChannelRef struct {
+	Ref   string
+	Value *Channel
 }
 
 type Channel struct {
 	Description string
 	Subscribe   *Operation
 	Publish     *Operation
+	//Bindings ChannelBindings
+}
+
+type ChannelBindings struct {
+	Kafka Kafka
 }
 
 type Operation struct {

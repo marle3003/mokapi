@@ -2,9 +2,11 @@ package basics
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/Masterminds/sprig"
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"mokapi/providers/pipeline/lang/runtime"
 	"mokapi/providers/pipeline/lang/types"
@@ -21,6 +23,8 @@ type ReadFileStepExecution struct {
 	File       string `step:"file,position=0,required"`
 	AsString   bool
 	AsTemplate bool
+	AsJson     bool
+	AsYml      bool
 }
 
 func (e *ReadFileStep) Start() types.StepExecution {
@@ -37,16 +41,20 @@ func (e *ReadFileStepExecution) Run(ctx types.StepContext) (interface{}, error) 
 
 	file := filepath.Join(dir, fmt.Sprintf("%v", e.File))
 
-	bytes, err := readFile(file, e.AsTemplate)
+	b, err := readFile(file, e.AsTemplate)
 	if err != nil {
 		return nil, err
 	}
 
-	if e.AsString {
-		return string(bytes), nil
+	if e.AsJson {
+		return toJson(b)
+	} else if e.AsYml {
+		return toYml(b)
+	} else if e.AsString {
+		return string(b), nil
 	}
 
-	return bytes, nil
+	return b, nil
 }
 
 func readFile(p string, asTemplate bool) ([]byte, error) {
@@ -82,4 +90,56 @@ func readFile(p string, asTemplate bool) ([]byte, error) {
 func extractUsername(s string) string {
 	slice := strings.Split(s, "\\")
 	return slice[len(slice)-1]
+}
+
+func toJson(b []byte) (interface{}, error) {
+	var m interface{}
+	err := json.Unmarshal(b, &m)
+	if err != nil {
+		return nil, err
+	}
+
+	return convertObject(m), nil
+}
+
+func toYml(b []byte) (interface{}, error) {
+	m := make(map[interface{}]interface{})
+	err := yaml.Unmarshal(b, &m)
+	if err != nil {
+		return nil, err
+	}
+	return convertObject(m), nil
+}
+
+func convertObject(i interface{}) types.Object {
+	switch o := i.(type) {
+	case map[interface{}]interface{}:
+		obj := types.NewExpando()
+		for k, v := range o {
+			propertyName := fmt.Sprint(k)
+			v := convertObject(v)
+			obj.SetField(propertyName, v)
+		}
+		return obj
+	case map[string]interface{}:
+		obj := types.NewExpando()
+		for k, v := range o {
+			v := convertObject(v)
+			obj.SetField(k, v)
+		}
+		return obj
+	case []interface{}:
+		array := types.NewArray()
+		for _, e := range o {
+			array.Add(convertObject(e))
+		}
+		return array
+	case string:
+		return types.NewString(o)
+	case float64:
+		return types.NewNumber(o)
+	case int:
+		return types.NewNumber(float64(o))
+	}
+	return types.NewString(fmt.Sprintf("%v", i))
 }

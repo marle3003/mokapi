@@ -9,6 +9,10 @@ import ServiceOverview from '@/components/ServiceOverview'
 import Dashboard from '@/views/Dashboard'
 import Docs from '@/views/Docs'
 
+import AsyncApiService from '@/views/asyncapi/Service'
+
+import LdapService from '@/views/ldap/Service'
+
 Vue.use(Router)
 
 export default new Router({
@@ -39,8 +43,13 @@ export default new Router({
       component: ServiceList
     },
     {
-      path: '/services/:name',
-      name: 'service',
+      path: '/services/asyncapi/:name',
+      name: 'asyncapi',
+      component: AsyncApiService
+    },
+    {
+      path: '/services/openapi/:name',
+      name: 'openapi',
       component: Service,
       redirect: {
         name: 'default'
@@ -68,5 +77,10 @@ export default new Router({
         }
       ]
     },
+    {
+      path: '/services/ldap/:name',
+      name: 'ldap',
+      component: LdapService
+    }
   ]
 })

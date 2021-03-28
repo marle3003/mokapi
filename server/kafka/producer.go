@@ -6,20 +6,20 @@ import (
 	"mokapi/models/media"
 	"mokapi/providers/encoding"
 	"mokapi/providers/pipeline/lang/types"
-	"mokapi/server/kafka/protocol"
-	"time"
 )
 
 type ProducerStep struct {
 	types.AbstractStep
-	topics map[string]*topic
-	g      *openapi.Generator
+	topics     map[string]*topic
+	g          *openapi.Generator
+	addMessage func(*topic, []byte, []byte) error
 }
 
-func newProducerStep(topics map[string]*topic) *ProducerStep {
+func newProducerStep(topics map[string]*topic, addMessage func(*topic, []byte, []byte) error) *ProducerStep {
 	return &ProducerStep{
-		topics: topics,
-		g:      openapi.NewGenerator(),
+		topics:     topics,
+		g:          openapi.NewGenerator(),
+		addMessage: addMessage,
 	}
 }
 
@@ -44,9 +44,9 @@ func (e *ProducerStepExecution) Run(_ types.StepContext) (interface{}, error) {
 	} else {
 		var data []byte
 		if len(e.Message) == 0 {
-			i := e.step.g.New(t.config.Payload)
-			contentType := media.ParseContentType(t.config.ContentType)
-			b, err := encode(i, t.config.Payload, contentType)
+			i := e.step.g.New(t.payload)
+			contentType := media.ParseContentType(t.contentType)
+			b, err := encode(i, t.payload, contentType)
 			if err != nil {
 				return nil, err
 			}
@@ -57,25 +57,13 @@ func (e *ProducerStepExecution) Run(_ types.StepContext) (interface{}, error) {
 
 		var key []byte
 		if len(e.Key) == 0 {
-			k := e.step.g.New(t.config.Bindings.Kafka.Key)
+			k := e.step.g.New(t.key)
 			key = []byte(fmt.Sprintf("%v", k))
 		} else {
 			key = []byte(e.Key)
 		}
 
-		record := &protocol.RecordBatch{
-			Records: []protocol.Record{
-				{
-					Offset:  0,
-					Time:    time.Now(),
-					Key:     key,
-					Value:   data,
-					Headers: nil,
-				},
-			},
-		}
-		err := t.addRecord(0, record)
-		return nil, err
+		return nil, e.step.addMessage(t, key, data)
 	}
 }
 

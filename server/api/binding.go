@@ -6,6 +6,8 @@ import (
 	"fmt"
 	assetfs "github.com/elazarl/go-bindata-assetfs"
 	"mokapi/models"
+	"mokapi/server/api/asyncapi"
+	"mokapi/server/api/openapi"
 	"net/http"
 	"strings"
 	"time"
@@ -21,9 +23,16 @@ type Binding struct {
 }
 
 type serviceSummary struct {
-	Name        string `json:"name,omitempty"`
-	Description string `json:"description,omitempty"`
-	Version     string `json:"version,omitempty"`
+	Name        string    `json:"name,omitempty"`
+	Description string    `json:"description,omitempty"`
+	Version     string    `json:"version,omitempty"`
+	Type        string    `json:"type,omitempty"`
+	BaseUrls    []baseUrl `json:"baseUrls"`
+}
+
+type baseUrl struct {
+	Url         string `json:"url"`
+	Description string `json:"description"`
 }
 
 func NewBinding(addr string, r *models.Runtime) *Binding {
@@ -66,8 +75,10 @@ func (b *Binding) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch p := r.URL.Path; {
 	case p == "/api/services":
 		b.getServices(w, r)
-	case strings.HasPrefix(p, "/api/services/"):
+	case strings.HasPrefix(p, "/api/services/openapi"):
 		b.getService(w, r)
+	case strings.HasPrefix(p, "/api/services/asyncapi"):
+		b.getAsyncService(w, r)
 	case p == "/api/dashboard":
 		b.getDashboard(w, r)
 	default:
@@ -77,14 +88,12 @@ func (b *Binding) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (b *Binding) getService(w http.ResponseWriter, r *http.Request) {
 	segments := strings.Split(r.URL.Path, "/")
-	name := segments[3]
+	name := segments[4]
 
 	if s, ok := b.runtime.OpenApi[name]; ok {
-		service := newService(s)
-
 		w.Header().Set("Content-Type", "application/json")
 
-		error := json.NewEncoder(w).Encode(service)
+		error := json.NewEncoder(w).Encode(openapi.NewService(s))
 		if error != nil {
 			log.Errorf("Error in writing service response: %v", error.Error())
 		}
@@ -93,11 +102,19 @@ func (b *Binding) getService(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (b *Binding) getServices(w http.ResponseWriter, r *http.Request) {
-	services := make([]serviceSummary, 0)
+func (b *Binding) getServices(w http.ResponseWriter, _ *http.Request) {
+	services := make([]interface{}, 0)
 
-	for _, s := range b.runtime.OpenApi {
-		services = append(services, newServiceSummary(s))
+	for _, c := range b.runtime.OpenApi {
+		services = append(services, openapi.NewService(c))
+	}
+	for _, c := range b.runtime.AsyncApi {
+		services = append(services, asyncapi.NewService(c))
+	}
+	for _, s := range b.runtime.Ldap {
+		summary := serviceSummary{Name: s.Info.Name, Type: "LDAP"}
+		summary.BaseUrls = append(summary.BaseUrls, baseUrl{Url: s.Address})
+		services = append(services, summary)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -116,5 +133,21 @@ func (b *Binding) getDashboard(w http.ResponseWriter, r *http.Request) {
 	error := json.NewEncoder(w).Encode(dashboard)
 	if error != nil {
 		log.Errorf("Error in writing dashboard response: %v", error.Error())
+	}
+}
+
+func (b *Binding) getAsyncService(w http.ResponseWriter, r *http.Request) {
+	segments := strings.Split(r.URL.Path, "/")
+	name := segments[4]
+
+	if c, ok := b.runtime.AsyncApi[name]; ok {
+		w.Header().Set("Content-Type", "application/json")
+
+		error := json.NewEncoder(w).Encode(asyncapi.NewService(c))
+		if error != nil {
+			log.Errorf("Error in writing service response: %v", error.Error())
+		}
+	} else {
+		w.WriteHeader(404)
 	}
 }

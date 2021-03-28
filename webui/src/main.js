@@ -5,11 +5,12 @@ import App from './App'
 import router from './router'
 import axios from 'axios'
 import VueAxios from 'vue-axios'
-import {BootstrapVue, BIcon, BIconArrowLeft, BIconX, BIconPlus, BIconCircleFill, BIconCheckCircle, BIconPlusSquare, BIconDashSquare} from 'bootstrap-vue'
+import {BootstrapVue, BIcon, BIconArrowLeft, BIconX, BIconPlus, BIconCircleFill, BIconCheckCircle, BIconPlusSquare, BIconDashSquare, BIconChevronRight} from 'bootstrap-vue'
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 import VueSimpleMarkdown from 'vue-simple-markdown'
 import 'vue-simple-markdown/dist/vue-simple-markdown.css'
+import './assets/prism'
 
 Vue.config.productionTip = false
 
@@ -24,6 +25,7 @@ Vue.component('BIconCircleFill', BIconCircleFill)
 Vue.component('BIconCheckCircle', BIconCheckCircle)
 Vue.component('BIconPlusSquare', BIconPlusSquare)
 Vue.component('BIconDashSquare', BIconDashSquare)
+Vue.component('BIconChevronRight', BIconChevronRight)
 
 /* eslint-disable no-new */
 new Vue({

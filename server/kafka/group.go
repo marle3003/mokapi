@@ -56,6 +56,11 @@ type strategyCounter struct {
 	counter int
 }
 
+type groupAssignmentStrategy struct {
+	assignmentStrategy string
+	metadata           []byte
+}
+
 type join struct {
 	consumer *client
 	write    func(protocol.Message)

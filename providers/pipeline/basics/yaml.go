@@ -45,36 +45,3 @@ func (e *YamlExecution) Run(ctx types.StepContext) (interface{}, error) {
 
 	return convertObject(m), nil
 }
-
-func convertObject(i interface{}) types.Object {
-	switch o := i.(type) {
-	case map[interface{}]interface{}:
-		obj := types.NewExpando()
-		for k, v := range o {
-			propertyName := fmt.Sprint(k)
-			v := convertObject(v)
-			obj.SetField(propertyName, v)
-		}
-		return obj
-	case map[string]interface{}:
-		obj := types.NewExpando()
-		for k, v := range o {
-			v := convertObject(v)
-			obj.SetField(k, v)
-		}
-		return obj
-	case []interface{}:
-		array := types.NewArray()
-		for _, e := range o {
-			array.Add(convertObject(e))
-		}
-		return array
-	case string:
-		return types.NewString(o)
-	case float64:
-		return types.NewNumber(o)
-	case int:
-		return types.NewNumber(float64(o))
-	}
-	return types.NewString(fmt.Sprintf("%v", i))
-}

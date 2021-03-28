@@ -80,10 +80,10 @@ func (s *Server) startMetricUpdater() {
 			select {
 			case <-ticker.C:
 				s.runtime.Metrics.Update()
-				for k, e := range s.Bindings {
+				for _, e := range s.Bindings {
 					switch b := e.(type) {
 					case *kafka.Binding:
-						b.UpdateMetrics(s.runtime.Metrics.Kafka[k])
+						b.UpdateMetrics(s.runtime.Metrics.Kafka)
 					}
 				}
 			case <-s.stopMetricsUpdater:
@@ -98,6 +98,7 @@ func (s *Server) updateBindings(config dynamic.Config) {
 	case *openapi.Config:
 		if _, ok := s.runtime.OpenApi[c.Info.Name]; !ok {
 			s.runtime.OpenApi[c.Info.Name] = c
+			s.runtime.Metrics.OpenApi[c.Info.Name] = &models.ServiceMetric{Name: c.Info.Name}
 		}
 		for _, server := range c.Servers {
 			address := fmt.Sprintf(":%v", server.GetPort())
@@ -114,6 +115,8 @@ func (s *Server) updateBindings(config dynamic.Config) {
 		}
 	case *ldap.Config:
 		if b, ok := s.Bindings[c.Address]; !ok {
+			s.runtime.Ldap[c.Info.Name] = c
+
 			lserver := ldapServer.NewServer(c)
 			s.Bindings[c.Address] = lserver
 			lserver.Start()
@@ -123,14 +126,15 @@ func (s *Server) updateBindings(config dynamic.Config) {
 	case *asyncApi.Config:
 		if _, ok := s.runtime.AsyncApi[c.Info.Name]; !ok {
 			s.runtime.AsyncApi[c.Info.Name] = c
-			s.runtime.Metrics.Kafka[c.Info.Name] = &models.KafkaMetrics{TopicSizes: make(map[string]int64)}
 		}
 
 		binding, found := s.Bindings[c.Info.Name]
 		if !found {
-			binding = kafka.NewBinding(c)
-			s.Bindings[c.Info.Name] = binding
-			binding.Start()
+			b := kafka.NewBinding(c, s.runtime.Metrics.AddMessage)
+			binding = b
+			s.Bindings[c.Info.Name] = b
+			b.Start()
+			b.UpdateMetrics(s.runtime.Metrics.Kafka)
 		}
 		err := binding.Apply(c)
 		if err != nil {

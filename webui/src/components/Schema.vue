@@ -211,13 +211,13 @@ export default {
     width: 20px;
   }
   .prop-type {
-    color: var(--blue);
+    color: var(--var-code-orange);
   }
   .ref-type{
     color: var(--purple);
   }
   .comment {
-    color: var(--orange);
+    color: var(--var-code-green);
   }
 </style>
 <style scoped>

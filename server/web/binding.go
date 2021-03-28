@@ -16,17 +16,17 @@ import (
 type AddRequestMetric func(metric *models.RequestMetric)
 
 type Binding struct {
-	Addr     string
-	server   *http.Server
-	handlers map[string]map[string]*ServiceHandler
-	mh       AddRequestMetric
+	Addr             string
+	server           *http.Server
+	handlers         map[string]map[string]*ServiceHandler
+	addRequestMetric AddRequestMetric
 }
 
 func NewBinding(addr string, mh AddRequestMetric) *Binding {
 	b := &Binding{
-		Addr:     addr,
-		handlers: make(map[string]map[string]*ServiceHandler),
-		mh:       mh,
+		Addr:             addr,
+		handlers:         make(map[string]map[string]*ServiceHandler),
+		addRequestMetric: mh,
 	}
 	b.server = &http.Server{Addr: addr, Handler: b}
 
@@ -99,11 +99,11 @@ func (binding *Binding) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := NewHttpContext(r, w, servicePath)
-	ctx.metric = models.NewRequestMetric(r.Method, r.URL.String())
+	ctx.metric = models.NewRequestMetric(r.Method, r.URL.String(), service.config)
 
 	service.ServeHTTP(ctx)
 
-	binding.mh(ctx.metric)
+	binding.addRequestMetric(ctx.metric)
 }
 
 func (binding *Binding) resolveHandler(r *http.Request) (*ServiceHandler, string) {

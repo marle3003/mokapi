@@ -55,10 +55,14 @@ export default {
 #nav-collapse .nav-link:hover{
   border-bottom: 4px solid var(--var-color-primary);
   margin-bottom: -4px;
+   text-decoration: none;
 }
 
 #nav-collapse .nav-link.router-link-active{
   border-bottom: 4px solid var(--var-color-primary);
   margin-bottom: -4px;
+}
+#nav-collapse .nav-link.router-link-exact-active{
+  text-decoration: none;
 }
 </style>

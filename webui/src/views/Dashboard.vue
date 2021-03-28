@@ -19,39 +19,44 @@
 
         <b-card-group deck>
           <b-card body-class="info-body" class="text-center">
-            <b-card-title class="info">Services Up</b-card-title>
-            <b-card-text class="text-center value">{{ dashboard.totalServices }}</b-card-text>
-          </b-card>
-          <b-card body-class="info-body" class="text-center">
-            <b-card-title class="info">Total Web Requests</b-card-title>
+            <b-card-title class="info">Total REST Requests</b-card-title>
             <b-card-text class="text-center value">{{ dashboard.totalRequests }}</b-card-text>
           </b-card>
           <b-card body-class="info-body" class="text-center">
             <b-card-title class="info">Web Request Errors</b-card-title>
-            <b-card-text class="text-center value text-danger">{{ dashboard.requestsWithError }}</b-card-text>
+            <b-card-text class="text-center value" v-bind:class="{'text-danger': hasErrors}">{{ dashboard.requestsWithError }}</b-card-text>
           </b-card>
         </b-card-group>
 
         <b-card-group deck>
           <b-card body-class="info-body" class="text-center">
-            <b-card-title class="info">Kafka Clusters</b-card-title>
-            <b-card-text class="text-center value">{{ dashboard.kafka.totalClusters }}</b-card-text>
+             <b-card-title class="info">REST Services</b-card-title>
+             <b-table :items="services" :fields="serviceFields" table-class="dataTable">
+              <template v-slot:cell(method)="data">
+                <b-badge pill class="operation" :class="data.item.method.toLowerCase()" >{{ data.item.method }}</b-badge>
+              </template>
+              <template v-slot:cell(lastRequest)="data">
+                <span v-if="data.item.lastRequest === '0001-01-01T00:00:00Z'">-</span>
+                <span v-else>{{ data.item.lastRequest | moment}}</span>
+              </template>
+            </b-table>
           </b-card>
+        </b-card-group>
+
+        <b-card-group deck>
           <b-card body-class="info-body" class="text-center">
-            <b-card-title class="info">Kafka Topics</b-card-title>
-            <b-card-text class="text-center value">{{ dashboard.kafka.totalTopics }}</b-card-text>
-          </b-card>
-          <b-card body-class="info-body" class="text-center">
-            <b-card-title class="info">Kafka Partitions</b-card-title>
-            <b-card-text class="text-center value">{{ dashboard.kafka.totalPartitions }}</b-card-text>
-          </b-card>
-          <b-card body-class="info-body" class="text-center">
-            <b-card-title class="info">Kafka Segments</b-card-title>
-            <b-card-text class="text-center value">{{ dashboard.kafka.totalSegments }}</b-card-text>
-          </b-card>
-          <b-card body-class="info-body" class="text-center">
-            <b-card-title class="info">Received Kafka Messages</b-card-title>
-            <b-card-text class="text-center value">{{ dashboard.kafka.totalMessages }}</b-card-text>
+             <b-card-title class="info">Kafka Topics</b-card-title>
+             <b-table :items="topics" :fields="topicFields" table-class="dataTable">
+              <template v-slot:cell(method)="data">
+                <b-badge pill class="operation" :class="data.item.method.toLowerCase()" >{{ data.item.method }}</b-badge>
+              </template>
+              <template v-slot:cell(lastRecord)="data">
+                {{ data.item.lastRecord | moment}}
+              </template>
+              <template v-slot:cell(size)="data">
+                {{ data.item.size | prettyBytes}}
+              </template>
+            </b-table>
           </b-card>
         </b-card-group>
 
@@ -160,6 +165,8 @@ export default {
       lastRequestField: ['method', 'url', 'httpStatus', 'error', 'time', 'responseTime'],
       topicSizes: {},
       chartTopicSize: {},
+      serviceFields: ['name', 'lastRequest', 'requests', 'errors'],
+      topicFields: ['name', 'count', 'size', 'lastRecord', 'partitions', 'segments']
     }
   },
   created () {
@@ -178,6 +185,9 @@ export default {
         labels: ['Success', 'Errors']
       }
     },
+    hasErrors: function() {
+      return this.dashboard.lastErrors !== undefined && this.dashboard.lastErrors.length > 0;
+    },
     lastErrors: function() {
       if (this.dashboard.lastErrors === undefined) {
         return null
@@ -189,6 +199,46 @@ export default {
         return null
       }
       return this.dashboard.lastRequests.reverse()
+    },
+    services: function() {
+      const services = this.dashboard.services;
+      if (services === undefined){
+        return null
+      }
+
+      function compare(s1, s2) {
+        const a = s1.name.toLowerCase()
+        const b = s2.name.toLowerCase()
+        if (a < b) {
+          return -1
+        }
+        if (a > b) {
+          return 1
+        }
+        return 0
+      }
+
+      return services.sort(compare);
+    },
+    topics: function() {
+      const topics = this.dashboard.kafkaTopics;
+      if (topics === undefined){
+        return null
+      }
+
+      function compare(s1, s2) {
+        const a = s1.name.toLowerCase()
+        const b = s2.name.toLowerCase()
+        if (a < b) {
+          return -1
+        }
+        if (a > b) {
+          return 1
+        }
+        return 0
+      }
+
+      return topics.sort(compare);
     }
   },
   filters: {

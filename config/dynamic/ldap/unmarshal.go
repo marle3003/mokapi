@@ -7,6 +7,7 @@ import (
 )
 
 type ldap struct {
+	Info    Info
 	Server  server
 	Entries []map[string]interface{}
 }
@@ -24,6 +25,7 @@ func (c *Config) UnmarshalYAML(value *yaml.Node) error {
 	tmp := &ldap{}
 	value.Decode(tmp)
 
+	c.Info = tmp.Info
 	c.Address = tmp.Server.Address
 	c.Root = Entry{
 		Attributes: map[string][]string{

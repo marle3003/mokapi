@@ -1,17 +1,22 @@
 <template>
   <div class="doc">
     <div class="page-body">
-      <b-card>
+
         <b-row>
           <b-col cols="2">
-            <b-list-group>
-              <b-list-group-item class="menu-item title border-0">Mokapi</b-list-group-item>
-              <div v-for="item in navigation" :key="item.label">
+            <b-navbar sticky>
+            <b-list-group class="w-100">
+              <div v-for="item in navigation" :key="item.label" class="w-100">
                 <b-list-group-item
                   :to="item.url != undefined ? { path: item.url} : null"
                   class="menu-item"
                   v-b-toggle="item.label.toLowerCase()">
-                  {{item.label}}
+                  <span style="display: flex; flex-grow: 1">{{item.label}}</span>
+                  <span v-if="item.children != undefined">
+                    <span class="icon">
+                      <b-icon icon="chevron-right"></b-icon>
+                    </span>
+                  </span>
                   </b-list-group-item>
                 <b-collapse v-if="item.children != undefined" style="padding:0.4rem" :id="item.label.toLowerCase()" v-model="item.isOpen">
                   <b-list-group-item
@@ -22,12 +27,13 @@
                 </b-collapse>
               </div>
             </b-list-group>
+            </b-navbar>
           </b-col>
           <b-col>
             <component v-if="doc != null" v-bind:is="doc.obj.vue.component" class="content"></component>
           </b-col>
         </b-row>
-      </b-card>
+
     </div>
   </div>
 </template>
@@ -117,46 +123,52 @@ export default {
   margin: auto;
   margin-top: 42px;
 }
-.card {
-  margin: 15px;
+.col{
+  padding-left: 0;
 }
-.card p {
-  margin-bottom: 0;
+.col-2{
+  padding-left: 0;
+}
+.navbar {
+  padding: 0;
 }
 .menu-item {
   border: 0;
   padding: 0.2rem;
+  padding-right: 1.5rem;
+  display: flex;
 }
-.menu-item:focus {
-  outline: none;
-  box-shadow: none;
+.menu-item svg {
+  -moz-transition: all .3s linear;
+  -webkit-transition: all .3s linear;
+  transition: all .3s linear;
 }
-.menu-item.title {
-  font-weight: 500;
+.not-collapsed svg {
+  -moz-transform:rotate(90deg);
+  -webkit-transform:rotate(90deg);
+  transform:rotate(90eg);
 }
 .content {
   line-height: 1.6;
-
+  font-size: 0.8rem;
 }
 .router-link-active {
-  color: #007bff;
-  background-color: #D0E6FF;
   font-weight: 500;
-  border-radius: 8px;
 }
-a:hover{
-  background-color: #D0E6FF;
-  border-radius: 8px;
-}
-
 /* markdown deep selector */
 .content >>> h1 {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin: 0 0 2rem;
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin: 0 0 1.3rem;
 }
 .content >>> h2 {
   font-size: 1.25rem;
+  font-weight: 500;
+  margin: 1.5rem 0 0.5rem;
+}
+.content >>> h3 {
+  font-size: 1.1rem;
+  font-weight: 500;
   margin: 1.5rem 0 0.5rem;
 }
 </style>

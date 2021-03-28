@@ -1,4 +1,4 @@
-package api
+package openapi
 
 import (
 	"fmt"
@@ -12,9 +12,10 @@ type service struct {
 	Description string     `json:"description"`
 	Version     string     `json:"version"`
 	BaseUrls    []baseUrl  `json:"baseUrls"`
-	Endpoints   []endpoint `json:"endpoints"`
-	Models      []*schema  `json:"models"`
+	Endpoints   []Endpoint `json:"endpoints"`
+	Models      []*Schema  `json:"models"`
 	Mokapi      string     `json:"mokapifile"`
+	Type        string     `json:"type"`
 }
 
 type baseUrl struct {
@@ -22,56 +23,56 @@ type baseUrl struct {
 	Description string `json:"description"`
 }
 
-type endpoint struct {
+type Endpoint struct {
 	Path        string      `json:"path"`
 	Summary     string      `json:"summary"`
 	Description string      `json:"description"`
-	Operations  []operation `json:"operations"`
+	Operations  []Operation `json:"operations"`
 }
 
-type operation struct {
+type Operation struct {
 	Method        string        `json:"method"`
 	Summary       string        `json:"summary"`
 	Description   string        `json:"description"`
-	Parameters    []parameter   `json:"parameters"`
-	Responses     []response    `json:"responses"`
+	Parameters    []Parameter   `json:"parameters"`
+	Responses     []Response    `json:"responses"`
 	Pipeline      string        `json:"pipeline"`
-	RequestBodies []requestBody `json:"requestBodies"`
+	RequestBodies []RequestBody `json:"requestBodies"`
 }
 
-type requestBody struct {
+type RequestBody struct {
 	Description  string  `json:"description"`
 	ContentTypes string  `json:"contentType"`
-	Schema       *schema `json:"schema"`
+	Schema       *Schema `json:"schema"`
 	Required     bool    `json:"required"`
 }
 
-type parameter struct {
+type Parameter struct {
 	Name        string  `json:"name"`
 	Location    string  `json:"location"`
-	Schema      *schema `json:"schema"`
+	Schema      *Schema `json:"schema"`
 	Description string  `json:"description"`
 	Required    bool    `json:"required"`
 	Style       string  `json:"style"`
 	Explode     bool    `json:"explode"`
 }
 
-type response struct {
+type Response struct {
 	Status       int               `json:"status"`
 	Description  string            `json:"description"`
-	ContentTypes []responseContent `json:"contentTypes"`
+	ContentTypes []ResponseContent `json:"contentTypes"`
 }
 
-type responseContent struct {
+type ResponseContent struct {
 	Type   string  `json:"type"`
-	Schema *schema `json:"schema"`
+	Schema *Schema `json:"schema"`
 }
 
-type schema struct {
+type Schema struct {
 	Name        string    `json:"name"`
 	Type        string    `json:"type"`
-	Properties  []*schema `json:"properties"`
-	Items       *schema   `json:"items"`
+	Properties  []*Schema `json:"properties"`
+	Items       *Schema   `json:"items"`
 	Ref         string    `json:"ref"`
 	Description string    `json:"description"`
 	Required    []string  `json:"required"`
@@ -80,11 +81,12 @@ type schema struct {
 	Nullable    bool      `json:"nullable"`
 }
 
-func newService(s *openapi.Config) service {
+func NewService(s *openapi.Config) service {
 	service := service{
 		Name:        s.Info.Name,
 		Description: s.Info.Description,
 		Version:     s.Info.Version,
+		Type:        "OpenAPI",
 	}
 
 	//if s.Info.Mokapi.Value != nil{
@@ -114,8 +116,8 @@ func newBaseUrl(s *openapi.Server) baseUrl {
 	return baseUrl{Url: s.Url, Description: s.Description}
 }
 
-func newEndpoint(path string, e *openapi.Endpoint) endpoint {
-	v := endpoint{Path: path, Summary: e.Summary, Description: e.Description, Operations: make([]operation, 0)}
+func newEndpoint(path string, e *openapi.Endpoint) Endpoint {
+	v := Endpoint{Path: path, Summary: e.Summary, Description: e.Description, Operations: make([]Operation, 0)}
 	if e.Get != nil {
 		v.Operations = append(v.Operations, newOperation("get", e.Get, e.Pipeline))
 	} else if e.Post != nil {
@@ -136,13 +138,13 @@ func newEndpoint(path string, e *openapi.Endpoint) endpoint {
 	return v
 }
 
-func newOperation(method string, o *openapi.Operation, pipeline string) operation {
-	v := operation{
+func newOperation(method string, o *openapi.Operation, pipeline string) Operation {
+	v := Operation{
 		Method:      method,
 		Summary:     o.Summary,
 		Description: o.Description,
-		Parameters:  make([]parameter, 0),
-		Responses:   make([]response, 0),
+		Parameters:  make([]Parameter, 0),
+		Responses:   make([]Response, 0),
 		Pipeline:    o.Pipeline,
 	}
 
@@ -159,7 +161,7 @@ func newOperation(method string, o *openapi.Operation, pipeline string) operatio
 	if o.RequestBody != nil {
 		for c, r := range o.RequestBody.Value.Content {
 			v.RequestBodies = append(v.RequestBodies,
-				requestBody{
+				RequestBody{
 					Description:  o.RequestBody.Value.Description,
 					Required:     o.RequestBody.Value.Required,
 					ContentTypes: c,
@@ -174,8 +176,8 @@ func newOperation(method string, o *openapi.Operation, pipeline string) operatio
 	return v
 }
 
-func newParameter(p *openapi.Parameter) parameter {
-	return parameter{
+func newParameter(p *openapi.Parameter) Parameter {
+	return Parameter{
 		Location:    string(p.Type),
 		Name:        p.Name,
 		Schema:      newSchema("", p.Schema, 0),
@@ -186,25 +188,25 @@ func newParameter(p *openapi.Parameter) parameter {
 	}
 }
 
-func newResponse(status openapi.HttpStatus, r *openapi.ResponseRef) response {
-	response := response{Status: int(status), Description: r.Value.Description, ContentTypes: make([]responseContent, 0)}
+func newResponse(status openapi.HttpStatus, r *openapi.ResponseRef) Response {
+	response := Response{Status: int(status), Description: r.Value.Description, ContentTypes: make([]ResponseContent, 0)}
 
 	for t, c := range r.Value.Content {
-		response.ContentTypes = append(response.ContentTypes, responseContent{Type: t, Schema: newSchema("", c.Schema, 0)})
+		response.ContentTypes = append(response.ContentTypes, ResponseContent{Type: t, Schema: newSchema("", c.Schema, 0)})
 	}
 
 	return response
 }
 
-func newSchema(name string, s *openapi.SchemaRef, level int) *schema {
+func newSchema(name string, s *openapi.SchemaRef, level int) *Schema {
 	if s == nil {
 		return nil
 	}
 
-	v := &schema{
+	v := &Schema{
 		Name:        name,
 		Type:        s.Value.Type,
-		Properties:  make([]*schema, 0),
+		Properties:  make([]*Schema, 0),
 		Ref:         s.Ref,
 		Description: s.Value.Description,
 		Required:    s.Value.Required,
@@ -234,12 +236,12 @@ func newSchema(name string, s *openapi.SchemaRef, level int) *schema {
 	return v
 }
 
-func newModel(name string, s *openapi.SchemaRef) *schema {
+func newModel(name string, s *openapi.SchemaRef) *Schema {
 	if s == nil {
 		return nil
 	}
 
-	v := &schema{Name: name, Type: s.Value.Type, Properties: make([]*schema, 0), Ref: s.Ref}
+	v := &Schema{Name: name, Type: s.Value.Type, Properties: make([]*Schema, 0), Ref: s.Ref}
 
 	for s, p := range s.Value.Properties.Value {
 		if p.Value.Type == "array" && p.Value.Items != nil {
@@ -248,11 +250,11 @@ func newModel(name string, s *openapi.SchemaRef) *schema {
 				seg := strings.Split(p.Value.Items.Ref, "/")
 				tName = seg[len(seg)-1]
 			}
-			v.Properties = append(v.Properties, &schema{Name: s, Type: fmt.Sprintf("array[%v]", tName)})
+			v.Properties = append(v.Properties, &Schema{Name: s, Type: fmt.Sprintf("array[%v]", tName)})
 		} else if len(p.Ref) > 0 {
 			seg := strings.Split(p.Ref, "/")
 			tName := seg[len(seg)-1]
-			v.Properties = append(v.Properties, &schema{Name: s, Type: tName})
+			v.Properties = append(v.Properties, &Schema{Name: s, Type: tName})
 		} else {
 			v.Properties = append(v.Properties, newSchema(s, p, 0))
 		}
@@ -268,8 +270,4 @@ func newModel(name string, s *openapi.SchemaRef) *schema {
 	}
 
 	return v
-}
-
-func newServiceSummary(s *openapi.Config) serviceSummary {
-	return serviceSummary{Name: s.Info.Name, Description: s.Info.Description, Version: s.Info.Version}
 }

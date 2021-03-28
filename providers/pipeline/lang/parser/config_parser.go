@@ -81,7 +81,7 @@ func (p *configParser) parseStages(s []*mokapi.Stage) (stages []*ast.Stage, vars
 }
 
 func (p *configParser) parseStage(s *mokapi.Stage) (stage *ast.Stage) {
-	src := fmt.Sprintf("stage('%v') { when { %v \n } steps { %v \n }", s.Name, s.Condition, s.Steps)
+	src := fmt.Sprintf("stage('%v') { when { %v \n } steps { %v \n } }", s.Name, s.Condition, s.Steps)
 	parser := newParser([]byte(src), p.scope)
 	stage = parser.parseStage()
 	err := parser.errors.Err()

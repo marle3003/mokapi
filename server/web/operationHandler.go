@@ -45,7 +45,7 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 		var bodySchema *openapi.SchemaRef
 		if c, ok := operation.RequestBody.Value.Content[contentType.String()]; ok {
 			if c.Schema == nil {
-				respond(fmt.Sprintf("schema of response %q is not defined", contentType.String()), http.StatusInternalServerError, context)
+				respond(fmt.Sprintf("schema of request body %q is not defined", contentType.String()), http.StatusInternalServerError, context)
 				return
 			}
 			bodySchema = c.Schema

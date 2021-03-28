@@ -14,12 +14,11 @@ type FileExistsStep struct {
 }
 
 type FileExistsStepExecution struct {
-	File     string `step:"file,position=0,required"`
-	AsString bool
+	File string `step:"file,position=0,required"`
 }
 
 func (e *FileExistsStep) Start() types.StepExecution {
-	return &FileExistsStepExecution{AsString: true}
+	return &FileExistsStepExecution{}
 }
 
 func (e *FileExistsStepExecution) Run(ctx types.StepContext) (interface{}, error) {

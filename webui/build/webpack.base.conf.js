@@ -87,7 +87,7 @@ module.exports = {
             html: true,
             linkify: true,
             breaks: true
-          }).use(markdownItPrism)
+          }).use(markdownItPrism, {plugins: ['show-language', 'toolbar']})
         }
       },
       {

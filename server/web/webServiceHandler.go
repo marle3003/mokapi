@@ -25,6 +25,8 @@ func (handler *ServiceHandler) ServeHTTP(ctx *HttpContext) {
 			handler.config.Info.Name,
 			ctx.Request.Method,
 			ctx.Request.URL.String())
+		ctx.metric.Error = message
+		ctx.metric.HttpStatus = http.StatusNotFound
 		http.Error(ctx.Response, message, http.StatusNotFound)
 		log.Infof(message)
 		return

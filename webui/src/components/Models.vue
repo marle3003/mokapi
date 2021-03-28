@@ -1,5 +1,5 @@
 <template>
-  <b-table hover :items="models" :fields="fields" tbody-class="models">
+  <b-table hover :items="models" :fields="fields" class="dataTable" tbody-class="models">
     <template v-slot:cell(properties)="data">
         <div v-for="( property, index ) in data.value" :key="index" class="mr-1">
           {{property.name}}: <span class="type">{{property.type}}</span>
@@ -51,6 +51,6 @@ export default {
       font-size: 1rem;
   }
   .type{
-    color: #007bff;
+    color: var(--var-code-orange);
   }
 </style>

@@ -160,6 +160,13 @@ func (p *parser) parseStage() *ast.Stage {
 func (p *parser) parseWhen() (expr *ast.ExprStatement) {
 	p.expect(token.WHEN)
 	p.expect(token.LBRACE)
+
+	// if empty block
+	if p.tok == token.RBRACE {
+		p.expect(token.RBRACE)
+		return
+	}
+
 	p.scanner.UseLineEnd(true)
 	x := p.parseBinary(true)
 	expr = &ast.ExprStatement{X: x}

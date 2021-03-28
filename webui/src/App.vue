@@ -21,6 +21,7 @@ export default {
 <style>
   @import './assets/vars.css';
   @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
+  @import './assets/prism.css';
 
   body{
     background-color: var(--var-bg-color);
@@ -30,11 +31,17 @@ export default {
     font-family: 'Roboto', sans-serif;
     font-weight: 400;
     line-height: normal;
-    font-size: 1.0rem;
+    font-size: 0.9rem;
   }
   #app {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+  a {
+    color: var(--var-link-color);
+  }
+  a:hover{
+    color: var(--var-link-color);
   }
   h1 {
     font-size: 1.75rem;
@@ -42,6 +49,10 @@ export default {
   }
   h2 {
     font-size: 1.25rem;
+    font-weight: 500;
+  }
+  h3 {
+    font-size: 1.1rem;
     font-weight: 500;
   }
   pre {
@@ -81,7 +92,7 @@ export default {
   .card {
     border: 1px solid #141414;
     border-radius: 10px;
-    background-color: #292933;
+    background-color: var(--var-bg-color-primary);
   }
   table.dataTable {
     border-left-style: hidden;
@@ -108,15 +119,11 @@ export default {
   .table-hover tbody tr:hover td, .table-hover tbody tr:hover th {
     color: var(--var-color-primary);
   }
-  .markdown-body {
-    color:var(--var-color-primary);
-    font-size: 0.8rem;
-    line-height: normal;
-  }
   .nav-tabs .nav-item .nav-link.active,
   .nav-tabs .nav-item.show .nav-link {
     border-color: var(--var-table-border-color);
     background-color: var(--var-tab-bg-color);
+    color: var(--var-tab-header-color);
   }
   .nav-pills .nav-link.active,
   .nav-pills .show > .nav-link{
@@ -131,11 +138,66 @@ export default {
  .card-header, .nav-tabs {
     border-color: var(--var-table-border-color);
     border-width: 2px;
-    
   }
   .label {
     font-size: 0.6rem;
     margin: 0;
     margin-bottom: 0.3rem;
+  }
+  .list-group-item {
+    background-color: var(--var-bg-color);
+  }
+  .list-group-item-action {
+    color:var(--var-color-primary);
+  }
+  .router-link-active {
+    background-color: var(---var-bg-color);
+  }
+  .router-link-exact-active {
+    background-color: var(--var-bg-color);
+    text-decoration: underline;
+  }
+  .list-group-item-action:hover,
+  .router-link-active:hover {
+    background-color: var(--var-bg-color);
+    color:var(--var-color-primary);
+    text-decoration: underline;
+  }
+  .list-group-item-action:visited,
+  .router-link-active:visited {
+    background-color: var(--var-bg-color);
+    color:var(--var-color-primary);
+    text-decoration: underline;
+  }
+  .list-group-item:focus {
+    outline: none;
+  }
+  .markdown-body {
+    color:var(--var-color-primary);
+    font-size: 0.9rem;
+    line-height: normal;
+  }
+  .markdown-body a {
+    color: var(--var-link-color);
+  }
+  /* markdownit */
+  div.code-toolbar > .toolbar{
+    opacity: 1;
+  }
+  code[class*="language-"], pre[class*="language-"] {
+    font-family: 'Consolas';
+    font-size: 0.8rem;
+    background-color: var(--var-code-bg-color);
+    text-shadow: none;
+    color: var(--orange);
+  }
+  .token.atrule, .token.attr-value, .token.keyword {
+    color: var(--var-code-blue);
+  }
+  .token.comment, .token.prolog, .token.doctype, .token.cdata{
+    color: var(--var-code-green);
+  }
+  .token.property, .token.tag, .token.boolean, .token.number, .token.constant, .token.symbol, .token.deleted{
+    color: var(--orange);
   }
 </style>

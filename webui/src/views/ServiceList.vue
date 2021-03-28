@@ -2,21 +2,9 @@
   <div class="service-list">
       <h1>Services</h1>
       <div class="page-body">
-        <b-link :to="{ name: 'service', params: {name: service.name} }" router-tag="div" v-for="service in services" :key="service.name">
-          <b-card>
-            <b-row>
-              <b-col class="col-auto">
-                <img src="@/assets/service.png" />
-              </b-col>
-              <b-col>
-                <p class="name">{{ service.name }}</p>
-                <vue-simple-markdown :source="service.description" />
-              </b-col>
-              <b-col>
-              <p>{{ service.version }}</p>
-              </b-col>
-            </b-row>
-          </b-card>
+        <b-link :to="{ name: service.type.toLowerCase(), params: {name: service.name } }" router-tag="div" v-for="service in services" :key="service.name">
+          <async-service-info :service="service" v-if="service.type === 'AsyncAPI'"></async-service-info>
+          <service-info :service="service" v-else></service-info>
         </b-link>
       </div>
   </div>
@@ -24,9 +12,14 @@
 
 <script>
 import Api from '@/mixins/Api'
+import ServiceInfo from '@/components/ServiceInfo'
+import AsyncServiceInfo from '@/components/asyncapi/ServiceInfo'
 
 export default {
-  components: {},
+  components: {
+     'service-info': ServiceInfo,
+     'async-service-info': AsyncServiceInfo
+  },
   mixins: [Api],
   data () {
     return {
@@ -42,11 +35,13 @@ export default {
   methods: {
     async getData () {
 
-      function compare(a, b) {
-        if (a.name < b.name) {
+      function compare(s1, s2) {
+        const a = s1.name.toLowerCase()
+        const b = s2.name.toLowerCase()
+        if (a < b) {
           return -1
         }
-        if (a.name > b.name) {
+        if (a > b) {
           return 1
         }
         return 0

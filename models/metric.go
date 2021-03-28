@@ -1,6 +1,7 @@
 package models
 
 import (
+	"mokapi/config/dynamic/openapi"
 	"runtime"
 	"time"
 )
@@ -12,10 +13,12 @@ type Metrics struct {
 	LastRequests      []*RequestMetric
 	LastErrorRequests []*RequestMetric
 	Memory            int64
-	Kafka             map[string]*KafkaMetrics
+	Kafka             *KafkaMetric
+	OpenApi           map[string]*ServiceMetric
 }
 
 type RequestMetric struct {
+	Service      string
 	Method       string
 	Url          string
 	HttpStatus   int
@@ -24,34 +27,68 @@ type RequestMetric struct {
 	Time         time.Time
 }
 
-type KafkaMetrics struct {
-	Topics     int
-	Partitions int
-	Segments   int
-	Messages   int64
-	TopicSizes map[string]int64
+type ServiceMetric struct {
+	Name        string    `json:"name"`
+	LastRequest time.Time `json:"lastRequest"`
+	Requests    int       `json:"requests"`
+	Errors      int       `json:"errors"`
 }
 
-func NewRequestMetric(method string, url string) *RequestMetric {
+type KafkaMetric struct {
+	Topics map[string]KafkaTopic
+}
+
+type KafkaTopic struct {
+	Name       string         `json:"name"`
+	Count      int64          `json:"count"`
+	Size       int64          `json:"size"`
+	LastRecord time.Time      `json:"lastRecord"`
+	Partitions int            `json:"partitions"`
+	Segments   int            `json:"segments"`
+	Messages   []KafkaMessage `json:"messages"`
+	//Groups []string `json:"groups"`
+}
+
+type KafkaMessage struct {
+	Key   string `json:"name"`
+	Value string `json:"value"`
+}
+
+func NewRequestMetric(method string, url string, config *openapi.Config) *RequestMetric {
 	return &RequestMetric{
-		Method: method,
-		Url:    url,
-		Time:   time.Now(),
+		Method:  method,
+		Url:     url,
+		Time:    time.Now(),
+		Service: config.Info.Name,
 	}
 }
 
 func newMetrics() *Metrics {
-	return &Metrics{LastRequests: make([]*RequestMetric, 0), Start: time.Now(), Kafka: make(map[string]*KafkaMetrics)}
+	return &Metrics{LastRequests: make([]*RequestMetric, 0), Start: time.Now(), Kafka: &KafkaMetric{Topics: make(map[string]KafkaTopic)}, OpenApi: make(map[string]*ServiceMetric)}
+}
+
+func (m *Metrics) AddMessage(topic string, key []byte, value []byte) {
+	msg := KafkaMessage{Key: string(key), Value: string(value)}
+	if _, ok := m.Kafka.Topics[topic]; !ok {
+		m.Kafka.Topics[topic] = KafkaTopic{Name: topic}
+	}
+	t := m.Kafka.Topics[topic]
+	t.Messages = append(t.Messages, msg)
+	if len(t.Messages) > 10 {
+		t.Messages = t.Messages[1:]
+	}
 }
 
 func (m *Metrics) AddRequest(r *RequestMetric) {
 	m.TotalRequests++
+	m.OpenApi[r.Service].Requests++
 	if len(r.Error) > 0 {
 		m.RequestsWithError++
 		if len(m.LastErrorRequests) > 10 {
 			m.LastErrorRequests = m.LastErrorRequests[1:]
 		}
 		m.LastErrorRequests = append(m.LastErrorRequests, r)
+		m.OpenApi[r.Service].Errors++
 	}
 	if len(m.LastRequests) > 10 {
 		m.LastRequests = m.LastRequests[1:]
@@ -61,6 +98,7 @@ func (m *Metrics) AddRequest(r *RequestMetric) {
 		r.HttpStatus = 200
 	}
 	m.LastRequests = append(m.LastRequests, r)
+	m.OpenApi[r.Service].LastRequest = r.Time
 }
 
 func (m *Metrics) Update() {

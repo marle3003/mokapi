@@ -1,5 +1,3 @@
 nav:
   - "Welcome": "welcome.md"
-  - "Middlewares":
-    - "FilterContent": "middlewares/filtercontent.md"
-    - "ReplaceContent": "middlewares/replacecontent.md"
+  - "Pipelines": "pipeline/pipeline.md"

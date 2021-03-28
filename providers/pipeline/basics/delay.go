@@ -12,22 +12,29 @@ import (
 
 type DelayStep struct {
 	types.AbstractStep
+	random *rand.Rand
 }
 
 type DelayStepExecution struct {
-	Type   string
-	Median float64
-	Sigma  float64
-	Lower  int
-	Upper  int
-	Time   int
-	Unit   string
+	Type  string
+	Mean  float64
+	Sigma float64
+	Lower int
+	Upper int
+	Time  interface{}
+	Unit  string
 
-	random *rand.Rand `step:-`
+	step *DelayStep
+}
+
+func NewDelayStep() *DelayStep {
+	return &DelayStep{
+		random: rand.New(rand.NewSource(time.Now().Unix())),
+	}
 }
 
 func (e *DelayStep) Start() types.StepExecution {
-	return &DelayStepExecution{Unit: "seconds"}
+	return &DelayStepExecution{Unit: "s", step: e}
 }
 
 func (e *DelayStepExecution) Run(_ types.StepContext) (interface{}, error) {
@@ -38,7 +45,7 @@ func (e *DelayStepExecution) Run(_ types.StepContext) (interface{}, error) {
 
 	switch strings.ToLower(e.Type) {
 	case "lognormal":
-		number := math.Round(math.Exp(e.random.NormFloat64()*e.Sigma) * e.Median)
+		number := math.Round(e.step.random.NormFloat64()*e.Sigma + e.Mean)
 		delay := time.Duration(number) * unit
 		log.Infof("Delay request for %v", delay)
 		time.Sleep(delay)
@@ -48,7 +55,17 @@ func (e *DelayStepExecution) Run(_ types.StepContext) (interface{}, error) {
 		log.Infof("Delay request for %v", delay)
 		time.Sleep(delay)
 	case "":
-		delay := time.Duration(e.Time) * unit
+		var delay time.Duration
+		switch t := e.Time.(type) {
+		case string:
+			d, err := time.ParseDuration(t)
+			if err != nil {
+				return nil, err
+			}
+			delay = d
+		case float64:
+			delay = time.Duration(t) * unit
+		}
 		log.Infof("Delay request for %v", delay)
 		time.Sleep(delay)
 	}
@@ -58,17 +75,17 @@ func (e *DelayStepExecution) Run(_ types.StepContext) (interface{}, error) {
 
 func (e *DelayStepExecution) getUnit() (time.Duration, error) {
 	switch strings.ToLower(e.Unit) {
-	case "seconds":
+	case "s":
 		return time.Second, nil
-	case "minutes":
+	case "m":
 		return time.Minute, nil
-	case "milliseconds":
+	case "ms":
 		return time.Millisecond, nil
-	case "nanoseconds":
+	case "ns":
 		return time.Nanosecond, nil
-	case "microseconds":
+	case "us":
 		return time.Microsecond, nil
-	case "hours":
+	case "h":
 		return time.Hour, nil
 	default:
 		return 0, errors.Errorf("unknown unit '%v'", e.Unit)

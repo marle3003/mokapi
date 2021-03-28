@@ -21,27 +21,30 @@
       </template>
       <p class="label">Description</p>
       <p>{{ response.description }}</p>
+      <p class="label">Content Type</p>
       <div v-if="response.contentTypes != null && response.contentTypes.length === 1">
           <div v-for="content in response.contentTypes" :key="content.type">
-            <p class="label">Content Type</p>
             <p>{{ content.type }}</p>
             <p v-if="content.schema != null" class="label">Schema</p>
             <schema v-if="content.schema != null" v-bind:schema="content.schema"></schema>
           </div>
       </div>
-      <b-card v-if="response.contentTypes != null && response.contentTypes.length > 1">
-        <template #header>
-          <b-dropdown>
-            <b-dropdown-item  v-for="content in response.contentTypes" :key="content.type">
+      <div v-if="response.contentTypes != null && response.contentTypes.length > 1">
+        <p>
+          <b-form-select v-model="selected[response.status]">
+            <b-form-select-option
+              v-for="content in response.contentTypes" :key="content.type" :value="content.type">
               {{ content.type }}
-            </b-dropdown-item>
-          </b-dropdown>
-        </template>
-        <b-card-text v-for="content in response.contentTypes" :key="content.type">
-          <p class="label">Schema</p>
-          <schema v-bind:schema="content.schema"></schema>
-        </b-card-text>
-      </b-card>
+            </b-form-select-option>
+            </b-form-select>
+        </p>
+        <div v-for="content in response.contentTypes" :key="content.type">
+          <div v-if="selected[response.status] === content.type">
+            <p class="label">Schema</p>
+            <schema v-bind:schema="content.schema"></schema>
+          </div>
+        </div>
+      </div>
     </b-tab>
   </b-tabs>
 </template>
@@ -53,18 +56,30 @@ export default {
   name: 'response',
   components: {'schema': Schema,},
   props: ['responses'],
+  data () {
+    return {
+      selected: {}
+    }
+  },
+  created () {
+    for (var r of this.responses){
+      if (r.contentTypes !== null) {
+        this.selected[r.status] = r.contentTypes[0].type
+      }
+    }
+  },
   computed: {
     sorted: function() {
       if (!this.responses) {
-        return []
+        return [];
       }
       
       function compare(a, b) {
-        return a.status - b.status
+        return a.status - b.status;
       }
 
-      return this.responses.sort(compare)
-    }
+      return this.responses.sort(compare);
+    }    
   }
 }
 </script>
@@ -73,5 +88,15 @@ export default {
   .responses .icon{
       vertical-align: middle;
       font-size: 0.5rem;
+  }
+  .custom-select {
+    background: var(--var-bg-color-primary) url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='4' height='5' viewBox='0 0 4 5'%3e%3cpath fill='%23d3d4d5' d='M2 0L0 2h4zm0 5L0 3h4z'/%3e%3c/svg%3e") no-repeat right .75rem center/8px 10px !important;
+    color: var(--var-color-primary);
+    border-color: var(--var-border-color);
+    padding: 0;
+    height: 1.5rem;
+  }
+  .custom-select:hover{
+    background: var(--var-bg-color-secondary) url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='4' height='5' viewBox='0 0 4 5'%3e%3cpath fill='%23d3d4d5' d='M2 0L0 2h4zm0 5L0 3h4z'/%3e%3c/svg%3e") no-repeat right .75rem center/8px 10px !important;
   }
 </style>

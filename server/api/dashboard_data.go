@@ -6,24 +6,14 @@ import (
 )
 
 type dashboard struct {
-	ServerUptime      time.Time     `json:"serverUptime"`
-	TotalRequests     int64         `json:"totalRequests"`
-	RequestsWithError int64         `json:"requestsWithError"`
-	ServiceStatus     serviceStatus `json:"serviceStatus"`
-	LastErrors        []request     `json:"lastErrors"`
-	LastRequests      []request     `json:"lastRequests"`
-	MemoeryUsage      int64         `json:"memoryUsage"`
-	TotalServices     int           `json:"totalServices"`
-	Kafka             kafkaSummary  `json:"kafka"`
-}
-
-type kafkaSummary struct {
-	TotalClusters   int              `json:"totalClusters"`
-	TotalTopics     int              `json:"totalTopics"`
-	TotalPartitions int              `json:"totalPartitions"`
-	TotalSegments   int              `json:"totalSegments"`
-	TotalMessages   int64            `json:"totalMessages"`
-	TopicSizes      map[string]int64 `json:"topicSizes"`
+	ServerUptime      time.Time              `json:"serverUptime"`
+	TotalRequests     int64                  `json:"totalRequests"`
+	RequestsWithError int64                  `json:"requestsWithError"`
+	LastErrors        []request              `json:"lastErrors"`
+	LastRequests      []request              `json:"lastRequests"`
+	MemoeryUsage      int64                  `json:"memoryUsage"`
+	Services          []models.ServiceMetric `json:"services"`
+	KafkaTopics       []models.KafkaTopic    `json:"kafkaTopics"`
 }
 
 type serviceStatus struct {
@@ -41,15 +31,21 @@ type request struct {
 }
 
 func newDashboard(runtime *models.Runtime) dashboard {
-	dashboard := dashboard{ServiceStatus: serviceStatus{}, LastErrors: make([]request, 0)}
+	dashboard := dashboard{LastErrors: make([]request, 0), Services: make([]models.ServiceMetric, 0)}
 	dashboard.ServerUptime = runtime.Metrics.Start
 	dashboard.TotalRequests = runtime.Metrics.TotalRequests
 	dashboard.RequestsWithError = runtime.Metrics.RequestsWithError
 	dashboard.LastRequests = make([]request, 0)
 	dashboard.MemoeryUsage = runtime.Metrics.Memory
-	dashboard.TotalServices = len(runtime.OpenApi)
 
-	dashboard.ServiceStatus.Total = len(runtime.OpenApi)
+	for _, s := range runtime.Metrics.OpenApi {
+		dashboard.Services = append(dashboard.Services, *s)
+	}
+
+	for _, t := range runtime.Metrics.Kafka.Topics {
+		dashboard.KafkaTopics = append(dashboard.KafkaTopics, t)
+	}
+
 	//for _, s := range app.OpenApi {
 	//	if len(s.Errors) > 0 {
 	//		dashboard.ServiceStatus.Errors++
@@ -62,16 +58,6 @@ func newDashboard(runtime *models.Runtime) dashboard {
 
 	for _, r := range runtime.Metrics.LastRequests {
 		dashboard.LastRequests = append(dashboard.LastRequests, newRequest(r))
-	}
-
-	dashboard.Kafka = kafkaSummary{}
-	dashboard.Kafka.TotalClusters = len(runtime.Metrics.Kafka)
-	for _, k := range runtime.Metrics.Kafka {
-		dashboard.Kafka.TotalTopics += k.Topics
-		dashboard.Kafka.TotalPartitions += k.Partitions
-		dashboard.Kafka.TotalSegments += k.Segments
-		dashboard.Kafka.TotalMessages += k.Messages
-		dashboard.Kafka.TopicSizes = k.TopicSizes
 	}
 
 	return dashboard

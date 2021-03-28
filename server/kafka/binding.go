@@ -1,39 +1,44 @@
 package kafka
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/models"
 	"mokapi/providers/pipeline"
 	"mokapi/providers/pipeline/lang/types"
+	"mokapi/server/kafka/protocol"
 	"time"
 )
 
+type AddedMessage func(string, []byte, []byte)
+
 type Binding struct {
-	stop        chan bool
-	stopCleaner chan bool
-	listen      string
-	isRunning   bool
-	brokers     []*broker
-	groups      map[string]*group
-	topics      map[string]*topic
-	config      *asyncApi.Config
-	kafka       asyncApi.Kafka
-	scheduler   *pipeline.Scheduler
-	clients     map[string]*client
+	stop         chan bool
+	stopCleaner  chan bool
+	listen       string
+	isRunning    bool
+	brokers      []*broker
+	groups       map[string]*group
+	topics       map[string]*topic
+	config       *asyncApi.Config
+	scheduler    *pipeline.Scheduler
+	kafka        asyncApi.Kafka
+	addedMessage AddedMessage
+	clients      map[string]*client
 }
 
-func NewBinding(c *asyncApi.Config) *Binding {
+func NewBinding(c *asyncApi.Config, addedMessage AddedMessage) *Binding {
 	s := &Binding{
-		stop:        make(chan bool),
-		stopCleaner: make(chan bool),
-		groups:      make(map[string]*group),
-		topics:      make(map[string]*topic),
-		config:      c,
-		kafka:       c.Info.Kafka,
-		clients:     make(map[string]*client),
-		scheduler:   pipeline.NewScheduler(),
+		stop:         make(chan bool),
+		stopCleaner:  make(chan bool),
+		groups:       make(map[string]*group),
+		topics:       make(map[string]*topic),
+		config:       c,
+		scheduler:    pipeline.NewScheduler(),
+		addedMessage: addedMessage,
+		clients:      make(map[string]*client),
 	}
 
 	brokerId := 0
@@ -52,12 +57,24 @@ func (s *Binding) Apply(data interface{}) error {
 		return errors.Errorf("unexpected parameter type %T in kafka binding", data)
 	}
 	s.config = config
-	s.kafka = config.Info.Kafka
 
 	s.scheduler.Stop()
 	if config.Info.Mokapi != nil {
 		err := s.scheduler.Start(config.Info.Mokapi.Value, pipeline.WithSteps(map[string]types.Step{
-			"producer": newProducerStep(s.topics),
+			"producer": newProducerStep(s.topics, func(t *topic, k []byte, v []byte) error {
+				record := protocol.RecordBatch{
+					Records: []protocol.Record{
+						{
+							Offset:  0,
+							Time:    time.Now(),
+							Key:     k,
+							Value:   v,
+							Headers: nil,
+						},
+					},
+				}
+				return s.addRecord(t, 0, record)
+			}),
 		}))
 		if err != nil {
 			return err
@@ -68,11 +85,8 @@ func (s *Binding) Apply(data interface{}) error {
 		name := n[1:] // remove leading slash from name
 		if _, ok := s.topics[name]; !ok {
 			log.Infof("kafka: adding topic %q", name)
-			var msg *asyncApi.Message
-			if c.Publish.Message != nil {
-				msg = c.Publish.Message.Value
-			}
-			s.topics[name] = newTopic(name, s.brokers[0], s.kafka.Log, msg)
+			msg := c.Value.Publish.Message.Value
+			s.topics[name] = newTopic(name, s.brokers[0], msg.Payload, msg.Bindings.Kafka.Key, msg.ContentType)
 		}
 	}
 
@@ -98,25 +112,78 @@ func (s *Binding) Start() {
 	for _, b := range s.brokers {
 		b.start(s.handle)
 	}
-	s.startCleaner()
 }
 
-func (s *Binding) UpdateMetrics(m *models.KafkaMetrics) {
-	m.Topics = len(s.topics)
-	m.Partitions = 0
-	m.Segments = 0
-	m.Messages = 0
-	for _, t := range s.topics {
-		m.Partitions += len(t.partitions)
-		var size int64
-		for _, p := range t.partitions {
-			m.Segments += len(p.segments)
-			m.Messages += p.offset
+func (s *Binding) addRecord(t *topic, partition int, record protocol.RecordBatch) error {
+	if partition >= len(t.partitions) {
+		return fmt.Errorf("index %q out of range", partition)
+	}
+
+	p := t.partitions[partition]
+
+	if p.segments[p.activeSegment].Size > s.kafka.Log.Segment.Bytes {
+		p.addNewSegment()
+	}
+
+	p.lock.Lock()
+	defer p.lock.Unlock()
+
+	record.Offset = p.offset
+	p.offset++
+
+	segment := p.segments[p.activeSegment]
+
+	segment.log = append(segment.log, record)
+	segment.Size += int64(record.Size())
+	segment.tail = record.Offset
+	segment.lastWritten = time.Now()
+
+	return nil
+}
+
+func (s *Binding) addRecords(t *topic, partition int, records []protocol.RecordBatch) error {
+	for _, r := range records {
+		err := s.addRecord(t, partition, r)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *Binding) UpdateMetrics(m *models.KafkaMetric) {
+	for _, topic := range s.topics {
+		var t models.KafkaTopic
+		if o, ok := m.Topics[topic.name]; !ok {
+			t = models.KafkaTopic{
+				Name:       topic.name,
+				Partitions: len(topic.partitions),
+				Segments:   0,
+				Count:      0,
+				Size:       0,
+			}
+			m.Topics[t.Name] = t
+		} else {
+			t = o
+		}
+
+		t.Segments = 0
+		t.Count = 0
+		t.Size = 0
+
+		for _, p := range topic.partitions {
+			t.Segments += len(p.segments)
+			t.Count += p.offset
 			for _, seg := range p.segments {
-				size += seg.Size
+				t.Count += seg.tail - seg.head
+				t.Size += seg.Size
+				if seg.lastWritten.After(t.LastRecord) {
+					t.LastRecord = seg.lastWritten
+				}
 			}
 		}
-		m.TopicSizes[t.name] = size
+
+		m.Topics[t.Name] = t
 	}
 }
 

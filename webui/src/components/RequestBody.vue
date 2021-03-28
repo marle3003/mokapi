@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="current !== null">
     <hr />
     <h5>Request Body</h5>
     <p class="label">Description</p>

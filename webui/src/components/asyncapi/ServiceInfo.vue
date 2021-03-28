@@ -13,9 +13,9 @@
         <b-col>
           <p class="label">Type</p>
           <p>{{ service.type }}</p>
-          <p class="label">Address</p>
+          <p class="label">Servers</p>
           <ul class="list-unstyled">
-              <li v-for="url in service.baseUrls" :key="url.url" v-b-tooltip.hover="{placement: 'left', customClass: 'address'}" :title="url.description">{{ url.url }}</li>
+              <li v-for="server in service.servers" :key="server.url">{{ server.url }}</li>
           </ul>
         </b-col>
       </b-row>

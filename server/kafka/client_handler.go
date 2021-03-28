@@ -73,7 +73,10 @@ func (s *Binding) handle(conn net.Conn) {
 		case protocol.Heartbeat:
 			protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, &heartbeat.Response{})
 		case protocol.Produce:
-			_ = msg.(*produce.Request)
+			r := msg.(*produce.Request)
+			for _, t := range r.Topics {
+				s.addRecords(s.topics[t.Name], int(t.Data.Partition), t.Data.Record.Batches)
+			}
 		case protocol.ListOffsets:
 			r := s.processListOffsets(msg.(*listOffsets.Request))
 			protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, r)

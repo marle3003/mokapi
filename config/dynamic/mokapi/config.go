@@ -27,17 +27,19 @@ type ConfigRef struct {
 }
 
 type Pipeline struct {
-	Name      string
-	Stages    []*Stage
-	Stage     *Stage
-	Steps     string
-	Variables Variables
+	Name        string
+	Description string
+	Stages      []*Stage
+	Stage       *Stage
+	Steps       string
+	Variables   Variables
 }
 
 type Stage struct {
-	Name      string
-	Steps     string
-	Condition string
+	Name        string
+	Description string
+	Steps       string
+	Condition   string
 }
 
 type Schedule struct {

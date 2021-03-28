@@ -237,8 +237,15 @@ func (cw *ConfigWatcher) Start() error {
 		cw.watcher = w
 	}
 
-	if err := filepath.Walk(cw.config.File.Directory, cw.walkDir); err != nil {
-		fmt.Println("ERROR", err)
+	if len(cw.config.File.Directory) > 0 {
+		if err := filepath.Walk(cw.config.File.Directory, cw.walkDir); err != nil {
+			fmt.Println("ERROR", err)
+		}
+	} else if len(cw.config.File.Filename) > 0 {
+		go cw.fw.add(cw.config.File.Filename)
+	} else {
+		log.Info("file provider: directory and filename empty")
+		return nil
 	}
 
 	ticker := time.NewTicker(time.Second)
@@ -357,9 +364,9 @@ func skipPath(path string) bool {
 
 func loadFileConfig(filename string, element interface{}) error {
 	log.Debugf("reading config %q", filename)
-	data, error := ioutil.ReadFile(filename)
-	if error != nil {
-		return error
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return err
 	}
 
 	content := string(data)
@@ -368,15 +375,15 @@ func loadFileConfig(filename string, element interface{}) error {
 	funcMap["extractUsername"] = extractUsername
 	tmpl := template.New(filename).Funcs(funcMap)
 
-	_, error = tmpl.Parse(content)
-	if error != nil {
-		return error
+	_, err = tmpl.Parse(content)
+	if err != nil {
+		return err
 	}
 
 	var buffer bytes.Buffer
-	error = tmpl.Execute(&buffer, false)
-	if error != nil {
-		return error
+	err = tmpl.Execute(&buffer, false)
+	if err != nil {
+		return err
 	}
 
 	renderedTemplate := buffer.Bytes()

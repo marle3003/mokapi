@@ -18,7 +18,7 @@ var (
 		"getContext": &basics.GetContextStep{},
 		"readFile":   &basics.ReadFileStep{},
 		"mustache":   &basics.MustacheStep{},
-		"delay":      &basics.DelayStep{},
+		"delay":      basics.NewDelayStep(),
 		"fileExists": &basics.FileExistsStep{},
 		"readJson":   &basics.JsonStep{},
 		"random":     &basics.RandomStep{},
