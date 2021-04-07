@@ -6,6 +6,8 @@ github.com/Masterminds/sprig v2.22.0+incompatible h1:z4yfnGrZ7netVz+0EDJ0Wi+5VZC
 github.com/Masterminds/sprig v2.22.0+incompatible/go.mod h1:y6hNFY5UBTIWBxnzTeuNhlNS5hqE0NB0E6fgfo2Br3o=
 github.com/brianvoe/gofakeit/v6 v6.2.2 h1:EcE/d5MiDA2xhg6Uc03Xh2OR6w2Sd8dpbuJXO99bcSc=
 github.com/brianvoe/gofakeit/v6 v6.2.2/go.mod h1:palrJUk4Fyw38zIFB/uBZqsgzW5VsNllhHKKwAebzew=
+github.com/brianvoe/gofakeit/v6 v6.3.0 h1:h1M5XPubl81K+41Ry0g5P4Q9a7OCM8FgFf2Heey5j24=
+github.com/brianvoe/gofakeit/v6 v6.3.0/go.mod h1:palrJUk4Fyw38zIFB/uBZqsgzW5VsNllhHKKwAebzew=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/elazarl/go-bindata-assetfs v1.0.0 h1:G/bYguwHIzWq9ZoyUQqrjTmJbbYn3j3CKKpKinvZLFk=

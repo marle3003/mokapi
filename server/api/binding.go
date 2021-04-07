@@ -105,15 +105,26 @@ func (b *Binding) getService(w http.ResponseWriter, r *http.Request) {
 func (b *Binding) getServices(w http.ResponseWriter, _ *http.Request) {
 	services := make([]interface{}, 0)
 
-	for _, c := range b.runtime.OpenApi {
-		services = append(services, openapi.NewService(c))
+	for k, c := range b.runtime.OpenApi {
+		s := openapi.NewService(c)
+		if len(s.Name) == 0 {
+			s.Name = k
+		}
+		services = append(services, s)
 	}
-	for _, c := range b.runtime.AsyncApi {
-		services = append(services, asyncapi.NewService(c))
+	for k, c := range b.runtime.AsyncApi {
+		s := asyncapi.NewService(c)
+		if len(s.Name) == 0 {
+			s.Name = k
+		}
+		services = append(services, s)
 	}
-	for _, s := range b.runtime.Ldap {
+	for k, s := range b.runtime.Ldap {
 		summary := serviceSummary{Name: s.Info.Name, Type: "LDAP"}
 		summary.BaseUrls = append(summary.BaseUrls, baseUrl{Url: s.Address})
+		if len(summary.Name) == 0 {
+			summary.Name = k
+		}
 		services = append(services, summary)
 	}
 

@@ -1,13 +1,54 @@
 # OpenAPI
-Mokapi supports OpenAPI 3.0. With [Enum](https://swagger.io/docs/specification/data-models/enums/) and [Example](https://swagger.io/docs/specification/adding-examples/) you can define the responses of your mocked Services without any coding.
-Mokapi takes a random element of your *enumeration* or the defined *example* element to response to a request.
-Additionally, it is possible to define a random generator for your data.
+Mokapi generates random data for the given response schema. You have several configuration options to cover your needs.
+If you want your data to be dynamic, you should take a look at pipelines, e.g. data depends on request parameters.
+
+## Format
+```yaml
+schema:
+  type: object
+  properties:
+    date:
+      type: string
+      format: date # 2017-07-21
+    time:
+      type: string
+      format: date-time # 2017-07-21T17:32:28Z
+    password:
+      type: string
+      format: password
+    email:
+      type: string
+      format: email
+    guid:
+      type: string
+      format: uuid
+    url:
+      type: string
+      format: uri
+    ipv4:
+      type: string
+      format: ipv4
+    ipv6:
+      type: string
+      format: ipv6
+```
+
+### Pattern
+```yaml
+schema:
+  type: object
+    ssn:
+      type: string
+      pattern: '^\d{3}-\d{2}-\d{4}$' # 123-45-6789
+```
 
 ## Enum
+Mokapi will take a random element from your [Enum](https://swagger.io/docs/specification/data-models/enums/) definition.
 
 ```yaml
 schema:
   type: object
+  properties:
     color:
       type: string
       enum: [red, green, blue]
@@ -25,10 +66,13 @@ schema:
 ```
 
 ## Example
+You can add [Example](https://swagger.io/docs/specification/adding-examples/) to properties, objects or arrays.
+Mokapi will take your defined example to generate the response. Additional defined elements are ignored.
 
 ```yaml
 schema:
   type: object
+  properties:
     color:
       type: string
       example: red
@@ -56,6 +100,15 @@ schema:
     count:
       type: integer
       x-faker: number:1,10
+    custom:
+      type: string
+      x-faker: '{number:1,3} {beername}, {number:3,5} {fruit}'
+    date:
+      type: string
+      x-faker: '{year}-{month}-{day}'
+    dateUnix:
+      type: string
+      x-faker: date:UnixDate
 ```
 
 Supported generator:
@@ -130,7 +183,7 @@ Supported generator:
 - useragent
 
 **Date/Time**
-- date
+- date (Format: ANSIC, UnixDate, RubyDate, RFC822, RFC822Z, RFC850, RFC1123, RFC1123Z, RFC3339Nano, default: RFC3339)
 - nanosecond
 - second
 - minute

@@ -120,19 +120,26 @@ func newEndpoint(path string, e *openapi.Endpoint) Endpoint {
 	v := Endpoint{Path: path, Summary: e.Summary, Description: e.Description, Operations: make([]Operation, 0)}
 	if e.Get != nil {
 		v.Operations = append(v.Operations, newOperation("get", e.Get, e.Pipeline))
-	} else if e.Post != nil {
+	}
+	if e.Post != nil {
 		v.Operations = append(v.Operations, newOperation("post", e.Post, e.Pipeline))
-	} else if e.Put != nil {
+	}
+	if e.Put != nil {
 		v.Operations = append(v.Operations, newOperation("put", e.Put, e.Pipeline))
-	} else if e.Patch != nil {
+	}
+	if e.Patch != nil {
 		v.Operations = append(v.Operations, newOperation("patch", e.Patch, e.Pipeline))
-	} else if e.Delete != nil {
+	}
+	if e.Delete != nil {
 		v.Operations = append(v.Operations, newOperation("delete", e.Delete, e.Pipeline))
-	} else if e.Head != nil {
+	}
+	if e.Head != nil {
 		v.Operations = append(v.Operations, newOperation("head", e.Head, e.Pipeline))
-	} else if e.Options != nil {
+	}
+	if e.Options != nil {
 		v.Operations = append(v.Operations, newOperation("options", e.Options, e.Pipeline))
-	} else if e.Trace != nil {
+	}
+	if e.Trace != nil {
 		v.Operations = append(v.Operations, newOperation("trace", e.Trace, e.Pipeline))
 	}
 	return v

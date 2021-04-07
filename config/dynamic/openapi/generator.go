@@ -3,7 +3,9 @@ package openapi
 import (
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
+	"math"
 	"math/rand"
+	"strings"
 	"time"
 )
 
@@ -42,17 +44,102 @@ func (g *Generator) New(schema *SchemaRef) interface{} {
 		return obj
 	} else {
 		if len(schema.Value.Faker) > 0 {
-			switch schema.Value.Faker {
-			case "numbers.uint32":
-				return gofakeit.Uint32()
-			default:
-				return gofakeit.Generate(fmt.Sprintf("{%s}", schema.Value.Faker))
+			if strings.HasPrefix(schema.Value.Faker, "{") {
+				return gofakeit.Generate(schema.Value.Faker)
 			}
-		} else if schema.Value.Type == "integer" {
-			return gofakeit.Int32()
-		} else if schema.Value.Type == "string" {
-			return gofakeit.Lexify("???????????????")
+			return gofakeit.Generate(fmt.Sprintf("{%s}", schema.Value.Faker))
+		} else {
+			switch schema.Value.Type {
+			case "boolean":
+				return gofakeit.Bool()
+			case "integer", "number":
+				return getNumber(schema.Value)
+			case "string":
+				if len(schema.Value.Format) > 0 {
+					return getByFormat(schema.Value.Format)
+				} else if len(schema.Value.Pattern) > 0 {
+					return gofakeit.Generate(fmt.Sprintf("{regex:%v}", schema.Value.Pattern))
+				}
+				return gofakeit.Lexify("???????????????")
+			}
 		}
 	}
 	return nil
+}
+
+func getNumber(s *Schema) string {
+	if s.Type == "number" {
+		if s.Format == "float" {
+			if s.Minimum == nil && s.Maximum == nil {
+				return fmt.Sprintf("%v", gofakeit.Float32())
+			}
+			max := float32(math.MaxFloat32)
+			min := max * -1
+			if s.Minimum != nil {
+				min = float32(*s.Minimum)
+			}
+			if s.Maximum != nil {
+				max = float32(*s.Maximum)
+			}
+			return fmt.Sprintf("%v", gofakeit.Float32Range(min, max))
+		} else {
+			if s.Minimum == nil && s.Maximum == nil {
+				return fmt.Sprintf("%v", gofakeit.Float64())
+			}
+			max := math.MaxFloat64
+			min := max * -1
+			if s.Minimum != nil {
+				min = *s.Minimum
+			}
+			if s.Maximum != nil {
+				max = *s.Maximum
+			}
+			return fmt.Sprintf("%v", gofakeit.Float64Range(min, max))
+		}
+
+	} else if s.Type == "integer" {
+		if s.Minimum == nil && s.Maximum == nil {
+			if s.Format == "int32" {
+				return fmt.Sprintf("%v", gofakeit.Int32())
+			} else {
+				return fmt.Sprintf("%v", gofakeit.Int64())
+			}
+		}
+		max := math.MaxInt64
+		min := math.MinInt64
+		if s.Minimum != nil {
+			min = int(*s.Minimum)
+		}
+		if s.Maximum != nil {
+			max = int(*s.Maximum)
+		}
+		return fmt.Sprintf("%v", gofakeit.Number(min, max))
+	}
+
+	return "0"
+}
+
+func getByFormat(format string) string {
+	switch format {
+	case "date":
+		return gofakeit.Generate("{year}-{month}-{day}")
+	case "date-time":
+		return gofakeit.Generate("{date}")
+	case "password":
+		return gofakeit.Generate("{password}")
+	case "email":
+		return gofakeit.Generate("{email}")
+	case "uuid":
+		return gofakeit.Generate("{uuid}")
+	case "uri":
+		return gofakeit.Generate("{url}")
+	case "hostname":
+		return gofakeit.Generate("{domainname}")
+	case "ipv4":
+		return gofakeit.Generate("{ipv4address}")
+	case "ipv6":
+		return gofakeit.Generate("{ipv6address}")
+	}
+
+	return ""
 }

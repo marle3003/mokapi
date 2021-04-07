@@ -27,16 +27,25 @@ func (s *Scheduler) Start(config *mokapi.Config, options ...PipelineOptions) (er
 	}
 
 	for _, c := range config.Schedules {
-		t := s.cron.Every(c.Every)
+		s.cron.Every(c.Every)
 		if c.Iterations >= 1 {
-			t.LimitRunsTo(c.Iterations)
+			s.cron.LimitRunsTo(c.Iterations)
 		}
-		j, err := t.Do(func() {
-			do(c.Name, c.Pipeline, config, options...)
+
+		t := task{
+			config:   config,
+			name:     c.Name,
+			pipeline: c.Pipeline,
+			options:  options,
+		}
+
+		j, err := s.cron.Do(func() {
+			t.do()
 		})
 		if err != nil {
 			return err
 		}
+		j.Tag(c.Name)
 		s.jobs = append(s.jobs, j)
 	}
 
@@ -51,33 +60,40 @@ func (s *Scheduler) Stop() {
 	}
 }
 
-func do(name string, pipeline string, config *mokapi.Config, options ...PipelineOptions) {
+type task struct {
+	config   *mokapi.Config
+	name     string
+	pipeline string
+	options  []PipelineOptions
+}
+
+func (t task) do() {
 	scope := ast.NewScope(builtInFunctions)
 	err := WithGlobalVars(map[types.Type]interface{}{
 		runtime.EnvVarsType: runtime.NewEnvVars(
 			runtime.FromOS(),
 			runtime.With(map[string]string{
-				"WORKING_DIRECTORY": filepath.Dir(config.ConfigPath),
+				"WORKING_DIRECTORY": filepath.Dir(t.config.ConfigPath),
 			})),
 	})(scope)
 	if err != nil {
-		log.Errorf("error in job %q: %v", name, err.Error())
+		log.Errorf("error in job %q: %v", t.name, err.Error())
 	}
 
-	for _, o := range options {
+	for _, o := range t.options {
 		err = o(scope)
 		if err != nil {
-			log.Errorf("error in job %q: %v", name, err.Error())
+			log.Errorf("error in job %q: %v", t.name, err.Error())
 		}
 	}
 
 	var f *ast.File
-	f, err = parser.ParseConfig(config, scope)
+	f, err = parser.ParseConfig(t.config, scope)
 	if err != nil {
 		return
 	}
 
-	if err := runtime.RunPipeline(f, pipeline); err != nil {
-		log.Errorf("job %v, error in pipeline %q: %v", name, pipeline, err)
+	if err := runtime.RunPipeline(f, t.pipeline); err != nil {
+		log.Errorf("job %v, error in pipeline %q: %v", t.name, t.pipeline, err)
 	}
 }

@@ -1,3 +1,7 @@
 nav:
   - "Welcome": "welcome.md"
-  - "Pipelines": "pipeline/pipeline.md"
+  - "Config": "config.md"
+  - "OpenAPI": "openapi.md"
+  - "Pipelines":
+    - "Intro": "pipeline/pipeline.md"
+    - "Steps": "pipeline/steps.md"

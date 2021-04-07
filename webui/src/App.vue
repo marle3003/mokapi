@@ -89,6 +89,9 @@ export default {
   .client-error{
       color: var(--orange);
   }
+  .break{
+    word-break: break-all;
+  }
   .card {
     border: 1px solid #141414;
     border-radius: 10px;

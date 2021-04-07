@@ -42,9 +42,10 @@ func NewBinding(c *asyncApi.Config, addedMessage AddedMessage) *Binding {
 	}
 
 	brokerId := 0
-	for name, b := range c.Servers {
-		b := newBroker(name, brokerId, b.GetHost(), b.GetPort()) // id is 1 based
+	for name, server := range c.Servers {
+		b := newBroker(name, brokerId, server.GetHost(), server.GetPort()) // id is 1 based
 		s.brokers = append(s.brokers, b)
+		s.kafka = server.Bindings.Kafka
 		brokerId++
 	}
 

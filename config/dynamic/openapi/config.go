@@ -197,6 +197,7 @@ type SchemaRef struct {
 type Schema struct {
 	Type                 string
 	Format               string
+	Pattern              string
 	Description          string
 	Properties           *Schemas
 	AdditionalProperties *SchemaRef // TODO custom marshal for bool, {} etc. Should it be a schema reference?
@@ -207,6 +208,8 @@ type Schema struct {
 	Nullable             bool
 	Example              interface{}
 	Enum                 []interface{}
+	Minimum              *float64 `yaml:"minimum,omitempty" json:"minimum,omitempty"`
+	Maximum              *float64 `yaml:"maximum,omitempty" json:"maximum,omitempty"`
 }
 
 type AdditionalProperties struct {

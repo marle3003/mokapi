@@ -162,11 +162,18 @@ export default {
       dashboard: null,
       loaded: false,
       timer: null,
-      lastRequestField: ['method', 'url', 'httpStatus', 'error', 'time', 'responseTime'],
+      lastRequestField: [
+       'method',
+        {key: 'url', tdClass: 'break'},
+        'httpStatus',
+        'error',
+        'time',
+        'responseTime',
+        ],
       topicSizes: {},
       chartTopicSize: {},
-      serviceFields: ['name', 'lastRequest', 'requests', 'errors'],
-      topicFields: ['name', 'count', 'size', 'lastRecord', 'partitions', 'segments']
+      serviceFields: [{key: 'name', class: 'text-left'}, 'lastRequest', 'requests', 'errors'],
+      topicFields: [{key: 'name', class: 'text-left'}, 'count', 'size', 'lastRecord', 'partitions', 'segments']
     }
   },
   created () {
@@ -222,7 +229,7 @@ export default {
     },
     topics: function() {
       const topics = this.dashboard.kafkaTopics;
-      if (topics === undefined){
+      if (topics === undefined || topics === null){
         return null
       }
 

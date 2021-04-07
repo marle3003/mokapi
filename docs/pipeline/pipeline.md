@@ -66,3 +66,29 @@ pipelines:
 	  - variable2: myValue
 	  - variable3 := 10 + 5
 ```
+
+## Schedules
+Schedules start your pipeline based on a schedule.
+```yaml
+schedules:
+  - name: kafka producer
+    every: 300ms
+    pipeline: job
+pipelines:
+  - name: job
+    steps: 
+```
+Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h"
+
+You can limit the iterations of a schedule
+
+```yaml
+schedules:
+  - name: kafka producer
+    every: 300ms
+    iterations: 10
+    pipeline: job
+pipelines:
+  - name: job
+    steps: 
+```

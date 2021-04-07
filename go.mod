@@ -6,7 +6,7 @@ require (
 	github.com/Masterminds/goutils v1.1.0 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/sprig v2.22.0+incompatible
-	github.com/brianvoe/gofakeit/v6 v6.2.2
+	github.com/brianvoe/gofakeit/v6 v6.3.0
 	github.com/elazarl/go-bindata-assetfs v1.0.0
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/go-co-op/gocron v0.7.1
