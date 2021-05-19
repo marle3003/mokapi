@@ -9,6 +9,7 @@ require (
 	github.com/brianvoe/gofakeit/v6 v6.3.0
 	github.com/elazarl/go-bindata-assetfs v1.0.0
 	github.com/fsnotify/fsnotify v1.4.9
+	github.com/go-bindata/go-bindata v3.1.2+incompatible // indirect
 	github.com/go-co-op/gocron v0.7.1
 	github.com/google/uuid v1.1.1 // indirect
 	github.com/huandu/xstrings v1.3.2 // indirect
