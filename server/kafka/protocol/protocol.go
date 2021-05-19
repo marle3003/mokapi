@@ -18,6 +18,7 @@ const (
 	Fetch           ApiKey = 1
 	ListOffsets     ApiKey = 2
 	Metadata        ApiKey = 3
+	OffsetCommit    ApiKey = 8
 	OffsetFetch     ApiKey = 9
 	FindCoordinator ApiKey = 10
 	JoinGroup       ApiKey = 11

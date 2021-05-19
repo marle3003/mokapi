@@ -15,5 +15,6 @@
 # vendor/
 data/*
 examples/*
+dist/
 
 server/api/dashboard.go

@@ -6,8 +6,13 @@ tasks:
   default:
     deps: [bindata-vueapp]
     cmds:
-      - go build ./cmd/mokapi
-    silent: true
+      - task: build-windows
+  build-windows:
+    cmds:
+      - go build -o mokapi_windows-amd64.exe ./cmd/mokapi
+    env:
+      GOOS: windows
+      GOARCH: amd64
   bindata-vueapp:
     deps: [build-vue-app]
     cmds:
