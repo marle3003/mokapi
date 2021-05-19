@@ -31,9 +31,7 @@
     "vue-chartjs": "^3.5.0",
     "vue-router": "^3.0.1",
     "vue-simple-markdown": "^1.1.4",
-    "yaml-loader": "^0.6.0"
-  },
-  "devDependencies": {
+    "yaml-loader": "^0.6.0",
     "autoprefixer": "^7.1.2",
     "babel-core": "^6.22.1",
     "babel-eslint": "^8.2.1",
@@ -86,8 +84,10 @@
     "vue-template-compiler": "^2.6.11",
     "webpack": "^3.6.0",
     "webpack-bundle-analyzer": "^2.9.0",
-    "webpack-dev-server": "^2.9.1",
     "webpack-merge": "^4.1.0"
+  },
+  "devDependencies": {
+    "webpack-dev-server": "^2.9.1"
   },
   "engines": {
     "node": ">= 6.0.0",
