@@ -3,21 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="1a9601df-4cac-4bc9-9e3a-1ba0e84e507f" name="Default Changelist" comment="refactoring but not all features are working">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/dynamic/openapi/config.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/dynamic/openapi/config.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/dynamic/openapi/generator.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/dynamic/openapi/generator.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/config.yml" beforeDir="false" afterPath="$PROJECT_DIR$/docs/config.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/openapi.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/openapi.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/pipeline/pipeline.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/pipeline/pipeline.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.mod" beforeDir="false" afterPath="$PROJECT_DIR$/go.mod" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/go.sum" beforeDir="false" afterPath="$PROJECT_DIR$/go.sum" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/scheduler.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/pipeline/scheduler.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/api/binding.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/api/binding.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/api/openapi/models.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/api/openapi/models.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/kafka/binding.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/kafka/binding.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/webui/src/App.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/App.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/webui/src/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/main.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/webui/src/views/Dashboard.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/views/Dashboard.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/webui/src/views/ServiceList.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/views/ServiceList.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -34,6 +19,12 @@
   </component>
   <component name="GOROOT" url="file://C:/Go" />
   <component name="Git.Settings">
+    <option name="PUSH_TAGS">
+      <GitPushTagMode>
+        <option name="argument" value="--tags" />
+        <option name="title" value="All" />
+      </GitPushTagMode>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="GitSEFilterConfiguration">
@@ -70,6 +61,7 @@
     <property name="restartRequiresConfirmation" value="false" />
     <property name="settings.editor.selected.configurable" value="editor.preferences.tabs" />
     <property name="ts.external.directory.path" value="C:\Program Files\JetBrains\GoLand 2020.3\plugins\JavaScriptLanguage\jsLanguageServicesImpl\external" />
+    <property name="vue.rearranger.settings.migration" value="true" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
@@ -175,14 +167,6 @@
     <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="refactoring but not all features are working" />
-    <MESSAGE value="removed features middleware and data provider&#10;introduced feature pipeline&#10;removed examples, must be reworked&#10;fixed some eslint errors" />
-    <MESSAGE value="refactored server bindings&#10;added skippable config files/dirs with prefix '_'&#10;added requestBody property&#10;optimized pipeline name usages&#10;added pipeline steps&#10;added feature when, unary operation to pipeline&#10;added pipeline string format" />
-    <MESSAGE value="added feature pathing to pipeline&#10;added operators &amp;&amp; and || to pipeline" />
-    <MESSAGE value="refactored pipeline: replaced participle with own parser" />
-    <MESSAGE value="extended pipeline:&#10;- closure&#10;- binary operations&#10;- pathing" />
-    <MESSAGE value="extended pipeline&#10;added query and path parameter" />
-    <MESSAGE value="various bugfixes and refactored package structure" />
     <MESSAGE value="optimized error reporting&#10;fixed some bugs" />
     <MESSAGE value="fixed ldap&#10;added json config support&#10;fixed openapi config&#10;fixed webui" />
     <MESSAGE value="extended pipeline:&#10;- added vars&#10;- optimized pathing&#10;- added tests&#10;extended webui" />
@@ -197,7 +181,18 @@
     <MESSAGE value="some bugfixes" />
     <MESSAGE value="updated web ui (dashboard)" />
     <MESSAGE value="extended webui, docs&#10;bugfixes" />
-    <option name="LAST_COMMIT_MESSAGE" value="extended webui, docs&#10;bugfixes" />
+    <MESSAGE value="some bugfixes&#10;extended docs&#10;extended openapi support" />
+    <MESSAGE value="fixed tests&#10;added goreleaser&#10;prepare kafka offsetCommit" />
+    <MESSAGE value="added release action" />
+    <MESSAGE value="fixed action" />
+    <MESSAGE value="fixed tasks" />
+    <MESSAGE value="fixed npm packages" />
+    <MESSAGE value="fixed npm install" />
+    <MESSAGE value="fixed case sensitive" />
+    <MESSAGE value="added go-bindata" />
+    <MESSAGE value="added go" />
+    <MESSAGE value="fixed line separator" />
+    <option name="LAST_COMMIT_MESSAGE" value="fixed line separator" />
   </component>
   <component name="VgoProject">
     <integration-enabled>true</integration-enabled>
@@ -270,16 +265,6 @@
           <url>file://$USER_HOME$/go/pkg/mod/github.com/brianvoe/gofakeit/v6@v6.2.2/generate.go</url>
           <line>130</line>
           <option name="timeStamp" value="1826" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/openapi/generator.go</url>
-          <line>71</line>
-          <option name="timeStamp" value="1827" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/openapi/generator.go</url>
-          <line>51</line>
-          <option name="timeStamp" value="1829" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
