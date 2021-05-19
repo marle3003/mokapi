@@ -4,7 +4,7 @@ version: '3'
 
 tasks:
   default:
-    deps: [bindata-vueapp]
+    deps: [clean,bindata-vueapp]
     cmds:
       - task: build-windows
   build-windows:
@@ -17,10 +17,13 @@ tasks:
     deps: [build-vue-app]
     cmds:
       - go-bindata -pkg api -o server/api/dashboard.go -prefix webui/dist/ webui/dist/...
-  build-vue-app:
+  clean:
     dir: webui
     cmds:
       - npm run clean
+  build-vue-app:
+    dir: webui
+    cmds:
       - npm run copy-docs
       - npm run build
 
