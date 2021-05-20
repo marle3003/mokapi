@@ -24,7 +24,7 @@ jobs:
         run: ./bin/task bindata-vueapp
         env:
           CGO_ENABLED: 0
-      name: Run GoReleaser
+      - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v2
         with:
           version: latest
