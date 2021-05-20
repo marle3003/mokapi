@@ -16,5 +16,6 @@
 data/*
 examples/*
 dist/
+bin/*
 
 server/api/dashboard.go
