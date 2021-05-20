@@ -2,7 +2,8 @@
 # Make sure to check the documentation at http://goreleaser.com
 project_name: mokapi
 builds:
-  - env:
+  - id: mokapi
+    env:
       - CGO_ENABLED=0
     main: ./cmd/mokapi
     goos:
@@ -21,3 +22,20 @@ checksum:
   name_template: "{{ .ProjectName }}_v{{ .Version }}_checksums.txt"
 snapshot:
   name_template: "{{ .Tag }}-next"
+dockers:
+  - goos: linux
+    goarch: amd64
+    ids:
+      - mokapi
+    image_templates:
+      - "mokapi/mokapi:latest"
+    dockerfile: Dockerfile-linux
+    use_buildx: true
+  - goos: windows
+    goarch: amd64
+    ids:
+      - mokapi
+    image_templates:
+      - "mokapi/mokapi:latest"
+    dockerfile: Dockerfile-windows
+    use_buildx: true
