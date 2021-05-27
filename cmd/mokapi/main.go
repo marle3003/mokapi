@@ -16,16 +16,16 @@ import (
 func main() {
 	cfg := static.NewConfig()
 	configDecoders := []decoders.ConfigDecoder{&decoders.FileDecoder{}, &decoders.FlagDecoder{}}
-	error := decoders.Load(configDecoders, cfg)
-	if error != nil {
-		fmt.Println("Error", error)
+	err := decoders.Load(configDecoders, cfg)
+	if err != nil {
+		fmt.Println("Error", err)
 	}
 
 	configureLogging(cfg)
 
-	s, error := createServer(cfg)
-	if error != nil {
-		log.WithField("error", error).Error("error creating server")
+	s, err := createServer(cfg)
+	if err != nil {
+		log.WithField("error", err).Error("error creating server")
 	}
 
 	s.Start()

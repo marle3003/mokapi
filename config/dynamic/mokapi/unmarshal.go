@@ -1,6 +1,10 @@
 package mokapi
 
-import "gopkg.in/yaml.v3"
+import (
+	"fmt"
+	"gopkg.in/yaml.v3"
+	"strings"
+)
 
 func (v *Variables) UnmarshalYAML(n *yaml.Node) error {
 
@@ -51,4 +55,107 @@ func (v *Variable) UnmarshalYAML(n *yaml.Node) error {
 	}
 
 	return nil
+}
+
+func (triggers *Triggers) UnmarshalYAML(n *yaml.Node) error {
+	m := make(map[string]interface{})
+	err := n.Decode(m)
+	if err != nil {
+		return err
+	}
+
+	for k, v := range m {
+		switch key := strings.ToLower(k); {
+		case key == "service":
+			*triggers = append(*triggers, parseTrigger(v)...)
+		case key == "http":
+			for _, h := range parseHttpTriggers(v) {
+				*triggers = append(*triggers, Trigger{Http: h})
+			}
+		}
+	}
+
+	return nil
+}
+
+func parseHttpTriggers(i interface{}) (t []HttpTrigger) {
+	switch i := i.(type) {
+	case []interface{}:
+		for _, m := range i {
+			t = append(t, HttpTrigger{Method: fmt.Sprintf("%v", m)})
+		}
+	case map[string]interface{}:
+		for k, v := range i {
+			switch key := strings.ToLower(k); {
+			case key == "path":
+				switch v := v.(type) {
+				case string:
+					t = append(t, HttpTrigger{Path: v})
+				case []interface{}:
+					for _, p := range v {
+						t = append(t, HttpTrigger{Path: fmt.Sprintf("%v", p)})
+					}
+				}
+
+			case key == "get", key == "post":
+				t = append(t, parseEndpoint(key, v)...)
+			}
+		}
+	}
+
+	return
+}
+
+func parseTrigger(i interface{}) (t Triggers) {
+	switch i := i.(type) {
+	case map[string]interface{}:
+		name := ""
+		var http []HttpTrigger
+		for k, v := range i {
+			switch k {
+			case "name":
+				name = fmt.Sprintf("%v", v)
+			case "http":
+				http = parseHttpTriggers(v)
+			}
+		}
+		if len(http) == 0 {
+			t = append(t, Trigger{Service: name})
+		} else {
+			for _, h := range http {
+				t = append(t, Trigger{Service: name, Http: h})
+			}
+		}
+	}
+	return
+}
+
+func parseEndpoint(method string, i interface{}) (t []HttpTrigger) {
+	if i == nil {
+		t = append(t, HttpTrigger{Method: method})
+	} else {
+		switch i := i.(type) {
+		case string:
+			t = append(t, HttpTrigger{Method: method, Path: i})
+		case []interface{}:
+			for _, p := range i {
+				t = append(t, HttpTrigger{Method: method, Path: fmt.Sprintf("%v", p)})
+			}
+		case map[string]interface{}:
+			for k, v := range i {
+				switch strings.ToLower(k) {
+				case "path":
+					if paths, ok := v.([]interface{}); ok {
+						for _, path := range paths {
+							t = append(t, HttpTrigger{Method: method, Path: fmt.Sprintf("%s", path)})
+						}
+					} else {
+						t = append(t, HttpTrigger{Method: method, Path: fmt.Sprintf("%s", v)})
+					}
+				}
+			}
+		}
+	}
+
+	return
 }

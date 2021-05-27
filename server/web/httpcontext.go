@@ -3,10 +3,10 @@ package web
 import (
 	"fmt"
 	"io/ioutil"
-	"mokapi/config/dynamic/mokapi"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/models"
 	"mokapi/models/media"
+	"mokapi/server/event"
 	"net/http"
 	"sort"
 	"strings"
@@ -19,24 +19,26 @@ type ParameterParser interface {
 }
 
 type HttpContext struct {
-	Response     http.ResponseWriter
-	Request      *http.Request
-	Parameters   RequestParameters
-	ResponseType *openapi.ResponseRef
-	ServicPath   string
-	Operation    *openapi.Operation
-	ContentType  *media.ContentType
-	Schema       *openapi.SchemaRef
-	Mokapi       *mokapi.Config
-	body         string
-	metric       *models.RequestMetric
-	statusCode   openapi.HttpStatus
+	Response        http.ResponseWriter
+	Request         *http.Request
+	Parameters      RequestParameters
+	ResponseType    *openapi.ResponseRef
+	ServicPath      string
+	ServiceName     string
+	Operation       *openapi.Operation
+	ContentType     *media.ContentType
+	Schema          *openapi.SchemaRef
+	body            string
+	metric          *models.RequestMetric
+	statusCode      openapi.HttpStatus
+	workflowHandler event.WorkflowHandler
 }
 
-func NewHttpContext(request *http.Request, response http.ResponseWriter, servicePath string) *HttpContext {
+func NewHttpContext(request *http.Request, response http.ResponseWriter, servicePath string, wh event.WorkflowHandler) *HttpContext {
 	return &HttpContext{Response: response,
-		Request:    request,
-		ServicPath: servicePath,
+		Request:         request,
+		ServicPath:      servicePath,
+		workflowHandler: wh,
 	}
 }
 

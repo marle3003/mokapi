@@ -47,7 +47,7 @@ type Info struct {
 
 	// The version of the service
 	Version string
-	Mokapi  *MokapiRef `yaml:"x-mokapi" json:"x-mokapi"`
+	//Mokapi  *MokapiRef `yaml:"x-mokapi" json:"x-mokapi"`
 }
 
 type MokapiRef struct {
@@ -188,6 +188,10 @@ type Parameter struct {
 type ParameterLocation string
 
 type HttpStatus int
+
+func (s HttpStatus) String() string {
+	return string(s)
+}
 
 type SchemaRef struct {
 	Ref   string `yaml:"$ref" json:"$ref"`

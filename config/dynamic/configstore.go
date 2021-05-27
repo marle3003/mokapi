@@ -1,10 +1,8 @@
 package dynamic
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/Masterminds/sprig"
 	"github.com/fsnotify/fsnotify"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -16,7 +14,6 @@ import (
 	"reflect"
 	"strings"
 	"sync"
-	"text/template"
 	"time"
 )
 
@@ -369,33 +366,14 @@ func loadFileConfig(filename string, element interface{}) error {
 		return err
 	}
 
-	content := string(data)
-
-	funcMap := sprig.TxtFuncMap()
-	funcMap["extractUsername"] = extractUsername
-	tmpl := template.New(filename).Funcs(funcMap)
-
-	_, err = tmpl.Parse(content)
-	if err != nil {
-		return err
-	}
-
-	var buffer bytes.Buffer
-	err = tmpl.Execute(&buffer, false)
-	if err != nil {
-		return err
-	}
-
-	renderedTemplate := buffer.Bytes()
-
 	switch filepath.Ext(filename) {
 	case ".yml", ".yaml":
-		err := yaml.Unmarshal(renderedTemplate, element)
+		err := yaml.Unmarshal(data, element)
 		if err != nil {
 			return errors.Wrapf(err, "parsing yaml file %s", filename)
 		}
 	case ".json":
-		err := json.Unmarshal(renderedTemplate, element)
+		err := json.Unmarshal(data, element)
 		if err != nil {
 			return errors.Wrapf(err, "parsing json file %s", filename)
 		}

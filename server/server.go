@@ -6,13 +6,18 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/ldap"
+	"mokapi/config/dynamic/mokapi"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/config/static"
 	"mokapi/models"
+	"mokapi/providers/workflow"
+	"mokapi/providers/workflow/runtime"
 	"mokapi/server/api"
+	"mokapi/server/event"
 	"mokapi/server/kafka"
 	ldapServer "mokapi/server/ldap"
 	"mokapi/server/web"
+	"path/filepath"
 	"time"
 )
 
@@ -27,6 +32,7 @@ type Server struct {
 	runtime            *models.Runtime
 	stopChannel        chan bool
 	stopMetricsUpdater chan bool
+	config             map[string]*mokapi.Config
 
 	Bindings map[string]Binding
 }
@@ -41,10 +47,11 @@ func NewServer(config *static.Config) *Server {
 		stopChannel:        make(chan bool),
 		stopMetricsUpdater: make(chan bool),
 		Bindings:           make(map[string]Binding),
+		config:             make(map[string]*mokapi.Config),
 	}
 
 	watcher.AddListener(func(o dynamic.Config) {
-		server.updateBindings(o)
+		server.updateConfigs(o)
 	})
 
 	if config.Api.Dashboard {
@@ -93,8 +100,10 @@ func (s *Server) startMetricUpdater() {
 	}()
 }
 
-func (s *Server) updateBindings(config dynamic.Config) {
+func (s *Server) updateConfigs(config dynamic.Config) {
 	switch c := config.(type) {
+	case *mokapi.Config:
+		s.config[c.Name] = c
 	case *openapi.Config:
 		if _, ok := s.runtime.OpenApi[c.Info.Name]; !ok {
 			s.runtime.OpenApi[c.Info.Name] = c
@@ -104,7 +113,7 @@ func (s *Server) updateBindings(config dynamic.Config) {
 			address := fmt.Sprintf(":%v", server.GetPort())
 			binding, found := s.Bindings[address]
 			if !found {
-				binding = web.NewBinding(address, s.runtime.Metrics.AddRequest)
+				binding = web.NewBinding(address, s.runtime.Metrics.AddRequest, s.triggerHandler)
 				s.Bindings[address] = binding
 				binding.Start()
 			}
@@ -139,6 +148,19 @@ func (s *Server) updateBindings(config dynamic.Config) {
 		err := binding.Apply(c)
 		if err != nil {
 			log.Error(err.Error())
+		}
+	}
+}
+
+func (s *Server) triggerHandler(event event.EventHandler, options ...runtime.WorkflowOptions) {
+	for _, c := range s.config {
+		o := append(options, runtime.WithWorkingDirectory(filepath.Dir(c.ConfigPath)))
+		for _, w := range c.Workflows {
+			for _, trigger := range w.On {
+				if event(trigger) {
+					workflow.Run(w, o...)
+				}
+			}
 		}
 	}
 }

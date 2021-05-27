@@ -19,6 +19,36 @@ type Config struct {
 	Pipelines  []Pipeline
 	ConfigPath string `yaml:"-" json:"-"`
 	Schedules  []Schedule
+	Workflows  []Workflow
+}
+
+type Workflow struct {
+	Name  string
+	Steps []Step
+	On    Triggers
+	Env   map[string]string
+}
+
+type Triggers []Trigger
+
+type Trigger struct {
+	Service string
+	Http    HttpTrigger
+}
+
+type HttpTrigger struct {
+	Method string
+	Path   string
+}
+
+type Step struct {
+	Name  string
+	Id    string
+	Uses  string
+	With  map[string]string
+	Run   string
+	Shell string
+	Env   map[string]string
 }
 
 type ConfigRef struct {

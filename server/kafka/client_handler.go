@@ -5,6 +5,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"io"
 	"math"
+	"mokapi/providers/utils"
 	"mokapi/server/kafka/protocol"
 	"mokapi/server/kafka/protocol/apiVersion"
 	"mokapi/server/kafka/protocol/fetch"
@@ -246,7 +247,7 @@ func (s *Binding) processJoinGroup(h *protocol.Header, req *joinGroup.Request, w
 	}
 
 	if len(req.MemberId) == 0 {
-		memberId := fmt.Sprintf("%v-%v", h.ClientId, createGuid())
+		memberId := fmt.Sprintf("%v-%v", h.ClientId, utils.NewGuid())
 		protocol.WriteMessage(w, h.ApiKey, h.ApiVersion, h.CorrelationId, &joinGroup.Response{
 			ErrorCode: 79, // MEMBER_ID_REQUIRED
 			MemberId:  memberId,

@@ -21,11 +21,6 @@ type resolver interface {
 }
 
 func (r refResolver) resolveConfig() error {
-
-	if err := r.resolveMokapiRef(r.config.Info.Mokapi); err != nil {
-		return err
-	}
-
 	if r.config.Components.Schemas != nil {
 		if err := r.resolveSchemas(r.config.Components.Schemas); err != nil {
 			return err

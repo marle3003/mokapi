@@ -2,15 +2,14 @@ package web
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/models/media"
 	"mokapi/providers/encoding"
-	"mokapi/providers/pipeline"
-	"mokapi/providers/pipeline/lang/types"
+	"mokapi/providers/workflow/runtime"
+	"mokapi/server/event"
 	"net/http"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type OperationHandler struct {
@@ -29,7 +28,7 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 
 	operation := context.Operation
 
-	var bodyParam interface{} = nil
+	//var bodyParam interface{} = nil
 	if operation.RequestBody != nil {
 		contentType := media.ParseContentType(context.Request.Header.Get("content-type"))
 		body, err := readBody(context)
@@ -58,7 +57,7 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 		}
 
 		if bodySchema != nil {
-			bodyParam, err = parseBody(body, contentType, bodySchema)
+			//bodyParam, err = parseBody(body, contentType, bodySchema)
 			if err != nil {
 				respond(err.Error(), http.StatusBadRequest, context)
 				return
@@ -72,38 +71,54 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 		}
 	}
 
-	pipelineName := operation.Endpoint.Pipeline
-	if len(operation.Pipeline) > 0 {
-		pipelineName = operation.Pipeline
+	//pipelineName := operation.Endpoint.Pipeline
+	//if len(operation.Pipeline) > 0 {
+	//	pipelineName = operation.Pipeline
+	//}
+
+	gen := openapi.NewGenerator()
+
+	r := &Response{
+		Headers: map[string]string{
+			"Content-Type": context.ContentType.String(),
+		},
+		StatusCode: int(context.statusCode),
+		Data:       gen.New(context.Schema),
 	}
 
-	r := newResponse(context, func(err error, status int) {
-		respond(err.Error(), http.StatusInternalServerError, context)
-	})
+	context.workflowHandler(event.WithHttpEvent(event.HttpEvent{
+		Service: context.ServiceName,
+		Method:  context.Request.Method,
+		Path:    context.Request.URL.Path,
+	}),
+		runtime.WithContext("response", r),
+		runtime.WithAction("set-response", r))
 
-	if context.Mokapi != nil && len(pipelineName) > 0 {
-		err := pipeline.RunConfig(
-			pipelineName,
-			context.Mokapi,
-			pipeline.WithGlobalVars(map[types.Type]interface{}{
-				"response":  r,
-				"Operation": operation,
-			}),
-			pipeline.WithParams(map[string]interface{}{
-				"method": context.Request.Method,
-				"body":   bodyParam,
-				"query":  context.Parameters[openapi.QueryParameter],
-				"path":   context.Parameters[openapi.PathParameter],
-				"header": context.Parameters[openapi.HeaderParameter],
-				"cookie": context.Parameters[openapi.CookieParameter],
-			}),
-		)
-		if err != nil {
-			respond(err.Error(), http.StatusInternalServerError, context)
-		}
-	} else {
-		r.WriteRandom(int(context.statusCode), context.ContentType.String())
-	}
+	write(r, context)
+
+	//if context.Mokapi != nil && len(pipelineName) > 0 {
+	//	err := pipeline.RunConfig(
+	//		pipelineName,
+	//		context.Mokapi,
+	//		pipeline.WithGlobalVars(map[types.Type]interface{}{
+	//			"response":  r,
+	//			"Operation": operation,
+	//		}),
+	//		pipeline.WithParams(map[string]interface{}{
+	//			"method": context.Request.Method,
+	//			"body":   bodyParam,
+	//			"query":  context.Parameters[openapi.QueryParameter],
+	//			"path":   context.Parameters[openapi.PathParameter],
+	//			"header": context.Parameters[openapi.HeaderParameter],
+	//			"cookie": context.Parameters[openapi.CookieParameter],
+	//		}),
+	//	)
+	//	if err != nil {
+	//		respond(err.Error(), http.StatusInternalServerError, context)
+	//	}
+	//} else {
+	//	r.WriteRandom(int(context.statusCode), context.ContentType.String())
+	//}
 }
 
 func readBody(ctx *HttpContext) (string, error) {
@@ -133,5 +148,53 @@ func parseBody(s string, contentType *media.ContentType, schema *openapi.SchemaR
 	default:
 		log.Debugf("unsupported content type '%v' from body", contentType)
 		return s, nil
+	}
+}
+
+func write(r *Response, ctx *HttpContext) error {
+	var body []byte
+	contentType := media.ParseContentType(r.Headers["Content-Type"])
+
+	if len(r.Body) > 0 {
+		body = []byte(r.Body)
+	} else {
+		if bytes, ok := r.Data.([]byte); ok {
+			if contentType.Subtype == "*" {
+				// detect content type by data
+				contentType = media.ParseContentType(http.DetectContentType(bytes))
+			}
+			body = bytes
+		} else {
+			if bytes, err := encodeData(r.Data, contentType, ctx.Schema); err != nil {
+				return err
+			} else {
+				body = bytes
+			}
+		}
+	}
+
+	for k, v := range r.Headers {
+		ctx.Response.Header().Add(k, v)
+	}
+
+	if r.StatusCode > 0 {
+		ctx.Response.WriteHeader(r.StatusCode)
+	}
+
+	_, err := ctx.Response.Write(body)
+	return err
+}
+
+func encodeData(data interface{}, contentType *media.ContentType, schema *openapi.SchemaRef) ([]byte, error) {
+	switch contentType.Subtype {
+	case "json":
+		return encoding.MarshalJSON(data, schema)
+	case "xml", "rss+xml":
+		return encoding.MarshalXML(data, schema)
+	default:
+		if s, ok := data.(string); ok {
+			return []byte(s), nil
+		}
+		return nil, fmt.Errorf("unspupported encoding for content type %v", contentType)
 	}
 }
