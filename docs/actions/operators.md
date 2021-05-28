@@ -2,11 +2,11 @@
 Mokapi Actions provides a number of operators allowing you to perform basic operations
 with values. Those operators include the following grous:
 
-- [Arithmetic operators](#Unary plus and minus operators)
+- [Arithmetic operators](#arithmetic)
 - [Comparison operators](#comparison)
 - [Member access operators](#member)
 
-## Unary plus and minus operators
+## Unary plus and minus operators <span id="arithmetic"></span>
 The unary *+* operator returns the value of its operand. The unary *-* operator computes
 the numeric negation of its operand.
 
