@@ -1,6 +1,6 @@
 # Operators
 Mokapi Actions provides a number of operators allowing you to perform basic operations
-with values. Those operators include the following grous:
+with values. Those operators include the following groups:
 
 - [Arithmetic operators](#arithmetic)
 - [Comparison operators](#comparison)
