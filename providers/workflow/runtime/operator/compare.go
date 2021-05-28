@@ -2,7 +2,7 @@ package operator
 
 import "strings"
 
-func Compare(x interface{}, y interface{}) (interface{}, error) {
+func Compare(x interface{}, y interface{}) (int, error) {
 	switch x := x.(type) {
 	case int:
 		switch y := y.(type) {

@@ -27,7 +27,7 @@ func Parse(s string) ast.Expression {
 }
 
 func (p *parser) parseBinary() ast.Expression {
-	x := p.parsePrimary()
+	x := p.parseUnary()
 
 	for {
 		switch p.tok {
@@ -40,6 +40,18 @@ func (p *parser) parseBinary() ast.Expression {
 			return x
 		}
 	}
+}
+
+func (p *parser) parseUnary() ast.Expression {
+	switch p.tok {
+	case token.ADD, token.SUB, token.NOT:
+		op := p.tok
+		pos := p.pos
+		p.next()
+		x := p.parseUnary()
+		return &ast.Unary{X: x, Op: op, OpPos: pos}
+	}
+	return p.parsePrimary()
 }
 
 func (p *parser) parsePrimary() ast.Expression {
@@ -158,7 +170,7 @@ func (p *parser) parseElement() ast.Expression {
 		p.next()
 		val := p.parseValue()
 		return &ast.KeyValueExpr{Key: x, Value: val}
-	} else if p.tok == token.ELLIPSIS {
+	} else if p.tok == token.RANGE {
 		p.next()
 		return &ast.RangeExpr{Start: x, End: p.parsePrimary()}
 	}

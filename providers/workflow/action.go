@@ -32,6 +32,8 @@ func Run(action mokapi.Workflow, options ...runtime.WorkflowOptions) {
 	}
 
 	for k, v := range action.Env {
+		// TODO error
+		v, _ := format(v, ctx)
 		ctx.Set(k, v)
 	}
 
@@ -53,6 +55,8 @@ func runStep(step mokapi.Step, ctx *runtime.WorkflowContext) error {
 	defer ctx.CloseScope()
 
 	for k, v := range step.Env {
+		// TODO error
+		v, _ := format(v, ctx)
 		ctx.Set(k, v)
 	}
 

@@ -95,12 +95,54 @@ func (n treeNode) eval() (interface{}, error) {
 	switch n.op {
 	case token.ADD:
 		return operator.Add(x, y)
+	case token.SUB:
+		return operator.Substract(x, y)
+	case token.MUL:
+		return operator.Multiply(x, y)
+	case token.QUO:
+		return operator.Divide(x, y)
+	case token.REM:
+		return operator.Modulo(x, y)
 	case token.EQL:
 		r, err := operator.Compare(x, y)
 		if err != nil {
 			return 0, err
 		}
 		return r == 0, nil
+	case token.NEQ:
+		r, err := operator.Compare(x, y)
+		if err != nil {
+			return 0, err
+		}
+		return r != 0, nil
+	case token.LSS:
+		r, err := operator.Compare(x, y)
+		if err != nil {
+			return 0, err
+		}
+		return r == -1, nil
+	case token.GTR:
+		r, err := operator.Compare(x, y)
+		if err != nil {
+			return 0, err
+		}
+		return r == 1, nil
+	case token.LEQ:
+		r, err := operator.Compare(x, y)
+		if err != nil {
+			return 0, err
+		}
+		return r <= 0, nil
+	case token.GEQ:
+		r, err := operator.Compare(x, y)
+		if err != nil {
+			return 0, err
+		}
+		return r >= 0, nil
+	case token.LAND:
+		return operator.And(x, y)
+	case token.LOR:
+		return operator.Or(x, y)
 	}
 
 	return 0, fmt.Errorf("unsupported operator %q", n.op)

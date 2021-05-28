@@ -13,6 +13,8 @@ func Walk(v Visitor, e Expression) {
 	case *Selector:
 		Walk(v, n.X)
 		Walk(v, n.Selector)
+	case *Unary:
+		Walk(v, n.X)
 	case *Binary:
 		Walk(v, n.Lhs)
 		Walk(v, n.Rhs)

@@ -11,7 +11,7 @@ func TestNumber(t *testing.T) {
 	x := Parse(src)
 	if n, ok := x.(*ast.Literal); !ok {
 		t.Errorf("Parse(%q): got %T, expected *ast.Literal", src, x)
-	} else if n.Kind != token.NUMBER {
+	} else if n.Kind != token.INT {
 		t.Errorf("Parse(%q): got %T, expected number", src, n.Kind)
 	} else if n.Value != "12" {
 		t.Errorf("Parse(%q): got %v, expected value 12", src, n.Value)
@@ -123,10 +123,8 @@ func TestClosureExpr(t *testing.T) {
 			t.Errorf("Parse(%q): got len of args %v, expected 1", src, len(f.Args))
 		}
 
-		if ident, isIdent := f.Args[0].(*ast.Identifier); !isIdent {
-			t.Errorf("Parse(%q): got %T, expected *ast.Identifier", src, f.Args[0])
-		} else if ident.Name != "x" {
-			t.Errorf("Parse(%q): got %v, expected ident 'x'", src, ident.Name)
+		if f.Args[0].Name != "x" {
+			t.Errorf("Parse(%q): got %v, expected ident 'x'", src, f.Args[0].Name)
 		}
 	}
 }

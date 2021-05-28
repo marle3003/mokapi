@@ -29,8 +29,6 @@ const (
 
 	LAND // &&
 	LOR  // ||
-	INC
-	DEC
 
 	EQL // ==
 	LSS // <
@@ -41,8 +39,8 @@ const (
 	LEQ // <=
 	GEQ // >=
 
-	LAMBDA   // =>
-	ELLIPSIS // ...
+	LAMBDA // =>
+	RANGE  // ..
 	operatorEnd
 
 	LPAREN // (
@@ -82,8 +80,6 @@ var tokens = [...]string{
 
 	LAND: "&&",
 	LOR:  "||",
-	INC:  "++",
-	DEC:  "--",
 
 	EQL: "==",
 	LSS: "<",
@@ -94,8 +90,8 @@ var tokens = [...]string{
 	LEQ: "<=",
 	GEQ: ">=",
 
-	LAMBDA:   "=>",
-	ELLIPSIS: "...",
+	LAMBDA: "=>",
+	RANGE:  "..",
 
 	LPAREN: "(",
 	RPAREN: ")",

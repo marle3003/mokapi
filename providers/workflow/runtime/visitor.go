@@ -6,6 +6,7 @@ import (
 	"mokapi/providers/workflow/functions"
 	"mokapi/providers/workflow/token"
 	"strconv"
+	"strings"
 )
 
 type visitor struct {
@@ -42,13 +43,19 @@ func (v *visitor) Visit(e ast.Expression) ast.Visitor {
 		default:
 			v.stack.Push(t.Value)
 		}
+	case *ast.Unary:
+		return newUnaryVisitor(t, v)
 	case *ast.Binary:
 		return newBinaryVisitor(t, v)
 	case *ast.Selector:
 		s := newSelectorVisitor(v)
 		return s.Visit(e)
 	case *ast.Identifier:
-		if x, ok := v.vars[t.Name]; ok {
+		if strings.ToLower(t.Name) == "true" {
+			v.stack.Push(true)
+		} else if strings.ToLower(t.Name) == "false" {
+			v.stack.Push(false)
+		} else if x, ok := v.vars[t.Name]; ok {
 			v.stack.Push(x)
 		} else {
 			i := v.ctx.Context.Get(t.Name)

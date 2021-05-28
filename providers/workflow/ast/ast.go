@@ -33,6 +33,12 @@ type Closure struct {
 	Args      []*Identifier
 }
 
+type Unary struct {
+	OpPos token.Position
+	Op    token.Token
+	X     Expression
+}
+
 type Binary struct {
 	Lhs   Expression
 	OpPos token.Position
@@ -60,6 +66,7 @@ func (e *Literal) Pos() token.Position      { return e.ValuePos }
 func (e *Identifier) Pos() token.Position   { return e.NamePos }
 func (e *Selector) Pos() token.Position     { return e.X.Pos() }
 func (e *CallExpr) Pos() token.Position     { return e.Fun.Pos() }
+func (e *Unary) Pos() token.Position        { return e.OpPos }
 func (e *Binary) Pos() token.Position       { return e.Lhs.Pos() }
 func (e *Closure) Pos() token.Position      { return e.LambdaPos }
 func (e *SequenceExpr) Pos() token.Position { return e.Lbrack }

@@ -215,21 +215,9 @@ func (s *Scanner) Scan() (pos token.Position, tok token.Token, lit string) {
 		case ']':
 			tok = token.RBRACK
 		case '+':
-			s.next()
-			if s.ch == '+' {
-				tok = token.INC
-			} else {
-				s.offset--
-				tok = token.ADD
-			}
+			tok = token.ADD
 		case '-':
-			s.next()
-			if s.ch == '-' {
-				tok = token.DEC
-			} else {
-				s.offset--
-				tok = token.SUB
-			}
+			tok = token.SUB
 		case '*':
 			s.next()
 			s.offset--
@@ -243,11 +231,13 @@ func (s *Scanner) Scan() (pos token.Position, tok token.Token, lit string) {
 			s.offset--
 			tok = token.REM
 		case '.':
-			tok = token.PERIOD
-			if s.ch == '.' && s.peek() == '.' {
+			s.next()
+			if s.ch == '.' {
 				s.next()
-				s.next()
-				tok = token.ELLIPSIS
+				tok = token.RANGE
+			} else {
+				s.offset--
+				tok = token.PERIOD
 			}
 		case '<':
 			s.next()
