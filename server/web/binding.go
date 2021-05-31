@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/models"
-	"mokapi/server/event"
+	"mokapi/providers/workflow"
 	"strings"
 	"time"
 
@@ -21,10 +21,10 @@ type Binding struct {
 	server           *http.Server
 	handlers         map[string]map[string]*ServiceHandler
 	addRequestMetric AddRequestMetric
-	workflowHandler  event.WorkflowHandler
+	workflowHandler  workflow.Handler
 }
 
-func NewBinding(addr string, mh AddRequestMetric, wh event.WorkflowHandler) *Binding {
+func NewBinding(addr string, mh AddRequestMetric, wh workflow.Handler) *Binding {
 	b := &Binding{
 		Addr:             addr,
 		handlers:         make(map[string]map[string]*ServiceHandler),

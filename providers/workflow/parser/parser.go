@@ -91,6 +91,12 @@ func (p *parser) parseOperand() ast.Expression {
 		return x
 	case token.LBRACK:
 		return p.parseSequence()
+	case token.LPAREN:
+		lparen := p.pos
+		p.next()
+		x := p.parseBinary()
+		p.expect(token.RPAREN)
+		return &ast.ParenExpr{Lparen: lparen, X: x}
 	default:
 		p.error("expected operand")
 		p.next()

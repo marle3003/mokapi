@@ -2,13 +2,10 @@ package event
 
 import (
 	"mokapi/config/dynamic/mokapi"
-	"mokapi/providers/workflow/runtime"
 	"strings"
 )
 
-type WorkflowHandler func(events EventHandler, options ...runtime.WorkflowOptions)
-
-type EventHandler func(trigger mokapi.Trigger) bool
+type Handler func(trigger mokapi.Trigger) bool
 
 type HttpEvent struct {
 	Service string
@@ -16,7 +13,7 @@ type HttpEvent struct {
 	Path    string
 }
 
-func WithHttpEvent(evt HttpEvent) EventHandler {
+func WithHttpEvent(evt HttpEvent) Handler {
 	return func(t mokapi.Trigger) bool {
 		if len(t.Service) > 0 && t.Service != evt.Service {
 			return false
@@ -33,7 +30,7 @@ func (e HttpEvent) isValid(t mokapi.HttpTrigger) bool {
 	if len(t.Method) > 0 && t.Method != strings.ToLower(e.Method) {
 		return false
 	}
-	if len(t.Path) > 0 && t.Path != strings.ToLower(e.Path) {
+	if len(t.Path) > 0 && !matchPath(t.Path, e.Path) {
 		return false
 	}
 

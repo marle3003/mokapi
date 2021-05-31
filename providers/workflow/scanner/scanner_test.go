@@ -34,8 +34,8 @@ var tokens = [...]data{
 	{token.IDENT, "foobar", literal},
 	{token.IDENT, "foo_bar", literal},
 	{token.IDENT, "foobar12", literal},
-	{token.NUMBER, "3", literal},
-	{token.NUMBER, "3.141", literal},
+	{token.INT, "3", literal},
+	{token.FLOAT, "3.141", literal},
 	{token.RSTRING, "'foobar'", literal},
 	{token.STRING, "\"foobar\"", literal},
 
@@ -47,8 +47,6 @@ var tokens = [...]data{
 
 	{token.LAND, "&&", operator},
 	{token.LOR, "||", operator},
-	{token.INC, "++", operator},
-	{token.DEC, "--", operator},
 
 	{token.EQL, "==", operator},
 	{token.LSS, "<", operator},
@@ -60,7 +58,7 @@ var tokens = [...]data{
 	{token.GEQ, ">=", operator},
 
 	{token.LAMBDA, "=>", operator},
-	{token.ELLIPSIS, "...", operator},
+	{token.RANGE, "..", operator},
 
 	{token.LPAREN, "(", special},
 	{token.RPAREN, ")", special},

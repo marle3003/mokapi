@@ -1,7 +1,6 @@
 package runtime
 
 import (
-	"fmt"
 	"mokapi/providers/workflow/functions"
 	"regexp"
 	"runtime"
@@ -13,74 +12,55 @@ var (
 )
 
 type WorkflowContext struct {
-	env              *envScope
+	Env              *Env
 	GOOS             string
-	Output           strings.Builder
 	Context          *Context
 	Actions          map[string]Action
 	Functions        map[string]functions.Function
 	WorkingDirectory string
-}
-
-type envScope struct {
-	parent *envScope
-	env    map[string]interface{}
+	Summary          Summary
 }
 
 func NewWorkflowContext(actions map[string]Action, functions map[string]functions.Function) *WorkflowContext {
+	env := &Env{
+		env: make(map[string]interface{}),
+	}
+	ctx := newContext()
+	ctx.data["env"] = env
 	return &WorkflowContext{
-		env: &envScope{
-			env: make(map[string]interface{}),
-		},
+		Env:       env,
 		GOOS:      runtime.GOOS,
-		Context:   newContext(),
+		Context:   ctx,
 		Actions:   actions,
 		Functions: functions,
 	}
 }
 
-func (ctx *WorkflowContext) ParseOutput(output []byte, stepId string) {
-	s := fmt.Sprintf("%s", output)
-	ctx.Output.WriteString(s)
+func (ctx *WorkflowContext) ParseOutput(s string, stepId string) {
 	matches := outputPattern.FindAllStringSubmatch(s, -1)
 	for _, m := range matches {
 		name := m[1]
 		value := m[2]
-		ctx.Set(fmt.Sprintf("steps.%v.%v", stepId, name), value)
+		ctx.Context.Steps[stepId].Outputs[name] = value
 	}
 }
 
 func (ctx *WorkflowContext) OpenScope() {
-	env := &envScope{
-		parent: ctx.env,
+	env := &Env{
+		parent: ctx.Env,
 		env:    make(map[string]interface{}),
 	}
-	ctx.env = env
+	ctx.Env = env
+	ctx.Context.data["env"] = env
 }
 
 func (ctx *WorkflowContext) CloseScope() {
-	ctx.env = ctx.env.parent
+	ctx.Env = ctx.Env.parent
+	ctx.Context.data["env"] = ctx.Env
 }
 
 func (ctx *WorkflowContext) EnvStrings() []string {
-	return ctx.env.envStrings()
-}
-
-func (ctx *WorkflowContext) Get(name string) interface{} {
-	return ctx.env.get(name)
-}
-
-func (ctx *WorkflowContext) GetString(name string) string {
-	v := ctx.env.get(name)
-	if v == nil {
-		return ""
-	}
-
-	return fmt.Sprintf("%s", v)
-}
-
-func (ctx *WorkflowContext) Set(name string, value interface{}) {
-	ctx.env.set(name, value)
+	return ctx.Env.envStrings()
 }
 
 func (ctx *WorkflowContext) ResolvePath(path string) string {
@@ -89,30 +69,4 @@ func (ctx *WorkflowContext) ResolvePath(path string) string {
 	}
 
 	return path
-}
-
-func (ctx *envScope) get(name string) interface{} {
-	if val, ok := ctx.env[name]; ok {
-		return val
-	}
-	if ctx.parent != nil {
-		return ctx.parent.get(name)
-	}
-	return nil
-}
-
-func (ctx *envScope) set(name string, value interface{}) {
-	ctx.env[name] = value
-}
-
-func (ctx *envScope) envStrings() []string {
-	r := make([]string, 0)
-	if ctx.parent != nil {
-		r = append(r, ctx.parent.envStrings()...)
-	}
-
-	for k, v := range ctx.env {
-		r = append(r, fmt.Sprintf("%v=%v", k, v))
-	}
-	return r
 }

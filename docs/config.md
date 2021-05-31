@@ -6,12 +6,9 @@ Mokapi has two types of configuration:
 
 ## Dynamic Configuration
 
-The dynamic configuration contains everything that defines a service like an
-OpenApi configuration. This configuration can change during runtime and is
-seamlessly hot-reloaded.
+The dynamic configuration contains everything that defines a service like an OpenApi configuration. This configuration can change during runtime and is seamlessly hot-reloaded.
 
-Mokapi gets its dynamic configuration from providers. Currently, only the 
-file provider is supported. Each service has its own configuration format.
+Mokapi gets its dynamic configuration from providers. Currently, only the file provider is supported. Each service has its own configuration format.
 
 - OpenApi
 - AsyncApi  
@@ -19,8 +16,7 @@ file provider is supported. Each service has its own configuration format.
 
 ## Static Configuration
 
-Elements in the static configuration don't often change and changes require
-a restart of the application.
+Elements in the static configuration don't often change and changes require a restart of the application.
 
 There are two different ways to define a static configuration options.
 1. Command-line arguments

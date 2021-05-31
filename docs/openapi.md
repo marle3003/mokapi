@@ -1,6 +1,5 @@
 # OpenAPI
-Mokapi generates random data for the given response schema. You have several configuration options to cover your needs.
-If you want your data to be dynamic, you should take a look at pipelines, e.g. data depends on request parameters.
+Mokapi generates random data for the given response schema. You have several configuration options to cover your needs. If you want your data to be dynamic, you should take a look at pipelines, e.g. data depends on request parameters.
 
 ## Format
 ```yaml
@@ -66,8 +65,7 @@ schema:
 ```
 
 ## Example
-You can add [Example](https://swagger.io/docs/specification/adding-examples/) to properties, objects or arrays.
-Mokapi will take your defined example to generate the response. Additional defined elements are ignored.
+You can add [Example](https://swagger.io/docs/specification/adding-examples/) to properties, objects or arrays. Mokapi will take your defined example to generate the response. Additional defined elements are ignored.
 
 ```yaml
 schema:
@@ -113,18 +111,36 @@ schema:
 
 Supported generator:
 
-**Person**
+- [Person](#person)
+- [Auth](#auth)
+- [Beer](#beer)
+- [Car](#car)
+- [Words](#words)
+- [Foods](#foods)
+- [Misc](#misc)
+- [Colors](#colors)
+- [Internet](#internet)
+- [Date/Time](#datetime)
+- [App](#app)
+- [Animals](#animals)
+- [Emojis](#emojis)
+- [Language](#language)
+- [Numbers](#numbers)
+- [String](#string)
+- [File](#file)
+
+**Person** <span id="person"></span>
 - name
 - firstname
 - lastname
 - gender
 - email
 
-**Auth**
+**Auth** <span id="auth"></span>
 - username
 - password
 
-**Beer**
+**Beer** <span id="beer"></span>
 - beername
 - beeralcohol
 - beerstyle
@@ -133,13 +149,13 @@ Supported generator:
 - beerblg
 - beeribu
 
-**Car**
+**Car** <span id="car"></span>
 - carmaker
 - carmodel
 - cartype
 - carfueltype
 
-**Words**
+**Words** <span id="words"></span>
 - noun
 - verb
 - adverb
@@ -151,7 +167,7 @@ Supported generator:
 - question
 - phrase
 
-**Foods**
+**Foods** <span id="foods"></span>
 - fruit
 - vegetable
 - breakfast
@@ -160,17 +176,17 @@ Supported generator:
 - snack
 - dessert
 
-**Misc**
+**Misc** <span id="misc"></span>
 - bool
 - flipacoin
 
-**Colors**
+**Colors** <span id="colors"></span>
 - color
 - hexcolor
 - rgbcolor
 - safecolor
 
-**Internet**
+**Internet** <span id="internet"></span>
 - url
 - domainname
 - domainsuffix
@@ -182,7 +198,7 @@ Supported generator:
 - httpmethod
 - useragent
 
-**Date/Time**
+**Date/Time** <span id="datetime"></span>
 - date (Format: ANSIC, UnixDate, RubyDate, RFC822, RFC822Z, RFC850, RFC1123, RFC1123Z, RFC3339Nano, default: RFC3339)
 - nanosecond
 - second
@@ -192,12 +208,12 @@ Supported generator:
 - weekday
 - year
 
-**App**
+**App** <span id="app"></span>
 - appname
 - appversion
 - appauthor
 
-**Animal**
+**Animals** <span id="animals"></span>
 - petname
 - animal
 - animaltype
@@ -205,18 +221,18 @@ Supported generator:
 - cat
 - dog
 
-**Emoji**
+**Emojis** <span id="emojis"></span>
 - emoji
 - emojidescription
 - emojicategory
 - emojialias
 - emojitag
 
-**Language**
+**Language** <span id="language"></span>
 - language
 - programminglanguage
 
-**Number**
+**Numbers** <span id="numbers"></span>
 - number:min,max
 - int8
 - int16
@@ -230,12 +246,12 @@ Supported generator:
 - float32range:min,max
 - float64
 
-**String**
+**String** <span id="string"></span>
 - digit
 - letter
 - lexify
 - nummerify
 
-**File**
+**File** <span id="file"></span>
 - fileextension
 - filemimetype

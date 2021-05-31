@@ -12,6 +12,14 @@ type Response struct {
 	Data       interface{}
 }
 
+type Request struct {
+	Method  string
+	Body    interface{}
+	Path    map[string]interface{}
+	Query   map[string]interface{}
+	Headers map[string]interface{}
+}
+
 func (r *Response) Run(ctx *runtime.ActionContext) error {
 	if data, ok := ctx.GetInput("data"); ok {
 		r.Data = data

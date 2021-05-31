@@ -3,7 +3,7 @@
     <div class="page-body">
 
         <b-row>
-          <b-col cols="2">
+          <b-col cols="3">
             <b-navbar sticky>
             <b-list-group class="w-100">
               <div v-for="item in navigation" :key="item.label" class="w-100">
@@ -151,11 +151,16 @@ export default {
 .content {
   line-height: 1.6;
   font-size: 0.8rem;
+  text-align: justify;
+  max-width: calc(100% - 12.1rem);
 }
 .router-link-active {
   font-weight: 500;
 }
 /* markdown deep selector */
+.content >>> strong, .content >>> b{
+  font-weight: 600;
+}
 .content >>> h1 {
   font-size: 1.75rem;
   font-weight: 600;
@@ -170,5 +175,18 @@ export default {
   font-size: 1.1rem;
   font-weight: 500;
   margin: 1.5rem 0 0.5rem;
+}
+.content >>> h4 {
+  font-size: 1.0rem;
+  font-weight: 500;
+  margin: 1.5rem 0 0.5rem;
+}
+.content >>> table{
+  width: 100%;
+  margin-bottom: 1rem;
+}
+.content >>> table thead th {
+  border-bottom: 2px solid;
+  border-color: var(--var-bg-color-primary);
 }
 </style>

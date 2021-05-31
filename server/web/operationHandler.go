@@ -7,8 +7,8 @@ import (
 	"mokapi/config/dynamic/openapi"
 	"mokapi/models/media"
 	"mokapi/providers/encoding"
+	"mokapi/providers/workflow/event"
 	"mokapi/providers/workflow/runtime"
-	"mokapi/server/event"
 	"net/http"
 )
 
@@ -28,7 +28,7 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 
 	operation := context.Operation
 
-	//var bodyParam interface{} = nil
+	var bodyParam interface{} = nil
 	if operation.RequestBody != nil {
 		contentType := media.ParseContentType(context.Request.Header.Get("content-type"))
 		body, err := readBody(context)
@@ -57,7 +57,7 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 		}
 
 		if bodySchema != nil {
-			//bodyParam, err = parseBody(body, contentType, bodySchema)
+			bodyParam, err = parseBody(body, contentType, bodySchema)
 			if err != nil {
 				respond(err.Error(), http.StatusBadRequest, context)
 				return
@@ -78,7 +78,14 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 
 	gen := openapi.NewGenerator()
 
-	r := &Response{
+	req := &Request{
+		Headers: context.Parameters[openapi.HeaderParameter],
+		Path:    context.Parameters[openapi.PathParameter],
+		Query:   context.Parameters[openapi.QueryParameter],
+		Body:    bodyParam,
+	}
+
+	res := &Response{
 		Headers: map[string]string{
 			"Content-Type": context.ContentType.String(),
 		},
@@ -91,10 +98,11 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 		Method:  context.Request.Method,
 		Path:    context.Request.URL.Path,
 	}),
-		runtime.WithContext("response", r),
-		runtime.WithAction("set-response", r))
+		runtime.WithContext("request", req),
+		runtime.WithContext("response", res),
+		runtime.WithAction("set-response", res))
 
-	write(r, context)
+	write(res, context)
 
 	//if context.Mokapi != nil && len(pipelineName) > 0 {
 	//	err := pipeline.RunConfig(

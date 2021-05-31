@@ -18,6 +18,8 @@ func Walk(v Visitor, e Expression) {
 	case *Binary:
 		Walk(v, n.Lhs)
 		Walk(v, n.Rhs)
+	case *ParenExpr:
+		Walk(v, n.X)
 	case *CallExpr:
 		Walk(v, n.Fun)
 		for _, a := range n.Args {

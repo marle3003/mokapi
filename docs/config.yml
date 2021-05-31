@@ -2,6 +2,11 @@ nav:
   - "Welcome": "welcome.md"
   - "Config": "config.md"
   - "OpenAPI": "openapi.md"
+  - "Actions":
+    - "Intro": "actions/intro.md"
+    - "Syntax": "actions/syntax.md"
+    - "Context and expression": "actions/context.md"
+    - "Operators": "actions/operators.md"
   - "Pipelines":
     - "Intro": "pipeline/pipeline.md"
     - "Steps": "pipeline/steps.md"

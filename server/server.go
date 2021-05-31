@@ -11,9 +11,9 @@ import (
 	"mokapi/config/static"
 	"mokapi/models"
 	"mokapi/providers/workflow"
+	"mokapi/providers/workflow/event"
 	"mokapi/providers/workflow/runtime"
 	"mokapi/server/api"
-	"mokapi/server/event"
 	"mokapi/server/kafka"
 	ldapServer "mokapi/server/ldap"
 	"mokapi/server/web"
@@ -38,12 +38,11 @@ type Server struct {
 }
 
 func NewServer(config *static.Config) *Server {
-	runtime := models.NewRuntime()
 	watcher := dynamic.NewConfigWatcher(config.Providers)
 
 	server := &Server{
 		watcher:            watcher,
-		runtime:            runtime,
+		runtime:            models.NewRuntime(),
 		stopChannel:        make(chan bool),
 		stopMetricsUpdater: make(chan bool),
 		Bindings:           make(map[string]Binding),
@@ -152,7 +151,7 @@ func (s *Server) updateConfigs(config dynamic.Config) {
 	}
 }
 
-func (s *Server) triggerHandler(event event.EventHandler, options ...runtime.WorkflowOptions) {
+func (s *Server) triggerHandler(event event.Handler, options ...runtime.WorkflowOptions) {
 	for _, c := range s.config {
 		o := append(options, runtime.WithWorkingDirectory(filepath.Dir(c.ConfigPath)))
 		for _, w := range c.Workflows {

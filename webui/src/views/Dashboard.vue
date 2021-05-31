@@ -172,7 +172,7 @@ export default {
         ],
       topicSizes: {},
       chartTopicSize: {},
-      serviceFields: [{key: 'name', class: 'text-left'}, 'lastRequest', 'requests', 'errors'],
+      serviceFields: [{key: 'name', class: 'text-left'}, {key: 'lastRequest', class: 'text-left'}, 'requests', 'errors'],
       topicFields: [{key: 'name', class: 'text-left'}, 'count', 'size', 'lastRecord', 'partitions', 'segments']
     }
   },
@@ -338,9 +338,10 @@ export default {
     margin-top: 42px;
   }
   .page-header h2{
-    font-weight: 700;
+    font-weight: 400;
   }
   .card{
+    border-color: var(--var-border-color);
     margin: 7px;
   }
   .card p{
@@ -348,18 +349,18 @@ export default {
   }
   .info{
     font-size: 0.7rem;
-    font-weight: 500;
+    font-weight: 300;
   }
   .info-body{
     padding: 0.8rem;
   }
   .value {
-    font-size: 1.8rem;
-    font-weight: 600;
+    font-size: 2.25rem;
+    font-weight: 300;
   }
   .additional{
     color: #a0a1a7;
-    font-size: 0.8rem;
+    font-size: 0.7rem;
   }
   .legend-item {
     border: 0 none;

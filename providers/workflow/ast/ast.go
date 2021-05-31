@@ -46,6 +46,11 @@ type Binary struct {
 	Rhs   Expression
 }
 
+type ParenExpr struct {
+	Lparen token.Position
+	X      Expression
+}
+
 type SequenceExpr struct {
 	Lbrack token.Position
 	Values []Expression
@@ -68,6 +73,7 @@ func (e *Selector) Pos() token.Position     { return e.X.Pos() }
 func (e *CallExpr) Pos() token.Position     { return e.Fun.Pos() }
 func (e *Unary) Pos() token.Position        { return e.OpPos }
 func (e *Binary) Pos() token.Position       { return e.Lhs.Pos() }
+func (e *ParenExpr) Pos() token.Position    { return e.Lparen }
 func (e *Closure) Pos() token.Position      { return e.LambdaPos }
 func (e *SequenceExpr) Pos() token.Position { return e.Lbrack }
 func (e *KeyValueExpr) Pos() token.Position { return e.Key.Pos() }

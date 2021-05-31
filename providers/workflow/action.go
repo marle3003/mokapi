@@ -2,16 +2,16 @@ package workflow
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/mokapi"
 	"mokapi/providers/utils"
 	"mokapi/providers/workflow/actions"
+	"mokapi/providers/workflow/event"
 	"mokapi/providers/workflow/functions"
 	"mokapi/providers/workflow/runtime"
-	"os/exec"
 	"regexp"
 	"strings"
+	"time"
 )
 
 var (
@@ -25,8 +25,12 @@ var (
 	}
 )
 
-func Run(action mokapi.Workflow, options ...runtime.WorkflowOptions) {
+type Handler func(events event.Handler, options ...runtime.WorkflowOptions)
+
+func Run(action mokapi.Workflow, options ...runtime.WorkflowOptions) runtime.Summary {
 	ctx := runtime.NewWorkflowContext(actionCollection, fCollection)
+	summary := runtime.Summary{}
+	start := time.Now()
 	for _, o := range options {
 		o(ctx)
 	}
@@ -34,18 +38,30 @@ func Run(action mokapi.Workflow, options ...runtime.WorkflowOptions) {
 	for k, v := range action.Env {
 		// TODO error
 		v, _ := format(v, ctx)
-		ctx.Set(k, v)
+		ctx.Env.Set(k, v)
 	}
 
 	for _, step := range action.Steps {
-		if err := runStep(step, ctx); err != nil {
+		if stepSum, err := runStep(step, ctx); err != nil {
 			log.Error(err)
+		} else {
+			summary.Steps = append(summary.Steps, stepSum)
 		}
 	}
-	log.Debugf("Action %v: %v", action.Name, ctx.Output.String())
+	end := time.Now()
+	summary.Duration = end.Sub(start)
+	log.WithField("log", summary).Debugf("Action %v", action.Name)
+
+	return summary
 }
 
-func runStep(step mokapi.Step, ctx *runtime.WorkflowContext) error {
+func runStep(step mokapi.Step, ctx *runtime.WorkflowContext) (runtime.StepSummary, error) {
+	summary := runtime.StepSummary{Name: step.Name}
+	start := time.Now()
+	defer func() {
+		end := time.Now()
+		summary.Duration = end.Sub(start)
+	}()
 	stepId := step.Id
 	if len(stepId) == 0 {
 		stepId = utils.NewGuid()
@@ -57,94 +73,56 @@ func runStep(step mokapi.Step, ctx *runtime.WorkflowContext) error {
 	for k, v := range step.Env {
 		// TODO error
 		v, _ := format(v, ctx)
-		ctx.Set(k, v)
+		ctx.Env.Set(k, v)
 	}
 
 	if len(step.Run) > 0 {
+		if len(summary.Name) == 0 {
+			summary.Name = step.Run
+		}
+		var output []byte
+		var err error
+		parsed, err := format(step.Run, ctx)
+		if err != nil {
+			return summary, err
+		}
+		s := fmt.Sprintf("%v", parsed)
 		switch shell := step.Shell; {
 		case len(shell) == 0:
 			if ctx.GOOS == "windows" {
-				return runCmd(step, ctx)
+				output, err = runCmd(s, ctx)
 			}
-			return runBash(step, ctx)
+			output, err = runBash(s, ctx)
 		}
+		if err != nil {
+			return summary, err
+		}
+		summary.Log = fmt.Sprintf("%s", output)
+		ctx.ParseOutput(summary.Log, step.Id)
 	} else if len(step.Uses) > 0 {
+		if len(summary.Name) == 0 {
+			summary.Name = step.Uses
+		}
 		ctx.Context.NewStep(stepId)
 		for k, v := range step.With {
 			val, err := format(v, ctx)
 			if err != nil {
-				return err
+				return summary, err
 			}
 			ctx.Context.Steps[stepId].Inputs[k] = val
 		}
 		if a, ok := ctx.Actions[step.Uses]; ok {
-			return a.Run(runtime.NewActionContext(stepId, ctx))
+			if err := a.Run(runtime.NewActionContext(stepId, ctx)); err != nil {
+				return summary, err
+			}
 		} else {
-			return fmt.Errorf("unknown action %v", step.Uses)
+			return summary, fmt.Errorf("unknown action %v", step.Uses)
 		}
+	} else {
+		return summary, fmt.Errorf("unable to run step %q", summary.Name)
 	}
 
-	name := step.Name
-	if len(name) == 0 {
-		name = step.Run
-	}
-	return fmt.Errorf("unable to run step %q", name)
-}
-
-func runBash(step mokapi.Step, ctx *runtime.WorkflowContext) error {
-	path, err := exec.LookPath("bash")
-	if err != nil {
-		return runShell(step, ctx)
-	}
-
-	cmd := exec.Command(path, "-c", step.Run)
-	cmd.Env = ctx.EnvStrings()
-
-	output, err := cmd.Output()
-	if err != nil {
-		return err
-	}
-	ctx.ParseOutput(output, step.Id)
-
-	return nil
-}
-
-func runShell(step mokapi.Step, ctx *runtime.WorkflowContext) error {
-	path, err := exec.LookPath("sh")
-	if err != nil {
-		return errors.Wrap(err, "unable to run step")
-	}
-
-	cmd := exec.Command(path, "-c", step.Run)
-	cmd.Env = ctx.EnvStrings()
-
-	output, err := cmd.Output()
-	if err != nil {
-		return err
-	}
-	ctx.ParseOutput(output, step.Id)
-
-	return nil
-}
-
-func runCmd(step mokapi.Step, ctx *runtime.WorkflowContext) error {
-	path, err := exec.LookPath("cmd")
-	if err != nil {
-		return fmt.Errorf("cmd not found")
-	}
-	cmd := &exec.Cmd{
-		Path: path,
-		Args: []string{"/C", step.Run},
-		Env:  ctx.EnvStrings(),
-	}
-
-	output, err := cmd.Output()
-	if err != nil {
-		return err
-	}
-	ctx.ParseOutput(output, step.Id)
-
-	return nil
+	return summary, nil
 }
 
 func format(s string, ctx *runtime.WorkflowContext) (interface{}, error) {

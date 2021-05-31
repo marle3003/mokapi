@@ -28,7 +28,7 @@ export default {
     height: 100%;
     color:var(--var-color-primary);
     border-color: #141414;
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Poppins', sans-serif;
     font-weight: 400;
     line-height: normal;
     font-size: 0.9rem;
@@ -105,19 +105,24 @@ export default {
   }
   table.dataTable thead tr{
     color: var(--var-table-header-color);
-    background-color: var(--var-table-header-bg-color);   
+    background-color: var(--var-table-header-bg-color);
   }
   table.dataTable thead th{
     padding: 3px 0 3px 12px;
     border-color: var(--var-table-border-color);
     border-top-width: 2px;
     border-bottom-width: 2px;
+    font-weight: 500;
   }
   table.dataTable td{
-    border-width: 2px;
+    border-top-width: 2px;
+    border-bottom-width: 2px;
     border-color: var(--var-table-border-color);
     border-style: solid;
     padding: 4px 0 3px 12px;
+    border-left-style: hidden;
+    border-right-style: hidden;
+    font-size: 0.75rem;
   }
   .table-hover tbody tr:hover td, .table-hover tbody tr:hover th {
     color: var(--var-color-primary);
