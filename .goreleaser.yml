@@ -29,13 +29,6 @@ dockers:
       - mokapi
     image_templates:
       - "mokapi/mokapi:latest"
+      - "mokapi/mokapi:{{ .Tag }}"
     dockerfile: Dockerfile-linux
-    use_buildx: true
-  - goos: windows
-    goarch: amd64
-    ids:
-      - mokapi
-    image_templates:
-      - "mokapi/mokapi:latest"
-    dockerfile: Dockerfile-windows
     use_buildx: true
