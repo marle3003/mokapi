@@ -1,7 +1,10 @@
 package models
 
 import (
+	"crypto/rand"
+	"io"
 	"mokapi/config/dynamic/openapi"
+	runtime2 "mokapi/providers/workflow/runtime"
 	"runtime"
 	"time"
 )
@@ -18,6 +21,7 @@ type Metrics struct {
 }
 
 type RequestMetric struct {
+	Id           string
 	Service      string
 	Method       string
 	Url          string
@@ -25,6 +29,17 @@ type RequestMetric struct {
 	Error        string
 	ResponseTime time.Duration
 	Time         time.Time
+	Parameters   []RequestParamter
+	ContentType  string
+	ResponseBody string
+	Actions      []*runtime2.WorkflowSummary
+}
+
+type RequestParamter struct {
+	Name  string
+	Type  string
+	Value string
+	Raw   string
 }
 
 type ServiceMetric struct {
@@ -56,6 +71,7 @@ type KafkaMessage struct {
 
 func NewRequestMetric(method string, url string, config *openapi.Config) *RequestMetric {
 	return &RequestMetric{
+		Id:      newId(10),
 		Method:  method,
 		Url:     url,
 		Time:    time.Now(),
@@ -105,4 +121,18 @@ func (m *Metrics) Update() {
 	var stats runtime.MemStats
 	runtime.ReadMemStats(&stats)
 	m.Memory = int64(stats.Alloc)
+}
+
+var table = [...]byte{'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'}
+
+func newId(length int) string {
+	b := make([]byte, length)
+	n, err := io.ReadAtLeast(rand.Reader, b, length)
+	if n != length {
+		panic(err)
+	}
+	for i := 0; i < len(b); i++ {
+		b[i] = table[int(b[i])%len(table)]
+	}
+	return string(b)
 }

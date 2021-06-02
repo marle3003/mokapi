@@ -2,6 +2,7 @@ package event
 
 import (
 	"mokapi/config/dynamic/mokapi"
+	"mokapi/providers/workflow/path/urlpath"
 	"strings"
 )
 
@@ -30,7 +31,7 @@ func (e HttpEvent) isValid(t mokapi.HttpTrigger) bool {
 	if len(t.Method) > 0 && t.Method != strings.ToLower(e.Method) {
 		return false
 	}
-	if len(t.Path) > 0 && !matchPath(t.Path, e.Path) {
+	if len(t.Path) > 0 && !urlpath.Match(t.Path, e.Path) {
 		return false
 	}
 

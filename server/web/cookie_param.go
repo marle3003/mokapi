@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func parseCookie(p *openapi.Parameter, r *http.Request) (interface{}, error) {
+func parseCookie(p *openapi.Parameter, r *http.Request) (rp RequestParameterValue, err error) {
 	switch p.Schema.Value.Type {
 	case "array":
 		return parseCookieArray(p, r)
@@ -15,27 +15,39 @@ func parseCookie(p *openapi.Parameter, r *http.Request) (interface{}, error) {
 		return parseCookieObject(p, r)
 	}
 
-	c, err := r.Cookie(p.Name)
+	var cookie *http.Cookie
+	cookie, err = r.Cookie(p.Name)
 	if err != nil {
-		return nil, err
+		return
 	}
-	if len(c.Value) == 0 && p.Required {
-		return nil, errors.Errorf("required parameter not found")
+	rp.Raw = cookie.Value
+	if len(cookie.Value) == 0 && p.Required {
+		return rp, errors.Errorf("required parameter not found")
 	}
 
-	return parse(c.Value, p.Schema)
+	if v, err := parse(cookie.Value, p.Schema); err != nil {
+		return rp, err
+	} else {
+		rp.Value = v
+	}
+	return
 }
 
-func parseCookieObject(p *openapi.Parameter, r *http.Request) (obj map[string]interface{}, err error) {
-	c, err := r.Cookie(p.Name)
+func parseCookieObject(p *openapi.Parameter, r *http.Request) (rp RequestParameterValue, err error) {
+	var cookie *http.Cookie
+	cookie, err = r.Cookie(p.Name)
 	if err != nil {
-		return nil, err
+		return
 	}
-	if len(c.Value) == 0 && p.Required {
-		return nil, errors.Errorf("required parameter not found")
+	if len(cookie.Value) == 0 && p.Required {
+		return rp, errors.Errorf("required parameter not found")
 	}
 
-	elements := strings.Split(c.Value, ",")
+	rp.Raw = cookie.Value
+	m := make(map[string]interface{})
+	rp.Value = m
+
+	elements := strings.Split(cookie.Value, ",")
 	i := 0
 	for {
 		if i >= len(elements) {
@@ -44,38 +56,41 @@ func parseCookieObject(p *openapi.Parameter, r *http.Request) (obj map[string]in
 		key := elements[i]
 		p, ok := p.Schema.Value.Properties.Value[key]
 		if !ok {
-			return nil, errors.Errorf("property '%v' not defined in schema", key)
+			return rp, errors.Errorf("property '%v' not defined in schema", key)
 		}
 		i++
 		if i >= len(elements) {
-			return nil, errors.Errorf("invalid number of property pairs")
+			return rp, errors.Errorf("invalid number of property pairs")
 		}
-		if v, err := parse(elements[i], p); err == nil {
-			obj[key] = v
+		if v, err := parse(elements[i], p); err != nil {
+			return rp, err
 		} else {
-			return nil, err
+			m[key] = v
 		}
 		i++
 	}
 	return
 }
 
-func parseCookieArray(p *openapi.Parameter, r *http.Request) (result []interface{}, err error) {
-	c, err := r.Cookie(p.Name)
+func parseCookieArray(p *openapi.Parameter, r *http.Request) (rp RequestParameterValue, err error) {
+	var cookie *http.Cookie
+	cookie, err = r.Cookie(p.Name)
 	if err != nil {
-		return nil, err
+		return
 	}
-	if len(c.Value) == 0 && p.Required {
-		return nil, errors.Errorf("required parameter not found")
+	if len(cookie.Value) == 0 && p.Required {
+		return rp, errors.Errorf("required parameter not found")
 	}
 
-	values := strings.Split(c.Value, ",")
+	rp.Raw = cookie.Value
+	values := make([]interface{}, 0)
+	rp.Value = values
 
-	for _, v := range values {
+	for _, v := range strings.Split(cookie.Value, ",") {
 		if i, err := parse(v, p.Schema.Value.Items); err != nil {
-			return nil, err
+			return rp, err
 		} else {
-			result = append(result, i)
+			values = append(values, i)
 		}
 	}
 	return

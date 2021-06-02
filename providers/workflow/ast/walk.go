@@ -37,6 +37,9 @@ func Walk(v Visitor, e Expression) {
 	case *RangeExpr:
 		Walk(v, n.Start)
 		Walk(v, n.End)
+	case *KeyValueExpr:
+		Walk(v, n.Key)
+		Walk(v, n.Value)
 	}
 	v.Visit(nil)
 }

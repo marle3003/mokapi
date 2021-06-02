@@ -1,4 +1,4 @@
-package event
+package urlpath
 
 import "strings"
 
@@ -12,7 +12,7 @@ const (
 
 const Separator = '/'
 
-func matchPath(pattern string, value string) bool {
+func Match(pattern string, value string) bool {
 Pattern:
 	for len(pattern) > 0 {
 

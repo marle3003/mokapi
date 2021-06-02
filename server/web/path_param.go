@@ -6,10 +6,12 @@ import (
 	"strings"
 )
 
-func parsePath(s string, p *openapi.Parameter) (interface{}, error) {
+func parsePath(s string, p *openapi.Parameter) (rp RequestParameterValue, err error) {
 	if len(s) == 0 && p.Required {
-		return nil, errors.Errorf("required parameter not found")
+		return rp, errors.Errorf("required parameter not found")
 	}
+
+	rp.Raw = s
 
 	switch p.Style {
 	case "label":
@@ -18,16 +20,25 @@ func parsePath(s string, p *openapi.Parameter) (interface{}, error) {
 		s = s[1:]
 	}
 
+	var v interface{}
 	if p.Schema != nil {
 		switch p.Schema.Value.Type {
 		case "array":
-			return parsePathArray(s, p)
+			v, err = parsePathArray(s, p)
 		case "object":
-			return parsePathObject(s, p)
+			v, err = parsePathObject(s, p)
+		default:
+			v, err = parse(s, p.Schema)
 		}
 	}
 
-	return parse(s, p.Schema)
+	if err != nil {
+		return rp, err
+	} else {
+		rp.Value = v
+	}
+
+	return
 }
 
 func parsePathObject(s string, p *openapi.Parameter) (obj map[string]interface{}, err error) {

@@ -1,4 +1,4 @@
-package event
+package urlpath
 
 import "testing"
 
@@ -24,9 +24,7 @@ var tests = [...]data{
 
 func TestSimple(t *testing.T) {
 	for _, test := range tests {
-		if b, err := matchPath(test.pat, test.lit); err != nil {
-			t.Error(err)
-		} else if b != test.result {
+		if b := Match(test.pat, test.lit); b != test.result {
 			t.Errorf("Expected %v, got %v: pattern %v, value: %v", test.result, b, test.pat, test.lit)
 		}
 	}

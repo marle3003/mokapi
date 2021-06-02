@@ -10,15 +10,22 @@ import (
 	"strings"
 )
 
-type RequestParameters map[openapi.ParameterLocation]map[string]interface{}
+type RequestParameters map[openapi.ParameterLocation]RequestParameter
 
 func newRequestParameters() RequestParameters {
 	p := make(RequestParameters)
-	p[openapi.PathParameter] = make(map[string]interface{})
-	p[openapi.QueryParameter] = make(map[string]interface{})
-	p[openapi.HeaderParameter] = make(map[string]interface{})
-	p[openapi.CookieParameter] = make(map[string]interface{})
+	p[openapi.PathParameter] = make(RequestParameter)
+	p[openapi.QueryParameter] = make(RequestParameter)
+	p[openapi.HeaderParameter] = make(RequestParameter)
+	p[openapi.CookieParameter] = make(RequestParameter)
 	return p
+}
+
+type RequestParameter map[string]RequestParameterValue
+
+type RequestParameterValue struct {
+	Value interface{}
+	Raw   string
 }
 
 func parseParams(params openapi.Parameters, route string, r *http.Request) (RequestParameters, error) {
@@ -42,9 +49,9 @@ func parseParams(params openapi.Parameters, route string, r *http.Request) (Requ
 			continue
 		}
 		p := ref.Value
-		var v interface{}
+		var v RequestParameterValue
 		var err error
-		var store map[string]interface{}
+		var store RequestParameter
 		switch p.Type {
 		case openapi.CookieParameter:
 			v, err = parseCookie(p, r)

@@ -59,12 +59,12 @@ export default {
   methods: {
     toggleDetails(row) {
       row.toggleDetails()
-      const index = this.detailsShown.indexOf(row.item.key);
+      const index = this.detailsShown.indexOf(row.item.key)
 
       if (row.item._showDetails) {
         this.detailsShown.push(row.item.key)
       } else {
-      	this.detailsShown.splice(index, 1)
+        this.detailsShown.splice(index, 1)
       }
     }
   }

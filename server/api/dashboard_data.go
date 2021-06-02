@@ -2,6 +2,7 @@ package api
 
 import (
 	"mokapi/models"
+	runtime2 "mokapi/providers/workflow/runtime"
 	"time"
 )
 
@@ -9,8 +10,8 @@ type dashboard struct {
 	ServerUptime      time.Time              `json:"serverUptime"`
 	TotalRequests     int64                  `json:"totalRequests"`
 	RequestsWithError int64                  `json:"requestsWithError"`
-	LastErrors        []request              `json:"lastErrors"`
-	LastRequests      []request              `json:"lastRequests"`
+	LastErrors        []requestSummary       `json:"lastErrors"`
+	LastRequests      []requestSummary       `json:"lastRequests"`
 	MemoeryUsage      int64                  `json:"memoryUsage"`
 	Services          []models.ServiceMetric `json:"services"`
 	KafkaTopics       []models.KafkaTopic    `json:"kafkaTopics"`
@@ -21,7 +22,8 @@ type serviceStatus struct {
 	Errors int `json:"errors"`
 }
 
-type request struct {
+type requestSummary struct {
+	Id           string        `json:"id"`
 	Method       string        `json:"method"`
 	Url          string        `json:"url"`
 	HttpStatus   int           `json:"httpStatus"`
@@ -30,12 +32,39 @@ type request struct {
 	ResponseTime time.Duration `json:"responseTime"`
 }
 
+type request struct {
+	requestSummary
+	Parameters   []requestParameter `json:"parameters"`
+	ContentType  string             `json:"contentType"`
+	ResponseBody string             `json:"responseBody"`
+	Actions      []workflowSummary  `json:"actions"`
+}
+
+type requestParameter struct {
+	Name  string `json:"name"`
+	Type  string `json:"type"`
+	Value string `json:"value"`
+	Raw   string `json:"raw"`
+}
+
+type workflowSummary struct {
+	Name     string        `json:"name"`
+	Steps    []stepSummary `json:"steps"`
+	Duration time.Duration `json:"duration"`
+}
+
+type stepSummary struct {
+	Name     string        `json:"name"`
+	Log      string        `json:"log"`
+	Duration time.Duration `json:"duration"`
+}
+
 func newDashboard(runtime *models.Runtime) dashboard {
-	dashboard := dashboard{LastErrors: make([]request, 0), Services: make([]models.ServiceMetric, 0)}
+	dashboard := dashboard{LastErrors: make([]requestSummary, 0), Services: make([]models.ServiceMetric, 0)}
 	dashboard.ServerUptime = runtime.Metrics.Start
 	dashboard.TotalRequests = runtime.Metrics.TotalRequests
 	dashboard.RequestsWithError = runtime.Metrics.RequestsWithError
-	dashboard.LastRequests = make([]request, 0)
+	dashboard.LastRequests = make([]requestSummary, 0)
 	dashboard.MemoeryUsage = runtime.Metrics.Memory
 
 	for _, s := range runtime.Metrics.OpenApi {
@@ -53,16 +82,72 @@ func newDashboard(runtime *models.Runtime) dashboard {
 	//}
 
 	for _, r := range runtime.Metrics.LastErrorRequests {
-		dashboard.LastErrors = append(dashboard.LastErrors, newRequest(r))
+		dashboard.LastErrors = append(dashboard.LastErrors, newRequestSummary(r))
 	}
 
 	for _, r := range runtime.Metrics.LastRequests {
-		dashboard.LastRequests = append(dashboard.LastRequests, newRequest(r))
+		dashboard.LastRequests = append(dashboard.LastRequests, newRequestSummary(r))
 	}
 
 	return dashboard
 }
 
+func newRequestSummary(r *models.RequestMetric) requestSummary {
+	return requestSummary{
+		Id:           r.Id,
+		Method:       r.Method,
+		Error:        r.Error,
+		Url:          r.Url,
+		HttpStatus:   r.HttpStatus,
+		Time:         r.Time,
+		ResponseTime: r.ResponseTime,
+	}
+}
+
 func newRequest(r *models.RequestMetric) request {
-	return request{Method: r.Method, Error: r.Error, Url: r.Url, HttpStatus: r.HttpStatus, Time: r.Time, ResponseTime: r.ResponseTime}
+	result := request{
+		requestSummary: requestSummary{
+			Id:           r.Id,
+			Method:       r.Method,
+			Error:        r.Error,
+			Url:          r.Url,
+			HttpStatus:   r.HttpStatus,
+			Time:         r.Time,
+			ResponseTime: r.ResponseTime,
+		},
+		ContentType:  r.ContentType,
+		ResponseBody: r.ResponseBody,
+	}
+	for _, p := range r.Parameters {
+		result.Parameters = append(result.Parameters, requestParameter{
+			Name:  p.Name,
+			Type:  p.Type,
+			Value: p.Value,
+			Raw:   p.Raw,
+		})
+	}
+	for _, a := range r.Actions {
+		result.Actions = append(result.Actions, newActionSummary(a))
+	}
+	return result
+}
+
+func newActionSummary(s *runtime2.WorkflowSummary) workflowSummary {
+	result := workflowSummary{
+		Name:     s.Name,
+		Duration: s.Duration,
+	}
+	for _, step := range s.Steps {
+		result.Steps = append(result.Steps, newStepSummary(step))
+	}
+
+	return result
+}
+
+func newStepSummary(s *runtime2.StepSummary) stepSummary {
+	return stepSummary{
+		Name:     s.Name,
+		Log:      s.Log,
+		Duration: s.Duration,
+	}
 }

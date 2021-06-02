@@ -11,9 +11,10 @@ type Action interface {
 type ActionContext struct {
 	ctx    *WorkflowContext
 	stepId string
+	log    []string
 }
 
-func NewActionContext(stepId string, ctx *WorkflowContext) *ActionContext {
+func newActionContext(stepId string, ctx *WorkflowContext) *ActionContext {
 	return &ActionContext{
 		ctx:    ctx,
 		stepId: stepId,

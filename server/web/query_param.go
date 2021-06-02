@@ -8,26 +8,36 @@ import (
 	"strings"
 )
 
-func parseQuery(p *openapi.Parameter, u *url.URL) (interface{}, error) {
+func parseQuery(p *openapi.Parameter, u *url.URL) (rp RequestParameterValue, err error) {
+	var v interface{}
 	if p.Schema != nil {
 		switch p.Schema.Value.Type {
 		case "array":
-			return parseQueryArray(p, u)
+			v, err = parseQueryArray(p, u)
 		case "object":
-			return parseQueryObject(p, u)
+			v, err = parseQueryObject(p, u)
+		}
+
+		if err != nil {
+			return
+		} else {
+			rp.Value = v
+			return
 		}
 	}
 
 	s := u.Query().Get(p.Name)
 	if len(s) == 0 {
 		if p.Required {
-			return nil, errors.Errorf("required parameter not found")
+			return rp, errors.Errorf("required parameter not found")
 		} else {
-			return nil, nil
+			return rp, nil
 		}
 	}
 
-	return parse(s, p.Schema)
+	rp.Value, err = parse(s, p.Schema)
+
+	return
 }
 
 func parseQueryObject(p *openapi.Parameter, u *url.URL) (obj map[string]interface{}, err error) {

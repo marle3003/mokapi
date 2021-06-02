@@ -21,6 +21,10 @@ export default {
     async getAsyncApiService (serviceName) {
       let response = await this.$http.get(this.baseUrl + '/api/services/asyncapi/' + serviceName)
       return response.data
+    },
+    async getHttpRequest (id) {
+      let response = await this.$http.get(this.baseUrl + '/api/dashboard/http/requests/' + id)
+      return response.data
     }
   }
 }

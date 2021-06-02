@@ -121,7 +121,7 @@
         <b-card-group deck>
           <b-card class="w-100">
             <b-card-title class="info text-center">Recent Request</b-card-title>
-            <b-table :items="lastRequests" :fields="lastRequestField" table-class="dataTable">
+            <b-table :items="lastRequests" :fields="lastRequestField" table-class="dataTable" @row-clicked="requestClickHandler">
               <template v-slot:cell(method)="data">
                 <b-badge pill class="operation" :class="data.item.method.toLowerCase()" >{{ data.item.method }}</b-badge>
               </template>
@@ -321,8 +321,11 @@ export default {
       // }
       this.loaded = true
     },
-  getRandomInt () {
+    getRandomInt () {
       return Math.floor(Math.random() * (50 - 5 + 1)) + 5
+    },
+    requestClickHandler (record, index) {
+      this.$router.push({name: 'httpRequest', params: {id: record.id}})
     }
   },
   beforeDestroy () {

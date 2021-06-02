@@ -8,6 +8,7 @@ import Models from '@/components/Models'
 import ServiceOverview from '@/components/ServiceOverview'
 import Dashboard from '@/views/Dashboard'
 import Docs from '@/views/Docs'
+import HttpRequest from '@/views/dashboard/HttpRequest'
 
 import AsyncApiService from '@/views/asyncapi/Service'
 
@@ -30,12 +31,17 @@ export default new Router({
     {
       path: '/docs/:topic/:subject?',
       name: 'docs',
-      component: Docs,
+      component: Docs
     },
     {
       path: '/dashboard',
       name: 'dashboard',
       component: Dashboard
+    },
+    {
+      path: '/dashboard/http/request/:id',
+      name: 'httpRequest',
+      component: HttpRequest
     },
     {
       path: '/services',

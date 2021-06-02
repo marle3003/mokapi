@@ -4,7 +4,7 @@ import "fmt"
 
 type Env struct {
 	parent *Env
-	env    map[string]interface{}
+	env    map[string]string
 }
 
 func (e *Env) Resolve(name string) (interface{}, error) {
@@ -17,24 +17,24 @@ func (e *Env) Resolve(name string) (interface{}, error) {
 	return nil, fmt.Errorf("unknown env variable '%q'", name)
 }
 
-func (e *Env) Get(name string) interface{} {
+func (e *Env) get(name string) string {
 	if val, ok := e.env[name]; ok {
 		return val
 	}
 	if e.parent != nil {
-		return e.parent.Get(name)
+		return e.parent.get(name)
 	}
-	return nil
+	return ""
 }
 
-func (e *Env) Set(name string, value interface{}) {
+func (e *Env) set(name, value string) {
 	e.env[name] = value
 }
 
-func (e *Env) envStrings() []string {
+func (e *Env) environ() []string {
 	r := make([]string, 0)
 	if e.parent != nil {
-		r = append(r, e.parent.envStrings()...)
+		r = append(r, e.parent.environ()...)
 	}
 
 	for k, v := range e.env {

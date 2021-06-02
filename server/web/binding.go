@@ -6,7 +6,8 @@ import (
 	"github.com/pkg/errors"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/models"
-	"mokapi/providers/workflow"
+	"mokapi/providers/workflow/event"
+	"mokapi/providers/workflow/runtime"
 	"strings"
 	"time"
 
@@ -16,15 +17,17 @@ import (
 
 type AddRequestMetric func(metric *models.RequestMetric)
 
+type EventHandler func(events event.Handler, options ...runtime.WorkflowOptions) *runtime.Summary
+
 type Binding struct {
 	Addr             string
 	server           *http.Server
 	handlers         map[string]map[string]*ServiceHandler
 	addRequestMetric AddRequestMetric
-	workflowHandler  workflow.Handler
+	workflowHandler  EventHandler
 }
 
-func NewBinding(addr string, mh AddRequestMetric, wh workflow.Handler) *Binding {
+func NewBinding(addr string, mh AddRequestMetric, wh EventHandler) *Binding {
 	b := &Binding{
 		Addr:             addr,
 		handlers:         make(map[string]map[string]*ServiceHandler),
@@ -102,7 +105,7 @@ func (binding *Binding) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := NewHttpContext(r, w, servicePath, binding.workflowHandler)
-	ctx.metric = models.NewRequestMetric(r.Method, r.URL.String(), service.config)
+	ctx.metric = models.NewRequestMetric(r.Method, fmt.Sprintf("%s%s", r.Host, r.URL.String()), service.config)
 
 	service.ServeHTTP(ctx)
 

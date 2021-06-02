@@ -151,15 +151,11 @@ func (s *Server) updateConfigs(config dynamic.Config) {
 	}
 }
 
-func (s *Server) triggerHandler(event event.Handler, options ...runtime.WorkflowOptions) {
+func (s *Server) triggerHandler(event event.Handler, options ...runtime.WorkflowOptions) *runtime.Summary {
 	for _, c := range s.config {
 		o := append(options, runtime.WithWorkingDirectory(filepath.Dir(c.ConfigPath)))
-		for _, w := range c.Workflows {
-			for _, trigger := range w.On {
-				if event(trigger) {
-					workflow.Run(w, o...)
-				}
-			}
-		}
+		return workflow.Run(c.Workflows, event, o...)
 	}
+
+	return nil
 }

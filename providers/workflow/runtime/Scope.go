@@ -22,21 +22,17 @@ type WorkflowContext struct {
 }
 
 func NewWorkflowContext(actions map[string]Action, functions map[string]functions.Function) *WorkflowContext {
-	env := &Env{
-		env: make(map[string]interface{}),
-	}
-	ctx := newContext()
-	ctx.data["env"] = env
-	return &WorkflowContext{
-		Env:       env,
+	ctx := &WorkflowContext{
 		GOOS:      runtime.GOOS,
-		Context:   ctx,
+		Context:   newContext(),
 		Actions:   actions,
 		Functions: functions,
 	}
+	ctx.OpenScope()
+	return ctx
 }
 
-func (ctx *WorkflowContext) ParseOutput(s string, stepId string) {
+func (ctx *WorkflowContext) parseOutput(s string, stepId string) {
 	matches := outputPattern.FindAllStringSubmatch(s, -1)
 	for _, m := range matches {
 		name := m[1]
@@ -48,7 +44,7 @@ func (ctx *WorkflowContext) ParseOutput(s string, stepId string) {
 func (ctx *WorkflowContext) OpenScope() {
 	env := &Env{
 		parent: ctx.Env,
-		env:    make(map[string]interface{}),
+		env:    make(map[string]string),
 	}
 	ctx.Env = env
 	ctx.Context.data["env"] = env
@@ -59,8 +55,8 @@ func (ctx *WorkflowContext) CloseScope() {
 	ctx.Context.data["env"] = ctx.Env
 }
 
-func (ctx *WorkflowContext) EnvStrings() []string {
-	return ctx.Env.envStrings()
+func (ctx *WorkflowContext) Environ() []string {
+	return ctx.Env.environ()
 }
 
 func (ctx *WorkflowContext) ResolvePath(path string) string {
@@ -69,4 +65,18 @@ func (ctx *WorkflowContext) ResolvePath(path string) string {
 	}
 
 	return path
+}
+
+func (ctx *WorkflowContext) GetEnv(name string) string {
+	return ctx.Env.get(name)
+}
+
+func (ctx *WorkflowContext) SetEnv(name, value string) error {
+	s, err := sPrint(value, ctx)
+	if err != nil {
+		return err
+	}
+	ctx.Env.set(name, s)
+
+	return nil
 }

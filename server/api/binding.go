@@ -81,6 +81,8 @@ func (b *Binding) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		b.getAsyncService(w, r)
 	case p == "/api/dashboard":
 		b.getDashboard(w, r)
+	case strings.HasPrefix(p, "/api/dashboard/http/requests/"):
+		b.getHttpRequest(w, r)
 	default:
 		b.fileServer.ServeHTTP(w, r)
 	}
@@ -161,4 +163,22 @@ func (b *Binding) getAsyncService(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.WriteHeader(404)
 	}
+}
+
+func (b *Binding) getHttpRequest(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	segments := strings.Split(r.URL.Path, "/")
+	id := segments[len(segments)-1]
+	for _, o := range b.runtime.Metrics.LastRequests {
+		if o.Id == id {
+			err := json.NewEncoder(w).Encode(newRequest(o))
+			if err != nil {
+				log.Errorf("Error in writing service response: %v", err.Error())
+			}
+			return
+		}
+	}
+
+	w.WriteHeader(404)
 }

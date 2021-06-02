@@ -1,6 +1,7 @@
 package web
 
 import (
+	"fmt"
 	"mokapi/providers/workflow/runtime"
 	"strconv"
 )
@@ -15,9 +16,9 @@ type Response struct {
 type Request struct {
 	Method  string
 	Body    interface{}
-	Path    map[string]interface{}
-	Query   map[string]interface{}
-	Headers map[string]interface{}
+	Path    RequestParameter
+	Query   RequestParameter
+	Headers RequestParameter
 }
 
 func (r *Response) Run(ctx *runtime.ActionContext) error {
@@ -41,4 +42,12 @@ func (r *Response) Run(ctx *runtime.ActionContext) error {
 	}
 
 	return nil
+}
+
+func (r RequestParameter) Resolve(name string) (interface{}, error) {
+	if v, ok := r[name]; ok {
+		return v.Value, nil
+	}
+
+	return nil, fmt.Errorf("undefined field %q", name)
 }

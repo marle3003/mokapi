@@ -2,10 +2,6 @@ package runtime
 
 import "fmt"
 
-type ContextResolver interface {
-	Resolve(name string) (interface{}, error)
-}
-
 type Context struct {
 	Steps map[string]*StepContext
 	data  map[string]interface{}

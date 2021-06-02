@@ -1,10 +1,12 @@
 package web
 
 import (
+	"encoding/json"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"mokapi/config/dynamic/openapi"
+	"mokapi/models"
 	"mokapi/models/media"
 	"mokapi/providers/encoding"
 	"mokapi/providers/workflow/event"
@@ -69,12 +71,15 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 				context)
 			return
 		}
-	}
 
-	//pipelineName := operation.Endpoint.Pipeline
-	//if len(operation.Pipeline) > 0 {
-	//	pipelineName = operation.Pipeline
-	//}
+		data, _ := json.Marshal(bodyParam)
+		context.metric.Parameters = append(context.metric.Parameters, models.RequestParamter{
+			Name:  "",
+			Type:  "Body",
+			Value: string(data),
+			Raw:   body,
+		})
+	}
 
 	gen := openapi.NewGenerator()
 
@@ -93,7 +98,7 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 		Data:       gen.New(context.Schema),
 	}
 
-	context.workflowHandler(event.WithHttpEvent(event.HttpEvent{
+	summary := context.workflowHandler(event.WithHttpEvent(event.HttpEvent{
 		Service: context.ServiceName,
 		Method:  context.Request.Method,
 		Path:    context.Request.URL.Path,
@@ -102,7 +107,11 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 		runtime.WithContext("response", res),
 		runtime.WithAction("set-response", res))
 
+	context.metric.Actions = summary.Workflows
+
 	write(res, context)
+
+	updateMetric(context)
 
 	//if context.Mokapi != nil && len(pipelineName) > 0 {
 	//	err := pipeline.RunConfig(
@@ -190,6 +199,11 @@ func write(r *Response, ctx *HttpContext) error {
 	}
 
 	_, err := ctx.Response.Write(body)
+
+	ctx.metric.HttpStatus = r.StatusCode
+	ctx.metric.ContentType = contentType.String()
+	ctx.metric.ResponseBody = string(body)
+
 	return err
 }
 
@@ -204,5 +218,59 @@ func encodeData(data interface{}, contentType *media.ContentType, schema *openap
 			return []byte(s), nil
 		}
 		return nil, fmt.Errorf("unspupported encoding for content type %v", contentType)
+	}
+}
+
+func updateMetric(context *HttpContext) {
+	// headers
+	for k, v := range context.Request.Header {
+		p := models.RequestParamter{
+			Name: k,
+			Raw:  fmt.Sprintf("%v", v),
+			Type: "header",
+		}
+		if v, ok := context.Parameters[openapi.HeaderParameter][k]; ok {
+			data, _ := json.Marshal(v.Value)
+			p.Value = string(data)
+		}
+		context.metric.Parameters = append(context.metric.Parameters, p)
+	}
+
+	// path
+	for k, v := range context.Parameters[openapi.PathParameter] {
+		data, _ := json.Marshal(v.Value)
+		p := models.RequestParamter{
+			Name:  k,
+			Value: string(data),
+			Raw:   v.Raw,
+			Type:  "path",
+		}
+		context.metric.Parameters = append(context.metric.Parameters, p)
+	}
+
+	// cookies
+	for _, cookie := range context.Request.Cookies() {
+		p := models.RequestParamter{
+			Name: cookie.Name,
+			Raw:  cookie.Raw,
+			Type: "cookie",
+		}
+		if v, ok := context.Parameters[openapi.CookieParameter][cookie.Name]; ok {
+			data, _ := json.Marshal(v.Value)
+			p.Value = string(data)
+		}
+		context.metric.Parameters = append(context.metric.Parameters, p)
+	}
+
+	// query
+	for k, v := range context.Parameters[openapi.QueryParameter] {
+		data, _ := json.Marshal(v.Value)
+		p := models.RequestParamter{
+			Name:  k,
+			Value: string(data),
+			Raw:   v.Raw,
+			Type:  "query",
+		}
+		context.metric.Parameters = append(context.metric.Parameters, p)
 	}
 }

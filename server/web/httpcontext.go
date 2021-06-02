@@ -6,7 +6,6 @@ import (
 	"mokapi/config/dynamic/openapi"
 	"mokapi/models"
 	"mokapi/models/media"
-	"mokapi/providers/workflow"
 	"net/http"
 	"sort"
 	"strings"
@@ -31,10 +30,10 @@ type HttpContext struct {
 	body            string
 	metric          *models.RequestMetric
 	statusCode      openapi.HttpStatus
-	workflowHandler workflow.Handler
+	workflowHandler EventHandler
 }
 
-func NewHttpContext(request *http.Request, response http.ResponseWriter, servicePath string, wh workflow.Handler) *HttpContext {
+func NewHttpContext(request *http.Request, response http.ResponseWriter, servicePath string, wh EventHandler) *HttpContext {
 	return &HttpContext{Response: response,
 		Request:         request,
 		ServicPath:      servicePath,

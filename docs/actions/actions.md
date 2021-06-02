@@ -13,3 +13,17 @@ steps:
       path: ./data.yml
   - run: echo "${{ steps.data.outputs.content }}"
 ```
+
+## mustache action
+Replace tags in a template. See the [manpage](http://mustache.github.io/mustache.5.html)
+
+### Usage
+```yaml
+steps:
+  - uses: mustache
+    id: demo
+    with:
+      template: 'Say: {{ Label }}'
+      data: "${{ [Label: 'Hello World'] }}"
+  - run: echo "${{ steps.demo.outputs.result }}"
+```
