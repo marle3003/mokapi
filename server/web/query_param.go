@@ -9,19 +9,13 @@ import (
 )
 
 func parseQuery(p *openapi.Parameter, u *url.URL) (rp RequestParameterValue, err error) {
-	var v interface{}
 	if p.Schema != nil {
 		switch p.Schema.Value.Type {
 		case "array":
-			v, err = parseQueryArray(p, u)
-		case "object":
-			v, err = parseQueryObject(p, u)
-		}
-
-		if err != nil {
+			rp.Value, err = parseQueryArray(p, u)
 			return
-		} else {
-			rp.Value = v
+		case "object":
+			rp.Value, err = parseQueryObject(p, u)
 			return
 		}
 	}
