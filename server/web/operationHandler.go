@@ -9,8 +9,8 @@ import (
 	"mokapi/models"
 	"mokapi/models/media"
 	"mokapi/providers/encoding"
+	"mokapi/providers/workflow"
 	"mokapi/providers/workflow/event"
-	"mokapi/providers/workflow/runtime"
 	"net/http"
 )
 
@@ -103,13 +103,21 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 		Method:  context.Request.Method,
 		Path:    context.Request.URL.Path,
 	}),
-		runtime.WithContext("request", req),
-		runtime.WithContext("response", res),
-		runtime.WithAction("set-response", res))
+		workflow.WithContext("request", req),
+		workflow.WithContext("response", res),
+		workflow.WithAction("set-response", res))
 
-	context.metric.Actions = summary.Workflows
+	if summary == nil {
+		log.Debugf("no actions found")
+	} else {
+		context.metric.Actions = summary.Workflows
+		log.WithField("action summary", summary).Debugf("executed actions")
+	}
 
-	write(res, context)
+	if err := write(res, context); err != nil {
+		respond(err.Error(), http.StatusBadRequest, context)
+		return
+	}
 
 	updateMetric(context)
 

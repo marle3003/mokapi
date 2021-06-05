@@ -2,7 +2,9 @@ package mokapi
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
+	"strconv"
 	"strings"
 )
 
@@ -72,6 +74,8 @@ func (triggers *Triggers) UnmarshalYAML(n *yaml.Node) error {
 			for _, h := range parseHttpTriggers(v) {
 				*triggers = append(*triggers, Trigger{Http: h})
 			}
+		case key == "schedule":
+			*triggers = append(*triggers, Trigger{Schedule: parseSchedule(v)})
 		}
 	}
 
@@ -103,6 +107,26 @@ func parseHttpTriggers(i interface{}) (t []HttpTrigger) {
 		}
 	}
 
+	return
+}
+
+func parseSchedule(i interface{}) (t ScheduleTrigger) {
+	switch i := i.(type) {
+	case map[string]interface{}:
+		for k, v := range i {
+			s := fmt.Sprintf("%v", v)
+			switch key := strings.ToLower(k); {
+			case key == "every":
+				t.Every = s
+			case key == "iterations":
+				if i, err := strconv.Atoi(s); err != nil {
+					log.Errorf("error parsing int %q", v)
+				} else {
+					t.Iterations = i
+				}
+			}
+		}
+	}
 	return
 }
 

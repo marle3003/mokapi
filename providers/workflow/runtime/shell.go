@@ -43,3 +43,23 @@ func runCmd(s string, ctx *WorkflowContext) ([]byte, error) {
 
 	return cmd.Output()
 }
+
+func runPowershell(s string, ctx *WorkflowContext) ([]byte, error) {
+	path, err := exec.LookPath("powershell.exe")
+
+	if err != nil {
+		return nil, fmt.Errorf("powershell not found")
+	}
+
+	//code := strings.ReplaceAll(s, "\"", "\\\"")
+	code := fmt.Sprintf("& {%v}", s)
+	args := []string{"-NoProfile", "-NonInteractive", "-Command", code}
+
+	cmd := &exec.Cmd{
+		Path: path,
+		Args: args,
+		Env:  ctx.Environ(),
+	}
+
+	return cmd.Output()
+}

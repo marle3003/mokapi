@@ -23,6 +23,9 @@ func newPredicate(f Function) Predicate {
 
 func Find(args ...interface{}) (interface{}, error) {
 	source := args[0]
+	if source == nil {
+		return nil, fmt.Errorf("find: source parameter is null")
+	}
 	p := newPredicate(args[1].(Function))
 	switch reflect.TypeOf(source).Kind() {
 	case reflect.Slice:

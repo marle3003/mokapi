@@ -14,19 +14,19 @@ func TestAddInt(t *testing.T) {
 func TestAddFloat(t *testing.T) {
 	out, err := Add(1.1, 2.2)
 	assert.NoError(t, err)
-	assert.Equal(t, 3.3, out)
+	assert.InDelta(t, 3.3, out, 0.0000001)
 }
 
 func TestAddFloatConvert(t *testing.T) {
 	out, err := Add(1, 2.2)
 	assert.NoError(t, err)
-	assert.Equal(t, 3.2, out)
+	assert.InDelta(t, 3.2, out, 0.0000001)
 }
 
 func TestAddFloatConvert2(t *testing.T) {
 	out, err := Add(1.1, 2)
 	assert.NoError(t, err)
-	assert.Equal(t, 3, out)
+	assert.Equal(t, 3.1, out)
 }
 
 func TestAddString(t *testing.T) {

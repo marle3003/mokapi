@@ -14,6 +14,7 @@ func init() {
 		eh := dynamic.NewEmptyEventHandler(o)
 		switch c := o.(type) {
 		case *Config:
+			c.ConfigPath = path
 			r := refResolver{reader: r, path: path, config: c, eh: eh}
 
 			if err := r.resolveConfig(); err != nil {
@@ -27,6 +28,7 @@ func init() {
 }
 
 type Config struct {
+	ConfigPath string `yaml:"-" json:"-"`
 	Info       Info
 	Servers    map[string]Server
 	Channels   map[string]*ChannelRef

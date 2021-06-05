@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/models"
+	"mokapi/providers/workflow"
 	"mokapi/providers/workflow/event"
 	"mokapi/providers/workflow/runtime"
 	"strings"
@@ -17,7 +18,7 @@ import (
 
 type AddRequestMetric func(metric *models.RequestMetric)
 
-type EventHandler func(events event.Handler, options ...runtime.WorkflowOptions) *runtime.Summary
+type EventHandler func(events event.Handler, options ...workflow.WorkflowOptions) *runtime.Summary
 
 type Binding struct {
 	Addr             string

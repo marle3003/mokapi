@@ -6,8 +6,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/models"
-	"mokapi/providers/pipeline"
-	"mokapi/providers/pipeline/lang/types"
 	"mokapi/server/kafka/protocol"
 	"time"
 )
@@ -23,7 +21,6 @@ type Binding struct {
 	groups       map[string]*group
 	topics       map[string]*topic
 	config       *asyncApi.Config
-	scheduler    *pipeline.Scheduler
 	kafka        asyncApi.Kafka
 	addedMessage AddedMessage
 	clients      map[string]*client
@@ -36,7 +33,6 @@ func NewBinding(c *asyncApi.Config, addedMessage AddedMessage) *Binding {
 		groups:       make(map[string]*group),
 		topics:       make(map[string]*topic),
 		config:       c,
-		scheduler:    pipeline.NewScheduler(),
 		addedMessage: addedMessage,
 		clients:      make(map[string]*client),
 	}
@@ -59,28 +55,28 @@ func (s *Binding) Apply(data interface{}) error {
 	}
 	s.config = config
 
-	s.scheduler.Stop()
-	if config.Info.Mokapi != nil {
-		err := s.scheduler.Start(config.Info.Mokapi.Value, pipeline.WithSteps(map[string]types.Step{
-			"producer": newProducerStep(s.topics, func(t *topic, k []byte, v []byte) error {
-				record := protocol.RecordBatch{
-					Records: []protocol.Record{
-						{
-							Offset:  0,
-							Time:    time.Now(),
-							Key:     k,
-							Value:   v,
-							Headers: nil,
-						},
-					},
-				}
-				return s.addRecord(t, 0, record)
-			}),
-		}))
-		if err != nil {
-			return err
-		}
-	}
+	//s.scheduler.Stop()
+	//if config.Info.Mokapi != nil {
+	//	err := s.scheduler.Start(config.Info.Mokapi.Value, pipeline.WithSteps(map[string]types.Step{
+	//		"producer": newProducerStep(s.topics, func(t *topic, k []byte, v []byte) error {
+	//			record := protocol.RecordBatch{
+	//				Records: []protocol.Record{
+	//					{
+	//						Offset:  0,
+	//						Time:    time.Now(),
+	//						Key:     k,
+	//						Value:   v,
+	//						Headers: nil,
+	//					},
+	//				},
+	//			}
+	//			return s.addRecord(t, 0, record)
+	//		}),
+	//	}))
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
 
 	for n, c := range config.Channels {
 		name := n[1:] // remove leading slash from name

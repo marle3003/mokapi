@@ -12,6 +12,7 @@ func init() {
 	dynamic.Register("ldap", &Config{}, func(path string, c dynamic.Config, r dynamic.ConfigReader) (bool, dynamic.Config) {
 		switch config := c.(type) {
 		case *Config:
+			config.ConfigPath = path
 			dir := filepath.Dir(path)
 			for _, e := range config.Entries {
 				resolveThumbnail(e, dir)
@@ -23,10 +24,11 @@ func init() {
 }
 
 type Config struct {
-	Info    Info
-	Address string
-	Root    Entry
-	Entries map[string]Entry
+	ConfigPath string `yaml:"-" json:"-"`
+	Info       Info
+	Address    string
+	Root       Entry
+	Entries    map[string]Entry
 }
 
 type Info struct {

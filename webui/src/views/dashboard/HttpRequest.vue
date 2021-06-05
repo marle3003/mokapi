@@ -61,10 +61,10 @@
                 {{ data.item.duration | duration }}
               </template>
               <template v-slot:row-details="row">
-                <div v-for="step in row.item.steps" :key="step" class="p-1" v-b-toggle="step.name">
+                <div v-for="step in row.item.steps" :key="step.id" class="p-1" v-b-toggle="step.id">
                   Run {{step.name}}
-                  <b-collapse :id="step.name">
-                    {{ step.log }}
+                  <b-collapse :id="step.id">
+                    <vue-simple-markdown :source="step.log" class="pl-4 mt-1" style="font-size: 0.6rem" />
                   </b-collapse>
                 </div>
               </template>
@@ -90,7 +90,7 @@ export default {
     return {
       request: null,
       parameters: [{key: 'show_details', label: '', thStyle: 'width: 1%'}, 'name', 'value', 'type', {key: 'openapi', label: 'OpenApi'}],
-      actions: [{key: 'show_details', label: '', thStyle: 'width: 1%'}, 'name', 'duration']
+      actions: [{key: 'show_details', label: '', thStyle: 'width: 1%'}, 'name', 'duration', 'status']
     }
   },
   created () {

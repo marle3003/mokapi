@@ -129,7 +129,7 @@ func TestParsePath(t *testing.T) {
 		i, err := parsePath(d.s, d.p)
 		if err != nil {
 			t.Errorf("parsePath(%v): %v", d.s, err)
-		} else if !reflect.DeepEqual(d.e, i) {
+		} else if !reflect.DeepEqual(d.e, i.Value) {
 			t.Errorf("parsePath(%v): got %v; expected %v", d.s, i, d.e)
 		}
 	}

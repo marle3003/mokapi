@@ -14,6 +14,7 @@ func init() {
 		eh := dynamic.NewEmptyEventHandler(o)
 		switch c := o.(type) {
 		case *Config:
+			c.ConfigPath = path
 			r := refResolver{reader: r, path: path, config: c, eh: eh}
 
 			if err := r.resolveConfig(); err != nil {
@@ -27,8 +28,9 @@ func init() {
 }
 
 type Config struct {
-	Info    Info
-	Servers []*Server
+	ConfigPath string `yaml:"-" json:"-"`
+	Info       Info
+	Servers    []*Server
 
 	// A relative path to an individual endpoint. The path MUST begin
 	// with a forward slash ('/'). The path is appended to the url from

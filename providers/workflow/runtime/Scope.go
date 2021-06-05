@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"mokapi/providers/workflow/functions"
+	"os"
 	"regexp"
 	"runtime"
 	"strings"
@@ -29,6 +30,10 @@ func NewWorkflowContext(actions map[string]Action, functions map[string]function
 		Functions: functions,
 	}
 	ctx.OpenScope()
+	for _, v := range os.Environ() {
+		kv := strings.SplitN(v, "=", 2)
+		ctx.Env.set(kv[0], kv[1])
+	}
 	return ctx
 }
 

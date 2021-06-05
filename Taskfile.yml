@@ -4,8 +4,9 @@ version: '3'
 
 tasks:
   default:
-    deps: [clean,bindata-vueapp]
+    deps: [clean]
     cmds:
+      - task: bindata-vueapp
       - task: build-windows
   build-windows:
     cmds:

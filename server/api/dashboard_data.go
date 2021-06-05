@@ -51,12 +51,15 @@ type workflowSummary struct {
 	Name     string        `json:"name"`
 	Steps    []stepSummary `json:"steps"`
 	Duration time.Duration `json:"duration"`
+	Status   string        `json:"status"`
 }
 
 type stepSummary struct {
 	Name     string        `json:"name"`
+	Id       string        `json:"id"`
 	Log      string        `json:"log"`
 	Duration time.Duration `json:"duration"`
+	Status   string        `json:"status"`
 }
 
 func newDashboard(runtime *models.Runtime) dashboard {
@@ -137,6 +140,14 @@ func newActionSummary(s *runtime2.WorkflowSummary) workflowSummary {
 		Name:     s.Name,
 		Duration: s.Duration,
 	}
+
+	switch s.Status {
+	case runtime2.Error:
+		result.Status = "error"
+	case runtime2.Successful:
+		result.Status = "successful"
+	}
+
 	for _, step := range s.Steps {
 		result.Steps = append(result.Steps, newStepSummary(step))
 	}
@@ -145,9 +156,19 @@ func newActionSummary(s *runtime2.WorkflowSummary) workflowSummary {
 }
 
 func newStepSummary(s *runtime2.StepSummary) stepSummary {
-	return stepSummary{
+	r := stepSummary{
+		Id:       s.Id,
 		Name:     s.Name,
 		Log:      s.Log,
 		Duration: s.Duration,
 	}
+
+	switch s.Status {
+	case runtime2.Error:
+		r.Status = "error"
+	case runtime2.Successful:
+		r.Status = "successful"
+	}
+
+	return r
 }

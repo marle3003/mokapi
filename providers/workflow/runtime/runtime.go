@@ -31,10 +31,13 @@ func Run(workflow mokapi.Workflow, ctx *WorkflowContext) (*WorkflowSummary, erro
 	}
 
 	for _, step := range workflow.Steps {
-		if stepSum, err := runStep(step, ctx); err != nil {
+		stepSum, err := runStep(step, ctx)
+		summary.Steps = append(summary.Steps, stepSum)
+		if err != nil {
+			stepSum.Status = Error
+			summary.Status = Error
 			log.Error(err)
-		} else {
-			summary.Steps = append(summary.Steps, stepSum)
+			return summary, err
 		}
 	}
 
@@ -53,17 +56,40 @@ func runStep(step mokapi.Step, ctx *WorkflowContext) (*StepSummary, error) {
 		ctx.CloseScope()
 	}()
 
+	if len(step.If) > 0 {
+		expr := step.If
+		// ${{ }} is optionally
+		if strings.HasPrefix(expr, "${{") && strings.HasSuffix(expr, "}}") {
+			expr = expr[3 : len(expr)-2]
+		}
+		i, err := RunExpression(expr, ctx)
+		if err != nil {
+			return summary, err
+		}
+		if b, ok := i.(bool); !ok {
+			return summary, fmt.Errorf("action id %q, if condition; expected bool value, got %t", summary.Id, i)
+		} else if !b {
+			return summary, nil
+		}
+	}
+
 	for k, v := range step.Env {
 		if err := ctx.SetEnv(k, v); err != nil {
 			return summary, err
 		}
 	}
 
+	ctx.Context.NewStep(summary.Id)
+
 	var err error
 	if len(step.Run) > 0 {
-		summary.Log, err = runScript(step, ctx)
+		summary.Log, err = runScript(step, summary.Id, ctx)
 	} else {
-		summary.Log, err = runAction(step, ctx)
+		summary.Log, err = runAction(step, summary.Id, ctx)
+	}
+
+	if len(summary.Log) == 0 && err != nil {
+		summary.Log = err.Error()
 	}
 
 	return summary, err
@@ -78,7 +104,7 @@ func RunExpression(s string, ctx *WorkflowContext) (interface{}, error) {
 	return v.stack.Pop(), nil
 }
 
-func runScript(step mokapi.Step, ctx *WorkflowContext) (log string, err error) {
+func runScript(step mokapi.Step, stepId string, ctx *WorkflowContext) (s string, err error) {
 	script := step.Run
 	script, err = sPrint(script, ctx)
 	if err != nil {
@@ -86,26 +112,32 @@ func runScript(step mokapi.Step, ctx *WorkflowContext) (log string, err error) {
 	}
 
 	var output []byte
-	switch shell := step.Shell; {
-	case len(shell) == 0:
-		if ctx.GOOS == "windows" {
-			output, err = runCmd(script, ctx)
-		}
+	switch step.Shell {
+	case "bash":
 		output, err = runBash(script, ctx)
+	case "ps":
+		output, err = runPowershell(script, ctx)
+	case "sh":
+		output, err = runShell(script, ctx)
+	case "cmd":
+		output, err = runCmd(script, ctx)
+	default:
+		if strings.Contains(ctx.GOOS, "windows") {
+			output, err = runCmd(script, ctx)
+		} else {
+			output, err = runBash(script, ctx)
+		}
 	}
 	if err != nil {
 		return
 	}
-	log = fmt.Sprintf("%s", output)
-	ctx.parseOutput(log, step.Id)
+	s = fmt.Sprintf("%s", output)
+	ctx.parseOutput(s, stepId)
 
 	return
 }
 
-func runAction(step mokapi.Step, ctx *WorkflowContext) (log string, err error) {
-	stepId := getStepId(step)
-	ctx.Context.NewStep(stepId)
-
+func runAction(step mokapi.Step, stepId string, ctx *WorkflowContext) (log string, err error) {
 	for k, v := range step.With {
 		var val interface{}
 		val, err = parse(v, ctx)

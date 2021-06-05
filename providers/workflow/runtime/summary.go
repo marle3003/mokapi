@@ -9,16 +9,26 @@ type Summary struct {
 	Workflows []*WorkflowSummary
 }
 
+type WorkflowStatus int
+
+const (
+	Successful WorkflowStatus = iota
+	Error
+)
+
 type WorkflowSummary struct {
 	Name     string
 	Steps    []*StepSummary
 	Duration time.Duration
+	Status   WorkflowStatus
 }
 
 type StepSummary struct {
+	Id       string
 	Name     string
 	Log      string
 	Duration time.Duration
+	Status   WorkflowStatus
 }
 
 func NewStepSummary(step mokapi.Step) *StepSummary {
@@ -31,5 +41,5 @@ func NewStepSummary(step mokapi.Step) *StepSummary {
 		}
 	}
 
-	return &StepSummary{Name: name}
+	return &StepSummary{Name: name, Id: getStepId(step)}
 }

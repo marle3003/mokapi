@@ -14,13 +14,14 @@ var (
 		"read-file": &actions.ReadFile{},
 		"parse-yml": &actions.YmlParser{},
 		"mustache":  &actions.Mustache{},
+		"split":     &actions.Split{},
 	}
 	fCollection = map[string]functions.Function{
 		"find": functions.Find,
 	}
 )
 
-func Run(workflows []mokapi.Workflow, event event.Handler, options ...runtime.WorkflowOptions) *runtime.Summary {
+func Run(workflows []mokapi.Workflow, event event.Handler, options ...WorkflowOptions) *runtime.Summary {
 	summary := &runtime.Summary{}
 
 	for _, w := range workflows {

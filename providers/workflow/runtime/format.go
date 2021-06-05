@@ -18,7 +18,8 @@ func parse(s string, ctx *WorkflowContext) (interface{}, error) {
 		if err != nil {
 			return s, err
 		}
-		s = strings.Replace(s, m[0], fmt.Sprintf("%v", i), 1)
+		v := fmt.Sprintf("%v", i)
+		s = strings.Replace(s, m[0], v, 1)
 	}
 
 	return s, nil

@@ -15,7 +15,6 @@ func init() {
 }
 
 type Config struct {
-	Name       string
 	Pipelines  []Pipeline
 	ConfigPath string `yaml:"-" json:"-"`
 	Schedules  []Schedule
@@ -32,13 +31,20 @@ type Workflow struct {
 type Triggers []Trigger
 
 type Trigger struct {
-	Service string
-	Http    HttpTrigger
+	Service  string
+	Http     HttpTrigger
+	Schedule ScheduleTrigger
 }
 
 type HttpTrigger struct {
 	Method string
 	Path   string
+}
+
+type ScheduleTrigger struct {
+	Every string
+	// Number of iterations, or less than 1 for unlimited
+	Iterations int
 }
 
 type Step struct {
@@ -49,6 +55,7 @@ type Step struct {
 	Run   string
 	Shell string
 	Env   map[string]string
+	If    string
 }
 
 type ConfigRef struct {

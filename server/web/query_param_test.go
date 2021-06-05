@@ -115,7 +115,7 @@ func TestParseQuery(t *testing.T) {
 		i, err := parseQuery(d.p, d.u)
 		if err != nil {
 			t.Errorf("parseQuery(%v): %v", d.u, err)
-		} else if !reflect.DeepEqual(d.e, i) {
+		} else if !reflect.DeepEqual(d.e, i.Value) {
 			t.Errorf("parsePath(%v): got %v; expected %v", d.u, i, d.e)
 		}
 	}

@@ -41,12 +41,12 @@ func TestParseParam(t *testing.T) {
 			func(p RequestParameters) error {
 				if channel, ok := p[openapi.PathParameter]["channel"]; !ok {
 					return errors.New("expected channel parameter in path")
-				} else if channel != "test" {
+				} else if channel.Value != "test" {
 					return errors.Errorf("got %v; expected id value test", channel)
 				}
 				if id, ok := p[openapi.PathParameter]["id"]; !ok {
 					return errors.New("GET: expected id parameter in path")
-				} else if id != int64(123456743) {
+				} else if id.Value != int64(123456743) {
 					return errors.Errorf("got %v; expected id value 123456743", id)
 				}
 				return nil
@@ -69,7 +69,7 @@ func TestParseParam(t *testing.T) {
 			func(p RequestParameters) error {
 				if limit, ok := p[openapi.QueryParameter]["limit"]; !ok {
 					return errors.New("expected limit parameter in query")
-				} else if limit != 10 {
+				} else if limit.Value != 10 {
 					t.Errorf("got %v; expected limit value 10", limit)
 				}
 				return nil

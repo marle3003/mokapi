@@ -34,7 +34,8 @@ type Server struct {
 	stopMetricsUpdater chan bool
 	config             map[string]*mokapi.Config
 
-	Bindings map[string]Binding
+	scheduler *workflow.Scheduler
+	Bindings  map[string]Binding
 }
 
 func NewServer(config *static.Config) *Server {
@@ -47,6 +48,7 @@ func NewServer(config *static.Config) *Server {
 		stopMetricsUpdater: make(chan bool),
 		Bindings:           make(map[string]Binding),
 		config:             make(map[string]*mokapi.Config),
+		scheduler:          workflow.NewScheduler(),
 	}
 
 	watcher.AddListener(func(o dynamic.Config) {
@@ -68,6 +70,7 @@ func (s *Server) Start() {
 	}
 	s.watcher.Start()
 	s.startMetricUpdater()
+	s.scheduler.Start()
 }
 
 func (s *Server) Wait() {
@@ -76,6 +79,7 @@ func (s *Server) Wait() {
 
 func (s *Server) Stop() {
 	s.watcher.Close()
+	s.scheduler.Stop()
 }
 
 func (s *Server) startMetricUpdater() {
@@ -102,7 +106,8 @@ func (s *Server) startMetricUpdater() {
 func (s *Server) updateConfigs(config dynamic.Config) {
 	switch c := config.(type) {
 	case *mokapi.Config:
-		s.config[c.Name] = c
+		s.config[c.ConfigPath] = c
+		s.scheduler.AddOrUpdate(c.ConfigPath, c.Workflows, workflow.WithWorkingDirectory(filepath.Dir(c.ConfigPath)))
 	case *openapi.Config:
 		if _, ok := s.runtime.OpenApi[c.Info.Name]; !ok {
 			s.runtime.OpenApi[c.Info.Name] = c
@@ -151,9 +156,9 @@ func (s *Server) updateConfigs(config dynamic.Config) {
 	}
 }
 
-func (s *Server) triggerHandler(event event.Handler, options ...runtime.WorkflowOptions) *runtime.Summary {
+func (s *Server) triggerHandler(event event.Handler, options ...workflow.WorkflowOptions) *runtime.Summary {
 	for _, c := range s.config {
-		o := append(options, runtime.WithWorkingDirectory(filepath.Dir(c.ConfigPath)))
+		o := append(options, workflow.WithWorkingDirectory(filepath.Dir(c.ConfigPath)))
 		return workflow.Run(c.Workflows, event, o...)
 	}
 
