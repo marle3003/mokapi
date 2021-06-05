@@ -19,14 +19,14 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: '12'
-        - run: curl -sL https://taskfile.dev/install.sh | sh
-        - run: npm install
-          working-directory: ./webui
-        - run: go get -u github.com/go-bindata/go-bindata/...
-        - name: Build
-          run: ./bin/task bindata-vueapp
-          env:
-            CGO_ENABLED: 0
+      - run: curl -sL https://taskfile.dev/install.sh | sh
+      - run: npm install
+        working-directory: ./webui
+      - run: go get -u github.com/go-bindata/go-bindata/...
+      - name: Build
+        run: ./bin/task bindata-vueapp
+        env:
+          CGO_ENABLED: 0
 
       - name: Run Unit tests.
         run: go test -v  -coverprofile=coverage.txt -covermode=atomic ./...
