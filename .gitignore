@@ -19,3 +19,4 @@ dist/
 bin/*
 
 server/api/dashboard.go
+coverage.txt
