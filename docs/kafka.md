@@ -68,6 +68,22 @@ components:
               x-faker: zip
 ```
 
+## Produce messages
+With Mokapi Actions you can produce scheduled messages to your Kafka channels.
+
+```yaml
+mokapi: 1.0
+workflows:
+  - name: produce kafka messages
+    on:
+      schedule:
+        every: 5s
+    steps:
+      - uses: kafka-producer
+        with:
+          topic: message
+```
+
 ## Kafka Server Bindings
 
 ### group.initial.rebalance.delay.ms
