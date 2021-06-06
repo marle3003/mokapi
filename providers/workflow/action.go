@@ -21,6 +21,10 @@ var (
 	}
 )
 
+func RegisterAction(name string, action runtime.Action) {
+	actionCollection[name] = action
+}
+
 func Run(workflows []mokapi.Workflow, event event.Handler, options ...WorkflowOptions) *runtime.Summary {
 	summary := &runtime.Summary{}
 

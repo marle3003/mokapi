@@ -1,9 +1,13 @@
 package kafka
 
 import (
+	"fmt"
+	"math/rand"
+	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/openapi"
+	"mokapi/models/media"
+	"mokapi/providers/encoding"
 	"mokapi/server/kafka/protocol"
-	"sync"
 	"time"
 )
 
@@ -13,103 +17,107 @@ type topic struct {
 	payload     *openapi.SchemaRef
 	key         *openapi.SchemaRef
 	contentType string
+	config      asyncApi.Log
+	g           *openapi.Generator
 }
 
-type partition struct {
-	leader        *broker
-	segments      map[int64]*segment
-	activeSegment int64
-	offset        int64
-	startOffset   int64
-	committed     int64
-	lock          sync.RWMutex
-}
-
-type segment struct {
-	head        int64
-	tail        int64
-	log         []protocol.RecordBatch
-	Size        int64
-	lastWritten time.Time
-}
-
-func newTopic(name string, leader *broker, payload *openapi.SchemaRef, key *openapi.SchemaRef, contentType string) *topic {
-	return &topic{name: name, partitions: map[int]*partition{
-		0: newPartition(leader)},
+func newTopic(name string, partitions int, leader *broker, payload *openapi.SchemaRef, key *openapi.SchemaRef, contentType string, config asyncApi.Log) *topic {
+	p := map[int]*partition{}
+	if partitions == 0 {
+		p[0] = newPartition(leader)
+	} else {
+		for i := 0; i < partitions; i++ {
+			p[i] = newPartition(leader)
+		}
+	}
+	return &topic{
+		name:        name,
+		partitions:  p,
 		payload:     payload,
 		key:         key,
-		contentType: contentType}
-}
-
-func newSegment(offset int64) *segment {
-	return &segment{head: offset}
-}
-
-func newPartition(leader *broker) *partition {
-	return &partition{leader: leader, activeSegment: 0, segments: map[int64]*segment{0: newSegment(0)}, startOffset: 0}
-}
-
-func (p *partition) read(offset int64, maxBytes int32) (set protocol.RecordSet, size int32) {
-	set = protocol.RecordSet{Batches: make([]protocol.RecordBatch, 0)}
-
-	for {
-		s := p.getSegment(offset)
-		if s == nil {
-			return
-		}
-
-		i := offset - s.head
-		for _, b := range s.log[i:] {
-			set.Batches = append(set.Batches, b)
-			size += b.Size()
-			if size > maxBytes {
-				return
-			}
-		}
-		offset = s.tail + 1
+		contentType: contentType,
+		config:      config,
+		g:           openapi.NewGenerator(),
 	}
 }
 
-func (p *partition) deleteSegment(key int64) {
-	if p.activeSegment == key {
+func (t *topic) addMessage(partition int, key, message interface{}) (interface{}, interface{}, error) {
+	record := protocol.Record{Time: time.Now()}
+
+	if key == nil {
+		key = t.g.New(t.key)
+	}
+	record.Key = []byte(fmt.Sprintf("%v", key))
+
+	if message == nil {
+		message = t.g.New(t.payload)
+	}
+
+	var err error
+	contentType := media.ParseContentType(t.contentType)
+	record.Value, err = encode(message, t.payload, contentType)
+	if err != nil {
+		return key, message, err
+	}
+
+	if partition < 0 {
+		// select random partition
+		rand.Seed(time.Now().Unix())
+		partition = rand.Intn(len(t.partitions))
+	}
+
+	return key, message, t.addRecord(partition, protocol.RecordBatch{
+		Records: []protocol.Record{record},
+	})
+}
+
+func (t *topic) addRecord(partition int, record protocol.RecordBatch) error {
+	if partition >= len(t.partitions) {
+		return fmt.Errorf("index %q out of range", partition)
+	}
+
+	p := t.partitions[partition]
+
+	if p.segments[p.activeSegment].Size > t.config.Segment.Bytes {
 		p.addNewSegment()
 	}
 
 	p.lock.Lock()
 	defer p.lock.Unlock()
 
-	seg := p.segments[key]
-	if p.startOffset <= seg.tail {
-		p.startOffset = seg.tail + 1
-	}
+	record.Offset = p.offset
+	p.offset++
 
-	delete(p.segments, key)
-}
+	segment := p.segments[p.activeSegment]
 
-func (p *partition) deleteAllInactiveSegments() {
-	p.lock.Lock()
-	defer p.lock.Unlock()
-	for k := range p.segments {
-		if k != p.activeSegment {
-			delete(p.segments, k)
-		}
-	}
-}
-
-func (p *partition) addNewSegment() {
-	p.lock.Lock()
-	defer p.lock.Unlock()
-
-	p.activeSegment = p.offset
-	p.segments[p.activeSegment] = newSegment(p.offset)
-}
-
-func (p *partition) getSegment(offset int64) *segment {
-	for _, v := range p.segments {
-		if v.head <= offset && offset <= v.tail {
-			return v
-		}
-	}
+	segment.log = append(segment.log, record)
+	segment.Size += int64(record.Size())
+	segment.tail = record.Offset
+	segment.lastWritten = time.Now()
 
 	return nil
+}
+
+func (t *topic) addRecords(partition int, records []protocol.RecordBatch) error {
+	for _, r := range records {
+		err := t.addRecord(partition, r)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func encode(data interface{}, schema *openapi.SchemaRef, contentType *media.ContentType) ([]byte, error) {
+	switch contentType.Subtype {
+	case "json":
+		return encoding.MarshalJSON(data, schema)
+	case "xml", "rss+xml":
+		return encoding.MarshalXML(data, schema)
+	default:
+		if s, ok := data.(string); ok {
+			return []byte(s), nil
+		}
+		return nil, fmt.Errorf("unspupported encoding for content type %v", contentType)
+	}
 }

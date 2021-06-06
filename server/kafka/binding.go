@@ -6,7 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/models"
-	"mokapi/server/kafka/protocol"
+	"mokapi/providers/workflow"
 	"time"
 )
 
@@ -45,6 +45,14 @@ func NewBinding(c *asyncApi.Config, addedMessage AddedMessage) *Binding {
 		brokerId++
 	}
 
+	workflow.RegisterAction("kafka-producer", newProducer(func(topic string, partition int, key, message interface{}) (interface{}, interface{}, error) {
+		if t, ok := s.topics[topic]; !ok {
+			return key, message, fmt.Errorf("topic %q not found", topic)
+		} else {
+			return t.addMessage(partition, key, message)
+		}
+	}))
+
 	return s
 }
 
@@ -55,35 +63,12 @@ func (s *Binding) Apply(data interface{}) error {
 	}
 	s.config = config
 
-	//s.scheduler.Stop()
-	//if config.Info.Mokapi != nil {
-	//	err := s.scheduler.Start(config.Info.Mokapi.Value, pipeline.WithSteps(map[string]types.Step{
-	//		"producer": newProducerStep(s.topics, func(t *topic, k []byte, v []byte) error {
-	//			record := protocol.RecordBatch{
-	//				Records: []protocol.Record{
-	//					{
-	//						Offset:  0,
-	//						Time:    time.Now(),
-	//						Key:     k,
-	//						Value:   v,
-	//						Headers: nil,
-	//					},
-	//				},
-	//			}
-	//			return s.addRecord(t, 0, record)
-	//		}),
-	//	}))
-	//	if err != nil {
-	//		return err
-	//	}
-	//}
-
 	for n, c := range config.Channels {
 		name := n[1:] // remove leading slash from name
 		if _, ok := s.topics[name]; !ok {
 			log.Infof("kafka: adding topic %q", name)
 			msg := c.Value.Publish.Message.Value
-			s.topics[name] = newTopic(name, s.brokers[0], msg.Payload, msg.Bindings.Kafka.Key, msg.ContentType)
+			s.topics[name] = newTopic(name, c.Value.Bindings.Kafka.Partitions, s.brokers[0], msg.Payload, msg.Bindings.Kafka.Key, msg.ContentType, s.kafka.Log)
 		}
 	}
 
@@ -109,43 +94,6 @@ func (s *Binding) Start() {
 	for _, b := range s.brokers {
 		b.start(s.handle)
 	}
-}
-
-func (s *Binding) addRecord(t *topic, partition int, record protocol.RecordBatch) error {
-	if partition >= len(t.partitions) {
-		return fmt.Errorf("index %q out of range", partition)
-	}
-
-	p := t.partitions[partition]
-
-	if p.segments[p.activeSegment].Size > s.kafka.Log.Segment.Bytes {
-		p.addNewSegment()
-	}
-
-	p.lock.Lock()
-	defer p.lock.Unlock()
-
-	record.Offset = p.offset
-	p.offset++
-
-	segment := p.segments[p.activeSegment]
-
-	segment.log = append(segment.log, record)
-	segment.Size += int64(record.Size())
-	segment.tail = record.Offset
-	segment.lastWritten = time.Now()
-
-	return nil
-}
-
-func (s *Binding) addRecords(t *topic, partition int, records []protocol.RecordBatch) error {
-	for _, r := range records {
-		err := s.addRecord(t, partition, r)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (s *Binding) UpdateMetrics(m *models.KafkaMetric) {

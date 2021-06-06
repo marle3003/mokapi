@@ -1,4 +1,4 @@
-package OffsetCommit
+package offsetCommit
 
 import (
 	"math"
@@ -8,7 +8,7 @@ import (
 func init() {
 	protocol.Register(
 		protocol.ApiReg{
-			ApiKey:     protocol.Metadata,
+			ApiKey:     protocol.OffsetCommit,
 			MinVersion: 0,
 			MaxVersion: 2},
 		&Request{},
@@ -34,7 +34,7 @@ type Topic struct {
 type Partition struct {
 	Index     int32  `kafka:""`
 	Offset    int64  `kafka:""`
-	Timestamp int64  `kafka:"min=1,max=2"`
+	Timestamp int64  `kafka:"min=1,max=1"`
 	Metadata  string `kafka:"nullable"`
 }
 

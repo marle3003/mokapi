@@ -137,7 +137,7 @@ func runScript(step mokapi.Step, stepId string, ctx *WorkflowContext) (s string,
 	return
 }
 
-func runAction(step mokapi.Step, stepId string, ctx *WorkflowContext) (log string, err error) {
+func runAction(step mokapi.Step, stepId string, ctx *WorkflowContext) (s string, err error) {
 	for k, v := range step.With {
 		var val interface{}
 		val, err = parse(v, ctx)
@@ -152,7 +152,7 @@ func runAction(step mokapi.Step, stepId string, ctx *WorkflowContext) (log strin
 	} else {
 		actionCtx := newActionContext(stepId, ctx)
 		err = a.Run(actionCtx)
-		log = strings.Join(actionCtx.log, "\n")
+		s = strings.Join(actionCtx.log, "\n")
 	}
 
 	return

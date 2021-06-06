@@ -14,6 +14,7 @@ import (
 	"mokapi/server/kafka/protocol/joinGroup"
 	"mokapi/server/kafka/protocol/listOffsets"
 	"mokapi/server/kafka/protocol/metaData"
+	"mokapi/server/kafka/protocol/offsetCommit"
 	"mokapi/server/kafka/protocol/offsetFetch"
 	"mokapi/server/kafka/protocol/produce"
 	"mokapi/server/kafka/protocol/syncGroup"
@@ -76,13 +77,16 @@ func (s *Binding) handle(conn net.Conn) {
 		case protocol.Produce:
 			r := msg.(*produce.Request)
 			for _, t := range r.Topics {
-				s.addRecords(s.topics[t.Name], int(t.Data.Partition), t.Data.Record.Batches)
+				topic := s.topics[t.Name]
+				topic.addRecords(int(t.Data.Partition), t.Data.Record.Batches)
 			}
 		case protocol.ListOffsets:
 			r := s.processListOffsets(msg.(*listOffsets.Request))
 			protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, r)
+		case protocol.OffsetCommit:
+			r := s.processOffsetCommit(msg.(*offsetCommit.Request))
+			protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, r)
 		}
-
 	}
 }
 
@@ -98,15 +102,11 @@ func (s *Binding) processListOffsets(req *listOffsets.Request) *listOffsets.Resp
 					Index:     rp.Index,
 					ErrorCode: 0,
 					Timestamp: -1,
-					Offset:    -1,
+					Offset:    p.offset,
 				}
 
 				if rp.Timestamp == -2 { // first offset
-					if p.offset <= 0 {
-						part.Offset = -1
-					} else {
-						part.Offset = p.startOffset
-					}
+					part.Offset = p.startOffset
 				} else if rp.Timestamp == -1 { // lastOffset
 					part.Offset = p.offset
 				}
@@ -161,9 +161,9 @@ func (s *Binding) processMetadata(req *metaData.Request) *metaData.Response {
 				Partitions: make([]metaData.ResponsePartition, 0, len(t.partitions)),
 			}
 
-			for _, p := range t.partitions {
+			for i, p := range t.partitions {
 				resT.Partitions = append(resT.Partitions, metaData.ResponsePartition{
-					PartitionIndex: 0,
+					PartitionIndex: int32(i),
 					LeaderId:       int32(p.leader.id),
 					ReplicaNodes:   []int32{1},
 					IsrNodes:       []int32{1},
@@ -182,9 +182,9 @@ func (s *Binding) processMetadata(req *metaData.Request) *metaData.Response {
 				Partitions: make([]metaData.ResponsePartition, 0, len(t.partitions)),
 			}
 
-			for _, p := range t.partitions {
+			for i, p := range t.partitions {
 				resT.Partitions = append(resT.Partitions, metaData.ResponsePartition{
-					PartitionIndex: 0,
+					PartitionIndex: int32(i),
 					LeaderId:       int32(p.leader.id),
 					ReplicaNodes:   []int32{1},
 					IsrNodes:       []int32{1},
@@ -321,7 +321,7 @@ func (s *Binding) processOffSetFetch(req *offsetFetch.Request) *offsetFetch.Resp
 			p := t.partitions[int(rp)]
 			resTopic.Partitions = append(resTopic.Partitions, offsetFetch.Partition{
 				Index:           rp,
-				CommittedOffset: p.committed,
+				CommittedOffset: p.getOffset(req.GroupId),
 			})
 		}
 		r.Topics = append(r.Topics, resTopic)
@@ -364,4 +364,26 @@ func (s *Binding) processFetch(req *fetch.Request) *fetch.Response {
 
 		time.Sleep(time.Duration(math.Floor(0.2*float64(req.MaxWaitMs))) * time.Millisecond)
 	}
+}
+
+func (s *Binding) processOffsetCommit(req *offsetCommit.Request) *offsetCommit.Response {
+	r := &offsetCommit.Response{
+		Topics: make([]offsetCommit.ResponseTopic, 0, len(req.Topics)),
+	}
+
+	// currently offset is not separated by groups
+	for _, rt := range req.Topics {
+		t := s.topics[rt.Name]
+		resTopic := offsetCommit.ResponseTopic{Name: rt.Name, Partitions: make([]offsetCommit.ResponsePartition, 0, len(rt.Partitions))}
+		for _, rp := range rt.Partitions {
+			p := t.partitions[int(rp.Index)]
+			p.setOffset(req.GroupId, rp.Offset)
+			resTopic.Partitions = append(resTopic.Partitions, offsetCommit.ResponsePartition{
+				Index: rp.Index,
+			})
+		}
+		r.Topics = append(r.Topics, resTopic)
+	}
+
+	return r
 }

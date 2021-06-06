@@ -38,3 +38,7 @@ func (c *ActionContext) SetOutput(name string, value interface{}) {
 func (c *ActionContext) WorkflowContext() *WorkflowContext {
 	return c.ctx
 }
+
+func (c *ActionContext) Log(format string, args ...interface{}) {
+	c.log = append(c.log, fmt.Sprintf(format, args...))
+}

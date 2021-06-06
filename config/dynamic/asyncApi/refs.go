@@ -22,45 +22,10 @@ type resolver interface {
 }
 
 func (r refResolver) resolveConfig() error {
-	if err := r.resolveMokapiRef(r.config.Info.Mokapi); err != nil {
-		return err
-	}
-
 	for _, ch := range r.config.Channels {
 		if err := r.resolveChannelRef(ch); err != nil {
 			return err
 		}
-	}
-
-	return nil
-}
-
-func (r refResolver) resolveMokapiRef(m *MokapiRef) error {
-	if m == nil {
-		return nil
-	}
-
-	if len(m.Ref) > 0 && m.Value == nil {
-		u, err := url.Parse(m.Ref)
-		if err != nil {
-			return err
-		}
-
-		if !isLocalRef(m.Ref) {
-			err := r.loadFrom(u.Path, &m.Value)
-			if err != nil {
-				return err
-			}
-		} else {
-			err := r.resolve(u.Fragment, r.config, &m.Value)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	if m.Value == nil {
-		return nil
 	}
 
 	return nil

@@ -121,7 +121,7 @@
         <b-card-group deck>
           <b-card class="w-100">
             <b-card-title class="info text-center">Recent Request</b-card-title>
-            <b-table :items="lastRequests" :fields="lastRequestField" table-class="dataTable" @row-clicked="requestClickHandler">
+            <b-table :items="lastRequests" :fields="lastRequestField" table-class="dataTable" @row-clicked="requestClickHandler" tbody-tr-class="pointer">
               <template v-slot:cell(method)="data">
                 <b-badge pill class="operation" :class="data.item.method.toLowerCase()" >{{ data.item.method }}</b-badge>
               </template>
@@ -372,5 +372,8 @@ export default {
   .response.icon{
     vertical-align: middle;
     font-size: 0.5rem;
+  }
+  .pointer{
+    cursor: hand;
   }
 </style>

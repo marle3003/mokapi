@@ -22,8 +22,17 @@ var (
 	}
 )
 
+type KafkaChannelBinding struct {
+	Partitions int
+}
+
 type KafkaMessageBinding struct {
 	Key *openapi.SchemaRef
+}
+
+type KafkaOperationBinding struct {
+	GroupId  *openapi.SchemaRef
+	ClientId *openapi.SchemaRef
 }
 
 type Kafka struct {

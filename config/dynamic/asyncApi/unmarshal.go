@@ -8,10 +8,6 @@ type refProp struct {
 	Ref string `yaml:"$ref" json:"$ref"`
 }
 
-func (r *MokapiRef) UnmarshalYAML(node *yaml.Node) error {
-	return unmarshalRef(node, &r.Ref, &r.Value)
-}
-
 func (r *MessageRef) UnmarshalYAML(node *yaml.Node) error {
 	return unmarshalRef(node, &r.Ref, &r.Value)
 }

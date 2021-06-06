@@ -140,6 +140,15 @@ Supported generator:
 - username
 - password
 
+**Address** <span id="address"></span>
+- street
+- city
+- state
+- zip
+- country
+- latitude
+- longitude
+
 **Beer** <span id="beer"></span>
 - beername
 - beeralcohol
@@ -178,6 +187,7 @@ Supported generator:
 
 **Misc** <span id="misc"></span>
 - bool
+- uuid  
 - flipacoin
 
 **Colors** <span id="colors"></span>
@@ -255,3 +265,9 @@ Supported generator:
 **File** <span id="file"></span>
 - fileextension
 - filemimetype
+
+**Payment** <span id="ayment"></span>
+- price:min,max
+- currencyshort
+- currencylong
+- creditcardnumber

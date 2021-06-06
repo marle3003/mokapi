@@ -3,7 +3,6 @@ package asyncApi
 import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/mokapi"
 	"mokapi/config/dynamic/openapi"
 	"net/url"
 	"strconv"
@@ -42,12 +41,6 @@ type Info struct {
 	TermsOfService string
 	Contact        *Contact
 	License        *License
-	Mokapi         *MokapiRef `yaml:"x-mokapi" json:"x-mokapi"`
-}
-
-type MokapiRef struct {
-	Ref   string
-	Value *mokapi.Config
 }
 
 type Contact struct {
@@ -82,11 +75,11 @@ type Channel struct {
 	Description string
 	Subscribe   *Operation
 	Publish     *Operation
-	//Bindings ChannelBindings
+	Bindings    ChannelBindings
 }
 
 type ChannelBindings struct {
-	Kafka Kafka
+	Kafka KafkaChannelBinding
 }
 
 type Operation struct {
