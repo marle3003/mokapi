@@ -8,6 +8,7 @@ nav:
     - "Syntax": "actions/syntax.md"
     - "Context and expression": "actions/context.md"
     - "Operators": "actions/operators.md"
+    - "Actions": "actions/actions.md"
   - "Pipelines":
     - "Intro": "pipeline/pipeline.md"
     - "Steps": "pipeline/steps.md"

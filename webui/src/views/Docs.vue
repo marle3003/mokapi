@@ -151,8 +151,11 @@ export default {
 .content {
   line-height: 1.6;
   font-size: 0.8rem;
+  position: absolute;
+  max-width: calc(100% - 12.1rem * 2);
+}
+.content p{
   text-align: justify;
-  max-width: calc(100% - 12.1rem);
 }
 .router-link-active {
   font-weight: 500;
@@ -188,5 +191,10 @@ export default {
 .content >>> table thead th {
   border-bottom: 2px solid;
   border-color: var(--var-bg-color-primary);
+}
+.content >>> pre{
+  display: block;
+  overflow-x: auto;
+  max-width: 90%;
 }
 </style>

@@ -184,7 +184,7 @@ func (s *Scanner) Scan() (pos token.Position, tok token.Token, lit string) {
 	pos = s.pos
 
 	switch ch := s.ch; {
-	case unicode.IsLetter(ch):
+	case isLetter(ch):
 		lit = s.scanIdentifier()
 		tok = token.Loockup(lit)
 	case unicode.IsDigit(ch):
@@ -295,4 +295,8 @@ func (s *Scanner) Scan() (pos token.Position, tok token.Token, lit string) {
 	}
 
 	return
+}
+
+func isLetter(ch rune) bool {
+	return unicode.IsLetter(ch) || ch == '_'
 }
