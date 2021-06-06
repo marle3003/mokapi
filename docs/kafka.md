@@ -1,6 +1,6 @@
 # AsyncApi
 
-With [AsyncApi](http://asyncapi.com) you can mock your [Apacahe Kafka](https://kafka.apache.org/) streaming API. 
+With [AsyncApi](http://asyncapi.com) you can mock your [Apache Kafka](https://kafka.apache.org/) streaming API. 
 
 ## Example
 
