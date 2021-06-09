@@ -1,7 +1,6 @@
 package runtime
 
 import (
-	"fmt"
 	"mokapi/providers/utils"
 	"regexp"
 	"strings"
@@ -31,5 +30,5 @@ func sPrint(s string, ctx *WorkflowContext) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("%v", i), nil
+	return utils.ToString(i), nil
 }

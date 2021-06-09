@@ -34,6 +34,10 @@ func Walk(v Visitor, e Expression) {
 		for _, val := range n.Values {
 			Walk(v, val)
 		}
+	case *MapExpr:
+		for _, val := range n.Values {
+			Walk(v, val)
+		}
 	case *RangeExpr:
 		Walk(v, n.Start)
 		Walk(v, n.End)

@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"fmt"
+	"mokapi/providers/utils"
 )
 
 type Action interface {
@@ -28,7 +29,7 @@ func (c *ActionContext) GetInput(name string) (interface{}, bool) {
 
 func (c *ActionContext) GetInputString(name string) (string, bool) {
 	v, found := c.GetInput(name)
-	return fmt.Sprintf("%s", v), found
+	return utils.ToString(v), found
 }
 
 func (c *ActionContext) SetOutput(name string, value interface{}) {

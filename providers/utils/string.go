@@ -30,7 +30,7 @@ func ToString(i interface{}) string {
 			}
 			sb.WriteString(fmt.Sprintf("%v=%v", k, ToString(v.MapIndex(k).Interface())))
 		}
-		return fmt.Sprintf("[%v]", sb.String())
+		return fmt.Sprintf("{%v}", sb.String())
 	} else if v.Kind() == reflect.Struct {
 		var sb strings.Builder
 		for i := 0; i < v.NumField(); i++ {
