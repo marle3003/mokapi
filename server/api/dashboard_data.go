@@ -27,7 +27,7 @@ type requestSummary struct {
 	Method       string        `json:"method"`
 	Url          string        `json:"url"`
 	HttpStatus   int           `json:"httpStatus"`
-	Error        string        `json:"error"`
+	IsError      bool          `json:"isError"`
 	Time         time.Time     `json:"time"`
 	ResponseTime time.Duration `json:"responseTime"`
 }
@@ -78,12 +78,6 @@ func newDashboard(runtime *models.Runtime) dashboard {
 		dashboard.KafkaTopics = append(dashboard.KafkaTopics, t)
 	}
 
-	//for _, s := range app.OpenApi {
-	//	if len(s.Errors) > 0 {
-	//		dashboard.ServiceStatus.Errors++
-	//	}
-	//}
-
 	for _, r := range runtime.Metrics.LastErrorRequests {
 		dashboard.LastErrors = append(dashboard.LastErrors, newRequestSummary(r))
 	}
@@ -99,11 +93,11 @@ func newRequestSummary(r *models.RequestMetric) requestSummary {
 	return requestSummary{
 		Id:           r.Id,
 		Method:       r.Method,
-		Error:        r.Error,
 		Url:          r.Url,
 		HttpStatus:   r.HttpStatus,
 		Time:         r.Time,
 		ResponseTime: r.ResponseTime,
+		IsError:      r.IsError,
 	}
 }
 
@@ -112,7 +106,7 @@ func newRequest(r *models.RequestMetric) request {
 		requestSummary: requestSummary{
 			Id:           r.Id,
 			Method:       r.Method,
-			Error:        r.Error,
+			IsError:      r.IsError,
 			Url:          r.Url,
 			HttpStatus:   r.HttpStatus,
 			Time:         r.Time,

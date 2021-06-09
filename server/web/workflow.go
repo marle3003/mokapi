@@ -14,11 +14,12 @@ type Response struct {
 }
 
 type Request struct {
-	Method  string
-	Body    interface{}
-	Path    RequestParameter
-	Query   RequestParameter
-	Headers RequestParameter
+	Method string
+	Body   interface{}
+	Path   RequestParameter
+	Query  RequestParameter
+	Header RequestParameter
+	Cookie RequestParameter
 }
 
 func (r *Response) Run(ctx *runtime.ActionContext) error {

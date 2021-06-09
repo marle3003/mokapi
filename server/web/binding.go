@@ -96,27 +96,26 @@ func (binding *Binding) Apply(data interface{}) error {
 }
 
 func (binding *Binding) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	service, servicePath := binding.resolveHandler(r)
-	if service == nil {
+	ctx := NewHttpContext(r, w, binding.workflowHandler)
+
+	defer binding.addRequestMetric(ctx.metric)
+
+	var service *ServiceHandler
+	service, ctx.ServicPath = binding.resolveHandler(r)
+
+	if service != nil {
+		service.ServeHTTP(ctx)
+	} else {
 		m := fmt.Sprintf("There was no service listening at %v", r.URL)
-		http.Error(w, m, http.StatusInternalServerError)
-		log.Error(m)
-		//e.requestChannel <- &models.RequestMetric{Method: r.Method, Url: r.URL.String(), Error: m, HttpStatus: http.StatusInternalServerError}
-		return
+		writeError(m, http.StatusInternalServerError, ctx)
 	}
-
-	ctx := NewHttpContext(r, w, servicePath, binding.workflowHandler)
-	ctx.metric = models.NewRequestMetric(r.Method, fmt.Sprintf("%s%s", r.Host, r.URL.String()), service.config)
-
-	service.ServeHTTP(ctx)
-
-	binding.addRequestMetric(ctx.metric)
 }
 
 func (binding *Binding) resolveHandler(r *http.Request) (*ServiceHandler, string) {
 	var matchedPath string
 	var matchedHandler *ServiceHandler
-	if host, ok := binding.handlers[r.Host]; ok {
+	rHost := strings.Split(r.Host, ":")[0]
+	if host, ok := binding.handlers[rHost]; ok {
 		for path, handler := range host {
 			if strings.HasPrefix(strings.ToLower(r.URL.Path), strings.ToLower(path)) {
 				if matchedPath == "" || len(matchedPath) < len(path) {
@@ -132,4 +131,10 @@ func (binding *Binding) resolveHandler(r *http.Request) (*ServiceHandler, string
 	}
 
 	return nil, ""
+}
+
+func writeError(message string, status int, ctx *HttpContext) {
+	ctx.updateMetricWithError(status, message)
+	log.WithFields(log.Fields{"url": ctx.metric.Url, "method": ctx.metric.Method, "status": status}).Error(message)
+	http.Error(ctx.Response, message, status)
 }

@@ -3,7 +3,6 @@ package models
 import (
 	"crypto/rand"
 	"io"
-	"mokapi/config/dynamic/openapi"
 	runtime2 "mokapi/providers/workflow/runtime"
 	"runtime"
 	"time"
@@ -26,7 +25,7 @@ type RequestMetric struct {
 	Method       string
 	Url          string
 	HttpStatus   int
-	Error        string
+	IsError      bool
 	ResponseTime time.Duration
 	Time         time.Time
 	Parameters   []RequestParamter
@@ -69,13 +68,12 @@ type KafkaMessage struct {
 	Value string `json:"value"`
 }
 
-func NewRequestMetric(method string, url string, config *openapi.Config) *RequestMetric {
+func NewRequestMetric(method string, url string) *RequestMetric {
 	return &RequestMetric{
-		Id:      newId(10),
-		Method:  method,
-		Url:     url,
-		Time:    time.Now(),
-		Service: config.Info.Name,
+		Id:     newId(10),
+		Method: method,
+		Url:    url,
+		Time:   time.Now(),
 	}
 }
 
@@ -98,7 +96,7 @@ func (m *Metrics) AddMessage(topic string, key []byte, value []byte) {
 func (m *Metrics) AddRequest(r *RequestMetric) {
 	m.TotalRequests++
 	m.OpenApi[r.Service].Requests++
-	if len(r.Error) > 0 {
+	if r.IsError {
 		m.RequestsWithError++
 		if len(m.LastErrorRequests) > 10 {
 			m.LastErrorRequests = m.LastErrorRequests[1:]

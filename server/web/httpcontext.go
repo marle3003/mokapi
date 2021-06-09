@@ -1,6 +1,7 @@
 package web
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"mokapi/config/dynamic/openapi"
@@ -33,11 +34,12 @@ type HttpContext struct {
 	workflowHandler EventHandler
 }
 
-func NewHttpContext(request *http.Request, response http.ResponseWriter, servicePath string, wh EventHandler) *HttpContext {
+func NewHttpContext(request *http.Request, response http.ResponseWriter, wh EventHandler) *HttpContext {
+	metric := models.NewRequestMetric(request.Method, fmt.Sprintf("%s%s", request.Host, request.URL.String()))
 	return &HttpContext{Response: response,
 		Request:         request,
-		ServicPath:      servicePath,
 		workflowHandler: wh,
+		metric:          metric,
 	}
 }
 
@@ -128,4 +130,67 @@ func (context *HttpContext) setContentType() error {
 	}
 
 	return fmt.Errorf("no content type found for accept header %q", accept)
+}
+
+func (context *HttpContext) updateMetricWithError(statusCode int, body string) {
+	context.updateMetric(statusCode, "text/plain; charset=utf-8", body)
+	context.metric.IsError = true
+}
+
+func (context *HttpContext) updateMetric(statusCode int, contentType, body string) {
+	context.metric.HttpStatus = statusCode
+	context.metric.ContentType = contentType
+	context.metric.ResponseBody = body
+
+	// headers
+	for k, v := range context.Request.Header {
+		p := models.RequestParamter{
+			Name: k,
+			Raw:  fmt.Sprintf("%v", v),
+			Type: "header",
+		}
+		if v, ok := context.Parameters[openapi.HeaderParameter][k]; ok {
+			data, _ := json.Marshal(v.Value)
+			p.Value = string(data)
+		}
+		context.metric.Parameters = append(context.metric.Parameters, p)
+	}
+
+	// path
+	for k, v := range context.Parameters[openapi.PathParameter] {
+		data, _ := json.Marshal(v.Value)
+		p := models.RequestParamter{
+			Name:  k,
+			Value: string(data),
+			Raw:   v.Raw,
+			Type:  "path",
+		}
+		context.metric.Parameters = append(context.metric.Parameters, p)
+	}
+
+	// cookies
+	for _, cookie := range context.Request.Cookies() {
+		p := models.RequestParamter{
+			Name: cookie.Name,
+			Raw:  cookie.Raw,
+			Type: "cookie",
+		}
+		if v, ok := context.Parameters[openapi.CookieParameter][cookie.Name]; ok {
+			data, _ := json.Marshal(v.Value)
+			p.Value = string(data)
+		}
+		context.metric.Parameters = append(context.metric.Parameters, p)
+	}
+
+	// query
+	for k, v := range context.Parameters[openapi.QueryParameter] {
+		data, _ := json.Marshal(v.Value)
+		p := models.RequestParamter{
+			Name:  k,
+			Value: string(data),
+			Raw:   v.Raw,
+			Type:  "query",
+		}
+		context.metric.Parameters = append(context.metric.Parameters, p)
+	}
 }

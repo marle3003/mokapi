@@ -10,6 +10,3 @@ nav:
     - "Operators": "actions/operators.md"
     - "Functions": "actions/functions.md"
     - "Actions": "actions/actions.md"
-  - "Pipelines":
-    - "Intro": "pipeline/pipeline.md"
-    - "Steps": "pipeline/steps.md"

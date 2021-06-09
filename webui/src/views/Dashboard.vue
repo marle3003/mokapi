@@ -97,7 +97,7 @@
         <b-card-group deck>
           <b-card class="w-100">
             <b-card-title class="info text-center">Last Request Errors</b-card-title>
-            <b-table :items="lastErrors" :fields="lastRequestField" table-class="dataTable">
+            <b-table hover :items="lastErrors" :fields="lastRequestField" class="dataTable selectable" @row-clicked="requestClickHandler">
               <template v-slot:cell(method)="data">
                 <b-badge pill class="operation" :class="data.item.method.toLowerCase()" >{{ data.item.method }}</b-badge>
               </template>
@@ -121,7 +121,7 @@
         <b-card-group deck>
           <b-card class="w-100">
             <b-card-title class="info text-center">Recent Request</b-card-title>
-            <b-table :items="lastRequests" :fields="lastRequestField" table-class="dataTable" @row-clicked="requestClickHandler" tbody-tr-class="pointer">
+            <b-table hover :items="lastRequests" :fields="lastRequestField" class="dataTable selectable" @row-clicked="requestClickHandler">
               <template v-slot:cell(method)="data">
                 <b-badge pill class="operation" :class="data.item.method.toLowerCase()" >{{ data.item.method }}</b-badge>
               </template>
@@ -163,13 +163,12 @@ export default {
       loaded: false,
       timer: null,
       lastRequestField: [
-       'method',
+        'method',
         {key: 'url', tdClass: 'break'},
         'httpStatus',
-        'error',
         'time',
-        'responseTime',
-        ],
+        'responseTime'
+      ],
       topicSizes: {},
       chartTopicSize: {},
       serviceFields: [{key: 'name', class: 'text-left'}, {key: 'lastRequest', class: 'text-left'}, 'requests', 'errors'],
@@ -373,7 +372,7 @@ export default {
     vertical-align: middle;
     font-size: 0.5rem;
   }
-  .pointer{
-    cursor: hand;
+  .dataTable.selectable{
+    cursor: pointer;
   }
 </style>

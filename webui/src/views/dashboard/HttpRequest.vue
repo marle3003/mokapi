@@ -12,7 +12,12 @@
             <p class="label">Method</p>
             <p><b-badge pill class="operation" :class="request.method.toLowerCase()" >{{ request.method }}</b-badge></p>
             <p class="label">Status</p>
-            <p><b-badge pill variant="success" >{{ request.httpStatus }}</b-badge></p>
+            <p>
+              <b-badge pill variant="success" v-if="request.httpStatus >= 200 && request.httpStatus < 300">{{ request.httpStatus }} {{ request.httpStatus | reason }}</b-badge>
+              <b-badge pill variant="warning" v-if="request.httpStatus >= 300 && request.httpStatus < 400">{{ request.httpStatus }} {{ request.httpStatus | reason }}</b-badge>
+              <b-badge pill class="client-error" v-if="request.httpStatus >= 400 && request.httpStatus < 500">{{ request.httpStatus }} {{ request.httpStatus | reason }}</b-badge>
+              <b-badge pill variant="danger" v-if="request.httpStatus >= 500 && request.httpStatus < 600">{{ request.httpStatus }} {{ request.httpStatus | reason }}</b-badge>
+            </p>
           </b-col>
           <b-col>
             <p class="label">Content Type</p>
@@ -81,7 +86,8 @@
 
 <script>
 import Api from '@/mixins/Api'
-import moment from "moment";
+import moment from "moment"
+import http from 'http-status-codes'
 
 export default {
   name: 'HttpRequest',
@@ -131,6 +137,9 @@ export default {
         return d.seconds() + " [sec]"
       }
       return moment.duration(d).minutes()
+    },
+    reason: function (status) {
+      return http.getStatusText(status)
     }
   }
 }

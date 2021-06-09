@@ -19,23 +19,20 @@ func NewWebServiceHandler(config *openapi.Config) *ServiceHandler {
 }
 
 func (handler *ServiceHandler) ServeHTTP(ctx *HttpContext) {
+	ctx.metric.Service = handler.config.Info.Name
 	err := handler.resolveEndpoint(ctx)
 	if err != nil {
 		message := fmt.Sprintf("No endpoint found in service %v. Request %v %v",
 			handler.config.Info.Name,
 			ctx.Request.Method,
-			ctx.Request.URL.String())
-		ctx.metric.Error = message
-		ctx.metric.HttpStatus = http.StatusNotFound
-		http.Error(ctx.Response, message, http.StatusNotFound)
-		log.Infof(message)
+			ctx.metric.Url)
+		writeError(message, http.StatusNotFound, ctx)
 		return
 	}
 
 	if err := ctx.Init(); err != nil {
-		msg := err.Error()
-		http.Error(ctx.Response, msg, http.StatusBadRequest)
-		log.Infof(msg)
+		message := err.Error()
+		writeError(message, http.StatusNotFound, ctx)
 		return
 	}
 

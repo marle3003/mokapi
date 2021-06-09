@@ -35,24 +35,24 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 		contentType := media.ParseContentType(context.Request.Header.Get("content-type"))
 		body, err := readBody(context)
 		if err != nil {
-			respond(err.Error(), http.StatusInternalServerError, context)
+			writeError(err.Error(), http.StatusInternalServerError, context)
 			return
 		}
 		if operation.RequestBody.Value.Required && len(body) == 0 {
-			respond("request body expected", http.StatusBadRequest, context)
+			writeError("request body expected", http.StatusBadRequest, context)
 			return
 		}
 
 		var bodySchema *openapi.SchemaRef
 		if c, ok := operation.RequestBody.Value.Content[contentType.String()]; ok {
 			if c.Schema == nil {
-				respond(fmt.Sprintf("schema of request body %q is not defined", contentType.String()), http.StatusInternalServerError, context)
+				writeError(fmt.Sprintf("schema of request body %q is not defined", contentType.String()), http.StatusInternalServerError, context)
 				return
 			}
 			bodySchema = c.Schema
 		} else if c, ok := operation.RequestBody.Value.Content[contentType.Key()]; ok {
 			if c.Schema == nil {
-				respond(fmt.Sprintf("schema of response %q is not defined", contentType.String()), http.StatusInternalServerError, context)
+				writeError(fmt.Sprintf("schema of response %q is not defined", contentType.String()), http.StatusInternalServerError, context)
 				return
 			}
 			bodySchema = c.Schema
@@ -61,11 +61,11 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 		if bodySchema != nil {
 			bodyParam, err = parseBody(body, contentType, bodySchema)
 			if err != nil {
-				respond(err.Error(), http.StatusBadRequest, context)
+				writeError(err.Error(), http.StatusBadRequest, context)
 				return
 			}
 		} else {
-			respond(
+			writeError(
 				fmt.Sprintf("content type '%v' of request body is not defined. Check your service configuration", contentType.String()),
 				http.StatusInternalServerError,
 				context)
@@ -84,10 +84,12 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 	gen := openapi.NewGenerator()
 
 	req := &Request{
-		Headers: context.Parameters[openapi.HeaderParameter],
-		Path:    context.Parameters[openapi.PathParameter],
-		Query:   context.Parameters[openapi.QueryParameter],
-		Body:    bodyParam,
+		Header: context.Parameters[openapi.HeaderParameter],
+		Path:   context.Parameters[openapi.PathParameter],
+		Query:  context.Parameters[openapi.QueryParameter],
+		Cookie: context.Parameters[openapi.CookieParameter],
+		Method: context.Request.Method,
+		Body:   bodyParam,
 	}
 
 	res := &Response{
@@ -115,35 +117,9 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 	}
 
 	if err := write(res, context); err != nil {
-		respond(err.Error(), http.StatusBadRequest, context)
+		writeError(err.Error(), http.StatusBadRequest, context)
 		return
 	}
-
-	updateMetric(context)
-
-	//if context.Mokapi != nil && len(pipelineName) > 0 {
-	//	err := pipeline.RunConfig(
-	//		pipelineName,
-	//		context.Mokapi,
-	//		pipeline.WithGlobalVars(map[types.Type]interface{}{
-	//			"response":  r,
-	//			"Operation": operation,
-	//		}),
-	//		pipeline.WithParams(map[string]interface{}{
-	//			"method": context.Request.Method,
-	//			"body":   bodyParam,
-	//			"query":  context.Parameters[openapi.QueryParameter],
-	//			"path":   context.Parameters[openapi.PathParameter],
-	//			"header": context.Parameters[openapi.HeaderParameter],
-	//			"cookie": context.Parameters[openapi.CookieParameter],
-	//		}),
-	//	)
-	//	if err != nil {
-	//		respond(err.Error(), http.StatusInternalServerError, context)
-	//	}
-	//} else {
-	//	r.WriteRandom(int(context.statusCode), context.ContentType.String())
-	//}
 }
 
 func readBody(ctx *HttpContext) (string, error) {
@@ -157,13 +133,6 @@ func readBody(ctx *HttpContext) (string, error) {
 	}
 
 	return string(data), nil
-}
-
-func respond(message string, status int, ctx *HttpContext) {
-	ctx.metric.Error = message
-	ctx.metric.HttpStatus = status
-	log.WithFields(log.Fields{"url": ctx.Request.URL.String()}).Errorf("path %q, operation %q: %v", ctx.Request.URL, ctx.Request.Method, message)
-	http.Error(ctx.Response, message, status)
 }
 
 func parseBody(s string, contentType *media.ContentType, schema *openapi.SchemaRef) (interface{}, error) {
@@ -214,9 +183,7 @@ func write(r *Response, ctx *HttpContext) error {
 
 	_, err := ctx.Response.Write(body)
 
-	ctx.metric.HttpStatus = r.StatusCode
-	ctx.metric.ContentType = contentType.String()
-	ctx.metric.ResponseBody = string(body)
+	ctx.updateMetric(r.StatusCode, contentType.String(), string(body))
 
 	return err
 }
@@ -232,59 +199,5 @@ func encodeData(data interface{}, contentType *media.ContentType, schema *openap
 			return []byte(s), nil
 		}
 		return nil, fmt.Errorf("unspupported encoding for content type %v", contentType)
-	}
-}
-
-func updateMetric(context *HttpContext) {
-	// headers
-	for k, v := range context.Request.Header {
-		p := models.RequestParamter{
-			Name: k,
-			Raw:  fmt.Sprintf("%v", v),
-			Type: "header",
-		}
-		if v, ok := context.Parameters[openapi.HeaderParameter][k]; ok {
-			data, _ := json.Marshal(v.Value)
-			p.Value = string(data)
-		}
-		context.metric.Parameters = append(context.metric.Parameters, p)
-	}
-
-	// path
-	for k, v := range context.Parameters[openapi.PathParameter] {
-		data, _ := json.Marshal(v.Value)
-		p := models.RequestParamter{
-			Name:  k,
-			Value: string(data),
-			Raw:   v.Raw,
-			Type:  "path",
-		}
-		context.metric.Parameters = append(context.metric.Parameters, p)
-	}
-
-	// cookies
-	for _, cookie := range context.Request.Cookies() {
-		p := models.RequestParamter{
-			Name: cookie.Name,
-			Raw:  cookie.Raw,
-			Type: "cookie",
-		}
-		if v, ok := context.Parameters[openapi.CookieParameter][cookie.Name]; ok {
-			data, _ := json.Marshal(v.Value)
-			p.Value = string(data)
-		}
-		context.metric.Parameters = append(context.metric.Parameters, p)
-	}
-
-	// query
-	for k, v := range context.Parameters[openapi.QueryParameter] {
-		data, _ := json.Marshal(v.Value)
-		p := models.RequestParamter{
-			Name:  k,
-			Value: string(data),
-			Raw:   v.Raw,
-			Type:  "query",
-		}
-		context.metric.Parameters = append(context.metric.Parameters, p)
 	}
 }
