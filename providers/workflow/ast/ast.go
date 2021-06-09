@@ -54,7 +54,11 @@ type ParenExpr struct {
 type SequenceExpr struct {
 	Lbrack token.Position
 	Values []Expression
-	IsMap  bool
+}
+
+type MapExpr struct {
+	Lbrack token.Position
+	Values []Expression
 }
 
 type KeyValueExpr struct {
@@ -76,5 +80,6 @@ func (e *Binary) Pos() token.Position       { return e.Lhs.Pos() }
 func (e *ParenExpr) Pos() token.Position    { return e.Lparen }
 func (e *Closure) Pos() token.Position      { return e.LambdaPos }
 func (e *SequenceExpr) Pos() token.Position { return e.Lbrack }
+func (e *MapExpr) Pos() token.Position      { return e.Lbrack }
 func (e *KeyValueExpr) Pos() token.Position { return e.Key.Pos() }
 func (e *RangeExpr) Pos() token.Position    { return e.Start.Pos() }

@@ -82,11 +82,11 @@ func (triggers *Triggers) UnmarshalYAML(n *yaml.Node) error {
 	return nil
 }
 
-func parseHttpTriggers(i interface{}) (t []HttpTrigger) {
+func parseHttpTriggers(i interface{}) (t []*HttpTrigger) {
 	switch i := i.(type) {
 	case []interface{}:
 		for _, m := range i {
-			t = append(t, HttpTrigger{Method: fmt.Sprintf("%v", m)})
+			t = append(t, &HttpTrigger{Method: fmt.Sprintf("%v", m)})
 		}
 	case map[string]interface{}:
 		for k, v := range i {
@@ -94,10 +94,10 @@ func parseHttpTriggers(i interface{}) (t []HttpTrigger) {
 			case key == "path":
 				switch v := v.(type) {
 				case string:
-					t = append(t, HttpTrigger{Path: v})
+					t = append(t, &HttpTrigger{Path: v})
 				case []interface{}:
 					for _, p := range v {
-						t = append(t, HttpTrigger{Path: fmt.Sprintf("%v", p)})
+						t = append(t, &HttpTrigger{Path: fmt.Sprintf("%v", p)})
 					}
 				}
 
@@ -110,7 +110,8 @@ func parseHttpTriggers(i interface{}) (t []HttpTrigger) {
 	return
 }
 
-func parseSchedule(i interface{}) (t ScheduleTrigger) {
+func parseSchedule(i interface{}) (t *ScheduleTrigger) {
+	t = &ScheduleTrigger{}
 	switch i := i.(type) {
 	case map[string]interface{}:
 		for k, v := range i {
@@ -134,7 +135,7 @@ func parseTrigger(i interface{}) (t Triggers) {
 	switch i := i.(type) {
 	case map[string]interface{}:
 		name := ""
-		var http []HttpTrigger
+		var http []*HttpTrigger
 		for k, v := range i {
 			switch k {
 			case "name":
@@ -154,16 +155,16 @@ func parseTrigger(i interface{}) (t Triggers) {
 	return
 }
 
-func parseEndpoint(method string, i interface{}) (t []HttpTrigger) {
+func parseEndpoint(method string, i interface{}) (t []*HttpTrigger) {
 	if i == nil {
-		t = append(t, HttpTrigger{Method: method})
+		t = append(t, &HttpTrigger{Method: method})
 	} else {
 		switch i := i.(type) {
 		case string:
-			t = append(t, HttpTrigger{Method: method, Path: i})
+			t = append(t, &HttpTrigger{Method: method, Path: i})
 		case []interface{}:
 			for _, p := range i {
-				t = append(t, HttpTrigger{Method: method, Path: fmt.Sprintf("%v", p)})
+				t = append(t, &HttpTrigger{Method: method, Path: fmt.Sprintf("%v", p)})
 			}
 		case map[string]interface{}:
 			for k, v := range i {
@@ -171,10 +172,10 @@ func parseEndpoint(method string, i interface{}) (t []HttpTrigger) {
 				case "path":
 					if paths, ok := v.([]interface{}); ok {
 						for _, path := range paths {
-							t = append(t, HttpTrigger{Method: method, Path: fmt.Sprintf("%s", path)})
+							t = append(t, &HttpTrigger{Method: method, Path: fmt.Sprintf("%s", path)})
 						}
 					} else {
-						t = append(t, HttpTrigger{Method: method, Path: fmt.Sprintf("%s", v)})
+						t = append(t, &HttpTrigger{Method: method, Path: fmt.Sprintf("%s", v)})
 					}
 				}
 			}

@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"fmt"
+	"mokapi/providers/utils"
 	"regexp"
 	"strings"
 )
@@ -18,7 +19,7 @@ func parse(s string, ctx *WorkflowContext) (interface{}, error) {
 		if err != nil {
 			return s, err
 		}
-		v := fmt.Sprintf("%v", i)
+		v := utils.ToString(i)
 		s = strings.Replace(s, m[0], v, 1)
 	}
 

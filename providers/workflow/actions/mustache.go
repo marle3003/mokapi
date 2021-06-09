@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-var pattern = regexp.MustCompile(`{{(.*)}}`)
+var pattern = regexp.MustCompile(`{{\s*([\w\.]+)\s*}}`)
 
 type Mustache struct{}
 

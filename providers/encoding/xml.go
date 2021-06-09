@@ -67,11 +67,14 @@ func (m StringMap) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 		if m.Schema.Value.Xml.Prefix != "" {
 			start.Name.Local = fmt.Sprintf("%s:%s", m.Schema.Value.Xml.Prefix, start.Name.Local)
 		}
-		start.Name.Space = m.Schema.Value.Xml.Namespace
+
+		if m.Schema.Value.Xml.Namespace != "" {
+			start.Attr = append(start.Attr, xml.Attr{Name: xml.Name{Local: "xmlns:" + m.Schema.Value.Xml.Prefix}, Value: m.Schema.Value.Xml.Namespace})
+		}
 	}
 
 	if wrapped {
-		e.EncodeToken(xml.StartElement{Name: xml.Name{Space: start.Name.Space, Local: start.Name.Local}})
+		e.EncodeToken(xml.StartElement{Name: xml.Name{Local: start.Name.Local}})
 	}
 
 	if m.Schema.Value.Type == "array" {
@@ -102,7 +105,7 @@ func (m StringMap) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 			}
 
 			if p, ok := o[propertyName]; ok {
-				start.Attr = append(start.Attr, xml.Attr{Name: xml.Name{Space: propertySchema.Value.Xml.Namespace, Local: attributeName}, Value: fmt.Sprint(p)})
+				start.Attr = append(start.Attr, xml.Attr{Name: xml.Name{Local: attributeName}, Value: fmt.Sprint(p)})
 			}
 		}
 
@@ -209,6 +212,9 @@ func (e *XmlNode) decode(decoder *xml.Decoder) error {
 
 func (e *XmlNode) parse(s *openapi.SchemaRef) (interface{}, error) {
 	if s == nil || s.Value == nil || s.Value.Type == "string" {
+		if e == nil {
+			return "", nil
+		}
 		return e.Content, nil
 	}
 
@@ -216,17 +222,18 @@ func (e *XmlNode) parse(s *openapi.SchemaRef) (interface{}, error) {
 	case "object":
 		props := map[string]interface{}{}
 		for name, property := range s.Value.Properties.Value {
+			xmlName := name
 			if property.Value.Xml != nil && len(property.Value.Xml.Name) > 0 {
-				name = property.Value.Xml.Name
+				xmlName = property.Value.Xml.Name
 			}
 			if property.Value.Xml != nil && property.Value.Xml.Attribute {
-				if v, ok := e.Attributes[name]; ok {
+				if v, ok := e.Attributes[xmlName]; ok {
 					props[name] = v
 				} else if isPropertyRequired(name, s) {
 					return nil, errors.Errorf("required property with name '%v' not found", name)
 				}
 			} else {
-				c := e.GetFirstElement(name)
+				c := e.GetFirstElement(xmlName)
 				if c == nil && isPropertyRequired(name, s) {
 					return nil, errors.Errorf("required property with name '%v' not found", name)
 				}
@@ -239,6 +246,9 @@ func (e *XmlNode) parse(s *openapi.SchemaRef) (interface{}, error) {
 		}
 		return props, nil
 	case "array":
+		if e == nil {
+			return nil, fmt.Errorf("expected array but found null")
+		}
 		elements := e.Children
 		if s.Value.Xml != nil && s.Value.Xml.Wrapped {
 			if len(e.Children) == 0 {

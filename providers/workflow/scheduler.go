@@ -37,7 +37,7 @@ func (s *Scheduler) AddOrUpdate(key string, workflows []mokapi.Workflow, options
 
 	for _, w := range workflows {
 		for _, t := range w.On {
-			if len(t.Schedule.Every) == 0 {
+			if t.Schedule == nil || len(t.Schedule.Every) == 0 {
 				continue
 			}
 

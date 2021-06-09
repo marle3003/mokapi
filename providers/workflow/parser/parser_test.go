@@ -109,6 +109,86 @@ func TestCallExpr(t *testing.T) {
 	}
 }
 
+func TestCallExprWithSelector(t *testing.T) {
+	src := "a(b.*, c)"
+	x := Parse(src)
+	if f, ok := x.(*ast.CallExpr); !ok {
+		t.Errorf("Parse(%q): got %T, expected *ast.CallExpr", src, x)
+	} else {
+		if f.Fun.Name != "a" {
+			t.Errorf("Parse(%q): got %v, expected function 'a'", src, f.Fun.Name)
+		}
+
+		if len(f.Args) != 2 {
+			t.Errorf("Parse(%q): got len of args %v, expected 2", src, len(f.Args))
+		}
+
+		if s, isIdent := f.Args[0].(*ast.Selector); !isIdent {
+			t.Errorf("Parse(%q): got %T, expected *ast.Selector", src, f.Args[0])
+		} else {
+			if ident, isIdent := s.X.(*ast.Identifier); !isIdent {
+				t.Errorf("Parse(%q): got %T, expected *ast.Identifier", src, s.X)
+			} else if ident.Name != "b" {
+				t.Errorf("Parse(%q): got %v, expected ident 'b'", src, ident.Name)
+			}
+			if s.Selector.Name != "*" {
+				t.Errorf("Parse(%q): got %v, expected selector '*'", src, s.Selector.Name)
+			}
+		}
+
+		if ident, isIdent := f.Args[1].(*ast.Identifier); !isIdent {
+			t.Errorf("Parse(%q): got %T, expected *ast.Identifier", src, f.Args[1])
+		} else if ident.Name != "c" {
+			t.Errorf("Parse(%q): got %v, expected ident 'c'", src, ident.Name)
+		}
+	}
+}
+
+func TestNestedCallExpr(t *testing.T) {
+	src := "a(b, c(d, e)"
+	x := Parse(src)
+	if f, ok := x.(*ast.CallExpr); !ok {
+		t.Errorf("Parse(%q): got %T, expected *ast.CallExpr", src, x)
+	} else {
+		if f.Fun.Name != "a" {
+			t.Errorf("Parse(%q): got %v, expected function 'a'", src, f.Fun.Name)
+		}
+
+		if len(f.Args) != 2 {
+			t.Errorf("Parse(%q): got len of args %v, expected 2", src, len(f.Args))
+		}
+
+		if ident, isIdent := f.Args[0].(*ast.Identifier); !isIdent {
+			t.Errorf("Parse(%q): got %T, expected *ast.Identifier", src, f.Args[0])
+		} else if ident.Name != "b" {
+			t.Errorf("Parse(%q): got %v, expected ident 'b'", src, ident.Name)
+		}
+
+		// c
+		if f2, isCall := f.Args[1].(*ast.CallExpr); !isCall {
+			t.Errorf("Parse(%q): got %T, expected *ast.CallExpr", src, f.Args[1])
+		} else {
+			if f2.Fun.Name != "c" {
+				t.Errorf("Parse(%q): got %v, expected function 'c'", src, f2.Fun.Name)
+			}
+
+			// d
+			if ident, isIdent := f2.Args[0].(*ast.Identifier); !isIdent {
+				t.Errorf("Parse(%q): got %T, expected *ast.Identifier", src, f2.Args[0])
+			} else if ident.Name != "d" {
+				t.Errorf("Parse(%q): got %v, expected ident 'd'", src, ident.Name)
+			}
+
+			// e
+			if ident, isIdent := f2.Args[1].(*ast.Identifier); !isIdent {
+				t.Errorf("Parse(%q): got %T, expected *ast.Identifier", src, f2.Args[0])
+			} else if ident.Name != "e" {
+				t.Errorf("Parse(%q): got %v, expected ident 'e'", src, ident.Name)
+			}
+		}
+	}
+}
+
 func TestClosureExpr(t *testing.T) {
 	src := "x => x == b"
 	x := Parse(src)
@@ -139,9 +219,6 @@ func TestList(t *testing.T) {
 		t.Errorf("Parse(%q): got %v, expected block *ast.SequenceExpr", src, x)
 		return
 	}
-	if seq.IsMap {
-		t.Errorf("ParseExpr(%q):expected not a map", src)
-	}
 	for i, v := range seq.Values {
 		if l, isLit := v.(*ast.Literal); !isLit {
 			t.Errorf("ParseExpr(%q): got %T, expected *ast.Literal", src, v)
@@ -162,9 +239,7 @@ func TestListRange(t *testing.T) {
 		t.Errorf("Parse(%q): got %v, expected block *ast.SequenceExpr", src, x)
 		return
 	}
-	if seq.IsMap {
-		t.Errorf("ParseExpr(%q):expected not a map", src)
-	}
+
 	for _, v := range seq.Values {
 		if r, isRange := v.(*ast.RangeExpr); !isRange {
 			t.Errorf("ParseExpr(%q): got %T, expected *ast.RangeExpr", src, v)
@@ -189,16 +264,13 @@ func TestListRange(t *testing.T) {
 
 func TestMap(t *testing.T) {
 	e := map[string]string{"a": "1", "b": "2", "c": "3", "z": "4"}
-	src := "[a: 1, b: 2, c: 3, z: 4]"
+	src := "{a: 1, b: 2, c: 3, z: 4}"
 
 	x := Parse(src)
-	seq, isSeq := x.(*ast.SequenceExpr)
+	seq, isSeq := x.(*ast.MapExpr)
 	if !isSeq {
-		t.Errorf("Parse(%q): got %v, expected block *ast.SequenceExpr", src, x)
+		t.Errorf("Parse(%q): got %v, expected block *ast.MapExpr", src, x)
 		return
-	}
-	if !seq.IsMap {
-		t.Errorf("ParseExpr(%q):expected a map", src)
 	}
 	for _, v := range seq.Values {
 		if kv, isLit := v.(*ast.KeyValueExpr); !isLit {

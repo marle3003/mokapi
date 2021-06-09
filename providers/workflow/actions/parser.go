@@ -15,7 +15,9 @@ func (p *YmlParser) Run(ctx *runtime.ActionContext) error {
 	}
 
 	result := make(map[string]interface{})
-	yaml.Unmarshal([]byte(content), result)
+	if err := yaml.Unmarshal([]byte(content), result); err != nil {
+		return err
+	}
 
 	ctx.SetOutput("result", result)
 

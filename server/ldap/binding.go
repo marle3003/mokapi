@@ -165,7 +165,7 @@ func (s *Binding) getEntry(dn string) (ldapConfig.Entry, error) {
 	if entry, ok := s.entries[dn]; ok {
 		return entry, nil
 	}
-	return ldapConfig.Entry{}, errors.Errorf("entry with dn %v not found", dn)
+	return ldapConfig.Entry{}, errors.Errorf("entry with dn %q not found", dn)
 }
 
 func sendResponse(conn net.Conn, packet *ber.Packet) {

@@ -42,3 +42,26 @@ func Find(args ...interface{}) (interface{}, error) {
 		return nil, fmt.Errorf("find: unexpected source type %t", source)
 	}
 }
+
+func FindAll(args ...interface{}) (interface{}, error) {
+	source := args[0]
+	if source == nil {
+		return nil, fmt.Errorf("findAll: source parameter is null")
+	}
+	p := newPredicate(args[1].(Function))
+	switch reflect.TypeOf(source).Kind() {
+	case reflect.Slice:
+		result := make([]interface{}, 0)
+		s := reflect.ValueOf(source)
+
+		for i := 0; i < s.Len(); i++ {
+			v := s.Index(i).Interface()
+			if found, _ := p(v); found {
+				result = append(result, v)
+			}
+		}
+		return result, nil
+	default:
+		return nil, fmt.Errorf("find: unexpected source type %t", source)
+	}
+}

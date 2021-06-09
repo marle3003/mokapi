@@ -42,3 +42,21 @@ func (c *ActionContext) WorkflowContext() *WorkflowContext {
 func (c *ActionContext) Log(format string, args ...interface{}) {
 	c.log = append(c.log, fmt.Sprintf(format, args...))
 }
+
+func (c *ActionContext) GetInputInt(name string) (int, bool) {
+	val, ok := c.ctx.Context.Steps[c.stepId].Inputs[name]
+	if !ok {
+		return 0, false
+	}
+	i, ok := val.(int)
+	return i, ok
+}
+
+func (c *ActionContext) GetInputFloat(name string) (float64, bool) {
+	val, ok := c.ctx.Context.Steps[c.stepId].Inputs[name]
+	if !ok {
+		return 0, false
+	}
+	f, ok := val.(float64)
+	return f, ok
+}

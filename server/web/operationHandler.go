@@ -167,9 +167,15 @@ func respond(message string, status int, ctx *HttpContext) {
 }
 
 func parseBody(s string, contentType *media.ContentType, schema *openapi.SchemaRef) (interface{}, error) {
+	if schema.Value != nil && schema.Value.Type == "string" {
+		return s, nil
+	}
+
 	switch contentType.Subtype {
 	case "xml":
 		return encoding.UnmarshalXml(s, schema)
+	case "json":
+		return encoding.UnmarshalJSON(s, schema)
 	default:
 		log.Debugf("unsupported content type '%v' from body", contentType)
 		return s, nil

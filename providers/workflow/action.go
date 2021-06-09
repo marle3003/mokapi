@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/mokapi"
 	"mokapi/providers/workflow/actions"
 	"mokapi/providers/workflow/event"
@@ -15,9 +16,17 @@ var (
 		"parse-yml": &actions.YmlParser{},
 		"mustache":  &actions.Mustache{},
 		"split":     &actions.Split{},
+		"echo":      &actions.Echo{},
+		"delay":     &actions.Delay{},
 	}
 	fCollection = map[string]functions.Function{
-		"find": functions.Find,
+		"find":      functions.Find,
+		"findAll":   functions.FindAll,
+		"any":       functions.Any,
+		"format":    functions.Format,
+		"now":       functions.Now,
+		"randInt":   functions.RandInt,
+		"randFloat": functions.RandFloat,
 	}
 )
 
@@ -36,7 +45,10 @@ func Run(workflows []mokapi.Workflow, event event.Handler, options ...WorkflowOp
 					opt(ctx)
 				}
 
-				s, _ := runtime.Run(w, ctx)
+				s, err := runtime.Run(w, ctx)
+				if err != nil {
+					log.Errorf("workflow %v: %v", w.Name, err.Error())
+				}
 				summary.Workflows = append(summary.Workflows, s)
 			}
 		}

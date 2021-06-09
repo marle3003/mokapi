@@ -1,7 +1,10 @@
 package dynamic
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
+	"github.com/Masterminds/sprig"
 	"github.com/fsnotify/fsnotify"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -11,6 +14,7 @@ import (
 	"reflect"
 	"strings"
 	"sync"
+	"text/template"
 	"time"
 )
 
@@ -161,23 +165,67 @@ func newFileHandler(config interface{}) *fileHandler {
 
 func loadFileConfig(filename string, element interface{}) error {
 	log.Debugf("reading config %q", filename)
-	data, err := ioutil.ReadFile(filename)
+	data, err := readFile(filename)
+
 	if err != nil {
 		return err
 	}
 
+	return parseConfig(filename, data, element)
+}
+
+func readFile(filename string) ([]byte, error) {
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return data, err
+	}
+
+	if filepath.Ext(filename) != ".tmpl" {
+		return data, nil
+	}
+	content := string(data)
+
+	funcMap := sprig.TxtFuncMap()
+	funcMap["extractUsername"] = extractUsername
+	tmpl := template.New(filename).Funcs(funcMap)
+
+	tmpl, err = tmpl.Parse(content)
+	if err != nil {
+		return data, err
+	}
+
+	var buffer bytes.Buffer
+	err = tmpl.Execute(&buffer, false)
+	if err != nil {
+		return data, err
+	}
+
+	return buffer.Bytes(), nil
+}
+
+func parseConfig(filename string, data []byte, element interface{}) error {
 	switch filepath.Ext(filename) {
 	case ".yml", ".yaml":
 		err := yaml.Unmarshal(data, element)
 		if err != nil {
 			return errors.Wrapf(err, "parsing yaml file %s", filename)
 		}
+		return nil
 	case ".json":
 		err := json.Unmarshal(data, element)
 		if err != nil {
 			return errors.Wrapf(err, "parsing json file %s", filename)
 		}
+		return nil
+	case ".tmpl":
+		filename = filename[0 : len(filename)-len(filepath.Ext(filename))]
+		return parseConfig(filename, data, element)
 	}
 
-	return nil
+	return fmt.Errorf("unsupported file extension: %v", filename)
+}
+
+func extractUsername(s string) string {
+	slice := strings.Split(s, "\\")
+	return slice[len(slice)-1]
 }

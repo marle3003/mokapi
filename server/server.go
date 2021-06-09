@@ -107,6 +107,12 @@ func (s *Server) updateConfigs(config dynamic.Config) {
 	switch c := config.(type) {
 	case *mokapi.Config:
 		s.config[c.ConfigPath] = c
+		if len(c.Workflows) == 0 {
+			log.Debugf("no workflows found in %v", c.ConfigPath)
+		}
+		for _, w := range c.Workflows {
+			log.Debugf("adding workflow %q", w.Name)
+		}
 		s.scheduler.AddOrUpdate(c.ConfigPath, c.Workflows, workflow.WithWorkingDirectory(filepath.Dir(c.ConfigPath)))
 	case *openapi.Config:
 		if _, ok := s.runtime.OpenApi[c.Info.Name]; !ok {
@@ -157,10 +163,12 @@ func (s *Server) updateConfigs(config dynamic.Config) {
 }
 
 func (s *Server) triggerHandler(event event.Handler, options ...workflow.WorkflowOptions) *runtime.Summary {
+	summary := &runtime.Summary{}
 	for _, c := range s.config {
 		o := append(options, workflow.WithWorkingDirectory(filepath.Dir(c.ConfigPath)))
-		return workflow.Run(c.Workflows, event, o...)
+		s := workflow.Run(c.Workflows, event, o...)
+		summary.Workflows = append(summary.Workflows, s.Workflows...)
 	}
 
-	return nil
+	return summary
 }

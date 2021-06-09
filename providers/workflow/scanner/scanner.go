@@ -76,7 +76,7 @@ func (s *Scanner) skipWhitespace() {
 
 func (s *Scanner) scanIdentifier() string {
 	offs := s.offset - 1
-	for unicode.IsLetter(s.ch) || unicode.IsDigit(s.ch) || s.ch == '_' {
+	for unicode.IsLetter(s.ch) || unicode.IsDigit(s.ch) || s.ch == '_' || s.ch == '*' {
 		s.next()
 	}
 	l := s.offset - 1 - offs
@@ -298,5 +298,5 @@ func (s *Scanner) Scan() (pos token.Position, tok token.Token, lit string) {
 }
 
 func isLetter(ch rune) bool {
-	return unicode.IsLetter(ch) || ch == '_'
+	return unicode.IsLetter(ch) || ch == '_' || ch == '*'
 }

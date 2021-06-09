@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	log "github.com/sirupsen/logrus"
 	"mokapi/providers/workflow/ast"
 	"mokapi/providers/workflow/functions"
 )
@@ -18,7 +19,10 @@ func (v *callVisitor) Visit(e ast.Expression) ast.Visitor {
 	if e != nil {
 		switch t := e.(type) {
 		case *ast.Identifier:
-			f := v.outer.ctx.Functions[t.Name]
+			f, ok := v.outer.ctx.Functions[t.Name]
+			if !ok {
+				log.Errorf("function %q not found", t.Name)
+			}
 			v.outer.stack.Push(f)
 			return nil
 		case *ast.CallExpr:
@@ -34,6 +38,9 @@ func (v *callVisitor) Visit(e ast.Expression) ast.Visitor {
 	}
 
 	f := v.outer.stack.Pop().(functions.Function)
+	if f == nil {
+		return nil
+	}
 	o, _ := f(args...)
 	v.outer.stack.Push(o)
 

@@ -292,7 +292,7 @@ type Xml struct {
 	Attribute bool
 	Prefix    string
 	Namespace string
-	CData     bool
+	CData     bool `yaml:"x-cdata" json:"x-cdata"`
 }
 
 const (

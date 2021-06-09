@@ -91,6 +91,8 @@ func (p *parser) parseOperand() ast.Expression {
 		return x
 	case token.LBRACK:
 		return p.parseSequence()
+	case token.LBRACE:
+		return p.parseMap()
 	case token.LPAREN:
 		lparen := p.pos
 		p.next()
@@ -138,36 +140,48 @@ func (p *parser) parseClosure(ident *ast.Identifier) *ast.Closure {
 	return closure
 }
 
-// TODO CHANGE MAP TO {}
-func (p *parser) parseSequence() *ast.SequenceExpr {
-	lbrack := p.pos
-	p.expect(token.LBRACK)
+func (p *parser) parseMap() *ast.MapExpr {
+	lbrace := p.pos
+	p.expect(token.LBRACE)
 	var values []ast.Expression
-	isMap := false
-	for p.tok != token.RBRACK && p.tok != token.EOF {
-		el := p.parseElement()
-		values = append(values, el)
-		switch el.(type) {
-		case *ast.KeyValueExpr:
-			if len(values) == 1 {
-				isMap = true
-			} else if !isMap {
-				p.expected(token.COLON)
-			}
-		default:
-			if len(values) == 1 {
-				isMap = false
-			} else if isMap {
-				p.expected(token.COLON)
-			}
-		}
+	for p.tok != token.RBRACE && p.tok != token.EOF {
+		k := p.parseValue()
+		p.expect(token.COLON)
+		v := p.parseValue()
+		kv := &ast.KeyValueExpr{Key: k, Value: v}
+
+		values = append(values, kv)
+
 		if p.tok != token.COMMA {
 			break
 		}
 		p.expect(token.COMMA)
 	}
 	p.expect(token.RBRACK)
-	return &ast.SequenceExpr{Values: values, Lbrack: lbrack, IsMap: isMap}
+	return &ast.MapExpr{Values: values, Lbrack: lbrace}
+}
+
+// TODO CHANGE MAP TO {}
+func (p *parser) parseSequence() *ast.SequenceExpr {
+	lbrack := p.pos
+	p.expect(token.LBRACK)
+	var values []ast.Expression
+	for p.tok != token.RBRACK && p.tok != token.EOF {
+		x := p.parseValue()
+		if p.tok == token.RANGE {
+			p.next()
+			x = &ast.RangeExpr{Start: x, End: p.parsePrimary()}
+		}
+
+		values = append(values, x)
+
+		if p.tok != token.COMMA {
+			break
+		}
+		p.expect(token.COMMA)
+	}
+	p.expect(token.RBRACK)
+	return &ast.SequenceExpr{Values: values, Lbrack: lbrack}
 }
 
 func (p *parser) parseElement() ast.Expression {
@@ -186,6 +200,8 @@ func (p *parser) parseElement() ast.Expression {
 func (p *parser) parseValue() ast.Expression {
 	if p.tok == token.LBRACK {
 		return p.parseSequence()
+	} else if p.tok == token.LBRACE {
+		return p.parseMap()
 	}
 
 	return p.parseBinary()

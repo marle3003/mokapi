@@ -5,6 +5,7 @@ import "fmt"
 type Context struct {
 	Steps map[string]*StepContext
 	data  map[string]interface{}
+	vars  map[string]interface{}
 }
 
 func (c *Context) Set(name string, value interface{}) {

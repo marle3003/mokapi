@@ -124,9 +124,11 @@ func (cw *ConfigWatcher) Start() error {
 					if b, err := isDir(evt.Name); err != nil {
 						log.Errorf("unable to read event from %v: %v", evt.Name, err)
 					} else if b && !skipPath(evt.Name) {
-						cw.watcher.Add(evt.Name)
+						if err := cw.watcher.Add(evt.Name); err != nil {
+							log.Error(err)
+						}
 						if err := filepath.Walk(cw.config.File.Directory, cw.walkDir); err != nil {
-							fmt.Println("ERROR", err)
+							log.Error(err)
 						}
 					} else if isValidConfigFile(evt.Name) {
 						go cw.fw.add(evt.Name)
@@ -183,7 +185,7 @@ func isValidConfigFile(path string) bool {
 		return false
 	}
 	switch filepath.Ext(path) {
-	case ".yml", ".yaml", ".json":
+	case ".yml", ".yaml", ".json", ".tmpl":
 		return true
 	default:
 		return false

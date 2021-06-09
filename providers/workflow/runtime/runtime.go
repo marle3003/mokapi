@@ -30,6 +30,14 @@ func Run(workflow mokapi.Workflow, ctx *WorkflowContext) (*WorkflowSummary, erro
 		}
 	}
 
+	for k, v := range workflow.Vars {
+		v, err := parse(v, ctx)
+		if err != nil {
+			return summary, err
+		}
+		ctx.Context.Set(k, v)
+	}
+
 	for _, step := range workflow.Steps {
 		stepSum, err := runStep(step, ctx)
 		summary.Steps = append(summary.Steps, stepSum)

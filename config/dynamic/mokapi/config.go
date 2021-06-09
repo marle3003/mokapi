@@ -26,14 +26,15 @@ type Workflow struct {
 	Steps []Step
 	On    Triggers
 	Env   map[string]string
+	Vars  map[string]string
 }
 
 type Triggers []Trigger
 
 type Trigger struct {
 	Service  string
-	Http     HttpTrigger
-	Schedule ScheduleTrigger
+	Http     *HttpTrigger
+	Schedule *ScheduleTrigger
 }
 
 type HttpTrigger struct {

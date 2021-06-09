@@ -86,3 +86,49 @@ steps:
       expression: /bookstore/book/title
   - run: echo "${{ steps.demo.outputs.result }}"
 ```
+
+## delay action
+Pauses the current Mokapi Action for at least the duration.
+
+Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h", default is "s"
+
+### Fixed length of time
+
+```yaml
+steps:
+  - uses: delay
+    with:
+      time: 10 # 10 seconds
+  - uses: delay
+    with:
+      time: 10
+      unit: s
+  - uses: delay
+      with:
+        time: 10m # 10 minutes
+  - uses: delay
+      with:
+        time: 1m30s # 1min 30 seconds
+```
+
+### Variable length of time
+
+`sigma` standard deviation of logarithmic values<br />
+`mean` mean of logarithmic values<br />
+`lower` lower bound of the range, inclusive<br />
+`upper` upper bound of the range, inclusive
+
+```yaml
+steps:
+  - uses: delay
+    with:
+      type: lognormal
+      sigma: 5
+      mean: 20
+      unit: ms
+  - uses: delay
+    with:
+      type: uniform
+      lower: 10
+      upper: 30
+```
