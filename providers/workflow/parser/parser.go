@@ -61,7 +61,13 @@ func (p *parser) parsePrimary() ast.Expression {
 		switch p.tok {
 		case token.PERIOD:
 			p.next()
-			s := p.parseIdent()
+			var s *ast.Identifier
+			if p.tok == token.MUL {
+				s = &ast.Identifier{Name: "*", NamePos: p.pos}
+				p.next()
+			} else {
+				s = p.parseIdent()
+			}
 			o = &ast.Selector{X: o, Selector: s}
 		case token.LPAREN:
 			if ident, isIdent := o.(*ast.Identifier); !isIdent {

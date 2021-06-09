@@ -82,6 +82,8 @@ func (v *visitor) Visit(e ast.Expression) ast.Visitor {
 		return nil
 	case *ast.SequenceExpr:
 		return newSequenceVisitor(t, v)
+	case *ast.MapExpr:
+		return newMapVisitor(t, v)
 	case *ast.RangeExpr:
 		return newRangeVisitor(t, v)
 	case *ast.KeyValueExpr:

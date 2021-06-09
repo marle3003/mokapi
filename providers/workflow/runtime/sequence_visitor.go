@@ -18,15 +18,7 @@ func (v *sequenceVisitor) Visit(e ast.Expression) ast.Visitor {
 		return v.outer.Visit(e)
 	}
 
-	if len(v.seq.Values) == 0 {
-		v.outer.stack.Push(v.getArray())
-	} else {
-		if v.seq.IsMap {
-			v.outer.stack.Push(v.getExpando())
-		} else {
-			v.outer.stack.Push(v.getArray())
-		}
-	}
+	v.outer.stack.Push(v.getArray())
 
 	return nil
 }
@@ -47,16 +39,6 @@ func (v *sequenceVisitor) getArray() interface{} {
 		}
 	}
 	return result
-}
-
-func (v *sequenceVisitor) getExpando() map[string]interface{} {
-	expando := make(map[string]interface{})
-	for range v.seq.Values {
-		val := v.outer.stack.Pop()
-		key := v.outer.stack.Pop()
-		expando[key.(string)] = val
-	}
-	return expando
 }
 
 func reverse(numbers []interface{}) []interface{} {

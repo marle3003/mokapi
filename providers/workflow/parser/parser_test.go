@@ -57,6 +57,23 @@ func TestSelectorExpr(t *testing.T) {
 	}
 }
 
+func TestStarSelectorExpr(t *testing.T) {
+	src := "a.*"
+	x := Parse(src)
+	if s, ok := x.(*ast.Selector); !ok {
+		t.Errorf("Parse(%q): got %T, expected *ast.Selector", src, x)
+	} else {
+		if ident, isIdent := s.X.(*ast.Identifier); !isIdent {
+			t.Errorf("Parse(%q): got %T, expected *ast.Identifier", src, s.X)
+		} else if ident.Name != "a" {
+			t.Errorf("Parse(%q): got %v, expected ident 'a'", src, ident.Name)
+		}
+		if s.Selector.Name != "*" {
+			t.Errorf("Parse(%q): got %v, expected selector '*'", src, s.Selector.Name)
+		}
+	}
+}
+
 func TestBinaryExpr(t *testing.T) {
 	src := "a == b"
 	x := Parse(src)
