@@ -17,11 +17,6 @@ type dashboard struct {
 	KafkaTopics       []models.KafkaTopic    `json:"kafkaTopics"`
 }
 
-type serviceStatus struct {
-	Total  int `json:"total"`
-	Errors int `json:"errors"`
-}
-
 type requestSummary struct {
 	Id           string        `json:"id"`
 	Method       string        `json:"method"`

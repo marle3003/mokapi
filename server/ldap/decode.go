@@ -8,35 +8,35 @@ import (
 
 func parseSearchRequest(req *ber.Packet) (*SearchRequest, error) {
 	if len(req.Children) != 8 {
-		return nil, fmt.Errorf("Unexpected search request length: %v", len(req.Children))
+		return nil, fmt.Errorf("unexpected search request length: %v", len(req.Children))
 	}
 
 	baseObject, ok := req.Children[0].Value.(string)
 	if !ok {
-		return nil, fmt.Errorf("Unexpected data type for field baseobject: %v", req.Children[0].Value)
+		return nil, fmt.Errorf("unexpected data type for field baseobject: %v", req.Children[0].Value)
 	}
 
 	s, ok := req.Children[1].Value.(int64)
 	if !ok {
-		return nil, fmt.Errorf("Unexpected data type for field scope: %v", req.Children[1].Value)
+		return nil, fmt.Errorf("unexpected data type for field scope: %v", req.Children[1].Value)
 	}
 	scope := int(s)
 
 	d, ok := req.Children[2].Value.(int64)
 	if !ok {
-		return nil, fmt.Errorf("Unexpected data type for field dereference policy: %v", req.Children[2].Value)
+		return nil, fmt.Errorf("unexpected data type for field dereference policy: %v", req.Children[2].Value)
 	}
 	derefPolicy := int(d)
 
 	s, ok = req.Children[3].Value.(int64)
 	if !ok {
-		return nil, fmt.Errorf("Unexpected data type for field size limit: %v", req.Children[3].Value)
+		return nil, fmt.Errorf("unexpected data type for field size limit: %v", req.Children[3].Value)
 	}
 	sizeLimit := int(s)
 
 	t, ok := req.Children[4].Value.(int64)
 	if !ok {
-		return nil, fmt.Errorf("Unexpected data type for field time limit: %v", req.Children[4].Value)
+		return nil, fmt.Errorf("unexpected data type for field time limit: %v", req.Children[4].Value)
 	}
 	timeLimit := int(t)
 
@@ -44,18 +44,18 @@ func parseSearchRequest(req *ber.Packet) (*SearchRequest, error) {
 	if req.Children[5].Value != nil {
 		typesOnly, ok = req.Children[5].Value.(bool)
 		if !ok {
-			return nil, fmt.Errorf("Unexpected data type for field types: %v", req.Children[4].Value)
+			return nil, fmt.Errorf("unexpected data type for field types: %v", req.Children[4].Value)
 		}
 	}
 
 	filterPacket := req.Children[6]
 	filter, _ := parseFilter(filterPacket)
 
-	attributes := []string{}
+	var attributes []string
 	for _, attr := range req.Children[7].Children {
 		a, ok := attr.Value.(string)
 		if !ok {
-			return nil, fmt.Errorf("Unexpected data type for field attributes: %v", req.Children[4].Value)
+			return nil, fmt.Errorf("unexpected data type for field attributes: %v", req.Children[4].Value)
 		}
 		attributes = append(attributes, a)
 	}

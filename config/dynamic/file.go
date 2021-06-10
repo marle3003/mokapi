@@ -47,7 +47,10 @@ func (fw *FileWatcher) Read(path string, config Config, h ChangeEventHandler) er
 	if !ok {
 		fh = newFileHandler(config)
 		fw.Path[path] = fh
-		fw.watcher.Add(path)
+		err := fw.watcher.Add(path)
+		if err != nil {
+			log.Errorf("unable to add file watcher to %q: %v", path, err.Error())
+		}
 	}
 	fh.events = append(fh.events, h)
 	v, err := fh.f(path)
@@ -82,7 +85,10 @@ func (fw *FileWatcher) add(path string) {
 			fh = newFileHandler(ci.item)
 			fh.events = append(fh.events, ci.handler)
 			fw.Path[path] = fh
-			fw.watcher.Add(path)
+			err := fw.watcher.Add(path)
+			if err != nil {
+				log.Errorf("unable to add file watcher to %q: %v", path, err.Error())
+			}
 			go func() {
 				ci.handler(path, ci.item, fw)
 				fw.update <- ci.item
@@ -105,9 +111,12 @@ func (fw *FileWatcher) Start() {
 
 	go func() {
 		defer func() {
-			log.Error("Closing file watcher. Restart is required...")
+			log.Error("closing file watcher. Restart is required...")
 			ticker.Stop()
-			fw.watcher.Close()
+			err := fw.watcher.Close()
+			if err != nil {
+				log.Error("unable to close file watcher")
+			}
 		}()
 
 		for {

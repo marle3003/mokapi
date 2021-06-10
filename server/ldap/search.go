@@ -28,12 +28,12 @@ type SearchResult struct {
 }
 
 func (s *Binding) handleSearchRequest(conn net.Conn, messageId int64, req *ber.Packet) error {
-	searchRequest, error := parseSearchRequest(req)
-	if error != nil {
-		return error
+	searchRequest, err := parseSearchRequest(req)
+	if err != nil {
+		return err
 	}
 
-	log.Infof("Received search request with messageId %v BaseDN: %v Filter %v", messageId, searchRequest.baseObject, searchRequest.filterString)
+	log.Infof("received search request with messageId %v BaseDN: %v Filter %v", messageId, searchRequest.baseObject, searchRequest.filterString)
 
 	if searchRequest.baseObject == "" && searchRequest.scope == ScopeBaseObject {
 		result := &SearchResult{dn: "", attributes: make(map[string][]string)}
@@ -48,9 +48,9 @@ func (s *Binding) handleSearchRequest(conn net.Conn, messageId int64, req *ber.P
 
 	count := 0
 	for _, entry := range s.entries {
-		ok, error := filter(searchRequest.filter, entry)
-		if error != nil {
-			fmt.Print(error.Error())
+		ok, err := filter(searchRequest.filter, entry)
+		if err != nil {
+			return err
 		}
 		if !ok {
 			continue
@@ -92,13 +92,13 @@ func (s *Binding) handleSearchRequest(conn net.Conn, messageId int64, req *ber.P
 			result.attributes = entry.Attributes
 		}
 
-		log.Infof("Found result for message %v: %v", messageId, result.dn)
+		log.Infof("found result for message %v: %v", messageId, result.dn)
 
 		response := s.encodeSearchResult(messageId, result)
 		sendResponse(conn, response)
 	}
 
-	log.Debugf("Finishing search for message %v", messageId)
+	log.Debugf("finishing search for message %v", messageId)
 
 	return nil
 }
@@ -107,9 +107,9 @@ func filter(f *ber.Packet, entry ldapConfig.Entry) (bool, error) {
 	switch f.Tag {
 	case FilterAnd:
 		for _, child := range f.Children {
-			ok, error := filter(child, entry)
-			if error != nil {
-				return false, error
+			ok, err := filter(child, entry)
+			if err != nil {
+				return false, err
 			}
 			if !ok {
 				return false, nil
@@ -118,9 +118,9 @@ func filter(f *ber.Packet, entry ldapConfig.Entry) (bool, error) {
 		return true, nil
 	case FilterOr:
 		for _, child := range f.Children {
-			ok, error := filter(child, entry)
-			if error != nil {
-				return false, error
+			ok, err := filter(child, entry)
+			if err != nil {
+				return false, err
 			}
 			if ok {
 				return true, nil
@@ -129,12 +129,12 @@ func filter(f *ber.Packet, entry ldapConfig.Entry) (bool, error) {
 		return false, nil
 	case FilterNot:
 		if len(f.Children) != 1 {
-			return false, fmt.Errorf("Invalid filter operation")
+			return false, fmt.Errorf("invalid filter operation")
 		}
 
-		ok, error := filter(f.Children[0], entry)
-		if error != nil {
-			return false, error
+		ok, err := filter(f.Children[0], entry)
+		if err != nil {
+			return false, err
 		}
 		return !ok, nil
 	case FilterEqualityMatch:
@@ -152,7 +152,7 @@ func filter(f *ber.Packet, entry ldapConfig.Entry) (bool, error) {
 		}
 	case FilterSubstrings:
 		if len(f.Children) != 2 {
-			return false, fmt.Errorf("Invalid filter operation")
+			return false, fmt.Errorf("invalid filter operation")
 		}
 		attribute := f.Children[0].Value.(string)
 		bytes := f.Children[1].Children[0].Data.Bytes()
@@ -178,9 +178,9 @@ func filter(f *ber.Packet, entry ldapConfig.Entry) (bool, error) {
 			}
 		}
 	case FilterGreaterOrEqual:
-		return false, fmt.Errorf("Not supported")
+		return false, fmt.Errorf("not supported")
 	case FilterLessOrEqual:
-		return false, fmt.Errorf("Not supported")
+		return false, fmt.Errorf("not supported")
 	case FilterPresent:
 		attribute := strings.ToLower(f.Data.String())
 		for k := range entry.Attributes {
@@ -189,7 +189,7 @@ func filter(f *ber.Packet, entry ldapConfig.Entry) (bool, error) {
 			}
 		}
 	default:
-		return false, fmt.Errorf("Unsupported filter %v requested", f.Tag)
+		return false, fmt.Errorf("unsupported filter %v requested", f.Tag)
 	}
 	return false, nil
 }

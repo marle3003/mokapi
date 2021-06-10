@@ -9,14 +9,14 @@ import (
 const DefaultEnvNamePrefix = "MOKAPI_"
 
 func parseFlags() (map[string]string, error) {
-	flags, error := parseArgs(os.Args[1:]) // first argument is the program path
-	if error != nil {
-		return nil, error
+	flags, err := parseArgs(os.Args[1:]) // first argument is the program path
+	if err != nil {
+		return nil, err
 	}
 
-	envs, error := parseEnv(os.Environ())
-	if error != nil {
-		return nil, error
+	envs, err := parseEnv(os.Environ())
+	if err != nil {
+		return nil, err
 	}
 
 	// merge maps. env flags overwrites cli flags
@@ -47,7 +47,7 @@ func parseArgs(args []string) (map[string]string, error) {
 	for i := 0; i < len(args); i++ {
 		s := args[i]
 		if len(s) < 2 || s[0] != '-' {
-			return nil, fmt.Errorf("Invalid argument %v", s)
+			return nil, fmt.Errorf("invalid argument %v", s)
 		}
 
 		index := 1
@@ -55,7 +55,7 @@ func parseArgs(args []string) (map[string]string, error) {
 		if s[1] == '-' {
 			index++
 			if len(s) == 2 {
-				return nil, fmt.Errorf("Invalid argument %v", s)
+				return nil, fmt.Errorf("invalid argument %v", s)
 			}
 		}
 
@@ -64,7 +64,7 @@ func parseArgs(args []string) (map[string]string, error) {
 		hasValue := false
 
 		if len(name) == 0 || name[0] == '-' || name[0] == '=' {
-			return nil, fmt.Errorf("Invalid argument %v", s)
+			return nil, fmt.Errorf("invalid argument %v", s)
 		}
 
 		// search for =

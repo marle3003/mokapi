@@ -52,7 +52,11 @@ func (v *Variable) UnmarshalYAML(n *yaml.Node) error {
 		}
 	} else if n.Kind == yaml.ScalarNode {
 		var s string
-		n.Decode(&s)
+		err := n.Decode(&s)
+		if err != nil {
+			return err
+		}
+
 		v.Expr = s
 	}
 

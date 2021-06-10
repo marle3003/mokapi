@@ -45,19 +45,19 @@ export default {
     }
   },
   computed: {
-    rows: function(){
+    rows: function () {
       return this.getRows(this.schema, 0, [])
     }
   },
   methods: {
-    isOpened (index){
+    isOpened (index) {
       return this.opened.indexOf(index) >= 0
     },
     toggleDetails (index) {
-      const i = this.opened.indexOf(index) 
-      if (i >= 0){
-	      this.opened.splice(i, 1)
-      }else{
+      const i = this.opened.indexOf(index)
+      if (i >= 0) {
+        this.opened.splice(i, 1)
+      } else {
         this.opened.push(index)
       }
     },
@@ -72,78 +72,77 @@ export default {
       this.isHovered = hovered
     },
     getRefOrEmpty (ref) {
-      if (!ref){
+      if (!ref) {
         return ''
       }
       return '<span class="ref-type">[' + ref + ']</span>'
     },
-    truncate (str, n){
-      return (str.length > n) ? str.substr(0, n-1) + '&hellip;' : str;
+    truncate (str, n) {
+      return (str.length > n) ? str.substr(0, n - 1) + '&hellip;' : str
     },
-    getRows (schema, level, paths){
+    getRows (schema, level, paths) {
       let rows = []
-      if (!schema){
+      if (!schema) {
         return rows
       }
 
-      var row = {
+      let row = {
         format: schema.format,
         description: schema.description,
         faker: schema.faker,
         required: false,
         nullable: schema.nullable
-        //xml: schema.xml
       }
       row.format = schema.format
 
-      if (schema.ref !== ''){
-        if (paths.indexOf(schema.ref) >= 0){
+      if (schema.ref !== '') {
+        if (paths.indexOf(schema.ref) >= 0) {
           return rows
         }
         paths.push(schema.ref)
       }
 
-      let ident = " ".repeat(2 * level)
+      let ident = ' '.repeat(2 * level)
       if (schema.type === 'object') {
         row.code = ident
-        if (schema.name !== ''){
-          row.code += schema.name +": "
+        if (schema.name !== '') {
+          row.code += schema.name + ': '
         }
-        row.code += this.getRefOrEmpty(schema.ref) + " {"
+        row.code += this.getRefOrEmpty(schema.ref) + ' {'
         rows.push(row)
-          
-        for (var i = 0; i < schema.properties.length; i++) {                
-          var propRows = this.getRows(schema.properties[i], level + 1, paths)
-          if (propRows.length > 0 && schema.required !== null){
+
+        for (let i = 0; i < schema.properties.length; i++) {
+          let propRows = this.getRows(schema.properties[i], level + 1, paths)
+          if (propRows.length > 0 && schema.required !== null) {
             propRows[0].required = schema.required.indexOf(schema.properties[i].name)
           }
           rows = rows.concat(propRows)
         }
-        rows.push({code: ident + "}"})
+        rows.push({code: ident + '}'})
       } else if (schema.type === 'array') {
-        let s = ident + schema.name + ": "
-        if (schema.items !== undefined && schema.items !== null){
+        let s = ident + schema.name + ': '
+        if (schema.items !== undefined && schema.items !== null) {
           s += this.getRefOrEmpty(schema.items.ref)
         }
-        s += " ["
+        s += ' ['
         // get all properties but not type => not incrementing level because we remove first level (shift)
         var arrayRows = this.getRows(schema.items, level, paths)
         arrayRows.shift() // remove object type
         arrayRows.pop()
-        if (arrayRows.length === 0){
-          rows.push({code: s + "...]"})
-        } else{
+        if (arrayRows.length === 0) {
+          rows.push({code: s + '...]'})
+        } else {
           rows.push({code: s})
           rows = rows.concat(arrayRows)
-          rows.push({code: ident + "]"})
+          rows.push({code: ident + ']'})
         }
       } else {
-        let s = '<span class="prop-type">'+schema.type+'</span>'
-        if (schema.name !== ''){
+        let s = '<span class="prop-type">' + schema.type + '</span>'
+        if (schema.name !== '') {
           s = schema.name + ': ' + s
         }
-        if (schema.description !== ''){
-          s += '<span class="comment"> ('+this.truncate(schema.description, 50)+')</span>'
+        if (schema.description !== '') {
+          s += '<span class="comment"> (' + this.truncate(schema.description, 50) + ')</span>'
         }
         row.code = ident + s
         row.type = 'prop'
@@ -157,7 +156,7 @@ export default {
       let items = []
 
       try {
-        var item = {}
+        let item = {}
 
         if (level === 0) {
           item = {type: schema.type, level: 0, text: schema.type, ref: schema.ref}
@@ -170,14 +169,14 @@ export default {
         }
 
         items.push(item)
-                
+
         if (schema.type === 'array') {
           if (typeof schema.items === undefined) {
-            console.error("field items is undefined in schema type array")
+            console.error('field items is undefined in schema type array')
             return items
           }
 
-          var itemType = schema.items.ref !== undefined ? schema.items.ref : schema.items.type
+          let itemType = schema.items.ref !== undefined ? schema.items.ref : schema.items.type
           item['text'] = schema.name + ': array[' + itemType + ']'
           item['refText'] = schema.items.ref
 
@@ -188,8 +187,8 @@ export default {
         }
 
         if (schema.type === 'object' && level < 2 && schema.properties !== undefined) {
-          for (var i = 0; i < schema.properties.length; i++) {                
-            var prop = this.getItems(schema.properties[i], level + 1)
+          for (let i = 0; i < schema.properties.length; i++) {
+            let prop = this.getItems(schema.properties[i], level + 1)
             items = items.concat(prop)
           }
         }

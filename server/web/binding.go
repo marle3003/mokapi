@@ -18,7 +18,7 @@ import (
 
 type AddRequestMetric func(metric *models.RequestMetric)
 
-type EventHandler func(events event.Handler, options ...workflow.WorkflowOptions) *runtime.Summary
+type EventHandler func(events event.Handler, options ...workflow.Options) *runtime.Summary
 
 type Binding struct {
 	Addr             string
@@ -42,20 +42,23 @@ func NewBinding(addr string, mh AddRequestMetric, wh EventHandler) *Binding {
 
 func (binding *Binding) Start() {
 	go func() {
-		log.Infof("Starting web binding %v", binding.Addr)
-		binding.server.ListenAndServe()
+		log.Infof("starting web binding %v", binding.Addr)
+		err := binding.server.ListenAndServe()
+		if err != nil {
+			log.Errorf("unable to start web binding %v: %v ", binding.Addr, err.Error())
+		}
 	}()
 }
 
 func (binding *Binding) Stop() {
 	go func() {
-		log.Infof("Stopping server on %v", binding.Addr)
+		log.Infof("stopping server on %v", binding.Addr)
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 
 		binding.server.SetKeepAlivesEnabled(false)
-		if error := binding.server.Shutdown(ctx); error != nil {
-			log.Errorf("Could not gracefully shutdown server %v", binding.Addr)
+		if err := binding.server.Shutdown(ctx); err != nil {
+			log.Errorf("could not gracefully shutdown server %v: %v", binding.Addr, err.Error())
 		}
 	}()
 }

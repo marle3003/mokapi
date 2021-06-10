@@ -73,7 +73,7 @@ export default {
     async getData () {
       let serviceName = this.$route.params.name
       let service = await this.getAsyncApiService(serviceName)
-      for (var server of service.servers){
+      for (let server of service.servers) {
         server.configs.sort(this.compare)
       }
       this.service = service

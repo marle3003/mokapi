@@ -22,7 +22,10 @@ type Binding struct {
 
 func NewServer(config *ldapConfig.Config) *Binding {
 	s := &Binding{stop: make(chan bool)}
-	s.Apply(config)
+	err := s.Apply(config)
+	if err != nil {
+		log.Error("unable to start ldap server: %v", err.Error())
+	}
 	return s
 }
 
@@ -57,33 +60,33 @@ func (s *Binding) Stop() {
 func (s *Binding) Start() {
 	s.isRunning = true
 
-	schema, error := s.getSchema()
-	if error != nil {
-		log.Errorf("Error in parsing schema: %v", error.Error())
+	schema, err := s.getSchema()
+	if err != nil {
+		log.Errorf("error in parsing schema: %v", err.Error())
 	}
 	s.schema = schema
 
 	l, err := net.Listen("tcp", s.listen)
 	if err != nil {
-		log.Errorf("Error listening: %v", err.Error())
+		log.Errorf("error listening: %v", err.Error())
 		return
 	}
 
-	log.Infof("Started ldap server on %v", s.listen)
+	log.Infof("started ldap server on %v", s.listen)
 
 	// Close the listener when the application closes.
 	connChannl := make(chan net.Conn)
-	close := make(chan bool)
+	c := make(chan bool)
 	go func() {
 		for {
 			// Listen for an incoming connection.
 			conn, err := l.Accept()
 			if err != nil {
 				select {
-				case <-close:
+				case <-c:
 					return
 				default:
-					log.Errorf("Error accepting: %v", err.Error())
+					log.Errorf("error accepting: %v", err.Error())
 				}
 			}
 			// Handle connections in a new goroutine.
@@ -97,9 +100,12 @@ func (s *Binding) Start() {
 			case conn := <-connChannl:
 				go s.handle(conn)
 			case <-s.stop:
-				log.Infof("Stopping ldap server on %v", s.listen)
-				close <- true
-				l.Close()
+				log.Infof("stopping ldap server on %v", s.listen)
+				c <- true
+				err := l.Close()
+				if err != nil {
+					log.Infof("error while stopping ldap server on %v: %v", s.listen, err.Error())
+				}
 			}
 		}
 	}()
@@ -107,8 +113,11 @@ func (s *Binding) Start() {
 
 func (s *Binding) handle(conn net.Conn) {
 	defer func() {
-		log.Info("Closing connection")
-		conn.Close()
+		log.Info("closing connection")
+		err := conn.Close()
+		if err != nil {
+			log.Infof("error while closing ldap server on %v: %v", s.listen, err.Error())
+		}
 	}()
 
 	for {
@@ -121,7 +130,7 @@ func (s *Binding) handle(conn net.Conn) {
 		}
 
 		if len(packet.Children) < 2 {
-			log.Errorf("Invalid packat length %v expected at least 2", len(packet.Children))
+			log.Errorf("invalid packat length %v expected at least 2", len(packet.Children))
 			return
 		}
 		o := packet.Children[0].Value
@@ -132,29 +141,29 @@ func (s *Binding) handle(conn net.Conn) {
 		}
 		req := packet.Children[1]
 		if req.ClassType != ber.ClassApplication {
-			log.Errorf("ClassType of packet is not ClassApplication was %v", req.ClassType)
+			log.Errorf("classType of packet is not ClassApplication was %v", req.ClassType)
 			return
 		}
 
 		switch req.Tag {
 		default:
-			log.Errorf("Unsupported tag %v", req.Tag)
+			log.Errorf("unsupported tag %v", req.Tag)
 		case ApplicationBindRequest:
 			s.handleBindRequest(conn, messageId, req)
 		case ApplicationUnbindRequest:
-			log.Infof("Received unbind request with messageId %v", messageId)
+			log.Infof("received unbind request with messageId %v", messageId)
 			// just close connection
 			return
 		case ApplicationSearchRequest:
-			error := s.handleSearchRequest(conn, messageId, req)
-			if error != nil {
-				log.Errorf("Error handling search request with messageId %v: %s", messageId, error.Error())
+			err := s.handleSearchRequest(conn, messageId, req)
+			if err != nil {
+				log.Errorf("error handling search request with messageId %v: %s", messageId, err.Error())
 				return
 			} else {
 				sendResponse(conn, encodeSearchDone(messageId))
 			}
 		case ApplicationAbandonRequest:
-			log.Infof("Received abandon request with messageId %v", messageId)
+			log.Infof("received abandon request with messageId %v", messageId)
 			// todo stop any searches on this messageid
 			// The abandon operation does not have a response
 		}
@@ -171,6 +180,6 @@ func (s *Binding) getEntry(dn string) (ldapConfig.Entry, error) {
 func sendResponse(conn net.Conn, packet *ber.Packet) {
 	_, err := conn.Write(packet.Bytes())
 	if err != nil {
-		log.Errorf("Error Sending Message: %s\n", err.Error())
+		log.Errorf("error Sending Message: %s\n", err.Error())
 	}
 }

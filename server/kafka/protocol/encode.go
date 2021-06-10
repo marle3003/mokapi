@@ -135,7 +135,7 @@ func newEncodeArray(t reflect.Type, version int16, tag kafkaTag) encodeFunc {
 	}
 }
 
-func newStructEncodeFunc(t reflect.Type, version int16, tag kafkaTag) encodeFunc {
+func newStructEncodeFunc(t reflect.Type, version int16, _ kafkaTag) encodeFunc {
 	type field struct {
 		index  int
 		encode encodeFunc
@@ -383,6 +383,6 @@ func (e *Encoder) writeUVarInt(i uint64) {
 
 }
 
-func (e *Encoder) encodeTagBuffer(v reflect.Value) {
+func (e *Encoder) encodeTagBuffer(_ reflect.Value) {
 	e.writeUVarInt(0)
 }

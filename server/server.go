@@ -68,7 +68,10 @@ func (s *Server) Start() {
 	for _, b := range s.Bindings {
 		b.Start()
 	}
-	s.watcher.Start()
+	err := s.watcher.Start()
+	if err != nil {
+		log.Error("unable to start server: %v", err.Error())
+	}
 	s.startMetricUpdater()
 	s.scheduler.Start()
 }
@@ -113,7 +116,10 @@ func (s *Server) updateConfigs(config dynamic.Config) {
 		for _, w := range c.Workflows {
 			log.Debugf("adding workflow %q", w.Name)
 		}
-		s.scheduler.AddOrUpdate(c.ConfigPath, c.Workflows, workflow.WithWorkingDirectory(filepath.Dir(c.ConfigPath)))
+		err := s.scheduler.AddOrUpdate(c.ConfigPath, c.Workflows, workflow.WithWorkingDirectory(filepath.Dir(c.ConfigPath)))
+		if err != nil {
+			log.Errorf("unable to add scheduler for workflows %q", c.ConfigPath)
+		}
 	case *openapi.Config:
 		if _, ok := s.runtime.OpenApi[c.Info.Name]; !ok {
 			s.runtime.OpenApi[c.Info.Name] = c
@@ -140,7 +146,10 @@ func (s *Server) updateConfigs(config dynamic.Config) {
 			s.Bindings[c.Address] = lserver
 			lserver.Start()
 		} else {
-			b.Apply(c)
+			err := b.Apply(c)
+			if err != nil {
+				log.Errorf("unable to update ldap configuration %v: %v", c.Address, err.Error())
+			}
 		}
 	case *asyncApi.Config:
 		if _, ok := s.runtime.AsyncApi[c.Info.Name]; !ok {
@@ -162,7 +171,7 @@ func (s *Server) updateConfigs(config dynamic.Config) {
 	}
 }
 
-func (s *Server) triggerHandler(event event.Handler, options ...workflow.WorkflowOptions) *runtime.Summary {
+func (s *Server) triggerHandler(event event.Handler, options ...workflow.Options) *runtime.Summary {
 	summary := &runtime.Summary{}
 	for _, c := range s.config {
 		o := append(options, workflow.WithWorkingDirectory(filepath.Dir(c.ConfigPath)))

@@ -9,7 +9,7 @@ import (
 
 type custom map[string]interface{}
 
-func UnmarshalJSON(s string, schema *openapi.SchemaRef) (interface{}, error) {
+func UnmarshalJSON(s string, _ *openapi.SchemaRef) (interface{}, error) {
 
 	var i interface{}
 	err := json.Unmarshal([]byte(s), &i)
@@ -31,15 +31,15 @@ func (m custom) MarshalJSON() ([]byte, error) {
 	l := len(m)
 	i := 0
 	for k, v := range m {
-		key, error := json.Marshal(k)
-		if error != nil {
-			return nil, error
+		key, err := json.Marshal(k)
+		if err != nil {
+			return nil, err
 		}
 		buf.Write(key)
 		buf.WriteRune(':')
-		value, error := json.Marshal(v)
-		if error != nil {
-			return nil, error
+		value, err := json.Marshal(v)
+		if err != nil {
+			return nil, err
 		}
 		buf.Write(value)
 		if i != l-1 {

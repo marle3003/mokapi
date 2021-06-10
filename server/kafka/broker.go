@@ -65,7 +65,10 @@ func (b *broker) start(handler func(net.Conn)) {
 			case <-b.stopCh:
 				log.Infof("Stopping kafka broker %q with id %v on %v", b.name, b.id, listen)
 				closeListener <- true
-				l.Close()
+				err := l.Close()
+				if err != nil {
+					log.Errorf("unable to stop kafka broker %q: %v", b.name, err.Error())
+				}
 			}
 		}
 	}()

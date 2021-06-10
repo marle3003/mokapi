@@ -42,7 +42,9 @@ func Run(workflow mokapi.Workflow, ctx *WorkflowContext) (*WorkflowSummary, erro
 		stepSum, err := runStep(step, ctx)
 		summary.Steps = append(summary.Steps, stepSum)
 		if err != nil {
-			stepSum.Status = Error
+			if stepSum != nil {
+				stepSum.Status = Error
+			}
 			summary.Status = Error
 			log.Error(err)
 			return summary, err

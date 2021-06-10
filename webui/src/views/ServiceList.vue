@@ -2,7 +2,7 @@
   <div class="service-list">
       <h1>Services</h1>
       <div class="page-body">
-        <b-link :to="{ name: service.type.toLowerCase(), params: {name: service.name } }" 
+        <b-link :to="{ name: service.type.toLowerCase(), params: {name: service.name } }"
           router-tag="div" v-for="service in services" :key="service.name"
           :class="[service.name === undefined ? 'disabled' : '']" :event="[service.name === undefined ? '' : 'click']">
           <async-service-info :service="service" v-if="service.type === 'AsyncAPI'"></async-service-info>
@@ -19,8 +19,8 @@ import AsyncServiceInfo from '@/components/asyncapi/ServiceInfo'
 
 export default {
   components: {
-     'service-info': ServiceInfo,
-     'async-service-info': AsyncServiceInfo
+    'service-info': ServiceInfo,
+    'async-service-info': AsyncServiceInfo
   },
   mixins: [Api],
   data () {
@@ -36,14 +36,13 @@ export default {
   },
   methods: {
     async getData () {
-
-      function compare(s1, s2) {
-        if (s1.name === s2.name){
+      function compare (s1, s2) {
+        if (s1.name === s2.name) {
           return 0
         }
-        if (s1.name === undefined){
+        if (s1.name === undefined) {
           return 1
-        }else if (s2.name === undefined){
+        } else if (s2.name === undefined) {
           return -1
         }
         const a = s1.name.toLowerCase()
@@ -71,12 +70,10 @@ export default {
 <style scoped>
   .service-list{
       width: 90%;
-      margin: auto;
-      margin-top: 42px;
+    margin: 42px auto auto;
   }
   .card{
-    margin: 15px;
-    margin-left: 0;
+    margin: 15px 15px 15px 0;
     cursor: pointer;
   }
   .disabled .card{

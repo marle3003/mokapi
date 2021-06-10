@@ -44,25 +44,28 @@ func NewBinding(addr string, r *models.Runtime) *Binding {
 
 func (b *Binding) Start() {
 	go func() {
-		log.Infof("Starting api on %v", b.Addr)
-		b.server.ListenAndServe()
+		log.Infof("starting api on %v", b.Addr)
+		err := b.server.ListenAndServe()
+		if err != nil {
+			log.Error("unable to start api on %v", b.Addr)
+		}
 	}()
 }
 
 func (b *Binding) Stop() {
 	go func() {
-		log.Infof("Stopping api on %v", b.Addr)
+		log.Infof("stopping api on %v", b.Addr)
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 
 		b.server.SetKeepAlivesEnabled(false)
-		if error := b.server.Shutdown(ctx); error != nil {
-			log.Errorf("Could not gracefully shutdown server %v", b.Addr)
+		if err := b.server.Shutdown(ctx); err != nil {
+			log.Errorf("could not gracefully shutdown server %v: %v", b.Addr, err.Error())
 		}
 	}()
 }
 
-func (b *Binding) Apply(data interface{}) error {
+func (b *Binding) Apply(_ interface{}) error {
 	return nil
 }
 
@@ -95,9 +98,9 @@ func (b *Binding) getService(w http.ResponseWriter, r *http.Request) {
 	if s, ok := b.runtime.OpenApi[name]; ok {
 		w.Header().Set("Content-Type", "application/json")
 
-		error := json.NewEncoder(w).Encode(openapi.NewService(s))
-		if error != nil {
-			log.Errorf("Error in writing service response: %v", error.Error())
+		err := json.NewEncoder(w).Encode(openapi.NewService(s))
+		if err != nil {
+			log.Errorf("Error in writing service response: %v", err.Error())
 		}
 	} else {
 		w.WriteHeader(404)
@@ -132,20 +135,20 @@ func (b *Binding) getServices(w http.ResponseWriter, _ *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	error := json.NewEncoder(w).Encode(services)
-	if error != nil {
-		log.Errorf("Error in writing service response: %v", error.Error())
+	err := json.NewEncoder(w).Encode(services)
+	if err != nil {
+		log.Errorf("error in writing service response: %v", err.Error())
 	}
 }
 
-func (b *Binding) getDashboard(w http.ResponseWriter, r *http.Request) {
+func (b *Binding) getDashboard(w http.ResponseWriter, _ *http.Request) {
 	dashboard := newDashboard(b.runtime)
 
 	w.Header().Set("Content-Type", "application/json")
 
-	error := json.NewEncoder(w).Encode(dashboard)
-	if error != nil {
-		log.Errorf("Error in writing dashboard response: %v", error.Error())
+	err := json.NewEncoder(w).Encode(dashboard)
+	if err != nil {
+		log.Errorf("Error in writing dashboard response: %v", err.Error())
 	}
 }
 
@@ -156,9 +159,9 @@ func (b *Binding) getAsyncService(w http.ResponseWriter, r *http.Request) {
 	if c, ok := b.runtime.AsyncApi[name]; ok {
 		w.Header().Set("Content-Type", "application/json")
 
-		error := json.NewEncoder(w).Encode(asyncapi.NewService(c))
-		if error != nil {
-			log.Errorf("Error in writing service response: %v", error.Error())
+		err := json.NewEncoder(w).Encode(asyncapi.NewService(c))
+		if err != nil {
+			log.Errorf("Error in writing service response: %v", err.Error())
 		}
 	} else {
 		w.WriteHeader(404)

@@ -120,8 +120,7 @@ export default {
 <style scoped>
 .doc {
   width: 90%;
-  margin: auto;
-  margin-top: 42px;
+  margin: 42px auto auto;
 }
 .col{
   padding-left: 0;
@@ -134,8 +133,7 @@ export default {
 }
 .menu-item {
   border: 0;
-  padding: 0.2rem;
-  padding-right: 1.5rem;
+  padding: 0.2rem 1.5rem 0.2rem 0.2rem;
   display: flex;
 }
 .menu-item svg {
@@ -146,7 +144,7 @@ export default {
 .not-collapsed svg {
   -moz-transform:rotate(90deg);
   -webkit-transform:rotate(90deg);
-  transform:rotate(90eg);
+  transform:rotate(90deg);
 }
 .content {
   line-height: 1.6;

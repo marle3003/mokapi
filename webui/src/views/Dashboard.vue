@@ -191,28 +191,30 @@ export default {
         labels: ['Success', 'Errors']
       }
     },
-    hasErrors: function() {
-      return this.dashboard.lastErrors !== undefined && this.dashboard.lastErrors.length > 0;
+    hasErrors: function () {
+      return this.dashboard.lastErrors !== undefined && this.dashboard.lastErrors.length > 0
     },
-    lastErrors: function() {
+    lastErrors: function () {
       if (this.dashboard.lastErrors === undefined) {
         return null
       }
+      // eslint-disable-next-line vue/no-side-effects-in-computed-properties
       return this.dashboard.lastErrors.reverse()
     },
-    lastRequests: function() {
+    lastRequests: function () {
       if (this.dashboard.lastRequests === undefined) {
         return null
       }
+      // eslint-disable-next-line vue/no-side-effects-in-computed-properties
       return this.dashboard.lastRequests.reverse()
     },
-    services: function() {
-      const services = this.dashboard.services;
-      if (services === undefined){
+    services: function () {
+      const services = this.dashboard.services
+      if (services === undefined) {
         return null
       }
 
-      function compare(s1, s2) {
+      function compare (s1, s2) {
         const a = s1.name.toLowerCase()
         const b = s2.name.toLowerCase()
         if (a < b) {
@@ -224,15 +226,15 @@ export default {
         return 0
       }
 
-      return services.sort(compare);
+      return services.sort(compare)
     },
-    topics: function() {
-      const topics = this.dashboard.kafkaTopics;
-      if (topics === undefined || topics === null){
+    topics: function () {
+      const topics = this.dashboard.kafkaTopics
+      if (topics === undefined || topics === null) {
         return null
       }
 
-      function compare(s1, s2) {
+      function compare (s1, s2) {
         const a = s1.name.toLowerCase()
         const b = s2.name.toLowerCase()
         if (a < b) {
@@ -244,7 +246,7 @@ export default {
         return 0
       }
 
-      return topics.sort(compare);
+      return topics.sort(compare)
     }
   },
   filters: {
@@ -255,39 +257,39 @@ export default {
       return moment(date).fromNow(true)
     },
     duration: function (time) {
-      let ms = Math.round(time/1000000)
+      let ms = Math.round(time / 1000000)
       let d = moment.duration(ms)
       if (d.seconds() < 1) {
-        return d.milliseconds() + " [ms]"
-      }else if (d.minutes() < 1) {
-        return d.seconds() +" [sec]"
+        return d.milliseconds() + ' [ms]'
+      } else if (d.minutes() < 1) {
+        return d.seconds() + ' [sec]'
       }
       return moment.duration(d).minutes()
     },
-    prettyBytes: function (num){
+    prettyBytes: function (num) {
       // jacked from: https://github.com/sindresorhus/pretty-bytes
       if (typeof num !== 'number' || isNaN(num)) {
         return 0
       }
 
-      var exponent;
-      var unit;
-      var neg = num < 0;
-      var units = ['B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+      let exponent
+      let unit
+      let neg = num < 0
+      let units = ['B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
 
       if (neg) {
-        num = -num;
+        num = -num
       }
 
       if (num < 1) {
-        return (neg ? '-' : '') + num + ' B';
+        return (neg ? '-' : '') + num + ' B'
       }
 
-      exponent = Math.min(Math.floor(Math.log(num) / Math.log(1000)), units.length - 1);
-      num = (num / Math.pow(1000, exponent)).toFixed(2) * 1;
-      unit = units[exponent];
+      exponent = Math.min(Math.floor(Math.log(num) / Math.log(1000)), units.length - 1)
+      num = (num / Math.pow(1000, exponent)).toFixed(2) * 1
+      unit = units[exponent]
 
-      return (neg ? '-' : '') + num + ' ' + unit;
+      return (neg ? '-' : '') + num + ' ' + unit
     }
   },
   methods: {
@@ -336,8 +338,7 @@ export default {
 <style scoped>
   .dashboard{
     width: 90%;
-    margin: auto;
-    margin-top: 42px;
+    margin: 42px auto auto;
   }
   .page-header h2{
     font-weight: 400;

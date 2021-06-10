@@ -34,7 +34,7 @@ func RegisterAction(name string, action runtime.Action) {
 	actionCollection[name] = action
 }
 
-func Run(workflows []mokapi.Workflow, event event.Handler, options ...WorkflowOptions) *runtime.Summary {
+func Run(workflows []mokapi.Workflow, event event.Handler, options ...Options) *runtime.Summary {
 	summary := &runtime.Summary{}
 
 	for _, w := range workflows {

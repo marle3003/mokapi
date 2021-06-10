@@ -78,9 +78,9 @@ func parseABNF(s string) (Attribute, error) {
 		case ")":
 			return attribute, nil
 		case "name":
-			names, error := parseName(scanner)
-			if error != nil {
-				return attribute, error
+			names, err := parseName(scanner)
+			if err != nil {
+				return attribute, err
 			}
 			attribute.names = names
 		case "desc":
@@ -92,7 +92,7 @@ func parseABNF(s string) (Attribute, error) {
 		}
 	}
 
-	return attribute, fmt.Errorf("Syntax error missing closing ')'")
+	return attribute, fmt.Errorf("syntax error missing closing ')'")
 }
 
 func parseName(scanner *bufio.Scanner) ([]string, error) {
@@ -108,7 +108,7 @@ func parseName(scanner *bufio.Scanner) ([]string, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("Syntax error in NAME")
+	return nil, fmt.Errorf("syntax error in NAME")
 }
 
 func parseDesc(scanner *bufio.Scanner) string {

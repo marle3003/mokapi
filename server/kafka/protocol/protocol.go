@@ -3,6 +3,7 @@ package protocol
 import (
 	"encoding/binary"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"io"
 	"math"
 	"reflect"
@@ -152,7 +153,10 @@ func WriteMessage(w io.Writer, k ApiKey, version int16, correlationId int32, msg
 	binary.BigEndian.PutUint32(size[:], uint32(p.Size()-4))
 	p.WriteAt(size[:], 0)
 
-	w.Write(p.buffer[0:p.offset])
+	_, err := w.Write(p.buffer[0:p.offset])
+	if err != nil {
+		log.Errorf("unable to write kafka message apikey %q", k)
+	}
 }
 
 func getTag(f reflect.StructField) kafkaTag {

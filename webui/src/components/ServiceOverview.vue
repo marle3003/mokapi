@@ -12,7 +12,7 @@
           <img src="@/assets/models.png" width="24" height="24" />
         </template>
         <b-card-text><models :service="service"></models></b-card-text>
-      </b-tab> 
+      </b-tab>
     </b-tabs>
   </b-card>
 </template>

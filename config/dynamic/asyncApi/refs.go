@@ -254,8 +254,8 @@ func isLocalRef(s string) bool {
 	return strings.HasPrefix(s, "#")
 }
 
-func (s *MessageRef) resolve(token string) (interface{}, error) {
-	return get(token, s.Value)
+func (r *MessageRef) resolve(token string) (interface{}, error) {
+	return get(token, r.Value)
 }
 
 func caseInsenstiveFieldByName(v reflect.Value, name string) reflect.Value {

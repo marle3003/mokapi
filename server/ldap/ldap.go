@@ -29,10 +29,5 @@ const (
 	ScopeSingleLevel  = 1
 	ScopeWholeSubtree = 2
 
-	LDAPResultSuccess = 0
+	ResultSuccess = 0
 )
-
-var RootDSE = map[string][]string{
-	"supportedLDAPVersion": []string{"3"},
-	"subSchemaSubentry":    []string{"cn=schema"},
-}

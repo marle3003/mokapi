@@ -12,7 +12,10 @@ type refProp struct {
 
 func (o *Responses) UnmarshalYAML(value *yaml.Node) error {
 	data := make(map[string]*ResponseRef)
-	value.Decode(data)
+	err := value.Decode(data)
+	if err != nil {
+		return err
+	}
 
 	*o = make(map[HttpStatus]*ResponseRef)
 	for k, n := range data {
@@ -43,7 +46,10 @@ type parameter struct {
 
 func (p *Parameter) UnmarshalYAML(value *yaml.Node) error {
 	tmp := &parameter{Explode: true}
-	value.Decode(tmp)
+	err := value.Decode(tmp)
+	if err != nil {
+		return err
+	}
 
 	p.Name = tmp.Name
 	p.Type = tmp.Type
@@ -58,10 +64,18 @@ func (p *Parameter) UnmarshalYAML(value *yaml.Node) error {
 
 func (s *Schemas) UnmarshalYAML(value *yaml.Node) error {
 	ref := &refProp{}
-	value.Decode(ref)
+	err := value.Decode(ref)
+	if err != nil {
+		return err
+	}
+
 	if len(ref.Ref) == 0 {
 		m := make(map[string]*SchemaRef)
-		value.Decode(m)
+		err := value.Decode(m)
+		if err != nil {
+			return err
+		}
+
 		s.Value = m
 	} else {
 		s.Ref = ref.Ref
@@ -95,10 +109,6 @@ func (r *EndpointRef) UnmarshalYAML(node *yaml.Node) error {
 }
 
 func (r *ParameterRef) UnmarshalYAML(node *yaml.Node) error {
-	return unmarshalRef(node, &r.Ref, &r.Value)
-}
-
-func (r *MokapiRef) UnmarshalYAML(node *yaml.Node) error {
 	return unmarshalRef(node, &r.Ref, &r.Value)
 }
 

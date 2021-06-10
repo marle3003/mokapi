@@ -11,7 +11,7 @@ type RecordSet struct {
 	Batches []RecordBatch
 }
 
-func (rs *RecordSet) ReadFrom(d *Decoder) {
+func (rs *RecordSet) ReadFrom(_ *Decoder) {
 
 }
 

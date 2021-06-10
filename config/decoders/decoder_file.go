@@ -11,10 +11,6 @@ type FileDecoder struct {
 	filename string
 }
 
-func NewFileDecoder(filename string) *FileDecoder {
-	return &FileDecoder{filename: filename}
-}
-
 func (f *FileDecoder) Decode(flags map[string]string, element interface{}) error {
 	if len(f.filename) == 0 {
 		if val, ok := flags["configfile"]; ok {
@@ -26,12 +22,12 @@ func (f *FileDecoder) Decode(flags map[string]string, element interface{}) error
 		return nil
 	}
 
-	data, error := loadFile(f.filename)
-	if error != nil {
-		return error
+	data, err := loadFile(f.filename)
+	if err != nil {
+		return err
 	}
 
-	err := parseYml(data, element)
+	err = parseYml(data, element)
 	if err != nil {
 		return errors.Wrapf(err, "parsing YAML file %s", f.filename)
 	}

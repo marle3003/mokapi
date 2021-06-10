@@ -24,8 +24,11 @@ import (
 
 func (s *Binding) handle(conn net.Conn) {
 	defer func() {
-		log.Info("Closing kafka connection")
-		conn.Close()
+		log.Info("closing kafka connection")
+		err := conn.Close()
+		if err != nil {
+			log.Errorf("unable to close kafka connection")
+		}
 	}()
 
 	for {
@@ -78,7 +81,10 @@ func (s *Binding) handle(conn net.Conn) {
 			r := msg.(*produce.Request)
 			for _, t := range r.Topics {
 				topic := s.topics[t.Name]
-				topic.addRecords(int(t.Data.Partition), t.Data.Record.Batches)
+				err := topic.addRecords(int(t.Data.Partition), t.Data.Record.Batches)
+				if err != nil {
+					log.Errorf("unable to add new kafka record to topic %q: %v", t.Name, err.Error())
+				}
 			}
 		case protocol.ListOffsets:
 			r := s.processListOffsets(msg.(*listOffsets.Request))

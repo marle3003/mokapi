@@ -29,7 +29,7 @@ import Schema from '@/components/Schema'
 
 export default {
   name: 'parameters',
-  components: {'schema': Schema,},
+  components: {'schema': Schema},
   props: ['operation'],
   data () {
     return {
@@ -47,7 +47,7 @@ export default {
 
       if (this.operation.parameters) {
         this.operation.parameters.forEach((parameter, index) => {
-          parameter['key'] = parameter.name +":"+parameter.location
+          parameter['key'] = parameter.name + ':' + parameter.location
           parameter['_showDetails'] = this.detailsShown.indexOf(parameter.key) >= 0
           result.push(parameter)
         })
@@ -57,7 +57,7 @@ export default {
     }
   },
   methods: {
-    toggleDetails(row) {
+    toggleDetails (row) {
       row.toggleDetails()
       const index = this.detailsShown.indexOf(row.item.key)
 

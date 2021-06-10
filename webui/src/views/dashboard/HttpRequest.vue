@@ -86,7 +86,7 @@
 
 <script>
 import Api from '@/mixins/Api'
-import moment from "moment"
+import moment from 'moment'
 import http from 'http-status-codes'
 
 export default {
@@ -110,7 +110,7 @@ export default {
     showRawParameter (p) {
       return p.value !== '' && p.value !== p.raw
     },
-    toggleDetails(row) {
+    toggleDetails (row) {
       row.toggleDetails()
       const index = this.detailsShown.indexOf(row.item.key)
 
@@ -132,9 +132,9 @@ export default {
       let ms = Math.round(time / 1000000)
       let d = moment.duration(ms)
       if (d.seconds() < 1) {
-        return d.milliseconds() + " [ms]"
+        return d.milliseconds() + ' [ms]'
       } else if (d.minutes() < 1) {
-        return d.seconds() + " [sec]"
+        return d.seconds() + ' [sec]'
       }
       return moment.duration(d).minutes()
     },
@@ -148,8 +148,7 @@ export default {
 <style scoped>
   .dashboard{
     width: 90%;
-    margin: auto;
-    margin-top: 42px;
+    margin: 42px auto auto;
   }
   .page-header h2{
     font-weight: 400;
@@ -162,7 +161,7 @@ export default {
   .not-collapsed svg {
     -moz-transform:rotate(90deg);
     -webkit-transform:rotate(90deg);
-    transform:rotate(90eg);
+    transform:rotate(90deg);
   }
   .actions{
     border-width: 1px;

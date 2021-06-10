@@ -30,9 +30,9 @@ func UnmarshalXml(s string, schema *openapi.SchemaRef) (interface{}, error) {
 
 func MarshalXML(v interface{}, schema *openapi.SchemaRef) ([]byte, error) {
 	m := &StringMap{Data: v, Schema: schema}
-	xmlString, error := xml.Marshal(m)
-	if error != nil {
-		return nil, error
+	xmlString, err := xml.Marshal(m)
+	if err != nil {
+		return nil, err
 	}
 	return []byte(xml.Header + string(xmlString)), nil
 }
@@ -74,7 +74,10 @@ func (m StringMap) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	}
 
 	if wrapped {
-		e.EncodeToken(xml.StartElement{Name: xml.Name{Local: start.Name.Local}})
+		err := e.EncodeToken(xml.StartElement{Name: xml.Name{Local: start.Name.Local}})
+		if err != nil {
+			return err
+		}
 	}
 
 	if m.Schema.Value.Type == "array" {
@@ -82,8 +85,14 @@ func (m StringMap) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 			for _, item := range list {
 				propertyMap := &StringMap{Data: item, Schema: m.Schema.Value.Items}
 				t := xml.StartElement{Name: start.Name}
-				e.EncodeElement(propertyMap, t)
-				e.EncodeToken(xml.EndElement{Name: t.Name})
+				err := e.EncodeElement(propertyMap, t)
+				if err != nil {
+					return err
+				}
+				err = e.EncodeToken(xml.EndElement{Name: t.Name})
+				if err != nil {
+					return err
+				}
 			}
 		}
 	} else if m.Schema.Value.Type == "object" {
@@ -109,28 +118,49 @@ func (m StringMap) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 			}
 		}
 
-		e.EncodeToken(start)
+		err := e.EncodeToken(start)
+		if err != nil {
+			return err
+		}
 
-		encodeObject(e, o, m.Schema)
+		err = encodeObject(e, o, m.Schema)
+		if err != nil {
+			return err
+		}
 
-		e.EncodeToken(xml.EndElement{Name: start.Name})
+		err = e.EncodeToken(xml.EndElement{Name: start.Name})
+		if err != nil {
+			return err
+		}
 	} else {
 		value := fmt.Sprint(m.Data)
 		if m.Schema.Value.Xml != nil && m.Schema.Value.Xml.CData {
-			e.EncodeElement(struct {
+			err := e.EncodeElement(struct {
 				S string `xml:",innerxml"`
 			}{
-				S: "<![CDATA[" + string(fmt.Sprint(m.Data)) + "]]>",
+				S: "<![CDATA[" + fmt.Sprint(m.Data) + "]]>",
 			}, start)
+			if err != nil {
+				return err
+			}
 		} else {
-			e.EncodeElement(value, start)
+			err := e.EncodeElement(value, start)
+			if err != nil {
+				return err
+			}
 		}
 
-		e.EncodeToken(xml.EndElement{Name: start.Name})
+		err := e.EncodeToken(xml.EndElement{Name: start.Name})
+		if err != nil {
+			return err
+		}
 	}
 
 	if wrapped {
-		e.EncodeToken(xml.EndElement{Name: start.Name})
+		err := e.EncodeToken(xml.EndElement{Name: start.Name})
+		if err != nil {
+			return err
+		}
 	}
 
 	// flush to ensure tokens are written
@@ -142,7 +172,7 @@ func (m StringMap) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	return nil
 }
 
-func encodeObject(e *xml.Encoder, obj map[string]interface{}, schema *openapi.SchemaRef) {
+func encodeObject(e *xml.Encoder, obj map[string]interface{}, schema *openapi.SchemaRef) error {
 	for propertyName, propertySchema := range schema.Value.Properties.Value {
 		if propertySchema.Value.Xml != nil && propertySchema.Value.Xml.Attribute {
 			continue
@@ -151,10 +181,18 @@ func encodeObject(e *xml.Encoder, obj map[string]interface{}, schema *openapi.Sc
 		if p, ok := obj[propertyName]; ok {
 			propertyMap := &StringMap{Data: p, Schema: propertySchema}
 			t := xml.StartElement{Name: xml.Name{Local: propertyName}}
-			e.EncodeElement(propertyMap, t)
-			e.EncodeToken(xml.EndElement{Name: t.Name})
+			err := e.EncodeElement(propertyMap, t)
+			if err != nil {
+				return err
+			}
+			err = e.EncodeToken(xml.EndElement{Name: t.Name})
+			if err != nil {
+				return err
+			}
 		}
 	}
+
+	return nil
 }
 
 type XmlNode struct {
@@ -196,7 +234,11 @@ func (e *XmlNode) decode(decoder *xml.Decoder) error {
 			for _, a := range tokEle.Attr {
 				child.Attributes[a.Name.Local] = a.Value
 			}
-			child.decode(decoder)
+			err := child.decode(decoder)
+			if err != nil {
+				return err
+			}
+
 			e.Children = append(e.Children, child)
 		case xml.EndElement:
 			return nil
@@ -234,8 +276,12 @@ func (e *XmlNode) parse(s *openapi.SchemaRef) (interface{}, error) {
 				}
 			} else {
 				c := e.GetFirstElement(xmlName)
-				if c == nil && isPropertyRequired(name, s) {
-					return nil, errors.Errorf("required property with name '%v' not found", name)
+				if c == nil {
+					if isPropertyRequired(name, s) {
+						return nil, errors.Errorf("required property with name '%v' not found", name)
+					} else {
+						continue
+					}
 				}
 				v, err := c.parse(property)
 				if err != nil {

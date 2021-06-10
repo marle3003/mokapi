@@ -13,14 +13,12 @@ import TopHeader from '@/components/TopHeader.vue'
 export default {
   name: 'App',
   components: {
-    'top-header': TopHeader,
-
+    'top-header': TopHeader
   }
 }
 </script>
 <style>
   @import './assets/vars.css';
-  @import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
   @import './assets/prism.css';
 
   body{
@@ -149,8 +147,7 @@ export default {
   }
   .label {
     font-size: 0.6rem;
-    margin: 0;
-    margin-bottom: 0.3rem;
+    margin: 0 0 0.3rem;
   }
   .list-group-item {
     background-color: var(--var-bg-color);
@@ -159,7 +156,7 @@ export default {
     color:var(--var-color-primary);
   }
   .router-link-active {
-    background-color: var(---var-bg-color);
+    background-color: var(--var-bg-color);
   }
   .router-link-exact-active {
     background-color: var(--var-bg-color);

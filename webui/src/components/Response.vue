@@ -54,7 +54,7 @@ import Schema from '@/components/Schema'
 
 export default {
   name: 'response',
-  components: {'schema': Schema,},
+  components: {'schema': Schema},
   props: ['responses'],
   data () {
     return {
@@ -62,24 +62,25 @@ export default {
     }
   },
   created () {
-    for (var r of this.responses){
+    for (let r of this.responses) {
       if (r.contentTypes !== null) {
         this.selected[r.status] = r.contentTypes[0].type
       }
     }
   },
   computed: {
-    sorted: function() {
+    sorted: function () {
       if (!this.responses) {
-        return [];
-      }
-      
-      function compare(a, b) {
-        return a.status - b.status;
+        return []
       }
 
-      return this.responses.sort(compare);
-    }    
+      function compare (a, b) {
+        return a.status - b.status
+      }
+
+      // eslint-disable-next-line vue/no-side-effects-in-computed-properties
+      return this.responses.sort(compare)
+    }
   }
 }
 </script>

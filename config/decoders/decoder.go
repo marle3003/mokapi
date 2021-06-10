@@ -5,15 +5,15 @@ type ConfigDecoder interface {
 }
 
 func Load(decoders []ConfigDecoder, config interface{}) error {
-	flags, error := parseFlags()
-	if error != nil {
-		return error
+	flags, err := parseFlags()
+	if err != nil {
+		return err
 	}
 
 	for _, decoder := range decoders {
-		error := decoder.Decode(flags, config)
-		if error != nil {
-			return error
+		err := decoder.Decode(flags, config)
+		if err != nil {
+			return err
 		}
 	}
 

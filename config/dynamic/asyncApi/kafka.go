@@ -78,7 +78,10 @@ func (k *Kafka) UnmarshalYAML(value *yaml.Node) error {
 		m[key] = val
 	}
 	k.raw = m
-	value.Decode(m)
+	err := value.Decode(m)
+	if err != nil {
+		return err
+	}
 
 	for key, v := range m {
 		switch key {

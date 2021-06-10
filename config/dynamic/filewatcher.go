@@ -96,9 +96,12 @@ func (cw *ConfigWatcher) Start() error {
 
 	go func() {
 		defer func() {
-			log.Error("Closing config watcher. Restart is required...")
+			log.Error("closing config watcher. Restart is required...")
 			ticker.Stop()
-			cw.watcher.Close()
+			err := cw.watcher.Close()
+			if err != nil {
+				log.Errorf("unable to close config watcher: %v", err.Error())
+			}
 		}()
 
 		for {
@@ -164,7 +167,7 @@ func (cw *ConfigWatcher) walkDir(path string, fi os.FileInfo, _ error) error {
 
 func (ci *configItem) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	data := make(map[string]string)
-	unmarshal(data)
+	_ = unmarshal(data)
 
 	for _, c := range configTypes {
 		if _, ok := data[c.header]; ok {

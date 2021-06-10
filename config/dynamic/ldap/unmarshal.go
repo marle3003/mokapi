@@ -23,7 +23,10 @@ type entry map[string]interface{}
 
 func (c *Config) UnmarshalYAML(value *yaml.Node) error {
 	tmp := &ldap{}
-	value.Decode(tmp)
+	err := value.Decode(tmp)
+	if err != nil {
+		return err
+	}
 
 	c.Info = tmp.Info
 	c.Address = tmp.Server.Address

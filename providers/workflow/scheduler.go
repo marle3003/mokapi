@@ -15,14 +15,14 @@ type Scheduler struct {
 
 type task struct {
 	workflow mokapi.Workflow
-	options  []WorkflowOptions
+	options  []Options
 }
 
 func NewScheduler() *Scheduler {
 	return &Scheduler{cron: gocron.NewScheduler(time.UTC), jobs: make(map[string][]*gocron.Job)}
 }
 
-func (s *Scheduler) AddOrUpdate(key string, workflows []mokapi.Workflow, options ...WorkflowOptions) error {
+func (s *Scheduler) AddOrUpdate(key string, workflows []mokapi.Workflow, options ...Options) error {
 	jobs, ok := s.jobs[key]
 	if ok {
 		// remove all jobs

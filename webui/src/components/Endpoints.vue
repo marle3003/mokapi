@@ -16,18 +16,18 @@
 export default {
   name: 'endpoints',
   props: ['service'],
-  data() {
+  data () {
     return {
-      fields: ['path', 'summary', 'operations'],
+      fields: ['path', 'summary', 'operations']
     }
   },
   computed: {
     endpoints: function () {
-      if (this.service === null){
+      if (this.service === null) {
         return []
       }
 
-      function compare(a, b) {
+      function compare (a, b) {
         if (a.path < b.path) {
           return -1
         }
@@ -37,6 +37,7 @@ export default {
         return 0
       }
 
+      // eslint-disable-next-line vue/no-side-effects-in-computed-properties
       return this.service.endpoints.sort(compare)
     }
   },

@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-type service struct {
+type Service struct {
 	Name        string     `json:"name"`
 	Description string     `json:"description"`
 	Version     string     `json:"version"`
@@ -81,17 +81,13 @@ type Schema struct {
 	Nullable    bool      `json:"nullable"`
 }
 
-func NewService(s *openapi.Config) service {
-	service := service{
+func NewService(s *openapi.Config) Service {
+	service := Service{
 		Name:        s.Info.Name,
 		Description: s.Info.Description,
 		Version:     s.Info.Version,
 		Type:        "OpenAPI",
 	}
-
-	//if s.Info.Mokapi.Value != nil{
-	//	service.Mokapi = s.Info.Mokapi.Value
-	//}
 
 	for _, server := range s.Servers {
 		service.BaseUrls = append(service.BaseUrls, newBaseUrl(server))

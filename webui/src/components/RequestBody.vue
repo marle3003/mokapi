@@ -19,7 +19,7 @@ import Schema from '@/components/Schema'
 
 export default {
   name: 'parameters',
-  components: {'schema': Schema,},
+  components: {'schema': Schema},
   props: ['operation'],
   data () {
     return {
@@ -27,24 +27,23 @@ export default {
     }
   },
   computed: {
-    current: function(){
-        if (this.operation.requestBodies && this.operation.requestBodies.length > 0){
-          return this.operation.requestBodies[0]
-        }
-        return null
+    current: function () {
+      if (this.operation.requestBodies && this.operation.requestBodies.length > 0) {
+        return this.operation.requestBodies[0]
+      }
+      return null
     },
-    options: function(){
+    options: function () {
       let options = []
-      if (this.operation.requestBodies){
+      if (this.operation.requestBodies) {
         this.operation.requestBodies.forEach(x => options.push(x.contentType))
       }
       return options
     }
   },
   methods: {
-    
   },
-  mounted: function(){
+  mounted: function () {
     if (this.options.length > 0) {
       this.selected = this.options[0]
     }

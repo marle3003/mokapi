@@ -85,7 +85,7 @@ func newArayDecodeFunc(t reflect.Type, version int16, tag kafkaTag) decodeFunc {
 	return func(d *Decoder, v reflect.Value) { d.decodeArray(v, elemFunc) }
 }
 
-func newStructDecodeFunc(t reflect.Type, version int16, tag kafkaTag) decodeFunc {
+func newStructDecodeFunc(t reflect.Type, version int16, _ kafkaTag) decodeFunc {
 	type field struct {
 		index  int
 		decode decodeFunc

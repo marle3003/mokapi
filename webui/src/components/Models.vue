@@ -10,33 +10,34 @@
 
 <script>
 export default {
-    name: "models",
-    props: ['service'],
-    components: {},
-    data() {
-      return {
-        fields: ['name', 'type', 'properties'],
-      }
-    },
-    computed: {
-      models: function () {
-        if (this.service == null || this.service.models == undefined){
-          return [];
-        }
-        
-        function compare(a, b) {
-          return (''+a.name).localeCompare(''+b.name)
-        }
-
-        this.service.models.forEach(x => {
-          if (x.properties != null) { 
-            x.properties.sort(compare)
-          }
-        })
-
-        return  this.service.models.sort(compare);
-      }
+  name: 'models',
+  props: ['service'],
+  components: {},
+  data () {
+    return {
+      fields: ['name', 'type', 'properties']
     }
+  },
+  computed: {
+    models: function () {
+      if (this.service == null || this.service.models === undefined) {
+        return []
+      }
+
+      function compare (a, b) {
+        return ('' + a.name).localeCompare('' + b.name)
+      }
+
+      this.service.models.forEach(x => {
+        if (x.properties != null) {
+          x.properties.sort(compare)
+        }
+      })
+
+      // eslint-disable-next-line vue/no-side-effects-in-computed-properties
+      return this.service.models.sort(compare)
+    }
+  }
 }
 </script>
 
