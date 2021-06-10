@@ -60,22 +60,55 @@ func (v *Variable) UnmarshalYAML(n *yaml.Node) error {
 }
 
 func (triggers *Triggers) UnmarshalYAML(n *yaml.Node) error {
-	m := make(map[string]interface{})
-	err := n.Decode(m)
-	if err != nil {
-		return err
-	}
-
-	for k, v := range m {
-		switch key := strings.ToLower(k); {
-		case key == "service":
-			*triggers = append(*triggers, parseTrigger(v)...)
-		case key == "http":
-			for _, h := range parseHttpTriggers(v) {
-				*triggers = append(*triggers, Trigger{Http: h})
+	if n.Kind == yaml.ScalarNode {
+		var s string
+		err := n.Decode(&s)
+		if err != nil {
+			return err
+		}
+		switch s {
+		case "http":
+			*triggers = append(*triggers, Trigger{Http: &HttpTrigger{}})
+		}
+	} else if n.Kind == yaml.MappingNode {
+		if n.Content[1].Kind == yaml.ScalarNode {
+			m := make(map[string]string)
+			err := n.Decode(m)
+			if err != nil {
+				return err
 			}
-		case key == "schedule":
-			*triggers = append(*triggers, Trigger{Schedule: parseSchedule(v)})
+			for k, v := range m {
+				switch key := strings.ToLower(k); {
+				case key == "service":
+					*triggers = append(*triggers, parseTrigger(v)...)
+				case key == "http":
+					for _, h := range parseHttpTriggers(v) {
+						*triggers = append(*triggers, Trigger{Http: h})
+					}
+				case key == "schedule":
+					*triggers = append(*triggers, Trigger{Schedule: parseSchedule(v)})
+				}
+			}
+		}
+		if n.Content[1].Kind == yaml.MappingNode {
+			m := make(map[string]interface{})
+			err := n.Decode(m)
+			if err != nil {
+				return err
+			}
+
+			for k, v := range m {
+				switch key := strings.ToLower(k); {
+				case key == "service":
+					*triggers = append(*triggers, parseTrigger(v)...)
+				case key == "http":
+					for _, h := range parseHttpTriggers(v) {
+						*triggers = append(*triggers, Trigger{Http: h})
+					}
+				case key == "schedule":
+					*triggers = append(*triggers, Trigger{Schedule: parseSchedule(v)})
+				}
+			}
 		}
 	}
 
@@ -105,6 +138,8 @@ func parseHttpTriggers(i interface{}) (t []*HttpTrigger) {
 				t = append(t, parseEndpoint(key, v)...)
 			}
 		}
+	case string:
+		t = append(t, &HttpTrigger{Method: i})
 	}
 
 	return
