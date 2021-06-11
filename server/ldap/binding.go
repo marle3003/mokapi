@@ -24,7 +24,7 @@ func NewServer(config *ldapConfig.Config) *Binding {
 	s := &Binding{stop: make(chan bool)}
 	err := s.Apply(config)
 	if err != nil {
-		log.Error("unable to start ldap server: %v", err.Error())
+		log.Errorf("unable to start ldap server: %v", err.Error())
 	}
 	return s
 }
@@ -125,7 +125,7 @@ func (s *Binding) handle(conn net.Conn) {
 		if err == io.EOF { // Client closed connection
 			return
 		} else if err != nil {
-			log.Errorf("handleConnection ber.ReadPacket ERROR: %s", err.Error())
+			log.Errorf("handleConnection ber.ReadPacket ERROR: %v", err.Error())
 			return
 		}
 
@@ -136,7 +136,7 @@ func (s *Binding) handle(conn net.Conn) {
 		o := packet.Children[0].Value
 		messageId, ok := packet.Children[0].Value.(int64)
 		if !ok {
-			log.Errorf("malformed messageId %v\n", reflect.TypeOf(o))
+			log.Errorf("malformed messageId %v", reflect.TypeOf(o))
 			return
 		}
 		req := packet.Children[1]
@@ -157,7 +157,7 @@ func (s *Binding) handle(conn net.Conn) {
 		case ApplicationSearchRequest:
 			err := s.handleSearchRequest(conn, messageId, req)
 			if err != nil {
-				log.Errorf("error handling search request with messageId %v: %s", messageId, err.Error())
+				log.Errorf("error handling search request with messageId %v: %v", messageId, err.Error())
 				return
 			} else {
 				sendResponse(conn, encodeSearchDone(messageId))
