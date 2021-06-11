@@ -60,7 +60,7 @@ endpointLoop:
 		if ctx.ServicPath != "/" {
 			routePath = ctx.ServicPath + routePath
 		}
-		routeSeg := strings.Split(strings.TrimSuffix(routePath, "/"), "/")
+		routeSeg := strings.Split(routePath, "/")
 
 		if len(reqSeg) != len(routeSeg) {
 			continue

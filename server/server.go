@@ -70,7 +70,7 @@ func (s *Server) Start() {
 	}
 	err := s.watcher.Start()
 	if err != nil {
-		log.Error("unable to start server: %v", err.Error())
+		log.Errorf("unable to start server: %v", err.Error())
 	}
 	s.startMetricUpdater()
 	s.scheduler.Start()

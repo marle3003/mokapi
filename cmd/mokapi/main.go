@@ -53,7 +53,7 @@ func configureLogging(cfg *static.Config) {
 	if cfg.Log != nil {
 		level, err := log.ParseLevel(cfg.Log.Level)
 		if err != nil {
-			log.WithField("logLevel", cfg.Log.Level).Error("error parsing log level: %v", err.Error())
+			log.WithField("logLevel", cfg.Log.Level).Errorf("error parsing log level: %v", err.Error())
 		}
 		log.SetLevel(level)
 
