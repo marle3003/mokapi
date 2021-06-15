@@ -36,12 +36,7 @@ func (g *Generator) New(schema *SchemaRef) interface{} {
 		}
 		return obj
 	} else if schema.Value.Type == "array" {
-		length := rand.Intn(5)
-		obj := make([]interface{}, length)
-		for i := range obj {
-			obj[i] = g.New(schema.Value.Items)
-		}
-		return obj
+		return g.newArray(schema.Value)
 	} else {
 		if len(schema.Value.Faker) > 0 {
 			if strings.HasPrefix(schema.Value.Faker, "{") {
@@ -117,6 +112,43 @@ func getNumber(s *Schema) string {
 	}
 
 	return "0"
+}
+
+func (g *Generator) newArray(s *Schema) (r []interface{}) {
+	maxItems := 5
+	if s.MaxItems != nil {
+		maxItems = *s.MaxItems + 1
+	}
+	minItems := 0
+	if s.MinItems != nil {
+		minItems = *s.MinItems
+	}
+
+	var f func(i int) interface{}
+
+	if s.UniqueItems && s.Items.Value != nil && len(s.Items.Value.Enum) > 0 {
+		if maxItems > len(s.Items.Value.Enum) {
+			maxItems = len(s.Items.Value.Enum)
+		}
+		f = func(i int) interface{} {
+			return s.Items.Value.Enum[i]
+		}
+		defer func() {
+			rand.Shuffle(len(r), func(i, j int) { r[i], r[j] = r[j], r[i] })
+		}()
+	} else {
+		f = func(i int) interface{} {
+			return g.New(s.Items)
+		}
+	}
+
+	length := rand.Intn(maxItems-minItems) + minItems
+	r = make([]interface{}, length)
+
+	for i := range r {
+		r[i] = f(i)
+	}
+	return r
 }
 
 func getByFormat(format string) string {
