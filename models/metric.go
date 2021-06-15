@@ -95,14 +95,20 @@ func (m *Metrics) AddMessage(topic string, key []byte, value []byte) {
 
 func (m *Metrics) AddRequest(r *RequestMetric) {
 	m.TotalRequests++
-	m.OpenApi[r.Service].Requests++
+	if s, ok := m.OpenApi[r.Service]; ok {
+		s.Requests++
+	}
+
 	if r.IsError {
 		m.RequestsWithError++
 		if len(m.LastErrorRequests) > 10 {
 			m.LastErrorRequests = m.LastErrorRequests[1:]
 		}
 		m.LastErrorRequests = append(m.LastErrorRequests, r)
-		m.OpenApi[r.Service].Errors++
+
+		if s, ok := m.OpenApi[r.Service]; ok {
+			s.Errors++
+		}
 	}
 	if len(m.LastRequests) > 10 {
 		m.LastRequests = m.LastRequests[1:]
@@ -112,7 +118,10 @@ func (m *Metrics) AddRequest(r *RequestMetric) {
 		r.HttpStatus = 200
 	}
 	m.LastRequests = append(m.LastRequests, r)
-	m.OpenApi[r.Service].LastRequest = r.Time
+
+	if s, ok := m.OpenApi[r.Service]; ok {
+		s.LastRequest = r.Time
+	}
 }
 
 func (m *Metrics) Update() {

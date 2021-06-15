@@ -119,21 +119,30 @@ func (binding *Binding) resolveHandler(r *http.Request) (*ServiceHandler, string
 	var matchedHandler *ServiceHandler
 	rHost := strings.Split(r.Host, ":")[0]
 	if host, ok := binding.handlers[rHost]; ok {
-		for path, handler := range host {
-			if strings.HasPrefix(strings.ToLower(r.URL.Path), strings.ToLower(path)) {
-				if matchedPath == "" || len(matchedPath) < len(path) {
-					matchedPath = path
-					matchedHandler = handler
-				}
-			}
-		}
+		matchedHandler, matchedPath = matchPath(host, r)
 	}
 
 	if matchedHandler != nil {
 		return matchedHandler, matchedPath
 	}
 
+	if host, ok := binding.handlers[""]; ok {
+		return matchPath(host, r)
+	}
+
 	return nil, ""
+}
+
+func matchPath(host map[string]*ServiceHandler, r *http.Request) (matchedHandler *ServiceHandler, matchedPath string) {
+	for path, handler := range host {
+		if strings.HasPrefix(strings.ToLower(r.URL.Path), strings.ToLower(path)) {
+			if matchedPath == "" || len(matchedPath) < len(path) {
+				matchedPath = path
+				matchedHandler = handler
+			}
+		}
+	}
+	return
 }
 
 func writeError(message string, status int, ctx *HttpContext) {
