@@ -224,6 +224,7 @@ type Schema struct {
 	UniqueItems          bool       `yaml:"uniqueItems" json:"uniqueItems"`
 	MinItems             *int       `yaml:"minItems" json:"minItems"`
 	MaxItems             *int       `yaml:"maxItems" json:"maxItems"`
+	ShuffleItems         bool       `yaml:"x-shuffleItems" json:"x-shuffleItems"`
 }
 
 type AdditionalProperties struct {

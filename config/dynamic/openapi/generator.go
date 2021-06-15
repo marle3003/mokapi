@@ -133,9 +133,11 @@ func (g *Generator) newArray(s *Schema) (r []interface{}) {
 		f = func(i int) interface{} {
 			return s.Items.Value.Enum[i]
 		}
-		defer func() {
-			rand.Shuffle(len(r), func(i, j int) { r[i], r[j] = r[j], r[i] })
-		}()
+		if s.ShuffleItems {
+			defer func() {
+				rand.Shuffle(len(r), func(i, j int) { r[i], r[j] = r[j], r[i] })
+			}()
+		}
 	} else {
 		f = func(i int) interface{} {
 			return g.New(s.Items)
