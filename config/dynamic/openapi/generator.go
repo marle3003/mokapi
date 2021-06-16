@@ -144,7 +144,10 @@ func (g *Generator) newArray(s *Schema) (r []interface{}) {
 		}
 	}
 
-	length := rand.Intn(maxItems-minItems) + minItems
+	length := minItems
+	if maxItems-minItems > 0 {
+		length = rand.Intn(maxItems-minItems) + minItems
+	}
 	r = make([]interface{}, length)
 
 	for i := range r {
