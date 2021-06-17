@@ -33,6 +33,7 @@ func main() {
 	exitChannel := make(chan os.Signal, 1)
 	signal.Notify(exitChannel, os.Interrupt)
 	signal.Notify(exitChannel, syscall.SIGTERM)
+	signal.Notify(exitChannel, syscall.SIGKILL)
 	go func() {
 		<-exitChannel
 		fmt.Println("Shutting down")

@@ -240,26 +240,28 @@ func newSchema(name string, s *openapi.SchemaRef, level int) *Schema {
 }
 
 func newModel(name string, s *openapi.SchemaRef) *Schema {
-	if s == nil {
+	if s == nil || s.Value == nil {
 		return nil
 	}
 
 	v := &Schema{Name: name, Type: s.Value.Type, Properties: make([]*Schema, 0), Ref: s.Ref}
 
-	for s, p := range s.Value.Properties.Value {
-		if p.Value.Type == "array" && p.Value.Items != nil {
-			tName := p.Value.Items.Value.Type
-			if len(p.Value.Items.Ref) > 0 {
-				seg := strings.Split(p.Value.Items.Ref, "/")
-				tName = seg[len(seg)-1]
+	if s.Value.Properties != nil {
+		for s, p := range s.Value.Properties.Value {
+			if p.Value.Type == "array" && p.Value.Items != nil {
+				tName := p.Value.Items.Value.Type
+				if len(p.Value.Items.Ref) > 0 {
+					seg := strings.Split(p.Value.Items.Ref, "/")
+					tName = seg[len(seg)-1]
+				}
+				v.Properties = append(v.Properties, &Schema{Name: s, Type: fmt.Sprintf("array[%v]", tName)})
+			} else if len(p.Ref) > 0 {
+				seg := strings.Split(p.Ref, "/")
+				tName := seg[len(seg)-1]
+				v.Properties = append(v.Properties, &Schema{Name: s, Type: tName})
+			} else {
+				v.Properties = append(v.Properties, newSchema(s, p, 0))
 			}
-			v.Properties = append(v.Properties, &Schema{Name: s, Type: fmt.Sprintf("array[%v]", tName)})
-		} else if len(p.Ref) > 0 {
-			seg := strings.Split(p.Ref, "/")
-			tName := seg[len(seg)-1]
-			v.Properties = append(v.Properties, &Schema{Name: s, Type: tName})
-		} else {
-			v.Properties = append(v.Properties, newSchema(s, p, 0))
 		}
 	}
 

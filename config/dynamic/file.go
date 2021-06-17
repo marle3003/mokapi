@@ -111,7 +111,7 @@ func (fw *FileWatcher) Start() {
 
 	go func() {
 		defer func() {
-			log.Error("closing file watcher. Restart is required...")
+			log.Info("closing file watcher. Restart is required...")
 			ticker.Stop()
 			err := fw.watcher.Close()
 			if err != nil {

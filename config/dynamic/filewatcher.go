@@ -57,7 +57,7 @@ type ConfigWatcher struct {
 }
 
 func NewConfigWatcher(config static.Providers) *ConfigWatcher {
-	return &ConfigWatcher{config: config}
+	return &ConfigWatcher{config: config, stop: make(chan bool)}
 }
 
 func (cw *ConfigWatcher) AddListener(listener func(c Config)) {
@@ -96,7 +96,7 @@ func (cw *ConfigWatcher) Start() error {
 
 	go func() {
 		defer func() {
-			log.Error("closing config watcher. Restart is required...")
+			log.Debug("closing file watcher")
 			ticker.Stop()
 			err := cw.watcher.Close()
 			if err != nil {
