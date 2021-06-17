@@ -32,10 +32,10 @@ Log level: `debug` | `info` | `error` (Default: `error`)
 `--log.format`:
 Log format: `json` | `default`
 
-`--log.providers.file.filename`:
+`--providers.file.filename`:
 Load dynamic configuration from a file
 
-`--log.providers.file.directory`:
+`--providers.file.directory`:
 Load dynamic configuration from one or more files in a directory
 
 `--api.dashboard`:
