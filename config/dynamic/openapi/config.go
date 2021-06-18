@@ -221,6 +221,8 @@ type Schema struct {
 	ExclusiveMinimum     *bool      `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
 	ExclusiveMaximum     *bool      `yaml:"exclusiveMaximum ,omitempty" json:"exclusiveMaximum,omitempty"`
 	AnyOf                SchemaRefs `yaml:"anyOf" json:"anyOf"`
+	AllOf                SchemaRefs `yaml:"allOf" json:"allOf"`
+	OneOf                SchemaRefs `yaml:"oneOf" json:"oneOf"`
 	UniqueItems          bool       `yaml:"uniqueItems" json:"uniqueItems"`
 	MinItems             *int       `yaml:"minItems" json:"minItems"`
 	MaxItems             *int       `yaml:"maxItems" json:"maxItems"`

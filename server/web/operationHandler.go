@@ -142,9 +142,9 @@ func parseBody(s string, contentType *media.ContentType, schema *openapi.SchemaR
 
 	switch contentType.Subtype {
 	case "xml":
-		return encoding.UnmarshalXml(s, schema)
+		return encoding.ParseXml(s, schema)
 	case "json":
-		return encoding.UnmarshalJSON(s, schema)
+		return encoding.Parse([]byte(s), contentType, schema)
 	default:
 		log.Debugf("unsupported content type '%v' from body", contentType)
 		return s, nil

@@ -9,13 +9,6 @@ import (
 
 type custom map[string]interface{}
 
-func UnmarshalJSON(s string, _ *openapi.SchemaRef) (interface{}, error) {
-
-	var i interface{}
-	err := json.Unmarshal([]byte(s), &i)
-	return i, err
-}
-
 func MarshalJSON(obj interface{}, schema *openapi.SchemaRef) ([]byte, error) {
 	data, err := selectData(obj, schema)
 	if err != nil {

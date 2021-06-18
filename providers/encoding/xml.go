@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-func UnmarshalXml(s string, schema *openapi.SchemaRef) (interface{}, error) {
+func ParseXml(s string, schema *openapi.SchemaRef) (interface{}, error) {
 	data := []byte(s)
 	e, err := decode(data)
 	if err != nil {

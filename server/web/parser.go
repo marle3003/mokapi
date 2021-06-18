@@ -88,6 +88,16 @@ func parse(s string, schema *openapi.SchemaRef) (interface{}, error) {
 	if schema == nil {
 		return s, nil
 	}
+
+	if len(schema.Value.AnyOf) > 0 {
+		for _, any := range schema.Value.AnyOf {
+			if i, err := parse(s, any); err == nil {
+				return i, nil
+			}
+		}
+		return nil, errors.Errorf("unable to parse %q, not any schema matches", s)
+	}
+
 	switch schema.Value.Type {
 	case "string":
 		return s, nil

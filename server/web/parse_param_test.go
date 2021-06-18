@@ -3,9 +3,9 @@ package web
 import (
 	"github.com/pkg/errors"
 	"mokapi/config/dynamic/openapi"
+	"mokapi/test"
 	"net/http"
 	"net/url"
-	"reflect"
 	"testing"
 )
 
@@ -130,14 +130,22 @@ func TestParse(t *testing.T) {
 			&openapi.SchemaRef{Value: &openapi.Schema{Type: "boolean"}},
 			false,
 		},
+		{
+			"12",
+			&openapi.SchemaRef{
+				Value: &openapi.Schema{
+					AnyOf: []*openapi.SchemaRef{
+						{Value: &openapi.Schema{Type: "integer"}},
+						{Value: &openapi.Schema{Type: "string"}},
+					}}},
+			12,
+		},
 	}
 
-	for _, d := range data {
+	for i, d := range data {
+		t.Logf("parse %v: %v", i, d.s)
 		i, err := parse(d.s, d.schema)
-		if err != nil {
-			t.Errorf("parse %v: %v", d.schema.Value.Type, err)
-		} else if !reflect.DeepEqual(i, d.e) {
-			t.Errorf("schema %q, format %q: got %v; expected %v", d.schema.Value.Type, d.schema.Value.Format, i, d.e)
-		}
+		test.Ok(t, err)
+		test.Equals(t, d.e, i)
 	}
 }
