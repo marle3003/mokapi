@@ -206,6 +206,10 @@ func newSchema(name string, s *openapi.SchemaRef, level int) *Schema {
 		return nil
 	}
 
+	if s.Value == nil {
+		return &Schema{Name: name, Ref: s.Ref}
+	}
+
 	v := &Schema{
 		Name:        name,
 		Type:        s.Value.Type,

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
+	"math/rand"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/models"
 	"mokapi/models/media"
@@ -12,6 +13,7 @@ import (
 	"mokapi/providers/workflow"
 	"mokapi/providers/workflow/event"
 	"net/http"
+	"reflect"
 )
 
 type OperationHandler struct {
@@ -81,8 +83,6 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 		})
 	}
 
-	gen := openapi.NewGenerator()
-
 	req := &Request{
 		Header: context.Parameters[openapi.HeaderParameter],
 		Path:   context.Parameters[openapi.PathParameter],
@@ -97,7 +97,17 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 			"Content-Type": context.ContentType.String(),
 		},
 		StatusCode: int(context.statusCode),
-		Data:       gen.New(context.Schema),
+	}
+
+	if len(context.Response.Examples) > 0 {
+		keys := reflect.ValueOf(context.Response.Examples).MapKeys()
+		v := keys[rand.Intn(len(keys))].Interface().(*openapi.ExampleRef)
+		res.Data = v.Value.Value
+	} else if context.Response.Example != nil {
+		res.Data = context.Response.Example
+	} else {
+		gen := openapi.NewGenerator()
+		res.Data = gen.New(context.Response.Schema)
 	}
 
 	summary := context.workflowHandler(event.WithHttpEvent(event.HttpEvent{
@@ -165,7 +175,7 @@ func write(r *Response, ctx *HttpContext) error {
 			}
 			body = bytes
 		} else {
-			if bytes, err := encodeData(r.Data, contentType, ctx.Schema); err != nil {
+			if bytes, err := encodeData(r.Data, contentType, ctx.Response.Schema); err != nil {
 				return err
 			} else {
 				body = bytes
@@ -174,14 +184,14 @@ func write(r *Response, ctx *HttpContext) error {
 	}
 
 	for k, v := range r.Headers {
-		ctx.Response.Header().Add(k, v)
+		ctx.ResponseWriter.Header().Add(k, v)
 	}
 
 	if r.StatusCode > 0 {
-		ctx.Response.WriteHeader(r.StatusCode)
+		ctx.ResponseWriter.WriteHeader(r.StatusCode)
 	}
 
-	_, err := ctx.Response.Write(body)
+	_, err := ctx.ResponseWriter.Write(body)
 
 	ctx.updateMetric(r.StatusCode, contentType.String(), string(body))
 

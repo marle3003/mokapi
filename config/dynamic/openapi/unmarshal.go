@@ -96,11 +96,31 @@ func (s *SchemaRef) UnmarshalYAML(node *yaml.Node) error {
 	return unmarshalRef(node, &s.Ref, &s.Value)
 }
 
+func (r *ExampleRef) UnmarshalYAML(node *yaml.Node) error {
+	return unmarshalRef(node, &r.Ref, &r.Value)
+}
+
+func (r *HeaderRef) UnmarshalYAML(node *yaml.Node) error {
+	return unmarshalRef(node, &r.Ref, &r.Value)
+}
+
 func (r *NamedResponses) UnmarshalYAML(node *yaml.Node) error {
 	return unmarshalRef(node, &r.Ref, &r.Value)
 }
 
 func (r *RequestBodies) UnmarshalYAML(node *yaml.Node) error {
+	return unmarshalRef(node, &r.Ref, &r.Value)
+}
+
+func (r *NamedParameters) UnmarshalYAML(node *yaml.Node) error {
+	return unmarshalRef(node, &r.Ref, &r.Value)
+}
+
+func (r *NamedHeaders) UnmarshalYAML(node *yaml.Node) error {
+	return unmarshalRef(node, &r.Ref, &r.Value)
+}
+
+func (r *Examples) UnmarshalYAML(node *yaml.Node) error {
 	return unmarshalRef(node, &r.Ref, &r.Value)
 }
 
@@ -114,7 +134,8 @@ func (r *ParameterRef) UnmarshalYAML(node *yaml.Node) error {
 
 func unmarshalRef(node *yaml.Node, ref *string, val interface{}) error {
 	r := &refProp{}
-	if err := node.Decode(r); err == nil && len(r.Ref) > 0 {
+	err := node.Decode(r)
+	if err == nil && len(r.Ref) > 0 {
 		*ref = r.Ref
 		return nil
 	}

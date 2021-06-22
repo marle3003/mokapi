@@ -3,15 +3,12 @@ package web
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/models"
 	"mokapi/models/media"
 	"net/http"
 	"sort"
 	"strings"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type ParameterParser interface {
@@ -19,69 +16,38 @@ type ParameterParser interface {
 }
 
 type HttpContext struct {
-	Response        http.ResponseWriter
+	ResponseWriter  http.ResponseWriter
 	Request         *http.Request
 	Parameters      RequestParameters
-	ResponseType    *openapi.ResponseRef
 	ServicPath      string
 	ServiceName     string
 	Operation       *openapi.Operation
 	ContentType     *media.ContentType
-	Schema          *openapi.SchemaRef
-	body            string
 	metric          *models.RequestMetric
 	statusCode      openapi.HttpStatus
 	workflowHandler EventHandler
+	Response        *openapi.MediaType
 }
 
 func NewHttpContext(request *http.Request, response http.ResponseWriter, wh EventHandler) *HttpContext {
 	metric := models.NewRequestMetric(request.Method, fmt.Sprintf("%s%s", request.Host, request.URL.String()))
-	return &HttpContext{Response: response,
+	return &HttpContext{ResponseWriter: response,
 		Request:         request,
 		workflowHandler: wh,
 		metric:          metric,
 	}
 }
 
-func (context *HttpContext) Body() string {
-	if context.Request.ContentLength == 0 {
-		return ""
-	}
-	if context.body != "" {
-		return context.body
-	}
-
-	data, err := ioutil.ReadAll(context.Request.Body)
-	if err != nil {
-		log.Errorf("Error while reading body: %v", err.Error())
-		return ""
-	}
-	context.body = string(data)
-	return context.body
-}
-
 func (context *HttpContext) Init() error {
-	err := context.setFirstSuccessResponse(context.Operation)
+	err := context.setResponse()
 	if err != nil {
 		return err
-	}
-	err = context.setContentType()
-	if err != nil {
-		return err
-	}
-
-	for k, content := range context.ResponseType.Value.Content {
-		ct := media.ParseContentType(k)
-		if ct.Key() == context.ContentType.Key() {
-			context.Schema = content.Schema
-			break
-		}
 	}
 
 	return nil
 }
 
-func (context *HttpContext) setFirstSuccessResponse(operation *openapi.Operation) error {
+func (context *HttpContext) getFirstSuccessResponse(operation *openapi.Operation) (openapi.HttpStatus, *openapi.ResponseRef, error) {
 	successStatus := make([]openapi.HttpStatus, 0, 1)
 	for httpStatus := range operation.Responses {
 		if httpStatus >= 200 && httpStatus < 300 {
@@ -90,30 +56,35 @@ func (context *HttpContext) setFirstSuccessResponse(operation *openapi.Operation
 	}
 
 	if len(successStatus) == 0 {
-		return fmt.Errorf("no success response in configuration found")
+		return 0, nil, fmt.Errorf("no success response in configuration found")
 	}
 
 	sort.SliceStable(successStatus, func(i, j int) bool { return i < j })
 
-	context.ResponseType = operation.Responses[successStatus[0]]
-	context.statusCode = successStatus[0]
-	return nil
+	return successStatus[0], operation.Responses[successStatus[0]], nil
 }
 
-func (context *HttpContext) setContentType() error {
+func (context *HttpContext) setResponse() error {
+	status, response, err := context.getFirstSuccessResponse(context.Operation)
+	if err != nil {
+		return err
+	}
+
+	context.statusCode = status
+
 	accept := context.Request.Header.Get("accept")
 
 	// search for a matching content type
 	if accept != "" {
 		for _, mimeType := range strings.Split(accept, ",") {
 			contentType := media.ParseContentType(mimeType)
-			if c, ok := context.ResponseType.Value.Content[mimeType]; ok {
+			if mt, ok := response.Value.Content[mimeType]; ok {
 				context.ContentType = contentType
-				context.Schema = c.Schema
+				context.Response = mt
 				return nil
-			} else if c, ok := context.ResponseType.Value.Content[contentType.Key()]; ok {
+			} else if mt, ok := response.Value.Content[contentType.Key()]; ok {
 				context.ContentType = contentType
-				context.Schema = c.Schema
+				context.Response = mt
 				return nil
 			}
 		}
@@ -122,10 +93,10 @@ func (context *HttpContext) setContentType() error {
 	// no matching content found => returning first in list
 	// The iteration order over maps is not specified and is not
 	// guaranteed to be the same from one iteration to the next
-	for i, c := range context.ResponseType.Value.Content {
+	for i, c := range response.Value.Content {
 		// return first element
 		context.ContentType = media.ParseContentType(i)
-		context.Schema = c.Schema
+		context.Response = c
 		return nil
 	}
 

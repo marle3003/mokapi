@@ -148,5 +148,5 @@ func matchPath(host map[string]*ServiceHandler, r *http.Request) (matchedHandler
 func writeError(message string, status int, ctx *HttpContext) {
 	ctx.updateMetricWithError(status, message)
 	log.WithFields(log.Fields{"url": ctx.metric.Url, "method": ctx.metric.Method, "status": status}).Error(message)
-	http.Error(ctx.Response, message, status)
+	http.Error(ctx.ResponseWriter, message, status)
 }

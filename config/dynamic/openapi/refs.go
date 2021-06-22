@@ -21,22 +21,28 @@ type resolver interface {
 }
 
 func (r refResolver) resolveConfig() error {
-	if r.config.Components.Schemas != nil {
-		if err := r.resolveSchemas(r.config.Components.Schemas); err != nil {
-			return err
-		}
+	if err := r.resolveSchemas(r.config.Components.Schemas); err != nil {
+		return err
 	}
 
-	if r.config.Components.Responses != nil {
-		if err := r.resolveResponses(r.config.Components.Responses); err != nil {
-			return err
-		}
+	if err := r.resolveResponses(r.config.Components.Responses); err != nil {
+		return err
 	}
 
-	if r.config.Components.RequestBodies != nil {
-		if err := r.resolveRequestBodies(r.config.Components.RequestBodies); err != nil {
-			return err
-		}
+	if err := r.resolveRequestBodies(r.config.Components.RequestBodies); err != nil {
+		return err
+	}
+
+	if err := r.resolveParameters(r.config.Components.Parameters); err != nil {
+		return err
+	}
+
+	if err := r.resolveExamples(r.config.Components.Examples); err != nil {
+		return err
+	}
+
+	if err := r.resolveHeaders(r.config.Components.Headers); err != nil {
+		return err
 	}
 
 	for _, e := range r.config.EndPoints {
@@ -48,58 +54,14 @@ func (r refResolver) resolveConfig() error {
 	return nil
 }
 
-func (r refResolver) resolveMokapiRef(m *MokapiRef) error {
-	if m == nil {
-		return nil
-	}
-
-	if len(m.Ref) > 0 && m.Value == nil {
-		u, err := url.Parse(m.Ref)
-		if err != nil {
-			return err
-		}
-
-		if !isLocalRef(m.Ref) {
-			err := r.loadFrom(u.Path, &m.Value)
-			if err != nil {
-				return err
-			}
-		} else {
-			err := r.resolve(u.Fragment, r.config, m.Value)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	if m.Value == nil {
-		return nil
-	}
-
-	return nil
-}
-
 func (r refResolver) resolveSchemas(s *Schemas) error {
 	if s == nil {
 		return nil
 	}
 
 	if len(s.Ref) > 0 && s.Value == nil {
-		u, err := url.Parse(s.Ref)
-		if err != nil {
+		if err := r.resolve(s.Ref, r.config, &s.Value); err != nil {
 			return err
-		}
-
-		if !isLocalRef(s.Ref) {
-			err := r.loadFrom(u.Path, &s.Value)
-			if err != nil {
-				return err
-			}
-		} else {
-			err := r.resolve(u.Fragment, r.config, &s.Value)
-			if err != nil {
-				return err
-			}
 		}
 	}
 
@@ -122,21 +84,8 @@ func (r refResolver) resolveResponses(res *NamedResponses) error {
 	}
 
 	if len(res.Ref) > 0 && res.Value == nil {
-		u, err := url.Parse(res.Ref)
-		if err != nil {
+		if err := r.resolve(res.Ref, r.config, &res.Value); err != nil {
 			return err
-		}
-
-		if !isLocalRef(res.Ref) {
-			err := r.loadFrom(u.Path, &res.Value)
-			if err != nil {
-				return err
-			}
-		} else {
-			err := r.resolve(u.Fragment, r.config, &res.Value)
-			if err != nil {
-				return err
-			}
 		}
 	}
 
@@ -149,21 +98,50 @@ func (r refResolver) resolveRequestBodies(req *RequestBodies) error {
 	}
 
 	if len(req.Ref) > 0 && req.Value == nil {
-		u, err := url.Parse(req.Ref)
-		if err != nil {
+		if err := r.resolve(req.Ref, r.config, &req.Value); err != nil {
 			return err
 		}
+	}
 
-		if !isLocalRef(req.Ref) {
-			err := r.loadFrom(u.Path, &req.Value)
-			if err != nil {
-				return err
-			}
-		} else {
-			err := r.resolve(u.Fragment, r.config, &req.Value)
-			if err != nil {
-				return err
-			}
+	return nil
+}
+
+func (r refResolver) resolveParameters(p *NamedParameters) error {
+	if p == nil {
+		return nil
+	}
+
+	if len(p.Ref) > 0 && p.Value == nil {
+		if err := r.resolve(p.Ref, r.config, &p.Value); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (r refResolver) resolveExamples(e *Examples) error {
+	if e == nil {
+		return nil
+	}
+
+	if len(e.Ref) > 0 && e.Value == nil {
+		if err := r.resolve(e.Ref, r.config, &e.Value); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (r refResolver) resolveHeaders(e *NamedHeaders) error {
+	if e == nil {
+		return nil
+	}
+
+	if len(e.Ref) > 0 && e.Value == nil {
+		if err := r.resolve(e.Ref, r.config, &e.Value); err != nil {
+			return err
 		}
 	}
 
@@ -176,22 +154,11 @@ func (r refResolver) resolveEndpointRef(e *EndpointRef) error {
 	}
 
 	if len(e.Ref) > 0 && e.Value == nil {
-		u, err := url.Parse(e.Ref)
-		if err != nil {
+		var resolved *EndpointRef
+		if err := r.resolve(e.Ref, r.config, &resolved); err != nil {
 			return err
 		}
-
-		if !isLocalRef(e.Ref) {
-			err := r.loadFrom(u.Path, &e.Value)
-			if err != nil {
-				return err
-			}
-		} else {
-			err := r.resolve(u.Fragment, r.config, &e.Value)
-			if err != nil {
-				return err
-			}
-		}
+		e.Value = resolved.Value
 	}
 
 	for _, p := range e.Value.Parameters {
@@ -228,22 +195,11 @@ func (r refResolver) resolveParameter(p *ParameterRef) error {
 	}
 
 	if len(p.Ref) > 0 && p.Value == nil {
-		u, err := url.Parse(p.Ref)
-		if err != nil {
+		var resolved *ParameterRef
+		if err := r.resolve(p.Ref, r.config, &resolved); err != nil {
 			return err
 		}
-
-		if !isLocalRef(p.Ref) {
-			err := r.loadFrom(u.Path, &p.Value)
-			if err != nil {
-				return err
-			}
-		} else {
-			err := r.resolve(u.Fragment, r.config, &p.Value)
-			if err != nil {
-				return err
-			}
-		}
+		p.Value = resolved.Value
 	}
 
 	if p.Value == nil {
@@ -263,22 +219,11 @@ func (r refResolver) resolveRequestBodyRef(req *RequestBodyRef) error {
 	}
 
 	if len(req.Ref) > 0 && req.Value == nil {
-		u, err := url.Parse(req.Ref)
-		if err != nil {
+		var resolved *RequestBodyRef
+		if err := r.resolve(req.Ref, r.config, &resolved); err != nil {
 			return err
 		}
-
-		if !isLocalRef(req.Ref) {
-			err := r.loadFrom(u.Path, &req.Value)
-			if err != nil {
-				return err
-			}
-		} else {
-			err := r.resolve(u.Fragment, r.config, &req.Value)
-			if err != nil {
-				return err
-			}
-		}
+		req.Value = resolved.Value
 	}
 
 	for _, c := range req.Value.Content {
@@ -299,21 +244,20 @@ func (r refResolver) resolveResponseRef(res *ResponseRef) error {
 	}
 
 	if len(res.Ref) > 0 && res.Value == nil {
-		u, err := url.Parse(res.Ref)
-		if err != nil {
+		var resolved *ResponseRef
+		if err := r.resolve(res.Ref, r.config, &resolved); err != nil {
 			return err
 		}
+		res.Value = resolved.Value
+	}
 
-		if !isLocalRef(res.Ref) {
-			err := r.loadFrom(u.Path, &res.Value)
-			if err != nil {
-				return err
-			}
-		} else {
-			err := r.resolve(u.Fragment, r.config, &res.Value)
-			if err != nil {
-				return err
-			}
+	if res.Value == nil {
+		return nil
+	}
+
+	for _, h := range res.Value.Headers {
+		if err := r.resolveHeader(h); err != nil {
+			return err
 		}
 	}
 
@@ -323,6 +267,12 @@ func (r refResolver) resolveResponseRef(res *ResponseRef) error {
 		}
 		if err := r.resolveSchemaRef(c.Schema); err != nil {
 			return err
+		}
+
+		for _, e := range c.Examples {
+			if err := r.resolveExample(e); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -335,38 +285,12 @@ func (r refResolver) resolveSchemaRef(s *SchemaRef) error {
 	}
 
 	if len(s.Ref) > 0 && s.Value == nil {
-		u, err := url.Parse(s.Ref)
-		if err != nil {
+		//var resolved *SchemaRef
+		resolved := &SchemaRef{}
+		if err := r.resolve(s.Ref, r.config, &resolved); err != nil {
 			return err
 		}
-
-		if !isLocalRef(s.Ref) {
-			if len(u.Fragment) == 0 {
-				err := r.loadFrom(u.Path, &s.Value)
-				if err != nil {
-					return err
-				}
-			} else {
-				schemas := &Schemas{}
-				err := r.loadFrom(u.Path, &schemas.Value)
-				if err != nil {
-					return err
-				}
-				var resolved *SchemaRef
-				if err := r.resolve(u.Fragment, schemas.Value, &resolved); err != nil {
-					return err
-				}
-				s.Value = resolved.Value
-			}
-
-		} else {
-			schema := &SchemaRef{}
-			err := r.resolve(u.Fragment, r.config, &schema)
-			if err != nil {
-				return err
-			}
-			s.Value = schema.Value
-		}
+		s.Value = resolved.Value
 	}
 
 	if s.Value == nil {
@@ -388,19 +312,92 @@ func (r refResolver) resolveSchemaRef(s *SchemaRef) error {
 	return nil
 }
 
-func (r refResolver) resolve(ref string, node interface{}, val interface{}) (err error) {
-	tokens := strings.Split(ref, "/")
-
-	i := node
-	for _, t := range tokens[1:] {
-		i, err = get(t, i)
+func (r refResolver) resolveExample(ref *ExampleRef) error {
+	if ref == nil {
+		return nil
 	}
 
-	if i == nil {
+	if len(ref.Ref) > 0 && ref.Value == nil {
+		var resolved *ExampleRef
+		if err := r.resolve(ref.Ref, r.config, &resolved); err != nil {
+			return err
+		}
+		ref.Value = resolved.Value
+	}
+
+	return nil
+}
+
+func (r refResolver) resolveHeader(ref *HeaderRef) error {
+	if ref == nil {
+		return nil
+	}
+
+	if len(ref.Ref) > 0 && ref.Value == nil {
+		var resolved *HeaderRef
+		if err := r.resolve(ref.Ref, r.config, &resolved); err != nil {
+			return err
+		}
+		ref.Value = resolved.Value
+	}
+
+	return nil
+}
+
+func (r refResolver) resolve(ref string, config interface{}, val interface{}) (err error) {
+	u, err := url.Parse(ref)
+	if err != nil {
+		return err
+	}
+
+	if len(u.Path) > 0 {
+		switch s := strings.ToLower(u.Fragment); {
+		case strings.HasPrefix(s, "/components"):
+			var c *Config
+			err = r.readConfig(u.Path, &c)
+			config = c
+		case len(s) == 0:
+			err = r.readConfig(u.Path, val)
+			config = val
+		default:
+			switch val.(type) {
+			case **SchemaRef:
+				schemas := &Schemas{}
+				err = r.readConfig(u.Path, &schemas.Value)
+				config = schemas
+			}
+
+		}
+
+		if err != nil {
+			return err
+		}
+	}
+
+	tokens := strings.Split(u.Fragment, "/")
+
+	for _, t := range tokens[1:] {
+		config, err = get(t, config)
+		if err != nil {
+			return
+		}
+	}
+
+	if config == nil {
 		return fmt.Errorf("found unresolved ref: %q", ref)
 	}
 
-	reflect.ValueOf(val).Elem().Set(reflect.ValueOf(i))
+	if reflect.ValueOf(config).Kind() == reflect.Ptr {
+		i := 2
+		_ = i
+	}
+
+	v := reflect.ValueOf(config)
+	if reflect.Indirect(v).Kind() == reflect.Map {
+		reflect.Indirect(reflect.ValueOf(val)).Set(reflect.Indirect(v))
+		return
+	}
+	reflect.Indirect(reflect.ValueOf(val)).Set(v)
 
 	return
 }
@@ -428,29 +425,41 @@ func get(token string, node interface{}) (interface{}, error) {
 	return nil, fmt.Errorf("invalid token reference %q", token)
 }
 
-func (r refResolver) loadFrom(ref string, val interface{}) error {
-	dir := filepath.Dir(r.path)
-	if !filepath.IsAbs(ref) {
-		ref = filepath.Join(dir, ref)
-	}
-
-	err := r.reader.Read(ref, val, r.eh)
-	if err != nil {
-		return err
-	}
-
-	return nil
+func caseInsenstiveFieldByName(v reflect.Value, name string) reflect.Value {
+	name = strings.ToLower(name)
+	return v.FieldByNameFunc(func(n string) bool { return strings.ToLower(n) == name })
 }
 
-func isLocalRef(s string) bool {
-	return strings.HasPrefix(s, "#")
+func (r refResolver) readConfig(path string, node interface{}) error {
+	dir := filepath.Dir(r.path)
+	if !filepath.IsAbs(path) {
+		path = filepath.Join(dir, path)
+	}
+
+	err := r.reader.Read(path, node, r.eh)
+	return err
 }
 
 func (s *Schemas) Resolve(token string) (interface{}, error) {
 	return get(token, s.Value)
 }
 
-func caseInsenstiveFieldByName(v reflect.Value, name string) reflect.Value {
-	name = strings.ToLower(name)
-	return v.FieldByNameFunc(func(n string) bool { return strings.ToLower(n) == name })
+func (r *NamedResponses) Resolve(token string) (interface{}, error) {
+	return get(token, r.Value)
+}
+
+func (r *NamedParameters) Resolve(token string) (interface{}, error) {
+	return get(token, r.Value)
+}
+
+func (r *Examples) Resolve(token string) (interface{}, error) {
+	return get(token, r.Value)
+}
+
+func (r *RequestBodies) Resolve(token string) (interface{}, error) {
+	return get(token, r.Value)
+}
+
+func (r *NamedHeaders) Resolve(token string) (interface{}, error) {
+	return get(token, r.Value)
 }

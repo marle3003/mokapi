@@ -10,12 +10,12 @@ import (
 )
 
 func init() {
-	dynamic.Register("openapi", &Config{}, func(path string, o dynamic.Config, r dynamic.ConfigReader) (bool, dynamic.Config) {
+	dynamic.Register("openapi", &Config{}, func(path string, o dynamic.Config, cr dynamic.ConfigReader) (bool, dynamic.Config) {
 		eh := dynamic.NewEmptyEventHandler(o)
 		switch c := o.(type) {
 		case *Config:
 			c.ConfigPath = path
-			r := refResolver{reader: r, path: path, config: c, eh: eh}
+			r := refResolver{reader: cr, path: path, config: c, eh: eh}
 
 			if err := r.resolveConfig(); err != nil {
 				log.Errorf("error in resolving references in config %q: %v", path, err)
@@ -269,17 +269,49 @@ type Response struct {
 	// it. For responses that match multiple keys, only the most specific
 	// key is applicable. e.g. text/plain overrides text/*
 	Content map[string]*MediaType
+
+	// Maps a header name to its definition. RFC7230 states header names are
+	// case insensitive. If a response header is defined with the name
+	// "Content-Type", it SHALL be ignored.
+	Headers map[string]*HeaderRef
 }
 
 type MediaType struct {
 	// The schema defining the content of the request, response.
-	Schema *SchemaRef
+	Schema   *SchemaRef
+	Example  interface{}
+	Examples map[string]*ExampleRef
+}
+
+type HeaderRef struct {
+	Ref   string `yaml:"$ref" json:"$ref"`
+	Value *Header
+}
+
+type Header struct {
+	Name        string
+	Description string
+	Schema      *SchemaRef
+}
+
+type Example struct {
+	Summary     string
+	Value       interface{}
+	Description string
+}
+
+type ExampleRef struct {
+	Ref   string `yaml:"$ref" json:"$ref"`
+	Value *Example
 }
 
 type Components struct {
 	Schemas       *Schemas
 	Responses     *NamedResponses
-	RequestBodies *RequestBodies
+	RequestBodies *RequestBodies `yaml:"requestBodies" json:"requestBodies"`
+	Parameters    *NamedParameters
+	Examples      *Examples
+	Headers       *NamedHeaders
 }
 
 type Schemas struct {
@@ -290,6 +322,21 @@ type Schemas struct {
 type NamedResponses struct {
 	Ref   string
 	Value map[string]*ResponseRef
+}
+
+type NamedParameters struct {
+	Ref   string
+	Value map[string]*ParameterRef
+}
+
+type NamedHeaders struct {
+	Ref   string
+	Value map[string]*HeaderRef
+}
+
+type Examples struct {
+	Ref   string
+	Value map[string]*ExampleRef
 }
 
 type RequestBodies struct {

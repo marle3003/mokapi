@@ -58,15 +58,11 @@ func (fw *FileWatcher) Read(path string, config Config, h ChangeEventHandler) er
 		return err
 	}
 
-	vConfig := reflect.ValueOf(config).Elem()
-	if vConfig.Kind() == reflect.Ptr {
-		if vConfig.Type() == reflect.TypeOf(v) {
-			vConfig.Set(reflect.ValueOf(v))
-		} else {
-			log.Debugf("TODO: FileWatcher.Read ** to *")
-		}
+	vConfig := reflect.Indirect(reflect.ValueOf(config))
+	if reflect.Indirect(reflect.ValueOf(v)).Kind() == reflect.Map {
+		vConfig.Set(reflect.Indirect(reflect.ValueOf(v)))
 	} else {
-		vConfig.Set(reflect.ValueOf(v).Elem())
+		vConfig.Set(reflect.ValueOf(v))
 	}
 
 	return nil
