@@ -137,7 +137,7 @@ func (s *Server) updateConfigs(config dynamic.Config) {
 			}
 			err := binding.Apply(c)
 			if err != nil {
-				log.Error("error on updating %q: %v", c.ConfigPath, err.Error())
+				log.Errorf("error on updating %q: %v", c.ConfigPath, err.Error())
 				return
 			}
 		}
