@@ -39,10 +39,12 @@ func (g *gitWatcher) Start() {
 			return
 		}
 
-		interval, err := time.ParseDuration(g.pullInterval)
-		if err != nil {
-			log.Errorf("unable to parse interval %q: %v", g.pullInterval, err.Error())
-			interval = time.Second * 5
+		interval := time.Second * 5
+		if len(g.pullInterval) > 0 {
+			interval, err = time.ParseDuration(g.pullInterval)
+			if err != nil {
+				log.Errorf("unable to parse interval %q: %v", g.pullInterval, err.Error())
+			}
 		}
 
 		ticker := time.NewTicker(interval)

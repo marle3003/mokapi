@@ -24,10 +24,13 @@ func newHttpWatcher(update chan Config, config static.HttpProvider) *httpWatcher
 
 func (h *httpWatcher) Start() {
 	go func() {
-		interval, err := time.ParseDuration(h.config.PollInterval)
-		if err != nil {
-			log.Errorf("unable to parse interval %q: %v", h.config.PollInterval, err.Error())
-			interval = time.Second * 5
+		interval := time.Second * 5
+		var err error
+		if len(h.config.PollInterval) > 0 {
+			interval, err = time.ParseDuration(h.config.PollInterval)
+			if err != nil {
+				log.Errorf("unable to parse interval %q: %v", h.config.PollInterval, err.Error())
+			}
 		}
 
 		ticker := time.NewTicker(interval)

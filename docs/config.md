@@ -8,11 +8,33 @@ Mokapi has two types of configuration:
 
 The dynamic configuration contains everything that defines a service like an OpenApi configuration. This configuration can change during runtime and is seamlessly hot-reloaded.
 
-Mokapi gets its dynamic configuration from providers. Currently, only the file provider is supported. Each service has its own configuration format.
+Mokapi gets its dynamic configuration from providers. Each service has its own configuration format.
 
 - OpenApi
 - AsyncApi  
 - LDAP
+- Mokapi
+
+### File Provider
+The file provider lets you define the dynamic configuration in a YAML or JSON file. Depending on service you can split your configuration in multiple files
+
+`filename` defines the path to the configuration file
+
+`directory` Defines the path to de directory that contains the configuration files. Mokapi includes all subdirectories
+
+### GIT Provider
+Provide your configuration files via a GIT repository for a example a github repository.
+
+`url` URL to the GIT repository
+
+`pullInterval` Defines the pull interval, default '5s'
+
+### HTTP Provider
+Provide your configuration via HTTP URL
+
+`url` URL to your configuration file
+
+`pollInterval` Defines the poll interval, default '5s'
 
 ## Static Configuration
 
@@ -26,40 +48,64 @@ These ways are evaluated in the order listed above.
 
 ### CLI variables
 
-`--log.level`:
+`--log.level`
 Log level: `debug` | `info` | `error` (Default: `error`)
 
-`--log.format`:
+`--log.format`
 Log format: `json` | `default`
 
-`--providers.file.filename`:
+`--providers.file.filename`
 Load dynamic configuration from a file
 
-`--providers.file.directory`:
+`--providers.file.directory`
 Load dynamic configuration from one or more files in a directory
 
-`--api.dashboard`:
+`--providers.git.url`
+URL to the GIT repository
+
+`--providers.git.pullInterval`
+Defines the pull interval, default '5s'
+
+`--providers.http.url`
+URL to your configuration file
+
+`--providers.http.pollInterval`
+Defines the poll interval, default '5s'
+
+`--api.dashboard`
 Enables API/dashboard. (Default `true`)
 
-`--api.port`:
+`--api.port`
 Dashboard's port (default: `8080`)
 
 ### Environment variables
 
-`MOKAPI_LOG_LEVEL`:
+`MOKAPI_Log.Level`
 Log level: `debug` | `info` | `error` (Default: `error`)
 
-`MOKAPI_LOG_FORMAT`:
+`MOKAPI_Log.Format`
 Log format: `json` | `default`
 
-`MOKAPI_PROVIDERS_FILE`:
+`MOKAPI_Providers.File.Filename`
 Load dynamic configuration from a file
 
-`MOKAPI_PROVIDERS_DIRECTORY`:
+`MOKAPI_Providers.File.Directory`
 Load dynamic configuration from one or more files in a directory
 
-`MOKAPI_API_DASHBOARD`:
+`MOKAPI_Providers.Git.Url`
+URL to the GIT repository
+
+`MOKAPI_Providers.Git.PullInterval`
+Defines the pull interval, default '5s'
+
+`MOKAPI_Providers.Http.Url`
+URL to your configuration file
+
+`MOKAPI_Providers.Http.pollInterval`
+Defines the poll interval, default '5s'
+
+`MOKAPI_Api.Dashboard`
 Enables API/dashboard. (Default `true`)
 
-`MOKAPI_API_PORT`:
+`MOKAPI_Api.Port`
 Dashboard's port (default: `8080`)
