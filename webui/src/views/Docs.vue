@@ -150,7 +150,7 @@ export default {
   line-height: 1.6;
   font-size: 0.8rem;
   position: absolute;
-  max-width: calc(100% - 12.1rem * 2);
+  max-width: calc(100% - 10rem);
 }
 .content p{
   text-align: justify;
@@ -194,5 +194,8 @@ export default {
   display: block;
   overflow-x: auto;
   max-width: 90%;
+}
+.content >>> .toolbar-item > span{
+  display: none;
 }
 </style>

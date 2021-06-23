@@ -3,6 +3,7 @@ nav:
   - "Config": "config.md"
   - "OpenAPI": "openapi.md"
   - "Kafka": "kafka.md"
+  - "LDAP": "ldap.md"
   - "Actions":
     - "Intro": "actions/intro.md"
     - "Syntax": "actions/syntax.md"

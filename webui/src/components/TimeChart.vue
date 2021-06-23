@@ -43,7 +43,7 @@ export default {
   },
   mounted () {
     this.renderChart(this.chartData, this.options)
-    $('#legend').prepend(mybarChart.generateLegend())
+    // $('#legend').prepend(mybarChart.generateLegend())
   },
   methods: {
     prettyBytes: function (num) {

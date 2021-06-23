@@ -10,7 +10,9 @@ export default {
     },
     options: {
       type: Object,
-      default: function () {return {responsive: false, maintainAspectRatio: true}}
+      default: function () {
+        return {responsive: false, maintainAspectRatio: true}
+      }
     }
   },
   mounted () {

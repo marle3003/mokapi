@@ -150,7 +150,6 @@ export default {
       }
 
       return rows
-
     },
     getItems (schema, level) {
       let items = []
@@ -171,7 +170,7 @@ export default {
         items.push(item)
 
         if (schema.type === 'array') {
-          if (typeof schema.items === undefined) {
+          if (typeof schema.items === 'undefined') {
             console.error('field items is undefined in schema type array')
             return items
           }
@@ -192,8 +191,7 @@ export default {
             items = items.concat(prop)
           }
         }
-      }
-      catch (e) {
+      } catch (e) {
         console.log(e)
       }
       return items
