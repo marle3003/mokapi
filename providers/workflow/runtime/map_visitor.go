@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	log "github.com/sirupsen/logrus"
 	"mokapi/providers/workflow/ast"
 )
 
@@ -28,6 +29,10 @@ func (v *mapVisitor) getExpando() map[string]interface{} {
 	for range v.m.Values {
 		val := v.outer.stack.Pop()
 		key := v.outer.stack.Pop()
+		if key == nil {
+			log.Errorf("empty key for value %q is not allowed", val)
+			continue
+		}
 		expando[key.(string)] = val
 	}
 	return expando

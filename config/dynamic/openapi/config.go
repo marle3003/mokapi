@@ -39,6 +39,10 @@ type Config struct {
 	Components Components
 }
 
+func (c *Config) Key() string {
+	return c.ConfigPath
+}
+
 type Info struct {
 	// The title of the service
 	Name string `yaml:"title" json:"title"`

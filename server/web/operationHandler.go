@@ -99,6 +99,8 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 		StatusCode: int(context.statusCode),
 	}
 
+	gen := openapi.NewGenerator()
+
 	if len(context.Response.Examples) > 0 {
 		keys := reflect.ValueOf(context.Response.Examples).MapKeys()
 		v := keys[rand.Intn(len(keys))].Interface().(*openapi.ExampleRef)
@@ -106,8 +108,13 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 	} else if context.Response.Example != nil {
 		res.Data = context.Response.Example
 	} else {
-		gen := openapi.NewGenerator()
+
 		res.Data = gen.New(context.Response.Schema)
+	}
+
+	for k, v := range context.Headers {
+		data := gen.New(v.Value.Schema)
+		res.Headers[k] = fmt.Sprintf("%v", data)
 	}
 
 	summary := context.workflowHandler(event.WithHttpEvent(event.HttpEvent{

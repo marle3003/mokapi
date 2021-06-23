@@ -5,6 +5,7 @@ import (
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/test"
+	"reflect"
 	"testing"
 )
 
@@ -41,8 +42,9 @@ func run(t *testing.T, data []testDataEntry) {
 }
 
 func (tr *testReader) Read(path string, c dynamic.Config, h dynamic.ChangeEventHandler) error {
+	val := reflect.ValueOf(c).Interface()
 	if s, ok := tr.data[path]; ok {
-		err := yaml.Unmarshal([]byte(s), c)
+		err := yaml.Unmarshal([]byte(s), val)
 		return err
 	}
 	return fmt.Errorf("path %q not found", path)

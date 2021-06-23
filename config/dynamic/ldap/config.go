@@ -31,6 +31,10 @@ type Config struct {
 	Entries    map[string]Entry
 }
 
+func (c *Config) Key() string {
+	return c.ConfigPath
+}
+
 type Info struct {
 	Name string `yaml:"title"`
 }

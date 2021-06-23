@@ -84,8 +84,6 @@ func (triggers *Triggers) UnmarshalYAML(n *yaml.Node) error {
 
 		for k, v := range m {
 			switch key := strings.ToLower(k); {
-			case key == "service":
-				*triggers = append(*triggers, parseTrigger(v)...)
 			case key == "http":
 				for _, h := range parseHttpTriggers(v) {
 					*triggers = append(*triggers, Trigger{Http: h})
@@ -100,6 +98,9 @@ func (triggers *Triggers) UnmarshalYAML(n *yaml.Node) error {
 }
 
 func parseHttpTriggers(i interface{}) (t []*HttpTrigger) {
+	if i == nil {
+		return []*HttpTrigger{{}}
+	}
 	switch i := i.(type) {
 	case []interface{}:
 		for _, m := range i {
@@ -144,30 +145,6 @@ func parseSchedule(i interface{}) (t *ScheduleTrigger) {
 				} else {
 					t.Iterations = i
 				}
-			}
-		}
-	}
-	return
-}
-
-func parseTrigger(i interface{}) (t Triggers) {
-	switch i := i.(type) {
-	case map[string]interface{}:
-		name := ""
-		var http []*HttpTrigger
-		for k, v := range i {
-			switch k {
-			case "name":
-				name = fmt.Sprintf("%v", v)
-			case "http":
-				http = parseHttpTriggers(v)
-			}
-		}
-		if len(http) == 0 {
-			t = append(t, Trigger{Service: name})
-		} else {
-			for _, h := range http {
-				t = append(t, Trigger{Service: name, Http: h})
 			}
 		}
 	}

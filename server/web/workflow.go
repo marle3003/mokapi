@@ -26,6 +26,15 @@ func (r *Response) Run(ctx *runtime.ActionContext) error {
 	if data, ok := ctx.GetInput("data"); ok {
 		r.Data = data
 	}
+
+	if headers, ok := ctx.GetInput("headers"); ok {
+		if m, ok := headers.(map[string]interface{}); ok {
+			for k, v := range m {
+				r.Headers[k] = fmt.Sprintf("%v", v)
+			}
+		}
+	}
+
 	if body, ok := ctx.GetInputString("body"); ok {
 		r.Body = body
 	}

@@ -1,50 +1,16 @@
 package dynamic
 
 import (
-	"fmt"
 	"github.com/fsnotify/fsnotify"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"io/ioutil"
 	"mokapi/config/static"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
 	"time"
 )
-
-var (
-	configTypes []configType
-)
-
-type configType struct {
-	header  string
-	config  reflect.Type
-	handler ChangeEventHandler
-}
-
-type configItem struct {
-	handler ChangeEventHandler
-	item    Config
-}
-
-func NewEmptyEventHandler(parent Config) ChangeEventHandler {
-	return func(path string, c Config, r ConfigReader) (bool, Config) { return true, parent }
-}
-
-func Register(header string, c Config, h ChangeEventHandler) {
-	val := reflect.ValueOf(c).Elem()
-	configTypes = append(configTypes, configType{header, val.Type(), h})
-}
-
-func isDir(path string) (bool, error) {
-	if fi, err := os.Stat(path); err != nil {
-		return false, err
-	} else if fi.IsDir() {
-		return true, nil
-	}
-	return false, nil
-}
 
 type ConfigWatcher struct {
 	config  static.Providers
@@ -82,13 +48,34 @@ func (cw *ConfigWatcher) Start() error {
 
 	if len(cw.config.File.Directory) > 0 {
 		if err := filepath.Walk(cw.config.File.Directory, cw.walkDir); err != nil {
-			fmt.Println("ERROR", err)
+			log.Error(err)
 		}
 	} else if len(cw.config.File.Filename) > 0 {
 		go cw.fw.add(cw.config.File.Filename)
 	} else {
 		log.Info("file provider: directory and filename empty")
 		return nil
+	}
+
+	var gw *gitWatcher
+	if len(cw.config.Git.Url) > 0 {
+		dir, err := ioutil.TempDir("", "mokapi_git")
+		if err != nil {
+			return errors.Wrap(err, "unable to create temp dir for git provider")
+
+		} else {
+			log.Debugf("git temp directory: %v", dir)
+		}
+
+		cw.watcher.Add(dir)
+		gw = newGitWatcher(dir, cw.config.Git)
+		gw.Start()
+	}
+
+	var hw *httpWatcher
+	if len(cw.config.Http.Url) > 0 {
+		hw = newHttpWatcher(update, cw.config.Http)
+		hw.Start()
 	}
 
 	ticker := time.NewTicker(time.Second)
@@ -102,6 +89,12 @@ func (cw *ConfigWatcher) Start() error {
 			if err != nil {
 				log.Errorf("unable to close config watcher: %v", err.Error())
 			}
+			if gw != nil {
+				gw.close <- true
+			}
+			if hw != nil {
+				hw.close <- true
+			}
 		}()
 
 		for {
@@ -110,7 +103,9 @@ func (cw *ConfigWatcher) Start() error {
 				stopFileWatcher <- true
 				return
 			case c := <-update:
-				cw.onConfigChanged(c)
+				for _, listener := range cw.listeners {
+					listener(c)
+				}
 			case evt := <-cw.watcher.Events:
 				// temporary files ends with '~' in name
 				if len(evt.Name) > 0 && !strings.HasSuffix(evt.Name, "~") {
@@ -130,9 +125,6 @@ func (cw *ConfigWatcher) Start() error {
 						if err := cw.watcher.Add(evt.Name); err != nil {
 							log.Error(err)
 						}
-						if err := filepath.Walk(cw.config.File.Directory, cw.walkDir); err != nil {
-							log.Error(err)
-						}
 					} else if isValidConfigFile(evt.Name) {
 						go cw.fw.add(evt.Name)
 					}
@@ -146,12 +138,6 @@ func (cw *ConfigWatcher) Start() error {
 	return nil
 }
 
-func (cw *ConfigWatcher) onConfigChanged(c Config) {
-	for _, listener := range cw.listeners {
-		listener(c)
-	}
-}
-
 func (cw *ConfigWatcher) walkDir(path string, fi os.FileInfo, _ error) error {
 	if fi.Mode().IsDir() {
 		if skipPath(path) {
@@ -163,44 +149,4 @@ func (cw *ConfigWatcher) walkDir(path string, fi os.FileInfo, _ error) error {
 	}
 
 	return nil
-}
-
-func (ci *configItem) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	data := make(map[string]string)
-	_ = unmarshal(data)
-
-	for _, c := range configTypes {
-		if _, ok := data[c.header]; ok {
-			ci.item = reflect.New(c.config).Interface()
-			ci.handler = c.handler
-			err := unmarshal(ci.item)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-func isValidConfigFile(path string) bool {
-	if skipPath(path) {
-		return false
-	}
-	switch filepath.Ext(path) {
-	case ".yml", ".yaml", ".json", ".tmpl":
-		return true
-	default:
-		return false
-	}
-}
-
-func skipPath(path string) bool {
-	name := filepath.Base(path)
-	// TODO: make skip char configurable
-	if strings.HasPrefix(name, "_") {
-		log.Infof("skipping config %v", name)
-		return true
-	}
-	return false
 }

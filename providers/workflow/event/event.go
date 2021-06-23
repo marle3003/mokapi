@@ -16,9 +16,7 @@ type HttpEvent struct {
 
 func WithHttpEvent(evt HttpEvent) Handler {
 	return func(t mokapi.Trigger) bool {
-		if len(t.Service) > 0 && !strings.EqualFold(t.Service, evt.Service) {
-			return false
-		}
+
 		if evt.isValid(t.Http) {
 			return true
 		}

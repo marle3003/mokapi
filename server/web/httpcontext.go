@@ -27,6 +27,7 @@ type HttpContext struct {
 	statusCode      openapi.HttpStatus
 	workflowHandler EventHandler
 	Response        *openapi.MediaType
+	Headers         map[string]*openapi.HeaderRef
 }
 
 func NewHttpContext(request *http.Request, response http.ResponseWriter, wh EventHandler) *HttpContext {
@@ -71,6 +72,7 @@ func (context *HttpContext) setResponse() error {
 	}
 
 	context.statusCode = status
+	context.Headers = response.Value.Headers
 
 	accept := context.Request.Header.Get("accept")
 

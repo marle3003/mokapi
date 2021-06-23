@@ -32,7 +32,6 @@ type Workflow struct {
 type Triggers []Trigger
 
 type Trigger struct {
-	Service  string
 	Http     *HttpTrigger
 	Schedule *ScheduleTrigger
 }

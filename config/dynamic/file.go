@@ -19,7 +19,7 @@ import (
 )
 
 type FileWatcher struct {
-	Path    map[string]*fileHandler
+	Files   map[string]*fileHandler
 	watcher *fsnotify.Watcher
 	close   chan bool
 	update  chan Config
@@ -27,13 +27,13 @@ type FileWatcher struct {
 }
 
 type fileHandler struct {
-	f      func(string) (Config, error)
+	read   func(string) (Config, error)
 	events []ChangeEventHandler
 }
 
 func NewFileWatcher(update chan Config, close chan bool) *FileWatcher {
 	return &FileWatcher{
-		Path:   make(map[string]*fileHandler),
+		Files:  make(map[string]*fileHandler),
 		close:  close,
 		update: update,
 		lock:   sync.RWMutex{},
@@ -43,17 +43,17 @@ func NewFileWatcher(update chan Config, close chan bool) *FileWatcher {
 func (fw *FileWatcher) Read(path string, config Config, h ChangeEventHandler) error {
 	fw.lock.Lock()
 	defer fw.lock.Unlock()
-	fh, ok := fw.Path[path]
+	fh, ok := fw.Files[path]
 	if !ok {
 		fh = newFileHandler(config)
-		fw.Path[path] = fh
+		fw.Files[path] = fh
 		err := fw.watcher.Add(path)
 		if err != nil {
 			log.Errorf("unable to add file watcher to %q: %v", path, err.Error())
 		}
 	}
 	fh.events = append(fh.events, h)
-	v, err := fh.f(path)
+	v, err := fh.read(path)
 	if err != nil {
 		return err
 	}
@@ -62,7 +62,11 @@ func (fw *FileWatcher) Read(path string, config Config, h ChangeEventHandler) er
 	if reflect.Indirect(reflect.ValueOf(v)).Kind() == reflect.Map {
 		vConfig.Set(reflect.Indirect(reflect.ValueOf(v)))
 	} else {
-		vConfig.Set(reflect.ValueOf(v))
+		v := reflect.ValueOf(v)
+		if !v.Type().AssignableTo(vConfig.Type()) {
+			v = v.Elem()
+		}
+		vConfig.Set(v)
 	}
 
 	return nil
@@ -72,21 +76,21 @@ func (fw *FileWatcher) add(path string) {
 	fw.lock.Lock()
 	defer fw.lock.Unlock()
 
-	if fh, ok := fw.Path[path]; !ok {
+	if fh, ok := fw.Files[path]; !ok {
 		ci := &configItem{}
 		if err := loadFileConfig(path, ci); err != nil {
 			log.Errorf("unable to read config %v: %v", path, err.Error())
 		}
 		if ci.item != nil {
 			fh = newFileHandler(ci.item)
-			fh.events = append(fh.events, ci.handler)
-			fw.Path[path] = fh
+			fh.events = append(fh.events, ci.eventHandler)
+			fw.Files[path] = fh
 			err := fw.watcher.Add(path)
 			if err != nil {
 				log.Errorf("unable to add file watcher to %q: %v", path, err.Error())
 			}
 			go func() {
-				ci.handler(path, ci.item, fw)
+				ci.eventHandler(path, ci.item, fw)
 				fw.update <- ci.item
 			}()
 
@@ -134,12 +138,12 @@ func (fw *FileWatcher) Start() {
 
 					log.Debugf("item change event received " + evt.Name)
 
-					handler, ok := fw.Path[evt.Name]
+					handler, ok := fw.Files[evt.Name]
 					if !ok {
 						log.Infof("No handler for '%v' found", evt.Name)
 					}
 
-					if config, err := handler.f(evt.Name); err != nil {
+					if config, err := handler.read(evt.Name); err != nil {
 						log.Errorf("unable to read %v: %v", evt.Name, err.Error())
 					} else {
 						fw.onChanged(handler, evt.Name, config)
@@ -160,9 +164,9 @@ func (fw *FileWatcher) onChanged(h *fileHandler, path string, config Config) {
 	}
 }
 
-func newFileHandler(config interface{}) *fileHandler {
+func newFileHandler(config Config) *fileHandler {
 	val := reflect.ValueOf(config).Interface()
-	return &fileHandler{f: func(path string) (Config, error) {
+	return &fileHandler{read: func(path string) (Config, error) {
 		err := loadFileConfig(path, val)
 		return config, err
 	}}

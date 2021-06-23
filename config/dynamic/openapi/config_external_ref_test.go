@@ -41,6 +41,18 @@ var testExternalData = []testDataEntry{
 			"test.yml": externalSchemasRef2,
 		}},
 	},
+
+	{
+		"External Endpoint",
+		externalEndpointRef,
+		func(t *testing.T, c *Config) {
+			test.Assert(t, c.EndPoints["/test"] != nil, "reference was not resolved")
+			test.Equals(t, "Returns a list of users.", c.EndPoints["/test"].Value.Get.Summary)
+		},
+		&testReader{data: map[string]string{
+			"test.yml": externalEndpointRef2,
+		}},
+	},
 }
 
 const externalSchemaRef = `
@@ -86,4 +98,15 @@ A:
   type: string
 C:
   type: string
+`
+
+const externalEndpointRef = `
+openapi: 3.0.0
+paths:
+  /test:
+    $ref: 'test.yml'
+`
+const externalEndpointRef2 = `
+get:
+  summary: Returns a list of users.
 `

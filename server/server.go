@@ -119,7 +119,9 @@ func (s *Server) updateConfigs(config dynamic.Config) {
 		err := s.scheduler.AddOrUpdate(c.ConfigPath, c.Workflows, workflow.WithWorkingDirectory(filepath.Dir(c.ConfigPath)))
 		if err != nil {
 			log.Errorf("unable to add scheduler for workflows %q", c.ConfigPath)
+			return
 		}
+		log.Infof("updated config %q", c.ConfigPath)
 	case *openapi.Config:
 		if _, ok := s.runtime.OpenApi[c.Info.Name]; !ok {
 			s.runtime.OpenApi[c.Info.Name] = c
@@ -135,9 +137,11 @@ func (s *Server) updateConfigs(config dynamic.Config) {
 			}
 			err := binding.Apply(c)
 			if err != nil {
-				log.Error(err.Error())
+				log.Error("error on updating %q: %v", c.ConfigPath, err.Error())
+				return
 			}
 		}
+		log.Infof("updated config %q", c.ConfigPath)
 	case *ldap.Config:
 		if b, ok := s.Bindings[c.Address]; !ok {
 			s.runtime.Ldap[c.Info.Name] = c
@@ -148,9 +152,11 @@ func (s *Server) updateConfigs(config dynamic.Config) {
 		} else {
 			err := b.Apply(c)
 			if err != nil {
-				log.Errorf("unable to update ldap configuration %v: %v", c.Address, err.Error())
+				log.Errorf("error on updating %q: %v", c.ConfigPath, err.Error())
+				return
 			}
 		}
+		log.Infof("updated config %q", c.ConfigPath)
 	case *asyncApi.Config:
 		if _, ok := s.runtime.AsyncApi[c.Info.Name]; !ok {
 			s.runtime.AsyncApi[c.Info.Name] = c
@@ -166,8 +172,10 @@ func (s *Server) updateConfigs(config dynamic.Config) {
 		}
 		err := binding.Apply(c)
 		if err != nil {
-			log.Error(err.Error())
+			log.Errorf("error on updating %q: %v", c.ConfigPath, err.Error())
+			return
 		}
+		log.Infof("updated config %q", c.ConfigPath)
 	}
 }
 

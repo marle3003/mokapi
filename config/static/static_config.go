@@ -22,6 +22,8 @@ type MokApiLog struct {
 
 type Providers struct {
 	File FileProvider
+	Git  GitProvider
+	Http HttpProvider
 }
 
 type Api struct {
@@ -32,4 +34,14 @@ type Api struct {
 type FileProvider struct {
 	Filename  string
 	Directory string
+}
+
+type GitProvider struct {
+	Url          string
+	PullInterval string
+}
+
+type HttpProvider struct {
+	Url          string
+	PollInterval string
 }

@@ -154,11 +154,11 @@ func (r refResolver) resolveEndpointRef(e *EndpointRef) error {
 	}
 
 	if len(e.Ref) > 0 && e.Value == nil {
-		var resolved *EndpointRef
-		if err := r.resolve(e.Ref, r.config, &resolved); err != nil {
+		//var resolved *EndpointRef
+		if err := r.resolve(e.Ref, r.config, &e.Value); err != nil {
 			return err
 		}
-		e.Value = resolved.Value
+		//e.Value = resolved.Value
 	}
 
 	for _, p := range e.Value.Parameters {
@@ -397,7 +397,11 @@ func (r refResolver) resolve(ref string, config interface{}, val interface{}) (e
 		reflect.Indirect(reflect.ValueOf(val)).Set(reflect.Indirect(v))
 		return
 	}
-	reflect.Indirect(reflect.ValueOf(val)).Set(v)
+	v2 := reflect.Indirect(reflect.ValueOf(val))
+	if !v.Type().AssignableTo(v2.Type()) {
+		v = v.Elem()
+	}
+	v2.Set(v)
 
 	return
 }
