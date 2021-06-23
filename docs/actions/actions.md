@@ -132,3 +132,22 @@ steps:
       lower: 10
       upper: 30
 ```
+
+## set-response
+Manipulates the HTTP response of the current request.
+
+`body` response body as plain text, overrides data.
+`data` any object marshalling to schema and encoding to content-type.
+`statusCode` HTTP status code of the response.
+`headers` add additionally or manipulate headers of the response.
+`contentType` sets the content type of the response body.
+
+### Usage
+```yaml
+steps:
+  - uses: set-response
+    with:
+      body: Hello World
+      statusCode: 200
+      headers: "${{ {'access-control-allow-origin': '*'}}"
+```

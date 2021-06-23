@@ -10,10 +10,10 @@ The dynamic configuration contains everything that defines a service like an Ope
 
 Mokapi gets its dynamic configuration from providers. Each service has its own configuration format.
 
-- OpenApi
-- AsyncApi  
+- [OpenApi](https://swagger.io/docs/specification/about/) Version 3.0
+- [AsyncApi](https://www.asyncapi.com/docs/specifications/v2.0.0)
 - LDAP
-- Mokapi
+- [Mokapi](#/docs/actions/intro)
 
 ### File Provider
 The file provider lets you define the dynamic configuration in a YAML or JSON file. Depending on service you can split your configuration in multiple files
