@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"github.com/pkg/errors"
 	"mokapi/config/dynamic/openapi"
@@ -26,6 +27,8 @@ type Binding struct {
 	handlers         map[string]map[string]*ServiceHandler
 	addRequestMetric AddRequestMetric
 	workflowHandler  EventHandler
+	IsTls            bool
+	certificates     map[string]*tls.Certificate
 }
 
 func NewBinding(addr string, mh AddRequestMetric, wh EventHandler) *Binding {
@@ -40,12 +43,39 @@ func NewBinding(addr string, mh AddRequestMetric, wh EventHandler) *Binding {
 	return b
 }
 
+func NewBindingWithTls(addr string, mh AddRequestMetric, wh EventHandler, getCertificate func(info *tls.ClientHelloInfo) (*tls.Certificate, error)) *Binding {
+	b := &Binding{
+		Addr:             addr,
+		handlers:         make(map[string]map[string]*ServiceHandler),
+		addRequestMetric: mh,
+		workflowHandler:  wh,
+		IsTls:            true,
+		certificates:     make(map[string]*tls.Certificate),
+	}
+
+	config := &tls.Config{
+		GetCertificate: getCertificate,
+	}
+
+	b.server = &http.Server{Addr: addr, Handler: b, TLSConfig: config}
+
+	return b
+}
+
 func (binding *Binding) Start() {
 	go func() {
-		log.Infof("starting web binding %v", binding.Addr)
-		err := binding.server.ListenAndServe()
-		if err != nil {
-			log.Errorf("unable to start web binding %v: %v ", binding.Addr, err.Error())
+		if binding.IsTls {
+			log.Infof("starting https binding %v", binding.Addr)
+			err := binding.server.ListenAndServeTLS("", "")
+			if err != nil {
+				log.Errorf("unable to start https binding %v: %v ", binding.Addr, err.Error())
+			}
+		} else {
+			log.Infof("starting http binding %v", binding.Addr)
+			err := binding.server.ListenAndServe()
+			if err != nil {
+				log.Errorf("unable to start http binding %v: %v ", binding.Addr, err.Error())
+			}
 		}
 	}()
 }

@@ -2,6 +2,7 @@ package mokapi
 
 import (
 	"mokapi/config/dynamic"
+	"mokapi/config/tls"
 )
 
 func init() {
@@ -15,10 +16,9 @@ func init() {
 }
 
 type Config struct {
-	Pipelines  []Pipeline
-	ConfigPath string `yaml:"-" json:"-"`
-	Schedules  []Schedule
-	Workflows  []Workflow
+	ConfigPath   string `yaml:"-" json:"-"`
+	Workflows    []Workflow
+	Certificates []Certificate
 }
 
 type Workflow struct {
@@ -58,40 +58,7 @@ type Step struct {
 	If    string
 }
 
-type ConfigRef struct {
-	Ref   string
-	Value Config
-}
-
-type Pipeline struct {
-	Name        string
-	Description string
-	Stages      []*Stage
-	Stage       *Stage
-	Steps       string
-	Variables   Variables
-}
-
-type Stage struct {
-	Name        string
-	Description string
-	Steps       string
-	Condition   string
-}
-
-type Schedule struct {
-	Name  string
-	Every string
-
-	// Number of iterations, or less than 1 for unlimited
-	Iterations int
-	Pipeline   string
-}
-
-type Variables []Variable
-
-type Variable struct {
-	Name  string
-	Value string
-	Expr  string
+type Certificate struct {
+	CertFile tls.FileOrContent `yaml:"certFile" json:"certFile"`
+	KeyFile  tls.FileOrContent `yaml:"keyFile" json:"keyFile"`
 }

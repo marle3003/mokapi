@@ -1,10 +1,14 @@
 package static
 
+import "mokapi/config/tls"
+
 type Config struct {
 	Log        *MokApiLog
 	ConfigFile string
 	Providers  Providers
 	Api        Api
+	RootCaCert tls.FileOrContent
+	RootCaKey  tls.FileOrContent
 }
 
 func NewConfig() *Config {

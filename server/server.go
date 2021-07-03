@@ -1,6 +1,8 @@
 package server
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
@@ -14,10 +16,12 @@ import (
 	"mokapi/providers/workflow/event"
 	"mokapi/providers/workflow/runtime"
 	"mokapi/server/api"
+	"mokapi/server/cert"
 	"mokapi/server/kafka"
 	ldapServer "mokapi/server/ldap"
 	"mokapi/server/web"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -33,6 +37,7 @@ type Server struct {
 	stopChannel        chan bool
 	stopMetricsUpdater chan bool
 	config             map[string]*mokapi.Config
+	store              *cert.Store
 
 	scheduler *workflow.Scheduler
 	Bindings  map[string]Binding
@@ -59,6 +64,12 @@ func NewServer(config *static.Config) *Server {
 		addr := fmt.Sprintf(":%v", config.Api.Port)
 		b := api.NewBinding(addr, server.runtime)
 		server.Bindings[addr] = b
+	}
+
+	var err error
+	server.store, err = cert.NewStore(config)
+	if err != nil {
+		log.Errorf("unable to create certificate store: %v", err)
 	}
 
 	return server
@@ -121,6 +132,12 @@ func (s *Server) updateConfigs(config dynamic.Config) {
 			log.Errorf("unable to add scheduler for workflows %q", c.ConfigPath)
 			return
 		}
+		for _, cer := range c.Certificates {
+			err := s.appendCertificate(cer, filepath.Dir(c.ConfigPath))
+			if err != nil {
+				log.Errorf("unable to add certificate from %q: %v", c.ConfigPath, err)
+			}
+		}
 		log.Infof("updated config %q", c.ConfigPath)
 	case *openapi.Config:
 		if _, ok := s.runtime.OpenApi[c.Info.Name]; !ok {
@@ -129,9 +146,13 @@ func (s *Server) updateConfigs(config dynamic.Config) {
 		}
 		for _, server := range c.Servers {
 			address := fmt.Sprintf(":%v", server.GetPort())
-			binding, found := s.Bindings[address]
+			binding, found := s.Bindings[address].(*web.Binding)
 			if !found {
-				binding = web.NewBinding(address, s.runtime.Metrics.AddRequest, s.triggerHandler)
+				if strings.HasPrefix(server.Url, "https://") {
+					binding = web.NewBindingWithTls(address, s.runtime.Metrics.AddRequest, s.triggerHandler, s.store.GetCertificate)
+				} else {
+					binding = web.NewBinding(address, s.runtime.Metrics.AddRequest, s.triggerHandler)
+				}
 				s.Bindings[address] = binding
 				binding.Start()
 			}
@@ -188,4 +209,28 @@ func (s *Server) triggerHandler(event event.Handler, options ...workflow.Options
 	}
 
 	return summary
+}
+
+func (s *Server) appendCertificate(c mokapi.Certificate, currentDir string) error {
+	certContent, err := c.CertFile.Read(currentDir)
+	if err != nil {
+		return err
+	}
+
+	keyContent, err := c.KeyFile.Read(currentDir)
+	if err != nil {
+		return err
+	}
+
+	tlsCert, err := tls.X509KeyPair(certContent, keyContent)
+	if err != nil {
+		return err
+	}
+
+	cer, _ := x509.ParseCertificate(tlsCert.Certificate[0])
+	s.store.AddCertificate(cer.Subject.CommonName, &tlsCert)
+	for _, n := range cer.DNSNames {
+		s.store.AddCertificate(n, &tlsCert)
+	}
+	return nil
 }
