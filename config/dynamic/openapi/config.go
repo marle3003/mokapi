@@ -196,7 +196,7 @@ type ParameterLocation string
 type HttpStatus int
 
 func (s HttpStatus) String() string {
-	return string(s)
+	return strconv.Itoa(int(s))
 }
 
 type SchemaRef struct {
