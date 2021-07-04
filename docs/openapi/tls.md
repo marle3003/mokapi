@@ -4,9 +4,6 @@ for them. This guide shows you how to configure TLS.
 
 ```yaml
 openapi: 3.0.0
-info:
-  title: Sample API
-  version: "1.0"
 servers:
   - url: https://demo
   - url: https://demo:8443

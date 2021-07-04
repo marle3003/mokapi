@@ -55,7 +55,7 @@ export default {
 #nav-collapse .nav-link:hover{
   border-bottom: 4px solid var(--var-color-primary);
   margin-bottom: -4px;
-   text-decoration: none;
+  text-decoration: none;
 }
 
 #nav-collapse .nav-link.router-link-active{

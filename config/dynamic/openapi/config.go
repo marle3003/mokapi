@@ -15,6 +15,12 @@ func init() {
 		switch c := o.(type) {
 		case *Config:
 			c.ConfigPath = path
+
+			if len(c.Info.Name) == 0 {
+				log.Errorf("missing required property title: %v", path)
+				return false, nil
+			}
+
 			r := refResolver{reader: cr, path: path, config: c, eh: eh}
 
 			if err := r.resolveConfig(); err != nil {

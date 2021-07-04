@@ -9,6 +9,7 @@ import ServiceOverview from '@/components/ServiceOverview'
 import Dashboard from '@/views/Dashboard'
 import Docs from '@/views/Docs'
 import HttpRequest from '@/views/dashboard/HttpRequest'
+import SmtpMail from '@/views/dashboard/SmtpMail'
 
 import AsyncApiService from '@/views/asyncapi/Service'
 
@@ -39,9 +40,29 @@ export default new Router({
       component: Dashboard
     },
     {
+      path: '/dashboard/http',
+      name: 'http',
+      component: Dashboard
+    },
+    {
       path: '/dashboard/http/request/:id',
       name: 'httpRequest',
       component: HttpRequest
+    },
+    {
+      path: '/dashboard/kafka',
+      name: 'kafka',
+      component: Dashboard
+    },
+    {
+      path: '/dashboard/smtp',
+      name: 'smtp',
+      component: Dashboard
+    },
+    {
+      path: '/dashboard/smtp/mails/:id',
+      name: 'smtpMail',
+      component: SmtpMail
     },
     {
       path: '/services',

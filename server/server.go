@@ -10,6 +10,7 @@ import (
 	"mokapi/config/dynamic/ldap"
 	"mokapi/config/dynamic/mokapi"
 	"mokapi/config/dynamic/openapi"
+	"mokapi/config/dynamic/smtp"
 	"mokapi/config/static"
 	"mokapi/models"
 	"mokapi/providers/workflow"
@@ -19,6 +20,7 @@ import (
 	"mokapi/server/cert"
 	"mokapi/server/kafka"
 	ldapServer "mokapi/server/ldap"
+	smtpServer "mokapi/server/smtp"
 	"mokapi/server/web"
 	"path/filepath"
 	"strings"
@@ -197,6 +199,19 @@ func (s *Server) updateConfigs(config dynamic.Config) {
 			return
 		}
 		log.Infof("updated config %q", c.ConfigPath)
+	case *smtp.Config:
+		if _, ok := s.runtime.Smtp[c.Name]; !ok {
+			s.runtime.Smtp[c.Name] = c
+		}
+
+		_, found := s.Bindings[c.Address]
+		if !found {
+			b := smtpServer.NewBinding(c, func(mail *smtpServer.Mail) {
+				s.runtime.Metrics.AddMail(&models.Mail{From: mail.From, To: mail.To, Data: mail.Data})
+			}, s.store.GetCertificate)
+			b.Start()
+			s.Bindings[c.Address] = b
+		}
 	}
 }
 

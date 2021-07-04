@@ -3,7 +3,6 @@ package models
 import (
 	"crypto/rand"
 	"io"
-	runtime2 "mokapi/providers/workflow/runtime"
 	"runtime"
 	"time"
 )
@@ -17,35 +16,9 @@ type Metrics struct {
 	Memory            int64
 	Kafka             *KafkaMetric
 	OpenApi           map[string]*ServiceMetric
-}
 
-type RequestMetric struct {
-	Id           string
-	Service      string
-	Method       string
-	Url          string
-	HttpStatus   int
-	IsError      bool
-	ResponseTime time.Duration
-	Time         time.Time
-	Parameters   []RequestParamter
-	ContentType  string
-	ResponseBody string
-	Actions      []*runtime2.WorkflowSummary
-}
-
-type RequestParamter struct {
-	Name  string
-	Type  string
-	Value string
-	Raw   string
-}
-
-type ServiceMetric struct {
-	Name        string    `json:"name"`
-	LastRequest time.Time `json:"lastRequest"`
-	Requests    int       `json:"requests"`
-	Errors      int       `json:"errors"`
+	TotalMails int64
+	LastMails  []*Mail
 }
 
 type KafkaMetric struct {
@@ -68,15 +41,6 @@ type KafkaMessage struct {
 	Value string `json:"value"`
 }
 
-func NewRequestMetric(method string, url string) *RequestMetric {
-	return &RequestMetric{
-		Id:     newId(10),
-		Method: method,
-		Url:    url,
-		Time:   time.Now(),
-	}
-}
-
 func newMetrics() *Metrics {
 	return &Metrics{LastRequests: make([]*RequestMetric, 0), Start: time.Now(), Kafka: &KafkaMetric{Topics: make(map[string]KafkaTopic)}, OpenApi: make(map[string]*ServiceMetric)}
 }
@@ -90,37 +54,6 @@ func (m *Metrics) AddMessage(topic string, key []byte, value []byte) {
 	t.Messages = append(t.Messages, msg)
 	if len(t.Messages) > 10 {
 		t.Messages = t.Messages[1:]
-	}
-}
-
-func (m *Metrics) AddRequest(r *RequestMetric) {
-	m.TotalRequests++
-	if s, ok := m.OpenApi[r.Service]; ok {
-		s.Requests++
-	}
-
-	if r.IsError {
-		m.RequestsWithError++
-		if len(m.LastErrorRequests) > 10 {
-			m.LastErrorRequests = m.LastErrorRequests[1:]
-		}
-		m.LastErrorRequests = append(m.LastErrorRequests, r)
-
-		if s, ok := m.OpenApi[r.Service]; ok {
-			s.Errors++
-		}
-	}
-	if len(m.LastRequests) > 10 {
-		m.LastRequests = m.LastRequests[1:]
-	}
-	r.ResponseTime = time.Now().Sub(r.Time)
-	if r.HttpStatus == 0 {
-		r.HttpStatus = 200
-	}
-	m.LastRequests = append(m.LastRequests, r)
-
-	if s, ok := m.OpenApi[r.Service]; ok {
-		s.LastRequest = r.Time
 	}
 }
 

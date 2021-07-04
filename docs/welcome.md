@@ -18,3 +18,7 @@ Mokapi produce messages into it.
 
 ## LDAP Server
 Use Mokapi to mock an LDAP server
+
+## SMTP Server
+With Mokapi you can capture your emails, being sent from your application, without flooding
+your mailbox. You also can use different email addresses for testing and not just your own.

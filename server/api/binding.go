@@ -86,6 +86,8 @@ func (b *Binding) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		b.getDashboard(w, r)
 	case strings.HasPrefix(p, "/api/dashboard/http/requests/"):
 		b.getHttpRequest(w, r)
+	case strings.HasPrefix(p, "/api/dashboard/smtp/mails/"):
+		b.getSmtpMail(w, r)
 	default:
 		b.fileServer.ServeHTTP(w, r)
 	}
@@ -178,6 +180,24 @@ func (b *Binding) getHttpRequest(w http.ResponseWriter, r *http.Request) {
 			err := json.NewEncoder(w).Encode(newRequest(o))
 			if err != nil {
 				log.Errorf("Error in writing service response: %v", err.Error())
+			}
+			return
+		}
+	}
+
+	w.WriteHeader(404)
+}
+
+func (b *Binding) getSmtpMail(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	segments := strings.Split(r.URL.Path, "/")
+	id := segments[len(segments)-1]
+	for _, o := range b.runtime.Metrics.LastMails {
+		if o.Id == id {
+			err := json.NewEncoder(w).Encode(newMail(o))
+			if err != nil {
+				log.Errorf("Error in writing smtp mail response: %v", err.Error())
 			}
 			return
 		}

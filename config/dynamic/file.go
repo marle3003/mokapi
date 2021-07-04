@@ -90,8 +90,10 @@ func (fw *FileWatcher) add(path string) {
 				log.Errorf("unable to add file watcher to %q: %v", path, err.Error())
 			}
 			go func() {
-				ci.eventHandler(path, ci.item, fw)
-				fw.update <- ci.item
+				ok, _ := ci.eventHandler(path, ci.item, fw)
+				if ok {
+					fw.update <- ci.item
+				}
 			}()
 
 		}

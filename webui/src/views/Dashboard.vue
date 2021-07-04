@@ -1,7 +1,14 @@
 <template>
   <div class="dashboard" v-if="dashboard !== null">
       <div class="page-header">
-          <h2>Dashboard</h2>
+          <b-navbar class="p-0">
+            <b-navbar-nav>
+              <b-nav-item to="/dashboard">Overview</b-nav-item>
+              <b-nav-item :to="{ name: 'http' }" v-if="dashboard.httpEnabled">HTTP</b-nav-item>
+              <b-nav-item :to="{ name: 'kafka' }" v-if="dashboard.kafkaEnabled">Kafka</b-nav-item>
+              <b-nav-item :to="{ name: 'smtp' }" v-if="dashboard.smtpEnabled">SMTP</b-nav-item>
+            </b-navbar-nav>
+          </b-navbar>
       </div>
       <div class="page-body">
 
@@ -18,17 +25,25 @@
         </b-card-group>
 
         <b-card-group deck>
-          <b-card body-class="info-body" class="text-center">
+          <b-card body-class="info-body" class="text-center" v-if="dashboard.httpEnabled">
             <b-card-title class="info">Total REST Requests</b-card-title>
             <b-card-text class="text-center value">{{ dashboard.totalRequests }}</b-card-text>
           </b-card>
-          <b-card body-class="info-body" class="text-center">
+          <b-card body-class="info-body" class="text-center" v-if="dashboard.httpEnabled">
             <b-card-title class="info">Web Request Errors</b-card-title>
             <b-card-text class="text-center value" v-bind:class="{'text-danger': hasErrors}">{{ dashboard.requestsWithError }}</b-card-text>
           </b-card>
+          <b-card body-class="info-body" class="text-center" v-if="dashboard.kafkaEnabled">
+            <b-card-title class="info">Total Messages</b-card-title>
+            <b-card-text class="text-center value">{{ totalMessages }}</b-card-text>
+          </b-card>
+          <b-card body-class="info-body" class="text-center" v-if="dashboard.smtpEnabled">
+            <b-card-title class="info">Total Mails</b-card-title>
+            <b-card-text class="text-center value">{{ dashboard.totalMails }}</b-card-text>
+          </b-card>
         </b-card-group>
 
-        <b-card-group deck>
+        <b-card-group deck v-if="dashboard.httpEnabled && $route.name === 'http' || $route.name === 'dashboard'">
           <b-card body-class="info-body" class="text-center">
              <b-card-title class="info">REST Services</b-card-title>
              <b-table :items="services" :fields="serviceFields" table-class="dataTable">
@@ -43,7 +58,7 @@
           </b-card>
         </b-card-group>
 
-        <b-card-group deck>
+        <b-card-group deck v-if="dashboard.kafkaEnabled && $route.name === 'dashboard' || $route.name === 'kafka'">
           <b-card body-class="info-body" class="text-center">
              <b-card-title class="info">Kafka Topics</b-card-title>
              <b-table :items="topics" :fields="topicFields" table-class="dataTable">
@@ -94,7 +109,7 @@
           </b-card>
         </b-card-group> -->
 
-        <b-card-group deck>
+        <b-card-group deck v-if="$route.name === 'http'">
           <b-card class="w-100">
             <b-card-title class="info text-center">Last Request Errors</b-card-title>
             <b-table hover :items="lastErrors" :fields="lastRequestField" class="dataTable selectable" @row-clicked="requestClickHandler">
@@ -118,7 +133,7 @@
           </b-card>
         </b-card-group>
 
-        <b-card-group deck>
+        <b-card-group deck v-if="$route.name === 'http'">
           <b-card class="w-100">
             <b-card-title class="info text-center">Recent Request</b-card-title>
             <b-table hover :items="lastRequests" :fields="lastRequestField" class="dataTable selectable" @row-clicked="requestClickHandler">
@@ -137,6 +152,17 @@
               </template>
               <template v-slot:cell(responseTime)="data">
                 {{ data.item.responseTime | duration}}
+              </template>
+            </b-table>
+          </b-card>
+        </b-card-group>
+
+        <b-card-group deck v-if="$route.name === 'smtp'">
+          <b-card class="w-100">
+            <b-card-title class="info text-center">Recent Mails</b-card-title>
+            <b-table hover :items="lastMails" :fields="lastMailField" class="dataTable selectable" @row-clicked="mailClickHandler">
+              <template v-slot:cell(time)="data">
+                {{ data.item.time | moment}}
               </template>
             </b-table>
           </b-card>
@@ -172,7 +198,8 @@ export default {
       topicSizes: {},
       chartTopicSize: {},
       serviceFields: [{key: 'name', class: 'text-left'}, {key: 'lastRequest', class: 'text-left'}, 'requests', 'errors'],
-      topicFields: [{key: 'name', class: 'text-left'}, 'count', 'size', 'lastRecord', 'partitions', 'segments']
+      topicFields: [{key: 'name', class: 'text-left'}, 'count', 'size', 'lastRecord', 'partitions', 'segments'],
+      lastMailField: ['from', 'to', 'time']
     }
   },
   created () {
@@ -208,6 +235,13 @@ export default {
       // eslint-disable-next-line vue/no-side-effects-in-computed-properties
       return this.dashboard.lastRequests.reverse()
     },
+    lastMails: function () {
+      if (this.dashboard.lastMails === undefined) {
+        return null
+      }
+      // eslint-disable-next-line vue/no-side-effects-in-computed-properties
+      return this.dashboard.lastMails.reverse()
+    },
     services: function () {
       const services = this.dashboard.services
       if (services === undefined) {
@@ -227,6 +261,17 @@ export default {
       }
 
       return services.sort(compare)
+    },
+    totalMessages: function () {
+      const topics = this.dashboard.kafkaTopics
+      if (topics === undefined || topics === null) {
+        return 0
+      }
+      let counter = 0
+      for (const topic of topics) {
+        counter += topic.count
+      }
+      return counter
     },
     topics: function () {
       const topics = this.dashboard.kafkaTopics
@@ -327,6 +372,9 @@ export default {
     },
     requestClickHandler (record, index) {
       this.$router.push({name: 'httpRequest', params: {id: record.id}})
+    },
+    mailClickHandler (record, index) {
+      this.$router.push({name: 'smtpMail', params: {id: record.id}})
     }
   },
   beforeDestroy () {
@@ -338,10 +386,24 @@ export default {
 <style scoped>
   .dashboard{
     width: 90%;
-    margin: 42px auto auto;
+    margin: 12px auto auto;
   }
-  .page-header h2{
-    font-weight: 400;
+  .page-header .nav-link{
+    color: var(--var-color-primary);
+    position:relative;
+    padding-bottom: 0;
+  }
+  .page-header .nav-link:hover{
+    color: var(--var-color-primary);
+    border-bottom: 2px solid var(--var-color-primary);
+    margin-bottom: -4px;
+    text-decoration: none;
+  }
+  .page-header .nav-link.router-link-exact-active{
+    color: var(--var-color-primary);
+    border-bottom: 2px solid var(--var-color-primary);
+    margin-bottom: -4px;
+    text-decoration: none;
   }
   .card{
     border-color: var(--var-border-color);

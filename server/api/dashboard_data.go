@@ -12,9 +12,16 @@ type dashboard struct {
 	RequestsWithError int64                  `json:"requestsWithError"`
 	LastErrors        []requestSummary       `json:"lastErrors"`
 	LastRequests      []requestSummary       `json:"lastRequests"`
-	MemoeryUsage      int64                  `json:"memoryUsage"`
+	MemoryUsage       int64                  `json:"memoryUsage"`
 	Services          []models.ServiceMetric `json:"services"`
 	KafkaTopics       []models.KafkaTopic    `json:"kafkaTopics"`
+	LastMails         []mailSummary          `json:"lastMails"`
+	TotalMails        int64                  `json:"totalMails"`
+
+	HttpEnabled  bool `json:"httpEnabled"`
+	KafkaEnabled bool `json:"kafkaEnabled"`
+	LdapEnabled  bool `json:"ldapEnabled"`
+	SmtpEnabled  bool `json:"smtpEnabled"`
 }
 
 type requestSummary struct {
@@ -63,7 +70,9 @@ func newDashboard(runtime *models.Runtime) dashboard {
 	dashboard.TotalRequests = runtime.Metrics.TotalRequests
 	dashboard.RequestsWithError = runtime.Metrics.RequestsWithError
 	dashboard.LastRequests = make([]requestSummary, 0)
-	dashboard.MemoeryUsage = runtime.Metrics.Memory
+	dashboard.LastMails = make([]mailSummary, 0)
+	dashboard.TotalMails = runtime.Metrics.TotalMails
+	dashboard.MemoryUsage = runtime.Metrics.Memory
 
 	for _, s := range runtime.Metrics.OpenApi {
 		dashboard.Services = append(dashboard.Services, *s)
@@ -80,6 +89,15 @@ func newDashboard(runtime *models.Runtime) dashboard {
 	for _, r := range runtime.Metrics.LastRequests {
 		dashboard.LastRequests = append(dashboard.LastRequests, newRequestSummary(r))
 	}
+
+	for _, m := range runtime.Metrics.LastMails {
+		dashboard.LastMails = append(dashboard.LastMails, newMailSummary(m))
+	}
+
+	dashboard.HttpEnabled = len(runtime.OpenApi) > 0
+	dashboard.KafkaEnabled = len(runtime.AsyncApi) > 0
+	dashboard.LdapEnabled = len(runtime.Ldap) > 0
+	dashboard.SmtpEnabled = len(runtime.Smtp) > 0
 
 	return dashboard
 }
