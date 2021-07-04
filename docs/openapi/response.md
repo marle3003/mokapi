@@ -1,7 +1,11 @@
-# OpenAPI
-Mokapi generates random data for the given response schema. You have several configuration options to cover your needs. If you want your data to be dynamic, you should take a look at pipelines, e.g. data depends on request parameters.
+# Specifying response payload
+Mokapi allow you to customize the response payload to meet the unique needs of your
+application. In this guide, we'll discuss some essential customization techniques such
+as using *format*, *pattern*, *enum*, *example*, *fake* and generate data by your own script. 
 
-## Format
+## Using format
+Mokapi offers a set of built-in string format.
+
 ```yaml
 schema:
   type: object
@@ -32,7 +36,9 @@ schema:
       format: ipv6
 ```
 
-### Pattern
+## Using pattern
+With *pattern* you can describe the data with a regular expression.
+
 ```yaml
 schema:
   type: object
@@ -41,8 +47,8 @@ schema:
       pattern: '^\d{3}-\d{2}-\d{4}$' # 123-45-6789
 ```
 
-## Enum
-Mokapi will take a random element from your [Enum](https://swagger.io/docs/specification/data-models/enums/) definition.
+## Using enum
+You can use the *enum* keyword to specify possible values.
 
 ```yaml
 schema:
@@ -64,8 +70,9 @@ schema:
           name: Jessica
 ```
 
-## Example
-You can add [Example](https://swagger.io/docs/specification/adding-examples/) to properties, objects or arrays. Mokapi will take your defined example to generate the response. Additional defined elements are ignored.
+## Using example
+With example, you can set the values for an object, array or property. Mokapi takes
+exactly this value.
 
 ```yaml
 schema:
@@ -80,13 +87,16 @@ schema:
           type: integer
         name:
           type: string
+        email: # not present in payload
+          type: string
+          format: email
       example:
         - id: 11
           name: Jessica
 ```
 
-## Random generator
-Mokapi extends the OpenAPI specification *Schema* object with a custom property *x-faker*. 
+## Using generator
+The *x-faker* keyword lets you define a random data generator.
 
 ```yaml
 schema:
@@ -187,7 +197,7 @@ Supported generator:
 
 **Misc** <span id="misc"></span>
 - bool
-- uuid  
+- uuid
 - flipacoin
 
 **Colors** <span id="colors"></span>

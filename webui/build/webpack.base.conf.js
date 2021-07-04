@@ -86,7 +86,6 @@ module.exports = {
           markdownIt: markdownIt({
             html: true,
             linkify: true,
-            breaks: true
           }).use(markdownItPrism, {plugins: []})
         }
       },

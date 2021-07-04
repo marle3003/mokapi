@@ -78,6 +78,12 @@ Enables API/dashboard. (Default `true`)
 `--api.port`
 Dashboard's port (default: `8080`)
 
+`--rootCaCert`
+CA Certificate for signing certificate generated at runtime
+
+`--rootCaKey`
+Private Key of CA for signing certificate generated at runtime
+
 ### Environment variables
 
 `MOKAPI_Log.Level`
@@ -109,3 +115,9 @@ Enables API/dashboard. (Default `true`)
 
 `MOKAPI_Api.Port`
 Dashboard's port (default: `8080`)
+
+`MOKAPI_RootCaCert`
+CA Certificate for signing certificate generated at runtime
+
+`MOKAPI_RootCaKey`
+Private Key of CA for signing certificate generated at runtime

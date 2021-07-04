@@ -1,7 +1,10 @@
 nav:
   - "Welcome": "welcome.md"
   - "Config": "config.md"
-  - "OpenAPI": "openapi.md"
+  - "OpenAPI":
+    - "Intro": "openapi/intro.md"
+    - "Response": "openapi/response.md"
+    - "HTTPS & TLS": "openapi/tls.md"
   - "Kafka": "kafka.md"
   - "LDAP": "ldap.md"
   - "Actions":

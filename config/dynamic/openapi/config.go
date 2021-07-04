@@ -442,6 +442,9 @@ func (s *Server) GetPort() int {
 	}
 	portString := u.Port()
 	if len(portString) == 0 {
+		if u.Scheme == "https" {
+			return 443
+		}
 		return 80
 	} else {
 		port, err := strconv.ParseInt(portString, 10, 32)
