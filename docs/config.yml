@@ -7,6 +7,7 @@ nav:
     - "HTTPS & TLS": "openapi/tls.md"
   - "Kafka": "kafka.md"
   - "LDAP": "ldap.md"
+  - "SMTP": "smtp.md"
   - "Actions":
     - "Intro": "actions/intro.md"
     - "Syntax": "actions/syntax.md"
