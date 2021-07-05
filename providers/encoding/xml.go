@@ -74,10 +74,7 @@ func (m StringMap) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	}
 
 	if wrapped {
-		err := e.EncodeToken(xml.StartElement{Name: xml.Name{Local: start.Name.Local}})
-		if err != nil {
-			return err
-		}
+		e.EncodeToken(xml.StartElement{Name: xml.Name{Local: start.Name.Local}})
 	}
 
 	if m.Schema.Value.Type == "array" {
@@ -85,14 +82,8 @@ func (m StringMap) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 			for _, item := range list {
 				propertyMap := &StringMap{Data: item, Schema: m.Schema.Value.Items}
 				t := xml.StartElement{Name: start.Name}
-				err := e.EncodeElement(propertyMap, t)
-				if err != nil {
-					return err
-				}
-				err = e.EncodeToken(xml.EndElement{Name: t.Name})
-				if err != nil {
-					return err
-				}
+				e.EncodeElement(propertyMap, t)
+				e.EncodeToken(xml.EndElement{Name: t.Name})
 			}
 		}
 	} else if m.Schema.Value.Type == "object" {
@@ -118,56 +109,32 @@ func (m StringMap) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 			}
 		}
 
-		err := e.EncodeToken(start)
-		if err != nil {
-			return err
-		}
+		e.EncodeToken(start)
 
-		err = encodeObject(e, o, m.Schema)
-		if err != nil {
-			return err
-		}
+		encodeObject(e, o, m.Schema)
 
-		err = e.EncodeToken(xml.EndElement{Name: start.Name})
-		if err != nil {
-			return err
-		}
+		e.EncodeToken(xml.EndElement{Name: start.Name})
 	} else {
 		value := fmt.Sprint(m.Data)
 		if m.Schema.Value.Xml != nil && m.Schema.Value.Xml.CData {
-			err := e.EncodeElement(struct {
+			e.EncodeElement(struct {
 				S string `xml:",innerxml"`
 			}{
 				S: "<![CDATA[" + fmt.Sprint(m.Data) + "]]>",
 			}, start)
-			if err != nil {
-				return err
-			}
 		} else {
-			err := e.EncodeElement(value, start)
-			if err != nil {
-				return err
-			}
+			e.EncodeElement(value, start)
 		}
 
-		err := e.EncodeToken(xml.EndElement{Name: start.Name})
-		if err != nil {
-			return err
-		}
+		e.EncodeToken(xml.EndElement{Name: start.Name})
 	}
 
 	if wrapped {
-		err := e.EncodeToken(xml.EndElement{Name: start.Name})
-		if err != nil {
-			return err
-		}
+		e.EncodeToken(xml.EndElement{Name: start.Name})
 	}
 
 	// flush to ensure tokens are written
-	err := e.Flush()
-	if err != nil {
-		return err
-	}
+	e.Flush()
 
 	return nil
 }

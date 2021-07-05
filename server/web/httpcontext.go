@@ -31,7 +31,7 @@ type HttpContext struct {
 }
 
 func NewHttpContext(request *http.Request, response http.ResponseWriter, wh EventHandler) *HttpContext {
-	metric := models.NewRequestMetric(request.Method, fmt.Sprintf("%s%s", request.Host, request.URL.String()))
+	metric := models.NewRequestMetric(request.Method, getUrl(request))
 	return &HttpContext{ResponseWriter: response,
 		Request:         request,
 		workflowHandler: wh,
@@ -166,4 +166,18 @@ func (context *HttpContext) updateMetric(statusCode int, contentType, body strin
 		}
 		context.metric.Parameters = append(context.metric.Parameters, p)
 	}
+}
+
+func getUrl(r *http.Request) string {
+	if r.URL.IsAbs() {
+		return r.URL.String()
+	}
+
+	var scheme string
+	if r.TLS == nil {
+		scheme = "http"
+	} else {
+		scheme = "https"
+	}
+	return fmt.Sprintf("%s://%s%s", scheme, r.Host, r.URL.String())
 }
