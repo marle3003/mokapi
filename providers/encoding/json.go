@@ -66,14 +66,15 @@ func selectData(data interface{}, schema *openapi.SchemaRef) (interface{}, error
 
 	if schema.Value.Type == "array" {
 		if list, ok := data.([]interface{}); ok {
+			result := make([]interface{}, len(list))
 			for i, e := range list {
 				var err error
-				list[i], err = selectData(e, schema.Value.Items)
+				result[i], err = selectData(e, schema.Value.Items)
 				if err != nil {
 					return nil, err
 				}
 			}
-			return list, nil
+			return result, nil
 		}
 
 		return nil, fmt.Errorf("unexpected type for schema type array")
