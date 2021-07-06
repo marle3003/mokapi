@@ -5,32 +5,27 @@ import (
 	"github.com/emersion/go-smtp"
 	log "github.com/sirupsen/logrus"
 	config "mokapi/config/dynamic/smtp"
+	"mokapi/models"
 )
 
-type ReceivedMailHandler func(mail *Mail)
+type ReceivedMailHandler func(mail *models.Mail)
 
 type Binding struct {
 	server *smtp.Server
 	config *config.Config
 
 	close    chan bool
-	received chan *Mail
+	received chan *models.Mail
 
 	mh ReceivedMailHandler
 }
 
-type Mail struct {
-	From string
-	To   string
-	Data string
-}
-
 type backend struct {
-	received chan *Mail
+	received chan *models.Mail
 }
 
 func NewBinding(c *config.Config, mh ReceivedMailHandler, getCertificate func(info *tls.ClientHelloInfo) (*tls.Certificate, error)) *Binding {
-	received := make(chan *Mail)
+	received := make(chan *models.Mail)
 	b := &backend{received: received}
 	s := smtp.NewServer(b)
 	s.Addr = c.Address

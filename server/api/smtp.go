@@ -2,20 +2,33 @@ package api
 
 import (
 	"mokapi/models"
+	"net/mail"
 	"time"
 )
 
 type mailSummary struct {
-	Id   string    `json:"id"`
-	From string    `json:"from"`
-	To   string    `json:"to"`
-	Time time.Time `json:"time"`
+	Id      string          `json:"id"`
+	From    []*mail.Address `json:"from"`
+	To      []*mail.Address `json:"to"`
+	Subject string          `json:"subject"`
+	Time    time.Time       `json:"time"`
 }
 
-type mail struct {
-	From string `json:"from"`
-	To   string `json:"to"`
-	Data string `json:"data"`
+type mailFull struct {
+	Sender  *mail.Address   `json:"sender"`
+	From    []*mail.Address `json:"from"`
+	ReplyTo []*mail.Address `json:"replyTo"`
+	To      []*mail.Address `json:"to"`
+	Cc      []*mail.Address `json:"cc"`
+	Bcc     []*mail.Address `json:"bcc"`
+	Time    time.Time       `json:"time"`
+
+	ContentType string `json:"contentType"`
+	Encoding    string `json:"encoding"`
+
+	Subject  string `json:"subject"`
+	TextBody string `json:"textBody"`
+	HtmlBody string `json:"htmlBody"`
 }
 
 func newMailSummary(mail *models.Mail) mailSummary {
@@ -27,10 +40,21 @@ func newMailSummary(mail *models.Mail) mailSummary {
 	}
 }
 
-func newMail(m *models.Mail) mail {
-	return mail{
-		From: m.From,
-		To:   m.To,
-		Data: m.Data,
+func newMail(m *models.Mail) mailFull {
+	return mailFull{
+		Sender:  m.Sender,
+		From:    m.From,
+		ReplyTo: m.ReplyTo,
+		To:      m.To,
+		Cc:      m.Cc,
+		Bcc:     m.Bcc,
+		Time:    m.Time,
+
+		ContentType: m.ContentType,
+		Encoding:    m.Encoding,
+
+		Subject:  m.Subject,
+		TextBody: m.TextBody,
+		HtmlBody: m.HtmlBody,
 	}
 }
