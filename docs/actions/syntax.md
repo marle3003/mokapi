@@ -115,8 +115,8 @@ steps:
 ```yaml
 steps:
 - name: Display the path
-  run: echo ${env:PATH}
-  shell: cmd
+  run: Write-Host ${env:PATH}
+  shell: ps
 ```
 
 ## steps[*].with

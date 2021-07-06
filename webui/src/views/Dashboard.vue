@@ -43,7 +43,7 @@
           </b-card>
         </b-card-group>
 
-        <b-card-group deck v-if="dashboard.httpEnabled && $route.name === 'http' || $route.name === 'dashboard'">
+        <b-card-group deck v-show="dashboard.httpEnabled && $route.name === 'http' || $route.name === 'dashboard'">
           <b-card body-class="info-body" class="text-center">
              <b-card-title class="info">REST Services</b-card-title>
              <b-table :items="services" :fields="serviceFields" table-class="dataTable">
@@ -58,7 +58,7 @@
           </b-card>
         </b-card-group>
 
-        <b-card-group deck v-if="dashboard.kafkaEnabled && $route.name === 'dashboard' || $route.name === 'kafka'">
+        <b-card-group deck v-show="dashboard.kafkaEnabled && $route.name === 'dashboard' || $route.name === 'kafka'">
           <b-card body-class="info-body" class="text-center">
              <b-card-title class="info">Kafka Topics</b-card-title>
              <b-table :items="topics" :fields="topicFields" table-class="dataTable">
@@ -75,41 +75,7 @@
           </b-card>
         </b-card-group>
 
-        <!-- <b-card-group deck>
-          <b-card body-class="info-body">
-           <b-card-title class="info">Topic Memory Usage</b-card-title>
-           <b-card-text class="text-center value">
-             <time-chart :chart-data="chartTopicSize" :height="250" />
-           </b-card-text>
-          </b-card>
-        </b-card-group> -->
-
-        <!-- <b-card-group deck>
-          <b-card>
-            <b-card-title class="info">Services</b-card-title>
-            <b-card-text v-if="loaded">
-              <div class="row">
-              <div class="col-5 p-0">
-            <doughnut-chart :height="250" :chartdata="serviceStatus" />
-              </div>
-              <div class="col-7 p-0 align-self-center">
-                <b-list-group>
-                  <b-list-group-item class="legend-item p-0 pb-2">
-                    <span class="mr-auto">Success</span>
-                    <b-badge>{{ dashboard.serviceStatus.total - dashboard.serviceStatus.errors }}</b-badge>
-                  </b-list-group-item>
-                  <b-list-group-item class="legend-item p-0 pb-2">
-                    <span class="mr-auto">Errors</span>
-                    <b-badge>{{ dashboard.serviceStatus.errors }}</b-badge>
-                  </b-list-group-item>
-                </b-list-group>
-              </div>
-              </div>
-            </b-card-text>
-          </b-card>
-        </b-card-group> -->
-
-        <b-card-group deck v-if="$route.name === 'http'">
+        <b-card-group deck v-show="$route.name === 'http'">
           <b-card class="w-100">
             <b-card-title class="info text-center">Last Request Errors</b-card-title>
             <b-table hover :items="lastErrors" :fields="lastRequestField" class="dataTable selectable" @row-clicked="requestClickHandler">
@@ -133,7 +99,7 @@
           </b-card>
         </b-card-group>
 
-        <b-card-group deck v-if="$route.name === 'http'">
+        <b-card-group deck v-show="$route.name === 'http'">
           <b-card class="w-100">
             <b-card-title class="info text-center">Recent Request</b-card-title>
             <b-table hover :items="lastRequests" :fields="lastRequestField" class="dataTable selectable" @row-clicked="requestClickHandler">
@@ -157,7 +123,7 @@
           </b-card>
         </b-card-group>
 
-        <b-card-group deck v-if="$route.name === 'smtp'">
+        <b-card-group deck v-show="$route.name === 'smtp'">
           <b-card class="w-100">
             <b-card-title class="info text-center">Recent Mails</b-card-title>
             <b-table hover :items="lastMails" :fields="lastMailField" class="dataTable selectable" @row-clicked="mailClickHandler">
@@ -340,35 +306,7 @@ export default {
   methods: {
     async getData () {
       this.dashboard = await this.getDashboard()
-      // var topicSizes = this.dashboard.kafka.topicSizes
-      // var now = new Date()
-      // for (var key in topicSizes){
-      //   if (!(key in this.topicSizes)){
-      //     this.topicSizes[key] = []
-      //   }
-      //   this.topicSizes[key].push({x: now, y: topicSizes[key]})
-      //   if (this.topicSizes[key].length > 1000) {
-      //     this.topicSizes[key].shift()
-      //   }
-      // }
-      // var datasets = []
-      // for (var key in this.topicSizes){
-      //   datasets.push({
-      //     label: key,
-      //     data: this.topicSizes[key],
-      //     fill: false,
-      //     borderColor: '#34b5e3',
-      //     pointRadius: 0,
-      //     lineTension: 0
-      //   })
-      // }
-      // this.chartTopicSize = {
-      //   datasets: datasets
-      // }
       this.loaded = true
-    },
-    getRandomInt () {
-      return Math.floor(Math.random() * (50 - 5 + 1)) + 5
     },
     requestClickHandler (record, index) {
       this.$router.push({name: 'httpRequest', params: {id: record.id}})

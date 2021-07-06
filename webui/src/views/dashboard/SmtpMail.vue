@@ -85,7 +85,7 @@
 
 <script>
 import Api from '@/mixins/Api'
-import moment from "moment";
+import moment from 'moment'
 
 export default {
   name: 'SmtpMail',
@@ -110,7 +110,7 @@ export default {
     },
     moment: function (date) {
       return moment(date).local().format('YYYY-MM-DD HH:mm:ss')
-    },
+    }
   }
 }
 </script>
