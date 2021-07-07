@@ -24,7 +24,7 @@ func (p *Producer) Run(ctx *runtime.ActionContext) error {
 	}
 
 	key, _ := ctx.GetInput("key")
-	message, _ := ctx.GetInput("key")
+	message, _ := ctx.GetInput("message")
 
 	partition := -1
 	if p, ok := ctx.GetInput("partition"); ok {
