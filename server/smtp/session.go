@@ -1,6 +1,7 @@
 package smtp
 
 import (
+	"bytes"
 	"encoding/base64"
 	"fmt"
 	"github.com/emersion/go-smtp"
@@ -9,6 +10,8 @@ import (
 	"io/ioutil"
 	"mime"
 	"mokapi/models"
+	"mokapi/providers/workflow"
+	"mokapi/providers/workflow/event"
 	"net/mail"
 	"strings"
 	"time"
@@ -16,22 +19,34 @@ import (
 
 type session struct {
 	current  *models.Mail
-	received chan *models.Mail
+	received chan *models.MailMetric
+	wh       EventHandler
+	state    *smtp.ConnectionState
 }
 
-func newSession(received chan *models.Mail) *session {
+func newSession(received chan *models.MailMetric, wh EventHandler, state *smtp.ConnectionState) *session {
 	return &session{
 		received: received,
+		wh:       wh,
+		state:    state,
 	}
 }
 
 func (s *session) Reset() {
 	if s.current != nil {
-		s.received <- s.current
+		summary := s.wh(event.WithSmtpEvent(event.SmtpEvent{Received: true, Address: s.state.LocalAddr.String()}), workflow.WithContext("mail", s.current))
+		if summary == nil {
+			log.Debugf("no actions found")
+		} else {
+			log.WithField("action summary", summary).Debugf("executed actions")
+		}
+
+		s.received <- &models.MailMetric{Mail: s.current, Summary: summary}
 	}
 }
 
 func (s *session) Logout() error {
+	s.wh(event.WithSmtpEvent(event.SmtpEvent{Logout: true}))
 	return nil
 }
 
@@ -64,7 +79,12 @@ func (s *session) Data(r io.Reader) error {
 	email.Encoding = m.Header.Get("Content-Transfer-Encoding")
 	email.Time = p.parseTime(m.Header.Get("Date"))
 
-	email.TextBody, email.HtmlBody, email.Attachments = p.parseBody(m.Body, email.ContentType, email.Encoding)
+	var buf bytes.Buffer
+	tee := io.TeeReader(m.Body, &buf)
+
+	email.RawBody = p.parseString(tee)
+
+	email.TextBody, email.HtmlBody, email.Attachments = p.parseBody(&buf, email.ContentType, email.Encoding)
 
 	if p.err != nil {
 		log.Errorf("error parsing mail: %v", err)
@@ -104,6 +124,16 @@ func (p parser) parseId(s string) string {
 	}
 
 	return strings.Trim(s, "<>")
+}
+
+func (p parser) parseString(r io.Reader) string {
+	if p.err != nil {
+		return ""
+	}
+
+	var b []byte
+	b, p.err = ioutil.ReadAll(r)
+	return string(b)
 }
 
 func (p parser) parseSubject(s string) string {

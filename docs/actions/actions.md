@@ -151,3 +151,26 @@ steps:
       statusCode: 200
       headers: "${{ {'access-control-allow-origin': '*'}}"
 ```
+
+## send-mail
+Sends the specified message to an SMTP server for delivery
+
+`server` a string that contains the name or IP address with optional port. Default port is 25
+`from` a string that contains the from address.
+`to` a string that contains the to address.
+`contentType` HTTP status code of the response.
+`encoding` the encoding used to encode body
+`subject` a string that contains the subject for this mail
+`body` a string that contains the body for this mail
+
+### Usage
+```yaml
+steps:
+  - uses: send-mail
+    with:
+      server: localhost
+      from: demo@mokapi.io
+      to: test@mokapi.io
+      body: Hello World
+      contentType: text/plain
+```

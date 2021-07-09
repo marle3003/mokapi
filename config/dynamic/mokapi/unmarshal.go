@@ -33,6 +33,10 @@ func (triggers *Triggers) UnmarshalYAML(n *yaml.Node) error {
 				for _, h := range parseHttpTriggers(v) {
 					*triggers = append(*triggers, Trigger{Http: h})
 				}
+			case key == "smtp":
+				for _, s := range parseSmtp(v) {
+					*triggers = append(*triggers, Trigger{Smtp: s})
+				}
 			case key == "schedule":
 				*triggers = append(*triggers, Trigger{Schedule: parseSchedule(v)})
 			}
@@ -64,7 +68,7 @@ func parseHttpTriggers(i interface{}) (t []*HttpTrigger) {
 					}
 				}
 
-			case key == "get", key == "post":
+			case key == "get", key == "post", key == "put", key == "patch", key == "delete", key == "head", key == "options", key == "trace":
 				t = append(t, parseEndpoint(key, v)...)
 			}
 		}
@@ -120,6 +124,57 @@ func parseEndpoint(method string, i interface{}) (t []*HttpTrigger) {
 					}
 				}
 			}
+		}
+	}
+
+	return
+}
+
+func parseSmtp(i interface{}) (t []*SmtpTrigger) {
+	if i == nil {
+		return []*SmtpTrigger{{}}
+	}
+	switch i := i.(type) {
+	case []interface{}:
+		for _, m := range i {
+			if s, ok := m.(string); ok {
+				switch strings.ToLower(s) {
+				case "login":
+					t = append(t, &SmtpTrigger{Login: true})
+				case "received":
+					t = append(t, &SmtpTrigger{Received: true})
+				case "logout":
+					t = append(t, &SmtpTrigger{Logout: true})
+				}
+			}
+		}
+	case map[string]interface{}:
+		var addr string
+		for k, v := range i {
+			switch key := strings.ToLower(k); {
+			case key == "login":
+				t = append(t, &SmtpTrigger{Login: v.(bool)})
+			case key == "received":
+				t = append(t, &SmtpTrigger{Received: v.(bool)})
+			case key == "logout":
+				t = append(t, &SmtpTrigger{Logout: v.(bool)})
+			case key == "address":
+				addr = v.(string)
+			}
+		}
+		if len(addr) > 0 {
+			for _, ti := range t {
+				ti.Address = addr
+			}
+		}
+	case string:
+		switch strings.ToLower(i) {
+		case "login":
+			t = append(t, &SmtpTrigger{Login: true})
+		case "received":
+			t = append(t, &SmtpTrigger{Received: true})
+		case "logout":
+			t = append(t, &SmtpTrigger{Logout: true})
 		}
 	}
 

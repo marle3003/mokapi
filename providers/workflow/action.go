@@ -18,6 +18,7 @@ var (
 		"split":     &actions.Split{},
 		"echo":      &actions.Echo{},
 		"delay":     &actions.Delay{},
+		"send-mail": &actions.SendMail{},
 	}
 	fCollection = map[string]functions.Function{
 		"find":      functions.Find,

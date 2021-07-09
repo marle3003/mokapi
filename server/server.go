@@ -206,7 +206,7 @@ func (s *Server) updateConfigs(config dynamic.Config) {
 
 		_, found := s.Bindings[c.Address]
 		if !found {
-			b := smtpServer.NewBinding(c, s.runtime.Metrics.AddMail, s.store.GetCertificate)
+			b := smtpServer.NewBinding(c, s.runtime.Metrics.AddMail, s.store.GetCertificate, s.triggerHandler)
 			b.Start()
 			s.Bindings[c.Address] = b
 		}

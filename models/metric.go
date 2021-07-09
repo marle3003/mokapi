@@ -18,7 +18,7 @@ type Metrics struct {
 	OpenApi           map[string]*ServiceMetric
 
 	TotalMails int64
-	LastMails  []*Mail
+	LastMails  []*MailMetric
 }
 
 type KafkaMetric struct {

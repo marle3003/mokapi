@@ -33,12 +33,20 @@ type Triggers []Trigger
 
 type Trigger struct {
 	Http     *HttpTrigger
+	Smtp     *SmtpTrigger
 	Schedule *ScheduleTrigger
 }
 
 type HttpTrigger struct {
 	Method string
 	Path   string
+}
+
+type SmtpTrigger struct {
+	Received bool
+	Login    bool
+	Logout   bool
+	Address  string
 }
 
 type ScheduleTrigger struct {

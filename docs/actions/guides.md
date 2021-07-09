@@ -11,5 +11,5 @@ workflows:
     steps:
       - uses: set-response
         with:
-          headers: "${{ {'access-control-allow-origin': '*'}}"
+          headers: "${{ {'access-control-allow-origin': '*'} }}"
 ```

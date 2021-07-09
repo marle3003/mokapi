@@ -6,27 +6,34 @@ import (
 	log "github.com/sirupsen/logrus"
 	config "mokapi/config/dynamic/smtp"
 	"mokapi/models"
+	"mokapi/providers/workflow"
+	"mokapi/providers/workflow/event"
+	"mokapi/providers/workflow/runtime"
 )
 
-type ReceivedMailHandler func(mail *models.Mail)
+type ReceivedMailHandler func(mail *models.MailMetric)
+
+type EventHandler func(events event.Handler, options ...workflow.Options) *runtime.Summary
 
 type Binding struct {
 	server *smtp.Server
 	config *config.Config
 
 	close    chan bool
-	received chan *models.Mail
+	received chan *models.MailMetric
 
 	mh ReceivedMailHandler
+	wh EventHandler
 }
 
 type backend struct {
-	received chan *models.Mail
+	received chan *models.MailMetric
+	wh       EventHandler
 }
 
-func NewBinding(c *config.Config, mh ReceivedMailHandler, getCertificate func(info *tls.ClientHelloInfo) (*tls.Certificate, error)) *Binding {
-	received := make(chan *models.Mail)
-	b := &backend{received: received}
+func NewBinding(c *config.Config, mh ReceivedMailHandler, getCertificate func(info *tls.ClientHelloInfo) (*tls.Certificate, error), wh EventHandler) *Binding {
+	received := make(chan *models.MailMetric)
+	b := &backend{received: received, wh: wh}
 	s := smtp.NewServer(b)
 	s.Addr = c.Address
 
@@ -42,6 +49,7 @@ func NewBinding(c *config.Config, mh ReceivedMailHandler, getCertificate func(in
 		received: received,
 		close:    make(chan bool),
 		mh:       mh,
+		wh:       wh,
 	}
 }
 
@@ -88,13 +96,25 @@ func (b *Binding) Apply(i interface{}) error {
 }
 
 func (b backend) Login(state *smtp.ConnectionState, username, password string) (smtp.Session, error) {
-	log.Infof("smtp login with username %q", username)
+	log.Debugf("smtp login with username %q", username)
+	summary := b.wh(event.WithSmtpEvent(event.SmtpEvent{Login: true, Address: state.LocalAddr.String()}), workflow.WithContext("auth", &Login{Username: username, Password: password}))
+	if summary == nil {
+		log.Debugf("no actions found")
+	} else {
+		log.WithField("action summary", summary).Debugf("executed actions")
+	}
 
-	return newSession(b.received), nil
+	return newSession(b.received, b.wh, state), nil
 }
 
 func (b backend) AnonymousLogin(state *smtp.ConnectionState) (smtp.Session, error) {
-	log.Info("smtp anonymous login")
+	log.Debug("smtp anonymous login")
+	summary := b.wh(event.WithSmtpEvent(event.SmtpEvent{Login: true, Address: state.LocalAddr.String()}), workflow.WithContext("auth", &Login{Anonymous: true}))
+	if summary == nil {
+		log.Debugf("no actions found")
+	} else {
+		log.WithField("action summary", summary).Debugf("executed actions")
+	}
 
-	return newSession(b.received), nil
+	return newSession(b.received, b.wh, state), nil
 }

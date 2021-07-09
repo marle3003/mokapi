@@ -29,32 +29,41 @@ type mailFull struct {
 	Subject  string `json:"subject"`
 	TextBody string `json:"textBody"`
 	HtmlBody string `json:"htmlBody"`
+
+	Actions []workflowSummary `json:"actions"`
 }
 
 func newMailSummary(mail *models.Mail) mailSummary {
 	return mailSummary{
-		Id:   mail.Id,
-		From: mail.From,
-		To:   mail.To,
-		Time: mail.Time,
+		Id:      mail.Id,
+		From:    mail.From,
+		To:      mail.To,
+		Subject: mail.Subject,
+		Time:    mail.Time,
 	}
 }
 
-func newMail(m *models.Mail) mailFull {
-	return mailFull{
-		Sender:  m.Sender,
-		From:    m.From,
-		ReplyTo: m.ReplyTo,
-		To:      m.To,
-		Cc:      m.Cc,
-		Bcc:     m.Bcc,
-		Time:    m.Time,
+func newMail(m *models.MailMetric) mailFull {
+	r := mailFull{
+		Sender:  m.Mail.Sender,
+		From:    m.Mail.From,
+		ReplyTo: m.Mail.ReplyTo,
+		To:      m.Mail.To,
+		Cc:      m.Mail.Cc,
+		Bcc:     m.Mail.Bcc,
+		Time:    m.Mail.Time,
 
-		ContentType: m.ContentType,
-		Encoding:    m.Encoding,
+		ContentType: m.Mail.ContentType,
+		Encoding:    m.Mail.Encoding,
 
-		Subject:  m.Subject,
-		TextBody: m.TextBody,
-		HtmlBody: m.HtmlBody,
+		Subject:  m.Mail.Subject,
+		TextBody: m.Mail.TextBody,
+		HtmlBody: m.Mail.HtmlBody,
 	}
+
+	for _, a := range m.Summary.Workflows {
+		r.Actions = append(r.Actions, newActionSummary(a))
+	}
+
+	return r
 }

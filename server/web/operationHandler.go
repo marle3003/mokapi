@@ -118,9 +118,8 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 	}
 
 	summary := context.workflowHandler(event.WithHttpEvent(event.HttpEvent{
-		Service: context.ServiceName,
-		Method:  context.Request.Method,
-		Path:    context.Request.URL.Path,
+		Method: context.Request.Method,
+		Path:   context.Request.URL.Path,
 	}),
 		workflow.WithContext("request", req),
 		workflow.WithContext("response", res),

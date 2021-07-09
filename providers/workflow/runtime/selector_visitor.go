@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	log "github.com/sirupsen/logrus"
 	"mokapi/providers/workflow/ast"
 	"mokapi/providers/workflow/path/objectpath"
 )
@@ -33,7 +34,10 @@ func (v *selectorVisitor) Visit(e ast.Expression) ast.Visitor {
 	selector := v.outer.stack.Pop().(string)
 	source := v.outer.stack.Pop()
 
-	m, _ := objectpath.Resolve(selector, source)
+	m, err := objectpath.Resolve(selector, source)
+	if err != nil {
+		log.Debugf("unable to resolve objectpath: %v", err)
+	}
 	v.outer.stack.Push(m)
 
 	return nil

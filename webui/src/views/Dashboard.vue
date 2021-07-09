@@ -26,15 +26,15 @@
 
         <b-card-group deck>
           <b-card body-class="info-body" class="text-center" v-if="dashboard.httpEnabled">
-            <b-card-title class="info">Total REST Requests</b-card-title>
+            <b-card-title class="info">Total HTTP Requests</b-card-title>
             <b-card-text class="text-center value">{{ dashboard.totalRequests }}</b-card-text>
           </b-card>
           <b-card body-class="info-body" class="text-center" v-if="dashboard.httpEnabled">
-            <b-card-title class="info">Web Request Errors</b-card-title>
+            <b-card-title class="info">HTTP Request Errors</b-card-title>
             <b-card-text class="text-center value" v-bind:class="{'text-danger': hasErrors}">{{ dashboard.requestsWithError }}</b-card-text>
           </b-card>
           <b-card body-class="info-body" class="text-center" v-if="dashboard.kafkaEnabled">
-            <b-card-title class="info">Total Messages</b-card-title>
+            <b-card-title class="info">Total Kafka Messages</b-card-title>
             <b-card-text class="text-center value">{{ totalMessages }}</b-card-text>
           </b-card>
           <b-card body-class="info-body" class="text-center" v-if="dashboard.smtpEnabled">
@@ -127,6 +127,16 @@
           <b-card class="w-100">
             <b-card-title class="info text-center">Recent Mails</b-card-title>
             <b-table hover :items="lastMails" :fields="lastMailField" class="dataTable selectable" @row-clicked="mailClickHandler">
+              <template v-slot:cell(from)="data">
+                <div v-for="from in data.item.from" :key="from.Address">
+                  <span v-if="from.Name !== ''">{{ from.Name }} &lt;</span><span>{{ from.Address }}</span><span v-if="from.Name !== ''">&gt;</span>
+                </div>
+              </template>
+              <template v-slot:cell(to)="data">
+                <div v-for="to in data.item.to" :key="to.Address">
+                  <span v-if="to.Name !== ''">{{ to.Name }} &lt;</span><span>{{ to.Address }}</span><span v-if="to.Name !== ''">&gt;</span>
+                </div>
+              </template>
               <template v-slot:cell(time)="data">
                 {{ data.item.time | moment}}
               </template>
@@ -165,7 +175,7 @@ export default {
       chartTopicSize: {},
       serviceFields: [{key: 'name', class: 'text-left'}, {key: 'lastRequest', class: 'text-left'}, 'requests', 'errors'],
       topicFields: [{key: 'name', class: 'text-left'}, 'count', 'size', 'lastRecord', 'partitions', 'segments'],
-      lastMailField: ['from', 'to', 'time']
+      lastMailField: ['from', 'to', {key: 'subject', class: 'subject'}, 'time']
     }
   },
   created () {
@@ -376,4 +386,14 @@ export default {
   .dataTable.selectable{
     cursor: pointer;
   }
+
+</style>
+<style>
+.subject {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 250px;
+  width: 250px;
+}
 </style>

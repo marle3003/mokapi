@@ -91,7 +91,7 @@ func newDashboard(runtime *models.Runtime) dashboard {
 	}
 
 	for _, m := range runtime.Metrics.LastMails {
-		dashboard.LastMails = append(dashboard.LastMails, newMailSummary(m))
+		dashboard.LastMails = append(dashboard.LastMails, newMailSummary(m.Mail))
 	}
 
 	dashboard.HttpEnabled = len(runtime.OpenApi) > 0

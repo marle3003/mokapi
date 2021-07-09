@@ -7,6 +7,7 @@ import (
 )
 
 func parse(s string, ctx *WorkflowContext) (interface{}, error) {
+	s = strings.TrimRight(s, "\n")
 	if strings.HasPrefix(s, "${{") && strings.HasSuffix(s, "}}") {
 		return RunExpression(s[3:len(s)-2], ctx)
 	}

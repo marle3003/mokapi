@@ -194,7 +194,7 @@ func (b *Binding) getSmtpMail(w http.ResponseWriter, r *http.Request) {
 	segments := strings.Split(r.URL.Path, "/")
 	id := segments[len(segments)-1]
 	for _, o := range b.runtime.Metrics.LastMails {
-		if o.Id == id {
+		if o.Mail.Id == id {
 			err := json.NewEncoder(w).Encode(newMail(o))
 			if err != nil {
 				log.Errorf("Error in writing smtp mail response: %v", err.Error())

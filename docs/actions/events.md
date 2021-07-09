@@ -50,6 +50,22 @@ on:
     iterations: 10
 ```
 
+## Using SMTP events
+```yaml
+# Triggered every 5 seconds
+on:
+  smtp: login, logout, received
+```
+
+## Using SMTP events on specified host
+```yaml
+# Triggered every 5 seconds
+on:
+  smtp:
+    received: true
+    address: localhost:25
+```
+
 ## Filter pattern
 
 You can use special characters in path filters

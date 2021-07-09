@@ -1,9 +1,15 @@
 package models
 
 import (
+	"mokapi/providers/workflow/runtime"
 	"net/mail"
 	"time"
 )
+
+type MailMetric struct {
+	Mail    *Mail
+	Summary *runtime.Summary
+}
 
 type Mail struct {
 	Id        string
@@ -22,6 +28,7 @@ type Mail struct {
 	Encoding    string
 	HtmlBody    string
 	TextBody    string
+	RawBody     string
 
 	Attachments []Attachment
 }
@@ -31,14 +38,14 @@ type Attachment struct {
 	ContentType string
 }
 
-func (m *Metrics) AddMail(mail *Mail) {
-	mail.Id = newId(10)
-	if mail.Time.IsZero() {
-		mail.Time = time.Now()
+func (m *Metrics) AddMail(mm *MailMetric) {
+	mm.Mail.Id = newId(10)
+	if mm.Mail.Time.IsZero() {
+		mm.Mail.Time = time.Now()
 	}
 	m.TotalMails += 1
 	if len(m.LastMails) > 10 {
 		m.LastMails = m.LastMails[1:]
 	}
-	m.LastMails = append(m.LastMails, mail)
+	m.LastMails = append(m.LastMails, mm)
 }
