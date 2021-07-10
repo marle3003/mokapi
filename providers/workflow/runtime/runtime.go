@@ -164,7 +164,7 @@ func runAction(step mokapi.Step, stepId string, ctx *WorkflowContext) Log {
 		actionCtx := newActionContext(stepId, ctx)
 		err := a.Run(actionCtx)
 		if err != nil {
-			return newLog("execution error: %v", step.Uses, err)
+			return newLog("execution error: %v", err)
 		}
 		l.AppendRange(actionCtx.log)
 		return l
