@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"fmt"
 	"mokapi/config/dynamic/mokapi"
 	"time"
 )
@@ -23,10 +24,12 @@ type WorkflowSummary struct {
 	Status   WorkflowStatus
 }
 
+type Log []string
+
 type StepSummary struct {
 	Id       string
 	Name     string
-	Log      string
+	Log      Log
 	Duration time.Duration
 	Status   WorkflowStatus
 }
@@ -42,4 +45,22 @@ func NewStepSummary(step mokapi.Step) *StepSummary {
 	}
 
 	return &StepSummary{Name: name, Id: getStepId(step)}
+}
+
+func (l *Log) Append(s string) {
+	*l = append(*l, s)
+}
+
+func (l *Log) AppendRange(s []string) {
+	*l = append(*l, s...)
+}
+
+func (l *Log) AppendGroup(name string, log Log) {
+	l.Append("##[group]" + name)
+	*l = append(*l, log...)
+	l.Append("##[endgroup]")
+}
+
+func newLog(format string, a ...interface{}) Log {
+	return Log{fmt.Sprintf(format, a...)}
 }

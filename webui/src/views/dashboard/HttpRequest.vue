@@ -54,29 +54,10 @@
               </template>
             </b-table>
 
-            <p class="label">Actions</p>
-            <b-table small hover class="dataTable" :items="request.actions" :fields="actions">
-              <template v-slot:cell(show_details)="row">
-                <div @click="toggleDetails(row)">
-                  <b-icon v-if="row.detailsShowing" icon="dash-square"></b-icon>
-                  <b-icon v-else icon="plus-square"></b-icon>
-                </div>
-              </template>
-              <template v-slot:cell(duration)="data">
-                {{ data.item.duration | duration }}
-              </template>
-              <template v-slot:row-details="row">
-                <div v-for="step in row.item.steps" :key="step.id" class="p-1" v-b-toggle="step.id">
-                  Run {{step.name}}
-                  <b-collapse :id="step.id">
-                    <vue-simple-markdown :source="step.log" class="pl-4 mt-1" style="font-size: 0.6rem" />
-                  </b-collapse>
-                </div>
-              </template>
-            </b-table>
+            <action :actions="request.actions"></action>
 
             <p class="label">Response Body</p>
-            <vue-simple-markdown :source="request.responseBody" />
+            <pre :class="getLanguage(request.contentType)"><code :class="getLanguage(request.contentType)" v-html="pretty(request.responseBody, request.contentType)"></code></pre>
           </b-col>
         </b-row>
       </b-card>
@@ -88,15 +69,20 @@
 import Api from '@/mixins/Api'
 import moment from 'moment'
 import http from 'http-status-codes'
+import Action from '@/components/Action'
+import xmlFormatter from 'xml-formatter'
 
 export default {
   name: 'HttpRequest',
+  components: {
+    'action': Action
+  },
   mixins: [Api],
   data () {
     return {
       request: null,
       parameters: [{key: 'show_details', label: '', thStyle: 'width: 1%'}, 'name', 'value', 'type', {key: 'openapi', label: 'OpenApi'}],
-      actions: [{key: 'show_details', label: '', thStyle: 'width: 1%'}, 'name', 'duration', 'status']
+      detailsShown: []
     }
   },
   created () {
@@ -119,6 +105,29 @@ export default {
       } else {
         this.detailsShown.splice(index, 1)
       }
+    },
+    pretty (s, contentType) {
+      switch (contentType) {
+        case 'application/json':
+          s = JSON.stringify(JSON.parse(s), null, 2)
+          return Prism.highlight(s, Prism.languages.json, 'json')
+        case 'text/xml':
+        case 'application/xml':
+          s = xmlFormatter(s)
+          return Prism.highlight(s, Prism.languages.xml, 'xml')
+      }
+      return s
+    },
+    getLanguage (contentType) {
+      // https://lucidar.me/en/web-dev/list-of-supported-languages-by-prism/
+      switch (contentType) {
+        case 'application/json':
+          return 'language-json'
+        case 'text/xml':
+        case 'application/xml':
+          return 'language-xml'
+      }
+      return ''
     }
   },
   filters: {
@@ -162,19 +171,5 @@ export default {
     -moz-transform:rotate(90deg);
     -webkit-transform:rotate(90deg);
     transform:rotate(90deg);
-  }
-  .actions{
-    border-width: 1px;
-    border-style: solid;
-    border-radius: 0.3rem;
-    padding: 0.3rem;
-    margin-bottom: 1rem;
-  }
-  .actions > .title{
-    margin-bottom: 0.3rem
-  }
-  .actions > .info{
-    font-size: 0.6rem;
-    margin-bottom: 0;
   }
 </style>

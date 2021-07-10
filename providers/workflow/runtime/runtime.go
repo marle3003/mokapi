@@ -93,13 +93,9 @@ func runStep(step mokapi.Step, ctx *WorkflowContext) (*StepSummary, error) {
 
 	var err error
 	if len(step.Run) > 0 {
-		summary.Log, err = runScript(step, summary.Id, ctx)
+		summary.Log = runScript(step, summary.Id, ctx)
 	} else {
-		summary.Log, err = runAction(step, summary.Id, ctx)
-	}
-
-	if len(summary.Log) == 0 && err != nil {
-		summary.Log = err.Error()
+		summary.Log = runAction(step, summary.Id, ctx)
 	}
 
 	return summary, err
@@ -114,11 +110,12 @@ func RunExpression(s string, ctx *WorkflowContext) (interface{}, error) {
 	return v.stack.Pop(), nil
 }
 
-func runScript(step mokapi.Step, stepId string, ctx *WorkflowContext) (s string, err error) {
+func runScript(step mokapi.Step, stepId string, ctx *WorkflowContext) Log {
 	script := step.Run
+	var err error
 	script, err = sPrint(script, ctx)
 	if err != nil {
-		return
+		return newLog("parse error: %v", err)
 	}
 
 	var output []byte
@@ -139,33 +136,39 @@ func runScript(step mokapi.Step, stepId string, ctx *WorkflowContext) (s string,
 		}
 	}
 	if err != nil {
-		return
+		return newLog("execution error: %v", err)
 	}
-	s = fmt.Sprintf("%s", output)
+	s := fmt.Sprintf("%s", output)
 	ctx.parseOutput(s, stepId)
 
-	return
+	return strings.Split(s, "\n")
 }
 
-func runAction(step mokapi.Step, stepId string, ctx *WorkflowContext) (s string, err error) {
+func runAction(step mokapi.Step, stepId string, ctx *WorkflowContext) Log {
+	withLog := make([]string, 0, len(step.With))
 	for k, v := range step.With {
-		var val interface{}
-		val, err = parse(v, ctx)
+		val, err := parse(v, ctx)
 		if err != nil {
-			return
+			return newLog("parse error %v: %v", k, err)
 		}
 		ctx.Context.Steps[stepId].Inputs[k] = val
+		withLog = append(withLog, fmt.Sprintf("%v: %v", k, utils.ToString(val)))
 	}
 
 	if a, ok := ctx.Actions[step.Uses]; !ok {
-		return "", fmt.Errorf("unknown action %v", step.Uses)
+		return newLog("unknown action %v", step.Uses)
 	} else {
-		actionCtx := newActionContext(stepId, ctx)
-		err = a.Run(actionCtx)
-		s = strings.Join(actionCtx.log, "\n")
-	}
+		l := Log{}
+		l.AppendGroup("Run action "+step.Uses, withLog)
 
-	return
+		actionCtx := newActionContext(stepId, ctx)
+		err := a.Run(actionCtx)
+		if err != nil {
+			return newLog("execution error: %v", step.Uses, err)
+		}
+		l.AppendRange(actionCtx.log)
+		return l
+	}
 }
 
 func getStepId(step mokapi.Step) string {

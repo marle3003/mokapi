@@ -3,7 +3,20 @@
 import Vue from 'vue'
 import axios from 'axios'
 import VueAxios from 'vue-axios'
-import {BootstrapVue, BIcon, BIconArrowLeft, BIconX, BIconPlus, BIconCircleFill, BIconCheckCircle, BIconPlusSquare, BIconDashSquare, BIconChevronRight} from 'bootstrap-vue'
+import {
+  BootstrapVue,
+  BIcon,
+  BIconArrowLeft,
+  BIconX,
+  BIconPlus,
+  BIconCircleFill,
+  BIconCheckCircle,
+  BIconPlusSquare,
+  BIconDashSquare,
+  BIconChevronRight,
+  BIconCaretDownFill,
+  BIconCaretRightFill
+} from 'bootstrap-vue'
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 import 'vue-simple-markdown/dist/vue-simple-markdown.css'
@@ -27,6 +40,8 @@ Vue.component('BIconCheckCircle', BIconCheckCircle)
 Vue.component('BIconPlusSquare', BIconPlusSquare)
 Vue.component('BIconDashSquare', BIconDashSquare)
 Vue.component('BIconChevronRight', BIconChevronRight)
+Vue.component('BIconCaretDownFill', BIconCaretDownFill)
+Vue.component('BIconCaretRightFill', BIconCaretRightFill)
 
 /* eslint-disable no-new */
 new Vue({

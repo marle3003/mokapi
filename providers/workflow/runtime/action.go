@@ -12,7 +12,7 @@ type Action interface {
 type ActionContext struct {
 	ctx    *WorkflowContext
 	stepId string
-	log    []string
+	log    Log
 }
 
 func newActionContext(stepId string, ctx *WorkflowContext) *ActionContext {

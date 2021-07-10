@@ -59,7 +59,7 @@ type workflowSummary struct {
 type stepSummary struct {
 	Name     string        `json:"name"`
 	Id       string        `json:"id"`
-	Log      string        `json:"log"`
+	Log      []string      `json:"log"`
 	Duration time.Duration `json:"duration"`
 	Status   string        `json:"status"`
 }

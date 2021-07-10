@@ -85,6 +85,7 @@
     "webpack": "^3.6.0",
     "webpack-bundle-analyzer": "^2.9.0",
     "webpack-merge": "^4.1.0",
+    "xml-formatter": "^2.4.0",
     "yaml-loader": "^0.6.0"
   },
   "devDependencies": {

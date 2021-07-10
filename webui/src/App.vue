@@ -122,8 +122,12 @@ export default {
     border-right-style: hidden;
     font-size: 0.75rem;
   }
-  .table-hover tbody tr:hover td, .table-hover tbody tr:hover th {
+  .table-hover tbody tr:hover:not(.b-table-details) td, .table-hover tbody tr:hover th {
     color: var(--var-color-primary);
+  }
+  .table-hover tbody tr.b-table-details:hover {
+    background-color: var(--var-bg-color-primary);
+    color:var(--var-color-primary);
   }
   .nav-tabs .nav-item .nav-link.active,
   .nav-tabs .nav-item.show .nav-link {
@@ -204,5 +208,8 @@ export default {
   }
   .token.property, .token.tag, .token.boolean, .token.number, .token.constant, .token.symbol, .token.deleted{
     color: var(--orange);
+  }
+  .token.operator, .token.entity, .token.url, .language-css .token.string, .style .token.string{
+    background-color: var(--var-code-bg-color);
   }
 </style>
