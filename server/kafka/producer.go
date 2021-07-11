@@ -7,13 +7,15 @@ import (
 	"strconv"
 )
 
+type WriteMessage func(broker, topic string, partition int, key, message interface{}) (interface{}, interface{}, error)
+
 type Producer struct {
-	addMessage func(topic string, partition int, key, message interface{}) (interface{}, interface{}, error)
+	write WriteMessage
 }
 
-func newProducer(addMessage func(topic string, partition int, key, message interface{}) (interface{}, interface{}, error)) *Producer {
+func NewProducer(write WriteMessage) *Producer {
 	return &Producer{
-		addMessage: addMessage,
+		write: write,
 	}
 }
 
@@ -22,6 +24,8 @@ func (p *Producer) Run(ctx *runtime.ActionContext) error {
 	if !ok {
 		return fmt.Errorf("missing required parameter 'topic'")
 	}
+
+	broker, ok := ctx.GetInputString("broker")
 
 	key, _ := ctx.GetInput("key")
 	message, _ := ctx.GetInput("message")
@@ -42,7 +46,7 @@ func (p *Producer) Run(ctx *runtime.ActionContext) error {
 	}
 
 	var err error
-	key, message, err = p.addMessage(topic, partition, key, message)
+	key, message, err = p.write(broker, topic, partition, key, message)
 	if err != nil {
 		return err
 	}

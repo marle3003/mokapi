@@ -174,3 +174,21 @@ steps:
       body: Hello World
       contentType: text/plain
 ```
+
+## kafka-producer
+With Mokapi Actions you can produce scheduled messages to your Kafka channels.
+
+`broker` broker server address.
+`topic` name of the topic.
+`broker` broker server address.
+`key` key of the message, if null Mokapi generates a random one.
+`message` the message, if null Mokapi generates a random one.
+`partition` the partition to write the message to. Default is -1, indicating to choose a random one
+
+```yaml
+steps:
+  - uses: kafka-producer
+    with:
+      broker: localhost:9092
+      topic: message
+```

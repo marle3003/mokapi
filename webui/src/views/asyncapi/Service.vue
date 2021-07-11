@@ -25,10 +25,9 @@
                 <b-tab title="Servers" v-on:click="selectedTab='servers'" :class="[selectedTab === 'servers' ? 'active' : '']">
                   <b-table :items="service.servers" :fields="serverFields" table-class="dataTable">
                     <template v-slot:cell(configs)="data">
-                      <dl v-for="c in data.item.configs" :key="c.key">
-                        <dt>{{ c.key }}</dt>
-                        <dd>{{ c.value }}</dd>
-                      </dl>
+                      <div v-for="c in data.item.configs" :key="c.key" class="config">
+                        <span>{{ c.key }}:&nbsp;</span><span>{{ c.value }}</span>
+                      </div>
                     </template>
                   </b-table>
                 </b-tab>
@@ -125,5 +124,8 @@ export default {
 }
 .content{
   min-width: 800px
+}
+.config{
+  padding-bottom: 3px;
 }
 </style>

@@ -86,7 +86,7 @@ func NewService(s *openapi.Config) Service {
 		Name:        s.Info.Name,
 		Description: s.Info.Description,
 		Version:     s.Info.Version,
-		Type:        "OpenAPI",
+		Type:        "HTTP",
 	}
 
 	for _, server := range s.Servers {

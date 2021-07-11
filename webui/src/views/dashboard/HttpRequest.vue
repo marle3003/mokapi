@@ -110,10 +110,12 @@ export default {
       switch (contentType) {
         case 'application/json':
           s = JSON.stringify(JSON.parse(s), null, 2)
+          // eslint-disable-next-line no-undef
           return Prism.highlight(s, Prism.languages.json, 'json')
         case 'text/xml':
         case 'application/xml':
           s = xmlFormatter(s)
+          // eslint-disable-next-line no-undef
           return Prism.highlight(s, Prism.languages.xml, 'xml')
       }
       return s

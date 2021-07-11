@@ -22,10 +22,11 @@ type Metrics struct {
 }
 
 type KafkaMetric struct {
-	Topics map[string]KafkaTopic
+	Topics map[string]*KafkaTopic
 }
 
 type KafkaTopic struct {
+	Service    string         `json:"service"`
 	Name       string         `json:"name"`
 	Count      int64          `json:"count"`
 	Size       int64          `json:"size"`
@@ -37,18 +38,20 @@ type KafkaTopic struct {
 }
 
 type KafkaMessage struct {
-	Key   string `json:"name"`
-	Value string `json:"value"`
+	Key       string    `json:"key"`
+	Message   string    `json:"message"`
+	Partition int       `json:"partition"`
+	Time      time.Time `json:"time"`
 }
 
 func newMetrics() *Metrics {
-	return &Metrics{LastRequests: make([]*RequestMetric, 0), Start: time.Now(), Kafka: &KafkaMetric{Topics: make(map[string]KafkaTopic)}, OpenApi: make(map[string]*ServiceMetric)}
+	return &Metrics{LastRequests: make([]*RequestMetric, 0), Start: time.Now(), Kafka: &KafkaMetric{Topics: make(map[string]*KafkaTopic)}, OpenApi: make(map[string]*ServiceMetric)}
 }
 
-func (m *Metrics) AddMessage(topic string, key []byte, value []byte) {
-	msg := KafkaMessage{Key: string(key), Value: string(value)}
+func (m *Metrics) AddMessage(topic string, key []byte, message []byte, partition int) {
+	msg := KafkaMessage{Key: string(key), Message: string(message), Partition: partition, Time: time.Now()}
 	if _, ok := m.Kafka.Topics[topic]; !ok {
-		m.Kafka.Topics[topic] = KafkaTopic{Name: topic}
+		m.Kafka.Topics[topic] = &KafkaTopic{Name: topic, Messages: make([]KafkaMessage, 0)}
 	}
 	t := m.Kafka.Topics[topic]
 	t.Messages = append(t.Messages, msg)

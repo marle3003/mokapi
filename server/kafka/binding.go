@@ -6,11 +6,10 @@ import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/models"
-	"mokapi/providers/workflow"
 	"time"
 )
 
-type AddedMessage func(string, []byte, []byte)
+type AddedMessage func(topic string, key []byte, message []byte, partition int)
 
 type Binding struct {
 	stop         chan bool
@@ -20,7 +19,7 @@ type Binding struct {
 	brokers      []*broker
 	groups       map[string]*group
 	topics       map[string]*topic
-	config       *asyncApi.Config
+	Config       *asyncApi.Config
 	kafka        asyncApi.Kafka
 	addedMessage AddedMessage
 	clients      map[string]*client
@@ -32,7 +31,7 @@ func NewBinding(c *asyncApi.Config, addedMessage AddedMessage) *Binding {
 		stopCleaner:  make(chan bool),
 		groups:       make(map[string]*group),
 		topics:       make(map[string]*topic),
-		config:       c,
+		Config:       c,
 		addedMessage: addedMessage,
 		clients:      make(map[string]*client),
 	}
@@ -45,15 +44,15 @@ func NewBinding(c *asyncApi.Config, addedMessage AddedMessage) *Binding {
 		brokerId++
 	}
 
-	workflow.RegisterAction("kafka-producer", newProducer(func(topic string, partition int, key, message interface{}) (interface{}, interface{}, error) {
-		if t, ok := s.topics[topic]; !ok {
-			return key, message, fmt.Errorf("topic %q not found", topic)
-		} else {
-			return t.addMessage(partition, key, message)
-		}
-	}))
-
 	return s
+}
+
+func (s *Binding) AddMessage(topic string, partition int, key, message interface{}) (interface{}, interface{}, error) {
+	if t, ok := s.topics[topic]; !ok {
+		return key, message, fmt.Errorf("topic %q not found", topic)
+	} else {
+		return t.addMessage(partition, key, message)
+	}
 }
 
 func (s *Binding) Apply(data interface{}) error {
@@ -61,14 +60,14 @@ func (s *Binding) Apply(data interface{}) error {
 	if !ok {
 		return errors.Errorf("unexpected parameter type %T in kafka binding", data)
 	}
-	s.config = config
+	s.Config = config
 
 	for n, c := range config.Channels {
 		name := n[1:] // remove leading slash from name
 		if _, ok := s.topics[name]; !ok {
 			log.Infof("kafka: adding topic %q", name)
 			msg := c.Value.Publish.Message.Value
-			s.topics[name] = newTopic(name, c.Value.Bindings.Kafka.Partitions, s.brokers[0], msg.Payload, msg.Bindings.Kafka.Key, msg.ContentType, s.kafka.Log)
+			s.topics[name] = newTopic(name, c.Value.Bindings.Kafka.Partitions, s.brokers[0], msg.Payload, msg.Bindings.Kafka.Key, msg.ContentType, s.kafka.Log, s.addedMessage)
 		}
 	}
 
@@ -98,9 +97,10 @@ func (s *Binding) Start() {
 
 func (s *Binding) UpdateMetrics(m *models.KafkaMetric) {
 	for _, topic := range s.topics {
-		var t models.KafkaTopic
+		var t *models.KafkaTopic
 		if o, ok := m.Topics[topic.name]; !ok {
-			t = models.KafkaTopic{
+			t = &models.KafkaTopic{
+				Service:    s.Config.Info.Name,
 				Name:       topic.name,
 				Partitions: len(topic.partitions),
 				Segments:   0,
@@ -110,11 +110,13 @@ func (s *Binding) UpdateMetrics(m *models.KafkaMetric) {
 			m.Topics[t.Name] = t
 		} else {
 			t = o
+			t.Service = s.Config.Info.Name
 		}
 
 		t.Segments = 0
 		t.Count = 0
 		t.Size = 0
+		t.Partitions = len(topic.partitions)
 
 		for _, p := range topic.partitions {
 			t.Segments += len(p.segments)

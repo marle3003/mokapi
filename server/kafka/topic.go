@@ -12,16 +12,17 @@ import (
 )
 
 type topic struct {
-	name        string
-	partitions  map[int]*partition
-	payload     *openapi.SchemaRef
-	key         *openapi.SchemaRef
-	contentType string
-	config      asyncApi.Log
-	g           *openapi.Generator
+	name         string
+	partitions   map[int]*partition
+	payload      *openapi.SchemaRef
+	key          *openapi.SchemaRef
+	contentType  string
+	config       asyncApi.Log
+	g            *openapi.Generator
+	addedMessage AddedMessage
 }
 
-func newTopic(name string, partitions int, leader *broker, payload *openapi.SchemaRef, key *openapi.SchemaRef, contentType string, config asyncApi.Log) *topic {
+func newTopic(name string, partitions int, leader *broker, payload *openapi.SchemaRef, key *openapi.SchemaRef, contentType string, config asyncApi.Log, addedMessage AddedMessage) *topic {
 	p := map[int]*partition{}
 	if partitions == 0 {
 		p[0] = newPartition(leader)
@@ -31,13 +32,14 @@ func newTopic(name string, partitions int, leader *broker, payload *openapi.Sche
 		}
 	}
 	return &topic{
-		name:        name,
-		partitions:  p,
-		payload:     payload,
-		key:         key,
-		contentType: contentType,
-		config:      config,
-		g:           openapi.NewGenerator(),
+		name:         name,
+		partitions:   p,
+		payload:      payload,
+		key:          key,
+		contentType:  contentType,
+		config:       config,
+		g:            openapi.NewGenerator(),
+		addedMessage: addedMessage,
 	}
 }
 
@@ -94,6 +96,12 @@ func (t *topic) addRecord(partition int, record protocol.RecordBatch) error {
 	segment.Size += int64(record.Size())
 	segment.tail = record.Offset
 	segment.lastWritten = time.Now()
+
+	go func() {
+		for _, r := range record.Records {
+			t.addedMessage(t.name, r.Key, r.Value, partition)
+		}
+	}()
 
 	return nil
 }

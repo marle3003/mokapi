@@ -1,10 +1,21 @@
 package api
 
 import (
+	"encoding/json"
+	log "github.com/sirupsen/logrus"
 	"mokapi/models"
+	"net/http"
 	"net/mail"
+	"strings"
 	"time"
 )
+
+type SmtpService struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Address     string `json:"address"`
+	Type        string `json:"type"`
+}
 
 type mailSummary struct {
 	Id      string          `json:"id"`
@@ -66,4 +77,27 @@ func newMail(m *models.MailMetric) mailFull {
 	}
 
 	return r
+}
+
+func (b *Binding) getSmtpService(w http.ResponseWriter, r *http.Request) {
+	segments := strings.Split(r.URL.Path, "/")
+	name := segments[4]
+
+	if c, ok := b.runtime.Smtp[name]; ok {
+		w.Header().Set("Content-Type", "application/json")
+
+		s := SmtpService{
+			Name:        c.Name,
+			Description: c.Description,
+			Address:     c.Address,
+			Type:        "SMTP",
+		}
+
+		err := json.NewEncoder(w).Encode(s)
+		if err != nil {
+			log.Errorf("Error in writing service response: %v", err.Error())
+		}
+	} else {
+		w.WriteHeader(404)
+	}
 }

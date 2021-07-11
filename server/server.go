@@ -87,6 +87,8 @@ func (s *Server) Start() {
 	}
 	s.startMetricUpdater()
 	s.scheduler.Start()
+
+	workflow.RegisterAction("kafka-producer", kafka.NewProducer(s.writeKafkaMessage))
 }
 
 func (s *Server) Wait() {
@@ -246,4 +248,22 @@ func (s *Server) appendCertificate(c mokapi.Certificate, currentDir string) erro
 		s.store.AddCertificate(n, &tlsCert)
 	}
 	return nil
+}
+
+func (s *Server) writeKafkaMessage(broker, topic string, partition int, key, message interface{}) (interface{}, interface{}, error) {
+	for _, c := range s.Bindings {
+		if b, ok := c.(*kafka.Binding); ok {
+			// if empty broker, try first binding
+			if len(broker) == 0 {
+				return b.AddMessage(topic, partition, key, message)
+			}
+			for _, server := range b.Config.Servers {
+				if server.Url == broker {
+					return b.AddMessage(topic, partition, key, message)
+				}
+			}
+		}
+	}
+
+	return nil, nil, fmt.Errorf("no broker found at %v", broker)
 }

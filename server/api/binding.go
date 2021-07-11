@@ -82,10 +82,14 @@ func (b *Binding) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		b.getService(w, r)
 	case strings.HasPrefix(p, "/api/services/asyncapi"):
 		b.getAsyncService(w, r)
+	case strings.HasPrefix(p, "/api/services/smtp"):
+		b.getSmtpService(w, r)
 	case p == "/api/dashboard":
 		b.getDashboard(w, r)
 	case strings.HasPrefix(p, "/api/dashboard/http/requests/"):
 		b.getHttpRequest(w, r)
+	case strings.HasPrefix(p, "/api/dashboard/kafka"):
+		b.handleKafka(w, r)
 	case strings.HasPrefix(p, "/api/dashboard/smtp/mails/"):
 		b.getSmtpMail(w, r)
 	default:
@@ -127,7 +131,15 @@ func (b *Binding) getServices(w http.ResponseWriter, _ *http.Request) {
 		services = append(services, s)
 	}
 	for k, s := range b.runtime.Ldap {
-		summary := serviceSummary{Name: s.Info.Name, Type: "LDAP"}
+		summary := serviceSummary{Name: s.Info.Name, Description: s.Info.Description, Type: "LDAP"}
+		summary.BaseUrls = append(summary.BaseUrls, baseUrl{Url: s.Address})
+		if len(summary.Name) == 0 {
+			summary.Name = k
+		}
+		services = append(services, summary)
+	}
+	for k, s := range b.runtime.Smtp {
+		summary := serviceSummary{Name: s.Name, Type: "SMTP"}
 		summary.BaseUrls = append(summary.BaseUrls, baseUrl{Url: s.Address})
 		if len(summary.Name) == 0 {
 			summary.Name = k

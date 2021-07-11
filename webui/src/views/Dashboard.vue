@@ -1,149 +1,151 @@
 <template>
-  <div class="dashboard" v-if="dashboard !== null">
-      <div class="page-header">
-          <b-navbar class="p-0">
-            <b-navbar-nav>
-              <b-nav-item to="/dashboard">Overview</b-nav-item>
-              <b-nav-item :to="{ name: 'http' }" v-if="dashboard.httpEnabled">HTTP</b-nav-item>
-              <b-nav-item :to="{ name: 'kafka' }" v-if="dashboard.kafkaEnabled">Kafka</b-nav-item>
-              <b-nav-item :to="{ name: 'smtp' }" v-if="dashboard.smtpEnabled">SMTP</b-nav-item>
-            </b-navbar-nav>
-          </b-navbar>
-      </div>
-      <div class="page-body">
+  <div>
+    <div v-if="error !== null">
+      <b-alert show variant="danger">{{ error }}</b-alert>
+    </div>
+    <div class="dashboard" v-if="dashboard !== null">
+        <div class="page-header">
+            <b-navbar class="p-0">
+              <b-navbar-nav>
+                <b-nav-item :to="{ name: 'dashboard', query: {refresh: this.$route.query.refresh} }">Overview</b-nav-item>
+                <b-nav-item :to="{ name: 'http', query: {refresh: this.$route.query.refresh} }" v-if="dashboard.httpEnabled">HTTP</b-nav-item>
+                <b-nav-item :to="{ name: 'kafka', query: {refresh: this.$route.query.refresh} }" v-if="dashboard.kafkaEnabled">Kafka</b-nav-item>
+                <b-nav-item :to="{ name: 'smtp', query: {refresh: this.$route.query.refresh} }" v-if="dashboard.smtpEnabled">SMTP</b-nav-item>
+              </b-navbar-nav>
+            </b-navbar>
+        </div>
+        <div class="page-body">
 
-        <b-card-group deck>
-          <b-card body-class="info-body" class="text-center">
-            <b-card-title class="info">Uptime Since</b-card-title>
-            <b-card-text class="text-center value">{{ dashboard.serverUptime | fromNow }}</b-card-text>
-            <b-card-text class="text-right additional">{{ dashboard.serverUptime | moment }}</b-card-text>
-          </b-card>
-          <b-card body-class="info-body" class="text-center">
-            <b-card-title class="info">Memory Usage</b-card-title>
-            <b-card-text class="text-center value">{{ dashboard.memoryUsage | prettyBytes }}</b-card-text>
+          <b-card-group deck>
+            <b-card body-class="info-body" class="text-center">
+              <b-card-title class="info">Uptime Since</b-card-title>
+              <b-card-text class="text-center value">{{ dashboard.serverUptime | fromNow }}</b-card-text>
+              <b-card-text class="text-right additional">{{ dashboard.serverUptime | moment }}</b-card-text>
             </b-card>
-        </b-card-group>
+            <b-card body-class="info-body" class="text-center">
+              <b-card-title class="info">Memory Usage</b-card-title>
+              <b-card-text class="text-center value">{{ dashboard.memoryUsage | prettyBytes }}</b-card-text>
+              </b-card>
+          </b-card-group>
 
-        <b-card-group deck>
-          <b-card body-class="info-body" class="text-center" v-if="dashboard.httpEnabled">
-            <b-card-title class="info">Total HTTP Requests</b-card-title>
-            <b-card-text class="text-center value">{{ dashboard.totalRequests }}</b-card-text>
-          </b-card>
-          <b-card body-class="info-body" class="text-center" v-if="dashboard.httpEnabled">
-            <b-card-title class="info">HTTP Request Errors</b-card-title>
-            <b-card-text class="text-center value" v-bind:class="{'text-danger': hasErrors}">{{ dashboard.requestsWithError }}</b-card-text>
-          </b-card>
-          <b-card body-class="info-body" class="text-center" v-if="dashboard.kafkaEnabled">
-            <b-card-title class="info">Total Kafka Messages</b-card-title>
-            <b-card-text class="text-center value">{{ totalMessages }}</b-card-text>
-          </b-card>
-          <b-card body-class="info-body" class="text-center" v-if="dashboard.smtpEnabled">
-            <b-card-title class="info">Total Mails</b-card-title>
-            <b-card-text class="text-center value">{{ dashboard.totalMails }}</b-card-text>
-          </b-card>
-        </b-card-group>
+          <b-card-group deck>
+            <b-card body-class="info-body" class="text-center" v-if="dashboard.httpEnabled">
+              <b-card-title class="info">Total HTTP Requests</b-card-title>
+              <b-card-text class="text-center value">{{ dashboard.totalRequests }}</b-card-text>
+            </b-card>
+            <b-card body-class="info-body" class="text-center" v-if="dashboard.httpEnabled">
+              <b-card-title class="info">HTTP Request Errors</b-card-title>
+              <b-card-text class="text-center value" v-bind:class="{'text-danger': hasErrors}">{{ dashboard.requestsWithError }}</b-card-text>
+            </b-card>
+            <b-card body-class="info-body" class="text-center" v-if="dashboard.kafkaEnabled">
+              <b-card-title class="info">Total Kafka Messages</b-card-title>
+              <b-card-text class="text-center value">{{ totalMessages }}</b-card-text>
+            </b-card>
+            <b-card body-class="info-body" class="text-center" v-if="dashboard.smtpEnabled">
+              <b-card-title class="info">Total Mails</b-card-title>
+              <b-card-text class="text-center value">{{ dashboard.totalMails }}</b-card-text>
+            </b-card>
+          </b-card-group>
 
-        <b-card-group deck v-show="dashboard.httpEnabled && $route.name === 'http' || $route.name === 'dashboard'">
-          <b-card body-class="info-body" class="text-center">
-             <b-card-title class="info">REST Services</b-card-title>
-             <b-table :items="services" :fields="serviceFields" table-class="dataTable">
-              <template v-slot:cell(method)="data">
-                <b-badge pill class="operation" :class="data.item.method.toLowerCase()" >{{ data.item.method }}</b-badge>
-              </template>
-              <template v-slot:cell(lastRequest)="data">
-                <span v-if="data.item.lastRequest === '0001-01-01T00:00:00Z'">-</span>
-                <span v-else>{{ data.item.lastRequest | moment}}</span>
-              </template>
-            </b-table>
-          </b-card>
-        </b-card-group>
+          <b-card-group deck v-show="dashboard.httpEnabled && $route.name === 'http' || $route.name === 'dashboard'">
+            <b-card body-class="info-body" class="text-center">
+               <b-card-title class="info">REST Services</b-card-title>
+               <b-table :items="services" :fields="serviceFields" table-class="dataTable">
+                <template v-slot:cell(method)="data">
+                  <b-badge pill class="operation" :class="data.item.method.toLowerCase()" >{{ data.item.method }}</b-badge>
+                </template>
+                <template v-slot:cell(lastRequest)="data">
+                  <span v-if="data.item.lastRequest === '0001-01-01T00:00:00Z'">-</span>
+                  <span v-else>{{ data.item.lastRequest | moment}}</span>
+                </template>
+              </b-table>
+            </b-card>
+          </b-card-group>
 
-        <b-card-group deck v-show="dashboard.kafkaEnabled && $route.name === 'dashboard' || $route.name === 'kafka'">
-          <b-card body-class="info-body" class="text-center">
-             <b-card-title class="info">Kafka Topics</b-card-title>
-             <b-table :items="topics" :fields="topicFields" table-class="dataTable">
-              <template v-slot:cell(method)="data">
-                <b-badge pill class="operation" :class="data.item.method.toLowerCase()" >{{ data.item.method }}</b-badge>
-              </template>
-              <template v-slot:cell(lastRecord)="data">
-                {{ data.item.lastRecord | moment}}
-              </template>
-              <template v-slot:cell(size)="data">
-                {{ data.item.size | prettyBytes}}
-              </template>
-            </b-table>
-          </b-card>
-        </b-card-group>
+          <b-card-group deck v-show="dashboard.kafkaEnabled && $route.name === 'dashboard' || $route.name === 'kafka'">
+            <b-card body-class="info-body" class="text-center">
+               <b-card-title class="info">Kafka Topics</b-card-title>
+               <b-table :items="topics" :fields="topicFields" table-class="dataTable selectable" @row-clicked="topicClickHandler">
+                <template v-slot:cell(lastRecord)="data">
+                  {{ data.item.lastRecord | moment}}
+                </template>
+                <template v-slot:cell(size)="data">
+                  {{ data.item.size | prettyBytes}}
+                </template>
+              </b-table>
+            </b-card>
+          </b-card-group>
 
-        <b-card-group deck v-show="$route.name === 'http'">
-          <b-card class="w-100">
-            <b-card-title class="info text-center">Last Request Errors</b-card-title>
-            <b-table hover :items="lastErrors" :fields="lastRequestField" class="dataTable selectable" @row-clicked="requestClickHandler">
-              <template v-slot:cell(method)="data">
-                <b-badge pill class="operation" :class="data.item.method.toLowerCase()" >{{ data.item.method }}</b-badge>
-              </template>
-              <template v-slot:cell(httpStatus)="data">
-                <b-icon icon="circle-fill" class="response icon mr-1" variant="success" v-if="data.item.httpStatus >= 200 && data.item.httpStatus < 300"></b-icon>
-                <b-icon icon="circle-fill" class="response icon mr-1" variant="warning" v-if="data.item.httpStatus >= 300 && data.item.httpStatus < 400"></b-icon>
-                <b-icon icon="circle-fill" class="response icon mr-1 client-error" v-if="data.item.httpStatus >= 400 && data.item.httpStatus < 500"></b-icon>
-                <b-icon icon="circle-fill" class="response icon mr-1" variant="danger" v-if="data.item.httpStatus >= 500 && data.item.httpStatus < 600"></b-icon>
-                {{ data.item.httpStatus }}
-              </template>
-              <template v-slot:cell(time)="data">
-                {{ data.item.time | moment}}
-              </template>
-              <template v-slot:cell(responseTime)="data">
-                {{ data.item.responseTime | duration}}
-              </template>
-            </b-table>
-          </b-card>
-        </b-card-group>
+          <b-card-group deck v-show="$route.name === 'http'">
+            <b-card class="w-100">
+              <b-card-title class="info text-center">Last Request Errors</b-card-title>
+              <b-table hover :items="lastErrors" :fields="lastRequestField" class="dataTable selectable" @row-clicked="requestClickHandler">
+                <template v-slot:cell(method)="data">
+                  <b-badge pill class="operation" :class="data.item.method.toLowerCase()" >{{ data.item.method }}</b-badge>
+                </template>
+                <template v-slot:cell(httpStatus)="data">
+                  <b-icon icon="circle-fill" class="response icon mr-1" variant="success" v-if="data.item.httpStatus >= 200 && data.item.httpStatus < 300"></b-icon>
+                  <b-icon icon="circle-fill" class="response icon mr-1" variant="warning" v-if="data.item.httpStatus >= 300 && data.item.httpStatus < 400"></b-icon>
+                  <b-icon icon="circle-fill" class="response icon mr-1 client-error" v-if="data.item.httpStatus >= 400 && data.item.httpStatus < 500"></b-icon>
+                  <b-icon icon="circle-fill" class="response icon mr-1" variant="danger" v-if="data.item.httpStatus >= 500 && data.item.httpStatus < 600"></b-icon>
+                  {{ data.item.httpStatus }}
+                </template>
+                <template v-slot:cell(time)="data">
+                  {{ data.item.time | moment}}
+                </template>
+                <template v-slot:cell(responseTime)="data">
+                  {{ data.item.responseTime | duration}}
+                </template>
+              </b-table>
+            </b-card>
+          </b-card-group>
 
-        <b-card-group deck v-show="$route.name === 'http'">
-          <b-card class="w-100">
-            <b-card-title class="info text-center">Recent Request</b-card-title>
-            <b-table hover :items="lastRequests" :fields="lastRequestField" class="dataTable selectable" @row-clicked="requestClickHandler">
-              <template v-slot:cell(method)="data">
-                <b-badge pill class="operation" :class="data.item.method.toLowerCase()" >{{ data.item.method }}</b-badge>
-              </template>
-              <template v-slot:cell(httpStatus)="data">
-                <b-icon icon="circle-fill" class="response icon mr-1" variant="success" v-if="data.item.httpStatus >= 200 && data.item.httpStatus < 300"></b-icon>
-                <b-icon icon="circle-fill" class="response icon mr-1" variant="warning" v-if="data.item.httpStatus >= 300 && data.item.httpStatus < 400"></b-icon>
-                <b-icon icon="circle-fill" class="response icon mr-1 client-error" v-if="data.item.httpStatus >= 400 && data.item.httpStatus < 500"></b-icon>
-                <b-icon icon="circle-fill" class="response icon mr-1" variant="danger" v-if="data.item.httpStatus >= 500 && data.item.httpStatus < 600"></b-icon>
-                {{ data.item.httpStatus }}
-              </template>
-              <template v-slot:cell(time)="data">
-                {{ data.item.time | moment}}
-              </template>
-              <template v-slot:cell(responseTime)="data">
-                {{ data.item.responseTime | duration}}
-              </template>
-            </b-table>
-          </b-card>
-        </b-card-group>
+          <b-card-group deck v-show="$route.name === 'http'">
+            <b-card class="w-100">
+              <b-card-title class="info text-center">Recent Request</b-card-title>
+              <b-table hover :items="lastRequests" :fields="lastRequestField" class="dataTable selectable" @row-clicked="requestClickHandler">
+                <template v-slot:cell(method)="data">
+                  <b-badge pill class="operation" :class="data.item.method.toLowerCase()" >{{ data.item.method }}</b-badge>
+                </template>
+                <template v-slot:cell(httpStatus)="data">
+                  <b-icon icon="circle-fill" class="response icon mr-1" variant="success" v-if="data.item.httpStatus >= 200 && data.item.httpStatus < 300"></b-icon>
+                  <b-icon icon="circle-fill" class="response icon mr-1" variant="warning" v-if="data.item.httpStatus >= 300 && data.item.httpStatus < 400"></b-icon>
+                  <b-icon icon="circle-fill" class="response icon mr-1 client-error" v-if="data.item.httpStatus >= 400 && data.item.httpStatus < 500"></b-icon>
+                  <b-icon icon="circle-fill" class="response icon mr-1" variant="danger" v-if="data.item.httpStatus >= 500 && data.item.httpStatus < 600"></b-icon>
+                  {{ data.item.httpStatus }}
+                </template>
+                <template v-slot:cell(time)="data">
+                  {{ data.item.time | moment}}
+                </template>
+                <template v-slot:cell(responseTime)="data">
+                  {{ data.item.responseTime | duration}}
+                </template>
+              </b-table>
+            </b-card>
+          </b-card-group>
 
-        <b-card-group deck v-show="$route.name === 'smtp'">
-          <b-card class="w-100">
-            <b-card-title class="info text-center">Recent Mails</b-card-title>
-            <b-table hover :items="lastMails" :fields="lastMailField" class="dataTable selectable" @row-clicked="mailClickHandler">
-              <template v-slot:cell(from)="data">
-                <div v-for="from in data.item.from" :key="from.Address">
-                  <span v-if="from.Name !== ''">{{ from.Name }} &lt;</span><span>{{ from.Address }}</span><span v-if="from.Name !== ''">&gt;</span>
-                </div>
-              </template>
-              <template v-slot:cell(to)="data">
-                <div v-for="to in data.item.to" :key="to.Address">
-                  <span v-if="to.Name !== ''">{{ to.Name }} &lt;</span><span>{{ to.Address }}</span><span v-if="to.Name !== ''">&gt;</span>
-                </div>
-              </template>
-              <template v-slot:cell(time)="data">
-                {{ data.item.time | moment}}
-              </template>
-            </b-table>
-          </b-card>
-        </b-card-group>
-      </div>
+          <b-card-group deck v-show="$route.name === 'smtp'">
+            <b-card class="w-100">
+              <b-card-title class="info text-center">Recent Mails</b-card-title>
+              <b-table hover :items="lastMails" :fields="lastMailField" class="dataTable selectable" @row-clicked="mailClickHandler">
+                <template v-slot:cell(from)="data">
+                  <div v-for="from in data.item.from" :key="from.Address">
+                    <span v-if="from.Name !== ''">{{ from.Name }} &lt;</span><span>{{ from.Address }}</span><span v-if="from.Name !== ''">&gt;</span>
+                  </div>
+                </template>
+                <template v-slot:cell(to)="data">
+                  <div v-for="to in data.item.to" :key="to.Address">
+                    <span v-if="to.Name !== ''">{{ to.Name }} &lt;</span><span>{{ to.Address }}</span><span v-if="to.Name !== ''">&gt;</span>
+                  </div>
+                </template>
+                <template v-slot:cell(time)="data">
+                  {{ data.item.time | moment}}
+                </template>
+              </b-table>
+            </b-card>
+          </b-card-group>
+        </div>
+    </div>
   </div>
 </template>
 
@@ -175,12 +177,12 @@ export default {
       chartTopicSize: {},
       serviceFields: [{key: 'name', class: 'text-left'}, {key: 'lastRequest', class: 'text-left'}, 'requests', 'errors'],
       topicFields: [{key: 'name', class: 'text-left'}, 'count', 'size', 'lastRecord', 'partitions', 'segments'],
-      lastMailField: ['from', 'to', {key: 'subject', class: 'subject'}, 'time']
+      lastMailField: ['from', 'to', {key: 'subject', class: 'subject'}, 'time'],
+      error: null
     }
   },
   created () {
-    this.getData()
-    this.timer = setInterval(this.getData, 2000)
+    this.init()
   },
   computed: {
     serviceStatus: function () {
@@ -315,7 +317,13 @@ export default {
   },
   methods: {
     async getData () {
-      this.dashboard = await this.getDashboard()
+      this.getDashboard().then(r => {
+        this.dashboard = r
+        this.error = null
+      }, r => {
+        this.dashboard = null
+        this.error = r
+      })
       this.loaded = true
     },
     requestClickHandler (record, index) {
@@ -323,10 +331,29 @@ export default {
     },
     mailClickHandler (record, index) {
       this.$router.push({name: 'smtpMail', params: {id: record.id}})
+    },
+    topicClickHandler (record, index) {
+      this.$router.push({name: 'kafkaTopic', params: {kafka: record.service, topic: record.name}, query: {refresh: '5'}})
+    },
+    init () {
+      this.getData()
+      clearInterval(this.timer)
+      let refresh = this.$route.query.refresh
+      if (refresh && refresh.length > 0) {
+        let i = parseInt(refresh)
+        if (!isNaN(i)) {
+          this.timer = setInterval(this.getData, i * 1000)
+        }
+      }
     }
   },
   beforeDestroy () {
     clearInterval(this.timer)
+  },
+  watch: {
+    $route () {
+      this.init()
+    }
   }
 }
 </script>
@@ -336,22 +363,26 @@ export default {
     width: 90%;
     margin: 12px auto auto;
   }
+  .page-header{
+    margin-left: -8px;
+  }
   .page-header .nav-link{
     color: var(--var-color-primary);
     position:relative;
-    padding-bottom: 0;
+    border-radius: 6px;
+    margin-right: 5px;
   }
   .page-header .nav-link:hover{
     color: var(--var-color-primary);
-    border-bottom: 2px solid var(--var-color-primary);
-    margin-bottom: -4px;
     text-decoration: none;
+    background-color: var(--var-bg-color-secondary);
+    opacity: 0.8;
   }
   .page-header .nav-link.router-link-exact-active{
     color: var(--var-color-primary);
-    border-bottom: 2px solid var(--var-color-primary);
-    margin-bottom: -4px;
     text-decoration: none;
+    background-color: var(--var-bg-color-secondary);
+    opacity: 0.8;
   }
   .card{
     border-color: var(--var-border-color);

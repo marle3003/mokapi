@@ -22,12 +22,20 @@ export default {
       let response = await this.$http.get(this.baseUrl + '/api/services/asyncapi/' + serviceName)
       return response.data
     },
+    async getSmtpService (serviceName) {
+      let response = await this.$http.get(this.baseUrl + '/api/services/smtp/' + serviceName)
+      return response.data
+    },
     async getHttpRequest (id) {
       let response = await this.$http.get(this.baseUrl + '/api/dashboard/http/requests/' + id)
       return response.data
     },
     async getSmtpMail (id) {
       let response = await this.$http.get(this.baseUrl + '/api/dashboard/smtp/mails/' + id)
+      return response.data
+    },
+    async getKafkaTopic (kafka, topic) {
+      let response = await this.$http.get(this.baseUrl + '/api/dashboard/kafka/' + kafka + '/topics/' + topic)
       return response.data
     }
   }

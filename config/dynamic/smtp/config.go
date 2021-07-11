@@ -16,10 +16,11 @@ func init() {
 }
 
 type Config struct {
-	ConfigPath string `yaml:"-" json:"-"`
-	Name       string
-	Address    string
-	Tls        *Tls
+	ConfigPath  string `yaml:"-" json:"-"`
+	Name        string
+	Description string
+	Address     string
+	Tls         *Tls
 }
 
 type Tls struct {

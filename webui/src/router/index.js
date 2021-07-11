@@ -10,6 +10,8 @@ import Dashboard from '@/views/Dashboard'
 import Docs from '@/views/Docs'
 import HttpRequest from '@/views/dashboard/HttpRequest'
 import SmtpMail from '@/views/dashboard/SmtpMail'
+import SmtpService from '@/views/smtp/Service'
+import KafkaTopic from '@/views/kafka/Topic'
 
 import AsyncApiService from '@/views/asyncapi/Service'
 
@@ -22,7 +24,10 @@ export default new Router({
     {
       path: '/',
       name: 'home',
-      redirect: '/dashboard'
+      redirect: to => ({
+        name: 'dashboard',
+        query: {refresh: '20'}
+      })
     },
     {
       path: '/docs',
@@ -55,6 +60,11 @@ export default new Router({
       component: Dashboard
     },
     {
+      path: '/dashboard/kafka/:kafka/topics/:topic',
+      name: 'kafkaTopic',
+      component: KafkaTopic
+    },
+    {
       path: '/dashboard/smtp',
       name: 'smtp',
       component: Dashboard
@@ -70,13 +80,38 @@ export default new Router({
       component: ServiceList
     },
     {
-      path: '/services/asyncapi/:name',
-      name: 'asyncapi',
+      path: '/services/http',
+      name: 'httpServices',
+      component: ServiceList
+    },
+    {
+      path: '/services/kafka',
+      name: 'kafkaServices',
+      component: ServiceList
+    },
+    {
+      path: '/services/ldap',
+      name: 'ldapServices',
+      component: ServiceList
+    },
+    {
+      path: '/services/smtp',
+      name: 'smtpServices',
+      component: ServiceList
+    },
+    {
+      path: '/services/kafka/:name',
+      name: 'kafkaService',
       component: AsyncApiService
     },
     {
-      path: '/services/openapi/:name',
-      name: 'openapi',
+      path: '/services/smtp/:name',
+      name: 'smtpService',
+      component: SmtpService
+    },
+    {
+      path: '/services/http/:name',
+      name: 'httpService',
       component: Service,
       redirect: {
         name: 'default'

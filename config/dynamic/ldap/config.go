@@ -36,7 +36,8 @@ func (c *Config) Key() string {
 }
 
 type Info struct {
-	Name string `yaml:"title"`
+	Name        string `yaml:"title"`
+	Description string `yaml:"description"`
 }
 
 type Entry struct {

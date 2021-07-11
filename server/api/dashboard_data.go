@@ -14,7 +14,7 @@ type dashboard struct {
 	LastRequests      []requestSummary       `json:"lastRequests"`
 	MemoryUsage       int64                  `json:"memoryUsage"`
 	Services          []models.ServiceMetric `json:"services"`
-	KafkaTopics       []models.KafkaTopic    `json:"kafkaTopics"`
+	KafkaTopics       []*models.KafkaTopic   `json:"kafkaTopics"`
 	LastMails         []mailSummary          `json:"lastMails"`
 	TotalMails        int64                  `json:"totalMails"`
 

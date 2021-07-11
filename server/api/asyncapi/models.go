@@ -50,7 +50,7 @@ func NewService(c *asyncApi.Config) Service {
 		Name:        c.Info.Name,
 		Description: c.Info.Description,
 		Version:     c.Info.Version,
-		Type:        "AsyncAPI",
+		Type:        "Kafka",
 	}
 
 	for _, server := range c.Servers {
