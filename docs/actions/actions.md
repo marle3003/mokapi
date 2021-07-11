@@ -136,11 +136,11 @@ steps:
 ## set-response
 Manipulates the HTTP response of the current request.
 
-`body` response body as plain text, overrides data.
-`data` any object marshalling to schema and encoding to content-type.
-`statusCode` HTTP status code of the response.
-`headers` add additionally or manipulate headers of the response.
-`contentType` sets the content type of the response body.
+`body` response body as plain text, overrides data.<br />
+`data` any object marshalling to schema and encoding to content-type.<br />
+`statusCode` HTTP status code of the response.<br />
+`headers` add additionally or manipulate headers of the response.<br />
+`contentType` sets the content type of the response body.<br />
 
 ### Usage
 ```yaml
@@ -155,13 +155,13 @@ steps:
 ## send-mail
 Sends the specified message to an SMTP server for delivery
 
-`server` a string that contains the name or IP address with optional port. Default port is 25
-`from` a string that contains the from address.
-`to` a string that contains the to address.
-`contentType` HTTP status code of the response.
-`encoding` the encoding used to encode body
-`subject` a string that contains the subject for this mail
-`body` a string that contains the body for this mail
+`server` a string that contains the name or IP address with optional port. Default port is 25. <br />
+`from` a string that contains the from address. <br />
+`to` a string that contains the to address. <br />
+`contentType` HTTP status code of the response. <br />
+`encoding` the encoding used to encode body. <br />
+`subject` a string that contains the subject for this mail.<br />
+`body` a string that contains the body for this mail. <br />
 
 ### Usage
 ```yaml
@@ -178,12 +178,12 @@ steps:
 ## kafka-producer
 With Mokapi Actions you can produce scheduled messages to your Kafka channels.
 
-`broker` broker server address.
-`topic` name of the topic.
-`broker` broker server address.
-`key` key of the message, if null Mokapi generates a random one.
-`message` the message, if null Mokapi generates a random one.
-`partition` the partition to write the message to. Default is -1, indicating to choose a random one
+`broker` broker server address. <br />
+`topic` name of the topic. <br />
+`broker` broker server address. <br />
+`key` key of the message, if null Mokapi generates a random one. <br />
+`message` the message, if null Mokapi generates a random one. <br />
+`partition` the partition to write the message to. Default is -1, indicating to choose a random one. <br />
 
 ```yaml
 steps:

@@ -71,6 +71,7 @@ import moment from 'moment'
 import http from 'http-status-codes'
 import Action from '@/components/Action'
 import xmlFormatter from 'xml-formatter'
+import MIMEType from 'whatwg-mimetype'
 
 export default {
   name: 'HttpRequest',
@@ -107,13 +108,14 @@ export default {
       }
     },
     pretty (s, contentType) {
-      switch (contentType) {
-        case 'application/json':
+      const mimeType = new MIMEType(contentType)
+      switch (mimeType.subtype) {
+        case 'json':
           s = JSON.stringify(JSON.parse(s), null, 2)
           // eslint-disable-next-line no-undef
           return Prism.highlight(s, Prism.languages.json, 'json')
-        case 'text/xml':
-        case 'application/xml':
+        case 'xml':
+        case 'rss+xml':
           s = xmlFormatter(s)
           // eslint-disable-next-line no-undef
           return Prism.highlight(s, Prism.languages.xml, 'xml')
@@ -122,11 +124,12 @@ export default {
     },
     getLanguage (contentType) {
       // https://lucidar.me/en/web-dev/list-of-supported-languages-by-prism/
-      switch (contentType) {
-        case 'application/json':
+      const mimeType = new MIMEType(contentType)
+      switch (mimeType.subtype) {
+        case 'json':
           return 'language-json'
-        case 'text/xml':
-        case 'application/xml':
+        case 'xml':
+        case 'rss+xml':
           return 'language-xml'
       }
       return ''
