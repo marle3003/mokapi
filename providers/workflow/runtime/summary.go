@@ -14,6 +14,7 @@ type WorkflowStatus int
 
 const (
 	Successful WorkflowStatus = iota
+	Skip
 	Error
 )
 
@@ -44,7 +45,7 @@ func NewStepSummary(step mokapi.Step) *StepSummary {
 		}
 	}
 
-	return &StepSummary{Name: name, Id: getStepId(step)}
+	return &StepSummary{Name: name, Id: getStepId(step), Log: make([]string, 0)}
 }
 
 func (l *Log) Append(s string) {

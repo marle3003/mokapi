@@ -15,18 +15,18 @@
         <div v-for="step in row.item.steps" :key="step.id" >
           <div class="step" v-b-toggle="step.id">
             <b-icon icon="chevron-right"></b-icon>
-            Run {{step.name}}
+            <span v-if="step.status === 'skip'">Skip </span><span v-else>Run </span>{{step.name}}
           </div>
-          <b-collapse :id="step.id" class="logs">
+          <b-collapse :id="step.id" class="logs" v-if="step.status !== 'skip'">
             <div v-for="log in parseLog(step.log)" :key="log.line" class="pl-4 mt-1">
               <div>
                 <div v-if="log.logs !== undefined">
-                  <div class="line" v-b-toggle="'line'+log.line">
+                  <div class="line" v-b-toggle="step.id+'_'+log.line">
                     <span class="number">{{ log.line }}</span>
                     <b-icon icon="caret-right-fill" style="margin-right: 5px;" />
                     <span>{{ log.text }}</span>
                   </div>
-                  <b-collapse :id="'line'+log.line" v-for="g in log.logs" :key="g.line">
+                  <b-collapse :id="step.id+'_'+log.line" v-for="g in log.logs" :key="g.line">
                     <div class="line">
                       <span class="number">{{ g.line }}</span>
                       <span style="padding-left: 25px;white-space: pre-wrap;padding-bottom: 1px;">{{ g.text }}</span>

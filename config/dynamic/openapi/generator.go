@@ -30,9 +30,11 @@ func (g *Generator) New(schema *SchemaRef) interface{} {
 
 	if schema.Value.Type == "object" {
 		obj := make(map[string]interface{})
-		for name, propSchema := range schema.Value.Properties.Value {
-			value := g.New(propSchema)
-			obj[name] = value
+		if schema.Value.Properties != nil {
+			for name, propSchema := range schema.Value.Properties.Value {
+				value := g.New(propSchema)
+				obj[name] = value
+			}
 		}
 		return obj
 	} else if schema.Value.Type == "array" {

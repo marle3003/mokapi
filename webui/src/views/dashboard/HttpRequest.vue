@@ -57,6 +57,9 @@
             <action :actions="request.actions"></action>
 
             <p class="label">Response Body</p>
+            <div v-if="parseError !== null">
+              <b-alert show variant="danger">{{ parseError }}</b-alert>
+            </div>
             <pre :class="getLanguage(request.contentType)"><code :class="getLanguage(request.contentType)" v-html="pretty(request.responseBody, request.contentType)"></code></pre>
           </b-col>
         </b-row>
@@ -83,7 +86,8 @@ export default {
     return {
       request: null,
       parameters: [{key: 'show_details', label: '', thStyle: 'width: 1%'}, 'name', 'value', 'type', {key: 'openapi', label: 'OpenApi'}],
-      detailsShown: []
+      detailsShown: [],
+      parseError: null
     }
   },
   created () {
@@ -108,12 +112,21 @@ export default {
       }
     },
     pretty (s, contentType) {
+      if (s === '' || s === null) {
+        return s
+      }
       const mimeType = new MIMEType(contentType)
+      this.parseError = null
       switch (mimeType.subtype) {
         case 'json':
-          s = JSON.stringify(JSON.parse(s), null, 2)
-          // eslint-disable-next-line no-undef
-          return Prism.highlight(s, Prism.languages.json, 'json')
+          try {
+            s = JSON.stringify(JSON.parse(s), null, 2)
+            // eslint-disable-next-line no-undef
+            return Prism.highlight(s, Prism.languages.json, 'json')
+          } catch (e) {
+            this.parseError = e
+            return s
+          }
         case 'xml':
         case 'rss+xml':
           s = xmlFormatter(s)
@@ -123,6 +136,9 @@ export default {
       return s
     },
     getLanguage (contentType) {
+      if (contentType === '' || contentType === null) {
+        return ''
+      }
       // https://lucidar.me/en/web-dev/list-of-supported-languages-by-prism/
       const mimeType = new MIMEType(contentType)
       switch (mimeType.subtype) {

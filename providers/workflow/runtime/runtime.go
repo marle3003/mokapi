@@ -79,6 +79,7 @@ func runStep(step mokapi.Step, ctx *WorkflowContext) (*StepSummary, error) {
 		if b, ok := i.(bool); !ok {
 			return summary, fmt.Errorf("action id %q, if condition; expected bool value, got %t", summary.Id, i)
 		} else if !b {
+			summary.Status = Skip
 			return summary, nil
 		}
 	}
@@ -145,20 +146,20 @@ func runScript(step mokapi.Step, stepId string, ctx *WorkflowContext) Log {
 }
 
 func runAction(step mokapi.Step, stepId string, ctx *WorkflowContext) Log {
-	withLog := make([]string, 0, len(step.With))
-	for k, v := range step.With {
-		val, err := parse(v, ctx)
-		if err != nil {
-			return newLog("parse error %v: %v", k, err)
-		}
-		ctx.Context.Steps[stepId].Inputs[k] = val
-		withLog = append(withLog, fmt.Sprintf("%v: %v", k, utils.ToString(val)))
-	}
-
 	if a, ok := ctx.Actions[step.Uses]; !ok {
 		return newLog("unknown action %v", step.Uses)
 	} else {
 		l := Log{}
+		withLog := make([]string, 0, len(step.With)+1)
+		withLog = append(withLog, "id: "+stepId)
+		for k, v := range step.With {
+			val, err := parse(v, ctx)
+			if err != nil {
+				return newLog("parse error %v: %v", k, err)
+			}
+			ctx.Context.Steps[stepId].Inputs[k] = val
+			withLog = append(withLog, fmt.Sprintf("%v: %v", k, utils.ToString(val)))
+		}
 		l.AppendGroup("Run action "+step.Uses, withLog)
 
 		actionCtx := newActionContext(stepId, ctx)

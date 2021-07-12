@@ -175,6 +175,8 @@ func newStepSummary(s *runtime2.StepSummary) stepSummary {
 		r.Status = "error"
 	case runtime2.Successful:
 		r.Status = "successful"
+	case runtime2.Skip:
+		r.Status = "skip"
 	}
 
 	return r
