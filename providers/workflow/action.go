@@ -28,6 +28,11 @@ var (
 		"now":       functions.Now,
 		"randInt":   functions.RandInt,
 		"randFloat": functions.RandFloat,
+		"hasPrefix": functions.HasPrefix,
+		"hasSuffix": functions.HasSuffix,
+		"contains":  functions.Contains,
+		"toLower":   functions.ToLower,
+		"toUpper":   functions.ToUpper,
 	}
 )
 

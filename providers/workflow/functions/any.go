@@ -8,7 +8,7 @@ import (
 func Any(args ...interface{}) (interface{}, error) {
 	source := args[0]
 	if source == nil {
-		return nil, fmt.Errorf("find: source parameter is null")
+		return nil, fmt.Errorf("any: source parameter is null")
 	}
 	p := newPredicate(args[1].(Function))
 	switch reflect.TypeOf(source).Kind() {

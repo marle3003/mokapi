@@ -1,9 +1,9 @@
 package runtime
 
 import (
-	log "github.com/sirupsen/logrus"
 	"mokapi/providers/workflow/ast"
 	"mokapi/providers/workflow/functions"
+	"strings"
 )
 
 type callVisitor struct {
@@ -21,9 +21,19 @@ func (v *callVisitor) Visit(e ast.Expression) ast.Visitor {
 		case *ast.Identifier:
 			f, ok := v.outer.ctx.Functions[t.Name]
 			if !ok {
-				log.Errorf("function %q not found", t.Name)
+				if strings.ToLower(t.Name) == "true" {
+					v.outer.stack.Push(true)
+				} else if strings.ToLower(t.Name) == "false" {
+					v.outer.stack.Push(false)
+				} else if x, ok := v.outer.vars[t.Name]; ok {
+					v.outer.stack.Push(x)
+				} else {
+					i := v.outer.ctx.Context.Get(t.Name)
+					v.outer.stack.Push(i)
+				}
+			} else {
+				v.outer.stack.Push(f)
 			}
-			v.outer.stack.Push(f)
 			return nil
 		case *ast.CallExpr:
 			v.args = len(t.Args)
