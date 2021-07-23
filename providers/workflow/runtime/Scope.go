@@ -22,13 +22,22 @@ type WorkflowContext struct {
 	Summary          Summary
 }
 
-func NewWorkflowContext(actions map[string]Action, functions map[string]functions.Function) *WorkflowContext {
+func NewWorkflowContext(actions map[string]Action, functionList map[string]functions.Function) *WorkflowContext {
 	ctx := &WorkflowContext{
 		GOOS:      runtime.GOOS,
 		Context:   newContext(),
-		Actions:   actions,
-		Functions: functions,
+		Actions:   make(map[string]Action),
+		Functions: make(map[string]functions.Function),
 	}
+
+	for k, v := range actions {
+		ctx.Actions[k] = v
+	}
+
+	for k, v := range functionList {
+		ctx.Functions[k] = v
+	}
+
 	ctx.OpenScope()
 	for _, v := range os.Environ() {
 		kv := strings.SplitN(v, "=", 2)

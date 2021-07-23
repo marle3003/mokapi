@@ -108,7 +108,6 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 	} else if context.Response.Example != nil {
 		res.Data = context.Response.Example
 	} else {
-
 		res.Data = gen.New(context.Response.Schema)
 	}
 
@@ -129,7 +128,6 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 		log.Debugf("no actions found")
 	} else {
 		context.metric.Actions = summary.Workflows
-		log.WithField("action summary", summary).Debugf("executed actions")
 	}
 
 	if err := write(res, context); err != nil {
