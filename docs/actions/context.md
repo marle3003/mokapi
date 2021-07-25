@@ -34,6 +34,18 @@ The *env* context contains environment variable that have been set in a workflow
 |:--------------|:--------------|:-----|
 | \<name\>     | string| The value of a specific environment variable |
 
+### request
+The *request* context contains information about the current HTTP request.
+
+| Property name | Type          | Description  |
+|:--------------|:--------------|:-----|
+| method    | string | HTTP method  |
+| path    | object | Path parameters defined by the OpenApi schema  |
+| query    | object | Query parameters defined by the OpenApi schema  |
+| body    | object | Body defined by the OpenApi schema  |
+| header    | object | Header parameters defined by the OpenApi schema  |
+| cookie    | object | Cookie parameters defined by the OpenApi schema  |
+
 ## Literals
 As part of an expression you can use *number*, *string* or *boolean* data types.
 

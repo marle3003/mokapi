@@ -77,7 +77,7 @@ func runStep(step mokapi.Step, ctx *WorkflowContext) (*StepSummary, error) {
 			return summary, err
 		}
 		if b, ok := i.(bool); !ok {
-			return summary, fmt.Errorf("action id %q, if condition; expected bool value, got %t", summary.Id, i)
+			return summary, fmt.Errorf("action id %q, if condition; expected bool value, got %v", summary.Id, i)
 		} else if !b {
 			summary.Status = Skip
 			return summary, nil

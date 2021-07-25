@@ -17,4 +17,4 @@ nav:
     - "Actions": "actions/actions.md"
     - "Commands": "actions/commands.md"
     - "Events": "actions/events.md"
-    - "Guides": "actions/guides.md"
+    - "Examples": "actions/examples.md"

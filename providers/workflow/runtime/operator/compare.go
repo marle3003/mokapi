@@ -3,6 +3,15 @@ package operator
 import "strings"
 
 func Compare(x interface{}, y interface{}) (int, error) {
+	if x == nil {
+		if y == nil {
+			return 0, nil
+		}
+		return -1, nil
+	}
+	if y == nil {
+		return 1, nil
+	}
 	switch x := x.(type) {
 	case int:
 		switch y := y.(type) {

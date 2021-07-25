@@ -9,6 +9,7 @@ import (
 type callVisitor struct {
 	outer *visitor
 	args  int
+	call  *ast.CallExpr
 }
 
 func newCallVisitor(outer *visitor) *callVisitor {
@@ -25,6 +26,8 @@ func (v *callVisitor) Visit(e ast.Expression) ast.Visitor {
 					v.outer.stack.Push(true)
 				} else if strings.ToLower(t.Name) == "false" {
 					v.outer.stack.Push(false)
+				} else if strings.ToLower(t.Name) == "null" {
+					v.outer.stack.Push(nil)
 				} else if x, ok := v.outer.vars[t.Name]; ok {
 					v.outer.stack.Push(x)
 				} else {
@@ -36,8 +39,14 @@ func (v *callVisitor) Visit(e ast.Expression) ast.Visitor {
 			}
 			return nil
 		case *ast.CallExpr:
-			v.args = len(t.Args)
-			return v
+			if v.call == nil {
+				v.call = t
+				v.args = len(t.Args)
+				return v
+			} else {
+				c := newCallVisitor(v.outer)
+				return c.Visit(t)
+			}
 		}
 		return v.outer.Visit(e)
 	}

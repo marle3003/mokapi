@@ -55,6 +55,8 @@ func (v *visitor) Visit(e ast.Expression) ast.Visitor {
 			v.stack.Push(true)
 		} else if strings.ToLower(t.Name) == "false" {
 			v.stack.Push(false)
+		} else if strings.ToLower(t.Name) == "null" {
+			v.stack.Push(nil)
 		} else if x, ok := v.vars[t.Name]; ok {
 			v.stack.Push(x)
 		} else {

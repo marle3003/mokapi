@@ -11,14 +11,15 @@ import (
 
 var (
 	actionCollection = map[string]runtime.Action{
-		"xpath":     &actions.XPath{},
-		"read-file": &actions.ReadFile{},
-		"parse-yml": &actions.YmlParser{},
-		"mustache":  &actions.Mustache{},
-		"split":     &actions.Split{},
-		"echo":      &actions.Echo{},
-		"delay":     &actions.Delay{},
-		"send-mail": &actions.SendMail{},
+		"xpath":      &actions.XPath{},
+		"read-file":  &actions.ReadFile{},
+		"parse-yml":  &actions.YmlParser{},
+		"parse-yaml": &actions.YmlParser{},
+		"mustache":   &actions.Mustache{},
+		"split":      &actions.Split{},
+		"echo":       &actions.Echo{},
+		"delay":      &actions.Delay{},
+		"send-mail":  &actions.SendMail{},
 	}
 	fCollection = map[string]functions.Function{
 		"find":      functions.Find,
