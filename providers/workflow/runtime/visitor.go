@@ -90,6 +90,8 @@ func (v *visitor) Visit(e ast.Expression) ast.Visitor {
 		return newRangeVisitor(t, v)
 	case *ast.KeyValueExpr:
 		return newKeyValueVisitor(v)
+	case *ast.IndexExpr:
+		return newIndexVisitor(v)
 	}
 
 	return v

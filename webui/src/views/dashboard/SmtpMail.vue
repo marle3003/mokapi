@@ -1,7 +1,16 @@
 <template>
   <div class="dashboard" v-if="mail !== null">
     <div class="page-header">
-      <h2>Smtp Mail</h2>
+      <b-row class="mb-2 ml-0 mr-0">
+        <b-col cols="auto" class="mr-auto pl-0">
+          <h2>SMTP Mail</h2>
+        </b-col>
+        <b-col cols="auto" class="pr-0">
+          <div class="close" @click="$router.go(-1)">
+            <b-icon icon="x" class="border rounded p-1"></b-icon>
+          </div>
+        </b-col>
+      </b-row>
     </div>
     <div class="page-body">
       <b-card class="w-100 mb-4">
@@ -106,11 +115,21 @@ export default {
   },
   created () {
     this.getData()
+    window.addEventListener('keyup', this.doCommand)
+  },
+  destroyed () {
+    window.removeEventListener('keyup', this.doCommand)
   },
   methods: {
     async getData () {
       let id = this.$route.params.id
       this.mail = await this.getSmtpMail(id)
+    },
+    doCommand (e) {
+      let cmd = e.key.toLowerCase()
+      if (cmd === 'escape') {
+        this.$router.go(-1)
+      }
     }
   },
   filters: {

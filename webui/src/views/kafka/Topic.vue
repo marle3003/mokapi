@@ -1,7 +1,16 @@
 <template>
   <div class="dashboard" v-if="topic !== null">
     <div class="page-header">
-      <h2>Kafka Topic</h2>
+      <b-row class="mb-2 ml-0 mr-0">
+        <b-col cols="auto" class="mr-auto pl-0">
+          <h2>Kafka Topic</h2>
+        </b-col>
+        <b-col cols="auto" class="pr-0">
+          <div class="close" @click="$router.go(-1)">
+            <b-icon icon="x" class="border rounded p-1"></b-icon>
+          </div>
+        </b-col>
+      </b-row>
     </div>
     <div class="page-body">
       <b-card-group deck>
@@ -86,6 +95,10 @@ export default {
         this.timer = setInterval(this.getData, i * 1000)
       }
     }
+    window.addEventListener('keyup', this.doCommand)
+  },
+  destroyed () {
+    window.removeEventListener('keyup', this.doCommand)
   },
   methods: {
     async getData () {
@@ -101,6 +114,12 @@ export default {
         this.detailsShown.push(row.item.key)
       } else {
         this.detailsShown.splice(index, 1)
+      }
+    },
+    doCommand (e) {
+      let cmd = e.key.toLowerCase()
+      if (cmd === 'escape') {
+        this.$router.go(-1)
       }
     }
   },

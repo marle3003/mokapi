@@ -4,6 +4,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/mokapi"
+	"mokapi/models/media"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -439,6 +440,23 @@ const (
 	NotExtended                   HttpStatus = 510 // RFC 2774, 7
 	NetworkAuthenticationRequired HttpStatus = 511 // RFC 6585, 6
 )
+
+func (s *Schemas) Get(name string) (*SchemaRef, bool) {
+	if s.Value == nil {
+		return nil, false
+	}
+	p, ok := s.Value[name]
+	return p, ok
+}
+
+func (r *RequestBody) GetMedia(contentType *media.ContentType) (*MediaType, bool) {
+	if c, ok := r.Content[contentType.String()]; ok {
+		return c, true
+	} else if c, ok := r.Content[contentType.Key()]; ok {
+		return c, true
+	}
+	return nil, false
+}
 
 func (s *Server) GetPort() int {
 	u, err := url.Parse(s.Url)

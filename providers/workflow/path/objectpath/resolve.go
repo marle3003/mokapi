@@ -7,23 +7,28 @@ import (
 )
 
 type Resolver interface {
-	Resolve(name string) (interface{}, error)
+	Resolve(name interface{}) (interface{}, error)
 }
 
-func Resolve(path string, i interface{}) (interface{}, error) {
-	segments := strings.Split(path, ".")
-	var err error
-	for _, seg := range segments {
-		i, err = resolveMember(seg, i)
-		if err != nil {
-			return i, err
+func Resolve(selector interface{}, i interface{}) (interface{}, error) {
+	switch s := selector.(type) {
+	case string:
+		segments := strings.Split(s, ".")
+		var err error
+		for _, seg := range segments {
+			i, err = resolveMember(seg, i)
+			if err != nil {
+				return i, err
+			}
 		}
+	default:
+		return resolveMember(selector, i)
 	}
 
 	return i, nil
 }
 
-func resolveMember(name string, i interface{}) (interface{}, error) {
+func resolveMember(name interface{}, i interface{}) (interface{}, error) {
 	if i == nil {
 		return nil, fmt.Errorf("null reference: can not resolve %q", name)
 	}
@@ -44,9 +49,11 @@ func resolveMember(name string, i interface{}) (interface{}, error) {
 	}
 
 	if v.Kind() == reflect.Map {
-		return resolveMapMember(name, v)
+		return resolveMapMember(name.(string), v)
 	} else if v.Kind() == reflect.Struct {
-		return resolveStructMember(name, v)
+		return resolveStructMember(name.(string), v)
+	} else if v.Kind() == reflect.Slice {
+		return v.Index(name.(int)).Interface(), nil
 	}
 
 	return nil, fmt.Errorf("undefined field %q", name)

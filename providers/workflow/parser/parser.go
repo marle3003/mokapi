@@ -75,6 +75,11 @@ func (p *parser) parsePrimary() ast.Expression {
 			} else {
 				return p.parseCall(ident)
 			}
+		case token.LBRACK:
+			p.next()
+			index := p.parseOperand()
+			p.expect(token.RBRACK)
+			o = &ast.IndexExpr{X: o, Index: index}
 		case token.LAMBDA:
 			if ident, isIdent := o.(*ast.Identifier); !isIdent {
 				p.error("unexpected token '=>'")

@@ -7,8 +7,7 @@ import (
 )
 
 type selectorVisitor struct {
-	outer        *visitor
-	resolvedRoot bool
+	outer *visitor
 }
 
 func newSelectorVisitor(outer *visitor) *selectorVisitor {
@@ -27,11 +26,13 @@ func (v *selectorVisitor) Visit(e ast.Expression) ast.Visitor {
 				return v.Visit(nil)
 			}
 			return v
+		case *ast.IndexExpr:
+			return v.outer.Visit(t)
 		}
 		return nil
 	}
 
-	selector := v.outer.stack.Pop().(string)
+	selector := v.outer.stack.Pop()
 	source := v.outer.stack.Pop()
 
 	m, err := objectpath.Resolve(selector, source)

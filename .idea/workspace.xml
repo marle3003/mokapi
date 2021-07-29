@@ -1,102 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
   <component name="ChangeListManager">
-    <list default="true" id="1a9601df-4cac-4bc9-9e3a-1ba0e84e507f" name="Default Changelist" comment="refactoring but not all features are working">
-      <change afterPath="$PROJECT_DIR$/config/dynamic/file.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/workflow/actions/split.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/workflow/options.go" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/workflow/scheduler.go" afterDir="false" />
+    <list default="true" id="1a9601df-4cac-4bc9-9e3a-1ba0e84e507f" name="Default Changelist" comment="added null support in Mokapi Actions&#10;fixed function calls in Mokapi Actions&#10;added more examples">
+      <change afterPath="$PROJECT_DIR$/providers/workflow/runtime/index_visitor.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Taskfile.yml" beforeDir="false" afterPath="$PROJECT_DIR$/Taskfile.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/dynamic/asyncApi/config.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/dynamic/asyncApi/config.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/dynamic/config.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/dynamic/config.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/dynamic/configstore.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/dynamic/filewatcher.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/dynamic/ldap/config.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/dynamic/ldap/config.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/dynamic/mokapi/config.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/dynamic/mokapi/config.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/dynamic/mokapi/unmarshal.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/dynamic/mokapi/unmarshal.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/config/dynamic/openapi/config.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/dynamic/openapi/config.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/basics/delay.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/basics/echo.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/basics/fileExists.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/basics/getcontext.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/basics/json.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/basics/mustache.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/basics/random.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/basics/readFile.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/basics/yaml.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/ast/ast.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/ast/scope.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/ast/walk.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/parser/config_parser.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/parser/error.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/parser/parser.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/parser/parser_test.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/runtime/argument.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/runtime/argument_test.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/runtime/assign.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/runtime/assign_test.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/runtime/binary.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/runtime/binary_test.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/runtime/call.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/runtime/closure.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/runtime/envvars.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/runtime/expression.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/runtime/index.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/runtime/path.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/runtime/range.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/runtime/runtime.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/runtime/runtime_test.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/runtime/sequence.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/runtime/stack.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/runtime/stage.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/runtime/step.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/runtime/string.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/runtime/string_test.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/runtime/visitor_mock_test.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/scanner/scanner.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/scanner/scanner_test.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/token/position.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/token/token.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/array.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/bool.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/closure.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/collection.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/convert.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/convert_test.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/expando.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/keyvalue.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/node.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/node_test.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/number.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/object.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/path.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/pathchildren.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/predicate.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/reference.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/reflect.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/step.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/lang/types/string.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/pipeline.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/pipeline/scheduler.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/workflow/action.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/workflow/action.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/workflow/functions/functions.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/workflow/functions/functions.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/workflow/runtime/Scope.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/workflow/runtime/Scope.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/workflow/runtime/format.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/workflow/runtime/format.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/workflow/runtime/operator/add_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/workflow/runtime/operator/add_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/workflow/runtime/options.go" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/workflow/runtime/runtime.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/workflow/runtime/runtime.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/workflow/runtime/shell.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/workflow/runtime/shell.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/workflow/runtime/summary.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/workflow/runtime/summary.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/api/dashboard_data.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/api/dashboard_data.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/kafka/binding.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/kafka/binding.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/kafka/producer.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/kafka/producer.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/server.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/web/binding.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/web/binding.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/workflow/ast/ast.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/workflow/ast/ast.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/workflow/ast/walk.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/workflow/ast/walk.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/workflow/parser/parser.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/workflow/parser/parser.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/workflow/path/objectpath/resolve.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/workflow/path/objectpath/resolve.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/workflow/runtime/selector_visitor.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/workflow/runtime/selector_visitor.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/workflow/runtime/visitor.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/workflow/runtime/visitor.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/providers/workflow/token/token.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/workflow/token/token.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server/web/operationHandler.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/web/operationHandler.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/web/parse_param_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/web/parse_param_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/web/path_param_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/web/path_param_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/web/query_param_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/web/query_param_test.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/webui/src/components/Parameters.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/components/Parameters.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/webui/src/views/dashboard/HttpRequest.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/views/dashboard/HttpRequest.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/webui/src/views/dashboard/SmtpMail.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/views/dashboard/SmtpMail.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/webui/src/views/kafka/Topic.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/views/kafka/Topic.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -112,7 +35,7 @@
       </list>
     </option>
   </component>
-  <component name="GOROOT" url="file://C:/Go" />
+  <component name="GOROOT" url="file://C:/Program Files/Go" />
   <component name="Git.Settings">
     <option name="PUSH_TAGS">
       <GitPushTagMode>
@@ -148,33 +71,34 @@
     <property name="go.sdk.automatically.set" value="true" />
     <property name="go.tried.to.enable.integration.vgo.integrator" value="true" />
     <property name="js.buildTools.gulp.gulp_package_dir" value="" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/providers/workflow" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/webui/src/components" />
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.path.for.package.eslint" value="project" />
     <property name="node.js.selected.package.eslint" value="(autodetect)" />
     <property name="nodejs_package_manager_path" value="npm" />
     <property name="restartRequiresConfirmation" value="false" />
-    <property name="settings.editor.selected.configurable" value="editor.preferences.tabs" />
+    <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
+    <property name="settings.editor.selected.configurable" value="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable" />
     <property name="ts.external.directory.path" value="C:\Program Files\JetBrains\GoLand 2020.3\plugins\JavaScriptLanguage\jsLanguageServicesImpl\external" />
     <property name="vue.rearranger.settings.migration" value="true" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="D:\Projekte\mokapi\providers\workflow" />
-      <recent name="D:\Projekte\mokapi\providers\workflow\runtime\operator" />
-      <recent name="D:\Projekte\mokapi\providers\workflow\lang\token" />
-      <recent name="D:\Projekte\mokapi\providers\workflow\lang\scanner" />
-      <recent name="D:\Projekte\mokapi" />
+      <recent name="D:\Projekte\mokapi\webui\src\components" />
+      <recent name="D:\Projekte\mokapi\webui\src\views\smtp" />
+      <recent name="D:\Projekte\mokapi\webui\src\components\smtp" />
+      <recent name="D:\Projekte\mokapi\webui\src\views\dashboard" />
+      <recent name="D:\Projekte\mokapi\config\dynamic\openapi" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
-      <recent name="D:\Projekte\mokapi\providers\workflow" />
-      <recent name="D:\Projekte\mokapi\providers\workflow\runtime" />
-      <recent name="D:\Projekte\mokapi\providers\workflow\path\urlpath" />
-      <recent name="D:\Projekte\mokapi\providers\workflow\event" />
-      <recent name="D:\Projekte\mokapi\docs\actions" />
+      <recent name="D:\Projekte\mokapi\server\cert" />
+      <recent name="D:\Projekte\mokapi\config\dynamic\openapi" />
+      <recent name="D:\Projekte\mokapi\config\dynamic" />
+      <recent name="D:\Projekte\mokapi\providers\utils" />
+      <recent name="D:\Projekte\mokapi\config\dynamic\asyncApi" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Test.go test mokapi/server/web">
+  <component name="RunManager" selected="Go Build.go build mokapi/cmd/mokapi">
     <configuration name="go build mokapi/cmd/mokapi" type="GoApplicationRunConfiguration" factoryName="Go Application" nameIsGenerated="true">
       <module name="mokapi" />
       <working_directory value="$PROJECT_DIR$" />
@@ -184,31 +108,70 @@
         <env name="MOKAPI_Log.Level" value="debug" />
         <env name="MOKAPI_Providers.File.Directory" value="data" />
         <env name="DEVUSER" value="lehmannmar" />
+        <env name="MOKAPI_Providers.Git.Url" value="https://github.com/marle3003/mokapi-example" />
+        <env name="MOKAPI_Providers.Http.Url" value="https://raw.githubusercontent.com/marle3003/mokapi-example/main/openapi.yml" />
+        <env name="MOKAPI_Providers.Http.PollInterval" value="1m" />
+        <env name="MOKAPI_RootCaCert" value="D:\Projekte\mokapi\assets\mokapiCert.pem" />
+        <env name="MOKAPI_RootCaKey" value="D:\Projekte\mokapi\assets\mokapiKey.pem" />
       </envs>
       <kind value="PACKAGE" />
-      <filePath value="$PROJECT_DIR$" />
       <package value="mokapi/cmd/mokapi" />
       <directory value="$PROJECT_DIR$" />
-      <method v="2" />
-    </configuration>
-    <configuration name="go test mokapi/providers/workflow/runtime/operator" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
-      <module name="mokapi" />
-      <working_directory value="$PROJECT_DIR$/providers/workflow/runtime/operator" />
-      <framework value="gotest" />
-      <kind value="PACKAGE" />
-      <package value="mokapi/providers/workflow/runtime/operator" />
-      <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
       <method v="2" />
     </configuration>
-    <configuration name="go test mokapi/server/web" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestConfig in mokapi/config/dynamic/openapi" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="mokapi" />
-      <working_directory value="$PROJECT_DIR$/server/web" />
-      <framework value="gotest" />
+      <working_directory value="$PROJECT_DIR$/config/dynamic/openapi" />
       <kind value="PACKAGE" />
-      <package value="mokapi/server/web" />
+      <package value="mokapi/config/dynamic/openapi" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <pattern value="^\QTestConfig\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestParseAllOf in mokapi/providers/encoding" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="mokapi" />
+      <working_directory value="$PROJECT_DIR$/providers/encoding" />
+      <kind value="PACKAGE" />
+      <package value="mokapi/providers/encoding" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <pattern value="^\QTestParseAllOf\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestParseOneOf in mokapi/providers/encoding" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="mokapi" />
+      <working_directory value="$PROJECT_DIR$/providers/encoding" />
+      <kind value="PACKAGE" />
+      <package value="mokapi/providers/encoding" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <pattern value="^\QTestParseOneOf\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestSchemaRef in mokapi/config/dynamic/openapi" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="mokapi" />
+      <working_directory value="$PROJECT_DIR$/config/dynamic/openapi" />
+      <kind value="PACKAGE" />
+      <package value="mokapi/config/dynamic/openapi" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <pattern value="^\QTestSchemaRef\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="json_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="mokapi" />
+      <working_directory value="$PROJECT_DIR$/providers/encoding" />
+      <kind value="FILE" />
+      <package value="mokapi" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$/providers/encoding/json_test.go" />
+      <framework value="gotest" />
       <method v="2" />
     </configuration>
     <configuration default="true" type="js.build_tools.gulp">
@@ -220,10 +183,21 @@
       <envs />
       <method v="2" />
     </configuration>
+    <list>
+      <item itemvalue="Go Build.go build mokapi/cmd/mokapi" />
+      <item itemvalue="Go Test.TestParseAllOf in mokapi/providers/encoding" />
+      <item itemvalue="Go Test.TestParseOneOf in mokapi/providers/encoding" />
+      <item itemvalue="Go Test.json_test.go" />
+      <item itemvalue="Go Test.TestSchemaRef in mokapi/config/dynamic/openapi" />
+      <item itemvalue="Go Test.TestConfig in mokapi/config/dynamic/openapi" />
+    </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Go Test.go test mokapi/server/web" />
-        <item itemvalue="Go Test.go test mokapi/providers/workflow/runtime/operator" />
+        <item itemvalue="Go Test.TestConfig in mokapi/config/dynamic/openapi" />
+        <item itemvalue="Go Test.TestSchemaRef in mokapi/config/dynamic/openapi" />
+        <item itemvalue="Go Test.json_test.go" />
+        <item itemvalue="Go Test.TestParseOneOf in mokapi/providers/encoding" />
+        <item itemvalue="Go Test.TestParseAllOf in mokapi/providers/encoding" />
       </list>
     </recent_temporary>
   </component>
@@ -244,6 +218,31 @@
   <component name="Vcs.Log.Tabs.Properties">
     <option name="TAB_STATES">
       <map>
+        <entry key="305a4a7c-579e-45a7-a6e7-acba75ea5911">
+          <value>
+            <State>
+              <option name="SHOW_ONLY_AFFECTED_CHANGES" value="true" />
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="HEAD" />
+                      </list>
+                    </value>
+                  </entry>
+                  <entry key="structure">
+                    <value>
+                      <list>
+                        <option value="dir:D:/Projekte/mokapi/webui" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
         <entry key="MAIN">
           <value>
             <State />
@@ -251,35 +250,40 @@
         </entry>
       </map>
     </option>
+    <option name="OPEN_GENERIC_TABS">
+      <map>
+        <entry key="305a4a7c-579e-45a7-a6e7-acba75ea5911" value="TOOL_WINDOW" />
+      </map>
+    </option>
     <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="fixed action" />
-    <MESSAGE value="fixed tasks" />
-    <MESSAGE value="fixed npm packages" />
-    <MESSAGE value="fixed npm install" />
-    <MESSAGE value="fixed case sensitive" />
-    <MESSAGE value="added go" />
-    <MESSAGE value="fixed line separator" />
-    <MESSAGE value="update workspace" />
-    <MESSAGE value="removed hooks" />
-    <MESSAGE value="added go-bindata" />
-    <MESSAGE value="updated action" />
-    <MESSAGE value="added bin directory" />
-    <MESSAGE value="added docker" />
-    <MESSAGE value="replace pipeline with actions. Work in progress" />
-    <MESSAGE value="added new ast objects&#10;added operator implementations&#10;added documentation" />
-    <MESSAGE value="fixed link" />
-    <MESSAGE value="fixed typo" />
-    <MESSAGE value="changed theming&#10;extended features Mokapi actions&#10;extended documentation" />
-    <MESSAGE value="updated actions&#10;updated webui" />
-    <MESSAGE value="updated go releaser" />
-    <MESSAGE value="added license" />
-    <MESSAGE value="fixed bug" />
-    <MESSAGE value="added commit action" />
-    <MESSAGE value="fixed name" />
-    <MESSAGE value="fixed test action" />
-    <option name="LAST_COMMIT_MESSAGE" value="fixed test action" />
+    <MESSAGE value="added git provider&#10;added http provider&#10;added headers to response" />
+    <MESSAGE value="fixed log" />
+    <MESSAGE value="updated doc&#10;fixed default value" />
+    <MESSAGE value="updated doc" />
+    <MESSAGE value="updated doc&#10;fixed eslint" />
+    <MESSAGE value="updated go 1.16&#10;added tls support" />
+    <MESSAGE value="updated github action for go 1.16" />
+    <MESSAGE value="fixed code for go 1.6" />
+    <MESSAGE value="updated docs&#10;added default port for https" />
+    <MESSAGE value="updated docs&#10;updated webui&#10;added smtp server" />
+    <MESSAGE value="reference smtp.md" />
+    <MESSAGE value="improved url resolve for webui&#10;removed error handling in xml encoding. it returns not nil if no error occurs" />
+    <MESSAGE value="improved resolve url&#10;removed error handling in xml encoding. it returns not nil if no error occurs" />
+    <MESSAGE value="fixed overwritten original example of schema" />
+    <MESSAGE value="updated mail paring and webui" />
+    <MESSAGE value="fixed click event in dashboard&#10;updated doc" />
+    <MESSAGE value="extended smtp server and webui&#10;added action send-mail&#10;added event smtp" />
+    <MESSAGE value="improved mokapi action logs" />
+    <MESSAGE value="fixed error" />
+    <MESSAGE value="extended webui&#10;fixed kafka producer&#10;updated docs" />
+    <MESSAGE value="fixed routing in header&#10;added mimetype parser&#10;fixed layout in doc" />
+    <MESSAGE value="added string functions to Mokapi Actions&#10;fixed resolving identifier in call visitor" />
+    <MESSAGE value="optimized mokapi actions&#10;bugfixes" />
+    <MESSAGE value="fixed thread-safe action and function collection" />
+    <MESSAGE value="added null support in Mokapi Actions&#10;fixed function calls in Mokapi Actions&#10;added more examples" />
+    <option name="LAST_COMMIT_MESSAGE" value="added null support in Mokapi Actions&#10;fixed function calls in Mokapi Actions&#10;added more examples" />
   </component>
   <component name="VgoProject">
     <integration-enabled>true</integration-enabled>
@@ -288,9 +292,13 @@
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/providers/workflow/runtime/shell.go</url>
-          <line>55</line>
-          <option name="timeStamp" value="34" />
+          <url>file://$PROJECT_DIR$/server/web/workflow.go</url>
+          <option name="timeStamp" value="27" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/server/web/webServiceHandler.go</url>
+          <line>24</line>
+          <option name="timeStamp" value="31" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -299,8 +307,7 @@
     </breakpoint-manager>
     <watches-manager>
       <configuration name="GoApplicationRunConfiguration">
-        <watch expression="*(*&quot;mokapi/config/dynamic/asyncApi.Log&quot;)(824638359304)" />
-        <watch expression="*(*&quot;[]*gopkg.in/yaml%2ev3.Node&quot;)(824638755744)" />
+        <watch expression="*(*&quot;mokapi/providers/workflow/ast.Selector&quot;)(824637039528)" />
       </configuration>
     </watches-manager>
   </component>

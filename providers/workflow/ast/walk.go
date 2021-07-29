@@ -44,6 +44,9 @@ func Walk(v Visitor, e Expression) {
 	case *KeyValueExpr:
 		Walk(v, n.Key)
 		Walk(v, n.Value)
+	case *IndexExpr:
+		Walk(v, n.X)
+		Walk(v, n.Index)
 	}
 	v.Visit(nil)
 }

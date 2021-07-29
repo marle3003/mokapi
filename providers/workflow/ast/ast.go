@@ -71,6 +71,11 @@ type RangeExpr struct {
 	End   Expression
 }
 
+type IndexExpr struct {
+	X     Expression
+	Index Expression
+}
+
 func (e *Literal) Pos() token.Position      { return e.ValuePos }
 func (e *Identifier) Pos() token.Position   { return e.NamePos }
 func (e *Selector) Pos() token.Position     { return e.X.Pos() }
@@ -83,3 +88,4 @@ func (e *SequenceExpr) Pos() token.Position { return e.Lbrack }
 func (e *MapExpr) Pos() token.Position      { return e.Lbrack }
 func (e *KeyValueExpr) Pos() token.Position { return e.Key.Pos() }
 func (e *RangeExpr) Pos() token.Position    { return e.Start.Pos() }
+func (e *IndexExpr) Pos() token.Position    { return e.X.Pos() }

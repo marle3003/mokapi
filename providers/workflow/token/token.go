@@ -46,11 +46,11 @@ const (
 	LPAREN // (
 	RPAREN // )
 
-	LBRACE
-	RBRACE
+	LBRACE // {
+	RBRACE // }
 
-	LBRACK
-	RBRACK
+	LBRACK // [
+	RBRACK // ]
 
 	COMMA
 	PERIOD

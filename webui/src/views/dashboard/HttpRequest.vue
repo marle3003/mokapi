@@ -1,7 +1,16 @@
 <template>
   <div class="dashboard" v-if="request !== null">
     <div class="page-header">
-      <h2>HTTP Request</h2>
+      <b-row class="mb-2 ml-0 mr-0">
+        <b-col cols="auto" class="mr-auto pl-0">
+          <h2>HTTP Request</h2>
+        </b-col>
+        <b-col cols="auto" class="pr-0">
+          <div class="close" @click="$router.go(-1)">
+            <b-icon icon="x" class="border rounded p-1"></b-icon>
+          </div>
+        </b-col>
+      </b-row>
     </div>
     <div class="page-body">
       <b-card class="w-100">
@@ -85,13 +94,17 @@ export default {
   data () {
     return {
       request: null,
-      parameters: [{key: 'show_details', label: '', thStyle: 'width: 1%'}, 'name', 'value', 'type', {key: 'openapi', label: 'OpenApi'}],
+      parameters: [{key: 'show_details', label: '', thStyle: 'width: 1%'}, 'name', {key: 'value', tdClass: 'break'}, 'type', {key: 'openapi', label: 'OpenApi'}],
       detailsShown: [],
       parseError: null
     }
   },
   created () {
     this.getData()
+    window.addEventListener('keyup', this.doCommand)
+  },
+  destroyed () {
+    window.removeEventListener('keyup', this.doCommand)
   },
   methods: {
     async getData () {
@@ -99,7 +112,7 @@ export default {
       this.request = await this.getHttpRequest(id)
     },
     showRawParameter (p) {
-      return p.value !== '' && p.value !== p.raw
+      return p.value !== '' && p.raw !== '' && p.value !== p.raw
     },
     toggleDetails (row) {
       row.toggleDetails()
@@ -149,6 +162,12 @@ export default {
           return 'language-xml'
       }
       return ''
+    },
+    doCommand (e) {
+      let cmd = e.key.toLowerCase()
+      if (cmd === 'escape') {
+        this.$router.go(-1)
+      }
     }
   },
   filters: {
@@ -192,5 +211,11 @@ export default {
     -moz-transform:rotate(90deg);
     -webkit-transform:rotate(90deg);
     transform:rotate(90deg);
+  }
+  .close {
+    font-size: 2.2rem;
+    cursor: pointer;
+    border-color: var(--var-border-color);
+    color: var(--var-color-primary);
   }
 </style>
