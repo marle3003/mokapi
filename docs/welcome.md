@@ -3,6 +3,8 @@ navigation: Welcome
 ---
 # Welcome
 
+![alt text](@/assets/logo.png "MokApi")
+
 Mokapi brings your API designs to life before spending time on development and reduces
 dependencies in your development and testing cycles. Change your API configuration on
 the fly for your test cases or producing edge cases. With Mokapi you can emulate

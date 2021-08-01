@@ -5,6 +5,8 @@ builds:
   - id: mokapi
     env:
       - CGO_ENABLED=0
+    ldflags:
+      - -X mokapi/version.BuildVersion={{ .Version }}
     main: ./cmd/mokapi
     goos:
       - linux

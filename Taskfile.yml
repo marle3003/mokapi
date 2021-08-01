@@ -10,7 +10,7 @@ tasks:
       - task: build-windows
   build-windows:
     cmds:
-      - go build -o mokapi_windows-amd64.exe ./cmd/mokapi
+      - go build -o mokapi_windows-amd64.exe -ldflags="-X 'mokapi/version.BuildVersion=1.0'" ./cmd/mokapi
     env:
       GOOS: windows
       GOARCH: amd64
