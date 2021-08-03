@@ -19,7 +19,7 @@ import (
 
 type AddRequestMetric func(metric *models.RequestMetric)
 
-type EventHandler func(events event.Handler, options ...workflow.Options) *runtime.Summary
+type EventHandler func(events event.Handler, options ...workflow.Options) (*runtime.Summary, error)
 
 type Binding struct {
 	Addr             string

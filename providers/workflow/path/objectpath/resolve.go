@@ -49,11 +49,23 @@ func resolveMember(name interface{}, i interface{}) (interface{}, error) {
 	}
 
 	if v.Kind() == reflect.Map {
-		return resolveMapMember(name.(string), v)
+		if s, ok := name.(string); ok {
+			return resolveMapMember(s, v)
+		} else {
+			return nil, fmt.Errorf("expected string but was %T: %v", name, name)
+		}
 	} else if v.Kind() == reflect.Struct {
-		return resolveStructMember(name.(string), v)
+		if s, ok := name.(string); ok {
+			return resolveStructMember(s, v)
+		} else {
+			return nil, fmt.Errorf("expected string but was %T: %v", name, name)
+		}
 	} else if v.Kind() == reflect.Slice {
-		return v.Index(name.(int)).Interface(), nil
+		if n, ok := name.(int); ok {
+			return v.Index(n).Interface(), nil
+		} else {
+			return nil, fmt.Errorf("expected int but was %T: %v", name, name)
+		}
 	}
 
 	return nil, fmt.Errorf("undefined field %q", name)

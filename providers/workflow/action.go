@@ -1,7 +1,7 @@
 package workflow
 
 import (
-	log "github.com/sirupsen/logrus"
+	"fmt"
 	"mokapi/config/dynamic/mokapi"
 	"mokapi/providers/workflow/actions"
 	"mokapi/providers/workflow/event"
@@ -41,7 +41,7 @@ func RegisterAction(name string, action runtime.Action) {
 	actionCollection[name] = action
 }
 
-func Run(workflows []mokapi.Workflow, event event.Handler, options ...Options) *runtime.Summary {
+func Run(workflows []mokapi.Workflow, event event.Handler, options ...Options) (*runtime.Summary, error) {
 	summary := &runtime.Summary{}
 
 	for _, w := range workflows {
@@ -54,12 +54,12 @@ func Run(workflows []mokapi.Workflow, event event.Handler, options ...Options) *
 
 				s, err := runtime.Run(w, ctx)
 				if err != nil {
-					log.Errorf("workflow %v: %v", w.Name, err.Error())
+					return nil, fmt.Errorf("workflow %v: %v", w.Name, err.Error())
 				}
 				summary.Workflows = append(summary.Workflows, s)
 			}
 		}
 	}
 
-	return summary
+	return summary, nil
 }

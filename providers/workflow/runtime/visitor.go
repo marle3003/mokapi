@@ -10,9 +10,10 @@ import (
 )
 
 type visitor struct {
-	ctx   *WorkflowContext
-	stack *stack
-	vars  map[string]interface{}
+	ctx    *WorkflowContext
+	stack  *stack
+	vars   map[string]interface{}
+	errors token.ErrorList
 }
 
 type stack struct {
@@ -29,6 +30,10 @@ func newStack() *stack {
 }
 
 func (v *visitor) Visit(e ast.Expression) ast.Visitor {
+	if len(v.errors) > 0 {
+		return nil
+	}
+
 	switch t := e.(type) {
 	case *ast.Literal:
 		switch t.Kind {
@@ -60,7 +65,11 @@ func (v *visitor) Visit(e ast.Expression) ast.Visitor {
 		} else if x, ok := v.vars[t.Name]; ok {
 			v.stack.Push(x)
 		} else {
-			i := v.ctx.Context.Get(t.Name)
+			i, err := v.ctx.Context.Get(t.Name)
+			if err != nil {
+				v.errors.Add(t.Pos(), err.Error())
+				return nil
+			}
 			v.stack.Push(i)
 		}
 		return nil
@@ -78,6 +87,12 @@ func (v *visitor) Visit(e ast.Expression) ast.Visitor {
 				fVisitor.vars[p.Name] = args[i]
 			}
 			ast.Walk(fVisitor, t.Func)
+
+			err := fVisitor.errors.Err()
+			if err != nil {
+				return nil, err
+			}
+
 			return fVisitor.stack.Pop(), nil
 		}
 		v.stack.Push(f)
@@ -91,7 +106,7 @@ func (v *visitor) Visit(e ast.Expression) ast.Visitor {
 	case *ast.KeyValueExpr:
 		return newKeyValueVisitor(v)
 	case *ast.IndexExpr:
-		return newIndexVisitor(v)
+		return newIndexVisitor(v, t)
 	}
 
 	return v

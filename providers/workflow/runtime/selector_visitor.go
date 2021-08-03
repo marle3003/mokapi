@@ -1,13 +1,13 @@
 package runtime
 
 import (
-	log "github.com/sirupsen/logrus"
 	"mokapi/providers/workflow/ast"
 	"mokapi/providers/workflow/path/objectpath"
 )
 
 type selectorVisitor struct {
 	outer *visitor
+	exp   ast.Expression
 }
 
 func newSelectorVisitor(outer *visitor) *selectorVisitor {
@@ -16,6 +16,7 @@ func newSelectorVisitor(outer *visitor) *selectorVisitor {
 
 func (v *selectorVisitor) Visit(e ast.Expression) ast.Visitor {
 	if e != nil {
+		v.exp = e
 		switch t := e.(type) {
 		case *ast.Identifier:
 			v.outer.stack.Push(t.Name)
@@ -37,7 +38,7 @@ func (v *selectorVisitor) Visit(e ast.Expression) ast.Visitor {
 
 	m, err := objectpath.Resolve(selector, source)
 	if err != nil {
-		log.Debugf("unable to resolve objectpath: %v", err)
+		v.outer.errors.Addf(v.exp.Pos(), "unable to resolve object path: %v", err)
 	}
 	v.outer.stack.Push(m)
 

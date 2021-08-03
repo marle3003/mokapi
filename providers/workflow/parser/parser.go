@@ -14,16 +14,21 @@ type parser struct {
 	pos token.Position
 	lit string
 
-	errors ErrorList
+	errors token.ErrorList
 }
 
-func Parse(s string) ast.Expression {
+func Parse(s string) (ast.Expression, error) {
 	p := &parser{}
 	eh := func(pos token.Position, msg string) { p.errors.Add(pos, msg) }
 	p.scanner = scanner.NewScanner([]byte(s), eh)
 
 	p.next()
-	return p.parseBinary()
+	exp := p.parseBinary()
+	if len(p.errors) > 0 {
+		return nil, p.errors.Err()
+	}
+
+	return exp, nil
 }
 
 func (p *parser) parseBinary() ast.Expression {
@@ -168,11 +173,10 @@ func (p *parser) parseMap() *ast.MapExpr {
 		}
 		p.expect(token.COMMA)
 	}
-	p.expect(token.RBRACK)
+	p.expect(token.RBRACE)
 	return &ast.MapExpr{Values: values, Lbrack: lbrace}
 }
 
-// TODO CHANGE MAP TO {}
 func (p *parser) parseSequence() *ast.SequenceExpr {
 	lbrack := p.pos
 	p.expect(token.LBRACK)

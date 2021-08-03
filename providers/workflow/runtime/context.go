@@ -11,12 +11,16 @@ func (c *Context) Set(name string, value interface{}) {
 	c.data[name] = value
 }
 
-func (c *Context) Get(name string) interface{} {
+func (c *Context) Get(name string) (interface{}, error) {
 	switch name {
 	case "steps":
-		return c.Steps
+		return c.Steps, nil
 	default:
-		return c.data[name]
+		i, ok := c.data[name]
+		if !ok {
+			return nil, fmt.Errorf("identifier %q not exists in current context", name)
+		}
+		return i, nil
 	}
 }
 

@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/mokapi"
 	"mokapi/providers/utils"
@@ -94,29 +95,37 @@ func runStep(step mokapi.Step, ctx *WorkflowContext) (*StepSummary, error) {
 
 	var err error
 	if len(step.Run) > 0 {
-		summary.Log = runScript(step, summary.Id, ctx)
+		summary.Log, err = runScript(step, summary.Id, ctx)
 	} else {
-		summary.Log = runAction(step, summary.Id, ctx)
+		summary.Log, err = runAction(step, summary.Id, ctx)
 	}
 
 	return summary, err
 }
 
 func RunExpression(s string, ctx *WorkflowContext) (interface{}, error) {
-	exp := parser.Parse(s)
+	exp, err := parser.Parse(s)
+	if err != nil {
+		return nil, err
+	}
 
 	v := newVisitor(ctx)
 	ast.Walk(v, exp)
 
+	err = v.errors.Err()
+	if err != nil {
+		return nil, err
+	}
+
 	return v.stack.Pop(), nil
 }
 
-func runScript(step mokapi.Step, stepId string, ctx *WorkflowContext) Log {
+func runScript(step mokapi.Step, stepId string, ctx *WorkflowContext) (Log, error) {
 	script := step.Run
 	var err error
 	script, err = sPrint(script, ctx)
 	if err != nil {
-		return newLog("parse error: %v", err)
+		return newLog("parse error: %v", err), err
 	}
 
 	var output []byte
@@ -137,17 +146,17 @@ func runScript(step mokapi.Step, stepId string, ctx *WorkflowContext) Log {
 		}
 	}
 	if err != nil {
-		return newLog("execution error: %v", err)
+		return newLog("execution error: %v", err), err
 	}
 	s := fmt.Sprintf("%s", output)
 	ctx.parseOutput(s, stepId)
 
-	return strings.Split(s, "\n")
+	return strings.Split(s, "\n"), nil
 }
 
-func runAction(step mokapi.Step, stepId string, ctx *WorkflowContext) Log {
+func runAction(step mokapi.Step, stepId string, ctx *WorkflowContext) (Log, error) {
 	if a, ok := ctx.Actions[step.Uses]; !ok {
-		return newLog("unknown action %v", step.Uses)
+		return newLog("unknown action %v", step.Uses), nil
 	} else {
 		l := Log{}
 		withLog := make([]string, 0, len(step.With)+1)
@@ -155,7 +164,7 @@ func runAction(step mokapi.Step, stepId string, ctx *WorkflowContext) Log {
 		for k, v := range step.With {
 			val, err := parse(v, ctx)
 			if err != nil {
-				return newLog("parse error %v: %v", k, err)
+				return newLog("parse error %v: %v", k, err), errors.Wrapf(err, "step %v, name %v", stepId, k)
 			}
 			ctx.Context.Steps[stepId].Inputs[k] = val
 			withLog = append(withLog, fmt.Sprintf("%v: %v", k, utils.ToString(val)))
@@ -165,10 +174,10 @@ func runAction(step mokapi.Step, stepId string, ctx *WorkflowContext) Log {
 		actionCtx := newActionContext(stepId, ctx)
 		err := a.Run(actionCtx)
 		if err != nil {
-			return newLog("execution error: %v", err)
+			return newLog("execution error: %v", err), err
 		}
 		l.AppendRange(actionCtx.log)
-		return l
+		return l, nil
 	}
 }
 

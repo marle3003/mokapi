@@ -1,14 +1,13 @@
-package parser
+package token
 
 import (
 	"fmt"
 	"github.com/pkg/errors"
-	"mokapi/providers/workflow/token"
 	"strings"
 )
 
 type Error struct {
-	Pos token.Position
+	Pos Position
 	Msg string
 }
 
@@ -18,12 +17,16 @@ func (e Error) String() string {
 
 type ErrorList []*Error
 
-func (l *ErrorList) Add(pos token.Position, msg string) {
+func (l *ErrorList) Add(pos Position, msg string) {
 	*l = append(*l, &Error{Pos: pos, Msg: msg})
 }
 
-func (l *ErrorList) Addf(pos token.Position, format string, args ...interface{}) {
+func (l *ErrorList) Addf(pos Position, format string, args ...interface{}) {
 	*l = append(*l, &Error{Pos: pos, Msg: fmt.Sprintf(format, args...)})
+}
+
+func (l ErrorList) Len() int {
+	return len(l)
 }
 
 func (l ErrorList) Err() error {

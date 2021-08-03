@@ -29,6 +29,12 @@ func ParseXml(s string, schema *openapi.SchemaRef) (interface{}, error) {
 }
 
 func MarshalXML(v interface{}, schema *openapi.SchemaRef) ([]byte, error) {
+	if schema == nil || schema.Value == nil {
+		return nil, errors.Errorf("unable to marshal xml with undefined schema")
+	} else if schema.Value.Type != "array" && schema.Value.Type != "object" && (schema.Value.Xml == nil || !schema.Value.Xml.Wrapped) {
+		return nil, errors.Errorf("schema must be object or array or using wrapping for marshalling to xml, but was %v", schema.Value.Type)
+	}
+
 	m := &StringMap{Data: v, Schema: schema}
 	xmlString, err := xml.Marshal(m)
 	if err != nil {
@@ -147,12 +153,8 @@ func encodeObject(e *xml.Encoder, obj map[string]interface{}, schema *openapi.Sc
 
 		if p, ok := obj[propertyName]; ok {
 			propertyMap := &StringMap{Data: p, Schema: propertySchema}
-			t := xml.StartElement{Name: xml.Name{Local: propertyName}}
-			err := e.EncodeElement(propertyMap, t)
-			if err != nil {
-				return err
-			}
-			err = e.EncodeToken(xml.EndElement{Name: t.Name})
+			start := xml.StartElement{Name: xml.Name{Local: propertyName}}
+			err := e.EncodeElement(propertyMap, start)
 			if err != nil {
 				return err
 			}

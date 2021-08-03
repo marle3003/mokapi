@@ -13,7 +13,7 @@ import (
 
 type ReceivedMailHandler func(mail *models.MailMetric)
 
-type EventHandler func(events event.Handler, options ...workflow.Options) *runtime.Summary
+type EventHandler func(events event.Handler, options ...workflow.Options) (*runtime.Summary, error)
 
 type Binding struct {
 	server *smtp.Server
@@ -97,7 +97,10 @@ func (b *Binding) Apply(i interface{}) error {
 
 func (b backend) Login(state *smtp.ConnectionState, username, password string) (smtp.Session, error) {
 	log.Debugf("smtp login with username %q", username)
-	summary := b.wh(event.WithSmtpEvent(event.SmtpEvent{Login: true, Address: state.LocalAddr.String()}), workflow.WithContext("auth", &Login{Username: username, Password: password}))
+	summary, err := b.wh(event.WithSmtpEvent(event.SmtpEvent{Login: true, Address: state.LocalAddr.String()}), workflow.WithContext("auth", &Login{Username: username, Password: password}))
+	if err != nil {
+		log.Errorf("error on smtp login: %v", err)
+	}
 	if summary == nil {
 		log.Debugf("no actions found")
 	} else {
@@ -109,7 +112,11 @@ func (b backend) Login(state *smtp.ConnectionState, username, password string) (
 
 func (b backend) AnonymousLogin(state *smtp.ConnectionState) (smtp.Session, error) {
 	log.Debug("smtp anonymous login")
-	summary := b.wh(event.WithSmtpEvent(event.SmtpEvent{Login: true, Address: state.LocalAddr.String()}), workflow.WithContext("auth", &Login{Anonymous: true}))
+	summary, err := b.wh(event.WithSmtpEvent(event.SmtpEvent{Login: true, Address: state.LocalAddr.String()}), workflow.WithContext("auth", &Login{Anonymous: true}))
+	if err != nil {
+		log.Errorf("error on smtp login: %v", err)
+	}
+
 	if summary == nil {
 		log.Debugf("no actions found")
 	} else {

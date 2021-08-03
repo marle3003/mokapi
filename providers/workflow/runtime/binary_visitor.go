@@ -69,8 +69,7 @@ func (v *binaryVisitor) Visit(e ast.Expression) ast.Visitor {
 		// finished building expression tree
 		val, err := v.tree.eval()
 		if err != nil {
-			// TODO
-			//v.outer.AddError(v.binary.Pos(), err.Error())
+			v.outer.errors.Add(v.binary.Pos(), err.Error())
 		} else {
 			v.outer.stack.Push(val)
 		}

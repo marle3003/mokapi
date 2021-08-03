@@ -215,15 +215,18 @@ func (s *Server) updateConfigs(config dynamic.Config) {
 	}
 }
 
-func (s *Server) triggerHandler(event event.Handler, options ...workflow.Options) *runtime.Summary {
+func (s *Server) triggerHandler(event event.Handler, options ...workflow.Options) (*runtime.Summary, error) {
 	summary := &runtime.Summary{}
 	for _, c := range s.config {
 		o := append(options, workflow.WithWorkingDirectory(filepath.Dir(c.ConfigPath)))
-		s := workflow.Run(c.Workflows, event, o...)
+		s, err := workflow.Run(c.Workflows, event, o...)
+		if err != nil {
+			return nil, err
+		}
 		summary.Workflows = append(summary.Workflows, s.Workflows...)
 	}
 
-	return summary
+	return summary, nil
 }
 
 func (s *Server) appendCertificate(c mokapi.Certificate, currentDir string) error {

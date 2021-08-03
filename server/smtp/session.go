@@ -34,7 +34,11 @@ func newSession(received chan *models.MailMetric, wh EventHandler, state *smtp.C
 
 func (s *session) Reset() {
 	if s.current != nil {
-		summary := s.wh(event.WithSmtpEvent(event.SmtpEvent{Received: true, Address: s.state.LocalAddr.String()}), workflow.WithContext("mail", s.current))
+		summary, err := s.wh(event.WithSmtpEvent(event.SmtpEvent{Received: true, Address: s.state.LocalAddr.String()}), workflow.WithContext("mail", s.current))
+		if err != nil {
+			log.Errorf("error on smtp: %v", err)
+		}
+
 		if summary == nil {
 			log.Debugf("no actions found")
 		} else {

@@ -78,7 +78,7 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 		res.Headers[k] = fmt.Sprintf("%v", data)
 	}
 
-	summary := context.workflowHandler(event.WithHttpEvent(event.HttpEvent{
+	summary, err := context.workflowHandler(event.WithHttpEvent(event.HttpEvent{
 		Method: context.Request.Method,
 		Path:   context.Request.URL.Path,
 	}),
@@ -86,6 +86,10 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 		workflow.WithContext("response", res),
 		workflow.WithAction("set-response", res))
 
+	if err != nil {
+		writeError(err.Error(), http.StatusBadRequest, context)
+		return
+	}
 	if summary == nil {
 		log.Debugf("no actions found")
 	} else {
@@ -93,7 +97,7 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 	}
 
 	if err := write(res, context); err != nil {
-		writeError(err.Error(), http.StatusBadRequest, context)
+		writeError(err.Error(), http.StatusInternalServerError, context)
 		return
 	}
 }
@@ -215,7 +219,7 @@ func readBody(ctx *HttpContext, contentType *media.ContentType) (interface{}, er
 		}
 
 		body, err := parseBody(data, contentType, media.Schema)
-		if err != nil {
+		if err == nil {
 			b, _ := json.Marshal(body)
 			ctx.metric.Parameters = append(ctx.metric.Parameters, models.RequestParamter{
 				Name:  "Body",
@@ -283,7 +287,7 @@ func write(r *Response, ctx *HttpContext) error {
 			}
 			body = bytes
 		} else {
-			if bytes, err := encodeData(r.Data, contentType, ctx.Response.Schema); err != nil {
+			if bytes, err := encoding.Encode(r.Data, contentType, ctx.Response.Schema); err != nil {
 				return err
 			} else {
 				body = bytes
@@ -304,20 +308,6 @@ func write(r *Response, ctx *HttpContext) error {
 	ctx.updateMetric(r.StatusCode, contentType.String(), string(body))
 
 	return err
-}
-
-func encodeData(data interface{}, contentType *media.ContentType, schema *openapi.SchemaRef) ([]byte, error) {
-	switch contentType.Subtype {
-	case "json":
-		return encoding.MarshalJSON(data, schema)
-	case "xml", "rss+xml":
-		return encoding.MarshalXML(data, schema)
-	default:
-		if s, ok := data.(string); ok {
-			return []byte(s), nil
-		}
-		return nil, fmt.Errorf("unspupported encoding for content type %v", contentType)
-	}
 }
 
 func prettyByteCountIEC(b int64) string {

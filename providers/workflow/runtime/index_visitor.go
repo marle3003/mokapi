@@ -1,17 +1,17 @@
 package runtime
 
 import (
-	log "github.com/sirupsen/logrus"
 	"mokapi/providers/workflow/ast"
 	"mokapi/providers/workflow/path/objectpath"
 )
 
 type indexVisitor struct {
 	outer *visitor
+	exp   ast.Expression
 }
 
-func newIndexVisitor(outer *visitor) *indexVisitor {
-	return &indexVisitor{outer: outer}
+func newIndexVisitor(outer *visitor, exp ast.Expression) *indexVisitor {
+	return &indexVisitor{outer: outer, exp: exp}
 }
 
 func (v *indexVisitor) Visit(e ast.Expression) ast.Visitor {
@@ -24,7 +24,7 @@ func (v *indexVisitor) Visit(e ast.Expression) ast.Visitor {
 
 	m, err := objectpath.Resolve(index, source)
 	if err != nil {
-		log.Debugf("unable to resolve index path: %v", err)
+		v.outer.errors.Addf(v.exp.Pos(), "unable to resolve index: %v", err)
 	}
 	v.outer.stack.Push(m)
 

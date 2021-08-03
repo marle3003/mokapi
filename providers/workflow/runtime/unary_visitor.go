@@ -29,7 +29,7 @@ func (v *unaryVisitor) Visit(e ast.Expression) ast.Visitor {
 		case float64:
 			x = n * -1
 		default:
-			// TODO ERROR
+			v.outer.errors.Addf(v.u.Pos(), "operator %v not supported for type %t", v.u.Op, x)
 		}
 	case token.NOT:
 		switch n := x.(type) {
