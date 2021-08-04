@@ -171,7 +171,7 @@ func TestCallExprWithSelector(t *testing.T) {
 }
 
 func TestNestedCallExpr(t *testing.T) {
-	src := "a(b, c(d, e)"
+	src := "a(b, c(d, e))"
 	x, err := Parse(src)
 	test.Ok(t, err)
 	if f, ok := x.(*ast.CallExpr); !ok {
