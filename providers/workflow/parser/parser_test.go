@@ -3,12 +3,14 @@ package parser
 import (
 	"mokapi/providers/workflow/ast"
 	"mokapi/providers/workflow/token"
+	"mokapi/test"
 	"testing"
 )
 
 func TestNumber(t *testing.T) {
 	src := "12"
-	x := Parse(src)
+	x, err := Parse(src)
+	test.Ok(t, err)
 	if n, ok := x.(*ast.Literal); !ok {
 		t.Errorf("Parse(%q): got %T, expected *ast.Literal", src, x)
 	} else if n.Kind != token.INT {
@@ -20,7 +22,8 @@ func TestNumber(t *testing.T) {
 
 func TestString(t *testing.T) {
 	src := "\"Hello World\""
-	x := Parse(src)
+	x, err := Parse(src)
+	test.Ok(t, err)
 	if s, ok := x.(*ast.Literal); !ok {
 		t.Errorf("Parse(%q): got %T, expected *ast.Literal", src, x)
 	} else if s.Kind != token.STRING {
@@ -32,7 +35,8 @@ func TestString(t *testing.T) {
 
 func TestIdentExpr(t *testing.T) {
 	src := "a"
-	x := Parse(src)
+	x, err := Parse(src)
+	test.Ok(t, err)
 	if i, ok := x.(*ast.Identifier); !ok {
 		t.Errorf("Parse(%q): got %T, expected *ast.Identifier", src, x)
 	} else if i.Name != "a" {
@@ -42,7 +46,8 @@ func TestIdentExpr(t *testing.T) {
 
 func TestSelectorExpr(t *testing.T) {
 	src := "a.b"
-	x := Parse(src)
+	x, err := Parse(src)
+	test.Ok(t, err)
 	if s, ok := x.(*ast.Selector); !ok {
 		t.Errorf("Parse(%q): got %T, expected *ast.Selector", src, x)
 	} else {
@@ -59,7 +64,8 @@ func TestSelectorExpr(t *testing.T) {
 
 func TestStarSelectorExpr(t *testing.T) {
 	src := "a.*"
-	x := Parse(src)
+	x, err := Parse(src)
+	test.Ok(t, err)
 	if s, ok := x.(*ast.Selector); !ok {
 		t.Errorf("Parse(%q): got %T, expected *ast.Selector", src, x)
 	} else {
@@ -76,7 +82,8 @@ func TestStarSelectorExpr(t *testing.T) {
 
 func TestBinaryExpr(t *testing.T) {
 	src := "a == b"
-	x := Parse(src)
+	x, err := Parse(src)
+	test.Ok(t, err)
 	if b, ok := x.(*ast.Binary); !ok {
 		t.Errorf("Parse(%q): got %T, expected *ast.Binary", src, x)
 	} else {
@@ -100,7 +107,8 @@ func TestBinaryExpr(t *testing.T) {
 
 func TestCallExpr(t *testing.T) {
 	src := "a(b, c)"
-	x := Parse(src)
+	x, err := Parse(src)
+	test.Ok(t, err)
 	if f, ok := x.(*ast.CallExpr); !ok {
 		t.Errorf("Parse(%q): got %T, expected *ast.CallExpr", src, x)
 	} else {
@@ -128,7 +136,8 @@ func TestCallExpr(t *testing.T) {
 
 func TestCallExprWithSelector(t *testing.T) {
 	src := "a(b.*, c)"
-	x := Parse(src)
+	x, err := Parse(src)
+	test.Ok(t, err)
 	if f, ok := x.(*ast.CallExpr); !ok {
 		t.Errorf("Parse(%q): got %T, expected *ast.CallExpr", src, x)
 	} else {
@@ -163,7 +172,8 @@ func TestCallExprWithSelector(t *testing.T) {
 
 func TestNestedCallExpr(t *testing.T) {
 	src := "a(b, c(d, e)"
-	x := Parse(src)
+	x, err := Parse(src)
+	test.Ok(t, err)
 	if f, ok := x.(*ast.CallExpr); !ok {
 		t.Errorf("Parse(%q): got %T, expected *ast.CallExpr", src, x)
 	} else {
@@ -208,7 +218,8 @@ func TestNestedCallExpr(t *testing.T) {
 
 func TestClosureExpr(t *testing.T) {
 	src := "x => x == b"
-	x := Parse(src)
+	x, err := Parse(src)
+	test.Ok(t, err)
 	if f, ok := x.(*ast.Closure); !ok {
 		t.Errorf("Parse(%q): got %T, expected *ast.CallExpr", src, x)
 	} else {
@@ -230,7 +241,8 @@ func TestList(t *testing.T) {
 	e := []string{"1", "2", "3", "4"}
 	src := "[1, 2, 3, 4]"
 
-	x := Parse(src)
+	x, err := Parse(src)
+	test.Ok(t, err)
 	seq, isSeq := x.(*ast.SequenceExpr)
 	if !isSeq {
 		t.Errorf("Parse(%q): got %v, expected block *ast.SequenceExpr", src, x)
@@ -250,7 +262,8 @@ func TestList(t *testing.T) {
 func TestListRange(t *testing.T) {
 	src := "[1...4]"
 
-	x := Parse(src)
+	x, err := Parse(src)
+	test.Ok(t, err)
 	seq, isSeq := x.(*ast.SequenceExpr)
 	if !isSeq {
 		t.Errorf("Parse(%q): got %v, expected block *ast.SequenceExpr", src, x)
@@ -283,7 +296,8 @@ func TestMap(t *testing.T) {
 	e := map[string]string{"a": "1", "b": "2", "c": "3", "z": "4"}
 	src := "{a: 1, b: 2, c: 3, z: 4}"
 
-	x := Parse(src)
+	x, err := Parse(src)
+	test.Ok(t, err)
 	seq, isSeq := x.(*ast.MapExpr)
 	if !isSeq {
 		t.Errorf("Parse(%q): got %v, expected block *ast.MapExpr", src, x)
