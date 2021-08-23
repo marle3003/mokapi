@@ -78,13 +78,27 @@ func (w *xmlEncoder) encodeElement(name string, i interface{}, schema *openapi.S
 					return err
 				}
 			}
+		} else if list, ok := i.(map[interface{}]interface{}); ok {
+			for _, item := range list {
+				err := w.encodeElement(start.name, item, schema.Value.Items)
+				if err != nil {
+					return err
+				}
+			}
 		} else {
 			return fmt.Errorf("expected array but found %T", i)
 		}
 	case "object":
 		o, ok := i.(map[string]interface{})
 		if !ok {
-			return fmt.Errorf("expected object but found %T", i)
+			if m, ok := i.(map[interface{}]interface{}); ok {
+				o = make(map[string]interface{})
+				for k, v := range m {
+					o[fmt.Sprintf("%v", k)] = v
+				}
+			} else {
+				return fmt.Errorf("expected object but found %T", i)
+			}
 		}
 		addAttribute(start, o, schema.Value)
 
@@ -104,7 +118,7 @@ func (w *xmlEncoder) encodeElement(name string, i interface{}, schema *openapi.S
 	default:
 		w.writeStart(start)
 
-		value := fmt.Sprint(i)
+		value := toString(i)
 		if schema.Value.Xml != nil && schema.Value.Xml.CData {
 			w.writer.WriteString(fmt.Sprintf("<![CDATA[%v]]>", value))
 		} else {
@@ -125,7 +139,7 @@ func (w *xmlEncoder) writeStart(start startElement) {
 	w.writer.WriteString("<")
 	w.writer.WriteString(start.name)
 	for k, v := range start.attr {
-		w.writer.WriteString(fmt.Sprintf(" %v=\"%v\"", k, v))
+		w.writer.WriteString(fmt.Sprintf(" %v=\"%v\"", k, toString(v)))
 	}
 	w.writer.WriteString(">")
 }
@@ -145,7 +159,7 @@ func addAttribute(start startElement, obj map[string]interface{}, schema *openap
 		}
 
 		if p, ok := obj[propertyName]; ok {
-			start.attr[attributeName] = fmt.Sprint(p)
+			start.attr[attributeName] = toString(p)
 		}
 	}
 }

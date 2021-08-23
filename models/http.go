@@ -1,7 +1,6 @@
 package models
 
 import (
-	runtime2 "mokapi/providers/workflow/runtime"
 	"time"
 )
 
@@ -17,7 +16,7 @@ type RequestMetric struct {
 	Parameters   []RequestParamter
 	ContentType  string
 	ResponseBody string
-	Actions      []*runtime2.WorkflowSummary
+	//Actions      []*runtime2.WorkflowSummary
 }
 
 type RequestParamter struct {

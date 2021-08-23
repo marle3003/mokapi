@@ -72,9 +72,9 @@ func newMail(m *models.MailMetric) mailFull {
 		HtmlBody: m.Mail.HtmlBody,
 	}
 
-	for _, a := range m.Summary.Workflows {
-		r.Actions = append(r.Actions, newActionSummary(a))
-	}
+	//for _, a := range m.Summary.Workflows {
+	//	r.Actions = append(r.Actions, newActionSummary(a))
+	//}
 
 	return r
 }

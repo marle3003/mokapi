@@ -21,7 +21,7 @@ func isValidConfigFile(path string) bool {
 		return false
 	}
 	switch filepath.Ext(path) {
-	case ".yml", ".yaml", ".json", ".tmpl":
+	case ".yml", ".yaml", ".json", ".tmpl", ".lua":
 		return true
 	default:
 		return false

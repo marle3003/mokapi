@@ -11,8 +11,6 @@ import (
 	"mokapi/models"
 	"mokapi/models/media"
 	"mokapi/providers/encoding"
-	"mokapi/providers/workflow"
-	"mokapi/providers/workflow/event"
 	"net/http"
 	"reflect"
 	"strings"
@@ -34,13 +32,7 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 
 	operation := context.Operation
 
-	req := &Request{
-		Header: context.Parameters[openapi.HeaderParameter],
-		Path:   context.Parameters[openapi.PathParameter],
-		Query:  context.Parameters[openapi.QueryParameter],
-		Cookie: context.Parameters[openapi.CookieParameter],
-		Method: context.Request.Method,
-	}
+	req := newRequest(context)
 
 	if operation.RequestBody != nil {
 		bodyParam, err := r(context)
@@ -78,23 +70,25 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 		res.Headers[k] = fmt.Sprintf("%v", data)
 	}
 
-	summary, err := context.workflowHandler(event.WithHttpEvent(event.HttpEvent{
-		Method: context.Request.Method,
-		Path:   context.Request.URL.Path,
-	}),
-		workflow.WithContext("request", req),
-		workflow.WithContext("response", res),
-		workflow.WithAction("set-response", res))
+	context.workflowHandler(req, res)
 
-	if err != nil {
-		writeError(err.Error(), http.StatusBadRequest, context)
-		return
-	}
-	if summary == nil {
-		log.Debugf("no actions found")
-	} else {
-		context.metric.Actions = summary.Workflows
-	}
+	//summary, err := context.workflowHandler(event.WithHttpEvent(event.HttpEvent{
+	//	Method: context.Request.Method,
+	//	Path:   context.Request.URL.Path,
+	//}),
+	//	workflow.WithContext("request", req),
+	//	workflow.WithContext("response", res),
+	//	workflow.WithAction("set-response", res))
+	//
+	//if err != nil {
+	//	writeError(err.Error(), http.StatusBadRequest, context)
+	//	return
+	//}
+	//if summary == nil {
+	//	log.Debugf("no actions found")
+	//} else {
+	//	context.metric.Actions = summary.Workflows
+	//}
 
 	if err := write(res, context); err != nil {
 		writeError(err.Error(), http.StatusInternalServerError, context)

@@ -2,7 +2,9 @@ package encoding
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
+	"math"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/models/media"
 )
@@ -14,7 +16,11 @@ type Encoder interface {
 func Encode(i interface{}, contentType *media.ContentType, schema *openapi.SchemaRef) ([]byte, error) {
 	switch contentType.Subtype {
 	case "json":
-		return MarshalJSON(i, schema)
+		b, err := MarshalJSON(i, schema)
+		if err, ok := err.(*json.SyntaxError); ok {
+			return nil, fmt.Errorf("json error (%v): %v", err.Offset, err.Error())
+		}
+		return b, err
 	case "xml", "rss+xml":
 		var buffer bytes.Buffer
 		w := newXmlWriter(&buffer)
@@ -31,4 +37,22 @@ func Encode(i interface{}, contentType *media.ContentType, schema *openapi.Schem
 	}
 
 	return nil, fmt.Errorf("unsupported content type %v", contentType)
+}
+
+func toString(i interface{}) string {
+	switch v := i.(type) {
+	case float64:
+		if i := math.Trunc(v); i == v {
+			return fmt.Sprintf("%v", int64(i))
+		}
+		return fmt.Sprintf("%f", v)
+	case float32:
+		f := float64(v)
+		if i := math.Trunc(f); i == f {
+			return fmt.Sprintf("%v", int64(i))
+		}
+		return fmt.Sprintf("%f", v)
+	default:
+		return fmt.Sprintf("%v", i)
+	}
 }

@@ -1,14 +1,13 @@
 package models
 
 import (
-	"mokapi/providers/workflow/runtime"
 	"net/mail"
 	"time"
 )
 
 type MailMetric struct {
-	Mail    *Mail
-	Summary *runtime.Summary
+	Mail *Mail
+	//Summary *runtime.Summary
 }
 
 type Mail struct {

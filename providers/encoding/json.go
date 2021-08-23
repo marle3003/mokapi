@@ -76,17 +76,33 @@ func selectData(data interface{}, schema *openapi.SchemaRef) (interface{}, error
 			}
 			return result, nil
 		}
+		if m, ok := data.(map[interface{}]interface{}); ok {
+			result := make([]interface{}, 0)
+			for _, v := range m {
+				if i, err := selectData(v, schema.Value.Items); err != nil {
+					return nil, err
+				} else {
+					result = append(result, i)
+				}
+			}
+			return result, nil
+		}
 
 		return nil, fmt.Errorf("unexpected type for schema type array")
 	} else if schema.Value.Type == "object" {
 		var obj map[string]interface{}
-		if o, isObject := data.(map[string]interface{}); isObject {
+		if o, isObject := data.(map[interface{}]interface{}); isObject {
+			obj = make(map[string]interface{})
+			for k, v := range o {
+				obj[fmt.Sprintf("%v", k)] = v
+			}
+		} else if o, isObject := data.(map[string]interface{}); isObject {
 			obj = o
 		} else {
 			s := fmt.Sprintf("%v", data)
 			err := json.Unmarshal([]byte(s), &obj)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("unable to map %t with value \"%v\" to object", data, data)
 			}
 		}
 

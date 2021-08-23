@@ -2,7 +2,6 @@ package api
 
 import (
 	"mokapi/models"
-	runtime2 "mokapi/providers/workflow/runtime"
 	"time"
 )
 
@@ -136,48 +135,48 @@ func newRequest(r *models.RequestMetric) request {
 			Raw:   p.Raw,
 		})
 	}
-	for _, a := range r.Actions {
-		result.Actions = append(result.Actions, newActionSummary(a))
-	}
+	//for _, a := range r.Actions {
+	//	result.Actions = append(result.Actions, newActionSummary(a))
+	//}
 	return result
 }
 
-func newActionSummary(s *runtime2.WorkflowSummary) workflowSummary {
-	result := workflowSummary{
-		Name:     s.Name,
-		Duration: s.Duration,
-	}
-
-	switch s.Status {
-	case runtime2.Error:
-		result.Status = "error"
-	case runtime2.Successful:
-		result.Status = "successful"
-	}
-
-	for _, step := range s.Steps {
-		result.Steps = append(result.Steps, newStepSummary(step))
-	}
-
-	return result
-}
-
-func newStepSummary(s *runtime2.StepSummary) stepSummary {
-	r := stepSummary{
-		Id:       s.Id,
-		Name:     s.Name,
-		Log:      s.Log,
-		Duration: s.Duration,
-	}
-
-	switch s.Status {
-	case runtime2.Error:
-		r.Status = "error"
-	case runtime2.Successful:
-		r.Status = "successful"
-	case runtime2.Skip:
-		r.Status = "skip"
-	}
-
-	return r
-}
+//func newActionSummary(s *runtime2.WorkflowSummary) workflowSummary {
+//	result := workflowSummary{
+//		Name:     s.Name,
+//		Duration: s.Duration,
+//	}
+//
+//	switch s.Status {
+//	case runtime2.Error:
+//		result.Status = "error"
+//	case runtime2.Successful:
+//		result.Status = "successful"
+//	}
+//
+//	for _, step := range s.Steps {
+//		result.Steps = append(result.Steps, newStepSummary(step))
+//	}
+//
+//	return result
+//}
+//
+//func newStepSummary(s *runtime2.StepSummary) stepSummary {
+//	r := stepSummary{
+//		Id:       s.Id,
+//		Name:     s.Name,
+//		Log:      s.Log,
+//		Duration: s.Duration,
+//	}
+//
+//	switch s.Status {
+//	case runtime2.Error:
+//		r.Status = "error"
+//	case runtime2.Successful:
+//		r.Status = "successful"
+//	case runtime2.Skip:
+//		r.Status = "skip"
+//	}
+//
+//	return r
+//}

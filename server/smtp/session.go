@@ -10,8 +10,6 @@ import (
 	"io/ioutil"
 	"mime"
 	"mokapi/models"
-	"mokapi/providers/workflow"
-	"mokapi/providers/workflow/event"
 	"net/mail"
 	"strings"
 	"time"
@@ -20,37 +18,37 @@ import (
 type session struct {
 	current  *models.Mail
 	received chan *models.MailMetric
-	wh       EventHandler
-	state    *smtp.ConnectionState
+	//wh       EventHandler
+	state *smtp.ConnectionState
 }
 
-func newSession(received chan *models.MailMetric, wh EventHandler, state *smtp.ConnectionState) *session {
+func newSession(received chan *models.MailMetric /*, wh EventHandler*/, state *smtp.ConnectionState) *session {
 	return &session{
 		received: received,
-		wh:       wh,
-		state:    state,
+		//wh:       wh,
+		state: state,
 	}
 }
 
 func (s *session) Reset() {
 	if s.current != nil {
-		summary, err := s.wh(event.WithSmtpEvent(event.SmtpEvent{Received: true, Address: s.state.LocalAddr.String()}), workflow.WithContext("mail", s.current))
-		if err != nil {
-			log.Errorf("error on smtp: %v", err)
-		}
+		//summary, err := s.wh(event.WithSmtpEvent(event.SmtpEvent{Received: true, Address: s.state.LocalAddr.String()}), workflow.WithContext("mail", s.current))
+		//if err != nil {
+		//	log.Errorf("error on smtp: %v", err)
+		//}
+		//
+		//if summary == nil {
+		//	log.Debugf("no actions found")
+		//} else {
+		//	log.WithField("action summary", summary).Debugf("executed actions")
+		//}
 
-		if summary == nil {
-			log.Debugf("no actions found")
-		} else {
-			log.WithField("action summary", summary).Debugf("executed actions")
-		}
-
-		s.received <- &models.MailMetric{Mail: s.current, Summary: summary}
+		s.received <- &models.MailMetric{Mail: s.current /*, Summary: summary*/}
 	}
 }
 
 func (s *session) Logout() error {
-	s.wh(event.WithSmtpEvent(event.SmtpEvent{Logout: true}))
+	//s.wh(event.WithSmtpEvent(event.SmtpEvent{Logout: true}))
 	return nil
 }
 

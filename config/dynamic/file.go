@@ -10,6 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
+	"mokapi/config/dynamic/script"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -83,16 +84,22 @@ func (fw *FileWatcher) add(path string) {
 		}
 		if ci.item != nil {
 			fh = newFileHandler(ci.item)
-			fh.events = append(fh.events, ci.eventHandler)
+			if ci.eventHandler != nil {
+				fh.events = append(fh.events, ci.eventHandler)
+			}
 			fw.Files[path] = fh
 			err := fw.watcher.Add(path)
 			if err != nil {
 				log.Errorf("unable to add file watcher to %q: %v", path, err.Error())
 			}
 			go func() {
-				ok, _ := ci.eventHandler(path, ci.item, fw)
-				if ok {
+				if ci.eventHandler == nil {
 					fw.update <- ci.item
+				} else {
+					ok, _ := ci.eventHandler(path, ci.item, fw)
+					if ok {
+						fw.update <- ci.item
+					}
 				}
 			}()
 
@@ -159,10 +166,14 @@ func (fw *FileWatcher) Start() {
 }
 
 func (fw *FileWatcher) onChanged(h *fileHandler, path string, config Config) {
-	for _, e := range h.events {
-		if b, c := e(path, config, fw); b {
-			fw.update <- c
+	if len(h.events) > 0 {
+		for _, e := range h.events {
+			if b, c := e(path, config, fw); b {
+				fw.update <- c
+			}
 		}
+	} else {
+		fw.update <- config
 	}
 }
 
@@ -231,6 +242,15 @@ func parseConfig(filename string, data []byte, element interface{}) error {
 	case ".tmpl":
 		filename = filename[0 : len(filename)-len(filepath.Ext(filename))]
 		return parseConfig(filename, data, element)
+	case ".lua":
+		item, ok := element.(*configItem)
+		if ok {
+			item.item = script.New(filename, data)
+		} else {
+			script := element.(*script.Script)
+			script.Code = string(data)
+		}
+		return nil
 	}
 
 	return fmt.Errorf("unsupported file extension: %v", filename)

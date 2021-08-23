@@ -7,9 +7,6 @@ import (
 	"github.com/pkg/errors"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/models"
-	"mokapi/providers/workflow"
-	"mokapi/providers/workflow/event"
-	"mokapi/providers/workflow/runtime"
 	"strings"
 	"time"
 
@@ -19,36 +16,36 @@ import (
 
 type AddRequestMetric func(metric *models.RequestMetric)
 
-type EventHandler func(events event.Handler, options ...workflow.Options) (*runtime.Summary, error)
+type WorkflowHandler func(request *Request, response *Response)
 
 type Binding struct {
 	Addr             string
 	server           *http.Server
 	handlers         map[string]map[string]*ServiceHandler
 	addRequestMetric AddRequestMetric
-	workflowHandler  EventHandler
+	workflowHandler  WorkflowHandler
 	IsTls            bool
 	certificates     map[string]*tls.Certificate
 }
 
-func NewBinding(addr string, mh AddRequestMetric, wh EventHandler) *Binding {
+func NewBinding(addr string, mh AddRequestMetric, wh func(string, ...interface{})) *Binding {
 	b := &Binding{
 		Addr:             addr,
 		handlers:         make(map[string]map[string]*ServiceHandler),
 		addRequestMetric: mh,
-		workflowHandler:  wh,
+		workflowHandler:  func(request *Request, response *Response) { wh("http", request, response) },
 	}
 	b.server = &http.Server{Addr: addr, Handler: b}
 
 	return b
 }
 
-func NewBindingWithTls(addr string, mh AddRequestMetric, wh EventHandler, getCertificate func(info *tls.ClientHelloInfo) (*tls.Certificate, error)) *Binding {
+func NewBindingWithTls(addr string, mh AddRequestMetric, wh func(string, ...interface{}), getCertificate func(info *tls.ClientHelloInfo) (*tls.Certificate, error)) *Binding {
 	b := &Binding{
 		Addr:             addr,
 		handlers:         make(map[string]map[string]*ServiceHandler),
 		addRequestMetric: mh,
-		workflowHandler:  wh,
+		workflowHandler:  func(request *Request, response *Response) { wh("http", request, response) },
 		IsTls:            true,
 		certificates:     make(map[string]*tls.Certificate),
 	}

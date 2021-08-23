@@ -10,12 +10,10 @@ import (
 	"mokapi/config/dynamic/ldap"
 	"mokapi/config/dynamic/mokapi"
 	"mokapi/config/dynamic/openapi"
+	"mokapi/config/dynamic/script"
 	"mokapi/config/dynamic/smtp"
 	"mokapi/config/static"
 	"mokapi/models"
-	"mokapi/providers/workflow"
-	"mokapi/providers/workflow/event"
-	"mokapi/providers/workflow/runtime"
 	"mokapi/server/api"
 	"mokapi/server/cert"
 	"mokapi/server/kafka"
@@ -41,8 +39,9 @@ type Server struct {
 	config             map[string]*mokapi.Config
 	store              *cert.Store
 
-	scheduler *workflow.Scheduler
-	Bindings  map[string]Binding
+	scripts map[string]*luaScript
+
+	Bindings map[string]Binding
 }
 
 func NewServer(config *static.Config) *Server {
@@ -55,7 +54,7 @@ func NewServer(config *static.Config) *Server {
 		stopMetricsUpdater: make(chan bool),
 		Bindings:           make(map[string]Binding),
 		config:             make(map[string]*mokapi.Config),
-		scheduler:          workflow.NewScheduler(),
+		scripts:            make(map[string]*luaScript),
 	}
 
 	watcher.AddListener(func(o dynamic.Config) {
@@ -86,9 +85,9 @@ func (s *Server) Start() {
 		log.Errorf("unable to start server: %v", err.Error())
 	}
 	s.startMetricUpdater()
-	s.scheduler.Start()
-
-	workflow.RegisterAction("kafka-producer", kafka.NewProducer(s.writeKafkaMessage))
+	//s.workflowRunner.Start()
+	//
+	//workflow.RegisterAction("kafka-producer", kafka.NewProducer(s.writeKafkaMessage))
 }
 
 func (s *Server) Wait() {
@@ -97,7 +96,7 @@ func (s *Server) Wait() {
 
 func (s *Server) Stop() {
 	s.watcher.Close()
-	s.scheduler.Stop()
+	//s.workflowRunner.Stop()
 }
 
 func (s *Server) startMetricUpdater() {
@@ -123,19 +122,17 @@ func (s *Server) startMetricUpdater() {
 
 func (s *Server) updateConfigs(config dynamic.Config) {
 	switch c := config.(type) {
+	case *script.Script:
+		s.AddScript(c.Filename, c.Code)
 	case *mokapi.Config:
 		s.config[c.ConfigPath] = c
-		if len(c.Workflows) == 0 {
-			log.Debugf("no workflows found in %v", c.ConfigPath)
-		}
-		for _, w := range c.Workflows {
-			log.Debugf("adding workflow %q", w.Name)
-		}
-		err := s.scheduler.AddOrUpdate(c.ConfigPath, c.Workflows, workflow.WithWorkingDirectory(filepath.Dir(c.ConfigPath)))
-		if err != nil {
-			log.Errorf("unable to add scheduler for workflows %q", c.ConfigPath)
-			return
-		}
+
+		//err := s.workflowRunner.Add(c.ConfigPath, c.Workflows, workflow.WithWorkingDirectory(filepath.Dir(c.ConfigPath)))
+		//if err != nil {
+		//	log.Errorf("unable to add scheduler for workflows %q", c.ConfigPath)
+		//	return
+		//}
+
 		for _, cer := range c.Certificates {
 			err := s.appendCertificate(cer, filepath.Dir(c.ConfigPath))
 			if err != nil {
@@ -153,9 +150,9 @@ func (s *Server) updateConfigs(config dynamic.Config) {
 			binding, found := s.Bindings[address].(*web.Binding)
 			if !found {
 				if strings.HasPrefix(server.Url, "https://") {
-					binding = web.NewBindingWithTls(address, s.runtime.Metrics.AddRequest, s.triggerHandler, s.store.GetCertificate)
+					binding = web.NewBindingWithTls(address, s.runtime.Metrics.AddRequest, s.Run, s.store.GetCertificate)
 				} else {
-					binding = web.NewBinding(address, s.runtime.Metrics.AddRequest, s.triggerHandler)
+					binding = web.NewBinding(address, s.runtime.Metrics.AddRequest, s.Run)
 				}
 				s.Bindings[address] = binding
 				binding.Start()
@@ -208,26 +205,33 @@ func (s *Server) updateConfigs(config dynamic.Config) {
 
 		_, found := s.Bindings[c.Address]
 		if !found {
-			b := smtpServer.NewBinding(c, s.runtime.Metrics.AddMail, s.store.GetCertificate, s.triggerHandler)
+			b := smtpServer.NewBinding(c, s.runtime.Metrics.AddMail, s.store.GetCertificate /*, s.triggerHandler*/)
 			b.Start()
 			s.Bindings[c.Address] = b
 		}
 	}
 }
 
-func (s *Server) triggerHandler(event event.Handler, options ...workflow.Options) (*runtime.Summary, error) {
-	summary := &runtime.Summary{}
-	for _, c := range s.config {
-		o := append(options, workflow.WithWorkingDirectory(filepath.Dir(c.ConfigPath)))
-		s, err := workflow.Run(c.Workflows, event, o...)
-		if err != nil {
-			return nil, err
-		}
-		summary.Workflows = append(summary.Workflows, s.Workflows...)
-	}
-
-	return summary, nil
-}
+//func (s *Server) triggerHandler(event event.Handler, options ...workflow.Options) (*runtime.Summary, error) {
+//	workflows := make([]workflow.Workflow, 0)
+//	for _, c := range s.config {
+//		for _, w := range c.Workflows {
+//			workflows = append(workflows, w)
+//		}
+//	}
+//
+//	summary, err := workflow.Run(s.workflows, event, options...)
+//	for _, c := range s.config {
+//		o := append(options, workflow.WithWorkingDirectory(filepath.Dir(c.ConfigPath)))
+//		s, err := workflow.Run(c.Workflows, event, o...)
+//		if err != nil {
+//			return nil, err
+//		}
+//		summary.Workflows = append(summary.Workflows, s.Workflows...)
+//	}
+//
+//	return summary, nil
+//}
 
 func (s *Server) appendCertificate(c mokapi.Certificate, currentDir string) error {
 	certContent, err := c.CertFile.Read(currentDir)
