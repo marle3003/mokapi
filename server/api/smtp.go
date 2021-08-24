@@ -41,7 +41,7 @@ type mailFull struct {
 	TextBody string `json:"textBody"`
 	HtmlBody string `json:"htmlBody"`
 
-	Actions []workflowSummary `json:"actions"`
+	Workflows []workflow `json:"workflows"`
 }
 
 func newMailSummary(mail *models.Mail) mailSummary {

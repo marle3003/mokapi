@@ -70,25 +70,7 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 		res.Headers[k] = fmt.Sprintf("%v", data)
 	}
 
-	context.workflowHandler(req, res)
-
-	//summary, err := context.workflowHandler(event.WithHttpEvent(event.HttpEvent{
-	//	Method: context.Request.Method,
-	//	Path:   context.Request.URL.Path,
-	//}),
-	//	workflow.WithContext("request", req),
-	//	workflow.WithContext("response", res),
-	//	workflow.WithAction("set-response", res))
-	//
-	//if err != nil {
-	//	writeError(err.Error(), http.StatusBadRequest, context)
-	//	return
-	//}
-	//if summary == nil {
-	//	log.Debugf("no actions found")
-	//} else {
-	//	context.metric.Actions = summary.Workflows
-	//}
+	context.metric.WorkflowLogs = context.workflowHandler(req, res)
 
 	if err := write(res, context); err != nil {
 		writeError(err.Error(), http.StatusInternalServerError, context)

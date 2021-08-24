@@ -3,7 +3,7 @@ package kafka
 import (
 	lua "github.com/yuin/gopher-lua"
 	luar "layeh.com/gopher-luar"
-	luam "mokapi/lua"
+	"mokapi/lua/utils"
 )
 
 type WriteMessage func(broker, topic string, partition int, key, message interface{}) (interface{}, interface{}, error)
@@ -22,7 +22,7 @@ func (kafka *Kafka) Produce(state *lua.LState) int {
 	broker := state.CheckString(1)
 	topic := state.CheckString(2)
 	key := state.ToString(3)
-	message := luam.MapTable(state.ToTable(4))
+	message := utils.MapTable(state.ToTable(4))
 	partition := -1
 	if lv, ok := state.Get(5).(lua.LNumber); ok {
 		partition = int(lv)

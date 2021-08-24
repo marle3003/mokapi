@@ -1,9 +1,9 @@
 <template>
-  <div v-if="actions !== null">
-    <p class="label">Actions</p>
-    <b-table small hover class="dataTable" :items="actions" :fields="fields">
+  <div v-if="workflows !== null">
+    <p class="label">Workflows</p>
+    <b-table small hover class="dataTable" :items="workflows" :fields="fields">
       <template v-slot:cell(show_details)="row">
-        <div @click="toggleDetails(row)">
+        <div @click="toggleDetails(row)" v-if="row.item.logs !== null && row.item.logs.length > 0">
           <b-icon v-if="row.detailsShowing" icon="dash-square"></b-icon>
           <b-icon v-else icon="plus-square"></b-icon>
         </div>
@@ -12,36 +12,10 @@
         {{ data.item.duration | duration }}
       </template>
       <template v-slot:row-details="row">
-        <div v-for="step in row.item.steps" :key="step.id" >
-          <div class="step" v-b-toggle="step.id">
-            <b-icon icon="chevron-right"></b-icon>
-            <span v-if="step.status === 'skip'">Skip </span><span v-else>Run </span>{{step.name}}
+        <div class="logs">
+          <div v-for="line in row.item.logs" :key="line" class="line">
+            {{ line }}
           </div>
-          <b-collapse :id="step.id" class="logs" v-if="step.status !== 'skip'">
-            <div v-for="log in parseLog(step.log)" :key="log.line" class="pl-4 mt-1">
-              <div>
-                <div v-if="log.logs !== undefined">
-                  <div class="line" v-b-toggle="step.id+'_'+log.line">
-                    <span class="number">{{ log.line }}</span>
-                    <b-icon icon="caret-right-fill" style="margin-right: 5px;" />
-                    <span>{{ log.text }}</span>
-                  </div>
-                  <b-collapse :id="step.id+'_'+log.line" v-for="g in log.logs" :key="g.line">
-                    <div class="line">
-                      <span class="number">{{ g.line }}</span>
-                      <span style="padding-left: 25px;white-space: pre-wrap;padding-bottom: 1px;">{{ g.text }}</span>
-                    </div>
-                  </b-collapse>
-                </div>
-                <div v-else>
-                  <div class="line">
-                    <span class="number">{{ log.line }}</span>
-                    <span>{{ log.text }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </b-collapse>
         </div>
       </template>
     </b-table>
@@ -53,11 +27,11 @@
 import moment from 'moment'
 
 export default {
-  name: 'Action',
-  props: ['actions'],
+  name: 'Workflows',
+  props: ['workflows'],
   data () {
     return {
-      fields: [{key: 'show_details', label: '', thStyle: 'width: 1%'}, 'name', 'duration', 'status'],
+      fields: [{key: 'show_details', label: '', thStyle: 'width: 1%'}, 'name', 'duration'],
       detailsShown: []
     }
   },

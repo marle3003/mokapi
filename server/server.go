@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"github.com/go-co-op/gocron"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi"
@@ -13,6 +14,7 @@ import (
 	"mokapi/config/dynamic/script"
 	"mokapi/config/dynamic/smtp"
 	"mokapi/config/static"
+	"mokapi/lua"
 	"mokapi/models"
 	"mokapi/server/api"
 	"mokapi/server/cert"
@@ -39,8 +41,9 @@ type Server struct {
 	config             map[string]*mokapi.Config
 	store              *cert.Store
 
-	scripts map[string]*luaScript
+	scripts map[string]*lua.Script
 
+	cron     *gocron.Scheduler
 	Bindings map[string]Binding
 }
 
@@ -54,7 +57,8 @@ func NewServer(config *static.Config) *Server {
 		stopMetricsUpdater: make(chan bool),
 		Bindings:           make(map[string]Binding),
 		config:             make(map[string]*mokapi.Config),
-		scripts:            make(map[string]*luaScript),
+		scripts:            make(map[string]*lua.Script),
+		cron:               gocron.NewScheduler(time.UTC),
 	}
 
 	watcher.AddListener(func(o dynamic.Config) {
@@ -85,9 +89,7 @@ func (s *Server) Start() {
 		log.Errorf("unable to start server: %v", err.Error())
 	}
 	s.startMetricUpdater()
-	//s.workflowRunner.Start()
-	//
-	//workflow.RegisterAction("kafka-producer", kafka.NewProducer(s.writeKafkaMessage))
+	s.cron.StartAsync()
 }
 
 func (s *Server) Wait() {
@@ -96,7 +98,7 @@ func (s *Server) Wait() {
 
 func (s *Server) Stop() {
 	s.watcher.Close()
-	//s.workflowRunner.Stop()
+	s.cron.Stop()
 }
 
 func (s *Server) startMetricUpdater() {

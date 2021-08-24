@@ -4,7 +4,7 @@ import (
 	"fmt"
 	lua "github.com/yuin/gopher-lua"
 	"io/ioutil"
-	luam "mokapi/lua"
+	"mokapi/lua/utils"
 	"mokapi/objectpath"
 	"regexp"
 	"strings"
@@ -26,7 +26,7 @@ func Loader(state *lua.LState) int {
 
 func renderFileApi(state *lua.LState) int {
 	path := state.CheckString(1)
-	data := luam.MapTable(state.CheckTable(2))
+	data := utils.MapTable(state.CheckTable(2))
 
 	template, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -49,7 +49,7 @@ func renderFileApi(state *lua.LState) int {
 
 func renderApi(state *lua.LState) int {
 	template := state.CheckString(1)
-	data := luam.MapTable(state.CheckTable(2))
+	data := utils.MapTable(state.CheckTable(2))
 
 	s, err := render(template, data)
 	if err != nil {

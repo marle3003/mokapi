@@ -78,7 +78,7 @@
         </b-row>
         <b-row>
           <b-col>
-            <action :actions="mail.actions"></action>
+            <workflows :workflows="mail.workflows"></workflows>
           </b-col>
         </b-row>
       </b-card>
@@ -100,12 +100,12 @@
 <script>
 import Api from '@/mixins/Api'
 import moment from 'moment'
-import Action from '@/components/Action'
+import Workflows from '@/components/Workflows'
 
 export default {
   name: 'SmtpMail',
   components: {
-    'action': Action
+    'workflows': Workflows
   },
   mixins: [Api],
   data () {

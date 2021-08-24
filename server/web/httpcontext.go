@@ -25,12 +25,12 @@ type HttpContext struct {
 	ContentType     *media.ContentType
 	metric          *models.RequestMetric
 	statusCode      openapi.HttpStatus
-	workflowHandler WorkflowHandler
+	workflowHandler workflowHandler
 	Response        *openapi.MediaType
 	Headers         map[string]*openapi.HeaderRef
 }
 
-func NewHttpContext(request *http.Request, response http.ResponseWriter, wh WorkflowHandler) *HttpContext {
+func NewHttpContext(request *http.Request, response http.ResponseWriter, wh workflowHandler) *HttpContext {
 	metric := models.NewRequestMetric(request.Method, getUrl(request))
 	return &HttpContext{ResponseWriter: response,
 		Request:         request,

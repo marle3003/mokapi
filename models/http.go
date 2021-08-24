@@ -16,7 +16,7 @@ type RequestMetric struct {
 	Parameters   []RequestParamter
 	ContentType  string
 	ResponseBody string
-	//Actions      []*runtime2.WorkflowSummary
+	WorkflowLogs []*WorkflowLog
 }
 
 type RequestParamter struct {

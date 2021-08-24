@@ -63,7 +63,7 @@
               </template>
             </b-table>
 
-            <action :actions="request.actions"></action>
+            <workflows :workflows="request.workflows"></workflows>
 
             <p class="label">Response Body</p>
             <div v-if="parseError !== null">
@@ -81,14 +81,14 @@
 import Api from '@/mixins/Api'
 import moment from 'moment'
 import http from 'http-status-codes'
-import Action from '@/components/Action'
+import Workflows from '@/components/Workflows'
 import xmlFormatter from 'xml-formatter'
 import MIMEType from 'whatwg-mimetype'
 
 export default {
   name: 'HttpRequest',
   components: {
-    'action': Action
+    'workflows': Workflows
   },
   mixins: [Api],
   data () {

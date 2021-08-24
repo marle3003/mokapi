@@ -16,36 +16,36 @@ import (
 
 type AddRequestMetric func(metric *models.RequestMetric)
 
-type WorkflowHandler func(request *Request, response *Response)
+type workflowHandler func(request *Request, response *Response) []*models.WorkflowLog
 
 type Binding struct {
 	Addr             string
 	server           *http.Server
 	handlers         map[string]map[string]*ServiceHandler
 	addRequestMetric AddRequestMetric
-	workflowHandler  WorkflowHandler
+	workflowHandler  workflowHandler
 	IsTls            bool
 	certificates     map[string]*tls.Certificate
 }
 
-func NewBinding(addr string, mh AddRequestMetric, wh func(string, ...interface{})) *Binding {
+func NewBinding(addr string, mh AddRequestMetric, wh func(string, ...interface{}) []*models.WorkflowLog) *Binding {
 	b := &Binding{
 		Addr:             addr,
 		handlers:         make(map[string]map[string]*ServiceHandler),
 		addRequestMetric: mh,
-		workflowHandler:  func(request *Request, response *Response) { wh("http", request, response) },
+		workflowHandler:  func(request *Request, response *Response) []*models.WorkflowLog { return wh("http", request, response) },
 	}
 	b.server = &http.Server{Addr: addr, Handler: b}
 
 	return b
 }
 
-func NewBindingWithTls(addr string, mh AddRequestMetric, wh func(string, ...interface{}), getCertificate func(info *tls.ClientHelloInfo) (*tls.Certificate, error)) *Binding {
+func NewBindingWithTls(addr string, mh AddRequestMetric, wh func(string, ...interface{}) []*models.WorkflowLog, getCertificate func(info *tls.ClientHelloInfo) (*tls.Certificate, error)) *Binding {
 	b := &Binding{
 		Addr:             addr,
 		handlers:         make(map[string]map[string]*ServiceHandler),
 		addRequestMetric: mh,
-		workflowHandler:  func(request *Request, response *Response) { wh("http", request, response) },
+		workflowHandler:  func(request *Request, response *Response) []*models.WorkflowLog { return wh("http", request, response) },
 		IsTls:            true,
 		certificates:     make(map[string]*tls.Certificate),
 	}

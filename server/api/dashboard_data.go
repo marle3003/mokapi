@@ -38,7 +38,7 @@ type request struct {
 	Parameters   []requestParameter `json:"parameters"`
 	ContentType  string             `json:"contentType"`
 	ResponseBody string             `json:"responseBody"`
-	Actions      []workflowSummary  `json:"actions"`
+	Workflows    []workflow         `json:"workflows"`
 }
 
 type requestParameter struct {
@@ -48,17 +48,9 @@ type requestParameter struct {
 	Raw   string `json:"raw"`
 }
 
-type workflowSummary struct {
+type workflow struct {
 	Name     string        `json:"name"`
-	Steps    []stepSummary `json:"steps"`
-	Duration time.Duration `json:"duration"`
-	Status   string        `json:"status"`
-}
-
-type stepSummary struct {
-	Name     string        `json:"name"`
-	Id       string        `json:"id"`
-	Log      []string      `json:"log"`
+	Logs     []string      `json:"logs"`
 	Duration time.Duration `json:"duration"`
 	Status   string        `json:"status"`
 }
@@ -135,48 +127,25 @@ func newRequest(r *models.RequestMetric) request {
 			Raw:   p.Raw,
 		})
 	}
-	//for _, a := range r.Actions {
-	//	result.Actions = append(result.Actions, newActionSummary(a))
-	//}
+	for _, w := range r.WorkflowLogs {
+		result.Workflows = append(result.Workflows, newWorkflow(w))
+	}
 	return result
 }
 
-//func newActionSummary(s *runtime2.WorkflowSummary) workflowSummary {
-//	result := workflowSummary{
-//		Name:     s.Name,
-//		Duration: s.Duration,
-//	}
-//
-//	switch s.Status {
-//	case runtime2.Error:
-//		result.Status = "error"
-//	case runtime2.Successful:
-//		result.Status = "successful"
-//	}
-//
-//	for _, step := range s.Steps {
-//		result.Steps = append(result.Steps, newStepSummary(step))
-//	}
-//
-//	return result
-//}
-//
-//func newStepSummary(s *runtime2.StepSummary) stepSummary {
-//	r := stepSummary{
-//		Id:       s.Id,
-//		Name:     s.Name,
-//		Log:      s.Log,
-//		Duration: s.Duration,
-//	}
-//
-//	switch s.Status {
-//	case runtime2.Error:
-//		r.Status = "error"
-//	case runtime2.Successful:
-//		r.Status = "successful"
-//	case runtime2.Skip:
-//		r.Status = "skip"
-//	}
-//
-//	return r
-//}
+func newWorkflow(w *models.WorkflowLog) workflow {
+	result := workflow{
+		Name:     w.Name,
+		Duration: w.Duration,
+		Logs:     w.Logs,
+	}
+
+	//switch s.Status {
+	//case runtime2.Error:
+	//	result.Status = "error"
+	//case runtime2.Successful:
+	//	result.Status = "successful"
+	//}
+
+	return result
+}
