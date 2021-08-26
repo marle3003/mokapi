@@ -265,7 +265,7 @@ func (s *Binding) processJoinGroup(h *protocol.Header, req *joinGroup.Request, w
 
 	s.clientsMutex.RLock()
 	consumer := s.clients[h.ClientId]
-	s.clientsMutex.Unlock()
+	s.clientsMutex.RUnlock()
 	j := join{
 		consumer:  consumer,
 		protocols: make([]groupAssignmentStrategy, 0, len(req.Protocols)),
@@ -301,7 +301,7 @@ func (s *Binding) handleSyncGroup(h *protocol.Header, req *syncGroup.Request, w 
 
 	s.clientsMutex.RLock()
 	consumer := s.clients[h.ClientId]
-	s.clientsMutex.Unlock()
+	s.clientsMutex.RUnlock()
 	sync := syncData{
 		consumer:     consumer,
 		generationId: int(req.GenerationId),
