@@ -41,11 +41,13 @@ func (s *Binding) handle(conn net.Conn) {
 			return
 		}
 
+		s.clientsMutex.Lock()
 		c, exists := s.clients[h.ClientId]
 		if !exists {
 			c = &client{id: h.ClientId}
 			s.clients[h.ClientId] = c
 		}
+		s.clientsMutex.Unlock()
 		c.lastHeartbeat = time.Now()
 
 		switch h.ApiKey {
@@ -261,8 +263,11 @@ func (s *Binding) processJoinGroup(h *protocol.Header, req *joinGroup.Request, w
 		return 0
 	}
 
+	s.clientsMutex.RLock()
+	consumer := s.clients[h.ClientId]
+	s.clientsMutex.Unlock()
 	j := join{
-		consumer:  s.clients[h.ClientId],
+		consumer:  consumer,
 		protocols: make([]groupAssignmentStrategy, 0, len(req.Protocols)),
 		write: func(msg protocol.Message) {
 			protocol.WriteMessage(w, h.ApiKey, h.ApiVersion, h.CorrelationId, msg)
@@ -294,8 +299,11 @@ func (s *Binding) handleSyncGroup(h *protocol.Header, req *syncGroup.Request, w 
 		return -27 // REBALANCE_IN_PROGRESS
 	}
 
+	s.clientsMutex.RLock()
+	consumer := s.clients[h.ClientId]
+	s.clientsMutex.Unlock()
 	sync := syncData{
-		consumer:     s.clients[h.ClientId],
+		consumer:     consumer,
 		generationId: int(req.GenerationId),
 		write: func(msg protocol.Message) {
 			protocol.WriteMessage(w, h.ApiKey, h.ApiVersion, h.CorrelationId, msg)

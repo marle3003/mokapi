@@ -6,6 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/models"
+	"sync"
 	"time"
 )
 
@@ -23,6 +24,7 @@ type Binding struct {
 	kafka        asyncApi.Kafka
 	addedMessage AddedMessage
 	clients      map[string]*client
+	clientsMutex sync.RWMutex
 }
 
 func NewBinding(c *asyncApi.Config, addedMessage AddedMessage) *Binding {
