@@ -2,7 +2,7 @@
 export default {
   data () {
     let baseUrl = process.env.VUE_APP_ApiBaseUrl
-    if (baseUrl === '') {
+    if (baseUrl === '' && window.location.pathname !== '/') {
       let host = window.location.origin
       let root = window.location.pathname
       baseUrl = host + root

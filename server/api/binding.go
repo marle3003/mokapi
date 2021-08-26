@@ -78,7 +78,7 @@ func (b *Binding) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	switch p := r.URL.Path; {
-	case strings.HasPrefix(p, b.path):
+	case len(b.path) > 0 && strings.HasPrefix(p, b.path):
 		r.URL.Path = r.URL.Path[len(b.path):]
 		b.ServeHTTP(w, r)
 	case p == "/api/services":
