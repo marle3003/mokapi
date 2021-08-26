@@ -5,7 +5,7 @@ export default {
     if (baseUrl === '' && window.location.pathname !== '/') {
       let host = window.location.origin
       let root = window.location.pathname
-      baseUrl = host + root
+      baseUrl = (host + root).replace(/\/$/, '')
     }
     return {
       baseUrl: baseUrl
