@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"io"
 	"runtime"
+	"sync"
 	"time"
 )
 
@@ -35,6 +36,7 @@ type KafkaTopic struct {
 	Segments   int            `json:"segments"`
 	Messages   []KafkaMessage `json:"messages"`
 	//Groups []string `json:"groups"`
+	mutex sync.RWMutex
 }
 
 type KafkaMessage struct {
@@ -54,10 +56,12 @@ func (m *Metrics) AddMessage(topic string, key []byte, message []byte, partition
 		m.Kafka.Topics[topic] = &KafkaTopic{Name: topic, Messages: make([]KafkaMessage, 0)}
 	}
 	t := m.Kafka.Topics[topic]
+	t.mutex.Lock()
 	t.Messages = append(t.Messages, msg)
 	if len(t.Messages) > 10 {
 		t.Messages = t.Messages[1:]
 	}
+	t.mutex.Unlock()
 }
 
 func (m *Metrics) Update() {
