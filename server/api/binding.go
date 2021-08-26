@@ -20,8 +20,10 @@ type Binding struct {
 	server     *http.Server
 	Addr       string
 	fileServer http.Handler
+	path       string
 }
 
+// todo move to runtime module
 type serviceSummary struct {
 	Name        string    `json:"name,omitempty"`
 	Description string    `json:"description,omitempty"`
@@ -35,8 +37,8 @@ type baseUrl struct {
 	Description string `json:"description"`
 }
 
-func NewBinding(addr string, r *models.Runtime) *Binding {
-	b := &Binding{runtime: r, Addr: addr}
+func NewBinding(addr string, r *models.Runtime, path string) *Binding {
+	b := &Binding{runtime: r, Addr: addr, path: path}
 	b.server = &http.Server{Addr: addr, Handler: b}
 	b.fileServer = http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir})
 	return b
@@ -76,6 +78,9 @@ func (b *Binding) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	switch p := r.URL.Path; {
+	case strings.HasPrefix(p, b.path):
+		r.URL.Path = r.URL.Path[len(b.path):]
+		b.ServeHTTP(w, r)
 	case p == "/api/services":
 		b.getServices(w, r)
 	case strings.HasPrefix(p, "/api/services/openapi"):

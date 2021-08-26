@@ -1,8 +1,14 @@
 <script>
 export default {
   data () {
+    let baseUrl = process.env.VUE_APP_ApiBaseUrl
+    if (baseUrl === '') {
+      let host = window.location.origin
+      let root = window.location.pathname
+      baseUrl = host + root
+    }
     return {
-      baseUrl: process.env.VUE_APP_ApiBaseUrl
+      baseUrl: baseUrl
     }
   },
   methods: {

@@ -67,7 +67,7 @@ func NewServer(config *static.Config) *Server {
 
 	if config.Api.Dashboard {
 		addr := fmt.Sprintf(":%v", config.Api.Port)
-		b := api.NewBinding(addr, server.runtime)
+		b := api.NewBinding(addr, server.runtime, config.Api.Path)
 		server.Bindings[addr] = b
 	}
 
