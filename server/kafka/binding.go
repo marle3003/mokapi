@@ -2,7 +2,6 @@ package kafka
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/models"
@@ -62,16 +61,21 @@ func (s *Binding) AddMessage(topic string, partition int, key, message interface
 func (s *Binding) Apply(data interface{}) error {
 	config, ok := data.(*asyncApi.Config)
 	if !ok {
-		return errors.Errorf("unexpected parameter type %T in kafka binding", data)
+		return fmt.Errorf("unexpected parameter type %T in kafka binding", data)
 	}
 	s.Config = config
 
 	for n, c := range config.Channels {
 		name := n[1:] // remove leading slash from name
 		if _, ok := s.topics[name]; !ok {
-			log.Infof("kafka: adding topic %q", name)
+			if c.Value.Publish.Message == nil {
+				log.Errorf("kafka: message reference error for channel %v", name)
+				continue
+			}
 			msg := c.Value.Publish.Message.Value
-			s.topics[name] = newTopic(name, c.Value.Bindings.Kafka.Partitions, s.brokers[0], msg.Payload, msg.Bindings.Kafka.Key, msg.ContentType, s.kafka.Log, s.addedMessage)
+			broker := s.brokers[0]
+			s.topics[name] = newTopic(name, c.Value.Bindings.Kafka.Partitions, broker, msg.Payload, msg.Bindings.Kafka.Key, msg.ContentType, s.kafka.Log, s.addedMessage)
+			log.Infof("kafka: added topic %q with %v partitions on broker %v:%v", name, c.Value.Bindings.Kafka.Partitions, broker.host, broker.port)
 		}
 	}
 
@@ -126,7 +130,7 @@ func (s *Binding) UpdateMetrics(m *models.KafkaMetric) {
 			t.Segments += len(p.segments)
 			t.Count += p.offset
 			for _, seg := range p.segments {
-				t.Count += seg.tail - seg.head
+				//t.Count += seg.tail - seg.head
 				t.Size += seg.Size
 				if seg.lastWritten.After(t.LastRecord) {
 					t.LastRecord = seg.lastWritten

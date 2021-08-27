@@ -23,7 +23,7 @@ type topic struct {
 }
 
 func newTopic(name string, partitions int, leader *broker, payload *openapi.SchemaRef, key *openapi.SchemaRef, contentType string, config asyncApi.Log, addedMessage AddedMessage) *topic {
-	p := map[int]*partition{}
+	p := make(map[int]*partition)
 	if partitions == 0 {
 		p[0] = newPartition(leader)
 	} else {

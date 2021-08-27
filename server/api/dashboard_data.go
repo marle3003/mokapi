@@ -75,7 +75,9 @@ func newDashboard(runtime *models.Runtime) dashboard {
 	}
 
 	for _, t := range runtime.Metrics.Kafka.Topics {
-		dashboard.Kafka.Topics = append(dashboard.Kafka.Topics, t)
+		if len(t.Service) > 0 {
+			dashboard.Kafka.Topics = append(dashboard.Kafka.Topics, t)
+		}
 	}
 
 	for _, r := range runtime.Metrics.LastErrorRequests {

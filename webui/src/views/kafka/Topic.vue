@@ -20,10 +20,6 @@
             <p class="label">Name</p>
             <p>{{ topic.name }}</p>
           </b-col>
-          <b-col>
-            <p class="label">Partitions</p>
-            <p>{{ topic.partitions }}</p>
-          </b-col>
         </b-row>
         <b-row v-if="topic.description !== ''">
           <b-col>
@@ -34,6 +30,10 @@
       </b-card>
       </b-card-group>
       <b-card-group deck>
+        <b-card body-class="info-body" class="text-center">
+          <b-card-title class="info">Partitions</b-card-title>
+          <b-card-text class="text-center value">{{ topic.partitions }}</b-card-text>
+        </b-card>
         <b-card body-class="info-body" class="text-center">
           <b-card-title class="info">Messages</b-card-title>
           <b-card-text class="text-center value">{{ topic.count }}</b-card-text>

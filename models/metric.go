@@ -74,6 +74,7 @@ func (m *Metrics) AddMessage(topic string, key []byte, message []byte, partition
 	if len(t.Messages) > 10 {
 		t.Messages = t.Messages[1:]
 	}
+	t.Count++
 	t.mutex.Unlock()
 }
 
