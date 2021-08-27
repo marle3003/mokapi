@@ -2,7 +2,6 @@ package protocol
 
 import (
 	"encoding/binary"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"io"
 	"math"
@@ -116,7 +115,6 @@ func ReadMessage(r io.Reader) (h *Header, msg Message, err error) {
 	h = readHeader(d)
 
 	if h.Size == 0 {
-		err = errors.New("Invalid size received")
 		return
 	}
 

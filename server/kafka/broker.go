@@ -60,7 +60,6 @@ func (b *broker) start(handler func(net.Conn)) {
 		for {
 			select {
 			case conn := <-connChannl:
-				log.Debugf("kafka: new client connected")
 				go handler(conn)
 			case <-b.stopCh:
 				log.Infof("Stopping kafka broker %q with id %v on %v", b.name, b.id, listen)

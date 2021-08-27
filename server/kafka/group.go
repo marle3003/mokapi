@@ -71,6 +71,15 @@ type join struct {
 	sessionTimeout   int
 }
 
+func newGroup(name string, coordinator *broker, rebalanceDelay int) *group {
+	g := &group{
+		name:        name,
+		coordinator: coordinator,
+	}
+	g.balancer = newGroupBalancer(g, rebalanceDelay)
+	return g
+}
+
 func (b *groupBalancer) startGroupWatcher() {
 	ticker := time.NewTicker(time.Duration(b.g.sessionTimeout) * time.Millisecond)
 	for {
@@ -102,8 +111,10 @@ func (b *groupBalancer) startGroupWatcher() {
 			if needRebalance {
 				if len(b.g.members) == 0 {
 					b.g.state = empty
+					log.Debugf("kafka: group %v is empty", b.g.name)
 				} else {
 					b.g.state = preparingRebalance
+					log.Debugf("kafka: group %v is preparingRebalance", b.g.name)
 					go b.startJoin()
 				}
 			}
@@ -156,7 +167,7 @@ StopWaitingForConsumers:
 				}
 			} else {
 				r := &syncGroup.Response{
-					ErrorCode: 22, // IllegalGenerationCode
+					ErrorCode: protocol.IllegalGeneration,
 				}
 				s.write(r)
 			}
@@ -164,7 +175,7 @@ StopWaitingForConsumers:
 			b.g.state = preparingRebalance
 			for _, m := range members {
 				r := &syncGroup.Response{
-					ErrorCode: 27, // REBALANCE_IN_PROGRESS
+					ErrorCode: protocol.RebalanceInProgress,
 				}
 				m.write(r)
 			}
@@ -174,7 +185,7 @@ StopWaitingForConsumers:
 
 	for _, m := range members {
 		r := &syncGroup.Response{
-			ErrorCode:  0,
+			ErrorCode:  protocol.None,
 			Assignment: assigments[m.consumer.id],
 		}
 		m.write(r)
@@ -182,11 +193,12 @@ StopWaitingForConsumers:
 	}
 
 	b.g.state = stable
-	b.startGroupWatcher()
+	log.Debugf("kafka: group %v is now stable", b.g.name)
+	go b.startGroupWatcher()
 }
 
 func (b *groupBalancer) startJoin() {
-
+	log.Debugf("kafka: group %v wait for members", b.g.name)
 	members := make([]join, 0)
 StopWaitingForConsumers:
 	for {
@@ -195,6 +207,7 @@ StopWaitingForConsumers:
 			return
 		case j := <-b.join:
 			members = append(members, j)
+			log.Debugf("kafka: adding member %v to group %v", j.consumer.id, b.g.name)
 		case <-time.After(5 * time.Second):
 			break StopWaitingForConsumers
 		}
@@ -244,6 +257,8 @@ StopWaitingForConsumers:
 		}
 	}
 
+	log.Debugf("kafka: chosen strategy for group %v: %v", b.g.name, chosenStrategy)
+
 	if len(chosenStrategy) == 0 {
 		// todo error handling
 	}
@@ -255,6 +270,8 @@ StopWaitingForConsumers:
 		MemberId:     b.g.members[0].consumer.id,
 		Members:      make([]joinGroup.Member, 0, len(b.g.members)),
 	}
+
+	log.Debugf("kafka: selected leader for group %v: %v", b.g.name, rLeader.MemberId)
 
 	send := make([]func(), 0, len(b.g.members))
 	for i, m := range members {

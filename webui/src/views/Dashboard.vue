@@ -252,7 +252,7 @@ export default {
       return counter
     },
     topics: function () {
-      const topics = this.dashboard.kafkaTopics
+      const topics = this.dashboard.kafka.topics
       if (topics === undefined || topics === null) {
         return null
       }

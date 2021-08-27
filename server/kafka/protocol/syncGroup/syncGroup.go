@@ -36,10 +36,10 @@ type GroupAssignment struct {
 }
 
 type Response struct {
-	ThrottleTimeMs int32            `kafka:"min=1"`
-	ErrorCode      int16            `kafka:""`
-	ProtocolType   string           `kafka:"min=5,compact=5,nullable"`
-	ProtocolName   string           `kafka:"min=5,compact=5,nullable"`
-	Assignment     []byte           `kafka:"compact=4"`
-	TagFields      map[int64]string `kafka:"type=TAG_BUFFER,min=4"`
+	ThrottleTimeMs int32              `kafka:"min=1"`
+	ErrorCode      protocol.ErrorCode `kafka:""`
+	ProtocolType   string             `kafka:"min=5,compact=5,nullable"`
+	ProtocolName   string             `kafka:"min=5,compact=5,nullable"`
+	Assignment     []byte             `kafka:"compact=4"`
+	TagFields      map[int64]string   `kafka:"type=TAG_BUFFER,min=4"`
 }

@@ -24,7 +24,9 @@ type Binding struct {
 	kafka        asyncApi.Kafka
 	addedMessage AddedMessage
 	clients      map[string]*client
+
 	clientsMutex sync.RWMutex
+	groupsMutex  sync.RWMutex
 }
 
 func NewBinding(c *asyncApi.Config, addedMessage AddedMessage) *Binding {
@@ -134,6 +136,12 @@ func (s *Binding) UpdateMetrics(m *models.KafkaMetric) {
 
 		m.Topics[t.Name] = t
 	}
+
+	s.groupsMutex.RLock()
+	for _, g := range s.groups {
+		m.Groups[g.name] = &models.KafkaGroup{Members: len(g.members)}
+	}
+	s.groupsMutex.RUnlock()
 }
 
 func (s *Binding) startCleaner() {
@@ -179,4 +187,24 @@ func (s *Binding) startCleaner() {
 			}
 		}
 	}()
+}
+
+func (s *Binding) getGroup(name string) (*group, bool) {
+	s.groupsMutex.RLock()
+	defer s.groupsMutex.RUnlock()
+
+	g, ok := s.groups[name]
+	return g, ok
+}
+
+func (s *Binding) getOrCreateGroup(name string) *group {
+	s.groupsMutex.Lock()
+	defer s.groupsMutex.Unlock()
+
+	g, ok := s.groups[name]
+	if !ok {
+		g = newGroup(name, s.brokers[0], s.kafka.Group.Initial.Rebalance.Delay)
+		s.groups[name] = g
+	}
+	return g
 }

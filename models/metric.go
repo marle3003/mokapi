@@ -24,6 +24,7 @@ type Metrics struct {
 
 type KafkaMetric struct {
 	Topics map[string]*KafkaTopic
+	Groups map[string]*KafkaGroup
 }
 
 type KafkaTopic struct {
@@ -39,6 +40,10 @@ type KafkaTopic struct {
 	mutex sync.RWMutex
 }
 
+type KafkaGroup struct {
+	Members int
+}
+
 type KafkaMessage struct {
 	Key       string    `json:"key"`
 	Message   string    `json:"message"`
@@ -47,7 +52,15 @@ type KafkaMessage struct {
 }
 
 func newMetrics() *Metrics {
-	return &Metrics{LastRequests: make([]*RequestMetric, 0), Start: time.Now(), Kafka: &KafkaMetric{Topics: make(map[string]*KafkaTopic)}, OpenApi: make(map[string]*ServiceMetric)}
+	return &Metrics{
+		LastRequests: make([]*RequestMetric, 0),
+		Start:        time.Now(),
+		Kafka: &KafkaMetric{
+			Topics: make(map[string]*KafkaTopic),
+			Groups: make(map[string]*KafkaGroup),
+		},
+		OpenApi: make(map[string]*ServiceMetric),
+	}
 }
 
 func (m *Metrics) AddMessage(topic string, key []byte, message []byte, partition int) {

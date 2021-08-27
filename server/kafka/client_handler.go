@@ -217,18 +217,7 @@ func (s *Binding) processFindCoordinator(req *findCoordinator.Request) *findCoor
 
 	switch req.KeyType {
 	case 0: // group
-		var g *group
-		if e, ok := s.groups[req.Key]; ok {
-			g = e
-		} else {
-			g = &group{
-				name:        req.Key,
-				coordinator: s.brokers[0],
-			}
-			g.balancer = newGroupBalancer(g, s.kafka.Group.Initial.Rebalance.Delay)
-			s.groups[req.Key] = g
-		}
-
+		g := s.getOrCreateGroup(req.Key)
 		r.NodeId = int32(g.coordinator.id)
 		r.Host = g.coordinator.host
 		r.Port = int32(g.coordinator.port)
@@ -237,15 +226,18 @@ func (s *Binding) processFindCoordinator(req *findCoordinator.Request) *findCoor
 		log.Error(msg)
 		r.ErrorCode = -1
 		r.ErrorMessage = msg
-		return r
 	}
+
 	return r
 }
 
 func (s *Binding) processJoinGroup(h *protocol.Header, req *joinGroup.Request, w io.Writer) protocol.ErrorCode {
 	var g *group
 	var exists bool
-	if g, exists = s.groups[req.GroupId]; !exists {
+	fmt.Printf("Join group %v\n", req.GroupId)
+
+	s.groupsMutex.RLock()
+	if g, exists = s.getGroup(req.GroupId); !exists {
 		return protocol.InvalidGroupId
 	} else if g.state == completingRebalance {
 		return protocol.RebalanceInProgress
@@ -253,6 +245,7 @@ func (s *Binding) processJoinGroup(h *protocol.Header, req *joinGroup.Request, w
 		g.state = preparingRebalance
 		go g.balancer.startJoin()
 	}
+	s.groupsMutex.RUnlock()
 
 	if len(req.MemberId) == 0 {
 		memberId := fmt.Sprintf("%v-%v", h.ClientId, utils.NewGuid())
@@ -260,7 +253,7 @@ func (s *Binding) processJoinGroup(h *protocol.Header, req *joinGroup.Request, w
 			ErrorCode: 79, // MEMBER_ID_REQUIRED
 			MemberId:  memberId,
 		})
-		return 0
+		return protocol.None
 	}
 
 	s.clientsMutex.RLock()
@@ -288,15 +281,14 @@ func (s *Binding) processJoinGroup(h *protocol.Header, req *joinGroup.Request, w
 	return protocol.None
 }
 
-func (s *Binding) handleSyncGroup(h *protocol.Header, req *syncGroup.Request, w io.Writer) int {
-	var g *group
-	var exists bool
-	if g, exists = s.groups[req.GroupId]; !exists {
-		return -1
+func (s *Binding) handleSyncGroup(h *protocol.Header, req *syncGroup.Request, w io.Writer) protocol.ErrorCode {
+	g, exists := s.getGroup(req.GroupId)
+	if !exists {
+		return protocol.InvalidGroupId
 	}
 
 	if g.state == preparingRebalance {
-		return -27 // REBALANCE_IN_PROGRESS
+		return protocol.RebalanceInProgress
 	}
 
 	s.clientsMutex.RLock()
@@ -319,7 +311,7 @@ func (s *Binding) handleSyncGroup(h *protocol.Header, req *syncGroup.Request, w 
 
 	g.balancer.sync <- sync
 
-	return 0
+	return protocol.None
 }
 
 func (s *Binding) processOffSetFetch(req *offsetFetch.Request) *offsetFetch.Response {

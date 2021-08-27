@@ -13,7 +13,7 @@ type dashboard struct {
 	LastRequests      []requestSummary       `json:"lastRequests"`
 	MemoryUsage       int64                  `json:"memoryUsage"`
 	Services          []models.ServiceMetric `json:"services"`
-	KafkaTopics       []*models.KafkaTopic   `json:"kafkaTopics"`
+	Kafka             kafka                  `json:"kafka"`
 	LastMails         []mailSummary          `json:"lastMails"`
 	TotalMails        int64                  `json:"totalMails"`
 
@@ -55,8 +55,13 @@ type workflow struct {
 	Status   string        `json:"status"`
 }
 
+type kafka struct {
+	Topics []*models.KafkaTopic `json:"topics"`
+	Groups []*models.KafkaGroup `json:"groups"`
+}
+
 func newDashboard(runtime *models.Runtime) dashboard {
-	dashboard := dashboard{LastErrors: make([]requestSummary, 0), Services: make([]models.ServiceMetric, 0)}
+	dashboard := dashboard{LastErrors: make([]requestSummary, 0), Services: make([]models.ServiceMetric, 0), Kafka: kafka{}}
 	dashboard.ServerUptime = runtime.Metrics.Start
 	dashboard.TotalRequests = runtime.Metrics.TotalRequests
 	dashboard.RequestsWithError = runtime.Metrics.RequestsWithError
@@ -70,7 +75,7 @@ func newDashboard(runtime *models.Runtime) dashboard {
 	}
 
 	for _, t := range runtime.Metrics.Kafka.Topics {
-		dashboard.KafkaTopics = append(dashboard.KafkaTopics, t)
+		dashboard.Kafka.Topics = append(dashboard.Kafka.Topics, t)
 	}
 
 	for _, r := range runtime.Metrics.LastErrorRequests {
