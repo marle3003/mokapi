@@ -7,6 +7,9 @@ import (
 )
 
 func MapTable(tbl *lua.LTable) interface{} {
+	if tbl == nil {
+		return nil
+	}
 	return toValue(tbl)
 }
 
