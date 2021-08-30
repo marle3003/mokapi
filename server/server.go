@@ -24,6 +24,7 @@ import (
 	"mokapi/server/web"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -45,6 +46,7 @@ type Server struct {
 
 	cron     *gocron.Scheduler
 	Bindings map[string]Binding
+	mutex    sync.RWMutex
 }
 
 func NewServer(config *static.Config) *Server {
@@ -123,18 +125,14 @@ func (s *Server) startMetricUpdater() {
 }
 
 func (s *Server) updateConfigs(config dynamic.Config) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	switch c := config.(type) {
 	case *script.Script:
 		s.AddScript(c.Filename, c.Code)
 	case *mokapi.Config:
 		s.config[c.ConfigPath] = c
-
-		//err := s.workflowRunner.Add(c.ConfigPath, c.Workflows, workflow.WithWorkingDirectory(filepath.Dir(c.ConfigPath)))
-		//if err != nil {
-		//	log.Errorf("unable to add scheduler for workflows %q", c.ConfigPath)
-		//	return
-		//}
-
 		for _, cer := range c.Certificates {
 			err := s.appendCertificate(cer, filepath.Dir(c.ConfigPath))
 			if err != nil {
@@ -214,27 +212,6 @@ func (s *Server) updateConfigs(config dynamic.Config) {
 	}
 }
 
-//func (s *Server) triggerHandler(event event.Handler, options ...workflow.Options) (*runtime.Summary, error) {
-//	workflows := make([]workflow.Workflow, 0)
-//	for _, c := range s.config {
-//		for _, w := range c.Workflows {
-//			workflows = append(workflows, w)
-//		}
-//	}
-//
-//	summary, err := workflow.Run(s.workflows, event, options...)
-//	for _, c := range s.config {
-//		o := append(options, workflow.WithWorkingDirectory(filepath.Dir(c.ConfigPath)))
-//		s, err := workflow.Run(c.Workflows, event, o...)
-//		if err != nil {
-//			return nil, err
-//		}
-//		summary.Workflows = append(summary.Workflows, s.Workflows...)
-//	}
-//
-//	return summary, nil
-//}
-
 func (s *Server) appendCertificate(c mokapi.Certificate, currentDir string) error {
 	certContent, err := c.CertFile.Read(currentDir)
 	if err != nil {
@@ -260,6 +237,9 @@ func (s *Server) appendCertificate(c mokapi.Certificate, currentDir string) erro
 }
 
 func (s *Server) writeKafkaMessage(broker, topic string, partition int, key, message interface{}) (interface{}, interface{}, error) {
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+
 	for _, c := range s.Bindings {
 		if b, ok := c.(*kafka.Binding); ok {
 			// if empty broker, try first binding
