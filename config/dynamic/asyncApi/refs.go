@@ -37,21 +37,8 @@ func (r refResolver) resolveChannelRef(m *ChannelRef) error {
 	}
 
 	if len(m.Ref) > 0 && m.Value == nil {
-		u, err := url.Parse(m.Ref)
-		if err != nil {
+		if err := r.resolve(m.Ref, r.config, &m.Value); err != nil {
 			return err
-		}
-
-		if !isLocalRef(m.Ref) {
-			err := r.loadFrom(u.Path, &m.Value)
-			if err != nil {
-				return err
-			}
-		} else {
-			err := r.resolve(u.Fragment, r.config, &m.Value)
-			if err != nil {
-				return err
-			}
 		}
 	}
 
@@ -75,21 +62,8 @@ func (r refResolver) resolveMessageRef(m *MessageRef) error {
 	}
 
 	if len(m.Ref) > 0 && m.Value == nil {
-		u, err := url.Parse(m.Ref)
-		if err != nil {
+		if err := r.resolve(m.Ref, r.config, &m.Value); err != nil {
 			return err
-		}
-
-		if !isLocalRef(m.Ref) {
-			err := r.loadFrom(u.Path, &m.Value)
-			if err != nil {
-				return err
-			}
-		} else {
-			err := r.resolve(u.Fragment, r.config, &m.Value)
-			if err != nil {
-				return err
-			}
 		}
 	}
 
@@ -106,21 +80,8 @@ func (r refResolver) resolveSchemas(s *openapi.Schemas) error {
 	}
 
 	if len(s.Ref) > 0 && s.Value == nil {
-		u, err := url.Parse(s.Ref)
-		if err != nil {
+		if err := r.resolve(s.Ref, r.config, &s.Value); err != nil {
 			return err
-		}
-
-		if !isLocalRef(s.Ref) {
-			err := r.loadFrom(u.Path, &s.Value)
-			if err != nil {
-				return err
-			}
-		} else {
-			err := r.resolve(u.Fragment, r.config, &s.Value)
-			if err != nil {
-				return err
-			}
 		}
 	}
 
@@ -143,38 +104,11 @@ func (r refResolver) resolveSchemaRef(s *openapi.SchemaRef) error {
 	}
 
 	if len(s.Ref) > 0 && s.Value == nil {
-		u, err := url.Parse(s.Ref)
-		if err != nil {
+		resolved := &openapi.SchemaRef{}
+		if err := r.resolve(s.Ref, r.config, &resolved); err != nil {
 			return err
 		}
-
-		if !isLocalRef(s.Ref) {
-			if len(u.Fragment) == 0 {
-				err := r.loadFrom(u.Path, &s.Value)
-				if err != nil {
-					return err
-				}
-			} else {
-				schemas := &openapi.Schemas{}
-				err := r.loadFrom(u.Path, &schemas.Value)
-				if err != nil {
-					return err
-				}
-				var resolved *openapi.SchemaRef
-				if err := r.resolve(u.Fragment, schemas.Value, &resolved); err != nil {
-					return err
-				}
-				s.Value = resolved.Value
-			}
-
-		} else {
-			schema := &openapi.SchemaRef{}
-			err := r.resolve(u.Fragment, r.config, &schema)
-			if err != nil {
-				return err
-			}
-			s.Value = schema.Value
-		}
+		s.Value = resolved.Value
 	}
 
 	if s.Value == nil {
@@ -194,23 +128,6 @@ func (r refResolver) resolveSchemaRef(s *openapi.SchemaRef) error {
 	}
 
 	return nil
-}
-
-func (r refResolver) resolve(ref string, node interface{}, val interface{}) (err error) {
-	tokens := strings.Split(ref, "/")
-
-	i := node
-	for _, t := range tokens[1:] {
-		i, err = get(t, i)
-	}
-
-	if i == nil {
-		return fmt.Errorf("found unresolved ref: %q", ref)
-	}
-
-	reflect.ValueOf(val).Elem().Set(reflect.ValueOf(i))
-
-	return
 }
 
 func get(token string, node interface{}) (interface{}, error) {
@@ -236,24 +153,6 @@ func get(token string, node interface{}) (interface{}, error) {
 	return nil, fmt.Errorf("invalid token reference %q", token)
 }
 
-func (r refResolver) loadFrom(ref string, val interface{}) error {
-	dir := filepath.Dir(r.path)
-	if !filepath.IsAbs(ref) {
-		ref = filepath.Join(dir, ref)
-	}
-
-	err := r.reader.Read(ref, val, r.eh)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func isLocalRef(s string) bool {
-	return strings.HasPrefix(s, "#")
-}
-
 func (r *MessageRef) resolve(token string) (interface{}, error) {
 	return get(token, r.Value)
 }
@@ -261,4 +160,76 @@ func (r *MessageRef) resolve(token string) (interface{}, error) {
 func caseInsenstiveFieldByName(v reflect.Value, name string) reflect.Value {
 	name = strings.ToLower(name)
 	return v.FieldByNameFunc(func(n string) bool { return strings.ToLower(n) == name })
+}
+
+func (r refResolver) resolve(ref string, config interface{}, val interface{}) (err error) {
+	u, err := url.Parse(ref)
+	if err != nil {
+		return err
+	}
+
+	if len(u.Path) > 0 {
+		switch s := strings.ToLower(u.Fragment); {
+		case strings.HasPrefix(s, "/components"):
+			var c *Config
+			err = r.readConfig(u.Path, &c)
+			config = c
+		case len(s) == 0:
+			err = r.readConfig(u.Path, val)
+			config = val
+		default:
+			switch val.(type) {
+			case **openapi.SchemaRef:
+				schemas := &openapi.Schemas{}
+				err = r.readConfig(u.Path, &schemas.Value)
+				config = schemas
+			}
+
+		}
+
+		if err != nil {
+			return err
+		}
+	}
+
+	tokens := strings.Split(u.Fragment, "/")
+
+	for _, t := range tokens[1:] {
+		config, err = get(t, config)
+		if err != nil {
+			return
+		}
+	}
+
+	if config == nil {
+		return fmt.Errorf("found unresolved ref: %q", ref)
+	}
+
+	if reflect.ValueOf(config).Kind() == reflect.Ptr {
+		i := 2
+		_ = i
+	}
+
+	v := reflect.ValueOf(config)
+	if reflect.Indirect(v).Kind() == reflect.Map {
+		reflect.Indirect(reflect.ValueOf(val)).Set(reflect.Indirect(v))
+		return
+	}
+	v2 := reflect.Indirect(reflect.ValueOf(val))
+	if !v.Type().AssignableTo(v2.Type()) {
+		v = v.Elem()
+	}
+	v2.Set(v)
+
+	return
+}
+
+func (r refResolver) readConfig(path string, node interface{}) error {
+	dir := filepath.Dir(r.path)
+	if !filepath.IsAbs(path) {
+		path = filepath.Join(dir, path)
+	}
+
+	err := r.reader.Read(path, node, r.eh)
+	return err
 }
