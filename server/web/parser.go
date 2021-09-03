@@ -71,7 +71,7 @@ func parseParams(params openapi.Parameters, route string, r *http.Request) (Requ
 			s := r.Header.Get(p.Name)
 			i, err = parse(s, p.Schema)
 			v = RequestParameterValue{Value: i, Raw: s}
-
+			store = parameters[openapi.HeaderParameter]
 		}
 		if err != nil && p.Required {
 			return nil, errors.Wrapf(err, "parse %v parameter %q", p.Type, p.Name)
