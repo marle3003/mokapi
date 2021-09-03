@@ -68,7 +68,7 @@ func (s *Binding) Apply(data interface{}) error {
 	for n, c := range config.Channels {
 		name := n[1:] // remove leading slash from name
 		if _, ok := s.topics[name]; !ok {
-			if c.Value.Publish.Message == nil {
+			if c.Value.Publish.Message == nil || c.Value.Publish.Message.Value == nil {
 				log.Errorf("kafka: message reference error for channel %v", name)
 				continue
 			}

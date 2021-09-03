@@ -37,8 +37,10 @@ func (r refResolver) resolveChannelRef(m *ChannelRef) error {
 	}
 
 	if len(m.Ref) > 0 && m.Value == nil {
-		if err := r.resolve(m.Ref, r.config, &m.Value); err != nil {
+		if resolver, err := r.resolve(m.Ref, r.config, &m.Value); err != nil {
 			return err
+		} else if !resolver.isEmpty() {
+			return resolver.resolveChannelRef(m)
 		}
 	}
 
@@ -62,8 +64,10 @@ func (r refResolver) resolveMessageRef(m *MessageRef) error {
 	}
 
 	if len(m.Ref) > 0 && m.Value == nil {
-		if err := r.resolve(m.Ref, r.config, &m.Value); err != nil {
+		if resolver, err := r.resolve(m.Ref, r.config, &m.Value); err != nil {
 			return err
+		} else if !resolver.isEmpty() {
+			return resolver.resolveMessageRef(m)
 		}
 	}
 
@@ -80,8 +84,10 @@ func (r refResolver) resolveSchemas(s *openapi.Schemas) error {
 	}
 
 	if len(s.Ref) > 0 && s.Value == nil {
-		if err := r.resolve(s.Ref, r.config, &s.Value); err != nil {
+		if resolver, err := r.resolve(s.Ref, r.config, &s.Value); err != nil {
 			return err
+		} else if !resolver.isEmpty() {
+			return resolver.resolveSchemas(s)
 		}
 	}
 
@@ -105,10 +111,12 @@ func (r refResolver) resolveSchemaRef(s *openapi.SchemaRef) error {
 
 	if len(s.Ref) > 0 && s.Value == nil {
 		resolved := &openapi.SchemaRef{}
-		if err := r.resolve(s.Ref, r.config, &resolved); err != nil {
+		if resolver, err := r.resolve(s.Ref, r.config, &resolved); err != nil {
 			return err
+		} else if !resolver.isEmpty() {
+			s.Value = resolved.Value
+			return resolver.resolveSchemaRef(s)
 		}
-		s.Value = resolved.Value
 	}
 
 	if s.Value == nil {
@@ -162,34 +170,40 @@ func caseInsenstiveFieldByName(v reflect.Value, name string) reflect.Value {
 	return v.FieldByNameFunc(func(n string) bool { return strings.ToLower(n) == name })
 }
 
-func (r refResolver) resolve(ref string, config interface{}, val interface{}) (err error) {
+func (r refResolver) resolve(ref string, config interface{}, val interface{}) (resolver refResolver, err error) {
 	u, err := url.Parse(ref)
 	if err != nil {
-		return err
+		return
 	}
 
 	if len(u.Path) > 0 {
+		path := u.Path
+		if !filepath.IsAbs(u.Path) {
+			path = filepath.Join(filepath.Dir(r.path), u.Path)
+		}
+
 		switch s := strings.ToLower(u.Fragment); {
 		case strings.HasPrefix(s, "/components"):
 			var c *Config
-			err = r.readConfig(u.Path, &c)
+			err = r.reader.Read(path, &c, r.eh)
 			config = c
 		case len(s) == 0:
-			err = r.readConfig(u.Path, val)
+			err = r.reader.Read(path, val, r.eh)
 			config = val
 		default:
 			switch val.(type) {
 			case **openapi.SchemaRef:
 				schemas := &openapi.Schemas{}
-				err = r.readConfig(u.Path, &schemas.Value)
+				err = r.reader.Read(path, &schemas.Value, r.eh)
 				config = schemas
 			}
-
 		}
 
 		if err != nil {
-			return err
+			return
 		}
+
+		resolver = refResolver{reader: r.reader, path: path, eh: r.eh}
 	}
 
 	tokens := strings.Split(u.Fragment, "/")
@@ -202,12 +216,7 @@ func (r refResolver) resolve(ref string, config interface{}, val interface{}) (e
 	}
 
 	if config == nil {
-		return fmt.Errorf("found unresolved ref: %q", ref)
-	}
-
-	if reflect.ValueOf(config).Kind() == reflect.Ptr {
-		i := 2
-		_ = i
+		return resolver, fmt.Errorf("found unresolved ref: %q", ref)
 	}
 
 	v := reflect.ValueOf(config)
@@ -224,12 +233,6 @@ func (r refResolver) resolve(ref string, config interface{}, val interface{}) (e
 	return
 }
 
-func (r refResolver) readConfig(path string, node interface{}) error {
-	dir := filepath.Dir(r.path)
-	if !filepath.IsAbs(path) {
-		path = filepath.Join(dir, path)
-	}
-
-	err := r.reader.Read(path, node, r.eh)
-	return err
+func (r refResolver) isEmpty() bool {
+	return r.reader == nil
 }
