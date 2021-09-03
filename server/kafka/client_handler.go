@@ -234,7 +234,6 @@ func (s *Binding) processFindCoordinator(req *findCoordinator.Request) *findCoor
 func (s *Binding) processJoinGroup(h *protocol.Header, req *joinGroup.Request, w io.Writer) protocol.ErrorCode {
 	var g *group
 	var exists bool
-	fmt.Printf("Join group %v\n", req.GroupId)
 
 	s.groupsMutex.RLock()
 	if g, exists = s.getGroup(req.GroupId); !exists {
