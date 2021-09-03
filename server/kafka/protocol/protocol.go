@@ -115,7 +115,7 @@ func ReadMessage(r io.Reader) (h *Header, msg Message, err error) {
 	h = readHeader(d)
 
 	if h.Size == 0 {
-		return
+		return nil, nil, io.EOF
 	}
 
 	if d.err != nil {
