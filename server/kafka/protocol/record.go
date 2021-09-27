@@ -2,6 +2,7 @@ package protocol
 
 import (
 	"encoding/binary"
+	"hash/crc32"
 	"time"
 )
 
@@ -143,7 +144,14 @@ func (rb *RecordBatch) WriteTo(e *Encoder) {
 	binary.BigEndian.PutUint32(buffer[:4], uint32(batchSize))
 	e.writer.WriteAt(buffer[:4], offset+8)
 
-	checksum := e.writer.Checksum(int64(offset+21), int64(offset+totalLength)) // checksum from attributes to end
+	checksum := uint32(0)
+	crcTable := crc32.MakeTable(crc32.Castagnoli)
+	// checksum from attributes to end
+	e.writer.Scan(offset+21, offset+totalLength, func(chunk []byte) bool {
+		checksum = crc32.Update(checksum, crcTable, chunk)
+		return true
+	})
+
 	binary.BigEndian.PutUint32(buffer[:4], checksum)
 	e.writer.WriteAt(buffer[:4], offset+17)
 }

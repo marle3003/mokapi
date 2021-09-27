@@ -8,7 +8,6 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-	"sync"
 )
 
 type ApiKey int16
@@ -29,10 +28,6 @@ const (
 
 const (
 	UnknownTopicOrPartition = 3
-)
-
-var (
-	pagePool = sync.Pool{New: func() interface{} { return new(page) }}
 )
 
 var ApiTypes = map[ApiKey]ApiType{}
@@ -131,13 +126,12 @@ func ReadMessage(r io.Reader) (h *Header, msg Message, err error) {
 }
 
 func WriteMessage(w io.Writer, k ApiKey, version int16, correlationId int32, msg Message) {
-	p := pagePool.Get().(*page)
+	buffer := newPageBuffer()
 	defer func() {
-		p.Reset()
-		pagePool.Put(p)
+		buffer.unref()
 	}()
 
-	e := NewEncoder(p)
+	e := NewEncoder(buffer)
 	t := ApiTypes[k]
 
 	e.writeInt32(0)
@@ -148,10 +142,11 @@ func WriteMessage(w io.Writer, k ApiKey, version int16, correlationId int32, msg
 	t.encode(e, version, msg)
 
 	var size [4]byte
-	binary.BigEndian.PutUint32(size[:], uint32(p.Size()-4))
-	p.WriteAt(size[:], 0)
+	binary.BigEndian.PutUint32(size[:], uint32(buffer.Size()-4))
+	buffer.WriteAt(size[:], 0)
 
-	_, err := w.Write(p.buffer[0:p.offset])
+	_, err := buffer.WriteTo(w)
+
 	if err != nil {
 		log.Errorf("unable to write kafka message apikey %q", k)
 	}

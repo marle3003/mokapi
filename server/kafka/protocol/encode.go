@@ -2,7 +2,6 @@ package protocol
 
 import (
 	"encoding/binary"
-	"hash/crc32"
 	"io"
 	"reflect"
 )
@@ -14,43 +13,11 @@ type BufferWriter interface {
 	WriteAt([]byte, int)
 	WriteSizeAt(size int, offset int)
 	Size() int
-	Checksum(start, end int64) uint32
+	Scan(begin, end int, f func([]byte) bool)
 }
 
 type WriterTo interface {
 	WriteTo(e *Encoder)
-}
-
-type page struct {
-	offset int
-	buffer [65536]byte
-}
-
-func (p *page) Write(b []byte) (n int, err error) {
-	n = copy(p.buffer[p.offset:], b)
-	p.offset += n
-	return
-}
-
-func (p *page) WriteSizeAt(size int, offset int) {
-	binary.BigEndian.PutUint32(p.buffer[offset:offset+4], uint32(size))
-}
-
-func (p *page) WriteAt(b []byte, offset int) {
-	copy(p.buffer[offset:], b)
-}
-
-func (p *page) Size() int {
-	return p.offset
-}
-
-func (p *page) Reset() {
-	p.offset = 0
-}
-
-func (p *page) Checksum(start, end int64) uint32 {
-	table := crc32.MakeTable(crc32.Castagnoli)
-	return crc32.Checksum(p.buffer[start:end], table)
 }
 
 var (

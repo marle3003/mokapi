@@ -78,7 +78,7 @@ func NewService(c *asyncApi.Config) Service {
 }
 
 func newSchema(name string, s *openapi.SchemaRef, level int) *Schema {
-	if s == nil {
+	if s == nil || s.Value == nil {
 		return nil
 	}
 

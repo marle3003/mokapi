@@ -50,6 +50,9 @@ func (p *partition) read(offset int64, maxBytes int32) (set protocol.RecordSet, 
 
 		i := offset - s.head
 		for _, b := range s.log[i:] {
+			if newSize := size + b.Size(); newSize > 30000 {
+				return
+			}
 			set.Batches = append(set.Batches, b)
 			size += b.Size()
 			if size > maxBytes {

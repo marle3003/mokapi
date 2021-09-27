@@ -347,16 +347,16 @@ func (s *Binding) processFetch(req *fetch.Request) *fetch.Response {
 			resTopic := fetch.ResponseTopic{Name: rt.Name, Partitions: make([]fetch.ResponsePartition, 0, len(rt.Partitions))}
 			for _, rp := range rt.Partitions {
 				p := t.partitions[int(rp.Index)]
+				record, recordSize := p.read(rp.FetchOffset, rp.MaxBytes)
 				resPar := fetch.ResponsePartition{
 					Index:                rp.Index,
 					HighWatermark:        p.offset,
 					LastStableOffset:     p.offset,
 					LogStartOffset:       0,
 					PreferredReadReplica: -1,
+					RecordSet:            record,
 				}
 
-				record, recordSize := p.read(rp.FetchOffset, rp.MaxBytes)
-				resPar.RecordSet = record
 				size += recordSize
 				resTopic.Partitions = append(resTopic.Partitions, resPar)
 			}
