@@ -33,15 +33,15 @@ func run(t *testing.T, data []testDataEntry) {
 		err := yaml.Unmarshal([]byte(td.content), &c)
 		test.Ok(t, err)
 
-		r := refResolver{reader: td.reader, path: "", config: c, eh: dynamic.NewEmptyEventHandler(c)}
-		err = r.resolveConfig()
+		r := ReferenceResolver{reader: td.reader, path: "", config: c, eh: dynamic.NewEmptyEventHandler(c)}
+		err = r.ResolveConfig()
 		test.Ok(t, err)
 
 		td.test(t, c)
 	}
 }
 
-func (tr *testReader) Read(path string, c dynamic.Config, h dynamic.ChangeEventHandler) error {
+func (tr *testReader) Read(path string, c dynamic.Config, _ dynamic.ChangeEventHandler) error {
 	val := reflect.ValueOf(c).Interface()
 	if s, ok := tr.data[path]; ok {
 		err := yaml.Unmarshal([]byte(s), val)
