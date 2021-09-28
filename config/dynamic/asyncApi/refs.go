@@ -10,18 +10,14 @@ import (
 	"strings"
 )
 
-type refResolver struct {
+type ReferenceResolver struct {
 	reader dynamic.ConfigReader
 	path   string
 	config *Config
 	eh     dynamic.ChangeEventHandler
 }
 
-type resolver interface {
-	Resolve(token string) (interface{}, error)
-}
-
-func (r refResolver) resolveConfig() error {
+func (r ReferenceResolver) ResolveConfig() error {
 	for _, ch := range r.config.Channels {
 		if err := r.resolveChannelRef(ch); err != nil {
 			return err
@@ -31,7 +27,7 @@ func (r refResolver) resolveConfig() error {
 	return nil
 }
 
-func (r refResolver) resolveChannelRef(m *ChannelRef) error {
+func (r ReferenceResolver) resolveChannelRef(m *ChannelRef) error {
 	if m == nil {
 		return nil
 	}
@@ -58,7 +54,7 @@ func (r refResolver) resolveChannelRef(m *ChannelRef) error {
 	return nil
 }
 
-func (r refResolver) resolveMessageRef(m *MessageRef) error {
+func (r ReferenceResolver) resolveMessageRef(m *MessageRef) error {
 	if m == nil {
 		return nil
 	}
@@ -78,7 +74,7 @@ func (r refResolver) resolveMessageRef(m *MessageRef) error {
 	return r.resolveSchemaRef(m.Value.Payload)
 }
 
-func (r refResolver) resolveSchemas(s *openapi.Schemas) error {
+func (r ReferenceResolver) resolveSchemas(s *openapi.Schemas) error {
 	if s == nil {
 		return nil
 	}
@@ -104,17 +100,15 @@ func (r refResolver) resolveSchemas(s *openapi.Schemas) error {
 	return nil
 }
 
-func (r refResolver) resolveSchemaRef(s *openapi.SchemaRef) error {
+func (r ReferenceResolver) resolveSchemaRef(s *openapi.SchemaRef) error {
 	if s == nil {
 		return nil
 	}
 
 	if len(s.Ref) > 0 && s.Value == nil {
-		resolved := &openapi.SchemaRef{}
-		if resolver, err := r.resolve(s.Ref, r.config, &resolved); err != nil {
+		if resolver, err := r.resolve(s.Ref, r.config, &s.Value); err != nil {
 			return err
 		} else if !resolver.isEmpty() {
-			s.Value = resolved.Value
 			return resolver.resolveSchemaRef(s)
 		}
 	}
@@ -141,7 +135,7 @@ func (r refResolver) resolveSchemaRef(s *openapi.SchemaRef) error {
 func get(token string, node interface{}) (interface{}, error) {
 	rValue := reflect.Indirect(reflect.ValueOf(node))
 
-	if r, ok := node.(resolver); ok {
+	if r, ok := node.(openapi.Resolver); ok {
 		return r.Resolve(token)
 	}
 
@@ -161,16 +155,12 @@ func get(token string, node interface{}) (interface{}, error) {
 	return nil, fmt.Errorf("invalid token reference %q", token)
 }
 
-func (r *MessageRef) resolve(token string) (interface{}, error) {
-	return get(token, r.Value)
-}
-
 func caseInsenstiveFieldByName(v reflect.Value, name string) reflect.Value {
 	name = strings.ToLower(name)
 	return v.FieldByNameFunc(func(n string) bool { return strings.ToLower(n) == name })
 }
 
-func (r refResolver) resolve(ref string, config interface{}, val interface{}) (resolver refResolver, err error) {
+func (r ReferenceResolver) resolve(ref string, config interface{}, val interface{}) (resolver ReferenceResolver, err error) {
 	u, err := url.Parse(ref)
 	if err != nil {
 		return
@@ -203,7 +193,7 @@ func (r refResolver) resolve(ref string, config interface{}, val interface{}) (r
 			return
 		}
 
-		resolver = refResolver{reader: r.reader, path: path, eh: r.eh}
+		resolver = ReferenceResolver{reader: r.reader, path: path, eh: r.eh}
 	}
 
 	tokens := strings.Split(u.Fragment, "/")
@@ -217,6 +207,12 @@ func (r refResolver) resolve(ref string, config interface{}, val interface{}) (r
 
 	if config == nil {
 		return resolver, fmt.Errorf("found unresolved ref: %q", ref)
+	}
+
+	if r, ok := config.(openapi.Resolver); ok {
+		if config, err = r.Resolve(""); err != nil {
+			return
+		}
 	}
 
 	v := reflect.ValueOf(config)
@@ -233,6 +229,10 @@ func (r refResolver) resolve(ref string, config interface{}, val interface{}) (r
 	return
 }
 
-func (r refResolver) isEmpty() bool {
+func (r ReferenceResolver) isEmpty() bool {
 	return r.reader == nil
+}
+
+func (r *MessageRef) Resolve(token string) (interface{}, error) {
+	return get(token, r.Value)
 }

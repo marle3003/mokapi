@@ -14,9 +14,9 @@ func init() {
 		switch c := o.(type) {
 		case *Config:
 			c.ConfigPath = path
-			r := refResolver{reader: r, path: path, config: c, eh: eh}
+			r := ReferenceResolver{reader: r, path: path, config: c, eh: eh}
 
-			if err := r.resolveConfig(); err != nil {
+			if err := r.ResolveConfig(); err != nil {
 				log.Errorf("error in resolving references in config %q: %v", path, err)
 			}
 

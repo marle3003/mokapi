@@ -9,18 +9,18 @@ import (
 	"strings"
 )
 
-type refResolver struct {
+type ReferenceResolver struct {
 	reader dynamic.ConfigReader
 	path   string
 	config *Config
 	eh     dynamic.ChangeEventHandler
 }
 
-type resolver interface {
+type Resolver interface {
 	Resolve(token string) (interface{}, error)
 }
 
-func (r refResolver) resolveConfig() error {
+func (r ReferenceResolver) ResolveConfig() error {
 	if err := r.resolveSchemas(r.config.Components.Schemas); err != nil {
 		return err
 	}
@@ -54,7 +54,7 @@ func (r refResolver) resolveConfig() error {
 	return nil
 }
 
-func (r refResolver) resolveSchemas(s *Schemas) error {
+func (r ReferenceResolver) resolveSchemas(s *Schemas) error {
 	if s == nil {
 		return nil
 	}
@@ -78,7 +78,7 @@ func (r refResolver) resolveSchemas(s *Schemas) error {
 	return nil
 }
 
-func (r refResolver) resolveResponses(res *NamedResponses) error {
+func (r ReferenceResolver) resolveResponses(res *NamedResponses) error {
 	if res == nil {
 		return nil
 	}
@@ -92,7 +92,7 @@ func (r refResolver) resolveResponses(res *NamedResponses) error {
 	return nil
 }
 
-func (r refResolver) resolveRequestBodies(req *RequestBodies) error {
+func (r ReferenceResolver) resolveRequestBodies(req *RequestBodies) error {
 	if req == nil {
 		return nil
 	}
@@ -106,7 +106,7 @@ func (r refResolver) resolveRequestBodies(req *RequestBodies) error {
 	return nil
 }
 
-func (r refResolver) resolveParameters(p *NamedParameters) error {
+func (r ReferenceResolver) resolveParameters(p *NamedParameters) error {
 	if p == nil {
 		return nil
 	}
@@ -120,7 +120,7 @@ func (r refResolver) resolveParameters(p *NamedParameters) error {
 	return nil
 }
 
-func (r refResolver) resolveExamples(e *Examples) error {
+func (r ReferenceResolver) resolveExamples(e *Examples) error {
 	if e == nil {
 		return nil
 	}
@@ -134,7 +134,7 @@ func (r refResolver) resolveExamples(e *Examples) error {
 	return nil
 }
 
-func (r refResolver) resolveHeaders(e *NamedHeaders) error {
+func (r ReferenceResolver) resolveHeaders(e *NamedHeaders) error {
 	if e == nil {
 		return nil
 	}
@@ -148,7 +148,7 @@ func (r refResolver) resolveHeaders(e *NamedHeaders) error {
 	return nil
 }
 
-func (r refResolver) resolveEndpointRef(e *EndpointRef) error {
+func (r ReferenceResolver) resolveEndpointRef(e *EndpointRef) error {
 	if e == nil {
 		return nil
 	}
@@ -189,7 +189,7 @@ func (r refResolver) resolveEndpointRef(e *EndpointRef) error {
 	return nil
 }
 
-func (r refResolver) resolveParameter(p *ParameterRef) error {
+func (r ReferenceResolver) resolveParameter(p *ParameterRef) error {
 	if p == nil {
 		return nil
 	}
@@ -213,7 +213,7 @@ func (r refResolver) resolveParameter(p *ParameterRef) error {
 	return nil
 }
 
-func (r refResolver) resolveRequestBodyRef(req *RequestBodyRef) error {
+func (r ReferenceResolver) resolveRequestBodyRef(req *RequestBodyRef) error {
 	if req == nil {
 		return nil
 	}
@@ -238,7 +238,7 @@ func (r refResolver) resolveRequestBodyRef(req *RequestBodyRef) error {
 	return nil
 }
 
-func (r refResolver) resolveResponseRef(res *ResponseRef) error {
+func (r ReferenceResolver) resolveResponseRef(res *ResponseRef) error {
 	if res == nil {
 		return nil
 	}
@@ -279,7 +279,7 @@ func (r refResolver) resolveResponseRef(res *ResponseRef) error {
 	return nil
 }
 
-func (r refResolver) resolveSchemaRef(s *SchemaRef) error {
+func (r ReferenceResolver) resolveSchemaRef(s *SchemaRef) error {
 	if s == nil {
 		return nil
 	}
@@ -312,7 +312,7 @@ func (r refResolver) resolveSchemaRef(s *SchemaRef) error {
 	return nil
 }
 
-func (r refResolver) resolveExample(ref *ExampleRef) error {
+func (r ReferenceResolver) resolveExample(ref *ExampleRef) error {
 	if ref == nil {
 		return nil
 	}
@@ -328,7 +328,7 @@ func (r refResolver) resolveExample(ref *ExampleRef) error {
 	return nil
 }
 
-func (r refResolver) resolveHeader(ref *HeaderRef) error {
+func (r ReferenceResolver) resolveHeader(ref *HeaderRef) error {
 	if ref == nil {
 		return nil
 	}
@@ -344,7 +344,7 @@ func (r refResolver) resolveHeader(ref *HeaderRef) error {
 	return nil
 }
 
-func (r refResolver) resolve(ref string, config interface{}, val interface{}) (err error) {
+func (r ReferenceResolver) resolve(ref string, config interface{}, val interface{}) (err error) {
 	u, err := url.Parse(ref)
 	if err != nil {
 		return err
@@ -407,9 +407,13 @@ func (r refResolver) resolve(ref string, config interface{}, val interface{}) (e
 }
 
 func get(token string, node interface{}) (interface{}, error) {
+	if len(token) == 0 {
+		return node, nil
+	}
+
 	rValue := reflect.Indirect(reflect.ValueOf(node))
 
-	if r, ok := node.(resolver); ok {
+	if r, ok := node.(Resolver); ok {
 		return r.Resolve(token)
 	}
 
@@ -434,7 +438,7 @@ func caseInsenstiveFieldByName(v reflect.Value, name string) reflect.Value {
 	return v.FieldByNameFunc(func(n string) bool { return strings.ToLower(n) == name })
 }
 
-func (r refResolver) readConfig(path string, node interface{}) error {
+func (r ReferenceResolver) readConfig(path string, node interface{}) error {
 	dir := filepath.Dir(r.path)
 	if !filepath.IsAbs(path) {
 		path = filepath.Join(dir, path)
@@ -465,5 +469,9 @@ func (r *RequestBodies) Resolve(token string) (interface{}, error) {
 }
 
 func (r *NamedHeaders) Resolve(token string) (interface{}, error) {
+	return get(token, r.Value)
+}
+
+func (r *SchemaRef) Resolve(token string) (interface{}, error) {
 	return get(token, r.Value)
 }
