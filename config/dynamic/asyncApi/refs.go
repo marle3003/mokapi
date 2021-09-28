@@ -133,6 +133,10 @@ func (r ReferenceResolver) resolveSchemaRef(s *openapi.SchemaRef) error {
 }
 
 func get(token string, node interface{}) (interface{}, error) {
+	if len(token) == 0 {
+		return node, nil
+	}
+
 	rValue := reflect.Indirect(reflect.ValueOf(node))
 
 	if r, ok := node.(openapi.Resolver); ok {
@@ -172,11 +176,14 @@ func (r ReferenceResolver) resolve(ref string, config interface{}, val interface
 			path = filepath.Join(filepath.Dir(r.path), u.Path)
 		}
 
+		resolver = ReferenceResolver{reader: r.reader, path: path, eh: r.eh}
+
 		switch s := strings.ToLower(u.Fragment); {
-		case strings.HasPrefix(s, "/components"):
+		case strings.HasPrefix(s, "/components"), strings.HasPrefix(s, "/channels"):
 			var c *Config
 			err = r.reader.Read(path, &c, r.eh)
 			config = c
+			resolver.config = c
 		case len(s) == 0:
 			err = r.reader.Read(path, val, r.eh)
 			config = val
@@ -192,8 +199,6 @@ func (r ReferenceResolver) resolve(ref string, config interface{}, val interface
 		if err != nil {
 			return
 		}
-
-		resolver = ReferenceResolver{reader: r.reader, path: path, eh: r.eh}
 	}
 
 	tokens := strings.Split(u.Fragment, "/")
@@ -235,4 +240,8 @@ func (r ReferenceResolver) isEmpty() bool {
 
 func (r *MessageRef) Resolve(token string) (interface{}, error) {
 	return get(token, r.Value)
+}
+
+func (c *ChannelRef) Resolve(token string) (interface{}, error) {
+	return get(token, c.Value)
 }
