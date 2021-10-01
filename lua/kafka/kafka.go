@@ -4,6 +4,8 @@ import (
 	lua "github.com/yuin/gopher-lua"
 	luar "layeh.com/gopher-luar"
 	"mokapi/lua/utils"
+	"strings"
+	"time"
 )
 
 type WriteMessage func(broker, topic string, partition int, key, message interface{}) (interface{}, interface{}, error)
@@ -27,19 +29,34 @@ func (kafka *Kafka) Produce(state *lua.LState) int {
 	if lv, ok := state.Get(5).(lua.LNumber); ok {
 		partition = int(lv)
 	}
-
-	k, m, err := kafka.producer(broker, topic, partition, key, message)
-	if err != nil {
-		state.Push(lua.LNil)
-		state.Push(lua.LNil)
-		state.Push(lua.LString(err.Error()))
-		return 3
+	timeout := time.Second * 30
+	if lv, ok := state.Get(6).(lua.LString); ok {
+		if d, err := time.ParseDuration(string(lv)); err != nil {
+			state.Push(lua.LNil)
+			state.Push(lua.LNil)
+			state.Push(lua.LString(err.Error()))
+			return 3
+		} else {
+			timeout = d
+		}
 	}
 
-	state.Push(luar.New(state, k))
-	state.Push(luar.New(state, m))
+	var err error
+	var k, m interface{}
+	for start := time.Now(); time.Since(start) < timeout; {
+		if k, m, err = kafka.producer(broker, topic, partition, key, message); err == nil {
+			state.Push(luar.New(state, k))
+			state.Push(luar.New(state, m))
+			return 2
+		} else if !strings.HasPrefix(err.Error(), "no broker found at") {
+			break
+		}
+	}
 
-	return 2
+	state.Push(lua.LNil)
+	state.Push(lua.LNil)
+	state.Push(lua.LString(err.Error()))
+	return 3
 }
 
 func (kafka *Kafka) Loader(state *lua.LState) int {
