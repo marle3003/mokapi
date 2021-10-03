@@ -88,6 +88,11 @@ type Operation struct {
 	Summary     string
 	Description string
 	Message     *MessageRef
+	Bindings    OperationBindings
+}
+
+type OperationBindings struct {
+	Kafka kafka.Operation
 }
 
 type MessageRef struct {
@@ -103,6 +108,7 @@ type Message struct {
 	ContentType string
 	Payload     *openapi.SchemaRef
 	Bindings    MessageBinding
+	Headers     *openapi.SchemaRef
 }
 
 type MessageBinding struct {

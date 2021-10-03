@@ -1,12 +1,15 @@
 package kafka
 
 import (
+	log "github.com/sirupsen/logrus"
 	"mokapi/server/kafka/protocol"
 	"sync"
 	"time"
 )
 
 type partition struct {
+	index         int
+	topic         *topic
 	leader        *broker
 	segments      map[int64]*segment
 	activeSegment int64
@@ -21,12 +24,16 @@ type segment struct {
 	head        int64
 	tail        int64
 	log         []protocol.RecordBatch
-	Size        int64
+	Size        int
+	opened      time.Time
+	closed      time.Time
 	lastWritten time.Time
 }
 
-func newPartition(leader *broker) *partition {
+func newPartition(index int, topic *topic, leader *broker) *partition {
 	return &partition{
+		index:         index,
+		topic:         topic,
 		leader:        leader,
 		activeSegment: 0,
 		segments:      map[int64]*segment{0: newSegment(0)},
@@ -36,7 +43,7 @@ func newPartition(leader *broker) *partition {
 }
 
 func newSegment(offset int64) *segment {
-	return &segment{head: offset}
+	return &segment{head: offset, opened: time.Now()}
 }
 
 func (p *partition) read(offset int64, maxBytes int32) (set protocol.RecordSet, size int32) {
@@ -79,12 +86,13 @@ func (p *partition) deleteSegment(key int64) {
 	delete(p.segments, key)
 }
 
-func (p *partition) deleteAllInactiveSegments() {
+func (p *partition) deleteClosedSegments() {
 	p.lock.Lock()
 	defer p.lock.Unlock()
-	for k := range p.segments {
-		if k != p.activeSegment {
-			delete(p.segments, k)
+
+	for key, seg := range p.segments {
+		if !seg.closed.IsZero() {
+			delete(p.segments, key)
 		}
 	}
 }
@@ -93,8 +101,12 @@ func (p *partition) addNewSegment() {
 	p.lock.Lock()
 	defer p.lock.Unlock()
 
+	p.segments[p.activeSegment].closed = time.Now()
+
 	p.activeSegment = p.offset
 	p.segments[p.activeSegment] = newSegment(p.offset)
+
+	log.Infof("added new segment to partition %v, topic %v", p.index, p.topic.name)
 }
 
 func (p *partition) getSegment(offset int64) *segment {

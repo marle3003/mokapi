@@ -110,10 +110,13 @@ The maximum size of a single log. Default value is *10485760* (10 megabytes)
 ### log.segment.delete.delay.ms
 The amount of time to wait before deleting a log. Default value is *60000* (1 minute)
 
-### log.cleaner.backoff.ms
-The amount of time to sleep when there are no logs to clean. Default value is *15000* (15 seconds)
-
 ## Kafka Channel Bindings
 
 ### partitions
 Sets the number of partition for the channel. Default value is *1*
+
+### retention.bytes
+The maximum size of a segment before deleting it. Default value is *-1*
+
+### retention.ms
+The numbers of milliseconds to keep a segment before deleting it.

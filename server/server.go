@@ -236,7 +236,7 @@ func (s *Server) appendCertificate(c mokapi.Certificate, currentDir string) erro
 	return nil
 }
 
-func (s *Server) writeKafkaMessage(broker, topic string, partition int, key, message interface{}) (interface{}, interface{}, error) {
+func (s *Server) writeKafkaMessage(broker, topic string, partition int, key, message, header interface{}) (interface{}, interface{}, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
 
@@ -244,11 +244,11 @@ func (s *Server) writeKafkaMessage(broker, topic string, partition int, key, mes
 		if b, ok := c.(*kafka.Binding); ok {
 			// if empty broker, try first binding
 			if len(broker) == 0 {
-				return b.AddMessage(topic, partition, key, message)
+				return b.AddMessage(topic, partition, key, message, header)
 			}
 
 			if b.HasBroker(broker) {
-				return b.AddMessage(topic, partition, key, message)
+				return b.AddMessage(topic, partition, key, message, header)
 			}
 		}
 	}

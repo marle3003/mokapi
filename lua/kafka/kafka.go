@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-type WriteMessage func(broker, topic string, partition int, key, message interface{}) (interface{}, interface{}, error)
+type WriteMessage func(broker, topic string, partition int, key, message, header interface{}) (interface{}, interface{}, error)
 
 type Kafka struct {
 	producer WriteMessage
@@ -25,12 +25,16 @@ func (kafka *Kafka) Produce(state *lua.LState) int {
 	topic := state.CheckString(2)
 	key := state.ToString(3)
 	message := utils.MapTable(state.ToTable(4))
+	var headers interface{}
+	if lv := state.Get(5); lv != lua.LNil {
+		headers = utils.MapTable(state.ToTable(5))
+	}
 	partition := -1
-	if lv, ok := state.Get(5).(lua.LNumber); ok {
+	if lv, ok := state.Get(6).(lua.LNumber); ok {
 		partition = int(lv)
 	}
 	timeout := time.Second * 30
-	if lv, ok := state.Get(6).(lua.LString); ok {
+	if lv, ok := state.Get(7).(lua.LString); ok {
 		if d, err := time.ParseDuration(string(lv)); err != nil {
 			state.Push(lua.LNil)
 			state.Push(lua.LNil)
@@ -44,7 +48,7 @@ func (kafka *Kafka) Produce(state *lua.LState) int {
 	var err error
 	var k, m interface{}
 	for start := time.Now(); time.Since(start) < timeout; {
-		if k, m, err = kafka.producer(broker, topic, partition, key, message); err == nil {
+		if k, m, err = kafka.producer(broker, topic, partition, key, message, headers); err == nil {
 			state.Push(luar.New(state, k))
 			state.Push(luar.New(state, m))
 			return 2

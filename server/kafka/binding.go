@@ -46,11 +46,11 @@ func NewBinding(addedMessage AddedMessage) *Binding {
 	return s
 }
 
-func (s *Binding) AddMessage(topic string, partition int, key, message interface{}) (interface{}, interface{}, error) {
+func (s *Binding) AddMessage(topic string, partition int, key, message, header interface{}) (interface{}, interface{}, error) {
 	if t, ok := s.topics[topic]; !ok {
 		return key, message, fmt.Errorf("topic %q not found", topic)
 	} else {
-		return t.addMessage(partition, key, message)
+		return t.addMessage(partition, key, message, header)
 	}
 }
 
@@ -71,8 +71,7 @@ func (s *Binding) Apply(data interface{}) error {
 				log.Errorf("kafka: message reference error for channel %v", name)
 				continue
 			}
-			msg := c.Value.Publish.Message.Value
-			s.topics[name] = newTopic(name, c.Value.Bindings.Kafka, leader, msg.Payload, msg.Bindings.Kafka.Key, msg.ContentType, s.addedMessage)
+			s.topics[name] = newTopic(name, c.Value, leader, s.addedMessage)
 			log.Infof("kafka: added topic %q with %v partitions on broker %v:%v", name, c.Value.Bindings.Kafka.Partitions, leader.host, leader.port)
 		} else {
 			topic.update(c.Value.Bindings.Kafka, leader)
@@ -181,7 +180,7 @@ func (s *Binding) UpdateMetrics(m *models.KafkaMetric) {
 			t.Count += p.offset
 			for _, seg := range p.segments {
 				//t.Count += seg.tail - seg.head
-				t.Size += seg.Size
+				t.Size += int64(seg.Size)
 				if seg.lastWritten.After(t.LastRecord) {
 					t.LastRecord = seg.lastWritten
 				}
@@ -199,16 +198,24 @@ func (s *Binding) UpdateMetrics(m *models.KafkaMetric) {
 }
 
 func (s *Binding) checkRetention(b *broker) {
-	retentionTime := time.Duration(b.config.LogRetentionMs())
-	retentionBytes := b.config.LogRetentionBytes()
+	brokerRetentionTime := time.Duration(b.config.LogRetentionMs()) * time.Millisecond
+	brokerRetentionBytes := b.config.LogRetentionBytes()
+	brokerRollingTime := time.Duration(b.config.LogRollMs()) * time.Millisecond
 	now := time.Now()
 
 	for _, t := range s.topics {
-		if t.config.RetentionMs() >= 0 {
-			retentionTime = time.Duration(t.config.RetentionMs())
+		retentionTime := brokerRetentionTime
+		retentionBytes := brokerRetentionBytes
+		rollingTime := brokerRollingTime
+
+		if ms, ok := t.config.RetentionMs(); ok {
+			retentionTime = time.Duration(ms) * time.Millisecond
 		}
-		if t.config.RetentionBytes() >= 0 {
-			retentionBytes = t.config.RetentionBytes()
+		if bytes, ok := t.config.RetentionBytes(); ok {
+			retentionBytes = bytes
+		}
+		if ms, ok := t.config.SegmentMs(); ok {
+			rollingTime = time.Duration(ms) * time.Millisecond
 		}
 
 		for i, p := range t.partitions {
@@ -218,17 +225,23 @@ func (s *Binding) checkRetention(b *broker) {
 
 			partitionSize := int64(0)
 			for k, seg := range p.segments {
-				partitionSize += seg.Size
-				if seg.Size > 0 && now.After(seg.lastWritten.Add(retentionTime)) {
-					log.Infof("Deleting segment with base offset [%v,%v] from topic %q", seg.head, seg.tail, t.name)
+				partitionSize += int64(seg.Size)
+
+				// check rolling
+				if now.After(seg.opened.Add(rollingTime)) {
+					p.addNewSegment()
+				}
+
+				// check retention
+				if seg.Size > 0 && !seg.closed.IsZero() && now.After(seg.closed.Add(retentionTime)) {
+					log.Infof("deleting segment with base offset [%v,%v] from partition %v topic %q", seg.head, seg.tail, p.index, t.name)
 					p.deleteSegment(k)
 				}
 			}
 
 			if retentionBytes > 0 && partitionSize >= retentionBytes {
-				log.Infof("Maximum partition size reached. Cleanup partition %v from topic %q", i, t.name)
-				p.addNewSegment()
-				p.deleteAllInactiveSegments()
+				log.Infof("maximum partition size reached. cleanup partition %v from topic %q", i, t.name)
+				p.deleteClosedSegments()
 			}
 		}
 	}

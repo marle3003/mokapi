@@ -3,6 +3,7 @@ package kafka
 import (
 	"fmt"
 	"math/rand"
+	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/kafka"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/models/media"
@@ -12,37 +13,43 @@ import (
 )
 
 type topic struct {
-	name         string
-	partitions   map[int]*partition
-	payload      *openapi.SchemaRef
-	key          *openapi.SchemaRef
-	contentType  string
-	config       kafka.TopicBindings
-	g            *openapi.Generator
-	addedMessage AddedMessage
+	name          string
+	partitions    map[int]*partition
+	payload       *openapi.SchemaRef
+	key           *openapi.SchemaRef
+	headers       *openapi.SchemaRef
+	contentType   string
+	config        kafka.TopicBindings
+	g             *openapi.Generator
+	addedMessage  AddedMessage
+	allowedGroups []string
 }
 
-func newTopic(name string, config kafka.TopicBindings, leader *broker, payload *openapi.SchemaRef, key *openapi.SchemaRef, contentType string, addedMessage AddedMessage) *topic {
-	p := make(map[int]*partition)
-	if config.Partitions == 0 {
-		p[0] = newPartition(leader)
-	} else {
-		for i := 0; i < config.Partitions; i++ {
-			p[i] = newPartition(leader)
-		}
-	}
-	return &topic{
+func newTopic(name string, c *asyncApi.Channel, leader *broker, addedMessage AddedMessage) *topic {
+	msg := c.Publish.Message.Value
+	topic := &topic{
 		name:         name,
-		partitions:   p,
-		payload:      payload,
-		key:          key,
-		contentType:  contentType,
+		payload:      msg.Payload,
+		partitions:   make(map[int]*partition),
+		key:          msg.Bindings.Kafka.Key,
+		contentType:  msg.ContentType,
+		headers:      msg.Headers,
 		g:            openapi.NewGenerator(),
 		addedMessage: addedMessage,
+		config:       c.Bindings.Kafka,
 	}
+	if c.Bindings.Kafka.Partitions == 0 {
+		topic.partitions[0] = newPartition(0, topic, leader)
+	} else {
+		for i := 0; i < c.Bindings.Kafka.Partitions; i++ {
+			topic.partitions[i] = newPartition(i, topic, leader)
+		}
+	}
+
+	return topic
 }
 
-func (t *topic) addMessage(partition int, key, message interface{}) (interface{}, interface{}, error) {
+func (t *topic) addMessage(partition int, key, message interface{}, header interface{}) (interface{}, interface{}, error) {
 	record := protocol.Record{Time: time.Now()}
 
 	if key == nil {
@@ -54,9 +61,17 @@ func (t *topic) addMessage(partition int, key, message interface{}) (interface{}
 		message = t.g.New(t.payload)
 	}
 
+	if header == nil {
+		header = t.g.New(t.headers)
+	}
+
 	var err error
 	contentType := media.ParseContentType(t.contentType)
 	record.Value, err = encode(message, t.payload, contentType)
+	if record.Headers, err = parseHeader(header); err != nil {
+		return nil, nil, err
+	}
+
 	if err != nil {
 		return key, message, err
 	}
@@ -79,6 +94,15 @@ func (t *topic) addRecord(partition int, record protocol.RecordBatch) error {
 
 	p := t.partitions[partition]
 
+	maxSegmentByes, ok := t.config.SegmentBytes()
+	if !ok {
+		maxSegmentByes = p.leader.config.LogSegmentBytes()
+	}
+
+	if maxSegmentByes >= 0 && p.segments[p.activeSegment].Size > maxSegmentByes {
+		p.addNewSegment()
+	}
+
 	p.lock.Lock()
 	defer p.lock.Unlock()
 
@@ -88,7 +112,7 @@ func (t *topic) addRecord(partition int, record protocol.RecordBatch) error {
 	segment := p.segments[p.activeSegment]
 
 	segment.log = append(segment.log, record)
-	segment.Size += int64(record.Size())
+	segment.Size += int(record.Size())
 	segment.tail = record.Offset
 	segment.lastWritten = time.Now()
 
@@ -130,4 +154,23 @@ func encode(data interface{}, schema *openapi.SchemaRef, contentType *media.Cont
 		}
 		return nil, fmt.Errorf("unspupported encoding for content type %v", contentType)
 	}
+}
+
+func parseHeader(i interface{}) ([]protocol.RecordHeader, error) {
+	headers := make([]protocol.RecordHeader, 0)
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("unexpected type of header: %t", i)
+	}
+
+	for k, v := range m {
+		if s, ok := v.(string); ok {
+			headers = append(headers, protocol.RecordHeader{Key: k, Value: []byte(s)})
+		} else {
+			return nil, fmt.Errorf("unexpected type of header value %v: %t", k, v)
+		}
+
+	}
+
+	return headers, nil
 }

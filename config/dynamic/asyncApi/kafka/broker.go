@@ -41,7 +41,7 @@ func (b BrokerBindings) GroupInitialRebalanceDelayMs() int {
 func (b BrokerBindings) LogRetentionMs() int64 {
 	if s, ok := b.Config["log.retention.ms"]; ok {
 		if i, err := strconv.ParseInt(s, 10, 64); err != nil {
-			log.Errorf("unable to convert 'log.retention.ms' to int, using default instead: %v", err)
+			log.Errorf("unable to convert 'log.retention.ms' to long, using default instead: %v", err)
 		} else {
 			return i
 		}
@@ -49,7 +49,7 @@ func (b BrokerBindings) LogRetentionMs() int64 {
 
 	if s, ok := b.Config["log.retention.minutes"]; ok {
 		if i, err := strconv.Atoi(s); err != nil {
-			log.Errorf("unable to convert 'group.initial.rebalance.delay.ms' to int, using default instead: %v", err)
+			log.Errorf("unable to convert 'log.retention.minutes' to int, using default instead: %v", err)
 		} else {
 			return int64(i) * 60 * 1000
 		}
@@ -87,6 +87,44 @@ func (b BrokerBindings) LogSegmentDeleteDelayMs() int64 {
 		}
 	}
 	return 60000 // 1 minutes
+}
+
+func (b BrokerBindings) LogRollMs() int64 {
+	if s, ok := b.Config["log.roll.ms"]; ok {
+		if i, err := strconv.ParseInt(s, 10, 64); err != nil {
+			log.Errorf("unable to convert 'log.roll.ms' to long, using default instead: %v", err)
+		} else {
+			return i
+		}
+	}
+
+	if s, ok := b.Config["log.roll.minutes"]; ok {
+		if i, err := strconv.Atoi(s); err != nil {
+			log.Errorf("unable to convert 'log.roll.minutes' to int, using default instead: %v", err)
+		} else {
+			return int64(i) * 60 * 1000
+		}
+	}
+
+	if s, ok := b.Config["log.roll.hours"]; ok {
+		if i, err := strconv.Atoi(s); err != nil {
+			log.Errorf("unable to convert 'log.roll.hours' to int, using default instead: %v", err)
+		} else {
+			return int64(i) * 60 * 60 * 1000
+		}
+	}
+	return 604800000 // 7 days
+}
+
+func (b BrokerBindings) LogSegmentBytes() int {
+	if s, ok := b.Config["log.segment.bytes"]; ok {
+		if i, err := strconv.Atoi(s); err != nil {
+			log.Errorf("unable to convert 'log.segment.bytes' to int, using default instead: %v", err)
+		} else {
+			return i
+		}
+	}
+	return 1073741824 // 1gb
 }
 
 func (b *BrokerBindings) UnmarshalYAML(value *yaml.Node) error {
