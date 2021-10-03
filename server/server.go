@@ -186,7 +186,7 @@ func (s *Server) updateConfigs(config dynamic.Config) {
 
 		binding, found := s.Bindings[c.Info.Name]
 		if !found {
-			b := kafka.NewBinding(c, s.runtime.Metrics.AddMessage)
+			b := kafka.NewBinding(s.runtime.Metrics.AddMessage)
 			binding = b
 			s.Bindings[c.Info.Name] = b
 			b.Start()
@@ -246,10 +246,9 @@ func (s *Server) writeKafkaMessage(broker, topic string, partition int, key, mes
 			if len(broker) == 0 {
 				return b.AddMessage(topic, partition, key, message)
 			}
-			for _, server := range b.Config.Servers {
-				if server.Url == broker {
-					return b.AddMessage(topic, partition, key, message)
-				}
+
+			if b.HasBroker(broker) {
+				return b.AddMessage(topic, partition, key, message)
 			}
 		}
 	}

@@ -2,7 +2,9 @@ package utils
 
 import (
 	"fmt"
+	"net/url"
 	"reflect"
+	"strconv"
 	"strings"
 )
 
@@ -43,4 +45,25 @@ func ToString(i interface{}) string {
 	}
 
 	return fmt.Sprintf("%v", i)
+}
+
+func ParseUrl(s string) (host string, port int, err error) {
+	u, err := url.Parse("//" + s)
+	if err != nil {
+		err = fmt.Errorf("invalid format in url %q", s)
+		return
+	}
+	host = u.Hostname()
+
+	portString := u.Port()
+	if len(portString) == 0 {
+		port = 80
+	} else {
+		port, err = strconv.Atoi(portString)
+		if err != nil {
+			err = fmt.Errorf("invalid port format in url %q", s)
+		}
+	}
+
+	return
 }

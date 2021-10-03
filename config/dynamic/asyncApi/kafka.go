@@ -24,6 +24,7 @@ var (
 
 type KafkaChannelBinding struct {
 	Partitions int
+	config     map[string]string
 }
 
 type KafkaMessageBinding struct {

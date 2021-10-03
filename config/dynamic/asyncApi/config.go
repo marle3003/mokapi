@@ -3,6 +3,7 @@ package asyncApi
 import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/asyncApi/kafka"
 	"mokapi/config/dynamic/openapi"
 	"net/url"
 	"strconv"
@@ -63,7 +64,7 @@ type Server struct {
 }
 
 type ServerBindings struct {
-	Kafka Kafka
+	Kafka kafka.BrokerBindings
 }
 
 type ChannelRef struct {
@@ -79,7 +80,7 @@ type Channel struct {
 }
 
 type ChannelBindings struct {
-	Kafka KafkaChannelBinding
+	Kafka kafka.TopicBindings
 }
 
 type Operation struct {

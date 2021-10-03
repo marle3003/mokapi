@@ -3,7 +3,7 @@ package kafka
 import (
 	"fmt"
 	"math/rand"
-	"mokapi/config/dynamic/asyncApi"
+	"mokapi/config/dynamic/asyncApi/kafka"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/models/media"
 	"mokapi/providers/encoding"
@@ -17,17 +17,17 @@ type topic struct {
 	payload      *openapi.SchemaRef
 	key          *openapi.SchemaRef
 	contentType  string
-	config       asyncApi.Log
+	config       kafka.TopicBindings
 	g            *openapi.Generator
 	addedMessage AddedMessage
 }
 
-func newTopic(name string, partitions int, leader *broker, payload *openapi.SchemaRef, key *openapi.SchemaRef, contentType string, config asyncApi.Log, addedMessage AddedMessage) *topic {
+func newTopic(name string, config kafka.TopicBindings, leader *broker, payload *openapi.SchemaRef, key *openapi.SchemaRef, contentType string, addedMessage AddedMessage) *topic {
 	p := make(map[int]*partition)
-	if partitions == 0 {
+	if config.Partitions == 0 {
 		p[0] = newPartition(leader)
 	} else {
-		for i := 0; i < partitions; i++ {
+		for i := 0; i < config.Partitions; i++ {
 			p[i] = newPartition(leader)
 		}
 	}
@@ -37,7 +37,6 @@ func newTopic(name string, partitions int, leader *broker, payload *openapi.Sche
 		payload:      payload,
 		key:          key,
 		contentType:  contentType,
-		config:       config,
 		g:            openapi.NewGenerator(),
 		addedMessage: addedMessage,
 	}
@@ -80,10 +79,6 @@ func (t *topic) addRecord(partition int, record protocol.RecordBatch) error {
 
 	p := t.partitions[partition]
 
-	if p.segments[p.activeSegment].Size > t.config.Segment.Bytes {
-		p.addNewSegment()
-	}
-
 	p.lock.Lock()
 	defer p.lock.Unlock()
 
@@ -114,6 +109,13 @@ func (t *topic) addRecords(partition int, records []protocol.RecordBatch) error 
 		}
 	}
 	return nil
+}
+
+func (t *topic) update(config kafka.TopicBindings, leader *broker) {
+	t.config = config
+	for _, p := range t.partitions {
+		p.leader = leader
+	}
 }
 
 func encode(data interface{}, schema *openapi.SchemaRef, contentType *media.ContentType) ([]byte, error) {

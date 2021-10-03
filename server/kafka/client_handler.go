@@ -24,7 +24,6 @@ import (
 
 func (s *Binding) handle(conn net.Conn) {
 	defer func() {
-		log.Info("closing kafka connection")
 		err := conn.Close()
 		if err != nil {
 			log.Errorf("unable to close kafka connection")

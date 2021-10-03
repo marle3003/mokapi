@@ -54,7 +54,7 @@ func NewService(c *asyncApi.Config) Service {
 	}
 
 	for _, server := range c.Servers {
-		m := server.Bindings.Kafka.ToMap()
+		m := server.Bindings.Kafka.Config
 		configs := make([]Config, 0, len(m))
 		for k, v := range m {
 			configs = append(configs, Config{k, v})

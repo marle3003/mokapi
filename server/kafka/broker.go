@@ -3,7 +3,9 @@ package kafka
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"mokapi/config/dynamic/asyncApi/kafka"
 	"net"
+	"sync"
 	"time"
 )
 
@@ -13,11 +15,19 @@ type broker struct {
 	host string
 	port int
 
-	stopCh chan bool
+	listener             net.Listener
+	closeListener        chan bool
+	stopped              chan bool
+	stopRetentionChecker chan bool
+	config               kafka.BrokerBindings
 }
 
-func newBroker(name string, id int, host string, port int) *broker {
-	return &broker{name: name, id: id, host: host, port: port, stopCh: make(chan bool)}
+var nextBrokerId = 0
+
+func newBroker(name string, host string, port int, config kafka.BrokerBindings) *broker {
+	b := &broker{name: name, id: nextBrokerId, host: host, port: port, config: config, closeListener: make(chan bool, 1), stopRetentionChecker: make(chan bool, 1), stopped: make(chan bool)}
+	nextBrokerId++
+	return b
 }
 
 type client struct {
@@ -26,53 +36,66 @@ type client struct {
 	lastHeartbeat time.Time
 }
 
-func (b *broker) start(handler func(net.Conn)) {
-	listen := fmt.Sprintf(":%v", b.port)
-	l, err := net.Listen("tcp", listen)
+func (b *broker) start(c controller) {
+	var err error
+	b.listener, err = net.Listen("tcp", fmt.Sprintf("%v:%v", b.host, b.port))
 	if err != nil {
 		log.Errorf("Error listening: %v", err.Error())
 		return
 	}
+	var handlers sync.WaitGroup
 
-	log.Infof("Started kafka broker %q with id %v on %v", b.name, b.id, listen)
-
-	// Close the listener when the application closes.
-	connChannl := make(chan net.Conn)
-	closeListener := make(chan bool)
 	go func() {
 		for {
 			// Listen for an incoming connection.
-			conn, err := l.Accept()
+			conn, err := b.listener.Accept()
 			if err != nil {
 				select {
-				case <-closeListener:
+				case <-b.closeListener:
+					handlers.Wait()
+					b.stopped <- true
 					return
 				default:
 					log.Errorf("Error accepting: %v", err.Error())
 				}
 			}
 			// Handle connections in a new goroutine.
-			connChannl <- conn
+			handlers.Add(1)
+			go func() {
+				go c.handle(conn)
+				handlers.Done()
+			}()
 		}
 	}()
 
 	go func() {
+		ticker := time.NewTicker(time.Duration(b.config.LogRetentionCheckIntervalMs()) * time.Millisecond)
+		defer ticker.Stop()
+
 		for {
 			select {
-			case conn := <-connChannl:
-				go handler(conn)
-			case <-b.stopCh:
-				log.Infof("Stopping kafka broker %q with id %v on %v", b.name, b.id, listen)
-				closeListener <- true
-				err := l.Close()
-				if err != nil {
-					log.Errorf("unable to stop kafka broker %q: %v", b.name, err.Error())
-				}
+			case <-b.stopRetentionChecker:
+				return
+			case <-ticker.C:
+				c.checkRetention(b)
 			}
 		}
 	}()
+
+	log.Infof("Started kafka broker %q with id %v on %v:%v", b.name, b.id, b.host, b.port)
 }
 
 func (b *broker) stop() {
-	b.stopCh <- true
+	log.Infof("Stopping kafka broker %q with id %v on %v:%v", b.name, b.id, b.host, b.port)
+	b.closeListener <- true
+	b.stopRetentionChecker <- true
+	err := b.listener.Close()
+	if err != nil {
+		log.Errorf("unable to stop kafka broker %q: %v", b.name, err.Error())
+	}
+	<-b.stopped
+}
+
+func (b *broker) newGroup(name string) *group {
+	return newGroup(name, b, b.config.GroupInitialRebalanceDelayMs())
 }

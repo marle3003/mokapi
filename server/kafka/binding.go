@@ -5,46 +5,42 @@ import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/models"
+	"mokapi/providers/utils"
+	"net"
 	"sync"
 	"time"
 )
 
 type AddedMessage func(topic string, key []byte, message []byte, partition int)
 
+type controller interface {
+	handle(conn net.Conn)
+	checkRetention(b *broker)
+}
+
 type Binding struct {
-	stop         chan bool
-	stopCleaner  chan bool
-	listen       string
-	isRunning    bool
-	brokers      []*broker
-	groups       map[string]*group
-	topics       map[string]*topic
-	Config       *asyncApi.Config
-	kafka        asyncApi.Kafka
+	listen    string
+	isRunning bool
+	brokers   map[string]*broker
+	groups    map[string]*group
+	topics    map[string]*topic
+	Config    *asyncApi.Config
+	//kafka        kafka.BrokerBindings
 	addedMessage AddedMessage
 	clients      map[string]*client
 
 	clientsMutex sync.RWMutex
 	groupsMutex  sync.RWMutex
+	brokerMutex  sync.RWMutex
 }
 
-func NewBinding(c *asyncApi.Config, addedMessage AddedMessage) *Binding {
+func NewBinding(addedMessage AddedMessage) *Binding {
 	s := &Binding{
-		stop:         make(chan bool),
-		stopCleaner:  make(chan bool),
+		brokers:      make(map[string]*broker),
 		groups:       make(map[string]*group),
 		topics:       make(map[string]*topic),
-		Config:       c,
 		addedMessage: addedMessage,
 		clients:      make(map[string]*client),
-	}
-
-	brokerId := 0
-	for name, server := range c.Servers {
-		b := newBroker(name, brokerId, server.GetHost(), server.GetPort()) // id is 1 based
-		s.brokers = append(s.brokers, b)
-		s.kafka = server.Bindings.Kafka
-		brokerId++
 	}
 
 	return s
@@ -65,42 +61,96 @@ func (s *Binding) Apply(data interface{}) error {
 	}
 	s.Config = config
 
+	s.updateBrokers(config.Servers)
+	leader := s.selectLeader()
+
 	for n, c := range config.Channels {
 		name := n[1:] // remove leading slash from name
-		if _, ok := s.topics[name]; !ok {
+		if topic, ok := s.topics[name]; !ok {
 			if c.Value.Publish.Message == nil || c.Value.Publish.Message.Value == nil {
 				log.Errorf("kafka: message reference error for channel %v", name)
 				continue
 			}
 			msg := c.Value.Publish.Message.Value
-			broker := s.brokers[0]
-			s.topics[name] = newTopic(name, c.Value.Bindings.Kafka.Partitions, broker, msg.Payload, msg.Bindings.Kafka.Key, msg.ContentType, s.kafka.Log, s.addedMessage)
-			log.Infof("kafka: added topic %q with %v partitions on broker %v:%v", name, c.Value.Bindings.Kafka.Partitions, broker.host, broker.port)
+			s.topics[name] = newTopic(name, c.Value.Bindings.Kafka, leader, msg.Payload, msg.Bindings.Kafka.Key, msg.ContentType, s.addedMessage)
+			log.Infof("kafka: added topic %q with %v partitions on broker %v:%v", name, c.Value.Bindings.Kafka.Partitions, leader.host, leader.port)
+		} else {
+			topic.update(c.Value.Bindings.Kafka, leader)
 		}
 	}
 
-	shouldRestart := false
-	if s.isRunning {
-		log.Infof("Updated configuration of kafka server: %v", s.listen)
-
-		if shouldRestart {
-			go s.Start()
-		}
+	for _, g := range s.groups {
+		g.coordinator = leader
 	}
+
 	return nil
 }
 
 func (s *Binding) Stop() {
-	s.stop <- true
-	s.stopCleaner <- true
+	s.brokerMutex.RLock()
+	defer s.brokerMutex.RUnlock()
+
+	for _, b := range s.brokers {
+		b.stop()
+	}
 }
 
 func (s *Binding) Start() {
-	s.isRunning = true
+}
 
-	for _, b := range s.brokers {
-		b.start(s.handle)
+func (s *Binding) updateBrokers(servers map[string]asyncApi.Server) {
+	s.brokerMutex.Lock()
+	defer s.brokerMutex.Unlock()
+
+	for name, broker := range s.brokers {
+		if server, ok := servers[name]; !ok {
+			broker.stop()
+			delete(s.brokers, name)
+		} else {
+			host, port := server.GetHost(), server.GetPort()
+			if broker.host != host || broker.port != port {
+				broker.stop()
+				broker.host, broker.port = host, port
+				broker.start(s)
+			}
+		}
 	}
+
+	for name, server := range servers {
+		if _, ok := s.brokers[name]; ok {
+			continue
+		}
+		b := newBroker(name, server.GetHost(), server.GetPort(), server.Bindings.Kafka)
+		s.brokers[name] = b
+		b.start(s)
+	}
+}
+
+func (s *Binding) selectLeader() *broker {
+	s.brokerMutex.RLock()
+	defer s.brokerMutex.RUnlock()
+
+	for _, broker := range s.brokers {
+		return broker
+	}
+	return nil
+}
+
+func (s *Binding) HasBroker(address string) bool {
+	s.brokerMutex.RLock()
+	defer s.brokerMutex.RUnlock()
+
+	host, port, err := utils.ParseUrl(address)
+	if err != nil {
+		return false
+	}
+
+	for _, broker := range s.brokers {
+		if broker.host == host && broker.port == port {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *Binding) UpdateMetrics(m *models.KafkaMetric) {
@@ -148,49 +198,40 @@ func (s *Binding) UpdateMetrics(m *models.KafkaMetric) {
 	s.groupsMutex.RUnlock()
 }
 
-func (s *Binding) startCleaner() {
-	retentionTime := time.Duration(0)
-	if s.kafka.Log.Retention.Hours > 0 {
-		retentionTime = time.Duration(s.kafka.Log.Retention.Hours) * time.Hour
-	} else if s.kafka.Log.Retention.Minutes > 0 {
-		retentionTime = time.Duration(s.kafka.Log.Retention.Minutes) * time.Minute
-	} else if s.kafka.Log.Retention.Ms > 0 {
-		retentionTime = time.Duration(s.kafka.Log.Retention.Ms) * time.Millisecond
-	} else {
-		return // no time limit defined
-	}
+func (s *Binding) checkRetention(b *broker) {
+	retentionTime := time.Duration(b.config.LogRetentionMs())
+	retentionBytes := b.config.LogRetentionBytes()
+	now := time.Now()
 
-	go func() {
-		ticker := time.NewTicker(time.Duration(s.kafka.Log.CleanerBackoffMs) * time.Millisecond)
+	for _, t := range s.topics {
+		if t.config.RetentionMs() >= 0 {
+			retentionTime = time.Duration(t.config.RetentionMs())
+		}
+		if t.config.RetentionBytes() >= 0 {
+			retentionBytes = t.config.RetentionBytes()
+		}
 
-		for {
-			select {
-			case <-s.stopCleaner:
-				return
-			case <-ticker.C:
-				now := time.Now()
-				for _, t := range s.topics {
+		for i, p := range t.partitions {
+			if p.leader != b {
+				continue
+			}
 
-					for i, p := range t.partitions {
-						partitionSize := int64(0)
-						for k, seg := range p.segments {
-							partitionSize += seg.Size
-							if now.After(seg.lastWritten.Add(retentionTime)) {
-								log.Infof("Deleting segment with base offset [%v,%v] from topic %q", seg.head, seg.tail, t.name)
-								p.deleteSegment(k)
-							}
-						}
-
-						if s.kafka.Log.Retention.Bytes > 0 && partitionSize >= s.kafka.Log.Retention.Bytes {
-							log.Infof("Maximum partition size reached. Cleanup partition %v from topic %q", i, t.name)
-							p.addNewSegment()
-							p.deleteAllInactiveSegments()
-						}
-					}
+			partitionSize := int64(0)
+			for k, seg := range p.segments {
+				partitionSize += seg.Size
+				if seg.Size > 0 && now.After(seg.lastWritten.Add(retentionTime)) {
+					log.Infof("Deleting segment with base offset [%v,%v] from topic %q", seg.head, seg.tail, t.name)
+					p.deleteSegment(k)
 				}
 			}
+
+			if retentionBytes > 0 && partitionSize >= retentionBytes {
+				log.Infof("Maximum partition size reached. Cleanup partition %v from topic %q", i, t.name)
+				p.addNewSegment()
+				p.deleteAllInactiveSegments()
+			}
 		}
-	}()
+	}
 }
 
 func (s *Binding) getGroup(name string) (*group, bool) {
@@ -207,7 +248,8 @@ func (s *Binding) getOrCreateGroup(name string) *group {
 
 	g, ok := s.groups[name]
 	if !ok {
-		g = newGroup(name, s.brokers[0], s.kafka.Group.Initial.Rebalance.Delay)
+		b := s.selectLeader()
+		g = b.newGroup(name)
 		s.groups[name] = g
 	}
 	return g
