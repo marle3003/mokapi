@@ -38,7 +38,7 @@ type client struct {
 
 func (b *broker) start(c controller) {
 	var err error
-	b.listener, err = net.Listen("tcp", fmt.Sprintf("%v:%v", b.host, b.port))
+	b.listener, err = net.Listen("tcp", fmt.Sprintf(":%v", b.port))
 	if err != nil {
 		log.Errorf("Error listening: %v", err.Error())
 		return
