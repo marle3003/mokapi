@@ -12,6 +12,10 @@ type RecordSet struct {
 	Batches []RecordBatch
 }
 
+func NewRecordSet() RecordSet {
+	return RecordSet{Batches: make([]RecordBatch, 0)}
+}
+
 func (rs *RecordSet) ReadFrom(_ *Decoder) {
 
 }

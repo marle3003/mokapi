@@ -100,7 +100,7 @@ func (t *topic) addRecord(partition int, record protocol.RecordBatch) error {
 	}
 
 	if maxSegmentByes >= 0 && p.segments[p.activeSegment].Size > maxSegmentByes {
-		p.addNewSegment()
+		p.addNewSegment(time.Now())
 	}
 
 	p.lock.Lock()

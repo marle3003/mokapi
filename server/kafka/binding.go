@@ -229,7 +229,7 @@ func (s *Binding) checkRetention(b *broker) {
 
 				// check rolling
 				if now.After(seg.opened.Add(rollingTime)) {
-					p.addNewSegment()
+					p.addNewSegment(now)
 				}
 
 				// check retention

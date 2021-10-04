@@ -325,39 +325,69 @@ func (s *Binding) processOffSetFetch(req *offsetFetch.Request) *offsetFetch.Resp
 	return r
 }
 
+type partitionData struct {
+	fetchOffset int64
+	set         protocol.RecordSet
+	size        int32
+	maxBytes    int32
+}
+
+type topicData struct {
+	partitions map[int32]*partitionData
+}
+
 func (s *Binding) processFetch(req *fetch.Request) *fetch.Response {
 	r := &fetch.Response{Topics: make([]fetch.ResponseTopic, 0)}
 
 	start := time.Now().Add(time.Duration(req.MaxWaitMs-200) * time.Millisecond) // -200: working load time
 	size := int32(0)
-	for {
-		for _, rt := range req.Topics {
-			t := s.topics[rt.Name]
-			resTopic := fetch.ResponseTopic{Name: rt.Name, Partitions: make([]fetch.ResponsePartition, 0, len(rt.Partitions))}
-			for _, rp := range rt.Partitions {
-				p := t.partitions[int(rp.Index)]
-				record, recordSize := p.read(rp.FetchOffset, rp.MaxBytes)
-				resPar := fetch.ResponsePartition{
-					Index:                rp.Index,
-					HighWatermark:        p.offset,
-					LastStableOffset:     p.offset,
-					LogStartOffset:       0,
-					PreferredReadReplica: -1,
-					RecordSet:            record,
-				}
 
-				size += recordSize
-				resTopic.Partitions = append(resTopic.Partitions, resPar)
+	topics := make(map[string]topicData)
+	for _, t := range req.Topics {
+		topics[t.Name] = topicData{partitions: make(map[int32]*partitionData)}
+		for _, p := range t.Partitions {
+			topics[t.Name].partitions[p.Index] = &partitionData{fetchOffset: p.FetchOffset, set: protocol.NewRecordSet(), maxBytes: p.MaxBytes}
+		}
+	}
+
+	for {
+		for name, topic := range topics {
+			t := s.topics[name]
+			for index, partition := range topic.partitions {
+				p := t.partitions[int(index)]
+				set, offset, setSize := p.read(partition.fetchOffset, partition.maxBytes-partition.size)
+				partition.set.Batches = append(partition.set.Batches, set.Batches...)
+				partition.fetchOffset = offset
+				partition.size += setSize
 			}
-			r.Topics = append(r.Topics, resTopic)
 		}
 
 		if time.Now().After(start) || size > req.MinBytes {
-			return r
+			break
 		}
 
 		time.Sleep(time.Duration(math.Floor(0.2*float64(req.MaxWaitMs))) * time.Millisecond)
 	}
+
+	for name, topic := range topics {
+		t := s.topics[name]
+		resTopic := fetch.ResponseTopic{Name: name, Partitions: make([]fetch.ResponsePartition, 0, len(topic.partitions))}
+		for index, partition := range topic.partitions {
+			p := t.partitions[int(index)]
+			resPar := fetch.ResponsePartition{
+				Index:                index,
+				HighWatermark:        p.offset,
+				LastStableOffset:     p.offset,
+				LogStartOffset:       p.startOffset,
+				PreferredReadReplica: -1,
+				RecordSet:            partition.set,
+			}
+			resTopic.Partitions = append(resTopic.Partitions, resPar)
+		}
+		r.Topics = append(r.Topics, resTopic)
+	}
+
+	return r
 }
 
 func (s *Binding) processOffsetCommit(req *offsetCommit.Request) *offsetCommit.Response {

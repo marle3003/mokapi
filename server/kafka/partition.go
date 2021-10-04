@@ -46,24 +46,25 @@ func newSegment(offset int64) *segment {
 	return &segment{head: offset, opened: time.Now()}
 }
 
-func (p *partition) read(offset int64, maxBytes int32) (set protocol.RecordSet, size int32) {
-	set = protocol.RecordSet{Batches: make([]protocol.RecordBatch, 0)}
+func (p *partition) read(offset int64, maxBytes int32) (protocol.RecordSet, int64, int32) {
+	set := protocol.NewRecordSet()
+	size := int32(0)
 
 	for {
 		s := p.getSegment(offset)
 		if s == nil {
-			return
+			return set, offset, size
 		}
 
 		i := offset - s.head
 		for _, b := range s.log[i:] {
 			if newSize := size + b.Size(); newSize > 30000 {
-				return
+				return set, offset, size
 			}
 			set.Batches = append(set.Batches, b)
 			size += b.Size()
 			if size > maxBytes {
-				return
+				return set, offset, size
 			}
 		}
 		offset = s.tail + 1
@@ -71,10 +72,6 @@ func (p *partition) read(offset int64, maxBytes int32) (set protocol.RecordSet, 
 }
 
 func (p *partition) deleteSegment(key int64) {
-	if p.activeSegment == key {
-		p.addNewSegment()
-	}
-
 	p.lock.Lock()
 	defer p.lock.Unlock()
 
@@ -97,14 +94,16 @@ func (p *partition) deleteClosedSegments() {
 	}
 }
 
-func (p *partition) addNewSegment() {
+func (p *partition) addNewSegment(t time.Time) {
 	p.lock.Lock()
 	defer p.lock.Unlock()
 
-	p.segments[p.activeSegment].closed = time.Now()
+	p.segments[p.activeSegment].closed = t
 
 	p.activeSegment = p.offset
-	p.segments[p.activeSegment] = newSegment(p.offset)
+	seg := newSegment(p.offset)
+	seg.opened = t
+	p.segments[p.activeSegment] = seg
 
 	log.Infof("kafka: added new segment to partition %v, topic %v", p.index, p.topic.name)
 }
@@ -123,7 +122,7 @@ func (p *partition) getOffset(group string) int64 {
 	if offset, ok := p.committed[group]; ok {
 		return offset
 	}
-	return 0
+	return p.startOffset
 }
 
 func (p *partition) setOffset(group string, offset int64) {
