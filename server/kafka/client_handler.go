@@ -60,12 +60,12 @@ func (s *Binding) handle(conn net.Conn) {
 			r := s.processFindCoordinator(msg.(*findCoordinator.Request))
 			protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, r)
 		case protocol.JoinGroup:
-			errorCode := s.processJoinGroup(h, msg.(*joinGroup.Request), conn)
+			errorCode := s.processJoinGroup(h, msg.(*joinGroup.Request), c, conn)
 			if errorCode != 0 {
 				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, &joinGroup.Response{ErrorCode: errorCode})
 			}
 		case protocol.SyncGroup:
-			s.handleSyncGroup(h, msg.(*syncGroup.Request), conn)
+			s.handleSyncGroup(h, msg.(*syncGroup.Request), c, conn)
 		case protocol.OffsetFetch:
 			r := s.processOffSetFetch(msg.(*offsetFetch.Request))
 			protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, r)
@@ -230,11 +230,10 @@ func (s *Binding) processFindCoordinator(req *findCoordinator.Request) *findCoor
 	return r
 }
 
-func (s *Binding) processJoinGroup(h *protocol.Header, req *joinGroup.Request, w io.Writer) protocol.ErrorCode {
+func (s *Binding) processJoinGroup(h *protocol.Header, req *joinGroup.Request, consumer *client, w io.Writer) protocol.ErrorCode {
 	var g *group
 	var exists bool
 
-	s.groupsMutex.RLock()
 	if g, exists = s.getGroup(req.GroupId); !exists {
 		return protocol.InvalidGroupId
 	} else if g.state == completingRebalance {
@@ -243,7 +242,6 @@ func (s *Binding) processJoinGroup(h *protocol.Header, req *joinGroup.Request, w
 		g.state = preparingRebalance
 		go g.balancer.startJoin()
 	}
-	s.groupsMutex.RUnlock()
 
 	if len(req.MemberId) == 0 {
 		memberId := fmt.Sprintf("%v-%v", h.ClientId, utils.NewGuid())
@@ -254,9 +252,6 @@ func (s *Binding) processJoinGroup(h *protocol.Header, req *joinGroup.Request, w
 		return protocol.None
 	}
 
-	s.clientsMutex.RLock()
-	consumer := s.clients[h.ClientId]
-	s.clientsMutex.RUnlock()
 	j := join{
 		consumer:  consumer,
 		protocols: make([]groupAssignmentStrategy, 0, len(req.Protocols)),
@@ -279,7 +274,7 @@ func (s *Binding) processJoinGroup(h *protocol.Header, req *joinGroup.Request, w
 	return protocol.None
 }
 
-func (s *Binding) handleSyncGroup(h *protocol.Header, req *syncGroup.Request, w io.Writer) protocol.ErrorCode {
+func (s *Binding) handleSyncGroup(h *protocol.Header, req *syncGroup.Request, consumer *client, w io.Writer) protocol.ErrorCode {
 	g, exists := s.getGroup(req.GroupId)
 	if !exists {
 		return protocol.InvalidGroupId
@@ -289,9 +284,6 @@ func (s *Binding) handleSyncGroup(h *protocol.Header, req *syncGroup.Request, w 
 		return protocol.RebalanceInProgress
 	}
 
-	s.clientsMutex.RLock()
-	consumer := s.clients[h.ClientId]
-	s.clientsMutex.RUnlock()
 	sync := syncData{
 		consumer:     consumer,
 		generationId: int(req.GenerationId),
@@ -317,7 +309,6 @@ func (s *Binding) processOffSetFetch(req *offsetFetch.Request) *offsetFetch.Resp
 		Topics: make([]offsetFetch.ResponseTopic, 0, len(req.Topics)),
 	}
 
-	// currently offset is not separated by groups
 	for _, rt := range req.Topics {
 		t := s.topics[rt.Name]
 		resTopic := offsetFetch.ResponseTopic{Name: rt.Name, Partitions: make([]offsetFetch.Partition, 0, len(rt.PartitionIndexes))}
@@ -340,7 +331,6 @@ func (s *Binding) processFetch(req *fetch.Request) *fetch.Response {
 	start := time.Now().Add(time.Duration(req.MaxWaitMs-200) * time.Millisecond) // -200: working load time
 	size := int32(0)
 	for {
-		// currently offset is not separated by groups
 		for _, rt := range req.Topics {
 			t := s.topics[rt.Name]
 			resTopic := fetch.ResponseTopic{Name: rt.Name, Partitions: make([]fetch.ResponsePartition, 0, len(rt.Partitions))}
@@ -375,7 +365,6 @@ func (s *Binding) processOffsetCommit(req *offsetCommit.Request) *offsetCommit.R
 		Topics: make([]offsetCommit.ResponseTopic, 0, len(req.Topics)),
 	}
 
-	// currently offset is not separated by groups
 	for _, rt := range req.Topics {
 		t := s.topics[rt.Name]
 		resTopic := offsetCommit.ResponseTopic{Name: rt.Name, Partitions: make([]offsetCommit.ResponsePartition, 0, len(rt.Partitions))}

@@ -234,13 +234,13 @@ func (s *Binding) checkRetention(b *broker) {
 
 				// check retention
 				if seg.Size > 0 && !seg.closed.IsZero() && now.After(seg.closed.Add(retentionTime)) {
-					log.Infof("deleting segment with base offset [%v,%v] from partition %v topic %q", seg.head, seg.tail, p.index, t.name)
+					log.Infof("kafka: deleting segment with base offset [%v,%v] from partition %v topic %q", seg.head, seg.tail, p.index, t.name)
 					p.deleteSegment(k)
 				}
 			}
 
 			if retentionBytes > 0 && partitionSize >= retentionBytes {
-				log.Infof("maximum partition size reached. cleanup partition %v from topic %q", i, t.name)
+				log.Infof("kafka: maximum partition size reached. cleanup partition %v from topic %q", i, t.name)
 				p.deleteClosedSegments()
 			}
 		}

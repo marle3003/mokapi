@@ -106,7 +106,7 @@ func (p *partition) addNewSegment() {
 	p.activeSegment = p.offset
 	p.segments[p.activeSegment] = newSegment(p.offset)
 
-	log.Infof("added new segment to partition %v, topic %v", p.index, p.topic.name)
+	log.Infof("kafka: added new segment to partition %v, topic %v", p.index, p.topic.name)
 }
 
 func (p *partition) getSegment(offset int64) *segment {
@@ -120,12 +120,13 @@ func (p *partition) getSegment(offset int64) *segment {
 }
 
 func (p *partition) getOffset(group string) int64 {
-	if o, ok := p.committed[group]; ok {
-		return o
+	if offset, ok := p.committed[group]; ok {
+		return offset
 	}
 	return 0
 }
 
 func (p *partition) setOffset(group string, offset int64) {
 	p.committed[group] = offset
+	log.Infof("kafka: group %v committed offset %v, partition %v, topic %v", group, offset, p.index, p.topic.name)
 }
