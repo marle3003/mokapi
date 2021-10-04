@@ -51,7 +51,9 @@ func (l *Log) Warn(s string) {
 
 func (l *Log) Error(s string) {
 	log.Error(s)
-	l.Handler(fmt.Sprintf("error: %v", s))
+	if l.Handler != nil {
+		l.Handler(fmt.Sprintf("error: %v", s))
+	}
 }
 
 func (l *Log) Loader(state *lua.LState) int {
