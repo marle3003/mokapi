@@ -61,7 +61,7 @@ func (t *topic) addMessage(partition int, key, message interface{}, header inter
 		message = t.g.New(t.payload)
 	}
 
-	if header == nil {
+	if header == nil && t.headers != nil {
 		header = t.g.New(t.headers)
 	}
 
@@ -158,6 +158,9 @@ func encode(data interface{}, schema *openapi.SchemaRef, contentType *media.Cont
 
 func parseHeader(i interface{}) ([]protocol.RecordHeader, error) {
 	headers := make([]protocol.RecordHeader, 0)
+	if i == nil {
+		return headers, nil
+	}
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil, fmt.Errorf("unexpected type of header: %t", i)
