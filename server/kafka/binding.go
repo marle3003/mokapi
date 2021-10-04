@@ -159,10 +159,9 @@ func (s *Binding) UpdateMetrics(m *models.KafkaMetric) {
 			t = &models.KafkaTopic{
 				Service:    s.Config.Info.Name,
 				Name:       topic.name,
-				Partitions: len(topic.partitions),
-				Segments:   0,
+				Partitions: make(map[int]*models.KafkaPartition),
 				Count:      0,
-				Size:       0,
+				Groups:     make(map[string]*models.KafkaTopicGroup),
 			}
 			m.Topics[t.Name] = t
 		} else {
@@ -170,21 +169,63 @@ func (s *Binding) UpdateMetrics(m *models.KafkaMetric) {
 			t.Service = s.Config.Info.Name
 		}
 
-		t.Segments = 0
-		t.Count = 0
-		t.Size = 0
-		t.Partitions = len(topic.partitions)
+		for name, group := range t.Groups {
+			group.Lag = 0
+			if g, ok := s.groups[name]; ok {
+				switch g.state {
+				case empty:
+					group.State = "empty"
+				case preparingRebalance, completingRebalance:
+					group.State = "rebalance"
+				case stable:
+					group.State = "stable"
+				}
+				group.Coordinator = g.coordinator.name
+				if len(g.members) > 0 {
+					group.Leader = g.members[0].consumer.id
+				} else {
+					group.Leader = ""
+				}
+			}
+		}
 
-		for _, p := range topic.partitions {
-			t.Segments += len(p.segments)
-			t.Count += p.offset
-			for _, seg := range p.segments {
-				//t.Count += seg.tail - seg.head
-				t.Size += int64(seg.Size)
+		for _, partition := range topic.partitions {
+			partition.lock.RLock()
+
+			p, ok := t.Partitions[partition.index]
+			if !ok {
+				p = &models.KafkaPartition{Index: partition.index}
+				t.Partitions[partition.index] = p
+			}
+
+			p.Segments = len(partition.segments)
+			p.StartOffset = partition.startOffset
+			p.Offset = partition.offset
+			p.Leader = partition.leader.name
+			p.Size = 0
+
+			for name, g := range t.Groups {
+				if _, ok := partition.committed[name]; !ok {
+					g.Lag += partition.offset
+				}
+			}
+			for name, committed := range partition.committed {
+				i, ok := t.Groups[name]
+				if !ok {
+					i = &models.KafkaTopicGroup{}
+					t.Groups[name] = i
+				}
+				i.Lag += partition.offset - committed
+			}
+
+			for _, seg := range partition.segments {
+				p.Size += int64(seg.Size)
 				if seg.lastWritten.After(t.LastRecord) {
 					t.LastRecord = seg.lastWritten
 				}
 			}
+
+			partition.lock.RUnlock()
 		}
 
 		m.Topics[t.Name] = t
@@ -192,7 +233,11 @@ func (s *Binding) UpdateMetrics(m *models.KafkaMetric) {
 
 	s.groupsMutex.RLock()
 	for _, g := range s.groups {
-		m.Groups[g.name] = &models.KafkaGroup{Members: len(g.members)}
+		group := &models.KafkaGroup{}
+		for _, m := range g.members {
+			group.Members = append(group.Members, m.consumer.id)
+		}
+		m.Groups[g.name] = group
 	}
 	s.groupsMutex.RUnlock()
 }

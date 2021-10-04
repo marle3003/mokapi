@@ -28,20 +28,34 @@ type KafkaMetric struct {
 }
 
 type KafkaTopic struct {
-	Service    string         `json:"service"`
-	Name       string         `json:"name"`
-	Count      int64          `json:"count"`
-	Size       int64          `json:"size"`
-	LastRecord time.Time      `json:"lastRecord"`
-	Partitions int            `json:"partitions"`
-	Segments   int            `json:"segments"`
-	Messages   []KafkaMessage `json:"messages"`
-	//Groups []string `json:"groups"`
-	mutex sync.RWMutex
+	Service    string                      `json:"service"`
+	Name       string                      `json:"name"`
+	LastRecord time.Time                   `json:"lastRecord"`
+	Partitions map[int]*KafkaPartition     `json:"partitions"`
+	Messages   []KafkaMessage              `json:"messages"`
+	Groups     map[string]*KafkaTopicGroup `json:"groups"`
+	Count      int64                       `json:"count"`
+	mutex      sync.RWMutex
+}
+
+type KafkaPartition struct {
+	Index       int    `json:"index"`
+	StartOffset int64  `json:"startOffset"`
+	Offset      int64  `json:"offset"`
+	Size        int64  `json:"size"`
+	Leader      string `json:"leader"`
+	Segments    int    `json:"segments"`
 }
 
 type KafkaGroup struct {
-	Members int
+	Members []string
+}
+
+type KafkaTopicGroup struct {
+	Lag         int64 `json:"lag"`
+	Coordinator string
+	Leader      string
+	State       string
 }
 
 type KafkaMessage struct {
@@ -66,7 +80,7 @@ func newMetrics() *Metrics {
 func (m *Metrics) AddMessage(topic string, key []byte, message []byte, partition int) {
 	msg := KafkaMessage{Key: string(key), Message: string(message), Partition: partition, Time: time.Now()}
 	if _, ok := m.Kafka.Topics[topic]; !ok {
-		m.Kafka.Topics[topic] = &KafkaTopic{Name: topic, Messages: make([]KafkaMessage, 0)}
+		m.Kafka.Topics[topic] = &KafkaTopic{Name: topic, Messages: make([]KafkaMessage, 0), Partitions: make(map[int]*KafkaPartition), Groups: make(map[string]*KafkaTopicGroup)}
 	}
 	t := m.Kafka.Topics[topic]
 	t.mutex.Lock()

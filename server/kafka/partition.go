@@ -109,6 +109,9 @@ func (p *partition) addNewSegment(t time.Time) {
 }
 
 func (p *partition) getSegment(offset int64) *segment {
+	p.lock.Lock()
+	defer p.lock.Unlock()
+
 	for _, v := range p.segments {
 		if v.head <= offset && offset <= v.tail {
 			return v

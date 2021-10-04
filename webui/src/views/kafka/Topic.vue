@@ -31,16 +31,12 @@
       </b-card-group>
       <b-card-group deck>
         <b-card body-class="info-body" class="text-center">
-          <b-card-title class="info">Partitions</b-card-title>
-          <b-card-text class="text-center value">{{ topic.partitions }}</b-card-text>
-        </b-card>
-        <b-card body-class="info-body" class="text-center">
-          <b-card-title class="info">Messages</b-card-title>
+          <b-card-title class="info">Received Messages</b-card-title>
           <b-card-text class="text-center value">{{ topic.count }}</b-card-text>
         </b-card>
         <b-card body-class="info-body" class="text-center">
           <b-card-title class="info">Size</b-card-title>
-          <b-card-text class="text-center value">{{ topic.size | prettyBytes }}</b-card-text>
+          <b-card-text class="text-center value">{{ this.size | prettyBytes }}</b-card-text>
         </b-card>
       </b-card-group>
 
@@ -67,6 +63,23 @@
           </b-table>
         </b-card>
       </b-card-group>
+
+      <b-card-group deck>
+        <b-card class="w-100">
+          <b-card-title class="info text-center">Partitions</b-card-title>
+          <b-table small hover class="dataTable" :items="topic.partitions"  style="table-layout: fixed" @row-clicked="toggleDetails">
+          </b-table>
+        </b-card>
+      </b-card-group>
+
+      <b-card-group deck>
+        <b-card class="w-100">
+          <b-card-title class="info text-center">Groups</b-card-title>
+          <b-table small hover class="dataTable" :items="topic.groups"  style="table-layout: fixed" @row-clicked="toggleDetails">
+          </b-table>
+        </b-card>
+      </b-card-group>
+
     </div>
   </div>
 </template>
@@ -96,6 +109,58 @@ export default {
       }
     }
     window.addEventListener('keyup', this.doCommand)
+  },
+  computed: {
+    partition: function () {
+      const topic = this.topic
+      if (topic === null) {
+        return null
+      }
+
+      function compare (s1, s2) {
+        const a = s1.id
+        const b = s2.id
+        if (a < b) {
+          return -1
+        }
+        if (a > b) {
+          return 1
+        }
+        return 0
+      }
+
+      return topic.partitions.sort(compare)
+    },
+    groups: function () {
+      const topic = this.topic
+      if (topic === null) {
+        return null
+      }
+
+      function compare (s1, s2) {
+        const a = s1.name.toLowerCase()
+        const b = s2.name.toLowerCase()
+        if (a < b) {
+          return -1
+        }
+        if (a > b) {
+          return 1
+        }
+        return 0
+      }
+
+      return topic.groups.sort(compare)
+    },
+    size: function () {
+      if (this.topic === null) {
+        return 0
+      }
+      let size = 0
+      for (let i = 0; i < this.topic.partitions.length; i++) {
+        size += this.topic.partitions[i].size
+      }
+      return size
+    }
   },
   destroyed () {
     window.removeEventListener('keyup', this.doCommand)

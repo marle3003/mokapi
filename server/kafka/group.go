@@ -40,7 +40,6 @@ type group struct {
 
 type groupMember struct {
 	consumer *client
-	memberId string
 }
 
 type groupBalancer struct {

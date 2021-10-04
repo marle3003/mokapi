@@ -56,8 +56,38 @@ type workflow struct {
 }
 
 type kafka struct {
-	Topics []*models.KafkaTopic `json:"topics"`
-	Groups []*models.KafkaGroup `json:"groups"`
+	Topics []topic `json:"topics"`
+	Groups []group `json:"groups"`
+}
+
+type topic struct {
+	Service    string      `json:"service"`
+	Name       string      `json:"name"`
+	LastRecord time.Time   `json:"lastRecord"`
+	Partitions []partition `json:"partitions"`
+	Count      int64       `json:"count"`
+}
+
+type partition struct {
+	Id          int    `json:"id"`
+	StartOffset int64  `json:"startOffset"`
+	Offset      int64  `json:"offset"`
+	Size        int64  `json:"size"`
+	Leader      string `json:"leader"`
+	Segments    int    `json:"segments"`
+}
+
+type group struct {
+	Name    string   `json:"name"`
+	Members []string `json:"members"`
+}
+
+type topicGroup struct {
+	Name        string `json:"name"`
+	Lag         int64  `json:"lag"`
+	Coordinator string `json:"coordinator"`
+	Leader      string `json:"leader"`
+	State       string `json:"state"`
 }
 
 func newDashboard(runtime *models.Runtime) dashboard {
@@ -76,8 +106,15 @@ func newDashboard(runtime *models.Runtime) dashboard {
 
 	for _, t := range runtime.Metrics.Kafka.Topics {
 		if len(t.Service) > 0 {
-			dashboard.Kafka.Topics = append(dashboard.Kafka.Topics, t)
+			dashboard.Kafka.Topics = append(dashboard.Kafka.Topics, newTopic(t))
 		}
+	}
+
+	for name, g := range runtime.Metrics.Kafka.Groups {
+		dashboard.Kafka.Groups = append(dashboard.Kafka.Groups, group{
+			Name:    name,
+			Members: g.Members,
+		})
 	}
 
 	for _, r := range runtime.Metrics.LastErrorRequests {
@@ -155,4 +192,38 @@ func newWorkflow(w *models.WorkflowLog) workflow {
 	//}
 
 	return result
+}
+
+func newTopic(t *models.KafkaTopic) topic {
+	result := topic{
+		Service:    t.Service,
+		Name:       t.Name,
+		LastRecord: t.LastRecord,
+		Count:      t.Count,
+	}
+	for _, p := range t.Partitions {
+		result.Partitions = append(result.Partitions, newPartition(p))
+	}
+	return result
+}
+
+func newPartition(p *models.KafkaPartition) partition {
+	return partition{
+		Id:          p.Index,
+		StartOffset: p.StartOffset,
+		Offset:      p.Offset,
+		Size:        p.Size,
+		Leader:      p.Leader,
+		Segments:    p.Segments,
+	}
+}
+
+func newTopicGroup(name string, g *models.KafkaTopicGroup) topicGroup {
+	return topicGroup{
+		Name:        name,
+		Lag:         g.Lag,
+		Coordinator: g.Coordinator,
+		Leader:      g.Leader,
+		State:       g.State,
+	}
 }

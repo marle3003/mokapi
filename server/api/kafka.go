@@ -12,9 +12,9 @@ type Topic struct {
 	Name        string                `json:"name"`
 	Description string                `json:"description"`
 	Messages    []models.KafkaMessage `json:"messages"`
-	Partitions  int                   `json:"partitions"`
+	Partitions  []partition           `json:"partitions"`
+	Groups      []topicGroup          `json:"groups"`
 	Count       int64                 `json:"count"`
-	Size        int64                 `json:"size"`
 }
 
 func (b *Binding) handleKafka(w http.ResponseWriter, r *http.Request) {
@@ -56,8 +56,12 @@ func (b *Binding) getKafkaTopic(kafka string, topicName string, w http.ResponseW
 	if ok {
 		data.Messages = m.Messages
 		data.Count = m.Count
-		data.Size = m.Size
-		data.Partitions = m.Partitions
+		for _, p := range m.Partitions {
+			data.Partitions = append(data.Partitions, newPartition(p))
+		}
+		for name, g := range m.Groups {
+			data.Groups = append(data.Groups, newTopicGroup(name, g))
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")

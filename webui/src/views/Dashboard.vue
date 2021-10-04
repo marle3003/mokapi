@@ -38,7 +38,7 @@
               <b-card-text class="text-center value" v-bind:class="{'text-danger': hasErrors}">{{ dashboard.requestsWithError }}</b-card-text>
             </b-card>
             <b-card body-class="info-body" class="text-center" v-if="dashboard.kafkaEnabled">
-              <b-card-title class="info">Total Kafka Messages</b-card-title>
+              <b-card-title class="info">Received Kafka Messages</b-card-title>
               <b-card-text class="text-center value">{{ totalMessages }}</b-card-text>
             </b-card>
             <b-card body-class="info-body" class="text-center" v-if="dashboard.smtpEnabled">
@@ -62,19 +62,31 @@
             </b-card>
           </b-card-group>
 
-          <b-card-group deck v-show="dashboard.kafkaEnabled && $route.name === 'dashboard' || $route.name === 'kafka'">
-            <b-card body-class="info-body" class="text-center">
-               <b-card-title class="info">Kafka Topics</b-card-title>
-               <b-table :items="topics" :fields="topicFields" table-class="dataTable selectable" @row-clicked="topicClickHandler">
-                <template v-slot:cell(lastRecord)="data">
-                  {{ data.item.lastRecord | moment}}
-                </template>
-                <template v-slot:cell(size)="data">
-                  {{ data.item.size | prettyBytes}}
-                </template>
-              </b-table>
-            </b-card>
-          </b-card-group>
+          <div v-show="dashboard.kafkaEnabled && $route.name === 'dashboard' || $route.name === 'kafka'">
+            <b-card-group deck>
+              <b-card body-class="info-body" class="text-center">
+                 <b-card-title class="info">Kafka Topics</b-card-title>
+                 <b-table :items="topics" :fields="topicFields" table-class="dataTable selectable" @row-clicked="topicClickHandler">
+                  <template v-slot:cell(lastRecord)="data">
+                    {{ data.item.lastRecord | moment}}
+                  </template>
+                  <template v-slot:cell(size)="data">
+                    {{ data.item.size | prettyBytes}}
+                  </template>
+                </b-table>
+              </b-card>
+            </b-card-group>
+            <b-card-group deck>
+              <b-card body-class="info-body" class="text-center">
+                <b-card-title class="info">Kafka Groups</b-card-title>
+                <b-table :items="groups" :fields="groupFields" table-class="dataTable">
+                  <template v-slot:cell(members)="data">
+                    {{ data.item.members.join(', ') }}
+                  </template>
+                </b-table>
+              </b-card>
+            </b-card-group>
+          </div>
 
           <b-card-group deck v-show="$route.name === 'http'">
             <b-card class="w-100">
@@ -177,6 +189,7 @@ export default {
       chartTopicSize: {},
       serviceFields: [{key: 'name', class: 'text-left'}, {key: 'lastRequest', class: 'text-left'}, 'requests', 'errors'],
       topicFields: [{key: 'name', class: 'text-left'}, 'count', 'size', 'lastRecord', 'partitions', 'segments'],
+      groupFields: [{key: 'name', class: 'text-left'}, 'members'],
       lastMailField: ['from', 'to', {key: 'subject', class: 'subject'}, 'time'],
       error: null
     }
@@ -241,7 +254,7 @@ export default {
       return services.sort(compare)
     },
     totalMessages: function () {
-      const topics = this.dashboard.kafkaTopics
+      const topics = this.dashboard.kafka.topics
       if (topics === undefined || topics === null) {
         return 0
       }
@@ -252,9 +265,25 @@ export default {
       return counter
     },
     topics: function () {
-      const topics = this.dashboard.kafka.topics
-      if (topics === undefined || topics === null) {
+      if (this.dashboard.kafka.topics === undefined || this.dashboard.kafka.topics === null) {
         return null
+      }
+
+      let topics = []
+      for (let i = 0; i < this.dashboard.kafka.topics.length; i++) {
+        let topic = this.dashboard.kafka.topics[i]
+        let item = {
+          service: topic.service,
+          name: topic.name,
+          count: topic.count,
+          lastRecord: topic.lastRecord,
+          groups: topic.groups
+        }
+        item.partitions = topic.partitions.length
+        for (let j = 0; j < topic.partitions.length; j++) {
+          item.segments = topic.partitions[j].segments
+        }
+        topics.push(item)
       }
 
       function compare (s1, s2) {
@@ -270,6 +299,26 @@ export default {
       }
 
       return topics.sort(compare)
+    },
+    groups: function () {
+      const groups = this.dashboard.kafka.groups
+      if (groups === undefined || groups === null) {
+        return null
+      }
+
+      function compare (s1, s2) {
+        const a = s1.name.toLowerCase()
+        const b = s2.name.toLowerCase()
+        if (a < b) {
+          return -1
+        }
+        if (a > b) {
+          return 1
+        }
+        return 0
+      }
+
+      return groups.sort(compare)
     }
   },
   filters: {
@@ -326,13 +375,13 @@ export default {
       })
       this.loaded = true
     },
-    requestClickHandler (record, index) {
+    requestClickHandler (record) {
       this.$router.push({name: 'httpRequest', params: {id: record.id}})
     },
-    mailClickHandler (record, index) {
+    mailClickHandler (record) {
       this.$router.push({name: 'smtpMail', params: {id: record.id}})
     },
-    topicClickHandler (record, index) {
+    topicClickHandler (record) {
       this.$router.push({name: 'kafkaTopic', params: {kafka: record.service, topic: record.name}, query: {refresh: '5'}})
     },
     init () {
