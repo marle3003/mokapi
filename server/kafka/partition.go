@@ -122,7 +122,7 @@ func (p *partition) getSegment(offset int64) *segment {
 }
 
 func (p *partition) getOffset(group string) int64 {
-	if offset, ok := p.committed[group]; ok {
+	if offset, ok := p.committed[group]; ok && offset >= p.startOffset {
 		return offset
 	}
 	return p.startOffset

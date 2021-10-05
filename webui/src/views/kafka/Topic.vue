@@ -67,7 +67,7 @@
       <b-card-group deck>
         <b-card class="w-100">
           <b-card-title class="info text-center">Partitions</b-card-title>
-          <b-table small hover class="dataTable" :items="topic.partitions" style="table-layout: fixed" @row-clicked="toggleDetails">
+          <b-table small hover class="dataTable" :items="partitions" style="table-layout: fixed" @row-clicked="toggleDetails">
           </b-table>
         </b-card>
       </b-card-group>
@@ -75,9 +75,9 @@
       <b-card-group deck>
         <b-card class="w-100">
           <b-card-title class="info text-center">Groups</b-card-title>
-          <b-table small hover class="dataTable" :items="topic.groups" :fields="groupFields" style="table-layout: fixed" @row-clicked="toggleDetails">
+          <b-table small hover class="dataTable" :items="groups" :fields="groupFields" style="table-layout: fixed" @row-clicked="toggleDetails">
             <template v-slot:cell(members)="data">
-              {{ data.item.members.join(', ') }}
+              <span v-if="data.item.members !== null">{{ data.item.members.join(', ') }}</span>
             </template>
           </b-table>
         </b-card>
@@ -115,7 +115,7 @@ export default {
     window.addEventListener('keyup', this.doCommand)
   },
   computed: {
-    partition: function () {
+    partitions: function () {
       const topic = this.topic
       if (topic === null) {
         return null
@@ -137,7 +137,7 @@ export default {
     },
     groups: function () {
       const topic = this.topic
-      if (topic === null) {
+      if (topic === null || topic.groups === null) {
         return null
       }
 

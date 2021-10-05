@@ -4,6 +4,7 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/asyncApi"
+	"mokapi/config/dynamic/openapi"
 	"mokapi/models"
 	"mokapi/providers/utils"
 	"net"
@@ -75,6 +76,15 @@ func (s *Binding) Apply(data interface{}) error {
 			log.Infof("kafka: added topic %q with %v partitions on broker %v:%v", name, c.Value.Bindings.Kafka.Partitions, leader.host, leader.port)
 		} else {
 			topic.update(c.Value.Bindings.Kafka, leader)
+		}
+		if c.Value.Subscribe.Bindings.Kafka.GroupId != nil {
+			groupId := c.Value.Subscribe.Bindings.Kafka.GroupId
+			for _, g := range getGroupIds(groupId) {
+				s.getOrCreateGroup(g)
+				for _, p := range s.topics[name].partitions {
+					p.committed[g] = 0
+				}
+			}
 		}
 	}
 
@@ -222,7 +232,7 @@ func (s *Binding) UpdateMetrics(m *models.KafkaMetric) {
 	for _, g := range s.groups {
 		group, ok := m.Groups[g.name]
 		if !ok {
-			group = &models.KafkaGroup{}
+			group = &models.KafkaGroup{Members: make([]string, 0)}
 			m.Groups[g.name] = group
 		}
 		g.updateMetrics(group)
@@ -300,4 +310,15 @@ func (s *Binding) getOrCreateGroup(name string) *group {
 		s.groups[name] = g
 	}
 	return g
+}
+
+func getGroupIds(schema *openapi.Schema) (groupIds []string) {
+	if schema.Enum != nil {
+		for _, i := range schema.Enum {
+			if s, ok := i.(string); ok {
+				groupIds = append(groupIds, s)
+			}
+		}
+	}
+	return
 }
