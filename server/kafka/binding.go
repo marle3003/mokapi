@@ -173,21 +173,6 @@ func (s *Binding) UpdateMetrics(m *models.KafkaMetric) {
 			group.Lag = 0
 			if g, ok := s.groups[name]; ok {
 				g.updateMetrics(&group.KafkaGroup)
-				//switch g.state {
-				//case empty:
-				//	group.State = "empty"
-				//case preparingRebalance, completingRebalance:
-				//	group.State = "rebalance"
-				//case stable:
-				//	group.State = "stable"
-				//}
-				//group.Coordinator = g.coordinator.name
-				//if len(g.members) > 0 {
-				//	group.Leader = g.members[0].consumer.id
-				//} else {
-				//	group.Leader = ""
-				//}
-				//group.AssignmentStrategy = g.assignmentStrategy
 			}
 		}
 
@@ -235,10 +220,11 @@ func (s *Binding) UpdateMetrics(m *models.KafkaMetric) {
 
 	s.groupsMutex.RLock()
 	for _, g := range s.groups {
-		group := &models.KafkaGroup{}
-		//for _, m := range g.members {
-		//	group.Members = append(group.Members, m.consumer.id)
-		//}
+		group, ok := m.Groups[g.name]
+		if !ok {
+			group = &models.KafkaGroup{}
+			m.Groups[g.name] = group
+		}
 		g.updateMetrics(group)
 		m.Groups[g.name] = group
 	}

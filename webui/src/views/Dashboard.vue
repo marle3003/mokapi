@@ -70,23 +70,27 @@
                   <template v-slot:cell(lastRecord)="data">
                     {{ data.item.lastRecord | moment}}
                   </template>
-                  <template v-slot:cell(size)="data">
-                    {{ data.item.size | prettyBytes}}
-                  </template>
-                </b-table>
-              </b-card>
-            </b-card-group>
-            <b-card-group deck>
-              <b-card body-class="info-body" class="text-center">
-                <b-card-title class="info">Kafka Groups</b-card-title>
-                <b-table :items="groups" :fields="groupFields" table-class="dataTable">
-                  <template v-slot:cell(members)="data">
-                    {{ data.item.members.join(', ') }}
+                   <template v-slot:cell(size)="data">
+                     {{ getSize(data.item) | prettyBytes}}
+                   </template>
+                  <template v-slot:cell(partitions)="data">
+                    {{ data.item.partitions.length}}
                   </template>
                 </b-table>
               </b-card>
             </b-card-group>
           </div>
+
+          <b-card-group deck v-show="$route.name === 'kafka'">
+            <b-card body-class="info-body" class="text-center">
+              <b-card-title class="info">Kafka Groups</b-card-title>
+              <b-table :items="groups" :fields="groupFields" table-class="dataTable">
+                <template v-slot:cell(members)="data">
+                  {{ data.item.members.join(', ') }}
+                </template>
+              </b-table>
+            </b-card>
+          </b-card-group>
 
           <b-card-group deck v-show="$route.name === 'http'">
             <b-card class="w-100">
@@ -189,7 +193,7 @@ export default {
       chartTopicSize: {},
       serviceFields: [{key: 'name', class: 'text-left'}, {key: 'lastRequest', class: 'text-left'}, 'requests', 'errors'],
       topicFields: [{key: 'name', class: 'text-left'}, 'count', 'size', 'lastRecord', 'partitions', 'segments'],
-      groupFields: [{key: 'name', class: 'text-left'}, 'state', {key: 'assignmentStrategy', class: 'text-left'}, {key: 'coordinator', class: 'text-left'}, {key: 'leader', class: 'text-left'}, {key: 'members', class: 'text-left'}],
+      groupFields: [{key: 'name', class: 'text-left'}, {key: 'state', thClass: 'small-column'}, {key: 'assignmentStrategy', class: 'text-left'}, {key: 'coordinator', class: 'text-left'}, {key: 'leader', class: 'text-left'}, {key: 'members', class: 'text-left'}],
       lastMailField: ['from', 'to', {key: 'subject', class: 'subject'}, 'time'],
       error: null
     }
@@ -279,7 +283,7 @@ export default {
           lastRecord: topic.lastRecord,
           groups: topic.groups
         }
-        item.partitions = topic.partitions.length
+        item.partitions = topic.partitions
         for (let j = 0; j < topic.partitions.length; j++) {
           item.segments = topic.partitions[j].segments
         }
@@ -394,6 +398,13 @@ export default {
           this.timer = setInterval(this.getData, i * 1000)
         }
       }
+    },
+    getSize (topic) {
+      let size = 0
+      for (let i = 0; i < topic.partitions.length; i++) {
+        size += topic.partitions[i].size
+      }
+      return size
     }
   },
   beforeDestroy () {
@@ -466,7 +477,9 @@ export default {
   .dataTable.selectable{
     cursor: pointer;
   }
-
+  .small-column{
+    width: 5%;
+  }
 </style>
 <style>
 .subject {

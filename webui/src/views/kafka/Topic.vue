@@ -99,7 +99,7 @@ export default {
       timer: null,
       topic: null,
       messageFields: [{key: 'show_details', label: '', thStyle: 'width: 3%'}, 'key', {key: 'message', class: 'kafka-message'}, 'partition', 'time'],
-      groupFields: ['name', 'lag', 'state', 'assignmentStrategy', 'coordinator', 'leader', 'members'],
+      groupFields: ['name', {key: 'lag', thClass: 'small-column'}, {key: 'state', thClass: 'small-column'}, 'assignmentStrategy', 'coordinator', 'leader', 'members'],
       detailsShown: []
     }
   },
@@ -259,5 +259,8 @@ export default {
   white-space: nowrap;
   max-width: 50%;
   width: 50%;
+}
+.small-column{
+  width: 5%;
 }
 </style>
