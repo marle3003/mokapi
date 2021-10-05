@@ -67,7 +67,7 @@
       <b-card-group deck>
         <b-card class="w-100">
           <b-card-title class="info text-center">Partitions</b-card-title>
-          <b-table small hover class="dataTable" :items="topic.partitions"  style="table-layout: fixed" @row-clicked="toggleDetails">
+          <b-table small hover class="dataTable" :items="topic.partitions" style="table-layout: fixed" @row-clicked="toggleDetails">
           </b-table>
         </b-card>
       </b-card-group>
@@ -75,7 +75,10 @@
       <b-card-group deck>
         <b-card class="w-100">
           <b-card-title class="info text-center">Groups</b-card-title>
-          <b-table small hover class="dataTable" :items="topic.groups"  style="table-layout: fixed" @row-clicked="toggleDetails">
+          <b-table small hover class="dataTable" :items="topic.groups" :fields="groupFields" style="table-layout: fixed" @row-clicked="toggleDetails">
+            <template v-slot:cell(members)="data">
+              {{ data.item.members.join(', ') }}
+            </template>
           </b-table>
         </b-card>
       </b-card-group>
@@ -96,6 +99,7 @@ export default {
       timer: null,
       topic: null,
       messageFields: [{key: 'show_details', label: '', thStyle: 'width: 3%'}, 'key', {key: 'message', class: 'kafka-message'}, 'partition', 'time'],
+      groupFields: ['name', 'lag', 'state', 'assignmentStrategy', 'coordinator', 'leader', 'members'],
       detailsShown: []
     }
   },

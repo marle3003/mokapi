@@ -2,6 +2,7 @@ package kafka
 
 import (
 	log "github.com/sirupsen/logrus"
+	"mokapi/models"
 	"mokapi/server/kafka/protocol"
 	"mokapi/server/kafka/protocol/joinGroup"
 	"mokapi/server/kafka/protocol/syncGroup"
@@ -31,11 +32,12 @@ type group struct {
 	// member does not rejoin before a rebalance completes, then it will have an
 	// old generationId, which will cause ILLEGAL_GENERATION errors when included
 	// in new requests.
-	generationId     int
-	state            groupState
-	balancer         *groupBalancer
-	rebalanceTimeout int
-	sessionTimeout   int
+	generationId       int
+	state              groupState
+	balancer           *groupBalancer
+	rebalanceTimeout   int
+	sessionTimeout     int
+	assignmentStrategy string
 }
 
 type groupMember struct {
@@ -257,6 +259,7 @@ StopWaitingForConsumers:
 	}
 
 	log.Debugf("kafka: chosen strategy for group %v: %v", b.g.name, chosenStrategy)
+	b.g.assignmentStrategy = chosenStrategy
 
 	if len(chosenStrategy) == 0 {
 		// todo error handling
@@ -317,4 +320,26 @@ func hasJoined(c *client, members []join) bool {
 		}
 	}
 	return false
+}
+
+func (g *group) updateMetrics(m *models.KafkaGroup) {
+	switch g.state {
+	case empty:
+		m.State = "empty"
+	case preparingRebalance, completingRebalance:
+		m.State = "rebalance"
+	case stable:
+		m.State = "stable"
+	}
+	m.Coordinator = g.coordinator.name
+	if len(g.members) > 0 {
+		m.Leader = g.members[0].consumer.id
+	} else {
+		m.Leader = ""
+	}
+	m.AssignmentStrategy = g.assignmentStrategy
+	m.Members = m.Members[:0]
+	for _, member := range g.members {
+		m.Members = append(m.Members, member.consumer.id)
+	}
 }

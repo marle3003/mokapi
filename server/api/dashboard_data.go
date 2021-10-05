@@ -78,16 +78,17 @@ type partition struct {
 }
 
 type group struct {
-	Name    string   `json:"name"`
-	Members []string `json:"members"`
+	Name               string   `json:"name"`
+	Members            []string `json:"members"`
+	Coordinator        string   `json:"coordinator"`
+	Leader             string   `json:"leader"`
+	State              string   `json:"state"`
+	AssignmentStrategy string   `json:"assignmentStrategy"`
 }
 
 type topicGroup struct {
-	Name        string `json:"name"`
-	Lag         int64  `json:"lag"`
-	Coordinator string `json:"coordinator"`
-	Leader      string `json:"leader"`
-	State       string `json:"state"`
+	group
+	Lag int64 `json:"lag"`
 }
 
 func newDashboard(runtime *models.Runtime) dashboard {
@@ -111,10 +112,7 @@ func newDashboard(runtime *models.Runtime) dashboard {
 	}
 
 	for name, g := range runtime.Metrics.Kafka.Groups {
-		dashboard.Kafka.Groups = append(dashboard.Kafka.Groups, group{
-			Name:    name,
-			Members: g.Members,
-		})
+		dashboard.Kafka.Groups = append(dashboard.Kafka.Groups, newGroup(name, g))
 	}
 
 	for _, r := range runtime.Metrics.LastErrorRequests {
@@ -218,12 +216,20 @@ func newPartition(p *models.KafkaPartition) partition {
 	}
 }
 
+func newGroup(name string, g *models.KafkaGroup) group {
+	return group{
+		Name:               name,
+		Coordinator:        g.Coordinator,
+		Leader:             g.Leader,
+		State:              g.State,
+		Members:            g.Members,
+		AssignmentStrategy: g.AssignmentStrategy,
+	}
+}
+
 func newTopicGroup(name string, g *models.KafkaTopicGroup) topicGroup {
 	return topicGroup{
-		Name:        name,
-		Lag:         g.Lag,
-		Coordinator: g.Coordinator,
-		Leader:      g.Leader,
-		State:       g.State,
+		group: newGroup(name, &g.KafkaGroup),
+		Lag:   g.Lag,
 	}
 }

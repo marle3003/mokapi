@@ -48,14 +48,16 @@ type KafkaPartition struct {
 }
 
 type KafkaGroup struct {
-	Members []string
+	Members            []string
+	Coordinator        string
+	Leader             string
+	State              string
+	AssignmentStrategy string
 }
 
 type KafkaTopicGroup struct {
-	Lag         int64 `json:"lag"`
-	Coordinator string
-	Leader      string
-	State       string
+	KafkaGroup
+	Lag int64 `json:"lag"`
 }
 
 type KafkaMessage struct {
