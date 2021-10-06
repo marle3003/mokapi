@@ -12,18 +12,30 @@
       </b-collapse>
 
       <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
+      <div style="align: right">
+        <a href="https://github.com/marle3003/mokapi" class="version">MokApi {{version}}</a>
+      </div>
     </b-navbar>
   </div>
 </template>
 
 <script>
+import Api from '@/mixins/Api'
+
 export default {
   name: 'topHeader',
   components: {},
+  mixins: [Api],
   data () {
     return {
-      title: process.env.VUE_APP_TITLE
+      title: process.env.VUE_APP_TITLE,
+      version: ''
     }
+  },
+  created () {
+    this.info().then(i => {
+      this.version = i.version
+    })
   }
 }
 </script>
@@ -63,6 +75,13 @@ export default {
   margin-bottom: -4px;
 }
 #nav-collapse .nav-link.router-link-exact-active{
+  text-decoration: none;
+}
+.version{
+  color: var( --var-color-line-num);
+  font-size: 0.8rem;
+}
+.version:hover{
   text-decoration: none;
 }
 </style>

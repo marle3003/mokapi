@@ -1,4 +1,4 @@
- <script>
+<script>
 export default {
   data () {
     let baseUrl = process.env.VUE_APP_ApiBaseUrl
@@ -12,6 +12,10 @@ export default {
     }
   },
   methods: {
+    async info () {
+      let response = await this.$http.get(this.baseUrl + '/api/info')
+      return response.data
+    },
     async getService (serviceName) {
       let response = await this.$http.get(this.baseUrl + '/api/services/openapi/' + serviceName)
       return response.data

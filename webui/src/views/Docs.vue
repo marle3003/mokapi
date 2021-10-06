@@ -1,7 +1,6 @@
 <template>
   <div class="doc">
     <div class="page-body">
-
         <b-row>
           <b-col cols="3">
             <b-navbar sticky>

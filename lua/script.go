@@ -4,6 +4,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	lua "github.com/yuin/gopher-lua"
 	luar "layeh.com/gopher-luar"
+	"mokapi/lua/http"
 	"mokapi/lua/kafka"
 	lualog "mokapi/lua/log"
 	"mokapi/lua/mustache"
@@ -64,6 +65,7 @@ func NewScript(key, code string, kafka *kafka.Kafka, scheduler Scheduler) *Scrip
 	l.state.PreloadModule("yaml", yaml.Loader)
 	l.state.PreloadModule("kafka", kafka.Loader)
 	l.state.PreloadModule("mustache", mustache.Loader)
+	l.state.PreloadModule("http", http.Loader)
 
 	newWorkflow := func(name string) *workflow {
 		w := newWorkflow(name, scheduler)

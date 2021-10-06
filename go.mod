@@ -11,7 +11,7 @@ require (
 	github.com/emersion/go-smtp v0.15.0 // indirect
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/go-bindata/go-bindata v3.1.2+incompatible // indirect
-	github.com/go-co-op/gocron v0.7.1
+	github.com/go-co-op/gocron v1.9.0
 	github.com/go-git/go-git/v5 v5.4.2
 	github.com/google/uuid v1.1.1 // indirect
 	github.com/huandu/xstrings v1.3.2 // indirect

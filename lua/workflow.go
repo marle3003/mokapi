@@ -8,7 +8,8 @@ import (
 type eventHandler func(workflow *workflow, event string, args ...interface{}) bool
 
 type Scheduler interface {
-	NewJob(every string, do func(), times int) (*gocron.Job, error)
+	Every(every string, do func(), times int) (*gocron.Job, error)
+	Cron(cron string, do func(), times int) (*gocron.Job, error)
 	CancelJob(*gocron.Job)
 }
 
@@ -32,7 +33,28 @@ func (w *workflow) Timer(every string, handler func(w *workflow), args ...interf
 		times = int(args[0].(float64))
 	}
 
-	j, err := w.scheduler.NewJob(every, func() {
+	j, err := w.scheduler.Every(every, func() {
+		handler(w)
+	}, times)
+
+	if err != nil {
+		return err
+	}
+
+	w.job = j
+	return nil
+}
+
+func (w *workflow) Cron(expression string, handler func(w *workflow), args ...interface{}) error {
+	if w.job != nil {
+		return fmt.Errorf("already scheduled, call cancel register a new scheduled handler")
+	}
+	times := -1
+	if len(args) > 0 {
+		times = int(args[0].(float64))
+	}
+
+	j, err := w.scheduler.Cron(expression, func() {
 		handler(w)
 	}, times)
 

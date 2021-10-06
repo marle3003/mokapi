@@ -21,6 +21,8 @@ type Request struct {
 	Query  map[string]interface{}
 	Header map[string]interface{}
 	Cookie map[string]interface{}
+
+	Key string
 }
 
 type Url struct {
@@ -32,6 +34,7 @@ type Url struct {
 
 func newRequest(ctx *HttpContext) *Request {
 	r := &Request{
+		Key:    ctx.EndpointPath,
 		Method: ctx.Request.Method,
 		Path:   make(map[string]interface{}),
 		Query:  make(map[string]interface{}),

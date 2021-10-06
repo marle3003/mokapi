@@ -33,8 +33,16 @@ func (s *Server) AddScript(key string, code string) {
 	s.scripts[key] = lua.NewScript(key, code, kafka.NewKafka(s.writeKafkaMessage), s)
 }
 
-func (s *Server) NewJob(every string, do func(), times int) (*gocron.Job, error) {
+func (s *Server) Every(every string, do func(), times int) (*gocron.Job, error) {
 	s.cron.Every(every)
+	if times >= 0 {
+		s.cron.LimitRunsTo(times)
+	}
+	return s.cron.Do(do)
+}
+
+func (s *Server) Cron(cron string, do func(), times int) (*gocron.Job, error) {
+	s.cron.Cron(cron)
 	if times >= 0 {
 		s.cron.LimitRunsTo(times)
 	}

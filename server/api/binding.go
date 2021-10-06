@@ -8,6 +8,7 @@ import (
 	"mokapi/models"
 	"mokapi/server/api/asyncapi"
 	"mokapi/server/api/openapi"
+	"mokapi/version"
 	"net/http"
 	"strings"
 	"time"
@@ -21,6 +22,10 @@ type Binding struct {
 	Addr       string
 	fileServer http.Handler
 	path       string
+}
+
+type info struct {
+	Version string `json:"version"`
 }
 
 // todo move to runtime module
@@ -81,6 +86,9 @@ func (b *Binding) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case len(b.path) > 0 && strings.HasPrefix(p, b.path):
 		r.URL.Path = r.URL.Path[len(b.path):]
 		b.ServeHTTP(w, r)
+	case p == "/api/info":
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(info{Version: version.BuildVersion})
 	case p == "/api/services":
 		b.getServices(w, r)
 	case strings.HasPrefix(p, "/api/services/openapi"):

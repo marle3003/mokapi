@@ -21,6 +21,7 @@ type HttpContext struct {
 	Parameters      RequestParameters
 	ServicPath      string
 	ServiceName     string
+	EndpointPath    string
 	Operation       *openapi.Operation
 	ContentType     *media.ContentType
 	metric          *models.RequestMetric

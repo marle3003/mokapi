@@ -82,6 +82,7 @@ endpointLoop:
 		}
 		ctx.Parameters = p
 		ctx.Operation = op
+		ctx.EndpointPath = path
 		return nil
 	}
 
@@ -95,17 +96,17 @@ func getOperation(method string, e *openapi.Endpoint) *openapi.Operation {
 		return e.Get
 	case "POST":
 		return e.Post
-	case "Put":
+	case "PUT":
 		return e.Put
-	case "Patch":
+	case "PATCH":
 		return e.Patch
-	case "Delete":
+	case "DELETE":
 		return e.Delete
-	case "Head":
+	case "HEAD":
 		return e.Head
-	case "Options":
+	case "OPTIONS":
 		return e.Options
-	case "Trace":
+	case "TRACE":
 		return e.Trace
 	}
 
