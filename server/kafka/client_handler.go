@@ -72,12 +72,20 @@ func (s *Binding) handle(conn net.Conn) {
 		case protocol.Fetch:
 			if c.group != nil && c.group.state != stable {
 				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, &fetch.Response{ErrorCode: protocol.RebalanceInProgress})
+			} else if c.group == nil {
+				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, &fetch.Response{ErrorCode: protocol.RebalanceInProgress})
 			} else {
 				r := s.processFetch(msg.(*fetch.Request))
 				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, r)
 			}
 		case protocol.Heartbeat:
-			protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, &heartbeat.Response{})
+			if c.group != nil && c.group.state != stable {
+				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, &fetch.Response{ErrorCode: protocol.RebalanceInProgress})
+			} else if c.group == nil {
+				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, &fetch.Response{ErrorCode: protocol.RebalanceInProgress})
+			} else {
+				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, &heartbeat.Response{})
+			}
 		case protocol.Produce:
 			r := msg.(*produce.Request)
 			for _, t := range r.Topics {
@@ -330,6 +338,7 @@ type partitionData struct {
 	set         protocol.RecordSet
 	size        int32
 	maxBytes    int32
+	error       protocol.ErrorCode
 }
 
 type topicData struct {
@@ -355,6 +364,9 @@ func (s *Binding) processFetch(req *fetch.Request) *fetch.Response {
 			t := s.topics[name]
 			for index, partition := range topic.partitions {
 				p := t.partitions[int(index)]
+				if p.offset > 0 && partition.fetchOffset > p.offset {
+					partition.error = protocol.OffsetOutOfRange
+				}
 				set, offset, setSize := p.read(partition.fetchOffset, partition.maxBytes-partition.size)
 				partition.set.Batches = append(partition.set.Batches, set.Batches...)
 				partition.fetchOffset = offset
@@ -381,6 +393,7 @@ func (s *Binding) processFetch(req *fetch.Request) *fetch.Response {
 				LogStartOffset:       p.startOffset,
 				PreferredReadReplica: -1,
 				RecordSet:            partition.set,
+				ErrorCode:            int16(partition.error),
 			}
 			resTopic.Partitions = append(resTopic.Partitions, resPar)
 		}
@@ -400,9 +413,15 @@ func (s *Binding) processOffsetCommit(req *offsetCommit.Request) *offsetCommit.R
 		resTopic := offsetCommit.ResponseTopic{Name: rt.Name, Partitions: make([]offsetCommit.ResponsePartition, 0, len(rt.Partitions))}
 		for _, rp := range rt.Partitions {
 			p := t.partitions[int(rp.Index)]
-			p.setOffset(req.GroupId, rp.Offset)
+			errCode := int16(0)
+			if rp.Offset > p.offset {
+				errCode = int16(protocol.OffsetOutOfRange)
+			} else {
+				p.setOffset(req.GroupId, rp.Offset)
+			}
 			resTopic.Partitions = append(resTopic.Partitions, offsetCommit.ResponsePartition{
-				Index: rp.Index,
+				Index:     rp.Index,
+				ErrorCode: errCode,
 			})
 		}
 		r.Topics = append(r.Topics, resTopic)

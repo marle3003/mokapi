@@ -1,4 +1,4 @@
-<script>
+ <script>
 export default {
   data () {
     let baseUrl = process.env.VUE_APP_ApiBaseUrl

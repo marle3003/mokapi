@@ -193,7 +193,7 @@ export default {
       chartTopicSize: {},
       serviceFields: [{key: 'name', class: 'text-left'}, {key: 'lastRequest', class: 'text-left'}, 'requests', 'errors'],
       topicFields: [{key: 'name', class: 'text-left'}, 'count', 'size', 'lastRecord', 'partitions', 'segments'],
-      groupFields: [{key: 'name', class: 'text-left'}, {key: 'state', thClass: 'small-column'}, {key: 'assignmentStrategy', class: 'text-left'}, {key: 'coordinator', class: 'text-left'}, {key: 'leader', class: 'text-left'}, {key: 'members', class: 'text-left'}],
+      groupFields: [{key: 'name', class: 'text-left'}, {key: 'state', thStyle: 'width:10%'}, {key: 'assignmentStrategy', class: 'text-left'}, {key: 'coordinator', class: 'text-left'}, {key: 'leader', class: 'text-left'}, {key: 'members', class: 'text-left'}],
       lastMailField: ['from', 'to', {key: 'subject', class: 'subject'}, 'time'],
       error: null
     }
@@ -476,9 +476,6 @@ export default {
   }
   .dataTable.selectable{
     cursor: pointer;
-  }
-  .small-column{
-    width: 5%;
   }
 </style>
 <style>
