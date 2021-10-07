@@ -41,7 +41,7 @@ func (b *Binding) getKafkaTopic(kafka string, topicName string, w http.ResponseW
 		return
 	}
 
-	topic, ok := s.Channels["/"+topicName]
+	topic, ok := s.Channels[topicName]
 	if !ok {
 		w.WriteHeader(404)
 		return
