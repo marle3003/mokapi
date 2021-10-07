@@ -72,8 +72,6 @@ func (s *Binding) handle(conn net.Conn) {
 		case protocol.Fetch:
 			if c.group != nil && c.group.state != stable {
 				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, &fetch.Response{ErrorCode: protocol.RebalanceInProgress})
-			} else if c.group == nil {
-				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, &fetch.Response{ErrorCode: protocol.RebalanceInProgress})
 			} else {
 				r := s.processFetch(msg.(*fetch.Request))
 				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, r)
