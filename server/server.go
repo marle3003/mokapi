@@ -149,7 +149,7 @@ func (s *Server) updateConfigs(config dynamic.Config) {
 			address := fmt.Sprintf(":%v", server.GetPort())
 			binding, found := s.Bindings[address].(*web.Binding)
 			if !found {
-				if strings.HasPrefix(server.Url, "https://") {
+				if strings.HasPrefix(strings.ToLower(server.Url), "https://") {
 					binding = web.NewBindingWithTls(address, s.runtime.Metrics.AddRequest, s.Run, s.store.GetCertificate)
 				} else {
 					binding = web.NewBinding(address, s.runtime.Metrics.AddRequest, s.Run)
