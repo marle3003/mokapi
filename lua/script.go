@@ -61,6 +61,7 @@ func NewScript(key, code string, kafka *kafka.Kafka, scheduler Scheduler) *Scrip
 	l.state.SetGlobal("script_path", lua.LString(key))
 	l.state.SetGlobal("script_dir", lua.LString(filepath.Dir(key)))
 	l.state.SetGlobal("dump", luar.New(l.state, Dump))
+	l.state.SetGlobal("sleep", luar.New(l.state, sleep))
 	l.state.PreloadModule("log", l.logger.Loader)
 	l.state.PreloadModule("yaml", yaml.Loader)
 	l.state.PreloadModule("kafka", kafka.Loader)
