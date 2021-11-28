@@ -14,15 +14,15 @@ type Response struct {
 }
 
 type Request struct {
-	Method string
-	Url    Url
-	Body   interface{}
-	Path   map[string]interface{}
-	Query  map[string]interface{}
-	Header map[string]interface{}
-	Cookie map[string]interface{}
+	Method string                 `js:"method"`
+	Url    Url                    `js:"url"`
+	Body   interface{}            `js:"body"`
+	Path   map[string]interface{} `js:"path"`
+	Query  map[string]interface{} `js:"query"`
+	Header map[string]interface{} `js:"header"`
+	Cookie map[string]interface{} `js:"cookie"`
 
-	Key string
+	Key string `js:"key"`
 }
 
 type Url struct {
