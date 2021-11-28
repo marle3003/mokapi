@@ -10,9 +10,7 @@ import (
 )
 
 func TestScript(t *testing.T) {
-	host := struct {
-		common.Host
-	}{}
+	host := &testHost{}
 
 	t.Parallel()
 	t.Run("blank", func(t *testing.T) {
@@ -64,4 +62,12 @@ func TestScript(t *testing.T) {
 		}()
 		s.Close()
 	})
+}
+
+type testHost struct {
+	common.Host
+}
+
+func (th *testHost) Info(args ...interface{}) {
+
 }
