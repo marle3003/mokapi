@@ -9,7 +9,6 @@ import (
 	"mokapi/lua/utils"
 	"net/http"
 	"strings"
-	"time"
 )
 
 type Client interface {
@@ -48,31 +47,31 @@ type response struct {
 }
 
 func (m *Module) get(state *lua.LState) int {
-	return m.doRequest(state, "get")
+	return m.doRequest(state, "GET")
 }
 
 func (m *Module) post(state *lua.LState) int {
-	return m.doRequest(state, "post")
+	return m.doRequest(state, "POST")
 }
 
 func (m *Module) put(state *lua.LState) int {
-	return m.doRequest(state, "put")
+	return m.doRequest(state, "PUT")
 }
 
 func (m *Module) head(state *lua.LState) int {
-	return m.doRequest(state, "head")
+	return m.doRequest(state, "HEAD")
 }
 
 func (m *Module) patch(state *lua.LState) int {
-	return m.doRequest(state, "patch")
+	return m.doRequest(state, "PATCH")
 }
 
 func (m *Module) delete(state *lua.LState) int {
-	return m.doRequest(state, "delete")
+	return m.doRequest(state, "DELETE")
 }
 
 func (m *Module) options(state *lua.LState) int {
-	return m.doRequest(state, "options")
+	return m.doRequest(state, "OPTIONS")
 }
 
 func (m *Module) doRequest(state *lua.LState, method string) int {
@@ -124,7 +123,7 @@ func createRequest(method, url, body string, args map[string]interface{}) (*http
 	}
 
 	for key, value := range args {
-		switch key {
+		switch strings.ToLower(key) {
 		case "headers":
 			headers, ok := value.(map[string]interface{})
 			if !ok {
@@ -147,7 +146,7 @@ func createRequest(method, url, body string, args map[string]interface{}) (*http
 
 func getArgs(state *lua.LState, index int) (map[string]interface{}, error) {
 	args := make(map[string]interface{})
-	if lv, ok := state.Get(2).(*lua.LTable); ok {
+	if lv, ok := state.Get(index).(*lua.LTable); ok {
 		tbl := utils.MapTable(lv)
 		args, ok = tbl.(map[string]interface{})
 		if !ok {
@@ -168,33 +167,4 @@ func parseResponse(r *http.Response) response {
 		result.Headers[k] = fmt.Sprintf("%v", v)
 	}
 	return result
-}
-
-func put(state *lua.LState) int {
-	url := state.CheckString(1)
-	content := state.CheckString(2)
-	contentType := "text/plain"
-	if lv, ok := state.Get(3).(lua.LString); ok {
-		contentType = string(lv)
-	}
-
-	client := &http.Client{
-		Timeout: time.Second * 30,
-	}
-
-	r, err := client.Post(url, contentType, strings.NewReader(content))
-	response := response{StatusCode: r.StatusCode}
-	if err == nil {
-		if b, err := io.ReadAll(r.Body); err == nil {
-			response.Body = string(b)
-		}
-	}
-
-	state.Push(luar.New(state, response))
-	if err != nil {
-		state.Push(lua.LString(err.Error()))
-		return 2
-	}
-
-	return 1
 }

@@ -30,6 +30,7 @@ func TestGet(t *testing.T) {
 			http.get("http://localhost/foo")`,
 		)
 		test.Ok(t, err)
+		test.Equals(t, "GET", client.req.Method)
 		test.Equals(t, "http://localhost/foo", client.req.URL.String())
 	})
 	t.Run("header", func(t *testing.T) {
@@ -55,5 +56,33 @@ func TestGet(t *testing.T) {
 		test.Ok(t, err)
 		test.Equals(t, "http://localhost/foo", client.req.URL.String())
 		test.Equals(t, []string{"hello", "world"}, client.req.Header.Values("foo"))
+	})
+}
+
+func TestPost(t *testing.T) {
+	t.Run("simple", func(t *testing.T) {
+		client := &testClient{}
+		state := lua.NewState()
+		state.PreloadModule("http", New(client).Loader)
+		err := state.DoString(`
+			http = require("http")
+			http.post("http://localhost/foo")`,
+		)
+		test.Ok(t, err)
+		test.Equals(t, "POST", client.req.Method)
+		test.Equals(t, "http://localhost/foo", client.req.URL.String())
+	})
+	t.Run("contenttype", func(t *testing.T) {
+		client := &testClient{}
+		state := lua.NewState()
+		state.PreloadModule("http", New(client).Loader)
+		err := state.DoString(`
+			http = require("http")
+			http.post("http://localhost/foo", "body", {headers = {['Content-Type'] = "application/json"}})`,
+		)
+		test.Ok(t, err)
+		test.Equals(t, "POST", client.req.Method)
+		test.Equals(t, "application/json", client.req.Header.Get("Content-Type"))
+		test.Equals(t, "http://localhost/foo", client.req.URL.String())
 	})
 }
