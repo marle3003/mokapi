@@ -1,7 +1,7 @@
 package file
 
 import (
-	"errors"
+	"fmt"
 	"mokapi/config/dynamic/common"
 	"mokapi/test"
 	"strings"
@@ -74,7 +74,7 @@ func TestTxt(t *testing.T) {
 	t.Run("read second time", func(t *testing.T) {
 		r := New(nil)
 		r.readFileFunc = func(s string) ([]byte, error) {
-			return nil, errors.New("fail")
+			return nil, fmt.Errorf("read file request: %v", s)
 		}
 		r.files["c:\\foo.txt"] = &common.File{Data: "foobar"}
 		f, err := r.Read(MustParseUrl("c:\\foo.txt"))
@@ -84,7 +84,7 @@ func TestTxt(t *testing.T) {
 	t.Run("read second time with options", func(t *testing.T) {
 		r := New(nil)
 		r.readFileFunc = func(s string) ([]byte, error) {
-			return nil, errors.New("fail")
+			return nil, fmt.Errorf("read file request: %v", s)
 		}
 		r.files["c:\\foo.txt"] = &common.File{Data: "foobar"}
 		ch := make(chan *common.File, 1)
