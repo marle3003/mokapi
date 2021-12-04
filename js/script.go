@@ -40,21 +40,27 @@ func New(filename, src string, host common.Host) (*Script, error) {
 	enableConsole(s.runtime, host)
 	enableOpen(s.runtime, host)
 
-	_, err = s.runtime.RunProgram(s.prg)
+	return s, err
+}
+
+func (s *Script) Run() error {
+	_, err := s.runtime.RunProgram(s.prg)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	err = s.getExports()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if f, ok := s.exports["default"]; ok {
 		_, err = f(goja.Undefined())
+		if err != nil {
+			return err
+		}
 	}
-
-	return s, err
+	return nil
 }
 
 func (s *Script) Close() {

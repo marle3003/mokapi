@@ -52,7 +52,11 @@ func newScriptHost(key, src string, e *Engine) (*scriptHost, error) {
 	return sh, nil
 }
 
-func (sh *scriptHost) Run(event string, args ...interface{}) []*Summary {
+func (sh *scriptHost) Run() error {
+	return sh.script.Run()
+}
+
+func (sh *scriptHost) RunEvent(event string, args ...interface{}) []*Summary {
 	var result []*Summary
 	for _, eh := range sh.events[event] {
 		s := &Summary{

@@ -8,6 +8,7 @@ import (
 )
 
 type Script interface {
+	Run() error
 	Close()
 }
 
@@ -43,6 +44,11 @@ func (e *Engine) AddScript(key, code string) error {
 	if err != nil {
 		return err
 	}
+
+	err = s.Run()
+	if err != nil {
+		return err
+	}
 	e.scripts[key] = s
 	return nil
 }
@@ -50,7 +56,7 @@ func (e *Engine) AddScript(key, code string) error {
 func (e *Engine) Run(event string, args ...interface{}) []*Summary {
 	var result []*Summary
 	for _, s := range e.scripts {
-		result = append(result, s.Run(event, args...)...)
+		result = append(result, s.RunEvent(event, args...)...)
 	}
 
 	return result

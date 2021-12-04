@@ -1,7 +1,7 @@
 package lua
 
 import (
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	lua "github.com/yuin/gopher-lua"
 	luar "layeh.com/gopher-luar"
 	"mokapi/engine/common"
@@ -13,10 +13,11 @@ import (
 type Script struct {
 	Key   string
 	state *lua.LState
+	src   string
 }
 
 func New(filename, src string, host common.Host) (*Script, error) {
-	script := &Script{Key: filename}
+	script := &Script{Key: filename, src: src}
 	script.state = lua.NewState(lua.Options{IncludeGoStackTrace: true})
 	script.state.SetGlobal("script_path", lua.LString(filename))
 	script.state.SetGlobal("script_dir", lua.LString(filepath.Dir(filename)))
@@ -30,15 +31,14 @@ func New(filename, src string, host common.Host) (*Script, error) {
 	script.state.PreloadModule("mustache", modules.MustacheLoader)
 	script.state.PreloadModule("http", http.New().Loader)
 
-	err := script.state.DoString(src)
-	if err != nil {
-		return nil, fmt.Errorf("script error %q: %v", filename, err)
-	}
-
 	return script, nil
 }
 
 func (s *Script) Run() error {
+	err := s.state.DoString(s.src)
+	if err != nil {
+		log.Errorf("script error %q: %v", s.Key, err)
+	}
 	return nil
 }
 

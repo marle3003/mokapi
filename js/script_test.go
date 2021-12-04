@@ -15,30 +15,35 @@ func TestScript(t *testing.T) {
 	t.Parallel()
 	t.Run("blank", func(t *testing.T) {
 		t.Parallel()
-		_, err := New("", "", host)
+		s, err := New("", "", host)
+		test.Ok(t, err)
+		err = s.Run()
 		test.Equals(t, fmt.Errorf("no exported functions in script"), err)
 	})
 	t.Run("null", func(t *testing.T) {
 		t.Parallel()
-		_, err := New("", "exports = null", host)
+		s, err := New("", "exports = null", host)
+		test.Ok(t, err)
+		err = s.Run()
 		test.Equals(t, fmt.Errorf("export must be an object"), err)
 	})
 	t.Run("emptyFunction", func(t *testing.T) {
 		t.Parallel()
-		_, err := New("test", `export default function() {}`, host)
+		s, err := New("test", `export default function() {}`, host)
 		test.Ok(t, err)
+		test.Ok(t, s.Run())
 	})
 	t.Run("alert", func(t *testing.T) {
 		t.Parallel()
 		s, err := New("test", `export default function() {console.log("foo")}`, host)
 		test.Ok(t, err)
-		_, err = s.exports["default"](goja.Undefined())
-		test.Ok(t, err)
+		test.Ok(t, s.Run())
 	})
 	t.Run("returnValueFunction", func(t *testing.T) {
 		t.Parallel()
 		s, err := New("test", `export default function() {return 2}`, host)
 		test.Ok(t, err)
+		test.Ok(t, s.Run())
 		v, err := s.exports["default"](goja.Undefined())
 		test.Ok(t, err)
 		test.Equals(t, int64(2), v.ToInteger())
@@ -47,6 +52,7 @@ func TestScript(t *testing.T) {
 		t.Parallel()
 		s, err := New("test", `function custom() {return 2}; export {custom}`, host)
 		test.Ok(t, err)
+		test.Ok(t, s.Run())
 		v, err := s.exports["custom"](goja.Undefined())
 		test.Ok(t, err)
 		test.Equals(t, int64(2), v.ToInteger())
@@ -55,11 +61,15 @@ func TestScript(t *testing.T) {
 		t.Parallel()
 		s, err := New("test", `export default function() {while(true) {}}`, host)
 		test.Ok(t, err)
+		ch := make(chan bool)
 		go func() {
-			_, err := s.exports["default"](goja.Undefined())
+			ch <- true
+			err := s.Run()
 			iErr := err.(*goja.InterruptedError)
-			test.Assert(t, strings.HasPrefix(iErr.String(), "closing"), "closed execution")
+			test.Assert(t, strings.HasPrefix(iErr.String(), "closing"), fmt.Sprintf("error prefix expected closing but got: %v", iErr.String()))
 		}()
+
+		_ = <-ch
 		s.Close()
 	})
 }
