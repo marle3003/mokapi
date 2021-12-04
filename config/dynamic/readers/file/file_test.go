@@ -76,8 +76,9 @@ func TestTxt(t *testing.T) {
 		r.readFileFunc = func(s string) ([]byte, error) {
 			return nil, fmt.Errorf("read file request: %v", s)
 		}
-		r.files["c:\\foo.txt"] = &common.File{Data: "foobar"}
-		f, err := r.Read(MustParseUrl("c:\\foo.txt"))
+		u := MustParseUrl("foo.txt")
+		r.files[r.name(u)] = &common.File{Data: "foobar"}
+		f, err := r.Read(MustParseUrl("foo.txt"))
 		test.Ok(t, err)
 		test.Equals(t, "foobar", f.Data)
 	})
@@ -86,9 +87,10 @@ func TestTxt(t *testing.T) {
 		r.readFileFunc = func(s string) ([]byte, error) {
 			return nil, fmt.Errorf("read file request: %v", s)
 		}
-		r.files["c:\\foo.txt"] = &common.File{Data: "foobar"}
+		u := MustParseUrl("foo.txt")
+		r.files[r.name(u)] = &common.File{Data: "foobar"}
 		ch := make(chan *common.File, 1)
-		f1, err := r.Read(MustParseUrl("c:\\foo.txt"), common.WithListener(ch))
+		f1, err := r.Read(u, common.WithListener(ch))
 		test.Ok(t, err)
 		f1.Changed()
 		f2 := <-ch
