@@ -28,7 +28,7 @@ func New(filename, src string, host common.Host) (*Script, error) {
 	script.state.PreloadModule("yaml", modules.YamlLoader)
 	//l.state.PreloadModule("kafka", kafka.Loader)
 	script.state.PreloadModule("mustache", modules.MustacheLoader)
-	script.state.PreloadModule("http", http.Loader)
+	script.state.PreloadModule("http", http.New().Loader)
 
 	err := script.state.DoString(src)
 	if err != nil {

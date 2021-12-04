@@ -24,7 +24,9 @@ func TestGet(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
 		client := &testClient{}
 		state := lua.NewState()
-		state.PreloadModule("http", New(client).Loader)
+		mod := New()
+		mod.client = client
+		state.PreloadModule("http", mod.Loader)
 		err := state.DoString(`
 			http = require("http")
 			http.get("http://localhost/foo")`,
@@ -36,7 +38,9 @@ func TestGet(t *testing.T) {
 	t.Run("header", func(t *testing.T) {
 		client := &testClient{}
 		state := lua.NewState()
-		state.PreloadModule("http", New(client).Loader)
+		mod := New()
+		mod.client = client
+		state.PreloadModule("http", mod.Loader)
 		err := state.DoString(`
 			http = require("http")
 			http.get("http://localhost/foo", {headers = {foo = "bar"}})`,
@@ -48,7 +52,9 @@ func TestGet(t *testing.T) {
 	t.Run("headerWithArray", func(t *testing.T) {
 		client := &testClient{}
 		state := lua.NewState()
-		state.PreloadModule("http", New(client).Loader)
+		mod := New()
+		mod.client = client
+		state.PreloadModule("http", mod.Loader)
 		err := state.DoString(`
 			http = require("http")
 			http.get("http://localhost/foo", {headers = {foo = {"hello", "world"}}})`,
@@ -63,7 +69,9 @@ func TestPost(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
 		client := &testClient{}
 		state := lua.NewState()
-		state.PreloadModule("http", New(client).Loader)
+		mod := New()
+		mod.client = client
+		state.PreloadModule("http", mod.Loader)
 		err := state.DoString(`
 			http = require("http")
 			http.post("http://localhost/foo")`,
@@ -75,7 +83,9 @@ func TestPost(t *testing.T) {
 	t.Run("contenttype", func(t *testing.T) {
 		client := &testClient{}
 		state := lua.NewState()
-		state.PreloadModule("http", New(client).Loader)
+		mod := New()
+		mod.client = client
+		state.PreloadModule("http", mod.Loader)
 		err := state.DoString(`
 			http = require("http")
 			http.post("http://localhost/foo", "body", {headers = {['Content-Type'] = "application/json"}})`,

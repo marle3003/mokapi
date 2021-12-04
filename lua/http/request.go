@@ -9,6 +9,7 @@ import (
 	"mokapi/lua/utils"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type Client interface {
@@ -19,8 +20,8 @@ type Module struct {
 	client Client
 }
 
-func New(client Client) *Module {
-	return &Module{client: client}
+func New() *Module {
+	return &Module{client: &http.Client{Timeout: time.Second * 30}}
 }
 
 func (m *Module) Loader(state *lua.LState) int {
