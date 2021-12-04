@@ -16,6 +16,8 @@ func TestRequire(t *testing.T) {
 		s, err := New("test", `import {sleep} from 'mokapi'; export let _sleep = sleep; sleep(12); export default function() {}`, host)
 		test.Ok(t, err)
 
+		test.Ok(t, s.Run())
+
 		exports := s.runtime.Get("exports").ToObject(s.runtime)
 		_, ok := goja.AssertFunction(exports.Get("_sleep"))
 		test.Assert(t, ok, "sleep is not a function")

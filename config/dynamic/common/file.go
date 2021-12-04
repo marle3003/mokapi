@@ -107,7 +107,11 @@ func (f *File) UnmarshalJSON(b []byte) error {
 	}
 
 	if f.Data == nil {
-		f.Data = make(map[string]interface{})
+		if f.AllowParsingUnknownType {
+			f.Data = make(map[string]interface{})
+		} else {
+			return nil
+		}
 	}
 
 	err := json.Unmarshal(b, f.Data)
