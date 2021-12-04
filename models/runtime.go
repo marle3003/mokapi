@@ -5,7 +5,6 @@ import (
 	"mokapi/config/dynamic/ldap"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/config/dynamic/smtp"
-	"time"
 )
 
 type Runtime struct {
@@ -24,10 +23,4 @@ func NewRuntime() *Runtime {
 		Smtp:     make(map[string]*smtp.Config),
 		Metrics:  newMetrics(),
 	}
-}
-
-type WorkflowLog struct {
-	Name     string
-	Logs     []string
-	Duration time.Duration
 }

@@ -2,7 +2,7 @@ package openapi
 
 import (
 	log "github.com/sirupsen/logrus"
-	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/mokapi"
 	"mokapi/models/media"
 	"net/http"
@@ -11,27 +11,7 @@ import (
 )
 
 func init() {
-	dynamic.Register("openapi", &Config{}, func(path string, o dynamic.Config, cr dynamic.ConfigReader) (bool, dynamic.Config) {
-		eh := dynamic.NewEmptyEventHandler(o)
-		switch c := o.(type) {
-		case *Config:
-			c.ConfigPath = path
-
-			if len(c.Info.Name) == 0 {
-				log.Errorf("missing required property title: %v", path)
-				return false, nil
-			}
-
-			r := ReferenceResolver{reader: cr, path: path, config: c, eh: eh}
-
-			if err := r.ResolveConfig(); err != nil {
-				log.Errorf("error in resolving references in config %q: %v", path, err)
-			}
-
-			return true, c
-		}
-		return false, nil
-	})
+	common.Register("openapi", &Config{})
 }
 
 type Config struct {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"mokapi/config/dynamic/openapi"
+	"mokapi/engine"
 	"mokapi/models"
 	"strings"
 	"time"
@@ -16,36 +17,36 @@ import (
 
 type AddRequestMetric func(metric *models.RequestMetric)
 
-type workflowHandler func(request *Request, response *Response) []*models.WorkflowLog
+type eventHandler func(request *Request, response *Response) []*engine.Summary
 
 type Binding struct {
 	Addr             string
 	server           *http.Server
 	handlers         map[string]map[string]*ServiceHandler
 	addRequestMetric AddRequestMetric
-	workflowHandler  workflowHandler
+	eventHandler     eventHandler
 	IsTls            bool
 	certificates     map[string]*tls.Certificate
 }
 
-func NewBinding(addr string, mh AddRequestMetric, wh func(string, ...interface{}) []*models.WorkflowLog) *Binding {
+func NewBinding(addr string, mh AddRequestMetric, eh func(string, ...interface{}) []*engine.Summary) *Binding {
 	b := &Binding{
 		Addr:             addr,
 		handlers:         make(map[string]map[string]*ServiceHandler),
 		addRequestMetric: mh,
-		workflowHandler:  func(request *Request, response *Response) []*models.WorkflowLog { return wh("http", request, response) },
+		eventHandler:     func(request *Request, response *Response) []*engine.Summary { return eh("http", request, response) },
 	}
 	b.server = &http.Server{Addr: addr, Handler: b}
 
 	return b
 }
 
-func NewBindingWithTls(addr string, mh AddRequestMetric, wh func(string, ...interface{}) []*models.WorkflowLog, getCertificate func(info *tls.ClientHelloInfo) (*tls.Certificate, error)) *Binding {
+func NewBindingWithTls(addr string, mh AddRequestMetric, eh func(string, ...interface{}) []*engine.Summary, getCertificate func(info *tls.ClientHelloInfo) (*tls.Certificate, error)) *Binding {
 	b := &Binding{
 		Addr:             addr,
 		handlers:         make(map[string]map[string]*ServiceHandler),
 		addRequestMetric: mh,
-		workflowHandler:  func(request *Request, response *Response) []*models.WorkflowLog { return wh("http", request, response) },
+		eventHandler:     func(request *Request, response *Response) []*engine.Summary { return eh("http", request, response) },
 		IsTls:            true,
 		certificates:     make(map[string]*tls.Certificate),
 	}
@@ -126,12 +127,12 @@ func (binding *Binding) Apply(data interface{}) error {
 }
 
 func (binding *Binding) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := NewHttpContext(r, w, binding.workflowHandler)
+	ctx := NewHttpContext(r, w, binding.eventHandler)
 
 	defer binding.addRequestMetric(ctx.metric)
 
 	var service *ServiceHandler
-	service, ctx.ServicPath = binding.resolveHandler(r)
+	service, ctx.ServicePath = binding.resolveHandler(r)
 
 	if service != nil {
 		service.ServeHTTP(ctx)

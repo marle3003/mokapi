@@ -1,19 +1,14 @@
 package mokapi
 
 import (
-	"mokapi/config/dynamic"
 	"mokapi/config/tls"
 )
 
-func init() {
-	dynamic.Register("mokapi", &Config{}, func(path string, config dynamic.Config, r dynamic.ConfigReader) (bool, dynamic.Config) {
-		switch c := config.(type) {
-		case *Config:
-			c.ConfigPath = path
-		}
-		return true, config
-	})
-}
+//func init() {
+//	dynamic.Register("mokapi", &Config{}, func(config *dynamic.Config, r dynamic.ConfigReader) bool {
+//		return true
+//	})
+//}
 
 type Config struct {
 	ConfigPath   string `yaml:"-" json:"-"`

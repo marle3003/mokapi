@@ -30,9 +30,14 @@ func Dump(i interface{}) string {
 		}
 		sb.WriteString("}")
 	case reflect.Map:
-		for _, k := range v.MapKeys() {
+		sb.WriteString("{")
+		for i, k := range v.MapKeys() {
+			if i > 0 {
+				sb.WriteString(", ")
+			}
 			sb.WriteString(fmt.Sprintf("%v: %v", k, Dump(v.MapIndex(k).Interface())))
 		}
+		sb.WriteString("}")
 	case reflect.Float64, reflect.Float32:
 		f := v.Float()
 		if i := math.Trunc(f); i == f {

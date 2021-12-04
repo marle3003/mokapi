@@ -3,7 +3,7 @@ package js
 import (
 	"fmt"
 	"github.com/dop251/goja"
-	"mokapi/js/common"
+	"mokapi/engine/common"
 	"mokapi/test"
 	"strings"
 	"testing"

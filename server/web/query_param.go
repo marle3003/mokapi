@@ -20,8 +20,8 @@ func parseQuery(p *openapi.Parameter, u *url.URL) (rp RequestParameterValue, err
 		}
 	}
 
-	s := u.Query().Get(p.Name)
-	if len(s) == 0 {
+	rp.Raw = u.Query().Get(p.Name)
+	if len(rp.Raw) == 0 {
 		if p.Required {
 			return rp, errors.Errorf("required parameter not found")
 		} else {
@@ -29,7 +29,7 @@ func parseQuery(p *openapi.Parameter, u *url.URL) (rp RequestParameterValue, err
 		}
 	}
 
-	rp.Value, err = parse(s, p.Schema)
+	rp.Value, err = parse(rp.Raw, p.Schema)
 
 	return
 }

@@ -4,17 +4,17 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"github.com/go-co-op/gocron"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi"
+	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/ldap"
 	"mokapi/config/dynamic/mokapi"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/config/dynamic/script"
 	"mokapi/config/dynamic/smtp"
 	"mokapi/config/static"
-	"mokapi/lua"
+	"mokapi/engine"
 	"mokapi/models"
 	"mokapi/server/api"
 	"mokapi/server/cert"
@@ -42,9 +42,8 @@ type Server struct {
 	config             map[string]*mokapi.Config
 	store              *cert.Store
 
-	scripts map[string]*lua.Script
+	engine *engine.Engine
 
-	cron     *gocron.Scheduler
 	Bindings map[string]Binding
 	mutex    sync.RWMutex
 }
@@ -59,11 +58,10 @@ func NewServer(config *static.Config) *Server {
 		stopMetricsUpdater: make(chan bool),
 		Bindings:           make(map[string]Binding),
 		config:             make(map[string]*mokapi.Config),
-		scripts:            make(map[string]*lua.Script),
-		cron:               gocron.NewScheduler(time.UTC),
+		engine:             engine.New(watcher),
 	}
 
-	watcher.AddListener(func(o dynamic.Config) {
+	watcher.AddListener(func(o *common.File) {
 		server.updateConfigs(o)
 	})
 
@@ -91,7 +89,7 @@ func (s *Server) Start() {
 		log.Errorf("unable to start server: %v", err.Error())
 	}
 	s.startMetricUpdater()
-	s.cron.StartAsync()
+	s.engine.Start()
 }
 
 func (s *Server) Wait() {
@@ -100,7 +98,7 @@ func (s *Server) Wait() {
 
 func (s *Server) Stop() {
 	s.watcher.Close()
-	s.cron.Stop()
+	s.engine.Close()
 }
 
 func (s *Server) startMetricUpdater() {
@@ -110,6 +108,7 @@ func (s *Server) startMetricUpdater() {
 		for {
 			select {
 			case <-ticker.C:
+				s.mutex.Lock()
 				s.runtime.Metrics.Update()
 				for _, e := range s.Bindings {
 					switch b := e.(type) {
@@ -117,6 +116,7 @@ func (s *Server) startMetricUpdater() {
 						b.UpdateMetrics(s.runtime.Metrics.Kafka)
 					}
 				}
+				s.mutex.Unlock()
 			case <-s.stopMetricsUpdater:
 				return
 			}
@@ -124,22 +124,25 @@ func (s *Server) startMetricUpdater() {
 	}()
 }
 
-func (s *Server) updateConfigs(config dynamic.Config) {
+func (s *Server) updateConfigs(config *common.File) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	switch c := config.(type) {
+	switch c := config.Data.(type) {
 	case *script.Script:
-		s.AddScript(c.Filename, c.Code)
+		err := s.engine.AddScript(c.Filename, c.Code)
+		if err != nil {
+			log.Errorf("unable to execute script %v: %v", config.Url.String(), err)
+		}
 	case *mokapi.Config:
 		s.config[c.ConfigPath] = c
 		for _, cer := range c.Certificates {
 			err := s.appendCertificate(cer, filepath.Dir(c.ConfigPath))
 			if err != nil {
-				log.Errorf("unable to add certificate from %q: %v", c.ConfigPath, err)
+				log.Errorf("unable to add certificate from %v: %v", config.Url.String(), err)
 			}
 		}
-		log.Infof("updated config %q", c.ConfigPath)
+		log.Infof("processed config %v", config.Url.String())
 	case *openapi.Config:
 		if _, ok := s.runtime.OpenApi[c.Info.Name]; !ok {
 			s.runtime.OpenApi[c.Info.Name] = c
@@ -159,11 +162,11 @@ func (s *Server) updateConfigs(config dynamic.Config) {
 			}
 			err := binding.Apply(c)
 			if err != nil {
-				log.Errorf("error on updating %q: %v", c.ConfigPath, err.Error())
+				log.Errorf("error on updating %v: %v", config.Url.String(), err.Error())
 				return
 			}
 		}
-		log.Infof("updated config %q", c.ConfigPath)
+		log.Infof("processed config %v", config.Url.String())
 	case *ldap.Config:
 		if b, ok := s.Bindings[c.Address]; !ok {
 			s.runtime.Ldap[c.Info.Name] = c
@@ -174,12 +177,17 @@ func (s *Server) updateConfigs(config dynamic.Config) {
 		} else {
 			err := b.Apply(c)
 			if err != nil {
-				log.Errorf("error on updating %q: %v", c.ConfigPath, err.Error())
+				log.Errorf("error on updating %v: %v", config.Url.String(), err.Error())
 				return
 			}
 		}
-		log.Infof("updated config %q", c.ConfigPath)
+		log.Infof("processed config %v", config.Url.String())
 	case *asyncApi.Config:
+		if err := c.Validate(); err != nil {
+			log.Warnf("validation error %v: %v", config.Url, err)
+			return
+		}
+
 		if _, ok := s.runtime.AsyncApi[c.Info.Name]; !ok {
 			s.runtime.AsyncApi[c.Info.Name] = c
 		}
@@ -194,10 +202,10 @@ func (s *Server) updateConfigs(config dynamic.Config) {
 		}
 		err := binding.Apply(c)
 		if err != nil {
-			log.Errorf("error on updating %q: %v", c.ConfigPath, err.Error())
+			log.Errorf("error on updating %v: %v", config.Url.String(), err.Error())
 			return
 		}
-		log.Infof("updated config %q", c.ConfigPath)
+		log.Infof("processed config %v", config.Url.String())
 	case *smtp.Config:
 		if _, ok := s.runtime.Smtp[c.Name]; !ok {
 			s.runtime.Smtp[c.Name] = c

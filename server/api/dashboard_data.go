@@ -1,6 +1,7 @@
 package api
 
 import (
+	"mokapi/engine"
 	"mokapi/models"
 	"time"
 )
@@ -38,7 +39,7 @@ type request struct {
 	Parameters   []requestParameter `json:"parameters"`
 	ContentType  string             `json:"contentType"`
 	ResponseBody string             `json:"responseBody"`
-	Workflows    []workflow         `json:"workflows"`
+	eventSummary []eventSummary     `json:"eventSummary"`
 }
 
 type requestParameter struct {
@@ -48,11 +49,9 @@ type requestParameter struct {
 	Raw   string `json:"raw"`
 }
 
-type workflow struct {
-	Name     string        `json:"name"`
-	Logs     []string      `json:"logs"`
-	Duration time.Duration `json:"duration"`
-	Status   string        `json:"status"`
+type eventSummary struct {
+	Duration time.Duration     `json:"duration"`
+	Tags     map[string]string `json:"tags"`
 }
 
 type kafka struct {
@@ -169,25 +168,17 @@ func newRequest(r *models.RequestMetric) request {
 			Raw:   p.Raw,
 		})
 	}
-	for _, w := range r.WorkflowLogs {
-		result.Workflows = append(result.Workflows, newWorkflow(w))
+	for _, e := range r.EventSummary {
+		result.eventSummary = append(result.eventSummary, newEventSummary(e))
 	}
 	return result
 }
 
-func newWorkflow(w *models.WorkflowLog) workflow {
-	result := workflow{
-		Name:     w.Name,
-		Duration: w.Duration,
-		Logs:     w.Logs,
+func newEventSummary(s *engine.Summary) eventSummary {
+	result := eventSummary{
+		Duration: s.Duration,
+		Tags:     s.Tags,
 	}
-
-	//switch s.Status {
-	//case runtime2.Error:
-	//	result.Status = "error"
-	//case runtime2.Successful:
-	//	result.Status = "successful"
-	//}
 
 	return result
 }

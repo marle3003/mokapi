@@ -1,6 +1,8 @@
 package static
 
-import "mokapi/config/tls"
+import (
+	"mokapi/config/tls"
+)
 
 type Config struct {
 	Log        *MokApiLog

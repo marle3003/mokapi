@@ -1,89 +1,49 @@
 package lua
 
 import (
-	log "github.com/sirupsen/logrus"
+	"fmt"
 	lua "github.com/yuin/gopher-lua"
 	luar "layeh.com/gopher-luar"
+	"mokapi/engine/common"
 	"mokapi/lua/http"
-	"mokapi/lua/kafka"
-	lualog "mokapi/lua/log"
-	"mokapi/lua/mustache"
-	"mokapi/lua/yaml"
+	"mokapi/lua/modules"
 	"path/filepath"
-	"time"
 )
 
 type Script struct {
-	Key       string
-	workflows []*workflow
-	state     *lua.LState
-	logger    *lualog.Log
+	Key   string
+	state *lua.LState
 }
 
-func (s *Script) Run(event string, args ...interface{}) (logs []*WorkflowLog) {
-	defer func() {
-		if r := recover(); r != nil {
-			log.Errorf("error in script %v: %v", s.Key, r)
-		}
-	}()
+func New(filename, src string, host common.Host) (*Script, error) {
+	script := &Script{Key: filename}
+	script.state = lua.NewState(lua.Options{IncludeGoStackTrace: true})
+	script.state.SetGlobal("script_path", lua.LString(filename))
+	script.state.SetGlobal("script_dir", lua.LString(filepath.Dir(filename)))
+	script.state.SetGlobal("dump", luar.New(script.state, Dump))
+	script.state.SetGlobal("sleep", luar.New(script.state, sleep))
+	script.state.SetGlobal("open", luar.New(script.state, newFile(host).open))
+	script.state.SetGlobal("log", luar.New(script.state, newLog(host)))
+	script.state.PreloadModule("mokapi", modules.NewMokapi(host).Loader)
+	script.state.PreloadModule("yaml", modules.YamlLoader)
+	//l.state.PreloadModule("kafka", kafka.Loader)
+	script.state.PreloadModule("mustache", modules.MustacheLoader)
+	script.state.PreloadModule("http", http.Loader)
 
-	for _, w := range s.workflows {
-		l := &WorkflowLog{Name: w.Name}
-		start := time.Now()
-		s.logger.Handler = func(s string) {
-			l.Log = append(l.Log, s)
-		}
-		for _, h := range w.EventHandlers {
-			b := h(w, event, args...)
-			if b {
-				logs = append(logs, l)
-			}
-		}
-
-		end := time.Now()
-		l.Duration = end.Sub(start)
+	err := script.state.DoString(src)
+	if err != nil {
+		return nil, fmt.Errorf("script error %q: %v", filename, err)
 	}
 
-	s.logger.Handler = nil
+	return script, nil
+}
 
-	return
+func (s *Script) Run() error {
+	return nil
 }
 
 func (s *Script) Close() {
 	if s.state != nil && !s.state.IsClosed() {
 		s.state.Close()
 	}
-}
-
-func NewScript(key, code string, kafka *kafka.Kafka, scheduler Scheduler) *Script {
-	l := &Script{Key: key, workflows: make([]*workflow, 0), logger: lualog.NewLog()}
-	l.state = lua.NewState()
-	l.state.SetGlobal("script_path", lua.LString(key))
-	l.state.SetGlobal("script_dir", lua.LString(filepath.Dir(key)))
-	l.state.SetGlobal("dump", luar.New(l.state, Dump))
-	l.state.SetGlobal("sleep", luar.New(l.state, sleep))
-	l.state.PreloadModule("log", l.logger.Loader)
-	l.state.PreloadModule("yaml", yaml.Loader)
-	l.state.PreloadModule("kafka", kafka.Loader)
-	l.state.PreloadModule("mustache", mustache.Loader)
-	l.state.PreloadModule("http", http.Loader)
-
-	newWorkflow := func(name string) *workflow {
-		w := newWorkflow(name, scheduler)
-		l.workflows = append(l.workflows, w)
-		return w
-	}
-
-	tbl := l.state.NewTable()
-	tbl.RawSetH(lua.LString("new"), luar.New(l.state, newWorkflow))
-	l.state.SetGlobal("workflow", tbl)
-
-	go func() {
-		err := l.state.DoString(code)
-		if err != nil {
-			log.Errorf("script error %q: %v", key, err)
-		}
-	}()
-
-	return l
 }

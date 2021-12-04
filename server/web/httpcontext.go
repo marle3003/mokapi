@@ -16,27 +16,27 @@ type ParameterParser interface {
 }
 
 type HttpContext struct {
-	ResponseWriter  http.ResponseWriter
-	Request         *http.Request
-	Parameters      RequestParameters
-	ServicPath      string
-	ServiceName     string
-	EndpointPath    string
-	Operation       *openapi.Operation
-	ContentType     *media.ContentType
-	metric          *models.RequestMetric
-	statusCode      openapi.HttpStatus
-	workflowHandler workflowHandler
-	Response        *openapi.MediaType
-	Headers         map[string]*openapi.HeaderRef
+	ResponseWriter http.ResponseWriter
+	Request        *http.Request
+	Parameters     RequestParameters
+	ServicePath    string
+	ServiceName    string
+	EndpointPath   string
+	Operation      *openapi.Operation
+	ContentType    *media.ContentType
+	metric         *models.RequestMetric
+	statusCode     openapi.HttpStatus
+	eventHandler   eventHandler
+	Response       *openapi.MediaType
+	Headers        map[string]*openapi.HeaderRef
 }
 
-func NewHttpContext(request *http.Request, response http.ResponseWriter, wh workflowHandler) *HttpContext {
+func NewHttpContext(request *http.Request, response http.ResponseWriter, eh eventHandler) *HttpContext {
 	metric := models.NewRequestMetric(request.Method, getUrl(request))
 	return &HttpContext{ResponseWriter: response,
-		Request:         request,
-		workflowHandler: wh,
-		metric:          metric,
+		Request:      request,
+		eventHandler: eh,
+		metric:       metric,
 	}
 }
 

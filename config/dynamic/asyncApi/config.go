@@ -1,34 +1,38 @@
 package asyncApi
 
 import (
+	"fmt"
 	log "github.com/sirupsen/logrus"
-	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi/kafka"
+	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/openapi"
 	"net/url"
 	"strconv"
 )
 
 func init() {
-	dynamic.Register("asyncapi", &Config{}, func(path string, o dynamic.Config, r dynamic.ConfigReader) (bool, dynamic.Config) {
-		eh := dynamic.NewEmptyEventHandler(o)
-		switch c := o.(type) {
-		case *Config:
-			c.ConfigPath = path
-			r := ReferenceResolver{reader: r, path: path, config: c, eh: eh}
-
-			if err := r.ResolveConfig(); err != nil {
-				log.Errorf("error in resolving references in config %q: %v", path, err)
-			}
-
-			return true, c
-		}
-		return false, nil
-	})
+	common.Register("asyncapi", &Config{})
 }
 
+//func init() {
+//	dynamic.Register("asyncapi", &Config{}, func(o *dynamic.Config, r dynamic.ConfigReader) bool {
+//		eh := dynamic.NewEmptyEventHandler()
+//		switch c := o.Data.(type) {
+//		case *Config:
+//			r := ReferenceResolver{reader: r, url: o.Url, config: c, eh: eh}
+//
+//			if err := r.ResolveConfig(); err != nil {
+//				log.Errorf("error in resolving references in config %q: %v", o.Url.String(), err)
+//			}
+//
+//			return true
+//		}
+//		return false
+//	})
+//}
+
 type Config struct {
-	ConfigPath string `yaml:"-" json:"-"`
+	AsyncApi   string
 	Info       Info
 	Servers    map[string]Server
 	Channels   map[string]*ChannelRef
@@ -118,6 +122,16 @@ type MessageBinding struct {
 type Components struct {
 	Schemas  *openapi.Schemas
 	Messages map[string]*Message
+}
+
+func (c *Config) Validate() error {
+	if len(c.AsyncApi) == 0 {
+		return fmt.Errorf("no version defined")
+	}
+	if c.AsyncApi != "2.0.0" {
+		return fmt.Errorf("unsupported version: %v", c.AsyncApi)
+	}
+	return nil
 }
 
 func (s *Server) GetPort() int {

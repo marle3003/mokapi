@@ -54,7 +54,7 @@ func (b *Binding) Start() {
 		log.Infof("starting api on %v", b.Addr)
 		err := b.server.ListenAndServe()
 		if err != nil {
-			log.Errorf("unable to start api on %v", b.Addr)
+			log.Errorf("unable to start api on %v: %v", b.Addr, err)
 		}
 	}()
 }

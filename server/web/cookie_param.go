@@ -1,6 +1,7 @@
 package web
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
 	"mokapi/config/dynamic/openapi"
 	"net/http"
@@ -8,21 +9,26 @@ import (
 )
 
 func parseCookie(p *openapi.Parameter, r *http.Request) (rp RequestParameterValue, err error) {
-	switch p.Schema.Value.Type {
-	case "array":
-		return parseCookieArray(p, r)
-	case "object":
-		return parseCookieObject(p, r)
+	if p.Schema != nil {
+		switch p.Schema.Value.Type {
+		case "array":
+			return parseCookieArray(p, r)
+		case "object":
+			return parseCookieObject(p, r)
+		}
 	}
 
 	var cookie *http.Cookie
 	cookie, err = r.Cookie(p.Name)
 	if err != nil {
-		return
+		if err == http.ErrNoCookie && !p.Required {
+			return rp, nil
+		}
+		return rp, fmt.Errorf("required parameter not found")
 	}
 	rp.Raw = cookie.Value
 	if len(cookie.Value) == 0 && p.Required {
-		return rp, errors.Errorf("required parameter not found")
+		return rp, fmt.Errorf("required parameter not found")
 	}
 
 	if v, err := parse(cookie.Value, p.Schema); err != nil {

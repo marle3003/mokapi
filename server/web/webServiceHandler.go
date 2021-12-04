@@ -3,7 +3,6 @@ package web
 import (
 	"fmt"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/openapi"
 	"net/http"
 	"regexp"
@@ -22,8 +21,9 @@ func (handler *ServiceHandler) ServeHTTP(ctx *HttpContext) {
 	ctx.metric.Service = handler.config.Info.Name
 	err := handler.resolveEndpoint(ctx)
 	if err != nil {
-		message := fmt.Sprintf("No endpoint found in service %v. Request %v %v",
+		message := fmt.Sprintf("No endpoint found in service %v: %v. Request %v %v",
 			handler.config.Info.Name,
+			err.Error(),
 			ctx.Request.Method,
 			ctx.metric.Url)
 		writeError(message, http.StatusNotFound, ctx)
@@ -36,7 +36,6 @@ func (handler *ServiceHandler) ServeHTTP(ctx *HttpContext) {
 		return
 	}
 
-	ctx.ServiceName = handler.config.Info.Name
 	operationHandler := NewOperationHandler()
 	operationHandler.ProcessRequest(ctx)
 }
@@ -57,8 +56,8 @@ endpointLoop:
 		}
 
 		routePath := path
-		if ctx.ServicPath != "/" {
-			routePath = ctx.ServicPath + routePath
+		if ctx.ServicePath != "/" {
+			routePath = ctx.ServicePath + routePath
 		}
 		routeSeg := strings.Split(routePath, "/")
 
@@ -77,9 +76,12 @@ endpointLoop:
 		params := append(endpoint.Parameters, op.Parameters...)
 		p, err := parseParams(params, routePath, ctx.Request)
 		if err != nil {
-			log.Infof("error on resolving endpoint: %v", err)
-			continue
+			return err
+			//log.Infof("error on resolving endpoint: %v", err)
+			//continue
 		}
+
+		ctx.ServiceName = handler.config.Info.Name
 		ctx.Parameters = p
 		ctx.Operation = op
 		ctx.EndpointPath = path

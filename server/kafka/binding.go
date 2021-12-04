@@ -67,6 +67,10 @@ func (s *Binding) Apply(data interface{}) error {
 
 	for name, c := range config.Channels {
 		if topic, ok := s.topics[name]; !ok {
+			if c.Value == nil || c.Value.Publish == nil {
+				log.Debugf("invalid config for channel %v", name)
+				continue
+			}
 			if c.Value.Publish.Message == nil || c.Value.Publish.Message.Value == nil {
 				log.Errorf("kafka: message reference error for channel %v", name)
 				continue

@@ -2,7 +2,7 @@ package js
 
 import (
 	"github.com/dop251/goja"
-	"mokapi/js/common"
+	"mokapi/engine/common"
 	"mokapi/test"
 	"testing"
 )

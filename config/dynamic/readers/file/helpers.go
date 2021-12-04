@@ -1,7 +1,8 @@
-package dynamic
+package file
 
 import (
 	log "github.com/sirupsen/logrus"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -36,4 +37,26 @@ func skipPath(path string) bool {
 		return true
 	}
 	return false
+}
+
+func ParseUrl(path string) (*url.URL, error) {
+	if !filepath.IsAbs(path) {
+		wd, err := os.Getwd()
+		if err != nil {
+			return nil, err
+		}
+		path = filepath.Join(wd, path)
+	}
+
+	path = filepath.ToSlash(path)
+
+	return url.ParseRequestURI("file:///" + path)
+}
+
+func MustParseUrl(path string) *url.URL {
+	u, err := ParseUrl(path)
+	if err != nil {
+		panic(err)
+	}
+	return u
 }

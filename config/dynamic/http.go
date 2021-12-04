@@ -2,16 +2,17 @@ package dynamic
 
 import (
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v3"
 	"hash/fnv"
 	"io/ioutil"
+	"mokapi/config/dynamic/common"
 	"mokapi/config/static"
 	"net/http"
+	"net/url"
 	"time"
 )
 
 type httpWatcher struct {
-	update chan Config
+	update chan *common.File
 	config static.HttpProvider
 	client *http.Client
 
@@ -19,32 +20,37 @@ type httpWatcher struct {
 	close chan bool
 }
 
-func (h2 *httpWatcher) Read(path string, c Config, h ChangeEventHandler) error {
-	log.Debugf("http watcher not implemented for %v", path)
-	return nil
-}
+//func (hw *httpWatcher) Read(c *Config, _ ChangeEventHandler) error {
+//	hw.ReadUrl(c.Url)
+//	return nil
+//}
 
-func newHttpWatcher(update chan Config, config static.HttpProvider) *httpWatcher {
+func newHttpWatcher(update chan *common.File, config static.HttpProvider) *httpWatcher {
 	return &httpWatcher{update: update, config: config, close: make(chan bool)}
 }
 
-func (h *httpWatcher) Start() {
+func (hw *httpWatcher) Start() error {
+	u, err := url.Parse(hw.config.Url)
+	if err != nil {
+		return err
+	}
+
 	go func() {
 		interval := time.Second * 5
 		var err error
-		if len(h.config.PollInterval) > 0 {
-			interval, err = time.ParseDuration(h.config.PollInterval)
+		if len(hw.config.PollInterval) > 0 {
+			interval, err = time.ParseDuration(hw.config.PollInterval)
 			if err != nil {
-				log.Errorf("unable to parse interval %q: %v", h.config.PollInterval, err.Error())
+				log.Errorf("unable to parse interval %q: %v", hw.config.PollInterval, err.Error())
 			}
 		}
 
 		ticker := time.NewTicker(interval)
-		h.client = &http.Client{
+		hw.client = &http.Client{
 			//Timeout: time.Duration(p.PollTimeout),
 		}
 
-		h.ReadUrl(h.config.Url)
+		hw.ReadUrl(u)
 
 		defer func() {
 			ticker.Stop()
@@ -52,19 +58,21 @@ func (h *httpWatcher) Start() {
 
 		for {
 			select {
-			case <-h.close:
+			case <-hw.close:
 				return
 			case <-ticker.C:
-				h.ReadUrl(h.config.Url)
+				hw.ReadUrl(u)
 			}
 		}
 	}()
+
+	return nil
 }
 
-func (h *httpWatcher) ReadUrl(url string) {
-	res, err := h.client.Get(url)
+func (hw *httpWatcher) ReadUrl(url *url.URL) {
+	res, err := hw.client.Get(url.String())
 	if err != nil {
-		log.Errorf("request to %q failed: %v", h.config.Url, err.Error())
+		log.Errorf("request to %q failed: %v", hw.config.Url, err.Error())
 		return
 	}
 
@@ -91,19 +99,19 @@ func (h *httpWatcher) ReadUrl(url string) {
 		log.Errorf("unable to create hash: %v", err.Error())
 		return
 	}
-	if h.hash == hash.Sum64() {
+	if hw.hash == hash.Sum64() {
 		return
 	}
 
-	c := &configItem{}
-	err = yaml.Unmarshal(b, c)
-	if err != nil {
-		log.Errorf("unable to parse %q: %v", h.config.Url, err.Error())
-	}
+	//c := &Config{Url: url}
+	//err = yaml.Unmarshal(b, c)
+	//if err != nil {
+	//	log.Errorf("unable to parse %q: %v", hw.config.Url, err.Error())
+	//}
 
-	if ok, _ := c.eventHandler(h.config.Url, c.item, h); ok {
-		h.update <- c.item
-	}
+	//if ok := c.eventHandler(c, hw); ok {
+	//	hw.update <- c
+	//}
 
-	h.hash = hash.Sum64()
+	hw.hash = hash.Sum64()
 }

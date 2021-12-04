@@ -1,15 +1,13 @@
 package engine
 
 import (
-	"fmt"
 	"github.com/go-co-op/gocron"
 	log "github.com/sirupsen/logrus"
-	"path/filepath"
+	"mokapi/config/dynamic/common"
 	"time"
 )
 
 type Script interface {
-	Run() error
 	Close()
 }
 
@@ -28,36 +26,25 @@ type Engine struct {
 	scripts map[string]*scriptHost
 	cron    *gocron.Scheduler
 	logger  Logger
+	reader  common.Reader
 }
 
-func New() *Engine {
+func New(reader common.Reader) *Engine {
 	return &Engine{
 		scripts: make(map[string]*scriptHost),
 		cron:    gocron.NewScheduler(time.UTC),
-		logger:  log.StandardLogger()}
-}
-
-func NewWithLogger(logger Logger) *Engine {
-	return &Engine{
-		scripts: make(map[string]*scriptHost),
-		cron:    gocron.NewScheduler(time.UTC),
-		logger:  logger}
+		logger:  log.StandardLogger(),
+		reader:  reader,
+	}
 }
 
 func (e *Engine) AddScript(key, code string) error {
-	switch filepath.Ext(key) {
-	case ".js":
-		if s, err := newScriptHost(key, code, e); err != nil {
-			return err
-		} else {
-			e.scripts[key] = s
-			return nil
-		}
-	case ".lua":
-
+	s, err := newScriptHost(key, code, e)
+	if err != nil {
+		return err
 	}
-
-	return fmt.Errorf("unsupported script %v", key)
+	e.scripts[key] = s
+	return nil
 }
 
 func (e *Engine) Run(event string, args ...interface{}) []*Summary {
@@ -67,4 +54,12 @@ func (e *Engine) Run(event string, args ...interface{}) []*Summary {
 	}
 
 	return result
+}
+
+func (e *Engine) Start() {
+	e.cron.StartAsync()
+}
+
+func (e *Engine) Close() {
+	e.cron.Stop()
 }

@@ -1,6 +1,7 @@
 package models
 
 import (
+	"mokapi/engine"
 	"time"
 )
 
@@ -16,7 +17,7 @@ type RequestMetric struct {
 	Parameters   []RequestParamter
 	ContentType  string
 	ResponseBody string
-	WorkflowLogs []*WorkflowLog
+	EventSummary []*engine.Summary
 }
 
 type RequestParamter struct {

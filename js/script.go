@@ -3,7 +3,7 @@ package js
 import (
 	"fmt"
 	"github.com/dop251/goja"
-	"mokapi/js/common"
+	"mokapi/engine/common"
 	"mokapi/js/compiler"
 )
 
@@ -38,6 +38,7 @@ func New(filename, src string, host common.Host) (*Script, error) {
 
 	enableRequire(s.runtime, host)
 	enableConsole(s.runtime, host)
+	enableOpen(s.runtime, host)
 
 	_, err = s.runtime.RunProgram(s.prg)
 	if err != nil {
@@ -49,12 +50,11 @@ func New(filename, src string, host common.Host) (*Script, error) {
 		return nil, err
 	}
 
-	return s, nil
-}
+	if f, ok := s.exports["default"]; ok {
+		_, err = f(goja.Undefined())
+	}
 
-func (s *Script) Run() error {
-	_, err := s.exports["default"](goja.Undefined())
-	return err
+	return s, err
 }
 
 func (s *Script) Close() {

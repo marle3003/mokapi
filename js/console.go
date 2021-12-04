@@ -2,15 +2,16 @@ package js
 
 import (
 	"github.com/dop251/goja"
+	common2 "mokapi/engine/common"
 	"mokapi/js/common"
 )
 
 type console struct {
 	runtime *goja.Runtime
-	logger  common.Logger
+	logger  common2.Logger
 }
 
-func enableConsole(runtime *goja.Runtime, logger common.Logger) {
+func enableConsole(runtime *goja.Runtime, logger common2.Logger) {
 	c := &console{
 		runtime: runtime,
 		logger:  logger,
