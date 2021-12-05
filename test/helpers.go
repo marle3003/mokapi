@@ -3,6 +3,9 @@ package test
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus/hooks/test"
+	"io/ioutil"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -72,4 +75,9 @@ func isNil(x interface{}) bool {
 	default:
 		return false
 	}
+}
+
+func NewNullLogger() *test.Hook {
+	logrus.SetOutput(ioutil.Discard)
+	return test.NewGlobal()
 }

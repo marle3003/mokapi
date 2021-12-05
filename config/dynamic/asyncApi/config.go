@@ -14,23 +14,6 @@ func init() {
 	common.Register("asyncapi", &Config{})
 }
 
-//func init() {
-//	dynamic.Register("asyncapi", &Config{}, func(o *dynamic.Config, r dynamic.ConfigReader) bool {
-//		eh := dynamic.NewEmptyEventHandler()
-//		switch c := o.Data.(type) {
-//		case *Config:
-//			r := ReferenceResolver{reader: r, url: o.Url, config: c, eh: eh}
-//
-//			if err := r.ResolveConfig(); err != nil {
-//				log.Errorf("error in resolving references in config %q: %v", o.Url.String(), err)
-//			}
-//
-//			return true
-//		}
-//		return false
-//	})
-//}
-
 type Config struct {
 	AsyncApi   string
 	Info       Info

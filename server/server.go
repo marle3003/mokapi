@@ -144,12 +144,22 @@ func (s *Server) updateConfigs(config *common.File) {
 		}
 		log.Infof("processed config %v", config.Url.String())
 	case *openapi.Config:
+		if err := c.Validate(); err != nil {
+			log.Warnf("validation error %v: %v", config.Url, err)
+			return
+		}
+
 		if _, ok := s.runtime.OpenApi[c.Info.Name]; !ok {
 			s.runtime.OpenApi[c.Info.Name] = c
 			s.runtime.Metrics.OpenApi[c.Info.Name] = &models.ServiceMetric{Name: c.Info.Name}
 		}
 		for _, server := range c.Servers {
-			address := fmt.Sprintf(":%v", server.GetPort())
+			_, port, _, err := web.ParseAddress(server.Url)
+			if err != nil {
+				log.Errorf("%v: %v", err, config.Url)
+				continue
+			}
+			address := fmt.Sprintf(":%v", port)
 			binding, found := s.Bindings[address].(*web.Binding)
 			if !found {
 				if strings.HasPrefix(strings.ToLower(server.Url), "https://") {
@@ -160,7 +170,7 @@ func (s *Server) updateConfigs(config *common.File) {
 				s.Bindings[address] = binding
 				binding.Start()
 			}
-			err := binding.Apply(c)
+			err = binding.Apply(c)
 			if err != nil {
 				log.Errorf("error on updating %v: %v", config.Url.String(), err.Error())
 				return

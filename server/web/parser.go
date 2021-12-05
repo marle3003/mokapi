@@ -61,7 +61,7 @@ func parseParams(params openapi.Parameters, route string, r *http.Request) (Requ
 				v, err = parsePath(s, p)
 				store = parameters[openapi.PathParameter]
 			} else {
-				return nil, errors.Errorf("required %v paramter %q not found in request %v", p.Type, p.Name, r.URL)
+				return nil, errors.Errorf("required path parameter %v not present", p.Name)
 			}
 		case openapi.QueryParameter:
 			v, err = parseQuery(p, r.URL)
@@ -71,9 +71,9 @@ func parseParams(params openapi.Parameters, route string, r *http.Request) (Requ
 			store = parameters[openapi.HeaderParameter]
 		}
 		if err != nil && p.Required {
-			return nil, errors.Wrapf(err, "%v parameter %q", p.Type, p.Name)
+			return nil, errors.Wrapf(err, "%v parameter %v", p.Type, p.Name)
 		} else if err != nil {
-			log.Infof("%v parameter %q: %v", p.Type, p.Name, err.Error())
+			log.Infof("%v parameter %v: %v", p.Type, p.Name, err.Error())
 		}
 		if store != nil {
 			store[p.Name] = v

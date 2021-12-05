@@ -9,30 +9,36 @@ import (
 	"strings"
 )
 
-type ServiceHandler struct {
+type serviceHandler struct {
 	config *openapi.Config
 }
 
-func NewWebServiceHandler(config *openapi.Config) *ServiceHandler {
-	return &ServiceHandler{config: config}
+func newServiceHandler(config *openapi.Config) *serviceHandler {
+	return &serviceHandler{config: config}
 }
 
-func (handler *ServiceHandler) ServeHTTP(ctx *HttpContext) {
+func (handler *serviceHandler) ServeHTTP(ctx *HttpContext) {
 	ctx.metric.Service = handler.config.Info.Name
 	err := handler.resolveEndpoint(ctx)
 	if err != nil {
-		message := fmt.Sprintf("No endpoint found in service %v: %v. Request %v %v",
+		message := fmt.Sprintf("unable to serve http request of API %v: %v",
 			handler.config.Info.Name,
-			err.Error(),
-			ctx.Request.Method,
-			ctx.metric.Url)
-		writeError(message, http.StatusNotFound, ctx)
+			err.Error())
+		if hErr, ok := err.(*httpError); ok {
+			writeError(message, hErr.StatusCode, ctx)
+		} else {
+			writeError(message, http.StatusNotFound, ctx)
+		}
 		return
 	}
 
-	if err := ctx.Init(); err != nil {
+	if err := ctx.setResponse(); err != nil {
 		message := err.Error()
-		writeError(message, http.StatusNotFound, ctx)
+		if hErr, ok := err.(*httpError); ok {
+			writeError(message, hErr.StatusCode, ctx)
+		} else {
+			writeError(message, http.StatusInternalServerError, ctx)
+		}
 		return
 	}
 
@@ -40,7 +46,7 @@ func (handler *ServiceHandler) ServeHTTP(ctx *HttpContext) {
 	operationHandler.ProcessRequest(ctx)
 }
 
-func (handler *ServiceHandler) resolveEndpoint(ctx *HttpContext) error {
+func (handler *serviceHandler) resolveEndpoint(ctx *HttpContext) error {
 	regex := regexp.MustCompile(`\{(?P<name>.+)\}`) // parameter format "/{param}/"
 	reqSeg := strings.Split(ctx.Request.URL.Path, "/")
 
@@ -76,7 +82,7 @@ endpointLoop:
 		params := append(endpoint.Parameters, op.Parameters...)
 		p, err := parseParams(params, routePath, ctx.Request)
 		if err != nil {
-			return err
+			return newHttpError(400, err.Error())
 			//log.Infof("error on resolving endpoint: %v", err)
 			//continue
 		}

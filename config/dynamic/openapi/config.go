@@ -1,12 +1,12 @@
 package openapi
 
 import (
-	log "github.com/sirupsen/logrus"
+	"errors"
+	"fmt"
 	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/mokapi"
 	"mokapi/models/media"
 	"net/http"
-	"net/url"
 	"strconv"
 )
 
@@ -15,19 +15,15 @@ func init() {
 }
 
 type Config struct {
-	ConfigPath string `yaml:"-" json:"-"`
-	Info       Info
-	Servers    []*Server
+	OpenApi string
+	Info    Info
+	Servers []*Server
 
 	// A relative path to an individual endpoint. The path MUST begin
 	// with a forward slash ('/'). The path is appended to the url from
 	// server objects url field in order to construct the full URL
 	EndPoints  map[string]*EndpointRef `yaml:"paths" json:"paths"`
 	Components Components
-}
-
-func (c *Config) Key() string {
-	return c.ConfigPath
 }
 
 type Info struct {
@@ -184,6 +180,19 @@ type HttpStatus int
 
 func (s HttpStatus) String() string {
 	return strconv.Itoa(int(s))
+}
+
+func (s HttpStatus) IsSuccess() bool {
+	return s == OK ||
+		s == Created ||
+		s == Accepted ||
+		s == NonAuthoritativeInfo ||
+		s == NoContent ||
+		s == ResetContent ||
+		s == PartialContent ||
+		s == MultiStatus ||
+		s == AlreadyReported ||
+		s == IMUsed
 }
 
 type SchemaRef struct {
@@ -421,6 +430,21 @@ const (
 	NetworkAuthenticationRequired HttpStatus = 511 // RFC 6585, 6
 )
 
+func (c *Config) Validate() error {
+	if len(c.OpenApi) == 0 {
+		return fmt.Errorf("no version defined")
+	}
+	if c.OpenApi != "3.0.0" {
+		return fmt.Errorf("unsupported version: %v", c.OpenApi)
+	}
+
+	if len(c.Info.Name) == 0 {
+		return errors.New("an openapi title is required")
+	}
+
+	return nil
+}
+
 func (s *Schemas) Get(name string) (*SchemaRef, bool) {
 	if s.Value == nil {
 		return nil, false
@@ -436,48 +460,6 @@ func (r *RequestBody) GetMedia(contentType *media.ContentType) (*MediaType, bool
 		return c, true
 	}
 	return nil, false
-}
-
-func (s *Server) GetPort() int {
-	u, err := url.Parse(s.Url)
-	if err != nil {
-		log.WithField("url", s.Url).Error("Invalid format in url found.")
-		return -1
-	}
-	portString := u.Port()
-	if len(portString) == 0 {
-		if u.Scheme == "https" {
-			return 443
-		}
-		return 80
-	} else {
-		port, err := strconv.ParseInt(portString, 10, 32)
-		if err != nil {
-			log.WithField("url", s.Url).Error("Invalid port format in url found.")
-		}
-		return int(port)
-	}
-}
-
-func (s *Server) GetHost() string {
-	u, err := url.Parse(s.Url)
-	if err != nil {
-		log.WithField("url", s.Url).Error("Invalid format in url found.")
-		return ""
-	}
-	return u.Hostname()
-}
-
-func (s *Server) GetPath() string {
-	u, err := url.Parse(s.Url)
-	if err != nil {
-		log.WithField("url", s.Url).Error("Invalid format in url found.")
-		return ""
-	}
-	if len(u.Path) == 0 {
-		return "/"
-	}
-	return u.Path
 }
 
 func (e *Endpoint) Operations() map[string]*Operation {

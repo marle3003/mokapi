@@ -47,22 +47,26 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 	}
 
 	res := &Response{
-		Headers: map[string]string{
-			"Content-Type": context.ContentType.String(),
-		},
+		Headers:    make(map[string]string),
 		StatusCode: int(context.statusCode),
+	}
+
+	if context.ContentType != nil {
+		res.Headers["Content-Type"] = context.ContentType.String()
 	}
 
 	gen := openapi.NewGenerator()
 
-	if len(context.Response.Examples) > 0 {
-		keys := reflect.ValueOf(context.Response.Examples).MapKeys()
-		v := keys[rand.Intn(len(keys))].Interface().(*openapi.ExampleRef)
-		res.Data = v.Value.Value
-	} else if context.Response.Example != nil {
-		res.Data = context.Response.Example
-	} else {
-		res.Data = gen.New(context.Response.Schema)
+	if context.Response != nil {
+		if len(context.Response.Examples) > 0 {
+			keys := reflect.ValueOf(context.Response.Examples).MapKeys()
+			v := keys[rand.Intn(len(keys))].Interface().(*openapi.ExampleRef)
+			res.Data = v.Value.Value
+		} else if context.Response.Example != nil {
+			res.Data = context.Response.Example
+		} else {
+			res.Data = gen.New(context.Response.Schema)
+		}
 	}
 
 	for k, v := range context.Headers {
@@ -255,7 +259,7 @@ func write(r *Response, ctx *HttpContext) error {
 
 	if len(r.Body) > 0 {
 		body = []byte(r.Body)
-	} else {
+	} else if r.Data != nil {
 		if bytes, ok := r.Data.([]byte); ok {
 			if contentType.Subtype == "*" {
 				// detect content type by data

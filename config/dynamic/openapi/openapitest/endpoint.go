@@ -1,0 +1,45 @@
+package openapitest
+
+import (
+	"mokapi/config/dynamic/openapi"
+	"strings"
+)
+
+type EndpointOptions func(o *openapi.Endpoint)
+
+func AppendEndpoint(path string, config *openapi.Config, opts ...EndpointOptions) *openapi.Endpoint {
+	e := &openapi.Endpoint{}
+	for _, opt := range opts {
+		opt(e)
+	}
+	if config.EndPoints == nil {
+		config.EndPoints = make(map[string]*openapi.EndpointRef)
+	}
+	config.EndPoints[path] = &openapi.EndpointRef{
+		Value: e,
+	}
+	return e
+}
+
+func WithOperation(method string, op *openapi.Operation) EndpointOptions {
+	return func(e *openapi.Endpoint) {
+		switch strings.ToUpper(method) {
+		case "GET":
+			e.Get = op
+		case "POST":
+			e.Post = op
+		case "PUT":
+			e.Put = op
+		case "PATCH":
+			e.Patch = op
+		case "DELETE":
+			e.Delete = op
+		case "HEAD":
+			e.Head = op
+		case "OPTIONS":
+			e.Options = op
+		case "TRACE":
+			e.Trace = op
+		}
+	}
+}

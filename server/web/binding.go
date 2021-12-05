@@ -22,7 +22,7 @@ type eventHandler func(request *Request, response *Response) []*engine.Summary
 type Binding struct {
 	Addr             string
 	server           *http.Server
-	handlers         map[string]map[string]*ServiceHandler
+	handlers         map[string]map[string]*serviceHandler // map[host][path]Handler
 	addRequestMetric AddRequestMetric
 	eventHandler     eventHandler
 	IsTls            bool
@@ -32,7 +32,7 @@ type Binding struct {
 func NewBinding(addr string, mh AddRequestMetric, eh func(string, ...interface{}) []*engine.Summary) *Binding {
 	b := &Binding{
 		Addr:             addr,
-		handlers:         make(map[string]map[string]*ServiceHandler),
+		handlers:         make(map[string]map[string]*serviceHandler),
 		addRequestMetric: mh,
 		eventHandler:     func(request *Request, response *Response) []*engine.Summary { return eh("http", request, response) },
 	}
@@ -44,7 +44,7 @@ func NewBinding(addr string, mh AddRequestMetric, eh func(string, ...interface{}
 func NewBindingWithTls(addr string, mh AddRequestMetric, eh func(string, ...interface{}) []*engine.Summary, getCertificate func(info *tls.ClientHelloInfo) (*tls.Certificate, error)) *Binding {
 	b := &Binding{
 		Addr:             addr,
-		handlers:         make(map[string]map[string]*ServiceHandler),
+		handlers:         make(map[string]map[string]*serviceHandler),
 		addRequestMetric: mh,
 		eventHandler:     func(request *Request, response *Response) []*engine.Summary { return eh("http", request, response) },
 		IsTls:            true,
@@ -98,7 +98,15 @@ func (binding *Binding) Apply(data interface{}) error {
 	}
 
 	for _, server := range service.Servers {
-		hostName, port, path := server.GetHost(), server.GetPort(), server.GetPath()
+		if len(strings.TrimSpace(server.Url)) == 0 {
+			continue
+		}
+
+		hostName, port, path, err := ParseAddress(server.Url)
+		if err != nil {
+			log.Errorf("API %v: %v", service.Info.Name, err)
+			continue
+		}
 
 		address := fmt.Sprintf(":%v", port)
 		if binding.Addr != address {
@@ -108,7 +116,7 @@ func (binding *Binding) Apply(data interface{}) error {
 		host, found := binding.handlers[hostName]
 		if !found {
 			log.Infof("Adding new host '%v' on binding %v", hostName, binding.Addr)
-			host = make(map[string]*ServiceHandler)
+			host = make(map[string]*serviceHandler)
 			binding.handlers[hostName] = host
 		}
 
@@ -118,7 +126,7 @@ func (binding *Binding) Apply(data interface{}) error {
 			}
 		} else {
 			log.Infof("Adding service %v on binding %v on path %v", service.Info.Name, binding.Addr, path)
-			handler = NewWebServiceHandler(service)
+			handler = newServiceHandler(service)
 			host[path] = handler
 		}
 	}
@@ -131,20 +139,20 @@ func (binding *Binding) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	defer binding.addRequestMetric(ctx.metric)
 
-	var service *ServiceHandler
+	var service *serviceHandler
 	service, ctx.ServicePath = binding.resolveHandler(r)
 
 	if service != nil {
 		service.ServeHTTP(ctx)
 	} else {
 		m := fmt.Sprintf("There was no service listening at %v", r.URL)
-		writeError(m, http.StatusInternalServerError, ctx)
+		writeError(m, http.StatusNotFound, ctx)
 	}
 }
 
-func (binding *Binding) resolveHandler(r *http.Request) (*ServiceHandler, string) {
+func (binding *Binding) resolveHandler(r *http.Request) (*serviceHandler, string) {
 	var matchedPath string
-	var matchedHandler *ServiceHandler
+	var matchedHandler *serviceHandler
 	rHost := strings.Split(r.Host, ":")[0]
 	if host, ok := binding.handlers[rHost]; ok {
 		matchedHandler, matchedPath = matchPath(host, r)
@@ -161,7 +169,7 @@ func (binding *Binding) resolveHandler(r *http.Request) (*ServiceHandler, string
 	return nil, ""
 }
 
-func matchPath(host map[string]*ServiceHandler, r *http.Request) (matchedHandler *ServiceHandler, matchedPath string) {
+func matchPath(host map[string]*serviceHandler, r *http.Request) (matchedHandler *serviceHandler, matchedPath string) {
 	for path, handler := range host {
 		if strings.HasPrefix(strings.ToLower(r.URL.Path), strings.ToLower(path)) {
 			if matchedPath == "" || len(matchedPath) < len(path) {
@@ -175,6 +183,11 @@ func matchPath(host map[string]*ServiceHandler, r *http.Request) (matchedHandler
 
 func writeError(message string, status int, ctx *HttpContext) {
 	ctx.updateMetricWithError(status, message)
-	log.WithFields(log.Fields{"url": ctx.metric.Url, "method": ctx.metric.Method, "status": status}).Error(message)
+	entry := log.WithFields(log.Fields{"url": ctx.metric.Url, "method": ctx.metric.Method, "status": status})
+	if status == http.StatusInternalServerError {
+		entry.Error(message)
+	} else {
+		entry.Info(message)
+	}
 	http.Error(ctx.ResponseWriter, message, status)
 }

@@ -40,25 +40,16 @@ func NewHttpContext(request *http.Request, response http.ResponseWriter, eh even
 	}
 }
 
-func (context *HttpContext) Init() error {
-	err := context.setResponse()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (context *HttpContext) getFirstSuccessResponse(operation *openapi.Operation) (openapi.HttpStatus, *openapi.ResponseRef, error) {
 	successStatus := make([]openapi.HttpStatus, 0, 1)
 	for httpStatus := range operation.Responses {
-		if httpStatus >= 200 && httpStatus < 300 {
+		if httpStatus.IsSuccess() {
 			successStatus = append(successStatus, httpStatus)
 		}
 	}
 
 	if len(successStatus) == 0 {
-		return 0, nil, fmt.Errorf("no success response in configuration found")
+		return 0, nil, fmt.Errorf("no success response (HTTP 2xx) in configuration")
 	}
 
 	sort.SliceStable(successStatus, func(i, j int) bool { return i < j })
@@ -91,19 +82,20 @@ func (context *HttpContext) setResponse() error {
 				return nil
 			}
 		}
+		return newHttpErrorf(415, "none of requests content type(s) are supported: %v", accept)
 	}
 
 	// no matching content found => returning first in list
 	// The iteration order over maps is not specified and is not
 	// guaranteed to be the same from one iteration to the next
-	for i, c := range response.Value.Content {
-		// return first element
-		context.ContentType = media.ParseContentType(i)
-		context.Response = c
-		return nil
-	}
+	//for i, c := range response.Value.Content {
+	//	// return first element
+	//	context.ContentType = media.ParseContentType(i)
+	//	context.Response = c
+	//	return nil
+	//}
 
-	return fmt.Errorf("no content type found for accept header %q", accept)
+	return nil
 }
 
 func (context *HttpContext) updateMetricWithError(statusCode int, body string) {
