@@ -52,7 +52,7 @@ func (context *HttpContext) getFirstSuccessResponse() (openapi.HttpStatus, *open
 		return 0, nil, fmt.Errorf("no success response (HTTP 2xx) in configuration")
 	}
 
-	sort.SliceStable(successStatus, func(i, j int) bool { return successStatus[i] < successStatus[j] })
+	sort.SliceStable(successStatus, func(i, j int) bool { return i < j })
 
 	return successStatus[0], context.Operation.Responses[successStatus[0]], nil
 }

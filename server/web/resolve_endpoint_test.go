@@ -63,6 +63,15 @@ func TestResolveEndpoint(t *testing.T) {
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				f(rr, r)
+				test.Equals(t, 204, rr.Code)
+			}},
+		{"with multiple success response",
+			func(t *testing.T, f serveHTTP, c *openapi.Config) {
+				op := openapitest.NewOperation(openapitest.WithResponse(openapi.Accepted), openapitest.WithResponse(openapi.NoContent))
+				openapitest.AppendEndpoint("/foo", c, openapitest.WithOperation("get", op))
+				r := httptest.NewRequest("get", "http://localhost/foo", nil)
+				rr := httptest.NewRecorder()
+				f(rr, r)
 				test.Equals(t, 202, rr.Code)
 			}},
 		//
