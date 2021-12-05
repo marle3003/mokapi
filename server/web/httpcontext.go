@@ -72,11 +72,7 @@ func (context *HttpContext) setResponse() error {
 	if accept != "" {
 		for _, mimeType := range strings.Split(accept, ",") {
 			contentType := media.ParseContentType(mimeType)
-			if mt, ok := response.Value.Content[mimeType]; ok {
-				context.ContentType = contentType
-				context.Response = mt
-				return nil
-			} else if mt, ok := response.Value.Content[contentType.Key()]; ok {
+			if mt, ok := response.Value.GetContent(contentType); ok {
 				context.ContentType = contentType
 				context.Response = mt
 				return nil

@@ -320,6 +320,34 @@ func TestResolveEndpoint(t *testing.T) {
 				test.Equals(t, 200, rr.Code)
 				test.Equals(t, "application/json", rr.Header().Get("content-type"))
 			}},
+		{"with content-type extensions",
+			func(t *testing.T, f serveHTTP, c *openapi.Config) {
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(openapi.OK, openapitest.WithContent("application/json;odata=verbose")),
+					openapitest.WithHeaderParam("id", true))
+				openapitest.AppendEndpoint("/foo", c, openapitest.WithOperation("get", op))
+				r := httptest.NewRequest("get", "http://localhost/foo", nil)
+				r.Header.Set("id", "42")
+				r.Header.Set("accept", "application/json;odata=verbose")
+				rr := httptest.NewRecorder()
+				f(rr, r)
+				test.Equals(t, 200, rr.Code)
+				test.Equals(t, "application/json;odata=verbose", rr.Header().Get("content-type"))
+			}},
+		{"with content-type extensions",
+			func(t *testing.T, f serveHTTP, c *openapi.Config) {
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(openapi.OK, openapitest.WithContent("application/json")),
+					openapitest.WithHeaderParam("id", true))
+				openapitest.AppendEndpoint("/foo", c, openapitest.WithOperation("get", op))
+				r := httptest.NewRequest("get", "http://localhost/foo", nil)
+				r.Header.Set("id", "42")
+				r.Header.Set("accept", "application/json;odata=verbose")
+				rr := httptest.NewRecorder()
+				f(rr, r)
+				test.Equals(t, 200, rr.Code)
+				test.Equals(t, "application/json;odata=verbose", rr.Header().Get("content-type"))
+			}},
 		{"with content-type multiple accepted",
 			func(t *testing.T, f serveHTTP, c *openapi.Config) {
 				op := openapitest.NewOperation(

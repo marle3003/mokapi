@@ -462,6 +462,15 @@ func (r *RequestBody) GetMedia(contentType *media.ContentType) (*MediaType, bool
 	return nil, false
 }
 
+func (r *Response) GetContent(contentType *media.ContentType) (*MediaType, bool) {
+	if c, ok := r.Content[contentType.String()]; ok {
+		return c, true
+	} else if c, ok := r.Content[contentType.Key()]; ok {
+		return c, true
+	}
+	return nil, false
+}
+
 func (e *Endpoint) Operations() map[string]*Operation {
 	operations := make(map[string]*Operation, 4)
 	if v := e.Get; v != nil {
