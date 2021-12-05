@@ -40,9 +40,9 @@ func NewHttpContext(request *http.Request, response http.ResponseWriter, eh even
 	}
 }
 
-func (context *HttpContext) getFirstSuccessResponse(operation *openapi.Operation) (openapi.HttpStatus, *openapi.ResponseRef, error) {
+func (context *HttpContext) getFirstSuccessResponse() (openapi.HttpStatus, *openapi.ResponseRef, error) {
 	successStatus := make([]openapi.HttpStatus, 0, 1)
-	for httpStatus := range operation.Responses {
+	for httpStatus := range context.Operation.Responses {
 		if httpStatus.IsSuccess() {
 			successStatus = append(successStatus, httpStatus)
 		}
@@ -52,13 +52,13 @@ func (context *HttpContext) getFirstSuccessResponse(operation *openapi.Operation
 		return 0, nil, fmt.Errorf("no success response (HTTP 2xx) in configuration")
 	}
 
-	sort.SliceStable(successStatus, func(i, j int) bool { return i < j })
+	sort.SliceStable(successStatus, func(i, j int) bool { return successStatus[i] < successStatus[j] })
 
-	return successStatus[0], operation.Responses[successStatus[0]], nil
+	return successStatus[0], context.Operation.Responses[successStatus[0]], nil
 }
 
 func (context *HttpContext) setResponse() error {
-	status, response, err := context.getFirstSuccessResponse(context.Operation)
+	status, response, err := context.getFirstSuccessResponse()
 	if err != nil {
 		return err
 	}
@@ -145,18 +145,4 @@ func (context *HttpContext) updateMetric(statusCode int, contentType, body strin
 		}
 		context.metric.Parameters = append(context.metric.Parameters, p)
 	}
-}
-
-func getUrl(r *http.Request) string {
-	if r.URL.IsAbs() {
-		return r.URL.String()
-	}
-
-	var scheme string
-	if r.TLS == nil {
-		scheme = "http"
-	} else {
-		scheme = "https"
-	}
-	return fmt.Sprintf("%s://%s%s", scheme, r.Host, r.URL.String())
 }

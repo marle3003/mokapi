@@ -2,6 +2,7 @@ package web
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"strconv"
 )
@@ -62,4 +63,18 @@ func ParseAddress(s string) (host string, port int, path string, err error) {
 	}
 
 	return
+}
+
+func getUrl(r *http.Request) string {
+	if r.URL.IsAbs() {
+		return r.URL.String()
+	}
+
+	var scheme string
+	if r.TLS == nil {
+		scheme = "http"
+	} else {
+		scheme = "https"
+	}
+	return fmt.Sprintf("%s://%s%s", scheme, r.Host, r.URL.String())
 }
