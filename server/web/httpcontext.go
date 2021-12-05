@@ -85,16 +85,6 @@ func (context *HttpContext) setResponse() error {
 		return newHttpErrorf(415, "none of requests content type(s) are supported: %v", accept)
 	}
 
-	// no matching content found => returning first in list
-	// The iteration order over maps is not specified and is not
-	// guaranteed to be the same from one iteration to the next
-	//for i, c := range response.Value.Content {
-	//	// return first element
-	//	context.ContentType = media.ParseContentType(i)
-	//	context.Response = c
-	//	return nil
-	//}
-
 	return nil
 }
 
