@@ -23,7 +23,7 @@ type partition struct {
 type segment struct {
 	head        int64
 	tail        int64
-	log         []protocol.RecordBatch
+	log         []protocol.Record
 	Size        int
 	opened      time.Time
 	closed      time.Time
@@ -46,8 +46,8 @@ func newSegment(offset int64) *segment {
 	return &segment{head: offset, opened: time.Now()}
 }
 
-func (p *partition) read(offset int64, maxBytes int32) (protocol.RecordSet, int64, int32) {
-	set := protocol.NewRecordSet()
+func (p *partition) read(offset int64, maxBytes int32) (protocol.RecordBatch, int64, int32) {
+	set := protocol.NewRecordBatch()
 	size := int32(0)
 
 	for {
@@ -61,7 +61,7 @@ func (p *partition) read(offset int64, maxBytes int32) (protocol.RecordSet, int6
 			if newSize := size + b.Size(); newSize > 30000 {
 				return set, offset, size
 			}
-			set.Batches = append(set.Batches, b)
+			set.Records = append(set.Records, b)
 			size += b.Size()
 			if size > maxBytes {
 				return set, offset, size

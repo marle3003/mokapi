@@ -12,11 +12,9 @@ import (
 type groupState int
 
 var (
-	empty               groupState = 0
-	preparingRebalance  groupState = 1
-	completingRebalance groupState = 2
-	// The rebalancing already took place and consumers are happily consuming
-	stable groupState = 3
+	stable    groupState = 0
+	joining   groupState = 1
+	awaitSync groupState = 2
 )
 
 type group struct {
@@ -45,11 +43,10 @@ type groupMember struct {
 }
 
 type groupBalancer struct {
-	g              *group
-	join           chan join
-	sync           chan syncData
-	stop           chan bool
-	rebalanceDelay int
+	g    *group
+	join chan join
+	sync chan syncData
+	stop chan bool
 }
 
 type strategyCounter struct {
@@ -74,15 +71,18 @@ type join struct {
 
 func newGroup(name string, coordinator *broker, rebalanceDelay int) *group {
 	g := &group{
-		name:        name,
-		coordinator: coordinator,
+		name:             name,
+		coordinator:      coordinator,
+		members:          make([]groupMember, 0),
+		rebalanceTimeout: rebalanceDelay,
 	}
-	g.balancer = newGroupBalancer(g, rebalanceDelay)
+	g.balancer = newGroupBalancer(g)
 	return g
 }
 
 func (b *groupBalancer) startGroupWatcher() {
-	ticker := time.NewTicker(time.Duration(b.g.sessionTimeout) * time.Millisecond)
+	//ticker := time.NewTicker(time.Duration(b.g.sessionTimeout) * time.Millisecond)
+	ticker := time.NewTicker(time.Duration(5000) * time.Millisecond)
 	for {
 		select {
 		case <-b.stop:
@@ -111,10 +111,10 @@ func (b *groupBalancer) startGroupWatcher() {
 
 			if needRebalance {
 				if len(b.g.members) == 0 {
-					b.g.state = empty
+					b.g.state = stable
 					log.Debugf("kafka: group %v is empty", b.g.name)
 				} else {
-					b.g.state = preparingRebalance
+					b.g.state = joining
 					log.Debugf("kafka: group %v is preparingRebalance", b.g.name)
 					go b.startJoin()
 				}
@@ -139,13 +139,12 @@ type syncData struct {
 	generationId int
 }
 
-func newGroupBalancer(g *group, rebalanceDelay int) *groupBalancer {
+func newGroupBalancer(g *group) *groupBalancer {
 	return &groupBalancer{
-		g:              g,
-		join:           make(chan join),
-		sync:           make(chan syncData),
-		stop:           make(chan bool),
-		rebalanceDelay: rebalanceDelay,
+		g:    g,
+		join: make(chan join),
+		sync: make(chan syncData),
+		stop: make(chan bool),
 	}
 }
 
@@ -172,8 +171,9 @@ StopWaitingForConsumers:
 				}
 				s.write(r)
 			}
-		case <-time.After(time.Duration(b.g.rebalanceTimeout) * time.Millisecond):
-			b.g.state = preparingRebalance
+		//case <-time.After(time.Duration(b.g.rebalanceTimeout) * time.Millisecond):
+		case <-time.After(3000 * time.Millisecond):
+			b.g.state = joining
 			for _, m := range members {
 				r := &syncGroup.Response{
 					ErrorCode: protocol.RebalanceInProgress,
@@ -209,18 +209,18 @@ StopWaitingForConsumers:
 		case j := <-b.join:
 			members = append(members, j)
 			log.Debugf("kafka: adding member %v to group %v", j.consumer.id, b.g.name)
-		case <-time.After(5 * time.Second):
+		case <-time.After(time.Duration(b.g.rebalanceTimeout) * time.Millisecond):
 			break StopWaitingForConsumers
 		}
 	}
 
 	if len(members) == 0 {
-		b.g.state = empty
+		b.g.state = stable
 		return
 	}
 
 	// switch to syncing state
-	b.g.state = completingRebalance
+	b.g.state = awaitSync
 
 	i := 0
 	for _, m := range b.g.members {
@@ -277,6 +277,7 @@ StopWaitingForConsumers:
 
 	send := make([]func(), 0, len(b.g.members))
 	for i, m := range members {
+		member := m
 		if i > 0 {
 			r := &joinGroup.Response{
 				GenerationId: -1,
@@ -284,9 +285,10 @@ StopWaitingForConsumers:
 				Leader:       members[0].consumer.id,
 				MemberId:     m.consumer.id,
 			}
-			send = append(send, func() { m.write(r) })
+
+			send = append(send, func() { member.write(r) })
 		} else {
-			send = append(send, func() { m.write(rLeader) })
+			send = append(send, func() { member.write(rLeader) })
 			b.g.sessionTimeout = m.sessionTimeout
 			b.g.rebalanceTimeout = m.rebalanceTimeout
 		}
@@ -324,12 +326,15 @@ func hasJoined(c *client, members []join) bool {
 
 func (g *group) updateMetrics(m *models.KafkaGroup) {
 	switch g.state {
-	case empty:
-		m.State = "empty"
-	case preparingRebalance, completingRebalance:
+	case joining, awaitSync:
 		m.State = "rebalance"
 	case stable:
-		m.State = "stable"
+		switch {
+		case len(m.Members) == 0:
+			m.State = "empty"
+		default:
+			m.State = "stable"
+		}
 	}
 	m.Coordinator = g.coordinator.name
 	if len(g.members) > 0 {

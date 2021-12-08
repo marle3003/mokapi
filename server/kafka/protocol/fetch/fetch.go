@@ -69,7 +69,7 @@ type ResponsePartition struct {
 	LogStartOffset       int64                `kafka:"min=5"`
 	AbortedTransactions  []AbortedTransaction `kafka:"min=4,compact=12"`
 	PreferredReadReplica int32                `kafka:"min=11"`
-	RecordSet            protocol.RecordSet   `kafka:""`
+	RecordSet            protocol.RecordBatch `kafka:""`
 	TagFields            map[int64]string     `kafka:"type=TAG_BUFFER,min=12"`
 }
 

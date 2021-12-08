@@ -22,11 +22,8 @@ type broker struct {
 	config               kafka.BrokerBindings
 }
 
-var nextBrokerId = 0
-
-func newBroker(name string, host string, port int, config kafka.BrokerBindings) *broker {
-	b := &broker{name: name, id: nextBrokerId, host: host, port: port, config: config, closeListener: make(chan bool, 1), stopRetentionChecker: make(chan bool, 1), stopped: make(chan bool)}
-	nextBrokerId++
+func newBroker(brokerId int, name string, host string, port int, config kafka.BrokerBindings) *broker {
+	b := &broker{name: name, id: brokerId, host: host, port: port, config: config, closeListener: make(chan bool, 1), stopRetentionChecker: make(chan bool, 1), stopped: make(chan bool)}
 	return b
 }
 

@@ -33,6 +33,8 @@ type Binding struct {
 	clientsMutex sync.RWMutex
 	groupsMutex  sync.RWMutex
 	brokerMutex  sync.RWMutex
+
+	nextBrokerId int
 }
 
 func NewBinding(addedMessage AddedMessage) *Binding {
@@ -68,15 +70,19 @@ func (s *Binding) Apply(data interface{}) error {
 	for name, c := range config.Channels {
 		if topic, ok := s.topics[name]; !ok {
 			if c.Value == nil || c.Value.Publish == nil {
-				log.Debugf("invalid config for channel %v", name)
+				log.Errorf("channel %v: subscribe and publish are required", name)
 				continue
 			}
 			if c.Value.Publish.Message == nil || c.Value.Publish.Message.Value == nil {
 				log.Errorf("kafka: message reference error for channel %v", name)
 				continue
 			}
-			s.topics[name] = newTopic(name, c.Value, leader, s.addedMessage)
-			log.Infof("kafka: added topic %q with %v partitions on broker %v:%v", name, c.Value.Bindings.Kafka.Partitions, leader.host, leader.port)
+			if err := validateTopicName(name); err == nil {
+				s.topics[name] = newTopic(name, c.Value, leader, s.addedMessage)
+			} else {
+				log.Errorf("unable to add topic %q: %v", name, err)
+			}
+			log.Infof("kafka: added topic %q with %v partitions on broker %v:%v", name, c.Value.Bindings.Kafka.Partitions(), leader.host, leader.port)
 		} else {
 			topic.update(c.Value.Bindings.Kafka, leader)
 		}
@@ -125,6 +131,7 @@ func (s *Binding) updateBrokers(servers map[string]asyncApi.Server) {
 				broker.host, broker.port = host, port
 				broker.start(s)
 			}
+			broker.config = server.Bindings.Kafka
 		}
 	}
 
@@ -132,9 +139,10 @@ func (s *Binding) updateBrokers(servers map[string]asyncApi.Server) {
 		if _, ok := s.brokers[name]; ok {
 			continue
 		}
-		b := newBroker(name, server.GetHost(), server.GetPort(), server.Bindings.Kafka)
+		b := newBroker(s.nextBrokerId, name, server.GetHost(), server.GetPort(), server.Bindings.Kafka)
 		s.brokers[name] = b
 		b.start(s)
+		s.nextBrokerId++
 	}
 }
 

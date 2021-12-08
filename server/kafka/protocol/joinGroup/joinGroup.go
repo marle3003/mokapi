@@ -52,3 +52,14 @@ type Member struct {
 	MetaData        []byte           `kafka:"compact=6"`
 	TagFields       map[int64]string `kafka:"type=TAG_BUFFER,min=6"`
 }
+
+type MemberGroupMetadata struct {
+	MemberId string        `kafka:""`
+	Metadata GroupMetadata `kafka:""`
+}
+
+type GroupMetadata struct {
+	Version  int16    `kafka:""`
+	Topics   []string `kafka:""`
+	UserData []byte   `kafka:""`
+}

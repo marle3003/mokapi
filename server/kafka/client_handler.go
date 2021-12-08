@@ -49,6 +49,8 @@ func (s *Binding) handle(conn net.Conn) {
 		s.clientsMutex.Unlock()
 		c.lastHeartbeat = time.Now()
 
+		log.Infof("API %v, CorrelationID %v", h.ApiKey, h.CorrelationId)
+
 		switch h.ApiKey {
 		case protocol.ApiVersions:
 			r := s.processApiVersion()
@@ -65,7 +67,10 @@ func (s *Binding) handle(conn net.Conn) {
 				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, &joinGroup.Response{ErrorCode: errorCode})
 			}
 		case protocol.SyncGroup:
-			s.handleSyncGroup(h, msg.(*syncGroup.Request), c, conn)
+			errorCode := s.handleSyncGroup(h, msg.(*syncGroup.Request), c, conn)
+			if errorCode != 0 {
+				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, &syncGroup.Response{ErrorCode: errorCode})
+			}
 		case protocol.OffsetFetch:
 			r := s.processOffSetFetch(msg.(*offsetFetch.Request))
 			protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, r)
@@ -85,14 +90,22 @@ func (s *Binding) handle(conn net.Conn) {
 				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, &heartbeat.Response{})
 			}
 		case protocol.Produce:
+			// todo
 			r := msg.(*produce.Request)
+			res := &produce.Response{}
 			for _, t := range r.Topics {
 				topic := s.topics[t.Name]
-				err := topic.addRecords(int(t.Data.Partition), t.Data.Record.Batches)
+				err := topic.addRecords(int(t.Data.Partition), t.Data.Record)
+				resT := produce.ResponseTopic{
+					Name: t.Name,
+				}
 				if err != nil {
+					resT.ErrorCode = -1
 					log.Errorf("unable to add new kafka record to topic %q: %v", t.Name, err.Error())
 				}
+				res.Topics = append(res.Topics, resT)
 			}
+			protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, res)
 		case protocol.ListOffsets:
 			r := s.processListOffsets(msg.(*listOffsets.Request))
 			protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, r)
@@ -206,8 +219,12 @@ func (s *Binding) processMetadata(req *metaData.Request) *metaData.Response {
 
 			r.Topics = append(r.Topics, resT)
 		} else {
+			errCode := protocol.UnknownTopicOrPartition
+			if validateTopicName(reqT.Name) != nil {
+				errCode = protocol.InvalidTopic
+			}
 			r.Topics = append(r.Topics, metaData.ResponseTopic{
-				ErrorCode: protocol.UnknownTopicOrPartition,
+				ErrorCode: errCode,
 				Name:      reqT.Name,
 			})
 		}
@@ -221,7 +238,7 @@ func (s *Binding) processFindCoordinator(req *findCoordinator.Request) *findCoor
 	r := &findCoordinator.Response{}
 
 	switch req.KeyType {
-	case 0: // group
+	case findCoordinator.KeyTypeGroup:
 		g := s.getOrCreateGroup(req.Key)
 		r.NodeId = int32(g.coordinator.id)
 		r.Host = g.coordinator.host
@@ -242,17 +259,17 @@ func (s *Binding) processJoinGroup(h *protocol.Header, req *joinGroup.Request, c
 
 	if g, exists = s.getGroup(req.GroupId); !exists {
 		return protocol.InvalidGroupId
-	} else if g.state == completingRebalance {
+	} else if g.state == awaitSync {
 		return protocol.RebalanceInProgress
-	} else if g.state == empty || g.state == stable {
-		g.state = preparingRebalance
+	} else if g.state == stable {
+		g.state = joining
 		go g.balancer.startJoin()
 	}
 
 	if len(req.MemberId) == 0 {
 		memberId := fmt.Sprintf("%v-%v", h.ClientId, utils.NewGuid())
 		protocol.WriteMessage(w, h.ApiKey, h.ApiVersion, h.CorrelationId, &joinGroup.Response{
-			ErrorCode: 79, // MEMBER_ID_REQUIRED
+			ErrorCode: protocol.MemberIdRequired,
 			MemberId:  memberId,
 		})
 		return protocol.None
@@ -286,8 +303,13 @@ func (s *Binding) handleSyncGroup(h *protocol.Header, req *syncGroup.Request, co
 		return protocol.InvalidGroupId
 	}
 
-	if g.state == preparingRebalance {
+	switch g.state {
+	case joining:
 		return protocol.RebalanceInProgress
+	case stable:
+		if !isMember(consumer, g.members) {
+			return protocol.UnknownMemberId
+		}
 	}
 
 	sync := syncData{
@@ -333,7 +355,7 @@ func (s *Binding) processOffSetFetch(req *offsetFetch.Request) *offsetFetch.Resp
 
 type partitionData struct {
 	fetchOffset int64
-	set         protocol.RecordSet
+	set         protocol.RecordBatch
 	size        int32
 	maxBytes    int32
 	error       protocol.ErrorCode
@@ -353,7 +375,7 @@ func (s *Binding) processFetch(req *fetch.Request) *fetch.Response {
 	for _, t := range req.Topics {
 		topics[t.Name] = topicData{partitions: make(map[int32]*partitionData)}
 		for _, p := range t.Partitions {
-			topics[t.Name].partitions[p.Index] = &partitionData{fetchOffset: p.FetchOffset, set: protocol.NewRecordSet(), maxBytes: p.MaxBytes}
+			topics[t.Name].partitions[p.Index] = &partitionData{fetchOffset: p.FetchOffset, maxBytes: p.MaxBytes}
 		}
 	}
 
@@ -366,7 +388,7 @@ func (s *Binding) processFetch(req *fetch.Request) *fetch.Response {
 					partition.error = protocol.OffsetOutOfRange
 				}
 				set, offset, setSize := p.read(partition.fetchOffset, partition.maxBytes-partition.size)
-				partition.set.Batches = append(partition.set.Batches, set.Batches...)
+				partition.set = set
 				partition.fetchOffset = offset
 				partition.size += setSize
 			}

@@ -7,8 +7,7 @@ import (
 )
 
 type TopicBindings struct {
-	Partitions int
-	Config     map[string]string
+	Config map[string]string
 }
 
 // RetentionBytes This configuration controls the maximum size a partition (which consists of log segments) can grow
@@ -51,8 +50,8 @@ func (t TopicBindings) SegmentBytes() (int, bool) {
 	return -1, false
 }
 
-func (b TopicBindings) SegmentMs() (int64, bool) {
-	if s, ok := b.Config["segment.ms"]; ok {
+func (t TopicBindings) SegmentMs() (int64, bool) {
+	if s, ok := t.Config["segment.ms"]; ok {
 		if i, err := strconv.ParseInt(s, 10, 64); err != nil {
 			log.Errorf("unable to convert 'segment.ms' to long, using default instead: %v", err)
 		} else {
@@ -63,6 +62,18 @@ func (b TopicBindings) SegmentMs() (int64, bool) {
 	return -1, false
 }
 
+func (t TopicBindings) Partitions() int {
+	if s, ok := t.Config["partitions"]; ok {
+		if i, err := strconv.Atoi(s); err != nil {
+			log.Errorf("unable to convert 'partitions' to int, using default instead: %v", err)
+			return 1
+		} else {
+			return i
+		}
+	}
+	return 1
+}
+
 func (t *TopicBindings) UnmarshalYAML(value *yaml.Node) error {
 	m := make(map[string]string)
 	err := value.Decode(m)
@@ -70,15 +81,6 @@ func (t *TopicBindings) UnmarshalYAML(value *yaml.Node) error {
 		return err
 	}
 	t.Config = m
-
-	if s, ok := m["partitions"]; ok {
-		if i, err := strconv.Atoi(s); err != nil {
-			log.Errorf("unable to convert 'partitions' to int, using default instead: %v", err)
-			t.Partitions = 1
-		} else {
-			t.Partitions = i
-		}
-	}
 
 	return nil
 }

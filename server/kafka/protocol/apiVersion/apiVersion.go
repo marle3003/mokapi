@@ -35,7 +35,7 @@ type ApiKeyResponse struct {
 	ApiKey     protocol.ApiKey  `kafka:""`
 	MinVersion int16            `kafka:""`
 	MaxVersion int16            `kafka:""`
-	TagFields  map[int64]string `kafka:"type=TAG_BUFFER"`
+	TagFields  map[int64]string `kafka:"type=TAG_BUFFER, min=3"`
 }
 
 func NewApiKeyResponse(k protocol.ApiKey, t protocol.ApiType) ApiKeyResponse {

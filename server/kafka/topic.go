@@ -9,8 +9,16 @@ import (
 	"mokapi/models/media"
 	"mokapi/providers/encoding"
 	"mokapi/server/kafka/protocol"
+	"regexp"
 	"time"
 )
+
+const (
+	legalTopicChars    = "[a-zA-Z0-9\\._\\-]"
+	maxTopicNameLength = 249
+)
+
+var topicNamePattern = regexp.MustCompile("^" + legalTopicChars + "+$")
 
 type topic struct {
 	name          string
@@ -38,12 +46,8 @@ func newTopic(name string, c *asyncApi.Channel, leader *broker, addedMessage Add
 		addedMessage: addedMessage,
 		config:       c.Bindings.Kafka,
 	}
-	if c.Bindings.Kafka.Partitions == 0 {
-		topic.partitions[0] = newPartition(0, topic, leader)
-	} else {
-		for i := 0; i < c.Bindings.Kafka.Partitions; i++ {
-			topic.partitions[i] = newPartition(i, topic, leader)
-		}
+	for i := 0; i < c.Bindings.Kafka.Partitions(); i++ {
+		topic.partitions[i] = newPartition(i, topic, leader)
 	}
 
 	return topic
@@ -111,7 +115,7 @@ func (t *topic) addRecord(partition int, record protocol.RecordBatch) error {
 
 	segment := p.segments[p.activeSegment]
 
-	segment.log = append(segment.log, record)
+	segment.log = append(segment.log, record.Records...)
 	segment.Size += int(record.Size())
 	segment.tail = record.Offset
 	segment.lastWritten = time.Now()
@@ -125,12 +129,10 @@ func (t *topic) addRecord(partition int, record protocol.RecordBatch) error {
 	return nil
 }
 
-func (t *topic) addRecords(partition int, records []protocol.RecordBatch) error {
-	for _, r := range records {
-		err := t.addRecord(partition, r)
-		if err != nil {
-			return err
-		}
+func (t *topic) addRecords(partition int, batch protocol.RecordBatch) error {
+	err := t.addRecord(partition, batch)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -176,4 +178,19 @@ func parseHeader(i interface{}) ([]protocol.RecordHeader, error) {
 	}
 
 	return headers, nil
+}
+
+func validateTopicName(s string) error {
+	switch {
+	case len(s) == 0:
+		return fmt.Errorf("topic name can not be empty")
+	case s == "." || s == "..":
+		return fmt.Errorf("topic name can not be %v", s)
+	case len(s) > maxTopicNameLength:
+		return fmt.Errorf("topic name can not be longer than %v", maxTopicNameLength)
+	case !topicNamePattern.Match([]byte(s)):
+		return fmt.Errorf("topic name is not valid, valid characters are ASCII alphanumerics, '.', '_', and '-'")
+	}
+
+	return nil
 }

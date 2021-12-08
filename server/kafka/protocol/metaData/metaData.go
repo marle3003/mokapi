@@ -47,7 +47,7 @@ type ResponseBroker struct {
 }
 
 type ResponseTopic struct {
-	ErrorCode                 int16               `kafka:""`
+	ErrorCode                 protocol.ErrorCode  `kafka:""`
 	Name                      string              `kafka:"compact=9"`
 	IsInternal                bool                `kafka:"min=1"`
 	Partitions                []ResponsePartition `kafka:"compact=9"`

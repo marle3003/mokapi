@@ -10,7 +10,7 @@ import (
 type decodeFunc func(*Decoder, reflect.Value)
 
 type ReaderFrom interface {
-	ReadFrom(e *Decoder)
+	ReadFrom(e *Decoder) error
 }
 
 type Decoder struct {
@@ -30,8 +30,9 @@ func NewDecoder(reader io.Reader, size int) *Decoder {
 
 func newDecodeFunc(t reflect.Type, version int16, tag kafkaTag) decodeFunc {
 	if reflect.PtrTo(t).Implements(readerFrom) {
-		return func(e *Decoder, v reflect.Value) {
-			v.Addr().Interface().(ReaderFrom).ReadFrom(e)
+		return func(d *Decoder, v reflect.Value) {
+			i := v.Addr().Interface()
+			i.(ReaderFrom).ReadFrom(d)
 		}
 	}
 
@@ -88,6 +89,7 @@ func newArayDecodeFunc(t reflect.Type, version int16, tag kafkaTag) decodeFunc {
 func newStructDecodeFunc(t reflect.Type, version int16, _ kafkaTag) decodeFunc {
 	type field struct {
 		index  int
+		name   string
 		decode decodeFunc
 	}
 	fields := make([]*field, 0)
@@ -98,7 +100,7 @@ func newStructDecodeFunc(t reflect.Type, version int16, _ kafkaTag) decodeFunc {
 		if !tag.isValid(version) {
 			continue
 		}
-		fields = append(fields, &field{i, newDecodeFunc(f.Type, version, tag)})
+		fields = append(fields, &field{i, f.Name, newDecodeFunc(f.Type, version, tag)})
 	}
 
 	return func(d *Decoder, v reflect.Value) {
@@ -199,6 +201,15 @@ func (d *Decoder) readInt8() int8 {
 	return int8(d.readByte())
 }
 
+func (d *Decoder) readVarInt() int64 {
+	ux := d.readUvarint()
+	x := int64(ux >> 1)
+	if ux&1 != 0 {
+		x = ^x
+	}
+	return x
+}
+
 func (d *Decoder) readBool() bool {
 	return d.readInt8() != 0
 }
@@ -293,6 +304,16 @@ func (d *Decoder) readBytes() []byte {
 		d.readFull(b)
 		return b
 	}
+}
+
+func (d *Decoder) readVarNullBytes() []byte {
+	n := d.readVarInt()
+	if n == -1 {
+		return []byte{}
+	}
+	b := make([]byte, n)
+	d.readFull(b)
+	return b
 }
 
 //func (d *Decoder) read(b []byte) bool {

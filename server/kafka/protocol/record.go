@@ -2,42 +2,77 @@ package protocol
 
 import (
 	"encoding/binary"
+	"fmt"
 	"hash/crc32"
 	"time"
 )
 
 type Attributes int16
 
-type RecordSet struct {
-	Batches []RecordBatch
+type RecordBatch struct {
+	Offset  int64
+	Records []Record
 }
 
-func NewRecordSet() RecordSet {
-	return RecordSet{Batches: make([]RecordBatch, 0)}
+func NewRecordBatch() RecordBatch {
+	return RecordBatch{Records: make([]Record, 0)}
 }
 
-func (rs *RecordSet) ReadFrom(_ *Decoder) {
+func (rb *RecordBatch) ReadFrom(d *Decoder) error {
+	size := d.readInt32()
+	_ = size
 
-}
+	// partition base offset of following records
+	baseOffset := d.readInt64()
+	d.readInt32()     // batchLength
+	d.readInt32()     // leader epoch
+	m := d.readInt8() // magic
+	_ = m
+	crc := d.readInt32() // checksum
+	attributes := Attributes(d.readInt16())
+	d.readInt32() // lastOffsetDelta
+	firstTimestamp := d.readInt64()
+	d.readInt64() // maxTimestamp
+	producerId := d.readInt64()
+	producerEpoch := d.readInt16()
+	d.readInt32() // baseSequence
+	numRecords := d.readInt32()
 
-func (rs *RecordSet) WriteTo(e *Encoder) {
-	offset := e.writer.Size()
+	_ = crc
+	_ = producerId
+	_ = producerEpoch
 
-	e.writeInt32(0) // size: 8
-
-	for _, rb := range rs.Batches {
-		rb.WriteTo(e)
+	if attributes.Compression() != 0 {
+		return fmt.Errorf("compression currently not supported")
 	}
 
-	size := e.writer.Size() - offset - 4
-	e.writer.WriteSizeAt(size, offset)
-}
+	rb.Records = make([]Record, numRecords)
+	for i := range rb.Records {
+		r := &rb.Records[i]
+		d.readVarInt() // length
+		d.readInt8()   // attributes
 
-type RecordBatch struct {
-	Offset     int64
-	Attributes Attributes
-	ProducerId int64
-	Records    []Record
+		timestampDelta := d.readVarInt()
+		offsetDelta := d.readVarInt()
+		r.Offset = baseOffset + offsetDelta
+		r.Time = time.Unix(firstTimestamp+timestampDelta, 0)
+
+		r.Key = d.readVarNullBytes()
+		r.Value = d.readVarNullBytes()
+
+		headerLen := d.readVarInt()
+		if headerLen > 0 {
+			r.Headers = make([]RecordHeader, headerLen)
+			for i := range r.Headers {
+				r.Headers[i] = RecordHeader{
+					Key:   d.readString(),
+					Value: d.readBytes(),
+				}
+			}
+		}
+	}
+
+	return nil
 }
 
 type Record struct {
@@ -53,24 +88,30 @@ type RecordHeader struct {
 	Value []byte
 }
 
+func (r *Record) Size() int32 {
+	return int32(len(r.Key)) + int32(len(r.Value))
+}
+
 func (rb *RecordBatch) Size() (s int32) {
 	for _, r := range rb.Records {
-		s += int32(len(r.Key))
-		s += int32(len(r.Value))
+		s += r.Size()
 	}
 	return
 }
 
 func (rb *RecordBatch) WriteTo(e *Encoder) {
+	offsetBatchSize := e.writer.Size()
+	e.writeInt32(0) // placeholder length
+
 	offset := e.writer.Size()
 	buffer := make([]byte, 8)
 
-	e.writeInt64(rb.Offset)              // offset
+	e.writeInt64(0)                      // base offset
 	e.writeInt32(0)                      // size: 8
 	e.writeInt32(0)                      // leader epoch
 	e.writeInt8(2)                       // magic
 	e.writeInt32(0)                      // checksum: 17
-	e.writeInt16(int16(rb.Attributes))   // 21
+	e.writeInt16(int16(0))               // 21
 	e.writeInt32(0)                      // last offset delta: 23
 	e.writeInt64(0)                      // first timestamp: 27
 	e.writeInt64(0)                      // max timestamp: 35
@@ -158,6 +199,9 @@ func (rb *RecordBatch) WriteTo(e *Encoder) {
 
 	binary.BigEndian.PutUint32(buffer[:4], checksum)
 	e.writer.WriteAt(buffer[:4], offset+17)
+
+	size := e.writer.Size() - offsetBatchSize - 4
+	e.writer.WriteSizeAt(size, offsetBatchSize)
 }
 
 func Timestamp(t time.Time) int64 {
@@ -165,4 +209,8 @@ func Timestamp(t time.Time) int64 {
 		return 0
 	}
 	return t.UnixNano() / int64(time.Millisecond)
+}
+
+func (a Attributes) Compression() int8 {
+	return int8(a & 7)
 }

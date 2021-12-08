@@ -18,6 +18,8 @@ func init() {
 	)
 }
 
+const KeyTypeGroup = 0
+
 type Request struct {
 	Key       string           `kafka:"compact=3"`
 	KeyType   int8             `kafka:"min=1"`
@@ -25,11 +27,11 @@ type Request struct {
 }
 
 type Response struct {
-	ThrottleTimeMs int32            `kafka:"min=1"`
-	ErrorCode      int16            `kafka:""`
-	ErrorMessage   string           `kafka:"min=1,nullable,compact=3"`
-	NodeId         int32            `kafka:""`
-	Host           string           `kafka:"compact=3"`
-	Port           int32            `kafka:""`
-	TagFields      map[int64]string `kafka:"type=TAG_BUFFER,min=3"`
+	ThrottleTimeMs int32              `kafka:"min=1"`
+	ErrorCode      protocol.ErrorCode `kafka:""`
+	ErrorMessage   string             `kafka:"min=1,nullable,compact=3"`
+	NodeId         int32              `kafka:""`
+	Host           string             `kafka:"compact=3"`
+	Port           int32              `kafka:""`
+	TagFields      map[int64]string   `kafka:"type=TAG_BUFFER,min=3"`
 }

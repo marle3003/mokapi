@@ -2,6 +2,7 @@ package protocol
 
 import (
 	"encoding/binary"
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"io"
 	"math"
@@ -26,9 +27,19 @@ const (
 	ApiVersions     ApiKey = 18
 )
 
-const (
-	UnknownTopicOrPartition = 3
-)
+var apitext = map[ApiKey]string{
+	Produce:         "Produce",
+	Fetch:           "Fetch",
+	ListOffsets:     "ListOffsets",
+	Metadata:        "Metadata",
+	OffsetCommit:    "OffsetCommit",
+	OffsetFetch:     "OffsetFetch",
+	FindCoordinator: "FindCoordinator",
+	JoinGroup:       "JoinGroup",
+	Heartbeat:       "Heartbeat",
+	SyncGroup:       "SyncGroup",
+	ApiVersions:     "ApiVersions",
+}
 
 var ApiTypes = map[ApiKey]ApiType{}
 
@@ -44,11 +55,21 @@ type ApiReg struct {
 type decodeMsg func(*Decoder, int16) Message
 type encodeMsg func(*Encoder, int16, Message)
 
+type encoding struct {
+	decode decodeMsg
+	encode encodeMsg
+}
+
+type messageType struct {
+	decode map[int16]decodeFunc
+	encode map[int16]encodeFunc
+}
+
 type ApiType struct {
 	MinVersion int16
 	MaxVersion int16
-	decode     decodeMsg
-	encode     encodeMsg
+	request    encoding
+	response   encoding
 	// https://cwiki.apache.org/confluence/display/KAFKA/KIP-482%3A+The+Kafka+Protocol+should+Support+Optional+Tagged+Fields
 	flexibleRequest  int16
 	flexibleResponse int16
@@ -77,28 +98,43 @@ type Header struct {
 }
 
 func Register(reg ApiReg, req, res Message, flexibleRequest int16, flexibleResponse int16) {
-	val := reflect.ValueOf(req).Elem()
-	t := val.Type()
+	tReq := reflect.ValueOf(req).Elem().Type()
+	tRes := reflect.ValueOf(res).Elem().Type()
 
-	decode := make(map[int16]decodeFunc)
-	encode := make(map[int16]encodeFunc)
+	requestTypes := newMessageType()
+	responseTypes := newMessageType()
 	tag := kafkaTag{}
 
 	for i := reg.MinVersion; i <= reg.MaxVersion; i++ {
-		decode[i] = newDecodeFunc(t, i, tag)
-		encode[i] = newEncodeFunc(reflect.ValueOf(res).Elem().Type(), i, tag)
+		requestTypes.decode[i] = newDecodeFunc(tReq, i, tag)
+		requestTypes.encode[i] = newEncodeFunc(tReq, i, tag)
+
+		responseTypes.decode[i] = newDecodeFunc(tRes, i, tag)
+		responseTypes.encode[i] = newEncodeFunc(tRes, i, tag)
 	}
 
 	ApiTypes[reg.ApiKey] = ApiType{
 		reg.MinVersion,
 		reg.MaxVersion,
-		func(d *Decoder, version int16) Message {
-			msg := reflect.New(t).Interface().(Message)
-			decode[version](d, reflect.ValueOf(msg).Elem())
-			return msg
+		encoding{
+			func(d *Decoder, version int16) Message {
+				msg := reflect.New(tReq).Interface().(Message)
+				requestTypes.decode[version](d, reflect.ValueOf(msg).Elem())
+				return msg
+			},
+			func(e *Encoder, version int16, msg Message) {
+				requestTypes.encode[version](e, reflect.ValueOf(msg).Elem())
+			},
 		},
-		func(e *Encoder, version int16, msg Message) {
-			encode[version](e, reflect.ValueOf(msg).Elem())
+		encoding{
+			func(d *Decoder, version int16) Message {
+				msg := reflect.New(tRes).Interface().(Message)
+				responseTypes.decode[version](d, reflect.ValueOf(msg).Elem())
+				return msg
+			},
+			func(e *Encoder, version int16, msg Message) {
+				responseTypes.encode[version](e, reflect.ValueOf(msg).Elem())
+			},
 		},
 		flexibleRequest,
 		flexibleResponse,
@@ -119,7 +155,7 @@ func ReadMessage(r io.Reader) (h *Header, msg Message, err error) {
 	}
 
 	t := ApiTypes[h.ApiKey]
-	msg = t.decode(d, h.ApiVersion)
+	msg = t.request.decode(d, h.ApiVersion)
 	err = d.err
 
 	return
@@ -139,7 +175,7 @@ func WriteMessage(w io.Writer, k ApiKey, version int16, correlationId int32, msg
 	if version >= t.flexibleResponse {
 		e.writeUVarInt(0) // tag_buffer
 	}
-	t.encode(e, version, msg)
+	t.response.encode(e, version, msg)
 
 	var size [4]byte
 	binary.BigEndian.PutUint32(size[:], uint32(buffer.Size()-4))
@@ -205,4 +241,19 @@ func readHeader(d *Decoder) (h *Header) {
 	}
 
 	return
+}
+
+func newMessageType() *messageType {
+	return &messageType{
+		decode: make(map[int16]decodeFunc),
+		encode: make(map[int16]encodeFunc),
+	}
+}
+
+func (a ApiKey) String() string {
+	if s, ok := apitext[a]; ok {
+		return fmt.Sprintf("%v (%v)", s, int(a))
+	}
+
+	return fmt.Sprintf("unknown kafka api key: %v", int(a))
 }

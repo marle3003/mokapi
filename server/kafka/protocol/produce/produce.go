@@ -31,17 +31,21 @@ type RequestTopic struct {
 }
 
 type RequestPartition struct {
-	Partition int32 `kafka:""`
-	Record    protocol.RecordSet
+	Partition int32                `kafka:""`
+	Record    protocol.RecordBatch `kafka:""`
 }
 
 type Response struct {
-	Topics         []ResponseTopic
-	ThrottleTimeMs int32 `kafka:"min=1"`
+	Topics         []ResponseTopic `kafka:""`
+	ThrottleTimeMs int32           `kafka:"min=1"`
 }
 
 type ResponseTopic struct {
-	Name string `kafka:""`
+	Name        string             `kafka:""`
+	ErrorCode   protocol.ErrorCode `kafka:""`
+	Offset      int64              `kafka:""`
+	Timestamp   int64              `kafka:"min=22"`
+	StartOffset int64              `kafka:"min=5"`
 }
 
 type ResponsePartition struct {

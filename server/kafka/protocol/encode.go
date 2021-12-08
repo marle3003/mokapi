@@ -105,6 +105,7 @@ func newEncodeArray(t reflect.Type, version int16, tag kafkaTag) encodeFunc {
 func newStructEncodeFunc(t reflect.Type, version int16, _ kafkaTag) encodeFunc {
 	type field struct {
 		index  int
+		name   string
 		encode encodeFunc
 	}
 	fields := make([]*field, 0)
@@ -115,88 +116,105 @@ func newStructEncodeFunc(t reflect.Type, version int16, _ kafkaTag) encodeFunc {
 		if !tag.isValid(version) {
 			continue
 		}
-		fields = append(fields, &field{i, newEncodeFunc(f.Type, version, tag)})
+		fields = append(fields, &field{i, f.Name, newEncodeFunc(f.Type, version, tag)})
 	}
 
 	return func(e *Encoder, v reflect.Value) {
 		for _, f := range fields {
-			f.encode(e, v.Field(f.index))
+			fv := v.Field(f.index)
+			f.encode(e, fv)
 		}
 	}
 }
 
 func (e *Encoder) encodeCompactArray(v reflect.Value, encodeElem encodeFunc) {
-	e.writeUVarInt(uint64(v.Len() + 1))
+	len := v.Len()
+	e.writeUVarInt(uint64(len + 1))
 
-	for i := 0; i < v.Len(); i++ {
+	for i := 0; i < len; i++ {
 		item := v.Index(i)
 		encodeElem(e, item)
 	}
 }
 
 func (e *Encoder) encodeArray(v reflect.Value, encodeElem encodeFunc) {
-	e.writeInt32(int32(v.Len()))
+	len := v.Len()
+	e.writeInt32(int32(len))
 
-	for i := 0; i < v.Len(); i++ {
+	for i := 0; i < len; i++ {
 		item := v.Index(i)
 		encodeElem(e, item)
 	}
 }
 
 func (e *Encoder) encodeCompactBytes(v reflect.Value) {
-	e.writeCompactBytes(v.Bytes())
+	b := v.Bytes()
+	e.writeCompactBytes(b)
 }
 
 func (e *Encoder) encodeCompactNullBytes(v reflect.Value) {
-	e.writeCompactNullBytes(v.Bytes())
+	b := v.Bytes()
+	e.writeCompactNullBytes(b)
 }
 
 func (e *Encoder) encodeNullBytes(v reflect.Value) {
-	e.writeNullBytes(v.Bytes())
+	b := v.Bytes()
+	e.writeNullBytes(b)
 }
 
 func (e *Encoder) encodeBytes(v reflect.Value) {
-	e.writeBytes(v.Bytes())
+	b := v.Bytes()
+	e.writeBytes(b)
 }
 
 func (e *Encoder) encodeCompactString(v reflect.Value) {
-	e.writeCompactString(v.String())
+	s := v.String()
+	e.writeCompactString(s)
 }
 
 func (e *Encoder) encodeCompactNullString(v reflect.Value) {
-	e.writeCompactNullString(v.String())
+	s := v.String()
+	e.writeCompactNullString(s)
 }
 
 func (e *Encoder) encodeNullString(v reflect.Value) {
-	e.writeNullString(v.String())
+	s := v.String()
+	e.writeNullString(s)
 }
 
 func (e *Encoder) encodeString(v reflect.Value) {
-	e.writeNullString(v.String())
+	s := v.String()
+	e.writeNullString(s)
 }
 
 func (e *Encoder) encodeInt8(v reflect.Value) {
-	e.writeInt8(int8(v.Int()))
+	i := v.Int()
+	e.writeInt8(int8(i))
 }
 
 func (e *Encoder) encodeInt16(v reflect.Value) {
-	e.writeInt16(int16(v.Int()))
+	i := v.Int()
+	e.writeInt16(int16(i))
 }
 
 func (e *Encoder) encodeBool(v reflect.Value) {
-	e.writeBool(v.Bool())
+	b := v.Bool()
+	e.writeBool(b)
 }
 
 func (e *Encoder) encodeInt32(v reflect.Value) {
-	e.writeInt32(int32(v.Int()))
+	i := v.Int()
+	e.writeInt32(int32(i))
 }
 
 func (e *Encoder) encodeInt64(v reflect.Value) {
-	e.writeInt64(v.Int())
+	i := v.Int()
+	e.writeInt64(i)
 }
 
 func (e *Encoder) writeCompactBytes(b []byte) {
-	e.writeUVarInt(uint64(len(b)) + 1)
+	len := len(b)
+	e.writeUVarInt(uint64(len) + 1)
 	e.write(b)
 }
 
