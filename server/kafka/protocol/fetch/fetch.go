@@ -63,7 +63,7 @@ type ResponseTopic struct {
 
 type ResponsePartition struct {
 	Index                int32                `kafka:""`
-	ErrorCode            int16                `kafka:""`
+	ErrorCode            protocol.ErrorCode   `kafka:""`
 	HighWatermark        int64                `kafka:""`
 	LastStableOffset     int64                `kafka:"min=4"`
 	LogStartOffset       int64                `kafka:"min=5"`

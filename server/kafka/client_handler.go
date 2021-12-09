@@ -72,7 +72,7 @@ func (s *Binding) handle(conn net.Conn) {
 				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, &syncGroup.Response{ErrorCode: errorCode})
 			}
 		case protocol.OffsetFetch:
-			r := s.processOffSetFetch(msg.(*offsetFetch.Request))
+			r := s.processOffSetFetch(h, msg.(*offsetFetch.Request))
 			protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, r)
 		case protocol.Fetch:
 			if c.group != nil && c.group.state != stable {
@@ -332,7 +332,7 @@ func (s *Binding) handleSyncGroup(h *protocol.Header, req *syncGroup.Request, co
 	return protocol.None
 }
 
-func (s *Binding) processOffSetFetch(req *offsetFetch.Request) *offsetFetch.Response {
+func (s *Binding) processOffSetFetch(h *protocol.Header, req *offsetFetch.Request) *offsetFetch.Response {
 	r := &offsetFetch.Response{
 		Topics: make([]offsetFetch.ResponseTopic, 0, len(req.Topics)),
 	}
@@ -340,12 +340,20 @@ func (s *Binding) processOffSetFetch(req *offsetFetch.Request) *offsetFetch.Resp
 	for _, rt := range req.Topics {
 		t := s.topics[rt.Name]
 		resTopic := offsetFetch.ResponseTopic{Name: rt.Name, Partitions: make([]offsetFetch.Partition, 0, len(rt.PartitionIndexes))}
-		for _, rp := range rt.PartitionIndexes {
-			p := t.partitions[int(rp)]
-			resTopic.Partitions = append(resTopic.Partitions, offsetFetch.Partition{
-				Index:           rp,
-				CommittedOffset: p.getOffset(req.GroupId),
-			})
+
+		for _, rpi := range rt.PartitionIndexes {
+			rp := &offsetFetch.Partition{Index: rpi, CommittedOffset: -1}
+
+			if t != nil {
+				if p, ok := t.partitions[int(rpi)]; ok {
+					rp.CommittedOffset = p.getOffset(req.GroupId)
+				}
+			}
+			if rp.CommittedOffset < 0 && h.ApiVersion == 0 {
+				rp.ErrorCode = protocol.UnknownTopicOrPartition
+			}
+
+			resTopic.Partitions = append(resTopic.Partitions, *rp)
 		}
 		r.Topics = append(r.Topics, resTopic)
 	}
@@ -384,7 +392,7 @@ func (s *Binding) processFetch(req *fetch.Request) *fetch.Response {
 			t := s.topics[name]
 			for index, partition := range topic.partitions {
 				p := t.partitions[int(index)]
-				if p.offset > 0 && partition.fetchOffset > p.offset {
+				if partition.fetchOffset > p.offset {
 					partition.error = protocol.OffsetOutOfRange
 				}
 				set, offset, setSize := p.read(partition.fetchOffset, partition.maxBytes-partition.size)
@@ -413,7 +421,7 @@ func (s *Binding) processFetch(req *fetch.Request) *fetch.Response {
 				LogStartOffset:       p.startOffset,
 				PreferredReadReplica: -1,
 				RecordSet:            partition.set,
-				ErrorCode:            int16(partition.error),
+				ErrorCode:            partition.error,
 			}
 			resTopic.Partitions = append(resTopic.Partitions, resPar)
 		}

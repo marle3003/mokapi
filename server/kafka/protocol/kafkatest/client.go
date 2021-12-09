@@ -3,9 +3,12 @@ package kafkatest
 import (
 	"fmt"
 	"mokapi/server/kafka/protocol"
+	"mokapi/server/kafka/protocol/fetch"
 	"mokapi/server/kafka/protocol/findCoordinator"
 	"mokapi/server/kafka/protocol/joinGroup"
+	"mokapi/server/kafka/protocol/listOffsets"
 	"mokapi/server/kafka/protocol/metaData"
+	"mokapi/server/kafka/protocol/offsetFetch"
 	"mokapi/server/kafka/protocol/produce"
 	"mokapi/server/kafka/protocol/syncGroup"
 	"net"
@@ -64,6 +67,39 @@ func (c *Client) Produce(version int, r *produce.Request) (*produce.Response, er
 		return nil, err
 	}
 	if msg, ok := res.Message.(*produce.Response); ok {
+		return msg, nil
+	}
+	return nil, fmt.Errorf("unexpected response message: %t", res.Message)
+}
+
+func (c *Client) Fetch(version int, r *fetch.Request) (*fetch.Response, error) {
+	res, err := c.Send(NewRequest(c.clientId, version, r))
+	if err != nil {
+		return nil, err
+	}
+	if msg, ok := res.Message.(*fetch.Response); ok {
+		return msg, nil
+	}
+	return nil, fmt.Errorf("unexpected response message: %t", res.Message)
+}
+
+func (c *Client) OffsetFetch(version int, r *offsetFetch.Request) (*offsetFetch.Response, error) {
+	res, err := c.Send(NewRequest(c.clientId, version, r))
+	if err != nil {
+		return nil, err
+	}
+	if msg, ok := res.Message.(*offsetFetch.Response); ok {
+		return msg, nil
+	}
+	return nil, fmt.Errorf("unexpected response message: %t", res.Message)
+}
+
+func (c *Client) ListOffsets(version int, r *listOffsets.Request) (*listOffsets.Response, error) {
+	res, err := c.Send(NewRequest(c.clientId, version, r))
+	if err != nil {
+		return nil, err
+	}
+	if msg, ok := res.Message.(*listOffsets.Response); ok {
 		return msg, nil
 	}
 	return nil, fmt.Errorf("unexpected response message: %t", res.Message)

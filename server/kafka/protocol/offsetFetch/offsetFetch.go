@@ -44,10 +44,10 @@ type ResponseTopic struct {
 }
 
 type Partition struct {
-	Index                int32            `kafka:""`
-	CommittedOffset      int64            `kafka:""`
-	CommittedLeaderEpoch int32            `kafka:"min=5"`
-	Metadata             string           `kafka:"compact=6,nullable"`
-	ErrorCode            int16            `kafka:""`
-	TagFields            map[int64]string `kafka:"type=TAG_BUFFER,min=6"`
+	Index                int32              `kafka:""`
+	CommittedOffset      int64              `kafka:""`
+	CommittedLeaderEpoch int32              `kafka:"min=5"`
+	Metadata             string             `kafka:"compact=6,nullable"`
+	ErrorCode            protocol.ErrorCode `kafka:""`
+	TagFields            map[int64]string   `kafka:"type=TAG_BUFFER,min=6"`
 }

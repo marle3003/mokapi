@@ -20,14 +20,15 @@ func NewRecordBatch() RecordBatch {
 
 func (rb *RecordBatch) ReadFrom(d *Decoder) error {
 	size := d.readInt32()
-	_ = size
+	if size <= 0 {
+		return nil
+	}
 
 	// partition base offset of following records
 	baseOffset := d.readInt64()
-	d.readInt32()     // batchLength
-	d.readInt32()     // leader epoch
-	m := d.readInt8() // magic
-	_ = m
+	d.readInt32()        // batchLength
+	d.readInt32()        // leader epoch
+	d.readInt8()         // magic
 	crc := d.readInt32() // checksum
 	attributes := Attributes(d.readInt16())
 	d.readInt32() // lastOffsetDelta
@@ -49,13 +50,14 @@ func (rb *RecordBatch) ReadFrom(d *Decoder) error {
 	rb.Records = make([]Record, numRecords)
 	for i := range rb.Records {
 		r := &rb.Records[i]
-		d.readVarInt() // length
-		d.readInt8()   // attributes
+		l := d.readVarInt() // length
+		_ = l
+		d.readInt8() // attributes
 
 		timestampDelta := d.readVarInt()
 		offsetDelta := d.readVarInt()
 		r.Offset = baseOffset + offsetDelta
-		r.Time = time.Unix(firstTimestamp+timestampDelta, 0)
+		r.Time = toTime(firstTimestamp + timestampDelta)
 
 		r.Key = d.readVarNullBytes()
 		r.Value = d.readVarNullBytes()
@@ -213,4 +215,8 @@ func Timestamp(t time.Time) int64 {
 
 func (a Attributes) Compression() int8 {
 	return int8(a & 7)
+}
+
+func toTime(i int64) time.Time {
+	return time.Unix(i/1000, 0)
 }
