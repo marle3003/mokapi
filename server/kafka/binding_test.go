@@ -30,3 +30,22 @@ func TestBindingApiVersion(t *testing.T) {
 	test.Equals(t, protocol.ApiVersions, r.Header.ApiKey)
 	b.Stop()
 }
+
+func TestUnsupportedVersion(t *testing.T) {
+	b := kafka.NewBinding(func(topic string, key []byte, message []byte, partition int) {
+
+	})
+	c := asyncapitest.NewConfig(
+		asyncapitest.WithServer("foo", "kafka", "127.0.0.1:9092"),
+		asyncapitest.WithChannel(
+			"foo", asyncapitest.WithSubscribeAndPublish(
+				asyncapitest.WithMessage(
+					asyncapitest.WithPayload(openapitest.NewSchema())))))
+	err := b.Apply(c)
+	test.Ok(t, err)
+
+	client := kafkatest.NewClient("127.0.0.1:9092", "kafkatest")
+	_, err = client.ApiVersion(9999, &apiVersion.Request{})
+	test.EqualError(t, "unsupported version 9999", err)
+	b.Stop()
+}

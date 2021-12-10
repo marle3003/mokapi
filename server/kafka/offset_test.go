@@ -53,7 +53,7 @@ func testListOffsetsFetchEmpty(t *testing.T, b *kafka.Binding) {
 			Partitions: []offset.RequestPartition{
 				{
 					Index:     0,
-					Timestamp: 0,
+					Timestamp: protocol.Earliest,
 				},
 			},
 		},
@@ -64,7 +64,7 @@ func testListOffsetsFetchEmpty(t *testing.T, b *kafka.Binding) {
 
 	p := r.Topics[0].Partitions[0]
 	test.Equals(t, protocol.None, p.ErrorCode)
-	test.Equals(t, int64(0), p.Offset)
+	test.Equals(t, int64(-1), p.Offset)
 }
 
 func testListOffsetsFetchWithSingle(t *testing.T, b *kafka.Binding) {
@@ -88,7 +88,7 @@ func testListOffsetsFetchWithSingle(t *testing.T, b *kafka.Binding) {
 			Partitions: []offset.RequestPartition{
 				{
 					Index:     0,
-					Timestamp: 0,
+					Timestamp: protocol.Earliest,
 				},
 			},
 		},
@@ -96,7 +96,8 @@ func testListOffsetsFetchWithSingle(t *testing.T, b *kafka.Binding) {
 
 	p := r.Topics[0].Partitions[0]
 	test.Equals(t, protocol.None, p.ErrorCode)
-	test.Equals(t, int64(0), p.Offset)
+	test.Equals(t, protocol.Earliest, p.Timestamp)
+	test.Equals(t, int64(-1), p.Offset)
 
 	r, err = client.Offset(3, &offset.Request{Topics: []offset.RequestTopic{
 		{
@@ -104,7 +105,7 @@ func testListOffsetsFetchWithSingle(t *testing.T, b *kafka.Binding) {
 			Partitions: []offset.RequestPartition{
 				{
 					Index:     0,
-					Timestamp: -2,
+					Timestamp: protocol.Latest,
 				},
 			},
 		},
@@ -112,5 +113,6 @@ func testListOffsetsFetchWithSingle(t *testing.T, b *kafka.Binding) {
 
 	p = r.Topics[0].Partitions[0]
 	test.Equals(t, protocol.None, p.ErrorCode)
+	test.Equals(t, protocol.Latest, p.Timestamp)
 	test.Equals(t, int64(0), p.Offset)
 }

@@ -50,8 +50,11 @@ func (r *Response) Read(reader io.Reader) error {
 	}
 
 	apiType := ApiTypes[r.Header.ApiKey]
-	r.Message = apiType.response.decode(d, r.Header.ApiVersion)
-
+	var err error
+	r.Message, err = apiType.response.decode(d, r.Header.ApiVersion)
+	if err != nil {
+		return err
+	}
 	return d.err
 }
 
@@ -69,7 +72,10 @@ func (r *Response) Write(w io.Writer) error {
 	if r.Header.ApiVersion >= apiType.flexibleResponse {
 		e.writeUVarInt(0) // tag_buffer
 	}
-	apiType.response.encode(e, r.Header.ApiVersion, r.Message)
+
+	if r.Message != nil {
+		apiType.response.encode(e, r.Header.ApiVersion, r.Message)
+	}
 
 	var size [4]byte
 	binary.BigEndian.PutUint32(size[:], uint32(buffer.Size()-4))

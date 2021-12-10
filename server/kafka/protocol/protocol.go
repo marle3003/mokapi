@@ -52,8 +52,8 @@ type ApiReg struct {
 	MaxVersion int16
 }
 
-type decodeMsg func(*Decoder, int16) Message
-type encodeMsg func(*Encoder, int16, Message)
+type decodeMsg func(*Decoder, int16) (Message, error)
+type encodeMsg func(*Encoder, int16, Message) error
 
 type encoding struct {
 	decode decodeMsg
@@ -117,23 +117,41 @@ func Register(reg ApiReg, req, res Message, flexibleRequest int16, flexibleRespo
 		reg.MinVersion,
 		reg.MaxVersion,
 		encoding{
-			func(d *Decoder, version int16) Message {
+			func(d *Decoder, version int16) (Message, error) {
+				decode, ok := requestTypes.decode[version]
+				if !ok {
+					return nil, fmt.Errorf("unsupported version %v", version)
+				}
 				msg := reflect.New(tReq).Interface().(Message)
-				requestTypes.decode[version](d, reflect.ValueOf(msg).Elem())
-				return msg
+				decode(d, reflect.ValueOf(msg).Elem())
+				return msg, nil
 			},
-			func(e *Encoder, version int16, msg Message) {
-				requestTypes.encode[version](e, reflect.ValueOf(msg).Elem())
+			func(e *Encoder, version int16, msg Message) error {
+				encode, ok := requestTypes.encode[version]
+				if !ok {
+					return fmt.Errorf("unsupported version %v", version)
+				}
+				encode(e, reflect.ValueOf(msg).Elem())
+				return nil
 			},
 		},
 		encoding{
-			func(d *Decoder, version int16) Message {
+			func(d *Decoder, version int16) (Message, error) {
+				decode, ok := responseTypes.decode[version]
+				if !ok {
+					return nil, fmt.Errorf("unsupported version %v", version)
+				}
 				msg := reflect.New(tRes).Interface().(Message)
-				responseTypes.decode[version](d, reflect.ValueOf(msg).Elem())
-				return msg
+				decode(d, reflect.ValueOf(msg).Elem())
+				return msg, nil
 			},
-			func(e *Encoder, version int16, msg Message) {
-				responseTypes.encode[version](e, reflect.ValueOf(msg).Elem())
+			func(e *Encoder, version int16, msg Message) error {
+				encode, ok := responseTypes.encode[version]
+				if !ok {
+					return fmt.Errorf("unsupported version %v", version)
+				}
+				encode(e, reflect.ValueOf(msg).Elem())
+				return nil
 			},
 		},
 		flexibleRequest,
@@ -155,8 +173,14 @@ func ReadMessage(r io.Reader) (h *Header, msg Message, err error) {
 	}
 
 	t := ApiTypes[h.ApiKey]
-	msg = t.request.decode(d, h.ApiVersion)
-	err = d.err
+	if t.MinVersion > h.ApiVersion && t.MaxVersion < h.ApiVersion {
+		return nil, nil, Error{Header: h, Code: UnsupportedVersion, Message: fmt.Sprintf("unsupported api version")}
+	}
+
+	msg, err = t.request.decode(d, h.ApiVersion)
+	if err != nil {
+		err = d.err
+	}
 
 	return
 }
@@ -175,7 +199,12 @@ func WriteMessage(w io.Writer, k ApiKey, version int16, correlationId int32, msg
 	if version >= t.flexibleResponse {
 		e.writeUVarInt(0) // tag_buffer
 	}
-	t.response.encode(e, version, msg)
+
+	if msg != nil {
+		if err := t.response.encode(e, version, msg); err != nil {
+			log.Errorf("unable to write kafka message apikey %q: %v", k, err)
+		}
+	}
 
 	var size [4]byte
 	binary.BigEndian.PutUint32(size[:], uint32(buffer.Size()-4))
@@ -184,7 +213,7 @@ func WriteMessage(w io.Writer, k ApiKey, version int16, correlationId int32, msg
 	_, err := buffer.WriteTo(w)
 
 	if err != nil {
-		log.Errorf("unable to write kafka message apikey %q", k)
+		log.Errorf("unable to write kafka message apikey %q: %v", k, err)
 	}
 }
 

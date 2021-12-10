@@ -25,10 +25,10 @@ type Request struct {
 }
 
 type Response struct {
-	ErrorCode      int16            `kafka:""`
-	ApiKeys        []ApiKeyResponse `kafka:"compact=3"`
-	ThrottleTimeMs int32            `kafka:"min=1"`
-	TagFields      map[int64]string `kafka:"type=TAG_BUFFER,min=3"`
+	ErrorCode      protocol.ErrorCode `kafka:""`
+	ApiKeys        []ApiKeyResponse   `kafka:"compact=3"`
+	ThrottleTimeMs int32              `kafka:"min=1"`
+	TagFields      map[int64]string   `kafka:"type=TAG_BUFFER,min=3"`
 }
 
 type ApiKeyResponse struct {

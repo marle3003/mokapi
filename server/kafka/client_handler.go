@@ -33,11 +33,19 @@ func (s *Binding) handle(conn net.Conn) {
 	for {
 		h, msg, err := protocol.ReadMessage(conn)
 		if err != nil {
-			if err == io.EOF {
+			switch t := err.(type) {
+			case protocol.Error:
+				log.WithFields(log.Fields{"ApiKey": t.Header.ApiKey, "ApiVersion": t.Header.ApiVersion}).
+					Error(t.Error())
+				if _, ok := msg.(*apiVersion.Request); ok {
+					protocol.WriteMessage(conn, h.ApiKey, t.Header.ApiVersion, t.Header.CorrelationId, &apiVersion.Response{ErrorCode: t.Code})
+				}
+			default:
+				if err != io.EOF {
+					log.Error(err)
+				}
 				return
 			}
-			log.Error(err)
-			return
 		}
 
 		s.clientsMutex.Lock()
@@ -85,7 +93,7 @@ func (s *Binding) handle(conn net.Conn) {
 			if c.group != nil && c.group.state != stable {
 				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, &heartbeat.Response{ErrorCode: protocol.RebalanceInProgress})
 			} else if c.group == nil {
-				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, &heartbeat.Response{ErrorCode: protocol.GroupIdNotFound})
+				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, &heartbeat.Response{ErrorCode: protocol.UnknownMemberId})
 			} else {
 				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, &heartbeat.Response{})
 			}
@@ -110,7 +118,7 @@ func (s *Binding) handle(conn net.Conn) {
 			r := s.processOffset(msg.(*offset.Request))
 			protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, r)
 		case protocol.OffsetCommit:
-			r := s.processOffsetCommit(msg.(*offsetCommit.Request))
+			r := s.processOffsetCommit(c, msg.(*offsetCommit.Request))
 			protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, r)
 		}
 	}
@@ -134,7 +142,7 @@ func (s *Binding) processOffset(req *offset.Request) *offset.Response {
 				case rp.Timestamp == protocol.Earliest || rp.Timestamp == 0:
 					part.Offset = p.startOffset
 				case rp.Timestamp == protocol.Latest:
-					part.Offset = p.offset
+					part.Offset = p.offset - 1
 				default:
 					// TODO
 					// look up the offsets for the given partitions by timestamp. The returned offset
@@ -236,22 +244,22 @@ func (s *Binding) processMetadata(req *metaData.Request) *metaData.Response {
 }
 
 func (s *Binding) processFindCoordinator(req *findCoordinator.Request) *findCoordinator.Response {
-	r := &findCoordinator.Response{}
+	res := &findCoordinator.Response{}
 
 	switch req.KeyType {
 	case findCoordinator.KeyTypeGroup:
 		g := s.getOrCreateGroup(req.Key)
-		r.NodeId = int32(g.coordinator.id)
-		r.Host = g.coordinator.host
-		r.Port = int32(g.coordinator.port)
+		res.NodeId = int32(g.coordinator.id)
+		res.Host = g.coordinator.host
+		res.Port = int32(g.coordinator.port)
 	default:
 		msg := fmt.Sprintf("unsupported key type '%v' in find coordinator request", req.KeyType)
 		log.Error(msg)
-		r.ErrorCode = -1
-		r.ErrorMessage = msg
+		res.ErrorCode = protocol.Unknown
+		res.ErrorMessage = msg
 	}
 
-	return r
+	return res
 }
 
 func (s *Binding) processJoinGroup(h *protocol.Header, req *joinGroup.Request, consumer *client, w io.Writer) protocol.ErrorCode {
@@ -432,7 +440,7 @@ func (s *Binding) processFetch(req *fetch.Request) *fetch.Response {
 	return r
 }
 
-func (s *Binding) processOffsetCommit(req *offsetCommit.Request) *offsetCommit.Response {
+func (s *Binding) processOffsetCommit(client *client, req *offsetCommit.Request) *offsetCommit.Response {
 	r := &offsetCommit.Response{
 		Topics: make([]offsetCommit.ResponseTopic, 0, len(req.Topics)),
 	}
@@ -442,10 +450,13 @@ func (s *Binding) processOffsetCommit(req *offsetCommit.Request) *offsetCommit.R
 		resTopic := offsetCommit.ResponseTopic{Name: rt.Name, Partitions: make([]offsetCommit.ResponsePartition, 0, len(rt.Partitions))}
 		for _, rp := range rt.Partitions {
 			p := t.partitions[int(rp.Index)]
-			errCode := int16(0)
-			if rp.Offset > p.offset {
-				errCode = int16(protocol.OffsetOutOfRange)
-			} else {
+			errCode := protocol.None
+			switch {
+			case client.group == nil:
+				errCode = protocol.UnknownMemberId
+			case rp.Offset > p.offset:
+				errCode = protocol.OffsetOutOfRange
+			default:
 				p.setOffset(req.GroupId, rp.Offset)
 			}
 			resTopic.Partitions = append(resTopic.Partitions, offsetCommit.ResponsePartition{

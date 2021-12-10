@@ -3,9 +3,10 @@ package openapi
 import (
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
+	log "github.com/sirupsen/logrus"
 	"math"
 	"math/rand"
-	"strings"
+	"reflect"
 	"time"
 )
 
@@ -17,58 +18,80 @@ func NewGenerator() *Generator {
 	return &Generator{randomNumber: rand.New(rand.NewSource(time.Now().Unix()))}
 }
 
-func (g *Generator) New(schema *SchemaRef) interface{} {
-	if schema == nil || schema.Value == nil {
+func (g *Generator) New(ref *SchemaRef) interface{} {
+	if ref == nil || ref.Value == nil {
 		return nil
 	}
+	schema := ref.Value
 
-	if schema.Value.Example != nil {
-		return schema.Value.Example
-	} else if schema.Value.Enum != nil && len(schema.Value.Enum) > 0 {
-		return schema.Value.Enum[g.randomNumber.Intn(len(schema.Value.Enum))]
-	}
-
-	if schema.Value.Type == "object" {
-		obj := make(map[string]interface{})
-		if schema.Value.Properties != nil {
-			for name, propSchema := range schema.Value.Properties.Value {
-				value := g.New(propSchema)
-				obj[name] = value
-			}
-		}
-		return obj
-	} else if schema.Value.Type == "array" {
-		return g.newArray(schema.Value)
-	} else {
-		if len(schema.Value.Faker) > 0 {
-			if strings.HasPrefix(schema.Value.Faker, "{") {
-				return gofakeit.Generate(schema.Value.Faker)
-			}
-			return gofakeit.Generate(fmt.Sprintf("{%s}", schema.Value.Faker))
-		} else {
-			switch schema.Value.Type {
-			case "boolean":
-				return gofakeit.Bool()
-			case "integer", "number":
-				return getNumber(schema.Value)
-			case "string":
-				if len(schema.Value.Format) > 0 {
-					return getByFormat(schema.Value.Format)
-				} else if len(schema.Value.Pattern) > 0 {
-					return gofakeit.Generate(fmt.Sprintf("{regex:%v}", schema.Value.Pattern))
-				}
-				return gofakeit.Lexify("???????????????")
-			}
+	switch {
+	case schema.Example != nil:
+		return schema.Example
+	case schema.Enum != nil && len(schema.Enum) > 0:
+		return schema.Enum[gofakeit.Number(0, len(schema.Enum)-1)]
+	default:
+		switch schema.Type {
+		case "object":
+			return g.getObject(schema)
+		case "array":
+			return g.newArray(schema)
+		case "boolean":
+			return gofakeit.Bool()
+		case "integer", "number":
+			return getNumber(schema)
+		case "string":
+			return getString(schema)
+		default:
+			return nil
 		}
 	}
+}
+
+func (g *Generator) getObject(s *Schema) interface{} {
+	obj := make(map[string]interface{})
+	if s.Properties != nil {
+		for name, propSchema := range s.Properties.Value {
+			value := g.New(propSchema)
+			obj[name] = value
+		}
+	}
+	return obj
+}
+
+func getString(s *Schema) string {
+	if len(s.Format) > 0 {
+		return getByFormat(s.Format)
+	} else if len(s.Pattern) > 0 {
+		return gofakeit.Generate(fmt.Sprintf("{regex:%v}", s.Pattern))
+	}
+	return gofakeit.Lexify("???????????????")
+}
+
+func getNumberExclusive(s *Schema) interface{} {
+	for i := 0; i < 10; i++ {
+		n := getNumber(s)
+		if *s.ExclusiveMinimum && s.Minimum == n {
+			continue
+		}
+		if *s.ExclusiveMaximum && s.Maximum == n {
+			continue
+		}
+		return n
+	}
+	log.Errorf("unable to find a valid number with exclusive")
 	return nil
 }
 
-func getNumber(s *Schema) string {
+func getNumber(s *Schema) interface{} {
+	if s.ExclusiveMinimum != nil && (*s.ExclusiveMinimum) ||
+		s.ExclusiveMaximum != nil && (*s.ExclusiveMaximum) {
+		return getNumberExclusive(s)
+	}
+
 	if s.Type == "number" {
 		if s.Format == "float" {
 			if s.Minimum == nil && s.Maximum == nil {
-				return fmt.Sprintf("%v", gofakeit.Float32())
+				return gofakeit.Float32()
 			}
 			max := float32(math.MaxFloat32)
 			min := max * -1
@@ -78,10 +101,10 @@ func getNumber(s *Schema) string {
 			if s.Maximum != nil {
 				max = float32(*s.Maximum)
 			}
-			return fmt.Sprintf("%v", gofakeit.Float32Range(min, max))
+			return gofakeit.Float32Range(min, max)
 		} else {
 			if s.Minimum == nil && s.Maximum == nil {
-				return fmt.Sprintf("%v", gofakeit.Float64())
+				return gofakeit.Float64()
 			}
 			max := math.MaxFloat64
 			min := max * -1
@@ -91,15 +114,15 @@ func getNumber(s *Schema) string {
 			if s.Maximum != nil {
 				max = *s.Maximum
 			}
-			return fmt.Sprintf("%v", gofakeit.Float64Range(min, max))
+			return gofakeit.Float64Range(min, max)
 		}
 
 	} else if s.Type == "integer" {
 		if s.Minimum == nil && s.Maximum == nil {
 			if s.Format == "int32" {
-				return fmt.Sprintf("%v", gofakeit.Int32())
+				gofakeit.Int32()
 			} else {
-				return fmt.Sprintf("%v", gofakeit.Int64())
+				gofakeit.Int64()
 			}
 		}
 		max := math.MaxInt64
@@ -110,10 +133,16 @@ func getNumber(s *Schema) string {
 		if s.Maximum != nil {
 			max = int(*s.Maximum)
 		}
-		return fmt.Sprintf("%v", gofakeit.Number(min, max))
+
+		// gofakeit uses Intn function which panics if number is <= 0
+		if s.Format == "int32" {
+			return int(math.Round(float64(gofakeit.Float32Range(float32(min), float32(max)))))
+		}
+
+		return int64(math.Round(gofakeit.Float64Range(float64(min), float64(max))))
 	}
 
-	return "0"
+	return 0
 }
 
 func (g *Generator) newArray(s *Schema) (r []interface{}) {
@@ -126,13 +155,14 @@ func (g *Generator) newArray(s *Schema) (r []interface{}) {
 		minItems = *s.MinItems
 	}
 
-	var f func(i int) interface{}
+	var f func() interface{}
 
 	if s.UniqueItems && s.Items.Value != nil && len(s.Items.Value.Enum) > 0 {
 		if maxItems > len(s.Items.Value.Enum) {
 			maxItems = len(s.Items.Value.Enum)
 		}
-		f = func(i int) interface{} {
+		f = func() interface{} {
+			i := gofakeit.Number(0, len(s.Items.Value.Enum)-1)
 			return s.Items.Value.Enum[i]
 		}
 		if s.ShuffleItems {
@@ -141,19 +171,23 @@ func (g *Generator) newArray(s *Schema) (r []interface{}) {
 			}()
 		}
 	} else {
-		f = func(i int) interface{} {
+		f = func() interface{} {
 			return g.New(s.Items)
 		}
 	}
 
 	length := minItems
 	if maxItems-minItems > 0 {
-		length = rand.Intn(maxItems-minItems) + minItems
+		length = gofakeit.Number(minItems, maxItems)
 	}
 	r = make([]interface{}, length)
 
 	for i := range r {
-		r[i] = f(i)
+		if s.UniqueItems {
+			r[i] = getUnique(r, f)
+		} else {
+			r[i] = f()
+		}
 	}
 	return r
 }
@@ -178,7 +212,26 @@ func getByFormat(format string) string {
 		return gofakeit.Generate("{ipv4address}")
 	case "ipv6":
 		return gofakeit.Generate("{ipv6address}")
+	default:
+		return gofakeit.Generate(format)
 	}
+}
 
-	return ""
+func getUnique(s []interface{}, gen func() interface{}) interface{} {
+	for i := 0; i < 10; i++ {
+		v := gen()
+		if !contains(s, v) {
+			return v
+		}
+	}
+	panic("can not fill array with unique items")
+}
+
+func contains(s []interface{}, v interface{}) bool {
+	for _, i := range s {
+		if reflect.DeepEqual(i, v) {
+			return true
+		}
+	}
+	return false
 }

@@ -3,12 +3,14 @@ package kafkatest
 import (
 	"fmt"
 	"mokapi/server/kafka/protocol"
+	"mokapi/server/kafka/protocol/apiVersion"
 	"mokapi/server/kafka/protocol/fetch"
 	"mokapi/server/kafka/protocol/findCoordinator"
 	"mokapi/server/kafka/protocol/heartbeat"
 	"mokapi/server/kafka/protocol/joinGroup"
 	"mokapi/server/kafka/protocol/metaData"
 	"mokapi/server/kafka/protocol/offset"
+	"mokapi/server/kafka/protocol/offsetCommit"
 	"mokapi/server/kafka/protocol/offsetFetch"
 	"mokapi/server/kafka/protocol/produce"
 	"mokapi/server/kafka/protocol/syncGroup"
@@ -49,6 +51,17 @@ func (c *Client) Send(r *protocol.Request) (*protocol.Response, error) {
 	res := protocol.NewResponse(r.Header.ApiKey, r.Header.ApiVersion, r.Header.CorrelationId)
 	err = res.Read(c.conn)
 	return res, err
+}
+
+func (c *Client) ApiVersion(version int, r *apiVersion.Request) (*apiVersion.Response, error) {
+	res, err := c.Send(NewRequest(c.clientId, version, r))
+	if err != nil {
+		return nil, err
+	}
+	if msg, ok := res.Message.(*apiVersion.Response); ok {
+		return msg, nil
+	}
+	return nil, fmt.Errorf("unexpected response message: %t", res.Message)
 }
 
 func (c *Client) Metadata(version int, r *metaData.Request) (*metaData.Response, error) {
@@ -148,4 +161,42 @@ func (c *Client) FindCoordinator(version int, r *findCoordinator.Request) (*find
 		return msg, nil
 	}
 	return nil, fmt.Errorf("unexpected response message: %t", res.Message)
+}
+
+func (c *Client) OffsetCommit(version int, r *offsetCommit.Request) (*offsetCommit.Response, error) {
+	res, err := c.Send(NewRequest(c.clientId, version, r))
+	if err != nil {
+		return nil, err
+	}
+	if msg, ok := res.Message.(*offsetCommit.Response); ok {
+		return msg, nil
+	}
+	return nil, fmt.Errorf("unexpected response message: %t", res.Message)
+}
+
+func (c *Client) JoinSyncGroup(member, group string, joinVersion, syncVersion int) error {
+	join, err := c.JoinGroup(joinVersion, &joinGroup.Request{
+		GroupId:      group,
+		MemberId:     member,
+		ProtocolType: "consumer",
+		Protocols: []joinGroup.Protocol{{
+			Name: "range",
+		}},
+	})
+	if err != nil {
+		return err
+	} else if join.ErrorCode != protocol.None {
+		return fmt.Errorf("join error code: %v", join.ErrorCode)
+	}
+	sync, err := c.SyncGroup(syncVersion, &syncGroup.Request{
+		GroupId:      group,
+		MemberId:     member,
+		ProtocolType: "consumer",
+	})
+	if err != nil {
+		return err
+	} else if sync.ErrorCode != protocol.None {
+		return fmt.Errorf("sync error code: %v", join.ErrorCode)
+	}
+	return nil
 }

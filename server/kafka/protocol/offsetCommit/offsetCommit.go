@@ -48,6 +48,6 @@ type ResponseTopic struct {
 }
 
 type ResponsePartition struct {
-	Index     int32 `kafka:""`
-	ErrorCode int16 `kafka:""`
+	Index     int32              `kafka:""`
+	ErrorCode protocol.ErrorCode `kafka:""`
 }

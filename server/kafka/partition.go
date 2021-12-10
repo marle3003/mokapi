@@ -37,7 +37,7 @@ func newPartition(index int, topic *topic, leader *broker) *partition {
 		leader:        leader,
 		activeSegment: 0,
 		segments:      map[int64]*segment{0: newSegment(0)},
-		startOffset:   0,
+		startOffset:   -1,
 		committed:     make(map[string]int64),
 	}
 }
