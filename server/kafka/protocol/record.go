@@ -205,18 +205,3 @@ func (rb *RecordBatch) WriteTo(e *Encoder) {
 	size := e.writer.Size() - offsetBatchSize - 4
 	e.writer.WriteSizeAt(size, offsetBatchSize)
 }
-
-func Timestamp(t time.Time) int64 {
-	if t.IsZero() {
-		return 0
-	}
-	return t.UnixNano() / int64(time.Millisecond)
-}
-
-func (a Attributes) Compression() int8 {
-	return int8(a & 7)
-}
-
-func toTime(i int64) time.Time {
-	return time.Unix(i/1000, 0)
-}

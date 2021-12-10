@@ -17,7 +17,7 @@ type handler struct {
 }
 
 func NewServer(handlerFunc func(rw protocol.ResponseWriter, req *protocol.Request)) *Server {
-	l, err := net.Listen("tcp", "")
+	l, err := net.Listen("tcp", "127.0.0.1:")
 	if err != nil {
 		panic(err)
 	}

@@ -8,8 +8,8 @@ import (
 	"mokapi/server/kafka/protocol/findCoordinator"
 	"mokapi/server/kafka/protocol/heartbeat"
 	"mokapi/server/kafka/protocol/joinGroup"
-	"mokapi/server/kafka/protocol/listOffsets"
 	"mokapi/server/kafka/protocol/metaData"
+	"mokapi/server/kafka/protocol/offset"
 	"mokapi/server/kafka/protocol/offsetCommit"
 	"mokapi/server/kafka/protocol/offsetFetch"
 	"mokapi/server/kafka/protocol/produce"
@@ -33,8 +33,8 @@ func getApiKey(msg protocol.Message) protocol.ApiKey {
 		return protocol.Produce
 	case *fetch.Request, *fetch.Response:
 		return protocol.Fetch
-	case *listOffsets.Request, *listOffsets.Response:
-		return protocol.ListOffsets
+	case *offset.Request, *offset.Response:
+		return protocol.Offset
 	case *metaData.Request, *metaData.Response:
 		return protocol.Metadata
 	case *offsetCommit.Request, *offsetCommit.Response:

@@ -27,7 +27,7 @@ type Request struct {
 }
 
 type Response struct {
-	ThrottleTimeMs int32            `kafka:"min=1"`
-	ErrorCode      int16            `kafka:""`
-	TagFields      map[int64]string `kafka:"type=TAG_BUFFER,min=4"`
+	ThrottleTimeMs int32              `kafka:"min=1"`
+	ErrorCode      protocol.ErrorCode `kafka:""`
+	TagFields      map[int64]string   `kafka:"type=TAG_BUFFER,min=4"`
 }

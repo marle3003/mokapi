@@ -12,8 +12,8 @@ import (
 	"mokapi/server/kafka/protocol/findCoordinator"
 	"mokapi/server/kafka/protocol/heartbeat"
 	"mokapi/server/kafka/protocol/joinGroup"
-	"mokapi/server/kafka/protocol/listOffsets"
 	"mokapi/server/kafka/protocol/metaData"
+	"mokapi/server/kafka/protocol/offset"
 	"mokapi/server/kafka/protocol/offsetCommit"
 	"mokapi/server/kafka/protocol/offsetFetch"
 	"mokapi/server/kafka/protocol/produce"
@@ -83,9 +83,9 @@ func (s *Binding) handle(conn net.Conn) {
 			}
 		case protocol.Heartbeat:
 			if c.group != nil && c.group.state != stable {
-				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, &fetch.Response{ErrorCode: protocol.RebalanceInProgress})
+				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, &heartbeat.Response{ErrorCode: protocol.RebalanceInProgress})
 			} else if c.group == nil {
-				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, &fetch.Response{ErrorCode: protocol.RebalanceInProgress})
+				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, &heartbeat.Response{ErrorCode: protocol.GroupIdNotFound})
 			} else {
 				protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, &heartbeat.Response{})
 			}
@@ -106,8 +106,8 @@ func (s *Binding) handle(conn net.Conn) {
 				res.Topics = append(res.Topics, resT)
 			}
 			protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, res)
-		case protocol.ListOffsets:
-			r := s.processListOffsets(msg.(*listOffsets.Request))
+		case protocol.Offset:
+			r := s.processOffset(msg.(*offset.Request))
 			protocol.WriteMessage(conn, h.ApiKey, h.ApiVersion, h.CorrelationId, r)
 		case protocol.OffsetCommit:
 			r := s.processOffsetCommit(msg.(*offsetCommit.Request))
@@ -116,34 +116,35 @@ func (s *Binding) handle(conn net.Conn) {
 	}
 }
 
-func (s *Binding) processListOffsets(req *listOffsets.Request) *listOffsets.Response {
-	r := &listOffsets.Response{Topics: make([]listOffsets.ResponseTopic, 0)}
+func (s *Binding) processOffset(req *offset.Request) *offset.Response {
+	r := &offset.Response{Topics: make([]offset.ResponseTopic, 0)}
 
 	for _, rt := range req.Topics {
 		if t, ok := s.topics[rt.Name]; ok {
-			partitions := make([]listOffsets.ResponsePartition, 0)
+			partitions := make([]offset.ResponsePartition, 0)
 			for _, rp := range rt.Partitions {
 				p := t.partitions[int(rp.Index)]
-				part := listOffsets.ResponsePartition{
+				part := offset.ResponsePartition{
 					Index:     rp.Index,
 					ErrorCode: 0,
-					Timestamp: -1,
-					Offset:    p.offset,
+					Timestamp: rp.Timestamp,
 				}
 
-				if rp.Timestamp == -2 { // first offset
+				switch {
+				case rp.Timestamp == protocol.Earliest || rp.Timestamp == 0:
 					part.Offset = p.startOffset
-				} else if rp.Timestamp == -1 { // lastOffset
+				case rp.Timestamp == protocol.Latest:
 					part.Offset = p.offset
+				default:
+					// TODO
+					// look up the offsets for the given partitions by timestamp. The returned offset
+					// for each partition is the earliest offset for which the timestamp is greater
+					// than or equal to the given timestamp.
 				}
-
-				//if part.Offset >= 0 {
-				//	part.Timestamp = protocol.Timestamp(p.segments[p.activeSegment].log[0].Records[0].Time)
-				//}
 
 				partitions = append(partitions, part)
 			}
-			r.Topics = append(r.Topics, listOffsets.ResponseTopic{
+			r.Topics = append(r.Topics, offset.ResponseTopic{
 				Name:       rt.Name,
 				Partitions: partitions,
 			})

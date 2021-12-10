@@ -24,7 +24,7 @@ func TestGroupBalancing(t *testing.T) {
 	}{
 		// a group is created by FindCoordinator request or by binding configuration
 		{"join group with invalid group name", func(t *testing.T, b *kafka.Binding, config *asyncApi.Config) {
-			c := kafkatest.NewClient(":9092", "kafkatest")
+			c := kafkatest.NewClient("127.0.0.1:9092", "kafkatest")
 			defer c.Close()
 			join, err := c.JoinGroup(3, &joinGroup.Request{
 				GroupId:      "TestGroup",
@@ -38,7 +38,7 @@ func TestGroupBalancing(t *testing.T) {
 			test.Equals(t, protocol.InvalidGroupId, join.ErrorCode)
 		}},
 		{"join group with FindCoordinator", func(t *testing.T, b *kafka.Binding, config *asyncApi.Config) {
-			c := kafkatest.NewClient(":9092", "kafkatest")
+			c := kafkatest.NewClient("127.0.0.1:9092", "kafkatest")
 			defer c.Close()
 			fc, err := c.FindCoordinator(2, &findCoordinator.Request{
 				Key:     "TestGroup",
@@ -63,7 +63,7 @@ func TestGroupBalancing(t *testing.T) {
 			err := b.Apply(config)
 			test.Ok(t, err)
 
-			c := kafkatest.NewClient(":9092", "kafkatest")
+			c := kafkatest.NewClient("127.0.0.1:9092", "kafkatest")
 			defer c.Close()
 			meta := []byte{
 				0, 1, // version
@@ -94,7 +94,7 @@ func TestGroupBalancing(t *testing.T) {
 			err := b.Apply(config)
 			test.Ok(t, err)
 
-			c := kafkatest.NewClient(":9092", "kafkatest")
+			c := kafkatest.NewClient("127.0.0.1:9092", "kafkatest")
 			sync, err := c.SyncGroup(3, &syncGroup.Request{
 				GroupId:      "TestGroup",
 				GenerationId: 0,
@@ -111,7 +111,7 @@ func TestGroupBalancing(t *testing.T) {
 
 			ch := make(chan bool)
 			go func() {
-				c := kafkatest.NewClient(":9092", "kafkatest")
+				c := kafkatest.NewClient("127.0.0.1:9092", "kafkatest")
 				defer c.Close()
 				join, err := c.JoinGroup(3, &joinGroup.Request{
 					GroupId:      "TestGroup",
@@ -127,7 +127,7 @@ func TestGroupBalancing(t *testing.T) {
 			}()
 
 			time.Sleep(500 * time.Millisecond)
-			c := kafkatest.NewClient(":9092", "kafkatest")
+			c := kafkatest.NewClient("127.0.0.1:9092", "kafkatest")
 			defer c.Close()
 			sync, err := c.SyncGroup(3, &syncGroup.Request{
 				GroupId:      "TestGroup",
@@ -144,7 +144,7 @@ func TestGroupBalancing(t *testing.T) {
 			err := b.Apply(config)
 			test.Ok(t, err)
 
-			c := kafkatest.NewClient(":9092", "kafkatest")
+			c := kafkatest.NewClient("127.0.0.1:9092", "kafkatest")
 			defer c.Close()
 			join, err := c.JoinGroup(3, &joinGroup.Request{
 				GroupId:      "TestGroup",
@@ -185,7 +185,7 @@ func TestGroupBalancing(t *testing.T) {
 			err := b.Apply(config)
 			test.Ok(t, err)
 
-			c := kafkatest.NewClient(":9092", "kafkatest")
+			c := kafkatest.NewClient("127.0.0.1:9092", "kafkatest")
 			defer c.Close()
 			join, err := c.JoinGroup(3, &joinGroup.Request{
 				GroupId:      "TestGroup",
@@ -239,7 +239,7 @@ func TestGroupBalancing(t *testing.T) {
 			}
 
 			joinFn := func(clientId string, ga []syncGroup.GroupAssignment) (*joinGroup.Response, *syncGroup.Response) {
-				c := kafkatest.NewClient(":9092", clientId)
+				c := kafkatest.NewClient("127.0.0.1:9092", clientId)
 				defer c.Close()
 				join, err := c.JoinGroup(3, &joinGroup.Request{
 					GroupId:      "TestGroup",
@@ -292,7 +292,7 @@ func TestGroupBalancing(t *testing.T) {
 			//t.Parallel()
 			b := kafka.NewBinding(func(topic string, key []byte, message []byte, partition int) {})
 			config := asyncapitest.NewConfig(
-				asyncapitest.WithServer("foo", "kafka", ":9092", asyncapitest.WithKafka("group.initial.rebalance.delay.ms", "0")),
+				asyncapitest.WithServer("foo", "kafka", "127.0.0.1:9092", asyncapitest.WithKafka("group.initial.rebalance.delay.ms", "0")),
 				asyncapitest.WithChannel(
 					"foo", asyncapitest.WithSubscribeAndPublish(
 						asyncapitest.WithMessage(

@@ -16,7 +16,7 @@ func TestBindingApiVersion(t *testing.T) {
 
 	})
 	c := asyncapitest.NewConfig(
-		asyncapitest.WithServer("foo", "kafka", ":9092"),
+		asyncapitest.WithServer("foo", "kafka", "127.0.0.1:9092"),
 		asyncapitest.WithChannel(
 			"foo", asyncapitest.WithSubscribeAndPublish(
 				asyncapitest.WithMessage(
@@ -24,7 +24,7 @@ func TestBindingApiVersion(t *testing.T) {
 	err := b.Apply(c)
 	test.Ok(t, err)
 
-	client := kafkatest.NewClient(":9092", "kafkatest")
+	client := kafkatest.NewClient("127.0.0.1:9092", "kafkatest")
 	r, err := client.Send(kafkatest.NewRequest("kafkatest", 3, &apiVersion.Request{}))
 	test.Ok(t, err)
 	test.Equals(t, protocol.ApiVersions, r.Header.ApiKey)

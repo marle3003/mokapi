@@ -5,9 +5,10 @@ import (
 	"mokapi/server/kafka/protocol"
 	"mokapi/server/kafka/protocol/fetch"
 	"mokapi/server/kafka/protocol/findCoordinator"
+	"mokapi/server/kafka/protocol/heartbeat"
 	"mokapi/server/kafka/protocol/joinGroup"
-	"mokapi/server/kafka/protocol/listOffsets"
 	"mokapi/server/kafka/protocol/metaData"
+	"mokapi/server/kafka/protocol/offset"
 	"mokapi/server/kafka/protocol/offsetFetch"
 	"mokapi/server/kafka/protocol/produce"
 	"mokapi/server/kafka/protocol/syncGroup"
@@ -94,12 +95,12 @@ func (c *Client) OffsetFetch(version int, r *offsetFetch.Request) (*offsetFetch.
 	return nil, fmt.Errorf("unexpected response message: %t", res.Message)
 }
 
-func (c *Client) ListOffsets(version int, r *listOffsets.Request) (*listOffsets.Response, error) {
+func (c *Client) Offset(version int, r *offset.Request) (*offset.Response, error) {
 	res, err := c.Send(NewRequest(c.clientId, version, r))
 	if err != nil {
 		return nil, err
 	}
-	if msg, ok := res.Message.(*listOffsets.Response); ok {
+	if msg, ok := res.Message.(*offset.Response); ok {
 		return msg, nil
 	}
 	return nil, fmt.Errorf("unexpected response message: %t", res.Message)
@@ -125,6 +126,17 @@ func (c *Client) SyncGroup(version int, r *syncGroup.Request) (*syncGroup.Respon
 		return msg, nil
 	}
 	return nil, fmt.Errorf("unexpected response message: %t", reflect.ValueOf(res.Message).Elem().Type())
+}
+
+func (c *Client) Heartbeat(version int, r *heartbeat.Request) (*heartbeat.Response, error) {
+	res, err := c.Send(NewRequest(c.clientId, version, r))
+	if err != nil {
+		return nil, err
+	}
+	if msg, ok := res.Message.(*heartbeat.Response); ok {
+		return msg, nil
+	}
+	return nil, fmt.Errorf("unexpected response message: %t", res.Message)
 }
 
 func (c *Client) FindCoordinator(version int, r *findCoordinator.Request) (*findCoordinator.Response, error) {

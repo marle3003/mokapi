@@ -1,11 +1,11 @@
-package listOffsets
+package offset
 
 import "mokapi/server/kafka/protocol"
 
 func init() {
 	protocol.Register(
 		protocol.ApiReg{
-			ApiKey:     protocol.ListOffsets,
+			ApiKey:     protocol.Offset,
 			MinVersion: 0,
 			MaxVersion: 6},
 		&Request{},

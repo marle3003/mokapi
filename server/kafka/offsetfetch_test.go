@@ -41,7 +41,7 @@ func TestOffsetFetch(t *testing.T) {
 
 func testOffsetFetchEmpty(t *testing.T, b *kafka.Binding) {
 	c := asyncapitest.NewConfig(
-		asyncapitest.WithServer("foo", "kafka", ":9092"),
+		asyncapitest.WithServer("foo", "kafka", "127.0.0.1:9092"),
 		asyncapitest.WithChannel(
 			"foo", asyncapitest.WithSubscribeAndPublish(
 				asyncapitest.WithMessage(
@@ -49,7 +49,7 @@ func testOffsetFetchEmpty(t *testing.T, b *kafka.Binding) {
 	err := b.Apply(c)
 	test.Ok(t, err)
 
-	client := kafkatest.NewClient(":9092", "kafkatest")
+	client := kafkatest.NewClient("127.0.0.1:9092", "kafkatest")
 	defer client.Close()
 	r, err := client.OffsetFetch(3, &offsetFetch.Request{Topics: []offsetFetch.RequestTopic{
 		{
@@ -69,7 +69,7 @@ func testOffsetFetchEmpty(t *testing.T, b *kafka.Binding) {
 
 func testOffsetFetchInvalidPartition(t *testing.T, b *kafka.Binding) {
 	c := asyncapitest.NewConfig(
-		asyncapitest.WithServer("foo", "kafka", ":9092"),
+		asyncapitest.WithServer("foo", "kafka", "127.0.0.1:9092"),
 		asyncapitest.WithChannel(
 			"foo", asyncapitest.WithSubscribeAndPublish(
 				asyncapitest.WithMessage(
@@ -77,7 +77,7 @@ func testOffsetFetchInvalidPartition(t *testing.T, b *kafka.Binding) {
 	err := b.Apply(c)
 	test.Ok(t, err)
 
-	client := kafkatest.NewClient(":9092", "kafkatest")
+	client := kafkatest.NewClient("127.0.0.1:9092", "kafkatest")
 	defer client.Close()
 	r, err := client.OffsetFetch(3, &offsetFetch.Request{Topics: []offsetFetch.RequestTopic{
 		{
@@ -111,7 +111,7 @@ func testOffsetFetchInvalidPartition(t *testing.T, b *kafka.Binding) {
 
 func testOffsetFetchUnknownTopic(t *testing.T, b *kafka.Binding) {
 	c := asyncapitest.NewConfig(
-		asyncapitest.WithServer("foo", "kafka", ":9092"),
+		asyncapitest.WithServer("foo", "kafka", "127.0.0.1:9092"),
 		asyncapitest.WithChannel(
 			"foo", asyncapitest.WithSubscribeAndPublish(
 				asyncapitest.WithMessage(
@@ -119,7 +119,7 @@ func testOffsetFetchUnknownTopic(t *testing.T, b *kafka.Binding) {
 	err := b.Apply(c)
 	test.Ok(t, err)
 
-	client := kafkatest.NewClient(":9092", "kafkatest")
+	client := kafkatest.NewClient("127.0.0.1:9092", "kafkatest")
 	defer client.Close()
 	r, err := client.OffsetFetch(3, &offsetFetch.Request{Topics: []offsetFetch.RequestTopic{
 		{

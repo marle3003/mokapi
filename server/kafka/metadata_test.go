@@ -51,7 +51,7 @@ func TestMetadata(t *testing.T) {
 
 func testMetadata(t *testing.T, b *kafka.Binding) {
 	c := asyncapitest.NewConfig(
-		asyncapitest.WithServer("foo", "kafka", ":9092"),
+		asyncapitest.WithServer("foo", "kafka", "127.0.0.1:9092"),
 		asyncapitest.WithChannel(
 			"foo", asyncapitest.WithSubscribeAndPublish(
 				asyncapitest.WithMessage(
@@ -59,7 +59,7 @@ func testMetadata(t *testing.T, b *kafka.Binding) {
 	err := b.Apply(c)
 	test.Ok(t, err)
 
-	client := kafkatest.NewClient(":9092", "kafkatest")
+	client := kafkatest.NewClient("127.0.0.1:9092", "kafkatest")
 	defer client.Close()
 	r, err := client.Metadata(4, &metaData.Request{})
 	test.Ok(t, err)
@@ -70,7 +70,7 @@ func testMetadata(t *testing.T, b *kafka.Binding) {
 	// brokers
 	test.Equals(t, 1, len(r.Brokers))
 	test.Equals(t, int32(0), r.Brokers[0].NodeId)
-	test.Equals(t, "", r.Brokers[0].Host)
+	test.Equals(t, "127.0.0.1", r.Brokers[0].Host)
 	test.Equals(t, int32(9092), r.Brokers[0].Port)
 	test.Equals(t, "", r.Brokers[0].Rack)
 
@@ -90,7 +90,7 @@ func testMetadata(t *testing.T, b *kafka.Binding) {
 
 func testMetadataWithTopic(t *testing.T, b *kafka.Binding) {
 	c := asyncapitest.NewConfig(
-		asyncapitest.WithServer("foo", "kafka", ":9092"),
+		asyncapitest.WithServer("foo", "kafka", "127.0.0.1:9092"),
 		asyncapitest.WithChannel(
 			"foo", asyncapitest.WithSubscribeAndPublish(
 				asyncapitest.WithMessage(
@@ -98,7 +98,7 @@ func testMetadataWithTopic(t *testing.T, b *kafka.Binding) {
 	err := b.Apply(c)
 	test.Ok(t, err)
 
-	client := kafkatest.NewClient(":9092", "kafkatest")
+	client := kafkatest.NewClient("127.0.0.1:9092", "kafkatest")
 	defer client.Close()
 	r, err := client.Metadata(4, &metaData.Request{
 		Topics: []metaData.TopicName{{Name: "foo"}},
@@ -111,7 +111,7 @@ func testMetadataWithTopic(t *testing.T, b *kafka.Binding) {
 	// brokers
 	test.Equals(t, 1, len(r.Brokers))
 	test.Equals(t, int32(0), r.Brokers[0].NodeId)
-	test.Equals(t, "", r.Brokers[0].Host)
+	test.Equals(t, "127.0.0.1", r.Brokers[0].Host)
 	test.Equals(t, int32(9092), r.Brokers[0].Port)
 	test.Equals(t, "", r.Brokers[0].Rack)
 
@@ -131,7 +131,7 @@ func testMetadataWithTopic(t *testing.T, b *kafka.Binding) {
 
 func testMetadataPartition(t *testing.T, b *kafka.Binding) {
 	c := asyncapitest.NewConfig(
-		asyncapitest.WithServer("foo", "kafka", ":9092"),
+		asyncapitest.WithServer("foo", "kafka", "127.0.0.1:9092"),
 		asyncapitest.WithChannel(
 			"foo",
 			asyncapitest.WithSubscribeAndPublish(
@@ -142,7 +142,7 @@ func testMetadataPartition(t *testing.T, b *kafka.Binding) {
 	err := b.Apply(c)
 	test.Ok(t, err)
 
-	client := kafkatest.NewClient(":9092", "kafkatest")
+	client := kafkatest.NewClient("127.0.0.1:9092", "kafkatest")
 	defer client.Close()
 	r, err := client.Metadata(4, &metaData.Request{
 		Topics: []metaData.TopicName{{Name: "foo"}},
@@ -153,7 +153,7 @@ func testMetadataPartition(t *testing.T, b *kafka.Binding) {
 
 func testMetadataInvalidTopic(t *testing.T, b *kafka.Binding) {
 	c := asyncapitest.NewConfig(
-		asyncapitest.WithServer("foo", "kafka", ":9092"),
+		asyncapitest.WithServer("foo", "kafka", "127.0.0.1:9092"),
 		asyncapitest.WithChannel(
 			"foo",
 			asyncapitest.WithSubscribeAndPublish(
@@ -164,7 +164,7 @@ func testMetadataInvalidTopic(t *testing.T, b *kafka.Binding) {
 	err := b.Apply(c)
 	test.Ok(t, err)
 
-	client := kafkatest.NewClient(":9092", "kafkatest")
+	client := kafkatest.NewClient("127.0.0.1:9092", "kafkatest")
 	defer client.Close()
 	r, err := client.Metadata(4, &metaData.Request{
 		Topics: []metaData.TopicName{{Name: "foo"}, {Name: "bar"}},
@@ -177,7 +177,7 @@ func testMetadataInvalidTopic(t *testing.T, b *kafka.Binding) {
 
 func testMetadataInvalidTopicName(t *testing.T, b *kafka.Binding) {
 	c := asyncapitest.NewConfig(
-		asyncapitest.WithServer("foo", "kafka", ":9092"),
+		asyncapitest.WithServer("foo", "kafka", "127.0.0.1:9092"),
 		asyncapitest.WithChannel(
 			"foo",
 			asyncapitest.WithSubscribeAndPublish(
@@ -188,7 +188,7 @@ func testMetadataInvalidTopicName(t *testing.T, b *kafka.Binding) {
 	err := b.Apply(c)
 	test.Ok(t, err)
 
-	client := kafkatest.NewClient(":9092", "kafkatest")
+	client := kafkatest.NewClient("127.0.0.1:9092", "kafkatest")
 	defer client.Close()
 
 	for _, name := range []string{"", ".", "..", "event?", strings.Repeat("a", 250)} {

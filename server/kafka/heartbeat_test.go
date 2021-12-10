@@ -5,21 +5,20 @@ import (
 	"mokapi/config/dynamic/openapi/openapitest"
 	"mokapi/server/kafka"
 	"mokapi/server/kafka/protocol"
+	"mokapi/server/kafka/protocol/heartbeat"
 	"mokapi/server/kafka/protocol/kafkatest"
-	"mokapi/server/kafka/protocol/produce"
 	"mokapi/test"
 	"testing"
-	"time"
 )
 
-func TestProduce(t *testing.T) {
+func TestHeartbeat(t *testing.T) {
 	testdata := []struct {
 		name string
 		fn   func(*testing.T, *kafka.Binding)
 	}{
 		{
-			"default",
-			testProduce,
+			"empty",
+			testHeartbeatEmpty,
 		},
 	}
 
@@ -32,7 +31,7 @@ func TestProduce(t *testing.T) {
 	}
 }
 
-func testProduce(t *testing.T, b *kafka.Binding) {
+func testHeartbeatEmpty(t *testing.T, b *kafka.Binding) {
 	c := asyncapitest.NewConfig(
 		asyncapitest.WithServer("foo", "kafka", "127.0.0.1:9092"),
 		asyncapitest.WithChannel(
@@ -44,25 +43,12 @@ func testProduce(t *testing.T, b *kafka.Binding) {
 
 	client := kafkatest.NewClient("127.0.0.1:9092", "kafkatest")
 	defer client.Close()
-	r, err := client.Produce(3, &produce.Request{Topics: []produce.RequestTopic{
-		{Name: "foo", Data: produce.RequestPartition{
-			Partition: 0,
-			Record: protocol.RecordBatch{
-				Offset: 0,
-				Records: []protocol.Record{
-					{
-						Offset:  0,
-						Time:    time.Now(),
-						Key:     []byte("foo"),
-						Value:   []byte("bar"),
-						Headers: nil,
-					},
-				},
-			},
-		},
-		}},
+	r, err := client.Heartbeat(3, &heartbeat.Request{
+		GroupId:         "",
+		GenerationId:    0,
+		MemberId:        "",
+		GroupInstanceId: "",
 	})
 	test.Ok(t, err)
-	test.Equals(t, "foo", r.Topics[0].Name)
-	test.Equals(t, protocol.None, r.Topics[0].ErrorCode)
+	test.Equals(t, protocol.GroupIdNotFound, r.ErrorCode)
 }

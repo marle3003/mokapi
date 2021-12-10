@@ -6,12 +6,12 @@ import (
 	"mokapi/server/kafka"
 	"mokapi/server/kafka/protocol"
 	"mokapi/server/kafka/protocol/kafkatest"
-	"mokapi/server/kafka/protocol/listOffsets"
+	"mokapi/server/kafka/protocol/offset"
 	"mokapi/test"
 	"testing"
 )
 
-func TestListOffsetsFetch(t *testing.T) {
+func TestOffsetsFetch(t *testing.T) {
 	testdata := []struct {
 		name string
 		fn   func(*testing.T, *kafka.Binding)
@@ -37,7 +37,7 @@ func TestListOffsetsFetch(t *testing.T) {
 
 func testListOffsetsFetchEmpty(t *testing.T, b *kafka.Binding) {
 	c := asyncapitest.NewConfig(
-		asyncapitest.WithServer("foo", "kafka", ":9092"),
+		asyncapitest.WithServer("foo", "kafka", "127.0.0.1:9092"),
 		asyncapitest.WithChannel(
 			"foo", asyncapitest.WithSubscribeAndPublish(
 				asyncapitest.WithMessage(
@@ -45,12 +45,12 @@ func testListOffsetsFetchEmpty(t *testing.T, b *kafka.Binding) {
 	err := b.Apply(c)
 	test.Ok(t, err)
 
-	client := kafkatest.NewClient(":9092", "kafkatest")
+	client := kafkatest.NewClient("127.0.0.1:9092", "kafkatest")
 	defer client.Close()
-	r, err := client.ListOffsets(3, &listOffsets.Request{Topics: []listOffsets.RequestTopic{
+	r, err := client.Offset(3, &offset.Request{Topics: []offset.RequestTopic{
 		{
 			Name: "foo",
-			Partitions: []listOffsets.RequestPartition{
+			Partitions: []offset.RequestPartition{
 				{
 					Index:     0,
 					Timestamp: 0,
@@ -69,7 +69,7 @@ func testListOffsetsFetchEmpty(t *testing.T, b *kafka.Binding) {
 
 func testListOffsetsFetchWithSingle(t *testing.T, b *kafka.Binding) {
 	c := asyncapitest.NewConfig(
-		asyncapitest.WithServer("foo", "kafka", ":9092"),
+		asyncapitest.WithServer("foo", "kafka", "127.0.0.1:9092"),
 		asyncapitest.WithChannel(
 			"foo", asyncapitest.WithSubscribeAndPublish(
 				asyncapitest.WithMessage(
@@ -77,15 +77,15 @@ func testListOffsetsFetchWithSingle(t *testing.T, b *kafka.Binding) {
 	err := b.Apply(c)
 	test.Ok(t, err)
 
-	client := kafkatest.NewClient(":9092", "kafkatest")
+	client := kafkatest.NewClient("127.0.0.1:9092", "kafkatest")
 	defer client.Close()
 
 	testProduce(t, b)
 
-	r, err := client.ListOffsets(3, &listOffsets.Request{Topics: []listOffsets.RequestTopic{
+	r, err := client.Offset(3, &offset.Request{Topics: []offset.RequestTopic{
 		{
 			Name: "foo",
-			Partitions: []listOffsets.RequestPartition{
+			Partitions: []offset.RequestPartition{
 				{
 					Index:     0,
 					Timestamp: 0,
@@ -96,12 +96,12 @@ func testListOffsetsFetchWithSingle(t *testing.T, b *kafka.Binding) {
 
 	p := r.Topics[0].Partitions[0]
 	test.Equals(t, protocol.None, p.ErrorCode)
-	test.Equals(t, int64(1), p.Offset)
+	test.Equals(t, int64(0), p.Offset)
 
-	r, err = client.ListOffsets(3, &listOffsets.Request{Topics: []listOffsets.RequestTopic{
+	r, err = client.Offset(3, &offset.Request{Topics: []offset.RequestTopic{
 		{
 			Name: "foo",
-			Partitions: []listOffsets.RequestPartition{
+			Partitions: []offset.RequestPartition{
 				{
 					Index:     0,
 					Timestamp: -2,

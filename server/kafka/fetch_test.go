@@ -58,7 +58,7 @@ func TestFetch(t *testing.T) {
 
 func testFetchEmpty(t *testing.T, b *kafka.Binding) {
 	c := asyncapitest.NewConfig(
-		asyncapitest.WithServer("foo", "kafka", ":9092"),
+		asyncapitest.WithServer("foo", "kafka", "127.0.0.1:9092"),
 		asyncapitest.WithChannel(
 			"foo", asyncapitest.WithSubscribeAndPublish(
 				asyncapitest.WithMessage(
@@ -66,7 +66,7 @@ func testFetchEmpty(t *testing.T, b *kafka.Binding) {
 	err := b.Apply(c)
 	test.Ok(t, err)
 
-	client := kafkatest.NewClient(":9092", "kafkatest")
+	client := kafkatest.NewClient("127.0.0.1:9092", "kafkatest")
 	defer client.Close()
 	r, err := client.Fetch(3, &fetch.Request{Topics: []fetch.Topic{
 		{
@@ -91,7 +91,7 @@ func testFetchEmpty(t *testing.T, b *kafka.Binding) {
 
 func testFetchEmptyMaxWait(t *testing.T, b *kafka.Binding) {
 	c := asyncapitest.NewConfig(
-		asyncapitest.WithServer("foo", "kafka", ":9092"),
+		asyncapitest.WithServer("foo", "kafka", "127.0.0.1:9092"),
 		asyncapitest.WithChannel(
 			"foo", asyncapitest.WithSubscribeAndPublish(
 				asyncapitest.WithMessage(
@@ -99,7 +99,7 @@ func testFetchEmptyMaxWait(t *testing.T, b *kafka.Binding) {
 	err := b.Apply(c)
 	test.Ok(t, err)
 
-	client := kafkatest.NewClient(":9092", "kafkatest")
+	client := kafkatest.NewClient("127.0.0.1:9092", "kafkatest")
 	defer client.Close()
 	start := time.Now()
 	_, err = client.Fetch(3, &fetch.Request{Topics: []fetch.Topic{
@@ -123,7 +123,7 @@ func testFetchEmptyMaxWait(t *testing.T, b *kafka.Binding) {
 
 func testFetchOneRecord(t *testing.T, b *kafka.Binding) {
 	c := asyncapitest.NewConfig(
-		asyncapitest.WithServer("foo", "kafka", ":9092"),
+		asyncapitest.WithServer("foo", "kafka", "127.0.0.1:9092"),
 		asyncapitest.WithChannel(
 			"foo", asyncapitest.WithSubscribeAndPublish(
 				asyncapitest.WithMessage(
@@ -131,7 +131,7 @@ func testFetchOneRecord(t *testing.T, b *kafka.Binding) {
 	err := b.Apply(c)
 	test.Ok(t, err)
 
-	client := kafkatest.NewClient(":9092", "kafkatest")
+	client := kafkatest.NewClient("127.0.0.1:9092", "kafkatest")
 	defer client.Close()
 	testProduce(t, b)
 	r, err := client.Fetch(3, &fetch.Request{Topics: []fetch.Topic{
@@ -158,7 +158,7 @@ func testFetchOneRecord(t *testing.T, b *kafka.Binding) {
 
 func testFetchTwoRecordMaxBytesZero(t *testing.T, b *kafka.Binding) {
 	c := asyncapitest.NewConfig(
-		asyncapitest.WithServer("foo", "kafka", ":9092"),
+		asyncapitest.WithServer("foo", "kafka", "127.0.0.1:9092"),
 		asyncapitest.WithChannel(
 			"foo", asyncapitest.WithSubscribeAndPublish(
 				asyncapitest.WithMessage(
@@ -166,7 +166,7 @@ func testFetchTwoRecordMaxBytesZero(t *testing.T, b *kafka.Binding) {
 	err := b.Apply(c)
 	test.Ok(t, err)
 
-	client := kafkatest.NewClient(":9092", "kafkatest")
+	client := kafkatest.NewClient("127.0.0.1:9092", "kafkatest")
 	defer client.Close()
 	testProduce(t, b)
 	testProduce(t, b)
@@ -195,7 +195,7 @@ func testFetchTwoRecordMaxBytesZero(t *testing.T, b *kafka.Binding) {
 
 func testFetchTwoRecords(t *testing.T, b *kafka.Binding) {
 	c := asyncapitest.NewConfig(
-		asyncapitest.WithServer("foo", "kafka", ":9092"),
+		asyncapitest.WithServer("foo", "kafka", "127.0.0.1:9092"),
 		asyncapitest.WithChannel(
 			"foo", asyncapitest.WithSubscribeAndPublish(
 				asyncapitest.WithMessage(
@@ -203,7 +203,7 @@ func testFetchTwoRecords(t *testing.T, b *kafka.Binding) {
 	err := b.Apply(c)
 	test.Ok(t, err)
 
-	client := kafkatest.NewClient(":9092", "kafkatest")
+	client := kafkatest.NewClient("127.0.0.1:9092", "kafkatest")
 	defer client.Close()
 	testProduce(t, b)
 	testProduce(t, b)
@@ -236,7 +236,7 @@ func testFetchTwoRecords(t *testing.T, b *kafka.Binding) {
 
 func testFetchMinBytes(t *testing.T, b *kafka.Binding) {
 	c := asyncapitest.NewConfig(
-		asyncapitest.WithServer("foo", "kafka", ":9092"),
+		asyncapitest.WithServer("foo", "kafka", "127.0.0.1:9092"),
 		asyncapitest.WithChannel(
 			"foo", asyncapitest.WithSubscribeAndPublish(
 				asyncapitest.WithMessage(
@@ -244,7 +244,7 @@ func testFetchMinBytes(t *testing.T, b *kafka.Binding) {
 	err := b.Apply(c)
 	test.Ok(t, err)
 
-	client := kafkatest.NewClient(":9092", "kafkatest")
+	client := kafkatest.NewClient("127.0.0.1:9092", "kafkatest")
 	defer client.Close()
 	ch := make(chan *fetch.Response, 1)
 	go func() {
@@ -281,7 +281,7 @@ func testFetchMinBytes(t *testing.T, b *kafka.Binding) {
 
 func testFetchOffsetOutOfRange(t *testing.T, b *kafka.Binding) {
 	c := asyncapitest.NewConfig(
-		asyncapitest.WithServer("foo", "kafka", ":9092"),
+		asyncapitest.WithServer("foo", "kafka", "127.0.0.1:9092"),
 		asyncapitest.WithChannel(
 			"foo", asyncapitest.WithSubscribeAndPublish(
 				asyncapitest.WithMessage(
@@ -289,7 +289,7 @@ func testFetchOffsetOutOfRange(t *testing.T, b *kafka.Binding) {
 	err := b.Apply(c)
 	test.Ok(t, err)
 
-	client := kafkatest.NewClient(":9092", "kafkatest")
+	client := kafkatest.NewClient("127.0.0.1:9092", "kafkatest")
 	defer client.Close()
 	r, err := client.Fetch(3, &fetch.Request{Topics: []fetch.Topic{
 		{
