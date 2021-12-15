@@ -26,19 +26,19 @@ func (r *Response) Read(reader io.Reader) error {
 		return fmt.Errorf("header not set")
 	}
 
-	r.Header.Size = d.readInt32()
+	r.Header.Size = d.ReadInt32()
 	if r.Header.Size == 0 {
-		return nil
+		return io.EOF
 	}
 	d.leftSize = int(r.Header.Size)
 
-	correlationId := d.readInt32()
+	correlationId := d.ReadInt32()
 	if correlationId != r.Header.CorrelationId {
 		return fmt.Errorf("error correlation id, expected %v, got %v, requested %v", r.Header.CorrelationId, correlationId, r.Header.ApiKey)
 	}
 
 	if r.Header.ApiVersion >= ApiTypes[r.Header.ApiKey].flexibleResponse {
-		r.Header.TagFields = d.readTagFields()
+		r.Header.TagFields = d.ReadTagFields()
 	}
 
 	if r.Header.Size == 0 {

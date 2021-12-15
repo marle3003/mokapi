@@ -10,7 +10,6 @@ import (
 type Attributes int16
 
 type RecordBatch struct {
-	Offset  int64
 	Records []Record
 }
 
@@ -19,25 +18,25 @@ func NewRecordBatch() RecordBatch {
 }
 
 func (rb *RecordBatch) ReadFrom(d *Decoder) error {
-	size := d.readInt32()
+	size := d.ReadInt32()
 	if size <= 0 {
 		return nil
 	}
 
 	// partition base offset of following records
-	baseOffset := d.readInt64()
-	d.readInt32()        // batchLength
-	d.readInt32()        // leader epoch
-	d.readInt8()         // magic
-	crc := d.readInt32() // checksum
-	attributes := Attributes(d.readInt16())
-	d.readInt32() // lastOffsetDelta
-	firstTimestamp := d.readInt64()
-	d.readInt64() // maxTimestamp
-	producerId := d.readInt64()
-	producerEpoch := d.readInt16()
-	d.readInt32() // baseSequence
-	numRecords := d.readInt32()
+	baseOffset := d.ReadInt64()
+	d.ReadInt32()        // batchLength
+	d.ReadInt32()        // leader epoch
+	d.ReadInt8()         // magic
+	crc := d.ReadInt32() // checksum
+	attributes := Attributes(d.ReadInt16())
+	d.ReadInt32() // lastOffsetDelta
+	firstTimestamp := d.ReadInt64()
+	d.ReadInt64() // maxTimestamp
+	producerId := d.ReadInt64()
+	producerEpoch := d.ReadInt16()
+	d.ReadInt32() // baseSequence
+	numRecords := d.ReadInt32()
 
 	_ = crc
 	_ = producerId
@@ -50,25 +49,25 @@ func (rb *RecordBatch) ReadFrom(d *Decoder) error {
 	rb.Records = make([]Record, numRecords)
 	for i := range rb.Records {
 		r := &rb.Records[i]
-		l := d.readVarInt() // length
+		l := d.ReadVarInt() // length
 		_ = l
-		d.readInt8() // attributes
+		d.ReadInt8() // attributes
 
-		timestampDelta := d.readVarInt()
-		offsetDelta := d.readVarInt()
+		timestampDelta := d.ReadVarInt()
+		offsetDelta := d.ReadVarInt()
 		r.Offset = baseOffset + offsetDelta
 		r.Time = toTime(firstTimestamp + timestampDelta)
 
-		r.Key = d.readVarNullBytes()
-		r.Value = d.readVarNullBytes()
+		r.Key = d.ReadVarNullBytes()
+		r.Value = d.ReadVarNullBytes()
 
-		headerLen := d.readVarInt()
+		headerLen := d.ReadVarInt()
 		if headerLen > 0 {
 			r.Headers = make([]RecordHeader, headerLen)
 			for i := range r.Headers {
 				r.Headers[i] = RecordHeader{
-					Key:   d.readString(),
-					Value: d.readBytes(),
+					Key:   d.ReadString(),
+					Value: d.ReadBytes(),
 				}
 			}
 		}
@@ -90,11 +89,11 @@ type RecordHeader struct {
 	Value []byte
 }
 
-func (r *Record) Size() int32 {
-	return int32(len(r.Key)) + int32(len(r.Value))
+func (r *Record) Size() int {
+	return len(r.Key) + len(r.Value)
 }
 
-func (rb *RecordBatch) Size() (s int32) {
+func (rb *RecordBatch) Size() (s int) {
 	for _, r := range rb.Records {
 		s += r.Size()
 	}

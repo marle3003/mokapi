@@ -18,14 +18,12 @@ import (
 	"mokapi/models"
 	"mokapi/server/api"
 	"mokapi/server/cert"
-	"mokapi/server/kafka"
 	ldapServer "mokapi/server/ldap"
 	smtpServer "mokapi/server/smtp"
 	"mokapi/server/web"
 	"path/filepath"
 	"strings"
 	"sync"
-	"time"
 )
 
 type Binding interface {
@@ -103,24 +101,24 @@ func (s *Server) Stop() {
 
 func (s *Server) startMetricUpdater() {
 	go func() {
-		ticker := time.NewTicker(time.Duration(5) * time.Second)
+		//ticker := time.NewTicker(time.Duration(5) * time.Second)
 
-		for {
-			select {
-			case <-ticker.C:
-				s.mutex.Lock()
-				s.runtime.Metrics.Update()
-				for _, e := range s.Bindings {
-					switch b := e.(type) {
-					case *kafka.Binding:
-						b.UpdateMetrics(s.runtime.Metrics.Kafka)
-					}
-				}
-				s.mutex.Unlock()
-			case <-s.stopMetricsUpdater:
-				return
-			}
-		}
+		//for {
+		//	select {
+		//	case <-ticker.C:
+		//		s.mutex.Lock()
+		//		s.runtime.Metrics.Update()
+		//		for _, e := range s.Bindings {
+		//			switch b := e.(type) {
+		//			case *kafka.Binding:
+		//				b.UpdateMetrics(s.runtime.Metrics.Kafka)
+		//			}
+		//		}
+		//		s.mutex.Unlock()
+		//	case <-s.stopMetricsUpdater:
+		//		return
+		//	}
+		//}
 	}()
 }
 
@@ -193,29 +191,30 @@ func (s *Server) updateConfigs(config *common.File) {
 		}
 		log.Infof("processed config %v", config.Url.String())
 	case *asyncApi.Config:
-		if err := c.Validate(); err != nil {
-			log.Warnf("validation error %v: %v", config.Url, err)
-			return
-		}
-
-		if _, ok := s.runtime.AsyncApi[c.Info.Name]; !ok {
-			s.runtime.AsyncApi[c.Info.Name] = c
-		}
-
-		binding, found := s.Bindings[c.Info.Name]
-		if !found {
-			b := kafka.NewBinding(s.runtime.Metrics.AddMessage)
-			binding = b
-			s.Bindings[c.Info.Name] = b
-			b.Start()
-			b.UpdateMetrics(s.runtime.Metrics.Kafka)
-		}
-		err := binding.Apply(c)
-		if err != nil {
-			log.Errorf("error on updating %v: %v", config.Url.String(), err.Error())
-			return
-		}
-		log.Infof("processed config %v", config.Url.String())
+		panic("not implemented")
+		//if err := c.Validate(); err != nil {
+		//	log.Warnf("validation error %v: %v", config.Url, err)
+		//	return
+		//}
+		//
+		//if _, ok := s.runtime.AsyncApi[c.Info.Name]; !ok {
+		//	s.runtime.AsyncApi[c.Info.Name] = c
+		//}
+		//
+		//binding, found := s.Bindings[c.Info.Name]
+		//if !found {
+		//	b := kafka.NewBinding(s.runtime.Metrics.AddMessage)
+		//	binding = b
+		//	s.Bindings[c.Info.Name] = b
+		//	b.Start()
+		//	b.UpdateMetrics(s.runtime.Metrics.Kafka)
+		//}
+		//err := binding.Apply(c)
+		//if err != nil {
+		//	log.Errorf("error on updating %v: %v", config.Url.String(), err.Error())
+		//	return
+		//}
+		//log.Infof("processed config %v", config.Url.String())
 	case *smtp.Config:
 		if _, ok := s.runtime.Smtp[c.Name]; !ok {
 			s.runtime.Smtp[c.Name] = c
@@ -255,21 +254,22 @@ func (s *Server) appendCertificate(c mokapi.Certificate, currentDir string) erro
 }
 
 func (s *Server) writeKafkaMessage(broker, topic string, partition int, key, message, header interface{}) (interface{}, interface{}, error) {
-	s.mutex.RLock()
-	defer s.mutex.RUnlock()
-
-	for _, c := range s.Bindings {
-		if b, ok := c.(*kafka.Binding); ok {
-			// if empty broker, try first binding
-			if len(broker) == 0 {
-				return b.AddMessage(topic, partition, key, message, header)
-			}
-
-			if b.HasBroker(broker) {
-				return b.AddMessage(topic, partition, key, message, header)
-			}
-		}
-	}
-
-	return nil, nil, fmt.Errorf("no broker found at %v", broker)
+	//s.mutex.RLock()
+	//defer s.mutex.RUnlock()
+	//
+	//for _, c := range s.Bindings {
+	//	if b, ok := c.(*kafka.Binding); ok {
+	//		// if empty broker, try first binding
+	//		if len(broker) == 0 {
+	//			return b.AddMessage(topic, partition, key, message, header)
+	//		}
+	//
+	//		if b.HasBroker(broker) {
+	//			return b.AddMessage(topic, partition, key, message, header)
+	//		}
+	//	}
+	//}
+	//
+	//return nil, nil, fmt.Errorf("no broker found at %v", broker)
+	return nil, nil, fmt.Errorf("not implemented")
 }

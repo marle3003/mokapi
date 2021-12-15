@@ -24,13 +24,14 @@ const (
 	JoinGroup       ApiKey = 11
 	Heartbeat       ApiKey = 12
 	SyncGroup       ApiKey = 14
+	ListGroup       ApiKey = 16
 	ApiVersions     ApiKey = 18
 )
 
 var apitext = map[ApiKey]string{
 	Produce:         "Produce",
 	Fetch:           "Fetch",
-	Offset:          "ListOffsets",
+	Offset:          "Offset",
 	Metadata:        "Metadata",
 	OffsetCommit:    "OffsetCommit",
 	OffsetFetch:     "OffsetFetch",
@@ -253,20 +254,20 @@ func getTag(f reflect.StructField) kafkaTag {
 func readHeader(d *Decoder) (h *Header) {
 	h = &Header{}
 
-	h.Size = d.readInt32()
+	h.Size = d.ReadInt32()
 	if h.Size == 0 {
 		return
 	}
 
 	d.leftSize = int(h.Size)
 
-	h.ApiKey = ApiKey(d.readInt16())
-	h.ApiVersion = d.readInt16()
-	h.CorrelationId = d.readInt32()
-	h.ClientId = d.readString()
+	h.ApiKey = ApiKey(d.ReadInt16())
+	h.ApiVersion = d.ReadInt16()
+	h.CorrelationId = d.ReadInt32()
+	h.ClientId = d.ReadString()
 
 	if h.ApiVersion >= ApiTypes[h.ApiKey].flexibleRequest {
-		h.TagFields = d.readTagFields()
+		h.TagFields = d.ReadTagFields()
 	}
 
 	return

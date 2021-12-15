@@ -8,6 +8,7 @@ import (
 	"mokapi/server/kafka/protocol/findCoordinator"
 	"mokapi/server/kafka/protocol/heartbeat"
 	"mokapi/server/kafka/protocol/joinGroup"
+	"mokapi/server/kafka/protocol/listgroup"
 	"mokapi/server/kafka/protocol/metaData"
 	"mokapi/server/kafka/protocol/offset"
 	"mokapi/server/kafka/protocol/offsetCommit"
@@ -16,24 +17,27 @@ import (
 	"mokapi/server/kafka/protocol/syncGroup"
 	"net"
 	"reflect"
+	"time"
 )
 
 // Client is not thread-safe
 type Client struct {
+	Addr    string
+	Timeout time.Duration
+
 	conn          net.Conn
 	clientId      string
 	correlationId int32
 }
 
 func NewClient(addr, clientId string) *Client {
-	conn, err := net.Dial("tcp", addr)
-	if err != nil {
-		panic(err)
-	}
-	return &Client{conn: conn, clientId: clientId}
+	return &Client{Addr: addr, clientId: clientId, Timeout: time.Second * 30}
 }
 
 func (c *Client) Close() {
+	if c.conn == nil {
+		return
+	}
 	err := c.conn.Close()
 	if err != nil {
 		panic(err)
@@ -41,9 +45,18 @@ func (c *Client) Close() {
 }
 
 func (c *Client) Send(r *protocol.Request) (*protocol.Response, error) {
+	var err error
+	if c.conn == nil {
+		d := net.Dialer{Timeout: c.Timeout}
+		c.conn, err = d.Dial("tcp", c.Addr)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	r.Header.CorrelationId = c.correlationId
 	c.correlationId++
-	err := r.Write(c.conn)
+	err = r.Write(c.conn)
 	if err != nil {
 		return nil, err
 	}
@@ -174,6 +187,17 @@ func (c *Client) OffsetCommit(version int, r *offsetCommit.Request) (*offsetComm
 	return nil, fmt.Errorf("unexpected response message: %t", res.Message)
 }
 
+func (c *Client) Listgroup(version int, r *listgroup.Request) (*listgroup.Response, error) {
+	res, err := c.Send(NewRequest(c.clientId, version, r))
+	if err != nil {
+		return nil, err
+	}
+	if msg, ok := res.Message.(*listgroup.Response); ok {
+		return msg, nil
+	}
+	return nil, fmt.Errorf("unexpected response message: %t", res.Message)
+}
+
 func (c *Client) JoinSyncGroup(member, group string, joinVersion, syncVersion int) error {
 	join, err := c.JoinGroup(joinVersion, &joinGroup.Request{
 		GroupId:      group,
@@ -192,6 +216,12 @@ func (c *Client) JoinSyncGroup(member, group string, joinVersion, syncVersion in
 		GroupId:      group,
 		MemberId:     member,
 		ProtocolType: "consumer",
+		GroupAssignments: []syncGroup.GroupAssignment{
+			{
+				MemberId:   member,
+				Assignment: []byte{},
+			},
+		},
 	})
 	if err != nil {
 		return err

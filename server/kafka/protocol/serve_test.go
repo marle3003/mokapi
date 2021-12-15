@@ -1,9 +1,9 @@
 package protocol_test
 
 import (
+	"mokapi/server/kafka/kafkatest"
 	"mokapi/server/kafka/protocol"
 	"mokapi/server/kafka/protocol/apiVersion"
-	"mokapi/server/kafka/protocol/kafkatest"
 	"mokapi/test"
 	"testing"
 )

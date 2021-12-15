@@ -10,9 +10,14 @@ import (
 type Request struct {
 	Header  *Header
 	Message Message
+	Context Context
 }
 
 func (r *Request) Write(w io.Writer) error {
+	if r.Message == nil {
+		return fmt.Errorf("message is nil")
+	}
+
 	buffer := newPageBuffer()
 	defer func() {
 		buffer.unref()

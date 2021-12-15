@@ -2,97 +2,164 @@ package kafka
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/asyncApi/kafka"
+	"mokapi/server/kafka/protocol"
+	"mokapi/server/kafka/protocol/apiVersion"
+	"mokapi/server/kafka/protocol/fetch"
+	"mokapi/server/kafka/protocol/findCoordinator"
+	"mokapi/server/kafka/protocol/heartbeat"
+	"mokapi/server/kafka/protocol/joinGroup"
+	"mokapi/server/kafka/protocol/listgroup"
+	"mokapi/server/kafka/protocol/metaData"
+	"mokapi/server/kafka/protocol/offset"
+	"mokapi/server/kafka/protocol/offsetCommit"
+	"mokapi/server/kafka/protocol/offsetFetch"
+	"mokapi/server/kafka/protocol/produce"
+	"mokapi/server/kafka/protocol/syncGroup"
 	"net"
 	"sync"
 	"time"
 )
 
-type broker struct {
-	name string
-	id   int
-	host string
-	port int
-
-	listener             net.Listener
-	closeListener        chan bool
-	stopped              chan bool
-	stopRetentionChecker chan bool
-	config               kafka.BrokerBindings
+type nullCluster struct {
 }
 
-func newBroker(brokerId int, name string, host string, port int, config kafka.BrokerBindings) *broker {
-	b := &broker{name: name, id: brokerId, host: host, port: port, config: config, closeListener: make(chan bool, 1), stopRetentionChecker: make(chan bool, 1), stopped: make(chan bool)}
+func (c *nullCluster) Topic(string) Topic {
+	return nil
+}
+
+func (c *nullCluster) Topics() []Topic {
+	return nil
+}
+
+func (c *nullCluster) AddTopic(string) (Topic, error) {
+	return nil, fmt.Errorf("not supported")
+}
+
+func (c *nullCluster) Group(string) Group {
+	return nil
+}
+
+func (c *nullCluster) Groups() []Group {
+	return nil
+}
+
+func (c *nullCluster) NewGroup(string) (Group, error) {
+	return nil, fmt.Errorf("not supported")
+}
+
+func (c *nullCluster) Brokers() []Broker {
+	return nil
+}
+
+type BrokerServer struct {
+	Id      int
+	Config  kafka.BrokerBindings
+	Cluster Cluster
+	Clients map[net.Conn]*ClientContext
+
+	server    *protocol.Server
+	balancers map[string]*groupBalancerNew
+	lock      sync.RWMutex
+}
+
+func NewBrokerServer(id int, addr string) *BrokerServer {
+	b := &BrokerServer{
+		Id:      id,
+		Cluster: &nullCluster{},
+		Clients: make(map[net.Conn]*ClientContext),
+	}
+	b.server = &protocol.Server{
+		Addr:    addr,
+		Handler: b,
+		ConnContext: func(ctx protocol.Context, conn net.Conn) protocol.Context {
+			cctx := &ClientContext{
+				ctx: ctx,
+				close: func() {
+					b.lock.Lock()
+					defer b.lock.Unlock()
+
+					delete(b.Clients, conn)
+					ctx.Close()
+				}}
+			b.Clients[conn] = cctx
+			return cctx
+		},
+	}
 	return b
 }
 
-type client struct {
-	id            string
-	group         *group
-	lastHeartbeat time.Time
+func (b *BrokerServer) ListenAndServe() error {
+	return b.server.ListenAndServe()
 }
 
-func (b *broker) start(c controller) {
+func (b *BrokerServer) Serve(l net.Listener) error {
+	return b.server.Serve(l)
+}
+
+func (b *BrokerServer) Close() {
+	for _, balancer := range b.balancers {
+		balancer.stop <- true
+	}
+	b.server.Close()
+}
+
+func (b *BrokerServer) ServeMessage(rw protocol.ResponseWriter, req *protocol.Request) {
+	req.Context.WithValue("heartbeat", time.Now())
+
 	var err error
-	b.listener, err = net.Listen("tcp", fmt.Sprintf(":%v", b.port))
-	if err != nil {
-		log.Errorf("Error listening: %v", err.Error())
-		return
+	switch req.Message.(type) {
+	case *produce.Request:
+		err = b.produce(rw, req)
+	case *fetch.Request:
+		err = b.fetch(rw, req)
+	case *offset.Request:
+		err = b.offset(rw, req)
+	case *metaData.Request:
+		err = b.metadata(rw, req)
+	case *offsetCommit.Request:
+		err = b.offsetCommit(rw, req)
+	case *offsetFetch.Request:
+		err = b.offsetFetch(rw, req)
+	case *findCoordinator.Request:
+		err = b.findCoordinator(rw, req)
+	case *joinGroup.Request:
+		err = b.joingroup(rw, req)
+	case *heartbeat.Request:
+		err = b.heartbeat(rw, req)
+	case *syncGroup.Request:
+		err = b.syncgroup(rw, req)
+	case *listgroup.Request:
+		err = b.listgroup(rw, req)
+	case *apiVersion.Request:
+		err = b.apiversion(rw, req)
+	default:
+		err = fmt.Errorf("unsupported api key: %v", req.Header.ApiKey)
 	}
-	var handlers sync.WaitGroup
 
-	go func() {
-		for {
-			// Listen for an incoming connection.
-			conn, err := b.listener.Accept()
-			if err != nil {
-				select {
-				case <-b.closeListener:
-					handlers.Wait()
-					b.stopped <- true
-					return
-				default:
-					log.Errorf("Error accepting: %v", err.Error())
-				}
-			}
-			// Handle connections in a new goroutine.
-			handlers.Add(1)
-			go func() {
-				go c.handle(conn)
-				handlers.Done()
-			}()
-		}
-	}()
-
-	go func() {
-		ticker := time.NewTicker(time.Duration(b.config.LogRetentionCheckIntervalMs()) * time.Millisecond)
-		defer ticker.Stop()
-
-		for {
-			select {
-			case <-b.stopRetentionChecker:
-				return
-			case <-ticker.C:
-				c.checkRetention(b)
-			}
-		}
-	}()
-
-	log.Infof("Started kafka broker %q with id %v on %v:%v", b.name, b.id, b.host, b.port)
+	if err != nil {
+		panic(fmt.Sprintf("kafka broker: %v", err))
+	}
 }
 
-func (b *broker) stop() {
-	log.Infof("Stopping kafka broker %q with id %v on %v:%v", b.name, b.id, b.host, b.port)
-	b.closeListener <- true
-	b.stopRetentionChecker <- true
-	err := b.listener.Close()
-	if err != nil {
-		log.Errorf("unable to stop kafka broker %q: %v", b.name, err.Error())
+func (b *BrokerServer) getBalancer(group Group) *groupBalancerNew {
+	b.lock.Lock()
+	defer b.lock.Unlock()
+
+	if b.balancers == nil {
+		b.balancers = make(map[string]*groupBalancerNew)
 	}
-	<-b.stopped
+	balancer, ok := b.balancers[group.Name()]
+	if ok {
+		return balancer
+	}
+
+	balancer = newGroupBalancerNew(group)
+	b.balancers[group.Name()] = balancer
+	go balancer.run()
+	return balancer
 }
 
-func (b *broker) newGroup(name string) *group {
-	return newGroup(name, b, b.config.GroupInitialRebalanceDelayMs())
+func getClientContext(req *protocol.Request) *ClientContext {
+	return req.Context.(*ClientContext)
 }

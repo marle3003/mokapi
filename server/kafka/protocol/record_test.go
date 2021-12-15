@@ -185,7 +185,7 @@ func TestRecordBatch_WriteTo(t *testing.T) {
 func TestRecord_Size(t *testing.T) {
 	testdata := []struct {
 		name  string
-		size  int32
+		size  int
 		batch RecordBatch
 	}{
 		{

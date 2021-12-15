@@ -111,85 +111,85 @@ func newStructDecodeFunc(t reflect.Type, version int16, _ kafkaTag) decodeFunc {
 }
 
 func (d *Decoder) decodeBytes(v reflect.Value) {
-	b := d.readBytes()
+	b := d.ReadBytes()
 	v.Set(reflect.ValueOf(b))
 }
 
 func (d *Decoder) decodeCompactBytes(v reflect.Value) {
-	b := d.readCompactBytes()
+	b := d.ReadCompactBytes()
 	v.Set(reflect.ValueOf(b))
 }
 
 func (d *Decoder) decodeCompactString(v reflect.Value) {
-	s := d.readCompactString()
+	s := d.ReadCompactString()
 	v.Set(reflect.ValueOf(s))
 }
 
 func (d *Decoder) decodeString(v reflect.Value) {
-	s := d.readString()
+	s := d.ReadString()
 	v.Set(reflect.ValueOf(s))
 }
 
 func (d *Decoder) decodeBool(v reflect.Value) {
-	b := d.readBool()
+	b := d.ReadBool()
 	v.Set(reflect.ValueOf(b))
 }
 
 func (d *Decoder) decodeInt8(v reflect.Value) {
-	i := d.readInt8()
+	i := d.ReadInt8()
 	v.Set(reflect.ValueOf(i).Convert(v.Type()))
 }
 
 func (d *Decoder) decodeInt16(v reflect.Value) {
-	i := d.readInt16()
+	i := d.ReadInt16()
 	v.Set(reflect.ValueOf(i).Convert(v.Type()))
 }
 
 func (d *Decoder) decodeInt32(v reflect.Value) {
-	i := d.readInt32()
+	i := d.ReadInt32()
 	v.Set(reflect.ValueOf(i))
 }
 
 func (d *Decoder) decodeInt64(v reflect.Value) {
-	i := d.readInt64()
+	i := d.ReadInt64()
 	v.Set(reflect.ValueOf(i))
 }
 
 func (d *Decoder) decodeTagBuffer(v reflect.Value) {
-	m := d.readTagFields()
+	m := d.ReadTagFields()
 	v.Set(reflect.ValueOf(m))
 }
 
-func (d *Decoder) readCompactString() string {
-	if n := d.readUvarint(); n == 0 {
+func (d *Decoder) ReadCompactString() string {
+	if n := d.ReadUvarint(); n == 0 {
 		return ""
 	} else {
 		b := make([]byte, n-1)
-		if d.readFull(b) {
+		if d.ReadFull(b) {
 			return string(b)
 		}
 	}
 	return ""
 }
 
-func (d *Decoder) readInt64() int64 {
-	if d.readFull(d.buffer[:8]) {
+func (d *Decoder) ReadInt64() int64 {
+	if d.ReadFull(d.buffer[:8]) {
 		i := binary.BigEndian.Uint64(d.buffer[:8])
 		return int64(i)
 	}
 	return 0
 }
 
-func (d *Decoder) readInt32() int32 {
-	if d.readFull(d.buffer[:4]) {
+func (d *Decoder) ReadInt32() int32 {
+	if d.ReadFull(d.buffer[:4]) {
 		i := binary.BigEndian.Uint32(d.buffer[:4])
 		return int32(i)
 	}
 	return 0
 }
 
-func (d *Decoder) readInt16() int16 {
-	if d.readFull(d.buffer[:2]) {
+func (d *Decoder) ReadInt16() int16 {
+	if d.ReadFull(d.buffer[:2]) {
 		i := binary.BigEndian.Uint16(d.buffer[:2])
 		return int16(i)
 	} else {
@@ -197,12 +197,12 @@ func (d *Decoder) readInt16() int16 {
 	}
 }
 
-func (d *Decoder) readInt8() int8 {
-	return int8(d.readByte())
+func (d *Decoder) ReadInt8() int8 {
+	return int8(d.ReadByte())
 }
 
-func (d *Decoder) readVarInt() int64 {
-	ux := d.readUvarint()
+func (d *Decoder) ReadVarInt() int64 {
+	ux := d.ReadUvarint()
 	x := int64(ux >> 1)
 	if ux&1 != 0 {
 		x = ^x
@@ -210,27 +210,27 @@ func (d *Decoder) readVarInt() int64 {
 	return x
 }
 
-func (d *Decoder) readBool() bool {
-	return d.readInt8() != 0
+func (d *Decoder) ReadBool() bool {
+	return d.ReadInt8() != 0
 }
 
-func (d *Decoder) readString() string {
-	if n := d.readInt16(); n < 0 {
+func (d *Decoder) ReadString() string {
+	if n := d.ReadInt16(); n < 0 {
 		return ""
 	} else {
 		b := make([]byte, n)
-		if d.readFull(b) {
+		if d.ReadFull(b) {
 			return string(b[0:])
 		}
 	}
 	return ""
 }
 
-func (d *Decoder) readUvarint() uint64 {
+func (d *Decoder) ReadUvarint() uint64 {
 	var x uint64
 	var s uint
 	for i := 0; ; i++ {
-		b := d.readByte()
+		b := d.ReadByte()
 		if b < 0x80 {
 			if i > 9 || i == 9 && b > 1 {
 				d.err = errors.New("kafka: varint overflows a 64-bit integer")
@@ -243,12 +243,12 @@ func (d *Decoder) readUvarint() uint64 {
 	}
 }
 
-func (d *Decoder) readCompactBytes() []byte {
-	if n := d.readUvarint(); n < 1 {
+func (d *Decoder) ReadCompactBytes() []byte {
+	if n := d.ReadUvarint(); n < 1 {
 		return nil
 	} else {
 		b := make([]byte, n)
-		if d.readFull(b) {
+		if d.ReadFull(b) {
 			return b
 		} else {
 			return nil
@@ -257,7 +257,7 @@ func (d *Decoder) readCompactBytes() []byte {
 }
 
 func (d *Decoder) decodeCompactArray(v reflect.Value, decodeElem decodeFunc) {
-	if n := d.readUvarint(); n < 1 {
+	if n := d.ReadUvarint(); n < 1 {
 		a := reflect.MakeSlice(v.Type(), 0, 0)
 		v.Set(a)
 	} else {
@@ -271,7 +271,7 @@ func (d *Decoder) decodeCompactArray(v reflect.Value, decodeElem decodeFunc) {
 }
 
 func (d *Decoder) decodeArray(v reflect.Value, decodeElem decodeFunc) {
-	if n := d.readInt32(); n < 0 {
+	if n := d.ReadInt32(); n < 0 {
 		a := reflect.MakeSlice(v.Type(), 0, 0)
 		v.Set(a)
 	} else {
@@ -283,7 +283,7 @@ func (d *Decoder) decodeArray(v reflect.Value, decodeElem decodeFunc) {
 	}
 }
 
-func (d *Decoder) readByte() byte {
+func (d *Decoder) ReadByte() byte {
 	if d.err != nil {
 		return 0
 	}
@@ -296,23 +296,23 @@ func (d *Decoder) readByte() byte {
 	return d.buffer[0]
 }
 
-func (d *Decoder) readBytes() []byte {
-	if n := d.readInt32(); n < 0 {
+func (d *Decoder) ReadBytes() []byte {
+	if n := d.ReadInt32(); n < 0 {
 		return nil
 	} else {
 		b := make([]byte, n)
-		d.readFull(b)
+		d.ReadFull(b)
 		return b
 	}
 }
 
-func (d *Decoder) readVarNullBytes() []byte {
-	n := d.readVarInt()
+func (d *Decoder) ReadVarNullBytes() []byte {
+	n := d.ReadVarInt()
 	if n == -1 {
 		return []byte{}
 	}
 	b := make([]byte, n)
-	d.readFull(b)
+	d.ReadFull(b)
 	return b
 }
 
@@ -327,7 +327,7 @@ func (d *Decoder) readVarNullBytes() []byte {
 //	return true
 //}
 
-func (d *Decoder) readFull(b []byte) bool {
+func (d *Decoder) ReadFull(b []byte) bool {
 	if d.err != nil {
 		return false
 	}
@@ -342,26 +342,19 @@ func (d *Decoder) readFull(b []byte) bool {
 	return true
 }
 
-func (d *Decoder) readDiscard() {
-	//for d.leftSize > 0 {
-	//	n, err := io.ReadFull(d.reader, d.buffer[:])
-	//	s = s[n:]
-	//}
-}
-
-func (d *Decoder) readTagFields() map[int64]string {
-	if tagCount := d.readUvarint(); tagCount == 0 {
+func (d *Decoder) ReadTagFields() map[int64]string {
+	if tagCount := d.ReadUvarint(); tagCount == 0 {
 		return nil
 	} else {
 		tagFields := make(map[int64]string)
 		for i := 0; i < int(tagCount); i++ {
-			tagId := d.readUvarint()
-			if size := d.readUvarint(); size == 0 {
+			tagId := d.ReadUvarint()
+			if size := d.ReadUvarint(); size == 0 {
 				d.err = errors.New("tag size zero")
 				return tagFields
 			} else {
 				tag := make([]byte, int(size))
-				d.readFull(tag)
+				d.ReadFull(tag)
 				tagFields[int64(tagId)] = string(tag)
 			}
 		}
