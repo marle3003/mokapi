@@ -7,7 +7,6 @@ import (
 	"mokapi/models"
 	"mokapi/models/media"
 	"net/http"
-	"sort"
 	"strings"
 )
 
@@ -41,20 +40,22 @@ func NewHttpContext(request *http.Request, response http.ResponseWriter, eh even
 }
 
 func (context *HttpContext) getFirstSuccessResponse() (openapi.HttpStatus, *openapi.ResponseRef, error) {
-	successStatus := make([]openapi.HttpStatus, 0, 1)
-	for httpStatus := range context.Operation.Responses {
-		if httpStatus.IsSuccess() {
-			successStatus = append(successStatus, httpStatus)
+	var successStatus openapi.HttpStatus
+	for it := context.Operation.Responses.Iter(); it.Next(); {
+		status := it.Key().(openapi.HttpStatus)
+		if status.IsSuccess() {
+			successStatus = status
+			break
 		}
 	}
 
-	if len(successStatus) == 0 {
+	if successStatus == 0 {
 		return 0, nil, fmt.Errorf("no success response (HTTP 2xx) in configuration")
 	}
 
-	sort.SliceStable(successStatus, func(i, j int) bool { return i < j })
+	v, _ := context.Operation.Responses.Get(successStatus)
 
-	return successStatus[0], context.Operation.Responses[successStatus[0]], nil
+	return successStatus, v.(*openapi.ResponseRef), nil
 }
 
 func (context *HttpContext) setResponse() error {

@@ -1,8 +1,10 @@
 package openapi
 
 import (
+	"errors"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
+	"mokapi/sortedmap"
 	"strconv"
 )
 
@@ -11,23 +13,31 @@ type refProp struct {
 }
 
 func (o *Responses) UnmarshalYAML(value *yaml.Node) error {
-	data := make(map[string]*ResponseRef)
-	err := value.Decode(data)
-	if err != nil {
-		return err
+	if value.Kind != yaml.MappingNode {
+		return errors.New("not a mapping node")
 	}
+	o.LinkedHashMap = *sortedmap.NewLinkedHashMap()
+	for i := 0; i < len(value.Content); i += 2 {
+		var key string
+		err := value.Content[i].Decode(&key)
+		if err != nil {
+			return err
+		}
+		val := &ResponseRef{}
+		err = value.Content[i+1].Decode(&val)
+		if err != nil {
+			return err
+		}
 
-	*o = make(map[HttpStatus]*ResponseRef)
-	for k, n := range data {
-		if k == "default" {
-			(*o)[Undefined] = n
+		if key == "default" {
+			o.Set(Undefined, val)
 		} else {
-			key, err := strconv.Atoi(k)
+			key, err := strconv.Atoi(key)
 			if err != nil {
-				log.Errorf("unable to parse http status %v", k)
+				log.Errorf("unable to parse http status %v", key)
 				continue
 			}
-			(*o)[HttpStatus(key)] = n
+			o.Set(HttpStatus(key), val)
 		}
 	}
 

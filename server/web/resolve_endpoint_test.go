@@ -56,7 +56,7 @@ func TestResolveEndpoint(t *testing.T) {
 				f(rr, r)
 				test.Equals(t, 200, rr.Code)
 			}},
-		{"with multiple success response",
+		{"with multiple success response 1/2",
 			func(t *testing.T, f serveHTTP, c *openapi.Config) {
 				op := openapitest.NewOperation(openapitest.WithResponse(openapi.NoContent), openapitest.WithResponse(openapi.Accepted))
 				openapitest.AppendEndpoint("/foo", c, openapitest.WithOperation("get", op))
@@ -65,7 +65,7 @@ func TestResolveEndpoint(t *testing.T) {
 				f(rr, r)
 				test.Equals(t, 204, rr.Code)
 			}},
-		{"with multiple success response",
+		{"with multiple success response 2/2",
 			func(t *testing.T, f serveHTTP, c *openapi.Config) {
 				op := openapitest.NewOperation(openapitest.WithResponse(openapi.Accepted), openapitest.WithResponse(openapi.NoContent))
 				openapitest.AppendEndpoint("/foo", c, openapitest.WithOperation("get", op))

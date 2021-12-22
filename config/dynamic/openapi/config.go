@@ -6,6 +6,7 @@ import (
 	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/mokapi"
 	"mokapi/models/media"
+	"mokapi/sortedmap"
 	"net/http"
 	"strconv"
 )
@@ -129,7 +130,7 @@ type Operation struct {
 
 	// The list of possible responses as they are returned from executing this
 	// operation.
-	Responses Responses `yaml:"responses" json:"responses"`
+	Responses *Responses `yaml:"responses" json:"responses"`
 
 	// The pipeline name used to identify the pipeline in the mokapi file.
 	// If pipeline name is already defined at the Path Item, the new definition
@@ -252,7 +253,9 @@ type RequestBody struct {
 	Required bool
 }
 
-type Responses map[HttpStatus]*ResponseRef
+type Responses struct {
+	sortedmap.LinkedHashMap
+} // map[HttpStatus]*ResponseRef
 
 type ResponseRef struct {
 	Ref   string `yaml:"$ref" json:"$ref"`

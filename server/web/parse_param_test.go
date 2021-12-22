@@ -1,6 +1,7 @@
 package web
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/test"
@@ -90,7 +91,7 @@ func TestParseParam(t *testing.T) {
 }
 
 func TestParse(t *testing.T) {
-	data := []struct {
+	testdata := []struct {
 		s      string
 		schema *openapi.SchemaRef
 		e      interface{}
@@ -142,10 +143,14 @@ func TestParse(t *testing.T) {
 		},
 	}
 
-	for i, d := range data {
-		t.Logf("parse %v: %v", i, d.s)
-		i, err := parse(d.s, d.schema)
-		test.Ok(t, err)
-		test.Equals(t, d.e, i)
+	t.Parallel()
+	for i, data := range testdata {
+		d := data
+		t.Run(fmt.Sprintf("parse %v: %v", i, d.s), func(t *testing.T) {
+			t.Parallel()
+			i, err := parse(d.s, d.schema)
+			test.Ok(t, err)
+			test.Equals(t, d.e, i)
+		})
 	}
 }

@@ -209,7 +209,8 @@ func (e *Endpoint) Parse(file *common.File, reader common.Reader) error {
 			return err
 		}
 
-		for _, res := range o.Responses {
+		for it := o.Responses.Iter(); it.Next(); {
+			res := it.Value().(*ResponseRef)
 			if err := res.Parse(file, reader); err != nil {
 				return err
 			}

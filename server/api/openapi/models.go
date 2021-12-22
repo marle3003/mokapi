@@ -172,8 +172,10 @@ func newOperation(method string, o *openapi.Operation, pipeline string) Operatio
 		}
 	}
 
-	for s, r := range o.Responses {
-		v.Responses = append(v.Responses, newResponse(s, r))
+	for it := o.Responses.Iter(); it.Next(); {
+		k := it.Key().(openapi.HttpStatus)
+		val := it.Value().(*openapi.ResponseRef)
+		v.Responses = append(v.Responses, newResponse(k, val))
 	}
 
 	return v

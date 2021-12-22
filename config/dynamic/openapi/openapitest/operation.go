@@ -5,7 +5,7 @@ import "mokapi/config/dynamic/openapi"
 type OperationOptions func(o *openapi.Operation)
 
 func NewOperation(opts ...OperationOptions) *openapi.Operation {
-	o := &openapi.Operation{Responses: make(map[openapi.HttpStatus]*openapi.ResponseRef)}
+	o := &openapi.Operation{Responses: new(openapi.Responses)}
 	for _, opt := range opts {
 		opt(o)
 	}
@@ -21,7 +21,7 @@ func WithResponse(status openapi.HttpStatus, opts ...ResponseOptions) OperationO
 			opt(r)
 		}
 
-		o.Responses[status] = &openapi.ResponseRef{Value: r}
+		o.Responses.Set(status, &openapi.ResponseRef{Value: r})
 	}
 }
 
