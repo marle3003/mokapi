@@ -50,7 +50,9 @@ func ParseUrl(path string) (*url.URL, error) {
 
 	path = filepath.ToSlash(path)
 
-	return url.ParseRequestURI("file:///" + path)
+	// windows needs that?
+	//return url.ParseRequestURI("file:///" + path)
+	return url.ParseRequestURI("file://" + path)
 }
 
 func MustParseUrl(path string) *url.URL {

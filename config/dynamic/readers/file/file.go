@@ -104,7 +104,10 @@ func (fr *Reader) add(u *url.URL, opts ...common.FileOptions) (*common.File, err
 func (fr *Reader) ReadDir(u *url.URL) error {
 	name := fr.name(u)
 
-	walkDir := func(path string, fi os.FileInfo, _ error) error {
+	walkDir := func(path string, fi os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
 		if fi.Mode().IsDir() {
 			if skipPath(path) {
 				return filepath.SkipDir
@@ -254,7 +257,8 @@ func (fr *Reader) name(u *url.URL) string {
 	if len(u.Fragment) > 0 {
 		pathOnFs = pathOnFs[:len(pathOnFs)-len(u.Fragment)-1] // -1 for #
 	}
-	pathOnFs = strings.TrimPrefix(pathOnFs, "/")
+	// todo remove only on windows
+	//pathOnFs = strings.TrimPrefix(pathOnFs, "/")
 	pathOnFs = filepath.FromSlash(pathOnFs)
 	return pathOnFs
 }

@@ -15,6 +15,7 @@ import (
 	"mokapi/config/dynamic/smtp"
 	"mokapi/config/static"
 	"mokapi/engine"
+	"mokapi/kafka"
 	"mokapi/models"
 	"mokapi/server/api"
 	"mokapi/server/cert"
@@ -42,6 +43,8 @@ type Server struct {
 
 	engine *engine.Engine
 
+	kafkaClusters map[string]*kafka.Cluster
+
 	Bindings map[string]Binding
 	mutex    sync.RWMutex
 }
@@ -57,6 +60,7 @@ func NewServer(config *static.Config) *Server {
 		Bindings:           make(map[string]Binding),
 		config:             make(map[string]*mokapi.Config),
 		engine:             engine.New(watcher),
+		kafkaClusters:      make(map[string]*kafka.Cluster),
 	}
 
 	watcher.AddListener(func(o *common.File) {
@@ -191,7 +195,7 @@ func (s *Server) updateConfigs(config *common.File) {
 		}
 		log.Infof("processed config %v", config.Url.String())
 	case *asyncApi.Config:
-		panic("not implemented")
+		s.updateAsyncConfig(c)
 		//if err := c.Validate(); err != nil {
 		//	log.Warnf("validation error %v: %v", config.Url, err)
 		//	return
