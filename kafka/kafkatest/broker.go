@@ -60,6 +60,11 @@ func (b *Broker) Close() {
 	b.Listener.Close()
 }
 
+func (b *Broker) HostPort() (string, int) {
+	addr := b.Listener.Addr().(*net.TCPAddr)
+	return addr.IP.String(), addr.Port
+}
+
 func WithPort(addr string) BrokerOptions {
 	return func(c *config) {
 		c.addr = addr

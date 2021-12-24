@@ -1,7 +1,6 @@
 package protocol
 
 import (
-	"encoding/binary"
 	"io"
 	"sync"
 )
@@ -27,7 +26,7 @@ type fragment struct {
 }
 
 func newPage(offset int) *page {
-	p, _ := pagePool.Get().(*page)
+	p := pagePool.Get().(*page)
 	p.offset = offset
 	p.refs.inc()
 	return p
@@ -45,6 +44,11 @@ func (p *page) ReadAt(b []byte, offset int) (int, error) {
 	if offset -= p.offset; offset < 0 || offset > pageSize {
 		panic("offset out of range")
 	}
+
+	if offset > p.length {
+		return 0, nil
+	}
+
 	n := copy(b, p.buffer[offset:p.length])
 	return n, nil
 }
@@ -53,10 +57,6 @@ func (p *page) Write(b []byte) (n int, err error) {
 	n = copy(p.buffer[p.length:], b)
 	p.length += n
 	return
-}
-
-func (p *page) WriteSizeAt(size int, offset int) {
-	binary.BigEndian.PutUint32(p.buffer[offset:offset+4], uint32(size))
 }
 
 func (p *page) WriteAt(b []byte, offset int) (int, error) {
@@ -131,4 +131,8 @@ func (f *fragment) unref() {
 	for _, p := range f.pages {
 		p.unref()
 	}
+	f.pages = nil
+	f.length = 0
+	f.cursor = 0
+	f.offset = 0
 }

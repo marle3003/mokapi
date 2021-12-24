@@ -14,7 +14,10 @@ func (b *Broker) syncgroup(rw protocol.ResponseWriter, req *protocol.Request) er
 		return rw.Write(&syncGroup.Response{ErrorCode: protocol.MemberIdRequired})
 	}
 
-	g := b.Store.Group(r.GroupId)
+	g := b.Store.GetOrCreateGroup(r.GroupId, b.Id)
+	if g.Coordinator().Id() != b.Id {
+		return rw.Write(&syncGroup.Response{ErrorCode: protocol.NotCoordinator})
+	}
 	balancer := b.getBalancer(g)
 
 	if g.State() == store.Joining {

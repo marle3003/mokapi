@@ -75,6 +75,11 @@ func (s *Store) Topics() []*Topic {
 	return topics
 }
 
+func (s *Store) Broker(id int) (*Broker, bool) {
+	b, ok := s.brokers[id]
+	return b, ok
+}
+
 func (s *Store) Brokers() []*Broker {
 	brokers := make([]*Broker, 0, len(s.brokers))
 	for _, b := range s.brokers {
@@ -91,21 +96,30 @@ func (s *Store) Groups() []*Group {
 	return groups
 }
 
-func (s *Store) Group(name string) *Group {
+func (s *Store) Group(name string) (*Group, bool) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
+
+	g, ok := s.groups[name]
+	return g, ok
+}
+
+func (s *Store) GetOrCreateGroup(name string, brokerId int) *Group {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	b, ok := s.Broker(brokerId)
+	if !ok {
+		panic(fmt.Sprintf("unknown broker id: %v", brokerId))
+	}
 
 	if g, ok := s.groups[name]; ok {
 		return g
 	}
-	g := &Group{name: name}
+
+	g := &Group{name: name, coordinator: b}
 	s.groups[name] = g
-
 	return g
-}
-
-func (s *Store) NewGroup(name string) (*Group, error) {
-	return s.newGroup(name)
 }
 
 func (b *Broker) Id() int {
@@ -136,18 +150,4 @@ func (s *Store) addTopic(name string) (*Topic, error) {
 	s.topics[name] = t
 
 	return t, nil
-}
-
-func (s *Store) newGroup(name string) (*Group, error) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
-	if _, ok := s.groups[name]; ok {
-		return nil, fmt.Errorf("group %v already exists", name)
-	}
-
-	g := &Group{name: name}
-	s.groups[name] = g
-
-	return g, nil
 }

@@ -37,8 +37,12 @@ func (b *Broker) offsetCommit(rw protocol.ResponseWriter, req *protocol.Request)
 					if rp.Offset > p.Offset() {
 						resPartition.ErrorCode = protocol.OffsetOutOfRange
 					} else {
-						g := b.Store.Group(r.GroupId)
-						g.Commit(topic.Name(), p.Index(), rp.Offset)
+						g, ok := b.Store.Group(r.GroupId)
+						if !ok {
+							resPartition.ErrorCode = protocol.InvalidGroupId
+						} else {
+							g.Commit(topic.Name(), p.Index(), rp.Offset)
+						}
 					}
 				}
 			}

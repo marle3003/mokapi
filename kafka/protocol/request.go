@@ -20,9 +20,7 @@ func (r *Request) Write(w io.Writer) error {
 	}
 
 	buffer := newPageBuffer()
-	defer func() {
-		buffer.unref()
-	}()
+	defer buffer.unref()
 
 	e := NewEncoder(buffer)
 	t := ApiTypes[r.Header.ApiKey]

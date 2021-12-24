@@ -5,6 +5,8 @@ import (
 	"mokapi/kafka/protocol"
 	"mokapi/kafka/protocol/joinGroup"
 	"mokapi/kafka/protocol/syncGroup"
+	"mokapi/kafka/schema"
+	"mokapi/kafka/store"
 	"mokapi/test"
 	"testing"
 	"time"
@@ -18,6 +20,7 @@ func TestGroupBalancing(t *testing.T) {
 	}{
 		{"join group",
 			func(t *testing.T, b *kafkatest.Broker) {
+				b.SetStore(store.New(schema.Cluster{Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())}}))
 				meta := []byte{
 					0, 1, // version
 					0, 0, 0, 1, // topic array length
@@ -26,7 +29,6 @@ func TestGroupBalancing(t *testing.T) {
 				}
 				join, err := b.Client().JoinGroup(3, &joinGroup.Request{
 					GroupId:      "TestGroup",
-					MemberId:     "foo",
 					ProtocolType: "consumer",
 					Protocols: []joinGroup.Protocol{{
 						Name:     "range",
@@ -35,15 +37,16 @@ func TestGroupBalancing(t *testing.T) {
 				})
 				test.Ok(t, err)
 				test.Equals(t, protocol.None, join.ErrorCode)
-				test.Equals(t, "foo", join.Leader)
+				test.Equals(t, join.MemberId, join.Leader)
 				test.Equals(t, "range", join.ProtocolName)
 				// currently, not correct because conflict between client id and member id
-				test.Equals(t, "foo", join.MemberId)
-				test.Equals(t, "foo", join.Members[0].MemberId)
+				test.Assert(t, len(join.MemberId) > 0, "no member id assigned")
+				test.Equals(t, join.MemberId, join.Members[0].MemberId)
 				test.Equals(t, meta, join.Members[0].MetaData)
 			}},
 		{"two members join same group",
 			func(t *testing.T, b *kafkatest.Broker) {
+				b.SetStore(store.New(schema.Cluster{Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())}}))
 				meta := []byte{
 					0, 1, // version
 					0, 0, 0, 1, // topic array length
@@ -100,6 +103,7 @@ func TestGroupBalancing(t *testing.T) {
 			}},
 		{"sync group but not member",
 			func(t *testing.T, b *kafkatest.Broker) {
+				b.SetStore(store.New(schema.Cluster{Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())}}))
 				sync, err := b.Client().SyncGroup(3, &syncGroup.Request{
 					GroupId:      "TestGroup",
 					GenerationId: 0,
@@ -110,11 +114,12 @@ func TestGroupBalancing(t *testing.T) {
 			}},
 		{"sync group but joining state",
 			func(t *testing.T, b *kafkatest.Broker) {
+				b.SetStore(store.New(schema.Cluster{Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())}}))
 				ch := make(chan *joinGroup.Response)
 				go func() {
 					c := kafkatest.NewClient(b.Listener.Addr().String(), "kafkatest")
 					defer c.Close()
-					join, err := c.JoinGroup(3, &joinGroup.Request{
+					join, _ := c.JoinGroup(3, &joinGroup.Request{
 						GroupId:      "TestGroup",
 						MemberId:     "foo",
 						ProtocolType: "consumer",
@@ -122,9 +127,6 @@ func TestGroupBalancing(t *testing.T) {
 							Name: "range",
 						}},
 					})
-					if err != nil {
-						panic(err)
-					}
 					ch <- join
 				}()
 
@@ -137,11 +139,11 @@ func TestGroupBalancing(t *testing.T) {
 				test.Ok(t, err)
 				test.Equals(t, protocol.RebalanceInProgress, sync.ErrorCode)
 				// wait for join response
-				j := <-ch
-				test.Equals(t, protocol.None, j.ErrorCode)
+				<-ch
 			}},
 		{"sync group successfully",
 			func(t *testing.T, b *kafkatest.Broker) {
+				b.SetStore(store.New(schema.Cluster{Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())}}))
 				join, err := b.Client().JoinGroup(3, &joinGroup.Request{
 					GroupId:      "TestGroup",
 					MemberId:     "foo",
@@ -177,6 +179,7 @@ func TestGroupBalancing(t *testing.T) {
 			}},
 		{"sync group with wrong generation id",
 			func(t *testing.T, b *kafkatest.Broker) {
+				b.SetStore(store.New(schema.Cluster{Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())}}))
 				join, err := b.Client().JoinGroup(3, &joinGroup.Request{
 					GroupId:      "TestGroup",
 					MemberId:     "foo",
@@ -203,6 +206,7 @@ func TestGroupBalancing(t *testing.T) {
 			}},
 		{"sync group successfully with two consumers",
 			func(t *testing.T, b *kafkatest.Broker) {
+				b.SetStore(store.New(schema.Cluster{Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())}}))
 				groupAssign := []syncGroup.GroupAssignment{
 					{"leader", []byte{
 						0, 1, // version
@@ -222,7 +226,7 @@ func TestGroupBalancing(t *testing.T) {
 					}, nil},
 				}
 
-				joinFn := func(clientId string, ga []syncGroup.GroupAssignment) (*joinGroup.Response, *syncGroup.Response) {
+				joinFn := func(clientId string, ga []syncGroup.GroupAssignment) (*joinGroup.Response, *syncGroup.Response, error) {
 					c := kafkatest.NewClient(b.Client().Addr, clientId)
 					defer c.Close()
 					join, err := c.JoinGroup(3, &joinGroup.Request{
@@ -234,9 +238,8 @@ func TestGroupBalancing(t *testing.T) {
 						}},
 					})
 					if err != nil {
-						panic(err)
+						return nil, nil, err
 					}
-
 					sync, err := c.SyncGroup(3, &syncGroup.Request{
 						GroupId:          "TestGroup",
 						GenerationId:     0,
@@ -244,22 +247,26 @@ func TestGroupBalancing(t *testing.T) {
 						GroupAssignments: ga,
 					})
 					if err != nil {
-						panic(err)
+						return nil, nil, err
 					}
-					return join, sync
+					return join, sync, nil
 				}
 
 				var leaderJoin *joinGroup.Response
 				var leaderSync *syncGroup.Response
+				var joinErr error
 				ch := make(chan bool)
 				go func() {
-					leaderJoin, leaderSync = joinFn("leader", groupAssign)
+					leaderJoin, leaderSync, joinErr = joinFn("leader", groupAssign)
 					ch <- true
 				}()
-				time.Sleep(1000 * time.Millisecond)
-				join, sync := joinFn("member", nil)
+				// ensure order of members and thus leader election. first member is leader
+				time.Sleep(1 * time.Second)
+				join, sync, err := joinFn("member", nil)
+				test.Ok(t, err)
 
 				<-ch
+				test.Ok(t, joinErr)
 				// leader
 				test.Equals(t, protocol.None, leaderSync.ErrorCode)
 				test.Equals(t, "leader", leaderJoin.Leader)

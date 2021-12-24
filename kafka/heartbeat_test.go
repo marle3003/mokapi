@@ -32,7 +32,7 @@ func TestHeartbeat(t *testing.T) {
 			func(t *testing.T, b *kafkatest.Broker) {
 				b.SetStore(store.New(schema.Cluster{Topics: []schema.Topic{
 					{Name: "foo"},
-				}}))
+				}, Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())}}))
 				j, err := b.Client().JoinGroup(3, &joinGroup.Request{GroupId: "foo", MemberId: "bar"})
 				test.Ok(t, err)
 				test.Equals(t, protocol.None, j.ErrorCode)
@@ -48,6 +48,7 @@ func TestHeartbeat(t *testing.T) {
 		{
 			"ok",
 			func(t *testing.T, b *kafkatest.Broker) {
+				b.SetStore(store.New(schema.Cluster{Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())}}))
 				err := b.Client().JoinSyncGroup("foo", "TestGroup", 3, 3)
 				test.Ok(t, err)
 				r, err := b.Client().Heartbeat(3, &heartbeat.Request{

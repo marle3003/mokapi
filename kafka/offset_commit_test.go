@@ -48,7 +48,10 @@ func TestOffsetCommit(t *testing.T) {
 		{
 			"offset out of range",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{Topics: []schema.Topic{{Name: "foo", Partitions: []schema.Partition{{Index: 0}}}}}))
+				b.SetStore(store.New(schema.Cluster{
+					Topics:  []schema.Topic{{Name: "foo", Partitions: []schema.Partition{{Index: 0}}}},
+					Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())},
+				}))
 
 				err := b.Client().JoinSyncGroup("foo", "bar", 3, 3)
 				test.Ok(t, err)
@@ -82,7 +85,10 @@ func TestOffsetCommit(t *testing.T) {
 		{
 			"offset commit successfully",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{Topics: []schema.Topic{{Name: "foo", Partitions: []schema.Partition{{Index: 0}}}}}))
+				b.SetStore(store.New(schema.Cluster{
+					Topics:  []schema.Topic{{Name: "foo", Partitions: []schema.Partition{{Index: 0}}}},
+					Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())},
+				}))
 				b.Store().Topic("foo").Partition(0).Write(protocol.RecordBatch{
 					Records: []protocol.Record{
 						{

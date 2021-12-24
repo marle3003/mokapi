@@ -66,6 +66,7 @@ func (b *groupBalancerNew) run() {
 			return
 		case j := <-b.join:
 			if b.group.State() == store.Stable {
+				// start a new rebalance
 				b.group.SetState(store.Joining)
 				b.joins = make([]joindata, 0)
 				syncs = nil
@@ -74,28 +75,28 @@ func (b *groupBalancerNew) run() {
 			}
 			b.joins = append(b.joins, j)
 		case s := <-b.sync:
-			if b.group.State() == store.AwaitingSync {
-				switch {
-				case s.assigns != nil: // leader sync
-					assigns = s.assigns
-					syncs = append(syncs, s)
-					b.group.SetState(store.Stable)
-					for _, s := range syncs {
-						res := &syncGroup.Response{
-							ErrorCode:  protocol.None,
-							Assignment: assigns[s.client.member[b.group.Name()]].raw,
-						}
-						go b.respond(s.writer, res)
-					}
-				case assigns == nil: // waiting for leader
-					syncs = append(syncs, s)
-				default:
+			switch {
+			case s.assigns != nil: // leader sync
+				assigns = s.assigns
+				syncs = append(syncs, s)
+				b.group.SetState(store.Stable)
+				for _, s := range syncs {
 					res := &syncGroup.Response{
 						ErrorCode:  protocol.None,
 						Assignment: assigns[s.client.member[b.group.Name()]].raw,
 					}
-					b.respond(s.writer, res)
+					go b.respond(s.writer, res)
 				}
+			case assigns == nil: // waiting for leader
+				syncs = append(syncs, s)
+			default:
+				// we have leader sync and respond directly
+				// a dead consumer will be kicked by heartbeat
+				res := &syncGroup.Response{
+					ErrorCode:  protocol.None,
+					Assignment: assigns[s.client.member[b.group.Name()]].raw,
+				}
+				b.respond(s.writer, res)
 			}
 		}
 	}
@@ -120,7 +121,7 @@ StopWaitingForConsumers:
 	}
 	var protocol string
 	for _, j := range b.joins {
-		memberId := j.client.member[b.group.Name()]
+		memberId := j.client.GetOrCreateMemberId(b.group.Name())
 		generation.Members[memberId] = &store.Member{}
 
 		for _, proto := range j.protocols {

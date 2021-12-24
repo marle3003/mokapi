@@ -9,11 +9,10 @@ func (b *Broker) joingroup(rw protocol.ResponseWriter, req *protocol.Request) er
 	r := req.Message.(*joinGroup.Request)
 	ctx := getClientContext(req)
 
-	if len(r.MemberId) == 0 {
-		return rw.Write(&joinGroup.Response{ErrorCode: protocol.MemberIdRequired})
+	g := b.Store.GetOrCreateGroup(r.GroupId, b.Id)
+	if g.Coordinator().Id() != b.Id {
+		return rw.Write(&joinGroup.Response{ErrorCode: protocol.NotCoordinator})
 	}
-
-	g := b.Store.Group(r.GroupId)
 	balancer := b.getBalancer(g)
 
 	ctx.AddGroup(g.Name(), r.MemberId)

@@ -13,7 +13,10 @@ func (b *Broker) heartbeat(rw protocol.ResponseWriter, req *protocol.Request) er
 	if _, ok := ctx.member[r.GroupId]; !ok {
 		return rw.Write(&heartbeat.Response{ErrorCode: protocol.UnknownMemberId})
 	} else {
-		g := b.Store.Group(r.GroupId)
+		g, ok := b.Store.Group(r.GroupId)
+		if !ok {
+			return rw.Write(&heartbeat.Response{ErrorCode: protocol.InvalidGroupId})
+		}
 		if g.State() != store.Stable {
 			return rw.Write(&heartbeat.Response{ErrorCode: protocol.RebalanceInProgress})
 		}

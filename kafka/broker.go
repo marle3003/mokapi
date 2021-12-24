@@ -3,7 +3,6 @@ package kafka
 import (
 	"context"
 	"fmt"
-	"mokapi/config/dynamic/asyncApi/kafka"
 	"mokapi/kafka/protocol"
 	"mokapi/kafka/protocol/apiVersion"
 	"mokapi/kafka/protocol/createTopics"
@@ -28,7 +27,6 @@ import (
 type Broker struct {
 	Id      int
 	Addr    string
-	Config  kafka.BrokerBindings
 	Store   *store.Store
 	Clients map[net.Conn]context.Context
 

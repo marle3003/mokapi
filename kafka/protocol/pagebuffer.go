@@ -42,7 +42,7 @@ func (r *refCounter) inc() {
 }
 
 func (r *refCounter) dec() bool {
-	i := atomic.AddUint32((*uint32)(r), ^uint32(1))
+	i := atomic.AddUint32((*uint32)(r), ^uint32(0))
 	return i == 0
 }
 
@@ -59,7 +59,7 @@ func (pb *pageBuffer) unref() {
 		}
 		pb.length = 0
 		pb.cursor = 0
-		pb.pages = pb.pages[:0]
+		pb.pages = nil
 		pageBufferPool.Put(pb)
 	}
 }
@@ -114,7 +114,7 @@ func (pb *pageBuffer) addPage() {
 
 func (pb *pageBuffer) slice(begin, end int) []*page {
 	i := begin / pageSize
-	j := int(end / pageSize)
+	j := end / pageSize
 	if j < len(pb.pages) {
 		j++
 	}
@@ -146,7 +146,7 @@ func (pb *pageBuffer) fragment(begin, end int) *fragment {
 		pages:  pages,
 		offset: begin,
 		cursor: begin,
-		length: int(end - begin),
+		length: end - begin,
 	}
 	f.ref()
 	return f

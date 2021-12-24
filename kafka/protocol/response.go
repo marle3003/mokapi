@@ -61,9 +61,7 @@ func (r *Response) Read(reader io.Reader) error {
 
 func (r *Response) Write(w io.Writer) error {
 	buffer := newPageBuffer()
-	defer func() {
-		buffer.unref()
-	}()
+	defer buffer.unref()
 
 	e := NewEncoder(buffer)
 	apiType := ApiTypes[r.Header.ApiKey]

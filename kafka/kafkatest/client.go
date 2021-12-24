@@ -31,7 +31,7 @@ type Client struct {
 }
 
 func NewClient(addr, clientId string) *Client {
-	return &Client{Addr: addr, clientId: clientId, Timeout: time.Second * 30}
+	return &Client{Addr: addr, clientId: clientId, Timeout: time.Second * 10}
 }
 
 func (c *Client) Close() {
@@ -62,6 +62,7 @@ func (c *Client) Send(r *protocol.Request) (*protocol.Response, error) {
 	}
 
 	res := protocol.NewResponse(r.Header.ApiKey, r.Header.ApiVersion, r.Header.CorrelationId)
+	c.conn.SetReadDeadline(time.Now().Add(c.Timeout))
 	err = res.Read(c.conn)
 	return res, err
 }

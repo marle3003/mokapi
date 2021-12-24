@@ -1,9 +1,5 @@
 package store
 
-import (
-	"fmt"
-)
-
 type GroupState int
 
 const (
@@ -36,11 +32,8 @@ func (g *Group) Name() string {
 	return g.name
 }
 
-func (g *Group) Coordinator() (*Broker, error) {
-	if g.coordinator == nil {
-		return nil, fmt.Errorf("coordinator not set")
-	}
-	return g.coordinator, nil
+func (g *Group) Coordinator() *Broker {
+	return g.coordinator
 }
 
 func (g *Group) State() GroupState {

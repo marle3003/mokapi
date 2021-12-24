@@ -30,8 +30,12 @@ func (b *Broker) offsetFetch(rw protocol.ResponseWriter, req *protocol.Request) 
 					resPartition.ErrorCode = protocol.UnknownMemberId
 				} else {
 					// todo check partition is assigned to member
-					g := b.Store.Group(r.GroupId)
-					resPartition.CommittedOffset = g.Offset(topic.Name(), p.Index())
+					g, ok := b.Store.Group(r.GroupId)
+					if !ok {
+						resPartition.ErrorCode = protocol.InvalidGroupId
+					} else {
+						resPartition.CommittedOffset = g.Offset(topic.Name(), p.Index())
+					}
 				}
 			}
 

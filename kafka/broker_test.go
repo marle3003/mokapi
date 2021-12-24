@@ -4,6 +4,8 @@ import (
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/protocol"
 	"mokapi/kafka/protocol/apiVersion"
+	"mokapi/kafka/schema"
+	"mokapi/kafka/store"
 	"mokapi/test"
 	"net"
 	"testing"
@@ -19,8 +21,12 @@ func TestApiKeys(t *testing.T) {
 			t.Parallel()
 			b := kafkatest.NewBroker()
 			defer b.Close()
+			b.SetStore(store.New(schema.Cluster{
+				Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())},
+			}))
 			c := b.Client()
-			c.Timeout = 3 * time.Second
+			// todo lower timeout when group.initial.rebalance.delay.ms is configurable
+			c.Timeout = 5 * time.Second
 
 			r, err := c.Send(&protocol.Request{
 				Header: &protocol.Header{

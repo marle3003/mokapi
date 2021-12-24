@@ -4,6 +4,8 @@ import (
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/protocol"
 	"mokapi/kafka/protocol/listgroup"
+	"mokapi/kafka/schema"
+	"mokapi/kafka/store"
 	"mokapi/test"
 	"testing"
 )
@@ -20,6 +22,40 @@ func TestListGroup(t *testing.T) {
 				test.Ok(t, err)
 				test.Equals(t, protocol.None, r.ErrorCode)
 				test.Equals(t, 0, len(r.Groups))
+			},
+		},
+		{
+			"with group state",
+			func(t *testing.T, b *kafkatest.Broker) {
+				b.SetStore(store.New(schema.Cluster{Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())}}))
+				group := b.Store().GetOrCreateGroup("foo", 0)
+				group.SetState(store.Joining)
+				g := group.NewGeneration()
+				g.Members[""] = &store.Member{}
+
+				r, err := b.Client().Listgroup(4, &listgroup.Request{})
+				test.Ok(t, err)
+				test.Equals(t, protocol.None, r.ErrorCode)
+				test.Equals(t, 1, len(r.Groups))
+				test.Equals(t, "PreparingRebalance", r.Groups[0].GroupState)
+			},
+		},
+		{
+			"filtering",
+			func(t *testing.T, b *kafkatest.Broker) {
+				b.SetStore(store.New(schema.Cluster{Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())}}))
+				b.Store().GetOrCreateGroup("foo", 0)
+				group := b.Store().GetOrCreateGroup("bar", 0)
+				group.SetState(store.AwaitingSync)
+				g := group.NewGeneration()
+				g.Members[""] = &store.Member{}
+
+				r, err := b.Client().Listgroup(4, &listgroup.Request{StatesFilter: []string{"Empty"}})
+				test.Ok(t, err)
+				test.Equals(t, protocol.None, r.ErrorCode)
+				test.Equals(t, 1, len(r.Groups))
+				test.Equals(t, "foo", r.Groups[0].GroupId)
+				test.Equals(t, "Empty", r.Groups[0].GroupState)
 			},
 		},
 	}

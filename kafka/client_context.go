@@ -1,6 +1,9 @@
 package kafka
 
-import "time"
+import (
+	"github.com/google/uuid"
+	"time"
+)
 
 type ClientContext struct {
 	clientId              string
@@ -16,4 +19,17 @@ func (c *ClientContext) AddGroup(groupName, memberId string) {
 		c.member = make(map[string]string)
 	}
 	c.member[groupName] = memberId
+}
+
+func (c *ClientContext) GetOrCreateMemberId(groupName string) string {
+	memberId := c.member[groupName]
+	if len(memberId) == 0 {
+		memberId = c.clientSoftwareName
+		if len(memberId) > 0 {
+			memberId += "-"
+		}
+		memberId += uuid.New().String()
+		c.member[groupName] = memberId
+	}
+	return memberId
 }

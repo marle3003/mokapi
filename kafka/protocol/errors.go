@@ -16,6 +16,7 @@ const (
 	OffsetOutOfRange        ErrorCode = 1
 	UnknownTopicOrPartition ErrorCode = 3
 	CoordinatorNotAvailable ErrorCode = 15
+	NotCoordinator          ErrorCode = 16
 	InvalidTopic            ErrorCode = 17
 	IllegalGeneration       ErrorCode = 22
 	InvalidGroupId          ErrorCode = 24
@@ -34,6 +35,7 @@ var (
 		OffsetOutOfRange:        "OFFSET_OUT_OF_RANGE",
 		UnknownTopicOrPartition: "UNKNOWN_TOPIC_OR_PARTITION",
 		CoordinatorNotAvailable: "COORDINATOR_NOT_AVAILABLE",
+		NotCoordinator:          "NOT_COORDINATOR",
 		InvalidTopic:            "INVALID_TOPIC_EXCEPTION",
 		IllegalGeneration:       "ILLEGAL_GENERATION",
 		InvalidGroupId:          "INVALID_GROUP_ID",
