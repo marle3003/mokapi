@@ -167,17 +167,17 @@ func TestGeneratorInt(t *testing.T) {
 	}{
 		{
 			"int32",
-			int32(2147483647),
+			int32(-1072427943),
 			&openapi.Schema{Type: "integer", Format: "int32"},
 		},
 		{
 			"int32 min",
-			int32(2147483647),
+			int32(196446384),
 			&openapi.Schema{Type: "integer", Format: "int32", Minimum: toFloatP(10)},
 		},
 		{
 			"int32 max",
-			int32(-2147483648),
+			int32(-1951037312),
 			&openapi.Schema{Type: "integer", Format: "int32", Maximum: toFloatP(0)},
 		},
 		{
@@ -187,7 +187,7 @@ func TestGeneratorInt(t *testing.T) {
 		},
 		{
 			"int64",
-			int64(5624956555383470080),
+			int64(-8379641344161477543),
 			&openapi.Schema{Type: "integer", Format: "int64"},
 		},
 		{
@@ -204,6 +204,11 @@ func TestGeneratorInt(t *testing.T) {
 			"int64 min max",
 			int64(-4),
 			&openapi.Schema{Type: "integer", Format: "int64", Minimum: toFloatP(-5), Maximum: toFloatP(5)},
+		},
+		{
+			"int64 min max positive",
+			int64(5),
+			&openapi.Schema{Type: "integer", Format: "int64", Minimum: toFloatP(4), Maximum: toFloatP(10)},
 		},
 	}
 
@@ -381,7 +386,7 @@ func TestGeneratorObject(t *testing.T) {
 			"simple",
 			&struct {
 				Id int64
-			}{Id: int64(5624956555383470080)},
+			}{Id: int64(-8379641344161477543)},
 			&openapi.Schema{Type: "object", Properties: &openapi.Schemas{
 				Value: map[string]*openapi.SchemaRef{
 					"id": {Value: &openapi.Schema{Type: "integer", Format: "int64"}},

@@ -155,26 +155,35 @@ func getNumber(s *Schema) interface{} {
 	} else if s.Type == "integer" {
 		if s.Minimum == nil && s.Maximum == nil {
 			if s.Format == "int32" {
-				gofakeit.Int32()
+				return gofakeit.Int32()
 			} else {
-				gofakeit.Int64()
+				return gofakeit.Int64()
 			}
 		}
-		max := math.MaxInt64
-		min := math.MinInt64
-		if s.Minimum != nil {
-			min = int(*s.Minimum)
-		}
-		if s.Maximum != nil {
-			max = int(*s.Maximum)
-		}
-
-		// gofakeit uses Intn function which panics if number is <= 0
 		if s.Format == "int32" {
-			return int32(math.Round(float64(gofakeit.Float32Range(float32(min), float32(max)))))
-		}
+			max := math.MaxInt32
+			min := math.MinInt32
+			if s.Minimum != nil {
+				min = int(*s.Minimum)
+			}
+			if s.Maximum != nil {
+				max = int(*s.Maximum)
+			}
 
-		return int64(math.Round(gofakeit.Float64Range(float64(min), float64(max))))
+			// gofakeit uses Intn function which panics if number is <= 0
+			return int32(math.Round(float64(gofakeit.Float32Range(float32(min), float32(max)))))
+		} else {
+			max := math.MaxInt64
+			min := math.MinInt64
+			if s.Minimum != nil {
+				min = int(*s.Minimum)
+			}
+			if s.Maximum != nil {
+				max = int(*s.Maximum)
+			}
+
+			return int64(math.Round(gofakeit.Float64Range(float64(min), float64(max))))
+		}
 	}
 
 	return 0
