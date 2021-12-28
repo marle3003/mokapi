@@ -17,48 +17,23 @@ type Store struct {
 	lock sync.RWMutex
 }
 
-type Broker struct {
-	id   int
-	host string
-	port int
-}
-
 func New(config *asyncApi.Config) *Store {
-	c := &Store{
+	s := &Store{
 		topics:  make(map[string]*Topic),
 		brokers: make(map[int]*Broker),
 		groups:  make(map[string]*Group),
 	}
 
-	brokerId := 0
-	replicas := make([]int, 0, len(config.Servers))
-	for _, b := range config.Servers {
-		host, port := parseHostAndPort(b.Url)
-		replicas = append(replicas, brokerId)
-		c.brokers[brokerId] = &Broker{
-			id:   brokerId,
-			host: host,
-			port: port,
-		}
-		brokerId++
+	for n, server := range config.Servers {
+		s.addBroker(n, server)
 	}
 	for name, ch := range config.Channels {
 		if ch.Value == nil {
 			continue
 		}
-
-		t, _ := c.addTopic(name)
-		t.validator = newValidator(ch.Value)
-
-		k := ch.Value.Bindings.Kafka
-		for i := 0; i < k.Partitions(); i++ {
-			part := newPartition(i, replicas)
-			part.validator = t.validator
-			t.partitions[i] = part
-
-		}
+		_, _ = s.addTopic(name, ch.Value)
 	}
-	return c
+	return s
 }
 
 func (s *Store) Topic(name string) *Topic {
@@ -71,17 +46,8 @@ func (s *Store) Topic(name string) *Topic {
 	return nil
 }
 
-func (s *Store) NewTopic(name string, numPartitions int) (*Topic, error) {
-	t, err := s.addTopic(name)
-	if err != nil {
-		return t, err
-	}
-	for i := 0; i < numPartitions; i++ {
-		part := newPartition(i, []int{})
-		t.partitions[i] = part
-	}
-
-	return t, nil
+func (s *Store) NewTopic(name string, config *asyncApi.Channel) (*Topic, error) {
+	return s.addTopic(name, config)
 }
 
 func (s *Store) Topics() []*Topic {
@@ -139,23 +105,39 @@ func (s *Store) GetOrCreateGroup(name string, brokerId int) *Group {
 	return g
 }
 
-func (b *Broker) Id() int {
-	return b.id
+func (s *Store) Update(c *asyncApi.Config) {
+	for n, server := range c.Servers {
+		if b := s.getBroker(n); b != nil {
+			b.host, b.port = parseHostAndPort(server.Url)
+		} else {
+			s.addBroker(n, server)
+		}
+	}
+	for _, b := range s.brokers {
+		if _, ok := c.Servers[b.name]; !ok {
+			s.deleteBroker(b.id)
+		}
+	}
+
+	for n, ch := range c.Channels {
+		k := ch.Value.Bindings.Kafka
+		if t, ok := s.topics[n]; ok {
+			t.validator.update(ch.Value)
+			for _, p := range t.partitions[k.Partitions():] {
+				p.delete()
+			}
+		} else {
+			s.addTopic(n, ch.Value)
+		}
+	}
+	for name := range s.topics {
+		if _, ok := c.Channels[name]; !ok {
+			s.deleteTopic(name)
+		}
+	}
 }
 
-func (b *Broker) Host() string {
-	return b.host
-}
-
-func (b *Broker) Port() int {
-	return b.port
-}
-
-func (b *Broker) Addr() string {
-	return fmt.Sprintf("%v:%v", b.host, b.port)
-}
-
-func (s *Store) addTopic(name string) (*Topic, error) {
+func (s *Store) addTopic(name string, config *asyncApi.Channel) (*Topic, error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
@@ -163,10 +145,63 @@ func (s *Store) addTopic(name string) (*Topic, error) {
 		return nil, fmt.Errorf("topic %v already exists", name)
 	}
 
-	t := &Topic{name: name, partitions: make(map[int]*Partition)}
+	k := config.Bindings.Kafka
+	t := &Topic{name: name, partitions: make([]*Partition, k.Partitions())}
 	s.topics[name] = t
 
+	t.validator = newValidator(config)
+
+	for i := 0; i < k.Partitions(); i++ {
+		part := newPartition(i, s.brokers)
+		part.validator = t.validator
+		t.partitions[i] = part
+
+	}
+
 	return t, nil
+}
+
+func (s *Store) deleteTopic(name string) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	t, ok := s.topics[name]
+	if !ok {
+		return
+	}
+	t.delete()
+	delete(s.topics, name)
+}
+
+func (s *Store) addBroker(name string, config asyncApi.Server) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	id := len(s.brokers)
+	b := &Broker{id: id, name: name}
+	s.brokers[id] = b
+	b.host, b.port = parseHostAndPort(config.Url)
+}
+
+func (s *Store) deleteBroker(id int) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	for _, t := range s.topics {
+		for _, p := range t.partitions {
+			p.removeReplica(id)
+		}
+	}
+	delete(s.brokers, id)
+}
+
+func (s *Store) getBroker(name string) *Broker {
+	for _, b := range s.brokers {
+		if b.name == name {
+			return b
+		}
+	}
+	return nil
 }
 
 func parseHostAndPort(s string) (host string, port int) {

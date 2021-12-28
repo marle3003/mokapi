@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"mokapi/kafka/protocol"
 	"mokapi/kafka/protocol/apiVersion"
 	"mokapi/kafka/protocol/createTopics"
@@ -64,6 +65,7 @@ func NewBroker(id int, addr string) *Broker {
 }
 
 func (b *Broker) ListenAndServe() error {
+	log.Infof("starting kafka broker %v", b.Addr)
 	return b.server.ListenAndServe()
 }
 
@@ -79,6 +81,7 @@ func (b *Broker) Close() {
 		balancer.stop <- true
 	}
 	b.server.Close()
+	log.Infof("stopped kafka broker on %v", b.Addr)
 }
 
 func (b *Broker) ServeMessage(rw protocol.ResponseWriter, req *protocol.Request) {

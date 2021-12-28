@@ -20,6 +20,11 @@ func newValidator(c *asyncApi.Channel) *validator {
 	}
 }
 
+func (v *validator) update(c *asyncApi.Channel) {
+	v.payload = getPayload(c)
+	v.contentType = getContentType(c)
+}
+
 func (v *validator) Payload(payload protocol.Bytes) error {
 	if len(v.contentType) == 0 || v.payload == nil {
 		return nil

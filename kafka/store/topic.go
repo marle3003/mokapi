@@ -2,7 +2,7 @@ package store
 
 type Topic struct {
 	name       string
-	partitions map[int]*Partition
+	partitions []*Partition
 
 	validator *validator
 }
@@ -12,10 +12,10 @@ func (t *Topic) Name() string {
 }
 
 func (t *Topic) Partition(index int) *Partition {
-	if p, ok := t.partitions[index]; ok {
-		return p
+	if index >= len(t.partitions) {
+		return nil
 	}
-	return nil
+	return t.partitions[index]
 }
 
 func (t *Topic) Partitions() []*Partition {
@@ -24,4 +24,10 @@ func (t *Topic) Partitions() []*Partition {
 		partitions = append(partitions, p)
 	}
 	return partitions
+}
+
+func (t *Topic) delete() {
+	for _, p := range t.partitions {
+		p.delete()
+	}
 }

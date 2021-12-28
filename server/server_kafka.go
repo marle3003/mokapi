@@ -22,7 +22,7 @@ func (kc KafkaClusters) UpdateConfig(file *common.File) {
 			log.Errorf("unable to start kafka cluster %v: %v", config.Info.Name, err)
 		}
 	} else {
-		c.Update()
+		c.Update(config)
 	}
 }
 

@@ -30,7 +30,11 @@ type Segment struct {
 	lastWritten time.Time
 }
 
-func newPartition(index int, replicas []int) *Partition {
+func newPartition(index int, brokers map[int]*Broker) *Partition {
+	replicas := make([]int, 0, len(brokers))
+	for i, _ := range brokers {
+		replicas = append(replicas, i)
+	}
 	p := &Partition{
 		index:    index,
 		head:     0,
@@ -140,6 +144,23 @@ func (p *Partition) getSegment(offset int64) *Segment {
 	return nil
 }
 
+func (p *Partition) delete() {
+	for _, s := range p.segments {
+		s.delete()
+	}
+}
+
+func (p *Partition) removeReplica(id int) {
+	i := 0
+	for _, replica := range p.replicas {
+		if replica != id {
+			p.replicas[i] = replica
+			i++
+		}
+	}
+	p.replicas = p.replicas[:i]
+}
+
 func newSegment(offset int64) *Segment {
 	return &Segment{
 		head:   offset,
@@ -156,4 +177,11 @@ func (s *Segment) Contains(offset int64) bool {
 func (s *Segment) Record(offset int64) protocol.Record {
 	index := offset - s.head
 	return s.log[index]
+}
+
+func (s *Segment) delete() {
+	for _, r := range s.log {
+		r.Key.Close()
+		r.Value.Close()
+	}
 }

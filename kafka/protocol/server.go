@@ -8,9 +8,16 @@ import (
 	"net"
 	"runtime/debug"
 	"sync"
+	"sync/atomic"
 )
 
 var ErrServerClosed = errors.New("kafka: Server closed")
+
+type atomicBool int32
+
+func (a *atomicBool) isSet() bool { return atomic.LoadInt32((*int32)(a)) != 0 }
+func (a *atomicBool) setFalse()   { atomic.StoreInt32((*int32)(a), 0) }
+func (a *atomicBool) setTrue()    { atomic.StoreInt32((*int32)(a), 1) }
 
 type Handler interface {
 	ServeMessage(rw ResponseWriter, req *Request)
@@ -36,22 +43,29 @@ type Server struct {
 	closeChan  chan bool
 	activeConn map[net.Conn]context.Context
 	listener   net.Listener
+	inShutdown atomicBool
 }
 
 func (s *Server) ListenAndServe() error {
-	l, err := net.Listen("tcp", s.Addr)
+	if s.inShutdown.isSet() {
+		return ErrServerClosed
+	}
+
+	var err error
+	s.listener, err = net.Listen("tcp", s.Addr)
 	if err != nil {
 		return err
 	}
-	return s.Serve(l)
+	return s.Serve(s.listener)
 }
 
 func (s *Server) Serve(l net.Listener) error {
+	closeCh := s.getCloseChan()
 	for {
 		conn, err := l.Accept()
 		if err != nil {
 			select {
-			case <-s.getCloseChan():
+			case <-closeCh:
 				return ErrServerClosed
 			default:
 				log.Errorf("kafka: Accept error: %v", err)
@@ -65,16 +79,23 @@ func (s *Server) Serve(l net.Listener) error {
 }
 
 func (s *Server) Close() {
+	s.inShutdown.setTrue()
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.getCloseChan() <- true
+	if s.closeChan != nil {
+		s.closeChan <- true
+		close(s.closeChan)
+	}
+
 	if s.listener != nil {
 		s.listener.Close()
 	}
 	for conn, ctx := range s.activeConn {
 		ctx.Done()
 		conn.Close()
+		delete(s.activeConn, conn)
 	}
 }
 

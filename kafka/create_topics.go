@@ -1,6 +1,8 @@
 package kafka
 
 import (
+	"fmt"
+	"mokapi/config/dynamic/asyncApi"
 	"mokapi/kafka/protocol"
 	"mokapi/kafka/protocol/createTopics"
 )
@@ -10,7 +12,14 @@ func (b *Broker) createtopics(rw protocol.ResponseWriter, req *protocol.Request)
 	res := &createTopics.Response{}
 
 	for _, t := range r.Topics {
-		_, err := b.Store.NewTopic(t.Name, int(t.NumPartitions))
+		op := &asyncApi.Operation{}
+		config := &asyncApi.Channel{
+			Subscribe: op,
+			Publish:   op,
+		}
+		config.Bindings.Kafka.Config["partitions"] = fmt.Sprintf("%v", t.NumPartitions)
+
+		_, err := b.Store.NewTopic(t.Name, config)
 		errCode := protocol.None
 		if err != nil {
 			errCode = protocol.TopicAlreadyExists

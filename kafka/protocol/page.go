@@ -136,3 +136,8 @@ func (f *fragment) unref() {
 	f.cursor = 0
 	f.offset = 0
 }
+
+func (f *fragment) Close() error {
+	f.unref()
+	return nil
+}

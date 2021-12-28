@@ -13,7 +13,7 @@ var (
 )
 
 type Bytes interface {
-	io.Reader
+	io.ReadCloser
 	io.Seeker
 	Len() int
 }
@@ -36,6 +36,8 @@ func NewBytes(b []byte) Bytes {
 	r.Reset(b)
 	return r
 }
+
+func (b *bytesReader) Close() error { return nil }
 
 func (r *refCounter) inc() {
 	atomic.AddUint32((*uint32)(r), 1)
