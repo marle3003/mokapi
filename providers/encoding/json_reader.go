@@ -85,7 +85,7 @@ func readInteger(i interface{}, s *openapi.Schema) (int64, error) {
 		return 0, fmt.Errorf("expected integer got %T", i)
 	}
 	n := int64(f)
-	if float64(n) != f {
+	if math.Trunc(f) != f {
 		return 0, fmt.Errorf("expected integer but got floating number")
 	}
 
