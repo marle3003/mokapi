@@ -414,11 +414,12 @@ func TestParseAllOf(t *testing.T) {
 		},
 	}
 
-	for i, d := range data {
-		t.Logf("parse %v: %v", i, d.s)
-		i, err := Parse([]byte(d.s), media.ParseContentType("application/json"), d.schema)
-		test.Ok(t, err)
-		test.Equals(t, d.e, i)
+	for _, d := range data {
+		t.Run(d.s, func(t *testing.T) {
+			i, err := Parse([]byte(d.s), media.ParseContentType("application/json"), d.schema)
+			test.Ok(t, err)
+			test.Equals(t, d.e, i)
+		})
 	}
 }
 
