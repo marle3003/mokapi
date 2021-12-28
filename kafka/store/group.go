@@ -48,10 +48,6 @@ func (g *Group) Generation() *Generation {
 	return g.generation
 }
 
-func (g *Group) SetGeneration(generation *Generation) {
-	g.generation = generation
-}
-
 func (g *Group) NewGeneration() *Generation {
 	var id int
 	if g.generation == nil {

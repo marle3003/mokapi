@@ -25,6 +25,7 @@ func TestKafka_TopicConfig(t *testing.T) {
 
 	r, err := c.Metadata(0, &metaData.Request{})
 	test.Ok(t, err)
+	test.Equals(t, 1, len(r.Topics))
 	test.Equals(t, "petstore.order-event", r.Topics[0].Name)
 	test.Equals(t, 2, len(r.Topics[0].Partitions))
 }

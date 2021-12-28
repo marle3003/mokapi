@@ -68,8 +68,8 @@ func (p *Partition) Read(offset int64, maxBytes int) (protocol.RecordBatch, prot
 			return batch, protocol.None
 		}
 
-		for seg.Contains(offset) && maxBytes > size {
-			r := seg.Record(offset)
+		for seg.contains(offset) && maxBytes > size {
+			r := seg.record(offset)
 			size += r.Size()
 			batch.Records = append(batch.Records, r)
 			offset++
@@ -78,10 +78,12 @@ func (p *Partition) Read(offset int64, maxBytes int) (protocol.RecordBatch, prot
 }
 
 func (p *Partition) Write(batch protocol.RecordBatch) (baseOffset int64, err error) {
-	for _, r := range batch.Records {
-		err := p.validator.Payload(r.Value)
-		if err != nil {
-			return p.tail, err
+	if p.validator != nil {
+		for _, r := range batch.Records {
+			err := p.validator.Payload(r.Value)
+			if err != nil {
+				return p.tail, err
+			}
 		}
 	}
 
@@ -170,11 +172,11 @@ func newSegment(offset int64) *Segment {
 	}
 }
 
-func (s *Segment) Contains(offset int64) bool {
+func (s *Segment) contains(offset int64) bool {
 	return offset >= s.head && offset < s.tail
 }
 
-func (s *Segment) Record(offset int64) protocol.Record {
+func (s *Segment) record(offset int64) protocol.Record {
 	index := offset - s.head
 	return s.log[index]
 }
