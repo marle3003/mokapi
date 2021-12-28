@@ -36,7 +36,7 @@ func TestGenerator(t *testing.T) {
 
 	for _, data := range testdata {
 		t.Run(data.name, func(t *testing.T) {
-			gofakeit.SetGlobalFaker(gofakeit.New(11))
+			gofakeit.Seed(11)
 
 			g := openapi.NewGenerator()
 			o := g.New(&openapi.SchemaRef{Value: data.schema})
@@ -126,7 +126,7 @@ func TestGeneratorString(t *testing.T) {
 	for _, data := range testdata {
 		d := data
 		t.Run(d.name, func(t *testing.T) {
-			gofakeit.SetGlobalFaker(gofakeit.New(11))
+			gofakeit.Seed(11)
 
 			g := openapi.NewGenerator()
 			o := g.New(&openapi.SchemaRef{Value: d.schema})
@@ -150,7 +150,7 @@ func TestGeneratorBool(t *testing.T) {
 
 	for _, data := range testdata {
 		t.Run(data.name, func(t *testing.T) {
-			gofakeit.SetGlobalFaker(gofakeit.New(11))
+			gofakeit.Seed(11)
 
 			g := openapi.NewGenerator()
 			o := g.New(&openapi.SchemaRef{Value: data.schema})
@@ -209,7 +209,7 @@ func TestGeneratorInt(t *testing.T) {
 
 	for _, data := range testdata {
 		t.Run(data.name, func(t *testing.T) {
-			gofakeit.SetGlobalFaker(gofakeit.New(11))
+			gofakeit.Seed(11)
 
 			g := openapi.NewGenerator()
 			o := g.New(&openapi.SchemaRef{Value: data.schema})
@@ -278,7 +278,7 @@ func TestGeneratorFloat(t *testing.T) {
 
 	for _, data := range testdata {
 		t.Run(data.name, func(t *testing.T) {
-			gofakeit.SetGlobalFaker(gofakeit.New(11))
+			gofakeit.Seed(11)
 
 			g := openapi.NewGenerator()
 			o := g.New(&openapi.SchemaRef{Value: data.schema})
@@ -361,7 +361,7 @@ func TestGeneratorArray(t *testing.T) {
 			test.Equals(t, "can not fill array with unique items", r)
 		}()
 
-		gofakeit.SetGlobalFaker(gofakeit.New(11))
+		gofakeit.Seed(11)
 		g := openapi.NewGenerator()
 		g.New(&openapi.SchemaRef{Value: &openapi.Schema{Type: "array", MinItems: toIntP(5), MaxItems: toIntP(10), UniqueItems: true,
 			Items: &openapi.SchemaRef{
@@ -434,7 +434,7 @@ func TestGeneratorObject(t *testing.T) {
 
 	for _, data := range testdata {
 		t.Run(data.name, func(t *testing.T) {
-			gofakeit.SetGlobalFaker(gofakeit.New(11))
+			gofakeit.Seed(11)
 
 			g := openapi.NewGenerator()
 			o := g.New(&openapi.SchemaRef{Value: data.schema})
