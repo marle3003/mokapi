@@ -49,9 +49,11 @@ func (cw *ConfigWatcher) Start() error {
 		if u, err := file.ParseUrl(cw.config.File.Filename); err != nil {
 			log.Errorf("parse %v: %v", cw.config.File.Filename, err)
 		} else {
-			_, err := fr.Read(u, common.WithListener(update))
+			f, err := fr.Read(u, common.WithListener(update))
 			if err != nil {
 				log.Error(err)
+			} else {
+				cw.update(f)
 			}
 		}
 	} else if len(cw.config.File.Directory) > 0 {
@@ -105,13 +107,17 @@ func (cw *ConfigWatcher) Start() error {
 			case <-cw.stop:
 				fr.Close()
 				return
-			case c := <-update:
-				for _, listener := range cw.listeners {
-					listener(c)
-				}
+			case f := <-update:
+				cw.update(f)
 			}
 		}
 	}()
 
 	return nil
+}
+
+func (cw *ConfigWatcher) update(f *common.File) {
+	for _, listener := range cw.listeners {
+		listener(f)
+	}
 }

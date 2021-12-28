@@ -16,6 +16,8 @@ type Partition struct {
 	lock          sync.RWMutex
 	leader        int
 	replicas      []int
+
+	validator *validator
 }
 
 type Segment struct {
@@ -71,7 +73,14 @@ func (p *Partition) Read(offset int64, maxBytes int) (protocol.RecordBatch, prot
 	}
 }
 
-func (p *Partition) Write(batch protocol.RecordBatch) (baseOffset int64) {
+func (p *Partition) Write(batch protocol.RecordBatch) (baseOffset int64, err error) {
+	for _, r := range batch.Records {
+		err := p.validator.Payload(r.Value)
+		if err != nil {
+			return p.tail, err
+		}
+	}
+
 	p.lock.Lock()
 	defer p.lock.Unlock()
 

@@ -30,6 +30,7 @@ func NewBroker(opts ...BrokerOptions) *Broker {
 	}
 
 	broker := kafka.NewBroker(0, l.Addr().String())
+	broker.Store = &store.Store{}
 
 	b := &Broker{
 		Listener: l,

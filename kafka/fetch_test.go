@@ -4,8 +4,6 @@ import (
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/protocol"
 	"mokapi/kafka/protocol/fetch"
-	"mokapi/kafka/schema"
-	"mokapi/kafka/store"
 	"mokapi/test"
 	"testing"
 	"time"
@@ -34,11 +32,9 @@ func TestFetch(t *testing.T) {
 			},
 		},
 		{
-			"topic not exists",
+			"partition not exists",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{Topics: []schema.Topic{
-					{Name: "foo"},
-				}}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{Topics: []kafkatest.TopicConfig{{"foo", 0}}}))
 				r, err := b.Client().Fetch(3, &fetch.Request{Topics: []fetch.Topic{
 					{
 						Name:       "foo",
@@ -56,9 +52,7 @@ func TestFetch(t *testing.T) {
 		{
 			"empty",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{Topics: []schema.Topic{
-					{Name: "foo", Partitions: []schema.Partition{{Index: 0}}},
-				}}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{Topics: []kafkatest.TopicConfig{{"foo", 1}}}))
 				r, err := b.Client().Fetch(3, &fetch.Request{Topics: []fetch.Topic{
 					{
 						Name:       "foo",
@@ -117,9 +111,7 @@ func TestFetch(t *testing.T) {
 		{
 			"fetch one record",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{Topics: []schema.Topic{
-					{Name: "foo", Partitions: []schema.Partition{{Index: 0}}},
-				}}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{Topics: []kafkatest.TopicConfig{{"foo", 1}}}))
 				b.Store().Topic("foo").Partition(0).Write(protocol.RecordBatch{
 					Records: []protocol.Record{
 						{
@@ -149,9 +141,7 @@ func TestFetch(t *testing.T) {
 		{
 			"fetch one record with MaxBytes 1",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{Topics: []schema.Topic{
-					{Name: "foo", Partitions: []schema.Partition{{Index: 0}}},
-				}}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{Topics: []kafkatest.TopicConfig{{"foo", 1}}}))
 				b.Store().Topic("foo").Partition(0).Write(protocol.RecordBatch{
 					Records: []protocol.Record{
 						{
@@ -186,9 +176,7 @@ func TestFetch(t *testing.T) {
 		{
 			"fetch two records",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{Topics: []schema.Topic{
-					{Name: "foo", Partitions: []schema.Partition{{Index: 0}}},
-				}}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{Topics: []kafkatest.TopicConfig{{"foo", 1}}}))
 				b.Store().Topic("foo").Partition(0).Write(protocol.RecordBatch{
 					Records: []protocol.Record{
 						{
@@ -229,9 +217,7 @@ func TestFetch(t *testing.T) {
 		{
 			"wait fetch for MinBytes",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{Topics: []schema.Topic{
-					{Name: "foo", Partitions: []schema.Partition{{Index: 0}}},
-				}}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{Topics: []kafkatest.TopicConfig{{"foo", 1}}}))
 				ch := make(chan *fetch.Response, 1)
 				go func() {
 					r, err := b.Client().Fetch(3, &fetch.Request{Topics: []fetch.Topic{
@@ -274,9 +260,7 @@ func TestFetch(t *testing.T) {
 		{
 			"fetch offset out of range when empty",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{Topics: []schema.Topic{
-					{Name: "foo", Partitions: []schema.Partition{{Index: 0}}},
-				}}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{Topics: []kafkatest.TopicConfig{{"foo", 1}}}))
 				r, err := b.Client().Fetch(3, &fetch.Request{Topics: []fetch.Topic{
 					{
 						Name: "foo",
@@ -297,9 +281,7 @@ func TestFetch(t *testing.T) {
 		{
 			"fetch offset out of range",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{Topics: []schema.Topic{
-					{Name: "foo", Partitions: []schema.Partition{{Index: 0}}},
-				}}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{Topics: []kafkatest.TopicConfig{{"foo", 1}}}))
 				b.Store().Topic("foo").Partition(0).Write(protocol.RecordBatch{
 					Records: []protocol.Record{
 						{

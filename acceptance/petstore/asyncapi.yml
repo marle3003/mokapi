@@ -1,0 +1,67 @@
+asyncapi: 2.0.0
+info:
+  title: A sample AsyncApi Kafka streaming api
+  version: 1.0.0
+servers:
+  broker:
+    url: 127.0.0.1:9092
+    protocol: kafka
+channels:
+  petstore.order-event:
+    subscribe:
+      message:
+        $ref: '#/components/messages/order'
+    publish:
+      message:
+        $ref: '#/components/messages/order'
+    bindings:
+      kafka:
+        partitions: 2
+        segment.ms: 30000
+
+
+components:
+  messages:
+    order:
+      contenttype: application/json
+      payload:
+        $ref: '#/components/schemas/order'
+      headers:
+        type: object
+        properties:
+          test:
+            type: string
+          number:
+            type: number
+      bindings:
+        kafka:
+          key:
+            type: string
+
+  schemas:
+    order:
+      type: object
+      properties:
+        id:
+          type: integer
+        placed:
+          type: object
+          properties:
+            petid:
+             type: integer
+            quantity:
+              type: integer
+              format: int32
+            ship-date:
+              type: date-time
+        accepted:
+          type: object
+          properties:
+            timestamp:
+              type: date-time
+        completed:
+          type: object
+          properties:
+            timestamp:
+              type: date-time
+      required: [id]

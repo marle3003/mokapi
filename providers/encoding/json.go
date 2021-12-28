@@ -102,7 +102,7 @@ func selectData(data interface{}, schema *openapi.SchemaRef) (interface{}, error
 			s := fmt.Sprintf("%v", data)
 			err := json.Unmarshal([]byte(s), &obj)
 			if err != nil {
-				return nil, fmt.Errorf("unable to map %t with value \"%v\" to object", data, data)
+				return nil, fmt.Errorf("unable to map %T with value \"%v\" to object", data, data)
 			}
 		}
 

@@ -25,7 +25,7 @@ type Generation struct {
 }
 
 type Member struct {
-	Partitions []Partition
+	Partitions []*Partition
 }
 
 func (g *Group) Name() string {

@@ -3,6 +3,8 @@ package store
 type Topic struct {
 	name       string
 	partitions map[int]*Partition
+
+	validator *validator
 }
 
 func (t *Topic) Name() string {

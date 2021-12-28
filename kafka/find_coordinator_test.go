@@ -4,8 +4,6 @@ import (
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/protocol"
 	"mokapi/kafka/protocol/findCoordinator"
-	"mokapi/kafka/schema"
-	"mokapi/kafka/store"
 	"mokapi/test"
 	"testing"
 )
@@ -16,9 +14,10 @@ func TestFindCoordinator(t *testing.T) {
 		fn   func(t *testing.T, b *kafkatest.Broker)
 	}{
 		{
-			"find defined group",
+			"find group",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())}}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{
+					Brokers: []string{b.Listener.Addr().String()}}))
 				r, err := b.Client().FindCoordinator(3, &findCoordinator.Request{
 					Key:     "foo",
 					KeyType: findCoordinator.KeyTypeGroup,

@@ -5,8 +5,6 @@ import (
 	"mokapi/kafka/protocol"
 	"mokapi/kafka/protocol/joinGroup"
 	"mokapi/kafka/protocol/syncGroup"
-	"mokapi/kafka/schema"
-	"mokapi/kafka/store"
 	"mokapi/test"
 	"testing"
 	"time"
@@ -20,7 +18,7 @@ func TestGroupBalancing(t *testing.T) {
 	}{
 		{"join group",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())}}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{Brokers: []string{b.Listener.Addr().String()}}))
 				meta := []byte{
 					0, 1, // version
 					0, 0, 0, 1, // topic array length
@@ -46,7 +44,7 @@ func TestGroupBalancing(t *testing.T) {
 			}},
 		{"two members join same group",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())}}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{Brokers: []string{b.Listener.Addr().String()}}))
 				meta := []byte{
 					0, 1, // version
 					0, 0, 0, 1, // topic array length
@@ -103,7 +101,7 @@ func TestGroupBalancing(t *testing.T) {
 			}},
 		{"sync group but not member",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())}}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{Brokers: []string{b.Listener.Addr().String()}}))
 				sync, err := b.Client().SyncGroup(3, &syncGroup.Request{
 					GroupId:      "TestGroup",
 					GenerationId: 0,
@@ -114,7 +112,7 @@ func TestGroupBalancing(t *testing.T) {
 			}},
 		{"sync group but joining state",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())}}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{Brokers: []string{b.Listener.Addr().String()}}))
 				ch := make(chan *joinGroup.Response)
 				go func() {
 					c := kafkatest.NewClient(b.Listener.Addr().String(), "kafkatest")
@@ -143,7 +141,7 @@ func TestGroupBalancing(t *testing.T) {
 			}},
 		{"sync group successfully",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())}}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{Brokers: []string{b.Listener.Addr().String()}}))
 				join, err := b.Client().JoinGroup(3, &joinGroup.Request{
 					GroupId:      "TestGroup",
 					MemberId:     "foo",
@@ -179,7 +177,7 @@ func TestGroupBalancing(t *testing.T) {
 			}},
 		{"sync group with wrong generation id",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())}}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{Brokers: []string{b.Listener.Addr().String()}}))
 				join, err := b.Client().JoinGroup(3, &joinGroup.Request{
 					GroupId:      "TestGroup",
 					MemberId:     "foo",
@@ -206,7 +204,7 @@ func TestGroupBalancing(t *testing.T) {
 			}},
 		{"sync group successfully with two consumers",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())}}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{Brokers: []string{b.Listener.Addr().String()}}))
 				groupAssign := []syncGroup.GroupAssignment{
 					{"leader", []byte{
 						0, 1, // version

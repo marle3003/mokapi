@@ -5,8 +5,6 @@ import (
 	"mokapi/kafka/protocol"
 	"mokapi/kafka/protocol/offsetCommit"
 	"mokapi/kafka/protocol/offsetFetch"
-	"mokapi/kafka/schema"
-	"mokapi/kafka/store"
 	"mokapi/test"
 	"testing"
 )
@@ -19,10 +17,9 @@ func TestOffsetFetch(t *testing.T) {
 		{
 			"empty",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{
-					Topics:  []schema.Topic{{Name: "foo", Partitions: []schema.Partition{{Index: 0}}}},
-					Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())},
-				}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{
+					Brokers: []string{b.Listener.Addr().String()},
+					Topics:  []kafkatest.TopicConfig{{"foo", 1}}}))
 
 				err := b.Client().JoinSyncGroup("foo", "bar", 3, 3)
 
@@ -47,7 +44,9 @@ func TestOffsetFetch(t *testing.T) {
 		{
 			"empty with api version 0",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{Topics: []schema.Topic{{Name: "foo", Partitions: []schema.Partition{{Index: 0}}}}}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{
+					Brokers: []string{b.Listener.Addr().String()},
+					Topics:  []kafkatest.TopicConfig{{"foo", 1}}}))
 
 				err := b.Client().JoinSyncGroup("foo", "bar", 3, 3)
 
@@ -72,7 +71,9 @@ func TestOffsetFetch(t *testing.T) {
 		{
 			"invalid partition request",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{Topics: []schema.Topic{{Name: "foo", Partitions: []schema.Partition{{Index: 0}}}}}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{
+					Brokers: []string{b.Listener.Addr().String()},
+					Topics:  []kafkatest.TopicConfig{{"foo", 1}}}))
 
 				err := b.Client().JoinSyncGroup("foo", "bar", 3, 3)
 
@@ -96,7 +97,9 @@ func TestOffsetFetch(t *testing.T) {
 		{
 			"invalid partition request with api version 0",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{Topics: []schema.Topic{{Name: "foo", Partitions: []schema.Partition{{Index: 0}}}}}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{
+					Brokers: []string{b.Listener.Addr().String()},
+					Topics:  []kafkatest.TopicConfig{{"foo", 1}}}))
 
 				err := b.Client().JoinSyncGroup("foo", "bar", 3, 3)
 
@@ -139,7 +142,9 @@ func TestOffsetFetch(t *testing.T) {
 		{
 			"unknown member",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{Topics: []schema.Topic{{Name: "foo", Partitions: []schema.Partition{{Index: 0}}}}}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{
+					Brokers: []string{b.Listener.Addr().String()},
+					Topics:  []kafkatest.TopicConfig{{"foo", 1}}}))
 
 				r, err := b.Client().OffsetFetch(3, &offsetFetch.Request{
 					GroupId: "bar",
@@ -162,12 +167,10 @@ func TestOffsetFetch(t *testing.T) {
 		{
 			"offset fetch",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{
-					Topics: []schema.Topic{
-						{Name: "foo", Partitions: []schema.Partition{{Index: 0}}},
-					},
-					Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())},
-				}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{
+					Brokers: []string{b.Listener.Addr().String()},
+					Topics:  []kafkatest.TopicConfig{{"foo", 1}}}))
+
 				b.Store().Topic("foo").Partition(0).Write(protocol.RecordBatch{
 					Records: []protocol.Record{
 						{

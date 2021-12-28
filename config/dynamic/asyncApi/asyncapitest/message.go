@@ -20,3 +20,9 @@ func WithPayload(schema *openapi.Schema) MessageOptions {
 		m.Payload = &openapi.SchemaRef{Value: schema}
 	}
 }
+
+func WithContentType(s string) MessageOptions {
+	return func(m *asyncApi.Message) {
+		m.ContentType = s
+	}
+}

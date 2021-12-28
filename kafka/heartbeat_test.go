@@ -5,8 +5,6 @@ import (
 	"mokapi/kafka/protocol"
 	"mokapi/kafka/protocol/heartbeat"
 	"mokapi/kafka/protocol/joinGroup"
-	"mokapi/kafka/schema"
-	"mokapi/kafka/store"
 	"mokapi/test"
 	"testing"
 )
@@ -30,9 +28,9 @@ func TestHeartbeat(t *testing.T) {
 		{
 			"group balancing",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{Topics: []schema.Topic{
-					{Name: "foo"},
-				}, Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())}}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{
+					Brokers: []string{b.Listener.Addr().String()},
+					Topics:  []kafkatest.TopicConfig{{"foo", 1}}}))
 				j, err := b.Client().JoinGroup(3, &joinGroup.Request{GroupId: "foo", MemberId: "bar"})
 				test.Ok(t, err)
 				test.Equals(t, protocol.None, j.ErrorCode)
@@ -48,7 +46,8 @@ func TestHeartbeat(t *testing.T) {
 		{
 			"ok",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())}}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{
+					Brokers: []string{b.Listener.Addr().String()}}))
 				err := b.Client().JoinSyncGroup("foo", "TestGroup", 3, 3)
 				test.Ok(t, err)
 				r, err := b.Client().Heartbeat(3, &heartbeat.Request{

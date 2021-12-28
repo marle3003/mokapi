@@ -27,6 +27,10 @@ import (
 	"sync"
 )
 
+type ConfigWatcher interface {
+	AddListener(listener func(c *common.File))
+}
+
 type Binding interface {
 	Start()
 	Stop()

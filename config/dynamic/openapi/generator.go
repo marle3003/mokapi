@@ -7,6 +7,7 @@ import (
 	"math"
 	"math/rand"
 	"reflect"
+	"strings"
 	"time"
 )
 
@@ -48,14 +49,48 @@ func (g *Generator) New(ref *SchemaRef) interface{} {
 }
 
 func (g *Generator) getObject(s *Schema) interface{} {
-	obj := make(map[string]interface{})
-	if s.Properties != nil {
-		for name, propSchema := range s.Properties.Value {
-			value := g.New(propSchema)
-			obj[name] = value
-		}
+	if s.Properties == nil || s.Properties.Value == nil {
+		t := reflect.StructOf([]reflect.StructField{})
+		return reflect.New(t).Interface()
 	}
-	return obj
+
+	fields := make([]reflect.StructField, 0, len(s.Properties.Value))
+	values := make([]reflect.Value, 0, len(s.Properties.Value))
+
+	for name, propSchema := range s.Properties.Value {
+		value := g.New(propSchema)
+		fields = append(fields, reflect.StructField{
+			Name: strings.Title(name),
+			Type: getType(propSchema.Value),
+		})
+		values = append(values, reflect.ValueOf(value))
+	}
+
+	t := reflect.StructOf(fields)
+	v := reflect.New(t).Elem()
+	for i, val := range values {
+		v.Field(i).Set(val)
+	}
+	return v.Addr().Interface()
+}
+
+func getType(s *Schema) reflect.Type {
+	switch s.Type {
+	case "integer":
+		if s.Format == "int32" {
+			return reflect.TypeOf(int32(0))
+		}
+		return reflect.TypeOf(int64(0))
+	case "number":
+		if s.Format == "float32" {
+			return reflect.TypeOf(float32(0))
+		}
+		return reflect.TypeOf(float64(0))
+	case "string":
+		return reflect.TypeOf("")
+	}
+
+	panic(fmt.Sprintf("type %v not implemented", s.Type))
 }
 
 func getString(s *Schema) string {
@@ -136,7 +171,7 @@ func getNumber(s *Schema) interface{} {
 
 		// gofakeit uses Intn function which panics if number is <= 0
 		if s.Format == "int32" {
-			return int(math.Round(float64(gofakeit.Float32Range(float32(min), float32(max)))))
+			return int32(math.Round(float64(gofakeit.Float32Range(float32(min), float32(max)))))
 		}
 
 		return int64(math.Round(gofakeit.Float64Range(float64(min), float64(max))))
@@ -195,7 +230,7 @@ func (g *Generator) newArray(s *Schema) (r []interface{}) {
 func getByFormat(format string) string {
 	switch format {
 	case "date":
-		return gofakeit.Generate("{year}-{month}-{day}")
+		return gofakeit.Date().Format("2006-01-02")
 	case "date-time":
 		return gofakeit.Generate("{date}")
 	case "password":

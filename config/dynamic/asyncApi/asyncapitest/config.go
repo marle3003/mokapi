@@ -12,6 +12,20 @@ func NewConfig(opts ...ConfigOptions) *asyncApi.Config {
 	return c
 }
 
+func WithTitle(title string) ConfigOptions {
+	return func(c *asyncApi.Config) {
+		c.Info.Name = title
+	}
+}
+
+func WithInfo(title, description, version string) ConfigOptions {
+	return func(c *asyncApi.Config) {
+		c.Info.Name = title
+		c.Info.Description = description
+		c.Info.Version = version
+	}
+}
+
 func WithChannel(name string, opts ...ChannelOptions) ConfigOptions {
 	return func(c *asyncApi.Config) {
 		if c.Channels == nil {
@@ -19,6 +33,12 @@ func WithChannel(name string, opts ...ChannelOptions) ConfigOptions {
 		}
 		ch := NewChannel(opts...)
 		c.Channels[name] = &asyncApi.ChannelRef{Value: ch}
+	}
+}
+
+func WithChannelBinding(key, value string) ChannelOptions {
+	return func(c *asyncApi.Channel) {
+		c.Bindings.Kafka.Config[key] = value
 	}
 }
 

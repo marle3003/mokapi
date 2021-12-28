@@ -54,7 +54,7 @@ func TestGeneratorString(t *testing.T) {
 		{
 			"nil",
 			nil,
-			openapitest.NewSchema(),
+			openapitest.NewSchema(""),
 		},
 		{
 			"string",
@@ -68,7 +68,7 @@ func TestGeneratorString(t *testing.T) {
 		},
 		{
 			"date",
-			"1908-12-7",
+			"1908-12-07",
 			&openapi.Schema{Type: "string", Format: "date"},
 		},
 		{
@@ -124,12 +124,13 @@ func TestGeneratorString(t *testing.T) {
 	}
 
 	for _, data := range testdata {
-		t.Run(data.name, func(t *testing.T) {
+		d := data
+		t.Run(d.name, func(t *testing.T) {
 			gofakeit.SetGlobalFaker(gofakeit.New(11))
 
 			g := openapi.NewGenerator()
-			o := g.New(&openapi.SchemaRef{Value: data.schema})
-			test.Equals(t, data.exp, o)
+			o := g.New(&openapi.SchemaRef{Value: d.schema})
+			test.Equals(t, d.exp, o)
 		})
 	}
 }
@@ -166,22 +167,22 @@ func TestGeneratorInt(t *testing.T) {
 	}{
 		{
 			"int32",
-			5624956352167149568,
+			int32(2147483647),
 			&openapi.Schema{Type: "integer", Format: "int32"},
 		},
 		{
 			"int32 min",
-			843730725977980928,
+			int32(2147483647),
 			&openapi.Schema{Type: "integer", Format: "int32", Minimum: toFloatP(10)},
 		},
 		{
 			"int32 max",
-			-8379641448315748352,
+			int32(-2147483648),
 			&openapi.Schema{Type: "integer", Format: "int32", Maximum: toFloatP(0)},
 		},
 		{
 			"int32 min max",
-			-4,
+			int32(-4),
 			&openapi.Schema{Type: "integer", Format: "int32", Minimum: toFloatP(-5), Maximum: toFloatP(5)},
 		},
 		{
@@ -301,21 +302,21 @@ func TestGeneratorArray(t *testing.T) {
 		},
 		{
 			"min items",
-			[]interface{}{1, 8, 8, 6, 7},
+			[]interface{}{int32(1), int32(8), int32(8), int32(6), int32(7)},
 			&openapi.Schema{Type: "array", MinItems: toIntP(5), Items: &openapi.SchemaRef{
 				Value: &openapi.Schema{
 					Type: "integer", Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(10)}}},
 		},
 		{
 			"min items",
-			[]interface{}{8, 8, 6, 7, 1, 8, 9, 5, 3, 1},
+			[]interface{}{int32(8), int32(8), int32(6), int32(7), int32(1), int32(8), int32(9), int32(5), int32(3), int32(1)},
 			&openapi.Schema{Type: "array", MinItems: toIntP(5), MaxItems: toIntP(10), Items: &openapi.SchemaRef{
 				Value: &openapi.Schema{
 					Type: "integer", Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(10)}}},
 		},
 		{
 			"unique items",
-			[]interface{}{8, 6, 7, 1, 9, 5, 3, 2, 4, 10},
+			[]interface{}{int32(8), int32(6), int32(7), int32(1), int32(9), int32(5), int32(3), int32(2), int32(4), int32(10)},
 			&openapi.Schema{Type: "array", MinItems: toIntP(5), MaxItems: toIntP(10), UniqueItems: true,
 				Items: &openapi.SchemaRef{
 					Value: &openapi.Schema{
@@ -378,10 +379,12 @@ func TestGeneratorObject(t *testing.T) {
 	}{
 		{
 			"simple",
-			map[string]interface{}{"id": 5624956352167149568},
+			&struct {
+				Id int64
+			}{Id: int64(5624956555383470080)},
 			&openapi.Schema{Type: "object", Properties: &openapi.Schemas{
 				Value: map[string]*openapi.SchemaRef{
-					"id": {Value: &openapi.Schema{Type: "integer", Format: "int32"}},
+					"id": {Value: &openapi.Schema{Type: "integer", Format: "int64"}},
 				},
 			}},
 		},
@@ -417,14 +420,16 @@ func TestGeneratorObject(t *testing.T) {
 		//},
 		{
 			"no fields defined",
-			map[string]interface{}{},
+			&struct{}{},
 			&openapi.Schema{Type: "object"},
 		},
-		{
-			"example",
-			map[string]interface{}{"foo": "bar"},
-			&openapi.Schema{Type: "object", Example: map[string]interface{}{"foo": "bar"}},
-		},
+		//{
+		//	"example",
+		//	struct {
+		//		foo string
+		//	}{foo: "bar"},
+		//	&openapi.Schema{Type: "object", Example: map[string]interface{}{"foo": "bar"}},
+		//},
 	}
 
 	for _, data := range testdata {

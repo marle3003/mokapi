@@ -2,7 +2,10 @@ package store
 
 import (
 	"fmt"
-	"mokapi/kafka/schema"
+	"mokapi/config/dynamic/asyncApi"
+	"net"
+	"net/url"
+	"strconv"
 	"sync"
 )
 
@@ -20,24 +23,38 @@ type Broker struct {
 	port int
 }
 
-func New(schema schema.Cluster) *Store {
+func New(config *asyncApi.Config) *Store {
 	c := &Store{
 		topics:  make(map[string]*Topic),
 		brokers: make(map[int]*Broker),
 		groups:  make(map[string]*Group),
 	}
-	for _, b := range schema.Brokers {
-		c.brokers[b.Id] = &Broker{
-			id:   b.Id,
-			host: b.Host,
-			port: b.Port,
+
+	brokerId := 0
+	replicas := make([]int, 0, len(config.Servers))
+	for _, b := range config.Servers {
+		host, port := parseHostAndPort(b.Url)
+		replicas = append(replicas, brokerId)
+		c.brokers[brokerId] = &Broker{
+			id:   brokerId,
+			host: host,
+			port: port,
 		}
+		brokerId++
 	}
-	for _, ts := range schema.Topics {
-		t, _ := c.addTopic(ts.Name)
-		for _, p := range ts.Partitions {
-			part := newPartition(p.Index, p.Replicas)
-			t.partitions[p.Index] = part
+	for name, ch := range config.Channels {
+		if ch.Value == nil {
+			continue
+		}
+
+		t, _ := c.addTopic(name)
+		t.validator = newValidator(ch.Value)
+
+		k := ch.Value.Bindings.Kafka
+		for i := 0; i < k.Partitions(); i++ {
+			part := newPartition(i, replicas)
+			part.validator = t.validator
+			t.partitions[i] = part
 
 		}
 	}
@@ -150,4 +167,35 @@ func (s *Store) addTopic(name string) (*Topic, error) {
 	s.topics[name] = t
 
 	return t, nil
+}
+
+func parseHostAndPort(s string) (host string, port int) {
+	var err error
+	var portString string
+	host, portString, err = net.SplitHostPort(s)
+	if err != nil {
+		u, err := url.Parse(s)
+		if err != nil || u.Host == "" {
+			u, err = url.Parse("//" + s)
+			if err != nil {
+				return "", 9092
+			}
+		}
+
+		host = u.Host
+		portString = u.Port()
+	}
+
+	if len(portString) == 0 {
+		port = 9092
+	} else {
+		var p int64
+		p, err = strconv.ParseInt(portString, 10, 32)
+		if err != nil {
+			return
+		}
+		port = int(p)
+	}
+
+	return
 }

@@ -3,45 +3,35 @@ package server
 import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/asyncApi"
+	"mokapi/config/dynamic/common"
 	"mokapi/kafka"
-	"mokapi/kafka/schema"
 )
 
-func (s *Server) updateAsyncConfig(config *asyncApi.Config) {
-	kafkaSchema := toKafkaSchema(config)
-	if c, ok := s.kafkaClusters[config.Info.Name]; !ok {
-		c = kafka.NewCluster(kafkaSchema)
-		s.kafkaClusters[config.Info.Name] = c
+type KafkaClusters map[string]*kafka.Cluster
+
+func (kc KafkaClusters) UpdateConfig(file *common.File) {
+	config, ok := file.Data.(*asyncApi.Config)
+	if !ok {
+		return
+	}
+
+	if c, ok := kc[config.Info.Name]; !ok {
+		c = kafka.NewCluster(config)
+		kc[config.Info.Name] = c
 		if err := c.Start(); err != nil {
 			log.Errorf("unable to start kafka cluster %v: %v", config.Info.Name, err)
 		}
 	} else {
-		c.Update(kafkaSchema)
+		c.Update()
 	}
 }
 
-func toKafkaSchema(config *asyncApi.Config) schema.Cluster {
-	s := schema.New()
-	// todo: order of servers
-	for _, server := range config.Servers {
-		s.Brokers = append(s.Brokers, schema.Broker{
-			Id:   0,
-			Host: server.GetHost(),
-			Port: server.GetPort(),
-		})
+func (kc KafkaClusters) Stop() {
+	for _, c := range kc {
+		c.Close()
 	}
+}
 
-	for name := range config.Channels {
-		s.Topics = append(s.Topics, schema.Topic{
-			Name: name,
-			Partitions: []schema.Partition{
-				{
-					Index:    0,
-					Replicas: []int{0},
-				},
-			},
-		})
-	}
+func (s *Server) updateAsyncConfig(config *asyncApi.Config) {
 
-	return s
 }

@@ -5,9 +5,9 @@ import (
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/protocol"
 	"mokapi/kafka/protocol/metaData"
-	"mokapi/kafka/schema"
-	"mokapi/kafka/store"
 	"mokapi/test"
+	"net"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -20,11 +20,9 @@ func TestMetadata(t *testing.T) {
 		{
 			"default",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{
-					Topics: []schema.Topic{
-						{Name: "foo", Partitions: []schema.Partition{{Index: 1, Replicas: []int{0}}}}},
-					Brokers: []schema.Broker{{Id: 0, Host: "foohost", Port: 9092}},
-				}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{
+					Brokers: []string{b.Listener.Addr().String()},
+					Topics:  []kafkatest.TopicConfig{{"foo", 1}}}))
 				r, err := b.Client().Metadata(4, &metaData.Request{})
 				test.Ok(t, err)
 
@@ -34,8 +32,10 @@ func TestMetadata(t *testing.T) {
 				// brokers
 				test.Equals(t, 1, len(r.Brokers))
 				test.Equals(t, int32(0), r.Brokers[0].NodeId)
-				test.Equals(t, "foohost", r.Brokers[0].Host)
-				test.Equals(t, int32(9092), r.Brokers[0].Port)
+				test.Equals(t, "127.0.0.1", r.Brokers[0].Host)
+				_, ps, _ := net.SplitHostPort(b.Listener.Addr().String())
+				p, _ := strconv.ParseInt(ps, 10, 32)
+				test.Equals(t, int32(p), r.Brokers[0].Port)
 				test.Equals(t, "", r.Brokers[0].Rack)
 
 				// topics
@@ -55,17 +55,9 @@ func TestMetadata(t *testing.T) {
 		{
 			"with specific topic and two partitions",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{
-					Topics: []schema.Topic{
-						{Name: "foo", Partitions: []schema.Partition{
-							{Index: 1, Replicas: []int{0}},
-							{Index: 2, Replicas: []int{0}},
-						}},
-						{Name: "foo2", Partitions: []schema.Partition{
-							{Index: 1, Replicas: []int{0}},
-						}}},
-					Brokers: []schema.Broker{{Id: 0, Host: "foohost", Port: 9092}},
-				}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{
+					Brokers: []string{b.Listener.Addr().String()},
+					Topics:  []kafkatest.TopicConfig{{"foo", 2}, {"foo2", 1}}}))
 
 				r, err := b.Client().Metadata(4, &metaData.Request{
 					Topics: []metaData.TopicName{{Name: "foo"}},
@@ -77,13 +69,9 @@ func TestMetadata(t *testing.T) {
 		{
 			"with invalid topic",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{
-					Topics: []schema.Topic{
-						{Name: "foo", Partitions: []schema.Partition{
-							{Index: 1, Replicas: []int{0}},
-						}}},
-					Brokers: []schema.Broker{{Id: 0, Host: "foohost", Port: 9092}},
-				}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{
+					Brokers: []string{b.Listener.Addr().String()},
+					Topics:  []kafkatest.TopicConfig{{"foo", 1}}}))
 				r, err := b.Client().Metadata(4, &metaData.Request{
 					Topics: []metaData.TopicName{{Name: "foo"}, {Name: "bar"}},
 				})

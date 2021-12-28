@@ -14,6 +14,7 @@ const (
 	Unknown                 ErrorCode = -1
 	None                    ErrorCode = 0
 	OffsetOutOfRange        ErrorCode = 1
+	CorruptMessage          ErrorCode = 2
 	UnknownTopicOrPartition ErrorCode = 3
 	CoordinatorNotAvailable ErrorCode = 15
 	NotCoordinator          ErrorCode = 16
@@ -33,6 +34,7 @@ var (
 		Unknown:                 "UNKNOWN_SERVER_ERROR",
 		None:                    "NONE",
 		OffsetOutOfRange:        "OFFSET_OUT_OF_RANGE",
+		CorruptMessage:          "CORRUPT_MESSAGE",
 		UnknownTopicOrPartition: "UNKNOWN_TOPIC_OR_PARTITION",
 		CoordinatorNotAvailable: "COORDINATOR_NOT_AVAILABLE",
 		NotCoordinator:          "NOT_COORDINATOR",

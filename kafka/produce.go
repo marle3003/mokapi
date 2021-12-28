@@ -1,6 +1,7 @@
 package kafka
 
 import (
+	log "github.com/sirupsen/logrus"
 	"mokapi/kafka/protocol"
 	"mokapi/kafka/protocol/produce"
 )
@@ -27,8 +28,13 @@ func (b *Broker) produce(rw protocol.ResponseWriter, req *protocol.Request) erro
 				if p == nil {
 					resPartition.ErrorCode = protocol.UnknownTopicOrPartition
 				} else {
-					baseOffset := p.Write(rp.Record)
-					resPartition.BaseOffset = baseOffset
+					baseOffset, err := p.Write(rp.Record)
+					if err != nil {
+						log.Infof("kafka corrupt message: %v", err)
+						resPartition.ErrorCode = protocol.CorruptMessage
+					} else {
+						resPartition.BaseOffset = baseOffset
+					}
 				}
 			}
 

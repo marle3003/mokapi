@@ -3,7 +3,7 @@ package kafka
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"mokapi/kafka/schema"
+	"mokapi/config/dynamic/asyncApi"
 	"mokapi/kafka/store"
 )
 
@@ -12,8 +12,8 @@ type Cluster struct {
 	brokers map[int]*Broker
 }
 
-func NewCluster(schema schema.Cluster) *Cluster {
-	c := &Cluster{store: store.New(schema), brokers: make(map[int]*Broker)}
+func NewCluster(cfg *asyncApi.Config) *Cluster {
+	c := &Cluster{store: store.New(cfg), brokers: make(map[int]*Broker)}
 	return c
 }
 
@@ -38,7 +38,7 @@ func (c *Cluster) Close() {
 	}
 }
 
-func (c *Cluster) Update(schema schema.Cluster) {
+func (c *Cluster) Update() {
 	// todo implement
 	panic("feature not implemented")
 }

@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"strings"
 	"testing"
 )
 
@@ -58,9 +59,11 @@ func Equals(tb testing.TB, exp, act interface{}) {
 		return
 	}
 	if !reflect.DeepEqual(exp, act) {
-		_, file, line, _ := runtime.Caller(1)
-		fmt.Printf("\033[31m%s:%d:\n\n\texp: %v\n\n\tgot: %v\033[39m\n\n", filepath.Base(file), line, exp, act)
-		tb.FailNow()
+		if !equal(exp, act) {
+			_, file, line, _ := runtime.Caller(1)
+			fmt.Printf("\033[31m%s:%d:\n\n\texp: %v\n\n\tgot: %v\033[39m\n\n", filepath.Base(file), line, exp, act)
+			tb.FailNow()
+		}
 	}
 }
 
@@ -80,4 +83,52 @@ func isNil(x interface{}) bool {
 func NewNullLogger() *test.Hook {
 	logrus.SetOutput(ioutil.Discard)
 	return test.NewGlobal()
+}
+
+func equal(exp, act interface{}) bool {
+	if _, ok := exp.(error); ok {
+		return false
+	}
+	if _, ok := act.(error); ok {
+		return false
+	}
+
+	v1 := reflect.ValueOf(exp)
+	v2 := reflect.ValueOf(act)
+
+	if v1.Kind() != v2.Kind() {
+		return false
+	}
+
+	if v1.Kind() == reflect.Ptr {
+		v1 = v1.Elem()
+		v2 = v2.Elem()
+	}
+
+	if v1.Kind() != reflect.Struct {
+		return false
+	}
+
+	if v1.NumField() != v2.NumField() {
+		return false
+	}
+	t := v1.Type()
+	for i := 0; i < t.NumField(); i++ {
+		f := t.Field(i)
+		// skip private fields
+		if f.Name != strings.Title(f.Name) {
+			continue
+		}
+		f1 := v1.FieldByName(f.Name)
+		f2 := v2.FieldByName(f.Name)
+
+		i1 := f1.Interface()
+		i2 := f2.Interface()
+
+		if !reflect.DeepEqual(i1, i2) && !equal(i1, i2) {
+			return false
+		}
+	}
+
+	return true
 }

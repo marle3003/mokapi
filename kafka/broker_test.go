@@ -1,10 +1,10 @@
 package kafka_test
 
 import (
+	"mokapi/config/dynamic/asyncApi/asyncapitest"
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/protocol"
 	"mokapi/kafka/protocol/apiVersion"
-	"mokapi/kafka/schema"
 	"mokapi/kafka/store"
 	"mokapi/test"
 	"net"
@@ -21,9 +21,8 @@ func TestApiKeys(t *testing.T) {
 			t.Parallel()
 			b := kafkatest.NewBroker()
 			defer b.Close()
-			b.SetStore(store.New(schema.Cluster{
-				Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())},
-			}))
+			cfg := asyncapitest.NewConfig(asyncapitest.WithServer("test", "kafka", b.Listener.Addr().String()))
+			b.SetStore(store.New(cfg))
 			c := b.Client()
 			// todo lower timeout when group.initial.rebalance.delay.ms is configurable
 			c.Timeout = 5 * time.Second

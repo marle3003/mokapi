@@ -4,8 +4,6 @@ import (
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/protocol"
 	"mokapi/kafka/protocol/offsetCommit"
-	"mokapi/kafka/schema"
-	"mokapi/kafka/store"
 	"mokapi/test"
 	"testing"
 )
@@ -18,7 +16,9 @@ func TestOffsetCommit(t *testing.T) {
 		{
 			"group not exists",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{Topics: []schema.Topic{{Name: "foo", Partitions: []schema.Partition{{Index: 0}}}}}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{
+					Brokers: []string{b.Listener.Addr().String()},
+					Topics:  []kafkatest.TopicConfig{{"foo", 1}}}))
 
 				r, err := b.Client().OffsetCommit(2, &offsetCommit.Request{
 					GroupId:       "TestGroup",
@@ -48,10 +48,9 @@ func TestOffsetCommit(t *testing.T) {
 		{
 			"offset out of range",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{
-					Topics:  []schema.Topic{{Name: "foo", Partitions: []schema.Partition{{Index: 0}}}},
-					Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())},
-				}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{
+					Brokers: []string{b.Listener.Addr().String()},
+					Topics:  []kafkatest.TopicConfig{{"foo", 1}}}))
 
 				err := b.Client().JoinSyncGroup("foo", "bar", 3, 3)
 				test.Ok(t, err)
@@ -85,10 +84,10 @@ func TestOffsetCommit(t *testing.T) {
 		{
 			"offset commit successfully",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{
-					Topics:  []schema.Topic{{Name: "foo", Partitions: []schema.Partition{{Index: 0}}}},
-					Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())},
-				}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{
+					Brokers: []string{b.Listener.Addr().String()},
+					Topics:  []kafkatest.TopicConfig{{"foo", 1}}}))
+
 				b.Store().Topic("foo").Partition(0).Write(protocol.RecordBatch{
 					Records: []protocol.Record{
 						{
@@ -158,7 +157,9 @@ func TestOffsetCommit(t *testing.T) {
 		{
 			"partition not exists",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{Topics: []schema.Topic{{Name: "foo"}}}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{
+					Brokers: []string{b.Listener.Addr().String()},
+					Topics:  []kafkatest.TopicConfig{{"foo", 0}}}))
 
 				r, err := b.Client().OffsetCommit(2, &offsetCommit.Request{
 					GroupId:       "TestGroup",

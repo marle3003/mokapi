@@ -17,7 +17,6 @@ import (
 	"mokapi/kafka/protocol/offsetFetch"
 	"mokapi/kafka/protocol/produce"
 	"mokapi/kafka/protocol/syncGroup"
-	"mokapi/kafka/schema"
 	"mokapi/kafka/store"
 	"net"
 	"sync"
@@ -39,7 +38,7 @@ func NewBroker(id int, addr string) *Broker {
 	b := &Broker{
 		Id:      id,
 		Addr:    addr,
-		Store:   store.New(schema.Cluster{}),
+		Store:   &store.Store{},
 		Clients: make(map[net.Conn]context.Context),
 	}
 	b.server = &protocol.Server{

@@ -4,7 +4,6 @@ import (
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/protocol"
 	"mokapi/kafka/protocol/listgroup"
-	"mokapi/kafka/schema"
 	"mokapi/kafka/store"
 	"mokapi/test"
 	"testing"
@@ -27,7 +26,7 @@ func TestListGroup(t *testing.T) {
 		{
 			"with group state",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())}}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{Brokers: []string{b.Listener.Addr().String()}}))
 				group := b.Store().GetOrCreateGroup("foo", 0)
 				group.SetState(store.Joining)
 				g := group.NewGeneration()
@@ -43,7 +42,7 @@ func TestListGroup(t *testing.T) {
 		{
 			"filtering",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{Brokers: []schema.Broker{schema.NewBroker(0, b.Listener.Addr().String())}}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{Brokers: []string{b.Listener.Addr().String()}}))
 				b.Store().GetOrCreateGroup("foo", 0)
 				group := b.Store().GetOrCreateGroup("bar", 0)
 				group.SetState(store.AwaitingSync)

@@ -1,12 +1,13 @@
 package kafka_test
 
 import (
+	"mokapi/config/dynamic/asyncApi/asyncapitest"
+	"mokapi/config/dynamic/openapi/openapitest"
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/protocol"
 	"mokapi/kafka/protocol/fetch"
 	"mokapi/kafka/protocol/offset"
 	"mokapi/kafka/protocol/produce"
-	"mokapi/kafka/schema"
 	"mokapi/kafka/store"
 	"mokapi/test"
 	"testing"
@@ -21,7 +22,10 @@ func TestProduce(t *testing.T) {
 		{
 			"default",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{Topics: []schema.Topic{{Name: "foo", Partitions: []schema.Partition{{Index: 0}}}}}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{
+					Brokers: []string{b.Listener.Addr().String()},
+					Topics:  []kafkatest.TopicConfig{{"foo", 1}}}))
+
 				r, err := b.Client().Produce(3, &produce.Request{Topics: []produce.RequestTopic{
 					{Name: "foo", Partitions: []produce.RequestPartition{
 						{
@@ -101,9 +105,10 @@ func TestProduce(t *testing.T) {
 		{
 			"Base Offset",
 			func(t *testing.T, b *kafkatest.Broker) {
-				b.SetStore(store.New(schema.Cluster{Topics: []schema.Topic{
-					{Name: "foo", Partitions: []schema.Partition{{Index: 0}}},
-				}}))
+				b.SetStore(kafkatest.NewStore(kafkatest.StoreConfig{
+					Brokers: []string{b.Listener.Addr().String()},
+					Topics:  []kafkatest.TopicConfig{{"foo", 1}}}))
+
 				b.Store().Topic("foo").Partition(0).Write(protocol.RecordBatch{
 					Records: []protocol.Record{
 						{
@@ -135,6 +140,43 @@ func TestProduce(t *testing.T) {
 				test.Equals(t, "foo", r.Topics[0].Name)
 				test.Equals(t, protocol.None, r.Topics[0].Partitions[0].ErrorCode)
 				test.Equals(t, int64(1), r.Topics[0].Partitions[0].BaseOffset)
+			},
+		},
+		{
+			"invalid message value format",
+			func(t *testing.T, b *kafkatest.Broker) {
+				b.SetStore(store.New(asyncapitest.NewConfig(
+					asyncapitest.WithServer(b.Listener.Addr().String(), "kafka", b.Listener.Addr().String()),
+					asyncapitest.WithChannel("foo", asyncapitest.WithSubscribeAndPublish(
+						asyncapitest.WithMessage(
+							asyncapitest.WithContentType("application/json"),
+							asyncapitest.WithPayload(openapitest.NewSchema("integer"))),
+					)),
+				)))
+
+				r, err := b.Client().Produce(3, &produce.Request{Topics: []produce.RequestTopic{
+					{Name: "foo", Partitions: []produce.RequestPartition{
+						{
+							Index: 0,
+							Record: protocol.RecordBatch{
+								Records: []protocol.Record{
+									{
+										Offset:  0,
+										Time:    time.Now(),
+										Key:     protocol.NewBytes([]byte(`"foo-1"`)),
+										Value:   protocol.NewBytes([]byte(`"bar-1"`)),
+										Headers: nil,
+									},
+								},
+							},
+						},
+					},
+					}},
+				})
+				test.Ok(t, err)
+				test.Equals(t, "foo", r.Topics[0].Name)
+				test.Equals(t, protocol.CorruptMessage, r.Topics[0].Partitions[0].ErrorCode)
+				test.Equals(t, int64(0), r.Topics[0].Partitions[0].BaseOffset)
 			},
 		},
 	}

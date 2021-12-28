@@ -2,75 +2,127 @@ package encoding
 
 import (
 	"fmt"
+	"math"
 	"mokapi/config/dynamic/openapi"
+	"reflect"
+	"strings"
 )
 
-type JsonReader struct {
-	data interface{}
-}
-
-func (r *JsonReader) ReadObject(v interface{}, schema *openapi.SchemaRef) (map[string]interface{}, error) {
-	m, ok := v.(map[string]interface{})
+func readObject(i interface{}, s *openapi.Schema) (interface{}, error) {
+	m, ok := i.(map[string]interface{})
 	if !ok {
-		return nil, fmt.Errorf("expected object but got %t", v)
+		return nil, fmt.Errorf("expected object but got %T", i)
 	}
-	result := make(map[string]interface{})
-	for k, v := range m {
-		if schema.Value == nil || schema.Value.Properties == nil || schema.Value.Properties.Value == nil {
+
+	required := make(map[string]struct{})
+	for _, r := range s.Required {
+		required[r] = struct{}{}
+	}
+
+	// free-form object
+	if s.Properties == nil {
+		return toObject(m), nil
+	}
+
+	if len(m) > len(s.Properties.Value) {
+		return nil, fmt.Errorf("too many properties for object")
+	}
+
+	fields := make([]reflect.StructField, 0, len(m))
+	values := make([]reflect.Value, 0, len(m))
+
+	for name, pRef := range s.Properties.Value {
+		p := pRef.Value
+
+		if _, ok := m[name]; !ok {
+			if _, ok := required[name]; ok && len(required) > 0 {
+				return nil, fmt.Errorf("expected required property %v", name)
+			}
 			continue
 		}
-		if p, ok := schema.Value.Properties.Value[k]; ok {
-			var err error
-			result[k], err = parse(v, p, r)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-	return result, nil
-}
-func (r *JsonReader) ReadArray(v interface{}, schema *openapi.SchemaRef) ([]interface{}, error) {
-	a, ok := v.([]interface{})
-	if !ok {
-		return nil, fmt.Errorf("expected array but got %t", v)
-	}
-	result := make([]interface{}, 0)
-	for _, v := range a {
-		v, err := parse(v, schema.Value.Items, r)
+
+		v, err := parse(m[name], pRef)
 		if err != nil {
 			return nil, err
 		}
-		result = append(result, v)
+		values = append(values, reflect.ValueOf(v))
+		fields = append(fields, reflect.StructField{
+			Name: strings.Title(name),
+			Type: getType(p),
+			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v"`, name)),
+		})
 	}
-	return result, nil
+
+	t := reflect.StructOf(fields)
+	v := reflect.New(t).Elem()
+	for i, val := range values {
+		v.Field(i).Set(val)
+	}
+	return v.Addr().Interface(), nil
 }
-func (r *JsonReader) ReadInteger(v interface{}, _ *openapi.SchemaRef) (int64, error) {
+
+func readArray(i interface{}, s *openapi.Schema) (interface{}, error) {
+	a, ok := i.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("expected array but got %T", i)
+	}
+
+	result := reflect.MakeSlice(reflect.SliceOf(getType(s.Items.Value)), 0, len(a))
+
+	for _, v := range a {
+		v, err := parse(v, s.Items)
+		if err != nil {
+			return nil, err
+		}
+		reflect.Append(result, reflect.ValueOf(v))
+	}
+	return result.Interface(), nil
+}
+
+func readInteger(i interface{}, s *openapi.Schema) (int64, error) {
+	f, ok := i.(float64)
+	if !ok {
+		return 0, fmt.Errorf("expected integer got %T", i)
+	}
+	n := int64(f)
+	if float64(n) != f {
+		return 0, fmt.Errorf("expected integer but got floating number")
+	}
+
+	switch s.Format {
+	case "int32":
+		if n > math.MaxInt32 || n < math.MinInt32 {
+			return 0, fmt.Errorf("integer is not int32")
+		}
+	}
+
+	return n, validateInt64(n, s)
+}
+func readNumber(v interface{}, s *openapi.Schema) (float64, error) {
 	f, ok := v.(float64)
 	if !ok {
-		return 0, fmt.Errorf("expected integer got %t", v)
+		return 0, fmt.Errorf("expected float got %T", v)
 	}
-	return int64(f), nil
-}
-func (r *JsonReader) ReadNumber(v interface{}, schema *openapi.SchemaRef) (float64, error) {
-	f, ok := v.(float64)
-	if !ok {
-		return 0, fmt.Errorf("expected float got %t", v)
+
+	switch s.Format {
+	case "float32":
+		if f > math.MaxFloat32 || f < -math.MaxFloat32 {
+			return 0, fmt.Errorf("number is not float32")
+		}
 	}
-	return f, nil
+
+	return f, validateFloat64(f, s)
 }
-func (r *JsonReader) ReadString(v interface{}, schema *openapi.SchemaRef) (string, error) {
+func readString(v interface{}, schema *openapi.SchemaRef) (string, error) {
 	s, ok := v.(string)
 	if !ok {
-		return "", fmt.Errorf("expected string got %t", v)
+		return "", fmt.Errorf("expected string got %T", v)
 	}
 	return s, nil
 }
-func (r *JsonReader) ReadBoolean(v interface{}, _ *openapi.SchemaRef) (bool, error) {
-	switch t := v.(type) {
-	case bool:
-		return t, nil
-	case string:
-		return t == "true" || t == "1", nil
+func readBoolean(i interface{}, _ *openapi.SchemaRef) (bool, error) {
+	if b, ok := i.(bool); ok {
+		return b, nil
 	}
-	return false, nil
+	return false, fmt.Errorf("expected bool but got %T", i)
 }
