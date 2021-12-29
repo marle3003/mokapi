@@ -462,7 +462,11 @@ func (s *SchemasRef) Get(name string) *SchemaRef {
 	if s.Value == nil {
 		return nil
 	}
-	return s.Value.Get(name).(*SchemaRef)
+	r := s.Value.Get(name)
+	if r == nil {
+		return nil
+	}
+	return r.(*SchemaRef)
 }
 
 func (s *Schemas) Resolve(token string) (interface{}, error) {
@@ -473,22 +477,22 @@ func (s *Schemas) Resolve(token string) (interface{}, error) {
 	return i.(*SchemaRef).Value, nil
 }
 
-func (r *RequestBody) GetMedia(contentType *media.ContentType) (*MediaType, bool) {
+func (r *RequestBody) GetMedia(contentType *media.ContentType) *MediaType {
 	if c, ok := r.Content[contentType.String()]; ok {
-		return c, true
+		return c
 	} else if c, ok := r.Content[contentType.Key()]; ok {
-		return c, true
+		return c
 	}
-	return nil, false
+	return nil
 }
 
-func (r *Response) GetContent(contentType *media.ContentType) (*MediaType, bool) {
+func (r *Response) GetContent(contentType *media.ContentType) *MediaType {
 	if c, ok := r.Content[contentType.String()]; ok {
-		return c, true
+		return c
 	} else if c, ok := r.Content[contentType.Key()]; ok {
-		return c, true
+		return c
 	}
-	return nil, false
+	return nil
 }
 
 func (e *Endpoint) Operations() map[string]*Operation {

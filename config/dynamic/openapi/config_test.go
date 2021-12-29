@@ -1,12 +1,79 @@
 package openapi_test
 
 import (
+	"fmt"
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/openapi"
+	"mokapi/models/media"
 	"mokapi/test"
 	"testing"
 )
+
+func TestConfig_Validate(t *testing.T) {
+	testdata := []struct {
+		s   string
+		err error
+	}{
+		{
+			`
+openapi: 3
+info:
+  title: foo
+`,
+			nil,
+		},
+		{
+			`
+openapi: 3.0
+info:
+  title: foo
+`,
+			nil,
+		},
+		{
+			`
+openapi: 2
+info:
+  title: foo
+`,
+			fmt.Errorf("unsupported version: 2"),
+		},
+		{
+			`
+openapi: 3
+info:
+`,
+			fmt.Errorf("an openapi title is required"),
+		},
+		{
+			`
+openapi: 3.f
+info:
+  title: foo
+`,
+			nil,
+		},
+		{
+			`
+openapi: ""
+info:
+  title: foo
+`,
+			fmt.Errorf("no version defined"),
+		},
+	}
+	t.Parallel()
+	for _, data := range testdata {
+		d := data
+		t.Run(d.s, func(t *testing.T) {
+			c := &openapi.Config{}
+			err := yaml.Unmarshal([]byte(d.s), c)
+			test.Ok(t, err)
+			test.Equals(t, d.err, c.Validate())
+		})
+	}
+}
 
 func TestConfig(t *testing.T) {
 	testdata := []struct {
@@ -33,6 +100,8 @@ components:
 			Name: "Responses",
 			Content: `
 openapi: 3.0.0
+info:
+  title: foo
 paths:
   /foo:
     get:
@@ -51,6 +120,7 @@ components:
       type: string
 `,
 			f: func(t *testing.T, c *openapi.Config) {
+				test.Ok(t, c.Validate())
 				test.Equals(t, 1, len(c.EndPoints))
 				exp := []interface{}{openapi.HttpStatus(204), openapi.HttpStatus(200)}
 				keys := c.EndPoints["/foo"].Value.Get.Responses.Keys()
@@ -80,6 +150,8 @@ func TestConfig_PetStore_PetSchema(t *testing.T) {
 	test.Ok(t, err)
 	err = config.Parse(&common.File{Data: config}, nil)
 	test.Ok(t, err)
+
+	test.Equals(t, nil, config.Components.Schemas.Get("foo"))
 
 	pet := config.Components.Schemas.Get("Pet")
 	test.Equals(t, []string{"name", "photoUrls"}, pet.Value.Required)
@@ -145,6 +217,8 @@ func TestConfig_PetStore_Path(t *testing.T) {
 	test.Equals(t, "#/components/schemas/Pet", body.Content["application/xml"].Schema.Ref)
 	test.Assert(t, body.Content["application/json"].Schema.Value != nil, "ref resolved")
 	test.Assert(t, body.Content["application/xml"].Schema.Value != nil, "ref resolved")
+	test.Equals(t, body.Content["application/json"], body.GetMedia(media.ParseContentType("application/json")))
+	test.Equals(t, nil, body.GetMedia(media.ParseContentType("foo/bar")))
 
 	schema := body.Content["application/json"].Schema.Value
 	test.Equals(t, []string{"name", "photoUrls"}, schema.Required)
@@ -154,6 +228,44 @@ func TestConfig_PetStore_Path(t *testing.T) {
 	r := i.(*openapi.ResponseRef)
 	test.Equals(t, 0, len(r.Value.Content))
 
+}
+
+func TestPetStore_Response(t *testing.T) {
+	config := &openapi.Config{}
+	err := yaml.Unmarshal([]byte(petstore), &config)
+	test.Ok(t, err)
+	err = config.Parse(&common.File{Data: config}, nil)
+	test.Ok(t, err)
+
+	endpoint := config.EndPoints["/pet/{petId}"]
+	r := endpoint.Value.Get.Responses.GetResponse(openapi.OK)
+	test.Assert(t, r != nil, "response exists")
+	m := r.Value.GetContent(media.ParseContentType("application/json"))
+	test.Equals(t, r.Value.Content["application/json"], m)
+
+	test.Equals(t, nil, r.Value.GetContent(media.ParseContentType("foo/bar")))
+}
+
+func TestPetStore_Paramters(t *testing.T) {
+	config := &openapi.Config{}
+	err := yaml.Unmarshal([]byte(petstore), &config)
+	test.Ok(t, err)
+	err = config.Parse(&common.File{Data: config}, nil)
+	test.Ok(t, err)
+
+	endpoint := config.EndPoints["/pet/{petId}"]
+	params := endpoint.Value.Delete.Parameters
+	test.Equals(t, 2, len(params))
+	test.Equals(t, "api_key", params[0].Value.Name)
+	test.Equals(t, openapi.HeaderParameter, params[0].Value.Type)
+	test.Equals(t, "string", params[0].Value.Schema.Value.Type)
+
+	test.Equals(t, "petId", params[1].Value.Name)
+	test.Equals(t, openapi.PathParameter, params[1].Value.Type)
+	test.Equals(t, "Pet id to delete", params[1].Value.Description)
+	test.Equals(t, true, params[1].Value.Required)
+	test.Equals(t, "integer", params[1].Value.Schema.Value.Type)
+	test.Equals(t, "int64", params[1].Value.Schema.Value.Format)
 }
 
 const petstore = `

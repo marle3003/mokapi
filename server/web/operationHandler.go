@@ -100,8 +100,8 @@ func readBody(ctx *HttpContext, contentType *media.ContentType) (interface{}, er
 		return "", nil
 	}
 
-	media, ok := ctx.Operation.RequestBody.Value.GetMedia(contentType)
-	if !ok {
+	media := ctx.Operation.RequestBody.Value.GetMedia(contentType)
+	if media == nil {
 		return nil, fmt.Errorf("content type '%v' of request body is not defined. Check your service configuration", contentType.String())
 	}
 	if media.Schema == nil || media.Schema.Value == nil {
