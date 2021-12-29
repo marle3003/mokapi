@@ -22,8 +22,6 @@ func TestPartition(t *testing.T) {
 func TestPartition_Write(t *testing.T) {
 	p := newPartition(0, map[int]*Broker{1: {id: 1}})
 
-	tNow := time.Now()
-
 	offset, err := p.Write(protocol.RecordBatch{
 		Records: []protocol.Record{
 			{
@@ -54,7 +52,7 @@ func TestPartition_Write(t *testing.T) {
 	test.Equals(t, protocol.None, errCode)
 	test.Equals(t, 2, len(b.Records))
 
-	test.Assert(t, b.Records[0].Time.After(tNow), "time is set")
+	test.Assert(t, !b.Records[0].Time.IsZero(), "time is set")
 }
 
 func TestPartition_Read_Empty(t *testing.T) {
