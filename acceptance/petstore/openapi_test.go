@@ -30,7 +30,7 @@ func TestOpenAPI(t *testing.T) {
 	test.Ok(t, err)
 
 	pet := petstore.Components.Schemas.Get("Pet")
-	err = webtest.GetRequest("http://127.0.0.1/pet/1",
+	err = webtest.GetRequest("http://127.0.0.1:8080/pet/1",
 		map[string]string{"Accept": "application/json"},
 		webtest.HasStatusCode(200),
 		webtest.HasBody(
