@@ -50,8 +50,8 @@ func parsePathObject(s string, p *openapi.Parameter) (obj map[string]interface{}
 			if len(kv) != 2 {
 				return nil, errors.Errorf("invalid format")
 			}
-			p, ok := p.Schema.Value.Properties.Value[kv[0]]
-			if !ok {
+			p := p.Schema.Value.Properties.Get(kv[0])
+			if p == nil {
 				return nil, errors.Errorf("property '%v' not defined in schema", kv[0])
 			}
 
@@ -68,8 +68,8 @@ func parsePathObject(s string, p *openapi.Parameter) (obj map[string]interface{}
 				break
 			}
 			key := values[i]
-			p, ok := p.Schema.Value.Properties.Value[key]
-			if !ok {
+			p := p.Schema.Value.Properties.Get(key)
+			if p == nil {
 				return nil, errors.Errorf("property '%v' not defined in schema", key)
 			}
 			i++

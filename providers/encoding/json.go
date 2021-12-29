@@ -5,9 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"mokapi/config/dynamic/openapi"
+	"mokapi/sortedmap"
+	"reflect"
+	"unicode"
 )
 
-type custom map[string]interface{}
+type custom struct {
+	sortedmap.LinkedHashMap
+}
 
 func MarshalJSON(obj interface{}, schema *openapi.SchemaRef) ([]byte, error) {
 	data, err := selectData(obj, schema)
@@ -21,9 +26,12 @@ func (m custom) MarshalJSON() ([]byte, error) {
 	var b []byte
 	buf := bytes.NewBuffer(b)
 	buf.WriteRune('{')
-	l := len(m)
+	l := m.Len()
 	i := 0
-	for k, v := range m {
+	for it := m.Iter(); it.Next(); {
+		k := it.Key()
+		v := it.Value()
+
 		key, err := json.Marshal(k)
 		if err != nil {
 			return nil, err
@@ -62,6 +70,10 @@ func selectData(data interface{}, schema *openapi.SchemaRef) (interface{}, error
 		if schema.Value.Type != "object" {
 			return nil, fmt.Errorf("expected %q but found object", schema.Value.Type)
 		}
+	case struct{}:
+		if schema.Value.Type != "object" {
+			return nil, fmt.Errorf("expected %q but found object", schema.Value.Type)
+		}
 	}
 
 	if schema.Value.Type == "array" {
@@ -90,44 +102,51 @@ func selectData(data interface{}, schema *openapi.SchemaRef) (interface{}, error
 
 		return nil, fmt.Errorf("unexpected type for schema type array")
 	} else if schema.Value.Type == "object" {
-		var obj map[string]interface{}
-		if o, isObject := data.(map[interface{}]interface{}); isObject {
-			obj = make(map[string]interface{})
-			for k, v := range o {
-				obj[fmt.Sprintf("%v", k)] = v
+		v := reflect.ValueOf(data)
+		if v.Kind() == reflect.Ptr {
+			v = v.Elem()
+		}
+		if v.Kind() == reflect.Struct {
+			t := v.Type()
+			obj := custom{}
+			for i := 0; i < v.NumField(); i++ {
+				ft := t.Field(i)
+				name := lowerTitle(ft.Name)
+				val := v.Field(i)
+
+				if schema.Value != nil || schema.Value.Properties.Value.Len() > 0 {
+					if p := schema.Value.Properties.Get(name); p != nil {
+						d, err := selectData(val.Interface(), p)
+						if err != nil {
+							return nil, err
+						}
+						obj.Set(name, d)
+					} else if schema.Value.AdditionalProperties != nil {
+						d, err := selectData(val.Interface(), schema.Value.AdditionalProperties)
+						if err != nil {
+							return nil, err
+						}
+						obj.Set(name, d)
+					}
+				} else {
+					obj.Set(name, val.Interface())
+				}
 			}
-		} else if o, isObject := data.(map[string]interface{}); isObject {
-			obj = o
 		} else {
-			s := fmt.Sprintf("%v", data)
-			err := json.Unmarshal([]byte(s), &obj)
-			if err != nil {
-				return nil, fmt.Errorf("unable to map %T with value \"%v\" to object", data, data)
-			}
+			panic("to do")
+			//s := fmt.Sprintf("%v", data)
+			//err := json.Unmarshal([]byte(s), &obj)
+			//if err != nil {
+			//	return nil, fmt.Errorf("unable to map %T with value \"%v\" to object", data, data)
+			//}
 		}
-
-		if schema.Value.Properties == nil || len(schema.Value.Properties.Value) == 0 {
-			return obj, nil
-		}
-
-		selectedData := make(custom)
-
-		for k, v := range obj {
-			if p, ok := schema.Value.Properties.Value[k]; ok {
-				var err error
-				selectedData[k], err = selectData(v, p)
-				if err != nil {
-					return nil, err
-				}
-			} else if schema.Value.AdditionalProperties != nil {
-				var err error
-				selectedData[k], err = selectData(v, schema.Value.AdditionalProperties)
-				if err != nil {
-					return nil, err
-				}
-			}
-		}
-		return selectedData, nil
 	}
 	return data, nil
+}
+
+func lowerTitle(s string) string {
+	for i, v := range s {
+		return string(unicode.ToLower(v)) + s[i+1:]
+	}
+	return s
 }

@@ -96,7 +96,9 @@ func (m StringMap) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 		o := m.Data.(map[string]interface{})
 
 		// Attributes
-		for propertyName, propertySchema := range m.Schema.Value.Properties.Value {
+		for it := m.Schema.Value.Properties.Value.Iter(); it.Next(); {
+			propertyName := it.Key().(string)
+			propertySchema := it.Value().(*openapi.SchemaRef)
 			// if property is mapped to attribute
 			if propertySchema.Value.Xml == nil || !propertySchema.Value.Xml.Attribute {
 				continue
@@ -146,7 +148,9 @@ func (m StringMap) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 }
 
 func encodeObject(e *xml.Encoder, obj map[string]interface{}, schema *openapi.SchemaRef) error {
-	for propertyName, propertySchema := range schema.Value.Properties.Value {
+	for it := schema.Value.Properties.Value.Iter(); it.Next(); {
+		propertyName := it.Key().(string)
+		propertySchema := it.Value().(*openapi.SchemaRef)
 		if propertySchema.Value.Xml != nil && propertySchema.Value.Xml.Attribute {
 			continue
 		}
@@ -232,7 +236,9 @@ func (e *XmlNode) parse(s *openapi.SchemaRef) (interface{}, error) {
 	switch s.Value.Type {
 	case "object":
 		props := map[string]interface{}{}
-		for name, property := range s.Value.Properties.Value {
+		for it := s.Value.Properties.Value.Iter(); it.Next(); {
+			name := it.Key().(string)
+			property := it.Value().(*openapi.SchemaRef)
 			xmlName := name
 			if property.Value.Xml != nil && len(property.Value.Xml.Name) > 0 {
 				xmlName = property.Value.Xml.Name

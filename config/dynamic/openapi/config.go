@@ -9,6 +9,7 @@ import (
 	"mokapi/sortedmap"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 func init() {
@@ -117,7 +118,7 @@ type Operation struct {
 	// case-sensitive. Tools and libraries MAY use the operationId to uniquely
 	// identify an operation, therefore, it is RECOMMENDED to follow common
 	// programming naming conventions.
-	OperationId string
+	OperationId string `yaml:"operationId" json:"operationId"`
 
 	// A list of parameters that are applicable for this operation.
 	// If a parameter is already defined at the Path Item, the new definition
@@ -208,7 +209,7 @@ type Schema struct {
 	Format               string
 	Pattern              string
 	Description          string
-	Properties           *Schemas
+	Properties           *SchemasRef
 	AdditionalProperties *SchemaRef // TODO custom marshal for bool, {} etc. Should it be a schema reference?
 	Faker                string     `yaml:"x-faker" json:"x-faker"`
 	Items                *SchemaRef
@@ -280,7 +281,6 @@ type Response struct {
 }
 
 type MediaType struct {
-	// The schema defining the content of the request, response.
 	Schema   *SchemaRef
 	Example  interface{}
 	Examples map[string]*ExampleRef
@@ -309,7 +309,7 @@ type ExampleRef struct {
 }
 
 type Components struct {
-	Schemas       *Schemas
+	Schemas       *SchemasRef
 	Responses     *NamedResponses
 	RequestBodies *RequestBodies `yaml:"requestBodies" json:"requestBodies"`
 	Parameters    *NamedParameters
@@ -317,9 +317,13 @@ type Components struct {
 	Headers       *NamedHeaders
 }
 
-type Schemas struct {
+type SchemasRef struct {
 	Ref   string
-	Value map[string]*SchemaRef
+	Value *Schemas
+}
+
+type Schemas struct {
+	sortedmap.LinkedHashMap
 }
 
 type NamedResponses struct {
@@ -437,7 +441,8 @@ func (c *Config) Validate() error {
 	if len(c.OpenApi) == 0 {
 		return fmt.Errorf("no version defined")
 	}
-	if c.OpenApi != "3.0.0" {
+	v := parseVersion(c.OpenApi)
+	if v.major != 3 {
 		return fmt.Errorf("unsupported version: %v", c.OpenApi)
 	}
 
@@ -448,12 +453,24 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-func (s *Schemas) Get(name string) (*SchemaRef, bool) {
+func (r *Responses) GetResponse(status HttpStatus) *ResponseRef {
+	i := r.Get(status)
+	return i.(*ResponseRef)
+}
+
+func (s *SchemasRef) Get(name string) *SchemaRef {
 	if s.Value == nil {
-		return nil, false
+		return nil
 	}
-	p, ok := s.Value[name]
-	return p, ok
+	return s.Value.Get(name).(*SchemaRef)
+}
+
+func (s *Schemas) Resolve(token string) (interface{}, error) {
+	i := s.Get(token)
+	if i == nil {
+		return nil, fmt.Errorf("unable to resolve %v", token)
+	}
+	return i.(*SchemaRef).Value, nil
 }
 
 func (r *RequestBody) GetMedia(contentType *media.ContentType) (*MediaType, bool) {
@@ -502,4 +519,39 @@ func (e *Endpoint) Operations() map[string]*Operation {
 	}
 
 	return operations
+}
+
+type version struct {
+	major int
+	minor int
+	build int
+}
+
+func parseVersion(s string) (v version) {
+	numbers := strings.Split(s, ".")
+	if len(numbers) == 0 {
+		return
+	}
+	if len(numbers) > 0 {
+		i, err := strconv.Atoi(numbers[0])
+		if err != nil {
+			return
+		}
+		v.major = i
+	}
+	if len(numbers) > 1 {
+		i, err := strconv.Atoi(numbers[1])
+		if err != nil {
+			return
+		}
+		v.minor = i
+	}
+	if len(numbers) > 2 {
+		i, err := strconv.Atoi(numbers[2])
+		if err != nil {
+			return
+		}
+		v.build = i
+	}
+	return
 }

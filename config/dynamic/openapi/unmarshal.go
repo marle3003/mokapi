@@ -73,22 +73,23 @@ func (p *Parameter) UnmarshalYAML(value *yaml.Node) error {
 }
 
 func (s *Schemas) UnmarshalYAML(value *yaml.Node) error {
-	ref := &refProp{}
-	err := value.Decode(ref)
-	if err != nil {
-		return err
+	if value.Kind != yaml.MappingNode {
+		return errors.New("not a mapping node")
 	}
-
-	if len(ref.Ref) == 0 {
-		m := make(map[string]*SchemaRef)
-		err := value.Decode(m)
+	s.LinkedHashMap = *sortedmap.NewLinkedHashMap()
+	for i := 0; i < len(value.Content); i += 2 {
+		var key string
+		err := value.Content[i].Decode(&key)
+		if err != nil {
+			return err
+		}
+		val := &SchemaRef{}
+		err = value.Content[i+1].Decode(&val)
 		if err != nil {
 			return err
 		}
 
-		s.Value = m
-	} else {
-		s.Ref = ref.Ref
+		s.Set(key, val)
 	}
 
 	return nil
@@ -103,6 +104,10 @@ func (r *RequestBodyRef) UnmarshalYAML(node *yaml.Node) error {
 }
 
 func (s *SchemaRef) UnmarshalYAML(node *yaml.Node) error {
+	return unmarshalRef(node, &s.Ref, &s.Value)
+}
+
+func (s *SchemasRef) UnmarshalYAML(node *yaml.Node) error {
 	return unmarshalRef(node, &s.Ref, &s.Value)
 }
 

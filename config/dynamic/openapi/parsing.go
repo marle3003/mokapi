@@ -46,6 +46,20 @@ func (s *Schemas) Parse(file *common.File, reader common.Reader) error {
 	if s == nil {
 		return nil
 	}
+
+	for it := s.Iter(); it.Next(); {
+		if err := it.Value().(*SchemaRef).Parse(file, reader); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *SchemasRef) Parse(file *common.File, reader common.Reader) error {
+	if s == nil {
+		return nil
+	}
 	if len(s.Ref) > 0 && s.Value == nil {
 		if err := common.Resolve(s.Ref, &s.Value, file, reader); err != nil {
 			return err
@@ -56,13 +70,7 @@ func (s *Schemas) Parse(file *common.File, reader common.Reader) error {
 		return nil
 	}
 
-	for _, child := range s.Value {
-		if err := child.Parse(file, reader); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return s.Value.Parse(file, reader)
 }
 
 func (s *SchemaRef) Parse(file *common.File, reader common.Reader) error {

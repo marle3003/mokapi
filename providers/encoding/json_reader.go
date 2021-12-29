@@ -24,16 +24,16 @@ func readObject(i interface{}, s *openapi.Schema) (interface{}, error) {
 		return toObject(m), nil
 	}
 
-	if len(m) > len(s.Properties.Value) {
+	if len(m) > s.Properties.Value.Len() {
 		return nil, fmt.Errorf("too many properties for object")
 	}
 
 	fields := make([]reflect.StructField, 0, len(m))
 	values := make([]reflect.Value, 0, len(m))
 
-	for name, pRef := range s.Properties.Value {
-		p := pRef.Value
-
+	for it := s.Properties.Value.Iter(); it.Next(); {
+		name := it.Key().(string)
+		pRef := it.Value().(*openapi.SchemaRef)
 		if _, ok := m[name]; !ok {
 			if _, ok := required[name]; ok && len(required) > 0 {
 				return nil, fmt.Errorf("expected required property %v", name)
@@ -48,7 +48,7 @@ func readObject(i interface{}, s *openapi.Schema) (interface{}, error) {
 		values = append(values, reflect.ValueOf(v))
 		fields = append(fields, reflect.StructField{
 			Name: strings.Title(name),
-			Type: getType(p),
+			Type: reflect.TypeOf(v),
 			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v"`, name)),
 		})
 	}
@@ -67,14 +67,29 @@ func readArray(i interface{}, s *openapi.Schema) (interface{}, error) {
 		return nil, fmt.Errorf("expected array but got %T", i)
 	}
 
-	result := reflect.MakeSlice(reflect.SliceOf(getType(s.Items.Value)), 0, len(a))
+	if len(a) == 0 {
+		var sliceOf reflect.Type
+		switch s.Items.Value.Type {
+		case "object":
+			sliceOf = reflect.TypeOf([]interface{}{})
+		default:
+			sliceOf = reflect.SliceOf(getType(s.Items.Value))
+		}
+		return reflect.MakeSlice(sliceOf, 0, 0).Interface(), nil
+	}
+
+	v, err := parse(a[0], s.Items)
+	if err != nil {
+		return nil, err
+	}
+	result := reflect.MakeSlice(reflect.SliceOf(reflect.TypeOf(v)), 0, len(a))
 
 	for _, v := range a {
 		v, err := parse(v, s.Items)
 		if err != nil {
 			return nil, err
 		}
-		reflect.Append(result, reflect.ValueOf(v))
+		result = reflect.Append(result, reflect.ValueOf(v))
 	}
 	return result.Interface(), nil
 }

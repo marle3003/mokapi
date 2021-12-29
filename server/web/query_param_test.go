@@ -2,6 +2,7 @@ package web
 
 import (
 	"mokapi/config/dynamic/openapi"
+	"mokapi/config/dynamic/openapi/openapitest"
 	"net/url"
 	"reflect"
 	"testing"
@@ -70,12 +71,10 @@ func TestParseQuery(t *testing.T) {
 		{&url.URL{RawQuery: "role=admin&firstName=Alex"},
 			&openapi.Parameter{
 				Name: "id",
-				Schema: &openapi.SchemaRef{Value: &openapi.Schema{Type: "object",
-					Properties: &openapi.Schemas{
-						Value: map[string]*openapi.SchemaRef{
-							"role":      {Value: &openapi.Schema{Type: "string"}},
-							"firstName": {Value: &openapi.Schema{Type: "string"}},
-						}}}},
+				Schema: &openapi.SchemaRef{Value: openapitest.NewSchema("object",
+					openapitest.WithProperty("role", openapitest.NewSchema("string")),
+					openapitest.WithProperty("firstName", openapitest.NewSchema("string")),
+				)},
 				Style:   "",
 				Explode: true,
 			},
@@ -84,12 +83,10 @@ func TestParseQuery(t *testing.T) {
 		{&url.URL{RawQuery: "id=role,admin,firstName,Alex"},
 			&openapi.Parameter{
 				Name: "id",
-				Schema: &openapi.SchemaRef{Value: &openapi.Schema{Type: "object",
-					Properties: &openapi.Schemas{
-						Value: map[string]*openapi.SchemaRef{
-							"role":      {Value: &openapi.Schema{Type: "string"}},
-							"firstName": {Value: &openapi.Schema{Type: "string"}},
-						}}}},
+				Schema: &openapi.SchemaRef{Value: openapitest.NewSchema("object",
+					openapitest.WithProperty("role", openapitest.NewSchema("string")),
+					openapitest.WithProperty("firstName", openapitest.NewSchema("string")),
+				)},
 				Style:   "",
 				Explode: false,
 			},
@@ -98,12 +95,10 @@ func TestParseQuery(t *testing.T) {
 		{&url.URL{RawQuery: "id[role]=admin&id[firstName]=Alex"},
 			&openapi.Parameter{
 				Name: "id",
-				Schema: &openapi.SchemaRef{Value: &openapi.Schema{Type: "object",
-					Properties: &openapi.Schemas{
-						Value: map[string]*openapi.SchemaRef{
-							"role":      {Value: &openapi.Schema{Type: "string"}},
-							"firstName": {Value: &openapi.Schema{Type: "string"}},
-						}}}},
+				Schema: &openapi.SchemaRef{Value: openapitest.NewSchema("object",
+					openapitest.WithProperty("role", openapitest.NewSchema("string")),
+					openapitest.WithProperty("firstName", openapitest.NewSchema("string")),
+				)},
 				Style:   "deepObject",
 				Explode: true,
 			},

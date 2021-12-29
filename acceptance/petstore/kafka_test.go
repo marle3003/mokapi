@@ -15,7 +15,8 @@ import (
 func TestKafka_TopicConfig(t *testing.T) {
 	cfg := static.NewConfig()
 	cfg.Providers.File.Filename = "./asyncapi.yml"
-	cmd := cmd.Start(cfg)
+	cmd, err := cmd.Start(cfg)
+	test.Ok(t, err)
 	defer cmd.Stop()
 
 	// wait for kafka start
@@ -33,7 +34,8 @@ func TestKafka_TopicConfig(t *testing.T) {
 func TestKafka_Produce_InvalidFormat(t *testing.T) {
 	cfg := static.NewConfig()
 	cfg.Providers.File.Filename = "./asyncapi.yml"
-	cmd := cmd.Start(cfg)
+	cmd, err := cmd.Start(cfg)
+	test.Ok(t, err)
 	defer cmd.Stop()
 
 	// wait for kafka start
@@ -69,7 +71,8 @@ func TestKafka_Produce_InvalidFormat(t *testing.T) {
 func TestKafka_Produce(t *testing.T) {
 	cfg := static.NewConfig()
 	cfg.Providers.File.Filename = "./asyncapi.yml"
-	cmd := cmd.Start(cfg)
+	cmd, err := cmd.Start(cfg)
+	test.Ok(t, err)
 	defer cmd.Stop()
 
 	// wait for kafka start

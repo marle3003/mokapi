@@ -16,12 +16,12 @@ func NewSchema(typeName string, opts ...SchemaOptions) *openapi.Schema {
 func WithProperty(name string, schema *openapi.Schema) SchemaOptions {
 	return func(s *openapi.Schema) {
 		if s.Properties == nil {
-			s.Properties = &openapi.Schemas{}
+			s.Properties = &openapi.SchemasRef{}
 		}
 		if s.Properties.Value == nil {
-			s.Properties.Value = make(map[string]*openapi.SchemaRef)
+			s.Properties.Value = &openapi.Schemas{}
 		}
-		s.Properties.Value[name] = &openapi.SchemaRef{Value: schema}
+		s.Properties.Value.Set(name, &openapi.SchemaRef{Value: schema})
 	}
 }
 
@@ -58,5 +58,19 @@ func OneOf(schemas ...*openapi.Schema) SchemaOptions {
 		for _, one := range schemas {
 			s.OneOf = append(s.OneOf, &openapi.SchemaRef{Value: one})
 		}
+	}
+}
+
+func AllOf(schemas ...*openapi.Schema) SchemaOptions {
+	return func(s *openapi.Schema) {
+		for _, all := range schemas {
+			s.AllOf = append(s.AllOf, &openapi.SchemaRef{Value: all})
+		}
+	}
+}
+
+func WithFormat(format string) SchemaOptions {
+	return func(s *openapi.Schema) {
+		s.Format = format
 	}
 }

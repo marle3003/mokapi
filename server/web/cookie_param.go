@@ -60,8 +60,8 @@ func parseCookieObject(p *openapi.Parameter, r *http.Request) (rp RequestParamet
 			break
 		}
 		key := elements[i]
-		p, ok := p.Schema.Value.Properties.Value[key]
-		if !ok {
+		p := p.Schema.Value.Properties.Get(key)
+		if p == nil {
 			return rp, errors.Errorf("property '%v' not defined in schema", key)
 		}
 		i++

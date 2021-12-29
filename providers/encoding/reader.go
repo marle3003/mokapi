@@ -99,7 +99,9 @@ func parseAnyObject(m map[string]interface{}, schemas openapi.SchemaRefs) (inter
 			return toObject(m), nil
 		}
 
-		for name, pRef := range s.Properties.Value {
+		for it := s.Properties.Value.Iter(); it.Next(); {
+			name := it.Key().(string)
+			pRef := it.Value().(*openapi.SchemaRef)
 			p := pRef.Value
 
 			if _, ok := m[name]; !ok {
@@ -165,7 +167,9 @@ func parseAllOf(i interface{}, schemas openapi.SchemaRefs) (interface{}, error) 
 			return toObject(m), nil
 		}
 
-		for name, pRef := range s.Properties.Value {
+		for it := s.Properties.Value.Iter(); it.Next(); {
+			name := it.Key().(string)
+			pRef := it.Value().(*openapi.SchemaRef)
 			p := pRef.Value
 
 			if _, ok := m[name]; !ok {
@@ -231,7 +235,9 @@ func parseOneOfObject(m map[string]interface{}, schemas openapi.SchemaRefs) (int
 			required[r] = struct{}{}
 		}
 
-		for name, pRef := range s.Properties.Value {
+		for it := s.Properties.Value.Iter(); it.Next(); {
+			name := it.Key().(string)
+			pRef := it.Value().(*openapi.SchemaRef)
 			p := pRef.Value
 
 			if _, ok := m[name]; !ok {

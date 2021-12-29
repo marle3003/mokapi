@@ -40,7 +40,9 @@ func parseQueryObject(p *openapi.Parameter, u *url.URL) (obj map[string]interfac
 		return nil, errors.Errorf("not supported object style '%v'", p.Style)
 	case s == "deepObject" && p.Explode:
 		obj = make(map[string]interface{})
-		for name, prop := range p.Schema.Value.Properties.Value {
+		for it := p.Schema.Value.Properties.Value.Iter(); it.Next(); {
+			name := it.Key().(string)
+			prop := it.Value().(*openapi.SchemaRef)
 			s := u.Query().Get(fmt.Sprintf("%v[%v]", p.Name, name))
 			if v, err := parse(s, prop); err == nil {
 				obj[name] = v
@@ -51,7 +53,9 @@ func parseQueryObject(p *openapi.Parameter, u *url.URL) (obj map[string]interfac
 	default:
 		obj = make(map[string]interface{})
 		if p.Explode {
-			for name, prop := range p.Schema.Value.Properties.Value {
+			for it := p.Schema.Value.Properties.Value.Iter(); it.Next(); {
+				name := it.Key().(string)
+				prop := it.Value().(*openapi.SchemaRef)
 				s := u.Query().Get(name)
 				if v, err := parse(s, prop); err == nil {
 					obj[name] = v
@@ -68,8 +72,8 @@ func parseQueryObject(p *openapi.Parameter, u *url.URL) (obj map[string]interfac
 					break
 				}
 				key := elements[i]
-				p, ok := p.Schema.Value.Properties.Value[key]
-				if !ok {
+				p := p.Schema.Value.Properties.Get(key)
+				if p == nil {
 					return nil, errors.Errorf("property '%v' not defined in schema", key)
 				}
 				i++

@@ -30,13 +30,18 @@ func (m *LinkedHashMap) Set(key, value interface{}) {
 	}
 }
 
-func (m *LinkedHashMap) Get(key interface{}) (interface{}, bool) {
+func (m *LinkedHashMap) Len() int {
+	return len(m.pairs)
+}
+
+func (m *LinkedHashMap) Get(key interface{}) interface{} {
 	if m.pairs != nil {
-		if p, ok := m.pairs[key]; ok {
-			return p.value, true
+		p, ok := m.pairs[key]
+		if ok {
+			return p.value
 		}
 	}
-	return nil, false
+	return nil
 }
 
 func (m *LinkedHashMap) Iter() *Iterator {

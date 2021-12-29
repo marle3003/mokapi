@@ -135,8 +135,8 @@ func readBody(ctx *HttpContext, contentType *media.ContentType) (interface{}, er
 
 		for name, values := range ctx.Request.MultipartForm.Value {
 			raw.WriteString(fmt.Sprintf("%v: %v", name, values))
-			p, ok := schema.Properties.Get(name)
-			if !ok || p.Value == nil {
+			p := schema.Properties.Get(name)
+			if p == nil || p.Value == nil {
 				continue
 			}
 			if p.Value.Type == "array" {
@@ -159,8 +159,8 @@ func readBody(ctx *HttpContext, contentType *media.ContentType) (interface{}, er
 		}
 
 		for name, files := range ctx.Request.MultipartForm.File {
-			p, ok := schema.Properties.Get(name)
-			if !ok || p.Value == nil {
+			p := schema.Properties.Get(name)
+			if p == nil || p.Value == nil {
 				continue
 			}
 			if p.Value.Type == "array" {

@@ -103,8 +103,10 @@ func newSchema(name string, s *openapi.SchemaRef, level int) *Schema {
 	}
 
 	if s.Value.Properties != nil {
-		for s, p := range s.Value.Properties.Value {
-			v.Properties = append(v.Properties, newSchema(s, p, level+1))
+		for it := s.Value.Properties.Value.Iter(); it.Next(); {
+			name := it.Key().(string)
+			model := it.Value().(*openapi.SchemaRef)
+			v.Properties = append(v.Properties, newSchema(name, model, level+1))
 		}
 	}
 

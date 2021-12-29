@@ -54,14 +54,17 @@ func (g *Generator) getObject(s *Schema) interface{} {
 		return reflect.New(t).Interface()
 	}
 
-	fields := make([]reflect.StructField, 0, len(s.Properties.Value))
-	values := make([]reflect.Value, 0, len(s.Properties.Value))
+	fields := make([]reflect.StructField, 0, s.Properties.Value.Len())
+	values := make([]reflect.Value, 0, s.Properties.Value.Len())
 
-	for name, propSchema := range s.Properties.Value {
+	for it := s.Properties.Value.Iter(); it.Next(); {
+		name := it.Key().(string)
+		propSchema := it.Value().(*SchemaRef)
+
 		value := g.New(propSchema)
 		fields = append(fields, reflect.StructField{
 			Name: strings.Title(name),
-			Type: getType(propSchema.Value),
+			Type: reflect.TypeOf(value),
 		})
 		values = append(values, reflect.ValueOf(value))
 	}
@@ -88,6 +91,10 @@ func getType(s *Schema) reflect.Type {
 		return reflect.TypeOf(float64(0))
 	case "string":
 		return reflect.TypeOf("")
+	case "boolean":
+		return reflect.TypeOf(false)
+	case "array":
+		return reflect.SliceOf(getType(s.Items.Value))
 	}
 
 	panic(fmt.Sprintf("type %v not implemented", s.Type))

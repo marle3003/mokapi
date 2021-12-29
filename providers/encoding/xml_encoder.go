@@ -104,7 +104,9 @@ func (w *xmlEncoder) encodeElement(name string, i interface{}, schema *openapi.S
 
 		w.writeStart(start)
 
-		for propertyName, propertySchema := range schema.Value.Properties.Value {
+		for it := schema.Value.Properties.Value.Iter(); it.Next(); {
+			propertyName := it.Key().(string)
+			propertySchema := it.Value().(*openapi.SchemaRef)
 			if propertySchema.Value.Xml != nil && propertySchema.Value.Xml.Attribute {
 				continue
 			}
@@ -145,7 +147,9 @@ func (w *xmlEncoder) writeStart(start startElement) {
 }
 
 func addAttribute(start startElement, obj map[string]interface{}, schema *openapi.Schema) {
-	for propertyName, propertySchema := range schema.Properties.Value {
+	for it := schema.Properties.Value.Iter(); it.Next(); {
+		propertyName := it.Key().(string)
+		propertySchema := it.Value().(*openapi.SchemaRef)
 		if propertySchema.Value.Xml == nil || !propertySchema.Value.Xml.Attribute {
 			continue
 		}

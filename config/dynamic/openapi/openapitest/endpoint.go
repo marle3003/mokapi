@@ -7,6 +7,14 @@ import (
 
 type EndpointOptions func(o *openapi.Endpoint)
 
+func NewEndpoint(opts ...EndpointOptions) *openapi.Endpoint {
+	e := &openapi.Endpoint{}
+	for _, opt := range opts {
+		opt(e)
+	}
+	return e
+}
+
 func AppendEndpoint(path string, config *openapi.Config, opts ...EndpointOptions) *openapi.Endpoint {
 	e := &openapi.Endpoint{}
 	for _, opt := range opts {

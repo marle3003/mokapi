@@ -53,9 +53,9 @@ func (context *HttpContext) getFirstSuccessResponse() (openapi.HttpStatus, *open
 		return 0, nil, fmt.Errorf("no success response (HTTP 2xx) in configuration")
 	}
 
-	v, _ := context.Operation.Responses.Get(successStatus)
+	v := context.Operation.Responses.GetResponse(successStatus)
 
-	return successStatus, v.(*openapi.ResponseRef), nil
+	return successStatus, v, nil
 }
 
 func (context *HttpContext) setResponse() error {
@@ -81,6 +81,15 @@ func (context *HttpContext) setResponse() error {
 		}
 		return newHttpErrorf(415, "none of requests content type(s) are supported: %v", accept)
 	}
+
+	for i, c := range response.Value.Content {
+		// return first element
+		context.ContentType = media.ParseContentType(i)
+		context.Response = c
+		return nil
+	}
+
+	return fmt.Errorf("no content type found for accept header %q", accept)
 
 	return nil
 }

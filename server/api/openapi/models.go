@@ -100,7 +100,9 @@ func NewService(s *openapi.Config) Service {
 	}
 
 	if s.Components.Schemas != nil {
-		for name, model := range s.Components.Schemas.Value {
+		for it := s.Components.Schemas.Value.Iter(); it.Next(); {
+			name := it.Key().(string)
+			model := it.Value().(*openapi.SchemaRef)
 			service.Models = append(service.Models, newModel(name, model))
 		}
 	}
@@ -233,8 +235,10 @@ func newSchema(name string, s *openapi.SchemaRef, level int) *Schema {
 	}
 
 	if s.Value.Properties != nil {
-		for s, p := range s.Value.Properties.Value {
-			v.Properties = append(v.Properties, newSchema(s, p, level+1))
+		for it := s.Value.Properties.Value.Iter(); it.Next(); {
+			name := it.Key().(string)
+			model := it.Value().(*openapi.SchemaRef)
+			v.Properties = append(v.Properties, newSchema(name, model, level+1))
 		}
 	}
 
@@ -253,7 +257,9 @@ func newModel(name string, s *openapi.SchemaRef) *Schema {
 	v := &Schema{Name: name, Type: s.Value.Type, Properties: make([]*Schema, 0), Ref: s.Ref}
 
 	if s.Value.Properties != nil {
-		for s, p := range s.Value.Properties.Value {
+		for it := s.Value.Properties.Value.Iter(); it.Next(); {
+			s := it.Key().(string)
+			p := it.Value().(*openapi.SchemaRef)
 			if p.Value.Type == "array" && p.Value.Items != nil {
 				tName := p.Value.Items.Value.Type
 				if len(p.Value.Items.Ref) > 0 {

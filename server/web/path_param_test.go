@@ -2,6 +2,7 @@ package web
 
 import (
 	"mokapi/config/dynamic/openapi"
+	"mokapi/config/dynamic/openapi/openapitest"
 	"reflect"
 	"testing"
 )
@@ -69,12 +70,10 @@ func TestParsePath(t *testing.T) {
 		{
 			"role,admin,firstName,Alex",
 			&openapi.Parameter{
-				Schema: &openapi.SchemaRef{Value: &openapi.Schema{Type: "object",
-					Properties: &openapi.Schemas{
-						Value: map[string]*openapi.SchemaRef{
-							"role":      {Value: &openapi.Schema{Type: "string"}},
-							"firstName": {Value: &openapi.Schema{Type: "string"}},
-						}}}},
+				Schema: &openapi.SchemaRef{Value: openapitest.NewSchema("object",
+					openapitest.WithProperty("role", openapitest.NewSchema("string")),
+					openapitest.WithProperty("firstName", openapitest.NewSchema("string")),
+				)},
 				Style:   "",
 				Explode: false,
 			},
@@ -83,12 +82,10 @@ func TestParsePath(t *testing.T) {
 		{
 			"role=admin,firstName=Alex",
 			&openapi.Parameter{
-				Schema: &openapi.SchemaRef{Value: &openapi.Schema{Type: "object",
-					Properties: &openapi.Schemas{
-						Value: map[string]*openapi.SchemaRef{
-							"role":      {Value: &openapi.Schema{Type: "string"}},
-							"firstName": {Value: &openapi.Schema{Type: "string"}},
-						}}}},
+				Schema: &openapi.SchemaRef{Value: openapitest.NewSchema("object",
+					openapitest.WithProperty("role", openapitest.NewSchema("string")),
+					openapitest.WithProperty("firstName", openapitest.NewSchema("string")),
+				)},
 				Style:   "",
 				Explode: true,
 			},
@@ -97,12 +94,10 @@ func TestParsePath(t *testing.T) {
 		{
 			".role,admin,firstName,Alex",
 			&openapi.Parameter{
-				Schema: &openapi.SchemaRef{Value: &openapi.Schema{Type: "object",
-					Properties: &openapi.Schemas{
-						Value: map[string]*openapi.SchemaRef{
-							"role":      {Value: &openapi.Schema{Type: "string"}},
-							"firstName": {Value: &openapi.Schema{Type: "string"}},
-						}}}},
+				Schema: &openapi.SchemaRef{Value: openapitest.NewSchema("object",
+					openapitest.WithProperty("role", openapitest.NewSchema("string")),
+					openapitest.WithProperty("firstName", openapitest.NewSchema("string")),
+				)},
 				Style:   "label",
 				Explode: false,
 			},
@@ -111,12 +106,10 @@ func TestParsePath(t *testing.T) {
 		{
 			";role=admin,firstName=Alex",
 			&openapi.Parameter{
-				Schema: &openapi.SchemaRef{Value: &openapi.Schema{Type: "object",
-					Properties: &openapi.Schemas{
-						Value: map[string]*openapi.SchemaRef{
-							"role":      {Value: &openapi.Schema{Type: "string"}},
-							"firstName": {Value: &openapi.Schema{Type: "string"}},
-						}}}},
+				Schema: &openapi.SchemaRef{Value: openapitest.NewSchema("object",
+					openapitest.WithProperty("role", openapitest.NewSchema("string")),
+					openapitest.WithProperty("firstName", openapitest.NewSchema("string")),
+				)},
 				Style:   "matrix",
 				Explode: true,
 			},

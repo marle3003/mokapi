@@ -239,9 +239,9 @@ func TestSchema(t *testing.T) {
 	})
 	t.Run("reference inside", func(t *testing.T) {
 		target := &openapi.Schema{}
-		config.Components = Components{Schemas: &openapi.Schemas{
-			Value: map[string]*openapi.SchemaRef{"foo": {Value: target}}},
-		}
+		schemas := &openapi.Schemas{}
+		schemas.Set("foo", &openapi.SchemaRef{Value: target})
+		config.Components = Components{Schemas: schemas}
 		message.Payload = &openapi.SchemaRef{Ref: "#/components/Schemas/foo"}
 		reader := &testReader{readFunc: func(file *common.File) error { return nil }}
 

@@ -387,11 +387,7 @@ func TestGeneratorObject(t *testing.T) {
 			&struct {
 				Id int64
 			}{Id: int64(-8379641344161477543)},
-			&openapi.Schema{Type: "object", Properties: &openapi.Schemas{
-				Value: map[string]*openapi.SchemaRef{
-					"id": {Value: &openapi.Schema{Type: "integer", Format: "int64"}},
-				},
-			}},
+			openapitest.NewSchema("object", openapitest.WithProperty("id", &openapi.Schema{Type: "integer", Format: "int64"})),
 		},
 		// unable to test because of unordered map which generates random values despite fixed seed
 		//{

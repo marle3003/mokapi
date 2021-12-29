@@ -58,12 +58,13 @@ func validateObject(i interface{}, s *Schema) error {
 		return nil
 	}
 
-	if v.NumField() > len(s.Properties.Value) {
+	if v.NumField() > s.Properties.Value.Len() {
 		return fmt.Errorf("too many properties for object")
 	}
 
-	for name, r := range s.Properties.Value {
-		p := r.Value
+	for it := s.Properties.Value.Iter(); it.Next(); {
+		name := it.Key().(string)
+		p := it.Value().(*SchemaRef).Value
 		f := v.FieldByName(strings.Title(name))
 		if !f.IsValid() || f.IsZero() {
 			if _, ok := required[name]; ok && len(required) > 0 {

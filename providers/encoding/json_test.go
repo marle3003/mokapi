@@ -7,6 +7,7 @@ import (
 	"mokapi/config/dynamic/openapi/openapitest"
 	"mokapi/models/media"
 	"mokapi/test"
+	"reflect"
 	"testing"
 )
 
@@ -15,7 +16,7 @@ func toFloatP(f float64) *float64 { return &f }
 func TestParse(t *testing.T) {
 	data := []struct {
 		s      string
-		schema *openapi.SchemaRef
+		schema *openapi.Schema
 		e      interface{}
 	}{
 		{
@@ -37,126 +38,43 @@ func TestParse(t *testing.T) {
 		},
 		{
 			`{"foo": 12}`,
-			&openapi.SchemaRef{
-				Value: &openapi.Schema{
-					Type: "object",
-					Properties: &openapi.Schemas{
-						Value: map[string]*openapi.SchemaRef{
-							"foo": {
-								Value: &openapi.Schema{
-									Type: "integer",
-								},
-							},
-						},
-					},
-				},
-			},
+			openapitest.NewSchema("object", openapitest.WithProperty("foo", openapitest.NewSchema("integer"))),
 			&struct {
 				foo int
 			}{foo: 12},
 		},
 		{
 			`{"foo": "bar"}`,
-			&openapi.SchemaRef{
-				Value: &openapi.Schema{
-					Type: "object",
-					Properties: &openapi.Schemas{
-						Value: map[string]*openapi.SchemaRef{
-							"foo": {
-								Value: &openapi.Schema{
-									Type: "string",
-								},
-							},
-						},
-					},
-				},
-			},
+			openapitest.NewSchema("object", openapitest.WithProperty("foo", openapitest.NewSchema("string"))),
 			&struct {
 				foo string
 			}{foo: "bar"},
 		},
 		{
 			`{"foo": "2021-01-20"}`,
-			&openapi.SchemaRef{
-				Value: &openapi.Schema{
-					Type: "object",
-					Properties: &openapi.Schemas{
-						Value: map[string]*openapi.SchemaRef{
-							"foo": {
-								Value: &openapi.Schema{
-									Type:   "string",
-									Format: "date",
-								},
-							},
-						},
-					},
-				},
-			},
+			openapitest.NewSchema("object",
+				openapitest.WithProperty("foo",
+					openapitest.NewSchema("string", openapitest.WithFormat("date")))),
 			&struct {
 				foo string
 			}{foo: "2021-01-20"},
 		},
 		{
 			`{"foo": ["a", "b", "c"]}`,
-			&openapi.SchemaRef{
-				Value: &openapi.Schema{
-					Type: "object",
-					Properties: &openapi.Schemas{
-						Value: map[string]*openapi.SchemaRef{
-							"foo": {
-								Value: &openapi.Schema{
-									Type: "array",
-									Items: &openapi.SchemaRef{
-										Value: &openapi.Schema{
-											Type: "string",
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
+			openapitest.NewSchema("object",
+				openapitest.WithProperty("foo",
+					openapitest.NewSchema("array", openapitest.WithItems(openapitest.NewSchema("string"))))),
 			&struct {
 				foo []string
 			}{foo: []string{"a", "b", "c"}},
 		},
 		{
 			`{"test": 12, "test2": true}`,
-			&openapi.SchemaRef{
-				Value: &openapi.Schema{
-					AnyOf: []*openapi.SchemaRef{
-						{
-							Value: &openapi.Schema{
-								Type: "object",
-								Properties: &openapi.Schemas{
-									Value: map[string]*openapi.SchemaRef{
-										"test": {
-											Value: &openapi.Schema{
-												Type: "integer",
-											},
-										},
-									},
-								},
-							},
-						},
-						{
-							Value: &openapi.Schema{
-								Type: "object",
-								Properties: &openapi.Schemas{
-									Value: map[string]*openapi.SchemaRef{
-										"test2": {
-											Value: &openapi.Schema{
-												Type: "boolean",
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
+			openapitest.NewSchema("object",
+				openapitest.Any(
+					openapitest.NewSchema("object", openapitest.WithProperty("test", openapitest.NewSchema("integer"))),
+					openapitest.NewSchema("object", openapitest.WithProperty("test2", openapitest.NewSchema("boolean"))),
+				)),
 			&struct {
 				test  int64
 				test2 bool
@@ -164,38 +82,18 @@ func TestParse(t *testing.T) {
 		},
 		{
 			`"hello world"`,
-			&openapi.SchemaRef{
-				Value: &openapi.Schema{
-					AnyOf: []*openapi.SchemaRef{
-						{
-							Value: &openapi.Schema{
-								Type: "object",
-								Properties: &openapi.Schemas{
-									Value: map[string]*openapi.SchemaRef{
-										"test": {
-											Value: &openapi.Schema{
-												Type: "integer",
-											},
-										},
-									},
-								},
-							},
-						},
-						{
-							Value: &openapi.Schema{
-								Type: "string",
-							},
-						},
-					},
-				},
-			},
+			openapitest.NewSchema("object",
+				openapitest.Any(
+					openapitest.NewSchema("object", openapitest.WithProperty("test", openapitest.NewSchema("integer"))),
+					openapitest.NewSchema("string"),
+				)),
 			"hello world",
 		},
 	}
 
 	for _, d := range data {
 		t.Run(d.s, func(t *testing.T) {
-			i, err := Parse([]byte(d.s), media.ParseContentType("application/json"), d.schema)
+			i, err := Parse([]byte(d.s), media.ParseContentType("application/json"), &openapi.SchemaRef{Value: d.schema})
 			test.Ok(t, err)
 			test.Equals(t, d.e, i)
 		})
@@ -368,45 +266,16 @@ func TestParseOneOf(t *testing.T) {
 func TestParseAllOf(t *testing.T) {
 	data := []struct {
 		s      string
-		schema *openapi.SchemaRef
+		schema *openapi.Schema
 		e      interface{}
 	}{
 		{
 			`{"foo": 12, "bar": true}`,
-			&openapi.SchemaRef{
-				Value: &openapi.Schema{
-					AllOf: []*openapi.SchemaRef{
-						{
-							Value: &openapi.Schema{
-								Type: "object",
-								Properties: &openapi.Schemas{
-									Value: map[string]*openapi.SchemaRef{
-										"foo": {
-											Value: &openapi.Schema{
-												Type: "integer",
-											},
-										},
-									},
-								},
-							},
-						},
-						{
-							Value: &openapi.Schema{
-								Type: "object",
-								Properties: &openapi.Schemas{
-									Value: map[string]*openapi.SchemaRef{
-										"bar": {
-											Value: &openapi.Schema{
-												Type: "boolean",
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
+			openapitest.NewSchema("object",
+				openapitest.Any(
+					openapitest.NewSchema("object", openapitest.WithProperty("foo", openapitest.NewSchema("integer"))),
+					openapitest.NewSchema("object", openapitest.WithProperty("bar", openapitest.NewSchema("boolean"))),
+				)),
 			&struct {
 				foo int64
 				bar bool
@@ -416,7 +285,7 @@ func TestParseAllOf(t *testing.T) {
 
 	for _, d := range data {
 		t.Run(d.s, func(t *testing.T) {
-			i, err := Parse([]byte(d.s), media.ParseContentType("application/json"), d.schema)
+			i, err := Parse([]byte(d.s), media.ParseContentType("application/json"), &openapi.SchemaRef{Value: d.schema})
 			test.Ok(t, err)
 			test.Equals(t, d.e, i)
 		})
@@ -747,6 +616,68 @@ func TestValidate_Object(t *testing.T) {
 				test.Ok(t, err)
 				test.Equals(t, d.exp, i)
 			}
+		})
+	}
+}
+
+func TestValidate_Array(t *testing.T) {
+	cases := []struct {
+		name   string
+		s      string
+		schema *openapi.Schema
+		fn     func(t *testing.T, i interface{}, err error)
+	}{
+		{
+			"empty",
+			"[]",
+			&openapi.Schema{Type: "array", Items: &openapi.SchemaRef{
+				Value: &openapi.Schema{Type: "string"},
+			}},
+			func(t *testing.T, i interface{}, err error) {
+				test.Ok(t, err)
+				test.Equals(t, []string{}, i)
+			},
+		},
+		{
+			"string array",
+			`["foo", "bar"]`,
+			&openapi.Schema{Type: "array", Items: &openapi.SchemaRef{
+				Value: &openapi.Schema{Type: "string"},
+			}},
+			func(t *testing.T, i interface{}, err error) {
+				test.Ok(t, err)
+				test.Equals(t, []string{"foo", "bar"}, i)
+			},
+		},
+		{
+			"object array",
+			`[{"name": "foo", "age": 12}]`,
+			openapitest.NewSchema("array", openapitest.WithItems(
+				openapitest.NewSchema("object",
+					openapitest.WithProperty("name", openapitest.NewSchema("string")),
+					openapitest.WithProperty("age", openapitest.NewSchema("integer")),
+				),
+			),
+			),
+			func(t *testing.T, i interface{}, err error) {
+				test.Ok(t, err)
+				v := reflect.ValueOf(i)
+				test.Equals(t, 1, v.Len())
+				test.Equals(t, &struct {
+					Name string
+					Age  int64
+				}{Name: "foo", Age: 12}, v.Index(0).Interface())
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, c := range cases {
+		d := c
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			i, err := Parse([]byte(d.s), media.ParseContentType("application/json"), &openapi.SchemaRef{Value: d.schema})
+			d.fn(t, i, err)
 		})
 	}
 }
