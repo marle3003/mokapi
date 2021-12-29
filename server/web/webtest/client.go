@@ -1,6 +1,8 @@
 package webtest
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"io/ioutil"
 	"mokapi/config/dynamic/openapi"
@@ -19,7 +21,21 @@ func GetRequest(url string, headers map[string]string, conditions ...ResponseCon
 		req.Header.Set(k, v)
 	}
 
-	client := http.DefaultClient
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+				VerifyPeerCertificate: func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+					for _, rawCert := range rawCerts {
+						c, _ := x509.ParseCertificate(rawCert)
+						if c.Issuer.CommonName == "Mokapi MockServer" {
+							return nil
+						}
+					}
+					return fmt.Errorf("unknown certificate")
+				}},
+		}}
+
 	res, err := client.Do(req)
 	if err != nil {
 		return err
