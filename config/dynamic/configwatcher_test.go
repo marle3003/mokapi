@@ -89,12 +89,15 @@ func TestWatcher(t *testing.T) {
 
 func TestWatcher_UpdateRef(t *testing.T) {
 	tempDir := t.TempDir()
-	t.Cleanup(func() { os.RemoveAll(tempDir) })
+	pool := safe.NewPool(context.Background())
+	t.Cleanup(func() {
+		pool.Stop()
+		os.RemoveAll(tempDir)
+	})
 	w := NewConfigWatcher(&static.Config{
 		Providers: static.Providers{
 			File: static.FileProvider{Directory: tempDir}}})
-	pool := safe.NewPool(context.Background())
-	defer pool.Stop()
+
 	ch := make(chan *common.File)
 	err := w.Start(pool)
 	test.Ok(t, err)
@@ -104,7 +107,11 @@ func TestWatcher_UpdateRef(t *testing.T) {
 
 	time.Sleep(time.Second)
 	f, err := w.Read(mustParse(file), common.WithListener(func(file *common.File) {
-		ch <- file
+		// send non-blocking to chan
+		select {
+		case ch <- file:
+		default:
+		}
 	}))
 	test.Ok(t, err)
 	config, ok := f.Data.(*openapi.Config)
@@ -119,13 +126,13 @@ func TestWatcher_UpdateRef(t *testing.T) {
 	// wait for all events.
 	timeout := time.After(3 * time.Second)
 	gotEvent := false
-Stop:
+Loop:
 	for {
 		select {
 		case <-ch:
 			gotEvent = true
 		case <-timeout:
-			break Stop
+			break Loop
 		}
 	}
 	assert.True(t, gotEvent)
