@@ -1,12 +1,19 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	stdlog "log"
 	"mokapi/config/decoders"
+	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic/script"
 	"mokapi/config/static"
+	"mokapi/engine"
+	"mokapi/safe"
 	"mokapi/server"
+	"mokapi/server/cert"
 	"mokapi/version"
 	"os"
 	"os/signal"
@@ -34,7 +41,7 @@ func main() {
 		log.WithField("error", err).Error("error creating server")
 	}
 
-	s.Start()
+	ctx, cancel := context.WithCancel(context.Background())
 
 	exitChannel := make(chan os.Signal, 1)
 	signal.Notify(exitChannel, os.Interrupt)
@@ -43,15 +50,43 @@ func main() {
 	go func() {
 		<-exitChannel
 		fmt.Println("Shutting down")
-		s.Stop()
+		cancel()
 		os.Exit(0)
 	}()
 
-	s.Wait()
+	err = s.Start(ctx)
+	if err != nil {
+		log.Error(err)
+	}
 }
 
 func createServer(cfg *static.Config) (*server.Server, error) {
-	return server.NewServer(cfg), nil
+	pool := safe.NewPool(context.Background())
+	watcher := dynamic.NewConfigWatcher(cfg)
+
+	certStore, err := cert.NewStore(cfg)
+	if err != nil {
+		return nil, err
+	}
+	kafka := make(server.KafkaClusters)
+	web := make(server.WebBindings)
+	e := engine.New(watcher)
+	watcher.AddListener(func(c *common.File) {
+		kafka.UpdateConfig(c)
+	})
+	watcher.AddListener(func(c *common.File) {
+		web.UpdateConfig(c, certStore)
+	})
+	watcher.AddListener(func(f *common.File) {
+		if s, ok := f.Data.(*script.Script); ok {
+			err := e.AddScript(f.Url.String(), s.Code)
+			if err != nil {
+				log.Error(err)
+			}
+		}
+	})
+
+	return server.NewServer(pool, watcher, kafka, web, e), nil
 }
 
 func configureLogging(cfg *static.Config) {

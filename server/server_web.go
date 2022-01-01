@@ -5,8 +5,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/openapi"
-	"mokapi/engine"
-	"mokapi/models"
 	"mokapi/server/cert"
 	"mokapi/server/web"
 	"strings"
@@ -35,17 +33,9 @@ func (wb WebBindings) UpdateConfig(file *common.File, certStore *cert.Store) {
 		binding, found := wb[address]
 		if !found {
 			if strings.HasPrefix(strings.ToLower(server.Url), "https://") {
-				binding = web.NewBindingWithTls(address, func(metric *models.RequestMetric) {
-
-				}, func(s string, i ...interface{}) []*engine.Summary {
-					return nil
-				}, certStore.GetCertificate)
+				binding = web.NewBindingWithTls(address, certStore)
 			} else {
-				binding = web.NewBinding(address, func(metric *models.RequestMetric) {
-
-				}, func(s string, i ...interface{}) []*engine.Summary {
-					return nil
-				})
+				binding = web.NewBinding(address)
 			}
 			wb[address] = binding
 			binding.Start()

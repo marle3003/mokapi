@@ -2,22 +2,24 @@ package cmd
 
 import (
 	"context"
+	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic/script"
 	"mokapi/config/static"
+	"mokapi/engine"
 	"mokapi/safe"
 	"mokapi/server"
 	"mokapi/server/cert"
 )
 
 type Cmd struct {
-	watcher *dynamic.ConfigWatcher
-	kafka   server.KafkaClusters
-	pool    *safe.Pool
+	server *server.Server
+	cancel context.CancelFunc
 }
 
 func Start(cfg *static.Config) (*Cmd, error) {
-	pool := safe.NewPool(context.Background())
+	log.SetLevel(log.DebugLevel)
 	watcher := dynamic.NewConfigWatcher(cfg)
 
 	certStore, err := cert.NewStore(cfg)
@@ -26,25 +28,33 @@ func Start(cfg *static.Config) (*Cmd, error) {
 	}
 	kafka := make(server.KafkaClusters)
 	web := make(server.WebBindings)
+	e := engine.New(watcher)
 	watcher.AddListener(func(c *common.File) {
 		kafka.UpdateConfig(c)
 	})
 	watcher.AddListener(func(c *common.File) {
 		web.UpdateConfig(c, certStore)
 	})
-	err = watcher.Start(pool)
-	if err != nil {
-		return nil, err
-	}
+	watcher.AddListener(func(f *common.File) {
+		if s, ok := f.Data.(*script.Script); ok {
+			err := e.AddScript(f.Url.String(), s.Code)
+			if err != nil {
+				log.Error(err)
+			}
+		}
+	})
+
+	pool := safe.NewPool(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
+	s := server.NewServer(pool, watcher, kafka, web, e)
+	s.StartAsync(ctx)
 
 	return &Cmd{
-		watcher: watcher,
-		kafka:   kafka,
-		pool:    pool,
+		server: s,
+		cancel: cancel,
 	}, nil
 }
 
 func (cmd *Cmd) Stop() {
-	cmd.pool.Stop()
-	cmd.kafka.Stop()
+	cmd.cancel()
 }

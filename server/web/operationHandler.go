@@ -74,7 +74,7 @@ func (handler *OperationHandler) ProcessRequest(context *HttpContext) {
 		res.Headers[k] = fmt.Sprintf("%v", data)
 	}
 
-	context.metric.EventSummary = context.eventHandler(req, res)
+	context.Event(req, res)
 
 	if err := write(res, context); err != nil {
 		writeError(err.Error(), http.StatusInternalServerError, context)

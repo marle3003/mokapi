@@ -8,6 +8,7 @@ import (
 	"mokapi/config/dynamic/openapi"
 	"mokapi/engine"
 	"mokapi/models"
+	"mokapi/server/cert"
 	"strings"
 	"time"
 
@@ -27,35 +28,34 @@ type Binding struct {
 	eventHandler     eventHandler
 	IsTls            bool
 	certificates     map[string]*tls.Certificate
+	engine           *engine.Engine
 }
 
-func NewBinding(addr string, mh AddRequestMetric, eh func(string, ...interface{}) []*engine.Summary) *Binding {
+func NewBinding(addr string) *Binding {
 	b := &Binding{
-		Addr:             addr,
-		handlers:         make(map[string]map[string]*serviceHandler),
-		addRequestMetric: mh,
-		eventHandler:     func(request *Request, response *Response) []*engine.Summary { return eh("http", request, response) },
+		Addr:     addr,
+		handlers: make(map[string]map[string]*serviceHandler),
 	}
 	b.server = &http.Server{Addr: addr, Handler: b}
 
 	return b
 }
 
-func NewBindingWithTls(addr string, mh AddRequestMetric, eh func(string, ...interface{}) []*engine.Summary, getCertificate func(info *tls.ClientHelloInfo) (*tls.Certificate, error)) *Binding {
+func NewBindingWithTls(addr string, store *cert.Store) *Binding {
 	b := &Binding{
-		Addr:             addr,
-		handlers:         make(map[string]map[string]*serviceHandler),
-		addRequestMetric: mh,
-		eventHandler:     func(request *Request, response *Response) []*engine.Summary { return eh("http", request, response) },
-		IsTls:            true,
-		certificates:     make(map[string]*tls.Certificate),
+		Addr:         addr,
+		handlers:     make(map[string]map[string]*serviceHandler),
+		IsTls:        true,
+		certificates: make(map[string]*tls.Certificate),
 	}
 
-	config := &tls.Config{
-		GetCertificate: getCertificate,
+	b.server = &http.Server{
+		Addr:    addr,
+		Handler: b,
+		TLSConfig: &tls.Config{
+			GetCertificate: store.GetCertificate,
+		},
 	}
-
-	b.server = &http.Server{Addr: addr, Handler: b, TLSConfig: config}
 
 	return b
 }
@@ -135,9 +135,10 @@ func (binding *Binding) Apply(data interface{}) error {
 }
 
 func (binding *Binding) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	ctx := NewHttpContext(r, w, binding.eventHandler)
+	ctx := NewHttpContext(r, w)
+	ctx.engine = binding.engine
 
-	defer binding.addRequestMetric(ctx.metric)
+	defer binding.setMetric(ctx.metric)
 
 	var service *serviceHandler
 	service, ctx.ServicePath = binding.resolveHandler(r)
@@ -167,6 +168,12 @@ func (binding *Binding) resolveHandler(r *http.Request) (*serviceHandler, string
 	}
 
 	return nil, ""
+}
+
+func (binding *Binding) setMetric(metric *models.RequestMetric) {
+	if binding.addRequestMetric != nil {
+		binding.addRequestMetric(metric)
+	}
 }
 
 func matchPath(host map[string]*serviceHandler, r *http.Request) (matchedHandler *serviceHandler, matchedPath string) {

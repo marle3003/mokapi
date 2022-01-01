@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"mokapi/config/dynamic/openapi"
+	"mokapi/engine"
 	"mokapi/models"
 	"mokapi/models/media"
 	"net/http"
@@ -25,17 +26,16 @@ type HttpContext struct {
 	ContentType    *media.ContentType
 	metric         *models.RequestMetric
 	statusCode     openapi.HttpStatus
-	eventHandler   eventHandler
+	engine         *engine.Engine
 	Response       *openapi.MediaType
 	Headers        map[string]*openapi.HeaderRef
 }
 
-func NewHttpContext(request *http.Request, response http.ResponseWriter, eh eventHandler) *HttpContext {
+func NewHttpContext(request *http.Request, response http.ResponseWriter) *HttpContext {
 	metric := models.NewRequestMetric(request.Method, getUrl(request))
 	return &HttpContext{ResponseWriter: response,
-		Request:      request,
-		eventHandler: eh,
-		metric:       metric,
+		Request: request,
+		metric:  metric,
 	}
 }
 
@@ -155,4 +155,11 @@ func (context *HttpContext) updateMetric(statusCode int, contentType, body strin
 		}
 		context.metric.Parameters = append(context.metric.Parameters, p)
 	}
+}
+
+func (context *HttpContext) Event(request *Request, response *Response) {
+	if context.engine == nil {
+		return
+	}
+	context.metric.EventSummary = context.engine.Run("http", request, response)
 }

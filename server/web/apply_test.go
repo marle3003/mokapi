@@ -3,8 +3,6 @@ package web_test
 import (
 	logtest "github.com/sirupsen/logrus/hooks/test"
 	"mokapi/config/dynamic/openapi"
-	"mokapi/engine"
-	"mokapi/models"
 	"mokapi/server/web"
 	"mokapi/test"
 	"testing"
@@ -105,11 +103,7 @@ func TestApply(t *testing.T) {
 		t.Run(data.name, func(t *testing.T) {
 			hook := test.NewNullLogger()
 
-			b := web.NewBinding(":80", func(metric *models.RequestMetric) {
-			}, func(s string, i ...interface {
-			}) []*engine.Summary {
-				return nil
-			})
+			b := web.NewBinding(":80")
 
 			data.fn(t, b, hook)
 		})

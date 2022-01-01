@@ -3,8 +3,6 @@ package web_test
 import (
 	"mokapi/config/dynamic/openapi"
 	"mokapi/config/dynamic/openapi/openapitest"
-	"mokapi/engine"
-	"mokapi/models"
 	"mokapi/server/web"
 	"mokapi/test"
 	"net/http"
@@ -402,11 +400,7 @@ func TestResolveEndpoint(t *testing.T) {
 		t.Run(data.name, func(t *testing.T) {
 			test.NewNullLogger()
 
-			b := web.NewBinding(":80", func(metric *models.RequestMetric) {
-			}, func(s string, i ...interface {
-			}) []*engine.Summary {
-				return nil
-			})
+			b := web.NewBinding(":80")
 			config := &openapi.Config{
 				Info:       openapi.Info{Name: "Testing"},
 				Servers:    []*openapi.Server{{Url: "http://localhost"}},
