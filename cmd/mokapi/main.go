@@ -51,6 +51,7 @@ func main() {
 		<-exitChannel
 		fmt.Println("Shutting down")
 		cancel()
+		s.Close()
 		os.Exit(0)
 	}()
 

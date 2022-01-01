@@ -57,4 +57,5 @@ func Start(cfg *static.Config) (*Cmd, error) {
 
 func (cmd *Cmd) Stop() {
 	cmd.cancel()
+	cmd.server.Close()
 }

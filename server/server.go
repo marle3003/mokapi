@@ -14,17 +14,19 @@ type Server struct {
 	web     WebBindings
 	engine  *engine.Engine
 
-	pool *safe.Pool
+	pool     *safe.Pool
+	stopChan chan bool
 }
 
 func NewServer(pool *safe.Pool, watcher *dynamic.ConfigWatcher,
 	kafka KafkaClusters, web WebBindings, engine *engine.Engine) *Server {
 	return &Server{
-		watcher: watcher,
-		kafka:   kafka,
-		web:     web,
-		engine:  engine,
-		pool:    pool,
+		watcher:  watcher,
+		kafka:    kafka,
+		web:      web,
+		engine:   engine,
+		pool:     pool,
+		stopChan: make(chan bool, 1),
 	}
 }
 
@@ -46,8 +48,13 @@ func (s *Server) Start(ctx context.Context) error {
 	s.kafka.Stop()
 	s.web.Stop()
 	s.engine.Close()
+	s.stopChan <- true
 
 	return nil
+}
+
+func (s *Server) Close() {
+	<-s.stopChan
 }
 
 //
