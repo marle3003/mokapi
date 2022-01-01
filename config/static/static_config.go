@@ -49,6 +49,8 @@ type GitProvider struct {
 }
 
 type HttpProvider struct {
-	Url          string
-	PollInterval string
+	Url           string
+	PollInterval  string
+	Proxy         string
+	TlsSkipVerify bool
 }

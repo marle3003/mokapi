@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
@@ -17,6 +18,7 @@ import (
 	"mokapi/engine"
 	"mokapi/kafka"
 	"mokapi/models"
+	"mokapi/safe"
 	"mokapi/server/api"
 	"mokapi/server/cert"
 	ldapServer "mokapi/server/ldap"
@@ -51,10 +53,11 @@ type Server struct {
 
 	Bindings map[string]Binding
 	mutex    sync.RWMutex
+	pool     *safe.Pool
 }
 
 func NewServer(config *static.Config) *Server {
-	watcher := dynamic.NewConfigWatcher(config.Providers)
+	watcher := dynamic.NewConfigWatcher(config)
 
 	server := &Server{
 		watcher:            watcher,
@@ -65,6 +68,7 @@ func NewServer(config *static.Config) *Server {
 		config:             make(map[string]*mokapi.Config),
 		engine:             engine.New(watcher),
 		kafkaClusters:      make(map[string]*kafka.Cluster),
+		pool:               safe.NewPool(context.Background()),
 	}
 
 	watcher.AddListener(func(o *common.File) {
@@ -90,7 +94,7 @@ func (s *Server) Start() {
 	for _, b := range s.Bindings {
 		b.Start()
 	}
-	err := s.watcher.Start()
+	err := s.watcher.Start(s.pool)
 	if err != nil {
 		log.Errorf("unable to start server: %v", err.Error())
 	}
@@ -103,7 +107,6 @@ func (s *Server) Wait() {
 }
 
 func (s *Server) Stop() {
-	s.watcher.Close()
 	s.engine.Close()
 }
 

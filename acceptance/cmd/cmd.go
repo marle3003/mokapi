@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"context"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/common"
 	"mokapi/config/static"
+	"mokapi/safe"
 	"mokapi/server"
 	"mokapi/server/cert"
 )
@@ -11,10 +13,13 @@ import (
 type Cmd struct {
 	watcher *dynamic.ConfigWatcher
 	kafka   server.KafkaClusters
+	pool    *safe.Pool
 }
 
 func Start(cfg *static.Config) (*Cmd, error) {
-	watcher := dynamic.NewConfigWatcher(cfg.Providers)
+	pool := safe.NewPool(context.Background())
+	watcher := dynamic.NewConfigWatcher(cfg)
+
 	certStore, err := cert.NewStore(cfg)
 	if err != nil {
 		return nil, err
@@ -27,7 +32,7 @@ func Start(cfg *static.Config) (*Cmd, error) {
 	watcher.AddListener(func(c *common.File) {
 		web.UpdateConfig(c, certStore)
 	})
-	err = watcher.Start()
+	err = watcher.Start(pool)
 	if err != nil {
 		return nil, err
 	}
@@ -35,10 +40,11 @@ func Start(cfg *static.Config) (*Cmd, error) {
 	return &Cmd{
 		watcher: watcher,
 		kafka:   kafka,
+		pool:    pool,
 	}, nil
 }
 
 func (cmd *Cmd) Stop() {
-	cmd.watcher.Close()
+	cmd.pool.Stop()
 	cmd.kafka.Stop()
 }

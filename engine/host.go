@@ -5,7 +5,7 @@ import (
 	"github.com/go-co-op/gocron"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/common"
-	"mokapi/config/dynamic/readers/file"
+	"mokapi/config/dynamic/provider/file"
 	"mokapi/js"
 	"mokapi/lua"
 	"path/filepath"

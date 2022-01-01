@@ -68,12 +68,12 @@ func TestGeneratorString(t *testing.T) {
 		},
 		{
 			"date",
-			"1908-12-07",
+			"2008-12-07",
 			&openapi.Schema{Type: "string", Format: "date"},
 		},
 		{
 			"date-time",
-			"1908-12-07T04:14:25Z",
+			"2008-12-07T04:14:25Z",
 			&openapi.Schema{Type: "string", Format: "date-time"},
 		},
 		{

@@ -11,6 +11,7 @@ import (
 	"mokapi/test"
 	"os"
 	"testing"
+	"time"
 )
 
 func TestOpenAPI(t *testing.T) {
@@ -29,6 +30,8 @@ func TestOpenAPI(t *testing.T) {
 	err = petstore.Parse(&common.File{Data: petstore}, nil)
 	test.Ok(t, err)
 
+	// wait for server start
+	time.Sleep(time.Second)
 	pet := petstore.Components.Schemas.Get("Pet")
 	err = webtest.GetRequest("http://127.0.0.1:8080/pet/1",
 		map[string]string{"Accept": "application/json"},

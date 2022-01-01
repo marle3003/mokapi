@@ -67,6 +67,10 @@ func Equals(tb testing.TB, exp, act interface{}) {
 	}
 }
 
+func IsTrue(t *testing.T, b bool) {
+	Equals(t, true, b)
+}
+
 func isNil(x interface{}) bool {
 	if x == nil {
 		return true

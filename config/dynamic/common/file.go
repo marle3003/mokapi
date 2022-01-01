@@ -13,23 +13,23 @@ type File struct {
 	Url  *url.URL
 	Data interface{}
 
-	listeners []chan *File
+	Listeners []func(*File)
 
 	AllowParsingUnknownType bool
 	AsPlainText             bool
 }
 
 func (f *File) Changed() {
-	for _, c := range f.listeners {
-		c <- f
+	for _, l := range f.Listeners {
+		l(f)
 	}
 }
 
 type FileOptions func(file *File)
 
-func WithListener(c chan *File) FileOptions {
+func WithListener(f func(file *File)) FileOptions {
 	return func(file *File) {
-		file.listeners = append(file.listeners, c)
+		file.Listeners = append(file.Listeners, f)
 	}
 }
 
@@ -43,16 +43,9 @@ func WithData(data interface{}) FileOptions {
 
 func WithParent(parent *File) FileOptions {
 	return func(file *File) {
-		ch := make(chan *File)
-		file.listeners = append(file.listeners, ch)
-		go func() {
-			for {
-				select {
-				case _ = <-ch:
-					parent.Changed()
-				}
-			}
-		}()
+		file.Listeners = append(file.Listeners, func(_ *File) {
+			parent.Changed()
+		})
 	}
 }
 
@@ -74,8 +67,16 @@ func (f *File) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	for _, ct := range configTypes {
 		if _, ok := data[ct.header]; ok {
-			f.Data = reflect.New(ct.configType).Interface()
-			return unmarshal(f.Data)
+			if f.Data != nil {
+				i := reflect.New(ct.configType).Interface()
+				err := unmarshal(i)
+				v := reflect.ValueOf(f.Data).Elem()
+				v.Set(reflect.ValueOf(i).Elem())
+				return err
+			} else {
+				f.Data = reflect.New(ct.configType).Interface()
+				return unmarshal(f.Data)
+			}
 		}
 	}
 

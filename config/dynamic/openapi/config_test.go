@@ -268,6 +268,26 @@ func TestPetStore_Paramters(t *testing.T) {
 	test.Equals(t, "int64", params[1].Value.Schema.Value.Format)
 }
 
+func TestHttpStatus_IsSuccess(t *testing.T) {
+	for _, d := range []openapi.HttpStatus{
+		openapi.OK,
+		openapi.Created,
+		openapi.Accepted,
+		openapi.NonAuthoritativeInfo,
+		openapi.NoContent,
+		openapi.ResetContent,
+		openapi.PartialContent,
+		openapi.MultiStatus,
+		openapi.AlreadyReported,
+		openapi.IMUsed,
+	} {
+		t.Run(d.String(), func(t *testing.T) {
+			test.Equals(t, true, d.IsSuccess())
+		})
+	}
+	test.Equals(t, false, openapi.BadGateway.IsSuccess())
+}
+
 const petstore = `
 openapi: 3.0.1
 info:

@@ -8,5 +8,4 @@ type Parser interface {
 
 type Reader interface {
 	Read(u *url.URL, opts ...FileOptions) (*File, error)
-	Close()
 }
