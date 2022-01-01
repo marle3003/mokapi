@@ -75,7 +75,7 @@ func (w *ConfigWatcher) Read(u *url.URL, opts ...common.FileOptions) (*common.Fi
 }
 
 func (w *ConfigWatcher) Start(pool *safe.Pool) error {
-	ch := make(chan *common.Config)
+	ch := make(chan *common.Config, 100)
 	for _, p := range w.providers {
 		err := p.Start(ch, pool)
 		if err != nil {
