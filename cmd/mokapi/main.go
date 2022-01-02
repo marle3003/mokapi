@@ -76,7 +76,7 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 		kafka.UpdateConfig(c)
 	})
 	watcher.AddListener(func(c *common.File) {
-		web.UpdateConfig(c, certStore)
+		web.UpdateConfig(c, certStore, e)
 	})
 	watcher.AddListener(func(f *common.File) {
 		if s, ok := f.Data.(*script.Script); ok {

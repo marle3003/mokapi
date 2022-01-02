@@ -7,10 +7,10 @@ import (
 )
 
 type Response struct {
-	Headers    map[string]string
-	StatusCode int
-	Body       string
-	Data       interface{}
+	Headers    map[string]string `js:"headers"`
+	StatusCode int               `js:"statusCode"`
+	Body       string            `js:"body"`
+	Data       interface{}       `js:"data"`
 }
 
 type Request struct {
@@ -22,7 +22,8 @@ type Request struct {
 	Header map[string]interface{} `js:"header"`
 	Cookie map[string]interface{} `js:"cookie"`
 
-	Key string `js:"key"`
+	Key         string `js:"key"`
+	OperationId string `js:"operationId"`
 }
 
 type Url struct {
@@ -34,12 +35,13 @@ type Url struct {
 
 func newRequest(ctx *HttpContext) *Request {
 	r := &Request{
-		Key:    ctx.EndpointPath,
-		Method: ctx.Request.Method,
-		Path:   make(map[string]interface{}),
-		Query:  make(map[string]interface{}),
-		Header: make(map[string]interface{}),
-		Cookie: make(map[string]interface{}),
+		Key:         ctx.EndpointPath,
+		OperationId: ctx.Operation.OperationId,
+		Method:      ctx.Request.Method,
+		Path:        make(map[string]interface{}),
+		Query:       make(map[string]interface{}),
+		Header:      make(map[string]interface{}),
+		Cookie:      make(map[string]interface{}),
 	}
 	for t, values := range ctx.Parameters {
 		for k, v := range values {
@@ -70,6 +72,22 @@ func newRequest(ctx *HttpContext) *Request {
 	}
 
 	return r
+}
+
+func (r *Request) String() string {
+	return r.Method + " " + r.Url.String()
+}
+
+func (u *Url) String() string {
+	sb := strings.Builder{}
+	sb.WriteString(u.Scheme)
+	if sb.Len() > 0 {
+		sb.WriteString("://")
+	}
+	sb.WriteString(u.Host)
+	sb.WriteString(u.Path)
+	sb.WriteString(u.Query)
+	return sb.String()
 }
 
 //func (r *Response) Run(ctx *runtime.ActionContext) error {

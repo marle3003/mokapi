@@ -5,7 +5,6 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io/ioutil"
-	"mokapi/config/dynamic/openapi"
 	"net/http"
 )
 
@@ -58,7 +57,7 @@ func HasStatusCode(status int) ResponseCondition {
 	}
 }
 
-func HasBody(expected string, schema *openapi.Schema) ResponseCondition {
+func HasBody(expected string) ResponseCondition {
 	return func(r *http.Response) error {
 		b, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -67,7 +66,7 @@ func HasBody(expected string, schema *openapi.Schema) ResponseCondition {
 
 		body := string(b)
 		if expected != body {
-			return fmt.Errorf("body does not match expected value")
+			return fmt.Errorf("body does not match expected value, got: %v", body)
 		}
 		return nil
 	}

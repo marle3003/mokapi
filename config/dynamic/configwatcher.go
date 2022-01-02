@@ -136,7 +136,7 @@ func (w *ConfigWatcher) loadConfig(c *common.Config) (*common.File, error) {
 		if err != nil {
 			f.Data = string(c.Data)
 		}
-	case ".lua":
+	case ".lua", ".js":
 		if f.Data == nil {
 			f.Data = script.New(name, c.Data)
 		} else {

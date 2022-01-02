@@ -110,7 +110,7 @@ func TestJsOn(t *testing.T) {
 		err := engine.AddScript("test.js", `
 			import {on, sleep} from 'mokapi'
 			export default function() {
-				on('http', function() {
+				on('http', function(request, response) {
 					return true
 				});
 			}
@@ -119,7 +119,7 @@ func TestJsOn(t *testing.T) {
 		test.Assert(t, len(engine.scripts) == 1, "script length not 1")
 		test.Assert(t, len(engine.scripts["test.js"].events["http"]) == 1, "event not defined")
 
-		summaries := engine.Run("http")
+		summaries := engine.Run("http", &struct{}{}, &struct{}{})
 
 		test.Assert(t, len(summaries) == 1, "summary length not 1")
 		summary := summaries[0]
