@@ -3,55 +3,23 @@ package acceptance
 import (
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
-	"gopkg.in/yaml.v3"
-	"mokapi/acceptance/cmd"
-	"mokapi/config/dynamic/common"
-	"mokapi/config/dynamic/openapi"
-	"mokapi/config/static"
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/protocol"
 	"mokapi/kafka/protocol/metaData"
 	"mokapi/kafka/protocol/produce"
 	"mokapi/server/web/webtest"
-	"os"
 	"time"
 )
 
-type PetStoreSuite struct {
-	suite.Suite
-	cmd   *cmd.Cmd
-	store *openapi.Config
-}
-
-func (suite *PetStoreSuite) SetupSuite() {
-	cfg := static.NewConfig()
-	cfg.Providers.File.Directory = "./petstore"
-	cmd, err := cmd.Start(cfg)
-	require.NoError(suite.T(), err)
-	suite.cmd = cmd
-
-	suite.store = &openapi.Config{}
-	b, err := os.ReadFile("./petstore/openapi.yml")
-	require.NoError(suite.T(), err)
-	err = yaml.Unmarshal(b, &suite.store)
-	require.NoError(suite.T(), err)
-	err = suite.store.Parse(&common.File{Data: suite.store}, nil)
-	require.NoError(suite.T(), err)
-
-	// wait for server start
-	time.Sleep(time.Second)
-}
-
-func (suite *PetStoreSuite) TearDownSuite() {
-	suite.cmd.Stop()
-}
+type PetStoreSuite struct{ BaseSuite }
 
 func (suite *PetStoreSuite) SetupTest() {
 	gofakeit.Seed(11)
 }
 
 func (suite *PetStoreSuite) TestJsFile() {
+	// ensure scripts are executed
+	time.Sleep(time.Second)
 	err := webtest.GetRequest("http://127.0.0.1:8080/pet/2",
 		map[string]string{"Accept": "application/json"},
 		webtest.HasStatusCode(404),
