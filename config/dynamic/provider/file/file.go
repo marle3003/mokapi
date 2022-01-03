@@ -40,11 +40,16 @@ func New(cfg static.FileProvider) *Provider {
 }
 
 func (p *Provider) Read(u *url.URL) (*common.Config, error) {
-	err := p.watcher.Add(u.Path)
+	file := u.Path
+	if len(u.Opaque) > 0 {
+		file = u.Opaque
+	}
+
+	err := p.watcher.Add(file)
 	if err != nil {
 		return nil, err
 	}
-	return p.readFile(u.Path)
+	return p.readFile(file)
 }
 
 func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {

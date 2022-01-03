@@ -157,11 +157,13 @@ func createTempFile(srcPath string, destPath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	defer file.Close()
 
 	src, err := os.Open(srcPath)
 	if err != nil {
 		return "", err
 	}
+	defer src.Close()
 	_, err = io.Copy(file, src)
 	return dest, err
 }

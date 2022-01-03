@@ -18,10 +18,8 @@ func TestProvider(t *testing.T) {
 	p := createProvider(t, "./test/openapi.yml")
 	pool := safe.NewPool(context.Background())
 	defer pool.Stop()
-	go func() {
-		err := p.Start(ch, pool)
-		test.Ok(t, err)
-	}()
+	err := p.Start(ch, pool)
+	test.Ok(t, err)
 
 	timeout := time.After(time.Second)
 	select {
@@ -38,13 +36,12 @@ func TestWatch(t *testing.T) {
 	p := createProvider(t, "")
 	pool := safe.NewPool(context.Background())
 	defer pool.Stop()
-	go func() {
-		err := p.Start(ch, pool)
-		test.Ok(t, err)
-	}()
+
+	err := p.Start(ch, pool)
+	test.Ok(t, err)
 
 	time.Sleep(500 * time.Millisecond)
-	err := createTempFile("./test/openapi.yml", p.cfg.Directory)
+	err = createTempFile("./test/openapi.yml", p.cfg.Directory)
 	test.Ok(t, err)
 
 	timeout := time.After(2 * time.Second)
@@ -75,11 +72,14 @@ func createTempFile(srcPath string, destPath string) error {
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 
 	src, err := os.Open(srcPath)
 	if err != nil {
 		return err
 	}
+	defer src.Close()
 	_, err = io.Copy(file, src)
+
 	return err
 }
