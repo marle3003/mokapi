@@ -7,12 +7,17 @@ func init() {
 }
 
 type Config struct {
-	ConfigPath  string `yaml:"-" json:"-"`
-	Name        string
-	Description string
-	Address     string
-	Tls         *Tls
+	ConfigPath        string `yaml:"-" json:"-"`
+	Name              string
+	Description       string
+	Server            string
+	MaxRecipients     int
+	MaxMessageBytes   int
+	AllowInsecureAuth bool
+	Accounts          []Account
 }
 
-type Tls struct {
+type Account struct {
+	Username string
+	Password string
 }

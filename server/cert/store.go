@@ -9,10 +9,6 @@ import (
 	"mokapi/config/static"
 )
 
-func init() {
-
-}
-
 type Store struct {
 	Certificates map[string]*tls.Certificate
 	CaCert       *x509.Certificate
@@ -61,6 +57,11 @@ func NewStore(config *static.Config) (*Store, error) {
 
 func (store *Store) AddCertificate(domain string, certificate *tls.Certificate) {
 	store.Certificates[domain] = certificate
+}
+
+func DefaultRootCert() (*x509.Certificate, error) {
+	block, _ := pem.Decode(defaultCaCert)
+	return x509.ParseCertificate(block.Bytes)
 }
 
 var (

@@ -132,6 +132,32 @@ func selectData(data interface{}, schema *openapi.SchemaRef) (interface{}, error
 					obj.Set(name, val.Interface())
 				}
 			}
+			return obj, nil
+		} else if v.Kind() == reflect.Map {
+			// a map ensures not the order of entries
+			// => loop over schema.fields to ensure an order
+			// we get a map for example from lua scripts
+			obj := custom{}
+			m := data.(map[interface{}]interface{})
+			if schema.Value != nil || schema.Value.Properties.Value.Len() > 0 {
+				for it := schema.Value.Properties.Value.Iter(); it.Next(); {
+					name := it.Key().(string)
+					p := it.Value().(*openapi.SchemaRef)
+					if v, ok := m[name]; ok {
+						d, err := selectData(v, p)
+						if err != nil {
+							return nil, err
+						}
+						obj.Set(name, d)
+					}
+				}
+			} else {
+				for k, v := range m {
+					obj.Set(k, v)
+				}
+			}
+
+			return obj, nil
 		} else {
 			panic("to do")
 			//s := fmt.Sprintf("%v", data)

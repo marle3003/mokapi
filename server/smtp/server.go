@@ -2,17 +2,20 @@ package smtp
 
 import (
 	"crypto/tls"
+	"fmt"
 	"github.com/emersion/go-smtp"
 	log "github.com/sirupsen/logrus"
 	config "mokapi/config/dynamic/smtp"
 	"mokapi/models"
+	"mokapi/server/cert"
+	"net/url"
 )
 
 type ReceivedMailHandler func(mail *models.MailMetric)
 
 //type EventHandler func(events event.Handler, options ...workflow.Options) (*runtime.Summary, error)
 
-type Binding struct {
+type Server struct {
 	server *smtp.Server
 	config *config.Config
 
@@ -28,33 +31,51 @@ type backend struct {
 	//wh       EventHandler
 }
 
-func NewBinding(c *config.Config, mh ReceivedMailHandler, getCertificate func(info *tls.ClientHelloInfo) (*tls.Certificate, error) /*, wh EventHandler*/) *Binding {
+func New(c *config.Config, store *cert.Store) (*Server, error) {
 	received := make(chan *models.MailMetric)
 	b := &backend{received: received /*wh: wh*/}
 	s := smtp.NewServer(b)
-	s.Addr = c.Address
 
-	if c.Tls != nil {
+	u, err := url.Parse(c.Server)
+	if err != nil {
+		return nil, err
+	}
+
+	s.Addr = u.Hostname()
+	if len(u.Port()) == 0 {
+		switch u.Scheme {
+		case "smtp", "smtps":
+			s.Addr += u.Scheme
+		case "":
+			s.Addr += ":smtp"
+		default:
+			return nil, fmt.Errorf("unsupported scheme: %v", u.Scheme)
+		}
+	} else {
+		s.Addr += ":" + u.Port()
+	}
+
+	if u.Scheme == "smtps" || u.Port() == "587" {
 		s.TLSConfig = &tls.Config{
-			GetCertificate: getCertificate,
+			GetCertificate: store.GetCertificate,
 		}
 	}
 
-	return &Binding{
+	return &Server{
 		config:   c,
 		server:   s,
 		received: received,
 		close:    make(chan bool),
-		mh:       mh,
+		//mh:       mh,
 		//wh:       wh,
-	}
+	}, nil
 }
 
-func (b *Binding) Start() {
+func (b *Server) Start() {
 	go func() {
-		log.Infof("starting smtp binding %v", b.config.Address)
+		log.Infof("starting smtp binding %v", b.config.Server)
 		var err error
-		if b.config.Tls != nil {
+		if b.server.TLSConfig != nil {
 			err = b.server.ListenAndServeTLS()
 		} else {
 			err = b.server.ListenAndServe()
@@ -76,7 +97,9 @@ func (b *Binding) Start() {
 		for {
 			select {
 			case mail := <-b.received:
-				b.mh(mail)
+				if b.mh != nil {
+					b.mh(mail)
+				}
 			case <-b.close:
 				return
 			}
@@ -84,11 +107,12 @@ func (b *Binding) Start() {
 	}()
 }
 
-func (b *Binding) Stop() {
+func (b *Server) Stop() {
+	b.server.Close()
 	b.close <- true
 }
 
-func (b *Binding) Apply(i interface{}) error {
+func (b *Server) Update(config *config.Config) error {
 	return nil
 }
 

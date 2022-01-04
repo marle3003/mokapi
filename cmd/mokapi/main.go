@@ -71,12 +71,12 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 	}
 	kafka := make(server.KafkaClusters)
 	web := make(server.WebBindings)
+	mail := make(server.SmtpServers)
 	e := engine.New(watcher)
 	watcher.AddListener(func(c *common.File) {
 		kafka.UpdateConfig(c)
-	})
-	watcher.AddListener(func(c *common.File) {
 		web.UpdateConfig(c, certStore, e)
+		mail.UpdateConfig(c, certStore)
 	})
 	watcher.AddListener(func(f *common.File) {
 		if s, ok := f.Data.(*script.Script); ok {
@@ -87,7 +87,7 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 		}
 	})
 
-	return server.NewServer(pool, watcher, kafka, web, e), nil
+	return server.NewServer(pool, watcher, kafka, web, mail, e), nil
 }
 
 func configureLogging(cfg *static.Config) {

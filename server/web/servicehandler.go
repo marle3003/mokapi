@@ -46,7 +46,7 @@ func (handler *serviceHandler) ServeHTTP(ctx *HttpContext) {
 	operationHandler.ProcessRequest(ctx)
 }
 
-func (handler *serviceHandler) resolveEndpoint(ctx *HttpContext) error {
+func (handler *serviceHandler) resolveEndpoint(ctx *HttpContext) (lastError error) {
 	regex := regexp.MustCompile(`\{(?P<name>.+)\}`) // parameter format "/{param}/"
 	reqSeg := strings.Split(ctx.Request.URL.Path, "/")
 
@@ -82,9 +82,8 @@ endpointLoop:
 		params := append(endpoint.Parameters, op.Parameters...)
 		p, err := parseParams(params, routePath, ctx.Request)
 		if err != nil {
-			return newHttpError(400, err.Error())
-			//log.Infof("error on resolving endpoint: %v", err)
-			//continue
+			lastError = newHttpError(400, err.Error())
+			continue
 		}
 
 		ctx.ServiceName = handler.config.Info.Name
@@ -94,7 +93,10 @@ endpointLoop:
 		return nil
 	}
 
-	return errors.Errorf("no matching endpoint found")
+	if lastError == nil {
+		lastError = errors.Errorf("no matching endpoint found")
+	}
+	return
 }
 
 // Gets the operation for the given method name

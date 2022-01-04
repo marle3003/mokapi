@@ -13,17 +13,19 @@ type Server struct {
 	kafka   KafkaClusters
 	web     WebBindings
 	engine  *engine.Engine
+	mail    SmtpServers
 
 	pool     *safe.Pool
 	stopChan chan bool
 }
 
 func NewServer(pool *safe.Pool, watcher *dynamic.ConfigWatcher,
-	kafka KafkaClusters, web WebBindings, engine *engine.Engine) *Server {
+	kafka KafkaClusters, web WebBindings, mail SmtpServers, engine *engine.Engine) *Server {
 	return &Server{
 		watcher:  watcher,
 		kafka:    kafka,
 		web:      web,
+		mail:     mail,
 		engine:   engine,
 		pool:     pool,
 		stopChan: make(chan bool, 1),
@@ -47,6 +49,7 @@ func (s *Server) Start(ctx context.Context) error {
 	s.pool.Stop()
 	s.kafka.Stop()
 	s.web.Stop()
+	s.mail.Stop()
 	s.engine.Close()
 	s.stopChan <- true
 

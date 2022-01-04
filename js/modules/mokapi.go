@@ -19,12 +19,57 @@ func (*Mokapi) Sleep(milliseconds float64) {
 	time.Sleep(time.Duration(milliseconds) * time.Millisecond)
 }
 
-func (m *Mokapi) Every(every string, do func(), times int) (int, error) {
-	return m.host.Every(every, do, times)
+func (m *Mokapi) Every(every string, do func(), args goja.Value) (int, error) {
+	times := -1
+	tags := make(map[string]string)
+
+	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
+		params := args.ToObject(m.rt)
+		for _, k := range params.Keys() {
+			switch k {
+			case "tags":
+				tagsV := params.Get(k)
+				if goja.IsUndefined(tagsV) || goja.IsNull(tagsV) {
+					continue
+				}
+				tagsO := tagsV.ToObject(m.rt)
+				for _, key := range tagsO.Keys() {
+					tags[key] = tagsO.Get(key).String()
+				}
+			case "times":
+				tagsV := params.Get(k)
+				times = int(tagsV.ToInteger())
+			}
+		}
+	}
+	return m.host.Every(every, do, times, tags)
 }
 
-func (m *Mokapi) Cron(expr string, do func(), times int) (int, error) {
-	return m.host.Cron(expr, do, times)
+func (m *Mokapi) Cron(expr string, do func(), args goja.Value) (int, error) {
+	times := -1
+	tags := make(map[string]string)
+
+	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
+		params := args.ToObject(m.rt)
+		for _, k := range params.Keys() {
+			switch k {
+			case "tags":
+				tagsV := params.Get(k)
+				if goja.IsUndefined(tagsV) || goja.IsNull(tagsV) {
+					continue
+				}
+				tagsO := tagsV.ToObject(m.rt)
+				for _, key := range tagsO.Keys() {
+					tags[key] = tagsO.Get(key).String()
+				}
+			case "times":
+				tagsV := params.Get(k)
+				times = int(tagsV.ToInteger())
+			}
+		}
+	}
+
+	return m.host.Cron(expr, do, times, tags)
 }
 
 func (m *Mokapi) On(event string, do goja.Value, args goja.Value) {

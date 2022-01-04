@@ -1,7 +1,7 @@
 package lua
 
 import (
-	log "github.com/sirupsen/logrus"
+	"fmt"
 	lua "github.com/yuin/gopher-lua"
 	luar "layeh.com/gopher-luar"
 	"mokapi/engine/common"
@@ -37,7 +37,7 @@ func New(filename, src string, host common.Host) (*Script, error) {
 func (s *Script) Run() error {
 	err := s.state.DoString(s.src)
 	if err != nil {
-		log.Errorf("script error %q: %v", s.Key, err)
+		return fmt.Errorf("syntax error %q: %v", s.Key, err)
 	}
 	return nil
 }

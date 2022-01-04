@@ -25,46 +25,53 @@ func WithResponse(status openapi.HttpStatus, opts ...ResponseOptions) OperationO
 	}
 }
 
-func WithPathParam(name string, required bool) OperationOptions {
+type ParamOptions func(p *openapi.Parameter)
+
+func WithPathParam(name string, required bool, opts ...ParamOptions) OperationOptions {
 	return func(o *openapi.Operation) {
+
 		o.Parameters = append(o.Parameters, &openapi.ParameterRef{
-			Value: &openapi.Parameter{
-				Name:     name,
-				Type:     openapi.PathParameter,
-				Required: required,
-			}})
+			Value: newParam(name, required, openapi.PathParameter, opts...)})
 	}
 }
 
-func WithQueryParam(name string, required bool) OperationOptions {
+func WithQueryParam(name string, required bool, opts ...ParamOptions) OperationOptions {
 	return func(o *openapi.Operation) {
+
 		o.Parameters = append(o.Parameters, &openapi.ParameterRef{
-			Value: &openapi.Parameter{
-				Name:     name,
-				Type:     openapi.QueryParameter,
-				Required: required,
-			}})
+			Value: newParam(name, required, openapi.QueryParameter, opts...)})
 	}
 }
 
-func WithCookieParam(name string, required bool) OperationOptions {
+func WithCookieParam(name string, required bool, opts ...ParamOptions) OperationOptions {
 	return func(o *openapi.Operation) {
 		o.Parameters = append(o.Parameters, &openapi.ParameterRef{
-			Value: &openapi.Parameter{
-				Name:     name,
-				Type:     openapi.CookieParameter,
-				Required: required,
-			}})
+			Value: newParam(name, required, openapi.CookieParameter, opts...)})
 	}
 }
 
-func WithHeaderParam(name string, required bool) OperationOptions {
+func WithHeaderParam(name string, required bool, opts ...ParamOptions) OperationOptions {
 	return func(o *openapi.Operation) {
 		o.Parameters = append(o.Parameters, &openapi.ParameterRef{
-			Value: &openapi.Parameter{
-				Name:     name,
-				Type:     openapi.HeaderParameter,
-				Required: required,
-			}})
+			Value: newParam(name, required, openapi.HeaderParameter, opts...)})
+	}
+}
+
+func newParam(name string, required bool, t openapi.ParameterLocation, opts ...ParamOptions) *openapi.Parameter {
+	p := &openapi.Parameter{
+		Name:     name,
+		Type:     t,
+		Required: required,
+	}
+
+	for _, opt := range opts {
+		opt(p)
+	}
+	return p
+}
+
+func WithParamSchema(s *openapi.Schema) ParamOptions {
+	return func(p *openapi.Parameter) {
+		p.Schema = &openapi.SchemaRef{Value: s}
 	}
 }

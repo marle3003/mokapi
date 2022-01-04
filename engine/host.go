@@ -76,7 +76,7 @@ func (sh *scriptHost) RunEvent(event string, args ...interface{}) []*Summary {
 	return result
 }
 
-func (sh *scriptHost) Every(every string, handler func(), times int) (int, error) {
+func (sh *scriptHost) Every(every string, handler func(), times int, tags map[string]string) (int, error) {
 	sh.engine.cron.Every(every)
 
 	if times >= 0 {
@@ -94,7 +94,7 @@ func (sh *scriptHost) Every(every string, handler func(), times int) (int, error
 	return id, nil
 }
 
-func (sh *scriptHost) Cron(expr string, handler func(), times int) (int, error) {
+func (sh *scriptHost) Cron(expr string, handler func(), times int, tags map[string]string) (int, error) {
 	sh.engine.cron.Cron(expr)
 
 	if times >= 0 {

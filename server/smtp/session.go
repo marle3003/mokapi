@@ -60,6 +60,10 @@ func (s *session) Rcpt(to string) error {
 	return nil
 }
 
+func (s *session) AuthPlain(username, password string) error {
+	return nil
+}
+
 func (s *session) Data(r io.Reader) error {
 	m, err := mail.ReadMessage(r)
 	if err != nil {

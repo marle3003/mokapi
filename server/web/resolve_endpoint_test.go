@@ -394,6 +394,26 @@ func TestResolveEndpoint(t *testing.T) {
 				test.Equals(t, 415, rr.Code)
 				test.Equals(t, "none of requests content type(s) are supported: application/json\n", rr.Body.String())
 			}},
+		{
+			// endpoint /pet/{petId} and /pet/findByStatus overlaps in segments but is different by type
+			// /pet/1
+			// /pet/findByStatus
+			"endpoints overlap",
+			func(t *testing.T, f serveHTTP, c *openapi.Config) {
+				byId := openapitest.NewOperation(
+					openapitest.WithResponse(openapi.OK),
+					openapitest.WithPathParam("petId", true, openapitest.WithParamSchema(openapitest.NewSchema("integer"))))
+				find := openapitest.NewOperation(
+					openapitest.WithResponse(openapi.OK),
+					openapitest.WithResponse(openapi.OK, openapitest.WithContent("application/json")))
+				openapitest.AppendEndpoint("/pet/{petId}", c, openapitest.WithOperation("get", byId))
+				openapitest.AppendEndpoint("/pet/findByStatus", c, openapitest.WithOperation("get", find))
+				r := httptest.NewRequest("get", "http://localhost/pet/findByStatus", nil)
+				r.Header.Set("accept", "application/json")
+				rr := httptest.NewRecorder()
+				f(rr, r)
+				test.Equals(t, 200, rr.Code)
+			}},
 	}
 
 	for _, data := range testdata {

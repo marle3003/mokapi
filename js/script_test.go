@@ -33,7 +33,7 @@ func TestScript(t *testing.T) {
 		test.Ok(t, err)
 		test.Ok(t, s.Run())
 	})
-	t.Run("alert", func(t *testing.T) {
+	t.Run("console.log", func(t *testing.T) {
 		t.Parallel()
 		s, err := New("test", `export default function() {console.log("foo")}`, host)
 		test.Ok(t, err)

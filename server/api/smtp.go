@@ -89,7 +89,7 @@ func (b *Binding) getSmtpService(w http.ResponseWriter, r *http.Request) {
 		s := SmtpService{
 			Name:        c.Name,
 			Description: c.Description,
-			Address:     c.Address,
+			Address:     c.Server,
 			Type:        "SMTP",
 		}
 

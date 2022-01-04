@@ -2,8 +2,8 @@ package common
 
 type Host interface {
 	Logger
-	Every(every string, do func(), times int) (int, error)
-	Cron(expr string, do func(), times int) (int, error)
+	Every(every string, do func(), times int, tags map[string]string) (int, error)
+	Cron(expr string, do func(), times int, tags map[string]string) (int, error)
 	Cancel(jobId int) error
 
 	OpenFile(file string) (string, error)

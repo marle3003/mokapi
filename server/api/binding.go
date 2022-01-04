@@ -153,7 +153,7 @@ func (b *Binding) getServices(w http.ResponseWriter, _ *http.Request) {
 	}
 	for k, s := range b.runtime.Smtp {
 		summary := serviceSummary{Name: s.Name, Type: "SMTP"}
-		summary.BaseUrls = append(summary.BaseUrls, baseUrl{Url: s.Address})
+		summary.BaseUrls = append(summary.BaseUrls, baseUrl{Url: s.Server})
 		if len(summary.Name) == 0 {
 			summary.Name = k
 		}

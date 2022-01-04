@@ -31,6 +31,7 @@ func toValue(lv lua.LValue) interface{} {
 		n := v.MaxN()
 		if n == 0 { // table
 			ret := make(map[string]interface{})
+
 			v.ForEach(func(key, value lua.LValue) {
 				k := fmt.Sprintf("%v", toValue(key))
 				ret[k] = toValue(value)

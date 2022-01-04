@@ -17,11 +17,23 @@ func NewMokapi(host common.Host) *Mokapi {
 
 func (m *Mokapi) Every(every string, do func(), args ...interface{}) (int, error) {
 	times := -1
+	tags := make(map[string]string)
+
 	if len(args) > 0 {
-		times = int(args[0].(float64))
+		m := args[0].(map[interface{}]interface{})
+		for f, v := range m {
+			switch f.(string) {
+			case "tags":
+				for k, v := range v.(map[interface{}]interface{}) {
+					tags[k.(string)] = fmt.Sprintf("%v", v)
+				}
+			case "times":
+				times = int(v.(float64))
+			}
+		}
 	}
 
-	return m.host.Every(every, do, times)
+	return m.host.Every(every, do, times, tags)
 }
 
 func (m *Mokapi) On(event string, do func(args ...interface{}) bool, args ...interface{}) {

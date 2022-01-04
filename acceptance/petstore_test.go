@@ -3,6 +3,7 @@ package acceptance
 import (
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
+	"mokapi/config/static"
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/protocol"
 	"mokapi/kafka/protocol/metaData"
@@ -13,42 +14,59 @@ import (
 
 type PetStoreSuite struct{ BaseSuite }
 
+func (suite *PetStoreSuite) SetupSuite() {
+	cfg := static.NewConfig()
+	cfg.Providers.File.Directory = "./petstore"
+	suite.initCmd(cfg)
+}
+
 func (suite *PetStoreSuite) SetupTest() {
 	gofakeit.Seed(11)
 }
 
 func (suite *PetStoreSuite) TestJsFile() {
 	// ensure scripts are executed
-	time.Sleep(time.Second)
+	time.Sleep(2 * time.Second)
 	err := webtest.GetRequest("http://127.0.0.1:8080/pet/2",
 		map[string]string{"Accept": "application/json"},
-		webtest.HasStatusCode(404),
-		webtest.HasBody(
-			`{"Id":-8379641344161477543,"Category":{"Id":-1799207740735652432,"Name":"RMaRxHkiJBPtapW"},"Name":"doggie","PhotoUrls":[],"Tags":[{"Id":-3430133205295092491,"Name":"nSMKgtlxwnqhqcl"},{"Id":-4360704630090834069,"Name":"YkWwfoRLOPxLIok"},{"Id":-9084870506124948944,"Name":"qanPAKaXSMQFpZy"}],"Status":"pending"}`,
+		webtest.HasStatusCode(suite.T(), 404),
+		webtest.HasBody(suite.T(),
+			`{"id":-8379641344161477543,"category":{"id":-1799207740735652432,"name":"RMaRxHkiJBPtapW"},"name":"doggie","photoUrls":[],"tags":[{"id":-3430133205295092491,"name":"nSMKgtlxwnqhqcl"},{"id":-4360704630090834069,"name":"YkWwfoRLOPxLIok"},{"id":-9084870506124948944,"name":"qanPAKaXSMQFpZy"}],"status":"pending"}`,
 		))
 	require.NoError(suite.T(), err)
 
 	err = webtest.GetRequest("http://127.0.0.1:8080/pet/3",
 		map[string]string{"Accept": "application/json"},
-		webtest.HasStatusCode(404),
-		webtest.HasBody(""))
+		webtest.HasStatusCode(suite.T(), 404),
+		webtest.HasBody(suite.T(), ""))
+	require.NoError(suite.T(), err)
+}
+
+func (suite *PetStoreSuite) TestLuaFile() {
+	// ensure scripts are executed
+	time.Sleep(time.Second)
+	err := webtest.GetRequest("http://127.0.0.1:8080/pet/findByStatus?status=available&status=pending",
+		map[string]string{"Accept": "application/json"},
+		webtest.HasStatusCode(suite.T(), 200),
+		webtest.HasBody(suite.T(),
+			"[{\"name\":\"Gidget\",\"photoUrls\":[\"http://www.pets.com/gidget.png\"],\"status\":\"pending\"},{\"name\":\"Max\",\"photoUrls\":[\"http://www.pets.com/max.png\"],\"status\":\"available\"}]"))
 	require.NoError(suite.T(), err)
 }
 
 func (suite *PetStoreSuite) TestGetPetById() {
 	err := webtest.GetRequest("http://127.0.0.1:8080/pet/1",
 		map[string]string{"Accept": "application/json"},
-		webtest.HasStatusCode(200),
-		webtest.HasBody(
-			`{"Id":-8379641344161477543,"Category":{"Id":-1799207740735652432,"Name":"RMaRxHkiJBPtapW"},"Name":"doggie","PhotoUrls":[],"Tags":[{"Id":-3430133205295092491,"Name":"nSMKgtlxwnqhqcl"},{"Id":-4360704630090834069,"Name":"YkWwfoRLOPxLIok"},{"Id":-9084870506124948944,"Name":"qanPAKaXSMQFpZy"}],"Status":"pending"}`,
+		webtest.HasStatusCode(suite.T(), 200),
+		webtest.HasBody(suite.T(),
+			`{"id":-8379641344161477543,"category":{"id":-1799207740735652432,"name":"RMaRxHkiJBPtapW"},"name":"doggie","photoUrls":[],"tags":[{"id":-3430133205295092491,"name":"nSMKgtlxwnqhqcl"},{"id":-4360704630090834069,"name":"YkWwfoRLOPxLIok"},{"id":-9084870506124948944,"name":"qanPAKaXSMQFpZy"}],"status":"pending"}`,
 		))
 	require.NoError(suite.T(), err)
 
 	err = webtest.GetRequest("https://localhost:8443/pet/1",
 		map[string]string{"Accept": "application/json"},
-		webtest.HasStatusCode(200),
-		webtest.HasBody(
-			`{"Id":-5233707484353581840,"Category":{"Id":-7922211254674255348,"Name":"HGyyvqqdHueUxcv"},"Name":"doggie","PhotoUrls":[],"Tags":[{"Id":-885632864726843768,"Name":"eDjRRGUnsAxdBXG"}],"Status":"pending"}`,
+		webtest.HasStatusCode(suite.T(), 200),
+		webtest.HasBody(suite.T(),
+			`{"id":-5233707484353581840,"category":{"id":-7922211254674255348,"name":"HGyyvqqdHueUxcv"},"name":"doggie","photoUrls":[],"tags":[{"id":-885632864726843768,"name":"eDjRRGUnsAxdBXG"}],"status":"pending"}`,
 		))
 	require.NoError(suite.T(), err)
 }

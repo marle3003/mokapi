@@ -4,11 +4,13 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"net/http"
+	"testing"
 )
 
-type ResponseCondition func(r *http.Response) error
+type ResponseCondition func(r *http.Response)
 
 func GetRequest(url string, headers map[string]string, conditions ...ResponseCondition) error {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -40,34 +42,24 @@ func GetRequest(url string, headers map[string]string, conditions ...ResponseCon
 		return err
 	}
 	for _, cond := range conditions {
-		err = cond(res)
-		if err != nil {
-			return err
-		}
+		cond(res)
 	}
 	return nil
 }
 
-func HasStatusCode(status int) ResponseCondition {
-	return func(r *http.Response) error {
-		if r.StatusCode != status {
-			return fmt.Errorf("expected status code %v, got %v", status, r.StatusCode)
-		}
-		return nil
+func HasStatusCode(t *testing.T, status int) ResponseCondition {
+	return func(r *http.Response) {
+		require.Equal(t, status, r.StatusCode)
 	}
 }
 
-func HasBody(expected string) ResponseCondition {
-	return func(r *http.Response) error {
+func HasBody(t *testing.T, expected string) ResponseCondition {
+	return func(r *http.Response) {
 		b, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			return fmt.Errorf("failed to read body")
-		}
+		require.NoError(t, err)
 
 		body := string(b)
-		if expected != body {
-			return fmt.Errorf("body does not match expected value, got: %v", body)
-		}
-		return nil
+
+		require.Equal(t, expected, body)
 	}
 }
