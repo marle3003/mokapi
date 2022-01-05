@@ -28,7 +28,7 @@ type Binding struct {
 	eventHandler     eventHandler
 	IsTls            bool
 	certificates     map[string]*tls.Certificate
-	Engine           *engine.Engine
+	Emitter          engine.EventEmitter
 }
 
 func NewBinding(addr string) *Binding {
@@ -136,7 +136,7 @@ func (binding *Binding) Apply(data interface{}) error {
 
 func (binding *Binding) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := NewHttpContext(r, w)
-	ctx.engine = binding.Engine
+	ctx.emitter = binding.Emitter
 
 	defer binding.setMetric(ctx.metric)
 

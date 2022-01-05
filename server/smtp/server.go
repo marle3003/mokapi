@@ -6,8 +6,10 @@ import (
 	"github.com/emersion/go-smtp"
 	log "github.com/sirupsen/logrus"
 	config "mokapi/config/dynamic/smtp"
+	"mokapi/engine"
 	"mokapi/models"
 	"mokapi/server/cert"
+	"net"
 	"net/url"
 )
 
@@ -22,7 +24,8 @@ type Server struct {
 	close    chan bool
 	received chan *models.MailMetric
 
-	mh ReceivedMailHandler
+	mh      ReceivedMailHandler
+	emitter engine.EventEmitter
 	//wh EventHandler
 }
 
@@ -31,7 +34,7 @@ type backend struct {
 	//wh       EventHandler
 }
 
-func New(c *config.Config, store *cert.Store) (*Server, error) {
+func New(c *config.Config, store *cert.Store, emitter engine.EventEmitter) (*Server, error) {
 	received := make(chan *models.MailMetric)
 	b := &backend{received: received /*wh: wh*/}
 	s := smtp.NewServer(b)
@@ -66,20 +69,33 @@ func New(c *config.Config, store *cert.Store) (*Server, error) {
 		server:   s,
 		received: received,
 		close:    make(chan bool),
+		emitter:  emitter,
 		//mh:       mh,
 		//wh:       wh,
 	}, nil
 }
 
-func (b *Server) Start() {
+func (s *Server) Start() error {
+	var l net.Listener
+	var err error
+	if s.server.TLSConfig != nil {
+		l, err = tls.Listen("tcp", s.server.Addr, s.server.TLSConfig)
+	} else {
+		l, err = net.Listen("tcp", s.server.Addr)
+	}
+	if err != nil {
+		return err
+	}
+
+	s.StartWith(l)
+	return nil
+
+}
+
+func (s *Server) StartWith(l net.Listener) {
 	go func() {
-		log.Infof("starting smtp binding %v", b.config.Server)
-		var err error
-		if b.server.TLSConfig != nil {
-			err = b.server.ListenAndServeTLS()
-		} else {
-			err = b.server.ListenAndServe()
-		}
+		log.Infof("starting smtp binding %v", s.config.Server)
+		err := s.server.Serve(l)
 		if err != nil {
 			log.Errorf("unable to start smtp server: %v", err)
 			return
@@ -88,7 +104,7 @@ func (b *Server) Start() {
 
 	go func() {
 		defer func() {
-			err := b.server.Close()
+			err := s.server.Close()
 			if err != nil {
 				log.Errorf("unable to close smtp server: %v", err)
 			}
@@ -96,23 +112,23 @@ func (b *Server) Start() {
 
 		for {
 			select {
-			case mail := <-b.received:
-				if b.mh != nil {
-					b.mh(mail)
+			case mail := <-s.received:
+				if s.mh != nil {
+					s.mh(mail)
 				}
-			case <-b.close:
+			case <-s.close:
 				return
 			}
 		}
 	}()
 }
 
-func (b *Server) Stop() {
-	b.server.Close()
-	b.close <- true
+func (s *Server) Stop() {
+	s.server.Close()
+	s.close <- true
 }
 
-func (b *Server) Update(config *config.Config) error {
+func (s *Server) Update(config *config.Config) error {
 	return nil
 }
 

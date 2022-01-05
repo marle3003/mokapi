@@ -113,6 +113,15 @@ func WithRootCa(cert *x509.Certificate) MailOptions {
 	}
 }
 
+func InsecureSkipVerfiy() MailOptions {
+	return func(m *mail) {
+		if m.tlsConfig == nil {
+			m.tlsConfig = &tls.Config{}
+		}
+		m.tlsConfig.InsecureSkipVerify = true
+	}
+}
+
 func WithSubject(title string) MailOptions {
 	return func(m *mail) {
 		m.subject = title

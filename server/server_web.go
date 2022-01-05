@@ -13,7 +13,7 @@ import (
 
 type WebBindings map[string]*web.Binding
 
-func (wb WebBindings) UpdateConfig(file *common.File, certStore *cert.Store, e *engine.Engine) {
+func (wb WebBindings) UpdateConfig(file *common.File, certStore *cert.Store, e engine.EventEmitter) {
 	config, ok := file.Data.(*openapi.Config)
 	if !ok {
 		return
@@ -38,7 +38,7 @@ func (wb WebBindings) UpdateConfig(file *common.File, certStore *cert.Store, e *
 			} else {
 				binding = web.NewBinding(address)
 			}
-			binding.Engine = e
+			binding.Emitter = e
 			wb[address] = binding
 			binding.Start()
 		}

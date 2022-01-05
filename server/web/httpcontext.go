@@ -26,7 +26,7 @@ type HttpContext struct {
 	ContentType    *media.ContentType
 	metric         *models.RequestMetric
 	statusCode     openapi.HttpStatus
-	engine         *engine.Engine
+	emitter        engine.EventEmitter
 	Response       *openapi.MediaType
 	Headers        map[string]*openapi.HeaderRef
 }
@@ -158,8 +158,8 @@ func (context *HttpContext) updateMetric(statusCode int, contentType, body strin
 }
 
 func (context *HttpContext) Event(request *Request, response *Response) {
-	if context.engine == nil {
+	if context.emitter == nil {
 		return
 	}
-	context.metric.EventSummary = context.engine.Run("http", request, response)
+	context.emitter.Emit("http", request, response)
 }

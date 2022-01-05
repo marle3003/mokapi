@@ -12,6 +12,10 @@ type Script interface {
 	Close()
 }
 
+type EventEmitter interface {
+	Emit(event string, args ...interface{})
+}
+
 type Logger interface {
 	Info(args ...interface{})
 	Warn(args ...interface{})
@@ -60,6 +64,10 @@ func (e *Engine) Run(event string, args ...interface{}) []*Summary {
 	}
 
 	return result
+}
+
+func (e *Engine) Emit(event string, args ...interface{}) {
+	e.Run(event, args...)
 }
 
 func (e *Engine) Start() {
