@@ -11,7 +11,7 @@ type HttpRequestLog struct {
 }
 
 type HttpResponseLog struct {
-	HttpStatus  int
+	StatusCode  int
 	ContentType string
 	Body        string
 }
@@ -21,8 +21,8 @@ type HttpLog struct {
 	Service  string
 	Time     time.Time
 	Duration time.Duration
-	Request  HttpRequestLog
-	Response HttpResponseLog
+	Request  *HttpRequestLog
+	Response *HttpResponseLog
 }
 
 type HttpParamter struct {
@@ -30,4 +30,15 @@ type HttpParamter struct {
 	Type  string
 	Value string
 	Raw   string
+}
+
+func NewHttpLog(method, url string) *HttpLog {
+	return &HttpLog{
+		Request: &HttpRequestLog{
+			Method: method,
+			Url:    url,
+		},
+		Response: &HttpResponseLog{},
+		Time:     time.Now(),
+	}
 }

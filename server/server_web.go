@@ -6,14 +6,32 @@ import (
 	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/engine"
+	"mokapi/runtime"
 	"mokapi/server/cert"
-	"mokapi/server/web"
-	"strings"
+	"mokapi/server/service"
+	"net/url"
 )
 
-type WebBindings map[string]*web.Binding
+type HttpServers map[string]*service.HttpServer
 
-func (wb WebBindings) UpdateConfig(file *common.File, certStore *cert.Store, e engine.EventEmitter) {
+type HttpManager struct {
+	Servers HttpServers
+
+	eventEmitter engine.EventEmitter
+	certStore    *cert.Store
+	app          *runtime.App
+}
+
+func NewHttpManager(servers HttpServers, emitter engine.EventEmitter, store *cert.Store, app *runtime.App) *HttpManager {
+	return &HttpManager{
+		eventEmitter: emitter,
+		certStore:    store,
+		app:          app,
+		Servers:      servers,
+	}
+}
+
+func (m *HttpManager) Update(file *common.File) {
 	config, ok := file.Data.(*openapi.Config)
 	if !ok {
 		return
@@ -24,25 +42,30 @@ func (wb WebBindings) UpdateConfig(file *common.File, certStore *cert.Store, e e
 		return
 	}
 
-	for _, server := range config.Servers {
-		_, port, _, err := web.ParseAddress(server.Url)
+	if len(config.Servers) == 0 {
+		config.Servers = append(config.Servers, &openapi.Server{Url: "/"})
+	}
+
+	for _, s := range config.Servers {
+		u, err := parseUrl(s.Url)
 		if err != nil {
-			log.Errorf("%v: %v", err, file.Url)
+			log.Errorf("error %v: %v", file.Url, err.Error())
 			continue
 		}
-		address := fmt.Sprintf(":%v", port)
-		binding, found := wb[address]
+
+		server, found := m.Servers[u.Port()]
 		if !found {
-			if strings.HasPrefix(strings.ToLower(server.Url), "https://") {
-				binding = web.NewBindingWithTls(address, certStore)
+			if u.Scheme == "https" {
+				server = service.NewHttpServerTls(u.Port(), m.certStore)
 			} else {
-				binding = web.NewBinding(address)
+				server = service.NewHttpServer(u.Port())
 			}
-			binding.Emitter = e
-			wb[address] = binding
-			binding.Start()
+
+			m.Servers[u.Port()] = server
+			server.Start()
+			m.app.AddHttp(config)
 		}
-		err = binding.Apply(config)
+		err = server.AddOrUpdate(m.createService(u, config))
 		if err != nil {
 			log.Errorf("error on updating %v: %v", file.Url.String(), err.Error())
 			return
@@ -51,8 +74,36 @@ func (wb WebBindings) UpdateConfig(file *common.File, certStore *cert.Store, e e
 	log.Infof("processed config %v", file.Url.String())
 }
 
-func (wb WebBindings) Stop() {
-	for _, b := range wb {
-		b.Stop()
+func (m *HttpManager) createService(u *url.URL, config *openapi.Config) *service.HttpService {
+	return &service.HttpService{
+		Url:     u,
+		Handler: runtime.NewHttpHandler(m.app.Monitor.Http, openapi.NewHandler(config, m.eventEmitter)),
+		Name:    config.Info.Name,
 	}
+}
+
+func (servers HttpServers) Stop() {
+	for _, server := range servers {
+		server.Stop()
+	}
+}
+
+func parseUrl(s string) (u *url.URL, err error) {
+	u, err = url.Parse(s)
+	if err != nil {
+		return
+	}
+
+	port := u.Port()
+	if len(port) == 0 {
+		switch u.Scheme {
+		case "https":
+			port = "443"
+		default:
+			port = "80"
+		}
+		u.Host = fmt.Sprintf("%v:%v", u.Hostname(), port)
+	}
+
+	return
 }

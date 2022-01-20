@@ -2,6 +2,7 @@ package openapi
 
 import (
 	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic/openapi/ref"
 	"mokapi/test"
 	"net/url"
 	"testing"
@@ -54,7 +55,7 @@ func TestEndpointResolve(t *testing.T) {
 			return nil
 		}}
 		config := &Config{EndPoints: map[string]*EndpointRef{
-			"foo": {Ref: "foo.yml#/endpoints/foo"},
+			"foo": {Reference: ref.Reference{Value: "foo.yml#/endpoints/foo"}},
 		}}
 		err := config.Parse(&common.File{Url: &url.URL{}, Data: config}, reader)
 		test.Ok(t, err)
@@ -70,7 +71,7 @@ func TestEndpointResolve(t *testing.T) {
 			return nil
 		}}
 		config := &Config{EndPoints: map[string]*EndpointRef{
-			"foo": {Ref: "foo.yml#/endpoints/foo"},
+			"foo": {Reference: ref.Reference{Value: "foo.yml#/endpoints/foo"}},
 		}}
 		err := config.Parse(&common.File{Url: &url.URL{}, Data: config}, reader)
 		test.Ok(t, err)
@@ -81,7 +82,7 @@ func TestEndpointResolve(t *testing.T) {
 			return test.TestError
 		}}
 		config := &Config{EndPoints: map[string]*EndpointRef{
-			"foo": {Ref: "foo.yml#/endpoints/foo"},
+			"foo": {Reference: ref.Reference{Value: "foo.yml#/endpoints/foo"}},
 		}}
 		err := config.Parse(&common.File{Url: &url.URL{}, Data: config}, reader)
 		test.Error(t, err)

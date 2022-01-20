@@ -1,8 +1,8 @@
 package store
 
 import (
-	"mokapi/config/dynamic/openapi"
-	"mokapi/config/dynamic/openapi/openapitest"
+	"mokapi/config/dynamic/openapi/schema"
+	"mokapi/config/dynamic/openapi/schema/schematest"
 	"mokapi/kafka/protocol"
 	"mokapi/test"
 	"testing"
@@ -90,7 +90,7 @@ func TestPartition_Read_OutOfOffset(t *testing.T) {
 func TestPartition_Write_Value_Validator(t *testing.T) {
 	p := newPartition(0, map[int]*Broker{1: {id: 1}})
 	p.validator = &validator{
-		payload:     &openapi.SchemaRef{Value: openapitest.NewSchema("string")},
+		payload:     &schema.Ref{Value: schematest.New("string")},
 		contentType: "application/json",
 	}
 

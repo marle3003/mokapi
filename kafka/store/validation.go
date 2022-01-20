@@ -2,14 +2,13 @@ package store
 
 import (
 	"mokapi/config/dynamic/asyncApi"
-	"mokapi/config/dynamic/openapi"
+	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/kafka/protocol"
 	"mokapi/models/media"
-	"mokapi/providers/encoding"
 )
 
 type validator struct {
-	payload     *openapi.SchemaRef
+	payload     *schema.Ref
 	contentType string
 }
 
@@ -30,11 +29,11 @@ func (v *validator) Payload(payload protocol.Bytes) error {
 		return nil
 	}
 
-	_, err := encoding.ParseFrom(payload, media.ParseContentType(v.contentType), v.payload)
+	_, err := schema.ParseFrom(payload, media.ParseContentType(v.contentType), v.payload)
 	return err
 }
 
-func getPayload(c *asyncApi.Channel) *openapi.SchemaRef {
+func getPayload(c *asyncApi.Channel) *schema.Ref {
 	if c.Publish == nil ||
 		c.Publish.Message == nil ||
 		c.Publish.Message.Value == nil {

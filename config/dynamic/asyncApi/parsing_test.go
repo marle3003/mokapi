@@ -2,7 +2,8 @@ package asyncApi
 
 import (
 	"mokapi/config/dynamic/common"
-	"mokapi/config/dynamic/openapi"
+	"mokapi/config/dynamic/openapi/ref"
+	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/test"
 	"net/url"
 	"testing"
@@ -238,11 +239,11 @@ func TestSchema(t *testing.T) {
 		test.Ok(t, err)
 	})
 	t.Run("reference inside", func(t *testing.T) {
-		target := &openapi.Schema{}
-		schemas := &openapi.Schemas{}
-		schemas.Set("foo", &openapi.SchemaRef{Value: target})
+		target := &schema.Schema{}
+		schemas := &schema.Schemas{}
+		schemas.Set("foo", &schema.Ref{Value: target})
 		config.Components = Components{Schemas: schemas}
-		message.Payload = &openapi.SchemaRef{Ref: "#/components/Schemas/foo"}
+		message.Payload = &schema.Ref{Reference: ref.Reference{Value: "#/components/Schemas/foo"}}
 		reader := &testReader{readFunc: func(file *common.File) error { return nil }}
 
 		err := config.Parse(&common.File{Url: &url.URL{}, Data: config}, reader)
@@ -250,8 +251,8 @@ func TestSchema(t *testing.T) {
 		test.Equals(t, target, message.Payload.Value)
 	})
 	t.Run("file reference direct", func(t *testing.T) {
-		target := &openapi.Schema{}
-		message.Payload = &openapi.SchemaRef{Ref: "foo.yml"}
+		target := &schema.Schema{}
+		message.Payload = &schema.Ref{Reference: ref.Reference{Value: "foo.yml"}}
 		reader := &testReader{readFunc: func(file *common.File) error {
 			file.Data = target
 			return nil
@@ -262,11 +263,11 @@ func TestSchema(t *testing.T) {
 		test.Equals(t, target, message.Payload.Value)
 	})
 	t.Run("modify file reference direct", func(t *testing.T) {
-		target := &openapi.Schema{}
-		message.Payload = &openapi.SchemaRef{Ref: "foo.yml"}
+		target := &schema.Schema{}
+		message.Payload = &schema.Ref{Reference: ref.Reference{Value: "foo.yml"}}
 		var fooFile *common.File
 		reader := &testReader{readFunc: func(file *common.File) error {
-			file.Data = &openapi.Schema{}
+			file.Data = &schema.Schema{}
 			fooFile = file
 			return nil
 		}}

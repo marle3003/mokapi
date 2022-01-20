@@ -4,7 +4,7 @@ import (
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
 	"mokapi/config/dynamic/common"
-	"mokapi/config/dynamic/openapi"
+	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/protocol/metaData"
 	"mokapi/test"
@@ -20,7 +20,7 @@ func TestKafkaServer(t *testing.T) {
 			asyncapitest.WithSubscribeAndPublish(
 				asyncapitest.WithMessage(
 					asyncapitest.WithPayload(
-						&openapi.Schema{Type: "string"},
+						&schema.Schema{Type: "string"},
 					),
 				),
 			),
@@ -138,7 +138,7 @@ func TestKafkaServer_Update(t *testing.T) {
 						asyncapitest.WithSubscribeAndPublish(
 							asyncapitest.WithMessage(
 								asyncapitest.WithPayload(
-									&openapi.Schema{Type: "string"},
+									&schema.Schema{Type: "string"},
 								),
 							),
 						),
@@ -149,7 +149,7 @@ func TestKafkaServer_Update(t *testing.T) {
 				cfg.Channels["bar"] = &asyncApi.ChannelRef{Value: asyncapitest.NewChannel(asyncapitest.WithSubscribeAndPublish(
 					asyncapitest.WithMessage(
 						asyncapitest.WithPayload(
-							&openapi.Schema{Type: "string"},
+							&schema.Schema{Type: "string"},
 						),
 					),
 				))}
@@ -177,7 +177,7 @@ func TestKafkaServer_Update(t *testing.T) {
 						asyncapitest.WithSubscribeAndPublish(
 							asyncapitest.WithMessage(
 								asyncapitest.WithPayload(
-									&openapi.Schema{Type: "string"},
+									&schema.Schema{Type: "string"},
 								),
 							),
 						),

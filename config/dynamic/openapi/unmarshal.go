@@ -8,15 +8,11 @@ import (
 	"strconv"
 )
 
-type refProp struct {
-	Ref string `yaml:"$ref" json:"$ref"`
-}
-
-func (o *Responses) UnmarshalYAML(value *yaml.Node) error {
+func (r *Responses) UnmarshalYAML(value *yaml.Node) error {
 	if value.Kind != yaml.MappingNode {
 		return errors.New("not a mapping node")
 	}
-	o.LinkedHashMap = *sortedmap.NewLinkedHashMap()
+	r.LinkedHashMap = *sortedmap.NewLinkedHashMap()
 	for i := 0; i < len(value.Content); i += 2 {
 		var key string
 		err := value.Content[i].Decode(&key)
@@ -30,130 +26,52 @@ func (o *Responses) UnmarshalYAML(value *yaml.Node) error {
 		}
 
 		if key == "default" {
-			o.Set(Undefined, val)
+			r.Set(0, val)
 		} else {
 			key, err := strconv.Atoi(key)
 			if err != nil {
 				log.Errorf("unable to parse http status %v", key)
 				continue
 			}
-			o.Set(HttpStatus(key), val)
+			r.Set(key, val)
 		}
 	}
 
 	return nil
 }
 
-type parameter struct {
-	Name        string
-	Type        ParameterLocation `yaml:"in" json:"in"`
-	Schema      *SchemaRef
-	Required    bool
-	Description string
-	Style       string
-	Explode     bool
-}
-
-func (p *Parameter) UnmarshalYAML(value *yaml.Node) error {
-	tmp := &parameter{Explode: true}
-	err := value.Decode(tmp)
-	if err != nil {
-		return err
-	}
-
-	p.Name = tmp.Name
-	p.Type = tmp.Type
-	p.Schema = tmp.Schema
-	p.Required = tmp.Required
-	p.Description = tmp.Description
-	p.Style = tmp.Style
-	p.Explode = tmp.Explode
-
-	return nil
-}
-
-func (s *Schemas) UnmarshalYAML(value *yaml.Node) error {
-	if value.Kind != yaml.MappingNode {
-		return errors.New("not a mapping node")
-	}
-	s.LinkedHashMap = *sortedmap.NewLinkedHashMap()
-	for i := 0; i < len(value.Content); i += 2 {
-		var key string
-		err := value.Content[i].Decode(&key)
-		if err != nil {
-			return err
-		}
-		val := &SchemaRef{}
-		err = value.Content[i+1].Decode(&val)
-		if err != nil {
-			return err
-		}
-
-		s.Set(key, val)
-	}
-
-	return nil
-}
-
-func (s *ResponseRef) UnmarshalYAML(node *yaml.Node) error {
-	return unmarshalRef(node, &s.Ref, &s.Value)
+func (r *ResponseRef) UnmarshalYAML(node *yaml.Node) error {
+	return r.Reference.Unmarshal(node, &r.Value)
 }
 
 func (r *RequestBodyRef) UnmarshalYAML(node *yaml.Node) error {
-	return unmarshalRef(node, &r.Ref, &r.Value)
-}
-
-func (s *SchemaRef) UnmarshalYAML(node *yaml.Node) error {
-	return unmarshalRef(node, &s.Ref, &s.Value)
-}
-
-func (s *SchemasRef) UnmarshalYAML(node *yaml.Node) error {
-	return unmarshalRef(node, &s.Ref, &s.Value)
+	return r.Reference.Unmarshal(node, &r.Value)
 }
 
 func (r *ExampleRef) UnmarshalYAML(node *yaml.Node) error {
-	return unmarshalRef(node, &r.Ref, &r.Value)
+	return r.Reference.Unmarshal(node, &r.Value)
 }
 
 func (r *HeaderRef) UnmarshalYAML(node *yaml.Node) error {
-	return unmarshalRef(node, &r.Ref, &r.Value)
+	return r.Reference.Unmarshal(node, &r.Value)
 }
 
 func (r *NamedResponses) UnmarshalYAML(node *yaml.Node) error {
-	return unmarshalRef(node, &r.Ref, &r.Value)
+	return r.Reference.Unmarshal(node, &r.Value)
 }
 
 func (r *RequestBodies) UnmarshalYAML(node *yaml.Node) error {
-	return unmarshalRef(node, &r.Ref, &r.Value)
-}
-
-func (r *NamedParameters) UnmarshalYAML(node *yaml.Node) error {
-	return unmarshalRef(node, &r.Ref, &r.Value)
+	return r.Reference.Unmarshal(node, &r.Value)
 }
 
 func (r *NamedHeaders) UnmarshalYAML(node *yaml.Node) error {
-	return unmarshalRef(node, &r.Ref, &r.Value)
+	return r.Reference.Unmarshal(node, &r.Value)
 }
 
 func (r *Examples) UnmarshalYAML(node *yaml.Node) error {
-	return unmarshalRef(node, &r.Ref, &r.Value)
+	return r.Reference.Unmarshal(node, &r.Value)
 }
 
 func (r *EndpointRef) UnmarshalYAML(node *yaml.Node) error {
-	return unmarshalRef(node, &r.Ref, &r.Value)
-}
-
-func (r *ParameterRef) UnmarshalYAML(node *yaml.Node) error {
-	return unmarshalRef(node, &r.Ref, &r.Value)
-}
-
-func unmarshalRef(node *yaml.Node, ref *string, val interface{}) error {
-	r := &refProp{}
-	err := node.Decode(r)
-	if err == nil && len(r.Ref) > 0 {
-		*ref = r.Ref
-		return nil
-	}
-
-	return node.Decode(val)
+	return r.Reference.Unmarshal(node, &r.Value)
 }

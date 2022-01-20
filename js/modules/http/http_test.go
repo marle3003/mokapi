@@ -2,8 +2,8 @@ package http
 
 import (
 	"github.com/dop251/goja"
+	"mokapi/config/dynamic/openapi"
 	"mokapi/js/common"
-	"mokapi/server/web"
 	"mokapi/test"
 	"testing"
 )
@@ -60,7 +60,7 @@ func TestOn(t *testing.T) {
 		_, err = rt.RunString("http.on({}, function(request) {return request.method === 'GET'});")
 		test.Ok(t, err)
 
-		b := http.Listeners[0].Listener(&web.Request{Method: "GET"}, nil)
+		b := http.Listeners[0].Listener(&openapi.EventRequest{Method: "GET"}, nil)
 		test.Equals(t, true, b)
 	})
 
@@ -75,7 +75,7 @@ func TestOn(t *testing.T) {
 		_, err = rt.RunString("http.on({}, function(request) {return request.header.Accept === 'application/json' && request.header['Accept'] === 'application/json'});")
 		test.Ok(t, err)
 
-		b := http.Listeners[0].Listener(&web.Request{Header: map[string]interface{}{"Accept": "application/json"}}, nil)
+		b := http.Listeners[0].Listener(&openapi.EventRequest{Header: map[string]interface{}{"Accept": "application/json"}}, nil)
 		test.Equals(t, true, b)
 	})
 }

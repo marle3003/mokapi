@@ -13,6 +13,10 @@ func (c *Counter) Add(v float64) {
 	c.value += v
 }
 
+func (c *Counter) Value() float64 {
+	return c.value
+}
+
 type Metrics struct {
 	Http *HttpMetrics
 }

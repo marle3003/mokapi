@@ -2,7 +2,7 @@ package asyncapi
 
 import (
 	"mokapi/config/dynamic/asyncApi"
-	"mokapi/config/dynamic/openapi"
+	"mokapi/config/dynamic/openapi/schema"
 	"sort"
 	"strings"
 )
@@ -77,7 +77,7 @@ func NewService(c *asyncApi.Config) Service {
 	return s
 }
 
-func newSchema(name string, s *openapi.SchemaRef, level int) *Schema {
+func newSchema(name string, s *schema.Ref, level int) *Schema {
 	if s == nil || s.Value == nil {
 		return nil
 	}
@@ -86,7 +86,7 @@ func newSchema(name string, s *openapi.SchemaRef, level int) *Schema {
 		Name:        name,
 		Type:        s.Value.Type,
 		Properties:  make([]*Schema, 0),
-		Ref:         s.Ref,
+		Ref:         s.Ref(),
 		Description: s.Value.Description,
 		Required:    s.Value.Required,
 		Format:      s.Value.Format,
@@ -105,7 +105,7 @@ func newSchema(name string, s *openapi.SchemaRef, level int) *Schema {
 	if s.Value.Properties != nil {
 		for it := s.Value.Properties.Value.Iter(); it.Next(); {
 			name := it.Key().(string)
-			model := it.Value().(*openapi.SchemaRef)
+			model := it.Value().(*schema.Ref)
 			v.Properties = append(v.Properties, newSchema(name, model, level+1))
 		}
 	}

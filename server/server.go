@@ -11,7 +11,7 @@ import (
 type Server struct {
 	watcher *dynamic.ConfigWatcher
 	kafka   KafkaClusters
-	web     WebBindings
+	http    HttpServers
 	engine  *engine.Engine
 	mail    SmtpServers
 
@@ -20,11 +20,11 @@ type Server struct {
 }
 
 func NewServer(pool *safe.Pool, watcher *dynamic.ConfigWatcher,
-	kafka KafkaClusters, web WebBindings, mail SmtpServers, engine *engine.Engine) *Server {
+	kafka KafkaClusters, http HttpServers, mail SmtpServers, engine *engine.Engine) *Server {
 	return &Server{
 		watcher:  watcher,
 		kafka:    kafka,
-		web:      web,
+		http:     http,
 		mail:     mail,
 		engine:   engine,
 		pool:     pool,
@@ -48,7 +48,7 @@ func (s *Server) Start(ctx context.Context) error {
 	log.Debug("stopping server")
 	s.pool.Stop()
 	s.kafka.Stop()
-	s.web.Stop()
+	s.http.Stop()
 	s.mail.Stop()
 	s.engine.Close()
 	s.stopChan <- true

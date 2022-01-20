@@ -1,18 +1,25 @@
 package runtime
 
 import (
-	"mokapi/runtime/logs"
-	"mokapi/runtime/metrics"
+	"mokapi/config/dynamic/openapi"
+	"mokapi/runtime/monitor"
 )
 
-type Runtime struct {
-	Log     *logs.Logs
-	Metrics *metrics.Metrics
+type App struct {
+	Http map[string]*HttpInfo
+
+	Monitor *monitor.Monitor
 }
 
-func New() *Runtime {
-	return &Runtime{
-		Log:     logs.New(),
-		Metrics: metrics.New(),
+func New() *App {
+	return &App{
+		Monitor: monitor.New(),
+	}
+}
+
+func (r *App) AddHttp(c *openapi.Config) {
+	if len(r.Http) == 0 {
+		r.Http = make(map[string]*HttpInfo)
+		r.Http[c.Info.Name] = &HttpInfo{Config: c}
 	}
 }

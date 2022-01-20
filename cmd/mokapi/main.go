@@ -11,6 +11,7 @@ import (
 	"mokapi/config/dynamic/script"
 	"mokapi/config/static"
 	"mokapi/engine"
+	"mokapi/runtime"
 	"mokapi/safe"
 	"mokapi/server"
 	"mokapi/server/cert"
@@ -63,31 +64,33 @@ func main() {
 
 func createServer(cfg *static.Config) (*server.Server, error) {
 	pool := safe.NewPool(context.Background())
+	app := runtime.New()
 	watcher := dynamic.NewConfigWatcher(cfg)
-
+	scriptEngine := engine.New(watcher)
 	certStore, err := cert.NewStore(cfg)
 	if err != nil {
 		return nil, err
 	}
 	kafka := make(server.KafkaClusters)
-	web := make(server.WebBindings)
+	web := make(server.HttpServers)
 	mail := make(server.SmtpServers)
-	e := engine.New(watcher)
-	watcher.AddListener(func(c *common.File) {
-		kafka.UpdateConfig(c)
-		web.UpdateConfig(c, certStore, e)
-		mail.UpdateConfig(c, certStore, e)
+	managerHttp := server.NewHttpManager(web, scriptEngine, certStore, app)
+
+	watcher.AddListener(func(file *common.File) {
+		kafka.UpdateConfig(file)
+		managerHttp.Update(file)
+		mail.UpdateConfig(file, certStore, scriptEngine)
 	})
 	watcher.AddListener(func(f *common.File) {
 		if s, ok := f.Data.(*script.Script); ok {
-			err := e.AddScript(f.Url.String(), s.Code)
+			err := scriptEngine.AddScript(f.Url.String(), s.Code)
 			if err != nil {
 				log.Error(err)
 			}
 		}
 	})
 
-	return server.NewServer(pool, watcher, kafka, web, mail, e), nil
+	return server.NewServer(pool, watcher, kafka, web, mail, scriptEngine), nil
 }
 
 func configureLogging(cfg *static.Config) {

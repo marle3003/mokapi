@@ -3,6 +3,8 @@ package openapi
 import (
 	"fmt"
 	"mokapi/config/dynamic/openapi"
+	"mokapi/config/dynamic/openapi/parameter"
+	"mokapi/config/dynamic/openapi/schema"
 	"sort"
 	"strings"
 )
@@ -102,7 +104,7 @@ func NewService(s *openapi.Config) Service {
 	if s.Components.Schemas != nil {
 		for it := s.Components.Schemas.Value.Iter(); it.Next(); {
 			name := it.Key().(string)
-			model := it.Value().(*openapi.SchemaRef)
+			model := it.Value().(*schema.Ref)
 			service.Models = append(service.Models, newModel(name, model))
 		}
 	}
@@ -175,7 +177,7 @@ func newOperation(method string, o *openapi.Operation, pipeline string) Operatio
 	}
 
 	for it := o.Responses.Iter(); it.Next(); {
-		k := it.Key().(openapi.HttpStatus)
+		k := it.Key().(int)
 		val := it.Value().(*openapi.ResponseRef)
 		v.Responses = append(v.Responses, newResponse(k, val))
 	}
@@ -183,7 +185,7 @@ func newOperation(method string, o *openapi.Operation, pipeline string) Operatio
 	return v
 }
 
-func newParameter(p *openapi.Parameter) Parameter {
+func newParameter(p *parameter.Parameter) Parameter {
 	return Parameter{
 		Location:    string(p.Type),
 		Name:        p.Name,
@@ -195,7 +197,7 @@ func newParameter(p *openapi.Parameter) Parameter {
 	}
 }
 
-func newResponse(status openapi.HttpStatus, r *openapi.ResponseRef) Response {
+func newResponse(status int, r *openapi.ResponseRef) Response {
 	response := Response{Status: int(status), Description: r.Value.Description, ContentTypes: make([]ResponseContent, 0)}
 
 	for t, c := range r.Value.Content {
@@ -205,20 +207,20 @@ func newResponse(status openapi.HttpStatus, r *openapi.ResponseRef) Response {
 	return response
 }
 
-func newSchema(name string, s *openapi.SchemaRef, level int) *Schema {
+func newSchema(name string, s *schema.Ref, level int) *Schema {
 	if s == nil {
 		return nil
 	}
 
 	if s.Value == nil {
-		return &Schema{Name: name, Ref: s.Ref}
+		return &Schema{Name: name, Ref: s.Ref()}
 	}
 
 	v := &Schema{
 		Name:        name,
 		Type:        s.Value.Type,
 		Properties:  make([]*Schema, 0),
-		Ref:         s.Ref,
+		Ref:         s.Ref(),
 		Description: s.Value.Description,
 		Required:    s.Value.Required,
 		Format:      s.Value.Format,
@@ -237,7 +239,7 @@ func newSchema(name string, s *openapi.SchemaRef, level int) *Schema {
 	if s.Value.Properties != nil {
 		for it := s.Value.Properties.Value.Iter(); it.Next(); {
 			name := it.Key().(string)
-			model := it.Value().(*openapi.SchemaRef)
+			model := it.Value().(*schema.Ref)
 			v.Properties = append(v.Properties, newSchema(name, model, level+1))
 		}
 	}
@@ -249,26 +251,26 @@ func newSchema(name string, s *openapi.SchemaRef, level int) *Schema {
 	return v
 }
 
-func newModel(name string, s *openapi.SchemaRef) *Schema {
+func newModel(name string, s *schema.Ref) *Schema {
 	if s == nil || s.Value == nil {
 		return nil
 	}
 
-	v := &Schema{Name: name, Type: s.Value.Type, Properties: make([]*Schema, 0), Ref: s.Ref}
+	v := &Schema{Name: name, Type: s.Value.Type, Properties: make([]*Schema, 0), Ref: s.Ref()}
 
 	if s.Value.Properties != nil {
 		for it := s.Value.Properties.Value.Iter(); it.Next(); {
 			s := it.Key().(string)
-			p := it.Value().(*openapi.SchemaRef)
+			p := it.Value().(*schema.Ref)
 			if p.Value.Type == "array" && p.Value.Items != nil {
 				tName := p.Value.Items.Value.Type
-				if len(p.Value.Items.Ref) > 0 {
-					seg := strings.Split(p.Value.Items.Ref, "/")
+				if len(p.Value.Items.Ref()) > 0 {
+					seg := strings.Split(p.Value.Items.Ref(), "/")
 					tName = seg[len(seg)-1]
 				}
 				v.Properties = append(v.Properties, &Schema{Name: s, Type: fmt.Sprintf("array[%v]", tName)})
-			} else if len(p.Ref) > 0 {
-				seg := strings.Split(p.Ref, "/")
+			} else if len(p.Ref()) > 0 {
+				seg := strings.Split(p.Ref(), "/")
 				tName := seg[len(seg)-1]
 				v.Properties = append(v.Properties, &Schema{Name: s, Type: tName})
 			} else {
@@ -279,8 +281,8 @@ func newModel(name string, s *openapi.SchemaRef) *Schema {
 
 	if s.Value.Type == "array" && s.Value.Items != nil {
 		tName := s.Value.Items.Value.Type
-		if len(s.Value.Items.Ref) > 0 {
-			seg := strings.Split(s.Value.Items.Ref, "/")
+		if len(s.Value.Items.Ref()) > 0 {
+			seg := strings.Split(s.Value.Items.Ref(), "/")
 			tName = seg[len(seg)-1]
 		}
 		v.Type = fmt.Sprintf("array[%v]", tName)

@@ -2,7 +2,7 @@ package kafka_test
 
 import (
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
-	"mokapi/config/dynamic/openapi/openapitest"
+	"mokapi/config/dynamic/openapi/schema/schematest"
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/protocol"
 	"mokapi/kafka/protocol/fetch"
@@ -150,7 +150,7 @@ func TestProduce(t *testing.T) {
 					asyncapitest.WithChannel("foo", asyncapitest.WithSubscribeAndPublish(
 						asyncapitest.WithMessage(
 							asyncapitest.WithContentType("application/json"),
-							asyncapitest.WithPayload(openapitest.NewSchema("integer"))),
+							asyncapitest.WithPayload(schematest.New("integer"))),
 					)),
 				)))
 

@@ -1,7 +1,9 @@
 package kafka
 
-import "mokapi/config/dynamic/openapi"
+import (
+	"mokapi/config/dynamic/openapi/schema"
+)
 
 type Operation struct {
-	GroupId *openapi.Schema `yaml:"groupId" json:"groupId"`
+	GroupId *schema.Schema `yaml:"groupId" json:"groupId"`
 }

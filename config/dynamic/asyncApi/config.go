@@ -5,7 +5,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/asyncApi/kafka"
 	"mokapi/config/dynamic/common"
-	"mokapi/config/dynamic/openapi"
+	"mokapi/config/dynamic/openapi/schema"
 	"net/url"
 	"strconv"
 )
@@ -93,9 +93,9 @@ type Message struct {
 	Summary     string
 	Description string
 	ContentType string
-	Payload     *openapi.SchemaRef
+	Payload     *schema.Ref
 	Bindings    MessageBinding
-	Headers     *openapi.SchemaRef
+	Headers     *schema.Ref
 }
 
 type MessageBinding struct {
@@ -103,7 +103,7 @@ type MessageBinding struct {
 }
 
 type Components struct {
-	Schemas  *openapi.Schemas
+	Schemas  *schema.Schemas
 	Messages map[string]*Message
 }
 

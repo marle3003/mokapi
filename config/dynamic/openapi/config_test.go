@@ -5,8 +5,10 @@ import (
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/openapi"
+	"mokapi/config/dynamic/openapi/parameter"
 	"mokapi/models/media"
 	"mokapi/test"
+	"net/http"
 	"testing"
 )
 
@@ -60,7 +62,7 @@ openapi: ""
 info:
   title: foo
 `,
-			fmt.Errorf("no version defined"),
+			fmt.Errorf("no OpenApi version defined"),
 		},
 	}
 	t.Parallel()
@@ -122,10 +124,10 @@ components:
 			f: func(t *testing.T, c *openapi.Config) {
 				test.Ok(t, c.Validate())
 				test.Equals(t, 1, len(c.EndPoints))
-				exp := []interface{}{openapi.HttpStatus(204), openapi.HttpStatus(200)}
+				exp := []interface{}{http.StatusNoContent, http.StatusOK}
 				keys := c.EndPoints["/foo"].Value.Get.Responses.Keys()
 				test.Equals(t, exp, keys)
-				r := c.EndPoints["/foo"].Value.Get.Responses.GetResponse(openapi.OK)
+				r := c.EndPoints["/foo"].Value.Get.Responses.GetResponse(http.StatusOK)
 				content := r.Value.Content["application/xml"]
 				test.Assert(t, content.Schema.Value != nil, "ref resolved")
 			},
@@ -165,7 +167,7 @@ func TestConfig_PetStore_PetSchema(t *testing.T) {
 
 	// category
 	category := pet.Value.Properties.Get("category")
-	test.Equals(t, "#/components/schemas/Category", category.Ref)
+	test.Equals(t, "#/components/schemas/Category", category.Ref())
 	test.Assert(t, category.Value != nil, "ref resolved")
 	test.Equals(t, "object", category.Value.Type)
 
@@ -184,7 +186,7 @@ func TestConfig_PetStore_PetSchema(t *testing.T) {
 	// tags
 	tags := pet.Value.Properties.Get("tags")
 	test.Equals(t, "array", tags.Value.Type)
-	test.Equals(t, "#/components/schemas/Tag", tags.Value.Items.Ref)
+	test.Equals(t, "#/components/schemas/Tag", tags.Value.Items.Ref())
 	test.Equals(t, "object", tags.Value.Items.Value.Type)
 	test.Equals(t, "tag", tags.Value.Xml.Name)
 	test.Equals(t, true, tags.Value.Xml.Wrapped)
@@ -213,8 +215,8 @@ func TestConfig_PetStore_Path(t *testing.T) {
 	body := put.RequestBody.Value
 	test.Equals(t, "Pet object that needs to be added to the store", body.Description)
 	test.Equals(t, 2, len(body.Content))
-	test.Equals(t, "#/components/schemas/Pet", body.Content["application/json"].Schema.Ref)
-	test.Equals(t, "#/components/schemas/Pet", body.Content["application/xml"].Schema.Ref)
+	test.Equals(t, "#/components/schemas/Pet", body.Content["application/json"].Schema.Ref())
+	test.Equals(t, "#/components/schemas/Pet", body.Content["application/xml"].Schema.Ref())
 	test.Assert(t, body.Content["application/json"].Schema.Value != nil, "ref resolved")
 	test.Assert(t, body.Content["application/xml"].Schema.Value != nil, "ref resolved")
 	test.Equals(t, body.Content["application/json"], body.GetMedia(media.ParseContentType("application/json")))
@@ -224,7 +226,7 @@ func TestConfig_PetStore_Path(t *testing.T) {
 	test.Equals(t, []string{"name", "photoUrls"}, schema.Required)
 
 	test.Equals(t, 3, put.Responses.Len())
-	i := put.Responses.Get(openapi.BadRequest)
+	i := put.Responses.Get(http.StatusBadRequest)
 	r := i.(*openapi.ResponseRef)
 	test.Equals(t, 0, len(r.Value.Content))
 
@@ -238,7 +240,7 @@ func TestPetStore_Response(t *testing.T) {
 	test.Ok(t, err)
 
 	endpoint := config.EndPoints["/pet/{petId}"]
-	r := endpoint.Value.Get.Responses.GetResponse(openapi.OK)
+	r := endpoint.Value.Get.Responses.GetResponse(http.StatusOK)
 	test.Assert(t, r != nil, "response exists")
 	m := r.Value.GetContent(media.ParseContentType("application/json"))
 	test.Equals(t, r.Value.Content["application/json"], m)
@@ -257,11 +259,11 @@ func TestPetStore_Paramters(t *testing.T) {
 	params := endpoint.Value.Delete.Parameters
 	test.Equals(t, 2, len(params))
 	test.Equals(t, "api_key", params[0].Value.Name)
-	test.Equals(t, openapi.HeaderParameter, params[0].Value.Type)
+	test.Equals(t, parameter.Header, params[0].Value.Type)
 	test.Equals(t, "string", params[0].Value.Schema.Value.Type)
 
 	test.Equals(t, "petId", params[1].Value.Name)
-	test.Equals(t, openapi.PathParameter, params[1].Value.Type)
+	test.Equals(t, parameter.Path, params[1].Value.Type)
 	test.Equals(t, "Pet id to delete", params[1].Value.Description)
 	test.Equals(t, true, params[1].Value.Required)
 	test.Equals(t, "integer", params[1].Value.Schema.Value.Type)
@@ -269,23 +271,23 @@ func TestPetStore_Paramters(t *testing.T) {
 }
 
 func TestHttpStatus_IsSuccess(t *testing.T) {
-	for _, d := range []openapi.HttpStatus{
-		openapi.OK,
-		openapi.Created,
-		openapi.Accepted,
-		openapi.NonAuthoritativeInfo,
-		openapi.NoContent,
-		openapi.ResetContent,
-		openapi.PartialContent,
-		openapi.MultiStatus,
-		openapi.AlreadyReported,
-		openapi.IMUsed,
+	for _, d := range []int{
+		200,
+		201,
+		202,
+		203,
+		204,
+		205,
+		206,
+		207,
+		208,
+		226,
 	} {
-		t.Run(d.String(), func(t *testing.T) {
-			test.Equals(t, true, d.IsSuccess())
+		t.Run(fmt.Sprintf("%v", d), func(t *testing.T) {
+			test.Equals(t, true, openapi.IsHttpStatusSuccess(d))
 		})
 	}
-	test.Equals(t, false, openapi.BadGateway.IsSuccess())
+	test.Equals(t, false, openapi.IsHttpStatusSuccess(http.StatusBadGateway))
 }
 
 const petstore = `

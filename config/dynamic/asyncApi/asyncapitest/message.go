@@ -2,7 +2,7 @@ package asyncapitest
 
 import (
 	"mokapi/config/dynamic/asyncApi"
-	"mokapi/config/dynamic/openapi"
+	"mokapi/config/dynamic/openapi/schema"
 )
 
 type MessageOptions func(m *asyncApi.Message)
@@ -15,9 +15,9 @@ func NewMessage(opts ...MessageOptions) *asyncApi.Message {
 	return m
 }
 
-func WithPayload(schema *openapi.Schema) MessageOptions {
+func WithPayload(s *schema.Schema) MessageOptions {
 	return func(m *asyncApi.Message) {
-		m.Payload = &openapi.SchemaRef{Value: schema}
+		m.Payload = &schema.Ref{Value: s}
 	}
 }
 

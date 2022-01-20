@@ -2,7 +2,7 @@ package asyncapitest
 
 import (
 	"mokapi/config/dynamic/asyncApi"
-	"mokapi/config/dynamic/openapi"
+	"mokapi/config/dynamic/openapi/schema"
 )
 
 type ChannelOptions func(c *asyncApi.Channel)
@@ -42,7 +42,7 @@ func WithMessage(opts ...MessageOptions) OperationOptions {
 	}
 }
 
-func WithOperationBinding(groupId *openapi.Schema) OperationOptions {
+func WithOperationBinding(groupId *schema.Schema) OperationOptions {
 	return func(o *asyncApi.Operation) {
 		o.Bindings.Kafka.GroupId = groupId
 	}

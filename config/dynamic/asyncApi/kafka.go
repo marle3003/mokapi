@@ -4,7 +4,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 	"math"
-	"mokapi/config/dynamic/openapi"
+	"mokapi/config/dynamic/openapi/schema"
 	"strconv"
 )
 
@@ -28,12 +28,12 @@ type KafkaChannelBinding struct {
 }
 
 type KafkaMessageBinding struct {
-	Key *openapi.SchemaRef
+	Key *schema.Ref
 }
 
 type KafkaOperationBinding struct {
-	GroupId  *openapi.SchemaRef
-	ClientId *openapi.SchemaRef
+	GroupId  *schema.Ref
+	ClientId *schema.Ref
 }
 
 type Kafka struct {
