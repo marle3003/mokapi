@@ -10,9 +10,28 @@ import (
 	"mokapi/runtime"
 	"mokapi/server/cert"
 	"mokapi/test"
+	"mokapi/try"
 	"net/url"
 	"testing"
 )
+
+func TestHttpServers_Monitor(t *testing.T) {
+	test.NewNullLogger()
+	store, err := cert.NewStore(&static.Config{})
+	require.NoError(t, err)
+
+	servers := HttpServers{}
+	defer servers.Stop()
+
+	app := runtime.New()
+	m := NewHttpManager(servers, &engine.Engine{}, store, app)
+
+	c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: "http://localhost:8080"}}}
+	m.Update(&common.File{Data: c, Url: MustParseUrl("foo.yml")})
+
+	try.GetRequest(t, "http://localhost:8080", map[string]string{})
+	require.Equal(t, float64(1), app.Monitor.Http.RequestCounter.Value())
+}
 
 func TestHttpManager_Update(t *testing.T) {
 	testdata := []struct {
