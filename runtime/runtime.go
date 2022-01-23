@@ -20,6 +20,6 @@ func New() *App {
 func (r *App) AddHttp(c *openapi.Config) {
 	if len(r.Http) == 0 {
 		r.Http = make(map[string]*HttpInfo)
-		r.Http[c.Info.Name] = &HttpInfo{Config: c}
 	}
+	r.Http[c.Info.Name] = &HttpInfo{Config: c}
 }

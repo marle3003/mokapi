@@ -9,6 +9,7 @@ import (
 	"mokapi/runtime"
 	"mokapi/server/cert"
 	"mokapi/server/service"
+	"net/http"
 	"net/url"
 )
 
@@ -31,6 +32,29 @@ func NewHttpManager(servers HttpServers, emitter engine.EventEmitter, store *cer
 	}
 }
 
+func (m *HttpManager) AddService(name string, u *url.URL, h http.Handler) error {
+	server, found := m.Servers[u.Port()]
+	if !found {
+		if u.Scheme == "https" {
+			server = service.NewHttpServerTls(u.Port(), m.certStore)
+		} else {
+			server = service.NewHttpServer(u.Port())
+		}
+
+		m.Servers[u.Port()] = server
+		server.Start()
+	}
+	err := server.AddOrUpdate(&service.HttpService{
+		Url:     u,
+		Handler: runtime.NewHttpHandler(m.app.Monitor.Http, h),
+		Name:    name,
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (m *HttpManager) Update(file *common.File) {
 	config, ok := file.Data.(*openapi.Config)
 	if !ok {
@@ -41,6 +65,8 @@ func (m *HttpManager) Update(file *common.File) {
 		log.Warnf("validation error %v: %v", file.Url, err)
 		return
 	}
+
+	m.app.AddHttp(config)
 
 	if len(config.Servers) == 0 {
 		config.Servers = append(config.Servers, &openapi.Server{Url: "/"})
@@ -53,19 +79,7 @@ func (m *HttpManager) Update(file *common.File) {
 			continue
 		}
 
-		server, found := m.Servers[u.Port()]
-		if !found {
-			if u.Scheme == "https" {
-				server = service.NewHttpServerTls(u.Port(), m.certStore)
-			} else {
-				server = service.NewHttpServer(u.Port())
-			}
-
-			m.Servers[u.Port()] = server
-			server.Start()
-			m.app.AddHttp(config)
-		}
-		err = server.AddOrUpdate(m.createService(u, config))
+		err = m.AddService(config.Info.Name, u, openapi.NewHandler(config, m.eventEmitter))
 		if err != nil {
 			log.Errorf("error on updating %v: %v", file.Url.String(), err.Error())
 			return
@@ -74,7 +88,7 @@ func (m *HttpManager) Update(file *common.File) {
 	log.Infof("processed config %v", file.Url.String())
 }
 
-func (m *HttpManager) createService(u *url.URL, config *openapi.Config) *service.HttpService {
+func (m *HttpManager) createOpenApiService(u *url.URL, config *openapi.Config) *service.HttpService {
 	return &service.HttpService{
 		Url:     u,
 		Handler: runtime.NewHttpHandler(m.app.Monitor.Http, openapi.NewHandler(config, m.eventEmitter)),

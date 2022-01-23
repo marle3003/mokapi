@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	log "github.com/sirupsen/logrus"
+	"mokapi/api"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/script"
@@ -51,6 +52,15 @@ func Start(cfg *static.Config) (*Cmd, error) {
 			}
 		}
 	})
+
+	if u, err := api.BuildUrl(cfg.Api); err == nil {
+		err = managerHttp.AddService("api", u, api.New(app, cfg.Api.Dashboard))
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, err
+	}
 
 	pool := safe.NewPool(context.Background())
 	ctx, cancel := context.WithCancel(context.Background())

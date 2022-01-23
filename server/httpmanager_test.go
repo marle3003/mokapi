@@ -73,6 +73,27 @@ func TestHttpManager_Update(t *testing.T) {
 				require.Equal(t, "Adding service foo on binding :80 on path /", entries[1].Message)
 				require.Equal(t, "processed config foo.yml", entries[2].Message)
 			}},
+		{
+			"app contains config",
+			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
+				c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: "http://:80"}}}
+				m.Update(&common.File{Data: c, Url: MustParseUrl("foo.yml")})
+
+				require.Contains(t, m.app.Http, "foo")
+			},
+		},
+		{
+			"app contains both config",
+			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
+				foo := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: "http://:80/foo"}}}
+				bar := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "bar"}, Servers: []*openapi.Server{{Url: "http://:80/bar"}}}
+				m.Update(&common.File{Data: foo, Url: MustParseUrl("foo.yml")})
+				m.Update(&common.File{Data: bar, Url: MustParseUrl("bar.yml")})
+
+				require.Contains(t, m.app.Http, "foo")
+				require.Contains(t, m.app.Http, "bar")
+			},
+		},
 		{"add new host http://:80",
 			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
 				c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: "http://:80"}}}

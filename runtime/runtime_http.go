@@ -8,7 +8,6 @@ import (
 
 type HttpInfo struct {
 	*openapi.Config
-	Status string `json:"status"`
 }
 
 type HttpHandler struct {
