@@ -31,7 +31,3 @@ func (kc KafkaClusters) Stop() {
 		c.Close()
 	}
 }
-
-func (s *Server) updateAsyncConfig(config *asyncApi.Config) {
-
-}

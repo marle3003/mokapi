@@ -13,6 +13,7 @@ import (
 func TestAcceptance(t *testing.T) {
 	suite.Run(t, new(PetStoreSuite))
 	suite.Run(t, new(MailSuite))
+	suite.Run(t, new(LdapSuite))
 }
 
 type BaseSuite struct {

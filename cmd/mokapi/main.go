@@ -74,12 +74,14 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 	kafka := make(server.KafkaClusters)
 	web := make(server.HttpServers)
 	mail := make(server.SmtpServers)
+	ldap := make(server.LdapDirectories)
 	managerHttp := server.NewHttpManager(web, scriptEngine, certStore, app)
 
 	watcher.AddListener(func(file *common.File) {
 		kafka.UpdateConfig(file)
 		managerHttp.Update(file)
 		mail.UpdateConfig(file, certStore, scriptEngine)
+		ldap.UpdateConfig(file)
 	})
 	watcher.AddListener(func(f *common.File) {
 		if s, ok := f.Data.(*script.Script); ok {
@@ -90,7 +92,7 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 		}
 	})
 
-	return server.NewServer(pool, watcher, kafka, web, mail, scriptEngine), nil
+	return server.NewServer(pool, watcher, kafka, web, mail, ldap, scriptEngine), nil
 }
 
 func configureLogging(cfg *static.Config) {
