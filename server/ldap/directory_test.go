@@ -8,6 +8,7 @@ import (
 	"mokapi/server/ldap/ldaptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 var testConfig = &config.Config{Entries: map[string]config.Entry{
@@ -407,6 +408,7 @@ func TestStart(t *testing.T) {
 	d.Start()
 	defer d.Close()
 
+	time.Sleep(500 * time.Millisecond)
 	r := ldaptest.NewSimpleBindRequest(0, 3, "", "")
 	client := ldaptest.NewClient("127.0.0.1:12345")
 	res, err := client.Send(r)
