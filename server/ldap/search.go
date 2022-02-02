@@ -25,6 +25,8 @@ type SearchResult struct {
 	attributes map[string][]string
 }
 
+type predicate func(entry ldapConfig.Entry) bool
+
 func (d *Directory) search(rw ResponseWriter, r *Request) error {
 	searchRequest, err := parseSearchRequest(r.Body)
 	if err != nil {
@@ -52,12 +54,12 @@ func (d *Directory) search(rw ResponseWriter, r *Request) error {
 	}
 
 	count := int64(0)
+	predicate, err := filter(searchRequest.Filter)
+	if err != nil {
+		return err
+	}
 	for _, entry := range d.config.Entries {
-		ok, err := filter(searchRequest.Filter, entry)
-		if err != nil {
-			return err
-		}
-		if !ok {
+		if !predicate(entry) {
 			continue
 		}
 
@@ -155,95 +157,129 @@ func newSearchAttribute(name string, values []string) *ber.Packet {
 	return packet
 }
 
-func filter(f *ber.Packet, entry ldapConfig.Entry) (bool, error) {
+func filter(f *ber.Packet) (predicate, error) {
 	switch f.Tag {
 	case FilterAnd:
+		var predicates []predicate
 		for _, child := range f.Children {
-			ok, err := filter(child, entry)
+			p, err := filter(child)
 			if err != nil {
-				return false, err
+				return nil, err
 			}
-			if !ok {
-				return false, nil
-			}
+			predicates = append(predicates, p)
 		}
-		return true, nil
+		return func(entry ldapConfig.Entry) bool {
+			for _, p := range predicates {
+				if !p(entry) {
+					return false
+				}
+			}
+			return true
+		}, nil
 	case FilterOr:
+		var predicates []predicate
 		for _, child := range f.Children {
-			ok, err := filter(child, entry)
+			p, err := filter(child)
 			if err != nil {
-				return false, err
+				return nil, err
 			}
-			if ok {
-				return true, nil
-			}
+			predicates = append(predicates, p)
 		}
-		return false, nil
+		return func(entry ldapConfig.Entry) bool {
+			for _, p := range predicates {
+				if p(entry) {
+					return true
+				}
+			}
+			return false
+		}, nil
 	case FilterNot:
 		if len(f.Children) != 1 {
-			return false, fmt.Errorf("invalid filter operation")
+			return nil, fmt.Errorf("invalid filter operation")
 		}
 
-		ok, err := filter(f.Children[0], entry)
+		p, err := filter(f.Children[0])
 		if err != nil {
-			return false, err
+			return nil, err
 		}
-		return !ok, nil
+		return func(entry ldapConfig.Entry) bool {
+			return !p(entry)
+		}, nil
 	case FilterEqualityMatch:
 		attribute := f.Children[0].Value.(string)
 		value := f.Children[1].Value.(string)
 
-		for k, a := range entry.Attributes {
-			if strings.ToLower(attribute) == strings.ToLower(k) {
-				for _, v := range a {
-					if strings.ToLower(value) == strings.ToLower(v) {
-						return true, nil
+		return func(entry ldapConfig.Entry) bool {
+			for k, list := range entry.Attributes {
+				if strings.ToLower(attribute) == strings.ToLower(k) {
+					for _, v := range list {
+						if strings.ToLower(value) == strings.ToLower(v) {
+							return true
+						}
 					}
 				}
 			}
-		}
+			return false
+		}, nil
+
 	case FilterSubstrings:
 		if len(f.Children) != 2 {
-			return false, fmt.Errorf("invalid filter operation")
+			return nil, fmt.Errorf("invalid filter operation")
 		}
 		attribute := f.Children[0].Value.(string)
-		bytes := f.Children[1].Children[0].Data.Bytes()
-		value := string(bytes[:])
-		for k, a := range entry.Attributes {
-			if strings.ToLower(attribute) == strings.ToLower(k) {
-				for _, v := range a {
-					switch f.Children[1].Children[0].Tag {
-					case FilterSubstringsStartWith:
-						if strings.HasPrefix(v, value) {
-							return true, nil
+
+		var predicates []func(string) bool
+		for _, cond := range f.Children[1].Children {
+			bytes := cond.Data.Bytes()
+			value := string(bytes[:])
+			var p func(string, string) bool
+			switch cond.Tag {
+			case FilterSubstringsStartWith:
+				p = strings.HasPrefix
+			case FilterSubstringsAny:
+				p = strings.Contains
+			case FilterSubstringsEndWith:
+				p = strings.HasSuffix
+			default:
+				return nil, fmt.Errorf("unsupported substring %v", cond.Tag)
+			}
+			predicates = append(predicates, func(s string) bool {
+				return p(s, value)
+			})
+		}
+
+		return func(entry ldapConfig.Entry) bool {
+			for k, list := range entry.Attributes {
+				if strings.ToLower(attribute) == strings.ToLower(k) {
+					for _, v := range list {
+						for _, p := range predicates {
+							if !p(v) {
+								return false
+							}
 						}
-					case FilterSubstringsAny:
-						if strings.Contains(v, value) {
-							return true, nil
-						}
-					case FilterSubstringsEndWith:
-						if strings.HasSuffix(v, value) {
-							return true, nil
-						}
+						return true
 					}
 				}
 			}
-		}
+			return false
+		}, nil
 	case FilterGreaterOrEqual:
-		return false, fmt.Errorf("not supported")
+		return nil, fmt.Errorf("not supported")
 	case FilterLessOrEqual:
-		return false, fmt.Errorf("not supported")
+		return nil, fmt.Errorf("not supported")
 	case FilterPresent:
 		attribute := strings.ToLower(f.Data.String())
-		for k := range entry.Attributes {
-			if strings.ToLower(k) == attribute {
-				return true, nil
+		return func(entry ldapConfig.Entry) bool {
+			for k := range entry.Attributes {
+				if strings.ToLower(k) == attribute {
+					return true
+				}
 			}
-		}
-	default:
-		return false, fmt.Errorf("unsupported filter %v requested", f.Tag)
+			return false
+		}, nil
 	}
-	return false, nil
+
+	return nil, fmt.Errorf("unsupported filter %v requested", f.Tag)
 }
 
 func parseSearchRequest(req *ber.Packet) (*SearchRequest, error) {

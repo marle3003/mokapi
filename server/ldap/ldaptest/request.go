@@ -43,6 +43,34 @@ func NewSimpleBindRequest(messageId, version int64, name, password string) *ldap
 	}
 }
 
+func NewUnbindRequest(messageId int64) *ldap.Request {
+	body := ber.Encode(
+		ber.ClassApplication,
+		ber.TypeConstructed,
+		ldap.ApplicationUnbindRequest,
+		nil,
+		"Bind Request")
+
+	return &ldap.Request{
+		MessageId: messageId,
+		Body:      body,
+	}
+}
+
+func NewAbandonRequest(messageId int64) *ldap.Request {
+	body := ber.Encode(
+		ber.ClassApplication,
+		ber.TypeConstructed,
+		ldap.ApplicationAbandonRequest,
+		nil,
+		"Abandon Request")
+
+	return &ldap.Request{
+		MessageId: messageId,
+		Body:      body,
+	}
+}
+
 func NewSearchRequest(messageId int64, r *ldap.SearchRequest) *ldap.Request {
 	body := ber.Encode(
 		ber.ClassUniversal,
