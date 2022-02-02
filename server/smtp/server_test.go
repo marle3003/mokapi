@@ -22,13 +22,13 @@ func TestServer(t *testing.T) {
 		{
 			name: "fixed ip:port",
 			fn: func(t *testing.T) {
-				server, err := New(&smtp.Config{Server: "smtp://127.0.0.1:8025"}, nil, &eventEmitter{})
+				server, err := New(&smtp.Config{Server: "smtp://127.0.0.1:12345"}, nil, &eventEmitter{})
 				require.NoError(t, err)
 				t.Cleanup(server.Stop)
 				err = server.Start()
 				require.NoError(t, err)
 
-				err = smtptest.SendMail("foo@foo.bar", "bar@foo.bar", "smtp://127.0.0.1:8025")
+				err = smtptest.SendMail("foo@foo.bar", "bar@foo.bar", "smtp://127.0.0.1:12345")
 				require.NoError(t, err)
 			},
 		},
