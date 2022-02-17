@@ -8,7 +8,7 @@ import (
 )
 
 func TestMokapi_Every(t *testing.T) {
-	t.Run("mokapi:every", func(t *testing.T) {
+	t.Run("mokapi.every", func(t *testing.T) {
 		var every string
 		host := &testHost{
 			fnEvery: func(s string, do func(), times int, tags map[string]string) (int, error) {
@@ -22,14 +22,14 @@ func TestMokapi_Every(t *testing.T) {
 		l.PreloadModule("mokapi", NewMokapi(host).Loader)
 		err := l.DoString(`
 local mokapi = require("mokapi")
-mokapi:every("1m", function() end)
+mokapi.every("1m", function() end)
 `)
 
 		require.NoError(t, err)
 		require.Equal(t, "1m", every)
 	})
 
-	t.Run("mokapi:every times", func(t *testing.T) {
+	t.Run("mokapi.every times", func(t *testing.T) {
 		var times int
 		host := &testHost{
 			fnEvery: func(every string, do func(), t int, tags map[string]string) (int, error) {
@@ -41,14 +41,14 @@ mokapi:every("1m", function() end)
 		l.PreloadModule("mokapi", NewMokapi(host).Loader)
 		err := l.DoString(`
 local mokapi = require("mokapi")
-mokapi:every("1m", function() end, {times = 3})
+mokapi.every("1m", function() end, {times = 3})
 `)
 		require.NoError(t, err)
 
 		require.Equal(t, 3, times)
 	})
 
-	t.Run("mokapi:every tags", func(t *testing.T) {
+	t.Run("mokapi.every tags", func(t *testing.T) {
 		var m map[string]string
 		host := &testHost{
 			fnEvery: func(every string, do func(), t int, tags map[string]string) (int, error) {
@@ -62,16 +62,40 @@ mokapi:every("1m", function() end, {times = 3})
 		l.PreloadModule("mokapi", NewMokapi(host).Loader)
 		err := l.DoString(`
 local mokapi = require("mokapi")
-mokapi:every("1m", function() end, {tags = {tag1 = "foo", tag2 = "bar"}})
+mokapi.every("1m", function() end, {tags = {tag1 = "foo", tag2 = "bar"}})
 `)
 		require.NoError(t, err)
 
 		require.Equal(t, map[string]string{"tag1": "foo", "tag2": "bar"}, m)
 	})
+
+	t.Run("mokapi.every access variable", func(t *testing.T) {
+		var fn func()
+		host := &testHost{
+			fnEvery: func(every string, do func(), t int, tags map[string]string) (int, error) {
+				fn = do
+				return 0, nil
+			},
+		}
+		l := lua.NewState(lua.Options{IncludeGoStackTrace: true})
+		defer l.Close()
+
+		l.PreloadModule("mokapi", NewMokapi(host).Loader)
+		err := l.DoString(`
+local mokapi = require("mokapi")
+local foo = "bar"
+mokapi.every("1m", function()
+print(foo)
+end)
+`)
+		require.NoError(t, err)
+
+		fn()
+	})
 }
 
 func TestMokapi_On(t *testing.T) {
-	t.Run("mokapi:on event", func(t *testing.T) {
+	t.Run("mokapi.on event", func(t *testing.T) {
 		var event string
 		host := &testHost{
 			fnOn: func(evt string, do func(args ...interface{}) (bool, error), tags map[string]string) {
@@ -83,15 +107,15 @@ func TestMokapi_On(t *testing.T) {
 
 		l.PreloadModule("mokapi", NewMokapi(host).Loader)
 		err := l.DoString(`
-local mokapi = require("mokapi")
-mokapi:on("foo", function() end)
+local mokapi = require "mokapi"
+mokapi.on("foo", function() end)
 `)
 
 		require.NoError(t, err)
 		require.Equal(t, "foo", event)
 	})
 
-	t.Run("mokapi:on do returns true", func(t *testing.T) {
+	t.Run("mokapi.on do returns true", func(t *testing.T) {
 		var fn func(args ...interface{}) (bool, error)
 		host := &testHost{
 			fnOn: func(evt string, do func(args ...interface{}) (bool, error), tags map[string]string) {
@@ -104,7 +128,7 @@ mokapi:on("foo", function() end)
 		l.PreloadModule("mokapi", NewMokapi(host).Loader)
 		err := l.DoString(`
 local mokapi = require("mokapi")
-mokapi:on("foo", function() return true end)
+mokapi.on("foo", function() return true end)
 `)
 		require.NoError(t, err)
 
@@ -113,7 +137,7 @@ mokapi:on("foo", function() return true end)
 		require.True(t, b)
 	})
 
-	t.Run("mokapi:on do got error", func(t *testing.T) {
+	t.Run("mokapi.on do got error", func(t *testing.T) {
 		var fn func(args ...interface{}) (bool, error)
 		host := &testHost{
 			fnOn: func(evt string, do func(args ...interface{}) (bool, error), tags map[string]string) {
@@ -126,7 +150,8 @@ mokapi:on("foo", function() return true end)
 		l.PreloadModule("mokapi", NewMokapi(host).Loader)
 		err := l.DoString(`
 local mokapi = require("mokapi")
-mokapi:on("foo", function()
+
+mokapi.on("foo", function()
 foo()
 return true
 end)
@@ -137,7 +162,33 @@ end)
 		require.Error(t, err)
 	})
 
-	t.Run("mokapi:on tags", func(t *testing.T) {
+	t.Run("mokapi.on with parameters", func(t *testing.T) {
+		var fn func(args ...interface{}) (bool, error)
+		host := &testHost{
+			fnOn: func(evt string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+				fn = do
+			},
+		}
+		l := lua.NewState(lua.Options{IncludeGoStackTrace: true})
+		defer l.Close()
+
+		l.PreloadModule("mokapi", NewMokapi(host).Loader)
+		err := l.DoString(`
+local mokapi = require("mokapi")
+mokapi.on("foo", function(request)
+request.data = {xy = {1, 2}}
+return true
+end)
+`)
+		require.NoError(t, err)
+
+		r := &request{}
+		b, err := fn(r)
+		require.NoError(t, err)
+		require.True(t, b)
+	})
+
+	t.Run("mokapi.on tags", func(t *testing.T) {
 		var m map[string]string
 		host := &testHost{
 			fnOn: func(evt string, do func(args ...interface{}) (bool, error), tags map[string]string) {
@@ -150,11 +201,38 @@ end)
 		l.PreloadModule("mokapi", NewMokapi(host).Loader)
 		err := l.DoString(`
 local mokapi = require("mokapi")
-mokapi:on("foo", function() return true end, {tags = {tag1 = "foo", tag2 = "bar"}})
+mokapi.on("foo", function() return true end, {tags = {tag1 = "foo", tag2 = "bar"}})
 `)
 		require.NoError(t, err)
 
 		require.Equal(t, map[string]string{"tag1": "foo", "tag2": "bar"}, m)
+	})
+
+	t.Run("mokapi.on access variable", func(t *testing.T) {
+		var fn func(args ...interface{}) (bool, error)
+		host := &testHost{
+			fnOn: func(evt string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+				fn = do
+			},
+		}
+		l := lua.NewState(lua.Options{IncludeGoStackTrace: true})
+		defer l.Close()
+
+		l.PreloadModule("mokapi", NewMokapi(host).Loader)
+		err := l.DoString(`
+local mokapi = require("mokapi")
+local foo = "bar"
+mokapi.on("foo", function(request)
+request.data = foo
+return true end)
+`)
+		require.NoError(t, err)
+
+		r := &request{}
+		b, err := fn(r)
+		require.NoError(t, err)
+		require.True(t, b)
+		require.Equal(t, "bar", r.Data)
 	})
 }
 
@@ -182,4 +260,8 @@ func (th *testHost) Every(every string, do func(), times int, tags map[string]st
 		return th.fnEvery(every, do, times, tags)
 	}
 	panic("not implemented")
+}
+
+type request struct {
+	Data interface{}
 }

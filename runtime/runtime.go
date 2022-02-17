@@ -7,6 +7,7 @@ import (
 
 type App struct {
 	Http map[string]*HttpInfo
+	Ldap map[string]*LdapInfo
 
 	Monitor *monitor.Monitor
 }

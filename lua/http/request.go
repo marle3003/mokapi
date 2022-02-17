@@ -3,12 +3,12 @@ package http
 import (
 	"bytes"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	lua "github.com/yuin/gopher-lua"
 	"io"
 	luar "layeh.com/gopher-luar"
 	"mokapi/lua/utils"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -18,6 +18,10 @@ type Client interface {
 
 type Module struct {
 	client Client
+}
+
+type requestArgs struct {
+	Headers map[string]interface{}
 }
 
 func New() *Module {
@@ -86,11 +90,11 @@ func (m *Module) doRequest(state *lua.LState, method string) int {
 		argsIndex = 2
 	}
 
-	args, err := getArgs(state, argsIndex)
-	if err != nil {
-		state.Push(luar.New(state, nil))
-		state.Push(lua.LString(err.Error()))
-		return 2
+	args := &requestArgs{}
+	if lArg := state.Get(argsIndex); lArg != lua.LNil {
+		if err := utils.Map(args, lArg); err != nil {
+			log.Error(err)
+		}
 	}
 
 	req, err := createRequest(method, url, body, args)
@@ -112,7 +116,7 @@ func (m *Module) doRequest(state *lua.LState, method string) int {
 	return 1
 }
 
-func createRequest(method, url, body string, args map[string]interface{}) (*http.Request, error) {
+func createRequest(method, url, body string, args *requestArgs) (*http.Request, error) {
 	var br io.Reader
 	if len(body) > 0 {
 		br = bytes.NewBufferString(body)
@@ -123,38 +127,17 @@ func createRequest(method, url, body string, args map[string]interface{}) (*http
 		return nil, err
 	}
 
-	for key, value := range args {
-		switch strings.ToLower(key) {
-		case "headers":
-			headers, ok := value.(map[string]interface{})
-			if !ok {
-				return nil, fmt.Errorf("invalid type of headers")
+	for k, v := range args.Headers {
+		if a, ok := v.([]interface{}); ok {
+			for _, i := range a {
+				req.Header.Add(k, fmt.Sprintf("%v", i))
 			}
-			for k, v := range headers {
-				if a, ok := v.([]interface{}); ok {
-					for _, i := range a {
-						req.Header.Add(k, fmt.Sprintf("%v", i))
-					}
-				} else {
-					req.Header.Set(k, fmt.Sprintf("%v", v))
-				}
-			}
+		} else {
+			req.Header.Set(k, fmt.Sprintf("%v", v))
 		}
 	}
 
 	return req, nil
-}
-
-func getArgs(state *lua.LState, index int) (map[string]interface{}, error) {
-	args := make(map[string]interface{})
-	if lv, ok := state.Get(index).(*lua.LTable); ok {
-		tbl := utils.MapTable(lv)
-		args, ok = tbl.(map[string]interface{})
-		if !ok {
-			return args, fmt.Errorf("invalid type of args")
-		}
-	}
-	return args, nil
 }
 
 func parseResponse(r *http.Response) response {

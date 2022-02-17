@@ -95,6 +95,31 @@ func selectData(data interface{}, schema *Ref) (interface{}, error) {
 
 		return nil, fmt.Errorf("unexpected type for schema type array")
 	} else if schema.Value.Type == "object" {
+		if m, ok := data.(*sortedmap.LinkedHashMap); ok {
+			obj := schemaObject{}
+			for it := m.Iter(); it.Next(); {
+				name := it.Key().(string)
+				if schema.Value != nil || schema.Value.Properties.Value.Len() > 0 {
+					if p := schema.Value.Properties.Get(name); p != nil {
+						d, err := selectData(it.Value(), p)
+						if err != nil {
+							return nil, err
+						}
+						obj.Set(name, d)
+					} else if schema.Value.AdditionalProperties != nil {
+						d, err := selectData(it.Value(), schema.Value.AdditionalProperties)
+						if err != nil {
+							return nil, err
+						}
+						obj.Set(name, d)
+					}
+				} else {
+					obj.Set(name, it.Value())
+				}
+			}
+			return obj, nil
+		}
+
 		v := reflect.ValueOf(data)
 		if v.Kind() == reflect.Ptr {
 			v = v.Elem()

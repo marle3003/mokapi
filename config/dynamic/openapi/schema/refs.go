@@ -1,6 +1,9 @@
 package schema
 
-import "mokapi/config/dynamic/common"
+import (
+	"fmt"
+	"mokapi/config/dynamic/common"
+)
 
 func (s *Schemas) Parse(file *common.File, reader common.Reader) error {
 	if s == nil {
@@ -22,7 +25,7 @@ func (s *SchemasRef) Parse(file *common.File, reader common.Reader) error {
 	}
 	if len(s.Ref()) > 0 && s.Value == nil {
 		if err := common.Resolve(s.Ref(), &s.Value, file, reader); err != nil {
-			return err
+			return fmt.Errorf("error on parsing file %v: %v", file.Url, err)
 		}
 	}
 

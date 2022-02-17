@@ -32,7 +32,10 @@ func TestScript(t *testing.T) {
 				log = s
 			},
 		}
-		s, err := New("foo.lua", "log:info(\"foobar\")", host)
+		s, err := New("foo.lua", `
+local log = require "log"
+log.info("foobar")
+`, host)
 		require.NoError(t, err)
 		defer s.Close()
 		err = s.Run()
@@ -44,21 +47,30 @@ func TestScript(t *testing.T) {
 func TestMokapi_On(t *testing.T) {
 	t.Run("mokapi:on", func(t *testing.T) {
 		called := false
+		var log string
 		host := &testHost{
+			fnInfo: func(s string) {
+				log = s
+			},
 			fnOn: func(evt string, do func(args ...interface{}) (bool, error), tags map[string]string) {
 				called = true
+				_, err := do()
+				require.NoError(t, err)
 			},
 		}
 		s, err := New("foo.lua", `
-local mokapi = require("mokapi")
-mokapi:on("foo", function() end)
+local mokapi = require "mokapi"
+local log = require "log"
+mokapi.on("foo", function() log.info("foobar") end)
 `, host)
 
 		require.NoError(t, err)
 		defer s.Close()
+
 		err = s.Run()
 		require.NoError(t, err)
 		require.True(t, called)
+		require.Equal(t, "foobar", log)
 	})
 }
 

@@ -8,6 +8,7 @@ import (
 	"mokapi/config/dynamic/provider/file"
 	"mokapi/js"
 	"mokapi/lua"
+	"net/url"
 	"path/filepath"
 	"time"
 )
@@ -18,7 +19,7 @@ type eventHandler struct {
 }
 
 type scriptHost struct {
-	name   string
+	Name   string
 	engine *Engine
 	script Script
 	jobs   map[int]*gocron.Job
@@ -26,27 +27,32 @@ type scriptHost struct {
 	cwd    string
 }
 
-func newScriptHost(key, src string, e *Engine) (*scriptHost, error) {
+func newScriptHost(u *url.URL, src string, e *Engine) (*scriptHost, error) {
+	path := u.String()
+	if len(u.Opaque) > 0 {
+		path = u.Opaque
+	}
+
 	sh := &scriptHost{
-		name:   key,
+		Name:   u.String(),
 		engine: e,
 		jobs:   make(map[int]*gocron.Job),
 		events: make(map[string][]*eventHandler),
-		cwd:    filepath.Dir(key),
+		cwd:    filepath.Dir(path),
 	}
 
 	var err error
-	switch filepath.Ext(key) {
+	switch filepath.Ext(path) {
 	case ".js":
-		if sh.script, err = js.New(key, src, sh); err != nil {
+		if sh.script, err = js.New(path, src, sh); err != nil {
 			return nil, err
 		}
 	case ".lua":
-		if sh.script, err = lua.New(key, src, sh); err != nil {
+		if sh.script, err = lua.New(path, src, sh); err != nil {
 			return nil, err
 		}
 	default:
-		return nil, fmt.Errorf("unsupported script %v", key)
+		return nil, fmt.Errorf("unsupported script %v", path)
 	}
 
 	return sh, nil
@@ -79,11 +85,19 @@ func (sh *scriptHost) RunEvent(event string, args ...interface{}) []*Summary {
 func (sh *scriptHost) Every(every string, handler func(), times int, tags map[string]string) (int, error) {
 	sh.engine.cron.Every(every)
 
-	if times >= 0 {
+	if times > 0 {
 		sh.engine.cron.LimitRunsTo(times)
 	}
 
-	j, err := sh.engine.cron.Do(handler)
+	j, err := sh.engine.cron.Do(func() {
+		defer func() {
+			r := recover()
+			if r != nil {
+				log.Errorf("script error %v: %v", sh.Name, r)
+			}
+		}()
+		handler()
+	})
 	if err != nil {
 		return -1, err
 	}
@@ -125,7 +139,7 @@ func (sh *scriptHost) On(event string, handler func(args ...interface{}) (bool, 
 	h := &eventHandler{
 		handler: handler,
 		tags: map[string]string{
-			"name":  sh.name,
+			"name":  sh.Name,
 			"event": event,
 		},
 	}
@@ -168,6 +182,7 @@ func (sh *scriptHost) OpenFile(path string) (string, error) {
 		return "", err
 	}
 
+	// todo: read as plaintext
 	f, err := sh.engine.reader.Read(u, common.AsPlaintext())
 	if err != nil {
 		return "", err

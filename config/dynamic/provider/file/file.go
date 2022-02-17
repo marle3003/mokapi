@@ -92,7 +92,14 @@ func (p *Provider) watch(ch chan<- *common.Config, pool *safe.Pool) error {
 			case evt := <-p.watcher.Events:
 				// temporary files ends with '~' in name
 				if len(evt.Name) > 0 && !strings.HasSuffix(evt.Name, "~") {
-					events = append(events, evt)
+					fileInfo, err := os.Stat(evt.Name)
+					if err != nil {
+						// skip
+						continue
+					}
+					if !fileInfo.IsDir() {
+						events = append(events, evt)
+					}
 				}
 			case <-ticker.C:
 				m := make(map[string]struct{})
@@ -123,6 +130,7 @@ func (p *Provider) watch(ch chan<- *common.Config, pool *safe.Pool) error {
 						ch <- c
 					}
 				}
+				events = make([]fsnotify.Event, 0)
 			}
 		}
 	})
@@ -171,6 +179,7 @@ func (p *Provider) walk(path string, ch chan<- *common.Config) error {
 			if c, err := p.readFile(path); err != nil {
 				log.Error(err)
 			} else if len(c.Data) > 0 {
+				p.watcher.Add(path)
 				ch <- c
 			}
 		}

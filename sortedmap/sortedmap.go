@@ -1,6 +1,10 @@
 package sortedmap
 
-import "container/list"
+import (
+	"container/list"
+	"fmt"
+	"strings"
+)
 
 // LinkedHashMap defines the iteration ordering by the order
 // in which keys were inserted into the map
@@ -72,4 +76,28 @@ func (m *LinkedHashMap) ensureInit() {
 		m.pairs = make(map[interface{}]*pair)
 		m.list = list.New()
 	}
+}
+
+func (m *LinkedHashMap) Resolve(name interface{}) (interface{}, error) {
+	if name == "*" {
+		return m.Values(), nil
+	}
+	v, ok := m.pairs[name]
+	if ok {
+		return v.value, nil
+	}
+	return nil, fmt.Errorf("undefined field %q", name)
+}
+
+func (m *LinkedHashMap) String() string {
+	var sb strings.Builder
+	sb.WriteString("{")
+	for it := m.Iter(); it.Next(); {
+		if sb.Len() > 1 {
+			sb.WriteString(", ")
+		}
+		sb.WriteString(fmt.Sprintf("%v: %v", it.Key(), it.Value()))
+	}
+	sb.WriteString("}")
+	return sb.String()
 }
