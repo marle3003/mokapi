@@ -88,6 +88,10 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	h.eventEmitter.Emit("http", request, response)
 
 	res = op.getResponse(response.StatusCode)
+	if res == nil {
+		writeError(rw, r, fmt.Errorf("no configuration was found for HTTP status code %v, https://swagger.io/docs/specification/describing-responses", response.StatusCode))
+		return
+	}
 
 	for k, v := range response.Headers {
 		rw.Header().Add(k, v)

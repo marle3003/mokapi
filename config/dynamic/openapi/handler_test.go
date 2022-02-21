@@ -4,7 +4,6 @@ import (
 	"mokapi/config/dynamic/openapi"
 	"mokapi/config/dynamic/openapi/openapitest"
 	"mokapi/config/dynamic/openapi/schema/schematest"
-	"mokapi/engine"
 	"mokapi/test"
 	"net/http"
 	"net/http/httptest"
@@ -475,10 +474,70 @@ func TestResolveEndpoint(t *testing.T) {
 			}
 
 			data.fn(t, func(rw http.ResponseWriter, r *http.Request) {
-				h := openapi.NewHandler(config, &engine.Engine{})
+				h := openapi.NewHandler(config, &engine{})
 				h.ServeHTTP(rw, r)
 			}, config)
 		})
 
+	}
+}
+
+func TestHandler_Event(t *testing.T) {
+	testcases := []struct {
+		name  string
+		fn    func(t *testing.T, f serveHTTP, c *openapi.Config)
+		event func(event string, args ...interface{})
+	}{
+		{
+			"no response found",
+			func(t *testing.T, f serveHTTP, c *openapi.Config) {
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
+					openapitest.WithHeaderParam("id", true))
+				openapitest.AppendEndpoint("/foo", c, openapitest.WithOperation("get", op))
+				r := httptest.NewRequest("get", "http://localhost/foo", nil)
+				r.Header.Set("id", "42")
+				r.Header.Set("accept", "application/json")
+				rr := httptest.NewRecorder()
+				f(rr, r)
+				test.Equals(t, 500, rr.Code)
+				test.Equals(t, "no configuration was found for HTTP status code 415, https://swagger.io/docs/specification/describing-responses\n", rr.Body.String())
+			},
+			func(event string, args ...interface{}) {
+				r := args[1].(*openapi.EventResponse)
+				r.StatusCode = 415
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			test.NewNullLogger()
+
+			config := &openapi.Config{
+				Info:       openapi.Info{Name: "Testing"},
+				Servers:    []*openapi.Server{{Url: "http://localhost"}},
+				Components: openapi.Components{},
+			}
+
+			tc.fn(t, func(rw http.ResponseWriter, r *http.Request) {
+				h := openapi.NewHandler(config, &engine{emit: tc.event})
+				h.ServeHTTP(rw, r)
+			}, config)
+		})
+
+	}
+}
+
+type engine struct {
+	emit func(event string, args ...interface{})
+}
+
+func (e *engine) Emit(event string, args ...interface{}) {
+	if e.emit != nil {
+		e.emit(event, args...)
 	}
 }
