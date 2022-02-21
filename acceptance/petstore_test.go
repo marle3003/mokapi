@@ -27,12 +27,12 @@ func (suite *PetStoreSuite) SetupTest() {
 func (suite *PetStoreSuite) TestJsFile() {
 	// ensure scripts are executed
 	time.Sleep(2 * time.Second)
-	try.GetRequest(suite.T(), "http://127.0.0.1:8080/pet/2",
+	try.GetRequest(suite.T(), "http://127.0.0.1:18080/pet/2",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(404),
 		try.HasBody(""))
 
-	try.GetRequest(suite.T(), "http://127.0.0.1:8080/pet/3",
+	try.GetRequest(suite.T(), "http://127.0.0.1:18080/pet/3",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(404),
 		try.HasBody(""))
@@ -41,26 +41,26 @@ func (suite *PetStoreSuite) TestJsFile() {
 func (suite *PetStoreSuite) TestLuaFile() {
 	// ensure scripts are executed
 	time.Sleep(time.Second)
-	try.GetRequest(suite.T(), "http://127.0.0.1:8080/pet/findByStatus?status=available&status=pending",
+	try.GetRequest(suite.T(), "http://127.0.0.1:18080/pet/findByStatus?status=available&status=pending",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(200),
 		try.HasBody("[{\"name\":\"Gidget\",\"photoUrls\":[\"http://www.pets.com/gidget.png\"],\"status\":\"pending\"},{\"name\":\"Max\",\"photoUrls\":[\"http://www.pets.com/max.png\"],\"status\":\"available\"}]"))
 }
 
 func (suite *PetStoreSuite) TestGetPetById() {
-	try.GetRequest(suite.T(), "http://127.0.0.1:8080/pet/1",
+	try.GetRequest(suite.T(), "http://127.0.0.1:18080/pet/1",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(200),
 		try.HasBody(`{"id":-8379641344161477543,"category":{"id":-1799207740735652432,"name":"RMaRxHkiJBPtapW"},"name":"doggie","photoUrls":[],"tags":[{"id":-3430133205295092491,"name":"nSMKgtlxwnqhqcl"},{"id":-4360704630090834069,"name":"YkWwfoRLOPxLIok"},{"id":-9084870506124948944,"name":"qanPAKaXSMQFpZy"}],"status":"pending"}`))
 
-	try.GetRequest(suite.T(), "https://localhost:8443/pet/1",
+	try.GetRequest(suite.T(), "https://localhost:18443/pet/1",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(200),
 		try.HasBody(`{"id":-5233707484353581840,"category":{"id":-7922211254674255348,"name":"HGyyvqqdHueUxcv"},"name":"doggie","photoUrls":[],"tags":[{"id":-885632864726843768,"name":"eDjRRGUnsAxdBXG"}],"status":"pending"}`))
 }
 
 func (suite *PetStoreSuite) TestKafka_TopicConfig() {
-	c := kafkatest.NewClient("127.0.0.1:9092", "test")
+	c := kafkatest.NewClient("127.0.0.1:19092", "test")
 	defer c.Close()
 
 	r, err := c.Metadata(0, &metaData.Request{})
@@ -73,7 +73,7 @@ func (suite *PetStoreSuite) TestKafka_TopicConfig() {
 }
 
 func (suite *PetStoreSuite) TestKafka_Produce_InvalidFormat() {
-	c := kafkatest.NewClient("127.0.0.1:9092", "test")
+	c := kafkatest.NewClient("127.0.0.1:19092", "test")
 	defer c.Close()
 
 	r, err := c.Produce(0, &produce.Request{Topics: []produce.RequestTopic{
@@ -102,7 +102,7 @@ func (suite *PetStoreSuite) TestKafka_Produce_InvalidFormat() {
 }
 
 func (suite *PetStoreSuite) KafkaProduce() {
-	c := kafkatest.NewClient("127.0.0.1:9092", "test")
+	c := kafkatest.NewClient("127.0.0.1:19092", "test")
 	defer c.Close()
 	r, err := c.Produce(0, &produce.Request{Topics: []produce.RequestTopic{
 		{Name: "petstore.order-event", Partitions: []produce.RequestPartition{

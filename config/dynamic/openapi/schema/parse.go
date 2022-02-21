@@ -6,7 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"math"
-	"mokapi/models/media"
+	"mokapi/media"
 	"reflect"
 	"strconv"
 	"strings"
@@ -16,7 +16,7 @@ func ParseString(s string, schema *Ref) (interface{}, error) {
 	return parse(s, schema)
 }
 
-func Parse(b []byte, contentType *media.ContentType, schema *Ref) (i interface{}, err error) {
+func Parse(b []byte, contentType media.ContentType, schema *Ref) (i interface{}, err error) {
 	switch {
 	case contentType.Subtype == "json":
 		err = json.Unmarshal(b, &i)
@@ -34,7 +34,7 @@ func Parse(b []byte, contentType *media.ContentType, schema *Ref) (i interface{}
 	return parse(i, schema)
 }
 
-func ParseFrom(r io.Reader, contentType *media.ContentType, schema *Ref) (i interface{}, err error) {
+func ParseFrom(r io.Reader, contentType media.ContentType, schema *Ref) (i interface{}, err error) {
 	switch contentType.Subtype {
 	case "json":
 		err = json.NewDecoder(r).Decode(&i)
@@ -302,13 +302,25 @@ func parseObject(i interface{}, s *Schema) (interface{}, error) {
 		return nil, fmt.Errorf("expected object but got %T", i)
 	}
 
-	required := make(map[string]struct{})
-	for _, r := range s.Required {
-		required[r] = struct{}{}
+	var err error
+
+	if err = validateObject(m, s); err != nil {
+		return nil, err
 	}
 
-	// free-form object
-	if s.Properties == nil {
+	if s.IsDictionary() {
+		result := make(map[string]interface{})
+		for k, v := range m {
+			v, err = parse(v, s.AdditionalProperties.Ref)
+			if err != nil {
+				return nil, err
+			}
+			result[k] = v
+		}
+		return result, nil
+	}
+
+	if !s.HasProperties() {
 		return toObject(m), nil
 	}
 
@@ -323,9 +335,6 @@ func parseObject(i interface{}, s *Schema) (interface{}, error) {
 		name := it.Key().(string)
 		pRef := it.Value().(*Ref)
 		if _, ok := m[name]; !ok {
-			if _, ok := required[name]; ok && len(required) > 0 {
-				return nil, fmt.Errorf("expected required property %v", name)
-			}
 			continue
 		}
 
@@ -341,18 +350,34 @@ func parseObject(i interface{}, s *Schema) (interface{}, error) {
 		})
 	}
 
+	for k, v := range m {
+		if p := s.Properties.Get(k); p != nil {
+			continue
+		}
+		if child, ok := v.(map[string]interface{}); ok {
+			v = toObject(child)
+		}
+		fields = append(fields, reflect.StructField{
+			Name: strings.Title(k),
+			Type: reflect.TypeOf(v),
+		})
+		values = append(values, reflect.ValueOf(v))
+	}
+
 	t := reflect.StructOf(fields)
 	v := reflect.New(t).Elem()
 	for i, val := range values {
 		v.Field(i).Set(val)
 	}
-	return v.Addr().Interface(), nil
+
+	o := v.Addr().Interface()
+	return o, validateObject(o, s)
 }
 
 func parseArray(i interface{}, s *Schema) (interface{}, error) {
 	a, ok := i.([]interface{})
 	if !ok {
-		return nil, fmt.Errorf("expected array but got %T", i)
+		return nil, fmt.Errorf("expected %v got %v", s, i)
 	}
 
 	if len(a) == 0 {
@@ -363,7 +388,8 @@ func parseArray(i interface{}, s *Schema) (interface{}, error) {
 		default:
 			sliceOf = reflect.SliceOf(getType(s.Items.Value))
 		}
-		return reflect.MakeSlice(sliceOf, 0, 0).Interface(), nil
+		ret := reflect.MakeSlice(sliceOf, 0, 0).Interface()
+		return ret, validateArray(ret, s)
 	}
 
 	v, err := parse(a[0], s.Items)
@@ -379,16 +405,19 @@ func parseArray(i interface{}, s *Schema) (interface{}, error) {
 		}
 		result = reflect.Append(result, reflect.ValueOf(v))
 	}
-	return result.Interface(), nil
+	ret := result.Interface()
+	return ret, validateArray(ret, s)
 }
 
 func parseInteger(i interface{}, s *Schema) (n int64, err error) {
 	switch v := i.(type) {
+	case int:
+		n = int64(v)
 	case int64:
 		n = v
 	case float64:
 		if math.Trunc(v) != v {
-			return 0, fmt.Errorf("expected integer but got floating number")
+			return 0, fmt.Errorf("expected %v, got %v", s, i)
 		}
 		n = int64(v)
 	case string:
@@ -403,7 +432,7 @@ func parseInteger(i interface{}, s *Schema) (n int64, err error) {
 			n = int64(temp)
 		}
 	default:
-		return 0, fmt.Errorf("expected integer got %T", i)
+		return 0, fmt.Errorf("expected %v, got %v", s, i)
 	}
 
 	switch s.Format {
@@ -427,13 +456,13 @@ func parseNumber(i interface{}, s *Schema) (f float64, err error) {
 	}
 
 	if err != nil {
-		return
+		return 0, fmt.Errorf("expected %v, got %v", s, i)
 	}
 
 	switch s.Format {
 	case "float":
 		if f > math.MaxFloat32 || f < -math.MaxFloat32 {
-			return 0, fmt.Errorf("number is not float")
+			return 0, fmt.Errorf("expected %v, got %v", s, i)
 		}
 	}
 

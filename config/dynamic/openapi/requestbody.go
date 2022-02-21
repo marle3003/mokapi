@@ -7,7 +7,7 @@ import (
 	"mime/multipart"
 	"mokapi/config/dynamic/openapi/ref"
 	"mokapi/config/dynamic/openapi/schema"
-	"mokapi/models/media"
+	"mokapi/media"
 	"net/http"
 	"strings"
 )
@@ -44,7 +44,7 @@ func BodyFromRequest(r *http.Request, op *Operation) (interface{}, error) {
 	return body, nil
 }
 
-func readBody(r *http.Request, op *Operation, contentType *media.ContentType) (interface{}, error) {
+func readBody(r *http.Request, op *Operation, contentType media.ContentType) (interface{}, error) {
 	if r.ContentLength == 0 {
 		return "", nil
 	}

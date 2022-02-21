@@ -15,8 +15,8 @@ externalDocs:
   description: Find out more about Swagger
   url: http://swagger.io
 servers:
-  - url: https://localhost:8443
-  - url: http://127.0.0.1:8080
+  - url: https://localhost:18443
+  - url: http://127.0.0.1:18080
 tags:
   - name: pet
     description: Everything about your Pets

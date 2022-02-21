@@ -6,7 +6,7 @@ import (
 	"math"
 	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/config/dynamic/openapi/schema/schematest"
-	"mokapi/models/media"
+	"mokapi/media"
 	"reflect"
 	"testing"
 )
@@ -310,7 +310,7 @@ func TestParse_Integer(t *testing.T) {
 			"3.61",
 			&schema.Schema{Type: "integer", Format: "int32"},
 			0,
-			fmt.Errorf("expected integer but got floating number"),
+			fmt.Errorf("expected schema type=integer format=int32, got 3.61"),
 		},
 		{
 			"not int32",
@@ -385,7 +385,7 @@ func TestParse_Number(t *testing.T) {
 			fmt.Sprintf("%v", math.MaxFloat64),
 			&schema.Schema{Type: "number", Format: "float"},
 			0,
-			fmt.Errorf("number is not float"),
+			fmt.Errorf("expected schema type=number format=float, got 1.7976931348623157e+308"),
 		},
 		{
 			"min",
@@ -550,19 +550,19 @@ func TestParse_String(t *testing.T) {
 }
 
 func TestValidate_Object(t *testing.T) {
-	cases := []struct {
+	testcases := []struct {
 		name   string
 		s      string
 		schema *schema.Schema
-		exp    interface{}
-		err    error
+		fn     func(t *testing.T, v interface{}, err error)
 	}{
 		{
 			"empty",
 			"{}",
 			&schema.Schema{Type: "object"},
-			&struct{}{},
-			nil,
+			func(t *testing.T, v interface{}, _ error) {
+				require.Equal(t, &struct{}{}, v)
+			},
 		},
 		{
 			"simple",
@@ -571,11 +571,12 @@ func TestValidate_Object(t *testing.T) {
 				schematest.WithProperty("name", schematest.New("string")),
 				schematest.WithProperty("age", schematest.New("integer")),
 			),
-			&struct {
-				Name string `json:"name"`
-				Age  int64  `json:"age"`
-			}{Name: "foo", Age: 12},
-			nil,
+			func(t *testing.T, v interface{}, _ error) {
+				require.Equal(t, &struct {
+					Name string `json:"name"`
+					Age  int64  `json:"age"`
+				}{Name: "foo", Age: 12}, v)
+			},
 		},
 		{
 			"missing but not required",
@@ -584,10 +585,11 @@ func TestValidate_Object(t *testing.T) {
 				schematest.WithProperty("name", schematest.New("string")),
 				schematest.WithProperty("age", schematest.New("integer")),
 			),
-			&struct {
-				Name string `json:"name"`
-			}{Name: "foo"},
-			nil,
+			func(t *testing.T, v interface{}, _ error) {
+				require.Equal(t, &struct {
+					Name string `json:"name"`
+				}{Name: "foo"}, v)
+			},
 		},
 		{
 			"missing but required",
@@ -597,23 +599,65 @@ func TestValidate_Object(t *testing.T) {
 				schematest.WithProperty("name", schematest.New("string")),
 				schematest.WithProperty("age", schematest.New("integer")),
 			),
-			nil,
-			fmt.Errorf("expected required property age"),
+			func(t *testing.T, _ interface{}, err error) {
+				require.EqualError(t, err, "expected schema type=object required=[name age], got {name=foo}")
+			},
+		},
+		{
+			"not minProperties",
+			`{"name": "foo"}`,
+			schematest.New("object",
+				schematest.WithMinProperties(2),
+			),
+			func(t *testing.T, _ interface{}, err error) {
+				require.EqualError(t, err, "expected schema type=object minProperties=2, got {name=foo}")
+			},
+		},
+		{
+			"not maxProperties",
+			`{"name": "foo", "age": 12}`,
+			schematest.New("object",
+				schematest.WithMaxProperties(1),
+			),
+			func(t *testing.T, _ interface{}, err error) {
+				switch err.Error() {
+				case "expected schema type=object maxProperties=1, got {age=12, name=foo}":
+				case "expected schema type=object maxProperties=1, got {name=foo, age=12}":
+					return
+				default:
+					require.Error(t, err)
+					require.Failf(t, "got wrong error message", err.Error())
+				}
+			},
+		},
+		{
+			"min-max properties, free-form order of properties not defined",
+			`{"name": "foo", "age": 12}`,
+			schematest.New("object",
+				schematest.WithMinProperties(1),
+				schematest.WithMaxProperties(2),
+			),
+			func(t *testing.T, v interface{}, _ error) {
+				if !reflect.DeepEqual(&struct {
+					Name string
+					Age  float64
+				}{Name: "foo", Age: 12}, v) && !reflect.DeepEqual(&struct {
+					Age  float64
+					Name string
+				}{Name: "foo", Age: 12}, v) {
+					require.Failf(t, "actual object is not an expected one", fmt.Sprintf("%v", v))
+				}
+			},
 		},
 	}
 
 	t.Parallel()
-	for _, c := range cases {
-		d := c
-		t.Run(c.name, func(t *testing.T) {
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			i, err := schema.Parse([]byte(d.s), media.ParseContentType("application/json"), &schema.Ref{Value: d.schema})
-			if d.err != nil {
-				require.Equal(t, d.err, err)
-			} else {
-				require.NoError(t, err)
-				require.Equal(t, d.exp, i)
-			}
+			i, err := schema.Parse([]byte(tc.s), media.ParseContentType("application/json"), &schema.Ref{Value: tc.schema})
+			tc.fn(t, i, err)
 		})
 	}
 }
@@ -744,6 +788,39 @@ func TestParse_Errors(t *testing.T) {
 			t.Parallel()
 			_, err := schema.Parse([]byte(d.s), media.ParseContentType("application/json"), &schema.Ref{Value: d.schema})
 			require.Equal(t, d.err, err)
+		})
+	}
+}
+
+func TestValidate_Dictionary(t *testing.T) {
+	cases := []struct {
+		name   string
+		s      string
+		schema *schema.Schema
+		exp    interface{}
+		err    error
+	}{
+		{
+			"string:string",
+			`{"en": "English", "de": "German"}`,
+			schematest.New("object", schematest.WithAdditionalProperties(schematest.New("string"))),
+			map[string]interface{}{"en": "English", "de": "German"},
+			nil,
+		},
+	}
+
+	t.Parallel()
+	for _, c := range cases {
+		d := c
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			i, err := schema.Parse([]byte(d.s), media.ParseContentType("application/json"), &schema.Ref{Value: d.schema})
+			if d.err != nil {
+				require.Equal(t, d.err, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, d.exp, i)
+			}
 		})
 	}
 }

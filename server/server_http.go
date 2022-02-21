@@ -85,7 +85,7 @@ func (m *HttpManager) Update(file *common.File) {
 			return
 		}
 	}
-	log.Infof("processed config %v", file.Url.String())
+	log.Infof("processed file %v", file.Url.String())
 }
 
 func (m *HttpManager) createOpenApiService(u *url.URL, config *openapi.Config) *service.HttpService {

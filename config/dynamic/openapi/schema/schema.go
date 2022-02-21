@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"mokapi/config/dynamic/openapi/ref"
 	"mokapi/sortedmap"
+	"strings"
 )
 
 type Ref struct {
@@ -26,8 +27,8 @@ type Schema struct {
 	Pattern              string
 	Description          string
 	Properties           *SchemasRef
-	AdditionalProperties *Ref   // TODO custom marshal for bool, {} etc. Should it be a schema reference?
-	Faker                string `yaml:"x-faker" json:"x-faker"`
+	AdditionalProperties *AdditionalProperties `yaml:"additionalProperties,omitempty" json:"additionalProperties,omitempty"`
+	Faker                string                `yaml:"x-faker" json:"x-faker"`
 	Items                *Ref
 	Xml                  *Xml
 	Required             []string
@@ -45,10 +46,13 @@ type Schema struct {
 	MinItems             *int     `yaml:"minItems" json:"minItems"`
 	MaxItems             *int     `yaml:"maxItems" json:"maxItems"`
 	ShuffleItems         bool     `yaml:"x-shuffleItems" json:"x-shuffleItems"`
+	MinProperties        *int     `yaml:"minProperties" json:"minProperties"`
+	MaxProperties        *int     `yaml:"maxProperties" json:"maxProperties"`
 }
 
 type AdditionalProperties struct {
-	Schema *Schema
+	*Ref
+	Allowed bool
 }
 
 type Xml struct {
@@ -77,4 +81,67 @@ func (s *Schemas) Resolve(token string) (interface{}, error) {
 		return nil, fmt.Errorf("unable to resolve %v", token)
 	}
 	return i.(*Ref).Value, nil
+}
+
+func (r *Ref) HasProperties() bool {
+	return r.Value != nil && r.Value.HasProperties()
+}
+
+func (s *Schema) HasProperties() bool {
+	return s.Properties != nil && s.Properties.Value != nil && s.Properties.Value.Len() > 0
+}
+
+func (s *Schema) String() string {
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("schema type=%v", s.Type))
+	if len(s.Format) > 0 {
+		sb.WriteString(fmt.Sprintf(" format=%v", s.Format))
+	}
+	if len(s.Pattern) > 0 {
+		sb.WriteString(fmt.Sprintf(" pattern=%v", s.Format))
+	}
+	if s.Minimum != nil {
+		sb.WriteString(fmt.Sprintf(" minimum=%v", *s.Minimum))
+	}
+	if s.Maximum != nil {
+		sb.WriteString(fmt.Sprintf(" maximum=%v", *s.Minimum))
+	}
+	if s.ExclusiveMinimum != nil && *s.ExclusiveMinimum {
+		sb.WriteString(" exclusiveMinimum")
+	}
+	if s.ExclusiveMaximum != nil && *s.ExclusiveMaximum {
+		sb.WriteString(" exclusiveMaximum")
+	}
+	if s.MinItems != nil {
+		sb.WriteString(fmt.Sprintf(" minItems=%v", *s.MinItems))
+	}
+	if s.MaxItems != nil {
+		sb.WriteString(fmt.Sprintf(" maxItems=%v", *s.MaxItems))
+	}
+	if s.MinProperties != nil {
+		sb.WriteString(fmt.Sprintf(" minProperties=%v", *s.MinProperties))
+	}
+	if s.MaxProperties != nil {
+		sb.WriteString(fmt.Sprintf(" maxProperties=%v", *s.MaxProperties))
+	}
+	if len(s.Required) > 0 {
+		sb.WriteString(fmt.Sprintf(" required=%v", s.Required))
+	}
+	if !s.IsFreeForm() {
+		sb.WriteString(" free-form=false")
+	}
+	return sb.String()
+}
+
+func (s *Schema) IsFreeForm() bool {
+	return !s.HasProperties() ||
+		s.AdditionalProperties.IsFreeForm()
+}
+
+func (s *Schema) IsDictionary() bool {
+	return s.AdditionalProperties != nil && s.AdditionalProperties.Value != nil && s.AdditionalProperties.Value.Type != ""
+}
+
+func (ap *AdditionalProperties) IsFreeForm() bool {
+	return ap == nil || ap.Allowed && ((ap.Value == nil && ap.Reference.Ref() == "") || ap.Value.Type == "")
 }

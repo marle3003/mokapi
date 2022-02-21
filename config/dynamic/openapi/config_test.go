@@ -2,11 +2,12 @@ package openapi_test
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/config/dynamic/openapi/parameter"
-	"mokapi/models/media"
+	"mokapi/media"
 	"mokapi/test"
 	"net/http"
 	"testing"
@@ -73,6 +74,67 @@ info:
 			err := yaml.Unmarshal([]byte(d.s), c)
 			test.Ok(t, err)
 			test.Equals(t, d.err, c.Validate())
+		})
+	}
+}
+
+func TestResponses(t *testing.T) {
+	testdata := []struct {
+		name    string
+		content string
+		fn      func(t *testing.T, c *openapi.Responses)
+	}{
+		{
+			name: "default httpstatus",
+			content: `
+default: {}
+`,
+			fn: func(t *testing.T, res *openapi.Responses) {
+				r := res.GetResponse(200)
+				require.NotNil(t, r)
+			},
+		},
+		{
+			name: "httpstatus",
+			content: `
+401: {}
+`,
+			fn: func(t *testing.T, res *openapi.Responses) {
+				r := res.GetResponse(401)
+				require.NotNil(t, r)
+			},
+		},
+		{
+			name: "not defined",
+			content: `
+401: {}
+`,
+			fn: func(t *testing.T, res *openapi.Responses) {
+				r := res.GetResponse(200)
+				require.Nil(t, r)
+			},
+		},
+		{
+			name: "not defined using default",
+			content: `
+401: {}
+default: {description: default}
+`,
+			fn: func(t *testing.T, res *openapi.Responses) {
+				r := res.GetResponse(200)
+				require.NotNil(t, r)
+				require.Equal(t, "default", r.Value.Description)
+			},
+		},
+	}
+	t.Parallel()
+	for _, data := range testdata {
+		d := data
+		t.Run(d.name, func(t *testing.T) {
+			res := &openapi.Responses{}
+			err := yaml.Unmarshal([]byte(d.content), res)
+			test.Ok(t, err)
+			data.fn(t, res)
 		})
 	}
 }
@@ -242,10 +304,11 @@ func TestPetStore_Response(t *testing.T) {
 	endpoint := config.EndPoints["/pet/{petId}"]
 	r := endpoint.Value.Get.Responses.GetResponse(http.StatusOK)
 	test.Assert(t, r != nil, "response exists")
-	m := r.Value.GetContent(media.ParseContentType("application/json"))
-	test.Equals(t, r.Value.Content["application/json"], m)
+	ct, m := r.Value.GetContent(media.ParseContentType("application/json"))
+	test.Equals(t, r.Value.Content[ct.String()], m)
 
-	test.Equals(t, nil, r.Value.GetContent(media.ParseContentType("foo/bar")))
+	_, m = r.Value.GetContent(media.ParseContentType("foo/bar"))
+	test.Equals(t, nil, m)
 }
 
 func TestPetStore_Paramters(t *testing.T) {

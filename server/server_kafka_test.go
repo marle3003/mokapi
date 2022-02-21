@@ -1,6 +1,8 @@
 package server
 
 import (
+	"fmt"
+	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
 	"mokapi/config/dynamic/common"
@@ -8,6 +10,7 @@ import (
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/protocol/metaData"
 	"mokapi/test"
+	"mokapi/try"
 	"testing"
 	"time"
 )
@@ -131,9 +134,12 @@ func TestKafkaServer_Update(t *testing.T) {
 		{
 			"add topic",
 			func(t *testing.T, c KafkaClusters) {
+				port, err := try.GetFreePort()
+				require.NoError(t, err)
+				addr := fmt.Sprintf("127.0.0.1:%v", port)
 				cfg := asyncapitest.NewConfig(
 					asyncapitest.WithTitle("foo"),
-					asyncapitest.WithServer("add topic", "kafka", "127.0.0.1:9092"),
+					asyncapitest.WithServer("add topic", "kafka", addr),
 					asyncapitest.WithChannel("foo",
 						asyncapitest.WithSubscribeAndPublish(
 							asyncapitest.WithMessage(
@@ -159,7 +165,7 @@ func TestKafkaServer_Update(t *testing.T) {
 				// wait for kafka start
 				time.Sleep(500 * time.Millisecond)
 
-				client := kafkatest.NewClient("127.0.0.1:9092", "test")
+				client := kafkatest.NewClient(addr, "test")
 				defer client.Close()
 
 				r, err := client.Metadata(0, &metaData.Request{})
@@ -170,9 +176,12 @@ func TestKafkaServer_Update(t *testing.T) {
 		{
 			"remove topic",
 			func(t *testing.T, c KafkaClusters) {
+				port, err := try.GetFreePort()
+				require.NoError(t, err)
+				addr := fmt.Sprintf("127.0.0.1:%v", port)
 				cfg := asyncapitest.NewConfig(
 					asyncapitest.WithTitle("foo"),
-					asyncapitest.WithServer("remove topic", "kafka", "127.0.0.1:9092"),
+					asyncapitest.WithServer("remove topic", "kafka", addr),
 					asyncapitest.WithChannel("foo",
 						asyncapitest.WithSubscribeAndPublish(
 							asyncapitest.WithMessage(
@@ -192,7 +201,10 @@ func TestKafkaServer_Update(t *testing.T) {
 
 				c.UpdateConfig(&common.File{Data: cfg})
 
-				client := kafkatest.NewClient("127.0.0.1:9092", "test")
+				// wait for update
+				time.Sleep(500 * time.Millisecond)
+
+				client := kafkatest.NewClient(addr, "test")
 				defer client.Close()
 
 				r, err := client.Metadata(0, &metaData.Request{})

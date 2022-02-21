@@ -2,8 +2,7 @@ package openapi
 
 import (
 	"context"
-	"fmt"
-	"mokapi/models/media"
+	"mokapi/media"
 	"mokapi/server/httperror"
 	"net/http"
 	"strings"
@@ -20,25 +19,59 @@ func OperationFromContext(ctx context.Context) (*Operation, bool) {
 	return o, ok
 }
 
-func ContentTypeFromRequest(r *http.Request, res *Response) (*media.ContentType, *MediaType, error) {
+func ContentTypeFromRequest(r *http.Request, res *Response) (media.ContentType, *MediaType, error) {
 	accept := r.Header.Get("accept")
+	ct, mt := negotiateContentType(accept, res)
+	if ct.IsEmpty() {
+		return media.Empty, nil, httperror.Newf(http.StatusUnsupportedMediaType,
+			"none of requests content type(s) are supported: %q", accept)
+	} else if ct.IsRange() {
+		return media.GetRandom(accept), mt, nil
+	}
 
-	// search for a matching content type
-	if accept != "" {
-		for _, mimeType := range strings.Split(accept, ",") {
-			contentType := media.ParseContentType(mimeType)
-			if mt := res.GetContent(contentType); mt != nil {
-				return contentType, mt, nil
+	return ct, mt, nil
+}
+
+func negotiateContentType(accept string, res *Response) (media.ContentType, *MediaType) {
+	if accept == "" || accept == "*" {
+		accept = "*/*"
+	}
+
+	best := media.Empty
+	bestSpec := media.Empty
+	var bestMediaType *MediaType
+	bestQ := -1.0
+	for _, spec := range parseAccept(accept) {
+		for _, mt := range res.Content {
+			if spec.Match(mt.ContentType) {
+				if bestQ > spec.Q {
+					continue
+				}
+				if !best.IsEmpty() && !best.IsRange() {
+					continue
+				}
+				if !best.IsEmpty() && len(best.Parameters) > len(mt.ContentType.Parameters) {
+					continue
+				}
+				best = mt.ContentType
+				bestQ = spec.Q
+				bestSpec = spec
+				bestMediaType = mt
 			}
 		}
-		return nil, nil, httperror.Newf(http.StatusUnsupportedMediaType,
-			"none of requests content type(s) are supported: %v", accept)
 	}
 
-	for name, mt := range res.Content {
-		// return first element
-		return media.ParseContentType(name), mt, nil
+	if best.String() != media.Empty.String() && best.IsRange() {
+		return bestSpec, bestMediaType
 	}
 
-	return nil, nil, fmt.Errorf("no content type found for accept header %q", accept)
+	return best, bestMediaType
+}
+
+func parseAccept(s string) []media.ContentType {
+	var ret []media.ContentType
+	for _, v := range strings.Split(s, ",") {
+		ret = append(ret, media.ParseContentType(v))
+	}
+	return ret
 }

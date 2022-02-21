@@ -4,6 +4,7 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 	"mokapi/sortedmap"
+	"strconv"
 )
 
 func (s *Schemas) UnmarshalYAML(value *yaml.Node) error {
@@ -29,10 +30,22 @@ func (s *Schemas) UnmarshalYAML(value *yaml.Node) error {
 	return nil
 }
 
-func (s *Ref) UnmarshalYAML(node *yaml.Node) error {
-	return s.Unmarshal(node, &s.Value)
+func (r *Ref) UnmarshalYAML(node *yaml.Node) error {
+	return r.Unmarshal(node, &r.Value)
 }
 
 func (s *SchemasRef) UnmarshalYAML(node *yaml.Node) error {
 	return s.Unmarshal(node, &s.Value)
+}
+
+func (ap *AdditionalProperties) UnmarshalYAML(node *yaml.Node) error {
+	ap.Allowed = true
+
+	var err error
+	if node.Kind == yaml.ScalarNode {
+		ap.Allowed, err = strconv.ParseBool(node.Value)
+		return err
+	} else {
+		return node.Decode(&ap.Ref)
+	}
 }

@@ -38,6 +38,10 @@ func NewConfigWatcher(cfg *static.Config) *ConfigWatcher {
 		w.providers["git"] = git.New(cfg.Providers.Git)
 	}
 
+	if len(w.providers) == 0 {
+		log.Infof("no providers configured")
+	}
+
 	return w
 }
 
