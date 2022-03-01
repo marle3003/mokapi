@@ -18,7 +18,7 @@ type testReader struct {
 func (tr *testReader) Read(u *url.URL, opts ...common.FileOptions) (*common.File, error) {
 	file := &common.File{Url: u}
 	for _, opt := range opts {
-		opt(file)
+		opt(file, true)
 	}
 	if err := tr.readFunc(file); err != nil {
 		return file, err
@@ -40,14 +40,14 @@ func TestJsScriptEngine(t *testing.T) {
 	t.Run("valid", func(t *testing.T) {
 		t.Parallel()
 		engine := New(emptyReader)
-		err := engine.AddScript("test.js", "export default function(){}")
+		err := engine.AddScript(mustParse("test.js"), "export default function(){}")
 		test.Ok(t, err)
 		test.Assert(t, len(engine.scripts) == 1, "script length not 1")
 	})
 	t.Run("blank", func(t *testing.T) {
 		t.Parallel()
 		engine := New(emptyReader)
-		err := engine.AddScript("test.js", "")
+		err := engine.AddScript(mustParse("test.js"), "")
 		test.EqualError(t, "no exported functions in script", err)
 		test.Assert(t, len(engine.scripts) == 0, "script length not 0")
 	})
@@ -58,7 +58,7 @@ func TestJsEvery(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
 		t.Parallel()
 		engine := New(emptyReader)
-		err := engine.AddScript("test.js", `
+		err := engine.AddScript(mustParse("test.js"), `
 			import mokapi from 'mokapi'
 			export default function() {
 				mokapi.every('1m', function() {});
@@ -77,7 +77,7 @@ func TestJsOn(t *testing.T) {
 	t.Run("noEvent", func(t *testing.T) {
 		t.Parallel()
 		engine := New(emptyReader)
-		err := engine.AddScript("test.js", `
+		err := engine.AddScript(mustParse("test.js"), `
 			import {on, sleep} from 'mokapi'
 			export default function() {}
 		`)
@@ -88,7 +88,7 @@ func TestJsOn(t *testing.T) {
 	t.Run("withoutSummary", func(t *testing.T) {
 		t.Parallel()
 		engine := New(emptyReader)
-		err := engine.AddScript("test.js", `
+		err := engine.AddScript(mustParse("test.js"), `
 			import {on, sleep} from 'mokapi'
 			export default function() {
 				on('http', function() {
@@ -107,7 +107,7 @@ func TestJsOn(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
 		t.Parallel()
 		engine := New(emptyReader)
-		err := engine.AddScript("test.js", `
+		err := engine.AddScript(mustParse("test.js"), `
 			import {on, sleep} from 'mokapi'
 			export default function() {
 				on('http', function(request, response) {
@@ -130,7 +130,7 @@ func TestJsOn(t *testing.T) {
 	t.Run("duration", func(t *testing.T) {
 		t.Parallel()
 		engine := New(emptyReader)
-		err := engine.AddScript("test.js", `
+		err := engine.AddScript(mustParse("test.js"), `
 			import {on, sleep} from 'mokapi'
 			export default function() {
 				on('http', function() {
@@ -150,7 +150,7 @@ func TestJsOn(t *testing.T) {
 	t.Run("tag name", func(t *testing.T) {
 		t.Parallel()
 		engine := New(emptyReader)
-		err := engine.AddScript("test.js", `
+		err := engine.AddScript(mustParse("test.js"), `
 			import {on} from 'mokapi'
 			export default function() {
 				on('http', function() {return true}, {tags: {'name': 'foobar'}});
@@ -166,7 +166,7 @@ func TestJsOn(t *testing.T) {
 	t.Run("custom tag", func(t *testing.T) {
 		t.Parallel()
 		engine := New(emptyReader)
-		err := engine.AddScript("test.js", `
+		err := engine.AddScript(mustParse("test.js"), `
 			import {on} from 'mokapi'
 			export default function() {
 				on('http', function() {return true}, {tags: {'foo': 'bar'}});
@@ -197,7 +197,7 @@ func TestJsOn(t *testing.T) {
 
 		engine := New(emptyReader)
 		engine.logger = logger
-		err := engine.AddScript("test.js", `
+		err := engine.AddScript(mustParse("test.js"), `
 			import {on} from 'mokapi'
 			export default function() {
 				on(
@@ -234,7 +234,7 @@ func TestJsOpen(t *testing.T) {
 
 		engine := New(reader)
 		engine.logger = logger
-		err := engine.AddScript("./test.js", `
+		err := engine.AddScript(mustParse("./test.js"), `
 			let file = open('test.txt');
 			console.log(file);
 			export default function() {}
@@ -250,7 +250,7 @@ func TestJsOpen(t *testing.T) {
 		}}
 
 		engine := New(reader)
-		err := engine.AddScript("./test.js", `
+		err := engine.AddScript(mustParse("./test.js"), `
 			let file = open('test.txt');
 			export default function() {}
 		`)

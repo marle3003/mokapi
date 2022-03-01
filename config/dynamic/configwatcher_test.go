@@ -3,6 +3,7 @@ package dynamic
 import (
 	"context"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"io"
 	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/openapi"
@@ -100,10 +101,10 @@ func TestWatcher_UpdateRef(t *testing.T) {
 
 	ch := make(chan *common.File)
 	err := w.Start(pool)
-	test.Ok(t, err)
+	require.NoError(t, err)
 
 	file, err := createTempFile(testcases[0].filePath, tempDir)
-	test.Ok(t, err)
+	require.NoError(t, err)
 
 	time.Sleep(time.Second)
 	f, err := w.Read(mustParse(file), common.WithListener(func(file *common.File) {
@@ -113,15 +114,15 @@ func TestWatcher_UpdateRef(t *testing.T) {
 		default:
 		}
 	}))
-	test.Ok(t, err)
+	require.NoError(t, err)
 	config, ok := f.Data.(*openapi.Config)
-	test.IsTrue(t, ok)
-	test.Equals(t, "test", config.Info.Name)
+	require.True(t, ok)
+	require.Equal(t, "test", config.Info.Name)
 	assert.Len(t, config.EndPoints, 1)
 
 	f1, err := createTempFile(testcases[0].updatePath, tempDir)
-	test.Ok(t, err)
-	test.Equals(t, file, f1)
+	require.NoError(t, err)
+	require.Equal(t, file, f1)
 
 	// wait for all events.
 	timeout := time.After(3 * time.Second)
@@ -135,8 +136,8 @@ Loop:
 			break Loop
 		}
 	}
-	assert.True(t, gotEvent)
-	assert.Len(t, config.EndPoints, 2)
+	require.True(t, gotEvent)
+	require.Len(t, config.EndPoints, 2)
 }
 
 func mustParse(s string) *url.URL {

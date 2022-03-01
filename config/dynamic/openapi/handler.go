@@ -9,7 +9,7 @@ import (
 	"mokapi/config/dynamic/openapi/parameter"
 	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/engine"
-	"mokapi/models/media"
+	"mokapi/media"
 	"mokapi/server/httperror"
 	"net/http"
 	"reflect"
@@ -88,6 +88,10 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	h.eventEmitter.Emit("http", request, response)
 
 	res = op.getResponse(response.StatusCode)
+	if res == nil {
+		writeError(rw, r, fmt.Errorf("no configuration was found for HTTP status code %v, https://swagger.io/docs/specification/describing-responses", response.StatusCode))
+		return
+	}
 
 	for k, v := range response.Headers {
 		rw.Header().Add(k, v)
@@ -103,7 +107,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	contentType = media.ParseContentType(response.Headers["Content-Type"])
-	mediaType = res.GetContent(contentType)
+	contentType, mediaType = res.GetContent(contentType)
 	if mediaType == nil {
 		writeError(rw, r, fmt.Errorf("response has no definition for content type: %v", contentType))
 		return

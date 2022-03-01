@@ -4,7 +4,7 @@ info:
   version: 1.0.0
 servers:
   broker:
-    url: 127.0.0.1:9092
+    url: 127.0.0.1:19092
     protocol: kafka
 channels:
   petstore.order-event:

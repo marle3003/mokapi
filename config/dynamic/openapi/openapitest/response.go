@@ -3,6 +3,7 @@ package openapitest
 import (
 	"mokapi/config/dynamic/openapi"
 	"mokapi/config/dynamic/openapi/schema"
+	"mokapi/media"
 )
 
 type ResponseOptions func(o *openapi.Response)
@@ -17,11 +18,12 @@ func NewResponse(opts ...ResponseOptions) *openapi.Response {
 	return r
 }
 
-func WithContent(mime string, opts ...ContentOptions) ResponseOptions {
+func WithContent(mediaType string, opts ...ContentOptions) ResponseOptions {
 	return func(o *openapi.Response) {
-		o.Content[mime] = &openapi.MediaType{}
+		ct := media.ParseContentType(mediaType)
+		o.Content[mediaType] = &openapi.MediaType{ContentType: ct}
 		for _, opt := range opts {
-			opt(o.Content[mime])
+			opt(o.Content[mediaType])
 		}
 	}
 }

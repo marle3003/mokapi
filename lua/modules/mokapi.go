@@ -1,75 +1,126 @@
 package modules
 
 import (
-	"fmt"
+	log "github.com/sirupsen/logrus"
 	lua "github.com/yuin/gopher-lua"
-	luar "layeh.com/gopher-luar"
 	"mokapi/engine/common"
+	"mokapi/lua/utils"
+	"reflect"
 )
 
 type Mokapi struct {
 	host common.Host
 }
 
+type everyArgs struct {
+	Times int
+	Tags  map[string]string
+}
+
+type onArgs struct {
+	Tags map[string]string
+}
+
 func NewMokapi(host common.Host) *Mokapi {
 	return &Mokapi{host: host}
 }
 
-func (m *Mokapi) Every(every string, do func(), args ...interface{}) (int, error) {
-	times := -1
-	tags := make(map[string]string)
+func (m *Mokapi) every(l *lua.LState) int {
+	every := l.ToString(1)
 
-	if len(args) > 0 {
-		m := args[0].(map[interface{}]interface{})
-		for f, v := range m {
-			switch f.(string) {
-			case "tags":
-				for k, v := range v.(map[interface{}]interface{}) {
-					tags[k.(string)] = fmt.Sprintf("%v", v)
-				}
-			case "times":
-				times = int(v.(float64))
+	s := l.ToFunction(2)
+	fn := func() {
+		co, cocancel := l.NewThread()
+		defer func() {
+			if cocancel != nil {
+				cocancel()
 			}
+		}()
+		_, err, values := l.Resume(co, s)
+		_ = values
+
+		if err != nil {
+			panic(err)
 		}
 	}
 
-	return m.host.Every(every, do, times, tags)
+	args := &everyArgs{}
+	if lArg := l.Get(3); lArg != lua.LNil {
+		if err := utils.Map(args, lArg); err != nil {
+			log.Error(err)
+		}
+	}
+
+	id, err := m.host.Every(every, fn, args.Times, args.Tags)
+
+	if err != nil {
+		l.Push(lua.LNumber(id))
+		l.Push(lua.LString(err.Error()))
+		return 2
+	}
+
+	l.Push(lua.LNumber(id))
+	return 1
 }
 
-func (m *Mokapi) On(event string, do func(args ...interface{}) bool, args ...interface{}) {
-	tags := make(map[string]string)
+func (m *Mokapi) on(l *lua.LState) int {
+	evt := l.CheckString(1)
 
-	if len(args) > 0 {
-		m := args[0].(map[interface{}]interface{})
-		for f, v := range m {
-			switch f.(string) {
-			case "tags":
-				for k, v := range v.(map[interface{}]interface{}) {
-					tags[k.(string)] = fmt.Sprintf("%v", v)
-				}
+	s := l.ToFunction(2)
+	fn := func(args ...interface{}) (bool, error) {
+		values := make([]lua.LValue, 0, len(args))
+		for _, arg := range args {
+			values = append(values, utils.ToValue(l, arg))
+		}
+
+		co, cocancel := l.NewThread()
+		defer func() {
+			if cocancel != nil {
+				cocancel()
 			}
+		}()
+		_, err, retValues := l.Resume(co, s, values...)
+
+		if err != nil {
+			return false, err
+		}
+
+		if retValues[0] == lua.LTrue {
+			for i, val := range values {
+				// update only pointers
+				if reflect.ValueOf(args[i]).Kind() == reflect.Ptr {
+					err = utils.Map(args[i], val)
+					if err != nil {
+						return false, err
+					}
+				}
+
+			}
+		}
+
+		return retValues[0] == lua.LTrue, nil
+	}
+
+	args := &onArgs{}
+	if lArg := l.Get(3); lArg != lua.LNil {
+		if err := utils.Map(args, lArg); err != nil {
+			log.Error(err)
 		}
 	}
 
-	f := func(args ...interface{}) (bool, error) {
-		var err error
-		b := func() bool {
-			defer func() {
-				if r := recover(); r != nil {
-					err = fmt.Errorf("error in script %v", r)
-				}
-			}()
+	m.host.On(evt, fn, args.Tags)
 
-			return do(args...)
-		}()
-
-		return b, err
-	}
-
-	m.host.On(event, f, tags)
+	return 0
 }
 
 func (m *Mokapi) Loader(state *lua.LState) int {
-	state.Push(luar.New(state, m))
+	exports := map[string]lua.LGFunction{
+		"every": m.every,
+		"on":    m.on,
+	}
+
+	mod := state.SetFuncs(state.NewTable(), exports)
+
+	state.Push(mod)
 	return 1
 }

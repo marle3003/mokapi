@@ -1,6 +1,9 @@
 package schema
 
-import "mokapi/config/dynamic/common"
+import (
+	"fmt"
+	"mokapi/config/dynamic/common"
+)
 
 func (s *Schemas) Parse(file *common.File, reader common.Reader) error {
 	if s == nil {
@@ -22,7 +25,7 @@ func (s *SchemasRef) Parse(file *common.File, reader common.Reader) error {
 	}
 	if len(s.Ref()) > 0 && s.Value == nil {
 		if err := common.Resolve(s.Ref(), &s.Value, file, reader); err != nil {
-			return err
+			return fmt.Errorf("error on parsing file %v: %v", file.Url, err)
 		}
 	}
 
@@ -33,21 +36,21 @@ func (s *SchemasRef) Parse(file *common.File, reader common.Reader) error {
 	return s.Value.Parse(file, reader)
 }
 
-func (s *Ref) Parse(file *common.File, reader common.Reader) error {
-	if s == nil {
+func (r *Ref) Parse(file *common.File, reader common.Reader) error {
+	if r == nil {
 		return nil
 	}
-	if len(s.Ref()) > 0 && s.Value == nil {
-		if err := common.Resolve(s.Ref(), &s.Value, file, reader); err != nil {
+	if len(r.Ref()) > 0 && r.Value == nil {
+		if err := common.Resolve(r.Ref(), &r.Value, file, reader); err != nil {
 			return err
 		}
 	}
 
-	if s.Value == nil {
+	if r.Value == nil {
 		return nil
 	}
 
-	return s.Value.Parse(file, reader)
+	return r.Value.Parse(file, reader)
 }
 
 func (s *Schema) Parse(file *common.File, reader common.Reader) error {
@@ -68,4 +71,12 @@ func (s *Schema) Parse(file *common.File, reader common.Reader) error {
 	}
 
 	return nil
+}
+
+func (ap *AdditionalProperties) Parse(file *common.File, reader common.Reader) error {
+	if ap == nil {
+		return nil
+	}
+
+	return ap.Ref.Parse(file, reader)
 }

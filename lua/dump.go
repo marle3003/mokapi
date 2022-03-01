@@ -2,12 +2,23 @@ package lua
 
 import (
 	"fmt"
+	lua "github.com/yuin/gopher-lua"
 	"math"
+	"mokapi/lua/utils"
+	"mokapi/sortedmap"
 	"reflect"
 	"strings"
 )
 
 func Dump(i interface{}) string {
+	if lv, ok := i.(lua.LValue); ok {
+		i = utils.FromValue(lv)
+	}
+
+	if m, ok := i.(*sortedmap.LinkedHashMap); ok {
+		return m.String()
+	}
+
 	var sb strings.Builder
 	v := reflect.ValueOf(i)
 
@@ -26,7 +37,11 @@ func Dump(i interface{}) string {
 				sb.WriteString(", ")
 			}
 			f := v.Field(i)
-			sb.WriteString(fmt.Sprintf("%v: %v", t.Field(i).Name, Dump(f.Interface())))
+			if !f.CanInterface() {
+				continue
+			}
+			name := t.Field(i).Name
+			sb.WriteString(fmt.Sprintf("%v: %v", name, Dump(f.Interface())))
 		}
 		sb.WriteString("}")
 	case reflect.Map:

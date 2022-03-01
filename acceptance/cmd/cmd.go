@@ -35,18 +35,21 @@ func Start(cfg *static.Config) (*Cmd, error) {
 	kafka := make(server.KafkaClusters)
 	http := make(server.HttpServers)
 	mail := make(server.SmtpServers)
+	directories := make(server.LdapDirectories)
 	scriptEngine := engine.New(watcher)
 
 	managerHttp := server.NewHttpManager(http, scriptEngine, certStore, app)
+	managerLdap := server.NewLdapDirectoryManager(directories, scriptEngine, certStore, app)
 
 	watcher.AddListener(func(file *common.File) {
 		kafka.UpdateConfig(file)
 		managerHttp.Update(file)
 		mail.UpdateConfig(file, certStore, scriptEngine)
+		managerLdap.UpdateConfig(file)
 	})
 	watcher.AddListener(func(file *common.File) {
 		if s, ok := file.Data.(*script.Script); ok {
-			err := scriptEngine.AddScript(file.Url.String(), s.Code)
+			err := scriptEngine.AddScript(file.Url, s.Code)
 			if err != nil {
 				log.Error(err)
 			}
@@ -64,7 +67,7 @@ func Start(cfg *static.Config) (*Cmd, error) {
 
 	pool := safe.NewPool(context.Background())
 	ctx, cancel := context.WithCancel(context.Background())
-	s := server.NewServer(pool, watcher, kafka, http, mail, scriptEngine)
+	s := server.NewServer(pool, watcher, kafka, http, mail, directories, scriptEngine)
 	s.StartAsync(ctx)
 
 	return &Cmd{

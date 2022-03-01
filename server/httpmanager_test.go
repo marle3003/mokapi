@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	logtest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/common"
@@ -26,10 +27,13 @@ func TestHttpServers_Monitor(t *testing.T) {
 	app := runtime.New()
 	m := NewHttpManager(servers, &engine.Engine{}, store, app)
 
-	c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: "http://localhost:8080"}}}
+	port, err := try.GetFreePort()
+	require.NoError(t, err)
+	url := fmt.Sprintf("http://localhost:%v", port)
+	c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: url}}}
 	m.Update(&common.File{Data: c, Url: MustParseUrl("foo.yml")})
 
-	try.GetRequest(t, "http://localhost:8080", map[string]string{})
+	try.GetRequest(t, url, map[string]string{})
 	require.Equal(t, float64(1), app.Monitor.Http.RequestCounter.Value())
 }
 
@@ -43,36 +47,6 @@ func TestHttpManager_Update(t *testing.T) {
 				m.Update(&common.File{Data: nil})
 				require.Nil(t, hook.LastEntry())
 			}},
-		{"no version",
-			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
-				c := &openapi.Config{Info: openapi.Info{Name: "foo"}}
-				m.Update(&common.File{Data: c, Url: MustParseUrl("foo.yml")})
-				require.Equal(t, "validation error foo.yml: no OpenApi version defined", hook.LastEntry().Message)
-			}},
-		{"no server specified",
-			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
-				c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}}
-				m.Update(&common.File{Data: c, Url: MustParseUrl("foo.yml")})
-
-				require.Contains(t, m.Servers, "80")
-				entries := hook.Entries
-				require.Len(t, entries, 3)
-				require.Equal(t, "Adding new host '' on binding :80", entries[0].Message)
-				require.Equal(t, "Adding service foo on binding :80 on path /", entries[1].Message)
-				require.Equal(t, "processed config foo.yml", entries[2].Message)
-			}},
-		{"empty url",
-			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
-				c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: ""}}}
-				m.Update(&common.File{Data: c, Url: MustParseUrl("foo.yml")})
-
-				require.Contains(t, m.Servers, "80")
-				entries := hook.Entries
-				require.Len(t, entries, 3)
-				require.Equal(t, "Adding new host '' on binding :80", entries[0].Message)
-				require.Equal(t, "Adding service foo on binding :80 on path /", entries[1].Message)
-				require.Equal(t, "processed config foo.yml", entries[2].Message)
-			}},
 		{
 			"app contains config",
 			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
@@ -85,8 +59,11 @@ func TestHttpManager_Update(t *testing.T) {
 		{
 			"app contains both config",
 			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
-				foo := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: "http://:80/foo"}}}
-				bar := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "bar"}, Servers: []*openapi.Server{{Url: "http://:80/bar"}}}
+				port, err := try.GetFreePort()
+				require.NoError(t, err)
+				url := fmt.Sprintf("http://localhost:%v", port)
+				foo := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: url + "/foo"}}}
+				bar := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "bar"}, Servers: []*openapi.Server{{Url: url + "/bar"}}}
 				m.Update(&common.File{Data: foo, Url: MustParseUrl("foo.yml")})
 				m.Update(&common.File{Data: bar, Url: MustParseUrl("bar.yml")})
 
@@ -94,41 +71,19 @@ func TestHttpManager_Update(t *testing.T) {
 				require.Contains(t, m.app.Http, "bar")
 			},
 		},
-		{"add new host http://:80",
+		{"add new host http://:X",
 			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
-				c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: "http://:80"}}}
+				port, err := try.GetFreePort()
+				require.NoError(t, err)
+				c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: fmt.Sprintf("http://:%v", port)}}}
 				m.Update(&common.File{Data: c, Url: MustParseUrl("foo.yml")})
 
-				require.Contains(t, m.Servers, "80")
+				require.Contains(t, m.Servers, fmt.Sprintf("%v", port))
 				entries := hook.Entries
 				require.Len(t, entries, 3)
-				require.Equal(t, "Adding new host '' on binding :80", entries[0].Message)
-				require.Equal(t, "Adding service foo on binding :80 on path /", entries[1].Message)
-				require.Equal(t, "processed config foo.yml", entries[2].Message)
-			}},
-		{"add new host http://localhost:80",
-			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
-				c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: "http://localhost:80"}}}
-				m.Update(&common.File{Data: c, Url: MustParseUrl("foo.yml")})
-
-				require.Contains(t, m.Servers, "80")
-				entries := hook.Entries
-				require.Len(t, entries, 3)
-				require.Equal(t, "Adding new host 'localhost' on binding :80", entries[0].Message)
-				require.Equal(t, "Adding service foo on binding :80 on path /", entries[1].Message)
-				require.Equal(t, "processed config foo.yml", entries[2].Message)
-			}},
-		{"add new host http://localhost",
-			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
-				c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: "http://localhost"}}}
-				m.Update(&common.File{Data: c, Url: MustParseUrl("foo.yml")})
-
-				require.Contains(t, m.Servers, "80")
-				entries := hook.Entries
-				require.Len(t, entries, 3)
-				require.Equal(t, "Adding new host 'localhost' on binding :80", entries[0].Message)
-				require.Equal(t, "Adding service foo on binding :80 on path /", entries[1].Message)
-				require.Equal(t, "processed config foo.yml", entries[2].Message)
+				require.Equal(t, fmt.Sprintf("Adding new host '' on binding :%v", port), entries[0].Message)
+				require.Equal(t, fmt.Sprintf("Adding service foo on binding :%v on path /", port), entries[1].Message)
+				require.Equal(t, "processed file foo.yml", entries[2].Message)
 			}},
 		{"invalid port format",
 			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
@@ -139,7 +94,7 @@ func TestHttpManager_Update(t *testing.T) {
 				entries := hook.Entries
 				require.Len(t, entries, 2)
 				require.Equal(t, "error foo.yml: parse \"http://localhost:foo\": invalid port \":foo\" after host", entries[0].Message)
-				require.Equal(t, "processed config foo.yml", entries[1].Message)
+				require.Equal(t, "processed file foo.yml", entries[1].Message)
 			}},
 		{"invalid url format",
 			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
@@ -150,21 +105,24 @@ func TestHttpManager_Update(t *testing.T) {
 				entries := hook.Entries
 				require.Len(t, entries, 2)
 				require.Equal(t, "error foo.yml: parse \"$://\": first path segment in URL cannot contain colon", entries[0].Message)
-				require.Equal(t, "processed config foo.yml", entries[1].Message)
+				require.Equal(t, "processed file foo.yml", entries[1].Message)
 			}},
 		{"add on same path",
 			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
-				c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: "/foo"}}}
+				port, err := try.GetFreePort()
+				require.NoError(t, err)
+				url := fmt.Sprintf("http://:%v", port)
+				c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: url + "/foo"}}}
 				m.Update(&common.File{Data: c, Url: MustParseUrl("foo.yml")})
-				c = &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "bar"}, Servers: []*openapi.Server{{Url: "/foo"}}}
+				c = &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "bar"}, Servers: []*openapi.Server{{Url: url + "/foo"}}}
 				m.Update(&common.File{Data: c, Url: MustParseUrl("foo.yml")})
 
 				require.Len(t, m.Servers, 1)
 				entries := hook.Entries
 				require.Len(t, entries, 4)
-				require.Equal(t, "Adding new host '' on binding :80", entries[0].Message)
-				require.Equal(t, "Adding service foo on binding :80 on path /foo", entries[1].Message)
-				require.Equal(t, "processed config foo.yml", entries[2].Message)
+				require.Equal(t, fmt.Sprintf("Adding new host '' on binding :%v", port), entries[0].Message)
+				require.Equal(t, fmt.Sprintf("Adding service foo on binding :%v on path /foo", port), entries[1].Message)
+				require.Equal(t, "processed file foo.yml", entries[2].Message)
 				require.Equal(t, "error on updating foo.yml: service 'foo' is already defined on path '/foo'", entries[3].Message)
 			}},
 	}

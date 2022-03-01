@@ -7,7 +7,7 @@ import (
 	"mokapi/config/dynamic/openapi/parameter"
 	"mokapi/config/dynamic/openapi/ref"
 	"mokapi/config/dynamic/openapi/schema"
-	"mokapi/models/media"
+	"mokapi/media"
 	"mokapi/sortedmap"
 	"net/http"
 	"strconv"
@@ -168,7 +168,7 @@ type Response struct {
 	// The key is a media type or media type range and the value describes
 	// it. For responses that match multiple keys, only the most specific
 	// key is applicable. e.g. text/plain overrides text/*
-	Content map[string]*MediaType
+	Content Content
 
 	// Maps a header name to its definition. RFC7230 states header names are
 	// case insensitive. If a response header is defined with the name
@@ -176,10 +176,14 @@ type Response struct {
 	Headers map[string]*HeaderRef
 }
 
+type Content map[string]*MediaType
+
 type MediaType struct {
 	Schema   *schema.Ref
 	Example  interface{}
 	Examples map[string]*ExampleRef
+
+	ContentType media.ContentType `yaml:"-" json:"-"`
 }
 
 type HeaderRef struct {
@@ -255,10 +259,14 @@ func (r *Responses) GetResponse(httpStatus int) *ResponseRef {
 		return i.(*ResponseRef)
 	}
 	// 0 as default
-	return r.Get(0).(*ResponseRef)
+	ref := r.Get(0)
+	if ref != nil {
+		return ref.(*ResponseRef)
+	}
+	return nil
 }
 
-func (r *RequestBody) GetMedia(contentType *media.ContentType) *MediaType {
+func (r *RequestBody) GetMedia(contentType media.ContentType) *MediaType {
 	if c, ok := r.Content[contentType.String()]; ok {
 		return c
 	} else if c, ok := r.Content[contentType.Key()]; ok {
@@ -267,13 +275,14 @@ func (r *RequestBody) GetMedia(contentType *media.ContentType) *MediaType {
 	return nil
 }
 
-func (r *Response) GetContent(contentType *media.ContentType) *MediaType {
-	if c, ok := r.Content[contentType.String()]; ok {
-		return c
-	} else if c, ok := r.Content[contentType.Key()]; ok {
-		return c
+func (r *Response) GetContent(contentType media.ContentType) (media.ContentType, *MediaType) {
+	for _, v := range r.Content {
+		if v.ContentType.Match(contentType) {
+			return v.ContentType, v
+		}
 	}
-	return nil
+
+	return media.Empty, nil
 }
 
 func (e *Endpoint) Operations() map[string]*Operation {

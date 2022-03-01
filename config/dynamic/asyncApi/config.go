@@ -99,7 +99,7 @@ type Message struct {
 }
 
 type MessageBinding struct {
-	Kafka KafkaMessageBinding
+	Kafka kafka.MessageBinding
 }
 
 type Components struct {

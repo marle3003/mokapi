@@ -2,12 +2,15 @@ package lua
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	lua "github.com/yuin/gopher-lua"
 	luar "layeh.com/gopher-luar"
 	"mokapi/engine/common"
 	"mokapi/lua/http"
 	"mokapi/lua/modules"
 	"path/filepath"
+	"runtime/debug"
+	"strings"
 )
 
 type Script struct {
@@ -17,6 +20,10 @@ type Script struct {
 }
 
 func New(filename, src string, host common.Host) (*Script, error) {
+	// add directory of script to package path. Lua uses this for searching modules
+	path := strings.ReplaceAll(filepath.Dir(filename), "\\", "\\\\")
+	src = "package.path = package.path .. \";" + path + "\" .. [[\\?.lua]]\n" + src
+
 	script := &Script{Key: filename, src: src}
 	script.state = lua.NewState(lua.Options{IncludeGoStackTrace: true})
 	script.state.SetGlobal("script_path", lua.LString(filename))
@@ -24,7 +31,7 @@ func New(filename, src string, host common.Host) (*Script, error) {
 	script.state.SetGlobal("dump", luar.New(script.state, Dump))
 	script.state.SetGlobal("sleep", luar.New(script.state, sleep))
 	script.state.SetGlobal("open", luar.New(script.state, newFile(host).open))
-	script.state.SetGlobal("log", luar.New(script.state, newLog(host)))
+	script.state.PreloadModule("log", modules.NewLog(host).Loader)
 	script.state.PreloadModule("mokapi", modules.NewMokapi(host).Loader)
 	script.state.PreloadModule("yaml", modules.YamlLoader)
 	//l.state.PreloadModule("kafka", kafka.Loader)
@@ -35,6 +42,14 @@ func New(filename, src string, host common.Host) (*Script, error) {
 }
 
 func (s *Script) Run() error {
+	defer func() {
+		r := recover()
+		if r != nil {
+			log.Debugf("lua script error: %v", string(debug.Stack()))
+			log.Errorf("lua script error: %v", r)
+		}
+	}()
+
 	err := s.state.DoString(s.src)
 	if err != nil {
 		return fmt.Errorf("syntax error %q: %v", s.Key, err)

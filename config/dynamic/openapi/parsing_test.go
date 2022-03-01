@@ -1,6 +1,7 @@
 package openapi
 
 import (
+	"fmt"
 	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/openapi/ref"
 	"mokapi/test"
@@ -15,7 +16,7 @@ type testReader struct {
 func (tr *testReader) Read(u *url.URL, opts ...common.FileOptions) (*common.File, error) {
 	file := &common.File{Url: u}
 	for _, opt := range opts {
-		opt(file)
+		opt(file, true)
 	}
 	if err := tr.readFunc(file); err != nil {
 		return file, err
@@ -86,6 +87,6 @@ func TestEndpointResolve(t *testing.T) {
 		}}
 		err := config.Parse(&common.File{Url: &url.URL{}, Data: config}, reader)
 		test.Error(t, err)
-		test.Equals(t, test.TestError, err)
+		test.Equals(t, fmt.Errorf("unable to read /foo.yml#/endpoints/foo: %v", test.TestError), err)
 	})
 }

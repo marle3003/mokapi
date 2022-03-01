@@ -76,3 +76,39 @@ func WithFormat(format string) SchemaOptions {
 		s.Format = format
 	}
 }
+
+func WithMinItems(n int) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.MinItems = &n
+	}
+}
+
+func WithMaxItems(n int) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.MaxItems = &n
+	}
+}
+
+func WithMinProperties(n int) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.MinProperties = &n
+	}
+}
+
+func WithMaxProperties(n int) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.MaxProperties = &n
+	}
+}
+
+func WithAdditionalProperties(additional *schema.Schema) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.AdditionalProperties = &schema.AdditionalProperties{Ref: &schema.Ref{Value: additional}}
+	}
+}
+
+func WithFreeForm(enabled bool) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.AdditionalProperties = &schema.AdditionalProperties{Allowed: enabled}
+	}
+}

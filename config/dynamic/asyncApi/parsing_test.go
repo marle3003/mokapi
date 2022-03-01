@@ -1,6 +1,8 @@
 package asyncApi
 
 import (
+	"fmt"
+	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/openapi/ref"
 	"mokapi/config/dynamic/openapi/schema"
@@ -16,7 +18,7 @@ type testReader struct {
 func (tr *testReader) Read(u *url.URL, opts ...common.FileOptions) (*common.File, error) {
 	file := &common.File{Url: u}
 	for _, opt := range opts {
-		opt(file)
+		opt(file, true)
 	}
 	if err := tr.readFunc(file); err != nil {
 		return file, err
@@ -87,7 +89,7 @@ func TestChannelResolve(t *testing.T) {
 		}}
 		err := config.Parse(&common.File{Url: &url.URL{}, Data: config}, reader)
 		test.Error(t, err)
-		test.Equals(t, test.TestError, err)
+		require.Equal(t, fmt.Sprintf("unable to read /foo.yml#/channels/foo: %v", test.TestError), err.Error())
 	})
 }
 
@@ -176,7 +178,7 @@ func TestMessageResolve(t *testing.T) {
 		}}
 		err := config.Parse(&common.File{Url: &url.URL{}, Data: config}, reader)
 		test.Error(t, err)
-		test.Equals(t, test.TestError, err)
+		require.Equal(t, fmt.Sprintf("unable to read /foo.yml#/components/messages/foo: %v", test.TestError), err.Error())
 	})
 	t.Run("publisher reader returns error", func(t *testing.T) {
 		reader := &testReader{readFunc: func(file *common.File) error {
@@ -187,7 +189,7 @@ func TestMessageResolve(t *testing.T) {
 		}}
 		err := config.Parse(&common.File{Url: &url.URL{}, Data: config}, reader)
 		test.Error(t, err)
-		test.Equals(t, test.TestError, err)
+		require.Equal(t, fmt.Sprintf("unable to read /foo.yml#/components/messages/foo: %v", test.TestError), err.Error())
 	})
 }
 

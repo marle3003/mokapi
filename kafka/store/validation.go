@@ -4,7 +4,7 @@ import (
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/kafka/protocol"
-	"mokapi/models/media"
+	"mokapi/media"
 )
 
 type validator struct {

@@ -4,7 +4,6 @@ import (
 	"mokapi/config/dynamic/openapi"
 	"mokapi/config/dynamic/openapi/openapitest"
 	"mokapi/config/dynamic/openapi/schema/schematest"
-	"mokapi/engine"
 	"mokapi/test"
 	"net/http"
 	"net/http/httptest"
@@ -25,7 +24,8 @@ func TestResolveEndpoint(t *testing.T) {
 				f(rr, r)
 				test.Equals(t, 404, rr.Code)
 				test.Equals(t, "no matching endpoint found at https://foo\n", rr.Body.String())
-			}},
+			},
+		},
 		//
 		// GET
 		//
@@ -35,7 +35,8 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				test.Equals(t, 404, rr.Code)
-			}},
+			},
+		},
 		{"no success response specified",
 			func(t *testing.T, f serveHTTP, c *openapi.Config) {
 				op := openapitest.NewOperation()
@@ -45,7 +46,8 @@ func TestResolveEndpoint(t *testing.T) {
 				f(rr, r)
 				test.Equals(t, 500, rr.Code)
 				test.Equals(t, "no success response (HTTP 2xx) in configuration\n", rr.Body.String())
-			}},
+			},
+		},
 		{"with endpoint",
 			func(t *testing.T, f serveHTTP, c *openapi.Config) {
 				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")))
@@ -54,7 +56,8 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				test.Equals(t, 200, rr.Code)
-			}},
+			},
+		},
 		{"with multiple success response 1/2",
 			func(t *testing.T, f serveHTTP, c *openapi.Config) {
 				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusNoContent, openapitest.WithContent("application/json")),
@@ -64,7 +67,8 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				test.Equals(t, 204, rr.Code)
-			}},
+			},
+		},
 		{"with multiple success response 2/2",
 			func(t *testing.T, f serveHTTP, c *openapi.Config) {
 				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusAccepted, openapitest.WithContent("application/json")),
@@ -74,7 +78,8 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				test.Equals(t, 202, rr.Code)
-			}},
+			},
+		},
 		//
 		// POST
 		//
@@ -86,7 +91,8 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				test.Equals(t, 200, rr.Code)
-			}},
+			},
+		},
 		//
 		// PUT
 		//
@@ -98,7 +104,8 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				test.Equals(t, 200, rr.Code)
-			}},
+			},
+		},
 		//
 		// PATCH
 		//
@@ -110,7 +117,8 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				test.Equals(t, 200, rr.Code)
-			}},
+			},
+		},
 		//
 		// DELETE
 		//
@@ -122,7 +130,8 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				test.Equals(t, 200, rr.Code)
-			}},
+			},
+		},
 		//
 		// HEAD
 		//
@@ -134,7 +143,8 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				test.Equals(t, 200, rr.Code)
-			}},
+			},
+		},
 		//
 		// OPTIONS
 		//
@@ -146,7 +156,8 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				test.Equals(t, 200, rr.Code)
-			}},
+			},
+		},
 		//
 		// TRACE
 		//
@@ -158,7 +169,8 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				test.Equals(t, 200, rr.Code)
-			}},
+			},
+		},
 		//
 		// Path parameter
 		//
@@ -173,7 +185,8 @@ func TestResolveEndpoint(t *testing.T) {
 				f(rr, r)
 				test.Equals(t, 404, rr.Code)
 				test.Equals(t, "no matching endpoint found at http://localhost/foo\n", rr.Body.String())
-			}},
+			},
+		},
 		{"segment of path not match",
 			func(t *testing.T, f serveHTTP, c *openapi.Config) {
 				op := openapitest.NewOperation(
@@ -185,7 +198,8 @@ func TestResolveEndpoint(t *testing.T) {
 				f(rr, r)
 				test.Equals(t, 404, rr.Code)
 				test.Equals(t, "no matching endpoint found at http://localhost/foo\n", rr.Body.String())
-			}},
+			},
+		},
 		{"with path parameter present",
 			func(t *testing.T, f serveHTTP, c *openapi.Config) {
 				op := openapitest.NewOperation(
@@ -196,7 +210,8 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				test.Equals(t, 200, rr.Code)
-			}},
+			},
+		},
 		{"path parameter not present in endpoint path",
 			func(t *testing.T, f serveHTTP, c *openapi.Config) {
 				op := openapitest.NewOperation(
@@ -208,7 +223,8 @@ func TestResolveEndpoint(t *testing.T) {
 				f(rr, r)
 				test.Equals(t, 400, rr.Code)
 				test.Equals(t, "required path parameter id not present\n", rr.Body.String())
-			}},
+			},
+		},
 		//
 		// Query parameter
 		//
@@ -222,7 +238,8 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				test.Equals(t, 200, rr.Code)
-			}},
+			},
+		},
 		{"with required query parameter and not present",
 			func(t *testing.T, f serveHTTP, c *openapi.Config) {
 				op := openapitest.NewOperation(
@@ -234,7 +251,8 @@ func TestResolveEndpoint(t *testing.T) {
 				f(rr, r)
 				test.Equals(t, 400, rr.Code)
 				test.Equals(t, "query parameter id: required parameter not found\n", rr.Body.String())
-			}},
+			},
+		},
 		{"with required query parameter and present",
 			func(t *testing.T, f serveHTTP, c *openapi.Config) {
 				op := openapitest.NewOperation(
@@ -245,7 +263,8 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				test.Equals(t, 200, rr.Code)
-			}},
+			},
+		},
 		//
 		// Cookie parameter
 		//
@@ -259,7 +278,8 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				test.Equals(t, 200, rr.Code)
-			}},
+			},
+		},
 		{"with required query parameter and not present",
 			func(t *testing.T, f serveHTTP, c *openapi.Config) {
 				op := openapitest.NewOperation(
@@ -271,7 +291,8 @@ func TestResolveEndpoint(t *testing.T) {
 				f(rr, r)
 				test.Equals(t, 400, rr.Code)
 				test.Equals(t, "cookie parameter id: required parameter not found\n", rr.Body.String())
-			}},
+			},
+		},
 		{"with required query parameter and present",
 			func(t *testing.T, f serveHTTP, c *openapi.Config) {
 				op := openapitest.NewOperation(
@@ -283,7 +304,8 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				test.Equals(t, 200, rr.Code)
-			}},
+			},
+		},
 		//
 		// Header parameter
 		//
@@ -297,7 +319,8 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				test.Equals(t, 200, rr.Code)
-			}},
+			},
+		},
 		{"with required query parameter and not present",
 			func(t *testing.T, f serveHTTP, c *openapi.Config) {
 				op := openapitest.NewOperation(
@@ -309,7 +332,8 @@ func TestResolveEndpoint(t *testing.T) {
 				f(rr, r)
 				test.Equals(t, 400, rr.Code)
 				test.Equals(t, "header parameter id: required parameter not found\n", rr.Body.String())
-			}},
+			},
+		},
 		{"with required query parameter and present",
 			func(t *testing.T, f serveHTTP, c *openapi.Config) {
 				op := openapitest.NewOperation(
@@ -321,7 +345,8 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				test.Equals(t, 200, rr.Code)
-			}},
+			},
+		},
 		//
 		// content-type
 		//
@@ -338,7 +363,8 @@ func TestResolveEndpoint(t *testing.T) {
 				f(rr, r)
 				test.Equals(t, 200, rr.Code)
 				test.Equals(t, "application/json", rr.Header().Get("content-type"))
-			}},
+			},
+		},
 		{"with content-type extensions",
 			func(t *testing.T, f serveHTTP, c *openapi.Config) {
 				op := openapitest.NewOperation(
@@ -352,7 +378,8 @@ func TestResolveEndpoint(t *testing.T) {
 				f(rr, r)
 				test.Equals(t, 200, rr.Code)
 				test.Equals(t, "application/json;odata=verbose", rr.Header().Get("content-type"))
-			}},
+			},
+		},
 		{"with content-type extensions",
 			func(t *testing.T, f serveHTTP, c *openapi.Config) {
 				op := openapitest.NewOperation(
@@ -365,8 +392,24 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				test.Equals(t, 200, rr.Code)
+				test.Equals(t, "application/json", rr.Header().Get("content-type"))
+			},
+		},
+		{"with content-type extensions exactly",
+			func(t *testing.T, f serveHTTP, c *openapi.Config) {
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json;odata=verbose")),
+					openapitest.WithHeaderParam("id", true))
+				openapitest.AppendEndpoint("/foo", c, openapitest.WithOperation("get", op))
+				r := httptest.NewRequest("get", "http://localhost/foo", nil)
+				r.Header.Set("id", "42")
+				r.Header.Set("accept", "application/json;odata=verbose")
+				rr := httptest.NewRecorder()
+				f(rr, r)
+				test.Equals(t, 200, rr.Code)
 				test.Equals(t, "application/json;odata=verbose", rr.Header().Get("content-type"))
-			}},
+			},
+		},
 		{"with content-type multiple accepted",
 			func(t *testing.T, f serveHTTP, c *openapi.Config) {
 				op := openapitest.NewOperation(
@@ -380,7 +423,8 @@ func TestResolveEndpoint(t *testing.T) {
 				f(rr, r)
 				test.Equals(t, 200, rr.Code)
 				test.Equals(t, "application/json", rr.Header().Get("content-type"))
-			}},
+			},
+		},
 		{"with content-type not supported",
 			func(t *testing.T, f serveHTTP, c *openapi.Config) {
 				op := openapitest.NewOperation(
@@ -393,8 +437,9 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				test.Equals(t, 415, rr.Code)
-				test.Equals(t, "none of requests content type(s) are supported: application/json\n", rr.Body.String())
-			}},
+				test.Equals(t, "none of requests content type(s) are supported: \"application/json\"\n", rr.Body.String())
+			},
+		},
 		{
 			// endpoint /pet/{petId} and /pet/findByStatus overlaps in segments but is different by type
 			// /pet/1
@@ -414,7 +459,8 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				test.Equals(t, 200, rr.Code)
-			}},
+			},
+		},
 	}
 
 	for _, data := range testdata {
@@ -428,10 +474,70 @@ func TestResolveEndpoint(t *testing.T) {
 			}
 
 			data.fn(t, func(rw http.ResponseWriter, r *http.Request) {
-				h := openapi.NewHandler(config, &engine.Engine{})
+				h := openapi.NewHandler(config, &engine{})
 				h.ServeHTTP(rw, r)
 			}, config)
 		})
 
+	}
+}
+
+func TestHandler_Event(t *testing.T) {
+	testcases := []struct {
+		name  string
+		fn    func(t *testing.T, f serveHTTP, c *openapi.Config)
+		event func(event string, args ...interface{})
+	}{
+		{
+			"no response found",
+			func(t *testing.T, f serveHTTP, c *openapi.Config) {
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
+					openapitest.WithHeaderParam("id", true))
+				openapitest.AppendEndpoint("/foo", c, openapitest.WithOperation("get", op))
+				r := httptest.NewRequest("get", "http://localhost/foo", nil)
+				r.Header.Set("id", "42")
+				r.Header.Set("accept", "application/json")
+				rr := httptest.NewRecorder()
+				f(rr, r)
+				test.Equals(t, 500, rr.Code)
+				test.Equals(t, "no configuration was found for HTTP status code 415, https://swagger.io/docs/specification/describing-responses\n", rr.Body.String())
+			},
+			func(event string, args ...interface{}) {
+				r := args[1].(*openapi.EventResponse)
+				r.StatusCode = 415
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			test.NewNullLogger()
+
+			config := &openapi.Config{
+				Info:       openapi.Info{Name: "Testing"},
+				Servers:    []*openapi.Server{{Url: "http://localhost"}},
+				Components: openapi.Components{},
+			}
+
+			tc.fn(t, func(rw http.ResponseWriter, r *http.Request) {
+				h := openapi.NewHandler(config, &engine{emit: tc.event})
+				h.ServeHTTP(rw, r)
+			}, config)
+		})
+
+	}
+}
+
+type engine struct {
+	emit func(event string, args ...interface{})
+}
+
+func (e *engine) Emit(event string, args ...interface{}) {
+	if e.emit != nil {
+		e.emit(event, args...)
 	}
 }

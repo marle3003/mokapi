@@ -3,24 +3,40 @@ package engine
 import (
 	"errors"
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/common"
 	"mokapi/test"
+	"net/url"
 	"testing"
 	"time"
 )
+
+func TestEngine_AddScript(t *testing.T) {
+	engine := New(emptyReader)
+	src := `
+			local mokapi = require "mokapi"
+			mokapi.every("1m", function() end);
+`
+	err := engine.AddScript(mustParse("test.lua"), src)
+	require.NoError(t, err)
+	err = engine.AddScript(mustParse("test.lua"), src)
+	require.NoError(t, err)
+
+	require.Len(t, engine.cron.Jobs(), 1, "only one job should exists")
+}
 
 func TestLuaScriptEngine(t *testing.T) {
 	t.Parallel()
 	t.Run("blank", func(t *testing.T) {
 		t.Parallel()
 		engine := New(emptyReader)
-		err := engine.AddScript("test.lua", "")
+		err := engine.AddScript(mustParse("test.lua"), "")
 		test.Ok(t, err)
 	})
 	t.Run("print", func(t *testing.T) {
 		t.Parallel()
 		engine := New(emptyReader)
-		err := engine.AddScript("test.lua", `print("Hello World")`)
+		err := engine.AddScript(mustParse("test.lua"), `print("Hello World")`)
 		test.Ok(t, err)
 	})
 }
@@ -30,22 +46,9 @@ func TestLuaEvery(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
 		t.Parallel()
 		engine := New(emptyReader)
-		err := engine.AddScript("test.lua", `
+		err := engine.AddScript(mustParse("test.lua"), `
 			local mokapi = require "mokapi"
-			mokapi:every("1m", function() end);
-		`)
-		test.Ok(t, err)
-		test.Assert(t, len(engine.scripts) == 1, "script length not 1")
-
-		test.Assert(t, len(engine.scripts["test.lua"].jobs) == 1, "job not defined")
-		test.Assert(t, len(engine.cron.Jobs()) == 1, "job not defined")
-	})
-	t.Run("simple2", func(t *testing.T) {
-		t.Parallel()
-		engine := New(emptyReader)
-		err := engine.AddScript("test.lua", `
-			local mokapi = require "mokapi"
-			mokapi.every(mokapi, "1m", function() end);
+			id = mokapi.every("1m", function() end);
 		`)
 		test.Ok(t, err)
 		test.Assert(t, len(engine.scripts) == 1, "script length not 1")
@@ -60,7 +63,7 @@ func TestLuaOn(t *testing.T) {
 	t.Run("noEvent", func(t *testing.T) {
 		t.Parallel()
 		engine := New(emptyReader)
-		err := engine.AddScript("test.lua", `
+		err := engine.AddScript(mustParse("test.lua"), `
 			local mokapi = require "mokapi"
 		`)
 		test.Ok(t, err)
@@ -70,9 +73,9 @@ func TestLuaOn(t *testing.T) {
 	t.Run("withoutSummary", func(t *testing.T) {
 		t.Parallel()
 		engine := New(emptyReader)
-		err := engine.AddScript("test.lua", `
+		err := engine.AddScript(mustParse("test.lua"), `
 			local mokapi = require "mokapi"
-			mokapi:on(
+			mokapi.on(
 				'http',
 				function()
 					return false
@@ -90,9 +93,9 @@ func TestLuaOn(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
 		t.Parallel()
 		engine := New(emptyReader)
-		err := engine.AddScript("test.lua", `
+		err := engine.AddScript(mustParse("test.lua"), `
 			local mokapi = require "mokapi"
-			mokapi:on(
+			mokapi.on(
 				'http',
 				function()
 					return true	
@@ -114,9 +117,9 @@ func TestLuaOn(t *testing.T) {
 	t.Run("duration", func(t *testing.T) {
 		t.Parallel()
 		engine := New(emptyReader)
-		err := engine.AddScript("test.lua", `
+		err := engine.AddScript(mustParse("test.lua"), `
 			local mokapi = require "mokapi"
-			mokapi:on(
+			mokapi.on(
 				'http',
 				function()
 					sleep(1000);
@@ -135,9 +138,9 @@ func TestLuaOn(t *testing.T) {
 	t.Run("tag name", func(t *testing.T) {
 		t.Parallel()
 		engine := New(emptyReader)
-		err := engine.AddScript("test.lua", `
+		err := engine.AddScript(mustParse("test.lua"), `
 			local mokapi = require "mokapi"
-			mokapi:on(
+			mokapi.on(
 				'http',
 				function()
 					return true	
@@ -155,9 +158,9 @@ func TestLuaOn(t *testing.T) {
 	t.Run("custom tag", func(t *testing.T) {
 		t.Parallel()
 		engine := New(emptyReader)
-		err := engine.AddScript("test.lua", `
+		err := engine.AddScript(mustParse("test.lua"), `
 			local mokapi = require "mokapi"
-			mokapi:on(
+			mokapi.on(
 				'http',
 				function()
 					return true	
@@ -190,12 +193,13 @@ func TestLuaOn(t *testing.T) {
 
 		engine := New(emptyReader)
 		engine.logger = logger
-		err := engine.AddScript("test.lua", `
+		err := engine.AddScript(mustParse("test.lua"), `
 			local mokapi = require "mokapi"
-			mokapi:on(
+			local log = require "log"
+			mokapi.on(
 				'http',
 				function(p)
-					log:info(p.foo)
+					log.info(p.foo)
 					return true
 				end
 			);
@@ -226,9 +230,10 @@ func TestLuaOpen(t *testing.T) {
 
 		engine := New(reader)
 		engine.logger = logger
-		err := engine.AddScript("./test.lua", `
+		err := engine.AddScript(mustParse("./test.lua"), `
 			local file = open('test.txt')
-			log:info(file)
+			local log = require "log"
+			log.info(file)
 		`)
 		test.Ok(t, err)
 		test.Equals(t, "foobar", msg)
@@ -249,11 +254,20 @@ func TestLuaOpen(t *testing.T) {
 
 		engine := New(reader)
 		engine.logger = logger
-		err := engine.AddScript("./test.lua", `
+		err := engine.AddScript(mustParse("./test.lua"), `
 			local file, err = open('test.txt')
-			log:info(err)
+			local log = require "log"
+			log.info(err)
 		`)
 		test.Ok(t, err)
 		test.Equals(t, "file not found", msg)
 	})
+}
+
+func mustParse(s string) *url.URL {
+	u, err := url.Parse(s)
+	if err != nil {
+		panic(err)
+	}
+	return u
 }

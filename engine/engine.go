@@ -4,6 +4,7 @@ import (
 	"github.com/go-co-op/gocron"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/common"
+	"net/url"
 	"time"
 )
 
@@ -43,17 +44,23 @@ func New(reader common.Reader) *Engine {
 	}
 }
 
-func (e *Engine) AddScript(key, code string) error {
-	s, err := newScriptHost(key, code, e)
+func (e *Engine) AddScript(u *url.URL, code string) error {
+	log.Infof("parsing %v", u)
+	s, err := newScriptHost(u, code, e)
 	if err != nil {
 		return err
+	}
+
+	if h, ok := e.scripts[s.Name]; ok {
+		log.Debugf("closing script %v", s.Name)
+		h.close()
 	}
 
 	err = s.Run()
 	if err != nil {
 		return err
 	}
-	e.scripts[key] = s
+	e.scripts[s.Name] = s
 	return nil
 }
 

@@ -33,7 +33,7 @@ local function getPetsByStatus (status)
     return result
 end
 
-mokapi:on("http", function(request, response)
+mokapi.on("http", function(request, response)
     if request.operationId == "findPetsByStatus" then
         response.data = getPetsByStatus(request.query.status)
         return true

@@ -4,6 +4,7 @@ import (
 	"errors"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
+	"mokapi/media"
 	"mokapi/sortedmap"
 	"strconv"
 )
@@ -37,6 +38,31 @@ func (r *Responses) UnmarshalYAML(value *yaml.Node) error {
 		}
 	}
 
+	return nil
+}
+
+func (c *Content) UnmarshalYAML(value *yaml.Node) error {
+	if value.Kind != yaml.MappingNode {
+		return errors.New("not a mapping node")
+	}
+	if *c == nil {
+		*c = Content{}
+	}
+	for i := 0; i < len(value.Content); i += 2 {
+		var key string
+		err := value.Content[i].Decode(&key)
+		if err != nil {
+			return err
+		}
+		val := &MediaType{}
+		err = value.Content[i+1].Decode(&val)
+		if err != nil {
+			return err
+		}
+		ct := media.ParseContentType(key)
+		val.ContentType = ct
+		(*c)[key] = val
+	}
 	return nil
 }
 

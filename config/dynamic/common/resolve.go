@@ -3,6 +3,7 @@ package common
 import (
 	"fmt"
 	"net/url"
+	"path/filepath"
 	"reflect"
 	"strings"
 )
@@ -19,7 +20,16 @@ func Resolve(ref string, element interface{}, file *File, reader Reader) error {
 
 	if len(u.Path) > 0 {
 		if !u.IsAbs() {
-			u, err = file.Url.Parse(ref)
+			if len(file.Url.Opaque) > 0 {
+				p := filepath.Join(filepath.Dir(file.Url.Opaque), u.Path)
+				p = fmt.Sprintf("file:%v", p)
+				if len(u.Fragment) > 0 {
+					p = fmt.Sprintf("%v#%v", p, u.Fragment)
+				}
+				u, err = url.Parse(p)
+			} else {
+				u, err = file.Url.Parse(ref)
+			}
 		}
 
 		opts := []FileOptions{WithParent(file)}
@@ -32,7 +42,7 @@ func Resolve(ref string, element interface{}, file *File, reader Reader) error {
 
 		f, err := reader.Read(u, opts...)
 		if err != nil {
-			return err
+			return fmt.Errorf("unable to read %v: %v", u, err)
 		}
 		return ResolvePath(u.Fragment, f.Data, element)
 	}
@@ -70,6 +80,11 @@ func ResolvePath(path string, cursor interface{}, resolved interface{}) (err err
 	if !vCursor.Type().AssignableTo(v2.Type()) {
 		vCursor = vCursor.Elem()
 	}
+
+	if !vCursor.Type().AssignableTo(v2.Type()) {
+		return fmt.Errorf("expected type %v, got %v", v2.Type(), vCursor.Type())
+	}
+
 	v2.Set(vCursor)
 
 	return
