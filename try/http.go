@@ -7,6 +7,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -43,9 +45,30 @@ func GetRequest(t *testing.T, url string, headers map[string]string, conditions 
 	}
 }
 
+func Handler(t *testing.T, method string, url string, headers map[string]string, body string, handler http.Handler, conditions ...ResponseCondition) {
+	r := httptest.NewRequest(method, url, strings.NewReader(body))
+	for k, v := range headers {
+		r.Header.Set(k, v)
+	}
+
+	rr := httptest.NewRecorder()
+	handler.ServeHTTP(rr, r)
+
+	for _, cond := range conditions {
+		cond(t, rr.Result())
+	}
+}
+
 func HasStatusCode(status int) ResponseCondition {
 	return func(t *testing.T, r *http.Response) {
 		require.Equal(t, status, r.StatusCode)
+	}
+}
+
+func HasHeader(name, value string) ResponseCondition {
+	return func(t *testing.T, r *http.Response) {
+		v := r.Header.Get(name)
+		require.Equal(t, value, v)
 	}
 }
 
@@ -56,6 +79,6 @@ func HasBody(expected string) ResponseCondition {
 
 		body := string(b)
 
-		require.Equal(t, expected, body)
+		require.Equal(t, expected+"\n", body)
 	}
 }
