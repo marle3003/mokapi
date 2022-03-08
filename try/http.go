@@ -79,6 +79,6 @@ func HasBody(expected string) ResponseCondition {
 
 		body := string(b)
 
-		require.Equal(t, expected+"\n", body)
+		require.Equal(t, expected, body)
 	}
 }
