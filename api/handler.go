@@ -67,9 +67,17 @@ func writeError(w http.ResponseWriter, err error, status int) {
 	http.Error(w, string(data), status)
 }
 
-func (h *handler) getInfo(w http.ResponseWriter, r *http.Request) {
+func (h *handler) getInfo(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(info{Version: version.BuildVersion})
+	writeJsonBody(w, info{Version: version.BuildVersion})
+}
+
+func writeJsonBody(w http.ResponseWriter, i interface{}) {
+	b, err := json.Marshal(i)
+	if err != nil {
+		writeError(w, err, http.StatusInternalServerError)
+	}
+	_, err = w.Write(b)
 	if err != nil {
 		writeError(w, err, http.StatusInternalServerError)
 	}
