@@ -21,8 +21,10 @@ type Script struct {
 
 func New(filename, src string, host common.Host) (*Script, error) {
 	// add directory of script to package path. Lua uses this for searching modules
-	path := strings.ReplaceAll(filepath.Dir(filename), "\\", "\\\\")
-	src = "package.path = package.path .. \";" + path + "\" .. [[\\?.lua]]\n" + src
+	sep := string(filepath.Separator)
+	pkg := fmt.Sprintf("package.path = package.path .. \";%v%v\" .. [[%v?.lua]]\n", filepath.Dir(filename), sep, sep)
+	pkg = strings.ReplaceAll(pkg, "\\", "\\\\")
+	src = pkg + src
 
 	script := &Script{Key: filename, src: src}
 	script.state = lua.NewState(lua.Options{IncludeGoStackTrace: true})
