@@ -254,17 +254,22 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-func (r *Responses) GetResponse(httpStatus int) *ResponseRef {
+func (r *Responses) GetResponse(httpStatus int) *Response {
 	i := r.Get(httpStatus)
-	if i != nil {
-		return i.(*ResponseRef)
+	if i == nil {
+		// 0 as default
+		i = r.Get(0)
 	}
-	// 0 as default
-	ref := r.Get(0)
-	if ref != nil {
-		return ref.(*ResponseRef)
+
+	if i == nil {
+		return nil
 	}
-	return nil
+
+	rr := i.(*ResponseRef)
+	if rr == nil {
+		return nil
+	}
+	return rr.Value
 }
 
 func (r *RequestBody) GetMedia(contentType media.ContentType) *MediaType {
@@ -331,18 +336,11 @@ func (op *Operation) getFirstSuccessResponse() (int, *Response, error) {
 	}
 
 	r := op.Responses.GetResponse(successStatus)
-	if r != nil {
-		return successStatus, r.Value, nil
-	}
-	return 0, nil, fmt.Errorf("unable to resolve reference: %v", r.Ref())
+	return successStatus, r, nil
 }
 
 func (op *Operation) getResponse(statusCode int) *Response {
-	r := op.Responses.GetResponse(statusCode)
-	if r != nil {
-		return r.Value
-	}
-	return nil
+	return op.Responses.GetResponse(statusCode)
 }
 
 type version struct {

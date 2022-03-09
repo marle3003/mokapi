@@ -31,6 +31,7 @@ properties:
 			func(t *testing.T, schema *Schema) {
 				require.Equal(t, "object", schema.Type)
 				require.False(t, schema.IsFreeForm())
+				require.False(t, schema.IsDictionary())
 			},
 		},
 		{

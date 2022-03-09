@@ -139,7 +139,7 @@ func (s *Schema) IsFreeForm() bool {
 }
 
 func (s *Schema) IsDictionary() bool {
-	return s.AdditionalProperties != nil && s.AdditionalProperties.Value != nil && s.AdditionalProperties.Value.Type != ""
+	return s.AdditionalProperties != nil && s.AdditionalProperties.Ref != nil && s.AdditionalProperties.Value != nil && s.AdditionalProperties.Value.Type != ""
 }
 
 func (ap *AdditionalProperties) IsFreeForm() bool {

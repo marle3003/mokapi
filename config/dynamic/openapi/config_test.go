@@ -123,7 +123,7 @@ default: {description: default}
 			fn: func(t *testing.T, res *openapi.Responses) {
 				r := res.GetResponse(200)
 				require.NotNil(t, r)
-				require.Equal(t, "default", r.Value.Description)
+				require.Equal(t, "default", r.Description)
 			},
 		},
 	}
@@ -190,7 +190,7 @@ components:
 				keys := c.EndPoints["/foo"].Value.Get.Responses.Keys()
 				test.Equals(t, exp, keys)
 				r := c.EndPoints["/foo"].Value.Get.Responses.GetResponse(http.StatusOK)
-				content := r.Value.Content["application/xml"]
+				content := r.Content["application/xml"]
 				test.Assert(t, content.Schema.Value != nil, "ref resolved")
 			},
 		},
@@ -201,7 +201,8 @@ components:
 		t.Run(d.Name, func(t *testing.T) {
 			c := &openapi.Config{}
 			err := yaml.Unmarshal([]byte(d.Content), c)
-			c.Parse(&common.File{Data: c}, nil)
+			test.Ok(t, err)
+			err = c.Parse(&common.File{Data: c}, nil)
 			test.Ok(t, err)
 			d.f(t, c)
 		})
@@ -304,10 +305,10 @@ func TestPetStore_Response(t *testing.T) {
 	endpoint := config.EndPoints["/pet/{petId}"]
 	r := endpoint.Value.Get.Responses.GetResponse(http.StatusOK)
 	test.Assert(t, r != nil, "response exists")
-	ct, m := r.Value.GetContent(media.ParseContentType("application/json"))
-	test.Equals(t, r.Value.Content[ct.String()], m)
+	ct, m := r.GetContent(media.ParseContentType("application/json"))
+	test.Equals(t, r.Content[ct.String()], m)
 
-	_, m = r.Value.GetContent(media.ParseContentType("foo/bar"))
+	_, m = r.GetContent(media.ParseContentType("foo/bar"))
 	test.Equals(t, nil, m)
 }
 
