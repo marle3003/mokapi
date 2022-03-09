@@ -268,19 +268,29 @@ func TestDirectory_ServeSearch(t *testing.T) {
 				require.Equal(t, int64(0), rr.Responses[1].MessageId)
 				require.Equal(t, int64(0), rr.Responses[2].MessageId)
 
-				require.Len(t, rr.Responses[0].Body.Children[1].Children, 2) // attributes
-				// the order of attributes is not guaranteed
-				attributes := rr.Responses[0].Body.Children[1].Children
-				var names []interface{}
-				for _, a := range attributes {
-					names = append(names, a.Children[0].Value)
+				testEntry := func(r ldaptest.Response, mail string) {
+					require.Len(t, r.Body.Children[1].Children, 2) // attributes
+					// the order of attributes is not guaranteed
+					attributes := r.Body.Children[1].Children
+					var names []interface{}
+					for _, a := range attributes {
+						names = append(names, a.Children[0].Value)
+					}
+					require.ElementsMatch(t, names, []interface{}{"objectclass", "mail"})
+					var values []interface{}
+					for _, a := range attributes {
+						values = append(values, a.Children[1].Children[0].Value)
+					}
+					require.ElementsMatch(t, values, []interface{}{"foo", mail})
 				}
-				require.ElementsMatch(t, names, []interface{}{"objectclass", "mail"})
-				var values []interface{}
-				for _, a := range attributes {
-					values = append(values, a.Children[1].Children[0].Value)
+
+				if results[0] == "cn=user1,dc=foo,dc=com" {
+					testEntry(rr.Responses[0], "user1@foo.bar")
+					testEntry(rr.Responses[1], "user2@foo.bar")
+				} else {
+					testEntry(rr.Responses[1], "user1@foo.bar")
+					testEntry(rr.Responses[0], "user2@foo.bar")
 				}
-				require.ElementsMatch(t, values, []interface{}{"foo", "user1@foo.bar"})
 
 				done := rr.Responses[2]
 				require.Equal(t, ldap.ResultSuccess, done.Body.Children[0].Value)
