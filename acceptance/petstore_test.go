@@ -16,12 +16,20 @@ type PetStoreSuite struct{ BaseSuite }
 
 func (suite *PetStoreSuite) SetupSuite() {
 	cfg := static.NewConfig()
+	cfg.Api.Port = "8081"
 	cfg.Providers.File.Directory = "./petstore"
 	suite.initCmd(cfg)
 }
 
 func (suite *PetStoreSuite) SetupTest() {
 	gofakeit.Seed(11)
+}
+
+func (suite *PetStoreSuite) TestApi() {
+	try.GetRequest(suite.T(), "http://127.0.0.1:8081",
+		nil,
+		try.HasStatusCode(200),
+		try.HasHeader("Access-Control-Allow-Origin", "*"))
 }
 
 func (suite *PetStoreSuite) TestJsFile() {

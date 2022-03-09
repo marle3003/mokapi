@@ -28,13 +28,13 @@ type scriptHost struct {
 }
 
 func newScriptHost(u *url.URL, src string, e *Engine) (*scriptHost, error) {
-	path := u.String()
+	path := u.Path
 	if len(u.Opaque) > 0 {
 		path = u.Opaque
 	}
 
 	sh := &scriptHost{
-		Name:   u.String(),
+		Name:   u.Path,
 		engine: e,
 		jobs:   make(map[int]*gocron.Job),
 		events: make(map[string][]*eventHandler),

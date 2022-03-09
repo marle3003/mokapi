@@ -269,9 +269,18 @@ func TestDirectory_ServeSearch(t *testing.T) {
 				require.Equal(t, int64(0), rr.Responses[2].MessageId)
 
 				require.Len(t, rr.Responses[0].Body.Children[1].Children, 2) // attributes
-				attr := rr.Responses[0].Body.Children[1].Children[0]
-				require.Equal(t, "objectclass", attr.Children[0].Value)     // name
-				require.Equal(t, "foo", attr.Children[1].Children[0].Value) // first value
+				// the order of attributes is not guaranteed
+				attributes := rr.Responses[0].Body.Children[1].Children
+				var names []interface{}
+				for _, a := range attributes {
+					names = append(names, a.Children[0].Value)
+				}
+				require.ElementsMatch(t, names, []interface{}{"objectclass", "mail"})
+				var values []interface{}
+				for _, a := range attributes {
+					values = append(values, a.Children[1].Children[0].Value)
+				}
+				require.ElementsMatch(t, values, []interface{}{"foo", "user1@foo.bar"})
 
 				done := rr.Responses[2]
 				require.Equal(t, ldap.ResultSuccess, done.Body.Children[0].Value)

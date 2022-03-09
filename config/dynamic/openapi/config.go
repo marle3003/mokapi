@@ -19,15 +19,15 @@ func init() {
 }
 
 type Config struct {
-	OpenApi string
-	Info    Info
-	Servers []*Server
+	OpenApi string    `yaml:"openapi" json:"openapi"`
+	Info    Info      `yaml:"info" json:"info"`
+	Servers []*Server `yaml:"servers,omitempty" json:"server,omitempty"`
 
 	// A relative path to an individual endpoint. The path MUST begin
 	// with a forward slash ('/'). The path is appended to the url from
 	// server objects url field in order to construct the full URL
 	EndPoints  map[string]*EndpointRef `yaml:"paths" json:"paths"`
-	Components Components
+	Components Components              `yaml:"components,omitempty" json:"components,omitempty"`
 }
 
 type Info struct {
@@ -36,11 +36,10 @@ type Info struct {
 
 	// A short description of the API. CommonMark syntax MAY be
 	// used for rich text representation.
-	Description string
+	Description string `yaml:"description,omitempty" json:"description,omitempty"`
 
 	// The version of the service
-	Version string
-	//Mokapi  *MokapiRef `yaml:"x-mokapi" json:"x-mokapi"`
+	Version string `yaml:"version" json:"version"`
 }
 
 type Server struct {
@@ -210,12 +209,12 @@ type ExampleRef struct {
 }
 
 type Components struct {
-	Schemas       *schema.SchemasRef
-	Responses     *NamedResponses
-	RequestBodies *RequestBodies `yaml:"requestBodies" json:"requestBodies"`
-	Parameters    *parameter.NamedParameters
-	Examples      *Examples
-	Headers       *NamedHeaders
+	Schemas       *schema.SchemasRef         `yaml:"schemas,omitempty" json:"schemas,omitempty"`
+	Responses     *NamedResponses            `yaml:"responses,omitempty" json:"responses,omitempty"`
+	RequestBodies *RequestBodies             `yaml:"requestBodies,omitempty" json:"requestBodies,omitempty"`
+	Parameters    *parameter.NamedParameters `yaml:"parameters,omitempty" json:"parameters,omitempty"`
+	Examples      *Examples                  `yaml:"examples,omitempty" json:"examples,omitempty"`
+	Headers       *NamedHeaders              `yaml:"headers,omitempty" json:"headers,omitempty"`
 }
 
 type NamedResponses struct {
