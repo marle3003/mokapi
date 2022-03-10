@@ -100,6 +100,14 @@ func ToValue(l *lua.LState, i interface{}) lua.LValue {
 	case reflect.Float32, reflect.Float64:
 		return lua.LNumber(val.Float())
 	case reflect.Ptr:
+		if sm, ok := i.(*sortedmap.LinkedHashMap); ok {
+			tbl := l.NewTable()
+			for it := sm.Iter(); it.Next(); {
+				l.SetField(tbl, it.Key().(string), ToValue(l, it.Value()))
+			}
+			return tbl
+		}
+
 		from := reflect.ValueOf(i)
 		t := from.Elem().Type()
 		fields := make([]reflect.StructField, 0, t.NumField())
@@ -259,7 +267,6 @@ func convert(val reflect.Value, t reflect.Type) reflect.Value {
 		}
 		return val
 	case reflect.Struct:
-
 	}
 
 	log.Debugf("unable to convert value to %v from package %v", t.Name(), t.PkgPath())

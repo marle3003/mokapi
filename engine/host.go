@@ -34,7 +34,7 @@ func newScriptHost(u *url.URL, src string, e *Engine) (*scriptHost, error) {
 	}
 
 	sh := &scriptHost{
-		Name:   u.Path,
+		Name:   path,
 		engine: e,
 		jobs:   make(map[int]*gocron.Job),
 		events: make(map[string][]*eventHandler),
@@ -74,6 +74,8 @@ func (sh *scriptHost) RunEvent(event string, args ...interface{}) []*Summary {
 			log.Errorf("unable to execute event handler: %v", err)
 		} else if !b {
 			continue
+		} else {
+			log.Debugf("processed event handler %v", s)
 		}
 
 		s.Duration = time.Now().Sub(start)
