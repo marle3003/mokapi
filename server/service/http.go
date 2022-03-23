@@ -122,8 +122,7 @@ func (s *HttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (s *HttpServer) resolveService(r *http.Request) (*HttpService, string) {
 	host, _, err := net.SplitHostPort(r.Host)
 	if err != nil {
-		log.Errorf("unable to split host and port: %v", err)
-		return nil, ""
+		host = r.Host
 	}
 
 	if paths, ok := s.handlers[host]; ok {

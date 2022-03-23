@@ -6,8 +6,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"math"
 	"math/rand"
+	"mokapi/sortedmap"
 	"reflect"
-	"strings"
 	"time"
 )
 
@@ -49,32 +49,20 @@ func (g *Generator) New(ref *Ref) interface{} {
 }
 
 func (g *Generator) getObject(s *Schema) interface{} {
-	if s.Properties == nil || s.Properties.Value == nil {
-		t := reflect.StructOf([]reflect.StructField{})
-		return reflect.New(t).Interface()
-	}
+	m := sortedmap.NewLinkedHashMap()
 
-	fields := make([]reflect.StructField, 0, s.Properties.Value.Len())
-	values := make([]reflect.Value, 0, s.Properties.Value.Len())
+	if s.Properties == nil || s.Properties.Value == nil {
+		return m
+	}
 
 	for it := s.Properties.Value.Iter(); it.Next(); {
-		name := it.Key().(string)
+		key := it.Key().(string)
 		propSchema := it.Value().(*Ref)
-
 		value := g.New(propSchema)
-		fields = append(fields, reflect.StructField{
-			Name: strings.Title(name),
-			Type: reflect.TypeOf(value),
-		})
-		values = append(values, reflect.ValueOf(value))
+		m.Set(key, value)
 	}
 
-	t := reflect.StructOf(fields)
-	v := reflect.New(t).Elem()
-	for i, val := range values {
-		v.Field(i).Set(val)
-	}
-	return v.Addr().Interface()
+	return m
 }
 
 func getType(s *Schema) reflect.Type {

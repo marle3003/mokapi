@@ -15,10 +15,16 @@ func MapTable(tbl *lua.LTable) interface{} {
 	if tbl == nil {
 		return nil
 	}
-	return FromValue(tbl)
+	return FromValue(tbl, nil)
 }
 
-func FromValue(lv lua.LValue) interface{} {
+func FromValue(lv lua.LValue, hint reflect.Type) interface{} {
+	if hint == nil {
+		hint = reflect.TypeOf((*interface{})(nil)).Elem()
+	}
+
+	isPtr := false
+
 	switch v := lv.(type) {
 	case *lua.LNilType:
 		return nil
@@ -33,12 +39,29 @@ func FromValue(lv lua.LValue) interface{} {
 		}
 		return f
 	case *lua.LTable:
-		n := v.MaxN()
-		if n == 0 { // table
-			ret := sortedmap.NewLinkedHashMap()
-
-			// using v.Next instead of v.ForEach to ensure the order of the table items
-			// v.ForEach loops over a map, v.Next loops over the keys which is an array
+		switch {
+		case hint.Kind() == reflect.Array:
+			ret := reflect.New(hint).Elem()
+			for i := 1; i <= v.MaxN(); i++ {
+				item := FromValue(v.RawGetInt(i), hint.Elem())
+				reflect.Append(ret, reflect.ValueOf(item))
+			}
+			return ret
+		case hint.Kind() == reflect.Slice:
+			length := v.Len()
+			ret := reflect.MakeSlice(hint, 0, length)
+			for i := 1; i <= v.MaxN(); i++ {
+				item := FromValue(v.RawGetInt(i), hint.Elem())
+				ret = reflect.Append(ret, reflect.ValueOf(item))
+			}
+			return ret.Interface()
+		case hint.Kind() == reflect.Ptr:
+			hint = hint.Elem()
+			isPtr = true
+			fallthrough
+		case hint.Kind() == reflect.Struct:
+			ret := reflect.New(hint)
+			t := ret.Elem()
 			k := lua.LNil
 			var val lua.LValue
 			for {
@@ -47,43 +70,98 @@ func FromValue(lv lua.LValue) interface{} {
 					break
 				}
 
-				key := fmt.Sprintf("%v", FromValue(k))
-				ret.Set(key, FromValue(val))
+				fieldName := k.String()
+				field, found := hint.FieldByName(strings.Title(fieldName))
+				if !found {
+					continue
+				}
+				value := FromValue(val, field.Type)
+				converted := convert(reflect.ValueOf(value), field.Type)
+				t.FieldByIndex(field.Index).Set(converted)
 			}
-			return ret
-		} else { // array
-			ret := make([]interface{}, 0, n)
-			for i := 1; i <= n; i++ {
-				ret = append(ret, FromValue(v.RawGetInt(i)))
+			if isPtr {
+				return ret.Interface()
+			}
+			return t.Interface()
+		case hint.Kind() == reflect.Map:
+			ret := reflect.MakeMap(hint)
+
+			v.ForEach(func(vKey lua.LValue, vVal lua.LValue) {
+				key := FromValue(vKey, hint.Key())
+				val := FromValue(vVal, hint.Elem())
+				ret.SetMapIndex(reflect.ValueOf(key), reflect.ValueOf(val))
+			})
+			return ret.Interface()
+		default:
+			if v.MaxN() == 0 {
+				ret := sortedmap.NewLinkedHashMap()
+
+				// using v.Next instead of v.ForEach to ensure the order of the table items
+				// v.ForEach loops over a map, v.Next loops over the keys which is an array
+				k := lua.LNil
+				var val lua.LValue
+				for {
+					k, val = v.Next(k)
+					if k == lua.LNil {
+						break
+					}
+
+					key := fmt.Sprintf("%v", FromValue(k, reflect.TypeOf("")))
+					ret.Set(key, FromValue(val, hint))
+				}
+				return ret
+			}
+			length := v.Len()
+			ret := make([]interface{}, 0, length)
+			for i := 1; i <= length; i++ {
+				ret = append(ret, FromValue(v.RawGetInt(i), hint))
 			}
 			return ret
 		}
 	case *lua.LUserData:
-		from := reflect.ValueOf(v.Value)
-		t := from.Elem().Type()
-		fields := make([]reflect.StructField, 0, t.NumField())
-		for i := 0; i < t.NumField(); i++ {
-			f := t.Field(i)
-			fields = append(fields, reflect.StructField{
-				Name: f.Name,
-				Type: reflect.TypeOf((*interface{})(nil)).Elem(),
-			})
-		}
-
-		p := reflect.New(reflect.StructOf(fields))
-		e := p.Elem()
-		for _, fd := range fields {
-			f := e.FieldByName(fd.Name)
-			fv := from.Elem().FieldByName(fd.Name).Interface()
-			val := FromValue(fv.(lua.LValue))
-			if val != nil {
-				f.Set(reflect.ValueOf(val))
-			} else {
-				f.Set(reflect.Zero(fd.Type))
+		switch {
+		case hint.Kind() == reflect.Ptr:
+			hint = hint.Elem()
+			isPtr = true
+			fallthrough
+		case hint.Kind() == reflect.Struct:
+			dest := reflect.New(hint)
+			from := reflect.ValueOf(v.Value)
+			ft := from.Elem().Type()
+			dt := dest.Elem()
+			for i := 0; i < ft.NumField(); i++ {
+				f := ft.Field(i)
+				dstF := dt.FieldByName(f.Name)
+				fv := from.Elem().FieldByName(f.Name).Interface()
+				val := FromValue(fv.(lua.LValue), dstF.Type())
+				if val != nil {
+					con := convert(reflect.ValueOf(val), dstF.Type())
+					dstF.Set(con)
+				} else {
+					dstF.Set(reflect.Zero(f.Type))
+				}
 			}
+			if isPtr {
+				return dest.Interface()
+			}
+			return dt.Interface()
+		case hint.Kind() == reflect.Interface:
+			m := sortedmap.NewLinkedHashMap()
+			from := reflect.ValueOf(v.Value)
+			t := from.Elem().Type()
+			for i := 0; i < t.NumField(); i++ {
+				f := t.Field(i)
+				fv := from.Elem().FieldByName(f.Name).Interface()
+				val := FromValue(fv.(lua.LValue), nil)
+				if val != nil {
+					m.Set(f.Name, val)
+				} else {
+					m.Set(f.Name, nil)
+				}
+			}
+			return m
 		}
-
-		return p.Interface()
+		return v
 	default:
 		return v
 	}
@@ -146,7 +224,7 @@ func ToValue(l *lua.LState, i interface{}) lua.LValue {
 		}
 		return tbl
 	case reflect.Slice:
-		if val.IsNil() {
+		if val.IsNil() || val.Len() == 0 {
 			return lua.LNil
 		}
 		tbl := l.NewTable()
@@ -193,51 +271,11 @@ func Map(i interface{}, v lua.LValue) error {
 		dstVal = dstVal.Elem()
 	}
 
-	switch converted := v.(type) {
-	case *lua.LUserData:
-		srcVal := reflect.ValueOf(converted.Value).Elem()
-		t := srcVal.Type()
-		for i := 0; i < t.NumField(); i++ {
-			f := t.Field(i)
-			fv := srcVal.Field(i).Interface()
-			if fv != nil {
-				dstF := dstVal.FieldByName(f.Name)
-				switch dstF.Kind() {
-				case reflect.Ptr:
-					if err := Map(dstF.Interface(), fv.(lua.LValue)); err != nil {
-						return err
-					}
-				case reflect.Struct:
-					if err := Map(dstF.Addr().Interface(), fv.(lua.LValue)); err != nil {
-						return err
-					}
-				default:
-					v := FromValue(fv.(lua.LValue))
-					if v != nil {
-						dstF.Set(convert(reflect.ValueOf(v), dstF.Type()))
-					} else {
-						dstF.Set(reflect.Zero(dstF.Type()))
-					}
-				}
-			}
-		}
-	case *lua.LTable:
-		n := converted.MaxN()
-		if n > 0 {
-			return fmt.Errorf("map does not support array")
-		}
+	r := FromValue(v, reflect.TypeOf(i))
+	rv := reflect.ValueOf(r)
+	rv = convert(rv, dstVal.Type())
 
-		converted.ForEach(func(key, value lua.LValue) {
-			k := fmt.Sprintf("%v", FromValue(key))
-			val := reflect.ValueOf(FromValue(value))
-			f := dstVal.FieldByName(strings.Title(k))
-			val = convert(val, f.Type())
-
-			dstVal.FieldByName(strings.Title(k)).Set(val)
-		})
-	default:
-		return fmt.Errorf("map does not support %t", v)
-	}
+	dstVal.Set(rv.Elem())
 
 	return nil
 }

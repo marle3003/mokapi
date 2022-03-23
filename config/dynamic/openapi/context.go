@@ -26,7 +26,7 @@ func ContentTypeFromRequest(r *http.Request, res *Response) (media.ContentType, 
 		return media.Empty, nil, httperror.Newf(http.StatusUnsupportedMediaType,
 			"none of requests content type(s) are supported: %q", accept)
 	} else if ct.IsRange() {
-		return media.GetRandom(accept), mt, nil
+		return media.GetRandom(ct.String()), mt, nil
 	}
 
 	return ct, mt, nil
@@ -61,7 +61,11 @@ func negotiateContentType(accept string, res *Response) (media.ContentType, *Med
 		}
 	}
 
-	if best.String() != media.Empty.String() && best.IsRange() {
+	if media.Equal(bestSpec, media.Any) && media.Equal(best, media.Any) {
+		return media.Default, bestMediaType
+	}
+
+	if !media.Equal(best, media.Empty) && best.IsRange() {
 		return bestSpec, bestMediaType
 	}
 

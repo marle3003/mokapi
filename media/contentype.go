@@ -8,6 +8,8 @@ import (
 )
 
 var Empty = ContentType{}
+var Any = ParseContentType("*/*")
+var Default = ParseContentType("application/json")
 
 type ContentType struct {
 	Type       string
@@ -83,4 +85,8 @@ func (c ContentType) Match(other ContentType) bool {
 		}
 	}
 	return false
+}
+
+func Equal(c1, c2 ContentType) bool {
+	return c1.raw == c2.raw
 }
