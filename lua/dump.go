@@ -12,7 +12,7 @@ import (
 
 func Dump(i interface{}) string {
 	if lv, ok := i.(lua.LValue); ok {
-		i = utils.FromValue(lv)
+		i = utils.FromValue(lv, nil)
 	}
 
 	if m, ok := i.(*sortedmap.LinkedHashMap); ok {

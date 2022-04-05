@@ -31,6 +31,13 @@ func TestRef_Marshal(t *testing.T) {
 			`3.141`,
 		},
 		{
+			"string",
+			&schema.Ref{Value: schematest.New("string")},
+			"12",
+			media.ParseContentType("application/json"),
+			`"12"`,
+		},
+		{
 			"integer as string",
 			&schema.Ref{Value: schematest.New("integer")},
 			"12",

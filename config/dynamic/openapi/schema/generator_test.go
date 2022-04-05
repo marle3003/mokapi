@@ -2,8 +2,10 @@ package schema_test
 
 import (
 	"github.com/brianvoe/gofakeit/v6"
+	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/config/dynamic/openapi/schema/schematest"
+	"mokapi/sortedmap"
 	"mokapi/test"
 	"testing"
 )
@@ -383,45 +385,38 @@ func TestGeneratorObject(t *testing.T) {
 		schema *schema.Schema
 	}{
 		{
-			"simple",
-			&struct {
-				Id int64
-			}{Id: int64(-8379641344161477543)},
-			schematest.New("object", schematest.WithProperty("id", &schema.Schema{Type: "integer", Format: "int64"})),
+			name: "simple",
+			exp: map[string]interface{}{
+				"id": int64(-8379641344161477543),
+			},
+			schema: schematest.New("object", schematest.WithProperty("id", &schema.Schema{Type: "integer", Format: "int64"})),
 		},
-		// unable to test because of unordered map which generates random values despite fixed seed
-		//{
-		//	"more fields",
-		//	map[string]interface{}{"id": 5624956352167149568, "date": "1943-5-23"},
-		//	&openapi.Schema{Type: "object", Properties: &openapi.Schemas{
-		//		Value: map[string]*openapi.SchemaRef{
-		//			"id":   {Value: &openapi.Schema{Type: "integer", Format: "int32"}},
-		//			"date": {Value: &openapi.Schema{Type: "string", Format: "date"}},
-		//		},
-		//	}},
-		//},
-		//{
-		//	"nested",
-		//	map[string]interface{}{
-		//		"nested": map[string]interface{}{
-		//			"id":   3225897846662234112,
-		//			"date": "1943-5-23",
-		//		},
-		//	},
-		//	&openapi.Schema{Type: "object", Properties: &openapi.Schemas{
-		//		Value: map[string]*openapi.SchemaRef{
-		//			"nested": {Value: &openapi.Schema{Type: "object", Properties: &openapi.Schemas{
-		//				Value: map[string]*openapi.SchemaRef{
-		//					"id":   {Value: &openapi.Schema{Type: "integer", Format: "int32"}},
-		//					"date": {Value: &openapi.Schema{Type: "string", Format: "date"}},
-		//				},
-		//			}}},
-		//		},
-		//	}},
-		//},
+		{
+			name: "more fields",
+			exp:  map[string]interface{}{"id": int32(-1072427943), "date": "1977-06-05"},
+			schema: schematest.New("object",
+				schematest.WithProperty("id", schematest.New("integer", schematest.WithFormat("int32"))),
+				schematest.WithProperty("date", schematest.New("string", schematest.WithFormat("date")))),
+		},
+		{
+			name: "nested",
+			exp: map[string]interface{}{
+				"nested": map[string]interface{}{
+					"id":   int32(-1072427943),
+					"date": "1977-06-05",
+				},
+			},
+			schema: schematest.New("object",
+				schematest.WithProperty("nested", schematest.New("object",
+					schematest.WithProperty("id", schematest.New("integer", schematest.WithFormat("int32"))),
+					schematest.WithProperty("date", schematest.New("string", schematest.WithFormat("date"))),
+				),
+				),
+			),
+		},
 		{
 			"no fields defined",
-			&struct{}{},
+			map[string]interface{}{},
 			&schema.Schema{Type: "object"},
 		},
 		//{
@@ -433,13 +428,27 @@ func TestGeneratorObject(t *testing.T) {
 		//},
 	}
 
+	var toMap func(m *sortedmap.LinkedHashMap) map[string]interface{}
+	toMap = func(m *sortedmap.LinkedHashMap) map[string]interface{} {
+		r := make(map[string]interface{})
+		for it := m.Iter(); it.Next(); {
+			v := it.Value()
+			if vm, ok := v.(*sortedmap.LinkedHashMap); ok {
+				r[it.Key().(string)] = toMap(vm)
+			} else {
+				r[it.Key().(string)] = it.Value()
+			}
+		}
+		return r
+	}
+
 	for _, data := range testdata {
 		t.Run(data.name, func(t *testing.T) {
 			gofakeit.Seed(11)
 
 			g := schema.NewGenerator()
 			o := g.New(&schema.Ref{Value: data.schema})
-			test.Equals(t, data.exp, o)
+			require.Equal(t, data.exp, toMap(o.(*sortedmap.LinkedHashMap)))
 		})
 	}
 }

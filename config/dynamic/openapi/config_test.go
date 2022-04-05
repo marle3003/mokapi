@@ -305,10 +305,11 @@ func TestPetStore_Response(t *testing.T) {
 	endpoint := config.EndPoints["/pet/{petId}"]
 	r := endpoint.Value.Get.Responses.GetResponse(http.StatusOK)
 	test.Assert(t, r != nil, "response exists")
-	ct, m := r.GetContent(media.ParseContentType("application/json"))
+	ct := media.ParseContentType("application/json")
+	m := r.GetContent(ct)
 	test.Equals(t, r.Content[ct.String()], m)
 
-	_, m = r.GetContent(media.ParseContentType("foo/bar"))
+	m = r.GetContent(media.ParseContentType("foo/bar"))
 	test.Equals(t, nil, m)
 }
 

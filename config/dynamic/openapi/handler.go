@@ -97,17 +97,16 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Add(k, v)
 	}
 
-	if response.StatusCode > 0 {
-		rw.WriteHeader(response.StatusCode)
-	}
-
 	if len(res.Content) == 0 {
 		// no response content is defined which means body is empty
+		if response.StatusCode > 0 {
+			rw.WriteHeader(response.StatusCode)
+		}
 		return
 	}
 
 	contentType = media.ParseContentType(response.Headers["Content-Type"])
-	contentType, mediaType = res.GetContent(contentType)
+	mediaType = res.GetContent(contentType)
 	if mediaType == nil {
 		writeError(rw, r, fmt.Errorf("response has no definition for content type: %v", contentType))
 		return
@@ -129,6 +128,10 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
+	}
+
+	if response.StatusCode > 0 {
+		rw.WriteHeader(response.StatusCode)
 	}
 
 	_, err = rw.Write(body)

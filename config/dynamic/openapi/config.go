@@ -280,14 +280,14 @@ func (r *RequestBody) GetMedia(contentType media.ContentType) *MediaType {
 	return nil
 }
 
-func (r *Response) GetContent(contentType media.ContentType) (media.ContentType, *MediaType) {
+func (r *Response) GetContent(contentType media.ContentType) *MediaType {
 	for _, v := range r.Content {
 		if v.ContentType.Match(contentType) {
-			return v.ContentType, v
+			return v
 		}
 	}
 
-	return media.Empty, nil
+	return nil
 }
 
 func (e *Endpoint) Operations() map[string]*Operation {

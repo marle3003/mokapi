@@ -234,6 +234,42 @@ return true end)
 		require.True(t, b)
 		require.Equal(t, "bar", r.Data)
 	})
+
+	t.Run("mokapi.on two handlers", func(t *testing.T) {
+		var fns []func(args ...interface{}) (bool, error)
+		host := &testHost{
+			fnOn: func(evt string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+				fns = append(fns, do)
+			},
+		}
+		l := lua.NewState(lua.Options{IncludeGoStackTrace: true})
+		defer l.Close()
+
+		l.PreloadModule("mokapi", NewMokapi(host).Loader)
+		err := l.DoString(`
+local mokapi = require("mokapi")
+ 
+mokapi.on("foo", function(request, response)
+response.data = "bar"
+return true end)
+mokapi.on("foo", function(request, response)
+response.headers["foo"] = "bar"
+return true end)
+`)
+		require.NoError(t, err)
+
+		r := &request{}
+		res := &response{Headers: map[string]interface{}{}}
+
+		for _, fn := range fns {
+			b, err := fn(r, res)
+			require.NoError(t, err)
+			require.True(t, b)
+		}
+
+		require.Equal(t, "bar", res.Data)
+		require.Equal(t, "bar", res.Headers["foo"])
+	})
 }
 
 type testHost struct {
@@ -264,4 +300,9 @@ func (th *testHost) Every(every string, do func(), times int, tags map[string]st
 
 type request struct {
 	Data interface{}
+}
+
+type response struct {
+	Data    interface{}
+	Headers map[string]interface{}
 }

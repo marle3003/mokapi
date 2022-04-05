@@ -33,4 +33,4 @@ dockers:
       - "mokapi/mokapi:latest"
       - "mokapi/mokapi:{{ .Tag }}"
     dockerfile: Dockerfile-linux
-    use_buildx: true
+    use: buildx

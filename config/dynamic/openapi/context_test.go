@@ -129,7 +129,19 @@ func TestContentTypeFromRequest(t *testing.T) {
 				require.NotNil(t, ct)
 				require.NotNil(t, mt)
 				require.NoError(t, err)
-				require.Equal(t, "application/dsptype", ct.String())
+				require.Equal(t, "application/json", ct.String())
+				require.Equal(t, media.Default.String(), ct.String())
+			},
+		},
+		{
+			accept:   "",
+			response: openapitest.NewResponse(openapitest.WithContent("*/*")),
+			validate: func(t *testing.T, ct media.ContentType, mt *openapi.MediaType, err error) {
+				require.NotNil(t, ct)
+				require.NotNil(t, mt)
+				require.NoError(t, err)
+				require.Equal(t, "application/json", ct.String())
+				require.Equal(t, media.Default.String(), ct.String())
 			},
 		},
 		{
