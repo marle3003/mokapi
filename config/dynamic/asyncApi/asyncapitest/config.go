@@ -5,7 +5,10 @@ import "mokapi/config/dynamic/asyncApi"
 type ConfigOptions func(c *asyncApi.Config)
 
 func NewConfig(opts ...ConfigOptions) *asyncApi.Config {
-	c := &asyncApi.Config{Servers: map[string]asyncApi.Server{}}
+	c := &asyncApi.Config{
+		AsyncApi: "2.0.0",
+		Info:     asyncApi.Info{Name: "test", Version: "1.0"},
+		Servers:  map[string]asyncApi.Server{}}
 	for _, opt := range opts {
 		opt(c)
 	}

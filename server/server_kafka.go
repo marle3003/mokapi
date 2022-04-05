@@ -1,28 +1,73 @@
 package server
 
 import (
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/asyncApi"
+	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/config/dynamic/common"
-	"mokapi/kafka"
+	"mokapi/engine"
+	"mokapi/runtime"
+	"mokapi/server/service"
+	"net"
+	"net/url"
 )
 
-type KafkaClusters map[string]*kafka.Cluster
+type KafkaClusters map[string]*Cluster
 
-func (kc KafkaClusters) UpdateConfig(file *common.File) {
+type Cluster struct {
+	Name  string
+	Store *store.Store
+	close map[string]func()
+}
+
+type KafkaManager struct {
+	Clusters KafkaClusters
+	brokers  map[string]*service.KafkaBroker //map[port]
+
+	emitter engine.EventEmitter
+	app     *runtime.App
+}
+
+func NewKafkaManager(clusters KafkaClusters, emitter engine.EventEmitter, app *runtime.App) *KafkaManager {
+	return &KafkaManager{
+		Clusters: clusters,
+		emitter:  emitter,
+		app:      app,
+		brokers:  make(map[string]*service.KafkaBroker),
+	}
+}
+
+func (m KafkaManager) UpdateConfig(file *common.File) {
 	config, ok := file.Data.(*asyncApi.Config)
 	if !ok {
 		return
 	}
 
-	if c, ok := kc[config.Info.Name]; !ok {
-		c = kafka.NewCluster(config)
-		kc[config.Info.Name] = c
-		if err := c.Start(); err != nil {
-			log.Errorf("unable to start kafka cluster %v: %v", config.Info.Name, err)
+	c, ok := m.Clusters[config.Info.Name]
+	if !ok {
+		c = &Cluster{
+			Name:  config.Info.Name,
+			Store: store.New(config),
+			close: make(map[string]func()),
 		}
+		m.Clusters[config.Info.Name] = c
 	} else {
-		c.Update(config)
+		c.Store.Update(config)
+	}
+
+	for _, s := range config.Servers {
+		m.AddOrUpdateBroker(s.Url, c)
+	}
+
+skip:
+	for url, f := range c.close {
+		for _, s := range config.Servers {
+			if url == s.Url {
+				continue skip
+			}
+		}
+		f()
 	}
 }
 
@@ -30,4 +75,44 @@ func (kc KafkaClusters) Stop() {
 	for _, c := range kc {
 		c.Close()
 	}
+}
+
+func (m *KafkaManager) AddOrUpdateBroker(url string, cluster *Cluster) {
+	host, port, err := parseKafkaUrl(url)
+	if err != nil {
+		log.Errorf("error %v: %v", url, err.Error())
+		return
+	}
+
+	addr := fmt.Sprintf("%v:%v", host, port)
+	b, ok := m.brokers[addr]
+	if !ok {
+		b = service.NewKafkaBroker(port)
+		b.Start()
+		m.brokers[addr] = b
+	}
+	b.Add(addr, runtime.NewKafkaMonitor(m.app.Monitor.Kafka, cluster.Store))
+	cluster.close[url] = func() { b.Remove(addr) }
+}
+
+func (c *Cluster) Close() {
+	for _, f := range c.close {
+		f()
+	}
+}
+
+func parseKafkaUrl(s string) (host, port string, err error) {
+	u, err := url.Parse(s)
+	if err != nil {
+		host, port, err = net.SplitHostPort(s)
+	} else {
+		host = u.Hostname()
+		port = u.Port()
+	}
+
+	if len(port) == 0 {
+		port = "9092"
+	}
+
+	return
 }

@@ -39,10 +39,11 @@ func Start(cfg *static.Config) (*Cmd, error) {
 	scriptEngine := engine.New(watcher)
 
 	managerHttp := server.NewHttpManager(http, scriptEngine, certStore, app)
+	mangerKafka := server.NewKafkaManager(kafka, scriptEngine, app)
 	managerLdap := server.NewLdapDirectoryManager(directories, scriptEngine, certStore, app)
 
 	watcher.AddListener(func(file *common.File) {
-		kafka.UpdateConfig(file)
+		mangerKafka.UpdateConfig(file)
 		managerHttp.Update(file)
 		mail.UpdateConfig(file, certStore, scriptEngine)
 		managerLdap.UpdateConfig(file)

@@ -96,7 +96,7 @@ func (f *File) Parse(c *Config, r Reader) error {
 	f.m.Lock()
 	defer f.m.Unlock()
 
-	path := f.Url.String()
+	path := f.Url.Path
 	if len(f.Url.Opaque) > 0 {
 		path = f.Url.Opaque
 	}
@@ -141,7 +141,7 @@ func (f *File) Parse(c *Config, r Reader) error {
 	if p, ok := f.Data.(Parser); ok {
 		err := p.Parse(f, r)
 		if err != nil {
-			return err
+			return errors.Wrapf(err, "parsing file %v", f.Url)
 		}
 	}
 

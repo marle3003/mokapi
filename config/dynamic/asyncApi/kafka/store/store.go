@@ -1,0 +1,304 @@
+package store
+
+import (
+	"fmt"
+	"mokapi/config/dynamic/asyncApi"
+	"mokapi/kafka"
+	"mokapi/kafka/apiVersion"
+	"mokapi/kafka/createTopics"
+	"mokapi/kafka/fetch"
+	"mokapi/kafka/findCoordinator"
+	"mokapi/kafka/heartbeat"
+	"mokapi/kafka/joinGroup"
+	"mokapi/kafka/listgroup"
+	"mokapi/kafka/metaData"
+	"mokapi/kafka/offset"
+	"mokapi/kafka/offsetCommit"
+	"mokapi/kafka/offsetFetch"
+	"mokapi/kafka/produce"
+	"mokapi/kafka/syncGroup"
+	"net"
+	"net/url"
+	"strconv"
+	"sync"
+)
+
+type Store struct {
+	brokers map[int]*Broker
+	topics  map[string]*Topic
+	groups  map[string]*Group
+
+	m sync.RWMutex
+}
+
+func New(config *asyncApi.Config) *Store {
+	s := &Store{
+		topics:  make(map[string]*Topic),
+		brokers: make(map[int]*Broker),
+		groups:  make(map[string]*Group),
+	}
+
+	for n, server := range config.Servers {
+		s.addBroker(n, server)
+	}
+	for name, ch := range config.Channels {
+		if ch.Value == nil {
+			continue
+		}
+		_, _ = s.addTopic(name, ch.Value)
+	}
+	return s
+}
+
+func (s *Store) Close() {
+	for _, g := range s.groups {
+		g.balancer.Stop()
+	}
+}
+
+func (s *Store) Topic(name string) *Topic {
+	s.m.RLock()
+	defer s.m.RUnlock()
+
+	if t, ok := s.topics[name]; ok {
+		return t
+	}
+	return nil
+}
+
+func (s *Store) NewTopic(name string, config *asyncApi.Channel) (*Topic, error) {
+	return s.addTopic(name, config)
+}
+
+func (s *Store) Topics() []*Topic {
+	topics := make([]*Topic, 0, len(s.topics))
+	for _, t := range s.topics {
+		topics = append(topics, t)
+	}
+	return topics
+}
+
+func (s *Store) Broker(id int) (*Broker, bool) {
+	b, ok := s.brokers[id]
+	return b, ok
+}
+
+func (s *Store) Brokers() []*Broker {
+	brokers := make([]*Broker, 0, len(s.brokers))
+	for _, b := range s.brokers {
+		brokers = append(brokers, b)
+	}
+	return brokers
+}
+
+func (s *Store) Groups() []*Group {
+	groups := make([]*Group, 0, len(s.groups))
+	for _, g := range s.groups {
+		groups = append(groups, g)
+	}
+	return groups
+}
+
+func (s *Store) Group(name string) (*Group, bool) {
+	s.m.Lock()
+	defer s.m.Unlock()
+
+	g, ok := s.groups[name]
+	return g, ok
+}
+
+func (s *Store) GetOrCreateGroup(name string, brokerId int) *Group {
+	s.m.Lock()
+	defer s.m.Unlock()
+
+	b, ok := s.Broker(brokerId)
+	if !ok {
+		panic(fmt.Sprintf("unknown broker id: %v", brokerId))
+	}
+
+	if g, ok := s.groups[name]; ok {
+		return g
+	}
+
+	g := NewGroup(name, b)
+	s.groups[name] = g
+	return g
+}
+
+func (s *Store) Update(c *asyncApi.Config) {
+	for n, server := range c.Servers {
+		if b := s.getBroker(n); b != nil {
+			b.Host, b.Port = parseHostAndPort(server.Url)
+		} else {
+			s.addBroker(n, server)
+		}
+	}
+	for _, b := range s.brokers {
+		if _, ok := c.Servers[b.Name]; !ok {
+			s.deleteBroker(b.Id)
+		}
+	}
+
+	for n, ch := range c.Channels {
+		k := ch.Value.Bindings.Kafka
+		if t, ok := s.topics[n]; ok {
+			t.validator.update(ch.Value)
+			for _, p := range t.Partitions[k.Partitions():] {
+				p.delete()
+			}
+		} else {
+			s.addTopic(n, ch.Value)
+		}
+	}
+	for name := range s.topics {
+		if _, ok := c.Channels[name]; !ok {
+			s.deleteTopic(name)
+		}
+	}
+}
+
+func (s *Store) ServeMessage(rw kafka.ResponseWriter, req *kafka.Request) {
+	var err error
+	switch req.Message.(type) {
+	case *produce.Request:
+		err = s.produce(rw, req)
+	case *fetch.Request:
+		err = s.fetch(rw, req)
+	case *offset.Request:
+		err = s.offset(rw, req)
+	case *metaData.Request:
+		err = s.metadata(rw, req)
+	case *offsetCommit.Request:
+		err = s.offsetCommit(rw, req)
+	case *offsetFetch.Request:
+		err = s.offsetFetch(rw, req)
+	case *findCoordinator.Request:
+		err = s.findCoordinator(rw, req)
+	case *joinGroup.Request:
+		err = s.joingroup(rw, req)
+	case *heartbeat.Request:
+		err = s.heartbeat(rw, req)
+	case *syncGroup.Request:
+		err = s.syncgroup(rw, req)
+	case *listgroup.Request:
+		err = s.listgroup(rw, req)
+	case *apiVersion.Request:
+		err = s.apiversion(rw, req)
+	case *createTopics.Request:
+		err = s.createtopics(rw, req)
+	default:
+		err = fmt.Errorf("unsupported api key: %v", req.Header.ApiKey)
+	}
+
+	if err != nil && err.Error() != "use of closed network connection" {
+		panic(fmt.Sprintf("kafka broker: %v", err))
+	}
+}
+
+func (s *Store) addTopic(name string, config *asyncApi.Channel) (*Topic, error) {
+	s.m.Lock()
+	defer s.m.Unlock()
+
+	if _, ok := s.topics[name]; ok {
+		return nil, fmt.Errorf("topic %v already exists", name)
+	}
+
+	k := config.Bindings.Kafka
+	t := &Topic{Name: name, Partitions: make([]*Partition, k.Partitions())}
+	s.topics[name] = t
+
+	t.validator = newValidator(config)
+
+	for i := 0; i < k.Partitions(); i++ {
+		part := newPartition(i, s.brokers)
+		part.validator = t.validator
+		t.Partitions[i] = part
+
+	}
+
+	return t, nil
+}
+
+func (s *Store) deleteTopic(name string) {
+	s.m.Lock()
+	defer s.m.Unlock()
+
+	t, ok := s.topics[name]
+	if !ok {
+		return
+	}
+	t.delete()
+	delete(s.topics, name)
+}
+
+func (s *Store) addBroker(name string, config asyncApi.Server) {
+	s.m.Lock()
+	defer s.m.Unlock()
+
+	id := len(s.brokers)
+	b := &Broker{Id: id, Name: name}
+	s.brokers[id] = b
+	b.Host, b.Port = parseHostAndPort(config.Url)
+}
+
+func (s *Store) deleteBroker(id int) {
+	s.m.Lock()
+	defer s.m.Unlock()
+
+	for _, t := range s.topics {
+		for _, p := range t.Partitions {
+			p.removeReplica(id)
+		}
+	}
+	delete(s.brokers, id)
+}
+
+func (s *Store) getBroker(name string) *Broker {
+	for _, b := range s.brokers {
+		if b.Name == name {
+			return b
+		}
+	}
+	return nil
+}
+
+func (s *Store) getBrokerByHost(addr string) *Broker {
+	for _, b := range s.brokers {
+		h, p := parseHostAndPort(addr)
+		if b.Host == h && b.Port == p {
+			return b
+		}
+	}
+	return nil
+}
+
+func parseHostAndPort(s string) (host string, port int) {
+	var err error
+	var portString string
+	host, portString, err = net.SplitHostPort(s)
+	if err != nil {
+		u, err := url.Parse(s)
+		if err != nil || u.Host == "" {
+			u, err = url.Parse("//" + s)
+			if err != nil {
+				return "", 9092
+			}
+		}
+
+		host = u.Host
+		portString = u.Port()
+	}
+
+	if len(portString) == 0 {
+		port = 9092
+	} else {
+		var p int64
+		p, err = strconv.ParseInt(portString, 10, 32)
+		if err != nil {
+			return
+		}
+		port = int(p)
+	}
+
+	return
+}

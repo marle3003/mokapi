@@ -40,8 +40,15 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 					Name:    "foo",
 				})
 				require.NoError(t, err)
-				try.GetRequest(t, fmt.Sprintf("http://localhost:%v", port), map[string]string{}, try.HasStatusCode(404), try.HasBody("There was no service listening at /\n"))
-				try.GetRequest(t, fmt.Sprintf("http://localhost:%v/foo", port), map[string]string{}, try.HasStatusCode(200))
+				try.GetRequest(t,
+					fmt.Sprintf("http://localhost:%v", port),
+					nil,
+					try.HasStatusCode(404),
+					try.HasBody("There was no service listening at /\n"))
+				try.GetRequest(t,
+					fmt.Sprintf("http://localhost:%v/foo", port),
+					nil,
+					try.HasStatusCode(200))
 			}},
 		{"empty url",
 			func(t *testing.T, s *HttpServer, port string) {
@@ -83,7 +90,10 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 
 				require.NoError(t, err)
 				require.NoError(t, err)
-				try.GetRequest(t, fmt.Sprintf("http://localhost:%v", port), map[string]string{}, try.HasStatusCode(500), try.HasBody("handler is nil\n"))
+				try.GetRequest(t,
+					fmt.Sprintf("http://localhost:%v", port),
+					map[string]string{}, try.HasStatusCode(500),
+					try.HasBody("handler is nil\n"))
 			}},
 		{"add on same path",
 			func(t *testing.T, s *HttpServer, port string) {

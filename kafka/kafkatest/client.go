@@ -2,19 +2,19 @@ package kafkatest
 
 import (
 	"fmt"
-	"mokapi/kafka/protocol"
-	"mokapi/kafka/protocol/apiVersion"
-	"mokapi/kafka/protocol/fetch"
-	"mokapi/kafka/protocol/findCoordinator"
-	"mokapi/kafka/protocol/heartbeat"
-	"mokapi/kafka/protocol/joinGroup"
-	"mokapi/kafka/protocol/listgroup"
-	"mokapi/kafka/protocol/metaData"
-	"mokapi/kafka/protocol/offset"
-	"mokapi/kafka/protocol/offsetCommit"
-	"mokapi/kafka/protocol/offsetFetch"
-	"mokapi/kafka/protocol/produce"
-	"mokapi/kafka/protocol/syncGroup"
+	"mokapi/kafka"
+	"mokapi/kafka/apiVersion"
+	"mokapi/kafka/fetch"
+	"mokapi/kafka/findCoordinator"
+	"mokapi/kafka/heartbeat"
+	"mokapi/kafka/joinGroup"
+	"mokapi/kafka/listgroup"
+	"mokapi/kafka/metaData"
+	"mokapi/kafka/offset"
+	"mokapi/kafka/offsetCommit"
+	"mokapi/kafka/offsetFetch"
+	"mokapi/kafka/produce"
+	"mokapi/kafka/syncGroup"
 	"net"
 	"reflect"
 	"time"
@@ -44,11 +44,18 @@ func (c *Client) Close() {
 	}
 }
 
-func (c *Client) Send(r *protocol.Request) (*protocol.Response, error) {
+func (c *Client) Send(r *kafka.Request) (*kafka.Response, error) {
+	backoff := 50 * time.Millisecond
 	var err error
 	if c.conn == nil {
-		d := net.Dialer{Timeout: c.Timeout}
-		c.conn, err = d.Dial("tcp", c.Addr)
+		for i := 0; i < 10; i++ {
+			d := net.Dialer{Timeout: c.Timeout}
+			c.conn, err = d.Dial("tcp", c.Addr)
+			if err != nil {
+				time.Sleep(backoff)
+				continue
+			}
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -61,7 +68,7 @@ func (c *Client) Send(r *protocol.Request) (*protocol.Response, error) {
 		return nil, err
 	}
 
-	res := protocol.NewResponse(r.Header.ApiKey, r.Header.ApiVersion, r.Header.CorrelationId)
+	res := kafka.NewResponse(r.Header.ApiKey, r.Header.ApiVersion, r.Header.CorrelationId)
 	c.conn.SetReadDeadline(time.Now().Add(c.Timeout))
 	err = res.Read(c.conn)
 	return res, err
@@ -210,7 +217,7 @@ func (c *Client) JoinSyncGroup(member, group string, joinVersion, syncVersion in
 	})
 	if err != nil {
 		return err
-	} else if join.ErrorCode != protocol.None {
+	} else if join.ErrorCode != kafka.None {
 		return fmt.Errorf("join error code: %v", join.ErrorCode)
 	}
 	sync, err := c.SyncGroup(syncVersion, &syncGroup.Request{
@@ -226,7 +233,7 @@ func (c *Client) JoinSyncGroup(member, group string, joinVersion, syncVersion in
 	})
 	if err != nil {
 		return err
-	} else if sync.ErrorCode != protocol.None {
+	} else if sync.ErrorCode != kafka.None {
 		return fmt.Errorf("sync error code: %v", join.ErrorCode)
 	}
 	return nil

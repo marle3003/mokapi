@@ -9,7 +9,7 @@ func (h *handler) getKafkaService(w http.ResponseWriter, r *http.Request) {
 	segments := strings.Split(r.URL.Path, "/")
 	name := segments[4]
 
-	if s, ok := h.app.Http[name]; ok {
+	if s, ok := h.app.Kafka[name]; ok {
 		w.Header().Set("Content-Type", "application/json")
 		writeJsonBody(w, s)
 	} else {

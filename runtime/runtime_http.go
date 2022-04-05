@@ -24,5 +24,4 @@ func (h *HttpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	h.http.RequestCounter.Add(1)
 
 	h.next.ServeHTTP(rw, r.WithContext(ctx))
-
 }

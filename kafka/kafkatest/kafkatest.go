@@ -1,100 +1,102 @@
 package kafkatest
 
 import (
+	"context"
 	"fmt"
-	"mokapi/kafka/protocol"
-	"mokapi/kafka/protocol/apiVersion"
-	"mokapi/kafka/protocol/createTopics"
-	"mokapi/kafka/protocol/fetch"
-	"mokapi/kafka/protocol/findCoordinator"
-	"mokapi/kafka/protocol/heartbeat"
-	"mokapi/kafka/protocol/joinGroup"
-	"mokapi/kafka/protocol/listgroup"
-	"mokapi/kafka/protocol/metaData"
-	"mokapi/kafka/protocol/offset"
-	"mokapi/kafka/protocol/offsetCommit"
-	"mokapi/kafka/protocol/offsetFetch"
-	"mokapi/kafka/protocol/produce"
-	"mokapi/kafka/protocol/syncGroup"
+	"mokapi/kafka"
+	"mokapi/kafka/apiVersion"
+	"mokapi/kafka/createTopics"
+	"mokapi/kafka/fetch"
+	"mokapi/kafka/findCoordinator"
+	"mokapi/kafka/heartbeat"
+	"mokapi/kafka/joinGroup"
+	"mokapi/kafka/listgroup"
+	"mokapi/kafka/metaData"
+	"mokapi/kafka/offset"
+	"mokapi/kafka/offsetCommit"
+	"mokapi/kafka/offsetFetch"
+	"mokapi/kafka/produce"
+	"mokapi/kafka/syncGroup"
 )
 
-func NewRequest(clientId string, version int, msg protocol.Message) *protocol.Request {
-	return &protocol.Request{
-		Header: &protocol.Header{
+func NewRequest(clientId string, version int, msg kafka.Message) *kafka.Request {
+	return &kafka.Request{
+		Header: &kafka.Header{
 			ApiKey:     getApiKey(msg),
 			ApiVersion: int16(version),
 			ClientId:   clientId,
 		},
 		Message: msg,
+		Context: kafka.NewClientContext(context.Background()),
 	}
 }
 
-func BytesToString(bytes protocol.Bytes) string {
+func BytesToString(bytes kafka.Bytes) string {
 	b := make([]byte, bytes.Len())
 	bytes.Read(b)
 	return string(b)
 }
 
-func getApiKey(msg protocol.Message) protocol.ApiKey {
+func getApiKey(msg kafka.Message) kafka.ApiKey {
 	switch t := msg.(type) {
 	case *produce.Request, *produce.Response:
-		return protocol.Produce
+		return kafka.Produce
 	case *fetch.Request, *fetch.Response:
-		return protocol.Fetch
+		return kafka.Fetch
 	case *offset.Request, *offset.Response:
-		return protocol.Offset
+		return kafka.Offset
 	case *metaData.Request, *metaData.Response:
-		return protocol.Metadata
+		return kafka.Metadata
 	case *offsetCommit.Request, *offsetCommit.Response:
-		return protocol.OffsetCommit
+		return kafka.OffsetCommit
 	case *offsetFetch.Request, *offsetFetch.Response:
-		return protocol.OffsetFetch
+		return kafka.OffsetFetch
 	case *findCoordinator.Request, *findCoordinator.Response:
-		return protocol.FindCoordinator
+		return kafka.FindCoordinator
 	case *joinGroup.Request, *joinGroup.Response:
-		return protocol.JoinGroup
+		return kafka.JoinGroup
 	case *heartbeat.Request, *heartbeat.Response:
-		return protocol.Heartbeat
+		return kafka.Heartbeat
 	case *syncGroup.Request, *syncGroup.Response:
-		return protocol.SyncGroup
+		return kafka.SyncGroup
 	case *apiVersion.Request, *apiVersion.Response:
-		return protocol.ApiVersions
+		return kafka.ApiVersions
 	case *listgroup.Request, *listgroup.Response:
-		return protocol.ListGroup
+		return kafka.ListGroup
 	case *createTopics.Request, *createTopics.Response:
-		return protocol.CreateTopics
+		return kafka.CreateTopics
 	default:
 		panic(fmt.Sprintf("unknown type: %v", t))
 	}
 }
 
-func GetRequest(key protocol.ApiKey) protocol.Message {
+func GetRequest(key kafka.ApiKey) kafka.Message {
 	switch key {
-	case protocol.Produce:
+	case kafka.Produce:
 		return &produce.Request{}
-	case protocol.Fetch:
+	case kafka.Fetch:
 		return &fetch.Request{}
-	case protocol.Offset:
+	case kafka.Offset:
 		return &offset.Request{}
-	case protocol.Metadata:
+	case kafka.Metadata:
 		return &metaData.Request{}
-	case protocol.OffsetCommit:
+	case kafka.OffsetCommit:
 		return &offsetCommit.Request{}
-	case protocol.OffsetFetch:
+	case kafka.OffsetFetch:
 		return &offsetFetch.Request{}
-	case protocol.FindCoordinator:
+	case kafka.FindCoordinator:
 		return &findCoordinator.Request{}
-	case protocol.JoinGroup:
+	case kafka.JoinGroup:
 		return &joinGroup.Request{}
-	case protocol.Heartbeat:
+	case kafka.Heartbeat:
 		return &heartbeat.Request{}
-	case protocol.SyncGroup:
+	case kafka.SyncGroup:
 		return &syncGroup.Request{}
-	case protocol.ApiVersions:
+	case kafka.ApiVersions:
 		return &apiVersion.Request{}
-	case protocol.ListGroup:
+	case kafka.ListGroup:
 		return &listgroup.Request{}
-	case protocol.CreateTopics:
+	case kafka.CreateTopics:
 		return &createTopics.Request{}
 	default:
 		panic(fmt.Sprintf("unknown type: %v", key))

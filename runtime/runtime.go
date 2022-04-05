@@ -1,13 +1,16 @@
 package runtime
 
 import (
+	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/runtime/monitor"
 )
 
 type App struct {
-	Http map[string]*HttpInfo
-	Ldap map[string]*LdapInfo
+	Http  map[string]*HttpInfo
+	Ldap  map[string]*LdapInfo
+	Kafka map[string]*KafkaInfo
+	Smtp  map[string]*SmtpInfo
 
 	Monitor *monitor.Monitor
 }
@@ -18,9 +21,16 @@ func New() *App {
 	}
 }
 
-func (r *App) AddHttp(c *openapi.Config) {
-	if len(r.Http) == 0 {
-		r.Http = make(map[string]*HttpInfo)
+func (a *App) AddHttp(c *openapi.Config) {
+	if len(a.Http) == 0 {
+		a.Http = make(map[string]*HttpInfo)
 	}
-	r.Http[c.Info.Name] = &HttpInfo{Config: c}
+	a.Http[c.Info.Name] = &HttpInfo{Config: c}
+}
+
+func (a *App) AddKafka(c *asyncApi.Config) {
+	if len(a.Kafka) == 0 {
+		a.Kafka = make(map[string]*KafkaInfo)
+	}
+	a.Kafka[c.Info.Name] = &KafkaInfo{Config: c}
 }

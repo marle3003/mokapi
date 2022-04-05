@@ -15,20 +15,20 @@ func init() {
 }
 
 type Config struct {
-	AsyncApi   string
-	Info       Info
-	Servers    map[string]Server
-	Channels   map[string]*ChannelRef
-	Components Components
+	AsyncApi   string                 `yaml:"asyncapi" json:"asyncapi"`
+	Info       Info                   `yaml:"info" json:"info"`
+	Servers    map[string]Server      `yaml:"servers,omitempty" json:"servers,omitempty"`
+	Channels   map[string]*ChannelRef `yaml:"channels" json:"channels"`
+	Components *Components            `yaml:"components,omitempty" json:"components,omitempty"`
 }
 
 type Info struct {
-	Name           string `yaml:"title" json:"title"`
-	Description    string
-	Version        string
-	TermsOfService string
-	Contact        *Contact
-	License        *License
+	Name           string   `yaml:"title" json:"title"`
+	Description    string   `yaml:"description,omitempty" json:"description,omitempty"`
+	Version        string   `yaml:"version" json:"version"`
+	TermsOfService string   `yaml:"termsOfService,omitempty" json:"termsOfService,omitempty"`
+	Contact        *Contact `yaml:"contact,omitempty" json:"contact,omitempty"`
+	License        *License `yaml:"license,omitempty" json:"license,omitempty"`
 }
 
 type Contact struct {

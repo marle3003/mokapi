@@ -99,7 +99,7 @@ func TestMessageResolve(t *testing.T) {
 		reader := &testReader{readFunc: func(file *common.File) error { return nil }}
 		config := &Config{Channels: map[string]*ChannelRef{
 			"foo": {Value: &Channel{Subscribe: &Operation{Message: &MessageRef{Ref: "#/components/messages/foo"}}}},
-		}, Components: Components{
+		}, Components: &Components{
 			Messages: map[string]*Message{"foo": target},
 		}}
 		err := config.Parse(&common.File{Url: &url.URL{}, Data: config}, reader)
@@ -111,7 +111,7 @@ func TestMessageResolve(t *testing.T) {
 		reader := &testReader{readFunc: func(file *common.File) error { return nil }}
 		config := &Config{Channels: map[string]*ChannelRef{
 			"foo": {Value: &Channel{Publish: &Operation{Message: &MessageRef{Ref: "#/components/messages/foo"}}}},
-		}, Components: Components{
+		}, Components: &Components{
 			Messages: map[string]*Message{"foo": target},
 		}}
 		err := config.Parse(&common.File{Url: &url.URL{}, Data: config}, reader)
@@ -123,7 +123,7 @@ func TestMessageResolve(t *testing.T) {
 		reader := &testReader{readFunc: func(file *common.File) error { return nil }}
 		config := &Config{Channels: map[string]*ChannelRef{
 			"foo": {Value: &Channel{Publish: &Operation{Message: &MessageRef{Ref: "#/components/messages/foo"}}}},
-		}, Components: Components{
+		}, Components: &Components{
 			Messages: map[string]*Message{"foo": {}},
 		}}
 		file := &common.File{Url: &url.URL{}, Data: config}
@@ -139,7 +139,7 @@ func TestMessageResolve(t *testing.T) {
 		target := &Message{}
 		reader := &testReader{readFunc: func(file *common.File) error {
 			test.Equals(t, "/foo.yml#/components/messages/foo", file.Url.String())
-			config := &Config{Components: Components{
+			config := &Config{Components: &Components{
 				Messages: map[string]*Message{"foo": target},
 			}}
 			file.Data = config
@@ -156,7 +156,7 @@ func TestMessageResolve(t *testing.T) {
 		target := &Message{}
 		reader := &testReader{readFunc: func(file *common.File) error {
 			test.Equals(t, "/foo.yml#/components/messages/foo", file.Url.String())
-			config := &Config{Components: Components{
+			config := &Config{Components: &Components{
 				Messages: map[string]*Message{"foo": target},
 			}}
 			file.Data = config
@@ -244,7 +244,7 @@ func TestSchema(t *testing.T) {
 		target := &schema.Schema{}
 		schemas := &schema.Schemas{}
 		schemas.Set("foo", &schema.Ref{Value: target})
-		config.Components = Components{Schemas: schemas}
+		config.Components = &Components{Schemas: schemas}
 		message.Payload = &schema.Ref{Reference: ref.Reference{Value: "#/components/Schemas/foo"}}
 		reader := &testReader{readFunc: func(file *common.File) error { return nil }}
 

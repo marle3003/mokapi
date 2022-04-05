@@ -1,22 +1,28 @@
 package kafkatest
 
 import (
+	"fmt"
+	"mokapi/config/dynamic/asyncApi"
+	"mokapi/config/dynamic/asyncApi/asyncapitest"
 	"mokapi/kafka"
-	"mokapi/kafka/store"
+	"mokapi/try"
 	"net"
+	"strconv"
 )
 
 type Broker struct {
-	Listener net.Listener
-
-	broker *kafka.Broker
+	Addr   string
 	client *Client
+	server *kafka.Server
+
+	cfg *asyncApi.Config
 }
 
 type BrokerOptions func(c *config)
 
 type config struct {
-	addr string
+	addr    string
+	handler kafka.Handler
 }
 
 func NewBroker(opts ...BrokerOptions) *Broker {
@@ -24,31 +30,29 @@ func NewBroker(opts ...BrokerOptions) *Broker {
 	for _, o := range opts {
 		o(c)
 	}
-	l, err := net.Listen("tcp", c.addr)
+	p, err := try.GetFreePort()
 	if err != nil {
 		panic(err)
 	}
+	addr := fmt.Sprintf("127.0.0.1:%v", p)
 
-	broker := kafka.NewBroker(0, l.Addr().String())
-	broker.Store = &store.Store{}
+	cfg := asyncapitest.NewConfig(asyncapitest.WithServer("test", "kafka", addr))
 
 	b := &Broker{
-		Listener: l,
-		broker:   broker,
-		client:   NewClient(l.Addr().String(), "kafkatest"),
+		Addr:   addr,
+		server: &kafka.Server{Addr: addr, Handler: c.handler},
+		client: NewClient(addr, "kafkatest"),
+		cfg:    cfg,
 	}
 
-	go b.broker.Serve(l)
+	go func() {
+		err = b.server.ListenAndServe()
+		if err != nil && err != kafka.ErrServerClosed {
+			panic(err)
+		}
+	}()
 
 	return b
-}
-
-func (b *Broker) Store() *store.Store {
-	return b.broker.Store
-}
-
-func (b *Broker) SetStore(s *store.Store) {
-	b.broker.Store = s
 }
 
 func (b *Broker) Client() *Client {
@@ -57,17 +61,39 @@ func (b *Broker) Client() *Client {
 
 func (b *Broker) Close() {
 	b.client.Close()
-	b.broker.Close()
-	b.Listener.Close()
+	b.server.Close()
 }
 
+//func (b *Broker) AddRecords(topic string, records ...protocol.Record) {
+//	b.client.Produce(3, &produce.Request{
+//		Topics: []produce.RequestTopic{
+//			{
+//				Name: topic, Partitions: []produce.RequestPartition{
+//					{
+//						Index: 0,
+//						Record: protocol.RecordBatch{
+//							Records: records,
+//						},
+//					},
+//				},
+//			}},
+//	})
+//}
+
 func (b *Broker) HostPort() (string, int) {
-	addr := b.Listener.Addr().(*net.TCPAddr)
-	return addr.IP.String(), addr.Port
+	h, ps, _ := net.SplitHostPort(b.Addr)
+	p, _ := strconv.Atoi(ps)
+	return h, p
 }
 
 func WithPort(addr string) BrokerOptions {
 	return func(c *config) {
 		c.addr = addr
+	}
+}
+
+func WithHandler(h kafka.Handler) BrokerOptions {
+	return func(c *config) {
+		c.handler = h
 	}
 }

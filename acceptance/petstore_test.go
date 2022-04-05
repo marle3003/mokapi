@@ -4,10 +4,10 @@ import (
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/static"
+	"mokapi/kafka"
 	"mokapi/kafka/kafkatest"
-	"mokapi/kafka/protocol"
-	"mokapi/kafka/protocol/metaData"
-	"mokapi/kafka/protocol/produce"
+	"mokapi/kafka/metaData"
+	"mokapi/kafka/produce"
 	"mokapi/try"
 	"time"
 )
@@ -88,13 +88,13 @@ func (suite *PetStoreSuite) TestKafka_Produce_InvalidFormat() {
 		{Name: "petstore.order-event", Partitions: []produce.RequestPartition{
 			{
 				Index: 0,
-				Record: protocol.RecordBatch{
-					Records: []protocol.Record{
+				Record: kafka.RecordBatch{
+					Records: []kafka.Record{
 						{
 							Offset:  0,
 							Time:    time.Now(),
-							Key:     protocol.NewBytes([]byte(`foo`)),
-							Value:   protocol.NewBytes([]byte(`{}`)),
+							Key:     kafka.NewBytes([]byte(`foo`)),
+							Value:   kafka.NewBytes([]byte(`{}`)),
 							Headers: nil,
 						},
 					},
@@ -105,7 +105,7 @@ func (suite *PetStoreSuite) TestKafka_Produce_InvalidFormat() {
 	})
 	require.NoError(suite.T(), err)
 	require.Equal(suite.T(), "petstore.order-event", r.Topics[0].Name)
-	require.Equal(suite.T(), protocol.CorruptMessage, r.Topics[0].Partitions[0].ErrorCode)
+	require.Equal(suite.T(), kafka.CorruptMessage, r.Topics[0].Partitions[0].ErrorCode)
 	require.Equal(suite.T(), int64(0), r.Topics[0].Partitions[0].BaseOffset)
 }
 
@@ -116,13 +116,13 @@ func (suite *PetStoreSuite) KafkaProduce() {
 		{Name: "petstore.order-event", Partitions: []produce.RequestPartition{
 			{
 				Index: 0,
-				Record: protocol.RecordBatch{
-					Records: []protocol.Record{
+				Record: kafka.RecordBatch{
+					Records: []kafka.Record{
 						{
 							Offset:  0,
 							Time:    time.Now(),
-							Key:     protocol.NewBytes([]byte(`foo`)),
-							Value:   protocol.NewBytes([]byte(`{"id": 12345}`)),
+							Key:     kafka.NewBytes([]byte(`foo`)),
+							Value:   kafka.NewBytes([]byte(`{"id": 12345}`)),
 							Headers: nil,
 						},
 					},
@@ -133,6 +133,6 @@ func (suite *PetStoreSuite) KafkaProduce() {
 	})
 	require.NoError(suite.T(), err)
 	require.Equal(suite.T(), "petstore.order-event", r.Topics[0].Name)
-	require.Equal(suite.T(), protocol.None, r.Topics[0].Partitions[0].ErrorCode)
+	require.Equal(suite.T(), kafka.None, r.Topics[0].Partitions[0].ErrorCode)
 	require.Equal(suite.T(), int64(0), r.Topics[0].Partitions[0].BaseOffset)
 }

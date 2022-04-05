@@ -1,35 +1,46 @@
 package kafka
 
 import (
+	"context"
 	"github.com/google/uuid"
 	"time"
 )
 
+const clientKey = "client"
+
 type ClientContext struct {
-	clientId              string
-	clientSoftwareName    string
-	clientSoftwareVersion string
-	heartbeat             time.Time
-	member                map[string]string
-	close                 func()
+	ClientId              string
+	ClientSoftwareName    string
+	ClientSoftwareVersion string
+	Heartbeat             time.Time
+	Member                map[string]string
+	Close                 func()
 }
 
 func (c *ClientContext) AddGroup(groupName, memberId string) {
-	if c.member == nil {
-		c.member = make(map[string]string)
+	if c.Member == nil {
+		c.Member = make(map[string]string)
 	}
-	c.member[groupName] = memberId
+	c.Member[groupName] = memberId
 }
 
 func (c *ClientContext) GetOrCreateMemberId(groupName string) string {
-	memberId := c.member[groupName]
+	memberId := c.Member[groupName]
 	if len(memberId) == 0 {
-		memberId = c.clientSoftwareName
+		memberId = c.ClientSoftwareName
 		if len(memberId) > 0 {
 			memberId += "-"
 		}
 		memberId += uuid.New().String()
-		c.member[groupName] = memberId
+		c.Member[groupName] = memberId
 	}
 	return memberId
+}
+
+func ClientFromContext(req *Request) *ClientContext {
+	return req.Context.Value(clientKey).(*ClientContext)
+}
+
+func NewClientContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, clientKey, &ClientContext{})
 }

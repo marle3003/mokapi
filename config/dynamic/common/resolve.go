@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"net/url"
 	"path/filepath"
 	"reflect"
@@ -44,7 +45,11 @@ func Resolve(ref string, element interface{}, file *File, reader Reader) error {
 		if err != nil {
 			return fmt.Errorf("unable to read %v: %v", u, err)
 		}
-		return ResolvePath(u.Fragment, f.Data, element)
+		err = ResolvePath(u.Fragment, f.Data, element)
+		if err != nil {
+			return errors.Wrapf(err, "unable to resolve reference %v", ref)
+		}
+		return nil
 	}
 
 	return ResolvePath(u.Fragment, file.Data, element)

@@ -8,17 +8,20 @@ import (
 	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/kafka/kafkatest"
-	"mokapi/kafka/protocol/metaData"
-	"mokapi/test"
+	"mokapi/kafka/metaData"
+	"mokapi/runtime"
 	"mokapi/try"
 	"testing"
 	"time"
 )
 
 func TestKafkaServer(t *testing.T) {
+	port, err := try.GetFreePort()
+	require.NoError(t, err)
+	addr := fmt.Sprintf("127.0.0.1:%v", port)
 	c := asyncapitest.NewConfig(
 		asyncapitest.WithTitle("foo"),
-		asyncapitest.WithServer("kafka12", "kafka", "127.0.0.1:9092"),
+		asyncapitest.WithServer("kafka12", "kafka", addr),
 		asyncapitest.WithChannel("foo",
 			asyncapitest.WithSubscribeAndPublish(
 				asyncapitest.WithMessage(
@@ -32,108 +35,150 @@ func TestKafkaServer(t *testing.T) {
 
 	clusters := KafkaClusters{}
 	defer clusters.Stop()
-	clusters.UpdateConfig(&common.File{Data: c})
+	m := NewKafkaManager(clusters, nil, runtime.New())
+	m.UpdateConfig(&common.File{Data: c})
 
 	// wait for kafka start
 	time.Sleep(500 * time.Millisecond)
 
-	test.Equals(t, 1, len(clusters))
+	require.Len(t, clusters, 1)
 	_, ok := clusters["foo"]
-	test.Assert(t, ok, "cluster exists")
+	require.True(t, ok, "cluster exists")
 }
 
 func TestKafkaServer_Update(t *testing.T) {
-	testdata := []struct {
+	testcases := []struct {
 		name string
-		fn   func(t *testing.T, c KafkaClusters)
+		fn   func(t *testing.T, m *KafkaManager)
 	}{
 		{
 			"add another broker",
-			func(t *testing.T, c KafkaClusters) {
+			func(t *testing.T, m *KafkaManager) {
+				port, err := try.GetFreePort()
+				require.NoError(t, err)
+				addr := fmt.Sprintf("127.0.0.1:%v", port)
 				cfg := asyncapitest.NewConfig(
 					asyncapitest.WithTitle("foo"),
-					asyncapitest.WithServer("add topic", "kafka", "127.0.0.1:9092"),
+					asyncapitest.WithServer("add topic", "kafka", addr),
 				)
-				c.UpdateConfig(&common.File{Data: cfg})
+				m.UpdateConfig(&common.File{Data: cfg})
 
+				port, err = try.GetFreePort()
+				require.NoError(t, err)
+				addr = fmt.Sprintf("127.0.0.1:%v", port)
 				cfg.Servers["broker"] = asyncApi.Server{
-					Url:      "127.0.0.1:9093",
+					Url:      addr,
 					Protocol: "kafka",
 				}
 
-				c.UpdateConfig(&common.File{Data: cfg})
+				m.UpdateConfig(&common.File{Data: cfg})
 
 				// wait for kafka start
 				time.Sleep(500 * time.Millisecond)
 
-				client := kafkatest.NewClient("127.0.0.1:9093", "test")
+				client := kafkatest.NewClient(addr, "test")
 				defer client.Close()
 
 				r, err := client.Metadata(0, &metaData.Request{})
-				test.Ok(t, err)
-				test.Equals(t, 2, len(r.Brokers))
+				require.NoError(t, err)
+				require.Len(t, r.Brokers, 2)
 			},
 		},
 		{
 			"add broker",
-			func(t *testing.T, c KafkaClusters) {
+			func(t *testing.T, m *KafkaManager) {
+				port, err := try.GetFreePort()
+				require.NoError(t, err)
+				addr := fmt.Sprintf("127.0.0.1:%v", port)
 				cfg := asyncapitest.NewConfig(
 					asyncapitest.WithTitle("foo"),
 				)
-				c.UpdateConfig(&common.File{Data: cfg})
+				m.UpdateConfig(&common.File{Data: cfg})
 
 				cfg.Servers["broker"] = asyncApi.Server{
-					Url:      "127.0.0.1:9092",
+					Url:      addr,
 					Protocol: "kafka",
 				}
 
-				c.UpdateConfig(&common.File{Data: cfg})
+				m.UpdateConfig(&common.File{Data: cfg})
 
 				// wait for kafka start
 				time.Sleep(500 * time.Millisecond)
 
-				client := kafkatest.NewClient("127.0.0.1:9092", "test")
+				client := kafkatest.NewClient(addr, "test")
 				defer client.Close()
 
 				r, err := client.Metadata(0, &metaData.Request{})
-				test.Ok(t, err)
-				test.Equals(t, 1, len(r.Brokers))
+				require.NoError(t, err)
+				require.Len(t, r.Brokers, 1)
+			},
+		},
+		{
+			"remove broker",
+			func(t *testing.T, m *KafkaManager) {
+				port, err := try.GetFreePort()
+				require.NoError(t, err)
+				addr := fmt.Sprintf("127.0.0.1:%v", port)
+				cfg := asyncapitest.NewConfig(
+					asyncapitest.WithServer("", "kafka", addr),
+					asyncapitest.WithTitle("foo"),
+				)
+				m.UpdateConfig(&common.File{Data: cfg})
+
+				// wait for kafka start
+				time.Sleep(500 * time.Millisecond)
+
+				client := kafkatest.NewClient(addr, "test")
+				defer client.Close()
+
+				r, err := client.Metadata(0, &metaData.Request{})
+				require.NoError(t, err)
+				require.Len(t, r.Brokers, 1)
+
+				delete(cfg.Servers, "")
+				m.UpdateConfig(&common.File{Data: cfg})
+
+				r, err = client.Metadata(0, &metaData.Request{})
+				require.EqualError(t, err, "EOF")
 			},
 		},
 		{
 			"change broker name",
-			func(t *testing.T, c KafkaClusters) {
+			func(t *testing.T, m *KafkaManager) {
+				port, err := try.GetFreePort()
+				require.NoError(t, err)
+				addr := fmt.Sprintf("127.0.0.1:%v", port)
 				cfg := asyncapitest.NewConfig(
 					asyncapitest.WithTitle("foo"),
-					asyncapitest.WithServer("kafka", "kafka", "127.0.0.1:9092"),
+					asyncapitest.WithServer("kafka", "kafka", addr),
 				)
-				c.UpdateConfig(&common.File{Data: cfg})
+				m.UpdateConfig(&common.File{Data: cfg})
 
 				delete(cfg.Servers, "kafka")
 				cfg.Servers["broker"] = asyncApi.Server{
-					Url:      "127.0.0.1:9092",
+					Url:      addr,
 					Protocol: "kafka",
 				}
 
 				// wait for kafka start
 				time.Sleep(500 * time.Millisecond)
 
-				c.UpdateConfig(&common.File{Data: cfg})
+				m.UpdateConfig(&common.File{Data: cfg})
 
 				// wait for kafka start
 				time.Sleep(500 * time.Millisecond)
 
-				client := kafkatest.NewClient("127.0.0.1:9092", "test")
+				client := kafkatest.NewClient(addr, "test")
 				defer client.Close()
 
 				r, err := client.Metadata(0, &metaData.Request{})
-				test.Ok(t, err)
-				test.Equals(t, 1, len(r.Brokers))
+				require.NoError(t, err)
+				require.Len(t, r.Brokers, 1)
 			},
 		},
 		{
 			"add topic",
-			func(t *testing.T, c KafkaClusters) {
+			func(t *testing.T, m *KafkaManager) {
 				port, err := try.GetFreePort()
 				require.NoError(t, err)
 				addr := fmt.Sprintf("127.0.0.1:%v", port)
@@ -150,7 +195,7 @@ func TestKafkaServer_Update(t *testing.T) {
 						),
 					),
 				)
-				c.UpdateConfig(&common.File{Data: cfg})
+				m.UpdateConfig(&common.File{Data: cfg})
 
 				cfg.Channels["bar"] = &asyncApi.ChannelRef{Value: asyncapitest.NewChannel(asyncapitest.WithSubscribeAndPublish(
 					asyncapitest.WithMessage(
@@ -160,7 +205,7 @@ func TestKafkaServer_Update(t *testing.T) {
 					),
 				))}
 
-				c.UpdateConfig(&common.File{Data: cfg})
+				m.UpdateConfig(&common.File{Data: cfg})
 
 				// wait for kafka start
 				time.Sleep(500 * time.Millisecond)
@@ -169,13 +214,13 @@ func TestKafkaServer_Update(t *testing.T) {
 				defer client.Close()
 
 				r, err := client.Metadata(0, &metaData.Request{})
-				test.Ok(t, err)
-				test.Equals(t, 2, len(r.Topics))
+				require.NoError(t, err)
+				require.Len(t, r.Topics, 2)
 			},
 		},
 		{
 			"remove topic",
-			func(t *testing.T, c KafkaClusters) {
+			func(t *testing.T, m *KafkaManager) {
 				port, err := try.GetFreePort()
 				require.NoError(t, err)
 				addr := fmt.Sprintf("127.0.0.1:%v", port)
@@ -192,14 +237,14 @@ func TestKafkaServer_Update(t *testing.T) {
 						),
 					),
 				)
-				c.UpdateConfig(&common.File{Data: cfg})
+				m.UpdateConfig(&common.File{Data: cfg})
 
 				// wait for kafka start
 				time.Sleep(500 * time.Millisecond)
 
 				delete(cfg.Channels, "foo")
 
-				c.UpdateConfig(&common.File{Data: cfg})
+				m.UpdateConfig(&common.File{Data: cfg})
 
 				// wait for update
 				time.Sleep(500 * time.Millisecond)
@@ -208,18 +253,21 @@ func TestKafkaServer_Update(t *testing.T) {
 				defer client.Close()
 
 				r, err := client.Metadata(0, &metaData.Request{})
-				test.Ok(t, err)
-				test.Equals(t, 0, len(r.Topics))
+				require.NoError(t, err)
+				require.Len(t, r.Topics, 0)
 			},
 		},
 	}
 
-	for _, data := range testdata {
-		t.Run(data.name, func(t *testing.T) {
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			c := KafkaClusters{}
 			defer c.Stop()
 
-			data.fn(t, c)
+			tc.fn(t, NewKafkaManager(c, nil, runtime.New()))
 		})
 	}
 }

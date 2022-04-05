@@ -508,6 +508,26 @@ func TestHandler_Event(t *testing.T) {
 				r.StatusCode = 415
 			},
 		},
+		{
+			"",
+			func(t *testing.T, f serveHTTP, c *openapi.Config) {
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
+					openapitest.WithHeaderParam("id", true))
+				openapitest.AppendEndpoint("/foo", c, openapitest.WithOperation("get", op))
+				r := httptest.NewRequest("get", "http://localhost/foo", nil)
+				r.Header.Set("id", "42")
+				r.Header.Set("accept", "application/json")
+				rr := httptest.NewRecorder()
+				f(rr, r)
+				test.Equals(t, 500, rr.Code)
+				test.Equals(t, "no configuration was found for HTTP status code 415, https://swagger.io/docs/specification/describing-responses\n", rr.Body.String())
+			},
+			func(event string, args ...interface{}) {
+				r := args[1].(*openapi.EventResponse)
+				r.StatusCode = 415
+			},
+		},
 	}
 
 	t.Parallel()

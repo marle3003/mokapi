@@ -53,7 +53,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case strings.HasPrefix(p, "/api/services/http/"):
 		h.getHttpService(w, r)
 	case strings.HasPrefix(p, "/api/services/kafka/"):
-		h.getHttpService(w, r)
+		h.getKafkaService(w, r)
 	}
 }
 
