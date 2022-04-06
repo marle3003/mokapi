@@ -121,7 +121,7 @@ func TestKafkaBroker_Remove(t *testing.T) {
 				b.Remove("")
 				client := kafkatest.NewClient(addr, "test")
 				_, err = client.ApiVersion(3, &apiVersion.Request{})
-				require.Contains(t, err.Error(), "connect: connection refused")
+				require.Error(t, err)
 			},
 		},
 		{
@@ -137,7 +137,7 @@ func TestKafkaBroker_Remove(t *testing.T) {
 				b.Remove(addr)
 				client := kafkatest.NewClient(addr, "test")
 				_, err = client.ApiVersion(3, &apiVersion.Request{})
-				require.Contains(t, err.Error(), "connect: connection refused")
+				require.Error(t, err)
 			},
 		},
 		{
