@@ -14,10 +14,7 @@ func parseFlags() (map[string]string, error) {
 		return nil, err
 	}
 
-	envs, err := parseEnv(os.Environ())
-	if err != nil {
-		return nil, err
-	}
+	envs := parseEnv(os.Environ())
 
 	// merge maps. env flags overwrites cli flags
 	for k, v := range envs {
@@ -27,7 +24,7 @@ func parseFlags() (map[string]string, error) {
 	return flags, nil
 }
 
-func parseEnv(environ []string) (map[string]string, error) {
+func parseEnv(environ []string) map[string]string {
 	dictionary := make(map[string]string)
 
 	for _, s := range environ {
@@ -39,7 +36,7 @@ func parseEnv(environ []string) (map[string]string, error) {
 		}
 	}
 
-	return dictionary, nil
+	return dictionary
 }
 
 func parseArgs(args []string) (map[string]string, error) {

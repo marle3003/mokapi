@@ -1,25 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="AutoImportSettings">
-    <option name="autoReloadType" value="SELECTIVE" />
+    <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1a9601df-4cac-4bc9-9e3a-1ba0e84e507f" name="Default Changelist" comment="added null support in Mokapi Actions&#10;fixed function calls in Mokapi Actions&#10;added more examples">
-      <change afterPath="$PROJECT_DIR$/providers/workflow/runtime/index_visitor.go" afterDir="false" />
+    <list default="true" id="1a9601df-4cac-4bc9-9e3a-1ba0e84e507f" name="Default Changelist" comment="refactored kafka">
+      <change afterPath="$PROJECT_DIR$/config/decoders/decoder_file_test.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/config/decoders/decoder_flag_test.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/config/decoders/decoder_test.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/dynamic/openapi/config.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/dynamic/openapi/config.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/workflow/ast/ast.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/workflow/ast/ast.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/workflow/ast/walk.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/workflow/ast/walk.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/workflow/parser/parser.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/workflow/parser/parser.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/workflow/path/objectpath/resolve.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/workflow/path/objectpath/resolve.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/workflow/runtime/selector_visitor.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/workflow/runtime/selector_visitor.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/workflow/runtime/visitor.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/workflow/runtime/visitor.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/workflow/token/token.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/workflow/token/token.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/web/operationHandler.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/web/operationHandler.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/webui/src/components/Parameters.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/components/Parameters.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/webui/src/views/dashboard/HttpRequest.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/views/dashboard/HttpRequest.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/webui/src/views/dashboard/SmtpMail.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/views/dashboard/SmtpMail.vue" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/webui/src/views/kafka/Topic.vue" beforeDir="false" afterPath="$PROJECT_DIR$/webui/src/views/kafka/Topic.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -35,7 +24,7 @@
       </list>
     </option>
   </component>
-  <component name="GOROOT" url="file://C:/Program Files/Go" />
+  <component name="GOROOT" url="file:///opt/homebrew/Cellar/go/1.17.5/libexec" />
   <component name="Git.Settings">
     <option name="PUSH_TAGS">
       <GitPushTagMode>
@@ -56,6 +45,9 @@
   <component name="GoLibraries">
     <option name="indexEntireGoPath" value="false" />
   </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
   <component name="ProjectId" id="1m40RSdtdDAxQq3OJ6eyNX6aqtz" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -67,43 +59,59 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="configurable..is.expanded" value="false" />
+    <property name="configurable.GoLibrariesConfigurable.is.expanded" value="true" />
+    <property name="go.format.on.save.advertiser.fired" value="true" />
+    <property name="go.formatter.settings.were.checked" value="true" />
     <property name="go.import.settings.migrated" value="true" />
+    <property name="go.modules.go.list.on.any.changes.was.set" value="true" />
     <property name="go.sdk.automatically.set" value="true" />
     <property name="go.tried.to.enable.integration.vgo.integrator" value="true" />
+    <property name="go.watchers.conflict.with.on.save.actions.check.performed" value="true" />
     <property name="js.buildTools.gulp.gulp_package_dir" value="" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/webui/src/components" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/kafka" />
     <property name="node.js.detected.package.eslint" value="true" />
+    <property name="node.js.detected.package.tslint" value="true" />
     <property name="node.js.path.for.package.eslint" value="project" />
     <property name="node.js.selected.package.eslint" value="(autodetect)" />
+    <property name="node.js.selected.package.tslint" value="(autodetect)" />
     <property name="nodejs_package_manager_path" value="npm" />
-    <property name="restartRequiresConfirmation" value="false" />
     <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
-    <property name="settings.editor.selected.configurable" value="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable" />
+    <property name="settings.editor.selected.configurable" value="go.vgo" />
     <property name="ts.external.directory.path" value="C:\Program Files\JetBrains\GoLand 2020.3\plugins\JavaScriptLanguage\jsLanguageServicesImpl\external" />
     <property name="vue.rearranger.settings.migration" value="true" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/kafka" />
+      <recent name="$PROJECT_DIR$/runtime" />
+      <recent name="$PROJECT_DIR$/api" />
       <recent name="D:\Projekte\mokapi\webui\src\components" />
       <recent name="D:\Projekte\mokapi\webui\src\views\smtp" />
-      <recent name="D:\Projekte\mokapi\webui\src\components\smtp" />
-      <recent name="D:\Projekte\mokapi\webui\src\views\dashboard" />
-      <recent name="D:\Projekte\mokapi\config\dynamic\openapi" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
-      <recent name="D:\Projekte\mokapi\server\cert" />
-      <recent name="D:\Projekte\mokapi\config\dynamic\openapi" />
-      <recent name="D:\Projekte\mokapi\config\dynamic" />
-      <recent name="D:\Projekte\mokapi\providers\utils" />
-      <recent name="D:\Projekte\mokapi\config\dynamic\asyncApi" />
+      <recent name="$PROJECT_DIR$/config/dynamic/asyncApi/kafka/store" />
+      <recent name="$PROJECT_DIR$/config/dynamic/asyncApi/kafka" />
+      <recent name="$PROJECT_DIR$/kafka" />
+      <recent name="$PROJECT_DIR$/kafka/protocol" />
+      <recent name="$PROJECT_DIR$/kafka/store" />
     </key>
   </component>
-  <component name="RunManager" selected="Go Build.go build mokapi/cmd/mokapi">
+  <component name="RunManager" selected="Go Test.TestLoad/env_var in mokapi/config/decoders">
+    <configuration default="true" type="GoApplicationRunConfiguration" factoryName="Go Application">
+      <module name="mokapi" />
+      <working_directory value="$PROJECT_DIR$" />
+      <go_parameters value="-i" />
+      <kind value="FILE" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
     <configuration name="go build mokapi/cmd/mokapi" type="GoApplicationRunConfiguration" factoryName="Go Application" nameIsGenerated="true">
       <module name="mokapi" />
       <working_directory value="$PROJECT_DIR$" />
       <go_parameters value="-i" />
-      <parameters value="--Log.Format=json --Api.Port=8081" />
+      <parameters value="--Log.Format=json --Api.Port=8081 --Log.Level=Debug" />
       <envs>
         <env name="MOKAPI_Log.Level" value="debug" />
         <env name="MOKAPI_Providers.File.Directory" value="data" />
@@ -120,57 +128,71 @@
       <filePath value="$PROJECT_DIR$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestConfig in mokapi/config/dynamic/openapi" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestLoad_Invalid in mokapi/config/decoders" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="mokapi" />
-      <working_directory value="$PROJECT_DIR$/config/dynamic/openapi" />
+      <working_directory value="$PROJECT_DIR$/config/decoders" />
+      <root_directory value="$PROJECT_DIR$" />
       <kind value="PACKAGE" />
-      <package value="mokapi/config/dynamic/openapi" />
+      <package value="mokapi/config/decoders" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
       <framework value="gotest" />
-      <pattern value="^\QTestConfig\E$" />
+      <pattern value="^\QTestLoad_Invalid\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestParseAllOf in mokapi/providers/encoding" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestLoad_Invalid/name=bar in mokapi/config/decoders" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="mokapi" />
-      <working_directory value="$PROJECT_DIR$/providers/encoding" />
+      <working_directory value="$PROJECT_DIR$/config/decoders" />
+      <root_directory value="$PROJECT_DIR$" />
       <kind value="PACKAGE" />
-      <package value="mokapi/providers/encoding" />
+      <package value="mokapi/config/decoders" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
       <framework value="gotest" />
-      <pattern value="^\QTestParseAllOf\E$" />
+      <pattern value="^\QTestLoad_Invalid\E$/^\Qname=bar\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestParseOneOf in mokapi/providers/encoding" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestLoad/env_var in mokapi/config/decoders" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="mokapi" />
-      <working_directory value="$PROJECT_DIR$/providers/encoding" />
+      <working_directory value="$PROJECT_DIR$/config/decoders" />
+      <root_directory value="$PROJECT_DIR$" />
       <kind value="PACKAGE" />
-      <package value="mokapi/providers/encoding" />
+      <package value="mokapi/config/decoders" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
       <framework value="gotest" />
-      <pattern value="^\QTestParseOneOf\E$" />
+      <pattern value="^\QTestLoad\E$/^\Qenv_var\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestSchemaRef in mokapi/config/dynamic/openapi" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestLoad/without_= in mokapi/config/decoders" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="mokapi" />
-      <working_directory value="$PROJECT_DIR$/config/dynamic/openapi" />
+      <working_directory value="$PROJECT_DIR$/config/decoders" />
+      <root_directory value="$PROJECT_DIR$" />
       <kind value="PACKAGE" />
-      <package value="mokapi/config/dynamic/openapi" />
+      <package value="mokapi/config/decoders" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
       <framework value="gotest" />
-      <pattern value="^\QTestSchemaRef\E$" />
+      <pattern value="^\QTestLoad\E$/^\Qwithout_=\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="json_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration default="true" type="GoTestRunConfiguration" factoryName="Go Test">
       <module name="mokapi" />
-      <working_directory value="$PROJECT_DIR$/providers/encoding" />
-      <kind value="FILE" />
-      <package value="mokapi" />
+      <working_directory value="$PROJECT_DIR$" />
+      <go_parameters value="-i" />
+      <kind value="DIRECTORY" />
       <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$/providers/encoding/json_test.go" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <method v="2" />
+    </configuration>
+    <configuration name="go test decoders" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="mokapi" />
+      <working_directory value="$PROJECT_DIR$/config/decoders" />
+      <root_directory value="$PROJECT_DIR$" />
+      <kind value="DIRECTORY" />
+      <directory value="$PROJECT_DIR$/config/decoders" />
+      <filePath value="$PROJECT_DIR$" />
       <framework value="gotest" />
       <method v="2" />
     </configuration>
@@ -185,19 +207,19 @@
     </configuration>
     <list>
       <item itemvalue="Go Build.go build mokapi/cmd/mokapi" />
-      <item itemvalue="Go Test.TestParseAllOf in mokapi/providers/encoding" />
-      <item itemvalue="Go Test.TestParseOneOf in mokapi/providers/encoding" />
-      <item itemvalue="Go Test.json_test.go" />
-      <item itemvalue="Go Test.TestSchemaRef in mokapi/config/dynamic/openapi" />
-      <item itemvalue="Go Test.TestConfig in mokapi/config/dynamic/openapi" />
+      <item itemvalue="Go Test.TestLoad_Invalid in mokapi/config/decoders" />
+      <item itemvalue="Go Test.TestLoad_Invalid/name=bar in mokapi/config/decoders" />
+      <item itemvalue="Go Test.go test decoders" />
+      <item itemvalue="Go Test.TestLoad/without_= in mokapi/config/decoders" />
+      <item itemvalue="Go Test.TestLoad/env_var in mokapi/config/decoders" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Go Test.TestConfig in mokapi/config/dynamic/openapi" />
-        <item itemvalue="Go Test.TestSchemaRef in mokapi/config/dynamic/openapi" />
-        <item itemvalue="Go Test.json_test.go" />
-        <item itemvalue="Go Test.TestParseOneOf in mokapi/providers/encoding" />
-        <item itemvalue="Go Test.TestParseAllOf in mokapi/providers/encoding" />
+        <item itemvalue="Go Test.TestLoad/env_var in mokapi/config/decoders" />
+        <item itemvalue="Go Test.go test decoders" />
+        <item itemvalue="Go Test.TestLoad/without_= in mokapi/config/decoders" />
+        <item itemvalue="Go Test.TestLoad_Invalid in mokapi/config/decoders" />
+        <item itemvalue="Go Test.TestLoad_Invalid/name=bar in mokapi/config/decoders" />
       </list>
     </recent_temporary>
   </component>
@@ -255,17 +277,8 @@
         <entry key="305a4a7c-579e-45a7-a6e7-acba75ea5911" value="TOOL_WINDOW" />
       </map>
     </option>
-    <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="added git provider&#10;added http provider&#10;added headers to response" />
-    <MESSAGE value="fixed log" />
-    <MESSAGE value="updated doc&#10;fixed default value" />
-    <MESSAGE value="updated doc" />
-    <MESSAGE value="updated doc&#10;fixed eslint" />
-    <MESSAGE value="updated go 1.16&#10;added tls support" />
-    <MESSAGE value="updated github action for go 1.16" />
-    <MESSAGE value="fixed code for go 1.6" />
     <MESSAGE value="updated docs&#10;added default port for https" />
     <MESSAGE value="updated docs&#10;updated webui&#10;added smtp server" />
     <MESSAGE value="reference smtp.md" />
@@ -283,7 +296,15 @@
     <MESSAGE value="optimized mokapi actions&#10;bugfixes" />
     <MESSAGE value="fixed thread-safe action and function collection" />
     <MESSAGE value="added null support in Mokapi Actions&#10;fixed function calls in Mokapi Actions&#10;added more examples" />
-    <option name="LAST_COMMIT_MESSAGE" value="added null support in Mokapi Actions&#10;fixed function calls in Mokapi Actions&#10;added more examples" />
+    <MESSAGE value="added api handler" />
+    <MESSAGE value="package path depends on type of OS" />
+    <MESSAGE value="fixed http test helper" />
+    <MESSAGE value="fixed ldap test" />
+    <MESSAGE value="optimized json output" />
+    <MESSAGE value="fixed path parameter" />
+    <MESSAGE value="fixed unit test" />
+    <MESSAGE value="refactored kafka" />
+    <option name="LAST_COMMIT_MESSAGE" value="refactored kafka" />
   </component>
   <component name="VgoProject">
     <integration-enabled>true</integration-enabled>
@@ -300,6 +321,101 @@
           <line>24</line>
           <option name="timeStamp" value="31" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/api/handler_http.go</url>
+          <line>11</line>
+          <option name="timeStamp" value="33" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/server/ldap/search.go</url>
+          <line>89</line>
+          <option name="timeStamp" value="53" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/acceptance/petstore_test.go</url>
+          <line>51</line>
+          <option name="timeStamp" value="55" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/config/dynamic/asyncApi/kafka/store/apiversion_test.go</url>
+          <line>50</line>
+          <option name="timeStamp" value="61" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/config/dynamic/asyncApi/kafka/store/fetch.go</url>
+          <line>60</line>
+          <option name="timeStamp" value="73" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/config/dynamic/asyncApi/kafka/store/find_coordinator.go</url>
+          <line>15</line>
+          <option name="timeStamp" value="75" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/config/dynamic/asyncApi/kafka/store/group_balancer_test.go</url>
+          <line>66</line>
+          <option name="timeStamp" value="81" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/config/dynamic/asyncApi/kafka/store/heartbeat.go</url>
+          <line>10</line>
+          <option name="timeStamp" value="88" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/config/dynamic/asyncApi/kafka/store/group_balancer.go</url>
+          <line>124</line>
+          <option name="timeStamp" value="90" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/kafka/client_context.go</url>
+          <line>28</line>
+          <option name="timeStamp" value="91" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/config/dynamic/asyncApi/kafka/store/store.go</url>
+          <line>114</line>
+          <option name="timeStamp" value="94" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/config/dynamic/asyncApi/kafka/store/offset_commit.go</url>
+          <line>8</line>
+          <option name="timeStamp" value="96" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/kafka/kafkatest/client.go</url>
+          <line>147</line>
+          <option name="timeStamp" value="98" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/server/server_kafka_test.go</url>
+          <line>37</line>
+          <option name="timeStamp" value="108" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/server/server_kafka_test.go</url>
+          <line>141</line>
+          <option name="timeStamp" value="111" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/server/service/kafka.go</url>
+          <line>44</line>
+          <option name="timeStamp" value="113" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/server/service/kafka_test.go</url>
+          <line>123</line>
+          <option name="timeStamp" value="114" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/config/dynamic/common/resolve.go</url>
+          <line>38</line>
+          <option name="timeStamp" value="117" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/config/decoders/parser.go</url>
+          <line>45</line>
+          <option name="timeStamp" value="122" />
+        </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
         <breakpoint type="DlvErrorBreakpoint" />
@@ -310,5 +426,24 @@
         <watch expression="*(*&quot;mokapi/providers/workflow/ast.Selector&quot;)(824637039528)" />
       </configuration>
     </watches-manager>
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/mokapi$TestProduce_default_in_mokapi_kafka.out" NAME="TestProduce/default in mokapi/kafka Coverage Results" MODIFIED="1640100018573" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_config.out" NAME="go test config Coverage Results" MODIFIED="1641042450460" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_service.out" NAME="go test service Coverage Results" MODIFIED="1649184251978" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$gocheck_kafka.out" NAME="gocheck kafka Coverage Results" MODIFIED="1640188259887" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_readers.out" NAME="go test readers Coverage Results" MODIFIED="1640880206556" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_decoders.out" NAME="go test decoders Coverage Results" MODIFIED="1649413262271" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_http.out" NAME="go test http Coverage Results" MODIFIED="1641039554502" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_mokapi.out" NAME="go test mokapi Coverage Results" MODIFIED="1649399934497" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_dynamic.out" NAME="go test dynamic Coverage Results" MODIFIED="1640964859580" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$TestReadWritePage_in_mokapi_kafka_protocol.out" NAME="TestReadWritePage in mokapi/kafka/protocol Coverage Results" MODIFIED="1640196578790" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_store.out" NAME="go test store Coverage Results" MODIFIED="1649007179504" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$find_coordinator_test_go.out" NAME="find_coordinator_test.go Coverage Results" MODIFIED="1640262105250" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_kafka.out" NAME="go test kafka Coverage Results" MODIFIED="1640337694839" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_encoding.out" NAME="go test encoding Coverage Results" MODIFIED="1640638561356" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_protocol.out" NAME="go test protocol Coverage Results" MODIFIED="1646470455316" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_openapi.out" NAME="go test openapi Coverage Results" MODIFIED="1646771239108" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_file.out" NAME="go test file Coverage Results" MODIFIED="1640857655337" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
   </component>
 </project>
