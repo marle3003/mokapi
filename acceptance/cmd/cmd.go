@@ -42,15 +42,15 @@ func Start(cfg *static.Config) (*Cmd, error) {
 	mangerKafka := server.NewKafkaManager(kafka, scriptEngine, app)
 	managerLdap := server.NewLdapDirectoryManager(directories, scriptEngine, certStore, app)
 
-	watcher.AddListener(func(file *common.File) {
-		mangerKafka.UpdateConfig(file)
-		managerHttp.Update(file)
-		mail.UpdateConfig(file, certStore, scriptEngine)
-		managerLdap.UpdateConfig(file)
+	watcher.AddListener(func(cfg *common.Config) {
+		mangerKafka.UpdateConfig(cfg)
+		managerHttp.Update(cfg)
+		mail.UpdateConfig(cfg, certStore, scriptEngine)
+		managerLdap.UpdateConfig(cfg)
 	})
-	watcher.AddListener(func(file *common.File) {
-		if s, ok := file.Data.(*script.Script); ok {
-			err := scriptEngine.AddScript(file.Url, s.Code)
+	watcher.AddListener(func(cfg *common.Config) {
+		if s, ok := cfg.Data.(*script.Script); ok {
+			err := scriptEngine.AddScript(cfg.Url, s.Code)
 			if err != nil {
 				log.Error(err)
 			}

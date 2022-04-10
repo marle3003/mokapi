@@ -202,7 +202,7 @@ components:
 			c := &openapi.Config{}
 			err := yaml.Unmarshal([]byte(d.Content), c)
 			test.Ok(t, err)
-			err = c.Parse(&common.File{Data: c}, nil)
+			err = c.Parse(&common.Config{Data: c}, nil)
 			test.Ok(t, err)
 			d.f(t, c)
 		})
@@ -213,7 +213,7 @@ func TestConfig_PetStore_PetSchema(t *testing.T) {
 	config := &openapi.Config{}
 	err := yaml.Unmarshal([]byte(petstore), &config)
 	test.Ok(t, err)
-	err = config.Parse(&common.File{Data: config}, nil)
+	err = config.Parse(&common.Config{Data: config}, nil)
 	test.Ok(t, err)
 
 	test.Equals(t, nil, config.Components.Schemas.Get("foo"))
@@ -266,7 +266,7 @@ func TestConfig_PetStore_Path(t *testing.T) {
 	config := &openapi.Config{}
 	err := yaml.Unmarshal([]byte(petstore), &config)
 	test.Ok(t, err)
-	err = config.Parse(&common.File{Data: config}, nil)
+	err = config.Parse(&common.Config{Data: config}, nil)
 	test.Ok(t, err)
 
 	endpoint := config.EndPoints["/pet"]
@@ -299,7 +299,7 @@ func TestPetStore_Response(t *testing.T) {
 	config := &openapi.Config{}
 	err := yaml.Unmarshal([]byte(petstore), &config)
 	test.Ok(t, err)
-	err = config.Parse(&common.File{Data: config}, nil)
+	err = config.Parse(&common.Config{Data: config}, nil)
 	test.Ok(t, err)
 
 	endpoint := config.EndPoints["/pet/{petId}"]
@@ -317,7 +317,7 @@ func TestPetStore_Paramters(t *testing.T) {
 	config := &openapi.Config{}
 	err := yaml.Unmarshal([]byte(petstore), &config)
 	test.Ok(t, err)
-	err = config.Parse(&common.File{Data: config}, nil)
+	err = config.Parse(&common.Config{Data: config}, nil)
 	test.Ok(t, err)
 
 	endpoint := config.EndPoints["/pet/{petId}"]

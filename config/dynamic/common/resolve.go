@@ -13,7 +13,7 @@ type PathResolver interface {
 	Resolve(token string) (interface{}, error)
 }
 
-func Resolve(ref string, element interface{}, file *File, reader Reader) error {
+func Resolve(ref string, element interface{}, config *Config, reader Reader) error {
 	u, err := url.Parse(ref)
 	if err != nil {
 		return err
@@ -21,21 +21,21 @@ func Resolve(ref string, element interface{}, file *File, reader Reader) error {
 
 	if len(u.Path) > 0 {
 		if !u.IsAbs() {
-			if len(file.Url.Opaque) > 0 {
-				p := filepath.Join(filepath.Dir(file.Url.Opaque), u.Path)
+			if len(config.Url.Opaque) > 0 {
+				p := filepath.Join(filepath.Dir(config.Url.Opaque), u.Path)
 				p = fmt.Sprintf("file:%v", p)
 				if len(u.Fragment) > 0 {
 					p = fmt.Sprintf("%v#%v", p, u.Fragment)
 				}
 				u, err = url.Parse(p)
 			} else {
-				u, err = file.Url.Parse(ref)
+				u, err = config.Url.Parse(ref)
 			}
 		}
 
-		opts := []FileOptions{WithParent(file)}
+		opts := []ConfigOptions{WithParent(config)}
 		if len(u.Fragment) > 0 {
-			val := reflect.ValueOf(file.Data).Elem()
+			val := reflect.ValueOf(config.Data).Elem()
 			opts = append(opts, WithData(reflect.New(val.Type()).Interface()))
 		} else {
 			opts = append(opts, WithData(element))
@@ -52,7 +52,7 @@ func Resolve(ref string, element interface{}, file *File, reader Reader) error {
 		return nil
 	}
 
-	return ResolvePath(u.Fragment, file.Data, element)
+	return ResolvePath(u.Fragment, config.Data, element)
 }
 
 func ResolvePath(path string, cursor interface{}, resolved interface{}) (err error) {

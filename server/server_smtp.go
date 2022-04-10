@@ -11,8 +11,8 @@ import (
 
 type SmtpServers map[string]*smtp.Server
 
-func (s SmtpServers) UpdateConfig(file *common.File, store *cert.Store, emitter engine.EventEmitter) {
-	cfg, ok := file.Data.(*config.Config)
+func (s SmtpServers) UpdateConfig(c *common.Config, store *cert.Store, emitter engine.EventEmitter) {
+	cfg, ok := c.Data.(*config.Config)
 	if !ok {
 		return
 	}

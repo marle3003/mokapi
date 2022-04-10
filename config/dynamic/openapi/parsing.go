@@ -4,37 +4,37 @@ import (
 	"mokapi/config/dynamic/common"
 )
 
-func (c *Config) Parse(file *common.File, reader common.Reader) error {
+func (c *Config) Parse(config *common.Config, reader common.Reader) error {
 	if c == nil {
 		return nil
 	}
 
-	if err := c.Components.Schemas.Parse(file, reader); err != nil {
+	if err := c.Components.Schemas.Parse(config, reader); err != nil {
 		return err
 	}
 
-	if err := c.Components.Responses.Parse(file, reader); err != nil {
+	if err := c.Components.Responses.Parse(config, reader); err != nil {
 		return err
 	}
 
-	if err := c.Components.RequestBodies.Parse(file, reader); err != nil {
+	if err := c.Components.RequestBodies.Parse(config, reader); err != nil {
 		return err
 	}
 
-	if err := c.Components.Parameters.Parse(file, reader); err != nil {
+	if err := c.Components.Parameters.Parse(config, reader); err != nil {
 		return err
 	}
 
-	if err := c.Components.Examples.Parse(file, reader); err != nil {
+	if err := c.Components.Examples.Parse(config, reader); err != nil {
 		return err
 	}
 
-	if err := c.Components.Headers.Parse(file, reader); err != nil {
+	if err := c.Components.Headers.Parse(config, reader); err != nil {
 		return err
 	}
 
 	for _, e := range c.EndPoints {
-		if err := e.Parse(file, reader); err != nil {
+		if err := e.Parse(config, reader); err != nil {
 			return err
 		}
 	}
@@ -42,13 +42,13 @@ func (c *Config) Parse(file *common.File, reader common.Reader) error {
 	return nil
 }
 
-func (r *NamedResponses) Parse(file *common.File, reader common.Reader) error {
+func (r *NamedResponses) Parse(config *common.Config, reader common.Reader) error {
 	if r == nil {
 		return nil
 	}
 
 	if len(r.Ref()) > 0 && r.Value == nil {
-		if err := common.Resolve(r.Ref(), &r.Value, file, reader); err != nil {
+		if err := common.Resolve(r.Ref(), &r.Value, config, reader); err != nil {
 			return err
 		}
 	}
@@ -56,13 +56,13 @@ func (r *NamedResponses) Parse(file *common.File, reader common.Reader) error {
 	return nil
 }
 
-func (r *RequestBodies) Parse(file *common.File, reader common.Reader) error {
+func (r *RequestBodies) Parse(config *common.Config, reader common.Reader) error {
 	if r == nil {
 		return nil
 	}
 
 	if len(r.Ref()) > 0 && r.Value == nil {
-		if err := common.Resolve(r.Ref(), &r.Value, file, reader); err != nil {
+		if err := common.Resolve(r.Ref(), &r.Value, config, reader); err != nil {
 			return err
 		}
 	}
@@ -70,13 +70,13 @@ func (r *RequestBodies) Parse(file *common.File, reader common.Reader) error {
 	return nil
 }
 
-func (r *Examples) Parse(file *common.File, reader common.Reader) error {
+func (r *Examples) Parse(config *common.Config, reader common.Reader) error {
 	if r == nil {
 		return nil
 	}
 
 	if len(r.Ref()) > 0 && r.Value == nil {
-		if err := common.Resolve(r.Ref(), &r.Value, file, reader); err != nil {
+		if err := common.Resolve(r.Ref(), &r.Value, config, reader); err != nil {
 			return err
 		}
 	}
@@ -84,13 +84,13 @@ func (r *Examples) Parse(file *common.File, reader common.Reader) error {
 	return nil
 }
 
-func (r *NamedHeaders) Parse(file *common.File, reader common.Reader) error {
+func (r *NamedHeaders) Parse(config *common.Config, reader common.Reader) error {
 	if r == nil {
 		return nil
 	}
 
 	if len(r.Ref()) > 0 && r.Value == nil {
-		if err := common.Resolve(r.Ref(), &r.Value, file, reader); err != nil {
+		if err := common.Resolve(r.Ref(), &r.Value, config, reader); err != nil {
 			return err
 		}
 	}
@@ -98,27 +98,27 @@ func (r *NamedHeaders) Parse(file *common.File, reader common.Reader) error {
 	return nil
 }
 
-func (e *EndpointRef) Parse(file *common.File, reader common.Reader) error {
+func (e *EndpointRef) Parse(config *common.Config, reader common.Reader) error {
 	if e == nil {
 		return nil
 	}
 
 	if len(e.Ref()) > 0 && e.Value == nil {
-		if err := common.Resolve(e.Ref(), &e.Value, file, reader); err != nil {
+		if err := common.Resolve(e.Ref(), &e.Value, config, reader); err != nil {
 			return err
 		}
 	}
 
-	return e.Value.Parse(file, reader)
+	return e.Value.Parse(config, reader)
 }
 
-func (e *Endpoint) Parse(file *common.File, reader common.Reader) error {
+func (e *Endpoint) Parse(config *common.Config, reader common.Reader) error {
 	if e == nil {
 		return nil
 	}
 
 	for _, p := range e.Parameters {
-		if err := p.Parse(file, reader); err != nil {
+		if err := p.Parse(config, reader); err != nil {
 			return err
 		}
 	}
@@ -126,19 +126,19 @@ func (e *Endpoint) Parse(file *common.File, reader common.Reader) error {
 	for _, o := range e.Operations() {
 		o.Endpoint = e
 		for _, p := range o.Parameters {
-			if err := p.Parse(file, reader); err != nil {
+			if err := p.Parse(config, reader); err != nil {
 				return err
 			}
 		}
 
-		if err := o.RequestBody.Parse(file, reader); err != nil {
+		if err := o.RequestBody.Parse(config, reader); err != nil {
 			return err
 		}
 
 		if o.Responses != nil {
 			for it := o.Responses.Iter(); it.Next(); {
 				res := it.Value().(*ResponseRef)
-				if err := res.Parse(file, reader); err != nil {
+				if err := res.Parse(config, reader); err != nil {
 					return err
 				}
 			}
@@ -148,13 +148,13 @@ func (e *Endpoint) Parse(file *common.File, reader common.Reader) error {
 	return nil
 }
 
-func (r *RequestBodyRef) Parse(file *common.File, reader common.Reader) error {
+func (r *RequestBodyRef) Parse(config *common.Config, reader common.Reader) error {
 	if r == nil {
 		return nil
 	}
 
 	if len(r.Ref()) > 0 && r.Value == nil {
-		if err := common.Resolve(r.Ref(), &r.Value, file, reader); err != nil {
+		if err := common.Resolve(r.Ref(), &r.Value, config, reader); err != nil {
 			return err
 		}
 	}
@@ -163,7 +163,7 @@ func (r *RequestBodyRef) Parse(file *common.File, reader common.Reader) error {
 		if c == nil {
 			continue
 		}
-		if err := c.Schema.Parse(file, reader); err != nil {
+		if err := c.Schema.Parse(config, reader); err != nil {
 			return err
 		}
 	}
@@ -171,13 +171,13 @@ func (r *RequestBodyRef) Parse(file *common.File, reader common.Reader) error {
 	return nil
 }
 
-func (r *ResponseRef) Parse(file *common.File, reader common.Reader) error {
+func (r *ResponseRef) Parse(config *common.Config, reader common.Reader) error {
 	if r == nil {
 		return nil
 	}
 
 	if len(r.Ref()) > 0 && r.Value == nil {
-		if err := common.Resolve(r.Ref(), &r.Value, file, reader); err != nil {
+		if err := common.Resolve(r.Ref(), &r.Value, config, reader); err != nil {
 			return err
 		}
 	}
@@ -187,7 +187,7 @@ func (r *ResponseRef) Parse(file *common.File, reader common.Reader) error {
 	}
 
 	for _, h := range r.Value.Headers {
-		if err := h.Parse(file, reader); err != nil {
+		if err := h.Parse(config, reader); err != nil {
 			return err
 		}
 	}
@@ -196,12 +196,12 @@ func (r *ResponseRef) Parse(file *common.File, reader common.Reader) error {
 		if c == nil {
 			continue
 		}
-		if err := c.Schema.Parse(file, reader); err != nil {
+		if err := c.Schema.Parse(config, reader); err != nil {
 			return err
 		}
 
 		for _, e := range c.Examples {
-			if err := e.Parse(file, reader); err != nil {
+			if err := e.Parse(config, reader); err != nil {
 				return err
 			}
 		}
@@ -210,26 +210,26 @@ func (r *ResponseRef) Parse(file *common.File, reader common.Reader) error {
 	return nil
 }
 
-func (r *ExampleRef) Parse(file *common.File, reader common.Reader) error {
+func (r *ExampleRef) Parse(config *common.Config, reader common.Reader) error {
 	if r == nil {
 		return nil
 	}
 
 	if len(r.Ref()) > 0 && r.Value == nil {
-		if err := common.Resolve(r.Ref(), &r.Value, file, reader); err != nil {
+		if err := common.Resolve(r.Ref(), &r.Value, config, reader); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (r *HeaderRef) Parse(file *common.File, reader common.Reader) error {
+func (r *HeaderRef) Parse(config *common.Config, reader common.Reader) error {
 	if r == nil {
 		return nil
 	}
 
 	if len(r.Ref()) > 0 && r.Value == nil {
-		if err := common.Resolve(r.Ref(), &r.Value, file, reader); err != nil {
+		if err := common.Resolve(r.Ref(), &r.Value, config, reader); err != nil {
 			return err
 		}
 	}

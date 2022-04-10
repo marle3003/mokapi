@@ -161,7 +161,7 @@ func (p *Provider) readFile(path string) (*common.Config, error) {
 
 	return &common.Config{
 		Url:          u,
-		Data:         data,
+		Raw:          data,
 		ProviderName: "file",
 	}, nil
 }
@@ -178,7 +178,7 @@ func (p *Provider) walk(path string, ch chan<- *common.Config) error {
 		} else if !p.skip(path) {
 			if c, err := p.readFile(path); err != nil {
 				log.Error(err)
-			} else if len(c.Data) > 0 {
+			} else if len(c.Raw) > 0 {
 				p.watcher.Add(path)
 				ch <- c
 			}

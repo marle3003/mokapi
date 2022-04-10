@@ -28,17 +28,17 @@ func NewLdapDirectoryManager(directories LdapDirectories, emitter engine.EventEm
 	}
 }
 
-func (m LdapDirectoryManager) UpdateConfig(file *common.File) {
-	config, ok := file.Data.(*config.Config)
+func (m LdapDirectoryManager) UpdateConfig(c *common.Config) {
+	ldapConfig, ok := c.Data.(*config.Config)
 	if !ok {
 		return
 	}
 
-	if d, ok := m.Directories[config.Info.Name]; !ok {
-		d = ldap.NewDirectory(config)
+	if d, ok := m.Directories[ldapConfig.Info.Name]; !ok {
+		d = ldap.NewDirectory(ldapConfig)
 		d.Start()
 	} else {
-		d.Update(config)
+		d.Update(ldapConfig)
 	}
 }
 

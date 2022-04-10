@@ -25,7 +25,7 @@ func TestProvider(t *testing.T) {
 	select {
 	case c := <-ch:
 		test.Assert(t, len(c.Url.String()) > 0, "url is set")
-		test.Assert(t, len(c.Data) > 0, "got data")
+		test.Assert(t, len(c.Raw) > 0, "got data")
 	case <-timeout:
 		t.Fatal("timeout while waiting for file event")
 	}
@@ -48,7 +48,7 @@ func TestWatch(t *testing.T) {
 	select {
 	case c := <-ch:
 		test.Assert(t, len(c.Url.String()) > 0, "url is set")
-		test.Assert(t, len(c.Data) > 0, "got data")
+		test.Assert(t, len(c.Raw) > 0, "got data")
 	case <-timeout:
 		t.Fatal("timeout while waiting for file event")
 	}

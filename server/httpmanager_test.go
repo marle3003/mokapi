@@ -31,7 +31,7 @@ func TestHttpServers_Monitor(t *testing.T) {
 	require.NoError(t, err)
 	url := fmt.Sprintf("http://localhost:%v", port)
 	c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: url}}}
-	m.Update(&common.File{Data: c, Url: MustParseUrl("foo.yml")})
+	m.Update(&common.Config{Data: c, Url: MustParseUrl("foo.yml")})
 
 	try.GetRequest(t, url, map[string]string{})
 	require.Equal(t, float64(1), app.Monitor.Http.RequestCounter.Value())
@@ -44,14 +44,14 @@ func TestHttpManager_Update(t *testing.T) {
 	}{
 		{"nil config",
 			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
-				m.Update(&common.File{Data: nil})
+				m.Update(&common.Config{Data: nil})
 				require.Nil(t, hook.LastEntry())
 			}},
 		{
 			"app contains config",
 			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
 				c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: "http://:80"}}}
-				m.Update(&common.File{Data: c, Url: MustParseUrl("foo.yml")})
+				m.Update(&common.Config{Data: c, Url: MustParseUrl("foo.yml")})
 
 				require.Contains(t, m.app.Http, "foo")
 			},
@@ -64,8 +64,8 @@ func TestHttpManager_Update(t *testing.T) {
 				url := fmt.Sprintf("http://localhost:%v", port)
 				foo := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: url + "/foo"}}}
 				bar := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "bar"}, Servers: []*openapi.Server{{Url: url + "/bar"}}}
-				m.Update(&common.File{Data: foo, Url: MustParseUrl("foo.yml")})
-				m.Update(&common.File{Data: bar, Url: MustParseUrl("bar.yml")})
+				m.Update(&common.Config{Data: foo, Url: MustParseUrl("foo.yml")})
+				m.Update(&common.Config{Data: bar, Url: MustParseUrl("bar.yml")})
 
 				require.Contains(t, m.app.Http, "foo")
 				require.Contains(t, m.app.Http, "bar")
@@ -76,7 +76,7 @@ func TestHttpManager_Update(t *testing.T) {
 				port, err := try.GetFreePort()
 				require.NoError(t, err)
 				c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: fmt.Sprintf("http://:%v", port)}}}
-				m.Update(&common.File{Data: c, Url: MustParseUrl("foo.yml")})
+				m.Update(&common.Config{Data: c, Url: MustParseUrl("foo.yml")})
 
 				require.Contains(t, m.Servers, fmt.Sprintf("%v", port))
 				entries := hook.Entries
@@ -88,7 +88,7 @@ func TestHttpManager_Update(t *testing.T) {
 		{"invalid port format",
 			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
 				c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: "http://localhost:foo"}}}
-				m.Update(&common.File{Data: c, Url: MustParseUrl("foo.yml")})
+				m.Update(&common.Config{Data: c, Url: MustParseUrl("foo.yml")})
 
 				require.Len(t, m.Servers, 0)
 				entries := hook.Entries
@@ -99,7 +99,7 @@ func TestHttpManager_Update(t *testing.T) {
 		{"invalid url format",
 			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
 				c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: "$://"}}}
-				m.Update(&common.File{Data: c, Url: MustParseUrl("foo.yml")})
+				m.Update(&common.Config{Data: c, Url: MustParseUrl("foo.yml")})
 
 				require.Len(t, m.Servers, 0)
 				entries := hook.Entries
@@ -113,9 +113,9 @@ func TestHttpManager_Update(t *testing.T) {
 				require.NoError(t, err)
 				url := fmt.Sprintf("http://:%v", port)
 				c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: url + "/foo"}}}
-				m.Update(&common.File{Data: c, Url: MustParseUrl("foo.yml")})
+				m.Update(&common.Config{Data: c, Url: MustParseUrl("foo.yml")})
 				c = &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "bar"}, Servers: []*openapi.Server{{Url: url + "/foo"}}}
-				m.Update(&common.File{Data: c, Url: MustParseUrl("foo.yml")})
+				m.Update(&common.Config{Data: c, Url: MustParseUrl("foo.yml")})
 
 				require.Len(t, m.Servers, 1)
 				entries := hook.Entries

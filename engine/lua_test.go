@@ -223,8 +223,8 @@ func TestLuaOpen(t *testing.T) {
 			},
 		}
 
-		reader := &testReader{readFunc: func(file *common.File) error {
-			file.Data = "foobar"
+		reader := &testReader{readFunc: func(cfg *common.Config) error {
+			cfg.Data = "foobar"
 			return nil
 		}}
 
@@ -248,7 +248,7 @@ func TestLuaOpen(t *testing.T) {
 			},
 		}
 
-		reader := &testReader{readFunc: func(file *common.File) error {
+		reader := &testReader{readFunc: func(cfg *common.Config) error {
 			return errors.New("file not found")
 		}}
 

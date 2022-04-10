@@ -55,14 +55,14 @@ func (m *HttpManager) AddService(name string, u *url.URL, h http.Handler) error 
 	return nil
 }
 
-func (m *HttpManager) Update(file *common.File) {
-	config, ok := file.Data.(*openapi.Config)
+func (m *HttpManager) Update(c *common.Config) {
+	config, ok := c.Data.(*openapi.Config)
 	if !ok {
 		return
 	}
 
 	if err := config.Validate(); err != nil {
-		log.Warnf("validation error %v: %v", file.Url, err)
+		log.Warnf("validation error %v: %v", c.Url, err)
 		return
 	}
 
@@ -75,17 +75,17 @@ func (m *HttpManager) Update(file *common.File) {
 	for _, s := range config.Servers {
 		u, err := parseUrl(s.Url)
 		if err != nil {
-			log.Errorf("error %v: %v", file.Url, err.Error())
+			log.Errorf("error %v: %v", c.Url, err.Error())
 			continue
 		}
 
 		err = m.AddService(config.Info.Name, u, openapi.NewHandler(config, m.eventEmitter))
 		if err != nil {
-			log.Errorf("error on updating %v: %v", file.Url.String(), err.Error())
+			log.Errorf("error on updating %v: %v", c.Url.String(), err.Error())
 			return
 		}
 	}
-	log.Infof("processed file %v", file.Url.String())
+	log.Infof("processed file %v", c.Url.String())
 }
 
 func (m *HttpManager) createOpenApiService(u *url.URL, config *openapi.Config) *service.HttpService {

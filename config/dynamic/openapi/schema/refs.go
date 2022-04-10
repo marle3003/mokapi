@@ -5,13 +5,13 @@ import (
 	"mokapi/config/dynamic/common"
 )
 
-func (s *Schemas) Parse(file *common.File, reader common.Reader) error {
+func (s *Schemas) Parse(config *common.Config, reader common.Reader) error {
 	if s == nil {
 		return nil
 	}
 
 	for it := s.Iter(); it.Next(); {
-		if err := it.Value().(*Ref).Parse(file, reader); err != nil {
+		if err := it.Value().(*Ref).Parse(config, reader); err != nil {
 			return err
 		}
 	}
@@ -19,7 +19,7 @@ func (s *Schemas) Parse(file *common.File, reader common.Reader) error {
 	return nil
 }
 
-func (s *SchemasRef) Parse(file *common.File, reader common.Reader) error {
+func (s *SchemasRef) Parse(file *common.Config, reader common.Reader) error {
 	if s == nil {
 		return nil
 	}
@@ -36,12 +36,12 @@ func (s *SchemasRef) Parse(file *common.File, reader common.Reader) error {
 	return s.Value.Parse(file, reader)
 }
 
-func (r *Ref) Parse(file *common.File, reader common.Reader) error {
+func (r *Ref) Parse(config *common.Config, reader common.Reader) error {
 	if r == nil {
 		return nil
 	}
 	if len(r.Ref()) > 0 && r.Value == nil {
-		if err := common.Resolve(r.Ref(), &r.Value, file, reader); err != nil {
+		if err := common.Resolve(r.Ref(), &r.Value, config, reader); err != nil {
 			return err
 		}
 	}
@@ -50,33 +50,33 @@ func (r *Ref) Parse(file *common.File, reader common.Reader) error {
 		return nil
 	}
 
-	return r.Value.Parse(file, reader)
+	return r.Value.Parse(config, reader)
 }
 
-func (s *Schema) Parse(file *common.File, reader common.Reader) error {
+func (s *Schema) Parse(config *common.Config, reader common.Reader) error {
 	if s == nil {
 		return nil
 	}
 
-	if err := s.Items.Parse(file, reader); err != nil {
+	if err := s.Items.Parse(config, reader); err != nil {
 		return err
 	}
 
-	if err := s.Properties.Parse(file, reader); err != nil {
+	if err := s.Properties.Parse(config, reader); err != nil {
 		return err
 	}
 
-	if err := s.AdditionalProperties.Parse(file, reader); err != nil {
+	if err := s.AdditionalProperties.Parse(config, reader); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (ap *AdditionalProperties) Parse(file *common.File, reader common.Reader) error {
+func (ap *AdditionalProperties) Parse(config *common.Config, reader common.Reader) error {
 	if ap == nil {
 		return nil
 	}
 
-	return ap.Ref.Parse(file, reader)
+	return ap.Ref.Parse(config, reader)
 }

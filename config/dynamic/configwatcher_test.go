@@ -2,169 +2,344 @@ package dynamic
 
 import (
 	"context"
-	"github.com/stretchr/testify/assert"
+	"fmt"
 	"github.com/stretchr/testify/require"
-	"io"
 	"mokapi/config/dynamic/common"
-	"mokapi/config/dynamic/openapi"
 	"mokapi/config/static"
 	"mokapi/safe"
-	"mokapi/test"
 	"net/url"
-	"os"
-	"path/filepath"
 	"testing"
 	"time"
 )
 
-type testcase struct {
-	name       string
-	filePath   string
-	fn         func(t *testing.T, f *common.File)
-	updatePath string
-	updateFn   func(t *testing.T, f *common.File)
-}
-
-var testcases = []testcase{
-	{
-		name:     "openapi",
-		filePath: "./test/openapi.yml",
-		fn: func(t *testing.T, f *common.File) {
-			assert.NotNil(t, f.Data)
-			c := f.Data.(*openapi.Config)
-			assert.Len(t, c.EndPoints, 1)
+func TestConfigWatcher_Read(t *testing.T) {
+	testcases := []struct {
+		name string
+		f    func(t *testing.T)
+	}{
+		{
+			name: "no provider",
+			f: func(t *testing.T) {
+				w := NewConfigWatcher(&static.Config{})
+				u := mustParse("file.yml")
+				c, err := w.Read(u)
+				require.EqualError(t, err, "unsupported scheme: file.yml")
+				require.Nil(t, c)
+			},
 		},
-		updatePath: "./test/openapi_update.yml",
-		updateFn: func(t *testing.T, f *common.File) {
-			assert.NotNil(t, f.Data)
-			c := f.Data.(*openapi.Config)
-			assert.Len(t, c.EndPoints, 2)
-		},
-	},
-}
-
-func TestWatcher(t *testing.T) {
-	for _, testcase := range testcases {
-		tc := testcase
-		t.Run(tc.name, func(t *testing.T) {
-			tempDir := t.TempDir()
-			t.Cleanup(func() { os.RemoveAll(tempDir) })
-			w := NewConfigWatcher(&static.Config{
-				Providers: static.Providers{
-					File: static.FileProvider{Directory: tempDir}}})
-			pool := safe.NewPool(context.Background())
-			defer pool.Stop()
-			ch := make(chan *common.File)
-			w.AddListener(func(file *common.File) {
-				ch <- file
-			})
-			err := w.Start(pool)
-			test.Ok(t, err)
-
-			_, err = createTempFile(tc.filePath, tempDir)
-			test.Ok(t, err)
-
-			timeout := time.After(2 * time.Second)
-			select {
-			case f := <-ch:
-				tc.fn(t, f)
-			case <-timeout:
-				t.Fatal("timeout while waiting for file event")
-			}
-
-			if len(tc.updatePath) > 0 {
-				_, err := createTempFile(tc.updatePath, tempDir)
-				test.Ok(t, err)
-
-				timeout := time.After(2 * time.Second)
-				select {
-				case f := <-ch:
-					tc.updateFn(t, f)
-				case <-timeout:
-					t.Fatal("timeout while waiting for file event")
+		{
+			name: "with provider",
+			f: func(t *testing.T) {
+				w := NewConfigWatcher(&static.Config{})
+				configPath := mustParse("file.yml")
+				configPath.Scheme = "foo"
+				w.providers["foo"] = &testprovider{
+					read: func(u *url.URL) (*common.Config, error) {
+						require.Equal(t, configPath, u)
+						return common.NewConfig(u), nil
+					},
 				}
-			}
+
+				c, err := w.Read(configPath)
+				require.NoError(t, err)
+				require.Equal(t, configPath, c.Url)
+			},
+		},
+		{
+			name: "read twice",
+			f: func(t *testing.T) {
+				w := NewConfigWatcher(&static.Config{})
+				configPath := mustParse("file.yml")
+				configPath.Scheme = "foo"
+				w.providers["foo"] = &testprovider{
+					read: func(u *url.URL) (*common.Config, error) {
+						require.Equal(t, configPath, u)
+						return common.NewConfig(u), nil
+					},
+				}
+
+				c1, err := w.Read(configPath)
+				require.NoError(t, err)
+				require.Equal(t, configPath, c1.Url)
+
+				c2, err := w.Read(configPath)
+				require.NoError(t, err)
+				require.Equal(t, configPath, c2.Url)
+				require.True(t, c1 == c2, "should be same reference")
+			},
+		},
+		{
+			name: "provider read error",
+			f: func(t *testing.T) {
+				w := NewConfigWatcher(&static.Config{})
+				configPath := mustParse("file.yml")
+				configPath.Scheme = "foo"
+				w.providers["foo"] = &testprovider{
+					read: func(u *url.URL) (*common.Config, error) {
+						require.Equal(t, configPath, u)
+						return nil, fmt.Errorf("TEST ERROR")
+					},
+				}
+
+				c, err := w.Read(configPath)
+				require.EqualError(t, err, "TEST ERROR")
+				require.Nil(t, c)
+			},
+		},
+		{
+			name: "file changed after read",
+			f: func(t *testing.T) {
+				w := NewConfigWatcher(&static.Config{})
+				configPath := mustParse("foo://file.yml")
+				var ch chan *common.Config
+				w.providers["foo"] = &testprovider{
+					read: func(u *url.URL) (*common.Config, error) {
+						return &common.Config{Url: u}, nil
+					},
+					start: func(configs chan *common.Config, pool *safe.Pool) error {
+						ch = configs
+						return nil
+					},
+				}
+				pool := safe.NewPool(context.Background())
+				w.Start(pool)
+				defer pool.Stop()
+
+				c, err := w.Read(configPath)
+				require.NoError(t, err)
+				require.NotNil(t, c)
+
+				ch <- &common.Config{Url: configPath, Raw: []byte("foobar")}
+				time.Sleep(time.Duration(100) * time.Millisecond)
+				require.Equal(t, []byte("foobar"), c.Raw)
+			},
+		},
+		{
+			name: "read after file changed",
+			f: func(t *testing.T) {
+				w := NewConfigWatcher(&static.Config{})
+				configPath := mustParse("foo://file.yml")
+				var ch chan *common.Config
+				w.providers["foo"] = &testprovider{
+					read: func(u *url.URL) (*common.Config, error) {
+						return &common.Config{Url: u}, nil
+					},
+					start: func(configs chan *common.Config, pool *safe.Pool) error {
+						ch = configs
+						return nil
+					},
+				}
+				pool := safe.NewPool(context.Background())
+				w.Start(pool)
+				defer pool.Stop()
+
+				ch <- &common.Config{Url: configPath, Raw: []byte("foobar")}
+				time.Sleep(time.Duration(100) * time.Millisecond)
+
+				c, err := w.Read(configPath)
+				require.NoError(t, err)
+				require.NotNil(t, c)
+				require.Equal(t, []byte("foobar"), c.Raw)
+			},
+		},
+		{
+			name: "config parse error",
+			f: func(t *testing.T) {
+				w := NewConfigWatcher(&static.Config{})
+				configPath := mustParse("file.yml")
+				configPath.Scheme = "foo"
+				w.providers["foo"] = &testprovider{
+					read: func(u *url.URL) (*common.Config, error) {
+						require.Equal(t, configPath, u)
+						return &common.Config{Url: u, Data: &data{
+							parse: func(config *common.Config, reader common.Reader) error {
+								return fmt.Errorf("TEST ERROR")
+							},
+						}}, nil
+					},
+				}
+
+				c, err := w.Read(configPath)
+				require.EqualError(t, err, "parsing file foo://file.yml: TEST ERROR")
+				require.Nil(t, c)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			tc.f(t)
 		})
 	}
 }
 
-func TestWatcher_UpdateRef(t *testing.T) {
-	tempDir := t.TempDir()
-	pool := safe.NewPool(context.Background())
-	t.Cleanup(func() {
-		pool.Stop()
-		os.RemoveAll(tempDir)
-	})
-	w := NewConfigWatcher(&static.Config{
-		Providers: static.Providers{
-			File: static.FileProvider{Directory: tempDir}}})
+func TestConfigWatcher_Start(t *testing.T) {
+	testcases := []struct {
+		name string
+		f    func(t *testing.T)
+	}{
+		{
+			name: "no provider",
+			f: func(t *testing.T) {
+				w := NewConfigWatcher(&static.Config{})
+				pool := safe.NewPool(context.Background())
 
-	ch := make(chan *common.File)
-	err := w.Start(pool)
-	require.NoError(t, err)
+				err := w.Start(pool)
+				require.NoError(t, err)
+				pool.Stop()
+			},
+		},
+		{
+			name: "provider error",
+			f: func(t *testing.T) {
+				w := NewConfigWatcher(&static.Config{})
+				pool := safe.NewPool(context.Background())
+				w.providers["foo"] = &testprovider{start: func(configs chan *common.Config, pool *safe.Pool) error {
+					return fmt.Errorf("TEST ERROR")
+				}}
 
-	file, err := createTempFile(testcases[0].filePath, tempDir)
-	require.NoError(t, err)
+				err := w.Start(pool)
+				require.EqualError(t, err, "TEST ERROR")
+				pool.Stop()
+			},
+		},
+		{
+			name: "closing",
+			f: func(t *testing.T) {
+				w := NewConfigWatcher(&static.Config{})
+				var listenerReceived []*common.Config
+				w.AddListener(func(config *common.Config) {
+					listenerReceived = append(listenerReceived, config)
+				})
+				var ch chan *common.Config
+				w.providers["foo"] = &testprovider{start: func(configs chan *common.Config, pool *safe.Pool) error {
+					ch = configs
+					return nil
+				}}
+				pool := safe.NewPool(context.Background())
+				err := w.Start(pool)
+				require.NoError(t, err)
 
-	time.Sleep(time.Second)
-	f, err := w.Read(mustParse(file), common.WithListener(func(file *common.File) {
-		// send non-blocking to chan
-		select {
-		case ch <- file:
-		default:
-		}
-	}))
-	require.NoError(t, err)
-	config, ok := f.Data.(*openapi.Config)
-	require.True(t, ok)
-	require.Equal(t, "test", config.Info.Name)
-	assert.Len(t, config.EndPoints, 1)
+				ch <- &common.Config{Url: mustParse("foo.yml")}
+				time.Sleep(time.Duration(100) * time.Millisecond)
 
-	f1, err := createTempFile(testcases[0].updatePath, tempDir)
-	require.NoError(t, err)
-	require.Equal(t, file, f1)
+				require.Len(t, listenerReceived, 1)
+				pool.Stop()
 
-	// wait for all events.
-	timeout := time.After(3 * time.Second)
-	gotEvent := false
-Loop:
-	for {
-		select {
-		case <-ch:
-			gotEvent = true
-		case <-timeout:
-			break Loop
-		}
+				func() {
+					defer func() {
+						err := recover()
+						require.Equal(t, err.(error).Error(), "send on closed channel")
+					}()
+					ch <- &common.Config{Url: mustParse("foo.yml")}
+				}()
+			},
+		},
 	}
-	require.True(t, gotEvent)
-	require.Len(t, config.EndPoints, 2)
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			tc.f(t)
+		})
+	}
+}
+
+func TestConfigWatcher_New(t *testing.T) {
+	testcases := []struct {
+		name string
+		f    func(t *testing.T)
+	}{
+		{
+			name: "file provider",
+			f: func(t *testing.T) {
+				w := NewConfigWatcher(
+					&static.Config{
+						Providers: static.Providers{
+							File: static.FileProvider{
+								Filename: "foo.yml",
+							},
+						},
+					},
+				)
+				require.Contains(t, w.providers, "file")
+			},
+		},
+		{
+			name: "http provider",
+			f: func(t *testing.T) {
+				w := NewConfigWatcher(
+					&static.Config{
+						Providers: static.Providers{
+							Http: static.HttpProvider{
+								Url: "foo",
+							},
+						},
+					},
+				)
+				require.Contains(t, w.providers, "http")
+			},
+		},
+		{
+			name: "git provider",
+			f: func(t *testing.T) {
+				w := NewConfigWatcher(
+					&static.Config{
+						Providers: static.Providers{
+							Git: static.GitProvider{
+								Url: "git",
+							},
+						},
+					},
+				)
+				require.Contains(t, w.providers, "git")
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			tc.f(t)
+		})
+	}
+}
+
+type data struct {
+	parse func(config *common.Config, reader common.Reader) error
+}
+
+type testprovider struct {
+	read  func(u *url.URL) (*common.Config, error)
+	start func(chan *common.Config, *safe.Pool) error
+}
+
+func (d *data) Parse(config *common.Config, reader common.Reader) error {
+	if d.parse != nil {
+		return d.parse(config, reader)
+	}
+	return nil
+}
+
+func (p *testprovider) Read(u *url.URL) (*common.Config, error) {
+	if p.read != nil {
+		return p.read(u)
+	}
+	return nil, nil
+}
+
+func (p *testprovider) Start(ch chan *common.Config, pool *safe.Pool) error {
+	if p.start != nil {
+		return p.start(ch, pool)
+	}
+	return nil
 }
 
 func mustParse(s string) *url.URL {
-	s, err := filepath.Abs(s)
-	if err != nil {
-		panic(err)
-	}
-	u, err := url.Parse("file:" + s)
+	u, err := url.Parse(s)
 	if err != nil {
 		panic(err)
 	}
 	return u
-}
-
-func createTempFile(srcPath string, destPath string) (string, error) {
-	dest := filepath.Join(destPath, "tmp"+filepath.Ext(srcPath))
-	file, err := os.Create(dest)
-	if err != nil {
-		return "", err
-	}
-	defer file.Close()
-
-	src, err := os.Open(srcPath)
-	if err != nil {
-		return "", err
-	}
-	defer src.Close()
-	_, err = io.Copy(file, src)
-	return dest, err
 }

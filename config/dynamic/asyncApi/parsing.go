@@ -4,12 +4,12 @@ import (
 	"mokapi/config/dynamic/common"
 )
 
-func (c *Config) Parse(file *common.File, reader common.Reader) error {
+func (c *Config) Parse(config *common.Config, reader common.Reader) error {
 	for _, ch := range c.Channels {
 		if ch == nil {
 			continue
 		}
-		if err := ch.Parse(file, reader); err != nil {
+		if err := ch.Parse(config, reader); err != nil {
 			return err
 		}
 	}
@@ -17,9 +17,9 @@ func (c *Config) Parse(file *common.File, reader common.Reader) error {
 	return nil
 }
 
-func (c *ChannelRef) Parse(file *common.File, reader common.Reader) error {
+func (c *ChannelRef) Parse(config *common.Config, reader common.Reader) error {
 	if len(c.Ref) > 0 && c.Value == nil {
-		if err := common.Resolve(c.Ref, &c.Value, file, reader); err != nil {
+		if err := common.Resolve(c.Ref, &c.Value, config, reader); err != nil {
 			return err
 		}
 	}
@@ -29,13 +29,13 @@ func (c *ChannelRef) Parse(file *common.File, reader common.Reader) error {
 	}
 
 	if c.Value.Publish != nil {
-		if err := c.Value.Publish.Parse(file, reader); err != nil {
+		if err := c.Value.Publish.Parse(config, reader); err != nil {
 			return err
 		}
 	}
 
 	if c.Value.Subscribe != nil {
-		if err := c.Value.Subscribe.Parse(file, reader); err != nil {
+		if err := c.Value.Subscribe.Parse(config, reader); err != nil {
 			return err
 		}
 	}
@@ -43,16 +43,16 @@ func (c *ChannelRef) Parse(file *common.File, reader common.Reader) error {
 	return nil
 }
 
-func (o *Operation) Parse(file *common.File, reader common.Reader) error {
+func (o *Operation) Parse(config *common.Config, reader common.Reader) error {
 	if o.Message != nil {
-		return o.Message.Parse(file, reader)
+		return o.Message.Parse(config, reader)
 	}
 	return nil
 }
 
-func (m *MessageRef) Parse(file *common.File, reader common.Reader) error {
+func (m *MessageRef) Parse(config *common.Config, reader common.Reader) error {
 	if len(m.Ref) > 0 && m.Value == nil {
-		if err := common.Resolve(m.Ref, &m.Value, file, reader); err != nil {
+		if err := common.Resolve(m.Ref, &m.Value, config, reader); err != nil {
 			return err
 		}
 	}
@@ -62,7 +62,7 @@ func (m *MessageRef) Parse(file *common.File, reader common.Reader) error {
 	}
 
 	if m.Value.Payload != nil {
-		if err := m.Value.Payload.Parse(file, reader); err != nil {
+		if err := m.Value.Payload.Parse(config, reader); err != nil {
 			return err
 		}
 	}

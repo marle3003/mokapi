@@ -10,82 +10,82 @@ import (
 )
 
 type testReader struct {
-	readFunc func(file *common.File) error
+	readFunc func(cfg *common.Config) error
 }
 
-func (tr *testReader) Read(u *url.URL, opts ...common.FileOptions) (*common.File, error) {
-	file := &common.File{Url: u}
+func (tr *testReader) Read(u *url.URL, opts ...common.ConfigOptions) (*common.Config, error) {
+	cfg := &common.Config{Url: u}
 	for _, opt := range opts {
-		opt(file, true)
+		opt(cfg, true)
 	}
-	if err := tr.readFunc(file); err != nil {
-		return file, err
+	if err := tr.readFunc(cfg); err != nil {
+		return cfg, err
 	}
-	if p, ok := file.Data.(common.Parser); ok {
-		return file, p.Parse(file, tr)
+	if p, ok := cfg.Data.(common.Parser); ok {
+		return cfg, p.Parse(cfg, tr)
 	}
-	return file, nil
+	return cfg, nil
 }
 
 func (tr *testReader) Close() {}
 
 func TestResolve(t *testing.T) {
 	t.Run("empty should not error", func(t *testing.T) {
-		reader := &testReader{readFunc: func(file *common.File) error { return nil }}
+		reader := &testReader{readFunc: func(cfg *common.Config) error { return nil }}
 		config := &Config{}
-		err := config.Parse(&common.File{Url: &url.URL{}, Data: config}, reader)
+		err := config.Parse(&common.Config{Url: &url.URL{}, Data: config}, reader)
 		test.Ok(t, err)
 	})
 }
 
 func TestEndpointResolve(t *testing.T) {
 	t.Run("nil should not error", func(t *testing.T) {
-		reader := &testReader{readFunc: func(file *common.File) error { return nil }}
+		reader := &testReader{readFunc: func(cfg *common.Config) error { return nil }}
 		config := &Config{EndPoints: map[string]*EndpointRef{"foo": nil}}
-		err := config.Parse(&common.File{Url: &url.URL{}, Data: config}, reader)
+		err := config.Parse(&common.Config{Url: &url.URL{}, Data: config}, reader)
 		test.Ok(t, err)
 	})
 	t.Run("file reference", func(t *testing.T) {
 		target := &Endpoint{}
-		reader := &testReader{readFunc: func(file *common.File) error {
-			test.Equals(t, "/foo.yml#/endpoints/foo", file.Url.String())
+		reader := &testReader{readFunc: func(cfg *common.Config) error {
+			test.Equals(t, "/foo.yml#/endpoints/foo", cfg.Url.String())
 			config := &Config{EndPoints: map[string]*EndpointRef{
 				"foo": {Value: target},
 			}}
-			file.Data = config
+			cfg.Data = config
 			return nil
 		}}
 		config := &Config{EndPoints: map[string]*EndpointRef{
 			"foo": {Reference: ref.Reference{Value: "foo.yml#/endpoints/foo"}},
 		}}
-		err := config.Parse(&common.File{Url: &url.URL{}, Data: config}, reader)
+		err := config.Parse(&common.Config{Url: &url.URL{}, Data: config}, reader)
 		test.Ok(t, err)
 		test.Equals(t, target, config.EndPoints["foo"].Value)
 	})
 	t.Run("file reference but nil", func(t *testing.T) {
-		reader := &testReader{readFunc: func(file *common.File) error {
-			test.Equals(t, "/foo.yml#/endpoints/foo", file.Url.String())
+		reader := &testReader{readFunc: func(cfg *common.Config) error {
+			test.Equals(t, "/foo.yml#/endpoints/foo", cfg.Url.String())
 			config := &Config{EndPoints: map[string]*EndpointRef{
 				"foo": {},
 			}}
-			file.Data = config
+			cfg.Data = config
 			return nil
 		}}
 		config := &Config{EndPoints: map[string]*EndpointRef{
 			"foo": {Reference: ref.Reference{Value: "foo.yml#/endpoints/foo"}},
 		}}
-		err := config.Parse(&common.File{Url: &url.URL{}, Data: config}, reader)
+		err := config.Parse(&common.Config{Url: &url.URL{}, Data: config}, reader)
 		test.Ok(t, err)
 		test.Equals(t, nil, config.EndPoints["foo"].Value)
 	})
 	t.Run("reader returns error", func(t *testing.T) {
-		reader := &testReader{readFunc: func(file *common.File) error {
+		reader := &testReader{readFunc: func(cfg *common.Config) error {
 			return test.TestError
 		}}
 		config := &Config{EndPoints: map[string]*EndpointRef{
 			"foo": {Reference: ref.Reference{Value: "foo.yml#/endpoints/foo"}},
 		}}
-		err := config.Parse(&common.File{Url: &url.URL{}, Data: config}, reader)
+		err := config.Parse(&common.Config{Url: &url.URL{}, Data: config}, reader)
 		test.Error(t, err)
 		test.Equals(t, fmt.Errorf("unable to read /foo.yml#/endpoints/foo: %v", test.TestError), err)
 	})

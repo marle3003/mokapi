@@ -18,47 +18,47 @@ import (
 
 var UnknownFile = errors.New("unknown file")
 
-type File struct {
-	Url *url.URL
-
-	Data interface{}
-
-	Listeners []func(*File)
+type Config struct {
+	Url          *url.URL
+	Raw          []byte
+	Data         interface{}
+	Listeners    []func(*Config)
+	ProviderName string
 
 	parseMode string
 	m         sync.Mutex
 }
 
-func NewFile(u *url.URL, opts ...FileOptions) *File {
-	f := &File{Url: u}
+func NewConfig(u *url.URL, opts ...ConfigOptions) *Config {
+	f := &Config{Url: u}
 	for _, opt := range opts {
 		opt(f, true)
 	}
 	return f
 }
 
-func (f *File) Options(opts ...FileOptions) {
+func (f *Config) Options(opts ...ConfigOptions) {
 	for _, opt := range opts {
 		opt(f, f.Data == nil)
 	}
 }
 
-func (f *File) Changed() {
+func (f *Config) Changed() {
 	for _, l := range f.Listeners {
 		l(f)
 	}
 }
 
-type FileOptions func(file *File, init bool)
+type ConfigOptions func(config *Config, init bool)
 
-func WithListener(f func(file *File)) FileOptions {
-	return func(file *File, init bool) {
+func WithListener(f func(file *Config)) ConfigOptions {
+	return func(file *Config, init bool) {
 		file.Listeners = append(file.Listeners, f)
 	}
 }
 
-func WithData(data interface{}) FileOptions {
-	return func(file *File, init bool) {
+func WithData(data interface{}) ConfigOptions {
+	return func(file *Config, init bool) {
 		if !init {
 			return
 		}
@@ -66,16 +66,16 @@ func WithData(data interface{}) FileOptions {
 	}
 }
 
-func WithParent(parent *File) FileOptions {
-	return func(file *File, init bool) {
-		file.Listeners = append(file.Listeners, func(_ *File) {
+func WithParent(parent *Config) ConfigOptions {
+	return func(file *Config, init bool) {
+		file.Listeners = append(file.Listeners, func(_ *Config) {
 			parent.Changed()
 		})
 	}
 }
 
-func AllowParsingAny() FileOptions {
-	return func(file *File, init bool) {
+func AllowParsingAny() ConfigOptions {
+	return func(file *Config, init bool) {
 		if !init {
 			return
 		}
@@ -83,8 +83,8 @@ func AllowParsingAny() FileOptions {
 	}
 }
 
-func AsPlaintext() FileOptions {
-	return func(file *File, init bool) {
+func AsPlaintext() ConfigOptions {
+	return func(file *Config, init bool) {
 		if !init {
 			return
 		}
@@ -92,7 +92,12 @@ func AsPlaintext() FileOptions {
 	}
 }
 
-func (f *File) Parse(c *Config, r Reader) error {
+func (f *Config) Parse(r Reader) error {
+	if f.parseMode == "plaintext" {
+		f.Data = string(f.Raw)
+		return nil
+	}
+
 	f.m.Lock()
 	defer f.m.Unlock()
 
@@ -102,40 +107,38 @@ func (f *File) Parse(c *Config, r Reader) error {
 	}
 	_, name := filepath.Split(path)
 
+	var data []byte
 	if filepath.Ext(name) == ".tmpl" {
 		var err error
-		c.Data, err = renderTemplate(c.Data)
+		data, err = renderTemplate(f.Raw)
 		if err != nil {
-			return fmt.Errorf("unable to render template %v: %v", c.Url, err)
+			return fmt.Errorf("unable to render template %v: %v", f.Url, err)
 		}
 		name = name[0 : len(name)-len(filepath.Ext(name))]
-	}
-
-	if f.parseMode == "plaintext" {
-		f.Data = string(c.Data)
-		return nil
+	} else {
+		data = f.Raw
 	}
 
 	switch filepath.Ext(name) {
 	case ".yml", ".yaml":
-		err := yaml.Unmarshal(c.Data, f)
+		err := yaml.Unmarshal(data, f)
 		if err != nil {
-			f.Data = string(c.Data)
+			f.Data = string(data)
 		}
 	case ".json":
-		err := json.Unmarshal(c.Data, f)
+		err := json.Unmarshal(data, f)
 		if err != nil {
-			f.Data = string(c.Data)
+			f.Data = string(data)
 		}
 	case ".lua", ".js":
 		if f.Data == nil {
-			f.Data = script.New(name, c.Data)
+			f.Data = script.New(name, data)
 		} else {
 			script := f.Data.(*script.Script)
-			script.Code = string(c.Data)
+			script.Code = string(data)
 		}
 	default:
-		f.Data = string(c.Data)
+		f.Data = string(data)
 	}
 
 	if p, ok := f.Data.(Parser); ok {
@@ -148,7 +151,7 @@ func (f *File) Parse(c *Config, r Reader) error {
 	return nil
 }
 
-func (f *File) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (f *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	data := make(map[string]string)
 	_ = unmarshal(data)
 
@@ -174,7 +177,7 @@ func (f *File) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-func (f *File) unmarshal(fn func(interface{}) error, ct configType) error {
+func (f *Config) unmarshal(fn func(interface{}) error, ct configType) error {
 	if f.Data != nil {
 		i := reflect.New(ct.configType).Interface()
 		err := fn(i)
@@ -187,7 +190,7 @@ func (f *File) unmarshal(fn func(interface{}) error, ct configType) error {
 	}
 }
 
-func (f *File) UnmarshalJSON(b []byte) error {
+func (f *Config) UnmarshalJSON(b []byte) error {
 	data := make(map[string]string)
 	_ = json.Unmarshal(b, &data)
 

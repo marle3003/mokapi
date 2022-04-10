@@ -79,15 +79,15 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 	managerKafka := server.NewKafkaManager(kafka, scriptEngine, app)
 	managerLdap := server.NewLdapDirectoryManager(directories, scriptEngine, certStore, app)
 
-	watcher.AddListener(func(file *common.File) {
-		managerKafka.UpdateConfig(file)
-		managerHttp.Update(file)
-		mail.UpdateConfig(file, certStore, scriptEngine)
-		managerLdap.UpdateConfig(file)
+	watcher.AddListener(func(cfg *common.Config) {
+		managerKafka.UpdateConfig(cfg)
+		managerHttp.Update(cfg)
+		mail.UpdateConfig(cfg, certStore, scriptEngine)
+		managerLdap.UpdateConfig(cfg)
 	})
-	watcher.AddListener(func(f *common.File) {
-		if s, ok := f.Data.(*script.Script); ok {
-			err := scriptEngine.AddScript(f.Url, s.Code)
+	watcher.AddListener(func(cfg *common.Config) {
+		if s, ok := cfg.Data.(*script.Script); ok {
+			err := scriptEngine.AddScript(cfg.Url, s.Code)
 			if err != nil {
 				log.Error(err)
 			}

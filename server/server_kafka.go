@@ -38,32 +38,32 @@ func NewKafkaManager(clusters KafkaClusters, emitter engine.EventEmitter, app *r
 	}
 }
 
-func (m KafkaManager) UpdateConfig(file *common.File) {
-	config, ok := file.Data.(*asyncApi.Config)
+func (m KafkaManager) UpdateConfig(c *common.Config) {
+	config, ok := c.Data.(*asyncApi.Config)
 	if !ok {
 		return
 	}
 
-	c, ok := m.Clusters[config.Info.Name]
+	cluster, ok := m.Clusters[config.Info.Name]
 	if !ok {
-		c = &Cluster{
+		cluster = &Cluster{
 			Name:  config.Info.Name,
 			Store: store.New(config),
 			close: make(map[string]func()),
 		}
-		m.Clusters[config.Info.Name] = c
+		m.Clusters[config.Info.Name] = cluster
 	} else {
-		c.Store.Update(config)
+		cluster.Store.Update(config)
 	}
 
 	for _, s := range config.Servers {
-		m.AddOrUpdateBroker(s.Url, c)
+		m.AddOrUpdateBroker(s.Url, cluster)
 	}
 
 skip:
-	for url, f := range c.close {
+	for u, f := range cluster.close {
 		for _, s := range config.Servers {
-			if url == s.Url {
+			if u == s.Url {
 				continue skip
 			}
 		}

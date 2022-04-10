@@ -12,11 +12,11 @@ import (
 )
 
 type testReader struct {
-	readFunc func(file *common.File) error
+	readFunc func(cfg *common.Config) error
 }
 
-func (tr *testReader) Read(u *url.URL, opts ...common.FileOptions) (*common.File, error) {
-	file := &common.File{Url: u}
+func (tr *testReader) Read(u *url.URL, opts ...common.ConfigOptions) (*common.Config, error) {
+	file := &common.Config{Url: u}
 	for _, opt := range opts {
 		opt(file, true)
 	}
@@ -31,7 +31,7 @@ func (tr *testReader) Read(u *url.URL, opts ...common.FileOptions) (*common.File
 
 func (tr *testReader) Close() {}
 
-var emptyReader = &testReader{readFunc: func(file *common.File) error {
+var emptyReader = &testReader{readFunc: func(cfg *common.Config) error {
 	return nil
 }}
 
@@ -227,8 +227,8 @@ func TestJsOpen(t *testing.T) {
 			},
 		}
 
-		reader := &testReader{readFunc: func(file *common.File) error {
-			file.Data = "foobar"
+		reader := &testReader{readFunc: func(cfg *common.Config) error {
+			cfg.Data = "foobar"
 			return nil
 		}}
 
@@ -245,7 +245,7 @@ func TestJsOpen(t *testing.T) {
 	t.Run("fileNotExists", func(t *testing.T) {
 		t.Parallel()
 
-		reader := &testReader{readFunc: func(file *common.File) error {
+		reader := &testReader{readFunc: func(cfg *common.Config) error {
 			return errors.New("file not found")
 		}}
 

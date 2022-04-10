@@ -31,14 +31,14 @@ type Entry struct {
 	Attributes map[string][]string
 }
 
-func (e Entry) Parse(file *common.File, reader common.Reader) error {
+func (e Entry) Parse(config *common.Config, reader common.Reader) error {
 	if aList, ok := e.Attributes["thumbnailphoto"]; ok {
 		for i, a := range aList {
 			u, err := url.Parse(a)
 			if err != nil {
 				continue
 			}
-			f, err := reader.Read(u, common.WithParent(file))
+			f, err := reader.Read(u, common.WithParent(config))
 			if err != nil {
 				return err
 			}
