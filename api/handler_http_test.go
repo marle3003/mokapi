@@ -20,7 +20,7 @@ func TestHandler_Http(t *testing.T) {
 			app: &runtime.App{
 				Http: map[string]*runtime.HttpInfo{
 					"foo": {
-						openapitest.NewConfig("3.0.0"),
+						Config: openapitest.NewConfig("3.0.0"),
 					},
 				},
 			},
@@ -41,7 +41,7 @@ func TestHandler_Http(t *testing.T) {
 			app: &runtime.App{
 				Http: map[string]*runtime.HttpInfo{
 					"foo": {
-						openapitest.NewConfig("3.0.0"),
+						Config: openapitest.NewConfig("3.0.0"),
 					},
 				},
 			},

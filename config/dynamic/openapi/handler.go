@@ -31,7 +31,13 @@ type responseHandler struct {
 }
 
 func NewHandler(config *Config, eventEmitter engine.EventEmitter) http.Handler {
-	return &operationHandler{config: config, next: &responseHandler{config: config, eventEmitter: eventEmitter}}
+	return &operationHandler{
+		config: config,
+		next: &responseHandler{
+			config:       config,
+			eventEmitter: eventEmitter,
+		},
+	}
 }
 
 func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
@@ -168,6 +174,9 @@ func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	if logHttp, ok := logs.HttpLogFromContext(r.Context()); ok {
 		logHttp.Service = h.config.Info.Name
 	}
+	if m, ok := monitor.HttpFromContext(r.Context()); ok {
+		m.RequestCounter.WithLabel(h.config.Info.Name).Add(1)
+	}
 
 endpointLoop:
 	for path, ref := range h.config.EndPoints {
@@ -209,9 +218,6 @@ endpointLoop:
 		r = r.WithContext(parameter.NewContext(r.Context(), rp))
 		r = r.WithContext(NewOperationContext(r.Context(), op))
 		r = r.WithContext(context.WithValue(r.Context(), "endpointPath", path))
-		if m, ok := monitor.HttpFromContext(r.Context()); ok {
-			m.RequestCounter.WithLabel(h.config.Info.Name).Add(1)
-		}
 
 		h.next.ServeHTTP(rw, r)
 		return

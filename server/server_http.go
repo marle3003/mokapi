@@ -94,14 +94,6 @@ func (m *HttpManager) Update(c *common.Config) {
 	log.Infof("processed file %v", c.Url.String())
 }
 
-func (m *HttpManager) createOpenApiService(u *url.URL, config *openapi.Config) *service.HttpService {
-	return &service.HttpService{
-		Url:     u,
-		Handler: runtime.NewHttpHandler(m.app.Monitor.Http, openapi.NewHandler(config, m.eventEmitter)),
-		Name:    config.Info.Name,
-	}
-}
-
 func (servers HttpServers) Stop() {
 	for _, server := range servers {
 		server.Stop()
