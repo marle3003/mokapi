@@ -51,12 +51,6 @@ func (f *Config) Changed() {
 
 type ConfigOptions func(config *Config, init bool)
 
-func WithListener(f func(file *Config)) ConfigOptions {
-	return func(file *Config, init bool) {
-		file.Listeners = append(file.Listeners, f)
-	}
-}
-
 func WithData(data interface{}) ConfigOptions {
 	return func(file *Config, init bool) {
 		if !init {
@@ -71,15 +65,6 @@ func WithParent(parent *Config) ConfigOptions {
 		file.Listeners = append(file.Listeners, func(_ *Config) {
 			parent.Changed()
 		})
-	}
-}
-
-func AllowParsingAny() ConfigOptions {
-	return func(file *Config, init bool) {
-		if !init {
-			return
-		}
-		file.parseMode = "any"
 	}
 }
 

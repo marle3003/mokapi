@@ -32,7 +32,7 @@ func NewHttpManager(servers HttpServers, emitter engine.EventEmitter, store *cer
 	}
 }
 
-func (m *HttpManager) AddService(name string, u *url.URL, h http.Handler) error {
+func (m *HttpManager) AddService(name string, u *url.URL, handler http.Handler, useMetrics bool) error {
 	server, found := m.Servers[u.Port()]
 	if !found {
 		if u.Scheme == "https" {
@@ -44,9 +44,15 @@ func (m *HttpManager) AddService(name string, u *url.URL, h http.Handler) error 
 		m.Servers[u.Port()] = server
 		server.Start()
 	}
+
+	h := handler
+	if useMetrics {
+		h = runtime.NewHttpHandler(m.app.Monitor.Http, h)
+	}
+
 	err := server.AddOrUpdate(&service.HttpService{
 		Url:     u,
-		Handler: runtime.NewHttpHandler(m.app.Monitor.Http, h),
+		Handler: h,
 		Name:    name,
 	})
 	if err != nil {
@@ -79,7 +85,7 @@ func (m *HttpManager) Update(c *common.Config) {
 			continue
 		}
 
-		err = m.AddService(config.Info.Name, u, openapi.NewHandler(config, m.eventEmitter))
+		err = m.AddService(config.Info.Name, u, openapi.NewHandler(config, m.eventEmitter), true)
 		if err != nil {
 			log.Errorf("error on updating %v: %v", c.Url.String(), err.Error())
 			return

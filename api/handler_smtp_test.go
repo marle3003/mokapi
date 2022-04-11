@@ -1,7 +1,7 @@
 package api
 
 import (
-	"mokapi/config/dynamic/asyncApi/asyncapitest"
+	"mokapi/config/dynamic/smtp"
 	"mokapi/config/static"
 	"mokapi/runtime"
 	"mokapi/try"
@@ -9,31 +9,31 @@ import (
 	"testing"
 )
 
-func TestHandler_Kafka(t *testing.T) {
+func TestHandler_Smtp(t *testing.T) {
 	testcases := []struct {
 		name string
 		app  *runtime.App
-		fn   func(t *testing.T, h http.Handler)
+		f    func(t *testing.T, h http.Handler)
 	}{
 		{
-			name: "/api/services/kafka",
+			name: "/api/services/smtp",
 			app: &runtime.App{
-				Kafka: map[string]*runtime.KafkaInfo{
+				Smtp: map[string]*runtime.SmtpInfo{
 					"foo": {
-						asyncapitest.NewConfig(asyncapitest.WithTitle("foo")),
+						&smtp.Config{Name: "foo"},
 					},
 				},
 			},
-			fn: func(t *testing.T, h http.Handler) {
+			f: func(t *testing.T, h http.Handler) {
 				try.Handler(t,
 					http.MethodGet,
-					"http://foo.api/api/services/kafka/foo",
+					"http://foo.api/api/services/smtp/foo",
 					nil,
 					"",
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"asyncapi":"2.0.0","info":{"title":"foo","version":"1.0"},"channels":null}`))
+					try.HasBody(`{"name":"foo","server":""}`))
 			},
 		},
 	}
@@ -43,9 +43,8 @@ func TestHandler_Kafka(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-
 			h := New(tc.app, static.Api{})
-			tc.fn(t, h)
+			tc.f(t, h)
 		})
 	}
 }

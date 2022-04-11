@@ -1,13 +1,13 @@
 package metrics
 
 type HttpMetrics struct {
-	RequestCounter      *Counter
-	RequestErrorCounter *Counter
+	RequestCounter      *CounterMap
+	RequestErrorCounter *CounterMap
 }
 
 func NewHttp() *HttpMetrics {
 	return &HttpMetrics{
-		RequestCounter:      NewCounter("http.requests.total"),
-		RequestErrorCounter: NewCounter("http.requests.total.errors"),
+		RequestCounter:      NewCounterMap("http_requests_total"),
+		RequestErrorCounter: NewCounterMap("http_requests_total.errors"),
 	}
 }

@@ -2,6 +2,7 @@ package api
 
 import (
 	"mokapi/config/dynamic/openapi/openapitest"
+	"mokapi/config/static"
 	"mokapi/runtime"
 	"mokapi/try"
 	"net/http"
@@ -16,6 +17,27 @@ func TestHandler_Http(t *testing.T) {
 	}{
 		{
 			name: "/api/services/http",
+			app: &runtime.App{
+				Http: map[string]*runtime.HttpInfo{
+					"foo": {
+						openapitest.NewConfig("3.0.0"),
+					},
+				},
+			},
+			fn: func(t *testing.T, h http.Handler) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/services/http",
+					nil,
+					"",
+					h,
+					try.HasStatusCode(200),
+					try.HasHeader("Content-Type", "application/json"),
+					try.HasBody(`[{"openapi":"3.0.0","info":{"title":"","version":""},"paths":{},"components":{}}]`))
+			},
+		},
+		{
+			name: "/api/services/http/foo",
 			app: &runtime.App{
 				Http: map[string]*runtime.HttpInfo{
 					"foo": {
@@ -43,7 +65,7 @@ func TestHandler_Http(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			h := New(tc.app, true)
+			h := New(tc.app, static.Api{})
 			tc.fn(t, h)
 		})
 	}

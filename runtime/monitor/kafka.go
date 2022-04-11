@@ -8,10 +8,10 @@ import (
 
 type Kafka struct {
 	*metrics.Kafka
-	log []logs.KafkaMessage
+	log []*logs.KafkaMessage
 }
 
-func (m *Http) AppendKafka(log logs.HttpLog) {
+func (m *Kafka) AppendKafka(log *logs.KafkaMessage) {
 	if len(m.log) == 10 {
 		m.log = m.log[1:]
 	}

@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/stretchr/testify/require"
+	"mokapi/config/static"
 	"mokapi/runtime"
 	"mokapi/try"
 	"net/http"
@@ -64,7 +65,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 	}
 	for _, test := range testcases {
 		t.Run(test.name, func(t *testing.T) {
-			h := New(runtime.New(), true)
+			h := New(runtime.New(), static.Api{})
 			test.fn(t, h)
 		})
 	}

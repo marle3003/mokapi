@@ -1,44 +1,60 @@
 package logs
 
-import "time"
+import (
+	"context"
+	"github.com/google/uuid"
+	"time"
+)
 
 type HttpRequestLog struct {
-	Method      string
-	Url         string
-	Parameters  []HttpParamter
-	ContentType string
-	Body        string
+	Method      string         `json:"method"`
+	Url         string         `json:"url"`
+	Parameters  []HttpParamter `json:"parameters"`
+	ContentType string         `json:"contentType"`
+	Body        string         `json:"body"`
 }
 
 type HttpResponseLog struct {
-	StatusCode  int
-	ContentType string
-	Body        string
+	StatusCode int               `json:"statusCode"`
+	Headers    map[string]string `json:"headers"`
+	Body       string            `json:"body"`
 }
 
 type HttpLog struct {
-	Id       string
-	Service  string
-	Time     time.Time
-	Duration time.Duration
-	Request  *HttpRequestLog
-	Response *HttpResponseLog
+	Id       string           `json:"id"`
+	Service  string           `json:"service"`
+	Time     time.Time        `json:"time"`
+	Duration time.Duration    `json:"duration"`
+	Request  *HttpRequestLog  `json:"request"`
+	Response *HttpResponseLog `json:"response"`
 }
 
 type HttpParamter struct {
-	Name  string
-	Type  string
-	Value string
-	Raw   string
+	Name  string `json:"name"`
+	Type  string `json:"type"`
+	Value string `json:"value"`
+	Raw   string `json:"raw"`
 }
 
 func NewHttpLog(method, url string) *HttpLog {
 	return &HttpLog{
+		Id: uuid.New().String(),
 		Request: &HttpRequestLog{
 			Method: method,
 			Url:    url,
 		},
-		Response: &HttpResponseLog{},
-		Time:     time.Now(),
+		Response: &HttpResponseLog{
+			Headers: make(map[string]string),
+		},
+		Time: time.Now(),
 	}
+}
+
+func NewHttpLogContext(ctx context.Context, log *HttpLog) context.Context {
+	return context.WithValue(ctx, "log", log)
+}
+
+func HttpLogFromContext(ctx context.Context) (*HttpLog, bool) {
+	m, ok := ctx.Value("log").(*HttpLog)
+	return m, ok
 }

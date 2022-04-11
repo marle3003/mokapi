@@ -8,14 +8,14 @@ import (
 
 type Http struct {
 	*metrics.HttpMetrics
-	log []logs.HttpLog
+	Log []*logs.HttpLog `json:"log"`
 }
 
-func (m *Http) AppendHttp(log logs.HttpLog) {
-	if len(m.log) == 10 {
-		m.log = m.log[1:]
+func (m *Http) AppendHttp(log *logs.HttpLog) {
+	if len(m.Log) == 10 {
+		m.Log = m.Log[1:]
 	}
-	m.log = append(m.log, log)
+	m.Log = append(m.Log, log)
 }
 
 func NewHttpContext(ctx context.Context, http *Http) context.Context {

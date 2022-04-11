@@ -19,7 +19,7 @@
           <b-card-group deck>
             <b-card body-class="info-body" class="text-center">
               <b-card-title class="info">Uptime Since</b-card-title>
-              <b-card-text class="text-center value">{{ dashboard.serverUptime | fromNow }}</b-card-text>
+              <b-card-text class="text-center value">{{ dashboard.startTime | fromNow }}</b-card-text>
               <b-card-text class="text-right additional">{{ dashboard.serverUptime | moment }}</b-card-text>
             </b-card>
             <b-card body-class="info-body" class="text-center">
@@ -49,8 +49,8 @@
 
           <b-card-group deck v-show="dashboard.httpEnabled && $route.name === 'http' || $route.name === 'dashboard'">
             <b-card body-class="info-body" class="text-center">
-               <b-card-title class="info">REST Services</b-card-title>
-               <b-table :items="services" :fields="serviceFields" table-class="dataTable">
+               <b-card-title class="info">HTTP Services</b-card-title>
+               <b-table :items="httpServices" :fields="httpFields" table-class="dataTable">
                 <template v-slot:cell(method)="data">
                   <b-badge pill class="operation" :class="data.item.method.toLowerCase()" >{{ data.item.method }}</b-badge>
                 </template>
@@ -121,7 +121,7 @@
               <b-card-title class="info text-center">Recent Request</b-card-title>
               <b-table hover :items="lastRequests" :fields="lastRequestField" class="dataTable selectable" @row-clicked="requestClickHandler">
                 <template v-slot:cell(method)="data">
-                  <b-badge pill class="operation" :class="data.item.method.toLowerCase()" >{{ data.item.method }}</b-badge>
+                  <b-badge pill class="operation" :class="data.item.method.toLowerCase()" >{{ data.item.request.method }}</b-badge>
                 </template>
                 <template v-slot:cell(httpStatus)="data">
                   <b-icon icon="circle-fill" class="response icon mr-1" variant="success" v-if="data.item.httpStatus >= 200 && data.item.httpStatus < 300"></b-icon>
@@ -180,6 +180,7 @@ export default {
   data () {
     return {
       dashboard: null,
+      httpServices: null,
       loaded: false,
       timer: null,
       lastRequestField: [
@@ -224,11 +225,11 @@ export default {
       return this.dashboard.lastErrors.reverse()
     },
     lastRequests: function () {
-      if (this.dashboard.lastRequests === undefined) {
+      if (this.dashboard.http.log === undefined || this.dashboard.http.log === null) {
         return null
       }
       // eslint-disable-next-line vue/no-side-effects-in-computed-properties
-      return this.dashboard.lastRequests.reverse()
+      return this.dashboard.http.log.reverse()
     },
     lastMails: function () {
       if (this.dashboard.lastMails === undefined) {
@@ -236,26 +237,6 @@ export default {
       }
       // eslint-disable-next-line vue/no-side-effects-in-computed-properties
       return this.dashboard.lastMails.reverse()
-    },
-    services: function () {
-      const services = this.dashboard.services
-      if (services === undefined) {
-        return null
-      }
-
-      function compare (s1, s2) {
-        const a = s1.name.toLowerCase()
-        const b = s2.name.toLowerCase()
-        if (a < b) {
-          return -1
-        }
-        if (a > b) {
-          return 1
-        }
-        return 0
-      }
-
-      return services.sort(compare)
     },
     totalMessages: function () {
       const topics = this.dashboard.kafka.topics
@@ -377,6 +358,13 @@ export default {
         this.dashboard = null
         this.error = r
       })
+      this.getHttpServices().then(r => {
+        this.httpServices = r
+        this.error = null
+      }, r => {
+        this.httpServices = null
+        this.error = r
+      })
       this.loaded = true
     },
     requestClickHandler (record) {
@@ -405,7 +393,7 @@ export default {
         size += topic.partitions[i].size
       }
       return size
-    }
+    },
   },
   beforeDestroy () {
     clearInterval(this.timer)

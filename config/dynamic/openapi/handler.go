@@ -2,6 +2,7 @@ package openapi
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -10,6 +11,8 @@ import (
 	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/engine"
 	"mokapi/media"
+	"mokapi/runtime/logs"
+	"mokapi/runtime/monitor"
 	"mokapi/server/httperror"
 	"net/http"
 	"reflect"
@@ -36,15 +39,16 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	logHttp := setRequestLog(r, op)
 
 	status, res, err := op.getFirstSuccessResponse()
 	if err != nil {
-		writeError(rw, r, err)
+		writeError(rw, r, err, h.config.Info.Name)
 		return
 	}
 	contentType, mediaType, err := ContentTypeFromRequest(r, res)
 	if err != nil {
-		writeError(rw, r, err)
+		writeError(rw, r, err, h.config.Info.Name)
 		return
 	}
 
@@ -54,10 +58,10 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	if op.RequestBody != nil {
 		body, err := BodyFromRequest(r, op)
 		if err != nil {
-			writeError(rw, r, err)
+			writeError(rw, r, err, h.config.Info.Name)
 			return
 		} else if body == nil {
-			writeError(rw, r, errors.New("request body expected"))
+			writeError(rw, r, errors.New("request body expected"), h.config.Info.Name)
 			return
 		}
 		request.Body = body
@@ -89,18 +93,28 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	res = op.getResponse(response.StatusCode)
 	if res == nil {
-		writeError(rw, r, fmt.Errorf("no configuration was found for HTTP status code %v, https://swagger.io/docs/specification/describing-responses", response.StatusCode))
+		writeError(rw, r,
+			fmt.Errorf(
+				"no configuration was found for HTTP status code %v, https://swagger.io/docs/specification/describing-responses",
+				response.StatusCode),
+			h.config.Info.Name)
 		return
 	}
 
 	for k, v := range response.Headers {
 		rw.Header().Add(k, v)
+		if logHttp != nil {
+			logHttp.Response.Headers[k] = v
+		}
 	}
 
 	if len(res.Content) == 0 {
 		// no response content is defined which means body is empty
 		if response.StatusCode > 0 {
 			rw.WriteHeader(response.StatusCode)
+			if logHttp != nil {
+				logHttp.Response.StatusCode = response.StatusCode
+			}
 		}
 		return
 	}
@@ -108,7 +122,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	contentType = media.ParseContentType(response.Headers["Content-Type"])
 	mediaType = res.GetContent(contentType)
 	if mediaType == nil {
-		writeError(rw, r, fmt.Errorf("response has no definition for content type: %v", contentType))
+		writeError(rw, r, fmt.Errorf("response has no definition for content type: %v", contentType), h.config.Info.Name)
 		return
 	}
 	var body []byte
@@ -124,7 +138,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		} else {
 			body, err = mediaType.Schema.Marshal(response.Data, contentType)
 			if err != nil {
-				writeError(rw, r, err)
+				writeError(rw, r, err, h.config.Info.Name)
 				return
 			}
 		}
@@ -132,11 +146,17 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	if response.StatusCode > 0 {
 		rw.WriteHeader(response.StatusCode)
+		if logHttp != nil {
+			logHttp.Response.StatusCode = response.StatusCode
+		}
 	}
 
 	_, err = rw.Write(body)
 	if err != nil {
 		log.Errorf("unable to write body: %v", err)
+	}
+	if logHttp != nil {
+		logHttp.Response.Body = string(body)
 	}
 }
 
@@ -144,6 +164,10 @@ func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	regex := regexp.MustCompile(`\{(?P<name>.+)\}`) // parameter format "/{param}/"
 	reqSeg := strings.Split(r.URL.Path, "/")
 	var lastError error
+
+	if logHttp, ok := logs.HttpLogFromContext(r.Context()); ok {
+		logHttp.Service = h.config.Info.Name
+	}
 
 endpointLoop:
 	for path, ref := range h.config.EndPoints {
@@ -178,22 +202,25 @@ endpointLoop:
 		params := append(endpoint.Parameters, op.Parameters...)
 		rp, err := parameter.FromRequest(params, routePath, r)
 		if err != nil {
-			lastError = httperror.New(400, err.Error())
+			lastError = httperror.New(http.StatusBadRequest, err.Error())
 			continue
 		}
 
 		r = r.WithContext(parameter.NewContext(r.Context(), rp))
 		r = r.WithContext(NewOperationContext(r.Context(), op))
 		r = r.WithContext(context.WithValue(r.Context(), "endpointPath", path))
+		if m, ok := monitor.HttpFromContext(r.Context()); ok {
+			m.RequestCounter.WithLabel(h.config.Info.Name).Add(1)
+		}
 
 		h.next.ServeHTTP(rw, r)
 		return
 	}
 
 	if lastError == nil {
-		writeError(rw, r, httperror.Newf(http.StatusNotFound, "no matching endpoint found at %v", r.URL))
+		writeError(rw, r, httperror.Newf(http.StatusNotFound, "no matching endpoint found at %v", r.URL), h.config.Info.Name)
 	} else {
-		writeError(rw, r, lastError)
+		writeError(rw, r, lastError, h.config.Info.Name)
 	}
 }
 
@@ -221,7 +248,7 @@ func getOperation(method string, e *Endpoint) *Operation {
 	return nil
 }
 
-func writeError(rw http.ResponseWriter, r *http.Request, err error) {
+func writeError(rw http.ResponseWriter, r *http.Request, err error, serviceName string) {
 	message := err.Error()
 	var status int
 
@@ -237,5 +264,30 @@ func writeError(rw http.ResponseWriter, r *http.Request, err error) {
 	} else {
 		entry.Info(message)
 	}
+	if m, ok := monitor.HttpFromContext(r.Context()); ok {
+		m.RequestErrorCounter.WithLabel(serviceName).Add(1)
+	}
 	http.Error(rw, message, status)
+}
+
+func setRequestLog(r *http.Request, o *Operation) *logs.HttpLog {
+	logHttp, ok := logs.HttpLogFromContext(r.Context())
+	if !ok {
+		return nil
+	}
+
+	params, _ := parameter.FromContext(r.Context())
+	for t, values := range params {
+		for k, v := range values {
+			value, _ := json.Marshal(v.Value)
+			logHttp.Request.Parameters = append(logHttp.Request.Parameters, logs.HttpParamter{
+				Name:  k,
+				Type:  string(t),
+				Value: string(value),
+				Raw:   v.Raw,
+			})
+		}
+	}
+
+	return logHttp
 }

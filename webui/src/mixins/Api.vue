@@ -28,6 +28,21 @@ export default {
       let response = await this.$http.get(this.baseUrl + '/api/dashboard')
       return response.data
     },
+    async getHttpServices () {
+      let response = await this.$http.get(this.baseUrl + '/api/services/http')
+      function compare (s1, s2) {
+        const a = s1.info.title.toLowerCase()
+        const b = s2.info.title.toLowerCase()
+        if (a < b) {
+          return -1
+        }
+        if (a > b) {
+          return 1
+        }
+        return 0
+      }
+      return response.data.sort(compare)
+    },
     async getAsyncApiService (serviceName) {
       let response = await this.$http.get(this.baseUrl + '/api/services/asyncapi/' + serviceName)
       return response.data

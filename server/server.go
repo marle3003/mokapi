@@ -5,10 +5,12 @@ import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/engine"
+	"mokapi/runtime"
 	"mokapi/safe"
 )
 
 type Server struct {
+	app     *runtime.App
 	watcher *dynamic.ConfigWatcher
 	kafka   KafkaClusters
 	http    HttpServers
@@ -20,9 +22,10 @@ type Server struct {
 	stopChan chan bool
 }
 
-func NewServer(pool *safe.Pool, watcher *dynamic.ConfigWatcher,
+func NewServer(pool *safe.Pool, app *runtime.App, watcher *dynamic.ConfigWatcher,
 	kafka KafkaClusters, http HttpServers, mail SmtpServers, ldap LdapDirectories, engine *engine.Engine) *Server {
 	return &Server{
+		app:      app,
 		watcher:  watcher,
 		kafka:    kafka,
 		http:     http,
@@ -45,6 +48,7 @@ func (s *Server) Start(ctx context.Context) error {
 	if err := s.watcher.Start(s.pool); err != nil {
 		return err
 	}
+	s.app.Monitor.Start(s.pool)
 
 	<-ctx.Done()
 	log.Debug("stopping server")

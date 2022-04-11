@@ -5,6 +5,7 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	stdlog "log"
+	"mokapi/api"
 	"mokapi/config/decoders"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/common"
@@ -94,7 +95,16 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 		}
 	})
 
-	return server.NewServer(pool, watcher, kafka, web, mail, directories, scriptEngine), nil
+	if u, err := api.BuildUrl(cfg.Api); err == nil {
+		err = managerHttp.AddService("api", u, api.New(app, cfg.Api), false)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, err
+	}
+
+	return server.NewServer(pool, app, watcher, kafka, web, mail, directories, scriptEngine), nil
 }
 
 func configureLogging(cfg *static.Config) {

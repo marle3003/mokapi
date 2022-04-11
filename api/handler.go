@@ -14,9 +14,9 @@ import (
 )
 
 type handler struct {
-	dashboard       bool
-	dashboardAssets *assetfs.AssetFS
-	app             *runtime.App
+	path       string
+	app        *runtime.App
+	fileServer http.Handler
 }
 
 type info struct {
@@ -27,12 +27,17 @@ type apiError struct {
 	Message string `json:"message"`
 }
 
-func New(app *runtime.App, dashboard bool) http.Handler {
-	return &handler{
-		dashboard:       dashboard,
-		dashboardAssets: nil,
-		app:             app,
+func New(app *runtime.App, config static.Api) http.Handler {
+	h := &handler{
+		path: config.Path,
+		app:  app,
 	}
+
+	if config.Dashboard {
+		h.fileServer = http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir})
+	}
+
+	return h
 }
 
 func BuildUrl(cfg static.Api) (*url.URL, error) {
@@ -48,12 +53,25 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	switch p := r.URL.Path; {
+	case len(h.path) > 0 && strings.HasPrefix(p, h.path):
+		r.URL.Path = r.URL.Path[len(h.path):]
+		h.ServeHTTP(w, r)
 	case p == "/api/info":
 		h.getInfo(w, r)
+	case p == "/api/services/http":
+		h.getHttpServices(w, r)
 	case strings.HasPrefix(p, "/api/services/http/"):
 		h.getHttpService(w, r)
 	case strings.HasPrefix(p, "/api/services/kafka/"):
 		h.getKafkaService(w, r)
+	case strings.HasPrefix(p, "/api/services/smtp/"):
+		h.getSmtpService(w, r)
+	case p == "/api/dashboard":
+		h.getDashboard(w, r)
+	case h.fileServer != nil:
+		h.fileServer.ServeHTTP(w, r)
+	default:
+		http.Error(w, "not found", http.StatusNotFound)
 	}
 }
 

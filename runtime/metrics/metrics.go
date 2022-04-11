@@ -1,12 +1,12 @@
 package metrics
 
 type Counter struct {
-	label string
+	Name  string
 	value float64
 }
 
-func NewCounter(label string) *Counter {
-	return &Counter{label: label}
+func NewCounter(name string) *Counter {
+	return &Counter{Name: name}
 }
 
 func (c *Counter) Add(v float64) {
@@ -17,12 +17,28 @@ func (c *Counter) Value() float64 {
 	return c.value
 }
 
-type Metrics struct {
-	Http *HttpMetrics
+type CounterMap struct {
+	Name     string
+	counters map[string]*Counter
 }
 
-func New() *Metrics {
-	return &Metrics{
-		Http: NewHttp(),
+func NewCounterMap(name string) *CounterMap {
+	return &CounterMap{Name: name, counters: make(map[string]*Counter)}
+}
+
+func (m *CounterMap) WithLabel(label string) *Counter {
+	c, ok := m.counters[label]
+	if !ok {
+		c = NewCounter(label)
+		m.counters[label] = c
 	}
+	return c
+}
+
+func (m *CounterMap) Value() float64 {
+	var v float64
+	for _, c := range m.counters {
+		v += c.Value()
+	}
+	return v
 }

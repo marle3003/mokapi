@@ -58,7 +58,7 @@ func Start(cfg *static.Config) (*Cmd, error) {
 	})
 
 	if u, err := api.BuildUrl(cfg.Api); err == nil {
-		err = managerHttp.AddService("api", u, api.New(app, cfg.Api.Dashboard))
+		err = managerHttp.AddService("api", u, api.New(app, cfg.Api), false)
 		if err != nil {
 			return nil, err
 		}
@@ -68,7 +68,7 @@ func Start(cfg *static.Config) (*Cmd, error) {
 
 	pool := safe.NewPool(context.Background())
 	ctx, cancel := context.WithCancel(context.Background())
-	s := server.NewServer(pool, watcher, kafka, http, mail, directories, scriptEngine)
+	s := server.NewServer(pool, app, watcher, kafka, http, mail, directories, scriptEngine)
 	s.StartAsync(ctx)
 
 	return &Cmd{
