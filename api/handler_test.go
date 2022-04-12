@@ -27,7 +27,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 		{
 			name: "cors is set",
 			fn: func(t *testing.T, h http.Handler) {
-				r := httptest.NewRequest(http.MethodGet, "http://foo.api", nil)
+				r := httptest.NewRequest(http.MethodGet, "http://foo.api/api/info", nil)
 				rr := httptest.NewRecorder()
 				h.ServeHTTP(rr, r)
 				require.Equal(t, http.StatusOK, rr.Code)
@@ -63,8 +63,11 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			},
 		},
 	}
+
+	t.Parallel()
 	for _, test := range testcases {
 		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
 			h := New(runtime.New(), static.Api{})
 			test.fn(t, h)
 		})

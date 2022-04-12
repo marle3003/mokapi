@@ -17,7 +17,7 @@ func TestHandler_Dashboard(t *testing.T) {
 		f    func(t *testing.T)
 	}{
 		{
-			name: "/api/dasboard",
+			name: "/api/dashboard",
 			f: func(t *testing.T) {
 				app := &runtime.App{
 					Monitor: monitor.New(),

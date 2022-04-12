@@ -1,5 +1,10 @@
 package metrics
 
+import (
+	"bytes"
+	"encoding/json"
+)
+
 type Counter struct {
 	Name  string
 	value float64
@@ -41,4 +46,52 @@ func (m *CounterMap) Value() float64 {
 		v += c.Value()
 	}
 	return v
+}
+
+func (c *Counter) MarshalJSON() ([]byte, error) {
+	var b []byte
+	buf := bytes.NewBuffer(b)
+	name, err := json.Marshal(c.Name)
+	if err != nil {
+		return nil, err
+	}
+	buf.Write(name)
+	buf.WriteRune(':')
+
+	value, err := json.Marshal(c.value)
+	if err != nil {
+		return nil, err
+	}
+	buf.Write(value)
+
+	return buf.Bytes(), nil
+}
+
+func (m *CounterMap) MarshalJSON() ([]byte, error) {
+	var b []byte
+	buf := bytes.NewBuffer(b)
+
+	name, err := json.Marshal(m.Name)
+	if err != nil {
+		return nil, err
+	}
+	buf.Write(name)
+	buf.WriteRune(':')
+
+	value, err := json.Marshal(m.Value())
+	if err != nil {
+		return nil, err
+	}
+	buf.Write(value)
+
+	for _, c := range m.counters {
+		buf.WriteRune(',')
+		j, err := json.Marshal(c.Name)
+		if err != nil {
+			return nil, err
+		}
+		buf.Write(j)
+	}
+
+	return buf.Bytes(), nil
 }

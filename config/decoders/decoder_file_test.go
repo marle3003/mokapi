@@ -27,7 +27,7 @@ func TestFileDecoder_Decode(t *testing.T) {
 				s := &struct{ Name string }{}
 				d := &FileDecoder{filename: "test.yml"}
 				err := d.Decode(map[string]string{}, s)
-				require.EqualError(t, err, "open test.yml: no such file or directory")
+				require.Contains(t, err.Error(), "open test.yml:")
 			},
 		},
 		{

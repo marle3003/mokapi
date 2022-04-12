@@ -4,6 +4,7 @@ import (
 	"mokapi/config/dynamic/openapi/openapitest"
 	"mokapi/config/static"
 	"mokapi/runtime"
+	"mokapi/runtime/monitor"
 	"mokapi/try"
 	"net/http"
 	"testing"
@@ -20,9 +21,10 @@ func TestHandler_Http(t *testing.T) {
 			app: &runtime.App{
 				Http: map[string]*runtime.HttpInfo{
 					"foo": {
-						Config: openapitest.NewConfig("3.0.0"),
+						Config: openapitest.NewConfig("3.0.0", openapitest.WithInfo("foo", "", "")),
 					},
 				},
+				Monitor: monitor.New(),
 			},
 			fn: func(t *testing.T, h http.Handler) {
 				try.Handler(t,
@@ -33,7 +35,7 @@ func TestHandler_Http(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`[{"openapi":"3.0.0","info":{"title":"","version":""},"paths":{},"components":{}}]`))
+					try.HasBody(`[{"name":"foo","lastRequest":"0001-01-01T00:00:00Z","requests":0,"errors":0}]`))
 			},
 		},
 		{
@@ -54,7 +56,7 @@ func TestHandler_Http(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"openapi":"3.0.0","info":{"title":"","version":""},"paths":{},"components":{}}`))
+					try.HasBody(`{"openapi":"3.0.0","info":{"title":"","version":""},"paths":{},"components":{},"LastRequest":"0001-01-01T00:00:00Z","Requests":0,"Errors":0}`))
 			},
 		},
 	}
