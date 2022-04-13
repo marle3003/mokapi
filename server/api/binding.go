@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	assetfs "github.com/elazarl/go-bindata-assetfs"
 	"mokapi/models"
 	"mokapi/server/api/asyncapi"
 	"mokapi/server/api/openapi"
@@ -45,7 +44,7 @@ type baseUrl struct {
 func NewBinding(addr string, r *models.Runtime, path string) *Binding {
 	b := &Binding{runtime: r, Addr: addr, path: path}
 	b.server = &http.Server{Addr: addr, Handler: b}
-	b.fileServer = http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir})
+	//b.fileServer = http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir})
 	return b
 }
 
@@ -105,8 +104,8 @@ func (b *Binding) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		b.handleKafka(w, r)
 	case strings.HasPrefix(p, "/api/dashboard/smtp/mails/"):
 		b.getSmtpMail(w, r)
-	default:
-		b.fileServer.ServeHTTP(w, r)
+		//default:
+		//b.fileServer.ServeHTTP(w, r)
 	}
 }
 
