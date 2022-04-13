@@ -7,7 +7,7 @@ require (
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/brianvoe/gofakeit/v6 v6.3.0
-	github.com/dop251/goja v0.0.0-20211115154819-26ebff68a7d5 // indirect
+	github.com/dop251/goja v0.0.0-20220408131256-ffe77e20c6f1 // indirect
 	github.com/elazarl/go-bindata-assetfs v1.0.0
 	github.com/emersion/go-smtp v0.15.0 // indirect
 	github.com/fsnotify/fsnotify v1.4.9

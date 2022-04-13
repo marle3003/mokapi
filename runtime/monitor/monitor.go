@@ -39,7 +39,7 @@ func (m *Monitor) Start(pool *safe.Pool) {
 			select {
 			case <-ctx.Done():
 				return
-			case <-time.After(time.Duration(5)):
+			case <-time.After(time.Duration(5) * time.Second):
 				m.update()
 			}
 		}
