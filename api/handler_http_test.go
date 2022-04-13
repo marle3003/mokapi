@@ -35,7 +35,7 @@ func TestHandler_Http(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`[{"name":"foo","lastRequest":"0001-01-01T00:00:00Z","requests":0,"errors":0}]`))
+					try.HasBody(`[{"name":"foo","lastRequest":0,"requests":0,"errors":0}]`))
 			},
 		},
 		{
@@ -56,7 +56,7 @@ func TestHandler_Http(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"openapi":"3.0.0","info":{"title":"","version":""},"paths":{},"components":{},"LastRequest":"0001-01-01T00:00:00Z","Requests":0,"Errors":0}`))
+					try.HasBody(`{"openapi":"3.0.0","info":{"title":"","version":""},"paths":{},"components":{}}`))
 			},
 		},
 	}

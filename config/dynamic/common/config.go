@@ -133,6 +133,8 @@ func (f *Config) Parse(r Reader) error {
 		}
 	}
 
+	f.Raw = nil
+
 	return nil
 }
 

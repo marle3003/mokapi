@@ -5,14 +5,10 @@ import (
 	"mokapi/runtime/logs"
 	"mokapi/runtime/monitor"
 	"net/http"
-	"time"
 )
 
 type HttpInfo struct {
 	*openapi.Config
-	LastRequest time.Time
-	Requests    int64
-	Errors      int64
 }
 
 type HttpHandler struct {

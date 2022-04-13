@@ -78,14 +78,14 @@ func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
 
-		p.chechFiles(ch)
+		p.checkFiles(ch)
 
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				p.chechFiles(ch)
+				p.checkFiles(ch)
 			}
 		}
 	})
@@ -93,7 +93,7 @@ func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
 	return nil
 }
 
-func (p *Provider) chechFiles(ch chan *common.Config) {
+func (p *Provider) checkFiles(ch chan *common.Config) {
 	p.m.Lock()
 	defer p.m.Unlock()
 

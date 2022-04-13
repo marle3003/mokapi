@@ -1,10 +1,5 @@
 package metrics
 
-import (
-	"bytes"
-	"encoding/json"
-)
-
 type Gauge struct {
 	Name  string
 	value float64
@@ -24,19 +19,20 @@ func (g *Gauge) Value() float64 {
 	return g.value
 }
 
-func (g *Gauge) writeJSON(buf *bytes.Buffer) error {
-	name, err := json.Marshal(g.Name)
-	if err != nil {
-		return err
-	}
-	buf.Write(name)
-	buf.WriteRune(':')
+type GaugeMap struct {
+	Name   string
+	gauges map[string]*Gauge
+}
 
-	value, err := json.Marshal(g.value)
-	if err != nil {
-		return err
-	}
-	buf.Write(value)
+func NewGaugeMap(name string) *GaugeMap {
+	return &GaugeMap{Name: name, gauges: make(map[string]*Gauge)}
+}
 
-	return nil
+func (m *GaugeMap) WithLabel(label string) *Gauge {
+	c, ok := m.gauges[label]
+	if !ok {
+		c = NewGauge(label)
+		m.gauges[label] = c
+	}
+	return c
 }

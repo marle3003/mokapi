@@ -5,14 +5,13 @@ import (
 	"mokapi/runtime/monitor"
 	"net/http"
 	"strings"
-	"time"
 )
 
 type httpSummary struct {
-	Name        string    `json:"name"`
-	LastRequest time.Time `json:"lastRequest"`
-	Requests    int64     `json:"requests"`
-	Errors      int64     `json:"errors"`
+	Name        string `json:"name"`
+	LastRequest int64  `json:"lastRequest"`
+	Requests    int64  `json:"requests"`
+	Errors      int64  `json:"errors"`
 }
 
 func (h *handler) getHttpServices(w http.ResponseWriter, r *http.Request) {
@@ -39,9 +38,10 @@ func getHttpServices(services map[string]*runtime.HttpInfo, m *monitor.Http) []*
 	for _, hs := range services {
 
 		result = append(result, &httpSummary{
-			Name:     hs.Info.Name,
-			Requests: int64(m.RequestCounter.WithLabel(hs.Info.Name).Value()),
-			Errors:   int64(m.RequestErrorCounter.WithLabel(hs.Info.Name).Value()),
+			Name:        hs.Info.Name,
+			Requests:    int64(m.RequestCounter.WithLabel(hs.Info.Name).Value()),
+			Errors:      int64(m.RequestErrorCounter.WithLabel(hs.Info.Name).Value()),
+			LastRequest: int64(m.LastRequest.WithLabel(hs.Info.Name).Value()),
 		})
 	}
 	return result

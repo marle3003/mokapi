@@ -9,6 +9,7 @@ type dashboardInfo struct {
 	MemoryUsage       int64          `json:"memoryUsage"`
 	HttpRequests      int64          `json:"httpRequests"`
 	HttpErrorRequests int64          `json:"httpErrorRequests"`
+	KafkaMessages     int64          `json:"kafkaMessages"`
 	Http              []*httpSummary `json:"httpServices"`
 }
 
@@ -18,6 +19,7 @@ func (h *handler) getDashboard(w http.ResponseWriter, _ *http.Request) {
 		MemoryUsage:       int64(h.app.Monitor.MemoryUsage.Value()),
 		HttpRequests:      int64(h.app.Monitor.Http.RequestCounter.Value()),
 		HttpErrorRequests: int64(h.app.Monitor.Http.RequestErrorCounter.Value()),
+		KafkaMessages:     int64(h.app.Monitor.Kafka.Messages.Value()),
 		Http:              getHttpServices(h.app.Http, h.app.Monitor.Http),
 	}
 
