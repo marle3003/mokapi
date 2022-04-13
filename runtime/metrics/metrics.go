@@ -48,50 +48,45 @@ func (m *CounterMap) Value() float64 {
 	return v
 }
 
-func (c *Counter) MarshalJSON() ([]byte, error) {
-	var b []byte
-	buf := bytes.NewBuffer(b)
+func (c *Counter) writeJSON(buf *bytes.Buffer) error {
 	name, err := json.Marshal(c.Name)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	buf.Write(name)
 	buf.WriteRune(':')
 
 	value, err := json.Marshal(c.value)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	buf.Write(value)
 
-	return buf.Bytes(), nil
+	return nil
 }
 
-func (m *CounterMap) MarshalJSON() ([]byte, error) {
-	var b []byte
-	buf := bytes.NewBuffer(b)
-
+func (m *CounterMap) writeJSON(buf *bytes.Buffer) error {
 	name, err := json.Marshal(m.Name)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	buf.Write(name)
 	buf.WriteRune(':')
 
 	value, err := json.Marshal(m.Value())
 	if err != nil {
-		return nil, err
+		return err
 	}
 	buf.Write(value)
 
 	for _, c := range m.counters {
 		buf.WriteRune(',')
-		j, err := json.Marshal(c.Name)
+		j, err := json.Marshal(c)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		buf.Write(j)
 	}
 
-	return buf.Bytes(), nil
+	return nil
 }

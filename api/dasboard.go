@@ -1,19 +1,24 @@
 package api
 
 import (
-	"mokapi/runtime/monitor"
 	"net/http"
 )
 
 type dashboardInfo struct {
-	*monitor.Monitor
-	Http []*httpSummary
+	StartTime         int64          `json:"startTime"`
+	MemoryUsage       int64          `json:"memoryUsage"`
+	HttpRequests      int64          `json:"httpRequests"`
+	HttpErrorRequests int64          `json:"httpErrorRequests"`
+	Http              []*httpSummary `json:"httpServices"`
 }
 
 func (h *handler) getDashboard(w http.ResponseWriter, _ *http.Request) {
 	dashboard := dashboardInfo{
-		Monitor: h.app.Monitor,
-		Http:    getHttpServices(h.app.Http, h.app.Monitor.Http),
+		StartTime:         int64(h.app.Monitor.StartTime.Value()),
+		MemoryUsage:       int64(h.app.Monitor.MemoryUsage.Value()),
+		HttpRequests:      int64(h.app.Monitor.Http.RequestCounter.Value()),
+		HttpErrorRequests: int64(h.app.Monitor.Http.RequestErrorCounter.Value()),
+		Http:              getHttpServices(h.app.Http, h.app.Monitor.Http),
 	}
 
 	w.Header().Set("Content-Type", "application/json")

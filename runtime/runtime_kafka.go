@@ -22,11 +22,6 @@ func NewKafkaMonitor(kafka *monitor.Kafka, next kafka.Handler) *KafkaHandler {
 func (h *KafkaHandler) ServeMessage(rw kafka.ResponseWriter, req *kafka.Request) {
 	ctx := monitor.NewKafkaContext(req.Context, h.kafka)
 
-	switch req.Header.ApiKey {
-	case kafka.Produce:
-		h.kafka.Messages.Add(1)
-	}
-
 	req.WithContext(ctx)
 	h.next.ServeMessage(rw, req)
 }

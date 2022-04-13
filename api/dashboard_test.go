@@ -8,7 +8,6 @@ import (
 	"mokapi/try"
 	"net/http"
 	"testing"
-	"time"
 )
 
 func TestHandler_Dashboard(t *testing.T) {
@@ -17,7 +16,7 @@ func TestHandler_Dashboard(t *testing.T) {
 		f    func(t *testing.T)
 	}{
 		{
-			name: "/api/dashboard",
+			name: "/api/dashboard empty",
 			f: func(t *testing.T) {
 				app := &runtime.App{
 					Monitor: monitor.New(),
@@ -32,8 +31,8 @@ func TestHandler_Dashboard(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(fmt.Sprintf(`{"startTime":"%v","http":{"RequestCounter":{},"RequestErrorCounter":{}},"kafka":{"Messages":{}}}`,
-						app.Monitor.StartTime.Format(time.RFC3339Nano))))
+					try.HasBody(fmt.Sprintf(`{"startTime":%v,"memoryUsage":0,"httpRequests":0,"httpErrorRequests":0,"httpServices":[]}`,
+						int64(app.Monitor.StartTime.Value()))))
 			},
 		},
 	}

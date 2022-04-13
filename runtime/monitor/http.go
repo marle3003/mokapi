@@ -7,7 +7,7 @@ import (
 )
 
 type Http struct {
-	*metrics.HttpMetrics
+	*metrics.Http
 	Log []*logs.HttpLog `json:"log"`
 }
 

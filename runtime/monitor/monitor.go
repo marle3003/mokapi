@@ -9,24 +9,28 @@ import (
 )
 
 type Monitor struct {
-	StartTime   time.Time `json:"startTime"`
-	MemoryUsage uint64    `json:"memoryUsage"`
+	StartTime   *metrics.Gauge `json:"start_time"`
+	MemoryUsage *metrics.Gauge `json:"memstats_alloc_bytes"`
 
 	Http  *Http  `json:"http"`
 	Kafka *Kafka `json:"kafka"`
 }
 
 func New() *Monitor {
-	return &Monitor{
-		StartTime: time.Now(),
+	m := &Monitor{
+		StartTime:   metrics.NewGauge("start_time"),
+		MemoryUsage: metrics.NewGauge("memstats_alloc_bytes"),
 		Http: &Http{
-			HttpMetrics: metrics.NewHttp(),
+			Http: metrics.NewHttp(),
 		},
 		Kafka: &Kafka{
 			Kafka: metrics.NewKafka(),
 			log:   nil,
 		},
 	}
+	m.StartTime.Set(float64(time.Now().Unix()))
+
+	return m
 }
 
 func (m *Monitor) Start(pool *safe.Pool) {
@@ -45,5 +49,5 @@ func (m *Monitor) Start(pool *safe.Pool) {
 func (m *Monitor) update() {
 	var stats runtime.MemStats
 	runtime.ReadMemStats(&stats)
-	m.MemoryUsage = stats.Alloc
+	m.MemoryUsage.Set(float64(stats.Alloc))
 }
