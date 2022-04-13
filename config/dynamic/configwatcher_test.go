@@ -111,7 +111,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 
 				ch <- &common.Config{Url: configPath, Raw: []byte("foobar")}
 				time.Sleep(time.Duration(100) * time.Millisecond)
-				require.Equal(t, []byte("foobar"), c.Raw)
+				require.Equal(t, "foobar", c.Data)
 			},
 		},
 		{
@@ -139,7 +139,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 				c, err := w.Read(configPath)
 				require.NoError(t, err)
 				require.NotNil(t, c)
-				require.Equal(t, []byte("foobar"), c.Raw)
+				require.Equal(t, "foobar", c.Data)
 			},
 		},
 		{
