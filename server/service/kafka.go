@@ -28,6 +28,9 @@ func (b *KafkaBroker) Add(addr string, handler kafka.Handler) {
 	b.m.Lock()
 	defer b.m.Unlock()
 
+	if _, ok := b.clusters[addr]; !ok {
+		log.Infof("add new kafka broker on %v", addr)
+	}
 	b.clusters[addr] = handler
 }
 

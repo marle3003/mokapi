@@ -15,7 +15,8 @@ func (m *Http) AppendHttp(log *logs.HttpLog) {
 	if len(m.Log) == 10 {
 		m.Log = m.Log[1:]
 	}
-	m.Log = append(m.Log, log)
+	// prepend
+	m.Log = append([]*logs.HttpLog{log}, m.Log...)
 }
 
 func NewHttpContext(ctx context.Context, http *Http) context.Context {

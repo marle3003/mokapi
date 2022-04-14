@@ -18,6 +18,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"time"
 )
 
 type operationHandler struct {
@@ -175,6 +176,7 @@ func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		logHttp.Service = h.config.Info.Name
 	}
 	if m, ok := monitor.HttpFromContext(r.Context()); ok {
+		m.LastRequest.WithLabel(h.config.Info.Name).Set(float64(time.Now().Unix()))
 		m.RequestCounter.WithLabel(h.config.Info.Name).Add(1)
 	}
 
@@ -274,6 +276,11 @@ func writeError(rw http.ResponseWriter, r *http.Request, err error, serviceName 
 		m.RequestErrorCounter.WithLabel(serviceName).Add(1)
 	}
 	http.Error(rw, message, status)
+	logHttp, ok := logs.HttpLogFromContext(r.Context())
+	if ok {
+		logHttp.Response.StatusCode = status
+		logHttp.Response.Body = message
+	}
 }
 
 func setRequestLog(r *http.Request, o *Operation) *logs.HttpLog {

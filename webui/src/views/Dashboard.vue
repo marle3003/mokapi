@@ -8,7 +8,7 @@
             <b-navbar class="p-0">
               <b-navbar-nav>
                 <b-nav-item :to="{ name: 'dashboard', query: {refresh: this.$route.query.refresh} }">Overview</b-nav-item>
-                <b-nav-item :to="{ name: 'http', query: {refresh: this.$route.query.refresh} }" v-if="dashboard.httpEnabled">HTTP</b-nav-item>
+                <b-nav-item :to="{ name: 'http', query: {refresh: this.$route.query.refresh} }" v-if="httpEnabled">HTTP</b-nav-item>
                 <b-nav-item :to="{ name: 'kafka', query: {refresh: this.$route.query.refresh} }" v-if="dashboard.kafkaEnabled">Kafka</b-nav-item>
                 <b-nav-item :to="{ name: 'smtp', query: {refresh: this.$route.query.refresh} }" v-if="dashboard.smtpEnabled">SMTP</b-nav-item>
               </b-navbar-nav>
@@ -29,13 +29,13 @@
           </b-card-group>
 
           <b-card-group deck>
-            <b-card body-class="info-body" class="text-center" v-if="dashboard.httpEnabled">
+            <b-card body-class="info-body" class="text-center" v-if="httpEnabled">
               <b-card-title class="info">Total HTTP Requests</b-card-title>
-              <b-card-text class="text-center value">{{ dashboard.totalRequests }}</b-card-text>
+              <b-card-text class="text-center value">{{ dashboard.httpRequests }}</b-card-text>
             </b-card>
-            <b-card body-class="info-body" class="text-center" v-if="dashboard.httpEnabled">
+            <b-card body-class="info-body" class="text-center" v-if="httpEnabled">
               <b-card-title class="info">HTTP Request Errors</b-card-title>
-              <b-card-text class="text-center value" v-bind:class="{'text-danger': hasErrors}">{{ dashboard.requestsWithError }}</b-card-text>
+              <b-card-text class="text-center value" v-bind:class="{'text-danger': dashboard.httpErrorRequests > 0}">{{ dashboard.httpErrorRequests }}</b-card-text>
             </b-card>
             <b-card body-class="info-body" class="text-center" v-if="dashboard.kafkaEnabled">
               <b-card-title class="info">Received Kafka Messages</b-card-title>
@@ -47,7 +47,7 @@
             </b-card>
           </b-card-group>
 
-          <b-card-group deck v-show="dashboard.httpEnabled && $route.name === 'http' || $route.name === 'dashboard'">
+          <b-card-group deck v-show="httpEnabled && $route.name === 'http' || $route.name === 'dashboard'">
             <b-card body-class="info-body" class="text-center">
                <b-card-title class="info">HTTP Services</b-card-title>
                <b-table :items="httpServices" :fields="httpFields" table-class="dataTable">
@@ -55,26 +55,21 @@
                   <b-badge pill class="operation" :class="data.item.method.toLowerCase()" >{{ data.item.method }}</b-badge>
                 </template>
                 <template v-slot:cell(lastRequest)="data">
-                  <span v-if="data.item.lastRequest === '0001-01-01T00:00:00Z'">-</span>
+                  <span v-if="data.item.lastRequest === 0">-</span>
                   <span v-else>{{ data.item.lastRequest | moment}}</span>
                 </template>
               </b-table>
             </b-card>
           </b-card-group>
 
-          <div v-show="dashboard.kafkaEnabled && $route.name === 'dashboard' || $route.name === 'kafka'">
+          <div v-show="kafkaEnabled && $route.name === 'dashboard' || $route.name === 'kafka'">
             <b-card-group deck>
               <b-card body-class="info-body" class="text-center">
-                 <b-card-title class="info">Kafka Topics</b-card-title>
-                 <b-table :items="topics" :fields="topicFields" table-class="dataTable selectable" @row-clicked="topicClickHandler">
-                  <template v-slot:cell(lastRecord)="data">
-                    {{ data.item.lastRecord | moment}}
-                  </template>
-                   <template v-slot:cell(size)="data">
-                     {{ getSize(data.item) | prettyBytes}}
-                   </template>
-                  <template v-slot:cell(partitions)="data">
-                    {{ data.item.partitions.length}}
+                 <b-card-title class="info">Kafka Clusters</b-card-title>
+                 <b-table :items="kafkaServices" :fields="kafkaFields" table-class="dataTable selectable" @row-clicked="topicClickHandler">
+                  <template v-slot:cell(lastMessage)="data">
+                    <span v-if="data.item.lastMessage === 0">-</span>
+                    <span v-else>{{ data.item.lastMessage | moment}}</span>
                   </template>
                 </b-table>
               </b-card>
@@ -92,53 +87,7 @@
             </b-card>
           </b-card-group>
 
-          <b-card-group deck v-show="$route.name === 'http'">
-            <b-card class="w-100">
-              <b-card-title class="info text-center">Last Request Errors</b-card-title>
-              <b-table hover :items="lastErrors" :fields="lastRequestField" class="dataTable selectable" @row-clicked="requestClickHandler">
-                <template v-slot:cell(method)="data">
-                  <b-badge pill class="operation" :class="data.item.method.toLowerCase()" >{{ data.item.method }}</b-badge>
-                </template>
-                <template v-slot:cell(httpStatus)="data">
-                  <b-icon icon="circle-fill" class="response icon mr-1" variant="success" v-if="data.item.httpStatus >= 200 && data.item.httpStatus < 300"></b-icon>
-                  <b-icon icon="circle-fill" class="response icon mr-1" variant="warning" v-if="data.item.httpStatus >= 300 && data.item.httpStatus < 400"></b-icon>
-                  <b-icon icon="circle-fill" class="response icon mr-1 client-error" v-if="data.item.httpStatus >= 400 && data.item.httpStatus < 500"></b-icon>
-                  <b-icon icon="circle-fill" class="response icon mr-1" variant="danger" v-if="data.item.httpStatus >= 500 && data.item.httpStatus < 600"></b-icon>
-                  {{ data.item.httpStatus }}
-                </template>
-                <template v-slot:cell(time)="data">
-                  {{ data.item.time | moment}}
-                </template>
-                <template v-slot:cell(responseTime)="data">
-                  {{ data.item.responseTime | duration}}
-                </template>
-              </b-table>
-            </b-card>
-          </b-card-group>
-
-          <b-card-group deck v-show="$route.name === 'http'">
-            <b-card class="w-100">
-              <b-card-title class="info text-center">Recent Request</b-card-title>
-              <b-table hover :items="lastRequests" :fields="lastRequestField" class="dataTable selectable" @row-clicked="requestClickHandler">
-                <template v-slot:cell(method)="data">
-                  <b-badge pill class="operation" :class="data.item.method.toLowerCase()" >{{ data.item.request.method }}</b-badge>
-                </template>
-                <template v-slot:cell(httpStatus)="data">
-                  <b-icon icon="circle-fill" class="response icon mr-1" variant="success" v-if="data.item.httpStatus >= 200 && data.item.httpStatus < 300"></b-icon>
-                  <b-icon icon="circle-fill" class="response icon mr-1" variant="warning" v-if="data.item.httpStatus >= 300 && data.item.httpStatus < 400"></b-icon>
-                  <b-icon icon="circle-fill" class="response icon mr-1 client-error" v-if="data.item.httpStatus >= 400 && data.item.httpStatus < 500"></b-icon>
-                  <b-icon icon="circle-fill" class="response icon mr-1" variant="danger" v-if="data.item.httpStatus >= 500 && data.item.httpStatus < 600"></b-icon>
-                  {{ data.item.httpStatus }}
-                </template>
-                <template v-slot:cell(time)="data">
-                  {{ data.item.time | moment}}
-                </template>
-                <template v-slot:cell(responseTime)="data">
-                  {{ data.item.responseTime | duration}}
-                </template>
-              </b-table>
-            </b-card>
-          </b-card-group>
+          <http-overview v-show="$route.name === 'http'" />
 
           <b-card-group deck v-show="$route.name === 'smtp'">
             <b-card class="w-100">
@@ -170,30 +119,30 @@ import Api from '@/mixins/Api'
 import moment from 'moment'
 import DoughnutChart from '@/components/DoughnutChart'
 import TimeChart from '@/components/TimeChart'
+import HttpOverview from '@/components/dashboard/HttpOverview'
 
 export default {
   components: {
     'doughnut-chart': DoughnutChart,
-    'time-chart': TimeChart
+    'time-chart': TimeChart,
+    'http-overview': HttpOverview
   },
   mixins: [Api],
   data () {
     return {
       dashboard: null,
       httpServices: null,
+      kafkaServices: null,
+      groups: null,
+      lastRequests: null,
+      lastErrors: null,
+      lastMails: null,
       loaded: false,
       timer: null,
-      lastRequestField: [
-        'method',
-        {key: 'url', tdClass: 'break'},
-        'httpStatus',
-        'time',
-        'responseTime'
-      ],
       topicSizes: {},
       chartTopicSize: {},
-      serviceFields: [{key: 'name', class: 'text-left'}, {key: 'lastRequest', class: 'text-left'}, 'requests', 'errors'],
-      topicFields: [{key: 'name', class: 'text-left'}, 'count', 'size', 'lastRecord', 'partitions', 'segments'],
+      httpFields: [{key: 'name', class: 'text-left'}, {key: 'lastRequest', class: 'text-left'}, 'requests', 'errors'],
+      kafkaFields: [{key: 'name', class: 'text-left'}, 'topics', 'lastMessage', 'messages', 'errors'],
       groupFields: [{key: 'name', class: 'text-left'}, {key: 'state', thStyle: 'width:10%'}, {key: 'assignmentStrategy', class: 'text-left'}, {key: 'coordinator', class: 'text-left'}, {key: 'leader', class: 'text-left'}, {key: 'members', class: 'text-left'}],
       lastMailField: ['from', 'to', {key: 'subject', class: 'subject'}, 'time'],
       error: null
@@ -203,6 +152,12 @@ export default {
     this.init()
   },
   computed: {
+    httpEnabled: function () {
+      return this.httpServices !== null && this.httpServices.length > 0
+    },
+    kafkaEnabled: function () {
+      return this.kafkaServices !== null && this.kafkaServices.length > 0
+    },
     serviceStatus: function () {
       let serviceStatus = this.dashboard.serviceStatus
       let success = serviceStatus.total - serviceStatus.errors
@@ -216,102 +171,14 @@ export default {
     },
     hasErrors: function () {
       return this.dashboard.lastErrors !== undefined && this.dashboard.lastErrors.length > 0
-    },
-    lastErrors: function () {
-      if (this.dashboard.lastErrors === undefined) {
-        return null
-      }
-      // eslint-disable-next-line vue/no-side-effects-in-computed-properties
-      return this.dashboard.lastErrors.reverse()
-    },
-    lastRequests: function () {
-      if (this.dashboard.http.log === undefined || this.dashboard.http.log === null) {
-        return null
-      }
-      // eslint-disable-next-line vue/no-side-effects-in-computed-properties
-      return this.dashboard.http.log.reverse()
-    },
-    lastMails: function () {
-      if (this.dashboard.lastMails === undefined) {
-        return null
-      }
-      // eslint-disable-next-line vue/no-side-effects-in-computed-properties
-      return this.dashboard.lastMails.reverse()
-    },
-    totalMessages: function () {
-      const topics = this.dashboard.kafka.topics
-      if (topics === undefined || topics === null) {
-        return 0
-      }
-      let counter = 0
-      for (const topic of topics) {
-        counter += topic.count
-      }
-      return counter
-    },
-    topics: function () {
-      if (this.dashboard.kafka.topics === undefined || this.dashboard.kafka.topics === null) {
-        return null
-      }
-
-      let topics = []
-      for (let i = 0; i < this.dashboard.kafka.topics.length; i++) {
-        let topic = this.dashboard.kafka.topics[i]
-        let item = {
-          service: topic.service,
-          name: topic.name,
-          count: topic.count,
-          lastRecord: topic.lastRecord,
-          groups: topic.groups
-        }
-        item.partitions = topic.partitions
-        for (let j = 0; j < topic.partitions.length; j++) {
-          item.segments = topic.partitions[j].segments
-        }
-        topics.push(item)
-      }
-
-      function compare (s1, s2) {
-        const a = s1.name.toLowerCase()
-        const b = s2.name.toLowerCase()
-        if (a < b) {
-          return -1
-        }
-        if (a > b) {
-          return 1
-        }
-        return 0
-      }
-
-      return topics.sort(compare)
-    },
-    groups: function () {
-      const groups = this.dashboard.kafka.groups
-      if (groups === undefined || groups === null) {
-        return null
-      }
-
-      function compare (s1, s2) {
-        const a = s1.name.toLowerCase()
-        const b = s2.name.toLowerCase()
-        if (a < b) {
-          return -1
-        }
-        if (a > b) {
-          return 1
-        }
-        return 0
-      }
-
-      return groups.sort(compare)
     }
   },
   filters: {
-    moment: function (date) {
-      return moment(date).local().format('YYYY-MM-DD HH:mm:ss')
+    moment: function (value) {
+      return moment.unix(value).local().format('YYYY-MM-DD HH:mm:ss')
     },
-    fromNow: function (date) {
-      return moment(date).fromNow(true)
+    fromNow: function (value) {
+      return moment.unix(value).fromNow(true)
     },
     duration: function (time) {
       let ms = Math.round(time / 1000000)
@@ -365,16 +232,21 @@ export default {
         this.httpServices = null
         this.error = r
       })
+      this.getKafkaServices().then(r => {
+        console.log(r)
+        this.kafkaServices = r
+        this.error = null
+      }, r => {
+        this.kafkaServices = null
+        this.error = r
+      })
       this.loaded = true
-    },
-    requestClickHandler (record) {
-      this.$router.push({name: 'httpRequest', params: {id: record.id}})
     },
     mailClickHandler (record) {
       this.$router.push({name: 'smtpMail', params: {id: record.id}})
     },
     topicClickHandler (record) {
-      this.$router.push({name: 'kafkaTopic', params: {kafka: record.service, topic: record.name}, query: {refresh: '5'}})
+      // this.$router.push({name: 'kafkaTopic', params: {kafka: record.service, topic: record.name}, query: {refresh: '5'}})
     },
     init () {
       this.getData()
@@ -386,14 +258,7 @@ export default {
           this.timer = setInterval(this.getData, i * 1000)
         }
       }
-    },
-    getSize (topic) {
-      let size = 0
-      for (let i = 0; i < topic.partitions.length; i++) {
-        size += topic.partitions[i].size
-      }
-      return size
-    },
+    }
   },
   beforeDestroy () {
     clearInterval(this.timer)

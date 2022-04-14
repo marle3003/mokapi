@@ -62,10 +62,14 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.getHttpServices(w, r)
 	case strings.HasPrefix(p, "/api/services/http/"):
 		h.getHttpService(w, r)
+	case p == "/api/services/kafka":
+		h.getKafkaServices(w, r)
 	case strings.HasPrefix(p, "/api/services/kafka/"):
 		h.getKafkaService(w, r)
 	case strings.HasPrefix(p, "/api/services/smtp/"):
 		h.getSmtpService(w, r)
+	case strings.HasPrefix(p, "/api/http/requests"):
+		h.getHttpRequests(w, r)
 	case p == "/api/dashboard":
 		h.getDashboard(w, r)
 	case h.fileServer != nil:

@@ -33,7 +33,7 @@ func TestHandler_Dashboard(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(fmt.Sprintf(`{"startTime":%v,"memoryUsage":0,"httpRequests":0,"httpErrorRequests":0,"kafkaMessages":0,"httpServices":[]}`,
+					try.HasBody(fmt.Sprintf(`{"startTime":%v,"memoryUsage":0,"httpRequests":0,"httpErrorRequests":0,"kafkaMessages":0}`,
 						int64(app.Monitor.StartTime.Value()))))
 			},
 		},
@@ -62,11 +62,10 @@ func TestHandler_Dashboard(t *testing.T) {
 					try.HasHeader("Content-Type", "application/json"),
 					try.HasBody(
 						fmt.Sprintf(
-							`{"startTime":%v,"memoryUsage":0,"httpRequests":0,"httpErrorRequests":0,"kafkaMessages":0,"httpServices":[{"name":"foo","lastRequest":%v,"requests":0,"errors":0}]}`,
-							int64(app.Monitor.StartTime.Value()),
-							now,
-						),
-					))
+							`{"startTime":%v,"memoryUsage":0,"httpRequests":0,"httpErrorRequests":0,"kafkaMessages":0}`,
+							now),
+					),
+				)
 			},
 		},
 	}

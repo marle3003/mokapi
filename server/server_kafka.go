@@ -44,8 +44,11 @@ func (m KafkaManager) UpdateConfig(c *common.Config) {
 		return
 	}
 
+	m.app.AddKafka(config)
+
 	cluster, ok := m.Clusters[config.Info.Name]
 	if !ok {
+		log.Infof("adding new kafka cluster '%v'", config.Info.Name)
 		cluster = &Cluster{
 			Name:  config.Info.Name,
 			Store: store.New(config),
@@ -69,6 +72,8 @@ skip:
 		}
 		f()
 	}
+
+	log.Infof("processed file %v", c.Url.String())
 }
 
 func (kc KafkaClusters) Stop() {

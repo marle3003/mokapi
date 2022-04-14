@@ -53,7 +53,7 @@ func (s *HttpServer) AddOrUpdate(service *HttpService) error {
 	hostname := service.Url.Hostname()
 	paths, ok := s.handlers[hostname]
 	if !ok {
-		log.Infof("Adding new host '%v' on binding %v", hostname, s.server.Addr)
+		log.Infof("adding new host '%v' on binding %v", hostname, s.server.Addr)
 		paths = make(map[string]*HttpService)
 		s.handlers[hostname] = paths
 	}
@@ -67,7 +67,7 @@ func (s *HttpServer) AddOrUpdate(service *HttpService) error {
 		if len(path) == 0 {
 			path = "/"
 		}
-		log.Infof("Adding service %v on binding %v on path %v", service.Name, s.server.Addr, path)
+		log.Infof("adding service %v on binding %v on path %v", service.Name, s.server.Addr, path)
 		paths[service.Url.Path] = service
 	}
 

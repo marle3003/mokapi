@@ -5,7 +5,7 @@ import "time"
 type LdapLog struct {
 	Id       string
 	Service  string
-	Time     time.Time
+	Time     int64
 	Duration time.Duration
 	Request  *LdapRequestLog
 	Response *LdapResponseLog
@@ -20,13 +20,13 @@ type LdapResponseLog struct {
 	Body string
 }
 
-func NewLdapLog(service, method string) *HttpLog {
-	return &HttpLog{
+func NewLdapLog(service, method string) *LdapLog {
+	return &LdapLog{
 		Service: service,
-		Request: &HttpRequestLog{
+		Request: &LdapRequestLog{
 			Method: method,
 		},
-		Response: &HttpResponseLog{},
-		Time:     time.Now(),
+		Response: &LdapResponseLog{},
+		Time:     time.Now().Unix(),
 	}
 }

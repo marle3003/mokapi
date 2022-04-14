@@ -62,15 +62,15 @@ func (w *ConfigWatcher) Read(u *url.URL, opts ...common.ConfigOptions) (*common.
 		}
 		w.configs[u.String()] = c
 		w.m.Unlock()
+		c.Options(opts...)
 		err = c.Parse(w)
 		if err != nil {
 			return nil, err
 		}
 	} else {
 		w.m.Unlock()
+		c.Options(opts...)
 	}
-
-	c.Options(opts...)
 
 	return c, nil
 }

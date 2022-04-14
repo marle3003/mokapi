@@ -120,8 +120,10 @@ func Get(token string, node interface{}) (interface{}, error) {
 		if mv.IsValid() {
 			v := reflect.Indirect(mv)
 			// if map value is a "ref wrapper" like SchemaRef
-			if f := v.FieldByName("Value"); f.IsValid() {
-				return f.Interface(), nil
+			if v.Kind() == reflect.Struct {
+				if f := v.FieldByName("Value"); f.IsValid() {
+					return f.Interface(), nil
+				}
 			}
 			return mv.Interface(), nil
 		}

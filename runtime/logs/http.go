@@ -9,21 +9,21 @@ import (
 type HttpRequestLog struct {
 	Method      string         `json:"method"`
 	Url         string         `json:"url"`
-	Parameters  []HttpParamter `json:"parameters"`
-	ContentType string         `json:"contentType"`
-	Body        string         `json:"body"`
+	Parameters  []HttpParamter `json:"parameters,omitempty"`
+	ContentType string         `json:"contentType,omitempty"`
+	Body        string         `json:"body,omitempty"`
 }
 
 type HttpResponseLog struct {
 	StatusCode int               `json:"statusCode"`
-	Headers    map[string]string `json:"headers"`
+	Headers    map[string]string `json:"headers,omitempty"`
 	Body       string            `json:"body"`
 }
 
 type HttpLog struct {
 	Id       string           `json:"id"`
 	Service  string           `json:"service"`
-	Time     time.Time        `json:"time"`
+	Time     int64            `json:"time"`
 	Duration time.Duration    `json:"duration"`
 	Request  *HttpRequestLog  `json:"request"`
 	Response *HttpResponseLog `json:"response"`
@@ -46,7 +46,7 @@ func NewHttpLog(method, url string) *HttpLog {
 		Response: &HttpResponseLog{
 			Headers: make(map[string]string),
 		},
-		Time: time.Now(),
+		Time: time.Now().Unix(),
 	}
 }
 
