@@ -43,6 +43,10 @@ func (g *Generator) New(ref *Ref) interface{} {
 		case "string":
 			return getString(schema)
 		default:
+			if len(schema.AnyOf) > 0 {
+				i := gofakeit.Number(0, len(schema.AnyOf)-1)
+				return g.New(schema.AnyOf[i])
+			}
 			return nil
 		}
 	}
@@ -50,6 +54,14 @@ func (g *Generator) New(ref *Ref) interface{} {
 
 func (g *Generator) getObject(s *Schema) interface{} {
 	m := sortedmap.NewLinkedHashMap()
+
+	if s.IsDictionary() {
+		length := gofakeit.Number(1, 10)
+		for i := 0; i < length; i++ {
+			m.Set(gofakeit.Word(), g.New(s.AdditionalProperties.Ref))
+		}
+		return m
+	}
 
 	if s.Properties == nil || s.Properties.Value == nil {
 		return m

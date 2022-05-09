@@ -4,7 +4,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/common"
 	config "mokapi/config/dynamic/smtp"
-	"mokapi/engine"
+	engine "mokapi/engine/common"
 	"mokapi/server/cert"
 	"mokapi/server/smtp"
 )

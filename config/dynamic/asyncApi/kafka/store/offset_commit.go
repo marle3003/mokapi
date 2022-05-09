@@ -1,8 +1,11 @@
 package store
 
 import (
+	"context"
 	"mokapi/kafka"
 	"mokapi/kafka/offsetCommit"
+	"mokapi/runtime/monitor"
+	"strconv"
 )
 
 func (s *Store) offsetCommit(rw kafka.ResponseWriter, req *kafka.Request) error {
@@ -42,6 +45,7 @@ func (s *Store) offsetCommit(rw kafka.ResponseWriter, req *kafka.Request) error 
 							resPartition.ErrorCode = kafka.InvalidGroupId
 						} else {
 							g.Commit(topic.Name, p.Index, rp.Offset)
+							go s.processMetricsOffsetCommit(req.Context, g, topic.Name, p)
 						}
 					}
 				}
@@ -53,4 +57,14 @@ func (s *Store) offsetCommit(rw kafka.ResponseWriter, req *kafka.Request) error 
 	}
 
 	return rw.Write(res)
+}
+
+func (s *Store) processMetricsOffsetCommit(ctx context.Context, g *Group, topic string, partition *Partition) {
+	m, ok := monitor.KafkaFromContext(ctx)
+	if !ok {
+		return
+	}
+
+	lag := float64(partition.Offset() - g.Commits[topic][partition.Index])
+	m.Lags.WithLabel(s.cluster, g.Name, topic, strconv.Itoa(partition.Index)).Set(lag)
 }

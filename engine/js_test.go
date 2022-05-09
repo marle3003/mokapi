@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"mokapi/config/dynamic/common"
+	"mokapi/runtime"
 	"mokapi/test"
 	"net/url"
 	"strings"
@@ -39,14 +40,14 @@ func TestJsScriptEngine(t *testing.T) {
 	t.Parallel()
 	t.Run("valid", func(t *testing.T) {
 		t.Parallel()
-		engine := New(emptyReader)
+		engine := New(emptyReader, runtime.New())
 		err := engine.AddScript(mustParse("test.js"), "export default function(){}")
 		test.Ok(t, err)
 		test.Assert(t, len(engine.scripts) == 1, "script length not 1")
 	})
 	t.Run("blank", func(t *testing.T) {
 		t.Parallel()
-		engine := New(emptyReader)
+		engine := New(emptyReader, runtime.New())
 		err := engine.AddScript(mustParse("test.js"), "")
 		test.EqualError(t, "no exported functions in script", err)
 		test.Assert(t, len(engine.scripts) == 0, "script length not 0")
@@ -57,7 +58,7 @@ func TestJsEvery(t *testing.T) {
 	t.Parallel()
 	t.Run("simple", func(t *testing.T) {
 		t.Parallel()
-		engine := New(emptyReader)
+		engine := New(emptyReader, runtime.New())
 		err := engine.AddScript(mustParse("test.js"), `
 			import mokapi from 'mokapi'
 			export default function() {
@@ -76,7 +77,7 @@ func TestJsOn(t *testing.T) {
 	t.Parallel()
 	t.Run("noEvent", func(t *testing.T) {
 		t.Parallel()
-		engine := New(emptyReader)
+		engine := New(emptyReader, runtime.New())
 		err := engine.AddScript(mustParse("test.js"), `
 			import {on, sleep} from 'mokapi'
 			export default function() {}
@@ -87,7 +88,7 @@ func TestJsOn(t *testing.T) {
 	})
 	t.Run("withoutSummary", func(t *testing.T) {
 		t.Parallel()
-		engine := New(emptyReader)
+		engine := New(emptyReader, runtime.New())
 		err := engine.AddScript(mustParse("test.js"), `
 			import {on, sleep} from 'mokapi'
 			export default function() {
@@ -106,7 +107,7 @@ func TestJsOn(t *testing.T) {
 	})
 	t.Run("simple", func(t *testing.T) {
 		t.Parallel()
-		engine := New(emptyReader)
+		engine := New(emptyReader, runtime.New())
 		err := engine.AddScript(mustParse("test.js"), `
 			import {on, sleep} from 'mokapi'
 			export default function() {
@@ -129,7 +130,7 @@ func TestJsOn(t *testing.T) {
 	})
 	t.Run("duration", func(t *testing.T) {
 		t.Parallel()
-		engine := New(emptyReader)
+		engine := New(emptyReader, runtime.New())
 		err := engine.AddScript(mustParse("test.js"), `
 			import {on, sleep} from 'mokapi'
 			export default function() {
@@ -149,7 +150,7 @@ func TestJsOn(t *testing.T) {
 	})
 	t.Run("tag name", func(t *testing.T) {
 		t.Parallel()
-		engine := New(emptyReader)
+		engine := New(emptyReader, runtime.New())
 		err := engine.AddScript(mustParse("test.js"), `
 			import {on} from 'mokapi'
 			export default function() {
@@ -165,7 +166,7 @@ func TestJsOn(t *testing.T) {
 	})
 	t.Run("custom tag", func(t *testing.T) {
 		t.Parallel()
-		engine := New(emptyReader)
+		engine := New(emptyReader, runtime.New())
 		err := engine.AddScript(mustParse("test.js"), `
 			import {on} from 'mokapi'
 			export default function() {
@@ -183,7 +184,7 @@ func TestJsOn(t *testing.T) {
 		t.Parallel()
 
 		p := struct {
-			Foo string `js:"foo"`
+			Foo string `json:"foo"`
 		}{
 			"bar",
 		}
@@ -195,7 +196,7 @@ func TestJsOn(t *testing.T) {
 			},
 		}
 
-		engine := New(emptyReader)
+		engine := New(emptyReader, runtime.New())
 		engine.logger = logger
 		err := engine.AddScript(mustParse("test.js"), `
 			import {on} from 'mokapi'
@@ -232,7 +233,7 @@ func TestJsOpen(t *testing.T) {
 			return nil
 		}}
 
-		engine := New(reader)
+		engine := New(reader, runtime.New())
 		engine.logger = logger
 		err := engine.AddScript(mustParse("./test.js"), `
 			let file = open('test.txt');
@@ -249,7 +250,7 @@ func TestJsOpen(t *testing.T) {
 			return errors.New("file not found")
 		}}
 
-		engine := New(reader)
+		engine := New(reader, runtime.New())
 		err := engine.AddScript(mustParse("./test.js"), `
 			let file = open('test.txt');
 			export default function() {}

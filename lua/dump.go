@@ -4,7 +4,7 @@ import (
 	"fmt"
 	lua "github.com/yuin/gopher-lua"
 	"math"
-	"mokapi/lua/utils"
+	"mokapi/lua/convert"
 	"mokapi/sortedmap"
 	"reflect"
 	"strings"
@@ -12,7 +12,8 @@ import (
 
 func Dump(i interface{}) string {
 	if lv, ok := i.(lua.LValue); ok {
-		i = utils.FromValue(lv, nil)
+		err := convert.FromLua(lv, &i)
+		return err.Error()
 	}
 
 	if m, ok := i.(*sortedmap.LinkedHashMap); ok {

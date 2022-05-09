@@ -58,12 +58,10 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.ServeHTTP(w, r)
 	case p == "/api/info":
 		h.getInfo(w, r)
-	case p == "/api/services/http":
-		h.getHttpServices(w, r)
+	case p == "/api/services":
+		h.getServices(w, r)
 	case strings.HasPrefix(p, "/api/services/http/"):
 		h.getHttpService(w, r)
-	case p == "/api/services/kafka":
-		h.getKafkaServices(w, r)
 	case strings.HasPrefix(p, "/api/services/kafka/"):
 		h.getKafkaService(w, r)
 	case strings.HasPrefix(p, "/api/services/smtp/"):
@@ -72,11 +70,23 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.getHttpRequests(w, r)
 	case p == "/api/dashboard":
 		h.getDashboard(w, r)
+	case strings.HasPrefix(p, "/api/metrics"):
+		h.getMetrics(w, r)
+	case strings.HasPrefix(p, "/api/events"):
+		h.getEvents(w, r)
 	case h.fileServer != nil:
 		h.fileServer.ServeHTTP(w, r)
 	default:
 		http.Error(w, "not found", http.StatusNotFound)
 	}
+}
+
+func (h *handler) getServices(w http.ResponseWriter, _ *http.Request) {
+	services := make([]interface{}, 0)
+	services = append(services, getHttpServices(h.app.Http, h.app.Monitor)...)
+	services = append(services, getKafkaServices(h.app.Kafka, h.app.Monitor)...)
+	w.Header().Set("Content-Type", "application/json")
+	writeJsonBody(w, services)
 }
 
 func writeError(w http.ResponseWriter, err error, status int) {

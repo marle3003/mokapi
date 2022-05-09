@@ -7,6 +7,7 @@ import (
 	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/config/dynamic/openapi/schema/schematest"
 	"mokapi/media"
+	"mokapi/sortedmap"
 	"reflect"
 	"testing"
 )
@@ -610,7 +611,7 @@ func TestValidate_Object(t *testing.T) {
 				schematest.WithMinProperties(2),
 			),
 			func(t *testing.T, _ interface{}, err error) {
-				require.EqualError(t, err, "expected schema type=object minProperties=2, got {name=foo}")
+				require.EqualError(t, err, "expected schema type=object minProperties=2 free-form=true, got {name=foo}")
 			},
 		},
 		{
@@ -620,14 +621,7 @@ func TestValidate_Object(t *testing.T) {
 				schematest.WithMaxProperties(1),
 			),
 			func(t *testing.T, _ interface{}, err error) {
-				switch err.Error() {
-				case "expected schema type=object maxProperties=1, got {age=12, name=foo}":
-				case "expected schema type=object maxProperties=1, got {name=foo, age=12}":
-					return
-				default:
-					require.Error(t, err)
-					require.Failf(t, "got wrong error message", err.Error())
-				}
+				require.EqualError(t, err, "expected schema type=object maxProperties=1 free-form=true, got {name=foo, age=12}")
 			},
 		},
 		{
@@ -821,6 +815,36 @@ func TestValidate_Dictionary(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, d.exp, i)
 			}
+		})
+	}
+}
+
+func TestMarshal_SortedMap(t *testing.T) {
+	cases := []struct {
+		name   string
+		schema *schema.Schema
+		f      func(t *testing.T, s *schema.Ref)
+	}{
+		{
+			"string:string",
+			schematest.New("object", schematest.WithProperty("number", schematest.New("number"))),
+			func(t *testing.T, s *schema.Ref) {
+				m := sortedmap.NewLinkedHashMap()
+				m.Set("number", 12)
+
+				b, err := s.Marshal(m, media.ParseContentType("application/json"))
+				require.NoError(t, err)
+				require.Equal(t, `{"number":12}`, string(b))
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			tc.f(t, &schema.Ref{Value: tc.schema})
 		})
 	}
 }

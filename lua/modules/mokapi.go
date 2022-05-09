@@ -4,7 +4,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	lua "github.com/yuin/gopher-lua"
 	"mokapi/engine/common"
-	"mokapi/lua/utils"
+	"mokapi/lua/convert"
 	"reflect"
 )
 
@@ -46,7 +46,7 @@ func (m *Mokapi) every(l *lua.LState) int {
 
 	args := &everyArgs{}
 	if lArg := l.Get(3); lArg != lua.LNil {
-		if err := utils.Map(args, lArg); err != nil {
+		if err := convert.FromLua(lArg, &args); err != nil {
 			log.Error(err)
 		}
 	}
@@ -70,7 +70,11 @@ func (m *Mokapi) on(l *lua.LState) int {
 	fn := func(args ...interface{}) (bool, error) {
 		values := make([]lua.LValue, 0, len(args))
 		for _, arg := range args {
-			values = append(values, utils.ToValue(l, arg))
+			i, err := convert.ToLua(l, arg)
+			if err != nil {
+				return false, err
+			}
+			values = append(values, i)
 		}
 
 		co, cocancel := l.NewThread()
@@ -89,7 +93,7 @@ func (m *Mokapi) on(l *lua.LState) int {
 			for i, val := range values {
 				// update only pointers
 				if reflect.ValueOf(args[i]).Kind() == reflect.Ptr {
-					err = utils.Map(args[i], val)
+					err = convert.FromLua(val, args[i])
 					if err != nil {
 						return false, err
 					}
@@ -103,7 +107,7 @@ func (m *Mokapi) on(l *lua.LState) int {
 
 	args := &onArgs{}
 	if lArg := l.Get(3); lArg != lua.LNil {
-		if err := utils.Map(args, lArg); err != nil {
+		if err := convert.FromLua(lArg, &args); err != nil {
 			log.Error(err)
 		}
 	}

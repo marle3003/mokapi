@@ -7,8 +7,10 @@ import (
 )
 
 type Http struct {
-	*metrics.Http
-	Log []*logs.HttpLog `json:"log"`
+	RequestCounter      *metrics.CounterMap
+	RequestErrorCounter *metrics.CounterMap
+	LastRequest         *metrics.GaugeMap
+	Log                 []*logs.HttpLog `json:"log"`
 }
 
 func (m *Http) AppendHttp(log *logs.HttpLog) {

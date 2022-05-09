@@ -26,6 +26,28 @@ func TestRef_UnmarshalYAML(t *testing.T) {
 				require.Equal(t, "string", r.Value.Type)
 			},
 		},
+		{
+			name: "additional properties true",
+			s: `
+type: object
+additionalProperties: true
+`,
+			fn: func(t *testing.T, r *Ref) {
+				require.Equal(t, "object", r.Value.Type)
+				require.NotNil(t, r.Value.AdditionalProperties)
+			},
+		},
+		{
+			name: "additional properties {}",
+			s: `
+type: object
+additionalProperties: {}
+`,
+			fn: func(t *testing.T, r *Ref) {
+				require.Equal(t, "object", r.Value.Type)
+				require.NotNil(t, r.Value.AdditionalProperties)
+			},
+		},
 	} {
 		test := testcase
 		t.Run(test.name, func(t *testing.T) {

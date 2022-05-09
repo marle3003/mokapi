@@ -2,6 +2,8 @@ package store
 
 import "fmt"
 
+type Brokers map[int]*Broker
+
 type Broker struct {
 	Id   int
 	Name string

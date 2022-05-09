@@ -14,7 +14,7 @@ func TestOn(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
 		t.Parallel()
 		rt := goja.New()
-		rt.SetFieldNameMapper(goja.TagFieldNameMapper("js", true))
+		rt.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
 		http := New()
 		err := rt.Set("http", common.Map(rt, http))
 		test.Ok(t, err)
@@ -27,7 +27,7 @@ func TestOn(t *testing.T) {
 	t.Run("method parameter", func(t *testing.T) {
 		t.Parallel()
 		rt := goja.New()
-		rt.SetFieldNameMapper(goja.TagFieldNameMapper("js", true))
+		rt.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
 		http := New()
 		err := rt.Set("http", common.Map(rt, http))
 		test.Ok(t, err)
@@ -39,7 +39,7 @@ func TestOn(t *testing.T) {
 	t.Run("url parameter", func(t *testing.T) {
 		t.Parallel()
 		rt := goja.New()
-		rt.SetFieldNameMapper(goja.TagFieldNameMapper("js", true))
+		rt.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
 		http := New()
 		err := rt.Set("http", common.Map(rt, http))
 		test.Ok(t, err)
@@ -52,7 +52,7 @@ func TestOn(t *testing.T) {
 	t.Run("request method", func(t *testing.T) {
 		t.Parallel()
 		rt := goja.New()
-		rt.SetFieldNameMapper(goja.TagFieldNameMapper("js", true))
+		rt.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
 		http := New()
 		err := rt.Set("http", common.Map(rt, http))
 		test.Ok(t, err)
@@ -67,7 +67,7 @@ func TestOn(t *testing.T) {
 	t.Run("request header", func(t *testing.T) {
 		t.Parallel()
 		rt := goja.New()
-		rt.SetFieldNameMapper(goja.TagFieldNameMapper("js", true))
+		rt.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
 		http := New()
 		err := rt.Set("http", common.Map(rt, http))
 		test.Ok(t, err)

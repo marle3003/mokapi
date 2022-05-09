@@ -18,7 +18,7 @@ func TestHandler_Http(t *testing.T) {
 		fn   func(t *testing.T, h http.Handler)
 	}{
 		{
-			name: "/api/services/http",
+			name: "/api/services",
 			app: &runtime.App{
 				Http: map[string]*runtime.HttpInfo{
 					"foo": {
@@ -30,13 +30,13 @@ func TestHandler_Http(t *testing.T) {
 			fn: func(t *testing.T, h http.Handler) {
 				try.Handler(t,
 					http.MethodGet,
-					"http://foo.api/api/services/http",
+					"http://foo.api/api/services",
 					nil,
 					"",
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`[{"name":"foo","lastRequest":0,"requests":0,"errors":0}]`))
+					try.HasBody(`[{"name":"foo","metrics":[]}]`))
 			},
 		},
 		{

@@ -135,12 +135,24 @@ func TestRef_Marshal_Object(t *testing.T) {
 			"map not free-form",
 			&schema.Ref{Value: schematest.New("object",
 				schematest.WithProperty("name", schematest.New("string")),
-				schematest.WithFreeForm(false),
 			)},
 			map[interface{}]interface{}{"name": "foo", "value": 12},
 			media.ParseContentType("application/json"),
 			func(t *testing.T, s string) {
 				require.True(t, s == `{"name":"foo"}`, s)
+			},
+		},
+		{
+			"any",
+			&schema.Ref{Value: schematest.New("",
+				schematest.Any(
+					schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
+					schematest.New("object", schematest.WithProperty("bar", schematest.New("string"))),
+				))},
+			map[string]interface{}{"foo": "foo", "value": 12},
+			media.ParseContentType("application/json"),
+			func(t *testing.T, s string) {
+				require.True(t, s == `{"foo":"foo"}`, s)
 			},
 		},
 	}

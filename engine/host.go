@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"github.com/go-co-op/gocron"
 	log "github.com/sirupsen/logrus"
-	"mokapi/config/dynamic/common"
+	config "mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/provider/file"
+	"mokapi/engine/common"
 	"mokapi/js"
 	"mokapi/lua"
 	"net/url"
@@ -185,9 +186,13 @@ func (sh *scriptHost) OpenFile(path string) (string, error) {
 	}
 
 	// todo: read as plaintext
-	f, err := sh.engine.reader.Read(u, common.AsPlaintext())
+	f, err := sh.engine.reader.Read(u, config.AsPlaintext())
 	if err != nil {
 		return "", err
 	}
 	return fmt.Sprintf("%s", f.Data), nil
+}
+
+func (sh *scriptHost) KafkaClient() common.KafkaClient {
+	return sh.engine.kafkaClient
 }

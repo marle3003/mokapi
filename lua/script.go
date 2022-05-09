@@ -7,6 +7,7 @@ import (
 	luar "layeh.com/gopher-luar"
 	"mokapi/engine/common"
 	"mokapi/lua/http"
+	"mokapi/lua/kafka"
 	"mokapi/lua/modules"
 	"path/filepath"
 	"runtime/debug"
@@ -36,7 +37,7 @@ func New(filename, src string, host common.Host) (*Script, error) {
 	script.state.PreloadModule("log", modules.NewLog(host).Loader)
 	script.state.PreloadModule("mokapi", modules.NewMokapi(host).Loader)
 	script.state.PreloadModule("yaml", modules.YamlLoader)
-	//l.state.PreloadModule("kafka", kafka.Loader)
+	script.state.PreloadModule("kafka", kafka.New(host.KafkaClient()).Loader)
 	script.state.PreloadModule("mustache", modules.MustacheLoader)
 	script.state.PreloadModule("http", http.New().Loader)
 

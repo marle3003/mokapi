@@ -1,56 +1,53 @@
 package kafka
 
 import (
+	log "github.com/sirupsen/logrus"
 	lua "github.com/yuin/gopher-lua"
 	luar "layeh.com/gopher-luar"
-	"mokapi/lua/utils"
+	"mokapi/lua/convert"
 	"strings"
 	"time"
 )
 
-type WriteMessage func(broker, topic string, partition int, key, message, header interface{}) (interface{}, interface{}, error)
-
-type Kafka struct {
-	producer WriteMessage
+type Client interface {
+	Produce(cluster, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error)
 }
 
-func NewKafka(write WriteMessage) *Kafka {
-	return &Kafka{
-		producer: write,
+type Module struct {
+	client Client
+}
+
+type produceOptions struct {
+	Cluster   string
+	Topic     string
+	Partition int
+	Key       interface{}
+	Value     interface{}
+	Headers   map[string]interface{}
+	Timeout   int
+}
+
+func New(c Client) *Module {
+	return &Module{
+		client: c,
 	}
 }
 
-func (kafka *Kafka) Produce(state *lua.LState) int {
-	broker := state.CheckString(1)
-	topic := state.CheckString(2)
-	key := state.ToString(3)
-	message := utils.MapTable(state.ToTable(4))
-	var headers interface{}
-	if lv := state.Get(5); lv != lua.LNil {
-		headers = utils.MapTable(state.ToTable(5))
-	}
-	partition := -1
-	if lv, ok := state.Get(6).(lua.LNumber); ok {
-		partition = int(lv)
-	}
-	timeout := time.Second * 30
-	if lv, ok := state.Get(7).(lua.LString); ok {
-		if d, err := time.ParseDuration(string(lv)); err != nil {
-			state.Push(lua.LNil)
-			state.Push(lua.LNil)
-			state.Push(lua.LString(err.Error()))
-			return 3
-		} else {
-			timeout = d
+func (m *Module) Produce(state *lua.LState) int {
+	opts := &produceOptions{Timeout: 30, Partition: -1}
+	if lArg := state.Get(1); lArg != lua.LNil {
+		if err := convert.FromLua(lArg, &opts); err != nil {
+			log.Error(err)
 		}
 	}
 
 	var err error
-	var k, m interface{}
+	var k, msg interface{}
+	timeout := time.Duration(opts.Timeout) * time.Second
 	for start := time.Now(); time.Since(start) < timeout; {
-		if k, m, err = kafka.producer(broker, topic, partition, key, message, headers); err == nil {
+		if k, msg, err = m.client.Produce(opts.Cluster, opts.Topic, opts.Partition, opts.Key, opts.Value, opts.Headers); err == nil {
 			state.Push(luar.New(state, k))
-			state.Push(luar.New(state, m))
+			state.Push(luar.New(state, msg))
 			return 2
 		} else if !strings.HasPrefix(err.Error(), "no broker found at") {
 			break
@@ -63,9 +60,9 @@ func (kafka *Kafka) Produce(state *lua.LState) int {
 	return 3
 }
 
-func (kafka *Kafka) Loader(state *lua.LState) int {
+func (m *Module) Loader(state *lua.LState) int {
 	exports := map[string]lua.LGFunction{
-		"produce": kafka.Produce,
+		"produce": m.Produce,
 	}
 
 	mod := state.SetFuncs(state.NewTable(), exports)

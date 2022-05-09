@@ -8,8 +8,8 @@ type EventListener struct {
 }
 
 type Event struct {
-	Method string `js:"method"`
-	Url    string `js:"url"`
+	Method string `json:"method"`
+	Url    string `json:"url"`
 }
 
 type Http struct {

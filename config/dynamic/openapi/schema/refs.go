@@ -70,6 +70,24 @@ func (s *Schema) Parse(config *common.Config, reader common.Reader) error {
 		return err
 	}
 
+	for _, r := range s.AnyOf {
+		if err := r.Parse(config, reader); err != nil {
+			return err
+		}
+	}
+
+	for _, r := range s.AllOf {
+		if err := r.Parse(config, reader); err != nil {
+			return err
+		}
+	}
+
+	for _, r := range s.OneOf {
+		if err := r.Parse(config, reader); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

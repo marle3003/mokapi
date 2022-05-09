@@ -3,9 +3,9 @@ package server
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"mokapi/config/dynamic/common"
+	config "mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/openapi"
-	"mokapi/engine"
+	"mokapi/engine/common"
 	"mokapi/runtime"
 	"mokapi/server/cert"
 	"mokapi/server/service"
@@ -18,12 +18,12 @@ type HttpServers map[string]*service.HttpServer
 type HttpManager struct {
 	Servers HttpServers
 
-	eventEmitter engine.EventEmitter
+	eventEmitter common.EventEmitter
 	certStore    *cert.Store
 	app          *runtime.App
 }
 
-func NewHttpManager(servers HttpServers, emitter engine.EventEmitter, store *cert.Store, app *runtime.App) *HttpManager {
+func NewHttpManager(servers HttpServers, emitter common.EventEmitter, store *cert.Store, app *runtime.App) *HttpManager {
 	return &HttpManager{
 		eventEmitter: emitter,
 		certStore:    store,
@@ -61,7 +61,7 @@ func (m *HttpManager) AddService(name string, u *url.URL, handler http.Handler, 
 	return nil
 }
 
-func (m *HttpManager) Update(c *common.Config) {
+func (m *HttpManager) Update(c *config.Config) {
 	config, ok := c.Data.(*openapi.Config)
 	if !ok {
 		return

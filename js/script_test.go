@@ -3,6 +3,7 @@ package js
 import (
 	"fmt"
 	"github.com/dop251/goja"
+	r "github.com/stretchr/testify/require"
 	"mokapi/engine/common"
 	"mokapi/test"
 	"strings"
@@ -71,6 +72,27 @@ func TestScript(t *testing.T) {
 
 		_ = <-ch
 		s.Close()
+	})
+}
+
+func TestScript_Generator(t *testing.T) {
+	host := &testHost{}
+
+	t.Parallel()
+	t.Run("nil", func(t *testing.T) {
+		t.Parallel()
+
+		s, err := New("",
+			`
+import g from 'generator'
+export default function() {
+  var s = g.new({type: 'string'})
+return s
+}`,
+			host)
+		r.NoError(t, err)
+		err = s.Run()
+		r.NoError(t, err)
 	})
 }
 

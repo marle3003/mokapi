@@ -15,7 +15,8 @@ import {
   BIconDashSquare,
   BIconChevronRight,
   BIconCaretDownFill,
-  BIconCaretRightFill
+  BIconCaretRightFill,
+  BIconEnvelope
 } from 'bootstrap-vue'
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
@@ -42,6 +43,7 @@ Vue.component('BIconDashSquare', BIconDashSquare)
 Vue.component('BIconChevronRight', BIconChevronRight)
 Vue.component('BIconCaretDownFill', BIconCaretDownFill)
 Vue.component('BIconCaretRightFill', BIconCaretRightFill)
+Vue.component('BIconEnvelope', BIconEnvelope)
 
 /* eslint-disable no-new */
 new Vue({

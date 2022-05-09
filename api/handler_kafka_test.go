@@ -2,6 +2,7 @@ package api
 
 import (
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
+	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/config/static"
 	"mokapi/runtime"
 	"mokapi/runtime/monitor"
@@ -14,28 +15,28 @@ func TestHandler_Kafka(t *testing.T) {
 	testcases := []struct {
 		name string
 		app  *runtime.App
-		fn   func(t *testing.T, h http.Handler)
+		fn   func(t *testing.T, h http.Handler, app *runtime.App)
 	}{
 		{
-			name: "/api/services/kafka",
+			name: "/api/services",
 			app: &runtime.App{
 				Monitor: monitor.New(),
 				Kafka: map[string]*runtime.KafkaInfo{
 					"foo": {
-						asyncapitest.NewConfig(asyncapitest.WithTitle("foo")),
+						Config: asyncapitest.NewConfig(asyncapitest.WithTitle("foo")),
 					},
 				},
 			},
-			fn: func(t *testing.T, h http.Handler) {
+			fn: func(t *testing.T, h http.Handler, app *runtime.App) {
 				try.Handler(t,
 					http.MethodGet,
-					"http://foo.api/api/services/kafka",
+					"http://foo.api/api/services",
 					nil,
 					"",
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`[{"name":"foo","topics":null,"lastMessage":0,"messages":0,"errors":0}]`))
+					try.HasBody(`[{"name":"foo","topics":null,"metrics":[]}]`))
 			},
 		},
 		{
@@ -43,11 +44,14 @@ func TestHandler_Kafka(t *testing.T) {
 			app: &runtime.App{
 				Kafka: map[string]*runtime.KafkaInfo{
 					"foo": {
-						asyncapitest.NewConfig(asyncapitest.WithTitle("foo")),
+						Config: asyncapitest.NewConfig(asyncapitest.WithTitle("foo")),
+						Store:  store.New(asyncapitest.NewConfig(asyncapitest.WithTitle("foo"))),
 					},
 				},
+				Monitor: monitor.New(),
 			},
-			fn: func(t *testing.T, h http.Handler) {
+			fn: func(t *testing.T, h http.Handler, app *runtime.App) {
+				app.Monitor.Kafka.Messages.WithLabel("foo", "topic").Add(1)
 				try.Handler(t,
 					http.MethodGet,
 					"http://foo.api/api/services/kafka/foo",
@@ -56,7 +60,7 @@ func TestHandler_Kafka(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"asyncapi":"2.0.0","info":{"title":"foo","version":"1.0"},"channels":null}`))
+					try.HasBody(`{"name":"foo","description":"","version":"1.0","contact":{"name":"","url":"","email":""},"topics":null,"groups":null,"metrics":[{"name":"kafka_messages_total{service=\"foo\",topic=\"topic\"}","value":1}]}`))
 			},
 		},
 	}
@@ -68,7 +72,7 @@ func TestHandler_Kafka(t *testing.T) {
 			t.Parallel()
 
 			h := New(tc.app, static.Api{})
-			tc.fn(t, h)
+			tc.fn(t, h, tc.app)
 		})
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"hash/crc32"
+	"io"
 	"time"
 )
 
@@ -58,6 +59,8 @@ type RecordHeader struct {
 }
 
 func (r *Record) Size() (s int) {
+	r.Key.Seek(0, io.SeekStart)
+	r.Value.Seek(0, io.SeekStart)
 	if r.Key != nil {
 		s += r.Key.Len()
 	}

@@ -50,12 +50,21 @@ func newSchemaObject() *schemaObject {
 
 // selectData selects data by schema
 func selectData(data interface{}, schema *Ref) (interface{}, error) {
-	if schema.Value == nil || schema.Value.Type == "" {
+	if schema.Value == nil || data == nil {
 		return data, nil
 	}
 
-	if data == nil {
-		return nil, nil
+	if len(schema.Value.AnyOf) > 0 {
+		for _, any := range schema.Value.AnyOf {
+			if r, err := selectData(data, any); err == nil {
+				return r, nil
+			}
+		}
+		return nil, fmt.Errorf("none of 'anyof' schemas match")
+	}
+
+	if schema.Value == nil || schema.Value.Type == "" {
+		return data, nil
 	}
 
 	switch data.(type) {
@@ -194,6 +203,10 @@ func convertObject(schema *Ref, selector func(string) (interface{}, bool)) (*sch
 }
 
 func fromLinkedMap(m *sortedmap.LinkedHashMap, schema *Schema) (*schemaObject, error) {
+	if schema.IsDictionary() {
+		return &schemaObject{m}, validateObject(m, schema)
+	}
+
 	obj := newSchemaObject()
 	for it := m.Iter(); it.Next(); {
 		name := it.Key().(string)

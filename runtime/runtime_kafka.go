@@ -2,12 +2,14 @@ package runtime
 
 import (
 	"mokapi/config/dynamic/asyncApi"
+	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/kafka"
 	"mokapi/runtime/monitor"
 )
 
 type KafkaInfo struct {
 	*asyncApi.Config
+	*store.Store
 }
 
 type KafkaHandler struct {

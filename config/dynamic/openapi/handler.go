@@ -9,7 +9,7 @@ import (
 	"math/rand"
 	"mokapi/config/dynamic/openapi/parameter"
 	"mokapi/config/dynamic/openapi/schema"
-	"mokapi/engine"
+	"mokapi/engine/common"
 	"mokapi/media"
 	"mokapi/runtime/logs"
 	"mokapi/runtime/monitor"
@@ -28,10 +28,10 @@ type operationHandler struct {
 
 type responseHandler struct {
 	config       *Config
-	eventEmitter engine.EventEmitter
+	eventEmitter common.EventEmitter
 }
 
-func NewHandler(config *Config, eventEmitter engine.EventEmitter) http.Handler {
+func NewHandler(config *Config, eventEmitter common.EventEmitter) http.Handler {
 	return &operationHandler{
 		config: config,
 		next: &responseHandler{
@@ -175,10 +175,6 @@ func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	if logHttp, ok := logs.HttpLogFromContext(r.Context()); ok {
 		logHttp.Service = h.config.Info.Name
 	}
-	if m, ok := monitor.HttpFromContext(r.Context()); ok {
-		m.LastRequest.WithLabel(h.config.Info.Name).Set(float64(time.Now().Unix()))
-		m.RequestCounter.WithLabel(h.config.Info.Name).Add(1)
-	}
 
 endpointLoop:
 	for path, ref := range h.config.EndPoints {
@@ -220,6 +216,11 @@ endpointLoop:
 		r = r.WithContext(parameter.NewContext(r.Context(), rp))
 		r = r.WithContext(NewOperationContext(r.Context(), op))
 		r = r.WithContext(context.WithValue(r.Context(), "endpointPath", path))
+
+		if m, ok := monitor.HttpFromContext(r.Context()); ok {
+			m.LastRequest.WithLabel(h.config.Info.Name).Set(float64(time.Now().Unix()))
+			m.RequestCounter.WithLabel(h.config.Info.Name, path).Add(1)
+		}
 
 		h.next.ServeHTTP(rw, r)
 		return

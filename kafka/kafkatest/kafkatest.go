@@ -3,6 +3,7 @@ package kafkatest
 import (
 	"context"
 	"fmt"
+	"io"
 	"mokapi/kafka"
 	"mokapi/kafka/apiVersion"
 	"mokapi/kafka/createTopics"
@@ -32,6 +33,7 @@ func NewRequest(clientId string, version int, msg kafka.Message) *kafka.Request 
 }
 
 func BytesToString(bytes kafka.Bytes) string {
+	bytes.Seek(0, io.SeekStart)
 	b := make([]byte, bytes.Len())
 	bytes.Read(b)
 	return string(b)

@@ -31,7 +31,7 @@ func New(filename, src string, host common.Host) (*Script, error) {
 		return nil, err
 	}
 
-	s.runtime.SetFieldNameMapper(goja.TagFieldNameMapper("js", true))
+	s.runtime.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
 
 	exports := s.runtime.NewObject()
 	s.runtime.Set("exports", exports)

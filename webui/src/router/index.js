@@ -11,6 +11,7 @@ import Docs from '@/views/Docs'
 import HttpRequest from '@/views/dashboard/HttpRequest'
 import SmtpMail from '@/views/dashboard/SmtpMail'
 import SmtpService from '@/views/smtp/Service'
+import KafkaCluster from '@/views/kafka/Cluster'
 import KafkaTopic from '@/views/kafka/Topic'
 
 import AsyncApiService from '@/views/asyncapi/Service'
@@ -60,7 +61,12 @@ export default new Router({
       component: Dashboard
     },
     {
-      path: '/dashboard/kafka/:kafka/topics/:topic',
+      path: '/dashboard/kafka/:cluster',
+      name: 'kafkaCluster',
+      component: KafkaCluster
+    },
+    {
+      path: '/dashboard/kafka/:cluster/topics/:topic',
       name: 'kafkaTopic',
       component: KafkaTopic
     },

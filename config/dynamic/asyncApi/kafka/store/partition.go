@@ -3,6 +3,8 @@ package store
 import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/kafka"
+	"mokapi/runtime/events"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -18,6 +20,7 @@ type Partition struct {
 	Replicas []int
 
 	validator *validator
+	logger    LogRecord
 
 	m sync.RWMutex
 }
@@ -32,7 +35,7 @@ type Segment struct {
 	LastWritten time.Time
 }
 
-func newPartition(index int, brokers map[int]*Broker) *Partition {
+func newPartition(index int, brokers Brokers, logger LogRecord) *Partition {
 	replicas := make([]int, 0, len(brokers))
 	for i, _ := range brokers {
 		replicas = append(replicas, i)
@@ -43,6 +46,7 @@ func newPartition(index int, brokers map[int]*Broker) *Partition {
 		Tail:     -1,
 		Segments: make(map[int64]*Segment),
 		Replicas: replicas,
+		logger:   logger,
 	}
 	if len(replicas) > 0 {
 		p.Leader = replicas[0]
@@ -110,6 +114,7 @@ func (p *Partition) Write(batch kafka.RecordBatch) (baseOffset int64, err error)
 		seg.Tail += 1
 		seg.LastWritten = now
 
+		p.logger(r, events.NewTraits().With("partition", strconv.Itoa(p.Index)))
 		log.Debugf("new message written to partition=%v offset=%v", p.Index, r.Offset)
 	}
 

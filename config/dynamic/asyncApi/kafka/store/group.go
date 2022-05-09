@@ -33,6 +33,7 @@ func NewGroup(name string, coordinator *Broker) *Group {
 type Generation struct {
 	Id       int
 	Protocol string
+	LeaderId string
 	Members  map[string]*Member
 }
 
@@ -73,4 +74,16 @@ func (g *Group) Offset(topic string, partition int) int64 {
 		}
 	}
 	return -1
+}
+
+func (g GroupState) String() string {
+	switch g {
+	case Joining:
+		return "Joining"
+	case Stable:
+		return "Stable"
+	case AwaitingSync:
+		return "AwaitingSync"
+	}
+	return "Unknown"
 }

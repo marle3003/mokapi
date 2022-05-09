@@ -36,7 +36,7 @@ func Start(cfg *static.Config) (*Cmd, error) {
 	http := make(server.HttpServers)
 	mail := make(server.SmtpServers)
 	directories := make(server.LdapDirectories)
-	scriptEngine := engine.New(watcher)
+	scriptEngine := engine.New(watcher, app)
 
 	managerHttp := server.NewHttpManager(http, scriptEngine, certStore, app)
 	mangerKafka := server.NewKafkaManager(kafka, scriptEngine, app)

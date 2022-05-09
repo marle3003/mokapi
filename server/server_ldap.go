@@ -3,7 +3,7 @@ package server
 import (
 	"mokapi/config/dynamic/common"
 	config "mokapi/config/dynamic/ldap"
-	"mokapi/engine"
+	engine "mokapi/engine/common"
 	"mokapi/runtime"
 	"mokapi/server/cert"
 	"mokapi/server/ldap"

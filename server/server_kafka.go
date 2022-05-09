@@ -5,8 +5,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
-	"mokapi/config/dynamic/common"
-	"mokapi/engine"
+	config "mokapi/config/dynamic/common"
+	"mokapi/engine/common"
 	"mokapi/runtime"
 	"mokapi/server/service"
 	"net"
@@ -25,11 +25,11 @@ type KafkaManager struct {
 	Clusters KafkaClusters
 	brokers  map[string]*service.KafkaBroker //map[port]
 
-	emitter engine.EventEmitter
+	emitter common.EventEmitter
 	app     *runtime.App
 }
 
-func NewKafkaManager(clusters KafkaClusters, emitter engine.EventEmitter, app *runtime.App) *KafkaManager {
+func NewKafkaManager(clusters KafkaClusters, emitter common.EventEmitter, app *runtime.App) *KafkaManager {
 	return &KafkaManager{
 		Clusters: clusters,
 		emitter:  emitter,
@@ -38,13 +38,11 @@ func NewKafkaManager(clusters KafkaClusters, emitter engine.EventEmitter, app *r
 	}
 }
 
-func (m KafkaManager) UpdateConfig(c *common.Config) {
+func (m KafkaManager) UpdateConfig(c *config.Config) {
 	config, ok := c.Data.(*asyncApi.Config)
 	if !ok {
 		return
 	}
-
-	m.app.AddKafka(config)
 
 	cluster, ok := m.Clusters[config.Info.Name]
 	if !ok {
@@ -55,6 +53,7 @@ func (m KafkaManager) UpdateConfig(c *common.Config) {
 			close: make(map[string]func()),
 		}
 		m.Clusters[config.Info.Name] = cluster
+		m.app.AddKafka(config, cluster.Store)
 	} else {
 		cluster.Store.Update(config)
 	}

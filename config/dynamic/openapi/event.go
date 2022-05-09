@@ -7,30 +7,30 @@ import (
 )
 
 type EventResponse struct {
-	Headers    map[string]string `js:"headers"`
-	StatusCode int               `js:"statusCode"`
-	Body       string            `js:"body"`
-	Data       interface{}       `js:"data"`
+	Headers    map[string]string `json:"headers"`
+	StatusCode int               `json:"statusCode"`
+	Body       string            `json:"body"`
+	Data       interface{}       `json:"data"`
 }
 
 type EventRequest struct {
-	Method string                 `js:"method"`
-	Url    Url                    `js:"url"`
-	Body   interface{}            `js:"body"`
-	Path   map[string]interface{} `js:"path"`
-	Query  map[string]interface{} `js:"query"`
-	Header map[string]interface{} `js:"header"`
-	Cookie map[string]interface{} `js:"cookie"`
+	Method string                 `json:"method"`
+	Url    Url                    `json:"url"`
+	Body   interface{}            `json:"body"`
+	Path   map[string]interface{} `json:"path"`
+	Query  map[string]interface{} `json:"query"`
+	Header map[string]interface{} `json:"header"`
+	Cookie map[string]interface{} `json:"cookie"`
 
-	Key         string `js:"key"`
-	OperationId string `js:"operationId"`
+	Key         string `json:"key"`
+	OperationId string `json:"operationId"`
 }
 
 type Url struct {
-	Scheme string
-	Host   string
-	Path   string
-	Query  string
+	Scheme string `json:"scheme"`
+	Host   string `json:"host"`
+	Path   string `json:"path"`
+	Query  string `json:"query"`
 }
 
 func NewEventResponse(status int) *EventResponse {

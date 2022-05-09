@@ -451,6 +451,10 @@ func parseNumber(i interface{}, s *Schema) (f float64, err error) {
 		f = v
 	case string:
 		f, err = strconv.ParseFloat(v, 64)
+	case int:
+		f = float64(v)
+	case int64:
+		f = float64(v)
 	default:
 		err = fmt.Errorf("expected float got %T", v)
 	}

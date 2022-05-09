@@ -17,6 +17,7 @@ import (
 	"mokapi/kafka/offsetFetch"
 	"mokapi/kafka/produce"
 	"mokapi/kafka/syncGroup"
+	"mokapi/runtime/events"
 	"net"
 	"net/url"
 	"strconv"
@@ -27,6 +28,7 @@ type Store struct {
 	brokers map[int]*Broker
 	topics  map[string]*Topic
 	groups  map[string]*Group
+	cluster string
 
 	m sync.RWMutex
 }
@@ -38,15 +40,7 @@ func New(config *asyncApi.Config) *Store {
 		groups:  make(map[string]*Group),
 	}
 
-	for n, server := range config.Servers {
-		s.addBroker(n, server)
-	}
-	for name, ch := range config.Channels {
-		if ch.Value == nil {
-			continue
-		}
-		_, _ = s.addTopic(name, ch.Value)
-	}
+	s.Update(config)
 	return s
 }
 
@@ -126,6 +120,7 @@ func (s *Store) GetOrCreateGroup(name string, brokerId int) *Group {
 }
 
 func (s *Store) Update(c *asyncApi.Config) {
+	s.cluster = c.Info.Name
 	for n, server := range c.Servers {
 		if b := s.getBroker(n); b != nil {
 			b.Host, b.Port = parseHostAndPort(server.Url)
@@ -140,9 +135,11 @@ func (s *Store) Update(c *asyncApi.Config) {
 	}
 
 	for n, ch := range c.Channels {
+		if ch.Value == nil {
+			continue
+		}
 		k := ch.Value.Bindings.Kafka
 		if t, ok := s.topics[n]; ok {
-			t.validator.update(ch.Value)
 			for _, p := range t.Partitions[k.Partitions():] {
 				p.delete()
 			}
@@ -202,20 +199,8 @@ func (s *Store) addTopic(name string, config *asyncApi.Channel) (*Topic, error) 
 	if _, ok := s.topics[name]; ok {
 		return nil, fmt.Errorf("topic %v already exists", name)
 	}
-
-	k := config.Bindings.Kafka
-	t := &Topic{Name: name, Partitions: make([]*Partition, k.Partitions())}
+	t := newTopic(name, config, s.brokers, s.log)
 	s.topics[name] = t
-
-	t.validator = newValidator(config)
-
-	for i := 0; i < k.Partitions(); i++ {
-		part := newPartition(i, s.brokers)
-		part.validator = t.validator
-		t.Partitions[i] = part
-
-	}
-
 	return t, nil
 }
 
@@ -270,6 +255,10 @@ func (s *Store) getBrokerByHost(addr string) *Broker {
 		}
 	}
 	return nil
+}
+
+func (s *Store) log(record kafka.Record, traits events.Traits) {
+	events.Push(NewKafkaLog(record), traits.WithNamespace("kafka").WithName(s.cluster))
 }
 
 func parseHostAndPort(s string) (host string, port int) {

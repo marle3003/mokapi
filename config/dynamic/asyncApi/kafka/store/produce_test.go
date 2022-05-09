@@ -10,6 +10,8 @@ import (
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/offset"
 	"mokapi/kafka/produce"
+	"mokapi/runtime/events"
+	"mokapi/runtime/monitor"
 	"testing"
 	"time"
 )
@@ -23,10 +25,14 @@ func TestProduce(t *testing.T) {
 			"default",
 			func(t *testing.T, s *store.Store) {
 				s.Update(asyncapitest.NewConfig(
+					asyncapitest.WithServer("foo", "kafka", ""),
 					asyncapitest.WithChannel("foo")))
+				g := s.GetOrCreateGroup("foo", 0)
+				g.Commit("foo", 0, 0)
+				events.SetStore(5, events.NewTraits().WithNamespace("kafka"))
 
 				rr := kafkatest.NewRecorder()
-				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &produce.Request{
+				r := kafkatest.NewRequest("kafkatest", 3, &produce.Request{
 					Topics: []produce.RequestTopic{
 						{Name: "foo", Partitions: []produce.RequestPartition{
 							{
@@ -50,8 +56,10 @@ func TestProduce(t *testing.T) {
 								},
 							},
 						},
-						}},
-				}))
+						}}})
+				m := monitor.New()
+				r.Context = monitor.NewKafkaContext(r.Context, m.Kafka)
+				s.ServeMessage(rr, r)
 
 				res, ok := rr.Message.(*produce.Response)
 				require.True(t, ok)
@@ -103,6 +111,20 @@ func TestProduce(t *testing.T) {
 				require.Equal(t, int64(1), record2.Offset)
 				require.Equal(t, "foo-2", kafkatest.BytesToString(record2.Key))
 				require.Equal(t, "bar-2", kafkatest.BytesToString(record2.Value))
+
+				// monitor
+				time.Sleep(100 * time.Millisecond)
+				require.Equal(t, 1.0, m.Kafka.Messages.WithLabel("test", "foo").Value())
+				require.Less(t, 0.0, m.Kafka.LastMessage.WithLabel("test", "foo").Value())
+				require.Equal(t, 1.0, m.Kafka.Lags.WithLabel("test", "foo", "foo", "0").Value())
+
+				logs := events.Events(events.NewTraits().WithNamespace("kafka").WithName("test").With("topic", "foo"))
+				require.Len(t, logs, 2)
+				require.Equal(t, "foo-2", logs[0].Data.(*store.KafkaLog).Key)
+				require.Equal(t, "bar-2", logs[0].Data.(*store.KafkaLog).Message)
+				require.Equal(t, int64(1), logs[0].Data.(*store.KafkaLog).Offset)
+
+				require.Equal(t, int64(0), logs[1].Data.(*store.KafkaLog).Offset)
 			},
 		},
 		{
@@ -188,11 +210,10 @@ func TestProduce(t *testing.T) {
 		},
 	}
 
-	t.Parallel()
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
+			defer events.Reset()
 			tc.fn(t, store.New(asyncapitest.NewConfig()))
 		})
 	}

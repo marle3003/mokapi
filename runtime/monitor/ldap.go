@@ -7,8 +7,9 @@ import (
 )
 
 type Ldap struct {
-	*metrics.LdapMetrics
-	log []logs.LdapLog
+	RequestCounter      *metrics.CounterMap
+	RequestErrorCounter *metrics.CounterMap
+	log                 []logs.LdapLog
 }
 
 func (m *Ldap) AppendLdap(log logs.LdapLog) {

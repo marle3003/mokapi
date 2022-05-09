@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"github.com/go-co-op/gocron"
 	log "github.com/sirupsen/logrus"
-	"mokapi/config/dynamic/common"
+	config "mokapi/config/dynamic/common"
+	"mokapi/engine/common"
+	"mokapi/runtime"
 	"net/url"
 	"strings"
 	"time"
@@ -15,34 +17,26 @@ type Script interface {
 	Close()
 }
 
-type EventEmitter interface {
-	Emit(event string, args ...interface{})
-}
-
-type Logger interface {
-	Info(args ...interface{})
-	Warn(args ...interface{})
-	Error(args ...interface{})
-}
-
 type Summary struct {
 	Duration time.Duration
 	Tags     map[string]string
 }
 
 type Engine struct {
-	scripts map[string]*scriptHost
-	cron    *gocron.Scheduler
-	logger  Logger
-	reader  common.Reader
+	scripts     map[string]*scriptHost
+	cron        *gocron.Scheduler
+	logger      common.Logger
+	reader      config.Reader
+	kafkaClient *kafkaClient
 }
 
-func New(reader common.Reader) *Engine {
+func New(reader config.Reader, app *runtime.App) *Engine {
 	return &Engine{
-		scripts: make(map[string]*scriptHost),
-		cron:    gocron.NewScheduler(time.UTC),
-		logger:  log.StandardLogger(),
-		reader:  reader,
+		scripts:     make(map[string]*scriptHost),
+		cron:        gocron.NewScheduler(time.UTC),
+		logger:      log.StandardLogger(),
+		reader:      reader,
+		kafkaClient: newKafkaClient(app),
 	}
 }
 

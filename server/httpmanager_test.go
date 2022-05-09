@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/openapi"
+	"mokapi/config/dynamic/openapi/openapitest"
 	"mokapi/config/static"
 	"mokapi/engine"
 	"mokapi/runtime"
@@ -30,11 +31,13 @@ func TestHttpServers_Monitor(t *testing.T) {
 	port, err := try.GetFreePort()
 	require.NoError(t, err)
 	url := fmt.Sprintf("http://localhost:%v", port)
-	c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: url}}}
+	c := openapitest.NewConfig("3.0", openapitest.WithInfo("test", "1.0", ""), openapitest.WithServer(url, ""))
+	openapitest.AppendEndpoint("/foo", c, openapitest.WithOperation("get", openapitest.NewOperation()))
+	//c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: url}}}
 	m.Update(&common.Config{Data: c, Url: MustParseUrl("foo.yml")})
 
-	try.GetRequest(t, url, map[string]string{})
-	require.Equal(t, float64(1), app.Monitor.Http.RequestCounter.Value())
+	try.GetRequest(t, url+"/foo", map[string]string{})
+	require.Equal(t, float64(1), app.Monitor.Http.RequestCounter.Sum())
 }
 
 func TestHttpManager_Update(t *testing.T) {

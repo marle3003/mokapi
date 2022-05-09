@@ -52,7 +52,6 @@ type Schema struct {
 
 type AdditionalProperties struct {
 	*Ref
-	Allowed bool
 }
 
 type Xml struct {
@@ -127,14 +126,14 @@ func (s *Schema) String() string {
 	if len(s.Required) > 0 {
 		sb.WriteString(fmt.Sprintf(" required=%v", s.Required))
 	}
-	if !s.IsFreeForm() {
-		sb.WriteString(" free-form=false")
+	if s.Type == "object" && s.IsFreeForm() {
+		sb.WriteString(" free-form=true")
 	}
 	return sb.String()
 }
 
 func (s *Schema) IsFreeForm() bool {
-	return !s.HasProperties() ||
+	return s.Type == "object" && !s.HasProperties() ||
 		s.AdditionalProperties.IsFreeForm()
 }
 
@@ -143,5 +142,14 @@ func (s *Schema) IsDictionary() bool {
 }
 
 func (ap *AdditionalProperties) IsFreeForm() bool {
-	return ap == nil || ap.Allowed && ((ap.Value == nil && ap.Reference.Ref() == "") || ap.Value.Type == "")
+	if ap == nil || ap.Ref == nil {
+		return false
+	}
+	if ap.Value == nil && ap.Ref == nil {
+		return true
+	}
+	if ap.Value != nil && ap.Value.Type == "" {
+		return true
+	}
+	return false
 }

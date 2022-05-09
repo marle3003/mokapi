@@ -121,3 +121,11 @@ func (th *testHost) On(event string, do func(args ...interface{}) (bool, error),
 		th.fnOn(event, do, tags)
 	}
 }
+
+func (th *testHost) Produce(cluster string, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error) {
+	return nil, nil, nil
+}
+
+func (th *testHost) KafkaClient() common.KafkaClient {
+	return th
+}

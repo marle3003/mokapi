@@ -55,10 +55,10 @@
 
 <script>
 import Api from '@/mixins/Api'
-import moment from 'moment'
+import Filters from '@/mixins/Filters'
 
 export default {
-  mixins: [Api],
+  mixins: [Api, Filters],
   data () {
     return {
       requests: [],
@@ -95,23 +95,6 @@ export default {
           this.timer = setInterval(this.getData, i * 1000)
         }
       }
-    }
-  },
-  filters: {
-    moment: function (value) {
-      return moment.unix(value)
-        .local()
-        .format('YYYY-MM-DD HH:mm:ss')
-    },
-    duration: function (time) {
-      let ms = Math.round(time / 1000000)
-      let d = moment.duration(ms)
-      if (d.seconds() < 1) {
-        return d.milliseconds() + ' [ms]'
-      } else if (d.minutes() < 1) {
-        return d.seconds() + ' [sec]'
-      }
-      return moment.duration(d).minutes()
     }
   },
   created () {

@@ -32,9 +32,9 @@ type Info struct {
 }
 
 type Contact struct {
-	Name  string
-	Url   string
-	Email string
+	Name  string `yaml:"name,omitempty" json:"name,omitempty"`
+	Url   string `yaml:"url,omitempty" json:"url,omitempty"`
+	Email string `yaml:"email,omitempty" json:"email,omitempty"`
 }
 
 type License struct {

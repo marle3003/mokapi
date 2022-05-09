@@ -17,7 +17,9 @@ export default {
       return response.data
     },
     async getService (serviceName) {
-      let response = await this.$http.get(this.baseUrl + '/api/services/openapi/' + serviceName)
+      let response = await this.$http.get(
+        this.baseUrl + '/api/services/openapi/' + serviceName
+      )
       return response.data
     },
     async getServices () {
@@ -56,26 +58,46 @@ export default {
         }
         return 0
       }
-      return response.data.sort(compare)
+      response.data.sort(compare)
+      return response.data
     },
     async getAsyncApiService (serviceName) {
-      let response = await this.$http.get(this.baseUrl + '/api/services/asyncapi/' + serviceName)
+      let response = await this.$http.get(
+        this.baseUrl + '/api/services/asyncapi/' + serviceName
+      )
       return response.data
     },
     async getSmtpService (serviceName) {
-      let response = await this.$http.get(this.baseUrl + '/api/services/smtp/' + serviceName)
+      let response = await this.$http.get(
+        this.baseUrl + '/api/services/smtp/' + serviceName
+      )
       return response.data
     },
     async getHttpRequest (id) {
-      let response = await this.$http.get(this.baseUrl + '/api/dashboard/http/requests/' + id)
+      let response = await this.$http.get(
+        this.baseUrl + '/api/dashboard/http/requests/' + id
+      )
       return response.data
     },
     async getSmtpMail (id) {
-      let response = await this.$http.get(this.baseUrl + '/api/dashboard/smtp/mails/' + id)
+      let response = await this.$http.get(
+        this.baseUrl + '/api/dashboard/smtp/mails/' + id
+      )
       return response.data
     },
     async getKafkaTopic (kafka, topic) {
-      let response = await this.$http.get(this.baseUrl + '/api/dashboard/kafka/' + kafka + '/topics/' + topic)
+      let response = await this.$http.get(
+        this.baseUrl + '/api/dashboard/kafka/' + kafka + '/topics/' + topic
+      )
+      return response.data
+    },
+    async getMetrics (...names) {
+      let url = this.baseUrl + '/api/metrics'
+      if (names.length > 0) {
+        const p = names.join(',')
+        url = url + '?names=' + p
+      }
+      let response = await this.$http.get(url)
       return response.data
     }
   }

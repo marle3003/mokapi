@@ -3,24 +3,25 @@ package js
 import (
 	"fmt"
 	"github.com/dop251/goja"
-	common2 "mokapi/engine/common"
+	engine "mokapi/engine/common"
 	"mokapi/js/common"
 	"mokapi/js/modules"
 )
 
-type factory func(common2.Host, *goja.Runtime) interface{}
+type factory func(engine.Host, *goja.Runtime) interface{}
 
 var moduleTypes = map[string]factory{
-	"mokapi": modules.NewMokapi,
+	"mokapi":    modules.NewMokapi,
+	"generator": modules.NewGenerator,
 }
 
 type require struct {
 	modules map[string]interface{}
 	runtime *goja.Runtime
-	host    common2.Host
+	host    engine.Host
 }
 
-func enableRequire(runtime *goja.Runtime, host common2.Host) {
+func enableRequire(runtime *goja.Runtime, host engine.Host) {
 	r := &require{
 		runtime: runtime,
 		host:    host,

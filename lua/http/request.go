@@ -7,7 +7,7 @@ import (
 	lua "github.com/yuin/gopher-lua"
 	"io"
 	luar "layeh.com/gopher-luar"
-	"mokapi/lua/utils"
+	"mokapi/lua/convert"
 	"net/http"
 	"time"
 )
@@ -92,7 +92,7 @@ func (m *Module) doRequest(state *lua.LState, method string) int {
 
 	args := &requestArgs{}
 	if lArg := state.Get(argsIndex); lArg != lua.LNil {
-		if err := utils.Map(args, lArg); err != nil {
+		if err := convert.FromLua(lArg, &args); err != nil {
 			log.Error(err)
 		}
 	}

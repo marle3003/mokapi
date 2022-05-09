@@ -6,7 +6,7 @@ import (
 	"github.com/emersion/go-smtp"
 	log "github.com/sirupsen/logrus"
 	config "mokapi/config/dynamic/smtp"
-	"mokapi/engine"
+	"mokapi/engine/common"
 	"mokapi/models"
 	"mokapi/server/cert"
 	"net"
@@ -25,7 +25,7 @@ type Server struct {
 	received chan *models.MailMetric
 
 	mh      ReceivedMailHandler
-	emitter engine.EventEmitter
+	emitter common.EventEmitter
 	//wh EventHandler
 }
 
@@ -34,7 +34,7 @@ type backend struct {
 	//wh       EventHandler
 }
 
-func New(c *config.Config, store *cert.Store, emitter engine.EventEmitter) (*Server, error) {
+func New(c *config.Config, store *cert.Store, emitter common.EventEmitter) (*Server, error) {
 	received := make(chan *models.MailMetric)
 	b := &backend{received: received /*wh: wh*/}
 	s := smtp.NewServer(b)

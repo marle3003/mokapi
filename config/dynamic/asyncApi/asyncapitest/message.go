@@ -26,3 +26,9 @@ func WithContentType(s string) MessageOptions {
 		m.ContentType = s
 	}
 }
+
+func WithKey(s *schema.Schema) MessageOptions {
+	return func(m *asyncApi.Message) {
+		m.Bindings.Kafka.Key = &schema.Ref{Value: s}
+	}
+}

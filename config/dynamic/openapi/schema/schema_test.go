@@ -1,8 +1,10 @@
-package schema
+package schema_test
 
 import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
+	"mokapi/config/dynamic/openapi/schema"
+	"mokapi/config/dynamic/openapi/schema/schematest"
 	"testing"
 )
 
@@ -10,12 +12,12 @@ func TestSchema_UnmarshalYAML(t *testing.T) {
 	testcases := []struct {
 		name string
 		s    string
-		fn   func(t *testing.T, schema *Schema)
+		fn   func(t *testing.T, schema *schema.Schema)
 	}{
 		{
 			"empty",
 			"",
-			func(t *testing.T, schema *Schema) {
+			func(t *testing.T, schema *schema.Schema) {
 				require.Equal(t, "", schema.Type)
 			},
 		},
@@ -28,7 +30,7 @@ properties:
   name:
     type: string
 `,
-			func(t *testing.T, schema *Schema) {
+			func(t *testing.T, schema *schema.Schema) {
 				require.Equal(t, "object", schema.Type)
 				require.False(t, schema.IsFreeForm())
 				require.False(t, schema.IsDictionary())
@@ -40,7 +42,7 @@ properties:
 type: object
 additionalProperties: {}
 `,
-			func(t *testing.T, schema *Schema) {
+			func(t *testing.T, schema *schema.Schema) {
 				require.Equal(t, "object", schema.Type)
 				require.True(t, schema.IsFreeForm())
 			},
@@ -55,7 +57,7 @@ properties:
   name:
     type: string
 `,
-			func(t *testing.T, schema *Schema) {
+			func(t *testing.T, schema *schema.Schema) {
 				require.Equal(t, "object", schema.Type)
 				require.False(t, schema.IsFreeForm())
 				require.Equal(t, "string", schema.AdditionalProperties.Value.Type)
@@ -69,10 +71,55 @@ properties:
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			s := &Schema{}
+			s := &schema.Schema{}
 			err := yaml.Unmarshal([]byte(tc.s), &s)
 			require.NoError(t, err)
 			tc.fn(t, s)
+		})
+	}
+}
+
+func TestSchema_IsFreeForm(t *testing.T) {
+	testcases := []struct {
+		name string
+		f    func(t *testing.T)
+	}{
+		{
+			"number",
+			func(t *testing.T) {
+				s := schematest.New("number")
+				require.False(t, s.IsFreeForm())
+			},
+		},
+		{
+			"object with property",
+			func(t *testing.T) {
+				s := schematest.New("object", schematest.WithProperty("foo", schematest.New("string")))
+				require.False(t, s.IsFreeForm())
+			},
+		},
+		{
+			"object without property",
+			func(t *testing.T) {
+				s := schematest.New("object")
+				require.True(t, s.IsFreeForm())
+			},
+		},
+		{
+			"object with empty additional properties",
+			func(t *testing.T) {
+				s := schematest.New("object")
+				s.AdditionalProperties = &schema.AdditionalProperties{}
+				require.True(t, s.IsFreeForm())
+			},
+		},
+	}
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			tc.f(t)
 		})
 	}
 }

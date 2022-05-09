@@ -7,15 +7,17 @@ import (
 )
 
 type Kafka struct {
-	*metrics.Kafka
-	log []*logs.KafkaMessage
+	Messages    *metrics.CounterMap
+	LastMessage *metrics.GaugeMap
+	Lags        *metrics.GaugeMap
+	Log         []*logs.KafkaMessage
 }
 
 func (m *Kafka) AppendKafka(log *logs.KafkaMessage) {
-	if len(m.log) == 10 {
-		m.log = m.log[1:]
+	if len(m.Log) == 10 {
+		m.Log = m.Log[1:]
 	}
-	m.log = append(m.log, log)
+	m.Log = append(m.Log, log)
 }
 
 func NewKafkaContext(ctx context.Context, kafka *Kafka) context.Context {

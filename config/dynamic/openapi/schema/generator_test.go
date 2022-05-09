@@ -415,6 +415,14 @@ func TestGeneratorObject(t *testing.T) {
 			),
 		},
 		{
+			name: "dictionary",
+			exp: map[string]interface{}{
+				"cat": "MaRxHkiJBPtapWY",
+			},
+			schema: schematest.New("object",
+				schematest.WithAdditionalProperties(schematest.New("string"))),
+		},
+		{
 			"no fields defined",
 			map[string]interface{}{},
 			&schema.Schema{Type: "object"},
@@ -449,6 +457,48 @@ func TestGeneratorObject(t *testing.T) {
 			g := schema.NewGenerator()
 			o := g.New(&schema.Ref{Value: data.schema})
 			require.Equal(t, data.exp, toMap(o.(*sortedmap.LinkedHashMap)))
+		})
+	}
+}
+
+func TestGenerator_Special(t *testing.T) {
+	testcases := []struct {
+		name string
+		f    func(t *testing.T)
+	}{
+		{
+			name: "array any of",
+			f: func(t *testing.T) {
+				s := schematest.New("array",
+					schematest.WithMinItems(1),
+					schematest.WithItems(schematest.New("",
+						schematest.Any(
+							schematest.New("object",
+								schematest.WithProperty("foo", schematest.New("string"))),
+							schematest.New("object",
+								schematest.WithProperty("bar",
+									schematest.New("integer",
+										schematest.WithMinimum(0),
+										schematest.WithMaximum(5)))),
+						),
+					)),
+				)
+				g := schema.NewGenerator()
+				o := g.New(&schema.Ref{Value: s})
+				a, ok := o.([]interface{})
+				require.True(t, ok, "should be an array")
+				require.Len(t, a, 1)
+				m := a[0].(*sortedmap.LinkedHashMap)
+				require.Equal(t, int64(4), m.Get("bar"))
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			gofakeit.Seed(11)
+			tc.f(t)
 		})
 	}
 }

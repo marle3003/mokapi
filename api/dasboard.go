@@ -14,11 +14,11 @@ type dashboardInfo struct {
 
 func (h *handler) getDashboard(w http.ResponseWriter, _ *http.Request) {
 	dashboard := dashboardInfo{
-		StartTime:         int64(h.app.Monitor.StartTime.Value()),
-		MemoryUsage:       int64(h.app.Monitor.MemoryUsage.Value()),
-		HttpRequests:      int64(h.app.Monitor.Http.RequestCounter.Value()),
-		HttpErrorRequests: int64(h.app.Monitor.Http.RequestErrorCounter.Value()),
-		KafkaMessages:     int64(h.app.Monitor.Kafka.Messages.Value()),
+		StartTime:   int64(h.app.Monitor.StartTime.Value()),
+		MemoryUsage: int64(h.app.Monitor.MemoryUsage.Value()),
+		//HttpRequests:      int64(h.app.Monitor.Http.RequestCounter.Value()),
+		//HttpErrorRequests: int64(h.app.Monitor.Http.RequestErrorCounter.Value()),
+		//KafkaMessages:     int64(h.app.Monitor.Kafka.Messages.Value()),
 	}
 
 	w.Header().Set("Content-Type", "application/json")

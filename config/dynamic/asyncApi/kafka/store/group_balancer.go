@@ -142,11 +142,11 @@ StopWaitingForConsumers:
 	generation.Protocol = protocol
 
 	leader := b.joins[0]
-	leaderMemberId := leader.client.Member[b.group.Name]
+	generation.LeaderId = leader.client.Member[b.group.Name]
 	members := make([]joinGroup.Member, 0, len(b.joins))
 	members = append(members, joinGroup.Member{
-		MemberId: leaderMemberId,
-		MetaData: counter[protocol].metadata[leaderMemberId],
+		MemberId: generation.LeaderId,
+		MetaData: counter[protocol].metadata[generation.LeaderId],
 	})
 
 	for _, j := range b.joins[1:] {
@@ -157,7 +157,7 @@ StopWaitingForConsumers:
 		})
 		go b.respond(j.writer, &joinGroup.Response{
 			GenerationId: int32(generation.Id),
-			Leader:       leaderMemberId,
+			Leader:       generation.LeaderId,
 			MemberId:     memberId,
 			ProtocolName: protocol,
 		})
@@ -165,8 +165,8 @@ StopWaitingForConsumers:
 
 	go b.respond(leader.writer, &joinGroup.Response{
 		GenerationId: int32(generation.Id),
-		Leader:       leaderMemberId,
-		MemberId:     leaderMemberId,
+		Leader:       generation.LeaderId,
+		MemberId:     generation.LeaderId,
 		ProtocolName: protocol,
 		Members:      members,
 	})

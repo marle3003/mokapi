@@ -107,8 +107,20 @@ func WithAdditionalProperties(additional *schema.Schema) SchemaOptions {
 	}
 }
 
-func WithFreeForm(enabled bool) SchemaOptions {
+func WithFreeForm() SchemaOptions {
 	return func(s *schema.Schema) {
-		s.AdditionalProperties = &schema.AdditionalProperties{Allowed: enabled}
+		s.AdditionalProperties = &schema.AdditionalProperties{}
+	}
+}
+
+func WithMinimum(min float64) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Minimum = &min
+	}
+}
+
+func WithMaximum(max float64) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Maximum = &max
 	}
 }

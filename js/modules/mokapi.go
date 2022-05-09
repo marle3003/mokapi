@@ -3,12 +3,15 @@ package modules
 import (
 	"github.com/dop251/goja"
 	"mokapi/engine/common"
+	"sync"
 	"time"
 )
 
 type Mokapi struct {
 	host common.Host
 	rt   *goja.Runtime
+	// goja scripts are not thread-safe
+	m sync.Mutex
 }
 
 func NewMokapi(host common.Host, rt *goja.Runtime) interface{} {
@@ -42,7 +45,14 @@ func (m *Mokapi) Every(every string, do func(), args goja.Value) (int, error) {
 			}
 		}
 	}
-	return m.host.Every(every, do, times, tags)
+
+	f := func() {
+		m.m.Lock()
+		defer m.m.Unlock()
+		do()
+	}
+
+	return m.host.Every(every, f, times, tags)
 }
 
 func (m *Mokapi) Cron(expr string, do func(), args goja.Value) (int, error) {
@@ -69,7 +79,13 @@ func (m *Mokapi) Cron(expr string, do func(), args goja.Value) (int, error) {
 		}
 	}
 
-	return m.host.Cron(expr, do, times, tags)
+	f := func() {
+		m.m.Lock()
+		defer m.m.Unlock()
+		do()
+	}
+
+	return m.host.Cron(expr, f, times, tags)
 }
 
 func (m *Mokapi) On(event string, do goja.Value, args goja.Value) {
@@ -93,6 +109,9 @@ func (m *Mokapi) On(event string, do goja.Value, args goja.Value) {
 	}
 
 	f := func(args ...interface{}) (bool, error) {
+		m.m.Lock()
+		defer m.m.Unlock()
+
 		call, _ := goja.AssertFunction(do)
 		var params []goja.Value
 		for _, v := range args {

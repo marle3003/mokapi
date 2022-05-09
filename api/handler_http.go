@@ -3,6 +3,7 @@ package api
 import (
 	"mokapi/runtime"
 	"mokapi/runtime/logs"
+	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
 	"net/http"
 	"strconv"
@@ -10,14 +11,12 @@ import (
 )
 
 type httpSummary struct {
-	Name        string `json:"name"`
-	LastRequest int64  `json:"lastRequest"`
-	Requests    int64  `json:"requests"`
-	Errors      int64  `json:"errors"`
+	Name    string           `json:"name"`
+	Metrics []metrics.Metric `json:"metrics"`
 }
 
-func (h *handler) getHttpServices(w http.ResponseWriter, r *http.Request) {
-	result := getHttpServices(h.app.Http, h.app.Monitor.Http)
+func (h *handler) getHttpServices(w http.ResponseWriter, _ *http.Request) {
+	result := getHttpServices(h.app.Http, h.app.Monitor)
 	w.Header().Set("Content-Type", "application/json")
 	writeJsonBody(w, result)
 }
@@ -68,15 +67,13 @@ func (h *handler) getHttpRequests(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func getHttpServices(services map[string]*runtime.HttpInfo, m *monitor.Http) []*httpSummary {
-	result := make([]*httpSummary, 0, len(services))
+func getHttpServices(services map[string]*runtime.HttpInfo, m *monitor.Monitor) []interface{} {
+	result := make([]interface{}, 0, len(services))
 	for _, hs := range services {
 
 		result = append(result, &httpSummary{
-			Name:        hs.Info.Name,
-			Requests:    int64(m.RequestCounter.WithLabel(hs.Info.Name).Value()),
-			Errors:      int64(m.RequestErrorCounter.WithLabel(hs.Info.Name).Value()),
-			LastRequest: int64(m.LastRequest.WithLabel(hs.Info.Name).Value()),
+			Name:    hs.Info.Name,
+			Metrics: m.FindAll(metrics.ByNamespace("http"), metrics.ByLabel("service", hs.Info.Name)),
 		})
 	}
 	return result

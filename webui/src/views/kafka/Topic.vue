@@ -31,8 +31,8 @@
       </b-card-group>
       <b-card-group deck>
         <b-card body-class="info-body" class="text-center">
-          <b-card-title class="info">Received Messages</b-card-title>
-          <b-card-text class="text-center value">{{ topic.count }}</b-card-text>
+          <b-card-title class="info">Records</b-card-title>
+          <b-card-text class="text-center value">{{ metric(cluster.metrics, 'kafka_messages_total', {name: 'topic', value: topic.name}) }}</b-card-text>
         </b-card>
         <b-card body-class="info-body" class="text-center">
           <b-card-title class="info">Size</b-card-title>
@@ -42,8 +42,8 @@
 
       <b-card-group deck>
         <b-card class="w-100">
-          <b-card-title class="info text-center">Messages</b-card-title>
-          <b-table small hover class="dataTable" :items="topic.messages" :fields="messageFields" style="table-layout: fixed" @row-clicked="toggleDetails">
+          <b-card-title class="info text-center">Records</b-card-title>
+          <b-table small hover class="dataTable" :items="messages" :fields="messageFields" style="table-layout: fixed" @row-clicked="toggleDetails">
             <template v-slot:cell(show_details)="row">
               <div @click="toggleDetails(row)">
                 <b-icon v-if="row.detailsShowing" icon="dash-square"></b-icon>
@@ -51,7 +51,7 @@
               </div>
             </template>
             <template v-slot:cell(time)="data">
-              {{ data.item.time | moment }}
+              {{ data.item.data.time | moment }}
             </template>
             <template v-slot:row-details="row">
               <b-card class="w-100">
@@ -67,7 +67,13 @@
       <b-card-group deck>
         <b-card class="w-100">
           <b-card-title class="info text-center">Partitions</b-card-title>
-          <b-table small hover class="dataTable" :items="partitions" style="table-layout: fixed" @row-clicked="toggleDetails">
+          <b-table small hover class="dataTable" :items="partitions" style="table-layout: fixed">
+            <template v-slot:cell(leader)="data">
+              <span v-if="data.item.leader !== null">
+                <span v-if="data.item.leader.name.length > 0">{{ data.item.leader.name }}</span>
+                {{ data.item.leader.addr }}
+              </span>
+            </template>
           </b-table>
         </b-card>
       </b-card-group>
@@ -75,9 +81,12 @@
       <b-card-group deck>
         <b-card class="w-100">
           <b-card-title class="info text-center">Groups</b-card-title>
-          <b-table small hover class="dataTable" :items="groups" :fields="groupFields" style="table-layout: fixed" @row-clicked="toggleDetails">
+          <b-table small hover class="dataTable" :items="groups" :fields="groupFields" style="table-layout: fixed">
             <template v-slot:cell(members)="data">
-              <span v-if="data.item.members !== null">{{ data.item.members.join(', ') }}</span>
+              <span v-if="data.item.members !== null">{{ data.item.members.map(x => x.name).join(', ') }}</span>
+            </template>
+            <template v-slot:cell(lag)="data">
+              <span>{{ metric(cluster.metrics, 'consumer_group_lag', {name: 'service', value: cluster.name}, {name: 'topic', value: topic.name}, {name: 'group', value: data.item.name}) }}</span>
             </template>
           </b-table>
         </b-card>
@@ -89,91 +98,76 @@
 
 <script>
 import Api from '@/mixins/Api'
-import moment from 'moment'
+import Filters from '@/mixins/Filters'
+import Refresh from '@/mixins/Refresh'
+import Metrics from '@/mixins/Metrics'
+import Shortcut from '@/mixins/Shortcut'
 
 export default {
   name: 'Topic',
-  mixins: [Api],
+  mixins: [Api, Filters, Refresh, Metrics, Shortcut],
   data () {
     return {
-      timer: null,
-      topic: null,
-      messageFields: [{key: 'show_details', label: '', thStyle: 'width: 3%'}, 'key', {key: 'message', class: 'kafka-message'}, 'partition', 'time'],
-      groupFields: ['name', {key: 'lag', thStyle: 'width:5%'}, {key: 'state', thStyle: 'width:10%'}, 'assignmentStrategy', 'coordinator', 'leader', 'members'],
+      cluster: null,
+      messages: null,
+      messageFields: [{key: 'show_details', label: '', thStyle: 'width: 3%'}, {key: 'data.offset', label: 'Offset'}, {key: 'data.key', label: 'Key'}, {key: 'data.message', label: 'Message', class: 'kafka-message'}, 'partition', 'time'],
+      groupFields: ['name', {key: 'lag', thStyle: 'width:5%'}, {key: 'state', thStyle: 'width:10%'}, {label: 'Strategy', key: 'protocol'}, 'coordinator', 'leader', 'members'],
       detailsShown: []
     }
   },
-  created () {
-    this.getData()
-    let refresh = this.$route.query.refresh
-    if (refresh && refresh.length > 0) {
-      let i = parseInt(refresh)
-      if (!isNaN(i)) {
-        this.timer = setInterval(this.getData, i * 1000)
-      }
-    }
-    window.addEventListener('keyup', this.doCommand)
-  },
   computed: {
-    partitions: function () {
-      const topic = this.topic
-      if (topic === null) {
+    topic: function () {
+      if (!this.cluster) {
         return null
       }
-
-      function compare (s1, s2) {
-        const a = s1.id
-        const b = s2.id
-        if (a < b) {
-          return -1
+      const name = this.$route.params.topic
+      for (let topic of this.cluster.topics) {
+        if (topic.name === name) {
+          return topic
         }
-        if (a > b) {
-          return 1
-        }
-        return 0
       }
-
-      return topic.partitions.sort(compare)
+      return null
+    },
+    partitions: function() {
+      var t = this.topic
+      if (!t) {
+        return null
+      }
+      return t.partitions
     },
     groups: function () {
-      const topic = this.topic
-      if (topic === null || topic.groups === null) {
+      if (!this.cluster) {
         return null
       }
-
-      function compare (s1, s2) {
-        const a = s1.name.toLowerCase()
-        const b = s2.name.toLowerCase()
-        if (a < b) {
-          return -1
+      const name = this.$route.params.topic
+      const groups = []
+      for (let group of this.cluster.groups) {
+        if (group.topics && group.topics.includes(name)) {
+          groups.push(group)
         }
-        if (a > b) {
-          return 1
-        }
-        return 0
       }
-
-      return topic.groups.sort(compare)
+      return groups
     },
-    size: function () {
-      if (this.topic === null) {
-        return 0
-      }
-      let size = 0
-      for (let i = 0; i < this.topic.partitions.length; i++) {
-        size += this.topic.partitions[i].size
-      }
-      return size
-    }
-  },
-  destroyed () {
-    window.removeEventListener('keyup', this.doCommand)
   },
   methods: {
     async getData () {
-      let kafka = this.$route.params.kafka
-      let topic = this.$route.params.topic
-      this.topic = await this.getKafkaTopic(kafka, topic)
+      const name = this.$route.params.cluster
+      this.$http.get(this.baseUrl + '/api/services/kafka/' + name).then(
+        r => {
+          this.cluster = r.data
+        },
+        r => {
+          this.cluster = null
+        }
+      )
+      this.$http.get(this.baseUrl + '/api/events/kafka').then(
+        r => {
+          this.messages = r.data
+        },
+        r => {
+          this.messages = null
+        }
+      )
     },
     toggleDetails (row) {
       row.toggleDetails()
@@ -185,45 +179,13 @@ export default {
         this.detailsShown.splice(index, 1)
       }
     },
-    doCommand (e) {
+    shortcut (e) {
+      console.log(e.key.toLowerCase())
       let cmd = e.key.toLowerCase()
       if (cmd === 'escape') {
         this.$router.go(-1)
       }
     }
-  },
-  filters: {
-    moment: function (date) {
-      return moment(date).local().format('YYYY-MM-DD HH:mm:ss')
-    },
-    prettyBytes: function (num) {
-      // jacked from: https://github.com/sindresorhus/pretty-bytes
-      if (typeof num !== 'number' || isNaN(num)) {
-        return 0
-      }
-
-      let exponent
-      let unit
-      let neg = num < 0
-      let units = ['B', 'kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
-
-      if (neg) {
-        num = -num
-      }
-
-      if (num < 1) {
-        return (neg ? '-' : '') + num + ' B'
-      }
-
-      exponent = Math.min(Math.floor(Math.log(num) / Math.log(1000)), units.length - 1)
-      num = (num / Math.pow(1000, exponent)).toFixed(2) * 1
-      unit = units[exponent]
-
-      return (neg ? '-' : '') + num + ' ' + unit
-    }
-  },
-  beforeDestroy () {
-    clearInterval(this.timer)
   }
 }
 </script>
