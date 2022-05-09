@@ -67,7 +67,7 @@
             <b-card-text
               class="text-center value"
               v-bind:class="{'text-danger': this.metric(this.httpServices, 'http_requests_total_errors') > 0}"
-            >{{ metric('http_requests_total_errors') }}</b-card-text>
+            >{{ metric(this.httpServices, 'http_requests_total_errors') }}</b-card-text>
           </b-card>
           <b-card
             body-class="info-body"
@@ -143,7 +143,7 @@
           </b-card-group>
         </div>
 
-        <http-overview v-show="$route.name === 'http'" />
+        <!-- <http-overview v-show="$route.name === 'http'" /> -->
 
         <b-card-group
           deck
@@ -190,23 +190,14 @@ import Api from '@/mixins/Api'
 import Filters from '@/mixins/Filters'
 import Refresh from '@/mixins/Refresh'
 import Metrics from '@/mixins/Metrics'
-import DoughnutChart from '@/components/DoughnutChart'
-import TimeChart from '@/components/TimeChart'
-import HttpOverview from '@/components/dashboard/HttpOverview'
 
 export default {
-  components: {
-    'doughnut-chart': DoughnutChart,
-    'time-chart': TimeChart,
-    'http-overview': HttpOverview
-  },
   mixins: [Api, Filters, Refresh, Metrics],
   data () {
     return {
       startTime: 0,
       memoryUsage: 0,
-      httpServices: null,
-      kafkaServices: null,
+      services: null,
       lastRequests: null,
       lastErrors: null,
       lastMails: null,
@@ -236,6 +227,31 @@ export default {
     }
   },
   computed: {
+    httpServices: function () {
+      if (!this.services) {
+        return null
+      }
+      let result = []
+      for (let service of this.services) {
+        if (service.type === 'http') {
+          console.log(service.name)
+          result.push(service)
+        }
+      }
+      return result
+    },
+    kafkaServices: function () {
+      if (!this.services) {
+        return null
+      }
+      let result = []
+      for (let service of this.services) {
+        if (service.type === 'kafka') {
+          result.push(service)
+        }
+      }
+      return result
+    },
     httpEnabled: function () {
       return this.httpServices !== null && this.httpServices.length > 0
     },
@@ -270,43 +286,33 @@ export default {
       }
       let sum = 0
       for (let service of this.kafkaServices) {
-        sum += this.metric(service.metrics, 'kafka_messages_total')
+        //sum += this.metric(service.metrics, 'kafka_messages_total')
       }
       return sum
     }
   },
   methods: {
     async getData () {
-      this.getHttpServices().then(
+      this.getServices().then(
         r => {
-          this.httpServices = r
+          this.services = r
           this.error = null
         },
         r => {
-          this.httpServices = null
+          this.services = null
           this.error = r
         }
       )
-      this.getKafkaServices().then(
-        r => {
-          this.kafkaServices = r
-          this.error = null
-        },
-        r => {
-          this.kafkaServices = null
-          this.error = r
-        }
-      )
-      this.getMetrics('app_start_timestamp', 'app_memory_usage_bytes').then(
-        data => {
-          this.startTime = this.metric(data, 'app_start_timestamp')
-          this.memoryUsage = this.metric(data, 'app_memory_usage_bytes')
-        },
-        _ => {
-          this.startTime = 0
-          this.memoryUsage = 0
-        }
-      )
+      // this.getMetrics('app_start_timestamp', 'app_memory_usage_bytes').then(
+      //   data => {
+      //     this.startTime = this.metric(data, 'app_start_timestamp')
+      //     this.memoryUsage = this.metric(data, 'app_memory_usage_bytes')
+      //   },
+      //   _ => {
+      //     this.startTime = 0
+      //     this.memoryUsage = 0
+      //   }
+      // )
       this.loaded = true
     },
     mailClickHandler (record) {

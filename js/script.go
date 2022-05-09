@@ -3,22 +3,21 @@ package js
 import (
 	"fmt"
 	"github.com/dop251/goja"
-	"mokapi/engine/common"
+	engine "mokapi/engine/common"
 	"mokapi/js/compiler"
 )
 
 type Script struct {
 	runtime  *goja.Runtime
 	prg      *goja.Program
-	exports  map[string]goja.Callable
+	exports  goja.Value
 	compiler *compiler.Compiler
-	host     common.Host
+	host     engine.Host
 }
 
-func New(filename, src string, host common.Host) (*Script, error) {
+func New(filename, src string, host engine.Host) (*Script, error) {
 	s := &Script{
 		runtime: goja.New(),
-		exports: make(map[string]goja.Callable),
 		host:    host,
 	}
 
@@ -33,8 +32,8 @@ func New(filename, src string, host common.Host) (*Script, error) {
 
 	s.runtime.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
 
-	exports := s.runtime.NewObject()
-	s.runtime.Set("exports", exports)
+	s.exports = s.runtime.NewObject()
+	s.runtime.Set("exports", s.exports)
 
 	enableRequire(s.runtime, host)
 	enableConsole(s.runtime, host)
@@ -49,17 +48,19 @@ func (s *Script) Run() error {
 		return err
 	}
 
-	err = s.getExports()
-	if err != nil {
-		return err
+	if goja.IsNull(s.exports) || goja.IsUndefined(s.exports) {
+		return fmt.Errorf("export must be an object")
 	}
 
-	if f, ok := s.exports["default"]; ok {
+	o := s.exports.ToObject(s.runtime)
+
+	if f, ok := goja.AssertFunction(o.Get("default")); ok {
 		_, err = f(goja.Undefined())
 		if err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -67,21 +68,19 @@ func (s *Script) Close() {
 	s.runtime.Interrupt(fmt.Errorf("closing"))
 }
 
-func (s *Script) getExports() error {
-	v := s.runtime.Get("exports")
+func getExports(runtime *goja.Runtime, exports map[string]goja.Value) error {
+	v := runtime.Get("exports")
 	if v == nil || goja.IsNull(v) || goja.IsUndefined(v) {
 		return fmt.Errorf("export must be an object")
 	}
 
-	o := v.ToObject(s.runtime)
+	o := v.ToObject(runtime)
 	for _, k := range o.Keys() {
 		v := o.Get(k)
-		if f, ok := goja.AssertFunction(v); ok {
-			s.exports[k] = f
-		}
+		exports[k] = v
 	}
 
-	if len(s.exports) == 0 {
+	if len(exports) == 0 {
 		return fmt.Errorf("no exported functions in script")
 	}
 

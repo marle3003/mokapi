@@ -128,7 +128,7 @@ export default {
       }
       return null
     },
-    partitions: function() {
+    partitions: function () {
       var t = this.topic
       if (!t) {
         return null
@@ -147,7 +147,7 @@ export default {
         }
       }
       return groups
-    },
+    }
   },
   methods: {
     async getData () {

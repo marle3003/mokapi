@@ -11,8 +11,7 @@ import (
 )
 
 type httpSummary struct {
-	Name    string           `json:"name"`
-	Metrics []metrics.Metric `json:"metrics"`
+	service
 }
 
 func (h *handler) getHttpServices(w http.ResponseWriter, _ *http.Request) {
@@ -72,8 +71,13 @@ func getHttpServices(services map[string]*runtime.HttpInfo, m *monitor.Monitor) 
 	for _, hs := range services {
 
 		result = append(result, &httpSummary{
-			Name:    hs.Info.Name,
-			Metrics: m.FindAll(metrics.ByNamespace("http"), metrics.ByLabel("service", hs.Info.Name)),
+			service: service{
+				Name:        hs.Info.Name,
+				Description: hs.Info.Description,
+				Version:     hs.Info.Version,
+				Type:        ServiceHttp,
+				Metrics:     m.FindAll(metrics.ByNamespace("http"), metrics.ByLabel("service", hs.Info.Name)),
+			},
 		})
 	}
 	return result

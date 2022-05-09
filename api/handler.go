@@ -7,6 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/static"
 	"mokapi/runtime"
+	"mokapi/runtime/metrics"
 	"mokapi/version"
 	"net/http"
 	"net/url"
@@ -21,6 +22,21 @@ type handler struct {
 
 type info struct {
 	Version string `json:"version"`
+}
+
+type serviceType string
+
+var (
+	ServiceHttp  serviceType = "http"
+	ServiceKafka serviceType = "kafka"
+)
+
+type service struct {
+	Name        string           `json:"name"`
+	Description string           `json:"description"`
+	Version     string           `json:"version"`
+	Type        serviceType      `json:"type"`
+	Metrics     []metrics.Metric `json:"metrics"`
 }
 
 type apiError struct {

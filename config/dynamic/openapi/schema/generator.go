@@ -47,6 +47,22 @@ func (g *Generator) New(ref *Ref) interface{} {
 				i := gofakeit.Number(0, len(schema.AnyOf)-1)
 				return g.New(schema.AnyOf[i])
 			}
+			if len(schema.AllOf) > 0 {
+				m := sortedmap.NewLinkedHashMap()
+				for _, all := range schema.AllOf {
+					if all.Value == nil {
+						continue
+					}
+					if all.Value.Type != "object" {
+						log.Info("allOf only supports type of object")
+						continue
+					}
+					o := g.New(all).(*sortedmap.LinkedHashMap)
+					m.Merge(o)
+
+				}
+				return m
+			}
 			return nil
 		}
 	}

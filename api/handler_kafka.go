@@ -11,9 +11,8 @@ import (
 )
 
 type kafkaSummary struct {
-	Name    string           `json:"name"`
-	Topics  []string         `json:"topics"`
-	Metrics []metrics.Metric `json:"metrics"`
+	service
+	Topics []string `json:"topics"`
 }
 
 type kafka struct {
@@ -91,8 +90,13 @@ func getKafkaServices(services map[string]*runtime.KafkaInfo, m *monitor.Monitor
 	result := make([]interface{}, 0, len(services))
 	for _, hs := range services {
 		k := &kafkaSummary{
-			Name:    hs.Info.Name,
-			Metrics: m.FindAll(metrics.ByNamespace("kafka"), metrics.ByLabel("service", hs.Info.Name)),
+			service: service{
+				Name:        hs.Info.Name,
+				Description: hs.Info.Description,
+				Version:     hs.Info.Version,
+				Type:        ServiceKafka,
+				Metrics:     m.FindAll(metrics.ByNamespace("kafka"), metrics.ByLabel("service", hs.Info.Name)),
+			},
 		}
 
 		for name := range hs.Channels {

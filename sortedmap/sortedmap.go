@@ -101,3 +101,9 @@ func (m *LinkedHashMap) String() string {
 	sb.WriteString("}")
 	return sb.String()
 }
+
+func (m *LinkedHashMap) Merge(o *LinkedHashMap) {
+	for it := o.Iter(); it.Next(); {
+		m.Set(it.Key(), it.Value())
+	}
+}

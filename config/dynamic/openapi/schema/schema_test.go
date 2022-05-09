@@ -63,6 +63,18 @@ properties:
 				require.Equal(t, "string", schema.AdditionalProperties.Value.Type)
 			},
 		},
+		{
+			"allOf",
+			`
+allOf:
+  - type: object
+`,
+			func(t *testing.T, schema *schema.Schema) {
+				require.Equal(t, "", schema.Type)
+				require.Len(t, schema.AllOf, 1)
+				require.Equal(t, "object", schema.AllOf[0].Value.Type)
+			},
+		},
 	}
 
 	t.Parallel()

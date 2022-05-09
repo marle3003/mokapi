@@ -24,14 +24,6 @@ export default {
     },
     async getServices () {
       let response = await this.$http.get(this.baseUrl + '/api/services')
-      return response.data
-    },
-    async getDashboard () {
-      let response = await this.$http.get(this.baseUrl + '/api/dashboard')
-      return response.data
-    },
-    async getHttpServices () {
-      let response = await this.$http.get(this.baseUrl + '/api/services/http')
       function compare (s1, s2) {
         const a = s1.name.toLowerCase()
         const b = s2.name.toLowerCase()
@@ -45,26 +37,8 @@ export default {
       }
       return response.data.sort(compare)
     },
-    async getKafkaServices () {
-      let response = await this.$http.get(this.baseUrl + '/api/services/kafka')
-      function compare (s1, s2) {
-        const a = s1.name.toLowerCase()
-        const b = s2.name.toLowerCase()
-        if (a < b) {
-          return -1
-        }
-        if (a > b) {
-          return 1
-        }
-        return 0
-      }
-      response.data.sort(compare)
-      return response.data
-    },
-    async getAsyncApiService (serviceName) {
-      let response = await this.$http.get(
-        this.baseUrl + '/api/services/asyncapi/' + serviceName
-      )
+    async getDashboard () {
+      let response = await this.$http.get(this.baseUrl + '/api/dashboard')
       return response.data
     },
     async getSmtpService (serviceName) {

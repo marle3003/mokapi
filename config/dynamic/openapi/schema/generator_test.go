@@ -461,7 +461,7 @@ func TestGeneratorObject(t *testing.T) {
 	}
 }
 
-func TestGenerator_Special(t *testing.T) {
+func TestGenerator_AnyOf(t *testing.T) {
 	testcases := []struct {
 		name string
 		f    func(t *testing.T)
@@ -490,6 +490,38 @@ func TestGenerator_Special(t *testing.T) {
 				require.Len(t, a, 1)
 				m := a[0].(*sortedmap.LinkedHashMap)
 				require.Equal(t, int64(4), m.Get("bar"))
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			gofakeit.Seed(11)
+			tc.f(t)
+		})
+	}
+}
+
+func TestGenerator_AllOf(t *testing.T) {
+	testcases := []struct {
+		name string
+		f    func(t *testing.T)
+	}{
+		{
+			name: "all of",
+			f: func(t *testing.T) {
+				s := schematest.New("", schematest.AllOf(
+					schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
+					schematest.New("object", schematest.WithProperty("bar", schematest.New("number"))),
+				))
+				g := schema.NewGenerator()
+				o := g.New(&schema.Ref{Value: s})
+				m, ok := o.(*sortedmap.LinkedHashMap)
+				require.True(t, ok, "should be a map")
+				require.Equal(t, 2, m.Len())
+				require.Equal(t, "gbRMaRxHkiJBPta", m.Get("foo"))
+				require.Equal(t, 2.2451747541855905e+307, m.Get("bar"))
 			},
 		},
 	}

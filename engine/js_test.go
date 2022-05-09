@@ -3,9 +3,9 @@ package engine
 import (
 	"errors"
 	"fmt"
+	r "github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/common"
 	"mokapi/runtime"
-	"mokapi/test"
 	"net/url"
 	"strings"
 	"testing"
@@ -42,15 +42,15 @@ func TestJsScriptEngine(t *testing.T) {
 		t.Parallel()
 		engine := New(emptyReader, runtime.New())
 		err := engine.AddScript(mustParse("test.js"), "export default function(){}")
-		test.Ok(t, err)
-		test.Assert(t, len(engine.scripts) == 1, "script length not 1")
+		r.NoError(t, err)
+		r.Len(t, engine.scripts, 1, "script length not 1")
 	})
 	t.Run("blank", func(t *testing.T) {
 		t.Parallel()
 		engine := New(emptyReader, runtime.New())
 		err := engine.AddScript(mustParse("test.js"), "")
-		test.EqualError(t, "no exported functions in script", err)
-		test.Assert(t, len(engine.scripts) == 0, "script length not 0")
+		r.NoError(t, err)
+		r.Len(t, engine.scripts, 1, "script length not 0")
 	})
 }
 
@@ -65,11 +65,11 @@ func TestJsEvery(t *testing.T) {
 				mokapi.every('1m', function() {});
 			}
 		`)
-		test.Ok(t, err)
-		test.Assert(t, len(engine.scripts) == 1, "script length not 1")
+		r.NoError(t, err)
+		r.Len(t, engine.scripts, 1, "script length not 1")
 
-		test.Assert(t, len(engine.scripts["test.js"].jobs) == 1, "job not defined")
-		test.Assert(t, len(engine.cron.Jobs()) == 1, "job not defined")
+		r.Len(t, engine.scripts["test.js"].jobs, 1, "job not defined")
+		r.Len(t, engine.cron.Jobs(), 1, "job not defined")
 	})
 }
 
@@ -82,9 +82,9 @@ func TestJsOn(t *testing.T) {
 			import {on, sleep} from 'mokapi'
 			export default function() {}
 		`)
-		test.Ok(t, err)
-		test.Assert(t, len(engine.scripts) == 1, "script length not 1")
-		test.Assert(t, len(engine.scripts["test.js"].events["http"]) == 0, "event defined")
+		r.NoError(t, err)
+		r.Len(t, engine.scripts, 1, "script length not 1")
+		r.Len(t, engine.scripts["test.js"].events["http"], 0, "event defined")
 	})
 	t.Run("withoutSummary", func(t *testing.T) {
 		t.Parallel()
@@ -97,13 +97,13 @@ func TestJsOn(t *testing.T) {
 				});
 			}
 		`)
-		test.Ok(t, err)
-		test.Assert(t, len(engine.scripts) == 1, "script length not 1")
-		test.Assert(t, len(engine.scripts["test.js"].events["http"]) == 1, "event not defined")
+		r.NoError(t, err)
+		r.Len(t, engine.scripts, 1, "script length not 1")
+		r.Len(t, engine.scripts["test.js"].events["http"], 1, "event not defined")
 
 		summaries := engine.Run("http")
 
-		test.Assert(t, len(summaries) == 0, "summary length not 0")
+		r.Len(t, summaries, 0, "summary length not 0")
 	})
 	t.Run("simple", func(t *testing.T) {
 		t.Parallel()
@@ -116,17 +116,17 @@ func TestJsOn(t *testing.T) {
 				});
 			}
 		`)
-		test.Ok(t, err)
-		test.Assert(t, len(engine.scripts) == 1, "script length not 1")
-		test.Assert(t, len(engine.scripts["test.js"].events["http"]) == 1, "event not defined")
+		r.NoError(t, err)
+		r.Len(t, engine.scripts, 1, "script length not 1")
+		r.Len(t, engine.scripts["test.js"].events["http"], 1, "event not defined")
 
 		summaries := engine.Run("http", &struct{}{}, &struct{}{})
 
-		test.Assert(t, len(summaries) == 1, "summary length not 1")
+		r.Len(t, summaries, 1, "summary length not 1")
 		summary := summaries[0]
 		// tags
-		test.Assert(t, summary.Tags["name"] == "test.js", "tag name not correct")
-		test.Assert(t, summary.Tags["event"] == "http", "tag event not correct")
+		r.Equal(t, "test.js", summary.Tags["name"], "tag name not correct")
+		r.Equal(t, "http", summary.Tags["event"], "tag event not correct")
 	})
 	t.Run("duration", func(t *testing.T) {
 		t.Parallel()
@@ -140,13 +140,13 @@ func TestJsOn(t *testing.T) {
 				});
 			}
 		`)
-		test.Ok(t, err)
+		r.NoError(t, err)
 
 		summaries := engine.Run("http")
 
-		test.Assert(t, len(summaries) == 1, "summary length not 1")
+		r.Len(t, summaries, 1, "summary length not 1")
 		summary := summaries[0]
-		test.Assert(t, summary.Duration >= 1.0*time.Second, "sleep")
+		r.GreaterOrEqual(t, summary.Duration, 1.0*time.Second, "sleep")
 	})
 	t.Run("tag name", func(t *testing.T) {
 		t.Parallel()
@@ -157,12 +157,12 @@ func TestJsOn(t *testing.T) {
 				on('http', function() {return true}, {tags: {'name': 'foobar'}});
 			}
 		`)
-		test.Ok(t, err)
+		r.NoError(t, err)
 
 		summaries := engine.Run("http")
 
-		test.Assert(t, len(summaries) == 1, "summary length not 1")
-		test.Assert(t, summaries[0].Tags["name"] == "foobar", "tag name not correct")
+		r.Len(t, summaries, 1, "summary length not 1")
+		r.Equal(t, "foobar", summaries[0].Tags["name"], "tag name not correct")
 	})
 	t.Run("custom tag", func(t *testing.T) {
 		t.Parallel()
@@ -173,12 +173,12 @@ func TestJsOn(t *testing.T) {
 				on('http', function() {return true}, {tags: {'foo': 'bar'}});
 			}
 		`)
-		test.Ok(t, err)
+		r.NoError(t, err)
 
 		summaries := engine.Run("http")
 
-		test.Assert(t, len(summaries) == 1, "summary length not 1")
-		test.Assert(t, summaries[0].Tags["foo"] == "bar", "tag name not correct")
+		r.Len(t, summaries, 1, "summary length not 1")
+		r.Equal(t, "bar", summaries[0].Tags["foo"], "tag name not correct")
 	})
 	t.Run("parameter", func(t *testing.T) {
 		t.Parallel()
@@ -209,11 +209,11 @@ func TestJsOn(t *testing.T) {
 				);
 			}
 		`)
-		test.Ok(t, err)
+		r.NoError(t, err)
 
 		engine.Run("http", p)
 
-		test.Equals(t, "bar", msg)
+		r.Equal(t, "bar", msg)
 	})
 }
 
@@ -240,8 +240,8 @@ func TestJsOpen(t *testing.T) {
 			console.log(file);
 			export default function() {}
 		`)
-		test.Ok(t, err)
-		test.Equals(t, "foobar", msg)
+		r.NoError(t, err)
+		r.Equal(t, "foobar", msg)
 	})
 	t.Run("fileNotExists", func(t *testing.T) {
 		t.Parallel()
@@ -255,7 +255,7 @@ func TestJsOpen(t *testing.T) {
 			let file = open('test.txt');
 			export default function() {}
 		`)
-		test.Assert(t, strings.HasPrefix(err.Error(), "GoError: file not found"), "file not found")
+		r.True(t, strings.HasPrefix(err.Error(), "GoError: file not found"), "file not found")
 	})
 }
 

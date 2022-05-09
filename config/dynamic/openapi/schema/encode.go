@@ -55,12 +55,25 @@ func selectData(data interface{}, schema *Ref) (interface{}, error) {
 	}
 
 	if len(schema.Value.AnyOf) > 0 {
-		for _, any := range schema.Value.AnyOf {
-			if r, err := selectData(data, any); err == nil {
-				return r, nil
+		return selectAny(schema.Value, data)
+	}
+	if len(schema.Value.AllOf) > 0 {
+		r := newSchemaObject()
+		for _, all := range schema.Value.AllOf {
+			if all == nil {
+				continue
 			}
+			if all.Value.Type != "object" {
+				return nil, fmt.Errorf("allOf only supports type of object")
+			}
+			o, err := selectData(data, all)
+			if err != nil {
+				return nil, err
+			}
+			so := o.(*schemaObject)
+			r.Merge(so.LinkedHashMap)
 		}
-		return nil, fmt.Errorf("none of 'anyof' schemas match")
+		return r, nil
 	}
 
 	if schema.Value == nil || schema.Value.Type == "" {
@@ -179,6 +192,25 @@ func selectObject(data interface{}, schema *Schema) (interface{}, error) {
 	}
 
 	panic("not implemented")
+}
+
+func selectAny(schema *Schema, data interface{}) (interface{}, error) {
+	result := newSchemaObject()
+	for _, any := range schema.AnyOf {
+		r, err := selectData(data, any)
+		if err != nil {
+			continue
+		}
+		o, ok := r.(*schemaObject)
+		if !ok {
+			if result.Len() > 0 {
+				continue
+			}
+			return r, nil
+		}
+		result.Merge(o.LinkedHashMap)
+	}
+	return result, nil
 }
 
 func convertObject(schema *Ref, selector func(string) (interface{}, bool)) (*schemaObject, error) {

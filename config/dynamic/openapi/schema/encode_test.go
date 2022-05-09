@@ -143,16 +143,16 @@ func TestRef_Marshal_Object(t *testing.T) {
 			},
 		},
 		{
-			"any",
+			"allOf",
 			&schema.Ref{Value: schematest.New("",
-				schematest.Any(
+				schematest.AllOf(
 					schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
 					schematest.New("object", schematest.WithProperty("bar", schematest.New("string"))),
 				))},
-			map[string]interface{}{"foo": "foo", "value": 12},
+			map[string]interface{}{"foo": "foo", "bar": "bar", "value": "test"},
 			media.ParseContentType("application/json"),
 			func(t *testing.T, s string) {
-				require.True(t, s == `{"foo":"foo"}`, s)
+				require.Equal(t, `{"foo":"foo","bar":"bar"}`, s)
 			},
 		},
 	}
@@ -166,6 +166,53 @@ func TestRef_Marshal_Object(t *testing.T) {
 			b, err := tc.schema.Marshal(tc.data, tc.ct)
 			require.NoError(t, err)
 			tc.fn(t, string(b))
+		})
+	}
+}
+
+func TestRef_Marshal_AnyOf(t *testing.T) {
+	testcases := []struct {
+		name string
+		f    func(t *testing.T)
+	}{
+		{
+			"any",
+			func(t *testing.T) {
+				s := &schema.Ref{Value: schematest.New("",
+					schematest.Any(
+						schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
+						schematest.New("object", schematest.WithProperty("bar", schematest.New("string"))),
+					))}
+				data := map[string]interface{}{"foo": "foo", "value": 12}
+
+				b, err := s.Marshal(data, media.ParseContentType("application/json"))
+				require.NoError(t, err)
+				require.Equal(t, `{"foo":"foo"}`, string(b))
+			},
+		},
+		{
+			"any mixed",
+			func(t *testing.T) {
+				s := &schema.Ref{Value: schematest.New("",
+					schematest.Any(
+						schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
+						schematest.New("object", schematest.WithProperty("bar", schematest.New("string"))),
+					))}
+				data := map[string]interface{}{"foo": "foo", "bar": "bar", "value": 12}
+
+				b, err := s.Marshal(data, media.ParseContentType("application/json"))
+				require.NoError(t, err)
+				require.Equal(t, `{"foo":"foo","bar":"bar"}`, string(b))
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			tc.f(t)
 		})
 	}
 }
