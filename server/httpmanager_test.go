@@ -2,8 +2,10 @@ package server
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	logtest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
+	"io/ioutil"
 	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/config/dynamic/openapi/openapitest"
@@ -11,14 +13,14 @@ import (
 	"mokapi/engine"
 	"mokapi/runtime"
 	"mokapi/server/cert"
-	"mokapi/test"
 	"mokapi/try"
 	"net/url"
 	"testing"
 )
 
 func TestHttpServers_Monitor(t *testing.T) {
-	test.NewNullLogger()
+	logrus.SetOutput(ioutil.Discard)
+	logtest.NewGlobal()
 	store, err := cert.NewStore(&static.Config{})
 	require.NoError(t, err)
 
@@ -132,7 +134,8 @@ func TestHttpManager_Update(t *testing.T) {
 
 	for _, data := range testdata {
 		t.Run(data.name, func(t *testing.T) {
-			hook := test.NewNullLogger()
+			logrus.SetOutput(ioutil.Discard)
+			hook := logtest.NewGlobal()
 			store, err := cert.NewStore(&static.Config{})
 			require.NoError(t, err)
 

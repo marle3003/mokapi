@@ -3,7 +3,6 @@ package service
 import (
 	"fmt"
 	"github.com/stretchr/testify/require"
-	"mokapi/test"
 	"mokapi/try"
 	"net/http"
 	"net/http/httptest"
@@ -64,7 +63,7 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 				r := httptest.NewRequest("GET", fmt.Sprintf("http://foo:%v/bar", port), nil)
 				rr := httptest.NewRecorder()
 				s.ServeHTTP(rr, r)
-				test.Equals(t, 200, rr.Code)
+				require.Equal(t, 200, rr.Code)
 			}},
 		{"empty host",
 			func(t *testing.T, s *HttpServer, port string) {
@@ -78,7 +77,7 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 				r := httptest.NewRequest("GET", fmt.Sprintf("http://foo:%v/foo", port), nil)
 				rr := httptest.NewRecorder()
 				s.ServeHTTP(rr, r)
-				test.Equals(t, 200, rr.Code)
+				require.Equal(t, 200, rr.Code)
 			}},
 		{"nil handler",
 			func(t *testing.T, s *HttpServer, port string) {

@@ -3,10 +3,10 @@ package git
 import (
 	"context"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/common"
 	"mokapi/config/static"
 	"mokapi/safe"
-	"mokapi/test"
 	"path/filepath"
 	"testing"
 	"time"
@@ -22,7 +22,7 @@ func TestGit(t *testing.T) {
 	}()
 	ch := make(chan *common.Config)
 	err := g.Start(ch, p)
-	test.Ok(t, err)
+	require.NoError(t, err)
 
 	timeout := time.After(1 * time.Second)
 	i := 0

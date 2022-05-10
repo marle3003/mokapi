@@ -8,7 +8,6 @@ import (
 	"mokapi/config/dynamic/openapi"
 	"mokapi/config/dynamic/openapi/parameter"
 	"mokapi/media"
-	"mokapi/test"
 	"net/http"
 	"testing"
 )
@@ -72,8 +71,8 @@ info:
 		t.Run(d.s, func(t *testing.T) {
 			c := &openapi.Config{}
 			err := yaml.Unmarshal([]byte(d.s), c)
-			test.Ok(t, err)
-			test.Equals(t, d.err, c.Validate())
+			require.NoError(t, err)
+			require.Equal(t, d.err, c.Validate())
 		})
 	}
 }
@@ -133,7 +132,7 @@ default: {description: default}
 		t.Run(d.name, func(t *testing.T) {
 			res := &openapi.Responses{}
 			err := yaml.Unmarshal([]byte(d.content), res)
-			test.Ok(t, err)
+			require.NoError(t, err)
 			data.fn(t, res)
 		})
 	}
@@ -155,9 +154,9 @@ components:
       type: string
 `,
 			f: func(t *testing.T, c *openapi.Config) {
-				test.Equals(t, 1, c.Components.Schemas.Value.Len())
+				require.Equal(t, 1, c.Components.Schemas.Value.Len())
 				foo := c.Components.Schemas.Get("Foo")
-				test.Equals(t, "string", foo.Value.Type)
+				require.Equal(t, "string", foo.Value.Type)
 			},
 		},
 		{
@@ -184,14 +183,14 @@ components:
       type: string
 `,
 			f: func(t *testing.T, c *openapi.Config) {
-				test.Ok(t, c.Validate())
-				test.Equals(t, 1, len(c.EndPoints))
+				require.NoError(t, c.Validate())
+				require.Len(t, c.EndPoints, 1)
 				exp := []interface{}{http.StatusNoContent, http.StatusOK}
 				keys := c.EndPoints["/foo"].Value.Get.Responses.Keys()
-				test.Equals(t, exp, keys)
+				require.Equal(t, exp, keys)
 				r := c.EndPoints["/foo"].Value.Get.Responses.GetResponse(http.StatusOK)
 				content := r.Content["application/xml"]
-				test.Assert(t, content.Schema.Value != nil, "ref resolved")
+				require.NotNil(t, content.Schema.Value, "ref resolved")
 			},
 		},
 	}
@@ -201,9 +200,9 @@ components:
 		t.Run(d.Name, func(t *testing.T) {
 			c := &openapi.Config{}
 			err := yaml.Unmarshal([]byte(d.Content), c)
-			test.Ok(t, err)
+			require.NoError(t, err)
 			err = c.Parse(&common.Config{Data: c}, nil)
-			test.Ok(t, err)
+			require.NoError(t, err)
 			d.f(t, c)
 		})
 	}
@@ -212,127 +211,127 @@ components:
 func TestConfig_PetStore_PetSchema(t *testing.T) {
 	config := &openapi.Config{}
 	err := yaml.Unmarshal([]byte(petstore), &config)
-	test.Ok(t, err)
+	require.NoError(t, err)
 	err = config.Parse(&common.Config{Data: config}, nil)
-	test.Ok(t, err)
+	require.NoError(t, err)
 
-	test.Equals(t, nil, config.Components.Schemas.Get("foo"))
+	require.Nil(t, config.Components.Schemas.Get("foo"))
 
 	pet := config.Components.Schemas.Get("Pet")
-	test.Equals(t, []string{"name", "photoUrls"}, pet.Value.Required)
-	test.Equals(t, "object", pet.Value.Type)
-	test.Equals(t, "Pet", pet.Value.Xml.Name)
+	require.Equal(t, []string{"name", "photoUrls"}, pet.Value.Required)
+	require.Equal(t, "object", pet.Value.Type)
+	require.Equal(t, "Pet", pet.Value.Xml.Name)
 
 	// id
 	id := pet.Value.Properties.Get("id")
-	test.Equals(t, "integer", id.Value.Type)
-	test.Equals(t, "int64", id.Value.Format)
+	require.Equal(t, "integer", id.Value.Type)
+	require.Equal(t, "int64", id.Value.Format)
 
 	// category
 	category := pet.Value.Properties.Get("category")
-	test.Equals(t, "#/components/schemas/Category", category.Ref())
-	test.Assert(t, category.Value != nil, "ref resolved")
-	test.Equals(t, "object", category.Value.Type)
+	require.Equal(t, "#/components/schemas/Category", category.Ref())
+	require.NotNil(t, category.Value, "ref resolved")
+	require.Equal(t, "object", category.Value.Type)
 
 	// name
 	name := pet.Value.Properties.Get("name")
-	test.Equals(t, "string", name.Value.Type)
-	test.Equals(t, "doggie", name.Value.Example)
+	require.Equal(t, "string", name.Value.Type)
+	require.Equal(t, "doggie", name.Value.Example)
 
 	// photoUrls
 	photoUrls := pet.Value.Properties.Get("photoUrls")
-	test.Equals(t, "array", photoUrls.Value.Type)
-	test.Equals(t, "string", photoUrls.Value.Items.Value.Type)
-	test.Equals(t, "photoUrl", photoUrls.Value.Xml.Name)
-	test.Equals(t, true, photoUrls.Value.Xml.Wrapped)
+	require.Equal(t, "array", photoUrls.Value.Type)
+	require.Equal(t, "string", photoUrls.Value.Items.Value.Type)
+	require.Equal(t, "photoUrl", photoUrls.Value.Xml.Name)
+	require.True(t, photoUrls.Value.Xml.Wrapped)
 
 	// tags
 	tags := pet.Value.Properties.Get("tags")
-	test.Equals(t, "array", tags.Value.Type)
-	test.Equals(t, "#/components/schemas/Tag", tags.Value.Items.Ref())
-	test.Equals(t, "object", tags.Value.Items.Value.Type)
-	test.Equals(t, "tag", tags.Value.Xml.Name)
-	test.Equals(t, true, tags.Value.Xml.Wrapped)
+	require.Equal(t, "array", tags.Value.Type)
+	require.Equal(t, "#/components/schemas/Tag", tags.Value.Items.Ref())
+	require.Equal(t, "object", tags.Value.Items.Value.Type)
+	require.Equal(t, "tag", tags.Value.Xml.Name)
+	require.True(t, tags.Value.Xml.Wrapped)
 
 	// status
 	status := pet.Value.Properties.Get("status")
-	test.Equals(t, "string", status.Value.Type)
-	test.Equals(t, "pet status in the store", status.Value.Description)
-	test.Equals(t, []interface{}{"available", "pending", "sold"}, status.Value.Enum)
+	require.Equal(t, "string", status.Value.Type)
+	require.Equal(t, "pet status in the store", status.Value.Description)
+	require.Equal(t, []interface{}{"available", "pending", "sold"}, status.Value.Enum)
 
 }
 
 func TestConfig_PetStore_Path(t *testing.T) {
 	config := &openapi.Config{}
 	err := yaml.Unmarshal([]byte(petstore), &config)
-	test.Ok(t, err)
+	require.NoError(t, err)
 	err = config.Parse(&common.Config{Data: config}, nil)
-	test.Ok(t, err)
+	require.NoError(t, err)
 
 	endpoint := config.EndPoints["/pet"]
-	test.Assert(t, endpoint.Value.Put != nil, "put is defined")
-	test.Assert(t, endpoint.Value.Post != nil, "post is defined")
+	require.NotNil(t, endpoint.Value.Put, "put is defined")
+	require.NotNil(t, endpoint.Value.Post, "post is defined")
 	put := endpoint.Value.Put
-	test.Equals(t, "Update an existing pet", put.Summary)
-	test.Equals(t, "updatePet", put.OperationId)
+	require.Equal(t, "Update an existing pet", put.Summary)
+	require.Equal(t, "updatePet", put.OperationId)
 	body := put.RequestBody.Value
-	test.Equals(t, "Pet object that needs to be added to the store", body.Description)
-	test.Equals(t, 2, len(body.Content))
-	test.Equals(t, "#/components/schemas/Pet", body.Content["application/json"].Schema.Ref())
-	test.Equals(t, "#/components/schemas/Pet", body.Content["application/xml"].Schema.Ref())
-	test.Assert(t, body.Content["application/json"].Schema.Value != nil, "ref resolved")
-	test.Assert(t, body.Content["application/xml"].Schema.Value != nil, "ref resolved")
-	test.Equals(t, body.Content["application/json"], body.GetMedia(media.ParseContentType("application/json")))
-	test.Equals(t, nil, body.GetMedia(media.ParseContentType("foo/bar")))
+	require.Equal(t, "Pet object that needs to be added to the store", body.Description)
+	require.Len(t, body.Content, 2)
+	require.Equal(t, "#/components/schemas/Pet", body.Content["application/json"].Schema.Ref())
+	require.Equal(t, "#/components/schemas/Pet", body.Content["application/xml"].Schema.Ref())
+	require.NotNil(t, body.Content["application/json"].Schema.Value, "ref resolved")
+	require.NotNil(t, body.Content["application/xml"].Schema.Value, "ref resolved")
+	require.Equal(t, body.Content["application/json"], body.GetMedia(media.ParseContentType("application/json")))
+	require.Nil(t, body.GetMedia(media.ParseContentType("foo/bar")))
 
 	schema := body.Content["application/json"].Schema.Value
-	test.Equals(t, []string{"name", "photoUrls"}, schema.Required)
+	require.Equal(t, []string{"name", "photoUrls"}, schema.Required)
 
-	test.Equals(t, 3, put.Responses.Len())
+	require.True(t, put.Responses.Len() == 3)
 	i := put.Responses.Get(http.StatusBadRequest)
 	r := i.(*openapi.ResponseRef)
-	test.Equals(t, 0, len(r.Value.Content))
+	require.Len(t, r.Value.Content, 0)
 
 }
 
 func TestPetStore_Response(t *testing.T) {
 	config := &openapi.Config{}
 	err := yaml.Unmarshal([]byte(petstore), &config)
-	test.Ok(t, err)
+	require.NoError(t, err)
 	err = config.Parse(&common.Config{Data: config}, nil)
-	test.Ok(t, err)
+	require.NoError(t, err)
 
 	endpoint := config.EndPoints["/pet/{petId}"]
 	r := endpoint.Value.Get.Responses.GetResponse(http.StatusOK)
-	test.Assert(t, r != nil, "response exists")
+	require.NotNil(t, r, "response exists")
 	ct := media.ParseContentType("application/json")
 	m := r.GetContent(ct)
-	test.Equals(t, r.Content[ct.String()], m)
+	require.Equal(t, r.Content[ct.String()], m)
 
 	m = r.GetContent(media.ParseContentType("foo/bar"))
-	test.Equals(t, nil, m)
+	require.Nil(t, m)
 }
 
 func TestPetStore_Paramters(t *testing.T) {
 	config := &openapi.Config{}
 	err := yaml.Unmarshal([]byte(petstore), &config)
-	test.Ok(t, err)
+	require.NoError(t, err)
 	err = config.Parse(&common.Config{Data: config}, nil)
-	test.Ok(t, err)
+	require.NoError(t, err)
 
 	endpoint := config.EndPoints["/pet/{petId}"]
 	params := endpoint.Value.Delete.Parameters
-	test.Equals(t, 2, len(params))
-	test.Equals(t, "api_key", params[0].Value.Name)
-	test.Equals(t, parameter.Header, params[0].Value.Type)
-	test.Equals(t, "string", params[0].Value.Schema.Value.Type)
+	require.Len(t, params, 2)
+	require.Equal(t, "api_key", params[0].Value.Name)
+	require.Equal(t, parameter.Header, params[0].Value.Type)
+	require.Equal(t, "string", params[0].Value.Schema.Value.Type)
 
-	test.Equals(t, "petId", params[1].Value.Name)
-	test.Equals(t, parameter.Path, params[1].Value.Type)
-	test.Equals(t, "Pet id to delete", params[1].Value.Description)
-	test.Equals(t, true, params[1].Value.Required)
-	test.Equals(t, "integer", params[1].Value.Schema.Value.Type)
-	test.Equals(t, "int64", params[1].Value.Schema.Value.Format)
+	require.Equal(t, "petId", params[1].Value.Name)
+	require.Equal(t, parameter.Path, params[1].Value.Type)
+	require.Equal(t, "Pet id to delete", params[1].Value.Description)
+	require.True(t, params[1].Value.Required)
+	require.Equal(t, "integer", params[1].Value.Schema.Value.Type)
+	require.Equal(t, "int64", params[1].Value.Schema.Value.Format)
 }
 
 func TestHttpStatus_IsSuccess(t *testing.T) {
@@ -349,10 +348,10 @@ func TestHttpStatus_IsSuccess(t *testing.T) {
 		226,
 	} {
 		t.Run(fmt.Sprintf("%v", d), func(t *testing.T) {
-			test.Equals(t, true, openapi.IsHttpStatusSuccess(d))
+			require.True(t, openapi.IsHttpStatusSuccess(d))
 		})
 	}
-	test.Equals(t, false, openapi.IsHttpStatusSuccess(http.StatusBadGateway))
+	require.False(t, openapi.IsHttpStatusSuccess(http.StatusBadGateway))
 }
 
 const petstore = `

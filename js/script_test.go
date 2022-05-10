@@ -5,7 +5,6 @@ import (
 	"github.com/dop251/goja"
 	r "github.com/stretchr/testify/require"
 	"mokapi/engine/common"
-	"mokapi/test"
 	"strings"
 	"testing"
 )
@@ -66,13 +65,13 @@ func TestScript(t *testing.T) {
 	t.Run("interrupt", func(t *testing.T) {
 		t.Parallel()
 		s, err := New("test", `export default function() {while(true) {}}`, host)
-		test.Ok(t, err)
+		r.NoError(t, err)
 		ch := make(chan bool)
 		go func() {
 			ch <- true
 			err := s.Run()
 			iErr := err.(*goja.InterruptedError)
-			test.Assert(t, strings.HasPrefix(iErr.String(), "closing"), fmt.Sprintf("error prefix expected closing but got: %v", iErr.String()))
+			r.True(t, strings.HasPrefix(iErr.String(), "closing"), fmt.Sprintf("error prefix expected closing but got: %v", iErr.String()))
 		}()
 
 		_ = <-ch
@@ -103,8 +102,19 @@ return s
 
 type testHost struct {
 	common.Host
+	openFile func(file string) (string, error)
+	info     func(args ...interface{})
 }
 
 func (th *testHost) Info(args ...interface{}) {
+	if th.info != nil {
+		th.info(args...)
+	}
+}
 
+func (th *testHost) OpenFile(file string) (string, error) {
+	if th.openFile != nil {
+		return th.openFile(file)
+	}
+	return "", nil
 }

@@ -6,7 +6,6 @@ import (
 	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/openapi/ref"
 	"mokapi/config/dynamic/openapi/schema"
-	"mokapi/test"
 	"net/url"
 	"testing"
 )
@@ -36,7 +35,7 @@ func TestResolve(t *testing.T) {
 		reader := &testReader{readFunc: func(cfg *common.Config) error { return nil }}
 		config := &Config{}
 		err := config.Parse(&common.Config{Url: &url.URL{}, Data: config}, reader)
-		test.Ok(t, err)
+		require.NoError(t, err)
 	})
 }
 
@@ -45,12 +44,12 @@ func TestChannelResolve(t *testing.T) {
 		reader := &testReader{readFunc: func(cfg *common.Config) error { return nil }}
 		config := &Config{Channels: map[string]*ChannelRef{"foo": nil}}
 		err := config.Parse(&common.Config{Url: &url.URL{}, Data: config}, reader)
-		test.Ok(t, err)
+		require.NoError(t, err)
 	})
 	t.Run("file reference", func(t *testing.T) {
 		target := &Channel{}
 		reader := &testReader{readFunc: func(cfg *common.Config) error {
-			test.Equals(t, "/foo.yml#/channels/foo", cfg.Url.String())
+			require.Equal(t, "/foo.yml#/channels/foo", cfg.Url.String())
 			config := &Config{Channels: map[string]*ChannelRef{
 				"foo": {Value: target},
 			}}
@@ -61,12 +60,12 @@ func TestChannelResolve(t *testing.T) {
 			"foo": {Ref: "foo.yml#/channels/foo"},
 		}}
 		err := config.Parse(&common.Config{Url: &url.URL{}, Data: config}, reader)
-		test.Ok(t, err)
-		test.Equals(t, target, config.Channels["foo"].Value)
+		require.NoError(t, err)
+		require.Equal(t, target, config.Channels["foo"].Value)
 	})
 	t.Run("file reference but nil", func(t *testing.T) {
 		reader := &testReader{readFunc: func(file *common.Config) error {
-			test.Equals(t, "/foo.yml#/channels/foo", file.Url.String())
+			require.Equal(t, "/foo.yml#/channels/foo", file.Url.String())
 			config := &Config{Channels: map[string]*ChannelRef{
 				"foo": {},
 			}}
@@ -77,19 +76,18 @@ func TestChannelResolve(t *testing.T) {
 			"foo": {Ref: "foo.yml#/channels/foo"},
 		}}
 		err := config.Parse(&common.Config{Url: &url.URL{}, Data: config}, reader)
-		test.Ok(t, err)
-		test.Equals(t, nil, config.Channels["foo"].Value)
+		require.NoError(t, err)
+		require.Nil(t, config.Channels["foo"].Value)
 	})
 	t.Run("reader returns error", func(t *testing.T) {
 		reader := &testReader{readFunc: func(cfg *common.Config) error {
-			return test.TestError
+			return fmt.Errorf("TEST ERROR")
 		}}
 		config := &Config{Channels: map[string]*ChannelRef{
 			"foo": {Ref: "foo.yml#/channels/foo"},
 		}}
 		err := config.Parse(&common.Config{Url: &url.URL{}, Data: config}, reader)
-		test.Error(t, err)
-		require.Equal(t, fmt.Sprintf("unable to read /foo.yml#/channels/foo: %v", test.TestError), err.Error())
+		require.EqualError(t, err, "unable to read /foo.yml#/channels/foo: TEST ERROR")
 	})
 }
 
@@ -103,8 +101,8 @@ func TestMessageResolve(t *testing.T) {
 			Messages: map[string]*Message{"foo": target},
 		}}
 		err := config.Parse(&common.Config{Url: &url.URL{}, Data: config}, reader)
-		test.Ok(t, err)
-		test.Equals(t, target, config.Channels["foo"].Value.Subscribe.Message.Value)
+		require.NoError(t, err)
+		require.Equal(t, target, config.Channels["foo"].Value.Subscribe.Message.Value)
 	})
 	t.Run("publish message", func(t *testing.T) {
 		target := &Message{}
@@ -115,8 +113,8 @@ func TestMessageResolve(t *testing.T) {
 			Messages: map[string]*Message{"foo": target},
 		}}
 		err := config.Parse(&common.Config{Url: &url.URL{}, Data: config}, reader)
-		test.Ok(t, err)
-		test.Equals(t, target, config.Channels["foo"].Value.Publish.Message.Value)
+		require.NoError(t, err)
+		require.Equal(t, target, config.Channels["foo"].Value.Publish.Message.Value)
 	})
 	t.Run("modify file", func(t *testing.T) {
 		target := &Message{}
@@ -132,13 +130,13 @@ func TestMessageResolve(t *testing.T) {
 		// modify file
 		file.Data.(*Config).Components.Messages["foo"] = target
 
-		test.Ok(t, err)
-		test.Equals(t, target, config.Channels["foo"].Value.Publish.Message.Value)
+		require.NoError(t, err)
+		require.Equal(t, target, config.Channels["foo"].Value.Publish.Message.Value)
 	})
 	t.Run("subscribe message", func(t *testing.T) {
 		target := &Message{}
 		reader := &testReader{readFunc: func(file *common.Config) error {
-			test.Equals(t, "/foo.yml#/components/messages/foo", file.Url.String())
+			require.Equal(t, "/foo.yml#/components/messages/foo", file.Url.String())
 			config := &Config{Components: &Components{
 				Messages: map[string]*Message{"foo": target},
 			}}
@@ -149,13 +147,13 @@ func TestMessageResolve(t *testing.T) {
 			"foo": {Value: &Channel{Subscribe: &Operation{Message: &MessageRef{Ref: "foo.yml#/components/messages/foo"}}}},
 		}}
 		err := config.Parse(&common.Config{Url: &url.URL{}, Data: config}, reader)
-		test.Ok(t, err)
-		test.Equals(t, target, config.Channels["foo"].Value.Subscribe.Message.Value)
+		require.NoError(t, err)
+		require.Equal(t, target, config.Channels["foo"].Value.Subscribe.Message.Value)
 	})
 	t.Run("publish message", func(t *testing.T) {
 		target := &Message{}
 		reader := &testReader{readFunc: func(file *common.Config) error {
-			test.Equals(t, "/foo.yml#/components/messages/foo", file.Url.String())
+			require.Equal(t, "/foo.yml#/components/messages/foo", file.Url.String())
 			config := &Config{Components: &Components{
 				Messages: map[string]*Message{"foo": target},
 			}}
@@ -166,30 +164,28 @@ func TestMessageResolve(t *testing.T) {
 			"foo": {Value: &Channel{Publish: &Operation{Message: &MessageRef{Ref: "foo.yml#/components/messages/foo"}}}},
 		}}
 		err := config.Parse(&common.Config{Url: &url.URL{}, Data: config}, reader)
-		test.Ok(t, err)
-		test.Equals(t, target, config.Channels["foo"].Value.Publish.Message.Value)
+		require.NoError(t, err)
+		require.Equal(t, target, config.Channels["foo"].Value.Publish.Message.Value)
 	})
 	t.Run("subscribe reader returns error", func(t *testing.T) {
 		reader := &testReader{readFunc: func(file *common.Config) error {
-			return test.TestError
+			return fmt.Errorf("TEST ERROR")
 		}}
 		config := &Config{Channels: map[string]*ChannelRef{
 			"foo": {Value: &Channel{Subscribe: &Operation{Message: &MessageRef{Ref: "foo.yml#/components/messages/foo"}}}},
 		}}
 		err := config.Parse(&common.Config{Url: &url.URL{}, Data: config}, reader)
-		test.Error(t, err)
-		require.Equal(t, fmt.Sprintf("unable to read /foo.yml#/components/messages/foo: %v", test.TestError), err.Error())
+		require.EqualError(t, err, "unable to read /foo.yml#/components/messages/foo: TEST ERROR")
 	})
 	t.Run("publisher reader returns error", func(t *testing.T) {
 		reader := &testReader{readFunc: func(cfg *common.Config) error {
-			return test.TestError
+			return fmt.Errorf("TEST ERROR")
 		}}
 		config := &Config{Channels: map[string]*ChannelRef{
 			"foo": {Value: &Channel{Publish: &Operation{Message: &MessageRef{Ref: "foo.yml#/components/messages/foo"}}}},
 		}}
 		err := config.Parse(&common.Config{Url: &url.URL{}, Data: config}, reader)
-		test.Error(t, err)
-		require.Equal(t, fmt.Sprintf("unable to read /foo.yml#/components/messages/foo: %v", test.TestError), err.Error())
+		require.EqualError(t, err, "unable to read /foo.yml#/components/messages/foo: TEST ERROR")
 	})
 }
 
@@ -198,7 +194,7 @@ func TestFileResolve(t *testing.T) {
 		target := &Channel{}
 		var fooConfig *common.Config
 		reader := &testReader{readFunc: func(cfg *common.Config) error {
-			test.Equals(t, "/foo.yml#/channels/foo", cfg.Url.String())
+			require.Equal(t, "/foo.yml#/channels/foo", cfg.Url.String())
 			config := &Config{Channels: map[string]*ChannelRef{
 				"foo": {Value: &Channel{}},
 			}}
@@ -210,13 +206,13 @@ func TestFileResolve(t *testing.T) {
 			"foo": {Ref: "foo.yml#/channels/foo"},
 		}}
 		err := config.Parse(&common.Config{Url: &url.URL{}, Data: config}, reader)
-		test.Ok(t, err)
+		require.NoError(t, err)
 
 		fooConfig.Data.(*Config).Channels["foo"].Value = target
 		err = fooConfig.Data.(common.Parser).Parse(fooConfig, reader)
 
-		test.Ok(t, err)
-		test.Equals(t, target, config.Channels["foo"].Value)
+		require.NoError(t, err)
+		require.Equal(t, target, config.Channels["foo"].Value)
 	})
 
 }
@@ -238,7 +234,7 @@ func TestSchema(t *testing.T) {
 	t.Run("nil should not error", func(t *testing.T) {
 		reader := &testReader{readFunc: func(file *common.Config) error { return nil }}
 		err := config.Parse(&common.Config{Url: &url.URL{}, Data: config}, reader)
-		test.Ok(t, err)
+		require.NoError(t, err)
 	})
 	t.Run("reference inside", func(t *testing.T) {
 		target := &schema.Schema{}
@@ -249,8 +245,8 @@ func TestSchema(t *testing.T) {
 		reader := &testReader{readFunc: func(cfg *common.Config) error { return nil }}
 
 		err := config.Parse(&common.Config{Url: &url.URL{}, Data: config}, reader)
-		test.Ok(t, err)
-		test.Equals(t, target, message.Payload.Value)
+		require.NoError(t, err)
+		require.Equal(t, target, message.Payload.Value)
 	})
 	t.Run("file reference direct", func(t *testing.T) {
 		target := &schema.Schema{}
@@ -261,8 +257,8 @@ func TestSchema(t *testing.T) {
 		}}
 
 		err := config.Parse(&common.Config{Url: &url.URL{}, Data: config}, reader)
-		test.Ok(t, err)
-		test.Equals(t, target, message.Payload.Value)
+		require.NoError(t, err)
+		require.Equal(t, target, message.Payload.Value)
 	})
 	t.Run("modify file reference direct", func(t *testing.T) {
 		target := &schema.Schema{}
@@ -275,13 +271,13 @@ func TestSchema(t *testing.T) {
 		}}
 
 		err := config.Parse(&common.Config{Url: &url.URL{}, Data: config}, reader)
-		test.Ok(t, err)
+		require.NoError(t, err)
 
 		// modify
 		fooConfig.Data = target
 		err = fooConfig.Data.(common.Parser).Parse(fooConfig, reader)
 
-		test.Ok(t, err)
-		test.Equals(t, target, message.Payload.Value)
+		require.NoError(t, err)
+		require.Equal(t, target, message.Payload.Value)
 	})
 }

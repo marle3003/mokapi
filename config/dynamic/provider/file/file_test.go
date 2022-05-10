@@ -2,11 +2,11 @@ package file
 
 import (
 	"context"
+	"github.com/stretchr/testify/require"
 	"io"
 	"mokapi/config/dynamic/common"
 	"mokapi/config/static"
 	"mokapi/safe"
-	"mokapi/test"
 	"os"
 	"path/filepath"
 	"testing"
@@ -19,13 +19,13 @@ func TestProvider(t *testing.T) {
 	pool := safe.NewPool(context.Background())
 	defer pool.Stop()
 	err := p.Start(ch, pool)
-	test.Ok(t, err)
+	require.NoError(t, err)
 
 	timeout := time.After(time.Second)
 	select {
 	case c := <-ch:
-		test.Assert(t, len(c.Url.String()) > 0, "url is set")
-		test.Assert(t, len(c.Raw) > 0, "got data")
+		require.True(t, len(c.Url.String()) > 0, "url is set")
+		require.True(t, len(c.Raw) > 0, "got data")
 	case <-timeout:
 		t.Fatal("timeout while waiting for file event")
 	}
@@ -38,17 +38,17 @@ func TestWatch(t *testing.T) {
 	defer pool.Stop()
 
 	err := p.Start(ch, pool)
-	test.Ok(t, err)
+	require.NoError(t, err)
 
 	time.Sleep(500 * time.Millisecond)
 	err = createTempFile("./test/openapi.yml", p.cfg.Directory)
-	test.Ok(t, err)
+	require.NoError(t, err)
 
 	timeout := time.After(2 * time.Second)
 	select {
 	case c := <-ch:
-		test.Assert(t, len(c.Url.String()) > 0, "url is set")
-		test.Assert(t, len(c.Raw) > 0, "got data")
+		require.True(t, len(c.Url.String()) > 0, "url is set")
+		require.True(t, len(c.Raw) > 0, "got data")
 	case <-timeout:
 		t.Fatal("timeout while waiting for file event")
 	}
@@ -60,7 +60,7 @@ func createProvider(t *testing.T, file string) *Provider {
 
 	if len(file) > 0 {
 		err := createTempFile(file, tempDir)
-		test.Ok(t, err)
+		require.NoError(t, err)
 	}
 
 	p := New(static.FileProvider{Directory: tempDir})

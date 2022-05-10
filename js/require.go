@@ -65,6 +65,7 @@ func (r *require) require(call goja.FunctionCall) goja.Value {
 		}
 
 		export := r.runtime.NewObject()
+		r.runtime.Set("exports", export)
 		_, err = r.runtime.RunProgram(prg)
 		if err != nil {
 			panic(err)

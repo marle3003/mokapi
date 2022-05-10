@@ -2,24 +2,50 @@ package js
 
 import (
 	"github.com/dop251/goja"
-	"mokapi/engine/common"
-	"mokapi/test"
+	r "github.com/stretchr/testify/require"
 	"testing"
 )
 
 func TestRequire(t *testing.T) {
-	host := struct{ common.Host }{}
+	host := &testHost{}
+	testcases := []struct {
+		name string
+		f    func(t *testing.T)
+	}{
+		{
+			"mokapi",
+			func(t *testing.T) {
+				s, err := New("test", `import {sleep} from 'mokapi'; export let _sleep = sleep; sleep(12); export default function() {}`, host)
+				r.NoError(t, err)
 
-	t.Parallel()
-	t.Run("import", func(t *testing.T) {
-		t.Parallel()
-		s, err := New("test", `import {sleep} from 'mokapi'; export let _sleep = sleep; sleep(12); export default function() {}`, host)
-		test.Ok(t, err)
+				r.NoError(t, s.Run())
 
-		test.Ok(t, s.Run())
+				exports := s.runtime.Get("exports").ToObject(s.runtime)
+				_, ok := goja.AssertFunction(exports.Get("_sleep"))
+				r.True(t, ok, "sleep is not a function")
+			},
+		},
+		{
+			"require custom file",
+			func(t *testing.T) {
+				host.openFile = func(file string) (string, error) {
+					r.Equal(t, "foo", file)
+					return "export var bar = {demo: 'demo'};", nil
+				}
+				host.info = func(args ...interface{}) {
+					r.Equal(t, "demo", args[0])
+				}
+				s, err := New("test", `import {bar} from 'foo'; export default function() {console.log(bar.demo);}`, host)
+				r.NoError(t, err)
 
-		exports := s.runtime.Get("exports").ToObject(s.runtime)
-		_, ok := goja.AssertFunction(exports.Get("_sleep"))
-		test.Assert(t, ok, "sleep is not a function")
-	})
+				r.NoError(t, s.Run())
+			},
+		},
+	}
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			tc.f(t)
+		})
+	}
 }

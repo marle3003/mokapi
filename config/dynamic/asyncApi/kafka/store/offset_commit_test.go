@@ -7,7 +7,6 @@ import (
 	"mokapi/kafka"
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/offsetCommit"
-	"mokapi/test"
 	"testing"
 )
 
@@ -56,7 +55,7 @@ func TestOffsetCommit(t *testing.T) {
 				)
 
 				err := b.Client().JoinSyncGroup("foo", "bar", 3, 3)
-				test.Ok(t, err)
+				require.NoError(t, err)
 
 				r, err := b.Client().OffsetCommit(2, &offsetCommit.Request{
 					GroupId:  "bar",

@@ -3,7 +3,7 @@ package kafka
 import (
 	"bufio"
 	"bytes"
-	"mokapi/test"
+	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 )
@@ -26,7 +26,7 @@ func TestRecord_ReadFrom(t *testing.T) {
 			func(t *testing.T, d *Decoder) {
 				record := RecordBatch{}
 				err := record.ReadFrom(d)
-				test.Ok(t, err)
+				require.NoError(t, err)
 			},
 		},
 		{
@@ -35,7 +35,7 @@ func TestRecord_ReadFrom(t *testing.T) {
 			func(t *testing.T, d *Decoder) {
 				batch := RecordBatch{}
 				err := batch.ReadFrom(d)
-				test.Ok(t, err)
+				require.NoError(t, err)
 			},
 		},
 		{
@@ -66,19 +66,19 @@ func TestRecord_ReadFrom(t *testing.T) {
 			func(t *testing.T, d *Decoder) {
 				batch := RecordBatch{}
 				err := batch.ReadFrom(d)
-				test.Ok(t, err)
-				test.Equals(t, 1, len(batch.Records))
+				require.NoError(t, err)
+				require.Len(t, batch.Records, 1)
 				record := batch.Records[0]
-				test.Equals(t, int64(13), record.Offset)
+				require.Equal(t, int64(13), record.Offset)
 				var b [3]byte
 				record.Key.Read(b[:])
-				test.Equals(t, "foo", string(b[:]))
+				require.Equal(t, "foo", string(b[:]))
 				record.Value.Read(b[:])
-				test.Equals(t, "bar", string(b[:]))
+				require.Equal(t, "bar", string(b[:]))
 				y, m, day := record.Time.Date()
-				test.Equals(t, 2021, y)
-				test.Equals(t, time.December, m)
-				test.Equals(t, 9, day)
+				require.Equal(t, 2021, y)
+				require.Equal(t, time.December, m)
+				require.Equal(t, 9, day)
 			},
 		},
 		{
@@ -116,8 +116,8 @@ func TestRecord_ReadFrom(t *testing.T) {
 			func(t *testing.T, d *Decoder) {
 				batch := RecordBatch{}
 				err := batch.ReadFrom(d)
-				test.Ok(t, err)
-				test.Equals(t, 2, len(batch.Records))
+				require.NoError(t, err)
+				require.Len(t, batch.Records, 2)
 			},
 		},
 	}
@@ -181,21 +181,21 @@ func TestRecordBatch_WriteTo(t *testing.T) {
 			data.batch.WriteTo(e)
 			var buf bytes.Buffer
 			n, err := pb.WriteTo(&buf)
-			test.Ok(t, err)
-			test.Assert(t, n > 0, "written should not be 0")
+			require.NoError(t, err)
+			require.Greater(t, n, 0, "written should not be 0")
 
 			r := bufio.NewReader(bytes.NewReader(buf.Bytes()))
 			d := NewDecoder(r, pb.Size())
 			batch := RecordBatch{}
 			err = batch.ReadFrom(d)
-			test.Ok(t, err)
+			require.NoError(t, err)
 
-			test.Equals(t, len(data.batch.Records), len(batch.Records))
+			require.Equal(t, len(data.batch.Records), len(batch.Records))
 			for i := 0; i < len(data.batch.Records); i++ {
-				test.Equals(t, data.batch.Records[i].Time, batch.Records[i].Time)
-				test.Equals(t, data.batch.Records[i].Offset, batch.Records[i].Offset)
-				test.Equals(t, bytesToString(data.batch.Records[i].Key), bytesToString(batch.Records[i].Key))
-				test.Equals(t, bytesToString(data.batch.Records[i].Value), bytesToString(batch.Records[i].Value))
+				require.Equal(t, data.batch.Records[i].Time, batch.Records[i].Time)
+				require.Equal(t, data.batch.Records[i].Offset, batch.Records[i].Offset)
+				require.Equal(t, bytesToString(data.batch.Records[i].Key), bytesToString(batch.Records[i].Key))
+				require.Equal(t, bytesToString(data.batch.Records[i].Value), bytesToString(batch.Records[i].Value))
 			}
 		})
 	}
@@ -247,7 +247,7 @@ func TestRecord_Size(t *testing.T) {
 
 	for _, data := range testdata {
 		t.Run(data.name, func(t *testing.T) {
-			test.Equals(t, data.size, data.batch.Size())
+			require.Equal(t, data.size, data.batch.Size())
 		})
 	}
 }

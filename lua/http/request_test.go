@@ -1,8 +1,8 @@
 package http
 
 import (
+	"github.com/stretchr/testify/require"
 	lua "github.com/yuin/gopher-lua"
-	"mokapi/test"
 	"net/http"
 	"testing"
 )
@@ -31,9 +31,9 @@ func TestGet(t *testing.T) {
 			http = require("http")
 			http.get("http://localhost/foo")`,
 		)
-		test.Ok(t, err)
-		test.Equals(t, "GET", client.req.Method)
-		test.Equals(t, "http://localhost/foo", client.req.URL.String())
+		require.NoError(t, err)
+		require.Equal(t, "GET", client.req.Method)
+		require.Equal(t, "http://localhost/foo", client.req.URL.String())
 	})
 	t.Run("header", func(t *testing.T) {
 		client := &testClient{}
@@ -45,9 +45,9 @@ func TestGet(t *testing.T) {
 			http = require("http")
 			http.get("http://localhost/foo", {headers = {foo = "bar"}})`,
 		)
-		test.Ok(t, err)
-		test.Equals(t, "http://localhost/foo", client.req.URL.String())
-		test.Equals(t, "bar", client.req.Header.Get("foo"))
+		require.NoError(t, err)
+		require.Equal(t, "http://localhost/foo", client.req.URL.String())
+		require.Equal(t, "bar", client.req.Header.Get("foo"))
 	})
 	t.Run("headerWithArray", func(t *testing.T) {
 		client := &testClient{}
@@ -59,9 +59,9 @@ func TestGet(t *testing.T) {
 			http = require("http")
 			http.get("http://localhost/foo", {headers = {foo = {"hello", "world"}}})`,
 		)
-		test.Ok(t, err)
-		test.Equals(t, "http://localhost/foo", client.req.URL.String())
-		test.Equals(t, []string{"hello", "world"}, client.req.Header.Values("foo"))
+		require.NoError(t, err)
+		require.Equal(t, "http://localhost/foo", client.req.URL.String())
+		require.Equal(t, []string{"hello", "world"}, client.req.Header.Values("foo"))
 	})
 }
 
@@ -76,9 +76,9 @@ func TestPost(t *testing.T) {
 			http = require("http")
 			http.post("http://localhost/foo")`,
 		)
-		test.Ok(t, err)
-		test.Equals(t, "POST", client.req.Method)
-		test.Equals(t, "http://localhost/foo", client.req.URL.String())
+		require.NoError(t, err)
+		require.Equal(t, "POST", client.req.Method)
+		require.Equal(t, "http://localhost/foo", client.req.URL.String())
 	})
 	t.Run("contenttype", func(t *testing.T) {
 		client := &testClient{}
@@ -90,9 +90,9 @@ func TestPost(t *testing.T) {
 			http = require("http")
 			http.post("http://localhost/foo", "body", {headers = {['Content-Type'] = "application/json"}})`,
 		)
-		test.Ok(t, err)
-		test.Equals(t, "POST", client.req.Method)
-		test.Equals(t, "application/json", client.req.Header.Get("Content-Type"))
-		test.Equals(t, "http://localhost/foo", client.req.URL.String())
+		require.NoError(t, err)
+		require.Equal(t, "POST", client.req.Method)
+		require.Equal(t, "application/json", client.req.Header.Get("Content-Type"))
+		require.Equal(t, "http://localhost/foo", client.req.URL.String())
 	})
 }

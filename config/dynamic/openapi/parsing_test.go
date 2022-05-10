@@ -2,9 +2,9 @@ package openapi
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/openapi/ref"
-	"mokapi/test"
 	"net/url"
 	"testing"
 )
@@ -34,7 +34,7 @@ func TestResolve(t *testing.T) {
 		reader := &testReader{readFunc: func(cfg *common.Config) error { return nil }}
 		config := &Config{}
 		err := config.Parse(&common.Config{Url: &url.URL{}, Data: config}, reader)
-		test.Ok(t, err)
+		require.NoError(t, err)
 	})
 }
 
@@ -43,12 +43,12 @@ func TestEndpointResolve(t *testing.T) {
 		reader := &testReader{readFunc: func(cfg *common.Config) error { return nil }}
 		config := &Config{EndPoints: map[string]*EndpointRef{"foo": nil}}
 		err := config.Parse(&common.Config{Url: &url.URL{}, Data: config}, reader)
-		test.Ok(t, err)
+		require.NoError(t, err)
 	})
 	t.Run("file reference", func(t *testing.T) {
 		target := &Endpoint{}
 		reader := &testReader{readFunc: func(cfg *common.Config) error {
-			test.Equals(t, "/foo.yml#/endpoints/foo", cfg.Url.String())
+			require.Equal(t, "/foo.yml#/endpoints/foo", cfg.Url.String())
 			config := &Config{EndPoints: map[string]*EndpointRef{
 				"foo": {Value: target},
 			}}
@@ -59,12 +59,12 @@ func TestEndpointResolve(t *testing.T) {
 			"foo": {Reference: ref.Reference{Value: "foo.yml#/endpoints/foo"}},
 		}}
 		err := config.Parse(&common.Config{Url: &url.URL{}, Data: config}, reader)
-		test.Ok(t, err)
-		test.Equals(t, target, config.EndPoints["foo"].Value)
+		require.NoError(t, err)
+		require.Equal(t, target, config.EndPoints["foo"].Value)
 	})
 	t.Run("file reference but nil", func(t *testing.T) {
 		reader := &testReader{readFunc: func(cfg *common.Config) error {
-			test.Equals(t, "/foo.yml#/endpoints/foo", cfg.Url.String())
+			require.Equal(t, "/foo.yml#/endpoints/foo", cfg.Url.String())
 			config := &Config{EndPoints: map[string]*EndpointRef{
 				"foo": {},
 			}}
@@ -75,18 +75,17 @@ func TestEndpointResolve(t *testing.T) {
 			"foo": {Reference: ref.Reference{Value: "foo.yml#/endpoints/foo"}},
 		}}
 		err := config.Parse(&common.Config{Url: &url.URL{}, Data: config}, reader)
-		test.Ok(t, err)
-		test.Equals(t, nil, config.EndPoints["foo"].Value)
+		require.NoError(t, err)
+		require.Nil(t, config.EndPoints["foo"].Value)
 	})
 	t.Run("reader returns error", func(t *testing.T) {
 		reader := &testReader{readFunc: func(cfg *common.Config) error {
-			return test.TestError
+			return fmt.Errorf("TEST ERROR")
 		}}
 		config := &Config{EndPoints: map[string]*EndpointRef{
 			"foo": {Reference: ref.Reference{Value: "foo.yml#/endpoints/foo"}},
 		}}
 		err := config.Parse(&common.Config{Url: &url.URL{}, Data: config}, reader)
-		test.Error(t, err)
-		test.Equals(t, fmt.Errorf("unable to read /foo.yml#/endpoints/foo: %v", test.TestError), err)
+		require.EqualError(t, err, "unable to read /foo.yml#/endpoints/foo: TEST ERROR")
 	})
 }

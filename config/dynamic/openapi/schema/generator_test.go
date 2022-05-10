@@ -6,7 +6,6 @@ import (
 	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/config/dynamic/openapi/schema/schematest"
 	"mokapi/sortedmap"
-	"mokapi/test"
 	"testing"
 )
 
@@ -42,7 +41,7 @@ func TestGenerator(t *testing.T) {
 
 			g := schema.NewGenerator()
 			o := g.New(&schema.Ref{Value: data.schema})
-			test.Equals(t, data.exp, o)
+			require.Equal(t, data.exp, o)
 		})
 	}
 }
@@ -132,7 +131,7 @@ func TestGeneratorString(t *testing.T) {
 
 			g := schema.NewGenerator()
 			o := g.New(&schema.Ref{Value: d.schema})
-			test.Equals(t, d.exp, o)
+			require.Equal(t, d.exp, o)
 		})
 	}
 }
@@ -156,7 +155,7 @@ func TestGeneratorBool(t *testing.T) {
 
 			g := schema.NewGenerator()
 			o := g.New(&schema.Ref{Value: data.schema})
-			test.Equals(t, data.exp, o)
+			require.Equal(t, data.exp, o)
 		})
 	}
 }
@@ -220,7 +219,7 @@ func TestGeneratorInt(t *testing.T) {
 
 			g := schema.NewGenerator()
 			o := g.New(&schema.Ref{Value: data.schema})
-			test.Equals(t, data.exp, o)
+			require.Equal(t, data.exp, o)
 		})
 	}
 }
@@ -289,7 +288,7 @@ func TestGeneratorFloat(t *testing.T) {
 
 			g := schema.NewGenerator()
 			o := g.New(&schema.Ref{Value: data.schema})
-			test.Equals(t, data.exp, o)
+			require.Equal(t, data.exp, o)
 		})
 	}
 }
@@ -358,14 +357,14 @@ func TestGeneratorArray(t *testing.T) {
 
 			g := schema.NewGenerator()
 			o := g.New(&schema.Ref{Value: data.schema})
-			test.Equals(t, data.exp, o)
+			require.Equal(t, data.exp, o)
 		})
 	}
 
 	t.Run("unique items panic", func(t *testing.T) {
 		defer func() {
 			r := recover()
-			test.Equals(t, "can not fill array with unique items", r)
+			require.Equal(t, "can not fill array with unique items", r)
 		}()
 
 		gofakeit.Seed(11)

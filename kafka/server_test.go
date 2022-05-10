@@ -1,18 +1,21 @@
 package kafka_test
 
 import (
+	"github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
+	"io/ioutil"
 	"mokapi/kafka"
 	"mokapi/kafka/apiVersion"
 	"mokapi/kafka/kafkatest"
-	"mokapi/test"
 	"net"
 	"testing"
 	"time"
 )
 
 func TestBroker_Disconnect(t *testing.T) {
-	hook := test.NewNullLogger()
+	logrus.SetOutput(ioutil.Discard)
+	hook := test.NewGlobal()
 	b := kafkatest.NewBroker(
 		kafkatest.WithHandler(
 			kafka.HandlerFunc(func(rw kafka.ResponseWriter, req *kafka.Request) {

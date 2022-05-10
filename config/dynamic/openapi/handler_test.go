@@ -1,12 +1,12 @@
 package openapi_test
 
 import (
+	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/config/dynamic/openapi/openapitest"
 	"mokapi/config/dynamic/openapi/schema/schematest"
 	"mokapi/runtime/logs"
-	"mokapi/test"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -24,8 +24,8 @@ func TestResolveEndpoint(t *testing.T) {
 				r := httptest.NewRequest("GET", "https://foo", nil)
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 404, rr.Code)
-				test.Equals(t, "no matching endpoint found at https://foo\n", rr.Body.String())
+				require.Equal(t, 404, rr.Code)
+				require.Equal(t, "no matching endpoint found at https://foo\n", rr.Body.String())
 			},
 		},
 		//
@@ -36,7 +36,7 @@ func TestResolveEndpoint(t *testing.T) {
 				r := httptest.NewRequest("GET", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 404, rr.Code)
+				require.Equal(t, 404, rr.Code)
 			},
 		},
 		{"no success response specified",
@@ -46,8 +46,8 @@ func TestResolveEndpoint(t *testing.T) {
 				r := httptest.NewRequest("GET", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 500, rr.Code)
-				test.Equals(t, "no success response (HTTP 2xx) in configuration\n", rr.Body.String())
+				require.Equal(t, 500, rr.Code)
+				require.Equal(t, "no success response (HTTP 2xx) in configuration\n", rr.Body.String())
 			},
 		},
 		{"with endpoint",
@@ -57,7 +57,7 @@ func TestResolveEndpoint(t *testing.T) {
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 200, rr.Code)
+				require.Equal(t, 200, rr.Code)
 				require.Equal(t, "application/json", rr.Header().Get("Content-Type"))
 			},
 		},
@@ -69,7 +69,7 @@ func TestResolveEndpoint(t *testing.T) {
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 204, rr.Code)
+				require.Equal(t, 204, rr.Code)
 			},
 		},
 		{"with multiple success response 2/2",
@@ -80,7 +80,7 @@ func TestResolveEndpoint(t *testing.T) {
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 202, rr.Code)
+				require.Equal(t, 202, rr.Code)
 			},
 		},
 		//
@@ -93,7 +93,7 @@ func TestResolveEndpoint(t *testing.T) {
 				r := httptest.NewRequest("POST", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 200, rr.Code)
+				require.Equal(t, 200, rr.Code)
 			},
 		},
 		//
@@ -106,7 +106,7 @@ func TestResolveEndpoint(t *testing.T) {
 				r := httptest.NewRequest("PUT", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 200, rr.Code)
+				require.Equal(t, 200, rr.Code)
 			},
 		},
 		//
@@ -119,7 +119,7 @@ func TestResolveEndpoint(t *testing.T) {
 				r := httptest.NewRequest("PATCH", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 200, rr.Code)
+				require.Equal(t, 200, rr.Code)
 			},
 		},
 		//
@@ -132,7 +132,7 @@ func TestResolveEndpoint(t *testing.T) {
 				r := httptest.NewRequest("DELETE", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 200, rr.Code)
+				require.Equal(t, 200, rr.Code)
 			},
 		},
 		//
@@ -145,7 +145,7 @@ func TestResolveEndpoint(t *testing.T) {
 				r := httptest.NewRequest("HEAD", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 200, rr.Code)
+				require.Equal(t, 200, rr.Code)
 			},
 		},
 		//
@@ -158,7 +158,7 @@ func TestResolveEndpoint(t *testing.T) {
 				r := httptest.NewRequest("OPTIONS", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 200, rr.Code)
+				require.Equal(t, 200, rr.Code)
 			},
 		},
 		//
@@ -171,7 +171,7 @@ func TestResolveEndpoint(t *testing.T) {
 				r := httptest.NewRequest("TRACE", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 200, rr.Code)
+				require.Equal(t, 200, rr.Code)
 			},
 		},
 		//
@@ -186,8 +186,8 @@ func TestResolveEndpoint(t *testing.T) {
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 404, rr.Code)
-				test.Equals(t, "no matching endpoint found at http://localhost/foo\n", rr.Body.String())
+				require.Equal(t, 404, rr.Code)
+				require.Equal(t, "no matching endpoint found at http://localhost/foo\n", rr.Body.String())
 			},
 		},
 		{"segment of path not match",
@@ -199,8 +199,8 @@ func TestResolveEndpoint(t *testing.T) {
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 404, rr.Code)
-				test.Equals(t, "no matching endpoint found at http://localhost/foo\n", rr.Body.String())
+				require.Equal(t, 404, rr.Code)
+				require.Equal(t, "no matching endpoint found at http://localhost/foo\n", rr.Body.String())
 			},
 		},
 		{"with path parameter present",
@@ -212,7 +212,7 @@ func TestResolveEndpoint(t *testing.T) {
 				r := httptest.NewRequest("get", "http://localhost/foo/42", nil)
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 200, rr.Code)
+				require.Equal(t, 200, rr.Code)
 			},
 		},
 		{"path parameter not present in endpoint path",
@@ -224,8 +224,8 @@ func TestResolveEndpoint(t *testing.T) {
 				r := httptest.NewRequest("get", "http://localhost/foo/bar", nil)
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 400, rr.Code)
-				test.Equals(t, "required path parameter id not present\n", rr.Body.String())
+				require.Equal(t, 400, rr.Code)
+				require.Equal(t, "required path parameter id not present\n", rr.Body.String())
 			},
 		},
 		//
@@ -240,7 +240,7 @@ func TestResolveEndpoint(t *testing.T) {
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 200, rr.Code)
+				require.Equal(t, 200, rr.Code)
 			},
 		},
 		{"with required query parameter and not present",
@@ -252,8 +252,8 @@ func TestResolveEndpoint(t *testing.T) {
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 400, rr.Code)
-				test.Equals(t, "query parameter id: required parameter not found\n", rr.Body.String())
+				require.Equal(t, 400, rr.Code)
+				require.Equal(t, "query parameter id: required parameter not found\n", rr.Body.String())
 			},
 		},
 		{"with required query parameter and present",
@@ -265,7 +265,7 @@ func TestResolveEndpoint(t *testing.T) {
 				r := httptest.NewRequest("get", "http://localhost/foo?id=42", nil)
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 200, rr.Code)
+				require.Equal(t, 200, rr.Code)
 			},
 		},
 		//
@@ -280,7 +280,7 @@ func TestResolveEndpoint(t *testing.T) {
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 200, rr.Code)
+				require.Equal(t, 200, rr.Code)
 			},
 		},
 		{"with required query parameter and not present",
@@ -292,8 +292,8 @@ func TestResolveEndpoint(t *testing.T) {
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 400, rr.Code)
-				test.Equals(t, "cookie parameter id: required parameter not found\n", rr.Body.String())
+				require.Equal(t, 400, rr.Code)
+				require.Equal(t, "cookie parameter id: required parameter not found\n", rr.Body.String())
 			},
 		},
 		{"with required query parameter and present",
@@ -306,7 +306,7 @@ func TestResolveEndpoint(t *testing.T) {
 				r.AddCookie(&http.Cookie{Name: "id", Value: "42"})
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 200, rr.Code)
+				require.Equal(t, 200, rr.Code)
 			},
 		},
 		//
@@ -321,7 +321,7 @@ func TestResolveEndpoint(t *testing.T) {
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 200, rr.Code)
+				require.Equal(t, 200, rr.Code)
 			},
 		},
 		{"with required query parameter and not present",
@@ -333,8 +333,8 @@ func TestResolveEndpoint(t *testing.T) {
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 400, rr.Code)
-				test.Equals(t, "header parameter id: required parameter not found\n", rr.Body.String())
+				require.Equal(t, 400, rr.Code)
+				require.Equal(t, "header parameter id: required parameter not found\n", rr.Body.String())
 			},
 		},
 		{"with required query parameter and present",
@@ -347,7 +347,7 @@ func TestResolveEndpoint(t *testing.T) {
 				r.Header.Set("id", "42")
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 200, rr.Code)
+				require.Equal(t, 200, rr.Code)
 			},
 		},
 		//
@@ -364,8 +364,8 @@ func TestResolveEndpoint(t *testing.T) {
 				r.Header.Set("accept", "application/json")
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 200, rr.Code)
-				test.Equals(t, "application/json", rr.Header().Get("content-type"))
+				require.Equal(t, 200, rr.Code)
+				require.Equal(t, "application/json", rr.Header().Get("content-type"))
 			},
 		},
 		{"with content-type extensions",
@@ -379,8 +379,8 @@ func TestResolveEndpoint(t *testing.T) {
 				r.Header.Set("accept", "application/json;odata=verbose")
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 200, rr.Code)
-				test.Equals(t, "application/json;odata=verbose", rr.Header().Get("content-type"))
+				require.Equal(t, 200, rr.Code)
+				require.Equal(t, "application/json;odata=verbose", rr.Header().Get("content-type"))
 			},
 		},
 		{"with content-type extensions",
@@ -394,8 +394,8 @@ func TestResolveEndpoint(t *testing.T) {
 				r.Header.Set("accept", "application/json;odata=verbose")
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 200, rr.Code)
-				test.Equals(t, "application/json", rr.Header().Get("content-type"))
+				require.Equal(t, 200, rr.Code)
+				require.Equal(t, "application/json", rr.Header().Get("content-type"))
 			},
 		},
 		{"with content-type extensions exactly",
@@ -409,8 +409,8 @@ func TestResolveEndpoint(t *testing.T) {
 				r.Header.Set("accept", "application/json;odata=verbose")
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 200, rr.Code)
-				test.Equals(t, "application/json;odata=verbose", rr.Header().Get("content-type"))
+				require.Equal(t, 200, rr.Code)
+				require.Equal(t, "application/json;odata=verbose", rr.Header().Get("content-type"))
 			},
 		},
 		{"with content-type multiple accepted",
@@ -424,8 +424,8 @@ func TestResolveEndpoint(t *testing.T) {
 				r.Header.Set("accept", "text/plain,application/json")
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 200, rr.Code)
-				test.Equals(t, "application/json", rr.Header().Get("content-type"))
+				require.Equal(t, 200, rr.Code)
+				require.Equal(t, "application/json", rr.Header().Get("content-type"))
 			},
 		},
 		{"with content-type not supported",
@@ -439,8 +439,8 @@ func TestResolveEndpoint(t *testing.T) {
 				r.Header.Set("accept", "application/json")
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 415, rr.Code)
-				test.Equals(t, "none of requests content type(s) are supported: \"application/json\"\n", rr.Body.String())
+				require.Equal(t, 415, rr.Code)
+				require.Equal(t, "none of requests content type(s) are supported: \"application/json\"\n", rr.Body.String())
 			},
 		},
 		{
@@ -461,7 +461,7 @@ func TestResolveEndpoint(t *testing.T) {
 				r.Header.Set("accept", "application/json")
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, 200, rr.Code)
+				require.Equal(t, 200, rr.Code)
 			},
 		},
 	}
@@ -501,8 +501,8 @@ func TestHandler_Event(t *testing.T) {
 				r.Header.Set("accept", "application/json")
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, http.StatusInternalServerError, rr.Code)
-				test.Equals(t, "no configuration was found for HTTP status code 415, https://swagger.io/docs/specification/describing-responses\n", rr.Body.String())
+				require.Equal(t, http.StatusInternalServerError, rr.Code)
+				require.Equal(t, "no configuration was found for HTTP status code 415, https://swagger.io/docs/specification/describing-responses\n", rr.Body.String())
 			},
 			func(event string, args ...interface{}) {
 				r := args[1].(*openapi.EventResponse)
@@ -519,8 +519,8 @@ func TestHandler_Event(t *testing.T) {
 				r.Header.Set("accept", "application/json")
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, http.StatusInternalServerError, rr.Code)
-				test.Equals(t, "no configuration was found for HTTP status code 415, https://swagger.io/docs/specification/describing-responses\n", rr.Body.String())
+				require.Equal(t, http.StatusInternalServerError, rr.Code)
+				require.Equal(t, "no configuration was found for HTTP status code 415, https://swagger.io/docs/specification/describing-responses\n", rr.Body.String())
 			},
 			func(event string, args ...interface{}) {
 				r := args[1].(*openapi.EventResponse)
@@ -539,8 +539,8 @@ func TestHandler_Event(t *testing.T) {
 				r.Header.Set("accept", "application/json")
 				rr := httptest.NewRecorder()
 				f(rr, r)
-				test.Equals(t, http.StatusOK, rr.Code)
-				test.Equals(t, "text/plain", rr.Header().Get("Content-Type"))
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.Equal(t, "text/plain", rr.Header().Get("Content-Type"))
 			},
 			func(event string, args ...interface{}) {
 				r := args[1].(*openapi.EventResponse)
