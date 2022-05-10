@@ -9,7 +9,6 @@ import (
 	"mokapi/safe"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -140,7 +139,7 @@ func createFileProvider(t *testing.T, files ...string) *Provider {
 		}
 	}
 
-	p := New(static.FileProvider{Filename: strings.Join(files, strconv.Itoa(os.PathListSeparator))})
+	p := New(static.FileProvider{Filename: strings.Join(files, string(os.PathListSeparator))})
 	return p
 }
 
@@ -157,7 +156,7 @@ func createDirectoryProvider(t *testing.T, files ...string) *Provider {
 		}
 	}
 
-	p := New(static.FileProvider{Directory: strings.Join(dirs, strconv.Itoa(os.PathListSeparator))})
+	p := New(static.FileProvider{Directory: strings.Join(dirs, string(os.PathListSeparator))})
 	return p
 }
 
