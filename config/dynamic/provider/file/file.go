@@ -62,15 +62,12 @@ func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
 	}
 	if len(path) > 0 {
 		pool.Go(func(ctx context.Context) {
-			if err := p.walk(path, ch); err != nil {
-				log.Errorf("file provider: %v", err)
+			for _, i := range strings.Split(path, string(os.PathListSeparator)) {
+				if err := p.walk(i, ch); err != nil {
+					log.Errorf("file provider: %v", err)
+				}
 			}
 		})
-
-		err := p.watcher.Add(path)
-		if err != nil {
-			return fmt.Errorf("error adding path to watcher: %v", err)
-		}
 	}
 	return p.watch(ch, pool)
 }
@@ -175,6 +172,7 @@ func (p *Provider) walk(path string, ch chan<- *common.Config) error {
 			if p.skip(path) {
 				return filepath.SkipDir
 			}
+			p.watcher.Add(path)
 		} else if !p.skip(path) {
 			if c, err := p.readFile(path); err != nil {
 				log.Error(err)
