@@ -1,0 +1,43 @@
+components:
+  schemas:
+    Service:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        version:
+          type: string
+        type:
+          type: string
+          enum: ["http", "kafka"]
+        metrics:
+          $ref: '#/components/schemas/Metrics'
+    Metrics:
+      type: array
+      items:
+        $ref: '#/components/schemas/Metric'
+    Metric:
+      type: object
+      properties:
+        name:
+          type: string
+        value:
+          type: number
+    Events:
+      type: array
+      items:
+        $ref: '#/components/schemas/Event'
+    Event:
+      type: object
+      properties:
+        id:
+          type: string
+        traits:
+          type: object
+          additionalProperties:
+            type: string
+        data:
+          type: object
+          additionalProperties: true

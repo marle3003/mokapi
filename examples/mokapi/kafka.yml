@@ -1,0 +1,102 @@
+components:
+  schemas:
+    KafkaInfo:
+      allOf:
+        - $ref: 'common.yml#/components/schemas/Service'
+        - type: object
+          properties:
+            topics:
+              type: array
+              items:
+                type: string
+    Kafka:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        version:
+          type: string
+        contact:
+          type: object
+          properties:
+            name:
+              type: string
+            url:
+              type: string
+              format: uri
+            email:
+              type: string
+              format: email
+        topics:
+          type: array
+          items:
+            $ref: '#/components/schemas/Topic'
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/Group'
+        metrics:
+          $ref: 'common.yml#/components/schemas/Metrics'
+    Topic:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        partitions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Partition'
+    Partition:
+      type: object
+      properties:
+        id:
+          type: integer
+        startOffset:
+          type: integer
+        offset:
+          type: integer
+        leader:
+          $ref:  '#/components/schemas/Broker'
+        segments:
+          type: integer
+    Group:
+      type: object
+      properties:
+        name:
+          type: string
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/Member'
+        coordinator:
+          type: string
+        leader:
+          type: string
+        state:
+          type: string
+        protocol:
+          type: string
+        topics:
+          type: array
+          items:
+            type: string
+    Member:
+      type: object
+      properties:
+        name:
+          type: string
+        partitions:
+          type: array
+          items:
+            type: int
+    Broker:
+      type: object
+      properties:
+        name:
+          type: string
+        addr:
+          type: string

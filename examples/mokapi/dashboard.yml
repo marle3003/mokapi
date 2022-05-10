@@ -1,0 +1,67 @@
+openapi: 3.0.1
+info:
+  title: Mokapi's Dashboard API
+  version: v1
+servers:
+  - url: http://localhost:8090
+paths:
+  /api/services:
+    get:
+      summary: list of all services
+      operationId: services
+      responses:
+        "200":
+          description: the list of services
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  anyOf:
+                    - $ref: 'http.yml#/components/schemas/HttpInfo'
+                    - $ref: 'kafka.yml#/components/schemas/KafkaInfo'
+  /api/services/kafka/{name}:
+    get:
+      summary: Information about the kafka cluster
+      operationId: serviceKafka
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: name of kafka cluster
+          content:
+            application/json:
+              schema:
+                $ref: 'kafka.yml#/components/schemas/Kafka'
+  /api/events/{namespace}:
+    get:
+      summary: Information about the kafka cluster
+      operationId: events
+      parameters:
+        - name: namespace
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: name of kafka cluster
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yml#/components/schemas/Events'
+  /api/metrics:
+    get:
+      summary: Information about the kafka cluster
+      operationId: events
+      responses:
+        "200":
+          description: name of kafka cluster
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yml#/components/schemas/Metrics'
