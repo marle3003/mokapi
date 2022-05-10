@@ -82,6 +82,9 @@
             style="table-layout: fixed"
             @row-clicked="topicClickHandler"
           >
+          <template v-slot:cell(partitions)="data">
+              <span>{{ data.item.partitions.map(x => x.id).join(", ") }}</span>
+            </template>
             <template v-slot:cell(messages)="data">
               {{ metric(cluster.metrics, 'kafka_messages_total', {name: 'topic', value: data.item.name}) }}
             </template>
