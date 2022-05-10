@@ -4,7 +4,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"mokapi/acceptance/cmd"
-	"mokapi/config/dynamic/openapi"
 	"mokapi/config/static"
 	"testing"
 	"time"
@@ -18,11 +17,12 @@ func TestAcceptance(t *testing.T) {
 
 type BaseSuite struct {
 	suite.Suite
-	cmd   *cmd.Cmd
-	store *openapi.Config
+	cmd *cmd.Cmd
+	cfg *static.Config
 }
 
 func (suite *BaseSuite) initCmd(cfg *static.Config) {
+	suite.cfg = cfg
 	cmd, err := cmd.Start(cfg)
 	require.NoError(suite.T(), err)
 	suite.cmd = cmd

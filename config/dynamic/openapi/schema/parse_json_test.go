@@ -9,6 +9,7 @@ import (
 	"mokapi/media"
 	"mokapi/sortedmap"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -621,7 +622,7 @@ func TestValidate_Object(t *testing.T) {
 				schematest.WithMaxProperties(1),
 			),
 			func(t *testing.T, _ interface{}, err error) {
-				require.EqualError(t, err, "expected schema type=object maxProperties=1 free-form=true, got {name=foo, age=12}")
+				require.True(t, strings.HasPrefix(err.Error(), "expected schema type=object maxProperties=1 free-form=true, got"))
 			},
 		},
 		{

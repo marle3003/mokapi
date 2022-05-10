@@ -1,6 +1,7 @@
 package acceptance
 
 import (
+	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/static"
@@ -17,7 +18,9 @@ type PetStoreSuite struct{ BaseSuite }
 
 func (suite *PetStoreSuite) SetupSuite() {
 	cfg := static.NewConfig()
-	cfg.Api.Port = "8081"
+	port, err := try.GetFreePort()
+	require.NoError(suite.T(), err)
+	cfg.Api.Port = fmt.Sprintf("%v", port)
 	cfg.Providers.File.Directory = "./petstore"
 	suite.initCmd(cfg)
 }
@@ -27,7 +30,7 @@ func (suite *PetStoreSuite) SetupTest() {
 }
 
 func (suite *PetStoreSuite) TestApi() {
-	try.GetRequest(suite.T(), "http://127.0.0.1:8081",
+	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%v", suite.cfg.Api.Port),
 		nil,
 		try.HasStatusCode(http.StatusOK),
 		try.HasHeader("Access-Control-Allow-Origin", "*"))
