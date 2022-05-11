@@ -3,6 +3,7 @@ package js
 import (
 	"github.com/dop251/goja"
 	r "github.com/stretchr/testify/require"
+	"mokapi/engine/common"
 	"testing"
 )
 
@@ -28,9 +29,9 @@ func TestRequire(t *testing.T) {
 		{
 			"require custom file",
 			func(t *testing.T) {
-				host.openFile = func(file string) (string, error) {
-					r.Equal(t, "foo", file)
-					return "export var bar = {demo: 'demo'};", nil
+				host.openScript = func(file string) (common.Script, error) {
+					r.Equal(t, "foo.js", file)
+					return New("foo.js", "export var bar = {demo: 'demo'};", host)
 				}
 				host.info = func(args ...interface{}) {
 					r.Equal(t, "demo", args[0])

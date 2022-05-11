@@ -4,6 +4,11 @@ type EventEmitter interface {
 	Emit(event string, args ...interface{})
 }
 
+type Script interface {
+	Run() error
+	Close()
+}
+
 type Host interface {
 	Logger
 	Every(every string, do func(), times int, tags map[string]string) (int, error)
@@ -11,6 +16,7 @@ type Host interface {
 	Cancel(jobId int) error
 
 	OpenFile(file string) (string, error)
+	OpenScript(file string) (Script, error)
 
 	On(event string, do func(args ...interface{}) (bool, error), tags map[string]string)
 

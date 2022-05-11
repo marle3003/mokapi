@@ -6,6 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	config "mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/provider/file"
+	"mokapi/config/dynamic/script"
 	"mokapi/engine/common"
 	"mokapi/js"
 	"mokapi/lua"
@@ -20,27 +21,30 @@ type eventHandler struct {
 }
 
 type scriptHost struct {
+	id     int
 	Name   string
 	engine *Engine
-	script Script
+	script common.Script
 	jobs   map[int]*gocron.Job
 	events map[string][]*eventHandler
 	cwd    string
+	file   *config.Config
 }
 
-func newScriptHost(u *url.URL, src string, e *Engine) (*scriptHost, error) {
-	path := u.Path
-	if len(u.Opaque) > 0 {
-		path = u.Opaque
-	}
+func newScriptHost(file *config.Config, e *Engine) (*scriptHost, error) {
+	path := getScriptName(file.Url)
 
 	sh := &scriptHost{
+		id:     1,
 		Name:   path,
 		engine: e,
 		jobs:   make(map[int]*gocron.Job),
 		events: make(map[string][]*eventHandler),
 		cwd:    filepath.Dir(path),
+		file:   file,
 	}
+
+	src := file.Data.(*script.Script).Code
 
 	var err error
 	switch filepath.Ext(path) {
@@ -193,6 +197,44 @@ func (sh *scriptHost) OpenFile(path string) (string, error) {
 	return fmt.Sprintf("%s", f.Data), nil
 }
 
+func (sh *scriptHost) OpenScript(path string) (common.Script, error) {
+	if !filepath.IsAbs(path) {
+		path = filepath.Join(sh.cwd, path)
+	}
+
+	u, err := file.ParseUrl(path)
+	if err != nil {
+		return nil, err
+	}
+
+	name := getScriptName(u)
+	if s, ok := sh.engine.scripts[name]; ok {
+		return s.script, nil
+	}
+
+	file, err := sh.engine.reader.Read(u, config.WithParent(sh.file))
+	if err != nil {
+		return nil, err
+	}
+
+	file.Listeners = append(file.Listeners, func(c *config.Config) {
+		sh.engine.remove(name)
+	})
+
+	err = sh.engine.AddScript(file)
+	if err != nil {
+		return nil, err
+	}
+	return sh.engine.scripts[name].script, nil
+}
+
 func (sh *scriptHost) KafkaClient() common.KafkaClient {
 	return sh.engine.kafkaClient
+}
+
+func getScriptName(u *url.URL) string {
+	if len(u.Path) > 0 {
+		return u.Path
+	}
+	return u.Opaque
 }

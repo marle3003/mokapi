@@ -5,17 +5,12 @@ import (
 	"github.com/go-co-op/gocron"
 	log "github.com/sirupsen/logrus"
 	config "mokapi/config/dynamic/common"
+	"mokapi/config/dynamic/script"
 	"mokapi/engine/common"
 	"mokapi/runtime"
-	"net/url"
 	"strings"
 	"time"
 )
-
-type Script interface {
-	Run() error
-	Close()
-}
 
 type Summary struct {
 	Duration time.Duration
@@ -40,23 +35,25 @@ func New(reader config.Reader, app *runtime.App) *Engine {
 	}
 }
 
-func (e *Engine) AddScript(u *url.URL, code string) error {
-	log.Infof("parsing %v", u)
-	s, err := newScriptHost(u, code, e)
+func (e *Engine) AddScript(cfg *config.Config) error {
+	s, ok := cfg.Data.(*script.Script)
+	if !ok {
+		return nil
+	}
+	log.Infof("parsing %v", s.Filename)
+	sh, err := newScriptHost(cfg, e)
 	if err != nil {
 		return err
 	}
 
-	if h, ok := e.scripts[s.Name]; ok {
-		log.Debugf("updating script %v", s.Name)
-		h.close()
-	}
+	e.remove(sh.Name)
 
-	err = s.Run()
+	err = sh.Run()
 	if err != nil {
 		return err
 	}
-	e.scripts[s.Name] = s
+	e.scripts[sh.Name] = sh
+
 	return nil
 }
 
@@ -79,6 +76,14 @@ func (e *Engine) Start() {
 
 func (e *Engine) Close() {
 	e.cron.Stop()
+}
+
+func (e *Engine) remove(name string) {
+	if h, ok := e.scripts[name]; ok {
+		log.Debugf("updating script %v", name)
+		h.close()
+		delete(e.scripts, name)
+	}
 }
 
 func (s *Summary) String() string {

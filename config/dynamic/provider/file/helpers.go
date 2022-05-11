@@ -48,11 +48,11 @@ func ParseUrl(path string) (*url.URL, error) {
 		path = filepath.Join(wd, path)
 	}
 
-	path = filepath.ToSlash(path)
+	//path = filepath.ToSlash(path)
 
 	// windows needs that?
 	//return url.ParseRequestURI("file:///" + path)
-	return url.ParseRequestURI("file://" + path)
+	return url.ParseRequestURI("file:" + path)
 }
 
 func MustParseUrl(path string) *url.URL {

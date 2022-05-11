@@ -37,15 +37,15 @@
             class="text-center"
           >
             <b-card-title class="info">Uptime Since</b-card-title>
-            <b-card-text class="text-center value">{{ startTime | fromNow }}</b-card-text>
-            <b-card-text class="text-right additional">{{ startTime | moment }}</b-card-text>
+            <b-card-text class="text-center value">{{ metric(metrics, 'app_start_timestamp') | fromNow }}</b-card-text>
+            <b-card-text class="text-right additional">{{ metric(metrics, 'app_start_timestamp') | moment }}</b-card-text>
           </b-card>
           <b-card
             body-class="info-body"
             class="text-center"
           >
             <b-card-title class="info">Memory Usage</b-card-title>
-            <b-card-text class="text-center value">{{ memoryUsage | prettyBytes }}</b-card-text>
+            <b-card-text class="text-center value">{{ metric(metrics, 'app_memory_usage_bytes') | prettyBytes }}</b-card-text>
           </b-card>
         </b-card-group>
 
@@ -195,8 +195,7 @@ export default {
   mixins: [Api, Filters, Refresh, Metrics],
   data () {
     return {
-      startTime: 0,
-      memoryUsage: 0,
+      metrics: [],
       services: null,
       lastRequests: null,
       lastErrors: null,
@@ -303,16 +302,16 @@ export default {
           this.error = r
         }
       )
-      // this.getMetrics('app_start_timestamp', 'app_memory_usage_bytes').then(
-      //   data => {
-      //     this.startTime = this.metric(data, 'app_start_timestamp')
-      //     this.memoryUsage = this.metric(data, 'app_memory_usage_bytes')
-      //   },
-      //   _ => {
-      //     this.startTime = 0
-      //     this.memoryUsage = 0
-      //   }
-      // )
+      this.getMetrics('app').then(
+        r => {
+          this.metrics = r
+          this.error = null
+        },
+        r => {
+          this.metrics = null
+          this.error = r
+        }
+      )
       this.loaded = true
     },
     mailClickHandler (record) {

@@ -1,18 +1,31 @@
 import {on} from 'mokapi'
-import {clusters} from 'kafka'
+import {clusters} from 'kafka.js'
 import {apps as httpServices} from 'services_http'
+import {metrics} from 'metrics'
 
 export default function() {
     on('http', function(request, response) {
         response.headers["Access-Control-Allow-Origin"] = '*'
 
         switch (request.operationId) {
-            case "services":
+            case 'info':
+                response.data = {version: "1.0"}
+                return true
+            case 'services':
                 response.data = getServices()
-        }
+                return true
+            case 'serviceKafka':
+                console.log(clusters)
+                response.data = clusters[0]
+                return true
+            case 'metrics':
+                let q = request.query["query"]
+                if (!q) {
+                    response.data = metrics
+                } else{
+                    response.data = metrics.filter(x => x.name.includes(q))
+                }
 
-        if (request.operationId === 'serviceKafka') {
-            response.data = clusters[0]
         }
     })
 }

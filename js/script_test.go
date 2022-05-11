@@ -102,8 +102,9 @@ return s
 
 type testHost struct {
 	common.Host
-	openFile func(file string) (string, error)
-	info     func(args ...interface{})
+	openFile   func(file string) (string, error)
+	openScript func(file string) (common.Script, error)
+	info       func(args ...interface{})
 }
 
 func (th *testHost) Info(args ...interface{}) {
@@ -117,4 +118,11 @@ func (th *testHost) OpenFile(file string) (string, error) {
 		return th.openFile(file)
 	}
 	return "", nil
+}
+
+func (th *testHost) OpenScript(file string) (common.Script, error) {
+	if th.openScript != nil {
+		return th.openScript(file)
+	}
+	return nil, nil
 }

@@ -5,6 +5,17 @@ info:
 servers:
   - url: http://localhost:8090
 paths:
+  /api/info:
+    get:
+      summary: get information about mokapi's runtime
+      operationId: info
+      responses:
+        "200":
+          description: the information about mokapi's runtime
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yml#/components/schemas/Info'
   /api/services:
     get:
       summary: list of all services
@@ -56,11 +67,16 @@ paths:
                 $ref: 'common.yml#/components/schemas/Events'
   /api/metrics:
     get:
-      summary: Information about the kafka cluster
-      operationId: events
+      summary: returns metrics
+      operationId: metrics
+      parameters:
+        - in: query
+          name: query
+          schema:
+            type: string
       responses:
         "200":
-          description: name of kafka cluster
+          description: a list of metrics
           content:
             application/json:
               schema:

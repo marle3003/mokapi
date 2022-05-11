@@ -1,11 +1,12 @@
 package js
 
 import (
+	"fmt"
 	"github.com/dop251/goja"
 	engine "mokapi/engine/common"
 	"mokapi/js/common"
-	"mokapi/js/compiler"
 	"mokapi/js/modules"
+	"strings"
 )
 
 type factory func(engine.Host, *goja.Runtime) interface{}
@@ -16,10 +17,9 @@ var moduleTypes = map[string]factory{
 }
 
 type require struct {
-	exports  map[string]goja.Value
-	runtime  *goja.Runtime
-	host     engine.Host
-	compiler *compiler.Compiler
+	exports map[string]goja.Value
+	runtime *goja.Runtime
+	host    engine.Host
 }
 
 func enableRequire(runtime *goja.Runtime, host engine.Host) {
@@ -27,10 +27,6 @@ func enableRequire(runtime *goja.Runtime, host engine.Host) {
 		runtime: runtime,
 		host:    host,
 		exports: make(map[string]goja.Value),
-	}
-	var err error
-	if r.compiler, err = compiler.New(); err != nil {
-		panic(err)
 	}
 	runtime.Set("require", r.require)
 }
@@ -51,29 +47,20 @@ func (r *require) require(call goja.FunctionCall) goja.Value {
 		r.exports[file] = e
 		return e
 	} else {
-		src, err := r.host.OpenFile(file)
-		if err != nil {
-			src, err = r.host.OpenFile(file + ".js")
-			if err != nil {
-				panic(err)
-			}
+		if !strings.HasSuffix(file, ".js") {
+			file = file + ".js"
 		}
-
-		prg, err := r.compiler.Compile(file, src)
+		s, err := r.host.OpenScript(file)
 		if err != nil {
 			panic(err)
 		}
 
-		export := r.runtime.NewObject()
-		r.runtime.Set("exports", export)
-		_, err = r.runtime.RunProgram(prg)
-		if err != nil {
-			panic(err)
+		js, ok := s.(*Script)
+		if !ok {
+			panic(fmt.Sprintf("not supporting %v", file))
 		}
 
-		r.exports[file] = export
-		return export
-
-		//panic(r.runtime.ToValue(fmt.Sprintf("unknown module %v", file)))
+		r.exports[file] = js.exports
+		return js.exports
 	}
 }

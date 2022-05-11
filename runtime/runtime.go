@@ -5,19 +5,22 @@ import (
 	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/runtime/monitor"
+	"mokapi/version"
 )
 
 type App struct {
-	Http  map[string]*HttpInfo
-	Ldap  map[string]*LdapInfo
-	Kafka map[string]*KafkaInfo
-	Smtp  map[string]*SmtpInfo
+	Version string
+	Http    map[string]*HttpInfo
+	Ldap    map[string]*LdapInfo
+	Kafka   map[string]*KafkaInfo
+	Smtp    map[string]*SmtpInfo
 
 	Monitor *monitor.Monitor
 }
 
 func New() *App {
 	return &App{
+		Version: version.BuildVersion,
 		Monitor: monitor.New(),
 	}
 }

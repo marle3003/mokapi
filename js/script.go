@@ -39,23 +39,18 @@ func New(filename, src string, host engine.Host) (*Script, error) {
 	enableConsole(s.runtime, host)
 	enableOpen(s.runtime, host)
 
+	_, err = s.runtime.RunProgram(s.prg)
+	if err != nil {
+		return nil, err
+	}
+
 	return s, err
 }
 
 func (s *Script) Run() error {
-	_, err := s.runtime.RunProgram(s.prg)
-	if err != nil {
-		return err
-	}
-
-	if goja.IsNull(s.exports) || goja.IsUndefined(s.exports) {
-		return fmt.Errorf("export must be an object")
-	}
-
 	o := s.exports.ToObject(s.runtime)
-
 	if f, ok := goja.AssertFunction(o.Get("default")); ok {
-		_, err = f(goja.Undefined())
+		_, err := f(goja.Undefined())
 		if err != nil {
 			return err
 		}

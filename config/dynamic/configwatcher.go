@@ -111,14 +111,11 @@ func (w *ConfigWatcher) addOrUpdate(c *common.Config) error {
 	if !ok {
 		w.configs[c.Url.String()] = c
 		cfg = c
+		cfg.Listeners = append(cfg.Listeners, w.listener...)
 	} else {
 		cfg.Raw = c.Raw
 	}
 	w.m.Unlock()
-
-	if len(c.Listeners) == 0 {
-		c.Listeners = append(c.Listeners, w.listener...)
-	}
 
 	err := cfg.Parse(w)
 	if err != nil {

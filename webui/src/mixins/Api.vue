@@ -65,12 +65,8 @@ export default {
       )
       return response.data
     },
-    async getMetrics (...names) {
-      let url = this.baseUrl + '/api/metrics'
-      if (names.length > 0) {
-        const p = names.join(',')
-        url = url + '?names=' + p
-      }
+    async getMetrics (query) {
+      let url = this.baseUrl + '/api/metrics?q=' + query
       let response = await this.$http.get(url)
       return response.data
     }

@@ -6,7 +6,6 @@ import (
 	"mokapi/api"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/common"
-	"mokapi/config/dynamic/script"
 	"mokapi/config/static"
 	"mokapi/engine"
 	"mokapi/runtime"
@@ -47,13 +46,8 @@ func Start(cfg *static.Config) (*Cmd, error) {
 		managerHttp.Update(cfg)
 		mail.UpdateConfig(cfg, certStore, scriptEngine)
 		managerLdap.UpdateConfig(cfg)
-	})
-	watcher.AddListener(func(cfg *common.Config) {
-		if s, ok := cfg.Data.(*script.Script); ok {
-			err := scriptEngine.AddScript(cfg.Url, s.Code)
-			if err != nil {
-				log.Error(err)
-			}
+		if err := scriptEngine.AddScript(cfg); err != nil {
+			panic(err)
 		}
 	})
 

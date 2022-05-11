@@ -1,5 +1,10 @@
 components:
   schemas:
+    Info:
+      type: object
+      properties:
+        version:
+          type: string
     Service:
       type: object
       properties:
