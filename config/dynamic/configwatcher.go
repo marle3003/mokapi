@@ -76,7 +76,7 @@ func (w *ConfigWatcher) Read(u *url.URL, opts ...common.ConfigOptions) (*common.
 }
 
 func (w *ConfigWatcher) Start(pool *safe.Pool) error {
-	ch := make(chan *common.Config, 100)
+	ch := make(chan *common.Config)
 	for _, p := range w.providers {
 		err := p.Start(ch, pool)
 		if err != nil {
@@ -112,8 +112,11 @@ func (w *ConfigWatcher) addOrUpdate(c *common.Config) error {
 		w.configs[c.Url.String()] = c
 		cfg = c
 		cfg.Listeners = append(cfg.Listeners, w.listener...)
+	} else if cfg.Checksum == c.Checksum {
+		return nil
 	} else {
 		cfg.Raw = c.Raw
+		cfg.Version = cfg.Version + 1
 	}
 	w.m.Unlock()
 
@@ -122,6 +125,6 @@ func (w *ConfigWatcher) addOrUpdate(c *common.Config) error {
 		return err
 	}
 
-	cfg.Changed()
+	go cfg.Changed()
 	return nil
 }

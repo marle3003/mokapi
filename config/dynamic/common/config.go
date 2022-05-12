@@ -24,6 +24,8 @@ type Config struct {
 	Data         interface{}
 	Listeners    []func(*Config)
 	ProviderName string
+	Checksum     uint32
+	Version      int
 
 	parseMode string
 	m         sync.Mutex

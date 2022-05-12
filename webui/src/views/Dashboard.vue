@@ -56,7 +56,7 @@
             v-if="httpEnabled"
           >
             <b-card-title class="info">Total HTTP Requests</b-card-title>
-            <b-card-text class="text-center value">{{ this.metric(this.httpServices, 'http_requests_total') }}</b-card-text>
+            <b-card-text class="text-center value">{{ totalHttpRequests }}</b-card-text>
           </b-card>
           <b-card
             body-class="info-body"
@@ -66,15 +66,17 @@
             <b-card-title class="info">HTTP Request Errors</b-card-title>
             <b-card-text
               class="text-center value"
-              v-bind:class="{'text-danger': this.metric(this.httpServices, 'http_requests_total_errors') > 0}"
-            >{{ metric(this.httpServices, 'http_requests_total_errors') }}</b-card-text>
+              v-bind:class="{'text-danger': totalHttpRequestErrors > 0}"
+            >
+            {{ totalHttpRequestErrors }}
+            </b-card-text>
           </b-card>
           <b-card
             body-class="info-body"
             class="text-center"
             v-if="kafkaEnabled"
           >
-            <b-card-title class="info">Received Kafka Messages</b-card-title>
+            <b-card-title class="info">Kafka Messages</b-card-title>
             <b-card-text class="text-center value">{{ this.totalKafkaMessages }}</b-card-text>
           </b-card>
           <b-card
@@ -278,6 +280,20 @@ export default {
         this.dashboard.lastErrors !== undefined &&
         this.dashboard.lastErrors.length > 0
       )
+    },
+    totalHttpRequests: function () {
+      let n = 0
+      for (let http of this.httpServices) {
+        n += this.metric(http.metrics, 'http_requests_total')
+      }
+      return n
+    },
+    totalHttpRequestErrors: function () {
+      let n = 0
+      for (let http of this.httpServices) {
+        n += this.metric(http.metrics, 'http_requests_errors_total')
+      }
+      return n
     },
     totalKafkaMessages: function () {
       if (!this.kafkaServices) {

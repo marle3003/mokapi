@@ -218,6 +218,10 @@ func (sh *scriptHost) OpenScript(path string) (common.Script, error) {
 	}
 
 	file.Listeners = append(file.Listeners, func(c *config.Config) {
+		if old, ok := sh.engine.scripts[sh.Name]; ok && c.Version <= old.file.Version {
+			return
+		}
+		log.Infof("remove file: %v", c.Url)
 		sh.engine.remove(name)
 	})
 

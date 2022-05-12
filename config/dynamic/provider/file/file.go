@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/fsnotify/fsnotify"
 	log "github.com/sirupsen/logrus"
+	"hash/crc32"
 	"io/ioutil"
 	"mokapi/config/dynamic/common"
 	"mokapi/config/static"
@@ -159,6 +160,7 @@ func (p *Provider) readFile(path string) (*common.Config, error) {
 	return &common.Config{
 		Url:          u,
 		Raw:          data,
+		Checksum:     crc32.Checksum(data, crc32.MakeTable(crc32.Castagnoli)),
 		ProviderName: "file",
 	}, nil
 }

@@ -16,10 +16,6 @@ export let metrics = [
         value: 1
     },
     {
-        name: 'http_requests_errors_total{service="Swagger Petstore"}"',
-        value: 1652035690
-    },
-    {
         name: 'kafka_messages_total{service="Kafka World",topic="foo"}"',
         value: 10
     },

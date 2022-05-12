@@ -46,6 +46,10 @@ func (e *Engine) AddScript(cfg *config.Config) error {
 		return err
 	}
 
+	if old, ok := e.scripts[sh.Name]; ok && cfg.Version <= old.file.Version {
+		return nil
+	}
+
 	e.remove(sh.Name)
 
 	err = sh.Run()

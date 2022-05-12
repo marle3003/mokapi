@@ -3,6 +3,7 @@ package metrics
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
 )
 
 type Counter struct {
@@ -49,6 +50,7 @@ type CounterMap struct {
 	info       *Info
 	counters   map[uint32]*Counter
 	newCounter func(values []string) *Counter
+	m          sync.Mutex
 }
 
 func NewCounterMap(opts ...Options) *CounterMap {
@@ -91,6 +93,9 @@ func (m *CounterMap) Info() *Info {
 }
 
 func (m *CounterMap) WithLabel(values ...string) *Counter {
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	key := hash(values)
 	c, ok := m.counters[key]
 	if !ok {
@@ -101,6 +106,9 @@ func (m *CounterMap) WithLabel(values ...string) *Counter {
 }
 
 func (m *CounterMap) Value(query *Query) float64 {
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	var v float64
 	for _, c := range m.counters {
 		if c.Info().Match(query) {
@@ -111,6 +119,9 @@ func (m *CounterMap) Value(query *Query) float64 {
 }
 
 func (m *CounterMap) Sum() float64 {
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	var v float64
 	for _, c := range m.counters {
 		v += c.Value()
@@ -119,6 +130,9 @@ func (m *CounterMap) Sum() float64 {
 }
 
 func (m *CounterMap) Collect(ch chan<- Metric) {
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	for _, c := range m.counters {
 		ch <- c
 	}

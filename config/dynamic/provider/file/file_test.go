@@ -118,7 +118,7 @@ func TestWatch(t *testing.T) {
 	err = createTempFile("./test/openapi.yml", p.cfg.Directory)
 	require.NoError(t, err)
 
-	timeout := time.After(2 * time.Second)
+	timeout := time.After(5 * time.Second)
 	select {
 	case c := <-ch:
 		require.True(t, len(c.Url.String()) > 0, "url is set")

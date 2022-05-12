@@ -3,6 +3,7 @@ package metrics
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
 )
 
 type Gauge struct {
@@ -51,6 +52,7 @@ type GaugeMap struct {
 	info     *Info
 	gauges   map[uint32]*Gauge
 	newGauge func(values []string) *Gauge
+	m        sync.Mutex
 }
 
 func NewGaugeMap(opts ...Options) *GaugeMap {
@@ -93,6 +95,9 @@ func (m *GaugeMap) Info() *Info {
 }
 
 func (m *GaugeMap) WithLabel(values ...string) *Gauge {
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	key := hash(values)
 	c, ok := m.gauges[key]
 	if !ok {
@@ -103,6 +108,9 @@ func (m *GaugeMap) WithLabel(values ...string) *Gauge {
 }
 
 func (m *GaugeMap) Value(query *Query) float64 {
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	var v float64
 	for _, c := range m.gauges {
 		if c.Info().Match(query) {
@@ -113,6 +121,9 @@ func (m *GaugeMap) Value(query *Query) float64 {
 }
 
 func (m *GaugeMap) FindAll(query *Query) []Metric {
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	result := make([]Metric, 0)
 	for _, c := range m.gauges {
 		if c.Info().Match(query) {
@@ -123,12 +134,18 @@ func (m *GaugeMap) FindAll(query *Query) []Metric {
 }
 
 func (m *GaugeMap) Collect(ch chan<- Metric) {
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	for _, g := range m.gauges {
 		ch <- g
 	}
 }
 
 func (m *GaugeMap) MarshalJSON() ([]byte, error) {
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	if len(m.gauges) == 0 {
 		return json.Marshal(&struct {
 			Name  string  `json:"name"`
