@@ -40,14 +40,11 @@ func (e *Engine) AddScript(cfg *config.Config) error {
 	if !ok {
 		return nil
 	}
+
 	log.Infof("parsing %v", s.Filename)
 	sh, err := newScriptHost(cfg, e)
 	if err != nil {
 		return err
-	}
-
-	if old, ok := e.scripts[sh.Name]; ok && cfg.Version <= old.file.Version {
-		return nil
 	}
 
 	e.remove(sh.Name)

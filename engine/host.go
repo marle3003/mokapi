@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/go-co-op/gocron"
 	log "github.com/sirupsen/logrus"
@@ -21,27 +22,29 @@ type eventHandler struct {
 }
 
 type scriptHost struct {
-	id     int
-	Name   string
-	engine *Engine
-	script common.Script
-	jobs   map[int]*gocron.Job
-	events map[string][]*eventHandler
-	cwd    string
-	file   *config.Config
+	id       int
+	Name     string
+	engine   *Engine
+	script   common.Script
+	jobs     map[int]*gocron.Job
+	events   map[string][]*eventHandler
+	cwd      string
+	file     *config.Config
+	checksum []byte
 }
 
 func newScriptHost(file *config.Config, e *Engine) (*scriptHost, error) {
 	path := getScriptName(file.Url)
 
 	sh := &scriptHost{
-		id:     1,
-		Name:   path,
-		engine: e,
-		jobs:   make(map[int]*gocron.Job),
-		events: make(map[string][]*eventHandler),
-		cwd:    filepath.Dir(path),
-		file:   file,
+		id:       1,
+		Name:     path,
+		engine:   e,
+		jobs:     make(map[int]*gocron.Job),
+		events:   make(map[string][]*eventHandler),
+		cwd:      filepath.Dir(path),
+		file:     file,
+		checksum: file.Checksum,
 	}
 
 	src := file.Data.(*script.Script).Code
@@ -212,18 +215,21 @@ func (sh *scriptHost) OpenScript(path string) (common.Script, error) {
 		return s.script, nil
 	}
 
-	file, err := sh.engine.reader.Read(u, config.WithParent(sh.file))
+	file, err := sh.engine.reader.Read(u,
+		config.WithListener("scripthost", func(cfg *config.Config) {
+			name := getScriptName(cfg.Url)
+			sh.engine.remove(name)
+		}),
+		config.WithParent(sh.file))
 	if err != nil {
 		return nil, err
 	}
 
-	file.Listeners = append(file.Listeners, func(c *config.Config) {
-		if old, ok := sh.engine.scripts[sh.Name]; ok && c.Version <= old.file.Version {
-			return
+	if sh, ok := sh.engine.scripts[name]; ok {
+		if bytes.Equal(sh.checksum, file.Checksum) {
+			return sh.script, nil
 		}
-		log.Infof("remove file: %v", c.Url)
-		sh.engine.remove(name)
-	})
+	}
 
 	err = sh.engine.AddScript(file)
 	if err != nil {

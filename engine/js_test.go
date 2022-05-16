@@ -258,6 +258,61 @@ func TestJsOpen(t *testing.T) {
 		`))
 		r.True(t, strings.HasPrefix(err.Error(), "GoError: file not found"), "file not found")
 	})
+	t.Run("require nested with update", func(t *testing.T) {
+		t.Parallel()
+		foo := `import {bar} from 'bar'; export let foo = bar`
+		bar := `export let bar = 'bar'`
+		var barFile *common.Config
+
+		reader := &testReader{readFunc: func(cfg *common.Config) error {
+			switch s := cfg.Url.String(); {
+			case strings.HasSuffix(s, "foo.js"):
+				cfg.Data = &script.Script{
+					Code:     foo,
+					Filename: cfg.Url.String(),
+				}
+				return nil
+			case strings.HasSuffix(s, "bar.js"):
+				barFile = cfg
+				cfg.Data = &script.Script{
+					Code:     bar,
+					Filename: cfg.Url.String(),
+				}
+				return nil
+			}
+			return errors.New("file not found")
+		}}
+
+		engine := New(reader, runtime.New())
+		s := newScript("./test.js", `
+			import {foo} from 'foo'
+			import {on} from 'mokapi'
+			export default function() {
+				on('http', function() {return true}, {tags: {'name': foo}});
+			}
+		`)
+		s.AddListener("", func(config *common.Config) {
+			err := engine.AddScript(config)
+			r.NoError(t, err)
+		})
+		err := engine.AddScript(s)
+		r.NoError(t, err)
+
+		summaries := engine.Run("http")
+
+		r.Len(t, summaries, 1, "summary length not 1")
+		summary := summaries[0]
+		r.Equal(t, "bar", summary.Tags["name"])
+
+		bar = `export let bar = 'foobar'`
+		barFile.Changed()
+
+		summaries = engine.Run("http")
+
+		r.Len(t, summaries, 1, "summary length not 1")
+		summary = summaries[0]
+		r.Equal(t, "foobar", summary.Tags["name"])
+	})
 }
 
 func newScript(path, src string) *common.Config {

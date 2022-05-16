@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic/script"
+	"mokapi/sortedmap"
 	"net/url"
 	"path/filepath"
 	"reflect"
@@ -18,21 +19,22 @@ import (
 
 var UnknownFile = errors.New("unknown file")
 
+type ConfigListener func(*Config)
+
 type Config struct {
 	Url          *url.URL
 	Raw          []byte
 	Data         interface{}
-	Listeners    []func(*Config)
+	listeners    *sortedmap.LinkedHashMap
 	ProviderName string
-	Checksum     uint32
-	Version      int
+	Checksum     []byte
 
 	parseMode string
 	m         sync.Mutex
 }
 
 func NewConfig(u *url.URL, opts ...ConfigOptions) *Config {
-	f := &Config{Url: u}
+	f := &Config{Url: u, listeners: sortedmap.NewLinkedHashMap()}
 	for _, opt := range opts {
 		opt(f, true)
 	}
@@ -46,8 +48,11 @@ func (f *Config) Options(opts ...ConfigOptions) {
 }
 
 func (f *Config) Changed() {
-	for _, l := range f.Listeners {
-		l(f)
+	if f.listeners == nil {
+		return
+	}
+	for it := f.listeners.Iter(); it.Next(); {
+		it.Value().(ConfigListener)(f)
 	}
 }
 
@@ -64,9 +69,15 @@ func WithData(data interface{}) ConfigOptions {
 
 func WithParent(parent *Config) ConfigOptions {
 	return func(file *Config, init bool) {
-		file.Listeners = append(file.Listeners, func(_ *Config) {
+		file.AddListener(parent.Url.String(), func(_ *Config) {
 			parent.Changed()
 		})
+	}
+}
+
+func WithListener(key string, l ConfigListener) ConfigOptions {
+	return func(file *Config, init bool) {
+		file.AddListener(key, l)
 	}
 }
 
@@ -77,6 +88,20 @@ func AsPlaintext() ConfigOptions {
 		}
 		file.parseMode = "plaintext"
 	}
+}
+
+func (f *Config) AddListener(key string, l ConfigListener) {
+	f.ensureListener()
+	if v := f.listeners.Get(key); v == nil {
+		f.listeners.Set(key, l)
+	}
+}
+
+func (f *Config) ensureListener() {
+	if f.listeners != nil {
+		return
+	}
+	f.listeners = sortedmap.NewLinkedHashMap()
 }
 
 func (f *Config) Parse(r Reader) error {

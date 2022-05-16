@@ -1,6 +1,7 @@
 package dynamic
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	log "github.com/sirupsen/logrus"
@@ -16,7 +17,7 @@ import (
 
 type ConfigWatcher struct {
 	providers map[string]common.Provider
-	listener  []func(c *common.Config)
+	listener  []common.ConfigListener
 	configs   map[string]*common.Config
 	m         sync.Mutex
 }
@@ -111,12 +112,15 @@ func (w *ConfigWatcher) addOrUpdate(c *common.Config) error {
 	if !ok {
 		w.configs[c.Url.String()] = c
 		cfg = c
-		cfg.Listeners = append(cfg.Listeners, w.listener...)
-	} else if cfg.Checksum == c.Checksum {
+		cfg.AddListener("configwatcher", func(cfg *common.Config) {
+			for _, l := range w.listener {
+				l(cfg)
+			}
+		})
+	} else if bytes.Equal(cfg.Checksum, c.Checksum) {
 		return nil
 	} else {
 		cfg.Raw = c.Raw
-		cfg.Version = cfg.Version + 1
 	}
 	w.m.Unlock()
 
