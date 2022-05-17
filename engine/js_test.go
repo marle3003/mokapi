@@ -305,6 +305,7 @@ func TestJsOpen(t *testing.T) {
 		r.Equal(t, "bar", summary.Tags["name"])
 
 		bar = `export let bar = 'foobar'`
+		barFile.Checksum = []byte("foobar")
 		barFile.Changed()
 
 		summaries = engine.Run("http")

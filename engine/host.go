@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/go-co-op/gocron"
 	log "github.com/sirupsen/logrus"
@@ -26,6 +25,7 @@ type scriptHost struct {
 	Name     string
 	engine   *Engine
 	script   common.Script
+	scripts  map[string]common.Script
 	jobs     map[int]*gocron.Job
 	events   map[string][]*eventHandler
 	cwd      string
@@ -33,13 +33,14 @@ type scriptHost struct {
 	checksum []byte
 }
 
-func newScriptHost(file *config.Config, e *Engine) (*scriptHost, error) {
-	path := getScriptName(file.Url)
+func newScriptHost(file *config.Config, e *Engine) *scriptHost {
+	path := getScriptPath(file.Url)
 
 	sh := &scriptHost{
 		id:       1,
 		Name:     path,
 		engine:   e,
+		scripts:  make(map[string]common.Script),
 		jobs:     make(map[int]*gocron.Job),
 		events:   make(map[string][]*eventHandler),
 		cwd:      filepath.Dir(path),
@@ -47,23 +48,16 @@ func newScriptHost(file *config.Config, e *Engine) (*scriptHost, error) {
 		checksum: file.Checksum,
 	}
 
-	src := file.Data.(*script.Script).Code
+	return sh
+}
 
-	var err error
-	switch filepath.Ext(path) {
-	case ".js":
-		if sh.script, err = js.New(path, src, sh); err != nil {
-			return nil, err
-		}
-	case ".lua":
-		if sh.script, err = lua.New(path, src, sh); err != nil {
-			return nil, err
-		}
-	default:
-		return nil, fmt.Errorf("unsupported script %v", path)
+func (sh *scriptHost) Compile() error {
+	s, err := compile(sh.file, sh)
+	if err != nil {
+		return err
 	}
-
-	return sh, nil
+	sh.script = s
+	return nil
 }
 
 func (sh *scriptHost) Run() error {
@@ -210,41 +204,44 @@ func (sh *scriptHost) OpenScript(path string) (common.Script, error) {
 		return nil, err
 	}
 
-	name := getScriptName(u)
-	if s, ok := sh.engine.scripts[name]; ok {
-		return s.script, nil
+	name := getScriptPath(u)
+	if s, ok := sh.scripts[name]; ok {
+		return s, nil
 	}
 
 	file, err := sh.engine.reader.Read(u,
-		config.WithListener("scripthost", func(cfg *config.Config) {
-			name := getScriptName(cfg.Url)
-			sh.engine.remove(name)
-		}),
 		config.WithParent(sh.file))
 	if err != nil {
 		return nil, err
 	}
 
-	if sh, ok := sh.engine.scripts[name]; ok {
-		if bytes.Equal(sh.checksum, file.Checksum) {
-			return sh.script, nil
-		}
-	}
-
-	err = sh.engine.AddScript(file)
+	s, err := compile(file, sh)
 	if err != nil {
 		return nil, err
 	}
-	return sh.engine.scripts[name].script, nil
+	sh.scripts[name] = s
+	return s, nil
 }
 
 func (sh *scriptHost) KafkaClient() common.KafkaClient {
 	return sh.engine.kafkaClient
 }
 
-func getScriptName(u *url.URL) string {
+func getScriptPath(u *url.URL) string {
 	if len(u.Path) > 0 {
 		return u.Path
 	}
 	return u.Opaque
+}
+
+func compile(file *config.Config, h common.Host) (common.Script, error) {
+	s := file.Data.(*script.Script)
+	switch filepath.Ext(s.Filename) {
+	case ".js":
+		return js.New(getScriptPath(file.Url), s.Code, h)
+	case ".lua":
+		return lua.New(getScriptPath(file.Url), s.Code, h)
+	default:
+		return nil, fmt.Errorf("unsupported script %v", s.Filename)
+	}
 }

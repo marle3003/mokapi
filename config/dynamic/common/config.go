@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/Masterminds/sprig"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic/script"
 	"mokapi/sortedmap"
@@ -52,6 +53,7 @@ func (f *Config) Changed() {
 		return
 	}
 	for it := f.listeners.Iter(); it.Next(); {
+		log.Infof("%v call listener %v", f.Url, it.Key())
 		it.Value().(ConfigListener)(f)
 	}
 }

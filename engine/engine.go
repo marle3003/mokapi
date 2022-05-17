@@ -9,6 +9,7 @@ import (
 	"mokapi/engine/common"
 	"mokapi/runtime"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -23,6 +24,7 @@ type Engine struct {
 	logger      common.Logger
 	reader      config.Reader
 	kafkaClient *kafkaClient
+	m           sync.Mutex
 }
 
 func New(reader config.Reader, app *runtime.App) *Engine {
@@ -36,24 +38,28 @@ func New(reader config.Reader, app *runtime.App) *Engine {
 }
 
 func (e *Engine) AddScript(cfg *config.Config) error {
-	s, ok := cfg.Data.(*script.Script)
-	if !ok {
+	if _, ok := cfg.Data.(*script.Script); !ok {
 		return nil
 	}
 
-	log.Infof("parsing %v", s.Filename)
-	sh, err := newScriptHost(cfg, e)
+	e.m.Lock()
+	defer e.m.Unlock()
+
+	name := getScriptPath(cfg.Url)
+	e.remove(name)
+
+	sh := newScriptHost(cfg, e)
+	e.scripts[name] = sh
+
+	err := sh.Compile()
 	if err != nil {
 		return err
 	}
-
-	e.remove(sh.Name)
 
 	err = sh.Run()
 	if err != nil {
 		return err
 	}
-	e.scripts[sh.Name] = sh
 
 	return nil
 }
@@ -84,6 +90,8 @@ func (e *Engine) remove(name string) {
 		log.Debugf("updating script %v", name)
 		h.close()
 		delete(e.scripts, name)
+	} else {
+		log.Debugf("parsing script %v", name)
 	}
 }
 

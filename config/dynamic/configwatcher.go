@@ -107,6 +107,7 @@ func (w *ConfigWatcher) AddListener(f func(config *common.Config)) {
 
 func (w *ConfigWatcher) addOrUpdate(c *common.Config) error {
 	w.m.Lock()
+	defer w.m.Unlock()
 
 	cfg, ok := w.configs[c.Url.String()]
 	if !ok {
@@ -121,14 +122,18 @@ func (w *ConfigWatcher) addOrUpdate(c *common.Config) error {
 		return nil
 	} else {
 		cfg.Raw = c.Raw
-	}
-	w.m.Unlock()
-
-	err := cfg.Parse(w)
-	if err != nil {
-		return err
+		cfg.Checksum = c.Checksum
 	}
 
-	go cfg.Changed()
+	log.Infof("file changed: %v", cfg.Url)
+
+	go func() {
+		err := cfg.Parse(w)
+		if err != nil {
+			log.Error(err)
+		}
+		cfg.Changed()
+	}()
+
 	return nil
 }
