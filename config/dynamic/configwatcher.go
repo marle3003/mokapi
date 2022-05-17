@@ -125,8 +125,6 @@ func (w *ConfigWatcher) addOrUpdate(c *common.Config) error {
 		cfg.Checksum = c.Checksum
 	}
 
-	log.Infof("file changed: %v", cfg.Url)
-
 	go func() {
 		err := cfg.Parse(w)
 		if err != nil {

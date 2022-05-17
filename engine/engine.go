@@ -45,11 +45,10 @@ func (e *Engine) AddScript(cfg *config.Config) error {
 	e.m.Lock()
 	defer e.m.Unlock()
 
-	name := getScriptPath(cfg.Url)
-	e.remove(name)
+	e.remove(cfg)
 
 	sh := newScriptHost(cfg, e)
-	e.scripts[name] = sh
+	e.scripts[sh.Name] = sh
 
 	err := sh.Compile()
 	if err != nil {
@@ -85,13 +84,14 @@ func (e *Engine) Close() {
 	e.cron.Stop()
 }
 
-func (e *Engine) remove(name string) {
+func (e *Engine) remove(cfg *config.Config) {
+	name := getScriptPath(cfg.Url)
 	if h, ok := e.scripts[name]; ok {
-		log.Debugf("updating script %v", name)
+		log.Debugf("updating script %v", cfg.Url)
 		h.close()
 		delete(e.scripts, name)
 	} else {
-		log.Debugf("parsing script %v", name)
+		log.Debugf("parsing script %v", cfg.Url)
 	}
 }
 
