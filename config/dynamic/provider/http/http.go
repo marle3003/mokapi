@@ -146,7 +146,7 @@ func (p *Provider) readUrl(u *url.URL) (c *common.Config, changed bool, err erro
 	p.files[u.String()] = hash.Sum64()
 	c = &common.Config{
 		Url:          u,
-		Data:         b,
+		Raw:          b,
 		ProviderName: "http",
 	}
 

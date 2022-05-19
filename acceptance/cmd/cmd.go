@@ -9,6 +9,7 @@ import (
 	"mokapi/config/static"
 	"mokapi/engine"
 	"mokapi/runtime"
+	"mokapi/runtime/events"
 	"mokapi/safe"
 	"mokapi/server"
 	"mokapi/server/cert"
@@ -23,6 +24,9 @@ type Cmd struct {
 
 func Start(cfg *static.Config) (*Cmd, error) {
 	log.SetLevel(log.DebugLevel)
+	events.SetStore(100, events.NewTraits().WithNamespace("http"))
+	events.SetStore(100, events.NewTraits().WithNamespace("kafka"))
+
 	app := runtime.New()
 
 	watcher := dynamic.NewConfigWatcher(cfg)

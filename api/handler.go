@@ -82,8 +82,6 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.getKafkaService(w, r)
 	case strings.HasPrefix(p, "/api/services/smtp/"):
 		h.getSmtpService(w, r)
-	case strings.HasPrefix(p, "/api/http/requests"):
-		h.getHttpRequests(w, r)
 	case p == "/api/dashboard":
 		h.getDashboard(w, r)
 	case strings.HasPrefix(p, "/api/metrics"):

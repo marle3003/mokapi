@@ -95,7 +95,7 @@ func NewService(s *openapi.Config) Service {
 		service.BaseUrls = append(service.BaseUrls, newBaseUrl(server))
 	}
 
-	for path, e := range s.EndPoints {
+	for path, e := range s.Paths.Value {
 		if e.Value != nil {
 			service.Endpoints = append(service.Endpoints, newEndpoint(path, e.Value))
 		}
@@ -213,14 +213,14 @@ func newSchema(name string, s *schema.Ref, level int) *Schema {
 	}
 
 	if s.Value == nil {
-		return &Schema{Name: name, Ref: s.Ref()}
+		return &Schema{Name: name, Ref: s.Ref}
 	}
 
 	v := &Schema{
 		Name:        name,
 		Type:        s.Value.Type,
 		Properties:  make([]*Schema, 0),
-		Ref:         s.Ref(),
+		Ref:         s.Ref,
 		Description: s.Value.Description,
 		Required:    s.Value.Required,
 		Format:      s.Value.Format,
@@ -256,7 +256,7 @@ func newModel(name string, s *schema.Ref) *Schema {
 		return nil
 	}
 
-	v := &Schema{Name: name, Type: s.Value.Type, Properties: make([]*Schema, 0), Ref: s.Ref()}
+	v := &Schema{Name: name, Type: s.Value.Type, Properties: make([]*Schema, 0), Ref: s.Ref}
 
 	if s.Value.Properties != nil {
 		for it := s.Value.Properties.Value.Iter(); it.Next(); {
@@ -264,13 +264,13 @@ func newModel(name string, s *schema.Ref) *Schema {
 			p := it.Value().(*schema.Ref)
 			if p.Value.Type == "array" && p.Value.Items != nil {
 				tName := p.Value.Items.Value.Type
-				if len(p.Value.Items.Ref()) > 0 {
-					seg := strings.Split(p.Value.Items.Ref(), "/")
+				if len(p.Value.Items.Ref) > 0 {
+					seg := strings.Split(p.Value.Items.Ref, "/")
 					tName = seg[len(seg)-1]
 				}
 				v.Properties = append(v.Properties, &Schema{Name: s, Type: fmt.Sprintf("array[%v]", tName)})
-			} else if len(p.Ref()) > 0 {
-				seg := strings.Split(p.Ref(), "/")
+			} else if len(p.Ref) > 0 {
+				seg := strings.Split(p.Ref, "/")
 				tName := seg[len(seg)-1]
 				v.Properties = append(v.Properties, &Schema{Name: s, Type: tName})
 			} else {
@@ -281,8 +281,8 @@ func newModel(name string, s *schema.Ref) *Schema {
 
 	if s.Value.Type == "array" && s.Value.Items != nil {
 		tName := s.Value.Items.Value.Type
-		if len(s.Value.Items.Ref()) > 0 {
-			seg := strings.Split(s.Value.Items.Ref(), "/")
+		if len(s.Value.Items.Ref) > 0 {
+			seg := strings.Split(s.Value.Items.Ref, "/")
 			tName = seg[len(seg)-1]
 		}
 		v.Type = fmt.Sprintf("array[%v]", tName)

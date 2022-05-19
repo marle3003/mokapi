@@ -1,6 +1,7 @@
 package openapi
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"mokapi/config/dynamic/common"
@@ -26,8 +27,8 @@ type Config struct {
 	// A relative path to an individual endpoint. The path MUST begin
 	// with a forward slash ('/'). The path is appended to the url from
 	// server objects url field in order to construct the full URL
-	EndPoints  map[string]*EndpointRef `yaml:"paths" json:"paths"`
-	Components Components              `yaml:"components,omitempty" json:"components,omitempty"`
+	Paths      EndpointsRef `yaml:"paths,omitempty" json:"paths,omitempty"`
+	Components Components   `yaml:"components,omitempty" json:"components,omitempty"`
 }
 
 type Info struct {
@@ -48,6 +49,11 @@ type Server struct {
 	// An optional string describing the host designated by the URL.
 	// CommonMark syntax MAY be used for rich text representation.
 	Description string
+}
+
+type EndpointsRef struct {
+	ref.Reference
+	Value map[string]*EndpointRef
 }
 
 type EndpointRef struct {
@@ -375,4 +381,17 @@ func parseVersion(s string) (v version) {
 		v.build = i
 	}
 	return
+}
+
+func (e *EndpointsRef) MarshalJSON() ([]byte, error) {
+	if len(e.Ref) == 0 && len(e.Value) == 0 {
+		return []byte("{}"), nil
+	}
+	return json.Marshal(struct {
+		Ref   string                  `json:"$ref"`
+		Value map[string]*EndpointRef `json:"value"`
+	}{
+		Ref:   e.Ref,
+		Value: e.Value,
+	})
 }

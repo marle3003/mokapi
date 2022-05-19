@@ -16,7 +16,7 @@ func TestRef_UnmarshalYAML(t *testing.T) {
 			name: "ref",
 			s:    "$ref: '#/components/schema/Foo'",
 			fn: func(t *testing.T, r *Ref) {
-				require.Equal(t, "#/components/schema/Foo", r.Ref())
+				require.Equal(t, "#/components/schema/Foo", r.Ref)
 			},
 		},
 		{

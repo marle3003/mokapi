@@ -13,7 +13,11 @@ export let metrics = [
     },
     {
         name: 'http_requests_errors_total{service="Swagger Petstore",endpoint="/pet"}"',
-        value: 10
+        value: 1
+    },
+    {
+        name: 'http_request_timestamp{service="Swagger Petstore"}"',
+        value: 1652235690
     },
     {
         name: 'kafka_messages_total{service="Kafka World",topic="foo"}"',

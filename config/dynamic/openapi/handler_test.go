@@ -6,7 +6,7 @@ import (
 	"mokapi/config/dynamic/openapi"
 	"mokapi/config/dynamic/openapi/openapitest"
 	"mokapi/config/dynamic/openapi/schema/schematest"
-	"mokapi/runtime/logs"
+	"mokapi/runtime/events"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -469,6 +469,8 @@ func TestResolveEndpoint(t *testing.T) {
 	for _, data := range testdata {
 		t.Run(data.name, func(t *testing.T) {
 			test.NewNullLogger()
+			events.SetStore(10, events.NewTraits().WithNamespace("http"))
+			defer events.Reset()
 
 			config := &openapi.Config{
 				Info:       openapi.Info{Name: "Testing"},
@@ -583,27 +585,28 @@ func TestHandler_Log(t *testing.T) {
 					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")))
 				openapitest.AppendEndpoint("/foo", c, openapitest.WithOperation("get", op))
 				r := httptest.NewRequest("GET", "http://localhost/foo", nil)
-				r = r.WithContext(logs.NewHttpLogContext(r.Context(), logs.NewHttpLog(r.Method, r.URL.String())))
 				r.Header.Set("accept", "application/json")
 				rr := httptest.NewRecorder()
 				f(rr, r)
 
-				log, ok := logs.HttpLogFromContext(r.Context())
-				require.True(t, ok)
-				require.Equal(t, "GET", log.Request.Method)
-				require.Equal(t, "http://localhost/foo", log.Request.Url)
+				logs := events.Events(events.NewTraits().WithNamespace("http"))
+				require.Len(t, logs, 1)
+				log := logs[0]
 				require.NotEmpty(t, log.Id)
-				require.Equal(t, "application/json", log.Response.Headers["Content-Type"])
+				httpLog := log.Data.(*openapi.HttpLog)
+				require.Equal(t, "GET", httpLog.Request.Method)
+				require.Equal(t, "http://localhost/foo", httpLog.Request.Url)
+				require.Equal(t, "application/json", httpLog.Response.Headers["Content-Type"])
 			},
 		},
 	}
 
-	t.Parallel()
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 			test.NewNullLogger()
+			events.SetStore(10, events.NewTraits().WithNamespace("http"))
+			defer events.Reset()
 
 			config := &openapi.Config{
 				Info:       openapi.Info{Name: "Testing"},

@@ -33,10 +33,8 @@ func (c *Config) Parse(config *common.Config, reader common.Reader) error {
 		return err
 	}
 
-	for _, e := range c.EndPoints {
-		if err := e.Parse(config, reader); err != nil {
-			return err
-		}
+	if err := c.Paths.Parse(config, reader); err != nil {
+		return err
 	}
 
 	return nil
@@ -47,8 +45,8 @@ func (r *NamedResponses) Parse(config *common.Config, reader common.Reader) erro
 		return nil
 	}
 
-	if len(r.Ref()) > 0 && r.Value == nil {
-		if err := common.Resolve(r.Ref(), &r.Value, config, reader); err != nil {
+	if len(r.Ref) > 0 {
+		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
 			return err
 		}
 	}
@@ -61,8 +59,8 @@ func (r *RequestBodies) Parse(config *common.Config, reader common.Reader) error
 		return nil
 	}
 
-	if len(r.Ref()) > 0 && r.Value == nil {
-		if err := common.Resolve(r.Ref(), &r.Value, config, reader); err != nil {
+	if len(r.Ref) > 0 {
+		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
 			return err
 		}
 	}
@@ -75,8 +73,8 @@ func (r *Examples) Parse(config *common.Config, reader common.Reader) error {
 		return nil
 	}
 
-	if len(r.Ref()) > 0 && r.Value == nil {
-		if err := common.Resolve(r.Ref(), &r.Value, config, reader); err != nil {
+	if len(r.Ref) > 0 {
+		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
 			return err
 		}
 	}
@@ -89,8 +87,8 @@ func (r *NamedHeaders) Parse(config *common.Config, reader common.Reader) error 
 		return nil
 	}
 
-	if len(r.Ref()) > 0 && r.Value == nil {
-		if err := common.Resolve(r.Ref(), &r.Value, config, reader); err != nil {
+	if len(r.Ref) > 0 {
+		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
 			return err
 		}
 	}
@@ -98,18 +96,37 @@ func (r *NamedHeaders) Parse(config *common.Config, reader common.Reader) error 
 	return nil
 }
 
-func (e *EndpointRef) Parse(config *common.Config, reader common.Reader) error {
-	if e == nil {
+func (r *EndpointsRef) Parse(config *common.Config, reader common.Reader) error {
+	if r == nil {
 		return nil
 	}
 
-	if len(e.Ref()) > 0 && e.Value == nil {
-		if err := common.Resolve(e.Ref(), &e.Value, config, reader); err != nil {
+	if len(r.Ref) > 0 {
+		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
 			return err
 		}
 	}
 
-	return e.Value.Parse(config, reader)
+	for _, e := range r.Value {
+		if err := e.Parse(config, reader); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *EndpointRef) Parse(config *common.Config, reader common.Reader) error {
+	if r == nil {
+		return nil
+	}
+
+	if len(r.Ref) > 0 {
+		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
+			return err
+		}
+	}
+
+	return r.Value.Parse(config, reader)
 }
 
 func (e *Endpoint) Parse(config *common.Config, reader common.Reader) error {
@@ -153,8 +170,8 @@ func (r *RequestBodyRef) Parse(config *common.Config, reader common.Reader) erro
 		return nil
 	}
 
-	if len(r.Ref()) > 0 && r.Value == nil {
-		if err := common.Resolve(r.Ref(), &r.Value, config, reader); err != nil {
+	if len(r.Ref) > 0 {
+		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
 			return err
 		}
 	}
@@ -176,8 +193,8 @@ func (r *ResponseRef) Parse(config *common.Config, reader common.Reader) error {
 		return nil
 	}
 
-	if len(r.Ref()) > 0 && r.Value == nil {
-		if err := common.Resolve(r.Ref(), &r.Value, config, reader); err != nil {
+	if len(r.Ref) > 0 {
+		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
 			return err
 		}
 	}
@@ -215,8 +232,8 @@ func (r *ExampleRef) Parse(config *common.Config, reader common.Reader) error {
 		return nil
 	}
 
-	if len(r.Ref()) > 0 && r.Value == nil {
-		if err := common.Resolve(r.Ref(), &r.Value, config, reader); err != nil {
+	if len(r.Ref) > 0 {
+		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
 			return err
 		}
 	}
@@ -228,8 +245,8 @@ func (r *HeaderRef) Parse(config *common.Config, reader common.Reader) error {
 		return nil
 	}
 
-	if len(r.Ref()) > 0 && r.Value == nil {
-		if err := common.Resolve(r.Ref(), &r.Value, config, reader); err != nil {
+	if len(r.Ref) > 0 {
+		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
 			return err
 		}
 	}

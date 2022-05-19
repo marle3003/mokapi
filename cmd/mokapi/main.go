@@ -12,6 +12,7 @@ import (
 	"mokapi/config/static"
 	"mokapi/engine"
 	"mokapi/runtime"
+	"mokapi/runtime/events"
 	"mokapi/safe"
 	"mokapi/server"
 	"mokapi/server/cert"
@@ -63,6 +64,9 @@ func main() {
 }
 
 func createServer(cfg *static.Config) (*server.Server, error) {
+	events.SetStore(100, events.NewTraits().WithNamespace("http"))
+	events.SetStore(100, events.NewTraits().WithNamespace("kafka"))
+
 	pool := safe.NewPool(context.Background())
 	app := runtime.New()
 	watcher := dynamic.NewConfigWatcher(cfg)

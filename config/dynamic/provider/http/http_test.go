@@ -36,7 +36,7 @@ func TestProvider(t *testing.T) {
 	select {
 	case c := <-ch:
 		require.Equal(t, p.config.Url, c.Url.String())
-		require.Equal(t, content[0], c.Data)
+		require.Equal(t, content[0], c.Raw)
 	case <-timeout:
 		t.Fatal("timeout while waiting for http event")
 		return
@@ -46,7 +46,7 @@ func TestProvider(t *testing.T) {
 	select {
 	case c := <-ch:
 		require.Equal(t, p.config.Url, c.Url.String())
-		require.Equal(t, content[1], c.Data)
+		require.Equal(t, content[1], c.Raw)
 	case <-timeout:
 		t.Fatal("timeout while waiting for http event")
 		return

@@ -2,7 +2,6 @@ package openapi
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -11,7 +10,7 @@ import (
 	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/engine/common"
 	"mokapi/media"
-	"mokapi/runtime/logs"
+	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"mokapi/server/httperror"
 	"net/http"
@@ -46,7 +45,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	logHttp := setRequestLog(r, op)
+	logHttp, ok := LogEventFromContext(r.Context())
 
 	status, res, err := op.getFirstSuccessResponse()
 	if err != nil {
@@ -90,7 +89,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	for k, v := range res.Headers {
 		if v.Value == nil {
-			log.Warnf("header ref not resovled: %v", v.Ref())
+			log.Warnf("header ref not resovled: %v", v.Ref)
 			continue
 		}
 		response.Headers[k] = fmt.Sprintf("%v", gen.New(v.Value.Schema))
@@ -172,12 +171,8 @@ func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	reqSeg := strings.Split(r.URL.Path, "/")
 	var lastError error
 
-	if logHttp, ok := logs.HttpLogFromContext(r.Context()); ok {
-		logHttp.Service = h.config.Info.Name
-	}
-
 endpointLoop:
-	for path, ref := range h.config.EndPoints {
+	for path, ref := range h.config.Paths.Value {
 		if ref.Value == nil {
 			continue
 		}
@@ -220,6 +215,12 @@ endpointLoop:
 		if m, ok := monitor.HttpFromContext(r.Context()); ok {
 			m.LastRequest.WithLabel(h.config.Info.Name).Set(float64(time.Now().Unix()))
 			m.RequestCounter.WithLabel(h.config.Info.Name, path).Add(1)
+		}
+
+		if ctx, err := NewLogEventContext(r, events.NewTraits().WithName(h.config.Info.Name).With("path", path)); err != nil {
+			log.Errorf("unable to log http event: %v", err)
+		} else {
+			r = r.WithContext(ctx)
 		}
 
 		h.next.ServeHTTP(rw, r)
@@ -277,31 +278,9 @@ func writeError(rw http.ResponseWriter, r *http.Request, err error, serviceName 
 		m.RequestErrorCounter.WithLabel(serviceName).Add(1)
 	}
 	http.Error(rw, message, status)
-	logHttp, ok := logs.HttpLogFromContext(r.Context())
+	logHttp, ok := LogEventFromContext(r.Context())
 	if ok {
 		logHttp.Response.StatusCode = status
 		logHttp.Response.Body = message
 	}
-}
-
-func setRequestLog(r *http.Request, o *Operation) *logs.HttpLog {
-	logHttp, ok := logs.HttpLogFromContext(r.Context())
-	if !ok {
-		return nil
-	}
-
-	params, _ := parameter.FromContext(r.Context())
-	for t, values := range params {
-		for k, v := range values {
-			value, _ := json.Marshal(v.Value)
-			logHttp.Request.Parameters = append(logHttp.Request.Parameters, logs.HttpParamter{
-				Name:  k,
-				Type:  string(t),
-				Value: string(value),
-				Raw:   v.Raw,
-			})
-		}
-	}
-
-	return logHttp
 }

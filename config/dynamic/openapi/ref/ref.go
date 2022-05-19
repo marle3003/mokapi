@@ -1,18 +1,20 @@
 package ref
 
-import "gopkg.in/yaml.v3"
+import (
+	"gopkg.in/yaml.v3"
+)
 
-type Reference struct {
-	Value string `yaml:"$ref" json:"$ref"`
+type Resolver interface {
+	Resolve() interface{}
 }
 
-func (r *Reference) Ref() string {
-	return r.Value
+type Reference struct {
+	Ref string `yaml:"$ref" json:"$ref"`
 }
 
 func (r *Reference) Unmarshal(node *yaml.Node, val interface{}) error {
 	err := node.Decode(r)
-	if err == nil && len(r.Value) > 0 {
+	if err == nil && len(r.Ref) > 0 {
 		return nil
 	}
 

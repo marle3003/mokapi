@@ -41,7 +41,7 @@ func Resolve(ref string, element interface{}, config *Config, reader Reader) err
 			opts = append(opts, WithData(element))
 		}
 
-		f, err := reader.Read(u, opts...)
+		f, err := reader.Read(removeFragment(u), opts...)
 		if err != nil {
 			return fmt.Errorf("unable to read %v: %v", u, err)
 		}
@@ -62,6 +62,13 @@ func ResolvePath(path string, cursor interface{}, resolved interface{}) (err err
 		cursor, err = Get(t, cursor)
 		if err != nil {
 			return
+		}
+		v := reflect.ValueOf(cursor)
+		if v.Kind() != reflect.Struct {
+			continue
+		}
+		if f := v.FieldByName("Value"); f.IsValid() {
+			cursor = f.Interface()
 		}
 	}
 
@@ -135,4 +142,12 @@ func Get(token string, node interface{}) (interface{}, error) {
 func caseInsensitiveFieldByName(v reflect.Value, name string) reflect.Value {
 	name = strings.ToLower(name)
 	return v.FieldByNameFunc(func(n string) bool { return strings.ToLower(n) == name })
+}
+
+func removeFragment(u *url.URL) *url.URL {
+	c := new(url.URL)
+	// shallow copy
+	*c = *u
+	c.Fragment = ""
+	return c
 }

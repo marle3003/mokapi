@@ -49,7 +49,7 @@ func TestChannelResolve(t *testing.T) {
 	t.Run("file reference", func(t *testing.T) {
 		target := &Channel{}
 		reader := &testReader{readFunc: func(cfg *common.Config) error {
-			require.Equal(t, "/foo.yml#/channels/foo", cfg.Url.String())
+			require.Equal(t, "/foo.yml", cfg.Url.String())
 			config := &Config{Channels: map[string]*ChannelRef{
 				"foo": {Value: target},
 			}}
@@ -65,7 +65,7 @@ func TestChannelResolve(t *testing.T) {
 	})
 	t.Run("file reference but nil", func(t *testing.T) {
 		reader := &testReader{readFunc: func(file *common.Config) error {
-			require.Equal(t, "/foo.yml#/channels/foo", file.Url.String())
+			require.Equal(t, "/foo.yml", file.Url.String())
 			config := &Config{Channels: map[string]*ChannelRef{
 				"foo": {},
 			}}
@@ -136,7 +136,7 @@ func TestMessageResolve(t *testing.T) {
 	t.Run("subscribe message", func(t *testing.T) {
 		target := &Message{}
 		reader := &testReader{readFunc: func(file *common.Config) error {
-			require.Equal(t, "/foo.yml#/components/messages/foo", file.Url.String())
+			require.Equal(t, "/foo.yml", file.Url.String())
 			config := &Config{Components: &Components{
 				Messages: map[string]*Message{"foo": target},
 			}}
@@ -153,7 +153,7 @@ func TestMessageResolve(t *testing.T) {
 	t.Run("publish message", func(t *testing.T) {
 		target := &Message{}
 		reader := &testReader{readFunc: func(file *common.Config) error {
-			require.Equal(t, "/foo.yml#/components/messages/foo", file.Url.String())
+			require.Equal(t, "/foo.yml", file.Url.String())
 			config := &Config{Components: &Components{
 				Messages: map[string]*Message{"foo": target},
 			}}
@@ -194,7 +194,7 @@ func TestFileResolve(t *testing.T) {
 		target := &Channel{}
 		var fooConfig *common.Config
 		reader := &testReader{readFunc: func(cfg *common.Config) error {
-			require.Equal(t, "/foo.yml#/channels/foo", cfg.Url.String())
+			require.Equal(t, "/foo.yml", cfg.Url.String())
 			config := &Config{Channels: map[string]*ChannelRef{
 				"foo": {Value: &Channel{}},
 			}}
@@ -241,7 +241,7 @@ func TestSchema(t *testing.T) {
 		schemas := &schema.Schemas{}
 		schemas.Set("foo", &schema.Ref{Value: target})
 		config.Components = &Components{Schemas: schemas}
-		message.Payload = &schema.Ref{Reference: ref.Reference{Value: "#/components/Schemas/foo"}}
+		message.Payload = &schema.Ref{Reference: ref.Reference{Ref: "#/components/Schemas/foo"}}
 		reader := &testReader{readFunc: func(cfg *common.Config) error { return nil }}
 
 		err := config.Parse(&common.Config{Url: &url.URL{}, Data: config}, reader)
@@ -250,7 +250,7 @@ func TestSchema(t *testing.T) {
 	})
 	t.Run("file reference direct", func(t *testing.T) {
 		target := &schema.Schema{}
-		message.Payload = &schema.Ref{Reference: ref.Reference{Value: "foo.yml"}}
+		message.Payload = &schema.Ref{Reference: ref.Reference{Ref: "foo.yml"}}
 		reader := &testReader{readFunc: func(cfg *common.Config) error {
 			cfg.Data = target
 			return nil
@@ -262,7 +262,7 @@ func TestSchema(t *testing.T) {
 	})
 	t.Run("modify file reference direct", func(t *testing.T) {
 		target := &schema.Schema{}
-		message.Payload = &schema.Ref{Reference: ref.Reference{Value: "foo.yml"}}
+		message.Payload = &schema.Ref{Reference: ref.Reference{Ref: "foo.yml"}}
 		var fooConfig *common.Config
 		reader := &testReader{readFunc: func(file *common.Config) error {
 			file.Data = &schema.Schema{}

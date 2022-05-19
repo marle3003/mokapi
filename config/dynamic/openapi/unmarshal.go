@@ -66,6 +66,10 @@ func (c *Content) UnmarshalYAML(value *yaml.Node) error {
 	return nil
 }
 
+func (r *EndpointsRef) UnmarshalYAML(node *yaml.Node) error {
+	return r.Reference.Unmarshal(node, &r.Value)
+}
+
 func (r *ResponseRef) UnmarshalYAML(node *yaml.Node) error {
 	return r.Reference.Unmarshal(node, &r.Value)
 }

@@ -20,10 +20,10 @@ func AppendEndpoint(path string, config *openapi.Config, opts ...EndpointOptions
 	for _, opt := range opts {
 		opt(e)
 	}
-	if config.EndPoints == nil {
-		config.EndPoints = make(map[string]*openapi.EndpointRef)
+	if config.Paths.Value == nil {
+		config.Paths.Value = make(map[string]*openapi.EndpointRef)
 	}
-	config.EndPoints[path] = &openapi.EndpointRef{
+	config.Paths.Value[path] = &openapi.EndpointRef{
 		Value: e,
 	}
 	return e

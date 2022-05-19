@@ -21,6 +21,10 @@ var UnknownFile = errors.New("unknown file")
 
 type ConfigListener func(*Config)
 
+type Validator interface {
+	Validate() error
+}
+
 type Config struct {
 	Url          *url.URL
 	Raw          []byte
@@ -160,8 +164,6 @@ func (f *Config) Parse(r Reader) error {
 		}
 	}
 
-	f.Raw = nil
-
 	return nil
 }
 
@@ -172,6 +174,14 @@ func (f *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	for _, ct := range configTypes {
 		if _, ok := data[ct.header]; ok {
 			return f.unmarshal(unmarshal, ct)
+		} else if f.Data != nil {
+			v := reflect.ValueOf(f.Data)
+			if v.Kind() != reflect.Ptr {
+				continue
+			}
+			if v.Elem().Type() == ct.configType {
+				return f.unmarshal(unmarshal, ct)
+			}
 		}
 	}
 
@@ -228,6 +238,13 @@ func (f *Config) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
+	return nil
+}
+
+func (f *Config) Validate() error {
+	if v, ok := f.Data.(Validator); ok {
+		return v.Validate()
+	}
 	return nil
 }
 

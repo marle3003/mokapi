@@ -13,34 +13,37 @@
           <b-badge
             pill
             class="operation"
-            :class="data.item.request.method.toLowerCase()"
-          >{{ data.item.request.method }}</b-badge>
+            :class="data.item.data.request.method.toLowerCase()"
+          >{{ data.item.data.request.method }}</b-badge>
         </template>
         <template v-slot:cell(statusCode)="data">
           <b-icon
             icon="circle-fill"
             class="response icon mr-1"
             variant="success"
-            v-if="data.item.response.statusCode >= 200 && data.item.response.statusCode < 300"
+            v-if="data.item.data.response.statusCode >= 200 && data.item.data.response.statusCode < 300"
           ></b-icon>
           <b-icon
             icon="circle-fill"
             class="response icon mr-1"
             variant="warning"
-            v-if="data.item.response.statusCode >= 300 && data.item.response.statusCode < 400"
+            v-if="data.item.data.response.statusCode >= 300 && data.item.data.response.statusCode < 400"
           ></b-icon>
           <b-icon
             icon="circle-fill"
             class="response icon mr-1 client-error"
-            v-if="data.item.response.statusCode >= 400 && data.item.response.statusCode < 500"
+            v-if="data.item.data.response.statusCode >= 400 && data.item.data.response.statusCode < 500"
           ></b-icon>
           <b-icon
             icon="circle-fill"
             class="response icon mr-1"
             variant="danger"
-            v-if="data.item.response.statusCode >= 500 && data.item.response.statusCode < 600"
+            v-if="data.item.data.response.statusCode >= 500 && data.item.response.statusCode < 600"
           ></b-icon>
-          {{ data.item.response.statusCode }}
+          {{ data.item.data.response.statusCode }}
+        </template>
+        <template v-slot:cell(url)="data">
+          {{ data.item.data.request.url }}
         </template>
         <template v-slot:cell(time)="data">
           {{ data.item.time | moment }}
@@ -56,16 +59,17 @@
 <script>
 import Api from '@/mixins/Api'
 import Filters from '@/mixins/Filters'
+import Refresh from '@/mixins/Refresh'
 
 export default {
-  mixins: [Api, Filters],
+  mixins: [Api, Filters, Refresh],
   data () {
     return {
       requests: [],
       requestFields: [
         'method',
         'statusCode',
-        { key: 'request.url', tdClass: 'break', label: 'Url' },
+        { key: 'url', tdClass: 'break', label: 'Url' },
         'time',
         'duration'
       ]
@@ -73,7 +77,7 @@ export default {
   },
   methods: {
     async getData () {
-      this.$http.get(this.baseUrl + '/api/http/requests').then(
+      this.$http.get(this.baseUrl + '/api/events/http').then(
         r => {
           this.requests = r.data
         },
@@ -84,24 +88,7 @@ export default {
     },
     requestClickHandler (record) {
       this.$router.push({ name: 'httpRequest', params: { id: record.id } })
-    },
-    init () {
-      this.getData()
-      clearInterval(this.timer)
-      let refresh = this.$route.query.refresh
-      if (refresh && refresh.length > 0) {
-        let i = parseInt(refresh)
-        if (!isNaN(i)) {
-          this.timer = setInterval(this.getData, i * 1000)
-        }
-      }
     }
-  },
-  created () {
-    this.init()
-  },
-  beforeDestroy () {
-    clearInterval(this.timer)
   }
 }
 </script>

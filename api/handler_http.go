@@ -2,11 +2,9 @@ package api
 
 import (
 	"mokapi/runtime"
-	"mokapi/runtime/logs"
 	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
@@ -31,39 +29,6 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.WriteHeader(404)
 	}
-}
-
-func (h *handler) getHttpRequests(w http.ResponseWriter, r *http.Request) {
-	limit := 10
-	s := r.URL.Query().Get("limit")
-	if n, err := strconv.Atoi(s); err == nil {
-		limit = n
-	}
-	service := r.URL.Query().Get("service")
-
-	w.Header().Set("Content-Type", "application/json")
-	log := h.app.Monitor.Http.Log
-	if len(log) == 0 {
-		writeJsonBody(w, log)
-	} else if len(service) == 0 {
-		n := limit
-		if len(log) < n {
-			n = len(log)
-		}
-		writeJsonBody(w, h.app.Monitor.Http.Log[:n])
-	} else {
-		result := make([]*logs.HttpLog, 0, limit)
-		for _, item := range h.app.Monitor.Http.Log {
-			if item.Service == service {
-				result = append(result, item)
-			}
-			if len(result) >= limit {
-				break
-			}
-		}
-		writeJsonBody(w, result)
-	}
-
 }
 
 func getHttpServices(services map[string]*runtime.HttpInfo, m *monitor.Monitor) []interface{} {

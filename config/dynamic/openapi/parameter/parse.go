@@ -7,8 +7,8 @@ func (r *Ref) Parse(config *common.Config, reader common.Reader) error {
 		return nil
 	}
 
-	if len(r.Ref()) > 0 && r.Value == nil {
-		if err := common.Resolve(r.Ref(), &r.Value, config, reader); err != nil {
+	if len(r.Ref) > 0 && r.Value == nil {
+		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
 			return err
 		}
 	}
@@ -29,8 +29,8 @@ func (r *NamedParameters) Parse(config *common.Config, reader common.Reader) err
 		return nil
 	}
 
-	if len(r.Ref()) > 0 && r.Value == nil {
-		if err := common.Resolve(r.Ref(), &r.Value, config, reader); err != nil {
+	if len(r.Ref) > 0 && r.Value == nil {
+		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
 			return err
 		}
 	}

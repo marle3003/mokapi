@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/openapi"
+	"mokapi/config/dynamic/openapi/openapitest"
 	"mokapi/config/dynamic/script"
 	"net/url"
 	"os"
@@ -79,6 +80,27 @@ func TestConfig_Parse(t *testing.T) {
 				require.IsType(t, &openapi.Config{}, c.Data)
 				o := c.Data.(*openapi.Config)
 				require.Equal(t, "3.0", o.OpenApi)
+			},
+		},
+		{
+			name: "openapi update",
+			f: func(t *testing.T) {
+				config := openapitest.NewConfig("")
+				c := common.NewConfig(mustUrl("foo.yml"))
+				c.Data = config
+				c.Raw = []byte(`
+components:
+  schemas:
+    Foo:
+      type: string
+`)
+
+				err := c.Parse(&testReader{})
+				require.NoError(t, err)
+				require.IsType(t, &openapi.Config{}, c.Data)
+				s := config.Components.Schemas.Get("Foo")
+				require.Equal(t, c.Data, config)
+				require.Equal(t, "string", s.Value.Type)
 			},
 		},
 		{

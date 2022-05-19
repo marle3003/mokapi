@@ -31,7 +31,7 @@
       </div>
       <div class="page-body">
 
-        <b-card-group deck>
+        <b-card-group deck v-show="$route.name === 'dashboard'">
           <b-card
             body-class="info-body"
             class="text-center"
@@ -74,7 +74,7 @@
           <b-card
             body-class="info-body"
             class="text-center"
-            v-if="kafkaEnabled"
+            v-if="kafkaEnabled && $route.name === 'dashboard' || $route.name === 'kafka'"
           >
             <b-card-title class="info">Kafka Messages</b-card-title>
             <b-card-text class="text-center value">{{ this.totalKafkaMessages }}</b-card-text>
@@ -111,8 +111,13 @@
                 >{{ data.item.method }}</b-badge>
               </template>
               <template v-slot:cell(lastRequest)="data">
-                <span v-if="data.item.lastRequest === 0">-</span>
-                <span v-else>{{ data.item.lastRequest | moment}}</span>
+                <span>{{ metric(data.item.metrics, 'http_request_timestamp') | moment}}</span>
+              </template>
+              <template v-slot:cell(requests)="data">
+                <span>{{ metric(data.item.metrics, 'http_requests_total') }}</span>
+              </template>
+               <template v-slot:cell(errors)="data">
+                <span>{{ metric(data.item.metrics, 'http_requests_errors_total') }}</span>
               </template>
             </b-table>
           </b-card>
@@ -145,7 +150,7 @@
           </b-card-group>
         </div>
 
-        <!-- <http-overview v-show="$route.name === 'http'" /> -->
+        <http-overview v-show="$route.name === 'http'" />
 
         <b-card-group
           deck
@@ -193,8 +198,13 @@ import Filters from '@/mixins/Filters'
 import Refresh from '@/mixins/Refresh'
 import Metrics from '@/mixins/Metrics'
 
+import HttpOverview from '@/components/dashboard/HttpOverview'
+
 export default {
   mixins: [Api, Filters, Refresh, Metrics],
+  components: {
+    'http-overview': HttpOverview
+  },
   data () {
     return {
       metrics: [],

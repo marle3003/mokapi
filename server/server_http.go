@@ -67,11 +67,6 @@ func (m *HttpManager) Update(c *config.Config) {
 		return
 	}
 
-	if err := config.Validate(); err != nil {
-		log.Warnf("validation error %v: %v", c.Url, err)
-		return
-	}
-
 	m.app.AddHttp(config)
 
 	if len(config.Servers) == 0 {

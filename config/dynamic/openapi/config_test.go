@@ -145,7 +145,7 @@ func TestConfig(t *testing.T) {
 		f       func(t *testing.T, c *openapi.Config)
 	}{
 		{
-			Name: "Responses",
+			Name: "component schema",
 			Content: `
 openapi: 3.0.0
 components:
@@ -184,11 +184,11 @@ components:
 `,
 			f: func(t *testing.T, c *openapi.Config) {
 				require.NoError(t, c.Validate())
-				require.Len(t, c.EndPoints, 1)
+				require.Len(t, c.Paths.Value, 1)
 				exp := []interface{}{http.StatusNoContent, http.StatusOK}
-				keys := c.EndPoints["/foo"].Value.Get.Responses.Keys()
+				keys := c.Paths.Value["/foo"].Value.Get.Responses.Keys()
 				require.Equal(t, exp, keys)
-				r := c.EndPoints["/foo"].Value.Get.Responses.GetResponse(http.StatusOK)
+				r := c.Paths.Value["/foo"].Value.Get.Responses.GetResponse(http.StatusOK)
 				content := r.Content["application/xml"]
 				require.NotNil(t, content.Schema.Value, "ref resolved")
 			},
@@ -229,7 +229,7 @@ func TestConfig_PetStore_PetSchema(t *testing.T) {
 
 	// category
 	category := pet.Value.Properties.Get("category")
-	require.Equal(t, "#/components/schemas/Category", category.Ref())
+	require.Equal(t, "#/components/schemas/Category", category.Ref)
 	require.NotNil(t, category.Value, "ref resolved")
 	require.Equal(t, "object", category.Value.Type)
 
@@ -248,7 +248,7 @@ func TestConfig_PetStore_PetSchema(t *testing.T) {
 	// tags
 	tags := pet.Value.Properties.Get("tags")
 	require.Equal(t, "array", tags.Value.Type)
-	require.Equal(t, "#/components/schemas/Tag", tags.Value.Items.Ref())
+	require.Equal(t, "#/components/schemas/Tag", tags.Value.Items.Ref)
 	require.Equal(t, "object", tags.Value.Items.Value.Type)
 	require.Equal(t, "tag", tags.Value.Xml.Name)
 	require.True(t, tags.Value.Xml.Wrapped)
@@ -268,7 +268,7 @@ func TestConfig_PetStore_Path(t *testing.T) {
 	err = config.Parse(&common.Config{Data: config}, nil)
 	require.NoError(t, err)
 
-	endpoint := config.EndPoints["/pet"]
+	endpoint := config.Paths.Value["/pet"]
 	require.NotNil(t, endpoint.Value.Put, "put is defined")
 	require.NotNil(t, endpoint.Value.Post, "post is defined")
 	put := endpoint.Value.Put
@@ -277,8 +277,8 @@ func TestConfig_PetStore_Path(t *testing.T) {
 	body := put.RequestBody.Value
 	require.Equal(t, "Pet object that needs to be added to the store", body.Description)
 	require.Len(t, body.Content, 2)
-	require.Equal(t, "#/components/schemas/Pet", body.Content["application/json"].Schema.Ref())
-	require.Equal(t, "#/components/schemas/Pet", body.Content["application/xml"].Schema.Ref())
+	require.Equal(t, "#/components/schemas/Pet", body.Content["application/json"].Schema.Ref)
+	require.Equal(t, "#/components/schemas/Pet", body.Content["application/xml"].Schema.Ref)
 	require.NotNil(t, body.Content["application/json"].Schema.Value, "ref resolved")
 	require.NotNil(t, body.Content["application/xml"].Schema.Value, "ref resolved")
 	require.Equal(t, body.Content["application/json"], body.GetMedia(media.ParseContentType("application/json")))
@@ -301,7 +301,7 @@ func TestPetStore_Response(t *testing.T) {
 	err = config.Parse(&common.Config{Data: config}, nil)
 	require.NoError(t, err)
 
-	endpoint := config.EndPoints["/pet/{petId}"]
+	endpoint := config.Paths.Value["/pet/{petId}"]
 	r := endpoint.Value.Get.Responses.GetResponse(http.StatusOK)
 	require.NotNil(t, r, "response exists")
 	ct := media.ParseContentType("application/json")
@@ -319,7 +319,7 @@ func TestPetStore_Paramters(t *testing.T) {
 	err = config.Parse(&common.Config{Data: config}, nil)
 	require.NoError(t, err)
 
-	endpoint := config.EndPoints["/pet/{petId}"]
+	endpoint := config.Paths.Value["/pet/{petId}"]
 	params := endpoint.Value.Delete.Parameters
 	require.Len(t, params, 2)
 	require.Equal(t, "api_key", params[0].Value.Name)

@@ -1,6 +1,6 @@
 import {on} from 'mokapi'
 import {clusters} from 'kafka.js'
-import {apps as httpServices} from 'services_http'
+import {apps as httpServices, events as httpEvents} from 'services_http'
 import {metrics} from 'metrics'
 
 export default function() {
@@ -25,7 +25,14 @@ export default function() {
                 } else{
                     response.data = metrics.filter(x => x.name.includes(q))
                 }
-
+                return true
+            case 'events':
+                switch (request.path["namespace"]) {
+                    case "http":
+                        response.data = httpEvents
+                        return true
+                }
+                return false
         }
     })
 }

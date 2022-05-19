@@ -3,6 +3,7 @@ package events
 import (
 	"fmt"
 	"github.com/google/uuid"
+	"time"
 )
 
 var stores []*store
@@ -11,6 +12,7 @@ type Event struct {
 	Id     string      `json:"id"`
 	Traits Traits      `json:"traits"`
 	Data   interface{} `json:"data"`
+	Time   time.Time
 }
 
 func SetStore(size int, traits Traits) {
@@ -30,6 +32,7 @@ func Push(data interface{}, traits Traits) error {
 				Id:     uuid.New().String(),
 				Traits: traits,
 				Data:   data,
+				Time:   time.Now(),
 			})
 			return nil
 		}

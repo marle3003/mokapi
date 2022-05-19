@@ -43,6 +43,8 @@ components:
           type: object
           additionalProperties:
             type: string
+        time:
+          type: integer
         data:
           type: object
           additionalProperties: true

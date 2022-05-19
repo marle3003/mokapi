@@ -54,6 +54,7 @@ func (w *ConfigWatcher) Read(u *url.URL, opts ...common.ConfigOptions) (*common.
 	w.m.Lock()
 
 	var err error
+	var parse bool
 	c, exists := w.configs[u.String()]
 	if !exists {
 		c, err = p.Read(u)
@@ -63,14 +64,21 @@ func (w *ConfigWatcher) Read(u *url.URL, opts ...common.ConfigOptions) (*common.
 		}
 		w.configs[u.String()] = c
 		w.m.Unlock()
-		c.Options(opts...)
+		c.AddListener("ConfigWatcher", func(cfg *common.Config) {
+			w.configChanged(cfg)
+		})
+		parse = true
+	} else {
+		w.m.Unlock()
+		parse = c.Data == nil
+	}
+
+	c.Options(opts...)
+	if parse {
 		err = c.Parse(w)
 		if err != nil {
 			return nil, err
 		}
-	} else {
-		w.m.Unlock()
-		c.Options(opts...)
 	}
 
 	return c, nil
@@ -107,31 +115,42 @@ func (w *ConfigWatcher) AddListener(f func(config *common.Config)) {
 
 func (w *ConfigWatcher) addOrUpdate(c *common.Config) error {
 	w.m.Lock()
-	defer w.m.Unlock()
 
 	cfg, ok := w.configs[c.Url.String()]
 	if !ok {
 		w.configs[c.Url.String()] = c
 		cfg = c
-		cfg.AddListener("configwatcher", func(cfg *common.Config) {
-			for _, l := range w.listener {
-				l(cfg)
-			}
+		cfg.AddListener("ConfigWatcher", func(cfg *common.Config) {
+			w.configChanged(cfg)
 		})
 	} else if bytes.Equal(cfg.Checksum, c.Checksum) {
+		w.m.Unlock()
 		return nil
 	} else {
 		cfg.Raw = c.Raw
 		cfg.Checksum = c.Checksum
 	}
 
-	go func() {
-		err := cfg.Parse(w)
-		if err != nil {
-			log.Error(err)
-		}
-		cfg.Changed()
-	}()
+	w.m.Unlock()
+	cfg.Changed()
 
 	return nil
+}
+
+func (w *ConfigWatcher) configChanged(cfg *common.Config) {
+	err := cfg.Parse(w)
+	if err != nil {
+		log.Error(err)
+	}
+
+	if err = cfg.Validate(); err != nil {
+		log.Infof("skipping file %v: %v", cfg.Url, err)
+		return
+	}
+
+	log.Infof("processing %v", cfg.Url)
+
+	for _, l := range w.listener {
+		l(cfg)
+	}
 }

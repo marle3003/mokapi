@@ -86,7 +86,7 @@ func newSchema(name string, s *schema.Ref, level int) *Schema {
 		Name:        name,
 		Type:        s.Value.Type,
 		Properties:  make([]*Schema, 0),
-		Ref:         s.Ref(),
+		Ref:         s.Ref,
 		Description: s.Value.Description,
 		Required:    s.Value.Required,
 		Format:      s.Value.Format,
