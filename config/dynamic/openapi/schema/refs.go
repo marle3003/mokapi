@@ -98,3 +98,13 @@ func (ap *AdditionalProperties) Parse(config *common.Config, reader common.Reade
 
 	return ap.Ref.Parse(config, reader)
 }
+
+func (r *Ref) String() string {
+	if r.Value == nil && len(r.Ref) == 0 {
+		return fmt.Sprintf("no schema defined")
+	}
+	if r.Value == nil {
+		return fmt.Sprintf("unresolved schema %v", r.Ref)
+	}
+	return r.Value.String()
+}

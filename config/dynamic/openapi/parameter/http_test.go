@@ -1,7 +1,6 @@
 package parameter
 
 import (
-	"fmt"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/openapi/schema"
@@ -69,7 +68,7 @@ func TestParseParam(t *testing.T) {
 			func(p RequestParameters) error {
 				if limit, ok := p[Query]["limit"]; !ok {
 					return errors.New("expected limit parameter in query")
-				} else if limit.Value != 10 {
+				} else if limit.Value != int64(10) {
 					t.Errorf("got %v; expected limit value 10", limit)
 				}
 				return nil
@@ -84,71 +83,6 @@ func TestParseParam(t *testing.T) {
 			require.NoError(t, err)
 			err = test.fn(p)
 			require.NoError(t, err)
-		})
-	}
-}
-
-func TestParse(t *testing.T) {
-	testcases := []struct {
-		s      string
-		schema *schema.Ref
-		e      interface{}
-	}{
-		{
-			"foobar",
-			&schema.Ref{Value: &schema.Schema{Type: "string"}},
-			"foobar",
-		},
-		{
-			"123",
-			&schema.Ref{Value: &schema.Schema{Type: "integer"}},
-			123,
-		},
-		{
-			"123123123123",
-			&schema.Ref{Value: &schema.Schema{Type: "integer", Format: "int64"}},
-			int64(123123123123),
-		},
-		{
-			"123.123",
-			&schema.Ref{Value: &schema.Schema{Type: "number"}},
-			float32(123.123),
-		},
-		{
-			"123.123",
-			&schema.Ref{Value: &schema.Schema{Type: "number", Format: "double"}},
-			123.123,
-		},
-		{
-			"true",
-			&schema.Ref{Value: &schema.Schema{Type: "boolean"}},
-			true,
-		},
-		{
-			"false",
-			&schema.Ref{Value: &schema.Schema{Type: "boolean"}},
-			false,
-		},
-		{
-			"12",
-			&schema.Ref{
-				Value: &schema.Schema{
-					AnyOf: []*schema.Ref{
-						{Value: &schema.Schema{Type: "integer"}},
-						{Value: &schema.Schema{Type: "string"}},
-					}}},
-			12,
-		},
-	}
-
-	t.Parallel()
-	for _, testcase := range testcases {
-		test := testcase
-		t.Run(fmt.Sprintf(test.s), func(t *testing.T) {
-			t.Parallel()
-			i, err := parse(test.s, test.schema)
-			require.NoError(t, err)
-			require.Equal(t, test.e, i)
 		})
 	}
 }

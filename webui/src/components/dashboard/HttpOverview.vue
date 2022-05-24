@@ -48,8 +48,8 @@
         <template v-slot:cell(time)="data">
           {{ data.item.time | moment }}
         </template>
-        <template v-slot:cell(responseTime)="data">
-          {{ data.item.duration | duration }}
+        <template v-slot:cell(duration)="data">
+          {{ data.item.data.duration | duration }}
         </template>
       </b-table>
     </b-card>

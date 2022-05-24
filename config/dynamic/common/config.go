@@ -139,12 +139,12 @@ func (f *Config) Parse(r Reader) error {
 	case ".yml", ".yaml":
 		err := yaml.Unmarshal(data, f)
 		if err != nil {
-			f.Data = string(data)
+			return err
 		}
 	case ".json":
 		err := json.Unmarshal(data, f)
 		if err != nil {
-			f.Data = string(data)
+			return err
 		}
 	case ".lua", ".js":
 		if f.Data == nil {

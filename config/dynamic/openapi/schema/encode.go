@@ -15,7 +15,7 @@ func (r *Ref) Marshal(i interface{}, contentType media.ContentType) ([]byte, err
 	case "json":
 		o, err := selectData(i, r)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("%v, expected %v", err, r)
 		}
 		b, err := json.Marshal(o)
 		if err, ok := err.(*json.SyntaxError); ok {

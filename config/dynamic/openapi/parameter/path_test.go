@@ -47,7 +47,7 @@ func TestParsePath(t *testing.T) {
 				Style:   "",
 				Explode: false,
 			},
-			[]interface{}{3, 4, 5},
+			[]interface{}{int64(3), int64(4), int64(5)},
 		},
 		{
 			".3,4,5",
@@ -56,7 +56,7 @@ func TestParsePath(t *testing.T) {
 				Style:   "label",
 				Explode: false,
 			},
-			[]interface{}{3, 4, 5},
+			[]interface{}{int64(3), int64(4), int64(5)},
 		},
 		{
 			";3,4,5",
@@ -65,7 +65,7 @@ func TestParsePath(t *testing.T) {
 				Style:   "matrix",
 				Explode: false,
 			},
-			[]interface{}{3, 4, 5},
+			[]interface{}{int64(3), int64(4), int64(5)},
 		},
 		{
 			"role,admin,firstName,Alex",

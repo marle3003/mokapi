@@ -3,6 +3,7 @@ package parameter
 import (
 	"fmt"
 	"github.com/pkg/errors"
+	"mokapi/config/dynamic/openapi/schema"
 	"net/http"
 	"strings"
 )
@@ -30,7 +31,7 @@ func parseCookie(p *Parameter, r *http.Request) (rp RequestParameterValue, err e
 		return rp, fmt.Errorf("required parameter not found")
 	}
 
-	if v, err := parse(cookie.Value, p.Schema); err != nil {
+	if v, err := schema.ParseString(cookie.Value, p.Schema); err != nil {
 		return rp, err
 	} else {
 		rp.Value = v
@@ -67,7 +68,7 @@ func parseCookieObject(p *Parameter, r *http.Request) (rp RequestParameterValue,
 		if i >= len(elements) {
 			return rp, errors.Errorf("invalid number of property pairs")
 		}
-		if v, err := parse(elements[i], p); err != nil {
+		if v, err := schema.ParseString(elements[i], p); err != nil {
 			return rp, err
 		} else {
 			m[key] = v
@@ -92,7 +93,7 @@ func parseCookieArray(p *Parameter, r *http.Request) (rp RequestParameterValue, 
 	rp.Value = values
 
 	for _, v := range strings.Split(cookie.Value, ",") {
-		if i, err := parse(v, p.Schema.Value.Items); err != nil {
+		if i, err := schema.ParseString(v, p.Schema.Value.Items); err != nil {
 			return rp, err
 		} else {
 			values = append(values, i)

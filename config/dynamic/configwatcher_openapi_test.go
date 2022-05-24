@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/stretchr/testify/require"
+	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/config/static"
@@ -96,6 +97,9 @@ paths:
 			},
 		},
 	}
+
+	common.Register("asyncapi", &asyncApi.Config{})
+	common.Register("openapi", &asyncApi.Config{})
 
 	for _, tc := range testcases {
 		tc := tc

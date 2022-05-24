@@ -46,6 +46,15 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 	logHttp, ok := LogEventFromContext(r.Context())
+	if logHttp != nil {
+		defer func() {
+			i := r.Context().Value("time")
+			if i != nil {
+				t := i.(time.Time)
+				logHttp.Duration = time.Now().Sub(t) * time.Millisecond
+			}
+		}()
+	}
 
 	status, res, err := op.getFirstSuccessResponse()
 	if err != nil {

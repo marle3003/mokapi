@@ -4,10 +4,8 @@ import (
 	"context"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"mokapi/config/dynamic/openapi/schema"
 	"net/http"
 	"regexp"
-	"strconv"
 	"strings"
 )
 
@@ -93,46 +91,4 @@ func FromRequest(params Parameters, route string, r *http.Request) (RequestParam
 	}
 
 	return parameters, nil
-}
-
-func parse(s string, schema *schema.Ref) (interface{}, error) {
-	if schema == nil {
-		return s, nil
-	}
-
-	if len(schema.Value.AnyOf) > 0 {
-		for _, any := range schema.Value.AnyOf {
-			if i, err := parse(s, any); err == nil {
-				return i, nil
-			}
-		}
-		return nil, errors.Errorf("unable to parse %q, not any schema matches", s)
-	}
-
-	switch schema.Value.Type {
-	case "string":
-		return s, nil
-	case "integer":
-		switch schema.Value.Format {
-		case "int64":
-			return strconv.ParseInt(s, 10, 64)
-		default:
-			return strconv.Atoi(s)
-		}
-
-	case "number":
-		switch schema.Value.Format {
-		case "double":
-			return strconv.ParseFloat(s, 64)
-		default:
-			v, err := strconv.ParseFloat(s, 32)
-			if err != nil {
-				return nil, err
-			}
-			return float32(v), nil
-		}
-	case "boolean":
-		return strconv.ParseBool(s)
-	}
-	return nil, errors.Errorf("unable to parse '%v'; schema type %q is not supported", s, schema.Value.Type)
 }

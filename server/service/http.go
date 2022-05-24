@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"time"
 )
 
 type HttpServer struct {
@@ -97,6 +98,7 @@ func (s *HttpServer) Stop() {
 }
 
 func (s *HttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	r = r.WithContext(context.WithValue(r.Context(), "time", time.Now()))
 	log.WithFields(log.Fields{
 		"url":    r.URL.String(),
 		"host":   r.Host,

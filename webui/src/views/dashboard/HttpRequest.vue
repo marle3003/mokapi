@@ -79,7 +79,7 @@
 
 <script>
 import Api from '@/mixins/Api'
-import moment from 'moment'
+import Filters from '@/mixins/Filters'
 import http from 'http-status-codes'
 import Workflows from '@/components/Workflows'
 import xmlFormatter from 'xml-formatter'
@@ -90,7 +90,7 @@ export default {
   components: {
     'workflows': Workflows
   },
-  mixins: [Api],
+  mixins: [Api, Filters],
   data () {
     return {
       request: null,

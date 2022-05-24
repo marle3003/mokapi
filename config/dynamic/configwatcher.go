@@ -140,7 +140,8 @@ func (w *ConfigWatcher) addOrUpdate(c *common.Config) error {
 func (w *ConfigWatcher) configChanged(cfg *common.Config) {
 	err := cfg.Parse(w)
 	if err != nil {
-		log.Error(err)
+		log.Errorf("parse error %v: %v", cfg.Url, err)
+		return
 	}
 
 	if err = cfg.Validate(); err != nil {

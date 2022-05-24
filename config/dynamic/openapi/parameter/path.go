@@ -2,6 +2,7 @@ package parameter
 
 import (
 	"github.com/pkg/errors"
+	"mokapi/config/dynamic/openapi/schema"
 	"strings"
 )
 
@@ -27,7 +28,7 @@ func parsePath(s string, p *Parameter) (rp RequestParameterValue, err error) {
 		case "object":
 			v, err = parsePathObject(s, p)
 		default:
-			v, err = parse(s, p.Schema)
+			v, err = schema.ParseString(s, p.Schema)
 		}
 	}
 
@@ -54,7 +55,7 @@ func parsePathObject(s string, p *Parameter) (obj map[string]interface{}, err er
 				return nil, errors.Errorf("property '%v' not defined in schema", kv[0])
 			}
 
-			if v, err := parse(kv[1], p); err == nil {
+			if v, err := schema.ParseString(kv[1], p); err == nil {
 				obj[kv[0]] = v
 			} else {
 				return nil, err
@@ -75,7 +76,7 @@ func parsePathObject(s string, p *Parameter) (obj map[string]interface{}, err er
 			if i >= len(values) {
 				return nil, errors.Errorf("invalid number of property pairs")
 			}
-			if v, err := parse(values[i], p); err == nil {
+			if v, err := schema.ParseString(values[i], p); err == nil {
 				obj[key] = v
 			} else {
 				return nil, err
@@ -91,7 +92,7 @@ func parsePathArray(s string, p *Parameter) (result []interface{}, err error) {
 	values := strings.Split(s, ",")
 
 	for _, v := range values {
-		if i, err := parse(v, p.Schema.Value.Items); err != nil {
+		if i, err := schema.ParseString(v, p.Schema.Value.Items); err != nil {
 			return nil, err
 		} else {
 			result = append(result, i)

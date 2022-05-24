@@ -65,8 +65,7 @@ func TestConfig_Parse(t *testing.T) {
 				c.Raw = []byte("flag: foobar")
 
 				err := c.Parse(&testReader{})
-				require.NoError(t, err)
-				require.Equal(t, "flag: foobar", c.Data)
+				require.EqualError(t, err, "yaml: unmarshal errors:\n  line 1: cannot unmarshal !!str `foobar` into bool")
 			},
 		},
 		{
@@ -127,8 +126,7 @@ components:
 				c.Raw = []byte("{\"name\"=\"foobar\"}")
 
 				err := c.Parse(&testReader{})
-				require.NoError(t, err)
-				require.Equal(t, "{\"name\"=\"foobar\"}", c.Data)
+				require.EqualError(t, err, "invalid character '=' after object key")
 			},
 		},
 		{

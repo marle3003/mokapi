@@ -19,8 +19,7 @@ export default {
       return moment.unix(value).fromNow(true)
     },
     duration: function (time) {
-      let ms = Math.round(time / 1000000)
-      let d = moment.duration(ms)
+      let d = moment.duration(time)
       if (d.seconds() < 1) {
         return d.milliseconds() + ' [ms]'
       } else if (d.minutes() < 1) {

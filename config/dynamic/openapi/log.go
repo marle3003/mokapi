@@ -7,6 +7,7 @@ import (
 	"mokapi/config/dynamic/openapi/parameter"
 	"mokapi/runtime/events"
 	"net/http"
+	"time"
 )
 
 const logKey = "http_log"
@@ -14,6 +15,7 @@ const logKey = "http_log"
 type HttpLog struct {
 	Request  *HttpRequestLog  `json:"request"`
 	Response *HttpResponseLog `json:"response"`
+	Duration time.Duration    `json:"duration"`
 }
 
 type HttpRequestLog struct {

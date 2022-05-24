@@ -92,18 +92,52 @@ func (s *Schema) HasProperties() bool {
 
 func (s *Schema) String() string {
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("schema type=%v", s.Type))
+
+	if len(s.AnyOf) > 0 {
+		sb.WriteString("any of ")
+		for _, i := range s.AnyOf {
+			if sb.Len() > 7 {
+				sb.WriteString(", ")
+			}
+			sb.WriteString(i.String())
+		}
+		return sb.String()
+	}
+	if len(s.AllOf) > 0 {
+		sb.WriteString("all of ")
+		for _, i := range s.AllOf {
+			if sb.Len() > 7 {
+				sb.WriteString(", ")
+			}
+			sb.WriteString(i.String())
+		}
+		return sb.String()
+	}
+	if len(s.OneOf) > 0 {
+		sb.WriteString("one of ")
+		for _, i := range s.OneOf {
+			if sb.Len() > 7 {
+				sb.WriteString(", ")
+			}
+			sb.WriteString(i.String())
+		}
+		return sb.String()
+	}
+
+	if len(s.Type) > 0 {
+		sb.WriteString(fmt.Sprintf("schema type=%v", s.Type))
+	}
 	if len(s.Format) > 0 {
 		sb.WriteString(fmt.Sprintf(" format=%v", s.Format))
 	}
 	if len(s.Pattern) > 0 {
-		sb.WriteString(fmt.Sprintf(" pattern=%v", s.Format))
+		sb.WriteString(fmt.Sprintf(" pattern=%v", s.Pattern))
 	}
 	if s.Minimum != nil {
 		sb.WriteString(fmt.Sprintf(" minimum=%v", *s.Minimum))
 	}
 	if s.Maximum != nil {
-		sb.WriteString(fmt.Sprintf(" maximum=%v", *s.Minimum))
+		sb.WriteString(fmt.Sprintf(" maximum=%v", *s.Maximum))
 	}
 	if s.ExclusiveMinimum != nil && *s.ExclusiveMinimum {
 		sb.WriteString(" exclusiveMinimum")
@@ -123,11 +157,20 @@ func (s *Schema) String() string {
 	if s.MaxProperties != nil {
 		sb.WriteString(fmt.Sprintf(" maxProperties=%v", *s.MaxProperties))
 	}
-	if len(s.Required) > 0 {
-		sb.WriteString(fmt.Sprintf(" required=%v", s.Required))
-	}
 	if s.Type == "object" && s.IsFreeForm() {
 		sb.WriteString(" free-form=true")
+	} else if s.Type == "object" && s.Properties != nil && s.Properties.Value != nil {
+		var sbProp strings.Builder
+		for _, p := range s.Properties.Value.Keys() {
+			if sbProp.Len() > 0 {
+				sbProp.WriteString(", ")
+			}
+			sbProp.WriteString(fmt.Sprintf("%v", p))
+		}
+		sb.WriteString(fmt.Sprintf(" properties=[%v]", sbProp.String()))
+	}
+	if len(s.Required) > 0 {
+		sb.WriteString(fmt.Sprintf(" required=%v", s.Required))
 	}
 	return sb.String()
 }

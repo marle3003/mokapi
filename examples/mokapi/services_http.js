@@ -30,7 +30,8 @@ export let events = [
                     "Content-Type": "application/json"
                 },
                 body: "{foo: \"bar\"}"
-            }
+            },
+            duration: 133
         }
     }
 ]

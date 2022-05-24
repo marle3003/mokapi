@@ -29,7 +29,7 @@ func parseQuery(p *Parameter, u *url.URL) (rp RequestParameterValue, err error) 
 		}
 	}
 
-	rp.Value, err = parse(rp.Raw, p.Schema)
+	rp.Value, err = schema.ParseString(rp.Raw, p.Schema)
 
 	return
 }
@@ -44,7 +44,7 @@ func parseQueryObject(p *Parameter, u *url.URL) (obj map[string]interface{}, err
 			name := it.Key().(string)
 			prop := it.Value().(*schema.Ref)
 			s := u.Query().Get(fmt.Sprintf("%v[%v]", p.Name, name))
-			if v, err := parse(s, prop); err == nil {
+			if v, err := schema.ParseString(s, prop); err == nil {
 				obj[name] = v
 			} else {
 				return nil, err
@@ -57,7 +57,7 @@ func parseQueryObject(p *Parameter, u *url.URL) (obj map[string]interface{}, err
 				name := it.Key().(string)
 				prop := it.Value().(*schema.Ref)
 				s := u.Query().Get(name)
-				if v, err := parse(s, prop); err == nil {
+				if v, err := schema.ParseString(s, prop); err == nil {
 					obj[name] = v
 				} else {
 					return nil, err
@@ -80,7 +80,7 @@ func parseQueryObject(p *Parameter, u *url.URL) (obj map[string]interface{}, err
 				if i >= len(elements) {
 					return nil, errors.Errorf("invalid number of property pairs")
 				}
-				if v, err := parse(elements[i], p); err == nil {
+				if v, err := schema.ParseString(elements[i], p); err == nil {
 					obj[key] = v
 				} else {
 					return nil, err
@@ -126,7 +126,7 @@ func parseQueryArray(p *Parameter, u *url.URL) (result []interface{}, err error)
 	}
 
 	for _, v := range values {
-		if i, err := parse(v, p.Schema.Value.Items); err != nil {
+		if i, err := schema.ParseString(v, p.Schema.Value.Items); err != nil {
 			return nil, err
 		} else {
 			result = append(result, i)

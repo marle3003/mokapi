@@ -21,7 +21,7 @@ func TestParseQuery(t *testing.T) {
 				Style:   "",
 				Explode: false,
 			},
-			5,
+			int64(5),
 		},
 		{&url.URL{RawQuery: ""},
 			&Parameter{
@@ -39,7 +39,7 @@ func TestParseQuery(t *testing.T) {
 				Style:   "",
 				Explode: true,
 			},
-			[]interface{}{3, 4, 5},
+			[]interface{}{int64(3), int64(4), int64(5)},
 		},
 		{&url.URL{RawQuery: "id=3,4,5"},
 			&Parameter{
@@ -48,7 +48,7 @@ func TestParseQuery(t *testing.T) {
 				Style:   "",
 				Explode: false,
 			},
-			[]interface{}{3, 4, 5},
+			[]interface{}{int64(3), int64(4), int64(5)},
 		},
 		{&url.URL{RawQuery: "id=3%204%205"},
 			&Parameter{
@@ -57,7 +57,7 @@ func TestParseQuery(t *testing.T) {
 				Style:   "spaceDelimited",
 				Explode: false,
 			},
-			[]interface{}{3, 4, 5},
+			[]interface{}{int64(3), int64(4), int64(5)},
 		},
 		{&url.URL{RawQuery: "id=3|4|5"},
 			&Parameter{
@@ -66,7 +66,7 @@ func TestParseQuery(t *testing.T) {
 				Style:   "pipeDelimited",
 				Explode: false,
 			},
-			[]interface{}{3, 4, 5},
+			[]interface{}{int64(3), int64(4), int64(5)},
 		},
 		{&url.URL{RawQuery: "role=admin&firstName=Alex"},
 			&Parameter{

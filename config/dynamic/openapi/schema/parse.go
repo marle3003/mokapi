@@ -3,6 +3,7 @@ package schema
 import (
 	"encoding/json"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"io"
 	"io/ioutil"
 	"math"
@@ -13,7 +14,11 @@ import (
 )
 
 func ParseString(s string, schema *Ref) (interface{}, error) {
-	return parse(s, schema)
+	i, err := parse(s, schema)
+	if err != nil {
+		return 0, fmt.Errorf("%v, expected %v", err, schema)
+	}
+	return i, err
 }
 
 func Parse(b []byte, contentType media.ContentType, schema *Ref) (i interface{}, err error) {
@@ -31,7 +36,11 @@ func Parse(b []byte, contentType media.ContentType, schema *Ref) (i interface{},
 		return
 	}
 
-	return parse(i, schema)
+	i, err = parse(i, schema)
+	if err != nil {
+		err = fmt.Errorf("%v, expected %v", err, schema)
+	}
+	return
 }
 
 func ParseFrom(r io.Reader, contentType media.ContentType, schema *Ref) (i interface{}, err error) {
@@ -120,7 +129,7 @@ func parseAnyObject(m map[string]interface{}, schemas []*Ref) (interface{}, erro
 
 			if _, ok := m[name]; !ok {
 				if _, ok := required[name]; ok && len(required) > 0 {
-					return nil, fmt.Errorf("expected required property %v", name)
+					return nil, fmt.Errorf("missing required property %v", name)
 				}
 				continue
 			}
@@ -139,7 +148,7 @@ func parseAnyObject(m map[string]interface{}, schemas []*Ref) (interface{}, erro
 	}
 
 	if len(m) > len(fields) {
-		return nil, fmt.Errorf("too many properties for object")
+		return nil, fmt.Errorf("could not parse %v, too many properties for object", toString(m))
 	}
 
 	t := reflect.StructOf(fields)
@@ -157,13 +166,13 @@ func parseAnyValue(i interface{}, schemas []*Ref) (interface{}, error) {
 			return i, nil
 		}
 	}
-	return nil, fmt.Errorf("value %v does not match any of expected schema", i)
+	return nil, fmt.Errorf("could not parse %v", i)
 }
 
 func parseAllOf(i interface{}, schemas []*Ref) (interface{}, error) {
 	m, ok := i.(map[string]interface{})
 	if !ok {
-		return nil, fmt.Errorf("expected an object for allOf")
+		return nil, fmt.Errorf("could not parse %v as object", toString(i))
 	}
 	fields := make([]reflect.StructField, 0, len(m))
 	values := make([]reflect.Value, 0, len(m))
@@ -188,14 +197,14 @@ func parseAllOf(i interface{}, schemas []*Ref) (interface{}, error) {
 
 			if _, ok := m[name]; !ok {
 				if _, ok := required[name]; ok && len(required) > 0 {
-					return nil, fmt.Errorf("expected required property %v", name)
+					return nil, fmt.Errorf("could not parse %v, missing required property %v", toString(i), name)
 				}
 				continue
 			}
 
 			v, err := parse(m[name], pRef)
 			if err != nil {
-				return nil, fmt.Errorf("value does not match all schema")
+				return nil, fmt.Errorf("could not parse %v, value does not match all schema", toString(i))
 			}
 			values = append(values, reflect.ValueOf(v))
 			fields = append(fields, reflect.StructField{
@@ -240,7 +249,7 @@ func parseOneOfObject(m map[string]interface{}, schemas []*Ref) (interface{}, er
 
 			if _, ok := m[name]; !ok {
 				if _, ok := required[name]; ok && len(required) > 0 {
-					return nil, fmt.Errorf("expected required property %v", name)
+					return nil, fmt.Errorf("could not parse %v, missing required property %v", toString(m), name)
 				}
 				continue
 			}
@@ -262,7 +271,7 @@ func parseOneOfObject(m map[string]interface{}, schemas []*Ref) (interface{}, er
 		}
 
 		if result != nil {
-			return nil, fmt.Errorf("oneOf: given data is valid against more as one schema")
+			return nil, fmt.Errorf("could not parse %v, it is not valid for only one schema", toString(m))
 		}
 
 		t := reflect.StructOf(fields)
@@ -274,7 +283,7 @@ func parseOneOfObject(m map[string]interface{}, schemas []*Ref) (interface{}, er
 	}
 
 	if result == nil {
-		return nil, fmt.Errorf("value does not match any of oneof schema")
+		return nil, fmt.Errorf("could not parse %v", toString(m))
 	}
 
 	return result, nil
@@ -288,7 +297,7 @@ func parseOneOfValue(i interface{}, schemas []*Ref) (interface{}, error) {
 			continue
 		}
 		if result != nil {
-			return nil, fmt.Errorf("oneOf: given data is valid against more as one schema")
+			return nil, fmt.Errorf("could not parse %v because it is not valid for only one", i)
 		}
 		result = v
 	}
@@ -299,7 +308,7 @@ func parseOneOfValue(i interface{}, schemas []*Ref) (interface{}, error) {
 func parseObject(i interface{}, s *Schema) (interface{}, error) {
 	m, ok := i.(map[string]interface{})
 	if !ok {
-		return nil, fmt.Errorf("expected object but got %T", i)
+		return nil, fmt.Errorf("could not parse %v as object", toString(i))
 	}
 
 	var err error
@@ -325,7 +334,7 @@ func parseObject(i interface{}, s *Schema) (interface{}, error) {
 	}
 
 	if len(m) > s.Properties.Value.Len() {
-		return nil, fmt.Errorf("too many properties for object")
+		return nil, fmt.Errorf("could not parse %v, too many properties", toString(m))
 	}
 
 	fields := make([]reflect.StructField, 0, len(m))
@@ -377,7 +386,7 @@ func parseObject(i interface{}, s *Schema) (interface{}, error) {
 func parseArray(i interface{}, s *Schema) (interface{}, error) {
 	a, ok := i.([]interface{})
 	if !ok {
-		return nil, fmt.Errorf("expected %v got %v", s, i)
+		return nil, fmt.Errorf("could not parse %v as array", toString(i))
 	}
 
 	if len(a) == 0 {
@@ -417,28 +426,32 @@ func parseInteger(i interface{}, s *Schema) (n int64, err error) {
 		n = v
 	case float64:
 		if math.Trunc(v) != v {
-			return 0, fmt.Errorf("expected %v, got %v", s, i)
+			return 0, fmt.Errorf("could not parse %v as integer", i)
 		}
 		n = int64(v)
 	case string:
 		switch s.Format {
 		case "int64":
 			n, err = strconv.ParseInt(v, 10, 64)
+			if err != nil {
+				return 0, fmt.Errorf("could not parse '%v' as int64", i)
+			}
+			return n, nil
 		default:
 			temp, err := strconv.Atoi(v)
 			if err != nil {
-				return 0, err
+				return 0, fmt.Errorf("could not parse '%v' as int", i)
 			}
 			n = int64(temp)
 		}
 	default:
-		return 0, fmt.Errorf("expected %v, got %v", s, i)
+		return 0, fmt.Errorf("could not parse '%v' as int", i)
 	}
 
 	switch s.Format {
 	case "int32":
 		if n > math.MaxInt32 || n < math.MinInt32 {
-			return 0, fmt.Errorf("integer is not int32")
+			return 0, fmt.Errorf("could not parse '%v', represents a number either less than int32 min value or greater max value", i)
 		}
 	}
 
@@ -451,22 +464,21 @@ func parseNumber(i interface{}, s *Schema) (f float64, err error) {
 		f = v
 	case string:
 		f, err = strconv.ParseFloat(v, 64)
+		if err != nil {
+			return 0, fmt.Errorf("could not parse '%v' as floating number", i)
+		}
 	case int:
 		f = float64(v)
 	case int64:
 		f = float64(v)
 	default:
-		err = fmt.Errorf("expected float got %T", v)
-	}
-
-	if err != nil {
-		return 0, fmt.Errorf("expected %v, got %v", s, i)
+		return 0, fmt.Errorf("could not parse '%v' as floating number", v)
 	}
 
 	switch s.Format {
 	case "float":
-		if f > math.MaxFloat32 || f < -math.MaxFloat32 {
-			return 0, fmt.Errorf("expected %v, got %v", s, i)
+		if f > math.MaxFloat32 {
+			return 0, fmt.Errorf("could not parse %v as float", i)
 		}
 	}
 
@@ -476,7 +488,7 @@ func parseNumber(i interface{}, s *Schema) (f float64, err error) {
 func parseString(v interface{}, schema *Schema) (string, error) {
 	s, ok := v.(string)
 	if !ok {
-		return "", fmt.Errorf("expected string got %T", v)
+		return "", fmt.Errorf("could not parse %v as string", v)
 	}
 
 	return s, validateString(s, schema)
@@ -486,7 +498,7 @@ func readBoolean(i interface{}, _ *Schema) (bool, error) {
 	if b, ok := i.(bool); ok {
 		return b, nil
 	}
-	return false, fmt.Errorf("expected bool but got %T", i)
+	return false, fmt.Errorf("could not parse %v as boolean", i)
 }
 
 func toObject(m map[string]interface{}) interface{} {
@@ -510,4 +522,12 @@ func toObject(m map[string]interface{}) interface{} {
 		v.Field(i).Set(val)
 	}
 	return v.Addr().Interface()
+}
+
+func toString(i interface{}) string {
+	b, err := json.Marshal(i)
+	if err != nil {
+		log.Errorf("error in schema.toString(): %v", err)
+	}
+	return string(b)
 }

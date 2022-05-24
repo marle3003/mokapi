@@ -126,7 +126,7 @@ func TestAny(t *testing.T) {
 					schematest.New("string"),
 					schematest.New("integer"))),
 			nil,
-			fmt.Errorf("value 12.6 does not match any of expected schema"),
+			fmt.Errorf("could not parse 12.6, expected any of schema type=string, schema type=integer"),
 		},
 		{
 			"any object",
@@ -150,7 +150,7 @@ func TestAny(t *testing.T) {
 					schematest.New("object",
 						schematest.WithProperty("name", schematest.New("string"))))),
 			nil,
-			fmt.Errorf("too many properties for object"),
+			fmt.Errorf(`could not parse {"age":12,"name":"bar"}, too many properties for object, expected any of schema type=object properties=[name]`),
 		},
 		{
 			"missing required property",
@@ -164,7 +164,7 @@ func TestAny(t *testing.T) {
 						schematest.WithRequired("age"),
 					))),
 			nil,
-			fmt.Errorf("expected required property age"),
+			fmt.Errorf("missing required property age, expected any of schema type=object properties=[name], schema type=object properties=[age] required=[age]"),
 		},
 		{
 			"marge",
@@ -230,7 +230,7 @@ func TestParseOneOf(t *testing.T) {
 					schematest.WithProperty("bar", schematest.New("boolean"))),
 			)),
 			nil,
-			fmt.Errorf("value does not match any of oneof schema"),
+			fmt.Errorf(`could not parse {"bar":true,"foo":12}, expected one of schema type=object properties=[foo], schema type=object properties=[bar]`),
 		},
 		{
 			`{"foo": 12}`,
@@ -241,7 +241,7 @@ func TestParseOneOf(t *testing.T) {
 					schematest.WithProperty("foo", schematest.New("number"))),
 			)),
 			nil,
-			fmt.Errorf("oneOf: given data is valid against more as one schema"),
+			fmt.Errorf(`could not parse {"foo":12}, it is not valid for only one schema, expected one of schema type=object properties=[foo], schema type=object properties=[foo]`),
 		},
 		{
 			`"hello world"`,
@@ -312,14 +312,14 @@ func TestParse_Integer(t *testing.T) {
 			"3.61",
 			&schema.Schema{Type: "integer", Format: "int32"},
 			0,
-			fmt.Errorf("expected schema type=integer format=int32, got 3.61"),
+			fmt.Errorf("could not parse 3.61 as integer, expected schema type=integer format=int32"),
 		},
 		{
 			"not int32",
 			fmt.Sprintf("%v", math.MaxInt64),
 			&schema.Schema{Type: "integer", Format: "int32"},
 			0,
-			fmt.Errorf("integer is not int32"),
+			fmt.Errorf("could not parse '9.223372036854776e+18', represents a number either less than int32 min value or greater max value, expected schema type=integer format=int32"),
 		},
 		{
 			"min",
@@ -333,7 +333,7 @@ func TestParse_Integer(t *testing.T) {
 			"12",
 			&schema.Schema{Type: "integer", Minimum: toFloatP(13)},
 			0,
-			fmt.Errorf("12 is lower as the expected minimum 13"),
+			fmt.Errorf("12 is lower as the required minimum 13, expected schema type=integer minimum=13"),
 		},
 		{
 			"max",
@@ -347,7 +347,7 @@ func TestParse_Integer(t *testing.T) {
 			"12",
 			&schema.Schema{Type: "integer", Maximum: toFloatP(5)},
 			0,
-			fmt.Errorf("12 is greater as the expected maximum 5"),
+			fmt.Errorf("12 is greater as the required maximum 5, expected schema type=integer maximum=5"),
 		},
 	}
 
@@ -387,7 +387,7 @@ func TestParse_Number(t *testing.T) {
 			fmt.Sprintf("%v", math.MaxFloat64),
 			&schema.Schema{Type: "number", Format: "float"},
 			0,
-			fmt.Errorf("expected schema type=number format=float, got 1.7976931348623157e+308"),
+			fmt.Errorf("could not parse 1.7976931348623157e+308 as float, expected schema type=number format=float"),
 		},
 		{
 			"min",
@@ -401,7 +401,7 @@ func TestParse_Number(t *testing.T) {
 			"3.612",
 			&schema.Schema{Type: "number", Minimum: toFloatP(3.7)},
 			0,
-			fmt.Errorf("3.612 is lower as the expected minimum 3.7"),
+			fmt.Errorf("3.612 is lower as the required minimum 3.7, expected schema type=number minimum=3.7"),
 		},
 		{
 			"max",
@@ -415,7 +415,7 @@ func TestParse_Number(t *testing.T) {
 			"3.612",
 			&schema.Schema{Type: "number", Maximum: toFloatP(3.6)},
 			0,
-			fmt.Errorf("3.612 is greater as the expected maximum 3.6"),
+			fmt.Errorf("3.612 is greater as the required maximum 3.6, expected schema type=number maximum=3.6"),
 		},
 	}
 
@@ -457,7 +457,7 @@ func TestParse_String(t *testing.T) {
 			"not pattern",
 			`"013-64-59943"`,
 			&schema.Schema{Type: "string", Pattern: "^\\d{3}-\\d{2}-\\d{4}$"},
-			fmt.Errorf("value does not match pattern"),
+			fmt.Errorf("value '013-64-59943' does not match pattern, expected schema type=string pattern=^\\d{3}-\\d{2}-\\d{4}$"),
 		},
 		{
 			"date",
@@ -469,7 +469,7 @@ func TestParse_String(t *testing.T) {
 			"not date",
 			`"1908-12-7"`,
 			&schema.Schema{Type: "string", Format: "date"},
-			fmt.Errorf("string is not a date RFC3339"),
+			fmt.Errorf("value '1908-12-7' is not a date RFC3339, expected schema type=string format=date"),
 		},
 		{
 			"date-time",
@@ -481,7 +481,7 @@ func TestParse_String(t *testing.T) {
 			"not date-time",
 			`"1908-12-07 T04:14:25Z"`,
 			&schema.Schema{Type: "string", Format: "date-time"},
-			fmt.Errorf("string is not a date-time RFC3339"),
+			fmt.Errorf("value '1908-12-07 T04:14:25Z' is not a date-time RFC3339, expected schema type=string format=date-time"),
 		},
 		{
 			"password",
@@ -499,7 +499,7 @@ func TestParse_String(t *testing.T) {
 			"not email",
 			`"markusmoen@@pagac.net"`,
 			&schema.Schema{Type: "string", Format: "email"},
-			fmt.Errorf("string is not an email address"),
+			fmt.Errorf("value 'markusmoen@@pagac.net' is not an email address, expected schema type=string format=email"),
 		},
 		{
 			"uuid",
@@ -511,7 +511,7 @@ func TestParse_String(t *testing.T) {
 			"not uuid",
 			`"590c1440-9888-45b0-bd51-a817ee07c3f2a"`,
 			&schema.Schema{Type: "string", Format: "uuid"},
-			fmt.Errorf("string is not an uuid"),
+			fmt.Errorf("value '590c1440-9888-45b0-bd51-a817ee07c3f2a' is not an uuid, expected schema type=string format=uuid"),
 		},
 		{
 			"ipv4",
@@ -523,7 +523,7 @@ func TestParse_String(t *testing.T) {
 			"not ipv4",
 			`"152.23.53.100."`,
 			&schema.Schema{Type: "string", Format: "ipv4"},
-			fmt.Errorf("string is not an ipv4"),
+			fmt.Errorf("value '152.23.53.100.' is not an ipv4, expected schema type=string format=ipv4"),
 		},
 		{
 			"ipv6",
@@ -535,7 +535,7 @@ func TestParse_String(t *testing.T) {
 			"not ipv6",
 			`"-8898:ee17:bc35:9064:5866:d019:3b95:7857"`,
 			&schema.Schema{Type: "string", Format: "ipv6"},
-			fmt.Errorf("string is not an ipv6"),
+			fmt.Errorf("value '-8898:ee17:bc35:9064:5866:d019:3b95:7857' is not an ipv6, expected schema type=string format=ipv6"),
 		},
 	}
 
@@ -602,7 +602,7 @@ func TestValidate_Object(t *testing.T) {
 				schematest.WithProperty("age", schematest.New("integer")),
 			),
 			func(t *testing.T, _ interface{}, err error) {
-				require.EqualError(t, err, "expected schema type=object required=[name age], got {name=foo}")
+				require.EqualError(t, err, `validation error on {"name":"foo"}, expected schema type=object properties=[name, age] required=[name age]`)
 			},
 		},
 		{
@@ -612,7 +612,7 @@ func TestValidate_Object(t *testing.T) {
 				schematest.WithMinProperties(2),
 			),
 			func(t *testing.T, _ interface{}, err error) {
-				require.EqualError(t, err, "expected schema type=object minProperties=2 free-form=true, got {name=foo}")
+				require.EqualError(t, err, `validation error on {"name":"foo"}, expected schema type=object minProperties=2 free-form=true`)
 			},
 		},
 		{
@@ -622,7 +622,7 @@ func TestValidate_Object(t *testing.T) {
 				schematest.WithMaxProperties(1),
 			),
 			func(t *testing.T, _ interface{}, err error) {
-				require.True(t, strings.HasPrefix(err.Error(), "expected schema type=object maxProperties=1 free-form=true, got"))
+				require.Truef(t, strings.HasSuffix(err.Error(), "expected schema type=object maxProperties=1 free-form=true"), "but error is %v", err)
 			},
 		},
 		{
@@ -736,7 +736,7 @@ func TestParse_Bool(t *testing.T) {
 			`1`,
 			&schema.Schema{Type: "boolean"},
 			false,
-			fmt.Errorf("expected bool but got float64"),
+			fmt.Errorf("could not parse 1 as boolean, expected schema type=boolean"),
 		},
 		{
 			`false`,

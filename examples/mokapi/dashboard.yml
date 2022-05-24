@@ -48,16 +48,33 @@ paths:
             application/json:
               schema:
                 $ref: 'kafka.yml#/components/schemas/Kafka'
-  /api/events/{namespace}:
+  /api/events:
     get:
       summary: Information about the kafka cluster
       operationId: events
       parameters:
         - name: namespace
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: name of kafka cluster
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yml#/components/schemas/Events'
+  /api/events/{id}:
+    get:
+      summary: Information about the kafka cluster
+      operationId: events
+      parameters:
+        - name: id
           in: path
           required: true
           schema:
-            type: string
+            type: integer
       responses:
         "200":
           description: name of kafka cluster
