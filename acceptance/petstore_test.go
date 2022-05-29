@@ -56,7 +56,7 @@ func (suite *PetStoreSuite) TestJsFile() {
 
 func (suite *PetStoreSuite) TestLuaFile() {
 	// ensure scripts are executed
-	time.Sleep(time.Second)
+	time.Sleep(2 * time.Second)
 	try.GetRequest(suite.T(), "http://127.0.0.1:18080/pet/findByStatus?status=available&status=pending",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(http.StatusOK),
