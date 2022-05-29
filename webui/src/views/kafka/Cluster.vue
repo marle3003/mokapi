@@ -3,39 +3,20 @@
     class="dashboard"
     v-if="cluster !== null"
   >
-    <div class="page-header">
-      <b-row class="mb-2 ml-0 mr-0">
-        <b-col
-          cols="auto"
-          class="mr-auto pl-0"
-        >
-          <h2>Kafka Cluster - {{ cluster.name }}</h2>
-        </b-col>
-        <b-col
-          cols="auto"
-          class="pr-0"
-        >
-          <div
-            class="close"
-            @click="$router.go(-1)"
-          >
-            <b-icon
-              icon="x"
-              class="border rounded p-1"
-            ></b-icon>
-          </div>
-        </b-col>
-      </b-row>
-    </div>
+   <dashboard-header />
     <div class="page-body">
       <b-card-group deck>
         <b-card class="w-100">
           <b-row>
             <b-col>
+              <p class="label">Kafka Cluster</p>
+              <p style="font-size: 1.25rem; font-weight: 500;">{{ cluster.name }}</p>
+            </b-col>
+            <b-col>
               <p class="label">Version</p>
               <p>{{ cluster.version }}</p>
             </b-col>
-            <b-col>
+                      <b-col>
               <p class="label">Contact</p>
               <p v-if="cluster.contact !== null">
                 <a :href="cluster.contact.url">{{ cluster.contact.name }}</a>
@@ -44,6 +25,9 @@
                 </a>
               </p>
             </b-col>
+          </b-row>
+          <b-row>
+  
           </b-row>
           <b-row v-if="cluster.description !== ''">
             <b-col>
@@ -76,7 +60,7 @@
           <b-table
             small
             hover
-            class="dataTable"
+            class="dataTable selectable"
             :items="cluster.topics"
             :fields="topicFields"
             style="table-layout: fixed"
@@ -100,7 +84,18 @@
               table-class="dataTable"
             >
               <template v-slot:cell(members)="data">
-                {{ data.item.members.map(x => x.name).join(', ') }}
+                <div v-for="member in data.item.members" :key="member">
+                  <span :id="member.name">{{ member.name }}</span>
+                  <b-popover :target="member.name" triggers="hover" placement="top">
+                    <template #title>{{ member.name }}</template>
+                    <p class="label">Address</p>
+                     <p>{{ member.addr }}</p>
+                     <p class="label">Client Software</p>
+                     <p>{{ member.clientSoftwareName }} {{ member.clientSoftwareVersion }}</p>
+                     <p class="label">Last Heartbeat</p>
+                     <p>{{ member.heartbeat | fromNow }}</p>
+                  </b-popover>
+                </div>
               </template>
             </b-table>
         </b-card>
@@ -116,9 +111,14 @@ import Refresh from '@/mixins/Refresh'
 import Metrics from '@/mixins/Metrics'
 import Shortcut from '@/mixins/Shortcut'
 
+import Header from '@/components/dashboard/Header'
+
 export default {
   name: 'Topic',
   mixins: [Api, Filters, Refresh, Metrics, Shortcut],
+    components: {
+    'dashboard-header': Header
+  },
   data () {
     return {
       cluster: null,
@@ -158,7 +158,6 @@ export default {
       })
     },
     shortcut (e) {
-      console.log(e.key.toLowerCase())
       let cmd = e.key.toLowerCase()
       if (cmd === 'escape') {
         this.$router.go(-1)

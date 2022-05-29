@@ -51,7 +51,7 @@ func (c *kafkaClient) Produce(cluster string, topic string, partition int, key, 
 	}
 
 	if t == nil {
-		return nil, nil, fmt.Errorf("kafka topic %v not found", topic)
+		return nil, nil, fmt.Errorf("kafka topic '%v' not found", topic)
 	}
 
 	if partition < 0 {

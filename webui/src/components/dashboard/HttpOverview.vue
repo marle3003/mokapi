@@ -77,7 +77,7 @@ export default {
   },
   methods: {
     async getData () {
-      this.$http.get(this.baseUrl + '/api/events/http').then(
+      this.$http.get(this.baseUrl + '/api/events?namespace=http').then(
         r => {
           this.requests = r.data
         },

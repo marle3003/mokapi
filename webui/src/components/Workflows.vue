@@ -2,20 +2,15 @@
   <div v-if="workflows !== null">
     <p class="label">Workflows</p>
     <b-table small hover class="dataTable" :items="workflows" :fields="fields">
-      <template v-slot:cell(show_details)="row">
-        <div @click="toggleDetails(row)" v-if="row.item.logs !== null && row.item.logs.length > 0">
-          <b-icon v-if="row.detailsShowing" icon="dash-square"></b-icon>
-          <b-icon v-else icon="plus-square"></b-icon>
-        </div>
+      <template v-slot:cell(name)="data">
+        {{ data.item.tags.name }}
       </template>
       <template v-slot:cell(duration)="data">
         {{ data.item.duration | duration }}
       </template>
-      <template v-slot:row-details="row">
-        <div class="logs">
-          <div v-for="line in row.item.logs" :key="line" class="line">
-            {{ line }}
-          </div>
+      <template v-slot:cell(tags)="data">
+        <div v-for="(v, k) in data.item.tags" :key="k" class="line">
+          {{ k + ": " + v }}
         </div>
       </template>
     </b-table>
@@ -23,64 +18,18 @@
 </template>
 
 <script>
-
-import moment from 'moment'
+import Filters from '@/mixins/Filters'
 
 export default {
   name: 'Workflows',
   props: ['workflows'],
+  mixins: [Filters],
   data () {
     return {
-      fields: [{key: 'show_details', label: '', thStyle: 'width: 1%'}, 'name', 'duration'],
-      detailsShown: []
+      fields: ['name', 'duration', 'tags'],
     }
   },
   methods: {
-    toggleDetails (row) {
-      row.toggleDetails()
-      const index = this.detailsShown.indexOf(row.item.key)
-
-      if (row.item._showDetails) {
-        this.detailsShown.push(row.item.key)
-      } else {
-        this.detailsShown.splice(index, 1)
-      }
-    },
-    parseLog (logs) {
-      let result = []
-      let group = {}
-      let inGroup = false
-      let line = 0
-      for (let log of logs) {
-        line++
-        if (log.startsWith('##[group]')) {
-          inGroup = true
-          group = { logs: [], text: log.substr(9), line: line }
-          result.push(group)
-        } else if (log === '##[endgroup]') {
-          line--
-          inGroup = false
-        } else if (inGroup) {
-          group.logs.push({text: log, line: line})
-        } else {
-          result.push({text: log, line: line})
-        }
-      }
-
-      return result
-    }
-  },
-  filters: {
-    duration: function (time) {
-      let ms = Math.round(time / 1000000)
-      let d = moment.duration(ms)
-      if (d.seconds() < 1) {
-        return d.milliseconds() + ' [ms]'
-      } else if (d.minutes() < 1) {
-        return d.seconds() + ' [sec]'
-      }
-      return moment.duration(d).minutes()
-    }
   }
 }
 </script>

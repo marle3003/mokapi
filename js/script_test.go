@@ -5,6 +5,7 @@ import (
 	"github.com/dop251/goja"
 	r "github.com/stretchr/testify/require"
 	"mokapi/engine/common"
+	"net/http"
 	"strings"
 	"testing"
 )
@@ -102,9 +103,11 @@ return s
 
 type testHost struct {
 	common.Host
-	openFile   func(file string) (string, error)
-	openScript func(file string) (common.Script, error)
-	info       func(args ...interface{})
+	openFile    func(file string) (string, error)
+	openScript  func(file string) (common.Script, error)
+	info        func(args ...interface{})
+	httpClient  *testClient
+	kafkaClient *kafkaClient
 }
 
 func (th *testHost) Info(args ...interface{}) {
@@ -125,4 +128,36 @@ func (th *testHost) OpenScript(file string) (common.Script, error) {
 		return th.openScript(file)
 	}
 	return nil, nil
+}
+
+func (th *testHost) HttpClient() common.HttpClient {
+	return th.httpClient
+}
+
+func (th *testHost) KafkaClient() common.KafkaClient {
+	return th.kafkaClient
+}
+
+type testClient struct {
+	req    *http.Request
+	doFunc func(request *http.Request) (*http.Response, error)
+}
+
+func (c *testClient) Do(request *http.Request) (*http.Response, error) {
+	c.req = request
+	if c.doFunc != nil {
+		return c.doFunc(request)
+	}
+	return &http.Response{}, nil
+}
+
+type kafkaClient struct {
+	produce func(cluster, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error)
+}
+
+func (c *kafkaClient) Produce(cluster, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error) {
+	if c.produce != nil {
+		return c.produce(cluster, topic, partition, key, value, headers)
+	}
+	return nil, nil, nil
 }

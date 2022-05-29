@@ -15,7 +15,7 @@ func (r *Ref) Marshal(i interface{}, contentType media.ContentType) ([]byte, err
 	case "json":
 		o, err := selectData(i, r)
 		if err != nil {
-			return nil, fmt.Errorf("%v, expected %v", err, r)
+			return nil, err
 		}
 		b, err := json.Marshal(o)
 		if err, ok := err.(*json.SyntaxError); ok {
@@ -191,7 +191,7 @@ func selectObject(data interface{}, schema *Schema) (interface{}, error) {
 		return fromMap(v, schema)
 	}
 
-	panic("not implemented")
+	return nil, fmt.Errorf("could not encode '%v' to %v", data, schema)
 }
 
 func selectAny(schema *Schema, data interface{}) (interface{}, error) {

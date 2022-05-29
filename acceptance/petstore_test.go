@@ -9,6 +9,7 @@ import (
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/metaData"
 	"mokapi/kafka/produce"
+	"mokapi/runtime/events"
 	"mokapi/try"
 	"net/http"
 	"time"
@@ -48,6 +49,9 @@ func (suite *PetStoreSuite) TestJsFile() {
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(http.StatusNotFound),
 		try.HasBody(""))
+
+	e := events.Events(events.NewTraits().WithNamespace("kafka"))
+	require.Len(suite.T(), e, 1)
 }
 
 func (suite *PetStoreSuite) TestLuaFile() {

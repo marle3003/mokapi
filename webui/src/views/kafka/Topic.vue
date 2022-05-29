@@ -83,7 +83,18 @@
           <b-card-title class="info text-center">Groups</b-card-title>
           <b-table small hover class="dataTable" :items="groups" :fields="groupFields" style="table-layout: fixed">
             <template v-slot:cell(members)="data">
-              <span v-if="data.item.members !== null">{{ data.item.members.map(x => x.name).join(', ') }}</span>
+              <div v-for="member in data.item.members" :key="member.name">
+                  <span :id="member.name">{{ member.name }}</span>
+                  <b-popover :target="member.name" triggers="hover" placement="top">
+                    <template #title>{{ member.name }}</template>
+                    <p class="label">Address</p>
+                     <p>{{ member.addr }}</p>
+                     <p class="label">Client Software</p>
+                     <p>{{ member.clientSoftwareName }} {{ member.clientSoftwareVersion }}</p>
+                     <p class="label">Last Heartbeat</p>
+                     <p>{{ member.heartbeat | fromNow }}</p>
+                  </b-popover>
+                </div>
             </template>
             <template v-slot:cell(lag)="data">
               <span>{{ metric(cluster.metrics, 'consumer_group_lag', {name: 'service', value: cluster.name}, {name: 'topic', value: topic.name}, {name: 'group', value: data.item.name}) }}</span>
@@ -160,12 +171,12 @@ export default {
           this.cluster = null
         }
       )
-      this.$http.get(this.baseUrl + '/api/events/kafka').then(
+      this.$http.get(this.baseUrl + '/api/events?namespace=kafka&topic=' + this.$route.params.topic).then(
         r => {
           this.messages = r.data
         },
         r => {
-          this.messages = null
+          this.messages = []
         }
       )
     },

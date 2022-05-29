@@ -8,7 +8,6 @@ import (
 	"mokapi/runtime"
 	"net/url"
 	"testing"
-	"time"
 )
 
 func TestEngine_AddScript(t *testing.T) {
@@ -133,7 +132,7 @@ func TestLuaOn(t *testing.T) {
 
 		require.Len(t, summaries, 1, "summary length not 1")
 		summary := summaries[0]
-		require.True(t, summary.Duration >= 1.0*time.Second, "sleep")
+		require.True(t, summary.Duration >= 1.0, "sleep")
 	})
 	t.Run("tag name", func(t *testing.T) {
 		t.Parallel()

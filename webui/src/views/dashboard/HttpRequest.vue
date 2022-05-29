@@ -13,7 +13,7 @@
       </b-row>
     </div>
     <div class="page-body">
-      <b-card class="w-100">
+      <b-card class="w-100 mb-3">
         <b-row>
           <b-col>
             <p class="label">URL</p>
@@ -22,54 +22,80 @@
             <p><b-badge pill class="operation" :class="request.method.toLowerCase()" >{{ request.method }}</b-badge></p>
             <p class="label">Status</p>
             <p>
-              <b-badge pill variant="success" v-if="request.httpStatus >= 200 && request.httpStatus < 300">{{ request.httpStatus }} {{ request.httpStatus | reason }}</b-badge>
-              <b-badge pill variant="warning" v-if="request.httpStatus >= 300 && request.httpStatus < 400">{{ request.httpStatus }} {{ request.httpStatus | reason }}</b-badge>
-              <b-badge pill class="client-error" v-if="request.httpStatus >= 400 && request.httpStatus < 500">{{ request.httpStatus }} {{ request.httpStatus | reason }}</b-badge>
-              <b-badge pill variant="danger" v-if="request.httpStatus >= 500 && request.httpStatus < 600">{{ request.httpStatus }} {{ request.httpStatus | reason }}</b-badge>
+              <b-badge pill variant="success" v-if="response.statusCode >= 200 && response.statusCode < 300">{{ response.statusCode }} {{ response.statusCode | httpStatusText }}</b-badge>
+              <b-badge pill variant="warning" v-if="response.statusCode >= 300 && response.statusCode < 400">{{ response.statusCode }} {{ response.statusCode | httpStatusText }}</b-badge>
+              <b-badge pill class="client-error" v-if="response.statusCode >= 400 && response.statusCode < 500">{{ response.statusCode }} {{ response.statusCode | httpStatusText }}</b-badge>
+              <b-badge pill variant="danger" v-if="response.statusCode >= 500 && response.statusCode < 600">{{ response.statusCode }} {{ response.statusCode | httpStatusText }}</b-badge>
             </p>
           </b-col>
           <b-col>
-            <p class="label">Content Type</p>
-            <p>{{ request.contentType }}</p>
             <p class="label">Time</p>
-            <p> {{ request.time | moment}}</p>
+            <p> {{ event.time | moment}}</p>
             <p class="label">Duration</p>
-            <p> {{ request.responseTime | duration}}</p>
+            <p> {{ event.data.duration | duration}}</p>
+            <p class="label">Size</p>
+            <p> {{ response.size | prettyBytes}}</p>
           </b-col>
         </b-row>
+      </b-card>
+      <b-card class="mb-3">
         <b-row>
           <b-col>
-            <p class="label">Request Parameters</p>
-            <b-table small hover class="dataTable" :items="request.parameters" :fields="parameters">
-              <template v-slot:cell(show_details)="row">
-                <div @click="toggleDetails(row)" v-if="showRawParameter(row.item)">
-                  <b-icon v-if="row.detailsShowing" icon="dash-square"></b-icon>
-                  <b-icon v-else icon="plus-square"></b-icon>
+            <b-tabs content-class="mt-3">
+              <b-tab title-link-class="pt-1 pb-1" title="Params" active>
+                <b-table small hover class="dataTable" :items="request.parameters" :fields="parameterFields">
+                  <template v-slot:cell(show_details)="row">
+                    <div @click="toggleDetails(row)" v-if="showRawParameter(row.item)">
+                      <b-icon v-if="row.detailsShowing" icon="dash-square"></b-icon>
+                      <b-icon v-else icon="plus-square"></b-icon>
+                    </div>
+                  </template>
+                  <template v-slot:cell(value)="data">
+                    {{ data.item.value !== '' ? data.item.value : data.item.raw }}
+                  </template>
+                  <template v-slot:cell(openapi)="data">
+                    {{ data.item.value !== '' ? 'yes' : 'no' }}
+                  </template>
+                  <template v-slot:row-details="row">
+                    <b-card class="w-100">
+                      <b-row class="mb-2">
+                        <b-col sm="3" class="text-sm-right"><b>Raw:</b></b-col>
+                        <b-col><vue-simple-markdown :source="row.item.raw" /></b-col>
+                      </b-row>
+                    </b-card>
+                  </template>
+                </b-table>
+              </b-tab>
+              <b-tab title-link-class="pt-1 pb-1" title="Body">
+                <p class="label">Content Type</p>
+                <p>{{ request.contentType }}</p>
+                <div v-if="request.body">
+                  <pre :class="getLanguage(request.contentType)"><code :class="getLanguage(request.contentType)" v-html="pretty(request.body, request.contentType)"></code></pre>
                 </div>
-              </template>
-              <template v-slot:cell(value)="data">
-                {{ data.item.value !== '' ? data.item.value : data.item.raw }}
-              </template>
-              <template v-slot:cell(openapi)="data">
-                {{ data.item.value !== '' ? 'yes' : 'no' }}
-              </template>
-              <template v-slot:row-details="row">
-                <b-card class="w-100">
-                  <b-row class="mb-2">
-                    <b-col sm="3" class="text-sm-right"><b>Raw:</b></b-col>
-                    <b-col><vue-simple-markdown :source="row.item.raw" /></b-col>
-                  </b-row>
-                </b-card>
-              </template>
-            </b-table>
-
-            <workflows :workflows="request.workflows"></workflows>
-
-            <p class="label">Response Body</p>
-            <div v-if="parseError !== null">
-              <b-alert show variant="danger">{{ parseError }}</b-alert>
-            </div>
-            <pre :class="getLanguage(request.contentType)"><code :class="getLanguage(request.contentType)" v-html="pretty(request.responseBody, request.contentType)"></code></pre>
+              </b-tab>
+              <b-tab title-link-class="pt-1 pb-1" title="Workflows">
+                <workflows :workflows="event.workflows"></workflows>
+              </b-tab>
+            </b-tabs>
+          </b-col>
+        </b-row>
+      </b-card>
+      <b-card>
+        <b-row>
+          <b-col>
+            <b-tabs content-class="mt-3">
+              <b-tab title-link-class="pt-1 pb-1" title="Body" active>
+                <p class="label">Content Type</p>
+                <p>{{ response.headers['Content-Type'] }}</p>
+                <div v-if="response.body">
+                  <pre :class="getLanguage(response.headers['Content-Type'])"><code :class="getLanguage(response.headers['Content-Type'])" v-html="pretty(response.body, response.headers['Content-Type'])"></code></pre>
+                </div>
+              </b-tab>
+              <b-tab title-link-class="pt-1 pb-1" title="Headers">
+                <b-table small hover class="dataTable" :items="response.headers">
+                </b-table>
+              </b-tab>
+            </b-tabs>
           </b-col>
         </b-row>
       </b-card>
@@ -80,36 +106,36 @@
 <script>
 import Api from '@/mixins/Api'
 import Filters from '@/mixins/Filters'
-import http from 'http-status-codes'
 import Workflows from '@/components/Workflows'
 import xmlFormatter from 'xml-formatter'
 import MIMEType from 'whatwg-mimetype'
+import Shortcut from '@/mixins/Shortcut'
 
 export default {
   name: 'HttpRequest',
   components: {
     'workflows': Workflows
   },
-  mixins: [Api, Filters],
+  mixins: [Api, Filters, Shortcut],
   data () {
     return {
       request: null,
-      parameters: [{key: 'show_details', label: '', thStyle: 'width: 1%'}, 'name', {key: 'value', tdClass: 'break'}, 'type', {key: 'openapi', label: 'OpenApi'}],
+      response: null,
+      event: null,
+      parameterFields: [{key: 'show_details', label: '', thStyle: 'width: 1%'}, 'name', {key: 'value', tdClass: 'break'}, 'type', {key: 'openapi', label: 'OpenApi'}],
       detailsShown: [],
       parseError: null
     }
   },
   created () {
     this.getData()
-    window.addEventListener('keyup', this.doCommand)
-  },
-  destroyed () {
-    window.removeEventListener('keyup', this.doCommand)
   },
   methods: {
     async getData () {
       let id = this.$route.params.id
-      this.request = await this.getHttpRequest(id)
+      this.event = await this.getHttpRequest(id)
+      this.request = this.event.data.request
+      this.response = this.event.data.response
     },
     showRawParameter (p) {
       return p.value !== '' && p.raw !== '' && p.value !== p.raw
@@ -125,7 +151,7 @@ export default {
       }
     },
     pretty (s, contentType) {
-      if (s === '' || s === null) {
+      if (!s) {
         return s
       }
       const mimeType = new MIMEType(contentType)
@@ -163,32 +189,11 @@ export default {
       }
       return ''
     },
-    doCommand (e) {
+    shortcut (e) {
       let cmd = e.key.toLowerCase()
       if (cmd === 'escape') {
         this.$router.go(-1)
       }
-    }
-  },
-  filters: {
-    moment: function (date) {
-      return moment(date).local().format('YYYY-MM-DD HH:mm:ss')
-    },
-    fromNow: function (date) {
-      return moment(date).fromNow(true)
-    },
-    duration: function (time) {
-      let ms = Math.round(time / 1000000)
-      let d = moment.duration(ms)
-      if (d.seconds() < 1) {
-        return d.milliseconds() + ' [ms]'
-      } else if (d.minutes() < 1) {
-        return d.seconds() + ' [sec]'
-      }
-      return moment.duration(d).minutes()
-    },
-    reason: function (status) {
-      return http.getStatusText(status)
     }
   }
 }

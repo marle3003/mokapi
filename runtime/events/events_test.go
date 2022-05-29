@@ -54,6 +54,28 @@ func TestPush(t *testing.T) {
 				require.Len(t, events, 1)
 			},
 		},
+		{
+			"get all events",
+			func(t *testing.T) {
+				SetStore(10, NewTraits().WithNamespace("foo"))
+				err := Push(nil, NewTraits().WithNamespace("foo"))
+				require.NoError(t, err)
+
+				events := Events(NewTraits())
+				require.Len(t, events, 1)
+			},
+		},
+		{
+			"get events by namespace",
+			func(t *testing.T) {
+				SetStore(10, NewTraits().WithNamespace("foo"))
+				err := Push(nil, NewTraits().WithNamespace("foo"))
+				require.NoError(t, err)
+
+				events := Events(NewTraits().WithNamespace("foo"))
+				require.Len(t, events, 1)
+			},
+		},
 	}
 
 	for _, tc := range testcase {

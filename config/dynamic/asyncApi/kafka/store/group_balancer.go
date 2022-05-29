@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-type groupBalancerNew struct {
+type groupBalancer struct {
 	group *Group
 	join  chan joindata
 	sync  chan syncdata
@@ -45,8 +45,8 @@ type groupAssignment struct {
 	raw      []byte
 }
 
-func newGroupBalancerNew(group *Group) *groupBalancerNew {
-	return &groupBalancerNew{
+func newGroupBalancer(group *Group) *groupBalancer {
+	return &groupBalancer{
 		group: group,
 		join:  make(chan joindata),
 		sync:  make(chan syncdata),
@@ -54,11 +54,11 @@ func newGroupBalancerNew(group *Group) *groupBalancerNew {
 	}
 }
 
-func (b *groupBalancerNew) Stop() {
+func (b *groupBalancer) Stop() {
 	b.stop <- true
 }
 
-func (b *groupBalancerNew) run() {
+func (b *groupBalancer) run() {
 	stop := make(chan bool, 1)
 	var syncs []syncdata
 	var assigns map[string]*groupAssignment
@@ -103,7 +103,7 @@ func (b *groupBalancerNew) run() {
 	}
 }
 
-func (b *groupBalancerNew) finishJoin(stop chan bool) {
+func (b *groupBalancer) finishJoin(stop chan bool) {
 StopWaitingForConsumers:
 	for {
 		select {
@@ -123,7 +123,7 @@ StopWaitingForConsumers:
 	var protocol string
 	for _, j := range b.joins {
 		memberId := j.client.GetOrCreateMemberId(b.group.Name)
-		generation.Members[memberId] = &Member{}
+		generation.Members[memberId] = &Member{Client: j.client}
 
 		for _, proto := range j.protocols {
 			if _, ok := counter[proto.Name]; !ok {
@@ -172,7 +172,7 @@ StopWaitingForConsumers:
 	})
 }
 
-func (b *groupBalancerNew) respond(w kafka.ResponseWriter, msg kafka.Message) {
+func (b *groupBalancer) respond(w kafka.ResponseWriter, msg kafka.Message) {
 	go func() {
 		err := w.Write(msg)
 		if err != nil {

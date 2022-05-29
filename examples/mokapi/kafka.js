@@ -1,4 +1,4 @@
-import g from 'generator'
+ import g from 'generator'
 import {metrics} from 'metrics';
 
 export let clusters = [
@@ -58,11 +58,19 @@ export let clusters = [
                 name:'foo',
                 members:[
                     {
-                        name:'julie',
+                        name: 'julie',
+                        addr: '127.0.0.1: 15001',
+                        clientSoftwareName: 'mokapi',
+                        clientSoftwareVersion: '1.0',
+                        heartbeat: 1654771269,
                         partitions:[1,2]
                     },
                     {
                         name:'hermann',
+                        addr: '127.0.0.1: 15002',
+                        clientSoftwareName: 'mokapi',
+                        clientSoftwareVersion: '1.0',
+                        heartbeat: 1654872269,
                         partitions:[3]
                     }
                 ],
@@ -77,6 +85,10 @@ export let clusters = [
                 members:[
                     {
                         name:'george',
+                        addr: '127.0.0.1: 15003',
+                        clientSoftwareName: 'mokapi',
+                        clientSoftwareVersion: '1.0',
+                        heartbeat: 1654721269,
                         partitions:[1]
                     }
                 ],
@@ -90,3 +102,19 @@ export let clusters = [
         metrics: metrics.filter(x => x.name.includes("kafka"))
     }
 ]
+
+export let events = [
+     {
+         id: "123456",
+         traits: {
+             namespace: "kafka",
+             topic: "foo"
+         },
+         time: 1651771269,
+         data: {
+             offset: 0,
+             key: "foo",
+             message: "{\"id\": 12345}",
+         }
+     }
+ ]

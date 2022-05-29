@@ -10,25 +10,7 @@
       class="dashboard"
       v-if="loaded"
     >
-      <div class="page-header">
-        <b-navbar class="p-0">
-          <b-navbar-nav>
-            <b-nav-item :to="{ name: 'dashboard', query: {refresh: this.$route.query.refresh} }">Overview</b-nav-item>
-            <b-nav-item
-              :to="{ name: 'http', query: {refresh: this.$route.query.refresh} }"
-              v-if="httpEnabled"
-            >HTTP</b-nav-item>
-            <b-nav-item
-              :to="{ name: 'kafka', query: {refresh: this.$route.query.refresh} }"
-              v-if="kafkaEnabled"
-            >Kafka</b-nav-item>
-            <b-nav-item
-              :to="{ name: 'smtp', query: {refresh: this.$route.query.refresh} }"
-              v-if="smtpEnabled"
-            >SMTP</b-nav-item>
-          </b-navbar-nav>
-        </b-navbar>
-      </div>
+      <dashboard-header />
       <div class="page-body">
 
         <b-card-group deck v-show="$route.name === 'dashboard'">
@@ -198,23 +180,20 @@ import Filters from '@/mixins/Filters'
 import Refresh from '@/mixins/Refresh'
 import Metrics from '@/mixins/Metrics'
 
+import Header from '@/components/dashboard/Header'
 import HttpOverview from '@/components/dashboard/HttpOverview'
 
 export default {
   mixins: [Api, Filters, Refresh, Metrics],
   components: {
-    'http-overview': HttpOverview
+    'http-overview': HttpOverview,
+    'dashboard-header': Header
   },
   data () {
     return {
       metrics: [],
       services: null,
-      lastRequests: null,
-      lastErrors: null,
-      lastMails: null,
       loaded: false,
-      topicSizes: {},
-      chartTopicSize: {},
       httpFields: [
         { key: 'name', class: 'text-left' },
         { key: 'lastRequest', class: 'text-left' },
@@ -234,7 +213,7 @@ export default {
         { key: 'subject', class: 'subject' },
         'time'
       ],
-      error: null
+      error: null,
     }
   },
   computed: {
@@ -359,27 +338,6 @@ export default {
   width: 90%;
   margin: 12px auto auto;
 }
-.page-header {
-  margin-left: -8px;
-}
-.page-header .nav-link {
-  color: var(--var-color-primary);
-  position: relative;
-  border-radius: 6px;
-  margin-right: 5px;
-}
-.page-header .nav-link:hover {
-  color: var(--var-color-primary);
-  text-decoration: none;
-  background-color: var(--var-bg-color-secondary);
-  opacity: 0.8;
-}
-.page-header .nav-link.router-link-exact-active {
-  color: var(--var-color-primary);
-  text-decoration: none;
-  background-color: var(--var-bg-color-secondary);
-  opacity: 0.8;
-}
 .card {
   border-color: var(--var-border-color);
   margin: 7px;
@@ -409,9 +367,6 @@ export default {
 .response.icon {
   vertical-align: middle;
   font-size: 0.5rem;
-}
-.dataTable.selectable {
-  cursor: pointer;
 }
 </style>
 <style>

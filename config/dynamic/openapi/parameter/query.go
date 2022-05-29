@@ -53,14 +53,28 @@ func parseQueryObject(p *Parameter, u *url.URL) (obj map[string]interface{}, err
 	default:
 		obj = make(map[string]interface{})
 		if p.Explode {
-			for it := p.Schema.Value.Properties.Value.Iter(); it.Next(); {
-				name := it.Key().(string)
-				prop := it.Value().(*schema.Ref)
-				s := u.Query().Get(name)
-				if v, err := schema.ParseString(s, prop); err == nil {
-					obj[name] = v
-				} else {
-					return nil, err
+			if p.Schema.Value.IsDictionary() {
+				for k, _ := range u.Query() {
+					if i, err := schema.ParseString(u.Query().Get(k), p.Schema.Value.AdditionalProperties.Ref); err == nil {
+						obj[k] = i
+					} else {
+						return nil, err
+					}
+				}
+			} else if p.Schema.Value.IsFreeForm() {
+				for k, v := range u.Query() {
+					obj[k] = v
+				}
+			} else {
+				for it := p.Schema.Value.Properties.Value.Iter(); it.Next(); {
+					name := it.Key().(string)
+					prop := it.Value().(*schema.Ref)
+					s := u.Query().Get(name)
+					if v, err := schema.ParseString(s, prop); err == nil {
+						obj[name] = v
+					} else {
+						return nil, err
+					}
 				}
 			}
 		} else {

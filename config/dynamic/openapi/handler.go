@@ -51,7 +51,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			i := r.Context().Value("time")
 			if i != nil {
 				t := i.(time.Time)
-				logHttp.Duration = time.Now().Sub(t) * time.Millisecond
+				logHttp.Duration = time.Now().Sub(t).Milliseconds()
 			}
 		}()
 	}
@@ -172,6 +172,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 	if logHttp != nil {
 		logHttp.Response.Body = string(body)
+		logHttp.Response.Size = len(body)
 	}
 }
 
@@ -291,5 +292,6 @@ func writeError(rw http.ResponseWriter, r *http.Request, err error, serviceName 
 	if ok {
 		logHttp.Response.StatusCode = status
 		logHttp.Response.Body = message
+		logHttp.Response.Size = len([]byte(message))
 	}
 }

@@ -49,7 +49,7 @@ export default {
     },
     async getHttpRequest (id) {
       let response = await this.$http.get(
-        this.baseUrl + '/api/dashboard/http/requests/' + id
+        this.baseUrl + '/api/events/' + id
       )
       return response.data
     },

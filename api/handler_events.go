@@ -3,15 +3,12 @@ package api
 import (
 	"mokapi/runtime/events"
 	"net/http"
-	"strings"
 )
 
 func (h *handler) getEvents(w http.ResponseWriter, r *http.Request) {
-	segments := strings.Split(r.URL.Path, "/")
 	traits := events.NewTraits()
-
-	if len(segments) > 3 {
-		traits.WithNamespace(segments[3])
+	for k := range r.URL.Query() {
+		traits.With(k, r.URL.Query().Get(k))
 	}
 
 	list := events.Events(traits)

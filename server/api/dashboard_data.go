@@ -50,7 +50,7 @@ type requestParameter struct {
 }
 
 type eventSummary struct {
-	Duration time.Duration     `json:"duration"`
+	Duration int64             `json:"duration"`
 	Tags     map[string]string `json:"tags"`
 }
 

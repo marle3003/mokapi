@@ -1,5 +1,5 @@
 import {on} from 'mokapi'
-import {clusters} from 'kafka.js'
+import {clusters, events as kafkaEvents} from 'kafka.js'
 import {apps as httpServices, events as httpEvents} from 'services_http'
 import {metrics} from 'metrics'
 
@@ -7,9 +7,13 @@ export default function() {
     on('http', function(request, response) {
         response.headers["Access-Control-Allow-Origin"] = '*'
 
+        let h = new XMLHttpRequest()
+        h.open("GET", "http://www.sbb.ch");
+        h.send();
+
         switch (request.operationId) {
             case 'info':
-                response.data = {version: "1.0"}
+                response.data = {version: "1.0", activeServices: ["http", "kafka"]}
                 return true
             case 'services':
                 response.data = getServices()
@@ -27,14 +31,19 @@ export default function() {
                 }
                 return true
             case 'events':
-                switch (request.path["namespace"]) {
-                    case "http":
-                        response.data = httpEvents
-                        return true
+                response.data = getEvents(request.query['traits'])
+                return true
+            case 'event':
+                let id = request.path["id"]
+                let e = getEvent(id)
+                if (!e){
+                    response.statusCode = 404
+                }else{
+                    response.data = e
                 }
-                return false
+                return true
         }
-    })
+    }, {tags: {name: "dashboard"}})
 }
 
 function getServices() {
@@ -50,4 +59,42 @@ function getServices() {
     })
 
     return http.concat(kafka)
+}
+
+function getEvent(id) {
+    for (let e of httpEvents){
+        if (e.id === id){
+            return e
+        }
+    }
+    for (let e of kafkaEvents){
+        if (e.id === id){
+            return e
+        }
+    }
+    return null
+}
+
+function getEvents(traits) {
+    let result = []
+    for (let e of httpEvents){
+        if (matchEvent(e, traits)) {
+            result.push(e)
+        }
+    }
+    for (let e of kafkaEvents){
+        if (matchEvent(e, traits)) {
+            result.push(e)
+        }
+    }
+    return result
+}
+
+function matchEvent(e, traits) {
+    for (let t in traits) {
+        if (e.traits[t] !== traits[t]) {
+            return false
+        }
+    }
+    return true
 }

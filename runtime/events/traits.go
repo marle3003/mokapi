@@ -43,3 +43,12 @@ func (t Traits) Includes(traits Traits) bool {
 	}
 	return true
 }
+
+func (t Traits) Match(traits Traits) bool {
+	for k, v := range t {
+		if s, ok := traits[k]; !ok || s != v {
+			return false
+		}
+	}
+	return true
+}

@@ -1,5 +1,7 @@
 package common
 
+import "net/http"
+
 type EventEmitter interface {
 	Emit(event string, args ...interface{})
 }
@@ -21,6 +23,7 @@ type Host interface {
 	On(event string, do func(args ...interface{}) (bool, error), tags map[string]string)
 
 	KafkaClient() KafkaClient
+	HttpClient() HttpClient
 }
 
 type Logger interface {
@@ -31,4 +34,8 @@ type Logger interface {
 
 type KafkaClient interface {
 	Produce(cluster string, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error)
+}
+
+type HttpClient interface {
+	Do(r *http.Request) (*http.Response, error)
 }

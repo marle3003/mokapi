@@ -10,11 +10,14 @@ import (
 
 func TestParseQuery(t *testing.T) {
 	testcases := []struct {
-		u *url.URL
-		p *Parameter
-		e interface{}
+		name string
+		u    *url.URL
+		p    *Parameter
+		e    interface{}
 	}{
-		{&url.URL{RawQuery: "id=5"},
+		{
+			"integer",
+			&url.URL{RawQuery: "id=5"},
 			&Parameter{
 				Name:    "id",
 				Schema:  &schema.Ref{Value: &schema.Schema{Type: "integer"}},
@@ -23,7 +26,9 @@ func TestParseQuery(t *testing.T) {
 			},
 			int64(5),
 		},
-		{&url.URL{RawQuery: ""},
+		{
+			"empty integer",
+			&url.URL{RawQuery: ""},
 			&Parameter{
 				Name:    "id",
 				Schema:  &schema.Ref{Value: &schema.Schema{Type: "integer"}},
@@ -32,7 +37,9 @@ func TestParseQuery(t *testing.T) {
 			},
 			nil,
 		},
-		{&url.URL{RawQuery: "id=3&id=4&id=5"},
+		{
+			"integer array as explode",
+			&url.URL{RawQuery: "id=3&id=4&id=5"},
 			&Parameter{
 				Name:    "id",
 				Schema:  &schema.Ref{Value: &schema.Schema{Type: "array", Items: &schema.Ref{Value: &schema.Schema{Type: "integer"}}}},
@@ -41,7 +48,9 @@ func TestParseQuery(t *testing.T) {
 			},
 			[]interface{}{int64(3), int64(4), int64(5)},
 		},
-		{&url.URL{RawQuery: "id=3,4,5"},
+		{
+			"integer array",
+			&url.URL{RawQuery: "id=3,4,5"},
 			&Parameter{
 				Name:    "id",
 				Schema:  &schema.Ref{Value: &schema.Schema{Type: "array", Items: &schema.Ref{Value: &schema.Schema{Type: "integer"}}}},
@@ -50,7 +59,9 @@ func TestParseQuery(t *testing.T) {
 			},
 			[]interface{}{int64(3), int64(4), int64(5)},
 		},
-		{&url.URL{RawQuery: "id=3%204%205"},
+		{
+			"integer array space delimited",
+			&url.URL{RawQuery: "id=3%204%205"},
 			&Parameter{
 				Name:    "id",
 				Schema:  &schema.Ref{Value: &schema.Schema{Type: "array", Items: &schema.Ref{Value: &schema.Schema{Type: "integer"}}}},
@@ -59,7 +70,9 @@ func TestParseQuery(t *testing.T) {
 			},
 			[]interface{}{int64(3), int64(4), int64(5)},
 		},
-		{&url.URL{RawQuery: "id=3|4|5"},
+		{
+			"integer array pipe delimited",
+			&url.URL{RawQuery: "id=3|4|5"},
 			&Parameter{
 				Name:    "id",
 				Schema:  &schema.Ref{Value: &schema.Schema{Type: "array", Items: &schema.Ref{Value: &schema.Schema{Type: "integer"}}}},
@@ -68,7 +81,9 @@ func TestParseQuery(t *testing.T) {
 			},
 			[]interface{}{int64(3), int64(4), int64(5)},
 		},
-		{&url.URL{RawQuery: "role=admin&firstName=Alex"},
+		{
+			"object explode",
+			&url.URL{RawQuery: "role=admin&firstName=Alex"},
 			&Parameter{
 				Name: "id",
 				Schema: &schema.Ref{Value: schematest.New("object",
@@ -80,7 +95,31 @@ func TestParseQuery(t *testing.T) {
 			},
 			map[string]interface{}{"role": "admin", "firstName": "Alex"},
 		},
-		{&url.URL{RawQuery: "id=role,admin,firstName,Alex"},
+		{
+			"free form object explode",
+			&url.URL{RawQuery: "role=admin&firstName=Alex"},
+			&Parameter{
+				Name:    "id",
+				Schema:  &schema.Ref{Value: schematest.New("object")},
+				Style:   "",
+				Explode: true,
+			},
+			map[string]interface{}{"role": []string{"admin"}, "firstName": []string{"Alex"}},
+		},
+		{
+			"dictionary explode",
+			&url.URL{RawQuery: "role=admin&firstName=Alex"},
+			&Parameter{
+				Name:    "id",
+				Schema:  &schema.Ref{Value: schematest.New("object", schematest.WithAdditionalProperties(schematest.New("string")))},
+				Style:   "",
+				Explode: true,
+			},
+			map[string]interface{}{"role": "admin", "firstName": "Alex"},
+		},
+		{
+			"object",
+			&url.URL{RawQuery: "id=role,admin,firstName,Alex"},
 			&Parameter{
 				Name: "id",
 				Schema: &schema.Ref{Value: schematest.New("object",
@@ -92,7 +131,9 @@ func TestParseQuery(t *testing.T) {
 			},
 			map[string]interface{}{"role": "admin", "firstName": "Alex"},
 		},
-		{&url.URL{RawQuery: "id[role]=admin&id[firstName]=Alex"},
+		{
+			"object deep",
+			&url.URL{RawQuery: "id[role]=admin&id[firstName]=Alex"},
 			&Parameter{
 				Name: "id",
 				Schema: &schema.Ref{Value: schematest.New("object",
@@ -106,12 +147,12 @@ func TestParseQuery(t *testing.T) {
 		},
 	}
 
-	for _, testcase := range testcases {
-		test := testcase
-		t.Run(test.u.String(), func(t *testing.T) {
-			i, err := parseQuery(test.p, test.u)
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			i, err := parseQuery(tc.p, tc.u)
 			require.NoError(t, err)
-			require.Equal(t, test.e, i.Value)
+			require.Equal(t, tc.e, i.Value)
 		})
 
 	}

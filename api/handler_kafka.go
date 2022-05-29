@@ -8,6 +8,7 @@ import (
 	"mokapi/runtime/monitor"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type kafkaSummary struct {
@@ -36,8 +37,12 @@ type group struct {
 }
 
 type member struct {
-	Name       string
-	Partitions []int
+	Name                  string    `json:"name"`
+	Addr                  string    `json:"addr"`
+	ClientSoftwareName    string    `json:"clientSoftwareName"`
+	ClientSoftwareVersion string    `json:"clientSoftwareVersion"`
+	Heartbeat             time.Time `json:"heartbeat"`
+	Partitions            []int     `json:"partitions"`
 }
 
 type kafkaContact struct {
@@ -165,8 +170,12 @@ func newGroup(g *store.Group) group {
 				partitions = append(partitions, p.Index)
 			}
 			grp.Members = append(grp.Members, member{
-				Name:       id,
-				Partitions: partitions,
+				Name:                  id,
+				Addr:                  m.Client.Addr,
+				ClientSoftwareName:    m.Client.ClientSoftwareName,
+				ClientSoftwareVersion: m.Client.ClientSoftwareVersion,
+				Heartbeat:             m.Client.Heartbeat,
+				Partitions:            partitions,
 			})
 		}
 	}

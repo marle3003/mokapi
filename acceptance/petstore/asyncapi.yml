@@ -53,15 +53,18 @@ components:
               type: integer
               format: int32
             ship-date:
-              type: date-time
+              type: string
+              format: date-time
         accepted:
           type: object
           properties:
             timestamp:
-              type: date-time
+              type: string
+              format: date-time
         completed:
           type: object
           properties:
             timestamp:
-              type: date-time
+              type: string
+              format: date-time
       required: [id]

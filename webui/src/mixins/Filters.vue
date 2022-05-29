@@ -1,5 +1,6 @@
 <script>
 import moment from 'moment'
+import http from 'http-status-codes'
 
 export default {
   filters: {
@@ -54,6 +55,9 @@ export default {
       unit = units[exponent]
 
       return (neg ? '-' : '') + num + ' ' + unit
+    },
+    httpStatusText: function (status) { 
+      return http.getStatusText(status)
     }
   }
 }

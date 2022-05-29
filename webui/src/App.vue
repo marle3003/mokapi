@@ -90,16 +90,14 @@ export default {
   .break{
     word-break: break-all;
   }
-  .card {
-    border: 1px solid #141414;
-    border-radius: 10px;
-    background-color: var(--var-bg-color-primary);
-  }
   table.dataTable {
     border-left-style: hidden;
     border-right-style: hidden;
     color:var(--var-color-primary);
     font-size: 0.8rem;
+  }
+  table.dataTable.selectable {
+    cursor: pointer;
   }
   table.dataTable thead tr{
     color: var(--var-table-header-color);
@@ -145,9 +143,26 @@ export default {
     border-color: var(--var-table-border-color);
     background-color: var(--var-tab-bg-color);
   }
- .card-header, .nav-tabs {
+  .card {
+    border: 1px solid #141414;
+    border-radius: 10px;
+    background-color: var(--var-bg-color-primary);
+  }
+ .card-header, .nav-tabs, .popover-header {
     border-color: var(--var-table-border-color);
     border-width: 2px;
+  }
+  .popover {
+    border: 1px solid #141414;
+    border-radius: 10px;
+    background-color: var(--var-bg-color-primary);
+  }
+  .popover-header {
+    color:var(--var-color-primary);
+    background-color: var(--var-bg-color-primary);
+  }
+  .popover-body {
+    color:var(--var-color-primary);
   }
   .label {
     font-size: 0.6rem;
@@ -194,7 +209,6 @@ export default {
     opacity: 1;
   }
   code[class*="language-"], pre[class*="language-"] {
-    font-family: 'Consolas';
     font-size: 0.8rem;
     background-color: var(--var-code-bg-color);
     text-shadow: none;

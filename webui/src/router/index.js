@@ -63,7 +63,8 @@ export default new Router({
     {
       path: '/dashboard/kafka/:cluster',
       name: 'kafkaCluster',
-      component: KafkaCluster
+      component: KafkaCluster,
+      meta: {showBack: true}
     },
     {
       path: '/dashboard/kafka/:cluster/topics/:topic',

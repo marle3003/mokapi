@@ -89,10 +89,18 @@ components:
       properties:
         name:
           type: string
+        addr:
+          type: string
+        clientSoftwareName:
+          type: string
+        clientSoftwareVersion:
+          type: string
+        heartbeat:
+          type: integer
         partitions:
           type: array
           items:
-            type: int
+            type: integer
     Broker:
       type: object
       properties:

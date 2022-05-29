@@ -1,5 +1,7 @@
 package store
 
+import "mokapi/kafka"
+
 type GroupState int
 
 const (
@@ -17,7 +19,7 @@ type Group struct {
 	// todo add timestamp and metadata to commit
 	Commits map[string]map[int]int64
 
-	balancer *groupBalancerNew
+	balancer *groupBalancer
 }
 
 func NewGroup(name string, coordinator *Broker) *Group {
@@ -25,7 +27,7 @@ func NewGroup(name string, coordinator *Broker) *Group {
 		Name:        name,
 		Coordinator: coordinator,
 	}
-	g.balancer = newGroupBalancerNew(g)
+	g.balancer = newGroupBalancer(g)
 	go g.balancer.run()
 	return g
 }
@@ -39,6 +41,7 @@ type Generation struct {
 
 type Member struct {
 	Partitions []*Partition
+	Client     *kafka.ClientContext
 }
 
 func (g *Group) NewGeneration() *Generation {

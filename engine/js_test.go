@@ -10,7 +10,6 @@ import (
 	"net/url"
 	"strings"
 	"testing"
-	"time"
 )
 
 type testReader struct {
@@ -147,7 +146,7 @@ func TestJsOn(t *testing.T) {
 
 		r.Len(t, summaries, 1, "summary length not 1")
 		summary := summaries[0]
-		r.GreaterOrEqual(t, summary.Duration, 1.0*time.Second, "sleep")
+		r.GreaterOrEqual(t, summary.Duration, int64(1000), "sleep")
 	})
 	t.Run("tag name", func(t *testing.T) {
 		t.Parallel()

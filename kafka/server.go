@@ -167,7 +167,7 @@ func (s *Server) trackConn(conn net.Conn) context.Context {
 	if s.activeConn == nil {
 		s.activeConn = make(map[net.Conn]context.Context)
 	}
-	ctx := NewClientContext(context.Background())
+	ctx := NewClientContext(context.Background(), conn.RemoteAddr().String())
 
 	s.activeConn[conn] = ctx
 	return ctx

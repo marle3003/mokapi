@@ -106,35 +106,3 @@ func (u *Url) String() string {
 func (r *EventResponse) HasBody() bool {
 	return len(r.Body) > 0 || r.Data != nil
 }
-
-//func (r *Response) Run(ctx *runtime.ActionContext) error {
-//	if data, ok := ctx.GetInput("data"); ok {
-//		r.Data = data
-//	}
-//
-//	if headers, ok := ctx.GetInput("headers"); ok {
-//		if m, ok := headers.(map[string]interface{}); ok {
-//			for k, v := range m {
-//				r.Headers[k] = fmt.Sprintf("%v", v)
-//			}
-//		}
-//	}
-//
-//	if body, ok := ctx.GetInputString("body"); ok {
-//		r.Body = body
-//	}
-//
-//	if s, ok := ctx.GetInputString("contentType"); ok {
-//		r.Headers["Content-Type"] = s
-//	}
-//
-//	if s, ok := ctx.GetInputString("statusCode"); ok {
-//		if i, err := strconv.Atoi(s); err != nil {
-//			return err
-//		} else {
-//			r.StatusCode = i
-//		}
-//	}
-//
-//	return nil
-//}

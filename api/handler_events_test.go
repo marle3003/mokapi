@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/static"
 	"mokapi/runtime"
@@ -8,6 +9,7 @@ import (
 	"mokapi/try"
 	"net/http"
 	"testing"
+	"time"
 )
 
 func TestHandler_Events(t *testing.T) {
@@ -20,7 +22,7 @@ func TestHandler_Events(t *testing.T) {
 			fn: func(t *testing.T, h http.Handler) {
 				try.Handler(t,
 					http.MethodGet,
-					"http://foo.api/api/events/http",
+					"http://foo.api/api/events?namespace=http",
 					nil,
 					"",
 					h,
@@ -34,15 +36,19 @@ func TestHandler_Events(t *testing.T) {
 			fn: func(t *testing.T, h http.Handler) {
 				events.SetStore(1, events.NewTraits().WithNamespace("http"))
 				err := events.Push("foo", events.NewTraits().WithNamespace("http"))
+				event := events.Events(events.NewTraits())[0]
 				require.NoError(t, err)
 				try.Handler(t,
 					http.MethodGet,
-					"http://foo.api/api/events/http",
+					"http://foo.api/api/events?namespace=http",
 					nil,
 					"",
 					h,
 					try.HasStatusCode(200),
-					try.HasHeader("Content-Type", "application/json"))
+					try.HasHeader("Content-Type", "application/json"),
+					try.HasBody(fmt.Sprintf(`[{"id":"%v","traits":{"namespace":"http"},"data":"foo","time":"%v"}]`,
+						event.Id,
+						event.Time.Format(time.RFC3339Nano))))
 			},
 		},
 	}

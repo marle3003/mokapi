@@ -1,4 +1,6 @@
 import {on} from 'mokapi'
+import kafka from 'kafka'
+
 export default function() {
     on('http', function(request, response) {
         if (request.operationId === "getPetById") {
@@ -13,4 +15,5 @@ export default function() {
         }
         return false
     });
+    kafka.produce({topic: 'petstore.order-event'})
 }

@@ -48,16 +48,35 @@ paths:
             application/json:
               schema:
                 $ref: 'kafka.yml#/components/schemas/Kafka'
+  /api/services/kafka/{name}/groups:
+    get:
+      summary: Information about the kafka cluster
+      operationId: serviceKafka
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: name of kafka cluster
+          content:
+            application/json:
+              schema:
+                $ref: 'kafka.yml#/components/schemas/Kafka'
   /api/events:
     get:
       summary: Information about the kafka cluster
       operationId: events
       parameters:
-        - name: namespace
+        - name: traits
           in: query
           required: false
           schema:
-            type: string
+            type: object
+            additionalProperties:
+              type: string
       responses:
         "200":
           description: name of kafka cluster
@@ -68,20 +87,22 @@ paths:
   /api/events/{id}:
     get:
       summary: Information about the kafka cluster
-      operationId: events
+      operationId: event
       parameters:
         - name: id
           in: path
           required: true
           schema:
-            type: integer
+            type: string
       responses:
         "200":
           description: name of kafka cluster
           content:
             application/json:
               schema:
-                $ref: 'common.yml#/components/schemas/Events'
+                $ref: 'common.yml#/components/schemas/Event'
+        "404":
+          description: no event exists for specified id
   /api/metrics:
     get:
       summary: returns metrics

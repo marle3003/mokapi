@@ -6,10 +6,6 @@ type store struct {
 	traits Traits
 }
 
-func (s *store) Match(traits Traits) bool {
-	return traits.Includes(s.traits)
-}
-
 func (s *store) Push(e Event) {
 	if len(s.events) == 10 {
 		s.events = s.events[1:]

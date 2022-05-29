@@ -14,7 +14,7 @@ import (
 )
 
 type Summary struct {
-	Duration time.Duration
+	Duration int64
 	Tags     map[string]string
 }
 

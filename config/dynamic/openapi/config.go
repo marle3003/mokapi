@@ -177,7 +177,7 @@ type Response struct {
 	Content Content
 
 	// Maps a header name to its definition. RFC7230 states header names are
-	// case insensitive. If a response header is defined with the name
+	// case-insensitive. If a response header is defined with the name
 	// "Content-Type", it SHALL be ignored.
 	Headers map[string]*HeaderRef
 }

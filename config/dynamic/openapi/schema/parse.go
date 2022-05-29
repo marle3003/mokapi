@@ -14,11 +14,7 @@ import (
 )
 
 func ParseString(s string, schema *Ref) (interface{}, error) {
-	i, err := parse(s, schema)
-	if err != nil {
-		return 0, fmt.Errorf("%v, expected %v", err, schema)
-	}
-	return i, err
+	return parse(s, schema)
 }
 
 func Parse(b []byte, contentType media.ContentType, schema *Ref) (i interface{}, err error) {
@@ -37,9 +33,6 @@ func Parse(b []byte, contentType media.ContentType, schema *Ref) (i interface{},
 	}
 
 	i, err = parse(i, schema)
-	if err != nil {
-		err = fmt.Errorf("%v, expected %v", err, schema)
-	}
 	return
 }
 
@@ -70,11 +63,11 @@ func parse(v interface{}, schema *Ref) (interface{}, error) {
 	}
 
 	if len(schema.Value.AnyOf) > 0 {
-		return parseAnyOf(v, schema.Value.AnyOf)
+		return parseAnyOf(v, schema.Value)
 	} else if len(schema.Value.AllOf) > 0 {
-		return parseAllOf(v, schema.Value.AllOf)
+		return parseAllOf(v, schema.Value)
 	} else if len(schema.Value.OneOf) > 0 {
-		return parseOneOf(v, schema.Value.OneOf)
+		return parseOneOf(v, schema.Value)
 	} else if len(schema.Value.Type) == 0 {
 		// A schema without a type matches any data type
 		return v, nil
@@ -98,18 +91,18 @@ func parse(v interface{}, schema *Ref) (interface{}, error) {
 	return nil, fmt.Errorf("unsupported type %q", schema.Value.Type)
 }
 
-func parseAnyOf(i interface{}, schemas []*Ref) (interface{}, error) {
+func parseAnyOf(i interface{}, schema *Schema) (interface{}, error) {
 	if m, ok := i.(map[string]interface{}); ok {
-		return parseAnyObject(m, schemas)
+		return parseAnyObject(m, schema)
 	}
-	return parseAnyValue(i, schemas)
+	return parseAnyValue(i, schema)
 }
 
-func parseAnyObject(m map[string]interface{}, schemas []*Ref) (interface{}, error) {
+func parseAnyObject(m map[string]interface{}, schema *Schema) (interface{}, error) {
 	fields := make([]reflect.StructField, 0, len(m))
 	values := make([]reflect.Value, 0, len(m))
 
-	for _, ref := range schemas {
+	for _, ref := range schema.AnyOf {
 		s := ref.Value
 
 		required := make(map[string]struct{})
@@ -129,7 +122,7 @@ func parseAnyObject(m map[string]interface{}, schemas []*Ref) (interface{}, erro
 
 			if _, ok := m[name]; !ok {
 				if _, ok := required[name]; ok && len(required) > 0 {
-					return nil, fmt.Errorf("missing required property %v", name)
+					return nil, fmt.Errorf("missing required property %v, expected %v", name, schema)
 				}
 				continue
 			}
@@ -148,7 +141,7 @@ func parseAnyObject(m map[string]interface{}, schemas []*Ref) (interface{}, erro
 	}
 
 	if len(m) > len(fields) {
-		return nil, fmt.Errorf("could not parse %v, too many properties for object", toString(m))
+		return nil, fmt.Errorf("could not parse %v, too many properties for object, expected %v", toString(m), schema)
 	}
 
 	t := reflect.StructOf(fields)
@@ -159,25 +152,25 @@ func parseAnyObject(m map[string]interface{}, schemas []*Ref) (interface{}, erro
 	return v.Addr().Interface(), nil
 }
 
-func parseAnyValue(i interface{}, schemas []*Ref) (interface{}, error) {
-	for _, s := range schemas {
+func parseAnyValue(i interface{}, schema *Schema) (interface{}, error) {
+	for _, s := range schema.AnyOf {
 		i, err := parse(i, s)
 		if err == nil {
 			return i, nil
 		}
 	}
-	return nil, fmt.Errorf("could not parse %v", i)
+	return nil, fmt.Errorf("could not parse %v, expected %v", i, schema)
 }
 
-func parseAllOf(i interface{}, schemas []*Ref) (interface{}, error) {
+func parseAllOf(i interface{}, schema *Schema) (interface{}, error) {
 	m, ok := i.(map[string]interface{})
 	if !ok {
-		return nil, fmt.Errorf("could not parse %v as object", toString(i))
+		return nil, fmt.Errorf("could not parse %v as object, expected %v", toString(i), schema)
 	}
 	fields := make([]reflect.StructField, 0, len(m))
 	values := make([]reflect.Value, 0, len(m))
 
-	for _, sRef := range schemas {
+	for _, sRef := range schema.AllOf {
 		s := sRef.Value
 
 		required := make(map[string]struct{})
@@ -197,14 +190,14 @@ func parseAllOf(i interface{}, schemas []*Ref) (interface{}, error) {
 
 			if _, ok := m[name]; !ok {
 				if _, ok := required[name]; ok && len(required) > 0 {
-					return nil, fmt.Errorf("could not parse %v, missing required property %v", toString(i), name)
+					return nil, fmt.Errorf("could not parse %v, missing required property %v, expected %v", toString(i), name, schema)
 				}
 				continue
 			}
 
 			v, err := parse(m[name], pRef)
 			if err != nil {
-				return nil, fmt.Errorf("could not parse %v, value does not match all schema", toString(i))
+				return nil, fmt.Errorf("could not parse %v, value does not match all schema, expected %v", toString(i), schema)
 			}
 			values = append(values, reflect.ValueOf(v))
 			fields = append(fields, reflect.StructField{
@@ -223,16 +216,16 @@ func parseAllOf(i interface{}, schemas []*Ref) (interface{}, error) {
 	return v.Addr().Interface(), nil
 }
 
-func parseOneOf(i interface{}, schemas []*Ref) (interface{}, error) {
+func parseOneOf(i interface{}, schema *Schema) (interface{}, error) {
 	if m, ok := i.(map[string]interface{}); ok {
-		return parseOneOfObject(m, schemas)
+		return parseOneOfObject(m, schema)
 	}
-	return parseOneOfValue(i, schemas)
+	return parseOneOfValue(i, schema)
 }
 
-func parseOneOfObject(m map[string]interface{}, schemas []*Ref) (interface{}, error) {
+func parseOneOfObject(m map[string]interface{}, schema *Schema) (interface{}, error) {
 	var result interface{}
-	for _, sRef := range schemas {
+	for _, sRef := range schema.OneOf {
 		s := sRef.Value
 		fields := make([]reflect.StructField, 0, len(m))
 		values := make([]reflect.Value, 0, len(m))
@@ -249,7 +242,7 @@ func parseOneOfObject(m map[string]interface{}, schemas []*Ref) (interface{}, er
 
 			if _, ok := m[name]; !ok {
 				if _, ok := required[name]; ok && len(required) > 0 {
-					return nil, fmt.Errorf("could not parse %v, missing required property %v", toString(m), name)
+					return nil, fmt.Errorf("could not parse %v, missing required property %v, expected %v", toString(m), name, schema)
 				}
 				continue
 			}
@@ -271,7 +264,7 @@ func parseOneOfObject(m map[string]interface{}, schemas []*Ref) (interface{}, er
 		}
 
 		if result != nil {
-			return nil, fmt.Errorf("could not parse %v, it is not valid for only one schema", toString(m))
+			return nil, fmt.Errorf("could not parse %v, it is not valid for only one schema, expected %v", toString(m), schema)
 		}
 
 		t := reflect.StructOf(fields)
@@ -283,21 +276,21 @@ func parseOneOfObject(m map[string]interface{}, schemas []*Ref) (interface{}, er
 	}
 
 	if result == nil {
-		return nil, fmt.Errorf("could not parse %v", toString(m))
+		return nil, fmt.Errorf("could not parse %v, expected %v", toString(m), schema)
 	}
 
 	return result, nil
 }
 
-func parseOneOfValue(i interface{}, schemas []*Ref) (interface{}, error) {
+func parseOneOfValue(i interface{}, schema *Schema) (interface{}, error) {
 	var result interface{}
-	for _, s := range schemas {
+	for _, s := range schema.OneOf {
 		v, err := parse(i, s)
 		if err != nil {
 			continue
 		}
 		if result != nil {
-			return nil, fmt.Errorf("could not parse %v because it is not valid for only one", i)
+			return nil, fmt.Errorf("could not parse %v because it is not valid for only one, expected %v", i, schema)
 		}
 		result = v
 	}
@@ -353,7 +346,7 @@ func parseObject(i interface{}, s *Schema) (interface{}, error) {
 		}
 		values = append(values, reflect.ValueOf(v))
 		fields = append(fields, reflect.StructField{
-			Name: strings.Title(name),
+			Name: strings.ReplaceAll(strings.Title(name), "-", ""),
 			Type: reflect.TypeOf(v),
 			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v"`, name)),
 		})
@@ -367,7 +360,7 @@ func parseObject(i interface{}, s *Schema) (interface{}, error) {
 			v = toObject(child)
 		}
 		fields = append(fields, reflect.StructField{
-			Name: strings.Title(k),
+			Name: strings.ReplaceAll(strings.Title(k), "-", ""),
 			Type: reflect.TypeOf(v),
 		})
 		values = append(values, reflect.ValueOf(v))
@@ -384,36 +377,27 @@ func parseObject(i interface{}, s *Schema) (interface{}, error) {
 }
 
 func parseArray(i interface{}, s *Schema) (interface{}, error) {
-	a, ok := i.([]interface{})
-	if !ok {
-		return nil, fmt.Errorf("could not parse %v as array", toString(i))
+	var sliceOf reflect.Type
+	switch s.Items.Value.Type {
+	case "object":
+		sliceOf = reflect.TypeOf([]interface{}{})
+	default:
+		sliceOf = reflect.SliceOf(getType(s.Items.Value))
 	}
+	result := reflect.MakeSlice(sliceOf, 0, 0)
 
-	if len(a) == 0 {
-		var sliceOf reflect.Type
-		switch s.Items.Value.Type {
-		case "object":
-			sliceOf = reflect.TypeOf([]interface{}{})
-		default:
-			sliceOf = reflect.SliceOf(getType(s.Items.Value))
+	v := reflect.ValueOf(i)
+	switch v.Kind() {
+	case reflect.Slice:
+		for index := 0; index < v.Len(); index++ {
+			item, err := parse(v.Index(index).Interface(), s.Items)
+			if err != nil {
+				return nil, err
+			}
+			result = reflect.Append(result, reflect.ValueOf(item))
 		}
-		ret := reflect.MakeSlice(sliceOf, 0, 0).Interface()
-		return ret, validateArray(ret, s)
 	}
 
-	v, err := parse(a[0], s.Items)
-	if err != nil {
-		return nil, err
-	}
-	result := reflect.MakeSlice(reflect.SliceOf(reflect.TypeOf(v)), 0, len(a))
-
-	for _, v := range a {
-		v, err := parse(v, s.Items)
-		if err != nil {
-			return nil, err
-		}
-		result = reflect.Append(result, reflect.ValueOf(v))
-	}
 	ret := result.Interface()
 	return ret, validateArray(ret, s)
 }
@@ -426,32 +410,34 @@ func parseInteger(i interface{}, s *Schema) (n int64, err error) {
 		n = v
 	case float64:
 		if math.Trunc(v) != v {
-			return 0, fmt.Errorf("could not parse %v as integer", i)
+			return 0, fmt.Errorf("could not parse %v as integer, expected %v", i, s)
 		}
+		n = int64(v)
+	case int32:
 		n = int64(v)
 	case string:
 		switch s.Format {
 		case "int64":
 			n, err = strconv.ParseInt(v, 10, 64)
 			if err != nil {
-				return 0, fmt.Errorf("could not parse '%v' as int64", i)
+				return 0, fmt.Errorf("could not parse '%v' as int64, expected %v", i, s)
 			}
 			return n, nil
 		default:
 			temp, err := strconv.Atoi(v)
 			if err != nil {
-				return 0, fmt.Errorf("could not parse '%v' as int", i)
+				return 0, fmt.Errorf("could not parse '%v' as int, expected %v", i, s)
 			}
 			n = int64(temp)
 		}
 	default:
-		return 0, fmt.Errorf("could not parse '%v' as int", i)
+		return 0, fmt.Errorf("could not parse '%v' as int, expected %v", i, s)
 	}
 
 	switch s.Format {
 	case "int32":
 		if n > math.MaxInt32 || n < math.MinInt32 {
-			return 0, fmt.Errorf("could not parse '%v', represents a number either less than int32 min value or greater max value", i)
+			return 0, fmt.Errorf("could not parse '%v', represents a number either less than int32 min value or greater max value, expected %v", i, s)
 		}
 	}
 
@@ -465,20 +451,20 @@ func parseNumber(i interface{}, s *Schema) (f float64, err error) {
 	case string:
 		f, err = strconv.ParseFloat(v, 64)
 		if err != nil {
-			return 0, fmt.Errorf("could not parse '%v' as floating number", i)
+			return 0, fmt.Errorf("could not parse '%v' as floating number, expected %v", i, s)
 		}
 	case int:
 		f = float64(v)
 	case int64:
 		f = float64(v)
 	default:
-		return 0, fmt.Errorf("could not parse '%v' as floating number", v)
+		return 0, fmt.Errorf("could not parse '%v' as floating number, expected %v", v, s)
 	}
 
 	switch s.Format {
 	case "float":
 		if f > math.MaxFloat32 {
-			return 0, fmt.Errorf("could not parse %v as float", i)
+			return 0, fmt.Errorf("could not parse %v as float, expected %v", i, s)
 		}
 	}
 
@@ -488,17 +474,17 @@ func parseNumber(i interface{}, s *Schema) (f float64, err error) {
 func parseString(v interface{}, schema *Schema) (string, error) {
 	s, ok := v.(string)
 	if !ok {
-		return "", fmt.Errorf("could not parse %v as string", v)
+		return "", fmt.Errorf("could not parse %v as string, expected %v", v, s)
 	}
 
 	return s, validateString(s, schema)
 }
 
-func readBoolean(i interface{}, _ *Schema) (bool, error) {
+func readBoolean(i interface{}, s *Schema) (bool, error) {
 	if b, ok := i.(bool); ok {
 		return b, nil
 	}
-	return false, fmt.Errorf("could not parse %v as boolean", i)
+	return false, fmt.Errorf("could not parse %v as boolean, expected %v", i, s)
 }
 
 func toObject(m map[string]interface{}) interface{} {

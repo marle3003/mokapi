@@ -10,6 +10,7 @@ import (
 	"mokapi/engine/common"
 	"mokapi/js"
 	"mokapi/lua"
+	"net/http"
 	"net/url"
 	"path/filepath"
 	"time"
@@ -80,7 +81,7 @@ func (sh *scriptHost) RunEvent(event string, args ...interface{}) []*Summary {
 			log.Debugf("processed event handler %v", s)
 		}
 
-		s.Duration = time.Now().Sub(start)
+		s.Duration = time.Now().Sub(start).Milliseconds()
 		result = append(result, s)
 	}
 	return result
@@ -144,6 +145,7 @@ func (sh *scriptHost) On(event string, handler func(args ...interface{}) (bool, 
 		handler: handler,
 		tags: map[string]string{
 			"name":  sh.Name,
+			"file":  sh.Name,
 			"event": event,
 		},
 	}
@@ -225,6 +227,10 @@ func (sh *scriptHost) OpenScript(path string) (common.Script, error) {
 
 func (sh *scriptHost) KafkaClient() common.KafkaClient {
 	return sh.engine.kafkaClient
+}
+
+func (sh *scriptHost) HttpClient() common.HttpClient {
+	return &http.Client{Timeout: time.Second * 30}
 }
 
 func getScriptPath(u *url.URL) string {
