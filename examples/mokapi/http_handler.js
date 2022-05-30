@@ -7,10 +7,6 @@ export default function() {
     on('http', function(request, response) {
         response.headers["Access-Control-Allow-Origin"] = '*'
 
-        let h = new XMLHttpRequest()
-        h.open("GET", "http://www.sbb.ch");
-        h.send();
-
         switch (request.operationId) {
             case 'info':
                 response.data = {version: "1.0", activeServices: ["http", "kafka"]}
