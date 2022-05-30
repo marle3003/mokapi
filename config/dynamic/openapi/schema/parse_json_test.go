@@ -8,65 +8,75 @@ import (
 	"mokapi/config/dynamic/openapi/schema/schematest"
 	"mokapi/media"
 	"mokapi/sortedmap"
-	"reflect"
 	"strings"
 	"testing"
 )
 
 func TestParse(t *testing.T) {
-	data := []struct {
+	testcases := []struct {
 		s      string
 		schema *schema.Schema
-		e      interface{}
+		f      func(t *testing.T, i interface{}, err error)
 	}{
 		{
 			`""`,
 			nil,
-			"",
+			func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "", i)
+			},
 		},
 		{
 			`{"foo": 12}`,
 			nil,
-			&struct {
-				Foo float64
-			}{Foo: 12},
+			func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"foo": float64(12)}, i)
+			},
 		},
 		{
 			`[1, 2, 3, 4]`,
 			nil,
-			[]interface{}{float64(1), float64(2), float64(3), float64(4)},
+			func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []interface{}{float64(1), float64(2), float64(3), float64(4)}, i)
+			},
 		},
 		{
 			`{"foo": 12}`,
 			schematest.New("object", schematest.WithProperty("foo", schematest.New("integer"))),
-			&struct {
-				Foo int64 `json:"foo"`
-			}{Foo: 12},
+			func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int64(12), i.(*sortedmap.LinkedHashMap).Get("foo"))
+			},
 		},
 		{
 			`{"foo": "bar"}`,
 			schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
-			&struct {
-				Foo string `json:"foo"`
-			}{Foo: "bar"},
+			func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "bar", i.(*sortedmap.LinkedHashMap).Get("foo"))
+			},
 		},
 		{
 			`{"foo": "2021-01-20"}`,
 			schematest.New("object",
 				schematest.WithProperty("foo",
 					schematest.New("string", schematest.WithFormat("date")))),
-			&struct {
-				Foo string `json:"foo"`
-			}{Foo: "2021-01-20"},
+			func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "2021-01-20", i.(*sortedmap.LinkedHashMap).Get("foo"))
+			},
 		},
 		{
 			`{"foo": ["a", "b", "c"]}`,
 			schematest.New("object",
 				schematest.WithProperty("foo",
 					schematest.New("array", schematest.WithItems(schematest.New("string"))))),
-			&struct {
-				Foo []string `json:"foo"`
-			}{Foo: []string{"a", "b", "c"}},
+			func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []string{"a", "b", "c"}, i.(*sortedmap.LinkedHashMap).Get("foo"))
+			},
 		},
 		{
 			`{"test": 12, "test2": true}`,
@@ -75,10 +85,11 @@ func TestParse(t *testing.T) {
 					schematest.New("object", schematest.WithProperty("test", schematest.New("integer"))),
 					schematest.New("object", schematest.WithProperty("test2", schematest.New("boolean"))),
 				)),
-			&struct {
-				Test  int64 `json:"test"`
-				Test2 bool  `json:"test2"`
-			}{Test: int64(12), Test2: true},
+			func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int64(12), i.(*sortedmap.LinkedHashMap).Get("test"))
+				require.True(t, i.(*sortedmap.LinkedHashMap).Get("test2").(bool))
+			},
 		},
 		{
 			`"hello world"`,
@@ -87,26 +98,30 @@ func TestParse(t *testing.T) {
 					schematest.New("object", schematest.WithProperty("test", schematest.New("integer"))),
 					schematest.New("string"),
 				)),
-			"hello world",
+			func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "hello world", i)
+			},
 		},
 	}
 
-	for _, d := range data {
-		t.Run(d.s, func(t *testing.T) {
-			i, err := schema.Parse([]byte(d.s), media.ParseContentType("application/json"), &schema.Ref{Value: d.schema})
-			require.NoError(t, err)
-			require.Equal(t, d.e, i)
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.s, func(t *testing.T) {
+			t.Parallel()
+			i, err := schema.Parse([]byte(tc.s), media.ParseContentType("application/json"), &schema.Ref{Value: tc.schema})
+			tc.f(t, i, err)
 		})
 	}
 }
 
 func TestAny(t *testing.T) {
-	cases := []struct {
+	testcases := []struct {
 		name   string
 		s      string
 		schema *schema.Schema
-		exp    interface{}
-		err    error
+		f      func(t *testing.T, i interface{}, err error)
 	}{
 		{
 			"any",
@@ -115,8 +130,10 @@ func TestAny(t *testing.T) {
 				schematest.Any(
 					schematest.New("string"),
 					schematest.New("integer"))),
-			int64(12),
-			nil,
+			func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int64(12), i)
+			},
 		},
 		{
 			"not match any",
@@ -125,8 +142,9 @@ func TestAny(t *testing.T) {
 				schematest.Any(
 					schematest.New("string"),
 					schematest.New("integer"))),
-			nil,
-			fmt.Errorf("could not parse 12.6, expected any of schema type=string, schema type=integer"),
+			func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, "could not parse 12.6, expected any of schema type=string, schema type=integer")
+			},
 		},
 		{
 			"any object",
@@ -137,10 +155,10 @@ func TestAny(t *testing.T) {
 						schematest.WithProperty("foo", schematest.New("integer"))),
 					schematest.New("object",
 						schematest.WithProperty("foo", schematest.New("string"))))),
-			&struct {
-				Foo string `json:"foo"`
-			}{Foo: "bar"},
-			nil,
+			func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "bar", i.(*sortedmap.LinkedHashMap).Get("foo"))
+			},
 		},
 		{
 			"too many properties",
@@ -149,8 +167,9 @@ func TestAny(t *testing.T) {
 				schematest.Any(
 					schematest.New("object",
 						schematest.WithProperty("name", schematest.New("string"))))),
-			nil,
-			fmt.Errorf(`could not parse {"age":12,"name":"bar"}, too many properties for object, expected any of schema type=object properties=[name]`),
+			func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, `could not parse {"age":12,"name":"bar"}, too many properties for object, expected any of schema type=object properties=[name]`)
+			},
 		},
 		{
 			"missing required property",
@@ -163,11 +182,12 @@ func TestAny(t *testing.T) {
 						schematest.WithProperty("age", schematest.New("integer")),
 						schematest.WithRequired("age"),
 					))),
-			nil,
-			fmt.Errorf("missing required property age, expected any of schema type=object properties=[name], schema type=object properties=[age] required=[age]"),
+			func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, "missing required property age, expected any of schema type=object properties=[name], schema type=object properties=[age] required=[age]")
+			},
 		},
 		{
-			"marge",
+			"merge",
 			`{"name": "bar", "age": 12}`,
 			schematest.New("",
 				schematest.Any(
@@ -177,36 +197,30 @@ func TestAny(t *testing.T) {
 						schematest.WithProperty("age", schematest.New("integer")),
 						schematest.WithRequired("age"),
 					))),
-			&struct {
-				Name string `json:"name"`
-				Age  int64  `json:"age"`
-			}{Name: "bar", Age: int64(12)},
-			nil,
+			func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "bar", i.(*sortedmap.LinkedHashMap).Get("name"))
+				require.Equal(t, int64(12), i.(*sortedmap.LinkedHashMap).Get("age"))
+			},
 		},
 	}
 
 	t.Parallel()
-	for _, c := range cases {
-		d := c
-		t.Run(c.name, func(t *testing.T) {
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			i, err := schema.Parse([]byte(d.s), media.ParseContentType("application/json"), &schema.Ref{Value: d.schema})
-			if d.err != nil {
-				require.Equal(t, d.err, err)
-			} else {
-				require.NoError(t, err)
-				require.Equal(t, d.exp, i)
-			}
+			i, err := schema.Parse([]byte(tc.s), media.ParseContentType("application/json"), &schema.Ref{Value: tc.schema})
+			tc.f(t, i, err)
 		})
 	}
 }
 
 func TestParseOneOf(t *testing.T) {
-	data := []struct {
+	testcases := []struct {
 		s      string
 		schema *schema.Schema
-		e      interface{}
-		err    error
+		f      func(t *testing.T, i interface{}, err error)
 	}{
 		{
 			`{"foo": true}`,
@@ -216,10 +230,10 @@ func TestParseOneOf(t *testing.T) {
 				schematest.New("object",
 					schematest.WithProperty("foo", schematest.New("boolean"))),
 			)),
-			&struct {
-				Foo bool `json:"foo"`
-			}{Foo: true},
-			nil,
+			func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.True(t, i.(*sortedmap.LinkedHashMap).Get("foo").(bool))
+			},
 		},
 		{
 			`{"foo": 12, "bar": true}`,
@@ -229,8 +243,9 @@ func TestParseOneOf(t *testing.T) {
 				schematest.New("object",
 					schematest.WithProperty("bar", schematest.New("boolean"))),
 			)),
-			nil,
-			fmt.Errorf(`could not parse {"bar":true,"foo":12}, expected one of schema type=object properties=[foo], schema type=object properties=[bar]`),
+			func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, `could not parse {"bar":true,"foo":12}, expected one of schema type=object properties=[foo], schema type=object properties=[bar]`)
+			},
 		},
 		{
 			`{"foo": 12}`,
@@ -240,8 +255,9 @@ func TestParseOneOf(t *testing.T) {
 				schematest.New("object",
 					schematest.WithProperty("foo", schematest.New("number"))),
 			)),
-			nil,
-			fmt.Errorf(`could not parse {"foo":12}, it is not valid for only one schema, expected one of schema type=object properties=[foo], schema type=object properties=[foo]`),
+			func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, `could not parse {"foo":12}, it is not valid for only one schema, expected one of schema type=object properties=[foo], schema type=object properties=[foo]`)
+			},
 		},
 		{
 			`"hello world"`,
@@ -249,45 +265,51 @@ func TestParseOneOf(t *testing.T) {
 				schematest.New("integer"),
 				schematest.New("string"),
 			)),
-			"hello world",
-			nil,
+			func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "hello world", i)
+			},
 		},
 	}
 
-	for _, d := range data {
-		t.Run(d.s, func(t *testing.T) {
-			i, err := schema.Parse([]byte(d.s), media.ParseContentType("application/json"), &schema.Ref{Value: d.schema})
-			require.Equal(t, d.err, err)
-			require.Equal(t, d.e, i)
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.s, func(t *testing.T) {
+			t.Parallel()
+			i, err := schema.Parse([]byte(tc.s), media.ParseContentType("application/json"), &schema.Ref{Value: tc.schema})
+			tc.f(t, i, err)
 		})
 	}
 }
 
 func TestParseAllOf(t *testing.T) {
-	data := []struct {
+	testcases := []struct {
 		s      string
 		schema *schema.Schema
-		e      interface{}
+		f      func(t *testing.T, i interface{}, err error)
 	}{
 		{
 			`{"foo": 12, "bar": true}`,
 			schematest.New("object",
-				schematest.Any(
+				schematest.AllOf(
 					schematest.New("object", schematest.WithProperty("foo", schematest.New("integer"))),
 					schematest.New("object", schematest.WithProperty("bar", schematest.New("boolean"))),
 				)),
-			&struct {
-				Foo int64 `json:"foo"`
-				Bar bool  `json:"bar"`
-			}{Foo: int64(12), Bar: true},
+			func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int64(12), i.(*sortedmap.LinkedHashMap).Get("foo"))
+				require.True(t, i.(*sortedmap.LinkedHashMap).Get("bar").(bool))
+			},
 		},
 	}
 
-	for _, d := range data {
-		t.Run(d.s, func(t *testing.T) {
-			i, err := schema.Parse([]byte(d.s), media.ParseContentType("application/json"), &schema.Ref{Value: d.schema})
-			require.NoError(t, err)
-			require.Equal(t, d.e, i)
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.s, func(t *testing.T) {
+			i, err := schema.Parse([]byte(tc.s), media.ParseContentType("application/json"), &schema.Ref{Value: tc.schema})
+			tc.f(t, i, err)
 		})
 	}
 }
@@ -563,7 +585,7 @@ func TestValidate_Object(t *testing.T) {
 			"{}",
 			&schema.Schema{Type: "object"},
 			func(t *testing.T, v interface{}, _ error) {
-				require.Equal(t, &struct{}{}, v)
+				require.Len(t, v, 0)
 			},
 		},
 		{
@@ -574,10 +596,8 @@ func TestValidate_Object(t *testing.T) {
 				schematest.WithProperty("age", schematest.New("integer")),
 			),
 			func(t *testing.T, v interface{}, _ error) {
-				require.Equal(t, &struct {
-					Name string `json:"name"`
-					Age  int64  `json:"age"`
-				}{Name: "foo", Age: 12}, v)
+				require.Equal(t, "foo", v.(*sortedmap.LinkedHashMap).Get("name"))
+				require.Equal(t, int64(12), v.(*sortedmap.LinkedHashMap).Get("age"))
 			},
 		},
 		{
@@ -588,9 +608,7 @@ func TestValidate_Object(t *testing.T) {
 				schematest.WithProperty("age", schematest.New("integer")),
 			),
 			func(t *testing.T, v interface{}, _ error) {
-				require.Equal(t, &struct {
-					Name string `json:"name"`
-				}{Name: "foo"}, v)
+				require.Equal(t, "foo", v.(*sortedmap.LinkedHashMap).Get("name"))
 			},
 		},
 		{
@@ -633,15 +651,9 @@ func TestValidate_Object(t *testing.T) {
 				schematest.WithMaxProperties(2),
 			),
 			func(t *testing.T, v interface{}, _ error) {
-				if !reflect.DeepEqual(&struct {
-					Name string
-					Age  float64
-				}{Name: "foo", Age: 12}, v) && !reflect.DeepEqual(&struct {
-					Age  float64
-					Name string
-				}{Name: "foo", Age: 12}, v) {
-					require.Failf(t, "actual object is not an expected one", fmt.Sprintf("%v", v))
-				}
+				m := v.(map[string]interface{})
+				require.Equal(t, "foo", m["name"])
+				require.Equal(t, float64(12), m["age"])
 			},
 		},
 	}
@@ -698,12 +710,9 @@ func TestValidate_Array(t *testing.T) {
 			),
 			func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				v := reflect.ValueOf(i)
-				require.Equal(t, 1, v.Len())
-				require.Equal(t, &struct {
-					Name string `json:"name"`
-					Age  int64  `json:"age"`
-				}{Name: "foo", Age: 12}, v.Index(0).Interface())
+				m := i.([]interface{})[0]
+				require.Equal(t, "foo", m.(*sortedmap.LinkedHashMap).Get("name"))
+				require.Equal(t, int64(12), m.(*sortedmap.LinkedHashMap).Get("age"))
 			},
 		},
 	}

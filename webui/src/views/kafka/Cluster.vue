@@ -123,7 +123,7 @@ export default {
     return {
       cluster: null,
       topicFields: [
-        'name',
+        { key: 'name', thStyle: 'width:40%' },
         'partitions',
         { key: 'messages', class: 'kafka-message' },
         'time'

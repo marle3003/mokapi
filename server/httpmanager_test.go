@@ -88,7 +88,7 @@ func TestHttpManager_Update(t *testing.T) {
 				require.Len(t, entries, 3)
 				require.Equal(t, fmt.Sprintf("adding new host '' on binding :%v", port), entries[0].Message)
 				require.Equal(t, fmt.Sprintf("adding service foo on binding :%v on path /", port), entries[1].Message)
-				require.Equal(t, "processed file foo.yml", entries[2].Message)
+				require.Equal(t, "processed foo.yml", entries[2].Message)
 			}},
 		{"invalid port format",
 			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
@@ -99,7 +99,7 @@ func TestHttpManager_Update(t *testing.T) {
 				entries := hook.Entries
 				require.Len(t, entries, 2)
 				require.Equal(t, "error foo.yml: parse \"http://localhost:foo\": invalid port \":foo\" after host", entries[0].Message)
-				require.Equal(t, "processed file foo.yml", entries[1].Message)
+				require.Equal(t, "processed foo.yml", entries[1].Message)
 			}},
 		{"invalid url format",
 			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
@@ -110,7 +110,7 @@ func TestHttpManager_Update(t *testing.T) {
 				entries := hook.Entries
 				require.Len(t, entries, 2)
 				require.Equal(t, "error foo.yml: parse \"$://\": first path segment in URL cannot contain colon", entries[0].Message)
-				require.Equal(t, "processed file foo.yml", entries[1].Message)
+				require.Equal(t, "processed foo.yml", entries[1].Message)
 			}},
 		{"add on same path",
 			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
@@ -127,7 +127,7 @@ func TestHttpManager_Update(t *testing.T) {
 				require.Len(t, entries, 4)
 				require.Equal(t, fmt.Sprintf("adding new host '' on binding :%v", port), entries[0].Message)
 				require.Equal(t, fmt.Sprintf("adding service foo on binding :%v on path /foo", port), entries[1].Message)
-				require.Equal(t, "processed file foo.yml", entries[2].Message)
+				require.Equal(t, "processed foo.yml", entries[2].Message)
 				require.Equal(t, "error on updating foo.yml: service 'foo' is already defined on path '/foo'", entries[3].Message)
 			}},
 	}
@@ -136,6 +136,7 @@ func TestHttpManager_Update(t *testing.T) {
 		t.Run(data.name, func(t *testing.T) {
 			logrus.SetOutput(ioutil.Discard)
 			hook := logtest.NewGlobal()
+			logrus.SetLevel(logrus.DebugLevel)
 			store, err := cert.NewStore(&static.Config{})
 			require.NoError(t, err)
 

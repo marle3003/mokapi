@@ -149,7 +149,7 @@ func (w *ConfigWatcher) configChanged(cfg *common.Config) {
 		return
 	}
 
-	log.Infof("processing %v", cfg.Url)
+	log.Debugf("processing %v", cfg.Url)
 
 	for _, l := range w.listener {
 		l(cfg)

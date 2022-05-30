@@ -5,9 +5,14 @@ import http from 'http-status-codes'
 export default {
   filters: {
     moment: function (value) {
-      if (value === 0) {
+      if (value === 0 || value === '') {
         return '-'
       }
+
+      if (typeof value === 'string'){
+        return moment(value).format('YYYY-MM-DD HH:mm:ss')
+      }
+
       return moment
         .unix(value)
         .local()

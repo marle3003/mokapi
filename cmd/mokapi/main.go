@@ -94,7 +94,7 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 	})
 
 	if u, err := api.BuildUrl(cfg.Api); err == nil {
-		err = managerHttp.AddService("api", u, api.New(app, cfg.Api), false)
+		err = managerHttp.AddService("api", u, api.New(app, cfg.Api), true)
 		if err != nil {
 			return nil, err
 		}

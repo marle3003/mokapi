@@ -49,7 +49,7 @@ export default {
     }
   },
   computed: {
-    displayBack: function() {
+    displayBack: function () {
       return this.$route.meta.showBack
     }
   },

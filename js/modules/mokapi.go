@@ -3,6 +3,7 @@ package modules
 import (
 	"github.com/dop251/goja"
 	"mokapi/engine/common"
+	"os"
 	"sync"
 	"time"
 )
@@ -125,4 +126,8 @@ func (m *Mokapi) On(event string, do goja.Value, args goja.Value) {
 	}
 
 	m.host.On(event, f, tags)
+}
+
+func (m *Mokapi) Env(name string) string {
+	return os.Getenv(name)
 }

@@ -53,6 +53,11 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 				t := i.(time.Time)
 				logHttp.Duration = time.Now().Sub(t).Milliseconds()
 			}
+			for k, v := range rw.Header() {
+				if _, ok := logHttp.Response.Headers[k]; !ok {
+					logHttp.Response.Headers[k] = strings.Join(v, ",")
+				}
+			}
 		}()
 	}
 
@@ -237,6 +242,12 @@ endpointLoop:
 		return
 	}
 
+	if ctx, err := NewLogEventContext(r, events.NewTraits().WithName(h.config.Info.Name)); err != nil {
+		log.Errorf("unable to log http event: %v", err)
+	} else {
+		r = r.WithContext(ctx)
+	}
+
 	if lastError == nil {
 		writeError(rw, r, httperror.Newf(http.StatusNotFound, "no matching endpoint found at %v", r.URL), h.config.Info.Name)
 	} else {
@@ -286,6 +297,7 @@ func writeError(rw http.ResponseWriter, r *http.Request, err error, serviceName 
 	}
 	if m, ok := monitor.HttpFromContext(r.Context()); ok {
 		m.RequestErrorCounter.WithLabel(serviceName).Add(1)
+		m.LastRequest.WithLabel(serviceName).Set(float64(time.Now().Unix()))
 	}
 	http.Error(rw, message, status)
 	logHttp, ok := LogEventFromContext(r.Context())
@@ -293,5 +305,10 @@ func writeError(rw http.ResponseWriter, r *http.Request, err error, serviceName 
 		logHttp.Response.StatusCode = status
 		logHttp.Response.Body = message
 		logHttp.Response.Size = len([]byte(message))
+		for k, v := range rw.Header() {
+			if _, ok := logHttp.Response.Headers[k]; !ok {
+				logHttp.Response.Headers[k] = strings.Join(v, ",")
+			}
+		}
 	}
 }

@@ -158,12 +158,16 @@ func (sh *scriptHost) On(event string, handler func(args ...interface{}) (bool, 
 }
 
 func (sh *scriptHost) close() {
-	for _, j := range sh.jobs {
-		sh.engine.cron.RemoveByReference(j)
+	if sh.jobs != nil {
+		for _, j := range sh.jobs {
+			sh.engine.cron.RemoveByReference(j)
+		}
+		sh.jobs = nil
 	}
-	sh.jobs = nil
 
-	sh.script.Close()
+	if sh.script != nil {
+		sh.script.Close()
+	}
 }
 
 func (sh *scriptHost) Info(args ...interface{}) {

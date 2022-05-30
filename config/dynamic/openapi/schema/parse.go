@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"math"
 	"mokapi/media"
+	"mokapi/sortedmap"
 	"reflect"
 	"strconv"
 	"strings"
@@ -57,7 +58,7 @@ func ParseFrom(r io.Reader, contentType media.ContentType, schema *Ref) (i inter
 func parse(v interface{}, schema *Ref) (interface{}, error) {
 	if schema == nil || schema.Value == nil {
 		if m, ok := v.(map[string]interface{}); ok {
-			return toObject(m), nil
+			return m, nil
 		}
 		return v, nil
 	}
@@ -99,8 +100,7 @@ func parseAnyOf(i interface{}, schema *Schema) (interface{}, error) {
 }
 
 func parseAnyObject(m map[string]interface{}, schema *Schema) (interface{}, error) {
-	fields := make([]reflect.StructField, 0, len(m))
-	values := make([]reflect.Value, 0, len(m))
+	result := sortedmap.NewLinkedHashMap()
 
 	for _, ref := range schema.AnyOf {
 		s := ref.Value
@@ -112,44 +112,31 @@ func parseAnyObject(m map[string]interface{}, schema *Schema) (interface{}, erro
 
 		// free-form object
 		if s.Properties == nil {
-			return toObject(m), nil
+			return m, nil
 		}
 
 		for it := s.Properties.Value.Iter(); it.Next(); {
 			name := it.Key().(string)
-			pRef := it.Value().(*Ref)
-			p := pRef.Value
-
-			if _, ok := m[name]; !ok {
+			if v, ok := m[name]; !ok {
 				if _, ok := required[name]; ok && len(required) > 0 {
 					return nil, fmt.Errorf("missing required property %v, expected %v", name, schema)
 				}
 				continue
+			} else {
+				v, err := parse(v, it.Value().(*Ref))
+				if err != nil {
+					continue
+				}
+				result.Set(it.Key(), v)
 			}
-
-			v, err := parse(m[name], pRef)
-			if err != nil {
-				continue
-			}
-			values = append(values, reflect.ValueOf(v))
-			fields = append(fields, reflect.StructField{
-				Name: strings.Title(name),
-				Type: getType(p),
-				Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v"`, name)),
-			})
 		}
 	}
 
-	if len(m) > len(fields) {
+	if len(m) > result.Len() {
 		return nil, fmt.Errorf("could not parse %v, too many properties for object, expected %v", toString(m), schema)
 	}
 
-	t := reflect.StructOf(fields)
-	v := reflect.New(t).Elem()
-	for i, val := range values {
-		v.Field(i).Set(val)
-	}
-	return v.Addr().Interface(), nil
+	return result, nil
 }
 
 func parseAnyValue(i interface{}, schema *Schema) (interface{}, error) {
@@ -167,8 +154,7 @@ func parseAllOf(i interface{}, schema *Schema) (interface{}, error) {
 	if !ok {
 		return nil, fmt.Errorf("could not parse %v as object, expected %v", toString(i), schema)
 	}
-	fields := make([]reflect.StructField, 0, len(m))
-	values := make([]reflect.Value, 0, len(m))
+	result := sortedmap.NewLinkedHashMap()
 
 	for _, sRef := range schema.AllOf {
 		s := sRef.Value
@@ -180,40 +166,27 @@ func parseAllOf(i interface{}, schema *Schema) (interface{}, error) {
 
 		// free-form object
 		if s.Properties == nil {
-			return toObject(m), nil
+			return m, nil
 		}
 
 		for it := s.Properties.Value.Iter(); it.Next(); {
 			name := it.Key().(string)
-			pRef := it.Value().(*Ref)
-			p := pRef.Value
-
-			if _, ok := m[name]; !ok {
+			if v, ok := m[name]; !ok {
 				if _, ok := required[name]; ok && len(required) > 0 {
-					return nil, fmt.Errorf("could not parse %v, missing required property %v, expected %v", toString(i), name, schema)
+					return nil, fmt.Errorf("missing required property %v, expected %v", name, schema)
 				}
 				continue
+			} else {
+				v, err := parse(v, it.Value().(*Ref))
+				if err != nil {
+					continue
+				}
+				result.Set(it.Key(), v)
 			}
-
-			v, err := parse(m[name], pRef)
-			if err != nil {
-				return nil, fmt.Errorf("could not parse %v, value does not match all schema, expected %v", toString(i), schema)
-			}
-			values = append(values, reflect.ValueOf(v))
-			fields = append(fields, reflect.StructField{
-				Name: strings.Title(name),
-				Type: getType(p),
-				Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v"`, name)),
-			})
 		}
 	}
 
-	t := reflect.StructOf(fields)
-	v := reflect.New(t).Elem()
-	for i, val := range values {
-		v.Field(i).Set(val)
-	}
-	return v.Addr().Interface(), nil
+	return result, nil
 }
 
 func parseOneOf(i interface{}, schema *Schema) (interface{}, error) {
@@ -227,8 +200,7 @@ func parseOneOfObject(m map[string]interface{}, schema *Schema) (interface{}, er
 	var result interface{}
 	for _, sRef := range schema.OneOf {
 		s := sRef.Value
-		fields := make([]reflect.StructField, 0, len(m))
-		values := make([]reflect.Value, 0, len(m))
+		one := sortedmap.NewLinkedHashMap()
 
 		required := make(map[string]struct{})
 		for _, r := range s.Required {
@@ -237,29 +209,21 @@ func parseOneOfObject(m map[string]interface{}, schema *Schema) (interface{}, er
 
 		for it := s.Properties.Value.Iter(); it.Next(); {
 			name := it.Key().(string)
-			pRef := it.Value().(*Ref)
-			p := pRef.Value
-
-			if _, ok := m[name]; !ok {
+			if v, ok := m[name]; !ok {
 				if _, ok := required[name]; ok && len(required) > 0 {
 					return nil, fmt.Errorf("could not parse %v, missing required property %v, expected %v", toString(m), name, schema)
 				}
 				continue
+			} else {
+				v, err := parse(v, it.Value().(*Ref))
+				if err != nil {
+					continue
+				}
+				one.Set(it.Key(), v)
 			}
-
-			v, err := parse(m[name], pRef)
-			if err != nil {
-				continue
-			}
-			values = append(values, reflect.ValueOf(v))
-			fields = append(fields, reflect.StructField{
-				Name: strings.Title(name),
-				Type: getType(p),
-				Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v"`, name)),
-			})
 		}
 
-		if len(m) > len(fields) {
+		if len(m) > one.Len() {
 			continue
 		}
 
@@ -267,12 +231,7 @@ func parseOneOfObject(m map[string]interface{}, schema *Schema) (interface{}, er
 			return nil, fmt.Errorf("could not parse %v, it is not valid for only one schema, expected %v", toString(m), schema)
 		}
 
-		t := reflect.StructOf(fields)
-		v := reflect.New(t).Elem()
-		for i, val := range values {
-			v.Field(i).Set(val)
-		}
-		result = v.Addr().Interface()
+		result = one
 	}
 
 	if result == nil {
@@ -323,12 +282,35 @@ func parseObject(i interface{}, s *Schema) (interface{}, error) {
 	}
 
 	if !s.HasProperties() {
-		return toObject(m), nil
+		return m, nil
 	}
 
 	if len(m) > s.Properties.Value.Len() {
 		return nil, fmt.Errorf("could not parse %v, too many properties", toString(m))
 	}
+
+	required := make(map[string]struct{})
+	for _, r := range s.Required {
+		required[r] = struct{}{}
+	}
+
+	result := sortedmap.NewLinkedHashMap()
+	for it := s.Properties.Value.Iter(); it.Next(); {
+		name := it.Key().(string)
+		if v, ok := m[name]; !ok {
+			if _, ok := required[name]; ok && len(required) > 0 {
+				return nil, fmt.Errorf("could not parse %v, missing required property %v, expected %v", toString(m), name, s)
+			}
+			continue
+		} else {
+			v, err = parse(v, it.Value().(*Ref))
+			if err != nil {
+				return nil, err
+			}
+			result.Set(it.Key(), v)
+		}
+	}
+	return result, nil
 
 	fields := make([]reflect.StructField, 0, len(m))
 	values := make([]reflect.Value, 0, len(m))

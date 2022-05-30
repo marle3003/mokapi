@@ -85,14 +85,12 @@
           <b-col>
             <b-tabs content-class="mt-3">
               <b-tab title-link-class="pt-1 pb-1" title="Body" active>
-                <p class="label">Content Type</p>
-                <p>{{ response.headers['Content-Type'] }}</p>
                 <div v-if="response.body">
                   <pre :class="getLanguage(response.headers['Content-Type'])"><code :class="getLanguage(response.headers['Content-Type'])" v-html="pretty(response.body, response.headers['Content-Type'])"></code></pre>
                 </div>
               </b-tab>
               <b-tab title-link-class="pt-1 pb-1" title="Headers">
-                <b-table small hover class="dataTable" :items="response.headers">
+                <b-table small hover class="dataTable" :items="reponseHeaders">
                 </b-table>
               </b-tab>
             </b-tabs>
@@ -125,6 +123,15 @@ export default {
       parameterFields: [{key: 'show_details', label: '', thStyle: 'width: 1%'}, 'name', {key: 'value', tdClass: 'break'}, 'type', {key: 'openapi', label: 'OpenApi'}],
       detailsShown: [],
       parseError: null
+    }
+  },
+  computed: {
+    reponseHeaders: function () {
+      let result = []
+      for (let key in this.response.headers){
+        result.push({name: key, value: this.response.headers[key]})
+      }
+      return result
     }
   },
   created () {

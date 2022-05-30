@@ -5,6 +5,10 @@ import (
 	"crypto/tls"
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"io"
+	"mokapi/config/dynamic/openapi"
+	"mokapi/runtime/events"
+	"mokapi/runtime/monitor"
 	"mokapi/server/cert"
 	"net"
 	"net/http"
@@ -21,9 +25,10 @@ type HttpServer struct {
 }
 
 type HttpService struct {
-	Url     *url.URL
-	Handler http.Handler
-	Name    string
+	Url        *url.URL
+	Handler    http.Handler
+	Name       string
+	IsInternal bool
 }
 
 func NewHttpServer(port string) *HttpServer {
@@ -99,25 +104,26 @@ func (s *HttpServer) Stop() {
 
 func (s *HttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r = r.WithContext(context.WithValue(r.Context(), "time", time.Now()))
-	log.WithFields(log.Fields{
-		"url":    r.URL.String(),
-		"host":   r.Host,
-		"method": r.Method,
-	}).Info("Processing http request")
 
 	service, servicePath := s.resolveService(r)
 
 	if service != nil {
+		if !service.IsInternal {
+			log.WithFields(log.Fields{
+				"url":    r.URL.String(),
+				"host":   r.Host,
+				"method": r.Method,
+			}).Info("Processing http request")
+		}
+
 		if service.Handler == nil {
 			http.Error(w, "handler is nil", 500)
 		} else {
-			context.WithValue(r.Context(), "servicePath", servicePath)
+			r = r.WithContext(context.WithValue(r.Context(), "servicePath", servicePath))
 			service.Handler.ServeHTTP(w, r)
 		}
 	} else {
-		entry := log.WithFields(log.Fields{"url": r.URL, "method": r.Method, "status": http.StatusNotFound})
-		entry.Infof("There was no service listening at %v", r.URL)
-		http.Error(w, fmt.Sprintf("There was no service listening at %v", r.URL), 404)
+		serveNoServiceFound(w, r)
 	}
 }
 
@@ -152,4 +158,35 @@ func matchPath(paths map[string]*HttpService, r *http.Request) (matchedService *
 		}
 	}
 	return
+}
+
+func serveNoServiceFound(w http.ResponseWriter, r *http.Request) {
+	msg := fmt.Sprintf("There was no service listening at %v", r.URL)
+	entry := log.WithFields(log.Fields{"url": r.URL, "method": r.Method, "status": http.StatusNotFound})
+	entry.Info(msg)
+	http.Error(w, msg, 404)
+
+	body, _ := io.ReadAll(r.Body)
+	l := &openapi.HttpLog{
+		Request: &openapi.HttpRequestLog{
+			Method:      r.Method,
+			Url:         openapi.GetUrl(r),
+			ContentType: r.Header.Get("content-type"),
+			Body:        string(body),
+		},
+		Response: &openapi.HttpResponseLog{
+			Headers:    make(map[string]string),
+			StatusCode: 404,
+			Body:       msg,
+		},
+	}
+
+	err := events.Push(l, events.NewTraits().WithNamespace("http"))
+	if err != nil {
+		log.Errorf("unable to log event: %v", err)
+	}
+
+	if m, ok := monitor.HttpFromContext(r.Context()); ok {
+		m.RequestErrorCounter.WithLabel("").Add(1)
+	}
 }

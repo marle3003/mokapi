@@ -21,7 +21,8 @@ type handler struct {
 }
 
 type info struct {
-	Version string `json:"version"`
+	Version        string   `json:"version"`
+	ActiveServices []string `json:"activeServices,omitempty"`
 }
 
 type serviceType string
@@ -115,7 +116,19 @@ func writeError(w http.ResponseWriter, err error, status int) {
 
 func (h *handler) getInfo(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	writeJsonBody(w, info{Version: version.BuildVersion})
+
+	i := info{Version: version.BuildVersion}
+	if len(h.app.Http) > 0 {
+		i.ActiveServices = append(i.ActiveServices, "http")
+	}
+	if len(h.app.Kafka) > 0 {
+		i.ActiveServices = append(i.ActiveServices, "kafka")
+	}
+	if len(h.app.Smtp) > 0 {
+		i.ActiveServices = append(i.ActiveServices, "smtp")
+	}
+
+	writeJsonBody(w, i)
 }
 
 func writeJsonBody(w http.ResponseWriter, i interface{}) {

@@ -96,7 +96,7 @@ export default {
     color:var(--var-color-primary);
     font-size: 0.8rem;
   }
-  table.dataTable.selectable {
+  table.dataTable.selectable td {
     cursor: pointer;
   }
   table.dataTable thead tr{

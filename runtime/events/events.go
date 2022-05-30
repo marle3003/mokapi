@@ -40,7 +40,7 @@ func Push(data interface{}, traits Traits) error {
 	return fmt.Errorf("no store found for %s", traits)
 }
 
-func Events(traits Traits) []Event {
+func GetEvents(traits Traits) []Event {
 	events := make([]Event, 0)
 	for _, s := range stores {
 		if len(traits) == 0 || s.traits.Match(traits) {
@@ -50,6 +50,21 @@ func Events(traits Traits) []Event {
 	return events
 }
 
+func GetEvent(id string) Event {
+	for _, s := range stores {
+		for _, e := range s.events {
+			if e.Id == id {
+				return e
+			}
+		}
+	}
+	return Event{}
+}
+
 func Reset() {
 	stores = make([]*store, 0)
+}
+
+func (e *Event) IsValid() bool {
+	return len(e.Id) > 0
 }

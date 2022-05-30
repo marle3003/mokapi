@@ -7,6 +7,7 @@ import (
 	"mokapi/config/dynamic/openapi/parameter"
 	"mokapi/runtime/events"
 	"net/http"
+	"strings"
 )
 
 const logKey = "http_log"
@@ -40,28 +41,48 @@ type HttpParamter struct {
 }
 
 func NewLogEventContext(r *http.Request, traits events.Traits) (context.Context, error) {
-	body, _ := io.ReadAll(r.Body)
 	l := &HttpLog{
 		Request: &HttpRequestLog{
 			Method:      r.Method,
-			Url:         r.URL.String(),
+			Url:         GetUrl(r),
 			ContentType: r.Header.Get("content-type"),
-			Body:        string(body),
 		},
 		Response: &HttpResponseLog{Headers: make(map[string]string)},
 	}
-	params, _ := parameter.FromContext(r.Context())
-	for t, values := range params {
-		for k, v := range values {
-			value, _ := json.Marshal(v.Value)
-			l.Request.Parameters = append(l.Request.Parameters, HttpParamter{
-				Name:  k,
-				Type:  string(t),
-				Value: string(value),
-				Raw:   v.Raw,
-			})
+
+	go func() {
+		body, _ := io.ReadAll(r.Body)
+		l.Request.Body = string(body)
+
+		params, _ := parameter.FromContext(r.Context())
+		if params != nil {
+			for t, values := range params {
+				for k, v := range values {
+					value, _ := json.Marshal(v.Value)
+					l.Request.Parameters = append(l.Request.Parameters, HttpParamter{
+						Name:  k,
+						Type:  string(t),
+						Value: string(value),
+						Raw:   v.Raw,
+					})
+				}
+			}
 		}
-	}
+		for k, v := range r.Header {
+			p := HttpParamter{
+				Name: k,
+				Type: string(parameter.Header),
+				Raw:  strings.Join(v, ","),
+			}
+			if params != nil {
+				if pp, ok := params[parameter.Header][k]; ok {
+					val, _ := json.Marshal(pp.Value)
+					p.Value = string(val)
+				}
+			}
+			l.Request.Parameters = append(l.Request.Parameters, p)
+		}
+	}()
 
 	err := events.Push(l, traits.WithNamespace("http"))
 	if err != nil {
@@ -75,4 +96,19 @@ func NewLogEventContext(r *http.Request, traits events.Traits) (context.Context,
 func LogEventFromContext(ctx context.Context) (*HttpLog, bool) {
 	l, ok := ctx.Value(logKey).(*HttpLog)
 	return l, ok
+}
+
+func GetUrl(r *http.Request) string {
+	if r.URL.IsAbs() {
+		return r.URL.String()
+	}
+	var sb strings.Builder
+	if strings.HasPrefix(r.Proto, "HTTPS") {
+		sb.WriteString("https://")
+	} else {
+		sb.WriteString("http://")
+	}
+	sb.WriteString(r.Host)
+	sb.WriteString(r.URL.String())
+	return sb.String()
 }

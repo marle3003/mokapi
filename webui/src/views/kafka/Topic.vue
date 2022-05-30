@@ -152,6 +152,10 @@ export default {
       }
       const name = this.$route.params.topic
       const groups = []
+      if (!this.cluster.groups) {
+        return groups
+      }
+
       for (let group of this.cluster.groups) {
         if (group.topics && group.topics.includes(name)) {
           groups.push(group)

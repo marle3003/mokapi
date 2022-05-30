@@ -32,7 +32,7 @@ func NewHttpManager(servers HttpServers, emitter common.EventEmitter, store *cer
 	}
 }
 
-func (m *HttpManager) AddService(name string, u *url.URL, handler http.Handler, useMetrics bool) error {
+func (m *HttpManager) AddService(name string, u *url.URL, handler http.Handler, isInternal bool) error {
 	server, found := m.Servers[u.Port()]
 	if !found {
 		if u.Scheme == "https" {
@@ -46,14 +46,15 @@ func (m *HttpManager) AddService(name string, u *url.URL, handler http.Handler, 
 	}
 
 	h := handler
-	if useMetrics {
+	if !isInternal {
 		h = runtime.NewHttpHandler(m.app.Monitor.Http, h)
 	}
 
 	err := server.AddOrUpdate(&service.HttpService{
-		Url:     u,
-		Handler: h,
-		Name:    name,
+		Url:        u,
+		Handler:    h,
+		Name:       name,
+		IsInternal: isInternal,
 	})
 	if err != nil {
 		return err
@@ -80,13 +81,13 @@ func (m *HttpManager) Update(c *config.Config) {
 			continue
 		}
 
-		err = m.AddService(config.Info.Name, u, openapi.NewHandler(config, m.eventEmitter), true)
+		err = m.AddService(config.Info.Name, u, openapi.NewHandler(config, m.eventEmitter), false)
 		if err != nil {
 			log.Errorf("error on updating %v: %v", c.Url.String(), err.Error())
 			return
 		}
 	}
-	log.Infof("processed file %v", c.Url.String())
+	log.Debugf("processed %v", c.Url.String())
 }
 
 func (servers HttpServers) Stop() {

@@ -72,7 +72,7 @@ skip:
 		f()
 	}
 
-	log.Infof("processed file %v", c.Url.String())
+	log.Debugf("processed %v", c.Url.String())
 }
 
 func (kc KafkaClusters) Stop() {

@@ -8,9 +8,9 @@ import (
 type LogRecord func(record kafka.Record, traits events.Traits)
 
 type KafkaLog struct {
-	Offset  int64
-	Key     string
-	Message string
+	Offset  int64  `json:"offset"`
+	Key     string `json:"key"`
+	Message string `json:"message"`
 }
 
 func NewKafkaLog(record kafka.Record) *KafkaLog {
