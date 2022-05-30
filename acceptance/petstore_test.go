@@ -50,7 +50,7 @@ func (suite *PetStoreSuite) TestJsFile() {
 		try.HasStatusCode(http.StatusNotFound),
 		try.HasBody(""))
 
-	e := events.Events(events.NewTraits().WithNamespace("kafka"))
+	e := events.GetEvents(events.NewTraits().WithNamespace("kafka"))
 	require.Len(suite.T(), e, 1)
 }
 

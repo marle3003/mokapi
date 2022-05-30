@@ -36,7 +36,7 @@ func TestHandler_Events(t *testing.T) {
 			fn: func(t *testing.T, h http.Handler) {
 				events.SetStore(1, events.NewTraits().WithNamespace("http"))
 				err := events.Push("foo", events.NewTraits().WithNamespace("http"))
-				event := events.Events(events.NewTraits())[0]
+				event := events.GetEvents(events.NewTraits())[0]
 				require.NoError(t, err)
 				try.Handler(t,
 					http.MethodGet,

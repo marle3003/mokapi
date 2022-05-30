@@ -603,7 +603,7 @@ func TestHandler_Log(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 
-				logs := events.Events(events.NewTraits().WithNamespace("http"))
+				logs := events.GetEvents(events.NewTraits().WithNamespace("http"))
 				require.Len(t, logs, 1)
 				log := logs[0]
 				require.NotEmpty(t, log.Id)

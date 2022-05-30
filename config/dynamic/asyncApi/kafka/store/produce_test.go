@@ -118,7 +118,7 @@ func TestProduce(t *testing.T) {
 				require.Less(t, 0.0, m.Kafka.LastMessage.WithLabel("test", "foo").Value())
 				require.Equal(t, 1.0, m.Kafka.Lags.WithLabel("test", "foo", "foo", "0").Value())
 
-				logs := events.Events(events.NewTraits().WithNamespace("kafka").WithName("test").With("topic", "foo"))
+				logs := events.GetEvents(events.NewTraits().WithNamespace("kafka").WithName("test").With("topic", "foo"))
 				require.Len(t, logs, 2)
 				require.Equal(t, "foo-2", logs[0].Data.(*store.KafkaLog).Key)
 				require.Equal(t, "bar-2", logs[0].Data.(*store.KafkaLog).Message)

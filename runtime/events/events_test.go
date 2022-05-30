@@ -48,9 +48,9 @@ func TestPush(t *testing.T) {
 				require.NoError(t, err)
 				err = Push(nil, NewTraits().WithNamespace("foo").WithName("foobar"))
 				require.NoError(t, err)
-				events := Events(NewTraits().WithNamespace("foo"))
+				events := GetEvents(NewTraits().WithNamespace("foo"))
 				require.Len(t, events, 2)
-				events = Events(NewTraits().WithNamespace("foo").WithName("bar"))
+				events = GetEvents(NewTraits().WithNamespace("foo").WithName("bar"))
 				require.Len(t, events, 1)
 			},
 		},
@@ -61,7 +61,7 @@ func TestPush(t *testing.T) {
 				err := Push(nil, NewTraits().WithNamespace("foo"))
 				require.NoError(t, err)
 
-				events := Events(NewTraits())
+				events := GetEvents(NewTraits())
 				require.Len(t, events, 1)
 			},
 		},
@@ -72,7 +72,7 @@ func TestPush(t *testing.T) {
 				err := Push(nil, NewTraits().WithNamespace("foo"))
 				require.NoError(t, err)
 
-				events := Events(NewTraits().WithNamespace("foo"))
+				events := GetEvents(NewTraits().WithNamespace("foo"))
 				require.Len(t, events, 1)
 			},
 		},
