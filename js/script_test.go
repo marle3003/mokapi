@@ -104,7 +104,7 @@ return s
 type testHost struct {
 	common.Host
 	openFile    func(file string) (string, error)
-	openScript  func(file string) (common.Script, error)
+	openScript  func(file string) (string, error)
 	info        func(args ...interface{})
 	httpClient  *testClient
 	kafkaClient *kafkaClient
@@ -123,11 +123,11 @@ func (th *testHost) OpenFile(file string) (string, error) {
 	return "", nil
 }
 
-func (th *testHost) OpenScript(file string) (common.Script, error) {
+func (th *testHost) OpenScript(file string) (string, error) {
 	if th.openScript != nil {
 		return th.openScript(file)
 	}
-	return nil, nil
+	return "", nil
 }
 
 func (th *testHost) HttpClient() common.HttpClient {

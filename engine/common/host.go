@@ -18,7 +18,7 @@ type Host interface {
 	Cancel(jobId int) error
 
 	OpenFile(file string) (string, error)
-	OpenScript(file string) (Script, error)
+	OpenScript(file string) (string, error)
 
 	On(event string, do func(args ...interface{}) (bool, error), tags map[string]string)
 

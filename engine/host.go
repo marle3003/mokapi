@@ -26,7 +26,6 @@ type scriptHost struct {
 	Name     string
 	engine   *Engine
 	script   common.Script
-	scripts  map[string]common.Script
 	jobs     map[int]*gocron.Job
 	events   map[string][]*eventHandler
 	cwd      string
@@ -41,7 +40,6 @@ func newScriptHost(file *config.Config, e *Engine) *scriptHost {
 		id:       1,
 		Name:     path,
 		engine:   e,
-		scripts:  make(map[string]common.Script),
 		jobs:     make(map[int]*gocron.Job),
 		events:   make(map[string][]*eventHandler),
 		cwd:      filepath.Dir(path),
@@ -200,33 +198,23 @@ func (sh *scriptHost) OpenFile(path string) (string, error) {
 	return string(f.Raw), nil
 }
 
-func (sh *scriptHost) OpenScript(path string) (common.Script, error) {
+func (sh *scriptHost) OpenScript(path string) (string, error) {
 	if !filepath.IsAbs(path) {
 		path = filepath.Join(sh.cwd, path)
 	}
 
 	u, err := file.ParseUrl(path)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	name := getScriptPath(u)
-	if s, ok := sh.scripts[name]; ok {
-		return s, nil
-	}
-
-	file, err := sh.engine.reader.Read(u,
+	f, err := sh.engine.reader.Read(u,
 		config.WithParent(sh.file))
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	s, err := compile(file, sh)
-	if err != nil {
-		return nil, err
-	}
-	sh.scripts[name] = s
-	return s, nil
+	return string(f.Raw), nil
 }
 
 func (sh *scriptHost) KafkaClient() common.KafkaClient {
@@ -238,7 +226,7 @@ func (sh *scriptHost) HttpClient() common.HttpClient {
 }
 
 func (sh *scriptHost) CanClose() bool {
-	return len(sh.events) > 0 || len(sh.jobs) > 0
+	return len(sh.events) == 0 && len(sh.jobs) == 0
 }
 
 func getScriptPath(u *url.URL) string {

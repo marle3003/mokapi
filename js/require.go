@@ -31,7 +31,7 @@ func enableRequire(script *Script, host engine.Host) *require {
 		runtime: script.runtime,
 		host:    host,
 		exports: make(map[string]goja.Value),
-		open:    script.openScript,
+		open:    script.requireFile,
 	}
 	script.runtime.Set("require", r.require)
 
@@ -46,9 +46,7 @@ func (r *require) require(call goja.FunctionCall) goja.Value {
 
 	if e, ok := r.exports[file]; ok {
 		return e
-	}
-
-	if f, ok := moduleTypes[file]; ok {
+	} else if f, ok := moduleTypes[file]; ok {
 		m := f(r.host, r.runtime)
 		e := common.Map(r.runtime, m)
 		r.exports[file] = e
@@ -58,16 +56,10 @@ func (r *require) require(call goja.FunctionCall) goja.Value {
 			file = file + ".js"
 		}
 
-		src, err := r.host.OpenFile(file)
-		//s, err := r.host.OpenScript(file)
+		src, err := r.host.OpenScript(file)
 		if err != nil {
 			panic(err)
 		}
-
-		//js, ok := s.(*Script)
-		//if !ok {
-		//panic(fmt.Sprintf("not supporting %v", file))
-		//}
 
 		export, err := r.open(file, src)
 		if err != nil {
@@ -75,9 +67,6 @@ func (r *require) require(call goja.FunctionCall) goja.Value {
 		}
 		r.exports[file] = export
 		return export
-
-		//r.exports[file] = js.exports
-		//return js.exports
 	}
 }
 

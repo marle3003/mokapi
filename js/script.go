@@ -60,6 +60,26 @@ func (s *Script) openScript(filename, src string) (goja.Value, error) {
 	return exports, nil
 }
 
+func (s *Script) requireFile(filename, src string) (goja.Value, error) {
+	exports := s.runtime.Get("exports")
+	defer func() {
+		s.runtime.Set("exports", exports)
+	}()
+	s.runtime.Set("exports", s.runtime.NewObject())
+	prg, err := s.compiler.Compile(filename, src)
+	if err != nil {
+		return nil, err
+	}
+	f, err := s.runtime.RunProgram(prg)
+	if err != nil {
+		return nil, err
+	}
+	if call, ok := goja.AssertFunction(f); ok {
+		_ = call
+	}
+	return s.runtime.Get("exports"), nil
+}
+
 func (s *Script) Close() {
 	s.runtime.Interrupt(fmt.Errorf("closing"))
 	s.runtime = nil

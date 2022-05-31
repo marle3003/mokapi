@@ -43,14 +43,14 @@ func TestJsScriptEngine(t *testing.T) {
 		engine := New(emptyReader, runtime.New())
 		err := engine.AddScript(newScript("test.js", "export default function(){}"))
 		r.NoError(t, err)
-		r.Len(t, engine.scripts, 1, "script length not 1")
+		r.Len(t, engine.scripts, 0, "no events and jobs, script should be closed")
 	})
 	t.Run("blank", func(t *testing.T) {
 		t.Parallel()
 		engine := New(emptyReader, runtime.New())
 		err := engine.AddScript(newScript("test.js", ""))
 		r.NoError(t, err)
-		r.Len(t, engine.scripts, 1, "script length not 0")
+		r.Len(t, engine.scripts, 0, "no events and jobs, script should be closed")
 	})
 }
 
@@ -83,8 +83,7 @@ func TestJsOn(t *testing.T) {
 			export default function() {}
 		`))
 		r.NoError(t, err)
-		r.Len(t, engine.scripts, 1, "script length not 1")
-		r.Len(t, engine.scripts["test.js"].events["http"], 0, "event defined")
+		r.Len(t, engine.scripts, 0, "script length not 1")
 	})
 	t.Run("withoutSummary", func(t *testing.T) {
 		t.Parallel()
@@ -229,7 +228,7 @@ func TestJsOpen(t *testing.T) {
 		}
 
 		reader := &testReader{readFunc: func(cfg *common.Config) error {
-			cfg.Data = "foobar"
+			cfg.Raw = []byte("foobar")
 			return nil
 		}}
 
@@ -259,24 +258,18 @@ func TestJsOpen(t *testing.T) {
 	})
 	t.Run("require nested with update", func(t *testing.T) {
 		t.Parallel()
-		foo := `import {bar} from 'bar'; export let foo = bar`
-		bar := `export let bar = 'bar'`
+		foo := `const {bar} = require('bar'); export let foo = bar`
+		bar := `export let bar = 'bar'; export let xy = 'xy'`
 		var barFile *common.Config
 
 		reader := &testReader{readFunc: func(cfg *common.Config) error {
 			switch s := cfg.Url.String(); {
 			case strings.HasSuffix(s, "foo.js"):
-				cfg.Data = &script.Script{
-					Code:     foo,
-					Filename: cfg.Url.String(),
-				}
+				cfg.Raw = []byte(foo)
 				return nil
 			case strings.HasSuffix(s, "bar.js"):
 				barFile = cfg
-				cfg.Data = &script.Script{
-					Code:     bar,
-					Filename: cfg.Url.String(),
-				}
+				cfg.Raw = []byte(bar)
 				return nil
 			}
 			return errors.New("file not found")
@@ -287,7 +280,7 @@ func TestJsOpen(t *testing.T) {
 			import {foo} from 'foo'
 			import {on} from 'mokapi'
 			export default function() {
-				on('http', function() {return true}, {tags: {'name': foo}});
+				on('http', function() {return true}, {tags: {name: foo}});
 			}
 		`)
 		s.AddListener("", func(config *common.Config) {

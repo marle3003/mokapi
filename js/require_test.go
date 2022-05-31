@@ -28,7 +28,7 @@ func TestRequire(t *testing.T) {
 		{
 			"require custom file",
 			func(t *testing.T) {
-				host.openFile = func(file string) (string, error) {
+				host.openScript = func(file string) (string, error) {
 					r.Equal(t, "foo.js", file)
 					return "export var bar = {demo: 'demo'};", nil
 				}

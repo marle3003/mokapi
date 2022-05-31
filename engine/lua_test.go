@@ -66,8 +66,7 @@ func TestLuaOn(t *testing.T) {
 			local mokapi = require "mokapi"
 		`))
 		require.NoError(t, err)
-		require.Len(t, engine.scripts, 1, "script length not 1")
-		require.Len(t, engine.scripts["test.lua"].events["http"], 0, "event defined")
+		require.Len(t, engine.scripts, 0, "script should be closed because no event and no jobs")
 	})
 	t.Run("withoutSummary", func(t *testing.T) {
 		t.Parallel()
@@ -223,7 +222,7 @@ func TestLuaOpen(t *testing.T) {
 		}
 
 		reader := &testReader{readFunc: func(cfg *common.Config) error {
-			cfg.Data = "foobar"
+			cfg.Raw = []byte("foobar")
 			return nil
 		}}
 
