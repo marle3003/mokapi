@@ -60,6 +60,11 @@ func (e *Engine) AddScript(cfg *config.Config) error {
 		return err
 	}
 
+	if sh.CanClose() {
+		sh.close()
+		delete(e.scripts, sh.Name)
+	}
+
 	return nil
 }
 

@@ -197,7 +197,7 @@ func (sh *scriptHost) OpenFile(path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("%s", f.Data), nil
+	return string(f.Raw), nil
 }
 
 func (sh *scriptHost) OpenScript(path string) (common.Script, error) {
@@ -235,6 +235,10 @@ func (sh *scriptHost) KafkaClient() common.KafkaClient {
 
 func (sh *scriptHost) HttpClient() common.HttpClient {
 	return &http.Client{Timeout: time.Second * 30}
+}
+
+func (sh *scriptHost) CanClose() bool {
+	return len(sh.events) > 0 || len(sh.jobs) > 0
 }
 
 func getScriptPath(u *url.URL) string {

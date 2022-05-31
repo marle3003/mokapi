@@ -74,7 +74,7 @@ func (b *babel) Transform(src string) (code string, err error) {
 		"compact":       false,
 		"retainLines":   true,
 		"highlightCode": false,
-		"filename":      "test.js"}
+		"filename":      "babel.js"}
 	v, err := b.transform(b.this, b.runtime.ToValue(src), b.runtime.ToValue(opts))
 	if err != nil {
 		return
