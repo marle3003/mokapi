@@ -2,6 +2,7 @@ import {on} from 'mokapi'
 import kafka from 'kafka'
 
 export default function() {
+    kafka.produce({topic: 'petstore.order-event'})
     on('http', function(request, response) {
         if (request.operationId === "getPetById") {
             if (request.path.petId === 2) {
@@ -15,5 +16,4 @@ export default function() {
         }
         return false
     });
-    kafka.produce({topic: 'petstore.order-event'})
 }
