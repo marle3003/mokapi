@@ -8,6 +8,7 @@ import (
 	"mokapi/config/dynamic/openapi/schema/schematest"
 	"mokapi/media"
 	"mokapi/sortedmap"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -39,7 +40,9 @@ func TestParse(t *testing.T) {
 			nil,
 			func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": float64(12)}, i)
+				require.Equal(t, &struct {
+					Foo float64 `json:"foo"`
+				}{Foo: 12}, i)
 			},
 		},
 		{
@@ -55,7 +58,9 @@ func TestParse(t *testing.T) {
 			schematest.New("object", schematest.WithProperty("foo", schematest.New("integer"))),
 			func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(12), i.(*sortedmap.LinkedHashMap).Get("foo"))
+				require.Equal(t, &struct {
+					Foo int64 `json:"foo"`
+				}{Foo: int64(12)}, i)
 			},
 		},
 		{
@@ -63,7 +68,9 @@ func TestParse(t *testing.T) {
 			schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
 			func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "bar", i.(*sortedmap.LinkedHashMap).Get("foo"))
+				require.Equal(t, &struct {
+					Foo string `json:"foo"`
+				}{Foo: "bar"}, i)
 			},
 		},
 		{
@@ -73,7 +80,9 @@ func TestParse(t *testing.T) {
 					schematest.New("string", schematest.WithFormat("date")))),
 			func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "2021-01-20", i.(*sortedmap.LinkedHashMap).Get("foo"))
+				require.Equal(t, &struct {
+					Foo string `json:"foo"`
+				}{Foo: "2021-01-20"}, i)
 			},
 		},
 		{
@@ -83,7 +92,9 @@ func TestParse(t *testing.T) {
 					schematest.New("array", schematest.WithItems(schematest.New("string"))))),
 			func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []string{"a", "b", "c"}, i.(*sortedmap.LinkedHashMap).Get("foo"))
+				require.Equal(t, &struct {
+					Foo []string `json:"foo"`
+				}{Foo: []string{"a", "b", "c"}}, i)
 			},
 		},
 		{
@@ -95,8 +106,10 @@ func TestParse(t *testing.T) {
 				)),
 			func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(12), i.(*sortedmap.LinkedHashMap).Get("test"))
-				require.True(t, i.(*sortedmap.LinkedHashMap).Get("test2").(bool))
+				require.Equal(t, &struct {
+					Test  int64 `json:"test"`
+					Test2 bool  `json:"test2"`
+				}{Test: 12, Test2: true}, i)
 			},
 		},
 		{
@@ -165,7 +178,9 @@ func TestAny(t *testing.T) {
 						schematest.WithProperty("foo", schematest.New("string"))))),
 			func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "bar", i.(*sortedmap.LinkedHashMap).Get("foo"))
+				require.Equal(t, &struct {
+					Foo string `json:"foo"`
+				}{Foo: "bar"}, i)
 			},
 		},
 		{
@@ -207,8 +222,10 @@ func TestAny(t *testing.T) {
 					))),
 			func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "bar", i.(*sortedmap.LinkedHashMap).Get("name"))
-				require.Equal(t, int64(12), i.(*sortedmap.LinkedHashMap).Get("age"))
+				require.Equal(t, &struct {
+					Name string `json:"name"`
+					Age  int64  `json:"age"`
+				}{Name: "bar", Age: 12}, i)
 			},
 		},
 	}
@@ -240,7 +257,9 @@ func TestParseOneOf(t *testing.T) {
 			)),
 			func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.True(t, i.(*sortedmap.LinkedHashMap).Get("foo").(bool))
+				require.Equal(t, &struct {
+					Foo bool `json:"foo"`
+				}{Foo: true}, i)
 			},
 		},
 		{
@@ -306,8 +325,10 @@ func TestParseAllOf(t *testing.T) {
 				)),
 			func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(12), i.(*sortedmap.LinkedHashMap).Get("foo"))
-				require.True(t, i.(*sortedmap.LinkedHashMap).Get("bar").(bool))
+				require.Equal(t, &struct {
+					Foo int64 `json:"foo"`
+					Bar bool  `json:"bar"`
+				}{Foo: 12, Bar: true}, i)
 			},
 		},
 	}
@@ -593,7 +614,7 @@ func TestValidate_Object(t *testing.T) {
 			"{}",
 			&schema.Schema{Type: "object"},
 			func(t *testing.T, v interface{}, _ error) {
-				require.Len(t, v, 0)
+				require.Equal(t, &struct{}{}, v)
 			},
 		},
 		{
@@ -604,8 +625,10 @@ func TestValidate_Object(t *testing.T) {
 				schematest.WithProperty("age", schematest.New("integer")),
 			),
 			func(t *testing.T, v interface{}, _ error) {
-				require.Equal(t, "foo", v.(*sortedmap.LinkedHashMap).Get("name"))
-				require.Equal(t, int64(12), v.(*sortedmap.LinkedHashMap).Get("age"))
+				require.Equal(t, &struct {
+					Name string `json:"name"`
+					Age  int64  `json:"age"`
+				}{Name: "foo", Age: 12}, v)
 			},
 		},
 		{
@@ -616,7 +639,9 @@ func TestValidate_Object(t *testing.T) {
 				schematest.WithProperty("age", schematest.New("integer")),
 			),
 			func(t *testing.T, v interface{}, _ error) {
-				require.Equal(t, "foo", v.(*sortedmap.LinkedHashMap).Get("name"))
+				require.Equal(t, &struct {
+					Name string `json:"name"`
+				}{Name: "foo"}, v)
 			},
 		},
 		{
@@ -659,9 +684,21 @@ func TestValidate_Object(t *testing.T) {
 				schematest.WithMaxProperties(2),
 			),
 			func(t *testing.T, v interface{}, _ error) {
-				m := v.(map[string]interface{})
-				require.Equal(t, "foo", m["name"])
-				require.Equal(t, float64(12), m["age"])
+				if !reflect.DeepEqual(
+					&struct {
+						Name string  `json:"name"`
+						Age  float64 `json:"age"`
+					}{
+						Name: "foo", Age: 12,
+					}, v) &&
+					!reflect.DeepEqual(&struct {
+						Age  float64 `json:"age"`
+						Name string  `json:"name"`
+					}{
+						Name: "foo", Age: 12,
+					}, v) {
+					require.Fail(t, "not equal in any order")
+				}
 			},
 		},
 	}
@@ -718,9 +755,11 @@ func TestValidate_Array(t *testing.T) {
 			),
 			func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				m := i.([]interface{})[0]
-				require.Equal(t, "foo", m.(*sortedmap.LinkedHashMap).Get("name"))
-				require.Equal(t, int64(12), m.(*sortedmap.LinkedHashMap).Get("age"))
+				v := i.([]interface{})[0]
+				require.Equal(t, &struct {
+					Name string `json:"name"`
+					Age  int64  `json:"age"`
+				}{Name: "foo", Age: 12}, v)
 			},
 		},
 	}

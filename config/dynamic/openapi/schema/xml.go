@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
-	"mokapi/sortedmap"
 	"net/url"
 	"strings"
 )
@@ -99,7 +98,7 @@ func encode(name string, i interface{}, r *Ref, writer *bufio.Writer) error {
 			node.writeStart(writer)
 			writer.WriteString(fmt.Sprintf("</%v>", node.Name))
 		} else {
-			o, ok := i.(*sortedmap.LinkedHashMap)
+			o, ok := i.(*schemaObject)
 			if !ok {
 				return fmt.Errorf("expected object got %T", i)
 			}
@@ -180,16 +179,17 @@ func (e *xmlNode) parse(r *Ref) (interface{}, error) {
 		props := make(map[string]interface{})
 		for it := s.Properties.Value.Iter(); it.Next(); {
 			name := it.Key().(string)
+			xmlName := name
 			prop := it.Value().(*Ref)
 			if prop.Value.Xml != nil && len(prop.Value.Xml.Name) > 0 {
-				name = prop.Value.Xml.Name
+				xmlName = prop.Value.Xml.Name
 			}
 			if prop.Value.Xml != nil && prop.Value.Xml.Attribute {
-				if v, ok := e.Attributes[name]; ok {
+				if v, ok := e.Attributes[xmlName]; ok {
 					props[name] = v
 				}
 			} else {
-				c := e.GetFirstElement(name)
+				c := e.GetFirstElement(xmlName)
 				if c == nil {
 					continue
 				}
@@ -283,6 +283,9 @@ func (e *xmlNode) parseFreeForm() (interface{}, error) {
 		return result, nil
 	} else {
 		result := make(map[string]interface{})
+		for n, a := range e.Attributes {
+			result[n] = a
+		}
 		for _, c := range e.Children {
 			v, err := c.parse(nil)
 			if err != nil {

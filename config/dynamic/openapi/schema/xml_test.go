@@ -8,6 +8,7 @@ import (
 	"mokapi/config/dynamic/openapi/schema/schematest"
 	"mokapi/media"
 	"mokapi/sortedmap"
+	"reflect"
 	"testing"
 )
 
@@ -23,7 +24,7 @@ func TestParse_Xml(t *testing.T) {
 			"",
 			nil,
 			func(t *testing.T, i interface{}, err error) {
-				require.Equal(t, err, io.EOF)
+				require.Equal(t, io.EOF, err)
 			},
 		},
 		{
@@ -32,11 +33,9 @@ func TestParse_Xml(t *testing.T) {
 			nil,
 			func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				m, ok := i.(map[string]interface{})
-				require.True(t, ok)
-				require.Equal(t, "0", m["id"])
-				require.Equal(t, "foo", m["title"])
-				require.Equal(t, "bar", m["author"])
+				require.True(t, hasField(i, "Id", "0"))
+				require.True(t, hasField(i, "Title", "foo"))
+				require.True(t, hasField(i, "Author", "bar"))
 			},
 		},
 		{
@@ -58,11 +57,28 @@ func TestParse_Xml(t *testing.T) {
 				schematest.WithProperty("author", schematest.New("string"))),
 			func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				m, ok := i.(*sortedmap.LinkedHashMap)
-				require.True(t, ok)
-				require.Equal(t, int64(0), m.Get("id"))
-				require.Equal(t, "foo", m.Get("title"))
-				require.Equal(t, "bar", m.Get("author"))
+				require.Equal(t, &struct {
+					Id     int64  `json:"id"`
+					Title  string `json:"title"`
+					Author string `json:"author"`
+				}{Id: 0, Title: "foo", Author: "bar"}, i)
+			},
+		},
+		{
+			"xml name",
+			"<Book><Id>0</Id><Title>foo</Title><Author>bar</Author></Book>",
+			schematest.New("object",
+				schematest.WithXml(&schema.Xml{Name: "Book"}),
+				schematest.WithProperty("id", schematest.New("integer", schematest.WithXml(&schema.Xml{Name: "Id"}))),
+				schematest.WithProperty("title", schematest.New("string", schematest.WithXml(&schema.Xml{Name: "Title"}))),
+				schematest.WithProperty("author", schematest.New("string", schematest.WithXml(&schema.Xml{Name: "Author"})))),
+			func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, &struct {
+					Id     int64  `json:"id"`
+					Title  string `json:"title"`
+					Author string `json:"author"`
+				}{Id: 0, Title: "foo", Author: "bar"}, i)
 			},
 		},
 	}
@@ -127,4 +143,13 @@ func TestEncode_Xml(t *testing.T) {
 			tc.f(t, string(b), err)
 		})
 	}
+}
+
+func hasField(i interface{}, field string, value interface{}) bool {
+	v := reflect.ValueOf(i).Elem()
+	f := v.FieldByName(field)
+	if !f.IsValid() {
+		return false
+	}
+	return f.Interface() == value
 }

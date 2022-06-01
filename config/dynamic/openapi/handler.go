@@ -84,7 +84,8 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			writeError(rw, r, errors.New("request body expected"), h.config.Info.Name)
 			return
 		}
-		request.Body = body
+		request.Body = body.Value
+		logHttp.Request.Body = body.Raw
 	}
 
 	response.Headers["Content-Type"] = contentType.String()

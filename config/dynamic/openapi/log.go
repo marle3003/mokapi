@@ -3,7 +3,6 @@ package openapi
 import (
 	"context"
 	"encoding/json"
-	"io"
 	"mokapi/config/dynamic/openapi/parameter"
 	"mokapi/runtime/events"
 	"net/http"
@@ -51,9 +50,6 @@ func NewLogEventContext(r *http.Request, traits events.Traits) (context.Context,
 	}
 
 	go func() {
-		body, _ := io.ReadAll(r.Body)
-		l.Request.Body = string(body)
-
 		params, _ := parameter.FromContext(r.Context())
 		if params != nil {
 			for t, values := range params {
