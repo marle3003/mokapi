@@ -25,7 +25,7 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: '12'
-      - run: curl -sL https://taskfile.dev/install.sh | sh
+      - run: curl -sL https://raw.githubusercontent.com/go-task/task/master/install-task.sh | sh
       - run: npm install
         working-directory: ./webui
       - run: go get -u github.com/go-bindata/go-bindata/...

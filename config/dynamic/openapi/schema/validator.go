@@ -139,7 +139,7 @@ func validateObject(i interface{}, schema *Schema) error {
 			return fmt.Errorf("validation error on %v, expected %v", toString(i), schema)
 		}
 		if !schema.IsFreeForm() && v.Len() > schema.Properties.Value.Len() {
-			return fmt.Errorf("validation error on %v, expected %v", toString(i), schema)
+			return fmt.Errorf("validation error on %v, too many fields, expected %v", toString(i), schema)
 		}
 
 		for _, p := range schema.Required {

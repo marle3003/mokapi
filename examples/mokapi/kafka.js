@@ -1,11 +1,11 @@
- import g from 'generator'
+import {fake} from 'faker'
 import {metrics} from 'metrics';
 
 export let clusters = [
     {
         name:'Kafka World',
-        description: g.new({type: 'string', format: '{sentence:10}'}),
-        version:g.new({type: 'string', pattern: '[0-9]\\.[0-9]{2}'}),
+        description: fake({type: 'string', format: '{sentence:10}'}),
+        version:fake({type: 'string', pattern: '[0-9]\\.[0-9]{2}'}),
         contact:{
             name:'mokapi',
             url:'https://www.mokapi.io',

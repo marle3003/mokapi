@@ -11,13 +11,13 @@ import (
 )
 
 func (r *Ref) Marshal(i interface{}, contentType media.ContentType) ([]byte, error) {
+	i, err := selectData(i, r)
+	if err != nil {
+		return nil, err
+	}
 	switch {
 	case contentType.Subtype == "json":
-		o, err := selectData(i, r)
-		if err != nil {
-			return nil, err
-		}
-		b, err := json.Marshal(o)
+		b, err := json.Marshal(i)
 		if err, ok := err.(*json.SyntaxError); ok {
 			return nil, fmt.Errorf("json error (%v): %v", err.Offset, err.Error())
 		}

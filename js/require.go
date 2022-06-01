@@ -5,18 +5,23 @@ import (
 	engine "mokapi/engine/common"
 	"mokapi/js/common"
 	"mokapi/js/modules"
+	"mokapi/js/modules/faker"
 	"mokapi/js/modules/http"
 	"mokapi/js/modules/kafka"
+	"mokapi/js/modules/mustache"
+	"mokapi/js/modules/yaml"
 	"strings"
 )
 
 type factory func(engine.Host, *goja.Runtime) interface{}
 
 var moduleTypes = map[string]factory{
-	"mokapi":    modules.NewMokapi,
-	"generator": modules.NewGenerator,
-	"http":      http.New,
-	"kafka":     kafka.New,
+	"mokapi":   modules.NewMokapi,
+	"faker":    faker.New,
+	"http":     http.New,
+	"kafka":    kafka.New,
+	"yaml":     yaml.New,
+	"mustache": mustache.New,
 }
 
 type require struct {

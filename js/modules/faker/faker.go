@@ -1,4 +1,4 @@
-package modules
+package faker
 
 import (
 	"encoding/json"
@@ -7,20 +7,19 @@ import (
 	"mokapi/engine/common"
 )
 
-type Generator struct {
-	rt        *goja.Runtime
+type Module struct {
 	generator *schema.Generator
 }
 
-func NewGenerator(host common.Host, rt *goja.Runtime) interface{} {
-	return &Generator{generator: schema.NewGenerator(), rt: rt}
+func New(_ common.Host, _ *goja.Runtime) interface{} {
+	return &Module{generator: schema.NewGenerator()}
 }
 
-func (g *Generator) New(v goja.Value) (interface{}, error) {
+func (m *Module) Fake(v goja.Value) (interface{}, error) {
 	e := v.Export().(map[string]interface{})
 	s := toSchema(e)
-	i := g.generator.New(&schema.Ref{Value: s})
-	return g.rt.ToValue(i), nil
+	i := m.generator.New(&schema.Ref{Value: s})
+	return i, nil
 }
 
 func toSchema(m map[string]interface{}) *schema.Schema {

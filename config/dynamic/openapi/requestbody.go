@@ -1,6 +1,7 @@
 package openapi
 
 import (
+	"encoding/json"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
@@ -9,7 +10,6 @@ import (
 	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/media"
 	"net/http"
-	"strings"
 )
 
 type RequestBodyRef struct {
@@ -31,7 +31,12 @@ type RequestBody struct {
 	Required bool
 }
 
-func BodyFromRequest(r *http.Request, op *Operation) (interface{}, error) {
+type Body struct {
+	Value interface{}
+	Raw   string
+}
+
+func BodyFromRequest(r *http.Request, op *Operation) (*Body, error) {
 	contentType := media.ParseContentType(r.Header.Get("content-type"))
 	body, err := readBody(r, op, contentType)
 	if err != nil {
@@ -44,9 +49,9 @@ func BodyFromRequest(r *http.Request, op *Operation) (interface{}, error) {
 	return body, nil
 }
 
-func readBody(r *http.Request, op *Operation, contentType media.ContentType) (interface{}, error) {
+func readBody(r *http.Request, op *Operation, contentType media.ContentType) (*Body, error) {
 	if r.ContentLength == 0 {
-		return "", nil
+		return nil, nil
 	}
 
 	media := op.RequestBody.Value.GetMedia(contentType)
@@ -80,10 +85,8 @@ func readBody(r *http.Request, op *Operation, contentType media.ContentType) (in
 		}
 
 		o := make(map[string]interface{})
-		raw := strings.Builder{}
 
 		for name, values := range r.MultipartForm.Value {
-			raw.WriteString(fmt.Sprintf("%v: %v", name, values))
 			p := s.Properties.Get(name)
 			if p == nil || p.Value == nil {
 				continue
@@ -129,10 +132,9 @@ func readBody(r *http.Request, op *Operation, contentType media.ContentType) (in
 				}
 				o[name] = i
 			}
-			//raw.WriteString(fmt.Sprintf("%v: filename=%v, type=%v, size=%v\n", name, fh.Filename, http.DetectContentType(sniff), prettyByteCountIEC(fh.Size)))
 		}
 
-		return o, nil
+		return &Body{Value: o, Raw: toString(o)}, nil
 	} else {
 		data, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -140,7 +142,7 @@ func readBody(r *http.Request, op *Operation, contentType media.ContentType) (in
 		}
 
 		body, err := schema.Parse(data, contentType, media.Schema)
-		return body, err
+		return &Body{Value: body, Raw: string(data)}, err
 	}
 }
 
@@ -181,4 +183,12 @@ func prettyByteCountIEC(b int64) string {
 	}
 	return fmt.Sprintf("%.1f %ciB",
 		float64(b)/float64(div), "KMGTPE"[exp])
+}
+
+func toString(i interface{}) string {
+	b, err := json.Marshal(i)
+	if err != nil {
+		log.Errorf("error in schema.toString(): %v", err)
+	}
+	return string(b)
 }
