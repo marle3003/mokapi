@@ -25,6 +25,8 @@ func Parse(b []byte, contentType media.ContentType, schema *Ref) (i interface{},
 		if err != nil {
 			return nil, fmt.Errorf("invalid json format: %v", err)
 		}
+	case contentType.IsXml():
+		i, err = parseXml(b, schema)
 	default:
 		i = string(b)
 	}

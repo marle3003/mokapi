@@ -11,8 +11,8 @@ import (
 )
 
 func (r *Ref) Marshal(i interface{}, contentType media.ContentType) ([]byte, error) {
-	switch contentType.Subtype {
-	case "json":
+	switch {
+	case contentType.Subtype == "json":
 		o, err := selectData(i, r)
 		if err != nil {
 			return nil, err
@@ -22,22 +22,14 @@ func (r *Ref) Marshal(i interface{}, contentType media.ContentType) ([]byte, err
 			return nil, fmt.Errorf("json error (%v): %v", err.Offset, err.Error())
 		}
 		return b, err
-	case "xml", "rss+xml":
-		//var buffer bytes.Buffer
-		//w := newXmlWriter(&buffer)
-		//err := w.write(i, schema)
-		//if err != nil {
-		//	return nil, err
-		//}
-		//return buffer.Bytes(), nil
+	case contentType.IsXml():
+		return writeXml(i, r)
 	default:
 		if s, ok := i.(string); ok {
 			return []byte(s), nil
 		}
 		return nil, fmt.Errorf("unspupported encoding for content type %v", contentType)
 	}
-
-	return nil, fmt.Errorf("unsupported content type %v", contentType)
 }
 
 type schemaObject struct {

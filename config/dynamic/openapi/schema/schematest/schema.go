@@ -124,3 +124,9 @@ func WithMaximum(max float64) SchemaOptions {
 		s.Maximum = &max
 	}
 }
+
+func WithXml(xml *schema.Xml) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Xml = xml
+	}
+}

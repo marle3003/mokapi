@@ -27,6 +27,14 @@ func TestParse(t *testing.T) {
 			},
 		},
 		{
+			`""`,
+			schematest.New(""),
+			func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "", i)
+			},
+		},
+		{
 			`{"foo": 12}`,
 			nil,
 			func(t *testing.T, i interface{}, err error) {

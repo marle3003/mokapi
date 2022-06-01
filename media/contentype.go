@@ -87,6 +87,10 @@ func (c ContentType) Match(other ContentType) bool {
 	return false
 }
 
+func (c ContentType) IsXml() bool {
+	return c.Subtype == "xml" || c.Subtype == "rss+xml" || c.Subtype == "xhtml+xml" || c.Subtype == "atom+xml" || c.Subtype == "xslt+xml"
+}
+
 func Equal(c1, c2 ContentType) bool {
 	return c1.raw == c2.raw
 }
