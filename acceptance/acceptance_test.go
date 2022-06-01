@@ -28,7 +28,7 @@ func (suite *BaseSuite) initCmd(cfg *static.Config) {
 	suite.cmd = cmd
 
 	// wait for server start
-	time.Sleep(time.Second)
+	time.Sleep(2 * time.Second)
 }
 
 func (suite *BaseSuite) TearDownSuite() {

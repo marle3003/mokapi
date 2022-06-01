@@ -89,9 +89,9 @@ func TestScript_Generator(t *testing.T) {
 
 		s, err := New("",
 			`
-import g from 'generator'
+import {fake} from 'faker'
 export default function() {
-  var s = g.new({type: 'string'})
+  var s = fake({type: 'string'})
 return s
 }`,
 			host)

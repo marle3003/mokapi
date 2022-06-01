@@ -118,8 +118,8 @@ func TestObject_SpecialNames(t *testing.T) {
 			func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, &struct {
-					Shipdate string `json:"ship-date"`
-				}{Shipdate: "2022-01-01"}, i)
+					Ship_date string `json:"ship-date"`
+				}{Ship_date: "2022-01-01"}, i)
 			},
 		},
 		{
