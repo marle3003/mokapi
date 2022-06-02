@@ -50,7 +50,7 @@ func (p *Provider) Read(u *url.URL) (*common.Config, error) {
 
 	err := p.watcher.Add(file)
 	if err != nil {
-		return nil, err
+		log.Warnf("unable to add watcher on file %v: %v", file, err)
 	}
 	return p.readFile(file)
 }

@@ -23,7 +23,7 @@ func (s *SchemasRef) Parse(file *common.Config, reader common.Reader) error {
 	if s == nil {
 		return nil
 	}
-	if len(s.Ref) > 0 && s.Value == nil {
+	if len(s.Ref) > 0 {
 		if err := common.Resolve(s.Ref, &s.Value, file, reader); err != nil {
 			return fmt.Errorf("error on parsing file %v: %v", file.Url, err)
 		}
@@ -40,7 +40,7 @@ func (r *Ref) Parse(config *common.Config, reader common.Reader) error {
 	if r == nil {
 		return nil
 	}
-	if len(r.Ref) > 0 && r.Value == nil {
+	if len(r.Ref) > 0 {
 		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
 			return err
 		}
