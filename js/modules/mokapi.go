@@ -131,3 +131,15 @@ func (m *Mokapi) On(event string, do goja.Value, args goja.Value) {
 func (m *Mokapi) Env(name string) string {
 	return os.Getenv(name)
 }
+
+func (m *Mokapi) Open(file string) (string, error) {
+	s, err := m.host.OpenFile(file)
+	if err != nil {
+		return "", err
+	}
+	return s, nil
+}
+
+func (m *Mokapi) Date(format string) string {
+	return time.Now().Format(format)
+}

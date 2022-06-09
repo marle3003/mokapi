@@ -24,9 +24,9 @@ type requestArgs struct {
 }
 
 type response struct {
-	Body       string
-	StatusCode int
-	Headers    map[string]string
+	Body       string            `json:"body"`
+	StatusCode int               `json:"statusCode"`
+	Headers    map[string]string `json:"headers"`
 }
 
 func New(host common.Host, rt *goja.Runtime) interface{} {
@@ -53,7 +53,7 @@ func (m *Module) Patch(url, body string, args goja.Value) (interface{}, error) {
 	return m.doRequest("PATCH", url, body, args)
 }
 
-func (m *Module) Delete(url, body string, args goja.Value) (interface{}, error) {
+func (m *Module) Del(url, body string, args goja.Value) (interface{}, error) {
 	return m.doRequest("DELETE", url, body, args)
 }
 

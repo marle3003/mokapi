@@ -7,6 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"io"
 	"mokapi/config/dynamic/openapi"
+	"mokapi/lib"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"mokapi/server/cert"
@@ -161,7 +162,7 @@ func matchPath(paths map[string]*HttpService, r *http.Request) (matchedService *
 }
 
 func serveNoServiceFound(w http.ResponseWriter, r *http.Request) {
-	msg := fmt.Sprintf("There was no service listening at %v", r.URL)
+	msg := fmt.Sprintf("There was no service listening at %v", lib.GetUrl(r))
 	entry := log.WithFields(log.Fields{"url": r.URL, "method": r.Method, "status": http.StatusNotFound})
 	entry.Info(msg)
 	http.Error(w, msg, 404)
@@ -170,7 +171,7 @@ func serveNoServiceFound(w http.ResponseWriter, r *http.Request) {
 	l := &openapi.HttpLog{
 		Request: &openapi.HttpRequestLog{
 			Method:      r.Method,
-			Url:         openapi.GetUrl(r),
+			Url:         lib.GetUrl(r),
 			ContentType: r.Header.Get("content-type"),
 			Body:        string(body),
 		},

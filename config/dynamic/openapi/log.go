@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"mokapi/config/dynamic/openapi/parameter"
+	"mokapi/lib"
 	"mokapi/runtime/events"
 	"net/http"
 	"strings"
@@ -43,7 +44,7 @@ func NewLogEventContext(r *http.Request, traits events.Traits) (context.Context,
 	l := &HttpLog{
 		Request: &HttpRequestLog{
 			Method:      r.Method,
-			Url:         GetUrl(r),
+			Url:         lib.GetUrl(r),
 			ContentType: r.Header.Get("content-type"),
 		},
 		Response: &HttpResponseLog{Headers: make(map[string]string)},
@@ -92,19 +93,4 @@ func NewLogEventContext(r *http.Request, traits events.Traits) (context.Context,
 func LogEventFromContext(ctx context.Context) (*HttpLog, bool) {
 	l, ok := ctx.Value(logKey).(*HttpLog)
 	return l, ok
-}
-
-func GetUrl(r *http.Request) string {
-	if r.URL.IsAbs() {
-		return r.URL.String()
-	}
-	var sb strings.Builder
-	if strings.HasPrefix(r.Proto, "HTTPS") {
-		sb.WriteString("https://")
-	} else {
-		sb.WriteString("http://")
-	}
-	sb.WriteString(r.Host)
-	sb.WriteString(r.URL.String())
-	return sb.String()
 }
