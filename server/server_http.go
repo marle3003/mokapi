@@ -5,6 +5,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	config "mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/openapi"
+	"mokapi/config/dynamic/swagger"
 	"mokapi/engine/common"
 	"mokapi/runtime"
 	"mokapi/server/cert"
@@ -63,8 +64,17 @@ func (m *HttpManager) AddService(name string, u *url.URL, handler http.Handler, 
 }
 
 func (m *HttpManager) Update(c *config.Config) {
-	config, ok := c.Data.(*openapi.Config)
-	if !ok {
+	var config *openapi.Config
+	if cfg, ok := c.Data.(*swagger.Config); ok {
+		var err error
+		config, err = swagger.Convert(cfg)
+		if err != nil {
+			log.Errorf("unable to convert swagger config to openapi: %v", err)
+			return
+		}
+	} else if cfg, ok := c.Data.(*openapi.Config); ok {
+		config = cfg
+	} else {
 		return
 	}
 

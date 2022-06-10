@@ -60,6 +60,9 @@ func (p *Provider) Read(u *url.URL) (*common.Config, error) {
 }
 
 func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
+	if len(p.config.Url) == 0 {
+		return nil
+	}
 	_, err := url.Parse(p.config.Url)
 	if err != nil {
 		return err

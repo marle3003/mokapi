@@ -1,6 +1,7 @@
 package ref
 
 import (
+	"encoding/json"
 	"gopkg.in/yaml.v3"
 )
 
@@ -19,4 +20,8 @@ func (r *Reference) Unmarshal(node *yaml.Node, val interface{}) error {
 	}
 
 	return node.Decode(val)
+}
+
+func (r *Reference) UnmarshalJson(b []byte, val interface{}) error {
+	return json.Unmarshal(b, val)
 }

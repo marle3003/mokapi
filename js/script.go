@@ -36,14 +36,20 @@ func New(filename, src string, host engine.Host) (*Script, error) {
 }
 
 func (s *Script) Run() error {
+	_, err := s.RunDefault()
+	return err
+}
+
+func (s *Script) RunDefault() (goja.Value, error) {
 	o := s.exports.ToObject(s.runtime)
 	if f, ok := goja.AssertFunction(o.Get("default")); ok {
-		_, err := f(goja.Undefined())
+		i, err := f(goja.Undefined())
 		if err != nil {
-			return err
+			return nil, err
 		}
+		return i, nil
 	}
-	return nil
+	return nil, nil
 }
 
 func (s *Script) openScript(filename, src string) (goja.Value, error) {
@@ -61,12 +67,11 @@ func (s *Script) openScript(filename, src string) (goja.Value, error) {
 }
 
 func (s *Script) requireFile(filename, src string) (goja.Value, error) {
-	exports := s.runtime.Get("exports")
-	defer func() {
-		s.runtime.Set("exports", exports)
-	}()
-	s.runtime.Set("exports", s.runtime.NewObject())
-	prg, err := s.compiler.Compile(filename, src)
+	module := s.runtime.NewObject()
+	exports := s.runtime.NewObject()
+	module.Set("exports", exports)
+
+	prg, err := s.compiler.CompileModule(filename, src)
 	if err != nil {
 		return nil, err
 	}
@@ -75,9 +80,12 @@ func (s *Script) requireFile(filename, src string) (goja.Value, error) {
 		return nil, err
 	}
 	if call, ok := goja.AssertFunction(f); ok {
-		_ = call
+		_, err = call(exports, exports, module)
+		if err != nil {
+			return nil, err
+		}
 	}
-	return s.runtime.Get("exports"), nil
+	return exports, nil
 }
 
 func (s *Script) Close() {

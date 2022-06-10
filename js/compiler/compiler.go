@@ -1,6 +1,7 @@
 package compiler
 
 import (
+	"fmt"
 	"github.com/dop251/goja"
 )
 
@@ -20,18 +21,19 @@ func New() (*Compiler, error) {
 	return c, nil
 }
 
-func (c *Compiler) Compile(filename, src string) (*goja.Program, error) {
-	prg, err := goja.Compile(filename, src, false)
+func (c *Compiler) CompileModule(filename, src string) (*goja.Program, error) {
+	source, err := c.babel.Transform(src)
 	if err != nil {
-		src, err = c.babel.Transform(src)
-		if err != nil {
-			return nil, err
-		}
-		prg, err = goja.Compile(filename, src, false)
-		if err != nil {
-			return nil, err
-		}
+		return nil, err
 	}
+	source = fmt.Sprintf("(function(exports, module) {%s\n})", source)
+	return goja.Compile(filename, source, false)
+}
 
-	return prg, nil
+func (c *Compiler) Compile(filename, src string) (*goja.Program, error) {
+	source, err := c.babel.Transform(src)
+	if err != nil {
+		return nil, err
+	}
+	return goja.Compile(filename, source, false)
 }

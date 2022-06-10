@@ -42,6 +42,10 @@ func (p *Provider) Read(u *url.URL) (*common.Config, error) {
 }
 
 func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
+	if len(p.url) == 0 {
+		return nil
+	}
+
 	var err error
 	interval := time.Second * 5
 	if len(p.pullInterval) > 0 {

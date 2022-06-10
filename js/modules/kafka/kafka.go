@@ -25,13 +25,27 @@ type produceOptions struct {
 	Timeout   int
 }
 
+type ProduceResult struct {
+	Key   interface{} `json:"key"`
+	Value interface{} `json:"value"`
+	Error string      `json:"error"`
+}
+
 func New(host common.Host, rt *goja.Runtime) interface{} {
 	return &Module{host: host, rt: rt, client: host.KafkaClient()}
 }
 
-func (m *Module) Produce(args goja.Value) (interface{}, interface{}, error) {
+func (m *Module) Produce(args goja.Value) interface{} {
 	opt := m.mapOption(args)
-	return m.client.Produce(opt.Cluster, opt.Topic, opt.Partition, opt.Key, opt.Value, opt.Headers)
+	k, v, err := m.client.Produce(opt.Cluster, opt.Topic, opt.Partition, opt.Key, opt.Value, opt.Headers)
+	r := &ProduceResult{
+		Key:   k,
+		Value: v,
+	}
+	if err != nil {
+		r.Error = err.Error()
+	}
+	return r
 }
 
 func (m *Module) mapOption(args goja.Value) *produceOptions {
@@ -63,13 +77,13 @@ func (m *Module) mapOption(args goja.Value) *produceOptions {
 				if goja.IsUndefined(tagsV) || goja.IsNull(tagsV) {
 					continue
 				}
-				opt.Key = tagsV.ToObject(m.rt)
+				opt.Key = tagsV.Export()
 			case "value":
 				tagsV := params.Get(k)
 				if goja.IsUndefined(tagsV) || goja.IsNull(tagsV) {
 					continue
 				}
-				opt.Key = tagsV.ToObject(m.rt)
+				opt.Value = tagsV.Export()
 			case "headers":
 				tagsV := params.Get(k)
 				if goja.IsUndefined(tagsV) || goja.IsNull(tagsV) {

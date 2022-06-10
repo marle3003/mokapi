@@ -39,8 +39,16 @@ type Info struct {
 	// used for rich text representation.
 	Description string `yaml:"description,omitempty" json:"description,omitempty"`
 
+	Contact Contact
+
 	// The version of the service
 	Version string `yaml:"version" json:"version"`
+}
+
+type Contact struct {
+	Name  string `yaml:"name" json:"name"`
+	Url   string `yaml:"url" json:"url"`
+	Email string `yaml:"email" json:"email"`
 }
 
 type Server struct {
@@ -108,12 +116,16 @@ type Endpoint struct {
 }
 
 type Operation struct {
+	// A list of tags for API documentation control. Tags can be used for
+	// logical grouping of operations by resources or any other qualifier.
+	Tags []string `yaml:"tags" json:"tags"`
+
 	// A short summary of what the operation does.
-	Summary string
+	Summary string `yaml:"summary" json:"summary"`
 
 	// A verbose explanation of the operation behavior.
 	// CommonMark syntax MAY be used for rich text representation.
-	Description string
+	Description string `yaml:"description" json:"description"`
 
 	// Unique string used to identify the operation. The id MUST be unique
 	// among all operations described in the API. The operationId value is
@@ -141,6 +153,13 @@ type Operation struct {
 	Pipeline string `yaml:"x-mokapi-pipeline" yaml:"x-mokapi-pipeline"`
 
 	Endpoint *Endpoint `yaml:"-" json:"-"`
+}
+
+func (e *EndpointsRef) Resolve(token string) (interface{}, error) {
+	if v, ok := e.Value[token]; ok {
+		return v, nil
+	}
+	return nil, nil
 }
 
 func IsHttpStatusSuccess(status int) bool {
@@ -297,7 +316,7 @@ func (r *Response) GetContent(contentType media.ContentType) *MediaType {
 }
 
 func (e *Endpoint) Operations() map[string]*Operation {
-	operations := make(map[string]*Operation, 4)
+	operations := make(map[string]*Operation, 7)
 	if v := e.Get; v != nil {
 		operations[http.MethodGet] = v
 	}
@@ -324,6 +343,29 @@ func (e *Endpoint) Operations() map[string]*Operation {
 	}
 
 	return operations
+}
+
+func (e *Endpoint) SetOperation(method string, o *Operation) {
+	switch method {
+	case http.MethodDelete:
+		e.Delete = o
+	case http.MethodGet:
+		e.Get = o
+	case http.MethodHead:
+		e.Head = o
+	case http.MethodOptions:
+		e.Options = o
+	case http.MethodPatch:
+		e.Patch = o
+	case http.MethodPost:
+		e.Post = o
+	case http.MethodPut:
+		e.Put = o
+	case http.MethodTrace:
+		e.Trace = o
+	default:
+		panic(fmt.Errorf("unsupported HTTP method %q", method))
+	}
 }
 
 func (op *Operation) getFirstSuccessResponse() (int, *Response, error) {

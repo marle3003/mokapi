@@ -45,6 +45,7 @@ func Resolve(ref string, element interface{}, config *Config, reader Reader) err
 		if err != nil {
 			return fmt.Errorf("unable to read %v: %v", u, err)
 		}
+
 		err = ResolvePath(u.Fragment, f.Data, element)
 		if err != nil {
 			return errors.Wrapf(err, "unable to resolve reference %v", ref)
@@ -58,7 +59,15 @@ func Resolve(ref string, element interface{}, config *Config, reader Reader) err
 func ResolvePath(path string, cursor interface{}, resolved interface{}) (err error) {
 	tokens := strings.Split(path, "/")
 
-	for _, t := range tokens[1:] {
+	for i, t := range tokens[1:] {
+		if r, ok := cursor.(PathResolver); ok {
+			cursor, err = r.Resolve(strings.Join(tokens[i+1:], "/"))
+			if err != nil {
+				return err
+			}
+			break
+		}
+
 		cursor, err = Get(t, cursor)
 		if err != nil {
 			return

@@ -27,21 +27,12 @@ func NewConfigWatcher(cfg *static.Config) *ConfigWatcher {
 		providers: make(map[string]common.Provider),
 		configs:   make(map[string]*common.Config),
 	}
-	if len(cfg.Providers.File.Filename) > 0 || len(cfg.Providers.File.Directory) > 0 {
-		w.providers["file"] = file.New(cfg.Providers.File)
-	}
 
-	if len(cfg.Providers.Http.Url) > 0 {
-		w.providers["http"] = http.New(cfg.Providers.Http)
-	}
-
-	if len(cfg.Providers.Git.Url) > 0 {
-		w.providers["git"] = git.New(cfg.Providers.Git)
-	}
-
-	if len(w.providers) == 0 {
-		log.Infof("no providers configured")
-	}
+	w.providers["file"] = file.New(cfg.Providers.File)
+	http := http.New(cfg.Providers.Http)
+	w.providers["http"] = http
+	w.providers["https"] = http
+	w.providers["git"] = git.New(cfg.Providers.Git)
 
 	return w
 }

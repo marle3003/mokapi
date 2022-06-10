@@ -140,6 +140,20 @@ func (m *Mokapi) Open(file string) (string, error) {
 	return s, nil
 }
 
-func (m *Mokapi) Date(format string) string {
-	return time.Now().Format(format)
+type DateArg struct {
+	Layout    string `json:"layout"`
+	Timestamp int64  `json:"timestamp"`
+}
+
+func (m *Mokapi) Date(args DateArg) string {
+	if len(args.Layout) == 0 {
+		args.Layout = time.RFC3339
+	}
+	var t time.Time
+	if args.Timestamp == 0 {
+		t = time.Now().UTC()
+	} else {
+		t = time.UnixMilli(args.Timestamp).UTC()
+	}
+	return t.Format(args.Layout)
 }

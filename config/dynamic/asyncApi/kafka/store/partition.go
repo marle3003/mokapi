@@ -1,7 +1,6 @@
 package store
 
 import (
-	log "github.com/sirupsen/logrus"
 	"mokapi/kafka"
 	"mokapi/runtime/events"
 	"strconv"
@@ -115,7 +114,6 @@ func (p *Partition) Write(batch kafka.RecordBatch) (baseOffset int64, err error)
 		seg.LastWritten = now
 
 		p.logger(r, events.NewTraits().With("partition", strconv.Itoa(p.Index)))
-		log.Debugf("new message written to partition=%v offset=%v", p.Index, r.Offset)
 	}
 
 	return
