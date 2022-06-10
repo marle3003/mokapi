@@ -39,7 +39,7 @@ type Info struct {
 	// used for rich text representation.
 	Description string `yaml:"description,omitempty" json:"description,omitempty"`
 
-	Contact Contact
+	Contact *Contact `yaml:"contact,omitempty" json:"contact,omitempty"`
 
 	// The version of the service
 	Version string `yaml:"version" json:"version"`

@@ -43,7 +43,7 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 					fmt.Sprintf("http://localhost:%v", port),
 					nil,
 					try.HasStatusCode(404),
-					try.HasBody("There was no service listening at /\n"))
+					try.HasBody(fmt.Sprintf("There was no service listening at http://localhost:%v/\n", port)))
 				try.GetRequest(t,
 					fmt.Sprintf("http://localhost:%v/foo", port),
 					nil,

@@ -38,7 +38,7 @@ func TestConvert(t *testing.T) {
 			`{"swagger": "2.0", "host": "server:8080", "basePath": "/api"}`,
 			func(t *testing.T, config *openapi.Config) {
 				require.Len(t, config.Servers, 1)
-				require.Equal(t, "server:8080/api", config.Servers[0].Url)
+				require.Equal(t, "http://server:8080/api", config.Servers[0].Url)
 			},
 		},
 		{
