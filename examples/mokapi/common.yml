@@ -21,7 +21,7 @@ components:
           type: string
         type:
           type: string
-          enum: ["http", "kafka"]
+          enum: ["http", "kafka", "smtp"]
         metrics:
           $ref: '#/components/schemas/Metrics'
     Metrics:

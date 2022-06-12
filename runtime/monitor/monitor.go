@@ -15,9 +15,12 @@ type Monitor struct {
 	Http  *Http  `json:"http"`
 	Kafka *Kafka `json:"kafka"`
 	Ldap  *Ldap  `json:"ldap"`
+	Smtp  *Smtp  `json:"smtp"`
 
 	metrics []metrics.Metric
 }
+
+type contextKey string
 
 func New() *Monitor {
 	startTime := metrics.NewGauge(metrics.WithFQName("app", "start_timestamp"))
@@ -43,13 +46,22 @@ func New() *Monitor {
 		metrics.WithFQName("kafka", "consumer_group_lag"),
 		metrics.WithLabelNames("service", "group", "topic", "partition"))
 
-	ldapRequestCounter := metrics.NewCounterMap(
-		metrics.WithFQName("ldap", "requests_total"),
-		metrics.WithLabelNames("service", "endpoint"))
-	ldapRequestErrorCounter :=
-		metrics.NewCounterMap(
-			metrics.WithFQName("ldap", "requests_errors_total"),
-			metrics.WithLabelNames("service", "endpoint"))
+	ldapBind := metrics.NewCounterMap(
+		metrics.WithFQName("ldap", "bind_total"),
+		metrics.WithLabelNames("service"))
+	ldapSearch := metrics.NewCounterMap(
+		metrics.WithFQName("ldap", "search_total"),
+		metrics.WithLabelNames("service"))
+	ldapErrors := metrics.NewCounterMap(
+		metrics.WithFQName("ldap", "search_total"),
+		metrics.WithLabelNames("service"))
+	ldapLastSearch := metrics.NewGaugeMap(
+		metrics.WithFQName("ldap", "search_timestamp"),
+		metrics.WithLabelNames("service"))
+
+	smtpMails := metrics.NewCounterMap(
+		metrics.WithFQName("smtp", "mails_total"),
+		metrics.WithLabelNames("service"))
 
 	m := &Monitor{
 		StartTime:   startTime,
@@ -65,8 +77,13 @@ func New() *Monitor {
 			Lags:        kafkaLag,
 		},
 		Ldap: &Ldap{
-			RequestCounter:      ldapRequestCounter,
-			RequestErrorCounter: ldapRequestErrorCounter,
+			Bind:       ldapBind,
+			Search:     ldapSearch,
+			Errors:     ldapErrors,
+			LastSearch: ldapLastSearch,
+		},
+		Smtp: &Smtp{
+			Mails: smtpMails,
 		},
 		metrics: []metrics.Metric{
 			startTime,
@@ -77,6 +94,11 @@ func New() *Monitor {
 			kafkaMessage,
 			kafkaLastMessage,
 			kafkaLag,
+			ldapBind,
+			ldapSearch,
+			ldapLastSearch,
+			ldapErrors,
+			smtpMails,
 		},
 	}
 
@@ -127,4 +149,8 @@ func (m *Monitor) FindAll(query ...metrics.QueryFunc) []metrics.Metric {
 	}
 
 	return result
+}
+
+func (c contextKey) String() string {
+	return "monitor context key " + string(c)
 }

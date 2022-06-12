@@ -26,6 +26,7 @@ type Handler interface {
 }
 
 type Request struct {
+	Context   context.Context
 	MessageId int64
 	Body      *ber.Packet
 }
@@ -35,7 +36,6 @@ type ResponseWriter interface {
 }
 
 type response struct {
-	ctx  context.Context
 	conn net.Conn
 }
 
@@ -125,25 +125,25 @@ func (s *Server) serve(conn net.Conn, ctx context.Context) {
 		}
 
 		if len(packet.Children) < 2 {
-			log.Debugf("invalid packat length %v expected at least 2", len(packet.Children))
+			log.Infof("invalid packat length %v expected at least 2", len(packet.Children))
 			return
 		}
 		o := packet.Children[0].Value
 		messageId, ok := packet.Children[0].Value.(int64)
 		if !ok {
-			log.Debugf("malformed messageId %v", reflect.TypeOf(o))
+			log.Infof("malformed messageId %v", reflect.TypeOf(o))
 			return
 		}
 		body := packet.Children[1]
 		if body.ClassType != ber.ClassApplication {
-			log.Debugf("classType of packet is not ClassApplication was %v", body.ClassType)
+			log.Infof("classType of packet is not ClassApplication was %v", body.ClassType)
 			return
 		}
 
 		s.Handler.Serve(&response{
-			ctx:  ctx,
 			conn: conn,
 		}, &Request{
+			Context:   ctx,
 			MessageId: messageId,
 			Body:      body,
 		})

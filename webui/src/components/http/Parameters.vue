@@ -33,7 +33,7 @@ export default {
   props: ['operation'],
   data () {
     return {
-      fields: [{key: 'show_details', label: ''}, 'name', 'location', 'schema'],
+      fields: [{key: 'show_details', label: ''}, 'name', 'type', 'schema'],
       detailsShown: []
     }
   },

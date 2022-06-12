@@ -1,35 +1,35 @@
 <template>
   <b-tabs content-class="mt-3 ml-2" class="responses" align="left">
-    <b-tab v-for="response in sorted" :key="response.status">
+    <b-tab v-for="response in sorted" :key="response.statusCode">
       <template v-slot:title>
-        <span v-if="response.status >= 200 && response.status < 300" class="success">
+        <span v-if="response.statusCode >= 200 && response.statusCode < 300" class="success">
           <b-icon icon="circle-fill" class="icon mr-1" ></b-icon>
-          {{ response.status }}
+          {{ response.statusCode }}
         </span>
-        <span v-if="response.status >= 300 && response.status < 400" class="warning">
+        <span v-if="response.statusCode >= 300 && response.statusCode < 400" class="warning">
           <b-icon icon="circle-fill" class="icon mr-1" ></b-icon>
-          {{ response.status }}
+          {{ response.statusCode }}
         </span>
-        <span v-if="response.status >= 400 && response.status < 500" class="client-error">
+        <span v-if="response.statusCode >= 400 && response.statusCode < 500" class="client-error">
           <b-icon icon="circle-fill" class="icon mr-1" ></b-icon>
-          {{ response.status }}
+          {{ response.statusCode }}
         </span>
-        <span v-if="response.status >= 500 && response.status < 600" class="danger">
+        <span v-if="response.statusCode >= 500 && response.statusCode < 600" class="danger">
           <b-icon icon="circle-fill" class="icon mr-1" ></b-icon>
-          {{ response.status }}
+          {{ response.statusCode }}
         </span>
       </template>
       <p class="label">Description</p>
       <p>{{ response.description }}</p>
       <p class="label">Content Type</p>
-      <div v-if="response.contentTypes != null && response.contentTypes.length === 1">
-          <div v-for="content in response.contentTypes" :key="content.type">
+      <div v-if="response.contents != null && response.contents.length === 1">
+          <div v-for="content in response.contents" :key="content.type">
             <p>{{ content.type }}</p>
             <p v-if="content.schema != null" class="label">Schema</p>
             <schema v-if="content.schema != null" v-bind:schema="content.schema"></schema>
           </div>
       </div>
-      <div v-if="response.contentTypes != null && response.contentTypes.length > 1">
+      <div v-if="response.contents != null && response.contents.length > 1">
         <p>
           <b-form-select v-model="selected[response.status]">
             <b-form-select-option
@@ -38,7 +38,7 @@
             </b-form-select-option>
             </b-form-select>
         </p>
-        <div v-for="content in response.contentTypes" :key="content.type">
+        <div v-for="content in response.contents" :key="content.type">
           <div v-if="selected[response.status] === content.type">
             <p class="label">Schema</p>
             <schema v-bind:schema="content.schema"></schema>
@@ -62,10 +62,11 @@ export default {
     }
   },
   created () {
+    if (!this.responses) {
+      return
+    }
     for (let r of this.responses) {
-      if (r.contentTypes !== null) {
-        this.selected[r.status] = r.contentTypes[0].type
-      }
+      this.selected[r.statusCode] = r.contents[0].contentType
     }
   },
   computed: {
@@ -75,7 +76,7 @@ export default {
       }
 
       function compare (a, b) {
-        return a.status - b.status
+        return a.statusCode - b.statusCode
       }
 
       // eslint-disable-next-line vue/no-side-effects-in-computed-properties

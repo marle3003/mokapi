@@ -21,9 +21,16 @@ type kafka struct {
 	Description string           `json:"description"`
 	Version     string           `json:"version"`
 	Contact     kafkaContact     `json:"contact"`
+	Servers     []kafkaServer    `json:"servers,omitempty"`
 	Topics      []topic          `json:"topics"`
 	Groups      []group          `json:"groups"`
 	Metrics     []metrics.Metric `json:"metrics"`
+}
+
+type kafkaServer struct {
+	Name        string `json:"name"`
+	Url         string `json:"url"`
+	Description string `json:"description"`
 }
 
 type group struct {
@@ -125,6 +132,14 @@ func getKafka(info *runtime.KafkaInfo) kafka {
 			Url:   info.Config.Info.Contact.Url,
 			Email: info.Config.Info.Contact.Email,
 		}
+	}
+
+	for name, server := range info.Servers {
+		k.Servers = append(k.Servers, kafkaServer{
+			Name:        name,
+			Url:         server.Url,
+			Description: server.Description,
+		})
 	}
 
 	for name, ch := range info.Config.Channels {

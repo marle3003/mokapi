@@ -16,7 +16,7 @@
 </template>
 
 <script>
-import ServiceInfo from '@/components/ServiceInfo'
+import ServiceInfo from '@/components/ldap/ServiceInfo'
 import Api from '@/mixins/Api'
 
 export default {

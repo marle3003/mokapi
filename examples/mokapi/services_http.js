@@ -5,7 +5,93 @@ export let apps = [
         name: "Swagger Petstore",
         description: "This is a sample server Petstore server",
         version: "1.0.6",
-        metrics: metrics.filter(x => x.name.startsWith("http"))
+        metrics: metrics.filter(x => x.name.startsWith("http")),
+        servers: [
+            {
+                url: "http://localhost:8080"
+            }
+        ],
+        paths: [
+            {
+                path: "/pet",
+                operations: [
+                    {
+                        method: "post",
+                        summary: "Add a new pet to the store",
+                        operationId: "addPet",
+                        requestBody: {
+                            description: "Pet object that needs to be added to the store",
+                            contents: [
+                                {
+                                    type: "application/json",
+                                    schema: {
+                                        type: "object",
+                                        properties: [
+                                            {
+                                                name: "id",
+                                                type: "integer",
+                                                format: "int64"
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        responses: [
+                            {
+                                statusCode: 400,
+                                description: "Invalid ID supplied"
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                path: "/pet/findByStatus",
+                operations: [
+                    {
+                        method: "get",
+                        summary: "Finds Pets by status",
+                        description: "Multiple status values can be provided with comma separated strings",
+                        operationId: "findPetsByStatus",
+                        parameters: [
+                            {
+                                name: "status",
+                                type: "query",
+                                description: "Status values that need to be considered for filter",
+                                required: true,
+                                style: "form",
+                                explode: true,
+                                schema: {
+                                    type: "array",
+                                    items: {
+                                        type: "string",
+                                        enum: ["available", "pending", "sold"]
+                                    }
+                                }
+                            }
+                        ],
+                        responses: [
+                            {
+                                statusCode: 200,
+                                description: "successful operation",
+                                contents: [
+                                    {
+                                        type: "application/json",
+                                        schema: {
+                                            type: "array",
+                                            items: {
+                                                ref: "#/components/schemas/Pet"
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
     }
 ]
 

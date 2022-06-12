@@ -4,6 +4,7 @@ import (
 	"fmt"
 	ldapConfig "mokapi/config/dynamic/ldap"
 	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	ber "gopkg.in/go-asn1-ber/asn1-ber.v1"
@@ -39,6 +40,8 @@ func (d *Directory) search(rw ResponseWriter, r *Request) error {
 	}
 	log.Infof("ldap search request: messageId=%v BaseDN=%v Filter=%v",
 		r.MessageId, searchRequest.BaseDN, filterString)
+	d.monitor.Search.WithLabel(d.config.Info.Name).Add(1)
+	d.monitor.LastSearch.WithLabel(d.config.Info.Name).Set(float64(time.Now().Unix()))
 
 	if searchRequest.BaseDN == "" && searchRequest.Scope == ScopeBaseObject {
 		result := &SearchResult{dn: "", attributes: make(map[string][]string)}

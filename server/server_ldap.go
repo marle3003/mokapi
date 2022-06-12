@@ -35,7 +35,7 @@ func (m LdapDirectoryManager) UpdateConfig(c *common.Config) {
 	}
 
 	if d, ok := m.Directories[ldapConfig.Info.Name]; !ok {
-		d = ldap.NewDirectory(ldapConfig)
+		d = ldap.NewDirectory(ldapConfig, m.app.Monitor.Ldap)
 		d.Start()
 	} else {
 		d.Update(ldapConfig)

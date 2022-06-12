@@ -18,7 +18,7 @@ export default {
   props: ['service'],
   data () {
     return {
-      fields: ['path', 'summary', 'operations']
+      fields: ['path', 'operations', 'summary', 'description']
     }
   },
   computed: {
@@ -38,12 +38,12 @@ export default {
       }
 
       // eslint-disable-next-line vue/no-side-effects-in-computed-properties
-      return this.service.endpoints.sort(compare)
+      return this.service.paths.sort(compare)
     }
   },
   methods: {
     routerLinkToEndpoint (item, index, event) {
-      this.$router.push({ name: 'endpoint', params: {path: item.path} })
+      this.$router.push({ name: 'http-path', params: {path: item.path} })
     }
   }
 }

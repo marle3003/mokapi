@@ -18,8 +18,8 @@
 </template>
 
 <script>
-import Endpoints from '@/components/Endpoints'
-import Models from '@/components/Models'
+import Endpoints from '@/components/http/Endpoints'
+import Models from '@/components/http/Models'
 
 export default {
   name: 'serviceOverview',

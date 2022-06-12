@@ -4,6 +4,7 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	ber "gopkg.in/go-asn1-ber/asn1-ber.v1"
+	"mokapi/runtime/monitor"
 )
 
 func (d *Directory) bind(rw ResponseWriter, r *Request) error {
@@ -23,6 +24,9 @@ func (d *Directory) bind(rw ResponseWriter, r *Request) error {
 	switch r.Body.Children[2].Tag {
 	case 0: // simple
 		log.Debugf("received bind request with messageId %v, version %v. auth: %v", r.MessageId, ldapVersion, name)
+		if m, ok := monitor.LdapFromContext(r.Context); ok {
+			m.Bind.WithLabel(d.config.Info.Name).Add(1)
+		}
 		return rw.Write(newBindResponse(r.MessageId, ResultSuccess, ""))
 	default:
 		return rw.Write(newBindResponse(r.MessageId, AuthMethodNotSupported, "server supports only simple auth method"))

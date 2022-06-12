@@ -16,10 +16,10 @@
         <b-link :to="{ name: service.type.toLowerCase()+'Service', params: {name: service.name } }" v-show="$route.name === 'serviceList' || $route.name === service.type.toLowerCase() + 'Services'"
           router-tag="div" v-for="service in services" :key="service.name" class="service"
           :class="[service.name === undefined ? 'disabled' : '']" :event="[service.name === undefined ? '' : 'click']">
-          <async-service-info :service="service" v-if="service.type === 'kafka'"></async-service-info>
-          <smtp-service-info :service="service" v-if="service.type === 'smtp'"></smtp-service-info>
-          <ldap-service-info :service="service" v-if="service.type === 'ldap'"></ldap-service-info>
-          <service-info :service="service" v-else></service-info>
+          <kafka-service-info :service="service" v-if="service.type === 'kafka'" />
+          <smtp-service-info :service="service" v-else-if="service.type === 'smtp'" />
+          <ldap-service-info :service="service" v-else-if="service.type === 'ldap'" />
+          <http-service-info :service="service" v-else-if="service.type === 'http'" />
         </b-link>
       </div>
   </div>
@@ -27,15 +27,15 @@
 
 <script>
 import Api from '@/mixins/Api'
-import ServiceInfo from '@/components/ServiceInfo'
-import AsyncServiceInfo from '@/components/asyncapi/ServiceInfo'
+import HttpServiceInfo from '@/components/http/ServiceInfo'
+import KafkaServiceInfo from '@/components/kafka/ServiceInfo'
 import SmtpServiceInfo from '@/components/smtp/ServiceInfo'
 import LdapServiceInfo from '@/components/ldap/ServiceInfo'
 
 export default {
   components: {
-    'service-info': ServiceInfo,
-    'async-service-info': AsyncServiceInfo,
+    'http-service-info': HttpServiceInfo,
+    'kafka-service-info': KafkaServiceInfo,
     'smtp-service-info': SmtpServiceInfo,
     'ldap-service-info': LdapServiceInfo
   },

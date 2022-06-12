@@ -11,10 +11,17 @@ export let clusters = [
             url:'https://www.mokapi.io',
             email:'info@mokapi.io'
         },
+        servers: [
+            {
+                name: "Broker",
+                url: "localhost:9092",
+                description: "kafka broker"
+            }
+        ],
         topics:[
             {
                 name:'foo',
-                description: g.new({type: 'string', format: '{sentence:10}'}),
+                description: fake({type: 'string', format: '{sentence:10}'}),
                 partitions: [
                     {
                         id: 0,
@@ -41,7 +48,7 @@ export let clusters = [
             },
             {
                 name:'bar',
-                description: g.new({type: 'string', format: '{sentence:10}'}),
+                description: fake({type: 'string', format: '{sentence:10}'}),
                 partitions: [
                     {
                         id: 0,

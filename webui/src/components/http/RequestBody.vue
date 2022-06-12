@@ -28,15 +28,23 @@ export default {
   },
   computed: {
     current: function () {
-      if (this.operation.requestBodies && this.operation.requestBodies.length > 0) {
-        return this.operation.requestBodies[0]
+      if (!this.operation.requestBody) {
+        return null
+      }
+
+      if (this.operation.requestBody.contents && this.operation.requestBody.contents.length > 0) {
+        return this.operation.requestBody.contents[0]
       }
       return null
     },
     options: function () {
       let options = []
-      if (this.operation.requestBodies) {
-        this.operation.requestBodies.forEach(x => options.push(x.contentType))
+      if (!this.operation.requestBody) {
+        return options
+      }
+
+      if (this.operation.requestBody.contents) {
+        this.operation.requestBody.contents.forEach(x => options.push(x.contentType))
       }
       return options
     }

@@ -12,8 +12,6 @@
               <p>{{ row.format }}</p>
             </b-col>
             <b-col>
-              <p class="label">Faker</p>
-              <p>{{ row.faker }}</p>
                <p class="label">Nullable</p>
               <p>{{ row.nullable }}</p>
             </b-col>
@@ -78,6 +76,7 @@ export default {
       return '<span class="ref-type">[' + ref + ']</span>'
     },
     truncate (str, n) {
+      if (!str) return ''
       return (str.length > n) ? str.substr(0, n - 1) + '&hellip;' : str
     },
     getRows (schema, level, paths) {
@@ -89,13 +88,12 @@ export default {
       let row = {
         format: schema.format,
         description: schema.description,
-        faker: schema.faker,
         required: false,
         nullable: schema.nullable
       }
       row.format = schema.format
 
-      if (schema.ref !== '') {
+      if (schema.ref) {
         if (paths.indexOf(schema.ref) >= 0) {
           return rows
         }
@@ -105,22 +103,26 @@ export default {
       let ident = ' '.repeat(2 * level)
       if (schema.type === 'object') {
         row.code = ident
-        if (schema.name !== '') {
+        if (schema.name) {
           row.code += schema.name + ': '
         }
-        row.code += this.getRefOrEmpty(schema.ref) + ' {'
+        row.code += this.getRefOrEmpty(schema.ref) + '{'
         rows.push(row)
 
         for (let i = 0; i < schema.properties.length; i++) {
           let propRows = this.getRows(schema.properties[i], level + 1, paths)
-          if (propRows.length > 0 && schema.required !== null) {
+          if (propRows.length > 0 && schema.required) {
             propRows[0].required = schema.required.indexOf(schema.properties[i].name)
           }
+          console.log(propRows)
           rows = rows.concat(propRows)
         }
         rows.push({code: ident + '}'})
       } else if (schema.type === 'array') {
-        let s = ident + schema.name + ': '
+        let s = ident
+        if (schema.name) {
+          s += schema.name + ': '
+        }
         if (schema.items !== undefined && schema.items !== null) {
           s += this.getRefOrEmpty(schema.items.ref)
         }
@@ -138,10 +140,10 @@ export default {
         }
       } else {
         let s = '<span class="prop-type">' + schema.type + '</span>'
-        if (schema.name !== '') {
+        if (schema.name) {
           s = schema.name + ': ' + s
         }
-        if (schema.description !== '') {
+        if (schema.description) {
           s += '<span class="comment"> (' + this.truncate(schema.description, 50) + ')</span>'
         }
         row.code = ident + s

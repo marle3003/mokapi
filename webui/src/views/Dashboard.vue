@@ -31,7 +31,7 @@
           </b-card>
         </b-card-group>
 
-        <b-card-group deck>
+        <b-card-group deck v-show="$route.name === 'dashboard'">
           <b-card
             body-class="info-body"
             class="text-center"
@@ -67,7 +67,7 @@
             v-if="smtpEnabled"
           >
             <b-card-title class="info">Total Mails</b-card-title>
-            <!-- <b-card-text class="text-center value">{{ dashboard.totalMails }}</b-card-text> -->
+            <b-card-text class="text-center value">{{ this.totalSmtpMails }}</b-card-text>
           </b-card>
         </b-card-group>
 
@@ -132,43 +132,15 @@
           </b-card-group>
         </div>
 
-        <http-overview v-show="$route.name === 'http'" />
+        <http-requests v-show="$route.name === 'http'" />
+        <http-request v-show="$route.name === 'httpRequest'" />
 
-        <b-card-group
-          deck
-          v-show="$route.name === 'smtp'"
-        >
-          <b-card class="w-100">
-            <b-card-title class="info text-center">Recent Mails</b-card-title>
-            <b-table
-              hover
-              :items="lastMails"
-              :fields="lastMailField"
-              class="dataTable selectable"
-              @row-clicked="mailClickHandler"
-            >
-              <template v-slot:cell(from)="data">
-                <div
-                  v-for="from in data.item.from"
-                  :key="from.Address"
-                >
-                  <span v-if="from.Name !== ''">{{ from.Name }} &lt;</span><span>{{ from.Address }}</span><span v-if="from.Name !== ''">&gt;</span>
-                </div>
-              </template>
-              <template v-slot:cell(to)="data">
-                <div
-                  v-for="to in data.item.to"
-                  :key="to.Address"
-                >
-                  <span v-if="to.Name !== ''">{{ to.Name }} &lt;</span><span>{{ to.Address }}</span><span v-if="to.Name !== ''">&gt;</span>
-                </div>
-              </template>
-              <template v-slot:cell(time)="data">
-                {{ data.item.time | moment}}
-              </template>
-            </b-table>
-          </b-card>
-        </b-card-group>
+        <kafka-cluster v-show="$route.name === 'kafkaCluster'" />
+        <kafka-topic v-show="$route.name === 'kafkaTopic'" />
+
+        <smtp-services :services="smtpServices" v-show="smtpEnabled && ($route.name === 'dashboard' || $route.name === 'smtp')" />
+        <smtp-mails v-show="$route.name === 'smtp'" />
+
       </div>
     </div>
   </div>
@@ -179,15 +151,29 @@ import Api from '@/mixins/Api'
 import Filters from '@/mixins/Filters'
 import Refresh from '@/mixins/Refresh'
 import Metrics from '@/mixins/Metrics'
+import Shortcut from '@/mixins/Shortcut'
 
 import Header from '@/components/dashboard/Header'
-import HttpOverview from '@/components/dashboard/HttpOverview'
+
+import HttpRequests from '@/components/http/Requests'
+import HttpRequest from '@/components/http/Request'
+
+import KafkaCluster from '@/components/kafka/Cluster'
+import KafkaTopic from '@/components/kafka/Topic'
+
+import SmtpServices from '@/components/smtp/Services'
+import SmtpMails from '@/components/smtp/Mails'
 
 export default {
-  mixins: [Api, Filters, Refresh, Metrics],
+  mixins: [Api, Filters, Refresh, Metrics, Shortcut],
   components: {
-    'http-overview': HttpOverview,
-    'dashboard-header': Header
+    'dashboard-header': Header,
+    'http-requests': HttpRequests,
+    'http-request': HttpRequest,
+    'kafka-cluster': KafkaCluster,
+    'kafka-topic': KafkaTopic,
+    'smtp-services': SmtpServices,
+    'smtp-mails': SmtpMails,
   },
   data () {
     return {
@@ -206,12 +192,6 @@ export default {
         'lastMessage',
         'messages',
         'errors'
-      ],
-      lastMailField: [
-        'from',
-        'to',
-        { key: 'subject', class: 'subject' },
-        'time'
       ],
       error: null,
     }
@@ -242,6 +222,18 @@ export default {
       }
       return result
     },
+    smtpServices: function () {
+      if (!this.services) {
+        return null
+      }
+      let result = []
+      for (let service of this.services) {
+        if (service.type === 'smtp') {
+          result.push(service)
+        }
+      }
+      return result
+    },
     httpEnabled: function () {
       return this.httpServices !== null && this.httpServices.length > 0
     },
@@ -249,7 +241,7 @@ export default {
       return this.kafkaServices !== null && this.kafkaServices.length > 0
     },
     smtpEnabled: function () {
-      return false // todo
+      return this.smtpServices !== null && this.smtpServices.length > 0
     },
     serviceStatus: function () {
       let serviceStatus = this.dashboard.serviceStatus
@@ -290,7 +282,17 @@ export default {
       }
       let sum = 0
       for (let service of this.kafkaServices) {
-        //sum += this.metric(service.metrics, 'kafka_messages_total')
+        sum += this.metric(service.metrics, 'kafka_messages_total')
+      }
+      return sum
+    },
+    totalSmtpMails: function () {
+      if (!this.smtpServices) {
+        return 0
+      }
+      let sum = 0
+      for (let service of this.smtpServices) {
+        sum += this.metric(service.metrics, 'mails_total')
       }
       return sum
     }
@@ -319,15 +321,18 @@ export default {
       )
       this.loaded = true
     },
-    mailClickHandler (record) {
-      this.$router.push({ name: 'smtpMail', params: { id: record.id } })
-    },
     kafkaClickHandler (record) {
       this.$router.push({
         name: 'kafkaCluster',
         params: { cluster: record.name },
         query: { refresh: '5' }
       })
+    },
+    shortcut (e) {
+      let cmd = e.key.toLowerCase()
+      if (cmd === 'escape' && this.$route.name !== 'dashboard') {
+        this.$router.go(-1)
+      }
     }
   }
 }
@@ -338,38 +343,38 @@ export default {
   width: 90%;
   margin: 12px auto auto;
 }
-.card {
+</style>
+<style>
+.dashboard .info {
+  font-size: 0.7rem;
+  font-weight: 300;
+}
+.dashboard .info-body {
+  padding: 0.8rem;
+}
+.dashboard .card {
   border-color: var(--var-border-color);
   margin: 7px;
 }
-.card p {
+.dashboard .card p {
   margin-bottom: 0;
 }
-.info {
-  font-size: 0.7rem;
-  font-weight: 300;
-}
-.info-body {
-  padding: 0.8rem;
-}
-.value {
+.dashboard .value {
   font-size: 2.25rem;
   font-weight: 300;
 }
-.additional {
+.dashboard .additional {
   color: #a0a1a7;
   font-size: 0.7rem;
 }
-.legend-item {
+.dashboard .legend-item {
   border: 0 none;
   font-weight: 600;
 }
-.response.icon {
+.dashboard .response.icon {
   vertical-align: middle;
   font-size: 0.5rem;
 }
-</style>
-<style>
 .subject {
   overflow: hidden;
   text-overflow: ellipsis;

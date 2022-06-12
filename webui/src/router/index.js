@@ -1,20 +1,21 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import ServiceList from '@/views/ServiceList'
-import Service from '@/views/Service'
-import Endpoint from '@/components/Endpoint'
-import Endpoints from '@/components/Endpoints'
-import Models from '@/components/Models'
-import ServiceOverview from '@/components/ServiceOverview'
+
+
 import Dashboard from '@/views/Dashboard'
 import Docs from '@/views/Docs'
-import HttpRequest from '@/views/dashboard/HttpRequest'
 import SmtpMail from '@/views/dashboard/SmtpMail'
-import SmtpService from '@/views/smtp/Service'
-import KafkaCluster from '@/views/kafka/Cluster'
-import KafkaTopic from '@/views/kafka/Topic'
 
-import AsyncApiService from '@/views/asyncapi/Service'
+import HttpService from '@/views/http/Service'
+import ServiceOverview from '@/components/http/ServiceOverview'
+import Endpoint from '@/components/http/Endpoint'
+import Endpoints from '@/components/http/Endpoints'
+import Models from '@/components/http/Models'
+
+import SmtpService from '@/views/smtp/Service'
+
+import KafkaService from '@/views/kafka/Service'
 
 import LdapService from '@/views/ldap/Service'
 
@@ -53,7 +54,7 @@ export default new Router({
     {
       path: '/dashboard/http/request/:id',
       name: 'httpRequest',
-      component: HttpRequest
+      component: Dashboard
     },
     {
       path: '/dashboard/kafka',
@@ -63,13 +64,12 @@ export default new Router({
     {
       path: '/dashboard/kafka/:cluster',
       name: 'kafkaCluster',
-      component: KafkaCluster,
-      meta: {showBack: true}
+      component: Dashboard,
     },
     {
       path: '/dashboard/kafka/:cluster/topics/:topic',
       name: 'kafkaTopic',
-      component: KafkaTopic
+      component: Dashboard
     },
     {
       path: '/dashboard/smtp',
@@ -109,7 +109,7 @@ export default new Router({
     {
       path: '/services/kafka/:name',
       name: 'kafkaService',
-      component: AsyncApiService
+      component: KafkaService
     },
     {
       path: '/services/smtp/:name',
@@ -119,7 +119,7 @@ export default new Router({
     {
       path: '/services/http/:name',
       name: 'httpService',
-      component: Service,
+      component: HttpService,
       redirect: {
         name: 'default'
       },
@@ -141,7 +141,7 @@ export default new Router({
         },
         {
           path: 'endpoint/:path',
-          name: 'endpoint',
+          name: 'http-path',
           component: Endpoint
         }
       ]
