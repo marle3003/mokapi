@@ -67,15 +67,13 @@ type mediaType struct {
 }
 
 type schemaInfo struct {
-	Ref        string        `json:"ref"`
-	Type       string        `json:"type"`
-	Properties []property    `json:"properties,omitempty"`
-	Enum       []interface{} `json:"enum,omitempty"`
-}
-
-type property struct {
-	Name  string      `json:"name"`
-	Value *schemaInfo `json:"value"`
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	Ref         string        `json:"ref"`
+	Type        string        `json:"type"`
+	Properties  []*schemaInfo `json:"properties,omitempty"`
+	Enum        []interface{} `json:"enum,omitempty"`
+	Items       *schemaInfo   `json:"items,omitempty"`
 }
 
 type server struct {
@@ -146,7 +144,6 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request) {
 				Description: o.Description,
 				OperationId: o.OperationId,
 			}
-			pi.Operations = append(pi.Operations, op)
 			if o.RequestBody != nil && o.RequestBody.Value != nil {
 				op.RequestBody = &requestBody{
 					Description: o.RequestBody.Value.Description,
@@ -176,7 +173,7 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request) {
 
 			for it := o.Responses.Iter(); it.Next(); {
 				statusCode := it.Key().(int)
-				r := it.Value().(openapi.ResponseRef)
+				r := it.Value().(*openapi.ResponseRef)
 				if r.Value == nil {
 					continue
 				}
@@ -193,7 +190,9 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request) {
 
 				op.Responses = append(op.Responses, res)
 			}
+			pi.Operations = append(pi.Operations, op)
 		}
+		result.Paths = append(result.Paths, pi)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -201,22 +200,23 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request) {
 }
 
 func getSchema(s *schema.Ref) *schemaInfo {
-	if s.Value == nil {
+	if s == nil || s.Value == nil {
 		return nil
 	}
 
 	result := &schemaInfo{
-		Ref:  s.Ref,
-		Type: s.Value.Type,
-		Enum: s.Value.Enum,
+		Description: s.Value.Description,
+		Ref:         s.Ref,
+		Type:        s.Value.Type,
+		Enum:        s.Value.Enum,
+		Items:       getSchema(s.Value.Items),
 	}
 
 	if s.Value.Properties != nil && s.Value.Properties.Value != nil {
 		for it := s.Value.Properties.Value.Iter(); it.Next(); {
-			result.Properties = append(result.Properties, property{
-				Name:  it.Key().(string),
-				Value: nil,
-			})
+			prop := getSchema(it.Value().(*schema.Ref))
+			prop.Name = it.Key().(string)
+			result.Properties = append(result.Properties, prop)
 		}
 	}
 

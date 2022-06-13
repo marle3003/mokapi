@@ -70,7 +70,7 @@ export default {
       this.isHovered = hovered
     },
     getRefOrEmpty (ref) {
-      if (!ref) {
+      if (ref === '') {
         return ''
       }
       return '<span class="ref-type">[' + ref + ']</span>'
@@ -123,7 +123,7 @@ export default {
         if (schema.name) {
           s += schema.name + ': '
         }
-        if (schema.items !== undefined && schema.items !== null) {
+        if (schema.items) {
           s += this.getRefOrEmpty(schema.items.ref)
         }
         s += ' ['
