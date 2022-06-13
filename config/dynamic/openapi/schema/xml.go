@@ -173,7 +173,7 @@ func (e *xmlNode) parse(r *Ref) (interface{}, error) {
 	s := r.Value
 	switch s.Type {
 	case "object":
-		if s.IsFreeForm() {
+		if s.Properties == nil && s.IsFreeForm() {
 			return e.parseFreeForm()
 		}
 		props := make(map[string]interface{})

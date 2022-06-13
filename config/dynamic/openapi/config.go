@@ -155,8 +155,8 @@ type Operation struct {
 	Endpoint *Endpoint `yaml:"-" json:"-"`
 }
 
-func (e *EndpointsRef) Resolve(token string) (interface{}, error) {
-	if v, ok := e.Value[token]; ok {
+func (e EndpointsRef) Resolve(token string) (interface{}, error) {
+	if v, ok := e.Value["/"+token]; ok {
 		return v, nil
 	}
 	return nil, nil

@@ -283,7 +283,7 @@ func fromMap(v reflect.Value, schema *Schema) (*schemaObject, error) {
 		}
 	}
 
-	if schema.IsFreeForm() {
+	if schema.IsFreeForm() || schema.IsDictionary() {
 		for _, k := range v.MapKeys() {
 			name := fmt.Sprintf("%v", k.Interface())
 			if obj.Get(name) == nil {

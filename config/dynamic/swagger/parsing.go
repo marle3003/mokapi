@@ -9,11 +9,16 @@ func (c *Config) Parse(config *common.Config, reader common.Reader) error {
 		return nil
 	}
 
-	for _, p := range c.Paths {
-		p.Parse(config, reader)
-	}
+	//for _, p := range c.Paths {
+	//	p.Parse(config, reader)
+	//}
 
-	return nil
+	converted, err := Convert(c)
+	if err != nil {
+		return nil
+	}
+	config.Data = converted
+	return converted.Parse(config, reader)
 }
 
 func (p *PathItem) Parse(config *common.Config, reader common.Reader) error {

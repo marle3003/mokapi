@@ -135,6 +135,7 @@ func TestRef_Marshal_Object(t *testing.T) {
 			"map not free-form",
 			&schema.Ref{Value: schematest.New("object",
 				schematest.WithProperty("name", schematest.New("string")),
+				schematest.WithFreeForm(false),
 			)},
 			map[interface{}]interface{}{"name": "foo", "value": 12},
 			media.ParseContentType("application/json"),
@@ -146,8 +147,8 @@ func TestRef_Marshal_Object(t *testing.T) {
 			"allOf",
 			&schema.Ref{Value: schematest.New("",
 				schematest.AllOf(
-					schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
-					schematest.New("object", schematest.WithProperty("bar", schematest.New("string"))),
+					schematest.New("object", schematest.WithProperty("foo", schematest.New("string")), schematest.WithFreeForm(false)),
+					schematest.New("object", schematest.WithProperty("bar", schematest.New("string")), schematest.WithFreeForm(false)),
 				))},
 			map[string]interface{}{"foo": "foo", "bar": "bar", "value": "test"},
 			media.ParseContentType("application/json"),
@@ -180,8 +181,8 @@ func TestRef_Marshal_AnyOf(t *testing.T) {
 			func(t *testing.T) {
 				s := &schema.Ref{Value: schematest.New("",
 					schematest.Any(
-						schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
-						schematest.New("object", schematest.WithProperty("bar", schematest.New("string"))),
+						schematest.New("object", schematest.WithProperty("foo", schematest.New("string")), schematest.WithFreeForm(false)),
+						schematest.New("object", schematest.WithProperty("bar", schematest.New("string")), schematest.WithFreeForm(false)),
 					))}
 				data := map[string]interface{}{"foo": "foo", "value": 12}
 
@@ -195,8 +196,8 @@ func TestRef_Marshal_AnyOf(t *testing.T) {
 			func(t *testing.T) {
 				s := &schema.Ref{Value: schematest.New("",
 					schematest.Any(
-						schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
-						schematest.New("object", schematest.WithProperty("bar", schematest.New("string"))),
+						schematest.New("object", schematest.WithProperty("foo", schematest.New("string")), schematest.WithFreeForm(false)),
+						schematest.New("object", schematest.WithProperty("bar", schematest.New("string")), schematest.WithFreeForm(false)),
 					))}
 				data := map[string]interface{}{"foo": "foo", "bar": "bar", "value": 12}
 

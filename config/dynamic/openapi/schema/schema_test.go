@@ -32,7 +32,22 @@ properties:
 `,
 			func(t *testing.T, schema *schema.Schema) {
 				require.Equal(t, "object", schema.Type)
-				require.False(t, schema.IsFreeForm())
+				require.False(t, schema.IsFreeForm(), "object should not be free form")
+				require.False(t, schema.IsDictionary())
+			},
+		},
+		{
+			"additional properties true",
+			`
+type: object
+additionalProperties: true
+properties:
+  name:
+    type: string
+`,
+			func(t *testing.T, schema *schema.Schema) {
+				require.Equal(t, "object", schema.Type)
+				require.True(t, schema.IsFreeForm(), "object should be free form")
 				require.False(t, schema.IsDictionary())
 			},
 		},
@@ -44,7 +59,7 @@ additionalProperties: {}
 `,
 			func(t *testing.T, schema *schema.Schema) {
 				require.Equal(t, "object", schema.Type)
-				require.True(t, schema.IsFreeForm())
+				require.True(t, schema.IsFreeForm(), "object should be free form")
 			},
 		},
 		{
@@ -107,7 +122,7 @@ func TestSchema_IsFreeForm(t *testing.T) {
 			"object with property",
 			func(t *testing.T) {
 				s := schematest.New("object", schematest.WithProperty("foo", schematest.New("string")))
-				require.False(t, s.IsFreeForm())
+				require.True(t, s.IsFreeForm())
 			},
 		},
 		{
@@ -123,6 +138,13 @@ func TestSchema_IsFreeForm(t *testing.T) {
 				s := schematest.New("object")
 				s.AdditionalProperties = &schema.AdditionalProperties{}
 				require.True(t, s.IsFreeForm())
+			},
+		},
+		{
+			"object with property additional false",
+			func(t *testing.T) {
+				s := schematest.New("object", schematest.WithProperty("foo", schematest.New("string")), schematest.WithFreeForm(false))
+				require.False(t, s.IsFreeForm())
 			},
 		},
 	}

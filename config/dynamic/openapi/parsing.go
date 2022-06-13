@@ -46,9 +46,7 @@ func (r *NamedResponses) Parse(config *common.Config, reader common.Reader) erro
 	}
 
 	if len(r.Ref) > 0 {
-		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
-			return err
-		}
+		return common.Resolve(r.Ref, &r.Value, config, reader)
 	}
 
 	return nil
@@ -60,9 +58,7 @@ func (r *RequestBodies) Parse(config *common.Config, reader common.Reader) error
 	}
 
 	if len(r.Ref) > 0 {
-		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
-			return err
-		}
+		return common.Resolve(r.Ref, &r.Value, config, reader)
 	}
 
 	return nil
@@ -74,9 +70,7 @@ func (r *Examples) Parse(config *common.Config, reader common.Reader) error {
 	}
 
 	if len(r.Ref) > 0 {
-		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
-			return err
-		}
+		return common.Resolve(r.Ref, &r.Value, config, reader)
 	}
 
 	return nil
@@ -88,9 +82,7 @@ func (r *NamedHeaders) Parse(config *common.Config, reader common.Reader) error 
 	}
 
 	if len(r.Ref) > 0 {
-		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
-			return err
-		}
+		return common.Resolve(r.Ref, &r.Value, config, reader)
 	}
 
 	return nil
@@ -102,9 +94,7 @@ func (r *EndpointsRef) Parse(config *common.Config, reader common.Reader) error 
 	}
 
 	if len(r.Ref) > 0 {
-		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
-			return err
-		}
+		return common.Resolve(r.Ref, &r.Value, config, reader)
 	}
 
 	for _, e := range r.Value {
@@ -121,9 +111,7 @@ func (r *EndpointRef) Parse(config *common.Config, reader common.Reader) error {
 	}
 
 	if len(r.Ref) > 0 {
-		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
-			return err
-		}
+		return common.Resolve(r.Ref, &r.Value, config, reader)
 	}
 
 	return r.Value.Parse(config, reader)
@@ -171,9 +159,7 @@ func (r *RequestBodyRef) Parse(config *common.Config, reader common.Reader) erro
 	}
 
 	if len(r.Ref) > 0 {
-		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
-			return err
-		}
+		return common.Resolve(r.Ref, &r.Value, config, reader)
 	}
 
 	for _, c := range r.Value.Content {
@@ -194,9 +180,7 @@ func (r *ResponseRef) Parse(config *common.Config, reader common.Reader) error {
 	}
 
 	if len(r.Ref) > 0 {
-		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
-			return err
-		}
+		return common.Resolve(r.Ref, &r.Value, config, reader)
 	}
 
 	if r.Value == nil {
@@ -233,9 +217,7 @@ func (r *ExampleRef) Parse(config *common.Config, reader common.Reader) error {
 	}
 
 	if len(r.Ref) > 0 {
-		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
-			return err
-		}
+		return common.Resolve(r.Ref, &r.Value, config, reader)
 	}
 	return nil
 }
@@ -246,9 +228,7 @@ func (r *HeaderRef) Parse(config *common.Config, reader common.Reader) error {
 	}
 
 	if len(r.Ref) > 0 {
-		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
-			return err
-		}
+		return common.Resolve(r.Ref, &r.Value, config, reader)
 	}
 	return nil
 }

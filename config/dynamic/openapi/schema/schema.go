@@ -52,6 +52,7 @@ type Schema struct {
 
 type AdditionalProperties struct {
 	*Ref
+	Forbidden bool
 }
 
 type Xml struct {
@@ -157,9 +158,8 @@ func (s *Schema) String() string {
 	if s.MaxProperties != nil {
 		sb.WriteString(fmt.Sprintf(" maxProperties=%v", *s.MaxProperties))
 	}
-	if s.Type == "object" && s.IsFreeForm() {
-		sb.WriteString(" free-form=true")
-	} else if s.Type == "object" && s.Properties != nil && s.Properties.Value != nil {
+
+	if s.Type == "object" && s.Properties != nil && s.Properties.Value != nil {
 		var sbProp strings.Builder
 		for _, p := range s.Properties.Value.Keys() {
 			if sbProp.Len() > 0 {
@@ -172,11 +172,15 @@ func (s *Schema) String() string {
 	if len(s.Required) > 0 {
 		sb.WriteString(fmt.Sprintf(" required=%v", s.Required))
 	}
+	if s.Type == "object" && !s.IsFreeForm() {
+		sb.WriteString(" free-form=false")
+	}
+
 	return sb.String()
 }
 
 func (s *Schema) IsFreeForm() bool {
-	return s.Type == "object" && !s.HasProperties() ||
+	return s.Type == "object" &&
 		s.AdditionalProperties.IsFreeForm()
 }
 
@@ -185,11 +189,11 @@ func (s *Schema) IsDictionary() bool {
 }
 
 func (ap *AdditionalProperties) IsFreeForm() bool {
-	if ap == nil || ap.Ref == nil {
-		return false
-	}
-	if ap.Value == nil && ap.Ref == nil {
+	if ap == nil {
 		return true
+	}
+	if ap.Ref == nil || ap.Value == nil {
+		return !ap.Forbidden
 	}
 	if ap.Value != nil && ap.Value.Type == "" {
 		return true

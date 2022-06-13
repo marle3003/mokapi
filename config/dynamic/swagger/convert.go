@@ -32,7 +32,7 @@ func Convert(config *Config) (*openapi.Config, error) {
 		if err != nil {
 			return nil, err
 		}
-		result.Paths.Value[path] = &openapi.EndpointRef{Value: converted}
+		result.Paths.Value[path] = converted
 	}
 
 	if len(config.Definitions) > 0 {
@@ -45,7 +45,11 @@ func Convert(config *Config) (*openapi.Config, error) {
 	return result, nil
 }
 
-func convertPath(p *PathItem) (*openapi.Endpoint, error) {
+func convertPath(p *PathItem) (*openapi.EndpointRef, error) {
+	if len(p.Ref) > 0 {
+		return &openapi.EndpointRef{Reference: ref.Reference{Ref: convertRef(p.Ref)}}, nil
+	}
+
 	result := &openapi.Endpoint{}
 	for m, o := range p.Operations() {
 		converted, err := convertOperation(o)
@@ -54,7 +58,7 @@ func convertPath(p *PathItem) (*openapi.Endpoint, error) {
 		}
 		result.SetOperation(m, converted)
 	}
-	return result, nil
+	return &openapi.EndpointRef{Value: result}, nil
 }
 
 func convertOperation(o *Operation) (*openapi.Operation, error) {
@@ -75,6 +79,7 @@ func convertOperation(o *Operation) (*openapi.Operation, error) {
 			body := &openapi.RequestBody{
 				Description: p.Description,
 				Required:    false,
+				Content:     make(map[string]*openapi.MediaType),
 			}
 			for _, consume := range o.Consumes {
 				body.Content[consume] = &openapi.MediaType{
@@ -140,9 +145,14 @@ func convertResponse(r *Response, produces []string) (*openapi.ResponseRef, erro
 }
 
 func convertSchema(s *schema.Ref) *schema.Ref {
+	if s == nil {
+		return nil
+	}
+
 	if len(s.Ref) > 0 {
 		return &schema.Ref{Reference: ref.Reference{Ref: convertRef(s.Ref)}}
 	}
+
 	if s.Value == nil {
 		return s
 	}
@@ -161,7 +171,7 @@ func convertSchema(s *schema.Ref) *schema.Ref {
 		}
 	}
 
-	if s.Value.AdditionalProperties != nil && len(s.Value.AdditionalProperties.Ref.Ref) > 0 {
+	if s.Value.AdditionalProperties != nil && s.Value.AdditionalProperties.Ref != nil {
 		s.Value.AdditionalProperties.Ref.Ref = convertRef(s.Value.AdditionalProperties.Ref.Ref)
 	}
 	for i, v := range s.Value.AllOf {

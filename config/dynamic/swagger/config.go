@@ -12,80 +12,80 @@ func init() {
 }
 
 type Config struct {
-	Swagger     string                 `json:"swagger" yaml:"swagger"`
-	Info        openapi.Info           `json:"info" yaml:"info"`
-	Schemes     []string               `json:"schemes,omitempty" yaml:"schemes,omitempty"`
-	Consumes    []string               `json:"consumes,omitempty" yaml:"consumes,omitempty"`
-	Produces    []string               `json:"produces,omitempty" yaml:"produces,omitempty"`
-	Host        string                 `json:"host,omitempty" yaml:"host,omitempty"`
-	BasePath    string                 `json:"basePath,omitempty" yaml:"basePath,omitempty"`
-	Paths       PathItems              `json:"paths,omitempty" yaml:"paths,omitempty"`
-	Definitions map[string]*schema.Ref `json:"definitions,omitempty" yaml:"definitions,omitempty"`
-	Parameters  map[string]*Parameter  `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Responses   map[string]*Response   `json:"responses,omitempty" yaml:"responses,omitempty"`
+	Swagger     string                 `yaml:"swagger" json:"swagger"`
+	Info        openapi.Info           `yaml:"info" json:"info"`
+	Schemes     []string               `yaml:"schemes,omitempty" json:"schemes,omitempty"`
+	Consumes    []string               `yaml:"consumes,omitempty" json:"consumes,omitempty"`
+	Produces    []string               `yaml:"produces,omitempty" json:"produces,omitempty"`
+	Host        string                 `yaml:"host,omitempty" json:"host,omitempty"`
+	BasePath    string                 `yaml:"basePath,omitempty" json:"basePath,omitempty"`
+	Paths       PathItems              `yaml:"paths,omitempty" json:"paths,omitempty"`
+	Definitions map[string]*schema.Ref `yaml:"definitions,omitempty" json:"definitions,omitempty"`
+	Parameters  map[string]*Parameter  `yaml:"parameters,omitempty" json:"parameters,omitempty"`
+	Responses   map[string]*Response   `yaml:"responses,omitempty" json:"responses,omitempty"`
 }
 
 type PathItems map[string]*PathItem
 
 type PathItem struct {
-	Ref        string     `json:"$ref,omitempty" yaml:"$ref,omitempty"`
-	Delete     *Operation `json:"delete,omitempty" yaml:"delete,omitempty"`
-	Get        *Operation `json:"get,omitempty" yaml:"get,omitempty"`
-	Head       *Operation `json:"head,omitempty" yaml:"head,omitempty"`
-	Options    *Operation `json:"options,omitempty" yaml:"options,omitempty"`
-	Patch      *Operation `json:"patch,omitempty" yaml:"patch,omitempty"`
-	Post       *Operation `json:"post,omitempty" yaml:"post,omitempty"`
-	Put        *Operation `json:"put,omitempty" yaml:"put,omitempty"`
-	Parameters Parameters `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Ref        string     `yaml:"$ref,omitempty" json:"$ref,omitempty"`
+	Delete     *Operation `yaml:"delete,omitempty" json:"delete,omitempty"`
+	Get        *Operation `yaml:"get,omitempty" json:"get,omitempty"`
+	Head       *Operation `yaml:"head,omitempty" json:"head,omitempty"`
+	Options    *Operation `yaml:"options,omitempty" json:"options,omitempty"`
+	Patch      *Operation `yaml:"patch,omitempty" json:"patch,omitempty"`
+	Post       *Operation `yaml:"post,omitempty" json:"post,omitempty"`
+	Put        *Operation `yaml:"put,omitempty" json:"put,omitempty"`
+	Parameters Parameters `yaml:"parameters,omitempty" json:"parameters,omitempty"`
 }
 
 type Operation struct {
-	Summary     string               `json:"summary,omitempty" yaml:"summary,omitempty"`
-	Description string               `json:"description,omitempty" yaml:"description,omitempty"`
-	Tags        []string             `json:"tags,omitempty" yaml:"tags,omitempty"`
-	OperationID string               `json:"operationId,omitempty" yaml:"operationId,omitempty"`
-	Parameters  Parameters           `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	Responses   map[string]*Response `json:"responses" yaml:"responses"`
-	Consumes    []string             `json:"consumes,omitempty" yaml:"consumes,omitempty"`
-	Produces    []string             `json:"produces,omitempty" yaml:"produces,omitempty"`
-	Schemes     []string             `json:"schemes,omitempty" yaml:"schemes,omitempty"`
+	Summary     string               `yaml:"summary,omitempty" json:"summary,omitempty"`
+	Description string               `yaml:"description,omitempty" json:"description,omitempty"`
+	Tags        []string             `yaml:"tags,omitempty" json:"tags,omitempty"`
+	OperationID string               `yaml:"operationId,omitempty" json:"operationId,omitempty"`
+	Parameters  Parameters           `yaml:"parameters,omitempty" json:"parameters,omitempty"`
+	Responses   map[string]*Response `yaml:"responses" json:"responses"`
+	Consumes    []string             `yaml:"consumes,omitempty" json:"consumes,omitempty"`
+	Produces    []string             `yaml:"produces,omitempty" json:"produces,omitempty"`
+	Schemes     []string             `yaml:"schemes,omitempty" json:"schemes,omitempty"`
 }
 
 type Response struct {
-	Ref         string                 `json:"$ref,omitempty" yaml:"$ref,omitempty"`
-	Description string                 `json:"description,omitempty" yaml:"description,omitempty"`
-	Schema      *schema.Ref            `json:"schema,omitempty" yaml:"schema,omitempty"`
-	Headers     map[string]*Header     `json:"headers,omitempty" yaml:"headers,omitempty"`
-	Examples    map[string]interface{} `json:"examples,omitempty" yaml:"examples,omitempty"`
+	Ref         string                 `yaml:"$ref,omitempty" json:"$ref,omitempty"`
+	Description string                 `yaml:"description,omitempty" json:"description,omitempty"`
+	Schema      *schema.Ref            `yaml:"schema,omitempty" json:"schema,omitempty"`
+	Headers     map[string]*Header     `yaml:"headers,omitempty" json:"headers,omitempty"`
+	Examples    map[string]interface{} `yaml:"examples,omitempty" json:"examples,omitempty"`
 }
 
 type Parameters []*Parameter
 
 type Parameter struct {
-	Ref              string        `json:"$ref,omitempty" yaml:"$ref,omitempty"`
-	In               string        `json:"in,omitempty" yaml:"in,omitempty"`
-	Name             string        `json:"name,omitempty" yaml:"name,omitempty"`
-	Description      string        `json:"description,omitempty" yaml:"description,omitempty"`
-	CollectionFormat string        `json:"collectionFormat,omitempty" yaml:"collectionFormat,omitempty"`
-	Type             string        `json:"type,omitempty" yaml:"type,omitempty"`
-	Format           string        `json:"format,omitempty" yaml:"format,omitempty"`
-	Pattern          string        `json:"pattern,omitempty" yaml:"pattern,omitempty"`
-	AllowEmptyValue  bool          `json:"allowEmptyValue,omitempty" yaml:"allowEmptyValue,omitempty"`
-	Required         bool          `json:"required,omitempty" yaml:"required,omitempty"`
-	UniqueItems      bool          `json:"uniqueItems,omitempty" yaml:"uniqueItems,omitempty"`
-	ExclusiveMin     bool          `json:"exclusiveMinimum,omitempty" yaml:"exclusiveMinimum,omitempty"`
-	ExclusiveMax     bool          `json:"exclusiveMaximum,omitempty" yaml:"exclusiveMaximum,omitempty"`
-	Schema           *schema.Ref   `json:"schema,omitempty" yaml:"schema,omitempty"`
-	Items            *schema.Ref   `json:"items,omitempty" yaml:"items,omitempty"`
-	Enum             []interface{} `json:"enum,omitempty" yaml:"enum,omitempty"`
-	MultipleOf       *float64      `json:"multipleOf,omitempty" yaml:"multipleOf,omitempty"`
-	Minimum          *float64      `json:"minimum,omitempty" yaml:"minimum,omitempty"`
-	Maximum          *float64      `json:"maximum,omitempty" yaml:"maximum,omitempty"`
-	MaxLength        *uint64       `json:"maxLength,omitempty" yaml:"maxLength,omitempty"`
-	MaxItems         *int          `json:"maxItems,omitempty" yaml:"maxItems,omitempty"`
-	MinLength        int64         `json:"minLength,omitempty" yaml:"minLength,omitempty"`
-	MinItems         int           `json:"minItems,omitempty" yaml:"minItems,omitempty"`
-	Default          interface{}   `json:"default,omitempty" yaml:"default,omitempty"`
+	Ref              string        `yaml:"$ref,omitempty" json:"$ref,omitempty"`
+	In               string        `yaml:"in,omitempty" json:"in,omitempty"`
+	Name             string        `yaml:"name,omitempty" json:"name,omitempty"`
+	Description      string        `yaml:"description,omitempty" json:"description,omitempty"`
+	CollectionFormat string        `yaml:"collectionFormat,omitempty" json:"collectionFormat,omitempty"`
+	Type             string        `yaml:"type,omitempty" json:"type,omitempty"`
+	Format           string        `yaml:"format,omitempty" json:"format,omitempty"`
+	Pattern          string        `yaml:"pattern,omitempty" json:"pattern,omitempty"`
+	AllowEmptyValue  bool          `yaml:"allowEmptyValue,omitempty" json:"allowEmptyValue,omitempty"`
+	Required         bool          `yaml:"required,omitempty" json:"required,omitempty"`
+	UniqueItems      bool          `yaml:"uniqueItems,omitempty" json:"uniqueItems,omitempty"`
+	ExclusiveMin     bool          `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
+	ExclusiveMax     bool          `yaml:"exclusiveMaximum,omitempty" json:"exclusiveMaximum,omitempty"`
+	Schema           *schema.Ref   `yaml:"schema,omitempty" json:"schema,omitempty"`
+	Items            *schema.Ref   `yaml:"items,omitempty" json:"items,omitempty"`
+	Enum             []interface{} `yaml:"enum,omitempty" json:"enum,omitempty"`
+	MultipleOf       *float64      `yaml:"multipleOf,omitempty" json:"multipleOf,omitempty"`
+	Minimum          *float64      `yaml:"minimum,omitempty" json:"minimum,omitempty"`
+	Maximum          *float64      `yaml:"maximum,omitempty" json:"maximum,omitempty"`
+	MaxLength        *uint64       `yaml:"maxLength,omitempty" json:"maxLength,omitempty"`
+	MaxItems         *int          `yaml:"maxItems,omitempty" json:"maxItems,omitempty"`
+	MinLength        int64         `yaml:"minLength,omitempty" json:"minLength,omitempty"`
+	MinItems         int           `yaml:"minItems,omitempty" json:"minItems,omitempty"`
+	Default          interface{}   `yaml:"default,omitempty" json:"default,omitempty"`
 }
 
 type Header struct {

@@ -61,7 +61,7 @@ func parseQueryObject(p *Parameter, u *url.URL) (obj map[string]interface{}, err
 						return nil, err
 					}
 				}
-			} else if p.Schema.Value.IsFreeForm() {
+			} else if !p.Schema.HasProperties() && p.Schema.Value.IsFreeForm() {
 				for k, v := range u.Query() {
 					obj[k] = v
 				}

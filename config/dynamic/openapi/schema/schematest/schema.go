@@ -107,9 +107,13 @@ func WithAdditionalProperties(additional *schema.Schema) SchemaOptions {
 	}
 }
 
-func WithFreeForm() SchemaOptions {
+func WithFreeForm(allowed bool) SchemaOptions {
 	return func(s *schema.Schema) {
-		s.AdditionalProperties = &schema.AdditionalProperties{}
+		if allowed {
+			s.AdditionalProperties = &schema.AdditionalProperties{}
+		} else {
+			s.AdditionalProperties = &schema.AdditionalProperties{Forbidden: true}
+		}
 	}
 }
 
