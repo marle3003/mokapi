@@ -38,20 +38,20 @@ type Contact struct {
 }
 
 type License struct {
-	Name string
-	Url  string
+	Name string `yaml:"name" json:"name"`
+	Url  string `yaml:"url" json:"url"`
 }
 
 type Server struct {
-	Url             string
-	Protocol        string
-	ProtocolVersion string
-	Description     string
-	Bindings        ServerBindings
+	Url             string         `yaml:"url" json:"url"`
+	Protocol        string         `yaml:"protocol" json:"protocol"`
+	ProtocolVersion string         `yaml:"protocolVersion" json:"protocolVersion"`
+	Description     string         `yaml:"description" json:"description"`
+	Bindings        ServerBindings `yaml:"bindings" json:"bindings"`
 }
 
 type ServerBindings struct {
-	Kafka kafka.BrokerBindings
+	Kafka kafka.BrokerBindings `yaml:"kafka" json:"kafka"`
 }
 
 type ChannelRef struct {
@@ -60,26 +60,26 @@ type ChannelRef struct {
 }
 
 type Channel struct {
-	Description string
-	Subscribe   *Operation
-	Publish     *Operation
-	Bindings    ChannelBindings
+	Description string          `yaml:"description" json:"description"`
+	Subscribe   *Operation      `yaml:"subscribe" json:"subscribe"`
+	Publish     *Operation      `yaml:"publish" json:"publish"`
+	Bindings    ChannelBindings `yaml:"bindings" json:"bindings"`
 }
 
 type ChannelBindings struct {
-	Kafka kafka.TopicBindings
+	Kafka kafka.TopicBindings `yaml:"kafka" json:"kafka"`
 }
 
 type Operation struct {
-	Id          string `yaml:"operationId" json:"operationId"`
-	Summary     string
-	Description string
-	Message     *MessageRef
-	Bindings    OperationBindings
+	Id          string            `yaml:"id" json:"id"`
+	Summary     string            `yaml:"summary" json:"summary"`
+	Description string            `yaml:"description" json:"description"`
+	Message     *MessageRef       `yaml:"message" json:"message"`
+	Bindings    OperationBindings `yaml:"bindings" json:"bindings"`
 }
 
 type OperationBindings struct {
-	Kafka kafka.Operation
+	Kafka kafka.Operation `yaml:"kafka" json:"kafka"`
 }
 
 type MessageRef struct {
@@ -88,23 +88,23 @@ type MessageRef struct {
 }
 
 type Message struct {
-	Name        string
-	Title       string
-	Summary     string
-	Description string
-	ContentType string
-	Payload     *schema.Ref
-	Bindings    MessageBinding
-	Headers     *schema.Ref
+	Name        string         `yaml:"name" json:"name"`
+	Title       string         `yaml:"title" json:"title"`
+	Summary     string         `yaml:"summary" json:"summary"`
+	Description string         `yaml:"description" json:"description"`
+	ContentType string         `yaml:"contentType" json:"contentType"`
+	Payload     *schema.Ref    `yaml:"payload" json:"payload"`
+	Bindings    MessageBinding `yaml:"bindings" json:"bindings"`
+	Headers     *schema.Ref    `yaml:"headers" json:"headers"`
 }
 
 type MessageBinding struct {
-	Kafka kafka.MessageBinding
+	Kafka kafka.MessageBinding `yaml:"kafka" json:"kafka"`
 }
 
 type Components struct {
-	Schemas  *schema.Schemas
-	Messages map[string]*Message
+	Schemas  *schema.Schemas     `yaml:"schemas" json:"schemas"`
+	Messages map[string]*Message `yaml:"messages" json:"messages"`
 }
 
 func (c *Config) Validate() error {

@@ -1,7 +1,9 @@
 package js
 
 import (
+	"fmt"
 	"github.com/dop251/goja"
+	log "github.com/sirupsen/logrus"
 	engine "mokapi/engine/common"
 	"mokapi/js/common"
 	"mokapi/js/modules"
@@ -10,7 +12,8 @@ import (
 	"mokapi/js/modules/kafka"
 	"mokapi/js/modules/mustache"
 	"mokapi/js/modules/yaml"
-	"strings"
+	"path/filepath"
+	"text/template"
 )
 
 type factory func(engine.Host, *goja.Runtime) interface{}
@@ -57,13 +60,10 @@ func (r *require) require(call goja.FunctionCall) goja.Value {
 		r.exports[file] = e
 		return e
 	} else {
-		if !strings.HasSuffix(file, ".js") {
-			file = file + ".js"
-		}
-
-		src, err := r.host.OpenScript(file)
+		src, err := r.loadModule(file)
 		if err != nil {
-			panic(err)
+			log.Errorf("unable to load module %v: %v", file, err)
+			return goja.Null()
 		}
 
 		export, err := r.open(file, src)
@@ -78,4 +78,32 @@ func (r *require) require(call goja.FunctionCall) goja.Value {
 func (r *require) close() {
 	r.exports = nil
 	r.runtime = nil
+}
+
+const json = "export default JSON.parse('%v')"
+
+func (r *require) loadModule(file string) (string, error) {
+	path := file
+
+	if len(filepath.Ext(path)) > 0 {
+		src, err := r.host.OpenScript(path)
+		if err == nil && filepath.Ext(path) == ".json" {
+			return fmt.Sprintf(json, template.JSEscapeString(src)), nil
+		}
+		return src, err
+	}
+
+	path = file + ".js"
+	src, err := r.host.OpenScript(path)
+	if err == nil {
+		return src, nil
+	}
+
+	path = file + ".json"
+	src, err = r.host.OpenScript(path)
+	if err == nil {
+		return fmt.Sprintf(json, template.JSEscapeString(src)), nil
+	}
+
+	return "", err
 }

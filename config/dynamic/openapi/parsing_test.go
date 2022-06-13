@@ -52,26 +52,26 @@ func TestEndpointResolve(t *testing.T) {
 		target := &openapi.Endpoint{}
 		reader := &testReader{readFunc: func(cfg *common.Config) error {
 			require.Equal(t, "/foo.yml", cfg.Url.String())
-			config := openapitest.NewConfig("3.0", openapitest.WithEndpoint("foo", target))
+			config := openapitest.NewConfig("3.0", openapitest.WithEndpoint("/foo", target))
 			cfg.Data = config
 			return nil
 		}}
-		config := openapitest.NewConfig("3.0", openapitest.WithEndpointRef("foo", &openapi.EndpointRef{Reference: ref.Reference{Ref: "foo.yml#/paths/foo"}}))
+		config := openapitest.NewConfig("3.0", openapitest.WithEndpointRef("/foo", &openapi.EndpointRef{Reference: ref.Reference{Ref: "foo.yml#/paths/foo"}}))
 		err := config.Parse(&common.Config{Url: &url.URL{}, Data: config}, reader)
 		require.NoError(t, err)
-		require.Equal(t, target, config.Paths.Value["foo"].Value)
+		require.Equal(t, target, config.Paths.Value["/foo"].Value)
 	})
 	t.Run("file reference but nil", func(t *testing.T) {
 		reader := &testReader{readFunc: func(cfg *common.Config) error {
 			require.Equal(t, "/foo.yml", cfg.Url.String())
-			config := openapitest.NewConfig("3.0", openapitest.WithEndpoint("foo", nil))
+			config := openapitest.NewConfig("3.0", openapitest.WithEndpoint("/foo", nil))
 			cfg.Data = config
 			return nil
 		}}
-		config := openapitest.NewConfig("3.0", openapitest.WithEndpointRef("foo", &openapi.EndpointRef{Reference: ref.Reference{Ref: "foo.yml#/paths/foo"}}))
+		config := openapitest.NewConfig("3.0", openapitest.WithEndpointRef("/foo", &openapi.EndpointRef{Reference: ref.Reference{Ref: "foo.yml#/paths/foo"}}))
 		err := config.Parse(&common.Config{Url: &url.URL{}, Data: config}, reader)
 		require.NoError(t, err)
-		require.Nil(t, config.Paths.Value["foo"].Value)
+		require.Nil(t, config.Paths.Value["/foo"].Value)
 	})
 	t.Run("reader returns error", func(t *testing.T) {
 		reader := &testReader{readFunc: func(cfg *common.Config) error {

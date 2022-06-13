@@ -75,15 +75,15 @@ func selectData(data interface{}, schema *Ref) (interface{}, error) {
 	switch data.(type) {
 	case []interface{}:
 		if schema.Value.Type != "array" {
-			return nil, fmt.Errorf("expected %q but found array", schema.Value.Type)
+			return nil, fmt.Errorf("found array, expected %v", schema)
 		}
 	case map[string]interface{}:
 		if schema.Value.Type != "object" {
-			return nil, fmt.Errorf("expected %q but found object", schema.Value.Type)
+			return nil, fmt.Errorf("found object, expected %v", schema)
 		}
 	case struct{}:
 		if schema.Value.Type != "object" {
-			return nil, fmt.Errorf("expected %q but found object", schema.Value.Type)
+			return nil, fmt.Errorf("found object, expected %v", schema)
 		}
 	}
 

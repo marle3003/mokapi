@@ -1,6 +1,7 @@
 package js
 
 import (
+	"fmt"
 	"github.com/dop251/goja"
 	r "github.com/stretchr/testify/require"
 	"testing"
@@ -29,6 +30,10 @@ func TestRequire(t *testing.T) {
 			"require custom file",
 			func(t *testing.T) {
 				host.openScript = func(file string) (string, error) {
+					// first request is foo, second is foo.js
+					if file == "foo" {
+						return "", fmt.Errorf("TEST ERROR NOT FOUND")
+					}
 					r.Equal(t, "foo.js", file)
 					return "export var bar = {demo: 'demo'};", nil
 				}
@@ -39,6 +44,20 @@ func TestRequire(t *testing.T) {
 				r.NoError(t, err)
 
 				r.NoError(t, s.Run())
+			},
+		},
+		{
+			"require json file",
+			func(t *testing.T) {
+				host.openScript = func(file string) (string, error) {
+					return `{"foo":"bar"}`, nil
+				}
+				s, err := New("test", `import bar from 'foo.json'; export default function() {return bar.foo;}`, host)
+				r.NoError(t, err)
+
+				v, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, "bar", v.Export())
 			},
 		},
 	}

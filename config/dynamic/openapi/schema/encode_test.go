@@ -238,14 +238,14 @@ func TestRef_Marshal_Invalid(t *testing.T) {
 			&schema.Ref{Value: schematest.New("array", schematest.WithItems(schematest.New("integer")), schematest.WithMinItems(3))},
 			[]interface{}{12, 13},
 			media.ParseContentType("application/json"),
-			`validation error on [12 13], expected schema type=array minItems=3`,
+			`validation error minItems on [12 13], expected schema type=array minItems=3`,
 		},
 		{
 			"max array",
 			&schema.Ref{Value: schematest.New("array", schematest.WithItems(schematest.New("integer")), schematest.WithMaxItems(1))},
 			[]interface{}{12, 13},
 			media.ParseContentType("application/json"),
-			`validation error on [12 13], expected schema type=array maxItems=1`,
+			`validation error maxItems on [12 13], expected schema type=array maxItems=1`,
 		},
 		{
 			"map missing required property",
@@ -256,7 +256,7 @@ func TestRef_Marshal_Invalid(t *testing.T) {
 			)},
 			map[interface{}]interface{}{"name": "foo"},
 			media.ParseContentType("application/json"),
-			`validation error on {name: foo}, expected schema type=object properties=[name, value] required=[value]`,
+			`missing required field value on {name: foo}, expected schema type=object properties=[name, value] required=[value]`,
 		},
 	}
 

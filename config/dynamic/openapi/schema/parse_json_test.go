@@ -653,7 +653,7 @@ func TestValidate_Object(t *testing.T) {
 				schematest.WithProperty("age", schematest.New("integer")),
 			),
 			func(t *testing.T, _ interface{}, err error) {
-				require.EqualError(t, err, `validation error on {"name":"foo"}, expected schema type=object properties=[name, age] required=[name age]`)
+				require.EqualError(t, err, `missing required field age on {"name":"foo"}, expected schema type=object properties=[name, age] required=[name age]`)
 			},
 		},
 		{
@@ -663,7 +663,7 @@ func TestValidate_Object(t *testing.T) {
 				schematest.WithMinProperties(2),
 			),
 			func(t *testing.T, _ interface{}, err error) {
-				require.EqualError(t, err, `validation error on {"name":"foo"}, expected schema type=object minProperties=2`)
+				require.EqualError(t, err, `validation error minProperties on {"name":"foo"}, expected schema type=object minProperties=2`)
 			},
 		},
 		{

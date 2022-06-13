@@ -23,7 +23,7 @@ channels:
 components:
   messages:
     order:
-      contenttype: application/json
+      contentType: application/json
       payload:
         $ref: '#/components/schemas/order'
       headers:
