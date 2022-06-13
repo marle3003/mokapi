@@ -3,3 +3,88 @@ components:
     HttpInfo:
       allOf:
         - $ref: 'common.yml#/components/schemas/Service'
+        - type: object
+          properties:
+            servers:
+              type: array
+              items:
+                type: object
+                properties:
+                  url:
+                    type: string
+                  description:
+                    type: string
+            paths:
+              type: array
+              items:
+                type: object
+                properties:
+                  path:
+                    type: string
+                  summary:
+                    type: string
+                  description:
+                    type: string
+                  operations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        method:
+                          type: string
+                        summary:
+                          type: string
+                        description:
+                          type: string
+                        operationId:
+                          type: string
+                        requestBody:
+                          type: object
+                          properties:
+                            description:
+                              type: string
+                            contents:
+                              type: array
+                              items:
+                                $ref: '#/components/schemas/MediaType'
+                            required:
+                              type: boolean
+                        paraneters:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/Parameter'
+                        responses:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              statusCode:
+                                type: integer
+                              description:
+                                type: string
+                              contents:
+                                $ref: '#/components/schemas/MediaType'
+    MediaType:
+      type: object
+      properties:
+        type:
+          type: string
+        schema:
+          $ref: 'schema.yml#/components/schemas/Schema'
+    Parameter:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        description:
+          type: string
+        required:
+          type: boolean
+        style:
+          type: string
+        explode:
+          type: boolean
+        schema:
+          $ref: 'schema.yml#/components/schemas/Schema'

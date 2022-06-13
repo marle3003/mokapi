@@ -1,6 +1,7 @@
 import {on} from 'mokapi'
 import {clusters, events as kafkaEvents} from 'kafka.js'
 import {apps as httpServices, events as httpEvents} from 'services_http'
+import {server as smtpServers} from 'smtp'
 import {metrics} from 'metrics'
 
 export default function() {
@@ -9,14 +10,19 @@ export default function() {
 
         switch (request.operationId) {
             case 'info':
-                response.data = {version: "1.0", activeServices: ["http", "kafka"]}
+                response.data = {version: "1.0", activeServices: ["http", "kafka", "smtp"]}
                 return true
             case 'services':
                 response.data = getServices()
                 return true
+            case 'serviceHttp':
+                response.data = httpServices[0]
+                return true
             case 'serviceKafka':
-                console.log(clusters)
                 response.data = clusters[0]
+                return true
+            case 'serviceSmtp':
+                response.data = smtpServers[0]
                 return true
             case 'metrics':
                 let q = request.query["query"]
@@ -53,8 +59,12 @@ function getServices() {
         c.topics = c.topics.map(t => t.name)
         return c
     })
+    let smtp = smtpServers.map(x => {
+        x.type = "smtp"
+        return x
+    })
 
-    return http.concat(kafka)
+    return http.concat(kafka).concat(smtp)
 }
 
 function getEvent(id) {

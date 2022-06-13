@@ -31,6 +31,23 @@ paths:
                   anyOf:
                     - $ref: 'http.yml#/components/schemas/HttpInfo'
                     - $ref: 'kafka.yml#/components/schemas/KafkaInfo'
+  /api/services/http/{name}:
+    get:
+      summary: Information about the http service
+      operationId: serviceHttp
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: http service
+          content:
+            application/json:
+              schema:
+                $ref: 'kafka.yml#/components/schemas/HttpInfo'
   /api/services/kafka/{name}:
     get:
       summary: Information about the kafka cluster
@@ -48,6 +65,23 @@ paths:
             application/json:
               schema:
                 $ref: 'kafka.yml#/components/schemas/Kafka'
+  /api/services/smtp/{name}:
+    get:
+      summary: Information about the smtp server
+      operationId: serviceSmtp
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: name of kafka cluster
+          content:
+            application/json:
+              schema:
+                $ref: 'smtp.yml#/components/schemas/SmtpInfo'
   /api/services/kafka/{name}/groups:
     get:
       summary: Information about the kafka cluster

@@ -31,4 +31,8 @@ export let metrics = [
         name: 'kafka_consumer_group_lag{service="Kafka World",group="foo",topic="foo",partition="0"}"',
         value: 10
     },
+    {
+        name: 'smtp_mails_total{service="Smtp Testserver"}"',
+        value: 3
+    },
 ]

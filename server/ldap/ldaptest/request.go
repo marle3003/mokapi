@@ -1,6 +1,7 @@
 package ldaptest
 
 import (
+	"context"
 	ber "gopkg.in/go-asn1-ber/asn1-ber.v1"
 	"mokapi/server/ldap"
 )
@@ -38,6 +39,7 @@ func NewSimpleBindRequest(messageId, version int64, name, password string) *ldap
 	))
 
 	return &ldap.Request{
+		Context:   context.Background(),
 		MessageId: messageId,
 		Body:      body,
 	}
@@ -52,6 +54,7 @@ func NewUnbindRequest(messageId int64) *ldap.Request {
 		"Bind Request")
 
 	return &ldap.Request{
+		Context:   context.Background(),
 		MessageId: messageId,
 		Body:      body,
 	}
@@ -66,6 +69,7 @@ func NewAbandonRequest(messageId int64) *ldap.Request {
 		"Abandon Request")
 
 	return &ldap.Request{
+		Context:   context.Background(),
 		MessageId: messageId,
 		Body:      body,
 	}
@@ -141,6 +145,7 @@ func NewSearchRequest(messageId int64, r *ldap.SearchRequest) *ldap.Request {
 	body.AppendChild(attributes)
 
 	return &ldap.Request{
+		Context:   context.Background(),
 		MessageId: messageId,
 		Body:      body,
 	}

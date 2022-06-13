@@ -12,8 +12,8 @@
           <b-col>
             <b-card no-body class="w-100">
               <b-tabs card>
-                <b-tab title="Channels" v-on:click="selectedTab='channels'" :class="[selectedTab === 'channels' ? 'active' : '']">
-                  <b-table :items="service.channels" :fields="channelFields" table-class="dataTable">
+                <b-tab title="Topics" v-on:click="selectedTab='topics'" :class="[selectedTab === 'topics' ? 'active' : '']">
+                  <b-table :items="service.topics" :fields="topicFields" table-class="dataTable">
                     <template v-slot:cell(key)="data">
                       <schema v-bind:schema="data.item.key" />
                     </template>
@@ -22,7 +22,7 @@
                     </template>
                   </b-table>
                 </b-tab>
-                <b-tab title="Servers" v-on:click="selectedTab='servers'" :class="[selectedTab === 'servers' ? 'active' : '']">
+                <b-tab title="Brokers" v-on:click="selectedTab='servers'" :class="[selectedTab === 'servers' ? 'active' : '']">
                   <b-table :items="service.servers" :fields="serverFields" table-class="dataTable">
                     <template v-slot:cell(configs)="data">
                       <div v-for="c in data.item.configs" :key="c.key" class="config">
@@ -43,7 +43,7 @@
 </template>
 
 <script>
-import ServiceInfo from '@/components/asyncapi/ServiceInfo'
+import ServiceInfo from '@/components/kafka/ServiceInfo'
 import Api from '@/mixins/Api'
 import Schema from '@/components/Schema'
 
@@ -59,9 +59,9 @@ export default {
       service: null,
       timer: null,
       loaded: false,
-      channelFields: ['name', 'key', 'value'],
+      topicFields: ['name', 'description', 'key', 'value'],
       serverFields: ['url', 'configs'],
-      selectedTab: 'channels'
+      selectedTab: 'topics'
     }
   },
   created () {
@@ -70,11 +70,9 @@ export default {
   },
   methods: {
     async getData () {
-      let serviceName = this.$route.params.name
-      let service = await this.getAsyncApiService(serviceName)
-      for (let server of service.servers) {
-        server.configs.sort(this.compare)
-      }
+      let response = await this.$http.get(this.baseUrl + '/api/services/kafka/' + this.$route.params.name)
+      let service = response.data
+      service.servers.sort(this.compare)
       this.service = service
       this.loaded = true
     },
@@ -85,8 +83,8 @@ export default {
       this.$router.push({ name: 'models' })
     },
     compare (s1, s2) {
-      const a = s1.key.toLowerCase()
-      const b = s2.key.toLowerCase()
+      const a = s1.name.toLowerCase()
+      const b = s2.name.toLowerCase()
       if (a < b) {
         return -1
       }

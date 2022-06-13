@@ -4,6 +4,7 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/ldap"
+	"mokapi/runtime/monitor"
 )
 
 // Filters: https://ldapwiki.com/wiki/LDAP%20Filter%20Choices
@@ -47,14 +48,18 @@ const (
 )
 
 type Directory struct {
-	config *ldap.Config
-	server *Server
+	config  *ldap.Config
+	server  *Server
+	monitor *monitor.Ldap
 }
 
-func NewDirectory(config *ldap.Config) *Directory {
+func NewDirectory(config *ldap.Config, m *monitor.Ldap) *Directory {
 	d := &Directory{
-		config: config,
-		server: &Server{Addr: config.Address},
+		config:  config,
+		monitor: m,
+		server: &Server{
+			Addr: config.Address,
+		},
 	}
 	d.server.Handler = d
 	return d
@@ -79,6 +84,8 @@ func (d *Directory) Update(config *ldap.Config) {
 }
 
 func (d *Directory) Serve(rw ResponseWriter, r *Request) {
+	r.Context = monitor.NewLdapContext(r.Context, d.monitor)
+
 	switch r.Body.Tag {
 	case ApplicationBindRequest:
 		if err := d.bind(rw, r); err != nil {

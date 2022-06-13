@@ -43,7 +43,7 @@ func TestHandler_Http(t *testing.T) {
 			app: &runtime.App{
 				Http: map[string]*runtime.HttpInfo{
 					"foo": {
-						Config: openapitest.NewConfig("3.0.0"),
+						Config: openapitest.NewConfig("3.0.0", openapitest.WithInfo("foo", "1.0", "bar")),
 					},
 				},
 			},
@@ -56,7 +56,7 @@ func TestHandler_Http(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"openapi":"3.0.0","info":{"title":"","version":""},"paths":{},"components":{}}`))
+					try.HasBody(`{"name":"foo","description":"bar","version":"1.0"}`))
 			},
 		},
 	}

@@ -1,10 +1,10 @@
 <template>
-  <b-row>
+  <b-row v-if="pathItem != null">
     <b-col>
-      <b-container fluid v-if="endpoint != null">
+      <b-container fluid>
         <b-row class="mb-2">
           <b-col cols="auto" class="mr-auto pl-0">
-          <h3>{{ endpoint.path }}</h3>
+          <h3>{{ pathItem.path }}</h3>
           </b-col>
           <b-col cols="auto" class="pr-0">
           <div class="close" @click="$router.go(-1)">
@@ -20,14 +20,14 @@
               </b-col>
               <b-col>
                 <p class="label">Summary</p>
-                <p class="title">{{ endpoint.summary }}</p>
+                <p class="title">{{ pathItem.summary }}</p>
               </b-col>
               </b-row>
               <b-row>
                 <b-col class="col-image"></b-col>
               <b-col>
                 <p class="label">Description</p>
-                <vue-simple-markdown :source="endpoint.description" />
+                <vue-simple-markdown :source="pathItem.description" />
               </b-col>
             </b-row>
           </b-card>
@@ -35,7 +35,7 @@
         <b-row>
           <b-card no-body class="w-100">
             <b-tabs card>
-              <b-tab v-for="operation in endpoint.operations" :key="operation.method">
+              <b-tab v-for="operation in pathItem.operations" :key="operation.method">
                 <template v-slot:title>
                 <b-badge pill class="operation" :class="operation.method" >{{ operation.method }}</b-badge>
                 </template>
@@ -44,13 +44,11 @@
                   <p>{{ operation.summary }}</p>
                   <p class="label">Description</p>
                   <p><vue-simple-markdown :source="operation.description" /></p>
-                  <p class="label">Pipeline</p>
-                  <p><vue-simple-markdown :source="operation.pipeline" /></p>
 
                   <h2>Parameters</h2>
                   <parameters v-bind:operation="operation" />
 
-                  <request v-bind:operation="operation" />
+                  <requestBody v-bind:operation="operation" />
 
                   <hr />
                   <h2>Response</h2>
@@ -66,15 +64,15 @@
 </template>
 
 <script>
-import Parameters from '@/components/Parameters'
-import Response from '@/components/Response'
-import RequestBody from '@/components/RequestBody'
+import Parameters from '@/components/http/Parameters'
+import Response from '@/components/http/Response'
+import RequestBody from '@/components/http/RequestBody'
 
 export default {
   name: 'endpoint',
   props: ['service'],
   computed: {
-    endpoint: function () {
+    pathItem: function () {
       if (this.service == null) {
         return null
       }
@@ -82,10 +80,10 @@ export default {
       let path = this.$route.params.path
       path = decodeURIComponent(path)
 
-      for (let i = 0; i < this.service.endpoints.length; i++) {
-        let endpoint = this.service.endpoints[i]
-        if (endpoint.path === path) {
-          return endpoint
+      for (let i = 0; i < this.service.paths.length; i++) {
+        let pathItem = this.service.paths[i]
+        if (pathItem.path === path) {
+          return pathItem
         }
       }
 
@@ -95,7 +93,7 @@ export default {
   components: {
     'parameters': Parameters,
     'response': Response,
-    'request': RequestBody
+    'requestBody': RequestBody
   },
   methods: {
     doCommand (e) {

@@ -18,7 +18,7 @@ export default {
     },
     async getService (serviceName) {
       let response = await this.$http.get(
-        this.baseUrl + '/api/services/openapi/' + serviceName
+        this.baseUrl + '/api/services/http/' + serviceName
       )
       return response.data
     },

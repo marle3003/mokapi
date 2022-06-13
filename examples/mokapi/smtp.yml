@@ -1,0 +1,9 @@
+components:
+  schemas:
+    SmtpInfo:
+      allOf:
+        - $ref: 'common.yml#/components/schemas/Service'
+        - type: object
+          properties:
+            address:
+              type: string

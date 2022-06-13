@@ -29,6 +29,17 @@ components:
             email:
               type: string
               format: email
+        servers:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              url:
+                type: string
+              description:
+                type: string
         topics:
           type: array
           items:

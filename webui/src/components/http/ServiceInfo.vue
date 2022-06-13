@@ -1,6 +1,6 @@
 <template>
-      <b-card class="w-100">
-      <b-row v-if="service !== null">
+    <b-card class="w-100" v-if="service !== null">
+      <b-row>
         <b-col class="col-image">
               <img src="@/assets/service.png" />
           </b-col>
@@ -15,11 +15,11 @@
           <p>{{ service.type }}</p>
           <p class="label">Address</p>
           <ul class="list-unstyled">
-              <li v-for="url in service.baseUrls" :key="url.url" v-b-tooltip.hover="{placement: 'left', customClass: 'address'}" :title="url.description">{{ url.url }}</li>
+              <li v-for="server in service.servers" :key="server.url" v-b-tooltip.hover="{placement: 'left', customClass: 'address'}" :title="server.description">{{ server.url }}</li>
           </ul>
         </b-col>
       </b-row>
-      <b-row v-if="service !== null">
+      <b-row>
         <b-col class="col-image">
         </b-col>
         <b-col>

@@ -4,6 +4,7 @@ import (
 	"github.com/stretchr/testify/require"
 	ber "gopkg.in/go-asn1-ber/asn1-ber.v1"
 	config "mokapi/config/dynamic/ldap"
+	"mokapi/runtime/monitor"
 	"mokapi/server/ldap"
 	"mokapi/server/ldap/ldaptest"
 	"strings"
@@ -11,51 +12,54 @@ import (
 	"time"
 )
 
-var testConfig = &config.Config{Entries: map[string]config.Entry{
-	"": {
-		Dn: "dc=foo,dc=com",
-		Attributes: map[string][]string{
-			"objectclass": {"foo"},
+var testConfig = &config.Config{
+	Info: config.Info{Name: "foo"},
+	Entries: map[string]config.Entry{
+		"": {
+			Dn: "dc=foo,dc=com",
+			Attributes: map[string][]string{
+				"objectclass": {"foo"},
+			},
 		},
-	},
-	"user1": {
-		Dn: "cn=user1,dc=foo,dc=com",
-		Attributes: map[string][]string{
-			"objectclass": {"foo"},
-			"mail":        {"user1@foo.bar"},
+		"user1": {
+			Dn: "cn=user1,dc=foo,dc=com",
+			Attributes: map[string][]string{
+				"objectclass": {"foo"},
+				"mail":        {"user1@foo.bar"},
+			},
 		},
-	},
-	"user2": {
-		Dn: "cn=user2,dc=foo,dc=com",
-		Attributes: map[string][]string{
-			"objectclass": {"foo"},
-			"mail":        {"user2@foo.bar"},
+		"user2": {
+			Dn: "cn=user2,dc=foo,dc=com",
+			Attributes: map[string][]string{
+				"objectclass": {"foo"},
+				"mail":        {"user2@foo.bar"},
+			},
 		},
-	},
-}}
+	}}
 
 func TestDirectory_ServeBind(t *testing.T) {
 	testcases := []struct {
 		name   string
 		config *config.Config
-		fn     func(t *testing.T, d *ldap.Directory)
+		fn     func(t *testing.T, d *ldap.Directory, m *monitor.Ldap)
 	}{
 		{
 			name:   "anonymous bind",
-			config: &config.Config{},
-			fn: func(t *testing.T, d *ldap.Directory) {
+			config: &config.Config{Info: config.Info{Name: "foo"}},
+			fn: func(t *testing.T, d *ldap.Directory, m *monitor.Ldap) {
 				rr := ldaptest.NewRecorder()
 				d.Serve(rr, ldaptest.NewSimpleBindRequest(0, 3, "", ""))
 				require.Equal(t, int64(0), rr.Responses[0].MessageId)
 				require.Equal(t, ldap.ResultSuccess, rr.Responses[0].Body.Children[0].Value)
 				require.Equal(t, "", rr.Responses[0].Body.Children[1].Value)
 				require.Equal(t, "", rr.Responses[0].Body.Children[2].Value)
+				require.Equal(t, 1.0, m.Bind.WithLabel("foo").Value())
 			},
 		},
 		{
 			name:   "unsupported bind request",
 			config: &config.Config{},
-			fn: func(t *testing.T, d *ldap.Directory) {
+			fn: func(t *testing.T, d *ldap.Directory, m *monitor.Ldap) {
 				rr := ldaptest.NewRecorder()
 				r := ldaptest.NewSimpleBindRequest(0, 3, "", "")
 				// switch to sasl
@@ -65,12 +69,13 @@ func TestDirectory_ServeBind(t *testing.T) {
 				require.Equal(t, ldap.AuthMethodNotSupported, rr.Responses[0].Body.Children[0].Value)
 				require.Equal(t, "", rr.Responses[0].Body.Children[1].Value)
 				require.Equal(t, "server supports only simple auth method", rr.Responses[0].Body.Children[2].Value)
+				require.Equal(t, 0.0, m.Bind.WithLabel("foo").Value())
 			},
 		},
 		{
 			name:   "unsupported ldap version",
 			config: &config.Config{},
-			fn: func(t *testing.T, d *ldap.Directory) {
+			fn: func(t *testing.T, d *ldap.Directory, m *monitor.Ldap) {
 				rr := ldaptest.NewRecorder()
 				r := ldaptest.NewSimpleBindRequest(0, 3, "", "")
 				// switch version
@@ -86,8 +91,9 @@ func TestDirectory_ServeBind(t *testing.T) {
 
 	for _, test := range testcases {
 		t.Run(test.name, func(t *testing.T) {
-			d := ldap.NewDirectory(test.config)
-			test.fn(t, d)
+			m := monitor.New()
+			d := ldap.NewDirectory(test.config, m.Ldap)
+			test.fn(t, d, m.Ldap)
 		})
 	}
 }
@@ -111,7 +117,8 @@ func TestDirectory_ServeUnbind(t *testing.T) {
 
 	for _, test := range testcases {
 		t.Run(test.name, func(t *testing.T) {
-			d := ldap.NewDirectory(test.config)
+			m := monitor.New()
+			d := ldap.NewDirectory(test.config, m.Ldap)
 			test.fn(t, d)
 		})
 	}
@@ -136,7 +143,8 @@ func TestDirectory_ServeAbandon(t *testing.T) {
 
 	for _, test := range testcases {
 		t.Run(test.name, func(t *testing.T) {
-			d := ldap.NewDirectory(test.config)
+			m := monitor.New()
+			d := ldap.NewDirectory(test.config, m.Ldap)
 			test.fn(t, d)
 		})
 	}
@@ -146,12 +154,12 @@ func TestDirectory_ServeSearch(t *testing.T) {
 	testcases := []struct {
 		name   string
 		config *config.Config
-		fn     func(t *testing.T, d *ldap.Directory)
+		fn     func(t *testing.T, d *ldap.Directory, m *monitor.Ldap)
 	}{
 		{
 			name:   "empty base object",
-			config: &config.Config{},
-			fn: func(t *testing.T, d *ldap.Directory) {
+			config: &config.Config{Info: config.Info{Name: "foo"}},
+			fn: func(t *testing.T, d *ldap.Directory, m *monitor.Ldap) {
 				rr := ldaptest.NewRecorder()
 				d.Serve(rr, ldaptest.NewSearchRequest(0, &ldap.SearchRequest{
 					BaseDN: "",
@@ -164,12 +172,15 @@ func TestDirectory_ServeSearch(t *testing.T) {
 				require.Equal(t, ldap.ResultSuccess, rr.Responses[1].Body.Children[0].Value)
 				require.Equal(t, "", rr.Responses[1].Body.Children[1].Value)
 				require.Equal(t, "", rr.Responses[1].Body.Children[2].Value)
+
+				require.Equal(t, 1.0, m.Search.WithLabel("foo").Value())
+				require.NotEqual(t, 0, m.LastSearch.WithLabel("foo").Value())
 			},
 		},
 		{
 			name:   "base object",
 			config: &config.Config{Root: config.Entry{Attributes: map[string][]string{"foo": {"bar"}}}},
-			fn: func(t *testing.T, d *ldap.Directory) {
+			fn: func(t *testing.T, d *ldap.Directory, m *monitor.Ldap) {
 				rr := ldaptest.NewRecorder()
 				d.Serve(rr, ldaptest.NewSearchRequest(0, &ldap.SearchRequest{
 					BaseDN: "",
@@ -197,7 +208,7 @@ func TestDirectory_ServeSearch(t *testing.T) {
 					},
 				},
 			}},
-			fn: func(t *testing.T, d *ldap.Directory) {
+			fn: func(t *testing.T, d *ldap.Directory, m *monitor.Ldap) {
 				rr := ldaptest.NewRecorder()
 				d.Serve(rr, ldaptest.NewSearchRequest(0, &ldap.SearchRequest{
 					BaseDN: "dc=foo,dc=com",
@@ -221,7 +232,7 @@ func TestDirectory_ServeSearch(t *testing.T) {
 		{
 			name:   "objectclass=* scope=ScopeBaseObject only return base",
 			config: testConfig,
-			fn: func(t *testing.T, d *ldap.Directory) {
+			fn: func(t *testing.T, d *ldap.Directory, m *monitor.Ldap) {
 				rr := ldaptest.NewRecorder()
 				d.Serve(rr, ldaptest.NewSearchRequest(0, &ldap.SearchRequest{
 					BaseDN: "dc=foo,dc=com",
@@ -245,7 +256,7 @@ func TestDirectory_ServeSearch(t *testing.T) {
 		{
 			name:   "objectclass=* scope=ScopeSingleLevel",
 			config: testConfig,
-			fn: func(t *testing.T, d *ldap.Directory) {
+			fn: func(t *testing.T, d *ldap.Directory, m *monitor.Ldap) {
 				rr := ldaptest.NewRecorder()
 				d.Serve(rr, ldaptest.NewSearchRequest(0, &ldap.SearchRequest{
 					BaseDN: "dc=foo,dc=com",
@@ -301,7 +312,7 @@ func TestDirectory_ServeSearch(t *testing.T) {
 		{
 			name:   "equals",
 			config: testConfig,
-			fn: func(t *testing.T, d *ldap.Directory) {
+			fn: func(t *testing.T, d *ldap.Directory, m *monitor.Ldap) {
 				rr := ldaptest.NewRecorder()
 				d.Serve(rr, ldaptest.NewSearchRequest(0, &ldap.SearchRequest{
 					BaseDN: "dc=foo,dc=com",
@@ -316,7 +327,7 @@ func TestDirectory_ServeSearch(t *testing.T) {
 		{
 			name:   "not equals",
 			config: testConfig,
-			fn: func(t *testing.T, d *ldap.Directory) {
+			fn: func(t *testing.T, d *ldap.Directory, m *monitor.Ldap) {
 				rr := ldaptest.NewRecorder()
 				d.Serve(rr, ldaptest.NewSearchRequest(0, &ldap.SearchRequest{
 					BaseDN: "dc=foo,dc=com",
@@ -330,7 +341,7 @@ func TestDirectory_ServeSearch(t *testing.T) {
 		{
 			name:   "starts with",
 			config: testConfig,
-			fn: func(t *testing.T, d *ldap.Directory) {
+			fn: func(t *testing.T, d *ldap.Directory, m *monitor.Ldap) {
 				rr := ldaptest.NewRecorder()
 				d.Serve(rr, ldaptest.NewSearchRequest(0, &ldap.SearchRequest{
 					BaseDN: "dc=foo,dc=com",
@@ -344,7 +355,7 @@ func TestDirectory_ServeSearch(t *testing.T) {
 		{
 			name:   "ends with",
 			config: testConfig,
-			fn: func(t *testing.T, d *ldap.Directory) {
+			fn: func(t *testing.T, d *ldap.Directory, m *monitor.Ldap) {
 				rr := ldaptest.NewRecorder()
 				d.Serve(rr, ldaptest.NewSearchRequest(0, &ldap.SearchRequest{
 					BaseDN: "dc=foo,dc=com",
@@ -358,7 +369,7 @@ func TestDirectory_ServeSearch(t *testing.T) {
 		{
 			name:   "any",
 			config: testConfig,
-			fn: func(t *testing.T, d *ldap.Directory) {
+			fn: func(t *testing.T, d *ldap.Directory, m *monitor.Ldap) {
 				rr := ldaptest.NewRecorder()
 				d.Serve(rr, ldaptest.NewSearchRequest(0, &ldap.SearchRequest{
 					BaseDN: "dc=foo,dc=com",
@@ -372,7 +383,7 @@ func TestDirectory_ServeSearch(t *testing.T) {
 		{
 			name:   "and",
 			config: testConfig,
-			fn: func(t *testing.T, d *ldap.Directory) {
+			fn: func(t *testing.T, d *ldap.Directory, m *monitor.Ldap) {
 				rr := ldaptest.NewRecorder()
 				d.Serve(rr, ldaptest.NewSearchRequest(0, &ldap.SearchRequest{
 					BaseDN: "dc=foo,dc=com",
@@ -386,7 +397,7 @@ func TestDirectory_ServeSearch(t *testing.T) {
 		{
 			name:   "or",
 			config: testConfig,
-			fn: func(t *testing.T, d *ldap.Directory) {
+			fn: func(t *testing.T, d *ldap.Directory, m *monitor.Ldap) {
 				rr := ldaptest.NewRecorder()
 				d.Serve(rr, ldaptest.NewSearchRequest(0, &ldap.SearchRequest{
 					BaseDN: "dc=foo,dc=com",
@@ -400,7 +411,7 @@ func TestDirectory_ServeSearch(t *testing.T) {
 		{
 			name:   "not",
 			config: testConfig,
-			fn: func(t *testing.T, d *ldap.Directory) {
+			fn: func(t *testing.T, d *ldap.Directory, m *monitor.Ldap) {
 				rr := ldaptest.NewRecorder()
 				d.Serve(rr, ldaptest.NewSearchRequest(0, &ldap.SearchRequest{
 					BaseDN: "dc=foo,dc=com",
@@ -416,14 +427,16 @@ func TestDirectory_ServeSearch(t *testing.T) {
 
 	for _, test := range testcases {
 		t.Run(test.name, func(t *testing.T) {
-			d := ldap.NewDirectory(test.config)
-			test.fn(t, d)
+			m := monitor.New()
+			d := ldap.NewDirectory(test.config, m.Ldap)
+			test.fn(t, d, m.Ldap)
 		})
 	}
 }
 
 func TestStart(t *testing.T) {
-	d := ldap.NewDirectory(&config.Config{Address: ":12345"})
+	m := monitor.New()
+	d := ldap.NewDirectory(&config.Config{Address: ":12345"}, m.Ldap)
 	d.Start()
 	defer d.Close()
 

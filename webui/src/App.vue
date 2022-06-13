@@ -58,7 +58,7 @@ export default {
   }
   .operation{
       text-transform: uppercase;
-      color:var(--var-color-primary);
+      color:var(--var-color-secondary);
   }
   .operation.put, .operation.patch{
     background-color: var(--orange);
