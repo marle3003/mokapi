@@ -112,9 +112,10 @@ func (p *Provider) checkFiles(ch chan *common.Config) {
 }
 
 func (p *Provider) readUrl(u *url.URL) (c *common.Config, changed bool, err error) {
-	res, err := p.client.Get(u.String())
+	var res *http.Response
+	res, err = p.client.Get(u.String())
 	if err != nil {
-		log.Errorf("request to %q failed: %v", p.config.Url, err)
+		err = fmt.Errorf("request to %q failed: %v", p.config.Url, err)
 		return
 	}
 
@@ -126,13 +127,13 @@ func (p *Provider) readUrl(u *url.URL) (c *common.Config, changed bool, err erro
 	}()
 
 	if res.StatusCode != http.StatusOK {
-		log.Errorf("received non-ok response code: %d", res.StatusCode)
+		err = fmt.Errorf("received non-ok response code: %d", res.StatusCode)
 		return
 	}
 
 	b, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		log.Errorf("unable to read response body: %v", err.Error())
+		err = fmt.Errorf("unable to read response body: %v", err.Error())
 	}
 
 	hash := fnv.New64()

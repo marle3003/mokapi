@@ -49,7 +49,8 @@ export default new Router({
     {
       path: '/dashboard/http',
       name: 'http',
-      component: Dashboard
+      component: Dashboard,
+      meta: {showMetrics: true}
     },
     {
       path: '/dashboard/http/request/:id',
@@ -59,7 +60,8 @@ export default new Router({
     {
       path: '/dashboard/kafka',
       name: 'kafka',
-      component: Dashboard
+      component: Dashboard,
+      meta: {showMetrics: true}
     },
     {
       path: '/dashboard/kafka/:cluster',
@@ -74,7 +76,8 @@ export default new Router({
     {
       path: '/dashboard/smtp',
       name: 'smtp',
-      component: Dashboard
+      component: Dashboard,
+      meta: {showMetrics: true}
     },
     {
       path: '/dashboard/smtp/mails/:id',

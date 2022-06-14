@@ -56,7 +56,7 @@
           small
           hover
           class="dataTable selectable"
-          :items="cluster.topics"
+          :items="topics"
           :fields="topicFields"
           style="table-layout: fixed"
           @row-clicked="topicClickHandler"
@@ -132,9 +132,18 @@ export default {
       ]
     }
   },
+  computed: {
+    topics: function () {
+      return this.cluster.topics.sort()
+    }
+  },
   methods: {
     async getData () {
       const name = this.$route.params.cluster
+      if (!name){
+        return
+      }
+
       this.$http.get(this.baseUrl + '/api/services/kafka/' + name).then(
         r => {
           this.cluster = r.data

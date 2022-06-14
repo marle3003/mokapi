@@ -126,6 +126,10 @@ export default {
   methods: {
     async getData () {
       let id = this.$route.params.id
+      if (!id){
+        return
+      }
+      
       this.event = await this.getHttpRequest(id)
       this.request = this.event.data.request
       this.response = this.event.data.response

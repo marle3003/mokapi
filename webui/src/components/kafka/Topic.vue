@@ -152,6 +152,10 @@ export default {
   methods: {
     async getData () {
       const name = this.$route.params.cluster
+      if (!name) {
+        return
+      }
+      
       this.$http.get(this.baseUrl + '/api/services/kafka/' + name).then(
         r => {
           this.cluster = r.data

@@ -12,7 +12,6 @@
     >
       <dashboard-header />
       <div class="page-body">
-
         <b-card-group deck v-show="$route.name === 'dashboard'">
           <b-card
             body-class="info-body"
@@ -31,11 +30,11 @@
           </b-card>
         </b-card-group>
 
-        <b-card-group deck v-show="$route.name === 'dashboard'">
+        <b-card-group deck v-show="$route.name === 'dashboard' || $route.meta.showMetrics">
           <b-card
             body-class="info-body"
             class="text-center"
-            v-if="httpEnabled"
+            v-if="httpEnabled && $route.name === 'dashboard' || $route.name === 'http'"
           >
             <b-card-title class="info">Total HTTP Requests</b-card-title>
             <b-card-text class="text-center value">{{ totalHttpRequests }}</b-card-text>
@@ -43,7 +42,7 @@
           <b-card
             body-class="info-body"
             class="text-center"
-            v-if="httpEnabled"
+            v-if="httpEnabled && $route.name === 'dashboard' || $route.name === 'http'"
           >
             <b-card-title class="info">HTTP Request Errors</b-card-title>
             <b-card-text
@@ -119,10 +118,12 @@
                 @row-clicked="kafkaClickHandler"
               >
                 <template v-slot:cell(topics)="data">
-                  <span>{{ data.item.topics.join(', ') }}</span>
+                  <div v-for="topic in data.item.topics" :key="topic" style="text-align: left">
+                    {{ topic }}
+                  </div>
                 </template>
                 <template v-slot:cell(lastMessage)="data">
-                  <span>{{ metric(data.item.metrics, 'kafka_message_timestamp') | moment}}</span>
+                  <span>{{ maxMetric(data.item.metrics, 'kafka_message_timestamp') | moment}}</span>
                 </template>
                 <template v-slot:cell(messages)="data">
                   <span>{{ metric(data.item.metrics, 'kafka_messages_total') }}</span>
@@ -173,7 +174,7 @@ export default {
     'kafka-cluster': KafkaCluster,
     'kafka-topic': KafkaTopic,
     'smtp-services': SmtpServices,
-    'smtp-mails': SmtpMails,
+    'smtp-mails': SmtpMails
   },
   data () {
     return {
@@ -193,7 +194,7 @@ export default {
         'messages',
         'errors'
       ],
-      error: null,
+      error: null
     }
   },
   computed: {
@@ -217,6 +218,7 @@ export default {
       let result = []
       for (let service of this.services) {
         if (service.type === 'kafka') {
+          service.topics = service.topics.sort()
           result.push(service)
         }
       }
