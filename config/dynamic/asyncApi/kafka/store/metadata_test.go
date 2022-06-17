@@ -26,7 +26,8 @@ func TestMetadata(t *testing.T) {
 					asyncapitest.WithChannel("foo"),
 				))
 				rr := kafkatest.NewRecorder()
-				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 4, &metaData.Request{}))
+				r := kafkatest.NewRequest("kafkatest", 4, &metaData.Request{})
+				s.ServeMessage(rr, r)
 
 				res, ok := rr.Message.(*metaData.Response)
 				require.True(t, ok)
@@ -53,6 +54,8 @@ func TestMetadata(t *testing.T) {
 				require.Len(t, res.Topics[0].Partitions[0].IsrNodes, 1)
 				require.Equal(t, int32(0), res.Topics[0].Partitions[0].IsrNodes[0])
 				require.False(t, res.Topics[0].IsInternal)
+
+				require.False(t, kafka.ClientFromContext(r).AllowAutoTopicCreation)
 			},
 		},
 		{
@@ -93,6 +96,21 @@ func TestMetadata(t *testing.T) {
 				require.Len(t, res.Topics, 2)
 				require.Equal(t, kafka.None, res.Topics[0].ErrorCode)
 				require.Equal(t, kafka.UnknownTopicOrPartition, res.Topics[1].ErrorCode)
+			},
+		},
+		{
+			"create auto topic true",
+			func(t *testing.T, s *store.Store) {
+				s.Update(asyncapitest.NewConfig(
+					asyncapitest.WithChannel("foo")))
+
+				rr := kafkatest.NewRecorder()
+				r := kafkatest.NewRequest("kafkatest", 4, &metaData.Request{
+					AllowAutoTopicCreation: true,
+				})
+				s.ServeMessage(rr, r)
+
+				require.True(t, kafka.ClientFromContext(r).AllowAutoTopicCreation)
 			},
 		},
 		{

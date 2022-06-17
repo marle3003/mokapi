@@ -9,13 +9,14 @@ import (
 const clientKey = "client"
 
 type ClientContext struct {
-	Addr                  string
-	ClientId              string
-	ClientSoftwareName    string
-	ClientSoftwareVersion string
-	Heartbeat             time.Time
-	Member                map[string]string
-	Close                 func()
+	Addr                   string
+	ClientId               string
+	ClientSoftwareName     string
+	ClientSoftwareVersion  string
+	Heartbeat              time.Time
+	Member                 map[string]string
+	Close                  func()
+	AllowAutoTopicCreation bool
 }
 
 func (c *ClientContext) AddGroup(groupName, memberId string) {
@@ -43,5 +44,5 @@ func ClientFromContext(req *Request) *ClientContext {
 }
 
 func NewClientContext(ctx context.Context, addr string) context.Context {
-	return context.WithValue(ctx, clientKey, &ClientContext{Addr: addr})
+	return context.WithValue(ctx, clientKey, &ClientContext{Addr: addr, AllowAutoTopicCreation: true})
 }

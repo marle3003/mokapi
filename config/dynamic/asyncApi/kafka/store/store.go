@@ -249,8 +249,8 @@ func (s *Store) getBroker(name string) *Broker {
 
 func (s *Store) getBrokerByHost(addr string) *Broker {
 	for _, b := range s.brokers {
-		h, p := parseHostAndPort(addr)
-		if b.Host == h && b.Port == p {
+		_, p := parseHostAndPort(addr)
+		if b.Port == p {
 			return b
 		}
 	}

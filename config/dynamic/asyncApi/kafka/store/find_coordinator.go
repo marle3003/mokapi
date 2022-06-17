@@ -13,20 +13,34 @@ func (s *Store) findCoordinator(rw kafka.ResponseWriter, req *kafka.Request) err
 
 	switch r.KeyType {
 	case findCoordinator.KeyTypeGroup:
-		b := s.getBrokerByHost(req.Host)
-		if b == nil {
-			res.ErrorCode = kafka.UnknownServerError
-			res.ErrorMessage = "broker not found"
-			break
-		}
-		g := s.GetOrCreateGroup(r.Key, b.Id)
-
-		if g.Coordinator == nil {
-			res.ErrorCode = kafka.CoordinatorNotAvailable
+		ctx := kafka.ClientFromContext(req)
+		var g *Group
+		var found bool
+		if ctx.AllowAutoTopicCreation {
+			b := s.getBrokerByHost(req.Host)
+			if b == nil {
+				res.ErrorCode = kafka.UnknownServerError
+				res.ErrorMessage = "broker not found"
+				break
+			}
+			g = s.GetOrCreateGroup(r.Key, b.Id)
+			if g.Coordinator == nil {
+				res.ErrorCode = kafka.CoordinatorNotAvailable
+			} else {
+				res.NodeId = int32(b.Id)
+				res.Host = b.Host
+				res.Port = int32(b.Port)
+			}
+		} else if g, found = s.Group(r.Key); !found {
+			res.ErrorCode = kafka.GroupIdNotFound
 		} else {
-			res.NodeId = int32(b.Id)
-			res.Host = b.Host
-			res.Port = int32(b.Port)
+			if g.Coordinator == nil {
+				res.ErrorCode = kafka.CoordinatorNotAvailable
+			} else {
+				res.NodeId = int32(g.Coordinator.Id)
+				res.Host = g.Coordinator.Host
+				res.Port = int32(g.Coordinator.Port)
+			}
 		}
 
 	default:
