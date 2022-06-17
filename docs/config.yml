@@ -8,4 +8,5 @@ nav:
   - "Kafka": "kafka.md"
   - "LDAP": "ldap.md"
   - "SMTP": "smtp.md"
+  - "Javascript": "javascript.md"
   - "Lua": "lua.md"

@@ -7,3 +7,6 @@ Mokapi responds to a request. If neither Example nor Enum are defined, Mokapi ge
 random values based on the [OpenAPI schema](https://swagger.io/docs/specification/data-models/).
 If the response should be dependent on the request, you should take a look at [Mokapi Actions](#/docs/actions/intro)
 
+## Swagger 2.0 support
+Mokapi also supports the Swagger 2.0 specification. After parsing a Swagger 2.0 file, mokapi converts it to OpenAPI 3.0
+

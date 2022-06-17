@@ -1,0 +1,54 @@
+# Javascript API
+
+The list of Mokapi's Javascript modules usable to extend Mokapi's behavior.
+
+## mokapi
+
+| Functions                   | Description                                        |
+|-----------------------------|----------------------------------------------------|
+| open(filePath)              | Opens a file and read its content                  |
+| env(name)                   | Returns the value of the environment variable      |
+| on(event, function, args)   | Registers an event handler for the specified event |
+| cron(expr, function, args)  | Creates a new cron job                             |
+| every(expr, function, args) | Creates a new scheduled job                        |
+| sleep(milliseconds)         | Suspends execution for the specified duration.     |
+
+## kafka
+
+| Functions                   | Description                                           |
+|-----------------------------|-------------------------------------------------------|
+| produce(args)               | Produces a new kafka message into the specified topic |
+
+## faker
+
+| Functions    | Description                                                    |
+|--------------|----------------------------------------------------------------|
+| fake(schema) | Generates random data depending on given OpenAPI schema object |
+
+## mustache
+
+| Functions              | Description                                             |
+|------------------------|---------------------------------------------------------|
+| render(template, data) | Renders the given mustache template with the given data |
+
+## yaml
+
+| Functions   | Description                                                                                    |
+|-------------|------------------------------------------------------------------------------------------------|
+| parse(yaml) | Parses a YAML string, constructing the JavaScript value or object<br/> described by the string |
+
+## http
+
+| Functions                | Description                    |
+|--------------------------|--------------------------------|
+| get(url, args)           | Issues an HTTP GET request     |
+| post(url, body, args)    | Issues an HTTP POST request    |
+| put(url, body, args)     | Issues an HTTP PUT request     |
+| head(url, args)          | Issues an HTTP HEAD request    |
+| patch(url, body, args)   | Issues an HTTP PATCH request   |
+| del(url, body, args)     | Issues an HTTP DELETE request  |
+| options(url, body, args) | Issues an HTTP OPTIONS request |
+
+
+
+
