@@ -7,7 +7,6 @@ import (
 	"mokapi/kafka"
 	"mokapi/kafka/findCoordinator"
 	"mokapi/kafka/kafkatest"
-	"mokapi/kafka/metaData"
 	"testing"
 )
 
@@ -34,27 +33,6 @@ func TestFindCoordinator(t *testing.T) {
 
 				require.Equal(t, "127.0.0.1", res.Host)
 				require.Equal(t, int32(9092), res.Port)
-			},
-		},
-		{
-			"find group but not exists",
-			func(t *testing.T, s *store.Store) {
-				s.Update(asyncapitest.NewConfig(asyncapitest.WithServer("foo", "kafka", "127.0.0.1:9092")))
-				r := kafkatest.NewRequest("kafkatest", 3, &metaData.Request{
-					AllowAutoTopicCreation: false,
-				})
-				s.ServeMessage(kafkatest.NewRecorder(), r)
-				r = kafkatest.NewRequest("kafkatest", 3, &findCoordinator.Request{
-					Key:     "foo",
-					KeyType: findCoordinator.KeyTypeGroup,
-				})
-				r.Host = "127.0.0.1"
-				rr := kafkatest.NewRecorder()
-				s.ServeMessage(rr, r)
-
-				res, ok := rr.Message.(*findCoordinator.Response)
-				require.True(t, ok)
-				require.Equal(t, kafka.GroupIdNotFound, res.ErrorCode, "group should not auto created")
 			},
 		},
 		{
