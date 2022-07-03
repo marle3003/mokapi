@@ -76,6 +76,9 @@ func (g *Group) Offset(topic string, partition int) int64 {
 			return offset
 		}
 	}
+	// If there is no offset associated with a topic-partition under that consumer group the broker
+	// does not set an error code (since it is not really an error), but returns empty metadata and sets the
+	// offset field to -1.
 	return -1
 }
 

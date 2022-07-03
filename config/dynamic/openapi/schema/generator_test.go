@@ -533,3 +533,75 @@ func TestGenerator_AllOf(t *testing.T) {
 		})
 	}
 }
+
+func TestGenerator_Recursions(t *testing.T) {
+	testcases := []struct {
+		name string
+		f    func(t *testing.T)
+	}{
+		{
+			"recursion depth 1",
+			func(t *testing.T) {
+				s := schematest.New("object")
+				props := &schema.Schemas{}
+				props.Set("foo", &schema.Ref{Value: s})
+				s.Properties = &schema.SchemasRef{
+					Value: props,
+				}
+				g := schema.NewGenerator()
+				o := g.New(&schema.Ref{Value: s})
+				require.NotNil(t, o)
+				m := o.(*sortedmap.LinkedHashMap)
+				foo := m.Get("foo").(*sortedmap.LinkedHashMap)
+				require.Nil(t, foo.Get("foo"))
+			},
+		},
+		{
+			"recursion across to objects depth 1",
+			func(t *testing.T) {
+				child := schematest.New("object")
+				s := schematest.New("object", schematest.WithProperty("bar", child))
+				props := &schema.Schemas{}
+				props.Set("foo", &schema.Ref{Value: s})
+				child.Properties = &schema.SchemasRef{
+					Value: props,
+				}
+				g := schema.NewGenerator()
+				o := g.New(&schema.Ref{Value: s})
+				require.NotNil(t, o)
+				m := o.(*sortedmap.LinkedHashMap)
+				bar := m.Get("bar").(*sortedmap.LinkedHashMap)
+				foo := bar.Get("foo").(*sortedmap.LinkedHashMap)
+				require.Nil(t, foo.Get("foo"))
+			},
+		},
+		{
+			"array",
+			func(t *testing.T) {
+				obj := schematest.New("object")
+				props := &schema.Schemas{}
+				props.Set("foo", &schema.Ref{Value: obj})
+				obj.Properties = &schema.SchemasRef{
+					Value: props,
+				}
+				array := schematest.New("array", schematest.WithItems(obj))
+				minItems := 2
+				array.MinItems = &minItems
+				g := schema.NewGenerator()
+				o := g.New(&schema.Ref{Value: array})
+				require.NotNil(t, o)
+				a := o.([]interface{})
+				require.NotNil(t, a[1])
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			gofakeit.Seed(11)
+			tc.f(t)
+		})
+	}
+
+}

@@ -1,7 +1,6 @@
 package kafka
 
 import (
-	"bufio"
 	"encoding/binary"
 	"github.com/pkg/errors"
 	"io"
@@ -15,7 +14,7 @@ type ReaderFrom interface {
 }
 
 type Decoder struct {
-	reader   *bufio.Reader
+	reader   io.Reader
 	buffer   [8]byte
 	err      error
 	leftSize int
@@ -25,7 +24,7 @@ var (
 	readerFrom = reflect.TypeOf((*ReaderFrom)(nil)).Elem()
 )
 
-func NewDecoder(reader *bufio.Reader, size int) *Decoder {
+func NewDecoder(reader io.Reader, size int) *Decoder {
 	return &Decoder{reader: reader, leftSize: size}
 }
 

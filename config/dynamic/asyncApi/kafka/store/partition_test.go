@@ -17,8 +17,8 @@ func TestPartition(t *testing.T) {
 		func(record kafka.Record, traits events.Traits) {})
 
 	require.Equal(t, 0, p.Index)
-	require.Equal(t, int64(-1), p.StartOffset())
-	require.Equal(t, int64(-1), p.Offset())
+	require.Equal(t, int64(0), p.StartOffset())
+	require.Equal(t, int64(0), p.Offset())
 	require.Equal(t, 1, p.Leader)
 	require.Equal(t, []int{1}, p.Replicas)
 }
@@ -51,7 +51,7 @@ func TestPartition_Write(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, int64(0), offset)
-	require.Equal(t, int64(1), p.Offset())
+	require.Equal(t, int64(2), p.Offset())
 	require.Equal(t, int64(0), p.StartOffset())
 
 	b, errCode := p.Read(0, 1)
@@ -73,6 +73,29 @@ func TestPartition_Read_Empty(t *testing.T) {
 		map[int]*Broker{1: {Id: 1}},
 		func(_ kafka.Record, _ events.Traits) {})
 	b, errCode := p.Read(0, 1)
+	require.Equal(t, kafka.None, errCode)
+	require.Equal(t, 0, len(b.Records))
+}
+
+func TestPartition_Read(t *testing.T) {
+	p := newPartition(
+		0,
+		map[int]*Broker{1: {Id: 1}},
+		func(_ kafka.Record, _ events.Traits) {})
+	offset, err := p.Write(kafka.RecordBatch{
+		Records: []kafka.Record{
+			{
+				Time:    time.Now(),
+				Key:     kafka.NewBytes([]byte(`"foo-1"`)),
+				Value:   kafka.NewBytes([]byte(`12`)),
+				Headers: nil,
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, int64(0), offset)
+
+	b, errCode := p.Read(1, 1)
 	require.Equal(t, kafka.None, errCode)
 	require.Equal(t, 0, len(b.Records))
 }
@@ -103,7 +126,7 @@ func TestPartition_Read_OutOfOffset(t *testing.T) {
 		},
 	})
 
-	b, errCode := p.Read(10, 1)
+	b, errCode := p.Read(-10, 1)
 	require.Equal(t, kafka.OffsetOutOfRange, errCode)
 	require.Equal(t, 0, len(b.Records))
 }
@@ -130,7 +153,7 @@ func TestPartition_Write_Value_Validator(t *testing.T) {
 	})
 
 	require.Error(t, err, "expected string got float64")
-	require.Equal(t, int64(-1), offset)
-	require.Equal(t, int64(-1), p.Offset())
-	require.Equal(t, int64(-1), p.StartOffset())
+	require.Equal(t, int64(0), offset)
+	require.Equal(t, int64(0), p.Offset())
+	require.Equal(t, int64(0), p.StartOffset())
 }

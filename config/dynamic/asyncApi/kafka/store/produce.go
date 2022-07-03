@@ -71,7 +71,7 @@ func (s *Store) processMetricsProduce(ctx context.Context, topic string, partiti
 		if !ok {
 			continue
 		}
-		lag := float64(partition.Offset() - commit)
+		lag := float64(partition.Offset() - commit - 1) // -1 because offset = written + 1
 		m.Lags.WithLabel(s.cluster, name, topic, strconv.Itoa(partition.Index)).Set(lag)
 	}
 }

@@ -42,7 +42,7 @@ func newPartition(index int, brokers Brokers, logger LogRecord) *Partition {
 	p := &Partition{
 		Index:    index,
 		Head:     0,
-		Tail:     -1,
+		Tail:     0,
 		Segments: make(map[int64]*Segment),
 		Replicas: replicas,
 		logger:   logger,
@@ -55,13 +55,13 @@ func newPartition(index int, brokers Brokers, logger LogRecord) *Partition {
 
 func (p *Partition) Read(offset int64, maxBytes int) (kafka.RecordBatch, kafka.ErrorCode) {
 	batch := kafka.NewRecordBatch()
-	if p.Tail >= 0 && offset > p.Tail {
+	if offset < p.StartOffset() {
 		return batch, kafka.OffsetOutOfRange
 	}
 
 	size := 0
 	for {
-		if offset > p.Tail || size > maxBytes {
+		if offset >= p.Tail || size > maxBytes {
 			return batch, kafka.None
 		}
 		seg := p.GetSegment(offset)
@@ -96,9 +96,8 @@ func (p *Partition) Write(batch kafka.RecordBatch) (baseOffset int64, err error)
 	defer p.m.Unlock()
 
 	now := time.Now()
-	baseOffset = p.Tail + 1
+	baseOffset = p.Tail
 	for _, r := range batch.Records {
-		p.Tail++
 		r.Offset = p.Tail
 		switch {
 		case len(p.Segments) == 0:
@@ -110,8 +109,9 @@ func (p *Partition) Write(batch kafka.RecordBatch) (baseOffset int64, err error)
 			r.Time = now
 		}
 		seg.Log = append(seg.Log, r)
-		seg.Tail += 1
+		seg.Tail++
 		seg.LastWritten = now
+		p.Tail++
 
 		p.logger(r, events.NewTraits().With("partition", strconv.Itoa(p.Index)))
 	}
@@ -124,9 +124,6 @@ func (p *Partition) Offset() int64 {
 }
 
 func (p *Partition) StartOffset() int64 {
-	if p.Tail < 0 {
-		return -1
-	}
 	return p.Head
 }
 

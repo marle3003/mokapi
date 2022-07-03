@@ -89,6 +89,9 @@ func (s *Store) fetch(rw kafka.ResponseWriter, req *kafka.Request) error {
 				RecordSet:            data.batch,
 				ErrorCode:            data.error,
 			}
+			if len(data.batch.Records) > 0 {
+				resPar.RecordSet = data.batch
+			}
 			resTopic.Partitions = append(resTopic.Partitions, resPar)
 		}
 		res.Topics = append(res.Topics, resTopic)

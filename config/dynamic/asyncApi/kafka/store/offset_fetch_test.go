@@ -88,12 +88,13 @@ func TestOffsetFetch(t *testing.T) {
 
 				err := b.Client().JoinSyncGroup("foo", "bar", 3, 3)
 
-				r, err := b.Client().OffsetFetch(3, &offsetFetch.Request{Topics: []offsetFetch.RequestTopic{
-					{
-						Name:             "foo",
-						PartitionIndexes: []int32{9999},
-					},
-				}})
+				r, err := b.Client().OffsetFetch(3, &offsetFetch.Request{
+					Topics: []offsetFetch.RequestTopic{
+						{
+							Name:             "foo",
+							PartitionIndexes: []int32{9999},
+						},
+					}})
 				require.NoError(t, err)
 				require.Equal(t, kafka.None, r.ErrorCode)
 				require.Len(t, r.Topics, 1)

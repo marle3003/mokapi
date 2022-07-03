@@ -1,7 +1,6 @@
 package kafka
 
 import (
-	"bufio"
 	"encoding/binary"
 	"fmt"
 	log "github.com/sirupsen/logrus"
@@ -164,11 +163,15 @@ func Register(reg ApiReg, req, res Message, flexibleRequest int16, flexibleRespo
 }
 
 func ReadMessage(r io.Reader) (h *Header, msg Message, err error) {
-	d := NewDecoder(bufio.NewReader(r), 4)
+	d := NewDecoder(r, 4)
 	h = readHeader(d)
 
+	if d.err != nil {
+		return nil, nil, d.err
+	}
+
 	if h.Size == 0 {
-		return nil, nil, io.EOF
+		return nil, nil, nil
 	}
 
 	if d.err != nil {

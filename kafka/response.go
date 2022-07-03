@@ -1,7 +1,6 @@
 package kafka
 
 import (
-	"bufio"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -21,7 +20,7 @@ func NewResponse(key ApiKey, version int16, correlationId int32) *Response {
 }
 
 func (r *Response) Read(reader io.Reader) error {
-	d := NewDecoder(bufio.NewReader(reader), 4)
+	d := NewDecoder(reader, 4)
 
 	if r.Header == nil {
 		return fmt.Errorf("header not set")
@@ -31,7 +30,7 @@ func (r *Response) Read(reader io.Reader) error {
 	if r.Header.Size == 0 {
 		return io.EOF
 	}
-	d.leftSize = int(r.Header.Size)
+	d.leftSize = int(r.Header.Size) - 4
 
 	correlationId := d.ReadInt32()
 	if correlationId != r.Header.CorrelationId {

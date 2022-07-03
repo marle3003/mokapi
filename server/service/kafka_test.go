@@ -55,7 +55,7 @@ func TestKafkaBroker_Add(t *testing.T) {
 			f: func(t *testing.T) {
 				port, err := try.GetFreePort()
 				require.NoError(t, err)
-				addr := fmt.Sprintf("127.0.0.1:%v", port)
+				addr := fmt.Sprintf("foo:%v", port)
 				b := NewKafkaBroker(fmt.Sprintf("%v", port))
 				b.Start()
 				defer b.Stop()
@@ -65,9 +65,13 @@ func TestKafkaBroker_Add(t *testing.T) {
 					called = true
 					rw.Write(&apiVersion.Response{})
 				}))
-				client := kafkatest.NewClient(addr, "test")
-				r, err := client.ApiVersion(3, &apiVersion.Request{})
-				require.Equal(t, kafka.UnknownServerError, r.ErrorCode)
+
+				r := kafkatest.NewRecorder()
+				b.ServeMessage(r, &kafka.Request{Message: &apiVersion.Request{}, Host: addr})
+
+				res := r.Message.(*apiVersion.Response)
+				require.NoError(t, err)
+				require.Equal(t, kafka.UnknownServerError, res.ErrorCode)
 				require.False(t, called, "handler should not be called")
 			},
 		},

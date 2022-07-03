@@ -83,7 +83,7 @@ func TestProduce(t *testing.T) {
 				oRes, ok := rr.Message.(*offset.Response)
 				require.True(t, ok)
 				require.Equal(t, kafka.None, oRes.Topics[0].Partitions[0].ErrorCode)
-				require.Equal(t, int64(1), oRes.Topics[0].Partitions[0].Offset)
+				require.Equal(t, int64(2), oRes.Topics[0].Partitions[0].Offset)
 
 				rr = kafkatest.NewRecorder()
 				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &fetch.Request{Topics: []fetch.Topic{
@@ -100,7 +100,7 @@ func TestProduce(t *testing.T) {
 				require.Equal(t, kafka.None, fRes.Topics[0].Partitions[0].ErrorCode)
 
 				require.Len(t, fRes.Topics[0].Partitions[0].RecordSet.Records, 2)
-				require.Equal(t, int64(1), fRes.Topics[0].Partitions[0].HighWatermark)
+				require.Equal(t, int64(2), fRes.Topics[0].Partitions[0].HighWatermark)
 
 				record1 := fRes.Topics[0].Partitions[0].RecordSet.Records[0]
 				require.Equal(t, int64(0), record1.Offset)

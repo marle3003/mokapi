@@ -37,7 +37,7 @@ type ResponseWriter interface {
 
 type response struct {
 	ctx    context.Context
-	conn   net.Conn
+	writer io.Writer
 	header *Header
 }
 
@@ -133,6 +133,9 @@ func (s *Server) serve(conn net.Conn, ctx context.Context) {
 				return
 			}
 		}
+		if r.Header == nil {
+			continue
+		}
 
 		go func() {
 			defer func() {
@@ -142,7 +145,7 @@ func (s *Server) serve(conn net.Conn, ctx context.Context) {
 					log.Errorf("kafka panic: %v", err)
 				}
 			}()
-			s.handleMessage(&response{conn: conn, header: r.Header, ctx: ctx}, r)
+			s.handleMessage(&response{writer: conn, header: r.Header, ctx: ctx}, r)
 		}()
 	}
 }
@@ -198,6 +201,6 @@ func (r *response) Write(msg Message) error {
 	}
 
 	res := Response{Header: r.header, Message: msg}
-	err := res.Write(r.conn)
+	err := res.Write(r.writer)
 	return err
 }

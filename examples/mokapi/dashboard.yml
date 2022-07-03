@@ -47,7 +47,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'kafka.yml#/components/schemas/HttpInfo'
+                $ref: 'http.yml#/components/schemas/HttpInfo'
   /api/services/kafka/{name}:
     get:
       summary: Information about the kafka cluster

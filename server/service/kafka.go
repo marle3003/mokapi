@@ -45,23 +45,16 @@ func (b *KafkaBroker) Remove(host string) {
 }
 
 func (b *KafkaBroker) ServeMessage(rw kafka.ResponseWriter, r *kafka.Request) {
-	c, ok := b.clusters[r.Host]
-	if ok {
-		c.ServeMessage(rw, r)
-		return
-	}
-	_, port, _ := net.SplitHostPort(r.Host)
-	c, ok = b.clusters[fmt.Sprintf(":%v", port)]
-	if ok {
-		c.ServeMessage(rw, r)
-		return
-	}
-
-	if _, ok := r.Message.(*apiVersion.Request); ok {
-		log.Errorf("received kafka message for unknown host: %v", r.Host)
-		rw.Write(&apiVersion.Response{ErrorCode: kafka.UnknownServerError})
+	h, err := b.getHandler(r.Host)
+	if err == nil {
+		h.ServeMessage(rw, r)
 	} else {
-		panic(fmt.Sprintf("received kafka message for unknown host: %v", r.Host))
+		if _, ok := r.Message.(*apiVersion.Request); ok {
+			log.Errorf("received kafka message for unknown host: %v", r.Host)
+			rw.Write(&apiVersion.Response{ErrorCode: kafka.UnknownServerError})
+		} else {
+			panic(fmt.Sprintf("received kafka message for unknown host: %v", r.Host))
+		}
 	}
 }
 
@@ -77,3 +70,40 @@ func (b *KafkaBroker) Start() {
 func (b *KafkaBroker) Stop() {
 	b.server.Close()
 }
+
+func (b *KafkaBroker) getHandler(hostport string) (kafka.Handler, error) {
+	if h, ok := b.clusters[hostport]; ok {
+		return h, nil
+	}
+
+	host, port, err := net.SplitHostPort(hostport)
+	if err != nil {
+		return nil, err
+	}
+
+	if h, ok := b.clusters[fmt.Sprintf(":%v", port)]; ok {
+		return h, nil
+	}
+
+	if isLocalhost(host) {
+		for _, alias := range localhostAliases {
+			if h, ok := b.clusters[fmt.Sprintf("%v:%v", alias, port)]; ok {
+				return h, nil
+			}
+		}
+	}
+
+	return nil, fmt.Errorf("received kafka message for unknown host: %v", hostport)
+
+}
+
+func isLocalhost(host string) bool {
+	for _, h := range localhostAliases {
+		if host == h {
+			return true
+		}
+	}
+	return false
+}
+
+var localhostAliases = []string{"::1", "127.0.0.1", "localhost"}

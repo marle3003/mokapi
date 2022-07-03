@@ -1,6 +1,7 @@
 package kafka
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"hash/crc32"
@@ -26,12 +27,13 @@ func (rb *RecordBatch) ReadFrom(d *Decoder) error {
 		return nil
 	}
 
-	b, err := d.reader.Peek(magicOffset + 1)
-	if err != nil {
+	b := make([]byte, magicOffset+1)
+	if _, err := io.ReadFull(d.reader, b); err != nil {
 		return err
 	}
-	magic := int8(b[magicOffset])
-	_ = magic
+	magic := b[magicOffset]
+	// add read bytes back to reader
+	d.reader = io.MultiReader(bytes.NewReader(b), d.reader)
 
 	switch magic {
 	case 0:
@@ -78,6 +80,12 @@ func (rb *RecordBatch) Size() (s int) {
 }
 
 func (rb *RecordBatch) WriteTo(e *Encoder) {
+	if len(rb.Records) == 0 {
+		// send only size of records
+		e.writeInt32(0) // size
+		return
+	}
+
 	offsetBatchSize := e.writer.Size()
 	e.writeInt32(0) // placeholder length
 

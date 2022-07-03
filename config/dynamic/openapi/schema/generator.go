@@ -15,11 +15,23 @@ type Generator struct {
 	randomNumber *rand.Rand
 }
 
+type builder struct {
+	requests []*Schema
+}
+
 func NewGenerator() *Generator {
 	return &Generator{randomNumber: rand.New(rand.NewSource(time.Now().Unix()))}
 }
 
 func (g *Generator) New(ref *Ref) interface{} {
+	return newBuilder().create(ref)
+}
+
+func newBuilder() *builder {
+	return &builder{}
+}
+
+func (b *builder) create(ref *Ref) interface{} {
 	if ref == nil || ref.Value == nil {
 		return nil
 	}
@@ -33,19 +45,19 @@ func (g *Generator) New(ref *Ref) interface{} {
 	default:
 		switch schema.Type {
 		case "object":
-			return g.getObject(schema)
+			return b.createObject(schema)
 		case "array":
-			return g.newArray(schema)
+			return b.createArray(schema)
 		case "boolean":
 			return gofakeit.Bool()
 		case "integer", "number":
-			return getNumber(schema)
+			return b.createNumber(schema)
 		case "string":
-			return getString(schema)
+			return b.createString(schema)
 		default:
 			if len(schema.AnyOf) > 0 {
 				i := gofakeit.Number(0, len(schema.AnyOf)-1)
-				return g.New(schema.AnyOf[i])
+				return b.create(schema.AnyOf[i])
 			}
 			if len(schema.AllOf) > 0 {
 				m := sortedmap.NewLinkedHashMap()
@@ -57,7 +69,7 @@ func (g *Generator) New(ref *Ref) interface{} {
 						log.Info("allOf only supports type of object")
 						continue
 					}
-					o := g.New(all).(*sortedmap.LinkedHashMap)
+					o := b.create(all).(*sortedmap.LinkedHashMap)
 					m.Merge(o)
 
 				}
@@ -68,13 +80,28 @@ func (g *Generator) New(ref *Ref) interface{} {
 	}
 }
 
-func (g *Generator) getObject(s *Schema) interface{} {
+func (b *builder) createObject(s *Schema) interface{} {
+	// recursion guard. Currently, we use a fixed depth: 1
+	n := len(b.requests)
+	numRequestsSameAsThisOne := 0
+	for _, r := range b.requests {
+		if s == r {
+			numRequestsSameAsThisOne++
+		}
+	}
+	if numRequestsSameAsThisOne > 1 {
+		return nil
+	}
+	b.requests = append(b.requests, s)
+	// remove schemas from guard
+	defer func() { b.requests = b.requests[:n] }()
+
 	m := sortedmap.NewLinkedHashMap()
 
 	if s.IsDictionary() {
 		length := gofakeit.Number(1, 10)
 		for i := 0; i < length; i++ {
-			m.Set(gofakeit.Word(), g.New(s.AdditionalProperties.Ref))
+			m.Set(gofakeit.Word(), b.create(s.AdditionalProperties.Ref))
 		}
 		return m
 	}
@@ -86,7 +113,7 @@ func (g *Generator) getObject(s *Schema) interface{} {
 	for it := s.Properties.Value.Iter(); it.Next(); {
 		key := it.Key().(string)
 		propSchema := it.Value().(*Ref)
-		value := g.New(propSchema)
+		value := b.create(propSchema)
 		m.Set(key, value)
 	}
 
@@ -116,18 +143,18 @@ func getType(s *Schema) reflect.Type {
 	panic(fmt.Sprintf("type %v not implemented", s.Type))
 }
 
-func getString(s *Schema) string {
+func (b *builder) createString(s *Schema) string {
 	if len(s.Format) > 0 {
-		return getByFormat(s.Format)
+		return b.createStringByFormat(s.Format)
 	} else if len(s.Pattern) > 0 {
 		return gofakeit.Generate(fmt.Sprintf("{regex:%v}", s.Pattern))
 	}
 	return gofakeit.Lexify("???????????????")
 }
 
-func getNumberExclusive(s *Schema) interface{} {
+func (b *builder) createNumberExclusive(s *Schema) interface{} {
 	for i := 0; i < 10; i++ {
-		n := getNumber(s)
+		n := b.createNumber(s)
 		if *s.ExclusiveMinimum && s.Minimum == n {
 			continue
 		}
@@ -140,10 +167,10 @@ func getNumberExclusive(s *Schema) interface{} {
 	return nil
 }
 
-func getNumber(s *Schema) interface{} {
+func (b *builder) createNumber(s *Schema) interface{} {
 	if s.ExclusiveMinimum != nil && (*s.ExclusiveMinimum) ||
 		s.ExclusiveMaximum != nil && (*s.ExclusiveMaximum) {
-		return getNumberExclusive(s)
+		return b.createNumberExclusive(s)
 	}
 
 	if s.Type == "number" {
@@ -212,7 +239,7 @@ func getNumber(s *Schema) interface{} {
 	return 0
 }
 
-func (g *Generator) newArray(s *Schema) (r []interface{}) {
+func (b *builder) createArray(s *Schema) (r []interface{}) {
 	maxItems := 5
 	if s.MaxItems != nil {
 		maxItems = *s.MaxItems + 1
@@ -239,7 +266,7 @@ func (g *Generator) newArray(s *Schema) (r []interface{}) {
 		}
 	} else {
 		f = func() interface{} {
-			return g.New(s.Items)
+			return b.create(s.Items)
 		}
 	}
 
@@ -251,7 +278,7 @@ func (g *Generator) newArray(s *Schema) (r []interface{}) {
 
 	for i := range r {
 		if s.UniqueItems {
-			r[i] = getUnique(r, f)
+			r[i] = b.getUnique(r, f)
 		} else {
 			r[i] = f()
 		}
@@ -259,7 +286,7 @@ func (g *Generator) newArray(s *Schema) (r []interface{}) {
 	return r
 }
 
-func getByFormat(format string) string {
+func (b *builder) createStringByFormat(format string) string {
 	switch format {
 	case "date":
 		return gofakeit.Date().Format("2006-01-02")
@@ -284,7 +311,7 @@ func getByFormat(format string) string {
 	}
 }
 
-func getUnique(s []interface{}, gen func() interface{}) interface{} {
+func (b *builder) getUnique(s []interface{}, gen func() interface{}) interface{} {
 	for i := 0; i < 10; i++ {
 		v := gen()
 		if !contains(s, v) {

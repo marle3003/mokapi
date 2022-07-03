@@ -41,7 +41,7 @@ func TestOffsets(t *testing.T) {
 
 				p := res.Topics[0].Partitions[0]
 				require.Equal(t, kafka.None, p.ErrorCode)
-				require.Equal(t, int64(-1), p.Offset)
+				require.Equal(t, int64(0), p.Offset)
 			},
 		},
 		{
@@ -70,7 +70,7 @@ func TestOffsets(t *testing.T) {
 
 				p := res.Topics[0].Partitions[0]
 				require.Equal(t, kafka.None, p.ErrorCode)
-				require.Equal(t, int64(-1), p.Offset)
+				require.Equal(t, int64(0), p.Offset)
 			},
 		},
 		{
@@ -140,7 +140,7 @@ func TestOffsets(t *testing.T) {
 				p := res.Topics[0].Partitions[0]
 				require.Equal(t, kafka.None, p.ErrorCode)
 				require.Equal(t, kafka.Latest, p.Timestamp)
-				require.Equal(t, int64(0), p.Offset)
+				require.Equal(t, int64(1), p.Offset)
 			},
 		},
 		{

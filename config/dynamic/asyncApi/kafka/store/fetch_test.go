@@ -146,7 +146,7 @@ func TestFetch(t *testing.T) {
 				res, ok := rr.Message.(*fetch.Response)
 				require.True(t, ok)
 				require.Equal(t, 1, len(res.Topics[0].Partitions[0].RecordSet.Records))
-				require.Equal(t, int64(0), res.Topics[0].Partitions[0].HighWatermark)
+				require.Equal(t, int64(1), res.Topics[0].Partitions[0].HighWatermark)
 
 				record := res.Topics[0].Partitions[0].RecordSet.Records[0]
 				require.Equal(t, int64(0), record.Offset)
@@ -182,12 +182,38 @@ func TestFetch(t *testing.T) {
 				require.True(t, ok)
 				// only one record returned because of MaxBytes 1
 				require.Len(t, res.Topics[0].Partitions[0].RecordSet.Records, 1)
-				require.Equal(t, int64(1), res.Topics[0].Partitions[0].HighWatermark)
+				require.Equal(t, int64(2), res.Topics[0].Partitions[0].HighWatermark)
 
 				record := res.Topics[0].Partitions[0].RecordSet.Records[0]
 				require.Equal(t, int64(0), record.Offset)
 				require.Equal(t, "key-1", kafkatest.BytesToString(record.Key))
 				require.Equal(t, "value-1", kafkatest.BytesToString(record.Value))
+			},
+		},
+		{
+			"fetch next record",
+			func(t *testing.T, s *store.Store) {
+				s.Update(asyncapitest.NewConfig(asyncapitest.WithChannel("foo")))
+				_, err := s.Topic("foo").Partition(0).Write(kafka.RecordBatch{Records: []kafka.Record{
+					{
+						Key:   kafka.NewBytes([]byte("foo")),
+						Value: kafka.NewBytes([]byte("bar")),
+					},
+				}})
+				require.NoError(t, err)
+
+				rr := kafkatest.NewRecorder()
+				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &fetch.Request{Topics: []fetch.Topic{
+					{
+						Name:       "foo",
+						Partitions: []fetch.RequestPartition{{MaxBytes: 1, FetchOffset: 1}},
+					},
+				}}))
+
+				res, ok := rr.Message.(*fetch.Response)
+				require.True(t, ok)
+				require.Equal(t, 0, len(res.Topics[0].Partitions[0].RecordSet.Records))
+				require.Equal(t, int64(1), res.Topics[0].Partitions[0].HighWatermark)
 			},
 		},
 		{
@@ -217,7 +243,7 @@ func TestFetch(t *testing.T) {
 				res, ok := rr.Message.(*fetch.Response)
 				require.True(t, ok)
 				require.Equal(t, 2, len(res.Topics[0].Partitions[0].RecordSet.Records))
-				require.Equal(t, int64(1), res.Topics[0].Partitions[0].HighWatermark)
+				require.Equal(t, int64(2), res.Topics[0].Partitions[0].HighWatermark)
 
 				record1 := res.Topics[0].Partitions[0].RecordSet.Records[0]
 				require.Equal(t, int64(0), record1.Offset)
@@ -262,7 +288,7 @@ func TestFetch(t *testing.T) {
 				r := <-ch
 
 				require.Equal(t, 1, len(r.Topics[0].Partitions[0].RecordSet.Records))
-				require.Equal(t, int64(0), r.Topics[0].Partitions[0].HighWatermark)
+				require.Equal(t, int64(1), r.Topics[0].Partitions[0].HighWatermark)
 
 				record := r.Topics[0].Partitions[0].RecordSet.Records[0]
 				require.Equal(t, int64(0), record.Offset)
@@ -305,7 +331,7 @@ func TestFetch(t *testing.T) {
 				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &fetch.Request{Topics: []fetch.Topic{
 					{
 						Name:       "foo",
-						Partitions: []fetch.RequestPartition{{FetchOffset: 1}},
+						Partitions: []fetch.RequestPartition{{FetchOffset: -10}},
 					},
 				}}))
 
