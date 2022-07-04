@@ -36,6 +36,7 @@ func (s *Store) offset(rw kafka.ResponseWriter, req *kafka.Request) error {
 						// for each partition is the earliest offset for which the timestamp is greater
 						// than or equal to the given timestamp.
 					}
+					resPartition.OldStyleOffsets = resPartition.Offset
 				}
 			}
 			resPartitions = append(resPartitions, resPartition)

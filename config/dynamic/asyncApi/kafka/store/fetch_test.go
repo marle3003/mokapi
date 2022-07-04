@@ -147,6 +147,7 @@ func TestFetch(t *testing.T) {
 				require.True(t, ok)
 				require.Equal(t, 1, len(res.Topics[0].Partitions[0].RecordSet.Records))
 				require.Equal(t, int64(1), res.Topics[0].Partitions[0].HighWatermark)
+				require.Equal(t, int64(0), res.Topics[1].Partitions[0].LastStableOffset)
 
 				record := res.Topics[0].Partitions[0].RecordSet.Records[0]
 				require.Equal(t, int64(0), record.Offset)

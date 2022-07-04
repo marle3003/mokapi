@@ -157,13 +157,14 @@ func TestRecordBatch_WriteTo(t *testing.T) {
 			"two records",
 			RecordBatch{Records: []Record{
 				{
+					Offset:  2,
 					Time:    ToTime(Timestamp(time.Now())),
 					Key:     NewBytes([]byte("key-1")),
 					Value:   NewBytes([]byte("value-1")),
 					Headers: nil,
 				},
 				{
-					Offset:  1,
+					Offset:  3,
 					Time:    ToTime(Timestamp(time.Now())),
 					Key:     NewBytes([]byte("key-2")),
 					Value:   NewBytes([]byte("value-2")),

@@ -134,7 +134,7 @@ export default {
   },
   computed: {
     topics: function () {
-      return this.cluster.topics.sort()
+      return this.cluster.topics.sort(this.compareTopic)
     }
   },
   methods: {
@@ -160,6 +160,9 @@ export default {
         query: { refresh: '5' }
       })
     },
+    compareTopic (x, y) {
+      return x.name.localeCompare(y.name)
+    }
   }
 }
 </script>

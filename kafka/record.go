@@ -92,7 +92,7 @@ func (rb *RecordBatch) WriteTo(e *Encoder) {
 	offset := e.writer.Size()
 	buffer := make([]byte, 8)
 
-	e.writeInt64(0)                      // base offset
+	e.writeInt64(rb.Records[0].Offset)   // base offset
 	e.writeInt32(0)                      // size: 8
 	e.writeInt32(0)                      // leader epoch
 	e.writeInt8(2)                       // magic
