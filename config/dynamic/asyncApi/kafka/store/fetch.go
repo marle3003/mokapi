@@ -22,6 +22,7 @@ func (s *Store) fetch(rw kafka.ResponseWriter, req *kafka.Request) error {
 
 	topics := make(map[string]map[int32]*fetchData)
 	size := int32(0)
+	maxSize := f.MaxBytes
 	for {
 		for _, rt := range f.Topics {
 			t, ok := topics[rt.Name]
@@ -61,6 +62,9 @@ func (s *Store) fetch(rw kafka.ResponseWriter, req *kafka.Request) error {
 				batch, data.error = p.Read(data.fetchOffset, data.maxBytes)
 				batchSize := batch.Size()
 				size += int32(batchSize)
+				if size > maxSize {
+					break
+				}
 				data.maxBytes -= batchSize
 				data.fetchOffset += int64(len(batch.Records))
 				data.batch.Records = append(data.batch.Records, batch.Records...)

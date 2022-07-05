@@ -136,12 +136,14 @@ func TestFetch(t *testing.T) {
 				require.NoError(t, err)
 
 				rr := kafkatest.NewRecorder()
-				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &fetch.Request{Topics: []fetch.Topic{
-					{
-						Name:       "foo",
-						Partitions: []fetch.RequestPartition{{MaxBytes: 1}},
-					},
-				}}))
+				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &fetch.Request{
+					MaxBytes: 1000,
+					Topics: []fetch.Topic{
+						{
+							Name:       "foo",
+							Partitions: []fetch.RequestPartition{{MaxBytes: 1000}},
+						},
+					}}))
 
 				res, ok := rr.Message.(*fetch.Response)
 				require.True(t, ok)
@@ -156,7 +158,7 @@ func TestFetch(t *testing.T) {
 			},
 		},
 		{
-			"fetch one record with MaxBytes 1",
+			"fetch one record with MaxBytes 15",
 			func(t *testing.T, s *store.Store) {
 				s.Update(asyncapitest.NewConfig(asyncapitest.WithChannel("foo")))
 				_, err := s.Topic("foo").Partition(0).Write(kafka.RecordBatch{Records: []kafka.Record{
@@ -172,12 +174,14 @@ func TestFetch(t *testing.T) {
 				require.NoError(t, err)
 
 				rr := kafkatest.NewRecorder()
-				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &fetch.Request{Topics: []fetch.Topic{
-					{
-						Name:       "foo",
-						Partitions: []fetch.RequestPartition{{MaxBytes: 1}},
-					},
-				}}))
+				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &fetch.Request{
+					MaxBytes: 1000,
+					Topics: []fetch.Topic{
+						{
+							Name:       "foo",
+							Partitions: []fetch.RequestPartition{{MaxBytes: 15}},
+						},
+					}}))
 
 				res, ok := rr.Message.(*fetch.Response)
 				require.True(t, ok)
@@ -192,7 +196,7 @@ func TestFetch(t *testing.T) {
 			},
 		},
 		{
-			"fetch next record",
+			"fetch next not available record",
 			func(t *testing.T, s *store.Store) {
 				s.Update(asyncapitest.NewConfig(asyncapitest.WithChannel("foo")))
 				_, err := s.Topic("foo").Partition(0).Write(kafka.RecordBatch{Records: []kafka.Record{
@@ -234,12 +238,14 @@ func TestFetch(t *testing.T) {
 				require.NoError(t, err)
 
 				rr := kafkatest.NewRecorder()
-				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &fetch.Request{Topics: []fetch.Topic{
-					{
-						Name:       "foo",
-						Partitions: []fetch.RequestPartition{{MaxBytes: 500}},
-					},
-				}}))
+				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &fetch.Request{
+					MaxBytes: 1000,
+					Topics: []fetch.Topic{
+						{
+							Name:       "foo",
+							Partitions: []fetch.RequestPartition{{MaxBytes: 24}},
+						},
+					}}))
 
 				res, ok := rr.Message.(*fetch.Response)
 				require.True(t, ok)
@@ -265,12 +271,14 @@ func TestFetch(t *testing.T) {
 				ch := make(chan *fetch.Response, 1)
 				go func() {
 					rr := kafkatest.NewRecorder()
-					s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &fetch.Request{Topics: []fetch.Topic{
-						{
-							Name:       "foo",
-							Partitions: []fetch.RequestPartition{{MaxBytes: 1}},
-						},
-					}, MinBytes: 1, MaxWaitMs: 5000}))
+					s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &fetch.Request{
+						MaxBytes: 1000,
+						Topics: []fetch.Topic{
+							{
+								Name:       "foo",
+								Partitions: []fetch.RequestPartition{{MaxBytes: 12}},
+							},
+						}, MinBytes: 1, MaxWaitMs: 5000}))
 					res, ok := rr.Message.(*fetch.Response)
 					require.True(t, ok)
 					ch <- res

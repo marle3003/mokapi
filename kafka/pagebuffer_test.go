@@ -77,3 +77,18 @@ func TestWritePageOutOfRange(t *testing.T) {
 	}()
 	_, _ = p.WriteAt(b, pageSize+1)
 }
+
+func TestPageBuffer_Write_Pages(t *testing.T) {
+	pb := newPageBuffer()
+	size := pageSize + 100
+	b := make([]byte, size)
+	n, err := pb.Write(b)
+	require.NoError(t, err)
+	require.Equal(t, size, n)
+	require.Equal(t, size, pb.length)
+
+	var b2 bytes.Buffer
+	n2, err := pb.WriteTo(&b2)
+	require.NoError(t, err)
+	require.Equal(t, n, n2)
+}

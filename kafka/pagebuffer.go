@@ -78,15 +78,15 @@ func (pb *pageBuffer) Write(b []byte) (n int, err error) {
 
 		if len(b) <= available {
 			tail.Write(b)
+			pb.length += len(b)
 			break
 		}
 
 		tail.Write(b[:available])
 		b = b[available:]
+		pb.length += available
 		pb.addPage()
 	}
-
-	pb.length += len(b)
 
 	return
 }

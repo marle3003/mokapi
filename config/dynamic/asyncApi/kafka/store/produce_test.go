@@ -86,14 +86,16 @@ func TestProduce(t *testing.T) {
 				require.Equal(t, int64(2), oRes.Topics[0].Partitions[0].Offset)
 
 				rr = kafkatest.NewRecorder()
-				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &fetch.Request{Topics: []fetch.Topic{
-					{
-						Name: "foo",
-						Partitions: []fetch.RequestPartition{{
-							MaxBytes: 1000,
-						}},
-					},
-				}}))
+				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &fetch.Request{
+					MaxBytes: 1000,
+					Topics: []fetch.Topic{
+						{
+							Name: "foo",
+							Partitions: []fetch.RequestPartition{{
+								MaxBytes: 1000,
+							}},
+						},
+					}}))
 				fRes, ok := rr.Message.(*fetch.Response)
 				require.True(t, ok)
 				require.Equal(t, kafka.None, fRes.ErrorCode)

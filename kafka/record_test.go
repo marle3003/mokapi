@@ -252,3 +252,51 @@ func TestRecord_Size(t *testing.T) {
 		})
 	}
 }
+
+func TestRecordBatch_WriteTo_Bytes_Compare(t *testing.T) {
+	records := RecordBatch{Records: []Record{
+		{
+			Offset:  0,
+			Time:    ToTime(1657010762684),
+			Key:     NewBytes([]byte("foo")),
+			Value:   NewBytes([]byte("bar")),
+			Headers: nil,
+		},
+	}}
+
+	pb := newPageBuffer()
+
+	e := NewEncoder(pb)
+	records.WriteTo(e)
+	var buf bytes.Buffer
+	_, err := pb.WriteTo(&buf)
+	require.NoError(t, err)
+
+	b := buf.Bytes()
+
+	expected := []byte{
+		0, 0, 0, 74, // length: len - 4
+		0, 0, 0, 0, 0, 0, 0, 0, //  base offset
+		0, 0, 0, 62, // message size: length - base offset - message size
+		0, 0, 0, 0, // leader epoch
+		2,                // magic
+		119, 89, 114, 22, // crc32
+		0, 0, // attributes
+		0, 0, 0, 0, // last offset delta
+		0, 0, 1, 129, 205, 137, 179, 188, // first timestamp
+		0, 0, 1, 129, 205, 137, 179, 188, // max timestamp
+		255, 255, 255, 255, 255, 255, 255, 255, // producer id
+		255, 255, // producer epoch
+		255, 255, 255, 255, // base sequence
+		0, 0, 0, 1, // number of records
+		24,               // record length 12
+		0,                // attributes
+		0,                // delta timestamp
+		0,                // delta offset 1
+		6, 'f', 'o', 'o', // key
+		6, 'b', 'a', 'r', // value
+		0, // header
+	}
+
+	require.Equal(t, expected, b)
+}

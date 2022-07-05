@@ -131,12 +131,13 @@ func (rb *RecordBatch) WriteTo(e *Encoder) {
 		valueLength := r.Value.Len()
 		headerLength := len(r.Headers)
 
-		size := binary.PutUvarint(buffer, uint64(deltaTimestamp)) +
+		size :=
 			1 + // attribute
-			binary.PutVarint(buffer, deltaOffset) +
-			binary.PutVarint(buffer, int64(keyLength)) + keyLength +
-			binary.PutVarint(buffer, int64(valueLength)) + valueLength +
-			binary.PutVarint(buffer, int64(headerLength))
+				binary.PutVarint(buffer, deltaTimestamp) +
+				binary.PutVarint(buffer, deltaOffset) +
+				binary.PutVarint(buffer, int64(keyLength)) + keyLength +
+				binary.PutVarint(buffer, int64(valueLength)) + valueLength +
+				binary.PutVarint(buffer, int64(headerLength))
 
 		for _, h := range r.Headers {
 			k := len(h.Key)
