@@ -24,7 +24,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, k)
 				require.NotNil(t, v)
-				b, kerr := s.Topic("foo").Partition(0).Read(0, 1)
+				b, kerr := s.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, kerr)
 				require.NotNil(t, b)
 				require.Equal(t, fmt.Sprintf("%v", k), string(readBytes(b.Records[0].Key)))
