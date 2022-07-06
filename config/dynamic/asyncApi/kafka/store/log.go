@@ -16,7 +16,7 @@ type KafkaLog struct {
 func NewKafkaLog(record kafka.Record) *KafkaLog {
 	return &KafkaLog{
 		Offset:  record.Offset,
-		Key:     bytesToString(record.Key),
-		Message: bytesToString(record.Value),
+		Key:     kafka.BytesToString(record.Key),
+		Message: kafka.BytesToString(record.Value),
 	}
 }

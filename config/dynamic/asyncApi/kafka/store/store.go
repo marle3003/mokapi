@@ -18,10 +18,12 @@ import (
 	"mokapi/kafka/produce"
 	"mokapi/kafka/syncGroup"
 	"mokapi/runtime/events"
+	"mokapi/runtime/monitor"
 	"net"
 	"net/url"
 	"strconv"
 	"sync"
+	"time"
 )
 
 type Store struct {
@@ -199,7 +201,7 @@ func (s *Store) addTopic(name string, config *asyncApi.Channel) (*Topic, error) 
 	if _, ok := s.topics[name]; ok {
 		return nil, fmt.Errorf("topic %v already exists", name)
 	}
-	t := newTopic(name, config, s.brokers, s.log)
+	t := newTopic(name, config, s.brokers, s.log, s)
 	s.topics[name] = t
 	return t, nil
 }
@@ -290,4 +292,22 @@ func parseHostAndPort(s string) (host string, port int) {
 	}
 
 	return
+}
+
+func (s *Store) UpdateMetrics(m *monitor.Kafka, topic *Topic, partition *Partition, batch kafka.RecordBatch) {
+	m.Messages.WithLabel(s.cluster, topic.Name).Add(float64(len(batch.Records)))
+	m.LastMessage.WithLabel(s.cluster, topic.Name).Set(float64(time.Now().Unix()))
+
+	for name, g := range s.groups {
+		gt, ok := g.Commits[topic.Name]
+		if !ok {
+			continue
+		}
+		commit, ok := gt[partition.Index]
+		if !ok {
+			continue
+		}
+		lag := float64(partition.Offset() - commit)
+		m.Lags.WithLabel(s.cluster, name, topic.Name, strconv.Itoa(partition.Index)).Set(lag)
+	}
 }

@@ -116,9 +116,9 @@ func TestProduce(t *testing.T) {
 
 				// monitor
 				time.Sleep(100 * time.Millisecond)
-				require.Equal(t, 1.0, m.Kafka.Messages.WithLabel("test", "foo").Value())
+				require.Equal(t, 2.0, m.Kafka.Messages.WithLabel("test", "foo").Value())
 				require.Less(t, 0.0, m.Kafka.LastMessage.WithLabel("test", "foo").Value())
-				require.Equal(t, 1.0, m.Kafka.Lags.WithLabel("test", "foo", "foo", "0").Value())
+				require.Equal(t, 2.0, m.Kafka.Lags.WithLabel("test", "foo", "foo", "0").Value())
 
 				logs := events.GetEvents(events.NewTraits().WithNamespace("kafka").WithName("test").With("topic", "foo"))
 				require.Len(t, logs, 2)

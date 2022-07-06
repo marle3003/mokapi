@@ -1,19 +1,17 @@
 package store
 
 import (
-	"context"
 	log "github.com/sirupsen/logrus"
-	"io"
 	"mokapi/kafka"
 	"mokapi/kafka/produce"
 	"mokapi/runtime/monitor"
-	"strconv"
-	"time"
 )
 
 func (s *Store) produce(rw kafka.ResponseWriter, req *kafka.Request) error {
 	r := req.Message.(*produce.Request)
 	res := &produce.Response{}
+
+	m, withMonitor := monitor.KafkaFromContext(req.Context)
 
 	for _, rt := range r.Topics {
 		topic := s.Topic(rt.Name)
@@ -39,7 +37,9 @@ func (s *Store) produce(rw kafka.ResponseWriter, req *kafka.Request) error {
 						resPartition.ErrorCode = kafka.CorruptMessage
 					} else {
 						resPartition.BaseOffset = baseOffset
-						go s.processMetricsProduce(req.Context, rt.Name, p, rp.Record)
+						if withMonitor {
+							go s.UpdateMetrics(m, topic, p, rp.Record)
+						}
 					}
 				}
 			}
@@ -51,34 +51,4 @@ func (s *Store) produce(rw kafka.ResponseWriter, req *kafka.Request) error {
 	}
 
 	return rw.Write(res)
-}
-
-func (s *Store) processMetricsProduce(ctx context.Context, topic string, partition *Partition, records kafka.RecordBatch) {
-	m, ok := monitor.KafkaFromContext(ctx)
-	if !ok {
-		return
-	}
-
-	m.Messages.WithLabel(s.cluster, topic).Add(1)
-	m.LastMessage.WithLabel(s.cluster, topic).Set(float64(time.Now().Unix()))
-
-	for name, g := range s.groups {
-		gt, ok := g.Commits[topic]
-		if !ok {
-			continue
-		}
-		commit, ok := gt[partition.Index]
-		if !ok {
-			continue
-		}
-		lag := float64(partition.Offset() - commit - 1) // -1 because offset = written + 1
-		m.Lags.WithLabel(s.cluster, name, topic, strconv.Itoa(partition.Index)).Set(lag)
-	}
-}
-
-func bytesToString(bytes kafka.Bytes) string {
-	bytes.Seek(0, io.SeekStart)
-	b := make([]byte, bytes.Len())
-	bytes.Read(b)
-	return string(b)
 }

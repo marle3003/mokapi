@@ -84,7 +84,7 @@
               </div>
           </template>
           <template v-slot:cell(lag)="data">
-            <span>{{ metric(cluster.metrics, 'consumer_group_lag', {name: 'service', value: cluster.name}, {name: 'topic', value: topic.name}, {name: 'group', value: data.item.name}) }}</span>
+            <span>{{ metric(cluster.metrics, 'kafka_consumer_group_lag', {name: 'service', value: cluster.name}, {name: 'topic', value: topic.name}, {name: 'group', value: data.item.name}) }}</span>
           </template>
         </b-table>
       </b-card>

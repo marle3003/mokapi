@@ -25,40 +25,9 @@ func newKafkaClient(app *runtime.App) *kafkaClient {
 }
 
 func (c *kafkaClient) Produce(cluster string, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error) {
-	var t *store.Topic
-	var config *asyncApi.Config
-	if len(cluster) == 0 {
-		var topics []*store.Topic
-		for _, v := range c.app.Kafka {
-			config = v.Config
-			if t := v.Topic(topic); t != nil {
-				if len(cluster) == 0 {
-					cluster = v.Info.Name
-				}
-				topics = append(topics, t)
-			}
-		}
-		if len(topics) > 1 {
-			return nil, nil, fmt.Errorf("ambiguous topic %v. Specify the cluster", topic)
-		} else if len(topics) == 1 {
-			t = topics[0]
-		}
-	} else {
-		if c, ok := c.app.Kafka[cluster]; ok {
-			config = c.Config
-			t = c.Topic(topic)
-		}
-	}
-
-	if t == nil {
-		return nil, nil, fmt.Errorf("kafka topic '%v' not found", topic)
-	}
-
-	if partition < 0 {
-		rand.Seed(time.Now().Unix())
-		partition = rand.Intn(len(t.Partitions))
-	} else if partition >= len(t.Partitions) {
-		return nil, nil, fmt.Errorf("partiton %v does not exist", partition)
+	t, p, config, err := c.get(cluster, topic, partition)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	ch := config.Channels[t.Name]
@@ -66,12 +35,20 @@ func (c *kafkaClient) Produce(cluster string, topic string, partition int, key, 
 		return nil, nil, fmt.Errorf("invalid topic configuration")
 	}
 
-	k, v, err := c.write(t.Partition(partition), ch.Value, key, value, headers)
+	rb, err := c.createRecordBatch(key, value, ch.Value)
 	if err != nil {
 		return nil, nil, err
 	}
-	c.app.Monitor.Kafka.Messages.WithLabel(cluster, t.Name).Add(1)
-	c.app.Monitor.Kafka.LastMessage.WithLabel(cluster, t.Name).Set(float64(time.Now().Unix()))
+
+	_, err = p.Write(rb)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	k := kafka.BytesToString(rb.Records[0].Key)
+	v := kafka.BytesToString(rb.Records[0].Value)
+	t.Store().UpdateMetrics(c.app.Monitor.Kafka, t, p, rb)
+
 	return k, v, nil
 
 }
@@ -117,6 +94,89 @@ func (c *kafkaClient) write(partition *store.Partition, config *asyncApi.Channel
 	if err != nil {
 		return nil, nil, err
 	}
-
 	return key, value, nil
+}
+
+func (c *kafkaClient) get(cluster string, topic string, partition int) (t *store.Topic, p *store.Partition, config *asyncApi.Config, err error) {
+	if len(cluster) == 0 {
+		var topics []*store.Topic
+		for _, v := range c.app.Kafka {
+			config = v.Config
+			if t := v.Topic(topic); t != nil {
+				if len(cluster) == 0 {
+					cluster = v.Info.Name
+				}
+				topics = append(topics, t)
+			}
+		}
+		if len(topics) > 1 {
+			err = fmt.Errorf("ambiguous topic %v. Specify the cluster", topic)
+			return
+		} else if len(topics) == 1 {
+			t = topics[0]
+		}
+	} else {
+		if k, ok := c.app.Kafka[cluster]; ok {
+			config = k.Config
+			t = k.Topic(topic)
+		}
+	}
+
+	if t == nil {
+		err = fmt.Errorf("kafka topic '%v' not found", topic)
+		return
+	}
+
+	if partition < 0 {
+		rand.Seed(time.Now().Unix())
+		partition = rand.Intn(len(t.Partitions))
+	} else if partition >= len(t.Partitions) {
+		err = fmt.Errorf("partiton %v does not exist", partition)
+		return
+	}
+
+	p = t.Partition(partition)
+
+	return
+}
+
+func (c *kafkaClient) createRecordBatch(key, value interface{}, config *asyncApi.Channel) (rb kafka.RecordBatch, err error) {
+	msg := config.Publish.Message.Value
+	if msg == nil {
+		err = fmt.Errorf("message configuration missing")
+		return
+	}
+
+	if key == nil {
+		key = c.generator.New(msg.Bindings.Kafka.Key)
+	}
+	if value == nil {
+		value = c.generator.New(msg.Payload)
+	}
+
+	var k []byte
+	switch msg.Bindings.Kafka.Key.Value.Type {
+	case "object", "array":
+		k, err = msg.Bindings.Kafka.Key.Marshal(key, media.ParseContentType("application/json"))
+		if err != nil {
+			return
+		}
+	default:
+		k = []byte(fmt.Sprintf("%v", key))
+	}
+
+	var v []byte
+	v, err = msg.Payload.Marshal(value, media.ParseContentType("application/json"))
+	if err != nil {
+		return
+	}
+
+	rb = kafka.RecordBatch{Records: []kafka.Record{
+		{
+			Key:     kafka.NewBytes(k),
+			Value:   kafka.NewBytes(v),
+			Headers: nil,
+		},
+	}}
+	return
 }

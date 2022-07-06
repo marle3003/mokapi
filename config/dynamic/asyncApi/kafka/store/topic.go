@@ -10,6 +10,7 @@ type Topic struct {
 	Name       string
 	Partitions []*Partition
 	logger     LogRecord
+	s          *Store
 }
 
 func (t *Topic) Partition(index int) *Partition {
@@ -25,8 +26,8 @@ func (t *Topic) delete() {
 	}
 }
 
-func newTopic(name string, config *asyncApi.Channel, brokers Brokers, logger LogRecord) *Topic {
-	t := &Topic{Name: name, logger: logger}
+func newTopic(name string, config *asyncApi.Channel, brokers Brokers, logger LogRecord, s *Store) *Topic {
+	t := &Topic{Name: name, logger: logger, s: s}
 
 	for i := 0; i < config.Bindings.Kafka.Partitions(); i++ {
 		part := newPartition(i, brokers, t.log)
@@ -38,4 +39,8 @@ func newTopic(name string, config *asyncApi.Channel, brokers Brokers, logger Log
 
 func (t *Topic) log(record kafka.Record, traits events.Traits) {
 	t.logger(record, traits.With("topic", t.Name))
+}
+
+func (t *Topic) Store() *Store {
+	return t.s
 }

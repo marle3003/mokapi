@@ -37,6 +37,13 @@ func NewBytes(b []byte) Bytes {
 	return r
 }
 
+func BytesToString(bytes Bytes) string {
+	bytes.Seek(0, io.SeekStart)
+	b := make([]byte, bytes.Len())
+	bytes.Read(b)
+	return string(b)
+}
+
 func (b *bytesReader) Close() error { return nil }
 
 func (r *refCounter) inc() {
