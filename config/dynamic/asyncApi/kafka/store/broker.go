@@ -25,11 +25,12 @@ func newBroker(id int, name string, config asyncApi.Server) *Broker {
 	h, p := parseHostAndPort(config.Url)
 
 	return &Broker{
-		Id:          id,
-		Name:        name,
-		Host:        h,
-		Port:        p,
-		kafkaConfig: config.Bindings.Kafka,
+		Id:              id,
+		Name:            name,
+		Host:            h,
+		Port:            p,
+		kafkaConfig:     config.Bindings.Kafka,
+		stopCleanerChan: make(chan bool, 1),
 	}
 }
 
