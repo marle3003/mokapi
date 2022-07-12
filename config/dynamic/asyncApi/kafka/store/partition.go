@@ -1,6 +1,7 @@
 package store
 
 import (
+	log "github.com/sirupsen/logrus"
 	"mokapi/kafka"
 	"mokapi/runtime/events"
 	"strconv"
@@ -14,6 +15,7 @@ type Partition struct {
 	ActiveSegment int64
 	Head          int64
 	Tail          int64
+	Topic         *Topic
 
 	Leader   int
 	Replicas []int
@@ -34,7 +36,7 @@ type Segment struct {
 	LastWritten time.Time
 }
 
-func newPartition(index int, brokers Brokers, logger LogRecord) *Partition {
+func newPartition(index int, brokers Brokers, logger LogRecord, topic *Topic) *Partition {
 	replicas := make([]int, 0, len(brokers))
 	for i, _ := range brokers {
 		replicas = append(replicas, i)
@@ -46,6 +48,7 @@ func newPartition(index int, brokers Brokers, logger LogRecord) *Partition {
 		Segments: make(map[int64]*Segment),
 		Replicas: replicas,
 		logger:   logger,
+		Topic:    topic,
 	}
 	if len(replicas) > 0 {
 		p.Leader = replicas[0]
@@ -102,14 +105,18 @@ func (p *Partition) Write(batch kafka.RecordBatch) (baseOffset int64, err error)
 		case len(p.Segments) == 0:
 			p.Segments[p.ActiveSegment] = newSegment(p.Tail)
 		}
+		segment, ok := p.Segments[p.ActiveSegment]
+		if !ok {
+			segment = p.addSegment()
+		}
 
-		seg := p.Segments[p.ActiveSegment]
 		if r.Time.IsZero() {
 			r.Time = now
 		}
-		seg.Log = append(seg.Log, r)
-		seg.Tail++
-		seg.LastWritten = now
+		segment.Log = append(segment.Log, r)
+		segment.Tail++
+		segment.LastWritten = now
+		segment.Size += r.Size()
 		p.Tail++
 
 		p.logger(r, events.NewTraits().With("partition", strconv.Itoa(p.Index)))
@@ -141,8 +148,24 @@ func (p *Partition) GetSegment(offset int64) *Segment {
 
 func (p *Partition) delete() {
 	for _, s := range p.Segments {
-		s.delete()
+		p.removeSegment(s)
 	}
+}
+
+func (p *Partition) removeClosedSegments() {
+	for _, s := range p.Segments {
+		if !s.Closed.IsZero() {
+			p.removeSegment(s)
+		}
+	}
+}
+
+func (p *Partition) removeSegment(s *Segment) {
+	p.m.RLock()
+	defer p.m.RUnlock()
+
+	s.delete()
+	delete(p.Segments, s.Head)
 }
 
 func (p *Partition) removeReplica(id int) {
@@ -154,6 +177,23 @@ func (p *Partition) removeReplica(id int) {
 		}
 	}
 	p.Replicas = p.Replicas[:i]
+}
+
+func (p *Partition) addSegment() *Segment {
+	p.m.RLock()
+	defer p.m.RUnlock()
+
+	now := time.Now()
+
+	if active, ok := p.Segments[p.ActiveSegment]; ok {
+		active.Closed = now
+	}
+	p.ActiveSegment = p.Offset()
+	s := newSegment(p.Offset())
+	p.Segments[p.ActiveSegment] = s
+	log.Infof("kafka: added new segment to partition %v, topic %v", p.Index, p.Topic.Name)
+
+	return s
 }
 
 func newSegment(offset int64) *Segment {

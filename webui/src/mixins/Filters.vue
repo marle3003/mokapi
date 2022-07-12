@@ -13,8 +13,6 @@ export default {
         return moment(value).format('YYYY-MM-DD HH:mm:ss')
       }
 
-      console.log("moment: "+value)
-
       return moment
         .unix(value)
         .local()

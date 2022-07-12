@@ -37,8 +37,11 @@
               <b-icon v-else icon="plus-square"></b-icon>
             </div>
           </template>
+          <template v-slot:cell(partition)="data">
+            {{ getParition(data.item) }}
+          </template>
           <template v-slot:cell(time)="data">
-            {{ data.item.data.time | moment }}
+            {{ data.item.time | moment }}
           </template>
           <template v-slot:row-details="row">
             <b-card class="w-100">
@@ -172,6 +175,9 @@ export default {
           this.messages = []
         }
       )
+    },
+    getParition (event) {
+      return event.traits.partition
     },
     toggleDetails (row) {
       row.toggleDetails()

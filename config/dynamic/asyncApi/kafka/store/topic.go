@@ -2,15 +2,17 @@ package store
 
 import (
 	"mokapi/config/dynamic/asyncApi"
+	kafkaconfig "mokapi/config/dynamic/asyncApi/kafka"
 	"mokapi/kafka"
 	"mokapi/runtime/events"
 )
 
 type Topic struct {
-	Name       string
-	Partitions []*Partition
-	logger     LogRecord
-	s          *Store
+	Name        string
+	Partitions  []*Partition
+	logger      LogRecord
+	s           *Store
+	kafkaConfig kafkaconfig.TopicBindings
 }
 
 func (t *Topic) Partition(index int) *Partition {
@@ -27,10 +29,10 @@ func (t *Topic) delete() {
 }
 
 func newTopic(name string, config *asyncApi.Channel, brokers Brokers, logger LogRecord, s *Store) *Topic {
-	t := &Topic{Name: name, logger: logger, s: s}
+	t := &Topic{Name: name, logger: logger, s: s, kafkaConfig: config.Bindings.Kafka}
 
 	for i := 0; i < config.Bindings.Kafka.Partitions(); i++ {
-		part := newPartition(i, brokers, t.log)
+		part := newPartition(i, brokers, t.log, t)
 		part.validator = newValidator(config)
 		t.Partitions = append(t.Partitions, part)
 	}

@@ -223,9 +223,9 @@ func (s *Store) addBroker(name string, config asyncApi.Server) {
 	defer s.m.Unlock()
 
 	id := len(s.brokers)
-	b := &Broker{Id: id, Name: name}
+	b := newBroker(id, name, config)
 	s.brokers[id] = b
-	b.Host, b.Port = parseHostAndPort(config.Url)
+	b.startCleaner(s.cleanLog)
 }
 
 func (s *Store) deleteBroker(id int) {
@@ -236,6 +236,9 @@ func (s *Store) deleteBroker(id int) {
 		for _, p := range t.Partitions {
 			p.removeReplica(id)
 		}
+	}
+	if b, ok := s.brokers[id]; ok {
+		b.stopCleaner()
 	}
 	delete(s.brokers, id)
 }

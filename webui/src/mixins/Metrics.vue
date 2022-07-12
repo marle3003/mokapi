@@ -1,7 +1,7 @@
 <script>
 export default {
   methods: {
-    maxMetric(metrics, name, ...labels){
+    maxMetric (metrics, name, ...labels) {
       if (!metrics) {
         return
       }
@@ -16,7 +16,7 @@ export default {
             value = metric.value
           }
         } else if (labels.length > 0 && this.matchLabels(metric, labels)) {
-           if (metric.value > value) {
+          if (metric.value > value) {
             value = metric.value
           }
         }
