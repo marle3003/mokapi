@@ -33,7 +33,7 @@ func TestListGroup(t *testing.T) {
 			func(t *testing.T, s *store.Store) {
 				s.Update(asyncapitest.NewConfig(asyncapitest.WithServer("", "kafka", "")))
 				group := s.GetOrCreateGroup("foo", 0)
-				group.State = store.Joining
+				group.State = store.PreparingRebalance
 				g := group.NewGeneration()
 				g.Members[""] = &store.Member{}
 
@@ -54,7 +54,7 @@ func TestListGroup(t *testing.T) {
 				s.Update(asyncapitest.NewConfig(asyncapitest.WithServer("", "kafka", "")))
 				s.GetOrCreateGroup("foo", 0)
 				group := s.GetOrCreateGroup("bar", 0)
-				group.State = store.AwaitingSync
+				group.State = store.CompletingRebalance
 				g := group.NewGeneration()
 				g.Members[""] = &store.Member{}
 
