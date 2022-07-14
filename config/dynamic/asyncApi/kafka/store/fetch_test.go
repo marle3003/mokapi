@@ -358,6 +358,7 @@ func TestFetch(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			s := store.New(asyncapitest.NewConfig())
+			defer s.Close()
 
 			tc.fn(t, s)
 		})

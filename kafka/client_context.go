@@ -44,5 +44,5 @@ func ClientFromContext(req *Request) *ClientContext {
 }
 
 func NewClientContext(ctx context.Context, addr string) context.Context {
-	return context.WithValue(ctx, clientKey, &ClientContext{Addr: addr, AllowAutoTopicCreation: true})
+	return context.WithValue(ctx, clientKey, &ClientContext{Addr: addr, AllowAutoTopicCreation: true, Heartbeat: time.Now()})
 }

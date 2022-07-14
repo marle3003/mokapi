@@ -5,9 +5,10 @@ import "mokapi/kafka"
 type GroupState int
 
 const (
-	Stable       GroupState = iota
-	Joining      GroupState = 1
-	AwaitingSync GroupState = 2
+	Empty               GroupState = iota
+	PreparingRebalance  GroupState = 1
+	CompletingRebalance GroupState = 2
+	Stable                         = 3
 )
 
 type Group struct {
@@ -27,7 +28,7 @@ func NewGroup(name string, coordinator *Broker) *Group {
 		Name:        name,
 		Coordinator: coordinator,
 	}
-	g.balancer = newGroupBalancer(g)
+	g.balancer = newGroupBalancer(g, coordinator.kafkaConfig)
 	go g.balancer.run()
 	return g
 }
@@ -37,11 +38,14 @@ type Generation struct {
 	Protocol string
 	LeaderId string
 	Members  map[string]*Member
+
+	RebalanceTimeoutMs int
 }
 
 type Member struct {
-	Partitions []*Partition
-	Client     *kafka.ClientContext
+	Partitions     []*Partition
+	Client         *kafka.ClientContext
+	SessionTimeout int
 }
 
 func (g *Group) NewGeneration() *Generation {
@@ -84,12 +88,14 @@ func (g *Group) Offset(topic string, partition int) int64 {
 
 func (g GroupState) String() string {
 	switch g {
-	case Joining:
-		return "Joining"
+	case Empty:
+		return "Empty"
+	case PreparingRebalance:
+		return "PreparingRebalance"
+	case CompletingRebalance:
+		return "CompletingRebalance"
 	case Stable:
 		return "Stable"
-	case AwaitingSync:
-		return "AwaitingSync"
 	}
 	return "Unknown"
 }

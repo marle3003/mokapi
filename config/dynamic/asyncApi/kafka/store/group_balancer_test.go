@@ -279,6 +279,7 @@ func TestGroupBalancing(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			s := store.New(asyncapitest.NewConfig())
+			defer s.Close()
 			b := kafkatest.NewBroker(kafkatest.WithHandler(s))
 			defer b.Close()
 			s.Update(asyncapitest.NewConfig(asyncapitest.WithServer("", "kafka", b.Addr)))

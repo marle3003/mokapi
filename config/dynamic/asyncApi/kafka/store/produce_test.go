@@ -216,7 +216,10 @@ func TestProduce(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			defer events.Reset()
-			tc.fn(t, store.New(asyncapitest.NewConfig()))
+
+			s := store.New(asyncapitest.NewConfig())
+			defer s.Close()
+			tc.fn(t, s)
 		})
 	}
 }

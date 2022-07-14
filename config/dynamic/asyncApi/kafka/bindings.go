@@ -140,6 +140,17 @@ func (b BrokerBindings) LogSegmentBytes() int {
 	return 1073741824 // 1gb
 }
 
+func (b BrokerBindings) GroupMinSessionTimeoutMs() int {
+	if s, ok := b.Config["group.min.session.timeout.ms"]; ok {
+		if i, err := strconv.Atoi(s); err != nil {
+			log.Errorf("unable to convert 'group.min.session.timeout.ms' to int, using default instead: %v", err)
+		} else {
+			return i
+		}
+	}
+	return 6000
+}
+
 func (b *BrokerBindings) UnmarshalYAML(value *yaml.Node) error {
 	m := make(map[string]string)
 	err := value.Decode(m)

@@ -185,7 +185,10 @@ func TestOffsetCommit(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			tc.fn(t, store.New(asyncapitest.NewConfig()))
+
+			s := store.New(asyncapitest.NewConfig())
+			defer s.Close()
+			tc.fn(t, s)
 		})
 	}
 }

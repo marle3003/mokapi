@@ -26,7 +26,7 @@ func (s *Store) syncgroup(rw kafka.ResponseWriter, req *kafka.Request) error {
 		return rw.Write(&syncGroup.Response{ErrorCode: kafka.NotCoordinator})
 	}
 
-	if g.State == Joining {
+	if g.State == PreparingRebalance {
 		return rw.Write(&syncGroup.Response{ErrorCode: kafka.RebalanceInProgress})
 	}
 

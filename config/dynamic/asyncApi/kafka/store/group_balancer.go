@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	log "github.com/sirupsen/logrus"
+	kafkaconfig "mokapi/config/dynamic/asyncApi/kafka"
 	"mokapi/kafka"
 	"mokapi/kafka/joinGroup"
 	"mokapi/kafka/syncGroup"
@@ -16,7 +17,8 @@ type groupBalancer struct {
 	sync  chan syncdata
 	stop  chan bool
 
-	joins []joindata
+	joins  []joindata
+	config kafkaconfig.BrokerBindings
 }
 
 type joindata struct {
@@ -45,12 +47,13 @@ type groupAssignment struct {
 	raw      []byte
 }
 
-func newGroupBalancer(group *Group) *groupBalancer {
+func newGroupBalancer(group *Group, config kafkaconfig.BrokerBindings) *groupBalancer {
 	return &groupBalancer{
-		group: group,
-		join:  make(chan joindata),
-		sync:  make(chan syncdata),
-		stop:  make(chan bool, 1),
+		group:  group,
+		join:   make(chan joindata),
+		sync:   make(chan syncdata),
+		stop:   make(chan bool, 1),
+		config: config,
 	}
 }
 
@@ -62,19 +65,34 @@ func (b *groupBalancer) run() {
 	stop := make(chan bool, 1)
 	var syncs []syncdata
 	var assigns map[string]*groupAssignment
+	prepareRebalance := func() {
+		// start a new rebalance
+		b.group.State = PreparingRebalance
+		b.joins = make([]joindata, 0)
+		syncs = nil
+		assigns = nil
+		go b.finishJoin(stop)
+	}
+
 	for {
 		select {
+		case <-time.After(time.Duration(b.config.GroupMinSessionTimeoutMs()) * time.Millisecond):
+			if b.group.Generation == nil {
+				continue
+			}
+			now := time.Now()
+			for _, m := range b.group.Generation.Members {
+				if m.Client.Heartbeat.Add(time.Duration(m.SessionTimeout) * time.Millisecond).Before(now) {
+					log.Infof("kafka consumer timeout: %v", m.Client.ClientId)
+					prepareRebalance()
+				}
+			}
 		case <-b.stop:
 			stop <- true
 			return
 		case j := <-b.join:
-			if b.group.State == Stable {
-				// start a new rebalance
-				b.group.State = Joining
-				b.joins = make([]joindata, 0)
-				syncs = nil
-				assigns = nil
-				go b.finishJoin(stop)
+			if b.group.State == Stable || b.group.State == Empty {
+				prepareRebalance()
 			}
 			b.joins = append(b.joins, j)
 		case s := <-b.sync:
@@ -93,7 +111,7 @@ func (b *groupBalancer) run() {
 				syncs = append(syncs, s)
 			default:
 				// we have leader sync and respond directly
-				// a dead consumer will be kicked by heartbeat
+				// a dead consumer from last generation will be kicked by heartbeat
 				res := &syncGroup.Response{
 					Assignment: assigns[s.client.Member[b.group.Name]].raw,
 				}
@@ -104,18 +122,28 @@ func (b *groupBalancer) run() {
 }
 
 func (b *groupBalancer) finishJoin(stop chan bool) {
+	rebalanceTimeoutMs := b.config.GroupInitialRebalanceDelayMs()
+	if b.group.Generation != nil {
+		rebalanceTimeoutMs = b.group.Generation.RebalanceTimeoutMs
+	}
+
 StopWaitingForConsumers:
 	for {
 		select {
 		case <-stop:
 			return
-		case <-time.After(time.Duration(3000) * time.Millisecond):
+		case <-time.After(time.Duration(rebalanceTimeoutMs) * time.Millisecond):
 			break StopWaitingForConsumers
 		}
 	}
 
-	b.group.State = AwaitingSync
 	generation := b.group.NewGeneration()
+	if len(b.joins) == 0 {
+		b.group.State = Empty
+		return
+	}
+
+	b.group.State = CompletingRebalance
 
 	counter := map[string]*protocoldata{
 		"": {counter: -1},
@@ -123,7 +151,7 @@ StopWaitingForConsumers:
 	var protocol string
 	for _, j := range b.joins {
 		memberId := j.client.GetOrCreateMemberId(b.group.Name)
-		generation.Members[memberId] = &Member{Client: j.client}
+		generation.Members[memberId] = &Member{Client: j.client, SessionTimeout: j.sessionTimeout}
 
 		for _, proto := range j.protocols {
 			if _, ok := counter[proto.Name]; !ok {

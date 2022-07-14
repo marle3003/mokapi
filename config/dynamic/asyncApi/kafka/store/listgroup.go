@@ -17,14 +17,7 @@ func (s *Store) listgroup(rw kafka.ResponseWriter, req *kafka.Request) error {
 
 		if g.Generation != nil && len(g.Generation.Members) > 0 {
 			group.ProtocolType = g.Generation.Protocol
-			switch g.State {
-			case Joining:
-				group.GroupState = "PreparingRebalance"
-			case AwaitingSync:
-				group.GroupState = "CompletingRebalance"
-			case Stable:
-				group.GroupState = "Stable"
-			}
+			group.GroupState = g.State.String()
 		}
 
 		if containsState(r.StatesFilter, group.GroupState) {

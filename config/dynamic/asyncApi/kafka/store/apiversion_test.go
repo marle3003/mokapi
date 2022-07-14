@@ -14,6 +14,7 @@ import (
 
 func TestApiVersion(t *testing.T) {
 	s := store.New(asyncapitest.NewConfig())
+	defer s.Close()
 
 	rr := kafkatest.NewRecorder()
 	s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &apiVersion.Request{
@@ -35,7 +36,9 @@ func TestApiVersion(t *testing.T) {
 }
 
 func TestApiVersion_Raw(t *testing.T) {
-	b := kafkatest.NewBroker(kafkatest.WithHandler(store.New(asyncapitest.NewConfig())))
+	s := store.New(asyncapitest.NewConfig())
+	defer s.Close()
+	b := kafkatest.NewBroker(kafkatest.WithHandler(s))
 	defer b.Close()
 
 	var err error

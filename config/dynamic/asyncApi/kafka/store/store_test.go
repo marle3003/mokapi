@@ -15,6 +15,7 @@ func TestStore(t *testing.T) {
 			"empty",
 			func(t *testing.T) {
 				s := New(asyncapitest.NewConfig())
+				defer s.Close()
 				require.Equal(t, 0, len(s.Brokers()))
 				require.Equal(t, 0, len(s.Topics()))
 				require.Equal(t, 0, len(s.Groups()))
@@ -27,6 +28,7 @@ func TestStore(t *testing.T) {
 				s := New(asyncapitest.NewConfig(
 					asyncapitest.WithServer("foo", "kafka", "foo:9092"),
 				))
+				defer s.Close()
 				require.Equal(t, 1, len(s.Brokers()))
 				require.Equal(t, 0, len(s.Topics()))
 				require.Equal(t, 0, len(s.Groups()))
@@ -41,6 +43,7 @@ func TestStore(t *testing.T) {
 				s := New(asyncapitest.NewConfig(
 					asyncapitest.WithChannel("foo"),
 				))
+				defer s.Close()
 				require.Equal(t, 0, len(s.Brokers()))
 				require.Equal(t, 1, len(s.Topics()))
 				require.Equal(t, 0, len(s.Groups()))
@@ -54,6 +57,7 @@ func TestStore(t *testing.T) {
 			"create topic",
 			func(t *testing.T) {
 				s := New(asyncapitest.NewConfig())
+				defer s.Close()
 				topic, err := s.NewTopic("foo", asyncapitest.NewChannel())
 				require.NoError(t, err)
 				require.Equal(t, "foo", topic.Name)
@@ -64,6 +68,7 @@ func TestStore(t *testing.T) {
 			"create topic, already exists",
 			func(t *testing.T) {
 				s := New(asyncapitest.NewConfig(asyncapitest.WithChannel("foo")))
+				defer s.Close()
 				_, err := s.NewTopic("foo", asyncapitest.NewChannel())
 				require.Error(t, err, "topic foo already exists")
 			},
