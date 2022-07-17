@@ -76,6 +76,9 @@ skip:
 }
 
 func (kc KafkaClusters) Stop() {
+	if len(kc) > 0 {
+		log.Debug("stopping kafka clusters")
+	}
 	for _, c := range kc {
 		c.Close()
 	}
@@ -103,6 +106,7 @@ func (c *Cluster) Close() {
 	for _, f := range c.close {
 		f()
 	}
+	c.Store.Close()
 }
 
 func parseKafkaUrl(s string) (host, port string, err error) {

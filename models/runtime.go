@@ -4,7 +4,6 @@ import (
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/ldap"
 	"mokapi/config/dynamic/openapi"
-	"mokapi/config/dynamic/smtp"
 )
 
 type Runtime struct {

@@ -88,6 +88,7 @@ func (w *ConfigWatcher) Start(pool *safe.Pool) error {
 		for {
 			select {
 			case <-ctx.Done():
+				log.Debug("configwatcher")
 				close(ch)
 				return
 			case c := <-ch:
@@ -124,6 +125,8 @@ func (w *ConfigWatcher) addOrUpdate(c *common.Config) error {
 
 	w.m.Unlock()
 	cfg.Changed()
+
+	log.Debugf("processed %v", cfg.Url)
 
 	return nil
 }

@@ -5,7 +5,6 @@ import ServiceList from '@/views/ServiceList'
 
 import Dashboard from '@/views/Dashboard'
 import Docs from '@/views/Docs'
-import SmtpMail from '@/views/dashboard/SmtpMail'
 
 import HttpService from '@/views/http/Service'
 import ServiceOverview from '@/components/http/ServiceOverview'
@@ -82,7 +81,7 @@ export default new Router({
     {
       path: '/dashboard/smtp/mails/:id',
       name: 'smtpMail',
-      component: SmtpMail
+      component: Dashboard
     },
     {
       path: '/services',

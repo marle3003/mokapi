@@ -11,6 +11,7 @@ import (
 	"mokapi/js/modules/http"
 	"mokapi/js/modules/kafka"
 	"mokapi/js/modules/mustache"
+	"mokapi/js/modules/smtp"
 	"mokapi/js/modules/yaml"
 	"path/filepath"
 	"text/template"
@@ -25,6 +26,7 @@ var moduleTypes = map[string]factory{
 	"kafka":    kafka.New,
 	"yaml":     yaml.New,
 	"mustache": mustache.New,
+	"smtp":     smtp.New,
 }
 
 type require struct {

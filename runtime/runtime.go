@@ -3,6 +3,7 @@ package runtime
 import (
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
+	"mokapi/config/dynamic/mail"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/runtime/monitor"
 	"mokapi/version"
@@ -42,4 +43,11 @@ func (a *App) AddKafka(c *asyncApi.Config, store *store.Store) {
 		a.Monitor.Kafka.Messages.WithLabel(c.Info.Name, n).Add(0)
 		a.Monitor.Kafka.LastMessage.WithLabel(c.Info.Name, n).Set(0)
 	}
+}
+
+func (a *App) AddSmtp(c *mail.Config) {
+	if len(a.Smtp) == 0 {
+		a.Smtp = make(map[string]*SmtpInfo)
+	}
+	a.Smtp[c.Info.Name] = &SmtpInfo{Config: c}
 }

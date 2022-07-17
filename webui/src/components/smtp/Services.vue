@@ -36,7 +36,7 @@ export default {
   },
   methods: {
     clickHandler (record) {
-      this.$router.push({ name: 'smtpMail', params: { id: record.id } })
+      this.$router.push({ name: 'smtp', params: { id: record.id } })
     },
   }
 }

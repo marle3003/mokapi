@@ -7,6 +7,8 @@ import (
 	"mokapi/engine"
 	"mokapi/runtime"
 	"mokapi/safe"
+	"os"
+	"runtime/pprof"
 )
 
 type Server struct {
@@ -59,6 +61,8 @@ func (s *Server) Start(ctx context.Context) error {
 	s.ldap.Stop()
 	s.engine.Close()
 	s.stopChan <- true
+
+	pprof.Lookup("goroutine").WriteTo(os.Stdout, 1)
 
 	return nil
 }

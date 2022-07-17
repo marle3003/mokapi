@@ -5,38 +5,33 @@ import (
 	"fmt"
 	"github.com/emersion/go-smtp"
 	log "github.com/sirupsen/logrus"
-	config "mokapi/config/dynamic/smtp"
+	config "mokapi/config/dynamic/mail"
 	"mokapi/engine/common"
-	"mokapi/models"
+	"mokapi/runtime"
+	"mokapi/runtime/events"
 	"mokapi/server/cert"
 	"net"
 	"net/url"
 )
 
-type ReceivedMailHandler func(mail *models.MailMetric)
-
-//type EventHandler func(events event.Handler, options ...workflow.Options) (*runtime.Summary, error)
-
 type Server struct {
+	app    *runtime.App
 	server *smtp.Server
 	config *config.Config
 
 	close    chan bool
-	received chan *models.MailMetric
+	received chan *Mail
 
-	mh      ReceivedMailHandler
 	emitter common.EventEmitter
-	//wh EventHandler
 }
 
 type backend struct {
-	received chan *models.MailMetric
-	//wh       EventHandler
+	received chan *Mail
 }
 
-func New(c *config.Config, store *cert.Store, emitter common.EventEmitter) (*Server, error) {
-	received := make(chan *models.MailMetric)
-	b := &backend{received: received /*wh: wh*/}
+func New(c *config.Config, store *cert.Store, emitter common.EventEmitter, app *runtime.App) (*Server, error) {
+	received := make(chan *Mail)
+	b := &backend{received: received}
 	s := smtp.NewServer(b)
 
 	u, err := url.Parse(c.Server)
@@ -65,13 +60,12 @@ func New(c *config.Config, store *cert.Store, emitter common.EventEmitter) (*Ser
 	}
 
 	return &Server{
+		app:      app,
 		config:   c,
 		server:   s,
 		received: received,
 		close:    make(chan bool),
 		emitter:  emitter,
-		//mh:       mh,
-		//wh:       wh,
 	}, nil
 }
 
@@ -113,9 +107,10 @@ func (s *Server) StartWith(l net.Listener) {
 		for {
 			select {
 			case mail := <-s.received:
-				if s.mh != nil {
-					s.mh(mail)
-				}
+				log.Infof("recevied new mail on %v from %v with subject %v", l.Addr(), mail.From, mail.Subject)
+				s.app.Monitor.Smtp.Mails.WithLabel(s.config.Info.Name).Add(1)
+				events.Push(mail, events.NewTraits().WithNamespace("smtp").WithName(s.config.Info.Name))
+				s.emitter.Emit("smtp", mail)
 			case <-s.close:
 				return
 			}
@@ -133,32 +128,9 @@ func (s *Server) Update(config *config.Config) error {
 }
 
 func (b backend) Login(state *smtp.ConnectionState, username, password string) (smtp.Session, error) {
-	log.Debugf("smtp login with username %q", username)
-	//summary, err := b.wh(event.WithSmtpEvent(event.SmtpEvent{Login: true, Address: state.LocalAddr.String()}), workflow.WithContext("auth", &Login{Username: username, Password: password}))
-	//if err != nil {
-	//	log.Errorf("error on smtp login: %v", err)
-	//}
-	//if summary == nil {
-	//	log.Debugf("no actions found")
-	//} else {
-	//	log.WithField("action summary", summary).Debugf("executed actions")
-	//}
-
-	return newSession(b.received /*, b.wh*/, state), nil
+	return newSession(b.received, state), nil
 }
 
 func (b backend) AnonymousLogin(state *smtp.ConnectionState) (smtp.Session, error) {
-	log.Debug("smtp anonymous login")
-	//summary, err := b.wh(event.WithSmtpEvent(event.SmtpEvent{Login: true, Address: state.LocalAddr.String()}), workflow.WithContext("auth", &Login{Anonymous: true}))
-	//if err != nil {
-	//	log.Errorf("error on smtp login: %v", err)
-	//}
-	//
-	//if summary == nil {
-	//	log.Debugf("no actions found")
-	//} else {
-	//	log.WithField("action summary", summary).Debugf("executed actions")
-	//}
-
-	return newSession(b.received /*, b.wh*/, state), nil
+	return newSession(b.received, state), nil
 }

@@ -9,46 +9,31 @@ import (
 	"io"
 	"io/ioutil"
 	"mime"
-	"mokapi/models"
 	"net/mail"
 	"strings"
 	"time"
 )
 
 type session struct {
-	current  *models.Mail
-	received chan *models.MailMetric
-	//wh       EventHandler
-	state *smtp.ConnectionState
+	current  *Mail
+	received chan *Mail
+	state    *smtp.ConnectionState
 }
 
-func newSession(received chan *models.MailMetric /*, wh EventHandler*/, state *smtp.ConnectionState) *session {
+func newSession(received chan *Mail, state *smtp.ConnectionState) *session {
 	return &session{
 		received: received,
-		//wh:       wh,
-		state: state,
+		state:    state,
 	}
 }
 
 func (s *session) Reset() {
 	if s.current != nil {
-		//summary, err := s.wh(event.WithSmtpEvent(event.SmtpEvent{Received: true, Address: s.state.LocalAddr.String()}), workflow.WithContext("mail", s.current))
-		//if err != nil {
-		//	log.Errorf("error on smtp: %v", err)
-		//}
-		//
-		//if summary == nil {
-		//	log.Debugf("no actions found")
-		//} else {
-		//	log.WithField("action summary", summary).Debugf("executed actions")
-		//}
-
-		s.received <- &models.MailMetric{Mail: s.current /*, Summary: summary*/}
+		s.received <- s.current
 	}
 }
 
 func (s *session) Logout() error {
-	//s.wh(event.WithSmtpEvent(event.SmtpEvent{Logout: true}))
 	return nil
 }
 
@@ -71,7 +56,7 @@ func (s *session) Data(r io.Reader) error {
 		return err
 	}
 
-	email := &models.Mail{}
+	email := &Mail{}
 	p := parser{}
 	email.Sender = p.parseAddress(m.Header.Get("Sender"))
 	email.From = p.parseAddressList(m.Header.Get("From"))
@@ -157,7 +142,7 @@ func (p parser) parseSubject(s string) string {
 	return strings.Join(r, "")
 }
 
-func (p parser) parseBody(r io.Reader, contentType, encoding string) (text, html string, attachments []models.Attachment) {
+func (p parser) parseBody(r io.Reader, contentType, encoding string) (text, html string, attachments []Attachment) {
 	mediaType, params, err := mime.ParseMediaType(contentType)
 	_ = params
 	if err != nil {

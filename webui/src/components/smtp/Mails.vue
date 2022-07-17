@@ -10,24 +10,27 @@
         @row-clicked="mailClickHandler"
       >
         <template v-slot:cell(from)="data">
-                <div
-                  v-for="from in data.item.from"
-                  :key="from.Address"
-                >
-                  <span v-if="from.Name !== ''">{{ from.Name }} &lt;</span><span>{{ from.Address }}</span><span v-if="from.Name !== ''">&gt;</span>
-                </div>
-              </template>
-              <template v-slot:cell(to)="data">
-                <div
-                  v-for="to in data.item.to"
-                  :key="to.Address"
-                >
-                  <span v-if="to.Name !== ''">{{ to.Name }} &lt;</span><span>{{ to.Address }}</span><span v-if="to.Name !== ''">&gt;</span>
-                </div>
-              </template>
-              <template v-slot:cell(time)="data">
-                {{ data.item.time | moment}}
-              </template>
+          <div
+            v-for="from in data.item.data.from"
+            :key="from.Address"
+          >
+            <span v-if="from.Name !== ''">{{ from.Name }} &lt;</span><span>{{ from.Address }}</span><span v-if="from.Name !== ''">&gt;</span>
+          </div>
+        </template>
+        <template v-slot:cell(to)="data">
+          <div
+            v-for="to in data.item.data.to"
+            :key="to.Address"
+          >
+            <span v-if="to.Name !== ''">{{ to.Name }} &lt;</span><span>{{ to.Address }}</span><span v-if="to.Name !== ''">&gt;</span>
+          </div>
+        </template>
+         <template v-slot:cell(subject)="data">
+          {{ data.item.data.subject }}
+        </template>
+        <template v-slot:cell(time)="data">
+          {{ data.item.time | moment}}
+        </template>
       </b-table>
     </b-card>
   </b-card-group>
@@ -63,7 +66,7 @@ export default {
       )
     },
     mailClickHandler (record) {
-      this.$router.push({ name: 'smptMail', params: { id: record.id } })
+      this.$router.push({ name: 'smtpMail', params: { id: record.id } })
     }
   }
 }

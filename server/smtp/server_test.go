@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/stretchr/testify/require"
-	"mokapi/config/dynamic/smtp"
 	"mokapi/config/static"
 	"mokapi/server/cert"
 	"mokapi/server/smtp/smtptest"

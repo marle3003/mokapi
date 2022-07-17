@@ -63,7 +63,7 @@
           <b-card
             body-class="info-body"
             class="text-center"
-            v-if="smtpEnabled"
+            v-if="smtpEnabled  && $route.name === 'dashboard' || $route.name === 'smtp'"
           >
             <b-card-title class="info">Total Mails</b-card-title>
             <b-card-text class="text-center value">{{ this.totalSmtpMails }}</b-card-text>
@@ -133,14 +133,15 @@
           </b-card-group>
         </div>
 
-        <http-requests v-show="$route.name === 'http'" />
-        <http-request v-show="$route.name === 'httpRequest'" />
+        <http-requests v-if="$route.name === 'http'" />
+        <http-request v-if="$route.name === 'httpRequest'" />
 
         <kafka-cluster v-show="$route.name === 'kafkaCluster'" />
-        <kafka-topic v-show="$route.name === 'kafkaTopic'" />
+        <kafka-topic v-if="$route.name === 'kafkaTopic'" />
 
         <smtp-services :services="smtpServices" v-show="smtpEnabled && ($route.name === 'dashboard' || $route.name === 'smtp')" />
-        <smtp-mails v-show="$route.name === 'smtp'" />
+        <smtp-mails v-if="$route.name === 'smtp'" />
+        <smtp-mail v-if="$route.name === 'smtpMail'" />
 
       </div>
     </div>
@@ -164,6 +165,7 @@ import KafkaTopic from '@/components/kafka/Topic'
 
 import SmtpServices from '@/components/smtp/Services'
 import SmtpMails from '@/components/smtp/Mails'
+import SmtpMail from '@/components/smtp/SmtpMail'
 
 export default {
   mixins: [Api, Filters, Refresh, Metrics, Shortcut],
@@ -174,7 +176,8 @@ export default {
     'kafka-cluster': KafkaCluster,
     'kafka-topic': KafkaTopic,
     'smtp-services': SmtpServices,
-    'smtp-mails': SmtpMails
+    'smtp-mails': SmtpMails,
+    'smtp-mail': SmtpMail
   },
   data () {
     return {
@@ -294,7 +297,7 @@ export default {
       }
       let sum = 0
       for (let service of this.smtpServices) {
-        sum += this.metric(service.metrics, 'mails_total')
+        sum += this.metric(service.metrics, 'smtp_mails_total')
       }
       return sum
     }

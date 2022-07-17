@@ -129,8 +129,8 @@ export default {
       if (!id){
         return
       }
-      
-      this.event = await this.getHttpRequest(id)
+
+      this.event = await this.getEvent(id)
       this.request = this.event.data.request
       this.response = this.event.data.response
     },
@@ -191,13 +191,6 @@ export default {
 </script>
 
 <style scoped>
-  .dashboard{
-    width: 90%;
-    margin: 42px auto auto;
-  }
-  .page-header h2{
-    font-weight: 400;
-  }
   .menu-item svg {
     -moz-transition: all .3s linear;
     -webkit-transition: all .3s linear;

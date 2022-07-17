@@ -26,6 +26,7 @@ func Start(cfg *static.Config) (*Cmd, error) {
 	log.SetLevel(log.DebugLevel)
 	events.SetStore(100, events.NewTraits().WithNamespace("http"))
 	events.SetStore(100, events.NewTraits().WithNamespace("kafka"))
+	events.SetStore(100, events.NewTraits().WithNamespace("smtp"))
 
 	app := runtime.New()
 
@@ -44,11 +45,12 @@ func Start(cfg *static.Config) (*Cmd, error) {
 	managerHttp := server.NewHttpManager(http, scriptEngine, certStore, app)
 	mangerKafka := server.NewKafkaManager(kafka, scriptEngine, app)
 	managerLdap := server.NewLdapDirectoryManager(directories, scriptEngine, certStore, app)
+	managerSmtp := server.NewSmtpManager(mail, scriptEngine, certStore, app)
 
 	watcher.AddListener(func(cfg *common.Config) {
 		mangerKafka.UpdateConfig(cfg)
 		managerHttp.Update(cfg)
-		mail.UpdateConfig(cfg, certStore, scriptEngine)
+		managerSmtp.UpdateConfig(cfg)
 		managerLdap.UpdateConfig(cfg)
 		if err := scriptEngine.AddScript(cfg); err != nil {
 			panic(err)

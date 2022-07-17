@@ -1,7 +1,6 @@
 package api
 
 import (
-	"mokapi/config/dynamic/smtp"
 	"mokapi/config/static"
 	"mokapi/runtime"
 	"mokapi/try"

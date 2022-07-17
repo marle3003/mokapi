@@ -47,15 +47,9 @@ export default {
       )
       return response.data
     },
-    async getHttpRequest (id) {
+    async getEvent (id) {
       let response = await this.$http.get(
         this.baseUrl + '/api/events/' + id
-      )
-      return response.data
-    },
-    async getSmtpMail (id) {
-      let response = await this.$http.get(
-        this.baseUrl + '/api/dashboard/smtp/mails/' + id
       )
       return response.data
     },

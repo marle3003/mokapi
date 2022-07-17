@@ -44,6 +44,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 							asyncapitest.WithPayload(schematest.New("string")),
 							asyncapitest.WithKey(schematest.New("string"))))))
 			s := store.New(config)
+			defer s.Close()
 			app := runtime.New()
 			app.AddKafka(config, s)
 			c := newKafkaClient(app)

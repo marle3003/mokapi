@@ -30,6 +30,7 @@ type serviceType string
 var (
 	ServiceHttp  serviceType = "http"
 	ServiceKafka serviceType = "kafka"
+	ServiceSmtp  serviceType = "smtp"
 )
 
 type service struct {
@@ -100,6 +101,7 @@ func (h *handler) getServices(w http.ResponseWriter, _ *http.Request) {
 	services := make([]interface{}, 0)
 	services = append(services, getHttpServices(h.app.Http, h.app.Monitor)...)
 	services = append(services, getKafkaServices(h.app.Kafka, h.app.Monitor)...)
+	services = append(services, getSmtpServices(h.app.Smtp, h.app.Monitor)...)
 	w.Header().Set("Content-Type", "application/json")
 	writeJsonBody(w, services)
 }

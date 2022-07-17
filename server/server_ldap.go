@@ -1,6 +1,7 @@
 package server
 
 import (
+	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/common"
 	config "mokapi/config/dynamic/ldap"
 	engine "mokapi/engine/common"
@@ -43,6 +44,9 @@ func (m LdapDirectoryManager) UpdateConfig(c *common.Config) {
 }
 
 func (dirs LdapDirectories) Stop() {
+	if len(dirs) > 0 {
+		log.Debug("stopping ldap directories")
+	}
 	for _, d := range dirs {
 		d.Close()
 	}
