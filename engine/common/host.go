@@ -17,8 +17,8 @@ type Host interface {
 	Cron(expr string, do func(), times int, tags map[string]string) (int, error)
 	Cancel(jobId int) error
 
-	OpenFile(file string) (string, error)
-	OpenScript(file string) (string, error)
+	OpenFile(file string, hint string) (string, string, error)
+	OpenScript(file string, hint string) (string, string, error)
 
 	On(event string, do func(args ...interface{}) (bool, error), tags map[string]string)
 

@@ -133,7 +133,7 @@ func (m *Mokapi) Env(name string) string {
 }
 
 func (m *Mokapi) Open(file string) (string, error) {
-	s, err := m.host.OpenFile(file)
+	_, s, err := m.host.OpenFile(file, "")
 	if err != nil {
 		return "", err
 	}

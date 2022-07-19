@@ -180,41 +180,55 @@ func (sh *scriptHost) Error(args ...interface{}) {
 	sh.engine.logger.Error(args...)
 }
 
-func (sh *scriptHost) OpenFile(path string) (string, error) {
+func (sh *scriptHost) OpenFile(path string, hint string) (string, string, error) {
 	if !filepath.IsAbs(path) {
-		path = filepath.Join(sh.cwd, path)
+		if len(hint) > 0 {
+			path = filepath.Join(filepath.Base(hint), path)
+		} else {
+			path = filepath.Join(sh.cwd, path)
+		}
 	}
 
 	u, err := file.ParseUrl(path)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	// todo: read as plaintext
 	f, err := sh.engine.reader.Read(u, config.AsPlaintext())
 	if err != nil {
-		return "", err
+		if len(hint) > 0 {
+			return sh.OpenFile(path, "")
+		}
+		return "", "", err
 	}
-	return string(f.Raw), nil
+	return path, string(f.Raw), nil
 }
 
-func (sh *scriptHost) OpenScript(path string) (string, error) {
+func (sh *scriptHost) OpenScript(path string, hint string) (string, string, error) {
 	if !filepath.IsAbs(path) {
-		path = filepath.Join(sh.cwd, path)
+		if len(hint) > 0 {
+			path = filepath.Join(hint, path)
+		} else {
+			path = filepath.Join(sh.cwd, path)
+		}
 	}
 
 	u, err := file.ParseUrl(path)
 	if err != nil {
-		return "", err
+		if len(hint) > 0 {
+			return sh.OpenScript(path, "")
+		}
+		return "", "", err
 	}
 
 	f, err := sh.engine.reader.Read(u,
 		config.WithParent(sh.file))
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return string(f.Raw), nil
+	return path, string(f.Raw), nil
 }
 
 func (sh *scriptHost) KafkaClient() common.KafkaClient {

@@ -3,9 +3,12 @@ package js
 import (
 	"fmt"
 	"github.com/dop251/goja"
+	"github.com/pkg/errors"
 	engine "mokapi/engine/common"
 	"mokapi/js/compiler"
 )
+
+var NoDefaultFunction = errors.New("js: no default function found")
 
 type Script struct {
 	runtime  *goja.Runtime
@@ -13,12 +16,15 @@ type Script struct {
 	compiler *compiler.Compiler
 	host     engine.Host
 	require  *require
+	filename string
+	source   string
 }
 
 func New(filename, src string, host engine.Host) (*Script, error) {
 	s := &Script{
-		runtime: goja.New(),
-		host:    host,
+		host:     host,
+		filename: filename,
+		source:   src,
 	}
 
 	var err error
@@ -26,21 +32,22 @@ func New(filename, src string, host engine.Host) (*Script, error) {
 		return nil, err
 	}
 
-	s.runtime.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
-	s.require = enableRequire(s, host)
-	enableConsole(s.runtime, host)
-	enableOpen(s.runtime, host)
-
-	s.exports, err = s.openScript(filename, src)
 	return s, err
 }
 
 func (s *Script) Run() error {
 	_, err := s.RunDefault()
+	if err == NoDefaultFunction {
+		s.runtime = nil
+		return nil
+	}
 	return err
 }
 
 func (s *Script) RunDefault() (goja.Value, error) {
+	if err := s.ensureRuntime(); err != nil {
+		return nil, err
+	}
 	o := s.exports.ToObject(s.runtime)
 	if f, ok := goja.AssertFunction(o.Get("default")); ok {
 		i, err := f(goja.Undefined())
@@ -49,7 +56,7 @@ func (s *Script) RunDefault() (goja.Value, error) {
 		}
 		return i, nil
 	}
-	return nil, nil
+	return nil, NoDefaultFunction
 }
 
 func (s *Script) openScript(filename, src string) (goja.Value, error) {
@@ -89,9 +96,28 @@ func (s *Script) requireFile(filename, src string) (goja.Value, error) {
 }
 
 func (s *Script) Close() {
-	s.runtime.Interrupt(fmt.Errorf("closing"))
-	s.runtime = nil
+	if s.runtime != nil {
+		s.runtime.Interrupt(fmt.Errorf("closing"))
+		s.runtime = nil
+	}
 	s.compiler = nil
 	s.exports = nil
-	s.require.close()
+	if s.require != nil {
+		s.require.close()
+	}
+}
+
+func (s *Script) ensureRuntime() (err error) {
+	if s.runtime != nil {
+		return nil
+	}
+	s.runtime = goja.New()
+
+	s.runtime.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
+	s.require = enableRequire(s, s.host)
+	enableConsole(s.runtime, s.host)
+	enableOpen(s.runtime, s.host)
+
+	s.exports, err = s.openScript(s.filename, s.source)
+	return
 }

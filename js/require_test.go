@@ -29,13 +29,13 @@ func TestRequire(t *testing.T) {
 		{
 			"require custom file",
 			func(t *testing.T) {
-				host.openScript = func(file string) (string, error) {
+				host.openScript = func(file, hint string) (string, string, error) {
 					// first request is foo, second is foo.js
 					if file == "foo" {
-						return "", fmt.Errorf("TEST ERROR NOT FOUND")
+						return "", "", fmt.Errorf("TEST ERROR NOT FOUND")
 					}
 					r.Equal(t, "foo.js", file)
-					return "export var bar = {demo: 'demo'};", nil
+					return "", "export var bar = {demo: 'demo'};", nil
 				}
 				host.info = func(args ...interface{}) {
 					r.Equal(t, "demo", args[0])
@@ -49,8 +49,8 @@ func TestRequire(t *testing.T) {
 		{
 			"require json file",
 			func(t *testing.T) {
-				host.openScript = func(file string) (string, error) {
-					return `{"foo":"bar"}`, nil
+				host.openScript = func(file, hint string) (string, string, error) {
+					return "", `{"foo":"bar"}`, nil
 				}
 				s, err := New("test", `import bar from 'foo.json'; export default function() {return bar.foo;}`, host)
 				r.NoError(t, err)

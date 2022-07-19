@@ -28,10 +28,11 @@ var moduleTypes = map[string]factory{
 }
 
 type require struct {
-	exports map[string]goja.Value
-	runtime *goja.Runtime
-	host    engine.Host
-	open    func(filename, src string) (goja.Value, error)
+	exports     map[string]goja.Value
+	runtime     *goja.Runtime
+	host        engine.Host
+	open        func(filename, src string) (goja.Value, error)
+	currentPath string
 }
 
 func enableRequire(script *Script, host engine.Host) *require {
@@ -60,11 +61,14 @@ func (r *require) require(call goja.FunctionCall) goja.Value {
 		r.exports[file] = e
 		return e
 	} else {
-		src, err := r.loadModule(file)
+		p, src, err := r.loadModule(file)
 		if err != nil {
 			log.Errorf("unable to load module %v: %v", file, err)
 			return goja.Null()
 		}
+		oldPath := r.currentPath
+		r.currentPath = filepath.Dir(p)
+		defer func() { r.currentPath = oldPath }()
 
 		export, err := r.open(file, src)
 		if err != nil {
@@ -82,28 +86,28 @@ func (r *require) close() {
 
 const json = "export default JSON.parse('%v')"
 
-func (r *require) loadModule(file string) (string, error) {
+func (r *require) loadModule(file string) (string, string, error) {
 	path := file
 
 	if len(filepath.Ext(path)) > 0 {
-		src, err := r.host.OpenScript(path)
+		p, src, err := r.host.OpenScript(path, r.currentPath)
 		if err == nil && filepath.Ext(path) == ".json" {
-			return fmt.Sprintf(json, template.JSEscapeString(src)), nil
+			return p, fmt.Sprintf(json, template.JSEscapeString(src)), nil
 		}
-		return src, err
+		return p, src, err
 	}
 
 	path = file + ".js"
-	src, err := r.host.OpenScript(path)
+	p, src, err := r.host.OpenScript(path, r.currentPath)
 	if err == nil {
-		return src, nil
+		return p, src, nil
 	}
 
 	path = file + ".json"
-	src, err = r.host.OpenScript(path)
+	p, src, err = r.host.OpenScript(path, r.currentPath)
 	if err == nil {
-		return fmt.Sprintf(json, template.JSEscapeString(src)), nil
+		return p, fmt.Sprintf(json, template.JSEscapeString(src)), nil
 	}
 
-	return "", err
+	return "", "", fmt.Errorf("module %v not found", file)
 }

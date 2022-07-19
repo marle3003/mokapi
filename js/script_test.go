@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestScript(t *testing.T) {
@@ -75,7 +76,8 @@ func TestScript(t *testing.T) {
 			r.True(t, strings.HasPrefix(iErr.String(), "closing"), fmt.Sprintf("error prefix expected closing but got: %v", iErr.String()))
 		}()
 
-		_ = <-ch
+		<-ch
+		<-time.NewTimer(time.Duration(1) * time.Second).C
 		s.Close()
 	})
 }
@@ -103,8 +105,8 @@ return s
 
 type testHost struct {
 	common.Host
-	openFile    func(file string) (string, error)
-	openScript  func(file string) (string, error)
+	openFile    func(file, hint string) (string, string, error)
+	openScript  func(file, hint string) (string, string, error)
 	info        func(args ...interface{})
 	httpClient  *testClient
 	kafkaClient *kafkaClient
@@ -116,18 +118,18 @@ func (th *testHost) Info(args ...interface{}) {
 	}
 }
 
-func (th *testHost) OpenFile(file string) (string, error) {
+func (th *testHost) OpenFile(file, hint string) (string, string, error) {
 	if th.openFile != nil {
-		return th.openFile(file)
+		return th.openFile(file, hint)
 	}
-	return "", nil
+	return "", "", nil
 }
 
-func (th *testHost) OpenScript(file string) (string, error) {
+func (th *testHost) OpenScript(file, hint string) (string, string, error) {
 	if th.openScript != nil {
-		return th.openScript(file)
+		return th.openScript(file, hint)
 	}
-	return "", nil
+	return "", "", nil
 }
 
 func (th *testHost) HttpClient() common.HttpClient {

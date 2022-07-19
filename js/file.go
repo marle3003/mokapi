@@ -17,7 +17,7 @@ func enableOpen(rt *goja.Runtime, host common.Host) {
 }
 
 func (o *open) open(file string) (string, error) {
-	s, err := o.host.OpenFile(file)
+	_, s, err := o.host.OpenFile(file, "")
 	if err != nil {
 		return "", err
 	}
