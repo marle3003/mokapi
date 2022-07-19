@@ -28,6 +28,7 @@ type operationHandler struct {
 type responseHandler struct {
 	config       *Config
 	eventEmitter common.EventEmitter
+	g            *schema.Generator
 }
 
 func NewHandler(config *Config, eventEmitter common.EventEmitter) http.Handler {
@@ -90,8 +91,6 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	response.Headers["Content-Type"] = contentType.String()
 
-	gen := schema.NewGenerator()
-
 	if len(mediaType.Examples) > 0 {
 		keys := reflect.ValueOf(mediaType.Examples).MapKeys()
 		v := keys[rand.Intn(len(keys))].Interface().(*ExampleRef)
@@ -99,7 +98,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	} else if mediaType.Example != nil {
 		response.Data = mediaType.Example
 	} else {
-		response.Data = gen.New(mediaType.Schema)
+		response.Data = h.g.New(mediaType.Schema)
 	}
 
 	for k, v := range res.Headers {
@@ -107,7 +106,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			log.Warnf("header ref not resovled: %v", v.Ref)
 			continue
 		}
-		response.Headers[k] = fmt.Sprintf("%v", gen.New(v.Value.Schema))
+		response.Headers[k] = fmt.Sprintf("%v", h.g.New(v.Value.Schema))
 	}
 
 	h.eventEmitter.Emit("http", request, response)
