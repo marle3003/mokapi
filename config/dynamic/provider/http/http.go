@@ -21,8 +21,7 @@ type Provider struct {
 	client *http.Client
 	files  map[string]uint64
 
-	m    sync.RWMutex
-	hash uint64
+	m sync.RWMutex
 }
 
 func New(config static.HttpProvider) *Provider {
