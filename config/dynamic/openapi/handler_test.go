@@ -26,7 +26,7 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				require.Equal(t, 404, rr.Code)
-				require.Equal(t, "no matching endpoint found at https://foo\n", rr.Body.String())
+				require.Equal(t, "no matching endpoint found: GET https://foo\n", rr.Body.String())
 			},
 		},
 		{"root path",
@@ -201,7 +201,7 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				require.Equal(t, 404, rr.Code)
-				require.Equal(t, "no matching endpoint found at http://localhost/foo\n", rr.Body.String())
+				require.Equal(t, "no matching endpoint found: GET http://localhost/foo\n", rr.Body.String())
 			},
 		},
 		{"segment of path not match",
@@ -214,7 +214,7 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				require.Equal(t, 404, rr.Code)
-				require.Equal(t, "no matching endpoint found at http://localhost/foo\n", rr.Body.String())
+				require.Equal(t, "no matching endpoint found: GET http://localhost/foo\n", rr.Body.String())
 			},
 		},
 		{"with path parameter present",

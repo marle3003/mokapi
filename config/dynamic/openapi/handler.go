@@ -249,7 +249,7 @@ endpointLoop:
 	}
 
 	if lastError == nil {
-		writeError(rw, r, httperror.Newf(http.StatusNotFound, "no matching endpoint found: %v %v", r.Method, r.URL), h.config.Info.Name)
+		writeError(rw, r, httperror.Newf(http.StatusNotFound, "no matching endpoint found: %v %v", strings.ToUpper(r.Method), r.URL), h.config.Info.Name)
 	} else {
 		writeError(rw, r, lastError, h.config.Info.Name)
 	}
