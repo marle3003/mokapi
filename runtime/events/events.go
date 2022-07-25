@@ -51,7 +51,7 @@ func GetEvents(traits Traits) []Event {
 	}
 
 	sort.SliceStable(events, func(i, j int) bool {
-		return events[i].Time.Before(events[j].Time)
+		return events[i].Time.After(events[j].Time)
 	})
 
 	return events
