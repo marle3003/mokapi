@@ -4,7 +4,6 @@
       <b-card class="w-100">
         <b-row>
           <b-col>
-            <p class="label">Kafka Cluster</p>
             <p style="font-size: 1.25rem; font-weight: 500;">{{ cluster.name }}</p>
           </b-col>
           <b-col>
@@ -13,7 +12,7 @@
           </b-col>
                     <b-col>
             <p class="label">Contact</p>
-            <p v-if="cluster.contact !== null">
+            <p v-if="cluster.contact">
               <a :href="cluster.contact.url">{{ cluster.contact.name }}</a>
               <a :href="'mailto:' + cluster.contact.email" v-if="cluster.contact.email">
                 <b-icon-envelope></b-icon-envelope>
@@ -110,7 +109,7 @@ import Header from '@/components/dashboard/Header'
 export default {
   name: 'Topic',
   mixins: [Api, Filters, Refresh, Metrics, Shortcut],
-    components: {
+  components: {
     'dashboard-header': Header
   },
   data () {
@@ -134,13 +133,14 @@ export default {
   },
   computed: {
     topics: function () {
-      return this.cluster.topics.sort(this.compareTopic)
+      let result = this.cluster.topics.sort(this.compareTopic)
+      return result
     }
   },
   methods: {
     async getData () {
       const name = this.$route.params.cluster
-      if (!name){
+      if (!name) {
         return
       }
 

@@ -158,7 +158,7 @@ export default {
       if (!name) {
         return
       }
-      
+
       this.$http.get(this.baseUrl + '/api/services/kafka/' + name).then(
         r => {
           this.cluster = r.data

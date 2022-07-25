@@ -26,13 +26,12 @@ export let apps = [
                                     type: "application/json",
                                     schema: {
                                         type: "object",
-                                        properties: [
-                                            {
-                                                name: "id",
+                                        properties: {
+                                            id: {
                                                 type: "integer",
                                                 format: "int64"
                                             }
-                                        ]
+                                        }
                                     }
                                 }
                             ]
@@ -100,12 +99,14 @@ export let events = [
         id: "4242",
         traits: {
             namespace: "http",
+            name: "Swagger Petstore",
+            path: "/pet"
         },
         time: 1651771269,
         data: {
             request: {
                 method: "GET",
-                url: "http://127.0.0.1:18080/demo",
+                url: "http://127.0.0.1:18080/pet",
                 parameters: [],
                 contentType: "application/json",
             },
@@ -133,12 +134,14 @@ export let events = [
         id: "4243",
         traits: {
             namespace: "http",
+            name: "Swagger Petstore",
+            path: "/pet/findByStatus"
         },
         time: 1654771269,
         data: {
             request: {
                 method: "POST",
-                url: "http://127.0.0.1:18080/demo",
+                url: "http://127.0.0.1:18080/pet/findByStatus",
                 contentType: "application/json",
                 body: "{\"foo\":\"bar\",\"child\":{\"key\":\"val\"}}",
                 parameters: [

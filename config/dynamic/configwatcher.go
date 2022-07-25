@@ -123,7 +123,7 @@ func (w *ConfigWatcher) addOrUpdate(c *common.Config) error {
 	}
 
 	w.m.Unlock()
-	cfg.Changed()
+	go cfg.Changed()
 
 	return nil
 }

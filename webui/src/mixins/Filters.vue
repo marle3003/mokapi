@@ -9,7 +9,7 @@ export default {
         return '-'
       }
 
-      if (typeof value === 'string'){
+      if (typeof value === 'string') {
         return moment(value).format('YYYY-MM-DD HH:mm:ss')
       }
 
@@ -61,7 +61,7 @@ export default {
 
       return (neg ? '-' : '') + num + ' ' + unit
     },
-    httpStatusText: function (status) { 
+    httpStatusText: function (status) {
       return http.getStatusText(status)
     }
   }

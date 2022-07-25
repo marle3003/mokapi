@@ -42,7 +42,7 @@ func newSchemaObject() *schemaObject {
 
 // selectData selects data by schema
 func selectData(data interface{}, schema *Ref) (interface{}, error) {
-	if schema.Value == nil || data == nil {
+	if schema == nil || schema.Value == nil || data == nil {
 		return data, nil
 	}
 
@@ -50,22 +50,7 @@ func selectData(data interface{}, schema *Ref) (interface{}, error) {
 		return selectAny(schema.Value, data)
 	}
 	if len(schema.Value.AllOf) > 0 {
-		r := newSchemaObject()
-		for _, all := range schema.Value.AllOf {
-			if all == nil {
-				continue
-			}
-			if all.Value.Type != "object" {
-				return nil, fmt.Errorf("allOf only supports type of object")
-			}
-			o, err := selectData(data, all)
-			if err != nil {
-				return nil, err
-			}
-			so := o.(*schemaObject)
-			r.Merge(so.LinkedHashMap)
-		}
-		return r, nil
+		return selectAll(schema.Value, data)
 	}
 
 	if schema.Value == nil || schema.Value.Type == "" {
@@ -205,25 +190,38 @@ func selectAny(schema *Schema, data interface{}) (interface{}, error) {
 	return result, nil
 }
 
-func convertObject(schema *Ref, selector func(string) (interface{}, bool)) (*schemaObject, error) {
-	obj := newSchemaObject()
+func selectAll(schema *Schema, data interface{}) (interface{}, error) {
+	r := newSchemaObject()
+	schemas := make([]*Ref, 0, len(schema.AllOf)+1)
+	schemas = append(schemas, schema.AllOf...)
+	schemas = append(schemas, &Ref{Value: &Schema{Type: "object"}})
 
-	// => loop over schema.fields to ensure an order
-	if schema.Value != nil && schema.Value.Properties.Value.Len() > 0 {
-		for it := schema.Value.Properties.Value.Iter(); it.Next(); {
-			name := it.Key().(string)
-			p := it.Value().(*Ref)
-			if v, ok := selector(name); ok {
-				d, err := selectData(v, p)
-				if err != nil {
-					return obj, err
-				}
-				obj.Set(name, d)
+	for i, all := range schemas {
+		if all == nil {
+			continue
+		}
+		if all.Value.Type != "object" {
+			return nil, fmt.Errorf("allOf only supports type of object")
+		}
+		s := all.Value
+		if i < len(schemas)-1 {
+			c := *all.Value
+			c.AdditionalProperties = &AdditionalProperties{Forbidden: true}
+			s = &c
+		}
+
+		o, err := selectObject(data, s)
+		if err != nil {
+			return nil, err
+		}
+		so := o.(*schemaObject)
+		for it := so.LinkedHashMap.Iter(); it.Next(); {
+			if v := r.Get(it.Key()); v == nil {
+				r.Set(it.Key(), it.Value())
 			}
 		}
 	}
-
-	return obj, validateObject(obj.LinkedHashMap, schema.Value)
+	return r, nil
 }
 
 func fromLinkedMap(m *sortedmap.LinkedHashMap, schema *Schema) (*schemaObject, error) {
@@ -235,8 +233,13 @@ func fromLinkedMap(m *sortedmap.LinkedHashMap, schema *Schema) (*schemaObject, e
 	for it := m.Iter(); it.Next(); {
 		name := it.Key().(string)
 
-		if p := schema.Properties.Get(name); p != nil || schema.IsFreeForm() {
-			d, err := selectData(it.Value(), p)
+		var field *Ref
+		if schema.Properties != nil {
+			field = schema.Properties.Get(name)
+		}
+
+		if field != nil || schema.IsFreeForm() {
+			d, err := selectData(it.Value(), field)
 			if err != nil {
 				return nil, err
 			}

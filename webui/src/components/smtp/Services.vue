@@ -37,7 +37,7 @@ export default {
   methods: {
     clickHandler (record) {
       this.$router.push({ name: 'smtpMail', params: { id: record.id } })
-    },
+    }
   }
 }
 </script>

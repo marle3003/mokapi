@@ -63,7 +63,11 @@ components:
                               description:
                                 type: string
                               contents:
-                                $ref: '#/components/schemas/MediaType'
+                                $ref: '#/components/schemas/MediaTypes'
+    MediaTypes:
+      type: array
+      items:
+        $ref: '#/components/schemas/MediaType'
     MediaType:
       type: object
       properties:

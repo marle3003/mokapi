@@ -14,7 +14,7 @@
       <div class="page-body">
         <b-card-group deck v-show="$route.name === 'dashboard'">
           <b-card
-            body-class="info-body"
+            body-class="metric-card"
             class="text-center"
           >
             <b-card-title class="info">Uptime Since</b-card-title>
@@ -22,7 +22,7 @@
             <b-card-text class="text-right additional">{{ metric(metrics, 'app_start_timestamp') | moment }}</b-card-text>
           </b-card>
           <b-card
-            body-class="info-body"
+            body-class="metric-card"
             class="text-center"
           >
             <b-card-title class="info">Memory Usage</b-card-title>
@@ -32,7 +32,7 @@
 
         <b-card-group deck v-show="$route.name === 'dashboard' || $route.meta.showMetrics">
           <b-card
-            body-class="info-body"
+            body-class="metric-card"
             class="text-center"
             v-if="httpEnabled && $route.name === 'dashboard' || $route.name === 'http'"
           >
@@ -40,7 +40,7 @@
             <b-card-text class="text-center value">{{ totalHttpRequests }}</b-card-text>
           </b-card>
           <b-card
-            body-class="info-body"
+            body-class="metric-card"
             class="text-center"
             v-if="httpEnabled && $route.name === 'dashboard' || $route.name === 'http'"
           >
@@ -53,7 +53,7 @@
             </b-card-text>
           </b-card>
           <b-card
-            body-class="info-body"
+            body-class="metric-card"
             class="text-center"
             v-if="kafkaEnabled && $route.name === 'dashboard' || $route.name === 'kafka'"
           >
@@ -61,7 +61,7 @@
             <b-card-text class="text-center value">{{ this.totalKafkaMessages }}</b-card-text>
           </b-card>
           <b-card
-            body-class="info-body"
+            body-class="metric-card"
             class="text-center"
             v-if="smtpEnabled"
           >
@@ -70,44 +70,11 @@
           </b-card>
         </b-card-group>
 
-        <b-card-group
-          deck
-          v-show="httpEnabled && ($route.name === 'http' || $route.name === 'dashboard')"
-        >
-          <b-card
-            body-class="info-body"
-            class="text-center"
-          >
-            <b-card-title class="info">HTTP Services</b-card-title>
-            <b-table
-              :items="httpServices"
-              :fields="httpFields"
-              table-class="dataTable"
-            >
-              <template v-slot:cell(method)="data">
-                <b-badge
-                  pill
-                  class="operation"
-                  :class="data.item.method.toLowerCase()"
-                >{{ data.item.method }}</b-badge>
-              </template>
-              <template v-slot:cell(lastRequest)="data">
-                <span>{{ metric(data.item.metrics, 'http_request_timestamp') | moment}}</span>
-              </template>
-              <template v-slot:cell(requests)="data">
-                <span>{{ metric(data.item.metrics, 'http_requests_total') }}</span>
-              </template>
-               <template v-slot:cell(errors)="data">
-                <span>{{ metric(data.item.metrics, 'http_requests_errors_total') }}</span>
-              </template>
-            </b-table>
-          </b-card>
-        </b-card-group>
+        <http-dashboard :services="services" v-show="httpEnabled" />
 
         <div v-show="kafkaEnabled && ($route.name === 'dashboard' || $route.name === 'kafka')">
           <b-card-group deck>
             <b-card
-              body-class="info-body"
               class="text-center"
             >
               <b-card-title class="info">Kafka Clusters</b-card-title>
@@ -131,10 +98,7 @@
               </b-table>
             </b-card>
           </b-card-group>
-        </div>
-
-        <http-requests v-show="$route.name === 'http'" />
-        <http-request v-show="$route.name === 'httpRequest'" />
+        </div>        
 
         <kafka-cluster v-show="$route.name === 'kafkaCluster'" />
         <kafka-topic v-show="$route.name === 'kafkaTopic'" />
@@ -156,8 +120,7 @@ import Shortcut from '@/mixins/Shortcut'
 
 import Header from '@/components/dashboard/Header'
 
-import HttpRequests from '@/components/http/Requests'
-import HttpRequest from '@/components/http/Request'
+import Http from '@/components/http/Dashboard'
 
 import KafkaCluster from '@/components/kafka/Cluster'
 import KafkaTopic from '@/components/kafka/Topic'
@@ -169,8 +132,7 @@ export default {
   mixins: [Api, Filters, Refresh, Metrics, Shortcut],
   components: {
     'dashboard-header': Header,
-    'http-requests': HttpRequests,
-    'http-request': HttpRequest,
+    'http-dashboard': Http,
     'kafka-cluster': KafkaCluster,
     'kafka-topic': KafkaTopic,
     'smtp-services': SmtpServices,
@@ -181,12 +143,6 @@ export default {
       metrics: [],
       services: null,
       loaded: false,
-      httpFields: [
-        { key: 'name', class: 'text-left' },
-        { key: 'lastRequest', class: 'text-left' },
-        'requests',
-        'errors'
-      ],
       kafkaFields: [
         { key: 'name', class: 'text-left' },
         'topics',
@@ -199,23 +155,22 @@ export default {
   },
   computed: {
     httpServices: function () {
-      if (!this.services) {
-        return null
-      }
       let result = []
+      if (!this.services) {
+        return result
+      }
       for (let service of this.services) {
         if (service.type === 'http') {
-          console.log(service.name)
           result.push(service)
         }
       }
       return result
     },
     kafkaServices: function () {
-      if (!this.services) {
-        return null
-      }
       let result = []
+      if (!this.services) {
+        return result
+      }
       for (let service of this.services) {
         if (service.type === 'kafka') {
           service.topics = service.topics.sort()
@@ -225,10 +180,10 @@ export default {
       return result
     },
     smtpServices: function () {
-      if (!this.services) {
-        return null
-      }
       let result = []
+      if (!this.services) {
+        return result
+      }
       for (let service of this.services) {
         if (service.type === 'smtp') {
           result.push(service)
@@ -351,15 +306,13 @@ export default {
   font-size: 0.7rem;
   font-weight: 300;
 }
-.dashboard .info-body {
+.dashboard .metric-card {
   padding: 0.8rem;
+  margin-bottom: 0;
 }
 .dashboard .card {
   border-color: var(--var-border-color);
   margin: 7px;
-}
-.dashboard .card p {
-  margin-bottom: 0;
 }
 .dashboard .value {
   font-size: 2.25rem;

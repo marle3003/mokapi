@@ -5,6 +5,7 @@ import (
 	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/config/dynamic/openapi/schema/schematest"
 	"mokapi/media"
+	"mokapi/sortedmap"
 	"testing"
 )
 
@@ -143,19 +144,6 @@ func TestRef_Marshal_Object(t *testing.T) {
 				require.True(t, s == `{"name":"foo"}`, s)
 			},
 		},
-		{
-			"allOf",
-			&schema.Ref{Value: schematest.New("",
-				schematest.AllOf(
-					schematest.New("object", schematest.WithProperty("foo", schematest.New("string")), schematest.WithFreeForm(false)),
-					schematest.New("object", schematest.WithProperty("bar", schematest.New("string")), schematest.WithFreeForm(false)),
-				))},
-			map[string]interface{}{"foo": "foo", "bar": "bar", "value": "test"},
-			media.ParseContentType("application/json"),
-			func(t *testing.T, s string) {
-				require.Equal(t, `{"foo":"foo","bar":"bar"}`, s)
-			},
-		},
 	}
 
 	t.Parallel()
@@ -204,6 +192,89 @@ func TestRef_Marshal_AnyOf(t *testing.T) {
 				b, err := s.Marshal(data, media.ParseContentType("application/json"))
 				require.NoError(t, err)
 				require.Equal(t, `{"foo":"foo","bar":"bar"}`, string(b))
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			tc.f(t)
+		})
+	}
+}
+
+func TestRef_Marshal_AllOf(t *testing.T) {
+	testcases := []struct {
+		name string
+		f    func(t *testing.T)
+	}{
+		{
+			"all from map",
+			func(t *testing.T) {
+				s := &schema.Ref{Value: schematest.New("",
+					schematest.AllOf(
+						schematest.New("object", schematest.WithProperty("foo", schematest.New("number"))),
+						schematest.New("object", schematest.WithProperty("bar", schematest.New("integer"))),
+					))}
+				data := map[string]interface{}{"foo": "3.141", "bar": "12"}
+
+				b, err := s.Marshal(data, media.ParseContentType("application/json"))
+				require.NoError(t, err)
+				require.Equal(t, `{"foo":3.141,"bar":12}`, string(b))
+			},
+		},
+		{
+			"all from linked map",
+			func(t *testing.T) {
+				s := &schema.Ref{Value: schematest.New("",
+					schematest.AllOf(
+						schematest.New("object", schematest.WithProperty("foo", schematest.New("number"))),
+						schematest.New("object", schematest.WithProperty("bar", schematest.New("integer"))),
+					))}
+				data := sortedmap.NewLinkedHashMap()
+				data.Set("foo", "3.141")
+				data.Set("bar", "12")
+
+				b, err := s.Marshal(data, media.ParseContentType("application/json"))
+				require.NoError(t, err)
+				require.Equal(t, `{"foo":3.141,"bar":12}`, string(b))
+			},
+		},
+		{
+			"all with additional field",
+			func(t *testing.T) {
+				s := &schema.Ref{Value: schematest.New("",
+					schematest.AllOf(
+						schematest.New("object", schematest.WithProperty("foo", schematest.New("number"))),
+						schematest.New("object", schematest.WithProperty("bar", schematest.New("integer"))),
+					))}
+				data := sortedmap.NewLinkedHashMap()
+				data.Set("foo", "3.141")
+				data.Set("bar", "12")
+				data.Set("name", "foobar")
+
+				b, err := s.Marshal(data, media.ParseContentType("application/json"))
+				require.NoError(t, err)
+				require.Equal(t, `{"foo":3.141,"bar":12,"name":"foobar"}`, string(b))
+			},
+		},
+		{
+			"allOf ignores any free-form false",
+			func(t *testing.T) {
+				s := &schema.Ref{Value: schematest.New("",
+					schematest.AllOf(
+						schematest.New("object", schematest.WithProperty("foo", schematest.New("string")), schematest.WithFreeForm(false)),
+						schematest.New("object", schematest.WithProperty("bar", schematest.New("string")), schematest.WithFreeForm(false)),
+					))}
+				data := map[string]interface{}{"foo": "foo", "bar": "bar", "value": "test"}
+
+				b, err := s.Marshal(data, media.ParseContentType("application/json"))
+				require.NoError(t, err)
+
+				require.Equal(t, `{"foo":"foo","bar":"bar","value":"test"}`, string(b))
 			},
 		},
 	}

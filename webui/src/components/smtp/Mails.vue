@@ -48,7 +48,7 @@ export default {
         'to',
         { key: 'subject', class: 'subject' },
         'time'
-      ],
+      ]
     }
   },
   methods: {

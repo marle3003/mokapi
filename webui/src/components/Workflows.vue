@@ -26,7 +26,7 @@ export default {
   mixins: [Filters],
   data () {
     return {
-      fields: ['name', 'duration', 'tags'],
+      fields: ['name', 'duration', 'tags']
     }
   },
   methods: {

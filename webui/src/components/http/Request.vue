@@ -114,7 +114,7 @@ export default {
   computed: {
     reponseHeaders: function () {
       let result = []
-      for (let key in this.response.headers){
+      for (let key in this.response.headers) {
         result.push({name: key, value: this.response.headers[key]})
       }
       return result
@@ -126,10 +126,10 @@ export default {
   methods: {
     async getData () {
       let id = this.$route.params.id
-      if (!id){
+      if (!id) {
         return
       }
-      
+
       this.event = await this.getHttpRequest(id)
       this.request = this.event.data.request
       this.response = this.event.data.response

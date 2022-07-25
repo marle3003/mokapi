@@ -2,7 +2,6 @@ import Vue from 'vue'
 import Router from 'vue-router'
 import ServiceList from '@/views/ServiceList'
 
-
 import Dashboard from '@/views/Dashboard'
 import Docs from '@/views/Docs'
 import SmtpMail from '@/views/dashboard/SmtpMail'
@@ -53,6 +52,16 @@ export default new Router({
       meta: {showMetrics: true}
     },
     {
+      path: '/dashboard/http/:service',
+      name: 'httpService2',
+      component: Dashboard
+    },
+    {
+      path: '/dashboard/http/:service/:path',
+      name: 'httpPath',
+      component: Dashboard
+    },
+    {
       path: '/dashboard/http/request/:id',
       name: 'httpRequest',
       component: Dashboard
@@ -66,7 +75,7 @@ export default new Router({
     {
       path: '/dashboard/kafka/:cluster',
       name: 'kafkaCluster',
-      component: Dashboard,
+      component: Dashboard
     },
     {
       path: '/dashboard/kafka/:cluster/topics/:topic',

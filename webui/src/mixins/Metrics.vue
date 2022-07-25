@@ -42,8 +42,9 @@ export default {
       return value
     },
     matchLabels (metric, labels) {
+       console.log(labels)
       for (var label of labels) {
-        const s = `${label.name}="${label.value}"`
+        const s = `${label.name}="${label.value}"`                    
         if (!metric.name.includes(s)) {
           return false
         }

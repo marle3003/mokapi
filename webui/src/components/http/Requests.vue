@@ -77,7 +77,22 @@ export default {
   },
   methods: {
     async getData () {
-      this.$http.get(this.baseUrl + '/api/events?namespace=http').then(
+      let url = this.baseUrl + '/api/events?namespace=http'
+
+      const name = this.$route.params.service
+      if (name && name !== '') {
+        url += "&name=" + name
+      }
+
+      const path = this.$route.params.path
+      if (path && path !== '') {
+        url += "&path=" + path
+      }
+
+      if (this.traits && this.traits !== ''){
+        url += "&" + this.traits
+      }
+      this.$http.get(url).then(
         r => {
           this.requests = r.data
         },

@@ -3,6 +3,7 @@ package events
 import (
 	"fmt"
 	"github.com/google/uuid"
+	"sort"
 	"time"
 )
 
@@ -42,11 +43,17 @@ func Push(data interface{}, traits Traits) error {
 
 func GetEvents(traits Traits) []Event {
 	events := make([]Event, 0)
+
 	for _, s := range stores {
 		if len(traits) == 0 || s.traits.Match(traits) {
 			events = append(events, s.Events(traits)...)
 		}
 	}
+
+	sort.SliceStable(events, func(i, j int) bool {
+		return events[i].Time.Before(events[j].Time)
+	})
+
 	return events
 }
 
