@@ -29,33 +29,6 @@
 
     <b-card-group deck>
       <b-card class="w-100">
-        <b-card-title class="info text-center">Records</b-card-title>
-        <b-table small hover class="dataTable" :items="messages" :fields="messageFields" style="table-layout: fixed" @row-clicked="toggleDetails">
-          <template v-slot:cell(show_details)="row">
-            <div @click="toggleDetails(row)">
-              <b-icon v-if="row.detailsShowing" icon="dash-square"></b-icon>
-              <b-icon v-else icon="plus-square"></b-icon>
-            </div>
-          </template>
-          <template v-slot:cell(partition)="data">
-            {{ getParition(data.item) }}
-          </template>
-          <template v-slot:cell(time)="data">
-            {{ data.item.time | moment }}
-          </template>
-          <template v-slot:row-details="row">
-            <b-card class="w-100">
-              <b-row class="mb-2">
-                {{ row.item.message }}
-              </b-row>
-            </b-card>
-          </template>
-        </b-table>
-      </b-card>
-    </b-card-group>
-
-    <b-card-group deck>
-      <b-card class="w-100">
         <b-card-title class="info text-center">Partitions</b-card-title>
         <b-table small hover class="dataTable" :items="partitions" style="table-layout: fixed">
           <template v-slot:cell(leader)="data">
@@ -88,6 +61,33 @@
           </template>
           <template v-slot:cell(lag)="data">
             <span>{{ metric(cluster.metrics, 'kafka_consumer_group_lag', {name: 'service', value: cluster.name}, {name: 'topic', value: topic.name}, {name: 'group', value: data.item.name}) }}</span>
+          </template>
+        </b-table>
+      </b-card>
+    </b-card-group>
+
+    <b-card-group deck>
+      <b-card class="w-100">
+        <b-card-title class="info text-center">Records</b-card-title>
+        <b-table small hover class="dataTable" :items="messages" :fields="messageFields" style="table-layout: fixed" @row-clicked="toggleDetails">
+          <template v-slot:cell(show_details)="row">
+            <div @click="toggleDetails(row)">
+              <b-icon v-if="row.detailsShowing" icon="dash-square"></b-icon>
+              <b-icon v-else icon="plus-square"></b-icon>
+            </div>
+          </template>
+          <template v-slot:cell(partition)="data">
+            {{ getParition(data.item) }}
+          </template>
+          <template v-slot:cell(time)="data">
+            {{ data.item.time | moment }}
+          </template>
+          <template v-slot:row-details="row">
+            <b-card class="w-100">
+              <b-row class="mb-2">
+                {{ row.item.message }}
+              </b-row>
+            </b-card>
           </template>
         </b-table>
       </b-card>

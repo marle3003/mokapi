@@ -55,6 +55,21 @@ func TestPush(t *testing.T) {
 			},
 		},
 		{
+			"store matches traits",
+			func(t *testing.T) {
+				SetStore(1, NewTraits().WithNamespace("foo"))
+				SetStore(1, NewTraits().WithNamespace("foo").WithName("bar"))
+				err := Push(nil, NewTraits().WithNamespace("foo").WithName("bar"))
+				require.NoError(t, err)
+				err = Push(nil, NewTraits().WithNamespace("foo").WithName("foobar"))
+				require.NoError(t, err)
+				events := GetEvents(NewTraits().WithNamespace("foo"))
+				require.Len(t, events, 2)
+				events = GetEvents(NewTraits().WithNamespace("foo").WithName("bar"))
+				require.Len(t, events, 1)
+			},
+		},
+		{
 			"get all events",
 			func(t *testing.T) {
 				SetStore(10, NewTraits().WithNamespace("foo"))
@@ -76,12 +91,23 @@ func TestPush(t *testing.T) {
 				require.Len(t, events, 1)
 			},
 		},
+		{
+			"reset store with traits",
+			func(t *testing.T) {
+				SetStore(10, NewTraits().WithNamespace("foo"))
+				SetStore(10, NewTraits().WithNamespace("bar"))
+				SetStore(10, NewTraits().WithNamespace("foo").WithName("name"))
+				ResetStores(NewTraits().WithNamespace("foo"))
+
+				require.Len(t, stores, 1)
+			},
+		},
 	}
 
 	for _, tc := range testcase {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			Reset()
+			defer Reset()
 			tc.f(t)
 		})
 	}

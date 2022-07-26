@@ -24,8 +24,8 @@ type Cmd struct {
 
 func Start(cfg *static.Config) (*Cmd, error) {
 	log.SetLevel(log.DebugLevel)
-	events.SetStore(100, events.NewTraits().WithNamespace("http"))
-	events.SetStore(100, events.NewTraits().WithNamespace("kafka"))
+	events.SetStore(20, events.NewTraits().WithNamespace("http"))
+	events.SetStore(20, events.NewTraits().WithNamespace("kafka"))
 
 	app := runtime.New()
 

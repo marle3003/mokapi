@@ -4,9 +4,12 @@ import (
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/config/dynamic/openapi"
+	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"mokapi/version"
 )
+
+const sizeEventStore = 20
 
 type App struct {
 	Version string
@@ -30,16 +33,26 @@ func (a *App) AddHttp(c *openapi.Config) {
 		a.Http = make(map[string]*HttpInfo)
 	}
 	a.Http[c.Info.Name] = &HttpInfo{Config: c}
+
+	events.ResetStores(events.NewTraits().WithNamespace("http").WithName(c.Info.Name))
+	events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("http").WithName(c.Info.Name))
+	for path := range c.Paths.Value {
+		events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("http").WithName(c.Info.Name).With("path", path))
+	}
 }
 
 func (a *App) AddKafka(c *asyncApi.Config, store *store.Store) {
 	if len(a.Kafka) == 0 {
 		a.Kafka = make(map[string]*KafkaInfo)
 	}
+
 	a.Kafka[c.Info.Name] = &KafkaInfo{Config: c, Store: store}
 
-	for n := range c.Channels {
-		a.Monitor.Kafka.Messages.WithLabel(c.Info.Name, n).Add(0)
-		a.Monitor.Kafka.LastMessage.WithLabel(c.Info.Name, n).Set(0)
+	events.ResetStores(events.NewTraits().WithNamespace("kafka").WithName(c.Info.Name))
+	events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("kafka").WithName(c.Info.Name))
+	for name := range c.Channels {
+		a.Monitor.Kafka.Messages.WithLabel(c.Info.Name, name).Add(0)
+		a.Monitor.Kafka.LastMessage.WithLabel(c.Info.Name, name).Set(0)
+		events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("kafka").WithName(c.Info.Name).With("topic", name))
 	}
 }

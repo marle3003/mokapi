@@ -23,7 +23,7 @@ func (s *store) Push(e Event) {
 func (s *store) Events(traits Traits) []Event {
 	var events []Event
 	for _, e := range s.events {
-		if e.Traits.Includes(traits) {
+		if e.Traits.Contains(traits) {
 			events = append(events, e)
 		}
 	}

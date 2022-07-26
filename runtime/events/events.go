@@ -27,25 +27,33 @@ func Push(data interface{}, traits Traits) error {
 	if len(traits) == 0 {
 		return fmt.Errorf("empty traits not allowed")
 	}
+	score := 0
+	var bestStore *store
 	for _, s := range stores {
-		if s.traits.Match(traits) {
-			s.Push(Event{
-				Id:     uuid.New().String(),
-				Traits: traits,
-				Data:   data,
-				Time:   time.Now(),
-			})
-			return nil
+		if s.traits.Match(traits) && len(s.traits) > score {
+			bestStore = s
+			score = len(s.traits)
 		}
 	}
-	return fmt.Errorf("no store found for %s", traits)
+
+	if bestStore == nil {
+		return fmt.Errorf("no store found for %s", traits)
+	}
+
+	bestStore.Push(Event{
+		Id:     uuid.New().String(),
+		Traits: traits,
+		Data:   data,
+		Time:   time.Now(),
+	})
+	return nil
 }
 
 func GetEvents(traits Traits) []Event {
 	events := make([]Event, 0)
 
 	for _, s := range stores {
-		if len(traits) == 0 || s.traits.Match(traits) {
+		if len(traits) == 0 || traits.Match(s.traits) || s.traits.Match(traits) {
 			events = append(events, s.Events(traits)...)
 		}
 	}
@@ -70,6 +78,22 @@ func GetEvent(id string) Event {
 
 func Reset() {
 	stores = make([]*store, 0)
+}
+
+func ResetStores(traits Traits) {
+	i := 0 // output index
+	for _, s := range stores {
+		if !traits.Match(s.traits) {
+			// copy and increment index
+			stores[i] = s
+			i++
+		}
+	}
+	// Prevent memory leak by erasing truncated values
+	for j := i; j < len(stores); j++ {
+		stores[j] = nil
+	}
+	stores = stores[:i]
 }
 
 func (e *Event) IsValid() bool {

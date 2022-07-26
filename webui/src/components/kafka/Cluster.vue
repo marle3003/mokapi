@@ -73,7 +73,7 @@
 
         <b-card-title class="info text-center">Groups</b-card-title>
           <b-table
-            :items="cluster.groups"
+            :items="groups"
             :fields="groupFields"
             table-class="dataTable"
           >
@@ -124,7 +124,7 @@ export default {
       groupFields: [
         { key: 'name', class: 'text-left' },
         { key: 'state', thStyle: 'width:10%' },
-        { key: 'assignmentStrategy', class: 'text-left' },
+        { key: 'protocol', class: 'text-left', label: 'Strategy' },
         { key: 'coordinator', class: 'text-left' },
         { key: 'leader', class: 'text-left' },
         { key: 'members', class: 'text-left' }
@@ -133,7 +133,11 @@ export default {
   },
   computed: {
     topics: function () {
-      let result = this.cluster.topics.sort(this.compareTopic)
+      let result = this.cluster.topics.sort(this.compareByName)
+      return result
+    },
+    groups: function () {
+      let result = this.cluster.groups.sort(this.compareByName)
       return result
     }
   },
@@ -160,7 +164,7 @@ export default {
         query: { refresh: '5' }
       })
     },
-    compareTopic (x, y) {
+    compareByName (x, y) {
       return x.name.localeCompare(y.name)
     }
   }
