@@ -155,6 +155,9 @@ func (p *Partition) delete() {
 func (p *Partition) removeClosedSegments() {
 	for _, s := range p.Segments {
 		if !s.Closed.IsZero() {
+			if p.Head < s.Tail {
+				p.Head = s.Tail
+			}
 			p.removeSegment(s)
 		}
 	}
@@ -163,6 +166,10 @@ func (p *Partition) removeClosedSegments() {
 func (p *Partition) removeSegment(s *Segment) {
 	p.m.RLock()
 	defer p.m.RUnlock()
+
+	if p.Head < s.Tail {
+		p.Head = s.Tail
+	}
 
 	s.delete()
 	delete(p.Segments, s.Head)

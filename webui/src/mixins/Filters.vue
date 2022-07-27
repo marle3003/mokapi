@@ -19,9 +19,14 @@ export default {
         .format('YYYY-MM-DD HH:mm:ss')
     },
     fromNow: function (value) {
-      if (value === 0) {
+      if (value === 0 || value === '') {
         return '-'
       }
+
+      if (typeof value === 'string') {
+        return moment(value).fromNow(true)
+      }
+
       return moment.unix(value).fromNow(true)
     },
     duration: function (time) {

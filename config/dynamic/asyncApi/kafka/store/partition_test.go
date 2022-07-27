@@ -157,3 +157,42 @@ func TestPartition_Write_Value_Validator(t *testing.T) {
 	require.Equal(t, int64(0), p.Offset())
 	require.Equal(t, int64(0), p.StartOffset())
 }
+
+func TestPatition_Retention(t *testing.T) {
+	p := newPartition(0, map[int]*Broker{1: {Id: 1}}, func(_ kafka.Record, _ events.Traits) {}, &Topic{})
+	require.Equal(t, int64(0), p.Head)
+	offset, err := p.Write(kafka.RecordBatch{
+		Records: []kafka.Record{
+			{
+				Time:    time.Now(),
+				Key:     kafka.NewBytes([]byte(`"foo-1"`)),
+				Value:   kafka.NewBytes([]byte(`12`)),
+				Headers: nil,
+			},
+		},
+	})
+	offset, err = p.Write(kafka.RecordBatch{
+		Records: []kafka.Record{
+			{
+				Time:    time.Now(),
+				Key:     kafka.NewBytes([]byte(`"foo-1"`)),
+				Value:   kafka.NewBytes([]byte(`12`)),
+				Headers: nil,
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, int64(1), offset)
+	require.Equal(t, int64(0), p.Head)
+	require.Equal(t, int64(2), p.Tail)
+
+	// rolling
+	p.addSegment()
+	require.Len(t, p.Segments, 2)
+	require.False(t, p.Segments[0].Closed.IsZero())
+
+	// retention
+	p.removeClosedSegments()
+	require.Len(t, p.Segments, 1)
+	require.Equal(t, int64(2), p.Head)
+}
