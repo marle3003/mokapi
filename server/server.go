@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/engine"
 	"mokapi/runtime"
@@ -53,7 +52,6 @@ func (s *Server) Start(ctx context.Context) error {
 	s.app.Monitor.Start(s.pool)
 
 	<-ctx.Done()
-	log.Debug("stopping server")
 	s.pool.Stop()
 	s.kafka.Stop()
 	s.http.Stop()

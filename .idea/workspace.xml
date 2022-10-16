@@ -4,9 +4,30 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1a9601df-4cac-4bc9-9e3a-1ba0e84e507f" name="Default Changelist" comment="extended file provider to support multiple files or directories separated by colons">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+    <list default="true" id="1a9601df-4cac-4bc9-9e3a-1ba0e84e507f" name="Default Changelist" comment="fixed stopping log cleaner">
+      <change afterPath="$PROJECT_DIR$/server/service/smtp.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/smtp/request.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/smtp/server_test.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/smtp/smtptest/client.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/smtp/smtptest/response.go" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/smtp/smtptest/server.go" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cmd/mokapi/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/cmd/mokapi/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/dynamic/configwatcher.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/dynamic/configwatcher.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/dynamic/mail/mail.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/dynamic/mail/mail.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/dynamic/mail/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/dynamic/mail/handler.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/dynamic/provider/file/file.go" beforeDir="false" afterPath="$PROJECT_DIR$/config/dynamic/provider/file/file.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/js/modules/smtp/smtp.go" beforeDir="false" afterPath="$PROJECT_DIR$/js/modules/smtp/smtp.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/runtime/monitor/monitor.go" beforeDir="false" afterPath="$PROJECT_DIR$/runtime/monitor/monitor.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/safe/pool.go" beforeDir="false" afterPath="$PROJECT_DIR$/safe/pool.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/server.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/server_http.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/server_http.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/server_kafka.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/server_kafka.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/server_ldap.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/server_ldap.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/server_smtp.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/server_smtp.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/service/http.go" beforeDir="false" afterPath="$PROJECT_DIR$/server/service/http.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/smtp/message.go" beforeDir="false" afterPath="$PROJECT_DIR$/smtp/message.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/smtp/server.go" beforeDir="false" afterPath="$PROJECT_DIR$/smtp/server.go" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -29,6 +50,11 @@
         <option name="argument" value="--tags" />
         <option name="title" value="All" />
       </GitPushTagMode>
+    </option>
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="master" />
+      </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
@@ -53,6 +79,7 @@
   </component>
   <component name="PropertiesComponent">
     <property name="DefaultGoTemplateProperty" value="Go File" />
+    <property name="Git.Branch.Popup.ShowAllRemotes" value="true" />
     <property name="NewWatcherDialog.advanced.open" value="true" />
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
@@ -67,7 +94,7 @@
     <property name="go.tried.to.enable.integration.vgo.integrator" value="true" />
     <property name="go.watchers.conflict.with.on.save.actions.check.performed" value="true" />
     <property name="js.buildTools.gulp.gulp_package_dir" value="" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/config/dynamic/provider/file/test" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/js" />
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.detected.package.tslint" value="true" />
     <property name="node.js.path.for.package.eslint" value="project" />
@@ -81,18 +108,18 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/js" />
+      <recent name="$PROJECT_DIR$/config/dynamic/common" />
       <recent name="$PROJECT_DIR$/config/dynamic/provider/file/test" />
       <recent name="$PROJECT_DIR$/kafka" />
       <recent name="$PROJECT_DIR$/runtime" />
-      <recent name="$PROJECT_DIR$/api" />
-      <recent name="D:\Projekte\mokapi\webui\src\components" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/smtp/smtptest" />
       <recent name="$PROJECT_DIR$/examples" />
       <recent name="$PROJECT_DIR$/config/dynamic/asyncApi/kafka/store" />
       <recent name="$PROJECT_DIR$/config/dynamic/asyncApi/kafka" />
       <recent name="$PROJECT_DIR$/kafka" />
-      <recent name="$PROJECT_DIR$/kafka/protocol" />
     </key>
   </component>
   <component name="RunManager" selected="Go Build.go build mokapi/cmd/mokapi">
@@ -123,52 +150,52 @@
       <filePath value="$PROJECT_DIR$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestProvider_File/one_file in mokapi/config/dynamic/provider/file" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestKafkaServer_Update in mokapi/server" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="mokapi" />
-      <working_directory value="$PROJECT_DIR$/config/dynamic/provider/file" />
+      <working_directory value="$PROJECT_DIR$/server" />
       <root_directory value="$PROJECT_DIR$" />
       <kind value="PACKAGE" />
-      <package value="mokapi/config/dynamic/provider/file" />
+      <package value="mokapi/server" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
       <framework value="gotest" />
-      <pattern value="^\QTestProvider_File\E$/^\Qone_file\E$" />
+      <pattern value="^\QTestKafkaServer_Update\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestProvider_File/two_dirs in mokapi/config/dynamic/provider/file" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestServer_Serve/connect in mokapi/smtp" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="mokapi" />
-      <working_directory value="$PROJECT_DIR$/config/dynamic/provider/file" />
+      <working_directory value="$PROJECT_DIR$/smtp" />
       <root_directory value="$PROJECT_DIR$" />
       <kind value="PACKAGE" />
-      <package value="mokapi/config/dynamic/provider/file" />
+      <package value="mokapi/smtp" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
       <framework value="gotest" />
-      <pattern value="^\QTestProvider_File\E$/^\Qtwo_dirs\E$" />
+      <pattern value="^\QTestServer_Serve\E$/^\Qconnect\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestProvider_File/two_file in mokapi/config/dynamic/provider/file" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestServer_Serve/say_hello in mokapi/smtp" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="mokapi" />
-      <working_directory value="$PROJECT_DIR$/config/dynamic/provider/file" />
+      <working_directory value="$PROJECT_DIR$/smtp" />
       <root_directory value="$PROJECT_DIR$" />
       <kind value="PACKAGE" />
-      <package value="mokapi/config/dynamic/provider/file" />
+      <package value="mokapi/smtp" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
       <framework value="gotest" />
-      <pattern value="^\QTestProvider_File\E$/^\Qtwo_file\E$" />
+      <pattern value="^\QTestServer_Serve\E$/^\Qsay_hello\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestWatch in mokapi/config/dynamic/provider/file" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestServer_Serve/send_Hello in mokapi/smtp" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="mokapi" />
-      <working_directory value="$PROJECT_DIR$/config/dynamic/provider/file" />
+      <working_directory value="$PROJECT_DIR$/smtp" />
       <root_directory value="$PROJECT_DIR$" />
       <kind value="PACKAGE" />
-      <package value="mokapi/config/dynamic/provider/file" />
+      <package value="mokapi/smtp" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
       <framework value="gotest" />
-      <pattern value="^\QTestWatch\E$" />
+      <pattern value="^\QTestServer_Serve\E$/^\Qsend_Hello\E$" />
       <method v="2" />
     </configuration>
     <configuration default="true" type="GoTestRunConfiguration" factoryName="Go Test">
@@ -203,7 +230,7 @@
       <option name="generatorPath" value="https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/5.0.0/openapi-generator-cli-5.0.0.jar" />
       <option name="jdkPath" value="" />
       <option name="language" value="java" />
-      <option name="specificationPath" value="$PROJECT_DIR$/data/mokapi/dashboard.yml" />
+      <option name="specificationPath" value="$PROJECT_DIR$/data/mail/smtp.yml" />
       <method v="2" />
     </configuration>
     <configuration default="true" type="js.build_tools.gulp">
@@ -218,18 +245,18 @@
     <list>
       <item itemvalue="Go Build.go build mokapi/cmd/mokapi" />
       <item itemvalue="Go Test.go test mokapi" />
-      <item itemvalue="Go Test.TestProvider_File/one_file in mokapi/config/dynamic/provider/file" />
-      <item itemvalue="Go Test.TestProvider_File/two_file in mokapi/config/dynamic/provider/file" />
-      <item itemvalue="Go Test.TestProvider_File/two_dirs in mokapi/config/dynamic/provider/file" />
-      <item itemvalue="Go Test.TestWatch in mokapi/config/dynamic/provider/file" />
+      <item itemvalue="Go Test.TestKafkaServer_Update in mokapi/server" />
+      <item itemvalue="Go Test.TestServer_Serve/send_Hello in mokapi/smtp" />
+      <item itemvalue="Go Test.TestServer_Serve/connect in mokapi/smtp" />
+      <item itemvalue="Go Test.TestServer_Serve/say_hello in mokapi/smtp" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Go Test.TestWatch in mokapi/config/dynamic/provider/file" />
         <item itemvalue="Go Test.go test mokapi" />
-        <item itemvalue="Go Test.TestProvider_File/two_dirs in mokapi/config/dynamic/provider/file" />
-        <item itemvalue="Go Test.TestProvider_File/two_file in mokapi/config/dynamic/provider/file" />
-        <item itemvalue="Go Test.TestProvider_File/one_file in mokapi/config/dynamic/provider/file" />
+        <item itemvalue="Go Test.TestServer_Serve/say_hello in mokapi/smtp" />
+        <item itemvalue="Go Test.TestServer_Serve/connect in mokapi/smtp" />
+        <item itemvalue="Go Test.TestServer_Serve/send_Hello in mokapi/smtp" />
+        <item itemvalue="Go Test.TestKafkaServer_Update in mokapi/server" />
       </list>
     </recent_temporary>
   </component>
@@ -289,23 +316,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="added string functions to Mokapi Actions&#10;fixed resolving identifier in call visitor" />
-    <MESSAGE value="optimized mokapi actions&#10;bugfixes" />
-    <MESSAGE value="fixed thread-safe action and function collection" />
-    <MESSAGE value="added null support in Mokapi Actions&#10;fixed function calls in Mokapi Actions&#10;added more examples" />
-    <MESSAGE value="added api handler" />
-    <MESSAGE value="package path depends on type of OS" />
-    <MESSAGE value="fixed http test helper" />
-    <MESSAGE value="fixed ldap test" />
-    <MESSAGE value="optimized json output" />
-    <MESSAGE value="fixed path parameter" />
-    <MESSAGE value="fixed unit test" />
-    <MESSAGE value="refactored kafka" />
-    <MESSAGE value="added tests" />
-    <MESSAGE value="refactored config" />
-    <MESSAGE value="extended api for dashboard" />
-    <MESSAGE value="removed unused code&#10;fixed http request counter" />
-    <MESSAGE value="extended api dashboard&#10;refactored metrics" />
     <MESSAGE value="upgraded goja&#10;fixed error" />
     <MESSAGE value="excluded fileserver, remove code later" />
     <MESSAGE value="fixed test, raw is cleared after parsing" />
@@ -314,7 +324,24 @@
     <MESSAGE value="working on dashboard and api&#10;fixed openapi schema allOf&#10;extended js require" />
     <MESSAGE value="improved tests" />
     <MESSAGE value="extended file provider to support multiple files or directories separated by colons" />
-    <option name="LAST_COMMIT_MESSAGE" value="extended file provider to support multiple files or directories separated by colons" />
+    <MESSAGE value="added example" />
+    <MESSAGE value="extended services api" />
+    <MESSAGE value="working on nested required js files" />
+    <MESSAGE value="fixed updating js script with nested imports" />
+    <MESSAGE value="changed log messages" />
+    <MESSAGE value="optimized configwatcher&#10;extended dashboard" />
+    <MESSAGE value="extended dashboard&#10;removed duplicated code http.go&#10;optimized parse messages" />
+    <MESSAGE value="extended dashboard&#10;added js module kafka and http&#10;parse.go optimized error message" />
+    <MESSAGE value="wait longer to ensure scripts are executed" />
+    <MESSAGE value="fixed tests" />
+    <MESSAGE value="optimized memory usage js" />
+    <MESSAGE value="fixed require in js" />
+    <MESSAGE value="try fixing tests on GitHub" />
+    <MESSAGE value="refactored web ui&#10;extended dashboard with smtp" />
+    <MESSAGE value="fixed broker select only by port&#10;added allow auto create topic support" />
+    <MESSAGE value="fixed kafka fetch, offsetFetch&#10;fixed generation recursion with a guard&#10;removed old workflow types&#10;fixed stackoverflow on recursion in generator" />
+    <MESSAGE value="fixed stopping log cleaner" />
+    <option name="LAST_COMMIT_MESSAGE" value="fixed stopping log cleaner" />
   </component>
   <component name="VgoProject">
     <integration-enabled>true</integration-enabled>
@@ -323,239 +350,34 @@
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/openapi/handler_test.go</url>
-          <line>60</line>
-          <option name="timeStamp" value="152" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/openapi/handler_test.go</url>
-          <line>594</line>
-          <option name="timeStamp" value="158" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/configwatcher_test.go</url>
-          <line>113</line>
-          <option name="timeStamp" value="187" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/server/httpmanager_test.go</url>
-          <line>40</line>
-          <option name="timeStamp" value="205" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/server/httpmanager_test.go</url>
-          <line>38</line>
-          <option name="timeStamp" value="206" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/runtime/metrics/metrics.go</url>
-          <line>43</line>
-          <option name="timeStamp" value="217" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/api/handler_metrics.go</url>
-          <line>15</line>
-          <option name="timeStamp" value="220" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/api/dashboard_test.go</url>
-          <line>51</line>
-          <option name="timeStamp" value="225" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/runtime/metrics/metrics_test.go</url>
-          <line>68</line>
-          <option name="timeStamp" value="227" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/api/handler_kafka.go</url>
-          <line>74</line>
-          <option name="timeStamp" value="241" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/lua/kafka/kafka_test.go</url>
-          <line>118</line>
-          <option name="timeStamp" value="242" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/lua/utils/mapper.go</url>
-          <line>28</line>
-          <option name="timeStamp" value="246" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/lua/utils/mapper_test.go</url>
-          <line>213</line>
-          <option name="timeStamp" value="252" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/lua/utils/mapper_test.go</url>
-          <line>262</line>
-          <option name="timeStamp" value="254" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/engine/kafka_test.go</url>
-          <line>28</line>
-          <option name="timeStamp" value="262" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/runtime/events/events_test.go</url>
-          <line>30</line>
-          <option name="timeStamp" value="296" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/runtime/events/events_test.go</url>
-          <line>52</line>
-          <option name="timeStamp" value="297" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/asyncApi/kafka/store/produce_test.go</url>
-          <line>122</line>
-          <option name="timeStamp" value="306" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/asyncApi/kafka/store/store.go</url>
-          <line>88</line>
-          <option name="timeStamp" value="307" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/config/dynamic/asyncApi/kafka/store/fetch_test.go</url>
-          <line>183</line>
-          <option name="timeStamp" value="308" />
+          <line>218</line>
+          <option name="timeStamp" value="843" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/asyncApi/kafka/store/partition.go</url>
-          <line>64</line>
-          <option name="timeStamp" value="309" />
+          <url>file://$PROJECT_DIR$/config/dynamic/asyncApi/kafka/store/produce.go</url>
+          <line>53</line>
+          <option name="timeStamp" value="845" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/engine/js_test.go</url>
-          <line>213</line>
-          <option name="timeStamp" value="311" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/engine/js_test.go</url>
-          <line>194</line>
-          <option name="timeStamp" value="312" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/lua/utils/mapper.go</url>
-          <line>148</line>
-          <option name="timeStamp" value="318" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/lua/utils/mapper.go</url>
-          <line>73</line>
-          <option name="timeStamp" value="320" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/lua/convert/table_test.go</url>
-          <line>88</line>
-          <option name="timeStamp" value="328" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/lua/convert/table_test.go</url>
-          <line>167</line>
-          <option name="timeStamp" value="339" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/lua/convert/userdata_test.go</url>
-          <line>57</line>
-          <option name="timeStamp" value="346" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/lua/convert/table.go</url>
-          <line>99</line>
-          <option name="timeStamp" value="356" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/lua/convert/table.go</url>
-          <line>104</line>
-          <option name="timeStamp" value="357" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/lua/convert/userdata_test.go</url>
-          <line>28</line>
-          <option name="timeStamp" value="364" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/api/handler_events.go</url>
-          <line>16</line>
-          <option name="timeStamp" value="370" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/js/modules/mokapi.go</url>
-          <line>121</line>
-          <option name="timeStamp" value="377" />
+          <url>file://$PROJECT_DIR$/server/service/kafka.go</url>
+          <line>74</line>
+          <option name="timeStamp" value="846" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/config/dynamic/openapi/schema/generator_test.go</url>
-          <line>490</line>
-          <option name="timeStamp" value="382" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/openapi/schema/encode.go</url>
-          <line>293</line>
-          <option name="timeStamp" value="394" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/openapi/schema/encode.go</url>
-          <line>278</line>
-          <option name="timeStamp" value="395" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/openapi/schema/schema_test.go</url>
-          <line>102</line>
-          <option name="timeStamp" value="396" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/openapi/schema/schema.go</url>
-          <line>147</line>
-          <option name="timeStamp" value="399" />
+          <line>556</line>
+          <option name="timeStamp" value="848" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/config/dynamic/openapi/schema/generator_test.go</url>
-          <line>520</line>
-          <option name="timeStamp" value="401" />
+          <line>591</line>
+          <option name="timeStamp" value="849" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/openapi/schema/generator_test.go</url>
-          <line>518</line>
-          <option name="timeStamp" value="402" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/openapi/schema/parse.go</url>
-          <line>163</line>
-          <option name="timeStamp" value="407" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/js/require.go</url>
-          <line>76</line>
-          <option name="timeStamp" value="414" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/js/require.go</url>
-          <line>73</line>
-          <option name="timeStamp" value="421" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/openapi/schema/parse.go</url>
-          <line>55</line>
-          <option name="timeStamp" value="422" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/provider/file/file_test.go</url>
-          <line>59</line>
-          <option name="timeStamp" value="442" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/provider/file/file.go</url>
-          <line>64</line>
-          <option name="timeStamp" value="444" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/provider/file/file_test.go</url>
-          <line>107</line>
-          <option name="timeStamp" value="445" />
+          <url>file://$PROJECT_DIR$/config/dynamic/mail/handler.go</url>
+          <line>50</line>
+          <option name="timeStamp" value="861" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -589,6 +411,7 @@
     <SUITE FILE_PATH="coverage/mokapi$go_test_kafka.out" NAME="go test kafka Coverage Results" MODIFIED="1651689992250" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
     <SUITE FILE_PATH="coverage/mokapi$go_test_encoding.out" NAME="go test encoding Coverage Results" MODIFIED="1640638561356" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
     <SUITE FILE_PATH="coverage/mokapi$TestJsFile_in_mokapi_acceptance.out" NAME="TestJsFile in mokapi/acceptance Coverage Results" MODIFIED="1649710193573" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_schema.out" NAME="go test schema Coverage Results" MODIFIED="1653048765017" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
     <SUITE FILE_PATH="coverage/mokapi$go_test_protocol.out" NAME="go test protocol Coverage Results" MODIFIED="1646470455316" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
     <SUITE FILE_PATH="coverage/mokapi$go_test_openapi.out" NAME="go test openapi Coverage Results" MODIFIED="1649663603559" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
     <SUITE FILE_PATH="coverage/mokapi$go_test_file.out" NAME="go test file Coverage Results" MODIFIED="1640857655337" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />

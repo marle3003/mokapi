@@ -1,6 +1,8 @@
 package mail
 
 import (
+	"mime/multipart"
+	"mokapi/media"
 	"mokapi/smtp"
 	"time"
 )
@@ -17,12 +19,19 @@ type Mail struct {
 	Subject     string
 	ContentType string
 	Encoding    string
-	Body        []string
+	Body        string
+	Attachment  []Attachement
 }
 
 type Address struct {
 	Name    string
 	Address string
+}
+
+type Attachement struct {
+	Name        string
+	ContentType string
+	p           *multipart.Part
 }
 
 func NewMail(msg *smtp.MailMessage) *Mail {
@@ -32,7 +41,6 @@ func NewMail(msg *smtp.MailMessage) *Mail {
 		Subject:     msg.Subject,
 		ContentType: msg.ContentType,
 		Encoding:    msg.Encoding,
-		Body:        msg.Body,
 	}
 
 	if msg.Sender != nil {
@@ -60,4 +68,29 @@ func NewMail(msg *smtp.MailMessage) *Mail {
 	}
 
 	return m
+}
+
+func (m *Mail) Write(b []byte) {
+
+}
+
+func newAttachment(part *multipart.Part) Attachement {
+	contentType := part.Header.Get("Content-Type")
+	name := part.FormName()
+	if len(name) == 0 {
+		name = part.FileName()
+		if len(name) == 0 {
+			m := media.ParseContentType(contentType)
+			name = m.Parameters["name"]
+		}
+	}
+	return Attachement{
+		Name:        name,
+		ContentType: part.Header.Get("Content-Type"),
+		p:           part,
+	}
+}
+
+func (a *Attachement) Read(b []byte) (int, error) {
+	return a.p.Read(b)
 }

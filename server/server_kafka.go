@@ -76,9 +76,6 @@ skip:
 }
 
 func (kc KafkaClusters) Stop() {
-	if len(kc) > 0 {
-		log.Debug("stopping kafka clusters")
-	}
 	for _, c := range kc {
 		c.Close()
 	}

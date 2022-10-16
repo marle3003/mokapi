@@ -2,8 +2,6 @@ package safe
 
 import (
 	"context"
-	"fmt"
-	"runtime"
 	"sync"
 )
 
@@ -22,11 +20,6 @@ func NewPool(parentCtx context.Context) *Pool {
 }
 
 func (p *Pool) Go(f func(ctx context.Context)) {
-	_, file, no, ok := runtime.Caller(1)
-	if ok {
-		fmt.Printf("called from %s#%d\n", file, no)
-	}
-
 	p.waitGroup.Add(1)
 	go func() {
 		defer func() {

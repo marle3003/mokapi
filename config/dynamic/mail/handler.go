@@ -3,7 +3,11 @@ package mail
 import (
 	"context"
 	log "github.com/sirupsen/logrus"
+	"io"
+	"io/ioutil"
+	"mime/multipart"
 	"mokapi/engine/common"
+	"mokapi/media"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"mokapi/smtp"
@@ -35,14 +39,39 @@ func (h *Handler) Serve(rw smtp.ResponseWriter, r *smtp.Request) {
 		rw.Write(smtp.StatusOk, smtp.Success, "Ok")
 	case smtp.Message:
 		rw.Write(smtp.StatusOk, smtp.Success, "Ok")
-		h.processMail(NewMail(r.Message), r.Context)
+		h.processMail(r.Message, r.Context)
 	case smtp.Quit:
 		rw.Write(smtp.StatusClose, smtp.Success, "Goodbye")
 	}
 }
 
-func (h *Handler) processMail(m *Mail, ctx context.Context) {
+func (h *Handler) processMail(m *smtp.MailMessage, ctx context.Context) {
 	clientContext := smtp.ClientFromContext(ctx)
+	mail := NewMail(m)
+	mime := media.ParseContentType(m.ContentType)
+	switch {
+	case mime.Key() == "multipart/mixed":
+		r := multipart.NewReader(m.Body, mime.Parameters["boundary"])
+		for {
+			p, err := r.NextPart()
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+				log.Errorf("smtp: unable to read message part: %v", err)
+				break
+			}
+			if p.Header.Get("Content-Disposition") == "attachment" {
+				mail.Attachment = append(mail.Attachment, newAttachment(p))
+			} else {
+				b, err := ioutil.ReadAll(p)
+				if err != nil {
+					log.Errorf("smtp: unable to read part: %v", err)
+				}
+				mail.Body += string(b)
+			}
+		}
+	}
 
 	log.Infof("recevied new mail on %v from client %v (%v)",
 		h.config.Info.Name, clientContext.Client, clientContext.Addr)
@@ -51,5 +80,5 @@ func (h *Handler) processMail(m *Mail, ctx context.Context) {
 		m.Mails.WithLabel(h.config.Info.Name).Add(1)
 	}
 	events.Push(m, events.NewTraits().WithNamespace("smtp").WithName(h.config.Info.Name))
-	h.eventEmitter.Emit("smtp", m)
+	h.eventEmitter.Emit("smtp", mail)
 }

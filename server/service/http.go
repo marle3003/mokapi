@@ -60,7 +60,7 @@ func (s *HttpServer) AddOrUpdate(service *HttpService) error {
 	hostname := service.Url.Hostname()
 	paths, ok := s.handlers[hostname]
 	if !ok {
-		log.Infof("adding new host '%v' on binding %v", hostname, s.server.Addr)
+		log.Infof("adding new http host '%v' on binding %v", hostname, s.server.Addr)
 		paths = make(map[string]*HttpService)
 		s.handlers[hostname] = paths
 	}

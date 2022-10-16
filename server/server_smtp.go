@@ -7,10 +7,10 @@ import (
 	engine "mokapi/engine/common"
 	"mokapi/runtime"
 	"mokapi/server/cert"
-	"mokapi/smtp"
+	"mokapi/server/service"
 )
 
-type SmtpServers map[string]*smtp.Server
+type SmtpServers map[string]*service.MailServer
 
 type SmtpManager struct {
 	Servers SmtpServers
@@ -38,28 +38,17 @@ func (s SmtpManager) UpdateConfig(c *common.Config) {
 	h := runtime.NewSmtpHandler(s.app.Monitor.Smtp, config.NewHandler(cfg, s.eventEmitter))
 
 	if server, ok := s.Servers[cfg.Info.Name]; !ok {
-		server = &smtp.Server{
-			Addr:    "127.0.0.1:25",
-			Handler: h,
-		}
-		err := server.ListenAndServe()
-		if err != nil {
-			log.Errorf("unable to start smtp server: %v", err)
-			return
-		}
-
-	} else {
-		server.Handler = h
+		server = service.NewMailServer(cfg.Server, h)
+		server.Start()
 	}
 
 	s.app.AddSmtp(cfg)
+
+	log.Debugf("processed %v", c.Url.String())
 }
 
 func (s SmtpServers) Stop() {
-	if len(s) > 0 {
-		log.Debug("stopping smtp servers")
-	}
 	for _, server := range s {
-		server.Close()
+		server.Stop()
 	}
 }

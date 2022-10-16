@@ -13,6 +13,8 @@ type Module struct {
 
 type mailArgs struct {
 	Address string
+	From    string
+	To      []string
 }
 
 func New(host common.Host, rt *goja.Runtime) interface{} {
@@ -38,6 +40,7 @@ func (m *Module) Send(msgV goja.Value, argsV goja.Value) error {
 		to = append(to, v.Address)
 	}
 
+	//smtp.SendMail(mArgs.Address, nil, mArgs.From, mArgs.To)
 	//mail.
 	//	smtp.SendMail(mArgs.Address, nil, msg.Sender.Address, to)
 

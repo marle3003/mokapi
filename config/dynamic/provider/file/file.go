@@ -88,7 +88,6 @@ func (p *Provider) watch(ch chan<- *common.Config, pool *safe.Pool) error {
 		for {
 			select {
 			case <-ctx.Done():
-				log.Debug("file")
 				return
 			case evt := <-p.watcher.Events:
 				// temporary files ends with '~' in name

@@ -2,7 +2,6 @@ package monitor
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
 	"mokapi/runtime/metrics"
 	"mokapi/safe"
 	"runtime"
@@ -113,7 +112,6 @@ func (m *Monitor) Start(pool *safe.Pool) {
 		for {
 			select {
 			case <-ctx.Done():
-				log.Debug("monitor")
 				return
 			case <-time.After(time.Duration(5) * time.Second):
 				m.update()

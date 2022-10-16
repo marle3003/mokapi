@@ -101,9 +101,6 @@ func (m *HttpManager) Update(c *config.Config) {
 }
 
 func (servers HttpServers) Stop() {
-	if len(servers) > 0 {
-		log.Debug("stopping http servers")
-	}
 	for _, server := range servers {
 		server.Stop()
 	}

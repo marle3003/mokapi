@@ -25,6 +25,12 @@ type Handler interface {
 	Serve(ResponseWriter, *Request)
 }
 
+type HandlerFunc func(rw ResponseWriter, req *Request)
+
+func (f HandlerFunc) Serve(rw ResponseWriter, req *Request) {
+	f(rw, req)
+}
+
 type Command int
 
 const (
@@ -34,14 +40,6 @@ const (
 	Message
 	Quit
 )
-
-type Request struct {
-	Context context.Context
-	Proto   string // SMTP or ESMTP
-	Cmd     Command
-	Param   string
-	Message *MailMessage
-}
 
 type ResponseWriter interface {
 	Write(code StatusCode, status EnhancedStatusCode, line ...string) error
@@ -84,7 +82,7 @@ func (s *Server) Serve(l net.Listener) error {
 			case <-closeCh:
 				return ErrServerClosed
 			default:
-				log.Errorf("kafka: Accept error: %v", err)
+				log.Errorf("smtp: Accept error: %v", err)
 				continue
 			}
 		}

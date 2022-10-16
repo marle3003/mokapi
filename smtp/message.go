@@ -1,8 +1,10 @@
 package smtp
 
 import (
+	"io"
 	"net/mail"
 	"net/textproto"
+	"strings"
 	"time"
 )
 
@@ -24,7 +26,7 @@ type MailMessage struct {
 	Subject     string
 	ContentType string
 	Encoding    string
-	Body        []string
+	Body        io.Reader
 }
 
 func ReadMessage(tc textproto.Reader) (*MailMessage, error) {
@@ -89,6 +91,7 @@ func ReadMessage(tc textproto.Reader) (*MailMessage, error) {
 	msg.ContentType = header.Get("Content-Type")
 	msg.Encoding = header.Get("Content-Transfer-Encoding")
 
+	var body []string
 	for {
 		line, err := tc.ReadLine()
 		if err != nil {
@@ -97,8 +100,9 @@ func ReadMessage(tc textproto.Reader) (*MailMessage, error) {
 		if line == "." {
 			break
 		}
-		msg.Body = append(msg.Body, line)
+		body = append(body, line)
 	}
+	msg.Body = strings.NewReader(strings.Join(body, "\n"))
 
 	return msg, nil
 }
