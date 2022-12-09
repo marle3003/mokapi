@@ -53,6 +53,7 @@ func (d *Directory) search(rw ResponseWriter, r *Request) error {
 		if err := rw.Write(searchResult); err != nil {
 			return err
 		}
+		log.Infof("found result for message %v: %v", r.MessageId, result.dn)
 		return rw.Write(newSearchDone(r.MessageId, ResultSuccess, ""))
 	}
 

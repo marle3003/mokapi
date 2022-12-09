@@ -3,6 +3,8 @@ package ldap
 import (
 	"mokapi/config/dynamic/common"
 	"net/url"
+	"path/filepath"
+	"strings"
 )
 
 func init() {
@@ -31,10 +33,29 @@ type Entry struct {
 	Attributes map[string][]string
 }
 
+func (c *Config) Parse(config *common.Config, reader common.Reader) error {
+	for _, entry := range c.Entries {
+		err := entry.Parse(config, reader)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (e Entry) Parse(config *common.Config, reader common.Reader) error {
 	if aList, ok := e.Attributes["thumbnailphoto"]; ok {
 		for i, a := range aList {
-			u, err := url.Parse(a)
+			if !strings.HasPrefix(a, "file:") {
+				continue
+			}
+
+			file := strings.TrimPrefix(a, "file:")
+			if strings.HasPrefix(file, "./") {
+				dir := filepath.Dir(config.Url.Opaque)
+				file = strings.Replace(file, ".", dir, 1)
+			}
+			u, err := url.Parse("file:" + file)
 			if err != nil {
 				continue
 			}
@@ -43,9 +64,7 @@ func (e Entry) Parse(config *common.Config, reader common.Reader) error {
 				return err
 			}
 
-			if b, ok := f.Data.([]byte); ok {
-				aList[i] = string(b)
-			}
+			aList[i] = f.Data.(string)
 		}
 	}
 
