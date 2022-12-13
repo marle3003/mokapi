@@ -4,6 +4,7 @@ import (
 	r "github.com/stretchr/testify/require"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestScript_Mokapi_Date(t *testing.T) {
@@ -18,13 +19,13 @@ func TestScript_Mokapi_Date(t *testing.T) {
 					`
 import { date } from 'mokapi'
 export default function() {
-  return date({timestamp:  new Date(2022, 5, 9, 12, 0, 0, 0).getTime()}); // january is 0
+  return date({timestamp:  new Date(Date.UTC(2022, 5, 9, 12, 0, 0, 0)).getTime()}); // january is 0
 }`,
 					host)
 				r.NoError(t, err)
 				i, err := s.RunDefault()
 				r.NoError(t, err)
-				expected := "2022-06-09T10:00:00Z"
+				expected := time.Date(2022, 6, 9, 12, 0, 0, 0, time.UTC).Format(time.RFC3339)
 				r.Equal(t, expected, i.String())
 			},
 		},
