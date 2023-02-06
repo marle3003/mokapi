@@ -110,6 +110,7 @@ type testHost struct {
 	info        func(args ...interface{})
 	httpClient  *testClient
 	kafkaClient *kafkaClient
+	every       func(every string, do func(), opt common.JobOptions)
 }
 
 func (th *testHost) Info(args ...interface{}) {
@@ -130,6 +131,13 @@ func (th *testHost) OpenScript(file, hint string) (string, string, error) {
 		return th.openScript(file, hint)
 	}
 	return "", "", nil
+}
+
+func (th *testHost) Every(every string, do func(), opt common.JobOptions) (int, error) {
+	if th.every != nil {
+		th.every(every, do, opt)
+	}
+	return 0, nil
 }
 
 func (th *testHost) HttpClient() common.HttpClient {

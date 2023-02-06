@@ -31,7 +31,7 @@ func TestListGroup(t *testing.T) {
 		{
 			"with group state",
 			func(t *testing.T, s *store.Store) {
-				s.Update(asyncapitest.NewConfig(asyncapitest.WithServer("", "kafka", "")))
+				s.Update(asyncapitest.NewConfig(asyncapitest.WithServer("", "kafka", "127.0.0.1")))
 				group := s.GetOrCreateGroup("foo", 0)
 				group.State = store.PreparingRebalance
 				g := group.NewGeneration()
@@ -51,7 +51,7 @@ func TestListGroup(t *testing.T) {
 		{
 			"filtering",
 			func(t *testing.T, s *store.Store) {
-				s.Update(asyncapitest.NewConfig(asyncapitest.WithServer("", "kafka", "")))
+				s.Update(asyncapitest.NewConfig(asyncapitest.WithServer("", "kafka", "127.0.0.1")))
 				s.GetOrCreateGroup("foo", 0)
 				group := s.GetOrCreateGroup("bar", 0)
 				group.State = store.CompletingRebalance

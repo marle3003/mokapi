@@ -56,7 +56,7 @@ func (e Entry) Parse(config *common.Config, reader common.Reader) error {
 				if len(path) == 0 {
 					path = config.Url.Path
 				}
-				dir := filepath.Dir(config.Url.Path)
+				dir := filepath.Dir(path)
 				file = strings.Replace(file, ".", dir, 1)
 			}
 			u, err := url.Parse("file:" + file)

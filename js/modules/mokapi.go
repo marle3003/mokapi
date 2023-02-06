@@ -24,25 +24,25 @@ func (*Mokapi) Sleep(milliseconds float64) {
 }
 
 func (m *Mokapi) Every(every string, do func(), args goja.Value) (int, error) {
-	times := -1
-	tags := make(map[string]string)
+	options := common.NewJobOptions()
 
 	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
 		params := args.ToObject(m.rt)
 		for _, k := range params.Keys() {
 			switch k {
 			case "tags":
+				options.Tags = make(map[string]string)
 				tagsV := params.Get(k)
 				if goja.IsUndefined(tagsV) || goja.IsNull(tagsV) {
 					continue
 				}
 				tagsO := tagsV.ToObject(m.rt)
 				for _, key := range tagsO.Keys() {
-					tags[key] = tagsO.Get(key).String()
+					options.Tags[key] = tagsO.Get(key).String()
 				}
 			case "times":
 				tagsV := params.Get(k)
-				times = int(tagsV.ToInteger())
+				options.Times = int(tagsV.ToInteger())
 			}
 		}
 	}
@@ -53,29 +53,29 @@ func (m *Mokapi) Every(every string, do func(), args goja.Value) (int, error) {
 		do()
 	}
 
-	return m.host.Every(every, f, times, tags)
+	return m.host.Every(every, f, options)
 }
 
 func (m *Mokapi) Cron(expr string, do func(), args goja.Value) (int, error) {
-	times := -1
-	tags := make(map[string]string)
+	options := common.NewJobOptions()
 
 	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
 		params := args.ToObject(m.rt)
 		for _, k := range params.Keys() {
 			switch k {
 			case "tags":
+				options.Tags = make(map[string]string)
 				tagsV := params.Get(k)
 				if goja.IsUndefined(tagsV) || goja.IsNull(tagsV) {
 					continue
 				}
 				tagsO := tagsV.ToObject(m.rt)
 				for _, key := range tagsO.Keys() {
-					tags[key] = tagsO.Get(key).String()
+					options.Tags[key] = tagsO.Get(key).String()
 				}
 			case "times":
 				tagsV := params.Get(k)
-				times = int(tagsV.ToInteger())
+				options.Times = int(tagsV.ToInteger())
 			}
 		}
 	}
@@ -86,7 +86,7 @@ func (m *Mokapi) Cron(expr string, do func(), args goja.Value) (int, error) {
 		do()
 	}
 
-	return m.host.Cron(expr, f, times, tags)
+	return m.host.Cron(expr, f, options)
 }
 
 func (m *Mokapi) On(event string, do goja.Value, args goja.Value) {

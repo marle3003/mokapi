@@ -2,6 +2,7 @@ package store
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/kafka"
 	"mokapi/kafka/apiVersion"
@@ -35,13 +36,16 @@ type Store struct {
 	m sync.RWMutex
 }
 
-func New(config *asyncApi.Config) *Store {
-	s := &Store{
+func NewEmpty() *Store {
+	return &Store{
 		topics:  make(map[string]*Topic),
 		brokers: make(map[int]*Broker),
 		groups:  make(map[string]*Group),
 	}
+}
 
+func New(config *asyncApi.Config) *Store {
+	s := NewEmpty()
 	s.Update(config)
 	return s
 }
@@ -125,7 +129,13 @@ func (s *Store) Update(c *asyncApi.Config) {
 	s.cluster = c.Info.Name
 	for n, server := range c.Servers {
 		if b := s.getBroker(n); b != nil {
-			b.Host, b.Port = parseHostAndPort(server.Url)
+			host, port := parseHostAndPort(server.Url)
+			if len(host) == 0 {
+				log.Errorf("unable to update broker '%v' to cluster '%v': missing host in url '%v'", n, s.cluster, server.Url)
+				continue
+			}
+			b.Host = host
+			b.Port = port
 		} else {
 			s.addBroker(n, server)
 		}
@@ -224,6 +234,12 @@ func (s *Store) addBroker(name string, config asyncApi.Server) {
 
 	id := len(s.brokers)
 	b := newBroker(id, name, config)
+
+	if len(b.Host) == 0 {
+		log.Errorf("unable to add broker '%v' to cluster '%v': missing host in url '%v'", name, s.cluster, config.Url)
+		return
+	}
+
 	s.brokers[id] = b
 	b.startCleaner(s.cleanLog)
 }

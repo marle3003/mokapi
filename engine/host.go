@@ -85,11 +85,14 @@ func (sh *scriptHost) RunEvent(event string, args ...interface{}) []*Summary {
 	return result
 }
 
-func (sh *scriptHost) Every(every string, handler func(), times int, tags map[string]string) (int, error) {
+func (sh *scriptHost) Every(every string, handler func(), opt common.JobOptions) (int, error) {
 	sh.engine.cron.Every(every)
 
-	if times > 0 {
-		sh.engine.cron.LimitRunsTo(times)
+	if opt.Times > 0 {
+		sh.engine.cron.LimitRunsTo(opt.Times)
+	}
+	if !opt.RunFirstTimeImmediately {
+		sh.engine.cron.WaitForSchedule()
 	}
 
 	j, err := sh.engine.cron.Do(func() {
@@ -111,11 +114,14 @@ func (sh *scriptHost) Every(every string, handler func(), times int, tags map[st
 	return id, nil
 }
 
-func (sh *scriptHost) Cron(expr string, handler func(), times int, tags map[string]string) (int, error) {
+func (sh *scriptHost) Cron(expr string, handler func(), opt common.JobOptions) (int, error) {
 	sh.engine.cron.Cron(expr)
 
-	if times >= 0 {
-		sh.engine.cron.LimitRunsTo(times)
+	if opt.Times >= 0 {
+		sh.engine.cron.LimitRunsTo(opt.Times)
+	}
+	if !opt.RunFirstTimeImmediately {
+		sh.engine.cron.WaitForSchedule()
 	}
 
 	j, err := sh.engine.cron.Do(handler)

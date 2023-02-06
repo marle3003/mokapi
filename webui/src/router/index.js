@@ -4,6 +4,8 @@ import ServiceList from '@/views/ServiceList'
 
 import Dashboard from '@/views/Dashboard'
 import Docs from '@/views/Docs'
+import KafkaCluster from '@/components/kafka/Cluster'
+import KafkaTopic from '@/components/kafka/Topic'
 import SmtpMail from '@/views/dashboard/SmtpMail'
 
 import HttpService from '@/views/http/Service'
@@ -52,17 +54,17 @@ export default new Router({
       meta: {showMetrics: true}
     },
     {
-      path: '/dashboard/http/:service',
+      path: '/dashboard/http/api/:service',
       name: 'httpService2',
       component: Dashboard
     },
     {
-      path: '/dashboard/http/:service/:path',
+      path: '/dashboard/http/api/:service/:path',
       name: 'httpPath',
       component: Dashboard
     },
     {
-      path: '/dashboard/http/request/:id',
+      path: '/dashboard/http/requests/:id',
       name: 'httpRequest',
       component: Dashboard
     },
@@ -70,17 +72,19 @@ export default new Router({
       path: '/dashboard/kafka',
       name: 'kafka',
       component: Dashboard,
-      meta: {showMetrics: true}
-    },
-    {
-      path: '/dashboard/kafka/:cluster',
-      name: 'kafkaCluster',
-      component: Dashboard
-    },
-    {
-      path: '/dashboard/kafka/:cluster/topics/:topic',
-      name: 'kafkaTopic',
-      component: Dashboard
+      meta: {showMetrics: true},
+      children: [
+        {
+          path: '/dashboard/kafka/api/:cluster',
+          name: 'kafkaCluster',
+          component: KafkaCluster
+        },
+        {
+          path: '/dashboard/kafka/api/:cluster/topics/:topic',
+          name: 'kafkaTopic',
+          component: KafkaTopic
+        }
+      ]
     },
     {
       path: '/dashboard/smtp',

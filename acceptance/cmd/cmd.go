@@ -9,7 +9,6 @@ import (
 	"mokapi/config/static"
 	"mokapi/engine"
 	"mokapi/runtime"
-	"mokapi/runtime/events"
 	"mokapi/safe"
 	"mokapi/server"
 	"mokapi/server/cert"
@@ -24,8 +23,6 @@ type Cmd struct {
 
 func Start(cfg *static.Config) (*Cmd, error) {
 	log.SetLevel(log.DebugLevel)
-	events.SetStore(20, events.NewTraits().WithNamespace("http"))
-	events.SetStore(20, events.NewTraits().WithNamespace("kafka"))
 
 	app := runtime.New()
 
@@ -35,18 +32,17 @@ func Start(cfg *static.Config) (*Cmd, error) {
 	if err != nil {
 		return nil, err
 	}
-	kafka := make(server.KafkaClusters)
 	http := make(server.HttpServers)
 	mail := make(server.SmtpServers)
 	directories := make(server.LdapDirectories)
 	scriptEngine := engine.New(watcher, app)
 
 	managerHttp := server.NewHttpManager(http, scriptEngine, certStore, app)
-	mangerKafka := server.NewKafkaManager(kafka, scriptEngine, app)
+	kafka := server.NewKafkaManager(scriptEngine, app)
 	managerLdap := server.NewLdapDirectoryManager(directories, scriptEngine, certStore, app)
 
 	watcher.AddListener(func(cfg *common.Config) {
-		mangerKafka.UpdateConfig(cfg)
+		kafka.UpdateConfig(cfg)
 		managerHttp.Update(cfg)
 		mail.UpdateConfig(cfg, certStore, scriptEngine)
 		managerLdap.UpdateConfig(cfg)

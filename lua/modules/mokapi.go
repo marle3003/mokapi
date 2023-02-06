@@ -51,7 +51,12 @@ func (m *Mokapi) every(l *lua.LState) int {
 		}
 	}
 
-	id, err := m.host.Every(every, fn, args.Times, args.Tags)
+	opt := common.JobOptions{
+		Times:                   args.Times,
+		Tags:                    args.Tags,
+		RunFirstTimeImmediately: true,
+	}
+	id, err := m.host.Every(every, fn, opt)
 
 	if err != nil {
 		l.Push(lua.LNumber(id))

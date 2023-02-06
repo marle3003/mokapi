@@ -69,12 +69,12 @@ func TestGeneratorString(t *testing.T) {
 		},
 		{
 			"date",
-			"2008-12-07",
+			"2004-12-07",
 			&schema.Schema{Type: "string", Format: "date"},
 		},
 		{
 			"date-time",
-			"2008-12-07T04:14:25Z",
+			"2004-12-07T04:14:25Z",
 			&schema.Schema{Type: "string", Format: "date-time"},
 		},
 		{
@@ -392,7 +392,7 @@ func TestGeneratorObject(t *testing.T) {
 		},
 		{
 			name: "more fields",
-			exp:  map[string]interface{}{"id": int32(-1072427943), "date": "1977-06-05"},
+			exp:  map[string]interface{}{"id": int32(-1072427943), "date": "1955-06-05"},
 			schema: schematest.New("object",
 				schematest.WithProperty("id", schematest.New("integer", schematest.WithFormat("int32"))),
 				schematest.WithProperty("date", schematest.New("string", schematest.WithFormat("date")))),
@@ -402,7 +402,7 @@ func TestGeneratorObject(t *testing.T) {
 			exp: map[string]interface{}{
 				"nested": map[string]interface{}{
 					"id":   int32(-1072427943),
-					"date": "1977-06-05",
+					"date": "1955-06-05",
 				},
 			},
 			schema: schematest.New("object",

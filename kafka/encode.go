@@ -184,7 +184,7 @@ func (e *Encoder) encodeNullString(v reflect.Value) {
 
 func (e *Encoder) encodeString(v reflect.Value) {
 	s := v.String()
-	e.writeNullString(s)
+	e.writeString(s)
 }
 
 func (e *Encoder) encodeInt8(v reflect.Value) {
@@ -264,12 +264,12 @@ func (e *Encoder) writeBytes(b []byte) {
 
 func (e *Encoder) writeCompactString(s string) {
 	e.writeUVarInt(uint64(len(s)) + 1)
-	e.writeString(s)
+	e.writeStringContent(s)
 }
 
 func (e *Encoder) writeVarString(s string) {
 	e.writeVarInt(int64(len(s)))
-	e.writeString(s)
+	e.writeStringContent(s)
 }
 
 func (e *Encoder) writeInt64(i int64) {
@@ -317,7 +317,7 @@ func (e *Encoder) writeCompactNullString(s string) {
 		e.writeUVarInt(0)
 	} else {
 		e.writeUVarInt(uint64(len(s)) + 1)
-		e.writeString(s)
+		e.writeStringContent(s)
 	}
 }
 
@@ -326,11 +326,16 @@ func (e *Encoder) writeNullString(s string) {
 		e.writeInt16(-1)
 	} else {
 		e.writeInt16(int16(len(s)))
-		e.writeString(s)
+		e.writeStringContent(s)
 	}
 }
 
 func (e *Encoder) writeString(s string) {
+	e.writeInt16(int16(len(s)))
+	e.writeStringContent(s)
+}
+
+func (e *Encoder) writeStringContent(s string) {
 	for len(s) != 0 {
 		n := copy(e.buffer[:], s)
 		_, err := e.writer.Write(e.buffer[:n])

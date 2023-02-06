@@ -120,8 +120,10 @@ export default {
       return result
     }
   },
-  created () {
-    this.getData()
+  watch: {
+    $route () {
+      this.getData()
+    }
   },
   methods: {
     async getData () {

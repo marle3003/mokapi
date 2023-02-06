@@ -11,7 +11,7 @@ func TestMokapi_Every(t *testing.T) {
 	t.Run("mokapi.every", func(t *testing.T) {
 		var every string
 		host := &testHost{
-			fnEvery: func(s string, do func(), times int, tags map[string]string) (int, error) {
+			fnEvery: func(s string, do func(), opt common.JobOptions) (int, error) {
 				every = s
 				return 0, nil
 			},
@@ -32,8 +32,8 @@ mokapi.every("1m", function() end)
 	t.Run("mokapi.every times", func(t *testing.T) {
 		var times int
 		host := &testHost{
-			fnEvery: func(every string, do func(), t int, tags map[string]string) (int, error) {
-				times = t
+			fnEvery: func(every string, do func(), opt common.JobOptions) (int, error) {
+				times = opt.Times
 				return 0, nil
 			},
 		}
@@ -51,8 +51,8 @@ mokapi.every("1m", function() end, {times = 3})
 	t.Run("mokapi.every tags", func(t *testing.T) {
 		var m map[string]string
 		host := &testHost{
-			fnEvery: func(every string, do func(), t int, tags map[string]string) (int, error) {
-				m = tags
+			fnEvery: func(every string, do func(), opt common.JobOptions) (int, error) {
+				m = opt.Tags
 				return 0, nil
 			},
 		}
@@ -72,7 +72,7 @@ mokapi.every("1m", function() end, {tags = {tag1 = "foo", tag2 = "bar"}})
 	t.Run("mokapi.every access variable", func(t *testing.T) {
 		var fn func()
 		host := &testHost{
-			fnEvery: func(every string, do func(), t int, tags map[string]string) (int, error) {
+			fnEvery: func(every string, do func(), opt common.JobOptions) (int, error) {
 				fn = do
 				return 0, nil
 			},
@@ -276,7 +276,7 @@ type testHost struct {
 	common.Host
 	fnInfo  func(s string)
 	fnOn    func(event string, do func(args ...interface{}) (bool, error), tags map[string]string)
-	fnEvery func(every string, do func(), times int, tags map[string]string) (int, error)
+	fnEvery func(every string, do func(), opt common.JobOptions) (int, error)
 }
 
 func (th *testHost) Info(args ...interface{}) {
@@ -291,9 +291,9 @@ func (th *testHost) On(event string, do func(args ...interface{}) (bool, error),
 	}
 }
 
-func (th *testHost) Every(every string, do func(), times int, tags map[string]string) (int, error) {
+func (th *testHost) Every(every string, do func(), opt common.JobOptions) (int, error) {
 	if th.fnEvery != nil {
-		return th.fnEvery(every, do, times, tags)
+		return th.fnEvery(every, do, opt)
 	}
 	panic("not implemented")
 }

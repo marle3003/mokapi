@@ -133,12 +133,16 @@ export default {
   },
   computed: {
     topics: function () {
-      let result = this.cluster.topics.sort(this.compareByName)
-      return result
+      if (!this.cluster.topics) {
+        return null
+      }
+      return [...this.cluster.topics].sort(this.compareByName)
     },
     groups: function () {
-      let result = this.cluster.groups.sort(this.compareByName)
-      return result
+      if (!this.cluster.groups) {
+        return null
+      }
+      return [...this.cluster.groups].sort(this.compareByName)
     }
   },
   methods: {

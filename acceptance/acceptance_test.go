@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"mokapi/acceptance/cmd"
 	"mokapi/config/static"
+	"mokapi/runtime/events"
 	"testing"
 	"time"
 )
@@ -29,6 +30,15 @@ func (suite *BaseSuite) initCmd(cfg *static.Config) {
 
 	// wait for server start
 	time.Sleep(2 * time.Second)
+}
+
+func (suite *BaseSuite) BeforeTest(_, _ string) {
+	events.SetStore(20, events.NewTraits().WithNamespace("http"))
+	events.SetStore(20, events.NewTraits().WithNamespace("kafka"))
+}
+
+func (suite *BaseSuite) AfterTest(_, _ string) {
+	events.Reset()
 }
 
 func (suite *BaseSuite) TearDownSuite() {

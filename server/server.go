@@ -12,7 +12,7 @@ import (
 type Server struct {
 	app     *runtime.App
 	watcher *dynamic.ConfigWatcher
-	kafka   KafkaClusters
+	kafka   *KafkaManager
 	http    HttpServers
 	engine  *engine.Engine
 	mail    SmtpServers
@@ -23,7 +23,7 @@ type Server struct {
 }
 
 func NewServer(pool *safe.Pool, app *runtime.App, watcher *dynamic.ConfigWatcher,
-	kafka KafkaClusters, http HttpServers, mail SmtpServers, ldap LdapDirectories, engine *engine.Engine) *Server {
+	kafka *KafkaManager, http HttpServers, mail SmtpServers, ldap LdapDirectories, engine *engine.Engine) *Server {
 	return &Server{
 		app:      app,
 		watcher:  watcher,

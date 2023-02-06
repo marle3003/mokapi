@@ -33,16 +33,15 @@ func TestKafkaServer(t *testing.T) {
 		),
 	)
 
-	clusters := KafkaClusters{}
-	defer clusters.Stop()
-	m := NewKafkaManager(clusters, nil, runtime.New())
+	m := NewKafkaManager(nil, runtime.New())
+	defer m.Stop()
 	m.UpdateConfig(&common.Config{Data: c, Url: MustParseUrl("foo.yml")})
 
 	// wait for kafka start
 	time.Sleep(500 * time.Millisecond)
 
-	require.Len(t, clusters, 1)
-	_, ok := clusters["foo"]
+	require.Len(t, m.clusters, 1)
+	_, ok := m.clusters["foo"]
 	require.True(t, ok, "cluster exists")
 }
 
@@ -264,10 +263,10 @@ func TestKafkaServer_Update(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			c := KafkaClusters{}
-			defer c.Stop()
+			m := NewKafkaManager(nil, runtime.New())
+			defer m.Stop()
 
-			tc.fn(t, NewKafkaManager(c, nil, runtime.New()))
+			tc.fn(t, m)
 		})
 	}
 }

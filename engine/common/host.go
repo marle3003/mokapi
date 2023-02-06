@@ -11,10 +11,16 @@ type Script interface {
 	Close()
 }
 
+type JobOptions struct {
+	Times                   int
+	RunFirstTimeImmediately bool
+	Tags                    map[string]string
+}
+
 type Host interface {
 	Logger
-	Every(every string, do func(), times int, tags map[string]string) (int, error)
-	Cron(expr string, do func(), times int, tags map[string]string) (int, error)
+	Every(every string, do func(), opt JobOptions) (int, error)
+	Cron(expr string, do func(), opt JobOptions) (int, error)
 	Cancel(jobId int) error
 
 	OpenFile(file string, hint string) (string, string, error)
@@ -38,4 +44,11 @@ type KafkaClient interface {
 
 type HttpClient interface {
 	Do(r *http.Request) (*http.Response, error)
+}
+
+func NewJobOptions() JobOptions {
+	return JobOptions{
+		Times:                   -1,
+		RunFirstTimeImmediately: true,
+	}
 }

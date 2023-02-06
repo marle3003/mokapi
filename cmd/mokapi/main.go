@@ -81,16 +81,15 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	kafka := make(server.KafkaClusters)
 	web := make(server.HttpServers)
 	mail := make(server.SmtpServers)
 	directories := make(server.LdapDirectories)
 	managerHttp := server.NewHttpManager(web, scriptEngine, certStore, app)
-	managerKafka := server.NewKafkaManager(kafka, scriptEngine, app)
+	kafka := server.NewKafkaManager(scriptEngine, app)
 	managerLdap := server.NewLdapDirectoryManager(directories, scriptEngine, certStore, app)
 
 	watcher.AddListener(func(cfg *common.Config) {
-		managerKafka.UpdateConfig(cfg)
+		kafka.UpdateConfig(cfg)
 		managerHttp.Update(cfg)
 		mail.UpdateConfig(cfg, certStore, scriptEngine)
 		managerLdap.UpdateConfig(cfg)

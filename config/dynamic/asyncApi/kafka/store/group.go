@@ -11,6 +11,13 @@ const (
 	Stable                         = 3
 )
 
+var states = [...]string{
+	Empty:               "Empty",
+	PreparingRebalance:  "PreparingRebalance",
+	CompletingRebalance: "CompletingRebalance",
+	Stable:              "Stable",
+}
+
 type Group struct {
 	Name        string
 	Coordinator *Broker

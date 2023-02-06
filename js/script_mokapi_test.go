@@ -2,6 +2,7 @@ package js
 
 import (
 	r "github.com/stretchr/testify/require"
+	"mokapi/engine/common"
 	"strings"
 	"testing"
 	"time"
@@ -59,6 +60,44 @@ export default function() {
 				i, err := s.RunDefault()
 				r.NoError(t, err)
 				r.True(t, strings.HasSuffix(i.String(), "Z"))
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			host := &testHost{}
+
+			tc.f(t, host)
+		})
+	}
+}
+
+func TestScript_Mokapi_Every(t *testing.T) {
+	testcases := []struct {
+		name string
+		f    func(t *testing.T, host *testHost)
+	}{
+		{
+			"every but one time",
+			func(t *testing.T, host *testHost) {
+				host.every = func(every string, do func(), opt common.JobOptions) {
+					r.Equal(t, 1, opt.Times)
+				}
+				s, err := New("",
+					`
+import { every } from 'mokapi'
+export default function() {
+  every('1s', function() {}, {times: 1})
+}`,
+					host)
+				r.NoError(t, err)
+				_, err = s.RunDefault()
+				r.NoError(t, err)
 			},
 		},
 	}

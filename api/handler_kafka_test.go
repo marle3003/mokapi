@@ -60,7 +60,7 @@ func TestHandler_Kafka(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"name":"foo","description":"","version":"1.0","contact":{"name":"","url":"","email":""},"topics":null,"groups":null,"metrics":[{"name":"kafka_messages_total{service=\"foo\",topic=\"topic\"}","value":1}]}`))
+					try.HasBody(`{"name":"foo","description":"","version":"1.0","contact":{"name":"","url":"","email":""},"topics":null,"groups":[],"metrics":[{"name":"kafka_messages_total{service=\"foo\",topic=\"topic\"}","value":1}]}`))
 			},
 		},
 	}

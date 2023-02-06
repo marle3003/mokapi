@@ -63,7 +63,7 @@
           <b-card
             body-class="metric-card"
             class="text-center"
-            v-if="smtpEnabled"
+            v-if="smtpEnabled && $route.name === 'dashboard' || $route.name === 'smtp'"
           >
             <b-card-title class="info">Total Mails</b-card-title>
             <b-card-text class="text-center value">{{ this.totalSmtpMails }}</b-card-text>
@@ -71,37 +71,7 @@
         </b-card-group>
 
         <http-dashboard :services="services" v-show="httpEnabled" />
-
-        <div v-show="kafkaEnabled && ($route.name === 'dashboard' || $route.name === 'kafka')">
-          <b-card-group deck>
-            <b-card
-              class="text-center"
-            >
-              <b-card-title class="info">Kafka Clusters</b-card-title>
-              <b-table
-                :items="kafkaServices"
-                :fields="kafkaFields"
-                table-class="dataTable selectable"
-                @row-clicked="kafkaClickHandler"
-              >
-                <template v-slot:cell(topics)="data">
-                  <div v-for="topic in data.item.topics" :key="topic" style="text-align: left">
-                    {{ topic }}
-                  </div>
-                </template>
-                <template v-slot:cell(lastMessage)="data">
-                  <span>{{ maxMetric(data.item.metrics, 'kafka_message_timestamp') | moment}}</span>
-                </template>
-                <template v-slot:cell(messages)="data">
-                  <span>{{ metric(data.item.metrics, 'kafka_messages_total') }}</span>
-                </template>
-              </b-table>
-            </b-card>
-          </b-card-group>
-        </div>        
-
-        <kafka-cluster v-show="$route.name === 'kafkaCluster'" />
-        <kafka-topic v-show="$route.name === 'kafkaTopic'" />
+        <kafka-dashboard :services="services" v-show="kafkaEnabled" />
 
         <smtp-services :services="smtpServices" v-show="smtpEnabled && ($route.name === 'dashboard' || $route.name === 'smtp')" />
         <smtp-mails v-show="$route.name === 'smtp'" />
@@ -121,9 +91,7 @@ import Shortcut from '@/mixins/Shortcut'
 import Header from '@/components/dashboard/Header'
 
 import Http from '@/components/http/Dashboard'
-
-import KafkaCluster from '@/components/kafka/Cluster'
-import KafkaTopic from '@/components/kafka/Topic'
+import Kafka from '@/components/kafka/Dashboard'
 
 import SmtpServices from '@/components/smtp/Services'
 import SmtpMails from '@/components/smtp/Mails'
@@ -133,8 +101,7 @@ export default {
   components: {
     'dashboard-header': Header,
     'http-dashboard': Http,
-    'kafka-cluster': KafkaCluster,
-    'kafka-topic': KafkaTopic,
+    'kafka-dashboard': Kafka,
     'smtp-services': SmtpServices,
     'smtp-mails': SmtpMails
   },
@@ -143,13 +110,6 @@ export default {
       metrics: [],
       services: null,
       loaded: false,
-      kafkaFields: [
-        { key: 'name', class: 'text-left' },
-        'topics',
-        'lastMessage',
-        'messages',
-        'errors'
-      ],
       error: null
     }
   },
@@ -199,25 +159,6 @@ export default {
     },
     smtpEnabled: function () {
       return this.smtpServices !== null && this.smtpServices.length > 0
-    },
-    serviceStatus: function () {
-      let serviceStatus = this.dashboard.serviceStatus
-      let success = serviceStatus.total - serviceStatus.errors
-      return {
-        datasets: [
-          {
-            data: [success, serviceStatus.errors],
-            backgroundColor: ['rgb(110, 181, 110)', 'rgb(186, 86, 86)']
-          }
-        ],
-        labels: ['Success', 'Errors']
-      }
-    },
-    hasErrors: function () {
-      return (
-        this.dashboard.lastErrors !== undefined &&
-        this.dashboard.lastErrors.length > 0
-      )
     },
     totalHttpRequests: function () {
       let n = 0
@@ -277,13 +218,6 @@ export default {
         }
       )
       this.loaded = true
-    },
-    kafkaClickHandler (record) {
-      this.$router.push({
-        name: 'kafkaCluster',
-        params: { cluster: record.name },
-        query: { refresh: '5' }
-      })
     },
     shortcut (e) {
       let cmd = e.key.toLowerCase()

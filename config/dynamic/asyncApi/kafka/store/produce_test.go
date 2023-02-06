@@ -25,7 +25,7 @@ func TestProduce(t *testing.T) {
 			"default",
 			func(t *testing.T, s *store.Store) {
 				s.Update(asyncapitest.NewConfig(
-					asyncapitest.WithServer("foo", "kafka", ""),
+					asyncapitest.WithServer("foo", "kafka", "127.0.0.1"),
 					asyncapitest.WithChannel("foo")))
 				g := s.GetOrCreateGroup("foo", 0)
 				g.Commit("foo", 0, 0)

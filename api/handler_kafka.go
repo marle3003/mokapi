@@ -124,6 +124,7 @@ func getKafka(info *runtime.KafkaInfo) kafka {
 		Name:        info.Config.Info.Name,
 		Description: info.Config.Info.Description,
 		Version:     info.Config.Info.Version,
+		Groups:      make([]group, 0),
 	}
 
 	if info.Config.Info.Contact != nil {

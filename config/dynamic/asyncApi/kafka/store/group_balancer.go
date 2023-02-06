@@ -66,6 +66,7 @@ func (b *groupBalancer) run() {
 	var syncs []syncdata
 	var assigns map[string]*groupAssignment
 	prepareRebalance := func() {
+		log.Infof("group state changed from %v to %v", states[b.group.State], states[PreparingRebalance])
 		// start a new rebalance
 		b.group.State = PreparingRebalance
 		b.joins = make([]joindata, 0)
@@ -77,13 +78,13 @@ func (b *groupBalancer) run() {
 	for {
 		select {
 		case <-time.After(time.Duration(b.config.GroupMinSessionTimeoutMs()) * time.Millisecond):
-			if b.group.Generation == nil {
+			if b.group.Generation == nil || b.group.State != Stable {
 				continue
 			}
 			now := time.Now()
 			for _, m := range b.group.Generation.Members {
 				if m.Client.Heartbeat.Add(time.Duration(m.SessionTimeout) * time.Millisecond).Before(now) {
-					log.Infof("kafka consumer timeout: %v", m.Client.ClientId)
+					log.Infof("kafka: consumer '%v' timed out in group '%v'", m.Client.ClientId, b.group.Name)
 					prepareRebalance()
 				}
 			}
@@ -91,15 +92,21 @@ func (b *groupBalancer) run() {
 			stop <- true
 			return
 		case j := <-b.join:
+			if b.group.State == CompletingRebalance {
+				b.sendRebalanceInProgress(j.writer)
+				continue
+			}
 			if b.group.State == Stable || b.group.State == Empty {
 				prepareRebalance()
 			}
+			log.Infof("kafka: consumer '%v' is joining the group '%v'", j.client.ClientId, b.group.Name)
 			b.joins = append(b.joins, j)
 		case s := <-b.sync:
 			switch {
 			case s.assigns != nil: // leader sync
 				assigns = s.assigns
 				syncs = append(syncs, s)
+				log.Infof("group state changed from %v to %v", states[b.group.State], states[Stable])
 				b.group.State = Stable
 				for _, s := range syncs {
 					res := &syncGroup.Response{
@@ -107,6 +114,7 @@ func (b *groupBalancer) run() {
 					}
 					go b.respond(s.writer, res)
 				}
+				log.Infof("kafka: received assignments from leader '%v' for group '%v'", s.client.ClientId, b.group.Name)
 			case assigns == nil: // waiting for leader
 				syncs = append(syncs, s)
 			default:
@@ -123,9 +131,11 @@ func (b *groupBalancer) run() {
 
 func (b *groupBalancer) finishJoin(stop chan bool) {
 	rebalanceTimeoutMs := b.config.GroupInitialRebalanceDelayMs()
-	if b.group.Generation != nil {
-		rebalanceTimeoutMs = b.group.Generation.RebalanceTimeoutMs
-	}
+	// change to a better solution. If only one consumer is used, then we will wait the here too long when
+	// consumer joins a second time
+	//if b.group.Generation != nil {
+	//	rebalanceTimeoutMs = b.group.Generation.RebalanceTimeoutMs
+	//}
 
 StopWaitingForConsumers:
 	for {
@@ -139,10 +149,12 @@ StopWaitingForConsumers:
 
 	generation := b.group.NewGeneration()
 	if len(b.joins) == 0 {
+		log.Infof("group state changed from %v to %v", states[b.group.State], states[Empty])
 		b.group.State = Empty
 		return
 	}
 
+	log.Infof("group state changed from %v to %v", states[b.group.State], states[CompletingRebalance])
 	b.group.State = CompletingRebalance
 
 	counter := map[string]*protocoldata{
@@ -171,6 +183,7 @@ StopWaitingForConsumers:
 
 	leader := b.joins[0]
 	generation.LeaderId = leader.client.Member[b.group.Name]
+	generation.RebalanceTimeoutMs = leader.rebalanceTimeout
 	members := make([]joinGroup.Member, 0, len(b.joins))
 	members = append(members, joinGroup.Member{
 		MemberId: generation.LeaderId,
@@ -198,6 +211,10 @@ StopWaitingForConsumers:
 		ProtocolName: protocol,
 		Members:      members,
 	})
+}
+
+func (b *groupBalancer) sendRebalanceInProgress(w kafka.ResponseWriter) {
+	go b.respond(w, &joinGroup.Response{ErrorCode: kafka.RebalanceInProgress})
 }
 
 func (b *groupBalancer) respond(w kafka.ResponseWriter, msg kafka.Message) {
