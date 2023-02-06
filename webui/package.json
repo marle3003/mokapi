@@ -90,7 +90,7 @@
     "yaml-loader": "^0.6.0"
   },
   "devDependencies": {
-    "webpack-dev-server": "^2.9.1"
+    "webpack-dev-server": "^3.1.11"
   },
   "engines": {
     "node": ">= 6.0.0",
