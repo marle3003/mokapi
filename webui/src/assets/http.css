@@ -1,0 +1,30 @@
+.operation {
+    text-transform: uppercase;
+}
+.operation.put .operation.patch {
+    background-color: var(--color-orange);
+}
+.operation.get, .operation.options {
+    background-color: var(--color-blue);
+}
+.operation.delete {
+    background-color: var(--color-red);
+}
+.operation.post {
+    background-color: var(--color-green);
+}
+.operation.head, .operation.trace {
+    background-color: var(--color-yellow);
+}
+.status-code.success {
+    background-color: var(--color-green);
+}
+.status-code.redirect {
+    background-color: var(--color-yellow);
+}
+.status-code.client-error {
+    background-color: var(--color-orange);
+}
+.status-code.server-error {
+    background-color: var(--color-red);
+}

@@ -1,0 +1,40 @@
+.dashboard {
+  height: 100vh;
+}
+.dashboard .card-group .card {
+    border-color: var(--color-border);
+    background-color: var(--color-background-soft);
+    margin: 7px;
+    margin-left: 0;
+    font-weight: 400;
+    font-size: 0.7rem;
+  }
+  .dashboard .card-group .card:first-child{
+    margin-left: 0px;
+  }
+  .dashboard  .card .card-body {
+    padding: 0.8rem;
+    margin-bottom: 0;
+  }
+  .dashboard .card-text {
+    font-size: 2.25rem;
+  }
+  .card-additional {
+    color: var(--color-text-light);
+    text-align: right !important;
+  }
+  .dashboard .card p {
+    font-size: 0.9rem;
+    margin: 0 0 0.3rem;
+  }
+  .dashboard .card .header p {
+    font-size: 1.2rem;
+  }
+  .dashboard .card .header .label {
+    font-size: 0.6rem;
+    margin: 0 0 0.3rem;
+  }
+  .dashboard .card .label {
+    font-size: 0.6rem;
+    margin: 0 0 0.3rem;
+  }

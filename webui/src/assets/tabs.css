@@ -1,0 +1,12 @@
+.nav-tabs {
+    --bs-nav-tabs-border-color: var(--color-tabs-border);
+}
+.nav-tabs .nav-item .nav-link {
+    border-color: var(--color-tabs-border);
+    color: var(--color-tabs-text);
+    font-size: 0.8rem;
+}
+.nav-tabs .nav-item .nav-link.active {
+    background-color: var(--color-tabs-background);
+  
+}

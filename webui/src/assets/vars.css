@@ -1,5 +1,35 @@
 :root{
-    --var-bg-color: #323743;
+    --color-background: #323743;
+    --color-background-mute:  #2e2e31;
+    --color-background-soft: #282b33;
+
+    --color-border: #282b33;
+
+    --color-red: #ff2e4a;
+    --color-blue: #027bff;
+    --color-orange: #ffc347;
+    --color-green: #30a72d;
+    --color-yellow: #eab839;
+    --color-purple: #b644a4;
+
+    --color-brand: #d3d4d5;
+    --color-brand-hover: #d3d4d5;
+    --color-link: #30acd8;
+    --color-link-hover: #30acd8;
+    --color-nav-link: #d3d4d5;
+    --color-nav-link-hover: #d3d4d5;
+
+    --color-text: #d3d4d5;
+    --color-text-light: #a0a1a7;
+    --color-version: #52555d;
+
+    --color-datatable-header-text: #30acd8;
+    --color-datatable-border: #52555d;
+
+    --color-tabs-border: #52555d;
+    --color-tabs-background: #3a3e45;
+    --color-tabs-text: #30acd8;
+
     --var-bg-color-primary: #282b33;
     --var-bg-color-secondary: #2e2e31;
     --var-color-primary: #d3d4d5;

@@ -19,11 +19,22 @@ components:
           type: string
         version:
           type: string
+        contact:
+          $ref: '#/components/schemas/Contact'
         type:
           type: string
           enum: ["http", "kafka", "smtp"]
         metrics:
           $ref: '#/components/schemas/Metrics'
+    Contact:
+      type: object
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+        email:
+          type: string
     Metrics:
       type: array
       items:

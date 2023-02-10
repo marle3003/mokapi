@@ -35,9 +35,16 @@ var (
 type service struct {
 	Name        string           `json:"name"`
 	Description string           `json:"description"`
+	Contact     *contact         `json:"contact"`
 	Version     string           `json:"version"`
 	Type        serviceType      `json:"type"`
 	Metrics     []metrics.Metric `json:"metrics"`
+}
+
+type contact struct {
+	Name  string `json:"name"`
+	Url   string `json:"url"`
+	Email string `json:"email"`
 }
 
 type apiError struct {

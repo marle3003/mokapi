@@ -1,0 +1,37 @@
+table.dataTable {
+    border-left-style: hidden;
+    border-right-style: hidden;
+    color:var(--color-text);
+    font-size: 0.8rem;
+}
+table.dataTable.selectable td {
+    cursor: pointer;
+}
+table.dataTable thead tr {
+    color: var(--color-datatable-header-text);
+}
+table.dataTable thead th {
+    padding: 3px 0 3px 12px;
+    border-color: var(--color-datatable-border);
+    border-top-width: 0px;
+    border-bottom-width: 2px;
+    font-weight: 500;
+}
+table.dataTable td{
+    border-top-width: 2px;
+    border-bottom-width: 2px;
+    border-color: var(--color-datatable-border);
+    border-style: solid;
+    padding: 4px 0 3px 12px;
+    border-left-style: hidden;
+    border-right-style: hidden;
+    font-size: 0.75rem;
+}
+
+table.dataTable tbody tr:hover {
+    background-color: var(--color-background-mute);
+}
+
+table.dataTable.selectable tbody tr:hover {
+    cursor: pointer;
+}

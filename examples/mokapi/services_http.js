@@ -3,8 +3,12 @@ import {metrics} from "metrics";
 export let apps = [
     {
         name: "Swagger Petstore",
-        description: "This is a sample server Petstore server",
+        description: "This is a sample server Petstore server. You can find out more about at [http://swagger.io](http://swagger.io)",
         version: "1.0.6",
+        contact: {
+            name: "Swagger Petstore Team",
+            email: "petstore@petstore.com"
+        },
         metrics: metrics.filter(x => x.name.startsWith("http")),
         servers: [
             {
@@ -107,8 +111,15 @@ export let events = [
             request: {
                 method: "GET",
                 url: "http://127.0.0.1:18080/pet",
-                parameters: [],
-                contentType: "application/json",
+                parameters: [
+                    {
+                        name: 'Acceot-Encoding',
+                        type: 'header',
+                        raw: 'gzip, deflate'
+                    }
+                ],
+                contentType: "application/xml",
+                body: "<foo bar=test><child><key>foo</key><value>bar</value></child>"
             },
             response: {
                 statusCode: 200,

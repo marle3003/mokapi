@@ -1,0 +1,48 @@
+@import './vars.css';
+@import 'bootstrap';
+@import 'bootstrap-icons/font/bootstrap-icons.css';
+@import './github-dark.css';
+@import './datatable.css';
+@import './tabs.css';
+
+body {
+  min-height: 100vh;
+  color: var(--color-text);
+  background: var(--color-background);
+  line-height: 1.6;
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.0rem;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 1.75rem;
+  font-weight: 600;
+}
+
+h2 {
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+h3 {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+a {
+  color: var(--color-link);
+}
+
+a:hover{
+  color: var(--color-link-hover);
+}
+pre{
+  font-size: 0.9rem;
+}

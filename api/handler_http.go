@@ -18,6 +18,7 @@ type httpInfo struct {
 	Name        string     `json:"name"`
 	Description string     `json:"description"`
 	Version     string     `json:"version"`
+	Contact     *contact   `json:"contact"`
 	Servers     []server   `json:"servers,omitempty"`
 	Paths       []pathItem `json:"paths,omitempty"`
 }
@@ -90,16 +91,23 @@ func (h *handler) getHttpServices(w http.ResponseWriter, _ *http.Request) {
 func getHttpServices(services map[string]*runtime.HttpInfo, m *monitor.Monitor) []interface{} {
 	result := make([]interface{}, 0, len(services))
 	for _, hs := range services {
+		s := service{
+			Name:        hs.Info.Name,
+			Description: hs.Info.Description,
+			Version:     hs.Info.Version,
+			Type:        ServiceHttp,
+			Metrics:     m.FindAll(metrics.ByNamespace("http"), metrics.ByLabel("service", hs.Info.Name)),
+		}
+		if hs.Info.Contact != nil {
+			c := hs.Info.Contact
+			s.Contact = &contact{
+				Name:  c.Name,
+				Url:   c.Url,
+				Email: c.Email,
+			}
+		}
 
-		result = append(result, &httpSummary{
-			service: service{
-				Name:        hs.Info.Name,
-				Description: hs.Info.Description,
-				Version:     hs.Info.Version,
-				Type:        ServiceHttp,
-				Metrics:     m.FindAll(metrics.ByNamespace("http"), metrics.ByLabel("service", hs.Info.Name)),
-			},
-		})
+		result = append(result, &httpSummary{service: s})
 	}
 	return result
 }
@@ -118,6 +126,13 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request) {
 		Name:        s.Info.Name,
 		Description: s.Info.Description,
 		Version:     s.Info.Version,
+	}
+	if s.Info.Contact != nil {
+		result.Contact = &contact{
+			Name:  s.Info.Contact.Name,
+			Url:   s.Info.Contact.Url,
+			Email: s.Info.Contact.Email,
+		}
 	}
 
 	for _, s := range s.Servers {
