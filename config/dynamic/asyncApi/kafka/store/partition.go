@@ -119,7 +119,7 @@ func (p *Partition) Write(batch kafka.RecordBatch) (baseOffset int64, err error)
 		segment.Size += r.Size()
 		p.Tail++
 
-		p.logger(r, events.NewTraits().With("partition", strconv.Itoa(p.Index)))
+		p.logger(r, p.Index, events.NewTraits().With("partition", strconv.Itoa(p.Index)))
 	}
 
 	return

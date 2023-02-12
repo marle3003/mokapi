@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import type { Service} from '@/composables/services'
 import type { PropType } from 'vue';
 import Markdown from 'vue3-markdown-it';
 
-const props = defineProps({
+defineProps({
     service: { type: Object as PropType<Service>, required: true },
     type: { type: String, required: false}
 })

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watchEffect, onMounted } from 'vue'
+import { ref, watchEffect } from 'vue'
 import MetricCard from './MetricCard.vue'
 import {useMetrics} from '../../composables/metrics'
 import { usePrettyBytes } from '@/composables/usePrettyBytes';

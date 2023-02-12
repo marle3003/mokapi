@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import type { PropType } from 'vue';
-import type { Event } from '@/composables/events';
+import { type PropType, computed } from 'vue';
 import { usePrettyBytes } from '@/composables/usePrettyBytes';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { usePrettyHttp } from '@/composables/http';
 
-defineProps({
-    event: { type: Object as PropType<Event>, required: true },
+const prop = defineProps({
+    event: { type: Object as PropType<ServiceEvent>, required: true },
 })
 
 const {format, duration} = usePrettyDates()
 const formatBytes = usePrettyBytes().format
 const formatStatusCode = usePrettyHttp().format
+const eventData = computed(() => <HttpEventData>prop.event.data)
 
 function getClassByStatusCode(statusCode: number) {
     switch (true) {
@@ -31,40 +31,38 @@ function getClassByStatusCode(statusCode: number) {
 <template>
     <div class="card">
         <div class="card-body">
-            <div class="card-body">
-                <div class="row">
-                    <div class="col">
-                        <p class="label">URL</p>
-                        <p>{{ event.data.request.url }}</p>
-                    </div>
-                    <div class="col">
-                        <p class="label">Time</p>
-                        <p>{{ format(event.time) }}</p>
-                    </div>
+            <div class="row">
+                <div class="col header">
+                    <p class="label">URL</p>
+                    <p>{{ eventData.request.url }}</p>
                 </div>
-                <div class="row">
-                    <div class="col">
-                        <p class="label">Method</p>
-                        <p><span class="badge operation" :class="event.data.request.method.toLowerCase()">{{ event.data.request.method }}</span></p>
-                    </div>
-                    <div class="col">
-                        <p class="label">Duration</p>
-                        <p>{{ duration(event.data.duration) }}</p>
-                    </div>
+                <div class="col">
+                    <p class="label">Time</p>
+                    <p>{{ format(event.time) }}</p>
                 </div>
-                <div class="row">
-                    <div class="col">
-                        <p class="label">Status</p>
-                        <p>
-                            <span class="badge status-code" :class="getClassByStatusCode(event.data.response.statusCode)">
-                                {{ formatStatusCode(event.data.response.statusCode) }}
-                            </span>
-                        </p>
-                    </div>
-                    <div class="col">
-                        <p class="label">Size</p>
-                        <p>{{ formatBytes(event.data.response.size) }}</p>
-                    </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <p class="label">Method</p>
+                    <p><span class="badge operation" :class="eventData.request.method.toLowerCase()">{{ eventData.request.method }}</span></p>
+                </div>
+                <div class="col">
+                    <p class="label">Duration</p>
+                    <p>{{ duration(eventData.duration) }}</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <p class="label">Status</p>
+                    <p>
+                        <span class="badge status-code" :class="getClassByStatusCode(eventData.response.statusCode)">
+                            {{ formatStatusCode(eventData.response.statusCode) }}
+                        </span>
+                    </p>
+                </div>
+                <div class="col">
+                    <p class="label">Size</p>
+                    <p>{{ formatBytes(eventData.response.size) }}</p>
                 </div>
             </div>
         </div>

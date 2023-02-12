@@ -25,9 +25,8 @@ export function useFetch(path: string) {
             .then((res) => res.json())
             .then((res) => response.data = res)
             .catch((err) => {
-                response.error = err
+                response.error = 'Network connection error'
                 response.data = null
-                console.log("error fetch "+path+": "+err)
             })
             .then(() => response.isLoading = false)
     }

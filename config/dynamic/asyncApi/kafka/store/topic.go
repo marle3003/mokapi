@@ -39,8 +39,8 @@ func newTopic(name string, config *asyncApi.Channel, brokers Brokers, logger Log
 	return t
 }
 
-func (t *Topic) log(record kafka.Record, traits events.Traits) {
-	t.logger(record, traits.With("topic", t.Name))
+func (t *Topic) log(record kafka.Record, partition int, traits events.Traits) {
+	t.logger(record, partition, traits.With("topic", t.Name))
 }
 
 func (t *Topic) Store() *Store {

@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import type { HttpHeader } from '@/composables/events'
 import type { PropType } from 'vue';
 
-const props = defineProps({
+defineProps({
     headers: { type: Object as PropType<HttpHeader>, required: true },
 })
 

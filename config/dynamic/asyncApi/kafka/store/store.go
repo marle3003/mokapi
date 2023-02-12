@@ -278,8 +278,8 @@ func (s *Store) getBrokerByHost(addr string) *Broker {
 	return nil
 }
 
-func (s *Store) log(record kafka.Record, traits events.Traits) {
-	events.Push(NewKafkaLog(record), traits.WithNamespace("kafka").WithName(s.cluster))
+func (s *Store) log(record kafka.Record, partition int, traits events.Traits) {
+	events.Push(NewKafkaLog(record, partition), traits.WithNamespace("kafka").WithName(s.cluster))
 }
 
 func parseHostAndPort(s string) (host string, port int) {

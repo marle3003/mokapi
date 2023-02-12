@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@popperjs/core": "^2.11.6",
+    "@types/bootstrap": "^5.2.6",
     "@types/whatwg-mimetype": "^3.0.0",
     "bootstrap": "^5.2.3",
     "bootstrap-icons": "^1.10.3",

@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { ref, watchEffect, onMounted } from 'vue'
+import { ref, watchEffect } from 'vue'
 import { useService } from '@/composables/services';
-import {ServiceType} from '@/composables/services';
 import { useMetrics } from '@/composables/metrics';
 
-const props = defineProps({
+defineProps({
     includeError: Boolean,
     onlyError: Boolean
 })
@@ -13,7 +12,7 @@ const {fetchServices} = useService()
 const {sum} = useMetrics()
 const requests = ref(0)
 const errors = ref(0)
-const services = fetchServices(ServiceType.Http)
+const services = fetchServices('http')
 watchEffect(() =>{
     requests.value = 0
     errors.value = 0

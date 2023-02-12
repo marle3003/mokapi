@@ -12,7 +12,7 @@
   .dashboard .card-group .card:first-child{
     margin-left: 0px;
   }
-  .dashboard  .card .card-body {
+  .dashboard .card .card-body {
     padding: 0.8rem;
     margin-bottom: 0;
   }
@@ -35,6 +35,21 @@
     margin: 0 0 0.3rem;
   }
   .dashboard .card .label {
+    font-size: 0.6rem;
+    margin: 0 0 0.3rem;
+  }
+  .dashboard-popover.show {
+    --bs-popover-bg: var(--color-background);
+    --bs-popover-header-bg: var(--color-background);
+    --bs-popover-border-color: var(--color-popover-border);
+  }
+  .dashboard-popover.show h3 {
+    font-size: 0.8rem;
+  }
+  .dashboard-popover.show .popover-body {
+    color: var(--color-text)
+  }
+  .dashboard-popover.show .label {
     font-size: 0.6rem;
     margin: 0 0 0.3rem;
   }

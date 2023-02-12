@@ -24,7 +24,7 @@ export let metrics = [
         value: 10
     },
     {
-        name: 'kafka_message_timestamp{service="Kafka World"}"',
+        name: 'kafka_message_timestamp{service="Kafka World",topic="foo"}"',
         value: 1652135690
     },
     {

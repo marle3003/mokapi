@@ -7,6 +7,8 @@ interface AppInfo {
 
 interface AppInfoResponse {
     data: AppInfo
+    isLoading: Boolean
+    error: string
 }
 
 export function useAppInfo() : AppInfoResponse {

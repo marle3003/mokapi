@@ -4,22 +4,44 @@ import AppStartCard from '../components/dashboard/AppStartCard.vue'
 import MemoryUsageCard from '../components/dashboard/MemoryCard.vue'
 
 import HttpRequestCard from '../components/dashboard/http/HttpRequestMetricCard.vue'
-import HttpServicesCard from '../components/dashboard//http/HttpServicesCard.vue'
-import HttpService from '../components/dashboard//http/HttpService.vue'
+import HttpServicesCard from '../components/dashboard/http/HttpServicesCard.vue'
+import HttpService from '../components/dashboard/http/HttpService.vue'
 import HttpRequests from '../components/dashboard/http/Requests.vue'
 
-import KafkaMessageCard from '../components/dashboard/KafkaMessageCard.vue'
-import SmtpMailCard from '../components/dashboard/SmtpMailCard.vue'
+import KafkaMessageCard from '../components/dashboard/KafkaMessageMetricCard.vue'
+import KafkaClustersCard from '../components/dashboard/kafka/KafkaServicesCard.vue'
+import KafkaService from '../components/dashboard/kafka/KafkaService.vue'
+
+import SmtpMessageMetricCard from '../components/dashboard/smtp/SmtpMessageMetricCard.vue'
+import SmtpServicesCard from '../components/dashboard/smtp/SmtpServicesCard.vue'
+
+import Loading from '@/components/Loading.vue'
+import Message from '@/components/Message.vue'
 
 import '@/assets/dashboard.css'
+import { useShortcut } from '@/composables/shortcut';
+import { useRoute, useRouter } from 'vue-router';
 
 const appInfo = useAppInfo()
+const route = useRoute()
+const router = useRouter()
+useShortcut('esacpe', (e: KeyboardEvent) => {
+    let cmd = e.key.toLowerCase()
+    if (cmd != 'escape' || route.name == 'dashboard') {
+        return
+    }
+    router.go(-1)
+})
 
 function isServiceAvailable(service: string): Boolean{
     if (!appInfo.data){
         return false
     }
     return appInfo.data.activeServices.includes(service)
+}
+
+function isInitLoading() {
+    return appInfo.isLoading && !appInfo.data
 }
 </script>
 
@@ -43,7 +65,7 @@ function isServiceAvailable(service: string): Boolean{
                 </ul>
             </nav>
         </div>
-        <div v-if="$route.name == 'dashboard'">
+        <div v-if="$route.name == 'dashboard' && appInfo.data">
             <div class="card-group">
                 <app-start-card />
                 <memory-usage-card />
@@ -51,10 +73,16 @@ function isServiceAvailable(service: string): Boolean{
             <div class="card-group">
                 <http-request-card v-if="isServiceAvailable('http')" includeError />
                 <kafka-message-card v-if="isServiceAvailable('kafka')" />
-                <smtp-mail-card v-if="isServiceAvailable('smtp')" />
+                <smtp-message-metric-card v-if="isServiceAvailable('smtp')" />
             </div>
             <div class="card-group"  v-if="isServiceAvailable('http')">
                 <http-services-card />
+            </div>
+            <div class="card-group"  v-if="isServiceAvailable('kafka')">
+                <kafka-clusters-card />
+            </div>
+            <div class="card-group"  v-if="isServiceAvailable('smtp')">
+                <smtp-services-card />
             </div>
         </div>
 
@@ -71,8 +99,30 @@ function isServiceAvailable(service: string): Boolean{
             </div>
         </div>
 
+        <div v-if="$route.name == 'kafka'">
+            <div class="card-group">
+                <kafka-message-card v-if="isServiceAvailable('kafka')" />
+            </div>
+            <div class="card-group"  v-if="isServiceAvailable('http')">
+                <kafka-clusters-card />
+            </div>
+        </div>
+
+        <div v-if="$route.name == 'smtp'">
+            <div class="card-group">
+                <smtp-message-metric-card v-if="isServiceAvailable('smtp')" />
+            </div>
+            <div class="card-group"  v-if="isServiceAvailable('http')">
+                <smtp-services-card />
+            </div>
+        </div>
+
         <http-service v-if="$route.meta.service == 'http'" />
+        <kafka-service v-if="$route.meta.service == 'kafka'" />
+
+        <message :message="appInfo.error" v-if="!appInfo.data && !appInfo.isLoading"></message>
     </div>
+    <loading v-if="isInitLoading()"></loading>
 </template>
 
 <style scoped>
@@ -92,6 +142,7 @@ function isServiceAvailable(service: string): Boolean{
   background-color: var(--color-background-mute);
   opacity: 0.8;
 }
+.dashboard-tabs .nav-link.router-link-active,
 .dashboard-tabs .nav-link.router-link-exact-active {
   color: var(--color-text);
   text-decoration: none;

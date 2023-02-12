@@ -1,15 +1,4 @@
-import { ref, watchEffect } from 'vue'
 import { useFetch } from './fetch'
-
-export interface Metric {
-    name: String
-    value: String | Number
-}
-
-export interface Label {
-    name: String
-    value: String
-}
 
 export function useMetrics() {
 

@@ -115,6 +115,7 @@ export let events = [
          id: "123456",
          traits: {
              namespace: "kafka",
+             name: "Kafka World",
              topic: "foo"
          },
          time: 1651771269,
@@ -122,6 +123,7 @@ export let events = [
              offset: 0,
              key: "foo",
              message: "{\"id\": 12345}",
+             partition: 0
          }
      }
  ]

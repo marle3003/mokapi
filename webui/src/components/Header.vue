@@ -19,7 +19,7 @@ const appInfo = useAppInfo()
             <li class="nav-item">
               <router-link class="nav-link" :to="{ name: 'dashboard', query: {refresh: 20} }">Dashboard</router-link>
             </li>
-            <li class="nav-item">
+            <li class="nav-item" style="display:none">
               <router-link class="nav-link" :to="{ name: 'serviceList' }">Services</router-link>
             </li>
             <li class="nav-item">

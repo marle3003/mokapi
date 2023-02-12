@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import type { HttpEventParameter } from '@/composables/events'
 import type { PropType } from 'vue';
 
-const props = defineProps({
+defineProps({
     parameters: { type: Object as PropType<HttpEventParameter[]>, required: true },
 })
 </script>

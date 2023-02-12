@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, type Ref } from 'vue'
 import { useRoute } from 'vue-router';
-import { useService, type HttpService } from '@/composables/services';
+import { useService } from '@/composables/services';
 import ServiceInfoCard from '../ServiceInfoCard.vue';
 import HttpRequestCard from './HttpRequestMetricCard.vue'
 import EndpointsCard from './EndpointsCard.vue'
@@ -11,7 +11,7 @@ import '@/assets/http.css'
 
 const {fetchService} = useService()
 const serviceName = useRoute().params.service?.toString()
-let service: Ref<HttpService | null> = serviceName ? <Ref<HttpService>>(fetchService(serviceName)) : ref<HttpService | null>(null)
+let service: Ref<HttpService | null> = serviceName ? <Ref<HttpService>>(fetchService(serviceName, 'http')) : ref<HttpService | null>(null)
 </script>
 
 <template>

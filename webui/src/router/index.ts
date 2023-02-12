@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
 import DashboardView from '../views/DashboardView.vue'
+import DocsView from '../views/DocsView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -14,55 +14,72 @@ const router = createRouter({
       })
     },
     {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue')
-    },
-    {
       path: '/dashboard',
       name: 'dashboard',
       component: DashboardView
     },
     {
-      path: '/222',
+      path: '/services',
       name: 'serviceList',
-      component: HomeView
-    },
-    {
-      path: '/222',
-      name: 'docsStart',
-      component: HomeView
+      component: DashboardView
     },
     {
       path: '/dashboard/http',
       name: 'http',
       component: DashboardView,
+      children: [
+        {
+          path: '/dashboard/http/service/:service',
+          name: 'httpService',
+          component: DashboardView,
+          meta: {service: 'http'}
+        },
+        {
+          path: '/dashboard/http/requests/:id',
+          name: 'httpRequest',
+          component: DashboardView,
+          meta: {service: 'http'}
+        },
+      ]
     },
     {
       path: '/dashboard/kafka',
       name: 'kafka',
-      component: DashboardView
+      component: DashboardView,
+      children: [
+        {
+          path: '/dashboard/kafka/service/:service',
+          name: 'kafkaService',
+          component: DashboardView,
+          meta: {service: 'kafka'}
+        },
+        {
+          path: '/dashboard/kafka/service/:service/topic/:topic',
+          name: 'kafkaTopic',
+          component: DashboardView,
+          meta: {service: 'kafka'}
+        }
+      ]
     },
     {
       path: '/dashboard/smtp',
       name: 'smtp',
-      component: DashboardView
+      component: DashboardView,
+      meta: {service: 'smtp'}
     },
     {
-      path: '/dashboard/http/service/:service',
-      name: 'httpService',
-      component: DashboardView,
-      meta: {service: 'http'}
+      path: '/docs',
+      redirect: ({
+        name: 'docs',
+        params: {topic: 'Welcome'}
+      }),
+      name: 'docsStart'
     },
     {
-      path: '/dashboard/http/requests/:id',
-      name: 'httpRequest',
-      component: DashboardView,
-      meta: {service: 'http'}
-    }
+      path: '/docs/:topic/:subject?',
+      name: 'docs',
+      component: DocsView
+    },
   ]
 })
 
