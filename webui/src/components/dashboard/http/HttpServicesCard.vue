@@ -43,16 +43,18 @@ function goToService(service: Service){
             <table class="table dataTable selectable">
                 <thead>
                     <tr>
-                        <th scope="col" class="text-left">Name</th>
-                        <th scope="col" class="text-left">Last Request</th>
-                        <th scope="col">Requests / Errors</th>
+                        <th scope="col" class="text-left w-25">Name</th>
+                        <th scope="col" class="text-left w-55">Description</th>
+                        <th scope="col" class="text-center" style="width:15%">Last Request</th>
+                        <th scope="col" class="text-center">Requests / Errors</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="service in services" key="service.name" @click="goToService(service)">
                         <td>{{ service.name }}</td>
-                        <td>{{ lastRequest(service) }}</td>
-                        <td>
+                        <td>{{ service.description }}</td>
+                        <td class="text-center">{{ lastRequest(service) }}</td>
+                        <td class="text-center">
                             <span>{{ requests(service) }}</span>
                             <span> / </span>
                             <span v-bind:class="{'text-danger': requests(service) > 0}">{{ errors(service) }}</span>

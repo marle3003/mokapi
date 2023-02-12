@@ -23,16 +23,16 @@ function messages(service: Service){
             <table class="table dataTable">
                 <thead>
                     <tr>
-                        <th scope="col" class="text-left">Name</th>
-                        <th scope="col" class="text-left">Description</th>
-                        <th scope="col">Messages</th>
+                        <th scope="col" class="text-left w-25">Name</th>
+                        <th scope="col" class="text-left" style="width: 65%">Description</th>
+                        <th scope="col" class="text-center">Messages</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="service in services" key="service.name">
                         <td>{{ service.name }}</td>
                         <td>{{ service.description }}</td>
-                        <td>{{ messages(service) }}</td>
+                        <td class="text-center">{{ messages(service) }}</td>
                     </tr>
                 </tbody>
             </table>
