@@ -22,6 +22,7 @@ type Partition struct {
 
 	validator *validator
 	logger    LogRecord
+	trigger   Trigger
 
 	m sync.RWMutex
 }
@@ -36,7 +37,7 @@ type Segment struct {
 	LastWritten time.Time
 }
 
-func newPartition(index int, brokers Brokers, logger LogRecord, topic *Topic) *Partition {
+func newPartition(index int, brokers Brokers, logger LogRecord, trigger Trigger, topic *Topic) *Partition {
 	replicas := make([]int, 0, len(brokers))
 	for i, _ := range brokers {
 		replicas = append(replicas, i)
@@ -48,6 +49,7 @@ func newPartition(index int, brokers Brokers, logger LogRecord, topic *Topic) *P
 		Segments: make(map[int64]*Segment),
 		Replicas: replicas,
 		logger:   logger,
+		trigger:  trigger,
 		Topic:    topic,
 	}
 	if len(replicas) > 0 {
@@ -101,6 +103,7 @@ func (p *Partition) Write(batch kafka.RecordBatch) (baseOffset int64, err error)
 	baseOffset = p.Tail
 	for _, r := range batch.Records {
 		r.Offset = p.Tail
+		p.trigger(&r)
 		switch {
 		case len(p.Segments) == 0:
 			p.Segments[p.ActiveSegment] = newSegment(p.Tail)

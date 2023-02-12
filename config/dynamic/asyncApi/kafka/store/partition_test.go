@@ -14,7 +14,7 @@ func TestPartition(t *testing.T) {
 	p := newPartition(
 		0,
 		map[int]*Broker{1: {Id: 1}},
-		func(record kafka.Record, traits events.Traits) {}, &Topic{})
+		func(record kafka.Record, partition int, traits events.Traits) {}, func(record *kafka.Record) {}, &Topic{})
 
 	require.Equal(t, 0, p.Index)
 	require.Equal(t, int64(0), p.StartOffset())
@@ -28,9 +28,9 @@ func TestPartition_Write(t *testing.T) {
 	p := newPartition(
 		0,
 		map[int]*Broker{1: {Id: 1}},
-		func(record kafka.Record, traits events.Traits) {
+		func(record kafka.Record, partition int, traits events.Traits) {
 			log = append(log, record)
-		}, &Topic{})
+		}, func(record *kafka.Record) {}, &Topic{})
 
 	offset, err := p.Write(kafka.RecordBatch{
 		Records: []kafka.Record{
@@ -71,7 +71,7 @@ func TestPartition_Read_Empty(t *testing.T) {
 	p := newPartition(
 		0,
 		map[int]*Broker{1: {Id: 1}},
-		func(_ kafka.Record, _ events.Traits) {}, &Topic{})
+		func(_ kafka.Record, partition int, _ events.Traits) {}, func(record *kafka.Record) {}, &Topic{})
 	b, errCode := p.Read(0, 1)
 	require.Equal(t, kafka.None, errCode)
 	require.Equal(t, 0, len(b.Records))
@@ -81,7 +81,7 @@ func TestPartition_Read(t *testing.T) {
 	p := newPartition(
 		0,
 		map[int]*Broker{1: {Id: 1}},
-		func(_ kafka.Record, _ events.Traits) {}, &Topic{})
+		func(_ kafka.Record, partition int, _ events.Traits) {}, func(record *kafka.Record) {}, &Topic{})
 	offset, err := p.Write(kafka.RecordBatch{
 		Records: []kafka.Record{
 			{
@@ -104,7 +104,7 @@ func TestPartition_Read_OutOfOffset_Empty(t *testing.T) {
 	p := newPartition(
 		0,
 		map[int]*Broker{1: {Id: 1}},
-		func(_ kafka.Record, _ events.Traits) {}, &Topic{})
+		func(_ kafka.Record, partition int, _ events.Traits) {}, func(record *kafka.Record) {}, &Topic{})
 	b, errCode := p.Read(10, 1)
 	require.Equal(t, kafka.None, errCode)
 	require.Equal(t, 0, len(b.Records))
@@ -114,7 +114,7 @@ func TestPartition_Read_OutOfOffset(t *testing.T) {
 	p := newPartition(
 		0,
 		map[int]*Broker{1: {Id: 1}},
-		func(_ kafka.Record, _ events.Traits) {}, &Topic{})
+		func(_ kafka.Record, partition int, _ events.Traits) {}, func(record *kafka.Record) {}, &Topic{})
 	_, _ = p.Write(kafka.RecordBatch{
 		Records: []kafka.Record{
 			{
@@ -135,7 +135,7 @@ func TestPartition_Write_Value_Validator(t *testing.T) {
 	p := newPartition(
 		0,
 		map[int]*Broker{1: {Id: 1}},
-		func(_ kafka.Record, _ events.Traits) {}, &Topic{})
+		func(_ kafka.Record, partition int, _ events.Traits) {}, func(record *kafka.Record) {}, &Topic{})
 	p.validator = &validator{
 		payload:     &schema.Ref{Value: schematest.New("string")},
 		contentType: "application/json",
@@ -159,7 +159,9 @@ func TestPartition_Write_Value_Validator(t *testing.T) {
 }
 
 func TestPatition_Retention(t *testing.T) {
-	p := newPartition(0, map[int]*Broker{1: {Id: 1}}, func(_ kafka.Record, _ events.Traits) {}, &Topic{})
+	p := newPartition(0, map[int]*Broker{1: {Id: 1}},
+		func(_ kafka.Record, partition int, _ events.Traits) {},
+		func(record *kafka.Record) {}, &Topic{})
 	require.Equal(t, int64(0), p.Head)
 	offset, err := p.Write(kafka.RecordBatch{
 		Records: []kafka.Record{

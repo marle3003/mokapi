@@ -5,6 +5,7 @@ import (
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/config/dynamic/openapi/schema/schematest"
+	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/fetch"
 	"mokapi/kafka/kafkatest"
@@ -217,9 +218,56 @@ func TestProduce(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			defer events.Reset()
 
-			s := store.New(asyncapitest.NewConfig())
+			s := store.New(asyncapitest.NewConfig(), enginetest.NewEngine())
 			defer s.Close()
 			tc.fn(t, s)
 		})
 	}
+}
+
+func TestProduceTriggersEvent(t *testing.T) {
+	defer events.Reset()
+	triggerCount := 0
+	s := store.New(asyncapitest.NewConfig(), enginetest.NewEngineWithHandler(func(event string, args ...interface{}) {
+		triggerCount++
+	}))
+	defer s.Close()
+
+	s.Update(asyncapitest.NewConfig(
+		asyncapitest.WithServer("foo", "kafka", "127.0.0.1"),
+		asyncapitest.WithChannel("foo")))
+	g := s.GetOrCreateGroup("foo", 0)
+	g.Commit("foo", 0, 0)
+	events.SetStore(5, events.NewTraits().WithNamespace("kafka"))
+
+	rr := kafkatest.NewRecorder()
+	r := kafkatest.NewRequest("kafkatest", 3, &produce.Request{
+		Topics: []produce.RequestTopic{
+			{Name: "foo", Partitions: []produce.RequestPartition{
+				{
+					Record: kafka.RecordBatch{
+						Records: []kafka.Record{
+							{
+								Offset:  0,
+								Time:    time.Now(),
+								Key:     kafka.NewBytes([]byte("foo-1")),
+								Value:   kafka.NewBytes([]byte("bar-1")),
+								Headers: nil,
+							},
+							{
+								Offset:  1,
+								Time:    time.Now(),
+								Key:     kafka.NewBytes([]byte("foo-2")),
+								Value:   kafka.NewBytes([]byte("bar-2")),
+								Headers: nil,
+							},
+						},
+					},
+				},
+			},
+			}}})
+
+	s.ServeMessage(rr, r)
+
+	require.Equal(t, 2, triggerCount)
 }

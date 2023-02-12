@@ -48,16 +48,16 @@ func (rb *RecordBatch) ReadFrom(d *Decoder) error {
 }
 
 type Record struct {
-	Offset  int64
-	Time    time.Time
-	Key     Bytes
-	Value   Bytes
-	Headers []RecordHeader
+	Offset  int64          `json:"offset"`
+	Time    time.Time      `json:"time"`
+	Key     Bytes          `json:"key"`
+	Value   Bytes          `json:"value"`
+	Headers []RecordHeader `json:"headers"`
 }
 
 type RecordHeader struct {
-	Key   string
-	Value []byte
+	Key   string `json:"key"`
+	Value []byte `json:"value"`
 }
 
 func (r *Record) Size() (s int) {

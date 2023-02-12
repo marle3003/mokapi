@@ -4,6 +4,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
+	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/joinGroup"
 	"mokapi/kafka/kafkatest"
@@ -278,7 +279,7 @@ func TestGroupBalancing(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			s := store.New(asyncapitest.NewConfig())
+			s := store.New(asyncapitest.NewConfig(), enginetest.NewEngine())
 			defer s.Close()
 			b := kafkatest.NewBroker(kafkatest.WithHandler(s))
 			defer b.Close()

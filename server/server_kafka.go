@@ -52,7 +52,7 @@ func (m *KafkaManager) getOrCreateCluster(cfg *asyncApi.Config) *cluster {
 	c, ok := m.clusters[cfg.Info.Name]
 	if !ok {
 		log.Infof("adding new kafka cluster '%v'", cfg.Info.Name)
-		c = &cluster{store: store.NewEmpty(), brokers: make(map[string]*service.KafkaBroker)}
+		c = &cluster{store: store.NewEmpty(m.emitter), brokers: make(map[string]*service.KafkaBroker)}
 		m.clusters[cfg.Info.Name] = c
 		m.app.AddKafka(cfg, c.store)
 	}

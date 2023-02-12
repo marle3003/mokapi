@@ -7,6 +7,7 @@ import (
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/config/dynamic/openapi/schema/schematest"
+	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/runtime"
 	"testing"
@@ -43,7 +44,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 							asyncapitest.WithContentType("application/json"),
 							asyncapitest.WithPayload(schematest.New("string")),
 							asyncapitest.WithKey(schematest.New("string"))))))
-			s := store.New(config)
+			s := store.New(config, enginetest.NewEngine())
 			app := runtime.New()
 			app.AddKafka(config, s)
 			c := newKafkaClient(app)

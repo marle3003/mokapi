@@ -4,6 +4,7 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/asyncApi"
+	"mokapi/engine/common"
 	"mokapi/kafka"
 	"mokapi/kafka/apiVersion"
 	"mokapi/kafka/createTopics"
@@ -28,24 +29,26 @@ import (
 )
 
 type Store struct {
-	brokers map[int]*Broker
-	topics  map[string]*Topic
-	groups  map[string]*Group
-	cluster string
+	brokers      map[int]*Broker
+	topics       map[string]*Topic
+	groups       map[string]*Group
+	cluster      string
+	eventEmitter common.EventEmitter
 
 	m sync.RWMutex
 }
 
-func NewEmpty() *Store {
+func NewEmpty(eventEmitter common.EventEmitter) *Store {
 	return &Store{
-		topics:  make(map[string]*Topic),
-		brokers: make(map[int]*Broker),
-		groups:  make(map[string]*Group),
+		topics:       make(map[string]*Topic),
+		brokers:      make(map[int]*Broker),
+		groups:       make(map[string]*Group),
+		eventEmitter: eventEmitter,
 	}
 }
 
-func New(config *asyncApi.Config) *Store {
-	s := NewEmpty()
+func New(config *asyncApi.Config, eventEmitter common.EventEmitter) *Store {
+	s := NewEmpty(eventEmitter)
 	s.Update(config)
 	return s
 }
@@ -211,7 +214,7 @@ func (s *Store) addTopic(name string, config *asyncApi.Channel) (*Topic, error) 
 	if _, ok := s.topics[name]; ok {
 		return nil, fmt.Errorf("topic %v already exists", name)
 	}
-	t := newTopic(name, config, s.brokers, s.log, s)
+	t := newTopic(name, config, s.brokers, s.log, s.trigger, s)
 	s.topics[name] = t
 	return t, nil
 }
@@ -280,6 +283,11 @@ func (s *Store) getBrokerByHost(addr string) *Broker {
 
 func (s *Store) log(record kafka.Record, partition int, traits events.Traits) {
 	events.Push(NewKafkaLog(record, partition), traits.WithNamespace("kafka").WithName(s.cluster))
+}
+
+func (s *Store) trigger(record *kafka.Record) {
+	//record.Headers = make([]kafka.RecordHeader, 0)
+	s.eventEmitter.Emit("kafka", record)
 }
 
 func parseHostAndPort(s string) (host string, port int) {

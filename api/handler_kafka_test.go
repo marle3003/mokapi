@@ -4,6 +4,7 @@ import (
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/config/static"
+	"mokapi/engine/enginetest"
 	"mokapi/runtime"
 	"mokapi/runtime/monitor"
 	"mokapi/try"
@@ -36,7 +37,7 @@ func TestHandler_Kafka(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`[{"name":"foo","description":"","version":"1.0","type":"kafka","metrics":[],"topics":null}]`))
+					try.HasBody(`[{"name":"foo","description":"","contact":null,"version":"1.0","type":"kafka","metrics":[],"topics":null}]`))
 			},
 		},
 		{
@@ -45,7 +46,7 @@ func TestHandler_Kafka(t *testing.T) {
 				Kafka: map[string]*runtime.KafkaInfo{
 					"foo": {
 						Config: asyncapitest.NewConfig(asyncapitest.WithTitle("foo")),
-						Store:  store.New(asyncapitest.NewConfig(asyncapitest.WithTitle("foo"))),
+						Store:  store.New(asyncapitest.NewConfig(asyncapitest.WithTitle("foo")), enginetest.NewEngine()),
 					},
 				},
 				Monitor: monitor.New(),

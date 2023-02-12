@@ -4,6 +4,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
+	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/heartbeat"
 	"mokapi/kafka/joinGroup"
@@ -73,7 +74,7 @@ func TestHeartbeat(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			s := store.New(asyncapitest.NewConfig())
+			s := store.New(asyncapitest.NewConfig(), enginetest.NewEngine())
 			defer s.Close()
 			tc.fn(t, s)
 		})

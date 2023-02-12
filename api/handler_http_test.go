@@ -35,7 +35,7 @@ func TestHandler_Http(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`[{"name":"foo","description":"","version":"","type":"http","metrics":[]}]`))
+					try.HasBody(`[{"name":"foo","description":"","contact":null,"version":"","type":"http","metrics":[]}]`))
 			},
 		},
 		{
@@ -56,7 +56,7 @@ func TestHandler_Http(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"name":"foo","description":"bar","version":"1.0"}`))
+					try.HasBody(`{"name":"foo","description":"bar","version":"1.0","contact":null}`))
 			},
 		},
 	}

@@ -4,6 +4,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
+	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/apiVersion"
 	"mokapi/kafka/kafkatest"
@@ -13,7 +14,7 @@ import (
 )
 
 func TestApiVersion(t *testing.T) {
-	s := store.New(asyncapitest.NewConfig())
+	s := store.New(asyncapitest.NewConfig(), enginetest.NewEngine())
 	defer s.Close()
 
 	rr := kafkatest.NewRecorder()
@@ -36,7 +37,7 @@ func TestApiVersion(t *testing.T) {
 }
 
 func TestApiVersion_Raw(t *testing.T) {
-	s := store.New(asyncapitest.NewConfig())
+	s := store.New(asyncapitest.NewConfig(), enginetest.NewEngine())
 	defer s.Close()
 	b := kafkatest.NewBroker(kafkatest.WithHandler(s))
 	defer b.Close()
