@@ -296,8 +296,9 @@ func writeError(rw http.ResponseWriter, r *http.Request, err error, serviceName 
 		entry.Info(message)
 	}
 	if m, ok := monitor.HttpFromContext(r.Context()); ok {
-		m.RequestErrorCounter.WithLabel(serviceName).Add(1)
-		m.LastRequest.WithLabel(serviceName).Set(float64(time.Now().Unix()))
+		endpointPath := r.Context().Value("endpointPath").(string)
+		m.RequestErrorCounter.WithLabel(serviceName, endpointPath).Add(1)
+		m.LastRequest.WithLabel(serviceName, endpointPath).Set(float64(time.Now().Unix()))
 	}
 	http.Error(rw, message, status)
 	logHttp, ok := LogEventFromContext(r.Context())
