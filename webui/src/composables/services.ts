@@ -32,11 +32,13 @@ export function useService() {
     function fetchService(name: string, type: string) {
         const response = useFetch(`/api/services/${type}/${name}`)
         const service = ref<Service | null>(null)
+        const isLoading = ref<boolean>()
 
         watchEffect(() => {
             service.value = response.data ? response.data : null
+            isLoading.value = response.isLoading
         })
-        return service
+        return {service, isLoading}
     }
 
     return {fetchServices, fetchService}

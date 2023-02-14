@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage';
 
-
-const {format, getLanguage} = usePrettyLanguage()
+const {formatLanguage, getLanguage} = usePrettyLanguage()
 const props = defineProps({
     contentType: { type: String, required: true },
     body: {type: String, required: true}
@@ -10,15 +9,20 @@ const props = defineProps({
 </script>
 
 <template>
-    <p class="label">Content Type</p>
-    <p>{{ contentType }}</p>
-    <div v-if="body">
-        <pre v-highlightjs="format(body, contentType)"><code :class="getLanguage(contentType)"></code></pre>
+    <div class="codeBlock">
+        <span class="label">{{ contentType }}</span>
+        <pre v-highlightjs="formatLanguage(body, contentType)"><code :class="getLanguage(contentType)"></code></pre>
     </div>
 </template>
 
 <style scoped>
-.w-10{
-    width: 10%;
+.codeBlock {
+  position: relative;
 }
+.card-body .codeBlock .label {
+    position: absolute;
+    right: 4px;
+    top: 4px;
+    font-size: 0.8rem;
+  }
 </style>

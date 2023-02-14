@@ -26,5 +26,5 @@ declare interface Label {
 declare interface ServiceEvent {
     id: string
     data: HttpEventData | KafkaEventData
-    time: number
+    time: string
 }

@@ -19,11 +19,11 @@ type HttpLog struct {
 }
 
 type HttpRequestLog struct {
-	Method      string         `json:"method"`
-	Url         string         `json:"url"`
-	Parameters  []HttpParamter `json:"parameters,omitempty"`
-	ContentType string         `json:"contentType,omitempty"`
-	Body        string         `json:"body,omitempty"`
+	Method      string          `json:"method"`
+	Url         string          `json:"url"`
+	Parameters  []HttpParameter `json:"parameters,omitempty"`
+	ContentType string          `json:"contentType,omitempty"`
+	Body        string          `json:"body,omitempty"`
 }
 
 type HttpResponseLog struct {
@@ -33,7 +33,7 @@ type HttpResponseLog struct {
 	Size       int               `json:"size"`
 }
 
-type HttpParamter struct {
+type HttpParameter struct {
 	Name  string `json:"name"`
 	Type  string `json:"type"`
 	Value string `json:"value"`
@@ -56,7 +56,7 @@ func NewLogEventContext(r *http.Request, traits events.Traits) (context.Context,
 			for t, values := range params {
 				for k, v := range values {
 					value, _ := json.Marshal(v.Value)
-					l.Request.Parameters = append(l.Request.Parameters, HttpParamter{
+					l.Request.Parameters = append(l.Request.Parameters, HttpParameter{
 						Name:  k,
 						Type:  string(t),
 						Value: string(value),
@@ -66,7 +66,7 @@ func NewLogEventContext(r *http.Request, traits events.Traits) (context.Context,
 			}
 		}
 		for k, v := range r.Header {
-			p := HttpParamter{
+			p := HttpParameter{
 				Name: k,
 				Type: string(parameter.Header),
 				Raw:  strings.Join(v, ","),

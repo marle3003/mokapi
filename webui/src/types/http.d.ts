@@ -11,6 +11,22 @@ declare interface HttpPath {
 
 declare interface HttpOperation {
     method: string
+    summary: string
+    description: string
+    operationId: string
+    parameters: HttpParameter[]
+    requestBody: HttpRequestBody
+    responses: HttpResponse[]
+}
+
+declare interface HttpParameter {
+    name: string
+    type: string
+    description: string
+    required: boolean
+    style: string
+    explode?: boolean
+    schema: Schema
 }
 
 declare interface HttpEventData {
@@ -25,6 +41,25 @@ declare interface HttpEventRequest {
     contentType: string
     parameters: HttpEventParameter[]
     body: string
+}
+
+declare interface HttpRequestBody {
+    description: string
+    contents: HttpMediaType[]
+    required: boolean
+}
+
+declare interface HttpResponse {
+    statusCode: number
+    description: string
+    contents: HttpMediaType[]
+    headers: HttpParameter[]
+}
+
+declare interface HttpMediaType {
+    type: string
+    schema: Schema
+    example: any
 }
 
 declare interface HttpEventParameter {

@@ -60,7 +60,7 @@ components:
           additionalProperties:
             type: string
         time:
-          type: integer
+          type: string
         data:
           type: object
           additionalProperties: true

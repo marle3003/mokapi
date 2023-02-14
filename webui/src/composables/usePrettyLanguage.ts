@@ -2,7 +2,7 @@ import MIMEType from 'whatwg-mimetype'
 import XmlFormatter from 'xml-formatter'
 
 export function usePrettyLanguage() {
-    function format(s: string, contentType: string): string {
+    function formatLanguage(s: string, contentType: string): string {
         if (!s){
             return s
         }
@@ -30,5 +30,5 @@ export function usePrettyLanguage() {
         }
     }
 
-    return {format, getLanguage}
+    return {formatLanguage, getLanguage}
 }

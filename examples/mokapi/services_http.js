@@ -43,7 +43,16 @@ export let apps = [
                         responses: [
                             {
                                 statusCode: 400,
-                                description: "Invalid ID supplied"
+                                description: "Invalid ID supplied",
+                                headers: [
+                                    {
+                                        name: "petId",
+                                        description: "Status values that need to be considered for filter",
+                                        schema: {
+                                            type: "number"
+                                        }
+                                    }
+                                ]
                             }
                         ]
                     }
@@ -106,10 +115,10 @@ export let events = [
             name: "Swagger Petstore",
             path: "/pet"
         },
-        time: 1651771269,
+        time:  '2023-02-13T08:49:25.482366+01:00',
         data: {
             request: {
-                method: "GET",
+                method: "POST",
                 url: "http://127.0.0.1:18080/pet",
                 parameters: [
                     {
@@ -128,7 +137,7 @@ export let events = [
                 },
                 body: "{\"foo\":\"bar\"}"
             },
-            duration: 133
+            duration: 30016
         },
         workflows: [
             {
@@ -142,16 +151,16 @@ export let events = [
         ]
     },
     {
-        id: "4243",
+        id: "a5348a42-b69d-409f-8698-044d2ba845a3",
         traits: {
             namespace: "http",
             name: "Swagger Petstore",
             path: "/pet/findByStatus"
         },
-        time: 1654771269,
+        time: '2023-02-13T09:49:25.482366+01:00',
         data: {
             request: {
-                method: "POST",
+                method: "GET",
                 url: "http://127.0.0.1:18080/pet/findByStatus",
                 contentType: "application/json",
                 body: "{\"foo\":\"bar\",\"child\":{\"key\":\"val\"}}",

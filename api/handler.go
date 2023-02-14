@@ -11,6 +11,7 @@ import (
 	"mokapi/version"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"strings"
 )
 
@@ -85,7 +86,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case p == "/api/services":
 		h.getServices(w, r)
 	case strings.HasPrefix(p, "/api/services/http/"):
-		h.getHttpService(w, r)
+		h.getHttpService(w, r, h.app.Monitor)
 	case strings.HasPrefix(p, "/api/services/kafka/"):
 		h.getKafkaService(w, r)
 	case strings.HasPrefix(p, "/api/services/smtp/"):
@@ -97,6 +98,15 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case strings.HasPrefix(p, "/api/events"):
 		h.getEvents(w, r)
 	case h.fileServer != nil:
+		if len(filepath.Ext(r.URL.Path)) == 0 {
+			r.URL.Path = "/"
+		} else {
+			if strings.ToLower(filepath.Base(r.URL.Path)) == "index.html" {
+				r.URL.Path = "/index.html"
+			} else {
+				r.URL.Path = "/assets/" + filepath.Base(r.URL.Path)
+			}
+		}
 		h.fileServer.ServeHTTP(w, r)
 	default:
 		http.Error(w, "not found", http.StatusNotFound)

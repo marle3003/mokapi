@@ -5,7 +5,7 @@ defineProps({
 </script>
 
 <template>
-    <div class="position-absolute top-50 start-50">
+    <div class="position-absolute top-50 start-50 translate-middle">
         <div class="card-group">
             <div class="card">
                 <div class="card-body">{{ message }}</div>
@@ -13,3 +13,10 @@ defineProps({
         </div>
     </div>
 </template>
+
+<style scoped>
+.card {
+    border-color: var(--color-border);
+    background-color: var(--color-background-soft);
+}
+</style>

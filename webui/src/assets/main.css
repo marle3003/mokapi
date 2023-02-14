@@ -4,6 +4,7 @@
 @import './github-dark.css';
 @import './datatable.css';
 @import './tabs.css';
+@import './modal.css';
 
 body {
   min-height: 100vh;

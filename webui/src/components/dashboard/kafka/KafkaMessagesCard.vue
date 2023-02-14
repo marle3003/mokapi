@@ -1,23 +1,27 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import { useEvents } from '@/composables/events';
-import { type PropType, computed } from 'vue';
+import { type PropType, onMounted } from 'vue';
 import { usePrettyDates } from '@/composables/usePrettyDate';
+import { Popover } from 'bootstrap'
+import { usePrettyLanguage } from '@/composables/usePrettyLanguage';
 
 const props = defineProps({
     service: { type: Object as PropType<KafkaService> },
     topicName: { type: String, required: false}
 })
 
+const labels = [{name: 'name', value: props.service!.name}]
+if (props.topicName){
+    labels.push({name: 'topic', value: props.topicName})
+}
+
 const router = useRouter()
 const {fetch} = useEvents()
-const events = computed(() => {
-    if (!props.topicName) {
-        return fetch('kafka', {name: 'name', value: props.service!.name}).events.value
-    }
-    return fetch('kafka', {name: 'name', value: props.service!.name}, {name: 'topic', value: props.topicName}).events.value
-})
 const {format} = usePrettyDates()
+const {formatLanguage} = usePrettyLanguage()
+
+const {events} = fetch('kafka', ...labels)
 
 function goToMessage(event: ServiceEvent){
     router.push({
@@ -28,6 +32,20 @@ function goToMessage(event: ServiceEvent){
 function eventData(event: ServiceEvent): KafkaEventData{
     return <KafkaEventData>event.data
 }
+function truncate(s: string, n: number){
+  return (s.length > n) ? s.slice(0, n-1) + '&hellip;' : s;
+};
+onMounted(()=> {
+  new Popover(document.body, {
+      selector: ".message[data-bs-toggle='popover']",
+      customClass: 'dashboard-popover',
+      html: true,
+      trigger: 'hover',
+      content: function(this: HTMLElement): string {
+        return this.nextElementSibling?.outerHTML ?? ''
+      }
+    })
+})
 </script>
 
 <template>
@@ -48,7 +66,10 @@ function eventData(event: ServiceEvent): KafkaEventData{
                     <tr v-for="event in events" :key="event.id" @click="goToMessage(event)">
                         <td>{{ eventData(event).offset }}</td>
                         <td>{{ eventData(event).key }}</td>
-                        <td>{{ eventData(event).message }}</td>
+                        <td>
+                            <span class="message" data-bs-toggle="popover" data-bs-placement="right"><span v-html="truncate(eventData(event).message, 20)"></span> <i class="bi bi-info-circle"></i></span>
+                            <pre style="display:none;" v-highlightjs="formatLanguage(eventData(event).message, 'application/json')"><code class="json"></code></pre>
+                        </td>
                         <td>{{ format(event.time) }}</td>
                         <td>{{ eventData(event).partition }}</td>
                     </tr>

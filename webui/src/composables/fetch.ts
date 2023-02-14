@@ -1,4 +1,4 @@
-import { reactive } from 'vue'
+import { onUnmounted, reactive } from 'vue'
 import { useBackendBaseUrl } from './backendBaseUrl'
 import router from '@/router';
 
@@ -11,7 +11,8 @@ export function useFetch(path: string) {
     const response = cached || reactive({
         data: null,
         isLoading: false,
-        error: null
+        error: null,
+        stop: null
     })
 
     if (cache[path]) {
@@ -33,7 +34,13 @@ export function useFetch(path: string) {
 
     const refresh = Number(route.query.refresh)
     if (refresh){
-        setInterval(doFetch, refresh * 1000)
+        const timer = setInterval(doFetch, refresh * 1000)
+        onUnmounted(() => {
+            clearInterval(timer)
+        })
+        response.stop = function() {
+            clearInterval(timer)
+        }
     }
     doFetch()
     

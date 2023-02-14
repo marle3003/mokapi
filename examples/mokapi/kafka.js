@@ -118,7 +118,7 @@ export let events = [
              name: "Kafka World",
              topic: "foo"
          },
-         time: 1651771269,
+         time: '2023-02-13T09:49:25.482366+01:00',
          data: {
              offset: 0,
              key: "foo",

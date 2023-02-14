@@ -228,7 +228,7 @@ endpointLoop:
 		r = r.WithContext(context.WithValue(r.Context(), "endpointPath", path))
 
 		if m, ok := monitor.HttpFromContext(r.Context()); ok {
-			m.LastRequest.WithLabel(h.config.Info.Name).Set(float64(time.Now().Unix()))
+			m.LastRequest.WithLabel(h.config.Info.Name, path).Set(float64(time.Now().Unix()))
 			m.RequestCounter.WithLabel(h.config.Info.Name, path).Add(1)
 		}
 

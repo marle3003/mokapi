@@ -9,17 +9,20 @@ export function usePrettyDates() {
     function fromNow(value: number): string {
         return dayjs.unix(value).fromNow()
     }
-    function format(value: number): string {
+    function format(value: number | string): string {
+        if (typeof value == 'string') {
+            return dayjs(value).format('YYYY-MM-DD HH:mm:ss')
+        }
         return dayjs.unix(value).format('YYYY-MM-DD HH:mm:ss')
     }
     function duration(value: number): string{
         let d = dayjs.duration(value)
         if (d.seconds() < 1){
-            return d.asMilliseconds() + ' [ms]'
+            return d.milliseconds() + ' [ms]'
         } else if (d.minutes() < 1){
-            return d.asSeconds + ' [sec]'
+            return d.seconds() + ' [sec]'
         }
-        return d.asMinutes() + ' [min]'
+        return d.minutes() + ' [min]'
     }
 
     return {fromNow, format, duration}

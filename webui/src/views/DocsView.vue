@@ -14,7 +14,6 @@ let file = nav[topic]
 if (subject) {
   file = file[subject]
 }
-console.log(file)
 const content = files[`/src/assets/docs/${file}`]
 </script>
 

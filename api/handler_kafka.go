@@ -20,7 +20,7 @@ type kafka struct {
 	Name        string           `json:"name"`
 	Description string           `json:"description"`
 	Version     string           `json:"version"`
-	Contact     kafkaContact     `json:"contact"`
+	Contact     *kafkaContact    `json:"contact"`
 	Servers     []kafkaServer    `json:"servers,omitempty"`
 	Topics      []topic          `json:"topics"`
 	Groups      []group          `json:"groups"`
@@ -128,7 +128,7 @@ func getKafka(info *runtime.KafkaInfo) kafka {
 	}
 
 	if info.Config.Info.Contact != nil {
-		k.Contact = kafkaContact{
+		k.Contact = &kafkaContact{
 			Name:  info.Config.Info.Contact.Name,
 			Url:   info.Config.Info.Contact.Url,
 			Email: info.Config.Info.Contact.Email,

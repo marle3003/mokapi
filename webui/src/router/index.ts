@@ -29,7 +29,7 @@ const router = createRouter({
       component: DashboardView,
       children: [
         {
-          path: '/dashboard/http/service/:service',
+          path: '/dashboard/http/services/:service',
           name: 'httpService',
           component: DashboardView,
           meta: {service: 'http'}
@@ -40,6 +40,36 @@ const router = createRouter({
           component: DashboardView,
           meta: {service: 'http'}
         },
+        {
+          path: '/dashboard/http/services/:service/paths/:path',
+          name: 'httpPath',
+          component: DashboardView,
+          meta: {service: 'http'}
+        },
+        {
+          path: '/dashboard/http/services/:service/paths/:path/methods/:method',
+          name: 'httpOperation',
+          component: DashboardView,
+          meta: {service: 'http'}
+        },
+        {
+          path: '/dashboard/http/services/:service/paths/:path/methods/:method/parameters/:parameter',
+          name: 'httpParameter',
+          component: DashboardView,
+          meta: {service: 'http'}
+        },
+        {
+          path: '/dashboard/http/services/:service/paths/:path/methods/:method/requestbody/:requestBody',
+          name: 'httpRequestBody',
+          component: DashboardView,
+          meta: {service: 'http'}
+        },
+        {
+          path: '/dashboard/http/services/:service/paths/:path/methods/:method/response/:statuscode',
+          name: 'httpResponse',
+          component: DashboardView,
+          meta: {service: 'http'}
+        }
       ]
     },
     {

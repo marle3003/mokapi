@@ -2,13 +2,13 @@
 import { useEvents } from '@/composables/events'
 import { useRoute } from 'vue-router'
 import RequestInfoCard from './RequestInfoCard.vue'
-import HttpParameters from './HttpParameters.vue'
+import HttpParameters from './HttpEventParameters.vue'
 import HttpBody from './HttpBody.vue'
-import HttpHeader from './HttpHeader.vue'
+import HttpHeader from './HttpEventHeader.vue'
 import Loading from '@/components/Loading.vue'
 
 const {fetchById} = useEvents()
-const eventId = Number(useRoute().params.id as string)
+const eventId = useRoute().params.id as string
 const {event, isLoading} = fetchById(eventId)
 
 function eventData() {
@@ -32,24 +32,9 @@ function getResponseContentType(): string {
             <div class="card">
                 <div class="card-body">
                     <div class="card-title text-center">Request</div>
-                    <div id="tabRequest" role="tablist">
-                        <ul class="nav nav-tabs mb-4">
-                            <li class="nav-item" role="presentation">
-                                <a class="nav-link active pt-1 pb-1" id="requestParamsTab" data-bs-toggle="tab" data-bs-target="#requestParams" type="button" role="tab" aria-controls="requestParams" aria-selected="true">Parameters</a>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <a class="nav-link pt-1 pb-1" id="requestBodyTab" data-bs-toggle="tab" data-bs-target="#requestBody" type="button" role="tab" aria-controls="requestBody" aria-selected="false">Body</a>
-                            </li>
-                        </ul>
-                        <div class="tab-content">
-                            <div class="tab-pane fade show active" id="requestParams" role="tabpanel" aria-labelledby="requestParamsTab">
-                                <http-parameters :parameters="eventData().request.parameters"></http-parameters>
-                            </div>
-                            <div class="tab-pane fade show" id="requestBody" role="tabpanel" aria-labelledby="requestBodyTab">
-                                <http-body :content-type="eventData().request.contentType" :body="eventData().request.body"></http-body>
-                            </div>
-                        </div>
-                    </div>
+                    <http-parameters :parameters="eventData().request.parameters"></http-parameters>
+                    <p class="label">Body</p>
+                    <http-body :content-type="eventData().request.contentType" :body="eventData().request.body"></http-body>
                 </div>
             </div>
         </div>
@@ -57,24 +42,9 @@ function getResponseContentType(): string {
             <div class="card">
                 <div class="card-body">
                     <div class="card-title text-center">Response</div>
-                    <div id="tabResponse" role="tablist">
-                        <ul class="nav nav-tabs mb-4">
-                            <li class="nav-item" role="presentation">
-                                <a class="nav-link active pt-1 pb-1" id="responseParamsTab" data-bs-toggle="tab" data-bs-target="#responseParams" type="button" role="tab" aria-controls="responseParams" aria-selected="true">Headers</a>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <a class="nav-link pt-1 pb-1" id="responseBodyTab" data-bs-toggle="tab" data-bs-target="#responseBody" type="button" role="tab" aria-controls="responseBody" aria-selected="false">Body</a>
-                            </li>
-                        </ul>
-                        <div class="tab-content">
-                            <div class="tab-pane fade show active" id="responseParams" role="tabpanel" aria-labelledby="responseParamsTab">
-                                <http-header :headers="eventData().response.headers"></http-header>
-                            </div>
-                            <div class="tab-pane fade show" id="responseBody" role="tabpanel" aria-labelledby="responseBodyTab">
-                                <http-body :content-type="getResponseContentType()" :body="eventData().response.body"></http-body>
-                            </div>
-                        </div>
-                    </div>
+                    <http-header :headers="eventData().response.headers"></http-header>
+                    <p class="label">Body</p>
+                    <http-body :content-type="getResponseContentType()" :body="eventData().response.body"></http-body>
                 </div>
             </div>
         </div>

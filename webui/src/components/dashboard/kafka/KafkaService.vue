@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, type Ref } from 'vue'
+import type { Ref } from 'vue'
 import { useRoute } from 'vue-router';
 import { useService } from '@/composables/services';
 import ServiceInfoCard from '../ServiceInfoCard.vue';
@@ -10,7 +10,7 @@ import KafkaTopic from './KafkaTopic.vue';
 
 const {fetchService} = useService()
 const serviceName = useRoute().params.service?.toString()
-let service = serviceName ? <Ref<KafkaService>>(fetchService(serviceName, 'kafka')) : ref<KafkaService | null>(null)
+const {service} = <{service: Ref<KafkaService | null>}>fetchService(serviceName, 'kafka')
 </script>
 
 <template>

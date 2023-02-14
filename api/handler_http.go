@@ -15,12 +15,13 @@ type httpSummary struct {
 }
 
 type httpInfo struct {
-	Name        string     `json:"name"`
-	Description string     `json:"description"`
-	Version     string     `json:"version"`
-	Contact     *contact   `json:"contact"`
-	Servers     []server   `json:"servers,omitempty"`
-	Paths       []pathItem `json:"paths,omitempty"`
+	Name        string           `json:"name"`
+	Description string           `json:"description"`
+	Version     string           `json:"version"`
+	Contact     *contact         `json:"contact"`
+	Servers     []server         `json:"servers,omitempty"`
+	Paths       []pathItem       `json:"paths,omitempty"`
+	Metrics     []metrics.Metric `json:"metrics"`
 }
 
 type pathItem struct {
@@ -54,6 +55,7 @@ type response struct {
 	StatusCode  int         `json:"statusCode"`
 	Description string      `json:"description"`
 	Contents    []mediaType `json:"contents,omitempty"`
+	Headers     []parameter `json:"parameters,omitempty"`
 }
 
 type requestBody struct {
@@ -68,9 +70,9 @@ type mediaType struct {
 }
 
 type schemaInfo struct {
-	Name        string        `json:"name"`
-	Description string        `json:"description"`
-	Ref         string        `json:"ref"`
+	Name        string        `json:"name,omitempty"`
+	Description string        `json:"description,omitempty"`
+	Ref         string        `json:"ref,omitempty"`
 	Type        string        `json:"type"`
 	Properties  []*schemaInfo `json:"properties,omitempty"`
 	Enum        []interface{} `json:"enum,omitempty"`
@@ -112,7 +114,7 @@ func getHttpServices(services map[string]*runtime.HttpInfo, m *monitor.Monitor) 
 	return result
 }
 
-func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request) {
+func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *monitor.Monitor) {
 	segments := strings.Split(r.URL.Path, "/")
 	name := segments[4]
 
@@ -126,6 +128,7 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request) {
 		Name:        s.Info.Name,
 		Description: s.Info.Description,
 		Version:     s.Info.Version,
+		Metrics:     m.FindAll(metrics.ByNamespace("http"), metrics.ByLabel("service", s.Info.Name)),
 	}
 	if s.Info.Contact != nil {
 		result.Contact = &contact{
@@ -154,7 +157,7 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request) {
 
 		for m, o := range p.Value.Operations() {
 			op := operation{
-				Method:      m,
+				Method:      strings.ToLower(m),
 				Summary:     o.Summary,
 				Description: o.Description,
 				OperationId: o.OperationId,
@@ -200,6 +203,17 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request) {
 					res.Contents = append(res.Contents, mediaType{
 						Type:   ct,
 						Schema: getSchema(r.Schema),
+					})
+				}
+				for name, header := range r.Value.Headers {
+					if header.Value != nil {
+						continue
+					}
+					res.Headers = append(res.Headers, parameter{
+						Name:        name,
+						Type:        "header",
+						Description: header.Value.Description,
+						Schema:      getSchema(header.Value.Schema),
 					})
 				}
 

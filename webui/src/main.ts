@@ -3,7 +3,6 @@ import App from './App.vue'
 import router from './router'
 import './assets/main.css';
 import VueHighlightJS from 'vue3-highlightjs'
-
 const app = createApp(App)
 
 app.use(router)
@@ -14,3 +13,4 @@ router.isReady().then(() =>{
 })
 
 import "bootstrap/dist/js/bootstrap.bundle.min.js"
+

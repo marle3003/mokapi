@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, type Ref } from 'vue'
+import type { Ref } from 'vue'
 import { useRoute } from 'vue-router';
 import { useService } from '@/composables/services';
 import KafkaMessageMetricCard from '../KafkaMessageMetricCard.vue';
@@ -12,7 +12,7 @@ const {fetchService} = useService()
 const route = useRoute()
 const serviceName = route.params.service?.toString()
 const topicName = route.params.topic?.toString()
-let service = serviceName ? <Ref<KafkaService>>(fetchService(serviceName, 'kafka')) : ref<KafkaService | null>(null)
+const {service} = <{service: Ref<KafkaService | null>}>fetchService(serviceName, 'kafka')
 function topic() {
   if (!service.value) {return null}
   for (let topic of service.value?.topics){

@@ -3,6 +3,7 @@ import { useService } from '@/composables/services';
 import { useMetrics } from '@/composables/metrics';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { useRouter, useRoute } from 'vue-router';
+import Markdown from 'vue3-markdown-it';
 
 const {fetchServices} = useService()
 const {sum} = useMetrics()
@@ -44,7 +45,7 @@ function goToService(service: Service){
                 <thead>
                     <tr>
                         <th scope="col" class="text-left w-25">Name</th>
-                        <th scope="col" class="text-left w-55">Description</th>
+                        <th scope="col" class="text-left w-50">Description</th>
                         <th scope="col" class="text-center" style="width:15%">Last Request</th>
                         <th scope="col" class="text-center">Requests / Errors</th>
                     </tr>
@@ -52,12 +53,12 @@ function goToService(service: Service){
                 <tbody>
                     <tr v-for="service in services" key="service.name" @click="goToService(service)">
                         <td>{{ service.name }}</td>
-                        <td>{{ service.description }}</td>
+                        <td><markdown :source="service.description" class="description"></markdown></td>
                         <td class="text-center">{{ lastRequest(service) }}</td>
                         <td class="text-center">
                             <span>{{ requests(service) }}</span>
                             <span> / </span>
-                            <span v-bind:class="{'text-danger': requests(service) > 0}">{{ errors(service) }}</span>
+                            <span v-bind:class="{'text-danger': errors(service) > 0}">{{ errors(service) }}</span>
                         </td>
                     </tr>
                 </tbody>
@@ -65,3 +66,11 @@ function goToService(service: Service){
         </div>
     </div>
 </template>
+
+<style>
+.description p {
+    font-size: 0.75rem !important;
+    margin: 0 !important;
+    line-height: 1.6 !important;
+}
+</style>

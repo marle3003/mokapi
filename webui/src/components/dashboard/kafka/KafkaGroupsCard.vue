@@ -8,14 +8,7 @@ const props = defineProps({
     service: { type: Object as PropType<KafkaService>, required: true },
     topicName: { type: String, required: false }
 })
-onMounted(()=> {
-  new Popover(document.body, {
-      selector: "[data-bs-toggle='popover']",
-      html: true,
-      customClass: 'dashboard-popover',
-      trigger: 'hover'
-    })
-})
+
 function memberInfo(member: KafkaMember): string {
   return `<p class="label">Address</p>
            <p>${member.addr}</p>
@@ -37,10 +30,21 @@ function getGroups(): KafkaGroup[] {
     }
     return result
 }
+onMounted(()=> {
+  new Popover(document.body, {
+      selector: ".member[data-bs-toggle='popover']",
+      customClass: 'dashboard-popover',
+      html: true,
+      trigger: 'hover',
+      content: function(this: HTMLElement): string {
+        return this.nextElementSibling?.outerHTML ?? ''
+      }
+    })
+})
 </script>
 
 <template>
-    <div class="card">
+    <div class="card groups">
         <div class="card-body">
             <div class="card-title text-center">Groups</div>
             <table class="table dataTable selectable">
@@ -62,9 +66,10 @@ function getGroups(): KafkaGroup[] {
                         <td>{{ group.coordinator }}</td>
                         <td>{{ group.leader }}</td>
                         <td>
-                          <div v-for="member in group.members" data-bs-toggle="popover" data-bs-placement="right" 
-                            :title="member.name"
-                            :data-bs-content="memberInfo(member)">{{ member.name }}</div>
+                            <div v-for="member in group.members">
+                                <div class="member" data-bs-toggle="popover" data-bs-placement="right" >{{ member.name }} <i class="bi bi-info-circle"></i></div>
+                                <span style="display:none" v-html="memberInfo(member)"></span>
+                            </div>
                         </td>
                     </tr>
                 </tbody>

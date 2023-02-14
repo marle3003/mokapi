@@ -25,13 +25,13 @@ import { useRoute, useRouter } from 'vue-router';
 const appInfo = useAppInfo()
 const route = useRoute()
 const router = useRouter()
-useShortcut('esacpe', (e: KeyboardEvent) => {
-    let cmd = e.key.toLowerCase()
-    if (cmd != 'escape' || route.name == 'dashboard') {
-        return
-    }
-    router.go(-1)
-})
+// useShortcut('esacpe', (e: KeyboardEvent) => {
+//     let cmd = e.key.toLowerCase()
+//     if (cmd != 'escape' || route.name == 'dashboard') {
+//         return
+//     }
+//     router.go(-1)
+// })
 
 function isServiceAvailable(service: string): Boolean{
     if (!appInfo.data){
@@ -119,9 +119,8 @@ function isInitLoading() {
 
         <http-service v-if="$route.meta.service == 'http'" />
         <kafka-service v-if="$route.meta.service == 'kafka'" />
-
-        <message :message="appInfo.error" v-if="!appInfo.data && !appInfo.isLoading"></message>
     </div>
+    <message :message="appInfo.error" v-if="!appInfo.data && !appInfo.isLoading"></message>
     <loading v-if="isInitLoading()"></loading>
 </template>
 

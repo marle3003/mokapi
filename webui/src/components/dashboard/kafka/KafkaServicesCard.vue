@@ -57,3 +57,10 @@ function goToService(service: Service){
         </div>
     </div>
 </template>
+
+<style scoped>
+.description p {
+    font-size: 0.75rem !important;
+    margin: 0 !important
+}
+</style>

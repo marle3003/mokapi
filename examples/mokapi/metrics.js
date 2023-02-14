@@ -16,8 +16,20 @@ export let metrics = [
         value: 1
     },
     {
-        name: 'http_request_timestamp{service="Swagger Petstore"}"',
+        name: 'http_requests_total{service="Swagger Petstore",endpoint="/pet/findByStatus"}"',
+        value: 3
+    },
+    {
+        name: 'http_requests_errors_total{service="Swagger Petstore",endpoint="/pet/findByStatus"}"',
+        value: 0
+    },
+    {
+        name: 'http_request_timestamp{service="Swagger Petstore,endpoint="/pet"}"',
         value: 1652235690
+    },
+    {
+        name: 'http_request_timestamp{service="Swagger Petstore,endpoint="/pet/findByStatus"}"',
+        value: 1652237690
     },
     {
         name: 'kafka_messages_total{service="Kafka World",topic="foo"}"',

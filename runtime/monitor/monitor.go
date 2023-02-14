@@ -26,16 +26,6 @@ func New() *Monitor {
 	startTime := metrics.NewGauge(metrics.WithFQName("app", "start_timestamp"))
 	memoryUsage := metrics.NewGauge(metrics.WithFQName("app", "memory_usage_bytes"))
 
-	httpRequestCounter := metrics.NewCounterMap(
-		metrics.WithFQName("http", "requests_total"),
-		metrics.WithLabelNames("service", "endpoint"))
-	httpRequestErrorCounter := metrics.NewCounterMap(
-		metrics.WithFQName("http", "requests_errors_total"),
-		metrics.WithLabelNames("service"))
-	httpLastRequest := metrics.NewGaugeMap(
-		metrics.WithFQName("http", "request_timestamp"),
-		metrics.WithLabelNames("service"))
-
 	kafkaMessage := metrics.NewCounterMap(
 		metrics.WithFQName("kafka", "messages_total"),
 		metrics.WithLabelNames("service", "topic"))
@@ -63,14 +53,11 @@ func New() *Monitor {
 		metrics.WithFQName("smtp", "mails_total"),
 		metrics.WithLabelNames("service"))
 
+	h := NewHttp()
 	m := &Monitor{
 		StartTime:   startTime,
 		MemoryUsage: memoryUsage,
-		Http: &Http{
-			RequestCounter:      httpRequestCounter,
-			RequestErrorCounter: httpRequestErrorCounter,
-			LastRequest:         httpLastRequest,
-		},
+		Http:        h,
 		Kafka: &Kafka{
 			Messages:    kafkaMessage,
 			LastMessage: kafkaLastMessage,
@@ -88,9 +75,9 @@ func New() *Monitor {
 		metrics: []metrics.Metric{
 			startTime,
 			memoryUsage,
-			httpRequestCounter,
-			httpRequestErrorCounter,
-			httpLastRequest,
+			h.RequestCounter,
+			h.RequestErrorCounter,
+			h.LastRequest,
 			kafkaMessage,
 			kafkaLastMessage,
 			kafkaLag,

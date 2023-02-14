@@ -26,7 +26,7 @@ export function useMetrics() {
 
     const matchLabels = (metric: Metric, labels: Label[]): Boolean => {
         for (var label of labels){
-            const s = `${label.name}="${label.value}`
+            const s = `${label.name}="${label.value}"`
             if (!metric.name.includes(s)){
                 return false
             }
