@@ -46,6 +46,7 @@ func TestHandler_Http(t *testing.T) {
 						Config: openapitest.NewConfig("3.0.0", openapitest.WithInfo("foo", "1.0", "bar")),
 					},
 				},
+				Monitor: monitor.New(),
 			},
 			fn: func(t *testing.T, h http.Handler) {
 				try.Handler(t,
@@ -56,7 +57,7 @@ func TestHandler_Http(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"name":"foo","description":"bar","version":"1.0","contact":null}`))
+					try.HasBody(`{"name":"foo","description":"bar","version":"1.0","contact":null,"metrics":[]}`))
 			},
 		},
 	}

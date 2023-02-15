@@ -98,8 +98,12 @@ func getHttpServices(services map[string]*runtime.HttpInfo, m *monitor.Monitor) 
 			Description: hs.Info.Description,
 			Version:     hs.Info.Version,
 			Type:        ServiceHttp,
-			Metrics:     m.FindAll(metrics.ByNamespace("http"), metrics.ByLabel("service", hs.Info.Name)),
 		}
+
+		if m != nil {
+			s.Metrics = m.FindAll(metrics.ByNamespace("http"), metrics.ByLabel("service", hs.Info.Name))
+		}
+
 		if hs.Info.Contact != nil {
 			c := hs.Info.Contact
 			s.Contact = &contact{
@@ -128,8 +132,12 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 		Name:        s.Info.Name,
 		Description: s.Info.Description,
 		Version:     s.Info.Version,
-		Metrics:     m.FindAll(metrics.ByNamespace("http"), metrics.ByLabel("service", s.Info.Name)),
 	}
+
+	if m != nil {
+		result.Metrics = m.FindAll(metrics.ByNamespace("http"), metrics.ByLabel("service", s.Info.Name))
+	}
+
 	if s.Info.Contact != nil {
 		result.Contact = &contact{
 			Name:  s.Info.Contact.Name,
