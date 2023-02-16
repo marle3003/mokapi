@@ -4,7 +4,7 @@ import router from '@/router';
 
 let cache: {[name: string]: any} = {}
 
-export function useFetch(path: string) {
+export function useFetch(path: string, options?: RequestInit, doRefresh: boolean = true) {
     const baseUrl = useBackendBaseUrl()
     const route = router.currentRoute.value
     const cached = cache[path]
@@ -22,7 +22,7 @@ export function useFetch(path: string) {
 
     function doFetch() {
         response.isLoading = true
-        fetch(baseUrl + path)
+        fetch(baseUrl + path, options)
             .then((res) => res.json())
             .then((res) => response.data = res)
             .catch((err) => {
@@ -33,7 +33,7 @@ export function useFetch(path: string) {
     }
 
     const refresh = Number(route.query.refresh)
-    if (refresh){
+    if (refresh && doRefresh){
         const timer = setInterval(doFetch, refresh * 1000)
         onUnmounted(() => {
             clearInterval(timer)

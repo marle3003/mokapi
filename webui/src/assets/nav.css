@@ -1,0 +1,13 @@
+.nav-link {
+  color: var(--color-text);
+}
+.nav-link.disabled {
+  color: var(--color-text);
+}
+.nav-link:not(.disabled):hover {
+  color: var(--color-text);
+  background-color: var(--color-background-soft);
+}
+.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
+  background-color: var(--color-background-soft);
+}

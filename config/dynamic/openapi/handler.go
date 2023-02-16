@@ -89,16 +89,20 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		logHttp.Request.Body = body.Raw
 	}
 
-	response.Headers["Content-Type"] = contentType.String()
+	if !contentType.IsEmpty() {
+		response.Headers["Content-Type"] = contentType.String()
+	}
 
-	if len(mediaType.Examples) > 0 {
-		keys := reflect.ValueOf(mediaType.Examples).MapKeys()
-		v := keys[rand.Intn(len(keys))].Interface().(*ExampleRef)
-		response.Data = v.Value.Value
-	} else if mediaType.Example != nil {
-		response.Data = mediaType.Example
-	} else {
-		response.Data = h.g.New(mediaType.Schema)
+	if mediaType != nil {
+		if len(mediaType.Examples) > 0 {
+			keys := reflect.ValueOf(mediaType.Examples).MapKeys()
+			v := keys[rand.Intn(len(keys))].Interface().(*ExampleRef)
+			response.Data = v.Value.Value
+		} else if mediaType.Example != nil {
+			response.Data = mediaType.Example
+		} else {
+			response.Data = h.g.New(mediaType.Schema)
+		}
 	}
 
 	for k, v := range res.Headers {
@@ -296,9 +300,15 @@ func writeError(rw http.ResponseWriter, r *http.Request, err error, serviceName 
 		entry.Info(message)
 	}
 	if m, ok := monitor.HttpFromContext(r.Context()); ok {
-		endpointPath := r.Context().Value("endpointPath").(string)
-		m.RequestErrorCounter.WithLabel(serviceName, endpointPath).Add(1)
-		m.LastRequest.WithLabel(serviceName, endpointPath).Set(float64(time.Now().Unix()))
+		endpointPath := r.Context().Value("endpointPath")
+		if endpointPath != nil {
+			endpointPathString := endpointPath.(string)
+			m.RequestErrorCounter.WithLabel(serviceName, endpointPathString).Add(1)
+			m.LastRequest.WithLabel(serviceName, endpointPathString).Set(float64(time.Now().Unix()))
+		} else {
+			m.RequestErrorCounter.WithLabel(serviceName, "").Add(1)
+			m.LastRequest.WithLabel(serviceName, "").Set(float64(time.Now().Unix()))
+		}
 	}
 	http.Error(rw, message, status)
 	logHttp, ok := LogEventFromContext(r.Context())

@@ -6,11 +6,17 @@
     --color-border: #282b33;
 
     --color-red: #ff2e4a;
+    --color-red-shadow: rgba(255, 46, 74, 0.4);
     --color-blue: #027bff;
+    --color-blue-shadow: rgba(2, 123, 255, 0.4);
     --color-orange: #ffc347;
+    --color-orange-shadow: rgba(255, 195, 71, 0.4);
     --color-green: #30a72d;
+    --color-green-shadow: rgba(48, 167, 45, 0.4);
     --color-yellow: #eab839;
+    --color-yellow-shadow: rgba(234, 184, 57, 0.4);
     --color-purple: #b644a4;
+    --color-purpl-shadowe: rgba(182, 68, 164, 0.4);
 
     --color-brand: #d3d4d5;
     --color-brand-hover: #d3d4d5;

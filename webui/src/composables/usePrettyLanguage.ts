@@ -9,7 +9,12 @@ export function usePrettyLanguage() {
         const mimeType = new MIMEType(contentType)
         switch (mimeType.subtype){
             case 'json':
-                return JSON.stringify(JSON.parse(s), null, 2)
+                try{ 
+                    return JSON.stringify(JSON.parse(s), null, 2)
+                }catch {
+                    console.log("unable to parse json: "+s)
+                    return s
+                }
             case 'xml':
             case 'rss+xml':
                 return XmlFormatter(s, {collapseContent: true})

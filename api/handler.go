@@ -97,6 +97,8 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.getMetrics(w, r)
 	case strings.HasPrefix(p, "/api/events"):
 		h.getEvents(w, r)
+	case p == "/api/schema/example":
+		h.getExampleData(w, r)
 	case h.fileServer != nil:
 		if len(filepath.Ext(r.URL.Path)) == 0 {
 			r.URL.Path = "/"

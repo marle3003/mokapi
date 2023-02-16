@@ -16,15 +16,36 @@
 .operation.head, .operation.trace {
     background-color: var(--color-yellow);
 }
+
 .status-code.success {
     background-color: var(--color-green);
+}
+.status-code.success.active {
+    outline-width: 3px;
+    outline-color: var(--color-green-shadow);
+    outline-style: solid;
 }
 .status-code.redirect {
     background-color: var(--color-yellow);
 }
+.status-code.redirect.active {
+    outline-width: 3px;
+    outline-color: var(--color-yellow-shadow);
+    outline-style: solid;
+}
 .status-code.client-error {
     background-color: var(--color-orange);
 }
+.status-code.client-error.active {
+    outline-width: 3px;
+    outline-color: var(--color-orange-shadow);
+    outline-style: solid;
+}
 .status-code.server-error {
     background-color: var(--color-red);
+}
+.status-code.server-error.active {
+    outline-width: 3px;
+    outline-color: var(--color-red-shadow);
+    outline-style: solid;
 }

@@ -5,6 +5,7 @@
 @import './datatable.css';
 @import './tabs.css';
 @import './modal.css';
+@import './nav.css';
 
 body {
   min-height: 100vh;

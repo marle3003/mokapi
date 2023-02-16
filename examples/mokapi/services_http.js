@@ -1,5 +1,77 @@
 import {metrics} from "metrics";
 
+const category = {
+    type: "object",
+    properties: {
+        id: {
+            type: "integer",
+            format: "int64",
+        },
+        name: {
+            type: "string"
+        }
+    },
+    xml: {name: "Category"}
+}
+
+const tag = {
+    type: "object",
+    properties: {
+        id: {
+            type: "string",
+            format: "int64"
+        },
+        name: {
+            type: "string"
+        }
+    },
+    xml: {name: "Tag"}
+}
+
+const pet = {
+    type: "object",
+    properties: {
+        id: {
+            type: "integer",
+            format: "int64",
+        },
+        category: {
+            ref: "#/components/schemas/Category",
+            ...category
+        },
+        name: {
+            type: "string",
+            example: "doggie"
+        },
+        photoUrls: {
+            type: "array",
+            xml: {
+                name: "photoUrl",
+                wrapped: true
+            },
+            items: {
+                type: "string"
+            }
+        },
+        tags: {
+            xml: {
+                name: "tag",
+                wrapped: true
+            },
+            items: {
+                ref: "#/components/schemas/Tag",
+                ...tag
+            }
+        },
+        status: {
+            type: "string",
+            description: "pet status in the store",
+            enum: ["available", "pending", "sold"]
+        }
+    },
+    xml: {name: "Pet"}
+}
+
 export let apps = [
     {
         name: "Swagger Petstore",
@@ -87,13 +159,54 @@ export let apps = [
                             {
                                 statusCode: 200,
                                 description: "successful operation",
+                                headers: [
+                                    {
+                                        name: "Expires-After",
+                                        schema: {type: "string", format: "date-time"},
+                                        description: "date in UTC when token expires",
+                                    }
+                                ],
                                 contents: [
                                     {
                                         type: "application/json",
                                         schema: {
                                             type: "array",
                                             items: {
-                                                ref: "#/components/schemas/Pet"
+                                                ref: "#/components/schemas/Pet",
+                                                ...pet
+                                            }
+                                        }
+                                    },
+                                    {
+                                        type: "application/xml",
+                                        schema: {
+                                            type: "array",
+                                            items: {
+                                                ref: "#/components/schemas/Pet",
+                                                ...pet
+                                            },
+                                            xml: {
+                                                wrapped: true
+                                            }
+                                        }
+                                    }
+                                ]
+                            },
+                            {
+                                statusCode: 500,
+                                description: "server error",
+                                contents: [
+                                    {
+                                        type: "application/json",
+                                        schema: {
+                                            type: "object",
+                                            properties: {
+                                                error: {
+                                                    type: "number"
+                                                },
+                                                message: {
+                                                    type: "string"
+                                                }
                                             }
                                         }
                                     }

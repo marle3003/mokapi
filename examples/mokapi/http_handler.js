@@ -3,10 +3,13 @@ import {clusters, events as kafkaEvents} from 'kafka.js'
 import {apps as httpServices, events as httpEvents} from 'services_http'
 import {server as smtpServers} from 'smtp'
 import {metrics} from 'metrics'
+import {fake} from 'faker'
 
 export default function() {
     on('http', function(request, response) {
-        response.headers["Access-Control-Allow-Origin"] = '*'
+        response.headers["Access-Control-Allow-Methods"] = "*"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["Access-Control-Allow-Origin"] = "*"
 
         switch (request.operationId) {
             case 'info':
@@ -43,6 +46,10 @@ export default function() {
                 }else{
                     response.data = e
                 }
+                return true
+            case 'example':
+                console.log('example!!!!!!')
+                response.data = fake(request.body)
                 return true
         }
     }, {tags: {name: "dashboard"}})

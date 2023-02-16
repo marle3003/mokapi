@@ -153,3 +153,23 @@ paths:
             application/json:
               schema:
                 $ref: 'common.yml#/components/schemas/Metrics'
+  /api/schema/example:
+    post:
+      summary: returns example for given schema
+      operationId: example
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {}
+      responses:
+        "200":
+          description: an example for given schema
+          content:
+            application/json:
+              schema: {}
+    options:
+      summary: preflight
+      responses:
+        204:
+          description: no content

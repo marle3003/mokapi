@@ -1,10 +1,10 @@
 declare interface Schema {
-    title: string
+    name: string
     type: string
     format: string
     pattern: string
     description: string
-    properties: {[string]: Schema}
+    properties: Schema[]
     additionalProperties: {[string]: Schema}
     items: Schema
     xml: XmlSchmea

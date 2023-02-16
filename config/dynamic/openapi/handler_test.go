@@ -97,6 +97,16 @@ func TestResolveEndpoint(t *testing.T) {
 				require.Equal(t, 202, rr.Code)
 			},
 		},
+		{"empty response body",
+			func(t *testing.T, f serveHTTP, c *openapi.Config) {
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusNoContent))
+				openapitest.AppendEndpoint("/foo", c, openapitest.WithOperation("get", op))
+				r := httptest.NewRequest("get", "http://localhost/foo", nil)
+				rr := httptest.NewRecorder()
+				f(rr, r)
+				require.Equal(t, 204, rr.Code)
+			},
+		},
 		//
 		// POST
 		//
@@ -445,7 +455,7 @@ func TestResolveEndpoint(t *testing.T) {
 		{"with content-type not supported",
 			func(t *testing.T, f serveHTTP, c *openapi.Config) {
 				op := openapitest.NewOperation(
-					openapitest.WithResponse(http.StatusOK),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("text/plain")),
 					openapitest.WithHeaderParam("id", true))
 				openapitest.AppendEndpoint("/foo", c, openapitest.WithOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)

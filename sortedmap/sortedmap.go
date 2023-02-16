@@ -1,7 +1,9 @@
 package sortedmap
 
 import (
+	"bytes"
 	"container/list"
+	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -106,4 +108,23 @@ func (m *LinkedHashMap) Merge(o *LinkedHashMap) {
 	for it := o.Iter(); it.Next(); {
 		m.Set(it.Key(), it.Value())
 	}
+}
+
+func (m *LinkedHashMap) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	buf.WriteString("{")
+	for it := m.Iter(); it.Next(); {
+		if buf.Len() > 1 {
+			buf.WriteString(",")
+		}
+		fmt.Fprintf(&buf, "\"%s\":", it.Key())
+		value, err := json.Marshal(it.Value())
+		if err != nil {
+			return nil, err
+		}
+		buf.Write(value)
+	}
+	buf.WriteString("}")
+
+	return buf.Bytes(), nil
 }

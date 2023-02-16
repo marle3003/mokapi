@@ -2,7 +2,6 @@ package api
 
 import (
 	"mokapi/config/dynamic/openapi"
-	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/runtime"
 	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
@@ -67,16 +66,6 @@ type requestBody struct {
 type mediaType struct {
 	Type   string      `json:"type"`
 	Schema *schemaInfo `json:"schema"`
-}
-
-type schemaInfo struct {
-	Name        string        `json:"name,omitempty"`
-	Description string        `json:"description,omitempty"`
-	Ref         string        `json:"ref,omitempty"`
-	Type        string        `json:"type"`
-	Properties  []*schemaInfo `json:"properties,omitempty"`
-	Enum        []interface{} `json:"enum,omitempty"`
-	Items       *schemaInfo   `json:"items,omitempty"`
 }
 
 type server struct {
@@ -234,28 +223,4 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 
 	w.Header().Set("Content-Type", "application/json")
 	writeJsonBody(w, result)
-}
-
-func getSchema(s *schema.Ref) *schemaInfo {
-	if s == nil || s.Value == nil {
-		return nil
-	}
-
-	result := &schemaInfo{
-		Description: s.Value.Description,
-		Ref:         s.Ref,
-		Type:        s.Value.Type,
-		Enum:        s.Value.Enum,
-		Items:       getSchema(s.Value.Items),
-	}
-
-	if s.Value.Properties != nil && s.Value.Properties.Value != nil {
-		for it := s.Value.Properties.Value.Iter(); it.Next(); {
-			prop := getSchema(it.Value().(*schema.Ref))
-			prop.Name = it.Key().(string)
-			result.Properties = append(result.Properties, prop)
-		}
-	}
-
-	return result
 }

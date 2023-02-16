@@ -57,18 +57,6 @@ const router = createRouter({
           name: 'httpParameter',
           component: DashboardView,
           meta: {service: 'http'}
-        },
-        {
-          path: '/dashboard/http/services/:service/paths/:path/methods/:method/requestbody/:requestBody',
-          name: 'httpRequestBody',
-          component: DashboardView,
-          meta: {service: 'http'}
-        },
-        {
-          path: '/dashboard/http/services/:service/paths/:path/methods/:method/response/:statuscode',
-          name: 'httpResponse',
-          component: DashboardView,
-          meta: {service: 'http'}
         }
       ]
     },

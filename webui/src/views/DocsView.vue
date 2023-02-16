@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
-import { onBeforeRouteUpdate, useRoute } from 'vue-router';
+import { useRoute } from 'vue-router';
 import Markdown from 'vue3-markdown-it';
 
 const files = import.meta.glob('/src/assets/docs/**/*.md', {as: 'raw', eager: true})
@@ -40,19 +39,6 @@ const content = files[`/src/assets/docs/${file}`]
 </template>
 
 <style scoped>
-.nav-link {
-  color: var(--color-text);
-}
-.nav-link.disabled {
-  color: var(--color-text);
-}
-.nav-link:not(.disabled):hover {
-  color: var(--color-text);
-  background-color: var(--color-background-soft);
-}
-.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
-  background-color: var(--color-background-soft);
-}
 .content p{
   text-align: justify;
 }

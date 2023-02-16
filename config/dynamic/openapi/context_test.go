@@ -20,14 +20,20 @@ func TestContentTypeFromRequest(t *testing.T) {
 			accept:   "",
 			response: openapitest.NewResponse(),
 			validate: func(t *testing.T, ct media.ContentType, mt *openapi.MediaType, err error) {
-				require.EqualError(t, err, "none of requests content type(s) are supported: \"\"")
+				// empty response should not get error
+				require.Equal(t, media.Empty, ct)
+				require.Nil(t, mt)
+				require.Nil(t, err)
 			},
 		},
 		{
 			accept:   "text/plain",
 			response: openapitest.NewResponse(),
 			validate: func(t *testing.T, ct media.ContentType, mt *openapi.MediaType, err error) {
-				require.EqualError(t, err, "none of requests content type(s) are supported: \"text/plain\"")
+				// empty response should not get error
+				require.Equal(t, media.Empty, ct)
+				require.Nil(t, mt)
+				require.Nil(t, err)
 			},
 		},
 		{

@@ -69,12 +69,12 @@ func TestGeneratorString(t *testing.T) {
 		},
 		{
 			"date",
-			"2004-12-07",
+			"1953-01-24",
 			&schema.Schema{Type: "string", Format: "date"},
 		},
 		{
 			"date-time",
-			"2004-12-07T04:14:25Z",
+			"1953-01-24T13:00:35Z",
 			&schema.Schema{Type: "string", Format: "date-time"},
 		},
 		{
@@ -94,7 +94,7 @@ func TestGeneratorString(t *testing.T) {
 		},
 		{
 			"url",
-			"http://www.principalproductize.biz/target",
+			"https://www.dynamiciterate.name/target/seamless",
 			&schema.Schema{Type: "string", Format: "{url}"},
 		},
 		{
@@ -119,7 +119,7 @@ func TestGeneratorString(t *testing.T) {
 		},
 		{
 			"address",
-			"13645 Mrazhaven",
+			"13645 Houston",
 			&schema.Schema{Type: "string", Format: "{zip} {city}"},
 		},
 	}
@@ -144,7 +144,7 @@ func TestGeneratorBool(t *testing.T) {
 	}{
 		{
 			"false",
-			false,
+			true,
 			&schema.Schema{Type: "boolean"},
 		},
 	}
@@ -277,7 +277,7 @@ func TestGeneratorFloat(t *testing.T) {
 		},
 		{
 			"enum",
-			1,
+			2,
 			&schema.Schema{Type: "number", Format: "double", Enum: []interface{}{1, 2, 3, 4}},
 		},
 	}
@@ -301,7 +301,7 @@ func TestGeneratorArray(t *testing.T) {
 	}{
 		{
 			"simple",
-			[]interface{}{},
+			[]interface{}{int32(8), int32(8), int32(6), int32(7), int32(1)},
 			&schema.Schema{Type: "array", Items: &schema.Ref{
 				Value: &schema.Schema{
 					Type: "integer", Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(10)}}},
@@ -315,14 +315,14 @@ func TestGeneratorArray(t *testing.T) {
 		},
 		{
 			"min items",
-			[]interface{}{int32(8), int32(8), int32(6), int32(7), int32(1), int32(8), int32(9), int32(5), int32(3), int32(1)},
+			[]interface{}{int32(8), int32(8), int32(6), int32(7), int32(1), int32(8), int32(9)},
 			&schema.Schema{Type: "array", MinItems: toIntP(5), MaxItems: toIntP(10), Items: &schema.Ref{
 				Value: &schema.Schema{
 					Type: "integer", Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(10)}}},
 		},
 		{
 			"unique items",
-			[]interface{}{int32(8), int32(6), int32(7), int32(1), int32(9), int32(5), int32(3), int32(2), int32(4), int32(10)},
+			[]interface{}{int32(8), int32(6), int32(7), int32(1), int32(9), int32(5), int32(3)},
 			&schema.Schema{Type: "array", MinItems: toIntP(5), MaxItems: toIntP(10), UniqueItems: true,
 				Items: &schema.Ref{
 					Value: &schema.Schema{
@@ -330,7 +330,7 @@ func TestGeneratorArray(t *testing.T) {
 		},
 		{
 			"enum ignores items config",
-			[]interface{}{1, 2, 3},
+			[]interface{}{3, 2, 1},
 			&schema.Schema{Type: "array", MinItems: toIntP(5), MaxItems: toIntP(10), UniqueItems: true,
 				Enum: []interface{}{
 					[]interface{}{1, 2, 3},
@@ -392,7 +392,7 @@ func TestGeneratorObject(t *testing.T) {
 		},
 		{
 			name: "more fields",
-			exp:  map[string]interface{}{"id": int32(-1072427943), "date": "1955-06-05"},
+			exp:  map[string]interface{}{"id": int32(-1072427943), "date": "1992-12-28"},
 			schema: schematest.New("object",
 				schematest.WithProperty("id", schematest.New("integer", schematest.WithFormat("int32"))),
 				schematest.WithProperty("date", schematest.New("string", schematest.WithFormat("date")))),
@@ -402,7 +402,7 @@ func TestGeneratorObject(t *testing.T) {
 			exp: map[string]interface{}{
 				"nested": map[string]interface{}{
 					"id":   int32(-1072427943),
-					"date": "1955-06-05",
+					"date": "1992-12-28",
 				},
 			},
 			schema: schematest.New("object",
@@ -416,7 +416,12 @@ func TestGeneratorObject(t *testing.T) {
 		{
 			name: "dictionary",
 			exp: map[string]interface{}{
-				"cat": "MaRxHkiJBPtapWY",
+				"fly":   "MaRxHkiJBPtapWY",
+				"gauva": "eDjRRGUnsAxdBXG",
+				"off":   "nPAKaXSMQFpZysV",
+				"table": "GyyvqqdHueUxcvU",
+				"them":  "kWwfoRLOPxLIokQ",
+				"why":   "nSMKgtlxwnqhqcl",
 			},
 			schema: schematest.New("object",
 				schematest.WithAdditionalProperties(schematest.New("string"))),
@@ -488,7 +493,7 @@ func TestGenerator_AnyOf(t *testing.T) {
 				require.True(t, ok, "should be an array")
 				require.Len(t, a, 1)
 				m := a[0].(*sortedmap.LinkedHashMap)
-				require.Equal(t, int64(4), m.Get("bar"))
+				require.Equal(t, "RMaRxHkiJBPtapW", m.Get("foo"))
 			},
 		},
 	}

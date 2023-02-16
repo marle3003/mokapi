@@ -2,9 +2,8 @@
 import { computed, type Ref } from 'vue'
 import { useRoute } from 'vue-router';
 import { useService } from '@/composables/services';
-import HttpParametersCard from './HttpParametersCard.vue';
-import HttpRequestBodyCard from './HttpRequestBodyCard.vue';
-import HttpResponseCard from './HttpResponseCard.vue';
+import HttpRequestCard from './request/HttpRequestCard.vue';
+import HttpResponseCard from './Response/HttpResponseCard.vue';
 import Requests from './Requests.vue';
 import Loading from '@/components/Loading.vue'
 import Markdown from 'vue3-markdown-it';
@@ -74,8 +73,7 @@ const operation = computed(() => {
             </div>
         </div>
         <div class="card-group">
-            <http-parameters-card :service="service" :path="path" :operation="operation" />
-            <http-request-body-card :service="service" :path="path" :operation="operation" />
+            <http-request-card :operation="operation" />
         </div>
         <div class="card-group">
             <http-response-card  :service="service" :path="path" :operation="operation" />
