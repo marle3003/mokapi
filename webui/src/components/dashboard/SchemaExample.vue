@@ -1,16 +1,14 @@
 <script setup lang="ts">
-import { usePrettyLanguage } from '@/composables/usePrettyLanguage';
 import { useGuid } from '@/composables/guid';
 import type { PropType } from 'vue';
-import { useFetch } from '@/composables/fetch';
+import { useExample } from '@/composables/example';
 
 const props = defineProps({
     schema: { type: Object as PropType<Schema>, required: true }
 })
 
 const {createGuid} = useGuid();
-const {formatLanguage} = usePrettyLanguage()
-const example = useFetch('/api/schema/example', {method: 'POST', body: JSON.stringify(props.schema), headers: {'Content-Type': 'application/json', 'Accept': 'application/json'}}, false)
+const example = useExample().fetchExample(props.schema)
 
 const id = createGuid()
 </script>
@@ -21,9 +19,7 @@ const id = createGuid()
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-body">
-                    <div class="codeBlock">
-                        <pre v-highlightjs="formatLanguage(JSON.stringify(example.data), 'application/json')"><code class="json"></code></pre>
-                    </div>
+                    <pre v-highlightjs="example"><code class="json"></code></pre>
                 </div>
             </div>
         </div>

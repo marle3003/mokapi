@@ -59,9 +59,10 @@ type kafkaContact struct {
 }
 
 type topic struct {
-	Name        string      `json:"name"`
-	Description string      `json:"description"`
-	Partitions  []partition `json:"partitions"`
+	Name        string       `json:"name"`
+	Description string       `json:"description"`
+	Partitions  []partition  `json:"partitions"`
+	Configs     *topicConfig `json:"configs"`
 }
 
 type partition struct {
@@ -75,6 +76,13 @@ type partition struct {
 type broker struct {
 	Name string `json:"name"`
 	Addr string `json:"addr"`
+}
+
+type topicConfig struct {
+	Key         *schemaInfo `json:"key"`
+	Message     *schemaInfo `json:"message"`
+	Header      *schemaInfo `json:header`
+	MessageType string      `json:messageType`
 }
 
 func (h *handler) getKafkaServices(w http.ResponseWriter, _ *http.Request) {
@@ -163,11 +171,22 @@ func newTopic(s *store.Store, t *store.Topic, config *asyncApi.Channel) topic {
 	for _, p := range t.Partitions {
 		partitions = append(partitions, newPartition(s, p))
 	}
-	return topic{
+	result := topic{
 		Name:        t.Name,
 		Description: config.Description,
 		Partitions:  partitions,
 	}
+
+	if config.Publish.Message.Value != nil {
+		result.Configs = &topicConfig{
+			Key:         getSchema(config.Publish.Message.Value.Bindings.Kafka.Key),
+			Message:     getSchema(config.Publish.Message.Value.Payload),
+			Header:      nil,
+			MessageType: config.Publish.Message.Value.ContentType,
+		}
+	}
+
+	return result
 }
 
 func newGroup(g *store.Group) group {

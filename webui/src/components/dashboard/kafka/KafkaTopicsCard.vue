@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useMetrics } from '@/composables/metrics';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import type { PropType } from 'vue';
@@ -11,6 +11,7 @@ const props = defineProps({
 const {sum} = useMetrics()
 const {format} = usePrettyDates()
 const router = useRouter()
+const route = useRoute()
 
 function messages(service: Service, topic: KafkaTopic){
     return sum(service.metrics, 'kafka_messages_total{', {name: 'topic', value: topic.name})
@@ -28,8 +29,9 @@ function goToTopic(topic: KafkaTopic){
         name: 'kafkaTopic',
         params: {
           service: props.service.name,
-          topic: topic.name
+          topic: topic.name,
         },
+        query: {refresh: route.query.refresh}
     })
 }
 </script>

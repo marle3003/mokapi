@@ -9,7 +9,7 @@ func init() {
 		kafka.ApiReg{
 			ApiKey:     kafka.Offset,
 			MinVersion: 0,
-			MaxVersion: 6},
+			MaxVersion: 7},
 		&Request{},
 		&Response{},
 		6,
@@ -56,6 +56,6 @@ type ResponsePartition struct {
 	Timestamp       int64            `kafka:"min=1"`
 	Offset          int64            `kafka:"min=1"`
 	LeaderEpoch     int32            `kafka:"min=4"`
-	OldStyleOffsets int64            `kafka:"max=0"`
+	OldStyleOffsets []int64          `kafka:"max=0"`
 	TagFields       map[int64]string `kafka:"type=TAG_BUFFER,min=6"`
 }

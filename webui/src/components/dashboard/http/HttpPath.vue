@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, type Ref } from 'vue'
+import { onUnmounted, computed, type Ref } from 'vue'
 import { useRoute } from 'vue-router';
 import { useService } from '@/composables/services';
 import HttpMethodsCard from './HttpOperationsCard.vue';
@@ -10,7 +10,7 @@ import '@/assets/http.css'
 const {fetchService} = useService()
 const serviceName = useRoute().params.service?.toString()
 const pathName = useRoute().params.path?.toString()
-const {service, isLoading} = <{service: Ref<HttpService | null>, isLoading: Ref<boolean>}>fetchService(serviceName, 'http')
+const {service, isLoading, close} = <{service: Ref<HttpService | null>, isLoading: Ref<boolean>, close: () => void}>fetchService(serviceName, 'http')
 let path = computed(() => {
     if (!service.value){
         return null
@@ -21,6 +21,9 @@ let path = computed(() => {
         }
     }
     return null
+})
+onUnmounted(() => {
+    close()
 })
 </script>
 

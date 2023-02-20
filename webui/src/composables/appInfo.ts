@@ -9,6 +9,7 @@ interface AppInfoResponse {
     data: AppInfo
     isLoading: Boolean
     error: string
+    close: () => void
 }
 
 export function useAppInfo() : AppInfoResponse {

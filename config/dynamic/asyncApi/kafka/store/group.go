@@ -1,6 +1,9 @@
 package store
 
-import "mokapi/kafka"
+import (
+	log "github.com/sirupsen/logrus"
+	"mokapi/kafka"
+)
 
 type GroupState int
 
@@ -73,12 +76,13 @@ func (g *Group) Commit(topic string, partition int, offset int64) {
 	if g.Commits == nil {
 		g.Commits = make(map[string]map[int]int64)
 	}
-	t, ok := g.Commits[topic]
+	topicCommits, ok := g.Commits[topic]
 	if !ok {
-		t = make(map[int]int64)
-		g.Commits[topic] = t
+		topicCommits = make(map[int]int64)
+		g.Commits[topic] = topicCommits
 	}
-	t[partition] = offset
+	topicCommits[partition] = offset
+	log.Infof("kafka: group %v committed for partition %v offset %v", g.Name, partition, offset)
 }
 
 func (g *Group) Offset(topic string, partition int) int64 {

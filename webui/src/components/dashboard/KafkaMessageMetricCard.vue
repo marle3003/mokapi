@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watchEffect, type PropType } from 'vue'
+import { ref, watchEffect, onUnmounted, type PropType } from 'vue'
 import MetricCard from './MetricCard.vue'
 import { useService } from '@/composables/services';
 import { useMetrics } from '@/composables/metrics';
@@ -7,7 +7,7 @@ import { useMetrics } from '@/composables/metrics';
 const {fetchServices} = useService()
 const {sum} = useMetrics()
 const messages = ref(0)
-const services = fetchServices('kafka')
+const {services, close} = fetchServices('kafka')
 watchEffect(() =>{
     messages.value = 0
     for (let service of services.value){
@@ -21,7 +21,9 @@ watchEffect(() =>{
 const props = defineProps({
     labels: { type: Object as PropType<Label[]> },
 })
-
+onUnmounted(() => {
+    close()
+})
 </script>
 
 <template>

@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import { useAppInfo } from '../composables/appInfo'
 import { RouterLink } from 'vue-router'
+import { onUnmounted } from 'vue';
 
 const title = import.meta.env.VITE_APP_TITLE
 const appInfo = useAppInfo()
+onUnmounted(() => {
+    appInfo.close()
+})
 </script>
 
 <template>

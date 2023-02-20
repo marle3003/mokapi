@@ -38,23 +38,28 @@ type Segment struct {
 }
 
 func newPartition(index int, brokers Brokers, logger LogRecord, trigger Trigger, topic *Topic) *Partition {
-	replicas := make([]int, 0, len(brokers))
+	brokerList := make([]int, 0, len(brokers))
 	for i, _ := range brokers {
-		replicas = append(replicas, i)
+		brokerList = append(brokerList, i)
 	}
 	p := &Partition{
 		Index:    index,
 		Head:     0,
 		Tail:     0,
 		Segments: make(map[int64]*Segment),
-		Replicas: replicas,
 		logger:   logger,
 		trigger:  trigger,
 		Topic:    topic,
 	}
-	if len(replicas) > 0 {
-		p.Leader = replicas[0]
+	if len(brokerList) > 0 {
+		p.Leader = brokerList[0]
 	}
+	if len(brokerList) > 1 {
+		p.Replicas = brokerList[1:]
+	} else {
+		p.Replicas = make([]int, 0)
+	}
+
 	return p
 }
 

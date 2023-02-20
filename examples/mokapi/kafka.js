@@ -1,6 +1,40 @@
 import {fake} from 'faker'
 import {metrics} from 'metrics';
 
+const Product = {
+    type: "object",
+    properties: {
+        id: {
+            type: "string",
+        },
+        name: {
+            type: "string"
+        },
+        description: {
+            type: "string"
+        },
+        features: {
+            type: "string"
+        },
+        price: {
+            type: "number"
+        },
+        keywords: {
+            type: "string"
+        },
+        url: {
+            type: "string"
+        },
+        category: {
+            type: "string"
+        },
+        subcategory: {
+            type: "string"
+        }
+    }
+}
+
+
 export let clusters = [
     {
         name:'Kafka World',
@@ -20,7 +54,7 @@ export let clusters = [
         ],
         topics:[
             {
-                name:'foo',
+                name:'mokapi.shop.products',
                 description: fake({type: 'string', format: '{sentence:10}'}),
                 partitions: [
                     {
@@ -44,7 +78,12 @@ export let clusters = [
                         leader: {name: 'foo', addr: 'localhost:9002'},
                         segments: 1
                     }
-                ]
+                ],
+                configs: {
+                    key: {type: "string"},
+                    message: Product,
+                    messageType: "application/json"
+                }
             },
             {
                 name:'bar',
@@ -85,7 +124,7 @@ export let clusters = [
                 leader:'julie',
                 state:'Stable',
                 protocol:'Range',
-                topics: ['foo','bar'],
+                topics: ['mokapi.shop.products','bar'],
             },
             {
                 name:'bar',
@@ -116,14 +155,49 @@ export let events = [
          traits: {
              namespace: "kafka",
              name: "Kafka World",
-             topic: "foo"
+             topic: "mokapi.shop.products"
          },
          time: '2023-02-13T09:49:25.482366+01:00',
          data: {
              offset: 0,
-             key: "foo",
-             message: "{\"id\": 12345}",
+             key: "GGOEWXXX0827",
+             message: `{
+                         "id": "GGOEWXXX0827",
+                         "name": "Waze Women's Short Sleeve Tee",
+                         "description": "Made of soft tri-blend jersey fabric, this great t-shirt will help you find your Waze. Made in USA.",
+                         "features": "<p>Jersey knit</p>\\n<p>37.5% cotton, 50% polyester, 12.5% rayon</p>\\n<p>Made in the USA</p>",
+                         "price": "18.99",
+                         "keywords": "Waze Women's Short Sleeve Tee, Waze Short Sleeve Tee, Waze Women's Tees, Waze Women's tee, waze ladies tees, waze ladies tee, waze short sleeve tees, waze short sleeve tee",
+                         "url": "Waze+Womens+Short+Sleeve+Tee",
+                         "category": "apparel",
+                         "subcategory": "apparel"
+                         }`,
              partition: 0
          }
-     }
+     },
+    {
+        id: "323456",
+        traits: {
+            namespace: "kafka",
+            name: "Kafka World",
+            topic: "mokapi.shop.products"
+        },
+        time: '2023-02-13T09:49:25.482366+01:00',
+        data: {
+            offset: 1,
+            key: "GGOEWXXX0828",
+            message: `{
+                        "id": "GGOEWXXX0828",
+                        "name": "Waze Men's Short Sleeve Tee",
+                        "description": "Made of soft tri-blend jersey fabric, this great t-shirt will help you find your Waze. Made in USA.",
+                        "features": "<p>Jersey knit</p>\\n<p>37.5% cotton, 50% polyester, 12.5% rayon</p>\\n<p>Made in the USA</p>",
+                        "price": "18.99",
+                        "keywords": "Waze Men's Short Sleeve Tee, Waze Short Sleeve Tee, Waze Men's Tees, Waze Men's tee, waze mens tees, waze mens tee, waze short sleeve tees, waze short sleeve tee",
+                        "url": "Waze+Mens+Short+Sleeve+Tee",
+                        "category": "apparel",
+                        "subcategory": "apparel"
+                      }`,
+            partition: 1
+        }
+    }
  ]

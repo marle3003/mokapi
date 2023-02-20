@@ -7,6 +7,13 @@ declare interface KafkaTopic {
     name: string
     description: string
     partitions: KafkaPartition[]
+    configs: KafkaTopicConfig
+}
+
+declare interface KafkaTopicConfig{
+    key: Schema
+    message: Schema
+    messageType: string
 }
 
 declare interface KafkaPartition {

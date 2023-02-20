@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watchEffect } from 'vue'
+import { ref, watchEffect, onUnmounted } from 'vue'
 import { useService } from '@/composables/services';
 import { useMetrics } from '@/composables/metrics';
 
@@ -12,7 +12,7 @@ const {fetchServices} = useService()
 const {sum} = useMetrics()
 const requests = ref(0)
 const errors = ref(0)
-const services = fetchServices('http')
+const {services, close} = fetchServices('http')
 watchEffect(() =>{
     requests.value = 0
     errors.value = 0
@@ -20,6 +20,9 @@ watchEffect(() =>{
         requests.value += sum(service.metrics, 'http_requests_total')
         errors.value += sum(service.metrics, 'http_requests_errors_total')
     }
+})
+onUnmounted(() => {
+    close()
 })
 </script>
 

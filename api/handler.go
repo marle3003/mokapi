@@ -29,8 +29,9 @@ type info struct {
 type serviceType string
 
 var (
-	ServiceHttp  serviceType = "http"
-	ServiceKafka serviceType = "kafka"
+	ServiceHttp    serviceType = "http"
+	ServiceKafka   serviceType = "kafka"
+	FileExtensions             = []string{".html", ".css", ".js"}
 )
 
 type service struct {
@@ -100,14 +101,14 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case p == "/api/schema/example":
 		h.getExampleData(w, r)
 	case h.fileServer != nil:
-		if len(filepath.Ext(r.URL.Path)) == 0 {
-			r.URL.Path = "/"
-		} else {
+		if isFileExtension(filepath.Ext(r.URL.Path)) {
 			if strings.ToLower(filepath.Base(r.URL.Path)) == "index.html" {
 				r.URL.Path = "/index.html"
 			} else {
 				r.URL.Path = "/assets/" + filepath.Base(r.URL.Path)
 			}
+		} else {
+			r.URL.Path = "/"
 		}
 		h.fileServer.ServeHTTP(w, r)
 	default:
@@ -159,4 +160,13 @@ func writeJsonBody(w http.ResponseWriter, i interface{}) {
 	if err != nil {
 		writeError(w, err, http.StatusInternalServerError)
 	}
+}
+
+func isFileExtension(ext string) bool {
+	for _, v := range FileExtensions {
+		if strings.ToLower(ext) == v {
+			return true
+		}
+	}
+	return false
 }

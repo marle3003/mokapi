@@ -6,10 +6,11 @@ import HttpParameters from './HttpEventParameters.vue'
 import HttpBody from './HttpBody.vue'
 import HttpHeader from './HttpEventHeader.vue'
 import Loading from '@/components/Loading.vue'
+import { onUnmounted } from 'vue'
 
 const {fetchById} = useEvents()
 const eventId = useRoute().params.id as string
-const {event, isLoading} = fetchById(eventId)
+const {event, isLoading, close} = fetchById(eventId)
 
 function eventData() {
     return <HttpEventData>event.value?.data
@@ -21,6 +22,9 @@ function isInitLoading() {
 function getResponseContentType(): string {
     return eventData().response.headers['Content-Type'] ?? ''
 }
+onUnmounted(() => {
+    close()
+})
 </script>
 
 <template>

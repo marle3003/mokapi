@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { computed, type Ref } from 'vue'
+import { computed, onUnmounted, type Ref } from 'vue'
 import { useRoute } from 'vue-router';
 import { useService } from '@/composables/services';
 import HttpRequestCard from './request/HttpRequestCard.vue';
-import HttpResponseCard from './Response/HttpResponseCard.vue';
+import HttpResponseCard from './response/HttpResponseCard.vue';
 import Requests from './Requests.vue';
 import Loading from '@/components/Loading.vue'
 import Markdown from 'vue3-markdown-it';
@@ -14,7 +14,7 @@ const route = useRoute()
 const serviceName = route.params.service?.toString()
 const pathName = route.params.path?.toString()
 const operationName = route.params.method?.toString()
-const {service, isLoading} = <{service: Ref<HttpService | null>, isLoading: Ref<boolean>}>fetchService(serviceName, 'http')
+const {service, isLoading, close} = <{service: Ref<HttpService | null>, isLoading: Ref<boolean>, close: () => void}>fetchService(serviceName, 'http')
 let path = computed(() => {
     if (!service.value){
         return null
@@ -36,6 +36,9 @@ const operation = computed(() => {
         }
     }
     return null
+})
+onUnmounted(() => {
+    close()
 })
 </script>
 

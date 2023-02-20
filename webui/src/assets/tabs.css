@@ -10,3 +10,31 @@
     background-color: var(--color-tabs-background);
   
 }
+
+.modal .tab-content {
+    display: flex;
+}
+.modal .tab-content .tab-pane {
+    display: block;
+    visibility: hidden;
+    margin-right: -100%;
+    width: 100%;
+}
+.modal .tab-content > .active {
+    visibility: visible;
+}
+
+.tab-sm li {
+    padding-right: 0;
+}
+.tab-sm li:not(:first-child) {
+    padding-left: 0;
+}
+.tab-sm li + li::before {
+    padding-right: 7px;
+    padding-left: 7px;
+    content: " | ";
+}
+.tab-sm li.disabled {
+    color: var(--color-text-light)
+}

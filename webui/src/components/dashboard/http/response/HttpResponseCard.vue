@@ -54,7 +54,7 @@ function selectedContentChange(event: any, statusCode: number){
                         <div v-if="response.contents || response.headers">
                             <ul class="nav nav-pills response-tab" role="tabList">
                                 <li class="nav-link" id="pills-body-tab" :class="response.contents ? 'active' : 'disabled'" data-bs-toggle="pill" data-bs-target="#pills-body" type="button" role="tab" aria-controls="pills-body" aria-selected="true">Body</li>
-                                <li class="nav-link" id="pills-header-tab" :class="response.headers ? (response.contents ? '' : 'active') : 'disabled'" data-bs-toggle="pill" data-bs-target="#pills-header" type="button" role="tab" aria-controls="pills-header" aria-selected="true">Headers</li>
+                                <li class="nav-link" id="pills-header-tab" :class="response.headers ? (response.contents ? '' : 'active') : 'disabled'" data-bs-toggle="pill" data-bs-target="#pills-header" type="button" role="tab" aria-controls="pills-header" aria-selected="false">Headers</li>
                             </ul>
                             <div class="tab-content" id="pills-tabContent">
                                 <div v-if="response.contents" class="tab-pane fade" :class="response.contents ? 'show active' : ''" id="pills-body" role="tabpanel" aria-labelledby="pills-body-tab">
@@ -63,13 +63,13 @@ function selectedContentChange(event: any, statusCode: number){
                                         <pre v-highlightjs="formatLanguage(JSON.stringify(selected.contents[response.statusCode].schema), 'application/json')" class="overflow-auto" style="max-height: 250px;"><code class="json"></code></pre>
                                     </p>
                                     <div class="row">
-                                        <div class="col-auto">
+                                        <div class="col-auto pe-2">
                                             <schema-expand :schema="selected.contents[response.statusCode].schema" />
                                         </div>
-                                        <div class="col-auto">
+                                        <div class="col-auto px-2">
                                             <schema-example :schema="selected.contents[response.statusCode].schema" />
                                         </div>
-                                        <div class="col-auto">
+                                        <div class="col-auto px-2">
                                             <select v-if="response.contents.length > 0" class="form-select form-select-sm" aria-label=".form-select-sm example" @change="selectedContentChange($event, response.statusCode)">
                                                 <option v-for="content in response.contents">{{ content.type }}</option>
                                             </select>

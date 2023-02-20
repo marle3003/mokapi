@@ -21,7 +21,6 @@ func TestMetadata(t *testing.T) {
 		{
 			"default",
 			func(t *testing.T, s *store.Store) {
-				//b.Apply(asyncapitest.NewConfig(asyncapitest.WithChannel("foo", asyncapitest.WithChannelKafka("partitions", "1"))))
 				s.Update(asyncapitest.NewConfig(
 					asyncapitest.WithServer("", "kafka", "127.0.0.1:9092"),
 					asyncapitest.WithChannel("foo"),
@@ -50,10 +49,8 @@ func TestMetadata(t *testing.T) {
 				require.Len(t, res.Topics[0].Partitions, 1)
 				require.Equal(t, int32(0), res.Topics[0].Partitions[0].PartitionIndex)
 				require.Equal(t, int32(0), res.Topics[0].Partitions[0].LeaderId) // default broker id is 0
-				require.Len(t, res.Topics[0].Partitions[0].ReplicaNodes, 1)
-				require.Equal(t, int32(0), res.Topics[0].Partitions[0].ReplicaNodes[0])
-				require.Len(t, res.Topics[0].Partitions[0].IsrNodes, 1)
-				require.Equal(t, int32(0), res.Topics[0].Partitions[0].IsrNodes[0])
+				require.Len(t, res.Topics[0].Partitions[0].ReplicaNodes, 0)
+				require.Len(t, res.Topics[0].Partitions[0].IsrNodes, 0)
 				require.False(t, res.Topics[0].IsInternal)
 
 				require.False(t, kafka.ClientFromContext(r).AllowAutoTopicCreation)

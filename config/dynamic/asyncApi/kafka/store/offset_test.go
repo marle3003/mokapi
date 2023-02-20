@@ -188,6 +188,39 @@ func TestOffsets(t *testing.T) {
 				require.Equal(t, kafka.UnknownTopicOrPartition, p.ErrorCode)
 			},
 		},
+		{
+			"version 0",
+			func(t *testing.T, s *store.Store) {
+				s.Update(asyncapitest.NewConfig(
+					asyncapitest.WithChannel("foo")))
+				s.Topic("foo").Partition(0).Write(kafka.RecordBatch{
+					Records: []kafka.Record{
+						{
+							Key:   kafka.NewBytes([]byte("foo")),
+							Value: kafka.NewBytes([]byte("bar")),
+						},
+					},
+				})
+				rr := kafkatest.NewRecorder()
+				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 0, &offset.Request{
+					Topics: []offset.RequestTopic{
+						{
+							Name: "foo",
+							Partitions: []offset.RequestPartition{
+								{
+									Timestamp:     kafka.Latest,
+									MaxNumOffsets: 1,
+								},
+							},
+						},
+					}}))
+
+				res, ok := rr.Message.(*offset.Response)
+				require.True(t, ok)
+				p := res.Topics[0].Partitions[0]
+				require.Equal(t, []int64{int64(1)}, p.OldStyleOffsets)
+			},
+		},
 	}
 
 	t.Parallel()
