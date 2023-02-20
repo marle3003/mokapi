@@ -24,8 +24,8 @@ func TestServer(t *testing.T) {
 			fn: func(t *testing.T) {
 				server, err := New(&smtp.Config{Server: "smtp://127.0.0.1:12345"}, nil, &eventEmitter{})
 				require.NoError(t, err)
-				t.Cleanup(server.Stop)
 				err = server.Start()
+				t.Cleanup(server.Stop)
 				require.NoError(t, err)
 
 				err = smtptest.SendMail("foo@foo.bar", "bar@foo.bar", "smtp://127.0.0.1:12345")
@@ -37,10 +37,10 @@ func TestServer(t *testing.T) {
 			fn: func(t *testing.T) {
 				server, err := New(&smtp.Config{}, nil, &eventEmitter{})
 				require.NoError(t, err)
-				t.Cleanup(server.Stop)
 				l, err := net.Listen("tcp", "127.0.0.1:")
 				require.NoError(t, err)
 				server.StartWith(l)
+				t.Cleanup(server.Stop)
 
 				err = smtptest.SendMail("foo@foo.bar", "bar@foo.bar", fmt.Sprintf("smtp://%v", l.Addr().String()))
 				require.NoError(t, err)
@@ -51,13 +51,13 @@ func TestServer(t *testing.T) {
 			fn: func(t *testing.T) {
 				server, err := New(&smtp.Config{}, nil, &eventEmitter{})
 				require.NoError(t, err)
-				t.Cleanup(server.Stop)
 				store, err := cert.NewStore(&static.Config{})
 				require.NoError(t, err)
 				tlsConfig := &tls.Config{GetCertificate: store.GetCertificate}
 				l, err := tls.Listen("tcp", "127.0.0.1:", tlsConfig)
 				require.NoError(t, err)
 				server.StartWith(l)
+				t.Cleanup(server.Stop)
 
 				err = smtptest.SendMail(
 					"foo@foo.bar",

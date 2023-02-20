@@ -114,7 +114,7 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 
 	for _, data := range testdata {
 		t.Run(data.name, func(t *testing.T) {
-			server := NewHttpServer("0")
+			server := NewHttpServer("0", NewServerAliases())
 			s := httptest.NewServer(server)
 			defer s.Close()
 
@@ -123,6 +123,78 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 			data.fn(t, server, u.Port())
 		})
 
+	}
+}
+
+func TestHttpServer_ServerAlias2(t *testing.T) {
+	for _, tc := range []struct {
+		name                 string
+		serverName           string
+		aliases              []string
+		request              string
+		shouldHaveStatusCode int
+	}{
+		{
+			name:                 "mokapi.com with alias localhost",
+			serverName:           "mokapi.com",
+			aliases:              []string{"mokapi.com=localhost"},
+			request:              "http://localhost",
+			shouldHaveStatusCode: http.StatusOK,
+		},
+		{
+			name:                 "mokapi.com with alias mokapi.io",
+			serverName:           "mokapi.com",
+			aliases:              []string{"mokapi.com=mokapi.io"},
+			request:              "http://mokapi.io",
+			shouldHaveStatusCode: http.StatusOK,
+		},
+		{
+			name:                 "mokapi.com with alias *",
+			serverName:           "mokapi.com",
+			aliases:              []string{"mokapi.com=*"},
+			request:              "http://mokapi.io",
+			shouldHaveStatusCode: http.StatusOK,
+		},
+		{
+			name:                 "* with alias *",
+			serverName:           "mokapi.com",
+			aliases:              []string{"*=*"},
+			request:              "http://mokapi.io",
+			shouldHaveStatusCode: http.StatusOK,
+		},
+		{
+			name:                 "* with alias mokapi.io",
+			serverName:           "mokapi.com",
+			aliases:              []string{"*=mokapi.io"},
+			request:              "http://mokapi.io",
+			shouldHaveStatusCode: http.StatusOK,
+		},
+		{
+			name:                 "alias not matches",
+			serverName:           "mokapi.com",
+			aliases:              []string{"mokapi.com=mokapi.io"},
+			request:              "http://mokapi.net",
+			shouldHaveStatusCode: http.StatusNotFound,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			aliases := NewServerAliases()
+			err := aliases.Parse(tc.aliases)
+			require.NoError(t, err)
+			server := NewHttpServer("0", aliases)
+
+			err = server.AddOrUpdate(&HttpService{
+				Url:     mustParseUrl("http://" + tc.serverName),
+				Handler: &testHandler{},
+				Name:    "foo",
+			})
+			require.NoError(t, err)
+			r := httptest.NewRequest(http.MethodGet, tc.request, nil)
+			w := httptest.NewRecorder()
+			server.ServeHTTP(w, r)
+			res := w.Result()
+			require.Equal(t, tc.shouldHaveStatusCode, res.StatusCode)
+		})
 	}
 }
 

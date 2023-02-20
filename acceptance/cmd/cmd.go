@@ -12,6 +12,7 @@ import (
 	"mokapi/safe"
 	"mokapi/server"
 	"mokapi/server/cert"
+	"mokapi/server/service"
 )
 
 type Cmd struct {
@@ -28,22 +29,26 @@ func Start(cfg *static.Config) (*Cmd, error) {
 
 	watcher := dynamic.NewConfigWatcher(cfg)
 
+	serverAliases := service.NewServerAliases()
+	if err := serverAliases.Parse(cfg.ServerAlias); err != nil {
+		return nil, err
+	}
+
 	certStore, err := cert.NewStore(cfg)
 	if err != nil {
 		return nil, err
 	}
-	http := make(server.HttpServers)
 	mail := make(server.SmtpServers)
 	directories := make(server.LdapDirectories)
 	scriptEngine := engine.New(watcher, app)
 
-	managerHttp := server.NewHttpManager(http, scriptEngine, certStore, app)
+	http := server.NewHttpManager(scriptEngine, certStore, app, serverAliases)
 	kafka := server.NewKafkaManager(scriptEngine, app)
 	managerLdap := server.NewLdapDirectoryManager(directories, scriptEngine, certStore, app)
 
 	watcher.AddListener(func(cfg *common.Config) {
 		kafka.UpdateConfig(cfg)
-		managerHttp.Update(cfg)
+		http.Update(cfg)
 		mail.UpdateConfig(cfg, certStore, scriptEngine)
 		managerLdap.UpdateConfig(cfg)
 		if err := scriptEngine.AddScript(cfg); err != nil {
@@ -52,7 +57,7 @@ func Start(cfg *static.Config) (*Cmd, error) {
 	})
 
 	if u, err := api.BuildUrl(cfg.Api); err == nil {
-		err = managerHttp.AddService("api", u, api.New(app, cfg.Api), true)
+		err = http.AddService("api", u, api.New(app, cfg.Api), true)
 		if err != nil {
 			return nil, err
 		}

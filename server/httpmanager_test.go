@@ -13,6 +13,7 @@ import (
 	"mokapi/engine"
 	"mokapi/runtime"
 	"mokapi/server/cert"
+	"mokapi/server/service"
 	"mokapi/try"
 	"net/url"
 	"testing"
@@ -24,11 +25,9 @@ func TestHttpServers_Monitor(t *testing.T) {
 	store, err := cert.NewStore(&static.Config{})
 	require.NoError(t, err)
 
-	servers := HttpServers{}
-	defer servers.Stop()
-
 	app := runtime.New()
-	m := NewHttpManager(servers, &engine.Engine{}, store, app)
+	m := NewHttpManager(&engine.Engine{}, store, app, service.NewServerAliases())
+	defer m.Stop()
 
 	port, err := try.GetFreePort()
 	require.NoError(t, err)
@@ -83,7 +82,6 @@ func TestHttpManager_Update(t *testing.T) {
 				c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: fmt.Sprintf("http://:%v", port)}}}
 				m.Update(&common.Config{Data: c, Url: MustParseUrl("foo.yml")})
 
-				require.Contains(t, m.Servers, fmt.Sprintf("%v", port))
 				entries := hook.Entries
 				require.Len(t, entries, 3)
 				require.Equal(t, fmt.Sprintf("adding new host '' on binding :%v", port), entries[0].Message)
@@ -95,7 +93,6 @@ func TestHttpManager_Update(t *testing.T) {
 				c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: "http://localhost:foo"}}}
 				m.Update(&common.Config{Data: c, Url: MustParseUrl("foo.yml")})
 
-				require.Len(t, m.Servers, 0)
 				entries := hook.Entries
 				require.Len(t, entries, 2)
 				require.Equal(t, "error foo.yml: parse \"http://localhost:foo\": invalid port \":foo\" after host", entries[0].Message)
@@ -106,7 +103,6 @@ func TestHttpManager_Update(t *testing.T) {
 				c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: "$://"}}}
 				m.Update(&common.Config{Data: c, Url: MustParseUrl("foo.yml")})
 
-				require.Len(t, m.Servers, 0)
 				entries := hook.Entries
 				require.Len(t, entries, 2)
 				require.Equal(t, "error foo.yml: parse \"$://\": first path segment in URL cannot contain colon", entries[0].Message)
@@ -122,7 +118,6 @@ func TestHttpManager_Update(t *testing.T) {
 				c = &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "bar"}, Servers: []*openapi.Server{{Url: url + "/foo"}}}
 				m.Update(&common.Config{Data: c, Url: MustParseUrl("foo.yml")})
 
-				require.Len(t, m.Servers, 1)
 				entries := hook.Entries
 				require.Len(t, entries, 4)
 				require.Equal(t, fmt.Sprintf("adding new host '' on binding :%v", port), entries[0].Message)
@@ -140,10 +135,8 @@ func TestHttpManager_Update(t *testing.T) {
 			store, err := cert.NewStore(&static.Config{})
 			require.NoError(t, err)
 
-			servers := HttpServers{}
-			defer servers.Stop()
-
-			m := NewHttpManager(servers, &engine.Engine{}, store, runtime.New())
+			m := NewHttpManager(&engine.Engine{}, store, runtime.New(), service.NewServerAliases())
+			defer m.Stop()
 
 			data.fn(t, m, hook)
 		})

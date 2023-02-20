@@ -5,12 +5,13 @@ import (
 )
 
 type Config struct {
-	Log        *MokApiLog
-	ConfigFile string
-	Providers  Providers
-	Api        Api
-	RootCaCert tls.FileOrContent
-	RootCaKey  tls.FileOrContent
+	Log         *MokApiLog
+	ConfigFile  string
+	Providers   Providers
+	Api         Api
+	RootCaCert  tls.FileOrContent
+	RootCaKey   tls.FileOrContent
+	ServerAlias []string
 }
 
 func NewConfig() *Config {

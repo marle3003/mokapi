@@ -17,7 +17,7 @@ func TestFlagDecoder_Decode(t *testing.T) {
 					Name string
 				}{}
 				d := &FlagDecoder{}
-				err := d.Decode(map[string]string{"name": "foobar"}, s)
+				err := d.Decode(map[string][]string{"name": {"foobar"}}, s)
 				require.NoError(t, err)
 				require.Equal(t, "foobar", s.Name)
 			},
@@ -30,7 +30,7 @@ func TestFlagDecoder_Decode(t *testing.T) {
 					Flag2 bool
 				}{}
 				d := &FlagDecoder{}
-				err := d.Decode(map[string]string{"flag1": "true", "flag2": "1"}, s)
+				err := d.Decode(map[string][]string{"flag1": {"true"}, "flag2": {"1"}}, s)
 				require.NoError(t, err)
 				require.True(t, s.Flag1)
 				require.True(t, s.Flag2)
@@ -43,8 +43,8 @@ func TestFlagDecoder_Decode(t *testing.T) {
 					Flag1 bool
 				}{}
 				d := &FlagDecoder{}
-				err := d.Decode(map[string]string{"flag1": "foo"}, s)
-				require.EqualError(t, err, "value foo cannot be parsed as bool: strconv.ParseBool: parsing \"foo\": invalid syntax")
+				err := d.Decode(map[string][]string{"flag1": {"foo"}}, s)
+				require.EqualError(t, err, "configuration error flag1: value [foo] cannot be parsed as bool: strconv.ParseBool: parsing \"foo\": invalid syntax")
 				require.False(t, s.Flag1)
 			},
 		},
@@ -58,7 +58,7 @@ func TestFlagDecoder_Decode(t *testing.T) {
 					}
 				}{}
 				d := &FlagDecoder{}
-				err := d.Decode(map[string]string{"key": "foo", "value.flag": "true"}, s)
+				err := d.Decode(map[string][]string{"key": {"foo"}, "value.flag": {"true"}}, s)
 				require.NoError(t, err)
 				require.Equal(t, "foo", s.Key)
 				require.True(t, s.Value.Flag)
@@ -71,8 +71,33 @@ func TestFlagDecoder_Decode(t *testing.T) {
 					Key string
 				}{}
 				d := &FlagDecoder{}
-				err := d.Decode(map[string]string{"Key": "foo"}, s)
-				require.EqualError(t, err, "no configuration entry found for Key with value foo")
+				err := d.Decode(map[string][]string{"Key": {"foo"}}, s)
+				require.NoError(t, err)
+				require.Equal(t, "foo", s.Key)
+			},
+		},
+		{
+			name: "map",
+			f: func(t *testing.T) {
+				s := &struct {
+					Key map[string][]string
+				}{}
+				d := &FlagDecoder{}
+				err := d.Decode(map[string][]string{"Key": {"foo=bar", "bar=foo, mokapi.io"}}, s)
+				require.NoError(t, err)
+				require.Equal(t, map[string][]string{"foo": {"bar"}, "bar": {"foo", "mokapi.io"}}, s.Key)
+			},
+		},
+		{
+			name: "sorted map",
+			f: func(t *testing.T) {
+				s := &struct {
+					Key []string
+				}{}
+				d := &FlagDecoder{}
+				err := d.Decode(map[string][]string{"Key": {"foo=bar", "bar=foo, mokapi.io"}}, s)
+				require.NoError(t, err)
+				require.Equal(t, []string{"foo=bar", "bar=foo, mokapi.io"}, s.Key)
 			},
 		},
 	}

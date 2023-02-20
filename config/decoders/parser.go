@@ -8,8 +8,13 @@ import (
 
 const DefaultEnvNamePrefix = "MOKAPI_"
 
-func parseFlags() (map[string]string, error) {
-	flags, err := parseArgs(os.Args[1:]) // first argument is the program path
+/*
+--ServerAlias mokapi.net=mokapi.io,foo.bar --ServerAlias test.com=test.com:8080
+MOKAPI_ServerAlias=mokapi.net=mokapio,foo.bar;test.com=test.com:8080
+*/
+
+func parseFlags() (map[string][]string, error) {
+	flags, err := parseArgs(os.Args[1:])
 	if err != nil {
 		return nil, err
 	}
@@ -18,7 +23,7 @@ func parseFlags() (map[string]string, error) {
 
 	// merge maps. env flags overwrites cli flags
 	for k, v := range envs {
-		flags[k] = v
+		flags[k] = []string{v}
 	}
 
 	return flags, nil
@@ -39,8 +44,8 @@ func parseEnv(environ []string) map[string]string {
 	return dictionary
 }
 
-func parseArgs(args []string) (map[string]string, error) {
-	dictionary := make(map[string]string)
+func parseArgs(args []string) (map[string][]string, error) {
+	dictionary := make(map[string][]string)
 	for i := 0; i < len(args); i++ {
 		s := args[i]
 		if len(s) < 2 || s[0] != '-' {
@@ -74,7 +79,7 @@ func parseArgs(args []string) (map[string]string, error) {
 		}
 
 		if hasValue {
-			dictionary[strings.ToLower(name)] = value
+			dictionary[strings.ToLower(name)] = append(dictionary[strings.ToLower(name)], value)
 			continue
 		}
 
@@ -84,7 +89,7 @@ func parseArgs(args []string) (map[string]string, error) {
 			return nil, fmt.Errorf("argument %v need a value", name)
 		}
 		value = args[i]
-		dictionary[strings.ToLower(name)] = value
+		dictionary[strings.ToLower(name)] = append(dictionary[strings.ToLower(name)], value)
 	}
 
 	return dictionary, nil

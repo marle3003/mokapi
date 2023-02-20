@@ -22,6 +22,7 @@ import (
 type HttpServer struct {
 	server   *http.Server
 	handlers map[string]map[string]*HttpService // map[host][path]Handler
+	aliases  *ServerAliases
 	m        sync.RWMutex
 }
 
@@ -32,17 +33,18 @@ type HttpService struct {
 	IsInternal bool
 }
 
-func NewHttpServer(port string) *HttpServer {
+func NewHttpServer(port string, aliases *ServerAliases) *HttpServer {
 	s := &HttpServer{
 		server:   &http.Server{Addr: fmt.Sprintf(":%v", port)},
 		handlers: make(map[string]map[string]*HttpService),
+		aliases:  aliases,
 	}
 	s.server.Handler = s
 	return s
 }
 
-func NewHttpServerTls(port string, store *cert.Store) *HttpServer {
-	s := NewHttpServer(port)
+func NewHttpServerTls(port string, store *cert.Store, aliases *ServerAliases) *HttpServer {
+	s := NewHttpServer(port, aliases)
 	s.server.TLSConfig = &tls.Config{
 		GetCertificate: store.GetCertificate,
 	}
@@ -135,9 +137,17 @@ func (s *HttpServer) resolveService(r *http.Request) (*HttpService, string) {
 	}
 
 	if paths, ok := s.handlers[host]; ok {
-		matchedService, matchedPath := matchPath(paths, r)
-		if matchedService != nil {
+		if matchedService, matchedPath := matchPath(paths, r); matchedService != nil {
 			return matchedService, matchedPath
+		}
+	}
+
+	// server alias
+	for handlerHost, paths := range s.handlers {
+		if s.aliases.MatchAny(handlerHost, r) {
+			if matchedService, matchedPath := matchPath(paths, r); matchedService != nil {
+				return matchedService, matchedPath
+			}
 		}
 	}
 

@@ -84,7 +84,7 @@ func TestLoad(t *testing.T) {
 				os.Args = append(os.Args, "--foo=bar")
 
 				err := Load([]ConfigDecoder{&FlagDecoder{}}, s)
-				require.EqualError(t, err, "no configuration entry found for foo with value bar")
+				require.EqualError(t, err, "configuration error foo: configuration not found")
 			},
 		},
 	}

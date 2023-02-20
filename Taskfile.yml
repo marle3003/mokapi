@@ -4,27 +4,37 @@ version: '3'
 
 tasks:
   default:
-    deps: [clean]
+    deps: [bindata-vueapp]
     cmds:
-      - task: bindata-vueapp
       - task: build-windows
   build-windows:
+    deps: [bindata-vueapp]
     cmds:
       - go build -o mokapi_windows-amd64.exe -ldflags="-X 'mokapi/version.BuildVersion=1.0'" ./cmd/mokapi
     env:
       GOOS: windows
       GOARCH: amd64
+  build-linux:
+    deps: [bindata-vueapp]
+    cmds:
+      - go build -o mokapi_linux-amd64 -ldflags="-X 'mokapi/version.BuildVersion=1.0'" ./cmd/mokapi
+    env:
+      GOOS: linux
+      GOARCH: amd64
+  build-macos:
+    cmds:
+      - go build -o mokapi_macos-arm64 -ldflags="-X 'mokapi/version.BuildVersion=1.0'" ./cmd/mokapi
+    env:
+      GOOS: darwin
+      GOARCH: arm64
   bindata-vueapp:
     deps: [build-vue-app]
     cmds:
       - go-bindata -nomemcopy -pkg api -o api/bindata.go -prefix webui/dist/ webui/dist/...
-  clean:
-    dir: webui
-    cmds:
-      - npm run clean
   build-vue-app:
     dir: webui
     cmds:
+      - npm run clean
       - npm run copy-docs
       - npm run build
 

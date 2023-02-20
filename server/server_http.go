@@ -14,35 +14,35 @@ import (
 	"net/url"
 )
 
-type HttpServers map[string]*service.HttpServer
-
 type HttpManager struct {
-	Servers HttpServers
+	servers map[string]*service.HttpServer
 
-	eventEmitter common.EventEmitter
-	certStore    *cert.Store
-	app          *runtime.App
+	eventEmitter  common.EventEmitter
+	certStore     *cert.Store
+	app           *runtime.App
+	serverAliases *service.ServerAliases
 }
 
-func NewHttpManager(servers HttpServers, emitter common.EventEmitter, store *cert.Store, app *runtime.App) *HttpManager {
+func NewHttpManager(emitter common.EventEmitter, store *cert.Store, app *runtime.App, aliases *service.ServerAliases) *HttpManager {
 	return &HttpManager{
-		eventEmitter: emitter,
-		certStore:    store,
-		app:          app,
-		Servers:      servers,
+		eventEmitter:  emitter,
+		certStore:     store,
+		app:           app,
+		servers:       make(map[string]*service.HttpServer),
+		serverAliases: aliases,
 	}
 }
 
 func (m *HttpManager) AddService(name string, u *url.URL, handler http.Handler, isInternal bool) error {
-	server, found := m.Servers[u.Port()]
+	server, found := m.servers[u.Port()]
 	if !found {
 		if u.Scheme == "https" {
-			server = service.NewHttpServerTls(u.Port(), m.certStore)
+			server = service.NewHttpServerTls(u.Port(), m.certStore, m.serverAliases)
 		} else {
-			server = service.NewHttpServer(u.Port())
+			server = service.NewHttpServer(u.Port(), m.serverAliases)
 		}
 
-		m.Servers[u.Port()] = server
+		m.servers[u.Port()] = server
 		server.Start()
 	}
 
@@ -100,8 +100,8 @@ func (m *HttpManager) Update(c *config.Config) {
 	log.Debugf("processed %v", c.Url.String())
 }
 
-func (servers HttpServers) Stop() {
-	for _, server := range servers {
+func (m *HttpManager) Stop() {
+	for _, server := range m.servers {
 		server.Stop()
 	}
 }
