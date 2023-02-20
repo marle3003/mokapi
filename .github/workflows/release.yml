@@ -21,10 +21,10 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       - uses: actions/setup-go@v2
         with:
-          go-version: '1.17.3'
+          go-version: 1.20.1'
       - uses: actions/setup-node@v2
         with:
-          node-version: '12'
+          node-version: '16'
       - run: curl -sL https://raw.githubusercontent.com/go-task/task/master/install-task.sh | sh
       - run: npm install
         working-directory: ./webui
