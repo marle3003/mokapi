@@ -1,6 +1,7 @@
 package store
 
 import (
+	log "github.com/sirupsen/logrus"
 	"math"
 	"mokapi/kafka"
 	"mokapi/kafka/fetch"
@@ -45,12 +46,14 @@ func (s *Store) fetch(rw kafka.ResponseWriter, req *kafka.Request) error {
 				}
 
 				if topic == nil {
+					log.Errorf("kafka: fetch unknown topic %v", rt.Name)
 					data.error = kafka.UnknownTopicOrPartition
 					continue
 				}
 
 				p := topic.Partition(int(rp.Index))
 				if p == nil {
+					log.Errorf("kafka: fetch unknown partition %v", rp.Index)
 					data.error = kafka.UnknownTopicOrPartition
 					continue
 				}

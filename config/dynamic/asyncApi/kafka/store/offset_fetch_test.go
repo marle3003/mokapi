@@ -73,7 +73,7 @@ func TestOffsetFetch(t *testing.T) {
 				require.Len(t, r.Topics[0].Partitions, 1)
 
 				p := r.Topics[0].Partitions[0]
-				require.Equal(t, kafka.UnknownTopicOrPartition, p.ErrorCode)
+				require.Equal(t, kafka.None, p.ErrorCode)
 				require.Equal(t, int64(-1), p.CommittedOffset)
 			},
 		},

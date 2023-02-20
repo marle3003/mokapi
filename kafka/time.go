@@ -3,8 +3,10 @@ package kafka
 import "time"
 
 const (
-	Earliest int64 = -2 // first offset
-	Latest   int64 = -1 // last offset
+	// Earliest the earliest available offset
+	Earliest int64 = -2
+	// Latest the offset of the next coming message
+	Latest int64 = -1
 )
 
 func Timestamp(t time.Time) int64 {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watchEffect } from 'vue'
+import { ref, watchEffect, onUnmounted } from 'vue'
 import MetricCard from './MetricCard.vue'
 import {useMetrics} from '../../composables/metrics'
 import {usePrettyDates} from '@/composables/usePrettyDate'
@@ -8,15 +8,18 @@ const {query, sum} = useMetrics()
 const {fromNow, format} = usePrettyDates()
 const appStartFromNow = ref<string>('-')
 const appStart = ref<string>('-')
+const response = query('app')
 watchEffect(() => {
     appStartFromNow.value = '-'
-    const response = query('app')
     if (!response.data) {
         return
     }
     const n = sum(response.data, 'app_start_timestamp')
     appStartFromNow.value = fromNow(n)
     appStart.value = format(n)
+})
+onUnmounted(() => {
+    response.close()
 })
 </script>
 

@@ -199,7 +199,7 @@ func (s *Store) ServeMessage(rw kafka.ResponseWriter, req *kafka.Request) {
 	case *createTopics.Request:
 		err = s.createtopics(rw, req)
 	default:
-		err = fmt.Errorf("unsupported api key: %v", req.Header.ApiKey)
+		err = fmt.Errorf("kafka: unsupported api key: %v", req.Header.ApiKey)
 	}
 
 	if err != nil && err.Error() != "use of closed network connection" {

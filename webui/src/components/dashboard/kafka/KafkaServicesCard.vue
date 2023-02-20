@@ -3,13 +3,14 @@ import { useService } from '@/composables/services';
 import { useMetrics } from '@/composables/metrics';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { useRouter, useRoute } from 'vue-router';
+import { onUnmounted } from 'vue';
 
 const {fetchServices} = useService()
 const {sum} = useMetrics()
 const {format} = usePrettyDates()
 const route = useRoute()
 const router = useRouter()
-const services = fetchServices('kafka')
+const {services, close} = fetchServices('kafka')
 
 function lastMessage(service: Service){
     const n = sum(service.metrics, 'kafka_message_timestamp')
@@ -30,6 +31,10 @@ function goToService(service: Service){
         query: {refresh: route.query.refresh}
     })
 }
+
+onUnmounted(() => {
+    close()
+})
 </script>
 
 <template>

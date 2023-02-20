@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import { useEvents } from '@/composables/events';
-import type { PropType, Ref } from 'vue';
+import { type PropType, onUnmounted } from 'vue';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { usePrettyHttp } from '@/composables/http';
 
@@ -20,7 +20,7 @@ if (props.service){
 
 const router = useRouter()
 const {fetch} = useEvents()
-const {events} = fetch('http', ...labels)
+const {events, close} = fetch('http', ...labels)
 const {format, duration} = usePrettyDates()
 const {formatStatusCode, getClassByStatusCode} = usePrettyHttp()
 
@@ -33,6 +33,9 @@ function goToRequest(event: ServiceEvent){
 function eventData(event: ServiceEvent): HttpEventData{
     return <HttpEventData>event.data
 }
+onUnmounted(() => {
+    close()
+})
 </script>
 
 <template>

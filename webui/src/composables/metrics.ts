@@ -1,9 +1,13 @@
 import { useFetch } from './fetch'
+import { onUnmounted } from 'vue'
 
 export function useMetrics() {
+    let responses: Response[] = []
 
-    function query(query: string){
-        return useFetch('/api/metrics?q=' + query)
+    function query(query: string): Response{
+        const response = useFetch('/api/metrics?q=' + query)
+        responses.push(response)
+        return response
     }
 
     function sum(metrics: Metric[], name: string, ...labels: Label[]): number{

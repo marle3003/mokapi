@@ -25,15 +25,17 @@ func (s *Store) produce(rw kafka.ResponseWriter, req *kafka.Request) error {
 			}
 
 			if topic == nil {
+				log.Errorf("kafka: produce unknown topic %v", rt.Name)
 				resPartition.ErrorCode = kafka.UnknownTopicOrPartition
 			} else {
 				p := topic.Partition(int(rp.Index))
 				if p == nil {
+					log.Errorf("kafka: produce unknown partition %v", rp.Index)
 					resPartition.ErrorCode = kafka.UnknownTopicOrPartition
 				} else {
 					baseOffset, err := p.Write(rp.Record)
 					if err != nil {
-						log.Infof("kafka corrupt message: %v", err)
+						log.Errorf("kafka: produce corrupt message for topic %v: %v", rt.Name, err)
 						resPartition.ErrorCode = kafka.CorruptMessage
 					} else {
 						resPartition.BaseOffset = baseOffset

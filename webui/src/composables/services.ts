@@ -26,7 +26,7 @@ export function useService() {
     
             services.value = result.sort(compareService)
         })
-        return services
+        return {services, close: response.close}
     }
 
     function fetchService(name: string, type: string) {
@@ -38,7 +38,7 @@ export function useService() {
             service.value = response.data ? response.data : null
             isLoading.value = response.isLoading
         })
-        return {service, isLoading}
+        return {service, isLoading, close: response.close}
     }
 
     return {fetchServices, fetchService}

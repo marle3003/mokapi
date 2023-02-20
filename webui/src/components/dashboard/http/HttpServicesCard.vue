@@ -4,13 +4,14 @@ import { useMetrics } from '@/composables/metrics';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { useRouter, useRoute } from 'vue-router';
 import Markdown from 'vue3-markdown-it';
+import { onUnmounted } from 'vue';
 
 const {fetchServices} = useService()
 const {sum} = useMetrics()
 const {format} = usePrettyDates()
 const route = useRoute()
 const router = useRouter()
-const services = fetchServices('http')
+const {services, close} = fetchServices('http')
 
 function lastRequest(service: Service){
     const n = sum(service.metrics, 'http_request_timestamp')
@@ -35,6 +36,9 @@ function goToService(service: Service){
         query: {refresh: route.query.refresh}
     })
 }
+onUnmounted(() => {
+    close()
+})
 </script>
 
 <template>

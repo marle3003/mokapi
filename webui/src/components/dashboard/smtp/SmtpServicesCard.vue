@@ -1,19 +1,19 @@
 <script setup lang="ts">
 import { useService } from '@/composables/services';
 import { useMetrics } from '@/composables/metrics';
-import { usePrettyDates } from '@/composables/usePrettyDate';
-import { useRouter, useRoute } from 'vue-router';
+import { onUnmounted } from 'vue';
 
 const {fetchServices} = useService()
 const {sum} = useMetrics()
-const {format} = usePrettyDates()
-const route = useRoute()
-const router = useRouter()
-const services = fetchServices('smtp')
+const {services, close} = fetchServices('smtp')
 
 function messages(service: Service){
     return sum(service.metrics, 'smtp_mails_total')
 }
+
+onUnmounted(() => {
+    close()
+})
 </script>
 
 <template>

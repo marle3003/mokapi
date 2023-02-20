@@ -66,7 +66,7 @@ func (b *groupBalancer) run() {
 	var syncs []syncdata
 	var assigns map[string]*groupAssignment
 	prepareRebalance := func() {
-		log.Infof("group state changed from %v to %v", states[b.group.State], states[PreparingRebalance])
+		log.Infof("kafka: group %v state changed from %v to %v", b.group.Name, states[b.group.State], states[PreparingRebalance])
 		// start a new rebalance
 		b.group.State = PreparingRebalance
 		b.joins = make([]joindata, 0)
@@ -106,7 +106,7 @@ func (b *groupBalancer) run() {
 			case s.assigns != nil: // leader sync
 				assigns = s.assigns
 				syncs = append(syncs, s)
-				log.Infof("group state changed from %v to %v", states[b.group.State], states[Stable])
+				log.Infof("kafka: group %v state changed from %v to %v", b.group.Name, states[b.group.State], states[Stable])
 				b.group.State = Stable
 				for _, s := range syncs {
 					res := &syncGroup.Response{
@@ -149,12 +149,12 @@ StopWaitingForConsumers:
 
 	generation := b.group.NewGeneration()
 	if len(b.joins) == 0 {
-		log.Infof("group state changed from %v to %v", states[b.group.State], states[Empty])
+		log.Infof("kafka: group %v state changed from %v to %v", b.group.Name, states[b.group.State], states[Empty])
 		b.group.State = Empty
 		return
 	}
 
-	log.Infof("group state changed from %v to %v", states[b.group.State], states[CompletingRebalance])
+	log.Infof("kafka group %v state changed from %v to %v", b.group.Name, states[b.group.State], states[CompletingRebalance])
 	b.group.State = CompletingRebalance
 
 	counter := map[string]*protocoldata{
@@ -221,7 +221,7 @@ func (b *groupBalancer) respond(w kafka.ResponseWriter, msg kafka.Message) {
 	go func() {
 		err := w.Write(msg)
 		if err != nil {
-			log.Errorf("kafka group balancer: %v", err)
+			log.Errorf("kafka group balancer for group %v: %v", b.group.Name, err)
 		}
 	}()
 }

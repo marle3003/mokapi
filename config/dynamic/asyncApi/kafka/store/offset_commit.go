@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	log "github.com/sirupsen/logrus"
 	"mokapi/kafka"
 	"mokapi/kafka/offsetCommit"
 	"mokapi/runtime/monitor"
@@ -17,6 +18,7 @@ func (s *Store) offsetCommit(rw kafka.ResponseWriter, req *kafka.Request) error 
 	ctx := kafka.ClientFromContext(req)
 
 	for _, rt := range r.Topics {
+		log.Infof("offsetCommit topic %v, client=%v", rt.Name, ctx.ClientId)
 		topic := s.Topic(rt.Name)
 		resTopic := offsetCommit.ResponseTopic{
 			Name:       rt.Name,
@@ -28,20 +30,25 @@ func (s *Store) offsetCommit(rw kafka.ResponseWriter, req *kafka.Request) error 
 			}
 
 			if topic == nil {
+				log.Errorf("kafka: offsetCommit unknown topic %v, client=%v", topic, ctx.ClientId)
 				resPartition.ErrorCode = kafka.UnknownTopicOrPartition
 			} else {
 				p := topic.Partition(int(rp.Index))
 				if p == nil {
+					log.Errorf("kafka: offsetCommit unknown partition %v, topic=%v, client=%v", rp.Index, topic, ctx.ClientId)
 					resPartition.ErrorCode = kafka.UnknownTopicOrPartition
 				} else if _, ok := ctx.Member[r.GroupId]; !ok {
+					log.Errorf("kafka: offsetCommit unknown member topic=%v, client=%v", topic, ctx.ClientId)
 					resPartition.ErrorCode = kafka.UnknownMemberId
 				} else {
 					// todo check partition is assigned to member
 					if rp.Offset > p.Offset() {
+						log.Errorf("kafka: offsetCommit offset out of range, offset=%v, topic=%v, client=%v", rp.Offset, topic, ctx.ClientId)
 						resPartition.ErrorCode = kafka.OffsetOutOfRange
 					} else {
 						g, ok := s.Group(r.GroupId)
 						if !ok {
+							log.Errorf("kafka: invalid group name %v, topic=%v, client=%v", r.GroupId, topic, ctx.ClientId)
 							resPartition.ErrorCode = kafka.InvalidGroupId
 						} else {
 							g.Commit(topic.Name, p.Index, rp.Offset)

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Ref } from 'vue'
+import { type Ref, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router';
 import { useService } from '@/composables/services';
 import ServiceInfoCard from '../ServiceInfoCard.vue';
@@ -14,7 +14,10 @@ import '@/assets/http.css'
 const {fetchService} = useService()
 const route = useRoute()
 const serviceName = route.params.service?.toString()
-const {service} = <{service: Ref<HttpService | null>}>fetchService(serviceName, 'http')
+const {service, close} = <{service: Ref<HttpService | null>, close: () => void}>fetchService(serviceName, 'http')
+onUnmounted(() => {
+    close()
+})
 </script>
 
 <template>

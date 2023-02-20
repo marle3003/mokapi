@@ -19,19 +19,12 @@ import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
 
 import '@/assets/dashboard.css'
-import { useShortcut } from '@/composables/shortcut';
-import { useRoute, useRouter } from 'vue-router';
+import { onUnmounted } from 'vue';
 
 const appInfo = useAppInfo()
-const route = useRoute()
-const router = useRouter()
-// useShortcut('esacpe', (e: KeyboardEvent) => {
-//     let cmd = e.key.toLowerCase()
-//     if (cmd != 'escape' || route.name == 'dashboard') {
-//         return
-//     }
-//     router.go(-1)
-// })
+onUnmounted(() => {
+    appInfo.close()
+})
 
 function isServiceAvailable(service: string): Boolean{
     if (!appInfo.data){

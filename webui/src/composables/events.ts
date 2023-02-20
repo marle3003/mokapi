@@ -1,10 +1,6 @@
 import { onUnmounted, ref, watchEffect } from 'vue'
 import { useFetch } from './fetch'
 
-interface Response{
-    stop: () => void
-}
-
 export function useEvents() {
     let responses: Response[] = []
 
@@ -21,7 +17,7 @@ export function useEvents() {
             events.value = response.data ? response.data : []
             isLoading.value = !response.data && response.isLoading
         })
-        return {events, isLoading}
+        return {events, isLoading, close: response.close}
     }
 
     function fetchById(id: string){
@@ -32,16 +28,8 @@ export function useEvents() {
             event.value = response.data ? response.data : null
             isLoading.value = response.isLoading
         })
-        return {event, isLoading}
+        return {event, isLoading, close: response.close}
     }
-
-    onUnmounted(() => {
-        for (let response of responses){
-            if (response.stop){
-                response.stop()
-            }
-        }
-    })
 
     return {fetch, fetchById}
 }
