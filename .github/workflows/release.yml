@@ -19,7 +19,7 @@ jobs:
         with:
           username: mokapi
           password: ${{ secrets.DOCKER_PASSWORD }}
-      - uses: actions/setup-go@v2
+      - uses: actions/setup-go@v3
         with:
           go-version: 1.20.1'
       - uses: actions/setup-node@v2
@@ -28,7 +28,7 @@ jobs:
       - run: curl -sL https://raw.githubusercontent.com/go-task/task/master/install-task.sh | sh
       - run: npm install
         working-directory: ./webui
-      - run: go get -u github.com/go-bindata/go-bindata/...
+      - run: go install -a -v github.com/go-bindata/go-bindata/...@latest
       - name: Build
         run: ./bin/task bindata-vueapp
         env:
