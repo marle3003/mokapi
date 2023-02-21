@@ -20,9 +20,10 @@ COPY . /go/src/github.com/mokapi
 WORKDIR /go/src/github.com/mokapi
 
 RUN rm -rf ./webui
-COPY --from=webui /webui/dist /webui
+COPY --from=webui /webui/dist webui
 
-RUN go-bindata -nomemcopy -pkg api -o api/bindata.go -prefix webui/dist/ webui/dist/...
+RUN go install -a -v github.com/go-bindata/go-bindata/...@latest
+RUN go-bindata -nomemcopy -pkg api -o api/bindata.go -prefix webui/ webui/...
 
 RUN go build -o mokapi -ldflags="-X mokapi/version.BuildVersion=$MOKAPI_VERSION" ./cmd/mokapi
 
