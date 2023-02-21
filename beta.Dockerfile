@@ -22,6 +22,8 @@ WORKDIR /go/src/github.com/mokapi
 RUN rm -rf ./webui
 COPY --from=webui /webui/dist /webui
 
+RUN go-bindata -nomemcopy -pkg api -o api/bindata.go -prefix webui/dist/ webui/dist/...
+
 RUN go build -o mokapi -ldflags="-X mokapi/version.BuildVersion=$MOKAPI_VERSION" ./cmd/mokapi
 
 FROM alpine
