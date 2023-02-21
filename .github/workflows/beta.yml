@@ -1,7 +1,7 @@
-name: Release
+name: Beta Release
 on:
   push:
-    tags:
+    branches:
       - v*
 
 jobs:
@@ -37,6 +37,6 @@ jobs:
         uses: goreleaser/goreleaser-action@v2
         with:
           version: latest
-          args: release --clean
+          args: release --clean -f ./.github/workflows/.goreleaser_beta.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
