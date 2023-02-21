@@ -9,34 +9,14 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
-      - name: Docker Login
+      - name: Check out code
+        uses: actions/checkout@v2
+      - name: Login to Docker
         uses: docker/login-action@v1
         with:
           username: mokapi
           password: ${{ secrets.DOCKER_PASSWORD }}
-      - uses: actions/setup-go@v3
-        with:
-          go-version: 1.20.1
-      - uses: actions/setup-node@v2
-        with:
-          node-version: '16'
-      - run: curl -sL https://raw.githubusercontent.com/go-task/task/master/install-task.sh | sh
-      - run: npm install
-        working-directory: ./webui
-      - run: go install -a -v github.com/go-bindata/go-bindata/...@latest
-      - name: Build
-        run: ./bin/task bindata-vueapp
-        env:
-          CGO_ENABLED: 0
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v2
-        with:
-          version: latest
-          args: release --clean -f .goreleaser_beta.yml
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build docker beta image
+        run: docker build -t mokapi/mokapi:${GITHUB_REF##*/}-beta -f beta.Dockerfile .
+      - name: Push image to Docker
+        run: docker push mokapi/mokapi:${GITHUB_REF##*/}-beta
