@@ -16,7 +16,7 @@ jobs:
         with:
           username: mokapi
           password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Build docker beta image
-        run: docker build -t mokapi/mokapi:${GITHUB_REF##*/}-beta -f beta.Dockerfile .
+      - name: Build docker alpha image
+        run: docker build -t mokapi/mokapi:${GITHUB_REF##*/}-alpha -f ./images/alpha.Dockerfile .
       - name: Push image to Docker
-        run: docker push mokapi/mokapi:${GITHUB_REF##*/}-beta
+        run: docker push mokapi/mokapi:${GITHUB_REF##*/}-alpha
