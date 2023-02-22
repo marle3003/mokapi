@@ -8,30 +8,28 @@ import (
 )
 
 type FileDecoder struct {
-	filenames []string
+	filename string
 }
 
-func (f *FileDecoder) Decode(flags map[string][]string, element interface{}) error {
-	if len(f.filenames) == 0 {
+func (f *FileDecoder) Decode(flags map[string]string, element interface{}) error {
+	if len(f.filename) == 0 {
 		if val, ok := flags["configfile"]; ok {
-			f.filenames = val
+			f.filename = val
 		}
 	}
 
-	if len(f.filenames) == 0 {
+	if len(f.filename) == 0 {
 		return nil
 	}
 
-	for _, filename := range f.filenames {
-		data, err := loadFile(filename)
-		if err != nil {
-			return err
-		}
+	data, err := loadFile(f.filename)
+	if err != nil {
+		return err
+	}
 
-		err = parseYml(data, element)
-		if err != nil {
-			return errors.Wrapf(err, "parsing YAML file %s", filename)
-		}
+	err = parseYml(data, element)
+	if err != nil {
+		return errors.Wrapf(err, "parsing YAML file %s", f.filename)
 	}
 
 	return nil

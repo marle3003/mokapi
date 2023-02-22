@@ -6,6 +6,7 @@ import (
 	config "mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/config/dynamic/swagger"
+	"mokapi/config/static"
 	"mokapi/engine/common"
 	"mokapi/runtime"
 	"mokapi/server/cert"
@@ -17,19 +18,19 @@ import (
 type HttpManager struct {
 	servers map[string]*service.HttpServer
 
-	eventEmitter  common.EventEmitter
-	certStore     *cert.Store
-	app           *runtime.App
-	serverAliases *service.ServerAliases
+	eventEmitter common.EventEmitter
+	certStore    *cert.Store
+	app          *runtime.App
+	services     static.Services
 }
 
-func NewHttpManager(emitter common.EventEmitter, store *cert.Store, app *runtime.App, aliases *service.ServerAliases) *HttpManager {
+func NewHttpManager(emitter common.EventEmitter, store *cert.Store, app *runtime.App, services static.Services) *HttpManager {
 	return &HttpManager{
-		eventEmitter:  emitter,
-		certStore:     store,
-		app:           app,
-		servers:       make(map[string]*service.HttpServer),
-		serverAliases: aliases,
+		eventEmitter: emitter,
+		certStore:    store,
+		app:          app,
+		servers:      make(map[string]*service.HttpServer),
+		services:     services,
 	}
 }
 
@@ -37,9 +38,9 @@ func (m *HttpManager) AddService(name string, u *url.URL, handler http.Handler, 
 	server, found := m.servers[u.Port()]
 	if !found {
 		if u.Scheme == "https" {
-			server = service.NewHttpServerTls(u.Port(), m.certStore, m.serverAliases)
+			server = service.NewHttpServerTls(u.Port(), m.certStore)
 		} else {
-			server = service.NewHttpServer(u.Port(), m.serverAliases)
+			server = service.NewHttpServer(u.Port())
 		}
 
 		m.servers[u.Port()] = server
@@ -78,6 +79,7 @@ func (m *HttpManager) Update(c *config.Config) {
 		return
 	}
 
+	m.updateConfigWithServiceConfigs(config)
 	m.app.AddHttp(config)
 
 	if len(config.Servers) == 0 {
@@ -98,6 +100,15 @@ func (m *HttpManager) Update(c *config.Config) {
 		}
 	}
 	log.Debugf("processed %v", c.Url.String())
+}
+
+func (m *HttpManager) updateConfigWithServiceConfigs(cfg *openapi.Config) {
+	serviceConfig := m.services.GetByName(cfg.Info.Name)
+	if serviceConfig != nil && serviceConfig.Http != nil {
+		for _, server := range serviceConfig.Http.Servers {
+			cfg.Servers = append(cfg.Servers, &openapi.Server{Url: server.Url})
+		}
+	}
 }
 
 func (m *HttpManager) Stop() {

@@ -104,6 +104,25 @@ func (w *ConfigWatcher) AddListener(f func(config *common.Config)) {
 	w.listener = append(w.listener, f)
 }
 
+func (w *ConfigWatcher) ReadServices(services static.Services) {
+	for name, p := range services {
+		if len(p.Config.File) > 0 {
+			u, _ := url.Parse(fmt.Sprintf("file:%v", p.Config.File))
+			if _, err := w.Read(u); err != nil {
+				log.Errorf("unable to read config for %v: %v", name, err)
+			}
+		}
+		if len(p.Config.Url) > 0 {
+			u, _ := url.Parse(fmt.Sprintf(p.Config.Url))
+			if cfg, err := w.Read(u); err != nil {
+				log.Errorf("unable to read config for %v: %v", name, err)
+			} else {
+				w.configChanged(cfg)
+			}
+		}
+	}
+}
+
 func (w *ConfigWatcher) addOrUpdate(c *common.Config) error {
 	w.m.Lock()
 

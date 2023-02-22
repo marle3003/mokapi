@@ -2,8 +2,7 @@ name: Release
 on:
   push:
     tags:
-      - v*
-      - !v*-beta
+      - v*-beta
 
 jobs:
   release:
@@ -38,6 +37,6 @@ jobs:
         uses: goreleaser/goreleaser-action@v2
         with:
           version: latest
-          args: release --clean
+          args: release --clean -f .goreleaser_beta.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

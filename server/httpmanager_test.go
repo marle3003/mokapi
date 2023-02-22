@@ -13,7 +13,6 @@ import (
 	"mokapi/engine"
 	"mokapi/runtime"
 	"mokapi/server/cert"
-	"mokapi/server/service"
 	"mokapi/try"
 	"net/url"
 	"testing"
@@ -26,7 +25,7 @@ func TestHttpServers_Monitor(t *testing.T) {
 	require.NoError(t, err)
 
 	app := runtime.New()
-	m := NewHttpManager(&engine.Engine{}, store, app, service.NewServerAliases())
+	m := NewHttpManager(&engine.Engine{}, store, app, make(static.Services))
 	defer m.Stop()
 
 	port, err := try.GetFreePort()
@@ -135,7 +134,7 @@ func TestHttpManager_Update(t *testing.T) {
 			store, err := cert.NewStore(&static.Config{})
 			require.NoError(t, err)
 
-			m := NewHttpManager(&engine.Engine{}, store, runtime.New(), service.NewServerAliases())
+			m := NewHttpManager(&engine.Engine{}, store, runtime.New(), make(static.Services))
 			defer m.Stop()
 
 			data.fn(t, m, hook)
