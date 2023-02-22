@@ -31,7 +31,7 @@ type serviceType string
 var (
 	ServiceHttp    serviceType = "http"
 	ServiceKafka   serviceType = "kafka"
-	FileExtensions             = []string{".html", ".css", ".js"}
+	FileExtensions             = []string{".html", ".css", ".js", ".woff", ".woff2"}
 )
 
 type service struct {
