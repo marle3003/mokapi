@@ -63,7 +63,13 @@ func setValue(paths []string, value string, element reflect.Value) error {
 		}
 
 		key := reflect.ValueOf(paths[0])
-		ptr := reflect.New(reflect.PointerTo(element.Type().Elem()))
+		var ptr reflect.Value
+		ptr = reflect.New(reflect.PointerTo(element.Type().Elem()))
+
+		if element.MapIndex(key).IsValid() {
+			ptr.Elem().Set(reflect.New(element.Type().Elem()))
+			ptr.Elem().Elem().Set(element.MapIndex(key))
+		}
 		if err := setValue(paths[1:], value, ptr); err != nil {
 			return err
 		}
