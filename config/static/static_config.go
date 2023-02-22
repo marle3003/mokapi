@@ -61,6 +61,7 @@ type Services map[string]*Service
 
 func (s Services) GetByName(name string) *Service {
 	key := strings.ReplaceAll(name, " ", "-")
+	key = strings.ToLower(key)
 	return s[key]
 }
 
