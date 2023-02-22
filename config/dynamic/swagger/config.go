@@ -44,6 +44,7 @@ type Operation struct {
 	Description string               `yaml:"description,omitempty" json:"description,omitempty"`
 	Tags        []string             `yaml:"tags,omitempty" json:"tags,omitempty"`
 	OperationID string               `yaml:"operationId,omitempty" json:"operationId,omitempty"`
+	Deprecated  bool                 `yaml:"deprecated" json:"deprecated"`
 	Parameters  Parameters           `yaml:"parameters,omitempty" json:"parameters,omitempty"`
 	Responses   map[string]*Response `yaml:"responses" json:"responses"`
 	Consumes    []string             `yaml:"consumes,omitempty" json:"consumes,omitempty"`
@@ -72,6 +73,7 @@ type Parameter struct {
 	Pattern          string        `yaml:"pattern,omitempty" json:"pattern,omitempty"`
 	AllowEmptyValue  bool          `yaml:"allowEmptyValue,omitempty" json:"allowEmptyValue,omitempty"`
 	Required         bool          `yaml:"required,omitempty" json:"required,omitempty"`
+	Deprecated       bool          `yaml:"deprecated" json:"deprecated"`
 	UniqueItems      bool          `yaml:"uniqueItems,omitempty" json:"uniqueItems,omitempty"`
 	ExclusiveMin     bool          `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
 	ExclusiveMax     bool          `yaml:"exclusiveMaximum,omitempty" json:"exclusiveMaximum,omitempty"`
