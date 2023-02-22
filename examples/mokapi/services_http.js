@@ -84,7 +84,8 @@ export let apps = [
         metrics: metrics.filter(x => x.name.startsWith("http")),
         servers: [
             {
-                url: "http://localhost:8080"
+                url: "http://localhost:8080",
+                description: "Server is mocked by *mokapi*"
             }
         ],
         paths: [

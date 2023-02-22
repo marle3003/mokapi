@@ -1,6 +1,13 @@
 declare interface KafkaService extends Service {
     topics: KafkaTopic[]
     groups: KafkaGroup[]
+    servers: KafkaServer[]
+}
+
+declare interface KafkaServer {
+    name: string
+    url: string
+    description: string
 }
 
 declare interface KafkaTopic {

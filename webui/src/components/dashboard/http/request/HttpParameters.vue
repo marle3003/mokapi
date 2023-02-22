@@ -47,7 +47,7 @@ function getExample(key: string){
                 <td>{{ parameter.name }}</td>
                 <td>{{ parameter.type }}</td>
                 <td>{{ printType(parameter.schema) }}</td>
-                <td>{{ parameter.description }}</td>
+                <td><markdown :source="parameter.description" class="description"></markdown></td>
             </tr>
         </tbody>
     </table>

@@ -1,5 +1,6 @@
 declare interface HttpService extends Service {
     paths: HttpPath[]
+    servers: HttpServer[]
 }
 
 declare interface HttpPath {
@@ -77,3 +78,8 @@ declare interface HttpEventResponse {
 }
 
 declare interface HttpHeader  {[name: string]: string}
+
+declare interface HttpServer {
+    url: string
+    description: string
+}

@@ -4,6 +4,7 @@ import { useMetrics } from '@/composables/metrics';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { useRouter, useRoute } from 'vue-router';
 import { onUnmounted } from 'vue';
+import Markdown from 'vue3-markdown-it'
 
 const {fetchServices} = useService()
 const {sum} = useMetrics()
@@ -53,7 +54,7 @@ onUnmounted(() => {
                 <tbody>
                     <tr v-for="service in services" key="service.name" @click="goToService(service)">
                         <td>{{ service.name }}</td>
-                        <td>{{ service.description }}</td>
+                        <td><markdown :source="service.description" class="description"></markdown></td>
                         <td class="text-center">{{ lastMessage(service) }}</td>
                         <td class="text-center">{{ messages(service) }}</td>
                     </tr>

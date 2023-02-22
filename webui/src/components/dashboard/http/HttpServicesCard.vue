@@ -70,11 +70,3 @@ onUnmounted(() => {
         </div>
     </div>
 </template>
-
-<style>
-.description p {
-    font-size: 0.75rem !important;
-    margin: 0 !important;
-    line-height: 1.6 !important;
-}
-</style>

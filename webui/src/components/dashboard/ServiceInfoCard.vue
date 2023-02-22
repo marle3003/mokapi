@@ -23,7 +23,8 @@ defineProps({
                     <div class="col">
                         <p class="label">Contact</p>
                         <p v-if="service.contact">
-                            <a :href="service.contact.url">{{ service.contact.name }}</a>
+                            <a v-if="service.contact.url" :href="service.contact.url">{{ service.contact.name }}</a>
+                            <span v-else>{{ service.contact.name }}</span>
                             <a v-if="service.contact.email" :href="'mailto:'+service.contact.email" style="margin-left: 0.5em;"><i class="bi bi-envelope"></i></a>
                         </p>
                     </div>

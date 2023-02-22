@@ -35,3 +35,9 @@ table.dataTable tbody tr:hover {
 table.dataTable.selectable tbody tr:hover {
     cursor: pointer;
 }
+
+.description p {
+    font-size: 0.75rem !important;
+    margin: 0 !important;
+    line-height: 1.6 !important;
+}
