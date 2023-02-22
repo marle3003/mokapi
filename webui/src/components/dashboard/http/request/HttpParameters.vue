@@ -76,7 +76,7 @@ function showWarningColumn(){
     </table>
     <div v-for="parameter in parameters" :key="parameter.name+parameter.type">
         <div class="modal fade" :id="'modal-'+parameter.name+parameter.type" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content">
                     <div class="modal-body">
                         <div class="card-group">
