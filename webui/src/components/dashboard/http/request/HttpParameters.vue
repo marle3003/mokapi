@@ -22,6 +22,14 @@ if (props.parameters){
     }
 }
 
+const sortedParameters = props.parameters?.sort((p1, p2) =>{
+    const r = p1.type.localeCompare(p2.type)
+    if (r != 0) {
+        return r
+    }
+    return p1.name.localeCompare(p2.name)
+})
+
 function getExample(key: string){
     const example = examples[key]
     if (!example.value){
@@ -55,7 +63,7 @@ function showWarningColumn(){
             </tr>
         </thead>
         <tbody>
-            <tr v-for="parameter in parameters" :key="parameter.name + parameter.type" data-bs-toggle="modal" :data-bs-target="'#modal-'+parameter.name+parameter.type">
+            <tr v-for="parameter in sortedParameters" :key="parameter.name + parameter.type" data-bs-toggle="modal" :data-bs-target="'#modal-'+parameter.name+parameter.type">
                 <td>{{ parameter.name }}</td>
                 <td>{{ parameter.type }}</td>
                 <td>{{ printType(parameter.schema) }}</td>

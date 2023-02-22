@@ -20,6 +20,8 @@ const selected = reactive({
 contents: {} as  { [statusCode: number]: HttpMediaType}
 })
 
+props.operation.responses = props.operation.responses.sort((r1, r2) => r1.statusCode - r2.statusCode)
+
 for (let response of props.operation.responses) {
     if (!response.contents) {
         continue
