@@ -36,6 +36,7 @@ declare interface HttpEventData {
     request: HttpEventRequest
     response: HttpEventResponse
     duration: number
+    deprecated: boolean
 }
 
 declare interface HttpEventRequest {

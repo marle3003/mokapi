@@ -13,9 +13,10 @@ import (
 const logKey = "http_log"
 
 type HttpLog struct {
-	Request  *HttpRequestLog  `json:"request"`
-	Response *HttpResponseLog `json:"response"`
-	Duration int64            `json:"duration"`
+	Request    *HttpRequestLog  `json:"request"`
+	Response   *HttpResponseLog `json:"response"`
+	Duration   int64            `json:"duration"`
+	Deprecated bool             `json:"deprecated"`
 }
 
 type HttpRequestLog struct {
@@ -40,14 +41,15 @@ type HttpParameter struct {
 	Raw   string `json:"raw"`
 }
 
-func NewLogEventContext(r *http.Request, traits events.Traits) (context.Context, error) {
+func NewLogEventContext(r *http.Request, deprecated bool, traits events.Traits) (context.Context, error) {
 	l := &HttpLog{
 		Request: &HttpRequestLog{
 			Method:      r.Method,
 			Url:         lib.GetUrl(r),
 			ContentType: r.Header.Get("content-type"),
 		},
-		Response: &HttpResponseLog{Headers: make(map[string]string)},
+		Response:   &HttpResponseLog{Headers: make(map[string]string)},
+		Deprecated: deprecated,
 	}
 
 	go func() {

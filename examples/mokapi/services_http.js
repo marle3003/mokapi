@@ -231,6 +231,7 @@ export let events = [
         },
         time:  '2023-02-13T08:49:25.482366+01:00',
         data: {
+            deprecated: true,
             request: {
                 method: "POST",
                 url: "http://127.0.0.1:18080/pet",

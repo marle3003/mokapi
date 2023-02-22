@@ -20,21 +20,18 @@ const eventData = computed(() => <HttpEventData>prop.event.data)
             <div class="row">
                 <div class="col header">
                     <p class="label">URL</p>
-                    <p>{{ eventData.request.url }}</p>
+                    <p>
+                        <span class="badge operation" :class="eventData.request.method.toLowerCase()">{{ eventData.request.method }}</span>
+                        {{ eventData.request.url }}
+                    </p>
                 </div>
                 <div class="col">
                     <p class="label">Time</p>
                     <p>{{ format(event.time) }}</p>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col">
-                    <p class="label">Method</p>
-                    <p><span class="badge operation" :class="eventData.request.method.toLowerCase()">{{ eventData.request.method }}</span></p>
-                </div>
-                <div class="col">
-                    <p class="label">Duration</p>
-                    <p>{{ duration(eventData.duration) }}</p>
+                <div class="col header" v-if="eventData.deprecated">
+                    <p class="label">Warning</p>
+                    <p><i class="bi bi-exclamation-triangle-fill yellow"></i> Deprecated</p>
                 </div>
             </div>
             <div class="row">
@@ -46,6 +43,14 @@ const eventData = computed(() => <HttpEventData>prop.event.data)
                         </span>
                     </p>
                 </div>
+                <div class="col">
+                    <p class="label">Duration</p>
+                    <p>{{ duration(eventData.duration) }}</p>
+                </div>
+                <div class="col header" v-if="eventData.deprecated">
+                </div>
+            </div>
+            <div class="row">
                 <div class="col">
                     <p class="label">Size</p>
                     <p>{{ formatBytes(eventData.response.size) }}</p>

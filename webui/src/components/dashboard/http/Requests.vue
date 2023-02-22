@@ -4,6 +4,7 @@ import { useEvents } from '@/composables/events';
 import { type PropType, onUnmounted } from 'vue';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { usePrettyHttp } from '@/composables/http';
+import { useService } from '@/composables/services';
 
 const props = defineProps({
     service: { type: Object as PropType<HttpService> },
@@ -22,7 +23,7 @@ const router = useRouter()
 const {fetch} = useEvents()
 const {events, close} = fetch('http', ...labels)
 const {format, duration} = usePrettyDates()
-const {formatStatusCode, getClassByStatusCode} = usePrettyHttp()
+const {formatStatusCode} = usePrettyHttp()
 
 function goToRequest(event: ServiceEvent){
     router.push({
@@ -33,6 +34,7 @@ function goToRequest(event: ServiceEvent){
 function eventData(event: ServiceEvent): HttpEventData{
     return <HttpEventData>event.data
 }
+
 onUnmounted(() => {
     close()
 })
@@ -45,6 +47,7 @@ onUnmounted(() => {
             <table class="table dataTable selectable">
                 <thead>
                     <tr>
+                        <th scope="col" class="warning"></th>
                         <th scope="col" class="text-left" style="width: 55%">URL</th>
                         <th scope="col" class="text-center" style="width: 10%">Method</th>
                         <th scope="col" class="text-center"  style="width: 10%">Status Code</th>
@@ -54,6 +57,7 @@ onUnmounted(() => {
                 </thead>
                 <tbody>
                     <tr v-for="event in events" :key="event.id" @click="goToRequest(event)">
+                        <td class="warning"><i class="bi bi-exclamation-triangle-fill yellow warning" v-if="eventData(event).deprecated"></i></td>
                         <td>{{ eventData(event).request.url }}</td>
                         <td class="text-center">
                             <span class="badge operation" :class="eventData(event).request.method.toLowerCase()">
@@ -69,3 +73,9 @@ onUnmounted(() => {
         </div>
     </div>
 </template>
+
+<style scoped>
+.warning:empty {
+    padding: 0;
+}
+</style>
