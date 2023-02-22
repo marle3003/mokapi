@@ -94,7 +94,7 @@ func TestHttpManager_Update(t *testing.T) {
 
 				entries := hook.Entries
 				require.Len(t, entries, 2)
-				require.Equal(t, "error foo.yml: parse \"http://localhost:foo\": invalid port \":foo\" after host", entries[0].Message)
+				require.Equal(t, "url syntax error foo.yml: parse \"http://localhost:foo\": invalid port \":foo\" after host", entries[0].Message)
 				require.Equal(t, "processed foo.yml", entries[1].Message)
 			}},
 		{"invalid url format",
@@ -104,7 +104,7 @@ func TestHttpManager_Update(t *testing.T) {
 
 				entries := hook.Entries
 				require.Len(t, entries, 2)
-				require.Equal(t, "error foo.yml: parse \"$://\": first path segment in URL cannot contain colon", entries[0].Message)
+				require.Equal(t, "url syntax error foo.yml: parse \"$://\": first path segment in URL cannot contain colon", entries[0].Message)
 				require.Equal(t, "processed foo.yml", entries[1].Message)
 			}},
 		{"add on same path",

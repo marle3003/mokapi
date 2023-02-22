@@ -19,7 +19,7 @@ type PetStoreSuite struct{ BaseSuite }
 
 func (suite *PetStoreSuite) SetupSuite() {
 	cfg := static.NewConfig()
-	cfg.Services = map[string]*static.Service{"Swagger-Petstore": {Http: &static.HttpService{Servers: []static.HttpServer{{Url: "http://127.0.0.1:22223"}}}}}
+	cfg.Services = map[string]*static.Service{"swagger-petstore": {Http: &static.HttpService{Servers: []static.HttpServer{{Url: "http://127.0.0.1:22223"}}}}}
 	port, err := try.GetFreePort()
 	require.NoError(suite.T(), err)
 	cfg.Api.Port = fmt.Sprintf("%v", port)
