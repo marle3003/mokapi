@@ -38,6 +38,8 @@ type Parameter struct {
 	// of use.
 	Description string
 
+	Deprecated bool `yaml:"deprecated" json:"deprecated"`
+
 	// Defines how multiple values are delimited. Possible styles depend on
 	// the parameter location
 	Style string

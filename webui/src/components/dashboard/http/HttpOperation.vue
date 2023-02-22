@@ -60,6 +60,10 @@ onUnmounted(() => {
                             <p class="label">Service</p>
                             <p>{{ service.name }}</p>
                         </div>
+                        <div class="col header" v-if="operation.deprecated">
+                            <p class="label">Warning</p>
+                            <p><i class="bi bi-exclamation-triangle-fill yellow"></i> Deprecated</p>
+                        </div>
                         <div class="col text-end">
                             <span class="badge bg-secondary">HTTP</span>
                         </div>
@@ -70,7 +74,7 @@ onUnmounted(() => {
                     </div>
                     <div class="row">
                         <p class="label">Description</p>
-                        <markdown :source="service.description"></markdown>
+                        <markdown :source="operation.description"></markdown>
                     </div>
                 </div>
             </div>

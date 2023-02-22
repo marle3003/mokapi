@@ -26,6 +26,17 @@ function goToOperation(operation: HttpOperation){
         query: {refresh: route.query.refresh}
     })
 }
+function showWarningColumn(){
+    if (!operations.value){
+        return false
+    }
+    for (let operation of operations.value){
+        if (operation.deprecated){
+            return true
+        }
+    }
+    return false
+}
 </script>
 
 <template>
@@ -35,16 +46,18 @@ function goToOperation(operation: HttpOperation){
             <table class="table dataTable selectable">
                 <thead>
                     <tr>
-                        <th scope="col" class="text-left">Method</th>
+                        <th scope="col" class="text-left" style="width: 10%">Method</th>
+                        <th scope="col" class="text-left" style="width: 20%">Operation ID</th>
+                        <th scope="col" class="text-left" style="width: 20%"  v-if="showWarningColumn()">Warning</th>
                         <th scope="col" class="text-left">Summary</th>
-                        <th scope="col" class="text-left">Operation ID</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="operation in operations" :key="path.path" @click="goToOperation(operation)">
                         <td><span class="badge operation" :class="operation.method">{{ operation.method }}</span></td>
-                        <td>{{ operation.summary }}</td>
                         <td>{{ operation.operationId }}</td>
+                        <td v-if="showWarningColumn()"><span v-if="operation.deprecated"><i class="bi bi-exclamation-triangle-fill yellow"></i> deprecated</span></td>
+                        <td>{{ operation.summary }}</td>
                     </tr>
                 </tbody>
             </table>

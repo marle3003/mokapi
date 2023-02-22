@@ -25,6 +25,7 @@ declare interface Schema {
     shuffleItems: boolean
     minProperties: number | undefined
     maxProperties: number | undefined
+    deprecated: boolean
 }
 
 declare interface XmlSchmea {

@@ -30,6 +30,17 @@ function getExample(key: string){
     return hljs.highlightAuto(example.value).value
 }
 
+function showWarningColumn(){
+    if (!props.parameters){
+        return false
+    }
+    for (let parameter of props.parameters){
+        if (parameter.deprecated){
+            return true
+        }
+    }
+    return false
+}
 </script>
 
 <template>
@@ -39,6 +50,7 @@ function getExample(key: string){
                 <th scope="col" class="text-left">Name</th>
                 <th scope="col" class="text-left">Location</th>
                 <th scope="col" class="text-left">Type</th>
+                <th scope="col" class="text-left" v-if="showWarningColumn()">Warning</th>
                 <th scope="col" class="text-left">Description</th>
             </tr>
         </thead>
@@ -47,6 +59,9 @@ function getExample(key: string){
                 <td>{{ parameter.name }}</td>
                 <td>{{ parameter.type }}</td>
                 <td>{{ printType(parameter.schema) }}</td>
+                <td v-if="showWarningColumn()">
+                    <span v-if="parameter.deprecated"><i class="bi bi-exclamation-triangle-fill yellow"></i> deprecated</span>
+                </td>
                 <td><markdown :source="parameter.description" class="description"></markdown></td>
             </tr>
         </tbody>
@@ -59,8 +74,15 @@ function getExample(key: string){
                         <div class="card-group">
                             <div class="card">
                                 <div class="card-body">
-                                    <p class="label">Name</p>
-                                    <p>{{ parameter.name }}</p>
+                                    <div class="row">
+                                        <div class="col">
+                                            <p class="label">Name</p>
+                                            <p>{{ parameter.name }}</p>
+                                        </div>
+                                        <div class="col" v-if="parameter.deprecated">
+                                            <p><i class="bi bi-exclamation-triangle-fill yellow"></i> Deprecated</p>
+                                        </div>
+                                    </div>
                                     <p class="label">Description</p>
                                     <markdown :source="parameter.description"></markdown>
                                 </div>

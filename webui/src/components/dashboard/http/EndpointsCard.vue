@@ -64,7 +64,9 @@ function errors(path: HttpPath){
                     <tr v-for="path in paths" :key="path.path" @click="goToPath(path)">
                         <td>{{ path.path }}</td>
                         <td>
-                            <span v-for="operation in path.operations" key="operation.method" class="badge operation" :class="operation.method">{{ operation.method }}</span>
+                            <span v-for="operation in path.operations" key="operation.method" class="badge operation" :class="operation.method">
+                                {{ operation.method }} <i class="bi bi-exclamation-triangle-fill yellow" v-if="operation.deprecated"></i>
+                            </span>
                         </td>
                         <td class="text-center">{{ lastRequest(path) }}</td>
                         <td class="text-center">

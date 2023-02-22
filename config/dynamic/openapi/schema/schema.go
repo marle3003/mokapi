@@ -48,6 +48,7 @@ type Schema struct {
 	ShuffleItems         bool     `yaml:"x-shuffleItems" json:"x-shuffleItems"`
 	MinProperties        *int     `yaml:"minProperties" json:"minProperties"`
 	MaxProperties        *int     `yaml:"maxProperties" json:"maxProperties"`
+	Deprecated           bool     `yaml:"deprecated" json:"deprecated"`
 }
 
 type AdditionalProperties struct {

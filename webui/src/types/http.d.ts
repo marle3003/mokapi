@@ -15,6 +15,7 @@ declare interface HttpOperation {
     summary: string
     description: string
     operationId: string
+    deprecated: boolean
     parameters: HttpParameter[]
     requestBody: HttpRequestBody
     responses: HttpResponse[]
@@ -25,6 +26,7 @@ declare interface HttpParameter {
     type: string
     description: string
     required: boolean
+    deprecated: boolean
     style: string
     explode?: boolean
     schema: Schema

@@ -89,7 +89,7 @@ func (m *HttpManager) Update(c *config.Config) {
 	for _, s := range config.Servers {
 		u, err := parseUrl(s.Url)
 		if err != nil {
-			log.Errorf("error %v: %v", c.Url, err.Error())
+			log.Errorf("url syntax error %v: %v", c.Url, err.Error())
 			continue
 		}
 

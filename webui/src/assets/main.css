@@ -48,3 +48,6 @@ a:hover{
 pre{
   font-size: 0.9rem;
 }
+.yellow {
+  color: var(--color-yellow)
+}

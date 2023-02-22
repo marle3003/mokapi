@@ -127,6 +127,8 @@ type Operation struct {
 	// CommonMark syntax MAY be used for rich text representation.
 	Description string `yaml:"description" json:"description"`
 
+	Deprecated bool `yaml:"deprecated" json:"deprecated"`
+
 	// Unique string used to identify the operation. The id MUST be unique
 	// among all operations described in the API. The operationId value is
 	// case-sensitive. Tools and libraries MAY use the operationId to uniquely

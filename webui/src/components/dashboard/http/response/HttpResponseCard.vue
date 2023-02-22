@@ -61,6 +61,7 @@ function selectedContentChange(event: any, statusCode: number){
                                 <div v-if="response.contents" class="tab-pane fade" :class="response.contents ? 'show active' : ''" id="pills-body" role="tabpanel" aria-labelledby="pills-body-tab">
                                     <p class="codeBlock">
                                         <span v-if="selected.contents[response.statusCode]" class="label">{{ selected.contents[response.statusCode].type }}</span>
+                                        <span v-if="selected.contents[response.statusCode].schema.deprecated" class="warning"><i class="bi bi-exclamation-triangle-fill yellow"></i> Deprecated</span>
                                         <pre v-highlightjs="formatLanguage(JSON.stringify(selected.contents[response.statusCode].schema), 'application/json')" class="overflow-auto" style="max-height: 250px;"><code class="json"></code></pre>
                                     </p>
                                     <div class="row">
@@ -115,6 +116,13 @@ function selectedContentChange(event: any, statusCode: number){
     right: 20px;
     top: 4px;
     font-size: 0.8rem;
+}
+.card-body .codeBlock .warning {
+    position: absolute;
+    text-align: center;
+    top: 4px;
+    font-size: 1.0rem;
+    width: 100%
 }
 .response-tab li {
     padding-left: 0;
