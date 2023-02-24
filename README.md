@@ -1,5 +1,5 @@
 <p style="text-align: center">
-<img src="logo.png" alt="Mokapi" title="Mokapi" />
+<img src="logo.png" alt="Mokapi" title="Mokapi" width="400" />
 </p>
 
 ![build](https://github.com/marle3003/mokapi/actions/workflows/build.yml/badge.svg)
