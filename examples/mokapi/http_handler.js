@@ -13,7 +13,7 @@ export default function() {
 
         switch (request.operationId) {
             case 'info':
-                response.data = {version: "1.0", activeServices: ["http", "kafka", "smtp"]}
+                response.data = {version: "0.5.0", activeServices: ["http", "kafka", "smtp"]}
                 return true
             case 'services':
                 response.data = getServices()
