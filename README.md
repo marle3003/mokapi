@@ -1,4 +1,4 @@
-<p style="text-align: center">
+<p align="center">
 <img src="logo.png" alt="Mokapi" title="Mokapi" width="400" />
 </p>
 
