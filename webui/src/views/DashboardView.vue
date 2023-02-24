@@ -27,10 +27,14 @@ onUnmounted(() => {
 })
 
 function isServiceAvailable(service: string): Boolean{
-    if (!appInfo.data){
+    if (!appInfo.data || !appInfo.data.activeServices){
         return false
     }
     return appInfo.data.activeServices.includes(service)
+}
+
+function isAnyServiceAvailable() {
+    return appInfo.data.activeServices && appInfo.data.activeServices.length> 0
 }
 
 function isInitLoading() {
@@ -114,6 +118,7 @@ function isInitLoading() {
         <kafka-service v-if="$route.meta.service == 'kafka'" />
     </div>
     <message :message="appInfo.error" v-if="!appInfo.data && !appInfo.isLoading"></message>
+    <message message="No service available" v-if="appInfo.data && !isAnyServiceAvailable()"></message>
     <loading v-if="isInitLoading()"></loading>
 </template>
 
