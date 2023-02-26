@@ -34,7 +34,7 @@ func TestHttpServers_Monitor(t *testing.T) {
 	c := openapitest.NewConfig("3.0", openapitest.WithInfo("test", "1.0", ""), openapitest.WithServer(url, ""))
 	openapitest.AppendEndpoint("/foo", c, openapitest.WithOperation("get", openapitest.NewOperation()))
 	//c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: url}}}
-	m.Update(&common.Config{Data: c, Url: MustParseUrl("foo.yml")})
+	m.Update(common.NewConfig(MustParseUrl("foo.yml"), common.WithData(c)))
 
 	try.GetRequest(t, url+"/foo", map[string]string{})
 	require.Equal(t, float64(1), app.Monitor.Http.RequestCounter.Sum())

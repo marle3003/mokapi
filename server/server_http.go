@@ -79,7 +79,8 @@ func (m *HttpManager) Update(c *config.Config) {
 		return
 	}
 
-	m.updateConfigWithServiceConfigs(config)
+	m.updateConfigWithStaticConfigByName(config, c.Key)
+	m.updateConfigWithStaticConfigByName(config, config.Info.Name)
 	m.app.AddHttp(config)
 
 	if len(config.Servers) == 0 {
@@ -102,8 +103,8 @@ func (m *HttpManager) Update(c *config.Config) {
 	log.Debugf("processed %v", c.Url.String())
 }
 
-func (m *HttpManager) updateConfigWithServiceConfigs(cfg *openapi.Config) {
-	serviceConfig := m.services.GetByName(cfg.Info.Name)
+func (m *HttpManager) updateConfigWithStaticConfigByName(cfg *openapi.Config, name string) {
+	serviceConfig := m.services.GetByName(name)
 	if serviceConfig != nil && serviceConfig.Http != nil {
 		for _, server := range serviceConfig.Http.Servers {
 			cfg.Servers = append(cfg.Servers, &openapi.Server{Url: server.Url})
