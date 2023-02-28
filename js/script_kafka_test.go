@@ -21,11 +21,9 @@ func TestScript_Kafka_Produce(t *testing.T) {
 
 				s, err := New("",
 					`
-import kafka from 'kafka'
+import {produce} from 'kafka'
 export default function() {
-  var producer = kafka.producer('foo')
-  var s = producer.produce()
-return s
+  return produce({topic: 'foo'})
 }`,
 					host)
 				r.NoError(t, err)
@@ -44,11 +42,9 @@ return s
 
 				s, err := New("",
 					`
-import kafka from 'kafka'
+import {produce} from 'kafka'
 export default function() {
-  var producer = kafka.producer('foo', 'bar')
-  var s = producer.produce()
-return s
+  return produce({topic: 'foo', cluster: 'bar'})
 }`,
 					host)
 				r.NoError(t, err)
@@ -68,11 +64,9 @@ return s
 
 				s, err := New("",
 					`
-import kafka from 'kafka'
+import {produce} from 'kafka'
 export default function() {
-  var p = kafka.producer('foo')
-  var s = p.produce({value: 'value', key: 'key', partition: 2})
-return s
+  return produce({value: 'value', key: 'key', partition: 2})
 }`,
 					host)
 				r.NoError(t, err)

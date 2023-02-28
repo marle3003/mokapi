@@ -9,13 +9,6 @@ type Client interface {
 	Produce(cluster, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error)
 }
 
-type Producer struct {
-	Cluster string
-	Topic   string
-	rt      *goja.Runtime
-	client  Client
-}
-
 type Module struct {
 	host   common.Host
 	rt     *goja.Runtime
@@ -42,24 +35,15 @@ func New(host common.Host, rt *goja.Runtime) interface{} {
 	return &Module{host: host, rt: rt, client: host.KafkaClient()}
 }
 
-func (p *Producer) Produce(v goja.Value) interface{} {
-	params := mapParams(v, p.rt)
+func (m *Module) Produce(v goja.Value) interface{} {
+	params := mapParams(v, m.rt)
 	r := &ProduceResult{}
 	var err error
-	r.Key, r.Value, err = p.client.Produce(p.Cluster, p.Topic, params.Partition, params.Key, params.Value, params.Headers)
+	r.Key, r.Value, err = m.client.Produce(params.Cluster, params.Topic, params.Partition, params.Key, params.Value, params.Headers)
 	if err != nil {
 		r.Error = err.Error()
 	}
 	return r
-}
-
-func (m *Module) Producer(topic, cluster string) interface{} {
-	return &Producer{
-		Cluster: cluster,
-		Topic:   topic,
-		rt:      m.rt,
-		client:  m.client,
-	}
 }
 
 func mapParams(args goja.Value, rt *goja.Runtime) *produceParams {

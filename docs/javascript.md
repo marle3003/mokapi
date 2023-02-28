@@ -15,20 +15,19 @@ The list of Mokapi's Javascript modules usable to extend Mokapi's behavior.
 
 ## kafka
 
-| Functions                  | Description                                          |
-|----------------------------|------------------------------------------------------|
-| producer(topic, [cluster]) | Creates a kafka producer for given cluster and topic |
+| Functions         | Description                                          |
+|-------------------|------------------------------------------------------|
+| produce([params]) | Creates a kafka producer for given cluster and topic |
 
 ## kafka Producer
-| Functions            | Description                                 |
-|----------------------|---------------------------------------------|
-| produce([args])      | Produces a message with given key and value |
+| Functions        | Description                                           |
+|------------------|-------------------------------------------------------|
+| produce()        | Produces a new Kafka message into the specified topic |
 
 ```javascript
-import kafka from 'kafka'
+import { produce } from 'kafka'
 export default function() {
-  var producer = kafka.producer('topic')
-  var msg = producer.produce({value: 'value', key: 'key', partition: 2})
+  var msg = produce({topic: 'topic', value: 'value', key: 'key', partition: 2})
   console.log(`key=${msg.key}, value=${msg.value}`)
 }
 ```
