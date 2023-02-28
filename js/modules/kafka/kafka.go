@@ -9,6 +9,13 @@ type Client interface {
 	Produce(cluster, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error)
 }
 
+type Producer struct {
+	Cluster string
+	Topic   string
+	rt      *goja.Runtime
+	client  Client
+}
+
 type Module struct {
 	host   common.Host
 	rt     *goja.Runtime
@@ -35,23 +42,30 @@ func New(host common.Host, rt *goja.Runtime) interface{} {
 	return &Module{host: host, rt: rt, client: host.KafkaClient()}
 }
 
-func (m *Module) Produce(args goja.Value) interface{} {
-	opt := m.mapOption(args)
-	k, v, err := m.client.Produce(opt.Cluster, opt.Topic, opt.Partition, opt.Key, opt.Value, opt.Headers)
-	r := &ProduceResult{
-		Key:   k,
-		Value: v,
-	}
+func (p *Producer) Produce(value interface{}, opts goja.Value) interface{} {
+	opt := mapOption(opts, p.rt)
+	r := &ProduceResult{}
+	var err error
+	r.Key, r.Value, err = p.client.Produce(p.Cluster, p.Topic, opt.Partition, opt.Key, value, opt.Headers)
 	if err != nil {
 		r.Error = err.Error()
 	}
 	return r
 }
 
-func (m *Module) mapOption(args goja.Value) *produceOptions {
+func (m *Module) Producer(topic, cluster string) interface{} {
+	return &Producer{
+		Cluster: cluster,
+		Topic:   topic,
+		rt:      m.rt,
+		client:  m.client,
+	}
+}
+
+func mapOption(args goja.Value, rt *goja.Runtime) *produceOptions {
 	opt := &produceOptions{Timeout: 30, Partition: -1}
 	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
-		params := args.ToObject(m.rt)
+		params := args.ToObject(rt)
 		for _, k := range params.Keys() {
 			switch k {
 			case "cluster":
@@ -90,7 +104,7 @@ func (m *Module) mapOption(args goja.Value) *produceOptions {
 					continue
 				}
 				opt.Headers = make(map[string]interface{})
-				tagsO := tagsV.ToObject(m.rt)
+				tagsO := tagsV.ToObject(rt)
 				for _, key := range tagsO.Keys() {
 					opt.Headers[key] = tagsO.Get(key).String()
 				}

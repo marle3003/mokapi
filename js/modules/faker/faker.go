@@ -2,10 +2,10 @@ package faker
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/dop251/goja"
 	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/engine/common"
-	"reflect"
 )
 
 type Module struct {
@@ -17,19 +17,18 @@ func New(_ common.Host, _ *goja.Runtime) interface{} {
 }
 
 func (m *Module) Fake(v goja.Value) (interface{}, error) {
-	t := v.ExportType()
-	if t.Kind() == reflect.Struct {
-
-	}
 	e := v.Export()
-	s := toSchema(e)
+	s, err := toSchema(e)
+	if err != nil {
+		return nil, fmt.Errorf("expected parameter type of schema")
+	}
 	i := m.generator.New(&schema.Ref{Value: s})
 	return i, nil
 }
 
-func toSchema(m interface{}) *schema.Schema {
+func toSchema(m interface{}) (*schema.Schema, error) {
 	s := &schema.Schema{}
 	b, _ := json.Marshal(m)
-	_ = json.Unmarshal(b, &s)
-	return s
+	err := json.Unmarshal(b, &s)
+	return s, err
 }

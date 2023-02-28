@@ -11,10 +11,11 @@ func TestScript_Kafka_Produce(t *testing.T) {
 		f    func(t *testing.T, host *testHost)
 	}{
 		{
-			"cluster should be foo",
+			"set topic",
 			func(t *testing.T, host *testHost) {
 				host.kafkaClient.produce = func(cluster, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error) {
-					r.Equal(t, "foo", cluster)
+					r.Equal(t, "foo", topic)
+					r.Equal(t, "", cluster)
 					return nil, nil, nil
 				}
 
@@ -22,7 +23,8 @@ func TestScript_Kafka_Produce(t *testing.T) {
 					`
 import kafka from 'kafka'
 export default function() {
-  var s = kafka.produce({cluster: 'foo'})
+  var producer = kafka.producer('foo')
+  var s = producer.produce()
 return s
 }`,
 					host)
@@ -32,10 +34,11 @@ return s
 			},
 		},
 		{
-			"topic should be foo",
+			"set topic and cluster",
 			func(t *testing.T, host *testHost) {
 				host.kafkaClient.produce = func(cluster, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error) {
 					r.Equal(t, "foo", topic)
+					r.Equal(t, "bar", cluster)
 					return nil, nil, nil
 				}
 
@@ -43,7 +46,32 @@ return s
 					`
 import kafka from 'kafka'
 export default function() {
-  var s = kafka.produce({topic: 'foo'})
+  var producer = kafka.producer('foo', 'bar')
+  var s = producer.produce()
+return s
+}`,
+					host)
+				r.NoError(t, err)
+				err = s.Run()
+				r.NoError(t, err)
+			},
+		},
+		{
+			"set key, value and partition",
+			func(t *testing.T, host *testHost) {
+				host.kafkaClient.produce = func(cluster, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error) {
+					r.Equal(t, "key", key)
+					r.Equal(t, "value", value)
+					r.Equal(t, 2, partition)
+					return nil, nil, nil
+				}
+
+				s, err := New("",
+					`
+import kafka from 'kafka'
+export default function() {
+  var p = kafka.producer('foo')
+  var s = p.produce('value', {key: 'key', partition: 2})
 return s
 }`,
 					host)
