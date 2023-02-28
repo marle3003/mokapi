@@ -16,7 +16,7 @@ defineProps({
                             </div>
                         </div>
                         <div class="col-sm-9">
-                            <div class="d-flex flex-wrap align-items-center h-100">
+                            <div class="d-flex flex-wrap align-items-center h-100 message">
                                 {{ message }}
                             </div>
                         </div>
@@ -31,5 +31,8 @@ defineProps({
 .card {
     border-color: var(--color-border);
     background-color: var(--color-background-soft);
+}
+.message{
+    font-size: 1rem;
 }
 </style>

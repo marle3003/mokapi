@@ -5,6 +5,7 @@ import { useService } from '@/composables/services';
 import HttpMethodsCard from './HttpOperationsCard.vue';
 import Requests from './Requests.vue';
 import Loading from '@/components/Loading.vue'
+import Message from '@/components/Message.vue'
 import '@/assets/http.css'
 
 const {fetchService} = useService()

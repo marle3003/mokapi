@@ -62,60 +62,62 @@ function isInitLoading() {
                 </ul>
             </nav>
         </div>
-        <div v-if="$route.name == 'dashboard' && appInfo.data">
-            <div class="card-group">
-                <app-start-card />
-                <memory-usage-card />
+        <div v-if="appInfo.data">
+            <div v-if="$route.name == 'dashboard' && appInfo.data">
+                <div class="card-group">
+                    <app-start-card />
+                    <memory-usage-card />
+                </div>
+                <div class="card-group">
+                    <http-request-card v-if="isServiceAvailable('http')" includeError />
+                    <kafka-message-card v-if="isServiceAvailable('kafka')" />
+                    <smtp-message-metric-card v-if="isServiceAvailable('smtp')" />
+                </div>
+                <div class="card-group"  v-if="isServiceAvailable('http')">
+                    <http-services-card />
+                </div>
+                <div class="card-group"  v-if="isServiceAvailable('kafka')">
+                    <kafka-clusters-card />
+                </div>
+                <div class="card-group"  v-if="isServiceAvailable('smtp')">
+                    <smtp-services-card />
+                </div>
             </div>
-            <div class="card-group">
-                <http-request-card v-if="isServiceAvailable('http')" includeError />
-                <kafka-message-card v-if="isServiceAvailable('kafka')" />
-                <smtp-message-metric-card v-if="isServiceAvailable('smtp')" />
-            </div>
-            <div class="card-group"  v-if="isServiceAvailable('http')">
-                <http-services-card />
-            </div>
-            <div class="card-group"  v-if="isServiceAvailable('kafka')">
-                <kafka-clusters-card />
-            </div>
-            <div class="card-group"  v-if="isServiceAvailable('smtp')">
-                <smtp-services-card />
-            </div>
-        </div>
 
-        <div v-if="$route.name == 'http'">
-            <div class="card-group">
-                <http-request-card v-if="isServiceAvailable('http')" />
-                <http-request-card v-if="isServiceAvailable('http')" onlyError />
+            <div v-if="$route.name == 'http'">
+                <div class="card-group">
+                    <http-request-card v-if="isServiceAvailable('http')" />
+                    <http-request-card v-if="isServiceAvailable('http')" onlyError />
+                </div>
+                <div class="card-group"  v-if="isServiceAvailable('http')">
+                    <http-services-card />
+                </div>
+                <div class="card-group">
+                    <http-requests />
+                </div>
             </div>
-            <div class="card-group"  v-if="isServiceAvailable('http')">
-                <http-services-card />
-            </div>
-            <div class="card-group">
-                <http-requests />
-            </div>
-        </div>
 
-        <div v-if="$route.name == 'kafka'">
-            <div class="card-group">
-                <kafka-message-card v-if="isServiceAvailable('kafka')" />
+            <div v-if="$route.name == 'kafka'">
+                <div class="card-group">
+                    <kafka-message-card v-if="isServiceAvailable('kafka')" />
+                </div>
+                <div class="card-group"  v-if="isServiceAvailable('http')">
+                    <kafka-clusters-card />
+                </div>
             </div>
-            <div class="card-group"  v-if="isServiceAvailable('http')">
-                <kafka-clusters-card />
-            </div>
-        </div>
 
-        <div v-if="$route.name == 'smtp'">
-            <div class="card-group">
-                <smtp-message-metric-card v-if="isServiceAvailable('smtp')" />
+            <div v-if="$route.name == 'smtp'">
+                <div class="card-group">
+                    <smtp-message-metric-card v-if="isServiceAvailable('smtp')" />
+                </div>
+                <div class="card-group"  v-if="isServiceAvailable('http')">
+                    <smtp-services-card />
+                </div>
             </div>
-            <div class="card-group"  v-if="isServiceAvailable('http')">
-                <smtp-services-card />
-            </div>
-        </div>
 
-        <http-service v-if="$route.meta.service == 'http'" />
-        <kafka-service v-if="$route.meta.service == 'kafka'" />
+            <http-service v-if="$route.meta.service == 'http'" />
+            <kafka-service v-if="$route.meta.service == 'kafka'" />
+        </div>
     </div>
     <message :message="appInfo.error" v-if="!appInfo.data && !appInfo.isLoading"></message>
     <message message="No service available" v-if="appInfo.data && !isAnyServiceAvailable()"></message>

@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router';
 import { useService } from '@/composables/services';
 import HttpRequestCard from './request/HttpRequestCard.vue';
 import HttpResponseCard from './response/HttpResponseCard.vue';
+import Message from '@/components/Message.vue'
 import Requests from './Requests.vue';
 import Loading from '@/components/Loading.vue'
 import Markdown from 'vue3-markdown-it';
