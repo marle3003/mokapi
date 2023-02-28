@@ -71,7 +71,7 @@ return s
 import kafka from 'kafka'
 export default function() {
   var p = kafka.producer('foo')
-  var s = p.produce('value', {key: 'key', partition: 2})
+  var s = p.produce({value: 'value', key: 'key', partition: 2})
 return s
 }`,
 					host)

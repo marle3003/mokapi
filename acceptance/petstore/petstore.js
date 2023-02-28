@@ -7,7 +7,8 @@ export default function() {
         record.headers.push({key: 'foo', value: 'bar'})
         console.log(record)
     })
-    kafka.produce({topic: 'petstore.order-event'})
+    let producer = kafka.producer('petstore.order-event')
+    producer.produce()
     on('http', function(request, response) {
         if (request.operationId === "getPetById") {
             if (request.path.petId === 2) {
