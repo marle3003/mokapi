@@ -22,6 +22,11 @@ let path = computed(() => {
     }
     return null
 })
+
+function endpointNotFoundMessage() {
+    return 'Endpoint ' + pathName + ' in service ' + serviceName + ' not found' 
+}
+
 onUnmounted(() => {
     close()
 })
@@ -57,7 +62,7 @@ onUnmounted(() => {
     </div>
     <loading v-if="isLoading && !path"></loading>
     <div v-if="!path && !isLoading">
-        Endpoint '{{ pathName }}' in service '{{ serviceName }}' not found
+        <message :message="endpointNotFoundMessage()"></message>
     </div>
 </template>
 

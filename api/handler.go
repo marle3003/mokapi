@@ -31,7 +31,7 @@ type serviceType string
 var (
 	ServiceHttp    serviceType = "http"
 	ServiceKafka   serviceType = "kafka"
-	FileExtensions             = []string{".html", ".css", ".js", ".woff", ".woff2"}
+	FileExtensions             = []string{".html", ".css", ".js", ".woff", ".woff2", ".svg"}
 )
 
 type service struct {
@@ -104,7 +104,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if isFileExtension(filepath.Ext(r.URL.Path)) {
 			if strings.ToLower(filepath.Base(r.URL.Path)) == "index.html" {
 				r.URL.Path = "/index.html"
-			} else {
+			} else if strings.Contains(r.URL.Path, "/assets/") {
 				r.URL.Path = "/assets/" + filepath.Base(r.URL.Path)
 			}
 		} else {

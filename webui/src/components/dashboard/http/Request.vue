@@ -55,7 +55,7 @@ onUnmounted(() => {
     </div>
     <loading v-if="isInitLoading()"></loading>
     <div v-if="!event && !isLoading">
-        Request not found
+        <message message="Request not found"></message>
     </div>
 </template>
 

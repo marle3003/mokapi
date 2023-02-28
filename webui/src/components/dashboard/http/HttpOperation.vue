@@ -37,6 +37,11 @@ const operation = computed(() => {
     }
     return null
 })
+
+function operationNotFoundMessage() {
+    return 'Operation '+ operation +' for path '+ pathName+' in service '+ serviceName +' not found'
+}
+
 onUnmounted(() => {
     close()
 })
@@ -91,7 +96,8 @@ onUnmounted(() => {
     </div>
     <loading v-if="isLoading && !operation"></loading>
     <div v-if="!operation && !isLoading">
-        Operation '{{ operation }}' for path '{{ pathName }}' in service '{{ serviceName }}' not found
+        <message :message="operationNotFoundMessage()"></message>
+        
     </div>
 </template>
 
