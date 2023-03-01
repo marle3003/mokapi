@@ -31,6 +31,9 @@ application/json:
 			func(t *testing.T, c Content) {
 				require.Len(t, c, 1)
 				require.Contains(t, c, "application/json")
+				ct := c["application/json"].ContentType
+				require.Equal(t, "application", ct.Type)
+				require.Equal(t, "json", ct.Subtype)
 			},
 		},
 	}
@@ -45,4 +48,14 @@ application/json:
 			test.fn(t, c)
 		})
 	}
+}
+
+func TestResponses_UnmarshalYAML(t *testing.T) {
+	s := `"200": {
+"description": "Success"
+}`
+	r := &Responses{}
+	err := yaml.Unmarshal([]byte(s), &r)
+	require.NoError(t, err)
+	require.Equal(t, "Success", r.GetResponse(200).Description)
 }

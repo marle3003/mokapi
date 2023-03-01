@@ -3,7 +3,8 @@
   "Config": "config.md",
   "OpenAPI": {
     "Intro": "openapi/intro.md",
-    "Response": "openapi/response.md",
+    "Quick Start": "openapi/quick-start.md",
+    "Static Data Generation": "openapi/static-data-generation.md",
     "HTTPS & TLS": "openapi/tls.md"
   },
   "Kafka": {

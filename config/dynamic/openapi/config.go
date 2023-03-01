@@ -1,7 +1,6 @@
 package openapi
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"mokapi/config/dynamic/common"
@@ -22,7 +21,7 @@ func init() {
 type Config struct {
 	OpenApi string    `yaml:"openapi" json:"openapi"`
 	Info    Info      `yaml:"info" json:"info"`
-	Servers []*Server `yaml:"servers,omitempty" json:"server,omitempty"`
+	Servers []*Server `yaml:"servers,omitempty" json:"servers,omitempty"`
 
 	// A relative path to an individual endpoint. The path MUST begin
 	// with a forward slash ('/'). The path is appended to the url from
@@ -107,12 +106,6 @@ type Endpoint struct {
 	// parameters can be overridden at the operation level,
 	// but cannot be removed there
 	Parameters parameter.Parameters
-
-	// The pipeline name used for all the operation described
-	// under this path. This pipeline name can be overridden
-	// at the operation level, but cannot reset to the default
-	// empty pipeline name.
-	Pipeline string `yaml:"x-mokapi-pipeline" json:"x-mokapi-pipeline"`
 }
 
 type Operation struct {
@@ -149,16 +142,11 @@ type Operation struct {
 	// operation.
 	Responses *Responses `yaml:"responses" json:"responses"`
 
-	// The pipeline name used to identify the pipeline in the mokapi file.
-	// If pipeline name is already defined at the Path Item, the new definition
-	// will override it but can not set to empty pipeline name.
-	Pipeline string `yaml:"x-mokapi-pipeline" yaml:"x-mokapi-pipeline"`
-
 	Endpoint *Endpoint `yaml:"-" json:"-"`
 }
 
-func (e EndpointsRef) Resolve(token string) (interface{}, error) {
-	if v, ok := e.Value["/"+token]; ok {
+func (r *EndpointsRef) Resolve(token string) (interface{}, error) {
+	if v, ok := r.Value["/"+token]; ok {
 		return v, nil
 	}
 	return nil, nil
@@ -425,17 +413,4 @@ func parseVersion(s string) (v version) {
 		v.build = i
 	}
 	return
-}
-
-func (e *EndpointsRef) MarshalJSON() ([]byte, error) {
-	if len(e.Ref) == 0 && len(e.Value) == 0 {
-		return []byte("{}"), nil
-	}
-	return json.Marshal(struct {
-		Ref   string                  `json:"$ref"`
-		Value map[string]*EndpointRef `json:"value"`
-	}{
-		Ref:   e.Ref,
-		Value: e.Value,
-	})
 }

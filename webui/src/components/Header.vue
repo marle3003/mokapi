@@ -43,6 +43,11 @@ onUnmounted(() => {
 <style scoped>
 header {
     width: 100%;
+    position:fixed;
+    top: 0;
+    z-index: 99;
+    background-color: var(--color-background);;
+    height: 5rem;
 }
 .navbar {
   margin-left: 0.5rem;

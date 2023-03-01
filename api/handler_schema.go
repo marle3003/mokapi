@@ -39,8 +39,6 @@ func (p *Properties) UnmarshalJSON(b []byte) error {
 		}
 		p.Set(key, s)
 	}
-
-	return nil
 }
 
 type schemaInfo struct {

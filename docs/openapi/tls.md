@@ -4,9 +4,11 @@ for them. This guide shows you how to configure TLS.
 
 ```yaml
 openapi: 3.0.0
+info: {}
 servers:
   - url: https://demo
   - url: https://demo:8443
+paths: {}
 ```
 
 ## Certificate Authority
