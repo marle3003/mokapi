@@ -154,21 +154,23 @@ func (c *kafkaClient) createRecordBatch(key, value interface{}, config *asyncApi
 		value = c.generator.New(msg.Payload)
 	}
 
-	var k []byte
-	switch msg.Bindings.Kafka.Key.Value.Type {
-	case "object", "array":
-		k, err = msg.Bindings.Kafka.Key.Marshal(key, media.ParseContentType("application/json"))
-		if err != nil {
-			return
-		}
-	default:
-		k = []byte(fmt.Sprintf("%v", key))
-	}
-
 	var v []byte
 	v, err = msg.Payload.Marshal(value, media.ParseContentType("application/json"))
 	if err != nil {
 		return
+	}
+
+	var k []byte
+	if msg.Bindings.Kafka.Key != nil {
+		switch msg.Bindings.Kafka.Key.Value.Type {
+		case "object", "array":
+			k, err = msg.Bindings.Kafka.Key.Marshal(key, media.ParseContentType("application/json"))
+			if err != nil {
+				return
+			}
+		default:
+			k = []byte(fmt.Sprintf("%v", key))
+		}
 	}
 
 	rb = kafka.RecordBatch{Records: []kafka.Record{

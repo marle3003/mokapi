@@ -6,7 +6,10 @@
     "Response": "openapi/response.md",
     "HTTPS & TLS": "openapi/tls.md"
   },
-  "Kafka": "kafka.md",
+  "Kafka": {
+    "Quick Start": "kafka/quick-start.md",
+    "Config": "kafka/config.md"
+  },
   "LDAP": "ldap.md",
   "SMTP": "smtp.md",
   "Lua": "lua.md"

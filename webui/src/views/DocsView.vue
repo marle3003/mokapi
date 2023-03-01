@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onUpdated, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import Markdown from 'vue3-markdown-it';
 
@@ -14,6 +15,21 @@ if (subject) {
   file = file[subject]
 }
 const content = files[`/src/assets/docs/${file}`]
+
+onMounted(() => {
+  setTimeout(() => {
+  for (var pre of document.querySelectorAll('pre')) {
+    console.log(pre)
+    pre.addEventListener("dblclick", (e) => {
+      const range = document.createRange()
+      range.selectNodeContents(e.target as HTMLElement)
+      const selection = getSelection()
+      selection?.removeAllRanges()
+      selection?.addRange(range)
+    })
+  }
+}, 1000)
+})
 </script>
 
 <template>
@@ -31,7 +47,7 @@ const content = files[`/src/assets/docs/${file}`]
         </li>
       </ul>
     </div>
-    <div class="d-flex flex-column flex-shrink-0" style="max-width:600px">
+    <div class="d-flex flex-column flex-shrink-0" style="max-width:700px">
       <markdown :source="content" :html="true" class="content" />
     </div>
     
