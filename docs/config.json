@@ -1,10 +1,10 @@
 {
   "Welcome": "welcome.md",
-  "Config": "config.md",
   "OpenAPI": {
     "Intro": "openapi/intro.md",
     "Quick Start": "openapi/quick-start.md",
     "Static Data Generation": "openapi/static-data-generation.md",
+    "Mokapi Script": "openapi/mokapi-script.md",
     "HTTPS & TLS": "openapi/tls.md"
   },
   "Kafka": {
@@ -13,5 +13,9 @@
   },
   "LDAP": "ldap.md",
   "SMTP": "smtp.md",
-  "Lua": "lua.md"
+  "References": {
+    "Configuration": "references/config.md",
+    "Javascript": "references/javascript.md",
+    "Lua": "references/lua.md"
+  }
 }

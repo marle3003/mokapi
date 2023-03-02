@@ -1,58 +1,91 @@
 .dashboard .card-group .card {
-    border-color: var(--color-border);
-    background-color: var(--color-background-soft);
-    margin: 7px;
-    margin-left: 0;
-    font-weight: 400;
-    font-size: 0.7rem;
-  }
-  .dashboard .card-group .card:first-child{
-    margin-left: 0px;
-  }
-  .dashboard .card-group:last-child{
-    margin-bottom: 50px;
-  }
-  .dashboard .modal .card-group:last-child{
-    margin-bottom: 0px;
-  }
-  .dashboard .card .card-body {
-    padding: 0.8rem;
-    margin-bottom: 0;
-  }
-  .dashboard .card-text {
-    font-size: 2.25rem;
-  }
-  .card-additional {
-    color: var(--color-text-light);
-    text-align: right !important;
-  }
-  .dashboard .card p {
-    font-size: 0.9rem;
-    margin: 0 0 0.3rem;
-  }
-  .dashboard .card .header p {
-    font-size: 1.2rem;
-  }
-  .dashboard .card .header .label {
-    font-size: 0.6rem;
-    margin: 0 0 0.3rem;
-  }
-  .dashboard .card .label {
-    font-size: 0.6rem;
-    margin: 0 0 0.3rem;
-  }
-  .dashboard-popover.show {
-    --bs-popover-bg: var(--color-background);
-    --bs-popover-header-bg: var(--color-background);
-    --bs-popover-border-color: var(--color-popover-border);
-  }
-  .dashboard-popover.show h3 {
-    font-size: 0.8rem;
-  }
-  .dashboard-popover.show .popover-body {
-    color: var(--color-text)
-  }
-  .dashboard-popover.show .label {
-    font-size: 0.6rem;
-    margin: 0 0 0.3rem;
-  }
+  border-color: var(--color-border);
+  background-color: var(--color-background-soft);
+  margin: 7px;
+  margin-left: 0;
+  font-weight: 400;
+  font-size: 0.7rem;
+}
+.dashboard .card-group .card:first-child{
+  margin-left: 0px;
+}  
+.dashboard .card-group:last-child{
+  margin-bottom: 50px;
+}
+.dashboard .modal .card-group:last-child{
+  margin-bottom: 0px;
+}
+.dashboard .card .card-body {
+  padding: 0.8rem;
+  margin-bottom: 0;
+}
+.dashboard .card-text {
+  font-size: 2.25rem;
+}
+.card-additional {
+  color: var(--color-text-light);
+  text-align: right !important;
+}
+.dashboard .card p {
+  font-size: 0.9rem;
+  margin: 0 0 0.3rem;
+}
+.dashboard .card .header p {
+  font-size: 1.2rem;
+}
+.dashboard .card .header .label {
+  font-size: 0.6rem;
+  margin: 0 0 0.3rem;
+}
+.dashboard .card .label {
+  font-size: 0.6rem;
+  margin: 0 0 0.3rem;
+}
+.dashboard-popover.show {
+  --bs-popover-bg: var(--color-background);
+  --bs-popover-header-bg: var(--color-background);
+  --bs-popover-border-color: var(--color-popover-border);
+}
+.dashboard-popover.show h3 {
+  font-size: 0.8rem;
+}
+.dashboard-popover.show .popover-body {
+  color: var(--color-text)
+}
+.dashboard-popover.show .label {
+  font-size: 0.6rem;
+  margin: 0 0 0.3rem;
+}
+.dashboard {
+    width: 90%;
+    margin: 0 auto auto;
+}
+.dashboard-tabs {
+  background-color: var(--color-background);
+  width: 100%;
+  position: fixed;
+  top: 4rem;
+  z-index: 99;
+}
+.dashboard-tabs .nav-link {
+  color: var(--color-text);
+  position: relative;
+  border-radius: 6px;
+  margin-right: 5px;
+}
+.dashboard-tabs .nav-link:hover {
+  color: var(--color-text);
+  text-decoration: none;
+  background-color: var(--color-background-mute);
+  opacity: 0.8;
+}
+.dashboard-tabs .nav-link.router-link-active,
+.dashboard-tabs .nav-link.router-link-exact-active {
+  color: var(--color-text);
+  text-decoration: none;
+  background-color: var(--color-background-mute);
+  opacity: 0.8;
+}
+.dashboard-content {
+  margin-top: 7.5rem;
+}

@@ -15,14 +15,9 @@ The list of Mokapi's Javascript modules usable to extend Mokapi's behavior.
 
 ## kafka
 
-| Functions         | Description                                          |
-|-------------------|------------------------------------------------------|
-| produce([params]) | Creates a kafka producer for given cluster and topic |
-
-## kafka Producer
-| Functions        | Description                                           |
-|------------------|-------------------------------------------------------|
-| produce()        | Produces a new Kafka message into the specified topic |
+| Functions         | Description                   |
+|-------------------|-------------------------------|
+| produce([params]) | Produces a new Kafka message  |
 
 ```javascript
 import { produce } from 'kafka'

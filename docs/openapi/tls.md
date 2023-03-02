@@ -15,7 +15,7 @@ paths: {}
 By default, Mokapi signs all generated certificate with its own CA certificate in the [git repo](https://github.com/marle3003/mokapi/tree/master/assets).
 
 This example demonstrates how to reference a custom CA certificate as an environment variable.
-```
+```yaml
 MOKAPI_RootCaCert: /path/to/caCert.pem
 MOKAPI_RootCaKey: /path/to/caKey.pem
 ```

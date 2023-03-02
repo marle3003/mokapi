@@ -10,10 +10,9 @@ Create an OpenAPI specification file `users.yaml` that defines an endpoint users
 openapi: 3.0.0
 info:
   title: Sample API
-  description: Optional multiline or single-line description in [CommonMark](http://commonmark.org/help/) or HTML.
-  version: 0.1.9
+  version: 0.1.0
 servers:
-  - url: /api/users
+  - url: /api
 paths:
   /users:
     get:
@@ -64,7 +63,10 @@ CMD ["--Providers.File.Directory=/demo"]
 ```
 
 ## Start Mokapi
-docker run -p 8080:8080 -p 9092:9092 --rm -it $(docker build -q .)
+
+```
+docker run -p 80:80 -p 8080:8080 --rm -it $(docker build -q .)
+```
 You can open a browser and go to Mokapi's Dashboard (http://localhost:8080) to see the Mokapi's HTTP REST API.
 
 ## Make HTTP request
