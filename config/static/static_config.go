@@ -17,7 +17,7 @@ type Config struct {
 
 func NewConfig() *Config {
 	cfg := &Config{}
-	cfg.Log = &MokApiLog{Level: "error", Format: "default"}
+	cfg.Log = &MokApiLog{Level: "info", Format: "default"}
 	cfg.Api.Port = "8080"
 	cfg.Api.Dashboard = true
 	return cfg
