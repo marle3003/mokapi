@@ -102,8 +102,22 @@ func (h *handler) getExampleData(w http.ResponseWriter, r *http.Request) {
 }
 
 func getSchema(s *schema.Ref) *schemaInfo {
+	converter := &schemaConverter{map[string]*schemaInfo{}}
+	return converter.getSchema(s)
+}
+
+type schemaConverter struct {
+	schemas map[string]*schemaInfo
+}
+
+func (c *schemaConverter) getSchema(s *schema.Ref) *schemaInfo {
 	if s == nil || s.Value == nil {
 		return nil
+	}
+
+	// loop protection, only return reference
+	if _, ok := c.schemas[s.Ref]; ok {
+		return &schemaInfo{Ref: s.Ref}
 	}
 
 	result := &schemaInfo{
@@ -111,7 +125,6 @@ func getSchema(s *schema.Ref) *schemaInfo {
 		Ref:              s.Ref,
 		Type:             s.Value.Type,
 		Enum:             s.Value.Enum,
-		Items:            getSchema(s.Value.Items),
 		Required:         s.Value.Required,
 		Format:           s.Value.Format,
 		Pattern:          s.Value.Pattern,
@@ -129,10 +142,16 @@ func getSchema(s *schema.Ref) *schemaInfo {
 		MaxProperties:    s.Value.MaxProperties,
 	}
 
+	if len(s.Ref) > 0 {
+		c.schemas[s.Ref] = result
+	}
+
+	result.Items = c.getSchema(s.Value.Items)
+
 	if s.Value.Properties != nil && s.Value.Properties.Value != nil {
 		result.Properties = &Properties{}
 		for it := s.Value.Properties.Value.Iter(); it.Next(); {
-			prop := getSchema(it.Value().(*schema.Ref))
+			prop := c.getSchema(it.Value().(*schema.Ref))
 			prop.Name = it.Key().(string)
 			result.Properties.Set(prop.Name, prop)
 		}
@@ -150,13 +169,13 @@ func getSchema(s *schema.Ref) *schemaInfo {
 	}
 
 	for _, any := range s.Value.AnyOf {
-		result.AnyOf = append(result.AnyOf, getSchema(any))
+		result.AnyOf = append(result.AnyOf, c.getSchema(any))
 	}
 	for _, all := range s.Value.AllOf {
-		result.AllOf = append(result.AnyOf, getSchema(all))
+		result.AllOf = append(result.AnyOf, c.getSchema(all))
 	}
 	for _, one := range s.Value.OneOf {
-		result.OneOf = append(result.AnyOf, getSchema(one))
+		result.OneOf = append(result.AnyOf, c.getSchema(one))
 	}
 
 	return result
