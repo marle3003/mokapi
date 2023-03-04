@@ -81,6 +81,7 @@ func (c *Content) UnmarshalJSON(b []byte) error {
 	}
 }
 
+//goland:noinspection GoMixedReceiverTypes
 func (r *EndpointsRef) UnmarshalJSON(b []byte) error {
 	return r.Reference.UnmarshalJson(b, &r.Value)
 }

@@ -89,10 +89,6 @@ func (r *NamedHeaders) Parse(config *common.Config, reader common.Reader) error 
 }
 
 func (r *EndpointsRef) Parse(config *common.Config, reader common.Reader) error {
-	if r == nil {
-		return nil
-	}
-
 	if len(r.Ref) > 0 {
 		return common.Resolve(r.Ref, &r.Value, config, reader)
 	}
