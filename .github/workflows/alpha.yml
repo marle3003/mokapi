@@ -1,4 +1,4 @@
-name: Beta Release
+name: Release alpha
 on:
   push:
     branches:
@@ -6,13 +6,15 @@ on:
 
 jobs:
   release:
-    name: Release
+    name: Release alpha
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
+      - name: Run Unit tests.
+        run: go test -v  -coverprofile=coverage.txt -covermode=atomic ./...
       - name: Login to Docker
         uses: docker/login-action@v1
         with:

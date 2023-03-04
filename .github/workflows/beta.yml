@@ -6,10 +6,11 @@ on:
 
 jobs:
   release:
-    name: Release
+    name: Release beta
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - name: Check out code
+        uses: actions/checkout@v2
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
       - name: Set up Docker Buildx
@@ -19,16 +20,20 @@ jobs:
         with:
           username: mokapi
           password: ${{ secrets.DOCKER_PASSWORD }}
-      - uses: actions/setup-go@v3
+      - name: Setup go
+        uses: actions/setup-go@v3
         with:
           go-version: 1.20.1
-      - uses: actions/setup-node@v2
+      - name: Setup node
+        uses: actions/setup-node@v2
         with:
           node-version: '16'
-      - run: curl -sL https://raw.githubusercontent.com/go-task/task/master/install-task.sh | sh
+      - name: Setup task
+        run: curl -sL https://raw.githubusercontent.com/go-task/task/master/install-task.sh | sh
       - run: npm install
         working-directory: ./webui
-      - run: go install -a -v github.com/go-bindata/go-bindata/...@latest
+      - name: Install bindata
+        run: go install -a -v github.com/go-bindata/go-bindata/...@latest
       - name: Build
         run: ./bin/task bindata-vueapp
         env:
