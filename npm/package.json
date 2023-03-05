@@ -1,0 +1,27 @@
+{
+  "name": "npm-mokapi",
+  "version": "0.5.2",
+  "description": "Create and test API designs before actually building them.",
+  "bin": {
+    "mokapi": "bin/mokapi.js"
+  },
+  "scripts": {
+    "mokapi": "mokapi"
+  },
+  "keywords": [
+    "mock",
+    "api",
+    "kafka",
+    "rest",
+    "http"
+  ],
+  "author": "Marcel Lehmann",
+  "license": "MIT",
+  "types": "index.d.ts",
+  "files": [
+    "bin",
+    "dist",
+	"types",
+	"index.d.ts"
+  ]
+}
