@@ -110,11 +110,9 @@ func TestLoad_Invalid(t *testing.T) {
 		{args: "--name"},
 	}
 
-	t.Parallel()
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.args, func(t *testing.T) {
-			t.Parallel()
 			os.Args = nil
 			os.Args = append(os.Args, "mokapi.exe")
 			args := strings.Split(tc.args, " ")

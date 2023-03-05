@@ -1,6 +1,8 @@
 package parameter
 
 import (
+	"bytes"
+	"encoding/json"
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic/openapi/schema"
 )
@@ -39,4 +41,31 @@ func (r *Ref) UnmarshalYAML(node *yaml.Node) error {
 
 func (r *NamedParameters) UnmarshalYAML(node *yaml.Node) error {
 	return r.Reference.Unmarshal(node, &r.Value)
+}
+
+func (p *Parameter) UnmarshalJSON(b []byte) error {
+	tmp := &parameter{Explode: true}
+	dec := json.NewDecoder(bytes.NewReader(b))
+	err := dec.Decode(&tmp)
+	if err != nil {
+		return err
+	}
+
+	p.Name = tmp.Name
+	p.Type = tmp.Type
+	p.Schema = tmp.Schema
+	p.Required = tmp.Required
+	p.Description = tmp.Description
+	p.Style = tmp.Style
+	p.Explode = tmp.Explode
+
+	return nil
+}
+
+func (r *Ref) UnmarshalJSON(b []byte) error {
+	return r.Reference.UnmarshalJson(b, &r.Value)
+}
+
+func (r *NamedParameters) UnmarshalJSON(b []byte) error {
+	return r.Reference.UnmarshalJson(b, &r.Value)
 }

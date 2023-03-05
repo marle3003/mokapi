@@ -66,6 +66,7 @@ func (c *Content) UnmarshalYAML(value *yaml.Node) error {
 	return nil
 }
 
+//goland:noinspection GoMixedReceiverTypes
 func (r *EndpointsRef) UnmarshalYAML(node *yaml.Node) error {
 	return r.Reference.Unmarshal(node, &r.Value)
 }

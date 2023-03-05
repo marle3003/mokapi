@@ -16,13 +16,17 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v2
 
-      - uses: actions/setup-node@v2
+      - name: Setup node
+        uses: actions/setup-node@v2
         with:
           node-version: '16'
-      - run: curl -sL https://raw.githubusercontent.com/go-task/task/master/install-task.sh | sh
-      - run: npm install
+      - name: Setup task
+        run: curl -sL https://raw.githubusercontent.com/go-task/task/master/install-task.sh | sh
+      - name: nmp install
+        run: npm install
         working-directory: ./webui
-      - run: go install -a -v github.com/go-bindata/go-bindata/...@latest
+      - name: Install bindata
+        run: go install -a -v github.com/go-bindata/go-bindata/...@latest
       - name: Build
         run: ./bin/task bindata-vueapp
         env:
