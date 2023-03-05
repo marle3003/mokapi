@@ -16,6 +16,7 @@ import (
 	"mokapi/try"
 	"net/url"
 	"testing"
+	"time"
 )
 
 func TestHttpServers_Monitor(t *testing.T) {
@@ -36,6 +37,8 @@ func TestHttpServers_Monitor(t *testing.T) {
 	//c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: url}}}
 	m.Update(common.NewConfig(MustParseUrl("foo.yml"), common.WithData(c)))
 
+	// give server time to start
+	time.Sleep(time.Second * 1)
 	try.GetRequest(t, url+"/foo", map[string]string{})
 	require.Equal(t, float64(1), app.Monitor.Http.RequestCounter.Sum())
 }

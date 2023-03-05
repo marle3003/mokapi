@@ -5,20 +5,14 @@ import (
 	"errors"
 	log "github.com/sirupsen/logrus"
 	"io"
+	"mokapi/safe"
 	"net"
 	"runtime/debug"
 	"sync"
-	"sync/atomic"
 	"time"
 )
 
 var ErrServerClosed = errors.New("kafka: Server closed")
-
-type atomicBool int32
-
-func (a *atomicBool) isSet() bool { return atomic.LoadInt32((*int32)(a)) != 0 }
-func (a *atomicBool) setFalse()   { atomic.StoreInt32((*int32)(a), 0) }
-func (a *atomicBool) setTrue()    { atomic.StoreInt32((*int32)(a), 1) }
 
 type Handler interface {
 	ServeMessage(rw ResponseWriter, req *Request)
@@ -49,11 +43,11 @@ type Server struct {
 	closeChan  chan bool
 	activeConn map[net.Conn]context.Context
 	listener   net.Listener
-	inShutdown atomicBool
+	inShutdown safe.AtomicBool
 }
 
 func (s *Server) ListenAndServe() error {
-	if s.inShutdown.isSet() {
+	if s.inShutdown.IsSet() {
 		return ErrServerClosed
 	}
 
@@ -85,10 +79,10 @@ func (s *Server) Serve(l net.Listener) error {
 }
 
 func (s *Server) Close() {
-	if s.inShutdown.isSet() {
+	if s.inShutdown.IsSet() {
 		return
 	}
-	s.inShutdown.setTrue()
+	s.inShutdown.SetTrue()
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -126,7 +120,7 @@ func (s *Server) serve(conn net.Conn, ctx context.Context) {
 		r.Header, r.Message, err = ReadMessage(conn)
 		if err != nil {
 			switch {
-			case err == io.EOF:
+			case err == io.EOF || errors.Is(err, net.ErrClosed):
 				return
 			default:
 				log.Errorf("kafka: %v", err)

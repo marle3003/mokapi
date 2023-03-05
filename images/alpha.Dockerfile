@@ -1,4 +1,4 @@
-ARG MOKAPI_VERSION
+ARG VERSION
 
 FROM node:16.13.1 as webui
 
@@ -11,9 +11,9 @@ COPY ./docs ./src/assets/docs
 RUN npm install
 RUN npm run build
 
-FROM golang:1.20.1-alpine AS gobuild
+FROM golang:1.20.1 AS gobuild
 
-ARG MOKAPI_VERSION=dev
+ARG VERSION=dev
 
 COPY . /go/src/github.com/mokapi
 
@@ -27,7 +27,7 @@ RUN go-bindata -nomemcopy -pkg api -o api/bindata.go -prefix webui/ webui/...
 
 RUN go test -v ./...
 
-RUN go build -o mokapi -ldflags="-X mokapi/version.BuildVersion=$MOKAPI_VERSION" ./cmd/mokapi
+RUN go build -o mokapi -ldflags="-X mokapi/version.BuildVersion=$VERSION" ./cmd/mokapi
 
 FROM alpine
 
