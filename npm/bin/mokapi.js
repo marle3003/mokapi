@@ -1,21 +1,21 @@
 #!/usr/bin/env node
-var spawn = require('child_process').spawn;
-var path = require('path');
+let spawn = require('child_process').spawn;
+let path = require('path');
 
-var ARCH_MAPPING = {
+const ARCH_MAPPING = {
     "ia32": "386",
     "x64": "amd64",
     "arm": "arm"
 };
 
 // Mapping between Node's `process.platform` to Golang's
-var PLATFORM_MAPPING = {
+const PLATFORM_MAPPING = {
     "darwin": "darwin",
     "linux": "linux",
     "win32": "windows",
 };
 
-let exe = `../dist/mokapi_${PLATFORM_MAPPING[process.platform]}_${ARCH_MAPPING[process.arch]}/mokapi`
+let exe = `../dist/mokapi-${PLATFORM_MAPPING[process.platform]}-${ARCH_MAPPING[process.arch]}/mokapi`
 if (process.platform === 'win32') {
     exe += '.exe'
 }
