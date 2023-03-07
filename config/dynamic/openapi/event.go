@@ -2,50 +2,24 @@ package openapi
 
 import (
 	"mokapi/config/dynamic/openapi/parameter"
+	"mokapi/engine/common"
 	"net/http"
 	"strings"
 )
 
-type EventResponse struct {
-	Headers    map[string]string `json:"headers"`
-	StatusCode int               `json:"statusCode"`
-	Body       string            `json:"body"`
-	Data       interface{}       `json:"data"`
-}
-
-type EventRequest struct {
-	Method string                 `json:"method"`
-	Url    Url                    `json:"url"`
-	Body   interface{}            `json:"body"`
-	Path   map[string]interface{} `json:"path"`
-	Query  map[string]interface{} `json:"query"`
-	Header map[string]interface{} `json:"header"`
-	Cookie map[string]interface{} `json:"cookie"`
-
-	Key         string `json:"key"`
-	OperationId string `json:"operationId"`
-}
-
-type Url struct {
-	Scheme string `json:"scheme"`
-	Host   string `json:"host"`
-	Path   string `json:"path"`
-	Query  string `json:"query"`
-}
-
-func NewEventResponse(status int) *EventResponse {
-	return &EventResponse{
+func NewEventResponse(status int) *common.EventResponse {
+	return &common.EventResponse{
 		Headers:    make(map[string]string),
 		StatusCode: status,
 	}
 }
 
-func EventRequestFrom(r *http.Request) *EventRequest {
+func EventRequestFrom(r *http.Request) *common.EventRequest {
 	ctx := r.Context()
 	endpointPath := ctx.Value("endpointPath").(string)
 	op, _ := OperationFromContext(ctx)
 
-	req := &EventRequest{
+	req := &common.EventRequest{
 		Key:         endpointPath,
 		OperationId: op.OperationId,
 		Method:      r.Method,
@@ -55,7 +29,7 @@ func EventRequestFrom(r *http.Request) *EventRequest {
 		Cookie:      make(map[string]interface{}),
 	}
 
-	req.Url = Url{
+	req.Url = common.Url{
 		Scheme: "",
 		Host:   r.Host,
 		Path:   r.URL.Path,
@@ -85,24 +59,4 @@ func EventRequestFrom(r *http.Request) *EventRequest {
 	}
 
 	return req
-}
-
-func (r *EventRequest) String() string {
-	return r.Method + " " + r.Url.String()
-}
-
-func (u *Url) String() string {
-	sb := strings.Builder{}
-	sb.WriteString(u.Scheme)
-	if sb.Len() > 0 {
-		sb.WriteString("://")
-	}
-	sb.WriteString(u.Host)
-	sb.WriteString(u.Path)
-	sb.WriteString(u.Query)
-	return sb.String()
-}
-
-func (r *EventResponse) HasBody() bool {
-	return len(r.Body) > 0 || r.Data != nil
 }

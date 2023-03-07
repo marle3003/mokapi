@@ -111,6 +111,7 @@ type testHost struct {
 	httpClient  *testClient
 	kafkaClient *kafkaClient
 	every       func(every string, do func(), opt common.JobOptions)
+	on          func(event string, do func(args ...interface{}) (bool, error), tags map[string]string)
 }
 
 func (th *testHost) Info(args ...interface{}) {
@@ -138,6 +139,12 @@ func (th *testHost) Every(every string, do func(), opt common.JobOptions) (int, 
 		th.every(every, do, opt)
 	}
 	return 0, nil
+}
+
+func (th *testHost) On(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+	if th.on != nil {
+		th.on(event, do, tags)
+	}
 }
 
 func (th *testHost) HttpClient() common.HttpClient {

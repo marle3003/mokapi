@@ -54,7 +54,14 @@ func (s *Script) RunDefault() (goja.Value, error) {
 		if err != nil {
 			return nil, err
 		}
+		s.processObject(i)
 		return i, nil
+	} else {
+		data := o.Get("mokapi")
+		if data != nil && !goja.IsUndefined(data) && !goja.IsNull(data) {
+			s.processObject(data)
+			return data, nil
+		}
 	}
 	return nil, NoDefaultFunction
 }
@@ -120,4 +127,24 @@ func (s *Script) ensureRuntime() (err error) {
 
 	s.exports, err = s.openScript(s.filename, s.source)
 	return
+}
+
+func (s *Script) processObject(v goja.Value) {
+	m := v.Export().(map[string]interface{})
+	if http, ok := m["http"]; ok {
+		s.addHttpEvent(http)
+	}
+}
+
+func (s *Script) addHttpEvent(i interface{}) {
+	f := func(args ...interface{}) (bool, error) {
+		if len(args) != 2 {
+			return false, fmt.Errorf("expected args: request, response")
+		}
+		req := args[0].(*engine.EventRequest)
+		res := args[1].(*engine.EventResponse)
+		return engine.EventHandler(req, res, i)
+	}
+
+	s.host.On("http", f, nil)
 }

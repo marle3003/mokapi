@@ -7,6 +7,7 @@ import (
 	"mokapi/config/dynamic/openapi"
 	"mokapi/config/dynamic/openapi/openapitest"
 	"mokapi/config/dynamic/openapi/schema/schematest"
+	"mokapi/engine/common"
 	"mokapi/runtime/events"
 	"net/http"
 	"net/http/httptest"
@@ -531,7 +532,7 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, "no configuration was found for HTTP status code 415, https://swagger.io/docs/specification/describing-responses\n", rr.Body.String())
 			},
 			func(event string, args ...interface{}) {
-				r := args[1].(*openapi.EventResponse)
+				r := args[1].(*common.EventResponse)
 				r.StatusCode = http.StatusUnsupportedMediaType
 			},
 		},
@@ -549,7 +550,7 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, "no configuration was found for HTTP status code 415, https://swagger.io/docs/specification/describing-responses\n", rr.Body.String())
 			},
 			func(event string, args ...interface{}) {
-				r := args[1].(*openapi.EventResponse)
+				r := args[1].(*common.EventResponse)
 				r.StatusCode = http.StatusUnsupportedMediaType
 			},
 		},
@@ -569,7 +570,7 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, "text/plain", rr.Header().Get("Content-Type"))
 			},
 			func(event string, args ...interface{}) {
-				r := args[1].(*openapi.EventResponse)
+				r := args[1].(*common.EventResponse)
 				r.Headers["Content-Type"] = "text/plain"
 			},
 		},
