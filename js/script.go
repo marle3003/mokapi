@@ -130,6 +130,9 @@ func (s *Script) ensureRuntime() (err error) {
 }
 
 func (s *Script) processObject(v goja.Value) {
+	if v == nil || goja.IsUndefined(v) || goja.IsNull(v) {
+		return
+	}
 	m := v.Export().(map[string]interface{})
 	if http, ok := m["http"]; ok {
 		s.addHttpEvent(http)

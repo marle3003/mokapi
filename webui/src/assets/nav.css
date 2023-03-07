@@ -4,10 +4,10 @@
 .nav-link.disabled {
   color: var(--color-text);
 }
-.nav-link:not(.disabled):hover {
-  color: var(--color-text);
-  background-color: var(--color-background-soft);
+.nav-link:not(.disabled):hover, .nav-link:not(.disabled):focus {
+  color: var(--color-link);
 }
 .nav-pills .nav-link.active, .nav-pills .show > .nav-link {
-  background-color: var(--color-background-soft);
+  color: var(--color-link);
+  background-color: var(--color-background);
 }

@@ -3,16 +3,23 @@ import { onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import Markdown from 'vue3-markdown-it';
 
+interface DocConfig{
+  [name: string]: string | DocConfig 
+}
+
 const files = import.meta.glob('/src/assets/docs/**/*.md', {as: 'raw', eager: true})
 const c =  import.meta.glob('/src/assets/docs/config.json', {as: 'raw', eager: true})
-const nav = JSON.parse(c['/src/assets/docs/config.json'])
+const nav: DocConfig = JSON.parse(c['/src/assets/docs/config.json'])
 
 const route = useRoute()
 const topic = <string>route.params.topic
 const subject = <string>route.params.subject
 let file = nav[topic]
 if (subject) {
-  file = file[subject]
+  file = (file as DocConfig)[subject]
+}
+if (typeof file != "string"){
+  file = file[topic]
 }
 const content = files[`/src/assets/docs/${file}`]
 
@@ -39,11 +46,17 @@ onMounted(() => {
       <div class="ps-3 text-white pe-4" style="position:fixed; width: 280px;">
         <ul class="nav nav-pills flex-column mb-auto pe-3">
           <li class="nav-item" v-for="(v, k) of nav">
-            <div v-if="(typeof v != 'string')">
-              <li class="nav-item"><a class="nav-link disabled">{{ k }}</a></li>
-              <li class="nav-item" v-for="(v2, k2) of v">
-                <router-link class="nav-link" :class="k.toString() == topic && k2.toString() == subject ? 'active' : ''" :to="{ name: 'docs', params: {topic: k, subject: k2} }" style="padding-left: 2rem">{{ k2 }}</router-link>
-              </li>
+            <div v-if="(typeof v != 'string')" class="chapter">
+              <router-link class="nav-link" :class="k.toString() == topic && !subject ? 'active' : ''" :to="{ name: 'docs', params: {topic: k} }">
+                {{ k }}
+                <i v-if="topic == k" class="bi bi-chevron-down"></i>
+                <i v-else class="bi bi-chevron-right"></i>
+              </router-link>
+              <div class="collapse" :id="k.toString()" :class="topic == k ? 'show' : ''">
+                <li class="nav-item" v-for="(v2, k2) of v">
+                  <router-link v-if="k != k2" class="nav-link" :class="k.toString() == topic && k2.toString() == subject ? 'active' : ''" :to="{ name: 'docs', params: {topic: k, subject: k2} }" style="padding-left: 2rem">{{ k2 }}</router-link>
+                </li>
+            </div>
             </div>
             <router-link v-if="(typeof v == 'string')" class="nav-link" :class="k.toString() == topic && !subject ? 'active' : ''" :to="{ name: 'docs', params: {topic: k} }">{{ k }}</router-link>
           </li>
@@ -96,5 +109,21 @@ table tbody tr:hover {
 
 table.selectable tbody tr:hover {
     cursor: pointer;
+}
+
+.nav {
+  font-size: 0.9rem;
+}
+
+.nav .nav-link {
+  padding-bottom: 5px;
+}
+
+.chapter {
+  position: relative; 
+}
+.nav-link i {
+  position: absolute;
+  right: 0;
 }
 </style>

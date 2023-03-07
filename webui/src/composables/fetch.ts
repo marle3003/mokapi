@@ -1,11 +1,9 @@
 import { reactive } from 'vue'
-import { useBackendBaseUrl } from './backendBaseUrl'
 import router from '@/router';
 
 let cache: {[name: string]: any} = {}
 
 export function useFetch(path: string, options?: RequestInit, doRefresh: boolean = true, useCache: boolean = true): Response {
-    const baseUrl = useBackendBaseUrl()
     const route = router.currentRoute.value
     const cached = cache[path]
     const response = cached || reactive({
@@ -27,7 +25,7 @@ export function useFetch(path: string, options?: RequestInit, doRefresh: boolean
 
     function doFetch() {
         response.isLoading = true
-        fetch(baseUrl + path, options)
+        fetch(path, options)
             .then((res) => res.json())
             .then((res) => {
                 response.data = res

@@ -1,13 +1,14 @@
 {
   "Welcome": "welcome.md",
   "OpenAPI": {
-    "Intro": "openapi/intro.md",
+    "OpenAPI": "openapi/intro.md",
     "Quick Start": "openapi/quick-start.md",
     "Static Data Generation": "openapi/static-data-generation.md",
     "Mokapi Script": "openapi/mokapi-script.md",
     "HTTPS & TLS": "openapi/tls.md"
   },
   "Kafka": {
+    "Kafka": "kafka/kafka.md",
     "Quick Start": "kafka/quick-start.md",
     "Config": "kafka/config.md"
   },
