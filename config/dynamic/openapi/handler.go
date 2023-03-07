@@ -196,7 +196,7 @@ endpointLoop:
 			continue
 		}
 		endpoint := ref.Value
-		op := getOperation(r.Method, endpoint)
+		op := endpoint.getOperation(r.Method)
 		if op == nil {
 			continue
 		}
@@ -257,30 +257,6 @@ endpointLoop:
 	} else {
 		writeError(rw, r, lastError, h.config.Info.Name)
 	}
-}
-
-// Gets the operation for the given method name
-func getOperation(method string, e *Endpoint) *Operation {
-	switch strings.ToUpper(method) {
-	case http.MethodGet:
-		return e.Get
-	case http.MethodPost:
-		return e.Post
-	case http.MethodPut:
-		return e.Put
-	case http.MethodPatch:
-		return e.Patch
-	case http.MethodDelete:
-		return e.Delete
-	case http.MethodHead:
-		return e.Head
-	case http.MethodOptions:
-		return e.Options
-	case http.MethodTrace:
-		return e.Trace
-	}
-
-	return nil
 }
 
 func writeError(rw http.ResponseWriter, r *http.Request, err error, serviceName string) {

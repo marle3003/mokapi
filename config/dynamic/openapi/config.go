@@ -345,6 +345,29 @@ func (e *Endpoint) Operations() map[string]*Operation {
 	return operations
 }
 
+func (e *Endpoint) getOperation(method string) *Operation {
+	switch strings.ToUpper(method) {
+	case http.MethodGet:
+		return e.Get
+	case http.MethodPost:
+		return e.Post
+	case http.MethodPut:
+		return e.Put
+	case http.MethodPatch:
+		return e.Patch
+	case http.MethodDelete:
+		return e.Delete
+	case http.MethodHead:
+		return e.Head
+	case http.MethodOptions:
+		return e.Options
+	case http.MethodTrace:
+		return e.Trace
+	}
+
+	return nil
+}
+
 func (e *Endpoint) SetOperation(method string, o *Operation) {
 	switch method {
 	case http.MethodDelete:
