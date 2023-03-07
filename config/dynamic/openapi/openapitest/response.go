@@ -2,6 +2,7 @@ package openapitest
 
 import (
 	"mokapi/config/dynamic/openapi"
+	"mokapi/config/dynamic/openapi/ref"
 	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/media"
 )
@@ -31,5 +32,11 @@ func WithContent(mediaType string, opts ...ContentOptions) ResponseOptions {
 func WithSchema(s *schema.Schema) ContentOptions {
 	return func(c *openapi.MediaType) {
 		c.Schema = &schema.Ref{Value: s}
+	}
+}
+
+func WithSchemaRef(r string) ContentOptions {
+	return func(c *openapi.MediaType) {
+		c.Schema = &schema.Ref{Reference: ref.Reference{Ref: r}}
 	}
 }

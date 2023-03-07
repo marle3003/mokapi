@@ -7,6 +7,7 @@ import KafkaTopicsCard from './KafkaTopicsCard.vue';
 import KafkaGroupsCard from './KafkaGroupsCard.vue';
 import KafkaMessagesCard from './KafkaMessagesCard.vue';
 import KafkaTopic from './KafkaTopic.vue';
+import Servers from './Servers.vue';
 
 const {fetchService} = useService()
 const serviceName = useRoute().params.service?.toString()
@@ -23,16 +24,24 @@ onUnmounted(() => {
           <service-info-card :service="service" type="Kafka" />
       </div>
       <div class="card-group">
+          <div class="card">
+              <div class="card-body">
+                  <div class="card-title text-center">Servers</div>
+                  <servers :servers="service.servers" />
+              </div>
+          </div>
+      </div>
+      <div class="card-group">
           <kafka-topics-card :service="service" />
       </div>
       <div class="card-group">
           <kafka-groups-card :service="service" />
       </div>
       <div class="card-group">
-        <kafka-messages-card :service="service" />
+          <kafka-messages-card :service="service" />
       </div>
   </div>
   <div v-if="$route.name == 'kafkaTopic'">
-    <kafka-topic></kafka-topic>
+      <kafka-topic></kafka-topic>
   </div>
 </template>

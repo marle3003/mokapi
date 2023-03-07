@@ -23,18 +23,24 @@ body {
   min-height: 100vh;
 }
 
+main {
+  margin-top: 5rem;
+}
+
 h1 {
-  font-size: 1.75rem;
+  font-size: 2rem;
   font-weight: 600;
 }
 
 h2 {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   font-weight: 500;
+  margin-block-start: 2.5rem;
+  margin-block-end: 1rem;
 }
 
 h3 {
-  font-size: 1.1rem;
+  font-size: 1.25rem;
   font-weight: 500;
 }
 
@@ -47,4 +53,11 @@ a:hover{
 }
 pre{
   font-size: 0.9rem;
+}
+.yellow {
+  color: var(--color-yellow)
+}
+.logo {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
 }

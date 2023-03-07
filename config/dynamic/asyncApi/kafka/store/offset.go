@@ -44,7 +44,6 @@ func (s *Store) offset(rw kafka.ResponseWriter, req *kafka.Request) error {
 							log.Errorf("kafka: offset only supports timestamp=latest|earliest")
 							resPartition.ErrorCode = kafka.UnknownServerError
 						}
-						log.Infof("kafka: offset %v, topic=%v, partition=%v, client=%v", resPartition.Offset, rt.Name, rp.Index, ctx.ClientId)
 					} else {
 						if rp.Timestamp == kafka.Earliest && rp.MaxNumOffsets == 1 {
 							resPartition.OldStyleOffsets = append(resPartition.OldStyleOffsets, partition.StartOffset())

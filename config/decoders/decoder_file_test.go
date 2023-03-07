@@ -17,7 +17,7 @@ func TestFileDecoder_Decode(t *testing.T) {
 			f: func(t *testing.T) {
 				s := &struct{ Name string }{}
 				d := &FileDecoder{}
-				err := d.Decode(map[string][]string{}, s)
+				err := d.Decode(map[string]string{}, s)
 				require.NoError(t, err)
 			},
 		},
@@ -25,8 +25,8 @@ func TestFileDecoder_Decode(t *testing.T) {
 			name: "file does not exist",
 			f: func(t *testing.T) {
 				s := &struct{ Name string }{}
-				d := &FileDecoder{filenames: []string{"test.yml"}}
-				err := d.Decode(map[string][]string{}, s)
+				d := &FileDecoder{filename: "test.yml"}
+				err := d.Decode(map[string]string{}, s)
 				require.Contains(t, err.Error(), "open test.yml:")
 			},
 		},
@@ -34,8 +34,8 @@ func TestFileDecoder_Decode(t *testing.T) {
 			name: "empty file",
 			f: func(t *testing.T) {
 				s := &struct{ Name string }{}
-				d := &FileDecoder{filenames: []string{createTempFile(t, "test.yml", "")}}
-				err := d.Decode(map[string][]string{}, s)
+				d := &FileDecoder{filename: createTempFile(t, "test.yml", "")}
+				err := d.Decode(map[string]string{}, s)
 				require.NoError(t, err)
 			},
 		},
@@ -43,8 +43,8 @@ func TestFileDecoder_Decode(t *testing.T) {
 			name: "yaml schema error",
 			f: func(t *testing.T) {
 				s := &struct{ Name string }{}
-				d := &FileDecoder{filenames: []string{createTempFile(t, "test.yml", "name: {}")}}
-				err := d.Decode(map[string][]string{}, s)
+				d := &FileDecoder{filename: createTempFile(t, "test.yml", "name: {}")}
+				err := d.Decode(map[string]string{}, s)
 				require.Contains(t, err.Error(), "parsing YAML file")
 			},
 		},
@@ -52,8 +52,8 @@ func TestFileDecoder_Decode(t *testing.T) {
 			name: "file with data",
 			f: func(t *testing.T) {
 				s := &struct{ Name string }{}
-				d := &FileDecoder{filenames: []string{createTempFile(t, "test.yml", "name: foobar")}}
-				err := d.Decode(map[string][]string{}, s)
+				d := &FileDecoder{filename: createTempFile(t, "test.yml", "name: foobar")}
+				err := d.Decode(map[string]string{}, s)
 				require.NoError(t, err)
 				require.Equal(t, "foobar", s.Name)
 			},
@@ -63,7 +63,7 @@ func TestFileDecoder_Decode(t *testing.T) {
 			f: func(t *testing.T) {
 				s := &struct{ Name string }{}
 				d := &FileDecoder{}
-				err := d.Decode(map[string][]string{"configfile": {createTempFile(t, "test.yml", "name: foobar")}}, s)
+				err := d.Decode(map[string]string{"configfile": createTempFile(t, "test.yml", "name: foobar")}, s)
 				require.NoError(t, err)
 				require.Equal(t, "foobar", s.Name)
 			},
@@ -72,8 +72,8 @@ func TestFileDecoder_Decode(t *testing.T) {
 			name: "file with data",
 			f: func(t *testing.T) {
 				s := &struct{ Name string }{}
-				d := &FileDecoder{filenames: []string{createTempFile(t, "test.yml", "name: foobar")}}
-				err := d.Decode(map[string][]string{"configfile": {createTempFile(t, "test.yml", "name: barfoo")}}, s)
+				d := &FileDecoder{filename: createTempFile(t, "test.yml", "name: foobar")}
+				err := d.Decode(map[string]string{"configfile": createTempFile(t, "test.yml", "name: barfoo")}, s)
 				require.NoError(t, err)
 				require.Equal(t, "foobar", s.Name)
 			},

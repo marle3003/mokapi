@@ -25,13 +25,13 @@ const {formatLanguage} = usePrettyLanguage()
             <tr v-for="header in headers" :key="header.name" data-bs-toggle="modal" :data-bs-target="'#modal-'+header.name">
                 <td>{{ header.name }}</td>
                 <td>{{ printType(header.schema) }}</td>
-                <td>{{ header.description }}</td>
+                <td><markdown :source="header.description" class="description"></markdown></td>
             </tr>
         </tbody>
     </table>
     <div v-for="header in headers" :key="header.name">
         <div class="modal fade" :id="'modal-'+header.name" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content">
                     <div class="modal-body">
                         <p class="label">Name</p>

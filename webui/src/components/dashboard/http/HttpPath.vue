@@ -5,6 +5,7 @@ import { useService } from '@/composables/services';
 import HttpMethodsCard from './HttpOperationsCard.vue';
 import Requests from './Requests.vue';
 import Loading from '@/components/Loading.vue'
+import Message from '@/components/Message.vue'
 import '@/assets/http.css'
 
 const {fetchService} = useService()
@@ -22,6 +23,11 @@ let path = computed(() => {
     }
     return null
 })
+
+function endpointNotFoundMessage() {
+    return 'Endpoint ' + pathName + ' in service ' + serviceName + ' not found' 
+}
+
 onUnmounted(() => {
     close()
 })
@@ -57,7 +63,7 @@ onUnmounted(() => {
     </div>
     <loading v-if="isLoading && !path"></loading>
     <div v-if="!path && !isLoading">
-        Endpoint '{{ pathName }}' in service '{{ serviceName }}' not found
+        <message :message="endpointNotFoundMessage()"></message>
     </div>
 </template>
 

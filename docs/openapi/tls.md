@@ -4,16 +4,18 @@ for them. This guide shows you how to configure TLS.
 
 ```yaml
 openapi: 3.0.0
+info: {}
 servers:
   - url: https://demo
   - url: https://demo:8443
+paths: {}
 ```
 
 ## Certificate Authority
 By default, Mokapi signs all generated certificate with its own CA certificate in the [git repo](https://github.com/marle3003/mokapi/tree/master/assets).
 
 This example demonstrates how to reference a custom CA certificate as an environment variable.
-```
+```yaml
 MOKAPI_RootCaCert: /path/to/caCert.pem
 MOKAPI_RootCaKey: /path/to/caKey.pem
 ```

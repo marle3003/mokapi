@@ -8,6 +8,7 @@ import (
 	config "mokapi/config/dynamic/smtp"
 	"mokapi/engine/common"
 	"mokapi/models"
+	"mokapi/safe"
 	"mokapi/server/cert"
 	"net"
 	"net/url"
@@ -27,6 +28,7 @@ type Server struct {
 	mh      ReceivedMailHandler
 	emitter common.EventEmitter
 	//wh EventHandler
+	inShutdown safe.AtomicBool
 }
 
 type backend struct {
@@ -94,7 +96,7 @@ func (s *Server) Start() error {
 
 func (s *Server) StartWith(l net.Listener) {
 	go func() {
-		log.Infof("starting smtp binding %v", s.config.Server)
+		log.Infof("start serving smtp on %v", l.Addr())
 		err := s.server.Serve(l)
 		if err != nil {
 			log.Errorf("unable to start smtp server: %v", err)
@@ -104,10 +106,7 @@ func (s *Server) StartWith(l net.Listener) {
 
 	go func() {
 		defer func() {
-			err := s.server.Close()
-			if err != nil {
-				log.Errorf("unable to close smtp server: %v", err)
-			}
+			s.Stop()
 		}()
 
 		for {
@@ -124,7 +123,15 @@ func (s *Server) StartWith(l net.Listener) {
 }
 
 func (s *Server) Stop() {
-	s.server.Close()
+	if s.inShutdown.IsSet() {
+		return
+	}
+	s.inShutdown.SetTrue()
+
+	err := s.server.Close()
+	if err != nil {
+		log.Errorf("unable to close smtp server: %v", err)
+	}
 	s.close <- true
 }
 

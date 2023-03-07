@@ -5,7 +5,7 @@ export let metrics = [
     },
     {
         name: 'app_memory_usage_bytes',
-        value: 3004506
+        value: 124506000
     },
     {
         name: 'http_requests_total{service="Swagger Petstore",endpoint="/pet"}"',

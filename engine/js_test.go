@@ -17,10 +17,7 @@ type testReader struct {
 }
 
 func (tr *testReader) Read(u *url.URL, opts ...common.ConfigOptions) (*common.Config, error) {
-	file := &common.Config{Url: u}
-	for _, opt := range opts {
-		opt(file, true)
-	}
+	file := common.NewConfig(u, opts...)
 	if err := tr.readFunc(file); err != nil {
 		return file, err
 	}
@@ -309,14 +306,9 @@ func TestJsOpen(t *testing.T) {
 }
 
 func newScript(path, src string) *common.Config {
-	return &common.Config{
-		Url: mustParse(path),
-		Raw: []byte(src),
-		Data: &script.Script{
-			Code:     src,
-			Filename: path,
-		},
-	}
+	s := common.NewConfig(mustParse(path), common.WithData(&script.Script{Code: src, Filename: path}))
+	s.Raw = []byte(src)
+	return s
 }
 
 type testLogger struct {

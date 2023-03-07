@@ -2,21 +2,22 @@ package static
 
 import (
 	"mokapi/config/tls"
+	"strings"
 )
 
 type Config struct {
-	Log         *MokApiLog
-	ConfigFile  string
-	Providers   Providers
-	Api         Api
-	RootCaCert  tls.FileOrContent
-	RootCaKey   tls.FileOrContent
-	ServerAlias []string
+	Log        *MokApiLog
+	ConfigFile string
+	Providers  Providers
+	Api        Api
+	RootCaCert tls.FileOrContent
+	RootCaKey  tls.FileOrContent
+	Services   Services
 }
 
 func NewConfig() *Config {
 	cfg := &Config{}
-	cfg.Log = &MokApiLog{Level: "error", Format: "default"}
+	cfg.Log = &MokApiLog{Level: "info", Format: "default"}
 	cfg.Api.Port = "8080"
 	cfg.Api.Dashboard = true
 	return cfg
@@ -54,4 +55,30 @@ type HttpProvider struct {
 	PollInterval  string
 	Proxy         string
 	TlsSkipVerify bool
+}
+
+type Services map[string]*Service
+
+func (s Services) GetByName(name string) *Service {
+	key := strings.ReplaceAll(name, " ", "-")
+	key = strings.ToLower(key)
+	return s[key]
+}
+
+type Service struct {
+	Config ServiceConfig
+	Http   *HttpService
+}
+
+type ServiceConfig struct {
+	File string
+	Url  string
+}
+
+type HttpService struct {
+	Servers []HttpServer
+}
+
+type HttpServer struct {
+	Url string
 }

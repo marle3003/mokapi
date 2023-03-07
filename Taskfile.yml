@@ -10,20 +10,20 @@ tasks:
   build-windows:
     deps: [bindata-vueapp]
     cmds:
-      - go build -o mokapi_windows-amd64.exe -ldflags="-X 'mokapi/version.BuildVersion=1.0'" ./cmd/mokapi
+      - go build -o mokapi-windows-amd64.exe -ldflags="-X 'mokapi/version.BuildVersion=1.0'" ./cmd/mokapi
     env:
       GOOS: windows
       GOARCH: amd64
   build-linux:
     deps: [bindata-vueapp]
     cmds:
-      - go build -o mokapi_linux-amd64 -ldflags="-X 'mokapi/version.BuildVersion=1.0'" ./cmd/mokapi
+      - go build -o mokapi-linux-amd64 -ldflags="-X 'mokapi/version.BuildVersion=1.0'" ./cmd/mokapi
     env:
       GOOS: linux
       GOARCH: amd64
   build-macos:
     cmds:
-      - go build -o mokapi_macos-arm64 -ldflags="-X 'mokapi/version.BuildVersion=1.0'" ./cmd/mokapi
+      - go build -o mokapi-darwin-arm64 -ldflags="-X 'mokapi/version.BuildVersion=1.0'" ./cmd/mokapi
     env:
       GOOS: darwin
       GOARCH: arm64
@@ -37,4 +37,34 @@ tasks:
       - npm run clean
       - npm run copy-docs
       - npm run build
+  build-npm-package:
+    deps: [bindata-vueapp]
+    cmds:
+      - task npm-build-windows VERSION={{.VERSION}}
+      - task npm-build-linux VERSION={{.VERSION}}
+      - task npm-build-macos VERSION={{.VERSION}}
+  publish-npm-package:
+    deps: [build-npm-package]
+    dir: npm
+    cmds:
+      - npm publish
+  npm-build-windows:
+    cmds:
+      - go build -o ./npm/dist/mokapi-windows-amd64/mokapi.exe -ldflags="-X mokapi/version.BuildVersion={{.VERSION}}" ./cmd/mokapi
+    env:
+      GOOS: windows
+      GOARCH: amd64
+  npm-build-linux:
+    cmds:
+      - go build -o ./npm/dist/mokapi-linux-amd64/mokapi -ldflags="-X mokapi/version.BuildVersion={{.VERSION}}" ./cmd/mokapi
+    env:
+      GOOS: linux
+      GOARCH: amd64
+  npm-build-macos:
+    cmds:
+      - go build -o ./npm/dist/mokapi-darwin-arm64/mokapi -ldflags="-X mokapi/version.BuildVersion={{.VERSION}}" ./cmd/mokapi
+    env:
+      GOOS: darwin
+      GOARCH: arm64
+
 

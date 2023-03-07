@@ -35,6 +35,7 @@ type operation struct {
 	Summary     string       `json:"summary"`
 	Description string       `json:"description"`
 	OperationId string       `json:"operationId"`
+	Deprecated  bool         `json:"deprecated"`
 	RequestBody *requestBody `json:"requestBody,omitempty"`
 	Parameters  []parameter  `json:"parameters,omitempty"`
 	Responses   []response   `json:"responses,omitempty"`
@@ -45,6 +46,7 @@ type parameter struct {
 	Type        string      `json:"type"`
 	Description string      `json:"description"`
 	Required    bool        `json:"required"`
+	Deprecated  bool        `json:"deprecated"`
 	Style       string      `json:"style"`
 	Exploded    bool        `json:"exploded"`
 	Schema      *schemaInfo `json:"schema"`
@@ -158,6 +160,7 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 				Summary:     o.Summary,
 				Description: o.Description,
 				OperationId: o.OperationId,
+				Deprecated:  o.Deprecated,
 			}
 			if o.RequestBody != nil && o.RequestBody.Value != nil {
 				op.RequestBody = &requestBody{
@@ -180,6 +183,7 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 					Type:        string(p.Value.Type),
 					Description: p.Value.Description,
 					Required:    p.Value.Required,
+					Deprecated:  p.Value.Deprecated,
 					Style:       p.Value.Style,
 					Exploded:    p.Value.Explode,
 					Schema:      getSchema(p.Value.Schema),

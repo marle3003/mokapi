@@ -14,7 +14,7 @@ onUnmounted(() => {
   <header>
     <nav class="navbar navbar-expand-lg ">
       <div class="container-fluid">
-        <a class="navbar-brand" href="/" >{{title}}</a>
+        <a class="navbar-brand" href="/" > <img src="/public/logo-header.svg" height="30" /></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -43,6 +43,11 @@ onUnmounted(() => {
 <style scoped>
 header {
     width: 100%;
+    position:fixed;
+    top: 0;
+    z-index: 99;
+    background-color: var(--color-background);;
+    height: 5rem;
 }
 .navbar {
   margin-left: 0.5rem;

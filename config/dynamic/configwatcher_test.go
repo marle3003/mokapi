@@ -94,7 +94,9 @@ func TestConfigWatcher_Read(t *testing.T) {
 				var ch chan *common.Config
 				w.providers["foo"] = &testprovider{
 					read: func(u *url.URL) (*common.Config, error) {
-						return &common.Config{Url: u, Checksum: []byte{1}}, nil
+						c := common.NewConfig(u)
+						c.Checksum = []byte{1}
+						return c, nil
 					},
 					start: func(configs chan *common.Config, pool *safe.Pool) error {
 						ch = configs

@@ -1,5 +1,6 @@
 declare interface HttpService extends Service {
     paths: HttpPath[]
+    servers: HttpServer[]
 }
 
 declare interface HttpPath {
@@ -14,6 +15,7 @@ declare interface HttpOperation {
     summary: string
     description: string
     operationId: string
+    deprecated: boolean
     parameters: HttpParameter[]
     requestBody: HttpRequestBody
     responses: HttpResponse[]
@@ -24,6 +26,7 @@ declare interface HttpParameter {
     type: string
     description: string
     required: boolean
+    deprecated: boolean
     style: string
     explode?: boolean
     schema: Schema
@@ -33,6 +36,7 @@ declare interface HttpEventData {
     request: HttpEventRequest
     response: HttpEventResponse
     duration: number
+    deprecated: boolean
 }
 
 declare interface HttpEventRequest {
@@ -77,3 +81,8 @@ declare interface HttpEventResponse {
 }
 
 declare interface HttpHeader  {[name: string]: string}
+
+declare interface HttpServer {
+    url: string
+    description: string
+}

@@ -41,7 +41,6 @@ func (s *Store) offsetFetch(rw kafka.ResponseWriter, req *kafka.Request) error {
 						resPartition.ErrorCode = kafka.InvalidGroupId
 					} else {
 						resPartition.CommittedOffset = g.Offset(topic.Name, p.Index)
-						log.Infof("kafka: offsetFetch committed offset %v, topic=%v, partition=%v, client=%v", resPartition.CommittedOffset, rt.Name, index, ctx.ClientId)
 					}
 				}
 			}

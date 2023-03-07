@@ -22,6 +22,14 @@ if (props.parameters){
     }
 }
 
+const sortedParameters = props.parameters?.sort((p1, p2) =>{
+    const r = p1.type.localeCompare(p2.type)
+    if (r != 0) {
+        return r
+    }
+    return p1.name.localeCompare(p2.name)
+})
+
 function getExample(key: string){
     const example = examples[key]
     if (!example.value){
@@ -30,6 +38,17 @@ function getExample(key: string){
     return hljs.highlightAuto(example.value).value
 }
 
+function showWarningColumn(){
+    if (!props.parameters){
+        return false
+    }
+    for (let parameter of props.parameters){
+        if (parameter.deprecated){
+            return true
+        }
+    }
+    return false
+}
 </script>
 
 <template>
@@ -39,28 +58,39 @@ function getExample(key: string){
                 <th scope="col" class="text-left">Name</th>
                 <th scope="col" class="text-left">Location</th>
                 <th scope="col" class="text-left">Type</th>
+                <th scope="col" class="text-left" v-if="showWarningColumn()">Warning</th>
                 <th scope="col" class="text-left">Description</th>
             </tr>
         </thead>
         <tbody>
-            <tr v-for="parameter in parameters" :key="parameter.name + parameter.type" data-bs-toggle="modal" :data-bs-target="'#modal-'+parameter.name+parameter.type">
+            <tr v-for="parameter in sortedParameters" :key="parameter.name + parameter.type" data-bs-toggle="modal" :data-bs-target="'#modal-'+parameter.name+parameter.type">
                 <td>{{ parameter.name }}</td>
                 <td>{{ parameter.type }}</td>
                 <td>{{ printType(parameter.schema) }}</td>
-                <td>{{ parameter.description }}</td>
+                <td v-if="showWarningColumn()">
+                    <span v-if="parameter.deprecated"><i class="bi bi-exclamation-triangle-fill yellow"></i> deprecated</span>
+                </td>
+                <td><markdown :source="parameter.description" class="description"></markdown></td>
             </tr>
         </tbody>
     </table>
     <div v-for="parameter in parameters" :key="parameter.name+parameter.type">
         <div class="modal fade" :id="'modal-'+parameter.name+parameter.type" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content">
                     <div class="modal-body">
                         <div class="card-group">
                             <div class="card">
                                 <div class="card-body">
-                                    <p class="label">Name</p>
-                                    <p>{{ parameter.name }}</p>
+                                    <div class="row">
+                                        <div class="col">
+                                            <p class="label">Name</p>
+                                            <p>{{ parameter.name }}</p>
+                                        </div>
+                                        <div class="col" v-if="parameter.deprecated">
+                                            <p><i class="bi bi-exclamation-triangle-fill yellow"></i> Deprecated</p>
+                                        </div>
+                                    </div>
                                     <p class="label">Description</p>
                                     <markdown :source="parameter.description"></markdown>
                                 </div>

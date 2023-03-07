@@ -6,6 +6,7 @@ import HttpParameters from './HttpEventParameters.vue'
 import HttpBody from './HttpBody.vue'
 import HttpHeader from './HttpEventHeader.vue'
 import Loading from '@/components/Loading.vue'
+import Message from '@/components/Message.vue'
 import { onUnmounted } from 'vue'
 
 const {fetchById} = useEvents()
@@ -55,7 +56,7 @@ onUnmounted(() => {
     </div>
     <loading v-if="isInitLoading()"></loading>
     <div v-if="!event && !isLoading">
-        Request not found
+        <message message="HTTP Request not found"></message>
     </div>
 </template>
 

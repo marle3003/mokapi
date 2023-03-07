@@ -71,6 +71,7 @@ func convertOperation(o *Operation) (*openapi.Operation, error) {
 		Description: o.Description,
 		OperationId: o.OperationID,
 		Responses:   &openapi.Responses{},
+		Deprecated:  o.Deprecated,
 	}
 
 	for _, p := range o.Parameters {
@@ -105,6 +106,7 @@ func convertOperation(o *Operation) (*openapi.Operation, error) {
 					MaxItems:         p.MaxItems,
 				}},
 				Required:    p.Required,
+				Deprecated:  p.Deprecated,
 				Description: p.Description,
 			}})
 		}

@@ -1,7 +1,7 @@
 .operation {
     text-transform: uppercase;
 }
-.operation.put .operation.patch {
+.operation.put, .operation.patch {
     background-color: var(--color-orange);
 }
 .operation.get, .operation.options {

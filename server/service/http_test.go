@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"github.com/stretchr/testify/require"
+	"mokapi/runtime/events"
 	"mokapi/try"
 	"net/http"
 	"net/http/httptest"
@@ -21,7 +22,7 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 		name string
 		fn   func(t *testing.T, h *HttpServer, port string)
 	}{
-		{"root path",
+		{"add service on root",
 			func(t *testing.T, s *HttpServer, port string) {
 				err := s.AddOrUpdate(&HttpService{
 					Url:     mustParseUrl("http://localhost"),
@@ -31,7 +32,7 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 				require.NoError(t, err)
 				try.GetRequest(t, fmt.Sprintf("http://localhost:%v", port), map[string]string{}, try.HasStatusCode(200))
 			}},
-		{"foo path",
+		{"add service on path /foo",
 			func(t *testing.T, s *HttpServer, port string) {
 				err := s.AddOrUpdate(&HttpService{
 					Url:     mustParseUrl("http://localhost/foo"),
@@ -49,7 +50,7 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 					nil,
 					try.HasStatusCode(200))
 			}},
-		{"empty url",
+		{"add service with empty url",
 			func(t *testing.T, s *HttpServer, port string) {
 				err := s.AddOrUpdate(&HttpService{
 					Url:     mustParseUrl(""),
@@ -65,7 +66,7 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 				s.ServeHTTP(rr, r)
 				require.Equal(t, 200, rr.Code)
 			}},
-		{"empty host",
+		{"add service with empty host",
 			func(t *testing.T, s *HttpServer, port string) {
 				err := s.AddOrUpdate(&HttpService{
 					Url:     mustParseUrl("/foo"),
@@ -94,7 +95,7 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 					map[string]string{}, try.HasStatusCode(500),
 					try.HasBody("handler is nil\n"))
 			}},
-		{"add on same path",
+		{"add service on already used path",
 			func(t *testing.T, s *HttpServer, port string) {
 				err := s.AddOrUpdate(&HttpService{
 					Url:     mustParseUrl(""),
@@ -114,7 +115,9 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 
 	for _, data := range testdata {
 		t.Run(data.name, func(t *testing.T) {
-			server := NewHttpServer("0", NewServerAliases())
+			events.SetStore(20, events.NewTraits().WithNamespace("http"))
+			defer events.Reset()
+			server := NewHttpServer("0")
 			s := httptest.NewServer(server)
 			defer s.Close()
 
@@ -123,78 +126,6 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 			data.fn(t, server, u.Port())
 		})
 
-	}
-}
-
-func TestHttpServer_ServerAlias2(t *testing.T) {
-	for _, tc := range []struct {
-		name                 string
-		serverName           string
-		aliases              []string
-		request              string
-		shouldHaveStatusCode int
-	}{
-		{
-			name:                 "mokapi.com with alias localhost",
-			serverName:           "mokapi.com",
-			aliases:              []string{"mokapi.com=localhost"},
-			request:              "http://localhost",
-			shouldHaveStatusCode: http.StatusOK,
-		},
-		{
-			name:                 "mokapi.com with alias mokapi.io",
-			serverName:           "mokapi.com",
-			aliases:              []string{"mokapi.com=mokapi.io"},
-			request:              "http://mokapi.io",
-			shouldHaveStatusCode: http.StatusOK,
-		},
-		{
-			name:                 "mokapi.com with alias *",
-			serverName:           "mokapi.com",
-			aliases:              []string{"mokapi.com=*"},
-			request:              "http://mokapi.io",
-			shouldHaveStatusCode: http.StatusOK,
-		},
-		{
-			name:                 "* with alias *",
-			serverName:           "mokapi.com",
-			aliases:              []string{"*=*"},
-			request:              "http://mokapi.io",
-			shouldHaveStatusCode: http.StatusOK,
-		},
-		{
-			name:                 "* with alias mokapi.io",
-			serverName:           "mokapi.com",
-			aliases:              []string{"*=mokapi.io"},
-			request:              "http://mokapi.io",
-			shouldHaveStatusCode: http.StatusOK,
-		},
-		{
-			name:                 "alias not matches",
-			serverName:           "mokapi.com",
-			aliases:              []string{"mokapi.com=mokapi.io"},
-			request:              "http://mokapi.net",
-			shouldHaveStatusCode: http.StatusNotFound,
-		},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			aliases := NewServerAliases()
-			err := aliases.Parse(tc.aliases)
-			require.NoError(t, err)
-			server := NewHttpServer("0", aliases)
-
-			err = server.AddOrUpdate(&HttpService{
-				Url:     mustParseUrl("http://" + tc.serverName),
-				Handler: &testHandler{},
-				Name:    "foo",
-			})
-			require.NoError(t, err)
-			r := httptest.NewRequest(http.MethodGet, tc.request, nil)
-			w := httptest.NewRecorder()
-			server.ServeHTTP(w, r)
-			res := w.Result()
-			require.Equal(t, tc.shouldHaveStatusCode, res.StatusCode)
-		})
 	}
 }
 

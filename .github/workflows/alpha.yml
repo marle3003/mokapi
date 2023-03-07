@@ -1,0 +1,24 @@
+name: Release alpha
+on:
+  push:
+    branches:
+      - v*
+
+jobs:
+  release:
+    name: Release alpha
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Login to Docker
+        uses: docker/login-action@v1
+        with:
+          username: mokapi
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Build docker alpha image
+        run: docker build --build-arg VERSION=${GITHUB_REF##*/} -t mokapi/mokapi:${GITHUB_REF##*/}-alpha -f ./images/alpha.Dockerfile .
+      - name: Push image to Docker
+        run: docker push mokapi/mokapi:${GITHUB_REF##*/}-alpha

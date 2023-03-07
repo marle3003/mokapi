@@ -5,6 +5,7 @@ import { type PropType, reactive } from 'vue';
 import HeaderTable from './HeaderTable.vue';
 import SchemaExpand from '../../SchemaExpand.vue';
 import SchemaExample from '../../SchemaExample.vue';
+import Markdown from 'vue3-markdown-it'
 
 const props = defineProps({
     service: { type: Object as PropType<HttpService>, required: true },
@@ -18,6 +19,8 @@ const {formatLanguage} = usePrettyLanguage()
 const selected = reactive({
 contents: {} as  { [statusCode: number]: HttpMediaType}
 })
+
+props.operation.responses = props.operation.responses.sort((r1, r2) => r1.statusCode - r2.statusCode)
 
 for (let response of props.operation.responses) {
     if (!response.contents) {
@@ -50,7 +53,7 @@ function selectedContentChange(event: any, statusCode: number){
                 <div class="tab-content ms-3 ps-3 responses-tab" style="width: 80%" id="v-pills-tabContent">
                     <div v-for="(response, index) of operation.responses" class="tab-pane fade" :class="index==0 ? 'show active' : ''" :id="'v-pills-'+response.statusCode" role="tabpanel" :aria-labelledby="'v-pills-'+response.statusCode+'-tab'">
                         <p class="label">Description</p>
-                        <p>{{ response.description }}</p>
+                        <p><markdown :source="response.description"></markdown></p>
                         <div v-if="response.contents || response.headers">
                             <ul class="nav nav-pills response-tab" role="tabList">
                                 <li class="nav-link" id="pills-body-tab" :class="response.contents ? 'active' : 'disabled'" data-bs-toggle="pill" data-bs-target="#pills-body" type="button" role="tab" aria-controls="pills-body" aria-selected="true">Body</li>
@@ -60,6 +63,7 @@ function selectedContentChange(event: any, statusCode: number){
                                 <div v-if="response.contents" class="tab-pane fade" :class="response.contents ? 'show active' : ''" id="pills-body" role="tabpanel" aria-labelledby="pills-body-tab">
                                     <p class="codeBlock">
                                         <span v-if="selected.contents[response.statusCode]" class="label">{{ selected.contents[response.statusCode].type }}</span>
+                                        <span v-if="selected.contents[response.statusCode].schema.deprecated" class="warning"><i class="bi bi-exclamation-triangle-fill yellow"></i> Deprecated</span>
                                         <pre v-highlightjs="formatLanguage(JSON.stringify(selected.contents[response.statusCode].schema), 'application/json')" class="overflow-auto" style="max-height: 250px;"><code class="json"></code></pre>
                                     </p>
                                     <div class="row">
@@ -114,6 +118,13 @@ function selectedContentChange(event: any, statusCode: number){
     right: 20px;
     top: 4px;
     font-size: 0.8rem;
+}
+.card-body .codeBlock .warning {
+    position: absolute;
+    text-align: center;
+    top: 4px;
+    font-size: 1.0rem;
+    width: 100%
 }
 .response-tab li {
     padding-left: 0;

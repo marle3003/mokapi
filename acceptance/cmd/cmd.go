@@ -12,7 +12,6 @@ import (
 	"mokapi/safe"
 	"mokapi/server"
 	"mokapi/server/cert"
-	"mokapi/server/service"
 )
 
 type Cmd struct {
@@ -29,11 +28,6 @@ func Start(cfg *static.Config) (*Cmd, error) {
 
 	watcher := dynamic.NewConfigWatcher(cfg)
 
-	serverAliases := service.NewServerAliases()
-	if err := serverAliases.Parse(cfg.ServerAlias); err != nil {
-		return nil, err
-	}
-
 	certStore, err := cert.NewStore(cfg)
 	if err != nil {
 		return nil, err
@@ -42,7 +36,7 @@ func Start(cfg *static.Config) (*Cmd, error) {
 	directories := make(server.LdapDirectories)
 	scriptEngine := engine.New(watcher, app)
 
-	http := server.NewHttpManager(scriptEngine, certStore, app, serverAliases)
+	http := server.NewHttpManager(scriptEngine, certStore, app, cfg.Services)
 	kafka := server.NewKafkaManager(scriptEngine, app)
 	managerLdap := server.NewLdapDirectoryManager(directories, scriptEngine, certStore, app)
 
@@ -55,6 +49,8 @@ func Start(cfg *static.Config) (*Cmd, error) {
 			panic(err)
 		}
 	})
+
+	watcher.ReadServices(cfg.Services)
 
 	if u, err := api.BuildUrl(cfg.Api); err == nil {
 		err = http.AddService("api", u, api.New(app, cfg.Api), true)

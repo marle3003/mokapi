@@ -13,10 +13,10 @@ import (
 	"mokapi/engine"
 	"mokapi/runtime"
 	"mokapi/server/cert"
-	"mokapi/server/service"
 	"mokapi/try"
 	"net/url"
 	"testing"
+	"time"
 )
 
 func TestHttpServers_Monitor(t *testing.T) {
@@ -26,7 +26,7 @@ func TestHttpServers_Monitor(t *testing.T) {
 	require.NoError(t, err)
 
 	app := runtime.New()
-	m := NewHttpManager(&engine.Engine{}, store, app, service.NewServerAliases())
+	m := NewHttpManager(&engine.Engine{}, store, app, make(static.Services))
 	defer m.Stop()
 
 	port, err := try.GetFreePort()
@@ -35,8 +35,10 @@ func TestHttpServers_Monitor(t *testing.T) {
 	c := openapitest.NewConfig("3.0", openapitest.WithInfo("test", "1.0", ""), openapitest.WithServer(url, ""))
 	openapitest.AppendEndpoint("/foo", c, openapitest.WithOperation("get", openapitest.NewOperation()))
 	//c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: url}}}
-	m.Update(&common.Config{Data: c, Url: MustParseUrl("foo.yml")})
+	m.Update(common.NewConfig(MustParseUrl("foo.yml"), common.WithData(c)))
 
+	// give server time to start
+	time.Sleep(time.Second * 1)
 	try.GetRequest(t, url+"/foo", map[string]string{})
 	require.Equal(t, float64(1), app.Monitor.Http.RequestCounter.Sum())
 }
@@ -95,7 +97,7 @@ func TestHttpManager_Update(t *testing.T) {
 
 				entries := hook.Entries
 				require.Len(t, entries, 2)
-				require.Equal(t, "error foo.yml: parse \"http://localhost:foo\": invalid port \":foo\" after host", entries[0].Message)
+				require.Equal(t, "url syntax error foo.yml: parse \"http://localhost:foo\": invalid port \":foo\" after host", entries[0].Message)
 				require.Equal(t, "processed foo.yml", entries[1].Message)
 			}},
 		{"invalid url format",
@@ -105,7 +107,7 @@ func TestHttpManager_Update(t *testing.T) {
 
 				entries := hook.Entries
 				require.Len(t, entries, 2)
-				require.Equal(t, "error foo.yml: parse \"$://\": first path segment in URL cannot contain colon", entries[0].Message)
+				require.Equal(t, "url syntax error foo.yml: parse \"$://\": first path segment in URL cannot contain colon", entries[0].Message)
 				require.Equal(t, "processed foo.yml", entries[1].Message)
 			}},
 		{"add on same path",
@@ -135,7 +137,7 @@ func TestHttpManager_Update(t *testing.T) {
 			store, err := cert.NewStore(&static.Config{})
 			require.NoError(t, err)
 
-			m := NewHttpManager(&engine.Engine{}, store, runtime.New(), service.NewServerAliases())
+			m := NewHttpManager(&engine.Engine{}, store, runtime.New(), make(static.Services))
 			defer m.Stop()
 
 			data.fn(t, m, hook)

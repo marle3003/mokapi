@@ -236,7 +236,7 @@ endpointLoop:
 			m.RequestCounter.WithLabel(h.config.Info.Name, path).Add(1)
 		}
 
-		if ctx, err := NewLogEventContext(r, events.NewTraits().WithName(h.config.Info.Name).With("path", path)); err != nil {
+		if ctx, err := NewLogEventContext(r, op.Deprecated, events.NewTraits().WithName(h.config.Info.Name).With("path", path)); err != nil {
 			log.Errorf("unable to log http event: %v", err)
 		} else {
 			r = r.WithContext(ctx)
@@ -246,7 +246,7 @@ endpointLoop:
 		return
 	}
 
-	if ctx, err := NewLogEventContext(r, events.NewTraits().WithName(h.config.Info.Name)); err != nil {
+	if ctx, err := NewLogEventContext(r, false, events.NewTraits().WithName(h.config.Info.Name)); err != nil {
 		log.Errorf("unable to log http event: %v", err)
 	} else {
 		r = r.WithContext(ctx)

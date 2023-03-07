@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router';
 import { useService } from '@/composables/services';
 import HttpRequestCard from './request/HttpRequestCard.vue';
 import HttpResponseCard from './response/HttpResponseCard.vue';
+import Message from '@/components/Message.vue'
 import Requests from './Requests.vue';
 import Loading from '@/components/Loading.vue'
 import Markdown from 'vue3-markdown-it';
@@ -37,6 +38,11 @@ const operation = computed(() => {
     }
     return null
 })
+
+function operationNotFoundMessage() {
+    return 'Operation '+ operation +' for path '+ pathName+' in service '+ serviceName +' not found'
+}
+
 onUnmounted(() => {
     close()
 })
@@ -60,6 +66,10 @@ onUnmounted(() => {
                             <p class="label">Service</p>
                             <p>{{ service.name }}</p>
                         </div>
+                        <div class="col header" v-if="operation.deprecated">
+                            <p class="label">Warning</p>
+                            <p><i class="bi bi-exclamation-triangle-fill yellow"></i> Deprecated</p>
+                        </div>
                         <div class="col text-end">
                             <span class="badge bg-secondary">HTTP</span>
                         </div>
@@ -70,7 +80,7 @@ onUnmounted(() => {
                     </div>
                     <div class="row">
                         <p class="label">Description</p>
-                        <markdown :source="service.description"></markdown>
+                        <markdown :source="operation.description"></markdown>
                     </div>
                 </div>
             </div>
@@ -87,7 +97,8 @@ onUnmounted(() => {
     </div>
     <loading v-if="isLoading && !operation"></loading>
     <div v-if="!operation && !isLoading">
-        Operation '{{ operation }}' for path '{{ pathName }}' in service '{{ serviceName }}' not found
+        <message :message="operationNotFoundMessage()"></message>
+        
     </div>
 </template>
 

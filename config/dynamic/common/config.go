@@ -32,6 +32,7 @@ type Config struct {
 	listeners    *sortedmap.LinkedHashMap
 	ProviderName string
 	Checksum     []byte
+	Key          string
 
 	parseMode string
 	m         sync.Mutex
@@ -39,9 +40,7 @@ type Config struct {
 
 func NewConfig(u *url.URL, opts ...ConfigOptions) *Config {
 	f := &Config{Url: u, listeners: sortedmap.NewLinkedHashMap()}
-	for _, opt := range opts {
-		opt(f, true)
-	}
+	f.Options(opts...)
 	return f
 }
 
@@ -95,17 +94,12 @@ func AsPlaintext() ConfigOptions {
 }
 
 func (f *Config) AddListener(key string, l ConfigListener) {
-	f.ensureListener()
+	if f.listeners == nil {
+		f.listeners = sortedmap.NewLinkedHashMap()
+	}
 	if v := f.listeners.Get(key); v == nil {
 		f.listeners.Set(key, l)
 	}
-}
-
-func (f *Config) ensureListener() {
-	if f.listeners != nil {
-		return
-	}
-	f.listeners = sortedmap.NewLinkedHashMap()
 }
 
 func (f *Config) Parse(r Reader) error {

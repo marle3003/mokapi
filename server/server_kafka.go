@@ -68,7 +68,7 @@ func (c *cluster) updateBrokers(cfg *asyncApi.Config, kafkaMonitor *monitor.Kafk
 	handler := runtime.NewKafkaMonitor(kafkaMonitor, c.store)
 	brokers := c.brokers
 	c.brokers = make(map[string]*service.KafkaBroker)
-	for _, server := range cfg.Servers {
+	for name, server := range cfg.Servers {
 		port, err := getPortFromUrl(server.Url)
 		if err != nil {
 			log.Errorf("unable to start broker %v for cluster %v: ", server.Url, cfg.Info.Name)
@@ -79,13 +79,15 @@ func (c *cluster) updateBrokers(cfg *asyncApi.Config, kafkaMonitor *monitor.Kafk
 		if found {
 			delete(brokers, port)
 		} else {
+			log.Infof("adding new kafka broker '%v' on port %v", name, port)
 			broker = service.NewKafkaBroker(port, handler)
 			broker.Start()
 		}
 		c.brokers[port] = broker
 	}
 
-	for _, broker := range brokers {
+	for name, broker := range brokers {
+		log.Infof("removing kafka broker '%v'", name)
 		broker.Stop()
 	}
 }

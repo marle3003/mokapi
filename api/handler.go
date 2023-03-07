@@ -31,7 +31,7 @@ type serviceType string
 var (
 	ServiceHttp    serviceType = "http"
 	ServiceKafka   serviceType = "kafka"
-	FileExtensions             = []string{".html", ".css", ".js"}
+	FileExtensions             = []string{".html", ".css", ".js", ".woff", ".woff2", ".svg"}
 )
 
 type service struct {
@@ -72,7 +72,7 @@ func BuildUrl(cfg static.Api) (*url.URL, error) {
 }
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
+	if r.Method != "GET" && r.Method != "POST" {
 		http.Error(w, fmt.Sprintf("method %v is not allowed", r.Method), http.StatusMethodNotAllowed)
 		return
 	}
@@ -104,7 +104,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if isFileExtension(filepath.Ext(r.URL.Path)) {
 			if strings.ToLower(filepath.Base(r.URL.Path)) == "index.html" {
 				r.URL.Path = "/index.html"
-			} else {
+			} else if strings.Contains(r.URL.Path, "/assets/") {
 				r.URL.Path = "/assets/" + filepath.Base(r.URL.Path)
 			}
 		} else {

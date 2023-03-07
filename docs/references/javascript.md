@@ -15,15 +15,31 @@ The list of Mokapi's Javascript modules usable to extend Mokapi's behavior.
 
 ## kafka
 
-| Functions                   | Description                                           |
-|-----------------------------|-------------------------------------------------------|
-| produce(args)               | Produces a new kafka message into the specified topic |
+| Functions         | Description                   |
+|-------------------|-------------------------------|
+| produce([params]) | Produces a new Kafka message  |
+
+```javascript
+import { produce } from 'kafka'
+export default function() {
+  var msg = produce({topic: 'topic', value: 'value', key: 'key', partition: 2})
+  console.log(`key=${msg.key}, value=${msg.value}`)
+}
+```
 
 ## faker
 
 | Functions    | Description                                                    |
 |--------------|----------------------------------------------------------------|
 | fake(schema) | Generates random data depending on given OpenAPI schema object |
+
+```javascript
+import {fake} from 'faker'
+export default function() {
+  var s = fake({type: 'string'})
+  console.log(s)
+}
+```
 
 ## mustache
 

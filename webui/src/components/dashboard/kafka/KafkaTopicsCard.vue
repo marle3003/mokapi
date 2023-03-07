@@ -3,6 +3,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { useMetrics } from '@/composables/metrics';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import type { PropType } from 'vue';
+import Markdown from 'vue3-markdown-it'
 
 const props = defineProps({
     service: { type: Object as PropType<KafkaService>, required: true },
@@ -52,7 +53,7 @@ function goToTopic(topic: KafkaTopic){
                 <tbody>
                     <tr v-for="topic in service.topics" :key="topic.name" @click="goToTopic(topic)">
                         <td>{{ topic.name }}</td>
-                        <td>{{ topic.description }}</td>
+                        <td><markdown :source="topic.description" class="description"></markdown></td>
                         <td class="text-center">{{ lastMessage(service, topic) }}</td>
                         <td class="text-center">{{ messages(service, topic) }}</td>
                     </tr>

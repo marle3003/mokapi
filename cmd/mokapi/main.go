@@ -16,7 +16,6 @@ import (
 	"mokapi/safe"
 	"mokapi/server"
 	"mokapi/server/cert"
-	"mokapi/server/service"
 	"mokapi/version"
 	_ "net/http/pprof"
 	"os"
@@ -69,11 +68,6 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 	events.SetStore(100, events.NewTraits().WithNamespace("http"))
 	events.SetStore(100, events.NewTraits().WithNamespace("kafka"))
 
-	serverAliases := service.NewServerAliases()
-	if err := serverAliases.Parse(cfg.ServerAlias); err != nil {
-		return nil, err
-	}
-
 	pool := safe.NewPool(context.Background())
 	app := runtime.New()
 	watcher := dynamic.NewConfigWatcher(cfg)
@@ -84,7 +78,7 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 	}
 	mail := make(server.SmtpServers)
 	directories := make(server.LdapDirectories)
-	http := server.NewHttpManager(scriptEngine, certStore, app, serverAliases)
+	http := server.NewHttpManager(scriptEngine, certStore, app, cfg.Services)
 	kafka := server.NewKafkaManager(scriptEngine, app)
 	managerLdap := server.NewLdapDirectoryManager(directories, scriptEngine, certStore, app)
 
@@ -97,6 +91,8 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 			log.Error(err)
 		}
 	})
+
+	go watcher.ReadServices(cfg.Services)
 
 	if u, err := api.BuildUrl(cfg.Api); err == nil {
 		err = http.AddService("api", u, api.New(app, cfg.Api), true)
