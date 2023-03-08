@@ -86,34 +86,34 @@ Private Key of CA for signing certificate generated at runtime
 
 ### Environment variables
 
-`MOKAPI_Log.Level`
+`MOKAPI_Log_Level`
 Log level: `debug` | `info` | `error` (Default: `error`)
 
-`MOKAPI_Log.Format`
+`MOKAPI_Log_Format`
 Log format: `json` | `default`
 
-`MOKAPI_Providers.File.Filename`
+`MOKAPI_Providers_File_Filename`
 Load dynamic configuration from a file
 
-`MOKAPI_Providers.File.Directory`
+`MOKAPI_Providers_File_Directory`
 Load dynamic configuration from one or more files in a directory
 
-`MOKAPI_Providers.Git.Url`
+`MOKAPI_Providers_Git_Url`
 URL to the GIT repository
 
-`MOKAPI_Providers.Git.PullInterval`
+`MOKAPI_Providers_Git_PullInterval`
 Defines the pull interval, default '5s'
 
-`MOKAPI_Providers.Http.Url`
+`MOKAPI_Providers_Http_Url`
 URL to your configuration file
 
-`MOKAPI_Providers.Http.pollInterval`
+`MOKAPI_Providers_Http_pollInterval`
 Defines the poll interval, default '5s'
 
-`MOKAPI_Api.Dashboard`
+`MOKAPI_Api_Dashboard`
 Enables API/dashboard. (Default `true`)
 
-`MOKAPI_Api.Port`
+`MOKAPI_Api_Port`
 Dashboard's port (default: `8080`)
 
 `MOKAPI_RootCaCert`
