@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/dop251/goja"
 	r "github.com/stretchr/testify/require"
+	"path/filepath"
 	"testing"
 )
 
@@ -58,6 +59,62 @@ func TestRequire(t *testing.T) {
 				v, err := s.RunDefault()
 				r.NoError(t, err)
 				r.Equal(t, "bar", v.Export())
+			},
+		},
+		{
+			"require node module with package.json and main",
+			func(t *testing.T) {
+				host.openScript = func(file, hint string) (string, string, error) {
+					switch file {
+					case filepath.Join("node_modules", "uuid", "package.json"):
+						return file, `{"main": "./dist/index.js"}`, nil
+					case filepath.Join("node_modules", "uuid", "dist", "index.js"):
+						return file, "export function v4() { return 'abc-def' }", nil
+					}
+					return "", "", fmt.Errorf("not found")
+				}
+				s, err := New("test", `import {v4 as uuidv4} from 'uuid'; export default () => uuidv4()`, host)
+				r.NoError(t, err)
+
+				v, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, "abc-def", v.Export())
+			},
+		},
+		{
+			"require node module with index.js",
+			func(t *testing.T) {
+				host.openScript = func(file, hint string) (string, string, error) {
+					switch file {
+					case filepath.Join("node_modules", "uuid", "index.js"):
+						return file, "export function v4() { return 'abc-def' }", nil
+					}
+					return "", "", fmt.Errorf("not found")
+				}
+				s, err := New("test", `import {v4 as uuidv4} from 'uuid'; export default () => uuidv4()`, host)
+				r.NoError(t, err)
+
+				v, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, "abc-def", v.Export())
+			},
+		},
+		{
+			"require node module in parent folder",
+			func(t *testing.T) {
+				host.openScript = func(file, hint string) (string, string, error) {
+					switch file {
+					case filepath.Join("/foo", "node_modules", "uuid", "index.js"):
+						return file, "export function v4() { return 'abc-def' }", nil
+					}
+					return "", "", fmt.Errorf("not found")
+				}
+				s, err := New("/foo/bar/test", `import {v4 as uuidv4} from 'uuid'; export default () => uuidv4()`, host)
+				r.NoError(t, err)
+
+				v, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, "abc-def", v.Export())
 			},
 		},
 	}

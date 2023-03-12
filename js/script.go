@@ -5,7 +5,16 @@ import (
 	"github.com/dop251/goja"
 	"github.com/pkg/errors"
 	engine "mokapi/engine/common"
+	"mokapi/js/common"
 	"mokapi/js/compiler"
+	"mokapi/js/modules"
+	"mokapi/js/modules/faker"
+	"mokapi/js/modules/http"
+	"mokapi/js/modules/kafka"
+	"mokapi/js/modules/mustache"
+	"mokapi/js/modules/require"
+	"mokapi/js/modules/yaml"
+	"path/filepath"
 )
 
 var NoDefaultFunction = errors.New("js: no default function found")
@@ -15,7 +24,7 @@ type Script struct {
 	exports  goja.Value
 	compiler *compiler.Compiler
 	host     engine.Host
-	require  *require
+	require  *require.Module
 	filename string
 	source   string
 }
@@ -80,28 +89,6 @@ func (s *Script) openScript(filename, src string) (goja.Value, error) {
 	return exports, nil
 }
 
-func (s *Script) requireFile(filename, src string) (goja.Value, error) {
-	module := s.runtime.NewObject()
-	exports := s.runtime.NewObject()
-	module.Set("exports", exports)
-
-	prg, err := s.compiler.CompileModule(filename, src)
-	if err != nil {
-		return nil, err
-	}
-	f, err := s.runtime.RunProgram(prg)
-	if err != nil {
-		return nil, err
-	}
-	if call, ok := goja.AssertFunction(f); ok {
-		_, err = call(exports, exports, module)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return exports, nil
-}
-
 func (s *Script) Close() {
 	if s.runtime != nil {
 		s.runtime.Interrupt(fmt.Errorf("closing"))
@@ -110,7 +97,7 @@ func (s *Script) Close() {
 	s.compiler = nil
 	s.exports = nil
 	if s.require != nil {
-		s.require.close()
+		s.require.Close()
 	}
 }
 
@@ -121,7 +108,19 @@ func (s *Script) ensureRuntime() (err error) {
 	s.runtime = goja.New()
 
 	s.runtime.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
-	s.require = enableRequire(s, s.host)
+
+	s.require = require.New(
+		require.WithCompiler(s.compiler),
+		require.WithSourceLoader(s.host.OpenScript),
+		require.WithWorkingDir(filepath.Dir(s.filename)),
+		require.WithNativeModule("mokapi", s.loadNativeModule(modules.NewMokapi)),
+		require.WithNativeModule("faker", s.loadNativeModule(faker.New)),
+		require.WithNativeModule("http", s.loadNativeModule(http.New)),
+		require.WithNativeModule("kafka", s.loadNativeModule(kafka.New)),
+		require.WithNativeModule("yaml", s.loadNativeModule(yaml.New)),
+		require.WithNativeModule("mustache", s.loadNativeModule(mustache.New)),
+	)
+	s.require.Enable(s.runtime)
 	enableConsole(s.runtime, s.host)
 	enableOpen(s.runtime, s.host)
 
@@ -153,4 +152,11 @@ func (s *Script) addHttpEvent(i interface{}) {
 	}
 
 	s.host.On("http", f, nil)
+}
+
+func (s *Script) loadNativeModule(f func(engine.Host, *goja.Runtime) interface{}) require.ModuleLoader {
+	return func() goja.Value {
+		m := f(s.host, s.runtime)
+		return common.Map(s.runtime, m)
+	}
 }

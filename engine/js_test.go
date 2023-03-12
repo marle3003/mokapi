@@ -253,7 +253,7 @@ func TestJsOpen(t *testing.T) {
 		`))
 		r.True(t, strings.HasPrefix(err.Error(), "GoError: file not found"), "file not found")
 	})
-	t.Run("require nested with update", func(t *testing.T) {
+	t.Run("require nested with change file", func(t *testing.T) {
 		t.Parallel()
 		foo := `const {bar} = require('bar'); export let foo = bar`
 		bar := `export let bar = 'bar'; export let xy = 'xy'`
