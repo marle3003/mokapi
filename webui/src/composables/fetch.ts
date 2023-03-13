@@ -4,6 +4,11 @@ import router from '@/router';
 let cache: {[name: string]: any} = {}
 
 export function useFetch(path: string, options?: RequestInit, doRefresh: boolean = true, useCache: boolean = true): Response {
+    let base = document.querySelector('base')?.href
+    if (base) {
+        base = base.substring(0, base.length - 1)
+        path = base + path
+    }
     const route = router.currentRoute.value
     const cached = cache[path]
     const response = cached || reactive({

@@ -31,7 +31,7 @@ type serviceType string
 var (
 	ServiceHttp    serviceType = "http"
 	ServiceKafka   serviceType = "kafka"
-	FileExtensions             = []string{".html", ".css", ".js", ".woff", ".woff2", ".svg"}
+	FileExtensions             = []string{".css", ".js", ".woff", ".woff2", ".svg"}
 )
 
 type service struct {
@@ -60,6 +60,10 @@ func New(app *runtime.App, config static.Api) http.Handler {
 	}
 
 	if config.Dashboard {
+		if len(h.path) > 0 {
+			_indexHtml = strings.Replace(_indexHtml, "<head>", fmt.Sprintf("<head><base href=\"%v/\">", h.path), 1)
+		}
+
 		h.fileServer = http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir})
 	}
 
@@ -102,13 +106,25 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.getExampleData(w, r)
 	case h.fileServer != nil:
 		if isFileExtension(filepath.Ext(r.URL.Path)) {
-			if strings.ToLower(filepath.Base(r.URL.Path)) == "index.html" {
-				r.URL.Path = "/index.html"
-			} else if strings.Contains(r.URL.Path, "/assets/") {
+			if strings.Contains(r.URL.Path, "/assets/") {
 				r.URL.Path = "/assets/" + filepath.Base(r.URL.Path)
 			}
 		} else {
-			r.URL.Path = "/"
+			if len(h.path) > 0 {
+				data, err := Asset("index.html")
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+				html := strings.Replace(string(data), "<head>", fmt.Sprintf("<head>\n<base href=\"%v/\" />", h.path), 1)
+				_, err = w.Write([]byte(html))
+				if err != nil {
+					log.Errorf("unable to write index.html: %v", err)
+				}
+				return
+			} else {
+				r.URL.Path = "/"
+			}
 		}
 		h.fileServer.ServeHTTP(w, r)
 	default:
