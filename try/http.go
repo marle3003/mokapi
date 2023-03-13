@@ -82,3 +82,14 @@ func HasBody(expected string) ResponseCondition {
 		require.Equal(t, expected, body)
 	}
 }
+
+func BodyContains(s string) ResponseCondition {
+	return func(t *testing.T, r *http.Response) {
+		b, err := ioutil.ReadAll(r.Body)
+		require.NoError(t, err)
+
+		body := string(b)
+
+		require.Contains(t, body, s)
+	}
+}

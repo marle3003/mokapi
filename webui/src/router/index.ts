@@ -2,8 +2,11 @@ import { createRouter, createWebHistory } from 'vue-router'
 import DashboardView from '../views/DashboardView.vue'
 import DocsView from '../views/DocsView.vue'
 
+let base = document.querySelector("base")?.href ?? '/'
+base = base.replace(document.location.origin, '')
+
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(base),
   routes: [
     {
       path: '/',
