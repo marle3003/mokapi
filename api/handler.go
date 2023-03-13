@@ -60,10 +60,6 @@ func New(app *runtime.App, config static.Api) http.Handler {
 	}
 
 	if config.Dashboard {
-		if len(h.path) > 0 {
-			_indexHtml = strings.Replace(_indexHtml, "<head>", fmt.Sprintf("<head><base href=\"%v/\">", h.path), 1)
-		}
-
 		h.fileServer = http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir})
 	}
 
