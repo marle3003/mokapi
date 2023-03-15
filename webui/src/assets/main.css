@@ -1,7 +1,6 @@
 @import './vars.css';
 @import 'bootstrap';
 @import 'bootstrap-icons/font/bootstrap-icons.css';
-@import './github-dark.css';
 @import './datatable.css';
 @import './tabs.css';
 @import './modal.css';
@@ -49,7 +48,7 @@ a {
 }
 
 a:hover{
-  color: var(--color-link-hover);
+  color: var(--color-link-active);
 }
 pre{
   font-size: 0.9rem;

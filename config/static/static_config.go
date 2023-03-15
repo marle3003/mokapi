@@ -47,14 +47,14 @@ type FileProvider struct {
 
 type GitProvider struct {
 	Url          string
-	PullInterval string
+	PullInterval string `yaml:"pullInterval"`
 }
 
 type HttpProvider struct {
 	Url           string
-	PollInterval  string
+	PollInterval  string `yaml:"pullInterval"`
 	Proxy         string
-	TlsSkipVerify bool
+	TlsSkipVerify bool `yaml:"tlsSkipVerify"`
 }
 
 type Services map[string]*Service

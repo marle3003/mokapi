@@ -1,13 +1,22 @@
 <script setup lang="ts">
 import { useAppInfo } from '../composables/appInfo'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import { onUnmounted } from 'vue';
 
-const title = import.meta.env.VITE_APP_TITLE
 const appInfo = useAppInfo()
 onUnmounted(() => {
     appInfo.close()
 })
+
+const isDark = document.documentElement.getAttribute('data-theme') == 'dark';
+
+const router = useRouter()
+function switchTheme() {
+  let theme = document.documentElement.getAttribute('data-theme');
+  theme = theme == 'dark' ? 'light' : 'dark'
+  localStorage.setItem('theme', theme)
+  router.go(0)
+}
 </script>
 
 <template>
@@ -31,8 +40,11 @@ onUnmounted(() => {
             </li>
           </ul>
 
-          <div class="d-flex ms-auto" v-if="appInfo.data">
+          <div class="d-flex ms-auto tools" v-if="appInfo.data">
+            
             <a href="https://github.com/marle3003/mokapi" class="version">Version {{appInfo.data.version}}</a>
+            <i class="bi bi-brightness-high-fill" @click="switchTheme" v-if="isDark"></i>
+            <i class="bi bi-moon-fill" @click="switchTheme" v-if="!isDark"></i>
           </div>
         </div>
       </div>
@@ -66,16 +78,25 @@ header {
     color: var(--color-version)
 }
 .nav-link {
-    color: var(--color-nav-link);
+    color: var(--color-link);
 }
 .nav-link:hover {
-    color: var(--color-nav-link-hover);
-    border-bottom: 4px solid var(--var-color-primary);
+    color: var(--color-nav-link-active);
+    border-bottom: 4px solid var(--color-nav-link-active);
     margin-bottom: -4px;
     text-decoration: none;
 }
 .nav-link.router-link-active{
-  border-bottom: 4px solid var(--color-nav-link);
+  color: var(--color-link-active);
+  border-bottom: 4px solid var(--color-nav-link-active);
   margin-bottom: -4px;
+  text-shadow: var(--shadow-nav-link-active);
+}
+.tools{
+  line-height: 1.2rem;
+}
+.tools i {
+  margin-left: 6px;
+  cursor: pointer;
 }
 </style>

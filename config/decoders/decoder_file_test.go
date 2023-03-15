@@ -73,9 +73,91 @@ func TestFileDecoder_Decode(t *testing.T) {
 			f: func(t *testing.T) {
 				s := &struct{ Name string }{}
 				d := &FileDecoder{filename: createTempFile(t, "test.yml", "name: foobar")}
-				err := d.Decode(map[string]string{"configfile": createTempFile(t, "test.yml", "name: barfoo")}, s)
+				err := d.Decode(map[string]string{"configfile": d.filename}, s)
 				require.NoError(t, err)
 				require.Equal(t, "foobar", s.Name)
+			},
+		},
+		{
+			name: "pascal case",
+			f: func(t *testing.T) {
+				s := &struct {
+					InstallDir string `yaml:"installDir"`
+				}{}
+				d := &FileDecoder{filename: createTempFile(t, "test.yml", "installDir: foobar")}
+				err := d.Decode(map[string]string{"configfile": d.filename}, s)
+				require.NoError(t, err)
+				require.Equal(t, "foobar", s.InstallDir)
+			},
+		},
+		{
+			name: "map",
+			f: func(t *testing.T) {
+				s := &struct {
+					Key map[string]string
+				}{}
+				d := &FileDecoder{filename: createTempFile(t, "test.yml", "key: {foo: bar}")}
+				err := d.Decode(map[string]string{"configFile": d.filename}, s)
+				require.NoError(t, err)
+				require.Equal(t, map[string]string{"foo": "bar"}, s.Key)
+			},
+		},
+		{
+			name: "array",
+			f: func(t *testing.T) {
+				s := &struct {
+					Key []string
+				}{}
+				d := &FileDecoder{filename: createTempFile(t, "test.yml", "key: [bar]")}
+				err := d.Decode(map[string]string{"configFile": d.filename}, s)
+				require.NoError(t, err)
+				require.Equal(t, []string{"bar"}, s.Key)
+			},
+		},
+		{
+			name: "map with array",
+			f: func(t *testing.T) {
+				s := &struct {
+					Key map[string][]string
+				}{}
+				d := &FileDecoder{filename: createTempFile(t, "test.yml", "key: {foo: [bar]}")}
+				err := d.Decode(map[string]string{"configFile": d.filename}, s)
+				require.NoError(t, err)
+				require.Equal(t, map[string][]string{"foo": {"bar"}}, s.Key)
+			},
+		},
+		{
+			name: "map pointer struct",
+			f: func(t *testing.T) {
+				type test struct {
+					Name string
+					Foo  string
+				}
+				s := &struct {
+					Key map[string]*test
+				}{}
+				d := &FileDecoder{filename: createTempFile(t, "test.yml", "key: {foo: {name: Bob, foo: bar}}")}
+				err := d.Decode(map[string]string{"configFile": d.filename}, s)
+				require.NoError(t, err)
+				require.Equal(t, "Bob", s.Key["foo"].Name)
+				require.Equal(t, "bar", s.Key["foo"].Foo)
+			},
+		},
+		{
+			name: "map struct",
+			f: func(t *testing.T) {
+				type test struct {
+					Name string
+					Foo  string
+				}
+				s := &struct {
+					Key map[string]test
+				}{}
+				d := &FileDecoder{filename: createTempFile(t, "test.yml", "key: {foo: {name: Bob, foo: bar}}")}
+				err := d.Decode(map[string]string{"configFile": d.filename}, s)
+				require.NoError(t, err)
+				require.Equal(t, "Bob", s.Key["foo"].Name)
+				require.Equal(t, "bar", s.Key["foo"].Foo)
 			},
 		},
 	}

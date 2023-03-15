@@ -1,13 +1,14 @@
 .nav-link {
-  color: var(--color-text);
+  color: var(--color-nav-link);
 }
 .nav-link.disabled {
-  color: var(--color-text);
+  color: var(--color-nav-link);
 }
 .nav-link:not(.disabled):hover, .nav-link:not(.disabled):focus {
-  color: var(--color-link);
+  color: var(--color-nav-link-active);
 }
 .nav-pills .nav-link.active, .nav-pills .show > .nav-link {
-  color: var(--color-link);
+  color: var(--color-nav-link-active);
   background-color: var(--color-background);
+  text-shadow: var(--shadow-nav-link-active);
 }

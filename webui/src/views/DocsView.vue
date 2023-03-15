@@ -70,6 +70,9 @@ onMounted(() => {
 </template>
 
 <style>
+.hljs{
+  background-color: var(--color-background-soft) !important;
+}
 .content{
   text-align: justify;
 }

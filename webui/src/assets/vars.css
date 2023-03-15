@@ -21,10 +21,13 @@
 
     --color-brand: #d3d4d5;
     --color-brand-hover: #d3d4d5;
-    --color-link: #30acd8;
-    --color-link-hover: #30acd8;
+
+    --color-link: #d3d4d5;
+    --color-link-active: #30acd8;
+
     --color-nav-link: #d3d4d5;
-    --color-nav-link-hover: #d3d4d5;
+    --color-nav-link-active: #30acd8;
+    --shadow-nav-link-active: var(--color-nav-link-active) 1px 0px 10px;
 
     --color-text: #d3d4d5;
     --color-text-light: #a0a1a7;
@@ -38,34 +41,41 @@
     --color-tabs-text: #30acd8;
 
     --color-popover-border: #52555d;
+}
 
-    --var-bg-color-primary: #282b33;
-    --var-bg-color-secondary: #2e2e31;
-    --var-color-primary: #d3d4d5;
-    --var-color-secondary: #282b33;
-    --var-color-line-num: #52555d;
+@media (prefers-color-scheme: light) or (data-theme: light) {
+    :root{
+        --color-background: #fff;
+        --color-background-mute: #e6e6e6;
+        --color-background-soft: #f8f8f8;
+        --color-border: #f8f8f8;
 
-    --red: #ff2e4a;
-    --blue: #027bff;
-    --orange: #ffc347;
-    --green: #30a72d;
-    --yellow: #eab839;
-    --purple: #b644a4;
+        --color-text: #000;
+        --color-link: #000;
+        --color-nav-link: #000;
+        --shadow-nav-link-active: var(--color-nav-link-active) 1px 0px 10px;
 
-    --var-border-color: #282b33;
+        --color-tabs-background: #f8f8f8;
 
-    --var-link-color: #30acd8;
+        --color-datatable-border: #bbbdc3;
+    }
+}
 
-    --var-table-header-bg-color: #282b33;
-    --var-table-border-color: #52555d;
-    --var-table-header-color: #30acd8;
+[data-theme="light"] {
+    --color-background: #F7F8FD;
+    --color-background-mute: #b2d7ed;
+    --color-background-soft: #edf1f2;
+    --color-border: #f8f8f8;
 
-    --var-tab-bg-color: #3a3e45;
-    --var-tab-header-color: #30acd8;
-    --var-code-bg-color: #3a3e45;
+    --color-text: #000;
+    --color-link: #000;
+    --color-nav-link: #000;
+    --shadow-nav-link-active: var(--color-nav-link-active) 1px 0px 10px;
 
-    /* code */
-    --var-code-blue: #30acd8;
-    --var-code-orange: #ffc347;
-    --var-code-green: #30a72d;
+    --color-tabs-background: #FFF;
+
+    --color-datatable-border: #bbbdc3;
+
+    --color-version: #d3d4d5;
+    
 }
