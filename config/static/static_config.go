@@ -37,6 +37,7 @@ type Providers struct {
 type Api struct {
 	Port      string
 	Path      string
+	Base      string
 	Dashboard bool
 }
 

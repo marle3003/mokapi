@@ -17,6 +17,7 @@ import (
 
 type handler struct {
 	path       string
+	base       string
 	app        *runtime.App
 	fileServer http.Handler
 }
@@ -56,6 +57,7 @@ type apiError struct {
 func New(app *runtime.App, config static.Api) http.Handler {
 	h := &handler{
 		path: config.Path,
+		base: config.Base,
 		app:  app,
 	}
 
@@ -106,13 +108,17 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				r.URL.Path = "/assets/" + filepath.Base(r.URL.Path)
 			}
 		} else {
-			if len(h.path) > 0 {
+			if len(h.path) > 0 || len(h.base) > 0 {
+				base := h.path
+				if len(h.base) > 0 {
+					base = h.base
+				}
 				data, err := Asset("index.html")
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
-				html := strings.Replace(string(data), "<head>", fmt.Sprintf("<head>\n<base href=\"%v/\" />", h.path), 1)
+				html := strings.Replace(string(data), "<head>", fmt.Sprintf("<head>\n<base href=\"%v/\" />", base), 1)
 				_, err = w.Write([]byte(html))
 				if err != nil {
 					log.Errorf("unable to write index.html: %v", err)
