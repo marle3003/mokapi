@@ -130,6 +130,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		h.fileServer.ServeHTTP(w, r)
 	default:
+		log.Errorf("dashboard file not found: %v", r.URL)
 		http.Error(w, "not found", http.StatusNotFound)
 	}
 }
