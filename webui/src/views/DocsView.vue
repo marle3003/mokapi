@@ -42,7 +42,7 @@ onMounted(() => {
 
 <template>
   <main>
-    <div>
+    <div class="doc">
       <div class="ps-3 text-white pe-4" style="position:fixed; width: 280px;">
         <ul class="nav nav-pills flex-column mb-auto pe-3">
           <li class="nav-item" v-for="(v, k) of nav">
@@ -70,9 +70,6 @@ onMounted(() => {
 </template>
 
 <style>
-.hljs{
-  background-color: var(--color-background-soft) !important;
-}
 .content{
   text-align: justify;
 }

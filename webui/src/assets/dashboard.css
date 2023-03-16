@@ -74,14 +74,14 @@
   margin-right: 5px;
 }
 .dashboard-tabs .nav-link:hover {
-  color: var(--color-text);
+  color: var(--color-nav-link-active);
   text-decoration: none;
   background-color: var(--color-background-mute);
   opacity: 0.8;
 }
 .dashboard-tabs .nav-link.router-link-active,
 .dashboard-tabs .nav-link.router-link-exact-active {
-  color: var(--color-text);
+  color: var(--color-nav-link-active);
   text-decoration: none;
   background-color: var(--color-background-mute);
   opacity: 0.8;

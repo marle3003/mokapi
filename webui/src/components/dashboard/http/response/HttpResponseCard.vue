@@ -50,7 +50,7 @@ function selectedContentChange(event: any, statusCode: number){
                 <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
                     <button v-for="(response, index) of operation.responses" class="badge status-code" :class="getClassByStatusCode(response.statusCode) + (index==0 ? ' active' : '')" :id="'v-pills-'+response.statusCode+'-tab'" data-bs-toggle="pill" :data-bs-target="'#v-pills-'+response.statusCode" type="button" role="tab" :aria-controls="'v-pills-'+response.statusCode" aria-selected="true">{{ formatStatusCode(response.statusCode) }}</button>
                 </div>
-                <div class="tab-content ms-3 ps-3 responses-tab" style="width: 80%" id="v-pills-tabContent">
+                <div class="tab-content ms-3 ps-3 responses-tab" style="width: 100%" id="v-pills-tabContent">
                     <div v-for="(response, index) of operation.responses" class="tab-pane fade" :class="index==0 ? 'show active' : ''" :id="'v-pills-'+response.statusCode" role="tabpanel" :aria-labelledby="'v-pills-'+response.statusCode+'-tab'">
                         <p class="label">Description</p>
                         <p><markdown :source="response.description"></markdown></p>
@@ -130,9 +130,21 @@ function selectedContentChange(event: any, statusCode: number){
     padding-left: 0;
     padding-right: 0;
 }
+.response-tab li.active {
+    background-color: transparent;
+    text-shadow: none;
+}
+
+.response-tab li.disabled {
+    color: var(--color-disabled);
+}
 .response-tab li + li::before {
     padding-right: 7px;
     padding-left: 7px;
     content: " | ";
 }
+.response .tab-pane {
+    padding-left: 0;
+    padding-top: 0.5rem;
+ }
 </style>

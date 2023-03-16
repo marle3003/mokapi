@@ -8,7 +8,6 @@
 }
 .nav-tabs .nav-item .nav-link.active {
     background-color: var(--color-tabs-background);
-  
 }
 
 .modal .tab-content {
@@ -38,3 +37,34 @@
 .tab-sm li.disabled {
     color: var(--color-text-light)
 }
+
+.card-tabs button {
+    font-size: 0.9rem;
+    padding-bottom: 8px;
+    padding-right: 20px;
+    padding-left: 20px;
+    color: var(--color-text);
+    background-color: transparent;
+    border: 0;
+    margin-right: 20px;
+}
+.card-tabs button.active {
+    font-size: 0.9rem;
+    border: 0;
+    color: var(--color-blue-cold);
+    border-bottom-width: 3px;
+    border-bottom-style: solid;
+    margin-bottom: -2px;
+}
+.card-tabs button.disabled {
+    color: var(--color-disabled);
+}
+.card-tabs {
+    border-bottom: 2px;
+    border-bottom-style: solid;
+    border-bottom-color: var(--color-tabs-border);
+}
+.tab-pane {
+    padding: 0.8rem;
+    padding-top: 1.6rem;
+ }

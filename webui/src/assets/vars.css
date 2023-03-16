@@ -33,6 +33,8 @@
     --color-text-light: #a0a1a7;
     --color-version: #52555d;
 
+    --color-disabled: #a0a1a7;
+
     --color-datatable-header-text: #30acd8;
     --color-datatable-border: #52555d;
 
@@ -41,24 +43,9 @@
     --color-tabs-text: #30acd8;
 
     --color-popover-border: #52555d;
-}
 
-@media (prefers-color-scheme: light) or (data-theme: light) {
-    :root{
-        --color-background: #fff;
-        --color-background-mute: #e6e6e6;
-        --color-background-soft: #f8f8f8;
-        --color-border: #f8f8f8;
-
-        --color-text: #000;
-        --color-link: #000;
-        --color-nav-link: #000;
-        --shadow-nav-link-active: var(--color-nav-link-active) 1px 0px 10px;
-
-        --color-tabs-background: #f8f8f8;
-
-        --color-datatable-border: #bbbdc3;
-    }
+    --btn-primary-color-background: #30acd8;
+    --btn-primary-color-background-hover: rgb(48, 172, 216, 0.8)
 }
 
 [data-theme="light"] {

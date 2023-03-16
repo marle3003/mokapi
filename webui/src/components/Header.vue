@@ -40,9 +40,9 @@ function switchTheme() {
             </li>
           </ul>
 
-          <div class="d-flex ms-auto tools" v-if="appInfo.data">
+          <div class="d-flex ms-auto tools">
             
-            <a href="https://github.com/marle3003/mokapi" class="version">Version {{appInfo.data.version}}</a>
+            <a href="https://github.com/marle3003/mokapi" class="version" v-if="appInfo.data">Version {{appInfo.data.version}}</a>
             <i class="bi bi-brightness-high-fill" @click="switchTheme" v-if="isDark"></i>
             <i class="bi bi-moon-fill" @click="switchTheme" v-if="!isDark"></i>
           </div>

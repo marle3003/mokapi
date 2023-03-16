@@ -58,7 +58,7 @@ onUnmounted(() => {
       <div class="card-group">
         <div class="card">
           <div class="card-body">
-            <div class="nav kafka-tabs" id="myTab" role="tablist">
+            <div class="nav card-tabs" id="myTab" role="tablist">
               <button class="active" id="messages-tab" data-bs-toggle="tab" data-bs-target="#messages" type="button" role="tab" aria-controls="messages" aria-selected="true">Messages</button>
               <button id="partition-tab" data-bs-toggle="tab" data-bs-target="#partitions" type="button" role="tab" aria-controls="partitions" aria-selected="false">Partitions</button>
               <button id="groups-tab" data-bs-toggle="tab" data-bs-target="#groups" type="button" role="tab" aria-controls="groups" aria-selected="false">Groups</button>
@@ -83,33 +83,3 @@ onUnmounted(() => {
       </div>
   </div>
 </template>
-
-<style scoped>
-.kafka-tabs button {
-  font-size: 0.9rem;
-  padding-bottom: 8px;
-  padding-right: 20px;
-  padding-left: 20px;
-  color: var(--color-text);
-  background-color: transparent;
-  border: 0;
-  margin-right: 20px;
-}
-.kafka-tabs button.active {
-    font-size: 0.9rem;
-    border: 0;
-    color: var(--color-blue-cold);
-    border-bottom-width: 3px;
-    border-bottom-style: solid;
-    margin-bottom: -2px;
-}
-.kafka-tabs{
-  border-bottom: 2px;
-  border-bottom-style: solid;
-  border-bottom-color: var(--color-tabs-border);
-}
-.tab-pane {
- padding: 0.8rem;
- padding-top: 1.6rem;
-}
-</style>

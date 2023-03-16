@@ -7,7 +7,6 @@
 @import './nav.css';
 
 body {
-  min-height: 100vh;
   color: var(--color-text);
   background: var(--color-background);
   line-height: 1.6;
@@ -16,10 +15,6 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-#app {
-  min-height: 100vh;
 }
 
 main {
@@ -59,4 +54,17 @@ pre{
 .logo {
   margin-top: 2rem;
   margin-bottom: 2rem;
+}
+
+.btn-primary {
+  background-color: var(--btn-primary-color-background);
+  border-color: var(--btn-primary-color-background);
+}
+.btn-primary:hover {
+  background-color: var(--btn-primary-color-background-hover);
+  border-color: var(--btn-primary-color-background-hover);
+}
+
+[data-theme="light"] .doc .content .hljs{
+  background-color: var(--color-background-soft);
 }

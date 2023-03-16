@@ -28,12 +28,13 @@ function selectedContentChange(event: any){
         <div class="card-body">
             <div class="card-title text-center">Request</div>
 
-            <ul class="nav nav-pills response-tab" role="tabList">
-                <li class="nav-link" id="pills-body-tab" :class="operation.requestBody ? 'active' : 'disabled'" data-bs-toggle="pill" data-bs-target="#pills-body" type="button" role="tab" aria-controls="pills-body" aria-selected="true">Body</li>
-                <li class="nav-link" id="pills-header-tab" :class="operation.parameters ? (operation.requestBody ? '' : 'active') : 'disabled'" data-bs-toggle="pill" data-bs-target="#pills-parameter" type="button" role="tab" aria-controls="pills-parameter" aria-selected="false">Parameters</li>
-            </ul>
-            <div class="tab-content" id="pills-tabContent">
-                <div v-if="operation.requestBody" class="tab-pane fade show active" id="pills-body" role="tabpanel" aria-labelledby="pills-body-tab">
+            <div class="nav card-tabs" role="tablist">
+              <button :class="operation.requestBody ? 'active' : 'disabled'" id="body-tab" data-bs-toggle="tab" data-bs-target="#body" type="button" role="tab" aria-controls="body" aria-selected="true">Body</button>
+              <button :class="operation.parameters ? (operation.requestBody ? '' : 'active') : 'disabled'" id="parameters-tab" data-bs-toggle="tab" data-bs-target="#parameters" type="button" role="tab" aria-controls="parameters" aria-selected="false">Parameters</button>
+            </div>
+
+            <div class="tab-content" id="tabRequest">
+              <div class="tab-pane fade" :class="operation.requestBody ? 'show active' : ''" id="body" role="tabpanel" aria-labelledby="body-tab">
                     <p class="codeBlock">
                         <span v-if="operation.requestBody.contents.length == 1" class="label">{{ selectContent?.type }}</span>
                         <pre v-highlightjs="formatLanguage(JSON.stringify(selectContent?.schema), 'application/json')" class="overflow-auto" style="max-height: 250px;"><code class="json"></code></pre>
@@ -52,7 +53,7 @@ function selectedContentChange(event: any){
                         </div>
                     </div>
                 </div>
-                <div v-if="operation.parameters" class="tab-pane fade" :class="!operation.requestBody ? 'show active' : ''" id="pills-parameter" role="tabpanel" aria-labelledby="pills-parameter-tab">
+                <div class="tab-pane fade" :class="!operation.requestBody ? 'show active' : ''" id="parameters" role="tabpanel" aria-labelledby="parameters-tab">
                     <http-parameters :parameters="operation.parameters" />
                 </div>
             </div>
