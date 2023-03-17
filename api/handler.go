@@ -36,11 +36,11 @@ var (
 
 type service struct {
 	Name        string           `json:"name"`
-	Description string           `json:"description"`
-	Contact     *contact         `json:"contact"`
-	Version     string           `json:"version"`
+	Description string           `json:"description,omitempty"`
+	Contact     *contact         `json:"contact,omitempty"`
+	Version     string           `json:"version,omitempty"`
 	Type        serviceType      `json:"type"`
-	Metrics     []metrics.Metric `json:"metrics"`
+	Metrics     []metrics.Metric `json:"metrics,omitempty"`
 }
 
 type contact struct {

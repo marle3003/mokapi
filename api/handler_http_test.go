@@ -18,7 +18,7 @@ func TestHandler_Http(t *testing.T) {
 		fn   func(t *testing.T, h http.Handler)
 	}{
 		{
-			name: "/api/services",
+			name: "http /api/services",
 			app: &runtime.App{
 				Http: map[string]*runtime.HttpInfo{
 					"foo": {
@@ -36,7 +36,7 @@ func TestHandler_Http(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`[{"name":"foo","description":"","version":"","type":"http","metrics":[]}]`))
+					try.HasBody(`[{"name":"foo","type":"http"}]`))
 			},
 		},
 		{
@@ -58,7 +58,7 @@ func TestHandler_Http(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"name":"foo","description":"bar","version":"1.0","metrics":[]}`))
+					try.HasBody(`{"name":"foo","description":"bar","version":"1.0"}`))
 			},
 		},
 		{
@@ -85,7 +85,7 @@ func TestHandler_Http(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"name":"foo","description":"bar","version":"1.0","paths":[{"path":"/foo/{bar}","operations":[{"method":"get","deprecated":false,"parameters":[{"name":"bar","type":"path","required":true,"deprecated":false,"exploded":false,"schema":{"type":"string"}}]}]}],"metrics":[]}`))
+					try.HasBody(`{"name":"foo","description":"bar","version":"1.0","paths":[{"path":"/foo/{bar}","operations":[{"method":"get","deprecated":false,"parameters":[{"name":"bar","type":"path","required":true,"deprecated":false,"exploded":false,"schema":{"type":"string"}}]}]}]}`))
 			},
 		},
 	}

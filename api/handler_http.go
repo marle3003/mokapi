@@ -21,7 +21,7 @@ type httpInfo struct {
 	Contact     *contact         `json:"contact,omitempty"`
 	Servers     []server         `json:"servers,omitempty"`
 	Paths       []pathItem       `json:"paths,omitempty"`
-	Metrics     []metrics.Metric `json:"metrics"`
+	Metrics     []metrics.Metric `json:"metrics,omitempty"`
 }
 
 type pathItem struct {
