@@ -47,6 +47,7 @@ tasks:
     deps: [build-npm-package]
     dir: npm
     cmds:
+      - npm version {{.VERSION}}
       - npm publish
   npm-build-windows:
     cmds:
