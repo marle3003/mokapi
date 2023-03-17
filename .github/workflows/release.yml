@@ -27,12 +27,12 @@ jobs:
         with:
           node-version: '16'
           registry-url: 'https://registry.npmjs.org'
-      - run: curl -sL https://raw.githubusercontent.com/go-task/task/master/install-task.sh | sh
+      - run: sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b ~/.local/bin
       - run: npm install
         working-directory: ./webui
       - run: go install -a -v github.com/go-bindata/go-bindata/...@latest
       - name: Build
-        run: ./bin/task bindata-vueapp
+        run: task bindata-vueapp
         env:
           CGO_ENABLED: 0
       - name: Run GoReleaser
@@ -43,6 +43,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Publish npm
-        run: ./bin/task publish-npm-package VERSION=${GITHUB_REF##*/v}
+        run: task publish-npm-package VERSION=${GITHUB_REF##*/v}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
