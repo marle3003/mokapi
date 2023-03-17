@@ -2,6 +2,7 @@ package openapitest
 
 import (
 	"mokapi/config/dynamic/openapi"
+	"mokapi/config/dynamic/openapi/parameter"
 	"strings"
 )
 
@@ -49,5 +50,12 @@ func WithOperation(method string, op *openapi.Operation) EndpointOptions {
 		case "TRACE":
 			e.Trace = op
 		}
+	}
+}
+
+func WithEndpointParam(name string, in string, required bool, opts ...ParamOptions) EndpointOptions {
+	return func(e *openapi.Endpoint) {
+		e.Parameters = append(e.Parameters, &parameter.Ref{
+			Value: newParam(name, required, parameter.Location(in), opts...)})
 	}
 }
