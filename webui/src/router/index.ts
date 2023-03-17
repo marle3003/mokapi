@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import DashboardView from '../views/DashboardView.vue'
-import DocsView from '../views/DocsView.vue'
+import DashboardView from '@/views/DashboardView.vue'
 
 let base = document.querySelector("base")?.href ?? '/'
 base = base.replace(document.location.origin, '')
@@ -44,19 +43,19 @@ const router = createRouter({
               meta: {service: 'http'}
             },
             {
-              path: '/dashboard/http/services/:service/paths/:path',
+              path: '/dashboard/http/services/:service/:path',
               name: 'httpPath',
               component: DashboardView,
               meta: {service: 'http'}
             },
             {
-              path: '/dashboard/http/services/:service/paths/:path/methods/:method',
+              path: '/dashboard/http/services/:service/:path/:operation',
               name: 'httpOperation',
               component: DashboardView,
               meta: {service: 'http'}
             },
             {
-              path: '/dashboard/http/services/:service/paths/:path/methods/:method/parameters/:parameter',
+              path: '/dashboard/http/services/:service/:path/:operation/parameters/:parameter',
               name: 'httpParameter',
               component: DashboardView,
               meta: {service: 'http'}
@@ -101,10 +100,15 @@ const router = createRouter({
         {
           path: '/docs/:topic/:subject?',
           name: 'docs',
-          component: DocsView
+          component: () => import('@/views/DocsView.vue')
         },
       ]
     },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: () => import('@/views/PageNotFound.vue')
+    }
   ]
 })
 

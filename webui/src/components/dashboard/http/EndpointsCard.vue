@@ -26,7 +26,14 @@ function comparePath(p1: HttpPath, p2: HttpPath) {
 function goToPath(path: HttpPath){
     router.push({
         name: 'httpPath',
-        params: {service: props.service.name, path: path.path},
+        params: {service: props.service.name, path: path.path.substring(1)},
+        query: {refresh: route.query.refresh}
+    })
+}
+function goToOperation(path: HttpPath, operation: HttpOperation){
+    router.push({
+        name: 'httpOperation',
+        params: {service: props.service.name, path: path.path.substring(1), operation: operation.method},
         query: {refresh: route.query.refresh}
     })
 }
@@ -45,6 +52,15 @@ function requests(path: HttpPath){
 function errors(path: HttpPath){
     return sum(props.service.metrics, 'http_requests_errors_total', {name: 'endpoint', value: path.path})
 }
+
+function allOperationsDeprecated(path: HttpPath): boolean{
+    for (var op of path.operations){
+        if (!op.deprecated){
+            return false
+        }
+    }
+    return true
+}
 </script>
 
 <template>
@@ -62,9 +78,12 @@ function errors(path: HttpPath){
                 </thead>
                 <tbody>
                     <tr v-for="path in paths" :key="path.path" @click="goToPath(path)">
-                        <td>{{ path.path }}</td>
                         <td>
-                            <span v-for="operation in path.operations" key="operation.method" class="badge operation" :class="operation.method">
+                            <i class="bi bi-exclamation-triangle-fill yellow pe-2" v-if="allOperationsDeprecated(path)"></i>
+                            {{ path.path }}
+                        </td>
+                        <td>
+                            <span v-for="operation in path.operations" key="operation.method" class="badge operation" :class="operation.method" @click.stop="goToOperation(path, operation)">
                                 {{ operation.method }} <i class="bi bi-exclamation-triangle-fill yellow" v-if="operation.deprecated"></i>
                             </span>
                         </td>

@@ -1,7 +1,12 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router';
+
 defineProps({
     message: { type: String, required: true },
+    showBackToHome: {type: Boolean, required: false}
 })
+
+const router = useRouter()
 </script>
 
 <template>
@@ -19,6 +24,11 @@ defineProps({
                             <div class="d-flex flex-wrap align-items-center h-100 message">
                                 {{ message }}
                             </div>
+                        </div>
+                    </div>
+                    <div class="row justify-content-center pt-4" v-if="showBackToHome">
+                        <div class="col-auto">
+                            <button type="button" class="btn btn-primary btn-sm" @click="router.push({name: 'home'})">Back to Home</button>
                         </div>
                     </div>
                 </div>

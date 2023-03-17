@@ -10,9 +10,7 @@ export function useExample() {
         const example = ref<string>()
 
         watchEffect(() => {
-                console.log(response)
                 example.value = formatLanguage(JSON.stringify(response.data), 'application/json')
-                console.log(example.value)
         })
         return example
     }

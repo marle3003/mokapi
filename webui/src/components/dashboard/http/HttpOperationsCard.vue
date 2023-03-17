@@ -22,7 +22,7 @@ const router = useRouter()
 function goToOperation(operation: HttpOperation){
     router.push({
         name: 'httpOperation',
-        params: {service: props.service.name, path: props.path.path, method: operation.method},
+        params: {service: props.service.name, path: props.path.path.substring(1), operation: operation.method},
         query: {refresh: route.query.refresh}
     })
 }

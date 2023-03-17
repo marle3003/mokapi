@@ -132,6 +132,38 @@ export let apps = [
                 ]
             },
             {
+                path: "/pet/{petId}",
+                operations: [
+                    {
+                        method: "get",
+                        summary: "Returns a single pet",
+                        parameters: [
+                            {
+                                name: "petId",
+                                type: "path",
+                                description: "ID of pet to return",
+                                schema: {
+                                    type: "integer",
+                                    format: "int64"
+                                },
+                                required: true
+                            }
+                        ],
+                        responses: [
+                            {
+                                statusCode: 200,
+                                contents: [
+                                    {
+                                        type: "application/json",
+                                        schema: {}
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
                 path: "/pet/findByStatus",
                 operations: [
                     {

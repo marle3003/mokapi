@@ -21,13 +21,18 @@ if (subject) {
 if (typeof file != "string"){
   file = file[topic]
 }
-const content = files[`/src/assets/docs/${file}`]
+let content = files[`/src/assets/docs/${file}`]
+
+let base = document.querySelector("base")?.href ?? '/'
+if (base != '/') {
+  base = base.replace(document.location.origin, '')
+  content = content.replace(/<img([^>]*)\ssrc=(['"])(?:[^\2\/]*\/)*([^\2]+)\2/gi, `<img$1 src=$2${base}$3$2`);
+}
 
 onMounted(() => {
   scrollTo(0, 0)
   setTimeout(() => {
   for (var pre of document.querySelectorAll('pre')) {
-    console.log(pre)
     pre.addEventListener("dblclick", (e) => {
       const range = document.createRange()
       range.selectNodeContents(e.target as HTMLElement)

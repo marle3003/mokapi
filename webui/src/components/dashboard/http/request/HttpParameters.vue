@@ -23,13 +23,21 @@ if (props.parameters){
 }
 
 const sortedParameters = props.parameters?.sort((p1, p2) =>{
-    const r = p1.type.localeCompare(p2.type)
+    const r = getParameterTypeSortOrder(p1.type) - getParameterTypeSortOrder(p2.type)
     if (r != 0) {
         return r
     }
     return p1.name.localeCompare(p2.name)
 })
-
+function getParameterTypeSortOrder(type: string): number{
+    switch (type){
+        case "path": return 0
+        case "query": return 1
+        case "header": return 2
+        case "cookie": return 3
+        default: return 4
+    }
+}
 function getExample(key: string){
     const example = examples[key]
     if (!example.value){

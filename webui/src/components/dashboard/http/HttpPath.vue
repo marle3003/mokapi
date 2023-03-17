@@ -2,7 +2,7 @@
 import { onUnmounted, computed, type Ref } from 'vue'
 import { useRoute } from 'vue-router';
 import { useService } from '@/composables/services';
-import HttpMethodsCard from './HttpOperationsCard.vue';
+import HttpOperationsCard from './HttpOperationsCard.vue';
 import Requests from './Requests.vue';
 import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
@@ -10,7 +10,7 @@ import '@/assets/http.css'
 
 const {fetchService} = useService()
 const serviceName = useRoute().params.service?.toString()
-const pathName = useRoute().params.path?.toString()
+const pathName = '/' + useRoute().params.path?.toString()
 const {service, isLoading, close} = <{service: Ref<HttpService | null>, isLoading: Ref<boolean>, close: () => void}>fetchService(serviceName, 'http')
 let path = computed(() => {
     if (!service.value){
@@ -28,6 +28,18 @@ function endpointNotFoundMessage() {
     return 'Endpoint ' + pathName + ' in service ' + serviceName + ' not found' 
 }
 
+function allOperationsDeprecated(): boolean{
+    if (!path.value){
+        return false
+    }
+    for (var op of path.value.operations){
+        if (!op.deprecated){
+            return false
+        }
+    }
+    return true
+}
+
 onUnmounted(() => {
     close()
 })
@@ -39,13 +51,20 @@ onUnmounted(() => {
             <div class="card">
                 <div class="card-body">
                     <div class="row">
-                        <div class="col header">
+                        <div class="col-6 header">
                             <p class="label">Path</p>
-                            <p>{{ path.path }}</p>
+                            <p>
+                                <i class="bi bi-exclamation-triangle-fill yellow pe-2" v-if="allOperationsDeprecated()"></i>
+                                {{ path.path }}
+                            </p>
                         </div>
                         <div class="col header">
                             <p class="label">Service</p>
                             <p>{{ service.name }}</p>
+                        </div>
+                        <div class="col header" v-if="allOperationsDeprecated()">
+                            <p class="label">Warning</p>
+                            <p>Deprecated</p>
                         </div>
                         <div class="col text-end">
                             <span class="badge bg-secondary">HTTP</span>
@@ -55,7 +74,7 @@ onUnmounted(() => {
             </div>
         </div>
         <div class="card-group">
-            <http-methods-card :service="service" :path="path" />
+            <http-operations-card :service="service" :path="path" />
         </div>
         <div class="card-group">
             <requests :service="service" :path="pathName" />

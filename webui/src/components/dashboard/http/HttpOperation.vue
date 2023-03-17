@@ -13,8 +13,8 @@ const {fetchService} = useService()
 const route = useRoute()
 
 const serviceName = route.params.service?.toString()
-const pathName = route.params.path?.toString()
-const operationName = route.params.method?.toString()
+const pathName = '/' + route.params.path?.toString()
+const operationName = route.params.operation?.toString()
 const {service, isLoading, close} = <{service: Ref<HttpService | null>, isLoading: Ref<boolean>, close: () => void}>fetchService(serviceName, 'http')
 let path = computed(() => {
     if (!service.value){
@@ -40,7 +40,7 @@ const operation = computed(() => {
 })
 
 function operationNotFoundMessage() {
-    return 'Operation '+ operation +' for path '+ pathName+' in service '+ serviceName +' not found'
+    return 'Operation '+ operationName.toUpperCase() +' '+ pathName+' in '+ serviceName +' not found'
 }
 
 onUnmounted(() => {
@@ -54,9 +54,13 @@ onUnmounted(() => {
             <div class="card">
                 <div class="card-body">
                     <div class="row">
-                        <div class="col header">
+                        <div class="col-6 header">
                             <p class="label">Operation</p>
-                            <p><span class="badge operation" :class="operation.method">{{ operation.method }}</span> {{ path.path }}</p>
+                            <p>
+                                <i class="bi bi-exclamation-triangle-fill yellow pe-2" v-if="operation.deprecated"></i>
+                                <span class="badge operation" :class="operation.method">{{ operation.method }}</span>
+                                <span class="ps-2">{{ path.path }}</span>
+                            </p>
                         </div>
                         <div class="col header">
                             <p class="label">Operation ID</p>
@@ -68,17 +72,17 @@ onUnmounted(() => {
                         </div>
                         <div class="col header" v-if="operation.deprecated">
                             <p class="label">Warning</p>
-                            <p><i class="bi bi-exclamation-triangle-fill yellow"></i> Deprecated</p>
+                            <p>Deprecated</p>
                         </div>
                         <div class="col text-end">
                             <span class="badge bg-secondary">HTTP</span>
                         </div>
                     </div>
-                    <div class="row">
+                    <div class="row" v-if="operation.summary">
                         <p class="label">Summary</p>
                         <p>{{ operation.summary }}</p>
                     </div>
-                    <div class="row">
+                    <div class="row" v-if="operation.description">
                         <p class="label">Description</p>
                         <markdown :source="operation.description"></markdown>
                     </div>
