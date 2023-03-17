@@ -30,9 +30,8 @@ type info struct {
 type serviceType string
 
 var (
-	ServiceHttp    serviceType = "http"
-	ServiceKafka   serviceType = "kafka"
-	FileExtensions             = []string{".css", ".js", ".woff", ".woff2", ".svg"}
+	ServiceHttp  serviceType = "http"
+	ServiceKafka serviceType = "kafka"
 )
 
 type service struct {
@@ -103,10 +102,8 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case p == "/api/schema/example":
 		h.getExampleData(w, r)
 	case h.fileServer != nil:
-		if isFileExtension(filepath.Ext(r.URL.Path)) {
-			if strings.Contains(r.URL.Path, "/assets/") {
-				r.URL.Path = "/assets/" + filepath.Base(r.URL.Path)
-			}
+		if isAsset(r.URL.Path) {
+			r.URL.Path = "/assets/" + filepath.Base(r.URL.Path)
 		} else {
 			if len(h.path) > 0 || len(h.base) > 0 {
 				base := h.path
@@ -181,11 +178,6 @@ func writeJsonBody(w http.ResponseWriter, i interface{}) {
 	}
 }
 
-func isFileExtension(ext string) bool {
-	for _, v := range FileExtensions {
-		if strings.ToLower(ext) == v {
-			return true
-		}
-	}
-	return false
+func isAsset(path string) bool {
+	return strings.Contains(path, "/assets/")
 }

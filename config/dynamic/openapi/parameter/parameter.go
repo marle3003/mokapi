@@ -55,3 +55,7 @@ type NamedParameters struct {
 	ref.Reference
 	Value map[string]*Ref
 }
+
+func (l Location) String() string {
+	return string(l)
+}

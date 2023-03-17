@@ -2,6 +2,7 @@ package api
 
 import (
 	"mokapi/config/dynamic/openapi"
+	"mokapi/config/dynamic/openapi/parameter"
 	"mokapi/runtime"
 	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
@@ -15,9 +16,9 @@ type httpSummary struct {
 
 type httpInfo struct {
 	Name        string           `json:"name"`
-	Description string           `json:"description"`
-	Version     string           `json:"version"`
-	Contact     *contact         `json:"contact"`
+	Description string           `json:"description,omitempty"`
+	Version     string           `json:"version,omitempty"`
+	Contact     *contact         `json:"contact,omitempty"`
 	Servers     []server         `json:"servers,omitempty"`
 	Paths       []pathItem       `json:"paths,omitempty"`
 	Metrics     []metrics.Metric `json:"metrics"`
@@ -25,29 +26,29 @@ type httpInfo struct {
 
 type pathItem struct {
 	Path        string      `json:"path"`
-	Summary     string      `json:"summary"`
-	Description string      `json:"description"`
+	Summary     string      `json:"summary,omitempty"`
+	Description string      `json:"description,omitempty"`
 	Operations  []operation `json:"operations,omitempty"`
 }
 
 type operation struct {
 	Method      string       `json:"method"`
-	Summary     string       `json:"summary"`
-	Description string       `json:"description"`
-	OperationId string       `json:"operationId"`
+	Summary     string       `json:"summary,omitempty"`
+	Description string       `json:"description,omitempty"`
+	OperationId string       `json:"operationId,omitempty"`
 	Deprecated  bool         `json:"deprecated"`
 	RequestBody *requestBody `json:"requestBody,omitempty"`
-	Parameters  []parameter  `json:"parameters,omitempty"`
+	Parameters  []param      `json:"parameters,omitempty"`
 	Responses   []response   `json:"responses,omitempty"`
 }
 
-type parameter struct {
+type param struct {
 	Name        string      `json:"name"`
 	Type        string      `json:"type"`
-	Description string      `json:"description"`
+	Description string      `json:"description,omitempty"`
 	Required    bool        `json:"required"`
 	Deprecated  bool        `json:"deprecated"`
-	Style       string      `json:"style"`
+	Style       string      `json:"style,omitempty"`
 	Exploded    bool        `json:"exploded"`
 	Schema      *schemaInfo `json:"schema"`
 }
@@ -56,7 +57,7 @@ type response struct {
 	StatusCode  int         `json:"statusCode"`
 	Description string      `json:"description"`
 	Contents    []mediaType `json:"contents,omitempty"`
-	Headers     []parameter `json:"parameters,omitempty"`
+	Headers     []param     `json:"parameters,omitempty"`
 }
 
 type requestBody struct {
@@ -174,21 +175,8 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 					})
 				}
 			}
-			for _, p := range o.Parameters {
-				if p.Value == nil {
-					continue
-				}
-				op.Parameters = append(op.Parameters, parameter{
-					Name:        p.Value.Name,
-					Type:        string(p.Value.Type),
-					Description: p.Value.Description,
-					Required:    p.Value.Required,
-					Deprecated:  p.Value.Deprecated,
-					Style:       p.Value.Style,
-					Exploded:    p.Value.Explode,
-					Schema:      getSchema(p.Value.Schema),
-				})
-			}
+			op.Parameters = getParameters(p.Value.Parameters)
+			op.Parameters = append(op.Parameters, getParameters(o.Parameters)...)
 
 			for it := o.Responses.Iter(); it.Next(); {
 				statusCode := it.Key().(int)
@@ -210,7 +198,7 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 					if header.Value != nil {
 						continue
 					}
-					res.Headers = append(res.Headers, parameter{
+					res.Headers = append(res.Headers, param{
 						Name:        name,
 						Type:        "header",
 						Description: header.Value.Description,
@@ -227,4 +215,23 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 
 	w.Header().Set("Content-Type", "application/json")
 	writeJsonBody(w, result)
+}
+
+func getParameters(params parameter.Parameters) (result []param) {
+	for _, p := range params {
+		if p.Value == nil {
+			continue
+		}
+		result = append(result, param{
+			Name:        p.Value.Name,
+			Type:        string(p.Value.Type),
+			Description: p.Value.Description,
+			Required:    p.Value.Required,
+			Deprecated:  p.Value.Deprecated,
+			Style:       p.Value.Style,
+			Exploded:    p.Value.Explode,
+			Schema:      getSchema(p.Value.Schema),
+		})
+	}
+	return
 }

@@ -16,7 +16,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 		fn   func(t *testing.T, h http.Handler)
 	}{
 		{
-			name: "post not allowed",
+			name: "should 405 when POST to file server",
 			fn: func(t *testing.T, h http.Handler) {
 				r := httptest.NewRequest(http.MethodPost, "http://foo.api", nil)
 				rr := httptest.NewRecorder()
@@ -62,14 +62,28 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					try.HasBody(`{"version":""}`))
 			},
 		},
+		{
+			name: "openapi path should return index.html",
+			fn: func(t *testing.T, h http.Handler) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/dashboard/http/services/petstore/paths/%2Fpets%2F%7BpetId%7D",
+					nil,
+					"",
+					h,
+					try.HasStatusCode(200),
+					try.HasHeader("Content-Type", "text/html; charset=utf-8"))
+			},
+		},
 	}
 
 	t.Parallel()
-	for _, test := range testcases {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			h := New(runtime.New(), static.Api{})
-			test.fn(t, h)
+			h := New(runtime.New(), static.Api{Dashboard: true})
+			tc.fn(t, h)
 		})
 	}
 }

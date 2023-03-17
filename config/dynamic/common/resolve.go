@@ -70,7 +70,7 @@ func ResolvePath(path string, cursor interface{}, resolved interface{}) (err err
 
 		cursor, err = Get(t, cursor)
 		if err != nil {
-			return
+			return fmt.Errorf("can not resolve path %v: %v", path, err)
 		}
 	}
 
