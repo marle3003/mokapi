@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import Markdown from 'vue3-markdown-it';
+import MarkdownItHighlightjs from 'markdown-it-highlightjs';
+import MarkdownIt from 'markdown-it';
+import { MarkdownItTabs } from '@/composables/markdown-tabs';
 
 interface DocConfig{
   [name: string]: string | DocConfig 
@@ -27,6 +29,14 @@ let base = document.querySelector("base")?.href ?? '/'
 if (base != '/') {
   base = base.replace(document.location.origin, '')
   content = content.replace(/<img([^>]*)\ssrc=(['"])(?:[^\2\/]*\/)*([^\2]+)\2/gi, `<img$1 src=$2${base}$3$2`);
+}
+
+if (content) {
+let markdown = new MarkdownIt()
+  .use(MarkdownItHighlightjs)
+  .use(MarkdownItTabs)
+  .set({html: true})
+content = markdown.render(content)
 }
 
 onMounted(() => {
@@ -68,7 +78,7 @@ onMounted(() => {
         </ul>
       </div>
       <div class="col-5" style="max-width:700px;margin-left: 280px;margin-bottom: 3rem;">
-        <markdown :source="content" :html="true" class="content" />
+        <div v-html="content" class="content" />
       </div>
     </div>
   </main>

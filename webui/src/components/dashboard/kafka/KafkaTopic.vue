@@ -5,7 +5,6 @@ import { useService } from '@/composables/services';
 import KafkaGroups from './KafkaGroups.vue';
 import KafkaMessages from './KafkaMessages.vue';
 import KafkaPartition from './KafkaPartition.vue';
-import Markdown from 'vue3-markdown-it';
 import TopicConfig from './TopicConfig.vue';
 
 const {fetchService} = useService()
