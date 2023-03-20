@@ -26,17 +26,17 @@ if (typeof file != "string"){
 let content = files[`/src/assets/docs/${file}`]
 
 let base = document.querySelector("base")?.href ?? '/'
-if (base != '/') {
+if (base != '/' && content) {
   base = base.replace(document.location.origin, '')
   content = content.replace(/<img([^>]*)\ssrc=(['"])(?:[^\2\/]*\/)*([^\2]+)\2/gi, `<img$1 src=$2${base}$3$2`);
 }
 
 if (content) {
-let markdown = new MarkdownIt()
-  .use(MarkdownItHighlightjs)
-  .use(MarkdownItTabs)
-  .set({html: true})
-content = markdown.render(content)
+  let markdown = new MarkdownIt()
+    .use(MarkdownItHighlightjs)
+    .use(MarkdownItTabs)
+    .set({html: true})
+  content = markdown.render(content)
 }
 
 onMounted(() => {
