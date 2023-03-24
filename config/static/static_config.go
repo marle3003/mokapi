@@ -42,13 +42,15 @@ type Api struct {
 }
 
 type FileProvider struct {
-	Filename  string
-	Directory string
+	Filename   string
+	Directory  string
+	SkipPrefix []string
 }
 
 type GitProvider struct {
 	Url          string
 	PullInterval string `yaml:"pullInterval"`
+	Directories  []string
 }
 
 type HttpProvider struct {
