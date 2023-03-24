@@ -16,6 +16,7 @@
   "SMTP": "smtp.md",
   "References": {
     "Configuration": "references/config.md",
+    "Static Configuration": "references/static-configuration.md",
     "Javascript": "references/javascript.md",
     "Lua": "references/lua.md"
   }

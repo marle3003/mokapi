@@ -55,7 +55,7 @@ type GitProvider struct {
 
 type HttpProvider struct {
 	Url           string
-	PollInterval  string `yaml:"pullInterval"`
+	PollInterval  string `yaml:"pollInterval"`
 	Proxy         string
 	TlsSkipVerify bool `yaml:"tlsSkipVerify"`
 }
