@@ -84,8 +84,7 @@ func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
 
 	ticker := time.NewTicker(interval)
 	repo, err := git.PlainClone(p.localPath, false, &git.CloneOptions{
-		URL:        p.repoUrl,
-		NoCheckout: true,
+		URL: p.repoUrl,
 	})
 	if err != nil {
 		return fmt.Errorf("unable to clone git %q: %v", p.url, err)
@@ -106,7 +105,7 @@ func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
 		Branch:                    ref,
 	})
 	if err != nil {
-		log.Errorf("git checkout error %v: %v", p.url, err.Error())
+		return fmt.Errorf("git checkout error %v: %v", p.url, err.Error())
 	}
 
 	p.startFileProvider(ch, pool)

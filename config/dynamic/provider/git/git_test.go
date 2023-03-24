@@ -3,6 +3,7 @@ package git
 import (
 	"context"
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/common"
@@ -18,7 +19,7 @@ import (
 var files = map[string]struct{}{"LICENSE": {}, "README.md": {}, "models.yml": {}, "openapi.yml": {}}
 
 func TestGit(t *testing.T) {
-	g := New(static.GitProvider{Url: "https://github.com/marle3003/mokapi-example.git"})
+	g := New(static.GitProvider{Url: "https://github.com/marle3003/mokapi-example.git?ref=main"})
 	p := safe.NewPool(context.Background())
 	defer func() {
 		p.Stop()
@@ -143,6 +144,8 @@ func (g *gitTestRepo) commit(t *testing.T, file, content string) {
 
 	_, err = w.Add(file)
 	require.NoError(t, err)
-	_, err = w.Commit("added "+file, &git.CommitOptions{})
+	ts, err := time.Parse(time.RFC3339, "2006-01-02T15:04:05-07:00")
+	require.NoError(t, err)
+	_, err = w.Commit("added "+file, &git.CommitOptions{Author: &object.Signature{Name: "Foo", Email: "foo@example.local", When: ts}})
 	require.NoError(t, err)
 }
