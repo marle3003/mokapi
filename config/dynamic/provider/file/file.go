@@ -8,6 +8,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	log "github.com/sirupsen/logrus"
 	"io"
+	"io/fs"
 	"mokapi/config/dynamic/common"
 	"mokapi/config/static"
 	"mokapi/safe"
@@ -18,21 +19,39 @@ import (
 	"time"
 )
 
+const mokapiIgnoreFile = ".mokapiignore"
+
+type FSReader interface {
+	Walk(string, fs.WalkDirFunc) error
+	ReadFile(name string) ([]byte, error)
+}
+
+type fsReader struct {
+}
+
 type Provider struct {
 	cfg        static.FileProvider
 	SkipPrefix []string
 	watched    map[string]struct{}
 	isInit     bool
+	ignores    IgnoreFiles
 
 	watcher *fsnotify.Watcher
+	fs      FSReader
 }
 
 func New(cfg static.FileProvider) *Provider {
+	return NewWithWalker(cfg, &fsReader{})
+}
+
+func NewWithWalker(cfg static.FileProvider, fs FSReader) *Provider {
 	p := &Provider{
 		cfg:        cfg,
 		SkipPrefix: []string{"_"},
 		watched:    make(map[string]struct{}),
 		isInit:     true,
+		ignores:    make(IgnoreFiles),
+		fs:         fs,
 	}
 
 	if cfg.SkipPrefix != nil {
@@ -152,16 +171,19 @@ func (p *Provider) watch(ch chan<- *common.Config, pool *safe.Pool) error {
 
 func (p *Provider) skip(path string) bool {
 	name := filepath.Base(path)
+	if name == mokapiIgnoreFile {
+		return true
+	}
 	for _, s := range p.SkipPrefix {
 		if strings.HasPrefix(name, s) {
 			return true
 		}
 	}
-	return false
+	return p.ignores.Match(path)
 }
 
 func (p *Provider) readFile(path string) (*common.Config, error) {
-	data, err := os.ReadFile(path)
+	data, err := p.fs.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read file %v: %v", path, err)
 	}
@@ -186,14 +208,16 @@ func (p *Provider) readFile(path string) (*common.Config, error) {
 }
 
 func (p *Provider) walk(root string, ch chan<- *common.Config) error {
-	walkDir := func(path string, fi os.FileInfo, err error) error {
+	p.readMokapiIgnore(root)
+	walkDir := func(path string, fi fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		if fi.Mode().IsDir() {
+		if fi.IsDir() {
 			if p.skip(path) {
 				return filepath.SkipDir
 			}
+			p.readMokapiIgnore(root)
 			p.watchPath(path)
 		} else if !p.skip(path) {
 			if c, err := p.readFile(path); err != nil {
@@ -207,7 +231,24 @@ func (p *Provider) walk(root string, ch chan<- *common.Config) error {
 		return nil
 	}
 
-	return filepath.Walk(root, walkDir)
+	return p.fs.Walk(root, walkDir)
+}
+
+func (p *Provider) readMokapiIgnore(path string) {
+	f := filepath.Join(path, mokapiIgnoreFile)
+	if _, err := os.Stat(f); err != nil {
+		b, err := p.fs.ReadFile(f)
+		if err != nil {
+			log.Errorf("unable to read file %v: %v", f, err)
+			return
+		}
+		if i, err := newIgnoreFile(b); err != nil {
+			log.Errorf("unable to read file %v: %v", f, err)
+		} else {
+			key := filepath.Clean(path)
+			p.ignores[key] = i
+		}
+	}
 }
 
 func (p *Provider) watchPath(path string) {
@@ -216,4 +257,12 @@ func (p *Provider) watchPath(path string) {
 	}
 	p.watched[path] = struct{}{}
 	p.watcher.Add(path)
+}
+
+func (r *fsReader) Walk(root string, f fs.WalkDirFunc) error {
+	return filepath.WalkDir(root, f)
+}
+
+func (r *fsReader) ReadFile(path string) ([]byte, error) {
+	return os.ReadFile(path)
 }

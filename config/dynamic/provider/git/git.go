@@ -98,14 +98,14 @@ func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
 	var ref plumbing.ReferenceName
 	if len(p.ref) > 0 {
 		ref = plumbing.NewBranchReferenceName(p.ref)
-	}
 
-	err = wt.Checkout(&git.CheckoutOptions{
-		SparseCheckoutDirectories: p.directories,
-		Branch:                    ref,
-	})
-	if err != nil {
-		return fmt.Errorf("git checkout error %v: %v", p.url, err.Error())
+		err = wt.Checkout(&git.CheckoutOptions{
+			SparseCheckoutDirectories: p.directories,
+			Branch:                    ref,
+		})
+		if err != nil {
+			return fmt.Errorf("git checkout error %v: %v", p.url, err.Error())
+		}
 	}
 
 	p.startFileProvider(ch, pool)
