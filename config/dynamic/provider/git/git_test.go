@@ -45,7 +45,8 @@ Stop:
 	assert.Equal(t, len(files), i)
 }
 
-func TestGit_SimpleUrl(t *testing.T) {
+// go-git requires git installed for file:// repositories
+func testGit_SimpleUrl(t *testing.T) {
 	repo := newGitRepo(t, t.Name())
 	defer func() {
 		err := os.RemoveAll(repo.dir)
@@ -146,6 +147,6 @@ func (g *gitTestRepo) commit(t *testing.T, file, content string) {
 	require.NoError(t, err)
 	ts, err := time.Parse(time.RFC3339, "2006-01-02T15:04:05-07:00")
 	require.NoError(t, err)
-	_, err = w.Commit("added "+file, &git.CommitOptions{Author: &object.Signature{Name: "Foo", Email: "foo@example.local", When: ts}})
+	_, err = w.Commit("added "+file, &git.CommitOptions{Author: &object.Signature{When: ts}})
 	require.NoError(t, err)
 }

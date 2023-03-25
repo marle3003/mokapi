@@ -92,7 +92,7 @@ func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
 
 	wt, err := repo.Worktree()
 	if err != nil {
-		log.Errorf("unable to get git worktree: %v", err.Error())
+		return fmt.Errorf("unable to get git worktree: %v", err.Error())
 	}
 
 	var ref plumbing.ReferenceName
