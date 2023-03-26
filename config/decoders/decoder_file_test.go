@@ -17,7 +17,7 @@ func TestFileDecoder_Decode(t *testing.T) {
 			name: "no filename set",
 			f: func(t *testing.T) {
 				s := &struct{ Name string }{}
-				d := &FileDecoder{}
+				d := NewDefaultFileDecoder()
 				err := d.Decode(map[string]string{}, s)
 				require.NoError(t, err)
 			},
@@ -42,9 +42,10 @@ func TestFileDecoder_Decode(t *testing.T) {
 			name: "file does not exist",
 			f: func(t *testing.T) {
 				s := &struct{ Name string }{}
-				d := &FileDecoder{filename: "test.yml"}
+				f := func(path string) ([]byte, error) { return []byte(""), fmt.Errorf("file not found") }
+				d := &FileDecoder{filename: "test.yml", readFile: f}
 				err := d.Decode(map[string]string{}, s)
-				require.Contains(t, err.Error(), "open test.yml:")
+				require.Error(t, err)
 			},
 		},
 		{
@@ -82,7 +83,7 @@ func TestFileDecoder_Decode(t *testing.T) {
 			name: "temp file with data",
 			f: func(t *testing.T) {
 				s := &struct{ Name string }{}
-				d := &FileDecoder{filename: createTempFile(t, "test.yml", "name: foobar")}
+				d := &FileDecoder{filename: createTempFile(t, "test.yml", "name: foobar"), readFile: os.ReadFile}
 				err := d.Decode(map[string]string{"configfile": d.filename}, s)
 				require.NoError(t, err)
 				require.Equal(t, "foobar", s.Name)
@@ -94,7 +95,7 @@ func TestFileDecoder_Decode(t *testing.T) {
 				s := &struct {
 					InstallDir string `yaml:"installDir"`
 				}{}
-				d := &FileDecoder{filename: createTempFile(t, "test.yml", "installDir: foobar")}
+				d := &FileDecoder{filename: createTempFile(t, "test.yml", "installDir: foobar"), readFile: os.ReadFile}
 				err := d.Decode(map[string]string{"configfile": d.filename}, s)
 				require.NoError(t, err)
 				require.Equal(t, "foobar", s.InstallDir)
@@ -106,7 +107,7 @@ func TestFileDecoder_Decode(t *testing.T) {
 				s := &struct {
 					Key map[string]string
 				}{}
-				d := &FileDecoder{filename: createTempFile(t, "test.yml", "key: {foo: bar}")}
+				d := &FileDecoder{filename: createTempFile(t, "test.yml", "key: {foo: bar}"), readFile: os.ReadFile}
 				err := d.Decode(map[string]string{"configFile": d.filename}, s)
 				require.NoError(t, err)
 				require.Equal(t, map[string]string{"foo": "bar"}, s.Key)
@@ -118,7 +119,7 @@ func TestFileDecoder_Decode(t *testing.T) {
 				s := &struct {
 					Key []string
 				}{}
-				d := &FileDecoder{filename: createTempFile(t, "test.yml", "key: [bar]")}
+				d := &FileDecoder{filename: createTempFile(t, "test.yml", "key: [bar]"), readFile: os.ReadFile}
 				err := d.Decode(map[string]string{"configFile": d.filename}, s)
 				require.NoError(t, err)
 				require.Equal(t, []string{"bar"}, s.Key)
@@ -130,7 +131,7 @@ func TestFileDecoder_Decode(t *testing.T) {
 				s := &struct {
 					Key map[string][]string
 				}{}
-				d := &FileDecoder{filename: createTempFile(t, "test.yml", "key: {foo: [bar]}")}
+				d := &FileDecoder{filename: createTempFile(t, "test.yml", "key: {foo: [bar]}"), readFile: os.ReadFile}
 				err := d.Decode(map[string]string{"configFile": d.filename}, s)
 				require.NoError(t, err)
 				require.Equal(t, map[string][]string{"foo": {"bar"}}, s.Key)
@@ -146,7 +147,7 @@ func TestFileDecoder_Decode(t *testing.T) {
 				s := &struct {
 					Key map[string]*test
 				}{}
-				d := &FileDecoder{filename: createTempFile(t, "test.yml", "key: {foo: {name: Bob, foo: bar}}")}
+				d := &FileDecoder{filename: createTempFile(t, "test.yml", "key: {foo: {name: Bob, foo: bar}}"), readFile: os.ReadFile}
 				err := d.Decode(map[string]string{"configFile": d.filename}, s)
 				require.NoError(t, err)
 				require.Equal(t, "Bob", s.Key["foo"].Name)
@@ -163,7 +164,7 @@ func TestFileDecoder_Decode(t *testing.T) {
 				s := &struct {
 					Key map[string]test
 				}{}
-				d := &FileDecoder{filename: createTempFile(t, "test.yml", "key: {foo: {name: Bob, foo: bar}}")}
+				d := &FileDecoder{filename: createTempFile(t, "test.yml", "key: {foo: {name: Bob, foo: bar}}"), readFile: os.ReadFile}
 				err := d.Decode(map[string]string{"configFile": d.filename}, s)
 				require.NoError(t, err)
 				require.Equal(t, "Bob", s.Key["foo"].Name)
