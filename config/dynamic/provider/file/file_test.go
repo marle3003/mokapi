@@ -214,6 +214,30 @@ func TestProvider(t *testing.T) {
 				require.Len(t, files, 0)
 			},
 		},
+		{
+			name: "mokapiignore all files with re-include",
+			fs: &mockFS{map[string]*entry{
+				".mokapiignore": {
+					name:  ".mokapiignore",
+					isDir: false,
+					data:  []byte("/*\n!/dir"),
+				},
+				"/bar.txt": {
+					name:  "foo.txt",
+					isDir: false,
+					data:  []byte("foobar"),
+				},
+				"dir/foo.txt": {
+					name:  "foo.txt",
+					isDir: false,
+					data:  []byte("foobar"),
+				},
+			}},
+			cfg: static.FileProvider{Directory: "./"},
+			test: func(t *testing.T, files []string) {
+				require.Len(t, files, 1)
+			},
+		},
 	}
 	for _, tc := range testcases {
 		tc := tc
