@@ -1,7 +1,7 @@
-import type { Options } from "markdown-it";
-import type MarkdownIt from "markdown-it";
-import type Token from "markdown-it/lib/token";
-import type Renderer from "markdown-it/lib/renderer";
+import type { Options } from "markdown-it"
+import type MarkdownIt from "markdown-it"
+import type Token from "markdown-it/lib/token"
+import type Renderer from "markdown-it/lib/renderer"
 
 
 export function MarkdownItTabs(md: MarkdownIt, opts: Options) {
@@ -11,7 +11,7 @@ export function MarkdownItTabs(md: MarkdownIt, opts: Options) {
         counter = 0
 
     function getInfo(token: Token) {
-        return token.info ? unescapeAll(token.info).trim() : '';
+        return token.info ? unescapeAll(token.info).trim() : ''
     }
 
     function getTabName(token: Token) {
@@ -20,7 +20,7 @@ export function MarkdownItTabs(md: MarkdownIt, opts: Options) {
     }
 
     function fenceGroup(tokens: Token[], idx: number, options: Options, env: any, slf: Renderer): string {
-        if (tokens[idx].hidden) { return ''; }
+        if (tokens[idx].hidden) { return '' }
 
         const tabName = getTabName(tokens[idx]);
         if (tabName == null) {
@@ -28,7 +28,7 @@ export function MarkdownItTabs(md: MarkdownIt, opts: Options) {
         }
         counter++
         
-        var tabs = '', contents = '';
+        var tabs = '', contents = ''
         for (let i = idx; i < tokens.length; i++) {
             const token = tokens[i];
             const tabName = getTabName(token);
@@ -36,12 +36,12 @@ export function MarkdownItTabs(md: MarkdownIt, opts: Options) {
                 break;
             }
 
-            token.info = token.info.replace(re, '');
-            token.hidden = true;
+            token.info = token.info.replace(re, '')
+            token.hidden = true
 
             const tabId = `tab-${counter}-${tabName}`
             const tabPanelId = `tabPanel-${counter}-${tabName}`
-            const checked = i - idx > 0 ? '' : ' checked';
+            const checked = i - idx > 0 ? '' : ' checked'
 
             tabs += `<button class="${checked?'active':''}" id="${tabId}" data-bs-toggle="tab" data-bs-target="#${tabPanelId}" type="button" role="tab" aria-controls="${tabPanelId}" aria-selected="${checked}">${tabName}</button>`
             contents += `<div class="tab-pane fade ${checked ? 'show active':''}" id="${tabPanelId}" role="tabpanel" aria-labelledby="${tabId}">
@@ -58,5 +58,5 @@ export function MarkdownItTabs(md: MarkdownIt, opts: Options) {
     
     }
 
-    md.renderer.rules.fence = fenceGroup;
-};
+    md.renderer.rules.fence = fenceGroup
+}

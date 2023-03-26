@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router';
 import MarkdownItHighlightjs from 'markdown-it-highlightjs';
 import MarkdownIt from 'markdown-it';
 import { MarkdownItTabs } from '@/composables/markdown-tabs';
+import { MarkdownItBox } from '@/composables/markdown-box';
 
 interface DocConfig{
   [name: string]: string | DocConfig 
@@ -35,6 +36,7 @@ if (content) {
   let markdown = new MarkdownIt()
     .use(MarkdownItHighlightjs)
     .use(MarkdownItTabs)
+    .use(MarkdownItBox)
     .set({html: true})
   content = markdown.render(content)
 }
@@ -88,6 +90,15 @@ onMounted(() => {
 .content{
   text-align: justify;
 }
+
+.content a {
+  color: var(--color-doc-link);
+}
+
+.content a:hover{
+  color: var(--color-doc-link-active);
+}
+
 table {
     color:var(--color-text);
     text-align: start;
@@ -140,5 +151,43 @@ table.selectable tbody tr:hover {
 .nav-link i {
   position: absolute;
   right: 0;
+}
+
+.box {
+  padding: 0.6rem;
+  padding-bottom: 0;
+  margin-bottom: 1.5rem;
+  border-left-width: 0.2rem ;
+  border-left-style: solid;
+  border-radius: 0.2rem;
+  font-size: 0.8rem;
+  box-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.05), 0 0.25rem 0.5rem rgba(0, 0, 0, 0.05);
+}
+.box .box-heading {
+  margin: -0.6rem -0.6rem 0 -0.6rem;
+  padding: 0.3rem 0 0.3rem 1rem;
+  text-transform: capitalize;
+}
+.box .box-body {
+  padding: 0.5rem;
+  margin: 0;
+}
+.box.info{
+  border-color: var(--color-blue);
+}
+.box.info .box-heading {
+  background-color: var(--color-blue-shadow);
+}
+.box.tip{
+  border-color: var(--color-green);
+}
+.box.tip .box-heading {
+  background-color: var(--color-green-shadow);
+}
+.box.limitation{
+  border-color: var(--color-orange);
+}
+.box.limitation .box-heading {
+  background-color: var(--color-orange-shadow);
 }
 </style>

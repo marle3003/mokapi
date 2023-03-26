@@ -3,8 +3,7 @@
 The file provider reads dynamic configuration from a single file or 
 multiple files.
 
-!!! tip
-```
+``` box=tip
 Other providers such as Git provider also use the file provider
 ```
 
@@ -12,8 +11,7 @@ Other providers such as Git provider also use the file provider
 A list of all options that can be used with the file provider, refer to
 the [reference page](/docs/references/static-configuration.md).
 
-!!! Limitation
-```
+``` box=limitation
 Mokapi uses fsnotify to listen to file system notification. There
 are issues with if Mokapi runs in a linux docker container on windows
 WSL2 host system.

@@ -25,6 +25,9 @@
     --color-link: #d3d4d5;
     --color-link-active: #30acd8;
 
+    --color-doc-link: #30acd8;
+    --color-doc-link-active: rgba(2, 123, 255, 0.9);
+
     --color-nav-link: #d3d4d5;
     --color-nav-link-active: #30acd8;
     --shadow-nav-link-active: var(--color-nav-link-active) 1px 0px 10px;

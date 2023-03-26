@@ -186,3 +186,28 @@ providers:
   git:
     pullInterval: 10
 ```
+
+## Certificates
+CA Certificate for signing certificate generated at runtime
+```bash tab=CLI
+--providers.git.rootCaCert=/path/to/caCert.pem
+```
+```bash tab=Env
+MOKAPI_Providers_RootCaCert=/path/to/caCert.pem
+```
+```yaml tab=File (YAML)
+providers:
+  rootCaCert: /path/to/caCert.pem
+```
+
+Private Key of CA for signing certificate generated at runtime
+```bash tab=CLI
+--providers.rootCaKey=/path/to/caKey.pem
+```
+```bash tab=Env
+MOKAPI_Providers_RootCaKey=/path/to/caKey.pem
+```
+```yaml tab=File (YAML)
+providers:
+  rootCaKey: /path/to/caKey.pem
+```

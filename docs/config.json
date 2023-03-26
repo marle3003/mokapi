@@ -1,5 +1,9 @@
 {
   "Welcome": "welcome.md",
+  "Configuration": {
+    "Configuration": "configuration/configuration.md",
+    "File": "configuration/file.md"
+  },
   "OpenAPI": {
     "OpenAPI": "openapi/intro.md",
     "Quick Start": "openapi/quick-start.md",
@@ -15,7 +19,6 @@
   "LDAP": "ldap.md",
   "SMTP": "smtp.md",
   "References": {
-    "Configuration": "references/config.md",
     "Static Configuration": "references/static-configuration.md",
     "Javascript": "references/javascript.md",
     "Lua": "references/lua.md"
