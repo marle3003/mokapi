@@ -3,7 +3,8 @@
   "Configuration": {
     "Configuration": "configuration/configuration.md",
     "File": "configuration/file.md",
-    "HTTP": "configuration/http.md"
+    "HTTP": "configuration/http.md",
+    "GIT": "configuration/git.md"
   },
   "OpenAPI": {
     "OpenAPI": "openapi/intro.md",

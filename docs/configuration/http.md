@@ -5,7 +5,7 @@ configuration and is read by the [File Provider](/docs/configuration/file.md).
 
 ## Configuration
 
-A list of all options that can be used with the file provider, refer to
+A list of all options that can be used with the HTTP provider, refer to
 the [reference page](/docs/references/static-configuration.md).
 
 ``` box=tip
