@@ -91,6 +91,18 @@ onMounted(() => {
   text-align: justify;
 }
 
+.content h1 {
+  margin-bottom: 2.5rem;
+}
+
+.content h2 {
+  margin-bottom: 1.5rem;
+}
+
+.content h3 {
+  margin-bottom: 1rem;
+}
+
 .content a {
   color: var(--color-doc-link);
 }
