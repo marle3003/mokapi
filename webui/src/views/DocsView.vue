@@ -156,11 +156,11 @@ table.selectable tbody tr:hover {
 .box {
   padding: 0.6rem;
   padding-bottom: 0;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
   border-left-width: 0.2rem ;
   border-left-style: solid;
   border-radius: 0.2rem;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   box-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.05), 0 0.25rem 0.5rem rgba(0, 0, 0, 0.05);
 }
 .box .box-heading {
@@ -189,5 +189,11 @@ table.selectable tbody tr:hover {
 }
 .box.limitation .box-heading {
   background-color: var(--color-orange-shadow);
+}
+.box.warning{
+  border-color: var(--color-yellow);
+}
+.box.warning .box-heading {
+  background-color: var(--color-yellow-shadow);
 }
 </style>

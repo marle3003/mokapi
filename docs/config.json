@@ -2,7 +2,8 @@
   "Welcome": "welcome.md",
   "Configuration": {
     "Configuration": "configuration/configuration.md",
-    "File": "configuration/file.md"
+    "File": "configuration/file.md",
+    "HTTP": "configuration/http.md"
   },
   "OpenAPI": {
     "OpenAPI": "openapi/intro.md",
