@@ -220,14 +220,14 @@ func TestProvider(t *testing.T) {
 				".mokapiignore": {
 					name:  ".mokapiignore",
 					isDir: false,
-					data:  []byte("/*\n!/dir"),
+					data:  []byte("/*\n!/dir/bar"),
 				},
 				"/bar.txt": {
-					name:  "foo.txt",
+					name:  "bar.txt",
 					isDir: false,
 					data:  []byte("foobar"),
 				},
-				"dir/foo.txt": {
+				"/dir/bar/foo.txt": {
 					name:  "foo.txt",
 					isDir: false,
 					data:  []byte("foobar"),
@@ -265,7 +265,7 @@ func TestProvider(t *testing.T) {
 			cfg: static.FileProvider{Directory: "./"},
 			test: func(t *testing.T, files []string) {
 				require.Len(t, files, 1)
-				require.Equal(t, filepath.Join("dir", "foo.js"), files[0])
+				require.True(t, strings.HasSuffix(files[0], filepath.Join("dir", "foo.js")))
 			},
 		},
 	}

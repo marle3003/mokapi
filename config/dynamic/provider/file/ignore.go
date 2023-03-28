@@ -16,15 +16,19 @@ func newIgnoreFile(b []byte) (*IgnoreFile, error) {
 }
 
 func (i *IgnoreFile) Match(path string) bool {
+	return i.MatchWithReInclude(path, false)
+}
+
+func (i *IgnoreFile) MatchWithReInclude(path string, skipReInclude bool) bool {
 	result := false
 	for _, e := range i.entries {
 		e = strings.TrimSpace(e)
 		if strings.HasPrefix(e, "#") || len(e) == 0 {
 			continue
 		}
-		if e[0] == '!' {
+		if e[0] == '!' && !skipReInclude {
 			if Match(e[1:], path) {
-				return i.Match(filepath.Dir(path))
+				return i.MatchWithReInclude(filepath.Dir(path), true)
 			}
 		}
 		if Match(e, path) {
