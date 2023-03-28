@@ -24,10 +24,9 @@ jobs:
           npm run build-website
       - name: deploy website
         uses: SamKirkland/FTP-Deploy-Action@4.3.0
-        working-directory: ./webui
         with:
           server: ${{ secrets.FTP_Server }}
           username: ${{ secrets.FTP_Username }}
           password: ${{ secrets.FTP_Password }}
-          local-dir: dist/
+          local-dir: webui/dist/
           server-dir: public_html
