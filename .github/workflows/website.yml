@@ -1,4 +1,10 @@
 name: Deploy website
+on:
+  push:
+    tags:
+      - 'v*'
+      - '!v*-beta'
+
 jobs:
   web-deploy:
     name: Deploy website
