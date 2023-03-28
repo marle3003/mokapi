@@ -11,6 +11,7 @@ import (
 	"mokapi/safe"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -35,13 +36,21 @@ func (m *mockFS) ReadFile(path string) ([]byte, error) {
 
 func (m *mockFS) Walk(root string, visit fs.WalkDirFunc) error {
 	var ignoreDirs []string
+
+	// loop order in a map is not safe, order path to ensure SkipDir
+	keys := make([]string, 0, len(m.fs))
+	for k := range m.fs {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
 Walk:
-	for path, f := range m.fs {
+	for _, path := range keys {
 		for _, dir := range ignoreDirs {
 			if strings.HasPrefix(path, dir) {
 				continue Walk
 			}
 		}
+		f := m.fs[path]
 		if err := visit(path, f, nil); err == fs.SkipDir {
 			ignoreDirs = append(ignoreDirs, path)
 		}
