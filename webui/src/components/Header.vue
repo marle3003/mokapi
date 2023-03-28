@@ -17,6 +17,7 @@ function switchTheme() {
   localStorage.setItem('theme', theme)
   router.go(0)
 }
+const isDashboardEnabled = import.meta.env.VITE_DASHBOARD == 'true'
 </script>
 
 <template>
@@ -29,11 +30,8 @@ function switchTheme() {
         </button>
         <div class="collapse navbar-collapse" id="navbar">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-            <li class="nav-item">
+            <li class="nav-item" v-if="isDashboardEnabled">
               <router-link class="nav-link" :to="{ name: 'dashboard', query: {refresh: 20} }">Dashboard</router-link>
-            </li>
-            <li class="nav-item" style="display:none">
-              <router-link class="nav-link" :to="{ name: 'serviceList' }">Services</router-link>
             </li>
             <li class="nav-item">
               <router-link class="nav-link" :to="{ name: 'docsStart' }">Docs</router-link>
@@ -58,7 +56,7 @@ header {
     position:fixed;
     top: 0;
     z-index: 99;
-    background-color: var(--color-background);;
+    background-color: var(--color-background);
     height: 5rem;
 }
 .navbar {

@@ -10,10 +10,12 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      redirect: ({
-        name: 'dashboard',
-        query: {refresh: 20}
-      })
+      redirect: to => {
+        if (import.meta.env.VITE_DASHBOARD == 'true') {
+          return {name: 'dashboard', query: {refresh: 20}}
+        }
+        return {path: '/docs'}
+      }
     },
     {
       path: '/dashboard',
