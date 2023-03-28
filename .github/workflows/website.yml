@@ -31,4 +31,4 @@ jobs:
           username: ${{ secrets.FTP_Username }}
           password: ${{ secrets.FTP_Password }}
           local-dir: webui/dist/
-          server-dir: public_html/
+          server-dir: mokapi.io/public_html/
