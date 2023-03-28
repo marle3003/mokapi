@@ -26,6 +26,8 @@ jobs:
         uses: SamKirkland/FTP-Deploy-Action@4.3.0
         with:
           server: ${{ secrets.FTP_Server }}
+          port: 5544
+          protocol: ftps
           username: ${{ secrets.FTP_Username }}
           password: ${{ secrets.FTP_Password }}
           local-dir: webui/dist/
