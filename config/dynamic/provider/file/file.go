@@ -236,18 +236,15 @@ func (p *Provider) walk(root string, ch chan<- *common.Config) error {
 
 func (p *Provider) readMokapiIgnore(path string) {
 	f := filepath.Join(path, mokapiIgnoreFile)
-	if _, err := os.Stat(f); err != nil {
-		b, err := p.fs.ReadFile(f)
-		if err != nil {
-			log.Errorf("unable to read file %v: %v", f, err)
-			return
-		}
-		if i, err := newIgnoreFile(b); err != nil {
-			log.Errorf("unable to read file %v: %v", f, err)
-		} else {
-			key := filepath.Clean(path)
-			p.ignores[key] = i
-		}
+	b, err := p.fs.ReadFile(f)
+	if err != nil {
+		return
+	}
+	if i, err := newIgnoreFile(b); err != nil {
+		log.Errorf("unable to read file %v: %v", f, err)
+	} else {
+		key := filepath.Clean(path)
+		p.ignores[key] = i
 	}
 }
 

@@ -86,6 +86,16 @@ func TestMatch(t *testing.T) {
 			},
 		},
 		{
+			pattern: "/*",
+			test: map[string]bool{
+				"/name.file":     true,
+				"name.file":      true,
+				"/lib/name.file": false,
+				"lib/name.file":  false,
+				"name.txt":       true,
+			},
+		},
+		{
 			pattern: "*name/",
 			test: map[string]bool{
 				"/lastname/log.file":  true,
@@ -137,6 +147,14 @@ func TestMatch(t *testing.T) {
 				"/namea.file": false,
 				"/nameb.file": false,
 				"/namec.file": false,
+			},
+		},
+		{
+			pattern: "foo/*",
+			test: map[string]bool{
+				"/foo/test.json":   true,
+				"/foo/bar":         true,
+				"/foo/bar/hello.c": false,
 			},
 		},
 	}

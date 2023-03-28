@@ -238,6 +238,36 @@ func TestProvider(t *testing.T) {
 				require.Len(t, files, 1)
 			},
 		},
+		{
+			name: "mokapiignore only js files",
+			fs: &mockFS{map[string]*entry{
+				".mokapiignore": {
+					name:  ".mokapiignore",
+					isDir: false,
+					data:  []byte("**/*.*\n!*.js"),
+				},
+				"/bar.txt": {
+					name:  "foo.txt",
+					isDir: false,
+					data:  []byte("foobar"),
+				},
+				"dir/bar.txt": {
+					name:  "foo.txt",
+					isDir: false,
+					data:  []byte("foobar"),
+				},
+				"dir/foo.js": {
+					name:  "foo.js",
+					isDir: false,
+					data:  []byte("foobar"),
+				},
+			}},
+			cfg: static.FileProvider{Directory: "./"},
+			test: func(t *testing.T, files []string) {
+				require.Len(t, files, 1)
+				require.Equal(t, filepath.Join("dir", "foo.js"), files[0])
+			},
+		},
 	}
 	for _, tc := range testcases {
 		tc := tc
@@ -255,7 +285,13 @@ func TestProvider(t *testing.T) {
 			for {
 				select {
 				case c := <-ch:
-					files = append(files, c.Url.Path)
+					path := c.Url.Path
+					if len(path) == 0 {
+						path = c.Url.Opaque
+						parent, _ := os.Getwd()
+						path = strings.Replace(path, parent+"\\", "", 1)
+					}
+					files = append(files, path)
 				case <-time.After(time.Second):
 					break Collect
 				}

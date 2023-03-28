@@ -27,7 +27,8 @@ func TestFileDecoder_Decode(t *testing.T) {
 			f: func(t *testing.T) {
 				s := &struct{ Name string }{}
 				f := func(path string) ([]byte, error) {
-					if path == "/etc/mokapi/mokapi.yaml" {
+					// if test is executed on windows we get second path
+					if path == "/etc/mokapi/mokapi.yaml" || path == "\\etc\\mokapi\\mokapi.yaml" {
 						return []byte("name: foobar"), nil
 					}
 					return nil, fmt.Errorf("not found")

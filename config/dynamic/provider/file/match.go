@@ -16,11 +16,18 @@ const (
 func Match(pattern, v string) bool {
 	//pattern = strings.Trim(pattern, " ")
 	v = filepath.ToSlash(v)
+	if !strings.HasPrefix(v, "/") {
+		v = "/" + v
+	}
 
 	p := strings.TrimSuffix(pattern, "/")
 	if !strings.Contains(p, "/") {
 		// without a slash it means in any folders
 		return matchGlobal(p, v)
+	}
+
+	if !strings.HasPrefix(pattern, "/") {
+		pattern = "/" + pattern
 	}
 
 	if strings.HasPrefix(pattern, "**/") {
