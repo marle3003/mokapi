@@ -2,7 +2,7 @@
   "name": "go-mokapi",
   "version": "0.6.0",
   "description": "Create and test API designs before actually building them.",
-  "homepage": "https://github.com/marle3003/mokapi/tree/v0.5.0/docs",
+  "homepage": "http://mokapi.io",
   "repository": {
     "type": "git",
     "url": "https://github.com/marle3003/mokapi.git"

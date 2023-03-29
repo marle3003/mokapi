@@ -5,6 +5,7 @@ import MarkdownItHighlightjs from 'markdown-it-highlightjs';
 import MarkdownIt from 'markdown-it';
 import { MarkdownItTabs } from '@/composables/markdown-tabs';
 import { MarkdownItBox } from '@/composables/markdown-box';
+import { MarkdownItLinks } from '@/composables/mardown-links'
 
 interface DocConfig{
   [name: string]: string | DocConfig 
@@ -37,6 +38,7 @@ if (content) {
     .use(MarkdownItHighlightjs)
     .use(MarkdownItTabs)
     .use(MarkdownItBox)
+    .use(MarkdownItLinks)
     .set({html: true})
   content = markdown.render(content)
 }

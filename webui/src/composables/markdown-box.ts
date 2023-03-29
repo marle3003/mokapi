@@ -36,8 +36,6 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
             token.info = token.info.replace(re, '')
             token.hidden = true
 
-            console.log(token)  
-
             alert += `<div class="box ${name}" role="alert">
                      <p class="box-heading">${name}</p>
                      <p class="box-body">${token.content}</p>
