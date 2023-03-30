@@ -23,7 +23,7 @@ jobs:
           npm install
           npm run build-website
       - name: deploy website
-        uses: SamKirkland/FTP-Deploy-Action@4.3.0
+        uses: SamKirkland/FTP-Deploy-Action@3.1.2
         with:
           server: ${{ secrets.FTP_SERVER }}
           port: 5544
