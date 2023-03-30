@@ -25,10 +25,8 @@ jobs:
       - name: deploy website
         uses: SamKirkland/FTP-Deploy-Action@3.1.2
         with:
-          server: ${{ secrets.FTP_SERVER }}
-          port: 5544
-          protocol: sftp
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
+          ftp-server: ${{ secrets.FTP_SERVER }}
+          ftp-username: ${{ secrets.FTP_USERNAME }}
+          ftp-password: ${{ secrets.FTP_PASSWORD }}
           local-dir: webui/dist/
-          server-dir: mokapi.io/public_html/
+          git-ftp-args: --insecure
