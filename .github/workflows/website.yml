@@ -27,7 +27,7 @@ jobs:
         with:
           server: ${{ secrets.FTP_SERVER }}
           port: 5544
-          protocol: ftps-legacy
+          protocol: sftp
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: webui/dist/
