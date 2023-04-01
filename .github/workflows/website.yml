@@ -28,7 +28,12 @@ jobs:
         working-directory: ./webui/dist
         run: >
           lftp -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} sftp://${{ secrets.FTP_SERVER }} -p 5544 -e "
+            set net:timeout 60;
+            set net:max-retries 20;
+            set net:reconnect-interval-multiplier 2;
+            set net:reconnect-interval-base 5;
             set ftp:ssl-force no;
             set ssl:verify-certificate no;
             set sftp:auto-confirm yes;
-            mirror -R --delete ./ ./"
+            mirror -R --delete ./ ./;
+            quit"
