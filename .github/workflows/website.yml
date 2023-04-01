@@ -21,6 +21,7 @@ jobs:
         working-directory: ./webui
         run: |
           npm install
+          npm run copy-docs
           npm run build-website
       - name: Install lftp
         run: sudo apt install lftp
