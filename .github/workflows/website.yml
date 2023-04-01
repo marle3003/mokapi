@@ -29,4 +29,4 @@ jobs:
           ftp-username: ${{ secrets.FTP_USERNAME }}
           ftp-password: ${{ secrets.FTP_PASSWORD }}
           git-ftp-args: --insecure
-        local-dir: webui/dist/
+          local-dir: webui/dist/
