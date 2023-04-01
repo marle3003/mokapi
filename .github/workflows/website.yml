@@ -26,4 +26,4 @@ jobs:
         run: sudo apt install lftp
       - name: deploy website
         working-directory: ./webui/dist
-        run: lftp -e "debug; sftp:connect-program ssh -a -x -oHostKeyAlgorithms=+ssh-rsa; set ftp:ssl-force no; set ssl:verify-certificate no; set sftp:auto-confirm yes; mirror -R --delete ./ ./;" -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} -p 5544 sftp://${{ secrets.FTP_SERVER }}
+        run: lftp -e 'debug; set sftp:connect-program "ssh -a -x -oHostKeyAlgorithms=+ssh-rsa"; set ftp:ssl-force no; set ssl:verify-certificate no; set sftp:auto-confirm yes; mirror -R --delete ./ ./;' -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} -p 5544 sftp://${{ secrets.FTP_SERVER }}
