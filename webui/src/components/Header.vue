@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import { useAppInfo } from '../composables/appInfo'
+import { useAppInfo, type AppInfoResponse } from '../composables/appInfo'
 import { RouterLink, useRouter } from 'vue-router'
 import { onUnmounted } from 'vue';
 
 const isDashboardEnabled = import.meta.env.VITE_DASHBOARD == 'true'
+let appInfo: AppInfoResponse | null = null
 
 if (isDashboardEnabled) {
-  const appInfo = useAppInfo()
+  appInfo = useAppInfo()
   onUnmounted(() => {
-      appInfo.close()
+      appInfo?.close()
   })
 }
 
@@ -41,9 +42,8 @@ function switchTheme() {
             </li>
           </ul>
 
-          <div class="d-flex ms-auto tools" v-if="isDashboardEnabled">
-            
-            <a href="https://github.com/marle3003/mokapi" class="version" v-if="appInfo.data">Version {{appInfo.data.version}}</a>
+          <div class="d-flex ms-auto tools">
+            <a href="https://github.com/marle3003/mokapi" class="version" v-if="appInfo?.data">Version {{appInfo.data.version}}</a>
             <i class="bi bi-brightness-high-fill" @click="switchTheme" v-if="isDark"></i>
             <i class="bi bi-moon-fill" @click="switchTheme" v-if="!isDark"></i>
           </div>
