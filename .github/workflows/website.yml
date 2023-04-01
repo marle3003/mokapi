@@ -23,12 +23,10 @@ jobs:
           npm install
           npm run build-website
       - name: deploy website
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        uses: SamKirkland/FTP-Deploy-Action@3.1.1
         with:
-          uses: SamKirkland/FTP-Deploy-Action@3.1.1
-          with:
-            ftp-server: ftp://${{ secrets.FTP_HOST }}:21
-            ftp-username: ${{ secrets.FTP_USERNAME }}
-            ftp-password: ${{ secrets.FTP_PASSWORD }}
-            git-ftp-args: --insecure
-          local-dir: webui/dist/
+          ftp-server: ftp://${{ secrets.FTP_HOST }}:21
+          ftp-username: ${{ secrets.FTP_USERNAME }}
+          ftp-password: ${{ secrets.FTP_PASSWORD }}
+          git-ftp-args: --insecure
+        local-dir: webui/dist/
