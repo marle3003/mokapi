@@ -17,8 +17,9 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-main {
-  margin-top: 5rem;
+#app {
+  display: flex;
+  flex-direction: column;
 }
 
 h1 {

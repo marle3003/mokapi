@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useAppInfo, type AppInfoResponse } from '../composables/appInfo'
 import { RouterLink, useRouter } from 'vue-router'
-import { onUnmounted } from 'vue';
+import { onMounted, onUnmounted } from 'vue';
 
 const isDashboardEnabled = import.meta.env.VITE_DASHBOARD == 'true'
 let appInfo: AppInfoResponse | null = null
@@ -22,14 +22,25 @@ function switchTheme() {
   localStorage.setItem('theme', theme)
   router.go(0)
 }
+
+onMounted(() => {
+  document.addEventListener("click", function (event) {
+    if (event.target instanceof Element){
+      const target = event.target as Element
+      if (!target.closest("#navbar") && document.getElementById("navbar")?.classList.contains("show")) {
+          document.getElementById("hamburger_menu_button")?.click();
+      }
+    }
+  })
+})
 </script>
 
 <template>
   <header>
-    <nav class="navbar navbar-expand-lg ">
+    <nav class="navbar navbar-expand-md">
       <div class="container-fluid">
         <a class="navbar-brand" href="/"><img src="/public/logo-header.svg" height="30" /></a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+        <button id="hamburger_menu_button" class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbar">
@@ -51,6 +62,7 @@ function switchTheme() {
       </div>
     </nav>
   </header>
+  <div style="height: 4rem;visibility: hidden;"></div>
 </template>
 
 <style scoped>
@@ -58,13 +70,20 @@ header {
     width: 100%;
     position:fixed;
     top: 0;
+    left: 0;
     z-index: 99;
     background-color: var(--color-background);
-    height: 5rem;
+    height: 4rem;
+    display: block;
 }
 .navbar {
   margin-left: 0.5rem;
   margin-right: 1rem;
+  background-color: var(--color-background);
+}
+.navbar-collapse.show{
+  height: 100vh;
+  z-index: 100;
 }
 .navbar-brand {
     font-weight: 500;

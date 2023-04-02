@@ -48,7 +48,10 @@
     --color-popover-border: #52555d;
 
     --btn-primary-color-background: #30acd8;
-    --btn-primary-color-background-hover: rgb(48, 172, 216, 0.8)
+    --btn-primary-color-background-hover: rgb(48, 172, 216, 0.8);
+
+    --color-subheader: rgba(235, 235, 235, 0.6);
+    --color-subheader-border: #52555d;
 }
 
 [data-theme="light"] {
