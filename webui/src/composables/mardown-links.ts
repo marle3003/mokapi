@@ -1,7 +1,6 @@
 import type { Options } from "markdown-it"
 import type MarkdownIt from "markdown-it"
 import type Token from "markdown-it/lib/token"
-import type Renderer from "markdown-it/lib/renderer"
 
 export function MarkdownItLinks(md: MarkdownIt, opts: Options) {
 
@@ -16,7 +15,11 @@ export function MarkdownItLinks(md: MarkdownIt, opts: Options) {
         for (var i = 0; i < slice.length; i++){
             slice[i] = slice[i].charAt(0).toUpperCase() + slice[i].slice(1)
         }
-        return slice.join('/')
+        s = slice.join('/')
+        if (s[0] == '/'){
+            return s.substring(1)
+        }
+        return s
     }
 
     md.core.ruler.after('inline', 'link', function(state){

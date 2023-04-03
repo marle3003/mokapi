@@ -12,6 +12,7 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
   },
+  base: '', // required for relative urls for base-tag
   server: {
     proxy: {
       '/api': 'http://localhost:8090'
