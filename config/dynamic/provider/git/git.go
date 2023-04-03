@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/common"
@@ -101,15 +102,18 @@ func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
 	}
 
 	var ref plumbing.ReferenceName
+	pullOptions := &git.PullOptions{SingleBranch: true}
 	if len(p.ref) > 0 {
 		ref = plumbing.NewBranchReferenceName(p.ref)
 
 		if h.Name() != ref {
-			err = wt.Pull(&git.PullOptions{
-				ReferenceName: ref,
-				SingleBranch:  true,
-			})
+			pullOptions.ReferenceName = ref
+			err = repo.Fetch(&git.FetchOptions{RefSpecs: []config.RefSpec{"refs/*:refs/*", "HEAD:refs/heads/HEAD"}})
 			if err != nil {
+				return fmt.Errorf("git fetch error %v: %v", p.url, err.Error())
+			}
+			err = wt.Checkout(&git.CheckoutOptions{Branch: ref})
+			if err != nil && err != git.NoErrAlreadyUpToDate {
 				return fmt.Errorf("git checkout error %v: %v", p.url, err.Error())
 			}
 		}
@@ -131,11 +135,18 @@ func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				err = wt.Pull(&git.PullOptions{})
+				err = repo.Fetch(&git.FetchOptions{RefSpecs: []config.RefSpec{"refs/*:refs/*", "HEAD:refs/heads/HEAD"}})
+				if err != nil {
+					if err != git.NoErrAlreadyUpToDate {
+						log.Errorf("git fetch error %v: %v", p.url, err.Error())
+					}
+					continue
+				}
+
+				err = wt.Pull(pullOptions)
 				if err != nil {
 					if err != git.NoErrAlreadyUpToDate {
 						log.Errorf("unable to pull: %v", err.Error())
-						continue
 					}
 					continue
 				}
