@@ -110,12 +110,13 @@ func (m *Module) require(call goja.FunctionCall) (module goja.Value) {
 func (m *Module) loadFileModule(modPath string) (goja.Value, error) {
 	if len(filepath.Ext(modPath)) > 0 {
 		p, src, err := m.sourceLoader(modPath, m.workingDir)
-		if err == nil {
-			return m.loadModule(p, src)
+		if err != nil {
+			return nil, err
 		}
 		if filepath.Ext(modPath) == ".json" {
 			return m.loadModule(p, fmt.Sprintf(jsonParseFunc, template.JSEscapeString(src)))
 		}
+		return m.loadModule(p, src)
 	} else {
 		if v, err := m.loadFileModule(modPath + ".js"); err == nil {
 			return v, nil
