@@ -74,11 +74,16 @@ func (p *Provider) Read(u *url.URL) (*common.Config, error) {
 		file = u.Opaque
 	}
 
-	err := p.watcher.Add(file)
+	config, err := p.readFile(file)
+	if err != nil {
+		return nil, err
+	}
+
+	err = p.watcher.Add(file)
 	if err != nil {
 		log.Warnf("unable to add watcher on file %v: %v", file, err)
 	}
-	return p.readFile(file)
+	return config, nil
 }
 
 func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
@@ -185,7 +190,7 @@ func (p *Provider) skip(path string) bool {
 func (p *Provider) readFile(path string) (*common.Config, error) {
 	data, err := p.fs.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read file %v: %v", path, err)
+		return nil, err
 	}
 
 	abs, err := filepath.Abs(path)

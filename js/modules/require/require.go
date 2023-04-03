@@ -8,6 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/js/compiler"
 	"path/filepath"
+	"strings"
 	"text/template"
 )
 
@@ -71,13 +72,11 @@ func (m *Module) Enable(rt *goja.Runtime) {
 	}
 }
 
-func (m *Module) require(call goja.FunctionCall) goja.Value {
+func (m *Module) require(call goja.FunctionCall) (module goja.Value) {
 	modPath := call.Argument(0).String()
 	if len(modPath) == 0 {
 		panic(m.runtime.ToValue("missing argument"))
 	}
-
-	modPath = filepath.Clean(modPath)
 
 	if e, ok := m.exports[modPath]; ok {
 		return e
@@ -88,29 +87,35 @@ func (m *Module) require(call goja.FunctionCall) goja.Value {
 		return v
 	}
 
-	if v, err := m.loadFileModule(modPath); err == nil {
-		m.exports[modPath] = v
-		return v
+	var err error
+	if strings.HasPrefix(modPath, "./") || strings.HasPrefix(modPath, "../") || strings.HasPrefix(modPath, "/") {
+		if module, err = m.loadFileModule(modPath); err == nil && module != nil {
+			m.exports[modPath] = module
+		}
+	} else {
+		if module, err = m.loadFileModule(modPath); err == nil && module != nil {
+			m.exports[modPath] = module
+		} else if module, err = m.loadNodeModule(modPath); err == nil && module != nil {
+			m.exports[modPath] = module
+		}
 	}
 
-	if v, err := m.loadNodeModule(modPath); err == nil {
-		m.exports[modPath] = v
-		return v
+	if module == nil {
+		panic(m.runtime.ToValue(fmt.Sprintf("module %v not found", modPath)))
 	}
 
-	panic(m.runtime.ToValue(fmt.Sprintf("module %v not found", modPath)))
+	return
 }
 
 func (m *Module) loadFileModule(modPath string) (goja.Value, error) {
 	if len(filepath.Ext(modPath)) > 0 {
 		p, src, err := m.sourceLoader(modPath, m.workingDir)
-		if err != nil {
-			return nil, err
+		if err == nil {
+			return m.loadModule(p, src)
 		}
 		if filepath.Ext(modPath) == ".json" {
 			return m.loadModule(p, fmt.Sprintf(jsonParseFunc, template.JSEscapeString(src)))
 		}
-		return m.loadModule(p, src)
 	} else {
 		if v, err := m.loadFileModule(modPath + ".js"); err == nil {
 			return v, nil
@@ -147,7 +152,11 @@ func (m *Module) loadNodeModule(mod string) (goja.Value, error) {
 			break
 		}
 
+		current := dir
 		dir = filepath.Dir(dir)
+		if dir == current {
+			break
+		}
 	}
 	return nil, fmt.Errorf("node module does not exist")
 }
