@@ -37,6 +37,9 @@
 .tab-sm li.disabled {
     color: var(--color-text-light)
 }
+.nav-pills.tab-sm .nav-link.active{
+    background-color: var(--color-tabs-background-mute);
+}
 
 .card-tabs button {
     font-size: 0.9rem;

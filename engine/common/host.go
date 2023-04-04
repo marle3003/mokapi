@@ -30,6 +30,8 @@ type Host interface {
 
 	KafkaClient() KafkaClient
 	HttpClient() HttpClient
+
+	Name() string
 }
 
 type Logger interface {

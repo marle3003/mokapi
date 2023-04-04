@@ -161,7 +161,7 @@ func validateObject(i interface{}, schema *Schema) error {
 
 		for _, p := range schema.Required {
 			if v := m.Get(p); v == nil {
-				return fmt.Errorf("missing required field %v on %v, expected %v", p, m, schema)
+				return fmt.Errorf("missing required field %v in %v, expected: %v", p, m, schema)
 			}
 		}
 	}
