@@ -27,7 +27,7 @@ function getGroups(): KafkaGroup[] {
     }
     let result = []
     for (let group of props.service.groups) {
-        if (group.topics.includes(props.topicName)) {
+        if (group.topics?.includes(props.topicName)) {
             result.push(group)
         }
     }

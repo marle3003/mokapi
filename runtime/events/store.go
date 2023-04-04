@@ -14,7 +14,7 @@ func (s *store) Push(e Event) {
 	defer s.m.Unlock()
 
 	if len(s.events) == s.size {
-		s.events = s.events[1:]
+		s.events = s.events[0 : len(s.events)-1]
 	}
 	// prepend
 	s.events = append([]Event{e}, s.events...)

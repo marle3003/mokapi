@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"github.com/dop251/goja"
+	log "github.com/sirupsen/logrus"
 	"mokapi/engine/common"
 )
 
@@ -41,6 +42,7 @@ func (m *Module) Produce(v goja.Value) interface{} {
 	var err error
 	r.Key, r.Value, err = m.client.Produce(params.Cluster, params.Topic, params.Partition, params.Key, params.Value, params.Headers)
 	if err != nil {
+		log.Errorf("js error: %v in %v", err, m.host.Name())
 		r.Error = err.Error()
 	}
 	return r

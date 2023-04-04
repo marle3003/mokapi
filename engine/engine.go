@@ -48,7 +48,7 @@ func (e *Engine) AddScript(cfg *config.Config) error {
 	e.remove(cfg)
 
 	sh := newScriptHost(cfg, e)
-	e.scripts[sh.Name] = sh
+	e.scripts[sh.name] = sh
 
 	err := sh.Compile()
 	if err != nil {
@@ -62,7 +62,7 @@ func (e *Engine) AddScript(cfg *config.Config) error {
 
 	if sh.CanClose() {
 		sh.close()
-		delete(e.scripts, sh.Name)
+		delete(e.scripts, sh.name)
 	}
 
 	return nil

@@ -6,6 +6,7 @@ import KafkaGroups from './KafkaGroups.vue';
 import KafkaMessages from './KafkaMessages.vue';
 import KafkaPartition from './KafkaPartition.vue';
 import TopicConfig from './TopicConfig.vue';
+import Markdown from 'vue3-markdown-it';
 
 const {fetchService} = useService()
 const route = useRoute()

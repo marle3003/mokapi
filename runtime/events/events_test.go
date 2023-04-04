@@ -102,6 +102,23 @@ func TestPush(t *testing.T) {
 				require.Len(t, stores, 1)
 			},
 		},
+		{
+			"Clean up, ensure size and oldest is removed",
+			func(t *testing.T) {
+				SetStore(2, NewTraits().WithNamespace("foo"))
+				err := Push(1, NewTraits().WithNamespace("foo"))
+				require.NoError(t, err)
+				err = Push(2, NewTraits().WithNamespace("foo"))
+				require.NoError(t, err)
+				err = Push(3, NewTraits().WithNamespace("foo"))
+				require.NoError(t, err)
+
+				events := GetEvents(NewTraits().WithNamespace("foo"))
+				require.Len(t, events, 2)
+				require.Equal(t, 3, events[0].Data)
+				require.Equal(t, 2, events[1].Data)
+			},
+		},
 	}
 
 	for _, tc := range testcase {
