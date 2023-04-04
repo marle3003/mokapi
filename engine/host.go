@@ -103,7 +103,7 @@ func (sh *scriptHost) Every(every string, handler func(), opt common.JobOptions)
 		defer func() {
 			r := recover()
 			if r != nil {
-				log.Errorf("script error %v: %v", sh.Name, r)
+				log.Errorf("script error %v: %v", sh.Name(), r)
 			}
 		}()
 		handler()
