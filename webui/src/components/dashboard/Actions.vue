@@ -30,7 +30,7 @@ function getName(action: Action){
         </thead>
         <tbody>
             <template v-for="(action, index) of actions">
-                <tr data-bs-toggle="collapse" :data-bs-target="'#action_'+index">
+                <tr data-bs-toggle="collapse" :data-bs-target="'#action_'+index" aria-expanded=false>
                     <td><i class="bi bi-chevron-right"></i><i class="bi bi-chevron-down"></i></td>
                     <td>{{ getName(action) }}</td>
                     <td>{{ duration(action.duration) }}</td>

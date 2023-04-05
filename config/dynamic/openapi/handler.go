@@ -101,7 +101,11 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		} else if mediaType.Example != nil {
 			response.Data = mediaType.Example
 		} else {
-			response.Data = h.g.New(mediaType.Schema)
+			if data, err := h.g.New(mediaType.Schema); err != nil {
+				log.Infof("unable to generate response data for %v: %v", r.URL.String(), err)
+			} else {
+				response.Data = data
+			}
 		}
 	}
 
@@ -110,7 +114,11 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			log.Warnf("header ref not resovled: %v", v.Ref)
 			continue
 		}
-		response.Headers[k] = fmt.Sprintf("%v", h.g.New(v.Value.Schema))
+		if data, err := h.g.New(v.Value.Schema); err != nil {
+			log.Infof("unable to generate response header %v for %v: %v", k, r.URL.String(), err)
+		} else {
+			response.Headers[k] = fmt.Sprintf("%v", data)
+		}
 	}
 
 	actions := h.eventEmitter.Emit("http", request, response)
@@ -287,6 +295,7 @@ func writeError(rw http.ResponseWriter, r *http.Request, err error, serviceName 
 			m.LastRequest.WithLabel(serviceName, "").Set(float64(time.Now().Unix()))
 		}
 	}
+	rw.Header().Add("Content-Type", "text/plain")
 	http.Error(rw, message, status)
 	logHttp, ok := LogEventFromContext(r.Context())
 	if ok {
@@ -294,9 +303,7 @@ func writeError(rw http.ResponseWriter, r *http.Request, err error, serviceName 
 		logHttp.Response.Body = message
 		logHttp.Response.Size = len([]byte(message))
 		for k, v := range rw.Header() {
-			if _, ok := logHttp.Response.Headers[k]; !ok {
-				logHttp.Response.Headers[k] = strings.Join(v, ",")
-			}
+			logHttp.Response.Headers[k] = strings.Join(v, ",")
 		}
 	}
 }
