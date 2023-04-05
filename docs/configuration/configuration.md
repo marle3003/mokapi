@@ -46,4 +46,8 @@ A list of available environment variables can be found [here](/docs/references/s
 
 ## Dynamic Configuration
 
-Mokapi reads the dynamic configuration using providers. You can find more information about providers in the next pages
+Mokapi reads the dynamic configuration using providers. You can find more information about providers in the next pages.
+
+- [File](/docs/configuration/file.md)
+- [HTTP](/docs/configuration/http.md)
+- [GIT](/docs/configuration/git.md)

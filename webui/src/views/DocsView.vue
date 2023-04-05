@@ -65,6 +65,7 @@ onMounted(() => {
       }
     }
   })
+  document.title = (subject?.length > 0 ? subject : topic) + ' | Mokapi'
 })
 function toggleSidebar() {
   openSidebar.value = !openSidebar.value
