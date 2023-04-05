@@ -284,18 +284,18 @@ export let events = [
                 },
                 body: "{\"foo\":\"bar\"}"
             },
-            duration: 30016
-        },
-        workflows: [
-            {
-                duration: 20,
-                tags: {
-                    name: "dashboard",
-                    file: "/Users/maesi/GolandProjects/mokapi/examples/mokapi/http_handler.js",
-                    event: "http"
+            duration: 30016,
+            actions: [
+                {
+                    duration: 20,
+                    tags: {
+                        name: "dashboard",
+                        file: "/Users/maesi/GolandProjects/mokapi/examples/mokapi/http_handler.js",
+                        event: "http"
+                    }
                 }
-            }
-        ]
+            ]
+        },
     },
     {
         id: "a5348a42-b69d-409f-8698-044d2ba845a3",
@@ -328,17 +328,17 @@ export let events = [
                 },
                 size: 512
             },
-            duration: 133
-        },
-        workflows: [
-            {
-                duration: 20,
-                tags: {
-                    name: "dashboard",
-                    file: "/Users/maesi/GolandProjects/mokapi/examples/mokapi/http_handler.js",
-                    event: "http"
+            duration: 133,
+            actions: [
+                {
+                    duration: 20,
+                    tags: {
+                        name: "dashboard",
+                        file: "/Users/maesi/GolandProjects/mokapi/examples/mokapi/http_handler.js",
+                        event: "http"
+                    }
                 }
-            }
-        ]
+            ]
+        }
     }
 ]

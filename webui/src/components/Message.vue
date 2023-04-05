@@ -17,7 +17,7 @@ const router = useRouter()
                     <div class="row">
                         <div class="col-sm-3">
                             <div class="d-flex flex-wrap align-items-center h-100">
-                            <img src="/public/icon.svg" width="50"/>
+                            <img src="/icon.svg" width="50"/>
                             </div>
                         </div>
                         <div class="col-sm-9">

@@ -16,7 +16,7 @@ func (r *Ref) Marshal(i interface{}, contentType media.ContentType) ([]byte, err
 		return nil, err
 	}
 	switch {
-	case contentType.Subtype == "json":
+	case contentType.Subtype == "json" || contentType.Subtype == "problem+json":
 		b, err := json.Marshal(i)
 		if err, ok := err.(*json.SyntaxError); ok {
 			return nil, fmt.Errorf("json error (%v): %v", err.Offset, err.Error())

@@ -516,7 +516,7 @@ func TestHandler_Event(t *testing.T) {
 	testcases := []struct {
 		name  string
 		fn    func(t *testing.T, f serveHTTP, c *openapi.Config)
-		event func(event string, args ...interface{})
+		event func(event string, args ...interface{}) []*common.Action
 	}{
 		{
 			"no response found",
@@ -531,9 +531,10 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, http.StatusInternalServerError, rr.Code)
 				require.Equal(t, "no configuration was found for HTTP status code 415, https://swagger.io/docs/specification/describing-responses\n", rr.Body.String())
 			},
-			func(event string, args ...interface{}) {
+			func(event string, args ...interface{}) []*common.Action {
 				r := args[1].(*common.EventResponse)
 				r.StatusCode = http.StatusUnsupportedMediaType
+				return nil
 			},
 		},
 		{
@@ -549,9 +550,10 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, http.StatusInternalServerError, rr.Code)
 				require.Equal(t, "no configuration was found for HTTP status code 415, https://swagger.io/docs/specification/describing-responses\n", rr.Body.String())
 			},
-			func(event string, args ...interface{}) {
+			func(event string, args ...interface{}) []*common.Action {
 				r := args[1].(*common.EventResponse)
 				r.StatusCode = http.StatusUnsupportedMediaType
+				return nil
 			},
 		},
 		{
@@ -569,9 +571,10 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, http.StatusOK, rr.Code)
 				require.Equal(t, "text/plain", rr.Header().Get("Content-Type"))
 			},
-			func(event string, args ...interface{}) {
+			func(event string, args ...interface{}) []*common.Action {
 				r := args[1].(*common.EventResponse)
 				r.Headers["Content-Type"] = "text/plain"
+				return nil
 			},
 		},
 	}
@@ -649,11 +652,12 @@ func TestHandler_Log(t *testing.T) {
 }
 
 type engine struct {
-	emit func(event string, args ...interface{})
+	emit func(event string, args ...interface{}) []*common.Action
 }
 
-func (e *engine) Emit(event string, args ...interface{}) {
+func (e *engine) Emit(event string, args ...interface{}) []*common.Action {
 	if e.emit != nil {
-		e.emit(event, args...)
+		return e.emit(event, args...)
 	}
+	return nil
 }

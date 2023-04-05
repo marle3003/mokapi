@@ -3,7 +3,7 @@ package common
 import "net/http"
 
 type EventEmitter interface {
-	Emit(event string, args ...interface{})
+	Emit(event string, args ...interface{}) []*Action
 }
 
 type Script interface {
@@ -46,6 +46,11 @@ type KafkaClient interface {
 
 type HttpClient interface {
 	Do(r *http.Request) (*http.Response, error)
+}
+
+type Action struct {
+	Duration int64             `json:duration`
+	Tags     map[string]string `json:"tags"`
 }
 
 func NewJobOptions() JobOptions {

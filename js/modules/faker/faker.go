@@ -22,8 +22,8 @@ func (m *Module) Fake(v goja.Value) (interface{}, error) {
 	if err != nil {
 		return nil, fmt.Errorf("expected parameter type of schema")
 	}
-	i := m.generator.New(&schema.Ref{Value: s})
-	return i, nil
+	i, err := m.generator.New(&schema.Ref{Value: s})
+	return i, err
 }
 
 func toSchema(m interface{}) (*schema.Schema, error) {

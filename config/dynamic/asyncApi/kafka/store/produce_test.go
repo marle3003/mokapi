@@ -5,6 +5,7 @@ import (
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/config/dynamic/openapi/schema/schematest"
+	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/fetch"
@@ -228,8 +229,9 @@ func TestProduce(t *testing.T) {
 func TestProduceTriggersEvent(t *testing.T) {
 	defer events.Reset()
 	triggerCount := 0
-	s := store.New(asyncapitest.NewConfig(), enginetest.NewEngineWithHandler(func(event string, args ...interface{}) {
+	s := store.New(asyncapitest.NewConfig(), enginetest.NewEngineWithHandler(func(event string, args ...interface{}) []*common.Action {
 		triggerCount++
+		return nil
 	}))
 	defer s.Close()
 

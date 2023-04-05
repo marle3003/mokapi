@@ -96,8 +96,8 @@ func (m *HttpManager) Update(c *config.Config) {
 
 		err = m.AddService(config.Info.Name, u, openapi.NewHandler(config, m.eventEmitter), false)
 		if err != nil {
-			log.Errorf("error on updating %v: %v", c.Url.String(), err.Error())
-			return
+			log.Errorf("unable to add '%v' on %v: %v", config.Info.Name, s.Url, err.Error())
+			continue
 		}
 	}
 	log.Debugf("processed %v", c.Url.String())

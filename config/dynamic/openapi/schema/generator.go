@@ -23,7 +23,7 @@ func NewGenerator() *Generator {
 	return &Generator{randomNumber: rand.New(rand.NewSource(time.Now().Unix()))}
 }
 
-func (g *Generator) New(ref *Ref) interface{} {
+func (g *Generator) New(ref *Ref) (interface{}, error) {
 	return newBuilder().create(ref)
 }
 
@@ -31,17 +31,17 @@ func newBuilder() *builder {
 	return &builder{}
 }
 
-func (b *builder) create(ref *Ref) interface{} {
+func (b *builder) create(ref *Ref) (interface{}, error) {
 	if ref == nil || ref.Value == nil {
-		return nil
+		return nil, nil
 	}
 	schema := ref.Value
 
 	switch {
 	case schema.Example != nil:
-		return schema.Example
+		return schema.Example, nil
 	case schema.Enum != nil && len(schema.Enum) > 0:
-		return schema.Enum[gofakeit.Number(0, len(schema.Enum)-1)]
+		return schema.Enum[gofakeit.Number(0, len(schema.Enum)-1)], nil
 	default:
 		switch schema.Type {
 		case "object":
@@ -49,11 +49,11 @@ func (b *builder) create(ref *Ref) interface{} {
 		case "array":
 			return b.createArray(schema)
 		case "boolean":
-			return gofakeit.Bool()
+			return gofakeit.Bool(), nil
 		case "integer", "number":
 			return b.createNumber(schema)
 		case "string":
-			return b.createString(schema)
+			return b.createString(schema), nil
 		default:
 			if len(schema.AnyOf) > 0 {
 				i := gofakeit.Number(0, len(schema.AnyOf)-1)
@@ -69,18 +69,21 @@ func (b *builder) create(ref *Ref) interface{} {
 						log.Info("allOf only supports type of object")
 						continue
 					}
-					o := b.create(all).(*sortedmap.LinkedHashMap)
-					m.Merge(o)
+					o, err := b.create(all)
+					if err != nil {
+						return nil, err
+					}
+					m.Merge(o.(*sortedmap.LinkedHashMap))
 
 				}
-				return m
+				return m, nil
 			}
-			return nil
+			return nil, nil
 		}
 	}
 }
 
-func (b *builder) createObject(s *Schema) interface{} {
+func (b *builder) createObject(s *Schema) (interface{}, error) {
 	// recursion guard. Currently, we use a fixed depth: 1
 	n := len(b.requests)
 	numRequestsSameAsThisOne := 0
@@ -90,7 +93,7 @@ func (b *builder) createObject(s *Schema) interface{} {
 		}
 	}
 	if numRequestsSameAsThisOne > 1 {
-		return nil
+		return nil, nil
 	}
 	b.requests = append(b.requests, s)
 	// remove schemas from guard
@@ -101,46 +104,57 @@ func (b *builder) createObject(s *Schema) interface{} {
 	if s.IsDictionary() {
 		length := gofakeit.Number(1, 10)
 		for i := 0; i < length; i++ {
-			m.Set(gofakeit.Word(), b.create(s.AdditionalProperties.Ref))
+			v, err := b.create(s.AdditionalProperties.Ref)
+			if err != nil {
+				return nil, err
+			}
+			m.Set(gofakeit.Word(), v)
 		}
-		return m
+		return m, nil
 	}
 
 	if s.Properties == nil || s.Properties.Value == nil {
-		return m
+		return m, nil
 	}
 
 	for it := s.Properties.Value.Iter(); it.Next(); {
 		key := it.Key().(string)
 		propSchema := it.Value().(*Ref)
-		value := b.create(propSchema)
+		value, err := b.create(propSchema)
+		if err != nil {
+			return nil, err
+		}
 		m.Set(key, value)
 	}
 
-	return m
+	return m, nil
 }
 
-func getType(s *Schema) reflect.Type {
+func getType(s *Schema) (reflect.Type, error) {
 	switch s.Type {
 	case "integer":
 		if s.Format == "int32" {
-			return reflect.TypeOf(int32(0))
+			return reflect.TypeOf(int32(0)), nil
 		}
-		return reflect.TypeOf(int64(0))
+		return reflect.TypeOf(int64(0)), nil
 	case "number":
 		if s.Format == "float32" {
-			return reflect.TypeOf(float32(0))
+			return reflect.TypeOf(float32(0)), nil
 		}
-		return reflect.TypeOf(float64(0))
+		return reflect.TypeOf(float64(0)), nil
 	case "string":
-		return reflect.TypeOf("")
+		return reflect.TypeOf(""), nil
 	case "boolean":
-		return reflect.TypeOf(false)
+		return reflect.TypeOf(false), nil
 	case "array":
-		return reflect.SliceOf(getType(s.Items.Value))
+		t, err := getType(s.Items.Value)
+		if err != nil {
+			return nil, err
+		}
+		return reflect.SliceOf(t), nil
 	}
 
-	panic(fmt.Sprintf("type %v not implemented", s.Type))
+	return nil, fmt.Errorf("type %v not implemented", s.Type)
 }
 
 func (b *builder) createString(s *Schema) string {
@@ -152,22 +166,24 @@ func (b *builder) createString(s *Schema) string {
 	return gofakeit.Lexify("???????????????")
 }
 
-func (b *builder) createNumberExclusive(s *Schema) interface{} {
+func (b *builder) createNumberExclusive(s *Schema) (interface{}, error) {
 	for i := 0; i < 10; i++ {
-		n := b.createNumber(s)
+		n, err := b.createNumber(s)
+		if err != nil {
+			return nil, err
+		}
 		if *s.ExclusiveMinimum && s.Minimum == n {
 			continue
 		}
 		if *s.ExclusiveMaximum && s.Maximum == n {
 			continue
 		}
-		return n
+		return n, nil
 	}
-	log.Errorf("unable to find a valid number with exclusive")
-	return nil
+	return nil, fmt.Errorf("unable to find a valid number with exclusive")
 }
 
-func (b *builder) createNumber(s *Schema) interface{} {
+func (b *builder) createNumber(s *Schema) (interface{}, error) {
 	if s.ExclusiveMinimum != nil && (*s.ExclusiveMinimum) ||
 		s.ExclusiveMaximum != nil && (*s.ExclusiveMaximum) {
 		return b.createNumberExclusive(s)
@@ -176,7 +192,7 @@ func (b *builder) createNumber(s *Schema) interface{} {
 	if s.Type == "number" {
 		if s.Format == "float" {
 			if s.Minimum == nil && s.Maximum == nil {
-				return gofakeit.Float32()
+				return gofakeit.Float32(), nil
 			}
 			max := float32(math.MaxFloat32)
 			min := max * -1
@@ -186,10 +202,10 @@ func (b *builder) createNumber(s *Schema) interface{} {
 			if s.Maximum != nil {
 				max = float32(*s.Maximum)
 			}
-			return gofakeit.Float32Range(min, max)
+			return gofakeit.Float32Range(min, max), nil
 		} else {
 			if s.Minimum == nil && s.Maximum == nil {
-				return gofakeit.Float64()
+				return gofakeit.Float64(), nil
 			}
 			max := math.MaxFloat64
 			min := max * -1
@@ -199,15 +215,15 @@ func (b *builder) createNumber(s *Schema) interface{} {
 			if s.Maximum != nil {
 				max = *s.Maximum
 			}
-			return gofakeit.Float64Range(min, max)
+			return gofakeit.Float64Range(min, max), nil
 		}
 
 	} else if s.Type == "integer" {
 		if s.Minimum == nil && s.Maximum == nil {
 			if s.Format == "int32" {
-				return gofakeit.Int32()
+				return gofakeit.Int32(), nil
 			} else {
-				return gofakeit.Int64()
+				return gofakeit.Int64(), nil
 			}
 		}
 		if s.Format == "int32" {
@@ -221,7 +237,7 @@ func (b *builder) createNumber(s *Schema) interface{} {
 			}
 
 			// gofakeit uses Intn function which panics if number is <= 0
-			return int32(math.Round(float64(gofakeit.Float32Range(float32(min), float32(max)))))
+			return int32(math.Round(float64(gofakeit.Float32Range(float32(min), float32(max))))), nil
 		} else {
 			max := math.MaxInt64
 			min := math.MinInt64
@@ -232,32 +248,32 @@ func (b *builder) createNumber(s *Schema) interface{} {
 				max = int(*s.Maximum)
 			}
 
-			return int64(math.Round(gofakeit.Float64Range(float64(min), float64(max))))
+			return int64(math.Round(gofakeit.Float64Range(float64(min), float64(max)))), nil
 		}
 	}
 
-	return 0
+	return 0, nil
 }
 
-func (b *builder) createArray(s *Schema) (r []interface{}) {
+func (b *builder) createArray(s *Schema) (r []interface{}, err error) {
 	maxItems := 5
 	if s.MaxItems != nil {
-		maxItems = *s.MaxItems + 1
+		maxItems = *s.MaxItems
 	}
 	minItems := 0
 	if s.MinItems != nil {
 		minItems = *s.MinItems
 	}
 
-	var f func() interface{}
+	var f func() (interface{}, error)
 
 	if s.UniqueItems && s.Items.Value != nil && len(s.Items.Value.Enum) > 0 {
 		if maxItems > len(s.Items.Value.Enum) {
 			maxItems = len(s.Items.Value.Enum)
 		}
-		f = func() interface{} {
+		f = func() (interface{}, error) {
 			i := gofakeit.Number(0, len(s.Items.Value.Enum)-1)
-			return s.Items.Value.Enum[i]
+			return s.Items.Value.Enum[i], nil
 		}
 		if s.ShuffleItems {
 			defer func() {
@@ -265,7 +281,7 @@ func (b *builder) createArray(s *Schema) (r []interface{}) {
 			}()
 		}
 	} else {
-		f = func() interface{} {
+		f = func() (interface{}, error) {
 			return b.create(s.Items)
 		}
 	}
@@ -278,12 +294,18 @@ func (b *builder) createArray(s *Schema) (r []interface{}) {
 
 	for i := range r {
 		if s.UniqueItems {
-			r[i] = b.getUnique(r, f)
+			r[i], err = b.getUnique(r, f)
+			if err != nil {
+				return
+			}
 		} else {
-			r[i] = f()
+			r[i], err = f()
+			if err != nil {
+				return
+			}
 		}
 	}
-	return r
+	return r, nil
 }
 
 func (b *builder) createStringByFormat(format string) string {
@@ -311,14 +333,17 @@ func (b *builder) createStringByFormat(format string) string {
 	}
 }
 
-func (b *builder) getUnique(s []interface{}, gen func() interface{}) interface{} {
+func (b *builder) getUnique(s []interface{}, gen func() (interface{}, error)) (interface{}, error) {
 	for i := 0; i < 10; i++ {
-		v := gen()
+		v, err := gen()
+		if err != nil {
+			return nil, err
+		}
 		if !contains(s, v) {
-			return v
+			return v, nil
 		}
 	}
-	panic("can not fill array with unique items")
+	return nil, fmt.Errorf("can not fill array with unique items")
 }
 
 func contains(s []interface{}, v interface{}) bool {

@@ -7,14 +7,13 @@ import (
 	log "github.com/sirupsen/logrus"
 	config "mokapi/config/dynamic/smtp"
 	"mokapi/engine/common"
-	"mokapi/models"
 	"mokapi/safe"
 	"mokapi/server/cert"
 	"net"
 	"net/url"
 )
 
-type ReceivedMailHandler func(mail *models.MailMetric)
+type ReceivedMailHandler func(*Mail)
 
 //type EventHandler func(events event.Handler, options ...workflow.Options) (*runtime.Summary, error)
 
@@ -23,7 +22,7 @@ type Server struct {
 	config *config.Config
 
 	close    chan bool
-	received chan *models.MailMetric
+	received chan *Mail
 
 	mh      ReceivedMailHandler
 	emitter common.EventEmitter
@@ -32,12 +31,12 @@ type Server struct {
 }
 
 type backend struct {
-	received chan *models.MailMetric
+	received chan *Mail
 	//wh       EventHandler
 }
 
 func New(c *config.Config, store *cert.Store, emitter common.EventEmitter) (*Server, error) {
-	received := make(chan *models.MailMetric)
+	received := make(chan *Mail)
 	b := &backend{received: received /*wh: wh*/}
 	s := smtp.NewServer(b)
 

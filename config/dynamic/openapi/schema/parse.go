@@ -383,7 +383,11 @@ func parseArray(i interface{}, s *Schema) (interface{}, error) {
 	case "object":
 		sliceOf = reflect.TypeOf([]interface{}{})
 	default:
-		sliceOf = reflect.SliceOf(getType(s.Items.Value))
+		t, err := getType(s.Items.Value)
+		if err != nil {
+			return nil, err
+		}
+		sliceOf = reflect.SliceOf(t)
 	}
 	result := reflect.MakeSlice(sliceOf, 0, 0)
 
