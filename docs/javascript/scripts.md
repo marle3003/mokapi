@@ -9,7 +9,7 @@ Kafka topic.
 
 A simple Time API looks like this:
 
-```yaml tab=time.yaml
+```yaml tab=OpenAPI
 openapi: 3.0.0
 info:
   title: Time API
@@ -31,7 +31,7 @@ paths:
                 format: date-time
 ```
 
-```javascript tab=time.js
+```javascript tab=Javascipt
 import {on} from 'mokapi'
 
 export default function() {
