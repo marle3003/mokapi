@@ -104,8 +104,8 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case h.fileServer != nil:
 		if isAsset(r.URL.Path) {
 			r.URL.Path = "/assets/" + filepath.Base(r.URL.Path)
-		} else if strings.HasSuffix(r.URL.Path, "/logo.svg") {
-			r.URL.Path = "/logo.svg"
+		} else if filepath.Ext(r.URL.Path) == ".svg" {
+			r.URL.Path = "/" + filepath.Base(r.URL.Path)
 		} else {
 			if len(h.path) > 0 || len(h.base) > 0 {
 				base := h.path
