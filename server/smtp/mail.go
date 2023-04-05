@@ -1,14 +1,9 @@
-package models
+package smtp
 
 import (
 	"net/mail"
 	"time"
 )
-
-type MailMetric struct {
-	Mail *Mail
-	//Summary *runtime.Summary
-}
 
 type Mail struct {
 	Id        string
@@ -35,16 +30,4 @@ type Mail struct {
 type Attachment struct {
 	Filename    string
 	ContentType string
-}
-
-func (m *Metrics) AddMail(mm *MailMetric) {
-	mm.Mail.Id = newId(10)
-	if mm.Mail.Time.IsZero() {
-		mm.Mail.Time = time.Now()
-	}
-	m.TotalMails += 1
-	if len(m.LastMails) > 10 {
-		m.LastMails = m.LastMails[1:]
-	}
-	m.LastMails = append(m.LastMails, mm)
 }

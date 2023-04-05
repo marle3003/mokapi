@@ -8,6 +8,7 @@ import HttpHeader from './HttpEventHeader.vue'
 import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
 import { onUnmounted } from 'vue'
+import Actions from '../Actions.vue'
 
 const {fetchById} = useEvents()
 const eventId = useRoute().params.id as string
@@ -50,6 +51,14 @@ onUnmounted(() => {
                     <http-header :headers="eventData().response.headers"></http-header>
                     <p class="label">Body</p>
                     <http-body :content-type="getResponseContentType()" :body="eventData().response.body"></http-body>
+                </div>
+            </div>
+        </div>
+        <div class="card-group">
+            <div class="card">
+                <div class="card-body" style="min-height: 20rem;">
+                    <div class="card-title text-center">Actions</div>
+                    <actions :actions="eventData().actions" />
                 </div>
             </div>
         </div>

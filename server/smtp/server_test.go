@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/smtp"
 	"mokapi/config/static"
+	"mokapi/engine/common"
 	"mokapi/server/cert"
 	"mokapi/server/smtp/smtptest"
 	"net"
@@ -79,6 +80,6 @@ func TestServer(t *testing.T) {
 type eventEmitter struct {
 }
 
-func (e *eventEmitter) Emit(event string, args ...interface{}) {
-
+func (e *eventEmitter) Emit(_ string, _ ...interface{}) []*common.Action {
+	return nil
 }

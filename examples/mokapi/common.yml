@@ -64,16 +64,3 @@ components:
         data:
           type: object
           additionalProperties: true
-        workflows:
-          type: array
-          items:
-            $ref: '#/components/schemas/EventWorkflow'
-    EventWorkflow:
-      type: object
-      properties:
-        duration:
-          type: integer
-        tags:
-          type: object
-          additionalProperties:
-            type: string

@@ -67,10 +67,10 @@ func (sh *scriptHost) Run() error {
 	return sh.script.Run()
 }
 
-func (sh *scriptHost) RunEvent(event string, args ...interface{}) []*Summary {
-	var result []*Summary
+func (sh *scriptHost) RunEvent(event string, args ...interface{}) []*common.Action {
+	var result []*common.Action
 	for _, eh := range sh.events[event] {
-		s := &Summary{
+		s := &common.Action{
 			Tags: eh.tags,
 		}
 		start := time.Now()

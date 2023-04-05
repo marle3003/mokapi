@@ -113,7 +113,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		response.Headers[k] = fmt.Sprintf("%v", h.g.New(v.Value.Schema))
 	}
 
-	h.eventEmitter.Emit("http", request, response)
+	actions := h.eventEmitter.Emit("http", request, response)
 
 	res = op.getResponse(response.StatusCode)
 	if res == nil {
@@ -182,6 +182,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	if logHttp != nil {
 		logHttp.Response.Body = string(body)
 		logHttp.Response.Size = len(body)
+		logHttp.Actions = actions
 	}
 }
 
