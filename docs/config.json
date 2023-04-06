@@ -20,9 +20,13 @@
   },
   "LDAP": "ldap.md",
   "SMTP": "smtp.md",
+  "Javascript": {
+    "Javascript": "javascript/scripts.md",
+    "Modules": "javascript/modules.md"
+  },
   "References": {
     "Static Configuration": "references/static-configuration.md",
-    "Javascript": "references/javascript.md",
-    "Lua": "references/lua.md"
+    "Javascript API": "references/javascript.md",
+    "Lua API": "references/lua.md"
   }
 }

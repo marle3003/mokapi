@@ -1,4 +1,4 @@
-# Javascript API
+# Mokapi's Javascript API
 
 The list of Mokapi's Javascript modules usable to extend Mokapi's behavior.
 
