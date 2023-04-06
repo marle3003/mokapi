@@ -66,6 +66,7 @@ function showMessage(event: ServiceEvent){
             <tr>
                 <th scope="col" class="text-left" style="width: 10%">Key</th>
                 <th scope="col" class="text-left" >Message</th>
+                <th scope="col" class="text-left" style="width: 10%" v-if="!topicName" >Topic</th>
                 <th scope="col" class="text-center" style="width: 5%">Offset</th>
                 <th scope="col" class="text-center" style="width: 5%">Partition</th>
                 <th scope="col" class="text-center" style="width: 10%">Time</th>
@@ -75,7 +76,8 @@ function showMessage(event: ServiceEvent){
         <tbody>
             <tr v-for="event in events" :key="event.id" @click="showMessage(event)">
                 <td class="key" v-html="eventData(event)?.key"></td>
-                <td class="message">{{ eventData(event)?.message }}}</td>
+                <td class="message">{{ eventData(event)?.message }}</td>
+                <td v-if="!topicName">{{ event.traits["topic"] }}</td>
                 <td class="text-center">{{ eventData(event)?.offset }}</td>
                 <td class="text-center">{{ eventData(event)?.partition }}</td>
                 <td class="text-center">{{ format(event.time) }}</td>

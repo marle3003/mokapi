@@ -1,7 +1,7 @@
 # Modules
 
 When writing scripts, it is common to separate code in
-different files or to use libraries. In Mokapi Scripts you
+different files or to use third-party modules. In Mokapi Scripts you
 can import three different kinds of modules:
 
 - Built-in modules
