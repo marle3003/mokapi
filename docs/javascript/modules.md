@@ -8,6 +8,12 @@ can import three different kinds of modules:
 - Local filesystem modules
 - JSON module
 
+``` box=tip
+Mokapi watches all imported modules for changes using fsnotify.
+If the script S imports the module A and the module A is
+changed, the script S is also reloaded.
+```
+
 ## Built-in modules
 
 These modules are provided by Mokapi. For example the `faker` module
