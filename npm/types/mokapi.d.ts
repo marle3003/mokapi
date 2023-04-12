@@ -1,13 +1,24 @@
 declare module 'mokapi' {
+
     /** Listener for http events. */
-    function on(event: 'http', f: HttpEventHandler): void
+    function on(event: 'http', f: HttpEventHandler, args: EventArgs): void
+
     /** Schedules a new periodic job with interval.
      * Interval string is a possibly signed sequence of
      * decimal numbers, each with optional fraction and a unit suffix,
      * such as "300ms", "-1.5h" or "2h45m".
      * Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
      */
-    function every(interval: string, f: function(): void): void
+    function every(interval: string, f: () => void, args: ScheduleArgs): void
+
+    /**
+     * Schedules a new periodic job with a cron expression.
+     * @param expr cron expression
+     * @param f function to execute
+     * @param args additional arguments
+     */
+    function cron(expr: string, f: () => void, args: ScheduleArgs): void
+
     /** Returns the environment variable named by the key. */
     function env(key: string): string
 
@@ -71,4 +82,23 @@ declare interface DateArgs {
     timestamp?: number
 }
 
-const RFC3339 = "RFC3339"
+declare interface EventArgs {
+    /**
+     * Adds or overrides existing tags used in dashboard
+     */
+    tags: {[key: string]: string}
+}
+
+declare interface ScheduleArgs {
+    /**
+     * Adds or overrides existing tags used in dashboard
+     */
+    tags: {[key: string]: string}
+
+    /**
+     * Defines the number of times the scheduled function is executed.
+     */
+    times: number
+}
+
+declare const RFC3339 = "RFC3339"
