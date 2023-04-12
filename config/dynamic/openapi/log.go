@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"mokapi/config/dynamic/openapi/parameter"
+	"mokapi/engine/common"
 	"mokapi/lib"
 	"mokapi/runtime/events"
 	"net/http"
@@ -17,6 +18,7 @@ type HttpLog struct {
 	Response   *HttpResponseLog `json:"response"`
 	Duration   int64            `json:"duration"`
 	Deprecated bool             `json:"deprecated"`
+	Actions    []*common.Action `json:"actions"`
 }
 
 type HttpRequestLog struct {

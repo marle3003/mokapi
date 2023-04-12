@@ -1,14 +1,31 @@
 package decoders
 
 import (
-	"io/ioutil"
-
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
+	"os"
+	"path/filepath"
 )
+
+var (
+	searchPaths  = []string{".", "/etc/mokapi"}
+	fileNames    = []string{"mokapi.yaml", "mokapi.yml"}
+	fileNotFound = errors.New("file not found")
+)
+
+type ReadFileFS func(path string) ([]byte, error)
 
 type FileDecoder struct {
 	filename string
+	readFile ReadFileFS
+}
+
+func NewDefaultFileDecoder() *FileDecoder {
+	return NewFileDecoder(os.ReadFile)
+}
+
+func NewFileDecoder(readFile ReadFileFS) *FileDecoder {
+	return &FileDecoder{readFile: readFile}
 }
 
 func (f *FileDecoder) Decode(flags map[string]string, element interface{}) error {
@@ -18,35 +35,30 @@ func (f *FileDecoder) Decode(flags map[string]string, element interface{}) error
 		}
 	}
 
-	if len(f.filename) == 0 {
-		return nil
+	if len(f.filename) > 0 {
+		return f.read(f.filename, element)
 	}
 
-	data, err := loadFile(f.filename)
-	if err != nil {
-		return err
-	}
-
-	err = parseYml(data, element)
-	if err != nil {
-		return errors.Wrapf(err, "parsing YAML file %s", f.filename)
+	for _, dir := range searchPaths {
+		for _, name := range fileNames {
+			path := filepath.Join(dir, name)
+			if err := f.read(path, element); err == nil {
+				return nil
+			}
+		}
 	}
 
 	return nil
 }
 
-func loadFile(filename string) ([]byte, error) {
-	data, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
-}
-
-func parseYml(data []byte, element interface{}) error {
-	err := yaml.Unmarshal(data, element)
+func (f *FileDecoder) read(path string, element interface{}) error {
+	data, err := f.readFile(path)
 	if err != nil {
 		return err
+	}
+	err = yaml.Unmarshal(data, element)
+	if err != nil {
+		return errors.Wrapf(err, "parsing YAML file %s", f.filename)
 	}
 	return nil
 }

@@ -2,14 +2,14 @@
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage';
 
 const {formatLanguage, getLanguage} = usePrettyLanguage()
-const props = defineProps({
+defineProps({
     contentType: { type: String, required: true },
     body: {type: String, required: true}
 })
 </script>
 
 <template>
-    <div class="codeBlock">
+    <div class="codeBlock" v-if="body">
         <span class="label">{{ contentType }}</span>
         <pre v-highlightjs="formatLanguage(body, contentType)"><code :class="getLanguage(contentType)"></code></pre>
     </div>

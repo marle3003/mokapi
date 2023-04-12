@@ -96,7 +96,11 @@ func (h *handler) getExampleData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s := toSchema(si)
-	data := schema.NewGenerator().New(&schema.Ref{Value: s})
+	data, err := schema.NewGenerator().New(&schema.Ref{Value: s})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	writeJsonBody(w, data)
 }

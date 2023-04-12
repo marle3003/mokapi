@@ -1,6 +1,7 @@
 package decoders
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/require"
 	"os"
 	"path/filepath"
@@ -16,25 +17,44 @@ func TestFileDecoder_Decode(t *testing.T) {
 			name: "no filename set",
 			f: func(t *testing.T) {
 				s := &struct{ Name string }{}
-				d := &FileDecoder{}
+				d := NewDefaultFileDecoder()
 				err := d.Decode(map[string]string{}, s)
 				require.NoError(t, err)
+			},
+		},
+		{
+			name: "/etc/mokapi/mokapi.yaml",
+			f: func(t *testing.T) {
+				s := &struct{ Name string }{}
+				f := func(path string) ([]byte, error) {
+					// if test is executed on windows we get second path
+					if path == "/etc/mokapi/mokapi.yaml" || path == "\\etc\\mokapi\\mokapi.yaml" {
+						return []byte("name: foobar"), nil
+					}
+					return nil, fmt.Errorf("not found")
+				}
+				d := &FileDecoder{readFile: f}
+				err := d.Decode(map[string]string{}, s)
+				require.NoError(t, err)
+				require.Equal(t, "foobar", s.Name)
 			},
 		},
 		{
 			name: "file does not exist",
 			f: func(t *testing.T) {
 				s := &struct{ Name string }{}
-				d := &FileDecoder{filename: "test.yml"}
+				f := func(path string) ([]byte, error) { return []byte(""), fmt.Errorf("file not found") }
+				d := &FileDecoder{filename: "test.yml", readFile: f}
 				err := d.Decode(map[string]string{}, s)
-				require.Contains(t, err.Error(), "open test.yml:")
+				require.Error(t, err)
 			},
 		},
 		{
 			name: "empty file",
 			f: func(t *testing.T) {
 				s := &struct{ Name string }{}
-				d := &FileDecoder{filename: createTempFile(t, "test.yml", "")}
+				f := func(path string) ([]byte, error) { return []byte(""), nil }
+				d := &FileDecoder{filename: "mokapi.yaml", readFile: f}
 				err := d.Decode(map[string]string{}, s)
 				require.NoError(t, err)
 			},
@@ -43,36 +63,28 @@ func TestFileDecoder_Decode(t *testing.T) {
 			name: "yaml schema error",
 			f: func(t *testing.T) {
 				s := &struct{ Name string }{}
-				d := &FileDecoder{filename: createTempFile(t, "test.yml", "name: {}")}
+				f := func(path string) ([]byte, error) { return []byte("name: {}"), nil }
+				d := &FileDecoder{filename: "mokapi.yml", readFile: f}
 				err := d.Decode(map[string]string{}, s)
-				require.Contains(t, err.Error(), "parsing YAML file")
+				require.EqualError(t, err, "parsing YAML file mokapi.yml: yaml: unmarshal errors:\n  line 1: cannot unmarshal !!map into string")
 			},
 		},
 		{
 			name: "file with data",
 			f: func(t *testing.T) {
 				s := &struct{ Name string }{}
-				d := &FileDecoder{filename: createTempFile(t, "test.yml", "name: foobar")}
-				err := d.Decode(map[string]string{}, s)
+				f := func(path string) ([]byte, error) { return []byte("name: foobar"), nil }
+				d := &FileDecoder{readFile: f}
+				err := d.Decode(map[string]string{"configfile": "mokapi.yaml"}, s)
 				require.NoError(t, err)
 				require.Equal(t, "foobar", s.Name)
 			},
 		},
 		{
-			name: "file with data",
+			name: "temp file with data",
 			f: func(t *testing.T) {
 				s := &struct{ Name string }{}
-				d := &FileDecoder{}
-				err := d.Decode(map[string]string{"configfile": createTempFile(t, "test.yml", "name: foobar")}, s)
-				require.NoError(t, err)
-				require.Equal(t, "foobar", s.Name)
-			},
-		},
-		{
-			name: "file with data",
-			f: func(t *testing.T) {
-				s := &struct{ Name string }{}
-				d := &FileDecoder{filename: createTempFile(t, "test.yml", "name: foobar")}
+				d := &FileDecoder{filename: createTempFile(t, "test.yml", "name: foobar"), readFile: os.ReadFile}
 				err := d.Decode(map[string]string{"configfile": d.filename}, s)
 				require.NoError(t, err)
 				require.Equal(t, "foobar", s.Name)
@@ -84,7 +96,7 @@ func TestFileDecoder_Decode(t *testing.T) {
 				s := &struct {
 					InstallDir string `yaml:"installDir"`
 				}{}
-				d := &FileDecoder{filename: createTempFile(t, "test.yml", "installDir: foobar")}
+				d := &FileDecoder{filename: createTempFile(t, "test.yml", "installDir: foobar"), readFile: os.ReadFile}
 				err := d.Decode(map[string]string{"configfile": d.filename}, s)
 				require.NoError(t, err)
 				require.Equal(t, "foobar", s.InstallDir)
@@ -96,7 +108,7 @@ func TestFileDecoder_Decode(t *testing.T) {
 				s := &struct {
 					Key map[string]string
 				}{}
-				d := &FileDecoder{filename: createTempFile(t, "test.yml", "key: {foo: bar}")}
+				d := &FileDecoder{filename: createTempFile(t, "test.yml", "key: {foo: bar}"), readFile: os.ReadFile}
 				err := d.Decode(map[string]string{"configFile": d.filename}, s)
 				require.NoError(t, err)
 				require.Equal(t, map[string]string{"foo": "bar"}, s.Key)
@@ -108,7 +120,7 @@ func TestFileDecoder_Decode(t *testing.T) {
 				s := &struct {
 					Key []string
 				}{}
-				d := &FileDecoder{filename: createTempFile(t, "test.yml", "key: [bar]")}
+				d := &FileDecoder{filename: createTempFile(t, "test.yml", "key: [bar]"), readFile: os.ReadFile}
 				err := d.Decode(map[string]string{"configFile": d.filename}, s)
 				require.NoError(t, err)
 				require.Equal(t, []string{"bar"}, s.Key)
@@ -120,7 +132,7 @@ func TestFileDecoder_Decode(t *testing.T) {
 				s := &struct {
 					Key map[string][]string
 				}{}
-				d := &FileDecoder{filename: createTempFile(t, "test.yml", "key: {foo: [bar]}")}
+				d := &FileDecoder{filename: createTempFile(t, "test.yml", "key: {foo: [bar]}"), readFile: os.ReadFile}
 				err := d.Decode(map[string]string{"configFile": d.filename}, s)
 				require.NoError(t, err)
 				require.Equal(t, map[string][]string{"foo": {"bar"}}, s.Key)
@@ -136,7 +148,7 @@ func TestFileDecoder_Decode(t *testing.T) {
 				s := &struct {
 					Key map[string]*test
 				}{}
-				d := &FileDecoder{filename: createTempFile(t, "test.yml", "key: {foo: {name: Bob, foo: bar}}")}
+				d := &FileDecoder{filename: createTempFile(t, "test.yml", "key: {foo: {name: Bob, foo: bar}}"), readFile: os.ReadFile}
 				err := d.Decode(map[string]string{"configFile": d.filename}, s)
 				require.NoError(t, err)
 				require.Equal(t, "Bob", s.Key["foo"].Name)
@@ -153,7 +165,7 @@ func TestFileDecoder_Decode(t *testing.T) {
 				s := &struct {
 					Key map[string]test
 				}{}
-				d := &FileDecoder{filename: createTempFile(t, "test.yml", "key: {foo: {name: Bob, foo: bar}}")}
+				d := &FileDecoder{filename: createTempFile(t, "test.yml", "key: {foo: {name: Bob, foo: bar}}"), readFile: os.ReadFile}
 				err := d.Decode(map[string]string{"configFile": d.filename}, s)
 				require.NoError(t, err)
 				require.Equal(t, "Bob", s.Key["foo"].Name)

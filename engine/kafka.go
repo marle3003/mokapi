@@ -58,16 +58,22 @@ func (c *kafkaClient) write(partition *store.Partition, config *asyncApi.Channel
 	if msg == nil {
 		return nil, nil, fmt.Errorf("message configuration missing")
 	}
+	var err error
 
 	if key == nil {
-		key = c.generator.New(msg.Bindings.Kafka.Key)
+		key, err = c.generator.New(msg.Bindings.Kafka.Key)
+		if err != nil {
+			return nil, nil, fmt.Errorf("unable to generate kafka key: %v", err)
+		}
 	}
 	if value == nil {
-		value = c.generator.New(msg.Payload)
+		value, err = c.generator.New(msg.Payload)
+		if err != nil {
+			return nil, nil, fmt.Errorf("unable to generate kafka data: %v", err)
+		}
 	}
 
 	var k []byte
-	var err error
 	switch msg.Bindings.Kafka.Key.Value.Type {
 	case "object", "array":
 		k, err = msg.Bindings.Kafka.Key.Marshal(key, media.ParseContentType("application/json"))
@@ -148,10 +154,16 @@ func (c *kafkaClient) createRecordBatch(key, value interface{}, config *asyncApi
 	}
 
 	if key == nil {
-		key = c.generator.New(msg.Bindings.Kafka.Key)
+		key, err = c.generator.New(msg.Bindings.Kafka.Key)
+		if err != nil {
+			return rb, fmt.Errorf("unable to generate kafka key: %v", err)
+		}
 	}
 	if value == nil {
-		value = c.generator.New(msg.Payload)
+		value, err = c.generator.New(msg.Payload)
+		if err != nil {
+			return rb, fmt.Errorf("unable to generate kafka data: %v", err)
+		}
 	}
 
 	var v []byte

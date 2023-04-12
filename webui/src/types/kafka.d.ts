@@ -43,7 +43,7 @@ declare interface KafkaGroup {
     leader: string
     state: string
     protocol: string
-    topics: string[]
+    topics: string[] | null
 }
 
 declare interface KafkaMember {

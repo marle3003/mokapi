@@ -5,7 +5,7 @@ interface AppInfo {
     activeServices: string[]
 }
 
-interface AppInfoResponse {
+export interface AppInfoResponse {
     data: AppInfo
     isLoading: Boolean
     error: string

@@ -1,5 +1,11 @@
 {
   "Welcome": "welcome.md",
+  "Configuration": {
+    "Configuration": "configuration/configuration.md",
+    "File": "configuration/file.md",
+    "HTTP": "configuration/http.md",
+    "GIT": "configuration/git.md"
+  },
   "OpenAPI": {
     "OpenAPI": "openapi/intro.md",
     "Quick Start": "openapi/quick-start.md",
@@ -14,9 +20,13 @@
   },
   "LDAP": "ldap.md",
   "SMTP": "smtp.md",
+  "Javascript": {
+    "Javascript": "javascript/scripts.md",
+    "Modules": "javascript/modules.md"
+  },
   "References": {
-    "Configuration": "references/config.md",
-    "Javascript": "references/javascript.md",
-    "Lua": "references/lua.md"
+    "Static Configuration": "references/static-configuration.md",
+    "Javascript API": "references/javascript.md",
+    "Lua API": "references/lua.md"
   }
 }

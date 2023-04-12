@@ -40,7 +40,8 @@ func TestGenerator(t *testing.T) {
 			gofakeit.Seed(11)
 
 			g := schema.NewGenerator()
-			o := g.New(&schema.Ref{Value: data.schema})
+			o, err := g.New(&schema.Ref{Value: data.schema})
+			require.NoError(t, err)
 			require.Equal(t, data.exp, o)
 		})
 	}
@@ -130,7 +131,8 @@ func TestGeneratorString(t *testing.T) {
 			gofakeit.Seed(11)
 
 			g := schema.NewGenerator()
-			o := g.New(&schema.Ref{Value: d.schema})
+			o, err := g.New(&schema.Ref{Value: d.schema})
+			require.NoError(t, err)
 			require.Equal(t, d.exp, o)
 		})
 	}
@@ -154,7 +156,8 @@ func TestGeneratorBool(t *testing.T) {
 			gofakeit.Seed(11)
 
 			g := schema.NewGenerator()
-			o := g.New(&schema.Ref{Value: data.schema})
+			o, err := g.New(&schema.Ref{Value: data.schema})
+			require.NoError(t, err)
 			require.Equal(t, data.exp, o)
 		})
 	}
@@ -218,7 +221,8 @@ func TestGeneratorInt(t *testing.T) {
 			gofakeit.Seed(11)
 
 			g := schema.NewGenerator()
-			o := g.New(&schema.Ref{Value: data.schema})
+			o, err := g.New(&schema.Ref{Value: data.schema})
+			require.NoError(t, err)
 			require.Equal(t, data.exp, o)
 		})
 	}
@@ -287,7 +291,8 @@ func TestGeneratorFloat(t *testing.T) {
 			gofakeit.Seed(11)
 
 			g := schema.NewGenerator()
-			o := g.New(&schema.Ref{Value: data.schema})
+			o, err := g.New(&schema.Ref{Value: data.schema})
+			require.NoError(t, err)
 			require.Equal(t, data.exp, o)
 		})
 	}
@@ -314,15 +319,15 @@ func TestGeneratorArray(t *testing.T) {
 					Type: "integer", Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(10)}}},
 		},
 		{
-			"min items",
-			[]interface{}{int32(8), int32(8), int32(6), int32(7), int32(1), int32(8), int32(9)},
+			"min & max items",
+			[]interface{}{int32(8), int32(8), int32(6), int32(7), int32(1), int32(8), int32(9), int32(5), int32(3), int32(1)},
 			&schema.Schema{Type: "array", MinItems: toIntP(5), MaxItems: toIntP(10), Items: &schema.Ref{
 				Value: &schema.Schema{
 					Type: "integer", Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(10)}}},
 		},
 		{
 			"unique items",
-			[]interface{}{int32(8), int32(6), int32(7), int32(1), int32(9), int32(5), int32(3)},
+			[]interface{}{int32(8), int32(6), int32(7), int32(1), int32(9), int32(5), int32(3), int32(2), int32(4), int32(10)},
 			&schema.Schema{Type: "array", MinItems: toIntP(5), MaxItems: toIntP(10), UniqueItems: true,
 				Items: &schema.Ref{
 					Value: &schema.Schema{
@@ -356,24 +361,21 @@ func TestGeneratorArray(t *testing.T) {
 			gofakeit.SetGlobalFaker(gofakeit.New(11))
 
 			g := schema.NewGenerator()
-			o := g.New(&schema.Ref{Value: data.schema})
+			o, err := g.New(&schema.Ref{Value: data.schema})
+			require.NoError(t, err)
 			require.Equal(t, data.exp, o)
 		})
 	}
 
 	t.Run("unique items panic", func(t *testing.T) {
-		defer func() {
-			r := recover()
-			require.Equal(t, "can not fill array with unique items", r)
-		}()
-
 		gofakeit.Seed(11)
 		g := schema.NewGenerator()
-		g.New(&schema.Ref{Value: &schema.Schema{Type: "array", MinItems: toIntP(5), MaxItems: toIntP(10), UniqueItems: true,
+		_, err := g.New(&schema.Ref{Value: &schema.Schema{Type: "array", MinItems: toIntP(5), MaxItems: toIntP(10), UniqueItems: true,
 			Items: &schema.Ref{
 				Value: &schema.Schema{
 					Type: "integer", Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(3)}}},
 		})
+		require.EqualError(t, err, "can not fill array with unique items")
 	})
 }
 
@@ -416,12 +418,12 @@ func TestGeneratorObject(t *testing.T) {
 		{
 			name: "dictionary",
 			exp: map[string]interface{}{
-				"fly":   "MaRxHkiJBPtapWY",
-				"gauva": "eDjRRGUnsAxdBXG",
-				"off":   "nPAKaXSMQFpZysV",
-				"table": "GyyvqqdHueUxcvU",
-				"them":  "kWwfoRLOPxLIokQ",
-				"why":   "nSMKgtlxwnqhqcl",
+				"his":          "aYkWwfoRLOPxLIo",
+				"most":         "VSeDjRRGUnsAxdB",
+				"ocean":        "bRMaRxHkiJBPtap",
+				"our":          "JdnSMKgtlxwnqhq",
+				"straightaway": "aHGyyvqqdHueUxc",
+				"theirs":       "qanPAKaXSMQFpZy",
 			},
 			schema: schematest.New("object",
 				schematest.WithAdditionalProperties(schematest.New("string"))),
@@ -459,7 +461,8 @@ func TestGeneratorObject(t *testing.T) {
 			gofakeit.Seed(11)
 
 			g := schema.NewGenerator()
-			o := g.New(&schema.Ref{Value: data.schema})
+			o, err := g.New(&schema.Ref{Value: data.schema})
+			require.NoError(t, err)
 			require.Equal(t, data.exp, toMap(o.(*sortedmap.LinkedHashMap)))
 		})
 	}
@@ -488,7 +491,8 @@ func TestGenerator_AnyOf(t *testing.T) {
 					)),
 				)
 				g := schema.NewGenerator()
-				o := g.New(&schema.Ref{Value: s})
+				o, err := g.New(&schema.Ref{Value: s})
+				require.NoError(t, err)
 				a, ok := o.([]interface{})
 				require.True(t, ok, "should be an array")
 				require.Len(t, a, 1)
@@ -520,7 +524,8 @@ func TestGenerator_AllOf(t *testing.T) {
 					schematest.New("object", schematest.WithProperty("bar", schematest.New("number"))),
 				))
 				g := schema.NewGenerator()
-				o := g.New(&schema.Ref{Value: s})
+				o, err := g.New(&schema.Ref{Value: s})
+				require.NoError(t, err)
 				m, ok := o.(*sortedmap.LinkedHashMap)
 				require.True(t, ok, "should be a map")
 				require.Equal(t, 2, m.Len())
@@ -554,7 +559,8 @@ func TestGenerator_Recursions(t *testing.T) {
 					Value: props,
 				}
 				g := schema.NewGenerator()
-				o := g.New(&schema.Ref{Value: s})
+				o, err := g.New(&schema.Ref{Value: s})
+				require.NoError(t, err)
 				require.NotNil(t, o)
 				m := o.(*sortedmap.LinkedHashMap)
 				foo := m.Get("foo").(*sortedmap.LinkedHashMap)
@@ -572,7 +578,8 @@ func TestGenerator_Recursions(t *testing.T) {
 					Value: props,
 				}
 				g := schema.NewGenerator()
-				o := g.New(&schema.Ref{Value: s})
+				o, err := g.New(&schema.Ref{Value: s})
+				require.NoError(t, err)
 				require.NotNil(t, o)
 				m := o.(*sortedmap.LinkedHashMap)
 				bar := m.Get("bar").(*sortedmap.LinkedHashMap)
@@ -593,7 +600,8 @@ func TestGenerator_Recursions(t *testing.T) {
 				minItems := 2
 				array.MinItems = &minItems
 				g := schema.NewGenerator()
-				o := g.New(&schema.Ref{Value: array})
+				o, err := g.New(&schema.Ref{Value: array})
+				require.NoError(t, err)
 				require.NotNil(t, o)
 				a := o.([]interface{})
 				require.NotNil(t, a[1])

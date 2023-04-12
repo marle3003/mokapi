@@ -6,7 +6,7 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"hash/fnv"
-	"io/ioutil"
+	"io"
 	"mokapi/config/dynamic/common"
 	"mokapi/config/static"
 	"mokapi/safe"
@@ -43,9 +43,19 @@ func New(config static.HttpProvider) *Provider {
 		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
 
+	pollTimeout := time.Second * 5
+	if len(config.PollTimeout) > 0 {
+		var err error
+		pollTimeout, err = time.ParseDuration(config.PollTimeout)
+		if err != nil {
+			pollTimeout = time.Second * 5
+			log.Errorf("invalid poll timeout argument %v: %v", config.PollTimeout, err)
+		}
+	}
+
 	p.client = &http.Client{
 		Transport: transport,
-		//Timeout: time.Duration(p.PollTimeout),
+		Timeout:   pollTimeout,
 	}
 	return p
 }
@@ -130,7 +140,7 @@ func (p *Provider) readUrl(u *url.URL) (c *common.Config, changed bool, err erro
 		return
 	}
 
-	b, err := ioutil.ReadAll(res.Body)
+	b, err := io.ReadAll(res.Body)
 	if err != nil {
 		err = fmt.Errorf("unable to read response body: %v", err.Error())
 	}

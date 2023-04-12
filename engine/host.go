@@ -23,7 +23,7 @@ type eventHandler struct {
 
 type scriptHost struct {
 	id       int
-	Name     string
+	name     string
 	engine   *Engine
 	script   common.Script
 	jobs     map[int]*gocron.Job
@@ -38,7 +38,7 @@ func newScriptHost(file *config.Config, e *Engine) *scriptHost {
 
 	sh := &scriptHost{
 		id:       1,
-		Name:     path,
+		name:     path,
 		engine:   e,
 		jobs:     make(map[int]*gocron.Job),
 		events:   make(map[string][]*eventHandler),
@@ -48,6 +48,10 @@ func newScriptHost(file *config.Config, e *Engine) *scriptHost {
 	}
 
 	return sh
+}
+
+func (sh *scriptHost) Name() string {
+	return sh.name
 }
 
 func (sh *scriptHost) Compile() error {
@@ -63,10 +67,10 @@ func (sh *scriptHost) Run() error {
 	return sh.script.Run()
 }
 
-func (sh *scriptHost) RunEvent(event string, args ...interface{}) []*Summary {
-	var result []*Summary
+func (sh *scriptHost) RunEvent(event string, args ...interface{}) []*common.Action {
+	var result []*common.Action
 	for _, eh := range sh.events[event] {
-		s := &Summary{
+		s := &common.Action{
 			Tags: eh.tags,
 		}
 		start := time.Now()
@@ -99,7 +103,7 @@ func (sh *scriptHost) Every(every string, handler func(), opt common.JobOptions)
 		defer func() {
 			r := recover()
 			if r != nil {
-				log.Errorf("script error %v: %v", sh.Name, r)
+				log.Errorf("script error %v: %v", sh.Name(), r)
 			}
 		}()
 		handler()
@@ -148,8 +152,8 @@ func (sh *scriptHost) On(event string, handler func(args ...interface{}) (bool, 
 	h := &eventHandler{
 		handler: handler,
 		tags: map[string]string{
-			"name":  sh.Name,
-			"file":  sh.Name,
+			"name":  sh.name,
+			"file":  sh.name,
 			"event": event,
 		},
 	}

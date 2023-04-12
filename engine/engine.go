@@ -1,22 +1,15 @@
 package engine
 
 import (
-	"fmt"
 	"github.com/go-co-op/gocron"
 	log "github.com/sirupsen/logrus"
 	config "mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/script"
 	"mokapi/engine/common"
 	"mokapi/runtime"
-	"strings"
 	"sync"
 	"time"
 )
-
-type Summary struct {
-	Duration int64
-	Tags     map[string]string
-}
 
 type Engine struct {
 	scripts     map[string]*scriptHost
@@ -48,7 +41,7 @@ func (e *Engine) AddScript(cfg *config.Config) error {
 	e.remove(cfg)
 
 	sh := newScriptHost(cfg, e)
-	e.scripts[sh.Name] = sh
+	e.scripts[sh.name] = sh
 
 	err := sh.Compile()
 	if err != nil {
@@ -62,14 +55,14 @@ func (e *Engine) AddScript(cfg *config.Config) error {
 
 	if sh.CanClose() {
 		sh.close()
-		delete(e.scripts, sh.Name)
+		delete(e.scripts, sh.name)
 	}
 
 	return nil
 }
 
-func (e *Engine) Run(event string, args ...interface{}) []*Summary {
-	var result []*Summary
+func (e *Engine) Run(event string, args ...interface{}) []*common.Action {
+	var result []*common.Action
 	for _, s := range e.scripts {
 		result = append(result, s.RunEvent(event, args...)...)
 	}
@@ -77,8 +70,8 @@ func (e *Engine) Run(event string, args ...interface{}) []*Summary {
 	return result
 }
 
-func (e *Engine) Emit(event string, args ...interface{}) {
-	e.Run(event, args...)
+func (e *Engine) Emit(event string, args ...interface{}) []*common.Action {
+	return e.Run(event, args...)
 }
 
 func (e *Engine) Start() {
@@ -98,16 +91,4 @@ func (e *Engine) remove(cfg *config.Config) {
 	} else {
 		log.Debugf("parsing script %v", cfg.Url)
 	}
-}
-
-func (s *Summary) String() string {
-	var sb strings.Builder
-	for _, tag := range s.Tags {
-		if sb.Len() > 0 {
-			sb.WriteString(", ")
-		}
-		sb.WriteString(tag)
-	}
-
-	return fmt.Sprintf("tags: %v", sb.String())
 }

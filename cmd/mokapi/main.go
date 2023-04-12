@@ -31,7 +31,7 @@ func main() {
 	fmt.Printf(logo, version.BuildVersion, strings.Repeat(" ", 17-len(versionString)))
 
 	cfg := static.NewConfig()
-	configDecoders := []decoders.ConfigDecoder{&decoders.FileDecoder{}, &decoders.FlagDecoder{}}
+	configDecoders := []decoders.ConfigDecoder{decoders.NewDefaultFileDecoder(), &decoders.FlagDecoder{}}
 	err := decoders.Load(configDecoders, cfg)
 	if err != nil {
 		fmt.Println("Error", err)

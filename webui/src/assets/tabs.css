@@ -37,6 +37,9 @@
 .tab-sm li.disabled {
     color: var(--color-text-light)
 }
+.nav-pills.tab-sm .nav-link.active{
+    background-color: var(--color-tabs-background-mute);
+}
 
 .card-tabs button {
     font-size: 0.9rem;
@@ -67,4 +70,35 @@
 .tab-pane {
     padding: 0.8rem;
     padding-top: 1.6rem;
+ }
+
+ .code-tabs button {
+    font-size: 0.9rem;
+    padding-bottom: 8px;
+    padding-right: 10px;
+    padding-left: 10px;
+    color: var(--color-text);
+    background-color: transparent;
+    border: 0;
+    margin-right: 5px;
+}
+.code-tabs button.active {
+    font-size: 0.9rem;
+    border: 0;
+    color: var(--color-blue-cold);
+    border-bottom-width: 3px;
+    border-bottom-style: solid;
+    margin-bottom: -2px;
+}
+.code-tabs button.disabled {
+    color: var(--color-disabled);
+}
+.code-tabs {
+    border-bottom: 2px;
+    border-bottom-style: solid;
+    border-bottom-color: var(--color-tabs-border);
+}
+.tab-content.code .tab-pane {
+    padding: 0;
+    margin-bottom: 4rem;
  }

@@ -104,6 +104,8 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case h.fileServer != nil:
 		if isAsset(r.URL.Path) {
 			r.URL.Path = "/assets/" + filepath.Base(r.URL.Path)
+		} else if filepath.Ext(r.URL.Path) == ".svg" {
+			r.URL.Path = "/" + filepath.Base(r.URL.Path)
 		} else {
 			if len(h.path) > 0 || len(h.base) > 0 {
 				base := h.path
@@ -115,7 +117,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
-				html := strings.Replace(string(data), "<head>", fmt.Sprintf("<head>\n<base href=\"%v/\" />", base), 1)
+				html := strings.Replace(string(data), "<base href=\"/\" />", fmt.Sprintf("<base href=\"%v/\" />", base), 1)
 				_, err = w.Write([]byte(html))
 				if err != nil {
 					log.Errorf("unable to write index.html: %v", err)

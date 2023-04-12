@@ -9,20 +9,19 @@ import (
 	"io"
 	"io/ioutil"
 	"mime"
-	"mokapi/models"
 	"net/mail"
 	"strings"
 	"time"
 )
 
 type session struct {
-	current  *models.Mail
-	received chan *models.MailMetric
+	current  *Mail
+	received chan *Mail
 	//wh       EventHandler
 	state *smtp.ConnectionState
 }
 
-func newSession(received chan *models.MailMetric /*, wh EventHandler*/, state *smtp.ConnectionState) *session {
+func newSession(received chan *Mail /*, wh EventHandler*/, state *smtp.ConnectionState) *session {
 	return &session{
 		received: received,
 		//wh:       wh,
@@ -43,7 +42,7 @@ func (s *session) Reset() {
 		//	log.WithField("action summary", summary).Debugf("executed actions")
 		//}
 
-		s.received <- &models.MailMetric{Mail: s.current /*, Summary: summary*/}
+		s.received <- s.current
 	}
 }
 
@@ -71,7 +70,7 @@ func (s *session) Data(r io.Reader) error {
 		return err
 	}
 
-	email := &models.Mail{}
+	email := &Mail{}
 	p := parser{}
 	email.Sender = p.parseAddress(m.Header.Get("Sender"))
 	email.From = p.parseAddressList(m.Header.Get("From"))
@@ -157,7 +156,7 @@ func (p parser) parseSubject(s string) string {
 	return strings.Join(r, "")
 }
 
-func (p parser) parseBody(r io.Reader, contentType, encoding string) (text, html string, attachments []models.Attachment) {
+func (p parser) parseBody(r io.Reader, contentType, encoding string) (text, html string, attachments []Attachment) {
 	mediaType, params, err := mime.ParseMediaType(contentType)
 	_ = params
 	if err != nil {

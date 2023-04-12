@@ -1,5 +1,3 @@
-# Welcome
-
 <img src="/logo.svg" width="400" class="logo mx-auto d-block"></imgs>
 
 Mokapi is a tool that allows developers to create and test API designs before actually building them. It works by emulating API responses based on the designs that have been created, which allows developers to test different configurations and edge cases without having to rely on a fully built API.

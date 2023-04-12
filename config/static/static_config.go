@@ -42,18 +42,21 @@ type Api struct {
 }
 
 type FileProvider struct {
-	Filename  string
-	Directory string
+	Filename   string
+	Directory  string
+	SkipPrefix []string
 }
 
 type GitProvider struct {
 	Url          string
 	PullInterval string `yaml:"pullInterval"`
+	Directories  []string
 }
 
 type HttpProvider struct {
 	Url           string
-	PollInterval  string `yaml:"pullInterval"`
+	PollInterval  string `yaml:"pollInterval"`
+	PollTimeout   string `yaml:"pollTimeout"`
 	Proxy         string
 	TlsSkipVerify bool `yaml:"tlsSkipVerify"`
 }

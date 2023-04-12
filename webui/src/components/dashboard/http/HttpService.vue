@@ -14,10 +14,14 @@ import '@/assets/http.css'
 const {fetchService} = useService()
 const route = useRoute()
 const serviceName = route.params.service?.toString()
-const {service, close} = <{service: Ref<HttpService | null>, close: () => void}>fetchService(serviceName, 'http')
-onUnmounted(() => {
-    close()
+let service: Ref<HttpService | null>
+if (serviceName){
+    const result = <{service: Ref<HttpService | null>, close: () => void}>fetchService(serviceName, 'http')
+    service = result.service
+    onUnmounted(() => {
+        result.close()
 })
+}
 </script>
 
 <template>

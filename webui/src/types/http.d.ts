@@ -37,6 +37,7 @@ declare interface HttpEventData {
     response: HttpEventResponse
     duration: number
     deprecated: boolean
+    actions: Action[]
 }
 
 declare interface HttpEventRequest {
@@ -86,3 +87,10 @@ declare interface HttpServer {
     url: string
     description: string
 }
+
+declare interface Action {
+    duration: number
+    tags: Tags
+}
+
+declare interface Tags {[key: string]: string}

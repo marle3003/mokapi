@@ -121,11 +121,11 @@ func TestHttpManager_Update(t *testing.T) {
 				m.Update(&common.Config{Data: c, Url: MustParseUrl("foo.yml")})
 
 				entries := hook.Entries
-				require.Len(t, entries, 4)
+				require.Len(t, entries, 5)
 				require.Equal(t, fmt.Sprintf("adding new host '' on binding :%v", port), entries[0].Message)
 				require.Equal(t, fmt.Sprintf("adding service foo on binding :%v on path /foo", port), entries[1].Message)
 				require.Equal(t, "processed foo.yml", entries[2].Message)
-				require.Equal(t, "error on updating foo.yml: service 'foo' is already defined on path '/foo'", entries[3].Message)
+				require.Equal(t, fmt.Sprintf("unable to add 'bar' on %v/foo: service 'foo' is already defined on path '/foo'", url), entries[3].Message)
 			}},
 	}
 

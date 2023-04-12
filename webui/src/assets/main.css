@@ -17,8 +17,9 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-main {
-  margin-top: 5rem;
+#app {
+  display: flex;
+  flex-direction: column;
 }
 
 h1 {
@@ -67,4 +68,8 @@ pre{
 
 [data-theme="light"] .doc .content .hljs{
   background-color: var(--color-background-soft);
+}
+
+pre {
+  box-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.05), 0 0.25rem 0.5rem rgba(0, 0, 0, 0.05);
 }
