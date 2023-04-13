@@ -2,6 +2,7 @@ package js
 
 import (
 	r "github.com/stretchr/testify/require"
+	"mokapi/engine/common"
 	"testing"
 )
 
@@ -13,18 +14,17 @@ func TestScript_Kafka_Produce(t *testing.T) {
 		{
 			"set topic",
 			func(t *testing.T, host *testHost) {
-				host.kafkaClient.produce = func(cluster, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error) {
-					r.Equal(t, "foo", topic)
-					r.Equal(t, "", cluster)
+				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (interface{}, interface{}, error) {
+					r.Equal(t, "foo", args.Topic)
+					r.Equal(t, "", args.Cluster)
 					return nil, nil, nil
 				}
 
 				s, err := New("",
-					`
-import {produce} from 'kafka'
-export default function() {
-  return produce({topic: 'foo'})
-}`,
+					`import {produce} from 'kafka'
+						 export default function() {
+						  	return produce({topic: 'foo'})
+						 }`,
 					host)
 				r.NoError(t, err)
 				err = s.Run()
@@ -34,18 +34,36 @@ export default function() {
 		{
 			"set topic and cluster",
 			func(t *testing.T, host *testHost) {
-				host.kafkaClient.produce = func(cluster, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error) {
-					r.Equal(t, "foo", topic)
-					r.Equal(t, "bar", cluster)
+				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (interface{}, interface{}, error) {
+					r.Equal(t, "foo", args.Topic)
+					r.Equal(t, "bar", args.Cluster)
 					return nil, nil, nil
 				}
 
 				s, err := New("",
-					`
-import {produce} from 'kafka'
-export default function() {
-  return produce({topic: 'foo', cluster: 'bar'})
-}`,
+					`import {produce} from 'kafka'
+						 export default function() {
+  							return produce({topic: 'foo', cluster: 'bar'})
+						 }`,
+					host)
+				r.NoError(t, err)
+				err = s.Run()
+				r.NoError(t, err)
+			},
+		},
+		{
+			"set cluster to null",
+			func(t *testing.T, host *testHost) {
+				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (interface{}, interface{}, error) {
+					r.Equal(t, "", args.Cluster)
+					return nil, nil, nil
+				}
+
+				s, err := New("",
+					`import {produce} from 'kafka'
+						 export default function() {
+  							return produce({cluster: null})
+						 }`,
 					host)
 				r.NoError(t, err)
 				err = s.Run()
@@ -55,19 +73,77 @@ export default function() {
 		{
 			"set key, value and partition",
 			func(t *testing.T, host *testHost) {
-				host.kafkaClient.produce = func(cluster, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error) {
-					r.Equal(t, "key", key)
-					r.Equal(t, "value", value)
-					r.Equal(t, 2, partition)
+				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (interface{}, interface{}, error) {
+					r.Equal(t, "key", args.Key)
+					r.Equal(t, "value", args.Value)
+					r.Equal(t, 2, args.Partition)
 					return nil, nil, nil
 				}
 
 				s, err := New("",
-					`
-import {produce} from 'kafka'
-export default function() {
-  return produce({value: 'value', key: 'key', partition: 2})
-}`,
+					`import {produce} from 'kafka'
+						 export default function() {
+						  	return produce({value: 'value', key: 'key', partition: 2})
+						 }`,
+					host)
+				r.NoError(t, err)
+				err = s.Run()
+				r.NoError(t, err)
+			},
+		},
+		{
+			"set key, value and partition",
+			func(t *testing.T, host *testHost) {
+				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (interface{}, interface{}, error) {
+					r.Equal(t, "key", args.Key)
+					r.Equal(t, "value", args.Value)
+					r.Equal(t, 2, args.Partition)
+					return nil, nil, nil
+				}
+
+				s, err := New("",
+					`import {produce} from 'kafka'
+						 export default function() {
+						  	return produce({value: 'value', key: 'key', partition: 2})
+						 }`,
+					host)
+				r.NoError(t, err)
+				err = s.Run()
+				r.NoError(t, err)
+			},
+		},
+		{
+			"set headers",
+			func(t *testing.T, host *testHost) {
+				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (interface{}, interface{}, error) {
+					r.Equal(t, map[string]interface{}{"foo": "bar"}, args.Headers)
+					return nil, nil, nil
+				}
+
+				s, err := New("",
+					`import {produce} from 'kafka'
+						 export default function() {
+						  	return produce({headers: {foo: 'bar'}})
+						 }`,
+					host)
+				r.NoError(t, err)
+				err = s.Run()
+				r.NoError(t, err)
+			},
+		},
+		{
+			"set timeout",
+			func(t *testing.T, host *testHost) {
+				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (interface{}, interface{}, error) {
+					r.Equal(t, map[string]interface{}{"foo": "bar"}, args.Headers)
+					return nil, nil, nil
+				}
+
+				s, err := New("",
+					`import {produce} from 'kafka'
+						 export default function() {
+						  	return produce({headers: {foo: 'bar'}})
+						 }`,
 					host)
 				r.NoError(t, err)
 				err = s.Run()

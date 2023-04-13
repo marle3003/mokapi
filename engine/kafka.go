@@ -6,6 +6,7 @@ import (
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/config/dynamic/openapi/schema"
+	"mokapi/engine/common"
 	"mokapi/kafka"
 	"mokapi/media"
 	"mokapi/runtime"
@@ -24,8 +25,8 @@ func newKafkaClient(app *runtime.App) *kafkaClient {
 	}
 }
 
-func (c *kafkaClient) Produce(cluster string, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error) {
-	t, p, config, err := c.get(cluster, topic, partition)
+func (c *kafkaClient) Produce(args *common.KafkaProduceArgs) (interface{}, interface{}, error) {
+	t, p, config, err := c.get(args.Cluster, args.Topic, args.Partition)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -35,7 +36,7 @@ func (c *kafkaClient) Produce(cluster string, topic string, partition int, key, 
 		return nil, nil, fmt.Errorf("invalid topic configuration")
 	}
 
-	rb, err := c.createRecordBatch(key, value, ch.Value)
+	rb, err := c.createRecordBatch(args.Key, args.Value, ch.Value)
 	if err != nil {
 		return nil, nil, err
 	}

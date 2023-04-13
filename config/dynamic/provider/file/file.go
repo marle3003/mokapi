@@ -21,6 +21,8 @@ import (
 
 const mokapiIgnoreFile = ".mokapiignore"
 
+var bom = []byte{0xEF, 0xBB, 0xBF}
+
 type FSReader interface {
 	Walk(string, fs.WalkDirFunc) error
 	ReadFile(name string) ([]byte, error)
@@ -191,6 +193,11 @@ func (p *Provider) readFile(path string) (*common.Config, error) {
 	data, err := p.fs.ReadFile(path)
 	if err != nil {
 		return nil, err
+	}
+
+	// remove bom sequence if present
+	if bytes.Equal(data[0:3], bom) {
+		data = data[3:]
 	}
 
 	abs, err := filepath.Abs(path)

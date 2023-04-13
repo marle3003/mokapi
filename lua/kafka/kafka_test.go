@@ -3,12 +3,13 @@ package kafka
 import (
 	"github.com/stretchr/testify/require"
 	lua "github.com/yuin/gopher-lua"
+	"mokapi/engine/common"
 	"mokapi/sortedmap"
 	"testing"
 )
 
 type client struct {
-	produce func(cluster, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error)
+	produce func(args *common.KafkaProduceArgs) (interface{}, interface{}, error)
 }
 
 func TestModule_Produce(t *testing.T) {
@@ -19,8 +20,8 @@ func TestModule_Produce(t *testing.T) {
 		{
 			"cluster should be foo",
 			func(t *testing.T, l *lua.LState, m *Module, c *client) {
-				c.produce = func(cluster, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error) {
-					require.Equal(t, "foo", cluster)
+				c.produce = func(args *common.KafkaProduceArgs) (interface{}, interface{}, error) {
+					require.Equal(t, "foo", args.Cluster)
 					return nil, nil, nil
 				}
 				err := l.DoString(`
@@ -33,8 +34,8 @@ func TestModule_Produce(t *testing.T) {
 		{
 			"topic should be foo",
 			func(t *testing.T, l *lua.LState, m *Module, c *client) {
-				c.produce = func(cluster, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error) {
-					require.Equal(t, "foo", topic)
+				c.produce = func(args *common.KafkaProduceArgs) (interface{}, interface{}, error) {
+					require.Equal(t, "foo", args.Topic)
 					return nil, nil, nil
 				}
 				err := l.DoString(`
@@ -47,8 +48,8 @@ func TestModule_Produce(t *testing.T) {
 		{
 			"partition should be -1",
 			func(t *testing.T, l *lua.LState, m *Module, c *client) {
-				c.produce = func(cluster, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error) {
-					require.Equal(t, -1, partition)
+				c.produce = func(args *common.KafkaProduceArgs) (interface{}, interface{}, error) {
+					require.Equal(t, -1, args.Partition)
 					return nil, nil, nil
 				}
 				err := l.DoString(`
@@ -61,8 +62,8 @@ func TestModule_Produce(t *testing.T) {
 		{
 			"partition should be 10",
 			func(t *testing.T, l *lua.LState, m *Module, c *client) {
-				c.produce = func(cluster, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error) {
-					require.Equal(t, 10, partition)
+				c.produce = func(args *common.KafkaProduceArgs) (interface{}, interface{}, error) {
+					require.Equal(t, 10, args.Partition)
 					return nil, nil, nil
 				}
 				err := l.DoString(`
@@ -75,8 +76,8 @@ func TestModule_Produce(t *testing.T) {
 		{
 			"key should be foo",
 			func(t *testing.T, l *lua.LState, m *Module, c *client) {
-				c.produce = func(cluster, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error) {
-					require.Equal(t, "foo", key)
+				c.produce = func(args *common.KafkaProduceArgs) (interface{}, interface{}, error) {
+					require.Equal(t, "foo", args.Key)
 					return nil, nil, nil
 				}
 				err := l.DoString(`
@@ -89,9 +90,9 @@ func TestModule_Produce(t *testing.T) {
 		{
 			"value",
 			func(t *testing.T, l *lua.LState, m *Module, c *client) {
-				c.produce = func(cluster, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error) {
-					require.IsType(t, &sortedmap.LinkedHashMap{}, value)
-					require.Equal(t, "bar", value.(*sortedmap.LinkedHashMap).Get("foo"))
+				c.produce = func(args *common.KafkaProduceArgs) (interface{}, interface{}, error) {
+					require.IsType(t, &sortedmap.LinkedHashMap{}, args.Value)
+					require.Equal(t, "bar", args.Value.(*sortedmap.LinkedHashMap).Get("foo"))
 					return nil, nil, nil
 				}
 				err := l.DoString(`
@@ -115,9 +116,9 @@ func TestModule_Produce(t *testing.T) {
 	}
 }
 
-func (c *client) Produce(cluster, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error) {
+func (c *client) Produce(args *common.KafkaProduceArgs) (interface{}, interface{}, error) {
 	if c.produce != nil {
-		return c.produce(cluster, topic, partition, key, value, headers)
+		return c.produce(args)
 	}
 	return nil, nil, nil
 }

@@ -1,4 +1,4 @@
-package http
+package js
 
 import (
 	"bytes"
@@ -9,14 +9,14 @@ import (
 	"net/http"
 )
 
-type Client interface {
+type HttpClient interface {
 	Do(r *http.Request) (*http.Response, error)
 }
 
-type Module struct {
+type httpModule struct {
 	host   common.Host
 	rt     *goja.Runtime
-	client Client
+	client HttpClient
 }
 
 type requestArgs struct {
@@ -24,58 +24,59 @@ type requestArgs struct {
 }
 
 type response struct {
-	Body       string            `json:"body"`
-	StatusCode int               `json:"statusCode"`
-	Headers    map[string]string `json:"headers"`
+	Body       string              `json:"body"`
+	StatusCode int                 `json:"statusCode"`
+	Headers    map[string][]string `json:"headers"`
 }
 
-func New(host common.Host, rt *goja.Runtime) interface{} {
-	return &Module{host: host, rt: rt, client: host.HttpClient()}
+func newHttp(host common.Host, rt *goja.Runtime) interface{} {
+	return &httpModule{host: host, rt: rt, client: host.HttpClient()}
 }
 
-func (m *Module) Get(url string, args goja.Value) (interface{}, error) {
+func (m *httpModule) Get(url string, args goja.Value) (interface{}, error) {
 	return m.doRequest("GET", url, "", args)
 }
 
-func (m *Module) Post(url, body string, args goja.Value) (interface{}, error) {
+func (m *httpModule) Post(url, body string, args goja.Value) (interface{}, error) {
 	return m.doRequest("POST", url, body, args)
 }
 
-func (m *Module) Put(url, body string, args goja.Value) (interface{}, error) {
+func (m *httpModule) Put(url, body string, args goja.Value) (interface{}, error) {
 	return m.doRequest("PUT", url, body, args)
 }
 
-func (m *Module) Head(url string, args goja.Value) (interface{}, error) {
+func (m *httpModule) Head(url string, args goja.Value) (interface{}, error) {
 	return m.doRequest("HEAD", url, "", args)
 }
 
-func (m *Module) Patch(url, body string, args goja.Value) (interface{}, error) {
+func (m *httpModule) Patch(url, body string, args goja.Value) (interface{}, error) {
 	return m.doRequest("PATCH", url, body, args)
 }
 
-func (m *Module) Del(url, body string, args goja.Value) (interface{}, error) {
+func (m *httpModule) Delete(url, body string, args goja.Value) (interface{}, error) {
 	return m.doRequest("DELETE", url, body, args)
 }
 
-func (m *Module) Options(url, body string, args goja.Value) (interface{}, error) {
+func (m *httpModule) Del(url, body string, args goja.Value) (interface{}, error) {
+	return m.Delete(url, body, args)
+}
+
+func (m *httpModule) Options(url, body string, args goja.Value) (interface{}, error) {
 	return m.doRequest("OPTIONS", url, body, args)
 }
 
-func (m *Module) doRequest(method, url, body string, args goja.Value) (interface{}, error) {
+func (m *httpModule) doRequest(method, url, body string, args goja.Value) (interface{}, error) {
 	rArgs := &requestArgs{Headers: make(map[string]interface{})}
 	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
 		params := args.ToObject(m.rt)
 		for _, k := range params.Keys() {
 			switch k {
 			case "headers":
-				tagsV := params.Get(k)
-				if goja.IsUndefined(tagsV) || goja.IsNull(tagsV) {
+				headers := params.Get(k)
+				if goja.IsUndefined(headers) || goja.IsNull(headers) {
 					continue
 				}
-				tagsO := tagsV.ToObject(m.rt)
-				for _, key := range tagsO.Keys() {
-					rArgs.Headers[key] = tagsO.Get(key).String()
-				}
+				rArgs.Headers = headers.Export().(map[string]interface{})
 			}
 		}
 	}
@@ -119,14 +120,14 @@ func createRequest(method, url, body string, args *requestArgs) (*http.Request, 
 }
 
 func parseResponse(r *http.Response) response {
-	result := response{StatusCode: r.StatusCode, Headers: make(map[string]string)}
+	result := response{StatusCode: r.StatusCode, Headers: make(map[string][]string)}
 	if r.Body != nil {
 		if b, err := io.ReadAll(r.Body); err == nil {
 			result.Body = string(b)
 		}
 	}
 	for k, v := range r.Header {
-		result.Headers[k] = fmt.Sprintf("%v", v)
+		result.Headers[k] = v
 	}
 	return result
 }

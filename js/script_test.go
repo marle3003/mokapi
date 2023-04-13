@@ -106,11 +106,11 @@ return s
 type testHost struct {
 	common.Host
 	openFile    func(file, hint string) (string, string, error)
-	openScript  func(file, hint string) (string, string, error)
 	info        func(args ...interface{})
 	httpClient  *testClient
 	kafkaClient *kafkaClient
 	every       func(every string, do func(), opt common.JobOptions)
+	cron        func(every string, do func(), opt common.JobOptions)
 	on          func(event string, do func(args ...interface{}) (bool, error), tags map[string]string)
 }
 
@@ -127,16 +127,16 @@ func (th *testHost) OpenFile(file, hint string) (string, string, error) {
 	return "", "", nil
 }
 
-func (th *testHost) OpenScript(file, hint string) (string, string, error) {
-	if th.openScript != nil {
-		return th.openScript(file, hint)
-	}
-	return "", "", nil
-}
-
 func (th *testHost) Every(every string, do func(), opt common.JobOptions) (int, error) {
 	if th.every != nil {
 		th.every(every, do, opt)
+	}
+	return 0, nil
+}
+
+func (th *testHost) Cron(expr string, do func(), opt common.JobOptions) (int, error) {
+	if th.cron != nil {
+		th.cron(expr, do, opt)
 	}
 	return 0, nil
 }
@@ -169,12 +169,12 @@ func (c *testClient) Do(request *http.Request) (*http.Response, error) {
 }
 
 type kafkaClient struct {
-	produce func(cluster, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error)
+	produce func(args *common.KafkaProduceArgs) (interface{}, interface{}, error)
 }
 
-func (c *kafkaClient) Produce(cluster, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error) {
+func (c *kafkaClient) Produce(args *common.KafkaProduceArgs) (interface{}, interface{}, error) {
 	if c.produce != nil {
-		return c.produce(cluster, topic, partition, key, value, headers)
+		return c.produce(args)
 	}
 	return nil, nil, nil
 }

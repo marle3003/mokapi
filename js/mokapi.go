@@ -1,4 +1,4 @@
-package modules
+package js
 
 import (
 	"github.com/dop251/goja"
@@ -8,22 +8,22 @@ import (
 	"time"
 )
 
-type Mokapi struct {
+type mokapi struct {
 	host common.Host
 	rt   *goja.Runtime
 	// goja scripts are not thread-safe
 	m sync.Mutex
 }
 
-func NewMokapi(host common.Host, rt *goja.Runtime) interface{} {
-	return &Mokapi{host: host, rt: rt}
+func newMokapi(host common.Host, rt *goja.Runtime) interface{} {
+	return &mokapi{host: host, rt: rt}
 }
 
-func (*Mokapi) Sleep(milliseconds float64) {
+func (*mokapi) Sleep(milliseconds float64) {
 	time.Sleep(time.Duration(milliseconds) * time.Millisecond)
 }
 
-func (m *Mokapi) Every(every string, do func(), args goja.Value) (int, error) {
+func (m *mokapi) Every(every string, do func(), args goja.Value) (int, error) {
 	options := common.NewJobOptions()
 
 	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
@@ -31,18 +31,17 @@ func (m *Mokapi) Every(every string, do func(), args goja.Value) (int, error) {
 		for _, k := range params.Keys() {
 			switch k {
 			case "tags":
-				options.Tags = make(map[string]string)
 				tagsV := params.Get(k)
 				if goja.IsUndefined(tagsV) || goja.IsNull(tagsV) {
 					continue
 				}
-				tagsO := tagsV.ToObject(m.rt)
-				for _, key := range tagsO.Keys() {
-					options.Tags[key] = tagsO.Get(key).String()
+				tags := tagsV.ToObject(m.rt)
+				for _, key := range tags.Keys() {
+					options.Tags[key] = tags.Get(key).String()
 				}
 			case "times":
-				tagsV := params.Get(k)
-				options.Times = int(tagsV.ToInteger())
+				times := params.Get(k)
+				options.Times = int(times.ToInteger())
 			}
 		}
 	}
@@ -56,7 +55,7 @@ func (m *Mokapi) Every(every string, do func(), args goja.Value) (int, error) {
 	return m.host.Every(every, f, options)
 }
 
-func (m *Mokapi) Cron(expr string, do func(), args goja.Value) (int, error) {
+func (m *mokapi) Cron(expr string, do func(), args goja.Value) (int, error) {
 	options := common.NewJobOptions()
 
 	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
@@ -64,18 +63,17 @@ func (m *Mokapi) Cron(expr string, do func(), args goja.Value) (int, error) {
 		for _, k := range params.Keys() {
 			switch k {
 			case "tags":
-				options.Tags = make(map[string]string)
 				tagsV := params.Get(k)
 				if goja.IsUndefined(tagsV) || goja.IsNull(tagsV) {
 					continue
 				}
-				tagsO := tagsV.ToObject(m.rt)
-				for _, key := range tagsO.Keys() {
-					options.Tags[key] = tagsO.Get(key).String()
+				tags := tagsV.ToObject(m.rt)
+				for _, key := range tags.Keys() {
+					options.Tags[key] = tags.Get(key).String()
 				}
 			case "times":
-				tagsV := params.Get(k)
-				options.Times = int(tagsV.ToInteger())
+				times := params.Get(k)
+				options.Times = int(times.ToInteger())
 			}
 		}
 	}
@@ -89,7 +87,7 @@ func (m *Mokapi) Cron(expr string, do func(), args goja.Value) (int, error) {
 	return m.host.Cron(expr, f, options)
 }
 
-func (m *Mokapi) On(event string, do goja.Value, args goja.Value) {
+func (m *mokapi) On(event string, do goja.Value, args goja.Value) {
 	tags := make(map[string]string)
 
 	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
@@ -128,11 +126,11 @@ func (m *Mokapi) On(event string, do goja.Value, args goja.Value) {
 	m.host.On(event, f, tags)
 }
 
-func (m *Mokapi) Env(name string) string {
+func (m *mokapi) Env(name string) string {
 	return os.Getenv(name)
 }
 
-func (m *Mokapi) Open(file string) (string, error) {
+func (m *mokapi) Open(file string) (string, error) {
 	_, s, err := m.host.OpenFile(file, "")
 	if err != nil {
 		return "", err
@@ -145,7 +143,7 @@ type DateArg struct {
 	Timestamp int64  `json:"timestamp"`
 }
 
-func (m *Mokapi) Date(args DateArg) string {
+func (m *mokapi) Date(args DateArg) string {
 	if len(args.Layout) == 0 {
 		args.Layout = time.RFC3339
 	}

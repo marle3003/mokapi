@@ -122,7 +122,7 @@ func (th *testHost) On(event string, do func(args ...interface{}) (bool, error),
 	}
 }
 
-func (th *testHost) Produce(cluster string, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error) {
+func (th *testHost) Produce(args *common.KafkaProduceArgs) (interface{}, interface{}, error) {
 	return nil, nil, nil
 }
 

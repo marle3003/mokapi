@@ -4,17 +4,14 @@ import (
 	log "github.com/sirupsen/logrus"
 	lua "github.com/yuin/gopher-lua"
 	luar "layeh.com/gopher-luar"
+	"mokapi/engine/common"
 	"mokapi/lua/convert"
 	"strings"
 	"time"
 )
 
-type Client interface {
-	Produce(cluster, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error)
-}
-
 type Module struct {
-	client Client
+	client common.KafkaClient
 }
 
 type produceOptions struct {
@@ -27,25 +24,25 @@ type produceOptions struct {
 	Timeout   int
 }
 
-func New(c Client) *Module {
+func New(c common.KafkaClient) *Module {
 	return &Module{
 		client: c,
 	}
 }
 
 func (m *Module) Produce(state *lua.LState) int {
-	opts := &produceOptions{Timeout: 30, Partition: -1}
+	args := &common.KafkaProduceArgs{Timeout: 30, Partition: -1}
 	if lArg := state.Get(1); lArg != lua.LNil {
-		if err := convert.FromLua(lArg, &opts); err != nil {
+		if err := convert.FromLua(lArg, &args); err != nil {
 			log.Error(err)
 		}
 	}
 
 	var err error
 	var k, msg interface{}
-	timeout := time.Duration(opts.Timeout) * time.Second
+	timeout := time.Duration(args.Timeout) * time.Second
 	for start := time.Now(); time.Since(start) < timeout; {
-		if k, msg, err = m.client.Produce(opts.Cluster, opts.Topic, opts.Partition, opts.Key, opts.Value, opts.Headers); err == nil {
+		if k, msg, err = m.client.Produce(args); err == nil {
 			state.Push(luar.New(state, k))
 			state.Push(luar.New(state, msg))
 			return 2

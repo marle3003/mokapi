@@ -7,13 +7,6 @@ import (
 	engine "mokapi/engine/common"
 	"mokapi/js/common"
 	"mokapi/js/compiler"
-	"mokapi/js/modules"
-	"mokapi/js/modules/faker"
-	"mokapi/js/modules/http"
-	"mokapi/js/modules/kafka"
-	"mokapi/js/modules/mustache"
-	"mokapi/js/modules/require"
-	"mokapi/js/modules/yaml"
 	"path/filepath"
 )
 
@@ -24,7 +17,7 @@ type Script struct {
 	exports  goja.Value
 	compiler *compiler.Compiler
 	host     engine.Host
-	require  *require.Module
+	require  *requireModule
 	filename string
 	source   string
 }
@@ -108,18 +101,18 @@ func (s *Script) ensureRuntime() (err error) {
 	s.runtime = goja.New()
 
 	s.runtime.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
-
-	s.require = require.New(
-		require.WithCompiler(s.compiler),
-		require.WithSourceLoader(s.host.OpenScript),
-		require.WithWorkingDir(filepath.Dir(s.filename)),
-		require.WithNativeModule("mokapi", s.loadNativeModule(modules.NewMokapi)),
-		require.WithNativeModule("faker", s.loadNativeModule(faker.New)),
-		require.WithNativeModule("http", s.loadNativeModule(http.New)),
-		require.WithNativeModule("kafka", s.loadNativeModule(kafka.New)),
-		require.WithNativeModule("yaml", s.loadNativeModule(yaml.New)),
-		require.WithNativeModule("mustache", s.loadNativeModule(mustache.New)),
-	)
+	s.require = newRequire(
+		s.host.OpenFile,
+		s.compiler,
+		filepath.Dir(s.filename),
+		map[string]ModuleLoader{
+			"mokapi":   s.loadNativeModule(newMokapi),
+			"faker":    s.loadNativeModule(newFaker),
+			"http":     s.loadNativeModule(newHttp),
+			"kafka":    s.loadNativeModule(newKafka),
+			"yaml":     s.loadNativeModule(newYaml),
+			"mustache": s.loadNativeModule(newMustache),
+		})
 	s.require.Enable(s.runtime)
 	enableConsole(s.runtime, s.host)
 	enableOpen(s.runtime, s.host)
@@ -154,7 +147,7 @@ func (s *Script) addHttpEvent(i interface{}) {
 	s.host.On("http", f, nil)
 }
 
-func (s *Script) loadNativeModule(f func(engine.Host, *goja.Runtime) interface{}) require.ModuleLoader {
+func (s *Script) loadNativeModule(f func(engine.Host, *goja.Runtime) interface{}) ModuleLoader {
 	return func() goja.Value {
 		m := f(s.host, s.runtime)
 		return common.Map(s.runtime, m)

@@ -1,4 +1,4 @@
-package require
+package js
 
 import (
 	"encoding/json"
@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"github.com/dop251/goja"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
 	"mokapi/js/compiler"
+	"net/url"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -18,13 +20,13 @@ var (
 
 const jsonParseFunc = "export default JSON.parse('%v')"
 
-type Option func(m *Module)
+type Option func(m *requireModule)
 
 type ModuleLoader func() goja.Value
 
 type SourceLoader func(file, hint string) (string, string, error)
 
-type Module struct {
+type requireModule struct {
 	native       map[string]ModuleLoader
 	sourceLoader SourceLoader
 	compiler     *compiler.Compiler
@@ -33,46 +35,25 @@ type Module struct {
 	exports      map[string]goja.Value
 }
 
-func New(opts ...Option) *Module {
-	m := &Module{native: map[string]ModuleLoader{}, exports: map[string]goja.Value{}}
-	for _, opt := range opts {
-		opt(m)
+func newRequire(loader SourceLoader, c *compiler.Compiler, workingDir string, native map[string]ModuleLoader) *requireModule {
+	m := &requireModule{
+		native:       native,
+		exports:      map[string]goja.Value{},
+		sourceLoader: loader,
+		compiler:     c,
+		workingDir:   workingDir,
 	}
 	return m
 }
 
-func WithNativeModule(name string, loader ModuleLoader) Option {
-	return func(m *Module) {
-		m.native[name] = loader
-	}
-}
-
-func WithCompiler(compiler *compiler.Compiler) Option {
-	return func(m *Module) {
-		m.compiler = compiler
-	}
-}
-
-func WithWorkingDir(dir string) Option {
-	return func(m *Module) {
-		m.workingDir = dir
-	}
-}
-
-func WithSourceLoader(loader SourceLoader) Option {
-	return func(m *Module) {
-		m.sourceLoader = loader
-	}
-}
-
-func (m *Module) Enable(rt *goja.Runtime) {
+func (m *requireModule) Enable(rt *goja.Runtime) {
 	m.runtime = rt
 	if err := rt.Set("require", m.require); err != nil {
 		log.Errorf("enabling require module: %v", err)
 	}
 }
 
-func (m *Module) require(call goja.FunctionCall) (module goja.Value) {
+func (m *requireModule) require(call goja.FunctionCall) (module goja.Value) {
 	modPath := call.Argument(0).String()
 	if len(modPath) == 0 {
 		panic(m.runtime.ToValue("missing argument"))
@@ -86,9 +67,17 @@ func (m *Module) require(call goja.FunctionCall) (module goja.Value) {
 		m.exports[modPath] = v
 		return v
 	}
-
 	var err error
-	if strings.HasPrefix(modPath, "./") || strings.HasPrefix(modPath, "../") || strings.HasPrefix(modPath, "/") {
+	var u *url.URL
+	if u, err = url.Parse(modPath); err == nil && len(u.Scheme) > 0 {
+		var src string
+		_, src, err = m.sourceLoader(modPath, "")
+		if err == nil {
+			if module, err = m.loadModule(modPath, src); err != nil && module != nil {
+				m.exports[modPath] = module
+			}
+		}
+	} else if strings.HasPrefix(modPath, "./") || strings.HasPrefix(modPath, "../") || strings.HasPrefix(modPath, "/") {
 		if module, err = m.loadFileModule(modPath); err == nil && module != nil {
 			m.exports[modPath] = module
 		}
@@ -101,13 +90,13 @@ func (m *Module) require(call goja.FunctionCall) (module goja.Value) {
 	}
 
 	if module == nil {
-		panic(m.runtime.ToValue(fmt.Sprintf("module %v not found", modPath)))
+		panic(m.runtime.ToValue(fmt.Sprintf("module %v not found: %v", modPath, err)))
 	}
 
 	return
 }
 
-func (m *Module) loadFileModule(modPath string) (goja.Value, error) {
+func (m *requireModule) loadFileModule(modPath string) (goja.Value, error) {
 	if len(filepath.Ext(modPath)) > 0 {
 		p, src, err := m.sourceLoader(modPath, m.workingDir)
 		if err != nil {
@@ -115,6 +104,13 @@ func (m *Module) loadFileModule(modPath string) (goja.Value, error) {
 		}
 		if filepath.Ext(modPath) == ".json" {
 			return m.loadModule(p, fmt.Sprintf(jsonParseFunc, template.JSEscapeString(src)))
+		} else if filepath.Ext(modPath) == ".yaml" {
+			result := make(map[string]interface{})
+			err := yaml.Unmarshal([]byte(src), result)
+			if err != nil {
+				return nil, err
+			}
+			return m.runtime.ToValue(result), nil
 		}
 		return m.loadModule(p, src)
 	} else {
@@ -130,7 +126,7 @@ func (m *Module) loadFileModule(modPath string) (goja.Value, error) {
 	return nil, ModuleFileNotFound
 }
 
-func (m *Module) loadNodeModule(mod string) (goja.Value, error) {
+func (m *requireModule) loadNodeModule(mod string) (goja.Value, error) {
 	dir := m.workingDir
 	for len(dir) > 0 {
 		path := filepath.Join(dir, "node_modules", mod)
@@ -162,7 +158,7 @@ func (m *Module) loadNodeModule(mod string) (goja.Value, error) {
 	return nil, fmt.Errorf("node module does not exist")
 }
 
-func (m *Module) loadFromPackage(modPath, src string) (goja.Value, error) {
+func (m *requireModule) loadFromPackage(modPath, src string) (goja.Value, error) {
 	pkg := struct {
 		Main string
 	}{}
@@ -174,7 +170,7 @@ func (m *Module) loadFromPackage(modPath, src string) (goja.Value, error) {
 	return m.loadFileModule(filepath.Join(modPath, pkg.Main))
 }
 
-func (m *Module) loadModule(modPath, source string) (goja.Value, error) {
+func (m *requireModule) loadModule(modPath, source string) (goja.Value, error) {
 	oldPath := m.workingDir
 	m.workingDir = filepath.Dir(modPath)
 	defer func() { m.workingDir = oldPath }()
@@ -203,7 +199,7 @@ func (m *Module) loadModule(modPath, source string) (goja.Value, error) {
 	return exports, nil
 }
 
-func (m *Module) Close() {
+func (m *requireModule) Close() {
 	m.native = nil
 	m.exports = nil
 }

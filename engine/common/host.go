@@ -24,7 +24,6 @@ type Host interface {
 	Cancel(jobId int) error
 
 	OpenFile(file string, hint string) (string, string, error)
-	OpenScript(file string, hint string) (string, string, error)
 
 	On(event string, do func(args ...interface{}) (bool, error), tags map[string]string)
 
@@ -41,7 +40,17 @@ type Logger interface {
 }
 
 type KafkaClient interface {
-	Produce(cluster string, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error)
+	Produce(args *KafkaProduceArgs) (interface{}, interface{}, error)
+}
+
+type KafkaProduceArgs struct {
+	Cluster   string
+	Topic     string
+	Partition int
+	Key       interface{}
+	Value     interface{}
+	Headers   map[string]interface{}
+	Timeout   int
 }
 
 type HttpClient interface {
@@ -55,6 +64,7 @@ type Action struct {
 
 func NewJobOptions() JobOptions {
 	return JobOptions{
+		Tags:                    map[string]string{},
 		Times:                   -1,
 		RunFirstTimeImmediately: true,
 	}

@@ -1,4 +1,4 @@
-declare module 'mustache' {
+declare module 'http' {
     function get(url: string, args: Args): Response
     function post(url: string, body: string, args: Args): Response
     function put(url: string, body: string, args: Args): Response
@@ -8,14 +8,12 @@ declare module 'mustache' {
     function options(url: string, body: string, args: Args): Response
 }
 
-type Header = { [name: string]: string };
-
 declare interface Args {
-    header?: Header;
+    header?: { [name: string]: any };
 }
 
 declare interface Response {
     body: string
     statusCode: number
-    headers: Header 
+    headers: { [name: string]: string[] }
 }
