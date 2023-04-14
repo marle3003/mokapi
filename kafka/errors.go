@@ -59,5 +59,8 @@ func (e ErrorCode) String() string {
 }
 
 func (e Error) Error() string {
-	return fmt.Sprintf("kafka: error code %v: %v", e.Code, e.Message)
+	if len(e.Message) > 0 {
+		return fmt.Sprintf("kafka: error code %v: %v", e.Code, e.Message)
+	}
+	return fmt.Sprintf("kafka: error code %v", e.Code)
 }

@@ -1,4 +1,4 @@
-package common
+package js
 
 import (
 	"github.com/dop251/goja"
@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func Map(rt *goja.Runtime, module interface{}) goja.Value {
+func mapToJSValue(rt *goja.Runtime, module interface{}) goja.Value {
 	exports := make(map[string]interface{})
 
 	val := reflect.ValueOf(module)

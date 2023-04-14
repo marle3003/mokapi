@@ -15,6 +15,19 @@ func TestRequire(t *testing.T) {
 		f    func(t *testing.T)
 	}{
 		{
+			"module not found",
+			func(t *testing.T) {
+				host.openFile = func(file, hint string) (string, string, error) {
+					return "", "", fmt.Errorf("file not found")
+				}
+				s, err := New("test", `import foo from 'foo'`, host)
+				r.NoError(t, err)
+
+				err = s.Run()
+				r.EqualError(t, err, "module foo not found: node module does not exist at mokapi/js.(*requireModule).require-fm (native)")
+			},
+		},
+		{
 			"mokapi",
 			func(t *testing.T) {
 				s, err := New("test", `import {sleep} from 'mokapi'; export let _sleep = sleep; sleep(12); export default function() {}`, host)
@@ -106,6 +119,19 @@ func TestRequire(t *testing.T) {
 				v, err := s.RunDefault()
 				r.NoError(t, err)
 				r.Equal(t, map[string]interface{}{"demo": "demo"}, v.Export())
+			},
+		},
+		{
+			"require http but script error",
+			func(t *testing.T) {
+				host.openFile = func(file, hint string) (string, string, error) {
+					return "", `foo`, nil
+				}
+				s, err := New("test", `import bar from 'http://foo.bar'`, host)
+				r.NoError(t, err)
+
+				err = s.Run()
+				r.EqualError(t, err, "ReferenceError: foo is not defined at http://foo.bar:1:42(1)")
 			},
 		},
 		{

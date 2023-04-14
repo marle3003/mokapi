@@ -8,6 +8,14 @@ import (
 
 const clientKey = "client"
 
+type UUIDGenerator func() string
+
+var uuidGenerator UUIDGenerator = uuid.New().String
+
+func SetUUIDGenerator(g UUIDGenerator) {
+	uuidGenerator = g
+}
+
 type ClientContext struct {
 	Addr                   string
 	ClientId               string
@@ -29,11 +37,11 @@ func (c *ClientContext) AddGroup(groupName, memberId string) {
 func (c *ClientContext) GetOrCreateMemberId(groupName string) string {
 	memberId := c.Member[groupName]
 	if len(memberId) == 0 {
-		memberId = c.ClientSoftwareName
+		memberId = c.ClientId
 		if len(memberId) > 0 {
 			memberId += "-"
 		}
-		memberId += uuid.New().String()
+		memberId += uuidGenerator()
 		c.Member[groupName] = memberId
 	}
 	return memberId

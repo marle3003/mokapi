@@ -8,7 +8,6 @@ import (
 	"mokapi/config/static"
 	"mokapi/runtime"
 	"mokapi/runtime/metrics"
-	"mokapi/version"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -155,7 +154,7 @@ func writeError(w http.ResponseWriter, err error, status int) {
 func (h *handler) getInfo(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	i := info{Version: version.BuildVersion}
+	i := info{Version: h.app.Version}
 	if len(h.app.Http) > 0 {
 		i.ActiveServices = append(i.ActiveServices, "http")
 	}
@@ -164,6 +163,9 @@ func (h *handler) getInfo(w http.ResponseWriter, _ *http.Request) {
 	}
 	if len(h.app.Smtp) > 0 {
 		i.ActiveServices = append(i.ActiveServices, "smtp")
+	}
+	if len(h.app.Ldap) > 0 {
+		i.ActiveServices = append(i.ActiveServices, "ldap")
 	}
 
 	writeJsonBody(w, i)

@@ -37,7 +37,28 @@ func TestScript(t *testing.T) {
 	})
 	t.Run("console.log", func(t *testing.T) {
 		t.Parallel()
+		host.info = func(args ...interface{}) {
+			r.Equal(t, "foo", args[0])
+		}
 		s, err := New("test", `export default function() {console.log("foo")}`, host)
+		r.NoError(t, err)
+		r.NoError(t, s.Run())
+	})
+	t.Run("console.warn", func(t *testing.T) {
+		t.Parallel()
+		host.warn = func(args ...interface{}) {
+			r.Equal(t, "foo", args[0])
+		}
+		s, err := New("test", `export default function() {console.warn("foo")}`, host)
+		r.NoError(t, err)
+		r.NoError(t, s.Run())
+	})
+	t.Run("console.err", func(t *testing.T) {
+		t.Parallel()
+		host.error = func(args ...interface{}) {
+			r.Equal(t, "foo", args[0])
+		}
+		s, err := New("test", `export default function() {console.error("foo")}`, host)
 		r.NoError(t, err)
 		r.NoError(t, s.Run())
 	})
@@ -82,31 +103,11 @@ func TestScript(t *testing.T) {
 	})
 }
 
-func TestScript_Generator(t *testing.T) {
-	host := &testHost{}
-
-	t.Parallel()
-	t.Run("nil", func(t *testing.T) {
-		t.Parallel()
-
-		s, err := New("",
-			`
-import {fake} from 'faker'
-export default function() {
-  var s = fake({type: 'string'})
-return s
-}`,
-			host)
-		r.NoError(t, err)
-		err = s.Run()
-		r.NoError(t, err)
-	})
-}
-
 type testHost struct {
-	common.Host
 	openFile    func(file, hint string) (string, string, error)
 	info        func(args ...interface{})
+	warn        func(args ...interface{})
+	error       func(args ...interface{})
 	httpClient  *testClient
 	kafkaClient *kafkaClient
 	every       func(every string, do func(), opt common.JobOptions)
@@ -117,6 +118,18 @@ type testHost struct {
 func (th *testHost) Info(args ...interface{}) {
 	if th.info != nil {
 		th.info(args...)
+	}
+}
+
+func (th *testHost) Warn(args ...interface{}) {
+	if th.warn != nil {
+		th.warn(args...)
+	}
+}
+
+func (th *testHost) Error(args ...interface{}) {
+	if th.error != nil {
+		th.error(args...)
 	}
 }
 
@@ -177,4 +190,12 @@ func (c *kafkaClient) Produce(args *common.KafkaProduceArgs) (interface{}, inter
 		return c.produce(args)
 	}
 	return nil, nil, nil
+}
+
+func (th *testHost) Cancel(jobId int) error {
+	return nil
+}
+
+func (th *testHost) Name() string {
+	return "test host"
 }

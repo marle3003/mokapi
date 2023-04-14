@@ -13,18 +13,17 @@ import (
 
 type kafkaSummary struct {
 	service
-	Topics []string `json:"topics"`
 }
 
 type kafka struct {
 	Name        string           `json:"name"`
 	Description string           `json:"description"`
 	Version     string           `json:"version"`
-	Contact     *kafkaContact    `json:"contact"`
+	Contact     *kafkaContact    `json:"contact,omitempty"`
 	Servers     []kafkaServer    `json:"servers,omitempty"`
-	Topics      []topic          `json:"topics"`
-	Groups      []group          `json:"groups"`
-	Metrics     []metrics.Metric `json:"metrics"`
+	Topics      []topic          `json:"topics,omitempty"`
+	Groups      []group          `json:"groups,omitempty"`
+	Metrics     []metrics.Metric `json:"metrics,omitempty"`
 }
 
 type kafkaServer struct {
@@ -79,16 +78,35 @@ type broker struct {
 }
 
 type topicConfig struct {
-	Key         *schemaInfo `json:"key"`
+	Key         *schemaInfo `json:"key,omitempty"`
 	Message     *schemaInfo `json:"message"`
-	Header      *schemaInfo `json:header`
-	MessageType string      `json:messageType`
+	Header      *schemaInfo `json:"header,omitempty"`
+	MessageType string      `json:"messageType"`
 }
 
-func (h *handler) getKafkaServices(w http.ResponseWriter, _ *http.Request) {
-	result := getKafkaServices(h.app.Kafka, h.app.Monitor)
-	w.Header().Set("Content-Type", "application/json")
-	writeJsonBody(w, result)
+func getKafkaServices(services map[string]*runtime.KafkaInfo, m *monitor.Monitor) []interface{} {
+	result := make([]interface{}, 0, len(services))
+	for _, hs := range services {
+		s := service{
+			Name:        hs.Info.Name,
+			Description: hs.Info.Description,
+			Version:     hs.Info.Version,
+			Type:        ServiceKafka,
+			Metrics:     m.FindAll(metrics.ByNamespace("kafka"), metrics.ByLabel("service", hs.Info.Name)),
+		}
+
+		if hs.Info.Contact != nil {
+			c := hs.Info.Contact
+			s.Contact = &contact{
+				Name:  c.Name,
+				Url:   c.Url,
+				Email: c.Email,
+			}
+		}
+
+		result = append(result, kafkaSummary{service: s})
+	}
+	return result
 }
 
 func (h *handler) getKafkaService(w http.ResponseWriter, r *http.Request) {
@@ -104,27 +122,6 @@ func (h *handler) getKafkaService(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.WriteHeader(404)
 	}
-}
-
-func getKafkaServices(services map[string]*runtime.KafkaInfo, m *monitor.Monitor) []interface{} {
-	result := make([]interface{}, 0, len(services))
-	for _, hs := range services {
-		k := &kafkaSummary{
-			service: service{
-				Name:        hs.Info.Name,
-				Description: hs.Info.Description,
-				Version:     hs.Info.Version,
-				Type:        ServiceKafka,
-				Metrics:     m.FindAll(metrics.ByNamespace("kafka"), metrics.ByLabel("service", hs.Info.Name)),
-			},
-		}
-
-		for name := range hs.Channels {
-			k.Topics = append(k.Topics, name)
-		}
-		result = append(result, k)
-	}
-	return result
 }
 
 func getKafka(info *runtime.KafkaInfo) kafka {
@@ -143,11 +140,11 @@ func getKafka(info *runtime.KafkaInfo) kafka {
 		}
 	}
 
-	for name, server := range info.Servers {
+	for name, s := range info.Servers {
 		k.Servers = append(k.Servers, kafkaServer{
 			Name:        name,
-			Url:         server.Url,
-			Description: server.Description,
+			Url:         s.Url,
+			Description: s.Description,
 		})
 	}
 
@@ -181,7 +178,7 @@ func newTopic(s *store.Store, t *store.Topic, config *asyncApi.Channel) topic {
 		result.Configs = &topicConfig{
 			Key:         getSchema(config.Publish.Message.Value.Bindings.Kafka.Key),
 			Message:     getSchema(config.Publish.Message.Value.Payload),
-			Header:      nil,
+			Header:      getSchema(config.Publish.Message.Value.Headers),
 			MessageType: config.Publish.Message.Value.ContentType,
 		}
 	}

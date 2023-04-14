@@ -19,6 +19,27 @@ func NewResponse(opts ...ResponseOptions) *openapi.Response {
 	return r
 }
 
+func WithResponseHeader(name, description string, s *schema.Schema) ResponseOptions {
+	return func(o *openapi.Response) {
+		if o.Headers == nil {
+			o.Headers = map[string]*openapi.HeaderRef{}
+		}
+		o.Headers[name] = &openapi.HeaderRef{
+			Value: &openapi.Header{
+				Name:        name,
+				Description: description,
+				Schema:      &schema.Ref{Value: s},
+			},
+		}
+	}
+}
+
+func WithResponseDescription(description string) ResponseOptions {
+	return func(o *openapi.Response) {
+		o.Description = description
+	}
+}
+
 func WithContent(mediaType string, opts ...ContentOptions) ResponseOptions {
 	return func(o *openapi.Response) {
 		ct := media.ParseContentType(mediaType)

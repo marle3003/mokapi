@@ -5,7 +5,6 @@ import (
 	"github.com/dop251/goja"
 	"github.com/pkg/errors"
 	engine "mokapi/engine/common"
-	"mokapi/js/common"
 	"mokapi/js/compiler"
 	"path/filepath"
 )
@@ -150,6 +149,6 @@ func (s *Script) addHttpEvent(i interface{}) {
 func (s *Script) loadNativeModule(f func(engine.Host, *goja.Runtime) interface{}) ModuleLoader {
 	return func() goja.Value {
 		m := f(s.host, s.runtime)
-		return common.Map(s.runtime, m)
+		return mapToJSValue(s.runtime, m)
 	}
 }

@@ -29,6 +29,16 @@ func WithInfo(title, description, version string) ConfigOptions {
 	}
 }
 
+func WithContact(name, url, mail string) ConfigOptions {
+	return func(c *asyncApi.Config) {
+		c.Info.Contact = &asyncApi.Contact{
+			Name:  name,
+			Url:   url,
+			Email: mail,
+		}
+	}
+}
+
 func WithChannel(name string, opts ...ChannelOptions) ConfigOptions {
 	return func(c *asyncApi.Config) {
 		if c.Channels == nil {
@@ -39,13 +49,19 @@ func WithChannel(name string, opts ...ChannelOptions) ConfigOptions {
 	}
 }
 
+func WithChannelDescription(description string) ChannelOptions {
+	return func(c *asyncApi.Channel) {
+		c.Description = description
+	}
+}
+
 func WithChannelBinding(key, value string) ChannelOptions {
 	return func(c *asyncApi.Channel) {
 		c.Bindings.Kafka.Config[key] = value
 	}
 }
 
-type ServerOptions func(s asyncApi.Server)
+type ServerOptions func(s *asyncApi.Server)
 
 func WithServer(name, protocol, url string, opts ...ServerOptions) ConfigOptions {
 	return func(c *asyncApi.Config) {
@@ -59,15 +75,21 @@ func WithServer(name, protocol, url string, opts ...ServerOptions) ConfigOptions
 		}
 		s.Bindings.Kafka.Config = make(map[string]string)
 		for _, opt := range opts {
-			opt(s)
+			opt(&s)
 		}
 
 		c.Servers[name] = s
 	}
 }
 
+func WithServerDescription(description string) ServerOptions {
+	return func(s *asyncApi.Server) {
+		s.Description = description
+	}
+}
+
 func WithKafka(key, value string) ServerOptions {
-	return func(s asyncApi.Server) {
+	return func(s *asyncApi.Server) {
 		s.Bindings.Kafka.Config[key] = value
 	}
 }
