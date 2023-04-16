@@ -1,4 +1,4 @@
-# Static Data Generation
+# Declarative Data Generation
 
 Providing a detailed specification for data types can greatly enhance the usefulness and accuracy of randomly generated data by ensuring that the generated data aligns with real-word scenarios and is consistent and error-free.
 Mokapi provides you an API endpoint to generate test data on the fly.

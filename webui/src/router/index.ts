@@ -95,12 +95,12 @@ const router = createRouter({
       path: '/docs',
       redirect: ({
         name: 'docs',
-        params: {topic: 'Welcome'}
+        params: {level1: 'Welcome'}
       }),
       name: 'docsStart',
       children: [
         {
-          path: '/docs/:topic/:subject?',
+          path: '/docs/:level1/:level2?/:level3?',
           name: 'docs',
           component: () => import('@/views/DocsView.vue')
         },

@@ -1,32 +1,48 @@
 {
-  "Welcome": "welcome.md",
+  "Home": "welcome.md",
+  "Guides": {
+    "Get started": {
+      "Welcome": "guides/get-started/welcome.md",
+      "Installation": "guides/get-started/installation.md",
+      "Running": "guides/get-started/running.md",
+      "Test Data": "guides/get-started/test-data.md",
+      "Dashboard": "guides/get-started/dashboard.md"
+    },
+    "HTTP": {
+      "Overview": "guides/http/overview.md",
+      "Quick Start": "guides/http/quick-start.md",
+      "HTTPS & TLS": "guides/http/tls.md"
+    },
+    "Kafka": {
+      "Overview": "guides/kafka/overview.md",
+      "Quick Start": "guides/kafka/quick-start.md",
+      "Config": "guides/kafka/config.md"
+    },
+    "LDAP": {"Overview": "guides/ldap/ldap.md"},
+    "SMTP": {"Overview":  "guides/smtp/smtp.md"}
+  },
   "Configuration": {
-    "Configuration": "configuration/configuration.md",
-    "File": "configuration/file.md",
-    "HTTP": "configuration/http.md",
-    "GIT": "configuration/git.md"
+    "Configuration": {
+      "Overview": "configuration/configuration.md"
+    },
+    "Providers": {
+      "File": "configuration/file.md",
+      "HTTP": "configuration/http.md",
+      "GIT": "configuration/git.md"
+    },
+    "Reference": "configuration/reference.md"
   },
-  "OpenAPI": {
-    "OpenAPI": "openapi/intro.md",
-    "Quick Start": "openapi/quick-start.md",
-    "Static Data Generation": "openapi/static-data-generation.md",
-    "Mokapi Script": "openapi/mokapi-script.md",
-    "HTTPS & TLS": "openapi/tls.md"
+  "Javascript API": {
+    "Javascript API": {
+      "Overview": "javascript/javascript.md",
+      "Modules": "javascript/modules.md"
+    }
   },
-  "Kafka": {
-    "Kafka": "kafka/kafka.md",
-    "Quick Start": "kafka/quick-start.md",
-    "Config": "kafka/config.md"
-  },
-  "LDAP": "ldap.md",
-  "SMTP": "smtp.md",
-  "Javascript": {
-    "Javascript": "javascript/scripts.md",
-    "Modules": "javascript/modules.md"
+  "Examples": {
+    "Simple HTTP API": "examples/simple-http-api.md"
   },
   "References": {
-    "Static Configuration": "references/static-configuration.md",
-    "Javascript API": "references/javascript.md",
+    "Declarative Data": "references/declarative-data.md",
     "Lua API": "references/lua.md"
   }
 }

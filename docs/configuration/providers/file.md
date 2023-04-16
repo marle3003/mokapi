@@ -9,7 +9,7 @@ Other providers such as Git provider also use the file provider
 
 ## Configuration
 A list of all options that can be used with the file provider, refer to
-the [reference page](/docs/references/static-configuration.md).
+the [reference page](/docs/configuration/reference.md).
 
 ``` box=limitation
 Mokapi uses fsnotify to listen to file system notification. There

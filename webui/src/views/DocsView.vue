@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref} from 'vue';
+import { onMounted, ref, inject } from 'vue';
 import { useRoute } from 'vue-router';
 import MarkdownItHighlightjs from 'markdown-it-highlightjs';
 import MarkdownIt from 'markdown-it';
@@ -7,31 +7,34 @@ import { MarkdownItTabs } from '@/composables/markdown-tabs';
 import { MarkdownItBox } from '@/composables/markdown-box';
 import { MarkdownItLinks } from '@/composables/mardown-links'
 
-interface DocConfig{
-  [name: string]: string | DocConfig 
-}
-
-const files = import.meta.glob('/src/assets/docs/**/*.md', {as: 'raw', eager: true})
-const c =  import.meta.glob('/src/assets/docs/config.json', {as: 'raw', eager: true})
-const nav: DocConfig = JSON.parse(c['/src/assets/docs/config.json'])
+const files =  import.meta.glob('/public/docs/**/*.md', {as: 'raw', eager: true})
+const nav = inject<DocConfig>('nav')!
 const openSidebar = ref(false);
 
 const route = useRoute()
-const topic = <string>route.params.topic
-const subject = <string>route.params.subject
-let file = nav[topic]
-if (subject) {
-  file = (file as DocConfig)[subject]
+const level1 = <string>route.params.level1
+let file = nav[level1]
+let level2 = <string>route.params.level2
+if (!level2) {
+  level2 = Object.keys(file)[0]
 }
-if (typeof file != "string"){
-  file = file[topic]
+file = (file as DocConfig)[level2.replace('Http', 'HTTP')]
+let level3 = <string>route.params.level3
+if (level3 || typeof file !== 'string') {
+  if (!level3) {
+    level3 = Object.keys(file)[0]
+  }
+  file = (file as DocConfig)[level3]
 }
-let content = files[`/src/assets/docs/${file}`]
+let content = files[`/public/docs/${file}`]
 
 let base = document.querySelector("base")?.href ?? '/'
-if (base != '/' && content) {
-  base = base.replace(document.location.origin, '')
-  content = content.replace(/<img([^>]*)\ssrc=(['"])(?:[^\2\/]*\/)*([^\2]+)\2/gi, `<img$1 src=$2${base}$3$2`);
+base = base.replace(document.location.origin, '')
+if (content) {
+  if (base == '/') {
+    base = ''
+  }
+  content = content.replace(/<img([^>]*)src="(?:[^"\/]*)([^"]+)"/gi, `<img$1 src="${base}$2"`);
 }
 
 if (content) {
@@ -65,11 +68,10 @@ onMounted(() => {
       }
     }
   })
-  document.title = (subject?.length > 0 ? subject : topic) + ' | Mokapi'
+  document.title = level3 + ' | Mokapi'
 })
 function toggleSidebar() {
   openSidebar.value = !openSidebar.value
-  console.log(openSidebar.value)
 }
 </script>
 
@@ -84,20 +86,20 @@ function toggleSidebar() {
       <div class="d-flex">
         <div class="text-white sidebar d-none d-md-block" :class="openSidebar ? 'open': ''" id="sidebar">
           <ul class="nav nav-pills flex-column mb-auto pe-3">
-            <li class="nav-item" v-for="(v, k) of nav">
+            <li class="nav-item" v-for="(v, k) of nav[level1]">
               <div v-if="(typeof v != 'string')" class="chapter">
-                <router-link class="nav-link" :class="k.toString() == topic && !subject ? 'active' : ''" :to="{ name: 'docs', params: {topic: k} }">
+                <div class="chapter-text">
                   {{ k }}
-                  <i v-if="topic == k" class="bi bi-chevron-down"></i>
-                  <i v-else class="bi bi-chevron-right"></i>
-                </router-link>
-                <div class="collapse" :id="k.toString()" :class="topic == k ? 'show' : ''">
+                </div>
+                <div>
                   <li class="nav-item" v-for="(v2, k2) of v">
-                    <router-link v-if="k != k2" class="nav-link" :class="k.toString() == topic && k2.toString() == subject ? 'active' : ''" :to="{ name: 'docs', params: {topic: k, subject: k2} }" style="padding-left: 2rem">{{ k2 }}</router-link>
+                    <router-link v-if="k != k2" class="nav-link" :class="k2.toString().toLowerCase() == level3?.toString().toLowerCase() ? 'active': ''" :to="{ name: 'docs', params: {level2: k.toString(), level3: k2} }" style="padding-left: 2rem">{{ k2 }}</router-link>
                   </li>
               </div>
               </div>
-              <router-link v-if="(typeof v == 'string')" class="nav-link" :class="k.toString() == topic && !subject ? 'active' : ''" :to="{ name: 'docs', params: {topic: k} }">{{ k }}</router-link>
+              <div class="chapter" v-if="typeof v == 'string' && level1 != k">
+                <router-link class="nav-link chapter-text" :class="k.toString().toLowerCase() == level2.toString().toLowerCase() ? 'active': ''" :to="{ name: 'docs', params: {level2: k.toString()} }">{{ k }}</router-link>
+              </div>
             </li>
           </ul>
         </div>
@@ -130,7 +132,7 @@ function toggleSidebar() {
   position: sticky;
   align-self: flex-start;
   width: 240px;
-  top: 5rem;
+  padding-top: 2rem;
 }
 .sidebar.open{
   background-color: var(--color-background-mute);
@@ -219,12 +221,17 @@ table.selectable tbody tr:hover {
   padding-bottom: 5px;
 }
 
-.chapter {
-  position: relative; 
+.nav .nav-link.active {
+  color: var(--color-link-active);
 }
-.nav-link i {
-  position: absolute;
-  right: 0;
+
+.chapter {
+  margin-bottom: 1.5rem;
+}
+
+.chapter-text {
+  font-weight: 700;
+  padding-left: 16px;
 }
 
 .box {

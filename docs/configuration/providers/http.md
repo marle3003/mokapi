@@ -1,12 +1,12 @@
 # HTTP
 
 Reads your dynamic configuration from an HTTP(S) source. The HTTP provider downloads yours
-configuration and is read by the [File Provider](/docs/configuration/file.md).
+configuration and is read by the [File Provider](/docs/configuration/providers/file.md).
 
 ## Configuration
 
 A list of all options that can be used with the HTTP provider, refer to
-the [reference page](/docs/references/static-configuration.md).
+the [reference page](/docs/configuration/reference.md).
 
 ``` box=tip
 HTTP provider is also used to get resources defined by `$ref` using HTTP scheme.

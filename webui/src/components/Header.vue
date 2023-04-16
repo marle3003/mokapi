@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useAppInfo, type AppInfoResponse } from '../composables/appInfo'
 import { RouterLink, useRouter } from 'vue-router'
-import { onMounted, onUnmounted } from 'vue';
+import { onMounted, onUnmounted, inject } from 'vue';
 
 const isDashboardEnabled = import.meta.env.VITE_DASHBOARD == 'true'
 let appInfo: AppInfoResponse | null = null
@@ -14,6 +14,7 @@ if (isDashboardEnabled) {
 }
 
 const isDark = document.documentElement.getAttribute('data-theme') == 'dark';
+const nav = inject<DocConfig>('nav')!
 
 const router = useRouter()
 function switchTheme() {
@@ -33,6 +34,10 @@ onMounted(() => {
     }
   })
 })
+
+function showInHeader(item: any): Boolean{
+  return typeof item !== 'string'
+}
 </script>
 
 <template>
@@ -48,8 +53,8 @@ onMounted(() => {
             <li class="nav-item" v-if="isDashboardEnabled">
               <router-link class="nav-link" :to="{ name: 'dashboard', query: {refresh: 20} }">Dashboard</router-link>
             </li>
-            <li class="nav-item">
-              <router-link class="nav-link" :to="{ name: 'docsStart' }">Docs</router-link>
+            <li class="nav-item" v-for="(item, label) of nav">
+              <router-link class="nav-link" :to="{ name: 'docs', params: {level1: label} }" v-if="showInHeader(item)">{{ label }}</router-link>
             </li>
           </ul>
 

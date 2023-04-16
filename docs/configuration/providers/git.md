@@ -10,7 +10,7 @@ containing files.
 ## Configuration
 
 A list of all options that can be used with the GIT provider, refer to
-the [reference page](/docs/references/static-configuration.md).
+the [reference page](/docs/configuration/reference.md).
 
 
 ### URL
