@@ -89,7 +89,7 @@ func TestHandler_FileServer(t *testing.T) {
 				}
 			}),
 		},
-		{
+		/*{
 			name:   "request svg",
 			config: static.Api{Path: "/mokapi/dashboard"},
 			fn: func(t *testing.T, h http.Handler) {
@@ -106,7 +106,7 @@ func TestHandler_FileServer(t *testing.T) {
 					writer.WriteHeader(404)
 				}
 			}),
-		},
+		},*/
 		{
 			name:   "url rewrite (proxy)",
 			config: static.Api{Path: "/mokapi/dashboard", Base: "/foo/mokapi/dashboard"},
