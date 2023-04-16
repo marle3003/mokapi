@@ -14,8 +14,12 @@ const router = createRouter({
         if (import.meta.env.VITE_DASHBOARD == 'true') {
           return {name: 'dashboard', query: {refresh: 20}}
         }
-        return {path: '/docs'}
+        return {path: '/home'}
       }
+    },
+    {
+      path: '/home',
+      component: import('@/views/Home.vue')
     },
     {
       path: '/dashboard',

@@ -15,7 +15,7 @@ const route = useRoute()
 const level1 = <string>route.params.level1
 let file = nav[level1]
 let level2 = <string>route.params.level2
-if (!level2) {
+if (!level2 || typeof file !== 'string') {
   level2 = Object.keys(file)[0]
 }
 file = (file as DocConfig)[level2.replace('Http', 'HTTP')]
