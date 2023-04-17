@@ -1,7 +1,7 @@
 {
   "Home": "welcome.md",
   "Guides": {
-    "Get started": {
+    "Get Started": {
       "Welcome": "guides/get-started/welcome.md",
       "Installation": "guides/get-started/installation.md",
       "Running": "guides/get-started/running.md",
