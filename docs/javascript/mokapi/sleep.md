@@ -1,6 +1,6 @@
 # sleep( time )
 
-Suspend the execution for the specified duration.
+Suspends the execution for the specified duration.
 
 | Parameter       | Type                 | Description                                                                                                                     |
 |-----------------|----------------------|---------------------------------------------------------------------------------------------------------------------------------|
