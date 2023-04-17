@@ -19,8 +19,18 @@ func newMokapi(host common.Host, rt *goja.Runtime) interface{} {
 	return &mokapi{host: host, rt: rt}
 }
 
-func (*mokapi) Sleep(milliseconds float64) {
-	time.Sleep(time.Duration(milliseconds) * time.Millisecond)
+func (*mokapi) Sleep(i interface{}) error {
+	switch t := i.(type) {
+	case int64:
+		time.Sleep(time.Duration(t) * time.Millisecond)
+	case string:
+		d, err := time.ParseDuration(t)
+		if err != nil {
+			return err
+		}
+		time.Sleep(d)
+	}
+	return nil
 }
 
 func (m *mokapi) Every(every string, do func(), args goja.Value) (int, error) {

@@ -11,6 +11,7 @@ export default function() {
     })
 }
 `
+document.title = 'Mocking tool for engineering teams | mokapi.io'
 </script>
 
 <template>

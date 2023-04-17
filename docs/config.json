@@ -37,8 +37,11 @@
       "Overview": "javascript/javascript.md",
       "Modules": "javascript/modules.md"
     },
-    "Globals": {
+    "globals": {
       "open": "javascript/open.md"
+    },
+    "mokapi": {
+      "sleep": "javascript/mokapi/sleep.md"
     }
   },
   "Examples": {
