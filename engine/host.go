@@ -190,7 +190,7 @@ func (sh *scriptHost) Error(args ...interface{}) {
 	sh.engine.logger.Error(args...)
 }
 
-func (sh *scriptHost) OpenFile(path string, hint string) (string, string, error) {
+func (sh *scriptHost) OpenFile(path string, hint string) (*config.Config, error) {
 	u, err := url.Parse(path)
 	if err != nil || len(u.Scheme) == 0 {
 		if !filepath.IsAbs(path) {
@@ -206,17 +206,17 @@ func (sh *scriptHost) OpenFile(path string, hint string) (string, string, error)
 			if len(hint) > 0 {
 				return sh.OpenFile(path, "")
 			}
-			return "", "", err
+			return nil, err
 		}
 	}
 
 	f, err := sh.engine.reader.Read(u,
 		config.WithParent(sh.file))
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
 
-	return path, string(f.Raw), nil
+	return f, nil
 }
 
 func (sh *scriptHost) KafkaClient() common.KafkaClient {

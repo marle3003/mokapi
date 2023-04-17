@@ -1,6 +1,9 @@
 package common
 
-import "net/http"
+import (
+	config "mokapi/config/dynamic/common"
+	"net/http"
+)
 
 type EventEmitter interface {
 	Emit(event string, args ...interface{}) []*Action
@@ -23,7 +26,7 @@ type Host interface {
 	Cron(expr string, do func(), opt JobOptions) (int, error)
 	Cancel(jobId int) error
 
-	OpenFile(file string, hint string) (string, string, error)
+	OpenFile(file string, hint string) (*config.Config, error)
 
 	On(event string, do func(args ...interface{}) (bool, error), tags map[string]string)
 

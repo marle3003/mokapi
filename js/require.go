@@ -7,6 +7,7 @@ import (
 	"github.com/dop251/goja"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
+	"mokapi/config/dynamic/common"
 	"mokapi/js/compiler"
 	"net/url"
 	"path/filepath"
@@ -24,7 +25,7 @@ type Option func(m *requireModule)
 
 type ModuleLoader func() goja.Value
 
-type SourceLoader func(file, hint string) (string, string, error)
+type SourceLoader func(file, hint string) (*common.Config, error)
 
 type requireModule struct {
 	native       map[string]ModuleLoader
@@ -70,10 +71,9 @@ func (m *requireModule) require(call goja.FunctionCall) (module goja.Value) {
 	var err error
 	var u *url.URL
 	if u, err = url.Parse(modPath); err == nil && len(u.Scheme) > 0 {
-		var src string
-		_, src, err = m.sourceLoader(modPath, "")
+		f, err := m.sourceLoader(modPath, "")
 		if err == nil {
-			if module, err = m.loadModule(modPath, src); err != nil && module != nil {
+			if module, err = m.loadModule(modPath, string(f.Raw)); err != nil && module != nil {
 				m.exports[modPath] = module
 			}
 		}
@@ -98,21 +98,21 @@ func (m *requireModule) require(call goja.FunctionCall) (module goja.Value) {
 
 func (m *requireModule) loadFileModule(modPath string) (goja.Value, error) {
 	if len(filepath.Ext(modPath)) > 0 {
-		p, src, err := m.sourceLoader(modPath, m.workingDir)
+		f, err := m.sourceLoader(modPath, m.workingDir)
 		if err != nil {
 			return nil, err
 		}
 		if filepath.Ext(modPath) == ".json" {
-			return m.loadModule(p, fmt.Sprintf(jsonParseFunc, template.JSEscapeString(src)))
+			return m.loadModule(f.Url.String(), fmt.Sprintf(jsonParseFunc, template.JSEscapeString(string(f.Raw))))
 		} else if filepath.Ext(modPath) == ".yaml" {
 			result := make(map[string]interface{})
-			err := yaml.Unmarshal([]byte(src), result)
+			err := yaml.Unmarshal(f.Raw, result)
 			if err != nil {
 				return nil, err
 			}
 			return m.runtime.ToValue(result), nil
 		}
-		return m.loadModule(p, src)
+		return m.loadModule(f.Url.String(), string(f.Raw))
 	} else {
 		if v, err := m.loadFileModule(modPath + ".js"); err == nil {
 			return v, nil
@@ -130,13 +130,13 @@ func (m *requireModule) loadNodeModule(mod string) (goja.Value, error) {
 	dir := m.workingDir
 	for len(dir) > 0 {
 		path := filepath.Join(dir, "node_modules", mod)
-		_, src, err := m.sourceLoader(filepath.Join(path, "package.json"), m.workingDir)
+		f, err := m.sourceLoader(filepath.Join(path, "package.json"), m.workingDir)
 		if err != nil {
 			if v, err := m.loadFileModule(filepath.Join(path, "index.js")); err == nil {
 				return v, nil
 			}
 		} else {
-			if v, err := m.loadFromPackage(path, src); err == nil {
+			if v, err := m.loadFromPackage(path, string(f.Raw)); err == nil {
 				return v, nil
 			}
 

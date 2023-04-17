@@ -13,7 +13,7 @@ restarting of Mokapi
 
 Elements in the static configuration don't often change and changes require a restart of the application.
 
-There are two different ways to define a static configuration options.
+There are three different ways to define a static configuration options.
 1. Configuration file
 2. Command-line arguments
 3. Environment variables

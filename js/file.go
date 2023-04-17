@@ -16,10 +16,17 @@ func enableOpen(rt *goja.Runtime, host common.Host) {
 	rt.Set("open", r.open)
 }
 
-func (o *open) open(file string) (string, error) {
-	_, s, err := o.host.OpenFile(file, "")
+func (o *open) open(file string, args map[string]interface{}) (interface{}, error) {
+	f, err := o.host.OpenFile(file, "")
 	if err != nil {
 		return "", err
 	}
-	return s, nil
+	switch args["as"] {
+	case "binary":
+		return f.Raw, nil
+	case "string":
+		fallthrough
+	default:
+		return string(f.Raw), nil
+	}
 }

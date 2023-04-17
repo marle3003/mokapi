@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"github.com/dop251/goja"
 	r "github.com/stretchr/testify/require"
+	config "mokapi/config/dynamic/common"
 	"mokapi/engine/common"
 	"net/http"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -105,6 +107,7 @@ func TestScript(t *testing.T) {
 
 type testHost struct {
 	openFile    func(file, hint string) (string, string, error)
+	open        func(file, hint string) (*config.Config, error)
 	info        func(args ...interface{})
 	warn        func(args ...interface{})
 	error       func(args ...interface{})
@@ -133,11 +136,18 @@ func (th *testHost) Error(args ...interface{}) {
 	}
 }
 
-func (th *testHost) OpenFile(file, hint string) (string, string, error) {
+func (th *testHost) OpenFile(file, hint string) (*config.Config, error) {
 	if th.openFile != nil {
-		return th.openFile(file, hint)
+		p, src, err := th.openFile(file, hint)
+		if err != nil {
+			return nil, err
+		}
+		return &config.Config{Raw: []byte(src), Url: mustParse(p)}, nil
 	}
-	return "", "", nil
+	if th.open != nil {
+		return th.open(file, hint)
+	}
+	return nil, nil
 }
 
 func (th *testHost) Every(every string, do func(), opt common.JobOptions) (int, error) {
@@ -198,4 +208,12 @@ func (th *testHost) Cancel(jobId int) error {
 
 func (th *testHost) Name() string {
 	return "test host"
+}
+
+func mustParse(s string) *url.URL {
+	u, err := url.Parse(s)
+	if err != nil {
+		panic(err)
+	}
+	return u
 }

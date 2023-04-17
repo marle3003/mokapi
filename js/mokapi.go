@@ -131,11 +131,11 @@ func (m *mokapi) Env(name string) string {
 }
 
 func (m *mokapi) Open(file string) (string, error) {
-	_, s, err := m.host.OpenFile(file, "")
+	f, err := m.host.OpenFile(file, "")
 	if err != nil {
 		return "", err
 	}
-	return s, nil
+	return string(f.Raw), nil
 }
 
 type DateArg struct {

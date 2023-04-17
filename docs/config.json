@@ -36,6 +36,9 @@
     "Javascript API": {
       "Overview": "javascript/javascript.md",
       "Modules": "javascript/modules.md"
+    },
+    "Globals": {
+      "open": "javascript/open.md"
     }
   },
   "Examples": {
