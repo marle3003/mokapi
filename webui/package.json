@@ -11,7 +11,7 @@
     "build-only": "vite build",
     "type-check": "vue-tsc --noEmit",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
-    "copy-docs": "ncp ../docs ./public/docs",
+    "copy-docs": "ncp ../docs ./src/assets/docs",
     "clean": "del-cli ./src/assets/docs"
   },
   "dependencies": {

@@ -71,7 +71,7 @@ export default function() {
     </section>
     <section>
       <h2>See what's going on</h2>
-      <img src="/docs/guides/get-started/dashboard.png" width="800" />
+      <img src="@/assets/docs/guides/get-started/dashboard.png" width="800" />
     </section>
   </main>
 </template>

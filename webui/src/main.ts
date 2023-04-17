@@ -3,7 +3,6 @@ import App from './App.vue'
 import router from './router'
 import './assets/main.css';
 import VueHighlightJS from 'vue3-highlightjs'
-import config from '../public/docs/config.json'
 
 const app = createApp(App)
 
@@ -14,6 +13,6 @@ router.isReady().then(() =>{
     app.mount('#app')
 })
 
-//const config =  import.meta.glob('/docs/config.json', {as: 'raw', eager: true})
-//const nav: DocConfig = JSON.parse(config['/docs/config.json'])
-app.provide('nav', config)
+const config =  import.meta.glob('/src/assets/docs/config.json', {as: 'raw', eager: true})
+const nav: DocConfig = JSON.parse(config['/src/assets/docs/config.json'])
+app.provide('nav', nav)

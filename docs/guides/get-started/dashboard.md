@@ -3,7 +3,7 @@
 Mokapi provides you a dashboard where you can view your 
 mocked APIs or analyze requests/messages.
 
-<img src="/docs/get-started/dashboard.png" width="700" alt="Mokapi Dashboard" title="Mokapi Dashboard" />
+<img src="/docs/guides/get-started/dashboard.png" width="700" alt="Mokapi Dashboard" title="Mokapi Dashboard" />
 
 ## API
 

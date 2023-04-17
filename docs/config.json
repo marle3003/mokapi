@@ -26,9 +26,9 @@
       "Overview": "configuration/configuration.md"
     },
     "Providers": {
-      "File": "configuration/file.md",
-      "HTTP": "configuration/http.md",
-      "GIT": "configuration/git.md"
+      "File": "configuration/providers/file.md",
+      "HTTP": "configuration/providers/http.md",
+      "GIT": "configuration/providers/git.md"
     },
     "Reference": "configuration/reference.md"
   },

@@ -7,7 +7,10 @@ import { MarkdownItTabs } from '@/composables/markdown-tabs';
 import { MarkdownItBox } from '@/composables/markdown-box';
 import { MarkdownItLinks } from '@/composables/mardown-links'
 
-const files =  import.meta.glob('/public/docs/**/*.md', {as: 'raw', eager: true})
+const images =  import.meta.glob('/src/assets/docs/**/*.png', {as: 'url', eager: true})
+console.log(images)
+
+const files =  import.meta.glob('/src/assets/docs/**/*.md', {as: 'raw', eager: true})
 const nav = inject<DocConfig>('nav')!
 const openSidebar = ref(false);
 
@@ -15,10 +18,12 @@ const route = useRoute()
 const level1 = <string>route.params.level1
 let file = nav[level1]
 let level2 = <string>route.params.level2
-if (!level2 || typeof file !== 'string') {
+if (!level2 && typeof file !== 'string') {
   level2 = Object.keys(file)[0]
 }
+
 file = (file as DocConfig)[level2.replace('Http', 'HTTP')]
+
 let level3 = <string>route.params.level3
 if (level3 || typeof file !== 'string') {
   if (!level3) {
@@ -26,7 +31,9 @@ if (level3 || typeof file !== 'string') {
   }
   file = (file as DocConfig)[level3]
 }
-let content = files[`/public/docs/${file}`]
+
+let content = files[`/src/assets/docs/${file}`]
+
 
 let base = document.querySelector("base")?.href ?? '/'
 base = base.replace(document.location.origin, '')
@@ -34,7 +41,17 @@ if (content) {
   if (base == '/') {
     base = ''
   }
-  content = content.replace(/<img([^>]*)src="(?:[^"\/]*)([^"]+)"/gi, `<img$1 src="${base}$2"`);
+  const regex = /<img([^>]*)src="(?:[^"\/]*)([^"]+)"/gi
+  let m;
+  do {
+    m = regex.exec(content)
+    if (m) {
+      const path = `/src/assets${m[2]}`
+      //const imageUrl = new URL(path, import.meta.url)
+      const imageUrl = images[path]
+      content = content.replace(m[0], `<img${m[1]} src="${imageUrl}"`);
+    }
+  } while(m);
 }
 
 if (content) {

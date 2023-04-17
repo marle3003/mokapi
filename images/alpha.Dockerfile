@@ -6,7 +6,7 @@ COPY ./webui ./webui
 
 WORKDIR webui
 
-COPY ./docs ./public/docs
+COPY ./docs ./src/assets/docs
 
 RUN npm install
 RUN npm run build

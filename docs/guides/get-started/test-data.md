@@ -7,8 +7,10 @@ conditions or parameters. Mokapi Scripts allows you to
 create responses that can simulate a wide range of scenarios
 and edge cases.
 
-You can also use [Mokapi's endpoint](/docs/guides/get-started/dashboard.md)
-to generate test data on the fly.
+``` box=tip
+You can also use Mokapi's endpoint to generate test data on the fly,
+see Mokapi's Dashboard for details
+```
 
 ## Declarative Test Data
 
