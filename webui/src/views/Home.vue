@@ -17,10 +17,10 @@ export default function() {
   <main class="home">
     <section>
       <div class="row hero-title">
-        <div class="col-6">
+        <div class="col-md-6">
           <h1>Create and test API designs<br />before actually building them</h1>
           <p class="description">Speed up testing process and reduce dependencies</p>
-          <p>
+          <p class="d-none d-md-block">
             <router-link :to="{ path: '/docs/Guides' }">
               <button type="button" class="btn btn-outline-primary">Guides</button>
             </router-link>
@@ -29,9 +29,17 @@ export default function() {
             </router-link>
           </p>
         </div>
-        <div class="col-6">
+        <div class="col-md-6">
           <img src="/logo.svg" width="300" />
         </div>
+        <p class="d-block d-md-none" style="margin-top: 2rem;">
+            <router-link :to="{ path: '/docs/Guides' }">
+              <button type="button" class="btn btn-outline-primary">Guides</button>
+            </router-link>
+            <router-link :to="{ path: '/docs/Examples' }">
+              <button type="button" class="btn btn-outline-primary">Examples</button>
+            </router-link>
+          </p>
       </div>
     </section>
     <section>
@@ -91,6 +99,9 @@ h1 {
 }
 .hero-title p {
   padding-left: 1.5rem;
+}
+.hero-title .description {
+  margin-bottom: 2rem;
 }
 .hero-title button {
   margin-right: 1rem;
