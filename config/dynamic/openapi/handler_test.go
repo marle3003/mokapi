@@ -30,12 +30,25 @@ func TestResolveEndpoint(t *testing.T) {
 				require.Equal(t, "no matching endpoint found: GET https://foo\n", rr.Body.String())
 			},
 		},
-		{"root path",
+		{"base path",
 			func(t *testing.T, f serveHTTP, c *openapi.Config) {
 				c.Servers[0].Url = "http://localhost/root"
 				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")))
 				openapitest.AppendEndpoint("/foo", c, openapitest.WithOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/root/foo", nil)
+				r = r.WithContext(context.WithValue(r.Context(), "servicePath", "/root"))
+				rr := httptest.NewRecorder()
+				f(rr, r)
+				require.Equal(t, 200, rr.Code)
+				require.Equal(t, "application/json", rr.Header().Get("Content-Type"))
+			},
+		},
+		{"base path single slash",
+			func(t *testing.T, f serveHTTP, c *openapi.Config) {
+				c.Servers[0].Url = "http://localhost/root"
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")))
+				openapitest.AppendEndpoint("/", c, openapitest.WithOperation("get", op))
+				r := httptest.NewRequest("get", "http://localhost/root", nil)
 				r = r.WithContext(context.WithValue(r.Context(), "servicePath", "/root"))
 				rr := httptest.NewRecorder()
 				f(rr, r)

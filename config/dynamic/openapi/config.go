@@ -287,11 +287,12 @@ func (r *Responses) GetResponse(httpStatus int) *Response {
 }
 
 func (r *RequestBody) GetMedia(contentType media.ContentType) *MediaType {
-	if c, ok := r.Content[contentType.String()]; ok {
-		return c
-	} else if c, ok := r.Content[contentType.Key()]; ok {
-		return c
+	for _, v := range r.Content {
+		if v.ContentType.Match(contentType) {
+			return v
+		}
 	}
+
 	return nil
 }
 

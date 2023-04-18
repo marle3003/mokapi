@@ -173,16 +173,19 @@ func (s *Schema) String() string {
 	if len(s.Required) > 0 {
 		sb.WriteString(fmt.Sprintf(" required=%v", s.Required))
 	}
-	if s.Type == "object" && !s.IsFreeForm() {
-		sb.WriteString(" free-form=false")
+	if s.Type == "object" && s.IsFreeForm() {
+		sb.WriteString(" free-form=true")
 	}
 
 	return sb.String()
 }
 
 func (s *Schema) IsFreeForm() bool {
-	return s.Type == "object" &&
-		s.AdditionalProperties.IsFreeForm()
+	free := s.Type == "object" && (s.Properties == nil || s.Properties.Value.Len() == 0)
+	if s.AdditionalProperties == nil {
+		return free
+	}
+	return s.AdditionalProperties.IsFreeForm()
 }
 
 func (s *Schema) IsDictionary() bool {
@@ -191,7 +194,7 @@ func (s *Schema) IsDictionary() bool {
 
 func (ap *AdditionalProperties) IsFreeForm() bool {
 	if ap == nil {
-		return true
+		return false
 	}
 	if ap.Ref == nil || ap.Value == nil {
 		return !ap.Forbidden

@@ -327,7 +327,7 @@ func TestRef_Marshal_Invalid(t *testing.T) {
 			)},
 			map[interface{}]interface{}{"name": "foo"},
 			media.ParseContentType("application/json"),
-			`missing required field value in {name: foo}, expected: schema type=object properties=[name, value] required=[value]`,
+			`missing required field value on {name: foo}, expected schema type=object properties=[name, value] required=[value]`,
 		},
 	}
 
