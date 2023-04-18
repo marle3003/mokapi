@@ -19,8 +19,18 @@ func newMokapi(host common.Host, rt *goja.Runtime) interface{} {
 	return &mokapi{host: host, rt: rt}
 }
 
-func (*mokapi) Sleep(milliseconds float64) {
-	time.Sleep(time.Duration(milliseconds) * time.Millisecond)
+func (*mokapi) Sleep(i interface{}) error {
+	switch t := i.(type) {
+	case int64:
+		time.Sleep(time.Duration(t) * time.Millisecond)
+	case string:
+		d, err := time.ParseDuration(t)
+		if err != nil {
+			return err
+		}
+		time.Sleep(d)
+	}
+	return nil
 }
 
 func (m *mokapi) Every(every string, do func(), args goja.Value) (int, error) {
@@ -131,11 +141,11 @@ func (m *mokapi) Env(name string) string {
 }
 
 func (m *mokapi) Open(file string) (string, error) {
-	_, s, err := m.host.OpenFile(file, "")
+	f, err := m.host.OpenFile(file, "")
 	if err != nil {
 		return "", err
 	}
-	return s, nil
+	return string(f.Raw), nil
 }
 
 type DateArg struct {

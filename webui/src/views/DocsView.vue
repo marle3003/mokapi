@@ -8,7 +8,6 @@ import { MarkdownItBox } from '@/composables/markdown-box';
 import { MarkdownItLinks } from '@/composables/mardown-links'
 
 const images =  import.meta.glob('/src/assets/docs/**/*.png', {as: 'url', eager: true})
-console.log(images)
 
 const files =  import.meta.glob('/src/assets/docs/**/*.md', {as: 'raw', eager: true})
 const nav = inject<DocConfig>('nav')!
@@ -20,6 +19,8 @@ let file = nav[level1]
 let level2 = <string>route.params.level2
 if (!level2 && typeof file !== 'string') {
   level2 = Object.keys(file)[0]
+}else {
+  level2 = level2.split('-').join(' ')
 }
 
 file = (file as DocConfig)[level2.replace('Http', 'HTTP')]
@@ -28,12 +29,13 @@ let level3 = <string>route.params.level3
 if (level3 || typeof file !== 'string') {
   if (!level3) {
     level3 = Object.keys(file)[0]
+  }else {
+    level3 = level3.split('-').join(' ')
   }
   file = (file as DocConfig)[level3]
 }
 
 let content = files[`/src/assets/docs/${file}`]
-
 
 let base = document.querySelector("base")?.href ?? '/'
 base = base.replace(document.location.origin, '')
@@ -90,6 +92,12 @@ onMounted(() => {
 function toggleSidebar() {
   openSidebar.value = !openSidebar.value
 }
+function matchLevel2(label: any): Boolean {
+  return label.toString().toLowerCase() == level2.toLowerCase()
+}
+function matchLevel3(label: any): Boolean {
+  return label.toString().toLowerCase() == level3.toLowerCase()
+}
 </script>
 
 <template>
@@ -109,13 +117,13 @@ function toggleSidebar() {
                   {{ k }}
                 </div>
                 <div>
-                  <li class="nav-item" v-for="(v2, k2) of v">
-                    <router-link v-if="k != k2" class="nav-link" :class="k2.toString().toLowerCase() == level3?.toString().toLowerCase() ? 'active': ''" :to="{ name: 'docs', params: {level2: k.toString(), level3: k2} }" style="padding-left: 2rem">{{ k2 }}</router-link>
+                  <li class="nav-item" v-for="(_, k2) of v">
+                    <router-link v-if="k != k2" class="nav-link" :class="matchLevel2(k) && matchLevel3(k2) ? 'active': ''" :to="{ name: 'docs', params: {level2: k.toString(), level3: k2} }" style="padding-left: 2rem">{{ k2 }}</router-link>
                   </li>
               </div>
               </div>
               <div class="chapter" v-if="typeof v == 'string' && level1 != k">
-                <router-link class="nav-link chapter-text" :class="k.toString().toLowerCase() == level2.toString().toLowerCase() ? 'active': ''" :to="{ name: 'docs', params: {level2: k.toString()} }">{{ k }}</router-link>
+                <router-link class="nav-link chapter-text" :class="matchLevel2(k) ? 'active': ''" :to="{ name: 'docs', params: {level2: k.toString()} }">{{ k }}</router-link>
               </div>
             </li>
           </ul>

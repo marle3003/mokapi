@@ -44,6 +44,23 @@ func TestScript_Open(t *testing.T) {
 				r.Error(t, err)
 			},
 		},
+		{
+			"file as binary",
+			func(t *testing.T, host *testHost) {
+				host.openFile = func(file, hint string) (string, string, error) {
+					return "", "foo", nil
+				}
+				s, err := New("",
+					`export default function() {
+						  	return open('foo', { as: 'binary' })
+						 }`,
+					host)
+				r.NoError(t, err)
+				v, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, []uint8{'f', 'o', 'o'}, v.Export())
+			},
+		},
 	}
 
 	t.Parallel()

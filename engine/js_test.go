@@ -144,6 +144,26 @@ func TestJsOn(t *testing.T) {
 		summary := summaries[0]
 		r.GreaterOrEqual(t, summary.Duration, int64(1000), "sleep")
 	})
+	t.Run("duration as string", func(t *testing.T) {
+		t.Parallel()
+		engine := New(emptyReader, runtime.New())
+		err := engine.AddScript(newScript("test.js", `
+			import {on, sleep} from 'mokapi'
+			export default function() {
+				on('http', function() {
+					sleep('1s');
+					return true
+				});
+			}
+		`))
+		r.NoError(t, err)
+
+		summaries := engine.Run("http")
+
+		r.Len(t, summaries, 1, "summary length not 1")
+		summary := summaries[0]
+		r.GreaterOrEqual(t, summary.Duration, int64(1000), "sleep")
+	})
 	t.Run("tag name", func(t *testing.T) {
 		t.Parallel()
 		engine := New(emptyReader, runtime.New())
