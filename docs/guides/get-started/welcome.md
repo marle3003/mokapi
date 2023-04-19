@@ -12,7 +12,7 @@ environment
 
 ## What is Mokapi
 
-Mokapi is an open-source that allows developers to create 
+Mokapi is an open-source tool that allows developers to create 
 and test API designs before actually building them. 
 
 Using Mokapi, you can quickly and easily test different 
