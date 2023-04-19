@@ -18,7 +18,7 @@ func TestHost_Every(t *testing.T) {
 			func(t *testing.T, host *scriptHost) {
 				opt := common.JobOptions{Times: 1, RunFirstTimeImmediately: true}
 				var err error
-				ch := make(chan bool)
+				ch := make(chan bool, 1)
 				_, err = host.Every("100ms", func() {
 					ch <- true
 				}, opt)
@@ -42,7 +42,7 @@ func TestHost_Every(t *testing.T) {
 			func(t *testing.T, host *scriptHost) {
 				opt := common.JobOptions{Times: 1, RunFirstTimeImmediately: false}
 				var err error
-				ch := make(chan bool)
+				ch := make(chan bool, 1)
 				_, err = host.Every("100ms", func() {
 					ch <- true
 				}, opt)
