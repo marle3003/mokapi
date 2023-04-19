@@ -3,7 +3,6 @@ package openapi
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"mokapi/config/dynamic/openapi/parameter"
@@ -81,12 +80,10 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			writeError(rw, r, err, h.config.Info.Name)
 			return
-		} else if body == nil {
-			writeError(rw, r, errors.New("request body expected"), h.config.Info.Name)
-			return
+		} else if body != nil {
+			request.Body = body.Value
+			logHttp.Request.Body = body.Raw
 		}
-		request.Body = body.Value
-		logHttp.Request.Body = body.Raw
 	}
 
 	if !contentType.IsEmpty() {
@@ -210,7 +207,10 @@ endpointLoop:
 			continue
 		}
 
-		routePath := path
+		routePath := ""
+		if path != "/" {
+			routePath = path
+		}
 		servicePath, ok := r.Context().Value("servicePath").(string)
 		if ok && servicePath != "/" {
 			routePath = servicePath + routePath

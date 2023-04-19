@@ -122,7 +122,7 @@ func TestSchema_IsFreeForm(t *testing.T) {
 			"object with property",
 			func(t *testing.T) {
 				s := schematest.New("object", schematest.WithProperty("foo", schematest.New("string")))
-				require.True(t, s.IsFreeForm())
+				require.False(t, s.IsFreeForm())
 			},
 		},
 		{

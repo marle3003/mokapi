@@ -191,7 +191,7 @@ func TestAny(t *testing.T) {
 					schematest.New("object",
 						schematest.WithProperty("name", schematest.New("string"))))),
 			func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, `could not parse {"age":12,"name":"bar"}, too many properties for object, expected any of schema type=object properties=[name]`)
+				require.EqualError(t, err, `could not parse {"name":"bar","age":12}, too many properties for object, expected any of schema type=object properties=[name]`)
 			},
 		},
 		{
@@ -271,7 +271,7 @@ func TestParseOneOf(t *testing.T) {
 					schematest.WithProperty("bar", schematest.New("boolean"))),
 			)),
 			func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, `could not parse {"bar":true,"foo":12}, expected one of schema type=object properties=[foo], schema type=object properties=[bar]`)
+				require.EqualError(t, err, `could not parse {"foo":12,"bar":true}, expected one of schema type=object properties=[foo], schema type=object properties=[bar]`)
 			},
 		},
 		{
@@ -653,7 +653,7 @@ func TestValidate_Object(t *testing.T) {
 				schematest.WithProperty("age", schematest.New("integer")),
 			),
 			func(t *testing.T, _ interface{}, err error) {
-				require.EqualError(t, err, `missing required field age on {"name":"foo"}, expected schema type=object properties=[name, age] required=[name age]`)
+				require.EqualError(t, err, `missing required field age on {name: foo}, expected schema type=object properties=[name, age] required=[name age]`)
 			},
 		},
 		{
@@ -663,7 +663,7 @@ func TestValidate_Object(t *testing.T) {
 				schematest.WithMinProperties(2),
 			),
 			func(t *testing.T, _ interface{}, err error) {
-				require.EqualError(t, err, `validation error minProperties on {"name":"foo"}, expected schema type=object minProperties=2`)
+				require.EqualError(t, err, `validation error minProperties on {name: foo}, expected schema type=object minProperties=2 free-form=true`)
 			},
 		},
 		{
@@ -673,7 +673,7 @@ func TestValidate_Object(t *testing.T) {
 				schematest.WithMaxProperties(1),
 			),
 			func(t *testing.T, _ interface{}, err error) {
-				require.Truef(t, strings.HasSuffix(err.Error(), "expected schema type=object maxProperties=1"), "but error is %v", err)
+				require.Truef(t, strings.HasSuffix(err.Error(), "expected schema type=object maxProperties=1 free-form=true"), "but error is %v", err)
 			},
 		},
 		{

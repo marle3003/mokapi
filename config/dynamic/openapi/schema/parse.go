@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	log "github.com/sirupsen/logrus"
@@ -8,6 +9,7 @@ import (
 	"io/ioutil"
 	"math"
 	"mokapi/media"
+	"mokapi/sortedmap"
 	"reflect"
 	"strconv"
 	"strings"
@@ -22,10 +24,12 @@ func ParseString(s string, schema *Ref) (interface{}, error) {
 func Parse(b []byte, contentType media.ContentType, schema *Ref) (i interface{}, err error) {
 	switch {
 	case contentType.Subtype == "json":
-		err = json.Unmarshal(b, &i)
+		d := &data{}
+		err = json.Unmarshal(b, &d)
 		if err != nil {
 			return nil, fmt.Errorf("invalid json format: %v", err)
 		}
+		i = d.d
 	case contentType.IsXml():
 		i, err = parseXml(b, schema)
 	default:
@@ -60,7 +64,7 @@ func ParseFrom(r io.Reader, contentType media.ContentType, schema *Ref) (i inter
 
 func parse(v interface{}, schema *Ref) (interface{}, error) {
 	if schema == nil || schema.Value == nil {
-		if m, ok := v.(map[string]interface{}); ok {
+		if m, ok := v.(*sortedmap.LinkedHashMap); ok {
 			return toObject(m)
 		}
 		return v, nil
@@ -96,15 +100,15 @@ func parse(v interface{}, schema *Ref) (interface{}, error) {
 }
 
 func parseAnyOf(i interface{}, schema *Schema) (interface{}, error) {
-	if m, ok := i.(map[string]interface{}); ok {
+	if m, ok := i.(*sortedmap.LinkedHashMap); ok {
 		return parseAnyObject(m, schema)
 	}
 	return parseAnyValue(i, schema)
 }
 
-func parseAnyObject(m map[string]interface{}, schema *Schema) (interface{}, error) {
-	fields := make([]reflect.StructField, 0, len(m))
-	values := make([]reflect.Value, 0, len(m))
+func parseAnyObject(m *sortedmap.LinkedHashMap, schema *Schema) (interface{}, error) {
+	fields := make([]reflect.StructField, 0, m.Len())
+	values := make([]reflect.Value, 0, m.Len())
 
 	for _, ref := range schema.AnyOf {
 		s := ref.Value
@@ -123,14 +127,14 @@ func parseAnyObject(m map[string]interface{}, schema *Schema) (interface{}, erro
 			name := it.Key().(string)
 			pRef := it.Value().(*Ref)
 
-			if _, ok := m[name]; !ok {
+			if v := m.Get(name); v == nil {
 				if _, ok := required[name]; ok && len(required) > 0 {
 					return nil, fmt.Errorf("missing required property %v, expected %v", name, schema)
 				}
 				continue
 			}
 
-			v, err := parse(m[name], pRef)
+			v, err := parse(m.Get(name), pRef)
 			if err != nil {
 				continue
 			}
@@ -139,7 +143,7 @@ func parseAnyObject(m map[string]interface{}, schema *Schema) (interface{}, erro
 		}
 	}
 
-	if len(m) > len(fields) {
+	if m.Len() > len(fields) {
 		return nil, fmt.Errorf("could not parse %v, too many properties for object, expected %v", toString(m), schema)
 	}
 
@@ -166,12 +170,12 @@ func parseAnyValue(i interface{}, schema *Schema) (interface{}, error) {
 }
 
 func parseAllOf(i interface{}, schema *Schema) (interface{}, error) {
-	m, ok := i.(map[string]interface{})
+	m, ok := i.(*sortedmap.LinkedHashMap)
 	if !ok {
 		return nil, fmt.Errorf("could not parse %v as object, expected %v", toString(i), schema)
 	}
-	fields := make([]reflect.StructField, 0, len(m))
-	values := make([]reflect.Value, 0, len(m))
+	fields := make([]reflect.StructField, 0, m.Len())
+	values := make([]reflect.Value, 0, m.Len())
 
 	for _, sRef := range schema.AllOf {
 		s := sRef.Value
@@ -190,14 +194,14 @@ func parseAllOf(i interface{}, schema *Schema) (interface{}, error) {
 			name := it.Key().(string)
 			pRef := it.Value().(*Ref)
 
-			if _, ok := m[name]; !ok {
+			if v := m.Get(name); v == nil {
 				if _, ok := required[name]; ok && len(required) > 0 {
 					return nil, fmt.Errorf("could not parse %v, missing required property %v, expected %v", toString(i), name, schema)
 				}
 				continue
 			}
 
-			v, err := parse(m[name], pRef)
+			v, err := parse(m.Get(name), pRef)
 			if err != nil {
 				return nil, fmt.Errorf("could not parse %v, value does not match all schema, expected %v", toString(i), schema)
 			}
@@ -219,18 +223,18 @@ func parseAllOf(i interface{}, schema *Schema) (interface{}, error) {
 }
 
 func parseOneOf(i interface{}, schema *Schema) (interface{}, error) {
-	if m, ok := i.(map[string]interface{}); ok {
+	if m, ok := i.(*sortedmap.LinkedHashMap); ok {
 		return parseOneOfObject(m, schema)
 	}
 	return parseOneOfValue(i, schema)
 }
 
-func parseOneOfObject(m map[string]interface{}, schema *Schema) (interface{}, error) {
+func parseOneOfObject(m *sortedmap.LinkedHashMap, schema *Schema) (interface{}, error) {
 	var result interface{}
 	for _, sRef := range schema.OneOf {
 		s := sRef.Value
-		fields := make([]reflect.StructField, 0, len(m))
-		values := make([]reflect.Value, 0, len(m))
+		fields := make([]reflect.StructField, 0, m.Len())
+		values := make([]reflect.Value, 0, m.Len())
 
 		required := make(map[string]struct{})
 		for _, r := range s.Required {
@@ -241,14 +245,14 @@ func parseOneOfObject(m map[string]interface{}, schema *Schema) (interface{}, er
 			name := it.Key().(string)
 			pRef := it.Value().(*Ref)
 
-			if _, ok := m[name]; !ok {
+			if v := m.Get(name); v == nil {
 				if _, ok := required[name]; ok && len(required) > 0 {
 					return nil, fmt.Errorf("could not parse %v, missing required property %v, expected %v", toString(m), name, schema)
 				}
 				continue
 			}
 
-			v, err := parse(m[name], pRef)
+			v, err := parse(m.Get(name), pRef)
 			if err != nil {
 				continue
 			}
@@ -256,7 +260,7 @@ func parseOneOfObject(m map[string]interface{}, schema *Schema) (interface{}, er
 			fields = append(fields, newField(name, v))
 		}
 
-		if len(m) > len(fields) {
+		if m.Len() > len(fields) {
 			continue
 		}
 
@@ -300,7 +304,7 @@ func parseOneOfValue(i interface{}, schema *Schema) (interface{}, error) {
 }
 
 func parseObject(i interface{}, s *Schema) (interface{}, error) {
-	m, ok := i.(map[string]interface{})
+	m, ok := i.(*sortedmap.LinkedHashMap)
 	if !ok {
 		return nil, fmt.Errorf("could not parse %v as object", toString(i))
 	}
@@ -313,7 +317,9 @@ func parseObject(i interface{}, s *Schema) (interface{}, error) {
 
 	if s.IsDictionary() {
 		result := make(map[string]interface{})
-		for k, v := range m {
+		for it := m.Iter(); it.Next(); {
+			k := it.Key().(string)
+			v := it.Value()
 			v, err = parse(v, s.AdditionalProperties.Ref)
 			if err != nil {
 				return nil, err
@@ -327,21 +333,21 @@ func parseObject(i interface{}, s *Schema) (interface{}, error) {
 		return toObject(m)
 	}
 
-	if len(m) > s.Properties.Value.Len() {
+	if m.Len() > s.Properties.Value.Len() {
 		return nil, fmt.Errorf("could not parse %v, too many properties", toString(m))
 	}
 
-	fields := make([]reflect.StructField, 0, len(m))
-	values := make([]reflect.Value, 0, len(m))
+	fields := make([]reflect.StructField, 0, m.Len())
+	values := make([]reflect.Value, 0, m.Len())
 
 	for it := s.Properties.Value.Iter(); it.Next(); {
 		name := it.Key().(string)
 		pRef := it.Value().(*Ref)
-		if _, ok := m[name]; !ok {
+		if v := m.Get(name); v == nil {
 			continue
 		}
 
-		v, err := parse(m[name], pRef)
+		v, err := parse(m.Get(name), pRef)
 		if err != nil {
 			return nil, err
 		}
@@ -349,11 +355,13 @@ func parseObject(i interface{}, s *Schema) (interface{}, error) {
 		fields = append(fields, newField(name, v))
 	}
 
-	for k, v := range m {
+	for it := m.Iter(); it.Next(); {
+		k := it.Key().(string)
+		v := it.Value()
 		if p := s.Properties.Get(k); p != nil {
 			continue
 		}
-		if child, ok := v.(map[string]interface{}); ok {
+		if child, ok := v.(*sortedmap.LinkedHashMap); ok {
 			v, err = toObject(child)
 			if err != nil {
 				return nil, err
@@ -492,19 +500,22 @@ func readBoolean(i interface{}, s *Schema) (bool, error) {
 	return false, fmt.Errorf("could not parse %v as boolean, expected %v", i, s)
 }
 
-func toObject(m map[string]interface{}) (interface{}, error) {
-	fields := make([]reflect.StructField, 0, len(m))
-	values := make([]reflect.Value, 0, len(m))
+func toObject(m *sortedmap.LinkedHashMap) (interface{}, error) {
+	fields := make([]reflect.StructField, 0, m.Len())
+	values := make([]reflect.Value, 0, m.Len())
 
-	for name, v := range m {
-		if child, ok := v.(map[string]interface{}); ok {
+	for it := m.Iter(); it.Next(); {
+		k := it.Key().(string)
+		v := it.Value()
+		if child, ok := v.(*sortedmap.LinkedHashMap); ok {
 			var err error
 			v, err = toObject(child)
 			if err != nil {
 				return nil, err
 			}
 		}
-		fields = append(fields, newField(name, v))
+
+		fields = append(fields, newField(k, v))
 		values = append(values, reflect.ValueOf(v))
 	}
 
@@ -567,4 +578,62 @@ func getValidFieldName(fieldName string) string {
 
 func isLetter(ch rune) bool {
 	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_' || ch >= utf8.RuneSelf && unicode.IsLetter(ch)
+}
+
+// to ensure order in json unmarshal
+// using sorted map instead of builtin map
+type data struct {
+	d interface{}
+}
+
+func (d *data) UnmarshalJSON(b []byte) error {
+	dec := json.NewDecoder(bytes.NewReader(b))
+	token, err := dec.Token()
+	if err != nil {
+		return err
+	}
+	delim, ok := token.(json.Delim)
+	if !ok {
+		d.d = token
+		return nil
+	}
+	if delim != '{' && delim != '[' {
+		return fmt.Errorf("unexpected token %s; expected '{'", token)
+	}
+
+	if delim == '[' {
+		a := make([]interface{}, 0)
+		for dec.More() {
+			val := &data{}
+			err = dec.Decode(&val)
+			if err != nil {
+				return err
+			}
+
+			a = append(a, val.d)
+		}
+		d.d = a
+		return nil
+	}
+
+	m := sortedmap.NewLinkedHashMap()
+	d.d = m
+	for {
+		token, err = dec.Token()
+		if err != nil {
+			return err
+		}
+		if delim, ok := token.(json.Delim); ok && delim == '}' {
+			return nil
+		}
+		key := token.(string)
+		val := &data{}
+		err = dec.Decode(&val)
+		if err != nil {
+			return err
+		}
+
+		m.Set(key, val.d)
+	}
+
 }

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"io/ioutil"
+	"io"
 	"mime/multipart"
 	"mokapi/config/dynamic/openapi/ref"
 	"mokapi/config/dynamic/openapi/schema"
@@ -25,7 +25,7 @@ type RequestBody struct {
 	// The content of the request body. The key is a media type or media type range
 	// and the value describes it. For requests that match multiple keys, only the
 	// most specific key is applicable. e.g. text/plain overrides text/*
-	Content map[string]*MediaType
+	Content Content
 
 	// Determines if the request body is required in the request. Defaults to false.
 	Required bool
@@ -54,7 +54,7 @@ func readBody(r *http.Request, op *Operation, contentType media.ContentType) (*B
 		return nil, nil
 	}
 
-	media := op.RequestBody.Value.GetMedia(contentType)
+	_, media := getMedia(contentType, op.RequestBody.Value)
 	if media == nil {
 		return nil, fmt.Errorf("content type '%v' of request body is not defined. Check your service configuration", contentType.String())
 	}
@@ -136,7 +136,7 @@ func readBody(r *http.Request, op *Operation, contentType media.ContentType) (*B
 
 		return &Body{Value: o, Raw: toString(o)}, nil
 	} else {
-		data, err := ioutil.ReadAll(r.Body)
+		data, err := io.ReadAll(r.Body)
 		if err != nil {
 			return nil, err
 		}
@@ -191,4 +191,38 @@ func toString(i interface{}) string {
 		log.Errorf("error in schema.toString(): %v", err)
 	}
 	return string(b)
+}
+
+func getMedia(contentType media.ContentType, body *RequestBody) (media.ContentType, *MediaType) {
+	best := media.Empty
+	bestSpec := media.Empty
+	var bestMediaType *MediaType
+	bestQ := -1.0
+	for _, mt := range body.Content {
+		if contentType.Match(mt.ContentType) {
+			if bestQ > contentType.Q {
+				continue
+			}
+			if !best.IsEmpty() && !best.IsRange() {
+				continue
+			}
+			if !best.IsEmpty() && len(best.Parameters) > len(mt.ContentType.Parameters) {
+				continue
+			}
+			best = mt.ContentType
+			bestQ = contentType.Q
+			bestSpec = contentType
+			bestMediaType = mt
+		}
+	}
+
+	if media.Equal(bestSpec, media.Any) && media.Equal(best, media.Any) {
+		return media.Default, bestMediaType
+	}
+
+	if !media.Equal(best, media.Empty) && best.IsRange() {
+		return bestSpec, bestMediaType
+	}
+
+	return best, bestMediaType
 }

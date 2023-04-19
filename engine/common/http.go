@@ -36,7 +36,7 @@ func (r *EventRequest) String() string {
 	return r.Method + " " + r.Url.String()
 }
 
-func (u *Url) String() string {
+func (u Url) String() string {
 	sb := strings.Builder{}
 	sb.WriteString(u.Scheme)
 	if sb.Len() > 0 {
@@ -44,7 +44,7 @@ func (u *Url) String() string {
 	}
 	sb.WriteString(u.Host)
 	sb.WriteString(u.Path)
-	sb.WriteString(u.Query)
+	sb.WriteString("?" + u.Query)
 	return sb.String()
 }
 
