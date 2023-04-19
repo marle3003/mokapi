@@ -48,7 +48,21 @@ Kafka topic.
 
 A simple Time API looks like this:
 
-```yaml tab=OpenAPI
+```javascript tab=time.js
+import {on} from 'mokapi'
+
+export default function() {
+    on('http', function(request, response) {
+        if (request.operationId === 'time') {
+            response.data = new Date().toISOString()
+            return true
+        }
+        return false
+    })
+}
+```
+
+```yaml tab=api.yaml
 openapi: 3.0.0
 info:
   title: Time API
@@ -68,18 +82,4 @@ paths:
               schema: 
                 type: string
                 format: date-time
-```
-
-```javascript tab=Javascipt
-import {on} from 'mokapi'
-
-export default function() {
-    on('http', function(request, response) {
-        if (request.operationId === 'time') {
-            response.data = new Date().toISOString()
-            return true
-        }
-        return false
-    })
-}
 ```
