@@ -34,7 +34,7 @@ Next, create a javascript file `users.js` which sets the content of the response
 
 ```javascript
 import {on} from 'mokapi'
-import {fake} from 'faker'
+import {fake} from 'mokapi/faker'
 
 export default function() {
     on('http', function(request, response) {

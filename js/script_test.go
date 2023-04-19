@@ -103,6 +103,20 @@ func TestScript(t *testing.T) {
 		<-time.NewTimer(time.Duration(1) * time.Second).C
 		s.Close()
 	})
+	t.Run("warn deprecated module", func(t *testing.T) {
+		t.Parallel()
+		s, err := New("test", `import http from 'http'
+											export default function() {}`, host)
+		r.NoError(t, err)
+		var warn interface{}
+		host.warn = func(args ...interface{}) {
+			warn = args[0]
+		}
+		err = s.Run()
+		r.NoError(t, err)
+		r.Equal(t, "deprecated module http: Please use mokapi/http instead", warn)
+		s.Close()
+	})
 }
 
 type testHost struct {
@@ -147,7 +161,7 @@ func (th *testHost) OpenFile(file, hint string) (*config.Config, error) {
 	if th.open != nil {
 		return th.open(file, hint)
 	}
-	return nil, nil
+	return nil, fmt.Errorf("file %v not found (hint: %v)", file, hint)
 }
 
 func (th *testHost) Every(every string, do func(), opt common.JobOptions) (int, error) {

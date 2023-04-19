@@ -63,7 +63,7 @@ export default function() {
 ## Example Reading From HTTP Resource
 
 ```javascript
-import { parse } from 'yaml'
+import { parse } from 'mokapi/yaml'
 
 export default function() {
     const data = open('https://raw.githubusercontent.com/marle3003/mokapi/master/examples/openapi/users.yaml')

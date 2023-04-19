@@ -19,7 +19,7 @@ func TestScript_Http_Get(t *testing.T) {
 			"simple",
 			func(t *testing.T, host *testHost) {
 				s, err := New("",
-					`import http from 'http'
+					`import http from 'mokapi/http'
 						 export default function() {
 						 	return http.get('http://foo.bar')
 						 }`,
@@ -35,7 +35,7 @@ func TestScript_Http_Get(t *testing.T) {
 			"header",
 			func(t *testing.T, host *testHost) {
 				s, err := New("",
-					`import http from 'http'
+					`import http from 'mokapi/http'
 						 export default function() {
 						  	return http.get('http://foo.bar', {headers: {foo: "bar"}})
 						 }`,
@@ -50,7 +50,7 @@ func TestScript_Http_Get(t *testing.T) {
 			"header with array",
 			func(t *testing.T, host *testHost) {
 				s, err := New("",
-					`import http from 'http'
+					`import http from 'mokapi/http'
 						 export default function() {
 						  	return http.get('http://foo.bar', {headers: {foo: ["hello", "world"]}})
 						 }`,
@@ -65,7 +65,7 @@ func TestScript_Http_Get(t *testing.T) {
 			"header set to null",
 			func(t *testing.T, host *testHost) {
 				s, err := New("",
-					`import http from 'http'
+					`import http from 'mokapi/http'
 						 export default function() {
 						  	return http.get('http://foo.bar', {headers: null})
 						 }`,
@@ -80,7 +80,7 @@ func TestScript_Http_Get(t *testing.T) {
 			"invalid url",
 			func(t *testing.T, host *testHost) {
 				s, err := New("",
-					`import http from 'http'
+					`import http from 'mokapi/http'
 						 export default function() {
 						  	return http.get('://')
 						 }`,
@@ -97,7 +97,7 @@ func TestScript_Http_Get(t *testing.T) {
 					return &http.Response{Body: io.NopCloser(strings.NewReader("hello world"))}, nil
 				}
 				s, err := New("",
-					`import http from 'http'
+					`import http from 'mokapi/http'
 						 export default function() {
 						  	return http.get('http://foo.bar')
 						 }`,
@@ -116,7 +116,7 @@ func TestScript_Http_Get(t *testing.T) {
 					return &http.Response{Header: map[string][]string{"foo": {"bar"}}}, nil
 				}
 				s, err := New("",
-					`import http from 'http'
+					`import http from 'mokapi/http'
 						 export default function() {
 						  	return http.get('http://foo.bar')
 						 }`,
@@ -135,7 +135,7 @@ func TestScript_Http_Get(t *testing.T) {
 					return nil, fmt.Errorf("test error")
 				}
 				s, err := New("",
-					`import http from 'http'
+					`import http from 'mokapi/http'
 						 export default function() {
 						  	return http.get('http://foo.bar')
 						 }`,
@@ -171,7 +171,7 @@ func TestScript_Http_Post(t *testing.T) {
 			"simple",
 			func(t *testing.T, host *testHost) {
 				s, err := New("",
-					`import http from 'http'
+					`import http from 'mokapi/http'
 						 export default function() {
   							return http.post('http://foo.bar')
 						 }`,
@@ -187,7 +187,7 @@ func TestScript_Http_Post(t *testing.T) {
 			"content type",
 			func(t *testing.T, host *testHost) {
 				s, err := New("",
-					`import http from 'http'
+					`import http from 'mokapi/http'
 						 export default function() {
 						  	return http.post("http://localhost/foo", "body", {headers: {'Content-Type': "application/json"}})
 						 }`,
@@ -283,7 +283,7 @@ func TestScript_Http(t *testing.T) {
 			}
 
 			s, err := New("",
-				fmt.Sprintf(`import http from 'http'
+				fmt.Sprintf(`import http from 'mokapi/http'
 						 export default function() {
 						 	return http.%v('http://foo.bar')
 						 }`, strings.ToLower(tc.name)),

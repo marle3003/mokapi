@@ -15,7 +15,7 @@ func TestYaml(t *testing.T) {
 			"parse",
 			func(t *testing.T) {
 				s, err := New("test",
-					`import {parse} from 'yaml';
+					`import {parse} from 'mokapi/yaml';
 						 export default function() {
 						 	return parse('foo: bar')
 						}`,
@@ -33,7 +33,7 @@ func TestYaml(t *testing.T) {
 			"stringify",
 			func(t *testing.T) {
 				s, err := New("test",
-					`import {stringify} from 'yaml';
+					`import {stringify} from 'mokapi/yaml';
 						 export default function() {
 						 	return stringify({foo: "bar"})
 						}`,

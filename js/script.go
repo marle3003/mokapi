@@ -105,12 +105,17 @@ func (s *Script) ensureRuntime() (err error) {
 		s.compiler,
 		filepath.Dir(s.filename),
 		map[string]ModuleLoader{
-			"mokapi":   s.loadNativeModule(newMokapi),
-			"faker":    s.loadNativeModule(newFaker),
-			"http":     s.loadNativeModule(newHttp),
-			"kafka":    s.loadNativeModule(newKafka),
-			"yaml":     s.loadNativeModule(newYaml),
-			"mustache": s.loadNativeModule(newMustache),
+			"mokapi":          s.loadNativeModule(newMokapi),
+			"mokapi/faker":    s.loadNativeModule(newFaker),
+			"faker":           s.loadDeprecatedNativeModule(newHttp, "deprecated module faker: Please use mokapi/faker instead"),
+			"mokapi/http":     s.loadNativeModule(newHttp),
+			"http":            s.loadDeprecatedNativeModule(newHttp, "deprecated module http: Please use mokapi/http instead"),
+			"mokapi/kafka":    s.loadNativeModule(newKafka),
+			"kafka":           s.loadDeprecatedNativeModule(newHttp, "deprecated module kafka: Please use mokapi/kafka instead"),
+			"mokapi/mustache": s.loadNativeModule(newMustache),
+			"mustache":        s.loadDeprecatedNativeModule(newHttp, "deprecated module mustache: Please use mokapi/mustache instead"),
+			"mokapi/yaml":     s.loadNativeModule(newYaml),
+			"yaml":            s.loadDeprecatedNativeModule(newHttp, "deprecated module yaml: Please use mokapi/yaml instead"),
 		})
 	s.require.Enable(s.runtime)
 	enableConsole(s.runtime, s.host)
@@ -148,6 +153,14 @@ func (s *Script) addHttpEvent(i interface{}) {
 
 func (s *Script) loadNativeModule(f func(engine.Host, *goja.Runtime) interface{}) ModuleLoader {
 	return func() goja.Value {
+		m := f(s.host, s.runtime)
+		return mapToJSValue(s.runtime, m)
+	}
+}
+
+func (s *Script) loadDeprecatedNativeModule(f func(engine.Host, *goja.Runtime) interface{}, msg string) ModuleLoader {
+	return func() goja.Value {
+		s.host.Warn(msg)
 		m := f(s.host, s.runtime)
 		return mapToJSValue(s.runtime, m)
 	}

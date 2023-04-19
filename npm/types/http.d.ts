@@ -1,4 +1,4 @@
-declare module 'http' {
+declare module 'mokapi/http' {
     function get(url: string, args: Args): Response
     function post(url: string, body: string, args: Args): Response
     function put(url: string, body: string, args: Args): Response

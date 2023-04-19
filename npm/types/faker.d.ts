@@ -1,4 +1,8 @@
-declare module 'faker' {
+declare module 'mokapi/faker' {
+    /**
+     * Creates a fake based on the given schema
+     * @param schema
+     */
     function fake(schema: Schema): any
 }
 

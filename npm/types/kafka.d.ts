@@ -1,4 +1,4 @@
-declare module 'kafka' {
+declare module 'mokapi/kafka' {
     function produce(args: ProduceArgs): ProduceResult
 }
 

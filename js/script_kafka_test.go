@@ -21,7 +21,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 				}
 
 				s, err := New("",
-					`import {produce} from 'kafka'
+					`import {produce} from 'mokapi/kafka'
 						 export default function() {
 						  	return produce({topic: 'foo'})
 						 }`,
@@ -41,7 +41,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 				}
 
 				s, err := New("",
-					`import {produce} from 'kafka'
+					`import {produce} from 'mokapi/kafka'
 						 export default function() {
   							return produce({topic: 'foo', cluster: 'bar'})
 						 }`,
@@ -60,7 +60,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 				}
 
 				s, err := New("",
-					`import {produce} from 'kafka'
+					`import {produce} from 'mokapi/kafka'
 						 export default function() {
   							return produce({cluster: null})
 						 }`,
@@ -81,7 +81,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 				}
 
 				s, err := New("",
-					`import {produce} from 'kafka'
+					`import {produce} from 'mokapi/kafka'
 						 export default function() {
 						  	return produce({value: 'value', key: 'key', partition: 2})
 						 }`,
@@ -102,7 +102,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 				}
 
 				s, err := New("",
-					`import {produce} from 'kafka'
+					`import {produce} from 'mokapi/kafka'
 						 export default function() {
 						  	return produce({value: 'value', key: 'key', partition: 2})
 						 }`,
@@ -121,7 +121,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 				}
 
 				s, err := New("",
-					`import {produce} from 'kafka'
+					`import {produce} from 'mokapi/kafka'
 						 export default function() {
 						  	return produce({headers: {foo: 'bar'}})
 						 }`,
@@ -140,7 +140,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 				}
 
 				s, err := New("",
-					`import {produce} from 'kafka'
+					`import {produce} from 'mokapi/kafka'
 						 export default function() {
 						  	return produce({headers: {foo: 'bar'}})
 						 }`,

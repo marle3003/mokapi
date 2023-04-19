@@ -13,14 +13,15 @@ The list of Mokapi's Javascript modules usable to extend Mokapi's behavior.
 | every(expr, function, args) | Creates a new scheduled job                        |
 | sleep(milliseconds)         | Suspends execution for the specified duration.     |
 
-## kafka
+## mokapi/kafka
 
 | Functions         | Description                   |
 |-------------------|-------------------------------|
 | produce([params]) | Produces a new Kafka message  |
 
 ```javascript
-import { produce } from 'kafka'
+import { produce } from 'mokapi/kafka'
+
 export default function() {
   var msg = produce({topic: 'topic', value: 'value', key: 'key', partition: 2})
   console.log(`key=${msg.key}, value=${msg.value}`)
@@ -34,26 +35,27 @@ export default function() {
 | fake(schema) | Generates random data depending on given OpenAPI schema object |
 
 ```javascript
-import {fake} from 'faker'
+import {fake} from 'mokapi/faker'
+
 export default function() {
   var s = fake({type: 'string'})
   console.log(s)
 }
 ```
 
-## mustache
+## mokapi/mustache
 
 | Functions              | Description                                             |
 |------------------------|---------------------------------------------------------|
 | render(template, data) | Renders the given mustache template with the given data |
 
-## yaml
+## mokapi/yaml
 
 | Functions   | Description                                                                                    |
 |-------------|------------------------------------------------------------------------------------------------|
 | parse(yaml) | Parses a YAML string, constructing the JavaScript value or object<br/> described by the string |
 
-## http
+## mokapi/http
 
 | Functions                | Description                    |
 |--------------------------|--------------------------------|

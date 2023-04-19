@@ -48,7 +48,7 @@ This specification defines a topic called "orders" that accepts messages in the 
 Next, create a javascript file `orders.js` to generate messages for your topic
 
 ```javascript
-import { produce } from 'kafka'
+import { produce } from 'mokapi/kafka'
 
 export default function () {
     produce({ topic: 'orders' })

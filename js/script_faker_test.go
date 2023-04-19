@@ -15,7 +15,7 @@ func TestScript_Faker(t *testing.T) {
 			"fake string",
 			func(t *testing.T, host *testHost) {
 				s, err := New("",
-					`import {fake} from 'faker'
+					`import {fake} from 'mokapi/faker'
 						 export default function() {
 						 	return fake({type: 'string'})
 						 }`,
@@ -30,7 +30,7 @@ func TestScript_Faker(t *testing.T) {
 			"fake enum",
 			func(t *testing.T, host *testHost) {
 				s, err := New("",
-					`import {fake} from 'faker'
+					`import {fake} from 'mokapi/faker'
 						 export default function() {
 						 	return fake({type: 'string', enum: ['foo', 'bar']})
 						 }`,
@@ -45,7 +45,7 @@ func TestScript_Faker(t *testing.T) {
 			"invalid format",
 			func(t *testing.T, host *testHost) {
 				s, err := New("",
-					`import {fake} from 'faker'
+					`import {fake} from 'mokapi/faker'
 						 export default function() {
 						 	return fake("")
 						 }`,

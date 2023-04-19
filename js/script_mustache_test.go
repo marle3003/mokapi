@@ -15,7 +15,7 @@ func Test_Mustache(t *testing.T) {
 			"render",
 			func(t *testing.T) {
 				s, err := New("test",
-					`import {render} from 'mustache';
+					`import {render} from 'mokapi/mustache';
 						 export default function() {
 						 	return render('foo{{x}}', {x: 'bar'})
 						}`,
