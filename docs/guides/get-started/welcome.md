@@ -5,9 +5,10 @@ environment
 
 ## Get started
 
-- Installation
-- Running
-- Dashboard
+- [Installation](/docs/guides/get-started/installation.md)
+- [Running](/docs/guides/get-started/running.md)
+- [Test Data](/docs/guides/get-started/test-data.md)
+- [Dashboard](/docs/guides/get-started/dashboard.md)
 
 ## What is Mokapi
 

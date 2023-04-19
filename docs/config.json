@@ -34,14 +34,23 @@
   },
   "Javascript API": {
     "Javascript API": {
-      "Overview": "javascript/javascript.md",
-      "Modules": "javascript/modules.md"
+      "Overview": "javascript-api/javascript.md",
+      "Modules": "javascript-api/modules.md"
     },
     "globals": {
-      "open": "javascript/open.md"
+      "open": "javascript-api/open.md"
     },
     "mokapi": {
-      "sleep": "javascript/mokapi/sleep.md"
+      "cron": "javascript-api/mokapi/cron.md",
+      "date": "javascript-api/mokapi/date.md",
+      "env": "javascript-api/mokapi/env.md",
+      "every": "javascript-api/mokapi/every.md",
+      "on": "javascript-api/mokapi/on.md",
+      "sleep": "javascript-api/mokapi/sleep.md",
+      "EventHandler": "javascript-api/mokapi/eventhandler.md",
+      "HttpRequest": "javascript-api/mokapi/httprequest.md",
+      "HttpResponse": "javascript-api/mokapi/httpresponse.md",
+      "ScheduledEventArgs": "javascript-api/mokapi/scheduledeventargs.md"
     }
   },
   "Examples": {

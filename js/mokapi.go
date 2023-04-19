@@ -19,14 +19,14 @@ func newMokapi(host common.Host, rt *goja.Runtime) interface{} {
 	return &mokapi{host: host, rt: rt}
 }
 
-func (*mokapi) Sleep(i interface{}) error {
+func (m *mokapi) Sleep(i interface{}) error {
 	switch t := i.(type) {
 	case int64:
 		time.Sleep(time.Duration(t) * time.Millisecond)
 	case string:
 		d, err := time.ParseDuration(t)
 		if err != nil {
-			return err
+			panic(m.rt.ToValue(err.Error()))
 		}
 		time.Sleep(d)
 	}
@@ -154,14 +154,39 @@ type DateArg struct {
 }
 
 func (m *mokapi) Date(args DateArg) string {
-	if len(args.Layout) == 0 {
-		args.Layout = time.RFC3339
+	var layout string
+	switch args.Layout {
+	case "DateTime":
+		layout = time.DateTime
+	case "DateOnly":
+		layout = time.DateOnly
+	case "TimeOnly":
+		layout = time.TimeOnly
+	case "UnixDate":
+		layout = time.UnixDate
+	case "RFC882":
+		layout = time.RFC822
+	case "RFC822Z":
+		layout = time.RFC822Z
+	case "RFC850":
+		layout = time.RFC850
+	case "RFC1123":
+		layout = time.RFC1123
+	case "RFC1123Z":
+		layout = time.RFC1123Z
+	case "RFC3339":
+		layout = time.RFC3339
+	case "RFC3339Nano":
+		layout = time.RFC3339Nano
+	default:
+		layout = time.RFC3339
 	}
+
 	var t time.Time
 	if args.Timestamp == 0 {
 		t = time.Now().UTC()
 	} else {
 		t = time.UnixMilli(args.Timestamp).UTC()
 	}
-	return t.Format(args.Layout)
+	return t.Format(layout)
 }

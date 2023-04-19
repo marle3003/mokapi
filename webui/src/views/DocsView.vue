@@ -14,23 +14,26 @@ const nav = inject<DocConfig>('nav')!
 const openSidebar = ref(false);
 
 const route = useRoute()
-const level1 = <string>route.params.level1
+let level1 = <string>route.params.level1
+  console.log(level1)
+level1 = Object.keys(nav).find(key => key.toLowerCase() == level1.split('-').join(' '))!
 let file = nav[level1]
+
 let level2 = <string>route.params.level2
 if (!level2 && typeof file !== 'string') {
   level2 = Object.keys(file)[0]
 }else {
-  level2 = level2.split('-').join(' ')
+  level2 = Object.keys(file).find(key => key.toLowerCase() == level2.split('-').join(' '))!
 }
 
-file = (file as DocConfig)[level2.replace('Http', 'HTTP')]
+file = (file as DocConfig)[level2]
 
 let level3 = <string>route.params.level3
 if (level3 || typeof file !== 'string') {
   if (!level3) {
     level3 = Object.keys(file)[0]
   }else {
-    level3 = level3.split('-').join(' ')
+    level3 = Object.keys(file).find(key => key.toLowerCase() == level3.split('-').join(' '))!
   }
   file = (file as DocConfig)[level3]
 }
@@ -92,11 +95,14 @@ onMounted(() => {
 function toggleSidebar() {
   openSidebar.value = !openSidebar.value
 }
-function matchLevel2(label: any): Boolean {
+function matchLevel2(label: any): boolean {
   return label.toString().toLowerCase() == level2.toLowerCase()
 }
-function matchLevel3(label: any): Boolean {
+function matchLevel3(label: any): boolean {
   return label.toString().toLowerCase() == level3.toLowerCase()
+}
+function formatParam(label: any): string {
+  return label.toString().toLowerCase().split(' ').join('-')
 }
 </script>
 
@@ -118,12 +124,12 @@ function matchLevel3(label: any): Boolean {
                 </div>
                 <div>
                   <li class="nav-item" v-for="(_, k2) of v">
-                    <router-link v-if="k != k2" class="nav-link" :class="matchLevel2(k) && matchLevel3(k2) ? 'active': ''" :to="{ name: 'docs', params: {level2: k.toString(), level3: k2} }" style="padding-left: 2rem">{{ k2 }}</router-link>
+                    <router-link v-if="k != k2" class="nav-link" :class="matchLevel2(k) && matchLevel3(k2) ? 'active': ''" :to="{ name: 'docs', params: {level2: formatParam(k), level3: formatParam(k2)} }" style="padding-left: 2rem">{{ k2 }}</router-link>
                   </li>
               </div>
               </div>
               <div class="chapter" v-if="typeof v == 'string' && level1 != k">
-                <router-link class="nav-link chapter-text" :class="matchLevel2(k) ? 'active': ''" :to="{ name: 'docs', params: {level2: k.toString()} }">{{ k }}</router-link>
+                <router-link class="nav-link chapter-text" :class="matchLevel2(k) ? 'active': ''" :to="{ name: 'docs', params: {level2: formatParam(k)} }">{{ k }}</router-link>
               </div>
             </li>
           </ul>

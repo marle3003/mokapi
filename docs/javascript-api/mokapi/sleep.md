@@ -6,11 +6,9 @@ Suspends the execution for the specified duration.
 |-----------------|----------------------|---------------------------------------------------------------------------------------------------------------------------------|
 | time            | number &#124; string | Duration in milliseconds or duration as string with unit. <br /> Valid time units are `ns`, `us` (or `µs`), `ms`, `s`, `m`, `h` |
 
-## Returns
+## Error
 
-| Type  | Description                                             |
-|-------|---------------------------------------------------------|
-| error | Returns an error if received wrong time duration format |
+Throws an exception if time duration format has wrong format
 
 ## Example
 

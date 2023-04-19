@@ -1,7 +1,7 @@
 declare module 'mokapi' {
 
     /** Listener for http events. */
-    function on(event: 'http', f: HttpEventHandler, args: EventArgs): void
+    function on(event: 'http', f: EventHandler, args: EventArgs): void
 
     /** Schedules a new periodic job with interval.
      * Interval string is a possibly signed sequence of
@@ -9,7 +9,7 @@ declare module 'mokapi' {
      * such as "300ms", "-1.5h" or "2h45m".
      * Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
      */
-    function every(interval: string, f: () => void, args: ScheduleArgs): void
+    function every(interval: string, f: ScheduledEventHandler, args: ScheduledEventArgs): void
 
     /**
      * Schedules a new periodic job with a cron expression.
@@ -17,10 +17,10 @@ declare module 'mokapi' {
      * @param f function to execute
      * @param args additional arguments
      */
-    function cron(expr: string, f: () => void, args: ScheduleArgs): void
+    function cron(expr: string, f: ScheduledEventHandler, args: ScheduledEventArgs): void
 
     /** Returns the environment variable named by the key. */
-    function env(key: string): string
+    function env(name: string): string
 
     /** Opens a file and reading all its content. */
     function open(path: string): string
@@ -30,7 +30,16 @@ declare module 'mokapi' {
      *  Default layout is RFC3339.
      *  Default timestamp is current UTC */
     function date(args?: DateArgs): string
+
+    /**
+     * Suspends the execution for the specified duration.
+     * Valid time units are `ns`, `us` (or `µs`), `ms`, `s`, `m`, `h`
+     * @param time Duration in milliseconds or duration as string with unit.
+     */
+    function sleep(time: number | string )
 }
+
+type EventHandler = () => boolean | HttpEventHandler
 
 type HttpEventHandler = (request: HttpRequest, response: HttpResponse) => boolean
 
@@ -51,7 +60,7 @@ declare interface HttpRequest {
     cookie: { [key: string]: any; }
     /** Path defined in OpenAPI. */
     key: string
-    /** OperationId definied in OpenAPI. */
+    /** OperationId defined in OpenAPI. */
     operationId: string
 }
 
@@ -89,7 +98,9 @@ declare interface EventArgs {
     tags: {[key: string]: string}
 }
 
-declare interface ScheduleArgs {
+type ScheduledEventHandler = () => void
+
+declare interface ScheduledEventArgs {
     /**
      * Adds or overrides existing tags used in dashboard
      */
@@ -99,6 +110,11 @@ declare interface ScheduleArgs {
      * Defines the number of times the scheduled function is executed.
      */
     times: number
+
+    /**
+     * Toggles behavior of first execution. Default is true
+     */
+    runFirstTimeImmediately: boolean
 }
 
 declare const RFC3339 = "RFC3339"

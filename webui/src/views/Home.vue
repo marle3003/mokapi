@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const script = `import {on} from 'mokapi'
+const script = `import { on } from 'mokapi'
 
 export default function() {
     on('http', function(request, response) {

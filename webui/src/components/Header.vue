@@ -38,6 +38,9 @@ onMounted(() => {
 function showInHeader(item: any): Boolean{
   return typeof item !== 'string'
 }
+function formatParam(label: any): string {
+  return label.toString().toLowerCase().split(' ').join('-')
+}
 </script>
 
 <template>
@@ -54,7 +57,7 @@ function showInHeader(item: any): Boolean{
               <router-link class="nav-link" :to="{ name: 'dashboard', query: {refresh: 20} }">Dashboard</router-link>
             </li>
             <li class="nav-item" v-for="(item, label) of nav">
-              <router-link class="nav-link" :to="{ name: 'docs', params: {level1: label} }" v-if="showInHeader(item)">{{ label }}</router-link>
+              <router-link class="nav-link" :to="{ name: 'docs', params: {level1: formatParam(label)} }" v-if="showInHeader(item)">{{ label }}</router-link>
             </li>
           </ul>
 

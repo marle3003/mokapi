@@ -6,19 +6,6 @@ export function MarkdownItLinks(md: MarkdownIt, opts: Options) {
 
     function replace(s: string): string{
         s = s.replace('.md', '')
-        let slice = s.split('-')
-        for (var i = 0; i < slice.length; i++){
-            slice[i] = slice[i].charAt(0).toUpperCase() + slice[i].slice(1)
-        }
-        s = slice.join('-')
-        slice = s.split('/')
-        for (var i = 0; i < slice.length; i++){
-            slice[i] = slice[i].charAt(0).toUpperCase() + slice[i].slice(1)
-        }
-        s = slice.join('/')
-        if (s[0] == '/'){
-            return s.substring(1)
-        }
         return s
     }
 

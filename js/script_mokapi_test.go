@@ -61,6 +61,21 @@ func TestScript_Mokapi_Date(t *testing.T) {
 				r.True(t, strings.HasSuffix(i.String(), "Z"))
 			},
 		},
+		{
+			"custom format",
+			func(t *testing.T, host *testHost) {
+				s, err := New("",
+					`import { date } from 'mokapi'
+						 export default function() {
+						  	return date({layout: 'DateTime', timestamp: new Date(Date.UTC(2022, 5, 9, 12, 0, 0, 0)).getTime()})
+						 }`,
+					host)
+				r.NoError(t, err)
+				i, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, "2022-06-09 12:00:00", i.String())
+			},
+		},
 	}
 
 	t.Parallel()
@@ -505,6 +520,105 @@ func TestScript_Mokapi_Open(t *testing.T) {
 				r.NoError(t, err)
 				_, err = s.RunDefault()
 				r.Error(t, err)
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			host := &testHost{}
+
+			tc.f(t, host)
+		})
+	}
+}
+
+func TestScript_Mokapi_Sleep(t *testing.T) {
+	testcases := []struct {
+		name string
+		f    func(t *testing.T, host *testHost)
+	}{
+		{
+			"sleep",
+			func(t *testing.T, host *testHost) {
+				host.openFile = func(file, hint string) (string, string, error) {
+					return "", "bar", nil
+				}
+				s, err := New("",
+					`import { sleep } from 'mokapi'
+						 export default function() {
+							sleep(300);
+						}`,
+					host)
+				r.NoError(t, err)
+				start := time.Now()
+				_, err = s.RunDefault()
+				r.NoError(t, err)
+				duration := time.Now().Sub(start).Milliseconds()
+				r.Greater(t, duration, int64(300))
+			},
+		},
+		{
+			"sleep with string",
+			func(t *testing.T, host *testHost) {
+				host.openFile = func(file, hint string) (string, string, error) {
+					return "", "bar", nil
+				}
+				s, err := New("",
+					`import { sleep } from 'mokapi'
+						 export default function() {
+							sleep('300ms');
+						}`,
+					host)
+				r.NoError(t, err)
+				start := time.Now()
+				_, err = s.RunDefault()
+				r.NoError(t, err)
+				duration := time.Now().Sub(start).Milliseconds()
+				r.Greater(t, duration, int64(300))
+			},
+		},
+		{
+			"sleep invalid time format",
+			func(t *testing.T, host *testHost) {
+				host.openFile = func(file, hint string) (string, string, error) {
+					return "", "bar", nil
+				}
+				s, err := New("",
+					`import { sleep } from 'mokapi'
+						 export default function() {
+							sleep('300-');
+						}`,
+					host)
+				r.NoError(t, err)
+				_, err = s.RunDefault()
+				r.EqualError(t, err, "time: unknown unit \"-\" in duration \"300-\" at reflect.methodValueCall (native)")
+			},
+		},
+		{
+			"catch exception sleep invalid time format",
+			func(t *testing.T, host *testHost) {
+				host.openFile = func(file, hint string) (string, string, error) {
+					return "", "bar", nil
+				}
+				s, err := New("",
+					`import { sleep } from 'mokapi'
+						 export default function() {
+							try {
+							sleep('300-');
+							} catch(e){
+								return e
+							}
+						}`,
+					host)
+				r.NoError(t, err)
+				v, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, "time: unknown unit \"-\" in duration \"300-\"", v.String())
 			},
 		},
 	}
