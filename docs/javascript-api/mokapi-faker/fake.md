@@ -2,13 +2,9 @@
 
 Creates a fake based on the given schema.
 
-| Parameter       | Type   | Description                                 |
-|-----------------|--------|---------------------------------------------|
-| schema          | object | Schema object contains definition of a type |
-
-## Schema
-
-Visit [OpenAPI Schema](https://swagger.io/docs/specification/data-models/)
+| Parameter       | Type   | Description                                                                                                |
+|-----------------|--------|------------------------------------------------------------------------------------------------------------|
+| schema          | object | [OpenAPI Schema](https://swagger.io/docs/specification/data-models/)  object contains definition of a type |
 
 ## Returns
 

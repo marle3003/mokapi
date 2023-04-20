@@ -53,7 +53,12 @@
       "ScheduledEventArgs": "javascript-api/mokapi/scheduledeventargs.md"
     },
     "mokapi/faker": {
-      "fake": "javascript-api/faker/fake.md"
+      "fake": "javascript-api/mokapi-faker/fake.md"
+    },
+    "mokapi/http": {
+      "get": "javascript-api/mokapi-http/get.md",
+      "HttpResponse": "javascript-api/mokapi-http/httpresponse.md",
+      "Args": "javascript-api/mokapi-http/args.md"
     }
   },
   "Examples": {

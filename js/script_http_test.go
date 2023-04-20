@@ -110,6 +110,25 @@ func TestScript_Http_Get(t *testing.T) {
 			},
 		},
 		{
+			"response body json",
+			func(t *testing.T, host *testHost) {
+				host.httpClient.doFunc = func(request *http.Request) (*http.Response, error) {
+					return &http.Response{Body: io.NopCloser(strings.NewReader(`{"foo": "bar"}`))}, nil
+				}
+				s, err := New("",
+					`import http from 'mokapi/http'
+						 export default function() {
+						  	return http.get('http://foo.bar').json()
+						 }`,
+					host)
+				r.NoError(t, err)
+				v, err := s.RunDefault()
+				r.NoError(t, err)
+				result := v.Export()
+				r.Equal(t, map[string]interface{}{"foo": "bar"}, result)
+			},
+		},
+		{
 			"response header",
 			func(t *testing.T, host *testHost) {
 				host.httpClient.doFunc = func(request *http.Request) (*http.Response, error) {

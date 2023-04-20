@@ -15,7 +15,6 @@ const openSidebar = ref(false);
 
 const route = useRoute()
 let level1 = <string>route.params.level1
-  console.log(level1)
 level1 = Object.keys(nav).find(key => key.toLowerCase() == level1.split('-').join(' '))!
 let file = nav[level1]
 
@@ -23,7 +22,10 @@ let level2 = <string>route.params.level2
 if (!level2 && typeof file !== 'string') {
   level2 = Object.keys(file)[0]
 }else {
-  level2 = Object.keys(file).find(key => key.toLowerCase() == level2.split('-').join(' '))!
+  level2 = Object.keys(file).find(key => {
+      const search = level2.split('-').join(' ')
+      return key.toLowerCase().split('/').join(' ') === search
+    })!
 }
 
 file = (file as DocConfig)[level2]
@@ -33,7 +35,10 @@ if (level3 || typeof file !== 'string') {
   if (!level3) {
     level3 = Object.keys(file)[0]
   }else {
-    level3 = Object.keys(file).find(key => key.toLowerCase() == level3.split('-').join(' '))!
+    level3 = Object.keys(file).find(key => {
+      const search = level3.split('-').join(' ')
+      return key.toLowerCase().split('/').join('-') == search
+    })!
   }
   file = (file as DocConfig)[level3]
 }
@@ -102,7 +107,7 @@ function matchLevel3(label: any): boolean {
   return label.toString().toLowerCase() == level3.toLowerCase()
 }
 function formatParam(label: any): string {
-  return label.toString().toLowerCase().split(' ').join('-')
+  return label.toString().toLowerCase().split(' ').join('-').split('/').join('-')
 }
 </script>
 

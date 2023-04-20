@@ -2,6 +2,7 @@ package js
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/dop251/goja"
 	"io"
@@ -24,6 +25,7 @@ type requestArgs struct {
 }
 
 type response struct {
+	rt         *goja.Runtime
 	Body       string              `json:"body"`
 	StatusCode int                 `json:"statusCode"`
 	Headers    map[string][]string `json:"headers"`
@@ -92,7 +94,7 @@ func (m *httpModule) doRequest(method, url, body string, args goja.Value) (inter
 		return nil, err
 	}
 
-	return parseResponse(res), nil
+	return m.parseResponse(res), nil
 }
 
 func createRequest(method, url, body string, args *requestArgs) (*http.Request, error) {
@@ -119,8 +121,8 @@ func createRequest(method, url, body string, args *requestArgs) (*http.Request, 
 	return req, nil
 }
 
-func parseResponse(r *http.Response) response {
-	result := response{StatusCode: r.StatusCode, Headers: make(map[string][]string)}
+func (m *httpModule) parseResponse(r *http.Response) response {
+	result := response{StatusCode: r.StatusCode, Headers: make(map[string][]string), rt: m.rt}
 	if r.Body != nil {
 		if b, err := io.ReadAll(r.Body); err == nil {
 			result.Body = string(b)
@@ -130,4 +132,13 @@ func parseResponse(r *http.Response) response {
 		result.Headers[k] = v
 	}
 	return result
+}
+
+func (r response) Json() interface{} {
+	var i interface{}
+	err := json.Unmarshal([]byte(r.Body), &i)
+	if err != nil {
+		panic(r.rt.ToValue(err.Error()))
+	}
+	return i
 }
