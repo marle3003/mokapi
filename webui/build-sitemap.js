@@ -22,12 +22,8 @@ const urlTemplate = `
 function writeObject(obj, base) {
     let xml = ''
     for (k in obj) {
-        let slice = k.split(' ')
-        for (var i = 0; i < slice.length; i++){
-            slice[i] = slice[i].charAt(0).toUpperCase() + slice[i].slice(1)
-        }
-        let segment = slice.join('-').replace('&', '&amp;')
-        const path = base + '/' + segment
+        let segment = k.split(' ').join('-').split('/').join('-').replace('&', '%26')
+        const path = base + '/' + segment.toLowerCase()
 
         if (typeof obj[k] !== "string") {
             xml += writeObject(obj[k], path)
