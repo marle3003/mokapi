@@ -132,19 +132,20 @@ func TestScript_Http_Get(t *testing.T) {
 			"response header",
 			func(t *testing.T, host *testHost) {
 				host.httpClient.doFunc = func(request *http.Request) (*http.Response, error) {
-					return &http.Response{Header: map[string][]string{"foo": {"bar"}}}, nil
+					return &http.Response{Header: map[string][]string{"Allow": {"OPTIONS", "GET", "HEAD", "POST"}}}, nil
 				}
 				s, err := New("",
 					`import http from 'mokapi/http'
 						 export default function() {
-						  	return http.get('http://foo.bar')
+						  	const res = http.options('https://foo.bar')
+							return res.headers['Allow']
 						 }`,
 					host)
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
-				result := v.Export().(response)
-				r.Equal(t, map[string][]string{"foo": {"bar"}}, result.Headers)
+				result := v.Export()
+				r.Equal(t, []string{"OPTIONS", "GET", "HEAD", "POST"}, result)
 			},
 		},
 		{
@@ -203,7 +204,7 @@ func TestScript_Http_Post(t *testing.T) {
 			},
 		},
 		{
-			"content type",
+			"json with body as string",
 			func(t *testing.T, host *testHost) {
 				s, err := New("",
 					`import http from 'mokapi/http'
@@ -217,6 +218,39 @@ func TestScript_Http_Post(t *testing.T) {
 				b, err := ioutil.ReadAll(host.httpClient.req.Body)
 				r.Equal(t, "body", string(b))
 				r.Equal(t, "application/json", host.httpClient.req.Header.Get("Content-Type"))
+			},
+		},
+		{
+			"json with body as object",
+			func(t *testing.T, host *testHost) {
+				s, err := New("",
+					`import http from 'mokapi/http'
+						 export default function() {
+						  	return http.post("http://localhost/foo", {"foo":"bar"}, {headers: {'Content-Type': "application/json"}})
+						 }`,
+					host)
+				r.NoError(t, err)
+				err = s.Run()
+				r.NoError(t, err)
+				b, err := io.ReadAll(host.httpClient.req.Body)
+				r.Equal(t, `{"foo":"bar"}`, string(b))
+				r.Equal(t, "application/json", host.httpClient.req.Header.Get("Content-Type"))
+			},
+		},
+		{
+			"json with body as object without Content-Type",
+			func(t *testing.T, host *testHost) {
+				s, err := New("",
+					`import http from 'mokapi/http'
+						 export default function() {
+						  	return http.post("http://localhost/foo", {"foo":"bar"})
+						 }`,
+					host)
+				r.NoError(t, err)
+				err = s.Run()
+				r.NoError(t, err)
+				b, err := io.ReadAll(host.httpClient.req.Body)
+				r.Equal(t, `{"foo":"bar"}`, string(b))
 			},
 		},
 	}

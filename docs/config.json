@@ -56,7 +56,13 @@
       "fake": "javascript-api/mokapi-faker/fake.md"
     },
     "mokapi/http": {
+      "delete": "javascript-api/mokapi-http/delete.md",
       "get": "javascript-api/mokapi-http/get.md",
+      "head": "javascript-api/mokapi-http/head.md",
+      "options": "javascript-api/mokapi-http/options.md",
+      "patch": "javascript-api/mokapi-http/patch.md",
+      "post": "javascript-api/mokapi-http/post.md",
+      "put": "javascript-api/mokapi-http/put.md",
       "HttpResponse": "javascript-api/mokapi-http/httpresponse.md",
       "Args": "javascript-api/mokapi-http/args.md"
     }

@@ -1,7 +1,6 @@
 package js
 
 import (
-	"fmt"
 	"github.com/dop251/goja"
 	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/engine/common"
@@ -16,11 +15,15 @@ func newFaker(_ common.Host, rt *goja.Runtime) interface{} {
 	return &fakerModule{generator: schema.NewGenerator(), rt: rt}
 }
 
-func (m *fakerModule) Fake(v goja.Value) (interface{}, error) {
+func (m *fakerModule) Fake(v goja.Value) interface{} {
 	s := &schema.Schema{}
 	err := m.rt.ExportTo(v, &s)
 	if err != nil {
-		return nil, fmt.Errorf("expected parameter type of OpenAPI schema")
+		panic(m.rt.ToValue("expected parameter type of OpenAPI schema"))
 	}
-	return m.generator.New(&schema.Ref{Value: s})
+	i, err := m.generator.New(&schema.Ref{Value: s})
+	if err != nil {
+		panic(m.rt.ToValue(err.Error()))
+	}
+	return i
 }

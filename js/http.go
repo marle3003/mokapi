@@ -7,6 +7,7 @@ import (
 	"github.com/dop251/goja"
 	"io"
 	"mokapi/engine/common"
+	"mokapi/media"
 	"net/http"
 )
 
@@ -35,39 +36,39 @@ func newHttp(host common.Host, rt *goja.Runtime) interface{} {
 	return &httpModule{host: host, rt: rt, client: host.HttpClient()}
 }
 
-func (m *httpModule) Get(url string, args goja.Value) (interface{}, error) {
+func (m *httpModule) Get(url string, args goja.Value) interface{} {
 	return m.doRequest("GET", url, "", args)
 }
 
-func (m *httpModule) Post(url, body string, args goja.Value) (interface{}, error) {
+func (m *httpModule) Post(url string, body interface{}, args goja.Value) interface{} {
 	return m.doRequest("POST", url, body, args)
 }
 
-func (m *httpModule) Put(url, body string, args goja.Value) (interface{}, error) {
+func (m *httpModule) Put(url string, body interface{}, args goja.Value) interface{} {
 	return m.doRequest("PUT", url, body, args)
 }
 
-func (m *httpModule) Head(url string, args goja.Value) (interface{}, error) {
+func (m *httpModule) Head(url string, args goja.Value) interface{} {
 	return m.doRequest("HEAD", url, "", args)
 }
 
-func (m *httpModule) Patch(url, body string, args goja.Value) (interface{}, error) {
+func (m *httpModule) Patch(url string, body interface{}, args goja.Value) interface{} {
 	return m.doRequest("PATCH", url, body, args)
 }
 
-func (m *httpModule) Delete(url, body string, args goja.Value) (interface{}, error) {
+func (m *httpModule) Delete(url string, body interface{}, args goja.Value) interface{} {
 	return m.doRequest("DELETE", url, body, args)
 }
 
-func (m *httpModule) Del(url, body string, args goja.Value) (interface{}, error) {
+func (m *httpModule) Del(url string, body interface{}, args goja.Value) interface{} {
 	return m.Delete(url, body, args)
 }
 
-func (m *httpModule) Options(url, body string, args goja.Value) (interface{}, error) {
+func (m *httpModule) Options(url string, body interface{}, args goja.Value) interface{} {
 	return m.doRequest("OPTIONS", url, body, args)
 }
 
-func (m *httpModule) doRequest(method, url, body string, args goja.Value) (interface{}, error) {
+func (m *httpModule) doRequest(method, url string, body interface{}, args goja.Value) interface{} {
 	rArgs := &requestArgs{Headers: make(map[string]interface{})}
 	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
 		params := args.ToObject(m.rt)
@@ -86,24 +87,24 @@ func (m *httpModule) doRequest(method, url, body string, args goja.Value) (inter
 	req, err := createRequest(method, url, body, rArgs)
 
 	if err != nil {
-		return nil, err
+		panic(m.rt.ToValue(err.Error()))
 	}
 
 	res, err := m.client.Do(req)
 	if err != nil {
+		panic(m.rt.ToValue(err.Error()))
+	}
+
+	return m.parseResponse(res)
+}
+
+func createRequest(method, url string, body interface{}, args *requestArgs) (*http.Request, error) {
+	r, err := encode(body, args)
+	if err != nil {
 		return nil, err
 	}
 
-	return m.parseResponse(res), nil
-}
-
-func createRequest(method, url, body string, args *requestArgs) (*http.Request, error) {
-	var br io.Reader
-	if len(body) > 0 {
-		br = bytes.NewBufferString(body)
-	}
-
-	req, err := http.NewRequest(method, url, br)
+	req, err := http.NewRequest(method, url, r)
 	if err != nil {
 		return nil, err
 	}
@@ -132,6 +133,30 @@ func (m *httpModule) parseResponse(r *http.Response) response {
 		result.Headers[k] = v
 	}
 	return result
+}
+
+func encode(i interface{}, args *requestArgs) (io.Reader, error) {
+	if s, ok := i.(string); ok {
+		return bytes.NewBufferString(s), nil
+	}
+
+	h, ok := args.Headers["Content-Type"]
+	if !ok {
+		h = "application/json"
+	}
+	contentType := fmt.Sprintf("%v", h)
+
+	ct := media.ParseContentType(contentType)
+	switch {
+	case ct.Subtype == "json" || ct.Subtype == "problem+json":
+		b, err := json.Marshal(i)
+		if err != nil {
+			return nil, err
+		}
+		return bytes.NewReader(b), nil
+	default:
+		return nil, fmt.Errorf("encoding %v is not supported", contentType)
+	}
 }
 
 func (r response) Json() interface{} {
