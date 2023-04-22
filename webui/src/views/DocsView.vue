@@ -166,7 +166,7 @@ function formatParam(label: any): string {
 .sidebar {
   position: sticky;
   align-self: flex-start;
-  width: 240px;
+  width: 340px;
   padding-top: 2rem;
 }
 .sidebar.open{
@@ -179,6 +179,7 @@ function formatParam(label: any): string {
   bottom: 0;
   box-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.05), 0 0.25rem 0.5rem rgba(0, 0, 0, 0.05);
   padding-top: 1.5rem;
+  overflow-y: scroll;
 }
 .sidebar.open .nav-pills .nav-link.active, .sidebar.show  .nav-pills .show > .nav-link {
   background-color: var(--color-background-mute);
@@ -249,7 +250,13 @@ table.selectable tbody tr:hover {
 }
 
 .nav {
-  font-size: 0.9rem;
+  font-size: 0.94rem;
+}
+
+@media only screen and (max-width: 600px)  {
+  .nav {
+    font-size: 1.7rem;
+  }
 }
 
 .nav .nav-link {

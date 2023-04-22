@@ -24,6 +24,10 @@ function switchTheme() {
   router.go(0)
 }
 
+router.beforeEach(() => {
+    document.getElementById('navbar')!.classList.remove('show');
+})
+
 onMounted(() => {
   document.addEventListener("click", function (event) {
     if (event.target instanceof Element){
