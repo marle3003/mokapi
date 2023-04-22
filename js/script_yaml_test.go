@@ -30,6 +30,43 @@ func TestYaml(t *testing.T) {
 			},
 		},
 		{
+			"parse array",
+			func(t *testing.T) {
+				s, err := New("test",
+					`import {parse} from 'mokapi/yaml';
+						 export default function() {
+						 	return parse('- a\n- b\n- c')
+						}`,
+					host)
+				r.NoError(t, err)
+
+				v, err := s.RunDefault()
+				r.NoError(t, err)
+
+				result := v.Export()
+				r.Equal(t, []interface{}{"a", "b", "c"}, result)
+			},
+		},
+		{
+			"access array element",
+			func(t *testing.T) {
+				s, err := New("test",
+					`import {parse} from 'mokapi/yaml';
+						 export default function() {
+						 	const o = parse('- a\n- b\n- c')
+							return o[1]
+						}`,
+					host)
+				r.NoError(t, err)
+
+				v, err := s.RunDefault()
+				r.NoError(t, err)
+
+				result := v.Export()
+				r.Equal(t, "b", result)
+			},
+		},
+		{
 			"stringify",
 			func(t *testing.T) {
 				s, err := New("test",

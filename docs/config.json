@@ -70,6 +70,13 @@
       "produce": "javascript-api/mokapi-kafka/produce.md",
       "ProduceArgs": "javascript-api/mokapi-kafka/produceargs.md",
       "ProduceResult": "javascript-api/mokapi-kafka/produceresult.md"
+    },
+    "mokapi/mustache":{
+      "render": "javascript-api/mokapi-mustache/render.md"
+    },
+    "mokapi/yaml":{
+      "parse": "javascript-api/mokapi-yaml/parse.md",
+      "stringify": "javascript-api/mokapi-yaml/stringify.md"
     }
   },
   "Examples": {

@@ -39,15 +39,16 @@ The list of Mokapi's Javascript modules usable to extend Mokapi's behavior.
 
 ## mokapi/mustache
 
-| Functions                | Description                                             |
-|--------------------------|---------------------------------------------------------|
-| render( template, data ) | Renders the given mustache template with the given data |
+| Functions                                                                   | Description                                              |
+|-----------------------------------------------------------------------------|----------------------------------------------------------|
+| [render( template, scope )](/docs/javascript-api/mokapi-mustache/render.md) | Renders the given mustache template with the given data  |
 
 ## mokapi/yaml
 
-| Functions   | Description                                                                                    |
-|-------------|------------------------------------------------------------------------------------------------|
-| parse(yaml) | Parses a YAML string, constructing the JavaScript value or object<br/> described by the string |
+| Functions                                                           | Description                                                                                |
+|---------------------------------------------------------------------|--------------------------------------------------------------------------------------------|
+| [parse( text )](/docs/javascript-api/mokapi-yaml/parse.md)          | Parses a YAML string, constructing the JavaScript value or object described by the string. |
+| [stringify( value )](/docs/javascript-api/mokapi-yaml/stringify.md) | Converts a JavaScript value to a YAML string.                                              |
 
 
 

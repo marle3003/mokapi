@@ -57,7 +57,6 @@ if (content) {
     m = regex.exec(content)
     if (m) {
       const path = `/src/assets${m[2]}`
-      //const imageUrl = new URL(path, import.meta.url)
       const imageUrl = images[path]
       content = content.replace(m[0], `<img${m[1]} src="${imageUrl}"`);
     }
@@ -95,7 +94,7 @@ onMounted(() => {
       }
     }
   })
-  document.title = level3 + ' | Mokapi'
+  document.title = level3 + ' | mokapi.io'
 })
 function toggleSidebar() {
   openSidebar.value = !openSidebar.value

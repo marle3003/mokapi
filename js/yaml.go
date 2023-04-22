@@ -16,9 +16,9 @@ func newYaml(host common.Host, rt *goja.Runtime) interface{} {
 }
 
 func (m *yamlModule) Parse(s string) (interface{}, error) {
-	result := make(map[string]interface{})
-	err := yaml.Unmarshal([]byte(s), result)
-	return result, err
+	var i interface{}
+	err := yaml.Unmarshal([]byte(s), &i)
+	return i, err
 }
 
 func (m *yamlModule) Stringify(i interface{}) (string, error) {
