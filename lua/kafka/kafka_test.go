@@ -1,6 +1,7 @@
 package kafka
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/require"
 	lua "github.com/yuin/gopher-lua"
 	"mokapi/engine/common"
@@ -9,7 +10,7 @@ import (
 )
 
 type client struct {
-	produce func(args *common.KafkaProduceArgs) (interface{}, interface{}, error)
+	produce func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error)
 }
 
 func TestModule_Produce(t *testing.T) {
@@ -20,9 +21,9 @@ func TestModule_Produce(t *testing.T) {
 		{
 			"cluster should be foo",
 			func(t *testing.T, l *lua.LState, m *Module, c *client) {
-				c.produce = func(args *common.KafkaProduceArgs) (interface{}, interface{}, error) {
+				c.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					require.Equal(t, "foo", args.Cluster)
-					return nil, nil, nil
+					return nil, nil
 				}
 				err := l.DoString(`
 					kafka = require("kafka")
@@ -34,9 +35,9 @@ func TestModule_Produce(t *testing.T) {
 		{
 			"topic should be foo",
 			func(t *testing.T, l *lua.LState, m *Module, c *client) {
-				c.produce = func(args *common.KafkaProduceArgs) (interface{}, interface{}, error) {
+				c.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					require.Equal(t, "foo", args.Topic)
-					return nil, nil, nil
+					return nil, nil
 				}
 				err := l.DoString(`
 					kafka = require("kafka")
@@ -48,9 +49,9 @@ func TestModule_Produce(t *testing.T) {
 		{
 			"partition should be -1",
 			func(t *testing.T, l *lua.LState, m *Module, c *client) {
-				c.produce = func(args *common.KafkaProduceArgs) (interface{}, interface{}, error) {
+				c.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					require.Equal(t, -1, args.Partition)
-					return nil, nil, nil
+					return nil, nil
 				}
 				err := l.DoString(`
 					kafka = require("kafka")
@@ -62,9 +63,9 @@ func TestModule_Produce(t *testing.T) {
 		{
 			"partition should be 10",
 			func(t *testing.T, l *lua.LState, m *Module, c *client) {
-				c.produce = func(args *common.KafkaProduceArgs) (interface{}, interface{}, error) {
+				c.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					require.Equal(t, 10, args.Partition)
-					return nil, nil, nil
+					return nil, nil
 				}
 				err := l.DoString(`
 					kafka = require("kafka")
@@ -76,9 +77,9 @@ func TestModule_Produce(t *testing.T) {
 		{
 			"key should be foo",
 			func(t *testing.T, l *lua.LState, m *Module, c *client) {
-				c.produce = func(args *common.KafkaProduceArgs) (interface{}, interface{}, error) {
+				c.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					require.Equal(t, "foo", args.Key)
-					return nil, nil, nil
+					return nil, nil
 				}
 				err := l.DoString(`
 					kafka = require("kafka")
@@ -90,10 +91,10 @@ func TestModule_Produce(t *testing.T) {
 		{
 			"value",
 			func(t *testing.T, l *lua.LState, m *Module, c *client) {
-				c.produce = func(args *common.KafkaProduceArgs) (interface{}, interface{}, error) {
+				c.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					require.IsType(t, &sortedmap.LinkedHashMap{}, args.Value)
 					require.Equal(t, "bar", args.Value.(*sortedmap.LinkedHashMap).Get("foo"))
-					return nil, nil, nil
+					return nil, nil
 				}
 				err := l.DoString(`
 					kafka = require("kafka")
@@ -116,9 +117,9 @@ func TestModule_Produce(t *testing.T) {
 	}
 }
 
-func (c *client) Produce(args *common.KafkaProduceArgs) (interface{}, interface{}, error) {
+func (c *client) Produce(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 	if c.produce != nil {
 		return c.produce(args)
 	}
-	return nil, nil, nil
+	return nil, fmt.Errorf("function not defined")
 }

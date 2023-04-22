@@ -4,68 +4,50 @@ The list of Mokapi's Javascript modules usable to extend Mokapi's behavior.
 
 ## mokapi
 
-| Functions                   | Description                                        |
-|-----------------------------|----------------------------------------------------|
-| open(filePath)              | Opens a file and read its content                  |
-| env(name)                   | Returns the value of the environment variable      |
-| on(event, function, args)   | Registers an event handler for the specified event |
-| cron(expr, function, args)  | Creates a new cron job                             |
-| every(expr, function, args) | Creates a new scheduled job                        |
-| sleep(milliseconds)         | Suspends execution for the specified duration.     |
+| Functions                                                                    | Description                                         |
+|------------------------------------------------------------------------------|-----------------------------------------------------|
+| [cron( expression, handler, \[args\] )](/docs/javascript-api/mokapi/cron.md) | Schedules a new periodic job using cron expression. |
+| [date( \[args\] )](/docs/javascript-api/mokapi/date.md)                      | Returns a textual representation of the date.       |
+| [env( name )](/docs/javascript-api/mokapi/env.md)                            | Gets the value of an environment variable.          |
+| [every( interval, handler, \[args\] )](/docs/javascript-api/mokapi/every.md) | Schedules a new periodic job with interval.         |
+| [on( event, handler, \[args\]](/docs/javascript-api/mokapi/on.md) )          | Attaches an event handler for the given event.      |
+| [sleep( time )](/docs/javascript-api/mokapi/sleep.md)                        | Suspends the execution for the specified duration.  |
 
-## mokapi/kafka
+## mokapi/http
 
-| Functions         | Description                   |
-|-------------------|-------------------------------|
-| produce([params]) | Produces a new Kafka message  |
-
-```javascript
-import { produce } from 'mokapi/kafka'
-
-export default function() {
-  var msg = produce({topic: 'topic', value: 'value', key: 'key', partition: 2})
-  console.log(`key=${msg.key}, value=${msg.value}`)
-}
-```
+| Functions                                                                        | Description                    |
+|----------------------------------------------------------------------------------|--------------------------------|
+| [get( url, \[args\] )](/docs/javascript-api/mokapi-http/get.md)                  | Issues an HTTP GET request     |
+| [post( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/post.md)      | Issues an HTTP POST request    |
+| [put( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/put.md)        | Issues an HTTP PUT request     |
+| [head( url, \[args\] )](/docs/javascript-api/mokapi-http/head.md)                | Issues an HTTP HEAD request    |
+| [patch( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/patch.md)    | Issues an HTTP PATCH request   |
+| [delete( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/delete.md)  | Issues an HTTP DELETE request  |
+| [options( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/option.md) | Issues an HTTP OPTIONS request |
 
 ## faker
 
-| Functions    | Description                                                    |
-|--------------|----------------------------------------------------------------|
-| fake(schema) | Generates random data depending on given OpenAPI schema object |
+| Functions                                                   | Description                                |
+|-------------------------------------------------------------|--------------------------------------------|
+| [fake( schema )](/docs/javascript-api/mokapi-faker/fake.md) | Creates a fake based on the given schema.  |
 
-```javascript
-import {fake} from 'mokapi/faker'
+## mokapi/kafka
 
-export default function() {
-  var s = fake({type: 'string'})
-  console.log(s)
-}
-```
+| Functions                                                           | Description                               |
+|---------------------------------------------------------------------|-------------------------------------------|
+| [produce( \[args\] )](/docs/javascript-api/mokapi-kafka/produce.md) | Sends a single message to a Kafka topic.  |
 
 ## mokapi/mustache
 
-| Functions              | Description                                             |
-|------------------------|---------------------------------------------------------|
-| render(template, data) | Renders the given mustache template with the given data |
+| Functions                | Description                                             |
+|--------------------------|---------------------------------------------------------|
+| render( template, data ) | Renders the given mustache template with the given data |
 
 ## mokapi/yaml
 
 | Functions   | Description                                                                                    |
 |-------------|------------------------------------------------------------------------------------------------|
 | parse(yaml) | Parses a YAML string, constructing the JavaScript value or object<br/> described by the string |
-
-## mokapi/http
-
-| Functions                | Description                    |
-|--------------------------|--------------------------------|
-| get(url, args)           | Issues an HTTP GET request     |
-| post(url, body, args)    | Issues an HTTP POST request    |
-| put(url, body, args)     | Issues an HTTP PUT request     |
-| head(url, args)          | Issues an HTTP HEAD request    |
-| patch(url, body, args)   | Issues an HTTP PATCH request   |
-| del(url, body, args)     | Issues an HTTP DELETE request  |
-| options(url, body, args) | Issues an HTTP OPTIONS request |
 
 
 

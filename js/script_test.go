@@ -206,14 +206,14 @@ func (c *testClient) Do(request *http.Request) (*http.Response, error) {
 }
 
 type kafkaClient struct {
-	produce func(args *common.KafkaProduceArgs) (interface{}, interface{}, error)
+	produce func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error)
 }
 
-func (c *kafkaClient) Produce(args *common.KafkaProduceArgs) (interface{}, interface{}, error) {
+func (c *kafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 	if c.produce != nil {
 		return c.produce(args)
 	}
-	return nil, nil, nil
+	return nil, nil
 }
 
 func (th *testHost) Cancel(jobId int) error {

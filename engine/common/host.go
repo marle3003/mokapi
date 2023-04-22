@@ -43,7 +43,7 @@ type Logger interface {
 }
 
 type KafkaClient interface {
-	Produce(args *KafkaProduceArgs) (interface{}, interface{}, error)
+	Produce(args *KafkaProduceArgs) (*KafkaProduceResult, error)
 }
 
 type KafkaProduceArgs struct {
@@ -54,6 +54,15 @@ type KafkaProduceArgs struct {
 	Value     interface{}
 	Headers   map[string]interface{}
 	Timeout   int
+}
+
+type KafkaProduceResult struct {
+	Cluster   string
+	Topic     string
+	Partition int
+	Offset    int64
+	Key       string
+	Value     string
 }
 
 type HttpClient interface {

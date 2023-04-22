@@ -39,22 +39,19 @@ func (m *Module) Produce(state *lua.LState) int {
 	}
 
 	var err error
-	var k, msg interface{}
 	timeout := time.Duration(args.Timeout) * time.Second
 	for start := time.Now(); time.Since(start) < timeout; {
-		if k, msg, err = m.client.Produce(args); err == nil {
-			state.Push(luar.New(state, k))
-			state.Push(luar.New(state, msg))
-			return 2
+		if result, err := m.client.Produce(args); err == nil {
+			state.Push(luar.New(state, result))
+			return 1
 		} else if !strings.HasPrefix(err.Error(), "no broker found at") {
 			break
 		}
 	}
 
 	state.Push(lua.LNil)
-	state.Push(lua.LNil)
 	state.Push(lua.LString(err.Error()))
-	return 3
+	return 2
 }
 
 func (m *Module) Loader(state *lua.LState) int {

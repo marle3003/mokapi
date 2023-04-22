@@ -10,9 +10,9 @@ Make a POST request
 
 ## Returns
 
-| Type     | Description                                                             |
-|----------|-------------------------------------------------------------------------|
-| Response | [HttpResponse](/docs/javascript-api/mokapi-http/httpresponse.md) object |
+| Type     | Description                                                     |
+|----------|-----------------------------------------------------------------|
+| Response | [Response](/docs/javascript-api/mokapi-http/response.md) object |
 
 ## Example
 

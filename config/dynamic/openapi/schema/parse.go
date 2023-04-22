@@ -47,10 +47,12 @@ func Parse(b []byte, contentType media.ContentType, schema *Ref) (i interface{},
 func ParseFrom(r io.Reader, contentType media.ContentType, schema *Ref) (i interface{}, err error) {
 	switch contentType.Subtype {
 	case "json":
-		err = json.NewDecoder(r).Decode(&i)
+		d := &data{}
+		err = json.NewDecoder(r).Decode(&d)
 		if err != nil {
 			return nil, fmt.Errorf("invalid json format: %v", err)
 		}
+		i = d.d
 	default:
 		i, err = ioutil.ReadAll(r)
 	}

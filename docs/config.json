@@ -65,6 +65,11 @@
       "put": "javascript-api/mokapi-http/put.md",
       "HttpResponse": "javascript-api/mokapi-http/httpresponse.md",
       "Args": "javascript-api/mokapi-http/args.md"
+    },
+    "mokapi/kafka": {
+      "produce": "javascript-api/mokapi-kafka/produce.md",
+      "ProduceArgs": "javascript-api/mokapi-kafka/produceargs.md",
+      "ProduceResult": "javascript-api/mokapi-kafka/produceresult.md"
     }
   },
   "Examples": {

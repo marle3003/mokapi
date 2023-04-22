@@ -122,8 +122,8 @@ func (th *testHost) On(event string, do func(args ...interface{}) (bool, error),
 	}
 }
 
-func (th *testHost) Produce(args *common.KafkaProduceArgs) (interface{}, interface{}, error) {
-	return nil, nil, nil
+func (th *testHost) Produce(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+	return nil, nil
 }
 
 func (th *testHost) KafkaClient() common.KafkaClient {

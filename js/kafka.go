@@ -13,9 +13,12 @@ type kafkaModule struct {
 }
 
 type ProduceResult struct {
-	Key   interface{} `json:"key"`
-	Value interface{} `json:"value"`
-	Error string      `json:"error"`
+	Cluster   string `json:"cluster"`
+	Topic     string `json:"topic"`
+	Partition int    `json:"partition"`
+	Offset    int64  `json:"offset"`
+	Key       string `json:"key"`
+	Value     string `json:"value"`
 }
 
 func newKafka(host common.Host, rt *goja.Runtime) interface{} {
@@ -24,14 +27,19 @@ func newKafka(host common.Host, rt *goja.Runtime) interface{} {
 
 func (m *kafkaModule) Produce(v goja.Value) interface{} {
 	args := mapParams(v, m.rt)
-	r := &ProduceResult{}
-	var err error
-	r.Key, r.Value, err = m.client.Produce(args)
+	result, err := m.client.Produce(args)
 	if err != nil {
 		log.Errorf("js error: %v in %v", err, m.host.Name())
-		r.Error = err.Error()
+		panic(m.rt.ToValue(err.Error()))
 	}
-	return r
+	return ProduceResult{
+		Cluster:   result.Cluster,
+		Topic:     result.Topic,
+		Partition: result.Partition,
+		Offset:    result.Offset,
+		Key:       result.Key,
+		Value:     result.Value,
+	}
 }
 
 func mapParams(args goja.Value, rt *goja.Runtime) *common.KafkaProduceArgs {

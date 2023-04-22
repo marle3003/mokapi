@@ -1,6 +1,6 @@
-# HttpResponse
+# Response
 
-HttpResponse object contains response data from a HTTP request 
+Response object contains response data from a HTTP request 
 from functions in the module mokapi/http.
 
 | Name       | Type     | Description                                                           |
