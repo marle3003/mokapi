@@ -25,12 +25,11 @@ func TestHost_Every(t *testing.T) {
 				require.NoError(t, err)
 
 				var counter int
-				now := time.Now()
-				for time.Now().Before(now.Add(200 * time.Millisecond)) {
-					select {
-					case <-ch:
-						counter++
-					}
+				select {
+				case <-ch:
+					counter++
+				case <-time.After(50 * time.Millisecond):
+					break
 				}
 
 				require.Equal(t, 1, counter)
@@ -48,12 +47,11 @@ func TestHost_Every(t *testing.T) {
 				require.NoError(t, err)
 
 				var counter int
-				now := time.Now()
-				for time.Now().After(now.Add(150 * time.Millisecond)) {
-					select {
-					case <-ch:
-						counter++
-					}
+				select {
+				case <-ch:
+					counter++
+				case <-time.After(50 * time.Millisecond):
+					break
 				}
 
 				require.Equal(t, 0, counter)

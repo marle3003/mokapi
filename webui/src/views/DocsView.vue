@@ -275,6 +275,19 @@ table.selectable tbody tr:hover {
   padding-left: 16px;
 }
 
+pre {
+  max-width: 700px;
+  margin: 0 auto auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  border-radius: 6px;
+}
+@media only screen and (max-width: 600px)  {
+  pre {
+    max-width: none !important;
+  }
+}
+
 .box {
   padding: 0.6rem;
   padding-bottom: 0;
