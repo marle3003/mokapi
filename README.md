@@ -5,9 +5,10 @@
 <h3 align="center">Create and test API designs<br />before actually building them</h3>
 
 <p align="center">
-![build](https://github.com/marle3003/mokapi/actions/workflows/build.yml/badge.svg)
-[![codecov](https://codecov.io/gh/marle3003/mokapi/branch/master/graph/badge.svg?token=C7X690ZOBI)](https://codecov.io/gh/marle3003/mokapi)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/marle3003/mokapi/blob/master/LICENSE)
+<a href="https://github.com/marle3003/mokapi/releases"><img src="https://img.shields.io/github/release/marle3003/mokapi.svg" alt="Github release"></a>
+<a href="https://github.com/marle3003/mokapi/actions/workflows/build.yml"><img src="https://github.com/marle3003/mokapi/actions/workflows/build.yml/badge.svg" alt="Build status"></a>
+<a href="https://codecov.io/gh/marle3003/mokapi"><img src="https://img.shields.io/codecov/c/gh/marle3003/mokapi/master.svg" alt="Codecov branch"></a>
+<a href="https://github.com/marle3003/mokapi/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
 </p>
 
 ## Overview
