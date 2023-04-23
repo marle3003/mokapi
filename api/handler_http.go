@@ -57,7 +57,13 @@ type response struct {
 	StatusCode  int         `json:"statusCode"`
 	Description string      `json:"description"`
 	Contents    []mediaType `json:"contents,omitempty"`
-	Headers     []param     `json:"parameters,omitempty"`
+	Headers     []header    `json:"headers,omitempty"`
+}
+
+type header struct {
+	Name        string      `json:"name"`
+	Description string      `json:"description"`
+	Schema      *schemaInfo `json:"schema"`
 }
 
 type requestBody struct {
@@ -74,12 +80,6 @@ type mediaType struct {
 type server struct {
 	Url         string `json:"url"`
 	Description string `json:"description"`
-}
-
-func (h *handler) getHttpServices(w http.ResponseWriter, _ *http.Request) {
-	result := getHttpServices(h.app.Http, h.app.Monitor)
-	w.Header().Set("Content-Type", "application/json")
-	writeJsonBody(w, result)
 }
 
 func getHttpServices(services map[string]*runtime.HttpInfo, m *monitor.Monitor) []interface{} {
@@ -194,15 +194,14 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 						Schema: getSchema(r.Schema),
 					})
 				}
-				for name, header := range r.Value.Headers {
-					if header.Value != nil {
+				for name, h := range r.Value.Headers {
+					if h.Value == nil {
 						continue
 					}
-					res.Headers = append(res.Headers, param{
+					res.Headers = append(res.Headers, header{
 						Name:        name,
-						Type:        "header",
-						Description: header.Value.Description,
-						Schema:      getSchema(header.Value.Schema),
+						Description: h.Value.Description,
+						Schema:      getSchema(h.Value.Schema),
 					})
 				}
 

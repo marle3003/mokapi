@@ -1,6 +1,9 @@
 package common
 
-import "net/http"
+import (
+	config "mokapi/config/dynamic/common"
+	"net/http"
+)
 
 type EventEmitter interface {
 	Emit(event string, args ...interface{}) []*Action
@@ -23,8 +26,7 @@ type Host interface {
 	Cron(expr string, do func(), opt JobOptions) (int, error)
 	Cancel(jobId int) error
 
-	OpenFile(file string, hint string) (string, string, error)
-	OpenScript(file string, hint string) (string, string, error)
+	OpenFile(file string, hint string) (*config.Config, error)
 
 	On(event string, do func(args ...interface{}) (bool, error), tags map[string]string)
 
@@ -41,7 +43,26 @@ type Logger interface {
 }
 
 type KafkaClient interface {
-	Produce(cluster string, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error)
+	Produce(args *KafkaProduceArgs) (*KafkaProduceResult, error)
+}
+
+type KafkaProduceArgs struct {
+	Cluster   string
+	Topic     string
+	Partition int
+	Key       interface{}
+	Value     interface{}
+	Headers   map[string]interface{}
+	Timeout   int
+}
+
+type KafkaProduceResult struct {
+	Cluster   string
+	Topic     string
+	Partition int
+	Offset    int64
+	Key       string
+	Value     string
 }
 
 type HttpClient interface {
@@ -55,6 +76,7 @@ type Action struct {
 
 func NewJobOptions() JobOptions {
 	return JobOptions{
+		Tags:                    map[string]string{},
 		Times:                   -1,
 		RunFirstTimeImmediately: true,
 	}

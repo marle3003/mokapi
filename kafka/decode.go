@@ -316,17 +316,6 @@ func (d *Decoder) ReadVarNullBytes() []byte {
 	return b
 }
 
-//func (d *Decoder) read(b []byte) bool {
-//	if d.err != nil {
-//		return false
-//	}
-//	if _, err := d.reader.Read(b); err != nil {
-//		d.err = err
-//		return false
-//	}
-//	return true
-//}
-
 func (d *Decoder) ReadFull(b []byte) bool {
 	if d.err != nil {
 		return false

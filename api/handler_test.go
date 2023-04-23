@@ -16,6 +16,15 @@ func TestHandler_ServeHTTP(t *testing.T) {
 		fn   func(t *testing.T, h http.Handler)
 	}{
 		{
+			name: "PATCH is not allowed",
+			fn: func(t *testing.T, h http.Handler) {
+				r := httptest.NewRequest(http.MethodPatch, "http://foo.api", nil)
+				rr := httptest.NewRecorder()
+				h.ServeHTTP(rr, r)
+				require.Equal(t, http.StatusMethodNotAllowed, rr.Code)
+			},
+		},
+		{
 			name: "should 405 when POST to file server",
 			fn: func(t *testing.T, h http.Handler) {
 				r := httptest.NewRequest(http.MethodPost, "http://foo.api", nil)
@@ -88,69 +97,109 @@ func TestHandler_ServeHTTP(t *testing.T) {
 	}
 }
 
-func TestHandler_ApiPath_ServeHTTP(t *testing.T) {
+func TestHandler_Api_Info(t *testing.T) {
 	testcases := []struct {
 		name string
-		path string
+		app  *runtime.App
 		fn   func(t *testing.T, h http.Handler)
 	}{
 		{
-			name: "request api info",
-			path: "/mokapi",
+			name: "version 1.0",
+			app:  &runtime.App{Version: "1.0"},
 			fn: func(t *testing.T, h http.Handler) {
 				try.Handler(t,
 					http.MethodGet,
-					"http://foo.api/mokapi/api/info",
+					"http://foo.api/api/info",
 					nil,
 					"",
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"version":""}`))
+					try.HasBody(`{"version":"1.0"}`))
 			},
 		},
 		{
-			name: "request web app",
-			path: "/mokapi",
+			name: "http active",
+			app:  &runtime.App{Http: map[string]*runtime.HttpInfo{"foo": {}}},
 			fn: func(t *testing.T, h http.Handler) {
 				try.Handler(t,
 					http.MethodGet,
-					"http://foo.api/mokapi/index.html",
+					"http://foo.api/api/info",
 					nil,
 					"",
 					h,
-					try.HasStatusCode(200))
+					try.HasStatusCode(200),
+					try.HasHeader("Content-Type", "application/json"),
+					try.HasBody(`{"version":"","activeServices":["http"]}`))
 			},
 		},
 		{
-			name: "request web app",
-			path: "/mokapi/dashboard",
+			name: "kafka active",
+			app:  &runtime.App{Kafka: map[string]*runtime.KafkaInfo{"foo": {}}},
 			fn: func(t *testing.T, h http.Handler) {
 				try.Handler(t,
 					http.MethodGet,
-					"http://foo.api/mokapi/dashboard/index.html",
+					"http://foo.api/api/info",
 					nil,
 					"",
 					h,
-					try.HasStatusCode(200), try.BodyContains(`<base href="/mokapi/dashboard/" />`))
+					try.HasStatusCode(200),
+					try.HasHeader("Content-Type", "application/json"),
+					try.HasBody(`{"version":"","activeServices":["kafka"]}`))
+			},
+		},
+		{
+			name: "smtp active",
+			app:  &runtime.App{Smtp: map[string]*runtime.SmtpInfo{"foo": {}}},
+			fn: func(t *testing.T, h http.Handler) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/info",
+					nil,
+					"",
+					h,
+					try.HasStatusCode(200),
+					try.HasHeader("Content-Type", "application/json"),
+					try.HasBody(`{"version":"","activeServices":["smtp"]}`))
+			},
+		},
+		{
+			name: "ldap active",
+			app:  &runtime.App{Ldap: map[string]*runtime.LdapInfo{"foo": {}}},
+			fn: func(t *testing.T, h http.Handler) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/info",
+					nil,
+					"",
+					h,
+					try.HasStatusCode(200),
+					try.HasHeader("Content-Type", "application/json"),
+					try.HasBody(`{"version":"","activeServices":["ldap"]}`))
 			},
 		},
 	}
 
 	t.Parallel()
-	for _, test := range testcases {
-		t.Run(test.name, func(t *testing.T) {
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			h := New(runtime.New(), static.Api{Path: test.path})
-			hh := h.(*handler)
-			hh.fileServer = http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-				if request.URL.Path == "/index.html" {
-					writer.WriteHeader(200)
-					return
-				}
-				writer.WriteHeader(404)
-			})
-			test.fn(t, h)
+			h := New(tc.app, static.Api{})
+			tc.fn(t, h)
 		})
 	}
+}
+
+func TestHandler_NoDashboard(t *testing.T) {
+	h := New(runtime.New(), static.Api{Dashboard: false})
+	try.Handler(t,
+		http.MethodGet,
+		"http://foo.api/api/foo",
+		nil,
+		"",
+		h,
+		try.HasStatusCode(404),
+		try.HasHeader("Content-Type", "text/plain; charset=utf-8"),
+		try.HasBody("not found\n"))
 }

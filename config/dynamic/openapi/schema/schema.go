@@ -22,47 +22,47 @@ type Schemas struct {
 }
 
 type Schema struct {
-	Type                 string
-	Format               string
-	Pattern              string
-	Description          string
-	Properties           *SchemasRef
+	Type                 string                `yaml:"type" json:"type"`
+	Format               string                `yaml:"format" json:"format"`
+	Pattern              string                `yaml:"pattern" json:"pattern"`
+	Description          string                `yaml:"description" json:"description"`
+	Properties           *SchemasRef           `yaml:"properties" json:"properties"`
 	AdditionalProperties *AdditionalProperties `yaml:"additionalProperties,omitempty" json:"additionalProperties,omitempty"`
 	Faker                string                `yaml:"x-faker" json:"x-faker"`
-	Items                *Ref
-	Xml                  *Xml
-	Required             []string
-	Nullable             bool
-	Example              interface{}
-	Enum                 []interface{}
-	Minimum              *float64 `yaml:"minimum,omitempty" json:"minimum,omitempty"`
-	Maximum              *float64 `yaml:"maximum,omitempty" json:"maximum,omitempty"`
-	ExclusiveMinimum     *bool    `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
-	ExclusiveMaximum     *bool    `yaml:"exclusiveMaximum ,omitempty" json:"exclusiveMaximum,omitempty"`
-	AnyOf                []*Ref   `yaml:"anyOf" json:"anyOf"`
-	AllOf                []*Ref   `yaml:"allOf" json:"allOf"`
-	OneOf                []*Ref   `yaml:"oneOf" json:"oneOf"`
-	UniqueItems          bool     `yaml:"uniqueItems" json:"uniqueItems"`
-	MinItems             *int     `yaml:"minItems" json:"minItems"`
-	MaxItems             *int     `yaml:"maxItems" json:"maxItems"`
-	ShuffleItems         bool     `yaml:"x-shuffleItems" json:"x-shuffleItems"`
-	MinProperties        *int     `yaml:"minProperties" json:"minProperties"`
-	MaxProperties        *int     `yaml:"maxProperties" json:"maxProperties"`
-	Deprecated           bool     `yaml:"deprecated" json:"deprecated"`
+	Items                *Ref                  `yaml:"items" json:"items"`
+	Xml                  *Xml                  `yaml:"xml" json:"xml"`
+	Required             []string              `yaml:"required" json:"required"`
+	Nullable             bool                  `yaml:"nullable" json:"nullable"`
+	Example              interface{}           `yaml:"example" json:"example"`
+	Enum                 []interface{}         `yaml:"enum" json:"enum"`
+	Minimum              *float64              `yaml:"minimum,omitempty" json:"minimum,omitempty"`
+	Maximum              *float64              `yaml:"maximum,omitempty" json:"maximum,omitempty"`
+	ExclusiveMinimum     *bool                 `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
+	ExclusiveMaximum     *bool                 `yaml:"exclusiveMaximum ,omitempty" json:"exclusiveMaximum,omitempty"`
+	AnyOf                []*Ref                `yaml:"anyOf" json:"anyOf"`
+	AllOf                []*Ref                `yaml:"allOf" json:"allOf"`
+	OneOf                []*Ref                `yaml:"oneOf" json:"oneOf"`
+	UniqueItems          bool                  `yaml:"uniqueItems" json:"uniqueItems"`
+	MinItems             *int                  `yaml:"minItems" json:"minItems"`
+	MaxItems             *int                  `yaml:"maxItems" json:"maxItems"`
+	ShuffleItems         bool                  `yaml:"x-shuffleItems" json:"x-shuffleItems"`
+	MinProperties        *int                  `yaml:"minProperties" json:"minProperties"`
+	MaxProperties        *int                  `yaml:"maxProperties" json:"maxProperties"`
+	Deprecated           bool                  `yaml:"deprecated" json:"deprecated"`
 }
 
 type AdditionalProperties struct {
 	*Ref
-	Forbidden bool
+	Forbidden bool `yaml:"forbidden" json:"forbidden"`
 }
 
 type Xml struct {
-	Wrapped   bool
-	Name      string
-	Attribute bool
-	Prefix    string
-	Namespace string
-	CData     bool `yaml:"x-cdata" json:"x-cdata"`
+	Wrapped   bool   `yaml:"wrapped" json:"wrapped"`
+	Name      string `yaml:"name" json:"name"`
+	Attribute bool   `yaml:"attribute" json:"attribute"`
+	Prefix    string `yaml:"prefix" json:"prefix"`
+	Namespace string `yaml:"namespace" json:"namespace"`
+	CData     bool   `yaml:"x-cdata" json:"x-cdata"`
 }
 
 func (s *SchemasRef) Get(name string) *Ref {
@@ -173,16 +173,19 @@ func (s *Schema) String() string {
 	if len(s.Required) > 0 {
 		sb.WriteString(fmt.Sprintf(" required=%v", s.Required))
 	}
-	if s.Type == "object" && !s.IsFreeForm() {
-		sb.WriteString(" free-form=false")
+	if s.Type == "object" && s.IsFreeForm() {
+		sb.WriteString(" free-form=true")
 	}
 
 	return sb.String()
 }
 
 func (s *Schema) IsFreeForm() bool {
-	return s.Type == "object" &&
-		s.AdditionalProperties.IsFreeForm()
+	free := s.Type == "object" && (s.Properties == nil || s.Properties.Value.Len() == 0)
+	if s.AdditionalProperties == nil {
+		return free
+	}
+	return s.AdditionalProperties.IsFreeForm()
 }
 
 func (s *Schema) IsDictionary() bool {
@@ -191,7 +194,7 @@ func (s *Schema) IsDictionary() bool {
 
 func (ap *AdditionalProperties) IsFreeForm() bool {
 	if ap == nil {
-		return true
+		return false
 	}
 	if ap.Ref == nil || ap.Value == nil {
 		return !ap.Forbidden

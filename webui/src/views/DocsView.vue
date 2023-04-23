@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref} from 'vue';
+import { onMounted, ref, inject } from 'vue';
 import { useRoute } from 'vue-router';
 import MarkdownItHighlightjs from 'markdown-it-highlightjs';
 import MarkdownIt from 'markdown-it';
@@ -7,31 +7,60 @@ import { MarkdownItTabs } from '@/composables/markdown-tabs';
 import { MarkdownItBox } from '@/composables/markdown-box';
 import { MarkdownItLinks } from '@/composables/mardown-links'
 
-interface DocConfig{
-  [name: string]: string | DocConfig 
-}
+const images =  import.meta.glob('/src/assets/docs/**/*.png', {as: 'url', eager: true})
 
-const files = import.meta.glob('/src/assets/docs/**/*.md', {as: 'raw', eager: true})
-const c =  import.meta.glob('/src/assets/docs/config.json', {as: 'raw', eager: true})
-const nav: DocConfig = JSON.parse(c['/src/assets/docs/config.json'])
+const files =  import.meta.glob('/src/assets/docs/**/*.md', {as: 'raw', eager: true})
+const nav = inject<DocConfig>('nav')!
 const openSidebar = ref(false);
 
 const route = useRoute()
-const topic = <string>route.params.topic
-const subject = <string>route.params.subject
-let file = nav[topic]
-if (subject) {
-  file = (file as DocConfig)[subject]
+let level1 = <string>route.params.level1
+level1 = Object.keys(nav).find(key => key.toLowerCase() == level1.split('-').join(' '))!
+let file = nav[level1]
+
+let level2 = <string>route.params.level2
+if (!level2 && typeof file !== 'string') {
+  level2 = Object.keys(file)[0]
+}else {
+  level2 = Object.keys(file).find(key => {
+      const search = level2.split('-').join(' ')
+      return key.toLowerCase().split('/').join(' ') === search
+    })!
 }
-if (typeof file != "string"){
-  file = file[topic]
+
+file = (file as DocConfig)[level2]
+
+let level3 = <string>route.params.level3
+if (level3 || typeof file !== 'string') {
+  if (!level3) {
+    level3 = Object.keys(file)[0]
+  }else {
+    level3 = Object.keys(file).find(key => {
+      const search = level3.split('-').join(' ')
+      return key.toLowerCase().split('/').join('-') == search
+    })!
+  }
+  file = (file as DocConfig)[level3]
 }
+
 let content = files[`/src/assets/docs/${file}`]
 
 let base = document.querySelector("base")?.href ?? '/'
-if (base != '/' && content) {
-  base = base.replace(document.location.origin, '')
-  content = content.replace(/<img([^>]*)\ssrc=(['"])(?:[^\2\/]*\/)*([^\2]+)\2/gi, `<img$1 src=$2${base}$3$2`);
+base = base.replace(document.location.origin, '')
+if (content) {
+  if (base == '/') {
+    base = ''
+  }
+  const regex = /<img([^>]*)src="(?:[^"\/]*)([^"]+)"/gi
+  let m;
+  do {
+    m = regex.exec(content)
+    if (m) {
+      const path = `/src/assets${m[2]}`
+      const imageUrl = images[path]
+      content = content.replace(m[0], `<img${m[1]} src="${imageUrl}"`);
+    }
+  } while(m);
 }
 
 if (content) {
@@ -65,11 +94,19 @@ onMounted(() => {
       }
     }
   })
-  document.title = (subject?.length > 0 ? subject : topic) + ' | Mokapi'
+  document.title = level3 + ' | mokapi.io'
 })
 function toggleSidebar() {
   openSidebar.value = !openSidebar.value
-  console.log(openSidebar.value)
+}
+function matchLevel2(label: any): boolean {
+  return label.toString().toLowerCase() == level2.toLowerCase()
+}
+function matchLevel3(label: any): boolean {
+  return label.toString().toLowerCase() == level3.toLowerCase()
+}
+function formatParam(label: any): string {
+  return label.toString().toLowerCase().split(' ').join('-').split('/').join('-')
 }
 </script>
 
@@ -84,20 +121,20 @@ function toggleSidebar() {
       <div class="d-flex">
         <div class="text-white sidebar d-none d-md-block" :class="openSidebar ? 'open': ''" id="sidebar">
           <ul class="nav nav-pills flex-column mb-auto pe-3">
-            <li class="nav-item" v-for="(v, k) of nav">
+            <li class="nav-item" v-for="(v, k) of nav[level1]">
               <div v-if="(typeof v != 'string')" class="chapter">
-                <router-link class="nav-link" :class="k.toString() == topic && !subject ? 'active' : ''" :to="{ name: 'docs', params: {topic: k} }">
+                <div class="chapter-text">
                   {{ k }}
-                  <i v-if="topic == k" class="bi bi-chevron-down"></i>
-                  <i v-else class="bi bi-chevron-right"></i>
-                </router-link>
-                <div class="collapse" :id="k.toString()" :class="topic == k ? 'show' : ''">
-                  <li class="nav-item" v-for="(v2, k2) of v">
-                    <router-link v-if="k != k2" class="nav-link" :class="k.toString() == topic && k2.toString() == subject ? 'active' : ''" :to="{ name: 'docs', params: {topic: k, subject: k2} }" style="padding-left: 2rem">{{ k2 }}</router-link>
+                </div>
+                <div>
+                  <li class="nav-item" v-for="(_, k2) of v">
+                    <router-link v-if="k != k2" class="nav-link" :class="matchLevel2(k) && matchLevel3(k2) ? 'active': ''" :to="{ name: 'docs', params: {level2: formatParam(k), level3: formatParam(k2)} }" style="padding-left: 2rem">{{ k2 }}</router-link>
                   </li>
               </div>
               </div>
-              <router-link v-if="(typeof v == 'string')" class="nav-link" :class="k.toString() == topic && !subject ? 'active' : ''" :to="{ name: 'docs', params: {topic: k} }">{{ k }}</router-link>
+              <div class="chapter" v-if="typeof v == 'string' && level1 != k">
+                <router-link class="nav-link chapter-text" :class="matchLevel2(k) ? 'active': ''" :to="{ name: 'docs', params: {level2: formatParam(k)} }">{{ k }}</router-link>
+              </div>
             </li>
           </ul>
         </div>
@@ -129,8 +166,8 @@ function toggleSidebar() {
 .sidebar {
   position: sticky;
   align-self: flex-start;
-  width: 240px;
-  top: 5rem;
+  width: 340px;
+  padding-top: 2rem;
 }
 .sidebar.open{
   background-color: var(--color-background-mute);
@@ -142,12 +179,12 @@ function toggleSidebar() {
   bottom: 0;
   box-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.05), 0 0.25rem 0.5rem rgba(0, 0, 0, 0.05);
   padding-top: 1.5rem;
+  overflow-y: scroll;
 }
 .sidebar.open .nav-pills .nav-link.active, .sidebar.show  .nav-pills .show > .nav-link {
   background-color: var(--color-background-mute);
 }
 .content{
-  text-align: justify;
   margin-left: 1.2rem;
   margin-right: 1.2rem;
   padding-top: 2rem;
@@ -212,19 +249,43 @@ table.selectable tbody tr:hover {
 }
 
 .nav {
-  font-size: 0.9rem;
+  font-size: 0.94rem;
+}
+
+@media only screen and (max-width: 600px)  {
+  .nav {
+    font-size: 1.7rem;
+  }
 }
 
 .nav .nav-link {
   padding-bottom: 5px;
 }
 
-.chapter {
-  position: relative; 
+.nav .nav-link.active {
+  color: var(--color-link-active);
 }
-.nav-link i {
-  position: absolute;
-  right: 0;
+
+.chapter {
+  margin-bottom: 1.5rem;
+}
+
+.chapter-text {
+  font-weight: 700;
+  padding-left: 16px;
+}
+
+pre {
+  max-width: 700px;
+  margin: 0 auto auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  border-radius: 6px;
+}
+@media only screen and (max-width: 600px)  {
+  pre {
+    max-width: none !important;
+  }
 }
 
 .box {

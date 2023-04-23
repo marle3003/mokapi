@@ -52,6 +52,32 @@ func (r *Request) Write(w io.Writer) error {
 	return nil
 }
 
+func (r *Request) Read(reader io.Reader) error {
+	d := NewDecoder(reader, 4)
+	r.Header = readHeader(d)
+
+	if d.err != nil {
+		return d.err
+	}
+
+	if r.Header.Size == 0 {
+		return nil
+	}
+
+	if d.err != nil {
+		return d.err
+	}
+
+	t := ApiTypes[r.Header.ApiKey]
+	if t.MinVersion > r.Header.ApiVersion && t.MaxVersion < r.Header.ApiVersion {
+		return Error{Header: r.Header, Code: UnsupportedVersion, Message: fmt.Sprintf("unsupported api version")}
+	}
+
+	var err error
+	r.Message, err = t.request.decode(d, r.Header.ApiVersion)
+	return err
+}
+
 func (r *Request) WithContext(ctx context.Context) *Request {
 	r.Context = ctx
 	return r

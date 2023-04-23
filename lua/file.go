@@ -11,9 +11,9 @@ func newFile(host common.Host) *file {
 }
 
 func (f *file) open(filename string) (string, string) {
-	_, s, err := f.host.OpenFile(filename, "")
+	file, err := f.host.OpenFile(filename, "")
 	if err != nil {
 		return "", err.Error()
 	}
-	return s, ""
+	return string(file.Raw), ""
 }

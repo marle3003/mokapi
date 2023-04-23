@@ -18,20 +18,18 @@ func TestHost_Every(t *testing.T) {
 			func(t *testing.T, host *scriptHost) {
 				opt := common.JobOptions{Times: 1, RunFirstTimeImmediately: true}
 				var err error
-				ch := make(chan bool)
+				ch := make(chan bool, 1)
 				_, err = host.Every("100ms", func() {
 					ch <- true
 				}, opt)
 				require.NoError(t, err)
 
 				var counter int
-				now := time.Now()
-				for time.Now().Before(now.Add(200 * time.Millisecond)) {
-					select {
-					case <-ch:
-						counter++
-					default:
-					}
+				select {
+				case <-ch:
+					counter++
+				case <-time.After(50 * time.Millisecond):
+					break
 				}
 
 				require.Equal(t, 1, counter)
@@ -42,20 +40,18 @@ func TestHost_Every(t *testing.T) {
 			func(t *testing.T, host *scriptHost) {
 				opt := common.JobOptions{Times: 1, RunFirstTimeImmediately: false}
 				var err error
-				ch := make(chan bool)
+				ch := make(chan bool, 1)
 				_, err = host.Every("100ms", func() {
 					ch <- true
 				}, opt)
 				require.NoError(t, err)
 
 				var counter int
-				now := time.Now()
-				for time.Now().Before(now.Add(100 * time.Millisecond)) {
-					select {
-					case <-ch:
-						counter++
-					default:
-					}
+				select {
+				case <-ch:
+					counter++
+				case <-time.After(50 * time.Millisecond):
+					break
 				}
 
 				require.Equal(t, 0, counter)

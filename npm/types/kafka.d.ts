@@ -1,4 +1,4 @@
-declare module 'kafka' {
+declare module 'mokapi/kafka' {
     function produce(args: ProduceArgs): ProduceResult
 }
 
@@ -12,7 +12,10 @@ declare interface ProduceArgs {
 }
 
 declare interface ProduceResult {
-    key: any
-    value: any
-    error?: string
+    cluster: string
+    topic: string
+    partition: number
+    offset: number
+    key: string
+    value: string
 }

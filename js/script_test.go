@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"github.com/dop251/goja"
 	r "github.com/stretchr/testify/require"
+	config "mokapi/config/dynamic/common"
 	"mokapi/engine/common"
 	"net/http"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -37,7 +39,28 @@ func TestScript(t *testing.T) {
 	})
 	t.Run("console.log", func(t *testing.T) {
 		t.Parallel()
+		host.info = func(args ...interface{}) {
+			r.Equal(t, "foo", args[0])
+		}
 		s, err := New("test", `export default function() {console.log("foo")}`, host)
+		r.NoError(t, err)
+		r.NoError(t, s.Run())
+	})
+	t.Run("console.warn", func(t *testing.T) {
+		t.Parallel()
+		host.warn = func(args ...interface{}) {
+			r.Equal(t, "foo", args[0])
+		}
+		s, err := New("test", `export default function() {console.warn("foo")}`, host)
+		r.NoError(t, err)
+		r.NoError(t, s.Run())
+	})
+	t.Run("console.err", func(t *testing.T) {
+		t.Parallel()
+		host.error = func(args ...interface{}) {
+			r.Equal(t, "foo", args[0])
+		}
+		s, err := New("test", `export default function() {console.error("foo")}`, host)
 		r.NoError(t, err)
 		r.NoError(t, s.Run())
 	})
@@ -80,37 +103,32 @@ func TestScript(t *testing.T) {
 		<-time.NewTimer(time.Duration(1) * time.Second).C
 		s.Close()
 	})
-}
-
-func TestScript_Generator(t *testing.T) {
-	host := &testHost{}
-
-	t.Parallel()
-	t.Run("nil", func(t *testing.T) {
+	t.Run("warn deprecated module", func(t *testing.T) {
 		t.Parallel()
-
-		s, err := New("",
-			`
-import {fake} from 'faker'
-export default function() {
-  var s = fake({type: 'string'})
-return s
-}`,
-			host)
+		s, err := New("test", `import http from 'http'
+											export default function() {}`, host)
 		r.NoError(t, err)
+		var warn interface{}
+		host.warn = func(args ...interface{}) {
+			warn = args[0]
+		}
 		err = s.Run()
 		r.NoError(t, err)
+		r.Equal(t, "deprecated module http: Please use mokapi/http instead", warn)
+		s.Close()
 	})
 }
 
 type testHost struct {
-	common.Host
 	openFile    func(file, hint string) (string, string, error)
-	openScript  func(file, hint string) (string, string, error)
+	open        func(file, hint string) (*config.Config, error)
 	info        func(args ...interface{})
+	warn        func(args ...interface{})
+	error       func(args ...interface{})
 	httpClient  *testClient
 	kafkaClient *kafkaClient
 	every       func(every string, do func(), opt common.JobOptions)
+	cron        func(every string, do func(), opt common.JobOptions)
 	on          func(event string, do func(args ...interface{}) (bool, error), tags map[string]string)
 }
 
@@ -120,23 +138,42 @@ func (th *testHost) Info(args ...interface{}) {
 	}
 }
 
-func (th *testHost) OpenFile(file, hint string) (string, string, error) {
-	if th.openFile != nil {
-		return th.openFile(file, hint)
+func (th *testHost) Warn(args ...interface{}) {
+	if th.warn != nil {
+		th.warn(args...)
 	}
-	return "", "", nil
 }
 
-func (th *testHost) OpenScript(file, hint string) (string, string, error) {
-	if th.openScript != nil {
-		return th.openScript(file, hint)
+func (th *testHost) Error(args ...interface{}) {
+	if th.error != nil {
+		th.error(args...)
 	}
-	return "", "", nil
+}
+
+func (th *testHost) OpenFile(file, hint string) (*config.Config, error) {
+	if th.openFile != nil {
+		p, src, err := th.openFile(file, hint)
+		if err != nil {
+			return nil, err
+		}
+		return &config.Config{Raw: []byte(src), Url: mustParse(p)}, nil
+	}
+	if th.open != nil {
+		return th.open(file, hint)
+	}
+	return nil, fmt.Errorf("file %v not found (hint: %v)", file, hint)
 }
 
 func (th *testHost) Every(every string, do func(), opt common.JobOptions) (int, error) {
 	if th.every != nil {
 		th.every(every, do, opt)
+	}
+	return 0, nil
+}
+
+func (th *testHost) Cron(expr string, do func(), opt common.JobOptions) (int, error) {
+	if th.cron != nil {
+		th.cron(expr, do, opt)
 	}
 	return 0, nil
 }
@@ -169,12 +206,28 @@ func (c *testClient) Do(request *http.Request) (*http.Response, error) {
 }
 
 type kafkaClient struct {
-	produce func(cluster, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error)
+	produce func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error)
 }
 
-func (c *kafkaClient) Produce(cluster, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error) {
+func (c *kafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 	if c.produce != nil {
-		return c.produce(cluster, topic, partition, key, value, headers)
+		return c.produce(args)
 	}
-	return nil, nil, nil
+	return nil, nil
+}
+
+func (th *testHost) Cancel(jobId int) error {
+	return nil
+}
+
+func (th *testHost) Name() string {
+	return "test host"
+}
+
+func mustParse(s string) *url.URL {
+	u, err := url.Parse(s)
+	if err != nil {
+		panic(err)
+	}
+	return u
 }

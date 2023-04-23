@@ -1,32 +1,89 @@
 {
-  "Welcome": "welcome.md",
+  "Home": "welcome.md",
+  "Guides": {
+    "Get Started": {
+      "Welcome": "guides/get-started/welcome.md",
+      "Installation": "guides/get-started/installation.md",
+      "Running": "guides/get-started/running.md",
+      "Test Data": "guides/get-started/test-data.md",
+      "Dashboard": "guides/get-started/dashboard.md"
+    },
+    "HTTP": {
+      "Overview": "guides/http/overview.md",
+      "Quick Start": "guides/http/quick-start.md",
+      "HTTPS & TLS": "guides/http/tls.md"
+    },
+    "Kafka": {
+      "Overview": "guides/kafka/overview.md",
+      "Quick Start": "guides/kafka/quick-start.md",
+      "Config": "guides/kafka/config.md"
+    },
+    "LDAP": {"Overview": "guides/ldap/ldap.md"},
+    "SMTP": {"Overview":  "guides/smtp/smtp.md"}
+  },
   "Configuration": {
-    "Configuration": "configuration/configuration.md",
-    "File": "configuration/file.md",
-    "HTTP": "configuration/http.md",
-    "GIT": "configuration/git.md"
+    "Configuration": {
+      "Overview": "configuration/configuration.md"
+    },
+    "Providers": {
+      "File": "configuration/providers/file.md",
+      "HTTP": "configuration/providers/http.md",
+      "GIT": "configuration/providers/git.md"
+    },
+    "Reference": "configuration/reference.md"
   },
-  "OpenAPI": {
-    "OpenAPI": "openapi/intro.md",
-    "Quick Start": "openapi/quick-start.md",
-    "Static Data Generation": "openapi/static-data-generation.md",
-    "Mokapi Script": "openapi/mokapi-script.md",
-    "HTTPS & TLS": "openapi/tls.md"
+  "Javascript API": {
+    "Javascript API": {
+      "Overview": "javascript-api/javascript.md",
+      "Modules": "javascript-api/modules.md"
+    },
+    "globals": {
+      "open": "javascript-api/open.md"
+    },
+    "mokapi": {
+      "cron": "javascript-api/mokapi/cron.md",
+      "date": "javascript-api/mokapi/date.md",
+      "env": "javascript-api/mokapi/env.md",
+      "every": "javascript-api/mokapi/every.md",
+      "on": "javascript-api/mokapi/on.md",
+      "sleep": "javascript-api/mokapi/sleep.md",
+      "EventHandler": "javascript-api/mokapi/eventhandler.md",
+      "HttpRequest": "javascript-api/mokapi/httprequest.md",
+      "HttpResponse": "javascript-api/mokapi/httpresponse.md",
+      "ScheduledEventArgs": "javascript-api/mokapi/scheduledeventargs.md"
+    },
+    "mokapi/faker": {
+      "fake": "javascript-api/mokapi-faker/fake.md"
+    },
+    "mokapi/http": {
+      "delete": "javascript-api/mokapi-http/delete.md",
+      "get": "javascript-api/mokapi-http/get.md",
+      "head": "javascript-api/mokapi-http/head.md",
+      "options": "javascript-api/mokapi-http/options.md",
+      "patch": "javascript-api/mokapi-http/patch.md",
+      "post": "javascript-api/mokapi-http/post.md",
+      "put": "javascript-api/mokapi-http/put.md",
+      "HttpResponse": "javascript-api/mokapi-http/httpresponse.md",
+      "Args": "javascript-api/mokapi-http/args.md"
+    },
+    "mokapi/kafka": {
+      "produce": "javascript-api/mokapi-kafka/produce.md",
+      "ProduceArgs": "javascript-api/mokapi-kafka/produceargs.md",
+      "ProduceResult": "javascript-api/mokapi-kafka/produceresult.md"
+    },
+    "mokapi/mustache":{
+      "render": "javascript-api/mokapi-mustache/render.md"
+    },
+    "mokapi/yaml":{
+      "parse": "javascript-api/mokapi-yaml/parse.md",
+      "stringify": "javascript-api/mokapi-yaml/stringify.md"
+    }
   },
-  "Kafka": {
-    "Kafka": "kafka/kafka.md",
-    "Quick Start": "kafka/quick-start.md",
-    "Config": "kafka/config.md"
-  },
-  "LDAP": "ldap.md",
-  "SMTP": "smtp.md",
-  "Javascript": {
-    "Javascript": "javascript/scripts.md",
-    "Modules": "javascript/modules.md"
+  "Examples": {
+    "Simple HTTP API": "examples/simple-http-api.md"
   },
   "References": {
-    "Static Configuration": "references/static-configuration.md",
-    "Javascript API": "references/javascript.md",
+    "Declarative Data": "references/declarative-data.md",
     "Lua API": "references/lua.md"
   }
 }

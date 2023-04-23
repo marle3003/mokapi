@@ -78,11 +78,15 @@ func (e *entry) Info() (fs.FileInfo, error) {
 }
 
 func TestProvider(t *testing.T) {
+	type file struct {
+		path string
+		data string
+	}
 	testcases := []struct {
 		name string
 		fs   *mockFS
 		cfg  static.FileProvider
-		test func(t *testing.T, files []string)
+		test func(t *testing.T, files []file)
 	}{
 		{
 			name: "one file",
@@ -92,9 +96,24 @@ func TestProvider(t *testing.T) {
 				data:  []byte("foobar"),
 			}}},
 			cfg: static.FileProvider{Directory: "./"},
-			test: func(t *testing.T, files []string) {
+			test: func(t *testing.T, files []file) {
 				require.Len(t, files, 1)
-				require.Equal(t, "foo.txt", filepath.Base(files[0]))
+				require.Equal(t, "foo.txt", filepath.Base(files[0].path))
+				require.Equal(t, "foobar", files[0].data)
+			},
+		},
+		{
+			name: "file UTF-8-BOM",
+			fs: &mockFS{map[string]*entry{"foo.txt": {
+				name:  "foo.txt",
+				isDir: false,
+				data:  []byte{0xEF, 0xBB, 0xBF, 'f', 'o', 'o', 'b', 'a', 'r'},
+			}}},
+			cfg: static.FileProvider{Directory: "./"},
+			test: func(t *testing.T, files []file) {
+				require.Len(t, files, 1)
+				require.Equal(t, "foo.txt", filepath.Base(files[0].path))
+				require.Equal(t, "foobar", files[0].data)
 			},
 		},
 		{
@@ -105,7 +124,7 @@ func TestProvider(t *testing.T) {
 				data:  []byte("foobar"),
 			}}},
 			cfg: static.FileProvider{Directory: "./"},
-			test: func(t *testing.T, files []string) {
+			test: func(t *testing.T, files []file) {
 				require.Len(t, files, 0)
 			},
 		},
@@ -124,9 +143,9 @@ func TestProvider(t *testing.T) {
 				},
 			}},
 			cfg: static.FileProvider{Directory: "./", SkipPrefix: []string{"$"}},
-			test: func(t *testing.T, files []string) {
+			test: func(t *testing.T, files []file) {
 				require.Len(t, files, 1)
-				require.Equal(t, "_foo.txt", filepath.Base(files[0]))
+				require.Equal(t, "_foo.txt", filepath.Base(files[0].path))
 			},
 		},
 		{
@@ -143,9 +162,9 @@ func TestProvider(t *testing.T) {
 				},
 			}},
 			cfg: static.FileProvider{Directory: "./"},
-			test: func(t *testing.T, files []string) {
+			test: func(t *testing.T, files []file) {
 				require.Len(t, files, 1)
-				require.Equal(t, "foo.txt", filepath.Base(files[0]))
+				require.Equal(t, "foo.txt", filepath.Base(files[0].path))
 			},
 		},
 		{
@@ -162,7 +181,7 @@ func TestProvider(t *testing.T) {
 				},
 			}},
 			cfg: static.FileProvider{Directory: "./"},
-			test: func(t *testing.T, files []string) {
+			test: func(t *testing.T, files []file) {
 				require.Len(t, files, 0)
 			},
 		},
@@ -181,7 +200,7 @@ func TestProvider(t *testing.T) {
 				},
 			}},
 			cfg: static.FileProvider{Directory: "./"},
-			test: func(t *testing.T, files []string) {
+			test: func(t *testing.T, files []file) {
 				require.Len(t, files, 0)
 			},
 		},
@@ -200,7 +219,7 @@ func TestProvider(t *testing.T) {
 				},
 			}},
 			cfg: static.FileProvider{Directory: "./"},
-			test: func(t *testing.T, files []string) {
+			test: func(t *testing.T, files []file) {
 				require.Len(t, files, 1)
 			},
 		},
@@ -219,7 +238,7 @@ func TestProvider(t *testing.T) {
 				},
 			}},
 			cfg: static.FileProvider{Directory: "./"},
-			test: func(t *testing.T, files []string) {
+			test: func(t *testing.T, files []file) {
 				require.Len(t, files, 0)
 			},
 		},
@@ -243,7 +262,7 @@ func TestProvider(t *testing.T) {
 				},
 			}},
 			cfg: static.FileProvider{Directory: "./"},
-			test: func(t *testing.T, files []string) {
+			test: func(t *testing.T, files []file) {
 				require.Len(t, files, 1)
 			},
 		},
@@ -272,9 +291,9 @@ func TestProvider(t *testing.T) {
 				},
 			}},
 			cfg: static.FileProvider{Directory: "./"},
-			test: func(t *testing.T, files []string) {
+			test: func(t *testing.T, files []file) {
 				require.Len(t, files, 1)
-				require.True(t, strings.HasSuffix(files[0], filepath.Join("dir", "foo.js")))
+				require.True(t, strings.HasSuffix(files[0].path, filepath.Join("dir", "foo.js")))
 			},
 		},
 	}
@@ -289,7 +308,7 @@ func TestProvider(t *testing.T) {
 			ch := make(chan *common.Config)
 			err := p.Start(ch, pool)
 			require.NoError(t, err)
-			var files []string
+			var files []file
 		Collect:
 			for {
 				select {
@@ -300,7 +319,7 @@ func TestProvider(t *testing.T) {
 						parent, _ := os.Getwd()
 						path = strings.Replace(path, parent+"\\", "", 1)
 					}
-					files = append(files, path)
+					files = append(files, file{path, string(c.Raw)})
 				case <-time.After(time.Second):
 					break Collect
 				}

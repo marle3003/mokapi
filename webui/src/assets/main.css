@@ -17,6 +17,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+@media only screen and (max-width: 600px)  {
+  body {
+    font-size: 1.1rem;
+  }
+}
+
 #app {
   display: flex;
   flex-direction: column;

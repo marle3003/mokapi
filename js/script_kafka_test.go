@@ -2,6 +2,7 @@ package js
 
 import (
 	r "github.com/stretchr/testify/require"
+	"mokapi/engine/common"
 	"testing"
 )
 
@@ -13,18 +14,17 @@ func TestScript_Kafka_Produce(t *testing.T) {
 		{
 			"set topic",
 			func(t *testing.T, host *testHost) {
-				host.kafkaClient.produce = func(cluster, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error) {
-					r.Equal(t, "foo", topic)
-					r.Equal(t, "", cluster)
-					return nil, nil, nil
+				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					r.Equal(t, "foo", args.Topic)
+					r.Equal(t, "", args.Cluster)
+					return &common.KafkaProduceResult{}, nil
 				}
 
 				s, err := New("",
-					`
-import {produce} from 'kafka'
-export default function() {
-  return produce({topic: 'foo'})
-}`,
+					`import {produce} from 'mokapi/kafka'
+						 export default function() {
+						  	return produce({topic: 'foo'})
+						 }`,
 					host)
 				r.NoError(t, err)
 				err = s.Run()
@@ -34,18 +34,36 @@ export default function() {
 		{
 			"set topic and cluster",
 			func(t *testing.T, host *testHost) {
-				host.kafkaClient.produce = func(cluster, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error) {
-					r.Equal(t, "foo", topic)
-					r.Equal(t, "bar", cluster)
-					return nil, nil, nil
+				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					r.Equal(t, "foo", args.Topic)
+					r.Equal(t, "bar", args.Cluster)
+					return &common.KafkaProduceResult{}, nil
 				}
 
 				s, err := New("",
-					`
-import {produce} from 'kafka'
-export default function() {
-  return produce({topic: 'foo', cluster: 'bar'})
-}`,
+					`import {produce} from 'mokapi/kafka'
+						 export default function() {
+  							return produce({topic: 'foo', cluster: 'bar'})
+						 }`,
+					host)
+				r.NoError(t, err)
+				err = s.Run()
+				r.NoError(t, err)
+			},
+		},
+		{
+			"set cluster to null",
+			func(t *testing.T, host *testHost) {
+				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					r.Equal(t, "", args.Cluster)
+					return &common.KafkaProduceResult{}, nil
+				}
+
+				s, err := New("",
+					`import {produce} from 'mokapi/kafka'
+						 export default function() {
+  							return produce({cluster: null})
+						 }`,
 					host)
 				r.NoError(t, err)
 				err = s.Run()
@@ -55,23 +73,113 @@ export default function() {
 		{
 			"set key, value and partition",
 			func(t *testing.T, host *testHost) {
-				host.kafkaClient.produce = func(cluster, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error) {
-					r.Equal(t, "key", key)
-					r.Equal(t, "value", value)
-					r.Equal(t, 2, partition)
-					return nil, nil, nil
+				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					r.Equal(t, "key", args.Key)
+					r.Equal(t, "value", args.Value)
+					r.Equal(t, 2, args.Partition)
+					return &common.KafkaProduceResult{}, nil
 				}
 
 				s, err := New("",
-					`
-import {produce} from 'kafka'
-export default function() {
-  return produce({value: 'value', key: 'key', partition: 2})
-}`,
+					`import {produce} from 'mokapi/kafka'
+						 export default function() {
+						  	return produce({value: 'value', key: 'key', partition: 2})
+						 }`,
 					host)
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
+			},
+		},
+		{
+			"set key, value and partition",
+			func(t *testing.T, host *testHost) {
+				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					r.Equal(t, "key", args.Key)
+					r.Equal(t, "value", args.Value)
+					r.Equal(t, 2, args.Partition)
+					return &common.KafkaProduceResult{}, nil
+				}
+
+				s, err := New("",
+					`import {produce} from 'mokapi/kafka'
+						 export default function() {
+						  	return produce({value: 'value', key: 'key', partition: 2})
+						 }`,
+					host)
+				r.NoError(t, err)
+				err = s.Run()
+				r.NoError(t, err)
+			},
+		},
+		{
+			"set headers",
+			func(t *testing.T, host *testHost) {
+				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					r.Equal(t, map[string]interface{}{"foo": "bar"}, args.Headers)
+					return &common.KafkaProduceResult{}, nil
+				}
+
+				s, err := New("",
+					`import {produce} from 'mokapi/kafka'
+						 export default function() {
+						  	return produce({headers: {foo: 'bar'}})
+						 }`,
+					host)
+				r.NoError(t, err)
+				err = s.Run()
+				r.NoError(t, err)
+			},
+		},
+		{
+			"set timeout",
+			func(t *testing.T, host *testHost) {
+				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					r.Equal(t, map[string]interface{}{"foo": "bar"}, args.Headers)
+					return &common.KafkaProduceResult{}, nil
+				}
+
+				s, err := New("",
+					`import {produce} from 'mokapi/kafka'
+						 export default function() {
+						  	return produce({headers: {foo: 'bar'}})
+						 }`,
+					host)
+				r.NoError(t, err)
+				err = s.Run()
+				r.NoError(t, err)
+			},
+		},
+		{
+			"result",
+			func(t *testing.T, host *testHost) {
+				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					return &common.KafkaProduceResult{
+						Cluster:   "Cluster",
+						Topic:     "Topic",
+						Partition: 99,
+						Offset:    3451345,
+						Key:       "foo",
+						Value:     "bar",
+					}, nil
+				}
+
+				s, err := New("",
+					`import {produce} from 'mokapi/kafka'
+						 export default function() {
+						  	return produce()
+						 }`,
+					host)
+				r.NoError(t, err)
+				v, err := s.RunDefault()
+				r.NoError(t, err)
+				result := v.Export().(ProduceResult)
+				r.Equal(t, "Cluster", result.Cluster)
+				r.Equal(t, "Topic", result.Topic)
+				r.Equal(t, 99, result.Partition)
+				r.Equal(t, int64(3451345), result.Offset)
+				r.Equal(t, "foo", result.Key)
+				r.Equal(t, "bar", result.Value)
 			},
 		},
 	}

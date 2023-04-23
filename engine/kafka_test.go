@@ -7,6 +7,7 @@ import (
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/config/dynamic/openapi/schema/schematest"
+	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/runtime"
@@ -21,14 +22,13 @@ func TestKafkaClient_Produce(t *testing.T) {
 		{
 			"random key",
 			func(t *testing.T, s *store.Store, c *kafkaClient) {
-				k, v, err := c.Produce("foo", "foo", -1, nil, nil, nil)
+				result, err := c.Produce(&common.KafkaProduceArgs{Topic: "foo", Cluster: "foo"})
 				require.NoError(t, err)
-				require.NotNil(t, k)
-				require.NotNil(t, v)
+				require.NotNil(t, result)
 				b, kerr := s.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, kerr)
 				require.NotNil(t, b)
-				require.Equal(t, fmt.Sprintf("%v", k), string(readBytes(b.Records[0].Key)))
+				require.Equal(t, fmt.Sprintf("%v", result.Key), string(readBytes(b.Records[0].Key)))
 			},
 		},
 	}

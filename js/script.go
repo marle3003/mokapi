@@ -5,15 +5,7 @@ import (
 	"github.com/dop251/goja"
 	"github.com/pkg/errors"
 	engine "mokapi/engine/common"
-	"mokapi/js/common"
 	"mokapi/js/compiler"
-	"mokapi/js/modules"
-	"mokapi/js/modules/faker"
-	"mokapi/js/modules/http"
-	"mokapi/js/modules/kafka"
-	"mokapi/js/modules/mustache"
-	"mokapi/js/modules/require"
-	"mokapi/js/modules/yaml"
 	"path/filepath"
 )
 
@@ -24,7 +16,7 @@ type Script struct {
 	exports  goja.Value
 	compiler *compiler.Compiler
 	host     engine.Host
-	require  *require.Module
+	require  *requireModule
 	filename string
 	source   string
 }
@@ -108,18 +100,23 @@ func (s *Script) ensureRuntime() (err error) {
 	s.runtime = goja.New()
 
 	s.runtime.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
-
-	s.require = require.New(
-		require.WithCompiler(s.compiler),
-		require.WithSourceLoader(s.host.OpenScript),
-		require.WithWorkingDir(filepath.Dir(s.filename)),
-		require.WithNativeModule("mokapi", s.loadNativeModule(modules.NewMokapi)),
-		require.WithNativeModule("faker", s.loadNativeModule(faker.New)),
-		require.WithNativeModule("http", s.loadNativeModule(http.New)),
-		require.WithNativeModule("kafka", s.loadNativeModule(kafka.New)),
-		require.WithNativeModule("yaml", s.loadNativeModule(yaml.New)),
-		require.WithNativeModule("mustache", s.loadNativeModule(mustache.New)),
-	)
+	s.require = newRequire(
+		s.host.OpenFile,
+		s.compiler,
+		filepath.Dir(s.filename),
+		map[string]ModuleLoader{
+			"mokapi":          s.loadNativeModule(newMokapi),
+			"mokapi/faker":    s.loadNativeModule(newFaker),
+			"faker":           s.loadDeprecatedNativeModule(newHttp, "deprecated module faker: Please use mokapi/faker instead"),
+			"mokapi/http":     s.loadNativeModule(newHttp),
+			"http":            s.loadDeprecatedNativeModule(newHttp, "deprecated module http: Please use mokapi/http instead"),
+			"mokapi/kafka":    s.loadNativeModule(newKafka),
+			"kafka":           s.loadDeprecatedNativeModule(newHttp, "deprecated module kafka: Please use mokapi/kafka instead"),
+			"mokapi/mustache": s.loadNativeModule(newMustache),
+			"mustache":        s.loadDeprecatedNativeModule(newHttp, "deprecated module mustache: Please use mokapi/mustache instead"),
+			"mokapi/yaml":     s.loadNativeModule(newYaml),
+			"yaml":            s.loadDeprecatedNativeModule(newHttp, "deprecated module yaml: Please use mokapi/yaml instead"),
+		})
 	s.require.Enable(s.runtime)
 	enableConsole(s.runtime, s.host)
 	enableOpen(s.runtime, s.host)
@@ -154,9 +151,17 @@ func (s *Script) addHttpEvent(i interface{}) {
 	s.host.On("http", f, nil)
 }
 
-func (s *Script) loadNativeModule(f func(engine.Host, *goja.Runtime) interface{}) require.ModuleLoader {
+func (s *Script) loadNativeModule(f func(engine.Host, *goja.Runtime) interface{}) ModuleLoader {
 	return func() goja.Value {
 		m := f(s.host, s.runtime)
-		return common.Map(s.runtime, m)
+		return mapToJSValue(s.runtime, m)
+	}
+}
+
+func (s *Script) loadDeprecatedNativeModule(f func(engine.Host, *goja.Runtime) interface{}, msg string) ModuleLoader {
+	return func() goja.Value {
+		s.host.Warn(msg)
+		m := f(s.host, s.runtime)
+		return mapToJSValue(s.runtime, m)
 	}
 }

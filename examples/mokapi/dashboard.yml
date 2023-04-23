@@ -84,7 +84,7 @@ paths:
                 $ref: 'smtp.yml#/components/schemas/SmtpInfo'
   /api/services/kafka/{name}/groups:
     get:
-      summary: Information about the kafka cluster
+      summary: list of kafka groups
       operationId: serviceKafka
       parameters:
         - name: name
@@ -101,7 +101,7 @@ paths:
                 $ref: 'kafka.yml#/components/schemas/Kafka'
   /api/events:
     get:
-      summary: Information about the kafka cluster
+      summary: list of events
       operationId: events
       parameters:
         - name: traits
@@ -139,7 +139,7 @@ paths:
           description: no event exists for specified id
   /api/metrics:
     get:
-      summary: returns metrics
+      summary: get list of metrics
       operationId: metrics
       parameters:
         - in: query

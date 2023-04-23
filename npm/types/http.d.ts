@@ -1,21 +1,20 @@
-declare module 'mustache' {
-    function get(url: string, args: Args): Response
-    function post(url: string, body: string, args: Args): Response
-    function put(url: string, body: string, args: Args): Response
-    function head(url: string, args: Args): Response
-    function patch(url: string, args: Args): Response
-    function del(url: string, body: string, args: Args): Response
-    function options(url: string, body: string, args: Args): Response
+declare module 'mokapi/http' {
+    function get(url: string, args?: Args): Response
+    function post(url: string, body?: any, args?: Args): Response
+    function put(url: string, body?: any, args?: Args): Response
+    function head(url: string, args?: Args): Response
+    function patch(url: string, args?: Args): Response
+    function del(url: string, body?: any, args?: Args): Response
+    function options(url: string, body?: any, args?: Args): Response
 }
 
-type Header = { [name: string]: string };
-
 declare interface Args {
-    header?: Header;
+    header?: { [name: string]: any };
 }
 
 declare interface Response {
     body: string
     statusCode: number
-    headers: Header 
+    headers: { [name: string]: string[] }
+    json(): any
 }

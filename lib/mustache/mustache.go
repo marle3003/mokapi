@@ -9,7 +9,7 @@ import (
 
 var pattern = regexp.MustCompile(`{{\s*([\w\.]+)\s*}}`)
 
-func Render(template string, data interface{}) (string, error) {
+func Render(template string, scope interface{}) (string, error) {
 	matches := pattern.FindAllStringSubmatch(template, -1)
 
 	for _, match := range matches {
@@ -17,9 +17,9 @@ func Render(template string, data interface{}) (string, error) {
 		var value interface{}
 		var err error
 		if path == "." {
-			value = data
+			value = scope
 		} else {
-			value, err = objectpath.Resolve(path, data)
+			value, err = objectpath.Resolve(path, scope)
 			if err != nil {
 				return "", err
 			}

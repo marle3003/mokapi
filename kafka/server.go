@@ -116,8 +116,7 @@ func (s *Server) serve(conn net.Conn, ctx context.Context) {
 
 	for {
 		r := &Request{Context: ctx, Host: conn.LocalAddr().String()}
-		var err error
-		r.Header, r.Message, err = ReadMessage(conn)
+		err := r.Read(conn)
 		if err != nil {
 			switch {
 			case err == io.EOF || errors.Is(err, net.ErrClosed):

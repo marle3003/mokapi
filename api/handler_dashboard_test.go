@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func TestHandler_Dashboard(t *testing.T) {
+func TestHandler_Api_Dashboard(t *testing.T) {
 	testcases := []struct {
 		name string
 		f    func(t *testing.T)

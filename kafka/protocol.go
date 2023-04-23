@@ -1,10 +1,7 @@
 package kafka
 
 import (
-	"encoding/binary"
 	"fmt"
-	log "github.com/sirupsen/logrus"
-	"io"
 	"math"
 	"reflect"
 	"strconv"
@@ -159,68 +156,6 @@ func Register(reg ApiReg, req, res Message, flexibleRequest int16, flexibleRespo
 		},
 		flexibleRequest,
 		flexibleResponse,
-	}
-}
-
-func ReadMessage(r io.Reader) (h *Header, msg Message, err error) {
-	d := NewDecoder(r, 4)
-	h = readHeader(d)
-
-	if d.err != nil {
-		return nil, nil, d.err
-	}
-
-	if h.Size == 0 {
-		return nil, nil, nil
-	}
-
-	if d.err != nil {
-		err = d.err
-		return
-	}
-
-	t := ApiTypes[h.ApiKey]
-	if t.MinVersion > h.ApiVersion && t.MaxVersion < h.ApiVersion {
-		return nil, nil, Error{Header: h, Code: UnsupportedVersion, Message: fmt.Sprintf("unsupported api version")}
-	}
-
-	msg, err = t.request.decode(d, h.ApiVersion)
-	if err != nil {
-		err = d.err
-	}
-
-	return
-}
-
-func WriteMessage(w io.Writer, k ApiKey, version int16, correlationId int32, msg Message) {
-	buffer := newPageBuffer()
-	defer func() {
-		buffer.unref()
-	}()
-
-	e := NewEncoder(buffer)
-	t := ApiTypes[k]
-
-	e.writeInt32(0)
-	e.writeInt32(correlationId)
-	if version >= t.flexibleResponse {
-		e.writeUVarInt(0) // tag_buffer
-	}
-
-	if msg != nil {
-		if err := t.response.encode(e, version, msg); err != nil {
-			log.Errorf("unable to write kafka message apikey %q: %v", k, err)
-		}
-	}
-
-	var size [4]byte
-	binary.BigEndian.PutUint32(size[:], uint32(buffer.Size()-4))
-	buffer.WriteAt(size[:], 0)
-
-	_, err := buffer.WriteTo(w)
-
-	if err != nil {
-		log.Errorf("unable to write kafka message apikey %q: %v", k, err)
 	}
 }
 

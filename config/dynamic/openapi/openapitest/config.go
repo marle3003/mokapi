@@ -28,6 +28,16 @@ func WithInfo(name, version, description string) ConfigOptions {
 	}
 }
 
+func WithContact(name, url, email string) ConfigOptions {
+	return func(c *openapi.Config) {
+		c.Info.Contact = &openapi.Contact{
+			Name:  name,
+			Url:   url,
+			Email: email,
+		}
+	}
+}
+
 func WithEndpoint(path string, endpoint *openapi.Endpoint) ConfigOptions {
 	return func(c *openapi.Config) {
 		c.Paths.Value[path] = &openapi.EndpointRef{Value: endpoint}

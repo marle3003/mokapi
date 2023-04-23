@@ -40,6 +40,8 @@ function isAnyServiceAvailable() {
 function isInitLoading() {
     return appInfo.isLoading && !appInfo.data
 }
+
+document.title = 'Dashbboard | mokapi.io'
 </script>
 
 <template>

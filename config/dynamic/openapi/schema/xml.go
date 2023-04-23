@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
+	"mokapi/sortedmap"
 	"net/url"
 	"strings"
 )
@@ -176,7 +177,7 @@ func (e *xmlNode) parse(r *Ref) (interface{}, error) {
 		if s.Properties == nil && s.IsFreeForm() {
 			return e.parseFreeForm()
 		}
-		props := make(map[string]interface{})
+		props := sortedmap.NewLinkedHashMap()
 		for it := s.Properties.Value.Iter(); it.Next(); {
 			name := it.Key().(string)
 			xmlName := name
@@ -186,7 +187,7 @@ func (e *xmlNode) parse(r *Ref) (interface{}, error) {
 			}
 			if prop.Value.Xml != nil && prop.Value.Xml.Attribute {
 				if v, ok := e.Attributes[xmlName]; ok {
-					props[name] = v
+					props.Set(name, v)
 				}
 			} else {
 				c := e.GetFirstElement(xmlName)
@@ -197,7 +198,7 @@ func (e *xmlNode) parse(r *Ref) (interface{}, error) {
 				if err != nil {
 					return nil, err
 				}
-				props[name] = v
+				props.Set(name, v)
 			}
 		}
 		return props, nil
@@ -282,16 +283,16 @@ func (e *xmlNode) parseFreeForm() (interface{}, error) {
 		}
 		return result, nil
 	} else {
-		result := make(map[string]interface{})
+		result := sortedmap.NewLinkedHashMap()
 		for n, a := range e.Attributes {
-			result[n] = a
+			result.Set(n, a)
 		}
 		for _, c := range e.Children {
 			v, err := c.parse(nil)
 			if err != nil {
 				return nil, err
 			}
-			result[c.Name] = v
+			result.Set(c.Name, v)
 		}
 		return result, nil
 	}

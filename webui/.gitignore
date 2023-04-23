@@ -30,3 +30,5 @@ coverage
 test-results/
 playwright-report/
 src/assets/docs
+public/docs
+public/sitemap.xml

@@ -4,6 +4,7 @@ import (
 	"mokapi/config/dynamic/openapi"
 	"mokapi/config/dynamic/openapi/parameter"
 	"mokapi/config/dynamic/openapi/schema"
+	"mokapi/media"
 )
 
 type OperationOptions func(o *openapi.Operation)
@@ -61,6 +62,23 @@ func WithHeaderParam(name string, required bool, opts ...ParamOptions) Operation
 	}
 }
 
+func WithRequestBody(description string, required bool, opts ...RequestBodyOptions) OperationOptions {
+	return func(o *openapi.Operation) {
+		body := &openapi.RequestBody{
+			Description: description,
+			Required:    required,
+		}
+
+		for _, opt := range opts {
+			opt(body)
+		}
+
+		o.RequestBody = &openapi.RequestBodyRef{
+			Value: body,
+		}
+	}
+}
+
 func newParam(name string, required bool, t parameter.Location, opts ...ParamOptions) *parameter.Parameter {
 	p := &parameter.Parameter{
 		Name:     name,
@@ -72,6 +90,21 @@ func newParam(name string, required bool, t parameter.Location, opts ...ParamOpt
 		opt(p)
 	}
 	return p
+}
+
+type RequestBodyOptions func(o *openapi.RequestBody)
+
+func WithRequestContent(mediaType string, opts ...ContentOptions) RequestBodyOptions {
+	return func(rb *openapi.RequestBody) {
+		ct := media.ParseContentType(mediaType)
+		if rb.Content == nil {
+			rb.Content = map[string]*openapi.MediaType{}
+		}
+		rb.Content[mediaType] = &openapi.MediaType{ContentType: ct}
+		for _, opt := range opts {
+			opt(rb.Content[mediaType])
+		}
+	}
 }
 
 func WithParamSchema(s *schema.Schema) ParamOptions {

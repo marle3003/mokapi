@@ -6,6 +6,7 @@ import (
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/config/dynamic/openapi/schema"
+	"mokapi/engine/common"
 	"mokapi/kafka"
 	"mokapi/media"
 	"mokapi/runtime"
@@ -24,32 +25,39 @@ func newKafkaClient(app *runtime.App) *kafkaClient {
 	}
 }
 
-func (c *kafkaClient) Produce(cluster string, topic string, partition int, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error) {
-	t, p, config, err := c.get(cluster, topic, partition)
+func (c *kafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+	t, p, config, err := c.get(args.Cluster, args.Topic, args.Partition)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	ch := config.Channels[t.Name]
 	if ch.Value == nil {
-		return nil, nil, fmt.Errorf("invalid topic configuration")
+		return nil, fmt.Errorf("invalid topic configuration")
 	}
 
-	rb, err := c.createRecordBatch(key, value, ch.Value)
+	rb, err := c.createRecordBatch(args.Key, args.Value, ch.Value)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	_, err = p.Write(rb)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	k := kafka.BytesToString(rb.Records[0].Key)
 	v := kafka.BytesToString(rb.Records[0].Value)
 	t.Store().UpdateMetrics(c.app.Monitor.Kafka, t, p, rb)
 
-	return k, v, nil
+	return &common.KafkaProduceResult{
+		Cluster:   config.Info.Name,
+		Topic:     t.Name,
+		Partition: p.Index,
+		Offset:    rb.Records[0].Offset,
+		Key:       k,
+		Value:     v,
+	}, nil
 
 }
 
@@ -134,8 +142,8 @@ func (c *kafkaClient) get(cluster string, topic string, partition int) (t *store
 	}
 
 	if partition < 0 {
-		rand.Seed(time.Now().Unix())
-		partition = rand.Intn(len(t.Partitions))
+		r := rand.New(rand.NewSource(time.Now().Unix()))
+		partition = r.Intn(len(t.Partitions))
 	} else if partition >= len(t.Partitions) {
 		err = fmt.Errorf("partiton %v does not exist", partition)
 		return

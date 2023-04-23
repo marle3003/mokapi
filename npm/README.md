@@ -1,6 +1,9 @@
 <p align="center">
-<img src="https://github.com/marle3003/mokapi/raw/v0.5.0/logo.svg" alt="Mokapi" title="Mokapi" width="400" />
+<img src="https://github.com/marle3003/mokapi/raw/v0.5.0/logo.svg" alt="Mokapi" title="Mokapi" width="300" />
 </p>
+
+<h3 align="center">Create and test API designs<br />before actually building them</h3>
+
 
 ## Overview
 
@@ -19,3 +22,13 @@ By using Mokapi, developers can reduce the time and effort required for developm
 ```shell
 npx mokapi --Providers.File.Directory=./mokapi
 ```
+
+## Documentation
+
+- [Get Started](https://mokapi.io/docs/guides/get-started/welcome)
+- [HTTP](https://mokapi.io/docs/guides/http/overview)
+- [Kafka](https://mokapi.io/docs/guides/kafka/overview)
+- [LDAP](https://mokapi.io/docs/guides/ldap/overview)
+- [SMTP](https://mokapi.io/docs/guides/smtp/overview)
+- [Javascript API](https://mokapi.io/docs/javascript-api)
+- [Examples](https://mokapi.io/docs/examples)

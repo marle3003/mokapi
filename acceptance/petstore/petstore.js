@@ -1,5 +1,5 @@
 import {on} from 'mokapi'
-import kafka from 'kafka'
+import kafka from 'mokapi/kafka'
 
 export default function() {
     on('kafka', function (record) {

@@ -120,7 +120,7 @@ func TestFetch(t *testing.T) {
 				_, ok := rr.Message.(*fetch.Response)
 				require.True(t, ok)
 				waitTime := end.Sub(start).Milliseconds()
-				require.Greater(t, waitTime, int64(800))
+				require.Greater(t, waitTime, int64(799))
 				require.Less(t, waitTime, int64(1000), "wait time should be 800ms but was %v", waitTime)
 			},
 		},

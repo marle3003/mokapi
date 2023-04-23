@@ -27,4 +27,7 @@ declare interface ServiceEvent {
     id: string
     data: HttpEventData | KafkaEventData
     time: string
+    traits: Traits
 }
+
+declare interface Traits {[name: string]: string}

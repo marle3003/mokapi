@@ -7,7 +7,7 @@ import type Renderer from "markdown-it/lib/renderer"
 export function MarkdownItTabs(md: MarkdownIt, opts: Options) {
     var defaultRender = md.renderer.rules.fence!,
         unescapeAll = md.utils.unescapeAll,
-        re = /tab=(\w*)/,
+        re = /tab=([^\s]*)/,
         counter = 0
 
     function getInfo(token: Token) {
@@ -16,14 +16,14 @@ export function MarkdownItTabs(md: MarkdownIt, opts: Options) {
 
     function getTabName(token: Token) {
         var info = getInfo(token)   
-        return re.exec(info)?.slice(1)
+        return re.exec(info)?.slice(1).toString() ?? ''
     }
 
     function fenceGroup(tokens: Token[], idx: number, options: Options, env: any, slf: Renderer): string {
         if (tokens[idx].hidden) { return '' }
 
         const tabName = getTabName(tokens[idx]);
-        if (tabName == null) {
+        if (tabName == null || tabName == '') {
             return defaultRender(tokens, idx, options, env, slf);
         }
         counter++
@@ -31,16 +31,17 @@ export function MarkdownItTabs(md: MarkdownIt, opts: Options) {
         var tabs = '', contents = ''
         for (let i = idx; i < tokens.length; i++) {
             const token = tokens[i];
-            const tabName = getTabName(token);
-            if (tabName == null) { 
+            let tabName = getTabName(token);
+            console.log('tabName'+tabName)
+            if (tabName == null || tabName == '') { 
                 break;
             }
 
             token.info = token.info.replace(re, '')
             token.hidden = true
 
-            const tabId = `tab-${counter}-${tabName}`
-            const tabPanelId = `tabPanel-${counter}-${tabName}`
+            const tabId = `tab-${counter}-${tabName.toString().replace('.', '-')}`
+            const tabPanelId = `tabPanel-${counter}-${tabName.toString().replace('.', '-')}`
             const checked = i - idx > 0 ? '' : ' checked'
 
             tabs += `<button class="${checked?'active':''}" id="${tabId}" data-bs-toggle="tab" data-bs-target="#${tabPanelId}" type="button" role="tab" aria-controls="${tabPanelId}" aria-selected="${checked}">${tabName}</button>`
