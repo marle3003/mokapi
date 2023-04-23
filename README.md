@@ -1,10 +1,14 @@
 <p align="center">
-<img src="https://github.com/marle3003/mokapi/raw/v0.5.0/logo.svg" alt="Mokapi" title="Mokapi" width="400" />
+<img src="https://github.com/marle3003/mokapi/raw/v0.5.0/logo.svg" alt="Mokapi" title="Mokapi" width="300" />
 </p>
 
+<h3 align="center">Create and test API designs<br />before actually building them</h3>
+
+<p align="center">
 ![build](https://github.com/marle3003/mokapi/actions/workflows/build.yml/badge.svg)
 [![codecov](https://codecov.io/gh/marle3003/mokapi/branch/master/graph/badge.svg?token=C7X690ZOBI)](https://codecov.io/gh/marle3003/mokapi)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/marle3003/mokapi/blob/master/LICENSE)
+</p>
 
 ## Overview
 
@@ -26,3 +30,13 @@ docker run --env 'MOKAPI_Services_Swagger-Petstore_Config_Url'='https://raw.gith
   -p 80:80 -p 8080:8080 \
   mokapi/mokapi:latest
 ```
+
+## Documentation
+
+- [Get Started](https://mokapi.io/docs/guides/get-started/welcome)
+- [HTTP](https://mokapi.io/docs/guides/http/overview)
+- [Kafka](https://mokapi.io/docs/guides/kafka/overview)
+- [LDAP](https://mokapi.io/docs/guides/ldap/overview)
+- [SMTP](https://mokapi.io/docs/guides/smtp/overview)
+- [Javascript API](https://mokapi.io/docs/javascript-api)
+- [Examples](https://mokapi.io/docs/examples)
