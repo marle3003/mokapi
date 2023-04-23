@@ -185,7 +185,6 @@ function formatParam(label: any): string {
   background-color: var(--color-background-mute);
 }
 .content{
-  text-align: justify;
   margin-left: 1.2rem;
   margin-right: 1.2rem;
   padding-top: 2rem;

@@ -30,7 +30,6 @@ func TestHost_Every(t *testing.T) {
 					select {
 					case <-ch:
 						counter++
-					default:
 					}
 				}
 
@@ -50,11 +49,10 @@ func TestHost_Every(t *testing.T) {
 
 				var counter int
 				now := time.Now()
-				for time.Now().Before(now.Add(100 * time.Millisecond)) {
+				for time.Now().After(now.Add(150 * time.Millisecond)) {
 					select {
 					case <-ch:
 						counter++
-					default:
 					}
 				}
 
