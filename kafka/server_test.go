@@ -4,7 +4,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
-	"io/ioutil"
+	"io"
 	"mokapi/kafka"
 	"mokapi/kafka/apiVersion"
 	"mokapi/kafka/kafkatest"
@@ -14,7 +14,7 @@ import (
 )
 
 func TestBroker_Disconnect(t *testing.T) {
-	logrus.SetOutput(ioutil.Discard)
+	logrus.SetOutput(io.Discard)
 	hook := test.NewGlobal()
 	b := kafkatest.NewBroker(
 		kafkatest.WithHandler(

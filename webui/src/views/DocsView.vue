@@ -95,6 +95,10 @@ onMounted(() => {
     }
   })
   document.title = level3 + ' | mokapi.io'
+  var link = document.createElement('link');
+  link.rel = "canonical";
+  link.href = 'https://mokapi.io'+useRoute().fullPath
+  document.getElementsByTagName('head')[0].appendChild(link);
 })
 function toggleSidebar() {
   openSidebar.value = !openSidebar.value

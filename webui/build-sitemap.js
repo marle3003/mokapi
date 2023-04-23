@@ -17,7 +17,10 @@ const urlTemplate = `
   <loc>%s/</loc>
   <changefreq>daily</changefreq>
   <priority>0.8</priority>
+  <lastmod>%s</lastmod>
 </url>`
+
+lastModified = new Date().toISOString()
 
 function writeObject(obj, base) {
     let xml = ''
@@ -29,7 +32,7 @@ function writeObject(obj, base) {
             xml += writeObject(obj[k], path)
         }else{
             const url = 'https://mokapi.io/docs' + path
-            const node = util.format(urlTemplate, url)
+            const node = util.format(urlTemplate, url, lastModified)
             xml += node
         }
     }
