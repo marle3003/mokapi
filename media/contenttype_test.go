@@ -16,7 +16,7 @@ func TestParseContentType(t *testing.T) {
 				require.Equal(t, "", ct.Type)
 				require.Equal(t, "", ct.Subtype)
 				require.Equal(t, "", ct.Key())
-				require.True(t, ct.IsRange())
+				require.True(t, ct.IsEmpty())
 			},
 		},
 		{
@@ -26,6 +26,7 @@ func TestParseContentType(t *testing.T) {
 				require.Equal(t, "plain", ct.Subtype)
 				require.Equal(t, "text/plain", ct.Key())
 				require.False(t, ct.IsRange())
+				require.True(t, ct.IsPrecise())
 			},
 		},
 		{
@@ -34,7 +35,7 @@ func TestParseContentType(t *testing.T) {
 				require.Equal(t, "*", ct.Type)
 				require.Equal(t, "*", ct.Subtype)
 				require.Equal(t, "*/*", ct.Key())
-				require.True(t, ct.IsRange())
+				require.True(t, ct.IsAny())
 			},
 		},
 		{
