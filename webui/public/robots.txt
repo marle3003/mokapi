@@ -1,4 +1,3 @@
 User-agent: *
 Allow: /
 Sitemap: https://mokapi.io/sitemap.xml
-Host: https://mokapi.io
