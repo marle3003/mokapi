@@ -15,7 +15,7 @@ const openSidebar = ref(false);
 
 const route = useRoute()
 let level1 = <string>route.params.level1
-level1 = Object.keys(nav).find(key => key.toLowerCase() == level1.split('-').join(' '))!
+level1 = Object.keys(nav).find(key => key.toLowerCase() == level1.split('-').join(' ').toLowerCase())!
 let file = nav[level1]
 
 let level2 = <string>route.params.level2
@@ -23,7 +23,7 @@ if (!level2 && typeof file !== 'string') {
   level2 = Object.keys(file)[0]
 }else {
   level2 = Object.keys(file).find(key => {
-      const search = level2.split('-').join(' ')
+      const search = level2.split('-').join(' ').toLowerCase()
       return key.toLowerCase().split('/').join(' ') === search
     })!
 }
@@ -36,7 +36,7 @@ if (level3 || typeof file !== 'string') {
     level3 = Object.keys(file)[0]
   }else {
     level3 = Object.keys(file).find(key => {
-      const search = level3.split('-').join(' ')
+      const search = level3.split('-').join(' ').toLowerCase()
       return key.toLowerCase().split('/').join('-') == search
     })!
   }
@@ -97,7 +97,7 @@ onMounted(() => {
   document.title = level3 + ' | mokapi.io'
   var link = document.createElement('link');
   link.rel = "canonical";
-  link.href = 'https://mokapi.io'+useRoute().fullPath
+  link.href = 'https://mokapi.io'+useRoute().fullPath.toLowerCase()
   document.getElementsByTagName('head')[0].appendChild(link);
 })
 function toggleSidebar() {
