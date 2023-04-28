@@ -80,7 +80,7 @@ func (sh *scriptHost) RunEvent(event string, args ...interface{}) []*common.Acti
 		} else if !b {
 			continue
 		} else {
-			log.Debugf("processed event handler %v", s)
+			log.WithField("handler", s).Debug("processed event handler")
 		}
 
 		s.Duration = time.Now().Sub(start).Milliseconds()

@@ -2,6 +2,7 @@ package ldap
 
 import (
 	"context"
+	"fmt"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	ber "gopkg.in/go-asn1-ber/asn1-ber.v1"
@@ -11,6 +12,7 @@ import (
 	"runtime/debug"
 	"sync"
 	"sync/atomic"
+	"syscall"
 )
 
 var ErrServerClosed = errors.New("ldap: Server closed")
@@ -22,21 +24,31 @@ func (a *atomicBool) setFalse()   { atomic.StoreInt32((*int32)(a), 0) }
 func (a *atomicBool) setTrue()    { atomic.StoreInt32((*int32)(a), 1) }
 
 type Handler interface {
-	Serve(ResponseWriter, *Request)
+	ServeLDAP(ResponseWriter, *Request)
+}
+
+type HandlerFunc func(rw ResponseWriter, req *Request)
+
+func (f HandlerFunc) ServeLDAP(rw ResponseWriter, req *Request) {
+	f(rw, req)
+}
+
+type Message interface {
 }
 
 type Request struct {
 	Context   context.Context
 	MessageId int64
-	Body      *ber.Packet
+	Message   Message
 }
 
 type ResponseWriter interface {
-	Write(packet *ber.Packet) error
+	Write(msg Message) error
 }
 
 type response struct {
-	conn net.Conn
+	messageId int64
+	conn      net.Conn
 }
 
 type Server struct {
@@ -117,35 +129,54 @@ func (s *Server) serve(conn net.Conn, ctx context.Context) {
 
 	for {
 		packet, err := ber.ReadPacket(conn)
-		if err == io.EOF { // Client closed connection
+		if err != nil && (err == io.EOF || err.Error() == "unexpected EOF" || errors.Is(err, net.ErrClosed) || errors.Is(err, syscall.ECONNRESET)) {
 			return
 		} else if err != nil {
-			log.Debugf("handleConnection ber.ReadPacket ERROR: %v", err.Error())
+			log.Debugf("ldap: handleConnection ber.ReadPacket ERROR: %v", err.Error())
 			return
 		}
 
 		if len(packet.Children) < 2 {
-			log.Infof("invalid packat length %v expected at least 2", len(packet.Children))
+			log.Infof("ldap: invalid packat length %v expected at least 2", len(packet.Children))
 			return
 		}
-		o := packet.Children[0].Value
 		messageId, ok := packet.Children[0].Value.(int64)
 		if !ok {
-			log.Infof("malformed messageId %v", reflect.TypeOf(o))
+			log.Infof("ldap: malformed messageId %v", reflect.TypeOf(packet.Children[0].Value))
 			return
 		}
 		body := packet.Children[1]
 		if body.ClassType != ber.ClassApplication {
-			log.Infof("classType of packet is not ClassApplication was %v", body.ClassType)
+			log.Infof("ldap: classType of packet is not ClassApplication was %v", body.ClassType)
 			return
 		}
 
-		s.Handler.Serve(&response{
-			conn: conn,
+		var msg Message
+		switch body.Tag {
+		case bindRequest:
+			msg, err = readBindRequest(body)
+		case unbindRequest:
+			log.Debugf("ldap: received unbind request")
+			return
+		case searchRequest:
+			msg, err = readSearchRequest(body)
+		case abandonRequest:
+			msg = &SearchResponse{Status: CannotCancel}
+		default:
+			log.Errorf("ldap: unknown operation %v, %v", packet.Tag, packet.Description)
+		}
+
+		if err != nil {
+			log.Errorf("ldap error: %v", err)
+		}
+
+		s.Handler.ServeLDAP(&response{
+			messageId: messageId,
+			conn:      conn,
 		}, &Request{
 			Context:   ctx,
 			MessageId: messageId,
-			Body:      body,
+			Message:   msg,
 		})
 	}
 }
@@ -182,7 +213,26 @@ func (s *Server) getCloseChan() chan bool {
 	return s.closeChan
 }
 
-func (r *response) Write(body *ber.Packet) error {
-	_, err := r.conn.Write(body.Bytes())
+func (r *response) Write(msg Message) error {
+	switch res := msg.(type) {
+	case *BindResponse:
+		return r.write(res.toPacket())
+	case *SearchResponse:
+		for _, p := range res.toPacket() {
+			if err := r.write(p); err != nil {
+				return err
+			}
+		}
+		return nil
+	default:
+		return fmt.Errorf("unsupported message: %t", msg)
+	}
+}
+
+func (r *response) write(body *ber.Packet) error {
+	p := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "LDAP Response")
+	p.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimitive, ber.TagInteger, r.messageId, "Message ID"))
+	p.AppendChild(body)
+	_, err := r.conn.Write(p.Bytes())
 	return err
 }

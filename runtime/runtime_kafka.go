@@ -17,7 +17,7 @@ type KafkaHandler struct {
 	next  kafka.Handler
 }
 
-func NewKafkaMonitor(kafka *monitor.Kafka, next kafka.Handler) *KafkaHandler {
+func NewKafkaHandler(kafka *monitor.Kafka, next kafka.Handler) *KafkaHandler {
 	return &KafkaHandler{kafka: kafka, next: next}
 }
 

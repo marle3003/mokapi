@@ -5,6 +5,11 @@ import (
 	"strings"
 )
 
+const (
+	namespace string = "namespace"
+	name      string = "name"
+)
+
 type Traits map[string]string
 
 func NewTraits() Traits {
@@ -12,11 +17,11 @@ func NewTraits() Traits {
 }
 
 func (t Traits) WithNamespace(ns string) Traits {
-	return t.With("namespace", ns)
+	return t.With(namespace, ns)
 }
 
-func (t Traits) WithName(name string) Traits {
-	return t.With("name", name)
+func (t Traits) WithName(v string) Traits {
+	return t.With(name, v)
 }
 
 func (t Traits) With(name, value string) Traits {
@@ -26,7 +31,19 @@ func (t Traits) With(name, value string) Traits {
 
 func (t Traits) String() string {
 	var sb strings.Builder
+	if ns, ok := t[namespace]; ok {
+		sb.WriteString("namespace=" + ns)
+	}
+	if n, ok := t[name]; ok {
+		if sb.Len() > 0 {
+			sb.WriteString(", ")
+		}
+		sb.WriteString("name=" + n)
+	}
 	for k, v := range t {
+		if k == namespace || k == name {
+			continue
+		}
 		if sb.Len() > 0 {
 			sb.WriteString(", ")
 		}

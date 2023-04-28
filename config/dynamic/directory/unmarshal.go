@@ -1,4 +1,4 @@
-package ldap
+package directory
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-type ldap struct {
+type config struct {
 	Info    Info
 	Server  server
 	Entries []map[string]interface{}
@@ -22,7 +22,7 @@ type server struct {
 type entry map[string]interface{}
 
 func (c *Config) UnmarshalYAML(value *yaml.Node) error {
-	tmp := &ldap{}
+	tmp := &config{}
 	err := value.Decode(tmp)
 	if err != nil {
 		return err

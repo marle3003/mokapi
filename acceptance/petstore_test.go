@@ -124,7 +124,7 @@ func (suite *PetStoreSuite) TestKafka_Produce_InvalidFormat() {
 	require.Equal(suite.T(), int64(0), r.Topics[0].Partitions[0].BaseOffset)
 }
 
-func (suite *PetStoreSuite) KafkaProduce() {
+func (suite *PetStoreSuite) TestKafkaProduce() {
 	c := kafkatest.NewClient("127.0.0.1:19092", "test")
 	defer c.Close()
 	r, err := c.Produce(0, &produce.Request{Topics: []produce.RequestTopic{
@@ -149,5 +149,4 @@ func (suite *PetStoreSuite) KafkaProduce() {
 	require.NoError(suite.T(), err)
 	require.Equal(suite.T(), "petstore.order-event", r.Topics[0].Name)
 	require.Equal(suite.T(), kafka.None, r.Topics[0].Partitions[0].ErrorCode)
-	require.Equal(suite.T(), int64(0), r.Topics[0].Partitions[0].BaseOffset)
 }

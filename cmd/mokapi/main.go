@@ -77,16 +77,15 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 		return nil, err
 	}
 	mail := make(server.SmtpServers)
-	directories := make(server.LdapDirectories)
 	http := server.NewHttpManager(scriptEngine, certStore, app, cfg.Services)
 	kafka := server.NewKafkaManager(scriptEngine, app)
-	managerLdap := server.NewLdapDirectoryManager(directories, scriptEngine, certStore, app)
+	ldap := server.NewLdapDirectoryManager(scriptEngine, certStore, app)
 
 	watcher.AddListener(func(cfg *common.Config) {
 		kafka.UpdateConfig(cfg)
 		http.Update(cfg)
 		mail.UpdateConfig(cfg, certStore, scriptEngine)
-		managerLdap.UpdateConfig(cfg)
+		ldap.UpdateConfig(cfg)
 		if err := scriptEngine.AddScript(cfg); err != nil {
 			log.Error(err)
 		}
@@ -103,7 +102,7 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 		return nil, err
 	}
 
-	return server.NewServer(pool, app, watcher, kafka, http, mail, directories, scriptEngine), nil
+	return server.NewServer(pool, app, watcher, kafka, http, mail, ldap, scriptEngine), nil
 }
 
 func configureLogging(cfg *static.Config) {

@@ -11,7 +11,6 @@ import (
 	"mokapi/media"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
-	"mokapi/server/httperror"
 	"net/http"
 	"reflect"
 	"regexp"
@@ -232,7 +231,7 @@ endpointLoop:
 		params := append(endpoint.Parameters, op.Parameters...)
 		rp, err := parameter.FromRequest(params, routePath, r)
 		if err != nil {
-			lastError = httperror.New(http.StatusBadRequest, err.Error())
+			lastError = newHttpError(http.StatusBadRequest, err.Error())
 			continue
 		}
 
@@ -262,7 +261,7 @@ endpointLoop:
 	}
 
 	if lastError == nil {
-		writeError(rw, r, httperror.Newf(http.StatusNotFound, "no matching endpoint found: %v %v", strings.ToUpper(r.Method), r.URL), h.config.Info.Name)
+		writeError(rw, r, newHttpErrorf(http.StatusNotFound, "no matching endpoint found: %v %v", strings.ToUpper(r.Method), r.URL), h.config.Info.Name)
 	} else {
 		writeError(rw, r, lastError, h.config.Info.Name)
 	}
@@ -272,7 +271,7 @@ func writeError(rw http.ResponseWriter, r *http.Request, err error, serviceName 
 	message := err.Error()
 	var status int
 
-	if hErr, ok := err.(*httperror.Error); ok {
+	if hErr, ok := err.(*httpError); ok {
 		status = hErr.StatusCode
 	} else {
 		status = http.StatusInternalServerError

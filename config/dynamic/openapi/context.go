@@ -3,7 +3,6 @@ package openapi
 import (
 	"context"
 	"mokapi/media"
-	"mokapi/server/httperror"
 	"net/http"
 	"strings"
 )
@@ -26,7 +25,7 @@ func ContentTypeFromRequest(r *http.Request, res *Response) (media.ContentType, 
 	accept := r.Header.Get("accept")
 	ct, mt := negotiateContentType(accept, res)
 	if ct.IsEmpty() {
-		return media.Empty, nil, httperror.Newf(http.StatusUnsupportedMediaType,
+		return media.Empty, nil, newHttpErrorf(http.StatusUnsupportedMediaType,
 			"none of requests content type(s) are supported: %q", accept)
 	} else if !ct.IsPrecise() {
 		return media.GetRandom(ct.String()), mt, nil

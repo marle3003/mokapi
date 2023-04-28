@@ -1,4 +1,6 @@
 ldap: 1.0.0
+info:
+  name: Futurama
 server:
   address: "0.0.0.0:8389"
   rootDomainNamingContext: DC=mokapi,DC=io

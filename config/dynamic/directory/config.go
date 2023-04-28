@@ -1,4 +1,4 @@
-package ldap
+package directory
 
 import (
 	"mokapi/config/dynamic/common"

@@ -16,14 +16,14 @@ type Server struct {
 	http    *HttpManager
 	engine  *engine.Engine
 	mail    SmtpServers
-	ldap    LdapDirectories
+	ldap    *LdapDirectoryManager
 
 	pool     *safe.Pool
 	stopChan chan bool
 }
 
 func NewServer(pool *safe.Pool, app *runtime.App, watcher *dynamic.ConfigWatcher,
-	kafka *KafkaManager, http *HttpManager, mail SmtpServers, ldap LdapDirectories, engine *engine.Engine) *Server {
+	kafka *KafkaManager, http *HttpManager, mail SmtpServers, ldap *LdapDirectoryManager, engine *engine.Engine) *Server {
 	return &Server{
 		app:      app,
 		watcher:  watcher,
