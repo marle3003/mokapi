@@ -4,17 +4,19 @@ import (
 	"fmt"
 	ber "gopkg.in/go-asn1-ber/asn1-ber.v1"
 	"net"
+	"time"
 )
 
 type Client struct {
-	Addr string
+	Addr    string
+	Timeout time.Duration
 
 	conn      net.Conn
 	messageId int64
 }
 
 func NewClient(addr string) *Client {
-	return &Client{Addr: addr}
+	return &Client{Addr: addr, Timeout: time.Second * 10}
 }
 
 func (c *Client) Close() {
@@ -119,9 +121,22 @@ func (c *Client) newRequest(msg Message) (*ber.Packet, error) {
 }
 
 func (c *Client) Dial() error {
-	d := net.Dialer{}
+	backoff := 50 * time.Millisecond
 	var err error
-	c.conn, err = d.Dial("tcp", c.Addr)
+	if c.conn == nil {
+		for i := 0; i < 10; i++ {
+			d := net.Dialer{Timeout: c.Timeout}
+			c.conn, err = d.Dial("tcp", c.Addr)
+			if err != nil {
+				time.Sleep(backoff)
+				continue
+			}
+		}
+		if err != nil {
+			return err
+		}
+	}
+
 	return err
 }
 
