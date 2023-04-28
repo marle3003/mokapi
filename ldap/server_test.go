@@ -74,7 +74,6 @@ func newTestServer(h Handler) (*Server, Client) {
 		panic(err)
 	}
 	addr := fmt.Sprintf("127.0.0.1:%v", p)
-	addr = "127.0.0.1:389"
 
 	s := &Server{
 		Addr:    addr,
