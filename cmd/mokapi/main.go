@@ -76,10 +76,9 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	smtp := server.NewSmtpManager(app, scriptEngine, certStore)
-	directories := make(server.LdapDirectories)
 	http := server.NewHttpManager(scriptEngine, certStore, app, cfg.Services)
 	kafka := server.NewKafkaManager(scriptEngine, app)
+	smtp := server.NewSmtpManager(app, scriptEngine, certStore)
 	ldap := server.NewLdapDirectoryManager(scriptEngine, certStore, app)
 
 	watcher.AddListener(func(cfg *common.Config) {
