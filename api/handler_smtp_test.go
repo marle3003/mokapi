@@ -1,7 +1,7 @@
 package api
 
 import (
-	"mokapi/config/dynamic/smtp"
+	"mokapi/config/dynamic/mail"
 	"mokapi/config/static"
 	"mokapi/runtime"
 	"mokapi/try"
@@ -11,30 +11,34 @@ import (
 
 func TestHandler_Smtp(t *testing.T) {
 	testcases := []struct {
-		name string
-		app  *runtime.App
-		f    func(t *testing.T, h http.Handler)
+		name         string
+		app          *runtime.App
+		requestUrl   string
+		responseBody string
 	}{
+		{
+			name: "get smtp services",
+			app: &runtime.App{
+				Smtp: map[string]*runtime.SmtpInfo{
+					"foo": {
+						&mail.Config{Info: mail.Info{Name: "foo", Description: "bar", Version: "1.0"}},
+					},
+				},
+			},
+			requestUrl:   "http://foo.api/api/services",
+			responseBody: `[{"name":"foo","description":"bar","version":"1.0","type":"smtp"}]`,
+		},
 		{
 			name: "/api/services/smtp",
 			app: &runtime.App{
 				Smtp: map[string]*runtime.SmtpInfo{
 					"foo": {
-						&smtp.Config{Name: "foo"},
+						&mail.Config{Info: mail.Info{Name: "foo"}},
 					},
 				},
 			},
-			f: func(t *testing.T, h http.Handler) {
-				try.Handler(t,
-					http.MethodGet,
-					"http://foo.api/api/services/smtp/foo",
-					nil,
-					"",
-					h,
-					try.HasStatusCode(200),
-					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"name":"foo","server":""}`))
-			},
+			requestUrl:   "http://foo.api/api/services/smtp/foo",
+			responseBody: `{"name":"foo","server":""}`,
 		},
 	}
 
@@ -44,7 +48,16 @@ func TestHandler_Smtp(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			h := New(tc.app, static.Api{})
-			tc.f(t, h)
+
+			try.Handler(t,
+				http.MethodGet,
+				tc.requestUrl,
+				nil,
+				"",
+				h,
+				try.HasStatusCode(200),
+				try.HasHeader("Content-Type", "application/json"),
+				try.HasBody(tc.responseBody))
 		})
 	}
 }

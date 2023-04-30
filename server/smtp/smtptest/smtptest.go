@@ -22,12 +22,7 @@ type mail struct {
 	tlsConfig *tls.Config
 }
 
-func SendMail(
-	from,
-	to,
-	addr string,
-	opts ...MailOptions,
-) error {
+func SendMail(from, to, addr string, opts ...MailOptions) error {
 	m := &mail{
 		from: from,
 		to:   to,
@@ -84,15 +79,17 @@ func SendMail(
 		return err
 	}
 
-	_, err = w.Write(m.body)
-	if err != nil {
-		return err
+	if m.body != nil {
+		_, err = w.Write(m.body)
+		if err != nil {
+			return err
+		}
 	}
 
-	_, err = w.Write([]byte("\r\n"))
-	if err != nil {
-		return err
-	}
+	//_, err = w.Write([]byte("\r\n.\r\n"))
+	//if err != nil {
+	//	return err
+	//}
 
 	err = w.Close()
 	if err != nil {

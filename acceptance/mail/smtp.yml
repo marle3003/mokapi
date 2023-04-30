@@ -1,2 +1,4 @@
 smtp: 1.0
 server: smtps://localhost:8025
+allowList:
+  - sender: .*@foo.bar
