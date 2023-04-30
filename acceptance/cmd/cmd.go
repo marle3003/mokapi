@@ -32,19 +32,18 @@ func Start(cfg *static.Config) (*Cmd, error) {
 	if err != nil {
 		return nil, err
 	}
-	directories := make(server.LdapDirectories)
 	scriptEngine := engine.New(watcher, app)
 
 	http := server.NewHttpManager(scriptEngine, certStore, app, cfg.Services)
 	kafka := server.NewKafkaManager(scriptEngine, app)
-	managerLdap := server.NewLdapDirectoryManager(directories, scriptEngine, certStore, app)
 	smtp := server.NewSmtpManager(app, scriptEngine, certStore)
+	ldap := server.NewLdapDirectoryManager(scriptEngine, certStore, app)
 
 	watcher.AddListener(func(cfg *common.Config) {
 		kafka.UpdateConfig(cfg)
 		http.Update(cfg)
 		smtp.UpdateConfig(cfg)
-		managerLdap.UpdateConfig(cfg)
+		ldap.UpdateConfig(cfg)
 		if err := scriptEngine.AddScript(cfg); err != nil {
 			panic(err)
 		}
@@ -63,7 +62,7 @@ func Start(cfg *static.Config) (*Cmd, error) {
 
 	pool := safe.NewPool(context.Background())
 	ctx, cancel := context.WithCancel(context.Background())
-	s := server.NewServer(pool, app, watcher, kafka, http, smtp, directories, scriptEngine)
+	s := server.NewServer(pool, app, watcher, kafka, http, smtp, ldap, scriptEngine)
 	s.StartAsync(ctx)
 
 	return &Cmd{

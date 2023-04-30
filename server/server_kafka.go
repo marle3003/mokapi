@@ -65,7 +65,7 @@ func (c *cluster) update(cfg *asyncApi.Config, kafkaMonitor *monitor.Kafka) {
 }
 
 func (c *cluster) updateBrokers(cfg *asyncApi.Config, kafkaMonitor *monitor.Kafka) {
-	handler := runtime.NewKafkaMonitor(kafkaMonitor, c.store)
+	handler := runtime.NewKafkaHandler(kafkaMonitor, c.store)
 	brokers := c.brokers
 	c.brokers = make(map[string]*service.KafkaBroker)
 	for name, server := range cfg.Servers {

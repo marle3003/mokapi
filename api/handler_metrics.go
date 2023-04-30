@@ -9,7 +9,7 @@ import (
 func (h *handler) getMetrics(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	query := make([]metrics.QueryFunc, 0)
+	query := make([]metrics.QueryOptions, 0)
 	result := make([]metrics.Metric, 0)
 
 	segments := strings.Split(r.URL.Path, "/")

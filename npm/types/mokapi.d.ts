@@ -1,7 +1,14 @@
-declare module 'mokapi' {
+/// <reference path="ldap.d.ts" />
+/// <reference path="kafka.d.ts" />
 
-    /** Listener for http events. */
-    function on(event: 'http', f: EventHandler, args: EventArgs): void
+declare module 'mokapi' {
+    /**
+     * Attaches an event handler for the given event.
+     * @param event Event type such as http
+     * @param handler An EventHandler to execute when the event is triggered
+     * @param args EventArgs object contains additional event arguments.
+     */
+    function on<T extends keyof EventHandler>(event: T, handler: EventHandler[T], args?: EventArgs): void
 
     /** Schedules a new periodic job with interval.
      * Interval string is a possibly signed sequence of
@@ -9,7 +16,7 @@ declare module 'mokapi' {
      * such as "300ms", "-1.5h" or "2h45m".
      * Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
      */
-    function every(interval: string, f: ScheduledEventHandler, args: ScheduledEventArgs): void
+    function every(interval: string, f: ScheduledEventHandler, args?: ScheduledEventArgs): void
 
     /**
      * Schedules a new periodic job with a cron expression.
@@ -17,7 +24,7 @@ declare module 'mokapi' {
      * @param f function to execute
      * @param args additional arguments
      */
-    function cron(expr: string, f: ScheduledEventHandler, args: ScheduledEventArgs): void
+    function cron(expr: string, f: ScheduledEventHandler, args?: ScheduledEventArgs): void
 
     /** Returns the environment variable named by the key. */
     function env(name: string): string
@@ -39,7 +46,11 @@ declare module 'mokapi' {
     function sleep(time: number | string )
 }
 
-type EventHandler = () => boolean | HttpEventHandler
+type EventHandler = {
+    http: HttpEventHandler
+    ldap: LdapEventHandler
+    kafka: KafkaEventHandler
+}
 
 type HttpEventHandler = (request: HttpRequest, response: HttpResponse) => boolean
 

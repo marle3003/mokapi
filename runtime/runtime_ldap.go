@@ -1,27 +1,30 @@
 package runtime
 
 import (
-	"mokapi/config/dynamic/openapi"
+	"context"
+	"mokapi/config/dynamic/directory"
+	"mokapi/ldap"
 	"mokapi/runtime/monitor"
-	"net/http"
+	"time"
 )
 
 type LdapInfo struct {
-	*openapi.Config
+	*directory.Config
 }
 
 type LdapHandler struct {
 	ldap *monitor.Ldap
-	next http.Handler
+	next ldap.Handler
 }
 
-func NewLdapHandler(http *monitor.Http, next http.Handler) *HttpHandler {
-	return &HttpHandler{http: http, next: next}
+func NewLdapHandler(ldap *monitor.Ldap, next ldap.Handler) *LdapHandler {
+	return &LdapHandler{ldap: ldap, next: next}
 }
 
-func (h *LdapHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	ctx := monitor.NewLdapContext(r.Context(), h.ldap)
+func (h *LdapHandler) ServeLDAP(rw ldap.ResponseWriter, r *ldap.Request) {
+	r.Context = monitor.NewLdapContext(r.Context, h.ldap)
+	r.Context = context.WithValue(r.Context, "time", time.Now())
 
-	h.next.ServeHTTP(rw, r.WithContext(ctx))
+	h.next.ServeLDAP(rw, r)
 
 }

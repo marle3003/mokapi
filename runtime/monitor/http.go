@@ -5,6 +5,8 @@ import (
 	"mokapi/runtime/metrics"
 )
 
+var httpKey = contextKey("http")
+
 type Http struct {
 	RequestCounter      *metrics.CounterMap
 	RequestErrorCounter *metrics.CounterMap
@@ -29,11 +31,15 @@ func NewHttp() *Http {
 	}
 }
 
+func (h *Http) Metrics() []metrics.Metric {
+	return []metrics.Metric{h.RequestCounter, h.RequestErrorCounter, h.LastRequest}
+}
+
 func NewHttpContext(ctx context.Context, http *Http) context.Context {
-	return context.WithValue(ctx, "monitor", http)
+	return context.WithValue(ctx, httpKey, http)
 }
 
 func HttpFromContext(ctx context.Context) (*Http, bool) {
-	m, ok := ctx.Value("monitor").(*Http)
+	m, ok := ctx.Value(httpKey).(*Http)
 	return m, ok
 }

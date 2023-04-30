@@ -66,7 +66,7 @@ document.title = 'Mocking tool for engineering teams | mokapi.io'
           <div class="card">
             <div class="card-body">
               <div class="card-title">LDAP</div>
-              Integrate your App with a mocked LDAP server.
+              Integrate your App with a fake LDAP server.
             </div>
           </div>
           <div class="card">
