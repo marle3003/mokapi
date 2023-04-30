@@ -40,6 +40,42 @@ func TestHandler_Smtp(t *testing.T) {
 			requestUrl:   "http://foo.api/api/services/smtp/foo",
 			responseBody: `{"name":"foo","server":""}`,
 		},
+		{
+			name: "get smtp service with mailbox",
+			app: &runtime.App{
+				Smtp: map[string]*runtime.SmtpInfo{
+					"foo": {
+						&mail.Config{
+							Info:      mail.Info{Name: "foo"},
+							Mailboxes: []mail.Mailbox{{Name: "alice@foo.bar", Username: "alice", Password: "foo"}},
+						},
+					},
+				},
+			},
+			requestUrl:   "http://foo.api/api/services/smtp/foo",
+			responseBody: `{"name":"foo","server":"","mailboxes":[{"name":"alice@foo.bar","username":"alice","password":"foo"}]}`,
+		},
+		{
+			name: "get smtp service with rules",
+			app: &runtime.App{
+				Smtp: map[string]*runtime.SmtpInfo{
+					"foo": {
+						&mail.Config{
+							Info: mail.Info{Name: "foo"},
+							Rules: []mail.Rule{{
+								Sender:    "alice@foo.bar",
+								Recipient: "alice@foo.bar",
+								Subject:   "foo",
+								Body:      "bar",
+								Action:    "deny",
+							}},
+						},
+					},
+				},
+			},
+			requestUrl:   "http://foo.api/api/services/smtp/foo",
+			responseBody: `{"name":"foo","server":"","rules":[{"sender":"alice@foo.bar","recipient":"alice@foo.bar","subject":"foo","body":"bar","action":"deny"}]}`,
+		},
 	}
 
 	t.Parallel()
@@ -47,6 +83,7 @@ func TestHandler_Smtp(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
+
 			h := New(tc.app, static.Api{})
 
 			try.Handler(t,

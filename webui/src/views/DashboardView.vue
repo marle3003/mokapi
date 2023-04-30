@@ -14,6 +14,7 @@ import KafkaService from '../components/dashboard/kafka/KafkaService.vue'
 
 import SmtpMessageMetricCard from '../components/dashboard/smtp/SmtpMessageMetricCard.vue'
 import SmtpServicesCard from '../components/dashboard/smtp/SmtpServicesCard.vue'
+import SmtpService from '../components/dashboard/smtp/Service.vue'
 
 import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
@@ -120,6 +121,7 @@ document.title = 'Dashbboard | mokapi.io'
 
                 <http-service v-if="$route.meta.service == 'http'" />
                 <kafka-service v-if="$route.meta.service == 'kafka'" />
+                <smtp-service v-if="$route.meta.service == 'smtp'" />
             </div>
         </div>
         <message :message="appInfo.error" v-if="!appInfo.data && !appInfo.isLoading"></message>

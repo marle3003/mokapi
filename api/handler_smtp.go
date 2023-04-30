@@ -13,10 +13,27 @@ type mailSummary struct {
 }
 
 type mailInfo struct {
-	Name        string `json:"name"`
-	Description string `json:"description,omitempty"`
-	Version     string `json:"version,omitempty"`
-	Server      string `json:"server"`
+	Name          string      `json:"name"`
+	Description   string      `json:"description,omitempty"`
+	Version       string      `json:"version,omitempty"`
+	Server        string      `json:"server"`
+	Mailboxes     []mailboxes `json:"mailboxes,omitempty"`
+	MaxRecipients int         `json:"maxRecipients,omitempty"`
+	Rules         []rule      `json:"rules,omitempty"`
+}
+
+type mailboxes struct {
+	Name     string `json:"name"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type rule struct {
+	Sender    string `json:"sender"`
+	Recipient string `json:"recipient"`
+	Subject   string `json:"subject"`
+	Body      string `json:"body"`
+	Action    string `json:"action"`
 }
 
 func getMailServices(services map[string]*runtime.SmtpInfo, m *monitor.Monitor) []interface{} {
@@ -49,10 +66,28 @@ func (h *handler) getSmtpService(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result := &mailInfo{
-		Name:        s.Info.Name,
-		Description: s.Info.Description,
-		Version:     s.Info.Version,
-		Server:      s.Server,
+		Name:          s.Info.Name,
+		Description:   s.Info.Description,
+		Version:       s.Info.Version,
+		Server:        s.Server,
+		MaxRecipients: s.MaxRecipients,
+	}
+
+	for _, m := range s.Mailboxes {
+		result.Mailboxes = append(result.Mailboxes, mailboxes{
+			Name:     m.Name,
+			Username: m.Username,
+			Password: m.Password,
+		})
+	}
+	for _, r := range s.Rules {
+		result.Rules = append(result.Rules, rule{
+			Sender:    r.Sender,
+			Recipient: r.Recipient,
+			Subject:   r.Subject,
+			Body:      r.Body,
+			Action:    string(r.Action),
+		})
 	}
 
 	w.Header().Set("Content-Type", "application/json")

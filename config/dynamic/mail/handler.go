@@ -9,6 +9,7 @@ import (
 	"mokapi/runtime/monitor"
 	"mokapi/smtp"
 	"regexp"
+	"time"
 )
 
 type Handler struct {
@@ -54,7 +55,16 @@ func (h *Handler) ServeSMTP(rw smtp.ResponseWriter, r smtp.Request) {
 
 func (h *Handler) processMail(msg *smtp.Message, ctx context.Context) error {
 	clientContext := smtp.ClientFromContext(ctx)
+	monitor, doMonitor := monitor.SmtpFromContext(ctx)
 	m := NewMail(msg)
+	event := NewLogEvent(m, clientContext, events.NewTraits().WithName(h.config.Info.Name))
+	defer func() {
+		i := ctx.Value("time")
+		if i != nil {
+			t := i.(time.Time)
+			event.Duration = time.Now().Sub(t).Milliseconds()
+		}
+	}()
 
 	if err := h.runRules(m); err != nil {
 		return err
@@ -63,30 +73,33 @@ func (h *Handler) processMail(msg *smtp.Message, ctx context.Context) error {
 	log.Infof("recevied new mail on %v from client %v (%v)",
 		h.config.Info.Name, clientContext.Client, clientContext.Addr)
 
-	if m, ok := monitor.SmtpFromContext(ctx); ok {
-		m.Mails.WithLabel(h.config.Info.Name).Add(1)
+	if doMonitor {
+		monitor.Mails.WithLabel(h.config.Info.Name).Add(1)
+		monitor.LastMail.WithLabel(h.config.Info.Name).Set(float64(time.Now().Unix()))
 	}
-	events.Push(m, events.NewTraits().WithNamespace("smtp").WithName(h.config.Info.Name))
-	h.eventEmitter.Emit("smtp", msg)
+
+	event.Actions = h.eventEmitter.Emit("smtp", msg)
 
 	return nil
 }
 
 func (h *Handler) runRules(m *Mail) error {
-	for _, r := range h.config.AllowList {
+	for _, r := range h.config.Rules {
 		if len(r.Sender) > 0 {
 			var senderAddress string
 			if m.Sender != nil {
 				senderAddress = m.Sender.Address
 			} else if len(m.From) > 0 {
 				senderAddress = m.From[0].Address
-			} else {
+			} else if r.Action == Allow {
 				return fmt.Errorf("required from address")
 			}
 			if b, err := regexp.Match(r.Sender, []byte(senderAddress)); err != nil {
 				return err
-			} else if !b {
+			} else if !b && r.Action == Allow {
 				return fmt.Errorf("sender %v does not match allow rule: %v", senderAddress, r.Sender)
+			} else if b && r.Action == Deny {
+				return fmt.Errorf("sender %v does match deny rule: %v", senderAddress, r.Sender)
 			}
 		}
 	}

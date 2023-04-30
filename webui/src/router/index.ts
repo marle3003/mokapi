@@ -91,7 +91,14 @@ const router = createRouter({
           path: '/dashboard/smtp',
           name: 'smtp',
           component: DashboardView,
-          meta: {service: 'smtp'}
+          children: [
+            {
+              path: '/dashboard/smtp/service/:service',
+              name: 'smtpService',
+              component: DashboardView,
+              meta: {service: 'smtp'},
+            }
+          ]
         },
       ]
     },

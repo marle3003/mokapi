@@ -5,5 +5,36 @@ components:
         - $ref: 'common.yml#/components/schemas/Service'
         - type: object
           properties:
-            address:
+            server:
               type: string
+            mailboxes:
+              type: array
+              items:
+                $ref: '#/components/schemas/SmtpMailbox'
+            rules:
+              type: array
+              items:
+                $ref: '#/components/schemas/SmtpRule'
+    SmtpMailbox:
+      type: object
+      properties:
+        name:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+    SmtpRule:
+      type: object
+      properties:
+        sender:
+          type: string
+        recipient:
+          type: string
+        subject:
+          type: string
+        body:
+          type: string
+        action:
+          type: string
+          enum: [allow, deny]

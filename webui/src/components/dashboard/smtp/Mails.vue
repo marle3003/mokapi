@@ -3,10 +3,9 @@ import { useRouter } from 'vue-router';
 import { useEvents } from '@/composables/events';
 import { type PropType, onUnmounted } from 'vue';
 import { usePrettyDates } from '@/composables/usePrettyDate';
-import { usePrettyHttp } from '@/composables/http';
 
 const props = defineProps({
-    service: { type: Object as PropType<HttpService> },
+    service: { type: Object as PropType<SmtpService> },
     path: { type: String, required: false}
 })
 
@@ -20,18 +19,17 @@ if (props.service){
 
 const router = useRouter()
 const {fetch} = useEvents()
-const {events, close} = fetch('http', ...labels)
+const {events, close} = fetch('smtp', ...labels)
 const {format, duration} = usePrettyDates()
-const {formatStatusCode} = usePrettyHttp()
 
 function goToRequest(event: ServiceEvent){
     router.push({
-        name: 'httpRequest',
+        name: 'smtpRequest',
         params: {id: event.id},
     })
 }
-function eventData(event: ServiceEvent): HttpEventData{
-    return <HttpEventData>event.data
+function eventData(event: ServiceEvent): SmtpEventData{
+    return <SmtpEventData>event.data
 }
 
 onUnmounted(() => {
@@ -42,13 +40,13 @@ onUnmounted(() => {
 <template>
     <div class="card">
         <div class="card-body">
-            <div class="card-title text-center">Recent Requests</div>
+            <div class="card-title text-center">Recent Mails</div>
             <table class="table dataTable selectable">
                 <thead>
                     <tr>
-                        <th scope="col" class="text-left" style="width: 55%">URL</th>
-                        <th scope="col" class="text-center" style="width: 10%">Method</th>
-                        <th scope="col" class="text-center"  style="width: 10%">Status Code</th>
+                        <th scope="col" class="text-left" style="width: 20%">From</th>
+                        <th scope="col" class="text-left" style="width: 20%">To</th>
+                        <th scope="col" class="text-left" style="width: 20%">Subject</th>
                         <th scope="col" class="text-center" style="width:15%">Time</th>
                         <th scope="col" class="text-center">Duration</th>
                     </tr>
@@ -56,15 +54,14 @@ onUnmounted(() => {
                 <tbody>
                     <tr v-for="event in events" :key="event.id" @click="goToRequest(event)">
                         <td>
-                            <i class="bi bi-exclamation-triangle-fill yellow warning pe-2" v-if="eventData(event).deprecated"></i>
-                            {{ eventData(event).request.url }}
+                            {{ eventData(event).from }}
                         </td>
-                        <td class="text-center">
-                            <span class="badge operation" :class="eventData(event).request.method.toLowerCase()">
-                                {{ eventData(event).request.method }}
-                            </span>
+                        <td>
+                            {{ eventData(event).to }}
                         </td>
-                        <td class="text-center">{{ formatStatusCode(eventData(event).response.statusCode) }}</td>
+                        <td>
+                            {{ eventData(event).mail.Subject }}
+                        </td>
                         <td class="text-center">{{ format(event.time) }}</td>
                         <td class="text-center">{{ duration(eventData(event).duration) }}</td>
                     </tr>

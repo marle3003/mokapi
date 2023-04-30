@@ -14,8 +14,7 @@ type Config struct {
 	//MaxMessageBytes   int       `yaml:"maxMessageBytes,omitempty" json:"maxMessageBytes,omitempty"`
 	//AllowInsecureAuth bool      `yaml:"allowInsecureAuth,omitempty" json:"allowInsecureAuth,omitempty"`
 	Mailboxes []Mailbox `yaml:"mailboxes" json:"mailboxes"`
-	AllowList []Rule    `yaml:"allowList" json:"allowList"`
-	DenyList  []Rule    `yaml:"denyList" json:"denyList"`
+	Rules     []Rule    `yaml:"rules" json:"rules"`
 }
 
 type Info struct {
@@ -24,11 +23,19 @@ type Info struct {
 	Version     string `yaml:"version" json:"version"`
 }
 
+type RuleAction string
+
+const (
+	Allow RuleAction = "allow"
+	Deny  RuleAction = "deny"
+)
+
 type Rule struct {
-	Sender    string `yaml:"sender" json:"sender"`
-	Recipient string `yaml:"recipient" json:"recipient"`
-	Subject   string `yaml:"subject" json:"subject"`
-	Body      string `yaml:"body" json:"body"`
+	Sender    string     `yaml:"sender" json:"sender"`
+	Recipient string     `yaml:"recipient" json:"recipient"`
+	Subject   string     `yaml:"subject" json:"subject"`
+	Body      string     `yaml:"body" json:"body"`
+	Action    RuleAction `yaml:"action" json:"action"`
 }
 
 type Mailbox struct {

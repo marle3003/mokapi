@@ -1,9 +1,11 @@
 package runtime
 
 import (
+	"context"
 	"mokapi/config/dynamic/mail"
 	"mokapi/runtime/monitor"
 	"mokapi/smtp"
+	"time"
 )
 
 type SmtpInfo struct {
@@ -21,5 +23,7 @@ func NewSmtpHandler(smtp *monitor.Smtp, next smtp.Handler) *SmtpHandler {
 
 func (h *SmtpHandler) ServeSMTP(rw smtp.ResponseWriter, r smtp.Request) {
 	r.WithContext(monitor.NewSmtpContext(r.Context(), h.smtp))
+	r.WithContext(context.WithValue(r.Context(), "time", time.Now()))
+
 	h.next.ServeSMTP(rw, r)
 }

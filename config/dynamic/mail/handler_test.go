@@ -185,7 +185,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		},
 		{
 			name:   "data with allow rule not match sender",
-			config: &Config{AllowList: []Rule{{Sender: ".*@mokapi.io"}}},
+			config: &Config{Rules: []Rule{{Sender: ".*@mokapi.io", Action: Allow}}},
 			test: func(t *testing.T, h *Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendData(t, h, ctx)

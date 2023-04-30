@@ -47,4 +47,8 @@ export let metrics = [
         name: 'smtp_mails_total{service="Smtp Testserver"}"',
         value: 3
     },
+    {
+        name: 'smtp_mail_timestamp{service="Smtp Testserver"}"',
+        value: 1652635690
+    },
 ]

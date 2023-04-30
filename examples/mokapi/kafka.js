@@ -1,5 +1,5 @@
-import {fake} from 'faker'
-import {metrics} from 'metrics';
+import {fake} from 'mokapi/faker'
+import {metrics} from 'metrics.js';
 
 const Product = {
     type: "object",

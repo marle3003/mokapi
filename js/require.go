@@ -112,7 +112,7 @@ func (m *requireModule) loadFileModule(modPath string) (goja.Value, error) {
 			}
 			return m.runtime.ToValue(result), nil
 		}
-		return m.loadModule(f.Url.String(), string(f.Raw))
+		return m.loadModule(f.Url.Path, string(f.Raw))
 	} else {
 		if v, err := m.loadFileModule(modPath + ".js"); err == nil {
 			return v, nil

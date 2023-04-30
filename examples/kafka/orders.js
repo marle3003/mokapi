@@ -1,4 +1,4 @@
-import { produce } from 'kafka'
+import { produce } from 'mokapi/kafka'
 
 export default function() {
     produce({ topic: 'orders' })

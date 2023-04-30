@@ -1,9 +1,9 @@
 import {on} from 'mokapi'
 import {clusters, events as kafkaEvents} from 'kafka.js'
-import {apps as httpServices, events as httpEvents} from 'services_http'
-import {server as smtpServers} from 'smtp'
-import {metrics} from 'metrics'
-import {fake} from 'faker'
+import {apps as httpServices, events as httpEvents} from 'services_http.js'
+import {server as smtpServers, mails} from 'smtp.js'
+import {metrics} from 'metrics.js'
+import {fake} from 'mokapi/faker'
 
 export default function() {
     on('http', function(request, response) {
@@ -96,6 +96,11 @@ function getEvents(traits) {
         }
     }
     for (let e of kafkaEvents){
+        if (matchEvent(e, traits)) {
+            result.push(e)
+        }
+    }
+    for (let e of mails) {
         if (matchEvent(e, traits)) {
             result.push(e)
         }
