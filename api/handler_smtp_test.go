@@ -6,10 +6,16 @@ import (
 	"mokapi/runtime"
 	"mokapi/try"
 	"net/http"
+	"regexp"
 	"testing"
 )
 
 func TestHandler_Smtp(t *testing.T) {
+	mustCompile := func(s string) *mail.RuleExpr {
+		r, _ := regexp.Compile(s)
+		return mail.NewRuleExpr(r)
+	}
+
 	testcases := []struct {
 		name         string
 		app          *runtime.App
@@ -63,10 +69,10 @@ func TestHandler_Smtp(t *testing.T) {
 						&mail.Config{
 							Info: mail.Info{Name: "foo"},
 							Rules: []mail.Rule{{
-								Sender:    "alice@foo.bar",
-								Recipient: "alice@foo.bar",
-								Subject:   "foo",
-								Body:      "bar",
+								Sender:    mustCompile("alice@foo.bar"),
+								Recipient: mustCompile("alice@foo.bar"),
+								Subject:   mustCompile("foo"),
+								Body:      mustCompile("bar"),
 								Action:    "deny",
 							}},
 						},

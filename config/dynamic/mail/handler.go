@@ -8,7 +8,6 @@ import (
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"mokapi/smtp"
-	"regexp"
 	"time"
 )
 
@@ -78,30 +77,31 @@ func (h *Handler) processMail(msg *smtp.Message, ctx context.Context) error {
 		monitor.LastMail.WithLabel(h.config.Info.Name).Set(float64(time.Now().Unix()))
 	}
 
-	event.Actions = h.eventEmitter.Emit("smtp", msg)
+	event.Actions = h.eventEmitter.Emit("smtp", m)
 
 	return nil
 }
 
 func (h *Handler) runRules(m *Mail) error {
 	for _, r := range h.config.Rules {
-		if len(r.Sender) > 0 {
-			var senderAddress string
-			if m.Sender != nil {
-				senderAddress = m.Sender.Address
-			} else if len(m.From) > 0 {
-				senderAddress = m.From[0].Address
-			} else if r.Action == Allow {
-				return fmt.Errorf("required from address")
-			}
-			if b, err := regexp.Match(r.Sender, []byte(senderAddress)); err != nil {
-				return err
-			} else if !b && r.Action == Allow {
-				return fmt.Errorf("sender %v does not match allow rule: %v", senderAddress, r.Sender)
-			} else if b && r.Action == Deny {
-				return fmt.Errorf("sender %v does match deny rule: %v", senderAddress, r.Sender)
-			}
-		}
+		_ = r
+		//if len(r.Sender) > 0 {
+		//	var senderAddress string
+		//	if m.Sender != nil {
+		//		senderAddress = m.Sender.Address
+		//	} else if len(m.From) > 0 {
+		//		senderAddress = m.From[0].Address
+		//	} else if r.Action == Allow {
+		//		return fmt.Errorf("required from address")
+		//	}
+		//	if b, err := regexp.Match(r.Sender, []byte(senderAddress)); err != nil {
+		//		return err
+		//	} else if !b && r.Action == Allow {
+		//		return fmt.Errorf("sender %v does not match allow rule: %v", senderAddress, r.Sender)
+		//	} else if b && r.Action == Deny {
+		//		return fmt.Errorf("sender %v does match deny rule: %v", senderAddress, r.Sender)
+		//	}
+		//}
 	}
 	return nil
 }
@@ -116,6 +116,20 @@ func (h *Handler) serveMail(rw smtp.ResponseWriter, r *smtp.MailRequest, ctx *sm
 			return
 		}
 	}
+
+	for _, rule := range h.config.Rules {
+		if rule.Sender != nil {
+			match := rule.Sender.Match(r.From)
+			if match && rule.Action == Deny {
+				rw.Write(&smtp.MailResponse{Result: smtp.NewAddressRejected(fmt.Sprintf("sender %v does match deny rule: %v", r.From, rule.Sender))})
+				return
+			} else if !match && rule.Action == Allow {
+				rw.Write(&smtp.MailResponse{Result: smtp.NewAddressRejected(fmt.Sprintf("sender %v does not match allow rule: %v", r.From, rule.Sender))})
+				return
+			}
+		}
+	}
+
 	ctx.From = r.From
 	rw.Write(&smtp.MailResponse{Result: smtp.Ok})
 }
@@ -125,6 +139,19 @@ func (h *Handler) serveRcpt(rw smtp.ResponseWriter, r *smtp.RcptRequest, ctx *sm
 		if _, ok := h.config.getMailbox(r.To); !ok {
 			rw.Write(&smtp.RcptResponse{Result: smtp.AddressRejected})
 			return
+		}
+	}
+
+	for _, rule := range h.config.Rules {
+		if rule.Recipient != nil {
+			match := rule.Recipient.Match(r.To)
+			if match && rule.Action == Deny {
+				rw.Write(&smtp.RcptResponse{Result: smtp.NewBadDestinationAddress(fmt.Sprintf("recipient %v does match deny rule: %v", r.To, rule.Recipient))})
+				return
+			} else if !match && rule.Action == Allow {
+				return
+				rw.Write(&smtp.RcptResponse{Result: smtp.NewBadDestinationAddress(fmt.Sprintf("recipient %v does not match allow rule: %v", r.To, rule.Recipient))})
+			}
 		}
 	}
 

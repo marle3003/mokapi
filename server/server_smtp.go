@@ -37,13 +37,14 @@ func (m *SmtpManager) UpdateConfig(c *common.Config) {
 
 	if server, ok := m.servers[cfg.Info.Name]; !ok {
 		h := runtime.NewSmtpHandler(m.app.Monitor.Smtp, mail.NewHandler(cfg, m.eventEmitter))
-		u, err := parseUrl(cfg.Server)
+		u, err := parseSmtpUrl(cfg.Server)
 		if err != nil {
 			log.Errorf("url syntax error %v: %v", c.Url, err.Error())
 			return
 		}
 		log.Infof("adding new smtp host on %v", u)
 		server = &smtp.Server{Addr: fmt.Sprintf(":%v", u.Port()), Handler: h}
+		m.servers[cfg.Info.Name] = server
 		if u.Scheme == "smtps" {
 			server.TLSConfig = &tls.Config{
 				GetCertificate: m.certStore.GetCertificate,

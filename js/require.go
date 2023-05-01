@@ -28,12 +28,13 @@ type ModuleLoader func() goja.Value
 type SourceLoader func(file, hint string) (*common.Config, error)
 
 type requireModule struct {
-	native       map[string]ModuleLoader
-	sourceLoader SourceLoader
-	compiler     *compiler.Compiler
-	workingDir   string
-	runtime      *goja.Runtime
-	exports      map[string]goja.Value
+	native        map[string]ModuleLoader
+	sourceLoader  SourceLoader
+	compiler      *compiler.Compiler
+	workingDir    string
+	runtime       *goja.Runtime
+	exports       map[string]goja.Value
+	globalFolders []string
 }
 
 func newRequire(loader SourceLoader, c *compiler.Compiler, workingDir string, native map[string]ModuleLoader) *requireModule {
@@ -112,13 +113,24 @@ func (m *requireModule) loadFileModule(modPath string) (goja.Value, error) {
 			}
 			return m.runtime.ToValue(result), nil
 		}
-		return m.loadModule(f.Url.Path, string(f.Raw))
+		path := f.Url.Path
+		if len(path) == 0 {
+			path = f.Url.Opaque
+		}
+		return m.loadModule(path, string(f.Raw))
 	} else {
 		if v, err := m.loadFileModule(modPath + ".js"); err == nil {
 			return v, nil
 		}
 
+		if v, err := m.loadFileModule(filepath.Join(modPath, "index.js")); err == nil {
+			return v, nil
+		}
+
 		if v, err := m.loadFileModule(modPath + ".json"); err == nil {
+			return v, nil
+		}
+		if v, err := m.loadFileModule(modPath + ".yaml"); err == nil {
 			return v, nil
 		}
 	}
@@ -127,31 +139,41 @@ func (m *requireModule) loadFileModule(modPath string) (goja.Value, error) {
 }
 
 func (m *requireModule) loadNodeModule(mod string) (goja.Value, error) {
-	dir := m.workingDir
-	for len(dir) > 0 {
-		path := filepath.Join(dir, "node_modules", mod)
-		f, err := m.sourceLoader(filepath.Join(path, "package.json"), m.workingDir)
+	oldPath := m.workingDir
+	defer func() { m.workingDir = oldPath }()
+
+	for _, dir := range m.globalFolders {
+		m.workingDir = dir
+		if mod, err := m.loadNodeModule(mod); mod != nil && err == nil {
+			return mod, nil
+		}
+	}
+	m.workingDir = oldPath
+
+	for len(m.workingDir) > 0 {
+		current := m.workingDir
+		m.workingDir = filepath.Join(m.workingDir, "node_modules", mod)
+		f, err := m.sourceLoader("package.json", m.workingDir)
 		if err != nil {
-			if v, err := m.loadFileModule(filepath.Join(path, "index.js")); err == nil {
+			if v, err := m.loadFileModule("index.js"); err == nil {
 				return v, nil
 			}
 		} else {
-			if v, err := m.loadFromPackage(path, string(f.Raw)); err == nil {
+			if v, err := m.loadFromPackage(m.workingDir, string(f.Raw)); err == nil {
 				return v, nil
 			}
 
-			if v, err := m.loadFileModule(filepath.Join(path, "index.js")); err == nil {
+			if v, err := m.loadFileModule("index.js"); err == nil {
 				return v, nil
 			}
 		}
 
-		if dir == string(filepath.Separator) {
+		if m.workingDir == string(filepath.Separator) {
 			break
 		}
 
-		current := dir
-		dir = filepath.Dir(dir)
-		if dir == current {
+		m.workingDir = filepath.Dir(current)
+		if m.workingDir == current {
 			break
 		}
 	}
@@ -167,7 +189,7 @@ func (m *requireModule) loadFromPackage(modPath, src string) (goja.Value, error)
 		return nil, fmt.Errorf("unable to parse package.json")
 	}
 
-	return m.loadFileModule(filepath.Join(modPath, pkg.Main))
+	return m.loadFileModule(pkg.Main)
 }
 
 func (m *requireModule) loadModule(modPath, source string) (goja.Value, error) {
@@ -176,6 +198,7 @@ func (m *requireModule) loadModule(modPath, source string) (goja.Value, error) {
 	defer func() { m.workingDir = oldPath }()
 
 	module := m.runtime.NewObject()
+	_ = module.Set("workingDir", m.workingDir)
 	exports := m.runtime.NewObject()
 	if err := module.Set("exports", exports); err != nil {
 		panic(fmt.Sprintf("unable to import module %v: %v", modPath, err))

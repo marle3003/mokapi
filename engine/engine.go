@@ -5,6 +5,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	config "mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/script"
+	"mokapi/config/static"
 	"mokapi/engine/common"
 	"mokapi/runtime"
 	"sync"
@@ -18,15 +19,17 @@ type Engine struct {
 	reader      config.Reader
 	kafkaClient *kafkaClient
 	m           sync.Mutex
+	jsConfig    static.JsConfig
 }
 
-func New(reader config.Reader, app *runtime.App) *Engine {
+func New(reader config.Reader, app *runtime.App, jsConfig static.JsConfig) *Engine {
 	return &Engine{
 		scripts:     make(map[string]*scriptHost),
 		cron:        gocron.NewScheduler(time.UTC),
 		logger:      log.StandardLogger(),
 		reader:      reader,
 		kafkaClient: newKafkaClient(app),
+		jsConfig:    jsConfig,
 	}
 }
 

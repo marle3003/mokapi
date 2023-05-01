@@ -71,7 +71,7 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 	pool := safe.NewPool(context.Background())
 	app := runtime.New()
 	watcher := dynamic.NewConfigWatcher(cfg)
-	scriptEngine := engine.New(watcher, app)
+	scriptEngine := engine.New(watcher, app, cfg.Js)
 	certStore, err := cert.NewStore(cfg)
 	if err != nil {
 		return nil, err

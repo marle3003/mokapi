@@ -2,10 +2,8 @@ package smtp
 
 import (
 	"bytes"
-	"io"
 	"net/mail"
 	"net/textproto"
-	"strings"
 	"time"
 )
 
@@ -17,11 +15,12 @@ type Message struct {
 	Cc          []*mail.Address
 	Bcc         []*mail.Address
 	MessageId   string
+	InReplyTo   string
 	Date        time.Time
 	Subject     string
 	ContentType string
 	Encoding    string
-	Body        io.Reader
+	Body        string
 }
 
 func (m *Message) readFrom(tc textproto.Reader) error {
@@ -44,7 +43,7 @@ func (m *Message) readFrom(tc textproto.Reader) error {
 		}
 	}
 
-	if to := header.Get("From"); to != "" {
+	if to := header.Get("To"); to != "" {
 		m.To, err = mail.ParseAddressList(to)
 		if err != nil {
 			return err
@@ -73,6 +72,7 @@ func (m *Message) readFrom(tc textproto.Reader) error {
 	}
 
 	m.MessageId = header.Get("Message-ID")
+	m.InReplyTo = header.Get("In-Reply-To")
 
 	if date := header.Get("Date"); date != "" {
 		m.Date, err = mail.ParseDate(date)
@@ -89,7 +89,9 @@ func (m *Message) readFrom(tc textproto.Reader) error {
 	// read dot-encoded block from r
 	data.ReadFrom(tc.DotReader())
 
-	m.Body = strings.NewReader(data.String())
+	if data.Len() > 0 {
+		m.Body = data.String()[0 : data.Len()-1] // remove last \n
+	}
 
 	return nil
 }

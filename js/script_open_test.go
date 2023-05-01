@@ -3,6 +3,7 @@ package js
 import (
 	"fmt"
 	r "github.com/stretchr/testify/require"
+	"mokapi/config/static"
 	"testing"
 )
 
@@ -21,7 +22,7 @@ func TestScript_Open(t *testing.T) {
 					`export default function() {
 						  	return open('foo')
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
@@ -38,7 +39,7 @@ func TestScript_Open(t *testing.T) {
 					`export default function() {
 						  	return open('foo')
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
 				r.Error(t, err)
@@ -54,7 +55,7 @@ func TestScript_Open(t *testing.T) {
 					`export default function() {
 						  	return open('foo', { as: 'binary' })
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)

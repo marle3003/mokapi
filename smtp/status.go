@@ -33,3 +33,19 @@ var SecurityError = EnhancedStatusCode{5, 7, 0}
 func (e *EnhancedStatusCode) String() string {
 	return fmt.Sprintf("%v.%v.%v", e[0], e[1], e[2])
 }
+
+func NewAddressRejected(message string) *SMTPStatus {
+	return &SMTPStatus{
+		Code:    550,
+		Status:  EnhancedStatusCode{5, 1, 0},
+		Message: message,
+	}
+}
+
+func NewBadDestinationAddress(message string) *SMTPStatus {
+	return &SMTPStatus{
+		Code:    550,
+		Status:  EnhancedStatusCode{5, 1, 1},
+		Message: message,
+	}
+}

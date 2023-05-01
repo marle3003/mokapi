@@ -32,7 +32,7 @@ func Start(cfg *static.Config) (*Cmd, error) {
 	if err != nil {
 		return nil, err
 	}
-	scriptEngine := engine.New(watcher, app)
+	scriptEngine := engine.New(watcher, app, cfg.Js)
 
 	http := server.NewHttpManager(scriptEngine, certStore, app, cfg.Services)
 	kafka := server.NewKafkaManager(scriptEngine, app)

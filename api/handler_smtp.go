@@ -82,10 +82,10 @@ func (h *handler) getSmtpService(w http.ResponseWriter, r *http.Request) {
 	}
 	for _, r := range s.Rules {
 		result.Rules = append(result.Rules, rule{
-			Sender:    r.Sender,
-			Recipient: r.Recipient,
-			Subject:   r.Subject,
-			Body:      r.Body,
+			Sender:    r.Sender.String(),
+			Recipient: r.Recipient.String(),
+			Subject:   r.Subject.String(),
+			Body:      r.Body.String(),
 			Action:    string(r.Action),
 		})
 	}

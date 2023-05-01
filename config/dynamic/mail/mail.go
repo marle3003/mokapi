@@ -21,6 +21,7 @@ type Mail struct {
 	Cc          []Address    `json:"cc,omitempty"`
 	Bcc         []Address    `json:"bbc,omitempty"`
 	MessageId   string       `json:"messageId"`
+	InReplyTo   string       `json:"inReplyTo"`
 	Date        time.Time    `json:"time"`
 	Subject     string       `json:"subject"`
 	ContentType string       `json:"contentType"`
@@ -47,6 +48,7 @@ func NewMail(msg *smtp.Message) *Mail {
 		Subject:     msg.Subject,
 		ContentType: msg.ContentType,
 		Encoding:    msg.Encoding,
+		InReplyTo:   msg.InReplyTo,
 	}
 
 	if msg.Sender != nil {
@@ -76,7 +78,7 @@ func NewMail(msg *smtp.Message) *Mail {
 	mime := media.ParseContentType(m.ContentType)
 	switch {
 	case mime.Key() == "multipart/mixed":
-		r := multipart.NewReader(msg.Body, mime.Parameters["boundary"])
+		r := multipart.NewReader(strings.NewReader(msg.Body), mime.Parameters["boundary"])
 		for {
 			p, err := r.NextPart()
 			if err != nil {
@@ -96,6 +98,8 @@ func NewMail(msg *smtp.Message) *Mail {
 				m.Body += string(b)
 			}
 		}
+	default:
+		m.Body = msg.Body
 	}
 
 	return m

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/dop251/goja"
 	"github.com/pkg/errors"
+	"mokapi/config/static"
 	engine "mokapi/engine/common"
 	"mokapi/js/compiler"
 	"path/filepath"
@@ -19,13 +20,15 @@ type Script struct {
 	require  *requireModule
 	filename string
 	source   string
+	config   static.JsConfig
 }
 
-func New(filename, src string, host engine.Host) (*Script, error) {
+func New(filename, src string, host engine.Host, config static.JsConfig) (*Script, error) {
 	s := &Script{
 		host:     host,
 		filename: filename,
 		source:   src,
+		config:   config,
 	}
 
 	var err error
@@ -107,15 +110,18 @@ func (s *Script) ensureRuntime() (err error) {
 		map[string]ModuleLoader{
 			"mokapi":          s.loadNativeModule(newMokapi),
 			"mokapi/faker":    s.loadNativeModule(newFaker),
-			"faker":           s.loadDeprecatedNativeModule(newHttp, "deprecated module faker: Please use mokapi/faker instead"),
+			"faker":           s.loadDeprecatedNativeModule(newFaker, "deprecated module faker: Please use mokapi/faker instead"),
 			"mokapi/http":     s.loadNativeModule(newHttp),
 			"http":            s.loadDeprecatedNativeModule(newHttp, "deprecated module http: Please use mokapi/http instead"),
 			"mokapi/kafka":    s.loadNativeModule(newKafka),
-			"kafka":           s.loadDeprecatedNativeModule(newHttp, "deprecated module kafka: Please use mokapi/kafka instead"),
+			"kafka":           s.loadDeprecatedNativeModule(newKafka, "deprecated module kafka: Please use mokapi/kafka instead"),
 			"mokapi/mustache": s.loadNativeModule(newMustache),
-			"mustache":        s.loadDeprecatedNativeModule(newHttp, "deprecated module mustache: Please use mokapi/mustache instead"),
+			"mustache":        s.loadDeprecatedNativeModule(newMustache, "deprecated module mustache: Please use mokapi/mustache instead"),
 			"mokapi/yaml":     s.loadNativeModule(newYaml),
-			"yaml":            s.loadDeprecatedNativeModule(newHttp, "deprecated module yaml: Please use mokapi/yaml instead"),
+			"yaml":            s.loadDeprecatedNativeModule(newYaml, "deprecated module yaml: Please use mokapi/yaml instead"),
+			"mokapi/mail": s.loadNativeModule(func(host engine.Host, runtime *goja.Runtime) interface{} {
+				return newMail(host, runtime, filepath.Dir(s.filename))
+			}),
 		})
 	s.require.Enable(s.runtime)
 	enableConsole(s.runtime, s.host)

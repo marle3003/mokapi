@@ -3,6 +3,7 @@ package js
 import (
 	"github.com/brianvoe/gofakeit/v6"
 	r "github.com/stretchr/testify/require"
+	"mokapi/config/static"
 	"testing"
 )
 
@@ -19,7 +20,7 @@ func TestScript_Faker(t *testing.T) {
 						 export default function() {
 						 	return fake({type: 'string'})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
@@ -34,7 +35,7 @@ func TestScript_Faker(t *testing.T) {
 						 export default function() {
 						 	return fake({type: 'string', enum: ['foo', 'bar']})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
@@ -49,10 +50,25 @@ func TestScript_Faker(t *testing.T) {
 						 export default function() {
 						 	return fake("")
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
 				r.Error(t, err)
+			},
+		},
+		{
+			"using deprecated module",
+			func(t *testing.T, host *testHost) {
+				s, err := New("",
+					`import {fake} from 'faker'
+						 export default function() {
+						 	return fake({type: 'string'})
+						 }`,
+					host, static.JsConfig{})
+				r.NoError(t, err)
+				v, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, "gbRMaRxHkiJBPta", v.String())
 			},
 		},
 	}

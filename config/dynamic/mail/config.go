@@ -1,6 +1,9 @@
 package mail
 
-import "mokapi/config/dynamic/common"
+import (
+	"mokapi/config/dynamic/common"
+	"regexp"
+)
 
 func init() {
 	common.Register("smtp", &Config{})
@@ -31,11 +34,15 @@ const (
 )
 
 type Rule struct {
-	Sender    string     `yaml:"sender" json:"sender"`
-	Recipient string     `yaml:"recipient" json:"recipient"`
-	Subject   string     `yaml:"subject" json:"subject"`
-	Body      string     `yaml:"body" json:"body"`
+	Sender    *RuleExpr  `yaml:"sender" json:"sender"`
+	Recipient *RuleExpr  `yaml:"recipient" json:"recipient"`
+	Subject   *RuleExpr  `yaml:"subject" json:"subject"`
+	Body      *RuleExpr  `yaml:"body" json:"body"`
 	Action    RuleAction `yaml:"action" json:"action"`
+}
+
+type RuleExpr struct {
+	expr *regexp.Regexp
 }
 
 type Mailbox struct {
@@ -51,4 +58,16 @@ func (c *Config) getMailbox(name string) (Mailbox, bool) {
 		}
 	}
 	return Mailbox{}, false
+}
+
+func NewRuleExpr(r *regexp.Regexp) *RuleExpr {
+	return &RuleExpr{expr: r}
+}
+
+func (r *RuleExpr) String() string {
+	return r.expr.String()
+}
+
+func (r *RuleExpr) Match(v string) bool {
+	return r.expr.Match([]byte(v))
 }

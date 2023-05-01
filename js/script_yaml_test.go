@@ -2,6 +2,7 @@ package js
 
 import (
 	r "github.com/stretchr/testify/require"
+	"mokapi/config/static"
 	"testing"
 )
 
@@ -19,7 +20,7 @@ func TestYaml(t *testing.T) {
 						 export default function() {
 						 	return parse('foo: bar')
 						}`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 
 				v, err := s.RunDefault()
@@ -37,7 +38,7 @@ func TestYaml(t *testing.T) {
 						 export default function() {
 						 	return parse('- a\n- b\n- c')
 						}`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 
 				v, err := s.RunDefault()
@@ -56,7 +57,7 @@ func TestYaml(t *testing.T) {
 						 	const o = parse('- a\n- b\n- c')
 							return o[1]
 						}`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 
 				v, err := s.RunDefault()
@@ -74,7 +75,7 @@ func TestYaml(t *testing.T) {
 						 export default function() {
 						 	return stringify({foo: "bar"})
 						}`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 
 				v, err := s.RunDefault()
@@ -82,6 +83,24 @@ func TestYaml(t *testing.T) {
 
 				result := v.String()
 				r.Equal(t, "foo: bar\n", result)
+			},
+		},
+		{
+			"using deprecated module",
+			func(t *testing.T) {
+				s, err := New("test",
+					`import {parse} from 'yaml';
+						 export default function() {
+						 	return parse('foo: bar')
+						}`,
+					host, static.JsConfig{})
+				r.NoError(t, err)
+
+				v, err := s.RunDefault()
+				r.NoError(t, err)
+
+				result := v.Export().(map[string]interface{})
+				r.Equal(t, "bar", result["foo"])
 			},
 		},
 	}

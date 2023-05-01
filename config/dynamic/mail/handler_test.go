@@ -7,11 +7,17 @@ import (
 	"mokapi/smtp"
 	"mokapi/smtp/smtptest"
 	"net/mail"
+	"regexp"
 	"testing"
 	"time"
 )
 
 func TestHandler_ServeSMTP(t *testing.T) {
+	mustCompile := func(s string) *RuleExpr {
+		r, _ := regexp.Compile(s)
+		return NewRuleExpr(r)
+	}
+
 	testcases := []struct {
 		name   string
 		config *Config
@@ -185,10 +191,10 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		},
 		{
 			name:   "data with allow rule not match sender",
-			config: &Config{Rules: []Rule{{Sender: ".*@mokapi.io", Action: Allow}}},
+			config: &Config{Rules: []Rule{{Sender: mustCompile(".*@mokapi.io"), Action: Allow}}},
 			test: func(t *testing.T, h *Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
-				r := sendData(t, h, ctx)
+				r := sendMail(t, h, ctx)
 				require.Equal(t, "sender alice@foo.bar does not match allow rule: .*@mokapi.io", r.Result.Message)
 			},
 		},
