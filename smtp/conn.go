@@ -2,6 +2,7 @@ package smtp
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -54,7 +55,7 @@ func (c *conn) serve() {
 		case "EHLO":
 			client.Client = param
 			client.Proto = "ESMTP"
-			write(tpc, StatusOk, Undefined, "Hello "+param, "AUTH LOGIN")
+			write(tpc, StatusOk, Undefined, "Hello "+param, "AUTH LOGIN", "STARTTLS")
 		case "AUTH":
 			c.serveAuth(tpc, param)
 		case "MAIL":
@@ -71,6 +72,9 @@ func (c *conn) serve() {
 			write(tpc, StatusClose, Success, "Bye, see you soon")
 			c.server.closeConn(c.conn)
 			return
+		case "STARTTLS":
+			c.serveStartTls(tpc, param)
+			tpc = textproto.NewConn(c.conn)
 		default:
 			log.Debugf("unknown smtp command: %v", cmd)
 			write(tpc, StatusCommandNotImplemented, Undefined, fmt.Sprintf("Command %v not implemented", cmd))
@@ -170,6 +174,19 @@ func (c *conn) serveAuth(conn *textproto.Conn, param string) error {
 	}, r)
 
 	return nil
+}
+
+func (c *conn) serveStartTls(conn *textproto.Conn, param string) {
+	write(conn, 220, EnhancedStatusCode{2, 0, 0}, "Starting TLS")
+
+	tlsConn := tls.Server(c.conn, c.server.TLSConfig)
+
+	if err := tlsConn.Handshake(); err != nil {
+		write(conn, 550, EnhancedStatusCode{5, 0, 0}, "Handshake error")
+		return
+	}
+	c.conn = tlsConn
+	c.reset()
 }
 
 func (c *conn) reset() {

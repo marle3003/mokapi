@@ -43,12 +43,15 @@ func (m *SmtpManager) UpdateConfig(c *common.Config) {
 			return
 		}
 		log.Infof("adding new smtp host on %v", u)
-		server = &smtp.Server{Addr: fmt.Sprintf(":%v", u.Port()), Handler: h}
+		server = &smtp.Server{
+			Addr: fmt.Sprintf(":%v", u.Port()),
+			TLSConfig: &tls.Config{
+				GetCertificate: m.certStore.GetCertificate,
+			},
+			Handler: h}
+
 		m.servers[cfg.Info.Name] = server
 		if u.Scheme == "smtps" {
-			server.TLSConfig = &tls.Config{
-				GetCertificate: m.certStore.GetCertificate,
-			}
 			startServer(server.ListenAndServeTLS)
 		} else {
 			startServer(server.ListenAndServe)
