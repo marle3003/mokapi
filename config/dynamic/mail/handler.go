@@ -29,11 +29,11 @@ func (h *Handler) ServeSMTP(rw smtp.ResponseWriter, r smtp.Request) {
 	case *smtp.LoginRequest:
 		for _, acc := range h.config.Mailboxes {
 			if acc.Username == req.Username && acc.Password == req.Password {
-				rw.Write(&smtp.LoginResponse{Result: smtp.AuthSucceeded})
+				rw.Write(&smtp.LoginResponse{Result: &smtp.AuthSucceeded})
 				ctx.Auth = acc.Username
 			}
 		}
-		rw.Write(&smtp.LoginResponse{Result: smtp.InvalidAuthCredentials})
+		h.writeErrorResponse(rw, r, smtp.InvalidAuthCredentials, "")
 	case *smtp.MailRequest:
 		h.serveMail(rw, req, ctx)
 	case *smtp.RcptRequest:
@@ -109,10 +109,10 @@ func (h *Handler) runRules(m *Mail) error {
 func (h *Handler) serveMail(rw smtp.ResponseWriter, r *smtp.MailRequest, ctx *smtp.ClientContext) {
 	if len(h.config.Mailboxes) > 0 {
 		if m, ok := h.config.getMailbox(r.From); !ok {
-			rw.Write(&smtp.MailResponse{Result: smtp.AddressRejected})
+			h.writeErrorResponse(rw, r, smtp.AddressRejected, fmt.Sprintf("Unknown mailbox %v", r.From))
 			return
 		} else if len(m.Username) > 0 && len(ctx.Auth) == 0 {
-			rw.Write(&smtp.MailResponse{Result: smtp.AuthRequired})
+			h.writeErrorResponse(rw, r, smtp.AuthRequired, "")
 			return
 		}
 	}
@@ -121,10 +121,10 @@ func (h *Handler) serveMail(rw smtp.ResponseWriter, r *smtp.MailRequest, ctx *sm
 		if rule.Sender != nil {
 			match := rule.Sender.Match(r.From)
 			if match && rule.Action == Deny {
-				rw.Write(&smtp.MailResponse{Result: smtp.NewAddressRejected(fmt.Sprintf("sender %v does match deny rule: %v", r.From, rule.Sender))})
+				h.writeErrorResponse(rw, r, smtp.AddressRejected, fmt.Sprintf("sender %v does match deny rule: %v", r.From, rule.Sender))
 				return
 			} else if !match && rule.Action == Allow {
-				rw.Write(&smtp.MailResponse{Result: smtp.NewAddressRejected(fmt.Sprintf("sender %v does not match allow rule: %v", r.From, rule.Sender))})
+				h.writeErrorResponse(rw, r, smtp.AddressRejected, fmt.Sprintf("sender %v does not match allow rule: %v", r.From, rule.Sender))
 				return
 			}
 		}
@@ -137,7 +137,7 @@ func (h *Handler) serveMail(rw smtp.ResponseWriter, r *smtp.MailRequest, ctx *sm
 func (h *Handler) serveRcpt(rw smtp.ResponseWriter, r *smtp.RcptRequest, ctx *smtp.ClientContext) {
 	if len(h.config.Mailboxes) > 0 {
 		if _, ok := h.config.getMailbox(r.To); !ok {
-			rw.Write(&smtp.RcptResponse{Result: smtp.AddressRejected})
+			h.writeErrorResponse(rw, r, smtp.AddressRejected, fmt.Sprintf("Unknown mailbox %v", r.To))
 			return
 		}
 	}
@@ -146,19 +146,30 @@ func (h *Handler) serveRcpt(rw smtp.ResponseWriter, r *smtp.RcptRequest, ctx *sm
 		if rule.Recipient != nil {
 			match := rule.Recipient.Match(r.To)
 			if match && rule.Action == Deny {
-				rw.Write(&smtp.RcptResponse{Result: smtp.NewBadDestinationAddress(fmt.Sprintf("recipient %v does match deny rule: %v", r.To, rule.Recipient))})
+				h.writeErrorResponse(rw, r, smtp.BadDestinationAddress, fmt.Sprintf("recipient %v does match deny rule: %v", r.To, rule.Recipient))
 				return
 			} else if !match && rule.Action == Allow {
+				h.writeErrorResponse(rw, r, smtp.BadDestinationAddress, fmt.Sprintf("recipient %v does not match allow rule: %v", r.To, rule.Recipient))
 				return
-				rw.Write(&smtp.RcptResponse{Result: smtp.NewBadDestinationAddress(fmt.Sprintf("recipient %v does not match allow rule: %v", r.To, rule.Recipient))})
 			}
 		}
 	}
 
 	if h.config.MaxRecipients > 0 && len(ctx.To)+1 > h.config.MaxRecipients {
-		rw.Write(&smtp.RcptResponse{Result: smtp.TooManyRecipientsWithMessage(fmt.Sprintf("Too many recipients of %v reached", h.config.MaxRecipients))})
+		h.writeErrorResponse(rw, r, smtp.TooManyRecipients, fmt.Sprintf("Too many recipients of %v reached", h.config.MaxRecipients))
 		return
 	}
 	ctx.To = append(ctx.To, r.To)
 	rw.Write(&smtp.RcptResponse{Result: smtp.Ok})
+}
+
+func (h *Handler) writeErrorResponse(rw smtp.ResponseWriter, r smtp.Request, status smtp.SMTPStatus, message string) {
+	clientContext := smtp.ClientFromContext(r.Context())
+	if len(message) > 0 {
+		status.Message = message
+	}
+	res := r.NewResponse(&status)
+	l := NewLogEvent(nil, clientContext, events.NewTraits().WithName(h.config.Info.Name))
+	l.Error = status.Message
+	_ = rw.Write(res)
 }

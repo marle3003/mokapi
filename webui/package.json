@@ -25,6 +25,7 @@
     "del-cli": "^5.0.0",
     "http-status-codes": "^2.2.0",
     "ncp": "^2.0.0",
+    "playwright": "^1.33.0",
     "vue": "^3.2.45",
     "vue-router": "^4.1.6",
     "vue3-highlightjs": "^1.0.5",
@@ -33,7 +34,7 @@
     "xml-formatter": "^3.2.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.28.1",
+    "@playwright/test": "^1.33.0",
     "@rushstack/eslint-patch": "^1.1.4",
     "@types/node": "^18.11.12",
     "@vitejs/plugin-vue": "^4.0.0",

@@ -34,18 +34,26 @@ func (e *EnhancedStatusCode) String() string {
 	return fmt.Sprintf("%v.%v.%v", e[0], e[1], e[2])
 }
 
-func NewAddressRejected(message string) *SMTPStatus {
-	return &SMTPStatus{
-		Code:    550,
-		Status:  EnhancedStatusCode{5, 1, 0},
-		Message: message,
-	}
+type SMTPStatus struct {
+	Code    StatusCode
+	Status  EnhancedStatusCode
+	Message string
 }
 
-func NewBadDestinationAddress(message string) *SMTPStatus {
-	return &SMTPStatus{
-		Code:    550,
-		Status:  EnhancedStatusCode{5, 1, 1},
-		Message: message,
+var (
+	Ok = &SMTPStatus{
+		Code:    250,
+		Status:  Success,
+		Message: "OK",
 	}
-}
+
+	AddressRejected = SMTPStatus{
+		Code:   550,
+		Status: EnhancedStatusCode{5, 1, 0},
+	}
+
+	BadDestinationAddress = SMTPStatus{
+		Code:   550,
+		Status: EnhancedStatusCode{5, 1, 1},
+	}
+)

@@ -6,19 +6,19 @@ import (
 )
 
 var (
-	InvalidAuthCredentials = &SMTPStatus{
+	InvalidAuthCredentials = SMTPStatus{
 		Code:    535,
 		Status:  EnhancedStatusCode{5, 7, 8},
 		Message: "Authentication credentials invalid",
 	}
 
-	AuthSucceeded = &SMTPStatus{
+	AuthSucceeded = SMTPStatus{
 		Code:    StatusAuthSucceeded,
 		Status:  Success,
 		Message: "Authentication succeeded",
 	}
 
-	AuthRequired = &SMTPStatus{
+	AuthRequired = SMTPStatus{
 		Code:    AuthenticationRequire,
 		Status:  SecurityError,
 		Message: "Authentication required",
@@ -49,6 +49,10 @@ func (r *LoginRequest) Context() context.Context {
 
 func (r *LoginRequest) WithContext(ctx context.Context) {
 	r.ctx = ctx
+}
+
+func (r *LoginRequest) NewResponse(result *SMTPStatus) Response {
+	return &LoginResponse{Result: result}
 }
 
 func (r *LoginResponse) write(conn *textproto.Conn) error {

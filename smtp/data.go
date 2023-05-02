@@ -29,6 +29,10 @@ func (r *DataRequest) WithContext(ctx context.Context) {
 	r.ctx = ctx
 }
 
+func (r *DataRequest) NewResponse(result *SMTPStatus) Response {
+	return &DataResponse{Result: result}
+}
+
 func (r *DataResponse) write(conn *textproto.Conn) error {
 	return write(conn, r.Result.Code, r.Result.Status, r.Result.Message)
 }

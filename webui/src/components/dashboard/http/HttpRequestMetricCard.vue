@@ -27,7 +27,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div class="card metric text-center">
+    <div class="card metric text-center" data-testid="metric-http-requests">
         <div class="card-body">
             <div class="card-title" v-if="includeError">HTTP Requests / Errors</div>
             <div class="card-title" v-else-if="onlyError">HTTP Errors</div>

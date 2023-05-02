@@ -42,7 +42,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div class="card">
+    <div class="card" data-testid="http-service-list">
         <div class="card-body">
             <div class="card-title text-center">HTTP Services</div>
             <table class="table dataTable selectable">

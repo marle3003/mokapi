@@ -5,25 +5,6 @@ import (
 	"net/textproto"
 )
 
-type SMTPStatus struct {
-	Code    StatusCode
-	Status  EnhancedStatusCode
-	Message string
-}
-
-var (
-	AddressRejected = &SMTPStatus{
-		Code:    550,
-		Status:  EnhancedStatusCode{5, 1, 0},
-		Message: "Address rejected",
-	}
-	Ok = &SMTPStatus{
-		Code:    250,
-		Status:  Success,
-		Message: "OK",
-	}
-)
-
 type MailRequest struct {
 	From string
 	ctx  context.Context
@@ -46,6 +27,10 @@ func (r *MailRequest) Context() context.Context {
 
 func (r *MailRequest) WithContext(ctx context.Context) {
 	r.ctx = ctx
+}
+
+func (r *MailRequest) NewResponse(result *SMTPStatus) Response {
+	return &MailResponse{Result: result}
 }
 
 func (r *MailResponse) write(conn *textproto.Conn) error {

@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	TooManyRecipients = &SMTPStatus{
+	TooManyRecipients = SMTPStatus{
 		Code:   StatusActionAborted,
 		Status: EnhancedStatusCode{4, 5, 3},
 	}
@@ -36,14 +36,10 @@ func (r *RcptRequest) WithContext(ctx context.Context) {
 	r.ctx = ctx
 }
 
-func (r *RcptResponse) write(conn *textproto.Conn) error {
-	return write(conn, r.Result.Code, r.Result.Status, r.Result.Message)
+func (r *RcptRequest) NewResponse(result *SMTPStatus) Response {
+	return &RcptResponse{Result: result}
 }
 
-func TooManyRecipientsWithMessage(message string) *SMTPStatus {
-	return &SMTPStatus{
-		Code:    TooManyRecipients.Code,
-		Status:  TooManyRecipients.Status,
-		Message: message,
-	}
+func (r *RcptResponse) write(conn *textproto.Conn) error {
+	return write(conn, r.Result.Code, r.Result.Status, r.Result.Message)
 }

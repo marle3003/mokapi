@@ -11,6 +11,7 @@ type Log struct {
 	To       []string         `json:"to"`
 	Mail     *Mail            `json:"mail"`
 	Duration int64            `json:"duration"`
+	Error    string           `json:"error"`
 	Actions  []*common.Action `json:"actions"`
 }
 

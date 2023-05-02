@@ -39,7 +39,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div class="card">
+    <div class="card" data-testid="kafka-service-list">
         <div class="card-body">
             <div class="card-title text-center">Kafka Clusters</div>
             <table class="table dataTable selectable">

@@ -45,7 +45,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 			test: func(t *testing.T, h *Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendMail(t, h, ctx)
-				require.Equal(t, smtp.AuthRequired, r.Result)
+				require.Equal(t, &smtp.AuthRequired, r.Result)
 			},
 		},
 		{
@@ -58,7 +58,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 			test: func(t *testing.T, h *Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendLogin(t, h, ctx, "foo", "foo")
-				require.Equal(t, smtp.InvalidAuthCredentials, r.Result)
+				require.Equal(t, &smtp.InvalidAuthCredentials, r.Result)
 			},
 		},
 		{
@@ -71,7 +71,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 			test: func(t *testing.T, h *Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendLogin(t, h, ctx, "alice", "foo")
-				require.Equal(t, smtp.InvalidAuthCredentials, r.Result)
+				require.Equal(t, &smtp.InvalidAuthCredentials, r.Result)
 			},
 		},
 		{
@@ -84,7 +84,9 @@ func TestHandler_ServeSMTP(t *testing.T) {
 			test: func(t *testing.T, h *Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendMail(t, h, ctx)
-				require.Equal(t, smtp.AddressRejected, r.Result)
+				exp := smtp.AddressRejected
+				exp.Message = "Unknown mailbox alice@foo.bar"
+				require.Equal(t, &exp, r.Result)
 			},
 		},
 		{
@@ -119,7 +121,9 @@ func TestHandler_ServeSMTP(t *testing.T) {
 			test: func(t *testing.T, h *Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendRcpt(t, h, ctx)
-				require.Equal(t, smtp.AddressRejected, r.Result)
+				exp := smtp.AddressRejected
+				exp.Message = "Unknown mailbox bob@foo.bar"
+				require.Equal(t, &exp, r.Result)
 			},
 		},
 		{
@@ -168,7 +172,9 @@ func TestHandler_ServeSMTP(t *testing.T) {
 				r = sendThisRcpt(t, h, ctx, "carol@foo.bar")
 				require.Equal(t, smtp.Ok, r.Result)
 				r = sendThisRcpt(t, h, ctx, "charlie@foo.bar")
-				require.Equal(t, smtp.TooManyRecipientsWithMessage("Too many recipients of 2 reached"), r.Result)
+				exp := smtp.TooManyRecipients
+				exp.Message = "Too many recipients of 2 reached"
+				require.Equal(t, &exp, r.Result)
 			},
 		},
 		{

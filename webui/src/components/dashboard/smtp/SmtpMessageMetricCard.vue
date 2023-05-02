@@ -28,5 +28,5 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <metric-card title="SMTP Messages" :value="messages" data-test="metric-smtp-messages"></metric-card>
+    <metric-card title="SMTP Mails" :value="messages" data-testid="metric-smtp-messages"></metric-card>
 </template>

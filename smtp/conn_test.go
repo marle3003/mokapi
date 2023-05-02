@@ -47,7 +47,7 @@ func TestServer(t *testing.T) {
 			name: "auth successfully",
 			handler: func(rw smtp.ResponseWriter, req smtp.Request) {
 				require.IsType(t, &smtp.LoginRequest{}, req)
-				rw.Write(&smtp.LoginResponse{Result: smtp.AuthSucceeded})
+				rw.Write(&smtp.LoginResponse{Result: &smtp.AuthSucceeded})
 			},
 			test: func(t *testing.T, conn *textproto.Conn) {
 				testGetGreeting(t, conn)
@@ -59,7 +59,7 @@ func TestServer(t *testing.T) {
 			name: "auth successfully long",
 			handler: func(rw smtp.ResponseWriter, req smtp.Request) {
 				require.IsType(t, &smtp.LoginRequest{}, req)
-				rw.Write(&smtp.LoginResponse{Result: smtp.AuthSucceeded})
+				rw.Write(&smtp.LoginResponse{Result: &smtp.AuthSucceeded})
 			},
 			test: func(t *testing.T, conn *textproto.Conn) {
 				testGetGreeting(t, conn)
@@ -71,7 +71,7 @@ func TestServer(t *testing.T) {
 			name: "auth invalid credentials",
 			handler: func(rw smtp.ResponseWriter, req smtp.Request) {
 				require.IsType(t, &smtp.LoginRequest{}, req)
-				rw.Write(&smtp.LoginResponse{Result: smtp.InvalidAuthCredentials})
+				rw.Write(&smtp.LoginResponse{Result: &smtp.InvalidAuthCredentials})
 			},
 			test: func(t *testing.T, conn *textproto.Conn) {
 				testGetGreeting(t, conn)
