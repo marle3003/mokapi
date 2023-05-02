@@ -55,7 +55,14 @@ func (c *conn) serve() {
 		case "EHLO":
 			client.Client = param
 			client.Proto = "ESMTP"
-			write(tpc, StatusOk, Undefined, "Hello "+param, "AUTH LOGIN", "STARTTLS")
+
+			exts := []string{"AUTH LOGIN"}
+			if c.server.TLSConfig != nil {
+				exts = append(exts, "STARTTLS")
+			}
+			args := []string{"Hello " + param}
+			args = append(args, exts...)
+			write(tpc, StatusOk, Undefined, args...)
 		case "AUTH":
 			c.serveAuth(tpc, param)
 		case "MAIL":

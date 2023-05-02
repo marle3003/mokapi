@@ -8,6 +8,7 @@ import (
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/smtp"
+	"mokapi/try"
 	"testing"
 	"time"
 )
@@ -21,7 +22,7 @@ func Test_Mail(t *testing.T) {
 	}{
 		{
 			name: "simple",
-			js:   "send('smtp://127.0.0.1:8025', {from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
+			js:   "send('smtp://127.0.0.1:%v', {from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
 			host: &testHost{},
 			test: func(t *testing.T, v *mail.Mail, err error) {
 				r.NoError(t, err)
@@ -34,7 +35,7 @@ func Test_Mail(t *testing.T) {
 		},
 		{
 			name: "multiple from and bcc",
-			js:   "send('smtp://127.0.0.1:8025', {sender: 'carol@mokapi.io', from: [{name: 'Alice', address: 'alice@mokapi.io'},'charlie@mokapi.io'], bcc: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
+			js:   "send('smtp://127.0.0.1:%v', {sender: 'carol@mokapi.io', from: [{name: 'Alice', address: 'alice@mokapi.io'},'charlie@mokapi.io'], bcc: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
 			host: &testHost{},
 			test: func(t *testing.T, v *mail.Mail, err error) {
 				r.NoError(t, err)
@@ -48,7 +49,7 @@ func Test_Mail(t *testing.T) {
 		},
 		{
 			name: "cc",
-			js:   "send('smtp://127.0.0.1:8025', {from: {name: 'Alice', address: 'alice@mokapi.io'}, cc: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
+			js:   "send('smtp://127.0.0.1:%v', {from: {name: 'Alice', address: 'alice@mokapi.io'}, cc: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
 			host: &testHost{},
 			test: func(t *testing.T, v *mail.Mail, err error) {
 				r.NoError(t, err)
@@ -60,7 +61,7 @@ func Test_Mail(t *testing.T) {
 		},
 		{
 			name: "messageId",
-			js:   "send('smtp://127.0.0.1:8025', {messageId: '434571BC.8070702@mokapi.io', from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
+			js:   "send('smtp://127.0.0.1:%v', {messageId: '434571BC.8070702@mokapi.io', from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
 			host: &testHost{},
 			test: func(t *testing.T, v *mail.Mail, err error) {
 				r.NoError(t, err)
@@ -69,7 +70,7 @@ func Test_Mail(t *testing.T) {
 		},
 		{
 			name: "replyTo",
-			js:   "send('smtp://127.0.0.1:8025', {replyTo: 'carol@mokapi.io', from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
+			js:   "send('smtp://127.0.0.1:%v', {replyTo: 'carol@mokapi.io', from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
 			host: &testHost{},
 			test: func(t *testing.T, v *mail.Mail, err error) {
 				r.NoError(t, err)
@@ -78,7 +79,7 @@ func Test_Mail(t *testing.T) {
 		},
 		{
 			name: "inReplyTo",
-			js:   "send('smtp://127.0.0.1:8025', {inReplyTo: '434571BC.8070702@mokapi.io', from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
+			js:   "send('smtp://127.0.0.1:%v', {inReplyTo: '434571BC.8070702@mokapi.io', from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
 			host: &testHost{},
 			test: func(t *testing.T, v *mail.Mail, err error) {
 				r.NoError(t, err)
@@ -87,7 +88,7 @@ func Test_Mail(t *testing.T) {
 		},
 		{
 			name: "contentType",
-			js:   "send('smtp://127.0.0.1:8025', {contentType: 'text/html', from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
+			js:   "send('smtp://127.0.0.1:%v', {contentType: 'text/html', from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
 			host: &testHost{},
 			test: func(t *testing.T, v *mail.Mail, err error) {
 				r.NoError(t, err)
@@ -96,7 +97,7 @@ func Test_Mail(t *testing.T) {
 		},
 		{
 			name: "encoding",
-			js:   "send('smtp://127.0.0.1:8025', {encoding: 'quoted-printable', from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
+			js:   "send('smtp://127.0.0.1:%v', {encoding: 'quoted-printable', from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
 			host: &testHost{},
 			test: func(t *testing.T, v *mail.Mail, err error) {
 				r.NoError(t, err)
@@ -105,7 +106,7 @@ func Test_Mail(t *testing.T) {
 		},
 		{
 			name: "attachment",
-			js:   "send('smtp://127.0.0.1:8025', {attachments: [{content: 'hello world', filename: 'foo.txt'}], from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
+			js:   "send('smtp://127.0.0.1:%v', {attachments: [{content: 'hello world', filename: 'foo.txt'}], from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
 			host: &testHost{},
 			test: func(t *testing.T, v *mail.Mail, err error) {
 				r.NoError(t, err)
@@ -117,7 +118,7 @@ func Test_Mail(t *testing.T) {
 		},
 		{
 			name: "attachment from file",
-			js:   "send('smtp://127.0.0.1:8025', {attachments: [{path: 'foo.txt'}], from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
+			js:   "send('smtp://127.0.0.1:%v', {attachments: [{path: 'foo.txt'}], from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
 			host: &testHost{openFile: func(file, hint string) (string, string, error) {
 				if file == "foo.txt" {
 					return file, "hello world", nil
@@ -134,7 +135,7 @@ func Test_Mail(t *testing.T) {
 		},
 		{
 			name: "attachment from file overwrite filename",
-			js:   "send('smtp://127.0.0.1:8025', {attachments: [{path: 'foo.txt', filename: 'test.txt'}], from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
+			js:   "send('smtp://127.0.0.1:%v', {attachments: [{path: 'foo.txt', filename: 'test.txt'}], from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
 			host: &testHost{openFile: func(file, hint string) (string, string, error) {
 				if file == "foo.txt" {
 					return file, "hello world", nil
@@ -151,7 +152,7 @@ func Test_Mail(t *testing.T) {
 		},
 		{
 			name: "attachment from file overwrite content type",
-			js:   "send('smtp://127.0.0.1:8025', {attachments: [{path: 'foo.txt', contentType: 'text/html'}], from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
+			js:   "send('smtp://127.0.0.1:%v', {attachments: [{path: 'foo.txt', contentType: 'text/html'}], from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
 			host: &testHost{openFile: func(file, hint string) (string, string, error) {
 				if file == "foo.txt" {
 					return file, "hello world", nil
@@ -167,24 +168,31 @@ func Test_Mail(t *testing.T) {
 			},
 		},
 	}
+
+	t.Parallel()
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			var received *mail.Mail
-			h := mail.NewHandler(&mail.Config{Server: "smtp://127.0.0.1:8025"}, enginetest.NewEngineWithHandler(func(event string, args ...interface{}) []*common.Action {
+			h := mail.NewHandler(&mail.Config{}, enginetest.NewEngineWithHandler(func(event string, args ...interface{}) []*common.Action {
 				received = args[0].(*mail.Mail)
 				return nil
 			}))
 
-			server := &smtp.Server{Addr: "127.0.0.1:8025", Handler: h}
+			port, err := try.GetFreePort()
+			r.NoError(t, err)
+			server := &smtp.Server{Addr: fmt.Sprintf("127.0.0.1:%v", port), Handler: h}
 			go server.ListenAndServe()
 			defer server.Close()
 
+			js := fmt.Sprintf(tc.js, port)
 			s, err := New("test",
 				fmt.Sprintf(`import {send} from 'mokapi/mail';
 						 export default function() {
 						 	%v
-						}`, tc.js),
+						}`, js),
 				tc.host, static.JsConfig{})
 			r.NoError(t, err)
 
