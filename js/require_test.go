@@ -139,15 +139,16 @@ func TestRequire(t *testing.T) {
 			"require node module with package.json and main",
 			func(t *testing.T) {
 				host.openFile = func(file, hint string) (string, string, error) {
+					hint = filepath.ToSlash(hint) // if on windows
 					switch {
-					case file == "package.json" && hint == "C:\\foo\\bar\\node_modules\\uuid":
+					case file == "package.json" && hint == "/foo/bar/node_modules/uuid":
 						return file, `{"main": "./dist/index.js"}`, nil
-					case file == "./dist/index.js" && hint == "C:\\foo\\bar\\node_modules\\uuid":
+					case file == "./dist/index.js" && hint == "/foo/bar/node_modules/uuid":
 						return file, "export function v4() { return 'abc-def' }", nil
 					}
 					return "", "", fmt.Errorf("not found")
 				}
-				s, err := New(`C:\foo\bar\test.js`, `import {v4 as uuidv4} from 'uuid'; export default () => uuidv4()`, host, static.JsConfig{})
+				s, err := New(`/foo/bar/test.js`, `import {v4 as uuidv4} from 'uuid'; export default () => uuidv4()`, host, static.JsConfig{})
 				r.NoError(t, err)
 
 				v, err := s.RunDefault()
@@ -159,13 +160,14 @@ func TestRequire(t *testing.T) {
 			"require node module with index.js",
 			func(t *testing.T) {
 				host.openFile = func(file, hint string) (string, string, error) {
+					hint = filepath.ToSlash(hint) // if on windows
 					switch {
-					case file == "index.js" && hint == "C:\\foo\\bar\\node_modules\\uuid":
+					case file == "index.js" && hint == "/foo/bar/node_modules/uuid":
 						return file, "export function v4() { return 'abc-def' }", nil
 					}
 					return "", "", fmt.Errorf("not found")
 				}
-				s, err := New(`C:\foo\bar\test.js`, `import {v4 as uuidv4} from 'uuid'; export default () => uuidv4()`, host, static.JsConfig{})
+				s, err := New(`/foo/bar/test.js`, `import {v4 as uuidv4} from 'uuid'; export default () => uuidv4()`, host, static.JsConfig{})
 				r.NoError(t, err)
 
 				v, err := s.RunDefault()
@@ -177,26 +179,9 @@ func TestRequire(t *testing.T) {
 			"require node module in parent folder",
 			func(t *testing.T) {
 				host.openFile = func(file, hint string) (string, string, error) {
+					hint = filepath.ToSlash(hint) // if on windows
 					switch {
-					case file == "index.js" && hint == "C:\\foo\\node_modules\\uuid":
-						return file, "export function v4() { return 'abc-def' }", nil
-					}
-					return "", "", fmt.Errorf("not found")
-				}
-				s, err := New(`C:\foo\bar\test.js`, `import {v4 as uuidv4} from 'uuid'; export default () => uuidv4()`, host, static.JsConfig{})
-				r.NoError(t, err)
-
-				v, err := s.RunDefault()
-				r.NoError(t, err)
-				r.Equal(t, "abc-def", v.Export())
-			},
-		},
-		{
-			"require node module in parent folder unix based",
-			func(t *testing.T) {
-				host.openFile = func(file, hint string) (string, string, error) {
-					switch {
-					case file == "index.js" && hint == filepath.Join(string(filepath.Separator), "foo", "node_modules", "uuid"):
+					case file == "index.js" && hint == "/foo/node_modules/uuid":
 						return file, "export function v4() { return 'abc-def' }", nil
 					}
 					return "", "", fmt.Errorf("not found")
