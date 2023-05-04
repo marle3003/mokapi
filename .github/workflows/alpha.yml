@@ -53,7 +53,7 @@ jobs:
       HTML_REPORT_URL_PATH: reports/${{ github.ref_name }}
     steps:
       - name: Checkout GitHub Pages Branch
-        uses: actions/checkout@v2dww
+        uses: actions/checkout@v2
         with:
           ref: gh-pages
       - name: Set Git User
