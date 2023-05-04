@@ -45,7 +45,7 @@ jobs:
           path: webui/playwright-report
   publish-report:
     name: Publish Playwright Report
-    if: "success() || needs.test.result == 'failure'"
+    if: "success() || needs.release.result == 'failure'"
     needs: [release]
     runs-on: ubuntu-latest
     continue-on-error: true
