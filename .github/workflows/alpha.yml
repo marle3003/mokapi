@@ -20,5 +20,24 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Build docker alpha image
         run: docker build --build-arg VERSION=${GITHUB_REF##*/v} -t mokapi/mokapi:${GITHUB_REF##*/}-alpha -f ./images/alpha.Dockerfile .
-      - name: Push image to Docker
-        run: docker push mokapi/mokapi:${GITHUB_REF##*/}-alpha
+      - name: Test
+        run: docker run --rm mokapi/mokapi:${GITHUB_REF##*/}-alpha
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+      - name: Install dependencies
+        working-directory: ./webui
+        run: npm ci
+      - name: Install Playwright
+        working-directory: ./webui
+        run: npx playwright install --with-deps
+      - name: Run your tests
+        working-directory: ./webui
+        run: npx playwright test
+      - name: Upload test results
+        working-directory: ./webui
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: playwright-report
+          path: playwright-reports
