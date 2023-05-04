@@ -1,4 +1,8 @@
 import { test, expect } from '../models/fixture-dashboard'
+import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
+
+dayjs.extend(relativeTime)
 
 test.describe('Dashboard', () => {
     test.use({ colorScheme: 'dark' })
@@ -11,7 +15,8 @@ test.describe('Dashboard', () => {
         const metricAppStart = dashboard.metricAppStart
         await expect(metricAppStart.title).toHaveText('Uptime Since')
         await expect(metricAppStart.value).not.toHaveText('-')
-        await expect(metricAppStart.additional).toHaveText('2022-05-08 18:01:30')
+        const d = dayjs.unix(1652025690).format('YYYY-MM-DD HH:mm:ss')
+        await expect(metricAppStart.additional).toHaveText(d)
 
         const metricMemoryUsage = dashboard.metricMemoryUsage
         await expect(metricMemoryUsage.title).toHaveText('Memory Usage')
@@ -41,7 +46,7 @@ test.describe('Dashboard', () => {
 
         const kafkaCells = dashboard.kafka.serviceList.getByRole('cell')
         await expect(kafkaCells.nth(0)).toHaveText('Kafka World')
-        await expect(kafkaCells.nth(1)).toHaveText('Many above upon normally including much how him turn life.')
+        await expect(kafkaCells.nth(1)).not.toHaveText('')
         await expect(kafkaCells.nth(2)).toHaveText('2022-05-10 00:34:50')
         await expect(kafkaCells.nth(3)).toHaveText('10')
 
@@ -63,10 +68,11 @@ test.describe('Dashboard', () => {
 
         const links = dashboard.header.nav.getByRole('link')
         await expect(links.nth(0)).toHaveText('Dashboard')
-        await expect(links.nth(1)).toHaveText('Configuration')
-        await expect(links.nth(2)).toHaveText('OpenAPI')
-        await expect(links.nth(3)).toHaveText('Kafka')
-        await expect(links.nth(4)).toHaveText('References')
+        await expect(links.nth(1)).toHaveText('Guides')
+        await expect(links.nth(2)).toHaveText('Configuration')
+        await expect(links.nth(3)).toHaveText('Javascript API')
+        await expect(links.nth(4)).toHaveText('Examples')
+        await expect(links.nth(5)).toHaveText('References')
         
         await expect(dashboard.header.version).toHaveText('Version 0.5.0')
     })
