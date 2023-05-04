@@ -48,6 +48,7 @@ jobs:
     if: "success() || needs.test.result == 'failure'"
     needs: [release]
     runs-on: ubuntu-latest
+    continue-on-error: true
     env:
       HTML_REPORT_URL_PATH: reports/${{ github.ref_name }}
     steps:
