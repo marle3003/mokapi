@@ -21,7 +21,7 @@ jobs:
       - name: Build docker alpha image
         run: docker build --build-arg VERSION=${GITHUB_REF##*/v} -t mokapi/mokapi:${GITHUB_REF##*/}-alpha -f ./images/alpha.Dockerfile .
       - name: Test
-        run: docker run -d --rm -v examples:/data --env MOKAPI_Providers_File_Directory=data/mokapi mokapi/mokapi:${GITHUB_REF##*/}-alpha
+        run: docker run -d --rm -p 8090:8090 -v examples:/data --env MOKAPI_Providers_File_Directory=data/mokapi mokapi/mokapi:${GITHUB_REF##*/}-alpha
       - uses: actions/setup-node@v3
         with:
           node-version: '16'
@@ -42,4 +42,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: webui/playwright-report
-          path: webui/test-reports
+          path: webui/playwright-report
