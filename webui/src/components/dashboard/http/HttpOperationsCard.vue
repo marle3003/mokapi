@@ -43,7 +43,7 @@ function showWarningColumn(){
     <div class="card">
         <div class="card-body">
             <div class="card-title text-center">Methods</div>
-            <table class="table dataTable selectable">
+            <table class="table dataTable selectable" data-testid="methods">
                 <thead>
                     <tr>
                         <th scope="col" class="text-left" style="width: 10%">Method</th>

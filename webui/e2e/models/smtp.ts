@@ -1,6 +1,5 @@
 import type { Locator } from '@playwright/test'
 import { Metric } from './metric'
-import { TableModel } from './table'
 
 export class SmtpModel {
     readonly metricSmtpMessages: Metric

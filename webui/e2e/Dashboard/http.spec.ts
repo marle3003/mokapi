@@ -1,7 +1,8 @@
 import exp from 'constants'
 import { test, expect } from '../models/fixture-dashboard'
+import { describe } from 'node:test'
 
-test.describe('HTTP Dashboard', () => {
+test.describe('Visit Swagger Petstore', () => {
     test.use({ colorScheme: 'dark' })
 
     const service = {
@@ -16,7 +17,7 @@ test.describe('HTTP Dashboard', () => {
         ]
     }
 
-    test('Visit Swagger Petstore', async ({ dashboard }) => {
+    test('Visit overview', async ({ dashboard }) => {
         await dashboard.open()
         const http = dashboard.http
         await http.clickService('Swagger Petstore')
@@ -48,6 +49,11 @@ test.describe('HTTP Dashboard', () => {
         const requests = http.requests.locator('tbody tr')
         for (const [i, request] of service.requests.entries()) {
             const cells = requests.nth(i).getByRole('cell')
+            if (request.deprecated) {
+                await expect(cells.nth(0).locator('.warning')).toBeVisible()
+            } else {
+                await expect(cells.nth(0).locator('.warning')).not.toBeVisible()
+            }
             await expect(cells.nth(0)).toHaveText(request.url)
             await expect(cells.nth(1)).toHaveText(request.method)
             await expect(cells.nth(1).locator('span')).toHaveCSS('text-transform', 'uppercase')
@@ -55,5 +61,30 @@ test.describe('HTTP Dashboard', () => {
             await expect(cells.nth(3)).toHaveText(request.time)
             await expect(cells.nth(4)).toHaveText(request.duration)
         }
+    })
+
+    test('Visit endpoint', async ({ dashboard }) => {
+        await dashboard.open()
+        const http = dashboard.http
+        await http.clickService('Swagger Petstore')
+
+        await test.step('/pet', async () => {
+            await http.clickPath('/pet')
+            const path = http.getPathModel()
+            await expect(path.path).toHaveText('/pet')
+            await expect(path.service).toHaveText('Swagger Petstore')
+            await expect(path.type).toHaveText('HTTP')
+
+            const cells = path.methods.locator('tbody tr').nth(0).getByRole('cell')
+            await expect(cells.nth(0)).toHaveText('post')
+            await expect(cells.nth(0).locator('span')).toHaveCSS('text-transform', 'uppercase')
+            await expect(cells.nth(0).locator('span')).toHaveClass('badge operation post')
+            await expect(cells.nth(1)).toHaveText('addPet')
+            await expect(cells.nth(2)).toHaveText('Add a new pet to the store')
+
+            const rows = path.requests.locator('tbody tr')
+            await expect(rows).toHaveCount(1)
+            await expect(rows.getByRole('cell').nth(0)).toHaveText(service.requests[0].url)
+        })
     })
 })

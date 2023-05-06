@@ -46,28 +46,28 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div v-if="service && path">
+    <div v-if="service && path" data-testid="http-path">
         <div class="card-group">
             <div class="card">
                 <div class="card-body">
                     <div class="row">
                         <div class="col-6 header">
                             <p class="label">Path</p>
-                            <p>
+                            <p data-testid="path">
                                 <i class="bi bi-exclamation-triangle-fill yellow pe-2" v-if="allOperationsDeprecated()"></i>
                                 {{ path.path }}
                             </p>
                         </div>
                         <div class="col header">
                             <p class="label">Service</p>
-                            <p>{{ service.name }}</p>
+                            <p data-testid="service">{{ service.name }}</p>
                         </div>
                         <div class="col header" v-if="allOperationsDeprecated()">
                             <p class="label">Warning</p>
-                            <p>Deprecated</p>
+                            <p data-testid="warning">Deprecated</p>
                         </div>
                         <div class="col text-end">
-                            <span class="badge bg-secondary">HTTP</span>
+                            <span class="badge bg-secondary" data-testid="type">HTTP</span>
                         </div>
                     </div>
                 </div>
