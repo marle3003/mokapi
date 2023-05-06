@@ -4,9 +4,12 @@ on:
     branches:
       - v*
 
+env:
+  image_name: mokapi/mokapi:${GITHUB_REF##*/}-alpha
+
 jobs:
-  release:
-    name: Release alpha
+  build:
+    name: Build alpha
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
@@ -19,9 +22,33 @@ jobs:
           username: mokapi
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Build docker alpha image
-        run: docker build --build-arg VERSION=${GITHUB_REF##*/v} -t mokapi/mokapi:${GITHUB_REF##*/}-alpha -f ./images/alpha.Dockerfile .
-      - name: Test
-        run: docker run --rm -d -p 8090:8090 --mount type=bind,source=$(pwd)/examples/mokapi,target=/data --env MOKAPI_Providers_File_Directory=/data mokapi/mokapi:${GITHUB_REF##*/}-alpha
+        run: docker build --build-arg VERSION=${GITHUB_REF##*/v} -t ${{ env.image_name }} -f ./images/alpha.Dockerfile .
+      - name: Save Image to file
+        run: docker save ${{ env.image_name }} > /tmp/mokapi.tar
+      - name: Upload image
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.image_name }}
+          path: /tmp/mokapi.tar
+  test:
+    name: Run e2e tests
+    runs-on: ubuntu-latest
+    if: "success()"
+    needs: [ build ]
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Download image
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ env.image_name }}
+          path: /tmp/mokapi.tar
+      - name: Load image
+        run: docker load --input /tmp/mokapi.tar
+      - name: Run mokapi image
+        run: docker run --rm -d -p 8090:8090 --mount type=bind,source=$(pwd)/examples/mokapi,target=/data --env MOKAPI_Providers_File_Directory=/data {{ env.image_name }}
       - uses: actions/setup-node@v3
         with:
           node-version: '16'
@@ -45,8 +72,8 @@ jobs:
           path: webui/playwright-report
   publish-report:
     name: Publish Playwright Report
-    if: "success() || needs.release.result == 'failure'"
-    needs: [release]
+    if: "success() || needs.test.result == 'failure'"
+    needs: [test]
     runs-on: ubuntu-latest
     continue-on-error: true
     env:
@@ -86,3 +113,18 @@ jobs:
               exit 0
             fi
           done
+  publish:
+    name: Publish docker image
+    runs-on: ubuntu-latest
+    if: "success()"
+    needs: [ test ]
+    steps:
+      - name: Download image
+        uses: actions/download-artifact@v2
+        with:
+          name: { { env.image_name } }
+          path: /tmp/mokapi.tar
+      - name: Load image
+        run: docker load --input /tmp/mokapi.tar
+      - name: Push image to Docker
+        run: docker push ${{ env.image_name }}
