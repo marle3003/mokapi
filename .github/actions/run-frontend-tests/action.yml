@@ -17,7 +17,7 @@ runs:
       id: download
       uses: actions/download-artifact@v2
       with:
-        name: ${{ inputs.artifact-image-name}}
+        name: ${{ inputs.artifact-image-name }}
         path: /tmp
     - name: Load image
       run: docker load --input ${{steps.download.outputs.download-path}}
