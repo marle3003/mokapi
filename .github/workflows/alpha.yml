@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - uses: actions/build-mokapi-image@v1
+      - uses: ./.github/actions/build-mokapi-image
         with:
           image-name: ${{ env.image-name }}
           artifact-name: ${{ env.image-artefact-name }}
@@ -34,7 +34,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - uses: actions/run-frontend-tests@v1
+      - uses: ./.github/actions/run-frontend-tests
         with:
           image-name: ${{ env.image-name }}
           artefact-name: ${{ env.image-artefact-name }}
@@ -52,7 +52,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           ref: gh-pages
-      - uses: actions/publish-test-report@v1
+      - uses: ./.github/actions/publish-test-report
         with:
           artefact-name: ${{ env.image-artefact-name }}
           test-report-path: ${{ env.report-publish-path }}
@@ -63,7 +63,7 @@ jobs:
     if: "success()"
     needs: [ test ]
     steps:
-      - uses: actions/publish-docker-image@v1
+      - uses: ./.github/actions/publish-docker-image
         with:
           image-name: ${{ env.image-name }}
           artefact-name: ${{ env.image-artefact-name }}
@@ -78,5 +78,5 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - uses: actions/publish-website@v1
+      - uses: ./.github/actions/publish-website
 
