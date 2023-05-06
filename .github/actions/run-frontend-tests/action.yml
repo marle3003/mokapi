@@ -15,12 +15,12 @@ runs:
   steps:
     - name: Download image
       id: download
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: ${{ inputs.artifact-image-name }}
         path: /tmp
     - name: Load image
-      run: docker load --input ${{steps.download.outputs.download-path}}
+      run: docker load --input ${{ steps.download.outputs.download-path }}
       shell: bash
     - name: Run mokapi image
       run: docker run --rm -d -p 8090:8090 --mount type=bind,source=$(pwd)/examples/mokapi,target=/data --env MOKAPI_Providers_File_Directory=/data ${{ inputs.image-name }}
