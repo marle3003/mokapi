@@ -45,7 +45,9 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v2
-      - uses: ./.github/actions/publish-test-report
+        with:
+          path: src
+      - uses: ./src/.github/actions/publish-test-report
         with:
           artifact-test-report: ${{ env.image-artifact-name }}
           test-report-path: ${{ env.report-publish-path }}
