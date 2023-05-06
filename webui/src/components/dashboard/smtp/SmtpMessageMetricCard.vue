@@ -5,7 +5,7 @@ import { useService } from '@/composables/services';
 import { useMetrics } from '@/composables/metrics';
 
 const {fetchServices} = useService()
-const {sum} = useMetrics()
+const { sum, max } = useMetrics()
 const messages = ref(0)
 const {services, close} = fetchServices('smtp')
 watchEffect(() =>{
