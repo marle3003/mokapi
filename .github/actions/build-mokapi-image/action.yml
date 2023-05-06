@@ -19,5 +19,5 @@ runs:
     - name: Upload image
       uses: actions/upload-artifact@v3
       with:
-        name: ${{ env.inputs.artifact-name }}
+        name: ${{ inputs.artifact-name }}
         path: /tmp/mokapi.tar
