@@ -17,8 +17,6 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
       - uses: ./.github/actions/build-mokapi-image
         with:
           image-name: ${{ env.image-name }}
@@ -32,8 +30,6 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
       - uses: ./.github/actions/run-frontend-tests
         with:
           image-name: ${{ env.image-name }}
@@ -49,9 +45,6 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-          path: 'src'
       - uses: ./src/.github/actions/publish-test-report
         with:
           artifact-test-report: ${{ env.image-artifact-name }}
@@ -82,8 +75,6 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
       - uses: ./.github/actions/publish-website
         with:
           username: ${{ secrets.FTP_USERNAME }}
