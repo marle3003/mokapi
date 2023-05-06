@@ -52,10 +52,6 @@ jobs:
         with:
           fetch-depth: 0
           path: 'src'
-      - name: Checkout GitHub Pages Branch
-        uses: actions/checkout@v2
-        with:
-          ref: gh-pages
       - uses: ./src/.github/actions/publish-test-report
         with:
           artifact-test-report: ${{ env.image-artifact-name }}
@@ -75,6 +71,8 @@ jobs:
         with:
           image-name: ${{ env.image-name }}
           artifact-name: ${{ env.image-artifact-name }}
+          docker-username: mokapi
+          docker-password: {{ secrets.DOCKER_PASSWORD }}
 
   publish-website:
     name: Publish website

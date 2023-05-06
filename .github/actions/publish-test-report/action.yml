@@ -10,6 +10,10 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Checkout GitHub Pages Branch
+      uses: actions/checkout@v2
+      with:
+        ref: gh-pages
     - name: Set Git User
       run: |
         git config --global user.name "github-actions[bot]"

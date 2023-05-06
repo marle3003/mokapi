@@ -7,6 +7,12 @@ inputs:
   artifact-name:
     required: true
     description: "The artifact name to download image"
+  docker-username:
+    required: true
+    description: docker username
+  docker-password:
+    required: true
+    description: docker password
 runs:
   using: "composite"
   steps:
@@ -22,8 +28,8 @@ runs:
     - name: Login to Docker
       uses: docker/login-action@v1
       with:
-        username: mokapi
-        password: ${{ secrets.DOCKER_PASSWORD }}
+        username: ${{ inputs.docker-username }}
+        password: ${{ inputs.docker-password }}
     - name: Push image to Docker
       run: docker push ${{ inputs.image-name }}
       shell: bash
