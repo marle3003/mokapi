@@ -72,7 +72,7 @@ jobs:
           image-name: ${{ env.image-name }}
           artifact-name: ${{ env.image-artifact-name }}
           docker-username: mokapi
-          docker-password: {{ secrets.DOCKER_PASSWORD }}
+          docker-password: ${{ secrets.DOCKER_PASSWORD }}
 
   publish-website:
     name: Publish website
