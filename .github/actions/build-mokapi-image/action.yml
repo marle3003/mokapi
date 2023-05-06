@@ -6,7 +6,7 @@ inputs:
     description: "The image name to build"
   artifact-name:
     required: true
-    description: "The upload artefact name"
+    description: "The upload artifact name"
 runs:
   using: "composite"
   steps:
