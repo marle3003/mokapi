@@ -4,42 +4,82 @@ on:
     branches:
       - v*
 
+env:
+  image-name: mokapi/mokapi:${GITHUB_REF##*/}-alpha
+  image-artifact-name: mokapi-image
+  artifact-test-report: playwright-report
+  report-publish-path: reports/${{ github.ref_name }}
+
 jobs:
-  release:
-    name: Release alpha
+  build:
+    name: Build alpha
     runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+      - uses: ./.github/actions/build-mokapi-image
+        with:
+          image-name: ${{ env.image-name }}
+          artifact-name: ${{ env.image-artifact-name }}
+
+  test:
+    name: Run UI tests
+    runs-on: ubuntu-latest
+    if: "success()"
+    needs: [ build ]
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+      - uses: ./.github/actions/run-frontend-tests
+        with:
+          image-name: ${{ env.image-name }}
+          artifact-image-name: ${{ env.image-artifact-name }}
+          artifact-test-report: ${{ env.artifact-test-report }}
+
+  publish-report:
+    name: Publish Playwright Report
+    if: "success() || needs.test.result == 'failure'"
+    needs: [ test ]
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          path: src
+      - uses: ./src/.github/actions/publish-test-report
+        with:
+          artifact-test-report: ${{ env.image-artifact-name }}
+          test-report-path: ${{ env.report-publish-path }}
+
+  publish-image:
+    name: Publish docker image
+    runs-on: ubuntu-latest
+    if: "success()"
+    needs: [ test ]
     steps:
       - name: Check out code
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: Login to Docker
-        uses: docker/login-action@v1
+      - uses: ./.github/actions/publish-docker-image
         with:
-          username: mokapi
-          password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Build docker alpha image
-        run: docker build --build-arg VERSION=${GITHUB_REF##*/v} -t mokapi/mokapi:${GITHUB_REF##*/}-alpha -f ./images/alpha.Dockerfile .
-      - name: Test
-        run: docker run --rm -d -p 8090:8090 --mount type=bind,source=$pwd/examples/mokapi,target=/data --env MOKAPI_Providers_File_Directory=/data mokapi/mokapi:${GITHUB_REF##*/}-alpha
-      - uses: actions/setup-node@v3
+          image-name: ${{ env.image-name }}
+          artifact-name: ${{ env.image-artifact-name }}
+          docker-username: mokapi
+          docker-password: ${{ secrets.DOCKER_PASSWORD }}
+
+  publish-website:
+    name: Publish website
+    runs-on: ubuntu-latest
+    if: "success()"
+    needs: [ test ]
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+      - uses: ./.github/actions/publish-website
         with:
-          node-version: '16'
-      - name: Install and Build
-        working-directory: ./webui
-        run: |
-          npm ci
-          npm run copy-docs
-          npm run build
-      - name: Install Playwright
-        working-directory: ./webui
-        run: npx playwright install --with-deps
-      - name: Run your tests
-        working-directory: ./webui
-        run: npx playwright test
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: playwright-report
-          path: webui/playwright-report
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server: ${{ secrets.FTP_SERVER }}
+

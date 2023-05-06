@@ -105,7 +105,8 @@ func TestGaugeMap_MarshalJSON_With_Entries(t *testing.T) {
 	m.WithLabel("bar").Set(2.0)
 	b, err := m.MarshalJSON()
 	require.NoError(t, err)
-	require.Equal(t,
-		`[{"name":"map{label=\"foo\"}","value":1},{"name":"map{label=\"bar\"}","value":2}]`,
-		string(b))
+	// order of output is not fix
+	require.True(t,
+		`[{"name":"map{label=\"foo\"}","value":1},{"name":"map{label=\"bar\"}","value":2}]` == string(b) ||
+			`[{"name":"map{label=\"bar\"}","value":2},{"name":"map{label=\"foo\"}","value":1}]` == string(b))
 }

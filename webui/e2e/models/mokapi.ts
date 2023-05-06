@@ -16,4 +16,12 @@ export class Header {
         this.nav = element.locator('.navbar-nav')
         this.version = element.locator('.version')
     }
+
+    getNavLinks() {
+        return this.nav.getByRole('link')
+    }
+
+    getActiveNavLink() {
+        return this.nav.locator('.nav-link.router-link-active.router-link-exact-active')
+    }
 }

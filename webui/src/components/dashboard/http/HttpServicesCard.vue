@@ -7,14 +7,14 @@ import Markdown from 'vue3-markdown-it';
 import { onUnmounted } from 'vue';
 
 const {fetchServices} = useService()
-const {sum} = useMetrics()
+const {sum, max} = useMetrics()
 const {format} = usePrettyDates()
 const route = useRoute()
 const router = useRouter()
 const {services, close} = fetchServices('http')
 
 function lastRequest(service: Service){
-    const n = sum(service.metrics, 'http_request_timestamp')
+    const n = max(service.metrics, 'http_request_timestamp')
     if (n == 0){
         return '-'
     }

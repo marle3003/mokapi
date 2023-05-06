@@ -1,0 +1,34 @@
+name: "Publish website"
+description: "Publish website to web hosting"
+inputs:
+  username:
+    required: true
+    description: ftp username
+  password:
+    required: true
+    description: ftp password
+  server:
+    required: true
+    description: ftp server
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-node@v2
+      with:
+        node-version: '16'
+        registry-url: 'https://registry.npmjs.org'
+    - name: build website
+      working-directory: ./webui
+      run: |
+        npm install
+        npm run copy-docs
+        npm run build-sitemap
+        npm run build-website
+      shell: bash
+    - name: Install lftp
+      run: sudo apt install lftp
+      shell: bash
+    - name: deploy website
+      working-directory: ./webui/dist
+      run: lftp -e 'set sftp:connect-program "ssh -a -x -oHostKeyAlgorithms=+ssh-rsa"; set ftp:ssl-force no; set ssl:verify-certificate no; set sftp:auto-confirm yes; mirror -R --delete ./ ./;' -u ${{ inputs.username }},${{ inputs.password }} -p 5544 sftp://${{ inputs.server }}
+      shell: bash
