@@ -67,7 +67,7 @@ function allOperationsDeprecated(path: HttpPath): boolean{
     <div class="card">
         <div class="card-body">
             <div class="card-title text-center">Endpoints</div>
-            <table class="table dataTable selectable">
+            <table class="table dataTable selectable" data-testid="endpoints">
                 <thead>
                     <tr>
                         <th scope="col" class="text-left w-25">Path</th>

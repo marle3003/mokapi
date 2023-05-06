@@ -43,7 +43,7 @@ onUnmounted(() => {
     <div class="card">
         <div class="card-body">
             <div class="card-title text-center">Recent Requests</div>
-            <table class="table dataTable selectable">
+            <table class="table dataTable selectable" data-testid="requests">
                 <thead>
                     <tr>
                         <th scope="col" class="text-left" style="width: 55%">URL</th>

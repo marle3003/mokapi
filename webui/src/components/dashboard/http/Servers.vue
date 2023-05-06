@@ -9,7 +9,7 @@ defineProps({
 </script>
 
 <template>
-    <table class="table dataTable">
+    <table class="table dataTable" data-testid="servers">
         <thead>
             <tr>
                 <th scope="col" class="text-left">Url</th>
