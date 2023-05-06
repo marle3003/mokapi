@@ -1,5 +1,15 @@
 name: "Publish website"
 description: "Publish website to web hosting"
+inputs:
+  username:
+    required: true
+    description: ftp username
+  password:
+    required: true
+    description: ftp password
+  server:
+    required: true
+    description: ftp server
 runs:
   using: "composite"
   steps:
@@ -20,5 +30,5 @@ runs:
       shell: bash
     - name: deploy website
       working-directory: ./webui/dist
-      run: lftp -e 'set sftp:connect-program "ssh -a -x -oHostKeyAlgorithms=+ssh-rsa"; set ftp:ssl-force no; set ssl:verify-certificate no; set sftp:auto-confirm yes; mirror -R --delete ./ ./;' -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} -p 5544 sftp://${{ secrets.FTP_SERVER }}
+      run: lftp -e 'set sftp:connect-program "ssh -a -x -oHostKeyAlgorithms=+ssh-rsa"; set ftp:ssl-force no; set ssl:verify-certificate no; set sftp:auto-confirm yes; mirror -R --delete ./ ./;' -u ${{ inputs.username }},${{ inputs.password }} -p 5544 sftp://${{ inputs.server }}
       shell: bash

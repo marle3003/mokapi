@@ -78,4 +78,8 @@ jobs:
         with:
           fetch-depth: 0
       - uses: ./.github/actions/publish-website
+        with:
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server: ${{ secrets.FTP_SERVER }}
 
