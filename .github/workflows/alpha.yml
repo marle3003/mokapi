@@ -5,8 +5,10 @@ on:
       - v*
 
 env:
-  image_name: mokapi/mokapi:${GITHUB_REF##*/}-alpha
-  image_artefact_name: mokapi-image
+  image-name: mokapi/mokapi:${GITHUB_REF##*/}-alpha
+  image-artefact-name: mokapi-image
+  artifact-test-report: playwright-report
+  report-publish-path: reports/${{ github.ref_name }}
 
 jobs:
   build:
@@ -17,22 +19,13 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: Login to Docker
-        uses: docker/login-action@v1
+      - uses: actions/build-mokapi-image@v1
         with:
-          username: mokapi
-          password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Build docker alpha image
-        run: docker build --build-arg VERSION=${GITHUB_REF##*/v} -t ${{ env.image_name }} -f ./images/alpha.Dockerfile .
-      - name: Save Image to file
-        run: docker save ${{ env.image_name }} > /tmp/mokapi.tar
-      - name: Upload image
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ env.image_artefact_name }}
-          path: /tmp/mokapi.tar
+          image-name: ${{ env.image-name }}
+          artifact-name: ${{ env.image-artefact-name }}
+
   test:
-    name: Run e2e tests
+    name: Run UI tests
     runs-on: ubuntu-latest
     if: "success()"
     needs: [ build ]
@@ -41,40 +34,15 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: Download image
-        uses: actions/download-artifact@v2
+      - uses: actions/run-frontend-tests@v1
         with:
-          name: ${{ env.image_artefact_name}}
-          path: /tmp
-      - name: Load image
-        run: docker load --input /tmp/mokapi.tar
-      - name: Run mokapi image
-        run: docker run --rm -d -p 8090:8090 --mount type=bind,source=$(pwd)/examples/mokapi,target=/data --env MOKAPI_Providers_File_Directory=/data ${{ env.image_name }}
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '16'
-      - name: Install and Build
-        working-directory: ./webui
-        run: |
-          npm ci
-          npm run copy-docs
-          npm run build
-      - name: Install Playwright
-        working-directory: ./webui
-        run: npx playwright install --with-deps
-      - name: Run your tests
-        working-directory: ./webui
-        run: npx playwright test
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: playwright-report
-          path: webui/playwright-report
+          image-name: ${{ env.image-name }}
+          artefact-name: ${{ env.image-artefact-name }}
+
   publish-report:
     name: Publish Playwright Report
     if: "success() || needs.test.result == 'failure'"
-    needs: [test]
+    needs: [ test ]
     runs-on: ubuntu-latest
     continue-on-error: true
     env:
@@ -84,53 +52,31 @@ jobs:
         uses: actions/checkout@v2
         with:
           ref: gh-pages
-      - name: Set Git User
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      - name: Download Report
-        uses: actions/download-artifact@v2
+      - uses: actions/publish-test-report@v1
         with:
-          name: playwright-report
-          path: ${{ env.HTML_REPORT_URL_PATH }}
-      - name: Push HTML Report
-        timeout-minutes: 3
-        # commit report, then try push-rebase-loop until it's able to merge the HTML report to the gh-pages branch
-        # this is necessary when this job is running at least twice at the same time (e.g. through two pushes at the same time)
-        run: |
-          git add .
-          git commit -m "workflow: add HTML report for run-id ${{ github.run_id }} (attempt:  ${{ github.run_attempt }})"
-          
-          while true; do
-            git pull --rebase
-            if [ $? -ne 0 ]; then
-              echo "Failed to rebase. Please review manually."
-              exit 1
-            fi
-          
-            git push
-            if [ $? -eq 0 ]; then
-              echo "Successfully pushed HTML report to repo."
-              exit 0
-            fi
-          done
-  publish:
+          artefact-name: ${{ env.image-artefact-name }}
+          test-report-path: ${{ env.report-publish-path }}
+
+  publish-image:
     name: Publish docker image
     runs-on: ubuntu-latest
     if: "success()"
     needs: [ test ]
     steps:
-      - name: Download image
-        uses: actions/download-artifact@v2
+      - uses: actions/publish-docker-image@v1
         with:
-          name: ${{ env.image_artefact_name }}
-          path: /tmp
-      - name: Load image
-        run: docker load --input /tmp/mokapi.tar
-      - name: Login to Docker
-        uses: docker/login-action@v1
+          image-name: ${{ env.image-name }}
+          artefact-name: ${{ env.image-artefact-name }}
+
+  publish-website:
+    name: Publish website
+    runs-on: ubuntu-latest
+    if: "success()"
+    needs: [ test ]
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
         with:
-          username: mokapi
-          password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Push image to Docker
-        run: docker push ${{ env.image_name }}
+          fetch-depth: 0
+      - uses: actions/publish-website@v1
+

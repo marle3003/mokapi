@@ -1,0 +1,41 @@
+name: "Publish test reports to gh-pages"
+description: "Publish test report to github pages"
+inputs:
+  artifact-test-report:
+    required: true
+    description: "The artifact name to upload test report"
+  test-report-path:
+    required: true
+    description: gh-pages path
+runs:
+  using: "composite"
+  steps:
+    - name: Set Git User
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      shell: bash
+    - name: Download Report
+      uses: actions/download-artifact@v2
+      with:
+        name: ${{ inputs.artifact-test-report }}
+        path: ${{ inputs.test-report-path }}
+    - name: Push HTML Report
+      run: |
+        git add .
+        git commit -m "workflow: add HTML report for run-id ${{ github.run_id }} (attempt:  ${{ github.run_attempt }})"
+        
+        while true; do
+          git pull --rebase
+          if [ $? -ne 0 ]; then
+            echo "Failed to rebase. Please review manually."
+            exit 1
+          fi
+        
+          git push
+          if [ $? -eq 0 ]; then
+            echo "Successfully pushed HTML report to repo."
+            exit 0
+          fi
+        done
+      shell: bash

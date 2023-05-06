@@ -1,0 +1,51 @@
+name: "Run frontend tests"
+description: "Run frontend tests with mocked backend"
+inputs:
+  image-name:
+    required: true
+    description: "The mokapi image name"
+  artifact-image-name:
+    required: true
+    description: "The artifact name to download image"
+  artifact-test-report:
+    required: true
+    description: "The artifact name to upload test report"
+runs:
+  using: "composite"
+  steps:
+    - name: Download image
+      id: download
+      uses: actions/download-artifact@v2
+      with:
+        name: ${{ inputs.artifact-image-name}}
+        path: /tmp
+    - name: Load image
+      run: docker load --input ${{steps.download.outputs.download-path}}
+      shell: bash
+    - name: Run mokapi image
+      run: docker run --rm -d -p 8090:8090 --mount type=bind,source=$(pwd)/examples/mokapi,target=/data --env MOKAPI_Providers_File_Directory=/data ${{ inputs.image-name }}
+      shell: bash
+    - uses: actions/setup-node@v3
+      with:
+        node-version: '16'
+    - name: Install and Build
+      working-directory: ./webui
+      run: |
+        npm ci
+        npm run copy-docs
+        npm run build
+      shell: bash
+    - name: Install Playwright
+      working-directory: ./webui
+      run: npx playwright install --with-deps
+      shell: bash
+    - name: Run your tests
+      working-directory: ./webui
+      run: npx playwright test
+      shell: bash
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ inputs.artifact-test-report }}
+        path: webui/playwright-report
