@@ -49,7 +49,7 @@ jobs:
           path: src
       - uses: ./src/.github/actions/publish-test-report
         with:
-          artifact-test-report: ${{ env.image-artifact-name }}
+          artifact-test-report: ${{ env.artifact-test-report }}
           test-report-path: ${{ env.report-publish-path }}
 
   publish-image:
