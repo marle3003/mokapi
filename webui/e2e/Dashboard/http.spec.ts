@@ -1,6 +1,7 @@
 import exp from 'constants'
 import { test, expect } from '../models/fixture-dashboard'
 import { describe } from 'node:test'
+import { formatDateTime } from '../helpers/format'
 
 test.describe('Visit Swagger Petstore', () => {
     test.use({ colorScheme: 'dark' })
@@ -12,8 +13,8 @@ test.describe('Visit Swagger Petstore', () => {
             { path: '/pet/findByStatus', method: 'get', lastRequest: '2022-05-11 04:54:50', requests: '3 / 0' }
         ],
         requests: [
-            { url: 'http://127.0.0.1:18080/pet', method: 'POST', statusCode: '200 OK', time: '2023-02-13 08:49:25', duration: '30 [sec]', deprecated: true },
-            { url: 'http://127.0.0.1:18080/pet/findByStatus', method: 'GET', statusCode: '201 Created', time: '2023-02-13 09:49:25', duration: '133 [ms]', deprecated: false }
+            { url: 'http://127.0.0.1:18080/pet', method: 'POST', statusCode: '200 OK', time: formatDateTime('2023-02-13T08:49:25.482366+01:00'), duration: '30 [sec]', deprecated: true },
+            { url: 'http://127.0.0.1:18080/pet/findByStatus', method: 'GET', statusCode: '201 Created', time: formatDateTime('2023-02-13T09:49:25.482366+01:00'), duration: '133 [ms]', deprecated: false }
         ]
     }
 

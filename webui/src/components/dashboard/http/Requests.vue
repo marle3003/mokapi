@@ -54,7 +54,7 @@ onUnmounted(() => {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="event in events" :key="event.id" @click="goToRequest(event)">
+                    <tr v-for="event in events!" :key="event.id" @click="goToRequest(event)">
                         <td>
                             <i class="bi bi-exclamation-triangle-fill yellow warning pe-2" v-if="eventData(event).deprecated"></i>
                             {{ eventData(event).request.url }}

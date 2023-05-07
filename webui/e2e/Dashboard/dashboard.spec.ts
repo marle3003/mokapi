@@ -1,6 +1,7 @@
 import { test, expect } from '../models/fixture-dashboard'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
+import { formatTimestamp } from '../helpers/format'
 
 dayjs.extend(relativeTime)
 
@@ -16,8 +17,7 @@ test.describe('Dashboard', () => {
             const metricAppStart = dashboard.metricAppStart
             await expect(metricAppStart.title).toHaveText('Uptime Since')
             await expect(metricAppStart.value).not.toHaveText('-')
-            const startTime = dayjs.unix(1652025690).format('YYYY-MM-DD HH:mm:ss')
-            await expect(metricAppStart.additional).toHaveText(startTime)
+            await expect(metricAppStart.additional).toHaveText(formatTimestamp(1652025690))
         })
         
         await test.step("metric Memory Usage", async () => {
@@ -40,8 +40,7 @@ test.describe('Dashboard', () => {
             await expect(httpCells.nth(0)).toHaveText('Swagger Petstore')
             await expect(httpCells.nth(1)).toHaveText('This is a sample server Petstore server. You can find out more about at http://swagger.io')
             await expect(httpCells.nth(1).locator('a')).toHaveAttribute('href', 'http://swagger.io')
-            const httpLastRequest = dayjs.unix(1652237690).format('YYYY-MM-DD HH:mm:ss')
-            await expect(httpCells.nth(2)).toHaveText(httpLastRequest)
+            await expect(httpCells.nth(2)).toHaveText(formatTimestamp(1652237690))
             await expect(httpCells.nth(3)).toHaveText('13 / 1')
             await expect(httpCells.nth(3).locator('.text-danger')).toBeVisible()
         })
@@ -57,8 +56,7 @@ test.describe('Dashboard', () => {
             const kafkaCells = dashboard.kafka.serviceList.getByRole('cell')
             await expect(kafkaCells.nth(0)).toHaveText('Kafka World')
             await expect(kafkaCells.nth(1)).not.toHaveText('')
-            const kafkaLastMessage = dayjs.unix(1652135690).format('YYYY-MM-DD HH:mm:ss')
-            await expect(kafkaCells.nth(2)).toHaveText(kafkaLastMessage)
+            await expect(kafkaCells.nth(2)).toHaveText(formatTimestamp(1652135690))
             await expect(kafkaCells.nth(3)).toHaveText('10')
         })
 
@@ -73,8 +71,7 @@ test.describe('Dashboard', () => {
             const smtpCells = dashboard.smtp.serviceList.getByRole('cell')
             await expect(smtpCells.nth(0)).toHaveText('Smtp Testserver')
             await expect(smtpCells.nth(1)).toHaveText('This is a sample smtp server')
-            const smtpLastMail = dayjs.unix(1652635690).format('YYYY-MM-DD HH:mm:ss')
-            await expect(smtpCells.nth(2)).toHaveText(smtpLastMail)
+            await expect(smtpCells.nth(2)).toHaveText(formatTimestamp(1652635690))
             await expect(smtpCells.nth(3)).toHaveText('3')
         })
 
