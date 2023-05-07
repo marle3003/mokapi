@@ -1,16 +1,16 @@
 import exp from 'constants'
 import { test, expect } from '../models/fixture-dashboard'
 import { describe } from 'node:test'
-import { formatDateTime } from '../helpers/format'
+import { formatDateTime, formatTimestamp } from '../helpers/format'
 
 test.describe('Visit Swagger Petstore', () => {
     test.use({ colorScheme: 'dark' })
 
     const service = {
         paths: [
-            { path: '/pet', method: 'post', lastRequest: formatDateTime('2022-05-11 04:21:30'), requests: '10 / 1' },
+            { path: '/pet', method: 'post', lastRequest: formatTimestamp(1652235690), requests: '10 / 1' },
             { path: '/pet/{petId}', method: 'get', lastRequest: '-', requests: '0 / 0' },
-            { path: '/pet/findByStatus', method: 'get', lastRequest: formatDateTime('2022-05-11 04:54:50'), requests: '3 / 0' }
+            { path: '/pet/findByStatus', method: 'get', lastRequest: formatTimestamp(1652237690), requests: '3 / 0' }
         ],
         requests: [
             { url: 'http://127.0.0.1:18080/pet', method: 'POST', statusCode: '200 OK', time: formatDateTime('2023-02-13T08:49:25.482366+01:00'), duration: '30 [sec]', deprecated: true },
