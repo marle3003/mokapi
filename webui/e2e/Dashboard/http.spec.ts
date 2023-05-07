@@ -8,9 +8,9 @@ test.describe('Visit Swagger Petstore', () => {
 
     const service = {
         paths: [
-            { path: '/pet', method: 'post', lastRequest: '2022-05-11 04:21:30', requests: '10 / 1' },
+            { path: '/pet', method: 'post', lastRequest: formatDateTime('2022-05-11 04:21:30'), requests: '10 / 1' },
             { path: '/pet/{petId}', method: 'get', lastRequest: '-', requests: '0 / 0' },
-            { path: '/pet/findByStatus', method: 'get', lastRequest: '2022-05-11 04:54:50', requests: '3 / 0' }
+            { path: '/pet/findByStatus', method: 'get', lastRequest: formatDateTime('2022-05-11 04:54:50'), requests: '3 / 0' }
         ],
         requests: [
             { url: 'http://127.0.0.1:18080/pet', method: 'POST', statusCode: '200 OK', time: formatDateTime('2023-02-13T08:49:25.482366+01:00'), duration: '30 [sec]', deprecated: true },
