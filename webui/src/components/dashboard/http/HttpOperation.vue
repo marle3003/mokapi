@@ -49,7 +49,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div v-if="service && path && operation">
+    <div v-if="service && path && operation" data-testid="http-operation">
         <div class="card-group">
             <div class="card">
                 <div class="card-body">
@@ -58,33 +58,33 @@ onUnmounted(() => {
                             <p class="label">Operation</p>
                             <p>
                                 <i class="bi bi-exclamation-triangle-fill yellow pe-2" v-if="operation.deprecated"></i>
-                                <span class="badge operation" :class="operation.method">{{ operation.method }}</span>
-                                <span class="ps-2">{{ path.path }}</span>
+                                <span class="badge operation" :class="operation.method" data-testid="operation">{{ operation.method }}</span>
+                                <span class="ps-2" data-testid="path">{{ path.path }}</span>
                             </p>
                         </div>
                         <div class="col header">
                             <p class="label">Operation ID</p>
-                            <p>{{ operation.operationId }}</p>
+                            <p data-testid="operationid">{{ operation.operationId }}</p>
                         </div>
                         <div class="col header">
                             <p class="label">Service</p>
-                            <p>{{ service.name }}</p>
+                            <p data-testid="service">{{ service.name }}</p>
                         </div>
                         <div class="col header" v-if="operation.deprecated">
                             <p class="label">Warning</p>
-                            <p>Deprecated</p>
+                            <p data-testid="warning">Deprecated</p>
                         </div>
                         <div class="col text-end">
-                            <span class="badge bg-secondary">HTTP</span>
+                            <span class="badge bg-secondary" data-testid="type">HTTP</span>
                         </div>
                     </div>
                     <div class="row" v-if="operation.summary">
                         <p class="label">Summary</p>
-                        <p>{{ operation.summary }}</p>
+                        <p data-testid="summary">{{ operation.summary }}</p>
                     </div>
                     <div class="row" v-if="operation.description">
                         <p class="label">Description</p>
-                        <markdown :source="operation.description"></markdown>
+                        <markdown :source="operation.description" data-testid="description"></markdown>
                     </div>
                 </div>
             </div>

@@ -30,6 +30,10 @@ export class HttpModel {
     getPathModel(): HttpPathModel {
         return new HttpPathModel(this.element.getByTestId('http-path'))
     }
+
+    getOperationModel(): HttpOperationModel {
+        return new HttpOperationModel(this.element.getByTestId('http-operation'))
+    }
 }
 
 export class HttpPathModel {
@@ -45,5 +49,54 @@ export class HttpPathModel {
         this.type = element.getByTestId('type')
         this.methods = element.getByTestId('methods')
         this.requests = element.getByTestId('requests')
+    }
+
+    async clickOperation(operation: string) {
+        await this.methods.getByText(operation, {exact: true}).click()
+    }
+}
+
+export class HttpOperationModel {
+    readonly operation: Locator
+    readonly path: Locator
+    readonly operationId: Locator
+    readonly service: Locator
+    readonly type: Locator
+    readonly summary: Locator
+    readonly description: Locator
+
+    readonly request: HttpOperationRequestModel
+
+    constructor(readonly element: Locator) {
+        this.operation = element.getByTestId('operation')
+        this.path = element.getByTestId('path')
+        this.operationId = element.getByTestId('operationid')
+        this.service = element.getByTestId('service')
+        this.type = element.getByTestId('type')
+        this.summary = element.getByTestId('summary')
+        this.description = element.getByTestId('description')
+        this.request = new HttpOperationRequestModel(element.getByTestId('http-request'))
+    }
+}
+
+export class HttpOperationRequestModel {
+    readonly tabs: Locator
+    readonly body: Locator
+    readonly expand: ExpandModel
+
+    constructor(readonly element: Locator) {
+        this.tabs = element.getByTestId('tabs')
+        this.body = element.getByTestId('body')
+        this.expand = new ExpandModel(element.getByTestId('expand'))
+    }
+}
+
+export class ExpandModel {
+    readonly button: Locator
+    readonly code: Locator
+
+    constructor(element: Locator) {
+        this.button = element.getByRole('button', { name: 'Expand' })
+        this.code = element.locator('code')
     }
 }

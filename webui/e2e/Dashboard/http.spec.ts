@@ -64,7 +64,7 @@ test.describe('Visit Swagger Petstore', () => {
         }
     })
 
-    test('Visit endpoint', async ({ dashboard }) => {
+    test('Visit endpoint', async ({ dashboard, page }) => {
         await dashboard.open()
         const http = dashboard.http
         await http.clickService('Swagger Petstore')
@@ -86,6 +86,40 @@ test.describe('Visit Swagger Petstore', () => {
             const rows = path.requests.locator('tbody tr')
             await expect(rows).toHaveCount(1)
             await expect(rows.getByRole('cell').nth(0)).toHaveText(service.requests[0].url)
+
+            await test.step('visit method post', async () => {
+                await path.clickOperation('post')
+                const op = http.getOperationModel()
+
+                await expect(op.operation).toHaveText('post')
+                await expect(op.path).toHaveText('/pet')
+                await expect(op.operationId).toHaveText('addPet')
+                await expect(op.service).toHaveText('Swagger Petstore')
+                await expect(op.type).toHaveText('HTTP')
+                await expect(op.summary).toHaveText('Add a new pet to the store')
+                await expect(op.description).not.toBeVisible()
+
+                await expect(op.request.tabs.locator('.active')).toHaveText('Body')
+                await expect(op.request.body).toHaveText(`{
+                    "type": "object",
+                    "properties": {}
+                  }`
+                )
+
+                await test.step('click expand', async () => {
+                    await op.request.expand.button.click()
+                    await expect(op.request.expand.code).toBeVisible()
+                    await expect(op.request.expand.code).toHaveText(`{
+                        "type": "object",
+                        "properties": {}
+                      }`
+                    )
+                    await op.request.expand.code.press('Escape', { delay: 100 })
+                    // without a second time, dialog does not disappear
+                    await op.request.expand.code.press('Escape')
+                    await expect(op.request.expand.code).not.toBeVisible()
+                })
+            })
         })
     })
 })

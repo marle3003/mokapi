@@ -24,11 +24,11 @@ function selectedContentChange(event: any){
 </script>
 
 <template>
-    <div class="card">
+    <div class="card" data-testid="http-request">
         <div class="card-body">
             <div class="card-title text-center">Request</div>
 
-            <div class="nav card-tabs" role="tablist">
+            <div class="nav card-tabs" role="tablist" data-testid="tabs">
               <button :class="operation.requestBody ? 'active' : 'disabled'" id="body-tab" data-bs-toggle="tab" data-bs-target="#body" type="button" role="tab" aria-controls="body" aria-selected="true">Body</button>
               <button :class="operation.parameters ? (operation.requestBody ? '' : 'active') : 'disabled'" id="parameters-tab" data-bs-toggle="tab" data-bs-target="#parameters" type="button" role="tab" aria-controls="parameters" aria-selected="false">Parameters</button>
             </div>
@@ -37,7 +37,9 @@ function selectedContentChange(event: any){
               <div class="tab-pane fade" :class="operation.requestBody ? 'show active' : ''" id="body" role="tabpanel" aria-labelledby="body-tab" v-if="operation.requestBody">
                     <p class="codeBlock">
                         <span v-if="operation.requestBody.contents.length == 1" class="label">{{ selectContent?.type }}</span>
-                        <pre v-highlightjs="formatLanguage(JSON.stringify(selectContent?.schema), 'application/json')" class="overflow-auto" style="max-height: 250px;"><code class="json"></code></pre>
+                        <pre v-highlightjs="formatLanguage(JSON.stringify(selectContent?.schema), 'application/json')" class="overflow-auto" style="max-height: 250px;">
+                            <code class="json" data-testid="body"></code>
+                        </pre>
                     </p>
                     <div class="row">
                         <div class="col-auto pe-2" v-if="selectContent">
