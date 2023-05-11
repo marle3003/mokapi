@@ -9,7 +9,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.0 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230316153859-cb82d937a5d9 // indirect
 	github.com/brianvoe/gofakeit/v6 v6.20.1
-	github.com/cloudflare/circl v1.3.2 // indirect
+	github.com/cloudflare/circl v1.3.3 // indirect
 	github.com/dop251/goja v0.0.0-20220408131256-ffe77e20c6f1
 	github.com/elazarl/go-bindata-assetfs v1.0.0
 	github.com/emersion/go-smtp v0.15.0
