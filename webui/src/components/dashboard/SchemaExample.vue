@@ -6,7 +6,7 @@ import { useExample } from '@/composables/example';
 const props = defineProps({
     schema: { type: Object as PropType<Schema>, required: true }
 })
-console.log(props.schema.properties[0])
+
 const {createGuid} = useGuid();
 const example = useExample().fetchExample(props.schema)
 
