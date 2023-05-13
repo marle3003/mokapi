@@ -162,7 +162,7 @@ test.describe('Visit Swagger Petstore', () => {
                     await op.service.click()
 
                     await test.step('click on GET of path',async () => {
-                        await page.getByRole('row', { name: '/pet/findByStatus get 2022-05-11 04:54:50 3 / 0' }).getByText('get').click()
+                        await dashboard.http.endpoints.getByRole('row', { name: '/pet/findByStatus' }).getByText('get').click()
                     })
                     
                     await test.step('switch response contenttype',async () => {
