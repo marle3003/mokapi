@@ -1,8 +1,43 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, useRoute as baseRoute, type RouteLocationRaw } from 'vue-router'
 import DashboardView from '@/views/DashboardView.vue'
 
 let base = document.querySelector("base")?.href ?? '/'
 base = base.replace(document.location.origin, '')
+
+export function useRoute() {
+  const route = baseRoute()
+  const context = {
+    service: route.params.service?.toString(),
+    path: route.params.path?.toString(),
+    operation: route.params.operation?.toString()
+  }
+  
+  function service(service: Service): RouteLocationRaw{
+    return {
+        name: 'httpService',
+        params: { service: service.name },
+        query: { refresh: route.query.refresh }
+    }
+  }
+
+  function path(service: Service, path: HttpPath): RouteLocationRaw {
+    return {
+      name: 'httpPath',
+      params: { service: service.name, path: path.path.substring(1) },
+      query: { refresh: route.query.refresh }
+    }
+  }
+
+  function operation(service: Service, path: HttpPath, operation: HttpOperation){
+    return {
+        name: 'httpOperation',
+        params: { service: service.name, path: path.path.substring(1), operation: operation.method },
+        query: { refresh: route.query.refresh }
+    }
+  }
+
+  return {service, path, operation, context, router}
+}
 
 const router = createRouter({
   history: createWebHistory(base),

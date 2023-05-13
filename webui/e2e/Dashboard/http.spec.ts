@@ -157,6 +157,26 @@ test.describe('Visit Swagger Petstore', () => {
                      await dialog.press('Escape')
                      await expect(dialog).not.toBeVisible()
                 })
+
+                await test.step("visit GET /pet/findByStatus", async () => {
+                    await op.service.click()
+
+                    await test.step('click on GET of path',async () => {
+                        await page.getByRole('row', { name: '/pet/findByStatus get 2022-05-11 04:54:50 3 / 0' }).getByText('get').click()
+                    })
+                    
+                    await test.step('switch response contenttype',async () => {
+                        await page.getByRole('combobox', { name: 'Response content type' }).selectOption('application/xml')
+
+                        await expect(op.response.element.getByRole('tabpanel', { name: 'Body' }).locator('span').filter({ hasText: 'application/xml' })).toBeVisible()
+                    })
+
+                    await test.step('click on HTTP status 500',async () => {
+                        await page.getByRole('tab', { name: '500 Internal Server Error' }).click()
+                        const tab = page.getByRole('tabpanel', { name: '500 Internal Server Error' })
+                        await expect(tab.getByLabel('Response body description')).toHaveText('server error')
+                    })
+                })
             })
         })
     })
