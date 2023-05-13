@@ -434,6 +434,13 @@ func TestParse_Number(t *testing.T) {
 			nil,
 		},
 		{
+			"type not defined",
+			"3.612",
+			&schema.Schema{},
+			3.612,
+			nil,
+		},
+		{
 			"not float",
 			fmt.Sprintf("%v", math.MaxFloat64),
 			&schema.Schema{Type: "number", Format: "float"},
@@ -496,6 +503,12 @@ func TestParse_String(t *testing.T) {
 			"string",
 			`"gbRMaRxHkiJBPta"`,
 			&schema.Schema{Type: "string"},
+			nil,
+		},
+		{
+			"type not defined",
+			`"gbRMaRxHkiJBPta"`,
+			&schema.Schema{},
 			nil,
 		},
 		{
@@ -615,6 +628,44 @@ func TestValidate_Object(t *testing.T) {
 			&schema.Schema{Type: "object"},
 			func(t *testing.T, v interface{}, _ error) {
 				require.Equal(t, &struct{}{}, v)
+			},
+		},
+		{
+			"type not defined",
+			`{"foo":"bar"}`,
+			&schema.Schema{},
+			func(t *testing.T, v interface{}, _ error) {
+				require.Equal(t, &struct {
+					Foo string `json:"foo"`
+				}{Foo: "bar"}, v)
+			},
+		},
+		{
+			"example type not defined",
+			`{"type":"object","properties":{"id":{"format":"int64","type":"integer"}}}`,
+			&schema.Schema{},
+			func(t *testing.T, v interface{}, _ error) {
+				exp := &struct {
+					Type       string `json:"type"`
+					Properties *struct {
+						Id *struct {
+							Format string `json:"format"`
+							Type   string `json:"type"`
+						} `json:"id"`
+					} `json:"properties"`
+				}{
+					Type: "object",
+					Properties: &struct {
+						Id *struct {
+							Format string `json:"format"`
+							Type   string `json:"type"`
+						} `json:"id"`
+					}{Id: &struct {
+						Format string `json:"format"`
+						Type   string `json:"type"`
+					}{Format: "int64", Type: "integer"}},
+				}
+				require.Equal(t, exp, v)
 			},
 		},
 		{

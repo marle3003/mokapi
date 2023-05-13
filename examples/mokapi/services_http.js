@@ -106,7 +106,8 @@ export let apps = [
                                         properties: {
                                             id: {
                                                 type: "integer",
-                                                format: "int64"
+                                                format: "int64",
+                                                minimum: 1
                                             }
                                         }
                                     }

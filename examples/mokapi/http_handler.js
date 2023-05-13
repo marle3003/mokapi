@@ -48,7 +48,7 @@ export default function() {
                 }
                 return true
             case 'example':
-                console.log('example!!!!!!')
+                console.log(request.body.properties.id)
                 response.data = fake(request.body)
                 return true
         }

@@ -80,6 +80,9 @@ func parse(v interface{}, schema *Ref) (interface{}, error) {
 		return parseOneOf(v, schema.Value)
 	} else if len(schema.Value.Type) == 0 {
 		// A schema without a type matches any data type
+		if _, ok := v.(*sortedmap.LinkedHashMap); ok {
+			return parseObject(v, &Schema{Type: "object"})
+		}
 		return v, nil
 	}
 

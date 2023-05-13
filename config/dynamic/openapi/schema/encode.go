@@ -96,6 +96,12 @@ func (m *schemaObject) MarshalJSON() ([]byte, error) {
 		k := it.Key()
 		v := it.Value()
 
+		s := fmt.Sprintf("%v", k)
+
+		if s == "minimum" {
+			fmt.Sprintf("")
+		}
+
 		key, err := json.Marshal(k)
 		if err != nil {
 			return nil, err
@@ -283,6 +289,21 @@ func fromMap(v reflect.Value, schema *Schema) (*schemaObject, error) {
 				return nil, err
 			}
 			obj.Set(name, d)
+		}
+	}
+
+	if schema.IsDictionary() {
+		for _, k := range v.MapKeys() {
+			name := fmt.Sprintf("%v", k.Interface())
+			if obj.Get(name) == nil {
+				o := v.MapIndex(k)
+				d, err := selectData(o.Interface(), schema.AdditionalProperties.Ref)
+				if err != nil {
+					_, err := selectData(o.Interface(), schema.AdditionalProperties.Ref)
+					return nil, err
+				}
+				obj.Set(name, d)
+			}
 		}
 	}
 

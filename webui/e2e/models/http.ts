@@ -83,11 +83,13 @@ export class HttpOperationRequestModel {
     readonly tabs: Locator
     readonly body: Locator
     readonly expand: ExpandModel
+    readonly example: ExampleModel
 
     constructor(readonly element: Locator) {
         this.tabs = element.getByTestId('tabs')
         this.body = element.getByTestId('body')
         this.expand = new ExpandModel(element.getByTestId('expand'))
+        this.example = new ExampleModel(element.getByTestId('example'))
     }
 }
 
@@ -97,6 +99,16 @@ export class ExpandModel {
 
     constructor(element: Locator) {
         this.button = element.getByRole('button', { name: 'Expand' })
+        this.code = element.locator('code')
+    }
+}
+
+export class ExampleModel {
+    readonly button: Locator
+    readonly code: Locator
+
+    constructor(element: Locator) {
+        this.button = element.getByRole('button', { name: 'Example' })
         this.code = element.locator('code')
     }
 }

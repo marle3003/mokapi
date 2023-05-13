@@ -70,6 +70,20 @@ func TestScript_Faker(t *testing.T) {
 				r.NoError(t, err)
 				r.Equal(t, "gbRMaRxHkiJBPta", v.String())
 			},
+		}, {
+			"object with properties",
+			func(t *testing.T, host *testHost) {
+				s, err := New("",
+					`import {fake} from 'faker'
+						 export default function() {
+						 	return fake({type: 'object', properties: {id: {type: 'integer', format: 'int64'}}})
+						 }`,
+					host, static.JsConfig{})
+				r.NoError(t, err)
+				v, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, "{id: -8379641344161477543}", v.String())
+			},
 		},
 	}
 

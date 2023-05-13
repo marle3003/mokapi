@@ -88,6 +88,17 @@ test.describe('Visit Swagger Petstore', () => {
             await expect(rows.getByRole('cell').nth(0)).toHaveText(service.requests[0].url)
 
             await test.step('visit method post', async () => {
+                const responseBody = `{
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "minimum": 1
+                      }
+                    }
+                  }`
+
                 await path.clickOperation('post')
                 const op = http.getOperationModel()
 
@@ -100,24 +111,28 @@ test.describe('Visit Swagger Petstore', () => {
                 await expect(op.description).not.toBeVisible()
 
                 await expect(op.request.tabs.locator('.active')).toHaveText('Body')
-                await expect(op.request.body).toHaveText(`{
-                    "type": "object",
-                    "properties": {}
-                  }`
-                )
+                await expect(op.request.body).toHaveText(responseBody)
 
                 await test.step('click expand', async () => {
-                    await op.request.expand.button.click()
-                    await expect(op.request.expand.code).toBeVisible()
-                    await expect(op.request.expand.code).toHaveText(`{
-                        "type": "object",
-                        "properties": {}
-                      }`
-                    )
-                    await op.request.expand.code.press('Escape', { delay: 100 })
+                    const expand = op.request.expand
+                    await expand.button.click()
+                    await expect(expand.code).toBeVisible()
+                    await expect(expand.code).toHaveText(responseBody)
+                    await expand.code.press('Escape', { delay: 100 })
                     // without a second time, dialog does not disappear
-                    await op.request.expand.code.press('Escape')
-                    await expect(op.request.expand.code).not.toBeVisible()
+                    await expand.code.press('Escape')
+                    await expect(expand.code).not.toBeVisible()
+                })
+
+                await test.step('click example', async () => {
+                    const example = op.request.example
+                    await example.button.click()
+                    await expect(example.code).toBeVisible()
+                    await expect(example.code).toContainText(`"id":`)
+                    await op.request.example.code.press('Escape', { delay: 100 })
+                    // without a second time, dialog does not disappear
+                    await example.code.press('Escape')
+                    await expect(example.code).not.toBeVisible()
                 })
             })
         })
