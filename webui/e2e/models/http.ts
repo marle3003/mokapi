@@ -66,6 +66,7 @@ export class HttpOperationModel {
     readonly description: Locator
 
     readonly request: HttpOperationRequestModel
+    readonly response: HttpOperationResponseModel
 
     constructor(readonly element: Locator) {
         this.operation = element.getByTestId('operation')
@@ -76,6 +77,7 @@ export class HttpOperationModel {
         this.summary = element.getByTestId('summary')
         this.description = element.getByTestId('description')
         this.request = new HttpOperationRequestModel(element.getByTestId('http-request'))
+        this.response = new HttpOperationResponseModel(element.getByTestId('http-response'))
     }
 }
 
@@ -90,6 +92,14 @@ export class HttpOperationRequestModel {
         this.body = element.getByTestId('body')
         this.expand = new ExpandModel(element.getByTestId('expand'))
         this.example = new ExampleModel(element.getByTestId('example'))
+    }
+}
+
+export class HttpOperationResponseModel {
+    readonly description: Locator
+
+    constructor(readonly element: Locator) {
+        this.description = element.getByTestId('response-description')
     }
 }
 

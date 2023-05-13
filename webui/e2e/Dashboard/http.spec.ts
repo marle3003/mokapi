@@ -110,29 +110,52 @@ test.describe('Visit Swagger Petstore', () => {
                 await expect(op.summary).toHaveText('Add a new pet to the store')
                 await expect(op.description).not.toBeVisible()
 
-                await expect(op.request.tabs.locator('.active')).toHaveText('Body')
-                await expect(op.request.body).toHaveText(responseBody)
+                await test.step("http request", async () => {
+                    await expect(op.request.tabs.locator('.active')).toHaveText('Body')
+                    await expect(op.request.body).toHaveText(responseBody)
 
-                await test.step('click expand', async () => {
-                    const expand = op.request.expand
-                    await expand.button.click()
-                    await expect(expand.code).toBeVisible()
-                    await expect(expand.code).toHaveText(responseBody)
-                    await expand.code.press('Escape', { delay: 100 })
-                    // without a second time, dialog does not disappear
-                    await expand.code.press('Escape')
-                    await expect(expand.code).not.toBeVisible()
+                    await test.step('click expand', async () => {
+                        const expand = op.request.expand
+                        await expand.button.click()
+                        await expect(expand.code).toBeVisible()
+                        await expect(expand.code).toHaveText(responseBody)
+                        await expand.code.press('Escape', { delay: 100 })
+                        // without a second time, dialog does not disappear
+                        await expand.code.press('Escape')
+                        await expect(expand.code).not.toBeVisible()
+                    })
+
+                    await test.step('click example', async () => {
+                        const example = op.request.example
+                        await example.button.click()
+                        await expect(example.code).toBeVisible()
+                        await expect(example.code).toContainText(`"id":`)
+                        await op.request.example.code.press('Escape', { delay: 100 })
+                        // without a second time, dialog does not disappear
+                        await example.code.press('Escape')
+                        await expect(example.code).not.toBeVisible()
+                    })
                 })
 
-                await test.step('click example', async () => {
-                    const example = op.request.example
-                    await example.button.click()
-                    await expect(example.code).toBeVisible()
-                    await expect(example.code).toContainText(`"id":`)
-                    await op.request.example.code.press('Escape', { delay: 100 })
-                    // without a second time, dialog does not disappear
-                    await example.code.press('Escape')
-                    await expect(example.code).not.toBeVisible()
+                await test.step("http response", async () => {
+                    await expect(op.response.element.getByRole('tab', {name: '400 Bad Request'})).toBeVisible()
+                    await expect(op.response.description).toHaveText('Invalid ID supplied')
+
+                    await expect(op.response.element.getByRole('tab', {name: 'Body'})).toHaveClass(/disabled/)
+                    await expect(op.response.element.getByRole('tab', {name: 'Headers'})).not.toHaveClass(/disabled/)
+
+                    const cells = op.response.element.locator('tbody tr').nth(0).getByRole('cell')
+                    await expect(cells.nth(0)).toHaveText('petId')
+                    await expect(cells.nth(1)).toHaveText('number')
+                    await expect(cells.nth(2)).toHaveText('Status values that need to be considered for filter')
+
+                    await cells.nth(0).click()
+                    const dialog = page.locator('#modal-petId')
+                    await expect(dialog).toBeVisible()
+                    await dialog.press('Escape', { delay: 100 })
+                     // without a second time, dialog does not disappear
+                     await dialog.press('Escape')
+                     await expect(dialog).not.toBeVisible()
                 })
             })
         })
