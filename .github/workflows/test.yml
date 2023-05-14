@@ -1,0 +1,58 @@
+name: Test
+on:
+  workflow_call:
+    inputs:
+      image-name:
+        required: true
+        type: string
+      image-artifact-name:
+        required: true
+        type: string
+      artifact-test-report:
+        required: true
+        type: string
+      report-publish-path:
+        required: true
+        type: string
+
+jobs:
+  build:
+    name: Build alpha
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+      - uses: ./.github/actions/build-mokapi-image
+        with:
+          image-name: ${{ inputs.image-name }}
+          artifact-name: ${{ inputs.image-artifact-name }}
+
+  test:
+    name: Run UI tests
+    runs-on: ubuntu-latest
+    if: "success()"
+    needs: [ build ]
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+      - uses: ./.github/actions/run-frontend-tests
+        with:
+          image-name: ${{ inputs.image-name }}
+          artifact-image-name: ${{ inputs.image-artifact-name }}
+          artifact-test-report: ${{ inputs.artifact-test-report }}
+
+  publish-report:
+    name: Publish Playwright Report
+    if: "success() || needs.test.result == 'failure'"
+    needs: [ test ]
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          path: src
+      - uses: ./src/.github/actions/publish-test-report
+        with:
+          artifact-test-report: ${{ inputs.artifact-test-report }}
+          test-report-path: ${{ inputs.report-publish-path }}
