@@ -12,7 +12,7 @@ env:
 
 jobs:
   test:
-    uses: ./test.yml
+    uses: ./.github/workflows/test.yml
     with:
       image-name: ${{ env.image-name }}
       image-artifact-name: ${{ env.image-artifact-name }}
