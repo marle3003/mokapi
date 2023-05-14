@@ -12,12 +12,14 @@ env:
 
 jobs:
   test:
-    uses: ./.github/workflows/test.yml
-    with:
-      image-name: ${{ env.image-name }}
-      image-artifact-name: ${{ env.image-artifact-name }}
-      artifact-test-report: ${{ env.artifact-test-report }}
-      report-publish-path: ${{ env.report-publish-path }}
+    name: Test
+    steps:
+      uses: ./.github/workflows/test.yml
+      with:
+        image-name: ${{ env.image-name }}
+        image-artifact-name: ${{ env.image-artifact-name }}
+        artifact-test-report: ${{ env.artifact-test-report }}
+        report-publish-path: ${{ env.report-publish-path }}
 
   publish-image:
     name: Publish docker image
