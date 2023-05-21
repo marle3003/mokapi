@@ -36,7 +36,8 @@ func (m *SmtpManager) UpdateConfig(c *common.Config) {
 	}
 
 	if server, ok := m.servers[cfg.Info.Name]; !ok {
-		h := runtime.NewSmtpHandler(m.app.Monitor.Smtp, mail.NewHandler(cfg, m.eventEmitter))
+		h := mail.NewHandler(cfg, m.eventEmitter)
+		m.app.AddSmtp(cfg, h.Store)
 		u, err := parseSmtpUrl(cfg.Server)
 		if err != nil {
 			log.Errorf("url syntax error %v: %v", c.Url, err.Error())
@@ -48,7 +49,7 @@ func (m *SmtpManager) UpdateConfig(c *common.Config) {
 			TLSConfig: &tls.Config{
 				GetCertificate: m.certStore.GetCertificate,
 			},
-			Handler: h}
+			Handler: runtime.NewSmtpHandler(m.app.Monitor.Smtp, h)}
 
 		m.servers[cfg.Info.Name] = server
 		if u.Scheme == "smtps" {

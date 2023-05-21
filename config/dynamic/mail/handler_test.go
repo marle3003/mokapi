@@ -6,7 +6,6 @@ import (
 	"mokapi/engine/enginetest"
 	"mokapi/smtp"
 	"mokapi/smtp/smtptest"
-	"net/mail"
 	"regexp"
 	"testing"
 	"time"
@@ -35,7 +34,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		{
 			name: "auth required without login",
 			config: &Config{
-				Mailboxes: []Mailbox{
+				Mailboxes: []MailboxConfig{
 					{
 						Name:     "alice@foo.bar",
 						Username: "foo", Password: "bar",
@@ -51,7 +50,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		{
 			name: "auth invalid credentials",
 			config: &Config{
-				Mailboxes: []Mailbox{
+				Mailboxes: []MailboxConfig{
 					{Username: "alice", Password: "foo"},
 				},
 			},
@@ -64,7 +63,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		{
 			name: "auth valid",
 			config: &Config{
-				Mailboxes: []Mailbox{
+				Mailboxes: []MailboxConfig{
 					{Username: "alice", Password: "foo"},
 				},
 			},
@@ -77,7 +76,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		{
 			name: "mail invalid mailbox",
 			config: &Config{
-				Mailboxes: []Mailbox{
+				Mailboxes: []MailboxConfig{
 					{Name: "bob@foo.bar"},
 				},
 			},
@@ -92,7 +91,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		{
 			name: "mail valid mailbox",
 			config: &Config{
-				Mailboxes: []Mailbox{
+				Mailboxes: []MailboxConfig{
 					{Name: "alice@foo.bar"},
 				},
 			},
@@ -114,7 +113,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		{
 			name: "rcpt invalid mailbox",
 			config: &Config{
-				Mailboxes: []Mailbox{
+				Mailboxes: []MailboxConfig{
 					{Name: "alice@foo.bar"},
 				},
 			},
@@ -129,7 +128,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		{
 			name: "rcpt valid mailbox",
 			config: &Config{
-				Mailboxes: []Mailbox{
+				Mailboxes: []MailboxConfig{
 					{Name: "alice@foo.bar"},
 					{Name: "bob@foo.bar"},
 				},
@@ -187,21 +186,64 @@ func TestHandler_ServeSMTP(t *testing.T) {
 			},
 		},
 		{
-			name:   "data",
+			name:   "server should add message into mailbox",
 			config: &Config{},
 			test: func(t *testing.T, h *Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendData(t, h, ctx)
 				require.Equal(t, smtp.Ok, r.Result)
+				require.Contains(t, h.Store.Mailboxes, "bob@foo.bar")
+				box := h.Store.Mailboxes["bob@foo.bar"]
+				require.Equal(t, "bob@foo.bar", box.Name)
+				require.Len(t, box.Messages, 1)
 			},
 		},
 		{
-			name:   "data with allow rule not match sender",
-			config: &Config{Rules: []Rule{{Sender: mustCompile(".*@mokapi.io"), Action: Allow}}},
+			name: "data with allow rule not match sender",
+			config: &Config{Rules: []Rule{
+				{
+					Sender: mustCompile(".*@mokapi.io"),
+					Action: Allow,
+				}}},
 			test: func(t *testing.T, h *Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendMail(t, h, ctx)
 				require.Equal(t, "sender alice@foo.bar does not match allow rule: .*@mokapi.io", r.Result.Message)
+			},
+		},
+		{
+			name: "data with deny rule",
+			config: &Config{Rules: []Rule{
+				{
+					Sender: mustCompile(".*@foo.bar"),
+					Action: Deny,
+				}}},
+			test: func(t *testing.T, h *Handler) {
+				ctx := smtp.NewClientContext(context.Background(), "")
+				r := sendMail(t, h, ctx)
+				require.Equal(t, "sender alice@foo.bar does match deny rule: .*@foo.bar", r.Result.Message)
+				require.Equal(t, smtp.StatusCode(550), r.Result.Code)
+				require.Equal(t, smtp.EnhancedStatusCode(smtp.EnhancedStatusCode{5, 1, 0}), r.Result.Status)
+			},
+		},
+		{
+			name: "data with deny rule custom response",
+			config: &Config{Rules: []Rule{
+				{
+					Sender: mustCompile(".*@foo.bar"),
+					Action: Deny,
+					RejectResponse: &RejectResponse{
+						StatusCode:         500,
+						EnhancedStatusCode: smtp.EnhancedStatusCode{5, 1, 2},
+						Text:               "custom error message",
+					},
+				}}},
+			test: func(t *testing.T, h *Handler) {
+				ctx := smtp.NewClientContext(context.Background(), "")
+				r := sendMail(t, h, ctx)
+				require.Equal(t, "custom error message", r.Result.Message)
+				require.Equal(t, smtp.StatusCode(500), r.Result.Code)
+				require.Equal(t, smtp.EnhancedStatusCode(smtp.EnhancedStatusCode{5, 1, 2}), r.Result.Status)
 			},
 		},
 	}
@@ -244,8 +286,8 @@ func sendData(t *testing.T, h smtp.Handler, ctx context.Context) *smtp.DataRespo
 	require.Equal(t, smtp.Ok, rcpt.Result)
 	rr := smtptest.NewRecorder()
 	h.ServeSMTP(rr, smtp.NewDataRequest(&smtp.Message{
-		From:    []*mail.Address{{Address: "alice@foo.bar"}},
-		To:      []*mail.Address{{Address: "bob@foo.bar"}},
+		From:    []smtp.Address{{Address: "alice@foo.bar"}},
+		To:      []smtp.Address{{Address: "bob@foo.bar"}},
 		Date:    time.Now(),
 		Subject: "A mail message",
 	}, ctx))

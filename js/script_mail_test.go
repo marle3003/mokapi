@@ -18,16 +18,16 @@ func Test_Mail(t *testing.T) {
 		name string
 		js   string
 		host common.Host
-		test func(t *testing.T, v *mail.Mail, err error)
+		test func(t *testing.T, v *smtp.Message, err error)
 	}{
 		{
 			name: "simple",
 			js:   "send('smtp://127.0.0.1:%v', {from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
 			host: &testHost{},
-			test: func(t *testing.T, v *mail.Mail, err error) {
+			test: func(t *testing.T, v *smtp.Message, err error) {
 				r.NoError(t, err)
-				r.Equal(t, mail.Address{Name: "Alice", Address: "alice@mokapi.io"}, v.From[0])
-				r.Equal(t, mail.Address{Address: "bob@mokapi.io"}, v.To[0])
+				r.Equal(t, smtp.Address{Name: "Alice", Address: "alice@mokapi.io"}, v.From[0])
+				r.Equal(t, smtp.Address{Address: "bob@mokapi.io"}, v.To[0])
 				r.Equal(t, "A test mail", v.Subject)
 				r.Equal(t, "Hello Bob", v.Body)
 				r.True(t, v.Date.After(time.Now().Add(-time.Minute*1)), "send date should be in the last minute")
@@ -37,12 +37,12 @@ func Test_Mail(t *testing.T) {
 			name: "multiple from and bcc",
 			js:   "send('smtp://127.0.0.1:%v', {sender: 'carol@mokapi.io', from: [{name: 'Alice', address: 'alice@mokapi.io'},'charlie@mokapi.io'], bcc: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
 			host: &testHost{},
-			test: func(t *testing.T, v *mail.Mail, err error) {
+			test: func(t *testing.T, v *smtp.Message, err error) {
 				r.NoError(t, err)
-				r.Equal(t, &mail.Address{Address: "carol@mokapi.io"}, v.Sender)
-				r.Equal(t, mail.Address{Name: "Alice", Address: "alice@mokapi.io"}, v.From[0])
-				r.Equal(t, mail.Address{Address: "charlie@mokapi.io"}, v.From[1])
-				r.Equal(t, mail.Address{Address: "bob@mokapi.io"}, v.Bcc[0])
+				r.Equal(t, &smtp.Address{Address: "carol@mokapi.io"}, v.Sender)
+				r.Equal(t, smtp.Address{Name: "Alice", Address: "alice@mokapi.io"}, v.From[0])
+				r.Equal(t, smtp.Address{Address: "charlie@mokapi.io"}, v.From[1])
+				r.Equal(t, smtp.Address{Address: "bob@mokapi.io"}, v.Bcc[0])
 				r.Equal(t, "A test mail", v.Subject)
 				r.Equal(t, "Hello Bob", v.Body)
 			},
@@ -51,10 +51,10 @@ func Test_Mail(t *testing.T) {
 			name: "cc",
 			js:   "send('smtp://127.0.0.1:%v', {from: {name: 'Alice', address: 'alice@mokapi.io'}, cc: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
 			host: &testHost{},
-			test: func(t *testing.T, v *mail.Mail, err error) {
+			test: func(t *testing.T, v *smtp.Message, err error) {
 				r.NoError(t, err)
-				r.Equal(t, mail.Address{Name: "Alice", Address: "alice@mokapi.io"}, v.From[0])
-				r.Equal(t, mail.Address{Address: "bob@mokapi.io"}, v.Cc[0])
+				r.Equal(t, smtp.Address{Name: "Alice", Address: "alice@mokapi.io"}, v.From[0])
+				r.Equal(t, smtp.Address{Address: "bob@mokapi.io"}, v.Cc[0])
 				r.Equal(t, "A test mail", v.Subject)
 				r.Equal(t, "Hello Bob", v.Body)
 			},
@@ -63,7 +63,7 @@ func Test_Mail(t *testing.T) {
 			name: "messageId",
 			js:   "send('smtp://127.0.0.1:%v', {messageId: '434571BC.8070702@mokapi.io', from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
 			host: &testHost{},
-			test: func(t *testing.T, v *mail.Mail, err error) {
+			test: func(t *testing.T, v *smtp.Message, err error) {
 				r.NoError(t, err)
 				r.Equal(t, "434571BC.8070702@mokapi.io", v.MessageId)
 			},
@@ -72,16 +72,16 @@ func Test_Mail(t *testing.T) {
 			name: "replyTo",
 			js:   "send('smtp://127.0.0.1:%v', {replyTo: 'carol@mokapi.io', from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
 			host: &testHost{},
-			test: func(t *testing.T, v *mail.Mail, err error) {
+			test: func(t *testing.T, v *smtp.Message, err error) {
 				r.NoError(t, err)
-				r.Equal(t, mail.Address{Address: "carol@mokapi.io"}, v.ReplyTo[0])
+				r.Equal(t, smtp.Address{Address: "carol@mokapi.io"}, v.ReplyTo[0])
 			},
 		},
 		{
 			name: "inReplyTo",
 			js:   "send('smtp://127.0.0.1:%v', {inReplyTo: '434571BC.8070702@mokapi.io', from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
 			host: &testHost{},
-			test: func(t *testing.T, v *mail.Mail, err error) {
+			test: func(t *testing.T, v *smtp.Message, err error) {
 				r.NoError(t, err)
 				r.Equal(t, "434571BC.8070702@mokapi.io", v.InReplyTo)
 			},
@@ -90,7 +90,7 @@ func Test_Mail(t *testing.T) {
 			name: "contentType",
 			js:   "send('smtp://127.0.0.1:%v', {contentType: 'text/html', from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
 			host: &testHost{},
-			test: func(t *testing.T, v *mail.Mail, err error) {
+			test: func(t *testing.T, v *smtp.Message, err error) {
 				r.NoError(t, err)
 				r.Equal(t, "text/html", v.ContentType)
 			},
@@ -99,7 +99,7 @@ func Test_Mail(t *testing.T) {
 			name: "encoding",
 			js:   "send('smtp://127.0.0.1:%v', {encoding: 'quoted-printable', from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
 			host: &testHost{},
-			test: func(t *testing.T, v *mail.Mail, err error) {
+			test: func(t *testing.T, v *smtp.Message, err error) {
 				r.NoError(t, err)
 				r.Equal(t, "quoted-printable", v.Encoding)
 			},
@@ -108,7 +108,7 @@ func Test_Mail(t *testing.T) {
 			name: "attachment",
 			js:   "send('smtp://127.0.0.1:%v', {attachments: [{content: 'hello world', filename: 'foo.txt'}], from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
 			host: &testHost{},
-			test: func(t *testing.T, v *mail.Mail, err error) {
+			test: func(t *testing.T, v *smtp.Message, err error) {
 				r.NoError(t, err)
 				r.Len(t, v.Attachments, 1)
 				r.Equal(t, "hello world", string(v.Attachments[0].Data))
@@ -125,7 +125,7 @@ func Test_Mail(t *testing.T) {
 				}
 				return "", "", fmt.Errorf("file not found: %v", file)
 			}},
-			test: func(t *testing.T, v *mail.Mail, err error) {
+			test: func(t *testing.T, v *smtp.Message, err error) {
 				r.NoError(t, err)
 				r.Len(t, v.Attachments, 1)
 				r.Equal(t, "hello world", string(v.Attachments[0].Data))
@@ -142,7 +142,7 @@ func Test_Mail(t *testing.T) {
 				}
 				return "", "", fmt.Errorf("file not found: %v", file)
 			}},
-			test: func(t *testing.T, v *mail.Mail, err error) {
+			test: func(t *testing.T, v *smtp.Message, err error) {
 				r.NoError(t, err)
 				r.Len(t, v.Attachments, 1)
 				r.Equal(t, "hello world", string(v.Attachments[0].Data))
@@ -159,7 +159,7 @@ func Test_Mail(t *testing.T) {
 				}
 				return "", "", fmt.Errorf("file not found: %v", file)
 			}},
-			test: func(t *testing.T, v *mail.Mail, err error) {
+			test: func(t *testing.T, v *smtp.Message, err error) {
 				r.NoError(t, err)
 				r.Len(t, v.Attachments, 1)
 				r.Equal(t, "hello world", string(v.Attachments[0].Data))
@@ -175,9 +175,9 @@ func Test_Mail(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			var received *mail.Mail
+			var received *smtp.Message
 			h := mail.NewHandler(&mail.Config{}, enginetest.NewEngineWithHandler(func(event string, args ...interface{}) []*common.Action {
-				received = args[0].(*mail.Mail)
+				received = args[0].(*smtp.Message)
 				return nil
 			}))
 
@@ -201,58 +201,3 @@ func Test_Mail(t *testing.T) {
 		})
 	}
 }
-
-//func TestMail_Smtps(t *testing.T) {
-//	testcases := []struct {
-//		name string
-//		js   string
-//		host common.Host
-//		test func(t *testing.T, v *mail.Mail, err error)
-//	}{
-//		{
-//			name: "simple",
-//			js:   "send('smtps://127.0.0.1:8025', {from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
-//			host: &testHost{},
-//			test: func(t *testing.T, v *mail.Mail, err error) {
-//				r.NoError(t, err)
-//				r.Equal(t, mail.Address{Name: "Alice", Address: "alice@mokapi.io"}, v.From[0])
-//				r.Equal(t, mail.Address{Address: "bob@mokapi.io"}, v.To[0])
-//				r.Equal(t, "A test mail", v.Subject)
-//				r.Equal(t, "Hello Bob", v.Body)
-//				r.True(t, v.Date.After(time.Now().Add(-time.Minute*1)), "send date should be in the last minute")
-//			},
-//		},
-//	}
-//
-//	for _, tc := range testcases {
-//		tc := tc
-//		t.Run(tc.name, func(t *testing.T) {
-//			var received *mail.Mail
-//			h := mail.NewHandler(&mail.Config{Server: "smtps://127.0.0.1:8025"}, enginetest.NewEngineWithHandler(func(event string, args ...interface{}) []*common.Action {
-//				received = args[0].(*mail.Mail)
-//				return nil
-//			}))
-//
-//			store, err := cert.NewStore(&static.Config{})
-//			r.NoError(t, err)
-//			server := &smtp.Server{Addr: "127.0.0.1:8025", Handler: h, TLSConfig: &tls.Config{
-//				GetConfigForClient: func(info *tls.ClientHelloInfo) (*tls.Config, error) {
-//					return nil, nil
-//				},
-//				GetCertificate: store.GetCertificate}}
-//			go server.ListenAndServeTLS()
-//			defer server.Close()
-//
-//			s, err := New("test",
-//				fmt.Sprintf(`import {send} from 'mokapi/mail';
-//						 export default function() {
-//						 	%v
-//						}`, tc.js),
-//				tc.host, static.JsConfig{})
-//			r.NoError(t, err)
-//
-//			_, err = s.RunDefault()
-//			tc.test(t, received, err)
-//		})
-//	}
-//}

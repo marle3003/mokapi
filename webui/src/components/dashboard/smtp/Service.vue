@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { type Ref, onUnmounted } from 'vue'
-import { useService } from '@/composables/services';
-import { useRoute } from 'vue-router';
-import Servers from './Servers.vue';
-import ServiceInfoCard from '../ServiceInfoCard.vue';
-import Mails from './Mails.vue';
+import { useService } from '@/composables/services'
+import { useRoute } from 'vue-router'
+import Servers from './Server.vue'
+import ServiceInfoCard from '../ServiceInfoCard.vue'
+import Mails from './Mails.vue'
+import Mail from './Mail.vue'
+import Rules from './Rules.vue'
 
 const {fetchService} = useService()
 const route = useRoute()
@@ -25,15 +27,19 @@ if (serviceName){
           <service-info-card :service="service" type="SMTP" />
       </div>
       <div class="card-group">
-          <div class="card">
-              <div class="card-body">
-                  <div class="card-title text-center">Servers</div>
-                  <servers :servers="[service.server]" />
-              </div>
-          </div>
+        <servers :service="service" />
       </div>
+      <div class="card-group">
+        <div class="card">
+            <div class="card-body">
+                <div class="card-title text-center">Rules</div>
+                <rules :rules="service.rules" />
+            </div>
+        </div>
+        </div>
       <div class="card-group">
         <mails :service="service" />
       </div>
   </div>
+  <mail v-if="$route.name == 'smtpMail'"></mail>
 </template>

@@ -1,7 +1,6 @@
 package mail
 
 import (
-	"context"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"mokapi/engine/common"
@@ -14,12 +13,14 @@ import (
 type Handler struct {
 	config       *Config
 	eventEmitter common.EventEmitter
+	Store        *Store
 }
 
 func NewHandler(config *Config, eventEmitter common.EventEmitter) *Handler {
 	return &Handler{
 		config:       config,
 		eventEmitter: eventEmitter,
+		Store:        NewStore(config),
 	}
 }
 
@@ -39,24 +40,15 @@ func (h *Handler) ServeSMTP(rw smtp.ResponseWriter, r smtp.Request) {
 	case *smtp.RcptRequest:
 		h.serveRcpt(rw, req, ctx)
 	case *smtp.DataRequest:
-		err := h.processMail(req.Message, r.Context())
-		if err != nil {
-			rw.Write(&smtp.DataResponse{Result: &smtp.SMTPStatus{
-				Code:    smtp.StatusReject,
-				Status:  smtp.EnhancedStatusCode{5, 0, 0}, // Invalid command arguments
-				Message: err.Error(),
-			}})
-			return
-		}
-		rw.Write(&smtp.DataResponse{Result: smtp.Ok})
+		h.processMail(rw, req)
 	}
 }
 
-func (h *Handler) processMail(msg *smtp.Message, ctx context.Context) error {
+func (h *Handler) processMail(rw smtp.ResponseWriter, r *smtp.DataRequest) {
+	ctx := r.Context()
 	clientContext := smtp.ClientFromContext(ctx)
 	monitor, doMonitor := monitor.SmtpFromContext(ctx)
-	m := NewMail(msg)
-	event := NewLogEvent(m, clientContext, events.NewTraits().WithName(h.config.Info.Name))
+	event := NewLogEvent(r.Message, clientContext, events.NewTraits().WithName(h.config.Info.Name))
 	defer func() {
 		i := ctx.Value("time")
 		if i != nil {
@@ -65,8 +57,14 @@ func (h *Handler) processMail(msg *smtp.Message, ctx context.Context) error {
 		}
 	}()
 
-	if err := h.runRules(m); err != nil {
-		return err
+	if res := h.config.Rules.runMail(r.Message); res != nil {
+		h.writeRuleResponse(rw, r, res)
+		return
+	}
+
+	for _, rcpt := range clientContext.To {
+		box := h.Store.Mailboxes[rcpt]
+		box.Append(r.Message)
 	}
 
 	log.Infof("recevied new mail on %v from client %v (%v)",
@@ -77,33 +75,9 @@ func (h *Handler) processMail(msg *smtp.Message, ctx context.Context) error {
 		monitor.LastMail.WithLabel(h.config.Info.Name).Set(float64(time.Now().Unix()))
 	}
 
-	event.Actions = h.eventEmitter.Emit("smtp", m)
+	event.Actions = h.eventEmitter.Emit("smtp", r.Message)
 
-	return nil
-}
-
-func (h *Handler) runRules(m *Mail) error {
-	for _, r := range h.config.Rules {
-		_ = r
-		//if len(r.Sender) > 0 {
-		//	var senderAddress string
-		//	if m.Sender != nil {
-		//		senderAddress = m.Sender.Address
-		//	} else if len(m.From) > 0 {
-		//		senderAddress = m.From[0].Address
-		//	} else if r.Action == Allow {
-		//		return fmt.Errorf("required from address")
-		//	}
-		//	if b, err := regexp.Match(r.Sender, []byte(senderAddress)); err != nil {
-		//		return err
-		//	} else if !b && r.Action == Allow {
-		//		return fmt.Errorf("sender %v does not match allow rule: %v", senderAddress, r.Sender)
-		//	} else if b && r.Action == Deny {
-		//		return fmt.Errorf("sender %v does match deny rule: %v", senderAddress, r.Sender)
-		//	}
-		//}
-	}
-	return nil
+	rw.Write(&smtp.DataResponse{Result: smtp.Ok})
 }
 
 func (h *Handler) serveMail(rw smtp.ResponseWriter, r *smtp.MailRequest, ctx *smtp.ClientContext) {
@@ -117,48 +91,32 @@ func (h *Handler) serveMail(rw smtp.ResponseWriter, r *smtp.MailRequest, ctx *sm
 		}
 	}
 
-	for _, rule := range h.config.Rules {
-		if rule.Sender != nil {
-			match := rule.Sender.Match(r.From)
-			if match && rule.Action == Deny {
-				h.writeErrorResponse(rw, r, smtp.AddressRejected, fmt.Sprintf("sender %v does match deny rule: %v", r.From, rule.Sender))
-				return
-			} else if !match && rule.Action == Allow {
-				h.writeErrorResponse(rw, r, smtp.AddressRejected, fmt.Sprintf("sender %v does not match allow rule: %v", r.From, rule.Sender))
-				return
-			}
-		}
+	res := h.config.Rules.RunSender(r.From)
+	if res != nil {
+		h.writeRuleResponse(rw, r, res)
+	} else {
+		ctx.From = r.From
+		rw.Write(&smtp.MailResponse{Result: smtp.Ok})
 	}
-
-	ctx.From = r.From
-	rw.Write(&smtp.MailResponse{Result: smtp.Ok})
 }
 
 func (h *Handler) serveRcpt(rw smtp.ResponseWriter, r *smtp.RcptRequest, ctx *smtp.ClientContext) {
-	if len(h.config.Mailboxes) > 0 {
-		if _, ok := h.config.getMailbox(r.To); !ok {
-			h.writeErrorResponse(rw, r, smtp.AddressRejected, fmt.Sprintf("Unknown mailbox %v", r.To))
-			return
-		}
+	if err := h.Store.EnsureMailbox(r.To); err != nil {
+		h.writeErrorResponse(rw, r, smtp.AddressRejected, fmt.Sprintf("Unknown mailbox %v", r.To))
+		return
 	}
 
-	for _, rule := range h.config.Rules {
-		if rule.Recipient != nil {
-			match := rule.Recipient.Match(r.To)
-			if match && rule.Action == Deny {
-				h.writeErrorResponse(rw, r, smtp.BadDestinationAddress, fmt.Sprintf("recipient %v does match deny rule: %v", r.To, rule.Recipient))
-				return
-			} else if !match && rule.Action == Allow {
-				h.writeErrorResponse(rw, r, smtp.BadDestinationAddress, fmt.Sprintf("recipient %v does not match allow rule: %v", r.To, rule.Recipient))
-				return
-			}
-		}
+	res := h.config.Rules.RunSender(r.To)
+	if res != nil {
+		h.writeRuleResponse(rw, r, res)
+		return
 	}
 
 	if h.config.MaxRecipients > 0 && len(ctx.To)+1 > h.config.MaxRecipients {
 		h.writeErrorResponse(rw, r, smtp.TooManyRecipients, fmt.Sprintf("Too many recipients of %v reached", h.config.MaxRecipients))
 		return
 	}
+
 	ctx.To = append(ctx.To, r.To)
 	rw.Write(&smtp.RcptResponse{Result: smtp.Ok})
 }
@@ -171,5 +129,17 @@ func (h *Handler) writeErrorResponse(rw smtp.ResponseWriter, r smtp.Request, sta
 	res := r.NewResponse(&status)
 	l := NewLogEvent(nil, clientContext, events.NewTraits().WithName(h.config.Info.Name))
 	l.Error = status.Message
+	_ = rw.Write(res)
+}
+
+func (h *Handler) writeRuleResponse(rw smtp.ResponseWriter, r smtp.Request, response *RejectResponse) {
+	clientContext := smtp.ClientFromContext(r.Context())
+	res := r.NewResponse(&smtp.SMTPStatus{
+		Code:    response.StatusCode,
+		Status:  response.EnhancedStatusCode,
+		Message: response.Text,
+	})
+	l := NewLogEvent(nil, clientContext, events.NewTraits().WithName(h.config.Info.Name))
+	l.Error = response.Text
 	_ = rw.Write(res)
 }

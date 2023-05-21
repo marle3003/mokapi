@@ -42,7 +42,7 @@ onUnmounted(() => {
     <div class="card" data-testid="smtp-service-list">
         <div class="card-body">
             <div class="card-title text-center">SMTP Servers</div>
-            <table class="table dataTable">
+            <table class="table dataTable selectable">
                 <thead>
                     <tr>
                         <th scope="col" class="text-left w-25">Name</th>

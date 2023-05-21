@@ -1,9 +1,9 @@
-import {on} from 'mokapi'
-import {clusters, events as kafkaEvents} from 'kafka.js'
-import {apps as httpServices, events as httpEvents} from 'services_http.js'
-import {server as smtpServers, mails} from 'smtp.js'
-import {metrics} from 'metrics.js'
-import {fake} from 'mokapi/faker'
+import { on } from 'mokapi'
+import { clusters, events as kafkaEvents } from 'kafka.js'
+import { apps as httpServices, events as httpEvents } from 'services_http.js'
+import {server as smtpServers, mails, mailEvents, getMail, getAttachment} from 'smtp.js'
+import { metrics } from 'metrics.js'
+import { fake } from 'mokapi/faker'
 
 export default function() {
     on('http', function(request, response) {
@@ -27,6 +27,24 @@ export default function() {
             case 'serviceSmtp':
                 response.data = smtpServers[0]
                 return true
+            case 'smtpMail':
+                const messageId = request.path['messageId']
+                const mail = getMail(messageId)
+                if (mail == null) {
+                    response.statusCode = 404
+                } else {
+                    response.data = mail
+                }
+                return true
+            case 'smtpMailAttachment':
+                const attachment = getAttachment(request.path['messageId'], request.path['name'])
+                if (attachment == null) {
+                    response.statusCode = 404
+                } else {
+                    response.data = attachment.data
+                    response.headers['Content-Type'] = attachment.contentType
+                }
+                return true
             case 'metrics':
                 let q = request.query["query"]
                 if (!q) {
@@ -48,7 +66,6 @@ export default function() {
                 }
                 return true
             case 'example':
-                console.log(request.body.properties.id)
                 response.data = fake(request.body)
                 return true
         }
@@ -85,6 +102,11 @@ function getEvent(id) {
             return e
         }
     }
+    for (let e of mailEvents){
+        if (e.id === id){
+            return e
+        }
+    }
     return null
 }
 
@@ -100,7 +122,7 @@ function getEvents(traits) {
             result.push(e)
         }
     }
-    for (let e of mails) {
+    for (let e of mailEvents) {
         if (matchEvent(e, traits)) {
             result.push(e)
         }

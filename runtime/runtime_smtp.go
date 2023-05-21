@@ -10,6 +10,7 @@ import (
 
 type SmtpInfo struct {
 	*mail.Config
+	*mail.Store
 }
 
 type SmtpHandler struct {

@@ -2,6 +2,7 @@ package mail
 
 import (
 	"mokapi/config/dynamic/common"
+	"mokapi/smtp"
 	"regexp"
 )
 
@@ -16,8 +17,8 @@ type Config struct {
 	MaxRecipients int    `yaml:"maxRecipients,omitempty" json:"maxRecipients,omitempty"`
 	//MaxMessageBytes   int       `yaml:"maxMessageBytes,omitempty" json:"maxMessageBytes,omitempty"`
 	//AllowInsecureAuth bool      `yaml:"allowInsecureAuth,omitempty" json:"allowInsecureAuth,omitempty"`
-	Mailboxes []Mailbox `yaml:"mailboxes" json:"mailboxes"`
-	Rules     []Rule    `yaml:"rules" json:"rules"`
+	Mailboxes []MailboxConfig `yaml:"mailboxes" json:"mailboxes"`
+	Rules     Rules           `yaml:"rules" json:"rules"`
 }
 
 type Info struct {
@@ -28,36 +29,46 @@ type Info struct {
 
 type RuleAction string
 
+type Rules []Rule
+
 const (
 	Allow RuleAction = "allow"
 	Deny  RuleAction = "deny"
 )
 
 type Rule struct {
-	Sender    *RuleExpr  `yaml:"sender" json:"sender"`
-	Recipient *RuleExpr  `yaml:"recipient" json:"recipient"`
-	Subject   *RuleExpr  `yaml:"subject" json:"subject"`
-	Body      *RuleExpr  `yaml:"body" json:"body"`
-	Action    RuleAction `yaml:"action" json:"action"`
+	Name           string          `yaml:"name" json:"name"`
+	Sender         *RuleExpr       `yaml:"sender" json:"sender"`
+	Recipient      *RuleExpr       `yaml:"recipient" json:"recipient"`
+	Subject        *RuleExpr       `yaml:"subject" json:"subject"`
+	Body           *RuleExpr       `yaml:"body" json:"body"`
+	Action         RuleAction      `yaml:"action" json:"action"`
+	RejectResponse *RejectResponse `yaml:"rejectResponse" json:"rejectResponse"`
+}
+
+type RejectResponse struct {
+	StatusCode         smtp.StatusCode         `yaml:"statusCode" json:"statusCode"`
+	EnhancedStatusCode smtp.EnhancedStatusCode `yaml:"enhancedStatusCode" json:"enhancedStatusCode"`
+	Text               string                  `yaml:"text" json:"text"`
 }
 
 type RuleExpr struct {
 	expr *regexp.Regexp
 }
 
-type Mailbox struct {
+type MailboxConfig struct {
 	Name     string `yaml:"name" json:"name"`
 	Username string `yaml:"username" json:"username"`
 	Password string `yaml:"password" json:"password"`
 }
 
-func (c *Config) getMailbox(name string) (Mailbox, bool) {
+func (c *Config) getMailbox(name string) (MailboxConfig, bool) {
 	for _, m := range c.Mailboxes {
 		if m.Name == name {
 			return m, true
 		}
 	}
-	return Mailbox{}, false
+	return MailboxConfig{}, false
 }
 
 func NewRuleExpr(r *regexp.Regexp) *RuleExpr {

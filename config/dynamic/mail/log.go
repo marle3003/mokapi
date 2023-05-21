@@ -7,22 +7,28 @@ import (
 )
 
 type Log struct {
-	From     string           `json:"from"`
-	To       []string         `json:"to"`
-	Mail     *Mail            `json:"mail"`
-	Duration int64            `json:"duration"`
-	Error    string           `json:"error"`
-	Actions  []*common.Action `json:"actions"`
+	From      string           `json:"from"`
+	To        []string         `json:"to"`
+	MessageId string           `json:"messageId"`
+	Subject   string           `json:"subject"`
+	Duration  int64            `json:"duration"`
+	Error     string           `json:"error"`
+	Actions   []*common.Action `json:"actions"`
 }
 
-func NewLogEvent(msg *Mail, ctx *smtp.ClientContext, traits events.Traits) *Log {
+func NewLogEvent(msg *smtp.Message, ctx *smtp.ClientContext, traits events.Traits) *Log {
 	event := &Log{
 		From:     ctx.From,
 		To:       ctx.To,
-		Mail:     msg,
 		Duration: 0,
 		Actions:  nil,
 	}
+
+	if msg != nil {
+		event.MessageId = msg.MessageId
+		event.Subject = msg.Subject
+	}
+
 	_ = events.Push(event, traits.WithNamespace("smtp"))
 	return event
 }

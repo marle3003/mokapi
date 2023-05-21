@@ -11,13 +11,47 @@ export let server = [
             {name: 'bob@mokapi.io', username: 'bob', password: 'foo'},
         ],
         rules: [
-            {sender: '.*@mokapi.io', action: 'allow'}
+            {name: 'mokapi.io', sender: '.*@mokapi.io', action: 'allow'},
+            {name: 'spam', recipient: '.*@foo.bar', subject: 'spam', body: 'spam', action: 'deny'}
         ],
         metrics: metrics.filter(x => x.name.startsWith("smtp"))
     }
 ]
 
 export let mails = [
+    {
+        from: [{ name: 'Alice', address: 'alice@mokapi.io' }],
+        to: [{ name: 'Bob', address: 'bob@mokapi.io'},{address: 'carol@mokapi.io'}],
+        date: '2023-02-23T08:49:25.482366+01:00',
+        contentType: 'text/html',
+        encoding: 'quoted-printable',
+        messageId: '20230223-084925.763-4196@mokapi.io',
+        inReplyTo: '20230222-084925.763-4196@mokapi.io',
+        subject: 'A test mail',
+        body: 'Mail message from Alice',
+        attachments: [
+            {
+                name: 'foo.txt',
+                contentType: 'text/plain',
+                size: 34056,
+                data: 'foobar'
+            }
+        ],
+        duration: 30016,
+        actions: [
+            {
+                duration: 20,
+                tags: {
+                    name: "dashboard",
+                    file: "/Users/maesi/GolandProjects/mokapi/examples/mokapi/http_handler.js",
+                    event: "http"
+                }
+            }
+        ]
+    }
+]
+
+export let mailEvents = [
     {
         id: "8832",
         traits: {
@@ -28,24 +62,27 @@ export let mails = [
         data: {
             from: 'alice@mokapi.io',
             to: ['bob@mokapi.io'],
-            mail: {
-                From: {Name: 'Alice', Address: 'alice@mokapi.io'},
-                To: [{Name: 'Bob', Address: 'bob@mokapi.io'}],
-                Date: '2023-02-23T08:49:25.482366+01:00',
-                Subject: 'A test mail',
-                Body: 'Mail message from Alice'
-            },
-            duration: 30016,
-            actions: [
-                {
-                    duration: 20,
-                    tags: {
-                        name: "dashboard",
-                        file: "/Users/maesi/GolandProjects/mokapi/examples/mokapi/http_handler.js",
-                        event: "http"
-                    }
-                }
-            ]
+            messageId: '20230223-084925.763-4196@mokapi.io',
+            subject: 'A test mail'
         },
     },
 ]
+
+export function getMail(messageId) {
+    for (let m of mails) {
+        if (m.messageId === messageId) {
+            return m
+        }
+    }
+    return null
+}
+
+export function getAttachment(messageId, attachmentName) {
+    const mail = getMail(messageId)
+    for (let a of mail.attachments) {
+        if (a.name === attachmentName) {
+            return a
+        }
+    }
+    return null
+}

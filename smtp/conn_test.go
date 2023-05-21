@@ -156,6 +156,7 @@ func TestServer(t *testing.T) {
 					ctx.To = append(ctx.To, r.To)
 					rw.Write(&smtp.RcptResponse{Result: smtp.Ok})
 				case *smtp.DataRequest:
+					require.Greater(t, len(r.Message.MessageId), 0)
 					rw.Write(&smtp.DataResponse{Result: smtp.Ok})
 				}
 			},

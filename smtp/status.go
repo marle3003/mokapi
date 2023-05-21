@@ -1,6 +1,11 @@
 package smtp
 
-import "fmt"
+import (
+	"fmt"
+	"gopkg.in/yaml.v3"
+	"strconv"
+	"strings"
+)
 
 // https://www.iana.org/assignments/smtp-enhanced-status-codes/smtp-enhanced-status-codes.xhtml
 
@@ -56,4 +61,24 @@ var (
 		Code:   550,
 		Status: EnhancedStatusCode{5, 1, 1},
 	}
+
+	MailReject = SMTPStatus{
+		Code:   550,
+		Status: EnhancedStatusCode{5, 7, 1},
+	}
 )
+
+func (e *EnhancedStatusCode) UnmarshalYAML(value *yaml.Node) error {
+	v := strings.Split(value.Value, ".")
+	if len(v) != 3 {
+		return fmt.Errorf("unexpected value %v, expected x.x.x", value.Value)
+	}
+	for index, s := range v {
+		i, err := strconv.ParseInt(s, 10, 8)
+		if err != nil {
+			return fmt.Errorf("unable to parse %v", s)
+		}
+		e[index] = int8(i)
+	}
+	return nil
+}

@@ -22,10 +22,11 @@ const {fetch} = useEvents()
 const {events, close} = fetch('smtp', ...labels)
 const {format, duration} = usePrettyDates()
 
-function goToRequest(event: ServiceEvent){
+function goToMail(data: SmtpEventData){
+    console.log(data)
     router.push({
-        name: 'smtpRequest',
-        params: {id: event.id},
+        name: 'smtpMail',
+        params: {id: data.messageId},
     })
 }
 function eventData(event: ServiceEvent): SmtpEventData{
@@ -52,15 +53,17 @@ onUnmounted(() => {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="event in events" :key="event.id" @click="goToRequest(event)">
+                    <tr v-for="event in events!" :key="event.id" @click="goToMail(eventData(event))">
                         <td>
                             {{ eventData(event).from }}
                         </td>
                         <td>
-                            {{ eventData(event).to }}
+                            <div v-for="address in eventData(event).to">
+                            {{ address }}
+                            </div>
                         </td>
                         <td>
-                            {{ eventData(event).mail.Subject }}
+                            {{ eventData(event).subject }}
                         </td>
                         <td class="text-center">{{ format(event.time) }}</td>
                         <td class="text-center">{{ duration(eventData(event).duration) }}</td>

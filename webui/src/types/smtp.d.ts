@@ -1,5 +1,6 @@
 declare interface SmtpService extends Service {
     server: string
+    maxRecipients: number
     mailboxes: SmtpMailbox[]
     rules: SmtpRule[]
 }
@@ -11,11 +12,12 @@ declare interface SmtpMailbox{
 }
 
 declare interface SmtpRule {
-    sender:    string    
+    name: string
+    sender: string    
 	recipient: string    
-	subject:   string    
-	body:      string    
-	action:   RuleAction 
+	subject: string    
+	body: string    
+	action: RuleAction 
 }
 
 declare enum RuleAction {
@@ -26,27 +28,37 @@ declare enum RuleAction {
 declare interface SmtpEventData {
     from: string
     to: string[]
-    mail: Mail
+    messageId: string
+    subject: string
     duration: number
+    error: string
     actions: Action[]
 }
 
 declare interface Mail {
-    Sender: MailAddress    
-	From: MailAddress[]
-	To: MailAddress[] 
-	ReplyTo: MailAddress[]  
-	Cc: MailAddress[]    
-	Bcc: MailAddress[]    
-	MessageId: string       
-	Date: number
-	Subject: string      
-	ContentType: string      
-	Encoding: string      
-	Body: string    
+    sender: MailAddress    
+    from: MailAddress[]
+	to: MailAddress[] 
+	replyTo: MailAddress[]  
+	cc: MailAddress[]    
+	bcc: MailAddress[]    
+	messageId: string    
+    inReplyTo: string   
+	date: number
+	subject: string      
+	contentType: string      
+	encoding: string      
+	body: string
+    attachments: Attachment[]
 }
 
 declare interface MailAddress {
     name: string
     address: string
+}
+
+declare interface Attachment {
+    name: string
+    contentType: string
+    size: number
 }
