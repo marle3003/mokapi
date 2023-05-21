@@ -22,13 +22,13 @@ export let mails = [
     {
         from: [{ name: 'Alice', address: 'alice@mokapi.io' }],
         to: [{ name: 'Bob', address: 'bob@mokapi.io'},{address: 'carol@mokapi.io'}],
-        date: '2023-02-23T08:49:25.482366+01:00',
+        time: '2023-02-23T08:49:25+01:00',
         contentType: 'text/html',
         encoding: 'quoted-printable',
         messageId: '20230223-084925.763-4196@mokapi.io',
         inReplyTo: '20230222-084925.763-4196@mokapi.io',
         subject: 'A test mail',
-        body: 'Mail message from Alice',
+        body: '<h1>Hello</h1>Mail message from Alice',
         attachments: [
             {
                 name: 'foo.txt',

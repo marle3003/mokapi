@@ -25,7 +25,7 @@ type Message struct {
 	Bcc         []Address    `json:"bcc"`
 	MessageId   string       `json:"messageId"`
 	InReplyTo   string       `json:"inReplyTo"`
-	Date        time.Time    `json:"date"`
+	Time        time.Time    `json:"time"`
 	Subject     string       `json:"subject"`
 	ContentType string       `json:"contentType"`
 	Encoding    string       `json:"encoding"`
@@ -99,7 +99,7 @@ func (m *Message) readFrom(tc textproto.Reader) error {
 	m.InReplyTo = header.Get("In-Reply-To")
 
 	if date := header.Get("Date"); date != "" {
-		m.Date, err = mail.ParseDate(date)
+		m.Time, err = mail.ParseDate(date)
 		if err != nil {
 			return err
 		}

@@ -44,7 +44,7 @@ declare interface Mail {
 	bcc: MailAddress[]    
 	messageId: string    
     inReplyTo: string   
-	date: number
+	time: number
 	subject: string      
 	contentType: string      
 	encoding: string      

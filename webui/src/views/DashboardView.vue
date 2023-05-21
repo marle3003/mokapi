@@ -114,7 +114,7 @@ document.title = 'Dashbboard | mokapi.io'
                     <div class="card-group">
                         <smtp-message-metric-card v-if="isServiceAvailable('smtp')" />
                     </div>
-                    <div class="card-group"  v-if="isServiceAvailable('http')">
+                    <div class="card-group"  v-if="isServiceAvailable('smtp')">
                         <smtp-services-card />
                     </div>
                 </div>

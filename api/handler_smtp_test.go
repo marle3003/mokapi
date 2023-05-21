@@ -122,7 +122,7 @@ func TestHandler_Smtp(t *testing.T) {
 											From:        []smtp.Address{{Address: "bob@foo.bar"}},
 											To:          []smtp.Address{{Address: "alice@foo.bar"}},
 											MessageId:   "foo-1@mokapi.io",
-											Date:        now,
+											Time:        now,
 											Subject:     "Hello Alice",
 											ContentType: "text/plain",
 											Body:        "foobar",
@@ -156,7 +156,7 @@ func TestHandler_Smtp(t *testing.T) {
 											From:        []smtp.Address{{Address: "bob@foo.bar"}},
 											To:          []smtp.Address{{Address: "alice@foo.bar"}},
 											MessageId:   "foo-1@mokapi.io",
-											Date:        now,
+											Time:        now,
 											Subject:     "Hello Alice",
 											ContentType: "text/plain",
 											Body:        "foobar",
@@ -190,7 +190,7 @@ func TestHandler_Smtp(t *testing.T) {
 											From:      []smtp.Address{{Address: "bob@foo.bar"}},
 											To:        []smtp.Address{{Address: "alice@foo.bar"}},
 											MessageId: "foo-1@mokapi.io",
-											Date:      now,
+											Time:      now,
 											Attachments: []smtp.Attachment{
 												{
 													Name:        "foo",

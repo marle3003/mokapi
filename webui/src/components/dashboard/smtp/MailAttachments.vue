@@ -14,7 +14,7 @@ const { attachmentUrl } = useMails()
 </script>
 
 <template>
-  <div class="row row-cols-1 g-4 attachments">
+  <div class="row row-cols-1 g-4 attachments" v-if="attachments">
     <div class="col attachment" v-for="attach of attachments">
       <a :href="attachmentUrl(messageId, attach.name)" download>
         <div class="card">

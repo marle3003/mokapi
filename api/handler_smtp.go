@@ -57,7 +57,7 @@ type message struct {
 	Bcc         []address    `json:"bbc,omitempty"`
 	MessageId   string       `json:"messageId"`
 	InReplyTo   string       `json:"inReplyTo,omitempty"`
-	Date        time.Time    `json:"time"`
+	Time        time.Time    `json:"time"`
 	Subject     string       `json:"subject"`
 	ContentType string       `json:"contentType"`
 	Encoding    string       `json:"encoding,omitempty"`
@@ -235,7 +235,7 @@ func toMessage(m *smtp.Message) *message {
 		Bcc:         toAddress(m.Bcc),
 		MessageId:   m.MessageId,
 		InReplyTo:   m.InReplyTo,
-		Date:        m.Date,
+		Time:        m.Time,
 		Subject:     m.Subject,
 		ContentType: m.ContentType,
 		Encoding:    m.Encoding,

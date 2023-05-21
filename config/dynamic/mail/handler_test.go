@@ -288,7 +288,7 @@ func sendData(t *testing.T, h smtp.Handler, ctx context.Context) *smtp.DataRespo
 	h.ServeSMTP(rr, smtp.NewDataRequest(&smtp.Message{
 		From:    []smtp.Address{{Address: "alice@foo.bar"}},
 		To:      []smtp.Address{{Address: "bob@foo.bar"}},
-		Date:    time.Now(),
+		Time:    time.Now(),
 		Subject: "A mail message",
 	}, ctx))
 	return expectDataesponse(t, rr.Response)
