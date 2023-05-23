@@ -188,7 +188,7 @@ function formatParam(label: any): string {
 .sidebar.open .nav-pills .nav-link.active, .sidebar.show  .nav-pills .show > .nav-link {
   background-color: var(--color-background-mute);
 }
-.content{
+.content {
   margin-left: 1.2rem;
   margin-right: 1.2rem;
   padding-top: 2rem;
@@ -233,7 +233,7 @@ table thead th {
     border-bottom-width: 2px;
     font-weight: 500;
 }
-table td{
+table td {
     border-top-width: 2px;
     border-bottom-width: 2px;
     border-color: var(--color-datatable-border);
@@ -282,6 +282,7 @@ table.selectable tbody tr:hover {
 pre {
   max-width: 700px;
   margin: 0 auto auto;
+  margin-bottom: 1rem;
   white-space: pre-wrap;
   word-break: break-all;
   border-radius: 6px;

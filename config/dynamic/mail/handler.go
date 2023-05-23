@@ -67,7 +67,7 @@ func (h *Handler) processMail(rw smtp.ResponseWriter, r *smtp.DataRequest) {
 		box.Append(r.Message)
 	}
 
-	log.Infof("recevied new mail on %v from client %v (%v)",
+	log.Infof("received new mail on %v from client %v (%v)",
 		h.config.Info.Name, clientContext.Client, clientContext.Addr)
 
 	if doMonitor {
@@ -75,9 +75,10 @@ func (h *Handler) processMail(rw smtp.ResponseWriter, r *smtp.DataRequest) {
 		monitor.LastMail.WithLabel(h.config.Info.Name).Set(float64(time.Now().Unix()))
 	}
 
-	event.Actions = h.eventEmitter.Emit("smtp", r.Message)
+	res := &smtp.DataResponse{Result: smtp.Ok}
+	event.Actions = h.eventEmitter.Emit("smtp", r.Message, res.Result)
 
-	rw.Write(&smtp.DataResponse{Result: smtp.Ok})
+	rw.Write(res)
 }
 
 func (h *Handler) serveMail(rw smtp.ResponseWriter, r *smtp.MailRequest, ctx *smtp.ClientContext) {
@@ -121,7 +122,7 @@ func (h *Handler) serveRcpt(rw smtp.ResponseWriter, r *smtp.RcptRequest, ctx *sm
 	rw.Write(&smtp.RcptResponse{Result: smtp.Ok})
 }
 
-func (h *Handler) writeErrorResponse(rw smtp.ResponseWriter, r smtp.Request, status smtp.SMTPStatus, message string) {
+func (h *Handler) writeErrorResponse(rw smtp.ResponseWriter, r smtp.Request, status smtp.Status, message string) {
 	clientContext := smtp.ClientFromContext(r.Context())
 	if len(message) > 0 {
 		status.Message = message
@@ -134,10 +135,10 @@ func (h *Handler) writeErrorResponse(rw smtp.ResponseWriter, r smtp.Request, sta
 
 func (h *Handler) writeRuleResponse(rw smtp.ResponseWriter, r smtp.Request, response *RejectResponse) {
 	clientContext := smtp.ClientFromContext(r.Context())
-	res := r.NewResponse(&smtp.SMTPStatus{
-		Code:    response.StatusCode,
-		Status:  response.EnhancedStatusCode,
-		Message: response.Text,
+	res := r.NewResponse(&smtp.Status{
+		StatusCode:         response.StatusCode,
+		EnhancedStatusCode: response.EnhancedStatusCode,
+		Message:            response.Text,
 	})
 	l := NewLogEvent(nil, clientContext, events.NewTraits().WithName(h.config.Info.Name))
 	l.Error = response.Text

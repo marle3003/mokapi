@@ -39,9 +39,9 @@ type Address struct {
 }
 
 type Attachment struct {
-	Name        string
-	ContentType string
-	Data        []byte
+	Name        string `json:"name"`
+	ContentType string `json:"contentType"`
+	Data        []byte `json:"data"`
 }
 
 func (m *Message) readFrom(tc textproto.Reader) error {
@@ -133,9 +133,20 @@ func (m *Message) readFrom(tc textproto.Reader) error {
 			}
 		}
 	default:
-		var data bytes.Buffer
-		data.ReadFrom(tc.DotReader())
+		var r io.Reader
+		switch strings.ToLower(m.Encoding) {
+		case "quoted-printable":
+			r = quotedprintable.NewReader(tc.DotReader())
+		case "base64":
+			r = base64.NewDecoder(base64.StdEncoding, tc.DotReader())
+		case "7bit", "8bit", "binary", "":
+			r = tc.DotReader()
+		default:
+			return fmt.Errorf("unsupported encoding %v", m.Encoding)
+		}
 
+		var data bytes.Buffer
+		data.ReadFrom(r)
 		if data.Len() > 0 {
 			m.Body = data.String()[0 : data.Len()-1] // remove last \n
 		}

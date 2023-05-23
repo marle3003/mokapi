@@ -33,7 +33,7 @@ func (f HandlerFunc) ServeSMTP(rw ResponseWriter, req Request) {
 type Request interface {
 	Context() context.Context
 	WithContext(ctx context.Context)
-	NewResponse(status *SMTPStatus) Response
+	NewResponse(status *Status) Response
 }
 
 type Response interface {

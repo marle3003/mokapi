@@ -19,7 +19,11 @@
       "Config": "guides/kafka/config.md"
     },
     "LDAP": {"Overview": "guides/ldap/ldap.md"},
-    "SMTP": {"Overview":  "guides/smtp/smtp.md"}
+    "SMTP": {
+      "Overview":  "guides/smtp/smtp.md",
+      "Quick Start": "guides/smtp/quick-start.md",
+      "Rules": "guides/smtp/rules.md"
+    }
   },
   "Configuration": {
     "Configuration": {

@@ -215,15 +215,15 @@ func TestHandler_ServeSMTP(t *testing.T) {
 			name: "data with deny rule",
 			config: &Config{Rules: []Rule{
 				{
-					Sender: mustCompile(".*@foo.bar"),
+					Sender: mustCompile("@foo.bar"),
 					Action: Deny,
 				}}},
 			test: func(t *testing.T, h *Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendMail(t, h, ctx)
-				require.Equal(t, "sender alice@foo.bar does match deny rule: .*@foo.bar", r.Result.Message)
-				require.Equal(t, smtp.StatusCode(550), r.Result.Code)
-				require.Equal(t, smtp.EnhancedStatusCode(smtp.EnhancedStatusCode{5, 1, 0}), r.Result.Status)
+				require.Equal(t, "sender alice@foo.bar does match deny rule: @foo.bar", r.Result.Message)
+				require.Equal(t, smtp.StatusCode(550), r.Result.StatusCode)
+				require.Equal(t, smtp.EnhancedStatusCode(smtp.EnhancedStatusCode{5, 1, 0}), r.Result.EnhancedStatusCode)
 			},
 		},
 		{
@@ -242,8 +242,8 @@ func TestHandler_ServeSMTP(t *testing.T) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendMail(t, h, ctx)
 				require.Equal(t, "custom error message", r.Result.Message)
-				require.Equal(t, smtp.StatusCode(500), r.Result.Code)
-				require.Equal(t, smtp.EnhancedStatusCode(smtp.EnhancedStatusCode{5, 1, 2}), r.Result.Status)
+				require.Equal(t, smtp.StatusCode(500), r.Result.StatusCode)
+				require.Equal(t, smtp.EnhancedStatusCode{5, 1, 2}, r.Result.EnhancedStatusCode)
 			},
 		},
 	}

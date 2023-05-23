@@ -11,7 +11,7 @@ type MailRequest struct {
 }
 
 type MailResponse struct {
-	Result *SMTPStatus
+	Result *Status
 }
 
 func NewMailRequest(from string, ctx context.Context) *MailRequest {
@@ -29,10 +29,10 @@ func (r *MailRequest) WithContext(ctx context.Context) {
 	r.ctx = ctx
 }
 
-func (r *MailRequest) NewResponse(result *SMTPStatus) Response {
+func (r *MailRequest) NewResponse(result *Status) Response {
 	return &MailResponse{Result: result}
 }
 
 func (r *MailResponse) write(conn *textproto.Conn) error {
-	return write(conn, r.Result.Code, r.Result.Status, r.Result.Message)
+	return write(conn, r.Result.StatusCode, r.Result.EnhancedStatusCode, r.Result.Message)
 }

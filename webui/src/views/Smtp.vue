@@ -1,32 +1,29 @@
 <script setup lang="ts">
-const script = `import { on } from 'mokapi'
-
-export default function() {
-    on('http', function(request, response) {
-        if (request.operationId === 'time') {
-            response.data = new Date().toISOString()
-            return true
-        }
-        return false
-    })
-}
+const config = `smtp: '1.0'
+info:
+  title: Mokapi's Mail Server
+server: smtp://127.0.0.1:25
+rules:
+  - name: Recipient's domain is mokapi.io
+    recipient: '@mokapi.io'
+    action: allow
 `
-document.title = 'Mocking tool for engineering teams | mokapi.io'
+document.title = 'Test emails safely and no risk of spamming recipients\' inbox | mokapi.io'
 </script>
 
 <template>
-  <main class="home">
+  <main class="smtp">
     <section>
       <div class="container">
         <div class="row hero-title">
           <div class="col-12 col-lg-6">
-            <h1>Create and test API designs<br />before actually building them</h1>
-            <p class="description">Speed up testing process and reduce dependencies</p>
+            <h1>End-to-end email testing<br />for a smooth email experience</h1>
+            <p class="description">Test emails safely and no risk of spamming recipients' inbox</p>
             <p class="d-none d-md-block">
               <router-link :to="{ path: '/docs/Guides' }">
                 <button type="button" class="btn btn-outline-primary">Guides</button>
               </router-link>
-              <router-link :to="{ path: '/docs/Examples' }">
+              <router-link :to="{ path: '/docs/E  xamples' }">
                 <button type="button" class="btn btn-outline-primary">Examples</button>
               </router-link>
             </p>
@@ -49,34 +46,33 @@ document.title = 'Mocking tool for engineering teams | mokapi.io'
     </section>
     <section>
       <div class="container">
-        <h2>Improve quality of your API. Reduce the risk of bugs or errors in production.</h2>
+        <h2>Everything you need for your scenario</h2>
         <div class="card-group">
           <div class="card">
             <div class="card-body">
-              <div class="card-title">HTTP</div>
-              Mock any HTTP API with OpenAPI specification.
+              <div class="card-title">Fake SMTP server</div>
+              Simulate sending emails for different scenarios
             </div>
           </div>
           <div class="card">
             <div class="card-body">
-              <div class="card-title">Kafka</div>
-              Simulate a Kafka system with AsyncAPI specification.
+              <div class="card-title">Email Preview</div>
+              Preview your emails in Mokapi's Dasboard.
             </div>
           </div>
           <div class="card">
             <div class="card-body">
-              <div class="card-title">LDAP</div>
-              Integrate your App with a fake LDAP server.
+              <div class="card-title">QA Automation</div>
+              Use your favorite testing tool for validating sent emails using
+              Mokapi's Dashboard or API
             </div>
           </div>
-            <div class="card">
-              <div class="card-body">
-                <router-link :to="{path: '/smtp'}">
-                <div class="card-title">SMTP</div>
-                Test emails safely and no risk of spamming recipients' inbox
-                </router-link>
-              </div>
-            </div> 
+          <div class="card">
+            <div class="card-body">
+              <div class="card-title">Rules</div>
+              Define rules to allow or deny emails
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -84,9 +80,9 @@ document.title = 'Mocking tool for engineering teams | mokapi.io'
       <div class="container">
         <div class="row">
           <div class="col-12 justify-content-center">
-            <h2>Script mock data in Javascript</h2>
+            <h2>Easy setup of your fake SMTP server</h2>
             <div class="justify-content-center">
-              <pre v-highlightjs="script"><code class="javascript"></code></pre>
+              <pre v-highlightjs="config"><code class="application/yaml"></code></pre>
             </div>
             </div>
           </div>
@@ -106,7 +102,7 @@ document.title = 'Mocking tool for engineering teams | mokapi.io'
 </template>
 
 <style scoped>
-.home {
+.smtp {
   max-width: 1200px;
   margin: 0 auto auto;
 }
@@ -170,9 +166,6 @@ h2 {
   background-color: var(--color-background-soft);
   margin: 7px;
   margin-left: 0;
-}
-.card a {
-  text-decoration: none;
 }
 .card-title {
   font-size: 1.3rem;

@@ -14,8 +14,8 @@ func (r Rules) RunSender(sender string) *RejectResponse {
 					return rule.RejectResponse
 				}
 				return &RejectResponse{
-					StatusCode:         smtp.AddressRejected.Code,
-					EnhancedStatusCode: smtp.AddressRejected.Status,
+					StatusCode:         smtp.AddressRejected.StatusCode,
+					EnhancedStatusCode: smtp.AddressRejected.EnhancedStatusCode,
 					Text:               rule.formatText("sender %v does match deny rule: %v", sender, rule.Sender),
 				}
 			} else if !match && rule.Action == Allow {
@@ -23,8 +23,8 @@ func (r Rules) RunSender(sender string) *RejectResponse {
 					return rule.RejectResponse
 				}
 				return &RejectResponse{
-					StatusCode:         smtp.AddressRejected.Code,
-					EnhancedStatusCode: smtp.AddressRejected.Status,
+					StatusCode:         smtp.AddressRejected.StatusCode,
+					EnhancedStatusCode: smtp.AddressRejected.EnhancedStatusCode,
 					Text:               rule.formatText("sender %v does not match allow rule: %v", sender, rule.Sender),
 				}
 			}
@@ -42,8 +42,8 @@ func (r Rules) runRcpt(to string) *RejectResponse {
 					return rule.RejectResponse
 				}
 				return &RejectResponse{
-					StatusCode:         smtp.AddressRejected.Code,
-					EnhancedStatusCode: smtp.AddressRejected.Status,
+					StatusCode:         smtp.AddressRejected.StatusCode,
+					EnhancedStatusCode: smtp.AddressRejected.EnhancedStatusCode,
 					Text:               rule.formatText("recipient %v does match deny rule: %v", to, rule.Recipient),
 				}
 			} else if !match && rule.Action == Allow {
@@ -51,8 +51,8 @@ func (r Rules) runRcpt(to string) *RejectResponse {
 					return rule.RejectResponse
 				}
 				return &RejectResponse{
-					StatusCode:         smtp.AddressRejected.Code,
-					EnhancedStatusCode: smtp.AddressRejected.Status,
+					StatusCode:         smtp.AddressRejected.StatusCode,
+					EnhancedStatusCode: smtp.AddressRejected.EnhancedStatusCode,
 					Text:               rule.formatText("recipient %v does not match allow rule: %v", to, rule.Recipient),
 				}
 			}
@@ -83,8 +83,8 @@ func (r Rule) runSubject(subject string) *RejectResponse {
 			return r.RejectResponse
 		}
 		return &RejectResponse{
-			StatusCode:         smtp.MailReject.Code,
-			EnhancedStatusCode: smtp.MailReject.Status,
+			StatusCode:         smtp.MailReject.StatusCode,
+			EnhancedStatusCode: smtp.MailReject.EnhancedStatusCode,
 			Text:               r.formatText("subject %v does match deny rule: %v", subject, r.Subject),
 		}
 	} else if !match && r.Action == Allow {
@@ -92,8 +92,8 @@ func (r Rule) runSubject(subject string) *RejectResponse {
 			return r.RejectResponse
 		}
 		return &RejectResponse{
-			StatusCode:         smtp.MailReject.Code,
-			EnhancedStatusCode: smtp.MailReject.Status,
+			StatusCode:         smtp.MailReject.StatusCode,
+			EnhancedStatusCode: smtp.MailReject.EnhancedStatusCode,
 			Text:               r.formatText("subject %v does not match allow rule: %v", subject, r.Subject),
 		}
 	}
@@ -110,8 +110,8 @@ func (r Rule) runBody(body string) *RejectResponse {
 			return r.RejectResponse
 		}
 		return &RejectResponse{
-			StatusCode:         smtp.MailReject.Code,
-			EnhancedStatusCode: smtp.MailReject.Status,
+			StatusCode:         smtp.MailReject.StatusCode,
+			EnhancedStatusCode: smtp.MailReject.EnhancedStatusCode,
 			Text:               r.formatText("body %v does match deny rule: %v", body, r.Body),
 		}
 	} else if !match && r.Action == Allow {
@@ -119,8 +119,8 @@ func (r Rule) runBody(body string) *RejectResponse {
 			return r.RejectResponse
 		}
 		return &RejectResponse{
-			StatusCode:         smtp.MailReject.Code,
-			EnhancedStatusCode: smtp.MailReject.Status,
+			StatusCode:         smtp.MailReject.StatusCode,
+			EnhancedStatusCode: smtp.MailReject.EnhancedStatusCode,
 			Text:               r.formatText("body %v does not match allow rule: %v", body, r.Body),
 		}
 	}

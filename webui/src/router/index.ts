@@ -41,6 +41,10 @@ export function useRoute() {
 
 const router = createRouter({
   history: createWebHistory(base),
+  scrollBehavior: (to, from, savedPosition) => {
+    // always scroll to top
+    return { top: 0 }
+  },
   routes: [
     {
       path: '/',
@@ -55,6 +59,10 @@ const router = createRouter({
     {
       path: '/home',
       component: () => import('@/views/Home.vue')
+    },
+    {
+      path: '/smtp',
+      component: () => import('@/views/Smtp.vue')
     },
     {
       path: '/dashboard',

@@ -11,7 +11,7 @@ type DataRequest struct {
 }
 
 type DataResponse struct {
-	Result *SMTPStatus
+	Result *Status
 }
 
 func NewDataRequest(msg *Message, ctx context.Context) *DataRequest {
@@ -29,10 +29,10 @@ func (r *DataRequest) WithContext(ctx context.Context) {
 	r.ctx = ctx
 }
 
-func (r *DataRequest) NewResponse(result *SMTPStatus) Response {
+func (r *DataRequest) NewResponse(result *Status) Response {
 	return &DataResponse{Result: result}
 }
 
 func (r *DataResponse) write(conn *textproto.Conn) error {
-	return write(conn, r.Result.Code, r.Result.Status, r.Result.Message)
+	return write(conn, r.Result.StatusCode, r.Result.EnhancedStatusCode, r.Result.Message)
 }

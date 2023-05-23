@@ -1,5 +1,6 @@
 /// <reference path="ldap.d.ts" />
 /// <reference path="kafka.d.ts" />
+/// <reference path="smtp.d.ts" />
 
 declare module 'mokapi' {
     /**
@@ -50,6 +51,7 @@ type EventHandler = {
     http: HttpEventHandler
     ldap: LdapEventHandler
     kafka: KafkaEventHandler
+    smtp: SmtpEventHandler
 }
 
 type HttpEventHandler = (request: HttpRequest, response: HttpResponse) => boolean

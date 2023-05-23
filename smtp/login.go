@@ -6,22 +6,22 @@ import (
 )
 
 var (
-	InvalidAuthCredentials = SMTPStatus{
-		Code:    535,
-		Status:  EnhancedStatusCode{5, 7, 8},
-		Message: "Authentication credentials invalid",
+	InvalidAuthCredentials = Status{
+		StatusCode:         535,
+		EnhancedStatusCode: EnhancedStatusCode{5, 7, 8},
+		Message:            "Authentication credentials invalid",
 	}
 
-	AuthSucceeded = SMTPStatus{
-		Code:    StatusAuthSucceeded,
-		Status:  Success,
-		Message: "Authentication succeeded",
+	AuthSucceeded = Status{
+		StatusCode:         StatusAuthSucceeded,
+		EnhancedStatusCode: Success,
+		Message:            "Authentication succeeded",
 	}
 
-	AuthRequired = SMTPStatus{
-		Code:    AuthenticationRequire,
-		Status:  SecurityError,
-		Message: "Authentication required",
+	AuthRequired = Status{
+		StatusCode:         AuthenticationRequire,
+		EnhancedStatusCode: SecurityError,
+		Message:            "Authentication required",
 	}
 )
 
@@ -32,7 +32,7 @@ type LoginRequest struct {
 }
 
 type LoginResponse struct {
-	Result *SMTPStatus
+	Result *Status
 }
 
 func NewLoginRequest(username, password string, ctx context.Context) *LoginRequest {
@@ -51,10 +51,10 @@ func (r *LoginRequest) WithContext(ctx context.Context) {
 	r.ctx = ctx
 }
 
-func (r *LoginRequest) NewResponse(result *SMTPStatus) Response {
+func (r *LoginRequest) NewResponse(result *Status) Response {
 	return &LoginResponse{Result: result}
 }
 
 func (r *LoginResponse) write(conn *textproto.Conn) error {
-	return write(conn, r.Result.Code, r.Result.Status, r.Result.Message)
+	return write(conn, r.Result.StatusCode, r.Result.EnhancedStatusCode, r.Result.Message)
 }

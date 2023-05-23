@@ -6,9 +6,9 @@ import (
 )
 
 var (
-	TooManyRecipients = SMTPStatus{
-		Code:   StatusActionAborted,
-		Status: EnhancedStatusCode{4, 5, 3},
+	TooManyRecipients = Status{
+		StatusCode:         StatusActionAborted,
+		EnhancedStatusCode: EnhancedStatusCode{4, 5, 3},
 	}
 )
 
@@ -18,7 +18,7 @@ type RcptRequest struct {
 }
 
 type RcptResponse struct {
-	Result *SMTPStatus
+	Result *Status
 }
 
 func NewRcptRequest(to string, ctx context.Context) *RcptRequest {
@@ -36,10 +36,10 @@ func (r *RcptRequest) WithContext(ctx context.Context) {
 	r.ctx = ctx
 }
 
-func (r *RcptRequest) NewResponse(result *SMTPStatus) Response {
+func (r *RcptRequest) NewResponse(result *Status) Response {
 	return &RcptResponse{Result: result}
 }
 
 func (r *RcptResponse) write(conn *textproto.Conn) error {
-	return write(conn, r.Result.Code, r.Result.Status, r.Result.Message)
+	return write(conn, r.Result.StatusCode, r.Result.EnhancedStatusCode, r.Result.Message)
 }

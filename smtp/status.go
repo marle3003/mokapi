@@ -39,32 +39,32 @@ func (e *EnhancedStatusCode) String() string {
 	return fmt.Sprintf("%v.%v.%v", e[0], e[1], e[2])
 }
 
-type SMTPStatus struct {
-	Code    StatusCode
-	Status  EnhancedStatusCode
-	Message string
+type Status struct {
+	StatusCode         StatusCode         `json:"statusCode"`
+	EnhancedStatusCode EnhancedStatusCode `json:"enhancedStatusCode"`
+	Message            string             `json:"message"`
 }
 
 var (
-	Ok = &SMTPStatus{
-		Code:    250,
-		Status:  Success,
-		Message: "OK",
+	Ok = &Status{
+		StatusCode:         250,
+		EnhancedStatusCode: Success,
+		Message:            "OK",
 	}
 
-	AddressRejected = SMTPStatus{
-		Code:   550,
-		Status: EnhancedStatusCode{5, 1, 0},
+	AddressRejected = Status{
+		StatusCode:         550,
+		EnhancedStatusCode: EnhancedStatusCode{5, 1, 0},
 	}
 
-	BadDestinationAddress = SMTPStatus{
-		Code:   550,
-		Status: EnhancedStatusCode{5, 1, 1},
+	BadDestinationAddress = Status{
+		StatusCode:         550,
+		EnhancedStatusCode: EnhancedStatusCode{5, 1, 1},
 	}
 
-	MailReject = SMTPStatus{
-		Code:   550,
-		Status: EnhancedStatusCode{5, 7, 1},
+	MailReject = Status{
+		StatusCode:         550,
+		EnhancedStatusCode: EnhancedStatusCode{5, 7, 1},
 	}
 )
 
