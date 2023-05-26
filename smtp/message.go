@@ -137,7 +137,7 @@ func (m *Message) readFrom(tc textproto.Reader) error {
 				if err != nil {
 					return err
 				}
-				m.Body = string(b[0 : len(b)-1]) // remove last \n
+				m.Body = string(b)
 			}
 		}
 	default:
