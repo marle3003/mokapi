@@ -15,7 +15,7 @@ function setOpenGraphMeta(property: string, content: string) {
     var meta = document.createElement('meta');
     meta.setAttribute('property', property)
     meta.content = content;
-    document.getElementsByTagName('head')[0].appendChild(meta);
+    document.getElementsByTagName('head')[0].prepend(meta);
 }
 
 function setMeta(name: string, content: string) {
