@@ -11,8 +11,8 @@ export function useMeta(title: string, description: string) {
 }
 
 function setOpenGraphMeta(property: string, content: string) {
-    var meta = document.createElement('meta') as any;
-    meta.property = property
+    var meta = document.createElement('meta');
+    meta.setAttribute('property', property)
     meta.content = content;
     document.getElementsByTagName('head')[0].appendChild(meta);
 }
