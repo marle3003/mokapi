@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useMeta } from '@/composables/meta'
+
 const config = `smtp: '1.0'
 info:
   title: Mokapi's Mail Server
@@ -9,6 +11,10 @@ rules:
     action: allow
 `
 document.title = 'Test emails safely and no risk of spamming recipients\' inbox | mokapi.io'
+
+const title = `End-to-end email testing for a smooth email experience`
+const description = `Test emails safely and no risk of spamming recipients' inbox`
+useMeta(`Mokapi - ${title} | mokapi.io`, description)
 </script>
 
 <template>
@@ -17,8 +23,8 @@ document.title = 'Test emails safely and no risk of spamming recipients\' inbox 
       <div class="container">
         <div class="row hero-title">
           <div class="col-12 col-lg-6">
-            <h1>End-to-end email testing<br />for a smooth email experience</h1>
-            <p class="description">Test emails safely and no risk of spamming recipients' inbox</p>
+            <h1>{{ title }}</h1>
+            <p class="description">{{ description }}</p>
             <p class="d-none d-md-block">
               <router-link :to="{ path: '/docs/Guides' }">
                 <button type="button" class="btn btn-outline-primary">Guides</button>

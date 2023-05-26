@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useMeta } from '@/composables/meta'
+
 const script = `import { on } from 'mokapi'
 
 export default function() {
@@ -11,7 +13,10 @@ export default function() {
     })
 }
 `
-document.title = 'Test emails safely and no risk of spamming recipients\' inbox | mokapi.io'
+
+const title = `Bring your OpenAPI specs to life`
+const description = `Don't wait for APIs to be ready. Let your teams develop in parallel`
+useMeta(`Mokapi - ${title} | mokapi.io`, description)
 </script>
 
 <template>
@@ -20,8 +25,8 @@ document.title = 'Test emails safely and no risk of spamming recipients\' inbox 
       <div class="container">
         <div class="row hero-title">
           <div class="col-12 col-lg-6">
-            <h1>Simulate any HTTP API behavior without external dependencies</h1>
-            <p class="description">Speed up testing process in an efficient and flexible way</p>
+            <h1>{{ title }}</h1>
+            <p class="description">{{ description }}</p>
             <p class="d-none d-md-block">
               <router-link :to="{ path: '/docs/Guides' }">
                 <button type="button" class="btn btn-outline-primary">Guides</button>

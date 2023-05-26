@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useMeta } from '@/composables/meta'
+
 const script = `import { on } from 'mokapi'
 
 export default function() {
@@ -11,7 +13,9 @@ export default function() {
     })
 }
 `
-document.title = 'Mocking tool for engineering teams | mokapi.io'
+const description = `Speed up testing process by creating stable development or test environments, reducing external dependencies, and simulating APIs that don't even exist yet.`
+
+useMeta('Mokapi - Easy and flexible API mocking | mokapi.io', description)
 </script>
 
 <template>
@@ -20,8 +24,8 @@ document.title = 'Mocking tool for engineering teams | mokapi.io'
       <div class="container">
         <div class="row hero-title">
           <div class="col-12 col-lg-6">
-            <h1>Create and test API designs<br />before actually building them</h1>
-            <p class="description">Speed up testing process and reduce dependencies</p>
+            <h1>Easy and flexible API mocking </h1>
+            <p class="description">{{ description }}</p>
             <p class="d-none d-md-block">
               <router-link :to="{ path: '/docs/Guides' }">
                 <button type="button" class="btn btn-outline-primary">Guides</button>

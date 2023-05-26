@@ -2,7 +2,7 @@
 <img src="https://github.com/marle3003/mokapi/raw/v0.5.0/logo.svg" alt="Mokapi" title="Mokapi" width="300" />
 </p>
 
-<h3 align="center">Create and test API designs<br />before actually building them</h3>
+<h3 align="center">Easy and flexible API mocking</h3>
 
 <p align="center">
 <a href="https://github.com/marle3003/mokapi/releases"><img src="https://img.shields.io/github/release/marle3003/mokapi.svg" alt="Github release"></a>
