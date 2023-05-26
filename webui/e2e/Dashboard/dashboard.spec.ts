@@ -41,7 +41,7 @@ test.describe('Dashboard', () => {
             await expect(httpCells.nth(1)).toHaveText('This is a sample server Petstore server. You can find out more about at http://swagger.io')
             await expect(httpCells.nth(1).locator('a')).toHaveAttribute('href', 'http://swagger.io')
             await expect(httpCells.nth(2)).toHaveText(formatTimestamp(1652237690))
-            await expect(httpCells.nth(3)).toHaveText('13 / 1')
+            await expect(httpCells.nth(3)).toHaveText('3 / 1')
             await expect(httpCells.nth(3).locator('.text-danger')).toBeVisible()
         })
 
