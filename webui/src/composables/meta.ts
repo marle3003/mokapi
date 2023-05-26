@@ -8,6 +8,7 @@ export function useMeta(title: string, description: string) {
     setOpenGraphMeta('og:title', title)
     setOpenGraphMeta('og:description', description)
     setOpenGraphMeta('og:image', 'https://mokapi.io/og-logo.png')
+    setOpenGraphMeta('og:image:alt', 'Mokapi logo')
     setOpenGraphMeta('og:type', 'website')
 }
 
