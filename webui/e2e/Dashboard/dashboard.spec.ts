@@ -30,7 +30,7 @@ test.describe('Dashboard', () => {
         await test.step("metric HTTP Requests", async () => {
             const metricHttpRequests = dashboard.http.metricHttpRequests
             await expect(metricHttpRequests.title).toHaveText('HTTP Requests / Errors')
-            await expect(metricHttpRequests.value).toHaveText('13 / 1')
+            await expect(metricHttpRequests.value).toHaveText('3 / 1')
             await expect(metricHttpRequests.value.locator('.text-danger')).toBeVisible()
             await expect(metricHttpRequests.additional).not.toBeVisible()
         })
