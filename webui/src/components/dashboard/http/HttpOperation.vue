@@ -55,7 +55,7 @@ onUnmounted(() => {
                             <p class="label">Operation</p>
                             <p>
                                 <i class="bi bi-exclamation-triangle-fill yellow pe-2" v-if="operation.deprecated"></i>
-                                <span class="badge operation" :class="operation.method" data-testid="operation">{{ operation.method }}</span>
+                                <span class="badge operation" :class="operation.method" data-testid="operation">{{ operation.method.toUpperCase() }}</span>
                                 <span class="ps-2" data-testid="path">
                                     <router-link :to="route.path(service, path)">
                                         {{ path.path }}

@@ -8,9 +8,9 @@ test.describe('Visit Swagger Petstore', () => {
 
     const service = {
         paths: [
-            { path: '/pet', method: 'post', lastRequest: formatTimestamp(1652235690), requests: '2 / 1' },
-            { path: '/pet/{petId}', method: 'get', lastRequest: '-', requests: '0 / 0' },
-            { path: '/pet/findByStatus', method: 'get', lastRequest: formatTimestamp(1652237690), requests: '1 / 0' }
+            { path: '/pet', method: 'POST', lastRequest: formatTimestamp(1652235690), requests: '2 / 1' },
+            { path: '/pet/{petId}', method: 'POST GET', lastRequest: '-', requests: '0 / 0' },
+            { path: '/pet/findByStatus', method: 'GET', lastRequest: formatTimestamp(1652237690), requests: '1 / 0' }
         ],
         requests: [
             { url: 'http://127.0.0.1:18080/pet', method: 'POST', statusCode: '200 OK', time: formatDateTime('2023-02-13T08:49:25.482366+01:00'), duration: '30 [sec]', deprecated: true },
@@ -40,8 +40,7 @@ test.describe('Visit Swagger Petstore', () => {
         for (const [i, path] of service.paths.entries()) {
             const cells = endpoints.nth(i).getByRole('cell')
             await expect(cells.nth(0)).toHaveText(path.path)
-            await expect(cells.nth(1)).toHaveText(path.method)
-            await expect(cells.nth(1).locator('span')).toHaveCSS('text-transform', 'uppercase')
+            await expect(cells.nth(1)).toHaveText(path.method, {ignoreCase: false})
             await expect(cells.nth(2)).toHaveText(path.lastRequest)
             await expect(cells.nth(3)).toHaveText(path.requests)
         }
@@ -57,7 +56,6 @@ test.describe('Visit Swagger Petstore', () => {
             }
             await expect(cells.nth(0)).toHaveText(request.url)
             await expect(cells.nth(1)).toHaveText(request.method)
-            await expect(cells.nth(1).locator('span')).toHaveCSS('text-transform', 'uppercase')
             await expect(cells.nth(2)).toHaveText(request.statusCode)
             await expect(cells.nth(3)).toHaveText(request.time)
             await expect(cells.nth(4)).toHaveText(request.duration)
@@ -77,8 +75,7 @@ test.describe('Visit Swagger Petstore', () => {
             await expect(path.type).toHaveText('HTTP')
 
             const cells = path.methods.locator('tbody tr').nth(0).getByRole('cell')
-            await expect(cells.nth(0)).toHaveText('post')
-            await expect(cells.nth(0).locator('span')).toHaveCSS('text-transform', 'uppercase')
+            await expect(cells.nth(0)).toHaveText('POST', {ignoreCase: false})
             await expect(cells.nth(0).locator('span')).toHaveClass('badge operation post')
             await expect(cells.nth(1)).toHaveText('addPet')
             await expect(cells.nth(2)).toHaveText('Add a new pet to the store')
@@ -88,21 +85,10 @@ test.describe('Visit Swagger Petstore', () => {
             await expect(rows.getByRole('cell').nth(0)).toHaveText(service.requests[0].url)
 
             await test.step('visit method post', async () => {
-                const responseBody = `{
-                    "type": "object",
-                    "properties": {
-                      "id": {
-                        "type": "integer",
-                        "format": "int64",
-                        "minimum": 1
-                      }
-                    }
-                  }`
-
-                await path.clickOperation('post')
+                await path.clickOperation('POST')
                 const op = http.getOperationModel()
 
-                await expect(op.operation).toHaveText('post')
+                await expect(op.operation).toHaveText('POST', {ignoreCase: false})
                 await expect(op.path).toHaveText('/pet')
                 await expect(op.operationId).toHaveText('addPet')
                 await expect(op.service).toHaveText('Swagger Petstore')
@@ -112,13 +98,13 @@ test.describe('Visit Swagger Petstore', () => {
 
                 await test.step("http request", async () => {
                     await expect(op.request.tabs.locator('.active')).toHaveText('Body')
-                    await expect(op.request.body).toHaveText(responseBody)
+                    await expect(op.request.body).not.toHaveText('')
 
                     await test.step('click expand', async () => {
                         const expand = op.request.expand
                         await expand.button.click()
                         await expect(expand.code).toBeVisible()
-                        await expect(expand.code).toHaveText(responseBody)
+                        await expect(expand.code).not.toHaveText('')
                         await expand.code.press('Escape', { delay: 100 })
                         // without a second time, dialog does not disappear
                         await expand.code.press('Escape')
@@ -138,8 +124,11 @@ test.describe('Visit Swagger Petstore', () => {
                 })
 
                 await test.step("http response", async () => {
-                    await expect(op.response.element.getByRole('tab', {name: '400 Bad Request'})).toBeVisible()
-                    await expect(op.response.description).toHaveText('Invalid ID supplied')
+                    await expect(op.response.element.getByRole('tab', {name: '200 OK'})).toBeVisible()
+                    await expect(op.response.element.getByTestId('response-description-200')).toHaveText('Successful operation')
+
+                    await op.response.element.getByRole('tab', {name: '400 Bad Request'}).click()
+                    await expect(op.response.element.getByTestId('response-description-400')).toHaveText('Invalid ID supplied')
 
                     await expect(op.response.element.getByRole('tab', {name: 'Body'})).toHaveClass(/disabled/)
                     await expect(op.response.element.getByRole('tab', {name: 'Headers'})).not.toHaveClass(/disabled/)

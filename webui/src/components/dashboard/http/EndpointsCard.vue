@@ -84,7 +84,7 @@ function allOperationsDeprecated(path: HttpPath): boolean{
                         </td>
                         <td>
                             <span v-for="operation in path.operations" key="operation.method" class="badge operation" :class="operation.method" @click.stop="goToOperation(path, operation)">
-                                {{ operation.method }} <i class="bi bi-exclamation-triangle-fill yellow" v-if="operation.deprecated"></i>
+                                {{ operation.method.toUpperCase() }} <i class="bi bi-exclamation-triangle-fill yellow" v-if="operation.deprecated"></i>
                             </span>
                         </td>
                         <td class="text-center">{{ lastRequest(path) }}</td>

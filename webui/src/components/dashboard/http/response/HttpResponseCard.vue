@@ -53,7 +53,7 @@ function selectedContentChange(event: any, statusCode: number){
                 <div class="tab-content ms-3 ps-3 responses-tab" style="width: 100%" id="v-pills-tabContent">
                     <div v-for="(response, index) of operation.responses" class="tab-pane fade" :class="index==0 ? 'show active' : ''" :id="'v-pills-'+response.statusCode" role="tabpanel" :aria-labelledby="'v-pills-'+response.statusCode+'-tab'">
                         <p class="label">Description</p>
-                        <p><markdown :source="response.description" data-testid="response-description" aria-label="Response body description"></markdown></p>
+                        <p><markdown :source="response.description" :data-testid="'response-description-'+response.statusCode" aria-label="Response body description"></markdown></p>
                         <div v-if="response.contents || response.headers">
                             <ul class="nav nav-pills response-tab" role="tabList">
                                 <li class="nav-link" id="pills-body-tab" :class="response.contents ? 'active' : 'disabled'" data-bs-toggle="pill" data-bs-target="#pills-body" type="button" role="tab" aria-controls="pills-body" aria-selected="true">Body</li>
