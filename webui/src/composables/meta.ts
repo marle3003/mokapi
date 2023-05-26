@@ -6,7 +6,7 @@ export function useMeta(title: string, description: string) {
     setOpenGraphMeta('og:site_name', 'Mokapi')
     setOpenGraphMeta('og:title', title)
     setOpenGraphMeta('og:description', description)
-    setOpenGraphMeta('og:image', 'https://mokapi.io/logo.svg')
+    setOpenGraphMeta('og:image', 'https://mokapi.io/logo.png')
     setOpenGraphMeta('og:type', 'website')
 }
 
