@@ -9,7 +9,7 @@ export let metrics = [
     },
     {
         name: 'http_requests_total{service="Swagger Petstore",endpoint="/pet"}"',
-        value: 10
+        value: 2
     },
     {
         name: 'http_requests_errors_total{service="Swagger Petstore",endpoint="/pet"}"',
@@ -17,7 +17,7 @@ export let metrics = [
     },
     {
         name: 'http_requests_total{service="Swagger Petstore",endpoint="/pet/findByStatus"}"',
-        value: 3
+        value: 1
     },
     {
         name: 'http_requests_errors_total{service="Swagger Petstore",endpoint="/pet/findByStatus"}"',

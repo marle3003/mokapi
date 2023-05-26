@@ -41,6 +41,7 @@ type Address struct {
 type Attachment struct {
 	Name        string `json:"name"`
 	ContentType string `json:"contentType"`
+	Disposition string `json:"disposition"`
 	Data        []byte `json:"data"`
 }
 
@@ -122,40 +123,53 @@ func (m *Message) readFrom(tc textproto.Reader) error {
 				log.Errorf("smtp: unable to read message part: %v", err)
 				break
 			}
-			if p.Header.Get("Content-Disposition") == "attachment" {
-				m.Attachments = append(m.Attachments, newAttachment(p))
-			} else {
-				b, err := io.ReadAll(p)
+
+			if p.Header.Get("Content-Disposition") != "" {
+				a, err := newAttachment(p)
 				if err != nil {
-					log.Errorf("smtp: unable to read part: %v", err)
+					return err
 				}
-				m.Body += string(b)
+				m.Attachments = append(m.Attachments, a)
+			} else {
+				m.ContentType = p.Header.Get("Content-Type")
+				encoding := p.Header.Get("Content-Transfer-Encoding")
+				b, err := parse(p, encoding)
+				if err != nil {
+					return err
+				}
+				m.Body = string(b[0 : len(b)-1]) // remove last \n
 			}
 		}
 	default:
-		var r io.Reader
-		switch strings.ToLower(m.Encoding) {
-		case "quoted-printable":
-			r = quotedprintable.NewReader(tc.DotReader())
-		case "base64":
-			r = base64.NewDecoder(base64.StdEncoding, tc.DotReader())
-		case "7bit", "8bit", "binary", "":
-			r = tc.DotReader()
-		default:
-			return fmt.Errorf("unsupported encoding %v", m.Encoding)
+		b, err := parse(tc.DotReader(), m.Encoding)
+		if err != nil {
+			return err
 		}
-
-		var data bytes.Buffer
-		data.ReadFrom(r)
-		if data.Len() > 0 {
-			m.Body = data.String()[0 : data.Len()-1] // remove last \n
+		if len(b) > 0 {
+			m.Body = string(b[0 : len(b)-1]) // remove last \n
 		}
 	}
 
 	return nil
 }
 
-func newAttachment(part *multipart.Part) Attachment {
+func parse(r io.Reader, encoding string) ([]byte, error) {
+	switch strings.ToLower(encoding) {
+	case "quoted-printable":
+		r = quotedprintable.NewReader(r)
+	case "base64":
+		r = base64.NewDecoder(base64.StdEncoding, r)
+	case "7bit", "8bit", "binary", "":
+	default:
+		return nil, fmt.Errorf("unsupported encoding %v", encoding)
+	}
+
+	var data bytes.Buffer
+	_, err := data.ReadFrom(r)
+	return data.Bytes(), err
+}
+
+func newAttachment(part *multipart.Part) (Attachment, error) {
 	contentType := part.Header.Get("Content-Type")
 	name := part.FormName()
 	if len(name) == 0 {
@@ -166,30 +180,16 @@ func newAttachment(part *multipart.Part) Attachment {
 		}
 	}
 	encoding := part.Header.Get("Content-Transfer-Encoding")
-	var data []byte
-	var err error
-	b, err := io.ReadAll(part)
+	b, err := parse(part, encoding)
 	if err != nil {
-		log.Errorf("unable to read multipart: %v", err)
-	}
-	switch strings.ToUpper(encoding) {
-	case "BASE64":
-
-		data, err = base64.StdEncoding.DecodeString(string(b))
-		if err != nil {
-			log.Errorf("error on base64 decoding attachment: %v", err)
-		}
-	case "QUOTED-PRINTABLE":
-		data, err = io.ReadAll(quotedprintable.NewReader(bytes.NewReader(b)))
-		if err != nil {
-			log.Println("Error decoding quoted-printable -", err)
-		}
+		return Attachment{}, err
 	}
 	return Attachment{
 		Name:        name,
 		ContentType: part.Header.Get("Content-Type"),
-		Data:        data,
-	}
+		Disposition: part.Header.Get("Content-Disposition"),
+		Data:        b,
+	}, nil
 }
 
 func newMessageId() string {

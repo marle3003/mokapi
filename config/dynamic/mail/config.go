@@ -76,6 +76,9 @@ func NewRuleExpr(r *regexp.Regexp) *RuleExpr {
 }
 
 func (r *RuleExpr) String() string {
+	if r == nil {
+		return ""
+	}
 	return r.expr.String()
 }
 

@@ -29,7 +29,9 @@ document.title = 'Test emails safely and no risk of spamming recipients\' inbox 
             </p>
           </div>
           <div class="col-12 col-lg-6 justify-content-center">
-            <img src="/logo.svg" />
+            <a href="#maildialog" data-bs-toggle="modal" data-bs-target="#maildialog">
+              <img src="/mail.png" />
+            </a>
           </div>
           <div class="col-12 d-block d-md-none">
             <p style="margin-top: 2rem;">
@@ -63,14 +65,14 @@ document.title = 'Test emails safely and no risk of spamming recipients\' inbox 
           <div class="card">
             <div class="card-body">
               <div class="card-title">QA Automation</div>
-              Use your favorite testing tool for validating sent emails using
+              Use your favorite testing tool to validate sent emails using
               Mokapi's Dashboard or API
             </div>
           </div>
           <div class="card">
             <div class="card-body">
-              <div class="card-title">Rules</div>
-              Define rules to allow or deny emails
+              <div class="card-title">Rules & Mokapi Script</div>
+              Define rules to allow or deny emails, intercept or forward SMTP mails
             </div>
           </div>
         </div>
@@ -93,11 +95,20 @@ document.title = 'Test emails safely and no risk of spamming recipients\' inbox 
         <div class="row">
           <div class="col-12">
             <h2>See what's going on</h2>
-              <img src="@/assets/docs/guides/get-started/dashboard.png" style="width:100%" />
+              <img src="/smtp.png" style="width:100%" />
           </div>
         </div>
       </div>
     </section>
+    <div class="modal fade" id="maildialog" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-body">
+            <img src="/mail.png" style="width:100%" />
+          </div>
+        </div>
+      </div>
+    </div>
   </main>
 </template>
 

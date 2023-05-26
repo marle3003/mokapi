@@ -25,6 +25,7 @@ const { attachmentUrl } = useMails()
               </div>
               <div class="col">
                 <p class="name">{{ attach.name }}</p>
+                <p>{{ attach.disposition }}</p>
                 <p>{{ format(attach.size) }}</p>
               </div>
             </div>

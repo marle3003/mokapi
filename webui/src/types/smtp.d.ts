@@ -61,4 +61,5 @@ declare interface Attachment {
     name: string
     contentType: string
     size: number
+    disposition: string
 }

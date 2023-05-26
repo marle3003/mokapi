@@ -28,13 +28,21 @@ export let mails = [
         messageId: '20230223-084925.763-4196@mokapi.io',
         inReplyTo: '20230222-084925.763-4196@mokapi.io',
         subject: 'A test mail',
-        body: '<h1>Hello</h1>Mail message from Alice',
+        body: '<html><body><h1>Hello</h1>Mail message from Alice<img src="cid:icon.png" /></body></html>',
         attachments: [
             {
                 name: 'foo.txt',
                 contentType: 'text/plain',
+                disposition: 'attachment',
                 size: 34056,
                 data: 'foobar'
+            },
+            {
+                name: 'icon.png',
+                contentType: 'image/png',
+                disposition: 'inline',
+                size: 372,
+                data: open('icon.png', { as: 'binary' })
             }
         ],
         duration: 30016,

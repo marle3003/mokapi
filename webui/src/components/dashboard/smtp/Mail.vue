@@ -87,7 +87,7 @@ const { mail, isLoading: isLoading } = fetchMail(messageId)
         </div>
       </div>
     </div>
-    <mail-body :body="mail.body" :contentType="mail.contentType" />
+    <mail-body :messageId="mail.messageId" :body="mail.body" :contentType="mail.contentType" />
     <mail-attachments :messageId="mail.messageId" :attachments="mail.attachments" />
     <mail-footer :contentType="mail.contentType" :encoding="mail.encoding" :messageId="mail.messageId" :inReplyTo="mail.inReplyTo" />
   </div>

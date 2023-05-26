@@ -61,6 +61,10 @@ const router = createRouter({
       component: () => import('@/views/Home.vue')
     },
     {
+      path: '/http',
+      component: () => import('@/views/Http.vue')
+    },
+    {
       path: '/smtp',
       component: () => import('@/views/Smtp.vue')
     },

@@ -97,24 +97,25 @@ export let apps = [
                         summary: "Add a new pet to the store",
                         operationId: "addPet",
                         requestBody: {
-                            description: "Pet object that needs to be added to the store",
+                            description: "Create a new pet in the store",
                             contents: [
                                 {
                                     type: "application/json",
-                                    schema: {
-                                        type: "object",
-                                        properties: {
-                                            id: {
-                                                type: "integer",
-                                                format: "int64",
-                                                minimum: 1
-                                            }
-                                        }
-                                    }
+                                    schema: pet
                                 }
                             ]
                         },
                         responses: [
+                            {
+                                statusCode: 200,
+                                description: "Successful operation",
+                                contents: [
+                                    {
+                                        type: "application/json",
+                                        schema: pet
+                                    }
+                                ]
+                            },
                             {
                                 statusCode: 400,
                                 description: "Invalid ID supplied",
@@ -135,6 +136,63 @@ export let apps = [
             {
                 path: "/pet/{petId}",
                 operations: [
+                    {
+                        method: "post",
+                        summary: "Updates a pet in the store with form data",
+                        parameters: [
+                            {
+                                name: "petId",
+                                type: "path",
+                                description: "ID of pet that needs to be updated",
+                                schema: {
+                                    type: "integer",
+                                    format: "int64"
+                                },
+                                required: true
+                            },
+                            {
+                                name: "name",
+                                type: "formData",
+                                description: "Updated name of the pet",
+                                schema: {
+                                    type: "string"
+                                }
+                            },
+                            {
+                                name: "status",
+                                type: "formData",
+                                description: "Updated status of the pet",
+                                schema: {
+                                    type: "string"
+                                }
+                            }
+                        ],
+                        responses: [
+                            {
+                                statusCode: 200,
+                                contents: [
+                                    {
+                                        type: "application/json",
+                                        schema: {
+                                            type: "object",
+                                            properties: {
+                                                id: {
+                                                    type: "integer",
+                                                    format: "int64"
+                                                },
+                                                name: {
+                                                    type: "string"
+                                                },
+                                                status: {
+                                                    type: "string"
+                                                }
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
                     {
                         method: "get",
                         summary: "Returns a single pet",
@@ -335,6 +393,42 @@ export let events = [
                     duration: 20,
                     tags: {
                         name: "dashboard",
+                        file: "/Users/maesi/GolandProjects/mokapi/examples/mokapi/http_handler.js",
+                        event: "http"
+                    }
+                }
+            ]
+        }
+    },
+    {
+        id: "ac509b4f-9254-4bb7-abbb-90c100310ad7",
+        traits: {
+            namespace: "http",
+            name: "Swagger Petstore",
+            path: "/pet"
+        },
+        time: '2023-02-13T10:05:25.583366+01:00',
+        data: {
+            request: {
+                method: "POST",
+                url: "http://127.0.0.1:18080/pet",
+                contentType: "application/json",
+                body: `{"id": 0,"category": {"id": 0,"name": "string"},"name": "doggie","photoUrls": ["string"],"tags":[{"id": 0,"name": "string"}],"status": "available"}`,
+            },
+            response: {
+                statusCode: 200,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: `{"id": 0,"category": {"id": 0,"name": "string"},"name": "doggie","photoUrls": ["string"],"tags":[{"id": 0,"name": "string"}],"status": "available"}`,
+                size: 512
+            },
+            duration: 133,
+            actions: [
+                {
+                    duration: 20,
+                    tags: {
+                        name: "pet store",
                         file: "/Users/maesi/GolandProjects/mokapi/examples/mokapi/http_handler.js",
                         event: "http"
                     }

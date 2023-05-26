@@ -11,17 +11,17 @@ export default function() {
     })
 }
 `
-document.title = 'Mocking tool for engineering teams | mokapi.io'
+document.title = 'Test emails safely and no risk of spamming recipients\' inbox | mokapi.io'
 </script>
 
 <template>
-  <main class="home">
+  <main class="smtp">
     <section>
       <div class="container">
         <div class="row hero-title">
           <div class="col-12 col-lg-6">
-            <h1>Create and test API designs<br />before actually building them</h1>
-            <p class="description">Speed up testing process and reduce dependencies</p>
+            <h1>Simulate any HTTP API behavior without external dependencies</h1>
+            <p class="description">Speed up testing process in an efficient and flexible way</p>
             <p class="d-none d-md-block">
               <router-link :to="{ path: '/docs/Guides' }">
                 <button type="button" class="btn btn-outline-primary">Guides</button>
@@ -32,7 +32,9 @@ document.title = 'Mocking tool for engineering teams | mokapi.io'
             </p>
           </div>
           <div class="col-12 col-lg-6 justify-content-center">
-            <img src="/logo.svg" />
+            <a href="#requestdialog" data-bs-toggle="modal" data-bs-target="#requestdialog">
+              <img src="/http-request.png" />
+            </a>
           </div>
           <div class="col-12 d-block d-md-none">
             <p style="margin-top: 2rem;">
@@ -49,36 +51,32 @@ document.title = 'Mocking tool for engineering teams | mokapi.io'
     </section>
     <section>
       <div class="container">
-        <h2>Improve quality of your API. Reduce the risk of bugs or errors in production.</h2>
+        <h2>Early feedback for faster time to market with high quality</h2>
         <div class="card-group">
           <div class="card">
             <div class="card-body">
-              <router-link :to="{path: '/http'}">
-                <div class="card-title">HTTP</div>
-                Mock any HTTP API with OpenAPI specification.
-              </router-link>
+              <div class="card-title">Configuration as Code</div>
+              Mock any HTTP API with OpenAPI specification
             </div>
           </div>
           <div class="card">
             <div class="card-body">
-              <div class="card-title">Kafka</div>
-              Simulate a Kafka system with AsyncAPI specification.
+              <div class="card-title">QA Automation</div>
+              Test only system that you are responsible and fake all others to build test scenarios faster and easier.
             </div>
           </div>
           <div class="card">
             <div class="card-body">
-              <div class="card-title">LDAP</div>
-              Integrate your App with a fake LDAP server.
+              <div class="card-title">Mokapi Scripts</div>
+              Intercept or forward HTTP requests for your unique scenario such as latencies, timeouts or other edge cases.
             </div>
           </div>
-            <div class="card">
-              <div class="card-body">
-                <router-link :to="{path: '/smtp'}">
-                  <div class="card-title">SMTP</div>
-                  Test emails safely and no risk of spamming recipients' inbox
-                </router-link>
-              </div>
-            </div> 
+          <div class="card">
+            <div class="card-body">
+              <div class="card-title">Request Loggin</div>
+              Analyze and inspect all requests and responses in Mokapi's Dashboard.
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -86,7 +84,7 @@ document.title = 'Mocking tool for engineering teams | mokapi.io'
       <div class="container">
         <div class="row">
           <div class="col-12 justify-content-center">
-            <h2>Script mock data in Javascript</h2>
+            <h2>Customize the response to your specific needs using Mokapi's event handlers.</h2>
             <div class="justify-content-center">
               <pre v-highlightjs="script"><code class="javascript"></code></pre>
             </div>
@@ -99,16 +97,36 @@ document.title = 'Mocking tool for engineering teams | mokapi.io'
         <div class="row">
           <div class="col-12">
             <h2>See what's going on</h2>
-              <img src="@/assets/docs/guides/get-started/dashboard.png" style="width:100%" />
+              <a href="#httpdialog" data-bs-toggle="modal" data-bs-target="#httpdialog">
+                <img src="/http.png" style="width:100%" />
+              </a>
           </div>
         </div>
       </div>
     </section>
+    <div class="modal fade" id="requestdialog" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-body">
+            <img src="/http-request.png" width="100%" />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal fade" id="httpdialog" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-body">
+            <img src="/http.png" style="width:100%" />
+          </div>
+        </div>
+      </div>
+    </div>
   </main>
 </template>
 
 <style scoped>
-.home {
+.smtp {
   max-width: 1200px;
   margin: 0 auto auto;
 }
@@ -172,9 +190,6 @@ h2 {
   background-color: var(--color-background-soft);
   margin: 7px;
   margin-left: 0;
-}
-.card a {
-  text-decoration: none;
 }
 .card-title {
   font-size: 1.3rem;
