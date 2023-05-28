@@ -24,7 +24,7 @@ const xmlTemplate = `
 
 const urlTemplate = `
 <url>
-  <loc>%s/</loc>
+  <loc>%s</loc>
   <changefreq>daily</changefreq>
   <priority>0.8</priority>
   <lastmod>%s</lastmod>
