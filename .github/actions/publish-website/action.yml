@@ -25,6 +25,10 @@ runs:
         npm run build-sitemap
         npm run build-website
       shell: bash
+    - name: prerender
+      working-directory: ./webui/ssg
+      run: node index.js
+      shell: bash
     - name: Install lftp
       run: sudo apt install lftp
       shell: bash

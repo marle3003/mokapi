@@ -14,7 +14,7 @@ document.title = 'Test emails safely and no risk of spamming recipients\' inbox 
 
 const title = `End-to-end email testing for a smooth email experience`
 const description = `Test emails safely and no risk of spamming recipients' inbox`
-useMeta(`Mokapi - ${title} | mokapi.io`, description)
+useMeta(`Mokapi - ${title} | mokapi.io`, description, "https://mokapi.io/smtp")
 </script>
 
 <template>
@@ -29,7 +29,7 @@ useMeta(`Mokapi - ${title} | mokapi.io`, description)
               <router-link :to="{ path: '/docs/Guides' }">
                 <button type="button" class="btn btn-outline-primary">Guides</button>
               </router-link>
-              <router-link :to="{ path: '/docs/E  xamples' }">
+              <router-link :to="{ path: '/docs/examples' }">
                 <button type="button" class="btn btn-outline-primary">Examples</button>
               </router-link>
             </p>
@@ -44,7 +44,7 @@ useMeta(`Mokapi - ${title} | mokapi.io`, description)
                 <router-link :to="{ path: '/docs/Guides' }">
                   <button type="button" class="btn btn-outline-primary">Guides</button>
                 </router-link>
-                <router-link :to="{ path: '/docs/Examples' }">
+                <router-link :to="{ path: '/docs/examples' }">
                   <button type="button" class="btn btn-outline-primary">Examples</button>
                 </router-link>
               </p>

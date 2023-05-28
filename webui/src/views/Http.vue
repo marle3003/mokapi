@@ -16,7 +16,7 @@ export default function() {
 
 const title = `Bring your OpenAPI specs to life`
 const description = `Don't wait for APIs to be ready. Let your teams develop in parallel`
-useMeta(`Mokapi - ${title} | mokapi.io`, description)
+useMeta(`Mokapi - ${title} | mokapi.io`, description, "https://mokapi.io/http")
 </script>
 
 <template>
@@ -31,7 +31,7 @@ useMeta(`Mokapi - ${title} | mokapi.io`, description)
               <router-link :to="{ path: '/docs/Guides' }">
                 <button type="button" class="btn btn-outline-primary">Guides</button>
               </router-link>
-              <router-link :to="{ path: '/docs/Examples' }">
+              <router-link :to="{ path: '/docs/examples' }">
                 <button type="button" class="btn btn-outline-primary">Examples</button>
               </router-link>
             </p>
@@ -46,7 +46,7 @@ useMeta(`Mokapi - ${title} | mokapi.io`, description)
                 <router-link :to="{ path: '/docs/Guides' }">
                   <button type="button" class="btn btn-outline-primary">Guides</button>
                 </router-link>
-                <router-link :to="{ path: '/docs/Examples' }">
+                <router-link :to="{ path: '/docs/examples' }">
                   <button type="button" class="btn btn-outline-primary">Examples</button>
                 </router-link>
               </p>
@@ -73,7 +73,7 @@ useMeta(`Mokapi - ${title} | mokapi.io`, description)
           <div class="card">
             <div class="card-body">
               <div class="card-title">Mokapi Scripts</div>
-              Intercept or forward HTTP requests for your unique scenario such as latencies, timeouts or other edge cases.
+              Intercept or forward HTTP requests for your unique workflow such as latencies, timeouts or other edge cases.
             </div>
           </div>
           <div class="card">

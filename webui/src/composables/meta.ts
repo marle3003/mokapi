@@ -1,7 +1,8 @@
 
-export function useMeta(title: string, description: string) {
+export function useMeta(title: string, description: string, canonicalUrl: string) {
     document.title = title
     setMeta('description', description)
+    setMeta('canonical', canonicalUrl)
 
     setOpenGraphMeta('og:site_name', 'Mokapi')
     setOpenGraphMeta('og.url', "https://mokapi.io")
