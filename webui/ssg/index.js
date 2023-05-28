@@ -19,7 +19,7 @@ const Server = require('./server');
     console.log(`crawling ${url.href}...`)
     const page = await browser.newPage();
     await page.goto(url.href, {
-      waitUntil: 'networkidle', // 4
+      waitUntil: 'networkidle',
     });
 
     await page.evaluate(async () => {
@@ -27,8 +27,6 @@ const Server = require('./server');
         script.remove();
        }
        for (const script of document.querySelectorAll('link'))  {
-           
-           console.log(script.as)
            if (script.as === 'script') {
                script.remove();
            }
@@ -51,11 +49,12 @@ const Server = require('./server');
     }, url))
     await page.close()
 
-    const promises = [];
+    //const promises = [];
     for (const u of links) {
-      promises.push(crawl(u))
+      //promises.push(crawl(u))
+      await crawl(u)
     }
-    await Promise.all(promises)
+    //await Promise.all(promises)
   }
 
   await crawl(new URL('http://localhost:8025/home'))
