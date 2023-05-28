@@ -14,7 +14,7 @@
 </p>
 <p align="center">
     <a href="https://github.com/marle3003/mokapi/releases">Download</a> ·
-    <a href="https://mokapi.io/docs/guides/get-started/welcome">Documentation</a> ·
+    <a href="https://mokapi.io/docs/guides/get-started/welcome">Documentation</a>
 </p>
 
 ## Overview
