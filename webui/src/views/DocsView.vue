@@ -126,19 +126,13 @@ function formatParam(label: any): string {
         <div class="text-white sidebar d-none d-md-block" :class="openSidebar ? 'open': ''" id="sidebar">
           <ul class="nav nav-pills flex-column mb-auto pe-3">
             <li class="nav-item" v-for="(v, k) of nav[level1]">
-              <div v-if="(typeof v != 'string')" class="chapter">
-                <div class="chapter-text">
-                  {{ k }}
-                </div>
-                <div>
-                  <li class="nav-item" v-for="(_, k2) of v">
-                    <router-link v-if="k != k2" class="nav-link" :class="matchLevel2(k) && matchLevel3(k2) ? 'active': ''" :to="{ name: 'docs', params: {level2: formatParam(k), level3: formatParam(k2)} }" style="padding-left: 2rem">{{ k2 }}</router-link>
-                  </li>
-              </div>
-              </div>
-              <div class="chapter" v-if="typeof v == 'string' && level1 != k">
-                <router-link class="nav-link chapter-text" :class="matchLevel2(k) ? 'active': ''" :to="{ name: 'docs', params: {level2: formatParam(k)} }">{{ k }}</router-link>
-              </div>
+              <p v-if="(typeof v != 'string')" class="chapter-text">{{ k }}</p>
+              <ul v-if="(typeof v != 'string')" class="nav nav-pills flex-column mb-auto pe-3 chapter">
+                <li class="nav-item" v-for="(_, k2) of v">
+                  <router-link v-if="k != k2" class="nav-link" :class="matchLevel2(k) && matchLevel3(k2) ? 'active': ''" :to="{ name: 'docs', params: {level2: formatParam(k), level3: formatParam(k2)} }" style="padding-left: 2rem">{{ k2 }}</router-link>
+                </li>
+              </ul>
+              <router-link v-if="typeof v == 'string' && level1 != k" class="nav-link chapter-text" :class="matchLevel2(k) ? 'active': ''" :to="{ name: 'docs', params: {level2: formatParam(k)} }">{{ k }}</router-link>
             </li>
           </ul>
         </div>
@@ -271,12 +265,14 @@ table.selectable tbody tr:hover {
 }
 
 .chapter {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.5rem !important;
 }
 
 .chapter-text {
+  color: var(--color-text);
   font-weight: 700;
   padding-left: 16px;
+  margin-bottom: 0;
 }
 
 pre {
