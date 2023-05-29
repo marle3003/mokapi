@@ -1,4 +1,8 @@
-# Mokapi's Javascript API
+---
+title: Mokapi Javascript API
+description: Provides the documentation of the Mokapi Javascript API.
+---
+# Mokapi Javascript API
 
 The list of Mokapi's Javascript modules usable to extend Mokapi's behavior.
 

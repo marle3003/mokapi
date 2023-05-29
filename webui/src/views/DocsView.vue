@@ -1,13 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref, inject } from 'vue';
 import { useRoute } from 'vue-router';
-import MarkdownItHighlightjs from 'markdown-it-highlightjs';
-import MarkdownIt from 'markdown-it';
-import { MarkdownItTabs } from '@/composables/markdown-tabs';
-import { MarkdownItBox } from '@/composables/markdown-box';
-import { MarkdownItLinks } from '@/composables/mardown-links'
-
-const images =  import.meta.glob('/src/assets/docs/**/*.png', {as: 'url', eager: true})
+import { useMarkdown } from '@/composables/markdown'
+import { useMeta } from '@/composables/meta'
 
 const files =  import.meta.glob('/src/assets/docs/**/*.md', {as: 'raw', eager: true})
 const nav = inject<DocConfig>('nav')!
@@ -43,7 +38,7 @@ if (level3 || typeof file !== 'string') {
   file = (file as DocConfig)[level3]
 }
 
-let content = files[`/src/assets/docs/${file}`]
+const {content, metadata} = useMarkdown(files[`/src/assets/docs/${file}`])
 
 let base = document.querySelector("base")?.href ?? '/'
 base = base.replace(document.location.origin, '')
@@ -51,26 +46,6 @@ if (content) {
   if (base == '/') {
     base = ''
   }
-  const regex = /<img([^>]*)src="(?:[^"\/]*)([^"]+)"/gi
-  let m;
-  do {
-    m = regex.exec(content)
-    if (m) {
-      const path = `/src/assets${m[2]}`
-      const imageUrl = images[path]
-      content = content.replace(m[0], `<img${m[1]} src="${imageUrl}"`);
-    }
-  } while(m);
-}
-
-if (content) {
-  let markdown = new MarkdownIt()
-    .use(MarkdownItHighlightjs)
-    .use(MarkdownItTabs)
-    .use(MarkdownItBox)
-    .use(MarkdownItLinks)
-    .set({html: true})
-  content = markdown.render(content)
 }
 
 onMounted(() => {
@@ -94,11 +69,7 @@ onMounted(() => {
       }
     }
   })
-  document.title = level3 + ' | mokapi.io'
-  var link = document.createElement('link');
-  link.rel = "canonical";
-  link.href = 'https://mokapi.io'+useRoute().fullPath.toLowerCase()
-  document.getElementsByTagName('head')[0].appendChild(link);
+  useMeta(metadata.title || level3, metadata.description, 'https://mokapi.io'+useRoute().fullPath.toLowerCase())
 })
 function toggleSidebar() {
   openSidebar.value = !openSidebar.value

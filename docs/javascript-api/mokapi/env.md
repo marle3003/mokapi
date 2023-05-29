@@ -1,3 +1,7 @@
+---
+title: Javascript API: env
+description: Gets the value of an environment variable.
+---
 # env( name )
 
 Gets the value of an environment variable.

@@ -1,3 +1,7 @@
+---
+title: LDAP Documentation
+description: Integrate your App with a fake LDAP server
+---
 # LDAP
 Use Mokapi to mock an LDAP server
 

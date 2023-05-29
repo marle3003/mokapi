@@ -1,3 +1,7 @@
+---
+title: Javascript API: put
+description: Make an HTTP PUT request
+---
 # put( url, [body], [args] )
 
 Make a PUT request

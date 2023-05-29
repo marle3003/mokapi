@@ -1,3 +1,7 @@
+---
+title: SMTP Rules
+description: Define rules to allow or deny emails
+---
 # Rules
 
 You can declaratively write a rule whether the mail server accepts or blocks a mail.

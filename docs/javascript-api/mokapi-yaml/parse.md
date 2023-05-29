@@ -1,3 +1,7 @@
+---
+title: Javascript API: parse
+description: Parses a YAML string, constructing the JavaScript value or object described by the string.
+---
 # parse( text )
 
 Parses a YAML string, constructing the JavaScript value or object described by the string.

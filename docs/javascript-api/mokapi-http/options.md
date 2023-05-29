@@ -1,3 +1,7 @@
+---
+title: Javascript API: options
+description: Make an HTTP OPTIONS request
+---
 # options( url, [body], [args] )
 
 Make a OPTIONS request

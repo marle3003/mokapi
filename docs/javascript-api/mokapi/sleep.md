@@ -1,3 +1,7 @@
+---
+title: Javascript API: sleep
+description: Suspends the execution for the specified duration.
+---
 # sleep( time )
 
 Suspends the execution for the specified duration.

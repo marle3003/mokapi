@@ -1,3 +1,7 @@
+---
+title: Javascript API: head
+description: Make an HTTP HEAD request
+---
 # head( url, [args] )
 
 Make a HEAD request

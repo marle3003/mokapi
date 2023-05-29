@@ -1,6 +1,10 @@
+---
+title: Javascript API: Response
+description: Response object contains response data from an HTTP request
+---
 # Response
 
-Response object contains response data from a HTTP request 
+Response object contains response data from an HTTP request 
 from functions in the module mokapi/http.
 
 | Name       | Type     | Description                                                           |

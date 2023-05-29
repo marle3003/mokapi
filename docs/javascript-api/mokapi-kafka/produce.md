@@ -1,6 +1,10 @@
+---
+title: Javascript API: produce
+description: Send a single message to a Kafka topic.
+---
 # produce( [args] )
 
-Sends a single message to a Kafka topic.
+Send a single message to a Kafka topic.
 
 | Parameter       | Type   | Description                                                                                           |
 |-----------------|--------|-------------------------------------------------------------------------------------------------------|

@@ -1,6 +1,10 @@
+---
+title: Javascript API: every
+description: Schedules a new periodic job with an interval
+---
 # every( interval, handler, [args] )
 
-Schedules a new periodic job with interval. Interval string 
+Schedules a new periodic job with an interval. Interval string 
 is a possibly signed sequence of decimal numbers, each with 
 optional fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m".
 

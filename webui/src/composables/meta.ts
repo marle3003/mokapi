@@ -1,11 +1,15 @@
+const defaultDescription = `Speed up testing process by creating stable development or test environments, reducing external dependencies, and simulating APIs that don't even exist yet.`
 
 export function useMeta(title: string, description: string, canonicalUrl: string) {
-    document.title = title
-    setMeta('description', description)
-    setMeta('canonical', canonicalUrl)
+    if (!description) {
+        description = defaultDescription
+    }
 
-    setOpenGraphMeta('og:site_name', 'Mokapi')
-    setOpenGraphMeta('og.url', "https://mokapi.io")
+    document.title = title
+    setDescription(description)
+    setCanonical(canonicalUrl)
+
+    setOpenGraphMeta('og:url', canonicalUrl)
     setOpenGraphMeta('og:title', title)
     setOpenGraphMeta('og:description', description)
     setOpenGraphMeta('og:image', 'https://mokapi.io/og-logo.png')
@@ -14,15 +18,32 @@ export function useMeta(title: string, description: string, canonicalUrl: string
 }
 
 function setOpenGraphMeta(property: string, content: string) {
-    var meta = document.createElement('meta');
-    meta.setAttribute('property', property)
+    let meta = document.head.querySelector(`meta[property="${property}"]`) as HTMLMetaElement
+    if (!meta) {
+        meta = document.createElement('meta')
+        meta.setAttribute('property', property)
+        document.getElementsByTagName('head')[0].prepend(meta);
+    }
     meta.content = content;
-    document.getElementsByTagName('head')[0].prepend(meta);
 }
 
-function setMeta(name: string, content: string) {
-    var meta = document.createElement('meta') as HTMLMetaElement;
-    meta.name = name
-    meta.content = content;
-    document.getElementsByTagName('head')[0].appendChild(meta);
+function setDescription(description: string) {
+    let meta = document.head.querySelector('meta[name="description"]') as HTMLMetaElement
+    if (!meta) {
+        meta = document.createElement('meta')
+        meta.name = 'description'
+        document.getElementsByTagName('head')[0].prepend(meta);
+    }
+    meta.content = description;
+}
+
+function setCanonical(href: string) {
+    let canonical = document.head.querySelector('link[rel="canonical"]') as HTMLLinkElement
+    if (!canonical) {
+        canonical = document.createElement('link') as HTMLLinkElement;
+        canonical.rel = 'canonical'
+        document.getElementsByTagName('head')[0].appendChild(canonical);
+    }
+    canonical.href = href;
+    
 }

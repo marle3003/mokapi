@@ -1,3 +1,7 @@
+---
+title: Installation
+description: You can use Mokapi inside a Docker container, standalone binary or using npm package
+---
 # Installation
 
 You can use Mokapi inside a Docker container, standalone binary

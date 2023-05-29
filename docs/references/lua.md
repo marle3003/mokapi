@@ -1,3 +1,7 @@
+---
+title: Lua
+description: You can extend Mokapi with scripts written in the Lua programming language.
+---
 # Lua
 
 You can extend Mokapi with scripts written in the Lua programming language. With

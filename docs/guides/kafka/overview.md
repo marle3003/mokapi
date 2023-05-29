@@ -1,3 +1,7 @@
+---
+title: Kafka Documentation
+description: Mock your Kafka topics with AsyncAPI specification
+---
 # Kafka
 
 Kafka is a distributed streaming platform that is commonly used to build real-time data pipelines and streaming applications.

@@ -1,3 +1,7 @@
+---
+title: Javascript API: stringify
+description: Converts a JavaScript value to a YAML string.
+---
 # stringify( value )
 
 Converts a JavaScript value to a YAML string.

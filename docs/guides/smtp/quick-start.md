@@ -1,3 +1,7 @@
+---
+title: SMTP Quick Start
+description: A simple Use Case to use Mokapi as a fake smtp server
+---
 # Quick Start
 
 A simple Use Case to use Mokapi as a fake smtp server

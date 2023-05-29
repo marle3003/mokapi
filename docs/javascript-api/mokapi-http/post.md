@@ -1,4 +1,8 @@
-# get( url, [body], [args] )
+---
+title: Javascript API: post
+description: Make an HTTP POST request
+---
+# post( url, [body], [args] )
 
 Make a POST request
 

@@ -1,3 +1,7 @@
+---
+title: Kafka Quick Start
+description: A simple Use Case to use Mokapi to produce orders into a Kafka topic
+---
 # Quick Start
 
 A simple Use Case to use Mokapi to produce orders into an [AsyncAPI](https://www.asyncapi.com/) Kafka instance

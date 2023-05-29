@@ -1,3 +1,7 @@
+---
+title: SMTP Documentation
+description: Test emails safely and no risk of spamming recipients' inbox
+---
 # SMTP
 With Mokapi you can capture your emails, being sent from your application, without flooding
 your mailbox. You can also use different email addresses for testing, not just your own.

@@ -1,3 +1,7 @@
+---
+title: Javascript API: date
+description: Returns a textual representation of the date.
+---
 # date ( [args] )
 
 Returns a textual representation of the date.
