@@ -7,7 +7,10 @@ import { MarkdownItLinks } from '@/composables/mardown-links'
 const images =  import.meta.glob('/src/assets/docs/**/*.png', {as: 'url', eager: true})
 const metadataRegex = /^---([\s\S]*?)---/;
 
-export function useMarkdown(content: string) {
+export function useMarkdown(content: string | undefined) {
+    if (!content) {
+        return {content, metadata: {}}
+    }
     const metadata = parseMetadata(content)
     content = replaceImageUrls(content).replace(metadataRegex, '')
 
@@ -49,11 +52,14 @@ function parseMetadata(data: string) {
   
     // Use reduce to accumulate the metadata as an object
     const metadata = metadataLines.reduce((acc: any, line) => {
-      const [key, value] = line.split(":").map(part => part.trim())
-      if(key) {
-        acc[key] = value
-      }
-      return acc;
+        const i = line.indexOf(':');
+        const splits = [line.slice(0,i), line.slice(i+1)];
+
+        const [key, value] = splits.map(part => part.trim())
+        if(key) {
+            acc[key] = value
+        }
+        return acc;
     }, {});
   
     return metadata;

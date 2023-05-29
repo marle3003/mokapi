@@ -3,6 +3,7 @@ import { onMounted, ref, inject } from 'vue';
 import { useRoute } from 'vue-router';
 import { useMarkdown } from '@/composables/markdown'
 import { useMeta } from '@/composables/meta'
+import PageNotFound from './PageNotFound.vue';
 
 const files =  import.meta.glob('/src/assets/docs/**/*.md', {as: 'raw', eager: true})
 const nav = inject<DocConfig>('nav')!
@@ -78,7 +79,7 @@ function matchLevel2(label: any): boolean {
   return label.toString().toLowerCase() == level2.toLowerCase()
 }
 function matchLevel3(label: any): boolean {
-  return label.toString().toLowerCase() == level3.toLowerCase()
+  return label.toString().toLowerCase() == level3?.toLowerCase()
 }
 function formatParam(label: any): string {
   return label.toString().toLowerCase().split(' ').join('-').split('/').join('-')
@@ -108,7 +109,8 @@ function formatParam(label: any): string {
           </ul>
         </div>
         <div style="flex: 1;max-width:700px;margin-bottom: 3rem;">
-          <div v-html="content" class="content" />
+          <div v-html="content" class="content" v-if="content" />
+          <page-not-found v-if="!content" />
         </div>
       </div>
     </div>
