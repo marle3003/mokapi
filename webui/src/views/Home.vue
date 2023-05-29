@@ -13,9 +13,9 @@ export default function() {
     })
 }
 `
-const description = `Simplify your test workflows and accelerate your development`
+const description = `Mokapi is an open-source tool that makes end-to-end testing easy for developers and QA engineers`
 
-useMeta('Easy and flexible API mocking', description, 'https://mokapi.io')
+useMeta('Mocking tool for engineering teams | mokapi.io', description, 'https://mokapi.io')
 </script>
 
 <template>
