@@ -15,7 +15,7 @@ export default function() {
 `
 const description = `Speed up testing process by creating stable development or test environments, reducing external dependencies, and simulating APIs that don't even exist yet.`
 
-useMeta('Mokapi - Easy and flexible API mocking | mokapi.io', description, 'https://mokapi.io')
+useMeta('Easy and flexible API mocking', description, 'https://mokapi.io')
 </script>
 
 <template>
@@ -25,7 +25,7 @@ useMeta('Mokapi - Easy and flexible API mocking | mokapi.io', description, 'http
         <div class="row hero-title">
           <div class="col-12 col-lg-6">
             <h1>Easy and flexible API mocking </h1>
-            <p class="description">{{ description }}</p>
+            <p class="description">Simplify your test workflows and accelerate your development</p>
             <p class="d-none d-md-block">
               <router-link :to="{ path: '/docs/Guides' }">
                 <button type="button" class="btn btn-outline-primary">Guides</button>
@@ -53,7 +53,8 @@ useMeta('Mokapi - Easy and flexible API mocking | mokapi.io', description, 'http
     </section>
     <section>
       <div class="container">
-        <h2>Improve quality of your API. Reduce the risk of bugs or errors in production.</h2>
+        <h2>Prevent bugs - Reduce dependencies - Simulating APIs that don't even exist yet</h2>
+        <p class="text-center">Increase delivery speed by creating stable development and test environment</p>
         <div class="card-group">
           <div class="card">
             <div class="card-body">
