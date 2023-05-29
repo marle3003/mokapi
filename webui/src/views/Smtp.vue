@@ -10,11 +10,9 @@ rules:
     recipient: '@mokapi.io'
     action: allow
 `
-document.title = 'Test emails safely and no risk of spamming recipients\' inbox | mokapi.io'
-
 const title = `End-to-end email testing for a smooth email experience`
 const description = `Test emails safely and no risk of spamming recipients' inbox`
-useMeta(`Mokapi - ${title} | mokapi.io`, description, "https://mokapi.io/smtp")
+useMeta(title, description, "https://mokapi.io/smtp")
 </script>
 
 <template>

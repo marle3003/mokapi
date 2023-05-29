@@ -16,7 +16,7 @@ export default function() {
 
 const title = `Bring your OpenAPI specs to life`
 const description = `Don't wait for APIs to be ready. Let your teams develop in parallel`
-useMeta(`Mokapi - ${title} | mokapi.io`, description, "https://mokapi.io/http")
+useMeta(title, description, "https://mokapi.io/http")
 </script>
 
 <template>
