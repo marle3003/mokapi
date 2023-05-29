@@ -1,3 +1,7 @@
+---
+title: Configuration
+description: This page will introduce you to the startup and dynamic configurations.
+---
 # Configuration
 
 Mokapi has two types of configuration:

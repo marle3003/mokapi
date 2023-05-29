@@ -13,7 +13,7 @@ export default function() {
     })
 }
 `
-const description = `Speed up testing process by creating stable development or test environments, reducing external dependencies, and simulating APIs that don't even exist yet.`
+const description = `Simplify your test workflows and accelerate your development`
 
 useMeta('Easy and flexible API mocking', description, 'https://mokapi.io')
 </script>

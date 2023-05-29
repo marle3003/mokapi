@@ -1,3 +1,7 @@
+---
+title: Static Configuration
+description: Reference the static configuration in Mokapi.
+---
 # Static Configuration
 
 ## Log

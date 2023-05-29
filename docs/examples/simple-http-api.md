@@ -1,3 +1,7 @@
+---
+title: Example OpenAPI with Mokapi Script
+description: A simple Use Case with using Mokapi Script.
+---
 # OpenAPI with Mokapi Script
 
 A simple Use Case with using Mokapi Script
