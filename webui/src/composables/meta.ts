@@ -4,6 +4,7 @@ export function useMeta(title: string, description: string, canonicalUrl: string
     if (!description) {
         description = defaultDescription
     }
+    canonicalUrl = canonicalUrl.replace('http://', 'https://')
 
     document.title = title
     setDescription(description)

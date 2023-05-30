@@ -36,7 +36,7 @@ useMeta('Mocking tool for engineering teams | mokapi.io', description, 'https://
             </p>
           </div>
           <div class="col-12 col-lg-6 justify-content-center">
-            <img src="/logo.svg" />
+            <img src="/logo.svg" alt="Logo Mokapi" />
           </div>
           <div class="col-12 d-block d-md-none">
             <p style="margin-top: 2rem;">
@@ -66,8 +66,10 @@ useMeta('Mocking tool for engineering teams | mokapi.io', description, 'https://
           </div>
           <div class="card">
             <div class="card-body">
-              <div class="card-title">Kafka</div>
-              Simulate a Kafka system with AsyncAPI specification.
+              <router-link :to="{path: '/kafka'}">
+                <div class="card-title">Kafka</div>
+                Simulate a Kafka system with AsyncAPI specification.
+              </router-link>
             </div>
           </div>
           <div class="card">
@@ -104,7 +106,7 @@ useMeta('Mocking tool for engineering teams | mokapi.io', description, 'https://
         <div class="row">
           <div class="col-12">
             <h2>See what's going on</h2>
-              <img src="@/assets/docs/guides/get-started/dashboard.png" style="width:100%" />
+              <img src="@/assets/docs/guides/get-started/dashboard.png" style="width:100%" alt="Mokapi Dashboard" />
           </div>
         </div>
       </div>
@@ -113,78 +115,5 @@ useMeta('Mocking tool for engineering teams | mokapi.io', description, 'https://
 </template>
 
 <style scoped>
-.home {
-  max-width: 1200px;
-  margin: 0 auto auto;
-}
-h1 {
-  margin-top: 3rem;
-  padding: 1.5rem;
-  padding-bottom: 0.5rem;
-}
-.hero-title {
-  margin-top: 5rem;
-}
-@media only screen and (max-width: 600px)  {
-  .hero-title {
-    margin-top: 0;
-  }
-}
-.hero-title p {
-  padding-left: 1.5rem;
-}
-.hero-title .description {
-  margin-bottom: 2rem;
-}
-.hero-title img {
-    max-width: 80%;
-  }
-@media only screen and (max-width: 600px)  {
-  .hero-title img {
-    width: 100%;
-    max-width: none !important;
-  }
-}
-pre {
-  max-width: 700px;
-  margin: 0 auto auto;
-  white-space: pre-wrap;
-  word-break: break-all;
-  border-radius: 6px;
-}
-@media only screen and (max-width: 600px)  {
-  pre {
-    max-width: none !important;
-  }
-}
-.hero-title button {
-  margin-right: 1rem;
-}
-.hero-title button {
-  margin-right: 1rem;
-  border-color: var(--color-doc-link);
-  color: var(--color-doc-link);
-}
-.hero-title button:hover {
-  background-color: var(--color-doc-link);
-}
-h2 {
-  margin-top: 0;
-  text-align: center;
-}
-.card-group .card {
-  border-color: var(--color-border);
-  background-color: var(--color-background-soft);
-  margin: 7px;
-  margin-left: 0;
-}
-.card a {
-  text-decoration: none;
-}
-.card-title {
-  font-size: 1.3rem;
-}
-section {
-  padding-bottom: 8rem;
-}
+
 </style>

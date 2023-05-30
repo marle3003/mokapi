@@ -1,5 +1,5 @@
 ---
-title: Installation
+title: Mokapi Installation
 description: You can use Mokapi inside a Docker container, standalone binary or using npm package
 ---
 # Installation

@@ -1,9 +1,9 @@
 ---
-title: Test Data
+title: Test Data Generator
 description: You can use randomly generated test data or use Mokapi scripts to create responses that can simulate a wide range of scenarios and edge cases.
 ---
 
-# Test Data
+# Test Data Generator
 
 By default, Mokapi generates test data randomly depend on 
 the data types. If you need more dynamic responses, you can 

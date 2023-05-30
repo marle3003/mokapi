@@ -1,8 +1,8 @@
 ---
-title: Lua
+title: Mokapi Lua Scripts
 description: You can extend Mokapi with scripts written in the Lua programming language.
 ---
-# Lua
+# Lua Scripts
 
 You can extend Mokapi with scripts written in the Lua programming language. With
 extensions points you can map requests to files or generate dynamic responses.

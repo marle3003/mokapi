@@ -16,7 +16,7 @@ useMeta(title, description, "https://mokapi.io/smtp")
 </script>
 
 <template>
-  <main class="smtp">
+  <main class="home">
     <section>
       <div class="container">
         <div class="row hero-title">
@@ -115,77 +115,3 @@ useMeta(title, description, "https://mokapi.io/smtp")
     </div>
   </main>
 </template>
-
-<style scoped>
-.smtp {
-  max-width: 1200px;
-  margin: 0 auto auto;
-}
-h1 {
-  margin-top: 3rem;
-  padding: 1.5rem;
-  padding-bottom: 0.5rem;
-}
-.hero-title {
-  margin-top: 5rem;
-}
-@media only screen and (max-width: 600px)  {
-  .hero-title {
-    margin-top: 0;
-  }
-}
-.hero-title p {
-  padding-left: 1.5rem;
-}
-.hero-title .description {
-  margin-bottom: 2rem;
-}
-.hero-title img {
-    max-width: 80%;
-  }
-@media only screen and (max-width: 600px)  {
-  .hero-title img {
-    width: 100%;
-    max-width: none !important;
-  }
-}
-pre {
-  max-width: 700px;
-  margin: 0 auto auto;
-  white-space: pre-wrap;
-  word-break: break-all;
-  border-radius: 6px;
-}
-@media only screen and (max-width: 600px)  {
-  pre {
-    max-width: none !important;
-  }
-}
-.hero-title button {
-  margin-right: 1rem;
-}
-.hero-title button {
-  margin-right: 1rem;
-  border-color: var(--color-doc-link);
-  color: var(--color-doc-link);
-}
-.hero-title button:hover {
-  background-color: var(--color-doc-link);
-}
-h2 {
-  margin-top: 0;
-  text-align: center;
-}
-.card-group .card {
-  border-color: var(--color-border);
-  background-color: var(--color-background-soft);
-  margin: 7px;
-  margin-left: 0;
-}
-.card-title {
-  font-size: 1.3rem;
-}
-section {
-  padding-bottom: 8rem;
-}
-</style>

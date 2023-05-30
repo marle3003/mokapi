@@ -1,8 +1,8 @@
 ---
-title: HTTPS and TLS
+title: HTTPS, TLS and Certificates
 description: Mokapi is able to mock the behaviour of multiple hostnames and present a valid X.509 Certificate for them. This guide shows you how to configure TLS.
 ---
-# HTTPS and TLS
+# HTTPS, TLS and Certificates
 Mokapi is able to mock the behaviour of multiple hostnames and present a valid X.509 Certificate
 for them. This guide shows you how to configure TLS.
 

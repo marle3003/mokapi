@@ -65,6 +65,10 @@ const router = createRouter({
       component: () => import('@/views/Http.vue')
     },
     {
+      path: '/kafka',
+      component: () => import('@/views/Kafka.vue')
+    },
+    {
       path: '/smtp',
       component: () => import('@/views/Smtp.vue')
     },

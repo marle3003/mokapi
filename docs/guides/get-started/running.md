@@ -1,8 +1,8 @@
 ---
-title: Running
+title: Running Mokapi
 description: Here you will learn how to run Mokapi
 ---
-# Running
+# Running Mokapi
 
 In this quick start we will run [Swagger](https://swagger.io/)'s Petstore in Mokapi
 
