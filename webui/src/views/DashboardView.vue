@@ -15,6 +15,7 @@ import KafkaService from '../components/dashboard/kafka/KafkaService.vue'
 import SmtpMessageMetricCard from '../components/dashboard/smtp/SmtpMessageMetricCard.vue'
 import SmtpServicesCard from '../components/dashboard/smtp/SmtpServicesCard.vue'
 import SmtpService from '../components/dashboard/smtp/Service.vue'
+import Mails from '@/components/dashboard/smtp/Mails.vue';
 
 import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
@@ -116,6 +117,9 @@ document.title = 'Dashbboard | mokapi.io'
                     </div>
                     <div class="card-group"  v-if="isServiceAvailable('smtp')">
                         <smtp-services-card />
+                    </div>
+                    <div class="card-group">
+                        <mails />
                     </div>
                 </div>
 

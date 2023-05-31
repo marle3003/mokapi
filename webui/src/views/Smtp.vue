@@ -10,6 +10,16 @@ rules:
     recipient: '@mokapi.io'
     action: allow
 `
+const script = `import { on } from 'mokapi'
+import { send } from 'mokapi/mail'
+
+export default function() {
+    on('smtp', function(mail) {
+        mail.to = [{address: 'test@foo.bar'}]
+        send('foo.bar', mail)
+    })
+}
+`
 const description = `Test SMTP emails safely no risk of spamming mailboxes. Improve quality through visual testing using your favorite testing tool`
 useMeta('Fake SMTP server for testing | mokapi.io', description, "https://mokapi.io/smtp")
 </script>
@@ -55,26 +65,26 @@ useMeta('Fake SMTP server for testing | mokapi.io', description, "https://mokapi
         <div class="card-group">
           <div class="card">
             <div class="card-body">
-              <div class="card-title">Fake SMTP server</div>
+              <h3 class="card-title">Fake SMTP server</h3>
               Simulate sending emails for different scenarios
             </div>
           </div>
           <div class="card">
             <div class="card-body">
-              <div class="card-title">Email Preview</div>
+              <h3 class="card-title">Email Preview</h3>
               Preview your emails in Mokapi's Dasboard.
             </div>
           </div>
           <div class="card">
             <div class="card-body">
-              <div class="card-title">QA Automation</div>
+              <h3 class="card-title">QA Automation</h3>
               Use your favorite testing tool to validate sent emails using
               Mokapi's Dashboard or API
             </div>
           </div>
           <div class="card">
             <div class="card-body">
-              <div class="card-title">Rules & Mokapi Script</div>
+              <h3 class="card-title">Rules & Mokapi Script</h3>
               Define rules to allow or deny emails, intercept or forward SMTP mails
             </div>
           </div>
@@ -86,18 +96,34 @@ useMeta('Fake SMTP server for testing | mokapi.io', description, "https://mokapi
         <div class="row">
           <div class="col-12 justify-content-center">
             <h2>Easy setup of your fake SMTP server</h2>
-            <div class="justify-content-center">
-              <pre v-highlightjs="config"><code class="application/yaml"></code></pre>
+            <p class="text-center">Create individual inboxes for different workflows or forward all emails into one real inbox.</p>
+            <div class="tab justify-content-center">
+              <div class="nav code-tabs" id="tab-1" role="tablist">
+                <button class="active" id="tab-1-CLI" data-bs-toggle="tab" data-bs-target="#tabPanel-1-CLI" type="button" role="tab" aria-controls="tabPanel-1-CLI" aria-selected="true">
+                  Configuration
+                </button>
+                <button id="tab-1-File" data-bs-toggle="tab" data-bs-target="#tabPanel-1-File" type="button" role="tab" aria-controls="tabPanel-1-File" aria-selected="false">
+                  Javascript
+                </button>
+              </div>
             </div>
+            <div class="tab-content code">
+              <div class="tab-pane fade show active" id="tabPanel-1-CLI" role="tabpanel" aria-labelledby="tab-1-CLI">
+                <pre v-highlightjs="config"><code class="application/yaml"></code></pre>
+              </div>
+              <div class="tab-pane fade" id="tabPanel-1-File" role="tabpanel" aria-labelledby="tab-1-File">
+                <pre v-highlightjs="script"><code class="javascript"></code></pre>
+              </div>
             </div>
           </div>
         </div>
+      </div>
     </section>
     <section>
       <div class="container">
         <div class="row">
           <div class="col-12">
-            <h2>See what's going on</h2>
+            <h2>Simple dashboard for your fake email server</h2>
               <img src="/smtp.png" style="width:100%" />
           </div>
         </div>
