@@ -10,9 +10,8 @@ rules:
     recipient: '@mokapi.io'
     action: allow
 `
-const title = `End-to-end email testing for a smooth email experience`
-const description = `Test emails safely and no risk of spamming recipients' inbox`
-useMeta(title, description, "https://mokapi.io/smtp")
+const description = `Test SMTP emails safely no risk of spamming mailboxes. Improve quality through visual testing using your favorite testing tool`
+useMeta('Fake SMTP server for testing | mokapi.io', description, "https://mokapi.io/smtp")
 </script>
 
 <template>
@@ -21,8 +20,8 @@ useMeta(title, description, "https://mokapi.io/smtp")
       <div class="container">
         <div class="row hero-title">
           <div class="col-12 col-lg-6">
-            <h1>{{ title }}</h1>
-            <p class="description">{{ description }}</p>
+            <h1>End-to-end email testing for a smooth email experience</h1>
+            <p class="description">Test SMTP emails safely and no risk of spamming mailboxes</p>
             <p class="d-none d-md-block">
               <router-link :to="{ path: '/docs/Guides' }">
                 <button type="button" class="btn btn-outline-primary">Guides</button>
