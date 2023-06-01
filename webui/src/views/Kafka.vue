@@ -73,26 +73,26 @@ useMeta(title, description, "https://mokapi.io/http")
         <div class="card-group">
           <div class="card">
             <div class="card-body">
-              <div class="card-title">Configuration as Code</div>
+              <h3 class="card-title">Configuration as Code</h3>
               Mock your Kafka Cluster with AsyncAPI
             </div>
           </div>
           <div class="card">
             <div class="card-body">
-              <div class="card-title">QA Automation</div>
+              <h3 class="card-title">QA Automation</h3>
               Verify that messages are written using Mokapi's Dashboard or API
             </div>
           </div>
           <div class="card">
             <div class="card-body">
-              <div class="card-title">Mokapi Scripts</div>
+              <h3 class="card-title">Mokapi Scripts</h3>
               Produce or intercept Kafka messages for your unique workflow and edge cases.
             </div>
           </div>
           <div class="card">
             <div class="card-body">
-              <div class="card-title">View data inside Kafka</div>
-              Analyze and inspect topics, topics data, consumer groups and more...
+              <h3 class="card-title">Validate correct messages</h3>
+              Mokapi validates that your application is producing correct messages.
             </div>
           </div>
         </div>
@@ -114,10 +114,11 @@ useMeta(title, description, "https://mokapi.io/http")
       <div class="container">
         <div class="row">
           <div class="col-12">
-            <h2>See what's going on</h2>
-              <a href="#kafkadialog" data-bs-toggle="modal" data-bs-target="#kafkadialog">
-                <img src="/kafka-dashboard.png" style="width:100%" alt="Analyze and inspect topics, topics data, consumer groups and more..." />
-              </a>
+            <h2>View your data inside Apache Kafka cluster</h2>
+            <p class="text-center">Analyze and inspect topics, topics data, consumer groups and more...</p>
+            <a href="#kafkadialog" data-bs-toggle="modal" data-bs-target="#kafkadialog">
+              <img src="/kafka-dashboard.png" style="width:100%" alt="Analyze and inspect topics, topics data, consumer groups and more..." />
+            </a>
           </div>
         </div>
       </div>
