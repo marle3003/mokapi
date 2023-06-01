@@ -136,7 +136,9 @@ func (c *conn) serveData(conn *textproto.Conn, param string) error {
 	if err != nil {
 		return err
 	}
-	msg := &Message{}
+	msg := &Message{
+		Server: c.conn.LocalAddr().String(),
+	}
 	err = msg.readFrom(conn.Reader)
 	if clientDisconnected(err) {
 		return err

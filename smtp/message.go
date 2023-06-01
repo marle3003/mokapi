@@ -17,6 +17,7 @@ import (
 )
 
 type Message struct {
+	Server      string       `json:"server"`
 	Sender      *Address     `json:"sender"`
 	From        []Address    `json:"from"`
 	To          []Address    `json:"to"`
@@ -104,6 +105,8 @@ func (m *Message) readFrom(tc textproto.Reader) error {
 		if err != nil {
 			return err
 		}
+	} else {
+		m.Time = time.Now()
 	}
 
 	m.Subject = header.Get("Subject")

@@ -34,6 +34,19 @@ func Test_Mail(t *testing.T) {
 			},
 		},
 		{
+			name: "only ip address",
+			js:   "send('127.0.0.1:%v', {from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
+			host: &testHost{},
+			test: func(t *testing.T, v *smtp.Message, err error) {
+				r.NoError(t, err)
+				r.Equal(t, smtp.Address{Name: "Alice", Address: "alice@mokapi.io"}, v.From[0])
+				r.Equal(t, smtp.Address{Address: "bob@mokapi.io"}, v.To[0])
+				r.Equal(t, "A test mail", v.Subject)
+				r.Equal(t, "Hello Bob", v.Body)
+				r.True(t, v.Time.After(time.Now().Add(-time.Minute*1)), "send date should be in the last minute")
+			},
+		},
+		{
 			name: "multiple from and bcc",
 			js:   "send('smtp://127.0.0.1:%v', {sender: 'carol@mokapi.io', from: [{name: 'Alice', address: 'alice@mokapi.io'},'charlie@mokapi.io'], bcc: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
 			host: &testHost{},
@@ -106,11 +119,12 @@ func Test_Mail(t *testing.T) {
 		},
 		{
 			name: "attachment",
-			js:   "send('smtp://127.0.0.1:%v', {attachments: [{content: 'hello world', filename: 'foo.txt'}], from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
+			js:   "send('smtp://127.0.0.1:%v', {attachments: [{data: 'hello world', name: 'foo.txt'}], from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
 			host: &testHost{},
 			test: func(t *testing.T, v *smtp.Message, err error) {
 				r.NoError(t, err)
 				r.Len(t, v.Attachments, 1)
+				r.Equal(t, "foo.txt", v.Attachments[0].Name)
 				r.Equal(t, "hello world", string(v.Attachments[0].Data))
 				r.Equal(t, "text/plain; charset=utf-8; name=foo.txt", string(v.Attachments[0].ContentType))
 				r.Equal(t, "Hello Bob", v.Body)
@@ -128,6 +142,7 @@ func Test_Mail(t *testing.T) {
 			test: func(t *testing.T, v *smtp.Message, err error) {
 				r.NoError(t, err)
 				r.Len(t, v.Attachments, 1)
+				r.Equal(t, "foo.txt", v.Attachments[0].Name)
 				r.Equal(t, "hello world", string(v.Attachments[0].Data))
 				r.Equal(t, "text/plain; charset=utf-8; name=foo.txt", string(v.Attachments[0].ContentType))
 				r.Equal(t, "Hello Bob", v.Body)
@@ -135,7 +150,7 @@ func Test_Mail(t *testing.T) {
 		},
 		{
 			name: "attachment from file overwrite filename",
-			js:   "send('smtp://127.0.0.1:%v', {attachments: [{path: 'foo.txt', filename: 'test.txt'}], from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
+			js:   "send('smtp://127.0.0.1:%v', {attachments: [{path: 'foo.txt', name: 'test.txt'}], from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bob@mokapi.io'], subject: 'A test mail', body: 'Hello Bob'})",
 			host: &testHost{openFile: func(file, hint string) (string, string, error) {
 				if file == "foo.txt" {
 					return file, "hello world", nil
@@ -145,6 +160,7 @@ func Test_Mail(t *testing.T) {
 			test: func(t *testing.T, v *smtp.Message, err error) {
 				r.NoError(t, err)
 				r.Len(t, v.Attachments, 1)
+				r.Equal(t, "test.txt", v.Attachments[0].Name)
 				r.Equal(t, "hello world", string(v.Attachments[0].Data))
 				r.Equal(t, "text/plain; charset=utf-8; name=test.txt", string(v.Attachments[0].ContentType))
 				r.Equal(t, "Hello Bob", v.Body)

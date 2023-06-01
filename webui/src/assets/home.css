@@ -7,6 +7,13 @@
   padding: 1.5rem;
   padding-bottom: 0.5rem;
 }
+.home h2 {
+  line-height: 1.6;
+}
+.home h3 {
+  line-height: 1.6;
+  font-size: 1.3rem;
+}
 .home .hero-title {
   margin-top: 5rem;
 }
@@ -29,6 +36,22 @@
     width: 100%;
     max-width: none !important;
   }
+}
+.home .tab {
+  max-width: 700px;
+  margin: 0 auto auto;
+}
+.home .code-tabs {
+  border: 0;
+  margin-bottom: 0.2rem;
+}
+.home .code-tabs button {
+  padding: 0.3rem;
+  margin-right: 0.5rem;
+  margin-left: 0.5rem;
+  padding-right: 0.8rem;
+  padding-left: 0.8rem;
+  font-size: 1rem;
 }
 .home pre {
   max-width: 700px;

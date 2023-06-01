@@ -117,17 +117,17 @@ declare interface ScheduledEventArgs {
     /**
      * Adds or overrides existing tags used in dashboard
      */
-    tags: {[key: string]: string}
+    tags?: {[key: string]: string}
 
     /**
      * Defines the number of times the scheduled function is executed.
      */
-    times: number
+    times?: number
 
     /**
      * Toggles behavior of first execution. Default is true
      */
-    runFirstTimeImmediately: boolean
+    runFirstTimeImmediately?: boolean
 }
 
 declare const RFC3339 = "RFC3339"

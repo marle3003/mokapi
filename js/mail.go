@@ -8,14 +8,14 @@ import (
 	"github.com/dop251/goja"
 	"github.com/google/uuid"
 	"mokapi/engine/common"
+	"mokapi/smtp"
 	"net/http"
 	"net/mail"
-	"net/smtp"
+	netsmtp "net/smtp"
 	"net/textproto"
 	"net/url"
 	"path/filepath"
 	"strings"
-	"time"
 )
 
 type mailModule struct {
@@ -41,9 +41,10 @@ type Mail struct {
 }
 
 type Attachment struct {
-	Filename    string `json:"filename"`
-	Content     string `json:"content"`
+	Name        string `json:"name"`
+	Data        string `json:"data"`
 	Path        string `json:"path"`
+	Disposition string `json:"disposition"`
 	ContentType string `json:"contentType"`
 }
 
@@ -54,8 +55,6 @@ func newMail(h common.Host, rt *goja.Runtime, workingDir string) interface{} {
 func (m *mailModule) Send(addr string, msg *Mail) {
 	var body bytes.Buffer
 	w := textproto.NewWriter(bufio.NewWriter(&body))
-
-	_ = w.PrintfLine("Date: %v", time.Now().Format(time.RFC1123Z))
 
 	if len(msg.MessageId) > 0 {
 		_ = w.PrintfLine("Message-ID: %s", msg.MessageId)
@@ -113,8 +112,9 @@ func (m *mailModule) Send(addr string, msg *Mail) {
 	_ = w.PrintfLine("Subject: %v", msg.Subject)
 
 	u, err := url.Parse(addr)
-	if err != nil {
-		toJsError(m.rt, err)
+	host := addr
+	if err == nil {
+		host = u.Host
 	}
 
 	sender := msg.Sender
@@ -146,7 +146,7 @@ func (m *mailModule) Send(addr string, msg *Mail) {
 		}
 	}
 
-	err = smtp.SendMail(u.Host, nil, sender, to, body.Bytes())
+	err = netsmtp.SendMail(host, nil, sender, to, body.Bytes())
 	if err != nil {
 		toJsError(m.rt, err)
 	}
@@ -169,30 +169,34 @@ func (m *mailModule) writeAttachments(w *textproto.Writer, msg *Mail) error {
 	w.W.WriteString(fmt.Sprintf("\n%s\n", msg.Body))
 
 	for _, attach := range msg.Attachments {
-		content := []byte(attach.Content)
-		fileName := attach.Filename
+		content := []byte(attach.Data)
+		name := attach.Name
 		if len(attach.Path) > 0 {
 			f, err := m.host.OpenFile(attach.Path, m.workingDir)
 			if err != nil {
 				return err
 			}
 			content = f.Raw
-			if len(fileName) == 0 {
-				fileName = filepath.Base(attach.Path)
+			if len(name) == 0 {
+				name = filepath.Base(attach.Path)
 			}
 		}
 		contentType := attach.ContentType
 		if len(contentType) == 0 {
 			contentType = http.DetectContentType(content)
 		}
-		if len(fileName) > 0 {
-			contentType += fmt.Sprintf("; name=%s", fileName)
+		if len(name) > 0 {
+			contentType += fmt.Sprintf("; name=%s", name)
 		}
 
 		_ = w.PrintfLine("--%v", boundary)
 		_ = w.PrintfLine("Content-Type: %v", contentType)
 		_ = w.PrintfLine("Content-Transfer-Encoding: base64")
-		_ = w.PrintfLine("Content-Disposition: attachment")
+		disposition := attach.Disposition
+		if len(disposition) == 0 {
+			disposition = "attachment"
+		}
+		_ = w.PrintfLine("Content-Disposition: %v", disposition)
 		_ = w.PrintfLine("")
 		data := base64.StdEncoding.EncodeToString(content)
 		_, err := w.W.WriteString(data)
@@ -233,6 +237,8 @@ func toMailAddress(i interface{}) (*mail.Address, error) {
 		}
 		name := v["name"]
 		return &mail.Address{Name: fmt.Sprintf("%s", name), Address: fmt.Sprintf("%s", address)}, nil
+	case smtp.Address:
+		return &mail.Address{Name: v.Name, Address: v.Address}, nil
 	}
 	return nil, fmt.Errorf("expected mail address but got: %s", i)
 }
@@ -242,10 +248,19 @@ func toJsError(rt *goja.Runtime, err error) {
 }
 
 func toList(i interface{}) []interface{} {
-	if list, ok := i.([]interface{}); ok {
-		return list
-	} else if i != nil {
-		return []interface{}{i}
+	switch v := i.(type) {
+	case []interface{}:
+		return v
+	case []smtp.Address:
+		var r []interface{}
+		for _, a := range v {
+			r = append(r, a)
+		}
+		return r
+	default:
+		if i != nil {
+			return []interface{}{i}
+		}
+		return nil
 	}
-	return nil
 }

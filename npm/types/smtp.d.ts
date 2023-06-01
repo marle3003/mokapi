@@ -1,6 +1,7 @@
 type SmtpEventHandler = (record: Message) => boolean
 
 declare interface Message {
+    server: string
     sender?: Address
     from: Address[]
     to: Address[]
@@ -8,8 +9,8 @@ declare interface Message {
     cc?: Address[]
     bcc?: Address[]
     messageId: string
-    inReplyTo: string
-    time: number
+    inReplyTo?: string
+    time?: Date
     subject: string
     contentType: string
     encoding: string
@@ -18,7 +19,7 @@ declare interface Message {
 }
 
 declare interface Address {
-    name: string
+    name?: string
     address: string
 }
 
