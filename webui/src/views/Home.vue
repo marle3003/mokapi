@@ -25,7 +25,7 @@ useMeta('Mocking tool for engineering teams | mokapi.io', description, 'https://
         <div class="row hero-title">
           <div class="col-12 col-lg-6">
             <h1>Easy and flexible API mocking </h1>
-            <p class="description">Simplify your test workflows and accelerate your development</p>
+            <p class="description">Simplify your test workflows to build better software faster</p>
             <p class="d-none d-md-block">
               <router-link :to="{ path: '/docs/Guides' }">
                 <button type="button" class="btn btn-outline-primary">Guides</button>
