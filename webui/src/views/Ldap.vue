@@ -11,8 +11,8 @@ const ldap = `
     file: ./philip.png
 `
 
-const title = `Bring your AsyncAPI specs to life`
-const description = `Don't wait for producers to send new messages. Create your own sample messages that fit your needs.`
+const title = `Use Mokapi to mock an LDAP server`
+const description = `Develop and test independently from your company's LDAP directory. Simulate any search request to fullfil your requirements to run your app with a fake LDAP server`
 useMeta(title, description, "https://mokapi.io/ldap")
 </script>
 
