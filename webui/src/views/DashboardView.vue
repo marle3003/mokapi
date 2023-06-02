@@ -12,6 +12,11 @@ import KafkaMessageCard from '../components/dashboard/KafkaMessageMetricCard.vue
 import KafkaClustersCard from '../components/dashboard/kafka/KafkaServicesCard.vue'
 import KafkaService from '../components/dashboard/kafka/KafkaService.vue'
 
+import LdapServicesCard from '@/components/dashboard/ldap/LdapServicesCard.vue'
+import LdapService from '../components/dashboard/ldap/Service.vue'
+import LdapSearchMetricCard from '../components/dashboard/ldap/LdapSearchMetricCard.vue'
+import Searches from '@/components/dashboard/ldap/Searches.vue';
+
 import SmtpMessageMetricCard from '../components/dashboard/smtp/SmtpMessageMetricCard.vue'
 import SmtpServicesCard from '../components/dashboard/smtp/SmtpServicesCard.vue'
 import SmtpService from '../components/dashboard/smtp/Service.vue'
@@ -64,11 +69,14 @@ document.title = 'Dashbboard | mokapi.io'
                         <li class="nav-item">
                             <router-link class="nav-link" :to="{ name: 'smtp', query: {refresh: $route.query.refresh} }" v-if="isServiceAvailable('smtp')">SMTP</router-link>
                         </li>
+                        <li class="nav-item">
+                            <router-link class="nav-link" :to="{ name: 'ldap', query: {refresh: $route.query.refresh} }" v-if="isServiceAvailable('ldap')">LDAP</router-link>
+                        </li>
                     </ul>
                 </nav>
             </div>
             <div v-if="appInfo.data" class="dashboard-content">
-                <div v-if="$route.name == 'dashboard' && appInfo.data">
+                <div v-if="$route.name === 'dashboard' && appInfo.data">
                     <div class="card-group">
                         <app-start-card />
                         <memory-usage-card />
@@ -77,6 +85,7 @@ document.title = 'Dashbboard | mokapi.io'
                         <http-request-card v-if="isServiceAvailable('http')" includeError />
                         <kafka-message-card v-if="isServiceAvailable('kafka')" />
                         <smtp-message-metric-card v-if="isServiceAvailable('smtp')" />
+                        <ldap-search-metric-card v-if="isServiceAvailable('ldap')" />
                     </div>
                     <div class="card-group"  v-if="isServiceAvailable('http')">
                         <http-services-card />
@@ -87,9 +96,12 @@ document.title = 'Dashbboard | mokapi.io'
                     <div class="card-group"  v-if="isServiceAvailable('smtp')">
                         <smtp-services-card />
                     </div>
+                    <div class="card-group"  v-if="isServiceAvailable('ldap')">
+                        <ldap-services-card />
+                    </div>
                 </div>
 
-                <div v-if="$route.name == 'http'">
+                <div v-if="$route.name === 'http'">
                     <div class="card-group">
                         <http-request-card v-if="isServiceAvailable('http')" />
                         <http-request-card v-if="isServiceAvailable('http')" onlyError />
@@ -102,7 +114,7 @@ document.title = 'Dashbboard | mokapi.io'
                     </div>
                 </div>
 
-                <div v-if="$route.name == 'kafka'">
+                <div v-if="$route.name === 'kafka'">
                     <div class="card-group">
                         <kafka-message-card v-if="isServiceAvailable('kafka')" />
                     </div>
@@ -111,7 +123,7 @@ document.title = 'Dashbboard | mokapi.io'
                     </div>
                 </div>
 
-                <div v-if="$route.name == 'smtp'">
+                <div v-if="$route.name === 'smtp'">
                     <div class="card-group">
                         <smtp-message-metric-card v-if="isServiceAvailable('smtp')" />
                     </div>
@@ -123,9 +135,22 @@ document.title = 'Dashbboard | mokapi.io'
                     </div>
                 </div>
 
-                <http-service v-if="$route.meta.service == 'http'" />
-                <kafka-service v-if="$route.meta.service == 'kafka'" />
-                <smtp-service v-if="$route.meta.service == 'smtp'" />
+                <div v-if="$route.name === 'ldap'">
+                    <div class="card-group">
+                        <ldap-search-metric-card v-if="isServiceAvailable('ldap')" />
+                    </div>
+                    <div class="card-group"  v-if="isServiceAvailable('ldap')">
+                        <ldap-services-card />
+                    </div>
+                    <div class="card-group">
+                        <searches />
+                    </div>
+                </div>
+
+                <http-service v-if="$route.meta.service === 'http'" />
+                <kafka-service v-if="$route.meta.service === 'kafka'" />
+                <smtp-service v-if="$route.meta.service === 'smtp'" />
+                <ldap-service v-if="$route.meta.service === 'ldap'" />
             </div>
         </div>
         <message :message="appInfo.error" v-if="!appInfo.data && !appInfo.isLoading"></message>

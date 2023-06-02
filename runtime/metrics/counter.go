@@ -35,6 +35,10 @@ func (c *Counter) Collect(ch chan<- Metric) {
 	ch <- c
 }
 
+func (c *Counter) Reset() {
+	c.value = 0
+}
+
 func (c *Counter) MarshalJSON() ([]byte, error) {
 	aux := &struct {
 		Name  string  `json:"name"`
@@ -135,5 +139,14 @@ func (m *CounterMap) Collect(ch chan<- Metric) {
 
 	for _, c := range m.counters {
 		ch <- c
+	}
+}
+
+func (m *CounterMap) Reset() {
+	m.m.Lock()
+	defer m.m.Unlock()
+
+	for _, c := range m.counters {
+		c.Reset()
 	}
 }

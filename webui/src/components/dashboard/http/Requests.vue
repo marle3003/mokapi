@@ -12,10 +12,10 @@ const props = defineProps({
 
 const labels = []
 if (props.service){
-    [{name: 'name', value: props.service!.name}]
+    labels.push({name: 'name', value: props.service!.name})
     if (props.path){
         labels.push({name: 'path', value: props.path})
-}
+    }
 }
 
 const router = useRouter()

@@ -6,6 +6,7 @@ import (
 	"mokapi/config/static"
 	"mokapi/ldap"
 	"mokapi/runtime/events"
+	"mokapi/runtime/metrics"
 	"time"
 )
 
@@ -62,6 +63,19 @@ func (suite *LdapSuite) TestLog() {
 	require.Equal(suite.T(), search, data.Request)
 	require.Len(suite.T(), data.Response.Results, 4)
 	require.Equal(suite.T(), "Success", data.Response.Status)
+}
+
+func (suite *LdapSuite) TestMetric() {
+	search := &ldap.SearchRequest{
+		Scope:      ldap.ScopeWholeSubtree,
+		Filter:     "(objectClass=user)",
+		Attributes: []string{"mail"},
+	}
+	_, err := suite.Client.Search(search)
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(), float64(1), suite.cmd.App.Monitor.Ldap.Search.Sum())
+	q := metrics.NewQuery(metrics.ByNamespace("ldap"), metrics.ByName("search_timestamp"))
+	require.Greater(suite.T(), suite.cmd.App.Monitor.Ldap.LastSearch.Value(q), float64(1))
 }
 
 func (suite *LdapSuite) TestJsEvent() {

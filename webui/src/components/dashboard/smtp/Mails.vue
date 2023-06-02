@@ -6,15 +6,11 @@ import { usePrettyDates } from '@/composables/usePrettyDate';
 
 const props = defineProps({
     service: { type: Object as PropType<SmtpService> },
-    path: { type: String, required: false}
 })
 
 const labels = []
-if (props.service){
-    [{name: 'name', value: props.service!.name}]
-    if (props.path){
-        labels.push({name: 'path', value: props.path})
-}
+if (props.service) {
+    labels.push({name: 'name', value: props.service!.name})
 }
 
 const router = useRouter()
@@ -23,7 +19,6 @@ const {events, close} = fetch('smtp', ...labels)
 const {format, duration} = usePrettyDates()
 
 function goToMail(data: SmtpEventData){
-    console.log(data)
     router.push({
         name: 'smtpMail',
         params: {id: data.messageId},
@@ -73,9 +68,3 @@ onUnmounted(() => {
         </div>
     </div>
 </template>
-
-<style scoped>
-.warning:empty {
-    padding: 0;
-}
-</style>

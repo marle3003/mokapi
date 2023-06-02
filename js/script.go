@@ -122,6 +122,9 @@ func (s *Script) ensureRuntime() (err error) {
 			"mokapi/mail": s.loadNativeModule(func(host engine.Host, runtime *goja.Runtime) interface{} {
 				return newMail(host, runtime, filepath.Dir(s.filename))
 			}),
+			"mokapi/ldap": func() goja.Value {
+				return NewLdapModule(s.runtime)
+			},
 		})
 	s.require.Enable(s.runtime)
 	enableConsole(s.runtime, s.host)

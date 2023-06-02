@@ -51,4 +51,12 @@ export let metrics = [
         name: 'smtp_mail_timestamp{service="Smtp Testserver"}"',
         value: 1652635690
     },
+    {
+        name: 'ldap_search_total{service="LDAP Testserver"}"',
+        value: 1
+    },
+    {
+        name: 'ldap_search_timestamp{service="LDAP Testserver"}"',
+        value: 1652635690
+    },
 ]

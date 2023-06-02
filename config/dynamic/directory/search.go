@@ -51,6 +51,11 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 	}
 
 	n := int64(0)
+	sizeLimit := msg.SizeLimit
+	if sizeLimit == 0 {
+		sizeLimit = d.config.getSizeLimit()
+	}
+	maxSizeLimit := d.config.getSizeLimit()
 	var results []ldap.SearchResult
 	predicate, pos, err := compileFilter(strings.ToLower(msg.Filter))
 	if pos != len(msg.Filter) || err != nil {
@@ -62,6 +67,7 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 		_ = rw.Write(&ldap.SearchResponse{Status: ldap.OperationsError})
 		return
 	}
+	status := ldap.Success
 	for _, e := range d.config.Entries {
 		if !predicate(e) {
 			continue
@@ -82,9 +88,15 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 			}
 		}
 
-		if n > msg.SizeLimit {
+		if n >= sizeLimit {
 			break
 		}
+		if n >= maxSizeLimit {
+			log.Errorf("ldap search query %v: size limit exceeded", msg.Filter)
+			status = ldap.SizeLimitExceeded
+			break
+		}
+		n++
 
 		res := ldap.NewSearchResult(e.Dn)
 		res.Attributes["objectClass"] = e.Attributes["objectClass"]
@@ -103,15 +115,19 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 
 		log.Debugf("found result for message %v: %v", r.MessageId, res.Dn)
 		results = append(results, res)
-		event.Response.Results = append(event.Response.Results, res.Dn)
+		event.Response.Results = append(event.Response.Results, LdapSearchResult{
+			Dn:         res.Dn,
+			Attributes: res.Attributes,
+		})
 	}
 
 	res := &ldap.SearchResponse{
-		Status:  ldap.Success,
+		Status:  status,
 		Results: results,
+		Message: ldap.StatusText[status],
 	}
 
-	event.Response.Status = ldap.StatusText[ldap.Success]
+	event.Response.Status = ldap.StatusText[status]
 	event.Actions = d.emitter.Emit("ldap", msg, res)
 
 	if err := rw.Write(res); err != nil {

@@ -35,6 +35,12 @@ func (k *Kafka) Metrics() []metrics.Metric {
 	return []metrics.Metric{k.Messages, k.LastMessage, k.Lags}
 }
 
+func (k *Kafka) Reset() {
+	k.Messages.Reset()
+	k.LastMessage.Reset()
+	k.Lags.Reset()
+}
+
 func NewKafkaContext(ctx context.Context, kafka *Kafka) context.Context {
 	return context.WithValue(ctx, kafkaKey, kafka)
 }

@@ -14,8 +14,13 @@ type LdapSearchLog struct {
 }
 
 type LdapSearchResponse struct {
-	Status  string   `json:"status"`
-	Results []string `json:"results"`
+	Status  string             `json:"status"`
+	Results []LdapSearchResult `json:"results"`
+}
+
+type LdapSearchResult struct {
+	Dn         string              `json:"dn"`
+	Attributes map[string][]string `json:"attributes"`
 }
 
 func NewLogEvent(r *ldap.SearchRequest, traits events.Traits) *LdapSearchLog {

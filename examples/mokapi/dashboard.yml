@@ -82,6 +82,23 @@ paths:
             application/json:
               schema:
                 $ref: 'smtp.yml#/components/schemas/SmtpInfo'
+  /api/services/ldap/{name}:
+    get:
+      summary: Information about the ldap server
+      operationId: serviceLdap
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ldap server
+          content:
+            application/json:
+              schema:
+                $ref: 'ldap.yml#/components/schemas/LdapInfo'
   /api/services/smtp/mails/{messageId}:
     get:
       summary: Retrieve the mail with the given messageId

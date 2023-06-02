@@ -37,6 +37,7 @@ const (
 	Success                uint8 = 0
 	OperationsError        uint8 = 1
 	ProtocolError          uint8 = 2
+	SizeLimitExceeded      uint8 = 4
 	AuthMethodNotSupported uint8 = 7
 	CannotCancel           uint8 = 121
 )
@@ -59,6 +60,7 @@ var StatusText = map[uint8]string{
 	Success:                "Success",
 	OperationsError:        "OperationsError",
 	ProtocolError:          "ProtocolError",
+	SizeLimitExceeded:      "SizeLimitExceeded",
 	AuthMethodNotSupported: "AuthMethodNotSupported",
 	CannotCancel:           "CannotCancel",
 }

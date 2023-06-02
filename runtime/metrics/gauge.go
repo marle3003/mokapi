@@ -142,6 +142,15 @@ func (m *GaugeMap) Collect(ch chan<- Metric) {
 	}
 }
 
+func (m *GaugeMap) Reset() {
+	m.m.Lock()
+	defer m.m.Unlock()
+
+	for _, g := range m.gauges {
+		g.Set(0)
+	}
+}
+
 func (m *GaugeMap) MarshalJSON() ([]byte, error) {
 	m.m.Lock()
 	defer m.m.Unlock()

@@ -35,6 +35,12 @@ func (h *Http) Metrics() []metrics.Metric {
 	return []metrics.Metric{h.RequestCounter, h.RequestErrorCounter, h.LastRequest}
 }
 
+func (h *Http) Reset() {
+	h.RequestCounter.Reset()
+	h.RequestErrorCounter.Reset()
+	h.LastRequest.Reset()
+}
+
 func NewHttpContext(ctx context.Context, http *Http) context.Context {
 	return context.WithValue(ctx, httpKey, http)
 }

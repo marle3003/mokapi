@@ -1,7 +1,8 @@
 import { on } from 'mokapi'
 import { clusters, events as kafkaEvents } from 'kafka.js'
 import { apps as httpServices, events as httpEvents } from 'services_http.js'
-import {server as smtpServers, mails, mailEvents, getMail, getAttachment} from 'smtp.js'
+import { server as smtpServers, mails, mailEvents, getMail, getAttachment } from 'smtp.js'
+import { server as ldapServers, searches } from 'ldap.js'
 import { metrics } from 'metrics.js'
 import { fake } from 'mokapi/faker'
 
@@ -13,7 +14,7 @@ export default function() {
 
         switch (request.operationId) {
             case 'info':
-                response.data = {version: "0.5.0", activeServices: ["http", "kafka", "smtp"]}
+                response.data = {version: "0.5.0", activeServices: ["http", "kafka", "ldap", "smtp"]}
                 return true
             case 'services':
                 response.data = getServices()
@@ -44,6 +45,9 @@ export default function() {
                     response.data = attachment.data
                     response.headers['Content-Type'] = attachment.contentType
                 }
+                return true
+            case 'serviceLdap':
+                response.data = ldapServers[0]
                 return true
             case 'metrics':
                 let q = request.query["query"]
@@ -87,8 +91,12 @@ function getServices() {
         x.type = "smtp"
         return x
     })
+    let ldap = ldapServers.map(x => {
+        x.type = "ldap"
+        return x
+    })
 
-    return http.concat(kafka).concat(smtp)
+    return http.concat(kafka).concat(smtp).concat(ldap)
 }
 
 function getEvent(id) {
@@ -103,6 +111,11 @@ function getEvent(id) {
         }
     }
     for (let e of mailEvents){
+        if (e.id === id){
+            return e
+        }
+    }
+    for (let e of searches){
         if (e.id === id){
             return e
         }
@@ -123,6 +136,11 @@ function getEvents(traits) {
         }
     }
     for (let e of mailEvents) {
+        if (matchEvent(e, traits)) {
+            result.push(e)
+        }
+    }
+    for (let e of searches) {
         if (matchEvent(e, traits)) {
             result.push(e)
         }

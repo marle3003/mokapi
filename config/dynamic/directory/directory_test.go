@@ -164,7 +164,7 @@ func TestDirectory_ServeSearch(t *testing.T) {
 				require.Equal(t, ldap.Success, res.Status)
 				require.Len(t, res.Results, 1)
 				require.Equal(t, "dc=foo,dc=com", res.Results[0].Dn)
-				require.Equal(t, "", res.Message)
+				require.Equal(t, "Success", res.Message)
 			},
 		},
 		{
@@ -184,7 +184,7 @@ func TestDirectory_ServeSearch(t *testing.T) {
 				require.Len(t, res.Results, 2)
 				require.True(t, hasResult(res.Results, "cn=user1,dc=foo,dc=com"), "search result should contain user1")
 				require.True(t, hasResult(res.Results, "cn=user2,dc=foo,dc=com"), "search result should contain user2")
-				require.Equal(t, "", res.Message)
+				require.Equal(t, "Success", res.Message)
 			},
 		},
 		{
@@ -203,7 +203,7 @@ func TestDirectory_ServeSearch(t *testing.T) {
 				require.Equal(t, ldap.Success, res.Status)
 				require.Len(t, res.Results, 1)
 				require.True(t, hasResult(res.Results, "cn=user2,dc=foo,dc=com"), "search result should contain user2")
-				require.Equal(t, "", res.Message)
+				require.Equal(t, "Success", res.Message)
 			},
 		},
 		{
@@ -222,7 +222,7 @@ func TestDirectory_ServeSearch(t *testing.T) {
 				require.Equal(t, ldap.Success, res.Status)
 				require.Len(t, res.Results, 1)
 				require.True(t, hasResult(res.Results, "cn=user2,dc=foo,dc=com"), "search result should contain user2")
-				require.Equal(t, "", res.Message)
+				require.Equal(t, "Success", res.Message)
 			},
 		},
 		{
@@ -242,7 +242,7 @@ func TestDirectory_ServeSearch(t *testing.T) {
 				require.Len(t, res.Results, 2)
 				require.True(t, hasResult(res.Results, "cn=user1,dc=foo,dc=com"), "search result should contain user1")
 				require.True(t, hasResult(res.Results, "cn=user2,dc=foo,dc=com"), "search result should contain user2")
-				require.Equal(t, "", res.Message)
+				require.Equal(t, "Success", res.Message)
 			},
 		},
 		{
@@ -261,7 +261,7 @@ func TestDirectory_ServeSearch(t *testing.T) {
 				require.Equal(t, ldap.Success, res.Status)
 				require.Len(t, res.Results, 1)
 				require.True(t, hasResult(res.Results, "cn=user1,dc=foo,dc=com"), "search result should contain user1")
-				require.Equal(t, "", res.Message)
+				require.Equal(t, "Success", res.Message)
 			},
 		},
 		{
@@ -280,7 +280,7 @@ func TestDirectory_ServeSearch(t *testing.T) {
 				require.Equal(t, ldap.Success, res.Status)
 				require.Len(t, res.Results, 1)
 				require.True(t, hasResult(res.Results, "cn=user1,dc=foo,dc=com"), "search result should contain user1")
-				require.Equal(t, "", res.Message)
+				require.Equal(t, "Success", res.Message)
 			},
 		},
 		{
@@ -298,7 +298,7 @@ func TestDirectory_ServeSearch(t *testing.T) {
 
 				require.Equal(t, ldap.Success, res.Status)
 				require.Len(t, res.Results, 0)
-				require.Equal(t, "", res.Message)
+				require.Equal(t, "Success", res.Message)
 			},
 		},
 		{
@@ -317,7 +317,7 @@ func TestDirectory_ServeSearch(t *testing.T) {
 				require.Equal(t, ldap.Success, res.Status)
 				require.Len(t, res.Results, 1)
 				require.True(t, hasResult(res.Results, "cn=user1,dc=foo,dc=com"), "search result should contain user1")
-				require.Equal(t, "", res.Message)
+				require.Equal(t, "Success", res.Message)
 			},
 		},
 		{
@@ -336,7 +336,7 @@ func TestDirectory_ServeSearch(t *testing.T) {
 				require.Equal(t, ldap.Success, res.Status)
 				require.Len(t, res.Results, 1)
 				require.True(t, hasResult(res.Results, "cn=user1,dc=foo,dc=com"), "search result should contain user1")
-				require.Equal(t, "", res.Message)
+				require.Equal(t, "Success", res.Message)
 			},
 		},
 		{
@@ -355,7 +355,7 @@ func TestDirectory_ServeSearch(t *testing.T) {
 				require.Equal(t, ldap.Success, res.Status)
 				require.Len(t, res.Results, 1)
 				require.True(t, hasResult(res.Results, "cn=user2,dc=foo,dc=com"), "search result should contain user2")
-				require.Equal(t, "", res.Message)
+				require.Equal(t, "Success", res.Message)
 			},
 		},
 		{
@@ -375,7 +375,7 @@ func TestDirectory_ServeSearch(t *testing.T) {
 				require.Len(t, res.Results, 2)
 				require.True(t, hasResult(res.Results, "cn=user1,dc=foo,dc=com"), "search result should contain user1")
 				require.True(t, hasResult(res.Results, "cn=user2,dc=foo,dc=com"), "search result should contain user2")
-				require.Equal(t, "", res.Message)
+				require.Equal(t, "Success", res.Message)
 			},
 		},
 		{
@@ -393,7 +393,7 @@ func TestDirectory_ServeSearch(t *testing.T) {
 
 				require.Equal(t, ldap.Success, res.Status)
 				require.Len(t, res.Results, 0)
-				require.Equal(t, "", res.Message)
+				require.Equal(t, "Success", res.Message)
 			},
 		},
 		{
@@ -412,7 +412,7 @@ func TestDirectory_ServeSearch(t *testing.T) {
 				require.Equal(t, ldap.Success, res.Status)
 				require.Len(t, res.Results, 1)
 				require.True(t, hasResult(res.Results, "cn=user1,dc=foo,dc=com"), "search result should contain user1")
-				require.Equal(t, "", res.Message)
+				require.Equal(t, "Success", res.Message)
 			},
 		},
 		{
@@ -430,7 +430,7 @@ func TestDirectory_ServeSearch(t *testing.T) {
 
 				require.Equal(t, ldap.Success, res.Status)
 				require.Len(t, res.Results, 0)
-				require.Equal(t, "", res.Message)
+				require.Equal(t, "Success", res.Message)
 			},
 		},
 		{
@@ -450,7 +450,51 @@ func TestDirectory_ServeSearch(t *testing.T) {
 				require.Equal(t, ldap.Success, res.Status)
 				require.Len(t, res.Results, 1)
 				require.Len(t, res.Results[0].Attributes, 2, "mail and objectClass")
-				require.Equal(t, "", res.Message)
+				require.Equal(t, "Success", res.Message)
+			},
+		},
+		{
+			name:   "sizeLimit=1",
+			config: testConfig,
+			fn: func(t *testing.T, h ldap.Handler) {
+				rr := ldaptest.NewRecorder()
+				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
+					BaseDN:    "dc=foo,dc=com",
+					Scope:     ldap.ScopeWholeSubtree,
+					Filter:    "(objectclass=foo)",
+					SizeLimit: 1,
+				}))
+				res := rr.Message.(*ldap.SearchResponse)
+				_ = res
+
+				require.Equal(t, ldap.Success, res.Status)
+				require.Len(t, res.Results, 1)
+				require.Equal(t, "Success", res.Message)
+			},
+		},
+		{
+			name: "exceed size limit",
+			config: &Config{
+				Info:      testConfig.Info,
+				Address:   testConfig.Address,
+				Root:      testConfig.Root,
+				SizeLimit: 1,
+				Entries:   testConfig.Entries,
+			},
+			fn: func(t *testing.T, h ldap.Handler) {
+				rr := ldaptest.NewRecorder()
+				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
+					BaseDN:    "dc=foo,dc=com",
+					Scope:     ldap.ScopeWholeSubtree,
+					Filter:    "(objectclass=foo)",
+					SizeLimit: 1000,
+				}))
+				res := rr.Message.(*ldap.SearchResponse)
+				_ = res
+
+				require.Equal(t, ldap.SizeLimitExceeded, res.Status)
+				require.Len(t, res.Results, 1)
+				require.Equal(t, "SizeLimitExceeded", res.Message)
 			},
 		},
 	}

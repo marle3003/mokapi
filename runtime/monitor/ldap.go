@@ -22,7 +22,7 @@ func NewLdap() *Ldap {
 		metrics.WithFQName("ldap", "search_total"),
 		metrics.WithLabelNames("service"))
 	errors := metrics.NewCounterMap(
-		metrics.WithFQName("ldap", "search_total"),
+		metrics.WithFQName("ldap", "search_errors_total"),
 		metrics.WithLabelNames("service"))
 	lastSearch := metrics.NewGaugeMap(
 		metrics.WithFQName("ldap", "search_timestamp"),
@@ -38,6 +38,13 @@ func NewLdap() *Ldap {
 
 func (l *Ldap) Metrics() []metrics.Metric {
 	return []metrics.Metric{l.Bind, l.Search, l.Errors, l.LastSearch}
+}
+
+func (l *Ldap) Reset() {
+	l.Bind.Reset()
+	l.Search.Reset()
+	l.Errors.Reset()
+	l.LastSearch.Reset()
 }
 
 func NewLdapContext(ctx context.Context, ldap *Ldap) context.Context {

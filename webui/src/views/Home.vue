@@ -74,8 +74,10 @@ useMeta('Mocking tool for engineering teams | mokapi.io', description, 'https://
           </div>
           <div class="card">
             <div class="card-body">
-              <div class="card-title">LDAP</div>
-              Integrate your App with a fake LDAP server.
+              <router-link :to="{path: '/ldap'}">
+                <div class="card-title">LDAP</div>
+                Integrate your App with a fake LDAP server.
+              </router-link>
             </div>
           </div>
             <div class="card">

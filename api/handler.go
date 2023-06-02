@@ -32,6 +32,7 @@ var (
 	ServiceHttp  serviceType = "http"
 	ServiceKafka serviceType = "kafka"
 	ServiceSmtp  serviceType = "smtp"
+	ServiceLdap  serviceType = "ldap"
 )
 
 type service struct {
@@ -93,6 +94,8 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.getKafkaService(w, r)
 	case strings.HasPrefix(p, "/api/services/smtp/"):
 		h.handleSmtpService(w, r)
+	case strings.HasPrefix(p, "/api/services/ldap/"):
+		h.handleLdapService(w, r)
 	case p == "/api/dashboard":
 		h.getDashboard(w, r)
 	case strings.HasPrefix(p, "/api/metrics"):
@@ -139,6 +142,7 @@ func (h *handler) getServices(w http.ResponseWriter, _ *http.Request) {
 	services = append(services, getHttpServices(h.app.Http, h.app.Monitor)...)
 	services = append(services, getKafkaServices(h.app.Kafka, h.app.Monitor)...)
 	services = append(services, getMailServices(h.app.Smtp, h.app.Monitor)...)
+	services = append(services, getLdapServices(h.app.Ldap, h.app.Monitor)...)
 	w.Header().Set("Content-Type", "application/json")
 	writeJsonBody(w, services)
 }

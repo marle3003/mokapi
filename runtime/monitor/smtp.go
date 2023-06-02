@@ -27,6 +27,11 @@ func (s *Smtp) Metrics() []metrics.Metric {
 	return []metrics.Metric{s.Mails, s.LastMail}
 }
 
+func (s *Smtp) Reset() {
+	s.Mails.Reset()
+	s.LastMail.Reset()
+}
+
 func NewSmtpContext(ctx context.Context, smtp *Smtp) context.Context {
 	return context.WithValue(ctx, smtpKey, smtp)
 }

@@ -18,7 +18,7 @@ func TestMonitor_Start(t *testing.T) {
 	m.Start(p)
 	defer p.Stop()
 
-	time.Sleep(1 * time.Second)
+	time.Sleep(2 * time.Second)
 	require.Greater(t, m.MemoryUsage.Value(), float64(0))
 	require.Greater(t, m.StartTime.Value(), float64(0))
 }

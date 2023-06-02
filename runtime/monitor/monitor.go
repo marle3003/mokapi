@@ -71,6 +71,13 @@ func (m *Monitor) Start(pool *safe.Pool) {
 	})
 }
 
+func (m *Monitor) Reset() {
+	m.Http.Reset()
+	m.Kafka.Reset()
+	m.Smtp.Reset()
+	m.Ldap.Reset()
+}
+
 func (m *Monitor) update() {
 	var stats runtime.MemStats
 	runtime.ReadMemStats(&stats)

@@ -1,0 +1,9 @@
+components:
+  schemas:
+    LdapInfo:
+      allOf:
+        - $ref: 'common.yml#/components/schemas/Service'
+        - type: object
+          properties:
+            server:
+              type: string

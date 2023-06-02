@@ -69,6 +69,10 @@ const router = createRouter({
       component: () => import('@/views/Kafka.vue')
     },
     {
+      path: '/ldap',
+      component: () => import('@/views/Ldap.vue')
+    },
+    {
       path: '/smtp',
       component: () => import('@/views/Smtp.vue')
     },
@@ -136,6 +140,25 @@ const router = createRouter({
               component: DashboardView,
               meta: {service: 'kafka'}
             }
+          ]
+        },
+        {
+          path: '/dashboard/ldap',
+          name: 'ldap',
+          component: DashboardView,
+          children: [
+            {
+              path: '/dashboard/ldap/service/:service',
+              name: 'ldapService',
+              component: DashboardView,
+              meta: { service: 'ldap' },
+            },
+            {
+              path: '/dashboard/ldap/searches/:id',
+              name: 'ldapSearch',
+              component: DashboardView,
+              meta: { service: 'ldap' }
+            },
           ]
         },
         {

@@ -11,11 +11,17 @@ func init() {
 	common.Register("ldap", &Config{})
 }
 
+const (
+	defaultSizeLimit = 1000
+	defaultTimeLimit = 3600
+)
+
 type Config struct {
 	ConfigPath string `yaml:"-" json:"-"`
 	Info       Info
 	Address    string
 	Root       Entry
+	SizeLimit  int64
 	Entries    map[string]Entry
 }
 
@@ -26,6 +32,7 @@ func (c *Config) Key() string {
 type Info struct {
 	Name        string `yaml:"title"`
 	Description string `yaml:"description"`
+	Version     string `yaml:"version"`
 }
 
 type Entry struct {
@@ -41,6 +48,13 @@ func (c *Config) Parse(config *common.Config, reader common.Reader) error {
 		}
 	}
 	return nil
+}
+
+func (c *Config) getSizeLimit() int64 {
+	if c.SizeLimit == 0 {
+		return defaultSizeLimit
+	}
+	return c.SizeLimit
 }
 
 func (e Entry) Parse(config *common.Config, reader common.Reader) error {
