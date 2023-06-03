@@ -147,7 +147,7 @@ function showImage(target: EventTarget | null) {
         </div>
         <div class="row pb-6">
           <div class="col-12 col-lg-6 ps-5 pe-3">
-            <img src="systemtest.png" @click="showImage($event.target)" />
+            <img src="/systemtest.png" @click="showImage($event.target)" />
           </div>
           <div class="col-12 col-lg-6 ps-3 pe-5 pt-5">
             <h3>End-to-End Tests</h3>
@@ -168,7 +168,7 @@ function showImage(target: EventTarget | null) {
         </div>
         <div class="row">
           <div class="col-12 col-lg-6 ps-5 pe-3">
-            <img src="systemcontracts.png" style="max-height:75%" @click="showImage($event.target)" />
+            <img src="/systemcontracts.png" style="max-height:75%" @click="showImage($event.target)" />
           </div>
           <div class="col-12 col-lg-6 ps-3 pe-5 pt-5">
             <h3>Contract Testing</h3>
