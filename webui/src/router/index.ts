@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory, useRoute as baseRoute, type RouteLocationRaw } from 'vue-router'
+import { createRouter, createWebHistory, useRoute as baseRoute, type RouteLocationRaw, type RouteRecordRaw } from 'vue-router'
 import DashboardView from '@/views/DashboardView.vue'
 
 let base = document.querySelector("base")?.href ?? '/'
@@ -39,6 +39,26 @@ export function useRoute() {
   return {service, path, operation, context, router}
 }
 
+let startPageRoute: RouteRecordRaw
+if (import.meta.env.VITE_DASHBOARD == 'true') {
+  startPageRoute = {
+    path: '/',
+    name: 'home',
+    redirect: to => {
+      return {name: 'dashboard', query: {refresh: 20}}
+    }
+  }
+} 
+else {
+  startPageRoute = {
+    path: '/',
+    name: 'home',
+    component: () => {
+      return import('@/views/Home.vue')
+    },
+  }
+}
+
 const router = createRouter({
   history: createWebHistory(base),
   scrollBehavior: (to, from, savedPosition) => {
@@ -46,16 +66,7 @@ const router = createRouter({
     return { top: 0 }
   },
   routes: [
-    {
-      path: '/',
-      name: 'home',
-      redirect: to => {
-        if (import.meta.env.VITE_DASHBOARD == 'true') {
-          return {name: 'dashboard', query: {refresh: 20}}
-        }
-        return {path: '/home'}
-      }
-    },
+    startPageRoute,
     {
       path: '/home',
       component: () => import('@/views/Home.vue')
