@@ -10,6 +10,8 @@ const nav = inject<DocConfig>('nav')!
 const openSidebar = ref(false);
 
 const route = useRoute()
+let canonical = 'https://mokapi.io/' + <string>route.params.level1
+
 let level1 = <string>route.params.level1
 level1 = Object.keys(nav).find(key => key.toLowerCase() == level1.split('-').join(' ').toLowerCase())!
 let file = nav[level1]
@@ -17,11 +19,13 @@ let file = nav[level1]
 let level2 = <string>route.params.level2
 if (!level2 && typeof file !== 'string') {
   level2 = Object.keys(file)[0]
+  canonical += '/' + toUrlPath(level2)
 }else {
   level2 = Object.keys(file).find(key => {
       const search = level2.split('-').join(' ').toLowerCase()
       return key.toLowerCase().split('/').join(' ') === search
     })!
+  canonical += '/' + <string>route.params.level2
 }
 
 file = (file as DocConfig)[level2]
@@ -30,11 +34,13 @@ let level3 = <string>route.params.level3
 if (level3 || typeof file !== 'string') {
   if (!level3) {
     level3 = Object.keys(file)[0]
+    canonical += '/' + toUrlPath(level3)
   }else {
     level3 = Object.keys(file).find(key => {
       const search = level3.split('-').join(' ').toLowerCase()
       return key.toLowerCase().split('/').join('-') == search
     })!
+    canonical += '/' + <string>route.params.level3
   }
   file = (file as DocConfig)[level3]
 }
@@ -70,7 +76,7 @@ onMounted(() => {
       }
     }
   })
-  useMeta(metadata.title || level3, metadata.description, 'https://mokapi.io'+useRoute().fullPath.toLowerCase())
+  useMeta(metadata.title || level3, metadata.description, canonical.toLowerCase())
 })
 function toggleSidebar() {
   openSidebar.value = !openSidebar.value
@@ -83,6 +89,9 @@ function matchLevel3(label: any): boolean {
 }
 function formatParam(label: any): string {
   return label.toString().toLowerCase().split(' ').join('-').split('/').join('-')
+}
+function toUrlPath(s: string): string {
+  return s.split(' ').join('-').split('/').join('-').replace('&', '%26')
 }
 </script>
 
