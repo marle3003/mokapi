@@ -4,18 +4,6 @@ import Footer from '@/components/Footer.vue'
 import { ref, onMounted } from 'vue'
 import { Modal } from 'bootstrap'
 
-const script = `import { on } from 'mokapi'
-
-export default function() {
-    on('http', function(request, response) {
-        if (request.operationId === 'time') {
-            response.data = new Date().toISOString()
-            return true
-        }
-        return false
-    })
-}
-`
 const description = `Mokapi is an open-source tool that makes mock up easy for developers and QA engineers`
 
 useMeta('Mocking tool for engineering teams | mokapi.io', description, 'https://mokapi.io')
@@ -44,7 +32,7 @@ function showImage(target: EventTarget | null) {
         <div class="row hero-title justify-content-center">
           <div class="col-12 col-lg-6">
             <h1>Easy and flexible API mocking </h1>
-            <p class="description">Simplify your test workflows to build better software faster</p>
+            <p class="description">Simplify your test workflows to build better software faster - open source</p>
             <p class="d-none d-md-block">
               <router-link :to="{ path: '/docs/Guides' }">
                 <button type="button" class="btn btn-outline-primary">Guides</button>
@@ -112,107 +100,90 @@ function showImage(target: EventTarget | null) {
     </section>
     <section class="feature">
       <div class="container">
-        <div class="row pb-6">
-          <div class="col-12 col-lg-6 ps-5 pe-3">
-            <pre v-highlightjs="script"><code class="javascript"></code></pre>
+        <div class="row pb-4 pb-lg-5">
+          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
+            <div class="text-lg-start text-center">
+              <h3>Control Everything</h3>
+              <p>Write the behavior of your mock in Javascript and control everything, such as delay, errors or other edge cases.</p>
+              <router-link :to="{ path: '/docs/javascript-api' }">
+                <button type="button" class="btn btn-outline-primary btn-sm">Javascript API</button>
+              </router-link>
+            </div>
           </div>
-          <div class="col-12 col-lg-6 ps-3 pe-5 pt-5">
-            <h3>Control Everything</h3>
-            <p>Write the behavior of your mock in Javascript and control everything, such as delay, errors or other edge cases.</p>
-            <router-link :to="{ path: '/docs/javascript-api' }">
-              <button type="button" class="btn btn-outline-primary btn-sm">Javascript API</button>
-            </router-link>
-          </div>
-        </div>
-        <div class="row pb-6">
-          <div class="col-12 col-lg-6 ps-3 pe-5 pt-5">
-            <h3>Run Anywhere</h3>
-            <p>Use the <a href="https://hub.docker.com/r/mokapi/mokapi">Docker image</a>, the <a href="https://www.npmjs.com/package/go-mokapi">NPM package</a> or directly as an <a href="https://github.com/marle3003/mokapi/releases">executable</a>.</p>
-            <router-link :to="{ path: '/docs/guides/get-started/running' }">
-              <button type="button" class="btn btn-outline-primary btn-sm">Read more</button>
-            </router-link>
-          </div>
-          <div class="col-12 col-lg-6 ps-5 pe-3">
-            
+          <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
+            <img src="/controleverything.png" @click="showImage($event.target)" />
           </div>
         </div>
-        <div class="row pb-6">
-          <div class="col-12 col-lg-6 ps-3 pe-5 pt-5">
-            <h3>Everything as Code</h3>
-            <p>Get all benefits of everything as code such as version control and consistency</p>
+        <div class="row pb-4 pb-lg-5">
+          <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
+            <div class="text-lg-start text-center">
+              <h3>Run Anywhere</h3>
+              <p>Use the <a href="https://hub.docker.com/r/mokapi/mokapi">Docker image</a>, the <a href="https://www.npmjs.com/package/go-mokapi">NPM package</a> or directly as an <a href="https://github.com/marle3003/mokapi/releases">executable</a>.</p>
+              <router-link :to="{ path: '/docs/guides/get-started/running' }">
+                <button type="button" class="btn btn-outline-primary btn-sm">Read more</button>
+              </router-link>
+            </div>
           </div>
-          <div class="col-12 col-lg-6 ps-5 pe-3">
-            
+          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
+            <img src="/anywhere.png" @click="showImage($event.target)" />
           </div>
         </div>
-        <div class="row pb-6">
-          <div class="col-12 col-lg-6 ps-5 pe-3">
+        <div class="row pb-4 pb-lg-5">
+          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
+            <div class="text-lg-start text-center">
+              <h3>Everything as Code</h3>
+              <p>Get all benefits of everything as code such as version control and consistency</p>
+            </div>
+          </div>
+          <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
+            <img src="/everythingcode.png" @click="showImage($event.target)" />
+          </div>
+        </div>
+        <div class="row pb-4 pb-lg-5">
+          <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
+            <div class="text-lg-start text-center">
+              <h3>End-to-End Tests</h3>
+              <p>Test only system that you are responsible and fake all others with Mokapi.</p>
+            </div>
+          </div>
+          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 order-lg-2">
             <img src="/systemtest.png" @click="showImage($event.target)" />
           </div>
-          <div class="col-12 col-lg-6 ps-3 pe-5 pt-5">
-            <h3>End-to-End Tests</h3>
-            <p>Test only system that you are responsible and fake all others with Mokapi.</p>
-          </div>
         </div>
-        <div class="row pb-6">
-          <div class="col-12 col-lg-6 ps-3 pe-5 pt-5">
-            <h3>See what's going on</h3>
-            <p>Quickly analyze and inspect all requests and responses in the dashboard to gather insights on how your mock APIs are used.</p>
-            <router-link :to="{ path: '/docs/guides/get-started/dashboard' }">
-              <button type="button" class="btn btn-outline-primary btn-sm">Read more</button>
-            </router-link>
-          </div>
-          <div class="col-12 col-lg-6 ps-5 pe-3">
-            
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-12 col-lg-6 ps-5 pe-3">
-            <img src="/systemcontracts.png" style="max-height:75%" @click="showImage($event.target)" />
-          </div>
-          <div class="col-12 col-lg-6 ps-3 pe-5 pt-5">
-            <h3>Contract Testing</h3>
-            <p>Fake interactions under test control between your software and systems that it collaborates.</p>
-          </div>
-        </div>
-        <div class="row pb-6">
-          <div class="col-12 col-lg-6 ps-3 pe-5 pt-5">
-            <h3>Build better software faster</h3>
-            <p>Good tests are deterministic and durable. Test your software if it is ready to release. Only your software, nothing else.</p>
-          </div>
-          <div class="col-12 col-lg-6 ps-5 pe-3">
-            
-          </div>
-        </div>
-        <div class="row pb-6">
-          <div class="col-12 col-lg-6 ps-5 pe-3">
-            
-          </div>
-          <div class="col-12 col-lg-6 ps-3 pe-5 pt-5">
-            <h3>Open Source</h3>
-            <p>Mokapi is a completely open source and free API mocking tool (<a href="https://github.com/marle3003/mokapi">GitHub Repo</a>)</p>
-          </div>
-        </div>
-      </div>
-    </section>
-    <section>
-      <div class="container">
-        <div class="row">
-          <div class="col-12 justify-content-center">
-            <h2>Script mock data in Javascript</h2>
-            <div class="justify-content-center">
-              <pre v-highlightjs="script"><code class="javascript"></code></pre>
-            </div>
+        <div class="row pb-4 pb-lg-5">
+          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
+            <div class="text-lg-start text-center">
+              <h3>See what's going on</h3>
+              <p>Quickly analyze and inspect all requests and responses in the dashboard to gather insights on how your mock APIs are used.</p>
+              <router-link :to="{ path: '/docs/guides/get-started/dashboard' }">
+                <button type="button" class="btn btn-outline-primary btn-sm">Read more</button>
+              </router-link>
             </div>
           </div>
+          <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
+            <img src="/dashboard.png" @click="showImage($event.target)" />
+          </div>
         </div>
-    </section>
-    <section>
-      <div class="container">
-        <div class="row">
-          <div class="col-12">
-            <h2>See what's going on</h2>
-              <img src="@/assets/docs/guides/get-started/dashboard.png" style="width:100%" alt="Mokapi Dashboard" />
+        <div class="row pb-4 pb-lg-5">
+          <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
+            <div class="text-lg-start text-center">
+              <h3>Contract Testing</h3>
+              <p>Fake interactions under test control between your software and systems that it collaborates.</p>
+            </div>
+          </div>
+          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
+            <img src="/systemcontracts.png" @click="showImage($event.target)" />
+          </div>
+        </div>
+        <div class="row pb-4 pb-lg-5">
+          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
+            <div class="text-lg-start text-center">
+              <h3>Build better software faster</h3>
+              <p>Good tests are deterministic and durable. Test your software if it is ready to release. Only your software, nothing else.</p>
+            </div>
+          </div>
+          <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 order-lg-1">
+            <img src="/betterfaster.png" class="float-lg-end mx-auto d-block" style="width: 80%" @click="showImage($event.target)" />
           </div>
         </div>
       </div>

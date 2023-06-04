@@ -1,11 +1,11 @@
 <template>
   <footer>
-    <div class="container">
+    <div class="container text-lg-start text-center">
       <div class="row justify-content-center">
-        <div class="col-2">
+        <div class="col-12 col-lg-2">
           <img src="/logo.svg" height="120" alt="Logo Mokapi"/>
         </div>
-        <div class="col-2">
+        <div class="col-12 col-lg-2 mt-5 mt-lg-0">
           <div class="row">
             <div class="col">
               <h3>Guides</h3>
@@ -34,7 +34,7 @@
             </div>
           </div>
         </div>
-        <div class="col-3">
+        <div class="col-12 col-lg-3 mt-4 mt-lg-0">
           <div class="row">
             <div class="col">
               <h3>Examples</h3>
@@ -48,7 +48,7 @@
             </div>
           </div>
         </div>
-        <div class="col-2">
+        <div class="col-12 col-lg-2 mt-4 mt-lg-0">
           <div class="row">
             <div class="col">
               <h3>Links</h3>

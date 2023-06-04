@@ -26,11 +26,11 @@ declare interface KafkaRecord {
     offset: number
     time: number
     key: number[]
-    Value: number[]
-    Headers: KafkaHeader[]
+    value: number[]
+    headers: KafkaHeader[]
 }
 
 declare interface KafkaHeader {
-    Key: string
-    Value: number[]
+    key: string
+    value: string
 }
