@@ -14,7 +14,6 @@ const (
 )
 
 func Match(pattern, v string) bool {
-	//pattern = strings.Trim(pattern, " ")
 	v = filepath.ToSlash(v)
 	if !strings.HasPrefix(v, "/") {
 		v = "/" + v
@@ -78,7 +77,11 @@ Pattern:
 			continue
 		}
 		if star == doubleStar {
-			return matchGlobal(chunk+pattern, s)
+			p := chunk + pattern
+			if len(p) == 0 {
+				return true
+			}
+			return matchGlobal(p, s)
 		}
 		if star == singleStar {
 			for i := 0; i < len(s); i++ {

@@ -296,6 +296,45 @@ func TestProvider(t *testing.T) {
 				require.True(t, strings.HasSuffix(files[0].path, filepath.Join("dir", "foo.js")))
 			},
 		},
+		{
+			name: "mokapiignore all files but specific sub folder",
+			fs: &mockFS{map[string]*entry{
+				".mokapiignore": {
+					name:  ".mokapiignore",
+					isDir: false,
+					data:  []byte("**/*.*\n!/foo/bar/**"),
+				},
+				"/bar.txt": {
+					name:  "foo.txt",
+					isDir: false,
+					data:  []byte("foobar"),
+				},
+				"dir/bar.txt": {
+					name:  "foo.txt",
+					isDir: false,
+					data:  []byte("foobar"),
+				},
+				"foo/bar/foo.js": {
+					name:  "foo.js",
+					isDir: false,
+					data:  []byte("foobar"),
+				},
+				"foo/bar/dir/foo.js": {
+					name:  "foo.js",
+					isDir: false,
+					data:  []byte("foobar"),
+				},
+			}},
+			cfg: static.FileProvider{Directory: "./"},
+			test: func(t *testing.T, files []file) {
+				require.Len(t, files, 2)
+				sort.Slice(files, func(i, j int) bool {
+					return files[i].path < files[j].path
+				})
+				require.True(t, strings.HasSuffix(files[0].path, filepath.Join("bar", "dir", "foo.js")), "%v does not match suffix %v", files[1].path, filepath.Join("bar", "dir", "foo.js"))
+				require.True(t, strings.HasSuffix(files[1].path, filepath.Join("bar", "foo.js")), "%v does not match suffix %v", files[0].path, filepath.Join("bar", "foo.js"))
+			},
+		},
 	}
 	for _, tc := range testcases {
 		tc := tc

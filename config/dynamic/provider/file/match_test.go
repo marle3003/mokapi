@@ -7,10 +7,12 @@ import (
 
 func TestMatch(t *testing.T) {
 	testcases := []struct {
+		name    string
 		pattern string
 		test    map[string]bool
 	}{
 		{
+			name:    "name",
 			pattern: "name",
 			test: map[string]bool{
 				"/name.log":      false,
@@ -21,6 +23,7 @@ func TestMatch(t *testing.T) {
 			},
 		},
 		{
+			name:    "name/",
 			pattern: "name/",
 			test: map[string]bool{
 				"/name/file.txt":     true,
@@ -29,6 +32,7 @@ func TestMatch(t *testing.T) {
 			},
 		},
 		{
+			name:    "name.file",
 			pattern: "name.file",
 			test: map[string]bool{
 				"/name.file":     true,
@@ -37,6 +41,7 @@ func TestMatch(t *testing.T) {
 			},
 		},
 		{
+			name:    "/name.file",
 			pattern: "/name.file",
 			test: map[string]bool{
 				"/name.file":     true,
@@ -45,6 +50,7 @@ func TestMatch(t *testing.T) {
 			},
 		},
 		{
+			name:    "lib/name.file",
 			pattern: "lib/name.file",
 			test: map[string]bool{
 				"/lib/name.file":      true,
@@ -53,6 +59,7 @@ func TestMatch(t *testing.T) {
 			},
 		},
 		{
+			name:    "double star at start with folder",
 			pattern: "**/lib/name.file",
 			test: map[string]bool{
 				"/lib/name.file":      true,
@@ -61,6 +68,7 @@ func TestMatch(t *testing.T) {
 			},
 		},
 		{
+			name:    "double star at start",
 			pattern: "**/name",
 			test: map[string]bool{
 				"/name/log.file":     true,
@@ -69,6 +77,7 @@ func TestMatch(t *testing.T) {
 			},
 		},
 		{
+			name:    "double star in middle",
 			pattern: "/lib/**/name",
 			test: map[string]bool{
 				"/lib/test/ver1/name/log.file": true,
@@ -77,6 +86,7 @@ func TestMatch(t *testing.T) {
 			},
 		},
 		{
+			name:    "*.file",
 			pattern: "*.file",
 			test: map[string]bool{
 				"/name.file":     true,
@@ -86,6 +96,7 @@ func TestMatch(t *testing.T) {
 			},
 		},
 		{
+			name:    "/*",
 			pattern: "/*",
 			test: map[string]bool{
 				"/name.file":     true,
@@ -96,6 +107,7 @@ func TestMatch(t *testing.T) {
 			},
 		},
 		{
+			name:    "*name/",
 			pattern: "*name/",
 			test: map[string]bool{
 				"/lastname/log.file":  true,
@@ -106,6 +118,7 @@ func TestMatch(t *testing.T) {
 		},
 		{
 			// star with slash requires a folder root folder "name" does not match
+			name:    "*/name/",
 			pattern: "*/name/",
 			test: map[string]bool{
 				"/foo/name/log.file": true,
@@ -115,6 +128,7 @@ func TestMatch(t *testing.T) {
 			},
 		},
 		{
+			name:    "name?.file",
 			pattern: "name?.file",
 			test: map[string]bool{
 				"/names.file":  true,
@@ -123,6 +137,7 @@ func TestMatch(t *testing.T) {
 			},
 		},
 		{
+			name:    "name[a-z].file",
 			pattern: "name[a-z].file",
 			test: map[string]bool{
 				"/names.file":  true,
@@ -132,6 +147,7 @@ func TestMatch(t *testing.T) {
 			},
 		},
 		{
+			name:    "name[abc].file",
 			pattern: "name[abc].file",
 			test: map[string]bool{
 				"/namea.file": true,
@@ -141,6 +157,7 @@ func TestMatch(t *testing.T) {
 			},
 		},
 		{
+			name:    "name[!abc].file",
 			pattern: "name[!abc].file",
 			test: map[string]bool{
 				"/named.file": true,
@@ -150,6 +167,7 @@ func TestMatch(t *testing.T) {
 			},
 		},
 		{
+			name:    "foo/*",
 			pattern: "foo/*",
 			test: map[string]bool{
 				"/foo/test.json":   true,
@@ -157,11 +175,21 @@ func TestMatch(t *testing.T) {
 				"/foo/bar/hello.c": false,
 			},
 		},
+		{
+			name:    "double star at end",
+			pattern: "/foo/bar/**",
+			test: map[string]bool{
+				"/foo/test.json":       false,
+				"/foo/bar":             false,
+				"/foo/bar/hello.c":     true,
+				"/foo/bar/dir/hello.c": true,
+			},
+		},
 	}
 
 	for _, tc := range testcases {
 		tc := tc
-		t.Run(tc.pattern, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			for v, expected := range tc.test {
 				t.Run(v, func(t *testing.T) {
 					b := Match(tc.pattern, v)
