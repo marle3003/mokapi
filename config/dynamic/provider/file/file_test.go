@@ -224,12 +224,12 @@ func TestProvider(t *testing.T) {
 			},
 		},
 		{
-			name: "mokapiignore with re-include but parent is blocked",
+			name: "mokapiignore with re-include but excluding again",
 			fs: &mockFS{map[string]*entry{
 				".mokapiignore": {
 					name:  ".mokapiignore",
 					isDir: false,
-					data:  []byte("dir\n!dir/foo.txt"),
+					data:  []byte("dir\n!dir/foo.txt\ndir"),
 				},
 				"dir/foo.txt": {
 					name:  "foo.txt",
@@ -243,7 +243,7 @@ func TestProvider(t *testing.T) {
 			},
 		},
 		{
-			name: "mokapiignore all files with re-include",
+			name: "ignoring all files but re-include some",
 			fs: &mockFS{map[string]*entry{
 				".mokapiignore": {
 					name:  ".mokapiignore",

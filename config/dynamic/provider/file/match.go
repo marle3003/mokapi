@@ -13,85 +13,78 @@ const (
 	doubleStar starMode = 3
 )
 
-func Match(pattern, v string) bool {
-	v = filepath.ToSlash(v)
-	if !strings.HasPrefix(v, "/") {
-		v = "/" + v
+func Match(pattern, value string) bool {
+	if len(pattern) == 0 {
+		return false
+	}
+	value = filepath.ToSlash(value)
+
+	pattern = strings.TrimSuffix(pattern, "/")
+
+	if strings.HasPrefix(value, "/") {
+		value = value[1:]
 	}
 
-	p := strings.TrimSuffix(pattern, "/")
-	if !strings.Contains(p, "/") {
-		// without a slash it means in any folders
-		return matchGlobal(p, v)
+	if !strings.Contains(pattern, "/") {
+		return matchGlobal(pattern, value)
 	}
 
-	if !strings.HasPrefix(pattern, "/") {
-		pattern = "/" + pattern
+	// If there is a separator at the beginning or middle (or both) of the pattern, then the pattern is relative
+	if strings.HasPrefix(pattern, "/") {
+		pattern = pattern[1:]
 	}
 
-	if strings.HasPrefix(pattern, "**/") {
-		pattern = strings.TrimPrefix(pattern, "**/")
-		return matchGlobal(pattern, v)
-	}
-
-	if strings.Contains(pattern, "*") {
-		return match(pattern, v)
-	}
-
-	pattern = strings.TrimPrefix(pattern, "/")
-	v = strings.TrimPrefix(v, "/")
-
-	return strings.HasPrefix(v, pattern)
+	return match(pattern, value)
 }
 
 func matchGlobal(pattern, s string) bool {
-	s = strings.TrimPrefix(s, "/")
 	segments := strings.Split(s, "/")
+	chunks := strings.Split(pattern, "/")
 Segments:
 	for i := range segments {
-		chunks := strings.Split(strings.TrimPrefix(pattern, "/"), "/")
 		for j, chunk := range chunks {
 			if !match(chunk, segments[i+j]) {
 				continue Segments
 			}
 		}
 		return true
-
 	}
 	return false
 }
 
 func match(pattern, s string) bool {
-	if strings.HasSuffix(pattern, "/") {
-		// trailing slashing means a folder with any containing files
-		pattern += "*"
-	}
 Pattern:
 	for len(pattern) > 0 {
 		var star starMode
 		var chunk string
 		star, chunk, pattern = scanChunk(pattern)
+		if star != none && len(chunk) == 0 {
+			return true
+		}
 		ok, rest := matchChunk(chunk, s)
-		if ok && (len(rest) == 0 || len(pattern) > 0) {
-			s = rest
-			continue
+		if ok {
+			if len(rest) == 0 || rest[0] == '/' || len(pattern) > 0 {
+				s = rest
+				continue
+			}
 		}
 		if star == doubleStar {
-			p := chunk + pattern
-			if len(p) == 0 {
+			pattern = strings.TrimPrefix(chunk+pattern, "/")
+			segments := strings.Split(s, "/")
+			chunks := strings.Split(pattern, "/")
+		Segments:
+			for i := range segments {
+				for j, chunk := range chunks {
+					if !match(chunk, segments[i+j]) {
+						continue Segments
+					}
+				}
 				return true
 			}
-			return matchGlobal(p, s)
+			return false
 		}
 		if star == singleStar {
-			for i := 0; i < len(s); i++ {
-				if i > 0 && s[i] == '/' && star == singleStar {
-					if len(chunk) > 0 {
-						break
-					}
-					s = s[i:]
-					continue Pattern
-				}
+			for i := 0; i < len(s) && s[i] != '/'; i++ {
 				ok, rest = matchChunk(chunk, s[i+1:])
 				if ok {
 					s = rest
@@ -106,7 +99,7 @@ Pattern:
 		return false
 	}
 
-	return len(s) == 0
+	return true
 }
 
 func scanChunk(pattern string) (mode starMode, chunk, rest string) {
@@ -124,11 +117,11 @@ Scan:
 		switch pattern[i] {
 		case '*':
 			break Scan
-		case '/':
-			// '*/foo' requires a parent element
-			if mode == singleStar {
-				break Scan
-			}
+			//case '/':
+			//	// '*/foo' requires a parent element
+			//	if mode == singleStar || mode == none {
+			//		break Scan
+			//	}
 		}
 	}
 	return mode, pattern[0:i], pattern[i:]

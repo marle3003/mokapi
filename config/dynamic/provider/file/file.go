@@ -252,7 +252,7 @@ func (p *Provider) readMokapiIgnore(path string) {
 	if err != nil {
 		return
 	}
-	if i, err := newIgnoreFile(b); err != nil {
+	if i, err := newIgnoreFile(f, b); err != nil {
 		log.Errorf("unable to read file %v: %v", f, err)
 	} else {
 		key := filepath.Clean(path)
