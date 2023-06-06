@@ -136,7 +136,11 @@ func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
 		for {
 			select {
 			case c := <-chFile:
-				path := strings.TrimPrefix(c.Info.Path(), p.localPath)
+				path := c.Info.Url.Path
+				if len(c.Info.Url.Opaque) > 0 {
+					path = c.Info.Url.Opaque
+				}
+				path = strings.TrimPrefix(path, p.localPath)
 				c.Info.Parent = &common.ConfigInfo{
 					Provider: "git",
 					Url:      addFilePath(repoUrl, path),
