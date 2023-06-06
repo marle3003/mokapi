@@ -13,6 +13,7 @@ import (
 	"mokapi/safe"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -119,7 +120,9 @@ func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
 		}
 	}
 
-	p.startFileProvider(ch, pool)
+	chFile := make(chan *common.Config)
+	p.startFileProvider(chFile, pool)
+	repoUrl, _ := url.Parse(p.url)
 
 	pool.Go(func(ctx context.Context) {
 		defer func() {
@@ -132,6 +135,14 @@ func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
 
 		for {
 			select {
+			case c := <-chFile:
+				path := strings.TrimPrefix(c.Info.Path(), p.localPath)
+				c.Info.Parent = &common.ConfigInfo{
+					Provider: "git",
+					Url:      addFilePath(repoUrl, path),
+					Parent:   nil,
+				}
+				ch <- c
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
@@ -177,4 +188,13 @@ func (p *Provider) startFileProvider(ch chan *common.Config, pool *safe.Pool) {
 	if err != nil {
 		log.Errorf("unable to start file provider for git: %v", err)
 	}
+}
+
+func addFilePath(u *url.URL, path string) *url.URL {
+	newUrl := *u
+	path = filepath.ToSlash(path)
+	q := newUrl.Query()
+	q.Add("file", path)
+	newUrl.RawQuery = q.Encode()
+	return &newUrl
 }

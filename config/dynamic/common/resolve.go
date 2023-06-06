@@ -21,15 +21,15 @@ func Resolve(ref string, element interface{}, config *Config, reader Reader) err
 
 	if len(u.Path) > 0 {
 		if !u.IsAbs() {
-			if len(config.Url.Opaque) > 0 {
-				p := filepath.Join(filepath.Dir(config.Url.Opaque), u.Path)
+			if len(config.Info.Url.Opaque) > 0 {
+				p := filepath.Join(filepath.Dir(config.Info.Url.Opaque), u.Path)
 				p = fmt.Sprintf("file:%v", p)
 				if len(u.Fragment) > 0 {
 					p = fmt.Sprintf("%v#%v", p, u.Fragment)
 				}
 				u, err = url.Parse(p)
 			} else {
-				u, err = config.Url.Parse(ref)
+				u, err = config.Info.Url.Parse(ref)
 			}
 		}
 

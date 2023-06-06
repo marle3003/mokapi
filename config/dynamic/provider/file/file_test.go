@@ -352,9 +352,9 @@ func TestProvider(t *testing.T) {
 			for {
 				select {
 				case c := <-ch:
-					path := c.Url.Path
+					path := c.Info.Url.Path
 					if len(path) == 0 {
-						path = c.Url.Opaque
+						path = c.Info.Url.Opaque
 						parent, _ := os.Getwd()
 						path = strings.Replace(path, parent+"\\", "", 1)
 					}
@@ -380,7 +380,7 @@ func TestProvider_File(t *testing.T) {
 				timeout := time.After(time.Second)
 				select {
 				case c := <-ch:
-					require.True(t, len(c.Url.String()) > 0, "url is set")
+					require.True(t, len(c.Info.Url.String()) > 0, "url is set")
 					require.True(t, len(c.Raw) > 0, "got data")
 				case <-timeout:
 					t.Fatal("timeout while waiting for file event")
@@ -398,8 +398,8 @@ func TestProvider_File(t *testing.T) {
 				for i := 0; i < 2; i++ {
 					select {
 					case c := <-ch:
-						got = append(got, c.Url.String())
-						require.True(t, len(c.Url.String()) > 0, "url is set")
+						got = append(got, c.Info.Url.String())
+						require.True(t, len(c.Info.Url.String()) > 0, "url is set")
 						require.True(t, len(c.Raw) > 0, "got data")
 					case <-timeout:
 						t.Fatal("timeout while waiting for file event")
@@ -425,8 +425,8 @@ func TestProvider_File(t *testing.T) {
 				for i := 0; i < 2; i++ {
 					select {
 					case c := <-ch:
-						got = append(got, c.Url.String())
-						require.True(t, len(c.Url.String()) > 0, "url is set")
+						got = append(got, c.Info.Url.String())
+						require.True(t, len(c.Info.Url.String()) > 0, "url is set")
 						require.True(t, len(c.Raw) > 0, "got data")
 					case <-timeout:
 						t.Fatal("timeout while waiting for file event")
@@ -464,7 +464,7 @@ func TestWatch_AddFile(t *testing.T) {
 	timeout := time.After(5 * time.Second)
 	select {
 	case c := <-ch:
-		require.True(t, len(c.Url.String()) > 0, "url is set")
+		require.True(t, len(c.Info.Url.String()) > 0, "url is set")
 		require.True(t, len(c.Raw) > 0, "got data")
 	case <-timeout:
 		t.Fatal("timeout while waiting for file event")
@@ -489,7 +489,7 @@ func TestWatch_Create_SubFolder_And_Add_File(t *testing.T) {
 	timeout := time.After(5 * time.Second)
 	select {
 	case c := <-ch:
-		require.True(t, len(c.Url.String()) > 0, "url is set")
+		require.True(t, len(c.Info.Url.String()) > 0, "url is set")
 		require.True(t, len(c.Raw) > 0, "got data")
 	case <-timeout:
 		t.Fatal("timeout while waiting for file event")

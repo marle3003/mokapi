@@ -212,10 +212,9 @@ func (p *Provider) readFile(path string) (*common.Config, error) {
 	}
 
 	return &common.Config{
-		Url:          u,
-		Raw:          data,
-		Checksum:     h.Sum(nil),
-		ProviderName: "file",
+		Info:     common.ConfigInfo{Url: u, Provider: "file"},
+		Raw:      data,
+		Checksum: h.Sum(nil),
 	}, nil
 }
 

@@ -37,9 +37,11 @@ Stop:
 			break Stop
 		case c := <-ch:
 			i++
-			name := filepath.Base(c.Url.String())
+			name := filepath.Base(c.Info.Url.String())
 			_, ok := files[name]
-			assert.True(t, ok)
+			require.True(t, ok)
+			require.Equal(t, "git", c.Info.Parent.Provider)
+			require.Equal(t, "https://github.com/marle3003/mokapi-example.git?file=/"+name, c.Info.Path())
 		}
 	}
 	assert.Equal(t, len(files), i)
@@ -64,7 +66,7 @@ Stop:
 			break Stop
 		case c := <-ch:
 			i++
-			name := filepath.Base(c.Url.String())
+			name := filepath.Base(c.Info.Url.String())
 			_, ok := files[name]
 			assert.True(t, ok)
 		}
@@ -94,7 +96,7 @@ func testGit_SimpleUrl(t *testing.T) {
 	case <-time.After(1 * time.Second):
 		t.Fatal("Timeout")
 	case c := <-ch:
-		require.Equal(t, "foo.txt", filepath.Base(c.Url.String()))
+		require.Equal(t, "foo.txt", filepath.Base(c.Info.Url.String()))
 	}
 }
 
@@ -120,7 +122,7 @@ Stop:
 		case <-time.After(3 * time.Second):
 			break Stop
 		case c := <-ch:
-			files[filepath.Base(c.Url.String())] = c.Url.String()
+			files[filepath.Base(c.Info.Url.String())] = c.Info.Url.String()
 		}
 	}
 

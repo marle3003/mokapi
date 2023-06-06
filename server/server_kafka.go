@@ -40,7 +40,7 @@ func (m *KafkaManager) UpdateConfig(c *config.Config) {
 	}
 
 	m.addOrUpdateCluster(cfg)
-	log.Debugf("processed %v", c.Url.String())
+	log.Debugf("processed %v", c.Info.Path())
 }
 
 func (m *KafkaManager) addOrUpdateCluster(cfg *asyncApi.Config) {

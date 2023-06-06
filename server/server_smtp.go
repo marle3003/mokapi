@@ -40,7 +40,7 @@ func (m *SmtpManager) UpdateConfig(c *common.Config) {
 		m.app.AddSmtp(cfg, h.Store)
 		u, err := parseSmtpUrl(cfg.Server)
 		if err != nil {
-			log.Errorf("url syntax error %v: %v", c.Url, err.Error())
+			log.Errorf("url syntax error %v: %v", c.Info.Path(), err.Error())
 			return
 		}
 		log.Infof("adding new smtp host on %v", u)

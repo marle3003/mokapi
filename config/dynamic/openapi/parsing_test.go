@@ -51,7 +51,7 @@ func TestEndpointResolve(t *testing.T) {
 	t.Run("file reference", func(t *testing.T) {
 		target := &openapi.Endpoint{}
 		reader := &testReader{readFunc: func(cfg *common.Config) error {
-			require.Equal(t, "/foo.yml", cfg.Url.String())
+			require.Equal(t, "/foo.yml", cfg.Info.Url.String())
 			config := openapitest.NewConfig("3.0", openapitest.WithEndpoint("/foo", target))
 			cfg.Data = config
 			return nil
@@ -63,7 +63,7 @@ func TestEndpointResolve(t *testing.T) {
 	})
 	t.Run("file reference but nil", func(t *testing.T) {
 		reader := &testReader{readFunc: func(cfg *common.Config) error {
-			require.Equal(t, "/foo.yml", cfg.Url.String())
+			require.Equal(t, "/foo.yml", cfg.Info.Url.String())
 			config := openapitest.NewConfig("3.0", openapitest.WithEndpoint("/foo", nil))
 			cfg.Data = config
 			return nil

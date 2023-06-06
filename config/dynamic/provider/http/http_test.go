@@ -35,7 +35,7 @@ func TestProvider(t *testing.T) {
 	timeout := time.After(time.Second)
 	select {
 	case c := <-ch:
-		require.Equal(t, p.config.Url, c.Url.String())
+		require.Equal(t, p.config.Url, c.Info.Url.String())
 		require.Equal(t, content[0], c.Raw)
 	case <-timeout:
 		t.Fatal("timeout while waiting for http event")
@@ -45,7 +45,7 @@ func TestProvider(t *testing.T) {
 	timeout = time.After(6 * time.Second)
 	select {
 	case c := <-ch:
-		require.Equal(t, p.config.Url, c.Url.String())
+		require.Equal(t, p.config.Url, c.Info.Url.String())
 		require.Equal(t, content[1], c.Raw)
 	case <-timeout:
 		t.Fatal("timeout while waiting for http event")

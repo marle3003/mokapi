@@ -90,7 +90,7 @@ func (m *HttpManager) Update(c *config.Config) {
 	for _, s := range config.Servers {
 		u, err := parseUrl(s.Url)
 		if err != nil {
-			log.Errorf("url syntax error %v: %v", c.Url, err.Error())
+			log.Errorf("url syntax error %v: %v", c.Info.Url, err.Error())
 			continue
 		}
 
@@ -100,7 +100,7 @@ func (m *HttpManager) Update(c *config.Config) {
 			continue
 		}
 	}
-	log.Debugf("processed %v", c.Url.String())
+	log.Debugf("processed %v", c.Info.Path())
 }
 
 func (m *HttpManager) updateConfigWithStaticConfigByName(cfg *openapi.Config, name string) {
