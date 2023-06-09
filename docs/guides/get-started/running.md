@@ -10,7 +10,7 @@ In this quick start we will run [Swagger](https://swagger.io/)'s Petstore in Mok
 Start Mokapi with the following command
 
 ```bash tab=Docker  
-docker run -it --rm -p 80:80 -p 8080:8080 -e MOKAPI_Providers_Http_Url=https://petstore3.swagger.io/api/v3/openapi.json mokapi/mokapi:v0.5.0-alpha
+docker run -it --rm -p 80:80 -p 8080:8080 -e MOKAPI_Providers_Http_Url=https://petstore3.swagger.io/api/v3/openapi.json mokapi/mokapi:latest
 ```
 
 ```bash tab=NPM
