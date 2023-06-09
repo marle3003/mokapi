@@ -23,4 +23,5 @@ declare interface Schema {
     minItems?: number
     maxItems?: number
     shuffleItems?: boolean
+    uniqueItems?: boolean
 }

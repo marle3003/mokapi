@@ -50,12 +50,13 @@ type FileProvider struct {
 
 type GitProvider struct {
 	Url          string
+	Urls         []string
 	PullInterval string `yaml:"pullInterval"`
-	Directories  []string
 }
 
 type HttpProvider struct {
 	Url           string
+	Urls          []string
 	PollInterval  string `yaml:"pollInterval"`
 	PollTimeout   string `yaml:"pollTimeout"`
 	Proxy         string

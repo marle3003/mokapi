@@ -2,11 +2,11 @@ package runtime
 
 import (
 	"github.com/stretchr/testify/require"
+	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic/openapi"
 	"mokapi/config/dynamic/openapi/openapitest"
 	"mokapi/runtime/events"
-	"mokapi/runtime/monitor"
-	"net/http"
-	"net/http/httptest"
+	"net/url"
 	"testing"
 )
 
@@ -21,7 +21,7 @@ func TestApp_AddHttp(t *testing.T) {
 	defer events.Reset()
 
 	app := New()
-	app.AddHttp(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", "")))
+	app.AddHttp(newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))))
 
 	require.Contains(t, app.Http, "foo")
 	err := events.Push("bar", events.NewTraits().WithNamespace("http").WithName("foo"))
@@ -32,21 +32,17 @@ func TestApp_AddHttp_Path(t *testing.T) {
 	defer events.Reset()
 
 	app := New()
-	app.AddHttp(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
-		openapitest.WithEndpoint("bar", openapitest.NewEndpoint())))
+	app.AddHttp(newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
+		openapitest.WithEndpoint("bar", openapitest.NewEndpoint()))))
 
 	require.Contains(t, app.Http, "foo")
 	err := events.Push("bar", events.NewTraits().WithNamespace("http").WithName("foo").With("path", "bar"))
 	require.NoError(t, err, "event store should be available")
 }
 
-func TestHttpHandler(t *testing.T) {
-	hf := http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-		v, ok := monitor.HttpFromContext(request.Context())
-		require.True(t, ok)
-		require.NotNil(t, v)
-	})
-	h := NewHttpHandler(New().Monitor.Http, hf)
-
-	h.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("GET", "https://foo.bar", nil))
+func newConfig(config *openapi.Config) *common.Config {
+	c := &common.Config{Data: config}
+	u, _ := url.Parse("https://mokapi.io")
+	c.Info.Url = u
+	return c
 }

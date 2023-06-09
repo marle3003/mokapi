@@ -37,6 +37,11 @@ func main() {
 		fmt.Println("Error", err)
 	}
 
+	if len(cfg.Services) > 0 {
+		fmt.Println("static configuration Services are no longer supported. Use patching instead.")
+		return
+	}
+
 	configureLogging(cfg)
 
 	s, err := createServer(cfg)
@@ -70,13 +75,14 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 
 	pool := safe.NewPool(context.Background())
 	app := runtime.New()
+
 	watcher := dynamic.NewConfigWatcher(cfg)
 	scriptEngine := engine.New(watcher, app, cfg.Js)
 	certStore, err := cert.NewStore(cfg)
 	if err != nil {
 		return nil, err
 	}
-	http := server.NewHttpManager(scriptEngine, certStore, app, cfg.Services)
+	http := server.NewHttpManager(scriptEngine, certStore, app)
 	kafka := server.NewKafkaManager(scriptEngine, app)
 	smtp := server.NewSmtpManager(app, scriptEngine, certStore)
 	ldap := server.NewLdapDirectoryManager(scriptEngine, certStore, app)
@@ -85,14 +91,11 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 		kafka.UpdateConfig(cfg)
 		http.Update(cfg)
 		smtp.UpdateConfig(cfg)
-		smtp.UpdateConfig(cfg)
 		ldap.UpdateConfig(cfg)
 		if err := scriptEngine.AddScript(cfg); err != nil {
 			log.Error(err)
 		}
 	})
-
-	go watcher.ReadServices(cfg.Services)
 
 	if u, err := api.BuildUrl(cfg.Api); err == nil {
 		err = http.AddService("api", u, api.New(app, cfg.Api), true)

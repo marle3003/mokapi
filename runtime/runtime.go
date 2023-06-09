@@ -3,6 +3,7 @@ package runtime
 import (
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
+	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/directory"
 	"mokapi/config/dynamic/mail"
 	"mokapi/config/dynamic/openapi"
@@ -30,17 +31,27 @@ func New() *App {
 	}
 }
 
-func (a *App) AddHttp(c *openapi.Config) {
+func (a *App) AddHttp(c *common.Config) *HttpInfo {
 	if len(a.Http) == 0 {
 		a.Http = make(map[string]*HttpInfo)
 	}
-	a.Http[c.Info.Name] = &HttpInfo{Config: c}
-
-	events.ResetStores(events.NewTraits().WithNamespace("http").WithName(c.Info.Name))
-	events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("http").WithName(c.Info.Name))
-	for path := range c.Paths.Value {
-		events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("http").WithName(c.Info.Name).With("path", path))
+	cfg := c.Data.(*openapi.Config)
+	name := cfg.Info.Name
+	hc, ok := a.Http[name]
+	if !ok {
+		hc = NewHttpInfo(c)
+		a.Http[cfg.Info.Name] = hc
+	} else {
+		hc.AddConfig(c)
 	}
+
+	events.ResetStores(events.NewTraits().WithNamespace("http").WithName(name))
+	events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("http").WithName(name))
+	for path := range cfg.Paths.Value {
+		events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("http").WithName(name).With("path", path))
+	}
+
+	return hc
 }
 
 func (a *App) AddKafka(c *asyncApi.Config, store *store.Store) {

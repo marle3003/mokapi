@@ -4,8 +4,6 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	config "mokapi/config/dynamic/common"
-	"mokapi/config/dynamic/openapi"
-	"mokapi/config/dynamic/swagger"
 	"mokapi/config/static"
 	"mokapi/engine/common"
 	"mokapi/runtime"
@@ -24,17 +22,16 @@ type HttpManager struct {
 	services     static.Services
 }
 
-func NewHttpManager(emitter common.EventEmitter, store *cert.Store, app *runtime.App, services static.Services) *HttpManager {
+func NewHttpManager(emitter common.EventEmitter, store *cert.Store, app *runtime.App) *HttpManager {
 	return &HttpManager{
 		eventEmitter: emitter,
 		certStore:    store,
 		app:          app,
 		servers:      make(map[string]*service.HttpServer),
-		services:     services,
 	}
 }
 
-func (m *HttpManager) AddService(name string, u *url.URL, handler http.Handler, isInternal bool) error {
+func (m *HttpManager) AddService(name string, u *url.URL, h http.Handler, isInternal bool) error {
 	server, found := m.servers[u.Port()]
 	if !found {
 		if u.Scheme == "https" {
@@ -45,11 +42,6 @@ func (m *HttpManager) AddService(name string, u *url.URL, handler http.Handler, 
 
 		m.servers[u.Port()] = server
 		server.Start()
-	}
-
-	h := handler
-	if !isInternal {
-		h = runtime.NewHttpHandler(m.app.Monitor.Http, h)
 	}
 
 	err := server.AddOrUpdate(&service.HttpService{
@@ -65,51 +57,25 @@ func (m *HttpManager) AddService(name string, u *url.URL, handler http.Handler, 
 }
 
 func (m *HttpManager) Update(c *config.Config) {
-	var config *openapi.Config
-	if cfg, ok := c.Data.(*swagger.Config); ok {
-		var err error
-		config, err = swagger.Convert(cfg)
-		if err != nil {
-			log.Errorf("unable to convert swagger config to openapi: %v", err)
-			return
-		}
-	} else if cfg, ok := c.Data.(*openapi.Config); ok {
-		config = cfg
-	} else {
+	if !runtime.IsHttpConfig(c) {
 		return
 	}
+	cfg := m.app.AddHttp(c)
 
-	m.updateConfigWithStaticConfigByName(config, c.Key)
-	m.updateConfigWithStaticConfigByName(config, config.Info.Name)
-	m.app.AddHttp(config)
-
-	if len(config.Servers) == 0 {
-		config.Servers = append(config.Servers, &openapi.Server{Url: "/"})
-	}
-
-	for _, s := range config.Servers {
+	for _, s := range cfg.Servers {
 		u, err := parseUrl(s.Url)
 		if err != nil {
 			log.Errorf("url syntax error %v: %v", c.Info.Url, err.Error())
 			continue
 		}
 
-		err = m.AddService(config.Info.Name, u, openapi.NewHandler(config, m.eventEmitter), false)
+		err = m.AddService(cfg.Info.Name, u, cfg.Handler(m.app.Monitor.Http, m.eventEmitter), false)
 		if err != nil {
-			log.Errorf("unable to add '%v' on %v: %v", config.Info.Name, s.Url, err.Error())
+			log.Warnf("unable to add '%v' on %v: %v", cfg.Info.Name, s.Url, err.Error())
 			continue
 		}
 	}
 	log.Debugf("processed %v", c.Info.Path())
-}
-
-func (m *HttpManager) updateConfigWithStaticConfigByName(cfg *openapi.Config, name string) {
-	serviceConfig := m.services.GetByName(name)
-	if serviceConfig != nil && serviceConfig.Http != nil {
-		for _, server := range serviceConfig.Http.Servers {
-			cfg.Servers = append(cfg.Servers, &openapi.Server{Url: server.Url})
-		}
-	}
 }
 
 func (m *HttpManager) Stop() {

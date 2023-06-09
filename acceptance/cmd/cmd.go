@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"mokapi/api"
 	"mokapi/config/dynamic"
@@ -24,6 +25,10 @@ type Cmd struct {
 func Start(cfg *static.Config) (*Cmd, error) {
 	log.SetLevel(log.DebugLevel)
 
+	if len(cfg.Services) > 0 {
+		return nil, errors.New("static configuration Services are no longer supported. Use patching instead.")
+	}
+
 	app := runtime.New()
 
 	watcher := dynamic.NewConfigWatcher(cfg)
@@ -34,7 +39,7 @@ func Start(cfg *static.Config) (*Cmd, error) {
 	}
 	scriptEngine := engine.New(watcher, app, cfg.Js)
 
-	http := server.NewHttpManager(scriptEngine, certStore, app, cfg.Services)
+	http := server.NewHttpManager(scriptEngine, certStore, app)
 	kafka := server.NewKafkaManager(scriptEngine, app)
 	smtp := server.NewSmtpManager(app, scriptEngine, certStore)
 	ldap := server.NewLdapDirectoryManager(scriptEngine, certStore, app)
@@ -48,8 +53,6 @@ func Start(cfg *static.Config) (*Cmd, error) {
 			panic(err)
 		}
 	})
-
-	watcher.ReadServices(cfg.Services)
 
 	if u, err := api.BuildUrl(cfg.Api); err == nil {
 		err = http.AddService("api", u, api.New(app, cfg.Api), true)

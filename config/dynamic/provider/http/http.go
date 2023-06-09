@@ -21,7 +21,8 @@ type Provider struct {
 	client *http.Client
 	files  map[string]uint64
 
-	m sync.RWMutex
+	running bool
+	m       sync.RWMutex
 }
 
 func New(config static.HttpProvider) *Provider {
@@ -61,22 +62,28 @@ func New(config static.HttpProvider) *Provider {
 }
 
 func (p *Provider) Read(u *url.URL) (*common.Config, error) {
-	p.m.Lock()
-	defer p.m.Unlock()
-
 	c, _, err := p.readUrl(u)
 	return c, err
 }
 
 func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
-	if len(p.config.Url) == 0 {
+	if p.running {
 		return nil
 	}
-	_, err := url.Parse(p.config.Url)
-	if err != nil {
-		return err
+
+	urls := p.config.Urls
+	if len(p.config.Url) > 0 {
+		urls = append(urls, p.config.Url)
 	}
-	p.files[p.config.Url] = 0
+
+	var err error
+	for _, u := range urls {
+		if err = checkUrl(u); err != nil {
+			log.Errorf("invalid url: %v", err)
+			continue
+		}
+		p.files[u] = 0
+	}
 
 	interval := time.Second * 5
 	if len(p.config.PollInterval) > 0 {
@@ -101,14 +108,12 @@ func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
 			}
 		}
 	})
+	p.running = true
 
 	return nil
 }
 
 func (p *Provider) checkFiles(ch chan *common.Config) {
-	p.m.Lock()
-	defer p.m.Unlock()
-
 	for f := range p.files {
 		u, _ := url.Parse(f)
 		c, changed, err := p.readUrl(u)
@@ -121,6 +126,9 @@ func (p *Provider) checkFiles(ch chan *common.Config) {
 }
 
 func (p *Provider) readUrl(u *url.URL) (c *common.Config, changed bool, err error) {
+	p.m.Lock()
+	defer p.m.Unlock()
+
 	var res *http.Response
 	res, err = p.client.Get(u.String())
 	if err != nil {
@@ -163,4 +171,9 @@ func (p *Provider) readUrl(u *url.URL) (c *common.Config, changed bool, err erro
 	}
 
 	return
+}
+
+func checkUrl(s string) error {
+	_, err := url.Parse(s)
+	return err
 }

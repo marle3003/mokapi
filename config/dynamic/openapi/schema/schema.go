@@ -28,7 +28,6 @@ type Schema struct {
 	Description          string                `yaml:"description" json:"description"`
 	Properties           *SchemasRef           `yaml:"properties" json:"properties"`
 	AdditionalProperties *AdditionalProperties `yaml:"additionalProperties,omitempty" json:"additionalProperties,omitempty"`
-	Faker                string                `yaml:"x-faker" json:"x-faker"`
 	Items                *Ref                  `yaml:"items" json:"items"`
 	Xml                  *Xml                  `yaml:"xml" json:"xml"`
 	Required             []string              `yaml:"required" json:"required"`

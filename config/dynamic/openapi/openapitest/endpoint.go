@@ -16,6 +16,13 @@ func NewEndpoint(opts ...EndpointOptions) *openapi.Endpoint {
 	return e
 }
 
+func WithEndpointInfo(summary, description string) EndpointOptions {
+	return func(o *openapi.Endpoint) {
+		o.Summary = summary
+		o.Description = description
+	}
+}
+
 func AppendEndpoint(path string, config *openapi.Config, opts ...EndpointOptions) *openapi.Endpoint {
 	e := &openapi.Endpoint{}
 	for _, opt := range opts {
