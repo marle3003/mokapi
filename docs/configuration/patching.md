@@ -22,7 +22,13 @@ servers:
 When Mokapi applies the changes, it tries to match each element to an element
 in the existing configuration. If there is a match, Mokapi updates the existing element. If there is no match, Mokapi inserts a new element.
 
-## The result of the merge:
+``` box=tip
+Mokapi patches any configuration file even if the source comes from a different provider.
+```
+
+## Patching Result:
+
+After merging these configuration files, we get the following as result:
 
 ```yaml
 openapi: 3.0.3
@@ -33,13 +39,11 @@ servers:
   - url: http://localhost/petstore
 ```
 
-Mokapi patches any configuration file even if the source is from a different provider.
-
-## Discriminators
+## Patching Discriminators
 
 | Type     | Discriminator |
 |----------|---------------|
-| OpenAPI  | info.title    |
-| AsyncAPI | info.title    |
-| SMTP     | info.title    |
-| LDAP     | info.title    |
+| OpenAPI  | *info.title*  |
+| AsyncAPI | *info.title*  |
+| SMTP     | *info.title*  |
+| LDAP     | *info.title*  |
