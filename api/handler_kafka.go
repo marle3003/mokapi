@@ -78,6 +78,10 @@ type broker struct {
 }
 
 type topicConfig struct {
+	Name        string      `json:"name,omitempty"`
+	Title       string      `json:"title,omitempty"`
+	Summary     string      `json:"summary,omitempty"`
+	Description string      `json:"description,omitempty"`
 	Key         *schemaInfo `json:"key,omitempty"`
 	Message     *schemaInfo `json:"message"`
 	Header      *schemaInfo `json:"header,omitempty"`
@@ -175,11 +179,16 @@ func newTopic(s *store.Store, t *store.Topic, config *asyncApi.Channel) topic {
 	}
 
 	if config.Publish.Message.Value != nil {
+		msg := config.Publish.Message.Value
 		result.Configs = &topicConfig{
-			Key:         getSchema(config.Publish.Message.Value.Bindings.Kafka.Key),
-			Message:     getSchema(config.Publish.Message.Value.Payload),
-			Header:      getSchema(config.Publish.Message.Value.Headers),
-			MessageType: config.Publish.Message.Value.ContentType,
+			Name:        msg.Name,
+			Title:       msg.Title,
+			Summary:     msg.Summary,
+			Description: msg.Description,
+			Key:         getSchema(msg.Bindings.Kafka.Key),
+			Message:     getSchema(msg.Payload),
+			Header:      getSchema(msg.Headers),
+			MessageType: msg.ContentType,
 		}
 	}
 

@@ -18,8 +18,13 @@ declare interface KafkaTopic {
 }
 
 declare interface KafkaTopicConfig {
+  name: string
+  title: string
+  summary: string
+  description: string
   key: Schema;
   message: Schema;
+  header: Schema
   messageType: string;
 }
 

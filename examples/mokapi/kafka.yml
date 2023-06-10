@@ -61,6 +61,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Partition'
+        configs:
+          $ref: '#/components/schemas/TopicConfig'
     Partition:
       type: object
       properties:
@@ -118,4 +120,23 @@ components:
         name:
           type: string
         addr:
+          type: string
+    TopicConfig:
+      type: object
+      properties:
+        name:
+          type: string
+        title:
+          type: string
+        summary:
+          type: string
+        description:
+          type: string
+        key:
+          $ref: 'schema.yml#/components/schemas/Schema'
+        message:
+          $ref: 'schema.yml#/components/schemas/Schema'
+        header:
+          $ref: 'schema.yml#/components/schemas/Schema'
+        messageType:
           type: string

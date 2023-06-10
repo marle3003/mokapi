@@ -1,6 +1,9 @@
 package asyncapitest
 
-import "mokapi/config/dynamic/asyncApi"
+import (
+	"mokapi/config/dynamic/asyncApi"
+	"mokapi/config/dynamic/openapi/schema"
+)
 
 type ConfigOptions func(c *asyncApi.Config)
 
@@ -29,6 +32,16 @@ func WithInfo(title, description, version string) ConfigOptions {
 	}
 }
 
+func WithInfoExt(termsOfService, licenseName, licenseUrl string) ConfigOptions {
+	return func(c *asyncApi.Config) {
+		c.Info.TermsOfService = termsOfService
+		c.Info.License = &asyncApi.License{
+			Name: licenseName,
+			Url:  licenseUrl,
+		}
+	}
+}
+
 func WithContact(name, url, mail string) ConfigOptions {
 	return func(c *asyncApi.Config) {
 		c.Info.Contact = &asyncApi.Contact{
@@ -49,15 +62,33 @@ func WithChannel(name string, opts ...ChannelOptions) ConfigOptions {
 	}
 }
 
-func WithChannelDescription(description string) ChannelOptions {
-	return func(c *asyncApi.Channel) {
-		c.Description = description
+func WithSchemas(name string, s *schema.Schema) ConfigOptions {
+	return func(c *asyncApi.Config) {
+		if c.Components == nil {
+			c.Components = &asyncApi.Components{}
+		}
+		if c.Components.Schemas == nil {
+			c.Components.Schemas = &schema.Schemas{}
+		}
+		c.Components.Schemas.Set(name, &schema.Ref{Value: s})
 	}
 }
 
-func WithChannelBinding(key, value string) ChannelOptions {
+func WithMessages(name string, message *asyncApi.Message) ConfigOptions {
+	return func(c *asyncApi.Config) {
+		if c.Components == nil {
+			c.Components = &asyncApi.Components{}
+		}
+		if c.Components.Messages == nil {
+			c.Components.Messages = map[string]*asyncApi.Message{}
+		}
+		c.Components.Messages[name] = message
+	}
+}
+
+func WithChannelDescription(description string) ChannelOptions {
 	return func(c *asyncApi.Channel) {
-		c.Bindings.Kafka.Config[key] = value
+		c.Description = description
 	}
 }
 
@@ -88,7 +119,7 @@ func WithServerDescription(description string) ServerOptions {
 	}
 }
 
-func WithKafka(key, value string) ServerOptions {
+func WithKafkaBinding(key, value string) ServerOptions {
 	return func(s *asyncApi.Server) {
 		s.Bindings.Kafka.Config[key] = value
 	}

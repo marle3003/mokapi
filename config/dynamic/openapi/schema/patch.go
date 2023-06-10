@@ -68,3 +68,18 @@ func (x *Xml) patch(patch *Xml) {
 		x.Namespace = patch.Namespace
 	}
 }
+
+func (s *Schemas) Patch(patch *Schemas) {
+	if patch == nil {
+		return
+	}
+	for it := patch.Iter(); it.Next(); {
+		r := it.Value().(*Ref)
+		name := it.Key().(string)
+		if v := s.Get(name); v != nil {
+			v.Patch(r)
+		} else {
+			s.Set(it.Key(), it.Value())
+		}
+	}
+}

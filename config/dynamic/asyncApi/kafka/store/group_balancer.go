@@ -75,9 +75,13 @@ func (b *groupBalancer) run() {
 		go b.finishJoin(stop)
 	}
 
+	timeoutMs := b.config.GroupMinSessionTimeoutMs
+	if timeoutMs == 0 {
+		timeoutMs = 6000
+	}
 	for {
 		select {
-		case <-time.After(time.Duration(b.config.GroupMinSessionTimeoutMs()) * time.Millisecond):
+		case <-time.After(time.Duration(timeoutMs) * time.Millisecond):
 			if b.group.Generation == nil || b.group.State != Stable {
 				continue
 			}
@@ -130,7 +134,10 @@ func (b *groupBalancer) run() {
 }
 
 func (b *groupBalancer) finishJoin(stop chan bool) {
-	rebalanceTimeoutMs := b.config.GroupInitialRebalanceDelayMs()
+	rebalanceTimeoutMs := b.config.GroupInitialRebalanceDelayMs
+	if rebalanceTimeoutMs == 0 {
+		rebalanceTimeoutMs = 3000
+	}
 	// change to a better solution. If only one consumer is used, then we will wait the here too long when
 	// consumer joins a second time
 	//if b.group.Generation != nil {

@@ -3,6 +3,7 @@ package store_test
 import (
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
+	kafka2 "mokapi/config/dynamic/asyncApi/kafka"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
@@ -62,7 +63,7 @@ func TestFetch(t *testing.T) {
 		{
 			"empty",
 			func(t *testing.T, s *store.Store) {
-				s.Update(asyncapitest.NewConfig(asyncapitest.WithChannel("foo", asyncapitest.WithChannelKafka("partitions", "1"))))
+				s.Update(asyncapitest.NewConfig(asyncapitest.WithChannel("foo", asyncapitest.WithChannelKafka(kafka2.TopicBindings{Partitions: 1}))))
 
 				rr := kafkatest.NewRecorder()
 				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &fetch.Request{Topics: []fetch.Topic{

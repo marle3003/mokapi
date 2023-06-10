@@ -4,6 +4,7 @@ func (c *Config) Patch(patch *Config) {
 	c.Info.patch(patch.Info)
 	c.patchServers(patch.Servers)
 	c.Paths.patch(patch.Paths)
+	c.patchComponents(patch)
 }
 
 func (c *Info) patch(patch Info) {
@@ -306,5 +307,13 @@ func (h *Header) patch(patch *Header) {
 		h.Schema = patch.Schema
 	} else {
 		h.Schema.Patch(patch.Schema)
+	}
+}
+
+func (c *Config) patchComponents(patch *Config) {
+	if c.Components.Schemas == nil {
+		c.Components.Schemas = patch.Components.Schemas
+	} else {
+		c.Components.Schemas.Patch(patch.Components.Schemas)
 	}
 }

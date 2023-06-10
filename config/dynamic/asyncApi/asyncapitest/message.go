@@ -32,3 +32,12 @@ func WithKey(s *schema.Schema) MessageOptions {
 		m.Bindings.Kafka.Key = &schema.Ref{Value: s}
 	}
 }
+
+func WithMessageInfo(name, title, summary, description string) MessageOptions {
+	return func(m *asyncApi.Message) {
+		m.Name = name
+		m.Title = title
+		m.Summary = summary
+		m.Description = description
+	}
+}

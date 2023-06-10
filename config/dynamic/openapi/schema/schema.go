@@ -65,10 +65,17 @@ type Xml struct {
 }
 
 func (s *SchemasRef) Get(name string) *Ref {
-	if s.Value == nil {
+	if s == nil && s.Value == nil {
 		return nil
 	}
-	r := s.Value.Get(name)
+	return s.Value.Get(name)
+}
+
+func (s *Schemas) Get(name string) *Ref {
+	if s == nil {
+		return nil
+	}
+	r := s.LinkedHashMap.Get(name)
 	if r == nil {
 		return nil
 	}
@@ -80,7 +87,7 @@ func (s *Schemas) Resolve(token string) (interface{}, error) {
 	if i == nil {
 		return nil, fmt.Errorf("unable to resolve %v", token)
 	}
-	return i.(*Ref).Value, nil
+	return i.Value, nil
 }
 
 func (r *Ref) HasProperties() bool {

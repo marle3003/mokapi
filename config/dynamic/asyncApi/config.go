@@ -71,7 +71,7 @@ type ChannelBindings struct {
 }
 
 type Operation struct {
-	Id          string            `yaml:"id" json:"id"`
+	OperationId string            `yaml:"operationId" json:"operationId"`
 	Summary     string            `yaml:"summary" json:"summary"`
 	Description string            `yaml:"description" json:"description"`
 	Message     *MessageRef       `yaml:"message" json:"message"`

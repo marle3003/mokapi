@@ -91,7 +91,7 @@ function showImage(target: EventTarget | null) {
               <div class="card-body">
                 <router-link :to="{path: '/smtp'}">
                   <div class="card-title">SMTP</div>
-                  Test emails safely and no risk of spamming recipients' inbox
+                  Test SMTP emails safely and no risk of spamming mailboxes
                 </router-link>
               </div>
             </div> 

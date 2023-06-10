@@ -40,7 +40,11 @@ func (b *Broker) Addr() string {
 
 func (b *Broker) startCleaner(cleaner logCleaner) {
 	go func() {
-		ticker := time.NewTicker(time.Duration(b.kafkaConfig.LogRetentionCheckIntervalMs()) * time.Millisecond)
+		ms := b.kafkaConfig.LogRetentionCheckIntervalMs
+		if ms == 0 {
+			ms = 300000 // 5 minutes
+		}
+		ticker := time.NewTicker(time.Duration(ms) * time.Millisecond)
 		defer ticker.Stop()
 
 		for {

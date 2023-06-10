@@ -2,6 +2,7 @@ package asyncapitest
 
 import (
 	"mokapi/config/dynamic/asyncApi"
+	"mokapi/config/dynamic/asyncApi/kafka"
 	"mokapi/config/dynamic/openapi/schema"
 )
 
@@ -9,7 +10,6 @@ type ChannelOptions func(c *asyncApi.Channel)
 
 func NewChannel(opts ...ChannelOptions) *asyncApi.Channel {
 	ch := &asyncApi.Channel{}
-	ch.Bindings.Kafka.Config = make(map[string]string)
 	for _, opt := range opts {
 		opt(ch)
 	}
@@ -31,6 +31,24 @@ func WithSubscribeAndPublish(opts ...OperationOptions) ChannelOptions {
 	}
 }
 
+func WithSubscribe(opts ...OperationOptions) ChannelOptions {
+	return func(c *asyncApi.Channel) {
+		c.Subscribe = &asyncApi.Operation{}
+		for _, opt := range opts {
+			opt(c.Subscribe)
+		}
+	}
+}
+
+func WithPublish(opts ...OperationOptions) ChannelOptions {
+	return func(c *asyncApi.Channel) {
+		c.Publish = &asyncApi.Operation{}
+		for _, opt := range opts {
+			opt(c.Publish)
+		}
+	}
+}
+
 func WithMessage(opts ...MessageOptions) OperationOptions {
 	return func(o *asyncApi.Operation) {
 		if o.Message == nil {
@@ -42,14 +60,22 @@ func WithMessage(opts ...MessageOptions) OperationOptions {
 	}
 }
 
+func WithOperationInfo(id, summary, description string) OperationOptions {
+	return func(o *asyncApi.Operation) {
+		o.OperationId = id
+		o.Summary = summary
+		o.Description = description
+	}
+}
+
 func WithOperationBinding(groupId *schema.Schema) OperationOptions {
 	return func(o *asyncApi.Operation) {
 		o.Bindings.Kafka.GroupId = groupId
 	}
 }
 
-func WithChannelKafka(key, value string) ChannelOptions {
+func WithChannelKafka(bindings kafka.TopicBindings) ChannelOptions {
 	return func(c *asyncApi.Channel) {
-		c.Bindings.Kafka.Config[key] = value
+		c.Bindings.Kafka = bindings
 	}
 }

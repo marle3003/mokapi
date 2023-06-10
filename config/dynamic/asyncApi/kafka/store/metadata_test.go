@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
+	kafka2 "mokapi/config/dynamic/asyncApi/kafka"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
@@ -60,8 +61,8 @@ func TestMetadata(t *testing.T) {
 			"with specific topic and two partitions",
 			func(t *testing.T, s *store.Store) {
 				s.Update(asyncapitest.NewConfig(
-					asyncapitest.WithChannel("foo", asyncapitest.WithChannelKafka("partitions", "2")),
-					asyncapitest.WithChannel("foo2", asyncapitest.WithChannelKafka("partitions", "1")),
+					asyncapitest.WithChannel("foo", asyncapitest.WithChannelKafka(kafka2.TopicBindings{Partitions: 2})),
+					asyncapitest.WithChannel("foo2", asyncapitest.WithChannelKafka(kafka2.TopicBindings{Partitions: 2})),
 				))
 
 				rr := kafkatest.NewRecorder()

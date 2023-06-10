@@ -6,24 +6,33 @@ import (
 )
 
 func (s *Store) cleanLog(b *Broker) {
-	brokerRetentionTime := time.Duration(b.kafkaConfig.LogRetentionMs()) * time.Millisecond
-	brokerRetentionBytes := b.kafkaConfig.LogRetentionBytes()
-	brokerRollingTime := time.Duration(b.kafkaConfig.LogRollMs()) * time.Millisecond
+	brokerRetentionMs := b.kafkaConfig.LogRetentionMs
+	if brokerRetentionMs == 0 {
+		brokerRetentionMs = 604800000 // 7 days
+	}
+	brokerRetentionBytes := b.kafkaConfig.LogRetentionBytes
+	if brokerRetentionBytes == 0 {
+		brokerRetentionBytes = -1
+	}
+	brokerRollingMs := b.kafkaConfig.LogRollMs
+	if brokerRollingMs == 0 {
+		brokerRollingMs = 604800000 // 7 days
+	}
 	now := time.Now()
 
 	for _, topic := range s.topics {
-		retentionTime := brokerRetentionTime
+		retentionTime := time.Duration(brokerRetentionMs) * time.Millisecond
 		retentionBytes := brokerRetentionBytes
-		rollingTime := brokerRollingTime
+		rollingTime := time.Duration(brokerRollingMs) * time.Millisecond
 
-		if ms, ok := topic.kafkaConfig.RetentionMs(); ok {
-			retentionTime = time.Duration(ms) * time.Millisecond
+		if topic.kafkaConfig.RetentionMs > 0 {
+			retentionTime = time.Duration(topic.kafkaConfig.RetentionMs) * time.Millisecond
 		}
-		if bytes, ok := topic.kafkaConfig.RetentionBytes(); ok {
-			retentionBytes = bytes
+		if topic.kafkaConfig.RetentionBytes > 0 {
+			retentionBytes = topic.kafkaConfig.RetentionBytes
 		}
-		if ms, ok := topic.kafkaConfig.SegmentMs(); ok {
-			rollingTime = time.Duration(ms) * time.Millisecond
+		if topic.kafkaConfig.SegmentMs > 0 {
+			rollingTime = time.Duration(topic.kafkaConfig.SegmentMs) * time.Millisecond
 		}
 
 		for _, p := range topic.Partitions {
@@ -56,4 +65,11 @@ func (s *Store) cleanLog(b *Broker) {
 			}
 		}
 	}
+}
+
+func valueOrDefault(i int64, d int64) int64 {
+	if i == 0 {
+		return d
+	}
+	return i
 }

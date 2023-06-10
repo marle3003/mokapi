@@ -83,14 +83,14 @@ func TestEndpointResolve(t *testing.T) {
 	})
 	t.Run("schema ref", func(t *testing.T) {
 		reader := &testReader{readFunc: func(cfg *common.Config) error {
-			config := openapitest.NewConfig("3.0", openapitest.WithComponentSchema("Foo", &schema.Ref{Value: &schema.Schema{Type: "string"}}))
+			config := openapitest.NewConfig("3.0", openapitest.WithComponentSchemaRef("Foo", &schema.Ref{Value: &schema.Schema{Type: "string"}}))
 			cfg.Data = config
 			return nil
 		}}
-		config := openapitest.NewConfig("3.0", openapitest.WithComponentSchema("Foo", &schema.Ref{Reference: ref.Reference{Ref: "foo.yml#/components/schemas/Foo"}}))
+		config := openapitest.NewConfig("3.0", openapitest.WithComponentSchemaRef("Foo", &schema.Ref{Reference: ref.Reference{Ref: "foo.yml#/components/schemas/Foo"}}))
 		err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
 		require.NoError(t, err)
-		s := config.Components.Schemas.Value.Get("Foo").(*schema.Ref)
+		s := config.Components.Schemas.Get("Foo")
 		require.Equal(t, "string", s.Value.Type)
 	})
 	t.Run("paths ref", func(t *testing.T) {

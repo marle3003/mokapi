@@ -154,7 +154,7 @@ components:
       type: string
 `,
 			f: func(t *testing.T, c *openapi.Config) {
-				require.Equal(t, 1, c.Components.Schemas.Value.Len())
+				require.Equal(t, 1, c.Components.Schemas.Len())
 				foo := c.Components.Schemas.Get("Foo")
 				require.Equal(t, "string", foo.Value.Type)
 			},

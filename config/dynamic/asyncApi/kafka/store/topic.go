@@ -31,7 +31,11 @@ func (t *Topic) delete() {
 func newTopic(name string, config *asyncApi.Channel, brokers Brokers, logger LogRecord, trigger Trigger, s *Store) *Topic {
 	t := &Topic{Name: name, logger: logger, s: s, kafkaConfig: config.Bindings.Kafka}
 
-	for i := 0; i < config.Bindings.Kafka.Partitions(); i++ {
+	numPartitions := config.Bindings.Kafka.Partitions
+	if numPartitions == 0 {
+		numPartitions = 1
+	}
+	for i := 0; i < numPartitions; i++ {
 		part := newPartition(i, brokers, t.log, trigger, t)
 		part.validator = newValidator(config)
 		t.Partitions = append(t.Partitions, part)

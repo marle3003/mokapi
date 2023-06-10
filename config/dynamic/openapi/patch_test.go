@@ -720,3 +720,34 @@ func TestConfig_Patch_Methods_Response(t *testing.T) {
 		})
 	}
 }
+
+func TestConfig_Patch_Components(t *testing.T) {
+	testcases := []struct {
+		name    string
+		configs []*openapi.Config
+		test    func(t *testing.T, result *openapi.Config)
+	}{
+		{
+			name: "patch schema",
+			configs: []*openapi.Config{
+				openapitest.NewConfig("1.0"),
+				openapitest.NewConfig("1.0", openapitest.WithComponentSchema("foo", schematest.New("number"))),
+			},
+			test: func(t *testing.T, result *openapi.Config) {
+				require.Equal(t, 1, result.Components.Schemas.Len())
+				require.Equal(t, "number", result.Components.Schemas.Get("foo").Value.Type)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			c := tc.configs[0]
+			for _, p := range tc.configs[1:] {
+				c.Patch(p)
+			}
+			tc.test(t, c)
+		})
+	}
+}

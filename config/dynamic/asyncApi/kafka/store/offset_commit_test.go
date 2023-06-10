@@ -3,6 +3,7 @@ package store_test
 import (
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
+	kafka2 "mokapi/config/dynamic/asyncApi/kafka"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
@@ -156,7 +157,7 @@ func TestOffsetCommit(t *testing.T) {
 			"partition not exists",
 			func(t *testing.T, s *store.Store) {
 				s.Update(asyncapitest.NewConfig(
-					asyncapitest.WithChannel("foo", asyncapitest.WithChannelKafka("partitions", "0"))))
+					asyncapitest.WithChannel("foo", asyncapitest.WithChannelKafka(kafka2.TopicBindings{Partitions: 1}))))
 
 				rr := kafkatest.NewRecorder()
 				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 2, &offsetCommit.Request{
@@ -165,7 +166,7 @@ func TestOffsetCommit(t *testing.T) {
 					Topics: []offsetCommit.Topic{
 						{
 							Name:       "foo",
-							Partitions: []offsetCommit.Partition{{}},
+							Partitions: []offsetCommit.Partition{{Index: 10}},
 						},
 					},
 				}))
