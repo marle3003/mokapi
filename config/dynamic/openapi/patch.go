@@ -316,4 +316,121 @@ func (c *Config) patchComponents(patch *Config) {
 	} else {
 		c.Components.Schemas.Patch(patch.Components.Schemas)
 	}
+	if c.Components.Responses == nil {
+		c.Components.Responses = patch.Components.Responses
+	} else {
+		c.Components.Responses.patch(patch.Components.Responses)
+	}
+	if c.Components.RequestBodies == nil {
+		c.Components.RequestBodies = patch.Components.RequestBodies
+	} else {
+		c.Components.RequestBodies.patch(patch.Components.RequestBodies)
+	}
+	if c.Components.Parameters == nil {
+		c.Components.Parameters = patch.Components.Parameters
+	} else {
+		c.Components.Parameters.Patch(patch.Components.Parameters)
+	}
+	if c.Components.Examples == nil {
+		c.Components.Examples = patch.Components.Examples
+	} else {
+		c.Components.Examples.patch(patch.Components.Examples)
+	}
+	if c.Components.Headers == nil {
+		c.Components.Headers = patch.Components.Headers
+	} else {
+		c.Components.Headers.patch(patch.Components.Headers)
+	}
+}
+
+func (r *NamedResponses) patch(patch *NamedResponses) {
+	if patch == nil || patch.Value == nil {
+		return
+	}
+	if r.Value == nil {
+		r.Value = patch.Value
+	}
+	for k, p := range patch.Value {
+		if p.Value == nil {
+			continue
+		}
+		if v, ok := r.Value[k]; ok {
+			if v.Value == nil {
+				v.Value = p.Value
+			} else {
+				v.Value.patch(p.Value)
+			}
+		} else {
+			r.Value[k] = p
+		}
+	}
+}
+
+func (r *RequestBodies) patch(patch *RequestBodies) {
+	if patch == nil || patch.Value == nil {
+		return
+	}
+	if r.Value == nil {
+		r.Value = patch.Value
+	}
+	for k, p := range patch.Value {
+		if p.Value == nil {
+			continue
+		}
+		if v, ok := r.Value[k]; ok {
+			if v.Value == nil {
+				v.Value = p.Value
+			} else {
+				v.Value.patch(p.Value)
+			}
+		} else {
+			r.Value[k] = p
+		}
+	}
+}
+
+func (r *Examples) patch(patch *Examples) {
+	if patch == nil || patch.Value == nil {
+		return
+	}
+	if r.Value == nil {
+		r.Value = patch.Value
+	}
+	for k, p := range patch.Value {
+		if p.Value == nil {
+			continue
+		}
+		if v, ok := r.Value[k]; ok {
+			if v.Value == nil {
+				v.Value = p.Value
+			} else {
+				v.patch(p)
+			}
+		} else {
+			r.Value[k] = p
+		}
+	}
+}
+
+func (r *NamedHeaders) patch(patch *NamedHeaders) {
+	if patch == nil || patch.Value == nil {
+		return
+	}
+	if r.Value == nil {
+		r.Value = patch.Value
+	}
+	for k, p := range patch.Value {
+		if p.Value == nil {
+			continue
+		}
+		if v, ok := r.Value[k]; ok {
+			if v.Value == nil {
+				v.Value = p.Value
+			} else {
+				v.patch(p)
+			}
+		} else {
+			r.Value[k] = p
+		}
+	}
 }
