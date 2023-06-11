@@ -8,10 +8,10 @@ func (c *Config) Patch(patch *Config) {
 }
 
 func (c *Config) patchInfo(patch *Config) {
-	if len(c.Info.Description) == 0 {
+	if len(patch.Info.Description) > 0 {
 		c.Info.Description = patch.Info.Description
 	}
-	if len(c.Info.Version) == 0 {
+	if len(patch.Info.Version) > 0 {
 		c.Info.Version = patch.Info.Version
 	}
 	if c.Info.Contact == nil {
@@ -19,7 +19,7 @@ func (c *Config) patchInfo(patch *Config) {
 	} else {
 		c.Info.Contact.patch(patch.Info.Contact)
 	}
-	if len(c.Info.TermsOfService) == 0 {
+	if len(patch.Info.TermsOfService) > 0 {
 		c.Info.TermsOfService = patch.Info.TermsOfService
 	}
 	if c.Info.License == nil {
@@ -30,22 +30,22 @@ func (c *Config) patchInfo(patch *Config) {
 }
 
 func (c *Contact) patch(patch *Contact) {
-	if len(c.Name) == 0 {
+	if len(patch.Name) > 0 {
 		c.Name = patch.Name
 	}
-	if len(c.Url) == 0 {
+	if len(patch.Url) > 0 {
 		c.Url = patch.Url
 	}
-	if len(c.Email) == 0 {
+	if len(patch.Email) > 0 {
 		c.Email = patch.Email
 	}
 }
 
 func (l *License) patch(patch *License) {
-	if len(l.Name) == 0 {
+	if len(patch.Name) > 0 {
 		l.Name = patch.Name
 	}
-	if len(l.Url) == 0 {
+	if len(patch.Url) > 0 {
 		l.Url = patch.Url
 	}
 }
@@ -70,7 +70,7 @@ func (s *Server) patch(patch Server) {
 		s.Url = patch.Url
 	}
 
-	if len(s.Description) == 0 {
+	if len(patch.Description) > 0 {
 		s.Description = patch.Description
 	}
 
@@ -109,7 +109,7 @@ func (c *Channel) patch(patch *Channel) {
 	if patch == nil {
 		return
 	}
-	if len(c.Description) == 0 {
+	if len(patch.Description) > 0 {
 		c.Description = patch.Description
 	}
 	if c.Subscribe == nil {
@@ -129,13 +129,13 @@ func (o *Operation) patch(patch *Operation) {
 	if patch == nil {
 		return
 	}
-	if len(o.OperationId) == 0 {
+	if len(patch.OperationId) > 0 {
 		o.OperationId = patch.OperationId
 	}
-	if len(o.Summary) == 0 {
+	if len(patch.Summary) > 0 {
 		o.Summary = patch.Summary
 	}
-	if len(o.Description) == 0 {
+	if len(patch.Description) > 0 {
 		o.Description = patch.Description
 	}
 	if o.Message == nil {
@@ -160,19 +160,19 @@ func (m *Message) patch(patch *Message) {
 	if patch == nil {
 		return
 	}
-	if len(m.Name) == 0 {
+	if len(patch.Name) > 0 {
 		m.Name = patch.Name
 	}
-	if len(m.Title) == 0 {
+	if len(patch.Title) > 0 {
 		m.Title = patch.Title
 	}
-	if len(m.Summary) == 0 {
+	if len(patch.Summary) > 0 {
 		m.Summary = patch.Summary
 	}
-	if len(m.Description) == 0 {
+	if len(patch.Description) > 0 {
 		m.Description = patch.Description
 	}
-	if len(m.ContentType) == 0 {
+	if len(patch.ContentType) > 0 {
 		m.ContentType = patch.ContentType
 	}
 	if m.Payload == nil {

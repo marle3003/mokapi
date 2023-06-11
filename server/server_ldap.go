@@ -32,11 +32,11 @@ func (m LdapDirectoryManager) UpdateConfig(c *common.Config) {
 
 	li := m.app.AddLdap(c, m.eventEmitter)
 
-	if s, ok := m.servers[li.Name]; ok {
+	if s, ok := m.servers[li.Info.Name]; ok {
 		s.Handler = li.Handler(m.app.Monitor.Ldap)
 	} else {
 		s := &ldap.Server{Addr: li.Config.Address, Handler: li.Handler(m.app.Monitor.Ldap)}
-		m.servers[li.Name] = s
+		m.servers[li.Info.Name] = s
 		go func() {
 			s.ListenAndServe()
 		}()

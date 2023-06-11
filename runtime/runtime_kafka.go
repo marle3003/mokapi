@@ -6,13 +6,13 @@ import (
 	cfg "mokapi/config/dynamic/common"
 	"mokapi/kafka"
 	"mokapi/runtime/monitor"
+	"path/filepath"
+	"sort"
 )
 
 type KafkaInfo struct {
 	*asyncApi.Config
 	*store.Store
-
-	Name    string
 	configs map[string]*asyncApi.Config
 }
 
@@ -32,9 +32,6 @@ func NewKafkaInfo(c *cfg.Config, store *store.Store) *KafkaInfo {
 
 func (c *KafkaInfo) AddConfig(config *cfg.Config) {
 	ac := config.Data.(*asyncApi.Config)
-	if len(c.Name) == 0 {
-		c.Name = ac.Info.Name
-	}
 
 	key := config.Info.Url.String()
 	c.configs[key] = ac
@@ -42,10 +39,20 @@ func (c *KafkaInfo) AddConfig(config *cfg.Config) {
 }
 
 func (c *KafkaInfo) update() {
-	cfg := &asyncApi.Config{}
-	cfg.Info.Name = c.Name
-	for _, p := range c.configs {
-		cfg.Patch(p)
+	var keys []string
+	for k := range c.configs {
+		keys = append(keys, k)
+	}
+
+	sort.Slice(keys, func(i, j int) bool {
+		x := keys[i]
+		y := keys[j]
+		return filepath.Base(x) < filepath.Base(y)
+	})
+
+	cfg := c.configs[keys[0]]
+	for _, k := range keys[1:] {
+		cfg.Patch(c.configs[k])
 	}
 
 	c.Config = cfg

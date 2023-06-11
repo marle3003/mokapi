@@ -7,13 +7,14 @@ import (
 	engine "mokapi/engine/common"
 	"mokapi/runtime/monitor"
 	"mokapi/smtp"
+	"path/filepath"
+	"sort"
 	"time"
 )
 
 type SmtpInfo struct {
 	*mail.Config
 	*mail.Store
-	Name    string
 	configs map[string]*mail.Config
 }
 
@@ -27,24 +28,29 @@ func NewSmtpInfo(c *common.Config) *SmtpInfo {
 
 func (c *SmtpInfo) AddConfig(config *common.Config) {
 	lc := config.Data.(*mail.Config)
-	if len(c.Name) == 0 {
-		c.Name = lc.Info.Name
-	}
-
 	key := config.Info.Url.String()
 	c.configs[key] = lc
 	c.update()
 }
 
 func (c *SmtpInfo) update() {
-	cfg := &mail.Config{}
-	cfg.Info.Name = c.Name
-	for _, p := range c.configs {
-		cfg.Patch(p)
+	var keys []string
+	for k := range c.configs {
+		keys = append(keys, k)
+	}
+
+	sort.Slice(keys, func(i, j int) bool {
+		x := keys[i]
+		y := keys[j]
+		return filepath.Base(x) < filepath.Base(y)
+	})
+
+	cfg := c.configs[keys[0]]
+	for _, k := range keys[1:] {
+		cfg.Patch(c.configs[k])
 	}
 
 	c.Config = cfg
-
 	if c.Store == nil {
 		c.Store = mail.NewStore(cfg)
 	} else {

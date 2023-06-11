@@ -8,7 +8,7 @@ func (c *Config) Patch(patch *Config) {
 }
 
 func (c *Info) patch(patch Info) {
-	if len(c.Description) == 0 {
+	if len(patch.Description) > 0 {
 		c.Description = patch.Description
 	}
 	if c.Contact == nil {
@@ -16,7 +16,7 @@ func (c *Info) patch(patch Info) {
 	} else {
 		c.Contact.patch(patch.Contact)
 	}
-	if len(c.Version) == 0 {
+	if len(patch.Version) > 0 {
 		c.Version = patch.Version
 	}
 }
@@ -25,13 +25,13 @@ func (c *Contact) patch(patch *Contact) {
 	if patch == nil {
 		return
 	}
-	if len(c.Name) == 0 {
+	if len(patch.Name) > 0 {
 		c.Name = patch.Name
 	}
-	if len(c.Url) == 0 {
+	if len(patch.Url) > 0 {
 		c.Url = patch.Url
 	}
-	if len(c.Email) == 0 {
+	if len(patch.Email) > 0 {
 		c.Email = patch.Email
 	}
 }
@@ -48,7 +48,7 @@ LoopPatch:
 	for _, p := range patch {
 		for _, s := range c.Servers {
 			if s.Url == p.Url {
-				if len(s.Description) == 0 {
+				if len(p.Description) > 0 {
 					s.Description = p.Description
 				}
 				continue LoopPatch
@@ -86,11 +86,11 @@ func (r *EndpointRef) patch(patch *EndpointRef) {
 		return
 	}
 
-	if len(r.Value.Summary) == 0 {
+	if len(patch.Value.Summary) > 0 {
 		r.Value.Summary = patch.Value.Summary
 	}
 
-	if len(r.Value.Description) == 0 {
+	if len(patch.Value.Description) > 0 {
 		r.Value.Description = patch.Value.Description
 	}
 
@@ -146,18 +146,16 @@ func (r *EndpointRef) patch(patch *EndpointRef) {
 }
 
 func (op *Operation) patch(patch *Operation) {
-	if len(op.Summary) == 0 {
+	if len(patch.Summary) > 0 {
 		op.Summary = patch.Summary
 	}
-	if len(op.Description) == 0 {
+	if len(patch.Description) > 0 {
 		op.Description = patch.Description
 	}
-	if len(op.OperationId) == 0 {
+	if len(patch.OperationId) > 0 {
 		op.OperationId = patch.OperationId
 	}
-	if !op.Deprecated {
-		op.Deprecated = patch.Deprecated
-	}
+	op.Deprecated = patch.Deprecated
 
 	if op.RequestBody == nil {
 		op.RequestBody = patch.RequestBody
@@ -195,12 +193,10 @@ func (r *RequestBodyRef) patch(patch *RequestBodyRef) {
 }
 
 func (r *RequestBody) patch(patch *RequestBody) {
-	if len(r.Description) == 0 {
+	if len(patch.Description) > 0 {
 		r.Description = patch.Description
 	}
-	if !r.Required {
-		r.Required = patch.Required
-	}
+	r.Required = patch.Required
 
 	if len(r.Content) == 0 {
 		r.Content = patch.Content
@@ -249,7 +245,7 @@ func (r *ExampleRef) patch(patch *ExampleRef) {
 		return
 	}
 
-	if len(r.Value.Summary) == 0 {
+	if len(patch.Value.Summary) > 0 {
 		r.Value.Summary = patch.Value.Summary
 	}
 
@@ -257,7 +253,7 @@ func (r *ExampleRef) patch(patch *ExampleRef) {
 		r.Value.Value = patch.Value.Value
 	}
 
-	if len(r.Value.Description) == 0 {
+	if len(patch.Value.Description) > 0 {
 		r.Value.Description = patch.Value.Description
 	}
 }
@@ -267,7 +263,7 @@ func (r *Response) patch(patch *Response) {
 		return
 	}
 
-	if len(r.Description) == 0 {
+	if len(patch.Description) > 0 {
 		r.Description = patch.Description
 	}
 
@@ -297,10 +293,10 @@ func (r *HeaderRef) patch(patch *HeaderRef) {
 }
 
 func (h *Header) patch(patch *Header) {
-	if len(h.Name) == 0 {
+	if len(patch.Name) > 0 {
 		h.Name = patch.Name
 	}
-	if len(h.Description) == 0 {
+	if len(patch.Description) > 0 {
 		h.Description = patch.Description
 	}
 	if h.Schema == nil {

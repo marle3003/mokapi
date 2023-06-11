@@ -7,12 +7,13 @@ import (
 	engine "mokapi/engine/common"
 	"mokapi/ldap"
 	"mokapi/runtime/monitor"
+	"path/filepath"
+	"sort"
 	"time"
 )
 
 type LdapInfo struct {
 	*directory.Config
-	Name         string
 	configs      map[string]*directory.Config
 	eventEmitter engine.EventEmitter
 }
@@ -33,20 +34,26 @@ func NewLdapInfo(c *cfg.Config, emitter engine.EventEmitter) *LdapInfo {
 
 func (c *LdapInfo) AddConfig(config *cfg.Config) {
 	lc := config.Data.(*directory.Config)
-	if len(c.Name) == 0 {
-		c.Name = lc.Info.Name
-	}
-
 	key := config.Info.Url.String()
 	c.configs[key] = lc
 	c.update()
 }
 
 func (c *LdapInfo) update() {
-	cfg := &directory.Config{}
-	cfg.Info.Name = c.Name
-	for _, p := range c.configs {
-		cfg.Patch(p)
+	var keys []string
+	for k := range c.configs {
+		keys = append(keys, k)
+	}
+
+	sort.Slice(keys, func(i, j int) bool {
+		x := keys[i]
+		y := keys[j]
+		return filepath.Base(x) < filepath.Base(y)
+	})
+
+	cfg := c.configs[keys[0]]
+	for _, k := range keys[1:] {
+		cfg.Patch(c.configs[k])
 	}
 
 	c.Config = cfg

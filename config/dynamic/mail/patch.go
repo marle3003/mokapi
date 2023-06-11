@@ -8,7 +8,7 @@ func (c *Config) Patch(patch *Config) {
 	if len(c.Server) == 0 {
 		c.Server = patch.Server
 	}
-	if c.MaxRecipients == 0 {
+	if patch.MaxRecipients > 0 {
 		c.MaxRecipients = patch.MaxRecipients
 	}
 	c.patchMailboxes(patch)
@@ -16,10 +16,10 @@ func (c *Config) Patch(patch *Config) {
 }
 
 func (c *Config) patchInfo(patch *Config) {
-	if len(c.Info.Description) == 0 {
+	if len(patch.Info.Description) > 0 {
 		c.Info.Description = patch.Info.Description
 	}
-	if len(c.Info.Version) == 0 {
+	if len(patch.Info.Version) > 0 {
 		c.Info.Version = patch.Info.Version
 	}
 }
@@ -46,10 +46,10 @@ Loop:
 }
 
 func (m *MailboxConfig) patch(patch MailboxConfig) {
-	if len(m.Username) == 0 {
+	if len(patch.Username) > 0 {
 		m.Username = patch.Username
 	}
-	if len(m.Password) == 0 {
+	if len(patch.Password) > 0 {
 		m.Password = patch.Password
 	}
 }
@@ -69,19 +69,19 @@ Loop:
 }
 
 func (r *Rule) patch(patch Rule) {
-	if r.Sender == nil {
+	if patch.Sender != nil {
 		r.Sender = patch.Sender
 	}
-	if r.Recipient == nil {
+	if patch.Recipient != nil {
 		r.Recipient = patch.Recipient
 	}
-	if r.Subject == nil {
+	if patch.Subject != nil {
 		r.Subject = patch.Subject
 	}
-	if r.Body == nil {
+	if patch.Body != nil {
 		r.Body = patch.Body
 	}
-	if r.RejectResponse == nil {
+	if patch.RejectResponse != nil {
 		r.RejectResponse = patch.RejectResponse
 	}
 }

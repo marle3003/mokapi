@@ -36,13 +36,13 @@ func TestConfig_Patch(t *testing.T) {
 			},
 		},
 		{
-			name: "address not overwrite",
+			name: "address is overwrite",
 			configs: []*Config{
 				{Address: "foo.bar"},
 				{Address: "bar.foo"},
 			},
 			test: func(t *testing.T, result *Config) {
-				require.Equal(t, "foo.bar", result.Address)
+				require.Equal(t, "bar.foo", result.Address)
 			},
 		},
 		{
