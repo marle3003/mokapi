@@ -2,6 +2,7 @@ package js
 
 import (
 	r "github.com/stretchr/testify/require"
+	"mokapi/config/static"
 	"mokapi/engine/common"
 	"testing"
 )
@@ -27,7 +28,7 @@ func TestScript_Data(t *testing.T) {
 				s, err := New("",
 					`
 export const mokapi = {http: {"bar": [1, 2, 3, 4]}}`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
@@ -49,7 +50,7 @@ export const mokapi = {http: {"bar": [1, 2, 3, 4]}}`,
 				s, err := New("",
 					`
 export const mokapi = {"http": {"bar": [5,6], "foo": {"bar": [1, 2, 3, 4]}}}`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
@@ -80,7 +81,7 @@ export default () => {
 		}
 	}
 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)

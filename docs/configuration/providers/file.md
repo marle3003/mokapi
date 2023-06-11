@@ -1,3 +1,7 @@
+---
+title: File Provider for dynamic configuration
+description: The file provider reads dynamic configuration from a single file or multiple files.
+---
 # File
 
 The file provider reads dynamic configuration from a single file or 

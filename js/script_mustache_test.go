@@ -3,6 +3,7 @@ package js
 import (
 	"github.com/brianvoe/gofakeit/v6"
 	r "github.com/stretchr/testify/require"
+	"mokapi/config/static"
 	"testing"
 )
 
@@ -20,7 +21,7 @@ func Test_Mustache(t *testing.T) {
 						 export default function() {
 						 	return render('foo{{x}}', {x: 'bar'})
 						}`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 
 				v, err := s.RunDefault()
@@ -46,12 +47,28 @@ func Test_Mustache(t *testing.T) {
 						
 							return render("{{firstname}} has {{calc}} apples", scope);
 						}`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 
 				v, err := s.RunDefault()
 				r.NoError(t, err)
 				r.Equal(t, "Markus has 7 apples", v.String())
+			},
+		},
+		{
+			"using deprecated module",
+			func(t *testing.T) {
+				s, err := New("test",
+					`import {render} from 'mustache';
+						 export default function() {
+						 	return render('foo{{x}}', {x: 'bar'})
+						}`,
+					host, static.JsConfig{})
+				r.NoError(t, err)
+
+				v, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, "foobar", v.String())
 			},
 		},
 	}

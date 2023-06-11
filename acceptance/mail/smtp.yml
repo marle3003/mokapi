@@ -1,2 +1,5 @@
 smtp: 1.0
 server: smtps://localhost:8025
+rules:
+  - sender: .*@foo.bar
+    action: allow

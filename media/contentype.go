@@ -61,12 +61,20 @@ func (c ContentType) String() string {
 	return c.raw
 }
 
+func (c ContentType) IsAny() bool {
+	return c.Type == "" || c.Type == "*" && c.Subtype == "*"
+}
+
 func (c ContentType) IsRange() bool {
-	return c.Type == "" || c.Type == "*" || c.Subtype == "*"
+	return c.Type != "*" && c.Subtype == "*"
 }
 
 func (c ContentType) IsEmpty() bool {
 	return c.raw == ""
+}
+
+func (c ContentType) IsPrecise() bool {
+	return !c.IsEmpty() && c.Type != "*" && c.Subtype != "*"
 }
 
 func (c ContentType) Match(other ContentType) bool {

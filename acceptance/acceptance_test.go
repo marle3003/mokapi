@@ -35,10 +35,13 @@ func (suite *BaseSuite) initCmd(cfg *static.Config) {
 func (suite *BaseSuite) BeforeTest(_, _ string) {
 	events.SetStore(20, events.NewTraits().WithNamespace("http"))
 	events.SetStore(20, events.NewTraits().WithNamespace("kafka"))
+	events.SetStore(20, events.NewTraits().WithNamespace("smtp"))
+	events.SetStore(20, events.NewTraits().WithNamespace("ldap"))
 }
 
 func (suite *BaseSuite) AfterTest(_, _ string) {
 	events.Reset()
+	suite.cmd.App.Monitor.Reset()
 }
 
 func (suite *BaseSuite) TearDownSuite() {

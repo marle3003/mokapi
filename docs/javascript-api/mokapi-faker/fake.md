@@ -1,3 +1,7 @@
+---
+title: Javascript API: fake
+description: Creates a fake based on the given schema.
+---
 # fake( schema )
 
 Creates a fake based on the given schema.

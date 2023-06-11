@@ -5,7 +5,7 @@ import { useService } from '@/composables/services';
 import { useMetrics } from '@/composables/metrics';
 
 const {fetchServices} = useService()
-const {sum} = useMetrics()
+const { sum, max } = useMetrics()
 const messages = ref(0)
 const {services, close} = fetchServices('smtp')
 watchEffect(() =>{
@@ -28,5 +28,5 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <metric-card title="SMTP Messages" :value="messages" data-test="metric-smtp-messages"></metric-card>
+    <metric-card title="SMTP Mails" :value="messages" data-testid="metric-smtp-messages"></metric-card>
 </template>

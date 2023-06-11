@@ -5,6 +5,7 @@ import (
 	r "github.com/stretchr/testify/require"
 	"io"
 	"io/ioutil"
+	"mokapi/config/static"
 	"net/http"
 	"strings"
 	"testing"
@@ -23,7 +24,7 @@ func TestScript_Http_Get(t *testing.T) {
 						 export default function() {
 						 	return http.get('http://foo.bar')
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
@@ -39,7 +40,7 @@ func TestScript_Http_Get(t *testing.T) {
 						 export default function() {
 						  	return http.get('http://foo.bar', {headers: {foo: "bar"}})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
@@ -54,7 +55,7 @@ func TestScript_Http_Get(t *testing.T) {
 						 export default function() {
 						  	return http.get('http://foo.bar', {headers: {foo: ["hello", "world"]}})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
@@ -69,7 +70,7 @@ func TestScript_Http_Get(t *testing.T) {
 						 export default function() {
 						  	return http.get('http://foo.bar', {headers: null})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
@@ -84,7 +85,7 @@ func TestScript_Http_Get(t *testing.T) {
 						 export default function() {
 						  	return http.get('://')
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()
 				r.Error(t, err)
@@ -101,7 +102,7 @@ func TestScript_Http_Get(t *testing.T) {
 						 export default function() {
 						  	return http.get('http://foo.bar')
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
@@ -120,7 +121,7 @@ func TestScript_Http_Get(t *testing.T) {
 						 export default function() {
 						  	return http.get('http://foo.bar').json()
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
@@ -140,7 +141,7 @@ func TestScript_Http_Get(t *testing.T) {
 						  	const res = http.options('https://foo.bar')
 							return res.headers['Allow']
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
@@ -159,10 +160,26 @@ func TestScript_Http_Get(t *testing.T) {
 						 export default function() {
 						  	return http.get('http://foo.bar')
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()
 				r.Error(t, err)
+			},
+		},
+		{
+			"using deprecated module",
+			func(t *testing.T, host *testHost) {
+				s, err := New("",
+					`import http from 'http'
+						 export default function() {
+						 	return http.get('http://foo.bar')
+						 }`,
+					host, static.JsConfig{})
+				r.NoError(t, err)
+				err = s.Run()
+				r.NoError(t, err)
+				r.Equal(t, "GET", host.httpClient.req.Method)
+				r.Equal(t, "http://foo.bar", host.httpClient.req.URL.String())
 			},
 		},
 	}
@@ -195,7 +212,7 @@ func TestScript_Http_Post(t *testing.T) {
 						 export default function() {
   							return http.post('http://foo.bar')
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
@@ -211,7 +228,7 @@ func TestScript_Http_Post(t *testing.T) {
 						 export default function() {
 						  	return http.post("http://localhost/foo", "body", {headers: {'Content-Type': "application/json"}})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
@@ -228,7 +245,7 @@ func TestScript_Http_Post(t *testing.T) {
 						 export default function() {
 						  	return http.post("http://localhost/foo", {"foo":"bar"}, {headers: {'Content-Type': "application/json"}})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
@@ -245,7 +262,7 @@ func TestScript_Http_Post(t *testing.T) {
 						 export default function() {
 						  	return http.post("http://localhost/foo", {"foo":"bar"})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
@@ -340,7 +357,7 @@ func TestScript_Http(t *testing.T) {
 						 export default function() {
 						 	return http.%v('http://foo.bar')
 						 }`, strings.ToLower(tc.name)),
-				host)
+				host, static.JsConfig{})
 			r.NoError(t, err)
 			err = s.Run()
 			r.NoError(t, err)

@@ -44,7 +44,7 @@ declare interface HttpEventRequest {
     method: string
     url: string
     contentType: string
-    parameters: HttpEventParameter[]
+    parameters?: HttpEventParameter[]
     body: string
 }
 

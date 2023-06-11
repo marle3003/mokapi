@@ -1,3 +1,7 @@
+---
+title: HTTP Provider for dynamic configuration
+description: Reads your dynamic configuration from an HTTP(S) source.
+---
 # HTTP
 
 Reads your dynamic configuration from an HTTP(S) source. The HTTP provider downloads yours

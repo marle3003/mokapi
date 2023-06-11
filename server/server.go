@@ -15,21 +15,21 @@ type Server struct {
 	kafka   *KafkaManager
 	http    *HttpManager
 	engine  *engine.Engine
-	mail    SmtpServers
-	ldap    LdapDirectories
+	smtp    *SmtpManager
+	ldap    *LdapDirectoryManager
 
 	pool     *safe.Pool
 	stopChan chan bool
 }
 
 func NewServer(pool *safe.Pool, app *runtime.App, watcher *dynamic.ConfigWatcher,
-	kafka *KafkaManager, http *HttpManager, mail SmtpServers, ldap LdapDirectories, engine *engine.Engine) *Server {
+	kafka *KafkaManager, http *HttpManager, smtp *SmtpManager, ldap *LdapDirectoryManager, engine *engine.Engine) *Server {
 	return &Server{
 		app:      app,
 		watcher:  watcher,
 		kafka:    kafka,
 		http:     http,
-		mail:     mail,
+		smtp:     smtp,
 		ldap:     ldap,
 		engine:   engine,
 		pool:     pool,
@@ -55,7 +55,7 @@ func (s *Server) Start(ctx context.Context) error {
 	s.pool.Stop()
 	s.kafka.Stop()
 	s.http.Stop()
-	s.mail.Stop()
+	s.smtp.Stop()
 	s.ldap.Stop()
 	s.engine.Close()
 	s.stopChan <- true

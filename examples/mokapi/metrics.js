@@ -9,7 +9,7 @@ export let metrics = [
     },
     {
         name: 'http_requests_total{service="Swagger Petstore",endpoint="/pet"}"',
-        value: 10
+        value: 2
     },
     {
         name: 'http_requests_errors_total{service="Swagger Petstore",endpoint="/pet"}"',
@@ -17,7 +17,7 @@ export let metrics = [
     },
     {
         name: 'http_requests_total{service="Swagger Petstore",endpoint="/pet/findByStatus"}"',
-        value: 3
+        value: 1
     },
     {
         name: 'http_requests_errors_total{service="Swagger Petstore",endpoint="/pet/findByStatus"}"',
@@ -46,5 +46,17 @@ export let metrics = [
     {
         name: 'smtp_mails_total{service="Smtp Testserver"}"',
         value: 3
+    },
+    {
+        name: 'smtp_mail_timestamp{service="Smtp Testserver"}"',
+        value: 1652635690
+    },
+    {
+        name: 'ldap_search_total{service="LDAP Testserver"}"',
+        value: 1
+    },
+    {
+        name: 'ldap_search_timestamp{service="LDAP Testserver"}"',
+        value: 1652635690
     },
 ]

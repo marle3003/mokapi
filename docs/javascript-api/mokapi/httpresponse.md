@@ -1,6 +1,10 @@
+---
+title: Javascript API: HttpResponse
+description: HttpResponse is an object used by HttpEventHandlers
+---
 # HttpResponse
 
-HttpResponse is an object used by the [HttpEventHandler](/docs/javascript-api/mokapi/eventhandler.md)
+HttpResponse is an object used by [HttpEventHandler](/docs/javascript-api/mokapi/eventhandler.md)
 that contains response-specific data such as HTTP headers.
 
 | Name       | Type   | Description                                                              |

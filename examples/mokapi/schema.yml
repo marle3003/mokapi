@@ -7,9 +7,31 @@ components:
           type: string
         type:
           type: string
+        format:
+          type: string
+        pattern:
+          type: string
+        description:
+          type: string
         properties:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/Schema'
+        items:
           $ref: '#/components/schemas/Schema'
+        required:
+          type: array
+          items:
+            type: string
+        nullable:
+          type: boolean
+        example:
         enum:
           type: array
           items:
-            type: object
+        minimum:
+          type: number
+          nullable: true
+        maximum:
+          type: number
+          nullable: true

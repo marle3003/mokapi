@@ -3,6 +3,7 @@ package js
 import (
 	"fmt"
 	r "github.com/stretchr/testify/require"
+	"mokapi/config/static"
 	"mokapi/engine/common"
 	"os"
 	"strings"
@@ -23,7 +24,7 @@ func TestScript_Mokapi_Date(t *testing.T) {
 						 export default function() {
 						  	return date({timestamp:  new Date(Date.UTC(2022, 5, 9, 12, 0, 0, 0)).getTime()}); // january is 0
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				i, err := s.RunDefault()
 				r.NoError(t, err)
@@ -39,7 +40,7 @@ func TestScript_Mokapi_Date(t *testing.T) {
 						 export default function() {
 						  	return date()
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				i, err := s.RunDefault()
 				r.NoError(t, err)
@@ -54,7 +55,7 @@ func TestScript_Mokapi_Date(t *testing.T) {
 						 export default function() {
 						  	return date({timestamp: Date.now()})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				i, err := s.RunDefault()
 				r.NoError(t, err)
@@ -69,7 +70,7 @@ func TestScript_Mokapi_Date(t *testing.T) {
 						 export default function() {
 						  	return date({layout: 'DateTime', timestamp: new Date(Date.UTC(2022, 5, 9, 12, 0, 0, 0)).getTime()})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				i, err := s.RunDefault()
 				r.NoError(t, err)
@@ -107,7 +108,7 @@ func TestScript_Mokapi_Every(t *testing.T) {
 						 export default function() {
 						  	every('1s', function() {})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
 				r.NoError(t, err)
@@ -124,7 +125,7 @@ func TestScript_Mokapi_Every(t *testing.T) {
 						 export default function() {
 						  	every('1s', function() {}, {times: 1})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
 				r.NoError(t, err)
@@ -141,7 +142,7 @@ func TestScript_Mokapi_Every(t *testing.T) {
 						 export default function() {
 						  	every('1s', function() {}, {tags: {foo: 'bar'}})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
 				r.NoError(t, err)
@@ -155,7 +156,7 @@ func TestScript_Mokapi_Every(t *testing.T) {
 						 export default function() {
 						  	every('1s', function() {}, {tags: null})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
 				r.NoError(t, err)
@@ -174,7 +175,7 @@ func TestScript_Mokapi_Every(t *testing.T) {
 						  	every('1s', function() {counter++}, {tags: {foo: 'bar'}})
 							return counter
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
@@ -212,7 +213,7 @@ func TestScript_Mokapi_Cron(t *testing.T) {
 						 export default function() {
 						  	cron('0/1 0 0 ? * * *', function() {})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
 				r.NoError(t, err)
@@ -229,7 +230,7 @@ func TestScript_Mokapi_Cron(t *testing.T) {
 						 export default function() {
 						  	cron('0/1 0 0 ? * * *', function() {}, {times: 1})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
 				r.NoError(t, err)
@@ -246,7 +247,7 @@ func TestScript_Mokapi_Cron(t *testing.T) {
 						 export default function() {
 						  	cron('0/1 0 0 ? * * *', function() {}, {tags: {foo: 'bar'}})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
 				r.NoError(t, err)
@@ -260,7 +261,7 @@ func TestScript_Mokapi_Cron(t *testing.T) {
 						 export default function() {
 						  	cron('0/1 0 0 ? * * *', function() {}, {tags: null})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
 				r.NoError(t, err)
@@ -279,7 +280,7 @@ func TestScript_Mokapi_Cron(t *testing.T) {
 						  	cron('0/1 0 0 ? * * *', function() {counter++}, {tags: {foo: 'bar'}})
 							return counter
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
@@ -317,7 +318,7 @@ func TestScript_Mokapi_On(t *testing.T) {
 						 export default function() {
 						  	on('http', function() {})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
 				r.NoError(t, err)
@@ -334,7 +335,7 @@ func TestScript_Mokapi_On(t *testing.T) {
 						 export default function() {
 						  	on('http', function() {}, {tags: {foo: 'bar'}})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
 				r.NoError(t, err)
@@ -348,7 +349,7 @@ func TestScript_Mokapi_On(t *testing.T) {
 						 export default function() {
 						  	on('http', function() {}, {tags: null})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
 				r.NoError(t, err)
@@ -367,7 +368,7 @@ func TestScript_Mokapi_On(t *testing.T) {
 						  	on('http', function(arg) {counter = arg})
 							return counter
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
@@ -387,7 +388,7 @@ func TestScript_Mokapi_On(t *testing.T) {
 						 export default function() {
 						  	on('http', function() {})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
 				r.NoError(t, err)
@@ -406,7 +407,7 @@ func TestScript_Mokapi_On(t *testing.T) {
 						 export default function() {
 						  	on('http', function() {return true})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
 				r.NoError(t, err)
@@ -425,7 +426,7 @@ func TestScript_Mokapi_On(t *testing.T) {
 						 export default function() {
 						  	on('http', function() {throw new Error('test error')})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
 				r.NoError(t, err)
@@ -460,7 +461,7 @@ func TestScript_Mokapi_Env(t *testing.T) {
 						 export default function() {
 						  	return env('foo')
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
@@ -498,7 +499,7 @@ func TestScript_Mokapi_Open(t *testing.T) {
 						 export default function() {
 						  	return open('foo')
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
@@ -516,7 +517,7 @@ func TestScript_Mokapi_Open(t *testing.T) {
 						 export default function() {
 						  	return open('foo')
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
 				r.Error(t, err)
@@ -553,7 +554,7 @@ func TestScript_Mokapi_Sleep(t *testing.T) {
 						 export default function() {
 							sleep(300);
 						}`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				start := time.Now()
 				_, err = s.RunDefault()
@@ -573,7 +574,7 @@ func TestScript_Mokapi_Sleep(t *testing.T) {
 						 export default function() {
 							sleep('300ms');
 						}`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				start := time.Now()
 				_, err = s.RunDefault()
@@ -593,7 +594,7 @@ func TestScript_Mokapi_Sleep(t *testing.T) {
 						 export default function() {
 							sleep('300-');
 						}`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
 				r.EqualError(t, err, "time: unknown unit \"-\" in duration \"300-\" at reflect.methodValueCall (native)")
@@ -614,7 +615,7 @@ func TestScript_Mokapi_Sleep(t *testing.T) {
 								return e
 							}
 						}`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)

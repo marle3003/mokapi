@@ -60,15 +60,15 @@ func selectData(data interface{}, schema *Ref) (interface{}, error) {
 	switch data.(type) {
 	case []interface{}:
 		if schema.Value.Type != "array" {
-			return nil, fmt.Errorf("found array, expected %v", schema)
+			return nil, fmt.Errorf("found array, expected %v: %v", schema, data)
 		}
 	case map[string]interface{}:
 		if schema.Value.Type != "object" {
-			return nil, fmt.Errorf("found object, expected %v", schema)
+			return nil, fmt.Errorf("found object, expected %v: %v", schema, data)
 		}
 	case struct{}:
 		if schema.Value.Type != "object" {
-			return nil, fmt.Errorf("found object, expected %v", schema)
+			return nil, fmt.Errorf("found object, expected %v: %v", schema, data)
 		}
 	}
 
@@ -95,6 +95,12 @@ func (m *schemaObject) MarshalJSON() ([]byte, error) {
 	for it := m.Iter(); it.Next(); {
 		k := it.Key()
 		v := it.Value()
+
+		s := fmt.Sprintf("%v", k)
+
+		if s == "minimum" {
+			fmt.Sprintf("")
+		}
 
 		key, err := json.Marshal(k)
 		if err != nil {
@@ -283,6 +289,21 @@ func fromMap(v reflect.Value, schema *Schema) (*schemaObject, error) {
 				return nil, err
 			}
 			obj.Set(name, d)
+		}
+	}
+
+	if schema.IsDictionary() {
+		for _, k := range v.MapKeys() {
+			name := fmt.Sprintf("%v", k.Interface())
+			if obj.Get(name) == nil {
+				o := v.MapIndex(k)
+				d, err := selectData(o.Interface(), schema.AdditionalProperties.Ref)
+				if err != nil {
+					_, err := selectData(o.Interface(), schema.AdditionalProperties.Ref)
+					return nil, err
+				}
+				obj.Set(name, d)
+			}
 		}
 	}
 

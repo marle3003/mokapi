@@ -1,15 +1,26 @@
-# Running
+---
+title: Running Mokapi
+description: Here you will learn how to run Mokapi
+---
+# Running Mokapi
 
 In this quick start we will run [Swagger](https://swagger.io/)'s Petstore in Mokapi
 
 ## Start Mokapi
 Start Mokapi with the following command
 
-```
+```bash tab=Docker  
 docker run -it --rm -p 80:80 -p 8080:8080 -e MOKAPI_Providers_Http_Url=https://petstore3.swagger.io/api/v3/openapi.json mokapi/mokapi:v0.5.0-alpha
 ```
+
+```bash tab=NPM
+npm install go-mokapi
+npx mokapi --Providers.Http.Url=https://petstore3.swagger.io/api/v3/openapi.json
+```
+``` box=tip
 When you use Mokapi behind a corporate proxy, you probably need 
-to skip SSL verification: `-e MOKAPI_Providers_Http_TlsSkipVerify=true`.
+to skip SSL verification: "-e MOKAPI_Providers_Http_TlsSkipVerify=true".
+```
 
 ## Mokapi's Dashboard
 

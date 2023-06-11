@@ -195,7 +195,6 @@ func toString(i interface{}) string {
 
 func getMedia(contentType media.ContentType, body *RequestBody) (media.ContentType, *MediaType) {
 	best := media.Empty
-	bestSpec := media.Empty
 	var bestMediaType *MediaType
 	bestQ := -1.0
 	for _, mt := range body.Content {
@@ -203,25 +202,25 @@ func getMedia(contentType media.ContentType, body *RequestBody) (media.ContentTy
 			if bestQ > contentType.Q {
 				continue
 			}
-			if !best.IsEmpty() && !best.IsRange() {
+
+			// text/plain > */* and text/*
+			if best.IsPrecise() && (mt.ContentType.IsAny() || mt.ContentType.IsRange()) {
 				continue
 			}
+
+			// text/* > */*
+			if best.IsRange() && mt.ContentType.IsAny() {
+				continue
+			}
+
 			if !best.IsEmpty() && len(best.Parameters) > len(mt.ContentType.Parameters) {
 				continue
 			}
+
 			best = mt.ContentType
-			bestQ = contentType.Q
-			bestSpec = contentType
+			bestQ = mt.ContentType.Q
 			bestMediaType = mt
 		}
-	}
-
-	if media.Equal(bestSpec, media.Any) && media.Equal(best, media.Any) {
-		return media.Default, bestMediaType
-	}
-
-	if !media.Equal(best, media.Empty) && best.IsRange() {
-		return bestSpec, bestMediaType
 	}
 
 	return best, bestMediaType

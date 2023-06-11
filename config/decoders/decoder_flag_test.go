@@ -95,9 +95,21 @@ func TestFlagDecoder_Decode(t *testing.T) {
 					Key []string
 				}{}
 				d := &FlagDecoder{}
-				err := d.Decode(map[string]string{"Key[0]": "bar"}, s)
+				err := d.Decode(map[string]string{"Key[0]": "bar", "Key[1]": "foo"}, s)
 				require.NoError(t, err)
-				require.Equal(t, []string{"bar"}, s.Key)
+				require.Equal(t, []string{"bar", "foo"}, s.Key)
+			},
+		},
+		{
+			name: "array with split",
+			f: func(t *testing.T) {
+				s := &struct {
+					Key []string
+				}{}
+				d := &FlagDecoder{}
+				err := d.Decode(map[string]string{"Key": "bar,foo"}, s)
+				require.NoError(t, err)
+				require.Equal(t, []string{"bar", "foo"}, s.Key)
 			},
 		},
 		{

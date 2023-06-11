@@ -67,7 +67,7 @@ function allOperationsDeprecated(path: HttpPath): boolean{
     <div class="card">
         <div class="card-body">
             <div class="card-title text-center">Endpoints</div>
-            <table class="table dataTable selectable">
+            <table class="table dataTable selectable" data-testid="endpoints">
                 <thead>
                     <tr>
                         <th scope="col" class="text-left w-25">Path</th>
@@ -84,7 +84,7 @@ function allOperationsDeprecated(path: HttpPath): boolean{
                         </td>
                         <td>
                             <span v-for="operation in path.operations" key="operation.method" class="badge operation" :class="operation.method" @click.stop="goToOperation(path, operation)">
-                                {{ operation.method }} <i class="bi bi-exclamation-triangle-fill yellow" v-if="operation.deprecated"></i>
+                                {{ operation.method.toUpperCase() }} <i class="bi bi-exclamation-triangle-fill yellow" v-if="operation.deprecated"></i>
                             </span>
                         </td>
                         <td class="text-center">{{ lastRequest(path) }}</td>

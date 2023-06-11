@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -12,7 +13,14 @@ type FlagDecoder struct {
 }
 
 func (f *FlagDecoder) Decode(flags map[string]string, element interface{}) error {
-	for name, value := range flags {
+	keys := make([]string, 0, len(flags))
+	for k := range flags {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, name := range keys {
+		value := flags[name]
 		paths := parsePath(name)
 		err := setValue(paths, value, reflect.ValueOf(element))
 		if err != nil {
@@ -51,11 +59,23 @@ func setValue(paths []string, value string, element reflect.Value) error {
 		element.SetBool(b)
 		return nil
 	case reflect.Slice:
-		ptr := reflect.New(reflect.PointerTo(element.Type().Elem()))
-		if err := setValue(paths[1:], value, ptr); err != nil {
-			return err
+		if len(paths) > 0 {
+			ptr := reflect.New(reflect.PointerTo(element.Type().Elem()))
+			if err := setValue(paths[1:], value, ptr); err != nil {
+				return err
+			}
+			element.Set(reflect.Append(element, ptr.Elem().Elem()))
+		} else {
+			values := strings.Split(value, ",")
+			for _, v := range values {
+				ptr := reflect.New(reflect.PointerTo(element.Type().Elem()))
+				if err := setValue(paths, v, ptr); err != nil {
+					return err
+				}
+				element.Set(reflect.Append(element, ptr.Elem().Elem()))
+			}
 		}
-		element.Set(reflect.Append(element, ptr.Elem().Elem()))
+
 		return nil
 	case reflect.Map:
 		if element.IsNil() {

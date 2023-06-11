@@ -2,48 +2,53 @@ package server
 
 import (
 	"mokapi/config/dynamic/common"
-	config "mokapi/config/dynamic/ldap"
+	"mokapi/config/dynamic/directory"
 	engine "mokapi/engine/common"
+	"mokapi/ldap"
 	"mokapi/runtime"
 	"mokapi/server/cert"
-	"mokapi/server/ldap"
 )
 
-type LdapDirectories map[string]*ldap.Directory
-
 type LdapDirectoryManager struct {
-	Directories LdapDirectories
+	servers map[string]*ldap.Server
 
 	eventEmitter engine.EventEmitter
 	certStore    *cert.Store
 	app          *runtime.App
 }
 
-func NewLdapDirectoryManager(directories LdapDirectories, emitter engine.EventEmitter, store *cert.Store, app *runtime.App) *LdapDirectoryManager {
+func NewLdapDirectoryManager(emitter engine.EventEmitter, store *cert.Store, app *runtime.App) *LdapDirectoryManager {
 	return &LdapDirectoryManager{
 		eventEmitter: emitter,
 		certStore:    store,
 		app:          app,
-		Directories:  directories,
+		servers:      map[string]*ldap.Server{},
 	}
 }
 
 func (m LdapDirectoryManager) UpdateConfig(c *common.Config) {
-	ldapConfig, ok := c.Data.(*config.Config)
+	ldapConfig, ok := c.Data.(*directory.Config)
 	if !ok {
 		return
 	}
 
-	if d, ok := m.Directories[ldapConfig.Info.Name]; !ok {
-		d = ldap.NewDirectory(ldapConfig, m.app.Monitor.Ldap)
-		d.Start()
+	m.app.AddLdap(ldapConfig)
+	d := directory.NewHandler(ldapConfig, m.eventEmitter)
+	d = runtime.NewLdapHandler(m.app.Monitor.Ldap, d)
+
+	if s, ok := m.servers[ldapConfig.Info.Name]; ok {
+		s.Handler = d
 	} else {
-		d.Update(ldapConfig)
+		s := &ldap.Server{Addr: ldapConfig.Address, Handler: d}
+		m.servers[ldapConfig.Info.Name] = s
+		go func() {
+			s.ListenAndServe()
+		}()
 	}
 }
 
-func (dirs LdapDirectories) Stop() {
-	for _, d := range dirs {
-		d.Close()
+func (m LdapDirectoryManager) Stop() {
+	for _, s := range m.servers {
+		s.Close()
 	}
 }

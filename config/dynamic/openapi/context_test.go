@@ -125,7 +125,7 @@ func TestContentTypeFromRequest(t *testing.T) {
 				require.NotNil(t, ct)
 				require.NotNil(t, mt)
 				require.NoError(t, err)
-				require.Equal(t, "image/pjpeg", ct.String())
+				require.Equal(t, "image/x-xpixmap", ct.String())
 			},
 		},
 		{
@@ -182,11 +182,12 @@ func TestContentTypeFromRequest(t *testing.T) {
 		},
 	}
 
-	media.SetFaker(11)
-	gofakeit.SetGlobalFaker(gofakeit.New(11))
 	for _, testcase := range testcases {
 		test := testcase
 		t.Run(test.accept, func(t *testing.T) {
+			media.SetFaker(11)
+			gofakeit.SetGlobalFaker(gofakeit.New(11))
+
 			r := httptest.NewRequest("GET", "http://foo", nil)
 			r.Header.Add("accept", test.accept)
 			ct, mt, err := openapi.ContentTypeFromRequest(r, test.response)

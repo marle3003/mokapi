@@ -1,8 +1,12 @@
+---
+title: Kafka Documentation
+description: Mock your Kafka topics with AsyncAPI specification
+---
 # Kafka
 
 Kafka is a distributed streaming platform that is commonly used to build real-time data pipelines and streaming applications.
 
-# AsyncAPI
+## AsyncAPI
 
 Mokapi with AsyncAPI can be used to simulate the behavior of a real Kafka system and test event-based applications.
 By using Mokapi you can create a test environment that is closely to the production environment.

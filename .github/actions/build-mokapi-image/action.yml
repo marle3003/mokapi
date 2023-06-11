@@ -1,0 +1,23 @@
+name: "Build Mokapi image"
+description: "Builds and deploys the React frontend to AWS S3"
+inputs:
+  image-name:
+    required: true
+    description: "The image name to build"
+  artifact-name:
+    required: true
+    description: "The upload artifact name"
+runs:
+  using: "composite"
+  steps:
+    - name: Build docker alpha image
+      run: docker build --build-arg VERSION=${GITHUB_REF##*/v} -t ${{ inputs.image-name }} -f ./images/alpha.Dockerfile .
+      shell: bash
+    - name: Save Image to file
+      run: docker save ${{ inputs.image-name }} > /tmp/mokapi.tar
+      shell: bash
+    - name: Upload image
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: /tmp/mokapi.tar

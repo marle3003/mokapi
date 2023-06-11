@@ -1,3 +1,7 @@
+---
+title: GIT Provider for dynamic configuration
+description: Pull your dynamic configuration from a GIT repository.
+---
 # GIT
 
 Pull your dynamic configuration from a GIT repository.

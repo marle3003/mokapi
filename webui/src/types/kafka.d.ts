@@ -1,63 +1,63 @@
 declare interface KafkaService extends Service {
-    topics: KafkaTopic[]
-    groups: KafkaGroup[]
-    servers: KafkaServer[]
+  topics: KafkaTopic[];
+  groups: KafkaGroup[];
+  servers: KafkaServer[];
 }
 
 declare interface KafkaServer {
-    name: string
-    url: string
-    description: string
+  name: string;
+  url: string;
+  description: string;
 }
 
 declare interface KafkaTopic {
-    name: string
-    description: string
-    partitions: KafkaPartition[]
-    configs: KafkaTopicConfig
+  name: string;
+  description: string;
+  partitions: KafkaPartition[];
+  configs: KafkaTopicConfig;
 }
 
-declare interface KafkaTopicConfig{
-    key: Schema
-    message: Schema
-    messageType: string
+declare interface KafkaTopicConfig {
+  key: Schema;
+  message: Schema;
+  messageType: string;
 }
 
 declare interface KafkaPartition {
-    id: number
-    startOffset: number
-    offset: number
-    leader: KafkaBroker
-    segments: number
+  id: number;
+  startOffset: number;
+  offset: number;
+  leader: KafkaBroker;
+  segments: number;
 }
 
 declare interface KafkaBroker {
-    name: string
-    addr: string
+  name: string;
+  addr: string;
 }
 
 declare interface KafkaGroup {
-    name: string
-    members: KafkaMember[]
-    coordinator: string
-    leader: string
-    state: string
-    protocol: string
-    topics: string[] | null
+  name: string;
+  members: KafkaMember[];
+  coordinator: string;
+  leader: string;
+  state: string;
+  protocol: string;
+  topics: string[] | null;
 }
 
 declare interface KafkaMember {
-    name: string
-    addr: string
-    clientSoftwareName: string
-    clientSoftwareVersion: string
-    heartbeat: number
-    partitions: KafkaPartition[]
+  name: string;
+  addr: string;
+  clientSoftwareName: string;
+  clientSoftwareVersion: string;
+  heartbeat: number;
+  partitions: KafkaPartition[];
 }
 
 declare interface KafkaEventData {
-    offset: number
-    key: string
-    message: string
-    partition: number
+  offset: number;
+  key: string;
+  message: string;
+  partition: number;
 }

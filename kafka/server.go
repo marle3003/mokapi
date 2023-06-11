@@ -9,6 +9,7 @@ import (
 	"net"
 	"runtime/debug"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -119,7 +120,7 @@ func (s *Server) serve(conn net.Conn, ctx context.Context) {
 		err := r.Read(conn)
 		if err != nil {
 			switch {
-			case err == io.EOF || errors.Is(err, net.ErrClosed):
+			case err == io.EOF || errors.Is(err, net.ErrClosed) || errors.Is(err, syscall.ECONNRESET):
 				return
 			default:
 				log.Errorf("kafka: %v", err)

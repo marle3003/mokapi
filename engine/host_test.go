@@ -2,6 +2,7 @@ package engine
 
 import (
 	"github.com/stretchr/testify/require"
+	"mokapi/config/static"
 	"mokapi/engine/common"
 	"mokapi/runtime"
 	"testing"
@@ -65,7 +66,7 @@ func TestHost_Every(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			engine := New(&testReader{}, runtime.New())
+			engine := New(&testReader{}, runtime.New(), static.JsConfig{})
 			engine.Start()
 			defer engine.Close()
 

@@ -55,7 +55,7 @@ func (sh *scriptHost) Name() string {
 }
 
 func (sh *scriptHost) Compile() error {
-	s, err := compile(sh.file, sh)
+	s, err := sh.compile()
 	if err != nil {
 		return err
 	}
@@ -80,7 +80,7 @@ func (sh *scriptHost) RunEvent(event string, args ...interface{}) []*common.Acti
 		} else if !b {
 			continue
 		} else {
-			log.Debugf("processed event handler %v", s)
+			log.WithField("handler", s).Debug("processed event handler")
 		}
 
 		s.Duration = time.Now().Sub(start).Milliseconds()
@@ -238,13 +238,13 @@ func getScriptPath(u *url.URL) string {
 	return u.Opaque
 }
 
-func compile(file *config.Config, h common.Host) (common.Script, error) {
-	s := file.Data.(*script.Script)
+func (sh *scriptHost) compile() (common.Script, error) {
+	s := sh.file.Data.(*script.Script)
 	switch filepath.Ext(s.Filename) {
 	case ".js":
-		return js.New(getScriptPath(file.Url), s.Code, h)
+		return js.New(getScriptPath(sh.file.Url), s.Code, sh, sh.engine.jsConfig)
 	case ".lua":
-		return lua.New(getScriptPath(file.Url), s.Code, h)
+		return lua.New(getScriptPath(sh.file.Url), s.Code, sh)
 	default:
 		return nil, fmt.Errorf("unsupported script %v", s.Filename)
 	}

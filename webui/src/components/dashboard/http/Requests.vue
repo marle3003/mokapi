@@ -4,7 +4,6 @@ import { useEvents } from '@/composables/events';
 import { type PropType, onUnmounted } from 'vue';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { usePrettyHttp } from '@/composables/http';
-import { useService } from '@/composables/services';
 
 const props = defineProps({
     service: { type: Object as PropType<HttpService> },
@@ -13,10 +12,10 @@ const props = defineProps({
 
 const labels = []
 if (props.service){
-    [{name: 'name', value: props.service!.name}]
+    labels.push({name: 'name', value: props.service!.name})
     if (props.path){
         labels.push({name: 'path', value: props.path})
-}
+    }
 }
 
 const router = useRouter()
@@ -44,7 +43,7 @@ onUnmounted(() => {
     <div class="card">
         <div class="card-body">
             <div class="card-title text-center">Recent Requests</div>
-            <table class="table dataTable selectable">
+            <table class="table dataTable selectable" data-testid="requests">
                 <thead>
                     <tr>
                         <th scope="col" class="text-left" style="width: 55%">URL</th>
@@ -55,7 +54,7 @@ onUnmounted(() => {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="event in events" :key="event.id" @click="goToRequest(event)">
+                    <tr v-for="event in events!" :key="event.id" @click="goToRequest(event)">
                         <td>
                             <i class="bi bi-exclamation-triangle-fill yellow warning pe-2" v-if="eventData(event).deprecated"></i>
                             {{ eventData(event).request.url }}

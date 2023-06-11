@@ -1,3 +1,7 @@
+---
+title: Declarative Data Generation
+description: Providing a detailed specification for data types can greatly enhance the usefulness and accuracy of randomly generated data by ensuring that the generated data aligns with real-word scenarios and is consistent and error-free.
+---
 # Declarative Data Generation
 
 Providing a detailed specification for data types can greatly enhance the usefulness and accuracy of randomly generated data by ensuring that the generated data aligns with real-word scenarios and is consistent and error-free.

@@ -1,3 +1,7 @@
+---
+title: Javascript API: get
+description: Make an HTTP GET request
+---
 # get( url, [args] )
 
 Make a GET request

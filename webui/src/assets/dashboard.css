@@ -89,3 +89,6 @@
 .dashboard-content {
   margin-top: 4rem;
 }
+.dashboard a {
+  text-decoration: none;
+}

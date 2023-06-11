@@ -27,5 +27,5 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <metric-card title="Kafka Messages" :value="messages" data-test="metric-kafka-messages"></metric-card>
+    <metric-card title="Kafka Messages" :value="messages" data-testid="metric-kafka-messages"></metric-card>
 </template>

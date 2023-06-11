@@ -6,6 +6,7 @@ import (
 	r "github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/script"
+	"mokapi/config/static"
 	"mokapi/runtime"
 	"net/url"
 	"strings"
@@ -37,14 +38,14 @@ func TestJsScriptEngine(t *testing.T) {
 	t.Parallel()
 	t.Run("valid", func(t *testing.T) {
 		t.Parallel()
-		engine := New(emptyReader, runtime.New())
+		engine := New(emptyReader, runtime.New(), static.JsConfig{})
 		err := engine.AddScript(newScript("test.js", "export default function(){}"))
 		r.NoError(t, err)
 		r.Len(t, engine.scripts, 0, "no events and jobs, script should be closed")
 	})
 	t.Run("blank", func(t *testing.T) {
 		t.Parallel()
-		engine := New(emptyReader, runtime.New())
+		engine := New(emptyReader, runtime.New(), static.JsConfig{})
 		err := engine.AddScript(newScript("test.js", ""))
 		r.NoError(t, err)
 		r.Len(t, engine.scripts, 0, "no events and jobs, script should be closed")
@@ -55,7 +56,7 @@ func TestJsEvery(t *testing.T) {
 	t.Parallel()
 	t.Run("simple", func(t *testing.T) {
 		t.Parallel()
-		engine := New(emptyReader, runtime.New())
+		engine := New(emptyReader, runtime.New(), static.JsConfig{})
 		err := engine.AddScript(newScript("test.js", `
 			import mokapi from 'mokapi'
 			export default function() {
@@ -74,7 +75,7 @@ func TestJsOn(t *testing.T) {
 	t.Parallel()
 	t.Run("noEvent", func(t *testing.T) {
 		t.Parallel()
-		engine := New(emptyReader, runtime.New())
+		engine := New(emptyReader, runtime.New(), static.JsConfig{})
 		err := engine.AddScript(newScript("test.js", `
 			import {on, sleep} from 'mokapi'
 			export default function() {}
@@ -84,7 +85,7 @@ func TestJsOn(t *testing.T) {
 	})
 	t.Run("withoutSummary", func(t *testing.T) {
 		t.Parallel()
-		engine := New(emptyReader, runtime.New())
+		engine := New(emptyReader, runtime.New(), static.JsConfig{})
 		err := engine.AddScript(newScript("test.js", `
 			import {on, sleep} from 'mokapi'
 			export default function() {
@@ -103,7 +104,7 @@ func TestJsOn(t *testing.T) {
 	})
 	t.Run("simple", func(t *testing.T) {
 		t.Parallel()
-		engine := New(emptyReader, runtime.New())
+		engine := New(emptyReader, runtime.New(), static.JsConfig{})
 		err := engine.AddScript(newScript("test.js", `
 			import {on, sleep} from 'mokapi'
 			export default function() {
@@ -126,7 +127,7 @@ func TestJsOn(t *testing.T) {
 	})
 	t.Run("duration", func(t *testing.T) {
 		t.Parallel()
-		engine := New(emptyReader, runtime.New())
+		engine := New(emptyReader, runtime.New(), static.JsConfig{})
 		err := engine.AddScript(newScript("test.js", `
 			import {on, sleep} from 'mokapi'
 			export default function() {
@@ -146,7 +147,7 @@ func TestJsOn(t *testing.T) {
 	})
 	t.Run("duration as string", func(t *testing.T) {
 		t.Parallel()
-		engine := New(emptyReader, runtime.New())
+		engine := New(emptyReader, runtime.New(), static.JsConfig{})
 		err := engine.AddScript(newScript("test.js", `
 			import {on, sleep} from 'mokapi'
 			export default function() {
@@ -166,7 +167,7 @@ func TestJsOn(t *testing.T) {
 	})
 	t.Run("tag name", func(t *testing.T) {
 		t.Parallel()
-		engine := New(emptyReader, runtime.New())
+		engine := New(emptyReader, runtime.New(), static.JsConfig{})
 		err := engine.AddScript(newScript("test.js", `
 			import {on} from 'mokapi'
 			export default function() {
@@ -182,7 +183,7 @@ func TestJsOn(t *testing.T) {
 	})
 	t.Run("custom tag", func(t *testing.T) {
 		t.Parallel()
-		engine := New(emptyReader, runtime.New())
+		engine := New(emptyReader, runtime.New(), static.JsConfig{})
 		err := engine.AddScript(newScript("test.js", `
 			import {on} from 'mokapi'
 			export default function() {
@@ -212,7 +213,7 @@ func TestJsOn(t *testing.T) {
 			},
 		}
 
-		engine := New(emptyReader, runtime.New())
+		engine := New(emptyReader, runtime.New(), static.JsConfig{})
 		engine.logger = logger
 		err := engine.AddScript(newScript("test.js", `
 			import {on} from 'mokapi'
@@ -249,7 +250,7 @@ func TestJsOpen(t *testing.T) {
 			return nil
 		}}
 
-		engine := New(reader, runtime.New())
+		engine := New(reader, runtime.New(), static.JsConfig{})
 		engine.logger = logger
 		err := engine.AddScript(newScript("./test.js", `
 			let file = open('test.txt');
@@ -266,7 +267,7 @@ func TestJsOpen(t *testing.T) {
 			return errors.New("file not found")
 		}}
 
-		engine := New(reader, runtime.New())
+		engine := New(reader, runtime.New(), static.JsConfig{})
 		err := engine.AddScript(newScript("./test.js", `
 			let file = open('test.txt');
 			export default function() {}
@@ -292,7 +293,7 @@ func TestJsOpen(t *testing.T) {
 			return errors.New("file not found")
 		}}
 
-		engine := New(reader, runtime.New())
+		engine := New(reader, runtime.New(), static.JsConfig{})
 		s := newScript("./test.js", `
 			import {foo} from 'foo'
 			import {on} from 'mokapi'

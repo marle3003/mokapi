@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/common"
+	"mokapi/config/static"
 	"mokapi/runtime"
 	"net/url"
 	"testing"
 )
 
 func TestEngine_AddScript(t *testing.T) {
-	engine := New(emptyReader, runtime.New())
+	engine := New(emptyReader, runtime.New(), static.JsConfig{})
 	src := `
 			local mokapi = require "mokapi"
 			mokapi.every("1m", function() end);
@@ -28,13 +29,13 @@ func TestLuaScriptEngine(t *testing.T) {
 	t.Parallel()
 	t.Run("blank", func(t *testing.T) {
 		t.Parallel()
-		engine := New(emptyReader, runtime.New())
+		engine := New(emptyReader, runtime.New(), static.JsConfig{})
 		err := engine.AddScript(newScript("test.lua", ""))
 		require.NoError(t, err)
 	})
 	t.Run("print", func(t *testing.T) {
 		t.Parallel()
-		engine := New(emptyReader, runtime.New())
+		engine := New(emptyReader, runtime.New(), static.JsConfig{})
 		err := engine.AddScript(newScript("test.lua", `print("Hello World")`))
 		require.NoError(t, err)
 	})
@@ -44,7 +45,7 @@ func TestLuaEvery(t *testing.T) {
 	t.Parallel()
 	t.Run("simple", func(t *testing.T) {
 		t.Parallel()
-		engine := New(emptyReader, runtime.New())
+		engine := New(emptyReader, runtime.New(), static.JsConfig{})
 		err := engine.AddScript(newScript("test.lua", `
 			local mokapi = require "mokapi"
 			id = mokapi.every("1m", function() end);
@@ -61,7 +62,7 @@ func TestLuaOn(t *testing.T) {
 	t.Parallel()
 	t.Run("noEvent", func(t *testing.T) {
 		t.Parallel()
-		engine := New(emptyReader, runtime.New())
+		engine := New(emptyReader, runtime.New(), static.JsConfig{})
 		err := engine.AddScript(newScript("test.lua", `
 			local mokapi = require "mokapi"
 		`))
@@ -70,7 +71,7 @@ func TestLuaOn(t *testing.T) {
 	})
 	t.Run("withoutSummary", func(t *testing.T) {
 		t.Parallel()
-		engine := New(emptyReader, runtime.New())
+		engine := New(emptyReader, runtime.New(), static.JsConfig{})
 		err := engine.AddScript(newScript("test.lua", `
 			local mokapi = require "mokapi"
 			mokapi.on(
@@ -90,7 +91,7 @@ func TestLuaOn(t *testing.T) {
 	})
 	t.Run("simple", func(t *testing.T) {
 		t.Parallel()
-		engine := New(emptyReader, runtime.New())
+		engine := New(emptyReader, runtime.New(), static.JsConfig{})
 		err := engine.AddScript(newScript("test.lua", `
 			local mokapi = require "mokapi"
 			mokapi.on(
@@ -114,7 +115,7 @@ func TestLuaOn(t *testing.T) {
 	})
 	t.Run("duration", func(t *testing.T) {
 		t.Parallel()
-		engine := New(emptyReader, runtime.New())
+		engine := New(emptyReader, runtime.New(), static.JsConfig{})
 		err := engine.AddScript(newScript("test.lua", `
 			local mokapi = require "mokapi"
 			mokapi.on(
@@ -135,7 +136,7 @@ func TestLuaOn(t *testing.T) {
 	})
 	t.Run("tag name", func(t *testing.T) {
 		t.Parallel()
-		engine := New(emptyReader, runtime.New())
+		engine := New(emptyReader, runtime.New(), static.JsConfig{})
 		err := engine.AddScript(newScript("test.lua", `
 			local mokapi = require "mokapi"
 			mokapi.on(
@@ -155,7 +156,7 @@ func TestLuaOn(t *testing.T) {
 	})
 	t.Run("custom tag", func(t *testing.T) {
 		t.Parallel()
-		engine := New(emptyReader, runtime.New())
+		engine := New(emptyReader, runtime.New(), static.JsConfig{})
 		err := engine.AddScript(newScript("test.lua", `
 			local mokapi = require "mokapi"
 			mokapi.on(
@@ -189,7 +190,7 @@ func TestLuaOn(t *testing.T) {
 			},
 		}
 
-		engine := New(emptyReader, runtime.New())
+		engine := New(emptyReader, runtime.New(), static.JsConfig{})
 		engine.logger = logger
 		err := engine.AddScript(newScript("test.lua", `
 			local mokapi = require "mokapi"
@@ -226,7 +227,7 @@ func TestLuaOpen(t *testing.T) {
 			return nil
 		}}
 
-		engine := New(reader, runtime.New())
+		engine := New(reader, runtime.New(), static.JsConfig{})
 		engine.logger = logger
 		err := engine.AddScript(newScript("./test.lua", `
 			local file = open('test.txt')
@@ -250,7 +251,7 @@ func TestLuaOpen(t *testing.T) {
 			return errors.New("file not found")
 		}}
 
-		engine := New(reader, runtime.New())
+		engine := New(reader, runtime.New(), static.JsConfig{})
 		engine.logger = logger
 		err := engine.AddScript(newScript("./test.lua", `
 			local file, err = open('test.txt')

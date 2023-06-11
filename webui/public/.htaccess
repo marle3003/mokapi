@@ -2,12 +2,33 @@
   Options -MultiViews
 </IfModule>
 
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
+
+  # rewrite for bots if tailing /
+  RewriteCond %{HTTP_USER_AGENT} googlebot|bingbot|yandex|baiduspider|facebookexternalhit|twitterbot|rogerbot|linkedinbot|embedly|quora\ link\ preview|showyoubot|outbrain|pinterest\/0\.|pinterestbot|slackbot|vkShare|W3C_Validator|whatsapp|redditbot|applebot|flipboard|tumblr|bitlybot|skypeuripreview|nuzzel|discordbot|google\ page\ speed|qwantify|bitrix\ link\ preview|xing-contenttabreceiver|google-inspectiontool|chrome-lighthouse|telegrambot [NC]
+  RewriteCond %{REQUEST_URI} !\.(html|css|js|less|jpg|png|gif|svg|woff2|xml)$
+  RewriteCond %{REQUEST_FILENAME} !^$
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^(.+)/$ $1.html [L]
+
+  # rewrite for botss
+  RewriteCond %{HTTP_USER_AGENT} googlebot|bingbot|yandex|baiduspider|facebookexternalhit|twitterbot|rogerbot|linkedinbot|embedly|quora\ link\ preview|showyoubot|outbrain|pinterest\/0\.|pinterestbot|slackbot|vkShare|W3C_Validator|whatsapp|redditbot|applebot|flipboard|tumblr|bitlybot|skypeuripreview|nuzzel|discordbot|google\ page\ speed|qwantify|bitrix\ link\ preview|xing-contenttabreceiver|google-inspectiontool|chrome-lighthouse|telegrambot [NC]
+  RewriteCond %{REQUEST_URI} !\.(html|css|js|less|jpg|png|gif|svg|woff2|xml)$
+  RewriteCond %{REQUEST_FILENAME} !^$
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^(.+)$ $1.html [L]
+
+  # rewrite for botss
+  RewriteCond %{HTTP_USER_AGENT} googlebot|bingbot|yandex|baiduspider|facebookexternalhit|twitterbot|rogerbot|linkedinbot|embedly|quora\ link\ preview|showyoubot|outbrain|pinterest\/0\.|pinterestbot|slackbot|vkShare|W3C_Validator|whatsapp|redditbot|applebot|flipboard|tumblr|bitlybot|skypeuripreview|nuzzel|discordbot|google\ page\ speed|qwantify|bitrix\ link\ preview|xing-contenttabreceiver|google-inspectiontool|chrome-lighthouse|telegrambot [NC]
+  RewriteRule ^$ home.html [L]
+
+  # rewrite for spa vuejs
+  RewriteBase /
   RewriteRule ^index\.html$ - [L]
   RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteCond %{REQUEST_FILENAME} !-d
   RewriteCond %{HTTP_ACCEPT} text/html
   RewriteRule . /index.html [L]
 </IfModule>

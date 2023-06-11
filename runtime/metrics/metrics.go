@@ -96,12 +96,6 @@ func WithFQName(namespace, name string) Options {
 	}
 }
 
-func WithLabels(labels ...*Label) Options {
-	return func(o *options) {
-		o.labels = append(o.labels, labels...)
-	}
-}
-
 func hash(values []string) uint32 {
 	s := strings.Join(values, "_")
 

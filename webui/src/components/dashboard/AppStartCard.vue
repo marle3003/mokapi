@@ -24,5 +24,5 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <metric-card title="Uptime Since" :value="appStartFromNow" :additional="appStart" data-test="metric-app-start"></metric-card>
+    <metric-card title="Uptime Since" :value="appStartFromNow" :additional="appStart" data-testid="metric-app-start"></metric-card>
 </template>

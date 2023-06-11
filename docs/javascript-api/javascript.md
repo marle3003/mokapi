@@ -1,4 +1,8 @@
-# Mokapi's Javascript API
+---
+title: Mokapi Javascript API
+description: Provides the documentation of the Mokapi Javascript API.
+---
+# Mokapi Javascript API
 
 The list of Mokapi's Javascript modules usable to extend Mokapi's behavior.
 
@@ -15,15 +19,15 @@ The list of Mokapi's Javascript modules usable to extend Mokapi's behavior.
 
 ## mokapi/http
 
-| Functions                                                                        | Description                    |
-|----------------------------------------------------------------------------------|--------------------------------|
-| [get( url, \[args\] )](/docs/javascript-api/mokapi-http/get.md)                  | Issues an HTTP GET request     |
-| [post( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/post.md)      | Issues an HTTP POST request    |
-| [put( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/put.md)        | Issues an HTTP PUT request     |
-| [head( url, \[args\] )](/docs/javascript-api/mokapi-http/head.md)                | Issues an HTTP HEAD request    |
-| [patch( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/patch.md)    | Issues an HTTP PATCH request   |
-| [delete( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/delete.md)  | Issues an HTTP DELETE request  |
-| [options( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/option.md) | Issues an HTTP OPTIONS request |
+| Functions                                                                         | Description                    |
+|-----------------------------------------------------------------------------------|--------------------------------|
+| [get( url, \[args\] )](/docs/javascript-api/mokapi-http/get.md)                   | Issues an HTTP GET request     |
+| [post( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/post.md)       | Issues an HTTP POST request    |
+| [put( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/put.md)         | Issues an HTTP PUT request     |
+| [head( url, \[args\] )](/docs/javascript-api/mokapi-http/head.md)                 | Issues an HTTP HEAD request    |
+| [patch( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/patch.md)     | Issues an HTTP PATCH request   |
+| [delete( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/delete.md)   | Issues an HTTP DELETE request  |
+| [options( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/options.md) | Issues an HTTP OPTIONS request |
 
 ## faker
 

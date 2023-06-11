@@ -1,6 +1,10 @@
+---
+title: Kafka Configuration
+description: Mokapi provides you some configuration parameters to set up a Kafka topic
+---
 # Kafka Configuration
 
-Mokapi provides you with some configuration parameters to set up a Kafka topic
+Mokapi provides you some configuration parameters to set up a Kafka topic
 
 ## Kafka Server Bindings
 

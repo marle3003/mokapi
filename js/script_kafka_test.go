@@ -2,6 +2,7 @@ package js
 
 import (
 	r "github.com/stretchr/testify/require"
+	"mokapi/config/static"
 	"mokapi/engine/common"
 	"testing"
 )
@@ -25,7 +26,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 						 export default function() {
 						  	return produce({topic: 'foo'})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
@@ -45,7 +46,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 						 export default function() {
   							return produce({topic: 'foo', cluster: 'bar'})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
@@ -64,7 +65,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 						 export default function() {
   							return produce({cluster: null})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
@@ -85,7 +86,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 						 export default function() {
 						  	return produce({value: 'value', key: 'key', partition: 2})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
@@ -106,7 +107,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 						 export default function() {
 						  	return produce({value: 'value', key: 'key', partition: 2})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
@@ -125,7 +126,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 						 export default function() {
 						  	return produce({headers: {foo: 'bar'}})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
@@ -144,7 +145,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 						 export default function() {
 						  	return produce({headers: {foo: 'bar'}})
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
@@ -169,7 +170,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 						 export default function() {
 						  	return produce()
 						 }`,
-					host)
+					host, static.JsConfig{})
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
@@ -180,6 +181,26 @@ func TestScript_Kafka_Produce(t *testing.T) {
 				r.Equal(t, int64(3451345), result.Offset)
 				r.Equal(t, "foo", result.Key)
 				r.Equal(t, "bar", result.Value)
+			},
+		},
+		{
+			"using deprecated module",
+			func(t *testing.T, host *testHost) {
+				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					r.Equal(t, "foo", args.Topic)
+					r.Equal(t, "", args.Cluster)
+					return &common.KafkaProduceResult{}, nil
+				}
+
+				s, err := New("",
+					`import {produce} from 'kafka'
+						 export default function() {
+						  	return produce({topic: 'foo'})
+						 }`,
+					host, static.JsConfig{})
+				r.NoError(t, err)
+				err = s.Run()
+				r.NoError(t, err)
 			},
 		},
 	}

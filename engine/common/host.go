@@ -1,8 +1,10 @@
 package common
 
 import (
+	"fmt"
 	config "mokapi/config/dynamic/common"
 	"net/http"
+	"strings"
 )
 
 type EventEmitter interface {
@@ -80,4 +82,15 @@ func NewJobOptions() JobOptions {
 		Times:                   -1,
 		RunFirstTimeImmediately: true,
 	}
+}
+
+func (a *Action) String() string {
+	var sb strings.Builder
+	for k, v := range a.Tags {
+		if sb.Len() > 0 {
+			sb.WriteString(", ")
+		}
+		sb.WriteString(fmt.Sprintf("%v=%v", k, v))
+	}
+	return sb.String()
 }

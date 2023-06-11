@@ -1,31 +1,31 @@
 <script setup lang="ts">
 import { onMounted, ref, inject } from 'vue';
 import { useRoute } from 'vue-router';
-import MarkdownItHighlightjs from 'markdown-it-highlightjs';
-import MarkdownIt from 'markdown-it';
-import { MarkdownItTabs } from '@/composables/markdown-tabs';
-import { MarkdownItBox } from '@/composables/markdown-box';
-import { MarkdownItLinks } from '@/composables/mardown-links'
-
-const images =  import.meta.glob('/src/assets/docs/**/*.png', {as: 'url', eager: true})
+import { useMarkdown } from '@/composables/markdown'
+import { useMeta } from '@/composables/meta'
+import PageNotFound from './PageNotFound.vue';
 
 const files =  import.meta.glob('/src/assets/docs/**/*.md', {as: 'raw', eager: true})
 const nav = inject<DocConfig>('nav')!
 const openSidebar = ref(false);
 
 const route = useRoute()
+let canonical = 'https://mokapi.io/' + <string>route.params.level1
+
 let level1 = <string>route.params.level1
-level1 = Object.keys(nav).find(key => key.toLowerCase() == level1.split('-').join(' '))!
+level1 = Object.keys(nav).find(key => key.toLowerCase() == level1.split('-').join(' ').toLowerCase())!
 let file = nav[level1]
 
 let level2 = <string>route.params.level2
 if (!level2 && typeof file !== 'string') {
   level2 = Object.keys(file)[0]
+  canonical += '/' + toUrlPath(level2)
 }else {
   level2 = Object.keys(file).find(key => {
-      const search = level2.split('-').join(' ')
+      const search = level2.split('-').join(' ').toLowerCase()
       return key.toLowerCase().split('/').join(' ') === search
     })!
+  canonical += '/' + <string>route.params.level2
 }
 
 file = (file as DocConfig)[level2]
@@ -34,16 +34,18 @@ let level3 = <string>route.params.level3
 if (level3 || typeof file !== 'string') {
   if (!level3) {
     level3 = Object.keys(file)[0]
+    canonical += '/' + toUrlPath(level3)
   }else {
     level3 = Object.keys(file).find(key => {
-      const search = level3.split('-').join(' ')
+      const search = level3.split('-').join(' ').toLowerCase()
       return key.toLowerCase().split('/').join('-') == search
     })!
+    canonical += '/' + <string>route.params.level3
   }
   file = (file as DocConfig)[level3]
 }
 
-let content = files[`/src/assets/docs/${file}`]
+const {content, metadata} = useMarkdown(files[`/src/assets/docs/${file}`])
 
 let base = document.querySelector("base")?.href ?? '/'
 base = base.replace(document.location.origin, '')
@@ -51,26 +53,6 @@ if (content) {
   if (base == '/') {
     base = ''
   }
-  const regex = /<img([^>]*)src="(?:[^"\/]*)([^"]+)"/gi
-  let m;
-  do {
-    m = regex.exec(content)
-    if (m) {
-      const path = `/src/assets${m[2]}`
-      const imageUrl = images[path]
-      content = content.replace(m[0], `<img${m[1]} src="${imageUrl}"`);
-    }
-  } while(m);
-}
-
-if (content) {
-  let markdown = new MarkdownIt()
-    .use(MarkdownItHighlightjs)
-    .use(MarkdownItTabs)
-    .use(MarkdownItBox)
-    .use(MarkdownItLinks)
-    .set({html: true})
-  content = markdown.render(content)
 }
 
 onMounted(() => {
@@ -94,7 +76,7 @@ onMounted(() => {
       }
     }
   })
-  document.title = level3 + ' | mokapi.io'
+  useMeta(metadata.title || level3, metadata.description, canonical.toLowerCase())
 })
 function toggleSidebar() {
   openSidebar.value = !openSidebar.value
@@ -103,10 +85,13 @@ function matchLevel2(label: any): boolean {
   return label.toString().toLowerCase() == level2.toLowerCase()
 }
 function matchLevel3(label: any): boolean {
-  return label.toString().toLowerCase() == level3.toLowerCase()
+  return label.toString().toLowerCase() == level3?.toLowerCase()
 }
 function formatParam(label: any): string {
   return label.toString().toLowerCase().split(' ').join('-').split('/').join('-')
+}
+function toUrlPath(s: string): string {
+  return s.split(' ').join('-').split('/').join('-').replace('&', '%26')
 }
 </script>
 
@@ -122,24 +107,19 @@ function formatParam(label: any): string {
         <div class="text-white sidebar d-none d-md-block" :class="openSidebar ? 'open': ''" id="sidebar">
           <ul class="nav nav-pills flex-column mb-auto pe-3">
             <li class="nav-item" v-for="(v, k) of nav[level1]">
-              <div v-if="(typeof v != 'string')" class="chapter">
-                <div class="chapter-text">
-                  {{ k }}
-                </div>
-                <div>
-                  <li class="nav-item" v-for="(_, k2) of v">
-                    <router-link v-if="k != k2" class="nav-link" :class="matchLevel2(k) && matchLevel3(k2) ? 'active': ''" :to="{ name: 'docs', params: {level2: formatParam(k), level3: formatParam(k2)} }" style="padding-left: 2rem">{{ k2 }}</router-link>
-                  </li>
-              </div>
-              </div>
-              <div class="chapter" v-if="typeof v == 'string' && level1 != k">
-                <router-link class="nav-link chapter-text" :class="matchLevel2(k) ? 'active': ''" :to="{ name: 'docs', params: {level2: formatParam(k)} }">{{ k }}</router-link>
-              </div>
+              <p v-if="(typeof v != 'string')" class="chapter-text">{{ k }}</p>
+              <ul v-if="(typeof v != 'string')" class="nav nav-pills flex-column mb-auto pe-3 chapter">
+                <li class="nav-item" v-for="(_, k2) of v">
+                  <router-link v-if="k != k2" class="nav-link" :class="matchLevel2(k) && matchLevel3(k2) ? 'active': ''" :to="{ name: 'docs', params: {level2: formatParam(k), level3: formatParam(k2)} }" style="padding-left: 2rem">{{ k2 }}</router-link>
+                </li>
+              </ul>
+              <router-link v-if="typeof v == 'string' && level1 != k" class="nav-link chapter-text" :class="matchLevel2(k) ? 'active': ''" :to="{ name: 'docs', params: {level2: formatParam(k)} }">{{ k }}</router-link>
             </li>
           </ul>
         </div>
         <div style="flex: 1;max-width:700px;margin-bottom: 3rem;">
-          <div v-html="content" class="content" />
+          <div v-html="content" class="content" v-if="content" />
+          <page-not-found v-if="!content" />
         </div>
       </div>
     </div>
@@ -184,7 +164,7 @@ function formatParam(label: any): string {
 .sidebar.open .nav-pills .nav-link.active, .sidebar.show  .nav-pills .show > .nav-link {
   background-color: var(--color-background-mute);
 }
-.content{
+.content {
   margin-left: 1.2rem;
   margin-right: 1.2rem;
   padding-top: 2rem;
@@ -229,7 +209,7 @@ table thead th {
     border-bottom-width: 2px;
     font-weight: 500;
 }
-table td{
+table td {
     border-top-width: 2px;
     border-bottom-width: 2px;
     border-color: var(--color-datatable-border);
@@ -267,17 +247,20 @@ table.selectable tbody tr:hover {
 }
 
 .chapter {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.5rem !important;
 }
 
 .chapter-text {
+  color: var(--color-text);
   font-weight: 700;
   padding-left: 16px;
+  margin-bottom: 0;
 }
 
 pre {
   max-width: 700px;
   margin: 0 auto auto;
+  margin-bottom: 1rem;
   white-space: pre-wrap;
   word-break: break-all;
   border-radius: 6px;

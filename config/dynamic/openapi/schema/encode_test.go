@@ -144,6 +144,33 @@ func TestRef_Marshal_Object(t *testing.T) {
 				require.True(t, s == `{"name":"foo"}`, s)
 			},
 		},
+		{
+			"order by schema property definition",
+			&schema.Ref{Value: schematest.New("object",
+				schematest.WithProperty("name", schematest.New("string")),
+				schematest.WithProperty("value", schematest.New("integer")),
+			)},
+			map[string]interface{}{"value": 12, "name": "foo"},
+			media.ParseContentType("application/json"),
+			func(t *testing.T, s string) {
+				require.True(t, s == `{"name":"foo","value":12}`, s)
+			},
+		},
+		{
+			"dictionary",
+			&schema.Ref{Value: schematest.New("object",
+				schematest.WithAdditionalProperties(schematest.New("object",
+					schematest.WithProperty("name", schematest.New("string")),
+					schematest.WithProperty("value", schematest.New("integer")),
+					schematest.WithProperty("bar", schematest.New("integer")),
+				)),
+			)},
+			map[string]interface{}{"foo": map[string]interface{}{"bar": 11, "value": 12, "name": "foo"}},
+			media.ParseContentType("application/json"),
+			func(t *testing.T, s string) {
+				require.True(t, s == `{"foo":{"name":"foo","value":12,"bar":11}}`, s)
+			},
+		},
 	}
 
 	t.Parallel()

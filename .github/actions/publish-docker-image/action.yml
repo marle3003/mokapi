@@ -1,0 +1,35 @@
+name: "Publish docker image"
+description: "Publish docker image to docker repository"
+inputs:
+  image-name:
+    required: true
+    description: "The mokapi image name"
+  artifact-name:
+    required: true
+    description: "The artifact name to download image"
+  docker-username:
+    required: true
+    description: docker username
+  docker-password:
+    required: true
+    description: docker password
+runs:
+  using: "composite"
+  steps:
+    - name: Download image
+      id: download
+      uses: actions/download-artifact@v3
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: /tmp
+    - name: Load image
+      run: docker load --input /tmp/mokapi.tar
+      shell: bash
+    - name: Login to Docker
+      uses: docker/login-action@v1
+      with:
+        username: ${{ inputs.docker-username }}
+        password: ${{ inputs.docker-password }}
+    - name: Push image to Docker
+      run: docker push ${{ inputs.image-name }}
+      shell: bash

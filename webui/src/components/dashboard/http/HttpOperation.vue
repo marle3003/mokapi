@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onUnmounted, type Ref } from 'vue'
-import { useRoute } from 'vue-router';
+import { useRoute } from '@/router';
 import { useService } from '@/composables/services';
 import HttpRequestCard from './request/HttpRequestCard.vue';
 import HttpResponseCard from './response/HttpResponseCard.vue';
@@ -9,19 +9,16 @@ import Requests from './Requests.vue';
 import Loading from '@/components/Loading.vue'
 import Markdown from 'vue3-markdown-it';
 
-const {fetchService} = useService()
+const { fetchService } = useService()
 const route = useRoute()
 
-const serviceName = route.params.service?.toString()
-const pathName = '/' + route.params.path?.toString()
-const operationName = route.params.operation?.toString()
-const {service, isLoading, close} = <{service: Ref<HttpService | null>, isLoading: Ref<boolean>, close: () => void}>fetchService(serviceName, 'http')
+const { service, isLoading, close } = <{service: Ref<HttpService | null>, isLoading: Ref<boolean>, close: () => void}>fetchService(route.context.service, 'http')
 let path = computed(() => {
     if (!service.value){
         return null
     }
     for (let p of service.value.paths){
-        if (p.path == pathName){
+        if (p.path.substring(1) == route.context.path){
             return p
         }
     }
@@ -32,7 +29,7 @@ const operation = computed(() => {
         return null
     }
     for (let o of path.value.operations){
-        if (o.method == operationName){
+        if (o.method == route.context.operation){
             return o
         }
     }
@@ -40,7 +37,7 @@ const operation = computed(() => {
 })
 
 function operationNotFoundMessage() {
-    return 'Operation '+ operationName.toUpperCase() +' '+ pathName+' in '+ serviceName +' not found'
+    return 'Endpoint '+ route.context.operation.toUpperCase() +' /'+ route.context.path+' in '+ route.context.service +' not found'
 }
 
 onUnmounted(() => {
@@ -49,7 +46,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div v-if="service && path && operation">
+    <div v-if="service && path && operation" data-testid="http-operation">
         <div class="card-group">
             <div class="card">
                 <div class="card-body">
@@ -58,33 +55,41 @@ onUnmounted(() => {
                             <p class="label">Operation</p>
                             <p>
                                 <i class="bi bi-exclamation-triangle-fill yellow pe-2" v-if="operation.deprecated"></i>
-                                <span class="badge operation" :class="operation.method">{{ operation.method }}</span>
-                                <span class="ps-2">{{ path.path }}</span>
+                                <span class="badge operation" :class="operation.method" data-testid="operation">{{ operation.method.toUpperCase() }}</span>
+                                <span class="ps-2" data-testid="path">
+                                    <router-link :to="route.path(service, path)">
+                                        {{ path.path }}
+                                    </router-link>
+                                </span>
                             </p>
                         </div>
                         <div class="col header">
                             <p class="label">Operation ID</p>
-                            <p>{{ operation.operationId }}</p>
+                            <p data-testid="operationid">{{ operation.operationId }}</p>
                         </div>
                         <div class="col header">
                             <p class="label">Service</p>
-                            <p>{{ service.name }}</p>
+                            <p data-testid="service">
+                                <router-link :to="route.service(service)">
+                                    {{ service.name }}
+                                </router-link>
+                            </p>
                         </div>
                         <div class="col header" v-if="operation.deprecated">
                             <p class="label">Warning</p>
-                            <p>Deprecated</p>
+                            <p data-testid="warning">Deprecated</p>
                         </div>
                         <div class="col text-end">
-                            <span class="badge bg-secondary">HTTP</span>
+                            <span class="badge bg-secondary" data-testid="type">HTTP</span>
                         </div>
                     </div>
                     <div class="row" v-if="operation.summary">
                         <p class="label">Summary</p>
-                        <p>{{ operation.summary }}</p>
+                        <p data-testid="summary">{{ operation.summary }}</p>
                     </div>
                     <div class="row" v-if="operation.description">
                         <p class="label">Description</p>
-                        <markdown :source="operation.description"></markdown>
+                        <markdown :source="operation.description" data-testid="description"></markdown>
                     </div>
                 </div>
             </div>
@@ -96,7 +101,7 @@ onUnmounted(() => {
             <http-response-card  :service="service" :path="path" :operation="operation" />
         </div>
         <div class="card-group">
-            <requests :service="service" :path="pathName" />
+            <requests :service="service" :path="route.context.path" />
         </div>
     </div>
     <loading v-if="isLoading && !operation"></loading>

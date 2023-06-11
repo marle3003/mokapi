@@ -1,8 +1,8 @@
 {
   "name": "go-mokapi",
   "version": "0.6.0",
-  "description": "Create and test API designs before actually building them.",
-  "homepage": "http://mokapi.io",
+  "description": "Easy and flexible API mocking",
+  "homepage": "https://mokapi.io",
   "repository": {
     "type": "git",
     "url": "https://github.com/marle3003/mokapi.git"

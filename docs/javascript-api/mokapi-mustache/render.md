@@ -1,3 +1,7 @@
+---
+title: Javascript API: render
+description: Renders the given mustache template with the given data
+---
 # render( template, scope )
 
 Renders the given mustache template with the given data

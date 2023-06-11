@@ -13,6 +13,7 @@ type Config struct {
 	RootCaCert tls.FileOrContent
 	RootCaKey  tls.FileOrContent
 	Services   Services
+	Js         JsConfig
 }
 
 func NewConfig() *Config {
@@ -85,4 +86,8 @@ type HttpService struct {
 
 type HttpServer struct {
 	Url string
+}
+
+type JsConfig struct {
+	GlobalFolders []string
 }

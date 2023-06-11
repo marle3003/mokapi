@@ -1,3 +1,7 @@
+---
+title: Kafka Quick Start
+description: A simple Use Case to use Mokapi to produce orders into a Kafka topic
+---
 # Quick Start
 
 A simple Use Case to use Mokapi to produce orders into an [AsyncAPI](https://www.asyncapi.com/) Kafka instance
@@ -74,7 +78,7 @@ CMD ["--Providers.File.Directory=/demo"]
 ```
 docker run -p 8080:8080 -p 9092:9092 --rm -it $(docker build -q .)
 ```
-You can open a browser and go to Mokapi's Dashboard (`http://localhost:8080`) to see the Mokapi's Kafka Topic and the produced messages.
+You can now open a browser and go to Mokapi's Dashboard (`http://localhost:8080`) to see the Mokapi's Kafka Topic and the produced messages.
 
 ## Use a Kafka Consumer
 

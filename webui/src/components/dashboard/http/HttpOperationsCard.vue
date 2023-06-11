@@ -43,7 +43,7 @@ function showWarningColumn(){
     <div class="card">
         <div class="card-body">
             <div class="card-title text-center">Methods</div>
-            <table class="table dataTable selectable">
+            <table class="table dataTable selectable" data-testid="methods">
                 <thead>
                     <tr>
                         <th scope="col" class="text-left" style="width: 10%">Method</th>
@@ -54,7 +54,7 @@ function showWarningColumn(){
                 </thead>
                 <tbody>
                     <tr v-for="operation in operations" :key="path.path" @click="goToOperation(operation)">
-                        <td><span class="badge operation" :class="operation.method">{{ operation.method }}</span></td>
+                        <td><span class="badge operation" :class="operation.method">{{ operation.method.toUpperCase() }}</span></td>
                         <td>{{ operation.operationId }}</td>
                         <td v-if="showWarningColumn()"><span v-if="operation.deprecated"><i class="bi bi-exclamation-triangle-fill yellow"></i> deprecated</span></td>
                         <td>{{ operation.summary }}</td>

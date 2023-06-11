@@ -17,6 +17,8 @@ type Monitor struct {
 	Ldap  *Ldap  `json:"ldap"`
 	Smtp  *Smtp  `json:"smtp"`
 
+	RefreshRateSeconds int
+
 	metrics []metrics.Metric
 }
 
@@ -26,67 +28,29 @@ func New() *Monitor {
 	startTime := metrics.NewGauge(metrics.WithFQName("app", "start_timestamp"))
 	memoryUsage := metrics.NewGauge(metrics.WithFQName("app", "memory_usage_bytes"))
 
-	kafkaMessage := metrics.NewCounterMap(
-		metrics.WithFQName("kafka", "messages_total"),
-		metrics.WithLabelNames("service", "topic"))
-	kafkaLastMessage := metrics.NewGaugeMap(
-		metrics.WithFQName("kafka", "message_timestamp"),
-		metrics.WithLabelNames("service", "topic"))
-	kafkaLag := metrics.NewGaugeMap(
-		metrics.WithFQName("kafka", "consumer_group_lag"),
-		metrics.WithLabelNames("service", "group", "topic", "partition"))
-
-	ldapBind := metrics.NewCounterMap(
-		metrics.WithFQName("ldap", "bind_total"),
-		metrics.WithLabelNames("service"))
-	ldapSearch := metrics.NewCounterMap(
-		metrics.WithFQName("ldap", "search_total"),
-		metrics.WithLabelNames("service"))
-	ldapErrors := metrics.NewCounterMap(
-		metrics.WithFQName("ldap", "search_total"),
-		metrics.WithLabelNames("service"))
-	ldapLastSearch := metrics.NewGaugeMap(
-		metrics.WithFQName("ldap", "search_timestamp"),
-		metrics.WithLabelNames("service"))
-
-	smtpMails := metrics.NewCounterMap(
-		metrics.WithFQName("smtp", "mails_total"),
-		metrics.WithLabelNames("service"))
-
 	h := NewHttp()
+	k := NewKafka()
+	l := NewLdap()
+	s := NewSmtp()
+
+	collection := []metrics.Metric{
+		startTime,
+		memoryUsage,
+	}
+	collection = append(collection, h.Metrics()...)
+	collection = append(collection, k.Metrics()...)
+	collection = append(collection, l.Metrics()...)
+	collection = append(collection, s.Metrics()...)
+
 	m := &Monitor{
-		StartTime:   startTime,
-		MemoryUsage: memoryUsage,
-		Http:        h,
-		Kafka: &Kafka{
-			Messages:    kafkaMessage,
-			LastMessage: kafkaLastMessage,
-			Lags:        kafkaLag,
-		},
-		Ldap: &Ldap{
-			Bind:       ldapBind,
-			Search:     ldapSearch,
-			Errors:     ldapErrors,
-			LastSearch: ldapLastSearch,
-		},
-		Smtp: &Smtp{
-			Mails: smtpMails,
-		},
-		metrics: []metrics.Metric{
-			startTime,
-			memoryUsage,
-			h.RequestCounter,
-			h.RequestErrorCounter,
-			h.LastRequest,
-			kafkaMessage,
-			kafkaLastMessage,
-			kafkaLag,
-			ldapBind,
-			ldapSearch,
-			ldapLastSearch,
-			ldapErrors,
-			smtpMails,
-		},
+		RefreshRateSeconds: 5,
+		StartTime:          startTime,
+		MemoryUsage:        memoryUsage,
+		Http:               h,
+		Kafka:              k,
+		Ldap:               l,
+		Smtp:               s,
+		metrics:            collection,
 	}
 
 	m.StartTime.Set(float64(time.Now().Unix()))
@@ -100,11 +64,18 @@ func (m *Monitor) Start(pool *safe.Pool) {
 			select {
 			case <-ctx.Done():
 				return
-			case <-time.After(time.Duration(5) * time.Second):
+			case <-time.After(time.Duration(m.RefreshRateSeconds) * time.Second):
 				m.update()
 			}
 		}
 	})
+}
+
+func (m *Monitor) Reset() {
+	m.Http.Reset()
+	m.Kafka.Reset()
+	m.Smtp.Reset()
+	m.Ldap.Reset()
 }
 
 func (m *Monitor) update() {
@@ -113,11 +84,8 @@ func (m *Monitor) update() {
 	m.MemoryUsage.Set(float64(stats.Alloc))
 }
 
-func (m *Monitor) FindAll(query ...metrics.QueryFunc) []metrics.Metric {
-	q := &metrics.Query{}
-	for _, qe := range query {
-		qe(q)
-	}
+func (m *Monitor) FindAll(query ...metrics.QueryOptions) []metrics.Metric {
+	q := metrics.NewQuery(query...)
 
 	ch := make(chan metrics.Metric)
 	result := make([]metrics.Metric, 0)

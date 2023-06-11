@@ -4,21 +4,53 @@ on:
     branches:
       - v*
 
+env:
+  image-name: mokapi/mokapi:${GITHUB_REF##*/}-alpha
+  image-artifact-name: mokapi-image
+  artifact-test-report: playwright-report
+  report-publish-path: reports/${{ github.ref_name }}
+
 jobs:
-  release:
-    name: Release alpha
+  test:
+    uses: ./.github/workflows/test.yml
+    with:
+      image-name: mokapi/mokapi:${GITHUB_REF##*/}-alpha
+      image-artifact-name: mokapi-image
+      artifact-test-report: playwright-report
+      report-publish-path: reports/${{ github.ref_name }}
+
+  publish-image:
+    name: Publish docker image
     runs-on: ubuntu-latest
+    if: "success()"
+    needs: [ test ]
     steps:
       - name: Check out code
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: Login to Docker
-        uses: docker/login-action@v1
+      - uses: ./.github/actions/publish-docker-image
         with:
-          username: mokapi
-          password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Build docker alpha image
-        run: docker build --build-arg VERSION=${GITHUB_REF##*/v} -t mokapi/mokapi:${GITHUB_REF##*/}-alpha -f ./images/alpha.Dockerfile .
-      - name: Push image to Docker
-        run: docker push mokapi/mokapi:${GITHUB_REF##*/}-alpha
+          image-name: ${{ env.image-name }}
+          artifact-name: ${{ env.image-artifact-name }}
+          docker-username: mokapi
+          docker-password: ${{ secrets.DOCKER_PASSWORD }}
+
+  publish-website:
+    name: Publish website
+    runs-on: ubuntu-latest
+    if: "success()"
+    needs: [ test ]
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Restore Timestamps
+        uses: chetan/git-restore-mtime-action@v2
+      - uses: ./.github/actions/publish-website
+        with:
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server: ${{ secrets.FTP_SERVER }}
+

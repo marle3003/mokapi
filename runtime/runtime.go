@@ -3,6 +3,8 @@ package runtime
 import (
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
+	"mokapi/config/dynamic/directory"
+	"mokapi/config/dynamic/mail"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
@@ -55,4 +57,25 @@ func (a *App) AddKafka(c *asyncApi.Config, store *store.Store) {
 		a.Monitor.Kafka.LastMessage.WithLabel(c.Info.Name, name).Set(0)
 		events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("kafka").WithName(c.Info.Name).With("topic", name))
 	}
+}
+
+func (a *App) AddSmtp(c *mail.Config, store *mail.Store) {
+	if len(a.Smtp) == 0 {
+		a.Smtp = make(map[string]*SmtpInfo)
+	}
+
+	a.Smtp[c.Info.Name] = &SmtpInfo{Config: c, Store: store}
+
+	events.ResetStores(events.NewTraits().WithNamespace("smtp").WithName(c.Info.Name))
+	events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("smtp").WithName(c.Info.Name))
+}
+
+func (a *App) AddLdap(c *directory.Config) {
+	if len(a.Ldap) == 0 {
+		a.Ldap = make(map[string]*LdapInfo)
+	}
+	a.Ldap[c.Info.Name] = &LdapInfo{Config: c}
+
+	events.ResetStores(events.NewTraits().WithNamespace("ldap").WithName(c.Info.Name))
+	events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("ldap").WithName(c.Info.Name))
 }

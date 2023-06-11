@@ -5,6 +5,7 @@
 @import './tabs.css';
 @import './modal.css';
 @import './nav.css';
+@import './home.css';
 
 body {
   color: var(--color-text);

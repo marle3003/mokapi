@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/stretchr/testify/require"
-	"mokapi/config/dynamic/smtp"
+	"mokapi/config/dynamic/mail"
 	"mokapi/config/static"
 	"mokapi/engine/common"
 	"mokapi/server/cert"
@@ -16,14 +16,14 @@ import (
 func TestServer(t *testing.T) {
 	testcases := []struct {
 		name   string
-		config *smtp.Config
+		config *mail.Config
 		store  *cert.Store
 		fn     func(t *testing.T)
 	}{
 		{
 			name: "fixed ip:port",
 			fn: func(t *testing.T) {
-				server, err := New(&smtp.Config{Server: "smtp://127.0.0.1:12345"}, nil, &eventEmitter{})
+				server, err := New(&mail.Config{Server: "smtp://127.0.0.1:12345"}, nil, &eventEmitter{})
 				require.NoError(t, err)
 				err = server.Start()
 				t.Cleanup(server.Stop)
@@ -36,7 +36,7 @@ func TestServer(t *testing.T) {
 		{
 			name: "simple config",
 			fn: func(t *testing.T) {
-				server, err := New(&smtp.Config{}, nil, &eventEmitter{})
+				server, err := New(&mail.Config{}, nil, &eventEmitter{})
 				require.NoError(t, err)
 				l, err := net.Listen("tcp", "127.0.0.1:")
 				require.NoError(t, err)
@@ -50,7 +50,7 @@ func TestServer(t *testing.T) {
 		{
 			name: "with tls",
 			fn: func(t *testing.T) {
-				server, err := New(&smtp.Config{}, nil, &eventEmitter{})
+				server, err := New(&mail.Config{}, nil, &eventEmitter{})
 				require.NoError(t, err)
 				store, err := cert.NewStore(&static.Config{})
 				require.NoError(t, err)

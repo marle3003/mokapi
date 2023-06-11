@@ -82,6 +82,64 @@ paths:
             application/json:
               schema:
                 $ref: 'smtp.yml#/components/schemas/SmtpInfo'
+  /api/services/ldap/{name}:
+    get:
+      summary: Information about the ldap server
+      operationId: serviceLdap
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ldap server
+          content:
+            application/json:
+              schema:
+                $ref: 'ldap.yml#/components/schemas/LdapInfo'
+  /api/services/smtp/mails/{messageId}:
+    get:
+      summary: Retrieve the mail with the given messageId
+      operationId: smtpMail
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: mail
+          content:
+            application/json:
+              schema:
+        "404":
+          description: mail not found
+  /api/services/smtp/mails/{messageId}/attachments/{name}:
+    get:
+      summary: Retrieve mail attachment's content
+      operationId: smtpMailAttachment
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: mail
+          content:
+            '*/*':
+              schema:
+        "404":
+          description: mail attachment not found
   /api/services/kafka/{name}/groups:
     get:
       summary: list of kafka groups

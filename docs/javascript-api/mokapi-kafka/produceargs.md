@@ -1,3 +1,7 @@
+---
+title: Javascript API: ProduceArgs
+description: ProduceArgs is an object used by functions in the module mokapi/kafka
+---
 # ProduceArgs
 
 ProduceArgs is an object used by functions in the module mokapi/kafka 

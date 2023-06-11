@@ -19,3 +19,18 @@ declare interface ProduceResult {
     key: string
     value: string
 }
+
+type KafkaEventHandler = (record: KafkaRecord) => boolean
+
+declare interface KafkaRecord {
+    offset: number
+    time: number
+    key: number[]
+    value: number[]
+    headers: KafkaHeader[]
+}
+
+declare interface KafkaHeader {
+    key: string
+    value: string
+}

@@ -1,5 +1,5 @@
 import {on} from 'mokapi'
-import {fake} from 'faker'
+import {fake} from 'mokapi/faker'
 
 export default function() {
     on('http', function(request, response) {

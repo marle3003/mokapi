@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/emersion/go-smtp"
 	log "github.com/sirupsen/logrus"
-	config "mokapi/config/dynamic/smtp"
+	"mokapi/config/dynamic/mail"
 	"mokapi/engine/common"
 	"mokapi/safe"
 	"mokapi/server/cert"
@@ -19,7 +19,7 @@ type ReceivedMailHandler func(*Mail)
 
 type Server struct {
 	server *smtp.Server
-	config *config.Config
+	config *mail.Config
 
 	close    chan bool
 	received chan *Mail
@@ -35,7 +35,7 @@ type backend struct {
 	//wh       EventHandler
 }
 
-func New(c *config.Config, store *cert.Store, emitter common.EventEmitter) (*Server, error) {
+func New(c *mail.Config, store *cert.Store, emitter common.EventEmitter) (*Server, error) {
 	received := make(chan *Mail)
 	b := &backend{received: received /*wh: wh*/}
 	s := smtp.NewServer(b)
@@ -134,7 +134,7 @@ func (s *Server) Stop() {
 	s.close <- true
 }
 
-func (s *Server) Update(config *config.Config) error {
+func (s *Server) Update(config *mail.Config) error {
 	return nil
 }
 

@@ -1,7 +1,11 @@
+---
+title: Mokapi Dashboard
+description: Mokapi provides you a dashboard where you can view your mocked APIs or analyze traffic like a HTTP request/response.
+---
 # Dashboard
 
 Mokapi provides you a dashboard where you can view your 
-mocked APIs or analyze requests/messages.
+mocked APIs or analyze traffic like a HTTP request/response.
 
 <img src="/docs/guides/get-started/dashboard.png" width="700" alt="Mokapi Dashboard" title="Mokapi Dashboard" />
 

@@ -7,14 +7,14 @@ import { onUnmounted } from 'vue';
 import Markdown from 'vue3-markdown-it'
 
 const {fetchServices} = useService()
-const {sum} = useMetrics()
+const { sum, max } = useMetrics()
 const {format} = usePrettyDates()
 const route = useRoute()
 const router = useRouter()
 const {services, close} = fetchServices('kafka')
 
 function lastMessage(service: Service){
-    const n = sum(service.metrics, 'kafka_message_timestamp')
+    const n = max(service.metrics, 'kafka_message_timestamp')
     if (n == 0){
         return '-'
     }
@@ -39,7 +39,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div class="card">
+    <div class="card" data-testid="kafka-service-list">
         <div class="card-body">
             <div class="card-title text-center">Kafka Clusters</div>
             <table class="table dataTable selectable">
