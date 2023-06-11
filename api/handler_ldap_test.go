@@ -22,7 +22,7 @@ func TestHandler_Ldap(t *testing.T) {
 			app: &runtime.App{
 				Ldap: map[string]*runtime.LdapInfo{
 					"foo": {
-						&directory.Config{Info: directory.Info{Name: "foo", Description: "bar", Version: "1.0"}},
+						Config: &directory.Config{Info: directory.Info{Name: "foo", Description: "bar", Version: "1.0"}},
 					},
 				},
 			},
@@ -35,7 +35,7 @@ func TestHandler_Ldap(t *testing.T) {
 			app: &runtime.App{
 				Ldap: map[string]*runtime.LdapInfo{
 					"foo": {
-						&directory.Config{
+						Config: &directory.Config{
 							Info:    directory.Info{Name: "foo", Description: "bar", Version: "1.0"},
 							Address: "0.0.0.0:389",
 						},

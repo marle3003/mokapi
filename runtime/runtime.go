@@ -7,6 +7,7 @@ import (
 	"mokapi/config/dynamic/directory"
 	"mokapi/config/dynamic/mail"
 	"mokapi/config/dynamic/openapi"
+	common2 "mokapi/engine/common"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"mokapi/version"
@@ -54,20 +55,29 @@ func (a *App) AddHttp(c *common.Config) *HttpInfo {
 	return hc
 }
 
-func (a *App) AddKafka(c *asyncApi.Config, store *store.Store) {
+func (a *App) AddKafka(c *common.Config, emitter common2.EventEmitter) *KafkaInfo {
 	if len(a.Kafka) == 0 {
 		a.Kafka = make(map[string]*KafkaInfo)
 	}
 
-	a.Kafka[c.Info.Name] = &KafkaInfo{Config: c, Store: store}
-
-	events.ResetStores(events.NewTraits().WithNamespace("kafka").WithName(c.Info.Name))
-	events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("kafka").WithName(c.Info.Name))
-	for name := range c.Channels {
-		a.Monitor.Kafka.Messages.WithLabel(c.Info.Name, name).Add(0)
-		a.Monitor.Kafka.LastMessage.WithLabel(c.Info.Name, name).Set(0)
-		events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("kafka").WithName(c.Info.Name).With("topic", name))
+	cfg := c.Data.(*asyncApi.Config)
+	name := cfg.Info.Name
+	hc, ok := a.Kafka[name]
+	if !ok {
+		hc = NewKafkaInfo(c, store.New(cfg, emitter))
+		a.Kafka[cfg.Info.Name] = hc
+	} else {
+		hc.AddConfig(c)
 	}
+
+	events.ResetStores(events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name))
+	events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name))
+	for name := range cfg.Channels {
+		a.Monitor.Kafka.Messages.WithLabel(cfg.Info.Name, name).Add(0)
+		a.Monitor.Kafka.LastMessage.WithLabel(cfg.Info.Name, name).Set(0)
+		events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name).With("topic", name))
+	}
+	return hc
 }
 
 func (a *App) AddSmtp(c *mail.Config, store *mail.Store) {
@@ -81,12 +91,23 @@ func (a *App) AddSmtp(c *mail.Config, store *mail.Store) {
 	events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("smtp").WithName(c.Info.Name))
 }
 
-func (a *App) AddLdap(c *directory.Config) {
+func (a *App) AddLdap(c *common.Config, emitter common2.EventEmitter) *LdapInfo {
 	if len(a.Ldap) == 0 {
 		a.Ldap = make(map[string]*LdapInfo)
 	}
-	a.Ldap[c.Info.Name] = &LdapInfo{Config: c}
 
-	events.ResetStores(events.NewTraits().WithNamespace("ldap").WithName(c.Info.Name))
-	events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("ldap").WithName(c.Info.Name))
+	cfg := c.Data.(*directory.Config)
+	name := cfg.Info.Name
+	hc, ok := a.Ldap[name]
+	if !ok {
+		hc = NewLdapInfo(c, emitter)
+		a.Ldap[cfg.Info.Name] = hc
+	} else {
+		hc.AddConfig(c)
+	}
+
+	events.ResetStores(events.NewTraits().WithNamespace("ldap").WithName(cfg.Info.Name))
+	events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("ldap").WithName(cfg.Info.Name))
+
+	return hc
 }

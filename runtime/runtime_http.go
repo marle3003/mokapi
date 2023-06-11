@@ -16,11 +16,6 @@ type HttpInfo struct {
 	configs map[string]*openapi.Config
 }
 
-type HttpConfig struct {
-	Name    string
-	configs map[string]*openapi.Config
-}
-
 type httpHandler struct {
 	http *monitor.Http
 	next http.Handler
