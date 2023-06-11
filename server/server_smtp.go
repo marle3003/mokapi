@@ -5,7 +5,6 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/common"
-	"mokapi/config/dynamic/mail"
 	engine "mokapi/engine/common"
 	"mokapi/runtime"
 	"mokapi/server/cert"
@@ -30,14 +29,13 @@ func NewSmtpManager(app *runtime.App, eventEmitter engine.EventEmitter, store *c
 }
 
 func (m *SmtpManager) UpdateConfig(c *common.Config) {
-	cfg, ok := c.Data.(*mail.Config)
-	if !ok {
+	if !runtime.IsSmtpConfig(c) {
 		return
 	}
 
+	cfg := m.app.AddSmtp(c)
+
 	if server, ok := m.servers[cfg.Info.Name]; !ok {
-		h := mail.NewHandler(cfg, m.eventEmitter)
-		m.app.AddSmtp(cfg, h.Store)
 		u, err := parseSmtpUrl(cfg.Server)
 		if err != nil {
 			log.Errorf("url syntax error %v: %v", c.Info.Path(), err.Error())
@@ -46,7 +44,7 @@ func (m *SmtpManager) UpdateConfig(c *common.Config) {
 		log.Infof("adding new smtp host on %v", u)
 		server = &smtp.Server{
 			Addr:    fmt.Sprintf(":%v", u.Port()),
-			Handler: runtime.NewSmtpHandler(m.app.Monitor.Smtp, h),
+			Handler: cfg.Handler(m.app.Monitor.Smtp, m.eventEmitter),
 		}
 		if m.certStore != nil {
 			server.TLSConfig = &tls.Config{

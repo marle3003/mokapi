@@ -31,6 +31,14 @@ func NewStore(c *Config) *Store {
 	return s
 }
 
+func (s *Store) Update(c *Config) {
+	for _, mb := range c.Mailboxes {
+		if _, ok := s.Mailboxes[mb.Name]; !ok {
+			s.NewMailbox(mb.Name, mb.Username, mb.Password)
+		}
+	}
+}
+
 func (s *Store) ExistsMailbox(name string) bool {
 	_, b := s.Mailboxes[name]
 	return b

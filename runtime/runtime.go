@@ -80,15 +80,25 @@ func (a *App) AddKafka(c *common.Config, emitter common2.EventEmitter) *KafkaInf
 	return hc
 }
 
-func (a *App) AddSmtp(c *mail.Config, store *mail.Store) {
+func (a *App) AddSmtp(c *common.Config) *SmtpInfo {
 	if len(a.Smtp) == 0 {
 		a.Smtp = make(map[string]*SmtpInfo)
 	}
 
-	a.Smtp[c.Info.Name] = &SmtpInfo{Config: c, Store: store}
+	cfg := c.Data.(*mail.Config)
+	name := cfg.Info.Name
+	hc, ok := a.Smtp[name]
+	if !ok {
+		hc = NewSmtpInfo(c)
+		a.Smtp[cfg.Info.Name] = hc
+	} else {
+		hc.AddConfig(c)
+	}
 
-	events.ResetStores(events.NewTraits().WithNamespace("smtp").WithName(c.Info.Name))
-	events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("smtp").WithName(c.Info.Name))
+	events.ResetStores(events.NewTraits().WithNamespace("smtp").WithName(cfg.Info.Name))
+	events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("smtp").WithName(cfg.Info.Name))
+
+	return hc
 }
 
 func (a *App) AddLdap(c *common.Config, emitter common2.EventEmitter) *LdapInfo {
