@@ -67,7 +67,7 @@ func TestConfig_Patch_Server(t *testing.T) {
 			},
 		},
 		{
-			name: "patch server description is not overwritten",
+			name: "patch server description is overwritten",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithServer("foo.bar", "description")),
 				openapitest.NewConfig("1.0", openapitest.WithServer("foo.bar", "foo")),
@@ -75,7 +75,7 @@ func TestConfig_Patch_Server(t *testing.T) {
 			test: func(t *testing.T, result *openapi.Config) {
 				require.Len(t, result.Servers, 1)
 				require.Equal(t, "foo.bar", result.Servers[0].Url)
-				require.Equal(t, "description", result.Servers[0].Description)
+				require.Equal(t, "foo", result.Servers[0].Description)
 			},
 		},
 	}
@@ -138,14 +138,14 @@ func TestConfig_Patch_Info(t *testing.T) {
 			},
 		},
 		{
-			name: "patch contact name but not overwritten",
+			name: "patch contact name is overwritten",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithContact("foo", "foo.bar", "info@foo.bar")),
 				openapitest.NewConfig("1.0", openapitest.WithContact("bar", "", "")),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				require.NotNil(t, result.Info.Contact)
-				require.Equal(t, "foo", result.Info.Contact.Name)
+				require.Equal(t, "bar", result.Info.Contact.Name)
 				require.Equal(t, "foo.bar", result.Info.Contact.Url)
 				require.Equal(t, "info@foo.bar", result.Info.Contact.Email)
 			},
@@ -164,7 +164,7 @@ func TestConfig_Patch_Info(t *testing.T) {
 			},
 		},
 		{
-			name: "patch contact url but not overwritten",
+			name: "patch contact url is overwritten",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithContact("foo", "foo.bar", "info@foo.bar")),
 				openapitest.NewConfig("1.0", openapitest.WithContact("", "mokapi.io", "")),
@@ -172,7 +172,7 @@ func TestConfig_Patch_Info(t *testing.T) {
 			test: func(t *testing.T, result *openapi.Config) {
 				require.NotNil(t, result.Info.Contact)
 				require.Equal(t, "foo", result.Info.Contact.Name)
-				require.Equal(t, "foo.bar", result.Info.Contact.Url)
+				require.Equal(t, "mokapi.io", result.Info.Contact.Url)
 				require.Equal(t, "info@foo.bar", result.Info.Contact.Email)
 			},
 		},
@@ -190,7 +190,7 @@ func TestConfig_Patch_Info(t *testing.T) {
 			},
 		},
 		{
-			name: "patch contact email but not overwritten",
+			name: "patch contact email is overwritten",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithContact("foo", "foo.bar", "info@foo.bar")),
 				openapitest.NewConfig("1.0", openapitest.WithContact("", "", "info@mokapi.io")),
@@ -199,7 +199,7 @@ func TestConfig_Patch_Info(t *testing.T) {
 				require.NotNil(t, result.Info.Contact)
 				require.Equal(t, "foo", result.Info.Contact.Name)
 				require.Equal(t, "foo.bar", result.Info.Contact.Url)
-				require.Equal(t, "info@foo.bar", result.Info.Contact.Email)
+				require.Equal(t, "info@mokapi.io", result.Info.Contact.Email)
 			},
 		},
 		{
@@ -213,13 +213,13 @@ func TestConfig_Patch_Info(t *testing.T) {
 			},
 		},
 		{
-			name: "patch description is not overwritten",
+			name: "patch description is overwritten",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithInfo("", "1.0", "foo")),
 				openapitest.NewConfig("1.0", openapitest.WithInfo("", "1.0", "bar")),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				require.Equal(t, "foo", result.Info.Description)
+				require.Equal(t, "bar", result.Info.Description)
 			},
 		},
 		{
@@ -233,13 +233,13 @@ func TestConfig_Patch_Info(t *testing.T) {
 			},
 		},
 		{
-			name: "patch version is not overwritten",
+			name: "patch version is overwritten",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithInfo("", "1.0", "")),
 				openapitest.NewConfig("1.0", openapitest.WithInfo("", "3.0", "")),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				require.Equal(t, "1.0", result.Info.Version)
+				require.Equal(t, "3.0", result.Info.Version)
 			},
 		},
 	}

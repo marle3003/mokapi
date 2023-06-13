@@ -32,7 +32,7 @@ func TestConfig_Patch_Info(t *testing.T) {
 			},
 		},
 		{
-			name: "patch description version but not overwrite",
+			name: "patch description version is overwritten",
 			configs: []*asyncApi.Config{
 				asyncapitest.NewConfig(asyncapitest.WithInfo("foo", "bar", "1.0"),
 					asyncapitest.WithInfoExt("term", "licName", "foo.bar")),
@@ -40,11 +40,11 @@ func TestConfig_Patch_Info(t *testing.T) {
 					asyncapitest.WithInfoExt("foo", "otherName", "bar.foo")),
 			},
 			test: func(t *testing.T, result *asyncApi.Config) {
-				require.Equal(t, "bar", result.Info.Description)
-				require.Equal(t, "1.0", result.Info.Version)
-				require.Equal(t, "term", result.Info.TermsOfService)
-				require.Equal(t, "licName", result.Info.License.Name)
-				require.Equal(t, "foo.bar", result.Info.License.Url)
+				require.Equal(t, "other", result.Info.Description)
+				require.Equal(t, "2.0", result.Info.Version)
+				require.Equal(t, "foo", result.Info.TermsOfService)
+				require.Equal(t, "otherName", result.Info.License.Name)
+				require.Equal(t, "bar.foo", result.Info.License.Url)
 			},
 		},
 		{
@@ -74,16 +74,16 @@ func TestConfig_Patch_Info(t *testing.T) {
 			},
 		},
 		{
-			name: "patch contact but not overwrite",
+			name: "patch contact is overwrite",
 			configs: []*asyncApi.Config{
 				asyncapitest.NewConfig(asyncapitest.WithContact("foo", "foo.bar", "info@foo.bar")),
 				asyncapitest.NewConfig(asyncapitest.WithContact("mokapi", "mokapi.io", "info@mokapi.io")),
 			},
 			test: func(t *testing.T, result *asyncApi.Config) {
 				require.NotNil(t, result.Info.Contact)
-				require.Equal(t, "foo", result.Info.Contact.Name)
-				require.Equal(t, "foo.bar", result.Info.Contact.Url)
-				require.Equal(t, "info@foo.bar", result.Info.Contact.Email)
+				require.Equal(t, "mokapi", result.Info.Contact.Name)
+				require.Equal(t, "mokapi.io", result.Info.Contact.Url)
+				require.Equal(t, "info@mokapi.io", result.Info.Contact.Email)
 			},
 		},
 	}
@@ -157,7 +157,7 @@ func TestConfig_Patch_Server(t *testing.T) {
 			},
 		},
 		{
-			name: "patch server description is not overwritten",
+			name: "patch server description is overwritten",
 			configs: []*asyncApi.Config{
 				asyncapitest.NewConfig(asyncapitest.WithServer("foo", "kafka", "foo.bar", asyncapitest.WithServerDescription("description"))),
 				asyncapitest.NewConfig(asyncapitest.WithServer("foo", "kafka", "foo.bar", asyncapitest.WithServerDescription("mokapi"))),
@@ -165,7 +165,7 @@ func TestConfig_Patch_Server(t *testing.T) {
 			test: func(t *testing.T, result *asyncApi.Config) {
 				require.Len(t, result.Servers, 1)
 				require.Equal(t, "foo.bar", result.Servers["foo"].Url)
-				require.Equal(t, "description", result.Servers["foo"].Description)
+				require.Equal(t, "mokapi", result.Servers["foo"].Description)
 			},
 		},
 		{

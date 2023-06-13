@@ -2,7 +2,12 @@
 
 You use patch files to add or change dynamic configurations. 
 Mokapi merges files to create the configuration that is used at runtime.
-Mokapi merges configuration with the same info-name. In the example below Mokapi will merge these configurations
+Mokapi merges configuration with the same *info-name*. 
+Patches are processed in the alphabetical order only of the filenames.
+
+This can be useful if you are retrieving an API definition from a library, and you need an additional
+server URL.
+In the example below Mokapi will merge these configurations
 
 ```yaml tab=petstore.yaml
 openapi: 3.0.3

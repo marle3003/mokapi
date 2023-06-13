@@ -8,11 +8,12 @@ import (
 	"mokapi/engine/common"
 	"mokapi/runtime/monitor"
 	"net/http"
+	"path/filepath"
+	"sort"
 )
 
 type HttpInfo struct {
 	*openapi.Config
-	Name    string
 	configs map[string]*openapi.Config
 }
 
@@ -41,9 +42,6 @@ func (c *HttpInfo) AddConfig(config *cfg.Config) {
 	} else {
 		oc = config.Data.(*openapi.Config)
 	}
-	if len(c.Name) == 0 {
-		c.Name = oc.Info.Name
-	}
 	key := config.Info.Url.String()
 	c.configs[key] = oc
 	c.update()
@@ -56,17 +54,30 @@ func (c *HttpInfo) Handler(http *monitor.Http, emitter common.EventEmitter) http
 }
 
 func (c *HttpInfo) update() {
-	cfg := &openapi.Config{}
-	cfg.Info.Name = c.Name
-	for _, p := range c.configs {
-		cfg.Patch(p)
+	if len(c.configs) == 0 {
+		return
+	}
+	var keys []string
+	for k := range c.configs {
+		keys = append(keys, k)
 	}
 
-	if len(cfg.Servers) == 0 {
-		cfg.Servers = append(cfg.Servers, &openapi.Server{Url: "/"})
+	sort.Slice(keys, func(i, j int) bool {
+		x := keys[i]
+		y := keys[j]
+		return filepath.Base(x) < filepath.Base(y)
+	})
+
+	r := c.configs[keys[0]]
+	for _, k := range keys[1:] {
+		r.Patch(c.configs[k])
 	}
 
-	c.Config = cfg
+	if len(r.Servers) == 0 {
+		r.Servers = append(r.Servers, &openapi.Server{Url: "/"})
+	}
+
+	c.Config = r
 }
 
 func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {

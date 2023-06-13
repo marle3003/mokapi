@@ -7,13 +7,13 @@ func (c *Config) Patch(patch *Config) {
 
 	c.patchInfo(patch)
 
-	if len(c.Address) == 0 {
+	if len(patch.Address) > 0 {
 		c.Address = patch.Address
 	}
 
 	c.Root.patch(patch.Root)
 
-	if c.SizeLimit == 0 {
+	if patch.SizeLimit > 0 {
 		c.SizeLimit = patch.SizeLimit
 	}
 
@@ -21,10 +21,10 @@ func (c *Config) Patch(patch *Config) {
 }
 
 func (c *Config) patchInfo(patch *Config) {
-	if len(c.Info.Description) == 0 {
+	if len(patch.Info.Description) > 0 {
 		c.Info.Description = patch.Info.Description
 	}
-	if len(c.Info.Version) == 0 {
+	if len(patch.Info.Version) > 0 {
 		c.Info.Version = patch.Info.Version
 	}
 }
