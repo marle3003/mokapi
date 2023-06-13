@@ -48,7 +48,7 @@ func New(config static.GitProvider) *Provider {
 			log.Errorf("unable to create temp dir for git provider: %v", err)
 		}
 
-		u, err := url.Parse(config.Url)
+		u, err := url.Parse(gitUrl)
 		if err != nil {
 			log.Errorf("unable to parse git url %v: %v", config.Url, err)
 		}
@@ -97,11 +97,12 @@ func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
 	ticker := time.NewTicker(interval)
 
 	for _, r := range p.repositories {
+		r := r
 		r.repo, err = git.PlainClone(r.localPath, false, &git.CloneOptions{
 			URL: r.repoUrl,
 		})
 		if err != nil {
-			return fmt.Errorf("unable to clone git %q: %v", r.url, err)
+			return fmt.Errorf("unable to clone git %q: %v", r.repoUrl, err)
 		}
 
 		r.wt, err = r.repo.Worktree()
