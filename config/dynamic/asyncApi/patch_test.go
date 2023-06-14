@@ -131,6 +131,17 @@ func TestConfig_Patch_Server(t *testing.T) {
 			},
 		},
 		{
+			name: "patch server url overwrite",
+			configs: []*asyncApi.Config{
+				asyncapitest.NewConfig(asyncapitest.WithServer("foo", "kafka", "foo.bar")),
+				asyncapitest.NewConfig(asyncapitest.WithServer("foo", "kafka", "bar.foo")),
+			},
+			test: func(t *testing.T, result *asyncApi.Config) {
+				require.Len(t, result.Servers, 1)
+				require.Equal(t, "bar.foo", result.Servers["foo"].Url)
+			},
+		},
+		{
 			name: "patch extend servers",
 			configs: []*asyncApi.Config{
 				asyncapitest.NewConfig(asyncapitest.WithServer("foo", "kafka", "foo.bar", asyncapitest.WithServerDescription("description"))),

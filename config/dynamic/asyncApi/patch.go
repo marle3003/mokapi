@@ -66,7 +66,7 @@ func (c *Config) patchServer(patch *Config) {
 }
 
 func (s *Server) patch(patch Server) {
-	if len(s.Url) == 0 {
+	if len(patch.Url) > 0 {
 		s.Url = patch.Url
 	}
 
