@@ -17,19 +17,21 @@
     --color-yellow-shadow: rgba(234, 184, 57, 0.4);
     --color-purple: #b644a4;
     --color-purpl-shadowe: rgba(182, 68, 164, 0.4);
-    --color-blue-cold: #30acd8;
+    --color-blue-cold: #eabaabff;
 
     --color-brand: #d3d4d5;
-    --color-brand-hover: #d3d4d5;
+    --color-brand-hover: #eabaabff;
 
     --color-link: #d3d4d5;
-    --color-link-active: #30acd8;
+    --color-link-active: #eabaabff;
 
-    --color-doc-link: #30acd8;
-    --color-doc-link-active: rgba(2, 123, 255, 0.9);
+    --color-doc-link: #eabaabff;
+    --color-doc-link-active: #a5899fff;
+    --color-doc-text-hover: #353e5bff;
+    --color-doc-border-hover: #a5899fff;
 
     --color-nav-link: #d3d4d5;
-    --color-nav-link-active: #30acd8;
+    --color-nav-link-active: #eabaabff;
     --shadow-nav-link-active: var(--color-nav-link-active) 1px 0px 10px;
 
     --color-text: #d3d4d5;
@@ -38,35 +40,42 @@
 
     --color-disabled: #a0a1a7;
 
-    --color-datatable-header-text: #30acd8;
+    --color-datatable-header-text: #eabaabff;
     --color-datatable-border: #52555d;
 
     --color-tabs-border: #52555d;
     --color-tabs-background: #3a3e45;
-    --color-tabs-text: #30acd8;
+    --color-tabs-text: #eabaabff;
 
     --color-popover-border: #52555d;
-
-    --btn-primary-color-background: #30acd8;
-    --btn-primary-color-background-hover: rgb(48, 172, 216, 0.8);
 
     --color-subheader: rgba(235, 235, 235, 0.6);
     --color-subheader-border: #52555d;
 }
 
 [data-theme="light"] {
-    --color-background: #F7F8FD;
-    --color-background-mute: #b2d7ed;
-    --color-background-soft: #edf1f2;
-    --color-border: #f8f8f8;
+    --color-background: #eff0f6;
+    --color-background-mute: #dfe2ec;
+    --color-background-soft: #cfd3e3;
+    --color-border: #cfd3e3;
 
-    --color-text: #000;
-    --color-link: #000;
-    --color-nav-link: #000;
+    --color-blue-cold: #cb8080;
+
+    --color-text: #353e5bff;
+    --color-link: #494c68ff;
+    --color-link-active: #cb8080;
+    --color-nav-link: #494c68ff;
+    --color-nav-link-active: #cb8080;
     --shadow-nav-link-active: var(--color-nav-link-active) 1px 0px 10px;
+
+    --color-doc-link: #cb8080;
+    --color-doc-link-active: #b54a4a;
+    --color-doc-text-hover: #b54a4a;
+    --color-doc-border-hover: #a5899fff;
 
     --color-tabs-background: #FFF;
 
+    --color-datatable-header-text: #cb8080;
     --color-datatable-border: #bbbdc3;
 
     --color-version: #d3d4d5;

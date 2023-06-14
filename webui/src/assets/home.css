@@ -67,7 +67,8 @@
   color: var(--color-doc-link);
 }
 .home button:hover {
-  color: var(--color-text);
+  color: var(--color-doc-text-hover);
+  border-color: var( --color-doc-border-hover);
   background-color: var(--color-doc-link);
 }
 .home .hero-title button {
