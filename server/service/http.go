@@ -68,6 +68,8 @@ func (s *HttpServer) AddOrUpdate(service *HttpService) error {
 	if serviceReg, found := paths[service.Url.Path]; found {
 		if service.Name != serviceReg.Name {
 			return fmt.Errorf("service '%v' is already defined on path '%v'", serviceReg.Name, service.Url.Path)
+		} else {
+			paths[service.Url.Path] = service
 		}
 	} else {
 		path := service.Url.Path

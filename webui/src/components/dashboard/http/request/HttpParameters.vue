@@ -66,6 +66,7 @@ function showWarningColumn(){
                 <th scope="col" class="text-left">Name</th>
                 <th scope="col" class="text-left">Location</th>
                 <th scope="col" class="text-left">Type</th>
+                <th scope="col" class="text-left">Required</th>
                 <th scope="col" class="text-left" v-if="showWarningColumn()">Warning</th>
                 <th scope="col" class="text-left">Description</th>
             </tr>
@@ -75,6 +76,7 @@ function showWarningColumn(){
                 <td>{{ parameter.name }}</td>
                 <td>{{ parameter.type }}</td>
                 <td>{{ printType(parameter.schema) }}</td>
+                <td>{{ parameter.required }}</td>
                 <td v-if="showWarningColumn()">
                     <span v-if="parameter.deprecated"><i class="bi bi-exclamation-triangle-fill yellow"></i> deprecated</span>
                 </td>

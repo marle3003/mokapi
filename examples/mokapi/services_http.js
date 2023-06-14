@@ -318,7 +318,8 @@ export let events = [
         traits: {
             namespace: "http",
             name: "Swagger Petstore",
-            path: "/pet"
+            path: "/pet",
+            method: 'POST'
         },
         time:  '2023-02-13T08:49:25.482366+01:00',
         data: {
@@ -361,7 +362,8 @@ export let events = [
         traits: {
             namespace: "http",
             name: "Swagger Petstore",
-            path: "/pet/findByStatus"
+            path: "/pet/findByStatus",
+            method: 'GET'
         },
         time: '2023-02-13T09:49:25.482366+01:00',
         data: {
@@ -405,7 +407,8 @@ export let events = [
         traits: {
             namespace: "http",
             name: "Swagger Petstore",
-            path: "/pet"
+            path: "/pet",
+            method: 'POST'
         },
         time: '2023-02-13T10:05:25.583366+01:00',
         data: {

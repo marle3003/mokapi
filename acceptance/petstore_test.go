@@ -143,3 +143,14 @@ func (suite *PetStoreSuite) TestKafkaProduce() {
 	require.Equal(suite.T(), "petstore.order-event", r.Topics[0].Name)
 	require.Equal(suite.T(), kafka.None, r.Topics[0].Partitions[0].ErrorCode)
 }
+
+func (suite *PetStoreSuite) TestEvents() {
+	try.GetRequest(suite.T(), "http://127.0.0.1:18080/pet/1",
+		map[string]string{"Accept": "application/json"},
+		try.HasStatusCode(http.StatusOK))
+
+	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%v/api/events?namespace=http&name=Swagger%%20Petstore", suite.cfg.Api.Port),
+		nil,
+		try.HasStatusCode(http.StatusOK),
+		try.BodyContains("Swagger Petstore"))
+}

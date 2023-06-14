@@ -74,9 +74,9 @@ docker run -p 80:80 -p 8080:8080 --rm -it $(docker build -q .)
 You can open a browser and go to Mokapi's Dashboard (http://localhost:8080) to see the Mokapi's HTTP REST API.
 
 ## Make HTTP request
-You can now make HTTP requests to the Petstore's API and Mokapi creates responses with randomly generated data.
+You can now make HTTP requests to our Sample API and Mokapi creates responses with randomly generated data.
 
 ```
 curl --header "Accept: application/json" http://localhost/api/users
 ```
-You can now see your request and the response on Mokapi's Dashboard.
+The request and the response are visible in the dashboard.

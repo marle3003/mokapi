@@ -101,7 +101,7 @@ onUnmounted(() => {
             <http-response-card  :service="service" :path="path" :operation="operation" />
         </div>
         <div class="card-group">
-            <requests :service="service" :path="route.context.path" />
+            <requests :service="service" :path="path.path" :method="route.context.operation.toUpperCase()" />
         </div>
     </div>
     <loading v-if="isLoading && !operation"></loading>

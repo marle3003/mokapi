@@ -10,7 +10,6 @@ pre:has(code.hljs) {
 
 .hljs {
   display: block;
-  overflow-x: auto;
   padding: 0.5em;
   color: #333;
   background: #afb5d0;
