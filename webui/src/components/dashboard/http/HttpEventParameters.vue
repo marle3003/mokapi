@@ -12,7 +12,7 @@ defineProps({
             <tr>
                 <th scope="col" class="text-left w-25">Name</th>
                 <th scope="col" class="text-left w-10">Type</th>
-                <th scope="col" class="text-center w-15">OpenAPI Specification</th>
+                <th scope="col" class="text-center w-10">OpenAPI</th>
                 <th scope="col" class="text-left">Value</th>
             </tr>
         </thead>
