@@ -83,3 +83,14 @@ func (s *Schemas) Patch(patch *Schemas) {
 		}
 	}
 }
+
+func (s *SchemasRef) Patch(patch *SchemasRef) {
+	if patch == nil || patch.Value == nil {
+		return
+	}
+	if s.Value == nil {
+		s.Value = patch.Value
+	} else {
+		s.Value.Patch(patch.Value)
+	}
+}

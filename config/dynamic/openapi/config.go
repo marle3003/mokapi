@@ -224,7 +224,7 @@ type ExampleRef struct {
 }
 
 type Components struct {
-	Schemas       *schema.Schemas            `yaml:"schemas,omitempty" json:"schemas,omitempty"`
+	Schemas       *schema.SchemasRef         `yaml:"schemas,omitempty" json:"schemas,omitempty"`
 	Responses     *NamedResponses            `yaml:"responses,omitempty" json:"responses,omitempty"`
 	RequestBodies *RequestBodies             `yaml:"requestBodies,omitempty" json:"requestBodies,omitempty"`
 	Parameters    *parameter.NamedParameters `yaml:"parameters,omitempty" json:"parameters,omitempty"`

@@ -734,7 +734,7 @@ func TestConfig_Patch_Components(t *testing.T) {
 				openapitest.NewConfig("1.0", openapitest.WithComponentSchema("foo", schematest.New("number"))),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				require.Equal(t, 1, result.Components.Schemas.Len())
+				require.Equal(t, 1, result.Components.Schemas.Value.Len())
 				require.Equal(t, "number", result.Components.Schemas.Get("foo").Value.Type)
 			},
 		},

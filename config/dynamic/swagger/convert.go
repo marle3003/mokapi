@@ -48,9 +48,9 @@ func (c *converter) Convert() (*openapi.Config, error) {
 	}
 
 	if len(c.config.Definitions) > 0 {
-		result.Components.Schemas = &schema.Schemas{}
+		result.Components.Schemas = &schema.SchemasRef{Value: &schema.Schemas{}}
 		for k, v := range c.config.Definitions {
-			result.Components.Schemas.Set(k, c.convertSchema(v))
+			result.Components.Schemas.Value.Set(k, c.convertSchema(v))
 		}
 	}
 
