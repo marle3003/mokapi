@@ -25,12 +25,22 @@ func NewClient(addr string) *Client {
 }
 
 func (c *Client) Dial() (string, error) {
-	d := net.Dialer{Timeout: c.Timeout}
 	var err error
-	c.conn, err = d.Dial("tcp", c.Addr)
-	if err != nil {
-		return "", err
+	backoff := 50 * time.Millisecond
+	if c.conn == nil {
+		for i := 0; i < 10; i++ {
+			d := net.Dialer{Timeout: c.Timeout}
+			c.conn, err = d.Dial("tcp", c.Addr)
+			if err != nil {
+				time.Sleep(backoff)
+				continue
+			}
+		}
+		if err != nil {
+			return "", err
+		}
 	}
+
 	err = c.conn.SetDeadline(time.Now().Add(time.Second * 5))
 	if err != nil {
 		return "", fmt.Errorf("unable to set deadline: %v", err)
