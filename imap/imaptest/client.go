@@ -2,9 +2,12 @@ package imaptest
 
 import (
 	"crypto/tls"
+	"encoding/base64"
 	"fmt"
+	"mokapi/sasl"
 	"net"
 	"net/textproto"
+	"strings"
 	"time"
 )
 
@@ -37,6 +40,16 @@ func (c *Client) Dial() (string, error) {
 	return r, err
 }
 
+func (c *Client) Capability() ([]string, error) {
+	r, err := c.Send("CAPABILITY")
+	if err != nil {
+		return nil, err
+	}
+	args := strings.SplitN(r, " ", 2)
+	caps := strings.Split(args[1], " ")
+	return caps[1:], nil
+}
+
 func (c *Client) Send(line string) (string, error) {
 	return c.send(line)
 }
@@ -66,11 +79,26 @@ func (c *Client) Login(username, password string) (string, error) {
 	return r, err
 }
 
+func (c *Client) PlainAuth(identity, username, password string) error {
+	_, err := c.Send("AUTHENTICATE PLAIN")
+	saslClient := sasl.NewPlainClient(identity, username, password)
+	cred, err := saslClient.Next(nil)
+	if err != nil {
+		return err
+	}
+	_, err = c.SendRaw(base64.StdEncoding.EncodeToString(cred))
+	return err
+}
+
 func (c *Client) send(line string) (string, error) {
 	c.tag++
 	err := c.tpc.PrintfLine("A%v %v", c.tag, line)
 	if err != nil {
 		return "", err
 	}
+	return c.tpc.ReadLine()
+}
+
+func (c *Client) ReadLine() (string, error) {
 	return c.tpc.ReadLine()
 }

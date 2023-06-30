@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/require"
 	"mokapi/imap/imaptest"
+	"mokapi/sasl"
 	"mokapi/try"
 	"testing"
 )
@@ -47,6 +48,24 @@ func TestServer_Auth(t *testing.T) {
 				r, err = c.SendRaw(secret)
 				require.NoError(t, err)
 				require.Equal(t, "A1 OK Authenticated", r)
+			},
+		},
+		{
+			name: "capability after auth",
+			test: func(t *testing.T, c *imaptest.Client) {
+				mustDial(t, c)
+				_, err := c.Send("AUTHENTICATE PLAIN")
+				require.NoError(t, err)
+				saslClient := sasl.NewPlainClient("", "bob", "password")
+				secret, err := saslClient.Next(nil)
+				_, err = c.SendRaw(base64.StdEncoding.EncodeToString(secret))
+				require.NoError(t, err)
+				r, err := c.Send("CAPABILITY")
+				require.NoError(t, err)
+				require.Equal(t, "* CAPABILITY IMAP4rev1", r)
+				r, err = c.ReadLine()
+				require.NoError(t, err)
+				require.Equal(t, "A2 OK CAPABILITY completed", r)
 			},
 		},
 	}

@@ -2,18 +2,19 @@ package imap
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"github.com/pkg/errors"
 	"mokapi/safe"
 	"net"
-	"net/textproto"
 	"sync"
 )
 
 var ErrServerClosed = errors.New("imap: Server closed")
 
 type Server struct {
-	Addr string
+	Addr      string
+	TLSConfig *tls.Config
 
 	mu         sync.Mutex
 	activeConn map[net.Conn]context.Context
@@ -47,7 +48,8 @@ func (s *Server) Serve(l net.Listener) error {
 		s.trackConn(c)
 
 		ic := conn{
-			tpc: textproto.NewConn(c),
+			conn:      c,
+			tlsConfig: s.TLSConfig,
 		}
 		go ic.serve()
 	}

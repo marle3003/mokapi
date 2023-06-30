@@ -1,38 +1,35 @@
 package imap
 
 import (
-	"encoding/base64"
-	"fmt"
+	"crypto/tls"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"io"
-	"mokapi/sasl"
 	"net"
 	"net/textproto"
 	"strings"
 	"syscall"
 )
 
-type ConnState uint8
-
-const (
-	Init ConnState = iota
-	NotAuthenticated
-	Authenticated
-	Selected
-	Logout
-)
-
 type conn struct {
-	tpc   *textproto.Conn
-	state ConnState
+	conn      net.Conn
+	tpc       *textproto.Conn
+	state     ConnState
+	tlsConfig *tls.Config
 }
 
 func (c *conn) serve() {
-	c.tpc.PrintfLine("* OK [CAPABILITY IMAP4rev1 STARTTLS AUTH=PLAIN] Mokapi Ready")
+	if c.tpc == nil {
+		c.tpc = textproto.NewConn(c.conn)
+	}
+	err := c.writeStatusCapability("*", ok, "Mokapi Ready")
+	if err != nil {
+		log.Errorf("failed to send greetings: %v", err)
+		return
+	}
 
 	for {
-		err := c.readCmd()
+		err = c.readCmd()
 		if err != nil {
 			switch {
 			case clientDisconnected(err):
@@ -55,6 +52,10 @@ func (c *conn) readCmd() error {
 	switch cmd {
 	case "AUTHENTICATE":
 		res = c.handleAuth(tag, param)
+	case "CAPABILITY":
+		res = c.handleCapability()
+	case "STARTTLS":
+		err = c.handleStartTLS(tag)
 	default:
 		log.Errorf("imap: unknown command: %v", line)
 		res = &response{
@@ -62,86 +63,13 @@ func (c *conn) readCmd() error {
 			text:   "Unknown command",
 		}
 	}
-	return c.writeResponse(tag, res)
-}
-
-func (c *conn) writeCapabilities(tag string) {
-
-}
-
-func (c *conn) handleAuth(tag, param string) *response {
-	params := strings.SplitN(param, " ", 2)
-	mechanism := params[0]
-	var resp []byte
-	var err error
-	if len(params) > 1 {
-		resp, err = base64.StdEncoding.DecodeString(params[1])
-		if err != nil {
-			return &response{}
-		}
+	if err != nil {
+		return err
 	}
-	var saslServer sasl.Server
-	mechanism = strings.ToUpper(mechanism)
-	switch mechanism {
-	case "PLAIN":
-		saslServer = sasl.NewPlainServer(func(identity, username, password string) error {
-			return nil
-		})
-	default:
-		return &response{
-			status: no,
-			text:   "Unsupported authentication mechanism",
-		}
+	if res != nil {
+		return c.writeResponse(tag, res)
 	}
-
-	for {
-		if err != nil {
-			return &response{
-				status: bad,
-				text:   err.Error(),
-			}
-		}
-
-		challenge, err := saslServer.Next(resp)
-		if err != nil {
-			return &response{
-				status: bad,
-				text:   err.Error(),
-			}
-		}
-
-		if !saslServer.HasNext() {
-			break
-		}
-
-		err = c.tpc.PrintfLine(fmt.Sprintf("+ %s", challenge))
-		if err != nil {
-			return &response{
-				status: bad,
-				text:   err.Error(),
-			}
-		}
-
-		line, err := c.tpc.ReadLine()
-		if err != nil {
-			return &response{
-				status: bad,
-				text:   err.Error(),
-			}
-		}
-		resp, err = base64.StdEncoding.DecodeString(line)
-		if err != nil {
-			return &response{
-				status: bad,
-				text:   "Invalid response",
-			}
-		}
-	}
-
-	return &response{
-		status: ok,
-		text:   "Authenticated",
-	}
+	return nil
 }
 
 func (c *conn) writeResponse(tag string, res *response) error {

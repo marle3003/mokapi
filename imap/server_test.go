@@ -18,16 +18,29 @@ func TestServer(t *testing.T) {
 			test: func(t *testing.T, c *imaptest.Client) {
 				g, err := c.Dial()
 				require.NoError(t, err)
-				require.Equal(t, "* OK [CAPABILITY IMAP4rev1 STARTTLS AUTH=PLAIN] Mokapi Ready", g)
+				require.Equal(t, "* OK [CAPABILITY IMAP4rev1 AUTH=PLAIN] Mokapi Ready", g)
 			},
 		},
 		{
-			name: "invalid line",
+			name: "unknown command",
 			test: func(t *testing.T, c *imaptest.Client) {
 				mustDial(t, c)
 				r, err := c.Send("foo")
 				require.NoError(t, err)
 				require.Equal(t, "A1 BAD Unknown command", r)
+			},
+		},
+		{
+			name: "capability",
+			test: func(t *testing.T, c *imaptest.Client) {
+				_, err := c.Dial()
+				require.NoError(t, err)
+				r, err := c.Send("CAPABILITY")
+				require.NoError(t, err)
+				require.Equal(t, "* CAPABILITY IMAP4rev1 AUTH=PLAIN", r)
+				r, err = c.ReadLine()
+				require.NoError(t, err)
+				require.Equal(t, "A1 OK CAPABILITY completed", r)
 			},
 		},
 	}
