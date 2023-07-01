@@ -13,7 +13,8 @@ const (
 	no  responseStatus = "NO"
 	bad responseStatus = "BAD"
 
-	alert responseCode = "ALERT"
+	alert     responseCode = "ALERT"
+	readWrite responseCode = "READ-WRITE"
 )
 
 type response struct {
@@ -26,6 +27,9 @@ func (r *response) String() string {
 	if len(r.code) > 0 {
 		return fmt.Sprintf("%v [%v] %v", r.status, r.code, r.text)
 	} else {
-		return fmt.Sprintf("%v %v", r.status, r.text)
+		if len(r.status) > 0 {
+			return fmt.Sprintf("%v %v", r.status, r.text)
+		}
+		return r.text
 	}
 }

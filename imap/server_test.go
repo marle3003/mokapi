@@ -1,8 +1,9 @@
-package imap
+package imap_test
 
 import (
 	"fmt"
 	"github.com/stretchr/testify/require"
+	"mokapi/imap"
 	"mokapi/imap/imaptest"
 	"mokapi/try"
 	"testing"
@@ -49,11 +50,11 @@ func TestServer(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			p, err := try.GetFreePort()
 			require.NoError(t, err)
-			s := &Server{Addr: fmt.Sprintf(":%v", p)}
+			s := &imap.Server{Addr: fmt.Sprintf(":%v", p)}
 			defer s.Close()
 			go func() {
 				err := s.ListenAndServe()
-				require.ErrorIs(t, err, ErrServerClosed)
+				require.ErrorIs(t, err, imap.ErrServerClosed)
 			}()
 
 			c := imaptest.NewClient(fmt.Sprintf("localhost:%v", p))

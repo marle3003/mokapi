@@ -7,7 +7,7 @@ import (
 
 func (c *conn) canStartTLS() bool {
 	_, isTLS := c.conn.(*tls.Conn)
-	return !isTLS && c.tlsConfig != nil && c.state == NotAuthenticated
+	return !isTLS && c.tlsConfig != nil && c.state == NotAuthenticatedState
 }
 
 func (c *conn) handleStartTLS(tag string) error {

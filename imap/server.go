@@ -15,6 +15,7 @@ var ErrServerClosed = errors.New("imap: Server closed")
 type Server struct {
 	Addr      string
 	TLSConfig *tls.Config
+	Handler   Handler
 
 	mu         sync.Mutex
 	activeConn map[net.Conn]context.Context
@@ -50,6 +51,7 @@ func (s *Server) Serve(l net.Listener) error {
 		ic := conn{
 			conn:      c,
 			tlsConfig: s.TLSConfig,
+			handler:   s.Handler,
 		}
 		go ic.serve()
 	}

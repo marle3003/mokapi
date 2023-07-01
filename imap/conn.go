@@ -16,6 +16,7 @@ type conn struct {
 	tpc       *textproto.Conn
 	state     ConnState
 	tlsConfig *tls.Config
+	handler   Handler
 }
 
 func (c *conn) serve() {
@@ -56,6 +57,8 @@ func (c *conn) readCmd() error {
 		res = c.handleCapability()
 	case "STARTTLS":
 		err = c.handleStartTLS(tag)
+	case "SELECT":
+		err = c.handleSelect(tag, param)
 	default:
 		log.Errorf("imap: unknown command: %v", line)
 		res = &response{

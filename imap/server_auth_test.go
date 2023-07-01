@@ -1,9 +1,10 @@
-package imap
+package imap_test
 
 import (
 	"encoding/base64"
 	"fmt"
 	"github.com/stretchr/testify/require"
+	"mokapi/imap"
 	"mokapi/imap/imaptest"
 	"mokapi/sasl"
 	"mokapi/try"
@@ -62,7 +63,7 @@ func TestServer_Auth(t *testing.T) {
 				require.NoError(t, err)
 				r, err := c.Send("CAPABILITY")
 				require.NoError(t, err)
-				require.Equal(t, "* CAPABILITY IMAP4rev1", r)
+				require.Equal(t, "* CAPABILITY IMAP4rev1 SELECT", r)
 				r, err = c.ReadLine()
 				require.NoError(t, err)
 				require.Equal(t, "A2 OK CAPABILITY completed", r)
@@ -74,11 +75,11 @@ func TestServer_Auth(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			p, err := try.GetFreePort()
 			require.NoError(t, err)
-			s := &Server{Addr: fmt.Sprintf(":%v", p)}
+			s := &imap.Server{Addr: fmt.Sprintf(":%v", p)}
 			defer s.Close()
 			go func() {
 				err := s.ListenAndServe()
-				require.ErrorIs(t, err, ErrServerClosed)
+				require.ErrorIs(t, err, imap.ErrServerClosed)
 			}()
 
 			c := imaptest.NewClient(fmt.Sprintf("localhost:%v", p))

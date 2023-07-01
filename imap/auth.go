@@ -8,7 +8,7 @@ import (
 )
 
 func (c *conn) canAuth() bool {
-	return c.state == NotAuthenticated
+	return c.state == NotAuthenticatedState
 }
 
 func (c *conn) handleAuth(_, param string) *response {
@@ -80,7 +80,7 @@ func (c *conn) handleAuth(_, param string) *response {
 		}
 	}
 
-	c.state = Authenticated
+	c.state = AuthenticatedState
 
 	return &response{
 		status: ok,
