@@ -55,13 +55,31 @@ func (c *Client) Capability() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	args := strings.SplitN(r, " ", 2)
+	args := strings.SplitN(r[0], " ", 2)
 	caps := strings.Split(args[1], " ")
 	return caps[1:], nil
 }
 
-func (c *Client) Send(line string) (string, error) {
-	return c.send(line)
+func (c *Client) Send(line string) ([]string, error) {
+	c.tag++
+	tag := fmt.Sprintf("A%v", c.tag)
+	err := c.tpc.PrintfLine("%v %v", tag, line)
+	if err != nil {
+		return nil, err
+	}
+	var lines []string
+	for {
+		resp, err := c.tpc.ReadLine()
+		if err != nil {
+			return lines, err
+		}
+		lines = append(lines, resp)
+		if strings.HasPrefix(resp, tag) {
+			break
+		}
+	}
+
+	return lines, nil
 }
 
 func (c *Client) SendRaw(line string) (string, error) {
@@ -90,7 +108,7 @@ func (c *Client) Login(username, password string) (string, error) {
 }
 
 func (c *Client) PlainAuth(identity, username, password string) error {
-	_, err := c.Send("AUTHENTICATE PLAIN")
+	_, err := c.send("AUTHENTICATE PLAIN")
 	saslClient := sasl.NewPlainClient(identity, username, password)
 	cred, err := saslClient.Next(nil)
 	if err != nil {
@@ -102,7 +120,8 @@ func (c *Client) PlainAuth(identity, username, password string) error {
 
 func (c *Client) send(line string) (string, error) {
 	c.tag++
-	err := c.tpc.PrintfLine("A%v %v", c.tag, line)
+	tag := fmt.Sprintf("A%v", c.tag)
+	err := c.tpc.PrintfLine("%v %v", tag, line)
 	if err != nil {
 		return "", err
 	}

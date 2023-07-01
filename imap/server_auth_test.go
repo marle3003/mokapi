@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"mokapi/imap"
 	"mokapi/imap/imaptest"
-	"mokapi/sasl"
 	"mokapi/try"
 	"testing"
 )
@@ -20,7 +19,7 @@ func TestServer_Auth(t *testing.T) {
 			name: "send unsupported mechanism",
 			test: func(t *testing.T, c *imaptest.Client) {
 				mustDial(t, c)
-				r, err := c.Send("AUTHENTICATE foo")
+				r, err := c.SendRaw("A1 AUTHENTICATE foo")
 				require.NoError(t, err)
 				require.Equal(t, "A1 NO Unsupported authentication mechanism", r)
 			},
@@ -29,7 +28,7 @@ func TestServer_Auth(t *testing.T) {
 			name: "plain wrong format",
 			test: func(t *testing.T, c *imaptest.Client) {
 				mustDial(t, c)
-				r, err := c.Send("AUTHENTICATE PLAIN")
+				r, err := c.SendRaw("A1 AUTHENTICATE PLAIN")
 				require.NoError(t, err)
 				require.Equal(t, "+ ", r)
 				r, err = c.SendRaw("foo")
@@ -41,7 +40,7 @@ func TestServer_Auth(t *testing.T) {
 			name: "plain without initial",
 			test: func(t *testing.T, c *imaptest.Client) {
 				mustDial(t, c)
-				r, err := c.Send("AUTHENTICATE PLAIN")
+				r, err := c.SendRaw("A1 AUTHENTICATE PLAIN")
 				require.NoError(t, err)
 				require.Equal(t, "+ ", r)
 				secret := "\x00" + "bob" + "\x00" + "password"
@@ -55,18 +54,12 @@ func TestServer_Auth(t *testing.T) {
 			name: "capability after auth",
 			test: func(t *testing.T, c *imaptest.Client) {
 				mustDial(t, c)
-				_, err := c.Send("AUTHENTICATE PLAIN")
+				err := c.PlainAuth("", "bob", "password")
 				require.NoError(t, err)
-				saslClient := sasl.NewPlainClient("", "bob", "password")
-				secret, err := saslClient.Next(nil)
-				_, err = c.SendRaw(base64.StdEncoding.EncodeToString(secret))
+				lines, err := c.Send("CAPABILITY")
 				require.NoError(t, err)
-				r, err := c.Send("CAPABILITY")
-				require.NoError(t, err)
-				require.Equal(t, "* CAPABILITY IMAP4rev1 SELECT", r)
-				r, err = c.ReadLine()
-				require.NoError(t, err)
-				require.Equal(t, "A2 OK CAPABILITY completed", r)
+				require.Equal(t, "* CAPABILITY IMAP4rev1 SELECT", lines[0])
+				require.Equal(t, "A2 OK CAPABILITY completed", lines[1])
 			},
 		},
 	}

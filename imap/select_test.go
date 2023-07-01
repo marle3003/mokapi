@@ -34,33 +34,15 @@ func TestServer_Select(t *testing.T) {
 				require.NoError(t, err)
 				err = c.PlainAuth("", "bob", "password")
 				require.NoError(t, err)
-				r, err := c.Send("SELECT INBOX")
+				lines, err := c.Send("SELECT INBOX")
 				require.NoError(t, err)
-				require.Equal(t, "* 172 EXISTS", r)
-
-				r, err = c.ReadLine()
-				require.NoError(t, err)
-				require.Equal(t, "* 1 RECENT", r)
-
-				r, err = c.ReadLine()
-				require.NoError(t, err)
-				require.Equal(t, "* OK [UNSEEN 12] Message 12 is first unseen", r)
-
-				r, err = c.ReadLine()
-				require.NoError(t, err)
-				require.Equal(t, "* OK [UIDVALIDITY 3857529045] UIDs valid", r)
-
-				r, err = c.ReadLine()
-				require.NoError(t, err)
-				require.Equal(t, "* OK [UIDNEXT 4392] Predicted next UID", r)
-
-				r, err = c.ReadLine()
-				require.NoError(t, err)
-				require.Equal(t, "* FLAGS (\\Answered \\Flagged \\Deleted \\Seen \\Draft)", r)
-
-				r, err = c.ReadLine()
-				require.NoError(t, err)
-				require.Equal(t, "A2 OK [READ-WRITE] SELECT completed", r)
+				require.Equal(t, "* 172 EXISTS", lines[0])
+				require.Equal(t, "* 1 RECENT", lines[1])
+				require.Equal(t, "* OK [UNSEEN 12] Message 12 is first unseen", lines[2])
+				require.Equal(t, "* OK [UIDVALIDITY 3857529045] UIDs valid", lines[3])
+				require.Equal(t, "* OK [UIDNEXT 4392] Predicted next UID", lines[4])
+				require.Equal(t, "* FLAGS (\\Answered \\Flagged \\Deleted \\Seen \\Draft)", lines[5])
+				require.Equal(t, "A2 OK [READ-WRITE] SELECT completed", lines[6])
 			},
 		},
 	}
