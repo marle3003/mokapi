@@ -46,14 +46,16 @@ func (s *Server) Serve(l net.Listener) error {
 			return fmt.Errorf("imap: %v", err)
 		}
 
-		s.trackConn(c)
-
 		ic := conn{
 			conn:      c,
+			ctx:       s.trackConn(c),
 			tlsConfig: s.TLSConfig,
 			handler:   s.Handler,
 		}
-		go ic.serve()
+		go func() {
+			ic.serve()
+			s.closeConn(c)
+		}()
 	}
 }
 
@@ -85,4 +87,17 @@ func (s *Server) trackConn(conn net.Conn) context.Context {
 	ctx := NewClientContext(context.Background(), conn.RemoteAddr().String())
 	s.activeConn[conn] = ctx
 	return ctx
+}
+
+func (s *Server) closeConn(conn net.Conn) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	ctx, ok := s.activeConn[conn]
+	if !ok {
+		return
+	}
+	ctx.Done()
+	conn.Close()
+	delete(s.activeConn, conn)
 }

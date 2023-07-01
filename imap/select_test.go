@@ -18,7 +18,7 @@ func TestServer_Select(t *testing.T) {
 		{
 			name: "select inbox",
 			handler: &imaptest.Handler{
-				SelectFunc: func(mailbox string) (*imap.Selected, error) {
+				SelectFunc: func(mailbox string, session map[string]interface{}) (*imap.Selected, error) {
 					return &imap.Selected{
 						NumMessages: 172,
 						NumRecent:   1,
@@ -48,7 +48,7 @@ func TestServer_Select(t *testing.T) {
 		{
 			name: "not authenticated",
 			handler: &imaptest.Handler{
-				SelectFunc: func(mailbox string) (*imap.Selected, error) {
+				SelectFunc: func(mailbox string, session map[string]interface{}) (*imap.Selected, error) {
 					return &imap.Selected{
 						NumMessages: 172,
 						NumRecent:   1,
@@ -70,7 +70,7 @@ func TestServer_Select(t *testing.T) {
 		{
 			name: "no such mailbox",
 			handler: &imaptest.Handler{
-				SelectFunc: func(mailbox string) (*imap.Selected, error) {
+				SelectFunc: func(mailbox string, session map[string]interface{}) (*imap.Selected, error) {
 					return nil, fmt.Errorf("no mailbox")
 				},
 			},
@@ -82,6 +82,33 @@ func TestServer_Select(t *testing.T) {
 				lines, err := c.Send("SELECT INBOX")
 				require.NoError(t, err)
 				require.Equal(t, "A2 NO No such mailbox, can't access mailbox", lines[0])
+			},
+		},
+		{
+			name: "unselect before select another mailbox",
+			handler: &imaptest.Handler{
+				SelectFunc: func(mailbox string, session map[string]interface{}) (*imap.Selected, error) {
+					if _, found := session["mailbox"]; found {
+						panic("mailbox not unselected")
+					}
+					session["mailbox"] = mailbox
+					return &imap.Selected{}, nil
+				},
+				UnselectFunc: func(session map[string]interface{}) error {
+					delete(session, "mailbox")
+					return nil
+				},
+			},
+			test: func(t *testing.T, c *imaptest.Client) {
+				_, err := c.Dial()
+				require.NoError(t, err)
+				err = c.PlainAuth("", "bob", "password")
+				require.NoError(t, err)
+				lines, err := c.Send("SELECT INBOX")
+				require.NoError(t, err)
+				lines, err = c.Send("SELECT FOO")
+				require.NoError(t, err)
+				require.Equal(t, "A3 OK [READ-WRITE] SELECT completed", lines[len(lines)-1])
 			},
 		},
 	}

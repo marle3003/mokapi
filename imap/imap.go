@@ -1,6 +1,9 @@
 package imap
 
-import "strings"
+import (
+	"context"
+	"strings"
+)
 
 type ConnState uint8
 
@@ -12,7 +15,8 @@ const (
 )
 
 type Handler interface {
-	Select(mailbox string) (*Selected, error)
+	Select(mailbox string, ctx context.Context) (*Selected, error)
+	Unselect(ctx context.Context) error
 }
 
 type Flag string

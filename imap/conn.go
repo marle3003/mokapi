@@ -1,18 +1,21 @@
 package imap
 
 import (
+	"context"
 	"crypto/tls"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"io"
 	"net"
 	"net/textproto"
+	"runtime/debug"
 	"strings"
 	"syscall"
 )
 
 type conn struct {
 	conn      net.Conn
+	ctx       context.Context
 	tpc       *textproto.Conn
 	state     ConnState
 	tlsConfig *tls.Config
@@ -20,6 +23,16 @@ type conn struct {
 }
 
 func (c *conn) serve() {
+	_, cancel := context.WithCancel(c.ctx)
+	defer func() {
+		r := recover()
+		if r != nil {
+			log.Debugf("smtp panic: %v", string(debug.Stack()))
+			log.Errorf("smtp panic: %v", r)
+		}
+		cancel()
+	}()
+
 	if c.tpc == nil {
 		c.tpc = textproto.NewConn(c.conn)
 	}
