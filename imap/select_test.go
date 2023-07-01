@@ -18,7 +18,7 @@ func TestServer_Select(t *testing.T) {
 		{
 			name: "select inbox",
 			handler: &imaptest.Handler{
-				SelectFunc: func(mailbox string) *imap.Selected {
+				SelectFunc: func(mailbox string) (*imap.Selected, error) {
 					return &imap.Selected{
 						NumMessages: 172,
 						NumRecent:   1,
@@ -26,7 +26,7 @@ func TestServer_Select(t *testing.T) {
 						UIDValidity: 3857529045,
 						UIDNext:     4392,
 						Flags:       []imap.Flag{imap.FlagAnswered, imap.FlagFlagged, imap.FlagDeleted, imap.FlagSeen, imap.FlagDraft},
-					}
+					}, nil
 				},
 			},
 			test: func(t *testing.T, c *imaptest.Client) {
@@ -43,6 +43,45 @@ func TestServer_Select(t *testing.T) {
 				require.Equal(t, "* OK [UIDNEXT 4392] Predicted next UID", lines[4])
 				require.Equal(t, "* FLAGS (\\Answered \\Flagged \\Deleted \\Seen \\Draft)", lines[5])
 				require.Equal(t, "A2 OK [READ-WRITE] SELECT completed", lines[6])
+			},
+		},
+		{
+			name: "not authenticated",
+			handler: &imaptest.Handler{
+				SelectFunc: func(mailbox string) (*imap.Selected, error) {
+					return &imap.Selected{
+						NumMessages: 172,
+						NumRecent:   1,
+						FirstUnseen: 12,
+						UIDValidity: 3857529045,
+						UIDNext:     4392,
+						Flags:       []imap.Flag{imap.FlagAnswered, imap.FlagFlagged, imap.FlagDeleted, imap.FlagSeen, imap.FlagDraft},
+					}, nil
+				},
+			},
+			test: func(t *testing.T, c *imaptest.Client) {
+				_, err := c.Dial()
+				require.NoError(t, err)
+				lines, err := c.Send("SELECT INBOX")
+				require.NoError(t, err)
+				require.Equal(t, "A1 BAD Command is only valid in authenticated state", lines[0])
+			},
+		},
+		{
+			name: "no such mailbox",
+			handler: &imaptest.Handler{
+				SelectFunc: func(mailbox string) (*imap.Selected, error) {
+					return nil, fmt.Errorf("no mailbox")
+				},
+			},
+			test: func(t *testing.T, c *imaptest.Client) {
+				_, err := c.Dial()
+				require.NoError(t, err)
+				err = c.PlainAuth("", "bob", "password")
+				require.NoError(t, err)
+				lines, err := c.Send("SELECT INBOX")
+				require.NoError(t, err)
+				require.Equal(t, "A2 NO No such mailbox, can't access mailbox", lines[0])
 			},
 		},
 	}

@@ -12,7 +12,7 @@ const (
 )
 
 type Handler interface {
-	Select(mailbox string) *Selected
+	Select(mailbox string) (*Selected, error)
 }
 
 type Flag string

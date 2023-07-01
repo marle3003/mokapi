@@ -16,7 +16,20 @@ func (c *conn) canSelect() bool {
 }
 
 func (c *conn) handleSelect(tag, mailbox string) error {
-	selected := c.handler.Select(mailbox)
+	if c.state != AuthenticatedState {
+		return c.writeResponse(tag, &response{
+			status: bad,
+			text:   "Command is only valid in authenticated state",
+		})
+	}
+
+	selected, err := c.handler.Select(mailbox)
+	if err != nil {
+		return c.writeResponse(tag, &response{
+			status: no,
+			text:   "No such mailbox, can't access mailbox",
+		})
+	}
 
 	if err := c.writeExists(selected.NumMessages); err != nil {
 		return err
