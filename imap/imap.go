@@ -5,6 +5,11 @@ import (
 	"strings"
 )
 
+const (
+	untagged       = "*"
+	dateTimeLayout = "_2-Jan-2006 15:04:05 -0700"
+)
+
 type ConnState uint8
 
 const (
@@ -17,6 +22,8 @@ const (
 type Handler interface {
 	Select(mailbox string, ctx context.Context) (*Selected, error)
 	Unselect(ctx context.Context) error
+	List(ref, pattern string, ctx context.Context) ([]ListEntry, error)
+	Fetch(request *FetchRequest, ctx context.Context) ([]FetchResult, error)
 }
 
 type Flag string
@@ -42,6 +49,4 @@ func flagsToString(flags []Flag) string {
 	return sb.String()
 }
 
-const (
-	untagged = "*"
-)
+type MailboxFlags string

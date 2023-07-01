@@ -72,6 +72,10 @@ func (c *conn) readCmd() error {
 		err = c.handleStartTLS(tag)
 	case "SELECT":
 		err = c.handleSelect(tag, param)
+	case "LIST":
+		err = c.handleList(tag, param)
+	case "FETCH":
+		err = c.handleFetch(tag, param)
 	default:
 		log.Errorf("imap: unknown command: %v", line)
 		res = &response{
