@@ -23,7 +23,7 @@ type Handler interface {
 	Select(mailbox string, ctx context.Context) (*Selected, error)
 	Unselect(ctx context.Context) error
 	List(ref, pattern string, ctx context.Context) ([]ListEntry, error)
-	Fetch(request *FetchRequest, ctx context.Context) ([]FetchResult, error)
+	Fetch(req *FetchRequest, res FetchResponse, ctx context.Context) error
 }
 
 type Flag string

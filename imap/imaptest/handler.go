@@ -10,7 +10,7 @@ type Handler struct {
 	SelectFunc   func(mailbox string, session map[string]interface{}) (*imap.Selected, error)
 	UnselectFunc func(session map[string]interface{}) error
 	ListFunc     func(ref, pattern string, session map[string]interface{}) ([]imap.ListEntry, error)
-	FetchFunc    func(request *imap.FetchRequest, session map[string]interface{}) ([]imap.FetchResult, error)
+	FetchFunc    func(request *imap.FetchRequest, response imap.FetchResponse, session map[string]interface{}) error
 }
 
 func (h *Handler) Select(mailbox string, _ context.Context) (*imap.Selected, error) {
@@ -37,10 +37,10 @@ func (h *Handler) List(ref, pattern string, _ context.Context) ([]imap.ListEntry
 	panic("list not implemented")
 }
 
-func (h *Handler) Fetch(request *imap.FetchRequest, _ context.Context) ([]imap.FetchResult, error) {
+func (h *Handler) Fetch(request *imap.FetchRequest, response imap.FetchResponse, _ context.Context) error {
 	if h.FetchFunc != nil {
 		h.ensureSession()
-		return h.FetchFunc(request, h.session)
+		return h.FetchFunc(request, response, h.session)
 	}
 	panic("fetch not implemented")
 }

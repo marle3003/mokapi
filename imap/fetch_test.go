@@ -19,17 +19,13 @@ func TestServer_Fetch(t *testing.T) {
 		{
 			name: "fetch one fast",
 			handler: &imaptest.Handler{
-				FetchFunc: func(request *imap.FetchRequest, session map[string]interface{}) ([]imap.FetchResult, error) {
+				FetchFunc: func(request *imap.FetchRequest, response imap.FetchResponse, session map[string]interface{}) error {
 					date, err := time.Parse(time.RFC3339, "2023-03-16T13:07:04+01:00")
 					require.NoError(t, err)
-					return []imap.FetchResult{
-						{
-							SequenceNumber: 1,
-							Flags:          nil,
-							InternalDate:   date,
-							Size:           43078,
-						},
-					}, nil
+					msg := response.NewMessage(1)
+					msg.WriteInternalDate(date)
+					msg.WriteRFC822Size(43078)
+					return nil
 				},
 			},
 			test: func(t *testing.T, c *imaptest.Client) {
@@ -39,7 +35,7 @@ func TestServer_Fetch(t *testing.T) {
 				require.NoError(t, err)
 				lines, err := c.Send("FETCH 1 FAST")
 				require.NoError(t, err)
-				require.Equal(t, "* 1 FETCH (FLAGS () INTERNALDATE \"16-Mar-2023 13:07:04 +0100\" RFC822.SIZE 43078)", lines[0])
+				require.Equal(t, "* 1 FETCH (INTERNALDATE \"16-Mar-2023 13:07:04 +0100\" RFC822.SIZE 43078)", lines[0])
 			},
 		},
 	}

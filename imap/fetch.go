@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 )
 
-type FetchAttribute uint
+type FetchOptions uint
 
 const (
-	FetchFlags FetchAttribute = 1 << iota
+	FetchFlags FetchOptions = 1 << iota
 	FetchEnvelope
 	FetchInternalDate
 	FetchRFC822Header
@@ -19,24 +18,16 @@ const (
 	FetchBodyStructure
 )
 
-type SequenceSet []SequenceNumber
+type SequenceSet []Sequence
 
-type SequenceNumber struct {
+type Sequence struct {
 	start int
 	end   int
 }
 
 type FetchRequest struct {
 	Sequence SequenceSet
-	Options  FetchAttribute
-}
-
-type FetchResult struct {
-	SequenceNumber uint32
-	UID            uint32
-	Flags          []Flag
-	InternalDate   time.Time
-	Size           int64
+	Options  FetchOptions
 }
 
 func (c *conn) handleFetch(tag, param string) error {
@@ -45,16 +36,21 @@ func (c *conn) handleFetch(tag, param string) error {
 	if err != nil {
 		return err
 	}
-	attr, err := parseFetchAttribute(args[1])
+	opts, err := parseFetchOptions(args[1])
 	if err != nil {
 		return err
 	}
-	result, err := c.handler.Fetch(&FetchRequest{
-		Sequence: seq,
-		Options:  attr,
-	}, c.ctx)
 
-	if err := c.writeFetchList(result, attr); err != nil {
+	req := &FetchRequest{
+		Sequence: seq,
+		Options:  opts,
+	}
+	res := fetchResponse{}
+	if err = c.handler.Fetch(req, &res, c.ctx); err != nil {
+		return err
+	}
+
+	if err := c.writeFetchResponse(&res); err != nil {
 		return err
 	}
 
@@ -70,15 +66,15 @@ func parseFetchSequence(s string) (SequenceSet, error) {
 		return nil, err
 	}
 	return SequenceSet{
-		SequenceNumber{
+		Sequence{
 			start: n,
 			end:   n,
 		},
 	}, nil
 }
 
-func parseFetchAttribute(s string) (FetchAttribute, error) {
-	var attr FetchAttribute
+func parseFetchOptions(s string) (FetchOptions, error) {
+	var attr FetchOptions
 	switch s {
 	case "FAST":
 		attr = FetchFlags | FetchInternalDate | FetchRFC822Size
@@ -86,36 +82,19 @@ func parseFetchAttribute(s string) (FetchAttribute, error) {
 	return attr, nil
 }
 
-func (c *conn) writeFetchList(list []FetchResult, attr FetchAttribute) error {
-	for _, result := range list {
-		if err := c.writeFetchResult(result, attr); err != nil {
+func (o FetchOptions) Has(opt FetchOptions) bool {
+	return o&opt == opt
+}
+
+func (c *conn) writeFetchResponse(res *fetchResponse) error {
+	for _, msg := range res.messages {
+		m := strings.Trim(msg.sb.String(), " ")
+		err := c.writeResponse(untagged, &response{
+			text: fmt.Sprintf("%v FETCH (%v)", msg.sequenceNumber, m),
+		})
+		if err != nil {
 			return err
 		}
 	}
 	return nil
-}
-
-func (c *conn) writeFetchResult(result FetchResult, attr FetchAttribute) error {
-
-	return c.writeResponse(untagged, &response{
-		text: fmt.Sprintf("%v FETCH (%v)", result.SequenceNumber, result.encode(attr)),
-	})
-}
-
-func (a FetchAttribute) has(attr FetchAttribute) bool {
-	return a&attr == attr
-}
-
-func (r FetchResult) encode(attr FetchAttribute) string {
-	var sb strings.Builder
-	if attr.has(FetchFlags) {
-		sb.WriteString("FLAGS ()")
-	}
-	if attr.has(FetchInternalDate) {
-		sb.WriteString(fmt.Sprintf(" INTERNALDATE \"%v\"", r.InternalDate.Format(dateTimeLayout)))
-	}
-	if attr.has(FetchRFC822Size) {
-		sb.WriteString(fmt.Sprintf(" RFC822.SIZE %v", r.Size))
-	}
-	return sb.String()
 }
