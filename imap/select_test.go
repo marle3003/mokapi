@@ -46,6 +46,35 @@ func TestServer_Select(t *testing.T) {
 			},
 		},
 		{
+			name: "close selected mailbox",
+			handler: &imaptest.Handler{
+				SelectFunc: func(mailbox string, session map[string]interface{}) (*imap.Selected, error) {
+					return &imap.Selected{
+						NumMessages: 172,
+						NumRecent:   1,
+						FirstUnseen: 12,
+						UIDValidity: 3857529045,
+						UIDNext:     4392,
+						Flags:       []imap.Flag{imap.FlagAnswered, imap.FlagFlagged, imap.FlagDeleted, imap.FlagSeen, imap.FlagDraft},
+					}, nil
+				},
+				UnselectFunc: func(session map[string]interface{}) error {
+					return nil
+				},
+			},
+			test: func(t *testing.T, c *imaptest.Client) {
+				_, err := c.Dial()
+				require.NoError(t, err)
+				err = c.PlainAuth("", "bob", "password")
+				require.NoError(t, err)
+				_, err = c.Send("SELECT INBOX")
+				require.NoError(t, err)
+				lines, err := c.Send("CLOSE")
+				require.NoError(t, err)
+				require.Equal(t, "A3 OK CLOSE completed", lines[0])
+			},
+		},
+		{
 			name: "not authenticated",
 			handler: &imaptest.Handler{
 				SelectFunc: func(mailbox string, session map[string]interface{}) (*imap.Selected, error) {

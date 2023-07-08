@@ -114,8 +114,14 @@ func (c *Client) PlainAuth(identity, username, password string) error {
 	if err != nil {
 		return err
 	}
-	_, err = c.SendRaw(base64.StdEncoding.EncodeToString(cred))
-	return err
+	res, err := c.SendRaw(base64.StdEncoding.EncodeToString(cred))
+	if err != nil {
+		return err
+	}
+	if !strings.Contains(res, "OK") {
+		return fmt.Errorf(res)
+	}
+	return nil
 }
 
 func (c *Client) send(line string) (string, error) {

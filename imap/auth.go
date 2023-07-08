@@ -27,7 +27,7 @@ func (c *conn) handleAuth(_, param string) *response {
 	switch mechanism {
 	case "PLAIN":
 		saslServer = sasl.NewPlainServer(func(identity, username, password string) error {
-			return nil
+			return c.handler.Login(username, password, c.ctx)
 		})
 	default:
 		return &response{

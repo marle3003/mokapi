@@ -21,16 +21,30 @@ const (
 type SequenceSet []Sequence
 
 type Sequence struct {
-	start int
-	end   int
+	Start int
+	End   int
+}
+
+type FetchBody struct {
+	Section      []int
+	HeaderFields []string
 }
 
 type FetchRequest struct {
 	Sequence SequenceSet
 	Options  FetchOptions
+	// nil means everything
+	Body *FetchBody
 }
 
 func (c *conn) handleFetch(tag, param string) error {
+	if c.state != AuthenticatedState && c.state != SelectedState {
+		return c.writeResponse(tag, &response{
+			status: bad,
+			text:   "Command is only valid in authenticated state",
+		})
+	}
+
 	args := strings.SplitN(param, " ", 2)
 	seq, err := parseFetchSequence(args[0])
 	if err != nil {
@@ -61,14 +75,21 @@ func (c *conn) handleFetch(tag, param string) error {
 }
 
 func parseFetchSequence(s string) (SequenceSet, error) {
-	n, err := strconv.Atoi(s)
+	args := strings.Split(s, ":")
+	start, err := strconv.Atoi(args[0])
 	if err != nil {
 		return nil, err
 	}
+	end := start
+	if len(args) > 1 {
+		if end, err = strconv.Atoi(args[1]); err != nil {
+			return nil, err
+		}
+	}
 	return SequenceSet{
 		Sequence{
-			start: n,
-			end:   n,
+			Start: start,
+			End:   end,
 		},
 	}, nil
 }
@@ -78,6 +99,10 @@ func parseFetchOptions(s string) (FetchOptions, error) {
 	switch s {
 	case "FAST":
 		attr = FetchFlags | FetchInternalDate | FetchRFC822Size
+	case "ALL":
+		attr = FetchFlags | FetchInternalDate | FetchRFC822Size | FetchEnvelope
+	case "FULL":
+		attr = FetchFlags | FetchInternalDate | FetchRFC822Size | FetchEnvelope | FetchBodyStructure
 	}
 	return attr, nil
 }

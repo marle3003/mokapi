@@ -30,7 +30,7 @@ func TestServer_StartTLS(t *testing.T) {
 			test: func(t *testing.T, c *imaptest.Client) {
 				r, err := c.Dial()
 				require.NoError(t, err)
-				require.Equal(t, "* OK [CAPABILITY IMAP4rev1 STARTTLS AUTH=PLAIN] Mokapi Ready", r)
+				require.Equal(t, "* OK [CAPABILITY IMAP4rev1 SASL-IR STARTTLS AUTH=PLAIN] Mokapi Ready", r)
 			},
 		},
 		{
@@ -81,7 +81,14 @@ func TestServer_StartTLS(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			p, err := try.GetFreePort()
 			require.NoError(t, err)
-			s := &imap.Server{Addr: fmt.Sprintf(":%v", p)}
+			s := &imap.Server{
+				Addr: fmt.Sprintf(":%v", p),
+				Handler: &imaptest.Handler{
+					LoginFunc: func(username, password string, session map[string]interface{}) error {
+						return nil
+					},
+				},
+			}
 			defer s.Close()
 			if tc.tlsConfig != nil {
 				s.TLSConfig = tc.tlsConfig()

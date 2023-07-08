@@ -11,7 +11,7 @@ type ListEntry struct {
 }
 
 func (c *conn) handleList(tag, param string) error {
-	if c.state != AuthenticatedState {
+	if c.state != AuthenticatedState && c.state != SelectedState {
 		return c.writeResponse(tag, &response{
 			status: bad,
 			text:   "Command is only valid in authenticated state",

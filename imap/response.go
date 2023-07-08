@@ -15,6 +15,7 @@ const (
 
 	alert     responseCode = "ALERT"
 	readWrite responseCode = "READ-WRITE"
+	cannot    responseCode = "CANNOT"
 )
 
 type response struct {

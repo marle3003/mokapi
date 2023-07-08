@@ -19,7 +19,7 @@ func TestServer(t *testing.T) {
 			test: func(t *testing.T, c *imaptest.Client) {
 				g, err := c.Dial()
 				require.NoError(t, err)
-				require.Equal(t, "* OK [CAPABILITY IMAP4rev1 AUTH=PLAIN] Mokapi Ready", g)
+				require.Equal(t, "* OK [CAPABILITY IMAP4rev1 SASL-IR AUTH=PLAIN] Mokapi Ready", g)
 			},
 		},
 		{
@@ -38,7 +38,7 @@ func TestServer(t *testing.T) {
 				require.NoError(t, err)
 				lines, err := c.Send("CAPABILITY")
 				require.NoError(t, err)
-				require.Equal(t, "* CAPABILITY IMAP4rev1 AUTH=PLAIN", lines[0])
+				require.Equal(t, "* CAPABILITY IMAP4rev1 SASL-IR AUTH=PLAIN", lines[0])
 				require.Equal(t, "A1 OK CAPABILITY completed", lines[1])
 			},
 		},

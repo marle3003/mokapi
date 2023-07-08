@@ -11,11 +11,15 @@ type Selected struct {
 	UIDNext     uint32
 }
 
-func (c *conn) canSelect() bool {
-	return c.state == AuthenticatedState
-}
-
 func (c *conn) handleSelect(tag, mailbox string) error {
+	if mailbox == "\"\"" {
+		return c.writeResponse(tag, &response{
+			status: no,
+			code:   cannot,
+			text:   "Invalid mailbox name: Name is empty",
+		})
+	}
+
 	if c.state == SelectedState {
 		if err := c.handler.Unselect(c.ctx); err != nil {
 			return err
@@ -61,6 +65,17 @@ func (c *conn) handleSelect(tag, mailbox string) error {
 		status: ok,
 		code:   readWrite,
 		text:   "SELECT completed",
+	})
+}
+
+func (c *conn) handleClose(tag string) error {
+	if err := c.handler.Unselect(c.ctx); err != nil {
+		return err
+	}
+	c.state = AuthenticatedState
+	return c.writeResponse(tag, &response{
+		status: ok,
+		text:   "CLOSE completed",
 	})
 }
 

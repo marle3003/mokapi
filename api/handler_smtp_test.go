@@ -116,16 +116,17 @@ func TestHandler_Smtp(t *testing.T) {
 							Mailboxes: map[string]*mail.Mailbox{
 								"alice@foo.bar": {
 									Name: "alice@foo.bar",
-									Messages: []*smtp.Message{
+									Messages: []*mail.Mail{
 										{
-											Sender:      nil,
-											From:        []smtp.Address{{Address: "bob@foo.bar"}},
-											To:          []smtp.Address{{Address: "alice@foo.bar"}},
-											MessageId:   "foo-1@mokapi.io",
-											Time:        now,
-											Subject:     "Hello Alice",
-											ContentType: "text/plain",
-											Body:        "foobar",
+											Message: &smtp.Message{Sender: nil,
+												From:        []smtp.Address{{Address: "bob@foo.bar"}},
+												To:          []smtp.Address{{Address: "alice@foo.bar"}},
+												MessageId:   "foo-1@mokapi.io",
+												Time:        now,
+												Subject:     "Hello Alice",
+												ContentType: "text/plain",
+												Body:        "foobar",
+											},
 										},
 									},
 								},
@@ -150,16 +151,18 @@ func TestHandler_Smtp(t *testing.T) {
 							Mailboxes: map[string]*mail.Mailbox{
 								"alice@foo.bar": {
 									Name: "alice@foo.bar",
-									Messages: []*smtp.Message{
+									Messages: []*mail.Mail{
 										{
-											Sender:      nil,
-											From:        []smtp.Address{{Address: "bob@foo.bar"}},
-											To:          []smtp.Address{{Address: "alice@foo.bar"}},
-											MessageId:   "foo-1@mokapi.io",
-											Time:        now,
-											Subject:     "Hello Alice",
-											ContentType: "text/plain",
-											Body:        "foobar",
+											Message: &smtp.Message{
+												Sender:      nil,
+												From:        []smtp.Address{{Address: "bob@foo.bar"}},
+												To:          []smtp.Address{{Address: "alice@foo.bar"}},
+												MessageId:   "foo-1@mokapi.io",
+												Time:        now,
+												Subject:     "Hello Alice",
+												ContentType: "text/plain",
+												Body:        "foobar",
+											},
 										},
 									},
 								},
@@ -184,18 +187,20 @@ func TestHandler_Smtp(t *testing.T) {
 							Mailboxes: map[string]*mail.Mailbox{
 								"alice@foo.bar": {
 									Name: "alice@foo.bar",
-									Messages: []*smtp.Message{
+									Messages: []*mail.Mail{
 										{
-											Sender:    nil,
-											From:      []smtp.Address{{Address: "bob@foo.bar"}},
-											To:        []smtp.Address{{Address: "alice@foo.bar"}},
-											MessageId: "foo-1@mokapi.io",
-											Time:      now,
-											Attachments: []smtp.Attachment{
-												{
-													Name:        "foo",
-													ContentType: "text/plain",
-													Data:        []byte("foobar"),
+											Message: &smtp.Message{
+												Sender:    nil,
+												From:      []smtp.Address{{Address: "bob@foo.bar"}},
+												To:        []smtp.Address{{Address: "alice@foo.bar"}},
+												MessageId: "foo-1@mokapi.io",
+												Time:      now,
+												Attachments: []smtp.Attachment{
+													{
+														Name:        "foo",
+														ContentType: "text/plain",
+														Data:        []byte("foobar"),
+													},
 												},
 											},
 										},

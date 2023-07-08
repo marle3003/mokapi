@@ -76,6 +76,8 @@ func (c *conn) readCmd() error {
 		err = c.handleList(tag, param)
 	case "FETCH":
 		err = c.handleFetch(tag, param)
+	case "CLOSE":
+		err = c.handleClose(tag)
 	default:
 		log.Errorf("imap: unknown command: %v", line)
 		res = &response{

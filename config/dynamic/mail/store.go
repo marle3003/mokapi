@@ -3,6 +3,8 @@ package mail
 import (
 	"fmt"
 	"mokapi/smtp"
+	"sync"
+	"time"
 )
 
 const mailboxSize = 100
@@ -17,7 +19,16 @@ type Mailbox struct {
 	Name     string
 	Username string
 	Password string
-	Messages []*smtp.Message
+	Messages []*Mail
+
+	messageSequenceNumber uint32
+	uidValidity           uint32
+	m                     sync.Mutex
+}
+
+type Mail struct {
+	*smtp.Message
+	UId uint32
 }
 
 func NewStore(c *Config) *Store {
@@ -49,9 +60,12 @@ func (s *Store) NewMailbox(name, username, password string) {
 		return
 	}
 	s.Mailboxes[name] = &Mailbox{
-		Name:     name,
-		Username: username,
-		Password: password,
+		Name:                  name,
+		Username:              username,
+		Password:              password,
+		messageSequenceNumber: 1,
+		// max date is February 2106
+		uidValidity: uint32(time.Now().Unix()),
 	}
 }
 
@@ -70,7 +84,7 @@ func (s *Store) GetMail(id string) *smtp.Message {
 	for _, b := range s.Mailboxes {
 		for _, m := range b.Messages {
 			if m.MessageId == id {
-				return m
+				return m.Message
 			}
 		}
 	}
@@ -78,8 +92,16 @@ func (s *Store) GetMail(id string) *smtp.Message {
 }
 
 func (mb *Mailbox) Append(m *smtp.Message) {
+	mb.m.Lock()
+	defer mb.m.Unlock()
+
 	if len(mb.Messages) == mailboxSize {
 		mb.Messages = mb.Messages[0 : len(mb.Messages)-1]
 	}
-	mb.Messages = append(mb.Messages, m)
+	uid := mb.messageSequenceNumber
+	mb.messageSequenceNumber++
+	mb.Messages = append(mb.Messages, &Mail{
+		Message: m,
+		UId:     uid,
+	})
 }

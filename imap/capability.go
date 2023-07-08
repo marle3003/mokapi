@@ -7,8 +7,13 @@ type capability string
 const (
 	imap4rev1Cap capability = "IMAP4rev1"
 	startTLSCap  capability = "STARTTLS"
-	authCap      capability = "AUTH=PLAIN"
-	selectCap    capability = "SELECT"
+	authPlainCap capability = "AUTH=PLAIN"
+	saslIrCap    capability = "SASL-IR"
+
+	selectCap capability = "SELECT"
+	listCap   capability = "LIST"
+	fetchCap  capability = "FETCH"
+	closeCap  capability = "CLOSE"
 )
 
 type capabilities []capability
@@ -45,15 +50,17 @@ func (c *conn) handleCapability() *response {
 }
 
 func (c *conn) getCapabilities() capabilities {
-	caps := capabilities{imap4rev1Cap}
+	caps := capabilities{imap4rev1Cap, saslIrCap}
 	if c.canStartTLS() {
 		caps = append(caps, startTLSCap)
 	}
 	if c.canAuth() {
-		caps = append(caps, authCap)
+		caps = append(caps, authPlainCap)
 	}
-	if c.canSelect() {
-		caps = append(caps, selectCap)
+
+	if c.state == AuthenticatedState || c.state == SelectedState {
+		caps = append(caps, selectCap, listCap, fetchCap, closeCap)
 	}
+
 	return caps
 }

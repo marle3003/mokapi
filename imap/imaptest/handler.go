@@ -7,10 +7,19 @@ import (
 
 type Handler struct {
 	session      map[string]interface{}
+	LoginFunc    func(username, password string, session map[string]interface{}) error
 	SelectFunc   func(mailbox string, session map[string]interface{}) (*imap.Selected, error)
 	UnselectFunc func(session map[string]interface{}) error
 	ListFunc     func(ref, pattern string, session map[string]interface{}) ([]imap.ListEntry, error)
 	FetchFunc    func(request *imap.FetchRequest, response imap.FetchResponse, session map[string]interface{}) error
+}
+
+func (h *Handler) Login(username, password string, _ context.Context) error {
+	if h.LoginFunc != nil {
+		h.ensureSession()
+		return h.LoginFunc(username, password, h.session)
+	}
+	return nil
 }
 
 func (h *Handler) Select(mailbox string, _ context.Context) (*imap.Selected, error) {

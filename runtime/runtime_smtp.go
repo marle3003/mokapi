@@ -5,12 +5,18 @@ import (
 	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/mail"
 	engine "mokapi/engine/common"
+	"mokapi/imap"
 	"mokapi/runtime/monitor"
 	"mokapi/smtp"
 	"path/filepath"
 	"sort"
 	"time"
 )
+
+type MailHandler interface {
+	smtp.Handler
+	imap.Handler
+}
 
 type SmtpInfo struct {
 	*mail.Config
@@ -58,20 +64,20 @@ func (c *SmtpInfo) update() {
 	}
 }
 
-func (c *SmtpInfo) Handler(smtp *monitor.Smtp, emitter engine.EventEmitter) smtp.Handler {
-	return &smtpHandler{
-		smtp: smtp,
-		next: mail.NewHandler(c.Config, c.Store, emitter),
+func (c *SmtpInfo) Handler(smtp *monitor.Smtp, emitter engine.EventEmitter) MailHandler {
+	return &mailHandler{
+		monitor: smtp,
+		next:    mail.NewHandler(c.Config, c.Store, emitter),
 	}
 }
 
-type smtpHandler struct {
-	smtp *monitor.Smtp
-	next smtp.Handler
+type mailHandler struct {
+	monitor *monitor.Smtp
+	next    *mail.Handler
 }
 
-func (h *smtpHandler) ServeSMTP(rw smtp.ResponseWriter, r smtp.Request) {
-	r.WithContext(monitor.NewSmtpContext(r.Context(), h.smtp))
+func (h *mailHandler) ServeSMTP(rw smtp.ResponseWriter, r smtp.Request) {
+	r.WithContext(monitor.NewSmtpContext(r.Context(), h.monitor))
 	r.WithContext(context.WithValue(r.Context(), "time", time.Now()))
 
 	h.next.ServeSMTP(rw, r)
@@ -80,4 +86,24 @@ func (h *smtpHandler) ServeSMTP(rw smtp.ResponseWriter, r smtp.Request) {
 func IsSmtpConfig(c *common.Config) bool {
 	_, ok := c.Data.(*mail.Config)
 	return ok
+}
+
+func (h *mailHandler) Login(username, password string, ctx context.Context) error {
+	return h.next.Login(username, password, ctx)
+}
+
+func (h *mailHandler) Select(mailbox string, ctx context.Context) (*imap.Selected, error) {
+	return h.next.Select(mailbox, ctx)
+}
+
+func (h *mailHandler) Unselect(ctx context.Context) error {
+	return h.next.Unselect(ctx)
+}
+
+func (h *mailHandler) List(ref, pattern string, ctx context.Context) ([]imap.ListEntry, error) {
+	return h.next.List(ref, pattern, ctx)
+}
+
+func (h *mailHandler) Fetch(req *imap.FetchRequest, res imap.FetchResponse, ctx context.Context) error {
+	return h.next.Fetch(req, res, ctx)
 }

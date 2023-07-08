@@ -59,14 +59,14 @@ func (s *Server) Serve(l net.Listener) error {
 	}
 }
 
-func (s *Server) Close() (err error) {
+func (s *Server) Close() {
 	s.inShutdown.SetTrue()
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.listener != nil {
-		err = s.listener.Close()
+		s.listener.Close()
 	}
 
 	for c, ctx := range s.activeConn {

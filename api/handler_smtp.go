@@ -208,7 +208,7 @@ func (h *handler) getMailbox(w http.ResponseWriter, r *http.Request, service, na
 	}
 
 	for _, m := range mb.Messages {
-		result.Messages = append(result.Messages, toMessage(m))
+		result.Messages = append(result.Messages, toMessage(m.Message))
 	}
 
 	w.Header().Set("Content-Type", "application/json")

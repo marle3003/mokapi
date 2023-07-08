@@ -12,11 +12,49 @@ import (
 
 func TestServer_Auth(t *testing.T) {
 	testcases := []struct {
-		name string
-		test func(t *testing.T, c *imaptest.Client)
+		name    string
+		handler newHandler
+		test    func(t *testing.T, c *imaptest.Client)
 	}{
 		{
+			name: "plain",
+			handler: func(t *testing.T) imap.Handler {
+				h := &imaptest.Handler{
+					LoginFunc: func(username, password string, session map[string]interface{}) error {
+						require.Equal(t, "bob", username)
+						require.Equal(t, "password", password)
+						return nil
+					},
+				}
+				return h
+			},
+			test: func(t *testing.T, c *imaptest.Client) {
+				mustDial(t, c)
+				err := c.PlainAuth("", "bob", "password")
+				require.NoError(t, err)
+			},
+		},
+		{
+			name: "plain wrong credentials",
+			handler: func(t *testing.T) imap.Handler {
+				h := &imaptest.Handler{
+					LoginFunc: func(username, password string, session map[string]interface{}) error {
+						return fmt.Errorf("wrong password")
+					},
+				}
+				return h
+			},
+			test: func(t *testing.T, c *imaptest.Client) {
+				mustDial(t, c)
+				err := c.PlainAuth("", "bob", "password")
+				require.EqualError(t, err, "A1 BAD wrong password")
+			},
+		},
+		{
 			name: "send unsupported mechanism",
+			handler: func(t *testing.T) imap.Handler {
+				return &imaptest.Handler{}
+			},
 			test: func(t *testing.T, c *imaptest.Client) {
 				mustDial(t, c)
 				r, err := c.SendRaw("A1 AUTHENTICATE foo")
@@ -26,6 +64,9 @@ func TestServer_Auth(t *testing.T) {
 		},
 		{
 			name: "plain wrong format",
+			handler: func(t *testing.T) imap.Handler {
+				return &imaptest.Handler{}
+			},
 			test: func(t *testing.T, c *imaptest.Client) {
 				mustDial(t, c)
 				r, err := c.SendRaw("A1 AUTHENTICATE PLAIN")
@@ -38,6 +79,9 @@ func TestServer_Auth(t *testing.T) {
 		},
 		{
 			name: "plain without initial",
+			handler: func(t *testing.T) imap.Handler {
+				return &imaptest.Handler{}
+			},
 			test: func(t *testing.T, c *imaptest.Client) {
 				mustDial(t, c)
 				r, err := c.SendRaw("A1 AUTHENTICATE PLAIN")
@@ -52,13 +96,16 @@ func TestServer_Auth(t *testing.T) {
 		},
 		{
 			name: "capability after auth",
+			handler: func(t *testing.T) imap.Handler {
+				return &imaptest.Handler{}
+			},
 			test: func(t *testing.T, c *imaptest.Client) {
 				mustDial(t, c)
 				err := c.PlainAuth("", "bob", "password")
 				require.NoError(t, err)
 				lines, err := c.Send("CAPABILITY")
 				require.NoError(t, err)
-				require.Equal(t, "* CAPABILITY IMAP4rev1 SELECT", lines[0])
+				require.Equal(t, "* CAPABILITY IMAP4rev1 SASL-IR SELECT LIST FETCH CLOSE", lines[0])
 				require.Equal(t, "A2 OK CAPABILITY completed", lines[1])
 			},
 		},
@@ -68,7 +115,10 @@ func TestServer_Auth(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			p, err := try.GetFreePort()
 			require.NoError(t, err)
-			s := &imap.Server{Addr: fmt.Sprintf(":%v", p)}
+			s := &imap.Server{
+				Addr:    fmt.Sprintf(":%v", p),
+				Handler: tc.handler(t),
+			}
 			defer s.Close()
 			go func() {
 				err := s.ListenAndServe()
