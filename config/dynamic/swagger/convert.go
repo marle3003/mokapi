@@ -170,10 +170,12 @@ func (c *converter) convertResponse(r *Response, produces []string) (*openapi.Re
 		Content:     make(map[string]*openapi.MediaType),
 	}
 
-	for _, produce := range produces {
-		result.Content[produce] = &openapi.MediaType{
-			Schema:      c.convertSchema(r.Schema),
-			ContentType: media.ParseContentType(produce),
+	if r.Schema != nil {
+		for _, produce := range produces {
+			result.Content[produce] = &openapi.MediaType{
+				Schema:      c.convertSchema(r.Schema),
+				ContentType: media.ParseContentType(produce),
+			}
 		}
 	}
 	return &openapi.ResponseRef{Value: result}, nil

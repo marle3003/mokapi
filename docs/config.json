@@ -26,7 +26,8 @@
   },
   "Configuration": {
     "Configuration": {
-      "Overview": "configuration/configuration.md"
+      "Overview": "configuration/configuration.md",
+      "Patching": "configuration/patching.md"
     },
     "Providers": {
       "File": "configuration/providers/file.md",

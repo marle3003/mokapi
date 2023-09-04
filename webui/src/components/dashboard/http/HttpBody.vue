@@ -11,7 +11,9 @@ defineProps({
 <template>
     <div class="codeBlock" v-if="body">
         <span class="label">{{ contentType }}</span>
-        <pre v-highlightjs="formatLanguage(body, contentType)"><code :class="getLanguage(contentType)"></code></pre>
+        <pre v-highlightjs="formatLanguage(body, contentType)" class="overflow-auto" style="max-height: 500px;">
+          <code :class="getLanguage(contentType)"></code>
+        </pre>
     </div>
 </template>
 

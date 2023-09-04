@@ -42,7 +42,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 
 				c, err := w.Read(configPath)
 				require.NoError(t, err)
-				require.Equal(t, configPath, c.Url)
+				require.Equal(t, configPath, c.Info.Url)
 			},
 		},
 		{
@@ -60,11 +60,11 @@ func TestConfigWatcher_Read(t *testing.T) {
 
 				c1, err := w.Read(configPath)
 				require.NoError(t, err)
-				require.Equal(t, configPath, c1.Url)
+				require.Equal(t, configPath, c1.Info.Url)
 
 				c2, err := w.Read(configPath)
 				require.NoError(t, err)
-				require.Equal(t, configPath, c2.Url)
+				require.Equal(t, configPath, c2.Info.Url)
 				require.True(t, c1 == c2, "should be same reference")
 			},
 		},
@@ -111,7 +111,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, c)
 
-				ch <- &common.Config{Url: configPath, Raw: []byte("foobar"), Checksum: []byte{10}}
+				ch <- &common.Config{Info: common.ConfigInfo{Url: configPath}, Raw: []byte("foobar"), Checksum: []byte{10}}
 				time.Sleep(5 * time.Millisecond)
 				require.Equal(t, "foobar", c.Data)
 			},
@@ -124,7 +124,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 				var ch chan *common.Config
 				w.providers["foo"] = &testprovider{
 					read: func(u *url.URL) (*common.Config, error) {
-						return &common.Config{Url: u}, nil
+						return &common.Config{Info: common.ConfigInfo{Url: u}}, nil
 					},
 					start: func(configs chan *common.Config, pool *safe.Pool) error {
 						ch = configs
@@ -135,7 +135,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 				w.Start(pool)
 				defer pool.Stop()
 
-				ch <- &common.Config{Url: configPath, Raw: []byte("foobar")}
+				ch <- &common.Config{Info: common.ConfigInfo{Url: configPath}, Raw: []byte("foobar")}
 				time.Sleep(time.Duration(100) * time.Millisecond)
 
 				c, err := w.Read(configPath)
@@ -153,7 +153,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 				w.providers["foo"] = &testprovider{
 					read: func(u *url.URL) (*common.Config, error) {
 						require.Equal(t, configPath, u)
-						return &common.Config{Url: u, Data: &data{
+						return &common.Config{Info: common.ConfigInfo{Url: u}, Data: &data{
 							parse: func(config *common.Config, reader common.Reader) error {
 								return fmt.Errorf("TEST ERROR")
 							},
@@ -223,7 +223,7 @@ func TestConfigWatcher_Start(t *testing.T) {
 				err := w.Start(pool)
 				require.NoError(t, err)
 
-				ch <- &common.Config{Url: mustParse("foo.yml")}
+				ch <- &common.Config{Info: common.ConfigInfo{Url: mustParse("foo.yml")}}
 				time.Sleep(time.Duration(100) * time.Millisecond)
 
 				require.Len(t, listenerReceived, 1)
@@ -234,7 +234,7 @@ func TestConfigWatcher_Start(t *testing.T) {
 						err := recover()
 						require.Equal(t, err.(error).Error(), "send on closed channel")
 					}()
-					ch <- &common.Config{Url: mustParse("foo.yml")}
+					ch <- &common.Config{Info: common.ConfigInfo{Url: mustParse("foo.yml")}}
 				}()
 			},
 		},

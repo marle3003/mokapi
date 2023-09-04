@@ -155,7 +155,7 @@ func (s *Store) Update(c *asyncApi.Config) {
 		}
 		k := ch.Value.Bindings.Kafka
 		if t, ok := s.topics[n]; ok {
-			for _, p := range t.Partitions[k.Partitions():] {
+			for _, p := range t.Partitions[k.Partitions:] {
 				p.delete()
 			}
 		} else {

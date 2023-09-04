@@ -2,8 +2,6 @@ package server
 
 import (
 	log "github.com/sirupsen/logrus"
-	"mokapi/config/dynamic/asyncApi"
-	"mokapi/config/dynamic/asyncApi/kafka/store"
 	config "mokapi/config/dynamic/common"
 	"mokapi/engine/common"
 	"mokapi/runtime"
@@ -16,7 +14,7 @@ type clusters map[string]*cluster
 
 type cluster struct {
 	brokers map[string]*service.KafkaBroker
-	store   *store.Store
+	cfg     *runtime.KafkaInfo
 }
 
 type KafkaManager struct {
@@ -34,38 +32,35 @@ func NewKafkaManager(emitter common.EventEmitter, app *runtime.App) *KafkaManage
 }
 
 func (m *KafkaManager) UpdateConfig(c *config.Config) {
-	cfg, ok := c.Data.(*asyncApi.Config)
-	if !ok {
+	if !runtime.IsKafkaConfig(c) {
 		return
 	}
+	cfg := m.app.AddKafka(c, m.emitter)
 
 	m.addOrUpdateCluster(cfg)
-	log.Debugf("processed %v", c.Url.String())
+	log.Debugf("processed %v", c.Info.Path())
 }
 
-func (m *KafkaManager) addOrUpdateCluster(cfg *asyncApi.Config) {
+func (m *KafkaManager) addOrUpdateCluster(cfg *runtime.KafkaInfo) {
 	c := m.getOrCreateCluster(cfg)
 	c.update(cfg, m.app.Monitor.Kafka)
 }
 
-func (m *KafkaManager) getOrCreateCluster(cfg *asyncApi.Config) *cluster {
+func (m *KafkaManager) getOrCreateCluster(cfg *runtime.KafkaInfo) *cluster {
 	c, ok := m.clusters[cfg.Info.Name]
 	if !ok {
 		log.Infof("adding new kafka cluster '%v'", cfg.Info.Name)
-		c = &cluster{store: store.NewEmpty(m.emitter), brokers: make(map[string]*service.KafkaBroker)}
+		c = &cluster{cfg: cfg, brokers: make(map[string]*service.KafkaBroker)}
 		m.clusters[cfg.Info.Name] = c
-		m.app.AddKafka(cfg, c.store)
 	}
 	return c
 }
 
-func (c *cluster) update(cfg *asyncApi.Config, kafkaMonitor *monitor.Kafka) {
-	c.store.Update(cfg)
+func (c *cluster) update(cfg *runtime.KafkaInfo, kafkaMonitor *monitor.Kafka) {
 	c.updateBrokers(cfg, kafkaMonitor)
 }
 
-func (c *cluster) updateBrokers(cfg *asyncApi.Config, kafkaMonitor *monitor.Kafka) {
-	handler := runtime.NewKafkaHandler(kafkaMonitor, c.store)
+func (c *cluster) updateBrokers(cfg *runtime.KafkaInfo, kafkaMonitor *monitor.Kafka) {
 	brokers := c.brokers
 	c.brokers = make(map[string]*service.KafkaBroker)
 	for name, server := range cfg.Servers {
@@ -80,7 +75,7 @@ func (c *cluster) updateBrokers(cfg *asyncApi.Config, kafkaMonitor *monitor.Kafk
 			delete(brokers, port)
 		} else {
 			log.Infof("adding new kafka broker '%v' on port %v", name, port)
-			broker = service.NewKafkaBroker(port, handler)
+			broker = service.NewKafkaBroker(port, cfg.Handler(kafkaMonitor))
 			broker.Start()
 		}
 		c.brokers[port] = broker

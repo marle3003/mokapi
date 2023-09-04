@@ -37,7 +37,6 @@ defineProps({
                         <p class="label">Description</p>
                         <markdown :source="service.description" data-testid="service-description"></markdown>
                     </div>
-                    
                 </div>
             </div>
         </div>

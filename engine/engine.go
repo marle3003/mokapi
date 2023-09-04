@@ -86,12 +86,12 @@ func (e *Engine) Close() {
 }
 
 func (e *Engine) remove(cfg *config.Config) {
-	name := getScriptPath(cfg.Url)
+	name := cfg.Info.Path()
 	if h, ok := e.scripts[name]; ok {
-		log.Debugf("updating script %v", cfg.Url)
+		log.Debugf("updating script %v", cfg.Info.Path())
 		h.close()
 		delete(e.scripts, name)
 	} else {
-		log.Debugf("parsing script %v", cfg.Url)
+		log.Debugf("parsing script %v", cfg.Info.Path())
 	}
 }

@@ -25,21 +25,53 @@ type Validator interface {
 	Validate() error
 }
 
+type ConfigInfo struct {
+	Provider string
+	Url      *url.URL
+	Parent   *ConfigInfo
+}
+
+func (ci *ConfigInfo) Path() string {
+	if ci.Parent != nil {
+		return ci.Parent.Path()
+	}
+	if len(ci.Url.Opaque) > 0 {
+		return ci.Url.Opaque
+	}
+	u := ci.Url
+	path, _ := url.PathUnescape(ci.Url.Path)
+	query, _ := url.QueryUnescape(ci.Url.RawQuery)
+	var sb strings.Builder
+	if len(u.Scheme) > 0 {
+		sb.WriteString(u.Scheme + ":")
+	}
+	if len(u.Scheme) > 0 || len(u.Host) > 0 {
+		sb.WriteString("//")
+	}
+	if len(u.Host) > 0 {
+		sb.WriteString(u.Host)
+	}
+	sb.WriteString(path)
+	if len(query) > 0 {
+		sb.WriteString("?" + query)
+	}
+	return sb.String()
+}
+
 type Config struct {
-	Url          *url.URL
-	Raw          []byte
-	Data         interface{}
-	listeners    *sortedmap.LinkedHashMap
-	ProviderName string
-	Checksum     []byte
-	Key          string
+	Info      ConfigInfo
+	Raw       []byte
+	Data      interface{}
+	listeners *sortedmap.LinkedHashMap
+	Checksum  []byte
+	Key       string
 
 	parseMode string
 	m         sync.Mutex
 }
 
 func NewConfig(u *url.URL, opts ...ConfigOptions) *Config {
-	f := &Config{Url: u, listeners: sortedmap.NewLinkedHashMap()}
+	f := &Config{Info: ConfigInfo{Url: u}, listeners: sortedmap.NewLinkedHashMap()}
 	f.Options(opts...)
 	return f
 }
@@ -72,7 +104,7 @@ func WithData(data interface{}) ConfigOptions {
 
 func WithParent(parent *Config) ConfigOptions {
 	return func(file *Config, init bool) {
-		file.AddListener(parent.Url.String(), func(_ *Config) {
+		file.AddListener(parent.Info.Url.String(), func(_ *Config) {
 			parent.Changed()
 		})
 	}
@@ -111,9 +143,9 @@ func (f *Config) Parse(r Reader) error {
 	f.m.Lock()
 	defer f.m.Unlock()
 
-	path := f.Url.Path
-	if len(f.Url.Opaque) > 0 {
-		path = f.Url.Opaque
+	path := f.Info.Url.Path
+	if len(f.Info.Url.Opaque) > 0 {
+		path = f.Info.Url.Opaque
 	}
 	_, name := filepath.Split(path)
 
@@ -122,7 +154,7 @@ func (f *Config) Parse(r Reader) error {
 		var err error
 		data, err = renderTemplate(f.Raw)
 		if err != nil {
-			return fmt.Errorf("unable to render template %v: %v", f.Url, err)
+			return fmt.Errorf("unable to render template %v: %v", f.Info.Path(), err)
 		}
 		name = name[0 : len(name)-len(filepath.Ext(name))]
 	} else {
@@ -154,7 +186,7 @@ func (f *Config) Parse(r Reader) error {
 	if p, ok := f.Data.(Parser); ok {
 		err := p.Parse(f, r)
 		if err != nil {
-			return errors.Wrapf(err, "parsing file %v", f.Url)
+			return errors.Wrapf(err, "parsing file %v", f.Info.Path())
 		}
 	}
 

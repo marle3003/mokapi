@@ -66,9 +66,9 @@ func (e Entry) Parse(config *common.Config, reader common.Reader) error {
 
 			file := strings.TrimPrefix(a, "file:")
 			if strings.HasPrefix(file, "./") {
-				path := config.Url.Opaque
+				path := config.Info.Url.Opaque
 				if len(path) == 0 {
-					path = config.Url.Path
+					path = config.Info.Url.Path
 				}
 				dir := filepath.Dir(path)
 				file = strings.Replace(file, ".", dir, 1)

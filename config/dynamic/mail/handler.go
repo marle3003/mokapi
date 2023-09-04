@@ -16,11 +16,11 @@ type Handler struct {
 	Store        *Store
 }
 
-func NewHandler(config *Config, eventEmitter common.EventEmitter) *Handler {
+func NewHandler(config *Config, store *Store, eventEmitter common.EventEmitter) *Handler {
 	return &Handler{
 		config:       config,
 		eventEmitter: eventEmitter,
-		Store:        NewStore(config),
+		Store:        store,
 	}
 }
 

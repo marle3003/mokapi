@@ -46,6 +46,14 @@ type Attachment struct {
 	Data        []byte `json:"data"`
 }
 
+func (m *Message) Size() int64 {
+	size := int64(len(m.Body))
+	for _, a := range m.Attachments {
+		size += int64(len(a.Data))
+	}
+	return size
+}
+
 func (m *Message) readFrom(tc textproto.Reader) error {
 	header, err := tc.ReadMIMEHeader()
 	if err != nil {

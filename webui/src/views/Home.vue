@@ -91,7 +91,7 @@ function showImage(target: EventTarget | null) {
               <div class="card-body">
                 <router-link :to="{path: '/smtp'}">
                   <div class="card-title">SMTP</div>
-                  Test emails safely and no risk of spamming recipients' inbox
+                  Test SMTP emails safely and no risk of spamming mailboxes
                 </router-link>
               </div>
             </div> 
@@ -100,7 +100,7 @@ function showImage(target: EventTarget | null) {
     </section>
     <section class="feature">
       <div class="container">
-        <div class="row pb-4 pb-lg-5">
+        <div class="row pb-4 pb-lg-5 mb-lg-5">
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
               <h3>Control Everything</h3>
@@ -114,7 +114,7 @@ function showImage(target: EventTarget | null) {
             <img src="/controleverything.png" @click="showImage($event.target)" />
           </div>
         </div>
-        <div class="row pb-4 pb-lg-5">
+        <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
             <div class="text-lg-start text-center">
               <h3>Run Anywhere</h3>
@@ -128,30 +128,47 @@ function showImage(target: EventTarget | null) {
             <img src="/anywhere.png" @click="showImage($event.target)" />
           </div>
         </div>
-        <div class="row pb-4 pb-lg-5">
+        <div class="row pb-4 pb-lg-5mb-lg-5 mt-lg-5">
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
               <h3>Everything as Code</h3>
               <p>Get all benefits of everything as code such as version control and consistency</p>
+              <router-link :to="{ path: '/docs/configuration/configuration/overview' }">
+                <button type="button" class="btn btn-outline-primary btn-sm">Read more</button>
+              </router-link>
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
             <img src="/everythingcode.png" @click="showImage($event.target)" />
           </div>
         </div>
-        <div class="row pb-4 pb-lg-5">
+        <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
+            <div class="text-lg-start text-center">
+              <h3>Patch Configuration</h3>
+              <p>Patch configuration changes for mocking needs, rather than changing the original contract</p>
+              <router-link :to="{ path: 'docs/configuration/configuration/patching' }">
+                <button type="button" class="btn btn-outline-primary btn-sm">Read more</button>
+              </router-link>
+            </div>
+          </div>
+          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 order-lg-2">
+            <img src="/patching.png" @click="showImage($event.target)" />
+          </div>
+        </div>
+        <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
+          <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
               <h3>End-to-End Tests</h3>
               <p>Test only system that you are responsible and fake all others with Mokapi.</p>
             </div>
           </div>
-          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 order-lg-2">
+          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 order-lg-1">
             <img src="/systemtest.png" @click="showImage($event.target)" />
           </div>
         </div>
-        <div class="row pb-4 pb-lg-5">
-          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
+        <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
+          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-1">
             <div class="text-lg-start text-center">
               <h3>See what's going on</h3>
               <p>Quickly analyze and inspect all requests and responses in the dashboard to gather insights on how your mock APIs are used.</p>
@@ -160,29 +177,29 @@ function showImage(target: EventTarget | null) {
               </router-link>
             </div>
           </div>
-          <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
+          <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-2">
             <img src="/dashboard.png" @click="showImage($event.target)" />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5">
-          <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
+          <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
               <h3>Contract Testing</h3>
               <p>Fake interactions under test control between your software and systems that it collaborates.</p>
             </div>
           </div>
-          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
+          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-1">
             <img src="/systemcontracts.png" @click="showImage($event.target)" />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5">
-          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
+          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-1">
             <div class="text-lg-start text-center">
               <h3>Build better software faster</h3>
               <p>Good tests are deterministic and durable. Test your software if it is ready to release. Only your software, nothing else.</p>
             </div>
           </div>
-          <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 order-lg-1">
+          <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 order-lg-2">
             <img src="/betterfaster.png" class="float-lg-end mx-auto d-block" style="width: 80%" @click="showImage($event.target)" />
           </div>
         </div>

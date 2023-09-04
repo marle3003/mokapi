@@ -59,3 +59,59 @@ func TestResponses_UnmarshalYAML(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "Success", r.GetResponse(200).Description)
 }
+
+func TestSchemas_UnmarshalYAML(t *testing.T) {
+	testcases := []struct {
+		name string
+		data string
+		test func(t *testing.T, c *Config)
+	}{
+		{
+			name: "ref",
+			data: `components:
+  schemas:
+    $ref: 'schemas.yml'
+`,
+			test: func(t *testing.T, c *Config) {
+				require.Equal(t, "schemas.yml", c.Components.Schemas.Ref)
+			},
+		},
+		{
+			name: "value",
+			data: `components:
+  schemas:
+    Foo:
+      type: number
+`,
+			test: func(t *testing.T, c *Config) {
+				require.NotNil(t, c.Components.Schemas.Value)
+				foo := c.Components.Schemas.Value.Get("Foo")
+				require.NotNil(t, foo)
+				require.NotNil(t, foo.Value)
+				require.Equal(t, "number", foo.Value.Type)
+			},
+		},
+		{
+			name: "schema ref",
+			data: `components:
+  schemas:
+    Foo:
+      $ref: 'schemas.yml'
+`,
+			test: func(t *testing.T, c *Config) {
+				require.NotNil(t, c.Components.Schemas.Value)
+				foo := c.Components.Schemas.Value.Get("Foo")
+				require.NotNil(t, foo)
+				require.Equal(t, "schemas.yml", foo.Ref)
+			},
+		},
+	}
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			c := &Config{}
+			err := yaml.Unmarshal([]byte(tc.data), &c)
+			require.NoError(t, err)
+		})
+	}
+}

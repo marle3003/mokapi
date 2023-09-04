@@ -131,9 +131,9 @@ func (w *ConfigWatcher) ReadServices(services static.Services) {
 func (w *ConfigWatcher) addOrUpdate(c *common.Config) error {
 	w.m.Lock()
 
-	cfg, ok := w.configs[c.Url.String()]
+	cfg, ok := w.configs[c.Info.Url.String()]
 	if !ok {
-		w.configs[c.Url.String()] = c
+		w.configs[c.Info.Url.String()] = c
 		cfg = c
 		cfg.AddListener("ConfigWatcher", func(cfg *common.Config) {
 			w.configChanged(cfg)
@@ -155,16 +155,16 @@ func (w *ConfigWatcher) addOrUpdate(c *common.Config) error {
 func (w *ConfigWatcher) configChanged(cfg *common.Config) {
 	err := cfg.Parse(w)
 	if err != nil {
-		log.Errorf("parse error %v: %v", cfg.Url, err)
+		log.Errorf("parse error %v: %v", cfg.Info.Path(), err)
 		return
 	}
 
 	if err = cfg.Validate(); err != nil {
-		log.Infof("skipping file %v: %v", cfg.Url, err)
+		log.Infof("skipping file %v: %v", cfg.Info.Path(), err)
 		return
 	}
 
-	log.Debugf("processing %v", cfg.Url)
+	log.Debugf("processing %v", cfg.Info.Path())
 
 	for _, l := range w.listener {
 		l(cfg)

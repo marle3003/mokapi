@@ -65,12 +65,14 @@ pre{
 }
 
 .btn-primary {
-  background-color: var(--btn-primary-color-background);
-  border-color: var(--btn-primary-color-background);
+  border-color: var(--color-doc-link);
+  color: var(--color-doc-link);
+  background-color: rgba(0, 0, 0, 0);
 }
 .btn-primary:hover {
-  background-color: var(--btn-primary-color-background-hover);
-  border-color: var(--btn-primary-color-background-hover);
+  color: var(--color-doc-text-hover);
+  border-color: var( --color-doc-border-hover);
+  background-color: var(--color-doc-link);
 }
 
 [data-theme="light"] .doc .content .hljs{

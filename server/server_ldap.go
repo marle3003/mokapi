@@ -2,7 +2,6 @@ package server
 
 import (
 	"mokapi/config/dynamic/common"
-	"mokapi/config/dynamic/directory"
 	engine "mokapi/engine/common"
 	"mokapi/ldap"
 	"mokapi/runtime"
@@ -27,20 +26,17 @@ func NewLdapDirectoryManager(emitter engine.EventEmitter, store *cert.Store, app
 }
 
 func (m LdapDirectoryManager) UpdateConfig(c *common.Config) {
-	ldapConfig, ok := c.Data.(*directory.Config)
-	if !ok {
+	if !runtime.IsLdapConfig(c) {
 		return
 	}
 
-	m.app.AddLdap(ldapConfig)
-	d := directory.NewHandler(ldapConfig, m.eventEmitter)
-	d = runtime.NewLdapHandler(m.app.Monitor.Ldap, d)
+	li := m.app.AddLdap(c, m.eventEmitter)
 
-	if s, ok := m.servers[ldapConfig.Info.Name]; ok {
-		s.Handler = d
+	if s, ok := m.servers[li.Info.Name]; ok {
+		s.Handler = li.Handler(m.app.Monitor.Ldap)
 	} else {
-		s := &ldap.Server{Addr: ldapConfig.Address, Handler: d}
-		m.servers[ldapConfig.Info.Name] = s
+		s := &ldap.Server{Addr: li.Config.Address, Handler: li.Handler(m.app.Monitor.Ldap)}
+		m.servers[li.Info.Name] = s
 		go func() {
 			s.ListenAndServe()
 		}()

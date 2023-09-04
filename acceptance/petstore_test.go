@@ -19,7 +19,6 @@ type PetStoreSuite struct{ BaseSuite }
 
 func (suite *PetStoreSuite) SetupSuite() {
 	cfg := static.NewConfig()
-	cfg.Services = map[string]*static.Service{"swagger-petstore": {Http: &static.HttpService{Servers: []static.HttpServer{{Url: "http://127.0.0.1:22223"}}}}}
 	port, err := try.GetFreePort()
 	require.NoError(suite.T(), err)
 	cfg.Api.Port = fmt.Sprintf("%v", port)
@@ -36,12 +35,6 @@ func (suite *PetStoreSuite) TestApi() {
 		nil,
 		try.HasStatusCode(http.StatusOK),
 		try.HasHeader("Access-Control-Allow-Origin", "*"))
-}
-
-func (suite *PetStoreSuite) TestStaticServiceConfig() {
-	try.GetRequest(suite.T(), "http://127.0.0.1:22223/pet/1",
-		nil,
-		try.HasStatusCode(http.StatusOK))
 }
 
 func (suite *PetStoreSuite) TestJsFile() {
@@ -149,4 +142,15 @@ func (suite *PetStoreSuite) TestKafkaProduce() {
 	require.NoError(suite.T(), err)
 	require.Equal(suite.T(), "petstore.order-event", r.Topics[0].Name)
 	require.Equal(suite.T(), kafka.None, r.Topics[0].Partitions[0].ErrorCode)
+}
+
+func (suite *PetStoreSuite) TestEvents() {
+	try.GetRequest(suite.T(), "http://127.0.0.1:18080/pet/1",
+		map[string]string{"Accept": "application/json"},
+		try.HasStatusCode(http.StatusOK))
+
+	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%v/api/events?namespace=http&name=Swagger%%20Petstore", suite.cfg.Api.Port),
+		nil,
+		try.HasStatusCode(http.StatusOK),
+		try.BodyContains("Swagger Petstore"))
 }

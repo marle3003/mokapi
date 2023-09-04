@@ -11,10 +11,16 @@ import (
 	"testing"
 )
 
-type testHandler struct{}
+type testHandler struct {
+	f func(rw http.ResponseWriter, r *http.Request)
+}
 
 func (h *testHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	rw.WriteHeader(200)
+	if h.f != nil {
+		h.f(rw, r)
+	} else {
+		rw.WriteHeader(200)
+	}
 }
 
 func TestHttpServer_AddOrUpdate(t *testing.T) {
@@ -111,6 +117,28 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 				})
 				require.Error(t, err, "service 'foo' is already defined on path ''")
 			}},
+		{
+			name: "update service",
+			fn: func(t *testing.T, s *HttpServer, port string) {
+				err := s.AddOrUpdate(&HttpService{
+					Url:     mustParseUrl(""),
+					Handler: nil,
+					Name:    "foo",
+				})
+				require.NoError(t, err)
+
+				err = s.AddOrUpdate(&HttpService{
+					Url:     mustParseUrl(""),
+					Handler: &testHandler{},
+					Name:    "foo",
+				})
+				require.NoError(t, err)
+				r := httptest.NewRequest("GET", fmt.Sprintf("http://foo:%v/foo", port), nil)
+				rr := httptest.NewRecorder()
+				s.ServeHTTP(rr, r)
+				require.Equal(t, 200, rr.Code)
+			},
+		},
 	}
 
 	for _, data := range testdata {

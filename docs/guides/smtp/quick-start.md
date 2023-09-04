@@ -48,6 +48,6 @@ string body = "Using Mokapi SMTP server, you can send an email message from any 
 
 MailMessage message = new(from, to, subject, body);
 
-using SmtpClient client = new SmtpClient("127.0.0.1", 8025);
+using SmtpClient client = new SmtpClient("127.0.0.1", 25);
 client.Send(message);
 ```

@@ -34,11 +34,11 @@ type scriptHost struct {
 }
 
 func newScriptHost(file *config.Config, e *Engine) *scriptHost {
-	path := getScriptPath(file.Url)
+	path := getScriptPath(file.Info.Url)
 
 	sh := &scriptHost{
 		id:       1,
-		name:     path,
+		name:     file.Info.Path(),
 		engine:   e,
 		jobs:     make(map[int]*gocron.Job),
 		events:   make(map[string][]*eventHandler),
@@ -242,9 +242,9 @@ func (sh *scriptHost) compile() (common.Script, error) {
 	s := sh.file.Data.(*script.Script)
 	switch filepath.Ext(s.Filename) {
 	case ".js":
-		return js.New(getScriptPath(sh.file.Url), s.Code, sh, sh.engine.jsConfig)
+		return js.New(getScriptPath(sh.file.Info.Url), s.Code, sh, sh.engine.jsConfig)
 	case ".lua":
-		return lua.New(getScriptPath(sh.file.Url), s.Code, sh)
+		return lua.New(getScriptPath(sh.file.Info.Url), s.Code, sh)
 	default:
 		return nil, fmt.Errorf("unsupported script %v", s.Filename)
 	}

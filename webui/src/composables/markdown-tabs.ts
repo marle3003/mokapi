@@ -32,7 +32,6 @@ export function MarkdownItTabs(md: MarkdownIt, opts: Options) {
         for (let i = idx; i < tokens.length; i++) {
             const token = tokens[i];
             let tabName = getTabName(token);
-            console.log('tabName'+tabName)
             if (tabName == null || tabName == '') { 
                 break;
             }

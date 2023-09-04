@@ -192,7 +192,8 @@ func Test_Mail(t *testing.T) {
 			t.Parallel()
 
 			var received *smtp.Message
-			h := mail.NewHandler(&mail.Config{}, enginetest.NewEngineWithHandler(func(event string, args ...interface{}) []*common.Action {
+			c := &mail.Config{}
+			h := mail.NewHandler(c, mail.NewStore(c), enginetest.NewEngineWithHandler(func(event string, args ...interface{}) []*common.Action {
 				received = args[0].(*smtp.Message)
 				return nil
 			}))

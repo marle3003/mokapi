@@ -43,18 +43,16 @@ paths:
 				p := &testproviderMap{
 					files: map[string]*common.Config{
 						"/root.yml": {
-							Url:          mustParse("/root.yml"),
-							Raw:          []byte(root),
-							Data:         nil,
-							ProviderName: "",
-							Checksum:     []byte{},
+							Info:     common.ConfigInfo{Url: mustParse("/root.yml")},
+							Raw:      []byte(root),
+							Data:     nil,
+							Checksum: []byte{},
 						},
 						"/paths.yml": {
-							Url:          mustParse("/paths.yml"),
-							Raw:          []byte(path),
-							Data:         nil,
-							ProviderName: "",
-							Checksum:     []byte{},
+							Info:     common.ConfigInfo{Url: mustParse("/paths.yml")},
+							Raw:      []byte(path),
+							Data:     nil,
+							Checksum: []byte{},
 						},
 					},
 				}
@@ -80,11 +78,10 @@ paths:
 
 				path = strings.ReplaceAll(path, "foo", "bar")
 				f := &common.Config{
-					Url:          mustParse("/paths.yml"),
-					Raw:          []byte(path),
-					Data:         nil,
-					ProviderName: "",
-					Checksum:     []byte(path),
+					Info:     common.ConfigInfo{Url: mustParse("/paths.yml")},
+					Raw:      []byte(path),
+					Data:     nil,
+					Checksum: []byte(path),
 				}
 				p.ch <- f
 

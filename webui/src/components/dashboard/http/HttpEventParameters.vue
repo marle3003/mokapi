@@ -12,7 +12,7 @@ defineProps({
             <tr>
                 <th scope="col" class="text-left w-25">Name</th>
                 <th scope="col" class="text-left w-10">Type</th>
-                <th scope="col" class="text-left w-10">Specified</th>
+                <th scope="col" class="text-center w-10">OpenAPI</th>
                 <th scope="col" class="text-left">Value</th>
             </tr>
         </thead>
@@ -20,7 +20,7 @@ defineProps({
             <tr v-for="p in parameters">
                 <td>{{ p.name }}</td>
                 <td>{{ p.type }}</td>
-                <td>{{ p.value ? 'yes' : 'no' }}</td>
+                <td class="text-center">{{ p.value ? 'yes' : 'no' }}</td>
                 <td>{{ p.value ? p.value : p.raw }}</td>
             </tr>
         </tbody>

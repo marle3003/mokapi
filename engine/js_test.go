@@ -281,7 +281,7 @@ func TestJsOpen(t *testing.T) {
 		var barFile *common.Config
 
 		reader := &testReader{readFunc: func(cfg *common.Config) error {
-			switch s := cfg.Url.String(); {
+			switch s := cfg.Info.Url.String(); {
 			case strings.HasSuffix(s, "foo.js"):
 				cfg.Raw = []byte(foo)
 				return nil

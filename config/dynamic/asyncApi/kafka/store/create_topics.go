@@ -1,7 +1,6 @@
 package store
 
 import (
-	"fmt"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/kafka"
 	"mokapi/kafka/createTopics"
@@ -17,7 +16,7 @@ func (s *Store) createtopics(rw kafka.ResponseWriter, req *kafka.Request) error 
 			Subscribe: op,
 			Publish:   op,
 		}
-		config.Bindings.Kafka.Config["partitions"] = fmt.Sprintf("%v", t.NumPartitions)
+		config.Bindings.Kafka.Partitions = int(t.NumPartitions)
 
 		_, err := s.NewTopic(t.Name, config)
 		errCode := kafka.None

@@ -12,6 +12,7 @@ if (localStorage.getItem('theme')) {
 }
 
 document.documentElement.setAttribute('data-theme', theme);
+document.documentElement.setAttribute('style', 'color-scheme:'+theme)
 if (theme == 'light' ) {
   import('@/assets/github.css')
 } else{

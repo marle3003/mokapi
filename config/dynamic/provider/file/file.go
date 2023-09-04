@@ -212,10 +212,9 @@ func (p *Provider) readFile(path string) (*common.Config, error) {
 	}
 
 	return &common.Config{
-		Url:          u,
-		Raw:          data,
-		Checksum:     h.Sum(nil),
-		ProviderName: "file",
+		Info:     common.ConfigInfo{Url: u, Provider: "file"},
+		Raw:      data,
+		Checksum: h.Sum(nil),
 	}, nil
 }
 
@@ -252,7 +251,7 @@ func (p *Provider) readMokapiIgnore(path string) {
 	if err != nil {
 		return
 	}
-	if i, err := newIgnoreFile(b); err != nil {
+	if i, err := newIgnoreFile(f, b); err != nil {
 		log.Errorf("unable to read file %v: %v", f, err)
 	} else {
 		key := filepath.Clean(path)

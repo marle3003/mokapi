@@ -117,7 +117,7 @@ func TestScript(t *testing.T) {
 		}
 		err = s.Run()
 		r.NoError(t, err)
-		r.Equal(t, "deprecated module http: Please use mokapi/http instead", warn)
+		r.Equal(t, "deprecated module http: Please use mokapi/http instead: test", warn)
 		s.Close()
 	})
 }
@@ -159,7 +159,7 @@ func (th *testHost) OpenFile(file, hint string) (*config.Config, error) {
 		if err != nil {
 			return nil, err
 		}
-		return &config.Config{Raw: []byte(src), Url: mustParse(p)}, nil
+		return &config.Config{Raw: []byte(src), Info: config.ConfigInfo{Url: mustParse(p)}}, nil
 	}
 	if th.open != nil {
 		return th.open(file, hint)

@@ -80,6 +80,10 @@ export let clusters = [
                     }
                 ],
                 configs: {
+                    name: "Products",
+                    title: "Products",
+                    summary: "Summary",
+                    description: "description",
                     key: {type: "string"},
                     message: Product,
                     messageType: "application/json"

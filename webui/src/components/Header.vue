@@ -97,13 +97,6 @@ header {
   height: 100vh;
   z-index: 100;
 }
-.navbar-brand {
-    font-weight: 500;
-    color: var(--color-brand)
-}
-.navbar-brand:hover {
-    color: var(--color-brand-hover)
-}
 .version{
     text-decoration: none;
     font-size: 0.8rem;

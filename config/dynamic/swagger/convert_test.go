@@ -5,7 +5,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/config/dynamic/openapi/parameter"
-	"mokapi/config/dynamic/openapi/schema"
 	"net/http"
 	"testing"
 )
@@ -357,11 +356,11 @@ func TestConvert(t *testing.T) {
 			"definitions",
 			`{"swagger": "2.0", "definitions": {"Foo": {"type": "string"}, "Bar": {"type": "object","properties": {"title":{"type": "string"}}}}}`,
 			func(t *testing.T, config *openapi.Config) {
-				foo := config.Components.Schemas.Value.Get("Foo").(*schema.Ref)
+				foo := config.Components.Schemas.Get("Foo")
 				require.Equal(t, "string", foo.Value.Type)
-				bar := config.Components.Schemas.Value.Get("Bar").(*schema.Ref)
+				bar := config.Components.Schemas.Get("Bar")
 				require.Equal(t, "object", bar.Value.Type)
-				title := bar.Value.Properties.Value.Get("title").(*schema.Ref)
+				title := bar.Value.Properties.Value.Get("title")
 				require.Equal(t, "string", title.Value.Type)
 			},
 		},

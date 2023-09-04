@@ -4,13 +4,16 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/stretchr/testify/require"
+	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
+	common2 "mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/openapi/schema/schematest"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/runtime"
+	"net/url"
 	"testing"
 )
 
@@ -44,11 +47,10 @@ func TestKafkaClient_Produce(t *testing.T) {
 							asyncapitest.WithContentType("application/json"),
 							asyncapitest.WithPayload(schematest.New("string")),
 							asyncapitest.WithKey(schematest.New("string"))))))
-			s := store.New(config, enginetest.NewEngine())
 			app := runtime.New()
-			app.AddKafka(config, s)
+			info := app.AddKafka(getConfig(config), enginetest.NewEngine())
 			c := newKafkaClient(app)
-			tc.f(t, s, c)
+			tc.f(t, info.Store, c)
 		})
 	}
 }
@@ -57,4 +59,11 @@ func readBytes(b kafka.Bytes) []byte {
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(b)
 	return buf.Bytes()
+}
+
+func getConfig(c *asyncApi.Config) *common2.Config {
+	u, _ := url.Parse("foo.bar")
+	cfg := &common2.Config{Data: c}
+	cfg.Info.Url = u
+	return cfg
 }

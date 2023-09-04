@@ -224,12 +224,12 @@ func TestProvider(t *testing.T) {
 			},
 		},
 		{
-			name: "mokapiignore with re-include but parent is blocked",
+			name: "mokapiignore with re-include but excluding again",
 			fs: &mockFS{map[string]*entry{
 				".mokapiignore": {
 					name:  ".mokapiignore",
 					isDir: false,
-					data:  []byte("dir\n!dir/foo.txt"),
+					data:  []byte("dir\n!dir/foo.txt\ndir"),
 				},
 				"dir/foo.txt": {
 					name:  "foo.txt",
@@ -243,7 +243,7 @@ func TestProvider(t *testing.T) {
 			},
 		},
 		{
-			name: "mokapiignore all files with re-include",
+			name: "ignoring all files but re-include some",
 			fs: &mockFS{map[string]*entry{
 				".mokapiignore": {
 					name:  ".mokapiignore",
@@ -296,6 +296,45 @@ func TestProvider(t *testing.T) {
 				require.True(t, strings.HasSuffix(files[0].path, filepath.Join("dir", "foo.js")))
 			},
 		},
+		{
+			name: "mokapiignore all files but specific sub folder",
+			fs: &mockFS{map[string]*entry{
+				".mokapiignore": {
+					name:  ".mokapiignore",
+					isDir: false,
+					data:  []byte("**/*.*\n!/foo/bar/**"),
+				},
+				"/bar.txt": {
+					name:  "foo.txt",
+					isDir: false,
+					data:  []byte("foobar"),
+				},
+				"dir/bar.txt": {
+					name:  "foo.txt",
+					isDir: false,
+					data:  []byte("foobar"),
+				},
+				"foo/bar/foo.js": {
+					name:  "foo.js",
+					isDir: false,
+					data:  []byte("foobar"),
+				},
+				"foo/bar/dir/foo.js": {
+					name:  "foo.js",
+					isDir: false,
+					data:  []byte("foobar"),
+				},
+			}},
+			cfg: static.FileProvider{Directory: "./"},
+			test: func(t *testing.T, files []file) {
+				require.Len(t, files, 2)
+				sort.Slice(files, func(i, j int) bool {
+					return files[i].path < files[j].path
+				})
+				require.True(t, strings.HasSuffix(files[0].path, filepath.Join("bar", "dir", "foo.js")), "%v does not match suffix %v", files[1].path, filepath.Join("bar", "dir", "foo.js"))
+				require.True(t, strings.HasSuffix(files[1].path, filepath.Join("bar", "foo.js")), "%v does not match suffix %v", files[0].path, filepath.Join("bar", "foo.js"))
+			},
+		},
 	}
 	for _, tc := range testcases {
 		tc := tc
@@ -313,9 +352,9 @@ func TestProvider(t *testing.T) {
 			for {
 				select {
 				case c := <-ch:
-					path := c.Url.Path
+					path := c.Info.Url.Path
 					if len(path) == 0 {
-						path = c.Url.Opaque
+						path = c.Info.Url.Opaque
 						parent, _ := os.Getwd()
 						path = strings.Replace(path, parent+"\\", "", 1)
 					}
@@ -341,7 +380,7 @@ func TestProvider_File(t *testing.T) {
 				timeout := time.After(time.Second)
 				select {
 				case c := <-ch:
-					require.True(t, len(c.Url.String()) > 0, "url is set")
+					require.True(t, len(c.Info.Url.String()) > 0, "url is set")
 					require.True(t, len(c.Raw) > 0, "got data")
 				case <-timeout:
 					t.Fatal("timeout while waiting for file event")
@@ -359,8 +398,8 @@ func TestProvider_File(t *testing.T) {
 				for i := 0; i < 2; i++ {
 					select {
 					case c := <-ch:
-						got = append(got, c.Url.String())
-						require.True(t, len(c.Url.String()) > 0, "url is set")
+						got = append(got, c.Info.Url.String())
+						require.True(t, len(c.Info.Url.String()) > 0, "url is set")
 						require.True(t, len(c.Raw) > 0, "got data")
 					case <-timeout:
 						t.Fatal("timeout while waiting for file event")
@@ -386,8 +425,8 @@ func TestProvider_File(t *testing.T) {
 				for i := 0; i < 2; i++ {
 					select {
 					case c := <-ch:
-						got = append(got, c.Url.String())
-						require.True(t, len(c.Url.String()) > 0, "url is set")
+						got = append(got, c.Info.Url.String())
+						require.True(t, len(c.Info.Url.String()) > 0, "url is set")
 						require.True(t, len(c.Raw) > 0, "got data")
 					case <-timeout:
 						t.Fatal("timeout while waiting for file event")
@@ -425,7 +464,7 @@ func TestWatch_AddFile(t *testing.T) {
 	timeout := time.After(5 * time.Second)
 	select {
 	case c := <-ch:
-		require.True(t, len(c.Url.String()) > 0, "url is set")
+		require.True(t, len(c.Info.Url.String()) > 0, "url is set")
 		require.True(t, len(c.Raw) > 0, "got data")
 	case <-timeout:
 		t.Fatal("timeout while waiting for file event")
@@ -450,7 +489,7 @@ func TestWatch_Create_SubFolder_And_Add_File(t *testing.T) {
 	timeout := time.After(5 * time.Second)
 	select {
 	case c := <-ch:
-		require.True(t, len(c.Url.String()) > 0, "url is set")
+		require.True(t, len(c.Info.Url.String()) > 0, "url is set")
 		require.True(t, len(c.Raw) > 0, "got data")
 	case <-timeout:
 		t.Fatal("timeout while waiting for file event")

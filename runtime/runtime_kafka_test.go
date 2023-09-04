@@ -2,14 +2,16 @@ package runtime
 
 import (
 	"github.com/stretchr/testify/require"
+	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
-	"mokapi/config/dynamic/asyncApi/kafka/store"
+	"mokapi/config/dynamic/common"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/apiVersion"
 	"mokapi/kafka/kafkatest"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
+	"net/url"
 	"testing"
 )
 
@@ -18,7 +20,7 @@ func TestApp_AddKafka(t *testing.T) {
 
 	app := New()
 	c := asyncapitest.NewConfig(asyncapitest.WithInfo("foo", "", ""))
-	app.AddKafka(c, store.New(c, enginetest.NewEngine()))
+	app.AddKafka(getConfig(c), enginetest.NewEngine())
 
 	require.Contains(t, app.Kafka, "foo")
 	err := events.Push("bar", events.NewTraits().WithNamespace("kafka").WithName("foo"))
@@ -30,7 +32,7 @@ func TestApp_AddKafka_Topic(t *testing.T) {
 
 	app := New()
 	c := asyncapitest.NewConfig(asyncapitest.WithInfo("foo", "", ""), asyncapitest.WithChannel("bar"))
-	app.AddKafka(c, store.New(c, enginetest.NewEngine()))
+	app.AddKafka(getConfig(c), enginetest.NewEngine())
 
 	require.Contains(t, app.Kafka, "foo")
 	err := events.Push("bar", events.NewTraits().WithNamespace("kafka").WithName("foo").With("path", "bar"))
@@ -43,7 +45,17 @@ func TestKafkaHandler(t *testing.T) {
 		require.True(t, ok)
 		require.NotNil(t, v)
 	})
-	h := NewKafkaHandler(New().Monitor.Kafka, hf)
+	h := &KafkaHandler{
+		kafka: New().Monitor.Kafka,
+		next:  hf,
+	}
 
 	h.ServeMessage(kafkatest.NewRecorder(), kafkatest.NewRequest("", 1.0, &apiVersion.Request{}))
+}
+
+func getConfig(c *asyncApi.Config) *common.Config {
+	u, _ := url.Parse("foo.bar")
+	cfg := &common.Config{Data: c}
+	cfg.Info.Url = u
+	return cfg
 }

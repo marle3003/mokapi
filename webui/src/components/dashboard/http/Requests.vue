@@ -1,28 +1,32 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import { useEvents } from '@/composables/events';
-import { type PropType, onUnmounted } from 'vue';
+import { type PropType, onUnmounted, computed } from 'vue';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { usePrettyHttp } from '@/composables/http';
 
 const props = defineProps({
     service: { type: Object as PropType<HttpService> },
-    path: { type: String, required: false}
+    path: { type: String, required: false},
+    method: { type: String, required: false}
 })
 
 const labels = []
 if (props.service){
-    labels.push({name: 'name', value: props.service!.name})
+    labels.push({ name: 'name', value: props.service!.name })
     if (props.path){
-        labels.push({name: 'path', value: props.path})
+        labels.push({ name: 'path', value: props.path })
+    }
+    if (props.method) {
+        labels.push({ name: 'method', value: props.method })
     }
 }
 
 const router = useRouter()
-const {fetch} = useEvents()
-const {events, close} = fetch('http', ...labels)
-const {format, duration} = usePrettyDates()
-const {formatStatusCode} = usePrettyHttp()
+const { fetch } = useEvents()
+const { events, close } = fetch('http', ...labels)
+const { format, duration } = usePrettyDates()
+const { formatStatusCode } = usePrettyHttp()
 
 function goToRequest(event: ServiceEvent){
     router.push({

@@ -10,7 +10,7 @@ const nav = inject<DocConfig>('nav')!
 const openSidebar = ref(false);
 
 const route = useRoute()
-let canonical = 'https://mokapi.io/' + <string>route.params.level1
+let canonical = 'https://mokapi.io/docs/' + <string>route.params.level1
 
 let level1 = <string>route.params.level1
 level1 = Object.keys(nav).find(key => key.toLowerCase() == level1.split('-').join(' ').toLowerCase())!
@@ -104,7 +104,7 @@ function toUrlPath(s: string): string {
         </button>
       </div>
       <div class="d-flex">
-        <div class="text-white sidebar d-none d-md-block" :class="openSidebar ? 'open': ''" id="sidebar">
+        <div class="text-white sidebar d-none d-md-block" :class="openSidebar ? 'open' : ''" id="sidebar">
           <ul class="nav nav-pills flex-column mb-auto pe-3">
             <li class="nav-item" v-for="(v, k) of nav[level1]">
               <p v-if="(typeof v != 'string')" class="chapter-text">{{ k }}</p>

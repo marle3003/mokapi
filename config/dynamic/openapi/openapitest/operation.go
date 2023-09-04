@@ -92,6 +92,15 @@ func newParam(name string, required bool, t parameter.Location, opts ...ParamOpt
 	return p
 }
 
+func WithOperationInfo(summary, description, operationId string, deprecated bool) OperationOptions {
+	return func(o *openapi.Operation) {
+		o.Summary = summary
+		o.Description = description
+		o.OperationId = operationId
+		o.Deprecated = deprecated
+	}
+}
+
 type RequestBodyOptions func(o *openapi.RequestBody)
 
 func WithRequestContent(mediaType string, opts ...ContentOptions) RequestBodyOptions {

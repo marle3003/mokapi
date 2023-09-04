@@ -169,7 +169,7 @@ func (s *Script) loadNativeModule(f func(engine.Host, *goja.Runtime) interface{}
 
 func (s *Script) loadDeprecatedNativeModule(f func(engine.Host, *goja.Runtime) interface{}, msg string) ModuleLoader {
 	return func() goja.Value {
-		s.host.Warn(msg)
+		s.host.Warn(fmt.Sprintf("%v: %v", msg, s.filename))
 		m := f(s.host, s.runtime)
 		return mapToJSValue(s.runtime, m)
 	}

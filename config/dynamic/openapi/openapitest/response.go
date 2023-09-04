@@ -50,6 +50,12 @@ func WithContent(mediaType string, opts ...ContentOptions) ResponseOptions {
 	}
 }
 
+func WithExample(example interface{}) ContentOptions {
+	return func(c *openapi.MediaType) {
+		c.Example = example
+	}
+}
+
 func WithSchema(s *schema.Schema) ContentOptions {
 	return func(c *openapi.MediaType) {
 		c.Schema = &schema.Ref{Value: s}

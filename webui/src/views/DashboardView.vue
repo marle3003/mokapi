@@ -28,6 +28,8 @@ import Message from '@/components/Message.vue'
 import '@/assets/dashboard.css'
 import { onUnmounted } from 'vue';
 
+import { useMeta } from '@/composables/meta'
+
 const appInfo = useAppInfo()
 onUnmounted(() => {
     appInfo.close()
@@ -48,7 +50,8 @@ function isInitLoading() {
     return appInfo.isLoading && !appInfo.data
 }
 
-document.title = 'Dashbboard | mokapi.io'
+const description = `Quickly analyze and inspect all requests and responses in the dashboard to gather insights on how your mock APIs are used.`
+useMeta('Dashboard | mokapi.io', description, "https://mokapi.io/smtp")
 </script>
 
 <template>

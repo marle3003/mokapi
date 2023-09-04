@@ -11,10 +11,12 @@ func init() {
 }
 
 type Config struct {
-	ConfigPath    string `yaml:"-" json:"-"`
-	Info          Info   `yaml:"info" json:"info"`
-	Server        string `yaml:"server" json:"server"`
-	MaxRecipients int    `yaml:"maxRecipients,omitempty" json:"maxRecipients,omitempty"`
+	ConfigPath    string   `yaml:"-" json:"-"`
+	Info          Info     `yaml:"info" json:"info"`
+	Server        string   `yaml:"server" json:"server"`
+	Servers       []Server `yaml:"servers" json:"servers"`
+	Imap          string   `yaml:"imap" json:"imap"`
+	MaxRecipients int      `yaml:"maxRecipients,omitempty" json:"maxRecipients,omitempty"`
 	//MaxMessageBytes   int       `yaml:"maxMessageBytes,omitempty" json:"maxMessageBytes,omitempty"`
 	//AllowInsecureAuth bool      `yaml:"allowInsecureAuth,omitempty" json:"allowInsecureAuth,omitempty"`
 	Mailboxes []MailboxConfig `yaml:"mailboxes" json:"mailboxes"`
@@ -25,6 +27,11 @@ type Info struct {
 	Name        string `yaml:"title" json:"title"`
 	Description string `yaml:"description,omitempty" json:"description,omitempty"`
 	Version     string `yaml:"version" json:"version"`
+}
+
+type Server struct {
+	Url         string `yaml:"url" json:"url"`
+	Description string `yaml:"description" json:"description"`
 }
 
 type RuleAction string

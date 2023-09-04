@@ -104,7 +104,7 @@ func (m *requireModule) loadFileModule(modPath string) (goja.Value, error) {
 			return nil, err
 		}
 		if filepath.Ext(modPath) == ".json" {
-			return m.loadModule(f.Url.String(), fmt.Sprintf(jsonParseFunc, template.JSEscapeString(string(f.Raw))))
+			return m.loadModule(f.Info.Url.String(), fmt.Sprintf(jsonParseFunc, template.JSEscapeString(string(f.Raw))))
 		} else if filepath.Ext(modPath) == ".yaml" {
 			result := make(map[string]interface{})
 			err := yaml.Unmarshal(f.Raw, result)
@@ -113,9 +113,9 @@ func (m *requireModule) loadFileModule(modPath string) (goja.Value, error) {
 			}
 			return m.runtime.ToValue(result), nil
 		}
-		path := f.Url.Path
+		path := f.Info.Url.Path
 		if len(path) == 0 {
-			path = f.Url.Opaque
+			path = f.Info.Url.Opaque
 		}
 		return m.loadModule(path, string(f.Raw))
 	} else {
