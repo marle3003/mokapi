@@ -21,11 +21,18 @@ func (h *Handler) Select(mailbox string, ctx context.Context) (*imap.Selected, e
 	c := imap.ClientFromContext(ctx)
 	mb := c.Session["mailbox"].(*Mailbox)
 	c.Session["selected"] = mailbox
+
+	firstUnseen := mb.FirstUnseen()
+	unseen := uint32(0)
+	if firstUnseen != nil {
+		unseen = firstUnseen.SeqNum
+	}
+
 	return &imap.Selected{
-		Flags:       []imap.Flag{imap.FlagSeen},
+		Flags:       []imap.Flag{imap.FlagAnswered, imap.FlagFlagged, imap.FlagDeleted, imap.FlagSeen, imap.FlagDraft},
 		NumMessages: uint32(len(mb.Messages)),
-		NumRecent:   0,
-		FirstUnseen: 1,
+		NumRecent:   uint32(mb.NumRecent()),
+		FirstUnseen: unseen,
 		UIDValidity: mb.uidValidity,
 		UIDNext:     mb.messageSequenceNumber,
 	}, nil
@@ -49,9 +56,29 @@ func (h *Handler) List(ref, pattern string, ctx context.Context) ([]imap.ListEnt
 func (h *Handler) Fetch(req *imap.FetchRequest, res imap.FetchResponse, ctx context.Context) error {
 	c := imap.ClientFromContext(ctx)
 	mb := c.Session["mailbox"].(*Mailbox)
-	msg := mb.Messages[0]
+	m := mb.Messages[0]
+
 	w := res.NewMessage(1)
-	w.WriteInternalDate(msg.Time)
-	w.WriteRFC822Size(msg.Size())
+	w.WriteInternalDate(m.Time)
+	w.WriteRFC822Size(m.Size())
+	w.WriteUID(1)
+	var values []string
+	for _, field := range req.Body.HeaderFields {
+		switch field {
+		case "date":
+			values = append(values, m.Time.Format(imap.DateTimeLayout))
+		case "subject":
+			values = append(values, m.Subject)
+		//case "from":
+		//	values = append(values, fmt.Sprintf("%s <%s>", m.From))
+		case "to":
+		case "cc":
+		case "message-id":
+		case "in-reply-to":
+		default:
+			continue
+		}
+	}
+
 	return nil
 }

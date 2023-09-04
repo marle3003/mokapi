@@ -6,16 +6,17 @@ import (
 	"strings"
 )
 
-type FetchOptions uint
+type FetchAttributes uint
 
 const (
-	FetchFlags FetchOptions = 1 << iota
+	FetchFlags FetchAttributes = 1 << iota
 	FetchEnvelope
 	FetchInternalDate
 	FetchRFC822Header
 	FetchRFC822Text
 	FetchRFC822Size
 	FetchBodyStructure
+	FetchUID
 )
 
 type SequenceSet []Sequence
@@ -31,8 +32,8 @@ type FetchBody struct {
 }
 
 type FetchRequest struct {
-	Sequence SequenceSet
-	Options  FetchOptions
+	Sequence   SequenceSet
+	Attributes FetchAttributes
 	// nil means everything
 	Body *FetchBody
 }
@@ -50,15 +51,12 @@ func (c *conn) handleFetch(tag, param string) error {
 	if err != nil {
 		return err
 	}
-	opts, err := parseFetchOptions(args[1])
+	req, err := parseFetch(args[1])
 	if err != nil {
 		return err
 	}
 
-	req := &FetchRequest{
-		Sequence: seq,
-		Options:  opts,
-	}
+	req.Sequence = seq
 	res := fetchResponse{}
 	if err = c.handler.Fetch(req, &res, c.ctx); err != nil {
 		return err
@@ -94,21 +92,8 @@ func parseFetchSequence(s string) (SequenceSet, error) {
 	}, nil
 }
 
-func parseFetchOptions(s string) (FetchOptions, error) {
-	var attr FetchOptions
-	switch s {
-	case "FAST":
-		attr = FetchFlags | FetchInternalDate | FetchRFC822Size
-	case "ALL":
-		attr = FetchFlags | FetchInternalDate | FetchRFC822Size | FetchEnvelope
-	case "FULL":
-		attr = FetchFlags | FetchInternalDate | FetchRFC822Size | FetchEnvelope | FetchBodyStructure
-	}
-	return attr, nil
-}
-
-func (o FetchOptions) Has(opt FetchOptions) bool {
-	return o&opt == opt
+func (a FetchAttributes) Has(attr FetchAttributes) bool {
+	return a&attr == attr
 }
 
 func (c *conn) writeFetchResponse(res *fetchResponse) error {

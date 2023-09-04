@@ -30,6 +30,19 @@ type Envelope struct {
 	MessageId string
 }
 
+type Header struct {
+	Date        time.Time
+	Subject     string
+	From        []Address
+	ReplyTo     []Address
+	To          []Address
+	Cc          []Address
+	Bcc         []Address
+	InReplyTo   string
+	MessageId   string
+	ContentType string
+}
+
 type Address struct {
 	Name    string
 	Mailbox string
@@ -59,7 +72,7 @@ func (m *message) WriteUID(uid uint32) {
 }
 
 func (m *message) WriteInternalDate(date time.Time) {
-	m.sb.WriteString(fmt.Sprintf(" INTERNALDATE \"%v\"", date.Format(dateTimeLayout)))
+	m.sb.WriteString(fmt.Sprintf(" INTERNALDATE \"%v\"", date.Format(DateTimeLayout)))
 }
 
 func (m *message) WriteRFC822Size(size int64) {
@@ -68,7 +81,7 @@ func (m *message) WriteRFC822Size(size int64) {
 
 func (m *message) WriteEnvelope(env *Envelope) {
 	m.sb.WriteString(" ENVELOPE (")
-	m.sb.WriteString(fmt.Sprintf("\"%v\"", env.Date.Format(dateTimeLayout)))
+	m.sb.WriteString(fmt.Sprintf("\"%v\"", env.Date.Format(DateTimeLayout)))
 	m.sb.WriteString(fmt.Sprintf(" \"%v\"", env.Subject))
 	m.writeAddress(env.From)
 	/*
@@ -95,6 +108,22 @@ func (m *message) WriteEnvelope(env *Envelope) {
 	}
 	m.sb.WriteString(fmt.Sprintf(" \"%v\"", env.MessageId))
 	m.sb.WriteString(")")
+}
+
+func (m *message) WriteBody(body *FetchBody, values []string) {
+	m.sb.WriteString(" BODY[HEADER.FIELDS (")
+	var sb strings.Builder
+	for i, field := range body.HeaderFields {
+		if i > 0 {
+			m.sb.WriteString(" ")
+		}
+		m.sb.WriteString(field)
+
+		sb.WriteString(fmt.Sprintf("%s=%s\r\n", field, values[i]))
+	}
+	m.sb.WriteString(")]")
+	m.sb.WriteString(fmt.Sprintf(" {%v}\r\n", sb.Len()))
+	m.sb.WriteString(sb.String())
 }
 
 func (m *message) writeAddress(addrList []Address) {

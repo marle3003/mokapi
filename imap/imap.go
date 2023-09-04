@@ -7,7 +7,7 @@ import (
 
 const (
 	untagged       = "*"
-	dateTimeLayout = "_2-Jan-2006 15:04:05 -0700"
+	DateTimeLayout = "_2-Jan-2006 15:04:05 -0700"
 )
 
 type ConnState uint8
