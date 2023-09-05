@@ -62,6 +62,13 @@ else {
 const router = createRouter({
   history: createWebHistory(base),
   scrollBehavior: (to, from, savedPosition) => {
+    if (to.hash) {
+      // if anchor is set go to element
+      return {
+        el: to.hash,
+        behavior: 'smooth',
+      }
+    }
     // always scroll to top
     return { top: 0 }
   },

@@ -314,4 +314,10 @@ pre {
 .box.warning .box-heading {
   background-color: var(--color-yellow-shadow);
 }
+.anchor {
+  display: block;
+  position: relative;
+  top: -64px;
+  visibility: hidden;
+}
 </style>

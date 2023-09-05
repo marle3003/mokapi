@@ -1,0 +1,158 @@
+---
+title: Example Kafka with AsyncAPI
+description: Mocking a Kafka topic and use it with a C# consumer and producer.
+---
+
+# Mocking Kafka using AsyncAPI 
+
+In Mokapi we can create a Kafka topic with an AsyncAPI specification file. This example is
+intended as a starters guide so that you can quickly and easily create your own mocked Kafka 
+topic.
+
+## Create AsyncAPI file
+
+Let's start by creating a file named `kafka.yml` with the following content.
+
+```yaml
+asyncapi: '2.0.0'
+info:
+  title: Kafka Cluster
+  description: A kafka test cluster
+  version: '1.0'
+  contact:
+    name: Mokapi
+    url: https://mokapi.io
+    email: mokapi@mokapi.io
+servers:
+  broker:
+    url: 127.0.0.1:9092
+    protocol: kafka
+channels:
+  users:
+    subscribe:
+      message:
+        $ref: '#/components/messages/user'
+    publish:
+      message:
+         $ref: '#/components/messages/user'
+    bindings:
+      kafka:
+        partitions: 2
+
+components:
+  messages:
+    user:
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/user'
+      bindings:
+        kafka:
+          key:
+            type: string
+
+  schemas:
+    user:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+      required:
+        - id
+        - name
+        - email
+```
+
+This creates a Kafka topic `users` with two partitions. The content type of the message's payload 
+is `application/json` and the object must have the properties `id`, `name` and `email`.
+
+``` box=info
+When Mokapi receives an invalid message it will return the error `CORRUPT_MESSAGE`and logs an
+error, for instance `kafka: invalid message received for topic users: missing required field name...`
+```
+
+## Create a Dockerfile
+
+Next create a `Dockerfile` to configure Mokapi to use the AsyncAPI specification file
+
+```dockerfile
+FROM mokapi/mokapi:latest
+
+COPY ./kafka.yaml /demo/
+
+CMD ["--Providers.File.Directory=/demo"]
+```
+
+## Start Mokapi
+
+Now we can start our container and verify in Mokapi's Dashboard (http://localhost:8080) our mocked Kafka topic
+
+```
+docker run -p 9092:9092 -p 8080:8080 --rm -it $(docker build -q .)
+```
+
+## Create a Kafka Producer
+
+In this example we create a .NET Producer and send a message to our Kafka topic. After execution,
+you can see the message in Mokapi's Dashboard.
+
+```csharp
+public class Producer
+{
+    public static async Task Run()
+    {
+        var config = new ProducerConfig { BootstrapServers = "localhost:9092" };
+
+        using var producer = new ProducerBuilder<string, string>(config).Build();
+        var topic = new TopicPartition("users", new Partition(1));
+
+        var serializeOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        };
+        
+        var result = await producer.ProduceAsync(topic, new Message<string, string> {
+            Key = "alice",
+            Value = JsonSerializer.Serialize(new {
+                Id = "dd5742d1-82ad-4d42-8960-cb21bd02f3e7",
+                Name = "Alice",
+                Email = "alice@foo.bar",
+            }, serializeOptions),
+        });
+    }
+}
+```
+
+## Create a Kafka Consumer
+
+Now we can use a .NET Consumer to consume our first sent message.
+
+```csharp
+public class Consumer
+{
+    public static void Run()
+    {
+        var config = new ConsumerConfig
+        {
+            BootstrapServers = "localhost:9092",
+            GroupId = "foo",
+            AutoOffsetReset = AutoOffsetReset.Earliest
+        };
+
+        using var consumer = new ConsumerBuilder<Ignore, string>(config).Build();
+        consumer.Subscribe("users");
+
+        CancellationTokenSource cts = new CancellationTokenSource();
+
+        while (true)
+        {
+            var result = consumer.Consume(cts.Token);
+            Console.WriteLine($"Consumed message '{result.Message.Value}' offset: {result.TopicPartitionOffset.Offset} partition: {result.TopicPartition.Partition}");
+        }
+    }
+}
+```

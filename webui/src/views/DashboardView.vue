@@ -121,7 +121,7 @@ useMeta('Dashboard | mokapi.io', description, "https://mokapi.io/smtp")
                     <div class="card-group">
                         <kafka-message-card v-if="isServiceAvailable('kafka')" />
                     </div>
-                    <div class="card-group"  v-if="isServiceAvailable('http')">
+                    <div class="card-group"  v-if="isServiceAvailable('kafka')">
                         <kafka-clusters-card />
                     </div>
                 </div>

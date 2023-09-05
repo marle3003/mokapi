@@ -1,0 +1,52 @@
+asyncapi: '2.0.0'
+info:
+  title: Kafka Cluster
+  description: A kafka test cluster
+  version: '1.0'
+  contact:
+    name: Mokapi
+    url: https://mokapi.io
+    email: mokapi@mokapi.io
+servers:
+  broker:
+    url: 127.0.0.1:9092
+    protocol: kafka
+channels:
+  users:
+    subscribe:
+      message:
+        $ref: '#/components/messages/user'
+    publish:
+      message:
+         $ref: '#/components/messages/user'
+    bindings:
+      kafka:
+        partitions: 2
+
+components:
+  messages:
+    user:
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/user'
+      bindings:
+        kafka:
+          key:
+            type: string
+
+  schemas:
+    user:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+      required:
+        - id
+        - name
+        - email
+

@@ -32,7 +32,7 @@ func (c *kafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 	}
 
 	ch := config.Channels[t.Name]
-	if ch.Value == nil {
+	if ch == nil || ch.Value == nil {
 		return nil, fmt.Errorf("invalid topic configuration")
 	}
 
