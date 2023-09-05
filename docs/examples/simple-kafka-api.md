@@ -127,6 +127,8 @@ public class Producer
 }
 ```
 
+<img src="/docs/examples/simple-kafka-example.png" alt="Mokapi Kafka Dashboard" title="Mokapi Kafka Dashboard" />
+
 ## Create a Kafka Consumer
 
 Now we can use a .NET Consumer to consume our first sent message.

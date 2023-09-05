@@ -44,6 +44,11 @@
                     OpenAPI with Mokapi Script
                   </router-link>
                 </li>
+                <li>
+                  <router-link :to="{ path: '/docs/examples/simple-kafka-api' }">
+                    Mocking Kafka using AsyncAPI
+                  </router-link>
+                </li>
               </ul>
             </div>
           </div>
