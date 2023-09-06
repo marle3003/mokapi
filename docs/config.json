@@ -84,7 +84,8 @@
     }
   },
   "Examples": {
-    "Simple HTTP API": "examples/simple-http-api.md"
+    "Simple HTTP API": "examples/simple-http-api.md",
+    "Simple Kafka API": "examples/simple-kafka-api.md"
   },
   "References": {
     "Declarative Data": "references/declarative-data.md",

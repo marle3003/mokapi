@@ -1,6 +1,7 @@
 package store
 
 import (
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"mokapi/kafka"
 	"mokapi/kafka/produce"
@@ -35,8 +36,10 @@ func (s *Store) produce(rw kafka.ResponseWriter, req *kafka.Request) error {
 				} else {
 					baseOffset, err := p.Write(rp.Record)
 					if err != nil {
-						log.Errorf("kafka: produce corrupt message for topic %v: %v", rt.Name, err)
+						s := fmt.Sprintf("kafka: invalid message received for topic %v: %v", rt.Name, err)
+						log.Errorf(s)
 						resPartition.ErrorCode = kafka.CorruptMessage
+						resPartition.ErrorMessage = s
 					} else {
 						resPartition.BaseOffset = baseOffset
 						if withMonitor {

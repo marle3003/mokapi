@@ -69,7 +69,7 @@ schema:
     color:
       type: string
       enum: [red, green, blue]
-    user: 
+    user:
       type: object
       properties:
         id:
@@ -111,25 +111,26 @@ schema:
 
 Supported formats:
 
-- [Person](#person)
-- [Auth](#auth)
-- [Beer](#beer)
-- [Car](#car)
-- [Words](#words)
-- [Foods](#foods)
-- [Misc](#misc)
-- [Colors](#colors)
-- [Internet](#internet)
-- [Date/Time](#datetime)
-- [App](#app)
-- [Animals](#animals)
-- [Emojis](#emojis)
-- [Language](#language)
-- [Numbers](#numbers)
-- [String](#string)
-- [File](#file)
+- [Person](/docs/references/declarative-data.md#person)
+- [Auth](/docs/references/declarative-data.md#auth)
+- [Beer](/docs/references/declarative-data.md#beer)
+- [Car](/docs/references/declarative-data.md#car)
+- [Words](/docs/references/declarative-data.md#words)
+- [Foods](/docs/references/declarative-data.md#foods)
+- [Misc](/docs/references/declarative-data.md#misc)
+- [Colors](/docs/references/declarative-data.md#colors)
+- [Internet](/docs/references/declarative-data.md#internet)
+- [Date/Time](/docs/references/declarative-data.md#datetime)
+- [App](/docs/references/declarative-data.md#app)
+- [Animals](/docs/references/declarative-data.md#animals)
+- [Emojis](/docs/references/declarative-data.md#emojis)
+- [Language](/docs/references/declarative-data.md#language)
+- [Numbers](/docs/references/declarative-data.md#numbers)
+- [String](/docs/references/declarative-data.md#string)
+- [File](/docs/references/declarative-data.md#file)
 
-**Person** <span id="person"></span>
+<span class="anchor" id="person"></span>
+**Person**
 - {name}
 - {firstname}
 - {lastname}

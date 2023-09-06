@@ -18,6 +18,9 @@ export function MarkdownItLinks(md: MarkdownIt, opts: Options) {
                         if (attr[0] == 'href' && attr[1].endsWith('.md')){
                             attr[1] = replace(attr[1])
                         }
+                        else if (attr[0] == 'href' && attr[1].includes('.md#')){
+                            attr[1] = replace(attr[1])
+                        }
                     }
                 }
               })

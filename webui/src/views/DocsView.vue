@@ -4,10 +4,14 @@ import { useRoute } from 'vue-router';
 import { useMarkdown } from '@/composables/markdown'
 import { useMeta } from '@/composables/meta'
 import PageNotFound from './PageNotFound.vue';
+import Footer from '@/components/Footer.vue'
+import { Modal } from 'bootstrap'
 
 const files =  import.meta.glob('/src/assets/docs/**/*.md', {as: 'raw', eager: true})
 const nav = inject<DocConfig>('nav')!
 const openSidebar = ref(false);
+const dialog = ref<Modal>()
+const imageUrl = ref<string>()
 
 const route = useRoute()
 let canonical = 'https://mokapi.io/docs/' + <string>route.params.level1
@@ -77,6 +81,7 @@ onMounted(() => {
     }
   })
   useMeta(metadata.title || level3, metadata.description, canonical.toLowerCase())
+  dialog.value = new Modal('#imageDialog', {})
 })
 function toggleSidebar() {
   openSidebar.value = !openSidebar.value
@@ -92,6 +97,14 @@ function formatParam(label: any): string {
 }
 function toUrlPath(s: string): string {
   return s.split(' ').join('-').split('/').join('-').replace('&', '%26')
+}
+function showImage(target: EventTarget | null) {
+  if (!target || !(target instanceof HTMLImageElement)) {
+    return
+  }
+  const element = target as HTMLImageElement
+  imageUrl.value = element.src
+  dialog.value?.show()
 }
 </script>
 
@@ -118,12 +131,22 @@ function toUrlPath(s: string): string {
           </ul>
         </div>
         <div style="flex: 1;max-width:700px;margin-bottom: 3rem;">
-          <div v-html="content" class="content" v-if="content" />
+          <div v-html="content" class="content" v-if="content" @click="showImage($event.target)" />
           <page-not-found v-if="!content" />
         </div>
       </div>
     </div>
   </main>
+  <Footer></Footer>
+  <div class="modal fade" id="imageDialog" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-body">
+          <img :src="imageUrl" style="width:100%" />
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style>
@@ -188,6 +211,13 @@ function toUrlPath(s: string): string {
 
 .content a:hover{
   color: var(--color-doc-link-active);
+}
+
+.content img {
+  max-width:100%;
+  max-height:100%;
+  cursor: pointer;
+  margin: auto auto;
 }
 
 table {
@@ -313,5 +343,11 @@ pre {
 }
 .box.warning .box-heading {
   background-color: var(--color-yellow-shadow);
+}
+.anchor {
+  display: block;
+  position: relative;
+  top: -64px;
+  visibility: hidden;
 }
 </style>
