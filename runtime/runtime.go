@@ -11,6 +11,7 @@ import (
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"mokapi/version"
+	"sync"
 )
 
 const sizeEventStore = 20
@@ -23,6 +24,7 @@ type App struct {
 	Smtp    map[string]*SmtpInfo
 
 	Monitor *monitor.Monitor
+	m       sync.Mutex
 }
 
 func New() *App {
@@ -33,6 +35,9 @@ func New() *App {
 }
 
 func (a *App) AddHttp(c *common.Config) *HttpInfo {
+	a.m.Lock()
+	defer a.m.Unlock()
+
 	if len(a.Http) == 0 {
 		a.Http = make(map[string]*HttpInfo)
 	}
@@ -56,6 +61,9 @@ func (a *App) AddHttp(c *common.Config) *HttpInfo {
 }
 
 func (a *App) AddKafka(c *common.Config, emitter common2.EventEmitter) *KafkaInfo {
+	a.m.Lock()
+	defer a.m.Unlock()
+
 	if len(a.Kafka) == 0 {
 		a.Kafka = make(map[string]*KafkaInfo)
 	}
@@ -81,6 +89,9 @@ func (a *App) AddKafka(c *common.Config, emitter common2.EventEmitter) *KafkaInf
 }
 
 func (a *App) AddSmtp(c *common.Config) *SmtpInfo {
+	a.m.Lock()
+	defer a.m.Unlock()
+
 	if len(a.Smtp) == 0 {
 		a.Smtp = make(map[string]*SmtpInfo)
 	}
@@ -102,6 +113,9 @@ func (a *App) AddSmtp(c *common.Config) *SmtpInfo {
 }
 
 func (a *App) AddLdap(c *common.Config, emitter common2.EventEmitter) *LdapInfo {
+	a.m.Lock()
+	defer a.m.Unlock()
+
 	if len(a.Ldap) == 0 {
 		a.Ldap = make(map[string]*LdapInfo)
 	}

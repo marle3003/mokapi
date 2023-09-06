@@ -19,8 +19,7 @@ type PetStoreSuite struct{ BaseSuite }
 
 func (suite *PetStoreSuite) SetupSuite() {
 	cfg := static.NewConfig()
-	port, err := try.GetFreePort()
-	require.NoError(suite.T(), err)
+	port := try.GetFreePort()
 	cfg.Api.Port = fmt.Sprintf("%v", port)
 	cfg.Providers.File.Directory = "./petstore"
 	suite.initCmd(cfg)

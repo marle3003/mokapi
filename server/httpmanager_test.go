@@ -29,8 +29,7 @@ func TestHttpServers_Monitor(t *testing.T) {
 	m := NewHttpManager(&engine.Engine{}, store, app)
 	defer m.Stop()
 
-	port, err := try.GetFreePort()
-	require.NoError(t, err)
+	port := try.GetFreePort()
 	url := fmt.Sprintf("http://localhost:%v", port)
 	c := openapitest.NewConfig("3.0", openapitest.WithInfo("test", "1.0", ""), openapitest.WithServer(url, ""))
 	openapitest.AppendEndpoint("/foo", c, openapitest.WithOperation("get", openapitest.NewOperation()))
@@ -65,8 +64,7 @@ func TestHttpManager_Update(t *testing.T) {
 		{
 			"app contains both config",
 			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
-				port, err := try.GetFreePort()
-				require.NoError(t, err)
+				port := try.GetFreePort()
 				url := fmt.Sprintf("http://localhost:%v", port)
 				foo := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: url + "/foo"}}}
 				bar := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "bar"}, Servers: []*openapi.Server{{Url: url + "/bar"}}}
@@ -79,8 +77,7 @@ func TestHttpManager_Update(t *testing.T) {
 		},
 		{"add new host http://:X",
 			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
-				port, err := try.GetFreePort()
-				require.NoError(t, err)
+				port := try.GetFreePort()
 				c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: fmt.Sprintf("http://:%v", port)}}}
 				m.Update(&common.Config{Data: c, Info: common.ConfigInfo{Url: MustParseUrl("foo.yml")}})
 
@@ -112,8 +109,7 @@ func TestHttpManager_Update(t *testing.T) {
 			}},
 		{"add on same path",
 			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
-				port, err := try.GetFreePort()
-				require.NoError(t, err)
+				port := try.GetFreePort()
 				url := fmt.Sprintf("http://:%v", port)
 				c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: url + "/foo"}}}
 				m.Update(&common.Config{Data: c, Info: common.ConfigInfo{Url: MustParseUrl("foo.yml")}})
@@ -129,8 +125,7 @@ func TestHttpManager_Update(t *testing.T) {
 			}},
 		{"patching server",
 			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
-				port, err := try.GetFreePort()
-				require.NoError(t, err)
+				port := try.GetFreePort()
 
 				c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}}
 				m.Update(&common.Config{Data: c, Info: common.ConfigInfo{Url: MustParseUrl("foo.yml")}})

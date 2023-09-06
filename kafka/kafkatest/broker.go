@@ -30,10 +30,7 @@ func NewBroker(opts ...BrokerOptions) *Broker {
 	for _, o := range opts {
 		o(c)
 	}
-	p, err := try.GetFreePort()
-	if err != nil {
-		panic(err)
-	}
+	p := try.GetFreePort()
 	addr := fmt.Sprintf("127.0.0.1:%v", p)
 
 	cfg := asyncapitest.NewConfig(asyncapitest.WithServer("test", "kafka", addr))
@@ -46,7 +43,7 @@ func NewBroker(opts ...BrokerOptions) *Broker {
 	}
 
 	go func() {
-		err = b.server.ListenAndServe()
+		err := b.server.ListenAndServe()
 		if err != nil && err != kafka.ErrServerClosed {
 			panic(err)
 		}

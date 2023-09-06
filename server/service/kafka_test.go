@@ -12,8 +12,7 @@ import (
 
 func TestKafkaBroker(t *testing.T) {
 	//t.Parallel()
-	port, err := try.GetFreePort()
-	require.NoError(t, err)
+	port := try.GetFreePort()
 	addr := fmt.Sprintf("127.0.0.1:%v", port)
 	called := false
 	handler := kafka.HandlerFunc(func(rw kafka.ResponseWriter, req *kafka.Request) {
@@ -28,6 +27,7 @@ func TestKafkaBroker(t *testing.T) {
 	client := kafkatest.NewClient(addr, "test")
 	defer client.Close()
 	r, err := client.ApiVersion(3, &apiVersion.Request{})
+	require.NoError(t, err)
 	require.Equal(t, kafka.None, r.ErrorCode)
 	require.True(t, called, "handler should be called")
 
