@@ -16,8 +16,7 @@ import (
 )
 
 func TestKafkaServer(t *testing.T) {
-	port, err := try.GetFreePort()
-	require.NoError(t, err)
+	port := try.GetFreePort()
 	addr := fmt.Sprintf("127.0.0.1:%v", port)
 	c := asyncapitest.NewConfig(
 		asyncapitest.WithTitle("foo"),
@@ -53,8 +52,7 @@ func TestKafkaServer_Update(t *testing.T) {
 		{
 			"add another broker",
 			func(t *testing.T, m *KafkaManager) {
-				port, err := try.GetFreePort()
-				require.NoError(t, err)
+				port := try.GetFreePort()
 				addr := fmt.Sprintf("127.0.0.1:%v", port)
 				cfg := asyncapitest.NewConfig(
 					asyncapitest.WithTitle("foo"),
@@ -62,8 +60,7 @@ func TestKafkaServer_Update(t *testing.T) {
 				)
 				m.UpdateConfig(&common.Config{Data: cfg, Info: common.ConfigInfo{Url: MustParseUrl("foo.yml")}})
 
-				port, err = try.GetFreePort()
-				require.NoError(t, err)
+				port = try.GetFreePort()
 				addr = fmt.Sprintf("127.0.0.1:%v", port)
 				cfg.Servers["broker"] = asyncApi.Server{
 					Url:      addr,
@@ -86,8 +83,7 @@ func TestKafkaServer_Update(t *testing.T) {
 		{
 			"add broker",
 			func(t *testing.T, m *KafkaManager) {
-				port, err := try.GetFreePort()
-				require.NoError(t, err)
+				port := try.GetFreePort()
 				addr := fmt.Sprintf("127.0.0.1:%v", port)
 				cfg := asyncapitest.NewConfig(
 					asyncapitest.WithTitle("foo"),
@@ -115,8 +111,7 @@ func TestKafkaServer_Update(t *testing.T) {
 		{
 			"remove broker",
 			func(t *testing.T, m *KafkaManager) {
-				port, err := try.GetFreePort()
-				require.NoError(t, err)
+				port := try.GetFreePort()
 				addr := fmt.Sprintf("127.0.0.1:%v", port)
 				cfg := asyncapitest.NewConfig(
 					asyncapitest.WithServer("", "kafka", addr),
@@ -144,8 +139,7 @@ func TestKafkaServer_Update(t *testing.T) {
 		{
 			"change broker name",
 			func(t *testing.T, m *KafkaManager) {
-				port, err := try.GetFreePort()
-				require.NoError(t, err)
+				port := try.GetFreePort()
 				addr := fmt.Sprintf("127.0.0.1:%v", port)
 				cfg := asyncapitest.NewConfig(
 					asyncapitest.WithTitle("foo"),
@@ -178,8 +172,7 @@ func TestKafkaServer_Update(t *testing.T) {
 		{
 			"add topic",
 			func(t *testing.T, m *KafkaManager) {
-				port, err := try.GetFreePort()
-				require.NoError(t, err)
+				port := try.GetFreePort()
 				addr := fmt.Sprintf("127.0.0.1:%v", port)
 				cfg := asyncapitest.NewConfig(
 					asyncapitest.WithTitle("foo"),
@@ -220,8 +213,7 @@ func TestKafkaServer_Update(t *testing.T) {
 		{
 			"remove topic",
 			func(t *testing.T, m *KafkaManager) {
-				port, err := try.GetFreePort()
-				require.NoError(t, err)
+				port := try.GetFreePort()
 				addr := fmt.Sprintf("127.0.0.1:%v", port)
 				cfg := asyncapitest.NewConfig(
 					asyncapitest.WithTitle("foo"),

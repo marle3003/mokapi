@@ -12,6 +12,7 @@ import (
 	"mokapi/server/cert"
 	"mokapi/smtp"
 	"net/url"
+	"sync"
 )
 
 type MailServer interface {
@@ -23,6 +24,7 @@ type SmtpManager struct {
 	app          *runtime.App
 	eventEmitter engine.EventEmitter
 	certStore    *cert.Store
+	m            sync.Mutex
 }
 
 func NewSmtpManager(app *runtime.App, eventEmitter engine.EventEmitter, store *cert.Store) *SmtpManager {
@@ -38,6 +40,9 @@ func (m *SmtpManager) UpdateConfig(c *common.Config) {
 	if !runtime.IsSmtpConfig(c) {
 		return
 	}
+
+	m.m.Lock()
+	defer m.m.Unlock()
 
 	cfg := m.app.AddSmtp(c)
 

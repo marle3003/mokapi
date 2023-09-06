@@ -113,8 +113,7 @@ func TestServer_Auth(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			p, err := try.GetFreePort()
-			require.NoError(t, err)
+			p := try.GetFreePort()
 			s := &imap.Server{
 				Addr:    fmt.Sprintf(":%v", p),
 				Handler: tc.handler(t),

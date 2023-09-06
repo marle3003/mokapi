@@ -69,10 +69,7 @@ func TestServer(t *testing.T) {
 }
 
 func newTestServer(h Handler) (*Server, Client) {
-	p, err := try.GetFreePort()
-	if err != nil {
-		panic(err)
-	}
+	p := try.GetFreePort()
 	addr := fmt.Sprintf("127.0.0.1:%v", p)
 
 	s := &Server{

@@ -11,6 +11,7 @@ import (
 	"mokapi/server/service"
 	"net/http"
 	"net/url"
+	"sync"
 )
 
 type HttpManager struct {
@@ -20,6 +21,7 @@ type HttpManager struct {
 	certStore    *cert.Store
 	app          *runtime.App
 	services     static.Services
+	m            sync.Mutex
 }
 
 func NewHttpManager(emitter common.EventEmitter, store *cert.Store, app *runtime.App) *HttpManager {
@@ -32,18 +34,7 @@ func NewHttpManager(emitter common.EventEmitter, store *cert.Store, app *runtime
 }
 
 func (m *HttpManager) AddService(name string, u *url.URL, h http.Handler, isInternal bool) error {
-	server, found := m.servers[u.Port()]
-	if !found {
-		if u.Scheme == "https" {
-			server = service.NewHttpServerTls(u.Port(), m.certStore)
-		} else {
-			server = service.NewHttpServer(u.Port())
-		}
-
-		m.servers[u.Port()] = server
-		server.Start()
-	}
-
+	server := m.getOrCreateServer(u)
 	err := server.AddOrUpdate(&service.HttpService{
 		Url:        u,
 		Handler:    h,
@@ -82,6 +73,26 @@ func (m *HttpManager) Stop() {
 	for _, server := range m.servers {
 		server.Stop()
 	}
+}
+
+func (m *HttpManager) getOrCreateServer(u *url.URL) *service.HttpServer {
+	m.m.Lock()
+	defer m.m.Unlock()
+
+	server, found := m.servers[u.Port()]
+	if found {
+		return server
+	}
+
+	if u.Scheme == "https" {
+		server = service.NewHttpServerTls(u.Port(), m.certStore)
+	} else {
+		server = service.NewHttpServer(u.Port())
+	}
+
+	m.servers[u.Port()] = server
+	server.Start()
+	return server
 }
 
 func parseUrl(s string) (u *url.URL, err error) {

@@ -8,6 +8,7 @@ import (
 	"mokapi/runtime/monitor"
 	"mokapi/server/service"
 	"net/url"
+	"sync"
 )
 
 type clusters map[string]*cluster
@@ -21,6 +22,7 @@ type KafkaManager struct {
 	clusters clusters
 	emitter  common.EventEmitter
 	app      *runtime.App
+	m        sync.Mutex
 }
 
 func NewKafkaManager(emitter common.EventEmitter, app *runtime.App) *KafkaManager {
@@ -47,6 +49,9 @@ func (m *KafkaManager) addOrUpdateCluster(cfg *runtime.KafkaInfo) {
 }
 
 func (m *KafkaManager) getOrCreateCluster(cfg *runtime.KafkaInfo) *cluster {
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	c, ok := m.clusters[cfg.Info.Name]
 	if !ok {
 		log.Infof("adding new kafka cluster '%v'", cfg.Info.Name)

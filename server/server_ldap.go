@@ -1,11 +1,14 @@
 package server
 
 import (
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/common"
 	engine "mokapi/engine/common"
 	"mokapi/ldap"
 	"mokapi/runtime"
 	"mokapi/server/cert"
+	"sync"
 )
 
 type LdapDirectoryManager struct {
@@ -14,6 +17,7 @@ type LdapDirectoryManager struct {
 	eventEmitter engine.EventEmitter
 	certStore    *cert.Store
 	app          *runtime.App
+	m            sync.Mutex
 }
 
 func NewLdapDirectoryManager(emitter engine.EventEmitter, store *cert.Store, app *runtime.App) *LdapDirectoryManager {
@@ -30,6 +34,9 @@ func (m LdapDirectoryManager) UpdateConfig(c *common.Config) {
 		return
 	}
 
+	m.m.Lock()
+	defer m.m.Unlock()
+
 	li := m.app.AddLdap(c, m.eventEmitter)
 
 	if s, ok := m.servers[li.Info.Name]; ok {
@@ -38,7 +45,10 @@ func (m LdapDirectoryManager) UpdateConfig(c *common.Config) {
 		s := &ldap.Server{Addr: li.Config.Address, Handler: li.Handler(m.app.Monitor.Ldap)}
 		m.servers[li.Info.Name] = s
 		go func() {
-			s.ListenAndServe()
+			err := s.ListenAndServe()
+			if !errors.Is(err, ldap.ErrServerClosed) {
+				log.Errorf("unable to start ldap server %v: %v", s.Addr, err)
+			}
 		}()
 	}
 }

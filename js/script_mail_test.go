@@ -198,8 +198,7 @@ func Test_Mail(t *testing.T) {
 				return nil
 			}))
 
-			port, err := try.GetFreePort()
-			r.NoError(t, err)
+			port := try.GetFreePort()
 			server := &smtp.Server{Addr: fmt.Sprintf("127.0.0.1:%v", port), Handler: h}
 			go server.ListenAndServe()
 			defer server.Close()
