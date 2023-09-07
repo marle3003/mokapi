@@ -12,7 +12,7 @@
 }
 .home h3 {
   line-height: 1.6;
-  font-size: 1.3rem;
+  font-size: 1.5rem;
 }
 .home .hero-title {
   margin-top: 5rem;
@@ -63,13 +63,13 @@
   margin-right: 1rem;
 }
 .home button {
-  border-color: var(--color-doc-link);
-  color: var(--color-doc-link);
+  border-color: var(--color-button-link);
+  color: var(--color-button-link);
 }
 .home button:hover {
-  color: var(--color-doc-text-hover);
-  border-color: var( --color-doc-border-hover);
-  background-color: var(--color-doc-link);
+  color: var(--color-button-text-hover);
+  border-color: var( --color-button-border-hover);
+  background-color: var(--color-button-link);
 }
 .home .hero-title button {
   margin-right: 1rem;
@@ -85,7 +85,17 @@
   margin-left: 0;
 }
 .home .card a {
+  color: var(--color-nav-link);
   text-decoration: none;
+}
+.home .card:hover {
+  background-color: var(--color-background-light);
+  border-color: var(--color-background-light);
+  color: var(--color-nav-link-active) !important;
+  cursor: pointer;
+}
+.home .card:hover a {
+  color: var(--color-nav-link-active);
 }
 .home .card-title {
   font-size: 1.3rem;

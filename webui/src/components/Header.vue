@@ -103,17 +103,17 @@ header {
     color: var(--color-version)
 }
 .nav-link {
-    color: var(--color-link);
+    color: var(--color-header-link);
 }
 .nav-link:hover {
-    color: var(--color-nav-link-active);
-    border-bottom: 4px solid var(--color-nav-link-active);
+    color: var(--color-header-link-active);
+    border-bottom: 4px solid var(--color-header-link-active);
     margin-bottom: -4px;
     text-decoration: none;
 }
 .nav-link.router-link-active{
-  color: var(--color-link-active);
-  border-bottom: 4px solid var(--color-nav-link-active);
+  color: var(--color-header-link-active);
+  border-bottom: 4px solid var(--color-header-link-active);
   margin-bottom: -4px;
   text-shadow: var(--shadow-nav-link-active);
 }

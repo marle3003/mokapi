@@ -2,6 +2,7 @@
     --color-background: #323743;
     --color-background-mute:  #2e2e31;
     --color-background-soft: #282b33;
+    --color-background-light: #393a40;
 
     --color-border: #282b33;
 
@@ -22,13 +23,21 @@
     --color-brand: #d3d4d5;
     --color-brand-hover: #eabaabff;
 
-    --color-link: #d3d4d5;
-    --color-link-active: #eabaabff;
+    --color-header-link: rgb(211, 212, 213);
+    --color-header-link-active: #eabaabff;
+
+    --color-link: #eabaabff;
+    --color-link-active: #a5899fff;
 
     --color-doc-link: #eabaabff;
     --color-doc-link-active: #a5899fff;
     --color-doc-text-hover: #353e5bff;
     --color-doc-border-hover: #a5899fff;
+
+    --color-button-link: #eabaabff;
+    --color-button-link-active: #a5899fff;
+    --color-button-text-hover: #353e5bff;
+    --color-button-border-hover: #a5899fff;
 
     --color-nav-link: #d3d4d5;
     --color-nav-link-active: #eabaabff;
@@ -54,24 +63,33 @@
 }
 
 [data-theme="light"] {
-    --color-background: #eff0f6;
+    --color-background: #fff;
     --color-background-mute: #dfe2ec;
-    --color-background-soft: #cfd3e3;
-    --color-border: #cfd3e3;
+    --color-background-soft: #f6f8fcff;
+    --color-background-light: #dfe2ec;
+    --color-border: #f6f8fcff;
 
     --color-blue-cold: #cb8080;
 
-    --color-text: #353e5bff;
-    --color-link: #494c68ff;
-    --color-link-active: #cb8080;
+    --color-header-link: rgb(3,6,11);
+    --color-header-link-active: #eabaabff;
+
+    --color-text: rgb(3,6,11);
+    --color-link: #cb8080;
+    --color-link-active: #b54a4a;
     --color-nav-link: #494c68ff;
     --color-nav-link-active: #cb8080;
-    --shadow-nav-link-active: var(--color-nav-link-active) 1px 0px 10px;
+    --shadow-nav-link-active: var(--color-header-link-active) 1px 0px 10px;
 
     --color-doc-link: #cb8080;
     --color-doc-link-active: #b54a4a;
     --color-doc-text-hover: #b54a4a;
-    --color-doc-border-hover: #a5899fff;
+    --color-doc-border-hover: rgb(22, 19, 21);
+
+    --color-button-link: #cb8080;
+    --color-button-link-active: #cb8080;
+    --color-button-text-hover: #fff;
+    --color-button-border-hover: #cb8080;
 
     --color-tabs-background: #FFF;
 

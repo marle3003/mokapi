@@ -168,6 +168,7 @@ function showImage(target: EventTarget | null) {
 }
 .sidebar {
   position: sticky;
+  top: 4rem;
   align-self: flex-start;
   width: 340px;
   padding-top: 2rem;
@@ -273,7 +274,7 @@ table.selectable tbody tr:hover {
 }
 
 .nav .nav-link.active {
-  color: var(--color-link-active);
+  color: var(--color-nav-link-active);
 }
 
 .chapter {

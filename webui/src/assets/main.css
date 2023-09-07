@@ -11,11 +11,12 @@ body {
   color: var(--color-text);
   background: var(--color-background);
   line-height: 1.6;
-  font-family: 'Poppins', sans-serif;
+  font-family: -apple-system, "system-ui", Inter, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI emoji";
   font-size: 1.0rem;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  height: 100vh;
 }
 
 @media only screen and (max-width: 600px)  {
@@ -27,27 +28,33 @@ body {
 #app {
   display: flex;
   flex-direction: column;
+  min-height: 100%;
+}
+
+main {
+  flex: 1;
 }
 
 h1 {
-  font-size: 2rem;
-  font-weight: 600;
+  font-size: 2.3rem;
+  font-weight: 700;
 }
 
 h2 {
-  font-size: 1.5rem;
-  font-weight: 500;
+  font-size: 1.7rem;
+  font-weight: 700;
   margin-block-start: 2.5rem;
   margin-block-end: 1rem;
 }
 
 h3 {
   font-size: 1.25rem;
-  font-weight: 500;
+  font-weight: 700;
 }
 
 a {
   color: var(--color-link);
+  text-decoration: none;
 }
 
 a:hover{

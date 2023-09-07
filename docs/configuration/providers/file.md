@@ -52,6 +52,11 @@ providers:
     directory: /foobar
 ```
 
+``` box=tip
+You can define multiple file names or directory by separating them with system's path separator
+(Unix=':', Windows=';')
+```
+
 ### Ignoring Files and Directories
 You can create a `.mokapiignore` file in your directory to tell
 Mokapi which files and directories to ignore. The structure of this
