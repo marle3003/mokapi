@@ -25,7 +25,7 @@ components:
             type: string
         nullable:
           type: boolean
-        example:
+        example: {}
         enum:
           type: array
           items:

@@ -156,6 +156,9 @@ func (c *schemaConverter) getSchema(s *schema.Ref) *schemaInfo {
 		result.Properties = &Properties{}
 		for it := s.Value.Properties.Value.Iter(); it.Next(); {
 			prop := c.getSchema(it.Value().(*schema.Ref))
+			if prop == nil {
+				continue
+			}
 			prop.Name = it.Key().(string)
 			result.Properties.Set(prop.Name, prop)
 		}
