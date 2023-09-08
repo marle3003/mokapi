@@ -82,7 +82,7 @@ func (g *Group) Commit(topic string, partition int, offset int64) {
 		g.Commits[topic] = topicCommits
 	}
 	topicCommits[partition] = offset
-	log.Infof("kafka: group %v committed for partition %v offset %v", g.Name, partition, offset)
+	log.Infof("kafka: group %v committed offset %v topic=%v partition=%v", g.Name, offset, topic, partition)
 }
 
 func (g *Group) Offset(topic string, partition int) int64 {

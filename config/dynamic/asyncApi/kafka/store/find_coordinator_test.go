@@ -40,14 +40,31 @@ func TestFindCoordinator(t *testing.T) {
 			"unsupported key type",
 			func(t *testing.T, s *store.Store) {
 				rr := kafkatest.NewRecorder()
-				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &findCoordinator.Request{
+				r := kafkatest.NewRequest("kafkatest", 3, &findCoordinator.Request{
 					Key:     "foo",
-					KeyType: findCoordinator.KeyTypeGroup,
-				}))
-
+					KeyType: 10,
+				})
+				s.ServeMessage(rr, r)
 				res, ok := rr.Message.(*findCoordinator.Response)
 				require.True(t, ok)
 				require.Equal(t, kafka.UnknownServerError, res.ErrorCode)
+				require.Equal(t, "unsupported request key_type=10", res.ErrorMessage)
+			},
+		},
+		{
+			"unknown broker",
+			func(t *testing.T, s *store.Store) {
+				rr := kafkatest.NewRecorder()
+				r := kafkatest.NewRequest("kafkatest", 3, &findCoordinator.Request{
+					Key:     "foo",
+					KeyType: findCoordinator.KeyTypeGroup,
+				})
+				r.Host = "127.0.0.1"
+				s.ServeMessage(rr, r)
+				res, ok := rr.Message.(*findCoordinator.Response)
+				require.True(t, ok)
+				require.Equal(t, kafka.UnknownServerError, res.ErrorCode)
+				require.Equal(t, "broker 127.0.0.1 not found", res.ErrorMessage)
 			},
 		},
 	}

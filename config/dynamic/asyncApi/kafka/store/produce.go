@@ -33,24 +33,21 @@ func (s *Store) produce(rw kafka.ResponseWriter, req *kafka.Request) error {
 				resPartition.ErrorCode = kafka.UnknownTopicOrPartition
 				resPartition.ErrorMessage = s
 			} else if err := validateProducer(topic, ctx); err != nil {
-				s := fmt.Sprintf("kafka: invalid producer clientId '%v': %v", ctx.ClientId, err)
-				log.Errorf(s)
 				resPartition.ErrorCode = kafka.UnknownServerError
-				resPartition.ErrorMessage = s
+				resPartition.ErrorMessage = fmt.Sprintf("invalid producer clientId '%v' for topic %v: %v", ctx.ClientId, topic.Name, err)
+				log.Errorf("kafka Produce: %v", resPartition.ErrorMessage)
 			} else {
 				p := topic.Partition(int(rp.Index))
 				if p == nil {
-					s := fmt.Sprintf("kafka: produce unknown partition %v", rp.Index)
-					log.Errorf(s)
 					resPartition.ErrorCode = kafka.UnknownServerError
-					resPartition.ErrorMessage = s
+					resPartition.ErrorMessage = fmt.Sprintf("unknown partition %v", rp.Index)
+					log.Errorf("kafka Produce: %v", resPartition.ErrorMessage)
 				} else {
 					baseOffset, err := p.Write(rp.Record)
 					if err != nil {
-						s := fmt.Sprintf("kafka: invalid message received for topic %v: %v", rt.Name, err)
-						log.Errorf(s)
 						resPartition.ErrorCode = kafka.CorruptMessage
-						resPartition.ErrorMessage = s
+						resPartition.ErrorMessage = fmt.Sprintf("invalid message received for topic %v: %v", rt.Name, err)
+						log.Errorf("kafka Produce: %v", resPartition.ErrorMessage)
 					} else {
 						resPartition.BaseOffset = baseOffset
 						if withMonitor {

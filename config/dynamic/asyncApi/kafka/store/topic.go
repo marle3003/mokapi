@@ -49,6 +49,13 @@ func newTopic(name string, config *asyncApi.Channel, brokers Brokers, logger Log
 		t.Partitions = append(t.Partitions, part)
 	}
 
+	if config.Subscribe != nil {
+		t.Subscribe = Operation{
+			GroupId:  config.Subscribe.Bindings.Kafka.GroupId,
+			ClientId: config.Subscribe.Bindings.Kafka.ClientId,
+		}
+	}
+
 	if config.Publish != nil {
 		t.Publish = Operation{
 			GroupId:  config.Publish.Bindings.Kafka.GroupId,

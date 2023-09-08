@@ -255,11 +255,11 @@ func TestProduce(t *testing.T) {
 				require.Equal(t, "foo", res.Topics[0].Name)
 				require.Equal(t, kafka.UnknownServerError, res.Topics[0].Partitions[0].ErrorCode, "expected kafka error UnknownServerError")
 				require.Equal(t, int64(0), res.Topics[0].Partitions[0].BaseOffset)
-				require.Equal(t, "kafka: invalid producer clientId 'kafkatest': value 'kafkatest' does not match pattern, expected schema type=string pattern=^[A-Z]{10}[0-5]$", res.Topics[0].Partitions[0].ErrorMessage)
+				require.Equal(t, "invalid producer clientId 'kafkatest' for topic foo: value 'kafkatest' does not match pattern, expected schema type=string pattern=^[A-Z]{10}[0-5]$", res.Topics[0].Partitions[0].ErrorMessage)
 
 				require.Equal(t, 1, len(hook.Entries))
 				require.Equal(t, logrus.ErrorLevel, hook.LastEntry().Level)
-				require.Equal(t, "kafka: invalid producer clientId 'kafkatest': value 'kafkatest' does not match pattern, expected schema type=string pattern=^[A-Z]{10}[0-5]$", hook.LastEntry().Message)
+				require.Equal(t, "kafka Produce: invalid producer clientId 'kafkatest' for topic foo: value 'kafkatest' does not match pattern, expected schema type=string pattern=^[A-Z]{10}[0-5]$", hook.LastEntry().Message)
 			},
 		},
 		{

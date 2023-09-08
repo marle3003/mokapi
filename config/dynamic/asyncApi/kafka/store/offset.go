@@ -22,12 +22,12 @@ func (s *Store) offset(rw kafka.ResponseWriter, req *kafka.Request) error {
 				Timestamp: rp.Timestamp,
 			}
 			if topic == nil {
-				log.Errorf("kafka: offsetCommit unknown topic %v, client=%v", topic, ctx.ClientId)
+				log.Errorf("kafka Offset: unknown topic %v, client=%v", topic, ctx.ClientId)
 				resPartition.ErrorCode = kafka.UnknownTopicOrPartition
 			} else {
 				partition := topic.Partition(int(rp.Index))
 				if partition == nil {
-					log.Errorf("kafka: offsetCommit unknown partition %v, topic=%v, client=%v", rp.Index, rt.Name, ctx.ClientId)
+					log.Errorf("kafka Offset: unknown partition %v, topic=%v, client=%v", rp.Index, rt.Name, ctx.ClientId)
 					resPartition.ErrorCode = kafka.UnknownTopicOrPartition
 				} else {
 					if req.Header.ApiVersion > 0 {
@@ -41,7 +41,7 @@ func (s *Store) offset(rw kafka.ResponseWriter, req *kafka.Request) error {
 							// look up the offsets for the given partitions by timestamp. The returned offset
 							// for each partition is the earliest offset for which the timestamp is greater
 							// than or equal to the given timestamp.
-							log.Errorf("kafka: offset only supports timestamp=latest|earliest")
+							log.Errorf("kafka Offset: only supporting timestamp=latest|earliest")
 							resPartition.ErrorCode = kafka.UnknownServerError
 						}
 					} else {
@@ -50,7 +50,7 @@ func (s *Store) offset(rw kafka.ResponseWriter, req *kafka.Request) error {
 						} else if rp.Timestamp == kafka.Latest && rp.MaxNumOffsets == 1 {
 							resPartition.OldStyleOffsets = append(resPartition.OldStyleOffsets, partition.Offset())
 						} else {
-							log.Errorf("kafka: offset only supports timestamp=latest|earliest and max_num_offsets=1")
+							log.Errorf("kafka Offset: only supporting timestamp=latest|earliest and max_num_offsets=1")
 							resPartition.ErrorCode = kafka.UnknownServerError
 						}
 					}
