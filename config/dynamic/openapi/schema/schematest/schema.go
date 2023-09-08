@@ -134,3 +134,21 @@ func WithXml(xml *schema.Xml) SchemaOptions {
 		s.Xml = xml
 	}
 }
+
+func WithPattern(p string) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Pattern = p
+	}
+}
+
+func WithEnum(e []interface{}) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Enum = e
+	}
+}
+
+func WithMinLength(n int) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.MinLength = n
+	}
+}

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"io/ioutil"
 	"math"
@@ -492,7 +491,7 @@ func parseNumber(i interface{}, s *Schema) (f float64, err error) {
 func parseString(v interface{}, schema *Schema) (string, error) {
 	s, ok := v.(string)
 	if !ok {
-		return "", fmt.Errorf("could not parse %v as string, expected %v", v, s)
+		return "", fmt.Errorf("could not parse %v as string, expected %v", v, schema)
 	}
 
 	return s, validateString(s, schema)
@@ -537,11 +536,65 @@ func toObject(m *sortedmap.LinkedHashMap) (interface{}, error) {
 }
 
 func toString(i interface{}) string {
-	b, err := json.Marshal(i)
-	if err != nil {
-		log.Errorf("error in schema.toString(): %v", err)
+	//b, err := json.Marshal(i)
+	//if err != nil {
+	//	log.Errorf("error in schema.toString(): %v", err)
+	//}
+	//return string(b)
+	var sb strings.Builder
+	switch o := i.(type) {
+	case []interface{}:
+		sb.WriteRune('[')
+		for i, v := range o {
+			if i > 0 {
+				sb.WriteString(", ")
+			}
+			sb.WriteString(toString(v))
+		}
+		sb.WriteRune(']')
+	case map[string]interface{}:
+		sb.WriteRune('{')
+		for key, val := range o {
+			if sb.Len() > 1 {
+				sb.WriteString(", ")
+			}
+			sb.WriteString(fmt.Sprintf("%v: %v", key, toString(val)))
+		}
+		sb.WriteRune('}')
+	case string, int, int32, int64, float32, float64:
+		sb.WriteString(fmt.Sprintf("%v", o))
+	case *sortedmap.LinkedHashMap:
+		return o.String()
+	default:
+		v := reflect.ValueOf(i)
+		if v.Kind() == reflect.Ptr {
+			v = v.Elem()
+		}
+		t := reflect.TypeOf(i)
+		switch v.Kind() {
+		case reflect.Slice:
+			sb.WriteRune('[')
+			for i := 0; i < v.Len(); i++ {
+				if i > 0 {
+					sb.WriteString(", ")
+				}
+				sb.WriteString(toString(v.Index(i).Interface()))
+			}
+			sb.WriteRune(']')
+		case reflect.Struct:
+			sb.WriteRune('{')
+			for i := 0; i < v.NumField(); i++ {
+				if i > 0 {
+					sb.WriteString(", ")
+				}
+				name := t.Field(i).Name
+				fv := v.Field(i).Interface()
+				sb.WriteString(fmt.Sprintf("%v: %v", name, fv))
+			}
+			sb.WriteRune('}')
+		}
 	}
-	return string(b)
+	return sb.String()
 }
 
 func newField(name string, value interface{}) reflect.StructField {

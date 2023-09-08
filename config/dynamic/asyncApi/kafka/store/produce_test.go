@@ -1,8 +1,11 @@
 package store_test
 
 import (
+	"github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
+	binding "mokapi/config/dynamic/asyncApi/kafka"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/config/dynamic/openapi/schema/schematest"
 	"mokapi/engine/common"
@@ -210,6 +213,98 @@ func TestProduce(t *testing.T) {
 				require.Equal(t, "foo", res.Topics[0].Name)
 				require.Equal(t, kafka.CorruptMessage, res.Topics[0].Partitions[0].ErrorCode)
 				require.Equal(t, int64(0), res.Topics[0].Partitions[0].BaseOffset)
+			},
+		},
+		{
+			"invalid client id",
+			func(t *testing.T, s *store.Store) {
+				s.Update(asyncapitest.NewConfig(
+					asyncapitest.WithChannel("foo", asyncapitest.WithSubscribeAndPublish(
+						asyncapitest.WithMessage(
+							asyncapitest.WithContentType("application/json"),
+							asyncapitest.WithPayload(schematest.New("integer"))),
+						asyncapitest.WithOperationBinding(binding.Operation{ClientId: schematest.New("string", schematest.WithPattern("^[A-Z]{10}[0-5]$"))}),
+					)),
+				))
+				hook := test.NewGlobal()
+
+				rr := kafkatest.NewRecorder()
+				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &produce.Request{
+					Topics: []produce.RequestTopic{
+						{Name: "foo", Partitions: []produce.RequestPartition{
+							{
+								Index: 0,
+								Record: kafka.RecordBatch{
+									Records: []kafka.Record{
+										{
+											Offset:  0,
+											Time:    time.Now(),
+											Key:     kafka.NewBytes([]byte(`"foo-1"`)),
+											Value:   kafka.NewBytes([]byte(`4`)),
+											Headers: nil,
+										},
+									},
+								},
+							},
+						},
+						}},
+				}))
+
+				res, ok := rr.Message.(*produce.Response)
+				require.True(t, ok)
+				require.Equal(t, "foo", res.Topics[0].Name)
+				require.Equal(t, kafka.UnknownServerError, res.Topics[0].Partitions[0].ErrorCode, "expected kafka error UnknownServerError")
+				require.Equal(t, int64(0), res.Topics[0].Partitions[0].BaseOffset)
+				require.Equal(t, "kafka: invalid producer clientId 'kafkatest': value 'kafkatest' does not match pattern, expected schema type=string pattern=^[A-Z]{10}[0-5]$", res.Topics[0].Partitions[0].ErrorMessage)
+
+				require.Equal(t, 1, len(hook.Entries))
+				require.Equal(t, logrus.ErrorLevel, hook.LastEntry().Level)
+				require.Equal(t, "kafka: invalid producer clientId 'kafkatest': value 'kafkatest' does not match pattern, expected schema type=string pattern=^[A-Z]{10}[0-5]$", hook.LastEntry().Message)
+			},
+		},
+		{
+			"valid client id",
+			func(t *testing.T, s *store.Store) {
+				s.Update(asyncapitest.NewConfig(
+					asyncapitest.WithChannel("foo", asyncapitest.WithSubscribeAndPublish(
+						asyncapitest.WithMessage(
+							asyncapitest.WithContentType("application/json"),
+							asyncapitest.WithPayload(schematest.New("integer"))),
+						asyncapitest.WithOperationBinding(binding.Operation{ClientId: schematest.New("string", schematest.WithPattern("^[A-Z]{10}[0-5]$"))}),
+					)),
+				))
+				hook := test.NewGlobal()
+
+				rr := kafkatest.NewRecorder()
+				s.ServeMessage(rr, kafkatest.NewRequest("MOKAPITEST1", 3, &produce.Request{
+					Topics: []produce.RequestTopic{
+						{Name: "foo", Partitions: []produce.RequestPartition{
+							{
+								Index: 0,
+								Record: kafka.RecordBatch{
+									Records: []kafka.Record{
+										{
+											Offset:  0,
+											Time:    time.Now(),
+											Key:     kafka.NewBytes([]byte(`"foo-1"`)),
+											Value:   kafka.NewBytes([]byte(`4`)),
+											Headers: nil,
+										},
+									},
+								},
+							},
+						},
+						}},
+				}))
+
+				res, ok := rr.Message.(*produce.Response)
+				require.True(t, ok)
+				require.Equal(t, "foo", res.Topics[0].Name)
+				require.Equal(t, kafka.None, res.Topics[0].Partitions[0].ErrorCode, "expected no kafka error")
+				require.Equal(t, int64(0), res.Topics[0].Partitions[0].BaseOffset)
+				require.Equal(t, "", res.Topics[0].Partitions[0].ErrorMessage)
+
+				require.Equal(t, 0, len(hook.Entries))
 			},
 		},
 	}

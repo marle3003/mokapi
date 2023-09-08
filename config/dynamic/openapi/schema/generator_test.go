@@ -11,6 +11,7 @@ import (
 
 func toFloatP(f float64) *float64 { return &f }
 func toIntP(i int) *int           { return &i }
+func toBoolP(b bool) *bool        { return &b }
 
 func TestGenerator(t *testing.T) {
 	testdata := []struct {

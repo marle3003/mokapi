@@ -7,6 +7,7 @@ import (
 	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 )
@@ -151,6 +152,9 @@ func getKafka(info *runtime.KafkaInfo) kafka {
 			Description: s.Description,
 		})
 	}
+	sort.Slice(k.Servers, func(i, j int) bool {
+		return strings.Compare(k.Servers[i].Name, k.Servers[j].Name) < 0
+	})
 
 	for name, ch := range info.Config.Channels {
 		if ch.Value == nil {
@@ -159,10 +163,16 @@ func getKafka(info *runtime.KafkaInfo) kafka {
 		t := info.Store.Topic(name)
 		k.Topics = append(k.Topics, newTopic(info.Store, t, ch.Value))
 	}
+	sort.Slice(k.Topics, func(i, j int) bool {
+		return strings.Compare(k.Topics[i].Name, k.Topics[j].Name) < 0
+	})
 
 	for _, g := range info.Store.Groups() {
 		k.Groups = append(k.Groups, newGroup(g))
 	}
+	sort.Slice(k.Groups, func(i, j int) bool {
+		return strings.Compare(k.Groups[i].Name, k.Groups[j].Name) < 0
+	})
 
 	return k
 }
@@ -172,6 +182,10 @@ func newTopic(s *store.Store, t *store.Topic, config *asyncApi.Channel) topic {
 	for _, p := range t.Partitions {
 		partitions = append(partitions, newPartition(s, p))
 	}
+	sort.Slice(partitions, func(i, j int) bool {
+		return partitions[i].Id < partitions[j].Id
+	})
+
 	result := topic{
 		Name:        t.Name,
 		Description: config.Description,
@@ -219,10 +233,16 @@ func newGroup(g *store.Group) group {
 				Partitions:            partitions,
 			})
 		}
+		sort.Slice(grp.Members, func(i, j int) bool {
+			return strings.Compare(grp.Members[i].Name, grp.Members[j].Name) < 0
+		})
 	}
 	for topicName := range g.Commits {
 		grp.Topics = append(grp.Topics, topicName)
 	}
+	sort.Slice(grp.Topics, func(i, j int) bool {
+		return strings.Compare(grp.Topics[i], grp.Topics[j]) < 0
+	})
 
 	return grp
 }

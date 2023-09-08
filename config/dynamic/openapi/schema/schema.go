@@ -22,32 +22,43 @@ type Schemas struct {
 }
 
 type Schema struct {
-	Type                 string                `yaml:"type" json:"type"`
-	Format               string                `yaml:"format" json:"format"`
-	Pattern              string                `yaml:"pattern" json:"pattern"`
-	Description          string                `yaml:"description" json:"description"`
+	Description string `yaml:"description" json:"description"`
+
+	Type       string        `yaml:"type" json:"type"`
+	AnyOf      []*Ref        `yaml:"anyOf" json:"anyOf"`
+	AllOf      []*Ref        `yaml:"allOf" json:"allOf"`
+	OneOf      []*Ref        `yaml:"oneOf" json:"oneOf"`
+	Deprecated bool          `yaml:"deprecated" json:"deprecated"`
+	Example    interface{}   `yaml:"example" json:"example"`
+	Enum       []interface{} `yaml:"enum" json:"enum"`
+	Xml        *Xml          `yaml:"xml" json:"xml"`
+	Format     string        `yaml:"format" json:"format"`
+	Nullable   bool          `yaml:"nullable" json:"nullable"`
+
+	// String
+	Pattern   string `yaml:"pattern" json:"pattern"`
+	MinLength int    `yaml:"minLength" json:"minLength"`
+	MaxLength *int   `yaml:"maxLength" json:"maxLength"`
+
+	// Numbers
+	Minimum          *float64 `yaml:"minimum,omitempty" json:"minimum,omitempty"`
+	Maximum          *float64 `yaml:"maximum,omitempty" json:"maximum,omitempty"`
+	ExclusiveMinimum *bool    `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
+	ExclusiveMaximum *bool    `yaml:"exclusiveMaximum ,omitempty" json:"exclusiveMaximum,omitempty"`
+
+	// Array
+	Items        *Ref `yaml:"items" json:"items"`
+	UniqueItems  bool `yaml:"uniqueItems" json:"uniqueItems"`
+	MinItems     *int `yaml:"minItems" json:"minItems"`
+	MaxItems     *int `yaml:"maxItems" json:"maxItems"`
+	ShuffleItems bool `yaml:"x-shuffleItems" json:"x-shuffleItems"`
+
+	// Object
 	Properties           *SchemasRef           `yaml:"properties" json:"properties"`
-	AdditionalProperties *AdditionalProperties `yaml:"additionalProperties,omitempty" json:"additionalProperties,omitempty"`
-	Items                *Ref                  `yaml:"items" json:"items"`
-	Xml                  *Xml                  `yaml:"xml" json:"xml"`
 	Required             []string              `yaml:"required" json:"required"`
-	Nullable             bool                  `yaml:"nullable" json:"nullable"`
-	Example              interface{}           `yaml:"example" json:"example"`
-	Enum                 []interface{}         `yaml:"enum" json:"enum"`
-	Minimum              *float64              `yaml:"minimum,omitempty" json:"minimum,omitempty"`
-	Maximum              *float64              `yaml:"maximum,omitempty" json:"maximum,omitempty"`
-	ExclusiveMinimum     *bool                 `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
-	ExclusiveMaximum     *bool                 `yaml:"exclusiveMaximum ,omitempty" json:"exclusiveMaximum,omitempty"`
-	AnyOf                []*Ref                `yaml:"anyOf" json:"anyOf"`
-	AllOf                []*Ref                `yaml:"allOf" json:"allOf"`
-	OneOf                []*Ref                `yaml:"oneOf" json:"oneOf"`
-	UniqueItems          bool                  `yaml:"uniqueItems" json:"uniqueItems"`
-	MinItems             *int                  `yaml:"minItems" json:"minItems"`
-	MaxItems             *int                  `yaml:"maxItems" json:"maxItems"`
-	ShuffleItems         bool                  `yaml:"x-shuffleItems" json:"x-shuffleItems"`
+	AdditionalProperties *AdditionalProperties `yaml:"additionalProperties,omitempty" json:"additionalProperties,omitempty"`
 	MinProperties        *int                  `yaml:"minProperties" json:"minProperties"`
 	MaxProperties        *int                  `yaml:"maxProperties" json:"maxProperties"`
-	Deprecated           bool                  `yaml:"deprecated" json:"deprecated"`
 }
 
 type AdditionalProperties struct {
@@ -164,6 +175,9 @@ func (s *Schema) String() string {
 	}
 	if s.MaxProperties != nil {
 		sb.WriteString(fmt.Sprintf(" maxProperties=%v", *s.MaxProperties))
+	}
+	if s.UniqueItems {
+		sb.WriteString(" unique-items")
 	}
 
 	if s.Type == "object" && s.Properties != nil && s.Properties.Value != nil {

@@ -35,7 +35,8 @@ type BrokerBindings struct {
 }
 
 type Operation struct {
-	GroupId *schema.Schema `yaml:"groupId" json:"groupId"`
+	GroupId  *schema.Schema `yaml:"groupId" json:"groupId"`
+	ClientId *schema.Schema `yaml:"clientId" json:"clientId"`
 }
 
 type MessageBinding struct {

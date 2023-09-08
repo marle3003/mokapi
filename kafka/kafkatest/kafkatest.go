@@ -21,7 +21,7 @@ import (
 )
 
 func NewRequest(clientId string, version int, msg kafka.Message) *kafka.Request {
-	return &kafka.Request{
+	r := &kafka.Request{
 		Header: &kafka.Header{
 			ApiKey:     getApiKey(msg),
 			ApiVersion: int16(version),
@@ -30,6 +30,9 @@ func NewRequest(clientId string, version int, msg kafka.Message) *kafka.Request 
 		Message: msg,
 		Context: kafka.NewClientContext(context.Background(), "127.0.0.1:42424"),
 	}
+	ctx := kafka.ClientFromContext(r)
+	ctx.ClientId = clientId
+	return r
 }
 
 func BytesToString(bytes kafka.Bytes) string {
