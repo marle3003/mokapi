@@ -1,14 +1,16 @@
 ---
-title: Example OpenAPI with Mokapi Script
-description: A simple Use Case with using Mokapi Script.
+title: Example Mocking REST API with OpenAPI | Mokapi
+description: In this example, you will learn how to mock an OpenAPI specification with Mokapi, how to configure Mokapi, and how to run it in a Docker container.
 ---
-# OpenAPI with Mokapi Script
+# Example Mocking REST API with OpenAPI
 
-A simple Use Case with using Mokapi Script
+In this example, you will learn how to mock an OpenAPI specification with Mokapi, how to configure Mokapi, 
+and how to run it in a Docker container. In further examples we will see how the test quality can be improved with some 
+edge cases such as increased response time or response errors like internal server errors.
 
-## Create REST API
+## Create OpenAPI file
 
-Create an OpenAPI specification file `users.yaml` that defines an endpoint users
+First, we create an OpenAPI specification file `users.yaml` that defines a /users endpoint
 
 ```yaml
 openapi: 3.0.0

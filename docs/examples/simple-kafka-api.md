@@ -1,6 +1,6 @@
 ---
-title: Example Kafka with AsyncAPI
-description: Mocking a Kafka topic and use it with a C# consumer and producer.
+title: Example Mocking Kafka Topic with AsyncAPI | Mokapi
+description: Learn how to use Mokapi to mock a Kafka Topic and verify that your producer generates valid messages according your AsyncAPI specification.
 ---
 
 # Mocking Kafka using AsyncAPI 
