@@ -7,10 +7,6 @@ description: The file provider reads dynamic configuration from a single file or
 The file provider reads dynamic configuration from a single file or 
 multiple files.
 
-``` box=tip
-Other providers such as Git provider also use the file provider
-```
-
 ## Configuration Example
 
 ```yaml tab=File (YAML)
@@ -42,16 +38,16 @@ Defines the path to the configuration file.
 <mark>Filename</mark> and <mark>Directory</mark> are mutually exclusive and <mark>Directory</mark> is weighted higher.
 ```
 
+```yaml tab=File (YAML)
+providers:
+  file:
+    filename: foobar.yaml
+```
 ```bash tab=CLI
 --providers.file.filename=foobar.yaml
 ```
 ```bash tab=Env
 MOKAPI_Providers_File_Filename=foobar.yaml
-```
-```yaml tab=File (YAML)
-providers:
-  file:
-    filename: foobar.yaml
 ```
 
 ### Directory
@@ -62,16 +58,16 @@ You can also organize your configuration files in subdirectories.
 <mark>Filename</mark> and <mark>Directory</mark> are mutually exclusive and <mark>Directory</mark> is weighted higher.
 ```
 
+```yaml tab=File (YAML)
+providers:
+  file:
+    directory: /foobar
+```
 ```bash tab=CLI
 --providers.file.directory=/foobar
 ```
 ```bash tab=Env
 MOKAPI_Providers_File_Directory=/foobar
-```
-```yaml tab=File (YAML)
-providers:
-  file:
-    directory: /foobar
 ```
 
 ``` box=tip
