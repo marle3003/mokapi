@@ -23,7 +23,7 @@ runs:
       run: docker load --input /tmp/mokapi.tar
       shell: bash
     - name: Run mokapi image
-      run: docker run --rm -d -p 8090:8090 --mount type=bind,source=$(pwd)/examples/mokapi,target=/data --env MOKAPI_Api_Port=8090 --env MOKAPI_Providers_File_Directory=/data ${{ inputs.image-name }}
+      run: docker run --name mokapi --rm -d -p 8090:8090 --mount type=bind,source=$(pwd)/examples/mokapi,target=/data --env MOKAPI_Api_Port=8090 --env MOKAPI_Providers_File_Directory=/data ${{ inputs.image-name }}
       shell: bash
     - uses: actions/setup-node@v3
       with:
@@ -49,3 +49,13 @@ runs:
       with:
         name: ${{ inputs.artifact-test-report }}
         path: webui/playwright-report
+    - name: Save Mokapi logs
+      if: always()
+      run: docker logs mokapi > /var/tmp/mokapi.log
+      shell: bash
+    - name: Archive Mokapi logs
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: mokapi-test-logs
+        path: /var/tmp/mokapi.log
