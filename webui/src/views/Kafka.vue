@@ -5,6 +5,7 @@ const script = `import { every } from 'mokapi'
 import { produce } from 'mokapi/kafka'
 
 export default function() {
+    // produce a random Kafka message
     produce({ topic: 'orders' })
 
     let orderId = 0
