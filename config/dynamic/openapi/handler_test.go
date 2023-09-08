@@ -11,6 +11,7 @@ import (
 	"mokapi/runtime/events"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -132,6 +133,21 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				require.Equal(t, 200, rr.Code)
+			},
+		},
+		{"POST request invalid data",
+			func(t *testing.T, f serveHTTP, c *openapi.Config) {
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
+					openapitest.WithRequestBody("", true,
+						openapitest.WithRequestContent("application/json",
+							openapitest.WithSchema(schematest.New("string", schematest.WithMinLength(4))))))
+				openapitest.AppendEndpoint("/foo", c, openapitest.WithOperation("POST", op))
+				r := httptest.NewRequest("POST", "http://localhost/foo", strings.NewReader(`"foo"`))
+				r.Header.Set("Content-Type", "application/json")
+				rr := httptest.NewRecorder()
+				f(rr, r)
+				require.Equal(t, 500, rr.Code)
+				require.Equal(t, "value 'foo' does not meet min length of 4\n", rr.Body.String())
 			},
 		},
 		//

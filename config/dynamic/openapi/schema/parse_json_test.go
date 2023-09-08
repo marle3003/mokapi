@@ -191,7 +191,7 @@ func TestAny(t *testing.T) {
 					schematest.New("object",
 						schematest.WithProperty("name", schematest.New("string"))))),
 			func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, `could not parse {"name":"bar","age":12}, too many properties for object, expected any of schema type=object properties=[name]`)
+				require.EqualError(t, err, `could not parse {name: bar, age: 12}, too many properties for object, expected any of schema type=object properties=[name]`)
 			},
 		},
 		{
@@ -271,7 +271,7 @@ func TestParseOneOf(t *testing.T) {
 					schematest.WithProperty("bar", schematest.New("boolean"))),
 			)),
 			func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, `could not parse {"foo":12,"bar":true}, expected one of schema type=object properties=[foo], schema type=object properties=[bar]`)
+				require.EqualError(t, err, `could not parse {foo: 12, bar: true}, expected one of schema type=object properties=[foo], schema type=object properties=[bar]`)
 			},
 		},
 		{
@@ -283,7 +283,7 @@ func TestParseOneOf(t *testing.T) {
 					schematest.WithProperty("foo", schematest.New("number"))),
 			)),
 			func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, `could not parse {"foo":12}, it is not valid for only one schema, expected one of schema type=object properties=[foo], schema type=object properties=[foo]`)
+				require.EqualError(t, err, `could not parse {foo: 12}, it is not valid for only one schema, expected one of schema type=object properties=[foo], schema type=object properties=[foo]`)
 			},
 		},
 		{
@@ -387,6 +387,13 @@ func TestParse_Integer(t *testing.T) {
 			fmt.Errorf("12 is lower as the required minimum 13, expected schema type=integer minimum=13"),
 		},
 		{
+			"not exclusive min",
+			"12",
+			&schema.Schema{Type: "integer", Minimum: toFloatP(12), ExclusiveMinimum: toBoolP(true)},
+			0,
+			fmt.Errorf("12 is lower or equal as the required minimum 12, expected schema type=integer minimum=12 exclusiveMinimum"),
+		},
+		{
 			"max",
 			"12",
 			&schema.Schema{Type: "integer", Maximum: toFloatP(13)},
@@ -396,9 +403,30 @@ func TestParse_Integer(t *testing.T) {
 		{
 			"not max",
 			"12",
-			&schema.Schema{Type: "integer", Maximum: toFloatP(5)},
+			&schema.Schema{Type: "integer", Maximum: toFloatP(11)},
 			0,
-			fmt.Errorf("12 is greater as the required maximum 5, expected schema type=integer maximum=5"),
+			fmt.Errorf("12 is greater as the required maximum 11, expected schema type=integer maximum=11"),
+		},
+		{
+			"not exclusive max",
+			"12",
+			&schema.Schema{Type: "integer", Maximum: toFloatP(12), ExclusiveMaximum: toBoolP(true)},
+			0,
+			fmt.Errorf("12 is greater or equal as the required maximum 12, expected schema type=integer maximum=12 exclusiveMaximum"),
+		},
+		{
+			"not in enum",
+			"12",
+			&schema.Schema{Type: "integer", Enum: []interface{}{1, 2, 3}},
+			0,
+			fmt.Errorf("value 12 does not match one in the enum [1, 2, 3]"),
+		},
+		{
+			"in enum",
+			"2",
+			&schema.Schema{Type: "integer", Enum: []interface{}{1, 2, 3}},
+			2,
+			nil,
 		},
 	}
 
@@ -462,6 +490,13 @@ func TestParse_Number(t *testing.T) {
 			fmt.Errorf("3.612 is lower as the required minimum 3.7, expected schema type=number minimum=3.7"),
 		},
 		{
+			"not min float",
+			"3.612",
+			&schema.Schema{Type: "number", Format: "float", Minimum: toFloatP(3.7)},
+			0,
+			fmt.Errorf("3.612 is lower as the required minimum 3.7, expected schema type=number format=float minimum=3.7"),
+		},
+		{
 			"max",
 			"3.612",
 			&schema.Schema{Type: "number", Maximum: toFloatP(3.7)},
@@ -474,6 +509,34 @@ func TestParse_Number(t *testing.T) {
 			&schema.Schema{Type: "number", Maximum: toFloatP(3.6)},
 			0,
 			fmt.Errorf("3.612 is greater as the required maximum 3.6, expected schema type=number maximum=3.6"),
+		},
+		{
+			"not max float",
+			"3.612",
+			&schema.Schema{Type: "number", Format: "float", Maximum: toFloatP(3.6)},
+			0,
+			fmt.Errorf("3.612 is greater as the required maximum 3.6, expected schema type=number format=float maximum=3.6"),
+		},
+		{
+			"not max exclusive",
+			"3.6",
+			&schema.Schema{Type: "number", Maximum: toFloatP(3.6), ExclusiveMaximum: toBoolP(true)},
+			0,
+			fmt.Errorf("3.6 is greater or equal as the required maximum 3.6, expected schema type=number maximum=3.6 exclusiveMaximum"),
+		},
+		{
+			"not in enum",
+			"3.6",
+			&schema.Schema{Type: "number", Enum: []interface{}{3, 4, 5.5}},
+			0,
+			fmt.Errorf("value 3.6 does not match one in the enum [3, 4, 5.5]"),
+		},
+		{
+			"in enum",
+			"3.6",
+			&schema.Schema{Type: "number", Enum: []interface{}{3.6, 4, 5.5}},
+			3.6,
+			nil,
 		},
 	}
 
@@ -488,129 +551,6 @@ func TestParse_Number(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, d.exp, i)
 			}
-		})
-	}
-}
-
-func TestParse_String(t *testing.T) {
-	cases := []struct {
-		name   string
-		s      string
-		schema *schema.Schema
-		err    error
-	}{
-		{
-			"string",
-			`"gbRMaRxHkiJBPta"`,
-			&schema.Schema{Type: "string"},
-			nil,
-		},
-		{
-			"type not defined",
-			`"gbRMaRxHkiJBPta"`,
-			&schema.Schema{},
-			nil,
-		},
-		{
-			"by pattern",
-			`"013-64-5994"`,
-			&schema.Schema{Type: "string", Pattern: "^\\d{3}-\\d{2}-\\d{4}$"},
-			nil,
-		},
-		{
-			"not pattern",
-			`"013-64-59943"`,
-			&schema.Schema{Type: "string", Pattern: "^\\d{3}-\\d{2}-\\d{4}$"},
-			fmt.Errorf("value '013-64-59943' does not match pattern, expected schema type=string pattern=^\\d{3}-\\d{2}-\\d{4}$"),
-		},
-		{
-			"date",
-			`"1908-12-07"`,
-			&schema.Schema{Type: "string", Format: "date"},
-			nil,
-		},
-		{
-			"not date",
-			`"1908-12-7"`,
-			&schema.Schema{Type: "string", Format: "date"},
-			fmt.Errorf("value '1908-12-7' is not a date RFC3339, expected schema type=string format=date"),
-		},
-		{
-			"date-time",
-			`"1908-12-07T04:14:25Z"`,
-			&schema.Schema{Type: "string", Format: "date-time"},
-			nil,
-		},
-		{
-			"not date-time",
-			`"1908-12-07 T04:14:25Z"`,
-			&schema.Schema{Type: "string", Format: "date-time"},
-			fmt.Errorf("value '1908-12-07 T04:14:25Z' is not a date-time RFC3339, expected schema type=string format=date-time"),
-		},
-		{
-			"password",
-			`"H|$9lb{J<+S;"`,
-			&schema.Schema{Type: "string", Format: "password"},
-			nil,
-		},
-		{
-			"email",
-			`"markusmoen@pagac.net"`,
-			&schema.Schema{Type: "string", Format: "email"},
-			nil,
-		},
-		{
-			"not email",
-			`"markusmoen@@pagac.net"`,
-			&schema.Schema{Type: "string", Format: "email"},
-			fmt.Errorf("value 'markusmoen@@pagac.net' is not an email address, expected schema type=string format=email"),
-		},
-		{
-			"uuid",
-			`"590c1440-9888-45b0-bd51-a817ee07c3f2"`,
-			&schema.Schema{Type: "string", Format: "uuid"},
-			nil,
-		},
-		{
-			"not uuid",
-			`"590c1440-9888-45b0-bd51-a817ee07c3f2a"`,
-			&schema.Schema{Type: "string", Format: "uuid"},
-			fmt.Errorf("value '590c1440-9888-45b0-bd51-a817ee07c3f2a' is not an uuid, expected schema type=string format=uuid"),
-		},
-		{
-			"ipv4",
-			`"152.23.53.100"`,
-			&schema.Schema{Type: "string", Format: "ipv4"},
-			nil,
-		},
-		{
-			"not ipv4",
-			`"152.23.53.100."`,
-			&schema.Schema{Type: "string", Format: "ipv4"},
-			fmt.Errorf("value '152.23.53.100.' is not an ipv4, expected schema type=string format=ipv4"),
-		},
-		{
-			"ipv6",
-			`"8898:ee17:bc35:9064:5866:d019:3b95:7857"`,
-			&schema.Schema{Type: "string", Format: "ipv6"},
-			nil,
-		},
-		{
-			"not ipv6",
-			`"-8898:ee17:bc35:9064:5866:d019:3b95:7857"`,
-			&schema.Schema{Type: "string", Format: "ipv6"},
-			fmt.Errorf("value '-8898:ee17:bc35:9064:5866:d019:3b95:7857' is not an ipv6, expected schema type=string format=ipv6"),
-		},
-	}
-
-	t.Parallel()
-	for _, c := range cases {
-		d := c
-		t.Run(c.name, func(t *testing.T) {
-			t.Parallel()
-			i, err := schema.Parse([]byte(d.s), media.ParseContentType("application/json"), &schema.Ref{Value: d.schema})
-			require.Equal(t, d.err, err)
-			require.Equal(t, d.s[1:len(d.s)-1], i)
 		})
 	}
 }
@@ -708,6 +648,30 @@ func TestValidate_Object(t *testing.T) {
 			},
 		},
 		{
+			"not in enum",
+			`{"name": "foo"}`,
+			schematest.New("object",
+				schematest.WithRequired("name"),
+				schematest.WithProperty("name", schematest.New("string")),
+				schematest.WithEnum([]interface{}{map[string]interface{}{"name": "bar"}}),
+			),
+			func(t *testing.T, _ interface{}, err error) {
+				require.EqualError(t, err, `value '{name: foo}' does not match one in the enum [{name: bar}]`)
+			},
+		},
+		{
+			"in enum",
+			`{"name": "foo"}`,
+			schematest.New("object",
+				schematest.WithRequired("name"),
+				schematest.WithProperty("name", schematest.New("string")),
+				schematest.WithEnum([]interface{}{map[string]interface{}{"name": "foo"}}),
+			),
+			func(t *testing.T, _ interface{}, err error) {
+				require.NoError(t, err)
+			},
+		},
+		{
 			"not minProperties",
 			`{"name": "foo"}`,
 			schematest.New("object",
@@ -789,6 +753,136 @@ func TestValidate_Array(t *testing.T) {
 			&schema.Schema{Type: "array", Items: &schema.Ref{
 				Value: &schema.Schema{Type: "string"},
 			}},
+			func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []string{"foo", "bar"}, i)
+			},
+		},
+		{
+			"not min items",
+			`["foo", "bar"]`,
+			&schema.Schema{
+				Type: "array",
+				Items: &schema.Ref{
+					Value: &schema.Schema{Type: "string"},
+				},
+				MinItems: toIntP(3),
+			},
+			func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, "validation error minItems on [foo, bar], expected schema type=array minItems=3")
+			},
+		},
+		{
+			"min items",
+			`["foo", "bar"]`,
+			&schema.Schema{
+				Type: "array",
+				Items: &schema.Ref{
+					Value: &schema.Schema{Type: "string"},
+				},
+				MinItems: toIntP(2),
+			},
+			func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []string{"foo", "bar"}, i)
+			},
+		},
+		{
+			"not max items",
+			`["foo", "bar"]`,
+			&schema.Schema{
+				Type: "array",
+				Items: &schema.Ref{
+					Value: &schema.Schema{Type: "string"},
+				},
+				MaxItems: toIntP(1),
+			},
+			func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, "validation error maxItems on [foo, bar], expected schema type=array maxItems=1")
+			},
+		},
+		{
+			"max items",
+			`["foo", "bar"]`,
+			&schema.Schema{
+				Type: "array",
+				Items: &schema.Ref{
+					Value: &schema.Schema{Type: "string"},
+				},
+				MaxItems: toIntP(2),
+			},
+			func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []string{"foo", "bar"}, i)
+			},
+		},
+		{
+			"not in enum",
+			`["foo", "bar"]`,
+			&schema.Schema{
+				Type: "array",
+				Items: &schema.Ref{
+					Value: &schema.Schema{Type: "string"},
+				},
+				Enum: []interface{}{[]string{"foo", "test"}},
+			},
+			func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, "value [foo, bar] does not match one in the enum [[foo, test]]")
+			},
+		},
+		{
+			"not with correct order in enum",
+			`["foo", "bar"]`,
+			&schema.Schema{
+				Type: "array",
+				Items: &schema.Ref{
+					Value: &schema.Schema{Type: "string"},
+				},
+				Enum: []interface{}{[]string{"bar", "foo"}},
+			},
+			func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, "value [foo, bar] does not match one in the enum [[bar, foo]]")
+			},
+		},
+		{
+			"in enum",
+			`["foo", "bar"]`,
+			&schema.Schema{
+				Type: "array",
+				Items: &schema.Ref{
+					Value: &schema.Schema{Type: "string"},
+				},
+				Enum: []interface{}{[]string{"foo", "test"}, []string{"foo", "bar"}},
+			},
+			func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []string{"foo", "bar"}, i)
+			},
+		},
+		{
+			"not uniqueItems",
+			`["foo", "foo"]`,
+			&schema.Schema{
+				Type: "array",
+				Items: &schema.Ref{
+					Value: &schema.Schema{Type: "string"},
+				},
+				UniqueItems: true,
+			},
+			func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, "value [foo, foo] must contain unique items, expected schema type=array unique-items")
+			},
+		},
+		{
+			"uniqueItems",
+			`["foo", "bar"]`,
+			&schema.Schema{
+				Type: "array",
+				Items: &schema.Ref{
+					Value: &schema.Schema{Type: "string"},
+				},
+				UniqueItems: true,
+			},
 			func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []string{"foo", "bar"}, i)

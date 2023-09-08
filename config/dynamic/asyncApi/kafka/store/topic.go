@@ -3,16 +3,24 @@ package store
 import (
 	"mokapi/config/dynamic/asyncApi"
 	kafkaconfig "mokapi/config/dynamic/asyncApi/kafka"
+	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/kafka"
 	"mokapi/runtime/events"
 )
 
 type Topic struct {
-	Name        string
-	Partitions  []*Partition
-	logger      LogRecord
-	s           *Store
-	kafkaConfig kafkaconfig.TopicBindings
+	Name       string
+	Partitions []*Partition
+	logger     LogRecord
+	s          *Store
+	config     kafkaconfig.TopicBindings
+	Subscribe  Operation
+	Publish    Operation
+}
+
+type Operation struct {
+	GroupId  *schema.Schema
+	ClientId *schema.Schema
 }
 
 func (t *Topic) Partition(index int) *Partition {
@@ -29,7 +37,7 @@ func (t *Topic) delete() {
 }
 
 func newTopic(name string, config *asyncApi.Channel, brokers Brokers, logger LogRecord, trigger Trigger, s *Store) *Topic {
-	t := &Topic{Name: name, logger: logger, s: s, kafkaConfig: config.Bindings.Kafka}
+	t := &Topic{Name: name, logger: logger, s: s, config: config.Bindings.Kafka}
 
 	numPartitions := config.Bindings.Kafka.Partitions
 	if numPartitions == 0 {
@@ -40,6 +48,14 @@ func newTopic(name string, config *asyncApi.Channel, brokers Brokers, logger Log
 		part.validator = newValidator(config)
 		t.Partitions = append(t.Partitions, part)
 	}
+
+	if config.Publish != nil {
+		t.Publish = Operation{
+			GroupId:  config.Publish.Bindings.Kafka.GroupId,
+			ClientId: config.Publish.Bindings.Kafka.ClientId,
+		}
+	}
+
 	return t
 }
 

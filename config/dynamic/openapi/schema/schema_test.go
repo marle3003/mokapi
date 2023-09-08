@@ -90,6 +90,20 @@ allOf:
 				require.Equal(t, "object", schema.AllOf[0].Value.Type)
 			},
 		},
+		{
+			"enum object",
+			`
+type: object
+enum:
+  - name: alice
+    age: 29
+`,
+			func(t *testing.T, schema *schema.Schema) {
+				require.Equal(t, "object", schema.Type)
+				require.Len(t, schema.Enum, 1)
+				require.Equal(t, map[string]interface{}{"name": "alice", "age": 29}, schema.Enum[0])
+			},
+		},
 	}
 
 	t.Parallel()

@@ -3,6 +3,7 @@ package store
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/kafka"
 	"mokapi/kafka/produce"
 	"mokapi/runtime/monitor"
@@ -11,6 +12,7 @@ import (
 func (s *Store) produce(rw kafka.ResponseWriter, req *kafka.Request) error {
 	r := req.Message.(*produce.Request)
 	res := &produce.Response{}
+	ctx := kafka.ClientFromContext(req)
 
 	m, withMonitor := monitor.KafkaFromContext(req.Context)
 
@@ -26,13 +28,22 @@ func (s *Store) produce(rw kafka.ResponseWriter, req *kafka.Request) error {
 			}
 
 			if topic == nil {
-				log.Errorf("kafka: produce unknown topic %v", rt.Name)
+				s := fmt.Sprintf("kafka: produce unknown topic %v", rt.Name)
+				log.Errorf(s)
 				resPartition.ErrorCode = kafka.UnknownTopicOrPartition
+				resPartition.ErrorMessage = s
+			} else if err := validateProducer(topic, ctx); err != nil {
+				s := fmt.Sprintf("kafka: invalid producer clientId '%v': %v", ctx.ClientId, err)
+				log.Errorf(s)
+				resPartition.ErrorCode = kafka.UnknownServerError
+				resPartition.ErrorMessage = s
 			} else {
 				p := topic.Partition(int(rp.Index))
 				if p == nil {
-					log.Errorf("kafka: produce unknown partition %v", rp.Index)
-					resPartition.ErrorCode = kafka.UnknownTopicOrPartition
+					s := fmt.Sprintf("kafka: produce unknown partition %v", rp.Index)
+					log.Errorf(s)
+					resPartition.ErrorCode = kafka.UnknownServerError
+					resPartition.ErrorMessage = s
 				} else {
 					baseOffset, err := p.Write(rp.Record)
 					if err != nil {
@@ -56,4 +67,11 @@ func (s *Store) produce(rw kafka.ResponseWriter, req *kafka.Request) error {
 	}
 
 	return rw.Write(res)
+}
+
+func validateProducer(t *Topic, ctx *kafka.ClientContext) (err error) {
+	if t.Publish.ClientId != nil {
+		_, err = schema.ParseString(ctx.ClientId, &schema.Ref{Value: t.Publish.ClientId})
+	}
+	return
 }
