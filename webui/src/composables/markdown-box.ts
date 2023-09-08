@@ -6,7 +6,8 @@ import type Renderer from "markdown-it/lib/renderer"
 export function MarkdownItBox(md: MarkdownIt, opts: Options) {
     var defaultRender = md.renderer.rules.fence!,
         unescapeAll = md.utils.unescapeAll,
-        re = /box=(\w*)/
+        boxExpr = /box=(\w*)/,
+        noTitleExpre = /noTitle/
 
     function getInfo(token: Token) {
         return token.info ? unescapeAll(token.info).trim() : ''
@@ -14,7 +15,12 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
 
     function getAlertName(token: Token) {
         var info = getInfo(token) 
-        return re.exec(info)?.slice(1)
+        return boxExpr.exec(info)?.slice(1)
+    }
+
+    function showTitle(token: Token): boolean {
+        var info = getInfo(token)
+        return noTitleExpre.exec(info) == null
     }
 
     function fenceGroup(tokens: Token[], idx: number, options: Options, env: any, slf: Renderer): string {
@@ -33,13 +39,20 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
                 break;
             }
 
-            token.info = token.info.replace(re, '')
+            token.info = token.info.replace(boxExpr, '')
             token.hidden = true
 
-            alert += `<div class="box ${name}" role="alert">
-                     <p class="box-heading">${name}</p>
-                     <p class="box-body">${token.content}</p>
-                    </div>`
+            if (showTitle(tokens[i])) {
+                alert += `<div class="box ${name}" role="alert">
+                        <p class="box-heading">${name}</p>
+                        <p class="box-body">${token.content}</p>
+                        </div>`
+            }
+            else {
+                alert += `<div class="box ${name} no-title" role="alert">
+                        <p class="box-body">${token.content}</p>
+                        </div>`
+            }
         }
 
         return alert

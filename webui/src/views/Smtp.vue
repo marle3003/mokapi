@@ -1,5 +1,10 @@
 <script setup lang="ts">
+import { onMounted, ref } from 'vue';
 import { useMeta } from '@/composables/meta'
+import { Modal } from 'bootstrap'
+
+const dialog = ref<Modal>()
+const imageUrl = ref<string>()
 
 const config = `smtp: '1.0'
 info:
@@ -22,10 +27,24 @@ export default function() {
 `
 const description = `Test SMTP emails safely no risk of spamming mailboxes. Improve quality through visual testing using your favorite testing tool`
 useMeta('Fake SMTP server for testing | mokapi.io', description, "https://mokapi.io/smtp")
+
+onMounted(() => {
+  dialog.value = new Modal('#imageDialog', {})
+})
+
+function showImage(target: EventTarget | null) {
+  if (!target || !(target instanceof HTMLImageElement)) {
+    return
+  }
+  const element = target as HTMLImageElement
+  imageUrl.value = element.src
+  dialog.value?.show()
+}
+
 </script>
 
 <template>
-  <main class="home">
+  <main class="home" @click="showImage($event.target)">
     <section>
       <div class="container">
         <div class="row hero-title">
@@ -129,14 +148,20 @@ useMeta('Fake SMTP server for testing | mokapi.io', description, "https://mokapi
         </div>
       </div>
     </section>
-    <div class="modal fade" id="maildialog" tabindex="-1" aria-hidden="true">
+  </main>
+  <div class="modal fade" id="imageDialog" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-body">
-            <img src="/mail.png" style="width:100%" />
+            <img :src="imageUrl" style="width:100%" />
           </div>
         </div>
       </div>
     </div>
-  </main>
 </template>
+
+<style>
+main img {
+  cursor: pointer;
+}
+</style>

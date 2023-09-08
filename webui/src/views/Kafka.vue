@@ -5,6 +5,7 @@ const script = `import { every } from 'mokapi'
 import { produce } from 'mokapi/kafka'
 
 export default function() {
+    // produce a random Kafka message
     produce({ topic: 'orders' })
 
     let orderId = 0
@@ -27,7 +28,7 @@ export default function() {
 }
 `
 
-const title = `Bring your AsyncAPI specs to life`
+const title = `Apache Kafka mocking and testing`
 const description = `Don't wait for producers to send new messages. Create your own sample messages that fit your needs.`
 useMeta(title, description, "https://mokapi.io/kafka")
 </script>
@@ -69,7 +70,7 @@ useMeta(title, description, "https://mokapi.io/kafka")
     </section>
     <section>
       <div class="container">
-        <h2>Prevent faults - Improve reliability - Reduce dependencies</h2>
+        <h2>Bring your AsyncAPI specs to life</h2>
         <div class="card-group">
           <div class="card">
             <div class="card-body">

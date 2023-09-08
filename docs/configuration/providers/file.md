@@ -7,49 +7,72 @@ description: The file provider reads dynamic configuration from a single file or
 The file provider reads dynamic configuration from a single file or 
 multiple files.
 
-``` box=tip
-Other providers such as Git provider also use the file provider
+## Configuration Example
+
+```yaml tab=File (YAML)
+providers:
+  file:
+    directory: /path/to/dynamic/config
+```
+```bash tab=CLI
+--providers.file.directory=/path/to/dynamic/config
+```
+```bash tab=Env
+MOKAPI_Providers_File_Directory=/path/to/dynamic/config
 ```
 
-## Configuration
+## Provider Configuration
 A list of all options that can be used with the file provider, refer to
 the [reference page](/docs/configuration/reference.md).
 
 ``` box=limitation
 Mokapi uses fsnotify to listen to file system notification. There
-are issues with if Mokapi runs in a linux docker container on windows
+are issues with if Mokapi runs in a Linux Docker container on Windows
 WSL2 host system.
 ```
 
 ### Filename
-Defines the path to the configuration file.
+Defines the path to the configuration file. 
+
+``` box=warning noTitle
+<mark>Filename</mark> and <mark>Directory</mark> are mutually exclusive and <mark>Directory</mark> is weighted higher.
+```
+
+```yaml tab=File (YAML)
+providers:
+  file:
+    filename: foobar.yaml
+```
 ```bash tab=CLI
 --providers.file.filename=foobar.yaml
 ```
 ```bash tab=Env
 MOKAPI_Providers_File_Filename=foobar.yaml
 ```
-```yaml tab=File (YAML)
-providers:
-  file:
-    filename: foobar.yaml
-```
 
 ### Directory
 Defines the path to the directory that contains the configuration files.
 You can also organize your configuration files in subdirectories. 
-`Filename` and `Directory` are mutually exclusive and `Directory` is weighted higher.
 
+``` box=warning noTitle
+<mark>Filename</mark> and <mark>Directory</mark> are mutually exclusive and <mark>Directory</mark> is weighted higher.
+```
+
+```yaml tab=File (YAML)
+providers:
+  file:
+    directory: /foobar
+```
 ```bash tab=CLI
 --providers.file.directory=/foobar
 ```
 ```bash tab=Env
 MOKAPI_Providers_File_Directory=/foobar
 ```
-```yaml tab=File (YAML)
-providers:
-  file:
-    directory: /foobar
+
+``` box=tip
+You can define multiple file names or directory by separating them with system's path separator
+(Unix=':', Windows=';')
 ```
 
 ### Ignoring Files and Directories

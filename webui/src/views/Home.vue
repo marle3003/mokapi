@@ -64,36 +64,36 @@ function showImage(target: EventTarget | null) {
         <p class="text-center">Increase delivery speed by creating stable development and test environment</p>
         <div class="card-group">
           <div class="card">
-            <div class="card-body">
-              <router-link :to="{path: '/http'}">
+            <router-link :to="{path: '/http'}">
+              <div class="card-body">
                 <div class="card-title">HTTP</div>
                 Mock any HTTP API with OpenAPI specification.
-              </router-link>
-            </div>
+              </div>
+            </router-link>
           </div>
           <div class="card">
-            <div class="card-body">
-              <router-link :to="{path: '/kafka'}">
+            <router-link :to="{path: '/kafka'}">
+              <div class="card-body">
                 <div class="card-title">Kafka</div>
                 Simulate a Kafka system with AsyncAPI specification.
-              </router-link>
-            </div>
+              </div>
+            </router-link>
           </div>
           <div class="card">
-            <div class="card-body">
-              <router-link :to="{path: '/ldap'}">
+            <router-link :to="{path: '/ldap'}">
+              <div class="card-body">
                 <div class="card-title">LDAP</div>
                 Integrate your App with a fake LDAP server.
-              </router-link>
-            </div>
+              </div>
+            </router-link>
           </div>
             <div class="card">
-              <div class="card-body">
-                <router-link :to="{path: '/smtp'}">
+              <router-link :to="{path: '/smtp'}">
+                <div class="card-body">
                   <div class="card-title">SMTP</div>
                   Test SMTP emails safely and no risk of spamming mailboxes
-                </router-link>
-              </div>
+                </div>
+              </router-link>
             </div> 
         </div>
       </div>

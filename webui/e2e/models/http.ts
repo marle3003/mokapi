@@ -72,7 +72,7 @@ export class HttpOperationModel {
         this.operation = element.getByTestId('operation')
         this.path = element.getByTestId('path')
         this.operationId = element.getByTestId('operationid')
-        this.service = element.getByTestId('service')
+        this.service = element.getByTestId('service').getByRole('link')
         this.type = element.getByTestId('type')
         this.summary = element.getByTestId('summary')
         this.description = element.getByTestId('description')
