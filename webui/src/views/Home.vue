@@ -4,7 +4,7 @@ import Footer from '@/components/Footer.vue'
 import { ref, onMounted } from 'vue'
 import { Modal } from 'bootstrap'
 
-const description = `Mokapi is an open-source tool that makes mock up easy for developers and QA engineers`
+const description = `Prevent bugs - Reduce dependencies - Simulating APIs that don't even exist yet. Easy and flexible API mocking to simplify your test workflows and build better software faster. Mock your HTTP, Apache Kafka, SMTP or LDAP services and control everything like delays, errors or other edge cases.`
 
 useMeta('Mocking tool for engineering teams | mokapi.io', description, 'https://mokapi.io')
 
@@ -31,7 +31,7 @@ function showImage(target: EventTarget | null) {
       <div class="container">
         <div class="row hero-title justify-content-center">
           <div class="col-12 col-lg-6">
-            <h1>Easy and flexible API mocking </h1>
+            <h1>Easy and flexible API mocking</h1>
             <p class="description">Simplify your test workflows to build better software faster</p>
             <p class="d-none d-md-block">
               <router-link :to="{ path: '/docs/Guides' }">
@@ -104,7 +104,7 @@ function showImage(target: EventTarget | null) {
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
               <h3>Control Everything</h3>
-              <p>Write the behavior of your mock in Javascript and control everything, such as delay, errors or other edge cases.</p>
+              <p>Write the behavior of your mock in Javascript and control everything, such as delays, errors or other edge cases.</p>
               <router-link :to="{ path: '/docs/javascript-api' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Javascript API</button>
               </router-link>
