@@ -17,7 +17,7 @@ the [reference page](/docs/configuration/reference.md).
 
 ``` box=limitation
 Mokapi uses fsnotify to listen to file system notification. There
-are issues with if Mokapi runs in a linux docker container on windows
+are issues with if Mokapi runs in a Linux Docker container on Windows
 WSL2 host system.
 ```
 
