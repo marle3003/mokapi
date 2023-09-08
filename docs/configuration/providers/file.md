@@ -11,7 +11,21 @@ multiple files.
 Other providers such as Git provider also use the file provider
 ```
 
-## Configuration
+## Configuration Example
+
+```yaml tab=File (YAML)
+providers:
+  file:
+    directory: /path/to/dynamic/config
+```
+```bash tab=CLI
+--providers.file.directory=/path/to/dynamic/config
+```
+```bash tab=Env
+MOKAPI_Providers_File_Directory=/path/to/dynamic/config
+```
+
+## Provider Configuration
 A list of all options that can be used with the file provider, refer to
 the [reference page](/docs/configuration/reference.md).
 
@@ -22,7 +36,12 @@ WSL2 host system.
 ```
 
 ### Filename
-Defines the path to the configuration file.
+Defines the path to the configuration file. 
+
+``` box=warning noTitle
+<mark>Filename</mark> and <mark>Directory</mark> are mutually exclusive and <mark>Directory</mark> is weighted higher.
+```
+
 ```bash tab=CLI
 --providers.file.filename=foobar.yaml
 ```
@@ -38,7 +57,10 @@ providers:
 ### Directory
 Defines the path to the directory that contains the configuration files.
 You can also organize your configuration files in subdirectories. 
-`Filename` and `Directory` are mutually exclusive and `Directory` is weighted higher.
+
+``` box=warning noTitle
+<mark>Filename</mark> and <mark>Directory</mark> are mutually exclusive and <mark>Directory</mark> is weighted higher.
+```
 
 ```bash tab=CLI
 --providers.file.directory=/foobar

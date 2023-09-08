@@ -302,15 +302,27 @@ pre {
   }
 }
 
+.code-tabs {
+  margin-top: 1rem;
+}
+.tab-content.code > .tab-pane {
+  margin-bottom: 3rem;
+}
+
 .box {
   padding: 0.6rem;
   padding-bottom: 0;
-  margin-bottom: 2rem;
+  margin-top: 2rem;
+  margin-bottom: 3rem;
   border-left-width: 0.2rem ;
   border-left-style: solid;
   border-radius: 0.2rem;
   font-size: 0.9rem;
-  box-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.05), 0 0.25rem 0.5rem rgba(0, 0, 0, 0.05);
+  box-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.2), 0 0.25rem 0.5rem rgba(0, 0, 0, 0.2);
+}
+.box.no-title {
+  padding: 0;
+  padding-left: 0.6rem;
 }
 .box .box-heading {
   margin: -0.6rem -0.6rem 0 -0.6rem;
@@ -320,6 +332,11 @@ pre {
 .box .box-body {
   padding: 0.5rem;
   margin: 0;
+}
+.box mark {
+  background-color: #a0a1a7;
+  padding: 0 0.1rem 0 0.1rem;
+  border-radius: 0.1rem;
 }
 .box.info{
   border-color: var(--color-blue);
