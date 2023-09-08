@@ -40,20 +40,26 @@ import { otherFunc } from '../lib'
 import dateTime from 'date-time' // npm install date-time
 ```
 
-## JSON file
+## JSON & YAML file
 
-You can import a JSON file and Mokapi converts the data to a
+You can import JSON and YAML file and Mokapi converts the data to a
 Javascript object.
 
 ```javascript tab=Javascript
 import users from './users.json'
+import envs from './environments.yaml'
 
 console.log(users[0].name)
+console.log(envs[0])
 ```
-
 ```json tab=JSON
 [  
     {"name":"Alice", "email":"alice@foo.bar"},  
     {"name":"Bob", "email":"bob@foo.bar"}  
 ]  
+```
+```yaml tab=YAML
+- test
+- integration
+- production
 ```
