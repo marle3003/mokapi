@@ -35,7 +35,9 @@ function replaceImageUrls(data: string) {
         if (m) {
         const path = `/src/assets${m[2]}`
         const imageUrl = images[path]
-        data = data.replace(m[0], `<img${m[1]} src="${imageUrl}"`)
+        if (imageUrl) {
+            data = data.replace(m[0], `<img${m[1]} src="${imageUrl}"`)
+        }
         }
     } while(m)
     return data

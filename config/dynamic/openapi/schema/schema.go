@@ -44,7 +44,7 @@ type Schema struct {
 	Minimum          *float64 `yaml:"minimum,omitempty" json:"minimum,omitempty"`
 	Maximum          *float64 `yaml:"maximum,omitempty" json:"maximum,omitempty"`
 	ExclusiveMinimum *bool    `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
-	ExclusiveMaximum *bool    `yaml:"exclusiveMaximum ,omitempty" json:"exclusiveMaximum,omitempty"`
+	ExclusiveMaximum *bool    `yaml:"exclusiveMaximum,omitempty" json:"exclusiveMaximum,omitempty"`
 
 	// Array
 	Items        *Ref `yaml:"items" json:"items"`
