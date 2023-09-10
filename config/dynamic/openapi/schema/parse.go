@@ -310,7 +310,11 @@ func parseOneOfValue(i interface{}, schema *Schema) (interface{}, error) {
 func parseObject(i interface{}, s *Schema) (interface{}, error) {
 	m, ok := i.(*sortedmap.LinkedHashMap)
 	if !ok {
-		return nil, fmt.Errorf("could not parse %v as object", toString(i))
+		if _, ok := i.(map[string]interface{}); ok {
+			m = sortedmap.FromMap(i)
+		} else {
+			return nil, fmt.Errorf("could not parse %v as object", toString(i))
+		}
 	}
 
 	var err error
@@ -386,7 +390,7 @@ func parseObject(i interface{}, s *Schema) (interface{}, error) {
 	}
 
 	o := v.Addr().Interface()
-	return o, validateObject(o, s)
+	return o, nil
 }
 
 func parseArray(i interface{}, s *Schema) (interface{}, error) {
@@ -536,11 +540,6 @@ func toObject(m *sortedmap.LinkedHashMap) (interface{}, error) {
 }
 
 func toString(i interface{}) string {
-	//b, err := json.Marshal(i)
-	//if err != nil {
-	//	log.Errorf("error in schema.toString(): %v", err)
-	//}
-	//return string(b)
 	var sb strings.Builder
 	switch o := i.(type) {
 	case []interface{}:

@@ -656,7 +656,7 @@ func TestValidate_Object(t *testing.T) {
 				schematest.WithEnum([]interface{}{map[string]interface{}{"name": "bar"}}),
 			),
 			func(t *testing.T, _ interface{}, err error) {
-				require.EqualError(t, err, `value '{name: foo}' does not match one in the enum [{name: bar}]`)
+				require.EqualError(t, err, `value {name: foo} does not match one in the enum [{name: bar}]`)
 			},
 		},
 		{
@@ -666,6 +666,20 @@ func TestValidate_Object(t *testing.T) {
 				schematest.WithRequired("name"),
 				schematest.WithProperty("name", schematest.New("string")),
 				schematest.WithEnum([]interface{}{map[string]interface{}{"name": "foo"}}),
+			),
+			func(t *testing.T, _ interface{}, err error) {
+				require.NoError(t, err)
+			},
+		},
+		{
+			"in enum nested",
+			`{"name": "foo", "colors": ["red", "green", "blue"] }`,
+			schematest.New("object",
+				schematest.WithRequired("name"),
+				schematest.WithProperty("name", schematest.New("string")),
+				schematest.WithProperty("colors", schematest.New("array",
+					schematest.WithItems(schematest.New("string")))),
+				schematest.WithEnum([]interface{}{map[string]interface{}{"name": "foo", "colors": []string{"red", "green", "blue"}}}),
 			),
 			func(t *testing.T, _ interface{}, err error) {
 				require.NoError(t, err)

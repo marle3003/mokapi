@@ -5,6 +5,7 @@ import (
 	"container/list"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 )
 
@@ -22,6 +23,15 @@ type pair struct {
 
 func NewLinkedHashMap() *LinkedHashMap {
 	return &LinkedHashMap{}
+}
+
+func FromMap(m interface{}) *LinkedHashMap {
+	sm := NewLinkedHashMap()
+	v := reflect.ValueOf(m)
+	for _, k := range v.MapKeys() {
+		sm.Set(k.Interface(), v.MapIndex(k).Interface())
+	}
+	return sm
 }
 
 func (m *LinkedHashMap) Set(key, value interface{}) {

@@ -49,8 +49,13 @@ func (suite *PetStoreSuite) TestJsFile() {
 		try.HasStatusCode(http.StatusNotFound),
 		try.HasBody(""))
 
+	try.GetRequest(suite.T(), "http://127.0.0.1:18080/pet/4",
+		map[string]string{"Accept": "application/json"},
+		try.HasStatusCode(http.StatusInternalServerError),
+		try.HasBody("missing required field name on {}, expected schema type=object properties=[id, category, name, photoUrls, tags, status] required=[name photoUrls]\n"))
+
 	e := events.GetEvents(events.NewTraits().WithNamespace("http"))
-	require.Len(suite.T(), e, 2)
+	require.Len(suite.T(), e, 3)
 }
 
 func (suite *PetStoreSuite) TestLuaFile() {

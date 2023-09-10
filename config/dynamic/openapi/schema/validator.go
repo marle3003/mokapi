@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"unicode"
 )
 
 func validateString(i interface{}, s *Schema) error {
@@ -205,7 +206,7 @@ func validateObject(i interface{}, schema *Schema) error {
 			}
 		}
 
-		if len(schema.Enum) > 0 {
+		/*if len(schema.Enum) > 0 {
 			found := false
 		LoopEnum:
 			for _, e := range schema.Enum {
@@ -223,7 +224,11 @@ func validateObject(i interface{}, schema *Schema) error {
 			if !found {
 				return fmt.Errorf("value '%v' does not match one in the enum %v", m.String(), toString(schema.Enum))
 			}
-		}
+		}*/
+	}
+
+	if len(schema.Enum) > 0 {
+		return checkValueIsInEnum(i, schema.Enum, &Schema{Type: "object"})
 	}
 
 	return nil
@@ -234,7 +239,7 @@ func checkValueIsInEnum(i interface{}, enum []interface{}, entrySchema *Schema) 
 	for _, e := range enum {
 		v, err := parse(e, &Ref{Value: entrySchema})
 		if err != nil {
-			log.Errorf("unable to parse enum value %v to integer: %v", toString(e), err)
+			log.Errorf("unable to parse enum value %v to %v: %v", toString(e), entrySchema, err)
 			continue
 		}
 		if compare(i, v) {
@@ -257,9 +262,16 @@ func compare(a, b interface{}) bool {
 		return false
 	}
 
+	k := av.Kind()
+	_ = k
+
 	switch av.Kind() {
 	case reflect.Slice:
 		return compareSlice(av, bv)
+	case reflect.Map:
+		return compareMap(av, bv)
+	case reflect.Struct, reflect.Pointer:
+		return compareStruct(av, bv)
 	default:
 		return a == b
 	}
@@ -275,4 +287,42 @@ func compareSlice(a, b reflect.Value) bool {
 		}
 	}
 	return true
+}
+
+func compareMap(a, b reflect.Value) bool {
+	if a.Len() != b.Len() {
+		return false
+	}
+	for _, k := range a.MapKeys() {
+		av := a.MapIndex(k)
+		bv := b.MapIndex(k)
+		if !compare(av.Interface(), bv.Interface()) {
+			return false
+		}
+
+	}
+
+	return true
+}
+
+func compareStruct(a, b reflect.Value) bool {
+	if b.Kind() == reflect.Pointer {
+		b = b.Elem()
+	}
+
+	m := a.Interface().(*sortedmap.LinkedHashMap)
+	for it := m.Iter(); it.Next(); {
+		name := toFieldName(it.Key().(string))
+		v := b.FieldByName(name)
+		if !compare(it.Value(), v.Interface()) {
+			return false
+		}
+	}
+	return true
+}
+
+func toFieldName(s string) string {
+	r := []rune(s)
+	r[0] = unicode.ToUpper(r[0])
+	return string(r)
 }
