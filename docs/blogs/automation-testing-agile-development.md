@@ -34,8 +34,8 @@ would be dependent on external systems in relation to runtime, changes and bugs.
 
 <img src="/systemtest.png" width="700" alt="End-to-End Testing" title="End-to-End Testing" />
 
-For stable tests, we need to simulate all interactions with external systems. In this case, we only test 
-what we are responsible for, and thus we have a much more controlled testing strategy. Mokapi can help us 
+For stable tests, we need to simulate all interactions with external systems. This way, we only test 
+what we are responsible for, and thus have a much more controlled testing strategy. Mokapi can help us 
 to simulate interfaces like REST API or Apache Kafka and allows us to bring the really important information
 into our system under test. 
 
