@@ -13,13 +13,16 @@ func (r *Ref) Patch(patch *Ref) {
 }
 
 func (s *Schema) Patch(patch *Schema) {
-	if len(s.Format) == 0 {
+	if len(patch.Type) > 0 {
+		s.Type = patch.Type
+	}
+	if len(patch.Format) > 0 {
 		s.Format = patch.Format
 	}
-	if len(s.Pattern) == 0 {
+	if len(patch.Pattern) > 0 {
 		s.Pattern = patch.Pattern
 	}
-	if len(s.Description) == 0 {
+	if len(patch.Description) > 0 {
 		s.Description = patch.Description
 	}
 	if s.Properties == nil {
@@ -39,6 +42,58 @@ func (s *Schema) Patch(patch *Schema) {
 	} else {
 		s.Xml.patch(patch.Xml)
 	}
+
+	if patch.MinLength != nil {
+		s.MinLength = patch.MinLength
+	}
+
+	if patch.MaxLength != nil {
+		s.MaxLength = patch.MaxLength
+	}
+
+	if patch.Enum != nil {
+		s.Enum = patch.Enum
+	}
+
+	if patch.Example != nil {
+		s.Example = patch.Example
+	}
+
+	if patch.Minimum != nil {
+		s.Minimum = patch.Minimum
+	}
+
+	if patch.Maximum != nil {
+		s.Maximum = patch.Maximum
+	}
+
+	if patch.ExclusiveMinimum != nil {
+		s.ExclusiveMinimum = patch.ExclusiveMinimum
+	}
+
+	if patch.ExclusiveMaximum != nil {
+		s.ExclusiveMaximum = patch.ExclusiveMaximum
+	}
+
+	if patch.MinItems != nil {
+		s.MinItems = patch.MinItems
+	}
+
+	if patch.MaxItems != nil {
+		s.MaxItems = patch.MaxItems
+	}
+
+	if patch.MinProperties != nil {
+		s.MinProperties = patch.MinProperties
+	}
+
+	if patch.MaxProperties != nil {
+		s.MaxProperties = patch.MaxProperties
+	}
+
+	if patch.Required != nil {
+		s.Required = patch.Required
+	}
 }
 
 func (s *SchemasRef) patch(patch *SchemasRef) {
@@ -49,6 +104,8 @@ func (s *SchemasRef) patch(patch *SchemasRef) {
 		s.Value = patch.Value
 		return
 	}
+
+	s.Value.Patch(patch.Value)
 }
 
 func (x *Xml) patch(patch *Xml) {
@@ -56,17 +113,21 @@ func (x *Xml) patch(patch *Xml) {
 		return
 	}
 
-	if len(x.Name) == 0 {
+	if len(patch.Name) > 0 {
 		x.Name = patch.Name
 	}
 
-	if len(x.Prefix) == 0 {
+	if len(patch.Prefix) > 0 {
 		x.Prefix = patch.Prefix
 	}
 
-	if len(x.Namespace) == 0 {
+	if len(patch.Namespace) > 0 {
 		x.Namespace = patch.Namespace
 	}
+
+	x.Wrapped = patch.Wrapped
+	x.Attribute = patch.Attribute
+	x.CData = patch.CData
 }
 
 func (s *Schemas) Patch(patch *Schemas) {

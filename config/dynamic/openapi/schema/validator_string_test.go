@@ -129,13 +129,13 @@ func TestParse_String(t *testing.T) {
 		{
 			"not minLength",
 			`"foo"`,
-			&schema.Schema{Type: "string", MinLength: 4},
+			&schema.Schema{Type: "string", MinLength: toIntP(4)},
 			fmt.Errorf("value 'foo' does not meet min length of 4"),
 		},
 		{
 			"minLength",
 			`"foo"`,
-			&schema.Schema{Type: "string", MinLength: 3},
+			&schema.Schema{Type: "string", MinLength: toIntP(3)},
 			nil,
 		},
 		{

@@ -149,6 +149,6 @@ func WithEnum(e []interface{}) SchemaOptions {
 
 func WithMinLength(n int) SchemaOptions {
 	return func(s *schema.Schema) {
-		s.MinLength = n
+		s.MinLength = &n
 	}
 }

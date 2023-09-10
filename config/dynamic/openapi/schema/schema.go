@@ -37,7 +37,7 @@ type Schema struct {
 
 	// String
 	Pattern   string `yaml:"pattern" json:"pattern"`
-	MinLength int    `yaml:"minLength" json:"minLength"`
+	MinLength *int   `yaml:"minLength" json:"minLength"`
 	MaxLength *int   `yaml:"maxLength" json:"maxLength"`
 
 	// Numbers

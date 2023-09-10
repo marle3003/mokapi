@@ -77,8 +77,8 @@ func validateString(i interface{}, s *Schema) error {
 		return fmt.Errorf("value '%v' does not match pattern, expected %v", str, s)
 	}
 
-	if s.MinLength > len(str) {
-		return fmt.Errorf("value '%v' does not meet min length of %v", str, s.MinLength)
+	if s.MinLength != nil && *s.MinLength > len(str) {
+		return fmt.Errorf("value '%v' does not meet min length of %v", str, *s.MinLength)
 	}
 	if s.MaxLength != nil && *s.MaxLength < len(str) {
 		return fmt.Errorf("value '%v' does not meet max length of %v", str, *s.MaxLength)
