@@ -368,4 +368,34 @@ pre {
   top: -64px;
   visibility: hidden;
 }
+
+blockquote {
+  width:100%;
+  margin:50px auto;
+  font-family:Open Sans;
+  font-style:italic;
+  padding:1.2em 30px 1.2em 70px;
+  line-height:1.6;
+  font-size: 1.2rem;
+  border-left:8px solid #eabaabff;
+  position: relative;
+  background: var(--color-background-soft);
+}
+blockquote:before {
+  content: "\201C";
+  color: #eabaabff;
+  font-size:4em;
+  position: absolute;
+  left: 10px;
+  top:-10px;
+}
+blockquote::after{
+  content: '';
+}
+blockquote span{
+  display:block;
+  font-style: normal;
+  font-weight: bold;
+  margin-top:1em;
+}
 </style>

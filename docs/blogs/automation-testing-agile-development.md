@@ -7,20 +7,27 @@ description: Automation Testing is essential for agile development. How can Moka
 Automated tests are essential for agile development. They ensure that our software system is still 
 easy to change. In an agile development process, software systems are changed and new feature are 
 added in many short iteration. Without an automated testing setup it becomes a challenge to keep up 
-your quality of your product.
+high quality of our product.
 
 The longer a product is in development, the harder it becomes for manual testing to keep up with the 
-pace. Manual tests don't scale really well. Also, in an agile development team you want to continuously 
-deploy your changes. For this, we need continuous testing to ensures that new code is bug-free before it 
-hits the production environment.
+pace. Manual testing does not scale, and it's not compatible with Continuous Delivery. Also, in an agile development team we want to continuously 
+deploy new changes. For this, we need continuous testing to ensures that new code is bug-free before it 
+hits the production environment. 
+
+Automated testing such as unit testing and contract testing eliminates the fear of change.
+
+> Write tests until fear is transformed into boredom
+> <span>Kent Beck</span>
+
+## Why Contract Testing?
 
 <img src="/e2e-testing.png" width="700" alt="Contract Testing" title="Contract Testing" />
 
-In addition, our software systems are becoming more and more complex and need to be integrated with many 
+Our software systems are becoming more and more complex and need to be integrated with many 
 external software systems that are maintained by other teams. We can't test our software system including 
-all external systems. We would need to understand all these external systems and even get them in the 
-right state for our tests. Also, these systems are changing, and we don't know how. Our tests would be 
-dependent on external systems in relation to runtime, changes and bugs.
+all external systems. We would need to understand all these external systems (system A and B) and even get 
+them in the right state for our tests. Also, these systems are changing, and we don't know how. Our tests 
+would be dependent on external systems in relation to runtime, changes and bugs.
 
 ## Test only system that we are responsible for and fake all others
 
