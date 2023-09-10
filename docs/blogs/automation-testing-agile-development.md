@@ -10,9 +10,10 @@ added in many short iteration. Without an automated testing setup it becomes a c
 high quality of our product.
 
 The longer a product is in development, the harder it becomes for manual testing to keep up with the 
-pace. Manual testing does not scale, and it's not compatible with Continuous Delivery. Also, in an agile development team we want to continuously 
-deploy new changes. For this, we need continuous testing to ensures that new code is bug-free before it 
-hits the production environment. 
+pace. Manual testing does not scale, and it's not compatible with continuous delivery. In continuous delivery
+software code is being developed in smaller increments, released more often and deployed more frequently. 
+Imagine we have 50 production changes every day. For that, we need continuous testing to make sure that new 
+code is bug-free before it hits the production environment. 
 
 Automated testing such as unit testing and contract testing eliminates the fear of change.
 
