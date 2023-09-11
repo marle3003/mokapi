@@ -3,8 +3,8 @@
   margin: 0 auto auto;
 }
 .home h1 {
-  margin-top: 3rem;
   padding: 1.5rem;
+  padding-top: 0;
   padding-bottom: 0.5rem;
 }
 .home h2 {
@@ -30,6 +30,14 @@
 }
 .home .hero-title img {
   max-width: 70%;
+}
+.home .hero-title .badge:first-child {
+  margin-left: 1.5rem;
+}
+.home .hero-title .badge {
+  margin-left: 0.5rem;
+  background-color: #eabaabff;
+  color: black;
 }
 .home .tab {
   max-width: 700px;
@@ -99,6 +107,7 @@
 }
 .home .card-title {
   font-size: 1.3rem;
+  font-weight: 600;
 }
 .home section {
   padding-bottom: 6rem;

@@ -4,9 +4,9 @@ import Footer from '@/components/Footer.vue'
 import { ref, onMounted } from 'vue'
 import { Modal } from 'bootstrap'
 
-const description = `Prevent bugs - Reduce dependencies - Simulating APIs that don't even exist yet. Easy and flexible API mocking to simplify your test workflows and build better software faster. Mock your HTTP, Apache Kafka, SMTP or LDAP services and control everything like delays, errors or other edge cases.`
+const description = `Easy and flexible API mocking to simplify your test workflows and build better software faster. Mock your HTTP, Apache Kafka, SMTP or LDAP services and control everything like delays, errors or other edge cases.`
 
-useMeta('Mocking tool for engineering teams | mokapi.io', description, 'https://mokapi.io')
+useMeta('API Mocking and Testing | mokapi.io', description, 'https://mokapi.io')
 
 const dialog = ref<Modal>()
 const imageUrl = ref<string>()
@@ -31,8 +31,12 @@ function showImage(target: EventTarget | null) {
       <div class="container">
         <div class="row hero-title justify-content-center">
           <div class="col-12 col-lg-6">
+            <span class="badge">HTTP</span>
+            <span class="badge">Kafka</span>
+            <span class="badge">LDAP</span>
+            <span class="badge">SMTP</span>
             <h1>Easy and flexible API mocking</h1>
-            <p class="description">Simplify your test workflows to build better software faster</p>
+            <p class="description">Mock your APIs in Seconds - Free and Open-Source</p>
             <p class="d-none d-md-block">
               <router-link :to="{ path: '/docs/Guides' }">
                 <button type="button" class="btn btn-outline-primary">Guides</button>
@@ -60,8 +64,8 @@ function showImage(target: EventTarget | null) {
     </section>
     <section>
       <div class="container">
-        <h2>Prevent bugs - Reduce dependencies - Simulating APIs that don't even exist yet</h2>
-        <p class="text-center">Increase delivery speed by creating stable development and test environment</p>
+        <h2>Prevent bugs - Reduce dependencies - Simulate APIs that don't exist yet</h2>
+        <p class="text-center">Increase speed, accuracy and efficiency by creating stable development and test environment</p>
         <div class="card-group">
           <div class="card">
             <router-link :to="{path: '/http'}">
@@ -74,8 +78,8 @@ function showImage(target: EventTarget | null) {
           <div class="card">
             <router-link :to="{path: '/kafka'}">
               <div class="card-body">
-                <div class="card-title">Kafka</div>
-                Simulate a Kafka system with AsyncAPI specification.
+                <div class="card-title">Apache Kafka</div>
+                Mock Apache Kafka topics with AsyncAPI specification.
               </div>
             </router-link>
           </div>
@@ -103,8 +107,8 @@ function showImage(target: EventTarget | null) {
         <div class="row pb-4 pb-lg-5 mb-lg-5">
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
-              <h3>Control Everything</h3>
-              <p>Write the behavior of your mock in Javascript and control everything, such as delays, errors or other edge cases.</p>
+              <h3>Control Everything with JavaScript</h3>
+              <p>Write the behavior of your mock in Javascript and control everything: status, headers, delays, errors or other edge cases.</p>
               <router-link :to="{ path: '/docs/javascript-api' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Javascript API</button>
               </router-link>
@@ -117,8 +121,10 @@ function showImage(target: EventTarget | null) {
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
             <div class="text-lg-start text-center">
-              <h3>Run Anywhere</h3>
-              <p>Use the <a href="https://hub.docker.com/r/mokapi/mokapi">Docker image</a>, the <a href="https://www.npmjs.com/package/go-mokapi">NPM package</a> or directly as an <a href="https://github.com/marle3003/mokapi/releases">executable</a>.</p>
+              <h3>Run Everywhere</h3>
+              <p>
+                Use the <a href="https://hub.docker.com/r/mokapi/mokapi">Docker image</a>, the <a href="https://www.npmjs.com/package/go-mokapi">NPM package</a> or directly as an <a href="https://github.com/marle3003/mokapi/releases">executable</a>.
+              </p>
               <router-link :to="{ path: '/docs/guides/get-started/running' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Read more</button>
               </router-link>
