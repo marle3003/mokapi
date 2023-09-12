@@ -47,7 +47,7 @@ function showImage(target: EventTarget | null) {
             </p>
           </div>
           <div class="col-12 col-lg-5">
-            <img src="/logo.svg" alt="Logo Mokapi" class="mx-auto d-block" />
+            <img src="/logo.svg" alt="mokapi" class="mx-auto d-block" />
           </div>
           <div class="col-12 d-block d-md-none">
             <p style="margin-top: 2rem;">
@@ -115,7 +115,7 @@ function showImage(target: EventTarget | null) {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
-            <img src="/controleverything.png" @click="showImage($event.target)" />
+            <img src="/controleverything.png" @click="showImage($event.target)" alt="Control in Mokapi everything with JavaScript" />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
@@ -124,6 +124,7 @@ function showImage(target: EventTarget | null) {
               <h3>Run Everywhere</h3>
               <p>
                 Use the <a href="https://hub.docker.com/r/mokapi/mokapi">Docker image</a>, the <a href="https://www.npmjs.com/package/go-mokapi">NPM package</a> or directly as an <a href="https://github.com/marle3003/mokapi/releases">executable</a>.
+                Use CLI arguments, environment variable or file configuration and take advantage from hot-reloading of dynamic configurations.
               </p>
               <router-link :to="{ path: '/docs/guides/get-started/running' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Read more</button>
@@ -131,7 +132,7 @@ function showImage(target: EventTarget | null) {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
-            <img src="/anywhere.png" @click="showImage($event.target)" />
+            <img src="/anywhere.png" @click="showImage($event.target)" alt="Run Mokapi in Docker Container or in NodeJS with powerful configuration options" />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5mb-lg-5 mt-lg-5">
@@ -145,7 +146,7 @@ function showImage(target: EventTarget | null) {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
-            <img src="/everythingcode.png" @click="showImage($event.target)" />
+            <img src="/everythingcode.png" @click="showImage($event.target)" alt="Mokapi uses everything as code approach" />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
@@ -159,7 +160,7 @@ function showImage(target: EventTarget | null) {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 order-lg-2">
-            <img src="/patching.png" @click="showImage($event.target)" />
+            <img src="/patching.png" @click="showImage($event.target)" alt="Patching allows more flexibility in mocking APIs" />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
@@ -170,7 +171,7 @@ function showImage(target: EventTarget | null) {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 order-lg-1">
-            <img src="/systemtest.png" @click="showImage($event.target)" />
+            <img src="/systemtest.png" @click="showImage($event.target)" alt="Mokapi can help us to simulate interfaces like REST API or Apache Kafka and allows to bring the really important information into the system under test." />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
@@ -184,7 +185,7 @@ function showImage(target: EventTarget | null) {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-2">
-            <img src="/dashboard.png" @click="showImage($event.target)" />
+            <img src="/dashboard.png" @click="showImage($event.target)" alt="Analyzing data in real-time using the powerful dashboard" />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5">
@@ -195,7 +196,7 @@ function showImage(target: EventTarget | null) {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-1">
-            <img src="/systemcontracts.png" @click="showImage($event.target)" />
+            <img src="/systemcontracts.png" @click="showImage($event.target)" alt="Test only system that we are responsible for and fake all others" />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5">
@@ -206,7 +207,7 @@ function showImage(target: EventTarget | null) {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 order-lg-2">
-            <img src="/betterfaster.png" class="float-lg-end mx-auto d-block" style="width: 80%" @click="showImage($event.target)" />
+            <img src="/betterfaster.png" class="float-lg-end mx-auto d-block" style="width: 80%" @click="showImage($event.target)" alt="Improve speed, accuracy and efficiency of testing and deliver higher quality" />
           </div>
         </div>
       </div>
