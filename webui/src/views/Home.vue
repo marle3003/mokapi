@@ -4,7 +4,7 @@ import Footer from '@/components/Footer.vue'
 import { ref, onMounted } from 'vue'
 import { Modal } from 'bootstrap'
 
-const description = `Easy and flexible API mocking to simplify your test workflows and build better software faster. Mock your HTTP, Apache Kafka, SMTP or LDAP services and control everything like delays, errors or other edge cases.`
+const description = `Mock tool for Agile, DevOps and Continuous Deployment teams. Mock your HTTP, Apache Kafka, SMTP or LDAP interfaces and control everything like delays, errors or other edge cases.`
 
 useMeta('API Mocking and Testing | mokapi.io', description, 'https://mokapi.io')
 
@@ -36,7 +36,7 @@ function showImage(target: EventTarget | null) {
             <span class="badge">LDAP</span>
             <span class="badge">SMTP</span>
             <h1>Easy and flexible API mocking</h1>
-            <p class="description">Mock your APIs in Seconds - Free and Open-Source</p>
+            <p class="description">Mock your APIs in Seconds - No registration, <b>free</b> and <b>open-source</b></p>
             <p class="d-none d-md-block">
               <router-link :to="{ path: '/docs/Guides' }">
                 <button type="button" class="btn btn-outline-primary">Guides</button>
@@ -127,7 +127,7 @@ function showImage(target: EventTarget | null) {
                 Use CLI arguments, environment variable or file configuration and take advantage from hot-reloading of dynamic configurations.
               </p>
               <router-link :to="{ path: '/docs/guides/get-started/running' }">
-                <button type="button" class="btn btn-outline-primary btn-sm">Read more</button>
+                <button type="button" class="btn btn-outline-primary btn-sm">Learn more</button>
               </router-link>
             </div>
           </div>
@@ -141,7 +141,7 @@ function showImage(target: EventTarget | null) {
               <h3>Everything as Code</h3>
               <p>Get all benefits of everything as code such as version control and consistency</p>
               <router-link :to="{ path: '/docs/configuration/configuration/overview' }">
-                <button type="button" class="btn btn-outline-primary btn-sm">Read more</button>
+                <button type="button" class="btn btn-outline-primary btn-sm">Learn more</button>
               </router-link>
             </div>
           </div>
@@ -155,7 +155,7 @@ function showImage(target: EventTarget | null) {
               <h3>Patch Configuration</h3>
               <p>Patch configuration changes for mocking needs, rather than changing the original contract</p>
               <router-link :to="{ path: 'docs/configuration/configuration/patching' }">
-                <button type="button" class="btn btn-outline-primary btn-sm">Read more</button>
+                <button type="button" class="btn btn-outline-primary btn-sm">Jump tp Patching</button>
               </router-link>
             </div>
           </div>
@@ -171,7 +171,7 @@ function showImage(target: EventTarget | null) {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 order-lg-1">
-            <img src="/systemtest.png" @click="showImage($event.target)" alt="Mokapi can help us to simulate interfaces like REST API or Apache Kafka and allows to bring the really important information into the system under test." />
+            <img src="/systemtest.png" @click="showImage($event.target)" alt="Mokapi helps you to simulate interfaces like REST API or Apache Kafka and allows to bring the really important information into the system under test." />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
@@ -180,7 +180,7 @@ function showImage(target: EventTarget | null) {
               <h3>See what's going on</h3>
               <p>Quickly analyze and inspect all requests and responses in the dashboard to gather insights on how your mock APIs are used.</p>
               <router-link :to="{ path: '/docs/guides/get-started/dashboard' }">
-                <button type="button" class="btn btn-outline-primary btn-sm">Read more</button>
+                <button type="button" class="btn btn-outline-primary btn-sm">Mokapi's Dashboard</button>
               </router-link>
             </div>
           </div>
