@@ -11,7 +11,7 @@ func (s *Schemas) Parse(config *common.Config, reader common.Reader) error {
 	}
 
 	for it := s.Iter(); it.Next(); {
-		if err := it.Value().(*Ref).Parse(config, reader); err != nil {
+		if err := it.Value().Parse(config, reader); err != nil {
 			return err
 		}
 	}

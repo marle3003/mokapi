@@ -1,7 +1,6 @@
 package api
 
 import (
-	"mokapi/config/dynamic/openapi"
 	"mokapi/config/dynamic/openapi/parameter"
 	"mokapi/runtime"
 	"mokapi/runtime/metrics"
@@ -145,7 +144,7 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 		})
 	}
 
-	for path, p := range s.Paths.Value {
+	for path, p := range s.Paths {
 		if p.Value == nil {
 			continue
 		}
@@ -179,8 +178,8 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 			op.Parameters = append(op.Parameters, getParameters(o.Parameters)...)
 
 			for it := o.Responses.Iter(); it.Next(); {
-				statusCode := it.Key().(int)
-				r := it.Value().(*openapi.ResponseRef)
+				statusCode := it.Key()
+				r := it.Value()
 				if r.Value == nil {
 					continue
 				}

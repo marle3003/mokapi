@@ -32,11 +32,18 @@ func WithResponse(status int, opts ...ResponseOptions) OperationOptions {
 
 type ParamOptions func(p *parameter.Parameter)
 
-func WithPathParam(name string, required bool, opts ...ParamOptions) OperationOptions {
+func WithOperationParam(name string, required bool, opts ...ParamOptions) OperationOptions {
 	return func(o *openapi.Operation) {
 
 		o.Parameters = append(o.Parameters, &parameter.Ref{
 			Value: newParam(name, required, parameter.Path, opts...)})
+	}
+}
+
+func WithOperationParamRef(ref *parameter.Ref) OperationOptions {
+	return func(o *openapi.Operation) {
+
+		o.Parameters = append(o.Parameters, ref)
 	}
 }
 

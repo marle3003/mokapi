@@ -188,7 +188,7 @@ func validateObject(i interface{}, schema *Schema) error {
 				return fmt.Errorf("missing required field %v on %v, expected %v", p, toString(i), schema)
 			}
 		}
-	} else if m, ok := i.(*sortedmap.LinkedHashMap); ok {
+	} else if m, ok := i.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
 		if schema.MinProperties != nil && m.Len() < *schema.MinProperties {
 			return fmt.Errorf("validation error minProperties on %v, expected %v", m, schema)
 		}
@@ -310,9 +310,9 @@ func compareStruct(a, b reflect.Value) bool {
 		b = b.Elem()
 	}
 
-	m := a.Interface().(*sortedmap.LinkedHashMap)
+	m := a.Interface().(*sortedmap.LinkedHashMap[string, interface{}])
 	for it := m.Iter(); it.Next(); {
-		name := toFieldName(it.Key().(string))
+		name := toFieldName(it.Key())
 		v := b.FieldByName(name)
 		if !compare(it.Value(), v.Interface()) {
 			return false

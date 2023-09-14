@@ -53,14 +53,14 @@ func TestFromLua_UserData(t *testing.T) {
 					lua.LNil,
 				}
 
-				var m *sortedmap.LinkedHashMap
+				var m *sortedmap.LinkedHashMap[string, interface{}]
 				err := FromLua(ud, &m)
 				require.NoError(t, err)
 				require.Equal(t, 3, m.Len())
 				require.Equal(t, "foo", m.Get("Name"))
 				require.Equal(t, nil, m.Get("Nil"))
 
-				data, ok := m.Get("Data").(*sortedmap.LinkedHashMap)
+				data, ok := m.Get("Data").(*sortedmap.LinkedHashMap[string, interface{}])
 				require.True(t, ok, "should be LinkedHashMap")
 
 				xy, ok := data.Get("xy").([]interface{})
@@ -99,8 +99,8 @@ func TestFromLua_UserData(t *testing.T) {
 				err := FromLua(ud, &v)
 				require.NoError(t, err)
 				require.Equal(t, "foo", v.Name)
-				require.Equal(t, []interface{}{"xy"}, v.Data.(*sortedmap.LinkedHashMap).Keys())
-				require.Equal(t, []interface{}{[]interface{}{5.0, 6.0}}, v.Data.(*sortedmap.LinkedHashMap).Values())
+				require.Equal(t, []string{"xy"}, v.Data.(*sortedmap.LinkedHashMap[string, interface{}]).Keys())
+				require.Equal(t, []interface{}{[]interface{}{5.0, 6.0}}, v.Data.(*sortedmap.LinkedHashMap[string, interface{}]).Values())
 				require.Nil(t, v.Nil)
 			},
 		},

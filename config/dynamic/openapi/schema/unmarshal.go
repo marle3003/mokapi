@@ -11,7 +11,7 @@ func (s *Schemas) UnmarshalYAML(value *yaml.Node) error {
 	if value.Kind != yaml.MappingNode {
 		return errors.New("not a mapping node")
 	}
-	s.LinkedHashMap = *sortedmap.NewLinkedHashMap()
+	s.LinkedHashMap = sortedmap.LinkedHashMap[string, *Ref]{}
 	for i := 0; i < len(value.Content); i += 2 {
 		var key string
 		err := value.Content[i].Decode(&key)
@@ -37,7 +37,7 @@ func (s *SchemasRef) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	s.Value = &Schemas{}
-	s.Value.LinkedHashMap = *sortedmap.NewLinkedHashMap()
+	s.Value.LinkedHashMap = sortedmap.LinkedHashMap[string, *Ref]{}
 	for k, v := range m {
 		s.Value.LinkedHashMap.Set(k, v)
 	}

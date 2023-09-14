@@ -53,7 +53,7 @@ func (a *App) AddHttp(c *common.Config) *HttpInfo {
 
 	events.ResetStores(events.NewTraits().WithNamespace("http").WithName(name))
 	events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("http").WithName(name))
-	for path := range cfg.Paths.Value {
+	for path := range cfg.Paths {
 		events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("http").WithName(name).With("path", path))
 	}
 

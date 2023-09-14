@@ -33,7 +33,7 @@ func (c *Config) Parse(config *common.Config, reader common.Reader) error {
 		return err
 	}
 
-	if err := c.Paths.Parse(config, reader); err != nil {
+	if err := c.Paths.parse(config, reader); err != nil {
 		return err
 	}
 
@@ -83,67 +83,6 @@ func (r *NamedHeaders) Parse(config *common.Config, reader common.Reader) error 
 
 	if len(r.Ref) > 0 {
 		return common.Resolve(r.Ref, &r.Value, config, reader)
-	}
-
-	return nil
-}
-
-func (r *EndpointsRef) Parse(config *common.Config, reader common.Reader) error {
-	if len(r.Ref) > 0 {
-		return common.Resolve(r.Ref, &r.Value, config, reader)
-	}
-
-	for _, e := range r.Value {
-		if err := e.Parse(config, reader); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (r *EndpointRef) Parse(config *common.Config, reader common.Reader) error {
-	if r == nil {
-		return nil
-	}
-
-	if len(r.Ref) > 0 {
-		return common.Resolve(r.Ref, &r.Value, config, reader)
-	}
-
-	return r.Value.Parse(config, reader)
-}
-
-func (e *Endpoint) Parse(config *common.Config, reader common.Reader) error {
-	if e == nil {
-		return nil
-	}
-
-	for _, p := range e.Parameters {
-		if err := p.Parse(config, reader); err != nil {
-			return err
-		}
-	}
-
-	for _, o := range e.Operations() {
-		o.Endpoint = e
-		for _, p := range o.Parameters {
-			if err := p.Parse(config, reader); err != nil {
-				return err
-			}
-		}
-
-		if err := o.RequestBody.Parse(config, reader); err != nil {
-			return err
-		}
-
-		if o.Responses != nil {
-			for it := o.Responses.Iter(); it.Next(); {
-				res := it.Value().(*ResponseRef)
-				if err := res.Parse(config, reader); err != nil {
-					return err
-				}
-			}
-		}
 	}
 
 	return nil

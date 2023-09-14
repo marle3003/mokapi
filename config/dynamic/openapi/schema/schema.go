@@ -18,7 +18,7 @@ type SchemasRef struct {
 }
 
 type Schemas struct {
-	sortedmap.LinkedHashMap
+	sortedmap.LinkedHashMap[string, *Ref]
 }
 
 type Schema struct {
@@ -90,7 +90,7 @@ func (s *Schemas) Get(name string) *Ref {
 	if r == nil {
 		return nil
 	}
-	return r.(*Ref)
+	return r
 }
 
 func (s *Schemas) Resolve(token string) (interface{}, error) {

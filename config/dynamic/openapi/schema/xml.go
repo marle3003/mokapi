@@ -105,12 +105,12 @@ func encode(name string, i interface{}, r *Ref, writer *bufio.Writer) error {
 			}
 
 			for it := s.Properties.Value.Iter(); it.Next(); {
-				prop := it.Value().(*Ref)
+				prop := it.Value()
 				if prop.Value == nil || prop.Value.Xml == nil || !prop.Value.Xml.Attribute {
 					continue
 				}
 				x := prop.Value.Xml
-				attrName := it.Key().(string)
+				attrName := it.Key()
 				if len(x.Name) > 0 {
 					attrName = x.Name
 				}
@@ -124,11 +124,11 @@ func encode(name string, i interface{}, r *Ref, writer *bufio.Writer) error {
 			node.writeStart(writer)
 
 			for it := s.Properties.Value.Iter(); it.Next(); {
-				prop := it.Value().(*Ref)
+				prop := it.Value()
 				if prop.Value == nil || (prop.Value.Xml != nil && prop.Value.Xml.Attribute) {
 					continue
 				}
-				name := it.Key().(string)
+				name := it.Key()
 				err := encode(name, o.Get(name), prop, writer)
 				if err != nil {
 					return err
@@ -179,9 +179,9 @@ func (e *xmlNode) parse(r *Ref) (interface{}, error) {
 		}
 		props := sortedmap.NewLinkedHashMap()
 		for it := s.Properties.Value.Iter(); it.Next(); {
-			name := it.Key().(string)
+			name := it.Key()
 			xmlName := name
-			prop := it.Value().(*Ref)
+			prop := it.Value()
 			if prop.Value.Xml != nil && len(prop.Value.Xml.Name) > 0 {
 				xmlName = prop.Value.Xml.Name
 			}

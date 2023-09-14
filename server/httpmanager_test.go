@@ -32,7 +32,7 @@ func TestHttpServers_Monitor(t *testing.T) {
 	port := try.GetFreePort()
 	url := fmt.Sprintf("http://localhost:%v", port)
 	c := openapitest.NewConfig("3.0", openapitest.WithInfo("test", "1.0", ""), openapitest.WithServer(url, ""))
-	openapitest.AppendEndpoint("/foo", c, openapitest.WithOperation("get", openapitest.NewOperation()))
+	openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", openapitest.NewOperation()))
 	//c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: url}}}
 	m.Update(common.NewConfig(MustParseUrl("foo.yml"), common.WithData(c)))
 

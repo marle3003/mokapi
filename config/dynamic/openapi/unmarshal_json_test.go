@@ -107,8 +107,8 @@ func TestConfig_UnmarshalJSON(t *testing.T) {
 	require.Equal(t, "1.0.0", c.Info.Version)
 	require.Equal(t, "Pet Store", c.Info.Name)
 	require.Equal(t, "/foo", c.Servers[0].Url)
-	require.Contains(t, c.Paths.Value, "/pets")
-	pets := c.Paths.Value["/pets"]
+	require.Contains(t, c.Paths, "/pets")
+	pets := c.Paths["/pets"]
 	require.Equal(t, "foo summary", pets.Value.Summary)
 	require.Equal(t, "foo get", pets.Value.Get.Summary)
 	require.Equal(t, "listPets", pets.Value.Get.OperationId)

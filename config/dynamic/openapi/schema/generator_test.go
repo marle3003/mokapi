@@ -443,15 +443,15 @@ func TestGeneratorObject(t *testing.T) {
 		//},
 	}
 
-	var toMap func(m *sortedmap.LinkedHashMap) map[string]interface{}
-	toMap = func(m *sortedmap.LinkedHashMap) map[string]interface{} {
+	var toMap func(m *sortedmap.LinkedHashMap[string, interface{}]) map[string]interface{}
+	toMap = func(m *sortedmap.LinkedHashMap[string, interface{}]) map[string]interface{} {
 		r := make(map[string]interface{})
 		for it := m.Iter(); it.Next(); {
 			v := it.Value()
-			if vm, ok := v.(*sortedmap.LinkedHashMap); ok {
-				r[it.Key().(string)] = toMap(vm)
+			if vm, ok := v.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
+				r[it.Key()] = toMap(vm)
 			} else {
-				r[it.Key().(string)] = it.Value()
+				r[it.Key()] = it.Value()
 			}
 		}
 		return r
@@ -464,7 +464,7 @@ func TestGeneratorObject(t *testing.T) {
 			g := schema.NewGenerator()
 			o, err := g.New(&schema.Ref{Value: data.schema})
 			require.NoError(t, err)
-			require.Equal(t, data.exp, toMap(o.(*sortedmap.LinkedHashMap)))
+			require.Equal(t, data.exp, toMap(o.(*sortedmap.LinkedHashMap[string, interface{}])))
 		})
 	}
 }
@@ -497,7 +497,7 @@ func TestGenerator_AnyOf(t *testing.T) {
 				a, ok := o.([]interface{})
 				require.True(t, ok, "should be an array")
 				require.Len(t, a, 1)
-				m := a[0].(*sortedmap.LinkedHashMap)
+				m := a[0].(*sortedmap.LinkedHashMap[string, interface{}])
 				require.Equal(t, "RMaRxHkiJBPtapW", m.Get("foo"))
 			},
 		},
@@ -527,7 +527,7 @@ func TestGenerator_AllOf(t *testing.T) {
 				g := schema.NewGenerator()
 				o, err := g.New(&schema.Ref{Value: s})
 				require.NoError(t, err)
-				m, ok := o.(*sortedmap.LinkedHashMap)
+				m, ok := o.(*sortedmap.LinkedHashMap[string, interface{}])
 				require.True(t, ok, "should be a map")
 				require.Equal(t, 2, m.Len())
 				require.Equal(t, "gbRMaRxHkiJBPta", m.Get("foo"))
@@ -563,8 +563,8 @@ func TestGenerator_Recursions(t *testing.T) {
 				o, err := g.New(&schema.Ref{Value: s})
 				require.NoError(t, err)
 				require.NotNil(t, o)
-				m := o.(*sortedmap.LinkedHashMap)
-				foo := m.Get("foo").(*sortedmap.LinkedHashMap)
+				m := o.(*sortedmap.LinkedHashMap[string, interface{}])
+				foo := m.Get("foo").(*sortedmap.LinkedHashMap[string, interface{}])
 				require.Nil(t, foo.Get("foo"))
 			},
 		},
@@ -582,9 +582,9 @@ func TestGenerator_Recursions(t *testing.T) {
 				o, err := g.New(&schema.Ref{Value: s})
 				require.NoError(t, err)
 				require.NotNil(t, o)
-				m := o.(*sortedmap.LinkedHashMap)
-				bar := m.Get("bar").(*sortedmap.LinkedHashMap)
-				foo := bar.Get("foo").(*sortedmap.LinkedHashMap)
+				m := o.(*sortedmap.LinkedHashMap[string, interface{}])
+				bar := m.Get("bar").(*sortedmap.LinkedHashMap[string, interface{}])
+				foo := bar.Get("foo").(*sortedmap.LinkedHashMap[string, interface{}])
 				require.Nil(t, foo.Get("foo"))
 			},
 		},

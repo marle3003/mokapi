@@ -84,14 +84,14 @@ func ToLua(l *lua.LState, from interface{}) (lua.LValue, error) {
 			}
 			return tbl, nil
 		case reflect.Struct:
-			if sm, ok := i.(sortedmap.LinkedHashMap); ok {
+			if sm, ok := i.(sortedmap.LinkedHashMap[string, interface{}]); ok {
 				tbl := l.NewTable()
 				for it := sm.Iter(); it.Next(); {
 					val, err := ToLua(l, it.Value())
 					if err != nil {
 						return nil, err
 					}
-					l.SetField(tbl, it.Key().(string), val)
+					l.SetField(tbl, it.Key(), val)
 				}
 				return tbl, nil
 			}

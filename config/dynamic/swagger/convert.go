@@ -7,6 +7,7 @@ import (
 	"mokapi/config/dynamic/openapi/ref"
 	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/media"
+	"net/http"
 	"strconv"
 	"strings"
 )
@@ -24,7 +25,7 @@ func (c *converter) Convert() (*openapi.Config, error) {
 	result := &openapi.Config{
 		OpenApi: "3.0.1",
 		Info:    c.config.Info,
-		Paths:   openapi.EndpointsRef{Value: make(map[string]*openapi.EndpointRef)},
+		Paths:   make(map[string]*openapi.PathRef),
 	}
 
 	if len(c.config.Schemes) == 0 {
@@ -44,7 +45,7 @@ func (c *converter) Convert() (*openapi.Config, error) {
 		if err != nil {
 			return nil, err
 		}
-		result.Paths.Value[path] = converted
+		result.Paths[path] = converted
 	}
 
 	if len(c.config.Definitions) > 0 {
@@ -57,12 +58,12 @@ func (c *converter) Convert() (*openapi.Config, error) {
 	return result, nil
 }
 
-func (c *converter) convertPath(p *PathItem) (*openapi.EndpointRef, error) {
+func (c *converter) convertPath(p *PathItem) (*openapi.PathRef, error) {
 	if len(p.Ref) > 0 {
-		return &openapi.EndpointRef{Reference: ref.Reference{Ref: convertRef(p.Ref)}}, nil
+		return &openapi.PathRef{Reference: ref.Reference{Ref: convertRef(p.Ref)}}, nil
 	}
 
-	result := &openapi.Endpoint{}
+	result := &openapi.Path{}
 
 	var body *openapi.RequestBodyRef
 	var bodySchema *schema.Ref
@@ -99,10 +100,10 @@ func (c *converter) convertPath(p *PathItem) (*openapi.EndpointRef, error) {
 				converted.RequestBody = b
 			}
 		}
-		result.SetOperation(m, converted)
+		setOperation(m, result, converted)
 	}
 
-	return &openapi.EndpointRef{Value: result}, nil
+	return &openapi.PathRef{Value: result}, nil
 }
 
 func (c *converter) convertOperation(o *Operation) (*openapi.Operation, error) {
@@ -194,6 +195,10 @@ func (c *converter) convertSchema(s *schema.Ref) *schema.Ref {
 		return s
 	}
 
+	if s.Value.Type == "integer" && s.Value.Format == "" {
+		s.Value.Format = "int32"
+	}
+
 	if s.Value.Items != nil {
 		s.Value.Items = c.convertSchema(s.Value.Items)
 	}
@@ -203,7 +208,7 @@ func (c *converter) convertSchema(s *schema.Ref) *schema.Ref {
 			s.Value.Properties.Ref = convertRef(s.Ref)
 		} else {
 			for it := s.Value.Properties.Value.Iter(); it.Next(); {
-				s.Value.Properties.Value.Set(it.Key(), c.convertSchema(it.Value().(*schema.Ref)))
+				s.Value.Properties.Value.Set(it.Key(), c.convertSchema(it.Value()))
 			}
 		}
 	}
@@ -253,4 +258,27 @@ func convertParameter(p *Parameter) *parameter.Ref {
 		Deprecated:  p.Deprecated,
 		Description: p.Description,
 	}}
+}
+
+func setOperation(method string, p *openapi.Path, o *openapi.Operation) {
+	switch method {
+	case http.MethodDelete:
+		p.Delete = o
+	case http.MethodGet:
+		p.Get = o
+	case http.MethodHead:
+		p.Head = o
+	case http.MethodOptions:
+		p.Options = o
+	case http.MethodPatch:
+		p.Patch = o
+	case http.MethodPost:
+		p.Post = o
+	case http.MethodPut:
+		p.Put = o
+	case http.MethodTrace:
+		p.Trace = o
+	default:
+		panic(fmt.Errorf("unsupported HTTP method %q", method))
+	}
 }

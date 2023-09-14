@@ -41,8 +41,8 @@ func parseQueryObject(p *Parameter, u *url.URL) (obj map[string]interface{}, err
 	case s == "deepObject" && p.Explode:
 		obj = make(map[string]interface{})
 		for it := p.Schema.Value.Properties.Value.Iter(); it.Next(); {
-			name := it.Key().(string)
-			prop := it.Value().(*schema.Ref)
+			name := it.Key()
+			prop := it.Value()
 			s := u.Query().Get(fmt.Sprintf("%v[%v]", p.Name, name))
 			if v, err := schema.ParseString(s, prop); err == nil {
 				obj[name] = v
@@ -67,8 +67,8 @@ func parseQueryObject(p *Parameter, u *url.URL) (obj map[string]interface{}, err
 				}
 			} else {
 				for it := p.Schema.Value.Properties.Value.Iter(); it.Next(); {
-					name := it.Key().(string)
-					prop := it.Value().(*schema.Ref)
+					name := it.Key()
+					prop := it.Value()
 					s := u.Query().Get(name)
 					if v, err := schema.ParseString(s, prop); err == nil {
 						obj[name] = v

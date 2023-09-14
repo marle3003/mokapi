@@ -12,7 +12,7 @@ func fromUserData(userdata *lua.LUserData, to interface{}) error {
 	v := reflect.ValueOf(to).Elem()
 	switch v.Kind() {
 	case reflect.Ptr, reflect.Struct:
-		if v.Type() == reflect.TypeOf((*sortedmap.LinkedHashMap)(nil)) {
+		if v.Type() == reflect.TypeOf((*sortedmap.LinkedHashMap[string, interface{}])(nil)) {
 			return toSortedMapFromUserData(userdata, to)
 		}
 		return toStructFromUserData(userdata, to)
@@ -25,7 +25,7 @@ func fromUserData(userdata *lua.LUserData, to interface{}) error {
 
 func toSortedMapFromUserData(userdata *lua.LUserData, to interface{}) error {
 	vm := reflect.ValueOf(to).Elem()
-	m, _ := vm.Interface().(*sortedmap.LinkedHashMap)
+	m, _ := vm.Interface().(*sortedmap.LinkedHashMap[string, interface{}])
 	if m == nil {
 		m = sortedmap.NewLinkedHashMap()
 		vm.Set(reflect.ValueOf(m))

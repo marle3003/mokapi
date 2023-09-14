@@ -26,7 +26,7 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 			name: "text/plain",
 			config: openapitest.NewConfig("3.0.0",
 				openapitest.WithServer("http://localhost", ""),
-				openapitest.WithEndpoint("/foo", openapitest.NewEndpoint(
+				openapitest.WithPath("/foo", openapitest.NewPath(
 					openapitest.WithOperation("post",
 						openapitest.NewOperation(
 							openapitest.WithRequestBody("", false,
@@ -53,7 +53,7 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 			name: "text/*",
 			config: openapitest.NewConfig("3.0.0",
 				openapitest.WithServer("http://localhost", ""),
-				openapitest.WithEndpoint("/foo", openapitest.NewEndpoint(
+				openapitest.WithPath("/foo", openapitest.NewPath(
 					openapitest.WithOperation("post",
 						openapitest.NewOperation(
 							openapitest.WithRequestBody("", false,
@@ -80,7 +80,7 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 			name: "text/* > */*",
 			config: openapitest.NewConfig("3.0.0",
 				openapitest.WithServer("http://localhost", ""),
-				openapitest.WithEndpoint("/foo", openapitest.NewEndpoint(
+				openapitest.WithPath("/foo", openapitest.NewPath(
 					openapitest.WithOperation("post",
 						openapitest.NewOperation(
 							openapitest.WithRequestBody("", false,
@@ -109,7 +109,7 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 			name: "application/json free-form",
 			config: openapitest.NewConfig("3.0.0",
 				openapitest.WithServer("http://localhost", ""),
-				openapitest.WithEndpoint("/foo", openapitest.NewEndpoint(
+				openapitest.WithPath("/foo", openapitest.NewPath(
 					openapitest.WithOperation("post",
 						openapitest.NewOperation(
 							openapitest.WithRequestBody("", false,
@@ -141,7 +141,7 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 			name: "application/json free-form",
 			config: openapitest.NewConfig("3.0.0",
 				openapitest.WithServer("http://localhost", ""),
-				openapitest.WithEndpoint("/foo", openapitest.NewEndpoint(
+				openapitest.WithPath("/foo", openapitest.NewPath(
 					openapitest.WithOperation("post",
 						openapitest.NewOperation(
 							openapitest.WithRequestBody("", false,

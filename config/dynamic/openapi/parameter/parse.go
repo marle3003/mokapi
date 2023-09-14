@@ -1,6 +1,9 @@
 package parameter
 
-import "mokapi/config/dynamic/common"
+import (
+	"fmt"
+	"mokapi/config/dynamic/common"
+)
 
 func (r *Ref) Parse(config *common.Config, reader common.Reader) error {
 	if r == nil {
@@ -9,7 +12,7 @@ func (r *Ref) Parse(config *common.Config, reader common.Reader) error {
 
 	if len(r.Ref) > 0 && r.Value == nil {
 		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
-			return err
+			return fmt.Errorf("unable to resolve parameter reference %v: %v", r.Ref, err)
 		}
 	}
 

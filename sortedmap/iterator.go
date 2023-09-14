@@ -2,12 +2,12 @@ package sortedmap
 
 import "container/list"
 
-type Iterator struct {
+type Iterator[K comparable, V any] struct {
 	next    *list.Element
 	current *list.Element
 }
 
-func (i *Iterator) Next() bool {
+func (i *Iterator[K, V]) Next() bool {
 	if i.next == nil {
 		return false
 	}
@@ -16,20 +16,20 @@ func (i *Iterator) Next() bool {
 	return true
 }
 
-func (i *Iterator) Item() (interface{}, interface{}) {
+func (i *Iterator[K, V]) Item() (K, V) {
 	if i.current == nil {
 		panic("current is nil")
 	}
-	p := i.current.Value.(*pair)
+	p := i.current.Value.(*pair[K, V])
 	return p.key, p.value
 }
 
-func (i *Iterator) Key() interface{} {
+func (i *Iterator[K, V]) Key() K {
 	k, _ := i.Item()
 	return k
 }
 
-func (i *Iterator) Value() interface{} {
+func (i *Iterator[K, V]) Value() V {
 	_, v := i.Item()
 	return v
 }

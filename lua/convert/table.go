@@ -16,7 +16,7 @@ func fromTable(tbl *lua.LTable, to interface{}) error {
 	case reflect.Map:
 		return toMap(tbl, to)
 	case reflect.Ptr, reflect.Struct:
-		if v.Type() == reflect.TypeOf((*sortedmap.LinkedHashMap)(nil)) {
+		if v.Type() == reflect.TypeOf((*sortedmap.LinkedHashMap[string, interface{}])(nil)) {
 			return toSortedMapFromTable(tbl, to)
 		}
 		return toStructFromTable(tbl, to)
@@ -109,7 +109,7 @@ func toMap(tbl *lua.LTable, to interface{}) error {
 
 func toSortedMapFromTable(tbl *lua.LTable, to interface{}) error {
 	vm := reflect.ValueOf(to).Elem()
-	m, _ := vm.Interface().(*sortedmap.LinkedHashMap)
+	m, _ := vm.Interface().(*sortedmap.LinkedHashMap[string, interface{}])
 	if m == nil {
 		m = sortedmap.NewLinkedHashMap()
 		vm.Set(reflect.ValueOf(m))
@@ -137,7 +137,7 @@ func toSortedMapFromTable(tbl *lua.LTable, to interface{}) error {
 			return err
 		}
 
-		m.Set(key, value)
+		m.Set(key.(string), value)
 	}
 	return nil
 }

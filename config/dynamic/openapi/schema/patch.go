@@ -135,8 +135,8 @@ func (s *Schemas) Patch(patch *Schemas) {
 		return
 	}
 	for it := patch.Iter(); it.Next(); {
-		r := it.Value().(*Ref)
-		name := it.Key().(string)
+		r := it.Value()
+		name := it.Key()
 		if v := s.Get(name); v != nil {
 			v.Patch(r)
 		} else {

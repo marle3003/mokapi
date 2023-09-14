@@ -65,7 +65,7 @@ func ParseFrom(r io.Reader, contentType media.ContentType, schema *Ref) (i inter
 
 func parse(v interface{}, schema *Ref) (interface{}, error) {
 	if schema == nil || schema.Value == nil {
-		if m, ok := v.(*sortedmap.LinkedHashMap); ok {
+		if m, ok := v.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
 			return toObject(m)
 		}
 		return v, nil
@@ -79,7 +79,7 @@ func parse(v interface{}, schema *Ref) (interface{}, error) {
 		return parseOneOf(v, schema.Value)
 	} else if len(schema.Value.Type) == 0 {
 		// A schema without a type matches any data type
-		if _, ok := v.(*sortedmap.LinkedHashMap); ok {
+		if _, ok := v.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
 			return parseObject(v, &Schema{Type: "object"})
 		}
 		return v, nil
@@ -104,13 +104,13 @@ func parse(v interface{}, schema *Ref) (interface{}, error) {
 }
 
 func parseAnyOf(i interface{}, schema *Schema) (interface{}, error) {
-	if m, ok := i.(*sortedmap.LinkedHashMap); ok {
+	if m, ok := i.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
 		return parseAnyObject(m, schema)
 	}
 	return parseAnyValue(i, schema)
 }
 
-func parseAnyObject(m *sortedmap.LinkedHashMap, schema *Schema) (interface{}, error) {
+func parseAnyObject(m *sortedmap.LinkedHashMap[string, interface{}], schema *Schema) (interface{}, error) {
 	fields := make([]reflect.StructField, 0, m.Len())
 	values := make([]reflect.Value, 0, m.Len())
 
@@ -128,8 +128,8 @@ func parseAnyObject(m *sortedmap.LinkedHashMap, schema *Schema) (interface{}, er
 		}
 
 		for it := s.Properties.Value.Iter(); it.Next(); {
-			name := it.Key().(string)
-			pRef := it.Value().(*Ref)
+			name := it.Key()
+			pRef := it.Value()
 
 			if v := m.Get(name); v == nil {
 				if _, ok := required[name]; ok && len(required) > 0 {
@@ -174,7 +174,7 @@ func parseAnyValue(i interface{}, schema *Schema) (interface{}, error) {
 }
 
 func parseAllOf(i interface{}, schema *Schema) (interface{}, error) {
-	m, ok := i.(*sortedmap.LinkedHashMap)
+	m, ok := i.(*sortedmap.LinkedHashMap[string, interface{}])
 	if !ok {
 		return nil, fmt.Errorf("could not parse %v as object, expected %v", toString(i), schema)
 	}
@@ -195,8 +195,8 @@ func parseAllOf(i interface{}, schema *Schema) (interface{}, error) {
 		}
 
 		for it := s.Properties.Value.Iter(); it.Next(); {
-			name := it.Key().(string)
-			pRef := it.Value().(*Ref)
+			name := it.Key()
+			pRef := it.Value()
 
 			if v := m.Get(name); v == nil {
 				if _, ok := required[name]; ok && len(required) > 0 {
@@ -227,13 +227,13 @@ func parseAllOf(i interface{}, schema *Schema) (interface{}, error) {
 }
 
 func parseOneOf(i interface{}, schema *Schema) (interface{}, error) {
-	if m, ok := i.(*sortedmap.LinkedHashMap); ok {
+	if m, ok := i.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
 		return parseOneOfObject(m, schema)
 	}
 	return parseOneOfValue(i, schema)
 }
 
-func parseOneOfObject(m *sortedmap.LinkedHashMap, schema *Schema) (interface{}, error) {
+func parseOneOfObject(m *sortedmap.LinkedHashMap[string, interface{}], schema *Schema) (interface{}, error) {
 	var result interface{}
 	for _, sRef := range schema.OneOf {
 		s := sRef.Value
@@ -246,8 +246,8 @@ func parseOneOfObject(m *sortedmap.LinkedHashMap, schema *Schema) (interface{}, 
 		}
 
 		for it := s.Properties.Value.Iter(); it.Next(); {
-			name := it.Key().(string)
-			pRef := it.Value().(*Ref)
+			name := it.Key()
+			pRef := it.Value()
 
 			if v := m.Get(name); v == nil {
 				if _, ok := required[name]; ok && len(required) > 0 {
@@ -307,11 +307,19 @@ func parseOneOfValue(i interface{}, schema *Schema) (interface{}, error) {
 	return result, nil
 }
 
+func fromMap(m map[string]interface{}) *sortedmap.LinkedHashMap[string, interface{}] {
+	l := &sortedmap.LinkedHashMap[string, interface{}]{}
+	for k, v := range m {
+		l.Set(k, v)
+	}
+	return l
+}
+
 func parseObject(i interface{}, s *Schema) (interface{}, error) {
-	m, ok := i.(*sortedmap.LinkedHashMap)
+	m, ok := i.(*sortedmap.LinkedHashMap[string, interface{}])
 	if !ok {
-		if _, ok := i.(map[string]interface{}); ok {
-			m = sortedmap.FromMap(i)
+		if mm, ok := i.(map[string]interface{}); ok {
+			m = fromMap(mm)
 		} else {
 			return nil, fmt.Errorf("could not parse %v as object", toString(i))
 		}
@@ -326,7 +334,7 @@ func parseObject(i interface{}, s *Schema) (interface{}, error) {
 	if s.IsDictionary() {
 		result := make(map[string]interface{})
 		for it := m.Iter(); it.Next(); {
-			k := it.Key().(string)
+			k := it.Key()
 			v := it.Value()
 			v, err = parse(v, s.AdditionalProperties.Ref)
 			if err != nil {
@@ -349,8 +357,8 @@ func parseObject(i interface{}, s *Schema) (interface{}, error) {
 	values := make([]reflect.Value, 0, m.Len())
 
 	for it := s.Properties.Value.Iter(); it.Next(); {
-		name := it.Key().(string)
-		pRef := it.Value().(*Ref)
+		name := it.Key()
+		pRef := it.Value()
 		if v := m.Get(name); v == nil {
 			continue
 		}
@@ -364,12 +372,12 @@ func parseObject(i interface{}, s *Schema) (interface{}, error) {
 	}
 
 	for it := m.Iter(); it.Next(); {
-		k := it.Key().(string)
+		k := it.Key()
 		v := it.Value()
 		if p := s.Properties.Get(k); p != nil {
 			continue
 		}
-		if child, ok := v.(*sortedmap.LinkedHashMap); ok {
+		if child, ok := v.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
 			v, err = toObject(child)
 			if err != nil {
 				return nil, err
@@ -508,14 +516,14 @@ func readBoolean(i interface{}, s *Schema) (bool, error) {
 	return false, fmt.Errorf("could not parse %v as boolean, expected %v", i, s)
 }
 
-func toObject(m *sortedmap.LinkedHashMap) (interface{}, error) {
+func toObject(m *sortedmap.LinkedHashMap[string, interface{}]) (interface{}, error) {
 	fields := make([]reflect.StructField, 0, m.Len())
 	values := make([]reflect.Value, 0, m.Len())
 
 	for it := m.Iter(); it.Next(); {
-		k := it.Key().(string)
+		k := it.Key()
 		v := it.Value()
-		if child, ok := v.(*sortedmap.LinkedHashMap); ok {
+		if child, ok := v.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
 			var err error
 			v, err = toObject(child)
 			if err != nil {
@@ -562,7 +570,7 @@ func toString(i interface{}) string {
 		sb.WriteRune('}')
 	case string, int, int32, int64, float32, float64:
 		sb.WriteString(fmt.Sprintf("%v", o))
-	case *sortedmap.LinkedHashMap:
+	case *sortedmap.LinkedHashMap[string, interface{}]:
 		return o.String()
 	default:
 		v := reflect.ValueOf(i)

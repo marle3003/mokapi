@@ -112,64 +112,64 @@ func TestConvert(t *testing.T) {
 			"path ref",
 			`{"swagger": "2.0","paths":{"/foo":{"$ref":"./foo.json"}}}`,
 			func(t *testing.T, config *openapi.Config) {
-				require.Equal(t, "./foo.json", config.Paths.Value["/foo"].Ref)
+				require.Equal(t, "./foo.json", config.Paths["/foo"].Ref)
 			},
 		},
 		{
 			"GET /foo",
 			`{"swagger": "2.0","paths":{"/foo":{"get":{}}}}`,
 			func(t *testing.T, config *openapi.Config) {
-				require.NotNil(t, config.Paths.Value["/foo"].Value.Get)
+				require.NotNil(t, config.Paths["/foo"].Value.Get)
 			},
 		},
 		{
 			"PUT /foo",
 			`{"swagger": "2.0","paths":{"/foo":{"put":{}}}}`,
 			func(t *testing.T, config *openapi.Config) {
-				require.NotNil(t, config.Paths.Value["/foo"].Value.Put)
+				require.NotNil(t, config.Paths["/foo"].Value.Put)
 			},
 		},
 		{
 			"POST /foo",
 			`{"swagger": "2.0","paths":{"/foo":{"post":{}}}}`,
 			func(t *testing.T, config *openapi.Config) {
-				require.NotNil(t, config.Paths.Value["/foo"].Value.Post)
+				require.NotNil(t, config.Paths["/foo"].Value.Post)
 			},
 		},
 		{
 			"DELETE /foo",
 			`{"swagger": "2.0","paths":{"/foo":{"delete":{}}}}`,
 			func(t *testing.T, config *openapi.Config) {
-				require.NotNil(t, config.Paths.Value["/foo"].Value.Delete)
+				require.NotNil(t, config.Paths["/foo"].Value.Delete)
 			},
 		},
 		{
 			"OPTIONS /foo",
 			`{"swagger": "2.0","paths":{"/foo":{"options":{}}}}`,
 			func(t *testing.T, config *openapi.Config) {
-				require.NotNil(t, config.Paths.Value["/foo"].Value.Options)
+				require.NotNil(t, config.Paths["/foo"].Value.Options)
 			},
 		},
 		{
 			"HEAD /foo",
 			`{"swagger": "2.0","paths":{"/foo":{"head":{}}}}`,
 			func(t *testing.T, config *openapi.Config) {
-				require.NotNil(t, config.Paths.Value["/foo"].Value.Head)
+				require.NotNil(t, config.Paths["/foo"].Value.Head)
 			},
 		},
 		{
 			"PATCH /foo",
 			`{"swagger": "2.0","paths":{"/foo":{"patch":{}}}}`,
 			func(t *testing.T, config *openapi.Config) {
-				require.NotNil(t, config.Paths.Value["/foo"].Value.Patch)
+				require.NotNil(t, config.Paths["/foo"].Value.Patch)
 			},
 		},
 		{
 			"path parameter",
 			`{"swagger": "2.0", "paths": {"/foo/{id}":{"parameters": [{"name": "id","in":"path","required":true,"description":"id parameter","type":"integer","format":"int64"}]}}}`,
 			func(t *testing.T, config *openapi.Config) {
-				require.Contains(t, config.Paths.Value, "/foo/{id}")
-				p := config.Paths.Value["/foo/{id}"].Value
+				require.Contains(t, config.Paths, "/foo/{id}")
+				p := config.Paths["/foo/{id}"].Value
 				require.Equal(t, parameter.Path, p.Parameters[0].Value.Type)
 				require.Equal(t, "id", p.Parameters[0].Value.Name)
 				require.True(t, p.Parameters[0].Value.Required)
@@ -182,8 +182,8 @@ func TestConvert(t *testing.T) {
 			"operation tags",
 			`{"swagger": "2.0", "paths": {"/foo": {"get": {"tags": ["foo","bar"]}}}}`,
 			func(t *testing.T, config *openapi.Config) {
-				require.Contains(t, config.Paths.Value, "/foo")
-				get := config.Paths.Value["/foo"].Value.Get
+				require.Contains(t, config.Paths, "/foo")
+				get := config.Paths["/foo"].Value.Get
 				require.Equal(t, []string{"foo", "bar"}, get.Tags)
 			},
 		},
@@ -191,8 +191,8 @@ func TestConvert(t *testing.T) {
 			"operation summary",
 			`{"swagger": "2.0", "paths": {"/foo": {"get": {"summary": "foo"}}}}`,
 			func(t *testing.T, config *openapi.Config) {
-				require.Contains(t, config.Paths.Value, "/foo")
-				get := config.Paths.Value["/foo"].Value.Get
+				require.Contains(t, config.Paths, "/foo")
+				get := config.Paths["/foo"].Value.Get
 				require.Equal(t, "foo", get.Summary)
 			},
 		},
@@ -200,8 +200,8 @@ func TestConvert(t *testing.T) {
 			"operation summary",
 			`{"swagger": "2.0", "paths": {"/foo": {"get": {"summary": "foo"}}}}`,
 			func(t *testing.T, config *openapi.Config) {
-				require.Contains(t, config.Paths.Value, "/foo")
-				get := config.Paths.Value["/foo"].Value.Get
+				require.Contains(t, config.Paths, "/foo")
+				get := config.Paths["/foo"].Value.Get
 				require.Equal(t, "foo", get.Summary)
 			},
 		},
@@ -209,8 +209,8 @@ func TestConvert(t *testing.T) {
 			"operation description",
 			`{"swagger": "2.0", "paths": {"/foo": {"get": {"description": "foo"}}}}`,
 			func(t *testing.T, config *openapi.Config) {
-				require.Contains(t, config.Paths.Value, "/foo")
-				get := config.Paths.Value["/foo"].Value.Get
+				require.Contains(t, config.Paths, "/foo")
+				get := config.Paths["/foo"].Value.Get
 				require.Equal(t, "foo", get.Description)
 			},
 		},
@@ -218,8 +218,8 @@ func TestConvert(t *testing.T) {
 			"operation operationId",
 			`{"swagger": "2.0", "paths": {"/foo": {"get": {"operationId": "foo"}}}}`,
 			func(t *testing.T, config *openapi.Config) {
-				require.Contains(t, config.Paths.Value, "/foo")
-				get := config.Paths.Value["/foo"].Value.Get
+				require.Contains(t, config.Paths, "/foo")
+				get := config.Paths["/foo"].Value.Get
 				require.Equal(t, "foo", get.OperationId)
 			},
 		},
@@ -227,8 +227,8 @@ func TestConvert(t *testing.T) {
 			"operation consumes without parameter body",
 			`{"swagger": "2.0", "paths": {"/foo": {"get": {"consumes": ["application/json"]}}}}`,
 			func(t *testing.T, config *openapi.Config) {
-				require.Contains(t, config.Paths.Value, "/foo")
-				get := config.Paths.Value["/foo"].Value.Get
+				require.Contains(t, config.Paths, "/foo")
+				get := config.Paths["/foo"].Value.Get
 				require.Nil(t, get.RequestBody)
 			},
 		},
@@ -236,8 +236,8 @@ func TestConvert(t *testing.T) {
 			"operation parameter body and empty consumes",
 			`{"swagger": "2.0", "paths": {"/foo": {"get": {"parameters": [{"in":"body","name":"body","schema":{"type":"string"}}]}}}}`,
 			func(t *testing.T, config *openapi.Config) {
-				require.Contains(t, config.Paths.Value, "/foo")
-				get := config.Paths.Value["/foo"].Value.Get
+				require.Contains(t, config.Paths, "/foo")
+				get := config.Paths["/foo"].Value.Get
 				require.NotNil(t, get.RequestBody)
 				require.Contains(t, get.RequestBody.Value.Content, "*/*")
 				require.Equal(t, "string", get.RequestBody.Value.Content["*/*"].Schema.Value.Type)
@@ -247,8 +247,8 @@ func TestConvert(t *testing.T) {
 			"operation parameter body required",
 			`{"swagger": "2.0", "paths": {"/foo": {"get": {"parameters": [{"in":"body","name":"body","required":true,"schema":{"type":"string"}}]}}}}`,
 			func(t *testing.T, config *openapi.Config) {
-				require.Contains(t, config.Paths.Value, "/foo")
-				get := config.Paths.Value["/foo"].Value.Get
+				require.Contains(t, config.Paths, "/foo")
+				get := config.Paths["/foo"].Value.Get
 				require.NotNil(t, get.RequestBody)
 				require.True(t, get.RequestBody.Value.Required)
 			},
@@ -257,8 +257,8 @@ func TestConvert(t *testing.T) {
 			"operation parameter body and consumes",
 			`{"swagger": "2.0", "paths": {"/foo": {"get": {"consumes":["application/json"],"parameters": [{"in":"body","name":"body","schema":{"type":"string"}}]}}}}`,
 			func(t *testing.T, config *openapi.Config) {
-				require.Contains(t, config.Paths.Value, "/foo")
-				get := config.Paths.Value["/foo"].Value.Get
+				require.Contains(t, config.Paths, "/foo")
+				get := config.Paths["/foo"].Value.Get
 				require.NotNil(t, get.RequestBody)
 				require.Contains(t, get.RequestBody.Value.Content, "application/json")
 				require.Equal(t, "string", get.RequestBody.Value.Content["application/json"].Schema.Value.Type)
@@ -268,8 +268,8 @@ func TestConvert(t *testing.T) {
 			"operation parameter body and global consumes",
 			`{"swagger": "2.0","consumes":["application/json"],"paths": {"/foo": {"get": {"parameters": [{"in":"body","name":"body","schema":{"type":"string"}}]}}}}`,
 			func(t *testing.T, config *openapi.Config) {
-				require.Contains(t, config.Paths.Value, "/foo")
-				get := config.Paths.Value["/foo"].Value.Get
+				require.Contains(t, config.Paths, "/foo")
+				get := config.Paths["/foo"].Value.Get
 				require.NotNil(t, get.RequestBody)
 				require.Contains(t, get.RequestBody.Value.Content, "application/json")
 				require.Equal(t, "string", get.RequestBody.Value.Content["application/json"].Schema.Value.Type)
@@ -279,8 +279,8 @@ func TestConvert(t *testing.T) {
 			"operation parameter body empty consumes and global consumes",
 			`{"swagger": "2.0","consumes":["application/json"],"paths": {"/foo": {"get": {"consumes":[],"parameters": [{"in":"body","name":"body","schema":{"type":"string"}}]}}}}`,
 			func(t *testing.T, config *openapi.Config) {
-				require.Contains(t, config.Paths.Value, "/foo")
-				get := config.Paths.Value["/foo"].Value.Get
+				require.Contains(t, config.Paths, "/foo")
+				get := config.Paths["/foo"].Value.Get
 				require.NotNil(t, get.RequestBody)
 				require.Contains(t, get.RequestBody.Value.Content, "*/*")
 				require.Equal(t, "string", get.RequestBody.Value.Content["*/*"].Schema.Value.Type)
@@ -290,8 +290,8 @@ func TestConvert(t *testing.T) {
 			"operation parameter body empty consumes and global consumes",
 			`{"swagger": "2.0","consumes":["text/plain"],"paths": {"/foo": {"get": {"consumes":["application/json"],"parameters": [{"in":"body","name":"body","schema":{"type":"string"}}]}}}}`,
 			func(t *testing.T, config *openapi.Config) {
-				require.Contains(t, config.Paths.Value, "/foo")
-				get := config.Paths.Value["/foo"].Value.Get
+				require.Contains(t, config.Paths, "/foo")
+				get := config.Paths["/foo"].Value.Get
 				require.NotNil(t, get.RequestBody)
 				require.Contains(t, get.RequestBody.Value.Content, "application/json")
 				require.Equal(t, "string", get.RequestBody.Value.Content["application/json"].Schema.Value.Type)
@@ -301,8 +301,8 @@ func TestConvert(t *testing.T) {
 			"operation parameter path",
 			`{"swagger": "2.0","paths": {"/foo": {"get": {"parameters": [{"in":"path","name":"id"}]}}}}`,
 			func(t *testing.T, config *openapi.Config) {
-				require.Contains(t, config.Paths.Value, "/foo")
-				get := config.Paths.Value["/foo"].Value.Get
+				require.Contains(t, config.Paths, "/foo")
+				get := config.Paths["/foo"].Value.Get
 				require.Equal(t, "path", get.Parameters[0].Value.Type.String())
 			},
 		},
@@ -310,8 +310,8 @@ func TestConvert(t *testing.T) {
 			"operation parameter query",
 			`{"swagger": "2.0","paths": {"/foo": {"get": {"parameters": [{"in":"query","name":"id"}]}}}}`,
 			func(t *testing.T, config *openapi.Config) {
-				require.Contains(t, config.Paths.Value, "/foo")
-				get := config.Paths.Value["/foo"].Value.Get
+				require.Contains(t, config.Paths, "/foo")
+				get := config.Paths["/foo"].Value.Get
 				require.Equal(t, "query", get.Parameters[0].Value.Type.String())
 			},
 		},
@@ -319,8 +319,8 @@ func TestConvert(t *testing.T) {
 			"operation parameter header",
 			`{"swagger": "2.0","paths": {"/foo": {"get": {"parameters": [{"in":"header","name":"id"}]}}}}`,
 			func(t *testing.T, config *openapi.Config) {
-				require.Contains(t, config.Paths.Value, "/foo")
-				get := config.Paths.Value["/foo"].Value.Get
+				require.Contains(t, config.Paths, "/foo")
+				get := config.Paths["/foo"].Value.Get
 				require.Equal(t, "header", get.Parameters[0].Value.Type.String())
 			},
 		},
@@ -328,8 +328,8 @@ func TestConvert(t *testing.T) {
 			"path parameter body",
 			`{"swagger": "2.0", "paths": {"/foo/{id}":{"parameters": [{"name": "id","in":"body","required":true,"description":"id parameter","schema":{"type": "string"}}],"get":{"consumes":["application/json"]}}}}`,
 			func(t *testing.T, config *openapi.Config) {
-				require.Contains(t, config.Paths.Value, "/foo/{id}")
-				p := config.Paths.Value["/foo/{id}"].Value
+				require.Contains(t, config.Paths, "/foo/{id}")
+				p := config.Paths["/foo/{id}"].Value
 				require.NotNil(t, p.Get.RequestBody)
 				require.NotNil(t, p.Get.RequestBody.Value)
 				require.Equal(t, "id parameter", p.Get.RequestBody.Value.Description)
@@ -342,8 +342,8 @@ func TestConvert(t *testing.T) {
 			"path response",
 			`{"swagger": "2.0", "paths": {"/foo": {"get": {"produces": ["application/json"], "responses": {"200": {"description": "response description", "schema": {"$ref": "#/definitions/foo"}}}}}}}`,
 			func(t *testing.T, config *openapi.Config) {
-				require.Contains(t, config.Paths.Value, "/foo")
-				p := config.Paths.Value["/foo"]
+				require.Contains(t, config.Paths, "/foo")
+				p := config.Paths["/foo"]
 				require.NotNil(t, p.Value.Get)
 				get := p.Value.Get
 				ok := get.Responses.GetResponse(http.StatusOK)
@@ -362,6 +362,22 @@ func TestConvert(t *testing.T) {
 				require.Equal(t, "object", bar.Value.Type)
 				title := bar.Value.Properties.Value.Get("title")
 				require.Equal(t, "string", title.Value.Type)
+			},
+		},
+		{
+			"integer with empty format needs to be int32",
+			`{"swagger": "2.0", "definitions": {"Foo": {"type": "integer"}}}`,
+			func(t *testing.T, config *openapi.Config) {
+				foo := config.Components.Schemas.Get("Foo")
+				require.Equal(t, "int32", foo.Value.Format)
+			},
+		},
+		{
+			"integer with format needs to be int64",
+			`{"swagger": "2.0", "definitions": {"Foo": {"type": "integer", "format": "int64"}}}`,
+			func(t *testing.T, config *openapi.Config) {
+				foo := config.Components.Schemas.Get("Foo")
+				require.Equal(t, "int64", foo.Value.Format)
 			},
 		},
 	}

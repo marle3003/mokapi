@@ -28,7 +28,8 @@ openapi: 3.0.1
 info:
   title: "update referenced file"
 paths:
-  $ref: 'paths.yml#/paths'`
+  /users:
+    $ref: 'paths.yml#/paths/users'`
 				// referenced files have to contain the header.
 				// If it is missing, updates will not work
 				path := `
@@ -71,7 +72,7 @@ paths:
 				p.ch <- p.files["/root.yml"]
 				select {
 				case c := <-ch:
-					require.Equal(t, "foo", c.Paths.Value["/users"].Value.Get.Summary)
+					require.Equal(t, "foo", c.Paths["/users"].Value.Get.Summary)
 				case <-time.After(10 * time.Second):
 					require.Fail(t, "expected to get config")
 				}
@@ -87,7 +88,7 @@ paths:
 
 				select {
 				case c := <-ch:
-					require.Equal(t, "bar", c.Paths.Value["/users"].Value.Get.Summary)
+					require.Equal(t, "bar", c.Paths["/users"].Value.Get.Summary)
 				case <-time.After(10 * time.Second):
 					require.Fail(t, "expected to get config")
 				}

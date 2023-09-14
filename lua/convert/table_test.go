@@ -116,10 +116,10 @@ func TestFromLua_Table(t *testing.T) {
 				tbl := l.NewTable()
 				l.SetField(tbl, "foo", lua.LString("123"))
 				l.SetField(tbl, "bar", lua.LString("456"))
-				var m *sortedmap.LinkedHashMap
+				var m *sortedmap.LinkedHashMap[string, interface{}]
 				err := FromLua(tbl, &m)
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{"foo", "bar"}, m.Keys())
+				require.Equal(t, []string{"foo", "bar"}, m.Keys())
 				require.Equal(t, []interface{}{"123", "456"}, m.Values())
 			},
 		},
@@ -132,8 +132,8 @@ func TestFromLua_Table(t *testing.T) {
 				var i interface{}
 				err := FromLua(tbl, &i)
 				require.NoError(t, err)
-				m := i.(*sortedmap.LinkedHashMap)
-				require.Equal(t, []interface{}{"foo", "bar"}, m.Keys())
+				m := i.(*sortedmap.LinkedHashMap[string, interface{}])
+				require.Equal(t, []string{"foo", "bar"}, m.Keys())
 				require.Equal(t, []interface{}{"123", "456"}, m.Values())
 			},
 		},
@@ -141,7 +141,7 @@ func TestFromLua_Table(t *testing.T) {
 			name: "empty table",
 			f: func(l *lua.LState) {
 				tbl := l.NewTable()
-				var m *sortedmap.LinkedHashMap
+				var m *sortedmap.LinkedHashMap[string, interface{}]
 				err := FromLua(tbl, &m)
 				require.NoError(t, err)
 				require.Equal(t, 0, m.Len())
@@ -150,7 +150,7 @@ func TestFromLua_Table(t *testing.T) {
 		{
 			name: "nil table",
 			f: func(l *lua.LState) {
-				var m *sortedmap.LinkedHashMap
+				var m *sortedmap.LinkedHashMap[string, interface{}]
 				err := FromLua(lua.LNil, &m)
 				require.NoError(t, err)
 				require.Nil(t, m)

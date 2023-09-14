@@ -33,7 +33,7 @@ func (r *Ref) Marshal(i interface{}, contentType media.ContentType) ([]byte, err
 }
 
 type schemaObject struct {
-	*sortedmap.LinkedHashMap
+	*sortedmap.LinkedHashMap[string, interface{}]
 }
 
 func newSchemaObject() *schemaObject {
@@ -158,7 +158,7 @@ func selectArray(data interface{}, schema *Schema) (interface{}, error) {
 }
 
 func selectObject(data interface{}, schema *Schema) (interface{}, error) {
-	if m, ok := data.(*sortedmap.LinkedHashMap); ok {
+	if m, ok := data.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
 		return fromLinkedMap(m, schema)
 	}
 
@@ -171,7 +171,7 @@ func selectObject(data interface{}, schema *Schema) (interface{}, error) {
 	case reflect.Struct:
 		return fromStruct(v, schema)
 	case reflect.Map:
-		return fromMap(v, schema)
+		return reflectFromMap(v, schema)
 	}
 
 	return nil, fmt.Errorf("could not encode '%v' to %v", data, schema)
@@ -230,14 +230,14 @@ func selectAll(schema *Schema, data interface{}) (interface{}, error) {
 	return r, nil
 }
 
-func fromLinkedMap(m *sortedmap.LinkedHashMap, schema *Schema) (*schemaObject, error) {
+func fromLinkedMap(m *sortedmap.LinkedHashMap[string, interface{}], schema *Schema) (*schemaObject, error) {
 	if schema.IsDictionary() {
 		return &schemaObject{m}, validateObject(m, schema)
 	}
 
 	obj := newSchemaObject()
 	for it := m.Iter(); it.Next(); {
-		name := it.Key().(string)
+		name := it.Key()
 
 		var field *Ref
 		if schema.Properties != nil {
@@ -274,17 +274,17 @@ func fromStruct(v reflect.Value, schema *Schema) (*schemaObject, error) {
 	return obj, validateObject(obj.LinkedHashMap, schema)
 }
 
-func fromMap(v reflect.Value, schema *Schema) (*schemaObject, error) {
+func reflectFromMap(v reflect.Value, schema *Schema) (*schemaObject, error) {
 	obj := newSchemaObject()
 
 	if schema.HasProperties() {
 		for it := schema.Properties.Value.Iter(); it.Next(); {
-			name := fmt.Sprintf("%v", it.Key())
+			name := it.Key()
 			o := v.MapIndex(reflect.ValueOf(name))
 			if !o.IsValid() {
 				continue
 			}
-			d, err := selectData(o.Interface(), it.Value().(*Ref))
+			d, err := selectData(o.Interface(), it.Value())
 			if err != nil {
 				return nil, err
 			}

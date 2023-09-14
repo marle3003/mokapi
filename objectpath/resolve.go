@@ -2,6 +2,7 @@ package objectpath
 
 import (
 	"fmt"
+	"mokapi/sortedmap"
 	"reflect"
 	"strings"
 )
@@ -35,6 +36,8 @@ func resolveMember(name interface{}, i interface{}) (interface{}, error) {
 
 	if r, ok := i.(Resolver); ok {
 		return r.Resolve(name)
+	} else if m, ok := i.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
+		return m.Get(name.(string)), nil
 	}
 
 	v := reflect.ValueOf(i)

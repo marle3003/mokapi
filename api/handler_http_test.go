@@ -104,8 +104,8 @@ func TestHandler_Http(t *testing.T) {
 				Http: map[string]*runtime.HttpInfo{
 					"foo": {
 						Config: openapitest.NewConfig("3.0.0",
-							openapitest.WithEndpoint("/foo/{bar}", openapitest.NewEndpoint(
-								openapitest.WithEndpointParam("bar", "path", true, openapitest.WithParamSchema(schematest.New("string"))),
+							openapitest.WithPath("/foo/{bar}", openapitest.NewPath(
+								openapitest.WithPathParam("bar", "path", true, openapitest.WithParamSchema(schematest.New("string"))),
 								openapitest.WithOperation("get", openapitest.NewOperation()),
 							))),
 					},
@@ -120,7 +120,7 @@ func TestHandler_Http(t *testing.T) {
 				Http: map[string]*runtime.HttpInfo{
 					"foo": {
 						Config: openapitest.NewConfig("3.0.0",
-							openapitest.WithEndpoint("/foo/{bar}", openapitest.NewEndpoint(
+							openapitest.WithPath("/foo/{bar}", openapitest.NewPath(
 								openapitest.WithOperation("get", openapitest.NewOperation(
 									openapitest.WithRequestBody("foo", true,
 										openapitest.WithRequestContent("application/json", openapitest.WithSchema(schematest.New("string"))),
@@ -139,7 +139,7 @@ func TestHandler_Http(t *testing.T) {
 				Http: map[string]*runtime.HttpInfo{
 					"foo": {
 						Config: openapitest.NewConfig("3.0.0",
-							openapitest.WithEndpoint("/foo/{bar}", openapitest.NewEndpoint(
+							openapitest.WithPath("/foo/{bar}", openapitest.NewPath(
 								openapitest.WithOperation("get", openapitest.NewOperation(
 									openapitest.WithResponse(http.StatusOK,
 										openapitest.WithResponseDescription("foo description"),

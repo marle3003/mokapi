@@ -11,7 +11,7 @@ import (
 )
 
 type Properties struct {
-	sortedmap.LinkedHashMap
+	sortedmap.LinkedHashMap[string, *schemaInfo]
 }
 
 func (p *Properties) UnmarshalJSON(b []byte) error {
@@ -155,11 +155,11 @@ func (c *schemaConverter) getSchema(s *schema.Ref) *schemaInfo {
 	if s.Value.Properties != nil && s.Value.Properties.Value != nil {
 		result.Properties = &Properties{}
 		for it := s.Value.Properties.Value.Iter(); it.Next(); {
-			prop := c.getSchema(it.Value().(*schema.Ref))
+			prop := c.getSchema(it.Value())
 			if prop == nil {
 				continue
 			}
-			prop.Name = it.Key().(string)
+			prop.Name = it.Key()
 			result.Properties.Set(prop.Name, prop)
 		}
 	}
@@ -215,7 +215,7 @@ func toSchema(s *schemaInfo) *schema.Schema {
 	if s.Properties != nil && s.Properties.Len() > 0 {
 		result.Properties = &schema.SchemasRef{Value: &schema.Schemas{}}
 		for it := s.Properties.Iter(); it.Next(); {
-			result.Properties.Value.Set(it.Key(), &schema.Ref{Value: toSchema(it.Value().(*schemaInfo))})
+			result.Properties.Value.Set(it.Key(), &schema.Ref{Value: toSchema(it.Value())})
 		}
 	}
 	if s.Items != nil {

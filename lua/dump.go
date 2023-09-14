@@ -16,7 +16,7 @@ func Dump(i interface{}) string {
 		return err.Error()
 	}
 
-	if m, ok := i.(*sortedmap.LinkedHashMap); ok {
+	if m, ok := i.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
 		return m.String()
 	}
 

@@ -13,7 +13,7 @@ func (r *Responses) UnmarshalYAML(value *yaml.Node) error {
 	if value.Kind != yaml.MappingNode {
 		return errors.New("not a mapping node")
 	}
-	r.LinkedHashMap = *sortedmap.NewLinkedHashMap()
+	r.LinkedHashMap = sortedmap.LinkedHashMap[int, *ResponseRef]{}
 	for i := 0; i < len(value.Content); i += 2 {
 		var key string
 		err := value.Content[i].Decode(&key)
@@ -66,11 +66,6 @@ func (c *Content) UnmarshalYAML(value *yaml.Node) error {
 	return nil
 }
 
-//goland:noinspection GoMixedReceiverTypes
-func (r *EndpointsRef) UnmarshalYAML(node *yaml.Node) error {
-	return r.Reference.Unmarshal(node, &r.Value)
-}
-
 func (r *ResponseRef) UnmarshalYAML(node *yaml.Node) error {
 	return r.Reference.Unmarshal(node, &r.Value)
 }
@@ -100,9 +95,5 @@ func (r *NamedHeaders) UnmarshalYAML(node *yaml.Node) error {
 }
 
 func (r *Examples) UnmarshalYAML(node *yaml.Node) error {
-	return r.Reference.Unmarshal(node, &r.Value)
-}
-
-func (r *EndpointRef) UnmarshalYAML(node *yaml.Node) error {
 	return r.Reference.Unmarshal(node, &r.Value)
 }

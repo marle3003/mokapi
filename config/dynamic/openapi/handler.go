@@ -196,12 +196,12 @@ func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	var lastError error
 
 endpointLoop:
-	for path, ref := range h.config.Paths.Value {
+	for path, ref := range h.config.Paths {
 		if ref.Value == nil {
 			continue
 		}
 		endpoint := ref.Value
-		op := endpoint.getOperation(r.Method)
+		op := endpoint.operation(r.Method)
 		if op == nil {
 			continue
 		}

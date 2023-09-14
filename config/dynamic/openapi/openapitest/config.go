@@ -11,7 +11,7 @@ func NewConfig(version string, opts ...ConfigOptions) *openapi.Config {
 	c := &openapi.Config{
 		OpenApi: version,
 		Servers: nil,
-		Paths:   openapi.EndpointsRef{Value: make(map[string]*openapi.EndpointRef)},
+		Paths:   make(map[string]*openapi.PathRef),
 	}
 
 	for _, opt := range opts {
@@ -38,21 +38,15 @@ func WithContact(name, url, email string) ConfigOptions {
 	}
 }
 
-func WithEndpoint(path string, endpoint *openapi.Endpoint) ConfigOptions {
+func WithPath(name string, path *openapi.Path) ConfigOptions {
 	return func(c *openapi.Config) {
-		c.Paths.Value[path] = &openapi.EndpointRef{Value: endpoint}
+		c.Paths[name] = &openapi.PathRef{Value: path}
 	}
 }
 
-func WithEndpointsRef(ref string) ConfigOptions {
+func WithPathRef(name string, ref *openapi.PathRef) ConfigOptions {
 	return func(c *openapi.Config) {
-		c.Paths.Reference.Ref = ref
-	}
-}
-
-func WithEndpointRef(path string, endpoint *openapi.EndpointRef) ConfigOptions {
-	return func(c *openapi.Config) {
-		c.Paths.Value[path] = endpoint
+		c.Paths[name] = ref
 	}
 }
 

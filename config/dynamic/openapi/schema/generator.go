@@ -73,7 +73,7 @@ func (b *builder) create(ref *Ref) (interface{}, error) {
 					if err != nil {
 						return nil, err
 					}
-					m.Merge(o.(*sortedmap.LinkedHashMap))
+					m.Merge(o.(*sortedmap.LinkedHashMap[string, interface{}]))
 
 				}
 				return m, nil
@@ -118,8 +118,8 @@ func (b *builder) createObject(s *Schema) (interface{}, error) {
 	}
 
 	for it := s.Properties.Value.Iter(); it.Next(); {
-		key := it.Key().(string)
-		propSchema := it.Value().(*Ref)
+		key := it.Key()
+		propSchema := it.Value()
 		value, err := b.create(propSchema)
 		if err != nil {
 			return nil, err

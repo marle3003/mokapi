@@ -62,7 +62,7 @@ type Config struct {
 	Info      ConfigInfo
 	Raw       []byte
 	Data      interface{}
-	listeners *sortedmap.LinkedHashMap
+	listeners *sortedmap.LinkedHashMap[string, ConfigListener]
 	Checksum  []byte
 	Key       string
 
@@ -71,7 +71,7 @@ type Config struct {
 }
 
 func NewConfig(u *url.URL, opts ...ConfigOptions) *Config {
-	f := &Config{Info: ConfigInfo{Url: u}, listeners: sortedmap.NewLinkedHashMap()}
+	f := &Config{Info: ConfigInfo{Url: u}, listeners: &sortedmap.LinkedHashMap[string, ConfigListener]{}}
 	f.Options(opts...)
 	return f
 }
@@ -87,7 +87,7 @@ func (f *Config) Changed() {
 		return
 	}
 	for it := f.listeners.Iter(); it.Next(); {
-		it.Value().(ConfigListener)(f)
+		it.Value()(f)
 	}
 }
 
@@ -127,7 +127,7 @@ func AsPlaintext() ConfigOptions {
 
 func (f *Config) AddListener(key string, l ConfigListener) {
 	if f.listeners == nil {
-		f.listeners = sortedmap.NewLinkedHashMap()
+		f.listeners = &sortedmap.LinkedHashMap[string, ConfigListener]{}
 	}
 	if v := f.listeners.Get(key); v == nil {
 		f.listeners.Set(key, l)

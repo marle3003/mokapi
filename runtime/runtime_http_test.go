@@ -33,7 +33,7 @@ func TestApp_AddHttp_Path(t *testing.T) {
 
 	app := New()
 	app.AddHttp(newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
-		openapitest.WithEndpoint("bar", openapitest.NewEndpoint()))))
+		openapitest.WithPath("bar", openapitest.NewPath()))))
 
 	require.Contains(t, app.Http, "foo")
 	err := events.Push("bar", events.NewTraits().WithNamespace("http").WithName("foo").With("path", "bar"))
