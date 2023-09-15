@@ -2,7 +2,6 @@ package common
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"net/url"
 	"path/filepath"
 	"reflect"
@@ -43,12 +42,12 @@ func Resolve(ref string, element interface{}, config *Config, reader Reader) err
 
 		f, err := reader.Read(removeFragment(u), opts...)
 		if err != nil {
-			return fmt.Errorf("unable to read %v: %v", u, err)
+			return fmt.Errorf("resolve reference '%v' failed: %w", ref, err)
 		}
 
 		err = ResolvePath(u.Fragment, f.Data, element)
 		if err != nil {
-			return errors.Wrapf(err, "unable to resolve reference %v", ref)
+			return fmt.Errorf("resolve reference '%v' failed: %w", ref, err)
 		}
 		return nil
 	}
@@ -70,7 +69,7 @@ func ResolvePath(path string, cursor interface{}, resolved interface{}) (err err
 
 		cursor, err = Get(t, cursor)
 		if err != nil {
-			return fmt.Errorf("can not resolve path %v: %v", path, err)
+			return fmt.Errorf("resolve path %v failed: %w", path, err)
 		}
 	}
 
@@ -85,7 +84,7 @@ func ResolvePath(path string, cursor interface{}, resolved interface{}) (err err
 	}
 
 	if cursor == nil {
-		return fmt.Errorf("unresolved path: %q", path)
+		return fmt.Errorf("local path not found: %v", path)
 	}
 
 	if r, ok := cursor.(PathResolver); ok {

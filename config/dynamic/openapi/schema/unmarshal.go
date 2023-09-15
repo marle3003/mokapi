@@ -1,11 +1,41 @@
 package schema
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 	"mokapi/sortedmap"
 )
+
+func (s *Schemas) UnmarshalJSON(b []byte) error {
+	dec := json.NewDecoder(bytes.NewReader(b))
+	token, err := dec.Token()
+	if err != nil {
+		return err
+	}
+	if delim, ok := token.(json.Delim); ok && delim != '{' {
+		return fmt.Errorf("expected openapi.Responses map, got %s", token)
+	}
+	s.LinkedHashMap = sortedmap.LinkedHashMap[string, *Ref]{}
+	for {
+		token, err = dec.Token()
+		if err != nil {
+			return err
+		}
+		if delim, ok := token.(json.Delim); ok && delim == '}' {
+			return nil
+		}
+		key := token.(string)
+		val := &Ref{}
+		err = dec.Decode(&val)
+		if err != nil {
+			return err
+		}
+		s.Set(key, val)
+	}
+}
 
 func (s *Schemas) UnmarshalYAML(value *yaml.Node) error {
 	if value.Kind != yaml.MappingNode {
@@ -30,31 +60,12 @@ func (s *Schemas) UnmarshalYAML(value *yaml.Node) error {
 	return nil
 }
 
-func (s *SchemasRef) UnmarshalJSON(b []byte) error {
-	m := make(map[string]*Ref)
-	err := json.Unmarshal(b, &m)
-	if err != nil {
-		return err
-	}
-	s.Value = &Schemas{}
-	s.Value.LinkedHashMap = sortedmap.LinkedHashMap[string, *Ref]{}
-	for k, v := range m {
-		s.Value.LinkedHashMap.Set(k, v)
-	}
-
-	return nil
-}
-
 func (r *Ref) UnmarshalYAML(node *yaml.Node) error {
 	return r.Unmarshal(node, &r.Value)
 }
 
 func (r *Ref) UnmarshalJSON(b []byte) error {
 	return r.UnmarshalJson(b, &r.Value)
-}
-
-func (s *SchemasRef) UnmarshalYAML(node *yaml.Node) error {
-	return s.Unmarshal(node, &s.Value)
 }
 
 func (ap *AdditionalProperties) UnmarshalYAML(node *yaml.Node) error {

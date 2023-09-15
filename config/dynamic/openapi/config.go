@@ -4,9 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"mokapi/config/dynamic/common"
-	"mokapi/config/dynamic/openapi/parameter"
-	"mokapi/config/dynamic/openapi/ref"
-	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/media"
 	"net/http"
 	"strconv"
@@ -42,67 +39,6 @@ func IsHttpStatusSuccess(status int) bool {
 		status == http.StatusIMUsed
 }
 
-type Content map[string]*MediaType
-
-type MediaType struct {
-	Schema   *schema.Ref
-	Example  interface{}
-	Examples map[string]*ExampleRef
-
-	ContentType media.ContentType `yaml:"-" json:"-"`
-}
-
-type HeaderRef struct {
-	ref.Reference
-	Value *Header
-}
-
-type Header struct {
-	Name        string
-	Description string
-	Schema      *schema.Ref
-}
-
-type Example struct {
-	Summary     string
-	Value       interface{}
-	Description string
-}
-
-type ExampleRef struct {
-	ref.Reference
-	Value *Example
-}
-
-type Components struct {
-	Schemas       *schema.SchemasRef         `yaml:"schemas,omitempty" json:"schemas,omitempty"`
-	Responses     *NamedResponses            `yaml:"responses,omitempty" json:"responses,omitempty"`
-	RequestBodies *RequestBodies             `yaml:"requestBodies,omitempty" json:"requestBodies,omitempty"`
-	Parameters    *parameter.NamedParameters `yaml:"parameters,omitempty" json:"parameters,omitempty"`
-	Examples      *Examples                  `yaml:"examples,omitempty" json:"examples,omitempty"`
-	Headers       *NamedHeaders              `yaml:"headers,omitempty" json:"headers,omitempty"`
-}
-
-type NamedResponses struct {
-	ref.Reference
-	Value map[string]*ResponseRef
-}
-
-type NamedHeaders struct {
-	ref.Reference
-	Value map[string]*HeaderRef
-}
-
-type Examples struct {
-	ref.Reference
-	Value map[string]*ExampleRef
-}
-
-type RequestBodies struct {
-	ref.Reference
-	Value map[string]*RequestBodyRef
-}
-
 func (c *Config) Validate() error {
 	if len(c.OpenApi) == 0 {
 		return fmt.Errorf("no OpenApi version defined")
@@ -120,16 +56,6 @@ func (c *Config) Validate() error {
 }
 
 func (r *RequestBody) GetMedia(contentType media.ContentType) *MediaType {
-	for _, v := range r.Content {
-		if v.ContentType.Match(contentType) {
-			return v
-		}
-	}
-
-	return nil
-}
-
-func (r *Response) GetContent(contentType media.ContentType) *MediaType {
 	for _, v := range r.Content {
 		if v.ContentType.Match(contentType) {
 			return v

@@ -2,6 +2,7 @@ package openapitest
 
 import (
 	"mokapi/config/dynamic/openapi"
+	"mokapi/config/dynamic/openapi/parameter"
 	"mokapi/config/dynamic/openapi/ref"
 	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/media"
@@ -26,11 +27,22 @@ func WithResponseHeader(name, description string, s *schema.Schema) ResponseOpti
 		}
 		o.Headers[name] = &openapi.HeaderRef{
 			Value: &openapi.Header{
-				Name:        name,
-				Description: description,
-				Schema:      &schema.Ref{Value: s},
+				Parameter: parameter.Parameter{
+					Name:        name,
+					Description: description,
+					Schema:      &schema.Ref{Value: s},
+				},
 			},
 		}
+	}
+}
+
+func WithResponseHeaderRef(name string, ref *openapi.HeaderRef) ResponseOptions {
+	return func(o *openapi.Response) {
+		if o.Headers == nil {
+			o.Headers = map[string]*openapi.HeaderRef{}
+		}
+		o.Headers[name] = ref
 	}
 }
 
@@ -40,14 +52,22 @@ func WithResponseDescription(description string) ResponseOptions {
 	}
 }
 
-func WithContent(mediaType string, opts ...ContentOptions) ResponseOptions {
+func WithContent(mediaType string, content *openapi.MediaType) ResponseOptions {
 	return func(o *openapi.Response) {
 		ct := media.ParseContentType(mediaType)
-		o.Content[mediaType] = &openapi.MediaType{ContentType: ct}
-		for _, opt := range opts {
-			opt(o.Content[mediaType])
+		o.Content[mediaType] = content
+		if content != nil {
+			content.ContentType = ct
 		}
 	}
+}
+
+func NewContent(opts ...ContentOptions) *openapi.MediaType {
+	mt := &openapi.MediaType{}
+	for _, opt := range opts {
+		opt(mt)
+	}
+	return mt
 }
 
 func WithExample(example interface{}) ContentOptions {

@@ -32,80 +32,6 @@ func (r *RequestBody) patch(patch *RequestBody) {
 	r.Content.patch(patch.Content)
 }
 
-func (c *Content) patch(patch Content) {
-	for k, v := range patch {
-		if con, ok := (*c)[k]; ok {
-			con.patch(v)
-		} else {
-			(*c)[k] = v
-		}
-	}
-}
-
-func (c *MediaType) patch(patch *MediaType) {
-	if c.Schema == nil {
-		c.Schema = patch.Schema
-	} else {
-		c.Schema.Patch(patch.Schema)
-	}
-
-	if c.Example == nil {
-		c.Example = patch.Example
-	}
-
-	for k, v := range patch.Examples {
-		if e, ok := c.Examples[k]; ok {
-			e.patch(v)
-		} else {
-			c.Examples[k] = v
-		}
-	}
-}
-
-func (r *ExampleRef) patch(patch *ExampleRef) {
-	if patch == nil || patch.Value == nil {
-		return
-	}
-	if r.Value == nil {
-		r.Value = patch.Value
-		return
-	}
-
-	if len(patch.Value.Summary) > 0 {
-		r.Value.Summary = patch.Value.Summary
-	}
-
-	if r.Value.Value == nil {
-		r.Value.Value = patch.Value.Value
-	}
-
-	if len(patch.Value.Description) > 0 {
-		r.Value.Description = patch.Value.Description
-	}
-}
-
-func (r *Response) patch(patch *Response) {
-	if patch == nil {
-		return
-	}
-
-	if len(patch.Description) > 0 {
-		r.Description = patch.Description
-	}
-
-	if r.Content == nil {
-		r.Content = patch.Content
-	} else {
-		r.Content.patch(patch.Content)
-	}
-
-	if len(r.Headers) == 0 {
-		r.Headers = patch.Headers
-	} else {
-
-	}
-}
-
 func (r *HeaderRef) patch(patch *HeaderRef) {
 	if patch == nil || patch.Value == nil {
 		return
@@ -165,94 +91,15 @@ func (c *Config) patchComponents(patch *Config) {
 	}
 }
 
-func (r *NamedResponses) patch(patch *NamedResponses) {
-	if patch == nil || patch.Value == nil {
-		return
-	}
-	if r.Value == nil {
-		r.Value = patch.Value
-	}
-	for k, p := range patch.Value {
-		if p.Value == nil {
+func (r RequestBodies) patch(patch RequestBodies) {
+	for k, p := range patch {
+		if p == nil || p.Value == nil {
 			continue
 		}
-		if v, ok := r.Value[k]; ok {
-			if v.Value == nil {
-				v.Value = p.Value
-			} else {
-				v.Value.patch(p.Value)
-			}
+		if v, ok := r[k]; ok && v != nil {
+			v.patch(p)
 		} else {
-			r.Value[k] = p
-		}
-	}
-}
-
-func (r *RequestBodies) patch(patch *RequestBodies) {
-	if patch == nil || patch.Value == nil {
-		return
-	}
-	if r.Value == nil {
-		r.Value = patch.Value
-	}
-	for k, p := range patch.Value {
-		if p.Value == nil {
-			continue
-		}
-		if v, ok := r.Value[k]; ok {
-			if v.Value == nil {
-				v.Value = p.Value
-			} else {
-				v.Value.patch(p.Value)
-			}
-		} else {
-			r.Value[k] = p
-		}
-	}
-}
-
-func (r *Examples) patch(patch *Examples) {
-	if patch == nil || patch.Value == nil {
-		return
-	}
-	if r.Value == nil {
-		r.Value = patch.Value
-	}
-	for k, p := range patch.Value {
-		if p.Value == nil {
-			continue
-		}
-		if v, ok := r.Value[k]; ok {
-			if v.Value == nil {
-				v.Value = p.Value
-			} else {
-				v.patch(p)
-			}
-		} else {
-			r.Value[k] = p
-		}
-	}
-}
-
-func (r *NamedHeaders) patch(patch *NamedHeaders) {
-	if patch == nil || patch.Value == nil {
-		return
-	}
-	if r.Value == nil {
-		r.Value = patch.Value
-	}
-	for k, p := range patch.Value {
-		if p.Value == nil {
-			continue
-		}
-		if v, ok := r.Value[k]; ok {
-			if v.Value == nil {
-				v.Value = p.Value
-			} else {
-				v.patch(p)
-			}
-		} else {
-			r.Value[k] = p
+			r[k] = p
 		}
 	}
 }

@@ -386,7 +386,7 @@ func TestPath_Parse(t *testing.T) {
 					openapitest.WithPathRef("foo",
 						&openapi.PathRef{Reference: ref.Reference{Ref: "foo.yml#/paths/foo"}}))
 				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
-				require.EqualError(t, err, "unable to read /foo.yml#/paths/foo: TEST ERROR")
+				require.EqualError(t, err, "parse path 'foo' failed: resolve reference 'foo.yml#/paths/foo' failed: TEST ERROR")
 			},
 		},
 		{
@@ -450,7 +450,7 @@ func TestPath_Parse(t *testing.T) {
 					openapitest.WithPathRef("/foo",
 						&openapi.PathRef{Reference: ref.Reference{Ref: "foo.yml#/paths/foo"}}))
 				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
-				require.EqualError(t, err, "unable to resolve reference foo.yml#/paths/foo: unresolved path: \"/paths/foo\"")
+				require.EqualError(t, err, "parse path '/foo' failed: resolve reference 'foo.yml#/paths/foo' failed: local path not found: /paths/foo")
 			},
 		},
 		{
@@ -465,7 +465,7 @@ func TestPath_Parse(t *testing.T) {
 					)),
 				)
 				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
-				require.EqualError(t, err, "unable to resolve parameter reference foo.yml: unable to read /foo.yml: TEST ERROR")
+				require.EqualError(t, err, "parse path '/foo' failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},
 	}

@@ -25,11 +25,11 @@ func (c *Config) Parse(config *common.Config, reader common.Reader) error {
 		return err
 	}
 
-	if err := c.Components.Examples.Parse(config, reader); err != nil {
+	if err := c.Components.Examples.parse(config, reader); err != nil {
 		return err
 	}
 
-	if err := c.Components.Headers.Parse(config, reader); err != nil {
+	if err := c.Components.Headers.parse(config, reader); err != nil {
 		return err
 	}
 
@@ -40,13 +40,9 @@ func (c *Config) Parse(config *common.Config, reader common.Reader) error {
 	return nil
 }
 
-func (r *NamedResponses) Parse(config *common.Config, reader common.Reader) error {
+func (r *Responses) Parse(config *common.Config, reader common.Reader) error {
 	if r == nil {
 		return nil
-	}
-
-	if len(r.Ref) > 0 {
-		return common.Resolve(r.Ref, &r.Value, config, reader)
 	}
 
 	return nil
@@ -55,34 +51,6 @@ func (r *NamedResponses) Parse(config *common.Config, reader common.Reader) erro
 func (r *RequestBodies) Parse(config *common.Config, reader common.Reader) error {
 	if r == nil {
 		return nil
-	}
-
-	if len(r.Ref) > 0 {
-		return common.Resolve(r.Ref, &r.Value, config, reader)
-	}
-
-	return nil
-}
-
-func (r *Examples) Parse(config *common.Config, reader common.Reader) error {
-	if r == nil {
-		return nil
-	}
-
-	if len(r.Ref) > 0 {
-		return common.Resolve(r.Ref, &r.Value, config, reader)
-	}
-
-	return nil
-}
-
-func (r *NamedHeaders) Parse(config *common.Config, reader common.Reader) error {
-	if r == nil {
-		return nil
-	}
-
-	if len(r.Ref) > 0 {
-		return common.Resolve(r.Ref, &r.Value, config, reader)
 	}
 
 	return nil
@@ -106,64 +74,5 @@ func (r *RequestBodyRef) Parse(config *common.Config, reader common.Reader) erro
 		}
 	}
 
-	return nil
-}
-
-func (r *ResponseRef) Parse(config *common.Config, reader common.Reader) error {
-	if r == nil {
-		return nil
-	}
-
-	if len(r.Ref) > 0 {
-		return common.Resolve(r.Ref, &r.Value, config, reader)
-	}
-
-	if r.Value == nil {
-		return nil
-	}
-
-	for _, h := range r.Value.Headers {
-		if err := h.Parse(config, reader); err != nil {
-			return err
-		}
-	}
-
-	for _, c := range r.Value.Content {
-		if c == nil {
-			continue
-		}
-		if err := c.Schema.Parse(config, reader); err != nil {
-			return err
-		}
-
-		for _, e := range c.Examples {
-			if err := e.Parse(config, reader); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-func (r *ExampleRef) Parse(config *common.Config, reader common.Reader) error {
-	if r == nil {
-		return nil
-	}
-
-	if len(r.Ref) > 0 {
-		return common.Resolve(r.Ref, &r.Value, config, reader)
-	}
-	return nil
-}
-
-func (r *HeaderRef) Parse(config *common.Config, reader common.Reader) error {
-	if r == nil {
-		return nil
-	}
-
-	if len(r.Ref) > 0 {
-		return common.Resolve(r.Ref, &r.Value, config, reader)
-	}
 	return nil
 }

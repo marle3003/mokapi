@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
 	"io"
 	"mime/multipart"
 	"mokapi/config/dynamic/openapi/ref"
@@ -34,6 +35,14 @@ type RequestBody struct {
 type Body struct {
 	Value interface{}
 	Raw   string
+}
+
+func (r *RequestBodyRef) UnmarshalJSON(b []byte) error {
+	return r.Reference.UnmarshalJson(b, &r.Value)
+}
+
+func (r *RequestBodyRef) UnmarshalYAML(node *yaml.Node) error {
+	return r.Reference.Unmarshal(node, &r.Value)
 }
 
 func BodyFromRequest(r *http.Request, op *Operation) (*Body, error) {
@@ -68,7 +77,7 @@ func readBody(r *http.Request, op *Operation, contentType media.ContentType) (*B
 		if s.Type != "object" {
 			return nil, fmt.Errorf("schema %q not support for content type multipart/form-data, expected 'object'", s.Type)
 		}
-		if s.Properties.Value == nil {
+		if s.Properties == nil {
 			// todo raw value
 			return nil, nil
 		}

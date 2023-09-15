@@ -113,11 +113,11 @@ func (b *builder) createObject(s *Schema) (interface{}, error) {
 		return m, nil
 	}
 
-	if s.Properties == nil || s.Properties.Value == nil {
+	if s.Properties == nil {
 		return m, nil
 	}
 
-	for it := s.Properties.Value.Iter(); it.Next(); {
+	for it := s.Properties.Iter(); it.Next(); {
 		key := it.Key()
 		propSchema := it.Value()
 		value, err := b.create(propSchema)

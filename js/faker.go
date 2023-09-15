@@ -76,9 +76,9 @@ func (m *fakerModule) toSchema(js *jsSchema) *schema.Schema {
 	}
 
 	if len(js.Properties) > 0 {
-		s.Properties = &schema.SchemasRef{Value: &schema.Schemas{}}
+		s.Properties = &schema.Schemas{}
 		for name, prop := range js.Properties {
-			s.Properties.Value.Set(name, &schema.Ref{Value: m.toSchema(prop)})
+			s.Properties.Set(name, &schema.Ref{Value: m.toSchema(prop)})
 		}
 	}
 

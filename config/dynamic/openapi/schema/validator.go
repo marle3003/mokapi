@@ -179,7 +179,7 @@ func validateObject(i interface{}, schema *Schema) error {
 		if schema.MaxProperties != nil && v.Len() > *schema.MaxProperties {
 			return fmt.Errorf("validation error maxProperties on %v, expected %v", toString(i), schema)
 		}
-		if !schema.IsFreeForm() && schema.Properties != nil && v.Len() > schema.Properties.Value.Len() {
+		if !schema.IsFreeForm() && schema.Properties != nil && v.Len() > schema.Properties.Len() {
 			return fmt.Errorf("validation error too many fields on %v, expected %v", toString(i), schema)
 		}
 
@@ -196,7 +196,7 @@ func validateObject(i interface{}, schema *Schema) error {
 			return fmt.Errorf("validation error maxProperties on %v, expected %v", m, schema)
 		}
 
-		if !schema.IsFreeForm() && schema.Properties != nil && m.Len() > schema.Properties.Value.Len() {
+		if !schema.IsFreeForm() && schema.Properties != nil && m.Len() > schema.Properties.Len() {
 			return fmt.Errorf("validation error too many fields on %v, expected %v", toString(i), schema)
 		}
 

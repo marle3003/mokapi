@@ -71,26 +71,16 @@ func (o *Operation) parse(p *Path, config *common.Config, reader common.Reader) 
 	}
 
 	o.Path = p
-	for _, p := range o.Parameters {
-		if err := p.Parse(config, reader); err != nil {
-			return err
-		}
+
+	if err := o.Parameters.Parse(config, reader); err != nil {
+		return err
 	}
 
 	if err := o.RequestBody.Parse(config, reader); err != nil {
 		return err
 	}
 
-	if o.Responses != nil {
-		for it := o.Responses.Iter(); it.Next(); {
-			res := it.Value()
-			if err := res.Parse(config, reader); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
+	return o.Responses.parse(config, reader)
 }
 
 func (o *Operation) patch(patch *Operation) {
@@ -114,17 +104,6 @@ func (o *Operation) patch(patch *Operation) {
 	if o.Responses == nil {
 		o.Responses = patch.Responses
 	} else {
-		for it := patch.Responses.Iter(); it.Next(); {
-			r := it.Value()
-			if r.Value == nil {
-				continue
-			}
-			statusCode := it.Key()
-			if v := o.Responses.GetResponse(statusCode); v != nil {
-				v.patch(r.Value)
-			} else {
-				o.Responses.Set(statusCode, r)
-			}
-		}
+		o.Responses.patch(patch.Responses)
 	}
 }

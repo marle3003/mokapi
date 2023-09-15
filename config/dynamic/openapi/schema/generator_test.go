@@ -556,9 +556,7 @@ func TestGenerator_Recursions(t *testing.T) {
 				s := schematest.New("object")
 				props := &schema.Schemas{}
 				props.Set("foo", &schema.Ref{Value: s})
-				s.Properties = &schema.SchemasRef{
-					Value: props,
-				}
+				s.Properties = props
 				g := schema.NewGenerator()
 				o, err := g.New(&schema.Ref{Value: s})
 				require.NoError(t, err)
@@ -575,9 +573,7 @@ func TestGenerator_Recursions(t *testing.T) {
 				s := schematest.New("object", schematest.WithProperty("bar", child))
 				props := &schema.Schemas{}
 				props.Set("foo", &schema.Ref{Value: s})
-				child.Properties = &schema.SchemasRef{
-					Value: props,
-				}
+				child.Properties = props
 				g := schema.NewGenerator()
 				o, err := g.New(&schema.Ref{Value: s})
 				require.NoError(t, err)
@@ -594,9 +590,7 @@ func TestGenerator_Recursions(t *testing.T) {
 				obj := schematest.New("object")
 				props := &schema.Schemas{}
 				props.Set("foo", &schema.Ref{Value: obj})
-				obj.Properties = &schema.SchemasRef{
-					Value: props,
-				}
+				obj.Properties = props
 				array := schematest.New("array", schematest.WithItems(obj))
 				minItems := 2
 				array.MinItems = &minItems

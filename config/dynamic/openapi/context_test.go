@@ -38,7 +38,7 @@ func TestContentTypeFromRequest(t *testing.T) {
 		},
 		{
 			accept:   "",
-			response: openapitest.NewResponse(openapitest.WithContent("text/plain")),
+			response: openapitest.NewResponse(openapitest.WithContent("text/plain", openapitest.NewContent())),
 			validate: func(t *testing.T, ct media.ContentType, mt *openapi.MediaType, err error) {
 				require.NotNil(t, ct)
 				require.NotNil(t, mt)
@@ -49,7 +49,7 @@ func TestContentTypeFromRequest(t *testing.T) {
 		},
 		{
 			accept:   "text/plain",
-			response: openapitest.NewResponse(openapitest.WithContent("text/plain")),
+			response: openapitest.NewResponse(openapitest.WithContent("text/plain", openapitest.NewContent())),
 			validate: func(t *testing.T, ct media.ContentType, mt *openapi.MediaType, err error) {
 				require.NotNil(t, ct)
 				require.NotNil(t, mt)
@@ -60,7 +60,7 @@ func TestContentTypeFromRequest(t *testing.T) {
 		},
 		{
 			accept:   "*/*",
-			response: openapitest.NewResponse(openapitest.WithContent("text/plain")),
+			response: openapitest.NewResponse(openapitest.WithContent("text/plain", openapitest.NewContent())),
 			validate: func(t *testing.T, ct media.ContentType, mt *openapi.MediaType, err error) {
 				require.NotNil(t, ct)
 				require.NotNil(t, mt)
@@ -71,7 +71,7 @@ func TestContentTypeFromRequest(t *testing.T) {
 		},
 		{
 			accept:   "text/*",
-			response: openapitest.NewResponse(openapitest.WithContent("text/plain")),
+			response: openapitest.NewResponse(openapitest.WithContent("text/plain", openapitest.NewContent())),
 			validate: func(t *testing.T, ct media.ContentType, mt *openapi.MediaType, err error) {
 				require.NotNil(t, ct)
 				require.NotNil(t, mt)
@@ -82,14 +82,14 @@ func TestContentTypeFromRequest(t *testing.T) {
 		},
 		{
 			accept:   "image/*",
-			response: openapitest.NewResponse(openapitest.WithContent("text/plain")),
+			response: openapitest.NewResponse(openapitest.WithContent("text/plain", openapitest.NewContent())),
 			validate: func(t *testing.T, ct media.ContentType, mt *openapi.MediaType, err error) {
 				require.EqualError(t, err, "none of requests content type(s) are supported: \"image/*\"")
 			},
 		},
 		{
 			accept:   "image/*",
-			response: openapitest.NewResponse(openapitest.WithContent("image/png")),
+			response: openapitest.NewResponse(openapitest.WithContent("image/png", openapitest.NewContent())),
 			validate: func(t *testing.T, ct media.ContentType, mt *openapi.MediaType, err error) {
 				require.NotNil(t, ct)
 				require.NotNil(t, mt)
@@ -100,7 +100,7 @@ func TestContentTypeFromRequest(t *testing.T) {
 		},
 		{
 			accept:   "image/png",
-			response: openapitest.NewResponse(openapitest.WithContent("image/*")),
+			response: openapitest.NewResponse(openapitest.WithContent("image/*", openapitest.NewContent())),
 			validate: func(t *testing.T, ct media.ContentType, mt *openapi.MediaType, err error) {
 				require.NotNil(t, ct)
 				require.NotNil(t, mt)
@@ -110,7 +110,7 @@ func TestContentTypeFromRequest(t *testing.T) {
 		},
 		{
 			accept:   "image/*",
-			response: openapitest.NewResponse(openapitest.WithContent("image/*")),
+			response: openapitest.NewResponse(openapitest.WithContent("image/*", openapitest.NewContent())),
 			validate: func(t *testing.T, ct media.ContentType, mt *openapi.MediaType, err error) {
 				require.NotNil(t, ct)
 				require.NotNil(t, mt)
@@ -120,7 +120,7 @@ func TestContentTypeFromRequest(t *testing.T) {
 		},
 		{
 			accept:   "image/*",
-			response: openapitest.NewResponse(openapitest.WithContent("*/*")),
+			response: openapitest.NewResponse(openapitest.WithContent("*/*", openapitest.NewContent())),
 			validate: func(t *testing.T, ct media.ContentType, mt *openapi.MediaType, err error) {
 				require.NotNil(t, ct)
 				require.NotNil(t, mt)
@@ -130,7 +130,7 @@ func TestContentTypeFromRequest(t *testing.T) {
 		},
 		{
 			accept:   "*/*",
-			response: openapitest.NewResponse(openapitest.WithContent("*/*")),
+			response: openapitest.NewResponse(openapitest.WithContent("*/*", openapitest.NewContent())),
 			validate: func(t *testing.T, ct media.ContentType, mt *openapi.MediaType, err error) {
 				require.NotNil(t, ct)
 				require.NotNil(t, mt)
@@ -141,7 +141,7 @@ func TestContentTypeFromRequest(t *testing.T) {
 		},
 		{
 			accept:   "",
-			response: openapitest.NewResponse(openapitest.WithContent("*/*")),
+			response: openapitest.NewResponse(openapitest.WithContent("*/*", openapitest.NewContent())),
 			validate: func(t *testing.T, ct media.ContentType, mt *openapi.MediaType, err error) {
 				require.NotNil(t, ct)
 				require.NotNil(t, mt)
@@ -152,7 +152,7 @@ func TestContentTypeFromRequest(t *testing.T) {
 		},
 		{
 			accept:   "image/png",
-			response: openapitest.NewResponse(openapitest.WithContent("*/*")),
+			response: openapitest.NewResponse(openapitest.WithContent("*/*", openapitest.NewContent())),
 			validate: func(t *testing.T, ct media.ContentType, mt *openapi.MediaType, err error) {
 				require.NotNil(t, ct)
 				require.NotNil(t, mt)
@@ -162,7 +162,7 @@ func TestContentTypeFromRequest(t *testing.T) {
 		},
 		{
 			accept:   "application/json;odata=verbose",
-			response: openapitest.NewResponse(openapitest.WithContent("application/json")),
+			response: openapitest.NewResponse(openapitest.WithContent("application/json", openapitest.NewContent())),
 			validate: func(t *testing.T, ct media.ContentType, mt *openapi.MediaType, err error) {
 				require.NotNil(t, ct)
 				require.NotNil(t, mt)
@@ -172,7 +172,7 @@ func TestContentTypeFromRequest(t *testing.T) {
 		},
 		{
 			accept:   "application/json",
-			response: openapitest.NewResponse(openapitest.WithContent("application/json;odata=verbose")),
+			response: openapitest.NewResponse(openapitest.WithContent("application/json;odata=verbose", openapitest.NewContent())),
 			validate: func(t *testing.T, ct media.ContentType, mt *openapi.MediaType, err error) {
 				require.NotNil(t, ct)
 				require.NotNil(t, mt)

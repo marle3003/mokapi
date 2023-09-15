@@ -234,7 +234,7 @@ func TestOperation_Parse(t *testing.T) {
 					)),
 				)
 				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
-				require.EqualError(t, err, "unable to resolve parameter reference foo.yml: unable to read /foo.yml: TEST ERROR")
+				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'GET' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},
 		{
@@ -268,7 +268,7 @@ func TestOperation_Parse(t *testing.T) {
 					)),
 				)
 				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
-				require.EqualError(t, err, "unable to resolve parameter reference foo.yml: unable to read /foo.yml: TEST ERROR")
+				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'POST' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},
 		{
@@ -302,7 +302,7 @@ func TestOperation_Parse(t *testing.T) {
 					)),
 				)
 				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
-				require.EqualError(t, err, "unable to resolve parameter reference foo.yml: unable to read /foo.yml: TEST ERROR")
+				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'PUT' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},
 		{
@@ -336,7 +336,7 @@ func TestOperation_Parse(t *testing.T) {
 					)),
 				)
 				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
-				require.EqualError(t, err, "unable to resolve parameter reference foo.yml: unable to read /foo.yml: TEST ERROR")
+				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'PATCH' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},
 		{
@@ -370,7 +370,7 @@ func TestOperation_Parse(t *testing.T) {
 					)),
 				)
 				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
-				require.EqualError(t, err, "unable to resolve parameter reference foo.yml: unable to read /foo.yml: TEST ERROR")
+				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'DELETE' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},
 		{
@@ -404,7 +404,7 @@ func TestOperation_Parse(t *testing.T) {
 					)),
 				)
 				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
-				require.EqualError(t, err, "unable to resolve parameter reference foo.yml: unable to read /foo.yml: TEST ERROR")
+				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'HEAD' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},
 		{
@@ -438,7 +438,7 @@ func TestOperation_Parse(t *testing.T) {
 					)),
 				)
 				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
-				require.EqualError(t, err, "unable to resolve parameter reference foo.yml: unable to read /foo.yml: TEST ERROR")
+				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'OPTIONS' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},
 		{
@@ -472,7 +472,7 @@ func TestOperation_Parse(t *testing.T) {
 					)),
 				)
 				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
-				require.EqualError(t, err, "unable to resolve parameter reference foo.yml: unable to read /foo.yml: TEST ERROR")
+				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'TRACE' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},
 	}

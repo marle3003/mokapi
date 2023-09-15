@@ -1,6 +1,7 @@
 package openapi
 
 import (
+	"fmt"
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/openapi/parameter"
@@ -124,9 +125,9 @@ func (p Paths) Resolve(token string) (interface{}, error) {
 }
 
 func (p Paths) parse(config *common.Config, reader common.Reader) error {
-	for _, e := range p {
+	for name, e := range p {
 		if err := e.parse(config, reader); err != nil {
-			return err
+			return fmt.Errorf("parse path '%v' failed: %w", name, err)
 		}
 	}
 	return nil
@@ -156,28 +157,28 @@ func (p *Path) parse(config *common.Config, reader common.Reader) error {
 	}
 
 	if err := p.Get.parse(p, config, reader); err != nil {
-		return err
+		return fmt.Errorf("parse operation 'GET' failed: %w", err)
 	}
 	if err := p.Post.parse(p, config, reader); err != nil {
-		return err
+		return fmt.Errorf("parse operation 'POST' failed: %w", err)
 	}
 	if err := p.Put.parse(p, config, reader); err != nil {
-		return err
+		return fmt.Errorf("parse operation 'PUT' failed: %w", err)
 	}
 	if err := p.Patch.parse(p, config, reader); err != nil {
-		return err
+		return fmt.Errorf("parse operation 'PATCH' failed: %w", err)
 	}
 	if err := p.Delete.parse(p, config, reader); err != nil {
-		return err
+		return fmt.Errorf("parse operation 'DELETE' failed: %w", err)
 	}
 	if err := p.Head.parse(p, config, reader); err != nil {
-		return err
+		return fmt.Errorf("parse operation 'HEAD' failed: %w", err)
 	}
 	if err := p.Options.parse(p, config, reader); err != nil {
-		return err
+		return fmt.Errorf("parse operation 'OPTIONS' failed: %w", err)
 	}
 	if err := p.Trace.parse(p, config, reader); err != nil {
-		return err
+		return fmt.Errorf("parse operation 'TRACE' failed: %w", err)
 	}
 
 	return nil

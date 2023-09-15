@@ -18,12 +18,9 @@ func New(typeName string, opts ...SchemaOptions) *schema.Schema {
 func WithProperty(name string, ps *schema.Schema) SchemaOptions {
 	return func(s *schema.Schema) {
 		if s.Properties == nil {
-			s.Properties = &schema.SchemasRef{}
+			s.Properties = &schema.Schemas{}
 		}
-		if s.Properties.Value == nil {
-			s.Properties.Value = &schema.Schemas{}
-		}
-		s.Properties.Value.Set(name, &schema.Ref{Value: ps})
+		s.Properties.Set(name, &schema.Ref{Value: ps})
 	}
 }
 

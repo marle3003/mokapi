@@ -360,7 +360,7 @@ func TestConvert(t *testing.T) {
 				require.Equal(t, "string", foo.Value.Type)
 				bar := config.Components.Schemas.Get("Bar")
 				require.Equal(t, "object", bar.Value.Type)
-				title := bar.Value.Properties.Value.Get("title")
+				title := bar.Value.Properties.Get("title")
 				require.Equal(t, "string", title.Value.Type)
 			},
 		},

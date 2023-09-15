@@ -12,11 +12,6 @@ type Ref struct {
 	Value *Schema
 }
 
-type SchemasRef struct {
-	ref.Reference
-	Value *Schemas
-}
-
 type Schemas struct {
 	sortedmap.LinkedHashMap[string, *Ref]
 }
@@ -54,7 +49,7 @@ type Schema struct {
 	ShuffleItems bool `yaml:"x-shuffleItems" json:"x-shuffleItems"`
 
 	// Object
-	Properties           *SchemasRef           `yaml:"properties" json:"properties"`
+	Properties           *Schemas              `yaml:"properties" json:"properties"`
 	Required             []string              `yaml:"required" json:"required"`
 	AdditionalProperties *AdditionalProperties `yaml:"additionalProperties,omitempty" json:"additionalProperties,omitempty"`
 	MinProperties        *int                  `yaml:"minProperties" json:"minProperties"`
@@ -73,13 +68,6 @@ type Xml struct {
 	Prefix    string `yaml:"prefix" json:"prefix"`
 	Namespace string `yaml:"namespace" json:"namespace"`
 	CData     bool   `yaml:"x-cdata" json:"x-cdata"`
-}
-
-func (s *SchemasRef) Get(name string) *Ref {
-	if s == nil && s.Value == nil {
-		return nil
-	}
-	return s.Value.Get(name)
 }
 
 func (s *Schemas) Get(name string) *Ref {
@@ -106,7 +94,7 @@ func (r *Ref) HasProperties() bool {
 }
 
 func (s *Schema) HasProperties() bool {
-	return s.Properties != nil && s.Properties.Value != nil && s.Properties.Value.Len() > 0
+	return s.Properties != nil && s.Properties.Len() > 0
 }
 
 func (s *Schema) String() string {
@@ -180,9 +168,9 @@ func (s *Schema) String() string {
 		sb.WriteString(" unique-items")
 	}
 
-	if s.Type == "object" && s.Properties != nil && s.Properties.Value != nil {
+	if s.Type == "object" && s.Properties != nil {
 		var sbProp strings.Builder
-		for _, p := range s.Properties.Value.Keys() {
+		for _, p := range s.Properties.Keys() {
 			if sbProp.Len() > 0 {
 				sbProp.WriteString(", ")
 			}
@@ -201,7 +189,7 @@ func (s *Schema) String() string {
 }
 
 func (s *Schema) IsFreeForm() bool {
-	free := s.Type == "object" && (s.Properties == nil || s.Properties.Value.Len() == 0)
+	free := s.Type == "object" && (s.Properties == nil || s.Properties.Len() == 0)
 	if s.AdditionalProperties == nil {
 		return free
 	}

@@ -104,7 +104,7 @@ func encode(name string, i interface{}, r *Ref, writer *bufio.Writer) error {
 				return fmt.Errorf("expected object got %T", i)
 			}
 
-			for it := s.Properties.Value.Iter(); it.Next(); {
+			for it := s.Properties.Iter(); it.Next(); {
 				prop := it.Value()
 				if prop.Value == nil || prop.Value.Xml == nil || !prop.Value.Xml.Attribute {
 					continue
@@ -123,7 +123,7 @@ func encode(name string, i interface{}, r *Ref, writer *bufio.Writer) error {
 
 			node.writeStart(writer)
 
-			for it := s.Properties.Value.Iter(); it.Next(); {
+			for it := s.Properties.Iter(); it.Next(); {
 				prop := it.Value()
 				if prop.Value == nil || (prop.Value.Xml != nil && prop.Value.Xml.Attribute) {
 					continue
@@ -178,7 +178,7 @@ func (e *xmlNode) parse(r *Ref) (interface{}, error) {
 			return e.parseFreeForm()
 		}
 		props := sortedmap.NewLinkedHashMap()
-		for it := s.Properties.Value.Iter(); it.Next(); {
+		for it := s.Properties.Iter(); it.Next(); {
 			name := it.Key()
 			xmlName := name
 			prop := it.Value()

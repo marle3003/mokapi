@@ -40,7 +40,7 @@ func parseQueryObject(p *Parameter, u *url.URL) (obj map[string]interface{}, err
 		return nil, errors.Errorf("not supported object style '%v'", p.Style)
 	case s == "deepObject" && p.Explode:
 		obj = make(map[string]interface{})
-		for it := p.Schema.Value.Properties.Value.Iter(); it.Next(); {
+		for it := p.Schema.Value.Properties.Iter(); it.Next(); {
 			name := it.Key()
 			prop := it.Value()
 			s := u.Query().Get(fmt.Sprintf("%v[%v]", p.Name, name))
@@ -66,7 +66,7 @@ func parseQueryObject(p *Parameter, u *url.URL) (obj map[string]interface{}, err
 					obj[k] = v
 				}
 			} else {
-				for it := p.Schema.Value.Properties.Value.Iter(); it.Next(); {
+				for it := p.Schema.Value.Properties.Iter(); it.Next(); {
 					name := it.Key()
 					prop := it.Value()
 					s := u.Query().Get(name)

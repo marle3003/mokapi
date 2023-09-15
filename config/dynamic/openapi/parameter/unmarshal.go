@@ -39,10 +39,6 @@ func (r *Ref) UnmarshalYAML(node *yaml.Node) error {
 	return r.Reference.Unmarshal(node, &r.Value)
 }
 
-func (r *NamedParameters) UnmarshalYAML(node *yaml.Node) error {
-	return r.Reference.Unmarshal(node, &r.Value)
-}
-
 func (p *Parameter) UnmarshalJSON(b []byte) error {
 	tmp := &parameter{Explode: true}
 	dec := json.NewDecoder(bytes.NewReader(b))
@@ -63,9 +59,5 @@ func (p *Parameter) UnmarshalJSON(b []byte) error {
 }
 
 func (r *Ref) UnmarshalJSON(b []byte) error {
-	return r.Reference.UnmarshalJson(b, &r.Value)
-}
-
-func (r *NamedParameters) UnmarshalJSON(b []byte) error {
 	return r.Reference.UnmarshalJson(b, &r.Value)
 }

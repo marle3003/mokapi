@@ -241,8 +241,8 @@ func TestRef_UnmarshalJSON(t *testing.T) {
 			s:    `{ "type": "object", "properties": { "name": { "type": "string" } } }`,
 			fn: func(t *testing.T, r *Ref) {
 				require.Equal(t, "object", r.Value.Type)
-				require.Equal(t, 1, r.Value.Properties.Value.Len())
-				name := r.Value.Properties.Value.Get("name")
+				require.Equal(t, 1, r.Value.Properties.Len())
+				name := r.Value.Properties.Get("name")
 				require.NotNil(t, name)
 				require.Equal(t, "string", name.Value.Type)
 			},

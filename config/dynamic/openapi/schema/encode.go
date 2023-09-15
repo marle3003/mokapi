@@ -278,7 +278,7 @@ func reflectFromMap(v reflect.Value, schema *Schema) (*schemaObject, error) {
 	obj := newSchemaObject()
 
 	if schema.HasProperties() {
-		for it := schema.Properties.Value.Iter(); it.Next(); {
+		for it := schema.Properties.Iter(); it.Next(); {
 			name := it.Key()
 			o := v.MapIndex(reflect.ValueOf(name))
 			if !o.IsValid() {

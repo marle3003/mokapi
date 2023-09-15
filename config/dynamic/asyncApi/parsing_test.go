@@ -87,7 +87,7 @@ func TestChannelResolve(t *testing.T) {
 			"foo": {Ref: "foo.yml#/channels/foo"},
 		}}
 		err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
-		require.EqualError(t, err, "unable to read /foo.yml#/channels/foo: TEST ERROR")
+		require.EqualError(t, err, "resolve reference 'foo.yml#/channels/foo' failed: TEST ERROR")
 	})
 }
 
@@ -175,7 +175,7 @@ func TestMessageResolve(t *testing.T) {
 			"foo": {Value: &Channel{Subscribe: &Operation{Message: &MessageRef{Ref: "foo.yml#/components/messages/foo"}}}},
 		}}
 		err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
-		require.EqualError(t, err, "unable to read /foo.yml#/components/messages/foo: TEST ERROR")
+		require.EqualError(t, err, "resolve reference 'foo.yml#/components/messages/foo' failed: TEST ERROR")
 	})
 	t.Run("publisher reader returns error", func(t *testing.T) {
 		reader := &testReader{readFunc: func(cfg *common.Config) error {
@@ -185,7 +185,7 @@ func TestMessageResolve(t *testing.T) {
 			"foo": {Value: &Channel{Publish: &Operation{Message: &MessageRef{Ref: "foo.yml#/components/messages/foo"}}}},
 		}}
 		err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
-		require.EqualError(t, err, "unable to read /foo.yml#/components/messages/foo: TEST ERROR")
+		require.EqualError(t, err, "resolve reference 'foo.yml#/components/messages/foo' failed: TEST ERROR")
 	})
 }
 

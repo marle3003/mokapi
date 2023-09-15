@@ -81,8 +81,8 @@ func TestSchema_Patch(t *testing.T) {
 					schematest.WithProperty("foo", schematest.New("string"))),
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, 1, result.Properties.Value.Len())
-				require.NotNil(t, result.Properties.Value.Get("foo"))
+				require.Equal(t, 1, result.Properties.Len())
+				require.NotNil(t, result.Properties.Get("foo"))
 			},
 		},
 		{
@@ -94,11 +94,11 @@ func TestSchema_Patch(t *testing.T) {
 					schematest.WithProperty("bar", schematest.New("number"))),
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, 2, result.Properties.Value.Len())
-				foo := result.Properties.Value.Get("foo")
+				require.Equal(t, 2, result.Properties.Len())
+				foo := result.Properties.Get("foo")
 				require.NotNil(t, foo)
 				require.Equal(t, "string", foo.Value.Type)
-				bar := result.Properties.Value.Get("bar")
+				bar := result.Properties.Get("bar")
 				require.NotNil(t, bar)
 				require.Equal(t, "number", bar.Value.Type)
 			},
@@ -112,8 +112,8 @@ func TestSchema_Patch(t *testing.T) {
 					schematest.WithProperty("foo", schematest.New("number"))),
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, 1, result.Properties.Value.Len())
-				foo := result.Properties.Value.Get("foo")
+				require.Equal(t, 1, result.Properties.Len())
+				foo := result.Properties.Get("foo")
 				require.NotNil(t, foo)
 				require.Equal(t, "number", foo.Value.Type)
 			},

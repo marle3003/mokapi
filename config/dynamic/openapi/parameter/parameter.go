@@ -1,6 +1,8 @@
 package parameter
 
 import (
+	"fmt"
+	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/openapi/ref"
 	"mokapi/config/dynamic/openapi/schema"
 )
@@ -51,11 +53,42 @@ type Parameter struct {
 
 type Location string
 
-type NamedParameters struct {
-	ref.Reference
-	Value map[string]*Ref
-}
-
 func (l Location) String() string {
 	return string(l)
+}
+
+func (p Parameters) Parse(config *common.Config, reader common.Reader) error {
+	for index, param := range p {
+		if err := param.Parse(config, reader); err != nil {
+			return fmt.Errorf("parse parameter index '%v' failed: %w", index, err)
+		}
+	}
+
+	return nil
+}
+
+func (r *Ref) Parse(config *common.Config, reader common.Reader) error {
+	if r == nil {
+		return nil
+	}
+
+	if len(r.Ref) > 0 && r.Value == nil {
+		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
+			return err
+		}
+	}
+
+	if r.Value == nil {
+		return nil
+	}
+
+	if err := r.Value.Schema.Parse(config, reader); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (p *Parameter) Parse(config *common.Config, reader common.Reader) error {
+	return nil
 }

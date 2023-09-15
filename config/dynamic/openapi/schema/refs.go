@@ -19,27 +19,14 @@ func (s *Schemas) Parse(config *common.Config, reader common.Reader) error {
 	return nil
 }
 
-func (s *SchemasRef) Parse(file *common.Config, reader common.Reader) error {
-	if s == nil {
-		return nil
-	}
-	if len(s.Ref) > 0 {
-		return common.Resolve(s.Ref, &s.Value, file, reader)
-	}
-
-	if s.Value == nil {
-		return nil
-	}
-
-	return s.Value.Parse(file, reader)
-}
-
 func (r *Ref) Parse(config *common.Config, reader common.Reader) error {
 	if r == nil {
 		return nil
 	}
 	if len(r.Ref) > 0 {
-		return common.Resolve(r.Ref, &r.Value, config, reader)
+		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
+			return fmt.Errorf("parse schema failed: %w", err)
+		}
 	}
 
 	if r.Value == nil {

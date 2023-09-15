@@ -28,7 +28,7 @@ func (s *Schema) Patch(patch *Schema) {
 	if s.Properties == nil {
 		s.Properties = patch.Properties
 	} else {
-		s.Properties.patch(patch.Properties)
+		s.Properties.Patch(patch.Properties)
 	}
 
 	if s.Items == nil {
@@ -96,18 +96,6 @@ func (s *Schema) Patch(patch *Schema) {
 	}
 }
 
-func (s *SchemasRef) patch(patch *SchemasRef) {
-	if patch == nil || patch.Value == nil {
-		return
-	}
-	if s.Value == nil {
-		s.Value = patch.Value
-		return
-	}
-
-	s.Value.Patch(patch.Value)
-}
-
 func (x *Xml) patch(patch *Xml) {
 	if patch == nil {
 		return
@@ -142,16 +130,5 @@ func (s *Schemas) Patch(patch *Schemas) {
 		} else {
 			s.Set(it.Key(), it.Value())
 		}
-	}
-}
-
-func (s *SchemasRef) Patch(patch *SchemasRef) {
-	if patch == nil || patch.Value == nil {
-		return
-	}
-	if s.Value == nil {
-		s.Value = patch.Value
-	} else {
-		s.Value.Patch(patch.Value)
 	}
 }

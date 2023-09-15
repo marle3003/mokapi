@@ -26,26 +26,3 @@ func (p *Parameter) Patch(patch *Parameter) {
 		p.Schema.Patch(patch.Schema)
 	}
 }
-
-func (r *NamedParameters) Patch(patch *NamedParameters) {
-	if patch == nil || patch.Value == nil {
-		return
-	}
-	if r.Value == nil {
-		r.Value = patch.Value
-	}
-	for k, p := range patch.Value {
-		if p.Value == nil {
-			continue
-		}
-		if v, ok := r.Value[k]; ok {
-			if v.Value == nil {
-				v.Value = p.Value
-			} else {
-				v.Value.Patch(p.Value)
-			}
-		} else {
-			r.Value[k] = p
-		}
-	}
-}

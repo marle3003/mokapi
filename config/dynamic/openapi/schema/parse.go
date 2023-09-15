@@ -127,7 +127,7 @@ func parseAnyObject(m *sortedmap.LinkedHashMap[string, interface{}], schema *Sch
 			return toObject(m)
 		}
 
-		for it := s.Properties.Value.Iter(); it.Next(); {
+		for it := s.Properties.Iter(); it.Next(); {
 			name := it.Key()
 			pRef := it.Value()
 
@@ -194,7 +194,7 @@ func parseAllOf(i interface{}, schema *Schema) (interface{}, error) {
 			return toObject(m)
 		}
 
-		for it := s.Properties.Value.Iter(); it.Next(); {
+		for it := s.Properties.Iter(); it.Next(); {
 			name := it.Key()
 			pRef := it.Value()
 
@@ -245,7 +245,7 @@ func parseOneOfObject(m *sortedmap.LinkedHashMap[string, interface{}], schema *S
 			required[r] = struct{}{}
 		}
 
-		for it := s.Properties.Value.Iter(); it.Next(); {
+		for it := s.Properties.Iter(); it.Next(); {
 			name := it.Key()
 			pRef := it.Value()
 
@@ -349,14 +349,14 @@ func parseObject(i interface{}, s *Schema) (interface{}, error) {
 		return toObject(m)
 	}
 
-	if m.Len() > s.Properties.Value.Len() {
+	if m.Len() > s.Properties.Len() {
 		return nil, fmt.Errorf("could not parse %v, too many properties", toString(m))
 	}
 
 	fields := make([]reflect.StructField, 0, m.Len())
 	values := make([]reflect.Value, 0, m.Len())
 
-	for it := s.Properties.Value.Iter(); it.Next(); {
+	for it := s.Properties.Iter(); it.Next(); {
 		name := it.Key()
 		pRef := it.Value()
 		if v := m.Get(name); v == nil {

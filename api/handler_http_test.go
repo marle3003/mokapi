@@ -145,7 +145,9 @@ func TestHandler_Http(t *testing.T) {
 										openapitest.WithResponseDescription("foo description"),
 										openapitest.WithContent(
 											"application/json",
-											openapitest.WithSchema(schematest.New("string")),
+											openapitest.NewContent(
+												openapitest.WithSchema(schematest.New("string")),
+											),
 										),
 										openapitest.WithResponseHeader("foo", "bar", schematest.New("string")),
 									),

@@ -152,9 +152,9 @@ func (c *schemaConverter) getSchema(s *schema.Ref) *schemaInfo {
 
 	result.Items = c.getSchema(s.Value.Items)
 
-	if s.Value.Properties != nil && s.Value.Properties.Value != nil {
+	if s.Value.Properties != nil {
 		result.Properties = &Properties{}
-		for it := s.Value.Properties.Value.Iter(); it.Next(); {
+		for it := s.Value.Properties.Iter(); it.Next(); {
 			prop := c.getSchema(it.Value())
 			if prop == nil {
 				continue
@@ -213,9 +213,9 @@ func toSchema(s *schemaInfo) *schema.Schema {
 		MaxProperties:    s.MaxProperties,
 	}
 	if s.Properties != nil && s.Properties.Len() > 0 {
-		result.Properties = &schema.SchemasRef{Value: &schema.Schemas{}}
+		result.Properties = &schema.Schemas{}
 		for it := s.Properties.Iter(); it.Next(); {
-			result.Properties.Value.Set(it.Key(), &schema.Ref{Value: toSchema(it.Value())})
+			result.Properties.Set(it.Key(), &schema.Ref{Value: toSchema(it.Value())})
 		}
 	}
 	if s.Items != nil {

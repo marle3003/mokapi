@@ -30,6 +30,12 @@ func WithResponse(status int, opts ...ResponseOptions) OperationOptions {
 	}
 }
 
+func WithResponseRef(status int, ref *openapi.ResponseRef) OperationOptions {
+	return func(o *openapi.Operation) {
+		o.Responses.Set(status, ref)
+	}
+}
+
 type ParamOptions func(p *parameter.Parameter)
 
 func WithOperationParam(name string, required bool, opts ...ParamOptions) OperationOptions {
