@@ -78,8 +78,10 @@ func ResolvePath(path string, cursor interface{}, resolved interface{}) (err err
 		v = v.Elem()
 	}
 	if v.Kind() == reflect.Struct {
-		if f := v.FieldByName("Value"); f.IsValid() {
-			cursor = f.Interface()
+		fRef := v.FieldByName("Ref")
+		fValue := v.FieldByName("Value")
+		if fRef.IsValid() && fValue.IsValid() {
+			cursor = fValue.Interface()
 		}
 	}
 

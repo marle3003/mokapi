@@ -5,7 +5,7 @@ Loop:
 	for _, pParam := range patch {
 		for _, param := range *p {
 			if param.Value != nil && pParam.Value != nil && param.Value.Name == pParam.Value.Name {
-				param.Value.Patch(pParam.Value)
+				param.Patch(pParam)
 				continue Loop
 			}
 		}
@@ -13,16 +13,21 @@ Loop:
 	}
 }
 
-func (p *Parameter) Patch(patch *Parameter) {
-	if len(p.Description) == 0 {
-		p.Description = patch.Description
+func (r *Ref) Patch(patch *Ref) {
+	if r.Value == nil {
+		r.Value = patch.Value
+		return
 	}
-	if !p.Deprecated {
-		p.Deprecated = patch.Deprecated
+
+	if len(patch.Value.Description) > 0 {
+		r.Value.Description = patch.Value.Description
 	}
-	if p.Schema == nil {
-		p.Schema = patch.Schema
+
+	r.Value.Deprecated = patch.Value.Deprecated
+
+	if r.Value.Schema == nil {
+		r.Value.Schema = patch.Value.Schema
 	} else {
-		p.Schema.Patch(patch.Schema)
+		r.Value.Schema.Patch(patch.Value.Schema)
 	}
 }

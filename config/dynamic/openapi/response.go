@@ -12,8 +12,8 @@ import (
 	"strconv"
 )
 
-type Responses struct {
-	sortedmap.LinkedHashMap[int, *ResponseRef]
+type Responses[K string | int] struct {
+	sortedmap.LinkedHashMap[K, *ResponseRef]
 } // map[HttpStatus]*ResponseRef
 
 type ResponseRef struct {
@@ -38,7 +38,7 @@ type Response struct {
 	Headers Headers
 }
 
-func (r *Responses) UnmarshalJSON(b []byte) error {
+func (r *Responses[K]) UnmarshalJSON(b []byte) error {
 	dec := json.NewDecoder(bytes.NewReader(b))
 	token, err := dec.Token()
 	if err != nil {
@@ -47,7 +47,7 @@ func (r *Responses) UnmarshalJSON(b []byte) error {
 	if delim, ok := token.(json.Delim); ok && delim != '{' {
 		return fmt.Errorf("expected openapi.Responses map, got %s", token)
 	}
-	r.LinkedHashMap = sortedmap.LinkedHashMap[int, *ResponseRef]{}
+	r.LinkedHashMap = sortedmap.LinkedHashMap[K, *ResponseRef]{}
 	for {
 		token, err = dec.Token()
 		if err != nil {
@@ -62,15 +62,19 @@ func (r *Responses) UnmarshalJSON(b []byte) error {
 		if err != nil {
 			return err
 		}
-
-		if key == "default" {
-			r.Set(0, val)
-		} else {
-			statusCode, err := strconv.Atoi(key)
-			if err != nil {
-				return fmt.Errorf("unable to parse http status %v", key)
+		switch m := any(&r.LinkedHashMap).(type) {
+		case *sortedmap.LinkedHashMap[string, *ResponseRef]:
+			m.Set(key, val)
+		case *sortedmap.LinkedHashMap[int, *ResponseRef]:
+			if key == "default" {
+				m.Set(0, val)
+			} else {
+				statusCode, err := strconv.Atoi(key)
+				if err != nil {
+					return fmt.Errorf("unable to parse http status %v", key)
+				}
+				m.Set(statusCode, val)
 			}
-			r.Set(statusCode, val)
 		}
 	}
 }
@@ -79,11 +83,11 @@ func (r *ResponseRef) UnmarshalJSON(b []byte) error {
 	return r.Reference.UnmarshalJson(b, &r.Value)
 }
 
-func (r *Responses) UnmarshalYAML(value *yaml.Node) error {
+func (r *Responses[K]) UnmarshalYAML(value *yaml.Node) error {
 	if value.Kind != yaml.MappingNode {
 		return fmt.Errorf("expected openapi.Responses map, got %v", value.Tag)
 	}
-	r.LinkedHashMap = sortedmap.LinkedHashMap[int, *ResponseRef]{}
+	r.LinkedHashMap = sortedmap.LinkedHashMap[K, *ResponseRef]{}
 	for i := 0; i < len(value.Content); i += 2 {
 		var key string
 		err := value.Content[i].Decode(&key)
@@ -95,15 +99,19 @@ func (r *Responses) UnmarshalYAML(value *yaml.Node) error {
 		if err != nil {
 			return err
 		}
-
-		if key == "default" {
-			r.Set(0, val)
-		} else {
-			statusCode, err := strconv.Atoi(key)
-			if err != nil {
-				return fmt.Errorf("unable to parse http status %v", key)
+		switch m := any(&r.LinkedHashMap).(type) {
+		case *sortedmap.LinkedHashMap[string, *ResponseRef]:
+			m.Set(key, val)
+		case *sortedmap.LinkedHashMap[int, *ResponseRef]:
+			if key == "default" {
+				m.Set(0, val)
+			} else {
+				statusCode, err := strconv.Atoi(key)
+				if err != nil {
+					return fmt.Errorf("unable to parse http status %v", key)
+				}
+				m.Set(statusCode, val)
 			}
-			r.Set(statusCode, val)
 		}
 	}
 
@@ -114,11 +122,31 @@ func (r *ResponseRef) UnmarshalYAML(node *yaml.Node) error {
 	return r.Reference.Unmarshal(node, &r.Value)
 }
 
-func (r *Responses) GetResponse(httpStatus int) *Response {
+func (r *Responses[K]) Resolve(token string) (interface{}, error) {
+	var res *ResponseRef
+	switch m := any(&r.LinkedHashMap).(type) {
+	case *sortedmap.LinkedHashMap[int, *ResponseRef]:
+		i, err := strconv.Atoi(token)
+		if err != nil {
+			return nil, err
+		}
+		res = m.Get(i)
+	case *sortedmap.LinkedHashMap[string, *ResponseRef]:
+		res = m.Get(token)
+	}
+	if res == nil {
+		return nil, fmt.Errorf("unable to resolve %v", token)
+	}
+	return res.Value, nil
+}
+
+func (r *Responses[K]) GetResponse(httpStatus K) *Response {
 	res := r.Get(httpStatus)
 	if res == nil {
-		// 0 as default
-		res = r.Get(0)
+		switch m := any(&r.LinkedHashMap).(type) {
+		case *sortedmap.LinkedHashMap[int, *ResponseRef]:
+			res = m.Get(0)
+		}
 	}
 
 	if res == nil {
@@ -138,7 +166,7 @@ func (r *Response) GetContent(contentType media.ContentType) *MediaType {
 	return nil
 }
 
-func (r *Responses) parse(config *common.Config, reader common.Reader) error {
+func (r *Responses[K]) parse(config *common.Config, reader common.Reader) error {
 	if r == nil {
 		return nil
 	}
@@ -177,7 +205,7 @@ func (r *Response) parse(config *common.Config, reader common.Reader) error {
 	return r.Content.parse(config, reader)
 }
 
-func (r *Responses) patch(patch *Responses) {
+func (r *Responses[K]) patch(patch *Responses[K]) {
 	if patch == nil {
 		return
 	}
@@ -188,8 +216,8 @@ func (r *Responses) patch(patch *Responses) {
 			continue
 		}
 		statusCode := it.Key()
-		if v := r.GetResponse(statusCode); v != nil {
-			v.patch(res.Value)
+		if v := r.Get(statusCode); v != nil && v.Value != nil {
+			v.Value.patch(res.Value)
 		} else {
 			r.Set(statusCode, res)
 		}

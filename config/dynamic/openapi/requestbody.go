@@ -7,11 +7,14 @@ import (
 	"gopkg.in/yaml.v3"
 	"io"
 	"mime/multipart"
+	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/openapi/ref"
 	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/media"
 	"net/http"
 )
+
+type RequestBodies map[string]*RequestBodyRef
 
 type RequestBodyRef struct {
 	ref.Reference
@@ -233,4 +236,77 @@ func getMedia(contentType media.ContentType, body *RequestBody) (media.ContentTy
 	}
 
 	return best, bestMediaType
+}
+
+func (r RequestBodies) parse(config *common.Config, reader common.Reader) error {
+	if r == nil {
+		return nil
+	}
+
+	for name, body := range r {
+		if err := body.parse(config, reader); err != nil {
+			return fmt.Errorf("parse request body '%v' failed: %w", name, err)
+		}
+	}
+
+	return nil
+}
+
+func (r *RequestBodyRef) parse(config *common.Config, reader common.Reader) error {
+	if r == nil {
+		return nil
+	}
+
+	if len(r.Ref) > 0 {
+		return common.Resolve(r.Ref, &r.Value, config, reader)
+	}
+
+	for _, c := range r.Value.Content {
+		if c == nil {
+			continue
+		}
+		if err := c.Schema.Parse(config, reader); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (r RequestBodies) patch(patch RequestBodies) {
+	for k, p := range patch {
+		if p == nil || p.Value == nil {
+			continue
+		}
+		if v, ok := r[k]; ok && v != nil {
+			v.patch(p)
+		} else {
+			r[k] = p
+		}
+	}
+}
+
+func (r *RequestBodyRef) patch(patch *RequestBodyRef) {
+	if patch == nil || patch.Value == nil {
+		return
+	}
+	if r.Value == nil {
+		r.Value = patch.Value
+	} else {
+		r.Value.patch(patch.Value)
+	}
+}
+
+func (r *RequestBody) patch(patch *RequestBody) {
+	if len(patch.Description) > 0 {
+		r.Description = patch.Description
+	}
+	r.Required = patch.Required
+
+	if len(r.Content) == 0 {
+		r.Content = patch.Content
+		return
+	}
+
+	r.Content.patch(patch.Content)
 }

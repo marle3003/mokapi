@@ -55,6 +55,29 @@ func (c *Config) Validate() error {
 	return nil
 }
 
+func (c *Config) Parse(config *common.Config, reader common.Reader) error {
+	if c == nil {
+		return nil
+	}
+
+	if err := c.Components.parse(config, reader); err != nil {
+		return err
+	}
+
+	if err := c.Paths.parse(config, reader); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *Config) Patch(patch *Config) {
+	c.Info.patch(patch.Info)
+	c.patchServers(patch.Servers)
+	c.Paths.patch(patch.Paths)
+	c.Components.patch(patch.Components)
+}
+
 func (r *RequestBody) GetMedia(contentType media.ContentType) *MediaType {
 	for _, v := range r.Content {
 		if v.ContentType.Match(contentType) {

@@ -9,8 +9,38 @@ import (
 	"mokapi/config/dynamic/openapi/parameter"
 	"mokapi/media"
 	"net/http"
+	"net/url"
 	"testing"
 )
+
+type testReader struct {
+	readFunc func(cfg *common.Config) error
+}
+
+func (tr *testReader) Read(u *url.URL, opts ...common.ConfigOptions) (*common.Config, error) {
+	cfg := common.NewConfig(u)
+	for _, opt := range opts {
+		opt(cfg, true)
+	}
+	if err := tr.readFunc(cfg); err != nil {
+		return cfg, err
+	}
+	if p, ok := cfg.Data.(common.Parser); ok {
+		return cfg, p.Parse(cfg, tr)
+	}
+	return cfg, nil
+}
+
+func (tr *testReader) Close() {}
+
+func TestResolve(t *testing.T) {
+	t.Run("empty should not error", func(t *testing.T) {
+		reader := &testReader{readFunc: func(cfg *common.Config) error { return nil }}
+		config := &openapi.Config{}
+		err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+		require.NoError(t, err)
+	})
+}
 
 func TestConfig_Validate(t *testing.T) {
 	testdata := []struct {
@@ -81,14 +111,14 @@ func TestResponses(t *testing.T) {
 	testdata := []struct {
 		name    string
 		content string
-		fn      func(t *testing.T, c *openapi.Responses)
+		fn      func(t *testing.T, c *openapi.Responses[int])
 	}{
 		{
 			name: "default httpstatus",
 			content: `
 default: {}
 `,
-			fn: func(t *testing.T, res *openapi.Responses) {
+			fn: func(t *testing.T, res *openapi.Responses[int]) {
 				r := res.GetResponse(200)
 				require.NotNil(t, r)
 			},
@@ -98,7 +128,7 @@ default: {}
 			content: `
 401: {}
 `,
-			fn: func(t *testing.T, res *openapi.Responses) {
+			fn: func(t *testing.T, res *openapi.Responses[int]) {
 				r := res.GetResponse(401)
 				require.NotNil(t, r)
 			},
@@ -108,7 +138,7 @@ default: {}
 			content: `
 401: {}
 `,
-			fn: func(t *testing.T, res *openapi.Responses) {
+			fn: func(t *testing.T, res *openapi.Responses[int]) {
 				r := res.GetResponse(200)
 				require.Nil(t, r)
 			},
@@ -119,7 +149,7 @@ default: {}
 401: {}
 default: {description: default}
 `,
-			fn: func(t *testing.T, res *openapi.Responses) {
+			fn: func(t *testing.T, res *openapi.Responses[int]) {
 				r := res.GetResponse(200)
 				require.NotNil(t, r)
 				require.Equal(t, "default", r.Description)
@@ -130,7 +160,7 @@ default: {description: default}
 	for _, data := range testdata {
 		d := data
 		t.Run(d.name, func(t *testing.T) {
-			res := &openapi.Responses{}
+			res := &openapi.Responses[int]{}
 			err := yaml.Unmarshal([]byte(d.content), res)
 			require.NoError(t, err)
 			data.fn(t, res)

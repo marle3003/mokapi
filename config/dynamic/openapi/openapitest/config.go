@@ -2,6 +2,7 @@ package openapitest
 
 import (
 	"mokapi/config/dynamic/openapi"
+	"mokapi/config/dynamic/openapi/parameter"
 	"mokapi/config/dynamic/openapi/schema"
 )
 
@@ -60,12 +61,7 @@ func WithServer(url, description string) ConfigOptions {
 }
 
 func WithComponentSchema(name string, s *schema.Schema) ConfigOptions {
-	return func(c *openapi.Config) {
-		if c.Components.Schemas == nil {
-			c.Components.Schemas = &schema.Schemas{}
-		}
-		c.Components.Schemas.Set(name, &schema.Ref{Value: s})
-	}
+	return WithComponentSchemaRef(name, &schema.Ref{Value: s})
 }
 
 func WithComponentSchemaRef(name string, s *schema.Ref) ConfigOptions {
@@ -74,5 +70,70 @@ func WithComponentSchemaRef(name string, s *schema.Ref) ConfigOptions {
 			c.Components.Schemas = &schema.Schemas{}
 		}
 		c.Components.Schemas.Set(name, s)
+	}
+}
+
+func WithComponentResponse(name string, r *openapi.Response) ConfigOptions {
+	return WithComponentResponseRef(name, &openapi.ResponseRef{Value: r})
+}
+
+func WithComponentResponseRef(name string, r *openapi.ResponseRef) ConfigOptions {
+	return func(c *openapi.Config) {
+		if c.Components.Responses == nil {
+			c.Components.Responses = &openapi.Responses[string]{}
+		}
+		c.Components.Responses.Set(name, r)
+	}
+}
+
+func WithComponentRequestBody(name string, r *openapi.RequestBody) ConfigOptions {
+	return WithComponentRequestBodyRef(name, &openapi.RequestBodyRef{Value: r})
+}
+
+func WithComponentRequestBodyRef(name string, r *openapi.RequestBodyRef) ConfigOptions {
+	return func(c *openapi.Config) {
+		if c.Components.RequestBodies == nil {
+			c.Components.RequestBodies = openapi.RequestBodies{}
+		}
+		c.Components.RequestBodies[name] = r
+	}
+}
+
+func WithComponentParameter(name string, p *parameter.Parameter) ConfigOptions {
+	return WithComponentParameterRef(name, &parameter.Ref{Value: p})
+}
+
+func WithComponentParameterRef(name string, r *parameter.Ref) ConfigOptions {
+	return func(c *openapi.Config) {
+		if c.Components.Parameters == nil {
+			c.Components.Parameters = openapi.Parameters{}
+		}
+		c.Components.Parameters[name] = r
+	}
+}
+
+func WithComponentExample(name string, e *openapi.Example) ConfigOptions {
+	return WithComponentExampleRef(name, &openapi.ExampleRef{Value: e})
+}
+
+func WithComponentExampleRef(name string, r *openapi.ExampleRef) ConfigOptions {
+	return func(c *openapi.Config) {
+		if c.Components.Examples == nil {
+			c.Components.Examples = openapi.Examples{}
+		}
+		c.Components.Examples[name] = r
+	}
+}
+
+func WithComponentHeader(name string, h *openapi.Header) ConfigOptions {
+	return WithComponentHeaderRef(name, &openapi.HeaderRef{Value: h})
+}
+
+func WithComponentHeaderRef(name string, r *openapi.HeaderRef) ConfigOptions {
+	return func(c *openapi.Config) {
+		if c.Components.Headers == nil {
+			c.Components.Headers = openapi.Headers{}
+		}
+		c.Components.Headers[name] = r
 	}
 }

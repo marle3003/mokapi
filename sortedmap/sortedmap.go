@@ -24,15 +24,6 @@ func NewLinkedHashMap() *LinkedHashMap[string, interface{}] {
 	return &LinkedHashMap[string, interface{}]{}
 }
 
-//func FromMap(m interface{}) *LinkedHashMap[string, interface{}] {
-//	sm := NewLinkedHashMap()
-//	v := reflect.ValueOf(m)
-//	for _, k := range v.MapKeys() {
-//		sm.Set(k.Convert(reflect.), v.MapIndex(k).Interface())
-//	}
-//	return sm
-//}
-
 func (m *LinkedHashMap[K, V]) Set(key K, value V) {
 	m.ensureInit()
 	p, ok := m.pairs[key]
@@ -88,17 +79,6 @@ func (m *LinkedHashMap[K, V]) ensureInit() {
 		m.list = list.New()
 	}
 }
-
-//func (m *LinkedHashMap[K, V]) Resolve(name K) (interface{}, error) {
-//	if name == "*" {
-//		return m.Values(), nil
-//	}
-//	v, ok := m.pairs[name]
-//	if ok {
-//		return v.value, nil
-//	}
-//	return nil, fmt.Errorf("undefined field %q", name)
-//}
 
 func (m *LinkedHashMap[K, V]) String() string {
 	var sb strings.Builder

@@ -38,7 +38,7 @@ type Operation struct {
 
 	// The list of possible responses as they are returned from executing this
 	// operation.
-	Responses *Responses `yaml:"responses" json:"responses"`
+	Responses *Responses[int] `yaml:"responses" json:"responses"`
 
 	Path *Path `yaml:"-" json:"-"`
 }
@@ -76,7 +76,7 @@ func (o *Operation) parse(p *Path, config *common.Config, reader common.Reader) 
 		return err
 	}
 
-	if err := o.RequestBody.Parse(config, reader); err != nil {
+	if err := o.RequestBody.parse(config, reader); err != nil {
 		return err
 	}
 

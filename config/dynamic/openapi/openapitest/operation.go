@@ -10,7 +10,7 @@ import (
 type OperationOptions func(o *openapi.Operation)
 
 func NewOperation(opts ...OperationOptions) *openapi.Operation {
-	o := &openapi.Operation{Responses: new(openapi.Responses)}
+	o := &openapi.Operation{Responses: new(openapi.Responses[int])}
 	for _, opt := range opts {
 		opt(o)
 	}

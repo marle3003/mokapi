@@ -60,3 +60,29 @@ func (h Headers) patch(patch Headers) {
 		}
 	}
 }
+
+func (r *HeaderRef) patch(patch *HeaderRef) {
+	if patch == nil || patch.Value == nil {
+		return
+	}
+
+	if r.Value == nil {
+		r.Value = patch.Value
+	} else {
+		r.Value.patch(patch.Value)
+	}
+}
+
+func (h *Header) patch(patch *Header) {
+	if len(patch.Name) > 0 {
+		h.Name = patch.Name
+	}
+	if len(patch.Description) > 0 {
+		h.Description = patch.Description
+	}
+	if h.Schema == nil {
+		h.Schema = patch.Schema
+	} else {
+		h.Schema.Patch(patch.Schema)
+	}
+}
