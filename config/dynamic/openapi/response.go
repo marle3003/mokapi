@@ -159,9 +159,7 @@ func (r *ResponseRef) parse(config *common.Config, reader common.Reader) error {
 	}
 
 	if len(r.Ref) > 0 {
-		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
-			return err
-		}
+		return common.Resolve(r.Ref, &r.Value, config, reader)
 	}
 
 	return r.Value.parse(config, reader)

@@ -27,6 +27,7 @@ func (r *Ref) Parse(config *common.Config, reader common.Reader) error {
 		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
 			return fmt.Errorf("parse schema failed: %w", err)
 		}
+		return nil
 	}
 
 	if r.Value == nil {
