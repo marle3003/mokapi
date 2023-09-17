@@ -475,6 +475,64 @@ func TestOperation_Parse(t *testing.T) {
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'TRACE' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},
+		{
+			name: "request body",
+			test: func(t *testing.T) {
+				reader := &testReader{readFunc: func(cfg *common.Config) error {
+					return nil
+				}}
+				config := openapitest.NewConfig("3.0",
+					openapitest.WithPath("/foo", openapitest.NewPath(
+						openapitest.WithOperation(http.MethodTrace, &openapi.Operation{
+							RequestBody: &openapi.RequestBodyRef{Value: &openapi.RequestBody{Description: "foo"}},
+						}),
+					)),
+				)
+				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				require.NoError(t, err)
+				path := config.Paths["/foo"].Value
+				require.Equal(t, "foo", path.Trace.RequestBody.Value.Description)
+			},
+		},
+		{
+			name: "request body reference",
+			test: func(t *testing.T) {
+				reader := &testReader{readFunc: func(cfg *common.Config) error {
+					cfg.Data = openapitest.NewConfig("3.0",
+						openapitest.WithComponentRequestBody("foo", &openapi.RequestBody{Description: "foo"}),
+					)
+					return nil
+				}}
+				config := openapitest.NewConfig("3.0",
+					openapitest.WithPath("/foo", openapitest.NewPath(
+						openapitest.WithOperation(http.MethodTrace, &openapi.Operation{
+							RequestBody: &openapi.RequestBodyRef{Reference: ref.Reference{Ref: "foo.yml#/components/requestBodies/foo"}},
+						}),
+					)),
+				)
+				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				require.NoError(t, err)
+				path := config.Paths["/foo"].Value
+				require.Equal(t, "foo", path.Trace.RequestBody.Value.Description)
+			},
+		},
+		{
+			name: "request body reference error",
+			test: func(t *testing.T) {
+				reader := &testReader{readFunc: func(cfg *common.Config) error {
+					return fmt.Errorf("TEST ERROR")
+				}}
+				config := openapitest.NewConfig("3.0",
+					openapitest.WithPath("/foo", openapitest.NewPath(
+						openapitest.WithOperation(http.MethodTrace, &openapi.Operation{
+							RequestBody: &openapi.RequestBodyRef{Reference: ref.Reference{Ref: "foo.yml#/components/requestBodies/foo"}},
+						}),
+					)),
+				)
+				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'TRACE' failed: parse request body failed: resolve reference 'foo.yml#/components/requestBodies/foo' failed: TEST ERROR")
+			},
+		},
 	}
 
 	t.Parallel()

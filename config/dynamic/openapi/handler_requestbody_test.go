@@ -31,7 +31,7 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 						openapitest.NewOperation(
 							openapitest.WithRequestBody("", false,
 								openapitest.WithRequestContent(
-									"text/plain", openapitest.WithSchema(schematest.New("string")))),
+									"text/plain", openapitest.NewContent(openapitest.WithSchema(schematest.New("string"))))),
 							openapitest.WithResponse(200),
 						)),
 				)),
@@ -58,7 +58,7 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 						openapitest.NewOperation(
 							openapitest.WithRequestBody("", false,
 								openapitest.WithRequestContent(
-									"text/*", openapitest.WithSchema(schematest.New("string")))),
+									"text/*", openapitest.NewContent(openapitest.WithSchema(schematest.New("string"))))),
 							openapitest.WithResponse(200),
 						)),
 				)),
@@ -85,9 +85,9 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 						openapitest.NewOperation(
 							openapitest.WithRequestBody("", false,
 								openapitest.WithRequestContent(
-									"*/*", openapitest.WithSchema(schematest.New("number"))),
+									"*/*", openapitest.NewContent(openapitest.WithSchema(schematest.New("number")))),
 								openapitest.WithRequestContent(
-									"text/*", openapitest.WithSchema(schematest.New("string")))),
+									"text/*", openapitest.NewContent(openapitest.WithSchema(schematest.New("string"))))),
 							openapitest.WithResponse(200),
 						)),
 				)),
@@ -114,9 +114,9 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 						openapitest.NewOperation(
 							openapitest.WithRequestBody("", false,
 								openapitest.WithRequestContent(
-									"application/json", openapitest.WithSchema(
+									"application/json", openapitest.NewContent(openapitest.WithSchema(
 										schematest.New("object"),
-									))),
+									)))),
 							openapitest.WithResponse(200),
 						)),
 				)),
@@ -146,9 +146,9 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 						openapitest.NewOperation(
 							openapitest.WithRequestBody("", false,
 								openapitest.WithRequestContent(
-									"application/json", openapitest.WithSchema(
+									"application/json", openapitest.NewContent(openapitest.WithSchema(
 										schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
-									))),
+									)))),
 							openapitest.WithResponse(200),
 						)),
 				)),

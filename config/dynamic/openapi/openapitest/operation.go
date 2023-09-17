@@ -116,15 +116,15 @@ func WithOperationInfo(summary, description, operationId string, deprecated bool
 
 type RequestBodyOptions func(o *openapi.RequestBody)
 
-func WithRequestContent(mediaType string, opts ...ContentOptions) RequestBodyOptions {
+func WithRequestContent(mediaType string, content *openapi.MediaType) RequestBodyOptions {
 	return func(rb *openapi.RequestBody) {
 		ct := media.ParseContentType(mediaType)
 		if rb.Content == nil {
 			rb.Content = map[string]*openapi.MediaType{}
 		}
-		rb.Content[mediaType] = &openapi.MediaType{ContentType: ct}
-		for _, opt := range opts {
-			opt(rb.Content[mediaType])
+		rb.Content[mediaType] = content
+		if content != nil {
+			content.ContentType = ct
 		}
 	}
 }

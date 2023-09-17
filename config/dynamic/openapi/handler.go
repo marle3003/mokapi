@@ -76,12 +76,13 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	if op.RequestBody != nil {
 		body, err := BodyFromRequest(r, op)
+		if body != nil {
+			logHttp.Request.Body = body.Raw
+			request.Body = body.Value
+		}
 		if err != nil {
 			writeError(rw, r, err, h.config.Info.Name)
 			return
-		} else if body != nil {
-			request.Body = body.Value
-			logHttp.Request.Body = body.Raw
 		}
 	}
 

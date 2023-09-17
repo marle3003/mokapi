@@ -2,10 +2,12 @@ package openapi
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 	"io"
+	"mime"
 	"mime/multipart"
 	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/openapi/ref"
@@ -48,114 +50,111 @@ func (r *RequestBodyRef) UnmarshalYAML(node *yaml.Node) error {
 	return r.Reference.Unmarshal(node, &r.Value)
 }
 
-func BodyFromRequest(r *http.Request, op *Operation) (*Body, error) {
-	contentType := media.ParseContentType(r.Header.Get("content-type"))
-	body, err := readBody(r, op, contentType)
-	if err != nil {
-		return nil, err
+func BodyFromRequest(r *http.Request, op *Operation) (body *Body, err error) {
+	if r.ContentLength == 0 && op.RequestBody.Value.Required {
+		return nil, fmt.Errorf("request body is required")
 	}
-	if op.RequestBody.Value.Required && body == nil {
-		return nil, fmt.Errorf("request body expected")
+
+	contentType := media.ParseContentType(r.Header.Get("content-type"))
+	switch {
+	case contentType.IsEmpty():
+		body, err = tryParseBody(r, op)
+	default:
+		body, err = readBody(r, op, contentType)
+	}
+	if err != nil {
+		return body, err
 	}
 
 	return body, nil
 }
 
 func readBody(r *http.Request, op *Operation, contentType media.ContentType) (*Body, error) {
-	if r.ContentLength == 0 {
-		return nil, nil
-	}
-
-	_, media := getMedia(contentType, op.RequestBody.Value)
-	if media == nil {
-		return nil, fmt.Errorf("content type '%v' of request body is not defined. Check your service configuration", contentType.String())
-	}
-	if media.Schema == nil || media.Schema.Value == nil {
-		return nil, fmt.Errorf("schema of request body %q is not defined", contentType.String())
-	}
-
-	s := media.Schema.Value
-
-	if contentType.Key() == "multipart/form-data" {
-		if s.Type != "object" {
-			return nil, fmt.Errorf("schema %q not support for content type multipart/form-data, expected 'object'", s.Type)
-		}
-		if s.Properties == nil {
-			// todo raw value
-			return nil, nil
-		}
-
-		err := r.ParseMultipartForm(512) // maxMemory 32MB
-		defer func() {
-			err := r.MultipartForm.RemoveAll()
-			if err != nil {
-				log.Errorf("error on removing multipart form: %v", err)
-			}
-		}()
+	_, mt := getMedia(contentType, op.RequestBody.Value)
+	if mt == nil {
+		data, err := io.ReadAll(r.Body)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("read request body failed: %w", err)
 		}
+		return &Body{Raw: string(data)}, fmt.Errorf("read request body failed: no matching content type for '%v' defined", contentType.String())
+	}
 
-		o := make(map[string]interface{})
-
-		for name, values := range r.MultipartForm.Value {
-			p := s.Properties.Get(name)
-			if p == nil || p.Value == nil {
-				continue
-			}
-			if p.Value.Type == "array" {
-				a := make([]interface{}, 0, len(values))
-				for _, v := range values {
-					i, err := schema.ParseString(v, p.Value.Items)
-					if err != nil {
-						return nil, err
-					}
-					a = append(a, i)
-				}
-				o[name] = a
-			} else {
-				i, err := schema.ParseString(values[0], p)
-				if err != nil {
-					return nil, err
-				}
-				o[name] = i
-			}
-		}
-
-		for name, files := range r.MultipartForm.File {
-			p := s.Properties.Get(name)
-			if p == nil || p.Value == nil {
-				continue
-			}
-			if p.Value.Type == "array" {
-				a := make([]interface{}, 0, len(files))
-				for _, file := range files {
-					i, err := parseFormFile(file)
-					if err != nil {
-						return nil, err
-					}
-					a = append(a, i)
-				}
-				o[name] = a
-			} else {
-				i, err := parseFormFile(files[0])
-				if err != nil {
-					return nil, err
-				}
-				o[name] = i
-			}
-		}
-
-		return &Body{Value: o, Raw: toString(o)}, nil
+	if contentType.Type == "multipart" {
+		return readMultipart(r, mt, contentType)
 	} else {
 		data, err := io.ReadAll(r.Body)
 		if err != nil {
+			return nil, fmt.Errorf("read request body failed: %w", err)
+		}
+
+		body, err := schema.Parse(data, contentType, mt.Schema)
+		if err != nil {
+			err = fmt.Errorf("read request body '%v' failed: %w", contentType, err)
+		}
+		return &Body{Value: body, Raw: string(data)}, err
+	}
+	return nil, fmt.Errorf("ERROR")
+}
+
+func tryParseBody(r *http.Request, o *Operation) (*Body, error) {
+	data, err := io.ReadAll(r.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read request body failed: %w", err)
+	}
+	for _, mt := range o.RequestBody.Value.Content {
+		if b, err := schema.Parse(data, mt.ContentType, mt.Schema); err == nil {
+			return &Body{Value: b, Raw: string(data)}, nil
+		}
+	}
+
+	return &Body{Raw: string(data)}, nil
+}
+
+func readMultipart(r *http.Request, mt *MediaType, ct media.ContentType) (*Body, error) {
+	s := mt.Schema.Value
+	if s.Type != "object" {
+		return nil, fmt.Errorf("schema %q not support for content type multipart/form-data, expected 'object'", s.Type)
+	}
+	if s.Properties == nil {
+		// todo raw value
+		return nil, nil
+	}
+
+	_, params, err := mime.ParseMediaType(ct.String())
+	if err != nil {
+		return nil, err
+	}
+	multipartReader := multipart.NewReader(r.Body, params["boundary"])
+	o := make(map[string]interface{})
+	for {
+		part, err := multipartReader.NextPart()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
 			return nil, err
 		}
 
-		body, err := schema.Parse(data, contentType, media.Schema)
-		return &Body{Value: body, Raw: string(data)}, err
+		name := part.FormName()
+		p := s.Properties.Get(name)
+		v, err := parsePart(part, p)
+		if err != nil {
+			return nil, err
+		}
+		o[name] = v
 	}
+	return &Body{Value: o, Raw: toString(o)}, nil
+}
+
+func parsePart(part *multipart.Part, p *schema.Ref) (interface{}, error) {
+	defer part.Close()
+	b, err := io.ReadAll(part)
+	if err != nil {
+		return nil, err
+	}
+
+	ct := media.ParseContentType(part.Header.Get("Content-Type"))
+	return schema.Parse(b, ct, p)
 }
 
 func parseFormFile(fh *multipart.FileHeader) (interface{}, error) {
@@ -208,13 +207,8 @@ func toString(i interface{}) string {
 func getMedia(contentType media.ContentType, body *RequestBody) (media.ContentType, *MediaType) {
 	best := media.Empty
 	var bestMediaType *MediaType
-	bestQ := -1.0
 	for _, mt := range body.Content {
 		if contentType.Match(mt.ContentType) {
-			if bestQ > contentType.Q {
-				continue
-			}
-
 			// text/plain > */* and text/*
 			if best.IsPrecise() && (mt.ContentType.IsAny() || mt.ContentType.IsRange()) {
 				continue
@@ -230,7 +224,6 @@ func getMedia(contentType media.ContentType, body *RequestBody) (media.ContentTy
 			}
 
 			best = mt.ContentType
-			bestQ = mt.ContentType.Q
 			bestMediaType = mt
 		}
 	}
@@ -245,7 +238,8 @@ func (r RequestBodies) parse(config *common.Config, reader common.Reader) error 
 
 	for name, body := range r {
 		if err := body.parse(config, reader); err != nil {
-			return fmt.Errorf("parse request body '%v' failed: %w", name, err)
+			inner := errors.Unwrap(err)
+			return fmt.Errorf("parse request body '%v' failed: %w", name, inner)
 		}
 	}
 
@@ -258,19 +252,13 @@ func (r *RequestBodyRef) parse(config *common.Config, reader common.Reader) erro
 	}
 
 	if len(r.Ref) > 0 {
-		return common.Resolve(r.Ref, &r.Value, config, reader)
+		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
+			return fmt.Errorf("parse request body failed: %w", err)
+		}
+		return nil
 	}
 
-	for _, c := range r.Value.Content {
-		if c == nil {
-			continue
-		}
-		if err := c.Schema.Parse(config, reader); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return r.Value.Content.parse(config, reader)
 }
 
 func (r RequestBodies) patch(patch RequestBodies) {

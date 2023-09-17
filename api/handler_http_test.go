@@ -123,7 +123,7 @@ func TestHandler_Http(t *testing.T) {
 							openapitest.WithPath("/foo/{bar}", openapitest.NewPath(
 								openapitest.WithOperation("get", openapitest.NewOperation(
 									openapitest.WithRequestBody("foo", true,
-										openapitest.WithRequestContent("application/json", openapitest.WithSchema(schematest.New("string"))),
+										openapitest.WithRequestContent("application/json", openapitest.NewContent(openapitest.WithSchema(schematest.New("string")))),
 									),
 								)),
 							))),

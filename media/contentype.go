@@ -3,6 +3,7 @@ package media
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"reflect"
 	"strconv"
 	"strings"
 )
@@ -87,7 +88,7 @@ func (c ContentType) Match(other ContentType) bool {
 		}
 		if c.Subtype == other.Subtype {
 			if len(c.Parameters) > 0 && len(other.Parameters) > 0 {
-				return c.raw == other.raw
+				return reflect.DeepEqual(c.Parameters, other.Parameters)
 			}
 			return true
 		}

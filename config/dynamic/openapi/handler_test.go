@@ -140,14 +140,14 @@ func TestResolveEndpoint(t *testing.T) {
 				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())),
 					openapitest.WithRequestBody("", true,
 						openapitest.WithRequestContent("application/json",
-							openapitest.WithSchema(schematest.New("string", schematest.WithMinLength(4))))))
+							openapitest.NewContent(openapitest.WithSchema(schematest.New("string", schematest.WithMinLength(4)))))))
 				openapitest.AppendPath("/foo", c, openapitest.WithOperation("POST", op))
 				r := httptest.NewRequest("POST", "http://localhost/foo", strings.NewReader(`"foo"`))
 				r.Header.Set("Content-Type", "application/json")
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				require.Equal(t, 500, rr.Code)
-				require.Equal(t, "value 'foo' does not meet min length of 4\n", rr.Body.String())
+				require.Equal(t, "read request body 'application/json' failed: value 'foo' does not meet min length of 4\n", rr.Body.String())
 			},
 		},
 		//
