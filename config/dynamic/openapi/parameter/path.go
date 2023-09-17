@@ -1,6 +1,7 @@
 package parameter
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
 	"mokapi/config/dynamic/openapi/schema"
 	"strings"
@@ -8,7 +9,7 @@ import (
 
 func parsePath(s string, p *Parameter) (rp RequestParameterValue, err error) {
 	if len(s) == 0 && p.Required {
-		return rp, errors.Errorf("required parameter not found")
+		return rp, fmt.Errorf("path parameter '%v' is required", p.Name)
 	}
 
 	rp.Raw = s

@@ -307,7 +307,7 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				require.Equal(t, 400, rr.Code)
-				require.Equal(t, "required parameter not found: query parameter id\n", rr.Body.String())
+				require.Equal(t, "query parameter 'id' is required\n", rr.Body.String())
 			},
 		},
 		{"with required query parameter and present",
@@ -347,7 +347,7 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				require.Equal(t, 400, rr.Code)
-				require.Equal(t, "required parameter not found: cookie parameter id\n", rr.Body.String())
+				require.Equal(t, "cookie parameter 'id' is required\n", rr.Body.String())
 			},
 		},
 		{"with required query parameter and present",
@@ -388,7 +388,7 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				require.Equal(t, 400, rr.Code)
-				require.Equal(t, "required parameter not found: header parameter id\n", rr.Body.String())
+				require.Equal(t, "header parameter 'id' is required\n", rr.Body.String())
 			},
 		},
 		{"with required query parameter and present",

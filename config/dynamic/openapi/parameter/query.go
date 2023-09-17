@@ -23,7 +23,7 @@ func parseQuery(p *Parameter, u *url.URL) (rp RequestParameterValue, err error) 
 	rp.Raw = u.Query().Get(p.Name)
 	if len(rp.Raw) == 0 {
 		if p.Required {
-			return rp, errors.Errorf("required parameter not found")
+			return rp, fmt.Errorf("query parameter '%v' is required", p.Name)
 		} else {
 			return rp, nil
 		}

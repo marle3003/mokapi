@@ -85,7 +85,7 @@ func parseCookieArray(p *Parameter, r *http.Request) (rp RequestParameterValue, 
 		return
 	}
 	if len(cookie.Value) == 0 && p.Required {
-		return rp, errors.Errorf("required parameter not found")
+		return rp, fmt.Errorf("required parameter not found")
 	}
 
 	rp.Raw = cookie.Value
