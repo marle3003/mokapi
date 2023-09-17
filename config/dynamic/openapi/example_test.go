@@ -205,6 +205,33 @@ func TestExample_Parse(t *testing.T) {
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'GET' failed: parse response '200' failed: parse content 'application/json' failed: parse example 'foo' failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},
+		{
+			name: "resolve external value",
+			test: func(t *testing.T) {
+				calledReader := false
+				reader := &testReader{readFunc: func(cfg *common.Config) error {
+					require.Equal(t, "https://foo.bar", cfg.Info.Url.String())
+					cfg.Data = "foobar"
+					calledReader = true
+					return nil
+				}}
+				config := openapitest.NewConfig("3.0",
+					openapitest.WithPath("/foo", openapitest.NewPath(
+						openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
+							openapitest.WithResponse(http.StatusOK,
+								openapitest.WithContent("application/json", &openapi.MediaType{
+									Examples: map[string]*openapi.ExampleRef{"foo": {Value: &openapi.Example{ExternalValue: "https://foo.bar"}}},
+								}),
+							))),
+					)),
+				)
+				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				require.NoError(t, err)
+				require.True(t, calledReader, "reader not called")
+				content := config.Paths["/foo"].Value.Get.Responses.GetResponse(http.StatusOK).Content["application/json"]
+				require.Equal(t, "foobar", content.Examples["foo"].Value.Value)
+			},
+		},
 	}
 
 	t.Parallel()

@@ -18,7 +18,7 @@ func Resolve(ref string, element interface{}, config *Config, reader Reader) err
 		return err
 	}
 
-	if len(u.Path) > 0 {
+	if len(u.Path) > 0 || len(u.Host) > 0 {
 		if !u.IsAbs() {
 			if len(config.Info.Url.Opaque) > 0 {
 				p := filepath.Join(filepath.Dir(config.Info.Url.Opaque), u.Path)

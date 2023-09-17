@@ -47,6 +47,19 @@ func (r *ExampleRef) parse(config *common.Config, reader common.Reader) error {
 	if len(r.Ref) > 0 {
 		return common.Resolve(r.Ref, &r.Value, config, reader)
 	}
+
+	return r.Value.parse(config, reader)
+}
+
+func (e *Example) parse(config *common.Config, reader common.Reader) error {
+	if e == nil {
+		return nil
+	}
+
+	if e.ExternalValue != "" {
+		return common.Resolve(e.ExternalValue, &e.Value, config, reader)
+	}
+
 	return nil
 }
 
