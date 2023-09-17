@@ -23,32 +23,32 @@ type Ref struct {
 
 type Parameter struct {
 	// The name of the parameter. Parameter names are case-sensitive.
-	Name string
+	Name string `yaml:"name" json:"name"`
 
 	// The location of the parameter
 	Type Location `yaml:"in" json:"in"`
 
 	// The schema defining the type used for the parameter
-	Schema *schema.Ref
+	Schema *schema.Ref `yaml:"schema" json:"schema"`
 
 	// Determines whether the parameter is mandatory.
 	// If the location of the parameter is "path", this property
 	// is required and its value MUST be true
-	Required bool
+	Required bool `yaml:"required" json:"required"`
 
 	// A brief description of the parameter. This could contain examples
 	// of use.
-	Description string
+	Description string `yaml:"description" json:"description"`
 
 	Deprecated bool `yaml:"deprecated" json:"deprecated"`
 
 	// Defines how multiple values are delimited. Possible styles depend on
 	// the parameter location
-	Style string
+	Style string `yaml:"style" json:"style"`
 
 	// specifies whether arrays and objects should generate separate
 	// parameters for each array item or object property
-	Explode bool
+	Explode bool `yaml:"explode" json:"explode"`
 }
 
 type Location string
@@ -87,6 +87,6 @@ func (r *Ref) Parse(config *common.Config, reader common.Reader) error {
 	return nil
 }
 
-func (p *Parameter) Parse(config *common.Config, reader common.Reader) error {
+func (p *Parameter) Parse(_ *common.Config, _ common.Reader) error {
 	return nil
 }

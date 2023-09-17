@@ -1,36 +1,18 @@
 package parameter
 
 import (
-	"bytes"
 	"encoding/json"
 	"gopkg.in/yaml.v3"
-	"mokapi/config/dynamic/openapi/schema"
 )
 
-type parameter struct {
-	Name        string
-	Type        Location `yaml:"in" json:"in"`
-	Schema      *schema.Ref
-	Required    bool
-	Description string
-	Style       string
-	Explode     bool
-}
-
 func (p *Parameter) UnmarshalYAML(value *yaml.Node) error {
-	tmp := &parameter{Explode: true}
-	err := value.Decode(tmp)
+	type alias Parameter
+	param := alias{Explode: true}
+	err := value.Decode(&param)
 	if err != nil {
 		return err
 	}
-
-	p.Name = tmp.Name
-	p.Type = tmp.Type
-	p.Schema = tmp.Schema
-	p.Required = tmp.Required
-	p.Description = tmp.Description
-	p.Style = tmp.Style
-	p.Explode = tmp.Explode
+	*p = Parameter(param)
 
 	return nil
 }
@@ -40,21 +22,13 @@ func (r *Ref) UnmarshalYAML(node *yaml.Node) error {
 }
 
 func (p *Parameter) UnmarshalJSON(b []byte) error {
-	tmp := &parameter{Explode: true}
-	dec := json.NewDecoder(bytes.NewReader(b))
-	err := dec.Decode(&tmp)
+	type alias Parameter
+	param := alias{Explode: true}
+	err := json.Unmarshal(b, &param)
 	if err != nil {
 		return err
 	}
-
-	p.Name = tmp.Name
-	p.Type = tmp.Type
-	p.Schema = tmp.Schema
-	p.Required = tmp.Required
-	p.Description = tmp.Description
-	p.Style = tmp.Style
-	p.Explode = tmp.Explode
-
+	*p = Parameter(param)
 	return nil
 }
 

@@ -1,6 +1,7 @@
 package openapi
 
 import (
+	"encoding/json"
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic/common"
@@ -23,8 +24,32 @@ func (r *HeaderRef) UnmarshalJSON(b []byte) error {
 	return r.Reference.UnmarshalJson(b, &r.Value)
 }
 
+func (h *Header) UnmarshalJSON(b []byte) error {
+	type alias Header
+	header := alias{}
+	err := json.Unmarshal(b, &header)
+	if err != nil {
+		return err
+	}
+	header.Type = parameter.Header
+	*h = Header(header)
+	return nil
+}
+
 func (r *HeaderRef) UnmarshalYAML(node *yaml.Node) error {
 	return r.Reference.Unmarshal(node, &r.Value)
+}
+
+func (h *Header) UnmarshalYAML(node *yaml.Node) error {
+	type alias Header
+	header := alias{}
+	err := node.Decode(&header)
+	if err != nil {
+		return err
+	}
+	header.Type = parameter.Header
+	*h = Header(header)
+	return nil
 }
 
 func (h Headers) parse(config *common.Config, reader common.Reader) error {

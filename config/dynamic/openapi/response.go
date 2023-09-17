@@ -238,5 +238,6 @@ func (r *Response) patch(patch *Response) {
 	if len(r.Headers) == 0 {
 		r.Headers = patch.Headers
 	} else {
+		r.Headers.patch(patch.Headers)
 	}
 }

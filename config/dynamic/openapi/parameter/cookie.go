@@ -24,15 +24,15 @@ func parseCookie(p *Parameter, r *http.Request) (rp RequestParameterValue, err e
 		if err == http.ErrNoCookie && !p.Required {
 			return rp, nil
 		}
-		return rp, fmt.Errorf("required parameter not found")
+		return rp, fmt.Errorf("cookie parameter '%v' is required", p.Name)
 	}
 	rp.Raw = cookie.Value
 	if len(cookie.Value) == 0 && p.Required {
-		return rp, fmt.Errorf("required parameter not found")
+		return rp, fmt.Errorf("cookie parameter '%v' is required", p.Name)
 	}
 
 	if v, err := schema.ParseString(cookie.Value, p.Schema); err != nil {
-		return rp, err
+		return rp, fmt.Errorf("parse cookie '%v' failed: %w", p.Name, err)
 	} else {
 		rp.Value = v
 	}
@@ -90,7 +90,6 @@ func parseCookieArray(p *Parameter, r *http.Request) (rp RequestParameterValue, 
 
 	rp.Raw = cookie.Value
 	values := make([]interface{}, 0)
-	rp.Value = values
 
 	for _, v := range strings.Split(cookie.Value, ",") {
 		if i, err := schema.ParseString(v, p.Schema.Value.Items); err != nil {
@@ -99,5 +98,7 @@ func parseCookieArray(p *Parameter, r *http.Request) (rp RequestParameterValue, 
 			values = append(values, i)
 		}
 	}
+
+	rp.Value = values
 	return
 }

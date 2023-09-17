@@ -19,11 +19,21 @@ func (r *Ref) Patch(patch *Ref) {
 		return
 	}
 
+	if patch.Value.Type != "" {
+		r.Value.Type = patch.Value.Type
+	}
+
+	r.Value.Required = patch.Value.Required
+
 	if len(patch.Value.Description) > 0 {
 		r.Value.Description = patch.Value.Description
 	}
 
 	r.Value.Deprecated = patch.Value.Deprecated
+
+	if patch.Value.Style != "" {
+		r.Value.Style = patch.Value.Style
+	}
 
 	if r.Value.Schema == nil {
 		r.Value.Schema = patch.Value.Schema

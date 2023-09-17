@@ -2,9 +2,7 @@ package parameter
 
 import (
 	"context"
-	"fmt"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"regexp"
 	"strings"
@@ -81,10 +79,8 @@ func FromRequest(params Parameters, route string, r *http.Request) (RequestParam
 			v, err = parseHeader(p, r)
 			store = parameters[Header]
 		}
-		if err != nil && p.Required {
-			return nil, fmt.Errorf("%v: %v parameter %v", err, p.Type, p.Name)
-		} else if err != nil {
-			log.Infof("%v parameter %v: %v", p.Type, p.Name, err.Error())
+		if err != nil {
+			return nil, err
 		}
 		if store != nil {
 			store[p.Name] = v
