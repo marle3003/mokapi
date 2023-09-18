@@ -12,10 +12,10 @@ func (p *Parameter) UnmarshalYAML(value *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	if param.Style == "" {
+	*p = Parameter(param)
+	if p.Style == "" {
 		p.SetDefaultStyle()
 	}
-	*p = Parameter(param)
 
 	return nil
 }
@@ -31,10 +31,10 @@ func (p *Parameter) UnmarshalJSON(b []byte) error {
 	if err != nil {
 		return err
 	}
-	if param.Style == "" {
+	*p = Parameter(param)
+	if p.Style == "" {
 		p.SetDefaultStyle()
 	}
-	*p = Parameter(param)
 	return nil
 }
 

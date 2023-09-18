@@ -110,6 +110,15 @@ func TestHeader_UnmarshalJSON(t *testing.T) {
 				require.Equal(t, "foo", ref.Value.Description)
 			},
 		},
+		{
+			name: "set default style",
+			test: func(t *testing.T) {
+				ref := &parameter.Ref{}
+				err := json.Unmarshal([]byte(`{ "in": "query" }`), &ref)
+				require.NoError(t, err)
+				require.Equal(t, "form", ref.Value.Style)
+			},
+		},
 	}
 
 	t.Parallel()
@@ -216,6 +225,15 @@ func TestHeader_UnmarshalYAML(t *testing.T) {
 				err := yaml.Unmarshal([]byte(`description: foo`), &ref)
 				require.NoError(t, err)
 				require.Equal(t, "foo", ref.Value.Description)
+			},
+		},
+		{
+			name: "set default style",
+			test: func(t *testing.T) {
+				ref := &parameter.Ref{}
+				err := yaml.Unmarshal([]byte(`in: query`), &ref)
+				require.NoError(t, err)
+				require.Equal(t, "form", ref.Value.Style)
 			},
 		},
 	}
