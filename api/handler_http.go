@@ -227,7 +227,7 @@ func getParameters(params parameter.Parameters) (result []param) {
 			Required:    p.Value.Required,
 			Deprecated:  p.Value.Deprecated,
 			Style:       p.Value.Style,
-			Exploded:    p.Value.Explode,
+			Exploded:    p.Value.IsExplode(),
 			Schema:      getSchema(p.Value.Schema),
 		})
 	}

@@ -79,7 +79,8 @@ func TestHeader_UnmarshalJSON(t *testing.T) {
 				param := &parameter.Parameter{}
 				err := json.Unmarshal([]byte(`{ "explode": false  }`), &param)
 				require.NoError(t, err)
-				require.False(t, param.Explode)
+				require.NotNil(t, param.Explode)
+				require.False(t, *param.Explode)
 			},
 		},
 		{
@@ -186,7 +187,8 @@ func TestHeader_UnmarshalYAML(t *testing.T) {
 				param := &parameter.Parameter{}
 				err := yaml.Unmarshal([]byte(`explode: false`), &param)
 				require.NoError(t, err)
-				require.False(t, param.Explode)
+				require.NotNil(t, param.Explode)
+				require.False(t, *param.Explode)
 			},
 		},
 		{
@@ -415,11 +417,11 @@ func TestParameters_Patch(t *testing.T) {
 			name: "patch explode",
 			configs: []parameter.Parameters{
 				{&parameter.Ref{Value: &parameter.Parameter{}}},
-				{&parameter.Ref{Value: &parameter.Parameter{Explode: false}}},
+				{&parameter.Ref{Value: &parameter.Parameter{Explode: explode(true)}}},
 			},
 			test: func(t *testing.T, result parameter.Parameters) {
 				require.Len(t, result, 1)
-				require.False(t, result[0].Value.Explode)
+				require.True(t, *result[0].Value.Explode)
 			},
 		},
 	}
@@ -436,4 +438,8 @@ func TestParameters_Patch(t *testing.T) {
 			tc.test(t, p)
 		})
 	}
+}
+
+func explode(b bool) *bool {
+	return &b
 }

@@ -6,12 +6,32 @@ import (
 	"net/http"
 )
 
-func parseHeader(p *Parameter, r *http.Request) (rp RequestParameterValue, err error) {
-	rp.Raw = r.Header.Get(p.Name)
-	if len(rp.Raw) == 0 && p.Required {
-		return rp, fmt.Errorf("header parameter '%v' is required", p.Name)
+func parseHeader(p *Parameter, r *http.Request) (*RequestParameterValue, error) {
+	header := r.Header.Get(p.Name)
+
+	if len(header) == 0 {
+		if p.Required {
+			return nil, fmt.Errorf("parameter is required")
+		}
+		return nil, nil
 	}
 
-	rp.Value, err = schema.ParseString(rp.Raw, p.Schema)
-	return
+	rp := &RequestParameterValue{Raw: header, Value: header}
+	var err error
+	if p.Schema != nil {
+		switch p.Schema.Value.Type {
+		case "array":
+			rp.Value, err = parseArray(p, header, ",")
+		case "object":
+			rp.Value, err = parseObject(p, header, ",", p.IsExplode())
+		default:
+			rp.Value, err = schema.ParseString(header, p.Schema)
+		}
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return rp, nil
 }

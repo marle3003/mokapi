@@ -25,6 +25,10 @@ func (r *Ref) Patch(patch *Ref) {
 
 	r.Value.Required = patch.Value.Required
 
+	if patch.Value.Explode != nil {
+		r.Value.Explode = patch.Value.Explode
+	}
+
 	if len(patch.Value.Description) > 0 {
 		r.Value.Description = patch.Value.Description
 	}

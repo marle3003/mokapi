@@ -1,129 +1,297 @@
-package parameter
+package parameter_test
 
 import (
 	"github.com/stretchr/testify/require"
+	"mokapi/config/dynamic/openapi/parameter"
 	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/config/dynamic/openapi/schema/schematest"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
 func TestParsePath(t *testing.T) {
 	testcases := []struct {
-		s string
-		p *Parameter
-		e interface{}
+		name    string
+		param   *parameter.Parameter
+		route   string
+		request func() *http.Request
+		test    func(t *testing.T, result parameter.RequestParameters, err error)
 	}{
 		{
-			"foo",
-			&Parameter{
+			name: "simple path",
+			param: &parameter.Parameter{
+				Name:    "foo",
+				Type:    parameter.Path,
 				Schema:  &schema.Ref{Value: &schema.Schema{Type: "string"}},
 				Style:   "",
-				Explode: false,
+				Explode: explode(false),
 			},
-			"foo",
+			route: "/{foo}",
+			request: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "https://foo.bar/foo", nil)
+				r.AddCookie(&http.Cookie{
+					Name:  "debug",
+					Value: "1",
+				})
+				return r
+			},
+			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "foo", result[parameter.Path]["foo"].Value)
+			},
 		},
 		{
-			".foo",
-			&Parameter{
+			name: "path parameter not present in route",
+			param: &parameter.Parameter{
+				Name:    "foo",
+				Type:    parameter.Path,
+				Schema:  &schema.Ref{Value: &schema.Schema{Type: "string"}},
+				Style:   "",
+				Explode: explode(false),
+			},
+			route: "/foo",
+			request: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "https://foo.bar/foo", nil)
+				r.AddCookie(&http.Cookie{
+					Name:  "debug",
+					Value: "1",
+				})
+				return r
+			},
+			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+				require.EqualError(t, err, "parse path parameter 'foo' failed: parameter is required")
+				require.Len(t, result[parameter.Path], 0)
+			},
+		},
+		{
+			name: "labeled path",
+			param: &parameter.Parameter{
+				Name:    "foo",
+				Type:    parameter.Path,
 				Schema:  &schema.Ref{Value: &schema.Schema{Type: "string"}},
 				Style:   "label",
-				Explode: false,
+				Explode: explode(false),
 			},
-			"foo",
+			route: "/{foo}",
+			request: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "https://foo.bar/.foo", nil)
+				r.AddCookie(&http.Cookie{
+					Name:  "debug",
+					Value: "1",
+				})
+				return r
+			},
+			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "foo", result[parameter.Path]["foo"].Value)
+			},
 		},
 		{
-			";foo",
-			&Parameter{
+			name: "matrix path",
+			param: &parameter.Parameter{
+				Name:    "foo",
+				Type:    parameter.Path,
 				Schema:  &schema.Ref{Value: &schema.Schema{Type: "string"}},
 				Style:   "matrix",
-				Explode: false,
+				Explode: explode(false),
 			},
-			"foo",
+			route: "/{foo}",
+			request: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "https://foo.bar/;foo", nil)
+				r.AddCookie(&http.Cookie{
+					Name:  "debug",
+					Value: "1",
+				})
+				return r
+			},
+			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "foo", result[parameter.Path]["foo"].Value)
+			},
 		},
 		{
-			"3,4,5",
-			&Parameter{
-				Schema:  &schema.Ref{Value: &schema.Schema{Type: "array", Items: &schema.Ref{Value: &schema.Schema{Type: "integer"}}}},
-				Style:   "",
-				Explode: false,
-			},
-			[]interface{}{int64(3), int64(4), int64(5)},
-		},
-		{
-			".3,4,5",
-			&Parameter{
-				Schema:  &schema.Ref{Value: &schema.Schema{Type: "array", Items: &schema.Ref{Value: &schema.Schema{Type: "integer"}}}},
-				Style:   "label",
-				Explode: false,
-			},
-			[]interface{}{int64(3), int64(4), int64(5)},
-		},
-		{
-			";3,4,5",
-			&Parameter{
-				Schema:  &schema.Ref{Value: &schema.Schema{Type: "array", Items: &schema.Ref{Value: &schema.Schema{Type: "integer"}}}},
-				Style:   "matrix",
-				Explode: false,
-			},
-			[]interface{}{int64(3), int64(4), int64(5)},
-		},
-		{
-			"role,admin,firstName,Alex",
-			&Parameter{
-				Schema: &schema.Ref{Value: schematest.New("object",
-					schematest.WithProperty("role", schematest.New("string")),
-					schematest.WithProperty("firstName", schematest.New("string")),
-				)},
-				Style:   "",
-				Explode: false,
-			},
-			map[string]interface{}{"role": "admin", "firstName": "Alex"},
-		},
-		{
-			"role=admin,firstName=Alex",
-			&Parameter{
-				Schema: &schema.Ref{Value: schematest.New("object",
-					schematest.WithProperty("role", schematest.New("string")),
-					schematest.WithProperty("firstName", schematest.New("string")),
-				)},
-				Style:   "",
-				Explode: true,
-			},
-			map[string]interface{}{"role": "admin", "firstName": "Alex"},
-		},
-		{
-			".role,admin,firstName,Alex",
-			&Parameter{
-				Schema: &schema.Ref{Value: schematest.New("object",
-					schematest.WithProperty("role", schematest.New("string")),
-					schematest.WithProperty("firstName", schematest.New("string")),
-				)},
-				Style:   "label",
-				Explode: false,
-			},
-			map[string]interface{}{"role": "admin", "firstName": "Alex"},
-		},
-		{
-			";role=admin,firstName=Alex",
-			&Parameter{
-				Schema: &schema.Ref{Value: schematest.New("object",
-					schematest.WithProperty("role", schematest.New("string")),
-					schematest.WithProperty("firstName", schematest.New("string")),
-				)},
-				Style:   "matrix",
-				Explode: true,
-			},
+			name: "array",
+			param: &parameter.Parameter{
 
-			map[string]interface{}{"role": "admin", "firstName": "Alex"},
+				Name:    "foo",
+				Type:    parameter.Path,
+				Schema:  &schema.Ref{Value: &schema.Schema{Type: "array", Items: &schema.Ref{Value: &schema.Schema{Type: "integer"}}}},
+				Style:   "",
+				Explode: explode(false),
+			},
+			route: "/{foo}",
+			request: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "https://foo.bar/3,4,5", nil)
+				r.AddCookie(&http.Cookie{
+					Name:  "debug",
+					Value: "1",
+				})
+				return r
+			},
+			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []interface{}{int64(3), int64(4), int64(5)}, result[parameter.Path]["foo"].Value)
+			},
+		},
+		{
+			name: "labeled array",
+			param: &parameter.Parameter{
+				Name:    "foo",
+				Type:    parameter.Path,
+				Schema:  &schema.Ref{Value: &schema.Schema{Type: "array", Items: &schema.Ref{Value: &schema.Schema{Type: "integer"}}}},
+				Style:   "label",
+				Explode: explode(false),
+			},
+			route: "/{foo}",
+			request: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "https://foo.bar/.3,4,5", nil)
+				r.AddCookie(&http.Cookie{
+					Name:  "debug",
+					Value: "1",
+				})
+				return r
+			},
+			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []interface{}{int64(3), int64(4), int64(5)}, result[parameter.Path]["foo"].Value)
+			},
+		},
+		{
+			name: "matrix array",
+			param: &parameter.Parameter{
+
+				Name:    "foo",
+				Type:    parameter.Path,
+				Schema:  &schema.Ref{Value: &schema.Schema{Type: "array", Items: &schema.Ref{Value: &schema.Schema{Type: "integer"}}}},
+				Style:   "matrix",
+				Explode: explode(false),
+			},
+			route: "/{foo}",
+			request: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "https://foo.bar/;3,4,5", nil)
+				r.AddCookie(&http.Cookie{
+					Name:  "debug",
+					Value: "1",
+				})
+				return r
+			},
+			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []interface{}{int64(3), int64(4), int64(5)}, result[parameter.Path]["foo"].Value)
+			},
+		},
+		{
+			name: "object",
+			param: &parameter.Parameter{
+				Name: "foo",
+				Type: parameter.Path,
+				Schema: &schema.Ref{Value: schematest.New("object",
+					schematest.WithProperty("role", schematest.New("string")),
+					schematest.WithProperty("firstName", schematest.New("string")),
+				)},
+				Style:   "",
+				Explode: explode(false),
+			},
+			route: "/{foo}",
+			request: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "https://foo.bar/role,admin,firstName,Alex", nil)
+				r.AddCookie(&http.Cookie{
+					Name:  "debug",
+					Value: "1",
+				})
+				return r
+			},
+			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"role": "admin", "firstName": "Alex"}, result[parameter.Path]["foo"].Value)
+			},
+		},
+		{
+			name: "object explode",
+			param: &parameter.Parameter{
+				Name: "foo",
+				Type: parameter.Path,
+				Schema: &schema.Ref{Value: schematest.New("object",
+					schematest.WithProperty("role", schematest.New("string")),
+					schematest.WithProperty("firstName", schematest.New("string")),
+				)},
+				Style:   "",
+				Explode: explode(true),
+			},
+			route: "/{foo}",
+			request: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "https://foo.bar/role=admin,firstName=Alex", nil)
+				r.AddCookie(&http.Cookie{
+					Name:  "debug",
+					Value: "1",
+				})
+				return r
+			},
+			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"role": "admin", "firstName": "Alex"}, result[parameter.Path]["foo"].Value)
+			},
+		},
+		{
+			name: "labeled object",
+			param: &parameter.Parameter{
+				Name: "foo",
+				Type: parameter.Path,
+				Schema: &schema.Ref{Value: schematest.New("object",
+					schematest.WithProperty("role", schematest.New("string")),
+					schematest.WithProperty("firstName", schematest.New("string")),
+				)},
+				Style:   "label",
+				Explode: explode(false),
+			},
+			route: "/{foo}",
+			request: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "https://foo.bar/.role,admin,firstName,Alex", nil)
+				r.AddCookie(&http.Cookie{
+					Name:  "debug",
+					Value: "1",
+				})
+				return r
+			},
+			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"role": "admin", "firstName": "Alex"}, result[parameter.Path]["foo"].Value)
+			},
+		},
+		{
+			name: "matrix object",
+			param: &parameter.Parameter{
+				Name: "foo",
+				Type: parameter.Path,
+				Schema: &schema.Ref{Value: schematest.New("object",
+					schematest.WithProperty("role", schematest.New("string")),
+					schematest.WithProperty("firstName", schematest.New("string")),
+				)},
+				Style:   "matrix",
+				Explode: explode(true),
+			},
+			route: "/{foo}",
+			request: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "https://foo.bar/;role=admin,firstName=Alex", nil)
+				r.AddCookie(&http.Cookie{
+					Name:  "debug",
+					Value: "1",
+				})
+				return r
+			},
+			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"role": "admin", "firstName": "Alex"}, result[parameter.Path]["foo"].Value)
+			},
 		},
 	}
 
-	for _, testcase := range testcases {
-		test := testcase
-		t.Run(test.s, func(t *testing.T) {
-			i, err := parsePath(test.s, test.p)
-			require.NoError(t, err)
-			require.Equal(t, test.e, i.Value)
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			r, err := parameter.FromRequest(parameter.Parameters{{Value: tc.param}}, tc.route, tc.request())
+			tc.test(t, r, err)
 		})
 	}
 }

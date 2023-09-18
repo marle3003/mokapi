@@ -133,10 +133,10 @@ func TestSchema_IsFreeForm(t *testing.T) {
 			},
 		},
 		{
-			"object with property",
+			"object with property and additionalProperty null",
 			func(t *testing.T) {
 				s := schematest.New("object", schematest.WithProperty("foo", schematest.New("string")))
-				require.False(t, s.IsFreeForm())
+				require.True(t, s.IsFreeForm())
 			},
 		},
 		{
@@ -159,6 +159,13 @@ func TestSchema_IsFreeForm(t *testing.T) {
 			func(t *testing.T) {
 				s := schematest.New("object", schematest.WithProperty("foo", schematest.New("string")), schematest.WithFreeForm(false))
 				require.False(t, s.IsFreeForm())
+			},
+		},
+		{
+			"object with property additional true",
+			func(t *testing.T) {
+				s := schematest.New("object", schematest.WithProperty("foo", schematest.New("string")), schematest.WithFreeForm(true))
+				require.True(t, s.IsFreeForm())
 			},
 		},
 	}

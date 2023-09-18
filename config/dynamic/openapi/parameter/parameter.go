@@ -48,13 +48,38 @@ type Parameter struct {
 
 	// specifies whether arrays and objects should generate separate
 	// parameters for each array item or object property
-	Explode bool `yaml:"explode" json:"explode"`
+	Explode *bool `yaml:"explode" json:"explode"`
 }
 
 type Location string
 
 func (l Location) String() string {
 	return string(l)
+}
+
+func (p *Parameter) IsExplode() bool {
+	if p.Explode != nil {
+		return *p.Explode
+	}
+	if p.Style == "fom" {
+		return true
+	}
+	return false
+}
+
+func (p *Parameter) SetDefaultStyle() {
+	if p.Style == "" {
+		switch p.Type {
+		case Query:
+			p.Style = "form"
+		case Path:
+			p.Style = "simple"
+		case Header:
+			p.Style = "simple"
+		case Cookie:
+			p.Style = "form"
+		}
+	}
 }
 
 func (p Parameters) Parse(config *common.Config, reader common.Reader) error {

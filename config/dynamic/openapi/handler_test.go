@@ -279,7 +279,7 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				require.Equal(t, 400, rr.Code)
-				require.Equal(t, "required path parameter id not present\n", rr.Body.String())
+				require.Equal(t, "parse path parameter 'id' failed: parameter is required\n", rr.Body.String())
 			},
 		},
 		//
@@ -307,7 +307,7 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				require.Equal(t, 400, rr.Code)
-				require.Equal(t, "query parameter 'id' is required\n", rr.Body.String())
+				require.Equal(t, "parse query parameter 'id' failed: parameter is required\n", rr.Body.String())
 			},
 		},
 		{"with required query parameter and present",
@@ -347,7 +347,7 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				require.Equal(t, 400, rr.Code)
-				require.Equal(t, "cookie parameter 'id' is required\n", rr.Body.String())
+				require.Equal(t, "parse cookie parameter 'id' failed: parameter is required\n", rr.Body.String())
 			},
 		},
 		{"with required query parameter and present",
@@ -388,7 +388,7 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				require.Equal(t, 400, rr.Code)
-				require.Equal(t, "header parameter 'id' is required\n", rr.Body.String())
+				require.Equal(t, "parse header parameter 'id' failed: parameter is required\n", rr.Body.String())
 			},
 		},
 		{"with required query parameter and present",

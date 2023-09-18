@@ -81,7 +81,7 @@ func TestHeader_UnmarshalJSON(t *testing.T) {
 				header := &openapi.Header{}
 				err := json.Unmarshal([]byte(`{ "explode": false  }`), &header)
 				require.NoError(t, err)
-				require.False(t, header.Explode)
+				require.False(t, header.IsExplode())
 			},
 		},
 		{
@@ -188,7 +188,7 @@ func TestHeader_UnmarshalYAML(t *testing.T) {
 				header := &openapi.Header{}
 				err := yaml.Unmarshal([]byte(`explode: false`), &header)
 				require.NoError(t, err)
-				require.False(t, header.Explode)
+				require.False(t, header.IsExplode())
 			},
 		},
 		{

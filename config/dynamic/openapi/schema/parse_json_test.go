@@ -692,7 +692,7 @@ func TestValidate_Object(t *testing.T) {
 				schematest.WithMinProperties(2),
 			),
 			func(t *testing.T, _ interface{}, err error) {
-				require.EqualError(t, err, `validation error minProperties on {name: foo}, expected schema type=object minProperties=2 free-form=true`)
+				require.EqualError(t, err, `validation error minProperties on {name: foo}, expected schema type=object minProperties=2`)
 			},
 		},
 		{
@@ -702,7 +702,7 @@ func TestValidate_Object(t *testing.T) {
 				schematest.WithMaxProperties(1),
 			),
 			func(t *testing.T, _ interface{}, err error) {
-				require.Truef(t, strings.HasSuffix(err.Error(), "expected schema type=object maxProperties=1 free-form=true"), "but error is %v", err)
+				require.Truef(t, strings.HasSuffix(err.Error(), "expected schema type=object maxProperties=1"), "but error is %v", err)
 			},
 		},
 		{

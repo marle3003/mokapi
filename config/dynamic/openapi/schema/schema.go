@@ -58,7 +58,7 @@ type Schema struct {
 
 type AdditionalProperties struct {
 	*Ref
-	Forbidden bool `yaml:"forbidden" json:"forbidden"`
+	Forbidden bool
 }
 
 type Xml struct {
@@ -181,17 +181,20 @@ func (s *Schema) String() string {
 	if len(s.Required) > 0 {
 		sb.WriteString(fmt.Sprintf(" required=%v", s.Required))
 	}
-	if s.Type == "object" && s.IsFreeForm() {
-		sb.WriteString(" free-form=true")
+	if s.Type == "object" && !s.IsFreeForm() {
+		sb.WriteString(" free-form=false")
 	}
 
 	return sb.String()
 }
 
 func (s *Schema) IsFreeForm() bool {
+	if s.Type != "object" {
+		return false
+	}
 	free := s.Type == "object" && (s.Properties == nil || s.Properties.Len() == 0)
-	if s.AdditionalProperties == nil {
-		return free
+	if s.AdditionalProperties == nil || free {
+		return true
 	}
 	return s.AdditionalProperties.IsFreeForm()
 }
@@ -202,7 +205,7 @@ func (s *Schema) IsDictionary() bool {
 
 func (ap *AdditionalProperties) IsFreeForm() bool {
 	if ap == nil {
-		return false
+		return true
 	}
 	if ap.Ref == nil || ap.Value == nil {
 		return !ap.Forbidden

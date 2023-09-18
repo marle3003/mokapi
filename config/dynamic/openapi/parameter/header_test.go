@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func TestFromRequest_Cookie(t *testing.T) {
+func TestFromRequest_Header(t *testing.T) {
 	testcases := []struct {
 		name    string
 		params  parameter.Parameters
@@ -18,52 +18,46 @@ func TestFromRequest_Cookie(t *testing.T) {
 		test    func(t *testing.T, result parameter.RequestParameters, err error)
 	}{
 		{
-			name: "simple cookie",
+			name: "simple header",
 			params: parameter.Parameters{{Value: &parameter.Parameter{
-				Type:   parameter.Cookie,
+				Type:   parameter.Header,
 				Name:   "debug",
 				Schema: &schema.Ref{Value: &schema.Schema{Type: "integer", Enum: []interface{}{0, 1}}},
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
-				r.AddCookie(&http.Cookie{
-					Name:  "debug",
-					Value: "1",
-				})
+				r.Header.Set("debug", "1")
 				return r
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
 				require.NoError(t, err)
-				cookie := result[parameter.Cookie]["debug"]
+				cookie := result[parameter.Header]["debug"]
 				require.Equal(t, int64(1), cookie.Value)
 				require.Equal(t, "1", cookie.Raw)
 			},
 		},
 		{
-			name: "cookie without schema",
+			name: "header without schema",
 			params: parameter.Parameters{{Value: &parameter.Parameter{
-				Type: parameter.Cookie,
+				Type: parameter.Header,
 				Name: "debug",
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
-				r.AddCookie(&http.Cookie{
-					Name:  "debug",
-					Value: "1",
-				})
+				r.Header.Set("debug", "1")
 				return r
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
 				require.NoError(t, err)
-				cookie := result[parameter.Cookie]["debug"]
+				cookie := result[parameter.Header]["debug"]
 				require.Equal(t, "1", cookie.Value)
 				require.Equal(t, "1", cookie.Raw)
 			},
 		},
 		{
-			name: "not required cookie and not sent",
+			name: "not required header and not sent",
 			params: parameter.Parameters{{Value: &parameter.Parameter{
-				Type:     parameter.Cookie,
+				Type:     parameter.Header,
 				Name:     "debug",
 				Required: false,
 				Schema:   &schema.Ref{Value: &schema.Schema{Type: "integer", Enum: []interface{}{0, 1}}},
@@ -74,13 +68,13 @@ func TestFromRequest_Cookie(t *testing.T) {
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
 				require.NoError(t, err)
-				require.Len(t, result[parameter.Cookie], 0)
+				require.Len(t, result[parameter.Header], 0)
 			},
 		},
 		{
-			name: "required cookie but not sent",
+			name: "required header but not sent",
 			params: parameter.Parameters{{Value: &parameter.Parameter{
-				Type:     parameter.Cookie,
+				Type:     parameter.Header,
 				Name:     "debug",
 				Required: true,
 				Schema:   &schema.Ref{Value: &schema.Schema{Type: "integer", Enum: []interface{}{0, 1}}},
@@ -90,55 +84,49 @@ func TestFromRequest_Cookie(t *testing.T) {
 				return r
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
-				require.EqualError(t, err, "parse cookie parameter 'debug' failed: parameter is required")
-				require.Len(t, result[parameter.Cookie], 0)
+				require.EqualError(t, err, "parse header parameter 'debug' failed: parameter is required")
+				require.Len(t, result[parameter.Header], 0)
 			},
 		},
 		{
-			name: "required cookie but empty",
+			name: "required header but empty",
 			params: parameter.Parameters{{Value: &parameter.Parameter{
-				Type:     parameter.Cookie,
+				Type:     parameter.Header,
 				Name:     "debug",
 				Required: true,
 				Schema:   &schema.Ref{Value: &schema.Schema{Type: "integer", Enum: []interface{}{0, 1}}},
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
-				r.AddCookie(&http.Cookie{
-					Name:  "debug",
-					Value: "",
-				})
+				r.Header.Set("debug", "")
 				return r
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
-				require.EqualError(t, err, "parse cookie parameter 'debug' failed: parameter is required")
-				require.Len(t, result[parameter.Cookie], 0)
+				require.EqualError(t, err, "parse header parameter 'debug' failed: parameter is required")
+				require.Len(t, result[parameter.Header], 0)
 			},
 		},
 		{
 			name: "invalid value",
 			params: parameter.Parameters{{Value: &parameter.Parameter{
-				Type:   parameter.Cookie,
+				Type:   parameter.Header,
 				Name:   "debug",
 				Schema: &schema.Ref{Value: &schema.Schema{Type: "integer", Enum: []interface{}{0, 1}}},
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
-				r.AddCookie(&http.Cookie{
-					Name:  "debug",
-					Value: "foo",
-				})
+				r.Header.Set("debug", "foo")
 				return r
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
-				require.EqualError(t, err, "parse cookie parameter 'debug' failed: could not parse 'foo' as int, expected schema type=integer")
-				require.Len(t, result[parameter.Cookie], 0)
+				require.EqualError(t, err, "parse header parameter 'debug' failed: could not parse 'foo' as int, expected schema type=integer")
+				require.Len(t, result[parameter.Header], 0)
 			},
 		},
 		{
 			name: "array",
 			params: parameter.Parameters{{Value: &parameter.Parameter{
-				Type: parameter.Cookie,
+				Type: parameter.Header,
 				Name: "foo",
 				Schema: &schema.Ref{
 					Value: &schema.Schema{
@@ -149,15 +137,12 @@ func TestFromRequest_Cookie(t *testing.T) {
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
-				r.AddCookie(&http.Cookie{
-					Name:  "foo",
-					Value: "1,2,3",
-				})
+				r.Header.Set("foo", "1,2,3")
 				return r
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
 				require.NoError(t, err)
-				cookie := result[parameter.Cookie]["foo"]
+				cookie := result[parameter.Header]["foo"]
 				require.Equal(t, []interface{}{int64(1), int64(2), int64(3)}, cookie.Value)
 				require.Equal(t, "1,2,3", cookie.Raw)
 			},
@@ -165,7 +150,7 @@ func TestFromRequest_Cookie(t *testing.T) {
 		{
 			name: "array invalid value",
 			params: parameter.Parameters{{Value: &parameter.Parameter{
-				Type: parameter.Cookie,
+				Type: parameter.Header,
 				Name: "foo",
 				Schema: &schema.Ref{
 					Value: &schema.Schema{
@@ -176,21 +161,18 @@ func TestFromRequest_Cookie(t *testing.T) {
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
-				r.AddCookie(&http.Cookie{
-					Name:  "foo",
-					Value: "1,foo,3",
-				})
+				r.Header.Set("foo", "1,foo,3")
 				return r
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
-				require.EqualError(t, err, "parse cookie parameter 'foo' failed: could not parse 'foo' as int, expected schema type=integer")
-				require.Len(t, result[parameter.Cookie], 0)
+				require.EqualError(t, err, "parse header parameter 'foo' failed: could not parse 'foo' as int, expected schema type=integer")
+				require.Len(t, result[parameter.Header], 0)
 			},
 		},
 		{
 			name: "object",
 			params: parameter.Parameters{{Value: &parameter.Parameter{
-				Type: parameter.Cookie,
+				Type: parameter.Header,
 				Name: "foo",
 				Schema: &schema.Ref{
 					Value: schematest.New("object",
@@ -200,15 +182,12 @@ func TestFromRequest_Cookie(t *testing.T) {
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
-				r.AddCookie(&http.Cookie{
-					Name:  "foo",
-					Value: "role,admin,firstName,Alex",
-				})
+				r.Header.Set("foo", "role,admin,firstName,Alex")
 				return r
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
 				require.NoError(t, err)
-				cookie := result[parameter.Cookie]["foo"]
+				cookie := result[parameter.Header]["foo"]
 				require.Equal(t, map[string]interface{}{"firstName": "Alex", "role": "admin"}, cookie.Value)
 				require.Equal(t, "role,admin,firstName,Alex", cookie.Raw)
 			},
@@ -216,7 +195,7 @@ func TestFromRequest_Cookie(t *testing.T) {
 		{
 			name: "object not all properties defined",
 			params: parameter.Parameters{{Value: &parameter.Parameter{
-				Type: parameter.Cookie,
+				Type: parameter.Header,
 				Name: "foo",
 				Schema: &schema.Ref{
 					Value: schematest.New("object",
@@ -225,15 +204,12 @@ func TestFromRequest_Cookie(t *testing.T) {
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
-				r.AddCookie(&http.Cookie{
-					Name:  "foo",
-					Value: "role,admin,firstName,Alex",
-				})
+				r.Header.Set("foo", "role,admin,firstName,Alex")
 				return r
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
 				require.NoError(t, err)
-				cookie := result[parameter.Cookie]["foo"]
+				cookie := result[parameter.Header]["foo"]
 				require.Equal(t, map[string]interface{}{"role": "admin"}, cookie.Value)
 				require.Equal(t, "role,admin,firstName,Alex", cookie.Raw)
 			},
@@ -241,7 +217,7 @@ func TestFromRequest_Cookie(t *testing.T) {
 		{
 			name: "object invalid property pairs",
 			params: parameter.Parameters{{Value: &parameter.Parameter{
-				Type: parameter.Cookie,
+				Type: parameter.Header,
 				Name: "foo",
 				Schema: &schema.Ref{
 					Value: schematest.New("object",
@@ -251,21 +227,18 @@ func TestFromRequest_Cookie(t *testing.T) {
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
-				r.AddCookie(&http.Cookie{
-					Name:  "foo",
-					Value: "role,admin,firstName",
-				})
+				r.Header.Set("foo", "role,admin,firstName")
 				return r
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
-				require.EqualError(t, err, "parse cookie parameter 'foo' failed: invalid number of property pairs")
+				require.EqualError(t, err, "parse header parameter 'foo' failed: invalid number of property pairs")
 				require.Len(t, result[parameter.Cookie], 0)
 			},
 		},
 		{
 			name: "object invalid property",
 			params: parameter.Parameters{{Value: &parameter.Parameter{
-				Type: parameter.Cookie,
+				Type: parameter.Header,
 				Name: "foo",
 				Schema: &schema.Ref{
 					Value: schematest.New("object",
@@ -275,15 +248,12 @@ func TestFromRequest_Cookie(t *testing.T) {
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
-				r.AddCookie(&http.Cookie{
-					Name:  "foo",
-					Value: "role,admin,age,Alex",
-				})
+				r.Header.Set("foo", "role,admin,age,Alex")
 				return r
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
-				require.EqualError(t, err, "parse cookie parameter 'foo' failed: parse property 'age' failed: could not parse 'Alex' as floating number, expected schema type=number")
-				require.Len(t, result[parameter.Cookie], 0)
+				require.EqualError(t, err, "parse header parameter 'foo' failed: parse property 'age' failed: could not parse 'Alex' as floating number, expected schema type=number")
+				require.Len(t, result[parameter.Header], 0)
 			},
 		},
 	}
