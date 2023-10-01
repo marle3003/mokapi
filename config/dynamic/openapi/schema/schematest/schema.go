@@ -52,6 +52,22 @@ func Any(schemas ...*schema.Schema) SchemaOptions {
 	}
 }
 
+func NewAny(schemas ...*schema.Schema) *schema.Schema {
+	s := &schema.Schema{}
+	for _, any := range schemas {
+		s.AnyOf = append(s.AnyOf, &schema.Ref{Value: any})
+	}
+	return s
+}
+
+func NewAnyRef(schemas ...*schema.Ref) *schema.Schema {
+	s := &schema.Schema{}
+	for _, any := range schemas {
+		s.AnyOf = append(s.AnyOf, any)
+	}
+	return s
+}
+
 func OneOf(schemas ...*schema.Schema) SchemaOptions {
 	return func(s *schema.Schema) {
 		for _, one := range schemas {
@@ -60,12 +76,44 @@ func OneOf(schemas ...*schema.Schema) SchemaOptions {
 	}
 }
 
+func NewOneOf(schemas ...*schema.Schema) *schema.Schema {
+	s := &schema.Schema{}
+	for _, one := range schemas {
+		s.OneOf = append(s.OneOf, &schema.Ref{Value: one})
+	}
+	return s
+}
+
+func NewOneOfRef(schemas ...*schema.Ref) *schema.Schema {
+	s := &schema.Schema{}
+	for _, one := range schemas {
+		s.OneOf = append(s.OneOf, one)
+	}
+	return s
+}
+
 func AllOf(schemas ...*schema.Schema) SchemaOptions {
 	return func(s *schema.Schema) {
 		for _, all := range schemas {
 			s.AllOf = append(s.AllOf, &schema.Ref{Value: all})
 		}
 	}
+}
+
+func NewAllOf(schemas ...*schema.Schema) *schema.Schema {
+	s := &schema.Schema{}
+	for _, all := range schemas {
+		s.AllOf = append(s.AllOf, &schema.Ref{Value: all})
+	}
+	return s
+}
+
+func NewAllOfRefs(schemas ...*schema.Ref) *schema.Schema {
+	s := &schema.Schema{}
+	for _, all := range schemas {
+		s.AllOf = append(s.AllOf, all)
+	}
+	return s
 }
 
 func WithFormat(format string) SchemaOptions {

@@ -1,36 +1,12 @@
 package schema
 
 import (
-	"bytes"
-	"encoding/json"
+	"errors"
 	"fmt"
-	"mokapi/media"
 	"mokapi/sortedmap"
 	"reflect"
 	"unicode"
 )
-
-func (r *Ref) Marshal(i interface{}, contentType media.ContentType) ([]byte, error) {
-	i, err := selectData(i, r)
-	if err != nil {
-		return nil, err
-	}
-	switch {
-	case contentType.Subtype == "json" || contentType.Subtype == "problem+json":
-		b, err := json.Marshal(i)
-		if err, ok := err.(*json.SyntaxError); ok {
-			return nil, fmt.Errorf("json error (%v): %v", err.Offset, err.Error())
-		}
-		return b, err
-	case contentType.IsXml():
-		return writeXml(i, r)
-	default:
-		if s, ok := i.(string); ok {
-			return []byte(s), nil
-		}
-		return nil, fmt.Errorf("unspupported encoding for content type %v", contentType)
-	}
-}
 
 type schemaObject struct {
 	*sortedmap.LinkedHashMap[string, interface{}]
@@ -41,85 +17,53 @@ func newSchemaObject() *schemaObject {
 }
 
 // selectData selects data by schema
-func selectData(data interface{}, schema *Ref) (interface{}, error) {
-	if schema == nil || schema.Value == nil || data == nil {
+func selectData(data interface{}, ref *Ref) (interface{}, error) {
+	if ref == nil || ref.Value == nil || data == nil {
 		return data, nil
 	}
 
-	if len(schema.Value.AnyOf) > 0 {
-		return selectAny(schema.Value, data)
-	}
-	if len(schema.Value.AllOf) > 0 {
-		return selectAll(schema.Value, data)
+	schema := ref.Value
+
+	switch {
+	case len(schema.AnyOf) > 0:
+		return selectAny(schema, data)
+	case len(schema.AllOf) > 0:
+		return selectAll(schema, data)
+	case len(schema.OneOf) > 0:
+		return selectOne(schema, data)
 	}
 
-	if schema.Value == nil || schema.Value.Type == "" {
+	if schema.Type == "" {
 		return data, nil
 	}
 
 	switch data.(type) {
 	case []interface{}:
-		if schema.Value.Type != "array" {
+		if schema.Type != "array" {
 			return nil, fmt.Errorf("found array, expected %v: %v", schema, data)
 		}
 	case map[string]interface{}:
-		if schema.Value.Type != "object" {
+		if schema.Type != "object" {
 			return nil, fmt.Errorf("found object, expected %v: %v", schema, data)
 		}
 	case struct{}:
-		if schema.Value.Type != "object" {
+		if schema.Type != "object" {
 			return nil, fmt.Errorf("found object, expected %v: %v", schema, data)
 		}
 	}
 
-	switch schema.Value.Type {
+	switch schema.Type {
 	case "number":
-		return parseNumber(data, schema.Value)
+		return parseNumber(data, schema)
 	case "integer":
-		return parseInteger(data, schema.Value)
+		return parseInteger(data, schema)
 	case "array":
-		return selectArray(data, schema.Value)
+		return selectArray(data, schema)
 	case "object":
-		return selectObject(data, schema.Value)
+		return selectObject(data, schema)
 	}
 
 	return data, nil
-}
-
-func (m *schemaObject) MarshalJSON() ([]byte, error) {
-	var b []byte
-	buf := bytes.NewBuffer(b)
-	buf.WriteRune('{')
-	l := m.Len()
-	i := 0
-	for it := m.Iter(); it.Next(); {
-		k := it.Key()
-		v := it.Value()
-
-		s := fmt.Sprintf("%v", k)
-
-		if s == "minimum" {
-			fmt.Sprintf("")
-		}
-
-		key, err := json.Marshal(k)
-		if err != nil {
-			return nil, err
-		}
-		buf.Write(key)
-		buf.WriteRune(':')
-		value, err := json.Marshal(v)
-		if err != nil {
-			return nil, err
-		}
-		buf.Write(value)
-		if i != l-1 {
-			buf.WriteRune(',')
-		}
-		i++
-	}
-	buf.WriteRune('}')
-	return buf.Bytes(), nil
 }
 
 // UnTitle returns a copy of the string s with first letter mapped to its Unicode lower case
@@ -131,8 +75,11 @@ func unTitle(s string) string {
 }
 
 func selectArray(data interface{}, schema *Schema) (interface{}, error) {
-	if list, ok := data.([]interface{}); ok {
-		result := make([]interface{}, len(list))
+	var result []interface{}
+
+	switch list := data.(type) {
+	case []interface{}:
+		result = make([]interface{}, len(list))
 		for i, e := range list {
 			var err error
 			result[i], err = selectData(e, schema.Items)
@@ -140,21 +87,24 @@ func selectArray(data interface{}, schema *Schema) (interface{}, error) {
 				return nil, err
 			}
 		}
-		return result, validateArray(result, schema)
-	}
-	if m, ok := data.(map[interface{}]interface{}); ok {
-		result := make([]interface{}, 0)
-		for _, v := range m {
+	case map[interface{}]interface{}:
+		result = make([]interface{}, len(list))
+		for _, v := range list {
 			if i, err := selectData(v, schema.Items); err != nil {
 				return nil, err
 			} else {
 				result = append(result, i)
 			}
 		}
-		return result, validateArray(result, schema)
+	default:
+		return nil, fmt.Errorf("unexpected type for schema type array")
 	}
 
-	return nil, fmt.Errorf("unexpected type for schema type array")
+	if err := validateArray(result, schema); err != nil {
+		return nil, fmt.Errorf("does not match %s: %w", schema, err)
+	}
+
+	return result, nil
 }
 
 func selectObject(data interface{}, schema *Schema) (interface{}, error) {
@@ -174,51 +124,116 @@ func selectObject(data interface{}, schema *Schema) (interface{}, error) {
 		return reflectFromMap(v, schema)
 	}
 
-	return nil, fmt.Errorf("could not encode '%v' to %v", data, schema)
+	return nil, fmt.Errorf("encode '%v' to %v failed", data, schema)
 }
 
 func selectAny(schema *Schema, data interface{}) (interface{}, error) {
 	result := newSchemaObject()
+
+	isFreeFormUsed := false
 	for _, any := range schema.AnyOf {
+		if any == nil || any.Value == nil {
+			return selectData(data, nil)
+		}
+
+		if any.Value.IsFreeForm() {
+			// first we read data without free-form to get best matching data types
+			// after we processed all schemas we read with free-form
+			copySchema := *any.Value
+			any = &Ref{Value: &copySchema}
+			isFreeFormUsed = true
+			any.Value.AdditionalProperties = &AdditionalProperties{Forbidden: true}
+		}
+
 		r, err := selectData(data, any)
 		if err != nil {
 			continue
 		}
 		o, ok := r.(*schemaObject)
 		if !ok {
-			if result.Len() > 0 {
-				continue
-			}
 			return r, nil
 		}
-		result.Merge(o.LinkedHashMap)
+		for it := o.LinkedHashMap.Iter(); it.Next(); {
+			if v := result.Get(it.Key()); v == nil {
+				result.Set(it.Key(), it.Value())
+			}
+		}
 	}
+
+	if isFreeFormUsed {
+		// read data with free-form and add only missing values
+		// free-form returns never an error
+		i, _ := selectObject(data, &Schema{Type: "object"})
+		o := i.(*schemaObject)
+		for it := o.Iter(); it.Next(); {
+			if result.Get(it.Key()) == nil {
+				result.Set(it.Key(), it.Value())
+			}
+		}
+	}
+
+	return result, nil
+}
+
+func selectOne(schema *Schema, data interface{}) (interface{}, error) {
+	var result interface{}
+
+	for _, one := range schema.OneOf {
+		if one == nil || one.Value == nil {
+			next, err := selectData(data, nil)
+			if err != nil {
+				continue
+			}
+			if result != nil {
+				return nil, fmt.Errorf("oneOf can only match exactly one schema")
+			}
+			result = next
+			continue
+		}
+
+		next, err := selectData(data, one)
+		if err != nil {
+			continue
+		}
+		if obj, ok := next.(*schemaObject); ok && obj.Len() == 0 {
+			// empty object does not match
+			continue
+		}
+		if result != nil {
+			return nil, fmt.Errorf("oneOf can only match exactly one schema")
+		}
+		result = next
+	}
+
 	return result, nil
 }
 
 func selectAll(schema *Schema, data interface{}) (interface{}, error) {
 	r := newSchemaObject()
-	schemas := make([]*Ref, 0, len(schema.AllOf)+1)
-	schemas = append(schemas, schema.AllOf...)
-	schemas = append(schemas, &Ref{Value: &Schema{Type: "object"}})
 
-	for i, all := range schemas {
-		if all == nil {
-			continue
+	isFreeFormUsed := false
+	for _, all := range schema.AllOf {
+		if all == nil || all.Value == nil {
+			return nil, fmt.Errorf("schema is not defined: allOf only supports type of object")
 		}
 		if all.Value.Type != "object" {
-			return nil, fmt.Errorf("allOf only supports type of object")
-		}
-		s := all.Value
-		if i < len(schemas)-1 {
-			c := *all.Value
-			c.AdditionalProperties = &AdditionalProperties{Forbidden: true}
-			s = &c
+			return nil, fmt.Errorf("type of '%v' is not allowed: allOf only supports type of object", all.Value.Type)
 		}
 
-		o, err := selectObject(data, s)
+		origin := all
+		if all.Value.IsFreeForm() {
+			// first we read data without free-form to get best matching data types
+			// after we processed all schemas we read with free-form
+			copySchema := *all.Value
+			all = &Ref{Value: &copySchema}
+			isFreeFormUsed = true
+			all.Value.AdditionalProperties = &AdditionalProperties{Forbidden: true}
+		}
+
+		o, err := selectObject(data, all.Value)
 		if err != nil {
-			return nil, err
+			err := errors.Unwrap(err)
+			return nil, fmt.Errorf("does not match %v: %w", origin, err)
 		}
 		so := o.(*schemaObject)
 		for it := so.LinkedHashMap.Iter(); it.Next(); {
@@ -227,6 +242,19 @@ func selectAll(schema *Schema, data interface{}) (interface{}, error) {
 			}
 		}
 	}
+
+	if isFreeFormUsed {
+		// read data with free-form and add only missing values
+		// free-form returns never an error
+		i, _ := selectObject(data, &Schema{Type: "object"})
+		o := i.(*schemaObject)
+		for it := o.Iter(); it.Next(); {
+			if r.Get(it.Key()) == nil {
+				r.Set(it.Key(), it.Value())
+			}
+		}
+	}
+
 	return r, nil
 }
 
@@ -252,7 +280,12 @@ func fromLinkedMap(m *sortedmap.LinkedHashMap[string, interface{}], schema *Sche
 			obj.Set(name, d)
 		}
 	}
-	return obj, validateObject(obj.LinkedHashMap, schema)
+
+	if err := validateObject(obj.LinkedHashMap, schema); err != nil {
+		return nil, fmt.Errorf("does not match %s: %w", schema, err)
+	}
+
+	return obj, nil
 }
 
 func fromStruct(v reflect.Value, schema *Schema) (*schemaObject, error) {
@@ -266,12 +299,17 @@ func fromStruct(v reflect.Value, schema *Schema) (*schemaObject, error) {
 		if p := schema.Properties.Get(name); p != nil || schema.IsFreeForm() {
 			d, err := selectData(val.Interface(), p)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("encode property '%v' failed: %w", name, err)
 			}
 			obj.Set(name, d)
 		}
 	}
-	return obj, validateObject(obj.LinkedHashMap, schema)
+
+	if err := validateObject(obj.LinkedHashMap, schema); err != nil {
+		return nil, fmt.Errorf("does not match %s: %w", schema, err)
+	}
+
+	return obj, nil
 }
 
 func reflectFromMap(v reflect.Value, schema *Schema) (*schemaObject, error) {
@@ -317,5 +355,9 @@ func reflectFromMap(v reflect.Value, schema *Schema) (*schemaObject, error) {
 		}
 	}
 
-	return obj, validateObject(obj.LinkedHashMap, schema)
+	if err := validateObject(obj.LinkedHashMap, schema); err != nil {
+		return nil, fmt.Errorf("does not match %s: %w", schema, err)
+	}
+
+	return obj, nil
 }

@@ -215,13 +215,15 @@ func TestParsePath(t *testing.T) {
 				Schema: &schema.Ref{Value: schematest.New("object",
 					schematest.WithProperty("role", schematest.New("string")),
 					schematest.WithProperty("firstName", schematest.New("string")),
+					schematest.WithProperty("msg", schematest.New("string")),
+					schematest.WithProperty("foo", schematest.New("string")),
 				)},
 				Style:   "",
 				Explode: explode(true),
 			},
 			route: "/{foo}",
 			request: func() *http.Request {
-				r := httptest.NewRequest(http.MethodGet, "https://foo.bar/role=admin,firstName=Alex", nil)
+				r := httptest.NewRequest(http.MethodGet, "https://foo.bar/role=admin,firstName=Alex,msg=Hello%20World,foo=foo%26bar", nil)
 				r.AddCookie(&http.Cookie{
 					Name:  "debug",
 					Value: "1",
@@ -230,7 +232,7 @@ func TestParsePath(t *testing.T) {
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"role": "admin", "firstName": "Alex"}, result[parameter.Path]["foo"].Value)
+				require.Equal(t, map[string]interface{}{"role": "admin", "firstName": "Alex", "msg": "Hello World", "foo": "foo&bar"}, result[parameter.Path]["foo"].Value)
 			},
 		},
 		{

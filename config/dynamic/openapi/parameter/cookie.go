@@ -21,7 +21,7 @@ func parseCookie(p *Parameter, r *http.Request) (*RequestParameterValue, error) 
 		case "array":
 			rp.Value, err = parseArray(p, cookie.Value, ",")
 		case "object":
-			rp.Value, err = parseObject(p, cookie.Value, ",", p.IsExplode())
+			rp.Value, err = parseObject(p, cookie.Value, ",", p.IsExplode(), defaultDecode)
 		default:
 			rp.Value, err = schema.ParseString(cookie.Value, p.Schema)
 		}

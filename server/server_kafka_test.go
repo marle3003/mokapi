@@ -10,6 +10,7 @@ import (
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/metaData"
 	"mokapi/runtime"
+	"mokapi/runtime/events"
 	"mokapi/try"
 	"testing"
 	"time"
@@ -250,15 +251,15 @@ func TestKafkaServer_Update(t *testing.T) {
 		},
 	}
 
-	t.Parallel()
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 			m := NewKafkaManager(nil, runtime.New())
 			defer m.Stop()
 
 			tc.fn(t, m)
+
+			events.Reset()
 		})
 	}
 }

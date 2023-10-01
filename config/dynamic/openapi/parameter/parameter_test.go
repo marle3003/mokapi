@@ -84,6 +84,26 @@ func TestHeader_UnmarshalJSON(t *testing.T) {
 			},
 		},
 		{
+			name: "default explode when style is form",
+			test: func(t *testing.T) {
+				param := &parameter.Parameter{}
+				err := json.Unmarshal([]byte(`{ "style": "form" }`), &param)
+				require.NoError(t, err)
+				require.Nil(t, param.Explode)
+				require.True(t, param.IsExplode(), "When style is form, the default value is true")
+			},
+		},
+		{
+			name: "default explode when style is not form",
+			test: func(t *testing.T) {
+				param := &parameter.Parameter{}
+				err := json.Unmarshal([]byte(`{ "style": "simple" }`), &param)
+				require.NoError(t, err)
+				require.Nil(t, param.Explode)
+				require.False(t, param.IsExplode(), "For all other styles, the default value is false.")
+			},
+		},
+		{
 			name: "schema",
 			test: func(t *testing.T) {
 				param := &parameter.Parameter{}
@@ -198,6 +218,26 @@ func TestHeader_UnmarshalYAML(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, param.Explode)
 				require.False(t, *param.Explode)
+			},
+		},
+		{
+			name: "default explode when style is form",
+			test: func(t *testing.T) {
+				param := &parameter.Parameter{}
+				err := yaml.Unmarshal([]byte(`style: form`), &param)
+				require.NoError(t, err)
+				require.Nil(t, param.Explode)
+				require.True(t, param.IsExplode(), "When style is form, the default value is true")
+			},
+		},
+		{
+			name: "default explode when style is not form",
+			test: func(t *testing.T) {
+				param := &parameter.Parameter{}
+				err := yaml.Unmarshal([]byte(`style: simple`), &param)
+				require.NoError(t, err)
+				require.Nil(t, param.Explode)
+				require.False(t, param.IsExplode(), "For all other styles, the default value is false.")
 			},
 		},
 		{

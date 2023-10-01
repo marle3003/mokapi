@@ -35,16 +35,18 @@ func parseQuery(p *Parameter, u *url.URL) (*RequestParameterValue, error) {
 }
 
 func parseQueryObject(p *Parameter, u *url.URL) (string, interface{}, error) {
-	raw := ""
 	if p.Style == "form" && p.IsExplode() {
-		raw = u.RawQuery
+		raw := u.RawQuery
 		if len(raw) == 0 && p.Required {
 			return "", nil, fmt.Errorf("parameter is required")
 		}
-		i, err := parseExplodeObject(p, raw, "&")
+		i, err := parseExplodeObject(p, raw, "&", url.QueryUnescape)
 		return raw, i, err
 	} else if p.Style == "form" {
-		raw = u.Query().Get(p.Name)
+		raw := u.Query().Get(p.Name)
+		if len(raw) == 0 && p.Required {
+			return "", nil, fmt.Errorf("parameter is required")
+		}
 		i, err := parseUnExplodeObject(p, raw, ",")
 		return raw, i, err
 	} else if p.Style == "deepObject" && p.IsExplode() {
@@ -65,6 +67,9 @@ func parseQueryObject(p *Parameter, u *url.URL) (string, interface{}, error) {
 			} else {
 				obj[name] = v
 			}
+		}
+		if len(raw.String()) == 0 && p.Required {
+			return "", nil, fmt.Errorf("parameter is required")
 		}
 		return raw.String(), obj, nil
 
