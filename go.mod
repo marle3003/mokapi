@@ -25,8 +25,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
 	github.com/yuin/gopher-lua v0.0.0-20210529063254-f4c35e4016d9
-	golang.org/x/crypto v0.7.0 // indirect
-	golang.org/x/net v0.8.0 // indirect
+	golang.org/x/net v0.17.0
 	golang.org/x/tools v0.7.0 // indirect
 	gopkg.in/go-asn1-ber/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d
 	gopkg.in/yaml.v3 v3.0.1
