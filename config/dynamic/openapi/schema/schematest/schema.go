@@ -68,6 +68,14 @@ func AllOf(schemas ...*schema.Schema) SchemaOptions {
 	}
 }
 
+func AllOfRef(schemas ...*schema.Ref) SchemaOptions {
+	return func(s *schema.Schema) {
+		for _, all := range schemas {
+			s.AllOf = append(s.AllOf, all)
+		}
+	}
+}
+
 func WithFormat(format string) SchemaOptions {
 	return func(s *schema.Schema) {
 		s.Format = format
