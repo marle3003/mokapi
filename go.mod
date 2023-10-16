@@ -19,7 +19,7 @@ require (
 	github.com/mitchellh/copystructure v1.0.0 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/sergi/go-diff v1.3.1 // indirect
-	github.com/sirupsen/logrus v1.9.0
+	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.2
 	github.com/yuin/gopher-lua v0.0.0-20210529063254-f4c35e4016d9
 	golang.org/x/net v0.17.0
