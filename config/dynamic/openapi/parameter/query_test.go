@@ -36,6 +36,24 @@ func TestParseQuery(t *testing.T) {
 			},
 		},
 		{
+			name: "string with whitespace",
+			params: parameter.Parameters{
+				{Value: &parameter.Parameter{
+					Name:   "foo",
+					Type:   parameter.Query,
+					Schema: &schema.Ref{Value: &schema.Schema{Type: "string"}},
+					Style:  "form",
+				}},
+			},
+			request: func() *http.Request {
+				return httptest.NewRequest(http.MethodGet, "https://foo.bar?foo=Hello%20World", nil)
+			},
+			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "Hello World", result[parameter.Query]["foo"].Value)
+			},
+		},
+		{
 			name: "no query parameter",
 			params: parameter.Parameters{
 				{Value: &parameter.Parameter{
@@ -196,17 +214,19 @@ func TestParseQuery(t *testing.T) {
 					Schema: &schema.Ref{Value: schematest.New("object",
 						schematest.WithProperty("role", schematest.New("string")),
 						schematest.WithProperty("firstName", schematest.New("string")),
+						schematest.WithProperty("msg", schematest.New("string")),
+						schematest.WithProperty("foo", schematest.New("string")),
 					)},
 					Style:   "form",
 					Explode: explode(true),
 				}},
 			},
 			request: func() *http.Request {
-				return httptest.NewRequest(http.MethodGet, "https://foo.bar?role=admin&firstName=Alex", nil)
+				return httptest.NewRequest(http.MethodGet, "https://foo.bar?role=admin&firstName=Alex&msg=Hello%20World&foo=foo%26bar", nil)
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"role": "admin", "firstName": "Alex"}, result[parameter.Query]["id"].Value)
+				require.Equal(t, map[string]interface{}{"role": "admin", "firstName": "Alex", "msg": "Hello World", "foo": "foo&bar"}, result[parameter.Query]["id"].Value)
 			},
 		},
 		{
@@ -225,7 +245,30 @@ func TestParseQuery(t *testing.T) {
 				}},
 			},
 			request: func() *http.Request {
-				return httptest.NewRequest(http.MethodGet, "https://foo.bar?", nil)
+				return httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
+			},
+			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+				require.EqualError(t, err, "parse query parameter 'id' failed: parameter is required")
+				require.Len(t, result[parameter.Query], 0)
+			},
+		},
+		{
+			name: "object not explode and required but no query",
+			params: parameter.Parameters{
+				{Value: &parameter.Parameter{
+					Name: "id",
+					Type: parameter.Query,
+					Schema: &schema.Ref{Value: schematest.New("object",
+						schematest.WithProperty("role", schematest.New("string")),
+						schematest.WithProperty("firstName", schematest.New("string")),
+					)},
+					Required: true,
+					Style:    "form",
+					Explode:  explode(false),
+				}},
+			},
+			request: func() *http.Request {
+				return httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
 				require.EqualError(t, err, "parse query parameter 'id' failed: parameter is required")
@@ -379,6 +422,29 @@ func TestParseQuery(t *testing.T) {
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
 				require.EqualError(t, err, "parse query parameter 'id' failed: could not parse 'foo' as int, expected schema type=integer")
+				require.Len(t, result[parameter.Query], 0)
+			},
+		},
+		{
+			name: "deepObject required but no query",
+			params: parameter.Parameters{
+				{Value: &parameter.Parameter{
+					Name: "id",
+					Type: parameter.Query,
+					Schema: &schema.Ref{Value: schematest.New("object",
+						schematest.WithProperty("role", schematest.New("string")),
+						schematest.WithProperty("firstName", schematest.New("string")),
+					)},
+					Required: true,
+					Style:    "deepObject",
+					Explode:  explode(true),
+				}},
+			},
+			request: func() *http.Request {
+				return httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
+			},
+			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+				require.EqualError(t, err, "parse query parameter 'id' failed: parameter is required")
 				require.Len(t, result[parameter.Query], 0)
 			},
 		},

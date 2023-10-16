@@ -144,10 +144,10 @@ func validateInt64(n int64, schema *Schema) error {
 func validateArray(a interface{}, schema *Schema) error {
 	v := reflect.ValueOf(a)
 	if schema.MinItems != nil && v.Len() < *schema.MinItems {
-		return fmt.Errorf("validation error minItems on %v, expected %v", toString(a), schema)
+		return fmt.Errorf("should NOT have less than %v items", *schema.MinItems)
 	}
 	if schema.MaxItems != nil && v.Len() > *schema.MaxItems {
-		return fmt.Errorf("validation error maxItems on %v, expected %v", toString(a), schema)
+		return fmt.Errorf("should NOT have more than %v items", *schema.MaxItems)
 	}
 
 	if len(schema.Enum) > 0 {
@@ -160,7 +160,7 @@ func validateArray(a interface{}, schema *Schema) error {
 			item := v.Index(i).Interface()
 			for _, u := range unique {
 				if compare(item, u) {
-					return fmt.Errorf("value %v must contain unique items, expected %v", toString(a), schema)
+					return fmt.Errorf("should NOT have duplicate items (%v)", toString(item))
 				}
 			}
 			unique = append(unique, item)
@@ -185,7 +185,7 @@ func validateObject(i interface{}, schema *Schema) error {
 
 		for _, p := range schema.Required {
 			if e := v.MapIndex(reflect.ValueOf(p)); !e.IsValid() {
-				return fmt.Errorf("missing required field %v on %v, expected %v", p, toString(i), schema)
+				return fmt.Errorf("missing required field '%v'", p)
 			}
 		}
 	} else if m, ok := i.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
@@ -202,29 +202,9 @@ func validateObject(i interface{}, schema *Schema) error {
 
 		for _, p := range schema.Required {
 			if v := m.Get(p); v == nil {
-				return fmt.Errorf("missing required field %v on %v, expected %v", p, m, schema)
+				return fmt.Errorf("missing required field '%v'", p)
 			}
 		}
-
-		/*if len(schema.Enum) > 0 {
-			found := false
-		LoopEnum:
-			for _, e := range schema.Enum {
-				v, ok := e.(map[string]interface{})
-				if !ok {
-					return fmt.Errorf("expected object in enumeration, got %v", schema.Enum)
-				}
-				for name, propValue := range v {
-					if m.Get(name) != propValue {
-						continue LoopEnum
-					}
-				}
-				found = true
-			}
-			if !found {
-				return fmt.Errorf("value '%v' does not match one in the enum %v", m.String(), toString(schema.Enum))
-			}
-		}*/
 	}
 
 	if len(schema.Enum) > 0 {

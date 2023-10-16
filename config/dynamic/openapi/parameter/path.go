@@ -35,7 +35,7 @@ func parsePath(p *Parameter, route string, r *http.Request) (*RequestParameterVa
 		case "array":
 			rp.Value, err = parseArray(p, path, ",")
 		case "object":
-			rp.Value, err = parseObject(p, path, ",", p.IsExplode())
+			rp.Value, err = parseObject(p, path, ",", p.IsExplode(), defaultDecode)
 		default:
 			rp.Value, err = schema.ParseString(path, p.Schema)
 		}

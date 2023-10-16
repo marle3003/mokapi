@@ -29,6 +29,8 @@ type RequestParameterValue struct {
 	Raw   string
 }
 
+type decoder func(string) (string, error)
+
 func NewContext(ctx context.Context, rp RequestParameters) context.Context {
 	return context.WithValue(ctx, requestKey, rp)
 }
@@ -86,15 +88,15 @@ func FromRequest(params Parameters, route string, r *http.Request) (RequestParam
 	return parameters, nil
 }
 
-func parseObject(p *Parameter, value string, separator string, explode bool) (map[string]interface{}, error) {
+func parseObject(p *Parameter, value string, separator string, explode bool, decode decoder) (map[string]interface{}, error) {
 	if explode {
-		return parseExplodeObject(p, value, separator)
+		return parseExplodeObject(p, value, separator, decode)
 	} else {
 		return parseUnExplodeObject(p, value, separator)
 	}
 }
 
-func parseExplodeObject(p *Parameter, value, separator string) (map[string]interface{}, error) {
+func parseExplodeObject(p *Parameter, value, separator string, decode decoder) (map[string]interface{}, error) {
 	m := make(map[string]interface{})
 	values := strings.Split(value, separator)
 	for _, i := range values {
@@ -102,13 +104,21 @@ func parseExplodeObject(p *Parameter, value, separator string) (map[string]inter
 		if len(kv) != 2 {
 			return nil, errors.Errorf("invalid format")
 		}
-		prop := p.Schema.Value.Properties.Get(kv[0])
+		key, err := decode(kv[0])
+		if err != nil {
+			return nil, err
+		}
+		val, err := decode(kv[1])
+		if err != nil {
+			return nil, err
+		}
+		prop := p.Schema.Value.Properties.Get(key)
 		if prop == nil && !p.Schema.Value.IsFreeForm() && !p.Schema.Value.IsDictionary() {
 			return nil, fmt.Errorf("property '%v' not defined in schema: %s", kv[0], p.Schema)
 		}
 
-		if v, err := schema.ParseString(kv[1], prop); err == nil {
-			m[kv[0]] = v
+		if v, err := schema.ParseString(val, prop); err == nil {
+			m[key] = v
 		} else {
 			return nil, err
 		}
@@ -156,4 +166,8 @@ func parseArray(p *Parameter, value string, separator string) ([]interface{}, er
 	}
 
 	return values, nil
+}
+
+func defaultDecode(s string) (string, error) {
+	return s, nil
 }

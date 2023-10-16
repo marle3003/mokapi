@@ -644,7 +644,7 @@ func TestValidate_Object(t *testing.T) {
 				schematest.WithProperty("age", schematest.New("integer")),
 			),
 			func(t *testing.T, _ interface{}, err error) {
-				require.EqualError(t, err, `missing required field age on {name: foo}, expected schema type=object properties=[name, age] required=[name age]`)
+				require.EqualError(t, err, `missing required field 'age'`)
 			},
 		},
 		{
@@ -783,7 +783,7 @@ func TestValidate_Array(t *testing.T) {
 				MinItems: toIntP(3),
 			},
 			func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "validation error minItems on [foo, bar], expected schema type=array minItems=3")
+				require.EqualError(t, err, "should NOT have less than 3 items")
 			},
 		},
 		{
@@ -812,7 +812,7 @@ func TestValidate_Array(t *testing.T) {
 				MaxItems: toIntP(1),
 			},
 			func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "validation error maxItems on [foo, bar], expected schema type=array maxItems=1")
+				require.EqualError(t, err, "should NOT have more than 1 items")
 			},
 		},
 		{
@@ -884,7 +884,7 @@ func TestValidate_Array(t *testing.T) {
 				UniqueItems: true,
 			},
 			func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "value [foo, foo] must contain unique items, expected schema type=array unique-items")
+				require.EqualError(t, err, "should NOT have duplicate items (foo)")
 			},
 		},
 		{

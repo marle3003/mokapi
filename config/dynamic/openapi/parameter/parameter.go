@@ -61,7 +61,7 @@ func (p *Parameter) IsExplode() bool {
 	if p.Explode != nil {
 		return *p.Explode
 	}
-	if p.Style == "fom" {
+	if p.Style == "form" {
 		return true
 	}
 	return false
