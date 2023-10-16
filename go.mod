@@ -6,7 +6,7 @@ require (
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/sprig v2.22.0+incompatible
-	github.com/brianvoe/gofakeit/v6 v6.20.1
+	github.com/brianvoe/gofakeit/v6 v6.23.2
 	github.com/dop251/goja v0.0.0-20220408131256-ffe77e20c6f1
 	github.com/elazarl/go-bindata-assetfs v1.0.0
 	github.com/emersion/go-smtp v0.15.0
