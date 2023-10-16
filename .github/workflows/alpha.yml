@@ -11,7 +11,7 @@ env:
   report-publish-path: reports/${{ github.ref_name }}
 
 jobs:
-  test:
+  build-alpha:
     uses: ./.github/workflows/test.yml
     with:
       image-name: mokapi/mokapi:${GITHUB_REF##*/}-alpha
