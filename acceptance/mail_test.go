@@ -4,7 +4,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"mokapi/config/static"
 	"mokapi/server/cert"
-	"mokapi/server/smtp/smtptest"
+	"mokapi/smtp/smtptest"
 )
 
 type MailSuite struct{ BaseSuite }
