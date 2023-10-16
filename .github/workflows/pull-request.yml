@@ -10,3 +10,4 @@ jobs:
       image-artifact-name: mokapi-image
       artifact-test-report: playwright-report
       report-publish-path: reports/${{ github.ref_name }}
+      version: dev
