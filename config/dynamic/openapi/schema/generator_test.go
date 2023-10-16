@@ -535,12 +535,10 @@ func TestGenerator_AllOf(t *testing.T) {
 		},
 		{
 			name: "one is null",
-			schema: schematest.New("", schematest.AllOfRef(
+			schema: schematest.NewAllOf(
 				nil,
-				&schema.Ref{
-					Value: schematest.New("object", schematest.WithProperty("bar", schematest.New("number"))),
-				},
-			)),
+				schematest.New("object", schematest.WithProperty("bar", schematest.New("number"))),
+			),
 			test: func(t *testing.T, result interface{}, err error) {
 				require.NoError(t, err)
 				m, ok := result.(*sortedmap.LinkedHashMap[string, interface{}])
@@ -551,12 +549,12 @@ func TestGenerator_AllOf(t *testing.T) {
 		},
 		{
 			name: "reference value is null",
-			schema: schematest.New("", schematest.AllOfRef(
+			schema: schematest.NewAllOfRefs(
 				&schema.Ref{},
 				&schema.Ref{
 					Value: schematest.New("object", schematest.WithProperty("bar", schematest.New("number"))),
 				},
-			)),
+			),
 			test: func(t *testing.T, result interface{}, err error) {
 				require.NoError(t, err)
 				m, ok := result.(*sortedmap.LinkedHashMap[string, interface{}])
