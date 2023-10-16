@@ -7,11 +7,15 @@ inputs:
   artifact-name:
     required: true
     description: "The upload artifact name"
+  version:
+    required: true
+    description: "The version of mokapi to build"
+    type: string
 runs:
   using: "composite"
   steps:
     - name: Build docker alpha image
-      run: docker build --build-arg VERSION=${GITHUB_REF##*/v} -t ${{ inputs.image-name }} -f ./images/alpha.Dockerfile .
+      run: docker build --build-arg VERSION=${{ inputs.version }} -t ${{ inputs.image-name }} -f ./images/alpha.Dockerfile .
       shell: bash
     - name: Save Image to file
       run: docker save ${{ inputs.image-name }} > /tmp/mokapi.tar
