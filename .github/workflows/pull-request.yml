@@ -3,7 +3,7 @@ on:
   pull_request:
 
 jobs:
-  test:
+  pull-request:
     uses: ./.github/workflows/test.yml
     with:
       image-name: mokapi/mokapi:${GITHUB_REF##*/}-alpha
