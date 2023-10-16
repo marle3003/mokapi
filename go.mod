@@ -25,5 +25,5 @@ require (
 	golang.org/x/net v0.17.0
 	gopkg.in/go-asn1-ber/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d
 	gopkg.in/yaml.v3 v3.0.1
-	layeh.com/gopher-luar v1.0.10
+	layeh.com/gopher-luar v1.0.11
 )
