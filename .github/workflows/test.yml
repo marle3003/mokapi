@@ -14,10 +14,14 @@ on:
       report-publish-path:
         required: true
         type: string
+      version:
+        required: true
+        description: "The version of mokapi to build"
+        type: string
 
 jobs:
   build:
-    name: Build alpha
+    name: Build mokapi
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
@@ -26,6 +30,7 @@ jobs:
         with:
           image-name: ${{ inputs.image-name }}
           artifact-name: ${{ inputs.image-artifact-name }}
+          version: ${{ inputs.version }}
 
   test:
     name: Run UI tests
