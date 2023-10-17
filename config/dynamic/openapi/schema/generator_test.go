@@ -376,7 +376,7 @@ func TestGeneratorArray(t *testing.T) {
 				Value: &schema.Schema{
 					Type: "integer", Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(3)}}},
 		})
-		require.EqualError(t, err, "can not fill array with unique items")
+		require.EqualError(t, err, "create mock data failed: can not fill array with unique items")
 	})
 }
 
@@ -514,24 +514,75 @@ func TestGenerator_AnyOf(t *testing.T) {
 
 func TestGenerator_AllOf(t *testing.T) {
 	testcases := []struct {
-		name string
-		f    func(t *testing.T)
+		name   string
+		schema *schema.Schema
+		test   func(t *testing.T, result interface{}, err error)
 	}{
 		{
 			name: "all of",
-			f: func(t *testing.T) {
-				s := schematest.New("", schematest.AllOf(
-					schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
-					schematest.New("object", schematest.WithProperty("bar", schematest.New("number"))),
-				))
-				g := schema.NewGenerator()
-				o, err := g.New(&schema.Ref{Value: s})
+			schema: schematest.New("", schematest.AllOf(
+				schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
+				schematest.New("object", schematest.WithProperty("bar", schematest.New("number"))),
+			)),
+			test: func(t *testing.T, result interface{}, err error) {
 				require.NoError(t, err)
-				m, ok := o.(*sortedmap.LinkedHashMap[string, interface{}])
-				require.True(t, ok, "should be a map")
+				m, ok := result.(*sortedmap.LinkedHashMap[string, interface{}])
+				require.True(t, ok, "should be a sorted map")
 				require.Equal(t, 2, m.Len())
 				require.Equal(t, "gbRMaRxHkiJBPta", m.Get("foo"))
 				require.Equal(t, 2.2451747541855905e+307, m.Get("bar"))
+			},
+		},
+		{
+			name: "one is null",
+			schema: schematest.NewAllOf(
+				nil,
+				schematest.New("object", schematest.WithProperty("bar", schematest.New("number"))),
+			),
+			test: func(t *testing.T, result interface{}, err error) {
+				require.NoError(t, err)
+				m, ok := result.(*sortedmap.LinkedHashMap[string, interface{}])
+				require.True(t, ok, "should be a sorted map")
+				require.Equal(t, 1, m.Len())
+				require.Equal(t, 1.644484108270445e+307, m.Get("bar"))
+			},
+		},
+		{
+			name: "reference value is null",
+			schema: schematest.NewAllOfRefs(
+				&schema.Ref{},
+				&schema.Ref{
+					Value: schematest.New("object", schematest.WithProperty("bar", schematest.New("number"))),
+				},
+			),
+			test: func(t *testing.T, result interface{}, err error) {
+				require.NoError(t, err)
+				m, ok := result.(*sortedmap.LinkedHashMap[string, interface{}])
+				require.True(t, ok, "should be a sorted map")
+				require.Equal(t, 1, m.Len())
+				require.Equal(t, 1.644484108270445e+307, m.Get("bar"))
+			},
+		},
+		{
+			name: "with integer type",
+			schema: schematest.New("", schematest.AllOf(
+				schematest.New("integer"),
+				schematest.New("object", schematest.WithProperty("bar", schematest.New("number"))),
+			)),
+			test: func(t *testing.T, result interface{}, err error) {
+				require.EqualError(t, err, "create mock data failed: allOf expects type of object but got integer")
+				require.Nil(t, result)
+			},
+		},
+		{
+			name: "one got error",
+			schema: schematest.New("", schematest.AllOf(
+				schematest.New("number"),
+				schematest.New("object", schematest.WithProperty("bar", schematest.New("number"))),
+			)),
+			test: func(t *testing.T, result interface{}, err error) {
+				require.EqualError(t, err, "create mock data failed: allOf expects type of object but got number")
+				require.Nil(t, result)
 			},
 		},
 	}
@@ -540,7 +591,11 @@ func TestGenerator_AllOf(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			gofakeit.Seed(11)
-			tc.f(t)
+
+			g := schema.NewGenerator()
+			o, err := g.New(&schema.Ref{Value: tc.schema})
+
+			tc.test(t, o, err)
 		})
 	}
 }

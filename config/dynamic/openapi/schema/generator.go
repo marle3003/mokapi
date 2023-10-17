@@ -3,7 +3,6 @@ package schema
 import (
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
-	log "github.com/sirupsen/logrus"
 	"math"
 	"math/rand"
 	"mokapi/sortedmap"
@@ -24,7 +23,11 @@ func NewGenerator() *Generator {
 }
 
 func (g *Generator) New(ref *Ref) (interface{}, error) {
-	return newBuilder().create(ref)
+	i, err := newBuilder().create(ref)
+	if err != nil {
+		return nil, fmt.Errorf("create mock data failed: %w", err)
+	}
+	return i, nil
 }
 
 func newBuilder() *builder {
@@ -62,12 +65,11 @@ func (b *builder) create(ref *Ref) (interface{}, error) {
 			if len(schema.AllOf) > 0 {
 				m := sortedmap.NewLinkedHashMap()
 				for _, all := range schema.AllOf {
-					if all.Value == nil {
+					if all == nil || all.Value == nil {
 						continue
 					}
 					if all.Value.Type != "object" {
-						log.Info("allOf only supports type of object")
-						continue
+						return nil, fmt.Errorf("allOf expects type of object but got %v", all.Value.Type)
 					}
 					o, err := b.create(all)
 					if err != nil {
