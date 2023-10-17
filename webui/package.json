@@ -33,7 +33,7 @@
     "xml-formatter": "^3.5.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.33.0",
+    "@playwright/test": "^1.39.0",
     "@rushstack/eslint-patch": "^1.5.1",
     "@types/node": "^20.8.6",
     "@vitejs/plugin-vue": "^4.0.0",
