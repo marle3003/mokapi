@@ -24,7 +24,7 @@ jobs:
     name: Publish docker image
     runs-on: ubuntu-latest
     if: "success()"
-    needs: [ test ]
+    needs: [ build-alpha ]
     steps:
       - name: Check out code
         uses: actions/checkout@v2
@@ -41,7 +41,7 @@ jobs:
     name: Publish website
     runs-on: ubuntu-latest
     if: "success()"
-    needs: [ test ]
+    needs: [ build-alpha ]
     steps:
       - name: Check out code
         uses: actions/checkout@v2
