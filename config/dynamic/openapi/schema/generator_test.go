@@ -91,7 +91,7 @@ func TestGeneratorString(t *testing.T) {
 		},
 		{
 			"uuid",
-			"98173564-6619-4557-888e-65b16bb5def5",
+			"590c1440-9888-45b0-bd51-a817ee07c3f2",
 			&schema.Schema{Type: "string", Format: "uuid"},
 		},
 		{
