@@ -16,7 +16,7 @@
     "build-sitemap": "node build-sitemap.js"
   },
   "dependencies": {
-    "@popperjs/core": "^2.11.6",
+    "@popperjs/core": "^2.11.8",
     "@types/bootstrap": "^5.2.6",
     "@types/whatwg-mimetype": "^3.0.0",
     "bootstrap": "^5.2.3",
