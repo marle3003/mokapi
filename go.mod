@@ -6,8 +6,7 @@ require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/brianvoe/gofakeit/v6 v6.20.1
 	github.com/dop251/goja v0.0.0-20220408131256-ffe77e20c6f1
-	github.com/elazarl/go-bindata-assetfs v1.0.0
-	github.com/emersion/go-smtp v0.15.0
+	github.com/elazarl/go-bindata-assetfs v1.0.1
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/go-co-op/gocron v1.9.0
 	github.com/go-git/go-git/v5 v5.6.1
@@ -31,7 +30,6 @@ require (
 	github.com/cloudflare/circl v1.3.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dlclark/regexp2 v1.4.1-0.20201116162257-a2a8dda75c91 // indirect
-	github.com/emersion/go-sasl v0.0.0-20200509203442-7bfe0ed36a21 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/go-git/gcfg v1.5.0 // indirect
 	github.com/go-git/go-billy/v5 v5.4.1 // indirect
