@@ -10,7 +10,7 @@ require (
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/go-co-op/gocron v1.9.0
 	github.com/go-git/go-git/v5 v5.6.1
-	github.com/google/uuid v1.1.1
+	github.com/google/uuid v1.3.1
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
