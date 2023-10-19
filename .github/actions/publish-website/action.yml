@@ -25,6 +25,10 @@ runs:
         npm run build-sitemap
         npm run build-website
       shell: bash
+    - name: Install Playwright
+      working-directory: ./webui
+      run: npx playwright install --with-deps
+      shell: bash
     - name: prerender
       working-directory: ./webui/ssg
       run: node index.js
