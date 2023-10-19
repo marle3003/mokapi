@@ -644,14 +644,14 @@ func TestRef_Marshal_Invalid(t *testing.T) {
 			&schema.Ref{Value: schematest.New("array", schematest.WithItems(schematest.New("integer")), schematest.WithMinItems(3))},
 			[]interface{}{12, 13},
 			media.ParseContentType("application/json"),
-			`serialize data to 'application/json' failed: does not match schema type=array minItems=3: should NOT have less than 3 items`,
+			`serialize data to 'application/json' failed: does not match schema type=array minItems=3 items=schema type=integer: should NOT have less than 3 items`,
 		},
 		{
 			"max array",
 			&schema.Ref{Value: schematest.New("array", schematest.WithItems(schematest.New("integer")), schematest.WithMaxItems(1))},
 			[]interface{}{12, 13},
 			media.ParseContentType("application/json"),
-			`serialize data to 'application/json' failed: does not match schema type=array maxItems=1: should NOT have more than 1 items`,
+			`serialize data to 'application/json' failed: does not match schema type=array maxItems=1 items=schema type=integer: should NOT have more than 1 items`,
 		},
 		{
 			"map missing required property",

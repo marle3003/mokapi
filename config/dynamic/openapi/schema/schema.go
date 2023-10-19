@@ -185,6 +185,11 @@ func (s *Schema) String() string {
 		sb.WriteString(" free-form=false")
 	}
 
+	if s.Type == "array" {
+		sb.WriteString(" items=")
+		sb.WriteString(s.Items.String())
+	}
+
 	return sb.String()
 }
 

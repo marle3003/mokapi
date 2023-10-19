@@ -124,6 +124,11 @@ func TestGeneratorString(t *testing.T) {
 			"13645 Houston",
 			&schema.Schema{Type: "string", Format: "{zip} {city}"},
 		},
+		{
+			"uri",
+			"https://www.dynamiciterate.name/target/seamless",
+			&schema.Schema{Type: "string", Format: "uri"},
+		},
 	}
 
 	for _, data := range testdata {
@@ -165,66 +170,121 @@ func TestGeneratorBool(t *testing.T) {
 }
 
 func TestGeneratorInt(t *testing.T) {
-	testdata := []struct {
+	testcases := []struct {
 		name   string
-		exp    interface{}
 		schema *schema.Schema
+		test   func(t *testing.T, i interface{}, err error)
 	}{
 		{
-			"int32",
-			int32(-1072427943),
-			&schema.Schema{Type: "integer", Format: "int32"},
+			name:   "int32",
+			schema: &schema.Schema{Type: "integer", Format: "int32"},
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int32(-1072427943), i)
+			},
 		},
 		{
-			"int32 min",
-			int32(196446384),
-			&schema.Schema{Type: "integer", Format: "int32", Minimum: toFloatP(10)},
+			name:   "int32 min",
+			schema: &schema.Schema{Type: "integer", Format: "int32", Minimum: toFloatP(10)},
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int32(196446384), i)
+			},
 		},
 		{
-			"int32 max",
-			int32(-1951037312),
-			&schema.Schema{Type: "integer", Format: "int32", Maximum: toFloatP(0)},
+			name: "int32 max",
+
+			schema: &schema.Schema{Type: "integer", Format: "int32", Maximum: toFloatP(0)},
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int32(-1951037312), i)
+			},
 		},
 		{
-			"int32 min max",
-			int32(-4),
-			&schema.Schema{Type: "integer", Format: "int32", Minimum: toFloatP(-5), Maximum: toFloatP(5)},
+			name:   "int32 min max",
+			schema: &schema.Schema{Type: "integer", Format: "int32", Minimum: toFloatP(-5), Maximum: toFloatP(5)},
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int32(-4), i)
+			},
 		},
 		{
-			"int64",
-			int64(-8379641344161477543),
-			&schema.Schema{Type: "integer", Format: "int64"},
+			name:   "int64",
+			schema: &schema.Schema{Type: "integer", Format: "int64"},
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int64(-8379641344161477543), i)
+			},
 		},
 		{
-			"int64 min",
-			int64(843730692693298304),
-			&schema.Schema{Type: "integer", Format: "int64", Minimum: toFloatP(10)},
+			name:   "int64 min",
+			schema: &schema.Schema{Type: "integer", Format: "int64", Minimum: toFloatP(10)},
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int64(843730692693298304), i)
+			},
 		},
 		{
-			"int64 max",
-			int64(-8379641344161477632),
-			&schema.Schema{Type: "integer", Format: "int64", Maximum: toFloatP(0)},
+			name:   "int64 max",
+			schema: &schema.Schema{Type: "integer", Format: "int64", Maximum: toFloatP(0)},
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int64(-8379641344161477632), i)
+			},
 		},
 		{
-			"int64 min max",
-			int64(-4),
-			&schema.Schema{Type: "integer", Format: "int64", Minimum: toFloatP(-5), Maximum: toFloatP(5)},
+			name:   "int64 min max",
+			schema: &schema.Schema{Type: "integer", Format: "int64", Minimum: toFloatP(-5), Maximum: toFloatP(5)},
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int64(-4), i)
+			},
 		},
 		{
-			"int64 min max positive",
-			int64(5),
-			&schema.Schema{Type: "integer", Format: "int64", Minimum: toFloatP(4), Maximum: toFloatP(10)},
+			name:   "int64 min max positive",
+			schema: &schema.Schema{Type: "integer", Format: "int64", Minimum: toFloatP(4), Maximum: toFloatP(10)},
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int64(5), i)
+			},
+		},
+		{
+			name: "int64 min max positive exclusive",
+			schema: &schema.Schema{
+				Type:             "integer",
+				Format:           "int64",
+				Minimum:          toFloatP(3),
+				Maximum:          toFloatP(5),
+				ExclusiveMinimum: toBoolP(true),
+				ExclusiveMaximum: toBoolP(true),
+			},
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int64(4), i)
+			},
+		},
+		{
+			name: "int64 min max positive exclusive but error",
+			schema: &schema.Schema{
+				Type:             "integer",
+				Format:           "int64",
+				Minimum:          toFloatP(4),
+				Maximum:          toFloatP(5),
+				ExclusiveMinimum: toBoolP(true),
+				ExclusiveMaximum: toBoolP(true),
+			},
+			test: func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, "generating data failed: invalid minimum '5' and maximum '4' in schema type=integer format=int64 minimum=5 maximum=4")
+			},
 		},
 	}
 
-	for _, data := range testdata {
-		t.Run(data.name, func(t *testing.T) {
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
 			gofakeit.Seed(11)
-
 			g := schema.NewGenerator()
-			o, err := g.New(&schema.Ref{Value: data.schema})
-			require.NoError(t, err)
-			require.Equal(t, data.exp, o)
+			i, err := g.New(&schema.Ref{Value: tc.schema})
+			tc.test(t, i, err)
 		})
 	}
 }
@@ -300,44 +360,74 @@ func TestGeneratorFloat(t *testing.T) {
 }
 
 func TestGeneratorArray(t *testing.T) {
-	testdata := []struct {
+	testcases := []struct {
 		name   string
 		exp    interface{}
 		schema *schema.Schema
+		test   func(t *testing.T, i interface{}, err error)
 	}{
 		{
-			"simple",
-			[]interface{}{int32(8), int32(8), int32(6), int32(7), int32(1)},
-			&schema.Schema{Type: "array", Items: &schema.Ref{
+			name: "int32",
+			schema: &schema.Schema{Type: "array", Items: &schema.Ref{
 				Value: &schema.Schema{
 					Type: "integer", Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(10)}}},
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []interface{}{int32(8), int32(8), int32(6), int32(7), int32(1)}, i)
+			},
 		},
 		{
-			"min items",
-			[]interface{}{int32(1), int32(8), int32(8), int32(6), int32(7)},
-			&schema.Schema{Type: "array", MinItems: toIntP(5), Items: &schema.Ref{
+			name: "min items",
+			schema: &schema.Schema{Type: "array", MinItems: toIntP(5), Items: &schema.Ref{
 				Value: &schema.Schema{
 					Type: "integer", Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(10)}}},
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []interface{}{int32(1), int32(8), int32(8), int32(6), int32(7)}, i)
+			},
 		},
 		{
-			"min & max items",
-			[]interface{}{int32(8), int32(8), int32(6), int32(7), int32(1), int32(8), int32(9), int32(5), int32(3), int32(1)},
-			&schema.Schema{Type: "array", MinItems: toIntP(5), MaxItems: toIntP(10), Items: &schema.Ref{
+			name: "min & max items",
+			schema: &schema.Schema{Type: "array", MinItems: toIntP(5), MaxItems: toIntP(10), Items: &schema.Ref{
 				Value: &schema.Schema{
 					Type: "integer", Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(10)}}},
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []interface{}{int32(8), int32(8), int32(6), int32(7), int32(1), int32(8), int32(9), int32(5), int32(3), int32(1)}, i)
+			},
 		},
 		{
-			"unique items",
-			[]interface{}{int32(8), int32(6), int32(7), int32(1), int32(9), int32(5), int32(3), int32(2), int32(4), int32(10)},
-			&schema.Schema{Type: "array", MinItems: toIntP(5), MaxItems: toIntP(10), UniqueItems: true,
+			name: "unique items",
+			schema: &schema.Schema{Type: "array", MinItems: toIntP(5), MaxItems: toIntP(10), UniqueItems: true,
 				Items: &schema.Ref{
 					Value: &schema.Schema{
 						Type: "integer", Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(10)}}},
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []interface{}{int32(8), int32(6), int32(7), int32(1), int32(9), int32(5), int32(3), int32(2), int32(4), int32(10)}, i)
+			},
 		},
 		{
-			"enum ignores items config",
-			[]interface{}{3, 2, 1},
-			&schema.Schema{Type: "array", MinItems: toIntP(5), MaxItems: toIntP(10), UniqueItems: true,
+			name: "unique and shuffle items",
+			schema: &schema.Schema{Type: "array", MinItems: toIntP(2), MaxItems: toIntP(5), UniqueItems: true,
+				Items: &schema.Ref{
+					Value: &schema.Schema{
+						Type:    "integer",
+						Format:  "int32",
+						Minimum: toFloatP(0),
+						Maximum: toFloatP(10),
+					},
+				},
+				ShuffleItems: true,
+			},
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []interface{}{int32(7), int32(6), int32(8)}, i)
+			},
+		},
+		{
+			name: "enum ignores items config",
+			schema: &schema.Schema{Type: "array", MinItems: toIntP(5), MaxItems: toIntP(10), UniqueItems: true,
 				Enum: []interface{}{
 					[]interface{}{1, 2, 3},
 					[]interface{}{3, 2, 1},
@@ -345,39 +435,77 @@ func TestGeneratorArray(t *testing.T) {
 				Items: &schema.Ref{
 					Value: &schema.Schema{
 						Type: "integer", Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(3)}}},
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []interface{}{3, 2, 1}, i)
+			},
 		},
 		{
-			"example",
-			[]interface{}{1, 2, 3},
-			&schema.Schema{Type: "array", MinItems: toIntP(5), MaxItems: toIntP(10), UniqueItems: true,
+			name: "example",
+			schema: &schema.Schema{Type: "array", MinItems: toIntP(5), MaxItems: toIntP(10), UniqueItems: true,
 				Example: []interface{}{1, 2, 3},
 				Items: &schema.Ref{
 					Value: &schema.Schema{
 						Type: "integer", Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(3)}}},
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []interface{}{1, 2, 3}, i)
+			},
+		},
+		{
+			name: "unique items with error",
+			schema: &schema.Schema{Type: "array", MinItems: toIntP(5), MaxItems: toIntP(10), UniqueItems: true,
+				Items: &schema.Ref{
+					Value: &schema.Schema{
+						Type: "integer", Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(3)}}},
+			test: func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, "generating data failed: can not fill array with unique items for schema type=array minItems=5 maxItems=10 unique-items items=schema type=integer format=int32 minimum=0 maximum=3")
+			},
+		},
+		{
+			name: "unique items with enum",
+			schema: &schema.Schema{Type: "array", MinItems: toIntP(5), MaxItems: toIntP(10), UniqueItems: true,
+				Items: &schema.Ref{
+					Value: &schema.Schema{
+						Type:   "integer",
+						Format: "int32",
+						Enum:   []interface{}{1, 2, 3, 4, 5, 6, 7, 8, 9},
+					},
+				},
+			},
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []interface{}{7, 3, 8, 6, 5}, i)
+			},
+		},
+		{
+			name: "unique items with enum and shuffle",
+			schema: &schema.Schema{Type: "array", MinItems: toIntP(5), MaxItems: toIntP(10), UniqueItems: true,
+				Items: &schema.Ref{
+					Value: &schema.Schema{
+						Type:   "integer",
+						Format: "int32",
+						Enum:   []interface{}{1, 2, 3, 4, 5, 6, 7, 8, 9},
+					},
+				},
+				ShuffleItems: true,
+			},
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []interface{}{5, 3, 8, 6, 7}, i)
+			},
 		},
 	}
 
-	for _, data := range testdata {
-		t.Run(data.name, func(t *testing.T) {
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
 			gofakeit.SetGlobalFaker(gofakeit.New(11))
 
-			g := schema.NewGenerator()
-			o, err := g.New(&schema.Ref{Value: data.schema})
-			require.NoError(t, err)
-			require.Equal(t, data.exp, o)
+			g := schema.NewGeneratorWithSeed(11)
+			o, err := g.New(&schema.Ref{Value: tc.schema})
+			tc.test(t, o, err)
 		})
 	}
-
-	t.Run("unique items panic", func(t *testing.T) {
-		gofakeit.Seed(11)
-		g := schema.NewGenerator()
-		_, err := g.New(&schema.Ref{Value: &schema.Schema{Type: "array", MinItems: toIntP(5), MaxItems: toIntP(10), UniqueItems: true,
-			Items: &schema.Ref{
-				Value: &schema.Schema{
-					Type: "integer", Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(3)}}},
-		})
-		require.EqualError(t, err, "create mock data failed: can not fill array with unique items")
-	})
 }
 
 func TestGeneratorObject(t *testing.T) {
@@ -570,18 +698,38 @@ func TestGenerator_AllOf(t *testing.T) {
 				schematest.New("object", schematest.WithProperty("bar", schematest.New("number"))),
 			)),
 			test: func(t *testing.T, result interface{}, err error) {
-				require.EqualError(t, err, "create mock data failed: allOf expects type of object but got integer")
+				require.EqualError(t, err, "generating data failed: allOf expects type of object but got integer")
 				require.Nil(t, result)
 			},
 		},
 		{
-			name: "one got error",
+			name: "one is not object",
 			schema: schematest.New("", schematest.AllOf(
 				schematest.New("number"),
 				schematest.New("object", schematest.WithProperty("bar", schematest.New("number"))),
 			)),
 			test: func(t *testing.T, result interface{}, err error) {
-				require.EqualError(t, err, "create mock data failed: allOf expects type of object but got number")
+				require.EqualError(t, err, "generating data failed: allOf expects type of object but got number")
+				require.Nil(t, result)
+			},
+		},
+		{
+			name: "one gets error",
+			schema: schematest.New("", schematest.AllOf(
+				schematest.New("object", schematest.WithProperty("a",
+					schematest.New("array",
+						schematest.WithUniqueItems(),
+						schematest.WithItems(
+							schematest.New("integer",
+								schematest.WithMinItems(5),
+								schematest.WithMinimum(0),
+								schematest.WithMaximum(3),
+							))),
+				)),
+				schematest.New("object", schematest.WithProperty("bar", schematest.New("number"))),
+			)),
+			test: func(t *testing.T, result interface{}, err error) {
+				require.EqualError(t, err, "generating data failed: allOf expects to be valid against all of subschemas: can not fill array with unique items for schema type=array unique-items items=schema type=integer minimum=0 maximum=3 minItems=5")
 				require.Nil(t, result)
 			},
 		},

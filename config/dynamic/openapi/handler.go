@@ -35,6 +35,7 @@ func NewHandler(config *Config, eventEmitter common.EventEmitter) http.Handler {
 		next: &responseHandler{
 			config:       config,
 			eventEmitter: eventEmitter,
+			g:            schema.NewGenerator(),
 		},
 	}
 }

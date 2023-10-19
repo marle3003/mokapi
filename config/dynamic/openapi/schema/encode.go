@@ -361,3 +361,30 @@ func reflectFromMap(v reflect.Value, schema *Schema) (*schemaObject, error) {
 
 	return obj, nil
 }
+
+func getType(s *Schema) (reflect.Type, error) {
+	switch s.Type {
+	case "integer":
+		if s.Format == "int32" {
+			return reflect.TypeOf(int32(0)), nil
+		}
+		return reflect.TypeOf(int64(0)), nil
+	case "number":
+		if s.Format == "float32" {
+			return reflect.TypeOf(float32(0)), nil
+		}
+		return reflect.TypeOf(float64(0)), nil
+	case "string":
+		return reflect.TypeOf(""), nil
+	case "boolean":
+		return reflect.TypeOf(false), nil
+	case "array":
+		t, err := getType(s.Items.Value)
+		if err != nil {
+			return nil, err
+		}
+		return reflect.SliceOf(t), nil
+	}
+
+	return nil, fmt.Errorf("type %v not implemented", s.Type)
+}
