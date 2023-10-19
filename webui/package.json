@@ -18,7 +18,7 @@
   "dependencies": {
     "@popperjs/core": "^2.11.6",
     "@types/bootstrap": "^5.2.8",
-    "@types/whatwg-mimetype": "^3.0.0",
+    "@types/whatwg-mimetype": "^3.0.1",
     "bootstrap": "^5.3.2",
     "bootstrap-icons": "^1.11.1",
     "dayjs": "^1.11.10",
@@ -35,7 +35,7 @@
   "devDependencies": {
     "@playwright/test": "^1.39.0",
     "@rushstack/eslint-patch": "^1.5.1",
-    "@types/node": "^20.8.6",
+    "@types/node": "^20.8.7",
     "@vitejs/plugin-vue": "^4.4.0",
     "@vue/eslint-config-prettier": "^8.0.0",
     "@vue/eslint-config-typescript": "^12.0.0",
@@ -46,7 +46,7 @@
     "playwright": "^1.39.0",
     "prettier": "^3.0.3",
     "typescript": "^5.0.4",
-    "vite": "^4.4.11",
+    "vite": "^4.5.0",
     "vite-plugin-rewrite-all": "^1.0.1",
     "vue-tsc": "^1.8.19"
   }
