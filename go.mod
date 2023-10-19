@@ -12,7 +12,7 @@ require (
 	github.com/go-git/go-git/v5 v5.6.1
 	github.com/google/uuid v1.3.1
 	github.com/pkg/errors v0.9.1
-	github.com/sirupsen/logrus v1.8.1
+	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.7.0
 	github.com/yuin/gopher-lua v0.0.0-20210529063254-f4c35e4016d9
 	golang.org/x/net v0.17.0
