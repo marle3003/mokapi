@@ -25,7 +25,7 @@
     "del-cli": "^5.1.0",
     "http-status-codes": "^2.3.0",
     "ncp": "^2.0.0",
-    "vue": "^3.3.5",
+    "vue": "^3.3.6",
     "vue-router": "^4.2.5",
     "vue3-highlightjs": "^1.0.5",
     "vue3-markdown-it": "^1.0.10",
