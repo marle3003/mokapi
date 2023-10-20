@@ -6,7 +6,6 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "types": ["node"],
     "typeRoots": ["./src/types"],
     "ignoreDeprecations": "5.0"
   },
