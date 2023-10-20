@@ -2,9 +2,13 @@ version: 2
 updates:
   - package-ecosystem: "gomod"
     directory: "/"
+    target-branch: v0.9
     schedule:
-      interval: "daily"
+      interval: "weekly"
+      day: friday
   - package-ecosystem: "npm"
     directory: "/webui"
+    target-branch: v0.9
     schedule:
-      interval: "daily"
+      interval: "weekly"
+      day: friday
