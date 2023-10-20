@@ -14,7 +14,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.2
-	github.com/yuin/gopher-lua v0.0.0-20210529063254-f4c35e4016d9
+	github.com/yuin/gopher-lua v1.1.0
 	golang.org/x/net v0.17.0
 	gopkg.in/go-asn1-ber/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d
 	gopkg.in/yaml.v3 v3.0.1
