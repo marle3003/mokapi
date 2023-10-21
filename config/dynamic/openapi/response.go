@@ -119,7 +119,7 @@ func (r *Responses[K]) UnmarshalYAML(value *yaml.Node) error {
 }
 
 func (r *ResponseRef) UnmarshalYAML(node *yaml.Node) error {
-	return r.Reference.Unmarshal(node, &r.Value)
+	return r.Reference.UnmarshalYaml(node, &r.Value)
 }
 
 func (r *Responses[K]) Resolve(token string) (interface{}, error) {

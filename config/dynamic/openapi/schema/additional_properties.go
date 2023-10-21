@@ -3,6 +3,7 @@ package schema
 import (
 	"encoding/json"
 	"gopkg.in/yaml.v3"
+	"mokapi/config/dynamic/common"
 )
 
 type AdditionalProperties struct {
@@ -21,6 +22,14 @@ func (ap *AdditionalProperties) IsFreeForm() bool {
 		return true
 	}
 	return false
+}
+
+func (ap *AdditionalProperties) Parse(config *common.Config, reader common.Reader) error {
+	if ap == nil {
+		return nil
+	}
+
+	return ap.Ref.Parse(config, reader)
 }
 
 func (ap *AdditionalProperties) UnmarshalYAML(node *yaml.Node) error {

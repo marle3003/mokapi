@@ -26,7 +26,7 @@ func (r *Ref) Marshal(i interface{}, contentType media.ContentType) ([]byte, err
 	case contentType.Subtype == "json" || contentType.Subtype == "problem+json":
 		b, err = json.Marshal(i)
 	case contentType.IsXml():
-		b, err = r.marshalXml(i)
+		b, err = marshalXml(i, r)
 	default:
 		if s, ok := i.(string); ok {
 			b = []byte(s)

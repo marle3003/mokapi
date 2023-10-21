@@ -2,6 +2,7 @@ package schema
 
 import (
 	"fmt"
+	"mokapi/config/dynamic/common"
 	"strings"
 )
 
@@ -47,6 +48,44 @@ type Schema struct {
 
 func (s *Schema) HasProperties() bool {
 	return s.Properties != nil && s.Properties.Len() > 0
+}
+
+func (s *Schema) Parse(config *common.Config, reader common.Reader) error {
+	if s == nil {
+		return nil
+	}
+
+	if err := s.Items.Parse(config, reader); err != nil {
+		return err
+	}
+
+	if err := s.Properties.Parse(config, reader); err != nil {
+		return err
+	}
+
+	if err := s.AdditionalProperties.Parse(config, reader); err != nil {
+		return err
+	}
+
+	for _, r := range s.AnyOf {
+		if err := r.Parse(config, reader); err != nil {
+			return err
+		}
+	}
+
+	for _, r := range s.AllOf {
+		if err := r.Parse(config, reader); err != nil {
+			return err
+		}
+	}
+
+	for _, r := range s.OneOf {
+		if err := r.Parse(config, reader); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *Schema) String() string {

@@ -31,7 +31,7 @@ func (r *Ref) Parse(config *common.Config, reader common.Reader) error {
 }
 
 func (r *Ref) UnmarshalYAML(node *yaml.Node) error {
-	return r.Unmarshal(node, &r.Value)
+	return r.UnmarshalYaml(node, &r.Value)
 }
 
 func (r *Ref) UnmarshalJSON(b []byte) error {
@@ -40,6 +40,16 @@ func (r *Ref) UnmarshalJSON(b []byte) error {
 
 func (r *Ref) HasProperties() bool {
 	return r.Value != nil && r.Value.HasProperties()
+}
+
+func (r *Ref) String() string {
+	if r.Value == nil && len(r.Ref) == 0 {
+		return fmt.Sprintf("no schema defined")
+	}
+	if r.Value == nil {
+		return fmt.Sprintf("unresolved schema %v", r.Ref)
+	}
+	return r.Value.String()
 }
 
 func (r *Ref) getXml() *Xml {

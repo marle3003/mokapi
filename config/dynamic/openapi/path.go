@@ -62,7 +62,7 @@ func (r *PathRef) UnmarshalJSON(b []byte) error {
 }
 
 func (r *PathRef) UnmarshalYAML(node *yaml.Node) error {
-	return r.Reference.Unmarshal(node, &r.Value)
+	return r.Reference.UnmarshalYaml(node, &r.Value)
 }
 
 func (p *Path) Operations() map[string]*Operation {

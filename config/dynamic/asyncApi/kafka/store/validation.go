@@ -29,7 +29,7 @@ func (v *validator) Payload(payload kafka.Bytes) error {
 		return nil
 	}
 
-	_, err := schema.ParseFrom(payload, media.ParseContentType(v.contentType), v.payload)
+	_, err := schema.UnmarshalFrom(payload, media.ParseContentType(v.contentType), v.payload)
 	return err
 }
 
