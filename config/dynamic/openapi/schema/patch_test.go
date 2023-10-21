@@ -123,7 +123,7 @@ func TestSchema_Patch(t *testing.T) {
 			schemas: []*schema.Schema{
 				{},
 				schematest.New("array",
-					schematest.WithItems(schematest.New("string"))),
+					schematest.WithItems("string")),
 			},
 			test: func(t *testing.T, result *schema.Schema) {
 				require.Equal(t, "array", result.Type)
@@ -134,9 +134,9 @@ func TestSchema_Patch(t *testing.T) {
 			name: "patch array items format",
 			schemas: []*schema.Schema{
 				schematest.New("array",
-					schematest.WithItems(schematest.New("string"))),
+					schematest.WithItems("string")),
 				schematest.New("array",
-					schematest.WithItems(schematest.New("string", schematest.WithFormat("foo")))),
+					schematest.WithItems("string", schematest.WithFormat("foo"))),
 			},
 			test: func(t *testing.T, result *schema.Schema) {
 				require.Equal(t, "array", result.Type)
@@ -219,19 +219,6 @@ func TestSchema_Patch(t *testing.T) {
 			test: func(t *testing.T, result *schema.Schema) {
 				require.NotNil(t, result.Xml)
 				require.True(t, result.Xml.Attribute)
-			},
-		},
-		{
-			name: "patch xml overwrite CData",
-			schemas: []*schema.Schema{
-				schematest.New("string",
-					schematest.WithXml(&schema.Xml{CData: false})),
-				schematest.New("string",
-					schematest.WithXml(&schema.Xml{CData: true})),
-			},
-			test: func(t *testing.T, result *schema.Schema) {
-				require.NotNil(t, result.Xml)
-				require.True(t, result.Xml.CData)
 			},
 		},
 		{

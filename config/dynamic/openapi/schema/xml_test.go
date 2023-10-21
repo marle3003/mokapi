@@ -2,15 +2,54 @@ package schema_test
 
 import (
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 	"io"
-	"mokapi/config/dynamic/openapi/ref"
 	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/config/dynamic/openapi/schema/schematest"
 	"mokapi/media"
-	"mokapi/sortedmap"
 	"reflect"
 	"testing"
 )
+
+func TestRef_UnmarshalYAML(t *testing.T) {
+	testcases := []struct {
+		name string
+		s    string
+		test func(t *testing.T, r *schema.Xml)
+	}{
+		{
+			name: "xml",
+			s: `
+  wrapped: true
+  name: foo
+  attribute: true
+  prefix: bar
+  namespace: ns1
+`,
+			test: func(t *testing.T, x *schema.Xml) {
+				require.Equal(t, &schema.Xml{
+					Wrapped:   true,
+					Name:      "foo",
+					Attribute: true,
+					Prefix:    "bar",
+					Namespace: "ns1",
+				}, x)
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			x := &schema.Xml{}
+			err := yaml.Unmarshal([]byte(tc.s), &x)
+			require.NoError(t, err)
+			tc.test(t, x)
+		})
+	}
+}
 
 func TestParse_Xml(t *testing.T) {
 	testcases := []struct {
@@ -90,57 +129,6 @@ func TestParse_Xml(t *testing.T) {
 			t.Parallel()
 			i, err := schema.Parse([]byte(tc.xml), media.ParseContentType("application/xml"), &schema.Ref{Value: tc.schema})
 			tc.f(t, i, err)
-		})
-	}
-}
-
-func TestEncode_Xml(t *testing.T) {
-	testcases := []struct {
-		name   string
-		data   func() interface{}
-		schema *schema.Schema
-		f      func(t *testing.T, s string, err error)
-	}{
-		{
-			"nil",
-			func() interface{} {
-				return nil
-			},
-			schematest.New("object"),
-			func(t *testing.T, s string, err error) {
-				require.NoError(t, err)
-				require.Equal(t, "<root></root>", s)
-			},
-		},
-		{
-			"simple",
-			func() interface{} {
-				m := sortedmap.NewLinkedHashMap()
-				m.Set("id", 0)
-				m.Set("title", "foo")
-				m.Set("author", "bar")
-				return m
-			},
-			schematest.New("object",
-				schematest.WithXml(&schema.Xml{Name: "book"}),
-				schematest.WithProperty("id", schematest.New("integer")),
-				schematest.WithProperty("title", schematest.New("string")),
-				schematest.WithProperty("author", schematest.New("string"))),
-			func(t *testing.T, s string, err error) {
-				require.NoError(t, err)
-				require.Equal(t, "<book><id>0</id><title>foo</title><author>bar</author></book>", s)
-			},
-		},
-	}
-
-	t.Parallel()
-	for _, tc := range testcases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			r := &schema.Ref{Value: tc.schema, Reference: ref.Reference{Ref: "#/root"}}
-			b, err := r.Marshal(tc.data(), media.ParseContentType("application/xml"))
-			tc.f(t, string(b), err)
 		})
 	}
 }

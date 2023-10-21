@@ -89,7 +89,7 @@ func TestParse(t *testing.T) {
 			`{"foo": ["a", "b", "c"]}`,
 			schematest.New("object",
 				schematest.WithProperty("foo",
-					schematest.New("array", schematest.WithItems(schematest.New("string"))))),
+					schematest.New("array", schematest.WithItems("string")))),
 			func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, &struct {
@@ -678,7 +678,7 @@ func TestValidate_Object(t *testing.T) {
 				schematest.WithRequired("name"),
 				schematest.WithProperty("name", schematest.New("string")),
 				schematest.WithProperty("colors", schematest.New("array",
-					schematest.WithItems(schematest.New("string")))),
+					schematest.WithItems("string"))),
 				schematest.WithEnum([]interface{}{map[string]interface{}{"name": "foo", "colors": []string{"red", "green", "blue"}}}),
 			),
 			func(t *testing.T, _ interface{}, err error) {
@@ -906,10 +906,9 @@ func TestValidate_Array(t *testing.T) {
 			"object array",
 			`[{"name": "foo", "age": 12}]`,
 			schematest.New("array", schematest.WithItems(
-				schematest.New("object",
-					schematest.WithProperty("name", schematest.New("string")),
-					schematest.WithProperty("age", schematest.New("integer")),
-				),
+				"object",
+				schematest.WithProperty("name", schematest.New("string")),
+				schematest.WithProperty("age", schematest.New("integer")),
 			),
 			),
 			func(t *testing.T, i interface{}, err error) {

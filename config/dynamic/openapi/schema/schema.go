@@ -2,19 +2,8 @@ package schema
 
 import (
 	"fmt"
-	"mokapi/config/dynamic/openapi/ref"
-	"mokapi/sortedmap"
 	"strings"
 )
-
-type Ref struct {
-	ref.Reference
-	Value *Schema
-}
-
-type Schemas struct {
-	sortedmap.LinkedHashMap[string, *Ref]
-}
 
 type Schema struct {
 	Description string `yaml:"description" json:"description"`
@@ -54,43 +43,6 @@ type Schema struct {
 	AdditionalProperties *AdditionalProperties `yaml:"additionalProperties,omitempty" json:"additionalProperties,omitempty"`
 	MinProperties        *int                  `yaml:"minProperties" json:"minProperties"`
 	MaxProperties        *int                  `yaml:"maxProperties" json:"maxProperties"`
-}
-
-type AdditionalProperties struct {
-	*Ref
-	Forbidden bool
-}
-
-type Xml struct {
-	Wrapped   bool   `yaml:"wrapped" json:"wrapped"`
-	Name      string `yaml:"name" json:"name"`
-	Attribute bool   `yaml:"attribute" json:"attribute"`
-	Prefix    string `yaml:"prefix" json:"prefix"`
-	Namespace string `yaml:"namespace" json:"namespace"`
-	CData     bool   `yaml:"x-cdata" json:"x-cdata"`
-}
-
-func (s *Schemas) Get(name string) *Ref {
-	if s == nil {
-		return nil
-	}
-	r := s.LinkedHashMap.Get(name)
-	if r == nil {
-		return nil
-	}
-	return r
-}
-
-func (s *Schemas) Resolve(token string) (interface{}, error) {
-	i := s.Get(token)
-	if i == nil {
-		return nil, fmt.Errorf("unable to resolve %v", token)
-	}
-	return i.Value, nil
-}
-
-func (r *Ref) HasProperties() bool {
-	return r.Value != nil && r.Value.HasProperties()
 }
 
 func (s *Schema) HasProperties() bool {
@@ -206,17 +158,4 @@ func (s *Schema) IsFreeForm() bool {
 
 func (s *Schema) IsDictionary() bool {
 	return s.AdditionalProperties != nil && s.AdditionalProperties.Ref != nil && s.AdditionalProperties.Value != nil && s.AdditionalProperties.Value.Type != ""
-}
-
-func (ap *AdditionalProperties) IsFreeForm() bool {
-	if ap == nil {
-		return true
-	}
-	if ap.Ref == nil || ap.Value == nil {
-		return !ap.Forbidden
-	}
-	if ap.Value != nil && ap.Value.Type == "" {
-		return true
-	}
-	return false
 }

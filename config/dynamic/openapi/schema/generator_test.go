@@ -607,7 +607,7 @@ func TestGenerator_AnyOf(t *testing.T) {
 			f: func(t *testing.T) {
 				s := schematest.New("array",
 					schematest.WithMinItems(1),
-					schematest.WithItems(schematest.New("",
+					schematest.WithItems("",
 						schematest.Any(
 							schematest.New("object",
 								schematest.WithProperty("foo", schematest.New("string"))),
@@ -617,7 +617,7 @@ func TestGenerator_AnyOf(t *testing.T) {
 										schematest.WithMinimum(0),
 										schematest.WithMaximum(5)))),
 						),
-					)),
+					),
 				)
 				g := schema.NewGenerator()
 				o, err := g.New(&schema.Ref{Value: s})
@@ -626,7 +626,8 @@ func TestGenerator_AnyOf(t *testing.T) {
 				require.True(t, ok, "should be an array")
 				require.Len(t, a, 1)
 				m := a[0].(*sortedmap.LinkedHashMap[string, interface{}])
-				require.Equal(t, "RMaRxHkiJBPtapW", m.Get("foo"))
+				foo, _ := m.Get("foo")
+				require.Equal(t, "RMaRxHkiJBPtapW", foo)
 			},
 		},
 	}
@@ -657,8 +658,10 @@ func TestGenerator_AllOf(t *testing.T) {
 				m, ok := result.(*sortedmap.LinkedHashMap[string, interface{}])
 				require.True(t, ok, "should be a sorted map")
 				require.Equal(t, 2, m.Len())
-				require.Equal(t, "gbRMaRxHkiJBPta", m.Get("foo"))
-				require.Equal(t, 2.2451747541855905e+307, m.Get("bar"))
+				foo, _ := m.Get("foo")
+				require.Equal(t, "gbRMaRxHkiJBPta", foo)
+				bar, _ := m.Get("bar")
+				require.Equal(t, 2.2451747541855905e+307, bar)
 			},
 		},
 		{
@@ -672,7 +675,8 @@ func TestGenerator_AllOf(t *testing.T) {
 				m, ok := result.(*sortedmap.LinkedHashMap[string, interface{}])
 				require.True(t, ok, "should be a sorted map")
 				require.Equal(t, 1, m.Len())
-				require.Equal(t, 1.644484108270445e+307, m.Get("bar"))
+				bar, _ := m.Get("bar")
+				require.Equal(t, 1.644484108270445e+307, bar)
 			},
 		},
 		{
@@ -688,7 +692,8 @@ func TestGenerator_AllOf(t *testing.T) {
 				m, ok := result.(*sortedmap.LinkedHashMap[string, interface{}])
 				require.True(t, ok, "should be a sorted map")
 				require.Equal(t, 1, m.Len())
-				require.Equal(t, 1.644484108270445e+307, m.Get("bar"))
+				bar, _ := m.Get("bar")
+				require.Equal(t, 1.644484108270445e+307, bar)
 			},
 		},
 		{
@@ -720,11 +725,11 @@ func TestGenerator_AllOf(t *testing.T) {
 					schematest.New("array",
 						schematest.WithUniqueItems(),
 						schematest.WithItems(
-							schematest.New("integer",
-								schematest.WithMinItems(5),
-								schematest.WithMinimum(0),
-								schematest.WithMaximum(3),
-							))),
+							"integer",
+							schematest.WithMinItems(5),
+							schematest.WithMinimum(0),
+							schematest.WithMaximum(3),
+						)),
 				)),
 				schematest.New("object", schematest.WithProperty("bar", schematest.New("number"))),
 			)),
@@ -765,8 +770,9 @@ func TestGenerator_Recursions(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, o)
 				m := o.(*sortedmap.LinkedHashMap[string, interface{}])
-				foo := m.Get("foo").(*sortedmap.LinkedHashMap[string, interface{}])
-				require.Nil(t, foo.Get("foo"))
+				foo, _ := m.Get("foo")
+				foo2, _ := foo.(*sortedmap.LinkedHashMap[string, interface{}]).Get("foo")
+				require.Nil(t, foo2)
 			},
 		},
 		{
@@ -782,9 +788,10 @@ func TestGenerator_Recursions(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, o)
 				m := o.(*sortedmap.LinkedHashMap[string, interface{}])
-				bar := m.Get("bar").(*sortedmap.LinkedHashMap[string, interface{}])
-				foo := bar.Get("foo").(*sortedmap.LinkedHashMap[string, interface{}])
-				require.Nil(t, foo.Get("foo"))
+				bar, _ := m.Get("bar")
+				foo, _ := bar.(*sortedmap.LinkedHashMap[string, interface{}]).Get("foo")
+				foo2, _ := foo.(*sortedmap.LinkedHashMap[string, interface{}]).Get("foo")
+				require.Nil(t, foo2)
 			},
 		},
 		{
@@ -794,9 +801,11 @@ func TestGenerator_Recursions(t *testing.T) {
 				props := &schema.Schemas{}
 				props.Set("foo", &schema.Ref{Value: obj})
 				obj.Properties = props
-				array := schematest.New("array", schematest.WithItems(obj))
+				array := schematest.New("array")
+				array.Items = &schema.Ref{Value: obj}
 				minItems := 2
 				array.MinItems = &minItems
+
 				g := schema.NewGenerator()
 				o, err := g.New(&schema.Ref{Value: array})
 				require.NoError(t, err)

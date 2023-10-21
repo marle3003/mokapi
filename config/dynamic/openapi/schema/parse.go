@@ -131,19 +131,20 @@ func parseAnyObject(m *sortedmap.LinkedHashMap[string, interface{}], schema *Sch
 			name := it.Key()
 			pRef := it.Value()
 
-			if v := m.Get(name); v == nil {
+			if v, found := m.Get(name); !found {
 				if _, ok := required[name]; ok && len(required) > 0 {
 					return nil, fmt.Errorf("missing required property %v, expected %v", name, schema)
 				}
 				continue
+			} else {
+				i, err := parse(v, pRef)
+				if err != nil {
+					continue
+				}
+				values = append(values, reflect.ValueOf(i))
+				fields = append(fields, newField(name, i))
 			}
 
-			v, err := parse(m.Get(name), pRef)
-			if err != nil {
-				continue
-			}
-			values = append(values, reflect.ValueOf(v))
-			fields = append(fields, newField(name, v))
 		}
 	}
 
@@ -198,14 +199,15 @@ func parseAllOf(i interface{}, schema *Schema) (interface{}, error) {
 			name := it.Key()
 			pRef := it.Value()
 
-			if v := m.Get(name); v == nil {
+			v, found := m.Get(name)
+			if !found {
 				if _, ok := required[name]; ok && len(required) > 0 {
 					return nil, fmt.Errorf("could not parse %v, missing required property %v, expected %v", toString(i), name, schema)
 				}
 				continue
 			}
 
-			v, err := parse(m.Get(name), pRef)
+			v, err := parse(v, pRef)
 			if err != nil {
 				return nil, fmt.Errorf("could not parse %v, value does not match all schema, expected %v", toString(i), schema)
 			}
@@ -249,14 +251,15 @@ func parseOneOfObject(m *sortedmap.LinkedHashMap[string, interface{}], schema *S
 			name := it.Key()
 			pRef := it.Value()
 
-			if v := m.Get(name); v == nil {
+			v, found := m.Get(name)
+			if !found {
 				if _, ok := required[name]; ok && len(required) > 0 {
 					return nil, fmt.Errorf("could not parse %v, missing required property %v, expected %v", toString(m), name, schema)
 				}
 				continue
 			}
 
-			v, err := parse(m.Get(name), pRef)
+			v, err := parse(v, pRef)
 			if err != nil {
 				continue
 			}
@@ -359,11 +362,12 @@ func parseObject(i interface{}, s *Schema) (interface{}, error) {
 	for it := s.Properties.Iter(); it.Next(); {
 		name := it.Key()
 		pRef := it.Value()
-		if v := m.Get(name); v == nil {
+		v, found := m.Get(name)
+		if !found {
 			continue
 		}
 
-		v, err := parse(m.Get(name), pRef)
+		v, err := parse(v, pRef)
 		if err != nil {
 			return nil, err
 		}
@@ -700,5 +704,31 @@ func (d *data) UnmarshalJSON(b []byte) error {
 
 		m.Set(key, val.d)
 	}
+}
 
+func getType(s *Schema) (reflect.Type, error) {
+	switch s.Type {
+	case "integer":
+		if s.Format == "int32" {
+			return reflect.TypeOf(int32(0)), nil
+		}
+		return reflect.TypeOf(int64(0)), nil
+	case "number":
+		if s.Format == "float32" {
+			return reflect.TypeOf(float32(0)), nil
+		}
+		return reflect.TypeOf(float64(0)), nil
+	case "string":
+		return reflect.TypeOf(""), nil
+	case "boolean":
+		return reflect.TypeOf(false), nil
+	case "array":
+		t, err := getType(s.Items.Value)
+		if err != nil {
+			return nil, err
+		}
+		return reflect.SliceOf(t), nil
+	}
+
+	return nil, fmt.Errorf("type %v not implemented", s.Type)
 }

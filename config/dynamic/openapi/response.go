@@ -130,9 +130,9 @@ func (r *Responses[K]) Resolve(token string) (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		res = m.Get(i)
+		res, _ = m.Get(i)
 	case *sortedmap.LinkedHashMap[string, *ResponseRef]:
-		res = m.Get(token)
+		res, _ = m.Get(token)
 	}
 	if res == nil {
 		return nil, fmt.Errorf("unable to resolve %v", token)
@@ -141,11 +141,11 @@ func (r *Responses[K]) Resolve(token string) (interface{}, error) {
 }
 
 func (r *Responses[K]) GetResponse(httpStatus K) *Response {
-	res := r.Get(httpStatus)
+	res, _ := r.Get(httpStatus)
 	if res == nil {
 		switch m := any(&r.LinkedHashMap).(type) {
 		case *sortedmap.LinkedHashMap[int, *ResponseRef]:
-			res = m.Get(0)
+			res, _ = m.Get(0)
 		}
 	}
 
@@ -216,7 +216,7 @@ func (r *Responses[K]) patch(patch *Responses[K]) {
 			continue
 		}
 		statusCode := it.Key()
-		if v := r.Get(statusCode); v != nil && v.Value != nil {
+		if v, _ := r.Get(statusCode); v != nil && v.Value != nil {
 			v.Value.patch(res.Value)
 		} else {
 			r.Set(statusCode, res)

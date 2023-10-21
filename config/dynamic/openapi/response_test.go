@@ -28,7 +28,7 @@ func TestResponse_UnmarshalJSON(t *testing.T) {
 				err := json.Unmarshal([]byte(`{ "200": { "description": "foo" } }`), &res)
 				require.NoError(t, err)
 				require.Equal(t, 1, res.Len())
-				r := res.Get(200)
+				r, _ := res.Get(200)
 				require.Equal(t, "foo", r.Value.Description)
 			},
 		},
@@ -39,7 +39,7 @@ func TestResponse_UnmarshalJSON(t *testing.T) {
 				err := json.Unmarshal([]byte(`{ "default": { "description": "foo" } }`), &res)
 				require.NoError(t, err)
 				require.Equal(t, 1, res.Len())
-				r := res.Get(0)
+				r, _ := res.Get(0)
 				require.Equal(t, "foo", r.Value.Description)
 			},
 		},
@@ -94,7 +94,7 @@ func TestResponse_UnmarshalYAML(t *testing.T) {
 				err := yaml.Unmarshal([]byte(`'200': { description: foo }`), &res)
 				require.NoError(t, err)
 				require.Equal(t, 1, res.Len())
-				r := res.Get(200)
+				r, _ := res.Get(200)
 				require.Equal(t, "foo", r.Value.Description)
 			},
 		},
@@ -105,7 +105,7 @@ func TestResponse_UnmarshalYAML(t *testing.T) {
 				err := yaml.Unmarshal([]byte(`default: { description: foo }`), &res)
 				require.NoError(t, err)
 				require.Equal(t, 1, res.Len())
-				r := res.Get(0)
+				r, _ := res.Get(0)
 				require.Equal(t, "foo", r.Value.Description)
 			},
 		},

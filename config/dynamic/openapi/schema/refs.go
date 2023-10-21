@@ -2,42 +2,8 @@ package schema
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"mokapi/config/dynamic/common"
 )
-
-func (s *Schemas) Parse(config *common.Config, reader common.Reader) error {
-	if s == nil {
-		return nil
-	}
-
-	for it := s.Iter(); it.Next(); {
-		if err := it.Value().Parse(config, reader); err != nil {
-			inner := errors.Unwrap(err)
-			return fmt.Errorf("parse schema '%v' failed: %w", it.Key(), inner)
-		}
-	}
-
-	return nil
-}
-
-func (r *Ref) Parse(config *common.Config, reader common.Reader) error {
-	if r == nil {
-		return nil
-	}
-	if len(r.Ref) > 0 {
-		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
-			return fmt.Errorf("parse schema failed: %w", err)
-		}
-		return nil
-	}
-
-	if r.Value == nil {
-		return nil
-	}
-
-	return r.Value.Parse(config, reader)
-}
 
 func (s *Schema) Parse(config *common.Config, reader common.Reader) error {
 	if s == nil {
