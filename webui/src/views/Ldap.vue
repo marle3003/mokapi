@@ -57,25 +57,25 @@ useMeta(title, description, "https://mokapi.io/ldap")
         <div class="card-group">
           <div class="card">
             <div class="card-body">
-              <div class="card-title">Configuration as Code</div>
+              <h3 class="card-title">Configuration as Code</h3>
               Setup your LDAP directory as code
             </div>
           </div>
           <div class="card">
             <div class="card-body">
-              <div class="card-title">QA Automation</div>
+              <h3 class="card-title">QA Automation</h3>
               Create groups, members and their attributes as required by your test workflows
             </div>
           </div>
           <div class="card">
             <div class="card-body">
-              <div class="card-title">Mokapi Scripts</div>
+              <h3 class="card-title">Mokapi Scripts</h3>
               Intercept LDAP queries for your unique workflow and edge cases.
             </div>
           </div>
           <div class="card">
             <div class="card-body">
-              <div class="card-title">View LDAP request</div>
+              <h3 class="card-title">View LDAP request</h3>
               Analyze and inspect your queries to the fake LDAP server
             </div>
           </div>

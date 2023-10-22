@@ -70,7 +70,7 @@ function showImage(target: EventTarget | null) {
           <div class="card">
             <router-link :to="{path: '/http'}">
               <div class="card-body">
-                <div class="card-title">REST API</div>
+                <h3 class="card-title">REST API</h3>
                 Mock any HTTP API with OpenAPI specification.
               </div>
             </router-link>
@@ -78,7 +78,7 @@ function showImage(target: EventTarget | null) {
           <div class="card">
             <router-link :to="{path: '/kafka'}">
               <div class="card-body">
-                <div class="card-title">Apache Kafka</div>
+                <h3 class="card-title">Apache Kafka</h3>
                 Mock Apache Kafka topics with AsyncAPI specification.
               </div>
             </router-link>
@@ -86,7 +86,7 @@ function showImage(target: EventTarget | null) {
           <div class="card">
             <router-link :to="{path: '/ldap'}">
               <div class="card-body">
-                <div class="card-title">LDAP</div>
+                <h3 class="card-title">LDAP</h3>
                 Integrate your App with a fake LDAP server.
               </div>
             </router-link>
@@ -94,7 +94,7 @@ function showImage(target: EventTarget | null) {
             <div class="card">
               <router-link :to="{path: '/smtp'}">
                 <div class="card-body">
-                  <div class="card-title">SMTP</div>
+                  <h3 class="card-title">SMTP</h3>
                   Test SMTP emails safely and no risk of spamming mailboxes
                 </div>
               </router-link>

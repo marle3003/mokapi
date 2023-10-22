@@ -60,25 +60,25 @@ useMeta(title, description, "https://mokapi.io/http")
         <div class="card-group">
           <div class="card">
             <div class="card-body">
-              <div class="card-title">Configuration as Code</div>
+              <h3 class="card-title">Configuration as Code</h3>
               Mock any HTTP API with OpenAPI specification
             </div>
           </div>
           <div class="card">
             <div class="card-body">
-              <div class="card-title">QA Automation</div>
+              <h3 class="card-title">QA Automation</h3>
               Test only system that you are responsible and fake all others to build test scenarios faster and easier.
             </div>
           </div>
           <div class="card">
             <div class="card-body">
-              <div class="card-title">Mokapi Scripts</div>
+              <h3 class="card-title">Mokapi Scripts</h3>
               Intercept or forward HTTP requests for your unique workflow such as latencies, timeouts or other edge cases.
             </div>
           </div>
           <div class="card">
             <div class="card-body">
-              <div class="card-title">Request Loggin</div>
+              <h3 class="card-title">Request Loggin</h3>
               Analyze and inspect all requests and responses in Mokapi's Dashboard.
             </div>
           </div>
