@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestRef_UnmarshalYAML(t *testing.T) {
+func TestXml_UnmarshalYAML(t *testing.T) {
 	testcases := []struct {
 		name string
 		s    string
