@@ -15,7 +15,7 @@ export default function() {
 `
 
 const title = `Bring your OpenAPI specs to life`
-const description = `Don't wait for APIs to be ready. Let your teams develop in parallel`
+const description = `Don't wait for APIs to be ready. Let your teams develop in parallel and save time.`
 useMeta(title, description, "https://mokapi.io/http")
 </script>
 

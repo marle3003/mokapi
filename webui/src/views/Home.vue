@@ -4,7 +4,7 @@ import Footer from '@/components/Footer.vue'
 import { ref, onMounted } from 'vue'
 import { Modal } from 'bootstrap'
 
-const description = `Mock tool for Agile, DevOps and Continuous Deployment teams. Mock your HTTP, Apache Kafka, SMTP or LDAP interfaces and control everything like delays, errors or other edge cases.`
+const description = `Mock tool for Agile, DevOps and Continuous Deployment teams. Mock your REST API, Apache Kafka, SMTP or LDAP interfaces and control everything like delays, errors or other edge cases.`
 
 useMeta('API Mocking and Testing | mokapi.io', description, 'https://mokapi.io')
 
@@ -70,7 +70,7 @@ function showImage(target: EventTarget | null) {
           <div class="card">
             <router-link :to="{path: '/http'}">
               <div class="card-body">
-                <div class="card-title">HTTP</div>
+                <div class="card-title">REST API</div>
                 Mock any HTTP API with OpenAPI specification.
               </div>
             </router-link>
