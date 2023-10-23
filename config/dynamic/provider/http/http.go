@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"hash/fnv"
@@ -31,7 +32,23 @@ func New(config static.HttpProvider) *Provider {
 		files:  make(map[string]uint64),
 	}
 
-	transport := http.DefaultTransport.(*http.Transport)
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	rootCAs, err := x509.SystemCertPool()
+	if err != nil {
+		log.Errorf("failed to get system cert pool: %v", err)
+		rootCAs = x509.NewCertPool()
+	}
+	if len(config.Ca) > 0 {
+		ca, err := parseCaCert(config)
+		if err != nil {
+			log.Errorf("failed to use CA certification for http provider: %v", err)
+		} else {
+			rootCAs.AddCert(ca)
+		}
+	}
+
+	transport.TLSClientConfig = &tls.Config{RootCAs: rootCAs}
+
 	if len(config.Proxy) > 0 {
 		proxy, err := url.Parse(config.Proxy)
 		if err != nil {
@@ -137,10 +154,7 @@ func (p *Provider) readUrl(u *url.URL) (c *common.Config, changed bool, err erro
 	}
 
 	defer func() {
-		err := res.Body.Close()
-		if err != nil {
-			log.Debugf("unable to close http response: %v", err.Error())
-		}
+		_ = res.Body.Close()
 	}()
 
 	if res.StatusCode != http.StatusOK {
@@ -176,4 +190,16 @@ func (p *Provider) readUrl(u *url.URL) (c *common.Config, changed bool, err erro
 func checkUrl(s string) error {
 	_, err := url.Parse(s)
 	return err
+}
+
+func parseCaCert(config static.HttpProvider) (*x509.Certificate, error) {
+	ca, err := config.Ca.Read("")
+	if err != nil {
+		return nil, fmt.Errorf("failed to read CA cert from http provider config: %w", err)
+	}
+	cert, err := x509.ParseCertificate(ca)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse CA cert: %w", err)
+	}
+	return cert, nil
 }

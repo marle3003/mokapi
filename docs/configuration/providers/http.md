@@ -6,6 +6,8 @@ description: Reads your dynamic configuration from an HTTP(S) source.
 
 Reads your dynamic configuration from an HTTP(S) source. The HTTP provider downloads your
 configuration, which is then read by the [File Provider](/docs/configuration/providers/file.md).
+By default, it uses HTTP proxies as directed by the environment variables HTTP_PROXY, HTTPS_PROXY
+and NO_PROXY (or the lowercase versions thereof).
 
 ## Configuration Example
 
@@ -80,7 +82,7 @@ MOKAPI_Providers_HTTP_PollTimeout=10s
 
 ### Proxy
 Specifies a proxy server for the request, rather than downloading directly from the
-resource.
+resource. 
 
 ```yaml tab=File (YAML)
 providers:
@@ -92,6 +94,27 @@ providers:
 ```
 ```bash tab=Env
 MOKAPI_Providers_HTTP_Proxy=http://localhost:3128
+```
+
+### CA (Certificate Authority)
+Path to the certificate authority used for secure connection. By default, the system 
+certification pool is used.
+
+``` box=warning
+This switch is only intended to be used against known hosts using self-signed certificate.
+Use at your own risk.
+```
+
+```yaml tab=File (YAML)
+providers:
+  http:
+    tlsSkipVerify: true
+```
+```bash tab=CLI
+--providers.http.tlsSkipVerify=true
+```
+```bash tab=Env
+MOKAPI_Providers_HTTP_TlsSkipVerify=true
 ```
 
 ### Skip TLS Verification
