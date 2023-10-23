@@ -76,7 +76,6 @@ type xml struct {
 	Attribute bool   `json:"attribute,omitempty"`
 	Prefix    string `json:"prefix,omitempty"`
 	Namespace string `json:"namespace,omitempty"`
-	CData     bool   `json:"x-cdata"`
 }
 
 func (h *handler) getExampleData(w http.ResponseWriter, r *http.Request) {
@@ -171,7 +170,6 @@ func (c *schemaConverter) getSchema(s *schema.Ref) *schemaInfo {
 			Attribute: s.Value.Xml.Attribute,
 			Prefix:    s.Value.Xml.Prefix,
 			Namespace: s.Value.Xml.Namespace,
-			CData:     s.Value.Xml.CData,
 		}
 	}
 
@@ -228,7 +226,6 @@ func toSchema(s *schemaInfo) *schema.Schema {
 			Attribute: s.Xml.Attribute,
 			Prefix:    s.Xml.Prefix,
 			Namespace: s.Xml.Namespace,
-			CData:     s.Xml.CData,
 		}
 	}
 	for _, any := range s.AnyOf {

@@ -8,6 +8,8 @@ import (
 	engine "mokapi/engine/common"
 	"mokapi/js/compiler"
 	"path/filepath"
+	"reflect"
+	"strings"
 )
 
 var NoDefaultFunction = errors.New("js: no default function found")
@@ -102,7 +104,7 @@ func (s *Script) ensureRuntime() (err error) {
 	}
 	s.runtime = goja.New()
 
-	s.runtime.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
+	s.runtime.SetFieldNameMapper(&customFieldNameMapper{})
 	s.require = newRequire(
 		s.host.OpenFile,
 		s.compiler,
@@ -173,4 +175,26 @@ func (s *Script) loadDeprecatedNativeModule(f func(engine.Host, *goja.Runtime) i
 		m := f(s.host, s.runtime)
 		return mapToJSValue(s.runtime, m)
 	}
+}
+
+// customFieldNameMapper default implementation filters out
+// "invalid" identifiers but also prevents accessing by
+// index operator such as object['prop']
+type customFieldNameMapper struct {
+}
+
+func (cfm customFieldNameMapper) FieldName(_ reflect.Type, f reflect.StructField) string {
+	tag := f.Tag.Get("json")
+	if idx := strings.IndexByte(tag, ','); idx != -1 {
+		tag = tag[:idx]
+	}
+	return tag
+}
+
+func uncapitalize(s string) string {
+	return strings.ToLower(s[0:1]) + s[1:]
+}
+
+func (cfm customFieldNameMapper) MethodName(_ reflect.Type, m reflect.Method) string {
+	return uncapitalize(m.Name)
 }

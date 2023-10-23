@@ -15,6 +15,15 @@ func New(typeName string, opts ...SchemaOptions) *schema.Schema {
 	return s
 }
 
+func NewRef(typeName string, opts ...SchemaOptions) *schema.Ref {
+	s := new(schema.Schema)
+	s.Type = typeName
+	for _, opt := range opts {
+		opt(s)
+	}
+	return &schema.Ref{Value: s}
+}
+
 func WithProperty(name string, ps *schema.Schema) SchemaOptions {
 	return func(s *schema.Schema) {
 		if s.Properties == nil {
@@ -24,9 +33,9 @@ func WithProperty(name string, ps *schema.Schema) SchemaOptions {
 	}
 }
 
-func WithItems(items *schema.Schema) SchemaOptions {
+func WithItems(typeName string, opts ...SchemaOptions) SchemaOptions {
 	return func(s *schema.Schema) {
-		s.Items = &schema.Ref{Value: items}
+		s.Items = NewRef(typeName, opts...)
 	}
 }
 

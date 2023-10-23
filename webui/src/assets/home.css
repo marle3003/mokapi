@@ -87,6 +87,7 @@
   text-align: center;
 }
 .home .card-group .card {
+  color: var(--color-nav-link);
   border-color: var(--color-border);
   background-color: var(--color-background-soft);
   margin: 7px;

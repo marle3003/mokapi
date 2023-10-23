@@ -34,5 +34,4 @@ declare interface XmlSchmea {
   attribute: boolean;
   prefix: string;
   namespace: string;
-  cdata: boolean;
 }

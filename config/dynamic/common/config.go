@@ -129,7 +129,7 @@ func (f *Config) AddListener(key string, l ConfigListener) {
 	if f.listeners == nil {
 		f.listeners = &sortedmap.LinkedHashMap[string, ConfigListener]{}
 	}
-	if v := f.listeners.Get(key); v == nil {
+	if _, found := f.listeners.Get(key); !found {
 		f.listeners.Set(key, l)
 	}
 }

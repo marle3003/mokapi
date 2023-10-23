@@ -52,7 +52,7 @@ func (suite *PetStoreSuite) TestJsFile() {
 	try.GetRequest(suite.T(), "http://127.0.0.1:18080/pet/4",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(http.StatusInternalServerError),
-		try.HasBody("serialize data to 'application/json' failed: does not match schema type=object properties=[id, category, name, photoUrls, tags, status] required=[name photoUrls]: missing required field 'name'\n"))
+		try.HasBody("marshal data to 'application/json' failed: does not match schema type=object properties=[id, category, name, photoUrls, tags, status] required=[name photoUrls]: missing required field 'name'\n"))
 
 	e := events.GetEvents(events.NewTraits().WithNamespace("http"))
 	require.Len(suite.T(), e, 3)

@@ -26,7 +26,7 @@ func (r *ExampleRef) UnmarshalJSON(b []byte) error {
 }
 
 func (r *ExampleRef) UnmarshalYAML(node *yaml.Node) error {
-	return r.Reference.Unmarshal(node, &r.Value)
+	return r.Reference.UnmarshalYaml(node, &r.Value)
 }
 
 func (e Examples) parse(config *common.Config, reader common.Reader) error {

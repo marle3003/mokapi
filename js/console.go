@@ -18,7 +18,7 @@ func enableConsole(runtime *goja.Runtime, logger common.Logger) {
 	runtime.Set("console", mapToJSValue(runtime, c))
 }
 
-func (c *console) Log(msg string) {
+func (c *console) Log(msg interface{}) {
 	c.logger.Info(msg)
 }
 
