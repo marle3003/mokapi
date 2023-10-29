@@ -1,63 +1,40 @@
 <script setup lang="ts">
-import { onMounted, ref, inject } from 'vue';
+import { onMounted, ref, inject  } from 'vue';
 import { useRoute } from 'vue-router';
 import { useMarkdown } from '@/composables/markdown'
 import { useMeta } from '@/composables/meta'
 import PageNotFound from './PageNotFound.vue';
 import Footer from '@/components/Footer.vue'
 import { Modal } from 'bootstrap'
+import { useFileResolver } from '@/composables/file-resolver';
+import DocNav from '@/components/docs/DocNav.vue';
 
-const files =  import.meta.glob('/src/assets/docs/**/*.md', {as: 'raw', eager: true})
+const files = inject<Record<string, string>>('files')!
+
 const nav = inject<DocConfig>('nav')!
 const openSidebar = ref(false);
 const dialog = ref<Modal>()
 const imageUrl = ref<string>()
 
 const route = useRoute()
-let canonical = 'https://mokapi.io/docs/' + <string>route.params.level1
+const { resolve } = useFileResolver()
+const { level1, level2, level3, file } = resolve(nav, route)
+console.log(`level1: ${level1}, level2: ${level2}, level3: ${level3}, file: ${file}`)
 
-let level1 = <string>route.params.level1
-level1 = Object.keys(nav).find(key => key.toLowerCase() == level1.split('-').join(' ').toLowerCase())!
-let file = nav[level1]
-
-let level2 = <string>route.params.level2
-if (!level2 && typeof file !== 'string') {
-  level2 = Object.keys(file)[0]
-  canonical += '/' + toUrlPath(level2)
-}else {
-  level2 = Object.keys(file).find(key => {
-      const search = level2.split('-').join(' ').toLowerCase()
-      return key.toLowerCase().split('/').join(' ') === search
-    })!
-  canonical += '/' + <string>route.params.level2
-}
-
-file = (file as DocConfig)[level2]
-
-let level3 = <string>route.params.level3
-if (level3 || typeof file !== 'string') {
-  if (!level3) {
-    level3 = Object.keys(file)[0]
-    canonical += '/' + toUrlPath(level3)
-  }else {
-    level3 = Object.keys(file).find(key => {
-      const search = level3.split('-').join(' ').toLowerCase()
-      return key.toLowerCase().split('/').join('-') == search
-    })!
-    canonical += '/' + <string>route.params.level3
-  }
-  file = (file as DocConfig)[level3]
-}
-
-const {content, metadata} = useMarkdown(files[`/src/assets/docs/${file}`])
-
-let base = document.querySelector("base")?.href ?? '/'
-base = base.replace(document.location.origin, '')
-if (content) {
-  if (base == '/') {
-    base = ''
+let data
+let component: any
+if (typeof file === 'string'){
+  data = files[`/src/assets/docs/${file}`]
+} else {
+  const entry = <DocEntry>file
+  if (entry.file) {
+    data = files[`/src/assets/docs/${entry.file}`]
+  } else if (entry.component) {
+    // component must be initialized in main.js
+    component = entry.component
   }
 }
+const { content, metadata } = useMarkdown(data)
 
 onMounted(() => {
   scrollTo(0, 0)
@@ -80,23 +57,24 @@ onMounted(() => {
       }
     }
   })
-  useMeta(metadata.title || level3, metadata.description, canonical.toLowerCase())
+  useMeta(metadata.title || level3, metadata.description, getCanonicalUrl(level1, level2, level3))
   dialog.value = new Modal('#imageDialog', {})
 })
 function toggleSidebar() {
   openSidebar.value = !openSidebar.value
 }
-function matchLevel2(label: any): boolean {
-  return label.toString().toLowerCase() == level2.toLowerCase()
-}
-function matchLevel3(label: any): boolean {
-  return label.toString().toLowerCase() == level3?.toLowerCase()
-}
-function formatParam(label: any): string {
-  return label.toString().toLowerCase().split(' ').join('-').split('/').join('-')
-}
 function toUrlPath(s: string): string {
-  return s.split(' ').join('-').split('/').join('-').replace('&', '%26')
+  return s.replaceAll(/[\s\/]/g, '-').replace('&', '%26')
+}
+function getCanonicalUrl(level1: string, level2: string, level3: string) {
+  let canonical = 'https://mokapi.io/docs/' + toUrlPath(level1)
+  if (level2) {
+    canonical += `/${toUrlPath(level2)}`
+  }
+  if (level3) {
+    canonical += `/${toUrlPath(level3)}`
+  }
+  return canonical.toLowerCase()
 }
 function showImage(target: EventTarget | null) {
   if (!target || !(target instanceof HTMLImageElement)) {
@@ -118,21 +96,12 @@ function showImage(target: EventTarget | null) {
       </div>
       <div class="d-flex">
         <div class="text-white sidebar d-none d-md-block" :class="openSidebar ? 'open' : ''" id="sidebar">
-          <ul class="nav nav-pills flex-column mb-auto pe-3">
-            <li class="nav-item" v-for="(v, k) of nav[level1]">
-              <p v-if="(typeof v != 'string')" class="chapter-text">{{ k }}</p>
-              <ul v-if="(typeof v != 'string')" class="nav nav-pills flex-column mb-auto pe-3 chapter">
-                <li class="nav-item" v-for="(_, k2) of v">
-                  <router-link v-if="k != k2" class="nav-link" :class="matchLevel2(k) && matchLevel3(k2) ? 'active': ''" :to="{ name: 'docs', params: {level2: formatParam(k), level3: formatParam(k2)} }" style="padding-left: 2rem">{{ k2 }}</router-link>
-                </li>
-              </ul>
-              <router-link v-if="typeof v == 'string' && level1 != k" class="nav-link chapter-text" :class="matchLevel2(k) ? 'active': ''" :to="{ name: 'docs', params: {level2: formatParam(k)} }">{{ k }}</router-link>
-            </li>
-          </ul>
+          <DocNav :level1="level1" :level2="level2" :level3="level3" :config="nav"/>
         </div>
         <div style="flex: 1;max-width:700px;margin-bottom: 3rem;">
-          <div v-html="content" class="content" v-if="content" @click="showImage($event.target)" />
-          <page-not-found v-if="!content" />
+          <div v-if="content" v-html="content" class="content" @click="showImage($event.target)" />
+          <div v-else-if="component" class="content"><component :is="component" :level1="level1" :level2="level2" :level3="level3" /></div>
+          <page-not-found v-else />
         </div>
       </div>
     </div>
