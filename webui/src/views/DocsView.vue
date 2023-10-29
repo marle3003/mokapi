@@ -19,7 +19,6 @@ const imageUrl = ref<string>()
 const route = useRoute()
 const { resolve } = useFileResolver()
 const { level1, level2, level3, file } = resolve(nav, route)
-console.log(`level1: ${level1}, level2: ${level2}, level3: ${level3}, file: ${file}`)
 
 let data
 let component: any

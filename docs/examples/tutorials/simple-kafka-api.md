@@ -1,11 +1,11 @@
 ---
-title: Get started with Mokapi & Kafka
-description: Learn how to use Mokapi to mock a Kafka Topic and verify that your producer generates valid messages according your AsyncAPI specification.
+title: Get started with Kafka
+description: Learn how to mock a Kafka Topic and verify that your producer generates valid messages according your AsyncAPI specification.
 ---
 
-# Get started with Mokapi & Kafka
+# Get started with Kafka
 
-In Mokapi we can create a Kafka topic with an AsyncAPI specification file. This example is
+In Mokapi, we can create a Kafka topic with an AsyncAPI specification file. This example is
 intended as a starters guide so that you can quickly and easily create your own mocked Kafka 
 topic.
 

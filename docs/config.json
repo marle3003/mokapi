@@ -85,6 +85,9 @@
   },
   "Examples": {
     "Index": { "component": "examples", "hideInNavigation": true},
+    "Examples": {
+      "Mokapi behind Reverse Proxy": "examples/examples/mokapi-behind-proxy.md"
+    },
     "Tutorials": {
       "Get started with REST API": "examples/tutorials/simple-http-api.md",
       "Get started with Kafka": "examples/tutorials/simple-kafka-api.md"

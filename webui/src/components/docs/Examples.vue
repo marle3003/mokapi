@@ -7,8 +7,6 @@ const files = inject<Record<string, string>>('files')!
 const nav = inject<DocConfig>('nav')!
 const exampleFiles = <DocConfig>(<DocConfig>nav['Examples'])['Examples'] ?? {}
 const tutorialsFiles = <DocConfig>(<DocConfig>nav['Examples'])['Tutorials'] ?? {}
-    console.log(exampleFiles)
-    console.log(tutorialsFiles)
 
 const examples: any[] = []
 for (const key in exampleFiles) {
@@ -20,7 +18,6 @@ for (const key in exampleFiles) {
 const tutorials: any[] = []
 for (const key in tutorialsFiles) {
     const file = tutorialsFiles[key]
-    console.log('file: '+file)
     const meta = parseMetadata(files[`/src/assets/docs/${file}`])
     tutorials.push({ key: key, meta: meta})
 }
@@ -36,7 +33,7 @@ function formatParam(label: any): string {
         <ul class="link-list">
             <li v-for="example of examples">
                 <router-link :to="{ name: 'docs', params: {level2: 'examples', level3: formatParam(example.key)} }">
-                    <p class="link-list-title">{{ example.meta.title.replace('Example ', "").replace() }}</p>
+                    <p class="link-list-title">{{ example.meta.title }}</p>
                     <p class="link-list-description">{{ example.meta.description }}</p>
                 </router-link>
             </li>
@@ -58,7 +55,7 @@ function formatParam(label: any): string {
 <style scoped>
 .link-list {
     list-style-type: none;
-    margin: 0;
+    margin-bottom: 50px;
     padding: 0;
 }
 .link-list > li{
