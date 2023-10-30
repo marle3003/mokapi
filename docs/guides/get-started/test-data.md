@@ -1,11 +1,11 @@
 ---
 title: Test Data Generator
-description: You can use randomly generated test data or use Mokapi scripts to create responses that can simulate a wide range of scenarios and edge cases.
+description: Use randomly generated test data or use Mokapi Script to create responses that can simulate a wide range of scenarios and edge cases.
 ---
 
 # Test Data Generator
 
-By default, Mokapi generates test data randomly depend on 
+By default, Mokapi generates test data randomly depending on 
 the data types. If you need more dynamic responses, you can 
 use Mokapi Script to generate responses based on specific 
 conditions or parameters. Mokapi Scripts allows you to 
@@ -45,13 +45,14 @@ schema:
       format: uuid # dd5742d1-82ad-4d42-8960-cb21bd02f3e7
 ```
 
-## Mokapi Scripts
+## Mokapi Script
 You can provide custom behavior for your API, such as
-returning an 404 HTTP respond to a given HTTP request,
+returning an 404 HTTP respond to a specific HTTP request,
 transmitting data from a resource or producing data for a
-Kafka topic.
+Kafka topic. Mokapi reads your custom scripts from 
+[providers](/docs/configuration/providers/overview.md).
 
-A simple Time API looks like this:
+A simple Time API might look like this:
 
 ```javascript tab=time.js
 import {on} from 'mokapi'
@@ -88,3 +89,4 @@ paths:
                 type: string
                 format: date-time
 ```
+To learn more about how to write Mokapi Script, see [JavaScript API](/docs/javascript-api/javascript.md).

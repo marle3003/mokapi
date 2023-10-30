@@ -131,7 +131,8 @@ section.feature img {
   margin: auto auto;
 }
 section.feature button {
-  margin-top: 0.5rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
 }
 footer {
   padding-top: 3rem;

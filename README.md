@@ -17,8 +17,8 @@
     <a href="https://mokapi.io/docs/guides/get-started/welcome">Documentation</a>
 </p>
 
-**Mokapi** is an open-source tool that allows developers to create
-and test API designs before actually building them.
+**Mokapi** is an open-source tool that allows Agile, DevOps and Continuous Deployment teams
+to create and test API designs before actually building them.
 
 With Mokapi you can quickly and easily test various
 scenarios, such as delayed or failed responses without
@@ -30,9 +30,9 @@ reduces the risk of bugs or errors in production.
 Its core feature are:
 
 - **Multiple Protocol support**: HTTP, HTTPS, Apache Kafka, SMTP, LDAP
-- **Everything as Code**: Reusing, version control, consistency and integrate tests with your CI.
+- **Everything as Code**: Reusing, version control, consistency and integrate mocks with your CI/CD.
 - **An embedded JavaScript engine** to control everything - status, headers, delays, errors or other edge cases.
-- **Patch Configuration**
+- **Patch Configuration** changes for mocking needs, rather than changing the original contract
 - **Multiple Provider support**: File, HTTP, GIT to gather configurations and scripts.
 - **Dashboard** to see what's going on.
 

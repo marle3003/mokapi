@@ -30,6 +30,7 @@
       "Patching": "configuration/patching.md"
     },
     "Providers": {
+      "Overview": "configuration/providers/overview.md",
       "File": "configuration/providers/file.md",
       "HTTP": "configuration/providers/http.md",
       "GIT": "configuration/providers/git.md"

@@ -36,7 +36,6 @@ if (typeof file === 'string'){
 const { content, metadata } = useMarkdown(data)
 
 onMounted(() => {
-  scrollTo(0, 0)
   setTimeout(() => {
     for (var pre of document.querySelectorAll('pre')) {
       pre.addEventListener("dblclick", (e) => {
@@ -276,7 +275,7 @@ pre {
   margin-top: 1rem;
 }
 .tab-content.code > .tab-pane {
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
 }
 
 .box {

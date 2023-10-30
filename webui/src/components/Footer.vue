@@ -8,6 +8,35 @@
         <div class="col-12 col-lg-2 mt-5 mt-lg-0">
           <div class="row">
             <div class="col">
+              <h3>Protocols</h3>
+              <ul>
+                <li>
+                  <router-link :to="{ path: '/http' }">
+                    HTTP / REST API
+                  </router-link>
+                </li>
+                <li>
+                  <router-link :to="{ path: '/kafka' }">
+                    Apache Kafka
+                  </router-link>
+                </li>
+                <li>
+                  <router-link :to="{ path: '/smtp' }">
+                    SMTP
+                  </router-link>
+                </li>
+                <li>
+                  <router-link :to="{ path: '/ldap' }">
+                    LDAP
+                  </router-link>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-12 col-lg-2 mt-5 mt-lg-0">
+          <div class="row">
+            <div class="col">
               <h3>Guides</h3>
               <ul>
                 <li>

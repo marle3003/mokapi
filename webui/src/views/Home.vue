@@ -144,7 +144,7 @@ function showImage(target: EventTarget | null) {
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
               <h2>Everything as Code</h2>
-              <p>Get all benefits of everything as code such as version control and consistency</p>
+              <p>Get all benefits of everything as code - Reusing, version control, consistency and integrate mocks with your CI/CD.</p>
               <router-link :to="{ path: '/docs/configuration/configuration/overview' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Learn more</button>
               </router-link>
@@ -172,7 +172,9 @@ function showImage(target: EventTarget | null) {
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
               <h2>End-to-End Tests</h2>
-              <p>Test only system that you are responsible and fake all others with Mokapi.</p>
+              <p>Test only system that you are responsible for and fake all others with Mokapi. Simulate 
+                real-life scenarios and edge cases with Mokapi Script
+              </p>
               <router-link :to="{ path: '/docs/blogs/automation-testing-in-agile-development' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Read more</button>
               </router-link>
