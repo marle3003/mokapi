@@ -5,11 +5,14 @@ import { parseMetadata } from '@/composables/markdown'
 const files = inject<Record<string, string>>('files')!
 
 const nav = inject<DocConfig>('nav')!
-const blogFiles = <DocConfig>(<DocConfig>nav['Blogs'])['Blogs'] ?? {}
+const blogFiles = <DocConfig>(<DocConfig>nav['Blogs']) ?? {}
 
 const blogs: any[] = []
 for (const key in blogFiles) {
     const file = blogFiles[key]
+    if (typeof file !== 'string') {
+        continue
+    }
     const meta = parseMetadata(files[`/src/assets/docs/${file}`])
     blogs.push({ key: key, meta: meta})
 }
@@ -24,7 +27,7 @@ function formatParam(label: any): string {
         <h1>Blogs</h1>
         <ul class="link-list">
             <li v-for="blog of blogs">
-                <router-link :to="{ name: 'docs', params: {level2: 'blogs', level3: formatParam(blog.key)} }">
+                <router-link :to="{ name: 'docs', params: {level2: formatParam(blog.key)} }">
                     <p class="link-list-title">{{ blog.meta.title }}</p>
                     <p class="link-list-description">{{ blog.meta.description }}</p>
                 </router-link>
