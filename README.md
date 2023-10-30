@@ -20,12 +20,12 @@
 **Mokapi** is an open-source tool that allows developers to create
 and test API designs before actually building them.
 
-Using Mokapi, you can quickly and easily test different
-scenarios, such as delayed or failed responses, without
+With Mokapi you can quickly and easily test various
+scenarios, such as delayed or failed responses without
 having to rely on a fully functional API.
 
-Mokapi will help you to improve the quality of the API and
-clients reduce the risk of bugs or errors in production.
+Mokapi helps you improve the quality of APIs and
+reduces the risk of bugs or errors in production.
 
 Its core feature are:
 
