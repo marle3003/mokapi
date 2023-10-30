@@ -4,7 +4,7 @@ import type { PropType } from 'vue';
 const props = defineProps({
     level1: { type: String, required: true },
     level2: { type: String, required: true },
-    level3: { type: String, required: true },
+    level3: { type: String },
     config: { type: Object as PropType<DocConfig>, required: true },
 })
 

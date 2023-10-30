@@ -64,7 +64,7 @@ function toggleSidebar() {
 function toUrlPath(s: string): string {
   return s.replaceAll(/[\s\/]/g, '-').replace('&', '%26')
 }
-function getCanonicalUrl(level1: string, level2: string, level3: string) {
+function getCanonicalUrl(level1: string, level2: string, level3: string | undefined) {
   let canonical = 'https://mokapi.io/docs/' + toUrlPath(level1)
   if (level2) {
     canonical += `/${toUrlPath(level2)}`
@@ -98,7 +98,7 @@ function showImage(target: EventTarget | null) {
         </div>
         <div style="flex: 1;max-width:700px;margin-bottom: 3rem;">
           <div v-if="content" v-html="content" class="content" @click="showImage($event.target)" />
-          <div v-else-if="component" class="content"><component :is="component" :level1="level1" :level2="level2" :level3="level3" /></div>
+          <div v-else-if="component" class="content"><component :is="component" /></div>
           <page-not-found v-else />
         </div>
       </div>

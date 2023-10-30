@@ -95,7 +95,10 @@
     }
   },
   "Blogs": {
-    "Automation Testing in Agile Development": "blogs/automation-testing-agile-development.md"
+    "Index": { "component": "blogs", "hideInNavigation": true},
+    "Blogs": {
+      "Automation Testing in Agile Development": "blogs/automation-testing-agile-development.md"
+    }
   },
   "References": {
     "Declarative Data": "references/declarative-data.md",
