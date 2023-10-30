@@ -37,16 +37,21 @@
         <div class="col-12 col-lg-3 mt-4 mt-lg-0">
           <div class="row">
             <div class="col">
-              <h3>Examples</h3>
+              <h3>Tutorials & Blogs</h3>
               <ul>
                 <li>
-                  <router-link :to="{ path: '/docs/examples/simple-http-api' }">
-                    OpenAPI with Mokapi Script
+                  <router-link :to="{ path: '/docs/examples/tutorials/get-started-with-rest-api' }">
+                    Get started with REST API
                   </router-link>
                 </li>
                 <li>
-                  <router-link :to="{ path: '/docs/examples/simple-kafka-api' }">
-                    Mocking Kafka using AsyncAPI
+                  <router-link :to="{ path: '/docs/examples/tutorials/get-started-with-kafka' }">
+                    Get started with Kafka
+                  </router-link>
+                </li>
+                <li>
+                  <router-link :to="{ path: '/docs/blogs/automation-testing-in-agile-development' }">
+                    Automation Testing in Agile Development
                   </router-link>
                 </li>
               </ul>
