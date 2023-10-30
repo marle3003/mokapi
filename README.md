@@ -1,18 +1,18 @@
-<p style="text-align: center;">
+<p align="center">
 <a href="https://mokapi.io">
 <img src="logo.svg" alt="Mokapi" title="Mokapi" width="300" />
 </a>
 </p>
 
-<h3 style="text-align: center;">Easy and flexible API mocking</h3>
+<h3 align="center">Easy and flexible API mocking</h3>
 
-<p style="text-align: center;">
+<p align="center">
 <a href="https://github.com/marle3003/mokapi/releases"><img src="https://img.shields.io/github/release/marle3003/mokapi.svg" alt="Github release"></a>
 <a href="https://github.com/marle3003/mokapi/actions/workflows/build.yml"><img src="https://github.com/marle3003/mokapi/actions/workflows/build.yml/badge.svg" alt="Build status"></a>
 <a href="https://codecov.io/gh/marle3003/mokapi"><img src="https://img.shields.io/codecov/c/gh/marle3003/mokapi/main.svg" alt="Codecov branch"></a>
 <a href="https://github.com/marle3003/mokapi/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
 </p>
-<p style="text-align: center;">
+<p align="center">
     <a href="https://github.com/marle3003/mokapi/releases">Download</a> ·
     <a href="https://mokapi.io/docs/guides/get-started/welcome">Documentation</a>
 </p>
