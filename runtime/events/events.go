@@ -4,10 +4,14 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"sort"
+	"sync"
 	"time"
 )
 
-var stores []*store
+var (
+	stores []*store
+	m      sync.Mutex
+)
 
 type Event struct {
 	Id     string      `json:"id"`
@@ -77,10 +81,16 @@ func GetEvent(id string) Event {
 }
 
 func Reset() {
+	m.Lock()
+	defer m.Unlock()
+
 	stores = make([]*store, 0)
 }
 
 func ResetStores(traits Traits) {
+	m.Lock()
+	defer m.Unlock()
+
 	i := 0 // output index
 	for _, s := range stores {
 		if !traits.Match(s.traits) {

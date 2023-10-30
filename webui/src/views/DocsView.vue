@@ -119,20 +119,22 @@ function showImage(target: EventTarget | null) {
 
 <style>
 .subheader {
-  background-color: var(--color-background); 
+  background-color: var(--color-background);
   position:sticky;
   top:4rem;
   left: 0;
   z-index:10;
   width: 100%;
-  display:flex;
-  border-bottom: 1px solid var(--color-subheader-border);
-  border-top: 1px solid var(--color-subheader-border);
+  display: flex;
+  border-bottom: 1px solid;
+  border-top: 1px solid;
+  border-color: var(--color-datatable-border)
 }
 .subheader button {
   background-color: var(--color-background);
   border: 0;
-  color: var(--color-subheader);
+  color: var(--color-text);
+  font-size: 1.3rem;
 }
 .sidebar {
   position: sticky;

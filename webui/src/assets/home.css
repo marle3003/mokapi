@@ -6,6 +6,8 @@
   padding: 1.5rem;
   padding-top: 0;
   padding-bottom: 0.5rem;
+  font-size: 2.4rem;
+  font-weight: 600;
 }
 .home h2 {
   line-height: 1.6;
@@ -27,6 +29,7 @@
 }
 .home .hero-title .description {
   margin-bottom: 2rem;
+  font-size: 1.2rem;
 }
 .home .hero-title img {
   max-width: 70%;
@@ -118,11 +121,17 @@
     padding-bottom: 3rem;
   }
 }
+section.feature h2 {
+  text-align: left;
+}
 section.feature img {
   max-width:100%;
   max-height:100%;
   cursor: pointer;
   margin: auto auto;
+}
+section.feature button {
+  margin-top: 0.5rem;
 }
 footer {
   padding-top: 3rem;
