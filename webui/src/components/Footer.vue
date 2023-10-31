@@ -66,7 +66,7 @@
         <div class="col-12 col-lg-3 mt-4 mt-lg-0">
           <div class="row">
             <div class="col">
-              <h3>Tutorials & Blogs</h3>
+              <h3>Examples & Blogs</h3>
               <ul>
                 <li>
                   <router-link :to="{ path: '/docs/examples/tutorials/get-started-with-rest-api' }">

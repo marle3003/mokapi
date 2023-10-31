@@ -4,7 +4,7 @@ import Footer from '@/components/Footer.vue'
 import { ref, onMounted } from 'vue'
 import { Modal } from 'bootstrap'
 
-const description = `Mock tool for Agile, DevOps and Continuous Deployment teams. Mock your REST API, Apache Kafka, SMTP or LDAP interfaces and control everything like delays, errors or other edge cases.`
+const description = `Mock tool for Agile, DevOps and Continuous Deployment teams. Mock your REST API, Apache Kafka, SMTP or LDAP interfaces and control everything.`
 
 useMeta('API Mocking and Testing | mokapi.io', description, 'https://mokapi.io')
 
