@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"mokapi/sortedmap"
 	"reflect"
+	"strings"
 	"time"
 )
 
@@ -143,7 +144,23 @@ func (b *builder) createString(s *Schema) string {
 	} else if len(s.Pattern) > 0 {
 		return gofakeit.Generate(fmt.Sprintf("{regex:%v}", s.Pattern))
 	}
-	return gofakeit.Lexify("???????????????")
+
+	minLength := 0
+	maxLength := 15
+
+	if s.MinLength != nil {
+		minLength = *s.MinLength
+	}
+	if s.MaxLength != nil {
+		maxLength = *s.MaxLength
+	} else if minLength > maxLength {
+		maxLength += minLength
+	}
+
+	length := gofakeit.IntRange(minLength, maxLength)
+
+	str := strings.Repeat("?", length)
+	return gofakeit.Lexify(str)
 }
 
 func (b *builder) createNumber(s *Schema) (interface{}, error) {

@@ -61,7 +61,7 @@ func TestGeneratorString(t *testing.T) {
 		},
 		{
 			"string",
-			"gbRMaRxHkiJBPta",
+			"bRMaRxHki",
 			&schema.Schema{Type: "string"},
 		},
 		{
@@ -128,6 +128,31 @@ func TestGeneratorString(t *testing.T) {
 			"uri",
 			"https://www.dynamiciterate.name/target/seamless",
 			&schema.Schema{Type: "string", Format: "uri"},
+		},
+		{
+			"minLength",
+			"bRMaRxHkiJBPtapWYJdnSMKgtlxwnqhqcl",
+			&schema.Schema{Type: "string", MinLength: toIntP(25)},
+		},
+		{
+			"maxLength",
+			"",
+			&schema.Schema{Type: "string", MaxLength: toIntP(4)},
+		},
+		{
+			"maxLength",
+			"bRMaRxHkiJB",
+			&schema.Schema{Type: "string", MaxLength: toIntP(12)},
+		},
+		{
+			"minLength with maxLength",
+			"bRMa",
+			&schema.Schema{Type: "string", MinLength: toIntP(3), MaxLength: toIntP(6)},
+		},
+		{
+			"minLength equals maxLength",
+			"gbRM",
+			&schema.Schema{Type: "string", MinLength: toIntP(4), MaxLength: toIntP(4)},
 		},
 	}
 
@@ -547,12 +572,12 @@ func TestGeneratorObject(t *testing.T) {
 		{
 			name: "dictionary",
 			exp: map[string]interface{}{
-				"his":          "aYkWwfoRLOPxLIo",
-				"most":         "VSeDjRRGUnsAxdB",
-				"ocean":        "bRMaRxHkiJBPtap",
-				"our":          "JdnSMKgtlxwnqhq",
-				"straightaway": "aHGyyvqqdHueUxc",
-				"theirs":       "qanPAKaXSMQFpZy",
+				"generally": "",
+				"here":      "YkWwfoRLOPx",
+				"our":       "SMKgtlxwnqhq",
+				"result":    "",
+				"why":       "iJBPtapWY",
+				"yours":     "kQqanPAKaXS",
 			},
 			schema: schematest.New("object",
 				schematest.WithAdditionalProperties(schematest.New("string"))),
@@ -627,7 +652,7 @@ func TestGenerator_AnyOf(t *testing.T) {
 				require.Len(t, a, 1)
 				m := a[0].(*sortedmap.LinkedHashMap[string, interface{}])
 				foo, _ := m.Get("foo")
-				require.Equal(t, "RMaRxHkiJBPtapW", foo)
+				require.Equal(t, "MaR", foo)
 			},
 		},
 	}
@@ -659,9 +684,9 @@ func TestGenerator_AllOf(t *testing.T) {
 				require.True(t, ok, "should be a sorted map")
 				require.Equal(t, 2, m.Len())
 				foo, _ := m.Get("foo")
-				require.Equal(t, "gbRMaRxHkiJBPta", foo)
+				require.Equal(t, "bRMaRxHki", foo)
 				bar, _ := m.Get("bar")
-				require.Equal(t, 2.2451747541855905e+307, bar)
+				require.Equal(t, 1.260262124648351e+307, bar)
 			},
 		},
 		{

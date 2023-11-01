@@ -369,7 +369,7 @@ func parseObject(i interface{}, s *Schema) (interface{}, error) {
 
 		v, err := parse(v, pRef)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("parse %v failed: %w", name, err)
 		}
 		values = append(values, reflect.ValueOf(v))
 		fields = append(fields, newField(name, v))
@@ -531,7 +531,7 @@ func toObject(m *sortedmap.LinkedHashMap[string, interface{}]) (interface{}, err
 			var err error
 			v, err = toObject(child)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("parse %v failed: %w", k, err)
 			}
 		}
 
@@ -701,8 +701,11 @@ func (d *data) UnmarshalJSON(b []byte) error {
 		if err != nil {
 			return err
 		}
-
-		m.Set(key, val.d)
+		if val == nil {
+			m.Set(key, nil)
+		} else {
+			m.Set(key, val.d)
+		}
 	}
 }
 

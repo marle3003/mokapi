@@ -134,6 +134,14 @@ func TestRef_Unmarshal_Json(t *testing.T) {
 				require.Equal(t, "hello world", i)
 			},
 		},
+		{
+			name:   "null",
+			data:   `{ "foo": null }`,
+			schema: schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
+			test: func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, "parse foo failed: could not parse <nil> as string, expected schema type=string")
+			},
+		},
 	}
 
 	t.Parallel()
@@ -859,6 +867,17 @@ func TestRef_Unmarshal_Json_Object(t *testing.T) {
 			),
 			test: func(t *testing.T, _ interface{}, err error) {
 				require.EqualError(t, err, `missing required field 'age'`)
+			},
+		},
+		{
+			name: "property is not valid",
+			s:    `{"name": null}`,
+			schema: schematest.New("object",
+				schematest.WithProperty("name", schematest.New("string", schematest.WithMinLength(6))),
+				schematest.WithProperty("age", schematest.New("integer")),
+			),
+			test: func(t *testing.T, _ interface{}, err error) {
+				require.EqualError(t, err, `parse name failed: could not parse <nil> as string, expected schema type=string minLength=6`)
 			},
 		},
 		{

@@ -71,12 +71,12 @@ func (suite *PetStoreSuite) TestGetPetById() {
 	try.GetRequest(suite.T(), "http://127.0.0.1:18080/pet/1",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(http.StatusOK),
-		try.HasBody(`{"id":-8379641344161477543,"category":{"id":7424164296119123376,"name":"RMaRxHkiJBPtapW"},"name":"doggie","photoUrls":["JdnSMKgtlxwnqhq"],"tags":[{"id":7791187558035139951,"name":"aYkWwfoRLOPxLIo"}],"status":"pending"}`))
+		try.HasBody(`{"id":-8379641344161477543,"category":{"id":7424164296119123376,"name":"MaR"},"name":"doggie","photoUrls":["ki"],"tags":[{"id":2168696190310795206,"name":""},{"id":5549848391338120894,"name":"pWYJdnSMKgtlxw"},{"id":4270288308821612815,"name":"hqc"},{"id":7791187558035139951,"name":"YkWwfoRLOPx"}],"status":"sold"}`))
 
 	try.GetRequest(suite.T(), "https://localhost:18443/pet/5",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(http.StatusOK),
-		try.HasBody(`{"id":-9084870506124948944,"category":{"id":7763557278590517218,"name":"anPAKaXSMQFpZys"},"name":"doggie","photoUrls":[],"tags":[{"id":-3131108332671120299,"name":"GyyvqqdHueUxcvU"},{"id":-2843486512347188448,"name":"SeDjRRGUnsAxdBX"},{"id":8636835111774326913,"name":"YdCynojqPYDrHNH"},{"id":-5185791142319610324,"name":"YKFgjikOyrwgeLh"}],"status":"pending"}`))
+		try.HasBody(`{"id":-4163344001092914963,"category":{"id":16372880380197387,"name":"QqanPAKaXSMQFp"},"name":"doggie","photoUrls":["sVaHGyyvqqdHue","x","vUVSeDjR","GUnsAxdBXGY","C"],"tags":[],"status":"pending"}`))
 }
 
 func (suite *PetStoreSuite) TestKafka_TopicConfig() {
