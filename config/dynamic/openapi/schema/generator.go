@@ -165,11 +165,28 @@ func (b *builder) createString(s *Schema) string {
 		maxLength += minLength
 	}
 
+	categories := []interface{}{0, 1, 2, 3}
+	weights := []float32{5, 0.5, 0.3, 0.1}
+	letters := lowerChars + upperChars
+
 	length := gofakeit.IntRange(minLength, maxLength)
 	result := make([]rune, length)
 	for i := 0; i < length; i++ {
-		n := b.r.Intn(len(allChars))
-		result[i] = rune(allChars[n])
+		c, _ := gofakeit.Weighted(categories, weights)
+
+		switch c {
+		case 0:
+			n := gofakeit.IntRange(0, len(letters)-1)
+			result[i] = rune(letters[n])
+		case 1:
+			n := gofakeit.IntRange(0, len(numericChars)-1)
+			result[i] = rune(numericChars[n])
+		case 2:
+			result[i] = rune(' ')
+		case 3:
+			n := gofakeit.IntRange(0, len(specialChars)-1)
+			result[i] = rune(specialChars[n])
+		}
 	}
 	return string(result)
 }

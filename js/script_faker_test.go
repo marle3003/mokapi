@@ -24,7 +24,7 @@ func TestScript_Faker(t *testing.T) {
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
-				r.Equal(t, "bRMaRxHki", v.String())
+				r.Equal(t, "xid1UOwQ;", v.String())
 			},
 		},
 		{
@@ -68,7 +68,7 @@ func TestScript_Faker(t *testing.T) {
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
-				r.Equal(t, "bRMaRxHki", v.String())
+				r.Equal(t, "xid1UOwQ;", v.String())
 			},
 		}, {
 			"object with properties",

@@ -61,7 +61,7 @@ func TestGeneratorString(t *testing.T) {
 		},
 		{
 			"string",
-			"bRMaRxHki",
+			"xid1UOwQ;",
 			&schema.Schema{Type: "string"},
 		},
 		{
@@ -131,7 +131,7 @@ func TestGeneratorString(t *testing.T) {
 		},
 		{
 			"minLength",
-			"bRMaRxHkiJBPtapWYJdnSMKgtlxwnqhqcl",
+			"xid1UOwQ;ezYvmtLRfvHgpevUwYR5rljgm",
 			&schema.Schema{Type: "string", MinLength: toIntP(25)},
 		},
 		{
@@ -141,17 +141,17 @@ func TestGeneratorString(t *testing.T) {
 		},
 		{
 			"maxLength",
-			"bRMaRxHkiJB",
+			"xid1UOwQ;ez",
 			&schema.Schema{Type: "string", MaxLength: toIntP(12)},
 		},
 		{
 			"minLength with maxLength",
-			"bRMa",
+			"xid1",
 			&schema.Schema{Type: "string", MinLength: toIntP(3), MaxLength: toIntP(6)},
 		},
 		{
 			"minLength equals maxLength",
-			"gbRM",
+			"SXpo",
 			&schema.Schema{Type: "string", MinLength: toIntP(4), MaxLength: toIntP(4)},
 		},
 	}
@@ -572,12 +572,12 @@ func TestGeneratorObject(t *testing.T) {
 		{
 			name: "dictionary",
 			exp: map[string]interface{}{
+				"class":     "vUwYR5rljgmr",
 				"generally": "",
-				"here":      "YkWwfoRLOPx",
-				"our":       "SMKgtlxwnqhq",
+				"hence":     "ZL",
 				"result":    "",
-				"why":       "iJBPtapWY",
-				"yours":     "kQqanPAKaXS",
+				"these":     "LRf",
+				"thing":     "UOwQ;ezYv",
 			},
 			schema: schematest.New("object",
 				schematest.WithAdditionalProperties(schematest.New("string"))),
@@ -652,7 +652,7 @@ func TestGenerator_AnyOf(t *testing.T) {
 				require.Len(t, a, 1)
 				m := a[0].(*sortedmap.LinkedHashMap[string, interface{}])
 				foo, _ := m.Get("foo")
-				require.Equal(t, "MaR", foo)
+				require.Equal(t, "id1", foo)
 			},
 		},
 	}
@@ -684,9 +684,9 @@ func TestGenerator_AllOf(t *testing.T) {
 				require.True(t, ok, "should be a sorted map")
 				require.Equal(t, 2, m.Len())
 				foo, _ := m.Get("foo")
-				require.Equal(t, "bRMaRxHki", foo)
+				require.Equal(t, "xid1UOwQ;", foo)
 				bar, _ := m.Get("bar")
-				require.Equal(t, 1.260262124648351e+307, bar)
+				require.Equal(t, 1.1291386311317026e+308, bar)
 			},
 		},
 		{

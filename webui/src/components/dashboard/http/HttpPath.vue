@@ -88,6 +88,3 @@ onUnmounted(() => {
         <message :message="endpointNotFoundMessage()"></message>
     </div>
 </template>
-
-<style scoped>
-</style>

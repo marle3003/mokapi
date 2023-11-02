@@ -4,7 +4,7 @@
   margin: 7px;
   margin-left: 0;
   font-weight: 400;
-  font-size: 0.7rem;
+  font-size: 0.9rem;
 }
 .dashboard .card-group .card:first-child{
   margin-left: 0px;
@@ -18,6 +18,7 @@
 .dashboard .card .card-body {
   padding: 0.8rem;
   margin-bottom: 0;
+  color: var(--color-text);
 }
 .dashboard .card-text {
   font-size: 2.25rem;
@@ -31,14 +32,14 @@
   margin: 0 0 0.3rem;
 }
 .dashboard .card .header p {
-  font-size: 1.2rem;
+  font-size: 1.4rem;
 }
 .dashboard .card .header .label {
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   margin: 0 0 0.3rem;
 }
 .dashboard .card .label {
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   margin: 0 0 0.3rem;
 }
 .dashboard-popover.show {
@@ -91,4 +92,7 @@
 }
 .dashboard a {
   text-decoration: none;
+}
+.col .badge{
+  font-size: 1em;
 }

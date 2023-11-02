@@ -65,7 +65,7 @@ onUnmounted(() => {
                         </div>
                         <div class="col header">
                             <p class="label">Operation ID</p>
-                            <p data-testid="operationid">{{ operation.operationId }}</p>
+                            <p data-testid="operationid">{{ operation.operationId }}</p> 
                         </div>
                         <div class="col header">
                             <p class="label">Service</p>

@@ -30,7 +30,7 @@ func TestHandler_Schema(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`"bRMaRxHki"`))
+					try.HasBody(`"xid1UOwQ;"`))
 			},
 		},
 		{
@@ -47,7 +47,7 @@ func TestHandler_Schema(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"foo":"bRMaRxHki"}`))
+					try.HasBody(`{"foo":"xid1UOwQ;"}`))
 			},
 		},
 	}
