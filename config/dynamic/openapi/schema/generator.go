@@ -7,8 +7,16 @@ import (
 	"math/rand"
 	"mokapi/sortedmap"
 	"reflect"
-	"strings"
 	"time"
+)
+
+const (
+	lowerChars   = "abcdefghijklmnopqrstuvwxyz"
+	upperChars   = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	numericChars = "0123456789"
+	specialChars = "!@#$%&*+-_=?:;,.|(){}<>"
+	spaceChar    = " "
+	allChars     = lowerChars + upperChars + numericChars + specialChars + spaceChar
 )
 
 type Generator struct {
@@ -158,9 +166,12 @@ func (b *builder) createString(s *Schema) string {
 	}
 
 	length := gofakeit.IntRange(minLength, maxLength)
-
-	str := strings.Repeat("?", length)
-	return gofakeit.Lexify(str)
+	result := make([]rune, length)
+	for i := 0; i < length; i++ {
+		n := b.r.Intn(len(allChars))
+		result[i] = rune(allChars[n])
+	}
+	return string(result)
 }
 
 func (b *builder) createNumber(s *Schema) (interface{}, error) {
