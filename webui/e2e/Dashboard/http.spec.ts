@@ -39,8 +39,8 @@ test.describe('Visit Swagger Petstore', () => {
         const endpoints = http.endpoints.locator('tbody tr')
         for (const [i, path] of service.paths.entries()) {
             const cells = endpoints.nth(i).getByRole('cell')
-            await expect(cells.nth(0)).toHaveText(path.path)
-            await expect(cells.nth(1)).toHaveText(path.method, {ignoreCase: false})
+            await expect(cells.nth(0)).toHaveText(path.method, {ignoreCase: false})
+            await expect(cells.nth(1)).toHaveText(path.path)
             await expect(cells.nth(2)).toHaveText(path.lastRequest)
             await expect(cells.nth(3)).toHaveText(path.requests)
         }
@@ -54,11 +54,11 @@ test.describe('Visit Swagger Petstore', () => {
             } else {
                 await expect(cells.nth(0).locator('.warning')).not.toBeVisible()
             }
-            await expect(cells.nth(0)).toHaveText(request.url)
             await expect(cells.nth(1)).toHaveText(request.method)
-            await expect(cells.nth(2)).toHaveText(request.statusCode)
-            await expect(cells.nth(3)).toHaveText(request.time)
-            await expect(cells.nth(4)).toHaveText(request.duration)
+            await expect(cells.nth(2)).toHaveText(request.url)
+            await expect(cells.nth(3)).toHaveText(request.statusCode)
+            await expect(cells.nth(4)).toHaveText(request.time)
+            await expect(cells.nth(5)).toHaveText(request.duration)
         }
     })
 
