@@ -2,7 +2,6 @@ package schema_test
 
 import (
 	"github.com/stretchr/testify/require"
-	"io"
 	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/config/dynamic/openapi/schema/schematest"
 	"mokapi/media"
@@ -22,7 +21,7 @@ func TestParse_Xml(t *testing.T) {
 			xml:    "",
 			schema: nil,
 			test: func(t *testing.T, i interface{}, err error) {
-				require.Equal(t, io.EOF, err)
+				require.EqualError(t, err, "unmarshal data failed: EOF")
 			},
 		},
 		{
