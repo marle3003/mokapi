@@ -10,6 +10,15 @@ import (
 	"time"
 )
 
+const (
+	lowerChars   = "abcdefghijklmnopqrstuvwxyz"
+	upperChars   = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	numericChars = "0123456789"
+	specialChars = "!@#$%&*+-_=?:;,.|(){}<>"
+	spaceChar    = " "
+	allChars     = lowerChars + upperChars + numericChars + specialChars + spaceChar
+)
+
 type Generator struct {
 	r *rand.Rand
 }
@@ -143,7 +152,43 @@ func (b *builder) createString(s *Schema) string {
 	} else if len(s.Pattern) > 0 {
 		return gofakeit.Generate(fmt.Sprintf("{regex:%v}", s.Pattern))
 	}
-	return gofakeit.Lexify("???????????????")
+
+	minLength := 0
+	maxLength := 15
+
+	if s.MinLength != nil {
+		minLength = *s.MinLength
+	}
+	if s.MaxLength != nil {
+		maxLength = *s.MaxLength
+	} else if minLength > maxLength {
+		maxLength += minLength
+	}
+
+	categories := []interface{}{0, 1, 2, 3}
+	weights := []float32{5, 0.5, 0.3, 0.1}
+	letters := lowerChars + upperChars
+
+	length := gofakeit.IntRange(minLength, maxLength)
+	result := make([]rune, length)
+	for i := 0; i < length; i++ {
+		c, _ := gofakeit.Weighted(categories, weights)
+
+		switch c {
+		case 0:
+			n := gofakeit.IntRange(0, len(letters)-1)
+			result[i] = rune(letters[n])
+		case 1:
+			n := gofakeit.IntRange(0, len(numericChars)-1)
+			result[i] = rune(numericChars[n])
+		case 2:
+			result[i] = rune(' ')
+		case 3:
+			n := gofakeit.IntRange(0, len(specialChars)-1)
+			result[i] = rune(specialChars[n])
+		}
+	}
+	return string(result)
 }
 
 func (b *builder) createNumber(s *Schema) (interface{}, error) {

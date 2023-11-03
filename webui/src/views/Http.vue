@@ -31,8 +31,8 @@ useMeta(title, description, "https://mokapi.io/http")
               <router-link :to="{ path: '/docs/Guides' }">
                 <button type="button" class="btn btn-outline-primary">Guides</button>
               </router-link>
-              <router-link :to="{ path: '/docs/examples' }">
-                <button type="button" class="btn btn-outline-primary">Examples</button>
+              <router-link :to="{ path: '/docs/examples/tutorials/get-started-with-rest-api' }">
+                <button type="button" class="btn btn-outline-primary">Get started</button>
               </router-link>
             </p>
           </div>

@@ -30,6 +30,7 @@
       "Patching": "configuration/patching.md"
     },
     "Providers": {
+      "Overview": "configuration/providers/overview.md",
       "File": "configuration/providers/file.md",
       "HTTP": "configuration/providers/http.md",
       "GIT": "configuration/providers/git.md"
@@ -84,10 +85,17 @@
     }
   },
   "Examples": {
-    "Simple HTTP API": "examples/simple-http-api.md",
-    "Simple Kafka API": "examples/simple-kafka-api.md"
+    "Index": { "component": "examples", "hideInNavigation": true},
+    "Examples": {
+      "Mokapi behind Reverse Proxy": "examples/examples/mokapi-behind-proxy.md"
+    },
+    "Tutorials": {
+      "Get started with REST API": "examples/tutorials/simple-http-api.md",
+      "Get started with Kafka": "examples/tutorials/simple-kafka-api.md"
+    }
   },
   "Blogs": {
+    "Index": { "component": "blogs", "hideInNavigation": true},
     "Automation Testing in Agile Development": "blogs/automation-testing-agile-development.md"
   },
   "References": {

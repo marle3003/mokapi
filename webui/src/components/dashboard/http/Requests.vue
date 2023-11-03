@@ -38,6 +38,18 @@ function eventData(event: ServiceEvent): HttpEventData{
     return <HttpEventData>event.data
 }
 
+const hasDeprecatedRequests = computed(() => {
+    if (!events.value) {
+        return false
+    }
+    for (const event of events.value) {
+        if (eventData(event).deprecated) {
+            return true
+        }
+    }
+    return false    
+})
+
 onUnmounted(() => {
     close()
 })
@@ -50,8 +62,9 @@ onUnmounted(() => {
             <table class="table dataTable selectable" data-testid="requests">
                 <thead>
                     <tr>
+                        <th v-if="hasDeprecatedRequests" scope="col" class="text-center" style="width: 5px"></th>
+                        <th scope="col" class="text-left" style="width: 5%">Method</th>
                         <th scope="col" class="text-left" style="width: 55%">URL</th>
-                        <th scope="col" class="text-center" style="width: 10%">Method</th>
                         <th scope="col" class="text-center"  style="width: 10%">Status Code</th>
                         <th scope="col" class="text-center" style="width:15%">Time</th>
                         <th scope="col" class="text-center">Duration</th>
@@ -59,14 +72,16 @@ onUnmounted(() => {
                 </thead>
                 <tbody>
                     <tr v-for="event in events!" :key="event.id" @click="goToRequest(event)">
-                        <td>
-                            <i class="bi bi-exclamation-triangle-fill yellow warning pe-2" v-if="eventData(event).deprecated"></i>
-                            {{ eventData(event).request.url }}
+                        <td v-if="hasDeprecatedRequests">
+                            <i class="bi bi-exclamation-triangle-fill yellow warning" v-if="eventData(event).deprecated" title="deprecated"></i>
                         </td>
-                        <td class="text-center">
+                        <td class="text-left">
                             <span class="badge operation" :class="eventData(event).request.method.toLowerCase()">
                                 {{ eventData(event).request.method }}
                             </span>
+                        </td>
+                        <td>
+                            {{ eventData(event).request.url }}
                         </td>
                         <td class="text-center">{{ formatStatusCode(eventData(event).response.statusCode) }}</td>
                         <td class="text-center">{{ format(event.time) }}</td>

@@ -1,6 +1,6 @@
 <p align="center">
 <a href="https://mokapi.io">
-<img src="https://github.com/marle3003/mokapi/raw/v0.5.0/logo.svg" alt="Mokapi" title="Mokapi" width="300" />
+<img src="logo.svg" alt="Mokapi" title="Mokapi" width="300" />
 </a>
 </p>
 
@@ -17,13 +17,28 @@
     <a href="https://mokapi.io/docs/guides/get-started/welcome">Documentation</a>
 </p>
 
-## Overview
+**Mokapi** is an open-source tool that allows Agile, DevOps and Continuous Deployment teams
+to create and test API designs before actually building them.
 
-Mokapi is a tool that allows developers to create and test API designs before actually building them. It works by emulating API responses based on the designs that have been created, which allows developers to test different configurations and edge cases without having to rely on a fully built API.
+With Mokapi you can quickly and easily test various
+scenarios, such as delayed or failed responses without
+having to rely on a fully functional API.
 
-With Mokapi, developers can make changes to their API configurations on the fly, which can help to speed up the testing process and reduce dependencies. This means that developers can quickly and easily test different scenarios, such as delayed or failed responses, without having to rely on a fully functional API.
+Mokapi helps you improve the quality of APIs and
+reduces the risk of bugs or errors in production.
 
-By using Mokapi, developers can reduce the time and effort required for development and testing, since they can test different scenarios and configurations in a more efficient way. This can help to improve the quality of the API and reduce the risk of bugs or errors in production.
+Its core feature are:
+
+- **Multiple Protocol support**: HTTP, HTTPS, Apache Kafka, SMTP, LDAP
+- **Everything as Code**: Reusing, version control, consistency and integrate mocks with your CI/CD.
+- **An embedded JavaScript engine** to control everything - status, headers, delays, errors or other edge cases.
+- **Patch Configuration** changes for mocking needs, rather than changing the original contract
+- **Multiple Provider support**: File, HTTP, GIT to gather configurations and scripts.
+- **Dashboard** to see what's going on.
+
+## Example
+
+<img src="webui/public/everythingcode.png" alt="Mokapi Web UI" title="Mokapi Web UI" />
 
 ## Web UI
 

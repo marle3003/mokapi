@@ -9,7 +9,7 @@ test.describe('Visit Swagger Petstore', () => {
     const service = {
         paths: [
             { path: '/pet', method: 'POST', lastRequest: formatTimestamp(1652235690), requests: '2 / 1' },
-            { path: '/pet/{petId}', method: 'POST GET', lastRequest: '-', requests: '0 / 0' },
+            { path: '/pet/{petId}', method: 'GET POST', lastRequest: '-', requests: '0 / 0' },
             { path: '/pet/findByStatus', method: 'GET', lastRequest: formatTimestamp(1652237690), requests: '1 / 0' }
         ],
         requests: [
@@ -54,11 +54,11 @@ test.describe('Visit Swagger Petstore', () => {
             } else {
                 await expect(cells.nth(0).locator('.warning')).not.toBeVisible()
             }
-            await expect(cells.nth(0)).toHaveText(request.url)
             await expect(cells.nth(1)).toHaveText(request.method)
-            await expect(cells.nth(2)).toHaveText(request.statusCode)
-            await expect(cells.nth(3)).toHaveText(request.time)
-            await expect(cells.nth(4)).toHaveText(request.duration)
+            await expect(cells.nth(2)).toHaveText(request.url)
+            await expect(cells.nth(3)).toHaveText(request.statusCode)
+            await expect(cells.nth(4)).toHaveText(request.time)
+            await expect(cells.nth(5)).toHaveText(request.duration)
         }
     })
 
@@ -82,7 +82,7 @@ test.describe('Visit Swagger Petstore', () => {
 
             const rows = path.requests.locator('tbody tr')
             await expect(rows).toHaveCount(2)
-            await expect(rows.getByRole('cell').nth(0)).toHaveText(service.requests[0].url)
+            await expect(rows.getByRole('cell').nth(2)).toHaveText(service.requests[0].url)
 
             await test.step('visit method post', async () => {
                 await path.clickOperation('POST')

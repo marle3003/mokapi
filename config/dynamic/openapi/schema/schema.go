@@ -131,6 +131,12 @@ func (s *Schema) String() string {
 	if len(s.Pattern) > 0 {
 		sb.WriteString(fmt.Sprintf(" pattern=%v", s.Pattern))
 	}
+	if s.MinLength != nil {
+		sb.WriteString(fmt.Sprintf(" minLength=%v", *s.MinLength))
+	}
+	if s.MaxLength != nil {
+		sb.WriteString(fmt.Sprintf(" maxLength=%v", *s.MaxLength))
+	}
 	if s.Minimum != nil {
 		sb.WriteString(fmt.Sprintf(" minimum=%v", *s.Minimum))
 	}

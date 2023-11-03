@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory, useRoute as baseRoute, type RouteLocationRaw, type RouteRecordRaw } from 'vue-router'
-import DashboardView from '@/views/DashboardView.vue'
 
 let base = document.querySelector("base")?.href ?? '/'
 base = base.replace(document.location.origin, '')
@@ -39,6 +38,8 @@ export function useRoute() {
   return {service, path, operation, context, router}
 }
 
+const dashboardView = () => import('@/views/DashboardView.vue')
+
 let startPageRoute: RouteRecordRaw
 if (import.meta.env.VITE_DASHBOARD == 'true') {
   startPageRoute = {
@@ -62,6 +63,9 @@ else {
 const router = createRouter({
   history: createWebHistory(base),
   scrollBehavior: (to, from, savedPosition) => {
+    if (savedPosition) {
+      return savedPosition
+    }
     if (to.hash) {
       // if anchor is set go to element
       return {
@@ -97,46 +101,46 @@ const router = createRouter({
     {
       path: '/dashboard',
       name: 'dashboard',
-      component: DashboardView,
+      component: dashboardView,
       children: [
         {
           path: '/services',
           name: 'serviceList',
-          component: DashboardView
+          component: dashboardView
         },
         {
           path: '/dashboard/http',
           name: 'http',
-          component: DashboardView,
+          component: dashboardView,
           children: [
             {
               path: '/dashboard/http/services/:service',
               name: 'httpService',
-              component: DashboardView,
+              component: dashboardView,
               meta: {service: 'http'}
             },
             {
               path: '/dashboard/http/requests/:id',
               name: 'httpRequest',
-              component: DashboardView,
+              component: dashboardView,
               meta: {service: 'http'}
             },
             {
               path: '/dashboard/http/services/:service/:path',
               name: 'httpPath',
-              component: DashboardView,
+              component: dashboardView,
               meta: {service: 'http'}
             },
             {
               path: '/dashboard/http/services/:service/:path/:operation',
               name: 'httpOperation',
-              component: DashboardView,
+              component: dashboardView,
               meta: {service: 'http'}
             },
             {
               path: '/dashboard/http/services/:service/:path/:operation/parameters/:parameter',
               name: 'httpParameter',
-              component: DashboardView,
+              component: dashboardView,
               meta: {service: 'http'}
             }
           ]
@@ -144,18 +148,18 @@ const router = createRouter({
         {
           path: '/dashboard/kafka',
           name: 'kafka',
-          component: DashboardView,
+          component: dashboardView,
           children: [
             {
               path: '/dashboard/kafka/service/:service',
               name: 'kafkaService',
-              component: DashboardView,
+              component: dashboardView,
               meta: {service: 'kafka'}
             },
             {
               path: '/dashboard/kafka/service/:service/topic/:topic',
               name: 'kafkaTopic',
-              component: DashboardView,
+              component: dashboardView,
               meta: {service: 'kafka'}
             }
           ]
@@ -163,18 +167,18 @@ const router = createRouter({
         {
           path: '/dashboard/ldap',
           name: 'ldap',
-          component: DashboardView,
+          component: dashboardView,
           children: [
             {
               path: '/dashboard/ldap/service/:service',
               name: 'ldapService',
-              component: DashboardView,
+              component: dashboardView,
               meta: { service: 'ldap' },
             },
             {
               path: '/dashboard/ldap/searches/:id',
               name: 'ldapSearch',
-              component: DashboardView,
+              component: dashboardView,
               meta: { service: 'ldap' }
             },
           ]
@@ -182,18 +186,18 @@ const router = createRouter({
         {
           path: '/dashboard/smtp',
           name: 'smtp',
-          component: DashboardView,
+          component: dashboardView,
           children: [
             {
               path: '/dashboard/smtp/service/:service',
               name: 'smtpService',
-              component: DashboardView,
+              component: dashboardView,
               meta: { service: 'smtp' },
             },
             {
               path: '/dashboard/smtp/mails/:id',
               name: 'smtpMail',
-              component: DashboardView,
+              component: dashboardView,
               meta: { service: 'smtp' }
             },
           ]

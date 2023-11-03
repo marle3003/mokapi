@@ -42,32 +42,40 @@ func (p *Properties) UnmarshalJSON(b []byte) error {
 }
 
 type schemaInfo struct {
-	Name             string        `json:"name,omitempty"`
-	Description      string        `json:"description,omitempty"`
-	Ref              string        `json:"ref,omitempty"`
-	Type             string        `json:"type"`
-	Properties       *Properties   `json:"properties,omitempty"`
-	Required         []string      `json:"required,omitempty"`
-	Enum             []interface{} `json:"enum,omitempty"`
-	Items            *schemaInfo   `json:"items,omitempty"`
-	Format           string        `json:"format,omitempty"`
-	Pattern          string        `json:"pattern,omitempty"`
-	Xml              *xml          `json:"xml,omitempty"`
-	Nullable         bool          `json:"nullable,omitempty"`
-	Example          interface{}   `json:"example,omitempty"`
-	Minimum          *float64      `json:"minimum,omitempty"`
-	Maximum          *float64      `json:"maximum,omitempty"`
-	ExclusiveMinimum *bool         `json:"exclusiveMinimum,omitempty"`
-	ExclusiveMaximum *bool         `json:"exclusiveMaximum,omitempty"`
-	AnyOf            []*schemaInfo `json:"anyOf,omitempty"`
-	AllOf            []*schemaInfo `json:"allOf,omitempty"`
-	OneOf            []*schemaInfo `json:"oneOf,omitempty"`
-	UniqueItems      bool          `json:"uniqueItems,omitempty"`
-	MinItems         *int          `json:"minItems,omitempty"`
-	MaxItems         *int          `json:"maxItems,omitempty"`
-	ShuffleItems     bool          `json:"shuffleItems,omitempty"`
-	MinProperties    *int          `json:"minProperties,omitempty"`
-	MaxProperties    *int          `json:"maxProperties,omitempty"`
+	Description string `json:"description,omitempty"`
+	Ref         string `json:"ref,omitempty"`
+
+	Type       string        `json:"type"`
+	AnyOf      []*schemaInfo `json:"anyOf,omitempty"`
+	AllOf      []*schemaInfo `json:"allOf,omitempty"`
+	OneOf      []*schemaInfo `json:"oneOf,omitempty"`
+	Deprecated bool          `json:"deprecated,omitempty"`
+	Example    interface{}   `json:"example,omitempty"`
+	Enum       []interface{} `json:"enum,omitempty"`
+	Xml        *xml          `json:"xml,omitempty"`
+	Format     string        `json:"format,omitempty"`
+	Nullable   bool          `json:"nullable,omitempty"`
+
+	Pattern   string `json:"pattern,omitempty"`
+	MinLength *int   `yaml:"minLength" json:"minLength,omitempty"`
+	MaxLength *int   `yaml:"maxLength" json:"maxLength,omitempty"`
+
+	Minimum          *float64 `json:"minimum,omitempty"`
+	Maximum          *float64 `json:"maximum,omitempty"`
+	ExclusiveMinimum *bool    `json:"exclusiveMinimum,omitempty"`
+	ExclusiveMaximum *bool    `json:"exclusiveMaximum,omitempty"`
+
+	Items        *schemaInfo `json:"items,omitempty"`
+	UniqueItems  bool        `json:"uniqueItems,omitempty"`
+	MinItems     *int        `json:"minItems,omitempty"`
+	MaxItems     *int        `json:"maxItems,omitempty"`
+	ShuffleItems bool        `json:"shuffleItems,omitempty"`
+
+	Properties           *Properties `json:"properties,omitempty"`
+	Required             []string    `json:"required,omitempty"`
+	AdditionalProperties interface{} `json:"additionalProperties,omitempty"`
+	MinProperties        *int        `json:"minProperties,omitempty"`
+	MaxProperties        *int        `json:"maxProperties,omitempty"`
 }
 
 type xml struct {
@@ -76,6 +84,11 @@ type xml struct {
 	Attribute bool   `json:"attribute,omitempty"`
 	Prefix    string `json:"prefix,omitempty"`
 	Namespace string `json:"namespace,omitempty"`
+}
+
+type additionalProperties struct {
+	Schema    *schemaInfo `json:"schema,omitempty"`
+	Forbidden bool        `json:"forbidden,omitempty"`
 }
 
 func (h *handler) getExampleData(w http.ResponseWriter, r *http.Request) {
@@ -122,27 +135,37 @@ func (c *schemaConverter) getSchema(s *schema.Ref) *schemaInfo {
 	if _, ok := c.schemas[s.Ref]; ok {
 		return &schemaInfo{Ref: s.Ref}
 	}
+	defer func() {
+		delete(c.schemas, s.Ref)
+	}()
 
 	result := &schemaInfo{
-		Description:      s.Value.Description,
-		Ref:              s.Ref,
-		Type:             s.Value.Type,
-		Enum:             s.Value.Enum,
-		Required:         s.Value.Required,
-		Format:           s.Value.Format,
-		Pattern:          s.Value.Pattern,
-		Nullable:         s.Value.Nullable,
-		Example:          s.Value.Example,
+		Description: s.Value.Description,
+		Ref:         s.Ref,
+
+		Type:     s.Value.Type,
+		Example:  s.Value.Example,
+		Enum:     s.Value.Enum,
+		Format:   s.Value.Format,
+		Nullable: s.Value.Nullable,
+
+		Pattern:   s.Value.Pattern,
+		MinLength: s.Value.MinLength,
+		MaxLength: s.Value.MaxLength,
+
 		Minimum:          s.Value.Minimum,
 		Maximum:          s.Value.Maximum,
 		ExclusiveMinimum: s.Value.ExclusiveMinimum,
 		ExclusiveMaximum: s.Value.ExclusiveMaximum,
-		UniqueItems:      s.Value.UniqueItems,
-		MinItems:         s.Value.MinItems,
-		MaxItems:         s.Value.MaxItems,
-		ShuffleItems:     s.Value.ShuffleItems,
-		MinProperties:    s.Value.MinProperties,
-		MaxProperties:    s.Value.MaxProperties,
+
+		UniqueItems:  s.Value.UniqueItems,
+		MinItems:     s.Value.MinItems,
+		MaxItems:     s.Value.MaxItems,
+		ShuffleItems: s.Value.ShuffleItems,
+
+		Required:      s.Value.Required,
+		MinProperties: s.Value.MinProperties,
+		MaxProperties: s.Value.MaxProperties,
 	}
 
 	if len(s.Ref) > 0 {
@@ -154,12 +177,13 @@ func (c *schemaConverter) getSchema(s *schema.Ref) *schemaInfo {
 	if s.Value.Properties != nil {
 		result.Properties = &Properties{}
 		for it := s.Value.Properties.Iter(); it.Next(); {
+			key := it.Key()
+			_ = key
 			prop := c.getSchema(it.Value())
 			if prop == nil {
 				continue
 			}
-			prop.Name = it.Key()
-			result.Properties.Set(prop.Name, prop)
+			result.Properties.Set(it.Key(), prop)
 		}
 	}
 
@@ -183,6 +207,14 @@ func (c *schemaConverter) getSchema(s *schema.Ref) *schemaInfo {
 		result.OneOf = append(result.AnyOf, c.getSchema(one))
 	}
 
+	if s.Value.AdditionalProperties != nil {
+		if s.Value.AdditionalProperties.Forbidden {
+			result.AdditionalProperties = !s.Value.AdditionalProperties.Forbidden
+		} else if s.Value.AdditionalProperties.Ref != nil {
+			result.AdditionalProperties = getSchema(s.Value.AdditionalProperties.Ref)
+		}
+	}
+
 	return result
 }
 
@@ -191,24 +223,32 @@ func toSchema(s *schemaInfo) *schema.Schema {
 		return nil
 	}
 	result := &schema.Schema{
-		Type:             s.Type,
-		Format:           s.Format,
-		Pattern:          s.Pattern,
-		Description:      s.Description,
-		Nullable:         s.Nullable,
-		Example:          s.Example,
-		Required:         s.Required,
-		Enum:             s.Enum,
+		Description: s.Description,
+
+		Type:       s.Type,
+		Deprecated: s.Deprecated,
+		Example:    s.Example,
+		Enum:       s.Enum,
+		Format:     s.Format,
+		Nullable:   s.Nullable,
+
+		Pattern:   s.Pattern,
+		MinLength: s.MinLength,
+		MaxLength: s.MaxLength,
+
 		Minimum:          s.Minimum,
 		Maximum:          s.Maximum,
 		ExclusiveMinimum: s.ExclusiveMinimum,
 		ExclusiveMaximum: s.ExclusiveMaximum,
-		UniqueItems:      s.UniqueItems,
-		MinItems:         s.MinItems,
-		MaxItems:         s.MaxItems,
-		ShuffleItems:     s.ShuffleItems,
-		MinProperties:    s.MinProperties,
-		MaxProperties:    s.MaxProperties,
+
+		UniqueItems:  s.UniqueItems,
+		MinItems:     s.MinItems,
+		MaxItems:     s.MaxItems,
+		ShuffleItems: s.ShuffleItems,
+
+		Required:      s.Required,
+		MinProperties: s.MinProperties,
+		MaxProperties: s.MaxProperties,
 	}
 	if s.Properties != nil && s.Properties.Len() > 0 {
 		result.Properties = &schema.Schemas{}
@@ -237,5 +277,14 @@ func toSchema(s *schemaInfo) *schema.Schema {
 	for _, one := range s.OneOf {
 		result.OneOf = append(result.OneOf, &schema.Ref{Value: toSchema(one)})
 	}
+
+	if s.AdditionalProperties != nil {
+		if b, ok := s.AdditionalProperties.(bool); ok {
+			result.AdditionalProperties = &schema.AdditionalProperties{Forbidden: !b}
+		} else if additional, ok := s.AdditionalProperties.(*schemaInfo); ok {
+			result.AdditionalProperties.Ref = &schema.Ref{Value: toSchema(additional)}
+		}
+	}
+
 	return result
 }

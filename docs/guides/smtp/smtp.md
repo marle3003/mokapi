@@ -14,5 +14,5 @@ ip address.
 smtp: '1.0'
 info:
   title: Mokapi's Mail Server
-server: smtp://127.0.0.1:8025
+server: smtp://:587
 ```

@@ -2,13 +2,16 @@ table.dataTable {
     border-left-style: hidden;
     border-right-style: hidden;
     color:var(--color-text);
-    font-size: 0.8rem;
+    font-size: 0.9rem;
+    background-color: var(--color-background-soft);
 }
-table.dataTable.selectable td {
-    cursor: pointer;
-}
-table.dataTable thead tr {
+table.dataTable th {
+    background-color: var(--color-background-soft);
     color: var(--color-datatable-header-text);
+}
+table.dataTable td {
+    background-color: var(--color-background-soft);
+    color: var(--color-text);
 }
 table.dataTable thead th {
     padding: 3px 0 3px 12px;
@@ -25,19 +28,18 @@ table.dataTable td{
     padding: 4px 0 3px 12px;
     border-left-style: hidden;
     border-right-style: hidden;
-    font-size: 0.75rem;
 }
 
-table.dataTable tbody tr:hover {
+table.dataTable tr:hover > td {
     background-color: var(--color-background-mute);
 }
 
-table.dataTable.selectable tbody tr:hover {
+table.dataTable.selectable tr:hover td {
     cursor: pointer;
 }
 
-.description p {
-    font-size: 0.75rem !important;
+table.dataTable .description p {
+    font-size: 0.9rem !important;
     margin: 0 !important;
     line-height: 1.6 !important;
 }
