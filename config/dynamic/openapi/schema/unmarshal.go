@@ -16,6 +16,8 @@ import (
 	"unicode/utf8"
 )
 
+const unmarshalErrorFormat = "unmarshal data failed: %w"
+
 func ParseString(s string, schema *Ref) (interface{}, error) {
 	return parse(s, schema)
 }
@@ -26,7 +28,7 @@ func (r *Ref) Unmarshal(b []byte, contentType media.ContentType) (i interface{},
 		d := &data{}
 		err = json.Unmarshal(b, &d)
 		if err != nil {
-			return nil, fmt.Errorf("invalid json format: %v", err)
+			err = fmt.Errorf("invalid json format: %v", err)
 		}
 		i = d.d
 	case contentType.IsXml():
@@ -36,10 +38,13 @@ func (r *Ref) Unmarshal(b []byte, contentType media.ContentType) (i interface{},
 	}
 
 	if err != nil {
-		return
+		return nil, fmt.Errorf(unmarshalErrorFormat, err)
 	}
 
 	i, err = parse(i, r)
+	if err != nil {
+		err = fmt.Errorf(unmarshalErrorFormat, err)
+	}
 	return
 }
 
@@ -171,14 +176,11 @@ func parseAnyValue(i interface{}, schema *Schema) (interface{}, error) {
 			return i, nil
 		}
 	}
-	return nil, fmt.Errorf("could not parse %v, expected %v", i, schema)
+	return nil, fmt.Errorf("parse %v failed, expected %v", i, schema)
 }
 
 func parseAllOf(i interface{}, schema *Schema) (interface{}, error) {
-	m, ok := i.(*sortedmap.LinkedHashMap[string, interface{}])
-	if !ok {
-		return nil, fmt.Errorf("could not parse %v as object, expected %v", toString(i), schema)
-	}
+	m := i.(*sortedmap.LinkedHashMap[string, interface{}])
 	fields := make([]reflect.StructField, 0, m.Len())
 	values := make([]reflect.Value, 0, m.Len())
 
@@ -507,7 +509,7 @@ func parseNumber(i interface{}, s *Schema) (f float64, err error) {
 func parseString(v interface{}, schema *Schema) (string, error) {
 	s, ok := v.(string)
 	if !ok {
-		return "", fmt.Errorf("could not parse %v as string, expected %v", v, schema)
+		return "", fmt.Errorf("parse %v failed, expected %v", v, schema)
 	}
 
 	return s, validateString(s, schema)

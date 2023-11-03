@@ -156,151 +156,213 @@ func TestRef_Unmarshal_Json_String(t *testing.T) {
 		name   string
 		s      string
 		schema *schema.Schema
+		test   func(t *testing.T, i interface{}, err error)
 		err    error
 	}{
 		{
 			name:   "not string",
 			s:      `12`,
 			schema: &schema.Schema{Type: "string"},
-			err:    fmt.Errorf("could not parse 12 as string, expected schema type=string"),
+			test: func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, "unmarshal data failed: parse 12 failed, expected schema type=string")
+			},
 		},
 		{
 			name:   "string",
 			s:      `"gbRMaRxHkiJBPta"`,
 			schema: &schema.Schema{Type: "string"},
-			err:    nil,
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "gbRMaRxHkiJBPta", i)
+			},
 		},
 		{
 			name:   "type not defined",
 			s:      `"gbRMaRxHkiJBPta"`,
 			schema: &schema.Schema{},
-			err:    nil,
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "gbRMaRxHkiJBPta", i)
+			},
 		},
 		{
 			name:   "by pattern",
 			s:      `"013-64-5994"`,
 			schema: &schema.Schema{Type: "string", Pattern: "^\\d{3}-\\d{2}-\\d{4}$"},
-			err:    nil,
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "013-64-5994", i)
+			},
 		},
 		{
 			name:   "not pattern",
 			s:      `"013-64-59943"`,
 			schema: &schema.Schema{Type: "string", Pattern: "^\\d{3}-\\d{2}-\\d{4}$"},
-			err:    fmt.Errorf("value '013-64-59943' does not match pattern, expected schema type=string pattern=^\\d{3}-\\d{2}-\\d{4}$"),
+			test: func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, "unmarshal data failed: value '013-64-59943' does not match pattern, expected schema type=string pattern=^\\d{3}-\\d{2}-\\d{4}$")
+			},
 		},
 		{
 			name:   "date",
 			s:      `"1908-12-07"`,
 			schema: &schema.Schema{Type: "string", Format: "date"},
-			err:    nil,
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "1908-12-07", i)
+			},
 		},
 		{
 			name:   "not date",
 			s:      `"1908-12-7"`,
 			schema: &schema.Schema{Type: "string", Format: "date"},
-			err:    fmt.Errorf("value '1908-12-7' is not a date RFC3339, expected schema type=string format=date"),
+			test: func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, "unmarshal data failed: value '1908-12-7' is not a date RFC3339, expected schema type=string format=date")
+			},
 		},
 		{
 			name:   "date-time",
 			s:      `"1908-12-07T04:14:25Z"`,
 			schema: &schema.Schema{Type: "string", Format: "date-time"},
-			err:    nil,
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "1908-12-07T04:14:25Z", i)
+			},
 		},
 		{
 			name:   "not date-time",
 			s:      `"1908-12-07 T04:14:25Z"`,
 			schema: &schema.Schema{Type: "string", Format: "date-time"},
-			err:    fmt.Errorf("value '1908-12-07 T04:14:25Z' is not a date-time RFC3339, expected schema type=string format=date-time"),
+			test: func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, "unmarshal data failed: value '1908-12-07 T04:14:25Z' is not a date-time RFC3339, expected schema type=string format=date-time")
+			},
 		},
 		{
 			name:   "password",
 			s:      `"H|$9lb{J<+S;"`,
 			schema: &schema.Schema{Type: "string", Format: "password"},
-			err:    nil,
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "H|$9lb{J<+S;", i)
+			},
 		},
 		{
 			name:   "email",
 			s:      `"markusmoen@pagac.net"`,
 			schema: &schema.Schema{Type: "string", Format: "email"},
-			err:    nil,
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "markusmoen@pagac.net", i)
+			},
 		},
 		{
 			name:   "not email",
 			s:      `"markusmoen@@pagac.net"`,
 			schema: &schema.Schema{Type: "string", Format: "email"},
-			err:    fmt.Errorf("value 'markusmoen@@pagac.net' is not an email address, expected schema type=string format=email"),
+			test: func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, "unmarshal data failed: value 'markusmoen@@pagac.net' is not an email address, expected schema type=string format=email")
+			},
 		},
 		{
 			name:   "uuid",
 			s:      `"590c1440-9888-45b0-bd51-a817ee07c3f2"`,
 			schema: &schema.Schema{Type: "string", Format: "uuid"},
-			err:    nil,
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "590c1440-9888-45b0-bd51-a817ee07c3f2", i)
+			},
 		},
 		{
 			name:   "not uuid",
 			s:      `"590c1440-9888-45b0-bd51-a817ee07c3f2a"`,
 			schema: &schema.Schema{Type: "string", Format: "uuid"},
-			err:    fmt.Errorf("value '590c1440-9888-45b0-bd51-a817ee07c3f2a' is not an uuid, expected schema type=string format=uuid"),
+			test: func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, "unmarshal data failed: value '590c1440-9888-45b0-bd51-a817ee07c3f2a' is not an uuid, expected schema type=string format=uuid")
+			},
 		},
 		{
 			name:   "ipv4",
 			s:      `"152.23.53.100"`,
 			schema: &schema.Schema{Type: "string", Format: "ipv4"},
-			err:    nil,
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "152.23.53.100", i)
+			},
 		},
 		{
 			name:   "not ipv4",
 			s:      `"152.23.53.100."`,
 			schema: &schema.Schema{Type: "string", Format: "ipv4"},
-			err:    fmt.Errorf("value '152.23.53.100.' is not an ipv4, expected schema type=string format=ipv4"),
+			test: func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, "unmarshal data failed: value '152.23.53.100.' is not an ipv4, expected schema type=string format=ipv4")
+			},
 		},
 		{
 			name:   "ipv6",
 			s:      `"8898:ee17:bc35:9064:5866:d019:3b95:7857"`,
 			schema: &schema.Schema{Type: "string", Format: "ipv6"},
-			err:    nil,
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "8898:ee17:bc35:9064:5866:d019:3b95:7857", i)
+			},
 		},
 		{
 			name:   "not ipv6",
 			s:      `"-8898:ee17:bc35:9064:5866:d019:3b95:7857"`,
 			schema: &schema.Schema{Type: "string", Format: "ipv6"},
-			err:    fmt.Errorf("value '-8898:ee17:bc35:9064:5866:d019:3b95:7857' is not an ipv6, expected schema type=string format=ipv6"),
+			test: func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, "unmarshal data failed: value '-8898:ee17:bc35:9064:5866:d019:3b95:7857' is not an ipv6, expected schema type=string format=ipv6")
+			},
 		},
 		{
 			name:   "not minLength",
 			s:      `"foo"`,
 			schema: &schema.Schema{Type: "string", MinLength: toIntP(4)},
-			err:    fmt.Errorf("value 'foo' does not meet min length of 4"),
+			test: func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, "unmarshal data failed: value 'foo' does not meet min length of 4")
+			},
 		},
 		{
 			name:   "minLength",
 			s:      `"foo"`,
 			schema: &schema.Schema{Type: "string", MinLength: toIntP(3)},
-			err:    nil,
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "foo", i)
+			},
 		},
 		{
 			name:   "not maxLength",
 			s:      `"foo"`,
 			schema: &schema.Schema{Type: "string", MaxLength: &maxLength2},
-			err:    fmt.Errorf("value 'foo' does not meet max length of 2"),
+			test: func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, "unmarshal data failed: value 'foo' does not meet max length of 2")
+			},
 		},
 		{
 			name:   "maxLength",
 			s:      `"foo"`,
 			schema: &schema.Schema{Type: "string", MaxLength: &maxLength3},
-			err:    nil,
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "foo", i)
+			},
 		},
 		{
 			name:   "enum",
 			s:      `"foo"`,
 			schema: &schema.Schema{Type: "string", Enum: []interface{}{"foo"}},
-			err:    nil,
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "foo", i)
+			},
 		},
 		{
 			name:   "not in enum",
 			s:      `"foo"`,
 			schema: &schema.Schema{Type: "string", Enum: []interface{}{"bar"}},
-			err:    fmt.Errorf("value foo does not match one in the enum [bar]"),
+			test: func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, "unmarshal data failed: value foo does not match one in the enum [bar]", i)
+			},
 		},
 	}
 
@@ -311,8 +373,8 @@ func TestRef_Unmarshal_Json_String(t *testing.T) {
 			t.Parallel()
 
 			r := &schema.Ref{Value: tc.schema}
-			_, err := r.Unmarshal([]byte(tc.s), media.ParseContentType("application/json"))
-			require.Equal(t, tc.err, err)
+			i, err := r.Unmarshal([]byte(tc.s), media.ParseContentType("application/json"))
+			tc.test(t, i, err)
 		})
 	}
 }
@@ -344,7 +406,7 @@ func TestRef_Unmarshal_Json_Any(t *testing.T) {
 					schematest.New("string"),
 					schematest.New("integer"))),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "could not parse 12.6, expected any of schema type=string, schema type=integer")
+				require.EqualError(t, err, "unmarshal data failed: parse 12.6 failed, expected any of schema type=string, schema type=integer")
 			},
 		},
 		{
@@ -506,6 +568,20 @@ func TestRef_Unmarshal_Json_AllOf(t *testing.T) {
 					Foo int64 `json:"foo"`
 					Bar bool  `json:"bar"`
 				}{Foo: 12, Bar: true}, i)
+			},
+		},
+		{
+			name: "missing required",
+			s:    `{"foo": 12}`,
+			schema: schematest.New("object",
+				schematest.AllOf(
+					schematest.New("object", schematest.WithProperty("foo", schematest.New("integer"))),
+					schematest.New("object",
+						schematest.WithRequired("bar"),
+						schematest.WithProperty("bar", schematest.New("boolean"))),
+				)),
+			test: func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, "unmarshal data failed: could not parse {foo: 12}, missing required property bar, expected all of schema type=object properties=[foo], schema type=object properties=[bar] required=[bar]")
 			},
 		},
 	}
