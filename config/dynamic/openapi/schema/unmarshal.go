@@ -138,7 +138,7 @@ func parseAnyObject(m *sortedmap.LinkedHashMap[string, interface{}], schema *Sch
 
 			if v, found := m.Get(name); !found {
 				if _, ok := required[name]; ok && len(required) > 0 {
-					return nil, fmt.Errorf("missing required property %v, expected %v", name, schema)
+					return nil, fmt.Errorf("missing required property '%v', expected %v", name, schema)
 				}
 				continue
 			} else {
@@ -154,7 +154,7 @@ func parseAnyObject(m *sortedmap.LinkedHashMap[string, interface{}], schema *Sch
 	}
 
 	if m.Len() > len(fields) {
-		return nil, fmt.Errorf("could not parse %v, too many properties for object, expected %v", toString(m), schema)
+		return nil, fmt.Errorf("parse %v failed: too many properties for object, expected %v", toString(m), schema)
 	}
 
 	if err := validFields(fields); err != nil {
@@ -204,14 +204,14 @@ func parseAllOf(i interface{}, schema *Schema) (interface{}, error) {
 			v, found := m.Get(name)
 			if !found {
 				if _, ok := required[name]; ok && len(required) > 0 {
-					return nil, fmt.Errorf("could not parse %v, missing required property %v, expected %v", toString(i), name, schema)
+					return nil, fmt.Errorf("parse %v failed: missing required property '%v', expected %v", toString(i), name, schema)
 				}
 				continue
 			}
 
 			v, err := parse(v, pRef)
 			if err != nil {
-				return nil, fmt.Errorf("could not parse %v, value does not match all schema, expected %v", toString(i), schema)
+				return nil, fmt.Errorf("parse %v failed: value does not match all schema, expected %v", toString(i), schema)
 			}
 			values = append(values, reflect.ValueOf(v))
 			fields = append(fields, newField(name, v))
@@ -256,7 +256,7 @@ func parseOneOfObject(m *sortedmap.LinkedHashMap[string, interface{}], schema *S
 			v, found := m.Get(name)
 			if !found {
 				if _, ok := required[name]; ok && len(required) > 0 {
-					return nil, fmt.Errorf("could not parse %v, missing required property %v, expected %v", toString(m), name, schema)
+					return nil, fmt.Errorf("parse %v failed: missing required property '%v', expected %v", toString(m), name, schema)
 				}
 				continue
 			}
@@ -274,7 +274,7 @@ func parseOneOfObject(m *sortedmap.LinkedHashMap[string, interface{}], schema *S
 		}
 
 		if result != nil {
-			return nil, fmt.Errorf("could not parse %v, it is not valid for only one schema, expected %v", toString(m), schema)
+			return nil, fmt.Errorf("parse %v failed: it is not valid for only one schema, expected %v", toString(m), schema)
 		}
 
 		if err := validFields(fields); err != nil {
@@ -290,7 +290,7 @@ func parseOneOfObject(m *sortedmap.LinkedHashMap[string, interface{}], schema *S
 	}
 
 	if result == nil {
-		return nil, fmt.Errorf("could not parse %v, expected %v", toString(m), schema)
+		return nil, fmt.Errorf("parse %v failed, expected %v", toString(m), schema)
 	}
 
 	return result, nil
@@ -304,7 +304,7 @@ func parseOneOfValue(i interface{}, schema *Schema) (interface{}, error) {
 			continue
 		}
 		if result != nil {
-			return nil, fmt.Errorf("could not parse %v because it is not valid for only one, expected %v", i, schema)
+			return nil, fmt.Errorf("parse %v failed: value is valid for more schema, expected %v", i, schema)
 		}
 		result = v
 	}
@@ -326,7 +326,7 @@ func parseObject(i interface{}, s *Schema) (interface{}, error) {
 		if mm, ok := i.(map[string]interface{}); ok {
 			m = fromMap(mm)
 		} else {
-			return nil, fmt.Errorf("could not parse %v as object", toString(i))
+			return nil, fmt.Errorf("parse %v as object", toString(i))
 		}
 	}
 
@@ -355,7 +355,7 @@ func parseObject(i interface{}, s *Schema) (interface{}, error) {
 	}
 
 	if m.Len() > s.Properties.Len() {
-		return nil, fmt.Errorf("could not parse %v, too many properties", toString(m))
+		return nil, fmt.Errorf("parse %v failed: too many properties", toString(m))
 	}
 
 	fields := make([]reflect.StructField, 0, m.Len())
@@ -371,7 +371,7 @@ func parseObject(i interface{}, s *Schema) (interface{}, error) {
 
 		v, err := parse(v, pRef)
 		if err != nil {
-			return nil, fmt.Errorf("parse %v failed: %w", name, err)
+			return nil, fmt.Errorf("parse '%v' failed: %w", name, err)
 		}
 		values = append(values, reflect.ValueOf(v))
 		fields = append(fields, newField(name, v))
@@ -445,7 +445,7 @@ func parseInteger(i interface{}, s *Schema) (n int64, err error) {
 		n = v
 	case float64:
 		if math.Trunc(v) != v {
-			return 0, fmt.Errorf("could not parse %v as integer, expected %v", i, s)
+			return 0, fmt.Errorf("parse '%v' failed, expected %v", i, s)
 		}
 		n = int64(v)
 	case int32:
@@ -455,24 +455,24 @@ func parseInteger(i interface{}, s *Schema) (n int64, err error) {
 		case "int64":
 			n, err = strconv.ParseInt(v, 10, 64)
 			if err != nil {
-				return 0, fmt.Errorf("could not parse '%v' as int64, expected %v", i, s)
+				return 0, fmt.Errorf("parse '%v' failed, expected %v", i, s)
 			}
 			return n, nil
 		default:
 			temp, err := strconv.Atoi(v)
 			if err != nil {
-				return 0, fmt.Errorf("could not parse '%v' as int, expected %v", i, s)
+				return 0, fmt.Errorf("parse '%v' failed, expected %v", i, s)
 			}
 			n = int64(temp)
 		}
 	default:
-		return 0, fmt.Errorf("could not parse '%v' as int, expected %v", i, s)
+		return 0, fmt.Errorf("parse '%v' failed, expected %v", i, s)
 	}
 
 	switch s.Format {
 	case "int32":
 		if n > math.MaxInt32 || n < math.MinInt32 {
-			return 0, fmt.Errorf("could not parse '%v', represents a number either less than int32 min value or greater max value, expected %v", i, s)
+			return 0, fmt.Errorf("parse '%v' failed: represents a number either less than int32 min value or greater max value, expected %v", i, s)
 		}
 	}
 
@@ -486,20 +486,20 @@ func parseNumber(i interface{}, s *Schema) (f float64, err error) {
 	case string:
 		f, err = strconv.ParseFloat(v, 64)
 		if err != nil {
-			return 0, fmt.Errorf("could not parse '%v' as floating number, expected %v", i, s)
+			return 0, fmt.Errorf("parse '%v' failed, expected %v", i, s)
 		}
 	case int:
 		f = float64(v)
 	case int64:
 		f = float64(v)
 	default:
-		return 0, fmt.Errorf("could not parse '%v' as floating number, expected %v", v, s)
+		return 0, fmt.Errorf("parse '%v' failed, expected %v", v, s)
 	}
 
 	switch s.Format {
 	case "float":
 		if f > math.MaxFloat32 {
-			return 0, fmt.Errorf("could not parse %v as float, expected %v", i, s)
+			return 0, fmt.Errorf("parse %v failed, expected %v", i, s)
 		}
 	}
 
@@ -519,7 +519,7 @@ func readBoolean(i interface{}, s *Schema) (bool, error) {
 	if b, ok := i.(bool); ok {
 		return b, nil
 	}
-	return false, fmt.Errorf("could not parse %v as boolean, expected %v", i, s)
+	return false, fmt.Errorf("parse %v failed, expected %v", i, s)
 }
 
 func toObject(m *sortedmap.LinkedHashMap[string, interface{}]) (interface{}, error) {

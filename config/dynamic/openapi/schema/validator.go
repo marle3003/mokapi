@@ -37,31 +37,31 @@ func validateString(i interface{}, s *Schema) error {
 	case "email":
 		_, err := mail.ParseAddress(str)
 		if err != nil {
-			return fmt.Errorf("value '%v' is not an email address, expected %v", str, s)
+			return fmt.Errorf("value '%v' does not match format 'email', expected %v", str, s)
 		}
 		return nil
 	case "uuid":
 		_, err := uuid.Parse(str)
 		if err != nil {
-			return fmt.Errorf("value '%v' is not an uuid, expected %v", str, s)
+			return fmt.Errorf("value '%v' does not match format 'uuid', expected %v", str, s)
 		}
 		return nil
 	case "ipv4":
 		ip := net.ParseIP(str)
 		if ip == nil {
-			return fmt.Errorf("value '%v' is not an ipv4, expected %v", str, s)
+			return fmt.Errorf("value '%v' does not match format 'ipv4', expected %v", str, s)
 		}
 		if len(strings.Split(str, ".")) != 4 {
-			return fmt.Errorf("value '%v' is not an ipv4, expected %v", str, s)
+			return fmt.Errorf("value '%v' does not match format 'ipv4', expected %v", str, s)
 		}
 		return nil
 	case "ipv6":
 		ip := net.ParseIP(str)
 		if ip == nil {
-			return fmt.Errorf("value '%v' is not an ipv6, expected %v", str, s)
+			return fmt.Errorf("value '%v' does not match format 'ipv6', expected %v", str, s)
 		}
 		if len(strings.Split(str, ":")) != 8 {
-			return fmt.Errorf("value '%v' is not an ipv6, expected %v", str, s)
+			return fmt.Errorf("value '%v' does not match format 'ipv6', expected %v", str, s)
 		}
 		return nil
 	}
@@ -78,10 +78,10 @@ func validateString(i interface{}, s *Schema) error {
 	}
 
 	if s.MinLength != nil && *s.MinLength > len(str) {
-		return fmt.Errorf("value '%v' does not meet min length of %v", str, *s.MinLength)
+		return fmt.Errorf("length of '%v' is too short, expected %v", str, s)
 	}
 	if s.MaxLength != nil && *s.MaxLength < len(str) {
-		return fmt.Errorf("value '%v' does not meet max length of %v", str, *s.MaxLength)
+		return fmt.Errorf("length of '%v' is too long, expected %v", str, s)
 	}
 
 	if len(s.Enum) > 0 {
@@ -228,7 +228,7 @@ func checkValueIsInEnum(i interface{}, enum []interface{}, entrySchema *Schema) 
 		}
 	}
 	if !found {
-		return fmt.Errorf("value %v does not match one in the enum %v", toString(i), toString(enum))
+		return fmt.Errorf("value '%v' does not match one in the enumeration %v", toString(i), toString(enum))
 	}
 
 	return nil

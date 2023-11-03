@@ -147,7 +147,7 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				f(rr, r)
 				require.Equal(t, 500, rr.Code)
-				require.Equal(t, "read request body 'application/json' failed: unmarshal data failed: value 'foo' does not meet min length of 4\n", rr.Body.String())
+				require.Equal(t, "read request body 'application/json' failed: unmarshal data failed: length of 'foo' is too short, expected schema type=string minLength=4\n", rr.Body.String())
 			},
 		},
 		//

@@ -8,7 +8,6 @@ import (
 	"mokapi/config/dynamic/openapi/schema/schematest"
 	"mokapi/media"
 	"reflect"
-	"strings"
 	"testing"
 )
 
@@ -139,7 +138,7 @@ func TestRef_Unmarshal_Json(t *testing.T) {
 			data:   `{ "foo": null }`,
 			schema: schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "unmarshal data failed: parse foo failed: parse <nil> failed, expected schema type=string")
+				require.EqualError(t, err, "unmarshal data failed: parse 'foo' failed: parse <nil> failed, expected schema type=string")
 			},
 		},
 	}
@@ -157,9 +156,6 @@ func TestRef_Unmarshal_Json(t *testing.T) {
 }
 
 func TestRef_Unmarshal_Json_String(t *testing.T) {
-	maxLength2 := 2
-	maxLength3 := 3
-
 	testcases := []struct {
 		name   string
 		s      string
@@ -267,7 +263,7 @@ func TestRef_Unmarshal_Json_String(t *testing.T) {
 			s:      `"markusmoen@@pagac.net"`,
 			schema: &schema.Schema{Type: "string", Format: "email"},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "unmarshal data failed: value 'markusmoen@@pagac.net' is not an email address, expected schema type=string format=email")
+				require.EqualError(t, err, "unmarshal data failed: value 'markusmoen@@pagac.net' does not match format 'email', expected schema type=string format=email")
 			},
 		},
 		{
@@ -284,7 +280,7 @@ func TestRef_Unmarshal_Json_String(t *testing.T) {
 			s:      `"590c1440-9888-45b0-bd51-a817ee07c3f2a"`,
 			schema: &schema.Schema{Type: "string", Format: "uuid"},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "unmarshal data failed: value '590c1440-9888-45b0-bd51-a817ee07c3f2a' is not an uuid, expected schema type=string format=uuid")
+				require.EqualError(t, err, "unmarshal data failed: value '590c1440-9888-45b0-bd51-a817ee07c3f2a' does not match format 'uuid', expected schema type=string format=uuid")
 			},
 		},
 		{
@@ -301,7 +297,7 @@ func TestRef_Unmarshal_Json_String(t *testing.T) {
 			s:      `"152.23.53.100."`,
 			schema: &schema.Schema{Type: "string", Format: "ipv4"},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "unmarshal data failed: value '152.23.53.100.' is not an ipv4, expected schema type=string format=ipv4")
+				require.EqualError(t, err, "unmarshal data failed: value '152.23.53.100.' does not match format 'ipv4', expected schema type=string format=ipv4")
 			},
 		},
 		{
@@ -318,7 +314,7 @@ func TestRef_Unmarshal_Json_String(t *testing.T) {
 			s:      `"-8898:ee17:bc35:9064:5866:d019:3b95:7857"`,
 			schema: &schema.Schema{Type: "string", Format: "ipv6"},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "unmarshal data failed: value '-8898:ee17:bc35:9064:5866:d019:3b95:7857' is not an ipv6, expected schema type=string format=ipv6")
+				require.EqualError(t, err, "unmarshal data failed: value '-8898:ee17:bc35:9064:5866:d019:3b95:7857' does not match format 'ipv6', expected schema type=string format=ipv6")
 			},
 		},
 		{
@@ -326,7 +322,7 @@ func TestRef_Unmarshal_Json_String(t *testing.T) {
 			s:      `"foo"`,
 			schema: &schema.Schema{Type: "string", MinLength: toIntP(4)},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "unmarshal data failed: value 'foo' does not meet min length of 4")
+				require.EqualError(t, err, "unmarshal data failed: length of 'foo' is too short, expected schema type=string minLength=4")
 			},
 		},
 		{
@@ -341,15 +337,15 @@ func TestRef_Unmarshal_Json_String(t *testing.T) {
 		{
 			name:   "not maxLength",
 			s:      `"foo"`,
-			schema: &schema.Schema{Type: "string", MaxLength: &maxLength2},
+			schema: &schema.Schema{Type: "string", MaxLength: toIntP(2)},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "unmarshal data failed: value 'foo' does not meet max length of 2")
+				require.EqualError(t, err, "unmarshal data failed: length of 'foo' is too long, expected schema type=string maxLength=2")
 			},
 		},
 		{
 			name:   "maxLength",
 			s:      `"foo"`,
-			schema: &schema.Schema{Type: "string", MaxLength: &maxLength3},
+			schema: &schema.Schema{Type: "string", MaxLength: toIntP(3)},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "foo", i)
@@ -369,7 +365,7 @@ func TestRef_Unmarshal_Json_String(t *testing.T) {
 			s:      `"foo"`,
 			schema: &schema.Schema{Type: "string", Enum: []interface{}{"bar"}},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "unmarshal data failed: value foo does not match one in the enum [bar]", i)
+				require.EqualError(t, err, "unmarshal data failed: value 'foo' does not match one in the enumeration [bar]", i)
 			},
 		},
 	}
@@ -441,7 +437,7 @@ func TestRef_Unmarshal_Json_Any(t *testing.T) {
 					schematest.New("object",
 						schematest.WithProperty("name", schematest.New("string"))))),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, `unmarshal data failed: could not parse {name: bar, age: 12}, too many properties for object, expected any of schema type=object properties=[name]`)
+				require.EqualError(t, err, `unmarshal data failed: parse {name: bar, age: 12} failed: too many properties for object, expected any of schema type=object properties=[name]`)
 			},
 		},
 		{
@@ -456,7 +452,7 @@ func TestRef_Unmarshal_Json_Any(t *testing.T) {
 						schematest.WithRequired("age"),
 					))),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "unmarshal data failed: missing required property age, expected any of schema type=object properties=[name], schema type=object properties=[age] required=[age]")
+				require.EqualError(t, err, "unmarshal data failed: missing required property 'age', expected any of schema type=object properties=[name], schema type=object properties=[age] required=[age]")
 			},
 		},
 		{
@@ -525,7 +521,7 @@ func TestRef_Unmarshal_Json_OneOf(t *testing.T) {
 					schematest.WithProperty("bar", schematest.New("boolean"))),
 			)),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, `unmarshal data failed: could not parse {foo: 12, bar: true}, expected one of schema type=object properties=[foo], schema type=object properties=[bar]`)
+				require.EqualError(t, err, `unmarshal data failed: parse {foo: 12, bar: true} failed, expected one of schema type=object properties=[foo], schema type=object properties=[bar]`)
 			},
 		},
 		{
@@ -538,7 +534,7 @@ func TestRef_Unmarshal_Json_OneOf(t *testing.T) {
 					schematest.WithProperty("foo", schematest.New("number"))),
 			)),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, `unmarshal data failed: could not parse {foo: 12}, it is not valid for only one schema, expected one of schema type=object properties=[foo], schema type=object properties=[foo]`)
+				require.EqualError(t, err, `unmarshal data failed: parse {foo: 12} failed: it is not valid for only one schema, expected one of schema type=object properties=[foo], schema type=object properties=[foo]`)
 			},
 		},
 	}
@@ -589,7 +585,7 @@ func TestRef_Unmarshal_Json_AllOf(t *testing.T) {
 						schematest.WithProperty("bar", schematest.New("boolean"))),
 				)),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "unmarshal data failed: could not parse {foo: 12}, missing required property bar, expected all of schema type=object properties=[foo], schema type=object properties=[bar] required=[bar]")
+				require.EqualError(t, err, "unmarshal data failed: parse {foo: 12} failed: missing required property 'bar', expected all of schema type=object properties=[foo], schema type=object properties=[bar] required=[bar]")
 			},
 		},
 	}
@@ -630,7 +626,7 @@ func TestRef_Unmarshal_Json_Integer(t *testing.T) {
 			s:      "3.61",
 			schema: &schema.Schema{Type: "integer", Format: "int32"},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "unmarshal data failed: could not parse 3.61 as integer, expected schema type=integer format=int32")
+				require.EqualError(t, err, "unmarshal data failed: parse '3.61' failed, expected schema type=integer format=int32")
 			},
 		},
 		{
@@ -638,7 +634,7 @@ func TestRef_Unmarshal_Json_Integer(t *testing.T) {
 			s:      fmt.Sprintf("%v", math.MaxInt64),
 			schema: &schema.Schema{Type: "integer", Format: "int32"},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "unmarshal data failed: could not parse '9.223372036854776e+18', represents a number either less than int32 min value or greater max value, expected schema type=integer format=int32")
+				require.EqualError(t, err, "unmarshal data failed: parse '9.223372036854776e+18' failed: represents a number either less than int32 min value or greater max value, expected schema type=integer format=int32")
 			},
 		},
 		{
@@ -696,7 +692,7 @@ func TestRef_Unmarshal_Json_Integer(t *testing.T) {
 			s:      "12",
 			schema: &schema.Schema{Type: "integer", Enum: []interface{}{1, 2, 3}},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "unmarshal data failed: value 12 does not match one in the enum [1, 2, 3]")
+				require.EqualError(t, err, "unmarshal data failed: value '12' does not match one in the enumeration [1, 2, 3]")
 			},
 		},
 		{
@@ -755,7 +751,7 @@ func TestParse_Number(t *testing.T) {
 			s:      fmt.Sprintf("%v", math.MaxFloat64),
 			schema: &schema.Schema{Type: "number", Format: "float"},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "unmarshal data failed: could not parse 1.7976931348623157e+308 as float, expected schema type=number format=float")
+				require.EqualError(t, err, "unmarshal data failed: parse 1.7976931348623157e+308 failed, expected schema type=number format=float")
 			},
 		},
 		{
@@ -821,7 +817,7 @@ func TestParse_Number(t *testing.T) {
 			s:      "3.6",
 			schema: &schema.Schema{Type: "number", Enum: []interface{}{3, 4, 5.5}},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "unmarshal data failed: value 3.6 does not match one in the enum [3, 4, 5.5]")
+				require.EqualError(t, err, "unmarshal data failed: value '3.6' does not match one in the enumeration [3, 4, 5.5]")
 			},
 		},
 		{
@@ -953,7 +949,7 @@ func TestRef_Unmarshal_Json_Object(t *testing.T) {
 				schematest.WithProperty("age", schematest.New("integer")),
 			),
 			test: func(t *testing.T, _ interface{}, err error) {
-				require.EqualError(t, err, `unmarshal data failed: parse name failed: parse <nil> failed, expected schema type=string minLength=6`)
+				require.EqualError(t, err, `unmarshal data failed: parse 'name' failed: parse <nil> failed, expected schema type=string minLength=6`)
 			},
 		},
 		{
@@ -965,7 +961,7 @@ func TestRef_Unmarshal_Json_Object(t *testing.T) {
 				schematest.WithEnum([]interface{}{map[string]interface{}{"name": "bar"}}),
 			),
 			test: func(t *testing.T, _ interface{}, err error) {
-				require.EqualError(t, err, `unmarshal data failed: value {name: foo} does not match one in the enum [{name: bar}]`)
+				require.EqualError(t, err, `unmarshal data failed: value '{name: foo}' does not match one in the enumeration [{name: bar}]`)
 			},
 		},
 		{
@@ -1011,7 +1007,7 @@ func TestRef_Unmarshal_Json_Object(t *testing.T) {
 				schematest.WithMaxProperties(1),
 			),
 			test: func(t *testing.T, _ interface{}, err error) {
-				require.Truef(t, strings.HasSuffix(err.Error(), "expected schema type=object maxProperties=1"), "but error is %v", err)
+				require.EqualError(t, err, "unmarshal data failed: validation error maxProperties on {name: foo, age: 12}, expected schema type=object maxProperties=1")
 			},
 		},
 		{
@@ -1152,7 +1148,7 @@ func TestRef_Unmarshal_Json_Array(t *testing.T) {
 				Enum: []interface{}{[]string{"foo", "test"}},
 			},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "unmarshal data failed: value [foo, bar] does not match one in the enum [[foo, test]]")
+				require.EqualError(t, err, "unmarshal data failed: value '[foo, bar]' does not match one in the enumeration [[foo, test]]")
 			},
 		},
 		{
@@ -1166,7 +1162,7 @@ func TestRef_Unmarshal_Json_Array(t *testing.T) {
 				Enum: []interface{}{[]string{"bar", "foo"}},
 			},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "unmarshal data failed: value [foo, bar] does not match one in the enum [[bar, foo]]")
+				require.EqualError(t, err, "unmarshal data failed: value '[foo, bar]' does not match one in the enumeration [[bar, foo]]")
 			},
 		},
 		{
@@ -1270,7 +1266,7 @@ func TestRef_Unmarshal_Json_Bool(t *testing.T) {
 			s:      `1`,
 			schema: &schema.Schema{Type: "boolean"},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "unmarshal data failed: could not parse 1 as boolean, expected schema type=boolean")
+				require.EqualError(t, err, "unmarshal data failed: parse 1 failed, expected schema type=boolean")
 			},
 		},
 		{

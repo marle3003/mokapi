@@ -117,7 +117,7 @@ func TestRef_Marshal_Json_Object(t *testing.T) {
 				Value string
 			}{"foo", "foo"},
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "marshal data to 'application/json' failed: encode property 'value' failed: could not parse 'foo' as int, expected schema type=integer")
+				require.EqualError(t, err, "marshal data to 'application/json' failed: encode property 'value' failed: parse 'foo' failed, expected schema type=integer")
 				require.Len(t, result, 0)
 			},
 		},
@@ -629,7 +629,7 @@ func TestRef_Marshal_Json_Invalid(t *testing.T) {
 			name:   "number",
 			schema: &schema.Ref{Value: schematest.New("number")},
 			data:   "foo",
-			exp:    "marshal data to 'application/json' failed: could not parse 'foo' as floating number, expected schema type=number",
+			exp:    "marshal data to 'application/json' failed: parse 'foo' failed, expected schema type=number",
 		},
 		{
 			name:   "min array",
