@@ -119,7 +119,7 @@ func TestFromRequest_Header(t *testing.T) {
 				return r
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
-				require.EqualError(t, err, "parse header parameter 'debug' failed: could not parse 'foo' as int, expected schema type=integer")
+				require.EqualError(t, err, "parse header parameter 'debug' failed: parse 'foo' failed, expected schema type=integer")
 				require.Len(t, result[parameter.Header], 0)
 			},
 		},
@@ -165,7 +165,7 @@ func TestFromRequest_Header(t *testing.T) {
 				return r
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
-				require.EqualError(t, err, "parse header parameter 'foo' failed: could not parse 'foo' as int, expected schema type=integer")
+				require.EqualError(t, err, "parse header parameter 'foo' failed: parse 'foo' failed, expected schema type=integer")
 				require.Len(t, result[parameter.Header], 0)
 			},
 		},
@@ -252,7 +252,7 @@ func TestFromRequest_Header(t *testing.T) {
 				return r
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
-				require.EqualError(t, err, "parse header parameter 'foo' failed: parse property 'age' failed: could not parse 'Alex' as floating number, expected schema type=number")
+				require.EqualError(t, err, "parse header parameter 'foo' failed: parse property 'age' failed: parse 'Alex' failed, expected schema type=number")
 				require.Len(t, result[parameter.Header], 0)
 			},
 		},

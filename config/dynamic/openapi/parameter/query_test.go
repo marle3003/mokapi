@@ -421,7 +421,7 @@ func TestParseQuery(t *testing.T) {
 				return httptest.NewRequest(http.MethodGet, "https://foo.bar?id[role]=admin&id[age]=foo&id[lastName]=Smith", nil)
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
-				require.EqualError(t, err, "parse query parameter 'id' failed: could not parse 'foo' as int, expected schema type=integer")
+				require.EqualError(t, err, "parse query parameter 'id' failed: parse 'foo' failed, expected schema type=integer")
 				require.Len(t, result[parameter.Query], 0)
 			},
 		},
