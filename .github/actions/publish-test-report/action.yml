@@ -11,7 +11,7 @@ runs:
   using: "composite"
   steps:
     - name: Checkout GitHub Pages Branch
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         ref: gh-pages
         path: gh-pages
