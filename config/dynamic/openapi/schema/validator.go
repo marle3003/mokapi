@@ -25,13 +25,13 @@ func validateString(i interface{}, s *Schema) error {
 	case "date":
 		_, err := time.Parse("2006-01-02", str)
 		if err != nil {
-			return fmt.Errorf("value '%v' is not a date RFC3339, expected %v", str, s)
+			return fmt.Errorf("value '%v' does not match format 'date' (RFC3339), expected %v", str, s)
 		}
 		return nil
 	case "date-time":
 		_, err := time.Parse(time.RFC3339, str)
 		if err != nil {
-			return fmt.Errorf("value '%v' is not a date-time RFC3339, expected %v", str, s)
+			return fmt.Errorf("value '%v' does not match format 'date-time' (RFC3339), expected %v", str, s)
 		}
 		return nil
 	case "email":

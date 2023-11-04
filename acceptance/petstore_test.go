@@ -54,8 +54,14 @@ func (suite *PetStoreSuite) TestJsFile() {
 		try.HasStatusCode(http.StatusInternalServerError),
 		try.HasBody("marshal data to 'application/json' failed: does not match schema type=object properties=[id, category, name, photoUrls, tags, status] required=[name photoUrls]: missing required field 'name'\n"))
 
+	// use generated data but change pet's name
+	try.GetRequest(suite.T(), "http://127.0.0.1:18080/pet/5",
+		map[string]string{"Accept": "application/json"},
+		try.HasStatusCode(http.StatusOK),
+		try.HasBody(`{"id":8091383101528396988,"category":{"id":-5704359215120949391,"name":"P0xJebAAT"},"name":"Zoe","photoUrls":["KnumE07P","","69Iy UEz Z"],"tags":[{"id":-8563566128195698032,"name":"zlgkT3F"},{"id":4331435074819496151,"name":"RZOOB "},{"id":7252227033529500492,"name":"I6deg7ktTUqtKw"}],"status":"pending"}`))
+
 	e := events.GetEvents(events.NewTraits().WithNamespace("http"))
-	require.Len(suite.T(), e, 3)
+	require.Len(suite.T(), e, 4)
 }
 
 func (suite *PetStoreSuite) TestLuaFile() {
@@ -73,7 +79,7 @@ func (suite *PetStoreSuite) TestGetPetById() {
 		try.HasStatusCode(http.StatusOK),
 		try.HasBody(`{"id":-8379641344161477543,"category":{"id":7424164296119123376,"name":"id1"},"name":"doggie","photoUrls":["OwQ;ezYvmtLRfv","ZL","evUwYR5rljgmr z"],"tags":[{"id":1502793126295339460,"name":"Wgsfi6SFflnzb"},{"id":-7391388163417809074,"name":"m"},{"id":1750077968446365139,"name":"DHXGaQPSE"},{"id":-4201786370340656298,"name":"KwoQEfHPR99"}],"status":"pending"}`))
 
-	try.GetRequest(suite.T(), "https://localhost:18443/pet/5",
+	try.GetRequest(suite.T(), "https://localhost:18443/pet/10",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(http.StatusOK),
 		try.HasBody(`{"id":2780694049194110144,"category":{"id":358698270060065978,"name":" qcXEuR"},"name":"doggie","photoUrls":["euX","cJQIn"],"tags":[{"id":-7925257062691635148,"name":"XLc.OqnSYDNeJn"},{"id":-8530491859977087890,"name":"Q2sq4zDyvB0Q"},{"id":-3767257451481315098,"name":"M9J7SZsU"},{"id":2343312407715696586,"name":"e"},{"id":-8004558519261086467,"name":"V"}],"status":"available"}`))

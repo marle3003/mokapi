@@ -78,6 +78,8 @@ func selectData(data interface{}, ref *Ref) (interface{}, error) {
 	}
 
 	switch schema.Type {
+	case "string":
+		return data, validateString(data, schema)
 	case "number":
 		return parseNumber(data, schema)
 	case "integer":

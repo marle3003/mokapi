@@ -30,7 +30,9 @@ func (r *Ref) Unmarshal(b []byte, contentType media.ContentType) (i interface{},
 		if err != nil {
 			err = fmt.Errorf("invalid json format: %v", err)
 		}
-		i = d.d
+		if d != nil {
+			i = d.d
+		}
 	case contentType.IsXml():
 		i, err = unmarshalXml(b, r)
 	default:
@@ -506,10 +508,13 @@ func parseNumber(i interface{}, s *Schema) (f float64, err error) {
 	return f, validateFloat64(f, s)
 }
 
-func parseString(v interface{}, schema *Schema) (string, error) {
+func parseString(v interface{}, schema *Schema) (interface{}, error) {
 	s, ok := v.(string)
 	if !ok {
-		return "", fmt.Errorf("parse %v failed, expected %v", v, schema)
+		if schema.Nullable {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("parse %v failed, expected %v", v, schema)
 	}
 
 	return s, validateString(s, schema)
@@ -548,6 +553,9 @@ func toObject(m *sortedmap.LinkedHashMap[string, interface{}]) (interface{}, err
 	t := reflect.StructOf(fields)
 	v := reflect.New(t).Elem()
 	for i, val := range values {
+		if !val.IsValid() {
+			continue
+		}
 		v.Field(i).Set(val)
 	}
 	return v.Addr().Interface(), nil
@@ -611,6 +619,13 @@ func toString(i interface{}) string {
 }
 
 func newField(name string, value interface{}) reflect.StructField {
+	if value == nil {
+		return reflect.StructField{
+			Name: strings.Title(getValidFieldName(name)),
+			Type: reflect.TypeOf(&struct{}{}),
+			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v"`, name)),
+		}
+	}
 	return reflect.StructField{
 		Name: strings.Title(getValidFieldName(name)),
 		Type: reflect.TypeOf(value),

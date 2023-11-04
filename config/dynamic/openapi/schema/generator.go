@@ -41,6 +41,9 @@ func (g *Generator) New(ref *Ref) (interface{}, error) {
 	if err != nil {
 		return nil, fmt.Errorf("generating data failed: %w", err)
 	}
+	if m, ok := i.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
+		return toObject(m)
+	}
 	return i, nil
 }
 
@@ -100,6 +103,13 @@ func (b *builder) create(ref *Ref) (interface{}, error) {
 }
 
 func (b *builder) createObject(s *Schema) (interface{}, error) {
+	if s.Nullable {
+		n := gofakeit.Float32Range(0, 1)
+		if n < 0.05 {
+			return nil, nil
+		}
+	}
+
 	// recursion guard. Currently, we use a fixed depth: 1
 	n := len(b.requests)
 	numRequestsSameAsThisOne := 0
@@ -146,7 +156,14 @@ func (b *builder) createObject(s *Schema) (interface{}, error) {
 	return m, nil
 }
 
-func (b *builder) createString(s *Schema) string {
+func (b *builder) createString(s *Schema) interface{} {
+	if s.Nullable {
+		n := gofakeit.Float32Range(0, 1)
+		if n < 0.05 {
+			return nil
+		}
+	}
+
 	if len(s.Format) > 0 {
 		return b.createStringByFormat(s.Format)
 	} else if len(s.Pattern) > 0 {
@@ -182,7 +199,7 @@ func (b *builder) createString(s *Schema) string {
 			n := gofakeit.IntRange(0, len(numericChars)-1)
 			result[i] = rune(numericChars[n])
 		case 2:
-			result[i] = rune(' ')
+			result[i] = ' '
 		case 3:
 			n := gofakeit.IntRange(0, len(specialChars)-1)
 			result[i] = rune(specialChars[n])
@@ -192,6 +209,13 @@ func (b *builder) createString(s *Schema) string {
 }
 
 func (b *builder) createNumber(s *Schema) (interface{}, error) {
+	if s.Nullable {
+		n := gofakeit.Float32Range(0, 1)
+		if n < 0.05 {
+			return nil, nil
+		}
+	}
+
 	f := false
 	if s.ExclusiveMinimum != nil && (*s.ExclusiveMinimum) {
 		ss := *s
@@ -282,6 +306,13 @@ func (b *builder) createNumber(s *Schema) (interface{}, error) {
 }
 
 func (b *builder) createArray(s *Schema) (r []interface{}, err error) {
+	if s.Nullable {
+		n := gofakeit.Float32Range(0, 1)
+		if n < 0.05 {
+			return nil, nil
+		}
+	}
+
 	maxItems := 5
 	if s.MaxItems != nil {
 		maxItems = *s.MaxItems
@@ -384,4 +415,42 @@ func contains(s []interface{}, v interface{}) bool {
 
 func toPointerF(f float64) *float64 {
 	return &f
+}
+
+func merge(o1, o2 interface{}) (interface{}, error) {
+	v1 := reflect.ValueOf(o1).Elem()
+	v2 := reflect.ValueOf(o2).Elem()
+
+	t := v1.Type()
+	n := t.NumField()
+	fieldsIndex := map[string]int{}
+	fields := make([]reflect.StructField, 0, n)
+	values := make([]reflect.Value, 0, n)
+
+	for i := 0; i < n; i++ {
+		f := t.Field(i)
+		fieldsIndex[f.Name] = i
+		fields = append(fields, f)
+		values = append(values, v1.Field(i))
+	}
+
+	t = v2.Type()
+	n = t.NumField()
+	for i := 0; i < n; i++ {
+		f := t.Field(i)
+		if index, ok := fieldsIndex[f.Name]; ok {
+			values[index] = v2.Field(i)
+		} else {
+			fieldsIndex[f.Name] = i
+			fields = append(fields, f)
+			values = append(values, v1.Field(i))
+		}
+	}
+
+	t = reflect.StructOf(fields)
+	v := reflect.New(t).Elem()
+	for i, val := range values {
+		v.Field(i).Set(val)
+	}
+	return v.Addr().Interface(), nil
 }

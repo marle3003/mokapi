@@ -158,6 +158,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	var body []byte
 
 	if len(response.Body) > 0 {
+		// we do not validate body against schema
 		body = []byte(response.Body)
 	} else if response.Data != nil {
 		if b, ok := response.Data.([]byte); ok {

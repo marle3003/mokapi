@@ -220,7 +220,7 @@ func TestRef_Unmarshal_Json_String(t *testing.T) {
 			s:      `"1908-12-7"`,
 			schema: &schema.Schema{Type: "string", Format: "date"},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "unmarshal data failed: value '1908-12-7' is not a date RFC3339, expected schema type=string format=date")
+				require.EqualError(t, err, "unmarshal data failed: value '1908-12-7' does not match format 'date' (RFC3339), expected schema type=string format=date")
 			},
 		},
 		{
@@ -237,7 +237,7 @@ func TestRef_Unmarshal_Json_String(t *testing.T) {
 			s:      `"1908-12-07 T04:14:25Z"`,
 			schema: &schema.Schema{Type: "string", Format: "date-time"},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "unmarshal data failed: value '1908-12-07 T04:14:25Z' is not a date-time RFC3339, expected schema type=string format=date-time")
+				require.EqualError(t, err, "unmarshal data failed: value '1908-12-07 T04:14:25Z' does not match format 'date-time' (RFC3339), expected schema type=string format=date-time")
 			},
 		},
 		{
@@ -366,6 +366,15 @@ func TestRef_Unmarshal_Json_String(t *testing.T) {
 			schema: &schema.Schema{Type: "string", Enum: []interface{}{"bar"}},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.EqualError(t, err, "unmarshal data failed: value 'foo' does not match one in the enumeration [bar]", i)
+			},
+		},
+		{
+			name:   "nullable string",
+			s:      `null`,
+			schema: &schema.Schema{Type: "string", Nullable: true},
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Nil(t, i)
 			},
 		},
 	}

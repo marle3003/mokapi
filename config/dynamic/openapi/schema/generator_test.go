@@ -1,11 +1,11 @@
 package schema_test
 
 import (
+	"encoding/json"
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/config/dynamic/openapi/schema/schematest"
-	"mokapi/sortedmap"
 	"testing"
 )
 
@@ -536,31 +536,24 @@ func TestGeneratorArray(t *testing.T) {
 func TestGeneratorObject(t *testing.T) {
 	testdata := []struct {
 		name   string
-		exp    interface{}
+		exp    string
 		schema *schema.Schema
 	}{
 		{
-			name: "simple",
-			exp: map[string]interface{}{
-				"id": int64(-8379641344161477543),
-			},
+			name:   "simple",
+			exp:    `{"id":-8379641344161477543}`,
 			schema: schematest.New("object", schematest.WithProperty("id", &schema.Schema{Type: "integer", Format: "int64"})),
 		},
 		{
 			name: "more fields",
-			exp:  map[string]interface{}{"id": int32(-1072427943), "date": "1992-12-28"},
+			exp:  `{"id":-1072427943,"date":"1992-12-28"}`,
 			schema: schematest.New("object",
 				schematest.WithProperty("id", schematest.New("integer", schematest.WithFormat("int32"))),
 				schematest.WithProperty("date", schematest.New("string", schematest.WithFormat("date")))),
 		},
 		{
 			name: "nested",
-			exp: map[string]interface{}{
-				"nested": map[string]interface{}{
-					"id":   int32(-1072427943),
-					"date": "1992-12-28",
-				},
-			},
+			exp:  `{"nested":{"id":-1072427943,"date":"1992-12-28"}}`,
 			schema: schematest.New("object",
 				schematest.WithProperty("nested", schematest.New("object",
 					schematest.WithProperty("id", schematest.New("integer", schematest.WithFormat("int32"))),
@@ -571,43 +564,15 @@ func TestGeneratorObject(t *testing.T) {
 		},
 		{
 			name: "dictionary",
-			exp: map[string]interface{}{
-				"class":     "vUwYR5rljgmr",
-				"generally": "",
-				"hence":     "ZL",
-				"result":    "",
-				"these":     "LRf",
-				"thing":     "UOwQ;ezYv",
-			},
+			exp:  `{"generally":"","result":"","thing":"UOwQ;ezYv","these":"LRf","hence":"ZL","class":"vUwYR5rljgmr"}`,
 			schema: schematest.New("object",
 				schematest.WithAdditionalProperties(schematest.New("string"))),
 		},
 		{
-			"no fields defined",
-			map[string]interface{}{},
-			&schema.Schema{Type: "object"},
+			name:   "no fields defined",
+			exp:    `{}`,
+			schema: &schema.Schema{Type: "object"},
 		},
-		//{
-		//	"example",
-		//	struct {
-		//		foo string
-		//	}{foo: "bar"},
-		//	&openapi.Schema{Type: "object", Example: map[string]interface{}{"foo": "bar"}},
-		//},
-	}
-
-	var toMap func(m *sortedmap.LinkedHashMap[string, interface{}]) map[string]interface{}
-	toMap = func(m *sortedmap.LinkedHashMap[string, interface{}]) map[string]interface{} {
-		r := make(map[string]interface{})
-		for it := m.Iter(); it.Next(); {
-			v := it.Value()
-			if vm, ok := v.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
-				r[it.Key()] = toMap(vm)
-			} else {
-				r[it.Key()] = it.Value()
-			}
-		}
-		return r
 	}
 
 	for _, data := range testdata {
@@ -617,7 +582,9 @@ func TestGeneratorObject(t *testing.T) {
 			g := schema.NewGenerator()
 			o, err := g.New(&schema.Ref{Value: data.schema})
 			require.NoError(t, err)
-			require.Equal(t, data.exp, toMap(o.(*sortedmap.LinkedHashMap[string, interface{}])))
+			b, err := json.Marshal(o)
+			require.NoError(t, err)
+			require.Equal(t, data.exp, string(b))
 		})
 	}
 }
@@ -647,12 +614,9 @@ func TestGenerator_AnyOf(t *testing.T) {
 				g := schema.NewGenerator()
 				o, err := g.New(&schema.Ref{Value: s})
 				require.NoError(t, err)
-				a, ok := o.([]interface{})
-				require.True(t, ok, "should be an array")
-				require.Len(t, a, 1)
-				m := a[0].(*sortedmap.LinkedHashMap[string, interface{}])
-				foo, _ := m.Get("foo")
-				require.Equal(t, "id1", foo)
+				b, err := json.Marshal(o)
+				require.NoError(t, err)
+				require.Equal(t, `[{"foo":"id1"}]`, string(b))
 			},
 		},
 	}
@@ -680,13 +644,9 @@ func TestGenerator_AllOf(t *testing.T) {
 			)),
 			test: func(t *testing.T, result interface{}, err error) {
 				require.NoError(t, err)
-				m, ok := result.(*sortedmap.LinkedHashMap[string, interface{}])
-				require.True(t, ok, "should be a sorted map")
-				require.Equal(t, 2, m.Len())
-				foo, _ := m.Get("foo")
-				require.Equal(t, "xid1UOwQ;", foo)
-				bar, _ := m.Get("bar")
-				require.Equal(t, 1.1291386311317026e+308, bar)
+				b, err := json.Marshal(result)
+				require.NoError(t, err)
+				require.Equal(t, `{"foo":"xid1UOwQ;","bar":1.1291386311317026e+308}`, string(b))
 			},
 		},
 		{
@@ -697,11 +657,9 @@ func TestGenerator_AllOf(t *testing.T) {
 			),
 			test: func(t *testing.T, result interface{}, err error) {
 				require.NoError(t, err)
-				m, ok := result.(*sortedmap.LinkedHashMap[string, interface{}])
-				require.True(t, ok, "should be a sorted map")
-				require.Equal(t, 1, m.Len())
-				bar, _ := m.Get("bar")
-				require.Equal(t, 1.644484108270445e+307, bar)
+				b, err := json.Marshal(result)
+				require.NoError(t, err)
+				require.Equal(t, `{"bar":1.644484108270445e+307}`, string(b))
 			},
 		},
 		{
@@ -714,11 +672,9 @@ func TestGenerator_AllOf(t *testing.T) {
 			),
 			test: func(t *testing.T, result interface{}, err error) {
 				require.NoError(t, err)
-				m, ok := result.(*sortedmap.LinkedHashMap[string, interface{}])
-				require.True(t, ok, "should be a sorted map")
-				require.Equal(t, 1, m.Len())
-				bar, _ := m.Get("bar")
-				require.Equal(t, 1.644484108270445e+307, bar)
+				b, err := json.Marshal(result)
+				require.NoError(t, err)
+				require.Equal(t, `{"bar":1.644484108270445e+307}`, string(b))
 			},
 		},
 		{
@@ -791,17 +747,17 @@ func TestGenerator_Recursions(t *testing.T) {
 				props.Set("foo", &schema.Ref{Value: s})
 				s.Properties = props
 				g := schema.NewGenerator()
-				o, err := g.New(&schema.Ref{Value: s})
+
+				result, err := g.New(&schema.Ref{Value: s})
 				require.NoError(t, err)
-				require.NotNil(t, o)
-				m := o.(*sortedmap.LinkedHashMap[string, interface{}])
-				foo, _ := m.Get("foo")
-				foo2, _ := foo.(*sortedmap.LinkedHashMap[string, interface{}]).Get("foo")
-				require.Nil(t, foo2)
+
+				b, err := json.Marshal(result)
+				require.NoError(t, err)
+				require.Equal(t, `{"foo":{"foo":null}}`, string(b))
 			},
 		},
 		{
-			"recursion across to objects depth 1",
+			"recursion across two objects depth 1",
 			func(t *testing.T) {
 				child := schematest.New("object")
 				s := schematest.New("object", schematest.WithProperty("bar", child))
@@ -809,14 +765,14 @@ func TestGenerator_Recursions(t *testing.T) {
 				props.Set("foo", &schema.Ref{Value: s})
 				child.Properties = props
 				g := schema.NewGenerator()
-				o, err := g.New(&schema.Ref{Value: s})
+
+				result, err := g.New(&schema.Ref{Value: s})
 				require.NoError(t, err)
-				require.NotNil(t, o)
-				m := o.(*sortedmap.LinkedHashMap[string, interface{}])
-				bar, _ := m.Get("bar")
-				foo, _ := bar.(*sortedmap.LinkedHashMap[string, interface{}]).Get("foo")
-				foo2, _ := foo.(*sortedmap.LinkedHashMap[string, interface{}]).Get("foo")
-				require.Nil(t, foo2)
+				require.NotNil(t, result)
+
+				b, err := json.Marshal(result)
+				require.NoError(t, err)
+				require.Equal(t, `{"bar":{"foo":{"bar":{"foo":null}}}}`, string(b))
 			},
 		},
 		{
@@ -849,4 +805,120 @@ func TestGenerator_Recursions(t *testing.T) {
 		})
 	}
 
+}
+
+func TestGeneratorNullable(t *testing.T) {
+	testcases := []struct {
+		name   string
+		schema *schema.Schema
+		seed   int64
+		test   func(t *testing.T, exp interface{}, err error)
+	}{
+		{
+			name:   "nullable string",
+			schema: schematest.New("string", schematest.IsNullable(true)),
+			seed:   -77,
+			test: func(t *testing.T, exp interface{}, err error) {
+				require.NoError(t, err)
+				require.Nil(t, exp)
+			},
+		},
+		{
+			name:   "nullable int",
+			schema: schematest.New("integer", schematest.IsNullable(true)),
+			seed:   -77,
+			test: func(t *testing.T, exp interface{}, err error) {
+				require.NoError(t, err)
+				require.Nil(t, exp)
+			},
+		},
+		{
+			name:   "nullable number",
+			schema: schematest.New("number", schematest.IsNullable(true)),
+			seed:   -77,
+			test: func(t *testing.T, exp interface{}, err error) {
+				require.NoError(t, err)
+				require.Nil(t, exp)
+			},
+		},
+		{
+			name: "nullable object",
+			schema: schematest.New("object",
+				schematest.IsNullable(true),
+				schematest.WithProperty("foo", schematest.New("string"))),
+			seed: -77,
+			test: func(t *testing.T, result interface{}, err error) {
+				require.NoError(t, err)
+				require.Nil(t, result)
+			},
+		},
+		{
+			name: "nullable property",
+			schema: schematest.New("object",
+				schematest.WithProperty("foo", schematest.New("string", schematest.IsNullable(true)))),
+			seed: -77,
+			test: func(t *testing.T, result interface{}, err error) {
+				require.NoError(t, err)
+				require.NotNil(t, result)
+
+				b, err := json.Marshal(result)
+				require.NoError(t, err)
+				require.Equal(t, `{"foo":null}`, string(b))
+			},
+		},
+		{
+			name: "nullable array",
+			schema: schematest.New("array",
+				schematest.IsNullable(true),
+				schematest.WithItems("string")),
+			seed: -77,
+			test: func(t *testing.T, result interface{}, err error) {
+				require.NoError(t, err)
+				require.Nil(t, result)
+			},
+		},
+		{
+			name: "nullable array item",
+			schema: schematest.New("array",
+				schematest.WithItems("string", schematest.IsNullable(true))),
+			seed: 52,
+			test: func(t *testing.T, result interface{}, err error) {
+				require.NoError(t, err)
+				require.NotNil(t, result)
+				arr := result.([]interface{})
+				require.Nil(t, arr[1])
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			gofakeit.Seed(tc.seed)
+
+			g := schema.NewGenerator()
+			o, err := g.New(&schema.Ref{Value: tc.schema})
+			tc.test(t, o, err)
+		})
+	}
+}
+
+func _TestFindSeed(t *testing.T) {
+	i := int64(0)
+	for {
+		gofakeit.Seed(i)
+
+		g := schema.NewGenerator()
+		o, _ := g.New(&schema.Ref{Value: schematest.New("array",
+			schematest.WithItems("string", schematest.IsNullable(true)))})
+
+		for _, v := range o.([]interface{}) {
+			if v == nil {
+				require.NotNil(t, v, "seed %v", i)
+				return
+			}
+		}
+
+		i++
+	}
 }

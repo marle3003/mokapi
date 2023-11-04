@@ -35,6 +35,12 @@ func TestRef_Marshal_Json(t *testing.T) {
 			exp:    `"12"`,
 		},
 		{
+			name:   "nullable string",
+			schema: &schema.Ref{Value: schematest.New("string")},
+			data:   nil,
+			exp:    `null`,
+		},
+		{
 			name:   "integer as string",
 			schema: &schema.Ref{Value: schematest.New("integer")},
 			data:   "12",

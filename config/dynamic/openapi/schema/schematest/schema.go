@@ -206,3 +206,9 @@ func WithMinLength(n int) SchemaOptions {
 		s.MinLength = &n
 	}
 }
+
+func IsNullable(b bool) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Nullable = b
+	}
+}
