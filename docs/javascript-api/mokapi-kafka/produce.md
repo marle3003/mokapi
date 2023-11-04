@@ -1,5 +1,5 @@
 ---
-title: Javascript API: produce
+title: "Javascript API: produce"
 description: Send a single message to a Kafka topic.
 ---
 # produce( [args] )

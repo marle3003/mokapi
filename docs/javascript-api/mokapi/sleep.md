@@ -1,5 +1,5 @@
 ---
-title: Javascript API: sleep
+title: "Javascript API: sleep"
 description: Suspends the execution for the specified duration.
 ---
 # sleep( time )
