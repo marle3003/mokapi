@@ -185,16 +185,19 @@ type customFieldNameMapper struct {
 
 func (cfm customFieldNameMapper) FieldName(_ reflect.Type, f reflect.StructField) string {
 	tag := f.Tag.Get("json")
+	if len(tag) == 0 {
+		return uncapitalize(f.Name)
+	}
 	if idx := strings.IndexByte(tag, ','); idx != -1 {
 		tag = tag[:idx]
 	}
 	return tag
 }
 
-func uncapitalize(s string) string {
-	return strings.ToLower(s[0:1]) + s[1:]
-}
-
 func (cfm customFieldNameMapper) MethodName(_ reflect.Type, m reflect.Method) string {
 	return uncapitalize(m.Name)
+}
+
+func uncapitalize(s string) string {
+	return strings.ToLower(s[0:1]) + s[1:]
 }

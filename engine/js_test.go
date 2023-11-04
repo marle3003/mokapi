@@ -336,6 +336,7 @@ type testLogger struct {
 	info  func(args ...interface{})
 	warn  func(args ...interface{})
 	error func(args ...interface{})
+	debug func(args ...interface{})
 }
 
 func (tl *testLogger) Info(args ...interface{}) {
@@ -348,4 +349,8 @@ func (tl *testLogger) Warn(args ...interface{}) {
 
 func (tl *testLogger) Error(args ...interface{}) {
 	tl.info(args...)
+}
+
+func (tl *testLogger) Debug(args ...interface{}) {
+	tl.debug(args...)
 }

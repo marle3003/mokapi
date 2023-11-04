@@ -15,16 +15,6 @@ type mokapi struct {
 	m sync.Mutex
 }
 
-type Student struct{ n string }
-
-func (s *Student) Name() string {
-	return s.n
-}
-
-func (s *Student) SetName(name string) {
-	s.n = name
-}
-
 func newMokapi(host common.Host, rt *goja.Runtime) interface{} {
 	return &mokapi{host: host, rt: rt}
 }
@@ -134,20 +124,6 @@ func (m *mokapi) On(event string, do goja.Value, args goja.Value) {
 		call, _ := goja.AssertFunction(do)
 		var params []goja.Value
 		for _, v := range args {
-			/*o := m.rt.NewObject()
-			s := &Student{n: "Nadine"}
-			err := o.DefineAccessorProperty("name-test",
-				m.rt.ToValue(func(call goja.FunctionCall) goja.Value {
-					return m.rt.ToValue(s.Name())
-				}),
-				m.rt.ToValue(func(call goja.FunctionCall) (ret goja.Value) {
-					s.SetName(call.Argument(0).String())
-					return
-				}),
-				goja.FLAG_TRUE, goja.FLAG_TRUE)
-			if err != nil {
-				panic(err)
-			}*/
 			params = append(params, m.rt.ToValue(v))
 		}
 		r, err := call(goja.Undefined(), params...)

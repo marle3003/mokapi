@@ -1,6 +1,7 @@
 package js
 
 import (
+	"encoding/json"
 	"github.com/brianvoe/gofakeit/v6"
 	r "github.com/stretchr/testify/require"
 	"mokapi/config/static"
@@ -82,7 +83,9 @@ func TestScript_Faker(t *testing.T) {
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
-				r.Equal(t, "{id: -8379641344161477543}", v.String())
+				b, err := json.Marshal(v)
+				r.NoError(t, err)
+				r.Equal(t, `{"id":-8379641344161478000}`, string(b))
 			},
 		},
 	}
