@@ -9,7 +9,7 @@ components:
           type: array
           items:
             type: string
-            enum: ["http", "kafka", "smtp"]
+            enum: ["http", "kafka", "smtp", "ldap"]
     Service:
       type: object
       properties:
@@ -23,7 +23,7 @@ components:
           $ref: '#/components/schemas/Contact'
         type:
           type: string
-          enum: ["http", "kafka", "smtp"]
+          enum: ["http", "kafka", "smtp", "ldap"]
         metrics:
           $ref: '#/components/schemas/Metrics'
     Contact:
