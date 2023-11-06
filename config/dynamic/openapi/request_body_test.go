@@ -145,12 +145,7 @@ func TestBodyFromRequest(t *testing.T) {
 			},
 			test: func(t *testing.T, result *openapi.Body, err error) {
 				require.NoError(t, err)
-				exp := &struct {
-					Foo string `json:"foo"`
-				}{
-					Foo: "bar",
-				}
-				require.Equal(t, exp, result.Value)
+				require.Equal(t, map[string]interface{}{"foo": "bar"}, result.Value)
 			},
 		},
 		{
@@ -165,12 +160,7 @@ func TestBodyFromRequest(t *testing.T) {
 			},
 			test: func(t *testing.T, result *openapi.Body, err error) {
 				require.NoError(t, err)
-				exp := &struct {
-					Foo string `json:"foo"`
-				}{
-					Foo: "bar",
-				}
-				require.Equal(t, exp, result.Value)
+				require.Equal(t, map[string]interface{}{"foo": "bar"}, result.Value)
 			},
 		},
 		{
@@ -185,12 +175,7 @@ func TestBodyFromRequest(t *testing.T) {
 			},
 			test: func(t *testing.T, result *openapi.Body, err error) {
 				require.NoError(t, err)
-				exp := &struct {
-					Foo string `json:"foo"`
-				}{
-					Foo: "bar",
-				}
-				require.Equal(t, exp, result.Value)
+				require.Equal(t, map[string]interface{}{"foo": "bar"}, result.Value)
 			},
 		},
 		{
@@ -412,12 +397,9 @@ foobar
 			test: func(t *testing.T, result *openapi.Body, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{
-					"address": &struct {
-						Street string `json:"street"`
-						City   string `json:"city"`
-					}{
-						Street: "3, Garden St",
-						City:   "Hillsbery, UT",
+					"address": map[string]interface{}{
+						"street": "3, Garden St",
+						"city":   "Hillsbery, UT",
 					},
 					"id":           "123e4567-e89b-12d3-a456-426655440000",
 					"profileImage": "foobar",

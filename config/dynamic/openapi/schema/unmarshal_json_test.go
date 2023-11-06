@@ -7,7 +7,6 @@ import (
 	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/config/dynamic/openapi/schema/schematest"
 	"mokapi/media"
-	"reflect"
 	"testing"
 )
 
@@ -42,9 +41,7 @@ func TestRef_Unmarshal_Json(t *testing.T) {
 			schema: nil,
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, &struct {
-					Foo float64 `json:"foo"`
-				}{Foo: 12}, i)
+				require.Equal(t, map[string]interface{}{"foo": float64(12)}, i)
 			},
 		},
 		{
@@ -62,9 +59,7 @@ func TestRef_Unmarshal_Json(t *testing.T) {
 			schema: schematest.New("object", schematest.WithProperty("foo", schematest.New("integer"))),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, &struct {
-					Foo int64 `json:"foo"`
-				}{Foo: int64(12)}, i)
+				require.Equal(t, map[string]interface{}{"foo": int64(12)}, i)
 			},
 		},
 		{
@@ -73,9 +68,7 @@ func TestRef_Unmarshal_Json(t *testing.T) {
 			schema: schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, &struct {
-					Foo string `json:"foo"`
-				}{Foo: "bar"}, i)
+				require.Equal(t, map[string]interface{}{"foo": "bar"}, i)
 			},
 		},
 		{
@@ -86,9 +79,7 @@ func TestRef_Unmarshal_Json(t *testing.T) {
 					schematest.New("string", schematest.WithFormat("date")))),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, &struct {
-					Foo string `json:"foo"`
-				}{Foo: "2021-01-20"}, i)
+				require.Equal(t, map[string]interface{}{"foo": "2021-01-20"}, i)
 			},
 		},
 		{
@@ -99,38 +90,7 @@ func TestRef_Unmarshal_Json(t *testing.T) {
 					schematest.New("array", schematest.WithItems("string")))),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, &struct {
-					Foo []string `json:"foo"`
-				}{Foo: []string{"a", "b", "c"}}, i)
-			},
-		},
-		{
-			name: "object containing two properties",
-			data: `{"test": 12, "test2": true}`,
-			schema: schematest.New("object",
-				schematest.Any(
-					schematest.New("object", schematest.WithProperty("test", schematest.New("integer"))),
-					schematest.New("object", schematest.WithProperty("test2", schematest.New("boolean"))),
-				)),
-			test: func(t *testing.T, i interface{}, err error) {
-				require.NoError(t, err)
-				require.Equal(t, &struct {
-					Test  int64 `json:"test"`
-					Test2 bool  `json:"test2"`
-				}{Test: 12, Test2: true}, i)
-			},
-		},
-		{
-			name: "anyOf",
-			data: `"hello world"`,
-			schema: schematest.New("object",
-				schematest.Any(
-					schematest.New("object", schematest.WithProperty("test", schematest.New("integer"))),
-					schematest.New("string"),
-				)),
-			test: func(t *testing.T, i interface{}, err error) {
-				require.NoError(t, err)
-				require.Equal(t, "hello world", i)
+				require.Equal(t, map[string]interface{}{"foo": []string{"a", "b", "c"}}, i)
 			},
 		},
 		{
@@ -433,35 +393,24 @@ func TestRef_Unmarshal_Json_Any(t *testing.T) {
 						schematest.WithProperty("foo", schematest.New("string"))))),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, &struct {
-					Foo string `json:"foo"`
-				}{Foo: "bar"}, i)
+				require.Equal(t, map[string]interface{}{"foo": "bar"}, i)
 			},
 		},
 		{
-			name: "too many properties",
-			s:    `{"name": "bar", "age": 12}`,
-			schema: schematest.New("",
-				schematest.Any(
-					schematest.New("object",
-						schematest.WithProperty("name", schematest.New("string"))))),
-			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, `unmarshal data failed: parse {name: bar, age: 12} failed: too many properties for object, expected any of schema type=object properties=[name]`)
-			},
-		},
-		{
-			name: "missing required property",
+			name: "missing required property should not error",
 			s:    `{"name": "bar"}`,
 			schema: schematest.New("",
 				schematest.Any(
 					schematest.New("object",
 						schematest.WithProperty("name", schematest.New("string"))),
 					schematest.New("object",
+						schematest.WithProperty("name", schematest.New("string")),
 						schematest.WithProperty("age", schematest.New("integer")),
 						schematest.WithRequired("age"),
 					))),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "unmarshal data failed: missing required property 'age', expected any of schema type=object properties=[name], schema type=object properties=[age] required=[age]")
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"name": "bar"}, i)
 			},
 		},
 		{
@@ -477,10 +426,33 @@ func TestRef_Unmarshal_Json_Any(t *testing.T) {
 					))),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, &struct {
-					Name string `json:"name"`
-					Age  int64  `json:"age"`
-				}{Name: "bar", Age: 12}, i)
+				require.Equal(t, map[string]interface{}{"name": "bar", "age": int64(12)}, i)
+			},
+		},
+		{
+			name: "anyOf: object containing both properties",
+			s:    `{"test": 12, "test2": true}`,
+			schema: schematest.New("object",
+				schematest.Any(
+					schematest.New("object", schematest.WithProperty("test", schematest.New("integer"))),
+					schematest.New("object", schematest.WithProperty("test2", schematest.New("boolean"))),
+				)),
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"test": int64(12), "test2": true}, i)
+			},
+		},
+		{
+			name: "anyOf",
+			s:    `"hello world"`,
+			schema: schematest.New("object",
+				schematest.Any(
+					schematest.New("object", schematest.WithProperty("test", schematest.New("integer"))),
+					schematest.New("string"),
+				)),
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "hello world", i)
 			},
 		},
 	}
@@ -515,14 +487,12 @@ func TestRef_Unmarshal_Json_OneOf(t *testing.T) {
 			)),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, &struct {
-					Foo bool `json:"foo"`
-				}{Foo: true}, i)
+				require.Equal(t, map[string]interface{}{"foo": true}, i)
 			},
 		},
 		{
 			name: "no match",
-			s:    `{"foo": 12, "bar": true}`,
+			s:    `{"foo": "bar", "bar": 12}`,
 			schema: schematest.New("", schematest.OneOf(
 				schematest.New("object",
 					schematest.WithProperty("foo", schematest.New("integer"))),
@@ -530,7 +500,7 @@ func TestRef_Unmarshal_Json_OneOf(t *testing.T) {
 					schematest.WithProperty("bar", schematest.New("boolean"))),
 			)),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, `unmarshal data failed: parse {foo: 12, bar: true} failed, expected one of schema type=object properties=[foo], schema type=object properties=[bar]`)
+				require.Regexp(t, `unmarshal data failed: parse .* failed: expected to match one of schema but it matches none`, err.Error())
 			},
 		},
 		{
@@ -543,7 +513,7 @@ func TestRef_Unmarshal_Json_OneOf(t *testing.T) {
 					schematest.WithProperty("foo", schematest.New("number"))),
 			)),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, `unmarshal data failed: parse {foo: 12} failed: it is not valid for only one schema, expected one of schema type=object properties=[foo], schema type=object properties=[foo]`)
+				require.EqualError(t, err, `unmarshal data failed: parse {foo: 12} failed: it is valid for more than one schema, expected one of schema type=object properties=[foo], schema type=object properties=[foo]`)
 			},
 		},
 	}
@@ -577,10 +547,7 @@ func TestRef_Unmarshal_Json_AllOf(t *testing.T) {
 				)),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, &struct {
-					Foo int64 `json:"foo"`
-					Bar bool  `json:"bar"`
-				}{Foo: 12, Bar: true}, i)
+				require.Equal(t, map[string]interface{}{"foo": int64(12), "bar": true}, i)
 			},
 		},
 		{
@@ -594,7 +561,7 @@ func TestRef_Unmarshal_Json_AllOf(t *testing.T) {
 						schematest.WithProperty("bar", schematest.New("boolean"))),
 				)),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "unmarshal data failed: parse {foo: 12} failed: missing required property 'bar', expected all of schema type=object properties=[foo], schema type=object properties=[bar] required=[bar]")
+				require.EqualError(t, err, "unmarshal data failed: parse {foo: 12} failed: value does not match part of allOf: missing required field 'bar'")
 			},
 		},
 	}
@@ -866,7 +833,7 @@ func TestRef_Unmarshal_Json_Object(t *testing.T) {
 			schema: &schema.Schema{Type: "object"},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, &struct{}{}, v)
+				require.Equal(t, map[string]interface{}{}, v)
 			},
 		},
 		{
@@ -875,9 +842,7 @@ func TestRef_Unmarshal_Json_Object(t *testing.T) {
 			schema: &schema.Schema{},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, &struct {
-					Foo string `json:"foo"`
-				}{Foo: "bar"}, v)
+				require.Equal(t, map[string]interface{}{"foo": "bar"}, v)
 			},
 		},
 		{
@@ -886,27 +851,15 @@ func TestRef_Unmarshal_Json_Object(t *testing.T) {
 			schema: &schema.Schema{},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				exp := &struct {
-					Type       string `json:"type"`
-					Properties *struct {
-						Id *struct {
-							Format string `json:"format"`
-							Type   string `json:"type"`
-						} `json:"id"`
-					} `json:"properties"`
-				}{
-					Type: "object",
-					Properties: &struct {
-						Id *struct {
-							Format string `json:"format"`
-							Type   string `json:"type"`
-						} `json:"id"`
-					}{Id: &struct {
-						Format string `json:"format"`
-						Type   string `json:"type"`
-					}{Format: "int64", Type: "integer"}},
-				}
-				require.Equal(t, exp, v)
+				require.Equal(t, map[string]interface{}{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"id": map[string]interface{}{
+							"format": "int64",
+							"type":   "integer",
+						},
+					},
+				}, v)
 			},
 		},
 		{
@@ -918,10 +871,7 @@ func TestRef_Unmarshal_Json_Object(t *testing.T) {
 			),
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, &struct {
-					Name string `json:"name"`
-					Age  int64  `json:"age"`
-				}{Name: "foo", Age: 12}, v)
+				require.Equal(t, map[string]interface{}{"name": "foo", "age": int64(12)}, v)
 			},
 		},
 		{
@@ -933,9 +883,7 @@ func TestRef_Unmarshal_Json_Object(t *testing.T) {
 			),
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, &struct {
-					Name string `json:"name"`
-				}{Name: "foo"}, v)
+				require.Equal(t, map[string]interface{}{"name": "foo"}, v)
 			},
 		},
 		{
@@ -1000,6 +948,28 @@ func TestRef_Unmarshal_Json_Object(t *testing.T) {
 			},
 		},
 		{
+			name: "with additional property",
+			s:    `{"name": "foo", "age": 12}`,
+			schema: schematest.New("object",
+				schematest.WithProperty("name", schematest.New("string")),
+			),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"name": "foo", "age": float64(12)}, v)
+			},
+		},
+		{
+			name: "with additional property but not allowed",
+			s:    `{"name": "foo", "age": 12}`,
+			schema: schematest.New("object",
+				schematest.WithProperty("name", schematest.New("string")),
+				schematest.WithFreeForm(false),
+			),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.Regexp(t, "unmarshal data failed: validation error too many fields on .*, expected schema type=object properties=\\[name\\] free-form=false", err.Error())
+			},
+		},
+		{
 			name: "not minProperties",
 			s:    `{"name": "foo"}`,
 			schema: schematest.New("object",
@@ -1016,7 +986,7 @@ func TestRef_Unmarshal_Json_Object(t *testing.T) {
 				schematest.WithMaxProperties(1),
 			),
 			test: func(t *testing.T, _ interface{}, err error) {
-				require.EqualError(t, err, "unmarshal data failed: validation error maxProperties on {name: foo, age: 12}, expected schema type=object maxProperties=1")
+				require.Regexp(t, "unmarshal data failed: validation error maxProperties on .*, expected schema type=object maxProperties=1", err.Error())
 			},
 		},
 		{
@@ -1026,22 +996,9 @@ func TestRef_Unmarshal_Json_Object(t *testing.T) {
 				schematest.WithMinProperties(1),
 				schematest.WithMaxProperties(2),
 			),
-			test: func(t *testing.T, v interface{}, _ error) {
-				if !reflect.DeepEqual(
-					&struct {
-						Name string  `json:"name"`
-						Age  float64 `json:"age"`
-					}{
-						Name: "foo", Age: 12,
-					}, v) &&
-					!reflect.DeepEqual(&struct {
-						Age  float64 `json:"age"`
-						Name string  `json:"name"`
-					}{
-						Name: "foo", Age: 12,
-					}, v) {
-					require.Fail(t, "not equal in any order")
-				}
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"name": "foo", "age": float64(12)}, v)
 			},
 		},
 	}
@@ -1230,11 +1187,7 @@ func TestRef_Unmarshal_Json_Array(t *testing.T) {
 			),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				v := i.([]interface{})[0]
-				require.Equal(t, &struct {
-					Name string `json:"name"`
-					Age  int64  `json:"age"`
-				}{Name: "foo", Age: 12}, v)
+				require.Equal(t, []interface{}{map[string]interface{}{"name": "foo", "age": int64(12)}}, i)
 			},
 		},
 	}
@@ -1386,33 +1339,7 @@ func TestRef_Unmarshal_Json_SpecialNames(t *testing.T) {
 			schema: schematest.New("object", schematest.WithProperty("ship-date", schematest.New("string"))),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, &struct {
-					Ship_date string `json:"ship-date"` // can be accessed via obj['ship-date'] in javascript
-				}{Ship_date: "2022-01-01"}, i)
-			},
-		},
-		{
-			name: "kebab case conflict",
-			s:    `{"ship-date":"2022-01-01","shipdate":"2023-01-01"}`,
-			schema: schematest.New("object",
-				schematest.WithProperty("ship-date", schematest.New("string")),
-				schematest.WithProperty("shipdate", schematest.New("string"))),
-			test: func(t *testing.T, i interface{}, err error) {
-				require.NoError(t, err)
-				require.Equal(t, &struct {
-					Ship_date string `json:"ship-date"`
-					Shipdate  string `json:"shipdate"`
-				}{Ship_date: "2022-01-01", Shipdate: "2023-01-01"}, i)
-			},
-		},
-		{
-			name: "- conflict",
-			s:    `{"ship-date":"2022-01-01","ship_date":"2023-01-01"}`,
-			schema: schematest.New("object",
-				schematest.WithProperty("ship-date", schematest.New("string")),
-				schematest.WithProperty("shipdate", schematest.New("string"))),
-			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "unmarshal data failed: duplicate field name Ship_date")
+				require.Equal(t, map[string]interface{}{"ship-date": "2022-01-01"}, i)
 			},
 		},
 	}

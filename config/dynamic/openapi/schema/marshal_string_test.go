@@ -40,6 +40,24 @@ func TestParseString(t *testing.T) {
 				require.Equal(t, int64(42), i)
 			},
 		},
+		{
+			name:   "string format date",
+			s:      "2021-09-21",
+			schema: &schema.Schema{Type: "string", Format: "date"},
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "2021-09-21", i)
+			},
+		},
+		{
+			name:   "string format date-time",
+			s:      "2021-09-21T13:22:11.408Z",
+			schema: &schema.Schema{Type: "string", Format: "date-time"},
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "2021-09-21T13:22:11.408Z", i)
+			},
+		},
 	}
 
 	t.Parallel()
@@ -48,7 +66,7 @@ func TestParseString(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			i, err := schema.ParseString("42", &schema.Ref{Value: tc.schema})
+			i, err := schema.ParseString(tc.s, &schema.Ref{Value: tc.schema})
 			tc.test(t, i, err)
 		})
 	}
