@@ -124,7 +124,8 @@ func (c *converter) convertOperation(o *Operation) (*openapi.Operation, error) {
 	}
 
 	if len(o.Consumes) == 0 {
-		o.Consumes = append(o.Consumes, "*/*")
+		// we use the same default MIME type like Swagger Editor
+		o.Consumes = append(o.Consumes, "application/json")
 	}
 
 	for _, p := range o.Parameters {
@@ -147,8 +148,17 @@ func (c *converter) convertOperation(o *Operation) (*openapi.Operation, error) {
 		}
 	}
 
+	produces := o.Produces
+	if len(produces) == 0 {
+		produces = c.config.Produces
+		if len(produces) == 0 {
+			// we use the same default MIME type like Swagger Editor
+			produces = []string{"application/json"}
+		}
+	}
+
 	for statusCode, r := range o.Responses {
-		converted, err := c.convertResponse(r, o.Produces)
+		converted, err := c.convertResponse(r, produces)
 		if err != nil {
 			return nil, err
 		}
