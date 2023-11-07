@@ -5,7 +5,6 @@ import (
 	"github.com/brianvoe/gofakeit/v6"
 	"math"
 	"math/rand"
-	"mokapi/sortedmap"
 	"reflect"
 	"time"
 )
@@ -40,9 +39,6 @@ func (g *Generator) New(ref *Ref) (interface{}, error) {
 	i, err := newBuilder(g.r).create(ref)
 	if err != nil {
 		return nil, fmt.Errorf("generating data failed: %w", err)
-	}
-	if m, ok := i.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
-		return toObject(m)
 	}
 	return i, nil
 }
@@ -80,7 +76,7 @@ func (b *builder) create(ref *Ref) (interface{}, error) {
 				return b.create(schema.AnyOf[i])
 			}
 			if len(schema.AllOf) > 0 {
-				m := sortedmap.NewLinkedHashMap()
+				result := map[string]interface{}{}
 				for _, all := range schema.AllOf {
 					if all == nil || all.Value == nil {
 						continue
@@ -92,10 +88,13 @@ func (b *builder) create(ref *Ref) (interface{}, error) {
 					if err != nil {
 						return nil, fmt.Errorf("allOf expects to be valid against all of subschemas: %w", err)
 					}
-					m.Merge(o.(*sortedmap.LinkedHashMap[string, interface{}]))
+					m := o.(map[string]interface{})
+					for key, value := range m {
+						result[key] = value
+					}
 
 				}
-				return m, nil
+				return result, nil
 			}
 			return nil, nil
 		}
@@ -125,7 +124,8 @@ func (b *builder) createObject(s *Schema) (interface{}, error) {
 	// remove schemas from guard
 	defer func() { b.requests = b.requests[:n] }()
 
-	m := sortedmap.NewLinkedHashMap()
+	//m := sortedmap.NewLinkedHashMap()
+	m := map[string]interface{}{}
 
 	if s.IsDictionary() {
 		length := gofakeit.Number(1, 10)
@@ -134,7 +134,8 @@ func (b *builder) createObject(s *Schema) (interface{}, error) {
 			if err != nil {
 				return nil, err
 			}
-			m.Set(gofakeit.Word(), v)
+			//m.Set(gofakeit.Word(), v)
+			m[gofakeit.Word()] = v
 		}
 		return m, nil
 	}
@@ -150,7 +151,8 @@ func (b *builder) createObject(s *Schema) (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		m.Set(key, value)
+		//m.Set(key, value)
+		m[key] = value
 	}
 
 	return m, nil
@@ -415,42 +417,4 @@ func contains(s []interface{}, v interface{}) bool {
 
 func toPointerF(f float64) *float64 {
 	return &f
-}
-
-func merge(o1, o2 interface{}) (interface{}, error) {
-	v1 := reflect.ValueOf(o1).Elem()
-	v2 := reflect.ValueOf(o2).Elem()
-
-	t := v1.Type()
-	n := t.NumField()
-	fieldsIndex := map[string]int{}
-	fields := make([]reflect.StructField, 0, n)
-	values := make([]reflect.Value, 0, n)
-
-	for i := 0; i < n; i++ {
-		f := t.Field(i)
-		fieldsIndex[f.Name] = i
-		fields = append(fields, f)
-		values = append(values, v1.Field(i))
-	}
-
-	t = v2.Type()
-	n = t.NumField()
-	for i := 0; i < n; i++ {
-		f := t.Field(i)
-		if index, ok := fieldsIndex[f.Name]; ok {
-			values[index] = v2.Field(i)
-		} else {
-			fieldsIndex[f.Name] = i
-			fields = append(fields, f)
-			values = append(values, v1.Field(i))
-		}
-	}
-
-	t = reflect.StructOf(fields)
-	v := reflect.New(t).Elem()
-	for i, val := range values {
-		v.Field(i).Set(val)
-	}
-	return v.Addr().Interface(), nil
 }

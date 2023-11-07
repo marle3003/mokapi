@@ -100,9 +100,11 @@ declare interface Url {
 }
 
 declare interface DateArgs {
-    layout?: string
+    layout?: DateLayout
     timestamp?: number
 }
+
+declare type DateLayout = 'DateTime' | 'DateOnly' | 'TimeOnly' | 'UnixDate' | 'RFC882' | 'RFC822Z' | 'RFC850' | 'RFC1123' | 'RFC1123Z' | 'RFC3339' | 'RFC3339Nano'
 
 declare interface EventArgs {
     /**

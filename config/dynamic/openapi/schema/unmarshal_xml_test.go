@@ -5,7 +5,6 @@ import (
 	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/config/dynamic/openapi/schema/schematest"
 	"mokapi/media"
-	"reflect"
 	"testing"
 )
 
@@ -30,9 +29,7 @@ func TestParse_Xml(t *testing.T) {
 			schema: nil,
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.True(t, hasField(i, "Id", "0"))
-				require.True(t, hasField(i, "Title", "foo"))
-				require.True(t, hasField(i, "Author", "bar"))
+				require.Equal(t, map[string]interface{}{"id": "0", "title": "foo", "author": "bar"}, i)
 			},
 		},
 		{
@@ -54,11 +51,7 @@ func TestParse_Xml(t *testing.T) {
 				schematest.WithProperty("author", schematest.New("string"))),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, &struct {
-					Id     int64  `json:"id"`
-					Title  string `json:"title"`
-					Author string `json:"author"`
-				}{Id: 0, Title: "foo", Author: "bar"}, i)
+				require.Equal(t, map[string]interface{}{"id": int64(0), "title": "foo", "author": "bar"}, i)
 			},
 		},
 		{
@@ -71,11 +64,7 @@ func TestParse_Xml(t *testing.T) {
 				schematest.WithProperty("author", schematest.New("string", schematest.WithXml(&schema.Xml{Name: "Author"})))),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, &struct {
-					Id     int64  `json:"id"`
-					Title  string `json:"title"`
-					Author string `json:"author"`
-				}{Id: 0, Title: "foo", Author: "bar"}, i)
+				require.Equal(t, map[string]interface{}{"id": int64(0), "title": "foo", "author": "bar"}, i)
 			},
 		},
 	}
@@ -91,13 +80,4 @@ func TestParse_Xml(t *testing.T) {
 			tc.test(t, i, err)
 		})
 	}
-}
-
-func hasField(i interface{}, field string, value interface{}) bool {
-	v := reflect.ValueOf(i).Elem()
-	f := v.FieldByName(field)
-	if !f.IsValid() {
-		return false
-	}
-	return f.Interface() == value
 }

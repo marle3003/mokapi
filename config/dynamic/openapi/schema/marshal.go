@@ -351,7 +351,7 @@ func reflectFromMap(v reflect.Value, schema *Schema) (*marshalObject, error) {
 			}
 			d, err := selectData(o.Interface(), it.Value())
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("parsing property '%v' failed: %w", name, err)
 			}
 			obj.Set(name, d)
 		}

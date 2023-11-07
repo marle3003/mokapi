@@ -239,8 +239,8 @@ func TestConvert(t *testing.T) {
 				require.Contains(t, config.Paths, "/foo")
 				get := config.Paths["/foo"].Value.Get
 				require.NotNil(t, get.RequestBody)
-				require.Contains(t, get.RequestBody.Value.Content, "*/*")
-				require.Equal(t, "string", get.RequestBody.Value.Content["*/*"].Schema.Value.Type)
+				require.Contains(t, get.RequestBody.Value.Content, "application/json")
+				require.Equal(t, "string", get.RequestBody.Value.Content["application/json"].Schema.Value.Type)
 			},
 		},
 		{
@@ -282,8 +282,8 @@ func TestConvert(t *testing.T) {
 				require.Contains(t, config.Paths, "/foo")
 				get := config.Paths["/foo"].Value.Get
 				require.NotNil(t, get.RequestBody)
-				require.Contains(t, get.RequestBody.Value.Content, "*/*")
-				require.Equal(t, "string", get.RequestBody.Value.Content["*/*"].Schema.Value.Type)
+				require.Contains(t, get.RequestBody.Value.Content, "application/json")
+				require.Equal(t, "string", get.RequestBody.Value.Content["application/json"].Schema.Value.Type)
 			},
 		},
 		{
@@ -341,6 +341,34 @@ func TestConvert(t *testing.T) {
 		{
 			"path response",
 			`{"swagger": "2.0", "paths": {"/foo": {"get": {"produces": ["application/json"], "responses": {"200": {"description": "response description", "schema": {"$ref": "#/definitions/foo"}}}}}}}`,
+			func(t *testing.T, config *openapi.Config) {
+				require.Contains(t, config.Paths, "/foo")
+				p := config.Paths["/foo"]
+				require.NotNil(t, p.Value.Get)
+				get := p.Value.Get
+				ok := get.Responses.GetResponse(http.StatusOK)
+				require.NotNil(t, ok)
+				require.Equal(t, "response description", ok.Description)
+				require.Equal(t, "#/components/schemas/foo", ok.Content["application/json"].Schema.Ref)
+			},
+		},
+		{
+			"path response root produces",
+			`{"swagger": "2.0", "produces": ["application/json"], "paths": {"/foo": {"get": {"responses": {"200": {"description": "response description", "schema": {"$ref": "#/definitions/foo"}}}}}}}`,
+			func(t *testing.T, config *openapi.Config) {
+				require.Contains(t, config.Paths, "/foo")
+				p := config.Paths["/foo"]
+				require.NotNil(t, p.Value.Get)
+				get := p.Value.Get
+				ok := get.Responses.GetResponse(http.StatusOK)
+				require.NotNil(t, ok)
+				require.Equal(t, "response description", ok.Description)
+				require.Equal(t, "#/components/schemas/foo", ok.Content["application/json"].Schema.Ref)
+			},
+		},
+		{
+			"path response with default MIME type",
+			`{"swagger": "2.0", "paths": {"/foo": {"get": {"responses": {"200": {"description": "response description", "schema": {"$ref": "#/definitions/foo"}}}}}}}`,
 			func(t *testing.T, config *openapi.Config) {
 				require.Contains(t, config.Paths, "/foo")
 				p := config.Paths["/foo"]

@@ -156,7 +156,7 @@ func parseXml(n *xml.Node, r *Ref) (interface{}, error) {
 		if s.Properties == nil && s.IsFreeForm() {
 			return parseFreeForm(n)
 		}
-		props := sortedmap.NewLinkedHashMap()
+		props := map[string]interface{}{}
 		for it := s.Properties.Iter(); it.Next(); {
 			name := it.Key()
 			xmlName := name
@@ -166,7 +166,7 @@ func parseXml(n *xml.Node, r *Ref) (interface{}, error) {
 			}
 			if prop.Value.Xml != nil && prop.Value.Xml.Attribute {
 				if v, found := n.Attributes.Get(xmlName); found {
-					props.Set(name, v)
+					props[name] = v
 				}
 			} else {
 				c := n.GetFirstElement(xmlName)
@@ -177,7 +177,7 @@ func parseXml(n *xml.Node, r *Ref) (interface{}, error) {
 				if err != nil {
 					return nil, err
 				}
-				props.Set(name, v)
+				props[name] = v
 			}
 		}
 		return props, nil
@@ -218,16 +218,16 @@ func parseFreeForm(n *xml.Node) (interface{}, error) {
 		}
 		return result, nil
 	} else {
-		result := sortedmap.NewLinkedHashMap()
+		result := map[string]interface{}{}
 		for it := n.Attributes.Iter(); it.Next(); {
-			result.Set(it.Key(), it.Value())
+			result[it.Key()] = it.Value()
 		}
 		for _, c := range n.Children {
 			v, err := parseXml(c, nil)
 			if err != nil {
 				return nil, err
 			}
-			result.Set(c.Name, v)
+			result[c.Name] = v
 		}
 		return result, nil
 	}

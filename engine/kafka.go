@@ -33,17 +33,17 @@ func (c *kafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 
 	ch := config.Channels[t.Name]
 	if ch == nil || ch.Value == nil {
-		return nil, fmt.Errorf("invalid topic configuration")
+		return nil, fmt.Errorf("produce kafka message to '%v' failed: invalid topic configuration", t.Name)
 	}
 
 	rb, err := c.createRecordBatch(args.Key, args.Value, ch.Value)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("produce kafka message to '%v' failed: %w", t.Name, err)
 	}
 
 	_, err = p.Write(rb)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("produce kafka message to '%v' failed: %w", t.Name, err)
 	}
 
 	k := kafka.BytesToString(rb.Records[0].Key)

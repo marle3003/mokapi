@@ -537,16 +537,19 @@ func TestGeneratorObject(t *testing.T) {
 	testdata := []struct {
 		name   string
 		exp    string
+		exp1   map[string]interface{}
 		schema *schema.Schema
 	}{
 		{
 			name:   "simple",
 			exp:    `{"id":-8379641344161477543}`,
+			exp1:   map[string]interface{}{"id": int64(-8379641344161477543)},
 			schema: schematest.New("object", schematest.WithProperty("id", &schema.Schema{Type: "integer", Format: "int64"})),
 		},
 		{
 			name: "more fields",
 			exp:  `{"id":-1072427943,"date":"1992-12-28"}`,
+			exp1: map[string]interface{}{"id": int32(-1072427943), "date": "1992-12-28"},
 			schema: schematest.New("object",
 				schematest.WithProperty("id", schematest.New("integer", schematest.WithFormat("int32"))),
 				schematest.WithProperty("date", schematest.New("string", schematest.WithFormat("date")))),
@@ -554,6 +557,7 @@ func TestGeneratorObject(t *testing.T) {
 		{
 			name: "nested",
 			exp:  `{"nested":{"id":-1072427943,"date":"1992-12-28"}}`,
+			exp1: map[string]interface{}{"nested": map[string]interface{}{"id": int32(-1072427943), "date": "1992-12-28"}},
 			schema: schematest.New("object",
 				schematest.WithProperty("nested", schematest.New("object",
 					schematest.WithProperty("id", schematest.New("integer", schematest.WithFormat("int32"))),
@@ -565,13 +569,21 @@ func TestGeneratorObject(t *testing.T) {
 		{
 			name: "dictionary",
 			exp:  `{"generally":"","result":"","thing":"UOwQ;ezYv","these":"LRf","hence":"ZL","class":"vUwYR5rljgmr"}`,
+			exp1: map[string]interface{}{"generally": "", "result": "", "thing": "UOwQ;ezYv", "these": "LRf", "hence": "ZL", "class": "vUwYR5rljgmr"},
 			schema: schematest.New("object",
 				schematest.WithAdditionalProperties(schematest.New("string"))),
 		},
 		{
 			name:   "no fields defined",
 			exp:    `{}`,
+			exp1:   map[string]interface{}{},
 			schema: &schema.Schema{Type: "object"},
+		},
+		{
+			name:   "with property _metadata",
+			exp:    `{"_metadata":-8379641344161477543}`,
+			exp1:   map[string]interface{}{"_metadata": int64(-8379641344161477543)},
+			schema: schematest.New("object", schematest.WithProperty("_metadata", &schema.Schema{Type: "integer", Format: "int64"})),
 		},
 	}
 
@@ -582,9 +594,7 @@ func TestGeneratorObject(t *testing.T) {
 			g := schema.NewGenerator()
 			o, err := g.New(&schema.Ref{Value: data.schema})
 			require.NoError(t, err)
-			b, err := json.Marshal(o)
-			require.NoError(t, err)
-			require.Equal(t, data.exp, string(b))
+			require.Equal(t, data.exp1, o)
 		})
 	}
 }
@@ -644,9 +654,7 @@ func TestGenerator_AllOf(t *testing.T) {
 			)),
 			test: func(t *testing.T, result interface{}, err error) {
 				require.NoError(t, err)
-				b, err := json.Marshal(result)
-				require.NoError(t, err)
-				require.Equal(t, `{"foo":"xid1UOwQ;","bar":1.1291386311317026e+308}`, string(b))
+				require.Equal(t, map[string]interface{}{"foo": "xid1UOwQ;", "bar": float64(1.1291386311317026e+308)}, result)
 			},
 		},
 		{

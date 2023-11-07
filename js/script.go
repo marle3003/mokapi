@@ -191,6 +191,7 @@ func (cfm customFieldNameMapper) FieldName(_ reflect.Type, f reflect.StructField
 	if idx := strings.IndexByte(tag, ','); idx != -1 {
 		tag = tag[:idx]
 	}
+
 	return tag
 }
 
