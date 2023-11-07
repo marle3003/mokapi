@@ -33,6 +33,4 @@ FROM alpine
 
 COPY --from=gobuild /go/src/github.com/mokapi/mokapi /
 
-ENV MOKAPI_Log.Level=info
-
 ENTRYPOINT ["/mokapi"]

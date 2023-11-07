@@ -1,7 +1,5 @@
 FROM alpine
 
-ENV MOKAPI_Log.Level=info
-
 ADD mokapi.exe /
 
 ENTRYPOINT ["mokapi.exe"]
