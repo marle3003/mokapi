@@ -13,10 +13,10 @@ import (
 	"testing"
 )
 
-func TestHandler_Body(t *testing.T) {
-	getConfig := func(s *schema.Schema) *openapi.Config {
+func TestHandler_Response(t *testing.T) {
+	getConfig := func(s *schema.Schema, contentType string) *openapi.Config {
 		op := openapitest.NewOperation(
-			openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json",
+			openapitest.WithResponse(http.StatusOK, openapitest.WithContent(contentType,
 				openapitest.NewContent(openapitest.WithSchema(s)))),
 		)
 
@@ -33,7 +33,7 @@ func TestHandler_Body(t *testing.T) {
 	}{
 		{
 			name:   "string as response body",
-			config: getConfig(schematest.New("string")),
+			config: getConfig(schematest.New("string"), "application/json"),
 			handler: func(event string, req *common.EventRequest, res *common.EventResponse) {
 				res.Body = "foo"
 			},
@@ -47,7 +47,7 @@ func TestHandler_Body(t *testing.T) {
 		},
 		{
 			name:   "invalid string body",
-			config: getConfig(schematest.New("string", schematest.WithFormat("date"))),
+			config: getConfig(schematest.New("string", schematest.WithFormat("date")), "application/json"),
 			handler: func(event string, req *common.EventRequest, res *common.EventResponse) {
 				res.Data = "foo"
 			},
@@ -61,7 +61,7 @@ func TestHandler_Body(t *testing.T) {
 		},
 		{
 			name:   "object with null property",
-			config: getConfig(schematest.New("object", schematest.WithProperty("foo", schematest.New("string", schematest.IsNullable(true))))),
+			config: getConfig(schematest.New("object", schematest.WithProperty("foo", schematest.New("string", schematest.IsNullable(true)))), "application/json"),
 			handler: func(event string, req *common.EventRequest, res *common.EventResponse) {
 				res.Data = &struct {
 					Foo interface{}
@@ -75,6 +75,21 @@ func TestHandler_Body(t *testing.T) {
 			test: func(t *testing.T, rr *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, rr.Code)
 				require.Equal(t, `{"foo":null}`, rr.Body.String())
+			},
+		},
+		{
+			name:   "detect content type on byte array",
+			config: getConfig(schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))), "*/*"),
+			handler: func(event string, req *common.EventRequest, res *common.EventResponse) {
+				res.Data = []byte(`{"foo":"bar"}`)
+			},
+			req: func() *http.Request {
+				return httptest.NewRequest("get", "http://localhost/foo", nil)
+			},
+			test: func(t *testing.T, rr *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.Equal(t, "application/json", rr.Header().Get("Content-Type"))
+				require.Equal(t, `{"foo":"bar"}`, rr.Body.String())
 			},
 		},
 	}
