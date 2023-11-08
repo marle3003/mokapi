@@ -256,33 +256,21 @@ func parseObject(i interface{}, s *Schema) (interface{}, error) {
 }
 
 func parseArray(i interface{}, s *Schema) (interface{}, error) {
-	var sliceOf reflect.Type
-	switch s.Items.Value.Type {
-	case "object":
-		sliceOf = reflect.TypeOf([]interface{}{})
-	default:
-		t, err := getType(s.Items.Value)
+	arr, ok := i.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("expected array but got %v", toString(i))
+	}
+
+	result := make([]interface{}, 0)
+	for _, o := range arr {
+		v, err := parse(o, s.Items)
 		if err != nil {
 			return nil, err
 		}
-		sliceOf = reflect.SliceOf(t)
-	}
-	result := reflect.MakeSlice(sliceOf, 0, 0)
-
-	v := reflect.ValueOf(i)
-	switch v.Kind() {
-	case reflect.Slice:
-		for index := 0; index < v.Len(); index++ {
-			item, err := parse(v.Index(index).Interface(), s.Items)
-			if err != nil {
-				return nil, err
-			}
-			result = reflect.Append(result, reflect.ValueOf(item))
-		}
+		result = append(result, v)
 	}
 
-	ret := result.Interface()
-	return ret, validateArray(ret, s)
+	return result, validateArray(result, s)
 }
 
 func parseInteger(i interface{}, s *Schema) (n int64, err error) {
