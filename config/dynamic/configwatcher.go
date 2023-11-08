@@ -122,7 +122,6 @@ func (w *ConfigWatcher) ReadServices(services static.Services) {
 			continue
 		}
 		if cfg != nil {
-			cfg.Key = name
 			w.configChanged(cfg)
 		}
 	}

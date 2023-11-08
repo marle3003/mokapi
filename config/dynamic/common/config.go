@@ -17,8 +17,6 @@ import (
 	"text/template"
 )
 
-var UnknownFile = errors.New("unknown file")
-
 type ConfigListener func(*Config)
 
 type Validator interface {
@@ -64,10 +62,8 @@ type Config struct {
 	Data      interface{}
 	listeners *sortedmap.LinkedHashMap[string, ConfigListener]
 	Checksum  []byte
-	Key       string
 
-	parseMode string
-	m         sync.Mutex
+	m sync.Mutex
 }
 
 func NewConfig(u *url.URL, opts ...ConfigOptions) *Config {
@@ -110,21 +106,6 @@ func WithParent(parent *Config) ConfigOptions {
 	}
 }
 
-func WithListener(key string, l ConfigListener) ConfigOptions {
-	return func(file *Config, init bool) {
-		file.AddListener(key, l)
-	}
-}
-
-func AsPlaintext() ConfigOptions {
-	return func(file *Config, init bool) {
-		if !init {
-			return
-		}
-		file.parseMode = "plaintext"
-	}
-}
-
 func (f *Config) AddListener(key string, l ConfigListener) {
 	if f.listeners == nil {
 		f.listeners = &sortedmap.LinkedHashMap[string, ConfigListener]{}
@@ -135,11 +116,6 @@ func (f *Config) AddListener(key string, l ConfigListener) {
 }
 
 func (f *Config) Parse(r Reader) error {
-	if f.parseMode == "plaintext" {
-		f.Data = string(f.Raw)
-		return nil
-	}
-
 	f.m.Lock()
 	defer f.m.Unlock()
 
@@ -212,11 +188,7 @@ func (f *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	if f.Data == nil {
-		if f.parseMode == "any" {
-			f.Data = make(map[string]interface{})
-		} else {
-			return nil
-		}
+		return nil
 	}
 
 	err := unmarshal(f.Data)
@@ -252,11 +224,7 @@ func (f *Config) UnmarshalJSON(b []byte) error {
 	}
 
 	if f.Data == nil {
-		if f.parseMode == "any" {
-			f.Data = make(map[string]interface{})
-		} else {
-			return nil
-		}
+		return nil
 	}
 
 	err := json.Unmarshal(b, f.Data)
