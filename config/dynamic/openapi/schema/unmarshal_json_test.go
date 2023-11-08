@@ -90,7 +90,7 @@ func TestRef_Unmarshal_Json(t *testing.T) {
 					schematest.New("array", schematest.WithItems("string")))),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": []string{"a", "b", "c"}}, i)
+				require.Equal(t, map[string]interface{}{"foo": []interface{}{"a", "b", "c"}}, i)
 			},
 		},
 		{
@@ -1031,7 +1031,7 @@ func TestRef_Unmarshal_Json_Array(t *testing.T) {
 			}},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []string{}, i)
+				require.Len(t, i, 0)
 			},
 		},
 		{
@@ -1042,7 +1042,7 @@ func TestRef_Unmarshal_Json_Array(t *testing.T) {
 			}},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []string{"foo", "bar"}, i)
+				require.Equal(t, []interface{}{"foo", "bar"}, i)
 			},
 		},
 		{
@@ -1071,7 +1071,7 @@ func TestRef_Unmarshal_Json_Array(t *testing.T) {
 			},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []string{"foo", "bar"}, i)
+				require.Equal(t, []interface{}{"foo", "bar"}, i)
 			},
 		},
 		{
@@ -1100,7 +1100,7 @@ func TestRef_Unmarshal_Json_Array(t *testing.T) {
 			},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []string{"foo", "bar"}, i)
+				require.Equal(t, []interface{}{"foo", "bar"}, i)
 			},
 		},
 		{
@@ -1139,11 +1139,11 @@ func TestRef_Unmarshal_Json_Array(t *testing.T) {
 				Items: &schema.Ref{
 					Value: &schema.Schema{Type: "string"},
 				},
-				Enum: []interface{}{[]string{"foo", "test"}, []string{"foo", "bar"}},
+				Enum: []interface{}{[]interface{}{"foo", "test"}, []interface{}{"foo", "bar"}},
 			},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []string{"foo", "bar"}, i)
+				require.Equal(t, []interface{}{"foo", "bar"}, i)
 			},
 		},
 		{
@@ -1172,7 +1172,7 @@ func TestRef_Unmarshal_Json_Array(t *testing.T) {
 			},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []string{"foo", "bar"}, i)
+				require.Equal(t, []interface{}{"foo", "bar"}, i)
 			},
 		},
 		{

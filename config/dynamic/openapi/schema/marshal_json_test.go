@@ -52,6 +52,12 @@ func TestRef_Marshal_Json(t *testing.T) {
 			data:   []interface{}{12, 13},
 			exp:    `[12,13]`,
 		},
+		{
+			name:   "array of string",
+			schema: &schema.Ref{Value: schematest.New("array", schematest.WithItems("string"))},
+			data:   []interface{}{"foo", "bar"},
+			exp:    `["foo","bar"]`,
+		},
 	}
 
 	t.Parallel()
