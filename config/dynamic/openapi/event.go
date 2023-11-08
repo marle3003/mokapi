@@ -1,17 +1,29 @@
 package openapi
 
 import (
+	"fmt"
+	log "github.com/sirupsen/logrus"
+	"math/rand"
 	"mokapi/config/dynamic/openapi/parameter"
+	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/engine/common"
+	"mokapi/media"
 	"net/http"
+	"reflect"
 	"strings"
 )
 
-func NewEventResponse(status int) *common.EventResponse {
-	return &common.EventResponse{
+func NewEventResponse(status int, ct media.ContentType) *common.EventResponse {
+	r := &common.EventResponse{
 		Headers:    make(map[string]string),
 		StatusCode: status,
 	}
+
+	if !ct.IsEmpty() {
+		r.Headers["Content-Type"] = ct.String()
+	}
+
+	return r
 }
 
 func EventRequestFrom(r *http.Request) *common.EventRequest {
@@ -59,4 +71,38 @@ func EventRequestFrom(r *http.Request) *common.EventRequest {
 	}
 
 	return req
+}
+
+func setResponseData(r *common.EventResponse, m *MediaType, g *schema.Generator) error {
+	if m != nil {
+		if len(m.Examples) > 0 {
+			keys := reflect.ValueOf(m.Examples).MapKeys()
+			v := keys[rand.Intn(len(keys))].Interface().(*ExampleRef)
+			r.Data = v.Value.Value
+		} else if m.Example != nil {
+			r.Data = m.Example
+		} else {
+			if data, err := g.New(m.Schema); err != nil {
+				return fmt.Errorf("generate response data failed: %v", err)
+			} else {
+				r.Data = data
+			}
+		}
+	}
+	return nil
+}
+
+func setResponseHeader(r *common.EventResponse, headers Headers, g *schema.Generator) error {
+	for k, v := range headers {
+		if v.Value == nil {
+			log.Warnf("header ref not resovled: %v", v.Ref)
+			continue
+		}
+		if data, err := g.New(v.Value.Schema); err != nil {
+			return fmt.Errorf("set response header '%v' failed: %v", k, err)
+		} else {
+			r.Headers[k] = fmt.Sprintf("%v", data)
+		}
+	}
+	return nil
 }
