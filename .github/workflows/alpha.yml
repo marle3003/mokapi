@@ -34,7 +34,7 @@ jobs:
         with:
           image-name: ${{ env.image-name }}
           artifact-name: ${{ env.image-artifact-name }}
-          docker-username: mokapi
+          docker-username: marle3003
           docker-password: ${{ secrets.DOCKER_PASSWORD }}
 
   publish-website:
