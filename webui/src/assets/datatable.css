@@ -13,7 +13,7 @@ table.dataTable td {
     background-color: var(--color-background-soft);
     color: var(--color-text);
 }
-table.dataTable thead th {
+table.dataTable th {
     padding: 3px 0 3px 12px;
     border-color: var(--color-datatable-border);
     border-top-width: 0px;
@@ -42,4 +42,8 @@ table.dataTable .description p {
     font-size: 0.9rem !important;
     margin: 0 !important;
     line-height: 1.6 !important;
+}
+table .badge {
+    vertical-align: middle;
+    margin-top: -0.5em;
 }

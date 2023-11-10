@@ -64,10 +64,10 @@ onUnmounted(() => {
                     <tr>
                         <th v-if="hasDeprecatedRequests" scope="col" class="text-center" style="width: 5px"></th>
                         <th scope="col" class="text-left" style="width: 5%">Method</th>
-                        <th scope="col" class="text-left" style="width: 55%">URL</th>
+                        <th scope="col" class="text-left" style="width: 60%">URL</th>
                         <th scope="col" class="text-center"  style="width: 10%">Status Code</th>
                         <th scope="col" class="text-center" style="width:15%">Time</th>
-                        <th scope="col" class="text-center">Duration</th>
+                        <th scope="col" class="text-center" style="width: 10%">Duration</th>
                     </tr>
                 </thead>
                 <tbody>

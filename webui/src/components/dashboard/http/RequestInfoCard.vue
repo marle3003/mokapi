@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { type PropType, computed } from 'vue';
-import { usePrettyBytes } from '@/composables/usePrettyBytes';
-import { usePrettyDates } from '@/composables/usePrettyDate';
-import { usePrettyHttp } from '@/composables/http';
+import { type PropType, computed } from 'vue'
+import { usePrettyBytes } from '@/composables/usePrettyBytes'
+import { usePrettyDates } from '@/composables/usePrettyDate'
+import { usePrettyHttp } from '@/composables/http'
+import { useRoute } from 'vue-router';
 
 const prop = defineProps({
     event: { type: Object as PropType<ServiceEvent>, required: true },
@@ -12,6 +13,15 @@ const {format, duration} = usePrettyDates()
 const formatBytes = usePrettyBytes().format
 const {formatStatusCode, getClassByStatusCode} = usePrettyHttp()
 const eventData = computed(() => <HttpEventData>prop.event.data)
+const route = useRoute()
+
+function operation(){
+    return {
+        name: 'httpOperation',
+        params: { service: prop.event.traits.name, path: prop.event.traits.path.substring(1), operation: prop.event.traits.method.toLowerCase() },
+        query: { refresh: route.query.refresh }
+    }
+}
 </script>
 
 <template>
@@ -29,7 +39,7 @@ const eventData = computed(() => <HttpEventData>prop.event.data)
                     <p class="label">Time</p>
                     <p>{{ format(event.time) }}</p>
                 </div>
-                <div class="col header" v-if="eventData.deprecated">
+                <div class="col" v-if="eventData.deprecated">
                     <p class="label">Warning</p>
                     <p><i class="bi bi-exclamation-triangle-fill yellow"></i> Deprecated</p>
                 </div>
@@ -47,7 +57,9 @@ const eventData = computed(() => <HttpEventData>prop.event.data)
                     <p class="label">Duration</p>
                     <p>{{ duration(eventData.duration) }}</p>
                 </div>
-                <div class="col header" v-if="eventData.deprecated">
+                <div class="col">
+                    <p class="label">Specification</p>
+                    <router-link :to="operation()">Operation</router-link>
                 </div>
             </div>
             <div class="row">

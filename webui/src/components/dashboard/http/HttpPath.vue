@@ -57,7 +57,7 @@ onUnmounted(() => {
                                 {{ path.path }}
                             </p>
                         </div>
-                        <div class="col header">
+                        <div class="col">
                             <p class="label">Service</p>
                             <p data-testid="service">
                                 <router-link :to="route.service(service)">
@@ -65,7 +65,7 @@ onUnmounted(() => {
                                 </router-link>
                             </p>
                         </div>
-                        <div class="col header" v-if="allOperationsDeprecated()">
+                        <div class="col" v-if="allOperationsDeprecated()">
                             <p class="label">Warning</p>
                             <p data-testid="warning">Deprecated</p>
                         </div>
