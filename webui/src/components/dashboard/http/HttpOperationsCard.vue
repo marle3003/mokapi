@@ -47,17 +47,17 @@ function showWarningColumn(){
                 <thead>
                     <tr>
                         <th scope="col" class="text-left" style="width: 10%">Method</th>
-                        <th scope="col" class="text-left" style="width: 20%">Operation ID</th>
-                        <th scope="col" class="text-left" style="width: 20%"  v-if="showWarningColumn()">Warning</th>
                         <th scope="col" class="text-left">Summary</th>
+                        <th scope="col" class="text-left" style="width: 10%">Operation ID</th>
+                        <th scope="col" class="text-left" style="width: 10%"  v-if="showWarningColumn()">Warning</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="operation in operations" :key="path.path" @click="goToOperation(operation)">
                         <td><span class="badge operation" :class="operation.method">{{ operation.method.toUpperCase() }}</span></td>
+                        <td>{{ operation.summary }}</td>
                         <td>{{ operation.operationId }}</td>
                         <td v-if="showWarningColumn()"><span v-if="operation.deprecated"><i class="bi bi-exclamation-triangle-fill yellow"></i> deprecated</span></td>
-                        <td>{{ operation.summary }}</td>
                     </tr>
                 </tbody>
             </table>

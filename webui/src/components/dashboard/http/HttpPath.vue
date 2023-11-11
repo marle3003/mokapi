@@ -50,7 +50,7 @@ onUnmounted(() => {
             <div class="card">
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-6 header">
+                        <div class="col-6 header mb-3">
                             <p class="label">Path</p>
                             <p data-testid="path">
                                 <i class="bi bi-exclamation-triangle-fill yellow pe-2" v-if="allOperationsDeprecated()"></i>
@@ -71,6 +71,18 @@ onUnmounted(() => {
                         </div>
                         <div class="col text-end">
                             <span class="badge bg-secondary" data-testid="type">HTTP</span>
+                        </div>
+                    </div>
+                    <div class="row mb-2" v-if="path.summary">
+                        <div class="col">
+                            <div class="label">Summary</div>
+                            <div>{{ path.summary }}</div>
+                        </div>
+                    </div>
+                    <div class="row" v-if="path.description">
+                        <div class="col">
+                            <div class="label">Description</div>
+                            <div>{{ path.description }}</div>
                         </div>
                     </div>
                 </div>

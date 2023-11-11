@@ -8,9 +8,9 @@ test.describe('Visit Swagger Petstore', () => {
 
     const service = {
         paths: [
-            { path: '/pet', method: 'POST', lastRequest: formatTimestamp(1652235690), requests: '2 / 1' },
-            { path: '/pet/{petId}', method: 'GET POST', lastRequest: '-', requests: '0 / 0' },
-            { path: '/pet/findByStatus', method: 'GET', lastRequest: formatTimestamp(1652237690), requests: '1 / 0' }
+            { path: '/pet', summary: 'Everything about your Pets', method: 'POST', lastRequest: formatTimestamp(1652235690), requests: '2 / 1' },
+            { path: '/pet/{petId}', summary: '', method: 'GET POST', lastRequest: '-', requests: '0 / 0' },
+            { path: '/pet/findByStatus', summary: 'Finds Pets by status', method: 'GET', lastRequest: formatTimestamp(1652237690), requests: '1 / 0' }
         ],
         requests: [
             { url: 'http://127.0.0.1:18080/pet', method: 'POST', statusCode: '200 OK', time: formatDateTime('2023-02-13T08:49:25.482366+01:00'), duration: '30 [sec]', deprecated: true },
@@ -40,9 +40,10 @@ test.describe('Visit Swagger Petstore', () => {
         for (const [i, path] of service.paths.entries()) {
             const cells = endpoints.nth(i).getByRole('cell')
             await expect(cells.nth(0)).toHaveText(path.path)
-            await expect(cells.nth(1)).toHaveText(path.method, {ignoreCase: false})
-            await expect(cells.nth(2)).toHaveText(path.lastRequest)
-            await expect(cells.nth(3)).toHaveText(path.requests)
+            await expect(cells.nth(1)).toHaveText(path.summary)
+            await expect(cells.nth(2)).toHaveText(path.method, {ignoreCase: false})
+            await expect(cells.nth(3)).toHaveText(path.lastRequest)
+            await expect(cells.nth(4)).toHaveText(path.requests)
         }
 
         // requests
@@ -77,8 +78,8 @@ test.describe('Visit Swagger Petstore', () => {
             const cells = path.methods.locator('tbody tr').nth(0).getByRole('cell')
             await expect(cells.nth(0)).toHaveText('POST', {ignoreCase: false})
             await expect(cells.nth(0).locator('span')).toHaveClass('badge operation post')
-            await expect(cells.nth(1)).toHaveText('addPet')
-            await expect(cells.nth(2)).toHaveText('Add a new pet to the store')
+            await expect(cells.nth(1)).toHaveText('Add a new pet to the store')
+            await expect(cells.nth(2)).toHaveText('addPet')
 
             const rows = path.requests.locator('tbody tr')
             await expect(rows).toHaveCount(2)
