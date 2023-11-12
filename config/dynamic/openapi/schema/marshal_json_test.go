@@ -9,48 +9,54 @@ import (
 	"testing"
 )
 
-func TestRef_Marshal(t *testing.T) {
+func TestRef_Marshal_Json(t *testing.T) {
 	testcases := []struct {
 		name   string
 		schema *schema.Ref
 		data   interface{}
-		ct     media.ContentType
 		exp    string
 	}{
 		{
-			"no schema",
-			&schema.Ref{},
-			"foo",
-			media.ParseContentType("application/json"),
-			`"foo"`,
+			name:   "no schema",
+			schema: &schema.Ref{},
+			data:   "foo",
+			exp:    `"foo"`,
 		},
 		{
-			"number",
-			&schema.Ref{Value: schematest.New("number")},
-			3.141,
-			media.ParseContentType("application/json"),
-			`3.141`,
+			name:   "number",
+			schema: &schema.Ref{Value: schematest.New("number")},
+			data:   3.141,
+			exp:    `3.141`,
 		},
 		{
-			"string",
-			&schema.Ref{Value: schematest.New("string")},
-			"12",
-			media.ParseContentType("application/json"),
-			`"12"`,
+			name:   "string",
+			schema: &schema.Ref{Value: schematest.New("string")},
+			data:   "12",
+			exp:    `"12"`,
 		},
 		{
-			"integer as string",
-			&schema.Ref{Value: schematest.New("integer")},
-			"12",
-			media.ParseContentType("application/json"),
-			`12`,
+			name:   "nullable string",
+			schema: &schema.Ref{Value: schematest.New("string")},
+			data:   nil,
+			exp:    `null`,
 		},
 		{
-			"array of integer",
-			&schema.Ref{Value: schematest.New("array", schematest.WithItems(schematest.New("integer")))},
-			[]interface{}{12, 13},
-			media.ParseContentType("application/json"),
-			`[12,13]`,
+			name:   "integer as string",
+			schema: &schema.Ref{Value: schematest.New("integer")},
+			data:   "12",
+			exp:    `12`,
+		},
+		{
+			name:   "array of integer",
+			schema: &schema.Ref{Value: schematest.New("array", schematest.WithItems("integer"))},
+			data:   []interface{}{12, 13},
+			exp:    `[12,13]`,
+		},
+		{
+			name:   "array of string",
+			schema: &schema.Ref{Value: schematest.New("array", schematest.WithItems("string"))},
+			data:   []interface{}{"foo", "bar"},
+			exp:    `["foo","bar"]`,
 		},
 	}
 
@@ -60,14 +66,14 @@ func TestRef_Marshal(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			b, err := tc.schema.Marshal(tc.data, tc.ct)
+			b, err := tc.schema.Marshal(tc.data, media.ParseContentType("application/json"))
 			require.NoError(t, err)
 			require.Equal(t, tc.exp, string(b))
 		})
 	}
 }
 
-func TestRef_Marshal_Object(t *testing.T) {
+func TestRef_Marshal_Json_Object(t *testing.T) {
 	testcases := []struct {
 		name   string
 		schema *schema.Schema
@@ -81,7 +87,7 @@ func TestRef_Marshal_Object(t *testing.T) {
 				schematest.WithProperty("value", schematest.New("integer"))),
 			data: 12,
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "serialize data to 'application/json' failed: encode '12' to schema type=object properties=[name, value] failed")
+				require.EqualError(t, err, "marshal data to 'application/json' failed: encode '12' to schema type=object properties=[name, value] failed")
 				require.Len(t, result, 0)
 			},
 		},
@@ -123,7 +129,7 @@ func TestRef_Marshal_Object(t *testing.T) {
 				Value string
 			}{"foo", "foo"},
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "serialize data to 'application/json' failed: encode property 'value' failed: could not parse 'foo' as int, expected schema type=integer")
+				require.EqualError(t, err, "marshal data to 'application/json' failed: encode property 'value' failed: parse 'foo' failed, expected schema type=integer")
 				require.Len(t, result, 0)
 			},
 		},
@@ -223,7 +229,7 @@ func TestRef_Marshal_Object(t *testing.T) {
 	}
 }
 
-func TestRef_Marshal_AnyOf(t *testing.T) {
+func TestRef_Marshal_Json_AnyOf(t *testing.T) {
 	testcases := []struct {
 		name   string
 		schema *schema.Schema
@@ -362,7 +368,7 @@ func TestRef_Marshal_AnyOf(t *testing.T) {
 	}
 }
 
-func TestRef_Marshal_OneOf(t *testing.T) {
+func TestRef_Marshal_Json_OneOf(t *testing.T) {
 	testcases := []struct {
 		name   string
 		schema *schema.Schema
@@ -388,7 +394,7 @@ func TestRef_Marshal_OneOf(t *testing.T) {
 			),
 			data: map[string]interface{}{"bark": true, "breed": "Dingo"},
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "serialize data to 'application/json' failed: oneOf can only match exactly one schema")
+				require.EqualError(t, err, "marshal data to 'application/json' failed: oneOf can only match exactly one schema")
 				require.Len(t, result, 0)
 			},
 		},
@@ -459,7 +465,7 @@ func TestRef_Marshal_OneOf(t *testing.T) {
 			),
 			data: map[string]interface{}{"bark": true, "breed": "Dingo"},
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "serialize data to 'application/json' failed: oneOf can only match exactly one schema")
+				require.EqualError(t, err, "marshal data to 'application/json' failed: oneOf can only match exactly one schema")
 				require.Len(t, result, 0)
 			},
 		},
@@ -476,7 +482,7 @@ func TestRef_Marshal_OneOf(t *testing.T) {
 			),
 			data: map[string]interface{}{"bark": true, "breed": "Dingo"},
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "serialize data to 'application/json' failed: oneOf can only match exactly one schema")
+				require.EqualError(t, err, "marshal data to 'application/json' failed: oneOf can only match exactly one schema")
 				require.Len(t, result, 0)
 			},
 		},
@@ -496,7 +502,7 @@ func TestRef_Marshal_OneOf(t *testing.T) {
 	}
 }
 
-func TestRef_Marshal_AllOf(t *testing.T) {
+func TestRef_Marshal_Json_AllOf(t *testing.T) {
 	testcases := []struct {
 		name   string
 		schema *schema.Schema
@@ -576,7 +582,7 @@ func TestRef_Marshal_AllOf(t *testing.T) {
 				return map[string]interface{}{"bar": "bar"}
 			},
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "serialize data to 'application/json' failed: does not match schema type=object properties=[foo] required=[foo]: missing required field 'foo'")
+				require.EqualError(t, err, "marshal data to 'application/json' failed: does not match schema type=object properties=[foo] required=[foo]: missing required field 'foo'")
 				require.Len(t, result, 0)
 			},
 		},
@@ -590,7 +596,7 @@ func TestRef_Marshal_AllOf(t *testing.T) {
 				return map[string]interface{}{"bar": "bar"}
 			},
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "serialize data to 'application/json' failed: type of 'integer' is not allowed: allOf only supports type of object")
+				require.EqualError(t, err, "marshal data to 'application/json' failed: type of 'integer' is not allowed: allOf only supports type of object")
 				require.Len(t, result, 0)
 			},
 		},
@@ -604,7 +610,7 @@ func TestRef_Marshal_AllOf(t *testing.T) {
 				return map[string]interface{}{"bar": "bar"}
 			},
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "serialize data to 'application/json' failed: schema is not defined: allOf only supports type of object")
+				require.EqualError(t, err, "marshal data to 'application/json' failed: schema is not defined: allOf only supports type of object")
 				require.Len(t, result, 0)
 			},
 		},
@@ -624,45 +630,40 @@ func TestRef_Marshal_AllOf(t *testing.T) {
 	}
 }
 
-func TestRef_Marshal_Invalid(t *testing.T) {
+func TestRef_Marshal_Json_Invalid(t *testing.T) {
 	testcases := []struct {
 		name   string
 		schema *schema.Ref
 		data   interface{}
-		ct     media.ContentType
 		exp    string
 	}{
 		{
-			"number",
-			&schema.Ref{Value: schematest.New("number")},
-			"foo",
-			media.ParseContentType("application/json"),
-			"serialize data to 'application/json' failed: could not parse 'foo' as floating number, expected schema type=number",
+			name:   "number",
+			schema: &schema.Ref{Value: schematest.New("number")},
+			data:   "foo",
+			exp:    "marshal data to 'application/json' failed: parse 'foo' failed, expected schema type=number",
 		},
 		{
-			"min array",
-			&schema.Ref{Value: schematest.New("array", schematest.WithItems(schematest.New("integer")), schematest.WithMinItems(3))},
-			[]interface{}{12, 13},
-			media.ParseContentType("application/json"),
-			`serialize data to 'application/json' failed: does not match schema type=array minItems=3: should NOT have less than 3 items`,
+			name:   "min array",
+			schema: &schema.Ref{Value: schematest.New("array", schematest.WithItems("integer"), schematest.WithMinItems(3))},
+			data:   []interface{}{12, 13},
+			exp:    `marshal data to 'application/json' failed: does not match schema type=array minItems=3 items=schema type=integer: should NOT have less than 3 items`,
 		},
 		{
-			"max array",
-			&schema.Ref{Value: schematest.New("array", schematest.WithItems(schematest.New("integer")), schematest.WithMaxItems(1))},
-			[]interface{}{12, 13},
-			media.ParseContentType("application/json"),
-			`serialize data to 'application/json' failed: does not match schema type=array maxItems=1: should NOT have more than 1 items`,
+			name:   "max array",
+			schema: &schema.Ref{Value: schematest.New("array", schematest.WithItems("integer"), schematest.WithMaxItems(1))},
+			data:   []interface{}{12, 13},
+			exp:    `marshal data to 'application/json' failed: does not match schema type=array maxItems=1 items=schema type=integer: should NOT have more than 1 items`,
 		},
 		{
-			"map missing required property",
-			&schema.Ref{Value: schematest.New("object",
+			name: "map missing required property",
+			schema: &schema.Ref{Value: schematest.New("object",
 				schematest.WithProperty("name", schematest.New("string")),
 				schematest.WithProperty("value", schematest.New("integer")),
 				schematest.WithRequired("value"),
 			)},
-			map[interface{}]interface{}{"name": "foo"},
-			media.ParseContentType("application/json"),
-			`serialize data to 'application/json' failed: does not match schema type=object properties=[name, value] required=[value]: missing required field 'value'`,
+			data: map[interface{}]interface{}{"name": "foo"},
+			exp:  `marshal data to 'application/json' failed: does not match schema type=object properties=[name, value] required=[value]: missing required field 'value'`,
 		},
 	}
 
@@ -672,7 +673,7 @@ func TestRef_Marshal_Invalid(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			_, err := tc.schema.Marshal(tc.data, tc.ct)
+			_, err := tc.schema.Marshal(tc.data, media.ParseContentType("application/json"))
 			require.EqualError(t, err, tc.exp)
 		})
 	}

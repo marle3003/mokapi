@@ -2,19 +2,9 @@ package schema
 
 import (
 	"fmt"
-	"mokapi/config/dynamic/openapi/ref"
-	"mokapi/sortedmap"
+	"mokapi/config/dynamic/common"
 	"strings"
 )
-
-type Ref struct {
-	ref.Reference
-	Value *Schema
-}
-
-type Schemas struct {
-	sortedmap.LinkedHashMap[string, *Ref]
-}
 
 type Schema struct {
 	Description string `yaml:"description" json:"description"`
@@ -56,45 +46,46 @@ type Schema struct {
 	MaxProperties        *int                  `yaml:"maxProperties" json:"maxProperties"`
 }
 
-type AdditionalProperties struct {
-	*Ref
-	Forbidden bool
+func (s *Schema) HasProperties() bool {
+	return s.Properties != nil && s.Properties.Len() > 0
 }
 
-type Xml struct {
-	Wrapped   bool   `yaml:"wrapped" json:"wrapped"`
-	Name      string `yaml:"name" json:"name"`
-	Attribute bool   `yaml:"attribute" json:"attribute"`
-	Prefix    string `yaml:"prefix" json:"prefix"`
-	Namespace string `yaml:"namespace" json:"namespace"`
-	CData     bool   `yaml:"x-cdata" json:"x-cdata"`
-}
-
-func (s *Schemas) Get(name string) *Ref {
+func (s *Schema) Parse(config *common.Config, reader common.Reader) error {
 	if s == nil {
 		return nil
 	}
-	r := s.LinkedHashMap.Get(name)
-	if r == nil {
-		return nil
+
+	if err := s.Items.Parse(config, reader); err != nil {
+		return err
 	}
-	return r
-}
 
-func (s *Schemas) Resolve(token string) (interface{}, error) {
-	i := s.Get(token)
-	if i == nil {
-		return nil, fmt.Errorf("unable to resolve %v", token)
+	if err := s.Properties.Parse(config, reader); err != nil {
+		return err
 	}
-	return i.Value, nil
-}
 
-func (r *Ref) HasProperties() bool {
-	return r.Value != nil && r.Value.HasProperties()
-}
+	if err := s.AdditionalProperties.Parse(config, reader); err != nil {
+		return err
+	}
 
-func (s *Schema) HasProperties() bool {
-	return s.Properties != nil && s.Properties.Len() > 0
+	for _, r := range s.AnyOf {
+		if err := r.Parse(config, reader); err != nil {
+			return err
+		}
+	}
+
+	for _, r := range s.AllOf {
+		if err := r.Parse(config, reader); err != nil {
+			return err
+		}
+	}
+
+	for _, r := range s.OneOf {
+		if err := r.Parse(config, reader); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *Schema) String() string {
@@ -139,6 +130,12 @@ func (s *Schema) String() string {
 	}
 	if len(s.Pattern) > 0 {
 		sb.WriteString(fmt.Sprintf(" pattern=%v", s.Pattern))
+	}
+	if s.MinLength != nil {
+		sb.WriteString(fmt.Sprintf(" minLength=%v", *s.MinLength))
+	}
+	if s.MaxLength != nil {
+		sb.WriteString(fmt.Sprintf(" maxLength=%v", *s.MaxLength))
 	}
 	if s.Minimum != nil {
 		sb.WriteString(fmt.Sprintf(" minimum=%v", *s.Minimum))
@@ -185,6 +182,11 @@ func (s *Schema) String() string {
 		sb.WriteString(" free-form=false")
 	}
 
+	if s.Type == "array" {
+		sb.WriteString(" items=")
+		sb.WriteString(s.Items.String())
+	}
+
 	return sb.String()
 }
 
@@ -201,17 +203,4 @@ func (s *Schema) IsFreeForm() bool {
 
 func (s *Schema) IsDictionary() bool {
 	return s.AdditionalProperties != nil && s.AdditionalProperties.Ref != nil && s.AdditionalProperties.Value != nil && s.AdditionalProperties.Value.Type != ""
-}
-
-func (ap *AdditionalProperties) IsFreeForm() bool {
-	if ap == nil {
-		return true
-	}
-	if ap.Ref == nil || ap.Value == nil {
-		return !ap.Forbidden
-	}
-	if ap.Value != nil && ap.Value.Type == "" {
-		return true
-	}
-	return false
 }

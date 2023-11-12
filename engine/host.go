@@ -190,6 +190,10 @@ func (sh *scriptHost) Error(args ...interface{}) {
 	sh.engine.logger.Error(args...)
 }
 
+func (sh *scriptHost) Debug(args ...interface{}) {
+	sh.engine.logger.Debug(args...)
+}
+
 func (sh *scriptHost) OpenFile(path string, hint string) (*config.Config, error) {
 	u, err := url.Parse(path)
 	if err != nil || len(u.Scheme) == 0 {

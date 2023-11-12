@@ -4,7 +4,7 @@ import Footer from '@/components/Footer.vue'
 import { ref, onMounted } from 'vue'
 import { Modal } from 'bootstrap'
 
-const description = `Mock tool for Agile, DevOps and Continuous Deployment teams. Mock your HTTP, Apache Kafka, SMTP or LDAP interfaces and control everything like delays, errors or other edge cases.`
+const description = `Mock tool for Agile, DevOps and Continuous Deployment teams. Mock your REST API, Apache Kafka, SMTP or LDAP interfaces and control everything.`
 
 useMeta('API Mocking and Testing | mokapi.io', description, 'https://mokapi.io')
 
@@ -30,11 +30,13 @@ function showImage(target: EventTarget | null) {
     <section>
       <div class="container">
         <div class="row hero-title justify-content-center">
-          <div class="col-12 col-lg-6">
-            <span class="badge">HTTP</span>
-            <span class="badge">Kafka</span>
-            <span class="badge">LDAP</span>
-            <span class="badge">SMTP</span>
+          <div class="col-12 col-lg-6 px-0">
+            <div class="mb-lg-2">
+              <span class="badge">HTTP</span>
+              <span class="badge">Kafka</span>
+              <span class="badge">LDAP</span>
+              <span class="badge">SMTP</span>
+            </div>
             <h1>Easy and flexible API mocking</h1>
             <p class="description">Mock your APIs in Seconds - No registration, <b>free</b> and <b>open-source</b></p>
             <p class="d-none d-md-block">
@@ -64,21 +66,20 @@ function showImage(target: EventTarget | null) {
     </section>
     <section>
       <div class="container">
-        <h2>Prevent bugs - Reduce dependencies - Simulate APIs that don't exist yet</h2>
-        <p class="text-center">Increase speed, accuracy and efficiency by creating stable development and test environment</p>
+        <h2>Mock your APIs with one tool</h2>
         <div class="card-group">
           <div class="card">
             <router-link :to="{path: '/http'}">
               <div class="card-body">
-                <div class="card-title">HTTP</div>
-                Mock any HTTP API with OpenAPI specification.
+                <h3 class="card-title">HTTP</h3>
+                Mock your REST API with your OpenAPI specification.
               </div>
             </router-link>
           </div>
           <div class="card">
             <router-link :to="{path: '/kafka'}">
               <div class="card-body">
-                <div class="card-title">Apache Kafka</div>
+                <h3 class="card-title">Apache Kafka</h3>
                 Mock Apache Kafka topics with AsyncAPI specification.
               </div>
             </router-link>
@@ -86,7 +87,7 @@ function showImage(target: EventTarget | null) {
           <div class="card">
             <router-link :to="{path: '/ldap'}">
               <div class="card-body">
-                <div class="card-title">LDAP</div>
+                <h3 class="card-title">LDAP</h3>
                 Integrate your App with a fake LDAP server.
               </div>
             </router-link>
@@ -94,20 +95,24 @@ function showImage(target: EventTarget | null) {
             <div class="card">
               <router-link :to="{path: '/smtp'}">
                 <div class="card-body">
-                  <div class="card-title">SMTP</div>
-                  Test SMTP emails safely and no risk of spamming mailboxes
+                  <h3 class="card-title">SMTP</h3>
+                  Test SMTP emails safely and no risk of spamming mailboxes.
                 </div>
               </router-link>
             </div> 
         </div>
       </div>
     </section>
+    <section>
+      <h2>Prevent bugs - Reduce dependencies - Simulate APIs that don't exist yet</h2>
+      <p class="text-center">Increase speed, accuracy and efficiency by creating stable development and test environment</p>
+    </section>
     <section class="feature">
       <div class="container">
         <div class="row pb-4 pb-lg-5 mb-lg-5">
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
-              <h3>Control Everything with JavaScript</h3>
+              <h2>Control Everything with JavaScript</h2>
               <p>Write the behavior of your mock in Javascript and control everything: status, headers, delays, errors or other edge cases.</p>
               <router-link :to="{ path: '/docs/javascript-api' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Javascript API</button>
@@ -121,13 +126,13 @@ function showImage(target: EventTarget | null) {
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
             <div class="text-lg-start text-center">
-              <h3>Run Everywhere</h3>
+              <h2>Run Everywhere</h2>
               <p>
                 Use the <a href="https://hub.docker.com/r/mokapi/mokapi">Docker image</a>, the <a href="https://www.npmjs.com/package/go-mokapi">NPM package</a> or directly as an <a href="https://github.com/marle3003/mokapi/releases">executable</a>.
                 Use CLI arguments, environment variable or file configuration and take advantage from hot-reloading of dynamic configurations.
               </p>
               <router-link :to="{ path: '/docs/guides/get-started/running' }">
-                <button type="button" class="btn btn-outline-primary btn-sm">Learn more</button>
+                <button type="button" class="btn btn-outline-primary btn-sm">Run Mokapi</button>
               </router-link>
             </div>
           </div>
@@ -138,8 +143,8 @@ function showImage(target: EventTarget | null) {
         <div class="row pb-4 pb-lg-5mb-lg-5 mt-lg-5">
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
-              <h3>Everything as Code</h3>
-              <p>Get all benefits of everything as code such as version control and consistency</p>
+              <h2>Everything as Code</h2>
+              <p>Get all benefits of everything as code - Reusing, version control, consistency and integrate mocks with your CI/CD.</p>
               <router-link :to="{ path: '/docs/configuration/configuration/overview' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Learn more</button>
               </router-link>
@@ -152,10 +157,10 @@ function showImage(target: EventTarget | null) {
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
             <div class="text-lg-start text-center">
-              <h3>Patch Configuration</h3>
+              <h2>Patch Configuration</h2>
               <p>Patch configuration changes for mocking needs, rather than changing the original contract</p>
               <router-link :to="{ path: 'docs/configuration/configuration/patching' }">
-                <button type="button" class="btn btn-outline-primary btn-sm">Jump tp Patching</button>
+                <button type="button" class="btn btn-outline-primary btn-sm">Discover Patching</button>
               </router-link>
             </div>
           </div>
@@ -166,8 +171,13 @@ function showImage(target: EventTarget | null) {
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
-              <h3>End-to-End Tests</h3>
-              <p>Test only system that you are responsible and fake all others with Mokapi.</p>
+              <h2>End-to-End Tests</h2>
+              <p>Test only system that you are responsible for and fake all others with Mokapi. Simulate 
+                real-life scenarios and edge cases with Mokapi Script
+              </p>
+              <router-link :to="{ path: '/docs/blogs/automation-testing-in-agile-development' }">
+                <button type="button" class="btn btn-outline-primary btn-sm">Read more</button>
+              </router-link>
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 order-lg-1">
@@ -177,7 +187,7 @@ function showImage(target: EventTarget | null) {
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-1">
             <div class="text-lg-start text-center">
-              <h3>See what's going on</h3>
+              <h2>See what's going on</h2>
               <p>Quickly analyze and inspect all requests and responses in the dashboard to gather insights on how your mock APIs are used.</p>
               <router-link :to="{ path: '/docs/guides/get-started/dashboard' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Mokapi's Dashboard</button>
@@ -191,8 +201,11 @@ function showImage(target: EventTarget | null) {
         <div class="row pb-4 pb-lg-5">
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
-              <h3>Contract Testing</h3>
+              <h2>Contract Testing</h2>
               <p>Fake interactions under test control between your software and systems that it collaborates.</p>
+              <router-link :to="{ path: '/docs/blogs/automation-testing-in-agile-development' }">
+                <button type="button" class="btn btn-outline-primary btn-sm">Read more</button>
+              </router-link>
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-1">
@@ -202,7 +215,7 @@ function showImage(target: EventTarget | null) {
         <div class="row pb-4 pb-lg-5">
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-1">
             <div class="text-lg-start text-center">
-              <h3>Build better software faster</h3>
+              <h2>Build better software faster</h2>
               <p>Good tests are deterministic and durable. Test your software if it is ready to release. Only your software, nothing else.</p>
             </div>
           </div>

@@ -37,7 +37,7 @@ func (h *Header) UnmarshalJSON(b []byte) error {
 }
 
 func (r *HeaderRef) UnmarshalYAML(node *yaml.Node) error {
-	return r.Reference.Unmarshal(node, &r.Value)
+	return r.Reference.UnmarshalYaml(node, &r.Value)
 }
 
 func (h *Header) UnmarshalYAML(node *yaml.Node) error {

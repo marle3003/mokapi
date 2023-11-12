@@ -57,9 +57,6 @@
     --color-tabs-text: #eabaabff;
 
     --color-popover-border: #52555d;
-
-    --color-subheader: rgba(235, 235, 235, 0.6);
-    --color-subheader-border: #52555d;
 }
 
 [data-theme="light"] {

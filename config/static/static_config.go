@@ -60,7 +60,8 @@ type HttpProvider struct {
 	PollInterval  string `yaml:"pollInterval"`
 	PollTimeout   string `yaml:"pollTimeout"`
 	Proxy         string
-	TlsSkipVerify bool `yaml:"tlsSkipVerify"`
+	TlsSkipVerify bool              `yaml:"tlsSkipVerify"`
+	Ca            tls.FileOrContent `yaml:"ca"`
 }
 
 type Services map[string]*Service

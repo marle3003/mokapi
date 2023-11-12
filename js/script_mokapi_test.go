@@ -432,6 +432,83 @@ func TestScript_Mokapi_On(t *testing.T) {
 				r.NoError(t, err)
 			},
 		},
+		{
+			"access struct by dot notation",
+			func(t *testing.T, host *testHost) {
+				data := &struct {
+					ShipDate string
+				}{
+					ShipDate: "2022-01-01",
+				}
+
+				host.on = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+					b, err := do(data)
+					r.NoError(t, err)
+					r.True(t, b, "return value should be true")
+				}
+				s, err := New("",
+					`import { on } from 'mokapi'
+						 export default function() {
+						  	on('http', function(data) {
+								return data.shipDate === '2022-01-01'
+							})
+						 }`,
+					host, static.JsConfig{})
+				r.NoError(t, err)
+				_, err = s.RunDefault()
+				r.NoError(t, err)
+			},
+		},
+		{
+			"access kebab case property by bracket notation",
+			func(t *testing.T, host *testHost) {
+				data := &struct {
+					Ship_date string `json:"ship-date"` // can be accessed via obj['ship-date'] in javascript
+				}{
+					Ship_date: "2022-01-01",
+				}
+
+				host.on = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+					b, err := do(data)
+					r.NoError(t, err)
+					r.True(t, b, "return value should be true")
+				}
+				s, err := New("",
+					`import { on } from 'mokapi'
+						 export default function() {
+						  	on('http', function(data) {
+								return data['ship-date'] === '2022-01-01'
+							})
+						 }`,
+					host, static.JsConfig{})
+				r.NoError(t, err)
+				_, err = s.RunDefault()
+				r.NoError(t, err)
+			},
+		},
+		{
+			"access map by object by dot notation",
+			func(t *testing.T, host *testHost) {
+				data := map[string]string{"foo": "bar"}
+
+				host.on = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+					b, err := do(data)
+					r.NoError(t, err)
+					r.True(t, b, "return value should be true")
+				}
+				s, err := New("",
+					`import { on } from 'mokapi'
+						 export default function() {
+						  	on('http', function(data) {
+								return data.foo === 'bar'
+							})
+						 }`,
+					host, static.JsConfig{})
+				r.NoError(t, err)
+				_, err = s.RunDefault()
+				r.NoError(t, err)
+			},
+		},
 	}
 
 	t.Parallel()

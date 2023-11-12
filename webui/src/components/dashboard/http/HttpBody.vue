@@ -15,6 +15,7 @@ defineProps({
           <code :class="getLanguage(contentType)"></code>
         </pre>
     </div>
+    <div v-else>No body returned for response</div>
 </template>
 
 <style scoped>

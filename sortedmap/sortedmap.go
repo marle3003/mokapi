@@ -40,14 +40,14 @@ func (m *LinkedHashMap[K, V]) Len() int {
 	return len(m.pairs)
 }
 
-func (m *LinkedHashMap[K, V]) Get(key K) V {
+func (m *LinkedHashMap[K, V]) Get(key K) (V, bool) {
 	if m.pairs != nil {
 		p, ok := m.pairs[key]
 		if ok {
-			return p.value
+			return p.value, true
 		}
 	}
-	return *new(V)
+	return *new(V), false
 }
 
 func (m *LinkedHashMap[K, V]) Iter() *Iterator[K, V] {

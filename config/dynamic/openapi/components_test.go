@@ -37,7 +37,8 @@ func TestComponents_UnmarshalJSON(t *testing.T) {
 				err := json.Unmarshal([]byte(`{ "responses": {"foo": {"description": "foo"}} }`), &c)
 				require.NoError(t, err)
 				require.Equal(t, 1, c.Responses.Len())
-				require.Equal(t, "foo", c.Responses.Get("foo").Value.Description)
+				r, _ := c.Responses.Get("foo")
+				require.Equal(t, "foo", r.Value.Description)
 			},
 		},
 		{
@@ -123,7 +124,8 @@ func TestComponents_UnmarshalYAML(t *testing.T) {
 				err := yaml.Unmarshal([]byte(`responses: {foo: {description: foo}}`), &c)
 				require.NoError(t, err)
 				require.Equal(t, 1, c.Responses.Len())
-				require.Equal(t, "foo", c.Responses.Get("foo").Value.Description)
+				r, _ := c.Responses.Get("foo")
+				require.Equal(t, "foo", r.Value.Description)
 			},
 		},
 		{
@@ -236,7 +238,8 @@ func TestComponents_Parse(t *testing.T) {
 				)
 				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
 				require.NoError(t, err)
-				require.Equal(t, "foo", config.Components.Responses.Get("foo").Value.Description)
+				r, _ := config.Components.Responses.Get("foo")
+				require.Equal(t, "foo", r.Value.Description)
 			},
 		},
 		{
@@ -418,7 +421,8 @@ func TestConfig_Patch_Components(t *testing.T) {
 				openapitest.NewConfig("1.0", openapitest.WithComponentResponse("foo", &openapi.Response{Description: "foo"})),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				require.Equal(t, "foo", result.Components.Responses.Get("foo").Value.Description)
+				r, _ := result.Components.Responses.Get("foo")
+				require.Equal(t, "foo", r.Value.Description)
 			},
 		},
 		{
@@ -428,7 +432,8 @@ func TestConfig_Patch_Components(t *testing.T) {
 				openapitest.NewConfig("1.0", openapitest.WithComponentResponse("foo", &openapi.Response{Description: "bar"})),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				require.Equal(t, "bar", result.Components.Responses.Get("foo").Value.Description)
+				r, _ := result.Components.Responses.Get("foo")
+				require.Equal(t, "bar", r.Value.Description)
 			},
 		},
 		{

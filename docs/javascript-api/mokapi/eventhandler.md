@@ -1,5 +1,5 @@
 ---
-title: Javascript API: EventHandler
+title: "Javascript API: EventHandler"
 description: EventHandler is a function that is executed when an event is triggered.
 ---
 # EventHandler

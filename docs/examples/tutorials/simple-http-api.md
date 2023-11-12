@@ -1,10 +1,10 @@
 ---
-title: Example Mocking REST API with OpenAPI | Mokapi
-description: In this example, you will learn how to mock an OpenAPI specification with Mokapi, how to configure Mokapi, and how to run it in a Docker container.
+title: Get started with REST API
+description: This tutorial will show you how to mock a REST API using an OpenAPI specification.
 ---
-# Example Mocking REST API with OpenAPI
+# Get started with REST API
 
-In this example, you will learn how to mock an OpenAPI specification with Mokapi, how to configure Mokapi, 
+In this tutorial, you will learn how to mock an OpenAPI specification with Mokapi, how to configure Mokapi, 
 and how to run it in a Docker container. In further examples we will see how the test quality can be improved with some 
 edge cases such as increased response time or response errors like internal server errors.
 

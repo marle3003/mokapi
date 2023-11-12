@@ -42,6 +42,7 @@ type Logger interface {
 	Info(args ...interface{})
 	Warn(args ...interface{})
 	Error(args ...interface{})
+	Debug(args ...interface{})
 }
 
 type KafkaClient interface {

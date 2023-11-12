@@ -91,13 +91,16 @@ export let apps = [
         paths: [
             {
                 path: "/pet",
+                summary: "Everything about your Pets",
                 operations: [
                     {
                         method: "post",
                         summary: "Add a new pet to the store",
                         operationId: "addPet",
+                        deprecated: true,
                         requestBody: {
                             description: "Create a new pet in the store",
+                            required: true,
                             contents: [
                                 {
                                     type: "application/json",
@@ -300,6 +303,50 @@ export let apps = [
                                                     type: "string"
                                                 }
                                             }
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                path: "/Zorem/ipsum/dolor/sit/amet/consetetur/sadipscing/elitr/sed/diam/nonumy/eirmod",
+                summary: "A long path example",
+                operations: [
+                    {
+                        method: "post",
+                        summary: "A long path example",
+                        requestBody: {
+                            description: "Create a new pet in the store",
+                            contents: [
+                                {
+                                    type: "application/json",
+                                    schema: pet
+                                }
+                            ]
+                        },
+                        responses: [
+                            {
+                                statusCode: 200,
+                                description: "Successful operation",
+                                contents: [
+                                    {
+                                        type: "application/json",
+                                        schema: pet
+                                    }
+                                ]
+                            },
+                            {
+                                statusCode: 400,
+                                description: "Invalid ID supplied",
+                                headers: [
+                                    {
+                                        name: "petId",
+                                        description: "Status values that need to be considered for filter",
+                                        schema: {
+                                            type: "number"
                                         }
                                     }
                                 ]

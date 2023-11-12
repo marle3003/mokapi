@@ -27,14 +27,14 @@ jobs:
     needs: [ build-alpha ]
     steps:
       - name: Check out code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: ./.github/actions/publish-docker-image
         with:
           image-name: ${{ env.image-name }}
           artifact-name: ${{ env.image-artifact-name }}
-          docker-username: mokapi
+          docker-username: marle3003
           docker-password: ${{ secrets.DOCKER_PASSWORD }}
 
   publish-website:
@@ -44,7 +44,7 @@ jobs:
     needs: [ build-alpha ]
     steps:
       - name: Check out code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Restore Timestamps

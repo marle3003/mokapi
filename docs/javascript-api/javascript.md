@@ -5,6 +5,7 @@ description: Provides the documentation of the Mokapi Javascript API.
 # Mokapi Javascript API
 
 The list of Mokapi's Javascript modules usable to extend Mokapi's behavior.
+To learn how Mokapi imports modules, see [Modules](/docs/javascript-api/modules.md).
 
 ## mokapi
 

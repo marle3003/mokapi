@@ -12,7 +12,7 @@ defineProps({
     <div class="card" data-testid="service-info">
             <div class="card-body">
                 <div class="row">
-                    <div class="col header">
+                    <div class="col col-7 header mb-3">
                         <p class="label">Name</p>
                         <p data-testid="service-name">{{ service.name }}</p>
                     </div>
@@ -41,9 +41,3 @@ defineProps({
             </div>
         </div>
 </template>
-
-<style scoped>
-.col .badge{
-    font-size: 1em;
-}
-</style>

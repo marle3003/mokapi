@@ -1,5 +1,5 @@
 ---
-title: Javascript API: options
+title: "Javascript API: options"
 description: Make an HTTP OPTIONS request
 ---
 # options( url, [body], [args] )

@@ -128,6 +128,7 @@ type testHost struct {
 	info        func(args ...interface{})
 	warn        func(args ...interface{})
 	error       func(args ...interface{})
+	debug       func(args ...interface{})
 	httpClient  *testClient
 	kafkaClient *kafkaClient
 	every       func(every string, do func(), opt common.JobOptions)
@@ -150,6 +151,12 @@ func (th *testHost) Warn(args ...interface{}) {
 func (th *testHost) Error(args ...interface{}) {
 	if th.error != nil {
 		th.error(args...)
+	}
+}
+
+func (th *testHost) Debug(args ...interface{}) {
+	if th.debug != nil {
+		th.debug(args...)
 	}
 }
 

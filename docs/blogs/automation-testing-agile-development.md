@@ -1,6 +1,6 @@
 ---
-title: Automation Testing in Agile Development | Mokapi
-description: Automation Testing is essential for agile development. How can Mokapi help to build better software faster?
+title: Automation Testing in Agile Development
+description: Automated tests are essential for Agile or CI teams. Learn how Mokapi helps to build better software faster
 ---
 # Automation Testing in Agile Development
 

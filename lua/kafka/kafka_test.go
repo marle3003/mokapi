@@ -93,7 +93,8 @@ func TestModule_Produce(t *testing.T) {
 			func(t *testing.T, l *lua.LState, m *Module, c *client) {
 				c.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					require.IsType(t, &sortedmap.LinkedHashMap[string, interface{}]{}, args.Value)
-					require.Equal(t, "bar", args.Value.(*sortedmap.LinkedHashMap[string, interface{}]).Get("foo"))
+					foo, _ := args.Value.(*sortedmap.LinkedHashMap[string, interface{}]).Get("foo")
+					require.Equal(t, "bar", foo)
 					return nil, nil
 				}
 				err := l.DoString(`

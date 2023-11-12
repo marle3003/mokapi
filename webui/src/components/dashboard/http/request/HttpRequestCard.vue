@@ -35,6 +35,9 @@ function selectedContentChange(event: any){
 
             <div class="tab-content" id="tabRequest">
               <div class="tab-pane fade" :class="operation.requestBody ? 'show active' : ''" id="body" role="tabpanel" aria-labelledby="body-tab" v-if="operation.requestBody">
+                    <p class="label">Description</p>
+                    <p>{{  operation.requestBody.description }}</p>
+                    <p v-if="operation.requestBody.required">Required</p>
                     <p class="codeBlock">
                         <span v-if="operation.requestBody.contents.length == 1" class="label">{{ selectContent?.type }}</span>
                         <pre v-highlightjs="formatLanguage(JSON.stringify(selectContent?.schema), 'application/json')" class="overflow-auto" style="max-height: 250px;">

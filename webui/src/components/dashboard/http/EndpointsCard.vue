@@ -61,6 +61,26 @@ function allOperationsDeprecated(path: HttpPath): boolean{
     }
     return true
 }
+
+function operations(path: HttpPath) {
+    return path.operations.sort(function (o1, o2) {
+        return operationOrderValue(o1)- (operationOrderValue(o2))
+    })
+}
+
+function operationOrderValue(operation: HttpOperation): number {
+    switch (operation.method.toLowerCase()) {
+        case 'get': return 0
+        case 'post': return 1
+        case 'put': return 2
+        case 'patch': return 3
+        case 'delete': return 4
+        case 'head': return 5
+        case 'options': return 6
+        case 'trace': return 7
+        default: return 20
+    }
+}
 </script>
 
 <template>
@@ -70,21 +90,26 @@ function allOperationsDeprecated(path: HttpPath): boolean{
             <table class="table dataTable selectable" data-testid="endpoints">
                 <thead>
                     <tr>
-                        <th scope="col" class="text-left w-25">Path</th>
-                        <th scope="col" class="text-left w-50">Operations</th>
-                        <th scope="col" class="text-center" style="width:15%">Last Request</th>
-                        <th scope="col" class="text-center">Requests / Errors</th>
+                        <th scope="col" class="text-left">Path</th>
+                        <th scope="col" class="text-left">Summary</th>
+                        <th scope="col" class="text-left">Operations</th>
+                        <th scope="col" class="text-center" style="width: 15%">Last Request</th>
+                        <th scope="col" class="text-center" style="width: 10%">Requests / Errors</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="path in paths" :key="path.path" @click="goToPath(path)">
                         <td>
-                            <i class="bi bi-exclamation-triangle-fill yellow pe-2" v-if="allOperationsDeprecated(path)"></i>
+                            <i class="bi bi-exclamation-triangle-fill yellow pe-1" v-if="allOperationsDeprecated(path)"></i>
                             {{ path.path }}
                         </td>
                         <td>
-                            <span v-for="operation in path.operations" key="operation.method" class="badge operation" :class="operation.method" @click.stop="goToOperation(path, operation)">
-                                {{ operation.method.toUpperCase() }} <i class="bi bi-exclamation-triangle-fill yellow" v-if="operation.deprecated"></i>
+                            <span v-if="path.summary">{{ path.summary }}</span>
+                            <span v-else-if="path.operations.length === 1">{{ path.operations[0].summary }}</span>
+                        </td>
+                        <td>
+                            <span v-for="operation in operations(path)" key="operation.method" :title="operation.summary" class="badge operation me-1" :class="operation.method" @click.stop="goToOperation(path, operation)">
+                                {{ operation.method.toUpperCase() }} <i class="bi bi-exclamation-triangle-fill yellow" style="vertical-align: middle;" v-if="operation.deprecated"></i>
                             </span>
                         </td>
                         <td class="text-center">{{ lastRequest(path) }}</td>

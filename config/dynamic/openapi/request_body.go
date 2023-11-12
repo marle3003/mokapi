@@ -47,7 +47,7 @@ func (r *RequestBodyRef) UnmarshalJSON(b []byte) error {
 }
 
 func (r *RequestBodyRef) UnmarshalYAML(node *yaml.Node) error {
-	return r.Reference.Unmarshal(node, &r.Value)
+	return r.Reference.UnmarshalYaml(node, &r.Value)
 }
 
 func BodyFromRequest(r *http.Request, op *Operation) (body *Body, err error) {
@@ -87,7 +87,7 @@ func readBody(r *http.Request, op *Operation, contentType media.ContentType) (*B
 			return nil, fmt.Errorf("read request body failed: %w", err)
 		}
 
-		body, err := schema.Parse(data, contentType, mt.Schema)
+		body, err := mt.Schema.Unmarshal(data, contentType)
 		if err != nil {
 			err = fmt.Errorf("read request body '%v' failed: %w", contentType, err)
 		}
@@ -102,7 +102,7 @@ func tryParseBody(r *http.Request, o *Operation) (*Body, error) {
 		return nil, fmt.Errorf("read request body failed: %w", err)
 	}
 	for _, mt := range o.RequestBody.Value.Content {
-		if b, err := schema.Parse(data, mt.ContentType, mt.Schema); err == nil {
+		if b, err := mt.Schema.Unmarshal(data, mt.ContentType); err == nil {
 			return &Body{Value: b, Raw: string(data)}, nil
 		}
 	}
@@ -154,7 +154,7 @@ func parsePart(part *multipart.Part, p *schema.Ref) (interface{}, error) {
 	}
 
 	ct := media.ParseContentType(part.Header.Get("Content-Type"))
-	return schema.Parse(b, ct, p)
+	return p.Unmarshal(b, ct)
 }
 
 func parseFormFile(fh *multipart.FileHeader) (interface{}, error) {

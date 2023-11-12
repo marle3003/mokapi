@@ -27,7 +27,9 @@ declare module 'mokapi' {
      */
     function cron(expr: string, f: ScheduledEventHandler, args?: ScheduledEventArgs): void
 
-    /** Returns the environment variable named by the key. */
+    /** Retrieves the value of the environment variable named by the key.
+     It returns the value, which will be empty if the variable is not present.
+     */
     function env(name: string): string
 
     /** Opens a file and reading all its content. */
@@ -100,9 +102,11 @@ declare interface Url {
 }
 
 declare interface DateArgs {
-    layout?: string
+    layout?: DateLayout
     timestamp?: number
 }
+
+declare type DateLayout = 'DateTime' | 'DateOnly' | 'TimeOnly' | 'UnixDate' | 'RFC882' | 'RFC822Z' | 'RFC850' | 'RFC1123' | 'RFC1123Z' | 'RFC3339' | 'RFC3339Nano'
 
 declare interface EventArgs {
     /**

@@ -1,6 +1,7 @@
 import type { Options } from "markdown-it"
 import type MarkdownIt from "markdown-it"
-import type Token from "markdown-it/lib/token"
+import Token from "markdown-it/lib/token"
+import { useRoute } from "vue-router"
 
 export function MarkdownItLinks(md: MarkdownIt, opts: Options) {
 
@@ -8,6 +9,8 @@ export function MarkdownItLinks(md: MarkdownIt, opts: Options) {
         s = s.replace('.md', '')
         return s
     }
+
+    const route = useRoute()
 
     md.core.ruler.after('inline', 'link', function(state){
         state.tokens.forEach(function (blockToken: Token) {
@@ -20,6 +23,9 @@ export function MarkdownItLinks(md: MarkdownIt, opts: Options) {
                         }
                         else if (attr[0] == 'href' && attr[1].includes('.md#')){
                             attr[1] = replace(attr[1])
+                        }
+                        else if (attr[0] == 'href' && attr[1].startsWith('#')){
+                            attr[1] = route.path + attr[1]
                         }
                     }
                 }

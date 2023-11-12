@@ -142,7 +142,7 @@ function showImage(target: EventTarget | null) {
       <div class="container">
         <div class="row">
           <div class="col-12">
-            <h2>Simple dashboard for your fake email server</h2>
+            <h2>Powerful dashboard for your fake email server</h2>
               <img src="/smtp.png" style="width:100%" />
           </div>
         </div>

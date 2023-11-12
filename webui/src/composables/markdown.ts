@@ -43,7 +43,7 @@ function replaceImageUrls(data: string) {
     return data
 }
 
-function parseMetadata(data: string) {
+export function parseMetadata(data: string) {
     const metadataMatch = data.match(metadataRegex);
   
     if (!metadataMatch) {

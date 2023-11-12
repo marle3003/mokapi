@@ -318,7 +318,7 @@ func TestConfig_PetStore_Path(t *testing.T) {
 	require.Equal(t, []string{"name", "photoUrls"}, schema.Required)
 
 	require.True(t, put.Responses.Len() == 3)
-	r := put.Responses.Get(http.StatusBadRequest)
+	r, _ := put.Responses.Get(http.StatusBadRequest)
 	require.Len(t, r.Value.Content, 0)
 
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"math/rand"
 	"mokapi/config/dynamic/openapi/parameter"
 	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/engine/common"
@@ -12,7 +11,6 @@ import (
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"net/http"
-	"reflect"
 	"regexp"
 	"strings"
 	"time"
@@ -35,6 +33,7 @@ func NewHandler(config *Config, eventEmitter common.EventEmitter) http.Handler {
 		next: &responseHandler{
 			config:       config,
 			eventEmitter: eventEmitter,
+			g:            schema.NewGenerator(),
 		},
 	}
 }
@@ -72,7 +71,6 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	request := EventRequestFrom(r)
-	response := NewEventResponse(status)
 
 	if op.RequestBody != nil {
 		body, err := BodyFromRequest(r, op)
@@ -86,36 +84,18 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if !contentType.IsEmpty() {
-		response.Headers["Content-Type"] = contentType.String()
+	response := NewEventResponse(status, contentType)
+
+	err = setResponseData(response, mediaType, h.g)
+	if err != nil {
+		writeError(rw, r, err, h.config.Info.Name)
+		return
 	}
 
-	if mediaType != nil {
-		if len(mediaType.Examples) > 0 {
-			keys := reflect.ValueOf(mediaType.Examples).MapKeys()
-			v := keys[rand.Intn(len(keys))].Interface().(*ExampleRef)
-			response.Data = v.Value.Value
-		} else if mediaType.Example != nil {
-			response.Data = mediaType.Example
-		} else {
-			if data, err := h.g.New(mediaType.Schema); err != nil {
-				log.Infof("unable to generate response data for %v: %v", r.URL.String(), err)
-			} else {
-				response.Data = data
-			}
-		}
-	}
-
-	for k, v := range res.Headers {
-		if v.Value == nil {
-			log.Warnf("header ref not resovled: %v", v.Ref)
-			continue
-		}
-		if data, err := h.g.New(v.Value.Schema); err != nil {
-			log.Infof("unable to generate response header %v for %v: %v", k, r.URL.String(), err)
-		} else {
-			response.Headers[k] = fmt.Sprintf("%v", data)
-		}
+	err = setResponseHeader(response, res.Headers, h.g)
+	if err != nil {
+		writeError(rw, r, err, h.config.Info.Name)
+		return
 	}
 
 	actions := h.eventEmitter.Emit("http", request, response)
@@ -157,6 +137,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	var body []byte
 
 	if len(response.Body) > 0 {
+		// we do not validate body against schema
 		body = []byte(response.Body)
 	} else if response.Data != nil {
 		if b, ok := response.Data.([]byte); ok {

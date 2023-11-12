@@ -1,5 +1,5 @@
 ---
-title: Javascript API: cron
+title: "Javascript API: cron"
 description: Schedules a new periodic job using cron expression.
 ---
 # cron( expression, handler, [args] )

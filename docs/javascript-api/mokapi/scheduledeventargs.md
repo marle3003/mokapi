@@ -1,5 +1,5 @@
 ---
-title: Javascript API: ScheduledEventArgs
+title: "Javascript API: ScheduledEventArgs"
 description: ScheduledEventArgs is an object used by every function.
 ---
 # ScheduledEventArgs

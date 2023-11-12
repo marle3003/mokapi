@@ -4,6 +4,10 @@ import MetricCard from '../MetricCard.vue'
 import { useService } from '@/composables/services';
 import { useMetrics } from '@/composables/metrics';
 
+const props = defineProps({
+    labels: { type: Object as PropType<Label[]> },
+})
+
 const {fetchServices} = useService()
 const { sum } = useMetrics()
 const messages = ref(0)
@@ -17,9 +21,6 @@ watchEffect(() =>{
             messages.value += sum(service.metrics, 'ldap_search_total')
         }
     }
-})
-const props = defineProps({
-    labels: { type: Object as PropType<Label[]> },
 })
 
 onUnmounted(() => {

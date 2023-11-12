@@ -23,6 +23,11 @@ export default function() {
                     response.data = {
 
                     }
+                    return true
+                case 5:
+                    // use generated data but change pet's name
+                    response.data.name = 'Zoe'
+                    return true
             }
         }
         return false

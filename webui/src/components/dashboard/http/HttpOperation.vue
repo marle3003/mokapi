@@ -54,7 +54,7 @@ onUnmounted(() => {
                         <div class="col-6 header">
                             <p class="label">Operation</p>
                             <p>
-                                <i class="bi bi-exclamation-triangle-fill yellow pe-2" v-if="operation.deprecated"></i>
+                                <i class="bi bi-exclamation-triangle-fill yellow pe-2" style="vertical-align: middle;" v-if="operation.deprecated"></i>
                                 <span class="badge operation" :class="operation.method" data-testid="operation">{{ operation.method.toUpperCase() }}</span>
                                 <span class="ps-2" data-testid="path">
                                     <router-link :to="route.path(service, path)">
@@ -63,11 +63,11 @@ onUnmounted(() => {
                                 </span>
                             </p>
                         </div>
-                        <div class="col header">
+                        <div class="col">
                             <p class="label">Operation ID</p>
-                            <p data-testid="operationid">{{ operation.operationId }}</p>
+                            <p data-testid="operationid">{{ operation.operationId }}</p> 
                         </div>
-                        <div class="col header">
+                        <div class="col">
                             <p class="label">Service</p>
                             <p data-testid="service">
                                 <router-link :to="route.service(service)">
@@ -75,7 +75,7 @@ onUnmounted(() => {
                                 </router-link>
                             </p>
                         </div>
-                        <div class="col header" v-if="operation.deprecated">
+                        <div class="col" v-if="operation.deprecated">
                             <p class="label">Warning</p>
                             <p data-testid="warning">Deprecated</p>
                         </div>

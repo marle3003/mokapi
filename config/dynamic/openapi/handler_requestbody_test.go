@@ -131,10 +131,7 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 				require.Equal(t, 200, rr.Code)
 			},
 			check: func(t *testing.T, r *engine2.EventRequest) {
-				require.Equal(t, &struct {
-					Foo string  `json:"foo"`
-					Bar float64 `json:"bar"`
-				}{Foo: "abc", Bar: 12}, r.Body)
+				require.Equal(t, map[string]interface{}{"bar": float64(12), "foo": "abc"}, r.Body)
 			},
 		},
 		{
@@ -160,7 +157,7 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 
 				handler.ServeHTTP(rr, r)
 
-				require.Equal(t, 500, rr.Code)
+				require.Equal(t, http.StatusOK, rr.Code)
 			},
 			check: func(t *testing.T, r *engine2.EventRequest) {
 			},

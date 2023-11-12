@@ -57,14 +57,16 @@ func TestFromLua_UserData(t *testing.T) {
 				err := FromLua(ud, &m)
 				require.NoError(t, err)
 				require.Equal(t, 3, m.Len())
-				require.Equal(t, "foo", m.Get("Name"))
-				require.Equal(t, nil, m.Get("Nil"))
+				name, _ := m.Get("Name")
+				require.Equal(t, "foo", name)
+				n, _ := m.Get("Nil")
+				require.Equal(t, nil, n)
 
-				data, ok := m.Get("Data").(*sortedmap.LinkedHashMap[string, interface{}])
-				require.True(t, ok, "should be LinkedHashMap")
+				data, _ := m.Get("Data")
+				require.IsType(t, &sortedmap.LinkedHashMap[string, interface{}]{}, data)
 
-				xy, ok := data.Get("xy").([]interface{})
-				require.True(t, ok, "should be []interface{}")
+				xy, _ := data.(*sortedmap.LinkedHashMap[string, interface{}]).Get("xy")
+				require.IsType(t, []interface{}{}, xy)
 				require.Equal(t, []interface{}{5.0, 6.0}, xy)
 			},
 		},

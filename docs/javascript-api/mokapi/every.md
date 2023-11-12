@@ -1,5 +1,5 @@
 ---
-title: Javascript API: every
+title: "Javascript API: every"
 description: Schedules a new periodic job with an interval
 ---
 # every( interval, handler, [args] )

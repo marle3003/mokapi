@@ -115,7 +115,6 @@ func (x *Xml) patch(patch *Xml) {
 
 	x.Wrapped = patch.Wrapped
 	x.Attribute = patch.Attribute
-	x.CData = patch.CData
 }
 
 func (s *Schemas) Patch(patch *Schemas) {

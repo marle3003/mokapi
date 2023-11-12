@@ -5,33 +5,46 @@ import (
 	"github.com/brianvoe/gofakeit/v6"
 	"math"
 	"math/rand"
-	"mokapi/sortedmap"
 	"reflect"
 	"time"
 )
 
+const (
+	lowerChars   = "abcdefghijklmnopqrstuvwxyz"
+	upperChars   = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	numericChars = "0123456789"
+	specialChars = "!@#$%&*+-_=?:;,.|(){}<>"
+	spaceChar    = " "
+	allChars     = lowerChars + upperChars + numericChars + specialChars + spaceChar
+)
+
 type Generator struct {
-	randomNumber *rand.Rand
+	r *rand.Rand
 }
 
 type builder struct {
 	requests []*Schema
+	r        *rand.Rand
 }
 
 func NewGenerator() *Generator {
-	return &Generator{randomNumber: rand.New(rand.NewSource(time.Now().Unix()))}
+	return &Generator{r: rand.New(rand.NewSource(time.Now().Unix()))}
+}
+
+func NewGeneratorWithSeed(seed int64) *Generator {
+	return &Generator{r: rand.New(rand.NewSource(seed))}
 }
 
 func (g *Generator) New(ref *Ref) (interface{}, error) {
-	i, err := newBuilder().create(ref)
+	i, err := newBuilder(g.r).create(ref)
 	if err != nil {
-		return nil, fmt.Errorf("create mock data failed: %w", err)
+		return nil, fmt.Errorf("generating data failed: %w", err)
 	}
 	return i, nil
 }
 
-func newBuilder() *builder {
-	return &builder{}
+func newBuilder(r *rand.Rand) *builder {
+	return &builder{r: r}
 }
 
 func (b *builder) create(ref *Ref) (interface{}, error) {
@@ -63,7 +76,7 @@ func (b *builder) create(ref *Ref) (interface{}, error) {
 				return b.create(schema.AnyOf[i])
 			}
 			if len(schema.AllOf) > 0 {
-				m := sortedmap.NewLinkedHashMap()
+				result := map[string]interface{}{}
 				for _, all := range schema.AllOf {
 					if all == nil || all.Value == nil {
 						continue
@@ -73,12 +86,15 @@ func (b *builder) create(ref *Ref) (interface{}, error) {
 					}
 					o, err := b.create(all)
 					if err != nil {
-						return nil, err
+						return nil, fmt.Errorf("allOf expects to be valid against all of subschemas: %w", err)
 					}
-					m.Merge(o.(*sortedmap.LinkedHashMap[string, interface{}]))
+					m := o.(map[string]interface{})
+					for key, value := range m {
+						result[key] = value
+					}
 
 				}
-				return m, nil
+				return result, nil
 			}
 			return nil, nil
 		}
@@ -86,6 +102,13 @@ func (b *builder) create(ref *Ref) (interface{}, error) {
 }
 
 func (b *builder) createObject(s *Schema) (interface{}, error) {
+	if s.Nullable {
+		n := gofakeit.Float32Range(0, 1)
+		if n < 0.05 {
+			return nil, nil
+		}
+	}
+
 	// recursion guard. Currently, we use a fixed depth: 1
 	n := len(b.requests)
 	numRequestsSameAsThisOne := 0
@@ -101,7 +124,8 @@ func (b *builder) createObject(s *Schema) (interface{}, error) {
 	// remove schemas from guard
 	defer func() { b.requests = b.requests[:n] }()
 
-	m := sortedmap.NewLinkedHashMap()
+	//m := sortedmap.NewLinkedHashMap()
+	m := map[string]interface{}{}
 
 	if s.IsDictionary() {
 		length := gofakeit.Number(1, 10)
@@ -110,7 +134,8 @@ func (b *builder) createObject(s *Schema) (interface{}, error) {
 			if err != nil {
 				return nil, err
 			}
-			m.Set(gofakeit.Word(), v)
+			//m.Set(gofakeit.Word(), v)
+			m[gofakeit.Word()] = v
 		}
 		return m, nil
 	}
@@ -126,69 +151,94 @@ func (b *builder) createObject(s *Schema) (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		m.Set(key, value)
+		//m.Set(key, value)
+		m[key] = value
 	}
 
 	return m, nil
 }
 
-func getType(s *Schema) (reflect.Type, error) {
-	switch s.Type {
-	case "integer":
-		if s.Format == "int32" {
-			return reflect.TypeOf(int32(0)), nil
+func (b *builder) createString(s *Schema) interface{} {
+	if s.Nullable {
+		n := gofakeit.Float32Range(0, 1)
+		if n < 0.05 {
+			return nil
 		}
-		return reflect.TypeOf(int64(0)), nil
-	case "number":
-		if s.Format == "float32" {
-			return reflect.TypeOf(float32(0)), nil
-		}
-		return reflect.TypeOf(float64(0)), nil
-	case "string":
-		return reflect.TypeOf(""), nil
-	case "boolean":
-		return reflect.TypeOf(false), nil
-	case "array":
-		t, err := getType(s.Items.Value)
-		if err != nil {
-			return nil, err
-		}
-		return reflect.SliceOf(t), nil
 	}
 
-	return nil, fmt.Errorf("type %v not implemented", s.Type)
-}
-
-func (b *builder) createString(s *Schema) string {
 	if len(s.Format) > 0 {
 		return b.createStringByFormat(s.Format)
 	} else if len(s.Pattern) > 0 {
 		return gofakeit.Generate(fmt.Sprintf("{regex:%v}", s.Pattern))
 	}
-	return gofakeit.Lexify("???????????????")
-}
 
-func (b *builder) createNumberExclusive(s *Schema) (interface{}, error) {
-	for i := 0; i < 10; i++ {
-		n, err := b.createNumber(s)
-		if err != nil {
-			return nil, err
-		}
-		if *s.ExclusiveMinimum && s.Minimum == n {
-			continue
-		}
-		if *s.ExclusiveMaximum && s.Maximum == n {
-			continue
-		}
-		return n, nil
+	minLength := 0
+	maxLength := 15
+
+	if s.MinLength != nil {
+		minLength = *s.MinLength
 	}
-	return nil, fmt.Errorf("unable to find a valid number with exclusive")
+	if s.MaxLength != nil {
+		maxLength = *s.MaxLength
+	} else if minLength > maxLength {
+		maxLength += minLength
+	}
+
+	categories := []interface{}{0, 1, 2, 3}
+	weights := []float32{5, 0.5, 0.3, 0.1}
+	letters := lowerChars + upperChars
+
+	length := gofakeit.IntRange(minLength, maxLength)
+	result := make([]rune, length)
+	for i := 0; i < length; i++ {
+		c, _ := gofakeit.Weighted(categories, weights)
+
+		switch c {
+		case 0:
+			n := gofakeit.IntRange(0, len(letters)-1)
+			result[i] = rune(letters[n])
+		case 1:
+			n := gofakeit.IntRange(0, len(numericChars)-1)
+			result[i] = rune(numericChars[n])
+		case 2:
+			result[i] = ' '
+		case 3:
+			n := gofakeit.IntRange(0, len(specialChars)-1)
+			result[i] = rune(specialChars[n])
+		}
+	}
+	return string(result)
 }
 
 func (b *builder) createNumber(s *Schema) (interface{}, error) {
-	if s.ExclusiveMinimum != nil && (*s.ExclusiveMinimum) ||
-		s.ExclusiveMaximum != nil && (*s.ExclusiveMaximum) {
-		return b.createNumberExclusive(s)
+	if s.Nullable {
+		n := gofakeit.Float32Range(0, 1)
+		if n < 0.05 {
+			return nil, nil
+		}
+	}
+
+	f := false
+	if s.ExclusiveMinimum != nil && (*s.ExclusiveMinimum) {
+		ss := *s
+		ss.ExclusiveMinimum = &f
+		if ss.Minimum != nil {
+			ss.Minimum = toPointerF(*ss.Minimum + 1)
+		}
+		return b.createNumber(&ss)
+	}
+	if s.ExclusiveMaximum != nil && (*s.ExclusiveMaximum) {
+		ss := *s
+		ss.ExclusiveMaximum = &f
+		if ss.Maximum != nil {
+			ss.Maximum = toPointerF(*ss.Maximum - 1)
+		}
+		return b.createNumber(&ss)
+	}
+
+	if s.Minimum != nil && s.Maximum != nil &&
+		(*s.Minimum) > (*s.Maximum) {
+		return nil, fmt.Errorf("invalid minimum '%v' and maximum '%v' in %v", *s.Minimum, *s.Maximum, s)
 	}
 
 	if s.Type == "number" {
@@ -258,6 +308,13 @@ func (b *builder) createNumber(s *Schema) (interface{}, error) {
 }
 
 func (b *builder) createArray(s *Schema) (r []interface{}, err error) {
+	if s.Nullable {
+		n := gofakeit.Float32Range(0, 1)
+		if n < 0.05 {
+			return nil, nil
+		}
+	}
+
 	maxItems := 5
 	if s.MaxItems != nil {
 		maxItems = *s.MaxItems
@@ -265,6 +322,12 @@ func (b *builder) createArray(s *Schema) (r []interface{}, err error) {
 	minItems := 0
 	if s.MinItems != nil {
 		minItems = *s.MinItems
+	}
+
+	if s.ShuffleItems {
+		defer func() {
+			b.r.Shuffle(len(r), func(i, j int) { r[i], r[j] = r[j], r[i] })
+		}()
 	}
 
 	var f func() (interface{}, error)
@@ -276,11 +339,6 @@ func (b *builder) createArray(s *Schema) (r []interface{}, err error) {
 		f = func() (interface{}, error) {
 			i := gofakeit.Number(0, len(s.Items.Value.Enum)-1)
 			return s.Items.Value.Enum[i], nil
-		}
-		if s.ShuffleItems {
-			defer func() {
-				rand.Shuffle(len(r), func(i, j int) { r[i], r[j] = r[j], r[i] })
-			}()
 		}
 	} else {
 		f = func() (interface{}, error) {
@@ -298,7 +356,7 @@ func (b *builder) createArray(s *Schema) (r []interface{}, err error) {
 		if s.UniqueItems {
 			r[i], err = b.getUnique(r, f)
 			if err != nil {
-				return
+				return nil, fmt.Errorf("%w for %v", err, s)
 			}
 		} else {
 			r[i], err = f()
@@ -355,4 +413,8 @@ func contains(s []interface{}, v interface{}) bool {
 		}
 	}
 	return false
+}
+
+func toPointerF(f float64) *float64 {
+	return &f
 }
