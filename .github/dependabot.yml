@@ -11,4 +11,4 @@ updates:
     target-branch: v0.9
     schedule:
       interval: "weekly"
-      day: friday
+      day: "friday"
