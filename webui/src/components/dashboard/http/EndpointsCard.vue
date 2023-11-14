@@ -14,6 +14,9 @@ const props = defineProps({
 })
 
 const paths = computed(() => {
+    if (!props.service.paths) {
+        return []
+    }
     return props.service.paths.sort(comparePath)
 })
 
@@ -63,6 +66,9 @@ function allOperationsDeprecated(path: HttpPath): boolean{
 }
 
 function operations(path: HttpPath) {
+    if (!path || !path.operations) {
+        return []
+    }
     return path.operations.sort(function (o1, o2) {
         return operationOrderValue(o1)- (operationOrderValue(o2))
     })
