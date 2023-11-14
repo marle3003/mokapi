@@ -121,6 +121,8 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 				html := strings.Replace(string(data), "<base href=\"/\" />", fmt.Sprintf("<base href=\"%v/\" />", base), 1)
+				html = h.replaceMeta(r.URL, html)
+
 				_, err = w.Write([]byte(html))
 				if err != nil {
 					log.Errorf("unable to write index.html: %v", err)

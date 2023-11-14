@@ -203,7 +203,7 @@ Loop:
 	require.Len(t, configs, 0)
 	require.Equal(t, logrus.ErrorLevel, hook.LastEntry().Level)
 	require.Equal(t,
-		fmt.Sprintf(`request to "https://%v" failed: Get "https://%v": tls: failed to verify certificate: x509: certificate signed by unknown authority`,
+		fmt.Sprintf(`request to https://%v failed: Get "https://%v": tls: failed to verify certificate: x509: certificate signed by unknown authority`,
 			server.Listener.Addr(),
 			server.Listener.Addr()),
 		hook.LastEntry().Message)

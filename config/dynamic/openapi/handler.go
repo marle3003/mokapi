@@ -183,7 +183,7 @@ endpointLoop:
 			continue
 		}
 		endpoint := ref.Value
-		op := endpoint.operation(r.Method)
+		op := endpoint.Operation(r.Method)
 		if op == nil {
 			continue
 		}

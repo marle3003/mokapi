@@ -94,7 +94,7 @@ func (p *Path) Operations() map[string]*Operation {
 	return m
 }
 
-func (p *Path) operation(method string) *Operation {
+func (p *Path) Operation(method string) *Operation {
 	switch strings.ToUpper(method) {
 	case http.MethodGet:
 		return p.Get
