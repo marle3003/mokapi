@@ -135,7 +135,7 @@ func (p *Provider) checkFiles(ch chan *common.Config) {
 		u, _ := url.Parse(f)
 		c, changed, err := p.readUrl(u)
 		if err != nil {
-			log.Error(err)
+			log.Error(fmt.Errorf("request to %v failed: %v", f, err))
 		} else if changed {
 			ch <- c
 		}
@@ -149,7 +149,6 @@ func (p *Provider) readUrl(u *url.URL) (c *common.Config, changed bool, err erro
 	var res *http.Response
 	res, err = p.client.Get(u.String())
 	if err != nil {
-		err = fmt.Errorf("request to %q failed: %v", p.config.Url, err)
 		return
 	}
 
@@ -164,13 +163,13 @@ func (p *Provider) readUrl(u *url.URL) (c *common.Config, changed bool, err erro
 
 	b, err := io.ReadAll(res.Body)
 	if err != nil {
-		err = fmt.Errorf("unable to read response body: %v", err.Error())
+		err = fmt.Errorf("read response body failed: %v", err.Error())
 	}
 
 	hash := fnv.New64()
 	_, err = hash.Write(b)
 	if err != nil {
-		log.Errorf("unable to create hash: %v", err.Error())
+		log.Errorf("create hash failed: %v", err.Error())
 		return
 	}
 
