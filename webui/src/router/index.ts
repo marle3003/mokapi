@@ -10,7 +10,7 @@ export function useRoute() {
     path: route.params.path?.toString(),
     operation: route.params.operation?.toString()
   }
-  
+
   function service(service: Service): RouteLocationRaw{
     return {
         name: 'httpService',
@@ -21,16 +21,19 @@ export function useRoute() {
 
   function path(service: Service, path: HttpPath): RouteLocationRaw {
     return {
-      name: 'httpPath',
-      params: { service: service.name, path: path.path.substring(1) },
+      name: 'httpEndpoint',
+      params: { service: service.name, endpoint: path.path.substring(1).split('/') },
       query: { refresh: route.query.refresh }
     }
   }
 
   function operation(service: Service, path: HttpPath, operation: HttpOperation){
+    const endpoint = path.path.substring(1).split('/')
+    endpoint.push(operation.method)
+    console.log(endpoint)
     return {
-        name: 'httpOperation',
-        params: { service: service.name, path: path.path.substring(1), operation: operation.method },
+        name: 'httpEndpoint',
+        params: { service: service.name, endpoint: endpoint },
         query: { refresh: route.query.refresh }
     }
   }
@@ -49,7 +52,7 @@ if (import.meta.env.VITE_DASHBOARD == 'true') {
       return {name: 'dashboard', query: {refresh: 20}}
     }
   }
-} 
+}
 else {
   startPageRoute = {
     path: '/',
@@ -126,20 +129,8 @@ const router = createRouter({
               meta: {service: 'http'}
             },
             {
-              path: '/dashboard/http/services/:service/:path',
-              name: 'httpPath',
-              component: dashboardView,
-              meta: {service: 'http'}
-            },
-            {
-              path: '/dashboard/http/services/:service/:path/:operation',
-              name: 'httpOperation',
-              component: dashboardView,
-              meta: {service: 'http'}
-            },
-            {
-              path: '/dashboard/http/services/:service/:path/:operation/parameters/:parameter',
-              name: 'httpParameter',
+              path: '/dashboard/http/services/:service/:endpoint(.*)*',
+              name: 'httpEndpoint',
               component: dashboardView,
               meta: {service: 'http'}
             }
@@ -228,3 +219,7 @@ const router = createRouter({
 })
 
 export default router
+
+export function useRouter() {
+  return router
+}
