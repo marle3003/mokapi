@@ -23,14 +23,6 @@ const mokapiIgnoreFile = ".mokapiignore"
 
 var bom = []byte{0xEF, 0xBB, 0xBF}
 
-type FSReader interface {
-	Walk(string, fs.WalkDirFunc) error
-	ReadFile(name string) ([]byte, error)
-}
-
-type fsReader struct {
-}
-
 type Provider struct {
 	cfg        static.FileProvider
 	SkipPrefix []string
@@ -43,7 +35,7 @@ type Provider struct {
 }
 
 func New(cfg static.FileProvider) *Provider {
-	return NewWithWalker(cfg, &fsReader{})
+	return NewWithWalker(cfg, &Reader{})
 }
 
 func NewWithWalker(cfg static.FileProvider, fs FSReader) *Provider {
@@ -196,7 +188,7 @@ func (p *Provider) readFile(path string) (*common.Config, error) {
 	}
 
 	// remove bom sequence if present
-	if bytes.Equal(data[0:3], bom) {
+	if len(data) >= 4 && bytes.Equal(data[0:3], bom) {
 		data = data[3:]
 	}
 
@@ -265,12 +257,4 @@ func (p *Provider) watchPath(path string) {
 	}
 	p.watched[path] = struct{}{}
 	p.watcher.Add(path)
-}
-
-func (r *fsReader) Walk(root string, f fs.WalkDirFunc) error {
-	return filepath.WalkDir(root, f)
-}
-
-func (r *fsReader) ReadFile(path string) ([]byte, error) {
-	return os.ReadFile(path)
 }

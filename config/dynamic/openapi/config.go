@@ -74,7 +74,11 @@ func (c *Config) Parse(config *common.Config, reader common.Reader) error {
 func (c *Config) Patch(patch *Config) {
 	c.Info.patch(patch.Info)
 	c.patchServers(patch.Servers)
-	c.Paths.patch(patch.Paths)
+	if c.Paths == nil {
+		c.Paths = patch.Paths
+	} else {
+		c.Paths.patch(patch.Paths)
+	}
 	c.Components.patch(patch.Components)
 }
 

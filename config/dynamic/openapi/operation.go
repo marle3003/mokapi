@@ -84,6 +84,10 @@ func (o *Operation) parse(p *Path, config *common.Config, reader common.Reader) 
 }
 
 func (o *Operation) patch(patch *Operation) {
+	if patch == nil {
+		return
+	}
+
 	if len(patch.Summary) > 0 {
 		o.Summary = patch.Summary
 	}

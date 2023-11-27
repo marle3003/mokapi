@@ -591,6 +591,22 @@ func TestConfig_Patch_Operation(t *testing.T) {
 		})
 	}
 
+	testcases = append(testcases, testType{
+		name: "patch is nil",
+		configs: []*openapi.Config{
+			openapitest.NewConfig("1.0", openapitest.WithPath(
+				"/foo", openapitest.NewPath(openapitest.WithOperation("get", openapitest.NewOperation())))),
+			openapitest.NewConfig("1.0", openapitest.WithPath(
+				"/foo", openapitest.NewPath())),
+		},
+		test: func(t *testing.T, result *openapi.Config) {
+			require.Len(t, result.Paths, 1)
+			require.Contains(t, result.Paths, "/foo")
+			o := result.Paths["/foo"].Value.Get
+			require.Equal(t, "", o.Summary)
+		},
+	})
+
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {

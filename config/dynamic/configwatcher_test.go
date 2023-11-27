@@ -298,6 +298,21 @@ func TestConfigWatcher_New(t *testing.T) {
 				require.Contains(t, w.providers, "git")
 			},
 		},
+		{
+			name: "npm provider",
+			f: func(t *testing.T) {
+				w := NewConfigWatcher(
+					&static.Config{
+						Providers: static.Providers{
+							Npm: static.NpmProvider{
+								Packages: []static.NpmPackage{{Name: "foo"}},
+							},
+						},
+					},
+				)
+				require.Contains(t, w.providers, "npm")
+			},
+		},
 	}
 
 	for _, tc := range testcases {

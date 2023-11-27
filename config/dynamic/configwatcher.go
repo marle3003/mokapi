@@ -9,6 +9,7 @@ import (
 	"mokapi/config/dynamic/provider/file"
 	"mokapi/config/dynamic/provider/git"
 	"mokapi/config/dynamic/provider/http"
+	"mokapi/config/dynamic/provider/npm"
 	"mokapi/config/static"
 	"mokapi/safe"
 	"net/url"
@@ -33,6 +34,7 @@ func NewConfigWatcher(cfg *static.Config) *ConfigWatcher {
 	w.providers["http"] = http
 	w.providers["https"] = http
 	w.providers["git"] = git.New(cfg.Providers.Git)
+	w.providers["npm"] = npm.New(cfg.Providers.Npm)
 
 	return w
 }
