@@ -7,7 +7,7 @@ import (
 	"mokapi/config/dynamic/provider/file/filetest"
 	"mokapi/config/static"
 	"mokapi/safe"
-	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -19,6 +19,11 @@ func TestNpmProvider(t *testing.T) {
 		data string
 	}
 
+	root := "/"
+	if filepath.Separator == '\\' {
+		root = "C:\\"
+	}
+
 	testcases := []struct {
 		name string
 		fs   *filetest.MockFS
@@ -28,7 +33,7 @@ func TestNpmProvider(t *testing.T) {
 		{
 			name: "node_modules in current directory and one file",
 			fs: &filetest.MockFS{
-				WorkingDir: "/",
+				WorkingDir: root,
 				Entries: map[string]*filetest.Entry{
 					"/node_modules": {
 						Name:  "node_modules",
@@ -52,7 +57,7 @@ func TestNpmProvider(t *testing.T) {
 		{
 			name: "node_modules in parent directory and one file",
 			fs: &filetest.MockFS{
-				WorkingDir: "/foo",
+				WorkingDir: root + "foo",
 				Entries: map[string]*filetest.Entry{
 					"/node_modules": {
 						Name:  "node_modules",
@@ -74,9 +79,36 @@ func TestNpmProvider(t *testing.T) {
 			},
 		},
 		{
+			name: "with global folder",
+			fs: &filetest.MockFS{
+				WorkingDir: root + "foo",
+				Entries: map[string]*filetest.Entry{
+					"/bar/node_modules": {
+						Name:  "node_modules",
+						IsDir: true,
+					},
+					"/bar/node_modules/foo": {
+						Name:  "foo",
+						IsDir: true,
+					},
+					"/bar/node_modules/foo/foo.txt": {
+						Name:  "foo.txt",
+						IsDir: false,
+						Data:  []byte("foobar"),
+					}}},
+			cfg: static.NpmProvider{
+				GlobalFolders: []string{root + "bar/node_modules"},
+				Packages:      []static.NpmPackage{{Name: "foo"}},
+			},
+			test: func(t *testing.T, files map[string]file) {
+				require.Len(t, files, 1)
+				require.Equal(t, "foobar", files["/bar/node_modules/foo/foo.txt"].data)
+			},
+		},
+		{
 			name: "node_modules in parent directory and two packages",
 			fs: &filetest.MockFS{
-				WorkingDir: "/foo",
+				WorkingDir: root + "foo",
 				Entries: map[string]*filetest.Entry{
 					"/node_modules": {
 						Name:  "node_modules",
@@ -115,7 +147,7 @@ func TestNpmProvider(t *testing.T) {
 		{
 			name: "one module in current and one in parent",
 			fs: &filetest.MockFS{
-				WorkingDir: "/foo",
+				WorkingDir: root + "foo",
 				Entries: map[string]*filetest.Entry{
 					"/node_modules": {
 						Name:  "node_modules",
@@ -154,7 +186,7 @@ func TestNpmProvider(t *testing.T) {
 		{
 			name: "with allow list",
 			fs: &filetest.MockFS{
-				WorkingDir: "/foo",
+				WorkingDir: root + "foo",
 				Entries: map[string]*filetest.Entry{
 					"/node_modules": {
 						Name:  "node_modules",
@@ -190,7 +222,7 @@ func TestNpmProvider(t *testing.T) {
 		{
 			name: "with include",
 			fs: &filetest.MockFS{
-				WorkingDir: "/foo",
+				WorkingDir: root + "foo",
 				Entries: map[string]*filetest.Entry{
 					"/node_modules": {
 						Name:  "node_modules",
@@ -262,8 +294,8 @@ func TestNpmProvider(t *testing.T) {
 					path := c.Info.Url.Path
 					if len(path) == 0 {
 						path = c.Info.Url.Opaque
-						parent, _ := os.Getwd()
-						path = strings.Replace(path, parent+"\\", "", 1)
+						path = strings.ReplaceAll(path, "\\", "/")
+						path = strings.ReplaceAll(path, "C:/", "/")
 					}
 					files[path] = file{path, string(c.Raw)}
 				case <-time.After(time.Second):

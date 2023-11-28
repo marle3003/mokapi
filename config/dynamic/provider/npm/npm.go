@@ -87,14 +87,22 @@ func (p *Provider) getPackageDir(name string, workDir string) (string, error) {
 	for len(workDir) > 0 {
 		dir := filepath.Join(workDir, "node_modules", name)
 		if _, err := p.fs.Stat(dir); err != nil {
-			if workDir == string(filepath.Separator) {
+			newWorkDir := filepath.Dir(workDir)
+			if newWorkDir == workDir {
 				break
 			}
-			workDir = filepath.Dir(workDir)
+			workDir = newWorkDir
 			continue
 		}
 
 		return dir, nil
+	}
+
+	for _, folder := range p.cfg.GlobalFolders {
+		dir := filepath.Join(folder, name)
+		if _, err := p.fs.Stat(dir); err == nil {
+			return dir, nil
+		}
 	}
 
 	return "", fmt.Errorf("module %v not found", name)

@@ -43,7 +43,8 @@ func (m *MockFS) Walk(root string, visit fs.WalkDirFunc) error {
 	sort.Strings(keys)
 Walk:
 	for _, path := range keys {
-		rel, _ := filepath.Rel(root, path)
+		tmp := strings.ReplaceAll(path, "/", string(filepath.Separator))
+		rel, _ := filepath.Rel(root, tmp)
 		if strings.HasPrefix(rel, "..") {
 			continue
 		}
@@ -65,7 +66,9 @@ func (m *MockFS) GetWorkingDir() (string, error) {
 }
 
 func (m *MockFS) Stat(name string) (fs.FileInfo, error) {
-	if e, ok := m.Entries[name]; ok {
+	path := strings.ReplaceAll(name, string(filepath.Separator), "/")
+	path = strings.ReplaceAll(path, "C:/", "/")
+	if e, ok := m.Entries[path]; ok {
 		return &fileInfo{entry: e}, nil
 	}
 	return nil, fmt.Errorf("not found")

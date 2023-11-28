@@ -34,7 +34,8 @@ func main() {
 	configDecoders := []decoders.ConfigDecoder{decoders.NewDefaultFileDecoder(), &decoders.FlagDecoder{}}
 	err := decoders.Load(configDecoders, cfg)
 	if err != nil {
-		fmt.Println("Error", err)
+		log.Errorf("load config failed: %v", err)
+		return
 	}
 
 	if len(cfg.Services) > 0 {

@@ -3,6 +3,7 @@ package decoders
 import (
 	"fmt"
 	"github.com/stretchr/testify/require"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
@@ -11,11 +12,11 @@ import (
 func TestFileDecoder_Decode(t *testing.T) {
 	testcases := []struct {
 		name string
-		f    func(t *testing.T)
+		test func(t *testing.T)
 	}{
 		{
 			name: "no filename set",
-			f: func(t *testing.T) {
+			test: func(t *testing.T) {
 				s := &struct{ Name string }{}
 				d := NewDefaultFileDecoder()
 				err := d.Decode(map[string]string{}, s)
@@ -23,15 +24,15 @@ func TestFileDecoder_Decode(t *testing.T) {
 			},
 		},
 		{
-			name: "/etc/mokapi/mokapi.yaml",
-			f: func(t *testing.T) {
+			name: "file in folder mokapi in etc",
+			test: func(t *testing.T) {
 				s := &struct{ Name string }{}
 				f := func(path string) ([]byte, error) {
 					// if test is executed on windows we get second path
 					if path == "/etc/mokapi/mokapi.yaml" || path == "\\etc\\mokapi\\mokapi.yaml" {
 						return []byte("name: foobar"), nil
 					}
-					return nil, fmt.Errorf("not found")
+					return nil, fs.ErrNotExist
 				}
 				d := &FileDecoder{readFile: f}
 				err := d.Decode(map[string]string{}, s)
@@ -41,7 +42,7 @@ func TestFileDecoder_Decode(t *testing.T) {
 		},
 		{
 			name: "file does not exist",
-			f: func(t *testing.T) {
+			test: func(t *testing.T) {
 				s := &struct{ Name string }{}
 				f := func(path string) ([]byte, error) { return []byte(""), fmt.Errorf("file not found") }
 				d := &FileDecoder{filename: "test.yml", readFile: f}
@@ -51,7 +52,7 @@ func TestFileDecoder_Decode(t *testing.T) {
 		},
 		{
 			name: "empty file",
-			f: func(t *testing.T) {
+			test: func(t *testing.T) {
 				s := &struct{ Name string }{}
 				f := func(path string) ([]byte, error) { return []byte(""), nil }
 				d := &FileDecoder{filename: "mokapi.yaml", readFile: f}
@@ -61,17 +62,17 @@ func TestFileDecoder_Decode(t *testing.T) {
 		},
 		{
 			name: "yaml schema error",
-			f: func(t *testing.T) {
+			test: func(t *testing.T) {
 				s := &struct{ Name string }{}
 				f := func(path string) ([]byte, error) { return []byte("name: {}"), nil }
 				d := &FileDecoder{filename: "mokapi.yml", readFile: f}
 				err := d.Decode(map[string]string{}, s)
-				require.EqualError(t, err, "parsing YAML file mokapi.yml: yaml: unmarshal errors:\n  line 1: cannot unmarshal !!map into string")
+				require.EqualError(t, err, "parse file 'mokapi.yml' failed: yaml: unmarshal errors:\n  line 1: cannot unmarshal !!map into string")
 			},
 		},
 		{
 			name: "file with data",
-			f: func(t *testing.T) {
+			test: func(t *testing.T) {
 				s := &struct{ Name string }{}
 				f := func(path string) ([]byte, error) { return []byte("name: foobar"), nil }
 				d := &FileDecoder{readFile: f}
@@ -82,7 +83,7 @@ func TestFileDecoder_Decode(t *testing.T) {
 		},
 		{
 			name: "temp file with data",
-			f: func(t *testing.T) {
+			test: func(t *testing.T) {
 				s := &struct{ Name string }{}
 				d := &FileDecoder{filename: createTempFile(t, "test.yml", "name: foobar"), readFile: os.ReadFile}
 				err := d.Decode(map[string]string{"configfile": d.filename}, s)
@@ -92,7 +93,7 @@ func TestFileDecoder_Decode(t *testing.T) {
 		},
 		{
 			name: "pascal case",
-			f: func(t *testing.T) {
+			test: func(t *testing.T) {
 				s := &struct {
 					InstallDir string `yaml:"installDir"`
 				}{}
@@ -104,7 +105,7 @@ func TestFileDecoder_Decode(t *testing.T) {
 		},
 		{
 			name: "map",
-			f: func(t *testing.T) {
+			test: func(t *testing.T) {
 				s := &struct {
 					Key map[string]string
 				}{}
@@ -116,7 +117,7 @@ func TestFileDecoder_Decode(t *testing.T) {
 		},
 		{
 			name: "array",
-			f: func(t *testing.T) {
+			test: func(t *testing.T) {
 				s := &struct {
 					Key []string
 				}{}
@@ -128,7 +129,7 @@ func TestFileDecoder_Decode(t *testing.T) {
 		},
 		{
 			name: "map with array",
-			f: func(t *testing.T) {
+			test: func(t *testing.T) {
 				s := &struct {
 					Key map[string][]string
 				}{}
@@ -140,7 +141,7 @@ func TestFileDecoder_Decode(t *testing.T) {
 		},
 		{
 			name: "map pointer struct",
-			f: func(t *testing.T) {
+			test: func(t *testing.T) {
 				type test struct {
 					Name string
 					Foo  string
@@ -157,7 +158,7 @@ func TestFileDecoder_Decode(t *testing.T) {
 		},
 		{
 			name: "map struct",
-			f: func(t *testing.T) {
+			test: func(t *testing.T) {
 				type test struct {
 					Name string
 					Foo  string
@@ -179,7 +180,7 @@ func TestFileDecoder_Decode(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			tc.f(t)
+			tc.test(t)
 		})
 	}
 }

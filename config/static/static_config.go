@@ -66,7 +66,8 @@ type HttpProvider struct {
 }
 
 type NpmProvider struct {
-	Packages []NpmPackage
+	GlobalFolders []string
+	Packages      []NpmPackage
 }
 
 type NpmPackage struct {
