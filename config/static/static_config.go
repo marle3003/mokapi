@@ -66,7 +66,7 @@ type HttpProvider struct {
 }
 
 type NpmProvider struct {
-	GlobalFolders []string
+	GlobalFolders []string `yaml:"globalFolders"`
 	Packages      []NpmPackage
 }
 
