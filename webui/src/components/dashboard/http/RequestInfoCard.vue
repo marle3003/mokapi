@@ -16,9 +16,12 @@ const eventData = computed(() => <HttpEventData>prop.event.data)
 const route = useRoute()
 
 function operation(){
+    const endpoint = prop.event.traits.path.substring(1).split('/')
+    endpoint.push(prop.event.traits.method.toLowerCase())
+
     return {
-        name: 'httpOperation',
-        params: { service: prop.event.traits.name, path: prop.event.traits.path.substring(1), operation: prop.event.traits.method.toLowerCase() },
+        name: 'httpEndpoint',
+        params: { service: prop.event.traits.name, endpoint: endpoint },
         query: { refresh: route.query.refresh }
     }
 }

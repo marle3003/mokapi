@@ -30,7 +30,7 @@ export function useRoute() {
   function operation(service: Service, path: HttpPath, operation: HttpOperation){
     const endpoint = path.path.substring(1).split('/')
     endpoint.push(operation.method)
-    console.log(endpoint)
+
     return {
         name: 'httpEndpoint',
         params: { service: service.name, endpoint: endpoint },
