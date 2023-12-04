@@ -7,6 +7,7 @@ import (
 	"mokapi/config/dynamic/provider/file/filetest"
 	"mokapi/config/static"
 	"mokapi/safe"
+	"net/url"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -306,4 +307,42 @@ func TestNpmProvider(t *testing.T) {
 			tc.test(t, files)
 		})
 	}
+}
+
+func TestProvider_Read(t *testing.T) {
+	root := "/"
+	if filepath.Separator == '\\' {
+		root = "C:\\"
+	}
+
+	fs := &filetest.MockFS{
+		WorkingDir: root,
+		Entries: map[string]*filetest.Entry{
+			"/node_modules": {
+				Name:  "node_modules",
+				IsDir: true,
+			},
+			"/node_modules/foo": {
+				Name:  "foo",
+				IsDir: true,
+			},
+			"/node_modules/foo/foo.txt": {
+				Name:  "foo.txt",
+				IsDir: false,
+				Data:  []byte("foobar"),
+			}}}
+
+	p := NewFS(static.NpmProvider{}, fs)
+	u := mustUrl("npm://foo/foo.txt")
+	c, err := p.Read(u)
+	require.NoError(t, err)
+	require.Equal(t, "foobar", string(c.Raw))
+}
+
+func mustUrl(s string) *url.URL {
+	u, err := url.Parse(s)
+	if err != nil {
+		panic(err)
+	}
+	return u
 }

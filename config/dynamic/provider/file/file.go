@@ -32,6 +32,7 @@ type Provider struct {
 
 	watcher *fsnotify.Watcher
 	fs      FSReader
+	ch      chan<- *common.Config
 }
 
 func New(cfg static.FileProvider) *Provider {
@@ -81,6 +82,7 @@ func (p *Provider) Read(u *url.URL) (*common.Config, error) {
 }
 
 func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
+	p.ch = ch
 	var path string
 	if len(p.cfg.Directory) > 0 {
 		path = p.cfg.Directory
@@ -91,17 +93,25 @@ func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
 	if len(path) > 0 {
 		pool.Go(func(ctx context.Context) {
 			for _, i := range strings.Split(path, string(os.PathListSeparator)) {
-				if err := p.walk(i, ch); err != nil {
+				if err := p.walk(i); err != nil {
 					log.Errorf("file provider: %v", err)
 				}
 			}
 			p.isInit = false
 		})
 	}
-	return p.watch(ch, pool)
+	return p.watch(pool)
 }
 
-func (p *Provider) watch(ch chan<- *common.Config, pool *safe.Pool) error {
+func (p *Provider) Watch(dir string, pool *safe.Pool) {
+	pool.Go(func(ctx context.Context) {
+		if err := p.walk(dir); err != nil {
+			log.Errorf("file provider: %v", err)
+		}
+	})
+}
+
+func (p *Provider) watch(pool *safe.Pool) error {
 	ticker := time.NewTicker(time.Second)
 	var events []fsnotify.Event
 
@@ -127,7 +137,7 @@ func (p *Provider) watch(ch chan<- *common.Config, pool *safe.Pool) error {
 						events = append(events, evt)
 					} else if _, ok := p.watched[evt.Name]; !p.isInit && !ok {
 						pool.Go(func(ctx context.Context) {
-							err := p.walk(evt.Name, ch)
+							err := p.walk(evt.Name)
 							if err != nil {
 								log.Errorf("unable to process dir %v: %v", evt.Name, err)
 							}
@@ -151,14 +161,14 @@ func (p *Provider) watch(ch chan<- *common.Config, pool *safe.Pool) error {
 							if err != nil {
 								log.Errorf("unable to read file %v", evt.Name)
 							}
-							ch <- c
+							p.ch <- c
 						}
 					} else if !p.skip(evt.Name) {
 						c, err := p.readFile(evt.Name)
 						if err != nil {
 							log.Errorf("unable to read file %v", evt.Name)
 						}
-						ch <- c
+						p.ch <- c
 					}
 				}
 				events = make([]fsnotify.Event, 0)
@@ -210,7 +220,7 @@ func (p *Provider) readFile(path string) (*common.Config, error) {
 	}, nil
 }
 
-func (p *Provider) walk(root string, ch chan<- *common.Config) error {
+func (p *Provider) walk(root string) error {
 	p.readMokapiIgnore(root)
 	walkDir := func(path string, fi fs.DirEntry, err error) error {
 		if err != nil {
@@ -227,7 +237,7 @@ func (p *Provider) walk(root string, ch chan<- *common.Config) error {
 				log.Error(err)
 			} else if len(c.Raw) > 0 {
 				p.watchPath(path)
-				ch <- c
+				p.ch <- c
 			}
 		}
 

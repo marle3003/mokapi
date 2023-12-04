@@ -18,29 +18,47 @@ type Provider struct {
 	ch     chan *common.Config
 	config map[string]static.NpmPackage
 
-	fs file.FSReader
+	reader file.FSReader
+	f      *file.Provider
 }
 
 func New(cfg static.NpmProvider) *Provider {
-	return &Provider{cfg: cfg, fs: &file.Reader{}}
+	return &Provider{cfg: cfg, reader: &file.Reader{}, f: file.New(static.FileProvider{})}
 }
 
 func NewFS(cfg static.NpmProvider, fs file.FSReader) *Provider {
-	return &Provider{cfg: cfg, fs: fs}
+	return &Provider{cfg: cfg, reader: fs, f: file.NewWithWalker(static.FileProvider{}, fs)}
 }
 
-func (p *Provider) Read(_ *url.URL) (*common.Config, error) {
-	return nil, fmt.Errorf("not supported")
+func (p *Provider) Read(u *url.URL) (*common.Config, error) {
+	workDir, err := p.reader.GetWorkingDir()
+	if err != nil {
+		return nil, err
+	}
+
+	dir, err := p.getPackageDir(u.Host, workDir)
+	if err != nil {
+		return nil, err
+	}
+
+	path := filepath.Join(dir, u.Path)
+	u, _ = url.Parse(fmt.Sprintf("file:%v", path))
+
+	return p.f.Read(u)
 }
 
 func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
-	workDir, err := p.fs.GetWorkingDir()
+	workDir, err := p.reader.GetWorkingDir()
 	if err != nil {
 		return err
 	}
 
 	p.ch = make(chan *common.Config)
 	p.config = map[string]static.NpmPackage{}
+
+	pool.Go(func(ctx context.Context) {
+		p.forward(ch, ctx)
+	})
 
 	for _, pkg := range p.cfg.Packages {
 		dir, err := p.getPackageDir(pkg.Name, workDir)
@@ -49,12 +67,13 @@ func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
 			continue
 		}
 		p.config[dir] = pkg
-		p.startFileProvider(dir, pool)
+		p.f.Watch(dir, pool)
 	}
 
-	pool.Go(func(ctx context.Context) {
-		p.forward(ch, ctx)
-	})
+	err = p.f.Start(p.ch, pool)
+	if err != nil {
+		return fmt.Errorf("start file provider failed: %w", err)
+	}
 
 	return nil
 }
@@ -86,7 +105,7 @@ func (p *Provider) forward(ch chan *common.Config, ctx context.Context) {
 func (p *Provider) getPackageDir(name string, workDir string) (string, error) {
 	for len(workDir) > 0 {
 		dir := filepath.Join(workDir, "node_modules", name)
-		if _, err := p.fs.Stat(dir); err != nil {
+		if _, err := p.reader.Stat(dir); err != nil {
 			newWorkDir := filepath.Dir(workDir)
 			if newWorkDir == workDir {
 				break
@@ -100,20 +119,12 @@ func (p *Provider) getPackageDir(name string, workDir string) (string, error) {
 
 	for _, folder := range p.cfg.GlobalFolders {
 		dir := filepath.Join(folder, name)
-		if _, err := p.fs.Stat(dir); err == nil {
+		if _, err := p.reader.Stat(dir); err == nil {
 			return dir, nil
 		}
 	}
 
 	return "", fmt.Errorf("module %v not found", name)
-}
-
-func (p *Provider) startFileProvider(dir string, pool *safe.Pool) {
-	f := file.NewWithWalker(static.FileProvider{Directory: dir}, p.fs)
-	err := f.Start(p.ch, pool)
-	if err != nil {
-		log.Errorf("unable to start file provider for git: %v", err)
-	}
 }
 
 func skip(path string, pkg static.NpmPackage) bool {

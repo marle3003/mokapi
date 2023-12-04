@@ -26,6 +26,8 @@ type fileInfo struct {
 }
 
 func (m *MockFS) ReadFile(path string) ([]byte, error) {
+	path = strings.ReplaceAll(path, string(filepath.Separator), "/")
+	path = strings.ReplaceAll(path, "C:/", "/")
 	if f, ok := m.Entries[path]; ok {
 		return f.Data, nil
 	}
