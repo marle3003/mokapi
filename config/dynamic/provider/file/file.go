@@ -16,6 +16,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -33,6 +34,8 @@ type Provider struct {
 	watcher *fsnotify.Watcher
 	fs      FSReader
 	ch      chan<- *common.Config
+
+	m sync.Mutex
 }
 
 func New(cfg static.FileProvider) *Provider {
@@ -262,6 +265,9 @@ func (p *Provider) readMokapiIgnore(path string) {
 }
 
 func (p *Provider) watchPath(path string) {
+	p.m.Lock()
+	defer p.m.Unlock()
+
 	if _, ok := p.watched[path]; ok {
 		return
 	}
