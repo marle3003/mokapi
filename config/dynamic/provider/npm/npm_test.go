@@ -315,28 +315,78 @@ func TestProvider_Read(t *testing.T) {
 		root = "C:\\"
 	}
 
-	fs := &filetest.MockFS{
-		WorkingDir: root,
-		Entries: map[string]*filetest.Entry{
-			"/node_modules": {
-				Name:  "node_modules",
-				IsDir: true,
+	testcases := []struct {
+		name string
+		fs   *filetest.MockFS
+		cfg  static.NpmProvider
+		test func(t *testing.T, p *Provider)
+	}{
+		{
+			name: "simple npm package name",
+			fs: &filetest.MockFS{
+				WorkingDir: root,
+				Entries: map[string]*filetest.Entry{
+					"/node_modules": {
+						Name:  "node_modules",
+						IsDir: true,
+					},
+					"/node_modules/foo": {
+						Name:  "foo",
+						IsDir: true,
+					},
+					"/node_modules/foo/foo.txt": {
+						Name:  "foo.txt",
+						IsDir: false,
+						Data:  []byte("foobar"),
+					}}},
+			test: func(t *testing.T, p *Provider) {
+				u := mustUrl("npm://foo/foo.txt")
+				c, err := p.Read(u)
+				require.NoError(t, err)
+				require.Equal(t, "foobar", string(c.Raw))
 			},
-			"/node_modules/foo": {
-				Name:  "foo",
-				IsDir: true,
+		},
+		{
+			name: "scoped npm package name",
+			fs: &filetest.MockFS{
+				WorkingDir: root,
+				Entries: map[string]*filetest.Entry{
+					"/node_modules": {
+						Name:  "node_modules",
+						IsDir: true,
+					},
+					"/node_modules/@foo": {
+						Name:  "foo",
+						IsDir: true,
+					},
+					"/node_modules/@foo/bar": {
+						Name:  "foo",
+						IsDir: true,
+					},
+					"/node_modules/@foo/bar/foo.txt": {
+						Name:  "foo.txt",
+						IsDir: false,
+						Data:  []byte("foobar"),
+					}}},
+			test: func(t *testing.T, p *Provider) {
+				u := mustUrl("npm://bar/foo.txt?scope=@foo")
+				c, err := p.Read(u)
+				require.NoError(t, err)
+				require.Equal(t, "foobar", string(c.Raw))
 			},
-			"/node_modules/foo/foo.txt": {
-				Name:  "foo.txt",
-				IsDir: false,
-				Data:  []byte("foobar"),
-			}}}
+		},
+	}
 
-	p := NewFS(static.NpmProvider{}, fs)
-	u := mustUrl("npm://foo/foo.txt")
-	c, err := p.Read(u)
-	require.NoError(t, err)
-	require.Equal(t, "foobar", string(c.Raw))
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			p := NewFS(static.NpmProvider{}, tc.fs)
+			tc.test(t, p)
+		})
+	}
 }
 
 func mustUrl(s string) *url.URL {

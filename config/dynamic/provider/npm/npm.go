@@ -36,7 +36,15 @@ func (p *Provider) Read(u *url.URL) (*common.Config, error) {
 		return nil, err
 	}
 
-	dir, err := p.getPackageDir(u.Host, workDir)
+	name := u.Host
+
+	q := u.Query()
+	scope := q.Get("scope")
+	if len(scope) > 0 {
+		name = filepath.Join(scope, name)
+	}
+
+	dir, err := p.getPackageDir(name, workDir)
 	if err != nil {
 		return nil, err
 	}
