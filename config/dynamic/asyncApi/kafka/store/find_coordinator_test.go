@@ -67,6 +67,27 @@ func TestFindCoordinator(t *testing.T) {
 				require.Equal(t, "broker 127.0.0.1 not found", res.ErrorMessage)
 			},
 		},
+		{
+			"broker without host",
+			func(t *testing.T, s *store.Store) {
+				s.Update(asyncapitest.NewConfig(asyncapitest.WithServer("foo", "kafka", ":9092")))
+
+				r := kafkatest.NewRequest("kafkatest", 3, &findCoordinator.Request{
+					Key:     "foo",
+					KeyType: findCoordinator.KeyTypeGroup,
+				})
+				r.Host = "127.0.0.1"
+				rr := kafkatest.NewRecorder()
+				s.ServeMessage(rr, r)
+
+				res, ok := rr.Message.(*findCoordinator.Response)
+				require.True(t, ok)
+				require.Equal(t, kafka.None, res.ErrorCode, "expected no kafka error")
+
+				require.Equal(t, "127.0.0.1", res.Host)
+				require.Equal(t, int32(9092), res.Port)
+			},
+		},
 	}
 
 	t.Parallel()

@@ -26,8 +26,13 @@ func (s *Store) findCoordinator(rw kafka.ResponseWriter, req *kafka.Request) err
 			res.ErrorMessage = fmt.Sprintf("no coordinator for group %v available", r.Key)
 			log.Errorf("kafka FindCoordinator: %v", res.ErrorMessage)
 		} else {
+			host := b.Host
+			if len(host) == 0 {
+				host = req.Host
+			}
+
 			res.NodeId = int32(b.Id)
-			res.Host = b.Host
+			res.Host = host
 			res.Port = int32(b.Port)
 		}
 	default:
