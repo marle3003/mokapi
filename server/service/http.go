@@ -177,7 +177,7 @@ func serveNoServiceFound(w http.ResponseWriter, r *http.Request) {
 			Body:        string(body),
 		},
 		Response: &openapi.HttpResponseLog{
-			Headers:    make(map[string]string),
+			Headers:    map[string]string{"Content-Type": w.Header().Get("Content-Type")},
 			StatusCode: 404,
 			Body:       msg,
 		},
