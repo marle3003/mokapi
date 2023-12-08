@@ -24,7 +24,7 @@ func TestFindCoordinator(t *testing.T) {
 					Key:     "foo",
 					KeyType: findCoordinator.KeyTypeGroup,
 				})
-				r.Host = "127.0.0.1"
+				r.Host = "127.0.0.1:9092"
 				rr := kafkatest.NewRecorder()
 				s.ServeMessage(rr, r)
 
@@ -59,12 +59,12 @@ func TestFindCoordinator(t *testing.T) {
 					Key:     "foo",
 					KeyType: findCoordinator.KeyTypeGroup,
 				})
-				r.Host = "127.0.0.1"
+				r.Host = "127.0.0.1:9092"
 				s.ServeMessage(rr, r)
 				res, ok := rr.Message.(*findCoordinator.Response)
 				require.True(t, ok)
 				require.Equal(t, kafka.UnknownServerError, res.ErrorCode)
-				require.Equal(t, "broker 127.0.0.1 not found", res.ErrorMessage)
+				require.Equal(t, "broker 127.0.0.1:9092 not found", res.ErrorMessage)
 			},
 		},
 		{
@@ -76,7 +76,7 @@ func TestFindCoordinator(t *testing.T) {
 					Key:     "foo",
 					KeyType: findCoordinator.KeyTypeGroup,
 				})
-				r.Host = "127.0.0.1"
+				r.Host = "127.0.0.1:9092"
 				rr := kafkatest.NewRecorder()
 				s.ServeMessage(rr, r)
 
