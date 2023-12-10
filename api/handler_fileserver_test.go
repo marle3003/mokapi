@@ -155,7 +155,7 @@ func TestOpenGraphInDashboard(t *testing.T) {
 			name: "http service",
 			test: func(t *testing.T) {
 				app := runtime.New()
-				app.AddHttp(common.NewConfig(mustParse("https://foo.bar"), common.WithData(
+				app.AddHttp(common.NewConfig(common.ConfigInfo{Url: mustParse("https://foo.bar")}, common.WithData(
 					openapitest.NewConfig("3.0", openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server.")),
 				)))
 				h := New(app, static.Api{Path: "/mokapi"}).(*handler)
@@ -177,7 +177,7 @@ func TestOpenGraphInDashboard(t *testing.T) {
 			name: "http service path without summary and description",
 			test: func(t *testing.T) {
 				app := runtime.New()
-				app.AddHttp(common.NewConfig(mustParse("https://foo.bar"), common.WithData(
+				app.AddHttp(common.NewConfig(common.ConfigInfo{Url: mustParse("https://foo.bar")}, common.WithData(
 					openapitest.NewConfig("3.0",
 						openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server."),
 						openapitest.WithPath("/pet/{petId}", openapitest.NewPath()),
@@ -202,7 +202,7 @@ func TestOpenGraphInDashboard(t *testing.T) {
 			name: "http service path with summary and description",
 			test: func(t *testing.T) {
 				app := runtime.New()
-				app.AddHttp(common.NewConfig(mustParse("https://foo.bar"), common.WithData(
+				app.AddHttp(common.NewConfig(common.ConfigInfo{Url: mustParse("https://foo.bar")}, common.WithData(
 					openapitest.NewConfig("3.0",
 						openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server."),
 						openapitest.WithPath("/pet/{petId}", openapitest.NewPath(
@@ -229,7 +229,7 @@ func TestOpenGraphInDashboard(t *testing.T) {
 			name: "http service path with no summary but description",
 			test: func(t *testing.T) {
 				app := runtime.New()
-				app.AddHttp(common.NewConfig(mustParse("https://foo.bar"), common.WithData(
+				app.AddHttp(common.NewConfig(common.ConfigInfo{Url: mustParse("https://foo.bar")}, common.WithData(
 					openapitest.NewConfig("3.0",
 						openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server."),
 						openapitest.WithPath("/pet/{petId}", openapitest.NewPath(
@@ -256,7 +256,7 @@ func TestOpenGraphInDashboard(t *testing.T) {
 			name: "http service endpoint no summary and no description",
 			test: func(t *testing.T) {
 				app := runtime.New()
-				app.AddHttp(common.NewConfig(mustParse("https://foo.bar"), common.WithData(
+				app.AddHttp(common.NewConfig(common.ConfigInfo{Url: mustParse("https://foo.bar")}, common.WithData(
 					openapitest.NewConfig("3.0",
 						openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server."),
 						openapitest.WithPath("/pet/{petId}", openapitest.NewPath(
@@ -283,7 +283,7 @@ func TestOpenGraphInDashboard(t *testing.T) {
 			name: "http service endpoint get right path",
 			test: func(t *testing.T) {
 				app := runtime.New()
-				app.AddHttp(common.NewConfig(mustParse("https://foo.bar"), common.WithData(
+				app.AddHttp(common.NewConfig(common.ConfigInfo{Url: mustParse("https://foo.bar")}, common.WithData(
 					openapitest.NewConfig("3.0",
 						openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server."),
 						openapitest.WithPath("/pet/{petId}", openapitest.NewPath(

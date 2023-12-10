@@ -20,7 +20,7 @@ func TestConfig_Parse(t *testing.T) {
 		{
 			name: "default",
 			f: func(t *testing.T) {
-				c := common.NewConfig(mustUrl("foo.txt"))
+				c := common.NewConfig(common.ConfigInfo{Url: mustUrl("foo.txt")})
 				c.Raw = []byte("name: foobar")
 
 				err := c.Parse(&testReader{})
@@ -33,7 +33,7 @@ func TestConfig_Parse(t *testing.T) {
 			f: func(t *testing.T) {
 				u := mustUrl("foo.yml")
 				u.Opaque = "foo.txt"
-				c := common.NewConfig(u)
+				c := common.NewConfig(common.ConfigInfo{Url: u})
 				c.Raw = []byte("name: foobar")
 
 				err := c.Parse(&testReader{})
@@ -47,7 +47,7 @@ func TestConfig_Parse(t *testing.T) {
 				data := &struct {
 					Name string
 				}{}
-				c := common.NewConfig(mustUrl("foo.yml"), common.WithData(data))
+				c := common.NewConfig(common.ConfigInfo{Url: mustUrl("foo.yml")}, common.WithData(data))
 				c.Raw = []byte("name: foobar")
 
 				err := c.Parse(&testReader{})
@@ -61,7 +61,7 @@ func TestConfig_Parse(t *testing.T) {
 				data := &struct {
 					Flag bool
 				}{}
-				c := common.NewConfig(mustUrl("foo.yml"), common.WithData(data))
+				c := common.NewConfig(common.ConfigInfo{Url: mustUrl("foo.yml")}, common.WithData(data))
 				c.Raw = []byte("flag: foobar")
 
 				err := c.Parse(&testReader{})
@@ -71,7 +71,7 @@ func TestConfig_Parse(t *testing.T) {
 		{
 			name: "openapi",
 			f: func(t *testing.T) {
-				c := common.NewConfig(mustUrl("foo.yml"))
+				c := common.NewConfig(common.ConfigInfo{Url: mustUrl("foo.yml")})
 				c.Raw = []byte("openapi: 3.0")
 
 				err := c.Parse(&testReader{})
@@ -85,7 +85,7 @@ func TestConfig_Parse(t *testing.T) {
 			name: "openapi update",
 			f: func(t *testing.T) {
 				config := openapitest.NewConfig("")
-				c := common.NewConfig(mustUrl("foo.yml"))
+				c := common.NewConfig(common.ConfigInfo{Url: mustUrl("foo.yml")})
 				c.Data = config
 				c.Raw = []byte(`
 components:
@@ -108,7 +108,7 @@ components:
 				data := &struct {
 					Name string
 				}{}
-				c := common.NewConfig(mustUrl("foo.json"), common.WithData(data))
+				c := common.NewConfig(common.ConfigInfo{Url: mustUrl("foo.json")}, common.WithData(data))
 				c.Raw = []byte("{\"name\":\"foobar\"}")
 
 				err := c.Parse(&testReader{})
@@ -122,7 +122,7 @@ components:
 				data := &struct {
 					Name string
 				}{}
-				c := common.NewConfig(mustUrl("foo.json"), common.WithData(data))
+				c := common.NewConfig(common.ConfigInfo{Url: mustUrl("foo.json")}, common.WithData(data))
 				c.Raw = []byte("{\"name\"=\"foobar\"}")
 
 				err := c.Parse(&testReader{})
@@ -132,7 +132,7 @@ components:
 		{
 			name: "openapi json",
 			f: func(t *testing.T) {
-				c := common.NewConfig(mustUrl("foo.json"))
+				c := common.NewConfig(common.ConfigInfo{Url: mustUrl("foo.json")})
 				c.Raw = []byte("{\"openapi\": \"3.0\"}")
 
 				err := c.Parse(&testReader{})
@@ -145,7 +145,7 @@ components:
 		{
 			name: "lua",
 			f: func(t *testing.T) {
-				c := common.NewConfig(mustUrl("foo.lua"))
+				c := common.NewConfig(common.ConfigInfo{Url: mustUrl("foo.lua")})
 				c.Raw = []byte("print(\"Hello World\")")
 
 				err := c.Parse(&testReader{})
@@ -160,7 +160,7 @@ components:
 			name: "lua update",
 			f: func(t *testing.T) {
 				s := script.New("foo.lua", []byte(""))
-				c := common.NewConfig(mustUrl("foo.lua"), common.WithData(s))
+				c := common.NewConfig(common.ConfigInfo{Url: mustUrl("foo.lua")}, common.WithData(s))
 				c.Raw = []byte("print(\"Hello World\")")
 
 				err := c.Parse(&testReader{})
@@ -175,7 +175,7 @@ components:
 		{
 			name: "template",
 			f: func(t *testing.T) {
-				c := common.NewConfig(mustUrl("foo.tmpl"))
+				c := common.NewConfig(common.ConfigInfo{Url: mustUrl("foo.tmpl")})
 				c.Raw = []byte("the user is {{ env \"TEST_USER\" }}")
 				os.Setenv("TEST_USER", "foo")
 				defer os.Unsetenv("TEST_USER")
@@ -188,7 +188,7 @@ components:
 		{
 			name: "template extract username",
 			f: func(t *testing.T) {
-				c := common.NewConfig(mustUrl("foo.tmpl"))
+				c := common.NewConfig(common.ConfigInfo{Url: mustUrl("foo.tmpl")})
 				c.Raw = []byte("the user is {{ env \"TEST_USER\" | extractUsername }}")
 				os.Setenv("TEST_USER", "foo\\bar")
 				defer os.Unsetenv("TEST_USER")
@@ -201,7 +201,7 @@ components:
 		{
 			name: "template err",
 			f: func(t *testing.T) {
-				c := common.NewConfig(mustUrl("foo.tmpl"))
+				c := common.NewConfig(common.ConfigInfo{Url: mustUrl("foo.tmpl")})
 				c.Raw = []byte("the user is {{ env \"TEST_USER\" | foo }}")
 				os.Setenv("TEST_USER", "foo\\bar")
 				defer os.Unsetenv("TEST_USER")
@@ -214,7 +214,7 @@ components:
 		{
 			name: "parse err",
 			f: func(t *testing.T) {
-				c := common.NewConfig(mustUrl("foo.tmpl"))
+				c := common.NewConfig(common.ConfigInfo{Url: mustUrl("foo.tmpl")})
 				c.Raw = []byte("the user is {{ env \"TEST_USER\" | foo }}")
 				os.Setenv("TEST_USER", "foo\\bar")
 				defer os.Unsetenv("TEST_USER")
@@ -230,7 +230,7 @@ components:
 				data := &testParser{parse: func(file *common.Config, reader common.Reader) error {
 					return fmt.Errorf("TEST ERROR")
 				}}
-				c := common.NewConfig(mustUrl("foo.yml"), common.WithData(data))
+				c := common.NewConfig(common.ConfigInfo{Url: mustUrl("foo.yml")}, common.WithData(data))
 				c.Raw = []byte("name: foobar")
 
 				err := c.Parse(&testReader{})

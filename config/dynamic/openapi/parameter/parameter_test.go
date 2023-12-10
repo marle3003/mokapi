@@ -300,7 +300,7 @@ func TestHeader_Parse(t *testing.T) {
 					return nil
 				}}
 				param := parameter.Parameters{nil}
-				err := param.Parse(common.NewConfig(&url.URL{}, common.WithData(param)), reader)
+				err := param.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(param)), reader)
 				require.NoError(t, err)
 			},
 		},
@@ -312,7 +312,7 @@ func TestHeader_Parse(t *testing.T) {
 					return nil
 				}}
 				param := parameter.Parameters{&parameter.Ref{Reference: ref.Reference{Ref: "foo.yml"}}}
-				err := param.Parse(common.NewConfig(&url.URL{}, common.WithData(param)), reader)
+				err := param.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(param)), reader)
 				require.NoError(t, err)
 				require.Equal(t, "foo", param[0].Value.Description)
 			},
@@ -325,7 +325,7 @@ func TestHeader_Parse(t *testing.T) {
 					return nil
 				}}
 				param := parameter.Parameters{&parameter.Ref{Value: &parameter.Parameter{Schema: &schema.Ref{Reference: ref.Reference{Ref: "foo.yml"}}}}}
-				err := param.Parse(common.NewConfig(&url.URL{}, common.WithData(param)), reader)
+				err := param.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(param)), reader)
 				require.NoError(t, err)
 				require.Equal(t, "string", param[0].Value.Schema.Value.Type)
 			},
@@ -337,7 +337,7 @@ func TestHeader_Parse(t *testing.T) {
 					return fmt.Errorf("TEST ERROR")
 				}}
 				param := parameter.Parameters{&parameter.Ref{Reference: ref.Reference{Ref: "foo.yml"}}}
-				err := param.Parse(common.NewConfig(&url.URL{}, common.WithData(param)), reader)
+				err := param.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(param)), reader)
 				require.EqualError(t, err, "parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},
@@ -348,7 +348,7 @@ func TestHeader_Parse(t *testing.T) {
 					return fmt.Errorf("TEST ERROR")
 				}}
 				param := parameter.Parameters{&parameter.Ref{Value: &parameter.Parameter{Schema: &schema.Ref{Reference: ref.Reference{Ref: "foo.yml"}}}}}
-				err := param.Parse(common.NewConfig(&url.URL{}, common.WithData(param)), reader)
+				err := param.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(param)), reader)
 				require.EqualError(t, err, "parse parameter index '0' failed: parse schema failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},

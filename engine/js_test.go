@@ -18,7 +18,7 @@ type testReader struct {
 }
 
 func (tr *testReader) Read(u *url.URL, opts ...common.ConfigOptions) (*common.Config, error) {
-	file := common.NewConfig(u, opts...)
+	file := common.NewConfig(common.ConfigInfo{Url: u}, opts...)
 	if err := tr.readFunc(file); err != nil {
 		return file, err
 	}
@@ -327,7 +327,7 @@ func TestJsOpen(t *testing.T) {
 }
 
 func newScript(path, src string) *common.Config {
-	s := common.NewConfig(mustParse(path), common.WithData(&script.Script{Code: src, Filename: path}))
+	s := common.NewConfig(common.ConfigInfo{Url: mustParse(path)}, common.WithData(&script.Script{Code: src, Filename: path}))
 	s.Raw = []byte(src)
 	return s
 }

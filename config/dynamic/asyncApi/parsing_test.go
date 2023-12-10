@@ -15,7 +15,7 @@ type testReader struct {
 }
 
 func (tr *testReader) Read(u *url.URL, opts ...common.ConfigOptions) (*common.Config, error) {
-	cfg := common.NewConfig(u, opts...)
+	cfg := common.NewConfig(common.ConfigInfo{Url: u}, opts...)
 	for _, opt := range opts {
 		opt(cfg, true)
 	}
@@ -43,7 +43,7 @@ func TestChannelResolve(t *testing.T) {
 	t.Run("nil should not error", func(t *testing.T) {
 		reader := &testReader{readFunc: func(cfg *common.Config) error { return nil }}
 		config := &Config{Channels: map[string]*ChannelRef{"foo": nil}}
-		err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+		err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 		require.NoError(t, err)
 	})
 	t.Run("file reference", func(t *testing.T) {
@@ -59,7 +59,7 @@ func TestChannelResolve(t *testing.T) {
 		config := &Config{Channels: map[string]*ChannelRef{
 			"foo": {Ref: "foo.yml#/channels/foo"},
 		}}
-		err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+		err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 		require.NoError(t, err)
 		require.Equal(t, target, config.Channels["foo"].Value)
 	})
@@ -75,7 +75,7 @@ func TestChannelResolve(t *testing.T) {
 		config := &Config{Channels: map[string]*ChannelRef{
 			"foo": {Ref: "foo.yml#/channels/foo"},
 		}}
-		err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+		err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 		require.NoError(t, err)
 		require.Nil(t, config.Channels["foo"].Value)
 	})
@@ -86,7 +86,7 @@ func TestChannelResolve(t *testing.T) {
 		config := &Config{Channels: map[string]*ChannelRef{
 			"foo": {Ref: "foo.yml#/channels/foo"},
 		}}
-		err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+		err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 		require.EqualError(t, err, "resolve reference 'foo.yml#/channels/foo' failed: TEST ERROR")
 	})
 }
@@ -100,7 +100,7 @@ func TestMessageResolve(t *testing.T) {
 		}, Components: &Components{
 			Messages: map[string]*Message{"foo": target},
 		}}
-		err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+		err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 		require.NoError(t, err)
 		require.Equal(t, target, config.Channels["foo"].Value.Subscribe.Message.Value)
 	})
@@ -112,7 +112,7 @@ func TestMessageResolve(t *testing.T) {
 		}, Components: &Components{
 			Messages: map[string]*Message{"foo": target},
 		}}
-		err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+		err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 		require.NoError(t, err)
 		require.Equal(t, target, config.Channels["foo"].Value.Publish.Message.Value)
 	})
@@ -124,7 +124,7 @@ func TestMessageResolve(t *testing.T) {
 		}, Components: &Components{
 			Messages: map[string]*Message{"foo": {}},
 		}}
-		file := common.NewConfig(&url.URL{}, common.WithData(config))
+		file := common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config))
 		err := config.Parse(file, reader)
 
 		// modify file
@@ -146,7 +146,7 @@ func TestMessageResolve(t *testing.T) {
 		config := &Config{Channels: map[string]*ChannelRef{
 			"foo": {Value: &Channel{Subscribe: &Operation{Message: &MessageRef{Ref: "foo.yml#/components/messages/foo"}}}},
 		}}
-		err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+		err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 		require.NoError(t, err)
 		require.Equal(t, target, config.Channels["foo"].Value.Subscribe.Message.Value)
 	})
@@ -163,7 +163,7 @@ func TestMessageResolve(t *testing.T) {
 		config := &Config{Channels: map[string]*ChannelRef{
 			"foo": {Value: &Channel{Publish: &Operation{Message: &MessageRef{Ref: "foo.yml#/components/messages/foo"}}}},
 		}}
-		err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+		err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 		require.NoError(t, err)
 		require.Equal(t, target, config.Channels["foo"].Value.Publish.Message.Value)
 	})
@@ -174,7 +174,7 @@ func TestMessageResolve(t *testing.T) {
 		config := &Config{Channels: map[string]*ChannelRef{
 			"foo": {Value: &Channel{Subscribe: &Operation{Message: &MessageRef{Ref: "foo.yml#/components/messages/foo"}}}},
 		}}
-		err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+		err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 		require.EqualError(t, err, "resolve reference 'foo.yml#/components/messages/foo' failed: TEST ERROR")
 	})
 	t.Run("publisher reader returns error", func(t *testing.T) {
@@ -184,7 +184,7 @@ func TestMessageResolve(t *testing.T) {
 		config := &Config{Channels: map[string]*ChannelRef{
 			"foo": {Value: &Channel{Publish: &Operation{Message: &MessageRef{Ref: "foo.yml#/components/messages/foo"}}}},
 		}}
-		err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+		err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 		require.EqualError(t, err, "resolve reference 'foo.yml#/components/messages/foo' failed: TEST ERROR")
 	})
 }
@@ -205,7 +205,7 @@ func TestFileResolve(t *testing.T) {
 		config := &Config{Channels: map[string]*ChannelRef{
 			"foo": {Ref: "foo.yml#/channels/foo"},
 		}}
-		err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+		err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 		require.NoError(t, err)
 
 		fooConfig.Data.(*Config).Channels["foo"].Value = target

@@ -54,7 +54,7 @@ func TestRef_Parse(t *testing.T) {
 					return nil
 				}}
 				var r *schema.Ref
-				err := r.Parse(common.NewConfig(&url.URL{}, common.WithData(r)), reader)
+				err := r.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(r)), reader)
 				require.NoError(t, err)
 			},
 		},
@@ -67,7 +67,7 @@ func TestRef_Parse(t *testing.T) {
 					return nil
 				}}
 				r := &schema.Ref{Reference: ref.Reference{Ref: "foo.yml"}}
-				err := r.Parse(common.NewConfig(&url.URL{}, common.WithData(r)), reader)
+				err := r.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(r)), reader)
 				require.NoError(t, err)
 				require.NotNil(t, r.Value)
 				require.Equal(t, "number", r.Value.Type)
@@ -80,7 +80,7 @@ func TestRef_Parse(t *testing.T) {
 					return fmt.Errorf("TEST ERROR")
 				}}
 				r := &schema.Ref{Reference: ref.Reference{Ref: "foo.yml"}}
-				err := r.Parse(common.NewConfig(&url.URL{}, common.WithData(r)), reader)
+				err := r.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(r)), reader)
 				require.EqualError(t, err, "parse schema failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},
@@ -91,7 +91,7 @@ func TestRef_Parse(t *testing.T) {
 					return nil
 				}}
 				r := &schema.Ref{}
-				err := r.Parse(common.NewConfig(&url.URL{}, common.WithData(r)), reader)
+				err := r.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(r)), reader)
 				require.NoError(t, err)
 				require.Nil(t, r.Value)
 			},
@@ -103,7 +103,7 @@ func TestRef_Parse(t *testing.T) {
 					return nil
 				}}
 				r := &schema.Ref{Value: schematest.New("integer")}
-				err := r.Parse(common.NewConfig(&url.URL{}, common.WithData(r)), reader)
+				err := r.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(r)), reader)
 				require.NoError(t, err)
 				require.NotNil(t, r.Value)
 			},

@@ -20,7 +20,7 @@ type testReader struct {
 }
 
 func (tr *testReader) Read(u *url.URL, opts ...common.ConfigOptions) (*common.Config, error) {
-	cfg := common.NewConfig(u)
+	cfg := common.NewConfig(common.ConfigInfo{Url: u})
 	for _, opt := range opts {
 		opt(cfg, true)
 	}
@@ -39,7 +39,7 @@ func TestResolve(t *testing.T) {
 	t.Run("empty should not error", func(t *testing.T) {
 		reader := &testReader{readFunc: func(cfg *common.Config) error { return nil }}
 		config := &openapi.Config{}
-		err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+		err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 		require.NoError(t, err)
 	})
 }

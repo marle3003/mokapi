@@ -36,7 +36,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 				w.providers["foo"] = &testprovider{
 					read: func(u *url.URL) (*common.Config, error) {
 						require.Equal(t, configPath, u)
-						return common.NewConfig(u), nil
+						return common.NewConfig(common.ConfigInfo{Url: u}), nil
 					},
 				}
 
@@ -54,7 +54,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 				w.providers["foo"] = &testprovider{
 					read: func(u *url.URL) (*common.Config, error) {
 						require.Equal(t, configPath, u)
-						return common.NewConfig(u), nil
+						return common.NewConfig(common.ConfigInfo{Url: u}), nil
 					},
 				}
 
@@ -94,7 +94,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 				var ch chan *common.Config
 				w.providers["foo"] = &testprovider{
 					read: func(u *url.URL) (*common.Config, error) {
-						c := common.NewConfig(u)
+						c := common.NewConfig(common.ConfigInfo{Url: u})
 						c.Checksum = []byte{1}
 						return c, nil
 					},

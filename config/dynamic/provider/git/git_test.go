@@ -21,9 +21,7 @@ var gitFiles = map[string]struct{}{"LICENSE": {}, "README.md": {}, "models.yml":
 func TestGit(t *testing.T) {
 	g := New(static.GitProvider{Url: "https://github.com/marle3003/mokapi-example.git"})
 	p := safe.NewPool(context.Background())
-	defer func() {
-		p.Stop()
-	}()
+	defer p.Stop()
 	ch := make(chan *common.Config)
 	err := g.Start(ch, p)
 	require.NoError(t, err)
@@ -37,14 +35,14 @@ Stop:
 			break Stop
 		case c := <-ch:
 			i++
-			name := filepath.Base(c.Info.Url.String())
+			name := filepath.Base(c.Info.Inner().Url.String())
 			_, ok := gitFiles[name]
-			require.True(t, ok)
-			require.Equal(t, "git", c.Info.Parent.Provider)
+			assert.True(t, ok)
+			require.Equal(t, "git", c.Info.Provider)
 			require.Equal(t, "https://github.com/marle3003/mokapi-example.git?file=/"+name, c.Info.Path())
 		}
 	}
-	assert.Equal(t, len(gitFiles), i)
+	require.Len(t, gitFiles, i)
 }
 
 func TestGit_Branch(t *testing.T) {
@@ -66,12 +64,12 @@ Stop:
 			break Stop
 		case c := <-ch:
 			i++
-			name := filepath.Base(c.Info.Url.String())
+			name := filepath.Base(c.Info.Inner().Url.String())
 			_, ok := gitFiles[name]
 			assert.True(t, ok)
 		}
 	}
-	assert.Equal(t, len(gitFiles), i)
+	require.Len(t, gitFiles, i)
 }
 
 func TestGit_MultipleUrls(t *testing.T) {
@@ -95,12 +93,12 @@ Stop:
 		case <-timeout:
 			break Stop
 		case c := <-ch:
-			files[c.Info.Parent.Url.String()] = c
+			files[c.Info.Url.String()] = c
 		}
 	}
-	assert.Equal(t, 8, len(files))
-	assert.Contains(t, files, "https://github.com/marle3003/mokapi-example.git?file=%2FLICENSE")
-	assert.Contains(t, files, "https://github.com/marle3003/mokapi-example.git?file=%2FLICENSE&ref=main")
+	require.Len(t, files, 8)
+	require.Contains(t, files, "https://github.com/marle3003/mokapi-example.git?file=%2FLICENSE")
+	require.Contains(t, files, "https://github.com/marle3003/mokapi-example.git?file=%2FLICENSE&ref=main")
 }
 
 // go-git requires git installed for file:// repositories

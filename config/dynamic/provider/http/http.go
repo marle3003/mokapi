@@ -184,10 +184,9 @@ func (p *Provider) readUrl(u *url.URL) (c *common.Config, changed bool, err erro
 	}
 	changed = true
 	p.files[u.String()] = hash.Sum64()
-	c = &common.Config{
-		Info: common.ConfigInfo{Url: u, Provider: "http"},
-		Raw:  b,
-	}
+	c = common.NewConfig(common.ConfigInfo{Url: u, Provider: "http"},
+		common.WithRaw(b),
+	)
 
 	return
 }
