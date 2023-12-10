@@ -13,6 +13,7 @@ import (
 	"mokapi/safe"
 	"net/http"
 	"net/url"
+	"os"
 	"sync"
 	"time"
 )
@@ -67,7 +68,7 @@ func New(config static.HttpProvider) *Provider {
 		pollTimeout, err = time.ParseDuration(config.PollTimeout)
 		if err != nil {
 			pollTimeout = time.Second * 5
-			log.Errorf("invalid poll timeout argument %v: %v", config.PollTimeout, err)
+			log.Warnf("invalid poll timeout argument '%v', using default: %v", config.PollTimeout, err)
 		}
 	}
 
@@ -135,7 +136,12 @@ func (p *Provider) checkFiles(ch chan *common.Config) {
 		u, _ := url.Parse(f)
 		c, changed, err := p.readUrl(u)
 		if err != nil {
-			log.Error(fmt.Errorf("request to %v failed: %v", f, err))
+			if os.IsTimeout(err) {
+				log.Error(fmt.Errorf("request to %v failed: request has timed out", f))
+			} else {
+				log.Error(fmt.Errorf("request to %v failed: %v", f, err))
+			}
+
 		} else if changed {
 			ch <- c
 		}
