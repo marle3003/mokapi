@@ -8,7 +8,7 @@ require (
 	github.com/dop251/goja v0.0.0-20220408131256-ffe77e20c6f1
 	github.com/elazarl/go-bindata-assetfs v1.0.1
 	github.com/fsnotify/fsnotify v1.7.0
-	github.com/go-co-op/gocron v1.36.1
+	github.com/go-co-op/gocron v1.37.0
 	github.com/go-git/go-git/v5 v5.11.0
 	github.com/google/uuid v1.4.0
 	github.com/pkg/errors v0.9.1
