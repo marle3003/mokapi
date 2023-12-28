@@ -108,3 +108,17 @@ func BodyContains(s string) ResponseCondition {
 		require.Contains(t, body, s)
 	}
 }
+
+func BodyMatch(regexp string) ResponseCondition {
+	return func(t *testing.T, tr *TestResponse) {
+		if tr.body == nil {
+			var err error
+			tr.body, err = io.ReadAll(tr.res.Body)
+			require.NoError(t, err)
+		}
+
+		body := string(tr.body)
+
+		require.Regexp(t, regexp, body)
+	}
+}

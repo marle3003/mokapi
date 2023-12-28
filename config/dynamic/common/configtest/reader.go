@@ -1,4 +1,4 @@
-package readertest
+package configtest
 
 import (
 	"mokapi/config/dynamic/common"

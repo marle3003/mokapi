@@ -12,6 +12,7 @@ import (
 	"mokapi/runtime/events"
 	"mokapi/try"
 	"net/http"
+	"testing"
 	"time"
 )
 
@@ -30,10 +31,21 @@ func (suite *PetStoreSuite) SetupTest() {
 }
 
 func (suite *PetStoreSuite) TestApi() {
-	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%v", suite.cfg.Api.Port),
-		nil,
-		try.HasStatusCode(http.StatusOK),
-		try.HasHeader("Access-Control-Allow-Origin", "*"))
+	suite.T().Run("CORS", func(t *testing.T) {
+		try.GetRequest(t, fmt.Sprintf("http://127.0.0.1:%v", suite.cfg.Api.Port),
+			nil,
+			try.HasStatusCode(http.StatusOK),
+			try.HasHeader("Access-Control-Allow-Origin", "*"))
+	})
+
+	suite.T().Run("get service", func(t *testing.T) {
+		try.GetRequest(t, fmt.Sprintf("http://127.0.0.1:%v/api/services/http/Swagger%%20Petstore", suite.cfg.Api.Port),
+			nil,
+			try.HasStatusCode(http.StatusOK),
+			try.BodyContains(`{"name":"Swagger Petstore","description":"This is a sample server Petstore server.  You can find out more about `),
+			try.BodyMatch(`"configs":\[{"id":".*","url":"file:.*\/acceptance\/petstore\/openapi\.yml","time":".*"}\]`),
+		)
+	})
 }
 
 func (suite *PetStoreSuite) TestJsFile() {

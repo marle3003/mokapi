@@ -96,6 +96,7 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 		if err := scriptEngine.AddScript(cfg); err != nil {
 			log.Error(err)
 		}
+		app.AddConfig(cfg)
 	})
 
 	if u, err := api.BuildUrl(cfg.Api); err == nil {

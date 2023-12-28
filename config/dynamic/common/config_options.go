@@ -22,11 +22,12 @@ func WithParent(parent *Config) ConfigOptions {
 		file.AddListener(parent.Info.Url.String(), func(_ *Config) {
 			parent.Changed()
 		})
+		parent.addRef(file)
 	}
 }
 
 func WithChecksum(b []byte) ConfigOptions {
 	return func(config *Config, init bool) {
-		config.Checksum = b
+		config.Info.Update(b)
 	}
 }

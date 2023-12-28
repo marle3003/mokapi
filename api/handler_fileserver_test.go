@@ -92,13 +92,13 @@ func TestHandler_FileServer(t *testing.T) {
 				}
 			}),
 		},
-		/*{
+		{
 			name:   "request svg",
 			config: static.Api{Path: "/mokapi/dashboard"},
 			fn: func(t *testing.T, h http.Handler) {
 				try.Handler(t,
 					http.MethodGet,
-					"http://foo.api/mokapi/dashboard/foo/logo.svg",
+					"http://foo.api/mokapi/dashboard/logo.svg",
 					nil,
 					"",
 					h,
@@ -109,7 +109,25 @@ func TestHandler_FileServer(t *testing.T) {
 					writer.WriteHeader(404)
 				}
 			}),
-		},*/
+		},
+		{
+			name:   "request png",
+			config: static.Api{Path: "/mokapi/dashboard"},
+			fn: func(t *testing.T, h http.Handler) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/mokapi/dashboard/mail.png",
+					nil,
+					"",
+					h,
+					try.HasStatusCode(200))
+			},
+			fileServer: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+				if request.URL.Path != "/mail.png" {
+					writer.WriteHeader(404)
+				}
+			}),
+		},
 		{
 			name:   "url rewrite (proxy)",
 			config: static.Api{Path: "/mokapi/dashboard", Base: "/foo/mokapi/dashboard"},

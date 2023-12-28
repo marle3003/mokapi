@@ -355,6 +355,13 @@ export let apps = [
                     }
                 ]
             }
+        ],
+        configs: [
+            {
+                id: 'b6fea8ac-56c7-4e73-a9c0-6887640bdca8',
+                url: 'foo',
+                time: '2023-02-13T08:49:25.482366+01:00'
+            }
         ]
     }
 ]

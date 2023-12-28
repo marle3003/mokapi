@@ -95,7 +95,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 				w.providers["foo"] = &testprovider{
 					read: func(u *url.URL) (*common.Config, error) {
 						c := common.NewConfig(common.ConfigInfo{Url: u})
-						c.Checksum = []byte{1}
+						c.Info.Checksum = []byte{1}
 						return c, nil
 					},
 					start: func(configs chan *common.Config, pool *safe.Pool) error {
@@ -111,7 +111,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, c)
 
-				ch <- &common.Config{Info: common.ConfigInfo{Url: configPath}, Raw: []byte("foobar"), Checksum: []byte{10}}
+				ch <- &common.Config{Info: common.ConfigInfo{Url: configPath, Checksum: []byte{10}}, Raw: []byte("foobar")}
 				time.Sleep(5 * time.Millisecond)
 				require.Equal(t, "foobar", c.Data)
 			},

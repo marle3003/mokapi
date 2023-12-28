@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic/common"
-	"mokapi/config/dynamic/common/readertest"
+	"mokapi/config/dynamic/common/configtest"
 	"mokapi/config/dynamic/openapi/parameter"
 	"mokapi/config/dynamic/openapi/ref"
 	"mokapi/config/dynamic/openapi/schema"
@@ -296,7 +296,7 @@ func TestHeader_Parse(t *testing.T) {
 		{
 			name: "reference is nil",
 			test: func(t *testing.T) {
-				reader := &readertest.Reader{ReadFunc: func(cfg *common.Config) error {
+				reader := &configtest.Reader{ReadFunc: func(cfg *common.Config) error {
 					return nil
 				}}
 				param := parameter.Parameters{nil}
@@ -307,7 +307,7 @@ func TestHeader_Parse(t *testing.T) {
 		{
 			name: "reference",
 			test: func(t *testing.T) {
-				reader := &readertest.Reader{ReadFunc: func(cfg *common.Config) error {
+				reader := &configtest.Reader{ReadFunc: func(cfg *common.Config) error {
 					cfg.Data = &parameter.Parameter{Description: "foo"}
 					return nil
 				}}
@@ -320,7 +320,7 @@ func TestHeader_Parse(t *testing.T) {
 		{
 			name: "schema reference",
 			test: func(t *testing.T) {
-				reader := &readertest.Reader{ReadFunc: func(cfg *common.Config) error {
+				reader := &configtest.Reader{ReadFunc: func(cfg *common.Config) error {
 					cfg.Data = &schema.Schema{Type: "string"}
 					return nil
 				}}
@@ -333,7 +333,7 @@ func TestHeader_Parse(t *testing.T) {
 		{
 			name: "error by resolving example ref",
 			test: func(t *testing.T) {
-				reader := &readertest.Reader{ReadFunc: func(cfg *common.Config) error {
+				reader := &configtest.Reader{ReadFunc: func(cfg *common.Config) error {
 					return fmt.Errorf("TEST ERROR")
 				}}
 				param := parameter.Parameters{&parameter.Ref{Reference: ref.Reference{Ref: "foo.yml"}}}
@@ -344,7 +344,7 @@ func TestHeader_Parse(t *testing.T) {
 		{
 			name: "error by resolving example ref",
 			test: func(t *testing.T) {
-				reader := &readertest.Reader{ReadFunc: func(cfg *common.Config) error {
+				reader := &configtest.Reader{ReadFunc: func(cfg *common.Config) error {
 					return fmt.Errorf("TEST ERROR")
 				}}
 				param := parameter.Parameters{&parameter.Ref{Value: &parameter.Parameter{Schema: &schema.Ref{Reference: ref.Reference{Ref: "foo.yml"}}}}}

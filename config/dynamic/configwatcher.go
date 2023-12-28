@@ -139,12 +139,12 @@ func (w *ConfigWatcher) addOrUpdate(c *common.Config) error {
 		cfg.AddListener("ConfigWatcher", func(cfg *common.Config) {
 			w.configChanged(cfg)
 		})
-	} else if bytes.Equal(cfg.Checksum, c.Checksum) {
+	} else if bytes.Equal(cfg.Info.Checksum, c.Info.Checksum) {
 		w.m.Unlock()
 		return nil
 	} else {
 		cfg.Raw = c.Raw
-		cfg.Checksum = c.Checksum
+		cfg.Info.Update(c.Info.Checksum)
 	}
 
 	w.m.Unlock()

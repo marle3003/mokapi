@@ -47,16 +47,14 @@ paths:
 				p := &testproviderMap{
 					files: map[string]*common.Config{
 						"/root.yml": {
-							Info:     common.ConfigInfo{Url: mustParse("/root.yml")},
-							Raw:      []byte(root),
-							Data:     nil,
-							Checksum: []byte{},
+							Info: common.ConfigInfo{Url: mustParse("/root.yml"), Provider: "foo"},
+							Raw:  []byte(root),
+							Data: nil,
 						},
 						"/paths.yml": {
-							Info:     common.ConfigInfo{Url: mustParse("/paths.yml")},
-							Raw:      []byte(path),
-							Data:     nil,
-							Checksum: []byte{},
+							Info: common.ConfigInfo{Url: mustParse("/paths.yml"), Provider: "foo"},
+							Raw:  []byte(path),
+							Data: nil,
 						},
 					},
 				}
@@ -69,6 +67,9 @@ paths:
 					require.NotNil(t, c)
 					cfg := c.Data.(*openapi.Config)
 					require.NotNil(t, cfg)
+					refs := c.Refs()
+					require.Len(t, refs, 1)
+					require.Equal(t, "/paths.yml", refs[0].Info.Url.Path)
 					ch <- cfg
 				})
 
@@ -82,10 +83,9 @@ paths:
 
 				path = strings.ReplaceAll(path, "foo", "bar")
 				f := &common.Config{
-					Info:     common.ConfigInfo{Url: mustParse("/paths.yml")},
-					Raw:      []byte(path),
-					Data:     nil,
-					Checksum: []byte(path),
+					Info: common.ConfigInfo{Url: mustParse("/paths.yml"), Checksum: []byte(path)},
+					Raw:  []byte(path),
+					Data: nil,
 				}
 				p.ch <- f
 
@@ -123,16 +123,14 @@ paths:
 				p := &testproviderMap{
 					files: map[string]*common.Config{
 						"/root.yml": {
-							Info:     common.ConfigInfo{Url: mustParse("/root.yml")},
-							Raw:      []byte(root),
-							Data:     nil,
-							Checksum: []byte{},
+							Info: common.ConfigInfo{Url: mustParse("/root.yml")},
+							Raw:  []byte(root),
+							Data: nil,
 						},
 						"/paths.yml": {
-							Info:     common.ConfigInfo{Url: mustParse("/paths.yml")},
-							Raw:      []byte(path),
-							Data:     nil,
-							Checksum: []byte{},
+							Info: common.ConfigInfo{Url: mustParse("/paths.yml")},
+							Raw:  []byte(path),
+							Data: nil,
 						},
 					},
 				}

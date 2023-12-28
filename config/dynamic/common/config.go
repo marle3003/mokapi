@@ -27,9 +27,9 @@ type Config struct {
 	Raw       []byte
 	Data      interface{}
 	listeners *sortedmap.LinkedHashMap[string, ConfigListener]
-	Checksum  []byte
 
-	m sync.Mutex
+	m    sync.Mutex
+	refs map[string]*Config
 }
 
 func NewConfig(info ConfigInfo, opts ...ConfigOptions) *Config {
@@ -194,6 +194,26 @@ func (c *Config) Validate() error {
 		return v.Validate()
 	}
 	return nil
+}
+
+func (c *Config) Refs() []*Config {
+	var refs []*Config
+	for _, v := range c.refs {
+		refs = append(refs, v)
+	}
+	return refs
+}
+
+func (c *Config) addRef(config *Config) {
+	if c.refs == nil {
+		c.refs = make(map[string]*Config)
+	}
+
+	key := config.Info.Path()
+	if _, ok := c.refs[key]; ok {
+		return
+	}
+	c.refs[key] = config
 }
 
 func renderTemplate(b []byte) ([]byte, error) {

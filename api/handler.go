@@ -104,6 +104,8 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.getEvents(w, r)
 	case p == "/api/schema/example":
 		h.getExampleData(w, r)
+	case strings.HasPrefix(p, "/api/configs"):
+		h.getConfig(w, r)
 	case h.fileServer != nil:
 		if isAsset(r.URL.Path) {
 			r.URL.Path = "/assets/" + filepath.Base(r.URL.Path)

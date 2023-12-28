@@ -1,13 +1,20 @@
 package common
 
 import (
+	"crypto/md5"
+	"encoding/hex"
+	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 	"net/url"
 	"strings"
+	"time"
 )
 
 type ConfigInfo struct {
 	Provider string
 	Url      *url.URL
+	Checksum []byte
+	Time     time.Time
 	inner    *ConfigInfo
 }
 
@@ -37,4 +44,20 @@ func (ci *ConfigInfo) Path() string {
 
 func (ci *ConfigInfo) Inner() *ConfigInfo {
 	return ci.inner
+}
+
+func (ci *ConfigInfo) Update(checksum []byte) {
+	ci.Time = time.Now()
+	ci.Checksum = checksum
+}
+
+func (ci *ConfigInfo) Key() string {
+	hash := md5.New()
+	hash.Write([]byte(ci.Url.String()))
+	s := hex.EncodeToString(hash.Sum(nil))
+	id, err := uuid.FromBytes([]byte(s[0:16]))
+	if err != nil {
+		log.Errorf("generate config key '%v' failed: %v", ci.Url.String(), err)
+	}
+	return id.String()
 }

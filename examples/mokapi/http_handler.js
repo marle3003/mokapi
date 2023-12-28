@@ -72,6 +72,9 @@ export default function() {
             case 'example':
                 response.data = fake(request.body)
                 return true
+            case 'config':
+                response.data = 'Hello World'
+                return true
         }
     }, {tags: {name: "dashboard"}})
 }
