@@ -221,13 +221,13 @@ func TestResponse_GetContent(t *testing.T) {
 			},
 		},
 		{
-			name: "application/* before application/json",
+			name: "ACCEPT application/json with best match not at first place",
 			test: func(t *testing.T) {
 				r := &openapi.Response{Content: map[string]*openapi.MediaType{}}
 				r.Content["application/*"] = &openapi.MediaType{ContentType: media.ParseContentType("application/*")}
 				r.Content["application/json"] = &openapi.MediaType{ContentType: media.ParseContentType("application/json")}
 				require.NotNil(t, r.GetContent(media.ParseContentType("application/json")))
-				require.Equal(t, "application/*", r.GetContent(media.ParseContentType("application/json")).ContentType.Key())
+				require.Equal(t, "application/json", r.GetContent(media.ParseContentType("application/json")).ContentType.Key())
 			},
 		},
 		{

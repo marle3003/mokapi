@@ -157,13 +157,34 @@ func (r *Responses[K]) GetResponse(httpStatus K) *Response {
 }
 
 func (r *Response) GetContent(contentType media.ContentType) *MediaType {
+	var found *MediaType
+
 	for _, v := range r.Content {
 		if v.ContentType.Match(contentType) {
-			return v
+			found = getBestMediaType(found, v)
 		}
 	}
 
-	return nil
+	return found
+}
+
+func getBestMediaType(m1, m2 *MediaType) *MediaType {
+	if m1 == nil {
+		return m2
+	}
+	if !m1.ContentType.IsAny() && !m1.ContentType.IsRange() {
+		return m1
+	}
+	if !m2.ContentType.IsAny() && !m2.ContentType.IsRange() {
+		return m2
+	}
+	if !m1.ContentType.IsAny() {
+		return m1
+	}
+	if !m2.ContentType.IsAny() {
+		return m2
+	}
+	return m1
 }
 
 func (r *Responses[K]) parse(config *common.Config, reader common.Reader) error {
