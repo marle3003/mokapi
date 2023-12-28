@@ -4,17 +4,17 @@ go 1.18
 
 require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
-	github.com/brianvoe/gofakeit/v6 v6.26.0
+	github.com/brianvoe/gofakeit/v6 v6.26.3
 	github.com/dop251/goja v0.0.0-20220408131256-ffe77e20c6f1
 	github.com/elazarl/go-bindata-assetfs v1.0.1
 	github.com/fsnotify/fsnotify v1.7.0
-	github.com/go-co-op/gocron v1.36.1
-	github.com/go-git/go-git/v5 v5.10.1
-	github.com/google/uuid v1.4.0
+	github.com/go-co-op/gocron v1.37.0
+	github.com/go-git/go-git/v5 v5.11.0
+	github.com/google/uuid v1.5.0
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.4
-	github.com/yuin/gopher-lua v1.1.0
+	github.com/yuin/gopher-lua v1.1.1
 	golang.org/x/net v0.19.0
 	gopkg.in/go-asn1-ber/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d
 	gopkg.in/yaml.v3 v3.0.1
