@@ -3,7 +3,10 @@ package dynamic
 import (
 	"context"
 	"fmt"
+	"github.com/sirupsen/logrus"
+	logtest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
+	"io"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/openapi"
@@ -44,16 +47,14 @@ paths:
 				p := &testproviderMap{
 					files: map[string]*common.Config{
 						"/root.yml": {
-							Info:     common.ConfigInfo{Url: mustParse("/root.yml")},
-							Raw:      []byte(root),
-							Data:     nil,
-							Checksum: []byte{},
+							Info: common.ConfigInfo{Url: mustParse("/root.yml"), Provider: "foo"},
+							Raw:  []byte(root),
+							Data: nil,
 						},
 						"/paths.yml": {
-							Info:     common.ConfigInfo{Url: mustParse("/paths.yml")},
-							Raw:      []byte(path),
-							Data:     nil,
-							Checksum: []byte{},
+							Info: common.ConfigInfo{Url: mustParse("/paths.yml"), Provider: "foo"},
+							Raw:  []byte(path),
+							Data: nil,
 						},
 					},
 				}
@@ -66,6 +67,9 @@ paths:
 					require.NotNil(t, c)
 					cfg := c.Data.(*openapi.Config)
 					require.NotNil(t, cfg)
+					refs := c.Refs()
+					require.Len(t, refs, 1)
+					require.Equal(t, "/paths.yml", refs[0].Info.Url.Path)
 					ch <- cfg
 				})
 
@@ -79,10 +83,9 @@ paths:
 
 				path = strings.ReplaceAll(path, "foo", "bar")
 				f := &common.Config{
-					Info:     common.ConfigInfo{Url: mustParse("/paths.yml")},
-					Raw:      []byte(path),
-					Data:     nil,
-					Checksum: []byte(path),
+					Info: common.ConfigInfo{Url: mustParse("/paths.yml"), Checksum: []byte(path)},
+					Raw:  []byte(path),
+					Data: nil,
 				}
 				p.ch <- f
 
@@ -92,6 +95,58 @@ paths:
 				case <-time.After(10 * time.Second):
 					require.Fail(t, "expected to get config")
 				}
+			},
+		},
+
+		{
+			"parse error in child",
+			func(t *testing.T) {
+				root := `
+openapi: 3.0.1
+info:
+  title: "update referenced file"
+paths:
+  /users:
+    $ref: 'paths.yml#/paths/users'`
+				// referenced files have to contain the header.
+				// If it is missing, updates will not work
+				path := `
+paths:
+  /users:
+    get:
+      requestBody:
+        $ref: 'not_found.yaml'`
+
+				w := NewConfigWatcher(&static.Config{})
+				configPath := mustParse("file.yml")
+				configPath.Scheme = "foo"
+				p := &testproviderMap{
+					files: map[string]*common.Config{
+						"/root.yml": {
+							Info: common.ConfigInfo{Url: mustParse("/root.yml")},
+							Raw:  []byte(root),
+							Data: nil,
+						},
+						"/paths.yml": {
+							Info: common.ConfigInfo{Url: mustParse("/paths.yml")},
+							Raw:  []byte(path),
+							Data: nil,
+						},
+					},
+				}
+				w.providers[""] = p
+				pool := safe.NewPool(context.Background())
+				defer pool.Stop()
+				w.Start(pool)
+
+				logrus.SetOutput(io.Discard)
+				hook := logtest.NewGlobal()
+
+				p.ch <- p.files["/root.yml"]
+
+				time.Sleep(1 * time.Second)
+
+				require.Equal(t, "parse error /root.yml: parsing file /root.yml: parse path '/users' failed: resolve reference 'paths.yml#/paths/users' failed: parsing file /paths.yml: parse path '/users' failed: parse operation 'GET' failed: parse request body failed: resolve reference 'not_found.yaml' failed: not found: /not_found.yaml", hook.LastEntry().Message)
 			},
 		},
 	}

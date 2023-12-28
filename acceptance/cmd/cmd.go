@@ -52,6 +52,7 @@ func Start(cfg *static.Config) (*Cmd, error) {
 		if err := scriptEngine.AddScript(cfg); err != nil {
 			panic(err)
 		}
+		app.AddConfig(cfg)
 	})
 
 	if u, err := api.BuildUrl(cfg.Api); err == nil {

@@ -25,12 +25,15 @@ type App struct {
 
 	Monitor *monitor.Monitor
 	m       sync.Mutex
+
+	Configs map[string]*common.Config
 }
 
 func New() *App {
 	return &App{
 		Version: version.BuildVersion,
 		Monitor: monitor.New(),
+		Configs: map[string]*common.Config{},
 	}
 }
 
@@ -134,4 +137,11 @@ func (a *App) AddLdap(c *common.Config, emitter common2.EventEmitter) *LdapInfo 
 	events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("ldap").WithName(cfg.Info.Name))
 
 	return hc
+}
+
+func (a *App) AddConfig(c *common.Config) {
+	a.Configs[c.Info.Key()] = c
+	for _, r := range c.Refs() {
+		a.Configs[r.Info.Key()] = r
+	}
 }

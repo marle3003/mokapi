@@ -34,7 +34,7 @@ func TestHttpServers_Monitor(t *testing.T) {
 	c := openapitest.NewConfig("3.0", openapitest.WithInfo("test", "1.0", ""), openapitest.WithServer(url, ""))
 	openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", openapitest.NewOperation()))
 	//c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: url}}}
-	m.Update(common.NewConfig(MustParseUrl("foo.yml"), common.WithData(c)))
+	m.Update(common.NewConfig(common.ConfigInfo{Url: MustParseUrl("foo.yml")}, common.WithData(c)))
 
 	// give server time to start
 	time.Sleep(time.Second * 1)

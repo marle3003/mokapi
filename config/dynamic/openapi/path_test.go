@@ -385,7 +385,7 @@ func TestPath_Parse(t *testing.T) {
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithPathRef("foo",
 						&openapi.PathRef{Reference: ref.Reference{Ref: "foo.yml#/paths/foo"}}))
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.EqualError(t, err, "parse path 'foo' failed: resolve reference 'foo.yml#/paths/foo' failed: TEST ERROR")
 			},
 		},
@@ -395,7 +395,7 @@ func TestPath_Parse(t *testing.T) {
 				reader := &testReader{readFunc: func(cfg *common.Config) error { return nil }}
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithPathRef("foo", nil))
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.NoError(t, err)
 			},
 		},
@@ -413,7 +413,7 @@ func TestPath_Parse(t *testing.T) {
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithPathRef("/foo",
 						&openapi.PathRef{Reference: ref.Reference{Ref: "foo.yml#/paths/foo"}}))
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.NoError(t, err)
 				require.Equal(t, target, config.Paths["/foo"].Value)
 			},
@@ -431,7 +431,7 @@ func TestPath_Parse(t *testing.T) {
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithPathRef("/foo",
 						&openapi.PathRef{Reference: ref.Reference{Ref: "foo.yml#/paths/foo"}}))
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.NoError(t, err)
 				require.Nil(t, config.Paths["/foo"].Value)
 			},
@@ -449,7 +449,7 @@ func TestPath_Parse(t *testing.T) {
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithPathRef("/foo",
 						&openapi.PathRef{Reference: ref.Reference{Ref: "foo.yml#/paths/foo"}}))
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.EqualError(t, err, "parse path '/foo' failed: resolve reference 'foo.yml#/paths/foo' failed: local path not found: /paths/foo")
 			},
 		},
@@ -464,7 +464,7 @@ func TestPath_Parse(t *testing.T) {
 						openapitest.WithPathParamRef(&parameter.Ref{Reference: ref.Reference{Ref: "foo.yml"}}),
 					)),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.EqualError(t, err, "parse path '/foo' failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},

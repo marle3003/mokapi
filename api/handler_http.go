@@ -7,6 +7,7 @@ import (
 	"mokapi/runtime/monitor"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type httpSummary struct {
@@ -21,6 +22,7 @@ type httpInfo struct {
 	Servers     []server         `json:"servers,omitempty"`
 	Paths       []pathItem       `json:"paths,omitempty"`
 	Metrics     []metrics.Metric `json:"metrics,omitempty"`
+	Configs     []config         `json:"configs,omitempty"`
 }
 
 type pathItem struct {
@@ -79,6 +81,12 @@ type mediaType struct {
 type server struct {
 	Url         string `json:"url"`
 	Description string `json:"description"`
+}
+
+type config struct {
+	Id   string    `json:"id"`
+	Url  string    `json:"url"`
+	Time time.Time `json:"time"`
 }
 
 func getHttpServices(services map[string]*runtime.HttpInfo, m *monitor.Monitor) []interface{} {
@@ -209,6 +217,14 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 			pi.Operations = append(pi.Operations, op)
 		}
 		result.Paths = append(result.Paths, pi)
+	}
+
+	for _, cfg := range s.Configs() {
+		result.Configs = append(result.Configs, config{
+			Id:   cfg.Info.Key(),
+			Url:  cfg.Info.Path(),
+			Time: cfg.Info.Time,
+		})
 	}
 
 	w.Header().Set("Content-Type", "application/json")

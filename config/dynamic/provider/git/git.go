@@ -142,16 +142,12 @@ func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
 				case <-ctx.Done():
 					return
 				case c := <-chFile:
-					path := c.Info.Url.Path
-					if len(c.Info.Url.Opaque) > 0 {
-						path = c.Info.Url.Opaque
-					}
-					path = strings.TrimPrefix(path, r.localPath)
-					c.Info.Parent = &common.ConfigInfo{
+
+					info := common.ConfigInfo{
 						Provider: "git",
-						Url:      addFilePath(r.url, path),
-						Parent:   nil,
+						Url:      getUrl(r, c.Info.Url),
 					}
+					common.Wrap(info, c)
 					ch <- c
 				}
 			}
@@ -223,8 +219,14 @@ func (p *Provider) cleanup() {
 	}
 }
 
-func addFilePath(repoUrl, path string) *url.URL {
-	u, _ := url.Parse(repoUrl)
+func getUrl(r *repository, file *url.URL) *url.URL {
+	path := file.Path
+	if len(file.Opaque) > 0 {
+		path = file.Opaque
+	}
+	path = strings.TrimPrefix(path, r.localPath)
+
+	u, _ := url.Parse(r.url)
 	path = filepath.ToSlash(path)
 	q := u.Query()
 	q.Add("file", path)

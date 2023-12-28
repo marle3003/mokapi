@@ -98,7 +98,7 @@ func TestMediaType_Parse(t *testing.T) {
 							))),
 					)),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.NoError(t, err)
 			},
 		},
@@ -116,7 +116,7 @@ func TestMediaType_Parse(t *testing.T) {
 							))),
 					)),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.NoError(t, err)
 			},
 		},
@@ -140,7 +140,7 @@ func TestMediaType_Parse(t *testing.T) {
 						),
 					)),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'GET' failed: parse response '200' failed: parse content 'application/json' failed: parse schema failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},
@@ -162,7 +162,7 @@ func TestMediaType_Parse(t *testing.T) {
 						),
 					)),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'GET' failed: parse response '200' failed: parse content 'application/json' failed: parse example 'foo' failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},

@@ -1,4 +1,4 @@
-package readertest
+package configtest
 
 import (
 	"mokapi/config/dynamic/common"
@@ -10,7 +10,7 @@ type Reader struct {
 }
 
 func (tr *Reader) Read(u *url.URL, opts ...common.ConfigOptions) (*common.Config, error) {
-	cfg := common.NewConfig(u)
+	cfg := common.NewConfig(common.ConfigInfo{Url: u})
 	for _, opt := range opts {
 		opt(cfg, true)
 	}

@@ -14,7 +14,7 @@ import (
 
 type HttpInfo struct {
 	*openapi.Config
-	configs map[string]*openapi.Config
+	configs map[string]*cfg.Config
 }
 
 type httpHandler struct {
@@ -24,26 +24,14 @@ type httpHandler struct {
 
 func NewHttpInfo(c *cfg.Config) *HttpInfo {
 	hc := &HttpInfo{
-		configs: map[string]*openapi.Config{},
+		configs: map[string]*cfg.Config{},
 	}
 	hc.AddConfig(c)
 	return hc
 }
 
 func (c *HttpInfo) AddConfig(config *cfg.Config) {
-	var oc *openapi.Config
-	if sw, ok := config.Data.(*swagger.Config); ok {
-		var err error
-		oc, err = swagger.Convert(sw)
-		if err != nil {
-			log.Errorf("unable to convert swagger config to openapi: %v", err)
-			return
-		}
-	} else {
-		oc = config.Data.(*openapi.Config)
-	}
-	key := config.Info.Url.String()
-	c.configs[key] = oc
+	c.configs[config.Info.Url.String()] = config
 	c.update()
 }
 
@@ -68,9 +56,10 @@ func (c *HttpInfo) update() {
 		return filepath.Base(x) < filepath.Base(y)
 	})
 
-	r := c.configs[keys[0]]
+	r := getHttpConfig(c.configs[keys[0]])
 	for _, k := range keys[1:] {
-		r.Patch(c.configs[k])
+		p := getHttpConfig(c.configs[k])
+		r.Patch(p)
 	}
 
 	if len(r.Servers) == 0 {
@@ -78,6 +67,15 @@ func (c *HttpInfo) update() {
 	}
 
 	c.Config = r
+}
+
+func (c *HttpInfo) Configs() []*cfg.Config {
+	var r []*cfg.Config
+	for _, config := range c.configs {
+		r = append(r, config)
+		r = append(r, config.Refs()...)
+	}
+	return r
 }
 
 func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
@@ -94,5 +92,18 @@ func IsHttpConfig(c *cfg.Config) bool {
 		return true
 	default:
 		return false
+	}
+}
+
+func getHttpConfig(c *cfg.Config) *openapi.Config {
+	if sw, ok := c.Data.(*swagger.Config); ok {
+		oc, err := swagger.Convert(sw)
+		if err != nil {
+			log.Errorf("unable to convert swagger config to openapi: %v", err)
+			return nil
+		}
+		return oc
+	} else {
+		return c.Data.(*openapi.Config)
 	}
 }

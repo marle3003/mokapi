@@ -214,6 +214,19 @@ func TestRef_Marshal_Json_Object(t *testing.T) {
 				require.Equal(t, `{"foo":{"name":"foo","value":12,"bar":11}}`, result)
 			},
 		},
+		{
+			name: "additional properties false but data has additional",
+			schema: schematest.New("object",
+				schematest.WithProperty("name", schematest.New("string")),
+				schematest.WithProperty("value", schematest.New("integer")),
+				schematest.WithFreeForm(false),
+			),
+			data: map[string]interface{}{"bar": 11, "value": 12, "name": "foo"},
+			test: func(t *testing.T, result string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"name":"foo","value":12}`, result)
+			},
+		},
 	}
 
 	t.Parallel()

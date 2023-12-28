@@ -231,3 +231,20 @@ paths:
       responses:
         204:
           description: no content
+  /api/configs/{id}:
+    get:
+      summary: returns the config for given id
+      operationId: config
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: content of config
+          content:
+            text/plain:
+              schema:
+                type: string

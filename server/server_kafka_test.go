@@ -35,7 +35,7 @@ func TestKafkaServer(t *testing.T) {
 
 	m := NewKafkaManager(nil, runtime.New())
 	defer m.Stop()
-	m.UpdateConfig(common.NewConfig(MustParseUrl("foo.yml"), common.WithData(c)))
+	m.UpdateConfig(common.NewConfig(common.ConfigInfo{Url: MustParseUrl("foo.yml")}, common.WithData(c)))
 
 	// wait for kafka start
 	time.Sleep(500 * time.Millisecond)

@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
-import { useEvents } from '@/composables/events';
-import { type PropType, onUnmounted, computed } from 'vue';
-import { usePrettyDates } from '@/composables/usePrettyDate';
-import { usePrettyHttp } from '@/composables/http';
+import { useRouter } from 'vue-router'
+import { useEvents } from '@/composables/events'
+import { type PropType, onUnmounted, computed } from 'vue'
+import { usePrettyDates } from '@/composables/usePrettyDate'
+import { usePrettyHttp } from '@/composables/http'
 
 const props = defineProps({
     service: { type: Object as PropType<HttpService> },

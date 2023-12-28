@@ -44,7 +44,7 @@ func newScriptHost(file *config.Config, e *Engine) *scriptHost {
 		events:   make(map[string][]*eventHandler),
 		cwd:      filepath.Dir(path),
 		file:     file,
-		checksum: file.Checksum,
+		checksum: file.Info.Checksum,
 	}
 
 	return sh

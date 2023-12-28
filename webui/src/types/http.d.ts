@@ -1,6 +1,7 @@
 declare interface HttpService extends Service {
     paths: HttpPath[]
     servers: HttpServer[]
+    configs: Config[]
 }
 
 declare interface HttpPath {
@@ -94,3 +95,9 @@ declare interface Action {
 }
 
 declare interface Tags {[key: string]: string}
+
+declare interface Config {
+    id: string
+    url: string
+    time: string
+}

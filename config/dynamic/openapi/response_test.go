@@ -279,7 +279,7 @@ func TestResponse_Parse(t *testing.T) {
 						)),
 					)),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.NoError(t, err)
 			},
 		},
@@ -294,7 +294,7 @@ func TestResponse_Parse(t *testing.T) {
 						openapitest.WithOperation(http.MethodGet, &openapi.Operation{}),
 					)),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.NoError(t, err)
 			},
 		},
@@ -311,7 +311,7 @@ func TestResponse_Parse(t *testing.T) {
 						)),
 					)),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.NoError(t, err)
 			},
 		},
@@ -328,7 +328,7 @@ func TestResponse_Parse(t *testing.T) {
 						)),
 					)),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'GET' failed: parse response '200' failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},
@@ -345,7 +345,7 @@ func TestResponse_Parse(t *testing.T) {
 						)),
 					)),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'GET' failed: parse response '200' failed: parse header 'foo' failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},

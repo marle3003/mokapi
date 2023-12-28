@@ -214,7 +214,7 @@ func TestOperation_Parse(t *testing.T) {
 						openapitest.WithOperation(http.MethodGet, &openapi.Operation{}),
 					)),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.NoError(t, err)
 				path := config.Paths["/foo"].Value
 				require.Equal(t, path.Get.Path, path)
@@ -233,7 +233,7 @@ func TestOperation_Parse(t *testing.T) {
 								openapitest.WithOperationParamRef(&parameter.Ref{Reference: ref.Reference{Ref: "foo.yml"}}))),
 					)),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'GET' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},
@@ -248,7 +248,7 @@ func TestOperation_Parse(t *testing.T) {
 						openapitest.WithOperation(http.MethodPost, &openapi.Operation{}),
 					)),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.NoError(t, err)
 				path := config.Paths["/foo"].Value
 				require.Equal(t, path.Post.Path, path)
@@ -267,7 +267,7 @@ func TestOperation_Parse(t *testing.T) {
 								openapitest.WithOperationParamRef(&parameter.Ref{Reference: ref.Reference{Ref: "foo.yml"}}))),
 					)),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'POST' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},
@@ -282,7 +282,7 @@ func TestOperation_Parse(t *testing.T) {
 						openapitest.WithOperation(http.MethodPut, &openapi.Operation{}),
 					)),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.NoError(t, err)
 				path := config.Paths["/foo"].Value
 				require.Equal(t, path.Put.Path, path)
@@ -301,7 +301,7 @@ func TestOperation_Parse(t *testing.T) {
 								openapitest.WithOperationParamRef(&parameter.Ref{Reference: ref.Reference{Ref: "foo.yml"}}))),
 					)),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'PUT' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},
@@ -316,7 +316,7 @@ func TestOperation_Parse(t *testing.T) {
 						openapitest.WithOperation(http.MethodPatch, &openapi.Operation{}),
 					)),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.NoError(t, err)
 				path := config.Paths["/foo"].Value
 				require.Equal(t, path.Patch.Path, path)
@@ -335,7 +335,7 @@ func TestOperation_Parse(t *testing.T) {
 								openapitest.WithOperationParamRef(&parameter.Ref{Reference: ref.Reference{Ref: "foo.yml"}}))),
 					)),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'PATCH' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},
@@ -350,7 +350,7 @@ func TestOperation_Parse(t *testing.T) {
 						openapitest.WithOperation(http.MethodDelete, &openapi.Operation{}),
 					)),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.NoError(t, err)
 				path := config.Paths["/foo"].Value
 				require.Equal(t, path.Delete.Path, path)
@@ -369,7 +369,7 @@ func TestOperation_Parse(t *testing.T) {
 								openapitest.WithOperationParamRef(&parameter.Ref{Reference: ref.Reference{Ref: "foo.yml"}}))),
 					)),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'DELETE' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},
@@ -384,7 +384,7 @@ func TestOperation_Parse(t *testing.T) {
 						openapitest.WithOperation(http.MethodHead, &openapi.Operation{}),
 					)),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.NoError(t, err)
 				path := config.Paths["/foo"].Value
 				require.Equal(t, path.Head.Path, path)
@@ -403,7 +403,7 @@ func TestOperation_Parse(t *testing.T) {
 								openapitest.WithOperationParamRef(&parameter.Ref{Reference: ref.Reference{Ref: "foo.yml"}}))),
 					)),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'HEAD' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},
@@ -418,7 +418,7 @@ func TestOperation_Parse(t *testing.T) {
 						openapitest.WithOperation(http.MethodOptions, &openapi.Operation{}),
 					)),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.NoError(t, err)
 				path := config.Paths["/foo"].Value
 				require.Equal(t, path.Options.Path, path)
@@ -437,7 +437,7 @@ func TestOperation_Parse(t *testing.T) {
 								openapitest.WithOperationParamRef(&parameter.Ref{Reference: ref.Reference{Ref: "foo.yml"}}))),
 					)),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'OPTIONS' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},
@@ -452,7 +452,7 @@ func TestOperation_Parse(t *testing.T) {
 						openapitest.WithOperation(http.MethodTrace, &openapi.Operation{}),
 					)),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.NoError(t, err)
 				path := config.Paths["/foo"].Value
 				require.Equal(t, path.Trace.Path, path)
@@ -471,7 +471,7 @@ func TestOperation_Parse(t *testing.T) {
 								openapitest.WithOperationParamRef(&parameter.Ref{Reference: ref.Reference{Ref: "foo.yml"}}))),
 					)),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'TRACE' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},
@@ -488,7 +488,7 @@ func TestOperation_Parse(t *testing.T) {
 						}),
 					)),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.NoError(t, err)
 				path := config.Paths["/foo"].Value
 				require.Equal(t, "foo", path.Trace.RequestBody.Value.Description)
@@ -510,7 +510,7 @@ func TestOperation_Parse(t *testing.T) {
 						}),
 					)),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.NoError(t, err)
 				path := config.Paths["/foo"].Value
 				require.Equal(t, "foo", path.Trace.RequestBody.Value.Description)
@@ -529,7 +529,7 @@ func TestOperation_Parse(t *testing.T) {
 						}),
 					)),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'TRACE' failed: parse request body failed: resolve reference 'foo.yml#/components/requestBodies/foo' failed: TEST ERROR")
 			},
 		},

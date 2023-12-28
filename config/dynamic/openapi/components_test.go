@@ -206,7 +206,7 @@ func TestComponents_Parse(t *testing.T) {
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithComponentSchemaRef("foo", &schema.Ref{Reference: ref.Reference{Ref: "foo.yml#/components/schemas/foo"}}),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.NoError(t, err)
 				require.Equal(t, "string", config.Components.Schemas.Get("foo").Value.Type)
 			},
@@ -220,7 +220,7 @@ func TestComponents_Parse(t *testing.T) {
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithComponentSchemaRef("foo", &schema.Ref{Reference: ref.Reference{Ref: "foo.yml#/components/schemas/foo"}}),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.EqualError(t, err, "parse components failed: parse schema 'foo' failed: resolve reference 'foo.yml#/components/schemas/foo' failed: TESTING ERROR")
 			},
 		},
@@ -236,7 +236,7 @@ func TestComponents_Parse(t *testing.T) {
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithComponentResponseRef("foo", &openapi.ResponseRef{Reference: ref.Reference{Ref: "foo.yml#/components/responses/foo"}}),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.NoError(t, err)
 				r, _ := config.Components.Responses.Get("foo")
 				require.Equal(t, "foo", r.Value.Description)
@@ -251,7 +251,7 @@ func TestComponents_Parse(t *testing.T) {
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithComponentResponseRef("foo", &openapi.ResponseRef{Reference: ref.Reference{Ref: "foo.yml#/components/schemas/foo"}}),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.EqualError(t, err, "parse components failed: parse response 'foo' failed: resolve reference 'foo.yml#/components/schemas/foo' failed: TESTING ERROR")
 			},
 		},
@@ -267,7 +267,7 @@ func TestComponents_Parse(t *testing.T) {
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithComponentRequestBodyRef("foo", &openapi.RequestBodyRef{Reference: ref.Reference{Ref: "foo.yml#/components/requestBodies/foo"}}),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.NoError(t, err)
 				require.Equal(t, "foo", config.Components.RequestBodies["foo"].Value.Description)
 			},
@@ -281,7 +281,7 @@ func TestComponents_Parse(t *testing.T) {
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithComponentRequestBodyRef("foo", &openapi.RequestBodyRef{Reference: ref.Reference{Ref: "foo.yml#/components/requestBodies/foo"}}),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.EqualError(t, err, "parse components failed: parse request body 'foo' failed: resolve reference 'foo.yml#/components/requestBodies/foo' failed: TESTING ERROR")
 			},
 		},
@@ -297,7 +297,7 @@ func TestComponents_Parse(t *testing.T) {
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithComponentParameterRef("foo", &parameter.Ref{Reference: ref.Reference{Ref: "foo.yml#/components/parameters/foo"}}),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.NoError(t, err)
 				require.Equal(t, "foo", config.Components.Parameters["foo"].Value.Description)
 			},
@@ -311,7 +311,7 @@ func TestComponents_Parse(t *testing.T) {
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithComponentParameterRef("foo", &parameter.Ref{Reference: ref.Reference{Ref: "foo.yml#/components/parameters/foo"}}),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.EqualError(t, err, "parse components failed: parse parameter 'foo' failed: resolve reference 'foo.yml#/components/parameters/foo' failed: TESTING ERROR")
 			},
 		},
@@ -327,7 +327,7 @@ func TestComponents_Parse(t *testing.T) {
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithComponentExampleRef("foo", &openapi.ExampleRef{Reference: ref.Reference{Ref: "foo.yml#/components/examples/foo"}}),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.NoError(t, err)
 				require.Equal(t, "foo", config.Components.Examples["foo"].Value.Description)
 			},
@@ -341,7 +341,7 @@ func TestComponents_Parse(t *testing.T) {
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithComponentExampleRef("foo", &openapi.ExampleRef{Reference: ref.Reference{Ref: "foo.yml#/components/parameters/foo"}}),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.EqualError(t, err, "parse components failed: parse example 'foo' failed: resolve reference 'foo.yml#/components/parameters/foo' failed: TESTING ERROR")
 			},
 		},
@@ -357,7 +357,7 @@ func TestComponents_Parse(t *testing.T) {
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithComponentHeaderRef("foo", &openapi.HeaderRef{Reference: ref.Reference{Ref: "foo.yml#/components/headers/foo"}}),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.NoError(t, err)
 				require.Equal(t, "foo", config.Components.Headers["foo"].Value.Description)
 			},
@@ -371,7 +371,7 @@ func TestComponents_Parse(t *testing.T) {
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithComponentHeaderRef("foo", &openapi.HeaderRef{Reference: ref.Reference{Ref: "foo.yml#/components/headers/foo"}}),
 				)
-				err := config.Parse(common.NewConfig(&url.URL{}, common.WithData(config)), reader)
+				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
 				require.EqualError(t, err, "parse components failed: parse header 'foo' failed: resolve reference 'foo.yml#/components/headers/foo' failed: TESTING ERROR")
 			},
 		},
