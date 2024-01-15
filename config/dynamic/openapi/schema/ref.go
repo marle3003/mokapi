@@ -3,7 +3,7 @@ package schema
 import (
 	"fmt"
 	"gopkg.in/yaml.v3"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/openapi/ref"
 )
 
@@ -12,12 +12,12 @@ type Ref struct {
 	Value *Schema
 }
 
-func (r *Ref) Parse(config *common.Config, reader common.Reader) error {
+func (r *Ref) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if r == nil {
 		return nil
 	}
 	if len(r.Ref) > 0 {
-		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
+		if err := dynamic.Resolve(r.Ref, &r.Value, config, reader); err != nil {
 			return fmt.Errorf("parse schema failed: %w", err)
 		}
 		return nil

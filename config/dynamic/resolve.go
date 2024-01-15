@@ -1,4 +1,4 @@
-package common
+package dynamic
 
 import (
 	"fmt"
@@ -32,15 +32,15 @@ func Resolve(ref string, element interface{}, config *Config, reader Reader) err
 			}
 		}
 
-		opts := []ConfigOptions{WithParent(config)}
+		var data interface{}
 		if len(u.Fragment) > 0 {
 			val := reflect.ValueOf(config.Data).Elem()
-			opts = append(opts, WithData(reflect.New(val.Type()).Interface()))
+			data = reflect.New(val.Type()).Interface()
 		} else {
-			opts = append(opts, WithData(element))
+			data = element
 		}
 
-		f, err := reader.Read(removeFragment(u), opts...)
+		f, err := reader.Read(removeFragment(u), data)
 		if err != nil {
 			return fmt.Errorf("resolve reference '%v' failed: %w", ref, err)
 		}
@@ -49,6 +49,7 @@ func Resolve(ref string, element interface{}, config *Config, reader Reader) err
 		if err != nil {
 			return fmt.Errorf("resolve reference '%v' failed: %w", ref, err)
 		}
+		AddRef(config, f)
 		return nil
 	}
 

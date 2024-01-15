@@ -2,7 +2,7 @@ package schema
 
 import (
 	"fmt"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"strings"
 )
 
@@ -50,7 +50,7 @@ func (s *Schema) HasProperties() bool {
 	return s.Properties != nil && s.Properties.Len() > 0
 }
 
-func (s *Schema) Parse(config *common.Config, reader common.Reader) error {
+func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if s == nil {
 		return nil
 	}

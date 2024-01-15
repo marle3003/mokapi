@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/provider/file"
 	"mokapi/config/static"
 	"mokapi/safe"
@@ -15,7 +15,7 @@ import (
 
 type Provider struct {
 	cfg    static.NpmProvider
-	ch     chan *common.Config
+	ch     chan *dynamic.Config
 	config map[string]static.NpmPackage
 
 	reader file.FSReader
@@ -30,7 +30,7 @@ func NewFS(cfg static.NpmProvider, fs file.FSReader) *Provider {
 	return &Provider{cfg: cfg, reader: fs, f: file.NewWithWalker(static.FileProvider{}, fs)}
 }
 
-func (p *Provider) Read(u *url.URL) (*common.Config, error) {
+func (p *Provider) Read(u *url.URL) (*dynamic.Config, error) {
 	workDir, err := p.reader.GetWorkingDir()
 	if err != nil {
 		return nil, err
@@ -55,13 +55,13 @@ func (p *Provider) Read(u *url.URL) (*common.Config, error) {
 	return p.f.Read(u)
 }
 
-func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
+func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
 	workDir, err := p.reader.GetWorkingDir()
 	if err != nil {
 		return err
 	}
 
-	p.ch = make(chan *common.Config)
+	p.ch = make(chan *dynamic.Config)
 	p.config = map[string]static.NpmPackage{}
 
 	pool.Go(func(ctx context.Context) {
@@ -86,7 +86,7 @@ func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
 	return nil
 }
 
-func (p *Provider) forward(ch chan *common.Config, ctx context.Context) {
+func (p *Provider) forward(ch chan *dynamic.Config, ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():

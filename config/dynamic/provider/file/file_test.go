@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/stretchr/testify/require"
 	"io"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/provider/file/filetest"
 	"mokapi/config/static"
 	"mokapi/safe"
@@ -314,7 +314,7 @@ func TestProvider(t *testing.T) {
 			t.Cleanup(func() {
 				pool.Stop()
 			})
-			ch := make(chan *common.Config)
+			ch := make(chan *dynamic.Config)
 			err := p.Start(ch, pool)
 			require.NoError(t, err)
 			var files []file
@@ -382,7 +382,7 @@ func TestProvider_File(t *testing.T) {
 		{
 			"two dirs",
 			func(t *testing.T) {
-				ch := make(chan *common.Config)
+				ch := make(chan *dynamic.Config)
 				files := []string{"./test/openapi.yml", "./test/openapi2.yml"}
 				p := createDirectoryProvider(t, files...)
 				pool := safe.NewPool(context.Background())
@@ -417,7 +417,7 @@ func TestProvider_File(t *testing.T) {
 }
 
 func TestWatch_AddFile(t *testing.T) {
-	ch := make(chan *common.Config)
+	ch := make(chan *dynamic.Config)
 	tempDir := t.TempDir()
 	t.Cleanup(func() { os.RemoveAll(tempDir) })
 	p := New(static.FileProvider{Directory: tempDir})
@@ -442,7 +442,7 @@ func TestWatch_AddFile(t *testing.T) {
 }
 
 func TestWatch_Create_SubFolder_And_Add_File(t *testing.T) {
-	ch := make(chan *common.Config)
+	ch := make(chan *dynamic.Config)
 	tempDir := t.TempDir()
 	t.Cleanup(func() { os.RemoveAll(tempDir) })
 	p := New(static.FileProvider{Directory: tempDir})
@@ -466,7 +466,7 @@ func TestWatch_Create_SubFolder_And_Add_File(t *testing.T) {
 	}
 }
 
-func createAndStartFileProvider(t *testing.T, files ...string) (*Provider, chan *common.Config) {
+func createAndStartFileProvider(t *testing.T, files ...string) (*Provider, chan *dynamic.Config) {
 	tempDir := t.TempDir()
 	t.Cleanup(func() { os.RemoveAll(tempDir) })
 
@@ -482,7 +482,7 @@ func createAndStartFileProvider(t *testing.T, files ...string) (*Provider, chan 
 	t.Cleanup(func() {
 		pool.Stop()
 	})
-	ch := make(chan *common.Config)
+	ch := make(chan *dynamic.Config)
 	err := p.Start(ch, pool)
 	require.NoError(t, err)
 	return p, ch

@@ -1,8 +1,8 @@
 package api
 
 import (
-	"mokapi/config/dynamic/common"
-	"mokapi/config/dynamic/common/configtest"
+	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/dynamic/openapi/openapitest"
 	"mokapi/config/dynamic/openapi/schema/schematest"
 	"mokapi/config/static"
@@ -77,13 +77,11 @@ func TestHandler_Http(t *testing.T) {
 			name: "get http service info",
 			app: func() *runtime.App {
 				app := runtime.New()
-				cfg := common.NewConfig(
-					configtest.NewConfigInfo(), common.WithData(
-						openapitest.NewConfig("3.0.0",
-							openapitest.WithInfo("foo", "1.0", "bar"),
-						),
+				cfg := &dynamic.Config{
+					Info: dynamictest.NewConfigInfo(), Data: openapitest.NewConfig("3.0.0",
+						openapitest.WithInfo("foo", "1.0", "bar"),
 					),
-				)
+				}
 				cfg.Info.Time = mustTime("2023-12-27T13:01:30+00:00")
 				app.AddHttp(cfg)
 				return app

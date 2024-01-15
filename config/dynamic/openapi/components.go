@@ -2,7 +2,7 @@ package openapi
 
 import (
 	"fmt"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/openapi/parameter"
 	"mokapi/config/dynamic/openapi/schema"
 )
@@ -18,7 +18,7 @@ type Components struct {
 
 type Parameters map[string]*parameter.Ref
 
-func (c *Components) parse(config *common.Config, reader common.Reader) error {
+func (c *Components) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if err := c.Schemas.Parse(config, reader); err != nil {
 		return fmt.Errorf("parse components failed: %w", err)
 	}
@@ -41,7 +41,7 @@ func (c *Components) parse(config *common.Config, reader common.Reader) error {
 	return nil
 }
 
-func (p Parameters) parse(config *common.Config, reader common.Reader) error {
+func (p Parameters) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	for name, param := range p {
 		if err := param.Parse(config, reader); err != nil {
 			return fmt.Errorf("parse parameter '%v' failed: %w", name, err)

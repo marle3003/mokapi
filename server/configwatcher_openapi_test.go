@@ -1,4 +1,4 @@
-package dynamic
+package server
 
 import (
 	"context"
@@ -7,8 +7,8 @@ import (
 	logtest "github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
 	"io"
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi"
-	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/config/static"
 	"mokapi/safe"
@@ -45,14 +45,14 @@ paths:
 				configPath := mustParse("file.yml")
 				configPath.Scheme = "foo"
 				p := &testproviderMap{
-					files: map[string]*common.Config{
+					files: map[string]*dynamic.Config{
 						"/root.yml": {
-							Info: common.ConfigInfo{Url: mustParse("/root.yml"), Provider: "foo"},
+							Info: dynamic.ConfigInfo{Url: mustParse("/root.yml"), Provider: "foo"},
 							Raw:  []byte(root),
 							Data: nil,
 						},
 						"/paths.yml": {
-							Info: common.ConfigInfo{Url: mustParse("/paths.yml"), Provider: "foo"},
+							Info: dynamic.ConfigInfo{Url: mustParse("/paths.yml"), Provider: "foo"},
 							Raw:  []byte(path),
 							Data: nil,
 						},
@@ -63,11 +63,11 @@ paths:
 				defer pool.Stop()
 				w.Start(pool)
 				ch := make(chan *openapi.Config)
-				w.AddListener(func(c *common.Config) {
+				w.AddListener(func(c *dynamic.Config) {
 					require.NotNil(t, c)
 					cfg := c.Data.(*openapi.Config)
 					require.NotNil(t, cfg)
-					refs := c.Refs()
+					refs := c.Refs.List()
 					require.Len(t, refs, 1)
 					require.Equal(t, "/paths.yml", refs[0].Info.Url.Path)
 					ch <- cfg
@@ -82,8 +82,8 @@ paths:
 				}
 
 				path = strings.ReplaceAll(path, "foo", "bar")
-				f := &common.Config{
-					Info: common.ConfigInfo{Url: mustParse("/paths.yml"), Checksum: []byte(path)},
+				f := &dynamic.Config{
+					Info: dynamic.ConfigInfo{Url: mustParse("/paths.yml"), Checksum: []byte(path)},
 					Raw:  []byte(path),
 					Data: nil,
 				}
@@ -121,14 +121,14 @@ paths:
 				configPath := mustParse("file.yml")
 				configPath.Scheme = "foo"
 				p := &testproviderMap{
-					files: map[string]*common.Config{
+					files: map[string]*dynamic.Config{
 						"/root.yml": {
-							Info: common.ConfigInfo{Url: mustParse("/root.yml")},
+							Info: dynamic.ConfigInfo{Url: mustParse("/root.yml")},
 							Raw:  []byte(root),
 							Data: nil,
 						},
 						"/paths.yml": {
-							Info: common.ConfigInfo{Url: mustParse("/paths.yml")},
+							Info: dynamic.ConfigInfo{Url: mustParse("/paths.yml")},
 							Raw:  []byte(path),
 							Data: nil,
 						},
@@ -151,8 +151,8 @@ paths:
 		},
 	}
 
-	common.Register("asyncapi", &asyncApi.Config{})
-	common.Register("openapi", &asyncApi.Config{})
+	dynamic.Register("asyncapi", &asyncApi.Config{})
+	dynamic.Register("openapi", &asyncApi.Config{})
 
 	for _, tc := range testcases {
 		tc := tc
@@ -163,18 +163,18 @@ paths:
 }
 
 type testproviderMap struct {
-	files map[string]*common.Config
-	ch    chan *common.Config
+	files map[string]*dynamic.Config
+	ch    chan *dynamic.Config
 }
 
-func (p *testproviderMap) Read(u *url.URL) (*common.Config, error) {
+func (p *testproviderMap) Read(u *url.URL) (*dynamic.Config, error) {
 	if f, ok := p.files[u.String()]; ok {
 		return f, nil
 	}
 	return nil, fmt.Errorf("not found: %v", u.String())
 }
 
-func (p *testproviderMap) Start(ch chan *common.Config, _ *safe.Pool) error {
+func (p *testproviderMap) Start(ch chan *dynamic.Config, _ *safe.Pool) error {
 	p.ch = ch
 	return nil
 }

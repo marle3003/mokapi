@@ -2,7 +2,7 @@ package server
 
 import (
 	log "github.com/sirupsen/logrus"
-	config "mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/engine/common"
 	"mokapi/runtime"
 	"mokapi/runtime/monitor"
@@ -33,7 +33,7 @@ func NewKafkaManager(emitter common.EventEmitter, app *runtime.App) *KafkaManage
 	}
 }
 
-func (m *KafkaManager) UpdateConfig(c *config.Config) {
+func (m *KafkaManager) UpdateConfig(c *dynamic.Config) {
 	if !runtime.IsKafkaConfig(c) {
 		return
 	}

@@ -3,7 +3,7 @@ package openapi
 import (
 	"errors"
 	"fmt"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/media"
 	"net/http"
 	"strconv"
@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	common.Register("openapi", &Config{})
+	dynamic.Register("openapi", &Config{})
 }
 
 type Config struct {
@@ -55,7 +55,7 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-func (c *Config) Parse(config *common.Config, reader common.Reader) error {
+func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if c == nil {
 		return nil
 	}

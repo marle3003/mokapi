@@ -1,13 +1,13 @@
 package mail
 
 import (
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/smtp"
 	"regexp"
 )
 
 func init() {
-	common.Register("smtp", &Config{})
+	dynamic.Register("smtp", &Config{})
 }
 
 type Config struct {

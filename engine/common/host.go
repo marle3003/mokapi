@@ -2,7 +2,7 @@ package common
 
 import (
 	"fmt"
-	config "mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"net/http"
 	"strings"
 )
@@ -28,7 +28,7 @@ type Host interface {
 	Cron(expr string, do func(), opt JobOptions) (int, error)
 	Cancel(jobId int) error
 
-	OpenFile(file string, hint string) (*config.Config, error)
+	OpenFile(file string, hint string) (*dynamic.Config, error)
 
 	On(event string, do func(args ...interface{}) (bool, error), tags map[string]string)
 

@@ -6,7 +6,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/api"
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/common"
 	"mokapi/config/static"
 	"mokapi/engine"
 	"mokapi/runtime"
@@ -31,7 +30,7 @@ func Start(cfg *static.Config) (*Cmd, error) {
 
 	app := runtime.New()
 
-	watcher := dynamic.NewConfigWatcher(cfg)
+	watcher := server.NewConfigWatcher(cfg)
 
 	certStore, err := cert.NewStore(cfg)
 	if err != nil {
@@ -44,7 +43,7 @@ func Start(cfg *static.Config) (*Cmd, error) {
 	smtp := server.NewSmtpManager(app, scriptEngine, certStore)
 	ldap := server.NewLdapDirectoryManager(scriptEngine, certStore, app)
 
-	watcher.AddListener(func(cfg *common.Config) {
+	watcher.AddListener(func(cfg *dynamic.Config) {
 		kafka.UpdateConfig(cfg)
 		http.Update(cfg)
 		smtp.UpdateConfig(cfg)

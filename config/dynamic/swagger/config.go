@@ -1,14 +1,14 @@
 package swagger
 
 import (
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/config/dynamic/openapi/schema"
 	"net/http"
 )
 
 func init() {
-	common.Register("swagger", &Config{})
+	dynamic.Register("swagger", &Config{})
 }
 
 type Config struct {

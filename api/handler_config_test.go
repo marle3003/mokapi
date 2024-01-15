@@ -1,7 +1,7 @@
 package api
 
 import (
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/runtime"
 	"mokapi/try"
@@ -36,7 +36,7 @@ func TestHandler_Config(t *testing.T) {
 		{
 			name: "not found",
 			app: func() *runtime.App {
-				return &runtime.App{Configs: map[string]*common.Config{}}
+				return &runtime.App{Configs: map[string]*dynamic.Config{}}
 			},
 			requestUrl: "http://foo.api/api/configs/foo",
 			test: []try.ResponseCondition{
@@ -46,9 +46,9 @@ func TestHandler_Config(t *testing.T) {
 		{
 			name: "yaml file empty",
 			app: func() *runtime.App {
-				return &runtime.App{Configs: map[string]*common.Config{
+				return &runtime.App{Configs: map[string]*dynamic.Config{
 					"foo": {
-						Info: common.ConfigInfo{
+						Info: dynamic.ConfigInfo{
 							Url:  mustUrl("https://foo.bar/foo.yaml"),
 							Time: mustTime("2023-12-27T13:01:30+00:00"),
 						},
@@ -67,9 +67,9 @@ func TestHandler_Config(t *testing.T) {
 		{
 			name: "json file with content",
 			app: func() *runtime.App {
-				return &runtime.App{Configs: map[string]*common.Config{
+				return &runtime.App{Configs: map[string]*dynamic.Config{
 					"foo": {
-						Info: common.ConfigInfo{
+						Info: dynamic.ConfigInfo{
 							Url:  mustUrl("https://foo.bar/foo.json"),
 							Time: mustTime("2023-12-22T13:01:30+00:00"),
 						},

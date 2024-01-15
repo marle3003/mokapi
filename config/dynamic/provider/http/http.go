@@ -8,7 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"hash/fnv"
 	"io"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/safe"
 	"net/http"
@@ -79,12 +79,12 @@ func New(config static.HttpProvider) *Provider {
 	return p
 }
 
-func (p *Provider) Read(u *url.URL) (*common.Config, error) {
+func (p *Provider) Read(u *url.URL) (*dynamic.Config, error) {
 	c, _, err := p.readUrl(u)
 	return c, err
 }
 
-func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
+func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
 	if p.running {
 		return nil
 	}
@@ -131,7 +131,7 @@ func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
 	return nil
 }
 
-func (p *Provider) checkFiles(ch chan *common.Config) {
+func (p *Provider) checkFiles(ch chan *dynamic.Config) {
 	for f := range p.files {
 		u, _ := url.Parse(f)
 		c, changed, err := p.readUrl(u)
@@ -148,7 +148,7 @@ func (p *Provider) checkFiles(ch chan *common.Config) {
 	}
 }
 
-func (p *Provider) readUrl(u *url.URL) (c *common.Config, changed bool, err error) {
+func (p *Provider) readUrl(u *url.URL) (c *dynamic.Config, changed bool, err error) {
 	p.m.Lock()
 	defer p.m.Unlock()
 
@@ -184,9 +184,10 @@ func (p *Provider) readUrl(u *url.URL) (c *common.Config, changed bool, err erro
 	}
 	changed = true
 	p.files[u.String()] = hash.Sum64()
-	c = common.NewConfig(common.ConfigInfo{Url: u, Provider: "http"},
-		common.WithRaw(b),
-	)
+	c = &dynamic.Config{
+		Info: dynamic.ConfigInfo{Url: u, Provider: "http"},
+		Raw:  b,
+	}
 
 	return
 }

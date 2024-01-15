@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"gopkg.in/yaml.v3"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/openapi/parameter"
 	"mokapi/config/dynamic/openapi/ref"
 )
@@ -52,7 +52,7 @@ func (h *Header) UnmarshalYAML(node *yaml.Node) error {
 	return nil
 }
 
-func (h Headers) parse(config *common.Config, reader common.Reader) error {
+func (h Headers) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	for name, header := range h {
 		if err := header.parse(config, reader); err != nil {
 			return fmt.Errorf("parse header '%v' failed: %w", name, err)
@@ -62,13 +62,13 @@ func (h Headers) parse(config *common.Config, reader common.Reader) error {
 	return nil
 }
 
-func (r *HeaderRef) parse(config *common.Config, reader common.Reader) error {
+func (r *HeaderRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if r == nil {
 		return nil
 	}
 
 	if len(r.Ref) > 0 {
-		return common.Resolve(r.Ref, &r.Value, config, reader)
+		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
 	}
 	return r.Value.Parse(config, reader)
 }

@@ -8,7 +8,6 @@ import (
 	"mokapi/api"
 	"mokapi/config/decoders"
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/common"
 	"mokapi/config/static"
 	"mokapi/engine"
 	"mokapi/runtime"
@@ -77,7 +76,7 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 	pool := safe.NewPool(context.Background())
 	app := runtime.New()
 
-	watcher := dynamic.NewConfigWatcher(cfg)
+	watcher := server.NewConfigWatcher(cfg)
 	scriptEngine := engine.New(watcher, app, cfg.Js)
 	certStore, err := cert.NewStore(cfg)
 	if err != nil {
@@ -88,7 +87,7 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 	smtp := server.NewSmtpManager(app, scriptEngine, certStore)
 	ldap := server.NewLdapDirectoryManager(scriptEngine, certStore, app)
 
-	watcher.AddListener(func(cfg *common.Config) {
+	watcher.AddListener(func(cfg *dynamic.Config) {
 		kafka.UpdateConfig(cfg)
 		http.Update(cfg)
 		smtp.UpdateConfig(cfg)

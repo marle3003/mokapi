@@ -3,7 +3,7 @@ package engine
 import (
 	"github.com/go-co-op/gocron"
 	log "github.com/sirupsen/logrus"
-	config "mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/script"
 	"mokapi/config/static"
 	"mokapi/engine/common"
@@ -16,13 +16,13 @@ type Engine struct {
 	scripts     map[string]*scriptHost
 	cron        *gocron.Scheduler
 	logger      common.Logger
-	reader      config.Reader
+	reader      dynamic.Reader
 	kafkaClient *kafkaClient
 	m           sync.Mutex
 	jsConfig    static.JsConfig
 }
 
-func New(reader config.Reader, app *runtime.App, jsConfig static.JsConfig) *Engine {
+func New(reader dynamic.Reader, app *runtime.App, jsConfig static.JsConfig) *Engine {
 	return &Engine{
 		scripts:     make(map[string]*scriptHost),
 		cron:        gocron.NewScheduler(time.UTC),
@@ -33,7 +33,7 @@ func New(reader config.Reader, app *runtime.App, jsConfig static.JsConfig) *Engi
 	}
 }
 
-func (e *Engine) AddScript(cfg *config.Config) error {
+func (e *Engine) AddScript(cfg *dynamic.Config) error {
 	if _, ok := cfg.Data.(*script.Script); !ok {
 		return nil
 	}
@@ -85,7 +85,7 @@ func (e *Engine) Close() {
 	e.cron.Stop()
 }
 
-func (e *Engine) remove(cfg *config.Config) {
+func (e *Engine) remove(cfg *dynamic.Config) {
 	name := cfg.Info.Path()
 	if h, ok := e.scripts[name]; ok {
 		log.Debugf("updating script %v", cfg.Info.Path())

@@ -2,7 +2,7 @@ package openapi
 
 import (
 	"fmt"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/openapi/parameter"
 )
 
@@ -65,7 +65,7 @@ func (o *Operation) getResponse(statusCode int) *Response {
 	return o.Responses.GetResponse(statusCode)
 }
 
-func (o *Operation) parse(p *Path, config *common.Config, reader common.Reader) error {
+func (o *Operation) parse(p *Path, config *dynamic.Config, reader dynamic.Reader) error {
 	if o == nil {
 		return nil
 	}

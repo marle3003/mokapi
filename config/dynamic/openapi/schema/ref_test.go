@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
-	"mokapi/config/dynamic/common"
-	"mokapi/config/dynamic/common/configtest"
+	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/dynamic/openapi/ref"
 	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/config/dynamic/openapi/schema/schematest"
@@ -50,24 +50,23 @@ func TestRef_Parse(t *testing.T) {
 		{
 			name: "Ref is nil",
 			test: func(t *testing.T) {
-				reader := &configtest.Reader{ReadFunc: func(cfg *common.Config) error {
-					return nil
-				}}
+				reader := dynamictest.ReaderFunc(func(_ *url.URL, _ any) (*dynamic.Config, error) {
+					return nil, nil
+				})
 				var r *schema.Ref
-				err := r.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(r)), reader)
+				err := r.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: r}, reader)
 				require.NoError(t, err)
 			},
 		},
 		{
 			name: "with reference",
 			test: func(t *testing.T) {
-				reader := &configtest.Reader{ReadFunc: func(cfg *common.Config) error {
-					require.Equal(t, "/foo.yml", cfg.Info.Url.String())
-					cfg.Data = schematest.New("number")
-					return nil
-				}}
+				reader := dynamictest.ReaderFunc(func(u *url.URL, _ any) (*dynamic.Config, error) {
+					cfg := &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}, Data: schematest.New("number")}
+					return cfg, nil
+				})
 				r := &schema.Ref{Reference: ref.Reference{Ref: "foo.yml"}}
-				err := r.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(r)), reader)
+				err := r.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: r}, reader)
 				require.NoError(t, err)
 				require.NotNil(t, r.Value)
 				require.Equal(t, "number", r.Value.Type)
@@ -76,22 +75,22 @@ func TestRef_Parse(t *testing.T) {
 		{
 			name: "with reference but error",
 			test: func(t *testing.T) {
-				reader := &configtest.Reader{ReadFunc: func(cfg *common.Config) error {
-					return fmt.Errorf("TEST ERROR")
-				}}
+				reader := dynamictest.ReaderFunc(func(_ *url.URL, _ any) (*dynamic.Config, error) {
+					return nil, fmt.Errorf("TEST ERROR")
+				})
 				r := &schema.Ref{Reference: ref.Reference{Ref: "foo.yml"}}
-				err := r.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(r)), reader)
+				err := r.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: r}, reader)
 				require.EqualError(t, err, "parse schema failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},
 		{
 			name: "value is nil",
 			test: func(t *testing.T) {
-				reader := &configtest.Reader{ReadFunc: func(cfg *common.Config) error {
-					return nil
-				}}
+				reader := dynamictest.ReaderFunc(func(u *url.URL, _ any) (*dynamic.Config, error) {
+					return &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}}, nil
+				})
 				r := &schema.Ref{}
-				err := r.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(r)), reader)
+				err := r.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: r}, reader)
 				require.NoError(t, err)
 				require.Nil(t, r.Value)
 			},
@@ -99,11 +98,11 @@ func TestRef_Parse(t *testing.T) {
 		{
 			name: "with value",
 			test: func(t *testing.T) {
-				reader := &configtest.Reader{ReadFunc: func(cfg *common.Config) error {
-					return nil
-				}}
+				reader := dynamictest.ReaderFunc(func(u *url.URL, _ any) (*dynamic.Config, error) {
+					return &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}}, nil
+				})
 				r := &schema.Ref{Value: schematest.New("integer")}
-				err := r.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(r)), reader)
+				err := r.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: r}, reader)
 				require.NoError(t, err)
 				require.NotNil(t, r.Value)
 			},
