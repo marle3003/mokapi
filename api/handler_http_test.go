@@ -87,7 +87,7 @@ func TestHandler_Http(t *testing.T) {
 				return app
 			},
 			requestUrl:   "http://foo.api/api/services/http/foo",
-			responseBody: `{"name":"foo","description":"bar","version":"1.0","servers":[{"url":"/","description":""}],"configs":[{"id":"64613435-3062-6462-3033-316532633233","url":"file://foo.yml","time":"2023-12-27T13:01:30Z"}]}`,
+			responseBody: `{"name":"foo","description":"bar","version":"1.0","servers":[{"url":"/","description":""}],"configs":[{"id":"64613435-3062-6462-3033-316532633233","url":"file://foo.yml","provider":"test","time":"2023-12-27T13:01:30Z"}]}`,
 		},
 		{
 			name: "get http service contact",

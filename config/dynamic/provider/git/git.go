@@ -115,10 +115,9 @@ func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
 			return fmt.Errorf("unable to get git head: %v", err.Error())
 		}
 
-		var ref plumbing.ReferenceName
 		r.pullOptions = &git.PullOptions{SingleBranch: true}
 		if len(r.ref) > 0 {
-			ref = plumbing.NewBranchReferenceName(r.ref)
+			ref := plumbing.NewBranchReferenceName(r.ref)
 
 			if h.Name() != ref {
 				r.pullOptions.ReferenceName = ref
@@ -133,6 +132,8 @@ func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
 			}
 		}
 
+		ref, err := r.repo.Head()
+
 		chFile := make(chan *dynamic.Config)
 		p.startFileProvider(r.localPath, chFile, pool)
 
@@ -143,10 +144,27 @@ func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
 					return
 				case c := <-chFile:
 
+					u := getUrl(r, c.Info.Url)
+					gitFile := u.Query()["file"][0][1:]
+
 					info := dynamic.ConfigInfo{
 						Provider: "git",
-						Url:      getUrl(r, c.Info.Url),
+						Url:      u,
 					}
+
+					cIter, _ := r.repo.Log(&git.LogOptions{
+						From:     ref.Hash(),
+						FileName: &gitFile,
+					})
+
+					commit, err := cIter.Next()
+					if err != nil {
+						log.Warnf("resolve mod time for '%v' failed: %v", u, err)
+						info.Time = time.Now()
+					} else {
+						info.Time = commit.Author.When
+					}
+
 					dynamic.Wrap(info, c)
 					ch <- c
 				}

@@ -43,7 +43,7 @@ func (suite *PetStoreSuite) TestApi() {
 			nil,
 			try.HasStatusCode(http.StatusOK),
 			try.BodyContains(`{"name":"Swagger Petstore","description":"This is a sample server Petstore server.  You can find out more about `),
-			try.BodyMatch(`"configs":\[{"id":".*","url":"file:.*\/acceptance\/petstore\/openapi\.yml","time":".*"}\]`),
+			try.BodyMatch(`"configs":\[{"id":".*","url":".*\/acceptance\/petstore\/openapi\.yml","provider":"file","time":".*"}\]`),
 		)
 	})
 }

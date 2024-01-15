@@ -31,3 +31,10 @@ declare interface ServiceEvent {
 }
 
 declare interface Traits {[name: string]: string}
+
+declare interface Config {
+    id: string
+    url: string
+    provider: string
+    time: string
+}

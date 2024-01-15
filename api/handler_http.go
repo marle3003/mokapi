@@ -6,6 +6,7 @@ import (
 	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
 	"net/http"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -84,9 +85,10 @@ type server struct {
 }
 
 type config struct {
-	Id   string    `json:"id"`
-	Url  string    `json:"url"`
-	Time time.Time `json:"time"`
+	Id       string    `json:"id"`
+	Url      string    `json:"url"`
+	Provider string    `json:"provider"`
+	Time     time.Time `json:"time"`
 }
 
 func getHttpServices(services map[string]*runtime.HttpInfo, m *monitor.Monitor) []interface{} {
@@ -220,10 +222,13 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 	}
 
 	for _, cfg := range s.Configs() {
+		path := cfg.Info.Path()
+		path = filepath.ToSlash(path)
 		result.Configs = append(result.Configs, config{
-			Id:   cfg.Info.Key(),
-			Url:  cfg.Info.Path(),
-			Time: cfg.Info.Time,
+			Id:       cfg.Info.Key(),
+			Url:      path,
+			Time:     cfg.Info.Time,
+			Provider: cfg.Info.Provider,
 		})
 	}
 

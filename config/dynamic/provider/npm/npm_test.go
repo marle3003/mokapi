@@ -15,21 +15,24 @@ import (
 )
 
 func TestNpmProvider(t *testing.T) {
-	type file struct {
-		path string
-		data string
-	}
-
 	root := "/"
 	if filepath.Separator == '\\' {
 		root = "C:\\"
+	}
+
+	mustTime := func(s string) time.Time {
+		d, err := time.Parse(time.RFC3339, s)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return d
 	}
 
 	testcases := []struct {
 		name string
 		fs   *filetest.MockFS
 		cfg  static.NpmProvider
-		test func(t *testing.T, files map[string]file)
+		test func(t *testing.T, configs map[string]*dynamic.Config)
 	}{
 		{
 			name: "node_modules in current directory and one file",
@@ -45,14 +48,16 @@ func TestNpmProvider(t *testing.T) {
 						IsDir: true,
 					},
 					"/node_modules/foo/foo.txt": {
-						Name:  "foo.txt",
-						IsDir: false,
-						Data:  []byte("foobar"),
+						Name:    "foo.txt",
+						IsDir:   false,
+						Data:    []byte("foobar"),
+						ModTime: mustTime("2024-01-02T15:04:05Z"),
 					}}},
 			cfg: static.NpmProvider{Packages: []static.NpmPackage{{Name: "foo"}}},
-			test: func(t *testing.T, files map[string]file) {
-				require.Len(t, files, 1)
-				require.Equal(t, "foobar", files["/node_modules/foo/foo.txt"].data)
+			test: func(t *testing.T, configs map[string]*dynamic.Config) {
+				require.Len(t, configs, 1)
+				require.Equal(t, []byte("foobar"), configs["/node_modules/foo/foo.txt"].Raw)
+				require.Equal(t, mustTime("2024-01-02T15:04:05Z"), configs["/node_modules/foo/foo.txt"].Info.Time)
 			},
 		},
 		{
@@ -74,9 +79,9 @@ func TestNpmProvider(t *testing.T) {
 						Data:  []byte("foobar"),
 					}}},
 			cfg: static.NpmProvider{Packages: []static.NpmPackage{{Name: "foo"}}},
-			test: func(t *testing.T, files map[string]file) {
-				require.Len(t, files, 1)
-				require.Equal(t, "foobar", files["/node_modules/foo/foo.txt"].data)
+			test: func(t *testing.T, configs map[string]*dynamic.Config) {
+				require.Len(t, configs, 1)
+				require.Equal(t, []byte("foobar"), configs["/node_modules/foo/foo.txt"].Raw)
 			},
 		},
 		{
@@ -101,9 +106,9 @@ func TestNpmProvider(t *testing.T) {
 				GlobalFolders: []string{root + "bar/node_modules"},
 				Packages:      []static.NpmPackage{{Name: "foo"}},
 			},
-			test: func(t *testing.T, files map[string]file) {
-				require.Len(t, files, 1)
-				require.Equal(t, "foobar", files["/bar/node_modules/foo/foo.txt"].data)
+			test: func(t *testing.T, configs map[string]*dynamic.Config) {
+				require.Len(t, configs, 1)
+				require.Equal(t, []byte("foobar"), configs["/bar/node_modules/foo/foo.txt"].Raw)
 			},
 		},
 		{
@@ -139,10 +144,10 @@ func TestNpmProvider(t *testing.T) {
 				{Name: "foo"},
 				{Name: "bar"},
 			}},
-			test: func(t *testing.T, files map[string]file) {
-				require.Len(t, files, 2)
-				require.Equal(t, "foobar", files["/node_modules/foo/foo.txt"].data)
-				require.Equal(t, "bar", files["/node_modules/bar/bar.txt"].data)
+			test: func(t *testing.T, configs map[string]*dynamic.Config) {
+				require.Len(t, configs, 2)
+				require.Equal(t, []byte("foobar"), configs["/node_modules/foo/foo.txt"].Raw)
+				require.Equal(t, []byte("bar"), configs["/node_modules/bar/bar.txt"].Raw)
 			},
 		},
 		{
@@ -178,10 +183,10 @@ func TestNpmProvider(t *testing.T) {
 				{Name: "foo"},
 				{Name: "bar"},
 			}},
-			test: func(t *testing.T, files map[string]file) {
-				require.Len(t, files, 2)
-				require.Equal(t, "foobar", files["/node_modules/foo/foo.txt"].data)
-				require.Equal(t, "bar", files["/foo/node_modules/bar/bar.txt"].data)
+			test: func(t *testing.T, configs map[string]*dynamic.Config) {
+				require.Len(t, configs, 2)
+				require.Equal(t, []byte("foobar"), configs["/node_modules/foo/foo.txt"].Raw)
+				require.Equal(t, []byte("bar"), configs["/foo/node_modules/bar/bar.txt"].Raw)
 			},
 		},
 		{
@@ -215,9 +220,9 @@ func TestNpmProvider(t *testing.T) {
 					Files: []string{"foo.txt"},
 				},
 			}},
-			test: func(t *testing.T, files map[string]file) {
-				require.Len(t, files, 1)
-				require.Equal(t, "foobar", files["/node_modules/foo/foo.txt"].data)
+			test: func(t *testing.T, configs map[string]*dynamic.Config) {
+				require.Len(t, configs, 1)
+				require.Equal(t, []byte("foobar"), configs["/node_modules/foo/foo.txt"].Raw)
 			},
 		},
 		{
@@ -264,9 +269,9 @@ func TestNpmProvider(t *testing.T) {
 					Include: []string{"dist/**/*.json"},
 				},
 			}},
-			test: func(t *testing.T, files map[string]file) {
-				require.Len(t, files, 1)
-				require.Equal(t, "{}", files["/node_modules/foo/dist/openapi/foo.json"].data)
+			test: func(t *testing.T, configs map[string]*dynamic.Config) {
+				require.Len(t, configs, 1)
+				require.Equal(t, []byte("{}"), configs["/node_modules/foo/dist/openapi/foo.json"].Raw)
 			},
 		},
 	}
@@ -287,7 +292,7 @@ func TestNpmProvider(t *testing.T) {
 			err := p.Start(ch, pool)
 			require.NoError(t, err)
 
-			files := map[string]file{}
+			configs := map[string]*dynamic.Config{}
 		Collect:
 			for {
 				select {
@@ -298,13 +303,13 @@ func TestNpmProvider(t *testing.T) {
 						path = strings.ReplaceAll(path, "\\", "/")
 						path = strings.ReplaceAll(path, "C:/", "/")
 					}
-					files[path] = file{path, string(c.Raw)}
+					configs[path] = c
 				case <-time.After(time.Second):
 					break Collect
 				}
 			}
 
-			tc.test(t, files)
+			tc.test(t, configs)
 		})
 	}
 }

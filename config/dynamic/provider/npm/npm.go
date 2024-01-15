@@ -103,6 +103,14 @@ func (p *Provider) forward(ch chan *dynamic.Config, ctx context.Context) {
 					if skip(relative, pkg) {
 						continue
 					}
+
+					info := dynamic.ConfigInfo{
+						Provider: "npm",
+						Url:      c.Info.Url,
+						Time:     c.Info.Time,
+					}
+					dynamic.Wrap(info, c)
+
 					ch <- c
 				}
 			}

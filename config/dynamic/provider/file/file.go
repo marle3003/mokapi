@@ -216,9 +216,18 @@ func (p *Provider) readFile(path string) (*dynamic.Config, error) {
 		return nil, err
 	}
 
+	stats, err := p.fs.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+
 	return &dynamic.Config{
-		Info: dynamic.ConfigInfo{Url: u, Provider: "file", Checksum: h.Sum(nil)},
-		Raw:  data,
+		Info: dynamic.ConfigInfo{
+			Url: u, Provider: "file",
+			Checksum: h.Sum(nil),
+			Time:     stats.ModTime(),
+		},
+		Raw: data,
 	}, nil
 }
 

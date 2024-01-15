@@ -95,9 +95,3 @@ declare interface Action {
 }
 
 declare interface Tags {[key: string]: string}
-
-declare interface Config {
-    id: string
-    url: string
-    time: string
-}

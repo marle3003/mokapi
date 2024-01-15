@@ -95,10 +95,12 @@ func TestProvider_Start(t *testing.T) {
 			test: func(t *testing.T, url string, ch chan *dynamic.Config, hook *test.Hook, err error) {
 				require.NoError(t, err)
 				timeout := time.After(time.Second)
+				var modTime time.Time
 				select {
 				case c := <-ch:
 					require.Equal(t, url, c.Info.Url.String())
 					require.Equal(t, "foobar", string(c.Raw))
+					modTime = c.Info.Time
 				case <-timeout:
 					t.Fatal("timeout while waiting for http event")
 					return
@@ -108,6 +110,7 @@ func TestProvider_Start(t *testing.T) {
 				case c := <-ch:
 					require.Equal(t, url, c.Info.Url.String())
 					require.Equal(t, "success", string(c.Raw))
+					require.True(t, c.Info.Time.After(modTime), "time of update must be after")
 				case <-timeout:
 					t.Fatal("timeout while waiting for http event")
 					return

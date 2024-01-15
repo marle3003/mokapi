@@ -11,9 +11,10 @@ import (
 )
 
 type Entry struct {
-	Name  string
-	IsDir bool
-	Data  []byte
+	Name    string
+	IsDir   bool
+	Data    []byte
+	ModTime time.Time
 }
 
 type MockFS struct {
@@ -104,7 +105,7 @@ func (f *fileInfo) Mode() os.FileMode {
 }
 
 func (f *fileInfo) ModTime() time.Time {
-	return time.Now()
+	return f.entry.ModTime
 }
 
 func (f *fileInfo) Sys() any {

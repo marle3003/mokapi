@@ -185,8 +185,12 @@ func (p *Provider) readUrl(u *url.URL) (c *dynamic.Config, changed bool, err err
 	changed = true
 	p.files[u.String()] = hash.Sum64()
 	c = &dynamic.Config{
-		Info: dynamic.ConfigInfo{Url: u, Provider: "http"},
-		Raw:  b,
+		Info: dynamic.ConfigInfo{
+			Url:      u,
+			Provider: "http",
+			Time:     time.Now(),
+		},
+		Raw: b,
 	}
 
 	return

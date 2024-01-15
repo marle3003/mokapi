@@ -16,7 +16,22 @@ import (
 	"time"
 )
 
-var gitFiles = map[string]struct{}{"LICENSE": {}, "README.md": {}, "models.yml": {}, "openapi.yml": {}}
+var gitFiles = map[string]struct {
+	time time.Time
+}{
+	"LICENSE":     {time: mustTime("2021-06-18T10:38:11Z")},
+	"README.md":   {time: mustTime("2021-06-18T10:38:11Z")},
+	"models.yml":  {time: mustTime("2021-06-22T17:02:57Z")},
+	"openapi.yml": {time: mustTime("2021-06-22T17:02:57Z")},
+}
+
+func mustTime(s string) time.Time {
+	d, err := time.Parse(time.RFC3339, s)
+	if err != nil {
+		panic(err)
+	}
+	return d
+}
 
 func TestGit(t *testing.T) {
 	g := New(static.GitProvider{Url: "https://github.com/marle3003/mokapi-example.git"})
@@ -36,10 +51,11 @@ Stop:
 		case c := <-ch:
 			i++
 			name := filepath.Base(c.Info.Inner().Url.String())
-			_, ok := gitFiles[name]
+			f, ok := gitFiles[name]
 			assert.True(t, ok)
 			require.Equal(t, "git", c.Info.Provider)
 			require.Equal(t, "https://github.com/marle3003/mokapi-example.git?file=/"+name, c.Info.Path())
+			require.Equal(t, f.time, c.Info.Time.UTC())
 		}
 	}
 	require.Len(t, gitFiles, i)

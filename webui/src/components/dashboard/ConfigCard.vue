@@ -26,12 +26,14 @@ function showConfig(config: Config, newTab: boolean){
               <thead>
                   <tr>
                       <th scope="col" class="text-left">URL</th>
+                      <th scope="col" class="text-left">Provider</th>
                       <th scope="col" class="text-left">Last Update</th>
                   </tr>
               </thead>
               <tbody>
                   <tr v-for="config in service.configs" :key="config.url" @mousedown.left="showConfig(config, false)" @mousedown.middle="showConfig(config, true)">
                       <td>{{ config.url }}</td>
+                      <td>{{ config.provider }}</td>
                       <td>{{ format(config.time) }}</td>
                   </tr>
               </tbody>
