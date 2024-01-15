@@ -81,7 +81,7 @@ func TestHandler_Config(t *testing.T) {
 			test: []try.ResponseCondition{
 				try.HasStatusCode(http.StatusOK),
 				try.HasHeader("Last-Modified", "Fri, 22 Dec 2023 13:01:30 GMT"),
-				try.HasHeader("Content-Type", "text/plain"),
+				try.HasHeader("Content-Type", "application/json"),
 				try.HasBody(`{"foo": "bar"}`),
 			},
 		},
