@@ -29,6 +29,10 @@ const { format, duration } = usePrettyDates()
 const { formatStatusCode } = usePrettyHttp()
 
 function goToRequest(event: ServiceEvent){
+    if (getSelection()?.toString()) {
+        return
+    }
+
     router.push({
         name: 'httpRequest',
         params: {id: event.id},

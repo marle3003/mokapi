@@ -248,3 +248,9 @@ paths:
             text/plain:
               schema:
                 type: string
+        "404":
+          description: config not found
+          content:
+            text/plain:
+              schema:
+                type: string

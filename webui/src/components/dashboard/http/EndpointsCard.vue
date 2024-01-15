@@ -27,6 +27,10 @@ function comparePath(p1: HttpPath, p2: HttpPath) {
 }
 
 function goToPath(path: HttpPath){
+    if (getSelection()?.toString()) {
+        return
+    }
+
     router.push(route.path(props.service, path))
 }
 function goToOperation(path: HttpPath, operation: HttpOperation){

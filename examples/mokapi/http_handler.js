@@ -5,6 +5,9 @@ import { server as smtpServers, mails, mailEvents, getMail, getAttachment } from
 import { server as ldapServers, searches } from 'ldap.js'
 import { metrics } from 'metrics.js'
 import { fake } from 'mokapi/faker'
+import { get } from 'mokapi/http'
+
+const configs = {}
 
 export default function() {
     on('http', function(request, response) {
@@ -73,10 +76,21 @@ export default function() {
                 response.data = fake(request.body)
                 return true
             case 'config':
-                response.data = 'Hello World'
-                return true
+                const config = configs[request.path.id]
+                if (config) {
+                    response.data = config
+                    return true
+                } else {
+                    response.statusCode = 404
+                    response.data = ''
+                    return true
+                }
         }
     }, {tags: {name: "dashboard"}})
+
+    // following code can not be used inside http handler. It would call same handler and run in a deadlock
+    const r = get('http://localhost:8090/api/services/http/Swagger%20Petstore')
+    configs['b6fea8ac-56c7-4e73-a9c0-6887640bdca8'] = r.body
 }
 
 function getServices() {

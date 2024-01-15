@@ -10,6 +10,11 @@ defineProps({
 const { format } = usePrettyDates()
 
 function showConfig(config: Config, newTab: boolean){
+  const selection = getSelection()?.toString()
+  if (selection) {
+    return
+  }
+
   if (newTab) {
     window.open(transformPath(`/api/configs/${config.id}`))
   } else {
@@ -31,7 +36,7 @@ function showConfig(config: Config, newTab: boolean){
                   </tr>
               </thead>
               <tbody>
-                  <tr v-for="config in service.configs" :key="config.url" @mousedown.left="showConfig(config, false)" @mousedown.middle="showConfig(config, true)">
+                  <tr v-for="config in service.configs" :key="config.url" @mouseup.left="showConfig(config, false)" @mousedown.middle="showConfig(config, true)">
                       <td>{{ config.url }}</td>
                       <td>{{ config.provider }}</td>
                       <td>{{ format(config.time) }}</td>
