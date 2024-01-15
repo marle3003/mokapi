@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/config/dynamic/openapi/openapitest"
 	"mokapi/config/dynamic/openapi/parameter"
@@ -238,9 +239,9 @@ func TestHeader_Parse(t *testing.T) {
 		{
 			name: "reference is nil",
 			test: func(t *testing.T) {
-				reader := &testReader{readFunc: func(cfg *common.Config) error {
-					return nil
-				}}
+				reader := dynamictest.ReaderFunc(func(_ *url.URL, _ any) (*dynamic.Config, error) {
+					return nil, nil
+				})
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithPath("/foo", openapitest.NewPath(
 						openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
@@ -249,16 +250,16 @@ func TestHeader_Parse(t *testing.T) {
 							))),
 					)),
 				)
-				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
+				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
 			},
 		},
 		{
 			name: "header",
 			test: func(t *testing.T) {
-				reader := &testReader{readFunc: func(cfg *common.Config) error {
-					return nil
-				}}
+				reader := dynamictest.ReaderFunc(func(_ *url.URL, _ any) (*dynamic.Config, error) {
+					return nil, nil
+				})
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithPath("/foo", openapitest.NewPath(
 						openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
@@ -267,7 +268,7 @@ func TestHeader_Parse(t *testing.T) {
 							))),
 					)),
 				)
-				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
+				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
 				h := config.Paths["/foo"].Value.Get.Responses.GetResponse(http.StatusOK).Headers["foo"]
 				require.Equal(t, "foo description", h.Value.Description)
@@ -276,9 +277,9 @@ func TestHeader_Parse(t *testing.T) {
 		{
 			name: "error by resolving example ref",
 			test: func(t *testing.T) {
-				reader := &testReader{readFunc: func(cfg *common.Config) error {
-					return fmt.Errorf("TEST ERROR")
-				}}
+				reader := dynamictest.ReaderFunc(func(_ *url.URL, _ any) (*dynamic.Config, error) {
+					return nil, fmt.Errorf("TEST ERROR")
+				})
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithPath("/foo", openapitest.NewPath(
 						openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
@@ -287,7 +288,7 @@ func TestHeader_Parse(t *testing.T) {
 							))),
 					)),
 				)
-				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
+				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'GET' failed: parse response '200' failed: parse header 'foo' failed: resolve reference 'foo' failed: TEST ERROR")
 			},
 		},

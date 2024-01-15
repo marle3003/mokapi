@@ -2,7 +2,7 @@ package runtime
 
 import (
 	"context"
-	cfg "mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/directory"
 	engine "mokapi/engine/common"
 	"mokapi/ldap"
@@ -23,7 +23,7 @@ type ldapHandler struct {
 	next ldap.Handler
 }
 
-func NewLdapInfo(c *cfg.Config, emitter engine.EventEmitter) *LdapInfo {
+func NewLdapInfo(c *dynamic.Config, emitter engine.EventEmitter) *LdapInfo {
 	li := &LdapInfo{
 		configs:      map[string]*directory.Config{},
 		eventEmitter: emitter,
@@ -32,7 +32,7 @@ func NewLdapInfo(c *cfg.Config, emitter engine.EventEmitter) *LdapInfo {
 	return li
 }
 
-func (c *LdapInfo) AddConfig(config *cfg.Config) {
+func (c *LdapInfo) AddConfig(config *dynamic.Config) {
 	lc := config.Data.(*directory.Config)
 	key := config.Info.Url.String()
 	c.configs[key] = lc
@@ -71,7 +71,7 @@ func (h *ldapHandler) ServeLDAP(rw ldap.ResponseWriter, r *ldap.Request) {
 
 }
 
-func IsLdapConfig(c *cfg.Config) bool {
+func IsLdapConfig(c *dynamic.Config) bool {
 	_, ok := c.Data.(*directory.Config)
 	return ok
 }

@@ -49,122 +49,181 @@ func TestGenerator(t *testing.T) {
 }
 
 func TestGeneratorString(t *testing.T) {
-	testdata := []struct {
+	testcases := []struct {
 		name   string
-		exp    interface{}
 		schema *schema.Schema
+		test   func(v interface{}, err error)
 	}{
 		{
-			"nil",
-			nil,
-			schematest.New(""),
+			name:   "nil",
+			schema: schematest.New(""),
+			test: func(v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, nil, v)
+			},
 		},
 		{
-			"string",
-			"xid1UOwQ;",
-			&schema.Schema{Type: "string"},
+			name:   "string",
+			schema: &schema.Schema{Type: "string"},
+			test: func(v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "xid1UOwQ;", v)
+			},
 		},
 		{
-			"by pattern",
-			"013-64-5994",
-			&schema.Schema{Type: "string", Pattern: "^\\d{3}-\\d{2}-\\d{4}$"},
+			name:   "by pattern",
+			schema: &schema.Schema{Type: "string", Pattern: "^\\d{3}-\\d{2}-\\d{4}$"},
+			test: func(v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "013-64-5994", v)
+			},
 		},
 		{
-			"date",
-			"1953-01-24",
-			&schema.Schema{Type: "string", Format: "date"},
+			name:   "date",
+			schema: &schema.Schema{Type: "string", Format: "date"},
+			test: func(v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "1915-01-24", v)
+			},
 		},
 		{
-			"date-time",
-			"1953-01-24T13:00:35Z",
-			&schema.Schema{Type: "string", Format: "date-time"},
+			name:   "date-time",
+			schema: &schema.Schema{Type: "string", Format: "date-time"},
+			test: func(v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "1915-01-24T13:00:35Z", v)
+			},
 		},
 		{
-			"password",
-			"H|$9lb{J<+S;",
-			&schema.Schema{Type: "string", Format: "password"},
+			name:   "password",
+			schema: &schema.Schema{Type: "string", Format: "password"},
+			test: func(v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "H|$9lb{J<+S;", v)
+			},
 		},
 		{
-			"email",
-			"markusmoen@pagac.net",
-			&schema.Schema{Type: "string", Format: "email"},
+			name:   "email",
+			schema: &schema.Schema{Type: "string", Format: "email"},
+			test: func(v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "markusmoen@pagac.net", v)
+			},
 		},
 		{
-			"uuid",
-			"98173564-6619-4557-888e-65b16bb5def5",
-			&schema.Schema{Type: "string", Format: "uuid"},
+			name:   "uuid",
+			schema: &schema.Schema{Type: "string", Format: "uuid"},
+			test: func(v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "98173564-6619-4557-888e-65b16bb5def5", v)
+			},
 		},
 		{
-			"url",
-			"https://www.dynamiciterate.name/target/seamless",
-			&schema.Schema{Type: "string", Format: "{url}"},
+			name:   "url",
+			schema: &schema.Schema{Type: "string", Format: "{url}"},
+			test: func(v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "https://www.dynamiciterate.name/target/seamless", v)
+			},
 		},
 		{
-			"hostname",
-			"centraltarget.biz",
-			&schema.Schema{Type: "string", Format: "hostname"},
+			name:   "hostname",
+			schema: &schema.Schema{Type: "string", Format: "hostname"},
+			test: func(v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "centraltarget.biz", v)
+			},
 		},
 		{
-			"ipv4",
-			"152.23.53.100",
-			&schema.Schema{Type: "string", Format: "ipv4"},
+			name:   "ipv4",
+			schema: &schema.Schema{Type: "string", Format: "ipv4"},
+			test: func(v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "152.23.53.100", v)
+			},
 		},
 		{
-			"ipv6",
-			"8898:ee17:bc35:9064:5866:d019:3b95:7857",
-			&schema.Schema{Type: "string", Format: "ipv6"},
+			name:   "ipv6",
+			schema: &schema.Schema{Type: "string", Format: "ipv6"},
+			test: func(v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "8898:ee17:bc35:9064:5866:d019:3b95:7857", v)
+			},
 		},
 		{
-			"beername",
-			"Duvel",
-			&schema.Schema{Type: "string", Format: "{beername}"},
+			name:   "beername",
+			schema: &schema.Schema{Type: "string", Format: "{beername}"},
+			test: func(v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "Duvel", v)
+			},
 		},
 		{
-			"address",
-			"13645 Houston",
-			&schema.Schema{Type: "string", Format: "{zip} {city}"},
+			name:   "address",
+			schema: &schema.Schema{Type: "string", Format: "{zip} {city}"},
+			test: func(v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "13645 Houston", v)
+			},
 		},
 		{
-			"uri",
-			"https://www.dynamiciterate.name/target/seamless",
-			&schema.Schema{Type: "string", Format: "uri"},
+			name:   "uri",
+			schema: &schema.Schema{Type: "string", Format: "uri"},
+			test: func(v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "https://www.dynamiciterate.name/target/seamless", v)
+			},
 		},
 		{
-			"minLength",
-			"xid1UOwQ;ezYvmtLRfvHgpevUwYR5rljgm",
-			&schema.Schema{Type: "string", MinLength: toIntP(25)},
+			name:   "minLength",
+			schema: &schema.Schema{Type: "string", MinLength: toIntP(25)},
+			test: func(v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "xid1UOwQ;ezYvmtLRfvHgpevUwYR5rljgm", v)
+			},
 		},
 		{
-			"maxLength",
-			"",
-			&schema.Schema{Type: "string", MaxLength: toIntP(4)},
+			name:   "maxLength",
+			schema: &schema.Schema{Type: "string", MaxLength: toIntP(4)},
+			test: func(v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "", v)
+			},
 		},
 		{
-			"maxLength",
-			"xid1UOwQ;ez",
-			&schema.Schema{Type: "string", MaxLength: toIntP(12)},
+			name:   "maxLength",
+			schema: &schema.Schema{Type: "string", MaxLength: toIntP(12)},
+			test: func(v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "xid1UOwQ;ez", v)
+			},
 		},
 		{
-			"minLength with maxLength",
-			"xid1",
-			&schema.Schema{Type: "string", MinLength: toIntP(3), MaxLength: toIntP(6)},
+			name:   "minLength with maxLength",
+			schema: &schema.Schema{Type: "string", MinLength: toIntP(3), MaxLength: toIntP(6)},
+			test: func(v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "xid1", v)
+			},
 		},
 		{
-			"minLength equals maxLength",
-			"SXpo",
-			&schema.Schema{Type: "string", MinLength: toIntP(4), MaxLength: toIntP(4)},
+			name:   "minLength equals maxLength",
+			schema: &schema.Schema{Type: "string", MinLength: toIntP(4), MaxLength: toIntP(4)},
+			test: func(v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "SXpo", v)
+			},
 		},
 	}
 
-	for _, data := range testdata {
-		d := data
-		t.Run(d.name, func(t *testing.T) {
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
 			gofakeit.Seed(11)
 
 			g := schema.NewGenerator()
-			o, err := g.New(&schema.Ref{Value: d.schema})
-			require.NoError(t, err)
-			require.Equal(t, d.exp, o)
+			v, err := g.New(&schema.Ref{Value: tc.schema})
+			tc.test(v, err)
 		})
 	}
 }
@@ -548,16 +607,16 @@ func TestGeneratorObject(t *testing.T) {
 		},
 		{
 			name: "more fields",
-			exp:  `{"id":-1072427943,"date":"1992-12-28"}`,
-			exp1: map[string]interface{}{"id": int32(-1072427943), "date": "1992-12-28"},
+			exp:  `{"id":-1072427943,"date":"1901-12-28"}`,
+			exp1: map[string]interface{}{"id": int32(-1072427943), "date": "1901-12-28"},
 			schema: schematest.New("object",
 				schematest.WithProperty("id", schematest.New("integer", schematest.WithFormat("int32"))),
 				schematest.WithProperty("date", schematest.New("string", schematest.WithFormat("date")))),
 		},
 		{
 			name: "nested",
-			exp:  `{"nested":{"id":-1072427943,"date":"1992-12-28"}}`,
-			exp1: map[string]interface{}{"nested": map[string]interface{}{"id": int32(-1072427943), "date": "1992-12-28"}},
+			exp:  `{"nested":{"id":-1072427943,"date":"1901-12-28"}}`,
+			exp1: map[string]interface{}{"nested": map[string]interface{}{"id": int32(-1072427943), "date": "1901-12-28"}},
 			schema: schematest.New("object",
 				schematest.WithProperty("nested", schematest.New("object",
 					schematest.WithProperty("id", schematest.New("integer", schematest.WithFormat("int32"))),

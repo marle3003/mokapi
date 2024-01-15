@@ -2,7 +2,7 @@ package parameter
 
 import (
 	"fmt"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/openapi/ref"
 	"mokapi/config/dynamic/openapi/schema"
 )
@@ -82,7 +82,7 @@ func (p *Parameter) SetDefaultStyle() {
 	}
 }
 
-func (p Parameters) Parse(config *common.Config, reader common.Reader) error {
+func (p Parameters) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	for index, param := range p {
 		if err := param.Parse(config, reader); err != nil {
 			return fmt.Errorf("parse parameter index '%v' failed: %w", index, err)
@@ -92,13 +92,13 @@ func (p Parameters) Parse(config *common.Config, reader common.Reader) error {
 	return nil
 }
 
-func (r *Ref) Parse(config *common.Config, reader common.Reader) error {
+func (r *Ref) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if r == nil {
 		return nil
 	}
 
 	if len(r.Ref) > 0 && r.Value == nil {
-		return common.Resolve(r.Ref, &r.Value, config, reader)
+		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
 	}
 
 	if r.Value == nil {
@@ -112,6 +112,6 @@ func (r *Ref) Parse(config *common.Config, reader common.Reader) error {
 	return nil
 }
 
-func (p *Parameter) Parse(_ *common.Config, _ common.Reader) error {
+func (p *Parameter) Parse(_ *dynamic.Config, _ dynamic.Reader) error {
 	return nil
 }

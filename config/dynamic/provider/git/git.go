@@ -7,7 +7,7 @@ import (
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	log "github.com/sirupsen/logrus"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/provider/file"
 	"mokapi/config/static"
 	"mokapi/safe"
@@ -76,11 +76,11 @@ func New(config static.GitProvider) *Provider {
 	}
 }
 
-func (p *Provider) Read(_ *url.URL) (*common.Config, error) {
+func (p *Provider) Read(_ *url.URL) (*dynamic.Config, error) {
 	return nil, fmt.Errorf("not supported")
 }
 
-func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
+func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
 	if len(p.repositories) == 0 {
 		return nil
 	}
@@ -133,7 +133,7 @@ func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
 			}
 		}
 
-		chFile := make(chan *common.Config)
+		chFile := make(chan *dynamic.Config)
 		p.startFileProvider(r.localPath, chFile, pool)
 
 		pool.Go(func(ctx context.Context) {
@@ -143,11 +143,11 @@ func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
 					return
 				case c := <-chFile:
 
-					info := common.ConfigInfo{
+					info := dynamic.ConfigInfo{
 						Provider: "git",
 						Url:      getUrl(r, c.Info.Url),
 					}
-					common.Wrap(info, c)
+					dynamic.Wrap(info, c)
 					ch <- c
 				}
 			}
@@ -201,7 +201,7 @@ func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
 	return nil
 }
 
-func (p *Provider) startFileProvider(dir string, ch chan *common.Config, pool *safe.Pool) {
+func (p *Provider) startFileProvider(dir string, ch chan *dynamic.Config, pool *safe.Pool) {
 	f := file.New(static.FileProvider{Directory: dir})
 	f.SkipPrefix = append(f.SkipPrefix, ".git")
 	err := f.Start(ch, pool)

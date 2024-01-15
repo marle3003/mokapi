@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/sortedmap"
 )
 
@@ -14,7 +14,7 @@ type Schemas struct {
 	sortedmap.LinkedHashMap[string, *Ref]
 }
 
-func (s *Schemas) Parse(config *common.Config, reader common.Reader) error {
+func (s *Schemas) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if s == nil {
 		return nil
 	}

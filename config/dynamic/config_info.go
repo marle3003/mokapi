@@ -1,4 +1,4 @@
-package common
+package dynamic
 
 import (
 	"crypto/md5"
@@ -19,6 +19,10 @@ type ConfigInfo struct {
 }
 
 func (ci *ConfigInfo) Path() string {
+	if ci.Url == nil {
+		return ""
+	}
+
 	if len(ci.Url.Opaque) > 0 {
 		return ci.Url.Opaque
 	}

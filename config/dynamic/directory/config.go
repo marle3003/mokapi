@@ -1,14 +1,14 @@
 package directory
 
 import (
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"net/url"
 	"path/filepath"
 	"strings"
 )
 
 func init() {
-	common.Register("ldap", &Config{})
+	dynamic.Register("ldap", &Config{})
 }
 
 const (
@@ -40,7 +40,7 @@ type Entry struct {
 	Attributes map[string][]string
 }
 
-func (c *Config) Parse(config *common.Config, reader common.Reader) error {
+func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	for _, entry := range c.Entries {
 		err := entry.Parse(config, reader)
 		if err != nil {
@@ -57,7 +57,7 @@ func (c *Config) getSizeLimit() int64 {
 	return c.SizeLimit
 }
 
-func (e Entry) Parse(config *common.Config, reader common.Reader) error {
+func (e Entry) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if aList, ok := e.Attributes["thumbnailphoto"]; ok {
 		for i, a := range aList {
 			if !strings.HasPrefix(a, "file:") {
@@ -77,11 +77,12 @@ func (e Entry) Parse(config *common.Config, reader common.Reader) error {
 			if err != nil {
 				continue
 			}
-			f, err := reader.Read(u, common.WithParent(config))
+			f, err := reader.Read(u, nil)
 			if err != nil {
 				return err
 			}
 
+			dynamic.AddRef(config, f)
 			aList[i] = f.Data.(string)
 		}
 	}

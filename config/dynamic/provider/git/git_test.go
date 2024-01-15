@@ -6,7 +6,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/safe"
 	"net/url"
@@ -22,7 +22,7 @@ func TestGit(t *testing.T) {
 	g := New(static.GitProvider{Url: "https://github.com/marle3003/mokapi-example.git"})
 	p := safe.NewPool(context.Background())
 	defer p.Stop()
-	ch := make(chan *common.Config)
+	ch := make(chan *dynamic.Config)
 	err := g.Start(ch, p)
 	require.NoError(t, err)
 
@@ -51,7 +51,7 @@ func TestGit_Branch(t *testing.T) {
 	defer func() {
 		p.Stop()
 	}()
-	ch := make(chan *common.Config)
+	ch := make(chan *dynamic.Config)
 	err := g.Start(ch, p)
 	require.NoError(t, err)
 
@@ -81,12 +81,12 @@ func TestGit_MultipleUrls(t *testing.T) {
 	defer func() {
 		p.Stop()
 	}()
-	ch := make(chan *common.Config)
+	ch := make(chan *dynamic.Config)
 	err := g.Start(ch, p)
 	require.NoError(t, err)
 
 	timeout := time.After(1 * time.Second)
-	files := map[string]*common.Config{}
+	files := map[string]*dynamic.Config{}
 Stop:
 	for {
 		select {
@@ -115,7 +115,7 @@ func testGit_SimpleUrl(t *testing.T) {
 	p := safe.NewPool(context.Background())
 	defer p.Stop()
 
-	ch := make(chan *common.Config)
+	ch := make(chan *dynamic.Config)
 	err := g.Start(ch, p)
 	require.NoError(t, err)
 
@@ -138,7 +138,7 @@ func testGit_SparseUrl(t *testing.T) {
 	p := safe.NewPool(context.Background())
 	defer p.Stop()
 
-	ch := make(chan *common.Config)
+	ch := make(chan *dynamic.Config)
 	err := g.Start(ch, p)
 	require.NoError(t, err)
 

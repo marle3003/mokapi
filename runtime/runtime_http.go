@@ -2,7 +2,7 @@ package runtime
 
 import (
 	log "github.com/sirupsen/logrus"
-	cfg "mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/config/dynamic/swagger"
 	"mokapi/engine/common"
@@ -14,7 +14,7 @@ import (
 
 type HttpInfo struct {
 	*openapi.Config
-	configs map[string]*cfg.Config
+	configs map[string]*dynamic.Config
 }
 
 type httpHandler struct {
@@ -22,15 +22,15 @@ type httpHandler struct {
 	next http.Handler
 }
 
-func NewHttpInfo(c *cfg.Config) *HttpInfo {
+func NewHttpInfo(c *dynamic.Config) *HttpInfo {
 	hc := &HttpInfo{
-		configs: map[string]*cfg.Config{},
+		configs: map[string]*dynamic.Config{},
 	}
 	hc.AddConfig(c)
 	return hc
 }
 
-func (c *HttpInfo) AddConfig(config *cfg.Config) {
+func (c *HttpInfo) AddConfig(config *dynamic.Config) {
 	c.configs[config.Info.Url.String()] = config
 	c.update()
 }
@@ -69,11 +69,11 @@ func (c *HttpInfo) update() {
 	c.Config = r
 }
 
-func (c *HttpInfo) Configs() []*cfg.Config {
-	var r []*cfg.Config
+func (c *HttpInfo) Configs() []*dynamic.Config {
+	var r []*dynamic.Config
 	for _, config := range c.configs {
 		r = append(r, config)
-		r = append(r, config.Refs()...)
+		r = append(r, config.Refs.List()...)
 	}
 	return r
 }
@@ -84,7 +84,7 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	h.next.ServeHTTP(rw, r.WithContext(ctx))
 }
 
-func IsHttpConfig(c *cfg.Config) bool {
+func IsHttpConfig(c *dynamic.Config) bool {
 	switch c.Data.(type) {
 	case *openapi.Config:
 		return true
@@ -95,7 +95,7 @@ func IsHttpConfig(c *cfg.Config) bool {
 	}
 }
 
-func getHttpConfig(c *cfg.Config) *openapi.Config {
+func getHttpConfig(c *dynamic.Config) *openapi.Config {
 	if sw, ok := c.Data.(*swagger.Config); ok {
 		oc, err := swagger.Convert(sw)
 		if err != nil {

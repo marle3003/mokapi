@@ -3,7 +3,7 @@ package npm
 import (
 	"context"
 	"github.com/stretchr/testify/require"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/provider/file/filetest"
 	"mokapi/config/static"
 	"mokapi/safe"
@@ -282,7 +282,7 @@ func TestNpmProvider(t *testing.T) {
 				pool.Stop()
 			})
 
-			ch := make(chan *common.Config)
+			ch := make(chan *dynamic.Config)
 			p := NewFS(tc.cfg, tc.fs)
 			err := p.Start(ch, pool)
 			require.NoError(t, err)

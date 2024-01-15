@@ -1,10 +1,10 @@
-package dynamic
+package server
 
 import (
 	"context"
 	"fmt"
 	"github.com/stretchr/testify/require"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/safe"
 	"net/url"
@@ -15,54 +15,54 @@ import (
 func TestConfigWatcher_Read(t *testing.T) {
 	testcases := []struct {
 		name string
-		f    func(t *testing.T)
+		test func(t *testing.T)
 	}{
 		{
 			name: "no provider",
-			f: func(t *testing.T) {
+			test: func(t *testing.T) {
 				w := NewConfigWatcher(&static.Config{})
 				u := mustParse("file.yml")
-				c, err := w.Read(u)
+				c, err := w.Read(u, nil)
 				require.EqualError(t, err, "unsupported scheme: file.yml")
 				require.Nil(t, c)
 			},
 		},
 		{
 			name: "with provider",
-			f: func(t *testing.T) {
+			test: func(t *testing.T) {
 				w := NewConfigWatcher(&static.Config{})
 				configPath := mustParse("file.yml")
 				configPath.Scheme = "foo"
 				w.providers["foo"] = &testprovider{
-					read: func(u *url.URL) (*common.Config, error) {
+					read: func(u *url.URL) (*dynamic.Config, error) {
 						require.Equal(t, configPath, u)
-						return common.NewConfig(common.ConfigInfo{Url: u}), nil
+						return &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}}, nil
 					},
 				}
 
-				c, err := w.Read(configPath)
+				c, err := w.Read(configPath, nil)
 				require.NoError(t, err)
 				require.Equal(t, configPath, c.Info.Url)
 			},
 		},
 		{
 			name: "read twice",
-			f: func(t *testing.T) {
+			test: func(t *testing.T) {
 				w := NewConfigWatcher(&static.Config{})
 				configPath := mustParse("file.yml")
 				configPath.Scheme = "foo"
 				w.providers["foo"] = &testprovider{
-					read: func(u *url.URL) (*common.Config, error) {
+					read: func(u *url.URL) (*dynamic.Config, error) {
 						require.Equal(t, configPath, u)
-						return common.NewConfig(common.ConfigInfo{Url: u}), nil
+						return &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}}, nil
 					},
 				}
 
-				c1, err := w.Read(configPath)
+				c1, err := w.Read(configPath, nil)
 				require.NoError(t, err)
 				require.Equal(t, configPath, c1.Info.Url)
 
-				c2, err := w.Read(configPath)
+				c2, err := w.Read(configPath, nil)
 				require.NoError(t, err)
 				require.Equal(t, configPath, c2.Info.Url)
 				require.True(t, c1 == c2, "should be same reference")
@@ -70,35 +70,35 @@ func TestConfigWatcher_Read(t *testing.T) {
 		},
 		{
 			name: "provider read error",
-			f: func(t *testing.T) {
+			test: func(t *testing.T) {
 				w := NewConfigWatcher(&static.Config{})
 				configPath := mustParse("file.yml")
 				configPath.Scheme = "foo"
 				w.providers["foo"] = &testprovider{
-					read: func(u *url.URL) (*common.Config, error) {
+					read: func(u *url.URL) (*dynamic.Config, error) {
 						require.Equal(t, configPath, u)
 						return nil, fmt.Errorf("TEST ERROR")
 					},
 				}
 
-				c, err := w.Read(configPath)
+				c, err := w.Read(configPath, nil)
 				require.EqualError(t, err, "TEST ERROR")
 				require.Nil(t, c)
 			},
 		},
 		{
 			name: "file changed after read",
-			f: func(t *testing.T) {
+			test: func(t *testing.T) {
 				w := NewConfigWatcher(&static.Config{})
 				configPath := mustParse("foo://file.yml")
-				var ch chan *common.Config
+				var ch chan *dynamic.Config
 				w.providers["foo"] = &testprovider{
-					read: func(u *url.URL) (*common.Config, error) {
-						c := common.NewConfig(common.ConfigInfo{Url: u})
+					read: func(u *url.URL) (*dynamic.Config, error) {
+						c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}}
 						c.Info.Checksum = []byte{1}
 						return c, nil
 					},
-					start: func(configs chan *common.Config, pool *safe.Pool) error {
+					start: func(configs chan *dynamic.Config, pool *safe.Pool) error {
 						ch = configs
 						return nil
 					},
@@ -107,26 +107,26 @@ func TestConfigWatcher_Read(t *testing.T) {
 				w.Start(pool)
 				defer pool.Stop()
 
-				c, err := w.Read(configPath)
+				c, err := w.Read(configPath, nil)
 				require.NoError(t, err)
 				require.NotNil(t, c)
 
-				ch <- &common.Config{Info: common.ConfigInfo{Url: configPath, Checksum: []byte{10}}, Raw: []byte("foobar")}
+				ch <- &dynamic.Config{Info: dynamic.ConfigInfo{Url: configPath, Checksum: []byte{10}}, Raw: []byte("foobar")}
 				time.Sleep(5 * time.Millisecond)
 				require.Equal(t, "foobar", c.Data)
 			},
 		},
 		{
 			name: "read after file changed",
-			f: func(t *testing.T) {
+			test: func(t *testing.T) {
 				w := NewConfigWatcher(&static.Config{})
 				configPath := mustParse("foo://file.yml")
-				var ch chan *common.Config
+				var ch chan *dynamic.Config
 				w.providers["foo"] = &testprovider{
-					read: func(u *url.URL) (*common.Config, error) {
-						return &common.Config{Info: common.ConfigInfo{Url: u}}, nil
+					read: func(u *url.URL) (*dynamic.Config, error) {
+						return &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}}, nil
 					},
-					start: func(configs chan *common.Config, pool *safe.Pool) error {
+					start: func(configs chan *dynamic.Config, pool *safe.Pool) error {
 						ch = configs
 						return nil
 					},
@@ -135,10 +135,10 @@ func TestConfigWatcher_Read(t *testing.T) {
 				w.Start(pool)
 				defer pool.Stop()
 
-				ch <- &common.Config{Info: common.ConfigInfo{Url: configPath}, Raw: []byte("foobar")}
+				ch <- &dynamic.Config{Info: dynamic.ConfigInfo{Url: configPath}, Raw: []byte("foobar")}
 				time.Sleep(time.Duration(100) * time.Millisecond)
 
-				c, err := w.Read(configPath)
+				c, err := w.Read(configPath, nil)
 				require.NoError(t, err)
 				require.NotNil(t, c)
 				require.Equal(t, "foobar", c.Data)
@@ -146,24 +146,65 @@ func TestConfigWatcher_Read(t *testing.T) {
 		},
 		{
 			name: "config parse error",
-			f: func(t *testing.T) {
+			test: func(t *testing.T) {
 				w := NewConfigWatcher(&static.Config{})
 				configPath := mustParse("file.yml")
 				configPath.Scheme = "foo"
 				w.providers["foo"] = &testprovider{
-					read: func(u *url.URL) (*common.Config, error) {
+					read: func(u *url.URL) (*dynamic.Config, error) {
 						require.Equal(t, configPath, u)
-						return &common.Config{Info: common.ConfigInfo{Url: u}, Data: &data{
-							parse: func(config *common.Config, reader common.Reader) error {
+						return &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}, Data: &data{
+							parse: func(config *dynamic.Config, reader dynamic.Reader) error {
 								return fmt.Errorf("TEST ERROR")
 							},
 						}}, nil
 					},
 				}
 
-				c, err := w.Read(configPath)
+				c, err := w.Read(configPath, nil)
 				require.EqualError(t, err, "parsing file foo://file.yml: TEST ERROR")
 				require.Nil(t, c)
+			},
+		},
+		{
+			name: "reading while parsing",
+			test: func(t *testing.T) {
+				w := NewConfigWatcher(&static.Config{})
+				configPath := mustParse("file.yml")
+				configPath.Scheme = "foo"
+				w.providers["foo"] = &testprovider{
+					read: func(u *url.URL) (*dynamic.Config, error) {
+						require.Equal(t, configPath, u)
+						return &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}, Data: &data{
+							parse: func(config *dynamic.Config, reader dynamic.Reader) error {
+								config.Data = "foo"
+								time.Sleep(5 * time.Second)
+								return nil
+							},
+						}}, nil
+					},
+				}
+
+				ch := make(chan interface{}, 2)
+
+				go func() {
+					c1, err := w.Read(configPath, nil)
+					require.NoError(t, err)
+					require.Equal(t, configPath, c1.Info.Url)
+					ch <- c1.Data
+				}()
+
+				go func() {
+					c1, err := w.Read(configPath, nil)
+					require.NoError(t, err)
+					require.Equal(t, configPath, c1.Info.Url)
+					ch <- c1.Data
+				}()
+
+				i1 := <-ch
+				i2 := <-ch
+
+				require.True(t, i1 == i2, "should be same reference")
 			},
 		},
 	}
@@ -171,7 +212,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			tc.f(t)
+			tc.test(t)
 		})
 	}
 }
@@ -197,7 +238,7 @@ func TestConfigWatcher_Start(t *testing.T) {
 			f: func(t *testing.T) {
 				w := NewConfigWatcher(&static.Config{})
 				pool := safe.NewPool(context.Background())
-				w.providers["foo"] = &testprovider{start: func(configs chan *common.Config, pool *safe.Pool) error {
+				w.providers["foo"] = &testprovider{start: func(configs chan *dynamic.Config, pool *safe.Pool) error {
 					return fmt.Errorf("TEST ERROR")
 				}}
 
@@ -210,12 +251,12 @@ func TestConfigWatcher_Start(t *testing.T) {
 			name: "closing",
 			f: func(t *testing.T) {
 				w := NewConfigWatcher(&static.Config{})
-				var listenerReceived []*common.Config
-				w.AddListener(func(config *common.Config) {
+				var listenerReceived []*dynamic.Config
+				w.AddListener(func(config *dynamic.Config) {
 					listenerReceived = append(listenerReceived, config)
 				})
-				var ch chan *common.Config
-				w.providers["foo"] = &testprovider{start: func(configs chan *common.Config, pool *safe.Pool) error {
+				var ch chan *dynamic.Config
+				w.providers["foo"] = &testprovider{start: func(configs chan *dynamic.Config, pool *safe.Pool) error {
 					ch = configs
 					return nil
 				}}
@@ -223,7 +264,7 @@ func TestConfigWatcher_Start(t *testing.T) {
 				err := w.Start(pool)
 				require.NoError(t, err)
 
-				ch <- &common.Config{Info: common.ConfigInfo{Url: mustParse("foo.yml")}}
+				ch <- &dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("foo.yml")}}
 				time.Sleep(time.Duration(100) * time.Millisecond)
 
 				require.Len(t, listenerReceived, 1)
@@ -234,7 +275,7 @@ func TestConfigWatcher_Start(t *testing.T) {
 						err := recover()
 						require.Equal(t, err.(error).Error(), "send on closed channel")
 					}()
-					ch <- &common.Config{Info: common.ConfigInfo{Url: mustParse("foo.yml")}}
+					ch <- &dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("foo.yml")}}
 				}()
 			},
 		},
@@ -324,29 +365,29 @@ func TestConfigWatcher_New(t *testing.T) {
 }
 
 type data struct {
-	parse func(config *common.Config, reader common.Reader) error
+	parse func(config *dynamic.Config, reader dynamic.Reader) error
 }
 
 type testprovider struct {
-	read  func(u *url.URL) (*common.Config, error)
-	start func(chan *common.Config, *safe.Pool) error
+	read  func(u *url.URL) (*dynamic.Config, error)
+	start func(chan *dynamic.Config, *safe.Pool) error
 }
 
-func (d *data) Parse(config *common.Config, reader common.Reader) error {
+func (d *data) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if d.parse != nil {
 		return d.parse(config, reader)
 	}
 	return nil
 }
 
-func (p *testprovider) Read(u *url.URL) (*common.Config, error) {
+func (p *testprovider) Read(u *url.URL) (*dynamic.Config, error) {
 	if p.read != nil {
 		return p.read(u)
 	}
 	return nil, nil
 }
 
-func (p *testprovider) Start(ch chan *common.Config, pool *safe.Pool) error {
+func (p *testprovider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
 	if p.start != nil {
 		return p.start(ch, pool)
 	}

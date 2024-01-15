@@ -2,9 +2,9 @@ package runtime
 
 import (
 	"github.com/stretchr/testify/require"
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
-	"mokapi/config/dynamic/common"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/apiVersion"
@@ -53,9 +53,9 @@ func TestKafkaHandler(t *testing.T) {
 	h.ServeMessage(kafkatest.NewRecorder(), kafkatest.NewRequest("", 1.0, &apiVersion.Request{}))
 }
 
-func getConfig(c *asyncApi.Config) *common.Config {
+func getConfig(c *asyncApi.Config) *dynamic.Config {
 	u, _ := url.Parse("foo.bar")
-	cfg := &common.Config{Data: c}
+	cfg := &dynamic.Config{Data: c}
 	cfg.Info.Url = u
 	return cfg
 }

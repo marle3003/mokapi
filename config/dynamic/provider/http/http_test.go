@@ -7,7 +7,7 @@ import (
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
 	"io"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/config/tls"
 	"mokapi/safe"
@@ -21,7 +21,7 @@ func TestProvider_Start(t *testing.T) {
 	testcases := []struct {
 		name string
 		init func() (static.HttpProvider, *httptest.Server)
-		test func(t *testing.T, url string, ch chan *common.Config, hook *test.Hook, err error)
+		test func(t *testing.T, url string, ch chan *dynamic.Config, hook *test.Hook, err error)
 	}{
 		{
 			name: "invalid url",
@@ -34,7 +34,7 @@ func TestProvider_Start(t *testing.T) {
 
 				return cfg, server
 			},
-			test: func(t *testing.T, url string, ch chan *common.Config, hook *test.Hook, err error) {
+			test: func(t *testing.T, url string, ch chan *dynamic.Config, hook *test.Hook, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "invalid url: parse \":80\": missing protocol scheme", hook.LastEntry().Message)
 			},
@@ -51,7 +51,7 @@ func TestProvider_Start(t *testing.T) {
 
 				return cfg, server
 			},
-			test: func(t *testing.T, url string, ch chan *common.Config, hook *test.Hook, err error) {
+			test: func(t *testing.T, url string, ch chan *dynamic.Config, hook *test.Hook, err error) {
 				require.EqualError(t, err, "unable to parse interval \":8\": time: invalid duration \":8\"")
 			},
 		},
@@ -68,7 +68,7 @@ func TestProvider_Start(t *testing.T) {
 
 				return cfg, server
 			},
-			test: func(t *testing.T, url string, ch chan *common.Config, hook *test.Hook, err error) {
+			test: func(t *testing.T, url string, ch chan *dynamic.Config, hook *test.Hook, err error) {
 				require.NoError(t, err)
 				time.Sleep(1 * time.Second)
 				require.Equal(t, fmt.Sprintf("request to %v failed: received non-ok response code: 400", url), hook.LastEntry().Message)
@@ -92,7 +92,7 @@ func TestProvider_Start(t *testing.T) {
 
 				return cfg, server
 			},
-			test: func(t *testing.T, url string, ch chan *common.Config, hook *test.Hook, err error) {
+			test: func(t *testing.T, url string, ch chan *dynamic.Config, hook *test.Hook, err error) {
 				require.NoError(t, err)
 				timeout := time.After(time.Second)
 				select {
@@ -128,7 +128,7 @@ func TestProvider_Start(t *testing.T) {
 
 				return cfg, server
 			},
-			test: func(t *testing.T, url string, ch chan *common.Config, hook *test.Hook, err error) {
+			test: func(t *testing.T, url string, ch chan *dynamic.Config, hook *test.Hook, err error) {
 				require.NoError(t, err)
 				time.Sleep(6 * time.Second)
 				require.Equal(t, fmt.Sprintf("request to %v failed: request has timed out", url), hook.LastEntry().Message)
@@ -149,7 +149,7 @@ func TestProvider_Start(t *testing.T) {
 
 				return cfg, server
 			},
-			test: func(t *testing.T, url string, ch chan *common.Config, hook *test.Hook, err error) {
+			test: func(t *testing.T, url string, ch chan *dynamic.Config, hook *test.Hook, err error) {
 				require.NoError(t, err)
 				time.Sleep(3 * time.Second)
 				require.Equal(t, fmt.Sprintf("request to %v failed: request has timed out", url), hook.LastEntry().Message)
@@ -169,7 +169,7 @@ func TestProvider_Start(t *testing.T) {
 			pool := safe.NewPool(context.Background())
 			defer pool.Stop()
 			p := New(cfg)
-			ch := make(chan *common.Config)
+			ch := make(chan *dynamic.Config)
 			err := p.Start(ch, pool)
 
 			tc.test(t, cfg.Url, ch, hook, err)
@@ -239,7 +239,7 @@ func TestProxy(t *testing.T) {
 	pool := safe.NewPool(context.Background())
 	defer pool.Stop()
 
-	ch := make(chan *common.Config)
+	ch := make(chan *dynamic.Config)
 	p := New(static.HttpProvider{
 		Url:   "http://foo.bar",
 		Proxy: server.URL,
@@ -248,7 +248,7 @@ func TestProxy(t *testing.T) {
 	require.NoError(t, err)
 
 	timeout := time.After(500 * time.Millisecond)
-	var configs []*common.Config
+	var configs []*dynamic.Config
 Loop:
 	for {
 		select {
@@ -279,13 +279,13 @@ func TestTlsWithCA(t *testing.T) {
 	pool := safe.NewPool(context.Background())
 	defer pool.Stop()
 
-	ch := make(chan *common.Config)
+	ch := make(chan *dynamic.Config)
 	p := New(config)
 	err := p.Start(ch, pool)
 	require.NoError(t, err)
 
 	timeout := time.After(500 * time.Millisecond)
-	var configs []*common.Config
+	var configs []*dynamic.Config
 Loop:
 	for {
 		select {
@@ -316,13 +316,13 @@ func TestTlsWithSkipCertVerification(t *testing.T) {
 	pool := safe.NewPool(context.Background())
 	defer pool.Stop()
 
-	ch := make(chan *common.Config)
+	ch := make(chan *dynamic.Config)
 	p := New(config)
 	err := p.Start(ch, pool)
 	require.NoError(t, err)
 
 	timeout := time.After(500 * time.Millisecond)
-	var configs []*common.Config
+	var configs []*dynamic.Config
 Loop:
 	for {
 		select {
@@ -352,13 +352,13 @@ func TestTlsWithCertError(t *testing.T) {
 
 	hook := test.NewGlobal()
 
-	ch := make(chan *common.Config)
+	ch := make(chan *dynamic.Config)
 	p := New(config)
 	err := p.Start(ch, pool)
 	require.NoError(t, err)
 
 	timeout := time.After(500 * time.Millisecond)
-	var configs []*common.Config
+	var configs []*dynamic.Config
 Loop:
 	for {
 		select {

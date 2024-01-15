@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/mail"
 	engine "mokapi/engine/common"
 	"mokapi/imap"
@@ -36,7 +36,7 @@ func NewSmtpManager(app *runtime.App, eventEmitter engine.EventEmitter, store *c
 	}
 }
 
-func (m *SmtpManager) UpdateConfig(c *common.Config) {
+func (m *SmtpManager) UpdateConfig(c *dynamic.Config) {
 	if !runtime.IsSmtpConfig(c) {
 		return
 	}

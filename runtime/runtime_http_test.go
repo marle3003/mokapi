@@ -2,7 +2,7 @@ package runtime
 
 import (
 	"github.com/stretchr/testify/require"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/config/dynamic/openapi/openapitest"
 	"mokapi/runtime/events"
@@ -43,8 +43,8 @@ func TestApp_AddHttp_Path(t *testing.T) {
 func TestApp_AddHttp_Patching(t *testing.T) {
 	defer events.Reset()
 
-	newConfig := func(name string, c *openapi.Config) *common.Config {
-		cfg := &common.Config{Data: c}
+	newConfig := func(name string, c *openapi.Config) *dynamic.Config {
+		cfg := &dynamic.Config{Data: c}
 		u, _ := url.Parse(name)
 		cfg.Info.Url = u
 		return cfg
@@ -52,12 +52,12 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 
 	testcases := []struct {
 		name    string
-		configs []*common.Config
+		configs []*dynamic.Config
 		test    func(t *testing.T, app *App)
 	}{
 		{
 			name: "overwrite value",
-			configs: []*common.Config{
+			configs: []*dynamic.Config{
 				newConfig("https://mokapi.io/a", openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", "foo"))),
 				newConfig("https://mokapi.io/b", openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", "bar"))),
 			},
@@ -68,7 +68,7 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 		},
 		{
 			name: "a is patched with b",
-			configs: []*common.Config{
+			configs: []*dynamic.Config{
 				newConfig("https://mokapi.io/b", openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", "foo"))),
 				newConfig("https://mokapi.io/a", openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", "bar"))),
 			},
@@ -79,7 +79,7 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 		},
 		{
 			name: "order only by filename",
-			configs: []*common.Config{
+			configs: []*dynamic.Config{
 				newConfig("https://a.io/b", openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", "foo"))),
 				newConfig("https://mokapi.io/a", openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", "bar"))),
 			},
@@ -101,8 +101,8 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 	}
 }
 
-func newConfig(config *openapi.Config) *common.Config {
-	c := &common.Config{Data: config}
+func newConfig(config *openapi.Config) *dynamic.Config {
+	c := &dynamic.Config{Data: config}
 	u, _ := url.Parse("https://mokapi.io")
 	c.Info.Url = u
 	return c

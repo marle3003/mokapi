@@ -3,15 +3,15 @@ package asyncApi
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi/kafka"
-	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/openapi/schema"
 	"net/url"
 	"strconv"
 )
 
 func init() {
-	common.Register("asyncapi", &Config{})
+	dynamic.Register("asyncapi", &Config{})
 }
 
 type Config struct {

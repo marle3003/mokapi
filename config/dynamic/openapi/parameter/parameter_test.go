@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
-	"mokapi/config/dynamic/common"
-	"mokapi/config/dynamic/common/configtest"
+	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/dynamic/openapi/parameter"
 	"mokapi/config/dynamic/openapi/ref"
 	"mokapi/config/dynamic/openapi/schema"
@@ -296,23 +296,24 @@ func TestHeader_Parse(t *testing.T) {
 		{
 			name: "reference is nil",
 			test: func(t *testing.T) {
-				reader := &configtest.Reader{ReadFunc: func(cfg *common.Config) error {
-					return nil
-				}}
+				reader := dynamictest.ReaderFunc(func(_ *url.URL, _ any) (*dynamic.Config, error) {
+					return nil, nil
+				})
 				param := parameter.Parameters{nil}
-				err := param.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(param)), reader)
+				c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: param}
+				err := param.Parse(c, reader)
 				require.NoError(t, err)
 			},
 		},
 		{
 			name: "reference",
 			test: func(t *testing.T) {
-				reader := &configtest.Reader{ReadFunc: func(cfg *common.Config) error {
-					cfg.Data = &parameter.Parameter{Description: "foo"}
-					return nil
-				}}
+				reader := dynamictest.ReaderFunc(func(u *url.URL, _ any) (*dynamic.Config, error) {
+					cfg := &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}, Data: &parameter.Parameter{Description: "foo"}}
+					return cfg, nil
+				})
 				param := parameter.Parameters{&parameter.Ref{Reference: ref.Reference{Ref: "foo.yml"}}}
-				err := param.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(param)), reader)
+				err := param.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: param}, reader)
 				require.NoError(t, err)
 				require.Equal(t, "foo", param[0].Value.Description)
 			},
@@ -320,12 +321,12 @@ func TestHeader_Parse(t *testing.T) {
 		{
 			name: "schema reference",
 			test: func(t *testing.T) {
-				reader := &configtest.Reader{ReadFunc: func(cfg *common.Config) error {
-					cfg.Data = &schema.Schema{Type: "string"}
-					return nil
-				}}
+				reader := dynamictest.ReaderFunc(func(u *url.URL, _ any) (*dynamic.Config, error) {
+					cfg := &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}, Data: &schema.Schema{Type: "string"}}
+					return cfg, nil
+				})
 				param := parameter.Parameters{&parameter.Ref{Value: &parameter.Parameter{Schema: &schema.Ref{Reference: ref.Reference{Ref: "foo.yml"}}}}}
-				err := param.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(param)), reader)
+				err := param.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: param}, reader)
 				require.NoError(t, err)
 				require.Equal(t, "string", param[0].Value.Schema.Value.Type)
 			},
@@ -333,22 +334,22 @@ func TestHeader_Parse(t *testing.T) {
 		{
 			name: "error by resolving example ref",
 			test: func(t *testing.T) {
-				reader := &configtest.Reader{ReadFunc: func(cfg *common.Config) error {
-					return fmt.Errorf("TEST ERROR")
-				}}
+				reader := dynamictest.ReaderFunc(func(_ *url.URL, _ any) (*dynamic.Config, error) {
+					return nil, fmt.Errorf("TEST ERROR")
+				})
 				param := parameter.Parameters{&parameter.Ref{Reference: ref.Reference{Ref: "foo.yml"}}}
-				err := param.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(param)), reader)
+				err := param.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: param}, reader)
 				require.EqualError(t, err, "parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},
 		{
 			name: "error by resolving example ref",
 			test: func(t *testing.T) {
-				reader := &configtest.Reader{ReadFunc: func(cfg *common.Config) error {
-					return fmt.Errorf("TEST ERROR")
-				}}
+				reader := dynamictest.ReaderFunc(func(_ *url.URL, _ any) (*dynamic.Config, error) {
+					return nil, fmt.Errorf("TEST ERROR")
+				})
 				param := parameter.Parameters{&parameter.Ref{Value: &parameter.Parameter{Schema: &schema.Ref{Reference: ref.Reference{Ref: "foo.yml"}}}}}
-				err := param.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(param)), reader)
+				err := param.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: param}, reader)
 				require.EqualError(t, err, "parse parameter index '0' failed: parse schema failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},

@@ -2,7 +2,7 @@ package runtime
 
 import (
 	"context"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/mail"
 	engine "mokapi/engine/common"
 	"mokapi/imap"
@@ -24,7 +24,7 @@ type SmtpInfo struct {
 	configs map[string]*mail.Config
 }
 
-func NewSmtpInfo(c *common.Config) *SmtpInfo {
+func NewSmtpInfo(c *dynamic.Config) *SmtpInfo {
 	si := &SmtpInfo{
 		configs: map[string]*mail.Config{},
 	}
@@ -32,7 +32,7 @@ func NewSmtpInfo(c *common.Config) *SmtpInfo {
 	return si
 }
 
-func (c *SmtpInfo) AddConfig(config *common.Config) {
+func (c *SmtpInfo) AddConfig(config *dynamic.Config) {
 	lc := config.Data.(*mail.Config)
 	key := config.Info.Url.String()
 	c.configs[key] = lc
@@ -83,7 +83,7 @@ func (h *mailHandler) ServeSMTP(rw smtp.ResponseWriter, r smtp.Request) {
 	h.next.ServeSMTP(rw, r)
 }
 
-func IsSmtpConfig(c *common.Config) bool {
+func IsSmtpConfig(c *dynamic.Config) bool {
 	_, ok := c.Data.(*mail.Config)
 	return ok
 }

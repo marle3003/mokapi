@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/config/dynamic/openapi/openapitest"
 	"mokapi/config/dynamic/openapi/parameter"
@@ -379,23 +380,25 @@ func TestPath_Parse(t *testing.T) {
 		{
 			name: "reader returns error",
 			test: func(t *testing.T) {
-				reader := &testReader{readFunc: func(cfg *common.Config) error {
-					return fmt.Errorf("TEST ERROR")
-				}}
+				reader := dynamictest.ReaderFunc(func(_ *url.URL, _ any) (*dynamic.Config, error) {
+					return nil, fmt.Errorf("TEST ERROR")
+				})
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithPathRef("foo",
 						&openapi.PathRef{Reference: ref.Reference{Ref: "foo.yml#/paths/foo"}}))
-				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
+				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse path 'foo' failed: resolve reference 'foo.yml#/paths/foo' failed: TEST ERROR")
 			},
 		},
 		{
 			name: "path is nil",
 			test: func(t *testing.T) {
-				reader := &testReader{readFunc: func(cfg *common.Config) error { return nil }}
+				reader := dynamictest.ReaderFunc(func(_ *url.URL, _ any) (*dynamic.Config, error) {
+					return nil, nil
+				})
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithPathRef("foo", nil))
-				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
+				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
 			},
 		},
@@ -403,17 +406,18 @@ func TestPath_Parse(t *testing.T) {
 			name: "reference to a file",
 			test: func(t *testing.T) {
 				target := &openapi.Path{}
-				reader := &testReader{readFunc: func(cfg *common.Config) error {
-					require.Equal(t, "/foo.yml", cfg.Info.Url.String())
-					config := openapitest.NewConfig("3.0",
-						openapitest.WithPath("/foo", target))
-					cfg.Data = config
-					return nil
-				}}
+				reader := dynamictest.ReaderFunc(func(u *url.URL, _ any) (*dynamic.Config, error) {
+					require.Equal(t, "/foo.yml", u.String())
+					cfg := &dynamic.Config{Info: dynamic.ConfigInfo{Url: u},
+						Data: openapitest.NewConfig("3.0",
+							openapitest.WithPath("/foo", target)),
+					}
+					return cfg, nil
+				})
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithPathRef("/foo",
 						&openapi.PathRef{Reference: ref.Reference{Ref: "foo.yml#/paths/foo"}}))
-				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
+				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
 				require.Equal(t, target, config.Paths["/foo"].Value)
 			},
@@ -421,17 +425,18 @@ func TestPath_Parse(t *testing.T) {
 		{
 			name: "file reference but path is nil",
 			test: func(t *testing.T) {
-				reader := &testReader{readFunc: func(cfg *common.Config) error {
-					require.Equal(t, "/foo.yml", cfg.Info.Url.String())
-					config := openapitest.NewConfig("3.0",
-						openapitest.WithPath("/foo", nil))
-					cfg.Data = config
-					return nil
-				}}
+				reader := dynamictest.ReaderFunc(func(u *url.URL, _ any) (*dynamic.Config, error) {
+					require.Equal(t, "/foo.yml", u.String())
+					cfg := &dynamic.Config{Info: dynamic.ConfigInfo{Url: u},
+						Data: openapitest.NewConfig("3.0",
+							openapitest.WithPath("/foo", nil)),
+					}
+					return cfg, nil
+				})
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithPathRef("/foo",
 						&openapi.PathRef{Reference: ref.Reference{Ref: "foo.yml#/paths/foo"}}))
-				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
+				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
 				require.Nil(t, config.Paths["/foo"].Value)
 			},
@@ -439,32 +444,34 @@ func TestPath_Parse(t *testing.T) {
 		{
 			name: "file reference but local reference not found",
 			test: func(t *testing.T) {
-				reader := &testReader{readFunc: func(cfg *common.Config) error {
-					require.Equal(t, "/foo.yml", cfg.Info.Url.String())
+				reader := dynamictest.ReaderFunc(func(u *url.URL, _ any) (*dynamic.Config, error) {
+					require.Equal(t, "/foo.yml", u.String())
 					config := openapitest.NewConfig("3.0")
 					config.Paths = openapi.Paths{}
-					cfg.Data = config
-					return nil
-				}}
+					cfg := &dynamic.Config{Info: dynamic.ConfigInfo{Url: u},
+						Data: config,
+					}
+					return cfg, nil
+				})
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithPathRef("/foo",
 						&openapi.PathRef{Reference: ref.Reference{Ref: "foo.yml#/paths/foo"}}))
-				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
+				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse path '/foo' failed: resolve reference 'foo.yml#/paths/foo' failed: local path not found: /paths/foo")
 			},
 		},
 		{
 			name: "parameters with error",
 			test: func(t *testing.T) {
-				reader := &testReader{readFunc: func(cfg *common.Config) error {
-					return fmt.Errorf("TEST ERROR")
-				}}
+				reader := dynamictest.ReaderFunc(func(_ *url.URL, _ any) (*dynamic.Config, error) {
+					return nil, fmt.Errorf("TEST ERROR")
+				})
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithPath("/foo", openapitest.NewPath(
 						openapitest.WithPathParamRef(&parameter.Ref{Reference: ref.Reference{Ref: "foo.yml"}}),
 					)),
 				)
-				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
+				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse path '/foo' failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},

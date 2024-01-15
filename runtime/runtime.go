@@ -1,9 +1,9 @@
 package runtime
 
 import (
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
-	"mokapi/config/dynamic/common"
 	"mokapi/config/dynamic/directory"
 	"mokapi/config/dynamic/mail"
 	"mokapi/config/dynamic/openapi"
@@ -26,18 +26,18 @@ type App struct {
 	Monitor *monitor.Monitor
 	m       sync.Mutex
 
-	Configs map[string]*common.Config
+	Configs map[string]*dynamic.Config
 }
 
 func New() *App {
 	return &App{
 		Version: version.BuildVersion,
 		Monitor: monitor.New(),
-		Configs: map[string]*common.Config{},
+		Configs: map[string]*dynamic.Config{},
 	}
 }
 
-func (a *App) AddHttp(c *common.Config) *HttpInfo {
+func (a *App) AddHttp(c *dynamic.Config) *HttpInfo {
 	a.m.Lock()
 	defer a.m.Unlock()
 
@@ -63,7 +63,7 @@ func (a *App) AddHttp(c *common.Config) *HttpInfo {
 	return hc
 }
 
-func (a *App) AddKafka(c *common.Config, emitter common2.EventEmitter) *KafkaInfo {
+func (a *App) AddKafka(c *dynamic.Config, emitter common2.EventEmitter) *KafkaInfo {
 	a.m.Lock()
 	defer a.m.Unlock()
 
@@ -91,7 +91,7 @@ func (a *App) AddKafka(c *common.Config, emitter common2.EventEmitter) *KafkaInf
 	return hc
 }
 
-func (a *App) AddSmtp(c *common.Config) *SmtpInfo {
+func (a *App) AddSmtp(c *dynamic.Config) *SmtpInfo {
 	a.m.Lock()
 	defer a.m.Unlock()
 
@@ -115,7 +115,7 @@ func (a *App) AddSmtp(c *common.Config) *SmtpInfo {
 	return hc
 }
 
-func (a *App) AddLdap(c *common.Config, emitter common2.EventEmitter) *LdapInfo {
+func (a *App) AddLdap(c *dynamic.Config, emitter common2.EventEmitter) *LdapInfo {
 	a.m.Lock()
 	defer a.m.Unlock()
 
@@ -139,9 +139,9 @@ func (a *App) AddLdap(c *common.Config, emitter common2.EventEmitter) *LdapInfo 
 	return hc
 }
 
-func (a *App) AddConfig(c *common.Config) {
+func (a *App) AddConfig(c *dynamic.Config) {
 	a.Configs[c.Info.Key()] = c
-	for _, r := range c.Refs() {
+	for _, r := range c.Refs.List() {
 		a.Configs[r.Info.Key()] = r
 	}
 }

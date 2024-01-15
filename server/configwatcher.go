@@ -1,11 +1,11 @@
-package dynamic
+package server
 
 import (
 	"bytes"
 	"context"
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/provider/file"
 	"mokapi/config/dynamic/provider/git"
 	"mokapi/config/dynamic/provider/http"
@@ -17,16 +17,21 @@ import (
 )
 
 type ConfigWatcher struct {
-	providers map[string]common.Provider
-	listener  []common.ConfigListener
-	configs   map[string]*common.Config
+	providers map[string]dynamic.Provider
+	listener  []dynamic.ConfigListener
+	configs   map[string]*entry
 	m         sync.Mutex
+}
+
+type entry struct {
+	config *dynamic.Config
+	m      sync.Mutex
 }
 
 func NewConfigWatcher(cfg *static.Config) *ConfigWatcher {
 	w := &ConfigWatcher{
-		providers: make(map[string]common.Provider),
-		configs:   make(map[string]*common.Config),
+		providers: make(map[string]dynamic.Provider),
+		configs:   make(map[string]*entry),
 	}
 
 	w.providers["file"] = file.New(cfg.Providers.File)
@@ -39,7 +44,7 @@ func NewConfigWatcher(cfg *static.Config) *ConfigWatcher {
 	return w
 }
 
-func (w *ConfigWatcher) Read(u *url.URL, opts ...common.ConfigOptions) (*common.Config, error) {
+func (w *ConfigWatcher) Read(u *url.URL, v any) (*dynamic.Config, error) {
 	p, ok := w.providers[u.Scheme]
 	if !ok {
 		return nil, fmt.Errorf("unsupported scheme: %v", u.String())
@@ -48,27 +53,34 @@ func (w *ConfigWatcher) Read(u *url.URL, opts ...common.ConfigOptions) (*common.
 
 	var err error
 	var parse bool
-	c, exists := w.configs[u.String()]
+	var c *dynamic.Config
+	e, exists := w.configs[u.String()]
 	if !exists {
 		c, err = p.Read(u)
 		if err != nil {
 			w.m.Unlock()
 			return nil, err
 		}
-		w.configs[u.String()] = c
-		w.m.Unlock()
-		c.AddListener("ConfigWatcher", func(cfg *common.Config) {
+		e = &entry{config: c}
+		w.configs[u.String()] = e
+		c.Listeners.Add("ConfigWatcher", func(cfg *dynamic.Config) {
 			w.configChanged(cfg)
 		})
 		parse = true
 	} else {
-		w.m.Unlock()
+		c = e.config
 		parse = c.Data == nil
 	}
 
-	c.Options(opts...)
+	e.m.Lock()
+	defer e.m.Unlock()
+	w.m.Unlock()
+
 	if parse {
-		err = c.Parse(w)
+		if v != nil {
+			c.Data = v
+		}
+		err = dynamic.Parse(c, w)
 		if err != nil {
 			return nil, err
 		}
@@ -78,7 +90,7 @@ func (w *ConfigWatcher) Read(u *url.URL, opts ...common.ConfigOptions) (*common.
 }
 
 func (w *ConfigWatcher) Start(pool *safe.Pool) error {
-	ch := make(chan *common.Config)
+	ch := make(chan *dynamic.Config)
 	for _, p := range w.providers {
 		err := p.Start(ch, pool)
 		if err != nil {
@@ -102,65 +114,42 @@ func (w *ConfigWatcher) Start(pool *safe.Pool) error {
 	return nil
 }
 
-func (w *ConfigWatcher) AddListener(f func(config *common.Config)) {
+func (w *ConfigWatcher) AddListener(f func(config *dynamic.Config)) {
 	w.listener = append(w.listener, f)
 }
 
-func (w *ConfigWatcher) ReadServices(services static.Services) {
-	for name, p := range services {
-		var err error
-		var cfg *common.Config
-		if len(p.Config.File) > 0 {
-			u, _ := url.Parse(fmt.Sprintf("file:%v", p.Config.File))
-			cfg, err = w.Read(u)
-
-		}
-		if len(p.Config.Url) > 0 {
-			u, _ := url.Parse(fmt.Sprintf(p.Config.Url))
-			cfg, err = w.Read(u)
-		}
-		if err != nil {
-			log.Errorf("unable to read config for %v: %v", name, err)
-			continue
-		}
-		if cfg != nil {
-			w.configChanged(cfg)
-		}
-	}
-}
-
-func (w *ConfigWatcher) addOrUpdate(c *common.Config) error {
+func (w *ConfigWatcher) addOrUpdate(c *dynamic.Config) error {
 	w.m.Lock()
 
-	cfg, ok := w.configs[c.Info.Url.String()]
+	e, ok := w.configs[c.Info.Url.String()]
 	if !ok {
-		w.configs[c.Info.Url.String()] = c
-		cfg = c
-		cfg.AddListener("ConfigWatcher", func(cfg *common.Config) {
+		e = &entry{config: c}
+		w.configs[c.Info.Url.String()] = e
+		c.Listeners.Add("ConfigWatcher", func(cfg *dynamic.Config) {
 			w.configChanged(cfg)
 		})
-	} else if bytes.Equal(cfg.Info.Checksum, c.Info.Checksum) {
+	} else if bytes.Equal(e.config.Info.Checksum, c.Info.Checksum) {
 		w.m.Unlock()
 		return nil
 	} else {
-		cfg.Raw = c.Raw
-		cfg.Info.Update(c.Info.Checksum)
+		e.config.Raw = c.Raw
+		e.config.Info.Update(c.Info.Checksum)
 	}
 
 	w.m.Unlock()
-	go cfg.Changed()
+	go e.config.Listeners.Invoke(e.config)
 
 	return nil
 }
 
-func (w *ConfigWatcher) configChanged(cfg *common.Config) {
-	err := cfg.Parse(w)
+func (w *ConfigWatcher) configChanged(cfg *dynamic.Config) {
+	err := dynamic.Parse(cfg, w)
 	if err != nil {
 		log.Errorf("parse error %v: %v", cfg.Info.Path(), err)
 		return
 	}
 
-	if err = cfg.Validate(); err != nil {
+	if err = dynamic.Validate(cfg); err != nil {
 		log.Infof("skipping file %v: %v", cfg.Info.Path(), err)
 		return
 	}

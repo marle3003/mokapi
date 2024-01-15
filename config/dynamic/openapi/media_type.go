@@ -1,7 +1,7 @@
 package openapi
 
 import (
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/media"
 )
@@ -14,7 +14,7 @@ type MediaType struct {
 	ContentType media.ContentType `yaml:"-" json:"-"`
 }
 
-func (m *MediaType) parse(config *common.Config, reader common.Reader) error {
+func (m *MediaType) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if m == nil {
 		return nil
 	}

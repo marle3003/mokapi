@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"gopkg.in/yaml.v3"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/openapi/ref"
 	"mokapi/media"
 	"mokapi/sortedmap"
@@ -166,7 +166,7 @@ func (r *Response) GetContent(contentType media.ContentType) *MediaType {
 	return nil
 }
 
-func (r *Responses[K]) parse(config *common.Config, reader common.Reader) error {
+func (r *Responses[K]) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if r == nil {
 		return nil
 	}
@@ -181,19 +181,19 @@ func (r *Responses[K]) parse(config *common.Config, reader common.Reader) error 
 	return nil
 }
 
-func (r *ResponseRef) parse(config *common.Config, reader common.Reader) error {
+func (r *ResponseRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if r == nil {
 		return nil
 	}
 
 	if len(r.Ref) > 0 {
-		return common.Resolve(r.Ref, &r.Value, config, reader)
+		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
 	}
 
 	return r.Value.parse(config, reader)
 }
 
-func (r *Response) parse(config *common.Config, reader common.Reader) error {
+func (r *Response) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if r == nil {
 		return nil
 	}

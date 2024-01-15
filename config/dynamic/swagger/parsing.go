@@ -1,10 +1,10 @@
 package swagger
 
 import (
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 )
 
-func (c *Config) Parse(config *common.Config, reader common.Reader) error {
+func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if c == nil {
 		return nil
 	}

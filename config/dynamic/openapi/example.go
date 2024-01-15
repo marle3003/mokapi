@@ -3,7 +3,7 @@ package openapi
 import (
 	"fmt"
 	"gopkg.in/yaml.v3"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/openapi/ref"
 )
 
@@ -29,7 +29,7 @@ func (r *ExampleRef) UnmarshalYAML(node *yaml.Node) error {
 	return r.Reference.UnmarshalYaml(node, &r.Value)
 }
 
-func (e Examples) parse(config *common.Config, reader common.Reader) error {
+func (e Examples) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	for name, ex := range e {
 		if err := ex.parse(config, reader); err != nil {
 			return fmt.Errorf("parse example '%v' failed: %w", name, err)
@@ -39,25 +39,25 @@ func (e Examples) parse(config *common.Config, reader common.Reader) error {
 	return nil
 }
 
-func (r *ExampleRef) parse(config *common.Config, reader common.Reader) error {
+func (r *ExampleRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if r == nil {
 		return nil
 	}
 
 	if len(r.Ref) > 0 {
-		return common.Resolve(r.Ref, &r.Value, config, reader)
+		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
 	}
 
 	return r.Value.parse(config, reader)
 }
 
-func (e *Example) parse(config *common.Config, reader common.Reader) error {
+func (e *Example) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if e == nil {
 		return nil
 	}
 
 	if e.ExternalValue != "" {
-		return common.Resolve(e.ExternalValue, &e.Value, config, reader)
+		return dynamic.Resolve(e.ExternalValue, &e.Value, config, reader)
 	}
 
 	return nil

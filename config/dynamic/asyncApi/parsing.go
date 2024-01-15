@@ -1,10 +1,10 @@
 package asyncApi
 
 import (
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 )
 
-func (c *Config) Parse(config *common.Config, reader common.Reader) error {
+func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	for _, ch := range c.Channels {
 		if ch == nil {
 			continue
@@ -17,9 +17,9 @@ func (c *Config) Parse(config *common.Config, reader common.Reader) error {
 	return nil
 }
 
-func (c *ChannelRef) Parse(config *common.Config, reader common.Reader) error {
+func (c *ChannelRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(c.Ref) > 0 {
-		return common.Resolve(c.Ref, &c.Value, config, reader)
+		return dynamic.Resolve(c.Ref, &c.Value, config, reader)
 	}
 
 	if c.Value == nil {
@@ -41,16 +41,16 @@ func (c *ChannelRef) Parse(config *common.Config, reader common.Reader) error {
 	return nil
 }
 
-func (o *Operation) Parse(config *common.Config, reader common.Reader) error {
+func (o *Operation) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if o.Message != nil {
 		return o.Message.Parse(config, reader)
 	}
 	return nil
 }
 
-func (r *MessageRef) Parse(config *common.Config, reader common.Reader) error {
+func (r *MessageRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(r.Ref) > 0 {
-		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
+		if err := dynamic.Resolve(r.Ref, &r.Value, config, reader); err != nil {
 			return err
 		}
 	}

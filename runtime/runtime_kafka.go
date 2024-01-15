@@ -1,9 +1,9 @@
 package runtime
 
 import (
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
-	cfg "mokapi/config/dynamic/common"
 	"mokapi/kafka"
 	"mokapi/runtime/monitor"
 	"path/filepath"
@@ -21,7 +21,7 @@ type KafkaHandler struct {
 	next  kafka.Handler
 }
 
-func NewKafkaInfo(c *cfg.Config, store *store.Store) *KafkaInfo {
+func NewKafkaInfo(c *dynamic.Config, store *store.Store) *KafkaInfo {
 	hc := &KafkaInfo{
 		configs: map[string]*asyncApi.Config{},
 		Store:   store,
@@ -30,7 +30,7 @@ func NewKafkaInfo(c *cfg.Config, store *store.Store) *KafkaInfo {
 	return hc
 }
 
-func (c *KafkaInfo) AddConfig(config *cfg.Config) {
+func (c *KafkaInfo) AddConfig(config *dynamic.Config) {
 	ac := config.Data.(*asyncApi.Config)
 
 	key := config.Info.Url.String()
@@ -70,7 +70,7 @@ func (h *KafkaHandler) ServeMessage(rw kafka.ResponseWriter, req *kafka.Request)
 	h.next.ServeMessage(rw, req)
 }
 
-func IsKafkaConfig(c *cfg.Config) bool {
+func IsKafkaConfig(c *dynamic.Config) bool {
 	_, ok := c.Data.(*asyncApi.Config)
 	return ok
 }

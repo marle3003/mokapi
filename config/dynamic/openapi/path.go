@@ -3,7 +3,7 @@ package openapi
 import (
 	"fmt"
 	"gopkg.in/yaml.v3"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/openapi/parameter"
 	"mokapi/config/dynamic/openapi/ref"
 	"net/http"
@@ -124,7 +124,7 @@ func (p Paths) Resolve(token string) (interface{}, error) {
 	return nil, nil
 }
 
-func (p Paths) parse(config *common.Config, reader common.Reader) error {
+func (p Paths) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	for name, e := range p {
 		if err := e.parse(config, reader); err != nil {
 			return fmt.Errorf("parse path '%v' failed: %w", name, err)
@@ -133,19 +133,19 @@ func (p Paths) parse(config *common.Config, reader common.Reader) error {
 	return nil
 }
 
-func (r *PathRef) parse(config *common.Config, reader common.Reader) error {
+func (r *PathRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if r == nil {
 		return nil
 	}
 
 	if len(r.Ref) > 0 {
-		return common.Resolve(r.Ref, &r.Value, config, reader)
+		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
 	}
 
 	return r.Value.parse(config, reader)
 }
 
-func (p *Path) parse(config *common.Config, reader common.Reader) error {
+func (p *Path) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if p == nil {
 		return nil
 	}

@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/config/dynamic/openapi/openapitest"
 	"mokapi/config/dynamic/openapi/parameter"
@@ -197,16 +198,19 @@ func TestComponents_Parse(t *testing.T) {
 		{
 			name: "schema ref",
 			test: func(t *testing.T) {
-				reader := &testReader{readFunc: func(cfg *common.Config) error {
-					cfg.Data = openapitest.NewConfig("3.0",
-						openapitest.WithComponentSchema("foo", &schema.Schema{Type: "string"}),
-					)
-					return nil
-				}}
+				reader := dynamictest.ReaderFunc(func(u *url.URL, _ any) (*dynamic.Config, error) {
+					cfg := &dynamic.Config{
+						Info: dynamic.ConfigInfo{Url: u},
+						Data: openapitest.NewConfig("3.0",
+							openapitest.WithComponentSchema("foo", &schema.Schema{Type: "string"}),
+						),
+					}
+					return cfg, nil
+				})
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithComponentSchemaRef("foo", &schema.Ref{Reference: ref.Reference{Ref: "foo.yml#/components/schemas/foo"}}),
 				)
-				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
+				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
 				require.Equal(t, "string", config.Components.Schemas.Get("foo").Value.Type)
 			},
@@ -214,29 +218,32 @@ func TestComponents_Parse(t *testing.T) {
 		{
 			name: "schema ref error",
 			test: func(t *testing.T) {
-				reader := &testReader{readFunc: func(cfg *common.Config) error {
-					return fmt.Errorf("TESTING ERROR")
-				}}
+				reader := dynamictest.ReaderFunc(func(_ *url.URL, _ any) (*dynamic.Config, error) {
+					return nil, fmt.Errorf("TESTING ERROR")
+				})
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithComponentSchemaRef("foo", &schema.Ref{Reference: ref.Reference{Ref: "foo.yml#/components/schemas/foo"}}),
 				)
-				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
+				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse components failed: parse schema 'foo' failed: resolve reference 'foo.yml#/components/schemas/foo' failed: TESTING ERROR")
 			},
 		},
 		{
 			name: "response ref",
 			test: func(t *testing.T) {
-				reader := &testReader{readFunc: func(cfg *common.Config) error {
-					cfg.Data = openapitest.NewConfig("3.0",
-						openapitest.WithComponentResponse("foo", &openapi.Response{Description: "foo"}),
-					)
-					return nil
-				}}
+				reader := dynamictest.ReaderFunc(func(u *url.URL, _ any) (*dynamic.Config, error) {
+					cfg := &dynamic.Config{
+						Info: dynamic.ConfigInfo{Url: u},
+						Data: openapitest.NewConfig("3.0",
+							openapitest.WithComponentResponse("foo", &openapi.Response{Description: "foo"}),
+						),
+					}
+					return cfg, nil
+				})
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithComponentResponseRef("foo", &openapi.ResponseRef{Reference: ref.Reference{Ref: "foo.yml#/components/responses/foo"}}),
 				)
-				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
+				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
 				r, _ := config.Components.Responses.Get("foo")
 				require.Equal(t, "foo", r.Value.Description)
@@ -245,29 +252,32 @@ func TestComponents_Parse(t *testing.T) {
 		{
 			name: "response ref error",
 			test: func(t *testing.T) {
-				reader := &testReader{readFunc: func(cfg *common.Config) error {
-					return fmt.Errorf("TESTING ERROR")
-				}}
+				reader := dynamictest.ReaderFunc(func(_ *url.URL, _ any) (*dynamic.Config, error) {
+					return nil, fmt.Errorf("TESTING ERROR")
+				})
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithComponentResponseRef("foo", &openapi.ResponseRef{Reference: ref.Reference{Ref: "foo.yml#/components/schemas/foo"}}),
 				)
-				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
+				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse components failed: parse response 'foo' failed: resolve reference 'foo.yml#/components/schemas/foo' failed: TESTING ERROR")
 			},
 		},
 		{
 			name: "requestBody ref",
 			test: func(t *testing.T) {
-				reader := &testReader{readFunc: func(cfg *common.Config) error {
-					cfg.Data = openapitest.NewConfig("3.0",
-						openapitest.WithComponentRequestBody("foo", &openapi.RequestBody{Description: "foo"}),
-					)
-					return nil
-				}}
+				reader := dynamictest.ReaderFunc(func(u *url.URL, _ any) (*dynamic.Config, error) {
+					cfg := &dynamic.Config{
+						Info: dynamic.ConfigInfo{Url: u},
+						Data: openapitest.NewConfig("3.0",
+							openapitest.WithComponentRequestBody("foo", &openapi.RequestBody{Description: "foo"}),
+						),
+					}
+					return cfg, nil
+				})
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithComponentRequestBodyRef("foo", &openapi.RequestBodyRef{Reference: ref.Reference{Ref: "foo.yml#/components/requestBodies/foo"}}),
 				)
-				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
+				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
 				require.Equal(t, "foo", config.Components.RequestBodies["foo"].Value.Description)
 			},
@@ -275,29 +285,32 @@ func TestComponents_Parse(t *testing.T) {
 		{
 			name: "requestBody ref error",
 			test: func(t *testing.T) {
-				reader := &testReader{readFunc: func(cfg *common.Config) error {
-					return fmt.Errorf("TESTING ERROR")
-				}}
+				reader := dynamictest.ReaderFunc(func(_ *url.URL, _ any) (*dynamic.Config, error) {
+					return nil, fmt.Errorf("TESTING ERROR")
+				})
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithComponentRequestBodyRef("foo", &openapi.RequestBodyRef{Reference: ref.Reference{Ref: "foo.yml#/components/requestBodies/foo"}}),
 				)
-				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
+				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse components failed: parse request body 'foo' failed: resolve reference 'foo.yml#/components/requestBodies/foo' failed: TESTING ERROR")
 			},
 		},
 		{
 			name: "parameter ref",
 			test: func(t *testing.T) {
-				reader := &testReader{readFunc: func(cfg *common.Config) error {
-					cfg.Data = openapitest.NewConfig("3.0",
-						openapitest.WithComponentParameter("foo", &parameter.Parameter{Description: "foo"}),
-					)
-					return nil
-				}}
+				reader := dynamictest.ReaderFunc(func(u *url.URL, _ any) (*dynamic.Config, error) {
+					cfg := &dynamic.Config{
+						Info: dynamic.ConfigInfo{Url: u},
+						Data: openapitest.NewConfig("3.0",
+							openapitest.WithComponentParameter("foo", &parameter.Parameter{Description: "foo"}),
+						),
+					}
+					return cfg, nil
+				})
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithComponentParameterRef("foo", &parameter.Ref{Reference: ref.Reference{Ref: "foo.yml#/components/parameters/foo"}}),
 				)
-				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
+				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
 				require.Equal(t, "foo", config.Components.Parameters["foo"].Value.Description)
 			},
@@ -305,29 +318,32 @@ func TestComponents_Parse(t *testing.T) {
 		{
 			name: "parameter ref error",
 			test: func(t *testing.T) {
-				reader := &testReader{readFunc: func(cfg *common.Config) error {
-					return fmt.Errorf("TESTING ERROR")
-				}}
+				reader := dynamictest.ReaderFunc(func(_ *url.URL, _ any) (*dynamic.Config, error) {
+					return nil, fmt.Errorf("TESTING ERROR")
+				})
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithComponentParameterRef("foo", &parameter.Ref{Reference: ref.Reference{Ref: "foo.yml#/components/parameters/foo"}}),
 				)
-				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
+				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse components failed: parse parameter 'foo' failed: resolve reference 'foo.yml#/components/parameters/foo' failed: TESTING ERROR")
 			},
 		},
 		{
 			name: "example ref",
 			test: func(t *testing.T) {
-				reader := &testReader{readFunc: func(cfg *common.Config) error {
-					cfg.Data = openapitest.NewConfig("3.0",
-						openapitest.WithComponentExample("foo", &openapi.Example{Description: "foo"}),
-					)
-					return nil
-				}}
+				reader := dynamictest.ReaderFunc(func(u *url.URL, _ any) (*dynamic.Config, error) {
+					cfg := &dynamic.Config{
+						Info: dynamic.ConfigInfo{Url: u},
+						Data: openapitest.NewConfig("3.0",
+							openapitest.WithComponentExample("foo", &openapi.Example{Description: "foo"}),
+						),
+					}
+					return cfg, nil
+				})
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithComponentExampleRef("foo", &openapi.ExampleRef{Reference: ref.Reference{Ref: "foo.yml#/components/examples/foo"}}),
 				)
-				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
+				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
 				require.Equal(t, "foo", config.Components.Examples["foo"].Value.Description)
 			},
@@ -335,29 +351,32 @@ func TestComponents_Parse(t *testing.T) {
 		{
 			name: "example ref error",
 			test: func(t *testing.T) {
-				reader := &testReader{readFunc: func(cfg *common.Config) error {
-					return fmt.Errorf("TESTING ERROR")
-				}}
+				reader := dynamictest.ReaderFunc(func(_ *url.URL, _ any) (*dynamic.Config, error) {
+					return nil, fmt.Errorf("TESTING ERROR")
+				})
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithComponentExampleRef("foo", &openapi.ExampleRef{Reference: ref.Reference{Ref: "foo.yml#/components/parameters/foo"}}),
 				)
-				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
+				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse components failed: parse example 'foo' failed: resolve reference 'foo.yml#/components/parameters/foo' failed: TESTING ERROR")
 			},
 		},
 		{
 			name: "header ref",
 			test: func(t *testing.T) {
-				reader := &testReader{readFunc: func(cfg *common.Config) error {
-					cfg.Data = openapitest.NewConfig("3.0",
-						openapitest.WithComponentHeader("foo", &openapi.Header{Parameter: parameter.Parameter{Description: "foo"}}),
-					)
-					return nil
-				}}
+				reader := dynamictest.ReaderFunc(func(u *url.URL, _ any) (*dynamic.Config, error) {
+					cfg := &dynamic.Config{
+						Info: dynamic.ConfigInfo{Url: u},
+						Data: openapitest.NewConfig("3.0",
+							openapitest.WithComponentHeader("foo", &openapi.Header{Parameter: parameter.Parameter{Description: "foo"}}),
+						),
+					}
+					return cfg, nil
+				})
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithComponentHeaderRef("foo", &openapi.HeaderRef{Reference: ref.Reference{Ref: "foo.yml#/components/headers/foo"}}),
 				)
-				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
+				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
 				require.Equal(t, "foo", config.Components.Headers["foo"].Value.Description)
 			},
@@ -365,13 +384,13 @@ func TestComponents_Parse(t *testing.T) {
 		{
 			name: "header ref error",
 			test: func(t *testing.T) {
-				reader := &testReader{readFunc: func(cfg *common.Config) error {
-					return fmt.Errorf("TESTING ERROR")
-				}}
+				reader := dynamictest.ReaderFunc(func(_ *url.URL, _ any) (*dynamic.Config, error) {
+					return nil, fmt.Errorf("TESTING ERROR")
+				})
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithComponentHeaderRef("foo", &openapi.HeaderRef{Reference: ref.Reference{Ref: "foo.yml#/components/headers/foo"}}),
 				)
-				err := config.Parse(common.NewConfig(common.ConfigInfo{Url: &url.URL{}}, common.WithData(config)), reader)
+				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse components failed: parse header 'foo' failed: resolve reference 'foo.yml#/components/headers/foo' failed: TESTING ERROR")
 			},
 		},

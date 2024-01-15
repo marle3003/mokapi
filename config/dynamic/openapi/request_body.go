@@ -9,7 +9,7 @@ import (
 	"io"
 	"mime"
 	"mime/multipart"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/openapi/ref"
 	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/media"
@@ -231,7 +231,7 @@ func getMedia(contentType media.ContentType, body *RequestBody) (media.ContentTy
 	return best, bestMediaType
 }
 
-func (r RequestBodies) parse(config *common.Config, reader common.Reader) error {
+func (r RequestBodies) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if r == nil {
 		return nil
 	}
@@ -246,13 +246,13 @@ func (r RequestBodies) parse(config *common.Config, reader common.Reader) error 
 	return nil
 }
 
-func (r *RequestBodyRef) parse(config *common.Config, reader common.Reader) error {
+func (r *RequestBodyRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if r == nil {
 		return nil
 	}
 
 	if len(r.Ref) > 0 {
-		if err := common.Resolve(r.Ref, &r.Value, config, reader); err != nil {
+		if err := dynamic.Resolve(r.Ref, &r.Value, config, reader); err != nil {
 			return fmt.Errorf("parse request body failed: %w", err)
 		}
 		return nil

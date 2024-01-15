@@ -1,7 +1,7 @@
 package api
 
 import (
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/openapi/openapitest"
 	"mokapi/config/static"
 	"mokapi/runtime"
@@ -173,9 +173,7 @@ func TestOpenGraphInDashboard(t *testing.T) {
 			name: "http service",
 			test: func(t *testing.T) {
 				app := runtime.New()
-				app.AddHttp(common.NewConfig(common.ConfigInfo{Url: mustParse("https://foo.bar")}, common.WithData(
-					openapitest.NewConfig("3.0", openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server.")),
-				)))
+				app.AddHttp(&dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("https://foo.bar")}, Data: openapitest.NewConfig("3.0", openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server."))})
 				h := New(app, static.Api{Path: "/mokapi"}).(*handler)
 				h.fileServer = fileServer
 				try.Handler(t,
@@ -195,12 +193,11 @@ func TestOpenGraphInDashboard(t *testing.T) {
 			name: "http service path without summary and description",
 			test: func(t *testing.T) {
 				app := runtime.New()
-				app.AddHttp(common.NewConfig(common.ConfigInfo{Url: mustParse("https://foo.bar")}, common.WithData(
-					openapitest.NewConfig("3.0",
-						openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server."),
-						openapitest.WithPath("/pet/{petId}", openapitest.NewPath()),
-					),
-				)))
+				app.AddHttp(&dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("https://foo.bar")}, Data: openapitest.NewConfig("3.0",
+					openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server."),
+					openapitest.WithPath("/pet/{petId}", openapitest.NewPath()),
+				)},
+				)
 				h := New(app, static.Api{Path: "/mokapi"}).(*handler)
 				h.fileServer = fileServer
 				try.Handler(t,
@@ -220,14 +217,13 @@ func TestOpenGraphInDashboard(t *testing.T) {
 			name: "http service path with summary and description",
 			test: func(t *testing.T) {
 				app := runtime.New()
-				app.AddHttp(common.NewConfig(common.ConfigInfo{Url: mustParse("https://foo.bar")}, common.WithData(
-					openapitest.NewConfig("3.0",
-						openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server."),
-						openapitest.WithPath("/pet/{petId}", openapitest.NewPath(
-							openapitest.WithPathInfo("foo", "bar"),
-						)),
-					),
-				)))
+				app.AddHttp(&dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("https://foo.bar")}, Data: openapitest.NewConfig("3.0",
+					openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server."),
+					openapitest.WithPath("/pet/{petId}", openapitest.NewPath(
+						openapitest.WithPathInfo("foo", "bar"),
+					)),
+				),
+				})
 				h := New(app, static.Api{Path: "/mokapi"}).(*handler)
 				h.fileServer = fileServer
 				try.Handler(t,
@@ -247,14 +243,12 @@ func TestOpenGraphInDashboard(t *testing.T) {
 			name: "http service path with no summary but description",
 			test: func(t *testing.T) {
 				app := runtime.New()
-				app.AddHttp(common.NewConfig(common.ConfigInfo{Url: mustParse("https://foo.bar")}, common.WithData(
-					openapitest.NewConfig("3.0",
-						openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server."),
-						openapitest.WithPath("/pet/{petId}", openapitest.NewPath(
-							openapitest.WithPathInfo("", "bar"),
-						)),
-					),
-				)))
+				app.AddHttp(&dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("https://foo.bar")}, Data: openapitest.NewConfig("3.0",
+					openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server."),
+					openapitest.WithPath("/pet/{petId}", openapitest.NewPath(
+						openapitest.WithPathInfo("", "bar"),
+					))),
+				})
 				h := New(app, static.Api{Path: "/mokapi"}).(*handler)
 				h.fileServer = fileServer
 				try.Handler(t,
@@ -274,14 +268,12 @@ func TestOpenGraphInDashboard(t *testing.T) {
 			name: "http service endpoint no summary and no description",
 			test: func(t *testing.T) {
 				app := runtime.New()
-				app.AddHttp(common.NewConfig(common.ConfigInfo{Url: mustParse("https://foo.bar")}, common.WithData(
-					openapitest.NewConfig("3.0",
-						openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server."),
-						openapitest.WithPath("/pet/{petId}", openapitest.NewPath(
-							openapitest.WithOperation("GET", openapitest.NewOperation()),
-						)),
-					),
-				)))
+				app.AddHttp(&dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("https://foo.bar")}, Data: openapitest.NewConfig("3.0",
+					openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server."),
+					openapitest.WithPath("/pet/{petId}", openapitest.NewPath(
+						openapitest.WithOperation("GET", openapitest.NewOperation()),
+					))),
+				})
 				h := New(app, static.Api{Path: "/mokapi"}).(*handler)
 				h.fileServer = fileServer
 				try.Handler(t,
@@ -301,17 +293,15 @@ func TestOpenGraphInDashboard(t *testing.T) {
 			name: "http service endpoint get right path",
 			test: func(t *testing.T) {
 				app := runtime.New()
-				app.AddHttp(common.NewConfig(common.ConfigInfo{Url: mustParse("https://foo.bar")}, common.WithData(
-					openapitest.NewConfig("3.0",
-						openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server."),
-						openapitest.WithPath("/pet/{petId}", openapitest.NewPath(
-							openapitest.WithOperation("GET", openapitest.NewOperation()),
-						)),
-						openapitest.WithPath("/pet/{petId}/foo", openapitest.NewPath(
-							openapitest.WithOperation("GET", openapitest.NewOperation()),
-						)),
-					),
-				)))
+				app.AddHttp(&dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("https://foo.bar")}, Data: openapitest.NewConfig("3.0",
+					openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server."),
+					openapitest.WithPath("/pet/{petId}", openapitest.NewPath(
+						openapitest.WithOperation("GET", openapitest.NewOperation()),
+					)),
+					openapitest.WithPath("/pet/{petId}/foo", openapitest.NewPath(
+						openapitest.WithOperation("GET", openapitest.NewOperation()),
+					))),
+				})
 				h := New(app, static.Api{Path: "/mokapi"}).(*handler)
 				h.fileServer = fileServer
 				try.Handler(t,
