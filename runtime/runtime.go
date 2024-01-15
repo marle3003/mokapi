@@ -140,6 +140,9 @@ func (a *App) AddLdap(c *common.Config, emitter common2.EventEmitter) *LdapInfo 
 }
 
 func (a *App) AddConfig(c *common.Config) {
+	a.m.Lock()
+	defer a.m.Unlock()
+
 	a.Configs[c.Info.Key()] = c
 	for _, r := range c.Refs() {
 		a.Configs[r.Info.Key()] = r

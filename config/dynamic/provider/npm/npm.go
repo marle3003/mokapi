@@ -140,6 +140,8 @@ func skip(path string, pkg static.NpmPackage) bool {
 		return false
 	}
 
+	path = filepath.ToSlash(path)
+
 	if contains(pkg.Files, path) {
 		return false
 	}
