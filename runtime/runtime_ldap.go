@@ -14,7 +14,7 @@ import (
 
 type LdapInfo struct {
 	*directory.Config
-	configs      map[string]*directory.Config
+	configs      map[string]*dynamic.Config
 	eventEmitter engine.EventEmitter
 }
 
@@ -25,7 +25,7 @@ type ldapHandler struct {
 
 func NewLdapInfo(c *dynamic.Config, emitter engine.EventEmitter) *LdapInfo {
 	li := &LdapInfo{
-		configs:      map[string]*directory.Config{},
+		configs:      map[string]*dynamic.Config{},
 		eventEmitter: emitter,
 	}
 	li.AddConfig(c)
@@ -33,9 +33,7 @@ func NewLdapInfo(c *dynamic.Config, emitter engine.EventEmitter) *LdapInfo {
 }
 
 func (c *LdapInfo) AddConfig(config *dynamic.Config) {
-	lc := config.Data.(*directory.Config)
-	key := config.Info.Url.String()
-	c.configs[key] = lc
+	c.configs[config.Info.Url.String()] = config
 	c.update()
 }
 
@@ -51,9 +49,10 @@ func (c *LdapInfo) update() {
 		return filepath.Base(x) < filepath.Base(y)
 	})
 
-	cfg := c.configs[keys[0]]
+	cfg := getLdapConfig(c.configs[keys[0]])
 	for _, k := range keys[1:] {
-		cfg.Patch(c.configs[k])
+		p := getLdapConfig(c.configs[k])
+		cfg.Patch(p)
 	}
 
 	c.Config = cfg
@@ -61,6 +60,15 @@ func (c *LdapInfo) update() {
 
 func (c *LdapInfo) Handler(ldap *monitor.Ldap) ldap.Handler {
 	return &ldapHandler{ldap: ldap, next: directory.NewHandler(c.Config, c.eventEmitter)}
+}
+
+func (c *LdapInfo) Configs() []*dynamic.Config {
+	var r []*dynamic.Config
+	for _, config := range c.configs {
+		r = append(r, config)
+		r = append(r, config.Refs.List()...)
+	}
+	return r
 }
 
 func (h *ldapHandler) ServeLDAP(rw ldap.ResponseWriter, r *ldap.Request) {
@@ -74,4 +82,8 @@ func (h *ldapHandler) ServeLDAP(rw ldap.ResponseWriter, r *ldap.Request) {
 func IsLdapConfig(c *dynamic.Config) bool {
 	_, ok := c.Data.(*directory.Config)
 	return ok
+}
+
+func getLdapConfig(c *dynamic.Config) *directory.Config {
+	return c.Data.(*directory.Config)
 }

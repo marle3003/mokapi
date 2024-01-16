@@ -1,15 +1,10 @@
 package swagger
 
 import (
-	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/config/dynamic/openapi/schema"
 	"net/http"
 )
-
-func init() {
-	dynamic.Register("swagger", &Config{})
-}
 
 type Config struct {
 	Swagger     string                 `yaml:"swagger" json:"swagger"`

@@ -7,10 +7,6 @@ import (
 	"strings"
 )
 
-func init() {
-	dynamic.Register("ldap", &Config{})
-}
-
 const (
 	defaultSizeLimit = 1000
 	defaultTimeLimit = 3600

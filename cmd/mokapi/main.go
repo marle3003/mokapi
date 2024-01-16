@@ -8,6 +8,11 @@ import (
 	"mokapi/api"
 	"mokapi/config/decoders"
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/asyncApi"
+	"mokapi/config/dynamic/directory"
+	"mokapi/config/dynamic/mail"
+	"mokapi/config/dynamic/openapi"
+	"mokapi/config/dynamic/swagger"
 	"mokapi/config/static"
 	"mokapi/engine"
 	"mokapi/runtime"
@@ -43,6 +48,7 @@ func main() {
 	}
 
 	configureLogging(cfg)
+	registerDynamicTypes()
 
 	s, err := createServer(cfg)
 	if err != nil {
@@ -127,4 +133,12 @@ func configureLogging(cfg *static.Config) {
 			log.SetFormatter(formatter)
 		}
 	}
+}
+
+func registerDynamicTypes() {
+	dynamic.Register("openapi", &openapi.Config{})
+	dynamic.Register("asyncapi", &asyncApi.Config{})
+	dynamic.Register("swagger", &swagger.Config{})
+	dynamic.Register("ldap", &directory.Config{})
+	dynamic.Register("smtp", &mail.Config{})
 }

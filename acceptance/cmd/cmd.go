@@ -6,6 +6,11 @@ import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/api"
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/asyncApi"
+	"mokapi/config/dynamic/directory"
+	"mokapi/config/dynamic/mail"
+	"mokapi/config/dynamic/openapi"
+	"mokapi/config/dynamic/swagger"
 	"mokapi/config/static"
 	"mokapi/engine"
 	"mokapi/runtime"
@@ -28,6 +33,7 @@ func Start(cfg *static.Config) (*Cmd, error) {
 		return nil, errors.New("static configuration Services are no longer supported. Use patching instead.")
 	}
 
+	registerDynamicTypes()
 	app := runtime.New()
 
 	watcher := server.NewConfigWatcher(cfg)
@@ -78,4 +84,12 @@ func Start(cfg *static.Config) (*Cmd, error) {
 func (cmd *Cmd) Stop() {
 	cmd.cancel()
 	cmd.server.Close()
+}
+
+func registerDynamicTypes() {
+	dynamic.Register("openapi", &openapi.Config{})
+	dynamic.Register("asyncapi", &asyncApi.Config{})
+	dynamic.Register("swagger", &swagger.Config{})
+	dynamic.Register("ldap", &directory.Config{})
+	dynamic.Register("smtp", &mail.Config{})
 }

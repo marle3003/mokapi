@@ -5,6 +5,7 @@ declare interface Service {
     contact: Contact | null
     type: ServiceType
     metrics: Metric[]
+    configs: Config[]
 }
 
 declare interface Contact {

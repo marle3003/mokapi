@@ -1,7 +1,6 @@
 declare interface HttpService extends Service {
     paths: HttpPath[]
     servers: HttpServer[]
-    configs: Config[]
 }
 
 declare interface HttpPath {

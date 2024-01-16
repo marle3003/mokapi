@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { type Ref, onUnmounted } from 'vue'
-import { useRoute } from 'vue-router';
-import { useService } from '@/composables/services';
-import ServiceInfoCard from '../ServiceInfoCard.vue';
-import KafkaTopicsCard from './KafkaTopicsCard.vue';
-import KafkaGroupsCard from './KafkaGroupsCard.vue';
-import KafkaMessagesCard from './KafkaMessagesCard.vue';
-import KafkaTopic from './KafkaTopic.vue';
-import Servers from './Servers.vue';
+import { useRoute } from 'vue-router'
+import { useService } from '@/composables/services'
+import ServiceInfoCard from '../ServiceInfoCard.vue'
+import KafkaTopicsCard from './KafkaTopicsCard.vue'
+import KafkaGroupsCard from './KafkaGroupsCard.vue'
+import KafkaMessagesCard from './KafkaMessagesCard.vue'
+import KafkaTopic from './KafkaTopic.vue'
+import Servers from './Servers.vue'
+import ConfigCard from '../ConfigCard.vue'
 
 const {fetchService} = useService()
 const serviceName = useRoute().params.service?.toString()
@@ -36,6 +37,9 @@ onUnmounted(() => {
       </div>
       <div class="card-group">
           <kafka-groups-card :service="service" />
+      </div>
+      <div class="card-group">
+            <config-card :service="service" />
       </div>
       <div class="card-group">
           <kafka-messages-card :service="service" />

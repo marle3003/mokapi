@@ -10,10 +10,6 @@ import (
 	"strings"
 )
 
-func init() {
-	dynamic.Register("openapi", &Config{})
-}
-
 type Config struct {
 	OpenApi string    `yaml:"openapi" json:"openapi"`
 	Info    Info      `yaml:"info" json:"info"`

@@ -1,10 +1,8 @@
 package runtime
 
 import (
-	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/openapi"
-	"mokapi/config/dynamic/swagger"
 	"mokapi/engine/common"
 	"mokapi/runtime/monitor"
 	"net/http"
@@ -42,9 +40,6 @@ func (c *HttpInfo) Handler(http *monitor.Http, emitter common.EventEmitter) http
 }
 
 func (c *HttpInfo) update() {
-	if len(c.configs) == 0 {
-		return
-	}
 	var keys []string
 	for k := range c.configs {
 		keys = append(keys, k)
@@ -88,22 +83,11 @@ func IsHttpConfig(c *dynamic.Config) bool {
 	switch c.Data.(type) {
 	case *openapi.Config:
 		return true
-	case *swagger.Config:
-		return true
 	default:
 		return false
 	}
 }
 
 func getHttpConfig(c *dynamic.Config) *openapi.Config {
-	if sw, ok := c.Data.(*swagger.Config); ok {
-		oc, err := swagger.Convert(sw)
-		if err != nil {
-			log.Errorf("unable to convert swagger config to openapi: %v", err)
-			return nil
-		}
-		return oc
-	} else {
-		return c.Data.(*openapi.Config)
-	}
+	return c.Data.(*openapi.Config)
 }

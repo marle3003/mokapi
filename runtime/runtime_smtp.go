@@ -21,21 +21,19 @@ type MailHandler interface {
 type SmtpInfo struct {
 	*mail.Config
 	*mail.Store
-	configs map[string]*mail.Config
+	configs map[string]*dynamic.Config
 }
 
 func NewSmtpInfo(c *dynamic.Config) *SmtpInfo {
 	si := &SmtpInfo{
-		configs: map[string]*mail.Config{},
+		configs: map[string]*dynamic.Config{},
 	}
 	si.AddConfig(c)
 	return si
 }
 
 func (c *SmtpInfo) AddConfig(config *dynamic.Config) {
-	lc := config.Data.(*mail.Config)
-	key := config.Info.Url.String()
-	c.configs[key] = lc
+	c.configs[config.Info.Url.String()] = config
 	c.update()
 }
 
@@ -51,9 +49,10 @@ func (c *SmtpInfo) update() {
 		return filepath.Base(x) < filepath.Base(y)
 	})
 
-	cfg := c.configs[keys[0]]
+	cfg := getSmtpConfig(c.configs[keys[0]])
 	for _, k := range keys[1:] {
-		cfg.Patch(c.configs[k])
+		p := getSmtpConfig(c.configs[k])
+		cfg.Patch(p)
 	}
 
 	c.Config = cfg
@@ -69,6 +68,15 @@ func (c *SmtpInfo) Handler(smtp *monitor.Smtp, emitter engine.EventEmitter) Mail
 		monitor: smtp,
 		next:    mail.NewHandler(c.Config, c.Store, emitter),
 	}
+}
+
+func (c *SmtpInfo) Configs() []*dynamic.Config {
+	var r []*dynamic.Config
+	for _, config := range c.configs {
+		r = append(r, config)
+		r = append(r, config.Refs.List()...)
+	}
+	return r
 }
 
 type mailHandler struct {
@@ -106,4 +114,8 @@ func (h *mailHandler) List(ref, pattern string, ctx context.Context) ([]imap.Lis
 
 func (h *mailHandler) Fetch(req *imap.FetchRequest, res imap.FetchResponse, ctx context.Context) error {
 	return h.next.Fetch(req, res, ctx)
+}
+
+func getSmtpConfig(c *dynamic.Config) *mail.Config {
+	return c.Data.(*mail.Config)
 }

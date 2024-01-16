@@ -19,6 +19,8 @@ import (
 )
 
 func TestConfigWatcher_Openapi(t *testing.T) {
+	dynamic.Register("openapi", &openapi.Config{})
+
 	testcases := []struct {
 		name string
 		f    func(t *testing.T)

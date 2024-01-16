@@ -33,12 +33,6 @@ type Listeners struct {
 	m    sync.Mutex
 }
 
-/*func NewConfig(info ConfigInfo, opts ...ConfigOptions) *Config {
-	f := &Config{Info: info, listeners: &sortedmap.LinkedHashMap[string, ConfigListener]{}}
-	f.Options(opts...)
-	return f
-}*/
-
 func AddRef(parent *Config, ref *Config) {
 	parent.Refs.Add(ref)
 	ref.Listeners.Add(parent.Info.Url.String(), func(config *Config) {
@@ -91,6 +85,7 @@ func (r *Refs) List() []*Config {
 	var refs []*Config
 	for _, v := range r.refs {
 		refs = append(refs, v)
+		refs = append(refs, v.Refs.List()...)
 	}
 	return refs
 }

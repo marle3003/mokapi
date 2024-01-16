@@ -25,6 +25,7 @@ type kafka struct {
 	Topics      []topic          `json:"topics,omitempty"`
 	Groups      []group          `json:"groups,omitempty"`
 	Metrics     []metrics.Metric `json:"metrics,omitempty"`
+	Configs     []config         `json:"configs,omitempty"`
 }
 
 type kafkaServer struct {
@@ -173,6 +174,8 @@ func getKafka(info *runtime.KafkaInfo) kafka {
 	sort.Slice(k.Groups, func(i, j int) bool {
 		return strings.Compare(k.Groups[i].Name, k.Groups[j].Name) < 0
 	})
+
+	k.Configs = getConfigs(info.Configs())
 
 	return k
 }
