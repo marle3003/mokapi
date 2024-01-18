@@ -115,8 +115,8 @@ func (c *kafkaClient) get(cluster string, topic string, partition int) (t *store
 	if len(cluster) == 0 {
 		var topics []*store.Topic
 		for _, v := range c.app.Kafka {
-			config = v.Config
 			if t := v.Topic(topic); t != nil {
+				config = v.Config
 				if len(cluster) == 0 {
 					cluster = v.Info.Name
 				}

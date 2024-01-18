@@ -72,19 +72,23 @@ func (w *ConfigWatcher) Read(u *url.URL, v any) (*dynamic.Config, error) {
 		parse = c.Data == nil
 	}
 
-	e.m.Lock()
-	defer e.m.Unlock()
-	w.m.Unlock()
-
 	if parse {
-		if v != nil {
-			c.Data = v
+		e.m.Lock()
+		defer e.m.Unlock()
+		w.m.Unlock()
+
+		if c.Data == nil {
+			if v != nil {
+				c.Data = v
+			}
+			// Currently, read does not validate config. Add Validate would break compatibility
+			err = dynamic.Parse(e.config, w)
+			if err != nil {
+				return nil, err
+			}
 		}
-		// Currently, read does not validate config. Add Validate would break compatibility
-		err = dynamic.Parse(e.config, w)
-		if err != nil {
-			return nil, err
-		}
+	} else {
+		w.m.Unlock()
 	}
 
 	return c, nil
@@ -144,14 +148,20 @@ func (w *ConfigWatcher) addOrUpdate(c *dynamic.Config) error {
 }
 
 func (w *ConfigWatcher) configChanged(c *dynamic.Config) {
+	w.m.Lock()
 	e := w.configs[c.Info.Url.String()]
 	e.m.Lock()
+	w.m.Unlock()
 
 	err := dynamic.Parse(c, w)
-	e.m.Unlock()
 
 	if err != nil {
 		log.Errorf("parse error %v: %v", c.Info.Path(), err)
+		return
+	}
+
+	if c.Data == nil {
+		e.m.Unlock()
 		return
 	}
 
@@ -160,9 +170,11 @@ func (w *ConfigWatcher) configChanged(c *dynamic.Config) {
 		return
 	}
 
+	e.m.Unlock()
+
 	log.Debugf("processing %v", c.Info.Path())
 
 	for _, l := range w.listener {
-		l(c)
+		l(e.config)
 	}
 }

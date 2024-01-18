@@ -36,6 +36,7 @@ type Listeners struct {
 func AddRef(parent *Config, ref *Config) {
 	parent.Refs.Add(ref)
 	ref.Listeners.Add(parent.Info.Url.String(), func(config *Config) {
+		parent.Info.Time = ref.Info.Time
 		parent.Listeners.Invoke(parent)
 	})
 }
@@ -66,12 +67,6 @@ func Wrap(i ConfigInfo, c *Config) {
 	c.Info = i
 	c.Info.inner = &inner
 
-}
-
-func (c *Config) Options(opts ...ConfigOptions) {
-	for _, opt := range opts {
-		opt(c, c.Data == nil)
-	}
 }
 
 func Validate(c *Config) error {

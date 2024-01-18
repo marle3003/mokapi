@@ -18,5 +18,4 @@ dist/
 bin/*
 
 server/api/dashboard.go
-api/bindata.go
 coverage.txt

@@ -3,6 +3,7 @@ package dynamictest
 import (
 	"mokapi/config/dynamic"
 	"net/url"
+	"time"
 )
 
 func NewConfigInfo() dynamic.ConfigInfo {
@@ -11,5 +12,6 @@ func NewConfigInfo() dynamic.ConfigInfo {
 	return dynamic.ConfigInfo{
 		Provider: "test",
 		Url:      u,
+		Time:     time.Now(),
 	}
 }

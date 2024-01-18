@@ -3,11 +3,12 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	assetfs "github.com/elazarl/go-bindata-assetfs"
 	log "github.com/sirupsen/logrus"
+	"io/fs"
 	"mokapi/config/static"
 	"mokapi/runtime"
 	"mokapi/runtime/metrics"
+	"mokapi/webui"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -19,6 +20,7 @@ type handler struct {
 	base       string
 	app        *runtime.App
 	fileServer http.Handler
+	index      string
 }
 
 type info struct {
@@ -62,7 +64,20 @@ func New(app *runtime.App, config static.Api) http.Handler {
 	}
 
 	if config.Dashboard {
-		h.fileServer = http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir})
+		webapp := webui.App
+		b, err := webapp.ReadFile("dist/index.html")
+		if err != nil {
+			panic(err)
+		}
+		h.index = string(b)
+
+		dist, err := fs.Sub(webapp, "dist")
+		if err != nil {
+			panic(err)
+		}
+
+		h.fileServer = http.FileServer(http.FS(dist))
+		//h.fileServer = http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir})
 	}
 
 	return h
@@ -117,15 +132,10 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				if len(h.base) > 0 {
 					base = h.base
 				}
-				data, err := Asset("index.html")
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-				html := strings.Replace(string(data), "<base href=\"/\" />", fmt.Sprintf("<base href=\"%v/\" />", base), 1)
+				html := strings.Replace(h.index, "<base href=\"/\" />", fmt.Sprintf("<base href=\"%v/\" />", base), 1)
 				html = h.replaceMeta(r.URL, html)
 
-				_, err = w.Write([]byte(html))
+				_, err := w.Write([]byte(html))
 				if err != nil {
 					log.Errorf("unable to write index.html: %v", err)
 				}

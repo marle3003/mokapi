@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"io"
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/config/static"
 	"mokapi/safe"
@@ -152,9 +151,6 @@ paths:
 			},
 		},
 	}
-
-	dynamic.Register("asyncapi", &asyncApi.Config{})
-	dynamic.Register("openapi", &asyncApi.Config{})
 
 	for _, tc := range testcases {
 		tc := tc

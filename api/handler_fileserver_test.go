@@ -1,13 +1,18 @@
-package api
+package api_test
 
 import (
+	"fmt"
+	"github.com/stretchr/testify/require"
+	"mokapi/api"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/openapi/openapitest"
 	"mokapi/config/static"
 	"mokapi/runtime"
 	"mokapi/try"
+	"mokapi/webui"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 )
 
@@ -20,7 +25,7 @@ func TestHandler_FileServer(t *testing.T) {
 	}{
 		{
 			name:   "request api info",
-			config: static.Api{Path: "/mokapi"},
+			config: static.Api{Path: "/mokapi", Dashboard: true},
 			fn: func(t *testing.T, h http.Handler) {
 				try.Handler(t,
 					http.MethodGet,
@@ -40,7 +45,7 @@ func TestHandler_FileServer(t *testing.T) {
 		},
 		{
 			name:   "request web app",
-			config: static.Api{Path: "/mokapi"},
+			config: static.Api{Path: "/mokapi", Dashboard: true},
 			fn: func(t *testing.T, h http.Handler) {
 				try.Handler(t,
 					http.MethodGet,
@@ -58,7 +63,7 @@ func TestHandler_FileServer(t *testing.T) {
 		},
 		{
 			name:   "request web app",
-			config: static.Api{Path: "/mokapi/dashboard"},
+			config: static.Api{Path: "/mokapi/dashboard", Dashboard: true},
 			fn: func(t *testing.T, h http.Handler) {
 				try.Handler(t,
 					http.MethodGet,
@@ -76,11 +81,17 @@ func TestHandler_FileServer(t *testing.T) {
 		},
 		{
 			name:   "request asset",
-			config: static.Api{Path: "/mokapi/dashboard"},
+			config: static.Api{Path: "/mokapi/dashboard", Dashboard: true},
 			fn: func(t *testing.T, h http.Handler) {
+				// select an asset from fs
+				dir, err := webui.App.ReadDir("dist/assets")
+				require.NoError(t, err)
+				// asset: DashboardView-7c070f1a.js
+				asset := strings.TrimSuffix(dir[0].Name(), "dist/")
+
 				try.Handler(t,
 					http.MethodGet,
-					"http://foo.api/mokapi/dashboard/assets/index.js",
+					fmt.Sprintf("http://foo.api/mokapi/dashboard/assets/%v", asset),
 					nil,
 					"",
 					h,
@@ -94,7 +105,7 @@ func TestHandler_FileServer(t *testing.T) {
 		},
 		{
 			name:   "request svg",
-			config: static.Api{Path: "/mokapi/dashboard"},
+			config: static.Api{Path: "/mokapi/dashboard", Dashboard: true},
 			fn: func(t *testing.T, h http.Handler) {
 				try.Handler(t,
 					http.MethodGet,
@@ -112,7 +123,7 @@ func TestHandler_FileServer(t *testing.T) {
 		},
 		{
 			name:   "request png",
-			config: static.Api{Path: "/mokapi/dashboard"},
+			config: static.Api{Path: "/mokapi/dashboard", Dashboard: true},
 			fn: func(t *testing.T, h http.Handler) {
 				try.Handler(t,
 					http.MethodGet,
@@ -130,7 +141,7 @@ func TestHandler_FileServer(t *testing.T) {
 		},
 		{
 			name:   "url rewrite (proxy)",
-			config: static.Api{Path: "/mokapi/dashboard", Base: "/foo/mokapi/dashboard"},
+			config: static.Api{Path: "/mokapi/dashboard", Base: "/foo/mokapi/dashboard", Dashboard: true},
 			fn: func(t *testing.T, h http.Handler) {
 				try.Handler(t,
 					http.MethodGet,
@@ -154,17 +165,13 @@ func TestHandler_FileServer(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			h := New(runtime.New(), tc.config)
-			hh := h.(*handler)
-			hh.fileServer = tc.fileServer
+			h := api.New(runtime.New(), tc.config)
 			tc.fn(t, h)
 		})
 	}
 }
 
 func TestOpenGraphInDashboard(t *testing.T) {
-	fileServer := http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {})
-
 	testcases := []struct {
 		name string
 		test func(t *testing.T)
@@ -174,8 +181,7 @@ func TestOpenGraphInDashboard(t *testing.T) {
 			test: func(t *testing.T) {
 				app := runtime.New()
 				app.AddHttp(&dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("https://foo.bar")}, Data: openapitest.NewConfig("3.0", openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server."))})
-				h := New(app, static.Api{Path: "/mokapi"}).(*handler)
-				h.fileServer = fileServer
+				h := api.New(app, static.Api{Path: "/mokapi", Dashboard: true})
 				try.Handler(t,
 					http.MethodGet,
 					"http://foo.api/mokapi/dashboard/http/services/Swagger%20Petstore?refresh=20",
@@ -198,8 +204,7 @@ func TestOpenGraphInDashboard(t *testing.T) {
 					openapitest.WithPath("/pet/{petId}", openapitest.NewPath()),
 				)},
 				)
-				h := New(app, static.Api{Path: "/mokapi"}).(*handler)
-				h.fileServer = fileServer
+				h := api.New(app, static.Api{Path: "/mokapi", Dashboard: true})
 				try.Handler(t,
 					http.MethodGet,
 					"http://foo.api/mokapi/dashboard/http/services/Swagger%20Petstore/pet%2F%7BpetId%7D?refresh=20",
@@ -224,8 +229,7 @@ func TestOpenGraphInDashboard(t *testing.T) {
 					)),
 				),
 				})
-				h := New(app, static.Api{Path: "/mokapi"}).(*handler)
-				h.fileServer = fileServer
+				h := api.New(app, static.Api{Path: "/mokapi", Dashboard: true})
 				try.Handler(t,
 					http.MethodGet,
 					"http://foo.api/mokapi/dashboard/http/services/Swagger%20Petstore/pet%2F%7BpetId%7D?refresh=20",
@@ -249,8 +253,7 @@ func TestOpenGraphInDashboard(t *testing.T) {
 						openapitest.WithPathInfo("", "bar"),
 					))),
 				})
-				h := New(app, static.Api{Path: "/mokapi"}).(*handler)
-				h.fileServer = fileServer
+				h := api.New(app, static.Api{Path: "/mokapi", Dashboard: true})
 				try.Handler(t,
 					http.MethodGet,
 					"http://foo.api/mokapi/dashboard/http/services/Swagger%20Petstore/pet%2F%7BpetId%7D?refresh=20",
@@ -274,8 +277,7 @@ func TestOpenGraphInDashboard(t *testing.T) {
 						openapitest.WithOperation("GET", openapitest.NewOperation()),
 					))),
 				})
-				h := New(app, static.Api{Path: "/mokapi"}).(*handler)
-				h.fileServer = fileServer
+				h := api.New(app, static.Api{Path: "/mokapi", Dashboard: true})
 				try.Handler(t,
 					http.MethodGet,
 					"http://foo.api/mokapi/dashboard/http/services/Swagger%20Petstore/pet%2F%7BpetId%7D/get?refresh=20",
@@ -302,8 +304,7 @@ func TestOpenGraphInDashboard(t *testing.T) {
 						openapitest.WithOperation("GET", openapitest.NewOperation()),
 					))),
 				})
-				h := New(app, static.Api{Path: "/mokapi"}).(*handler)
-				h.fileServer = fileServer
+				h := api.New(app, static.Api{Path: "/mokapi", Dashboard: true})
 				try.Handler(t,
 					http.MethodGet,
 					"http://foo.api/mokapi/dashboard/http/services/Swagger%20Petstore/pet%2F%7BpetId%7D%2Ffoo/get?refresh=20",

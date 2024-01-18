@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/openapi"
 	"mokapi/config/static"
 	"mokapi/safe"
 	"net/url"
@@ -153,15 +154,14 @@ func TestConfigWatcher_Read(t *testing.T) {
 				w.providers["foo"] = &testprovider{
 					read: func(u *url.URL) (*dynamic.Config, error) {
 						require.Equal(t, configPath, u)
-						return &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}, Data: &data{
-							parse: func(config *dynamic.Config, reader dynamic.Reader) error {
-								return fmt.Errorf("TEST ERROR")
-							},
-						}}, nil
+						return &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}}, nil
 					},
 				}
 
-				c, err := w.Read(configPath, nil)
+				c, err := w.Read(configPath, &data{
+					parse: func(config *dynamic.Config, reader dynamic.Reader) error {
+						return fmt.Errorf("TEST ERROR")
+					}})
 				require.EqualError(t, err, "parsing file foo://file.yml: TEST ERROR")
 				require.Nil(t, c)
 			},
@@ -207,6 +207,41 @@ func TestConfigWatcher_Read(t *testing.T) {
 				require.True(t, i1 == i2, "should be same reference")
 			},
 		},
+		{
+			name: "should not invoke listeners when content is unknown",
+			test: func(t *testing.T) {
+				w := NewConfigWatcher(&static.Config{})
+				configPath := mustParse("file.yml")
+				configPath.Scheme = "foo"
+				var chWatcher chan *dynamic.Config
+				w.providers["foo"] = &testprovider{
+					start: func(configs chan *dynamic.Config, pool *safe.Pool) error {
+						chWatcher = configs
+						return nil
+					},
+				}
+
+				pool := safe.NewPool(context.Background())
+				w.Start(pool)
+				defer pool.Stop()
+
+				ch := make(chan *dynamic.Config, 1)
+				w.AddListener(func(config *dynamic.Config) {
+					ch <- config
+				})
+				chWatcher <- &dynamic.Config{Info: dynamic.ConfigInfo{Url: configPath}}
+
+			Wait:
+				for {
+					select {
+					case <-ch:
+						require.Fail(t, "Unknown config should not trigger listener")
+					case <-time.After(1 * time.Second):
+						break Wait
+					}
+				}
+			},
+		},
 	}
 
 	for _, tc := range testcases {
@@ -250,6 +285,8 @@ func TestConfigWatcher_Start(t *testing.T) {
 		{
 			name: "closing",
 			f: func(t *testing.T) {
+				dynamic.Register("openapi", &openapi.Config{})
+
 				w := NewConfigWatcher(&static.Config{})
 				var listenerReceived []*dynamic.Config
 				w.AddListener(func(config *dynamic.Config) {
@@ -264,7 +301,7 @@ func TestConfigWatcher_Start(t *testing.T) {
 				err := w.Start(pool)
 				require.NoError(t, err)
 
-				ch <- &dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("foo.yml")}}
+				ch <- &dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("foo.json")}, Raw: []byte(`{"openapi": "3.0","info":{"title":"Foo"}}`)}
 				time.Sleep(time.Duration(100) * time.Millisecond)
 
 				require.Len(t, listenerReceived, 1)

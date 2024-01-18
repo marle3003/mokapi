@@ -457,7 +457,7 @@ func TestPath_Parse(t *testing.T) {
 					openapitest.WithPathRef("/foo",
 						&openapi.PathRef{Reference: ref.Reference{Ref: "foo.yml#/paths/foo"}}))
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
-				require.EqualError(t, err, "parse path '/foo' failed: resolve reference 'foo.yml#/paths/foo' failed: local path not found: /paths/foo")
+				require.EqualError(t, err, "parse path '/foo' failed: resolve reference 'foo.yml#/paths/foo' failed: path '/paths/foo' not found")
 			},
 		},
 		{

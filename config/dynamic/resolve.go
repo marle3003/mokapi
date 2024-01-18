@@ -45,7 +45,7 @@ func Resolve(ref string, element interface{}, config *Config, reader Reader) err
 			return fmt.Errorf("resolve reference '%v' failed: %w", ref, err)
 		}
 
-		err = ResolvePath(u.Fragment, f.Data, element)
+		err = resolvePath(u.Fragment, f.Data, element)
 		if err != nil {
 			return fmt.Errorf("resolve reference '%v' failed: %w", ref, err)
 		}
@@ -53,10 +53,14 @@ func Resolve(ref string, element interface{}, config *Config, reader Reader) err
 		return nil
 	}
 
-	return ResolvePath(u.Fragment, config.Data, element)
+	err = resolvePath(u.Fragment, config.Data, element)
+	if err != nil {
+		return fmt.Errorf("resolve reference '%v' failed: %w", ref, err)
+	}
+	return nil
 }
 
-func ResolvePath(path string, cursor interface{}, resolved interface{}) (err error) {
+func resolvePath(path string, cursor interface{}, resolved interface{}) (err error) {
 	tokens := strings.Split(path, "/")
 
 	for i, t := range tokens[1:] {
@@ -68,9 +72,9 @@ func ResolvePath(path string, cursor interface{}, resolved interface{}) (err err
 			break
 		}
 
-		cursor, err = Get(t, cursor)
+		cursor, err = get(t, cursor)
 		if err != nil {
-			return fmt.Errorf("resolve path %v failed: %w", path, err)
+			return err
 		}
 	}
 
@@ -87,7 +91,7 @@ func ResolvePath(path string, cursor interface{}, resolved interface{}) (err err
 	}
 
 	if cursor == nil {
-		return fmt.Errorf("local path not found: %v", path)
+		return fmt.Errorf("path '%v' not found", path)
 	}
 
 	if r, ok := cursor.(PathResolver); ok {
@@ -103,7 +107,7 @@ func ResolvePath(path string, cursor interface{}, resolved interface{}) (err err
 	}
 
 	v2 := reflect.Indirect(reflect.ValueOf(resolved))
-	if !vCursor.Type().AssignableTo(v2.Type()) {
+	if !vCursor.Type().AssignableTo(v2.Type()) && vCursor.Kind() == reflect.Ptr {
 		vCursor = vCursor.Elem()
 	}
 
@@ -116,22 +120,17 @@ func ResolvePath(path string, cursor interface{}, resolved interface{}) (err err
 	return
 }
 
-func Get(token string, node interface{}) (interface{}, error) {
+func get(token string, node interface{}) (interface{}, error) {
 	if len(token) == 0 {
 		return node, nil
 	}
 
 	rValue := reflect.Indirect(reflect.ValueOf(node))
-
-	if r, ok := node.(PathResolver); ok {
-		return r.Resolve(token)
-	}
-
 	switch rValue.Kind() {
 	case reflect.Struct:
 		// if node is a "ref wrapper" like SchemaRef
 		if f := rValue.FieldByName("Value"); f.IsValid() {
-			return Get(token, f.Interface())
+			return get(token, f.Interface())
 		}
 		if f := caseInsensitiveFieldByName(rValue, token); f.IsValid() {
 			return f.Interface(), nil
@@ -148,6 +147,8 @@ func Get(token string, node interface{}) (interface{}, error) {
 			}
 			return mv.Interface(), nil
 		}
+	default:
+		break
 	}
 
 	return nil, fmt.Errorf("invalid token reference %q", token)

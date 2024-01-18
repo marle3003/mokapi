@@ -6,7 +6,6 @@ require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/brianvoe/gofakeit/v6 v6.26.3
 	github.com/dop251/goja v0.0.0-20220408131256-ffe77e20c6f1
-	github.com/elazarl/go-bindata-assetfs v1.0.1
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-co-op/gocron v1.37.0
 	github.com/go-git/go-git/v5 v5.11.0
