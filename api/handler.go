@@ -77,7 +77,6 @@ func New(app *runtime.App, config static.Api) http.Handler {
 		}
 
 		h.fileServer = http.FileServer(http.FS(dist))
-		//h.fileServer = http.FileServer(&assetfs.AssetFS{Asset: Asset, AssetDir: AssetDir})
 	}
 
 	return h

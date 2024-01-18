@@ -81,6 +81,24 @@ func HasHeader(name, value string) ResponseCondition {
 	}
 }
 
+func HasHeaderXor(name string, values ...string) ResponseCondition {
+	return func(t *testing.T, tr *TestResponse) {
+		v := tr.res.Header.Get(name)
+		matched := ""
+		for _, exp := range values {
+			if v == exp {
+				if matched != "" {
+					require.Fail(t, fmt.Sprintf("header '%v' matches at least two values: '%v' and '%v'", name, matched, exp))
+				}
+				matched = exp
+			}
+		}
+		if matched == "" {
+			require.Fail(t, fmt.Sprintf("header '%v' does not match one of: %v", name, values))
+		}
+	}
+}
+
 func HasBody(expected string) ResponseCondition {
 	return func(t *testing.T, tr *TestResponse) {
 		if tr.body == nil {
