@@ -20,7 +20,7 @@ COPY . /go/src/github.com/mokapi
 WORKDIR /go/src/github.com/mokapi
 
 RUN rm -rf ./webui
-COPY --from=webui /webui/dist webui
+COPY --from=webui /webui webui
 
 RUN go test -v ./...
 
