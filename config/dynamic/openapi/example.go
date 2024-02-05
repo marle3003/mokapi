@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/openapi/ref"
+	"mokapi/json/ref"
 )
 
 type Examples map[string]*ExampleRef

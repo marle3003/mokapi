@@ -5,7 +5,7 @@ import (
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/openapi/parameter"
-	"mokapi/config/dynamic/openapi/ref"
+	"mokapi/json/ref"
 	"net/http"
 	"strings"
 )

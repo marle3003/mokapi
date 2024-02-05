@@ -3,8 +3,8 @@ package openapitest
 import (
 	"mokapi/config/dynamic/openapi"
 	"mokapi/config/dynamic/openapi/parameter"
-	"mokapi/config/dynamic/openapi/ref"
 	"mokapi/config/dynamic/openapi/schema"
+	"mokapi/json/ref"
 	"mokapi/media"
 )
 

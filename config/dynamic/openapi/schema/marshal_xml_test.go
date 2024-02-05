@@ -2,9 +2,9 @@ package schema_test
 
 import (
 	"github.com/stretchr/testify/require"
-	"mokapi/config/dynamic/openapi/ref"
 	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/config/dynamic/openapi/schema/schematest"
+	"mokapi/json/ref"
 	"mokapi/media"
 	"mokapi/sortedmap"
 	"testing"

@@ -9,7 +9,7 @@ import (
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/dynamic/openapi"
 	"mokapi/config/dynamic/openapi/openapitest"
-	"mokapi/config/dynamic/openapi/ref"
+	"mokapi/json/ref"
 	"net/http"
 	"net/url"
 	"testing"

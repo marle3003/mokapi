@@ -10,8 +10,8 @@ import (
 	"mime"
 	"mime/multipart"
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/openapi/ref"
 	"mokapi/config/dynamic/openapi/schema"
+	"mokapi/json/ref"
 	"mokapi/media"
 	"net/http"
 )
