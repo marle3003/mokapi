@@ -39,7 +39,7 @@ onUnmounted(() => {
           <kafka-groups-card :service="service" />
       </div>
       <div class="card-group">
-            <config-card :service="service" />
+            <config-card :configs="service.configs" />
       </div>
       <div class="card-group">
           <kafka-messages-card :service="service" />

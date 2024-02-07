@@ -193,6 +193,11 @@ const router = createRouter({
             },
           ]
         },
+        {
+          path: '/dashboard/config/:id',
+          name: 'config',
+          component: dashboardView,
+        },
       ]
     },
     {

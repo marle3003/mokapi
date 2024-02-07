@@ -34,7 +34,7 @@ func TestHandler_Config(t *testing.T) {
 		test       []try.ResponseCondition
 	}{
 		{
-			name: "not found",
+			name: "meta: not found",
 			app: func() *runtime.App {
 				return &runtime.App{Configs: map[string]*dynamic.Config{}}
 			},
@@ -44,7 +44,7 @@ func TestHandler_Config(t *testing.T) {
 			},
 		},
 		{
-			name: "yaml file empty",
+			name: "meta: found",
 			app: func() *runtime.App {
 				return &runtime.App{Configs: map[string]*dynamic.Config{
 					"foo": {
@@ -59,13 +59,68 @@ func TestHandler_Config(t *testing.T) {
 			requestUrl: "http://foo.api/api/configs/foo",
 			test: []try.ResponseCondition{
 				try.HasStatusCode(http.StatusOK),
+				try.HasBody(`{"id":"37636430-3165-3037-3435-376637313065","url":"https://foo.bar/foo.yaml","provider":"","time":"2023-12-27T13:01:30Z"}`),
+			},
+		},
+		{
+			name: "meta: found",
+			app: func() *runtime.App {
+				foo := &dynamic.Config{
+					Info: dynamic.ConfigInfo{
+						Url:  mustUrl("https://foo.bar/foo.yaml"),
+						Time: mustTime("2023-12-27T13:01:30+00:00"),
+					},
+				}
+				dynamic.AddRef(foo, &dynamic.Config{
+					Info: dynamic.ConfigInfo{
+						Url:  mustUrl("https://foo.bar/bar.yaml"),
+						Time: mustTime("2023-12-27T14:01:30+00:00"),
+					},
+				})
+
+				return &runtime.App{Configs: map[string]*dynamic.Config{
+					"foo": foo,
+				}}
+			},
+			requestUrl: "http://foo.api/api/configs/foo",
+			test: []try.ResponseCondition{
+				try.HasStatusCode(http.StatusOK),
+				try.HasBody(`{"id":"37636430-3165-3037-3435-376637313065","url":"https://foo.bar/foo.yaml","provider":"","time":"2023-12-27T13:01:30Z","refs":[{"id":"66643630-6636-6536-6634-303165316161","url":"https://foo.bar/bar.yaml","provider":"","time":"2023-12-27T14:01:30Z"}]}`),
+			},
+		},
+		{
+			name: "data: not found",
+			app: func() *runtime.App {
+				return &runtime.App{Configs: map[string]*dynamic.Config{}}
+			},
+			requestUrl: "http://foo.api/api/configs/foo",
+			test: []try.ResponseCondition{
+				try.HasStatusCode(http.StatusNotFound),
+			},
+		},
+		{
+			name: "data: yaml file empty",
+			app: func() *runtime.App {
+				return &runtime.App{Configs: map[string]*dynamic.Config{
+					"foo": {
+						Info: dynamic.ConfigInfo{
+							Url:  mustUrl("https://foo.bar/foo.yaml"),
+							Time: mustTime("2023-12-27T13:01:30+00:00"),
+						},
+						Raw: nil,
+					},
+				}}
+			},
+			requestUrl: "http://foo.api/api/configs/foo/data",
+			test: []try.ResponseCondition{
+				try.HasStatusCode(http.StatusOK),
 				try.HasHeader("Last-Modified", "Wed, 27 Dec 2023 13:01:30 GMT"),
 				try.HasHeaderXor("Content-Type", "text/plain", "application/x-yaml"),
 				try.HasBody(""),
 			},
 		},
 		{
-			name: "json file with content",
+			name: "data: json file with content",
 			app: func() *runtime.App {
 				return &runtime.App{Configs: map[string]*dynamic.Config{
 					"foo": {
@@ -77,7 +132,7 @@ func TestHandler_Config(t *testing.T) {
 					},
 				}}
 			},
-			requestUrl: "http://foo.api/api/configs/foo",
+			requestUrl: "http://foo.api/api/configs/foo/data",
 			test: []try.ResponseCondition{
 				try.HasStatusCode(http.StatusOK),
 				try.HasHeader("Last-Modified", "Fri, 22 Dec 2023 13:01:30 GMT"),

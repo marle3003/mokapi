@@ -38,4 +38,12 @@ declare interface Config {
     url: string
     provider: string
     time: string
+    refs: ConfigRef[]
+}
+
+declare interface ConfigRef {
+    id: string
+    url: string
+    provider: string
+    time: string
 }

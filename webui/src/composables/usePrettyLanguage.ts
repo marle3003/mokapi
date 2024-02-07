@@ -35,5 +35,21 @@ export function usePrettyLanguage() {
         }
     }
 
-    return {formatLanguage, getLanguage}
+    function getContentType(url: string): string | null {
+        const index = url.lastIndexOf('.')
+        if (index < 0) {
+            return null
+        }
+        const ext = url.substring(index)
+        switch (ext) {
+            case '.json':
+                return 'application/json'
+            case '.yaml':
+                return 'application/json'
+            default:
+                return null
+        }
+    }
+
+    return { formatLanguage, getLanguage, getContentType}
 }
