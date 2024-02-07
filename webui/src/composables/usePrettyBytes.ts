@@ -32,5 +32,5 @@ export function usePrettyBytes() : {format: FormatFunc} {
         return (neg ? '-' : '') + value + ' ' + unit
     }
 
-    return {format}
+    return { format }
 }

@@ -11,16 +11,43 @@ import (
 )
 
 type config struct {
+	Id       string      `json:"id"`
+	Url      string      `json:"url"`
+	Provider string      `json:"provider"`
+	Time     time.Time   `json:"time"`
+	Refs     []configRef `json:"refs,omitempty"`
+}
+
+type configRef struct {
 	Id       string    `json:"id"`
 	Url      string    `json:"url"`
 	Provider string    `json:"provider"`
 	Time     time.Time `json:"time"`
 }
 
-func (h *handler) getConfig(w http.ResponseWriter, r *http.Request) {
+func (h *handler) handleConfig(w http.ResponseWriter, r *http.Request) {
 	segments := strings.Split(r.URL.Path, "/")
-	key := segments[3]
+	if len(segments) == 5 {
+		h.getConfigData(w, segments[3])
+	} else if len(segments) == 4 {
+		h.getConfigMetaData(w, segments[3])
+	} else {
+		w.WriteHeader(http.StatusBadRequest)
+	}
+}
 
+func (h *handler) getConfigMetaData(w http.ResponseWriter, key string) {
+	c, ok := h.app.Configs[key]
+	if !ok {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	writeJsonBody(w, toConfig(c))
+}
+
+func (h *handler) getConfigData(w http.ResponseWriter, key string) {
 	c, ok := h.app.Configs[key]
 	if !ok {
 		w.WriteHeader(http.StatusNotFound)
@@ -46,14 +73,27 @@ func (h *handler) getConfig(w http.ResponseWriter, r *http.Request) {
 
 func getConfigs(src []*dynamic.Config) (dst []config) {
 	for _, cfg := range src {
-		path := cfg.Info.Path()
-		path = filepath.ToSlash(path)
-		dst = append(dst, config{
-			Id:       cfg.Info.Key(),
-			Url:      path,
-			Time:     cfg.Info.Time,
-			Provider: cfg.Info.Provider,
-		})
+		dst = append(dst, toConfig(cfg))
 	}
 	return
+}
+
+func toConfig(cfg *dynamic.Config) config {
+	var refs []configRef
+	for _, ref := range cfg.Refs.List() {
+		refs = append(refs, configRef{
+			Id:       ref.Info.Key(),
+			Url:      filepath.ToSlash(ref.Info.Path()),
+			Provider: ref.Info.Provider,
+			Time:     ref.Info.Time,
+		})
+	}
+
+	return config{
+		Id:       cfg.Info.Key(),
+		Url:      filepath.ToSlash(cfg.Info.Path()),
+		Time:     cfg.Info.Time,
+		Provider: cfg.Info.Provider,
+		Refs:     refs,
+	}
 }

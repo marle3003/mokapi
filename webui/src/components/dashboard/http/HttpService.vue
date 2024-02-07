@@ -13,7 +13,7 @@ import Message from '@/components/Message.vue'
 import ConfigCard from '../ConfigCard.vue'
 import '@/assets/http.css'
 
-const {fetchService} = useService()
+const { fetchService } = useService()
 const route = useRoute()
 const serviceName = route.params.service?.toString()
 
@@ -91,7 +91,7 @@ function endpointNotFoundMessage(msg: string | undefined) {
             <endpoints-card :service="service" />
         </div>
         <div class="card-group">
-            <config-card :service="service" />
+            <config-card :configs="service.configs" />
         </div>
         <div class="card-group">
             <requests :service="service" />

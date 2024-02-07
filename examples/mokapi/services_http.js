@@ -1,4 +1,4 @@
-import {metrics} from "metrics";
+import {metrics} from "metrics"
 
 const category = {
     type: "object",
@@ -70,6 +70,16 @@ const pet = {
         }
     },
     xml: {name: "Pet"}
+}
+
+export const configs = {
+    'b6fea8ac-56c7-4e73-a9c0-6887640bdca8': {
+        id: 'b6fea8ac-56c7-4e73-a9c0-6887640bdca8',
+        url: 'file://foo.json',
+        provider: 'file',
+        time: '2023-02-15T08:49:25.482366+01:00',
+        data: 'http://localhost:8090/api/services/http/Swagger%20Petstore'
+    }
 }
 
 export let apps = [
@@ -357,12 +367,7 @@ export let apps = [
             }
         ],
         configs: [
-            {
-                id: 'b6fea8ac-56c7-4e73-a9c0-6887640bdca8',
-                url: 'foo',
-                provider: 'file',
-                time: '2023-02-13T08:49:25.482366+01:00'
-            }
+            configs['b6fea8ac-56c7-4e73-a9c0-6887640bdca8']
         ]
     }
 ]

@@ -245,6 +245,39 @@ paths:
         "200":
           description: content of config
           content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  url:
+                    type: string
+                  provider:
+                    type: string
+                  time:
+                    type: string
+                    format: date-time
+        "404":
+          description: config not found
+          content:
+            text/plain:
+              schema:
+                type: string
+  /api/configs/{id}/data:
+    get:
+      summary: returns the config data for given id
+      operationId: configdata
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: content of config
+          content:
             text/plain:
               schema:
                 type: string

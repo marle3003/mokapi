@@ -29,6 +29,7 @@ import '@/assets/dashboard.css'
 import { onUnmounted } from 'vue';
 
 import { useMeta } from '@/composables/meta'
+import Config from '@/components/dashboard/Config.vue';
 
 const appInfo = useAppInfo()
 onUnmounted(() => {
@@ -154,6 +155,7 @@ useMeta('Dashboard | mokapi.io', description, "https://mokapi.io/smtp")
                 <kafka-service v-if="$route.meta.service === 'kafka'" />
                 <smtp-service v-if="$route.meta.service === 'smtp'" />
                 <ldap-service v-if="$route.meta.service === 'ldap'" />
+                <config v-if="$route.name === 'config'"></config>
             </div>
         </div>
         <message :message="appInfo.error" v-if="!appInfo.data && !appInfo.isLoading"></message>

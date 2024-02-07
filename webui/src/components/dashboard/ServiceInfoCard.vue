@@ -12,7 +12,7 @@ defineProps({
     <div class="card" data-testid="service-info">
             <div class="card-body">
                 <div class="row">
-                    <div class="col col-7 header mb-3">
+                    <div class="col col-8 header mb-3">
                         <p class="label">Name</p>
                         <p data-testid="service-name">{{ service.name }}</p>
                     </div>
@@ -20,7 +20,7 @@ defineProps({
                         <p class="label">Version</p>
                         <p data-testid="service-version">{{ service.version }}</p>
                     </div>
-                    <div class="col">
+                    <div class="col-2">
                         <p class="label">Contact</p>
                         <p v-if="service.contact" data-testid="service-contact">
                             <a v-if="service.contact.url" :href="service.contact.url">{{ service.contact.name }}</a>
@@ -28,7 +28,7 @@ defineProps({
                             <a v-if="service.contact.email" :href="'mailto:'+service.contact.email" style="margin-left: 0.5em;" data-testid="service-mail"><i class="bi bi-envelope"></i></a>
                         </p>
                     </div>
-                    <div class="col text-end">
+                    <div class="col-1 text-end" style="width:70px">
                         <span class="badge bg-secondary" data-testid="service-type">{{ type ? type : service.type }}</span>
                     </div>
                 </div>
