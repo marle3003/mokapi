@@ -3,9 +3,9 @@ package store
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/kafka"
 	"mokapi/kafka/offsetFetch"
+	"mokapi/providers/openapi/schema"
 )
 
 func (s *Store) offsetFetch(rw kafka.ResponseWriter, req *kafka.Request) error {

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/json/ref"
+	"mokapi/providers/openapi/schema"
 	"net/url"
 	"testing"
 )

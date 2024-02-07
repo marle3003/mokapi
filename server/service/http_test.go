@@ -3,7 +3,7 @@ package service
 import (
 	"fmt"
 	"github.com/stretchr/testify/require"
-	"mokapi/config/dynamic/openapi"
+	"mokapi/providers/openapi"
 	"mokapi/runtime/events"
 	"mokapi/try"
 	"net/http"

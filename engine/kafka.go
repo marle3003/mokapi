@@ -5,23 +5,21 @@ import (
 	"math/rand"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
-	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/engine/common"
 	"mokapi/kafka"
 	"mokapi/media"
+	"mokapi/providers/openapi/schema"
 	"mokapi/runtime"
 	"time"
 )
 
 type kafkaClient struct {
-	app       *runtime.App
-	generator *schema.Generator
+	app *runtime.App
 }
 
 func newKafkaClient(app *runtime.App) *kafkaClient {
 	return &kafkaClient{
-		app:       app,
-		generator: schema.NewGenerator(),
+		app: app,
 	}
 }
 
@@ -69,13 +67,13 @@ func (c *kafkaClient) write(partition *store.Partition, config *asyncApi.Channel
 	var err error
 
 	if key == nil {
-		key, err = c.generator.New(msg.Bindings.Kafka.Key)
+		key, err = schema.CreateValue(msg.Bindings.Kafka.Key)
 		if err != nil {
 			return nil, nil, fmt.Errorf("unable to generate kafka key: %v", err)
 		}
 	}
 	if value == nil {
-		value, err = c.generator.New(msg.Payload)
+		value, err = schema.CreateValue(msg.Payload)
 		if err != nil {
 			return nil, nil, fmt.Errorf("unable to generate kafka data: %v", err)
 		}
@@ -162,13 +160,13 @@ func (c *kafkaClient) createRecordBatch(key, value interface{}, config *asyncApi
 	}
 
 	if key == nil {
-		key, err = c.generator.New(msg.Bindings.Kafka.Key)
+		key, err = schema.CreateValue(msg.Bindings.Kafka.Key)
 		if err != nil {
 			return rb, fmt.Errorf("unable to generate kafka key: %v", err)
 		}
 	}
 	if value == nil {
-		value, err = c.generator.New(msg.Payload)
+		value, err = schema.CreateValue(msg.Payload)
 		if err != nil {
 			return rb, fmt.Errorf("unable to generate kafka data: %v", err)
 		}

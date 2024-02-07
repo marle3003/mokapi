@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"mokapi/config/dynamic/openapi/schema"
+	"mokapi/providers/openapi/schema"
 	"mokapi/sortedmap"
 	"net/http"
 )
@@ -108,7 +108,7 @@ func (h *handler) getExampleData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s := toSchema(si)
-	data, err := schema.NewGenerator().New(&schema.Ref{Value: s})
+	data, err := schema.CreateValue(&schema.Ref{Value: s})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

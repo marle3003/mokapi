@@ -3,9 +3,9 @@ package api
 import (
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
-	"mokapi/config/dynamic/openapi/openapitest"
-	"mokapi/config/dynamic/openapi/schema/schematest"
 	"mokapi/config/static"
+	"mokapi/providers/openapi/openapitest"
+	"mokapi/providers/openapi/schema/schematest"
 	"mokapi/runtime"
 	"mokapi/runtime/monitor"
 	"mokapi/try"
