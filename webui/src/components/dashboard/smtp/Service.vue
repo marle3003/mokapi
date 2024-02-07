@@ -39,7 +39,7 @@ if (serviceName){
         </div>
       </div>
       <div class="card-group">
-        <config-card :service="service" />
+        <config-card :configs="service.configs" />
       </div>
       <div class="card-group">
         <mails :service="service" />
