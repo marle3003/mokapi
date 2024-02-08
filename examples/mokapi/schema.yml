@@ -28,7 +28,7 @@ components:
         example: {}
         enum:
           type: array
-          items:
+          items: {}
         minimum:
           type: number
           nullable: true

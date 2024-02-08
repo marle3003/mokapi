@@ -3,9 +3,9 @@ package store
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/kafka"
 	"mokapi/kafka/produce"
+	"mokapi/providers/openapi/schema"
 	"mokapi/runtime/monitor"
 )
 

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/asyncApi/kafka"
-	"mokapi/config/dynamic/openapi/schema"
+	"mokapi/providers/openapi/schema"
 	"net/url"
 	"strconv"
 )
