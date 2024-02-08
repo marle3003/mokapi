@@ -27,7 +27,14 @@ export function useFetch(path: string, options?: RequestInit, doRefresh: boolean
     function doFetch() {
         response.isLoading = true
         fetch(path, options)
-            .then((res) => res.json())
+            .then((res) => {
+                const contentType = res.headers.get("content-type");
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    return res.json()
+                } else{
+                    return res.text()
+                }
+            })
             .then((res) => {
                 response.data = res
                 response.isLoading = false

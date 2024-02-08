@@ -17,7 +17,7 @@ export function useConfig() {
 
     function fetchData(id: string) {
         const response = useFetch(getDataUrl(id))
-        const data = ref<string | null>(null)
+        const data = ref<any | null>(null)
         const isLoading = ref<boolean>()
 
         watchEffect(() => {

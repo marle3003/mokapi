@@ -5,7 +5,7 @@ import { usePrettyBytes } from '@/composables/usePrettyBytes'
 
 const props = defineProps<{
   source: string
-  contentType?: string
+  contentType: string
   filename?: string
   url?: string
 }>()
@@ -13,15 +13,8 @@ const props = defineProps<{
 const { formatLanguage } = usePrettyLanguage()
 const { format } = usePrettyBytes()
 
-const contentType = computed(() => {
-    if (props.contentType) {
-      props.contentType
-    }
-    return 'application/json'
-})
-
 const code = computed(() => {
-  return formatLanguage(props.source, contentType.value)
+  return formatLanguage(props.source, props.contentType)
 })
 
 const lines = computed(() => {
@@ -32,9 +25,21 @@ const size = computed(() => {
   return format(new Blob([props.source]).size)
 })
 
+const highlightClass = computed(() => {
+  if (!props.contentType) {
+    return ''
+  }
+  switch (props.contentType) {
+    case 'application/json': return 'json'
+    case 'application/yaml': return 'yaml'
+    case 'application/xml': return 'xml'
+    default: return ''
+  }
+})
+
 function download(event: MouseEvent) {
   var element = document.createElement('a')
-  element.setAttribute('href', `data:${contentType};charset=utf-8,${encodeURIComponent(props.source)}`)
+  element.setAttribute('href', `data:${props.contentType};charset=utf-8,${encodeURIComponent(props.source)}`)
   let filename = props.filename
   if (!filename) {
     filename = 'file.dat'
@@ -59,11 +64,11 @@ function download(event: MouseEvent) {
       </div>
       <div class="controls" v-if="url">
         <a :href="url">Raw</a>
-        <a href="" @click="download"><i class="bi bi-download"></i></a>
+        <a href="" @click="download" title="Download config"><i class="bi bi-download"></i></a>
       </div>
     </div>
     <div class="source">
-      <pre v-highlightjs="code" class="overflow-auto"><code></code></pre>
+      <pre v-highlightjs="code" class="overflow-auto"><code :class="highlightClass"></code></pre>
     </div>
   </div>
 </template>
