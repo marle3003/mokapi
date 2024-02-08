@@ -592,6 +592,14 @@ func TestGeneratorArray(t *testing.T) {
 				require.Equal(t, []interface{}{5, 3, 8, 6, 7}, i)
 			},
 		},
+		{
+			name:   "items not defined",
+			schema: &schema.Schema{Type: "array"},
+			test: func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, "generating data failed: failed to create array: items must be present if the type is array: schema type=array")
+				require.Nil(t, i)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

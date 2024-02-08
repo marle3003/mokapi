@@ -188,6 +188,10 @@ func (b *builder) createNumber(s *Schema) (interface{}, error) {
 }
 
 func (b *builder) createArray(s *Schema) ([]interface{}, error) {
+	if s.Items == nil {
+		return nil, fmt.Errorf("failed to create array: items must be present if the type is array: %s", s)
+	}
+
 	opt := generator.ArrayOptions{
 		MinItems:    s.MinItems,
 		MaxItems:    s.MaxItems,
