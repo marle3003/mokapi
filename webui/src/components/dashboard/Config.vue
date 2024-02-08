@@ -10,16 +10,16 @@ import ConfigCard from '@/components/dashboard/ConfigCard.vue'
 import SourceView from './SourceView.vue'
 
 const configId = useRoute().params.id as string
-const { fetch, fetchData } = useConfig()
+const { fetch, fetchData, getDataUrl } = useConfig()
 const { format } = usePrettyDates()
-const { formatLanguage, getContentType } = usePrettyLanguage()
+const { getContentType } = usePrettyLanguage()
 const defaultContentType = 'plain/text'
 
 const { config, isLoading, close } = fetch(configId)
 const { data, isLoading: isLoadingData, close: closeData } = fetchData(configId)
 
 function isInitLoading() {
-    return isLoading.value && !config.value
+    return isLoading.value && !config.value && isLoadingData
 }
 
 const contentType = computed(() => {
@@ -32,6 +32,21 @@ const contentType = computed(() => {
     }
     return defaultContentType
 })
+
+const filename = computed(() => {
+    if (!config.value) {
+        return ''
+    }
+    const url = config.value.url
+    return url.substring(url.lastIndexOf('/')+1);
+})
+
+function toString(arg: any): string {
+    if (typeof arg === 'string') {
+        return arg
+    }
+    return JSON.stringify(arg)
+}
 
 onUnmounted(() => {
     close()
@@ -76,7 +91,7 @@ onUnmounted(() => {
                 <div class="card-body">
                     <div class="row">
                         <p class="codeBlock">
-                            <source-view :source="JSON.stringify(data)" :contenttype="contentType" />
+                            <source-view :source="toString(data)" :contenttype="contentType" :url="getDataUrl(configId)" :filename="filename" />
                         </p>
                     </div>
                 </div>

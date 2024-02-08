@@ -278,7 +278,7 @@ paths:
         "200":
           description: content of config
           content:
-            text/plain:
+            '*':
               schema:
                 type: string
         "404":

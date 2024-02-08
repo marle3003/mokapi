@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type PropType, computed } from 'vue'
+import { computed } from 'vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 import { usePrettyBytes } from '@/composables/usePrettyBytes'
 
@@ -7,13 +7,8 @@ const props = defineProps<{
   source: string
   contentType?: string
   filename?: string
+  url?: string
 }>()
-
-// const props = defineProps({
-//     source: { type: Object as PropType<string>, required: true },
-//     contentType: { type: Object as PropType<string>, required: false },
-//     filename: { type: Object as PropType<string>, required: false }
-// })
 
 const { formatLanguage } = usePrettyLanguage()
 const { format } = usePrettyBytes()
@@ -37,13 +32,7 @@ const size = computed(() => {
   return format(new Blob([props.source]).size)
 })
 
-function raw() {
-  var wnd = window.open("about:blank", "", "_blank")
-  wnd!.document.write(props.source)
-  return false
-}
-
-function download() {
+function download(event: MouseEvent) {
   var element = document.createElement('a')
   element.setAttribute('href', `data:${contentType};charset=utf-8,${encodeURIComponent(props.source)}`)
   let filename = props.filename
@@ -56,7 +45,7 @@ function download() {
   document.body.appendChild(element)
   element.click()
   document.body.removeChild(element)
-  return false
+  event.preventDefault()
 }
 
 </script>
@@ -68,9 +57,9 @@ function download() {
         <span>{{ lines }} lines</span> · 
         <span>{{ size }}</span>
       </div>
-      <div class="controls">
-        <a href="" @click="raw()">Raw</a>
-        <a href="" @click="download()"><i class="bi bi-download"></i></a>
+      <div class="controls" v-if="url">
+        <a :href="url">Raw</a>
+        <a href="" @click="download"><i class="bi bi-download"></i></a>
       </div>
     </div>
     <div class="source">

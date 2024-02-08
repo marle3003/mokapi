@@ -16,7 +16,7 @@ export function useConfig() {
     }
 
     function fetchData(id: string) {
-        const response = useFetch(`/api/configs/${id}/data`)
+        const response = useFetch(getDataUrl(id))
         const data = ref<string | null>(null)
         const isLoading = ref<boolean>()
 
@@ -27,5 +27,9 @@ export function useConfig() {
         return {data, isLoading, close: response.close}
     }
 
-    return { fetch, fetchData }
+    function getDataUrl(id: string): string {
+        return `/api/configs/${id}/data`
+    }
+
+    return { fetch, fetchData, getDataUrl }
 }

@@ -90,9 +90,9 @@ export default function() {
                 const configData = configs[request.path.id]
                 if (configData) {
                     response.data = configData
+                    //response.headers['Content-Type'] = 'application/json'
                     return true
                 } else {
-                    console.log("config not found: "+JSON.stringify(configs))
                     response.statusCode = 404
                     response.data = ''
                     return true
