@@ -3,7 +3,7 @@ package api
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"mokapi/config/dynamic/openapi"
+	"mokapi/providers/openapi"
 	"mokapi/runtime"
 	"net/url"
 	"regexp"
