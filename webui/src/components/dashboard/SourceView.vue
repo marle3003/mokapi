@@ -8,6 +8,8 @@ const props = defineProps<{
   contentType: string
   filename?: string
   url?: string
+  deprecated?: boolean
+  height?: string
 }>()
 
 const { formatLanguage } = usePrettyLanguage()
@@ -53,22 +55,30 @@ function download(event: MouseEvent) {
   event.preventDefault()
 }
 
+function copyToClipboard(event: MouseEvent) {
+  navigator.clipboard.writeText(code.value)
+  event.preventDefault()
+}
+
 </script>
 
 <template>
   <div>
     <div class="header">
       <div>
-        <span>{{ lines }} lines</span> · 
+        <span>{{ contentType }}</span>
+        <span>{{ lines }} lines</span>
         <span>{{ size }}</span>
+        <span v-if="deprecated"><i class="bi bi-exclamation-triangle-fill yellow"></i> deprecated</span>
       </div>
-      <div class="controls" v-if="url">
-        <a :href="url">Raw</a>
-        <a href="" @click="download" title="Download config"><i class="bi bi-download"></i></a>
+      <div class="controls">
+        <a  v-if="url" :href="url">Raw</a>
+        <a href="" @click="copyToClipboard" title="Copy source"><i class="bi bi-copy"></i></a>
+        <a href="" @click="download" title="Download source"><i class="bi bi-download"></i></a>
       </div>
     </div>
     <div class="source">
-      <pre v-highlightjs="code" class="overflow-auto"><code :class="highlightClass"></code></pre>
+      <pre v-highlightjs="code" class="overflow-auto" :style="(height) ? 'max-height: '+height : ''"><code :class="highlightClass"></code></pre>
     </div>
   </div>
 </template>
@@ -98,10 +108,14 @@ function download(event: MouseEvent) {
   border-top-right-radius: 6px;
   border-bottom-right-radius: 6px;
 }
+.header span + span::before {
+  content: ' · ';
+}
 .source {
   border: 1px solid var(--color-tabs-border);
   border-top: 0;
   border-radius: 0 0 6px 6px;
+  overflow: hidden;
 }
 .source pre {
   margin-bottom: 0;

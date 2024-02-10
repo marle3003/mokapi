@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { usePrettyHttp } from '@/composables/http';
-import { usePrettyLanguage } from '@/composables/usePrettyLanguage';
-import { type PropType, reactive, computed } from 'vue';
-import HeaderTable from './HeaderTable.vue';
-import SchemaExpand from '../../SchemaExpand.vue';
-import SchemaExample from '../../SchemaExample.vue';
+import { usePrettyHttp } from '@/composables/http'
+import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
+import { type PropType, reactive, computed } from 'vue'
+import HeaderTable from './HeaderTable.vue'
+import SchemaExpand from '../../SchemaExpand.vue'
+import SchemaExample from '../../SchemaExample.vue'
 import Markdown from 'vue3-markdown-it'
+import SourceView from '../../SourceView.vue'
 
 const props = defineProps({
     service: { type: Object as PropType<HttpService>, required: true },
@@ -64,9 +65,10 @@ function selectedContentChange(event: any, statusCode: number){
                             <div class="tab-content" id="pills-tabContent">
                                 <div v-if="response.contents" class="tab-pane fade" :class="response.contents ? 'show active' : ''" id="pills-body" role="tabpanel" aria-labelledby="pills-body-tab">
                                     <p class="codeBlock">
-                                        <span v-if="selected.contents[response.statusCode]" class="label">{{ selected.contents[response.statusCode].type }}</span>
+                                        <source-view :source="JSON.stringify(selected.contents[response.statusCode].schema)" :content-type="selected.contents[response.statusCode].type" height="250px"></source-view>
+                                        <!-- <span v-if="selected.contents[response.statusCode]" class="label">{{ selected.contents[response.statusCode].type }}</span>
                                         <span v-if="selected.contents[response.statusCode].schema?.deprecated" class="warning"><i class="bi bi-exclamation-triangle-fill yellow"></i> Deprecated</span>
-                                        <pre v-highlightjs="formatLanguage(JSON.stringify(selected.contents[response.statusCode].schema), 'application/json')" class="overflow-auto" style="max-height: 250px;"><code class="json"></code></pre>
+                                        <pre v-highlightjs="formatLanguage(JSON.stringify(selected.contents[response.statusCode].schema), 'application/json')" class="overflow-auto" style="max-height: 250px;"><code class="json"></code></pre> -->
                                     </p>
                                     <div class="row">
                                         <div class="col-auto pe-2">

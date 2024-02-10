@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { usePrettyLanguage } from '@/composables/usePrettyLanguage';
+import SourceView from '../SourceView.vue';
 
-const {formatLanguage, getLanguage} = usePrettyLanguage()
 defineProps({
     contentType: { type: String, required: true },
     body: {type: String, required: true}
@@ -9,13 +8,8 @@ defineProps({
 </script>
 
 <template>
-    <div class="codeBlock" v-if="body">
-        <span class="label">{{ contentType }}</span>
-        <pre v-highlightjs="formatLanguage(body, contentType)" class="overflow-auto" style="max-height: 500px;">
-          <code :class="getLanguage(contentType)"></code>
-        </pre>
-    </div>
-    <div v-else>No body returned for response</div>
+  <source-view v-if="body" :source="body" :content-type="contentType" style="max-height: 500px;"></source-view>
+  <div v-else>No body returned for response</div>
 </template>
 
 <style scoped>
