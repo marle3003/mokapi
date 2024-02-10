@@ -1,10 +1,10 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
-import './assets/main.css';
+import './assets/main.css'
 import VueHighlightJS from 'vue3-highlightjs'
-import ExamplesVue from './components/docs/Examples.vue';
-import BlogsVue from './components/docs/Blogs.vue';
+import ExamplesVue from './components/docs/Examples.vue'
+import BlogsVue from './components/docs/Blogs.vue'
 
 const app = createApp(App)
 // dynamic doc components

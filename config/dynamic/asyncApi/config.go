@@ -4,15 +4,10 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/asyncApi/kafka"
-	"mokapi/config/dynamic/common"
-	"mokapi/config/dynamic/openapi/schema"
+	"mokapi/providers/openapi/schema"
 	"net/url"
 	"strconv"
 )
-
-func init() {
-	common.Register("asyncapi", &Config{})
-}
 
 type Config struct {
 	AsyncApi   string                 `yaml:"asyncapi" json:"asyncapi"`

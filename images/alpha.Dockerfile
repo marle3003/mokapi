@@ -20,10 +20,7 @@ COPY . /go/src/github.com/mokapi
 WORKDIR /go/src/github.com/mokapi
 
 RUN rm -rf ./webui
-COPY --from=webui /webui/dist webui
-
-RUN go install -a -v github.com/go-bindata/go-bindata/...@latest
-RUN go-bindata -nomemcopy -pkg api -o api/bindata.go -prefix webui/ webui/...
+COPY --from=webui /webui webui
 
 RUN go test -v ./...
 

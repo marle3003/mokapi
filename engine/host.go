@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/go-co-op/gocron"
 	log "github.com/sirupsen/logrus"
-	config "mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/provider/file"
 	"mokapi/config/dynamic/script"
 	"mokapi/engine/common"
@@ -29,11 +29,11 @@ type scriptHost struct {
 	jobs     map[int]*gocron.Job
 	events   map[string][]*eventHandler
 	cwd      string
-	file     *config.Config
+	file     *dynamic.Config
 	checksum []byte
 }
 
-func newScriptHost(file *config.Config, e *Engine) *scriptHost {
+func newScriptHost(file *dynamic.Config, e *Engine) *scriptHost {
 	path := getScriptPath(file.Info.Url)
 
 	sh := &scriptHost{
@@ -44,7 +44,7 @@ func newScriptHost(file *config.Config, e *Engine) *scriptHost {
 		events:   make(map[string][]*eventHandler),
 		cwd:      filepath.Dir(path),
 		file:     file,
-		checksum: file.Checksum,
+		checksum: file.Info.Checksum,
 	}
 
 	return sh
@@ -194,7 +194,7 @@ func (sh *scriptHost) Debug(args ...interface{}) {
 	sh.engine.logger.Debug(args...)
 }
 
-func (sh *scriptHost) OpenFile(path string, hint string) (*config.Config, error) {
+func (sh *scriptHost) OpenFile(path string, hint string) (*dynamic.Config, error) {
 	u, err := url.Parse(path)
 	if err != nil || len(u.Scheme) == 0 {
 		if !filepath.IsAbs(path) {
@@ -214,12 +214,12 @@ func (sh *scriptHost) OpenFile(path string, hint string) (*config.Config, error)
 		}
 	}
 
-	f, err := sh.engine.reader.Read(u,
-		config.WithParent(sh.file))
+	f, err := sh.engine.reader.Read(u, nil)
 	if err != nil {
 		return nil, err
 	}
 
+	dynamic.AddRef(sh.file, f)
 	return f, nil
 }
 

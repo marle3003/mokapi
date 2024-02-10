@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"mokapi/kafka"
 )
@@ -20,7 +21,7 @@ func NewKafkaBroker(port string, handler kafka.Handler) *KafkaBroker {
 func (b *KafkaBroker) Start() {
 	go func() {
 		err := b.server.ListenAndServe()
-		if err != kafka.ErrServerClosed {
+		if !errors.Is(err, kafka.ErrServerClosed) {
 			log.Error(err)
 		}
 	}()

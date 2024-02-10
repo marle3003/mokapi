@@ -1,11 +1,9 @@
 package runtime
 
 import (
-	log "github.com/sirupsen/logrus"
-	cfg "mokapi/config/dynamic/common"
-	"mokapi/config/dynamic/openapi"
-	"mokapi/config/dynamic/swagger"
+	"mokapi/config/dynamic"
 	"mokapi/engine/common"
+	"mokapi/providers/openapi"
 	"mokapi/runtime/monitor"
 	"net/http"
 	"path/filepath"
@@ -14,7 +12,7 @@ import (
 
 type HttpInfo struct {
 	*openapi.Config
-	configs map[string]*openapi.Config
+	configs map[string]*dynamic.Config
 }
 
 type httpHandler struct {
@@ -22,28 +20,16 @@ type httpHandler struct {
 	next http.Handler
 }
 
-func NewHttpInfo(c *cfg.Config) *HttpInfo {
+func NewHttpInfo(c *dynamic.Config) *HttpInfo {
 	hc := &HttpInfo{
-		configs: map[string]*openapi.Config{},
+		configs: map[string]*dynamic.Config{},
 	}
 	hc.AddConfig(c)
 	return hc
 }
 
-func (c *HttpInfo) AddConfig(config *cfg.Config) {
-	var oc *openapi.Config
-	if sw, ok := config.Data.(*swagger.Config); ok {
-		var err error
-		oc, err = swagger.Convert(sw)
-		if err != nil {
-			log.Errorf("unable to convert swagger config to openapi: %v", err)
-			return
-		}
-	} else {
-		oc = config.Data.(*openapi.Config)
-	}
-	key := config.Info.Url.String()
-	c.configs[key] = oc
+func (c *HttpInfo) AddConfig(config *dynamic.Config) {
+	c.configs[config.Info.Url.String()] = config
 	c.update()
 }
 
@@ -54,9 +40,6 @@ func (c *HttpInfo) Handler(http *monitor.Http, emitter common.EventEmitter) http
 }
 
 func (c *HttpInfo) update() {
-	if len(c.configs) == 0 {
-		return
-	}
 	var keys []string
 	for k := range c.configs {
 		keys = append(keys, k)
@@ -68,9 +51,10 @@ func (c *HttpInfo) update() {
 		return filepath.Base(x) < filepath.Base(y)
 	})
 
-	r := c.configs[keys[0]]
+	r := getHttpConfig(c.configs[keys[0]])
 	for _, k := range keys[1:] {
-		r.Patch(c.configs[k])
+		p := getHttpConfig(c.configs[k])
+		r.Patch(p)
 	}
 
 	if len(r.Servers) == 0 {
@@ -80,19 +64,30 @@ func (c *HttpInfo) update() {
 	c.Config = r
 }
 
+func (c *HttpInfo) Configs() []*dynamic.Config {
+	var r []*dynamic.Config
+	for _, config := range c.configs {
+		r = append(r, config)
+		r = append(r, config.Refs.List()...)
+	}
+	return r
+}
+
 func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	ctx := monitor.NewHttpContext(r.Context(), h.http)
 
 	h.next.ServeHTTP(rw, r.WithContext(ctx))
 }
 
-func IsHttpConfig(c *cfg.Config) bool {
+func IsHttpConfig(c *dynamic.Config) bool {
 	switch c.Data.(type) {
 	case *openapi.Config:
-		return true
-	case *swagger.Config:
 		return true
 	default:
 		return false
 	}
+}
+
+func getHttpConfig(c *dynamic.Config) *openapi.Config {
+	return c.Data.(*openapi.Config)
 }

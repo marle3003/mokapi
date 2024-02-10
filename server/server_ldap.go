@@ -3,7 +3,7 @@ package server
 import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	engine "mokapi/engine/common"
 	"mokapi/ldap"
 	"mokapi/runtime"
@@ -29,7 +29,7 @@ func NewLdapDirectoryManager(emitter engine.EventEmitter, store *cert.Store, app
 	}
 }
 
-func (m LdapDirectoryManager) UpdateConfig(c *common.Config) {
+func (m LdapDirectoryManager) UpdateConfig(c *dynamic.Config) {
 	if !runtime.IsLdapConfig(c) {
 		return
 	}

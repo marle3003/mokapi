@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/dop251/goja"
 	r "github.com/stretchr/testify/require"
-	config "mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/engine/common"
 	"net/http"
@@ -124,7 +124,7 @@ func TestScript(t *testing.T) {
 
 type testHost struct {
 	openFile    func(file, hint string) (string, string, error)
-	open        func(file, hint string) (*config.Config, error)
+	open        func(file, hint string) (*dynamic.Config, error)
 	info        func(args ...interface{})
 	warn        func(args ...interface{})
 	error       func(args ...interface{})
@@ -160,13 +160,13 @@ func (th *testHost) Debug(args ...interface{}) {
 	}
 }
 
-func (th *testHost) OpenFile(file, hint string) (*config.Config, error) {
+func (th *testHost) OpenFile(file, hint string) (*dynamic.Config, error) {
 	if th.openFile != nil {
 		p, src, err := th.openFile(file, hint)
 		if err != nil {
 			return nil, err
 		}
-		return &config.Config{Raw: []byte(src), Info: config.ConfigInfo{Url: mustParse(p)}}, nil
+		return &dynamic.Config{Raw: []byte(src), Info: dynamic.ConfigInfo{Url: mustParse(p)}}, nil
 	}
 	if th.open != nil {
 		return th.open(file, hint)

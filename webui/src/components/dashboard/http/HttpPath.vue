@@ -1,37 +1,22 @@
 <script setup lang="ts">
-import { onUnmounted, computed, type Ref } from 'vue'
+import { onUnmounted, type PropType } from 'vue'
 import { useRoute } from '@/router';
-import { useService } from '@/composables/services';
 import HttpOperationsCard from './HttpOperationsCard.vue';
 import Requests from './Requests.vue';
-import Loading from '@/components/Loading.vue'
-import Message from '@/components/Message.vue'
 import '@/assets/http.css'
 
-const { fetchService } = useService()
-const route = useRoute()
-const { service, isLoading, close } = <{service: Ref<HttpService | null>, isLoading: Ref<boolean>, close: () => void}>fetchService(route.context.service, 'http')
-let path = computed(() => {
-    if (!service.value){
-        return null
-    }
-    for (let p of service.value.paths){
-        if (p.path.substring(1) == route.context.path){
-            return p
-        }
-    }
-    return null
+const props = defineProps({
+    service: { type: Object as PropType<HttpService>, required: true },
+    path: { type: Object as PropType<HttpPath>, required: true }
 })
 
-function endpointNotFoundMessage() {
-    return 'Endpoint ' + route.context.path + ' in service ' + route.context.service + ' not found' 
-}
+const route = useRoute()
 
 function allOperationsDeprecated(): boolean{
-    if (!path.value){
+    if (!props.path){
         return false
     }
-    for (var op of path.value.operations){
+    for (var op of props.path.operations){
         if (!op.deprecated){
             return false
         }
@@ -94,9 +79,5 @@ onUnmounted(() => {
         <div class="card-group">
             <requests :service="service" :path="path.path" />
         </div>
-    </div>
-    <loading v-if="isLoading && !path"></loading>
-    <div v-if="!path && !isLoading">
-        <message :message="endpointNotFoundMessage()"></message>
     </div>
 </template>

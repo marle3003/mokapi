@@ -5,7 +5,7 @@ import (
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
 	"mokapi/config/dynamic/asyncApi/kafka"
-	"mokapi/config/dynamic/openapi/schema/schematest"
+	"mokapi/providers/openapi/schema/schematest"
 	"testing"
 )
 

@@ -4,11 +4,7 @@ import router from '@/router';
 let cache: {[name: string]: any} = {}
 
 export function useFetch(path: string, options?: RequestInit, doRefresh: boolean = true, useCache: boolean = true): Response {
-    let base = document.querySelector('base')?.href
-    if (base) {
-        base = base.substring(0, base.length - 1)
-        path = base + path
-    }
+    path = transformPath(path)
     const route = router.currentRoute.value
     const cached = cache[path]
     const response = cached || reactive({
@@ -31,7 +27,14 @@ export function useFetch(path: string, options?: RequestInit, doRefresh: boolean
     function doFetch() {
         response.isLoading = true
         fetch(path, options)
-            .then((res) => res.json())
+            .then((res) => {
+                const contentType = res.headers.get("content-type");
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    return res.json()
+                } else{
+                    return res.text()
+                }
+            })
             .then((res) => {
                 response.data = res
                 response.isLoading = false
@@ -57,4 +60,13 @@ export function useFetch(path: string, options?: RequestInit, doRefresh: boolean
     doFetch()
     
     return response
+}
+
+export function transformPath(path: string): string {
+    let base = document.querySelector('base')?.href
+    if (base) {
+        base = base.substring(0, base.length - 1)
+        path = base + path
+    }
+    return path
 }

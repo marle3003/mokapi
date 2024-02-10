@@ -33,6 +33,7 @@ type Providers struct {
 	File FileProvider
 	Git  GitProvider
 	Http HttpProvider
+	Npm  NpmProvider
 }
 
 type Api struct {
@@ -62,6 +63,19 @@ type HttpProvider struct {
 	Proxy         string
 	TlsSkipVerify bool              `yaml:"tlsSkipVerify"`
 	Ca            tls.FileOrContent `yaml:"ca"`
+}
+
+type NpmProvider struct {
+	GlobalFolders []string `yaml:"globalFolders"`
+	Packages      []NpmPackage
+}
+
+type NpmPackage struct {
+	Name string
+	// Specifies an allow list of files to include in mokapi
+	Files []string
+	// Specifies an array of filenames pr pattern to include in mokapi
+	Include []string
 }
 
 type Services map[string]*Service

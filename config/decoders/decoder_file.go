@@ -1,16 +1,15 @@
 package decoders
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
 	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
 )
 
 var (
-	searchPaths  = []string{".", "/etc/mokapi"}
-	fileNames    = []string{"mokapi.yaml", "mokapi.yml"}
-	fileNotFound = errors.New("file not found")
+	searchPaths = []string{".", "/etc/mokapi"}
+	fileNames   = []string{"mokapi.yaml", "mokapi.yml"}
 )
 
 type ReadFileFS func(path string) ([]byte, error)
@@ -44,6 +43,8 @@ func (f *FileDecoder) Decode(flags map[string]string, element interface{}) error
 			path := filepath.Join(dir, name)
 			if err := f.read(path, element); err == nil {
 				return nil
+			} else if !os.IsNotExist(err) {
+				return err
 			}
 		}
 	}
@@ -58,7 +59,7 @@ func (f *FileDecoder) read(path string, element interface{}) error {
 	}
 	err = yaml.Unmarshal(data, element)
 	if err != nil {
-		return errors.Wrapf(err, "parsing YAML file %s", f.filename)
+		return fmt.Errorf("parse file '%v' failed: %w", path, err)
 	}
 	return nil
 }

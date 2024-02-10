@@ -238,11 +238,6 @@ func (s *Store) addBroker(name string, config asyncApi.Server) {
 	id := len(s.brokers)
 	b := newBroker(id, name, config)
 
-	if len(b.Host) == 0 {
-		log.Errorf("unable to add broker '%v' to cluster '%v': missing host in url '%v'", name, s.cluster, config.Url)
-		return
-	}
-
 	s.brokers[id] = b
 	b.startCleaner(s.cleanLog)
 }

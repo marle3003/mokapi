@@ -1,8 +1,6 @@
-name: build main branch
-on:
-  push:
-    branches:
-      - main
+name: build and publish test coverage
+on: push
+
 jobs:
   test:
     name: Test
@@ -20,23 +18,17 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: '16'
-      - name: Setup task
-        run: curl -sL https://raw.githubusercontent.com/go-task/task/master/install-task.sh | sh
-      - name: nmp install
-        run: npm install
+      - name: build webui
         working-directory: ./webui
-      - name: Install bindata
-        run: go install -a -v github.com/go-bindata/go-bindata/...@latest
-      - name: Build
-        run: ./bin/task bindata-vueapp
-        env:
-          CGO_ENABLED: 0
+        run: |
+          npm install
+          npm run copy-docs
+          npm run build
 
       - name: Run Unit tests.
-        run: go test -v  -coverprofile=coverage.txt -covermode=atomic ./...
+        run: go test -v  -coverprofile=coverage.out -covermode=atomic ./...
 
       - name: Upload Coverage report to CodeCov
-        uses: codecov/codecov-action@v1.0.0
+        uses: codecov/codecov-action@v3
         with:
           token: ${{secrets.CODECOV_TOKEN}}
-          file: ./coverage.txt

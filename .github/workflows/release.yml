@@ -30,9 +30,8 @@ jobs:
       - run: sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b ~/.local/bin
       - run: npm install
         working-directory: ./webui
-      - run: go install -a -v github.com/go-bindata/go-bindata/...@latest
       - name: Build
-        run: task bindata-vueapp
+        run: task build-vue-app
         env:
           CGO_ENABLED: 0
       - name: Run GoReleaser
@@ -42,6 +41,7 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
       - name: Publish npm
         run: task publish-npm-package VERSION=${GITHUB_REF##*/v}
         env:

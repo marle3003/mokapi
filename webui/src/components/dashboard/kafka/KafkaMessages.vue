@@ -45,6 +45,10 @@ interface DialogData {
 let message = ref<DialogData | null>(null)
 
 function showMessage(event: ServiceEvent){
+    if (getSelection()?.toString()) {
+        return
+    }
+
     const data = eventData(event)
     if (!data){
         return

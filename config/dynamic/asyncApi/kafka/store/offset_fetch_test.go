@@ -7,12 +7,12 @@ import (
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
 	binding "mokapi/config/dynamic/asyncApi/kafka"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
-	"mokapi/config/dynamic/openapi/schema/schematest"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/offsetCommit"
 	"mokapi/kafka/offsetFetch"
+	"mokapi/providers/openapi/schema/schematest"
 	"testing"
 )
 

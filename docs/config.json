@@ -33,7 +33,8 @@
       "Overview": "configuration/providers/overview.md",
       "File": "configuration/providers/file.md",
       "HTTP": "configuration/providers/http.md",
-      "GIT": "configuration/providers/git.md"
+      "GIT": "configuration/providers/git.md",
+      "NPM": "configuration/providers/npm.md"
     },
     "Reference": "configuration/reference.md"
   },

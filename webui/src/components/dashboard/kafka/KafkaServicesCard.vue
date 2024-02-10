@@ -26,6 +26,10 @@ function messages(service: Service){
 }
 
 function goToService(service: Service){
+    if (getSelection()?.toString()) {
+        return
+    }
+
     router.push({
         name: 'kafkaService',
         params: {service: service.name},
