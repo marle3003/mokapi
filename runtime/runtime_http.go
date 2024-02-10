@@ -2,8 +2,8 @@ package runtime
 
 import (
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/openapi"
 	"mokapi/engine/common"
+	"mokapi/providers/openapi"
 	"mokapi/runtime/monitor"
 	"net/http"
 	"path/filepath"

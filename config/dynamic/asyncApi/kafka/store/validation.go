@@ -2,9 +2,9 @@ package store
 
 import (
 	"mokapi/config/dynamic/asyncApi"
-	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/kafka"
 	"mokapi/media"
+	"mokapi/providers/openapi/schema"
 )
 
 type validator struct {

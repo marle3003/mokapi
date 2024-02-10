@@ -1,6 +1,6 @@
 import { on } from 'mokapi'
-import { clusters, events as kafkaEvents } from 'kafka.js'
-import { apps as httpServices, events as httpEvents } from 'services_http.js'
+import { clusters, events as kafkaEvents, configs as kafkaConfigs } from 'kafka.js'
+import { apps as httpServices, events as httpEvents, configs as httpConfigs } from 'services_http.js'
 import { server as smtpServers, mails, mailEvents, getMail, getAttachment } from 'smtp.js'
 import { server as ldapServers, searches } from 'ldap.js'
 import { metrics } from 'metrics.js'
@@ -76,9 +76,21 @@ export default function() {
                 response.data = fake(request.body)
                 return true
             case 'config':
-                const config = configs[request.path.id]
+                const config = getConfig(request.path.id)
                 if (config) {
                     response.data = config
+                    return true
+                } else {
+                    console.log("config not found: "+request.path.id)
+                    response.statusCode = 404
+                    response.data = ''
+                    return true
+                }
+            case 'configdata':
+                const configData = configs[request.path.id]
+                if (configData) {
+                    response.data = configData
+                    //response.headers['Content-Type'] = 'application/json'
                     return true
                 } else {
                     response.statusCode = 404
@@ -88,9 +100,10 @@ export default function() {
         }
     }, {tags: {name: "dashboard"}})
 
-    // following code can not be used inside http handler. It would call same handler and run in a deadlock
-    const r = get('http://localhost:8090/api/services/http/Swagger%20Petstore')
-    configs['b6fea8ac-56c7-4e73-a9c0-6887640bdca8'] = r.body
+    for (const config of [...Object.values(httpConfigs),...Object.values(kafkaConfigs)]) {
+        const r = get(config.data)
+        configs[config.id] = r.body
+    }
 }
 
 function getServices() {
@@ -172,4 +185,14 @@ function matchEvent(e, traits) {
         }
     }
     return true
+}
+
+function getConfig(id) {
+    if (httpConfigs[id]) {
+        return httpConfigs[id]
+    }
+    if (kafkaConfigs[id]) {
+        return kafkaConfigs[id]
+    }
+    return null
 }

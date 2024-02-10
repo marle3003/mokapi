@@ -3,8 +3,8 @@ package store
 import (
 	"mokapi/config/dynamic/asyncApi"
 	kafkaconfig "mokapi/config/dynamic/asyncApi/kafka"
-	"mokapi/config/dynamic/openapi/schema"
 	"mokapi/kafka"
+	"mokapi/providers/openapi/schema"
 	"mokapi/runtime/events"
 )
 

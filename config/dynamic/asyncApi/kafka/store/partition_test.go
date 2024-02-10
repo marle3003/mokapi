@@ -2,9 +2,9 @@ package store
 
 import (
 	"github.com/stretchr/testify/require"
-	"mokapi/config/dynamic/openapi/schema"
-	"mokapi/config/dynamic/openapi/schema/schematest"
 	"mokapi/kafka"
+	"mokapi/providers/openapi/schema"
+	"mokapi/providers/openapi/schema/schematest"
 	"mokapi/runtime/events"
 	"testing"
 	"time"

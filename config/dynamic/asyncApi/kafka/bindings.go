@@ -3,7 +3,7 @@ package kafka
 import (
 	"fmt"
 	"gopkg.in/yaml.v3"
-	"mokapi/config/dynamic/openapi/schema"
+	"mokapi/providers/openapi/schema"
 )
 
 type BrokerBindings struct {

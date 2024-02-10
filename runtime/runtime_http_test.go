@@ -3,9 +3,9 @@ package runtime
 import (
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/openapi"
-	"mokapi/config/dynamic/openapi/openapitest"
 	"mokapi/engine/enginetest"
+	"mokapi/providers/openapi"
+	"mokapi/providers/openapi/openapitest"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"net/http"

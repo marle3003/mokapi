@@ -1,7 +1,7 @@
 package api
 
 import (
-	"mokapi/config/dynamic/openapi/parameter"
+	"mokapi/providers/openapi/parameter"
 	"mokapi/runtime"
 	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
