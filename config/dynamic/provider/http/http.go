@@ -8,11 +8,12 @@ import (
 	log "github.com/sirupsen/logrus"
 	"hash/fnv"
 	"io"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/safe"
 	"net/http"
 	"net/url"
+	"os"
 	"sync"
 	"time"
 )
@@ -67,7 +68,7 @@ func New(config static.HttpProvider) *Provider {
 		pollTimeout, err = time.ParseDuration(config.PollTimeout)
 		if err != nil {
 			pollTimeout = time.Second * 5
-			log.Errorf("invalid poll timeout argument %v: %v", config.PollTimeout, err)
+			log.Warnf("invalid poll timeout argument '%v', using default: %v", config.PollTimeout, err)
 		}
 	}
 
@@ -78,12 +79,12 @@ func New(config static.HttpProvider) *Provider {
 	return p
 }
 
-func (p *Provider) Read(u *url.URL) (*common.Config, error) {
+func (p *Provider) Read(u *url.URL) (*dynamic.Config, error) {
 	c, _, err := p.readUrl(u)
 	return c, err
 }
 
-func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
+func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
 	if p.running {
 		return nil
 	}
@@ -130,26 +131,30 @@ func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
 	return nil
 }
 
-func (p *Provider) checkFiles(ch chan *common.Config) {
+func (p *Provider) checkFiles(ch chan *dynamic.Config) {
 	for f := range p.files {
 		u, _ := url.Parse(f)
 		c, changed, err := p.readUrl(u)
 		if err != nil {
-			log.Error(err)
+			if os.IsTimeout(err) {
+				log.Error(fmt.Errorf("request to %v failed: request has timed out", f))
+			} else {
+				log.Error(fmt.Errorf("request to %v failed: %v", f, err))
+			}
+
 		} else if changed {
 			ch <- c
 		}
 	}
 }
 
-func (p *Provider) readUrl(u *url.URL) (c *common.Config, changed bool, err error) {
+func (p *Provider) readUrl(u *url.URL) (c *dynamic.Config, changed bool, err error) {
 	p.m.Lock()
 	defer p.m.Unlock()
 
 	var res *http.Response
 	res, err = p.client.Get(u.String())
 	if err != nil {
-		err = fmt.Errorf("request to %q failed: %v", p.config.Url, err)
 		return
 	}
 
@@ -164,13 +169,13 @@ func (p *Provider) readUrl(u *url.URL) (c *common.Config, changed bool, err erro
 
 	b, err := io.ReadAll(res.Body)
 	if err != nil {
-		err = fmt.Errorf("unable to read response body: %v", err.Error())
+		err = fmt.Errorf("read response body failed: %v", err.Error())
 	}
 
 	hash := fnv.New64()
 	_, err = hash.Write(b)
 	if err != nil {
-		log.Errorf("unable to create hash: %v", err.Error())
+		log.Errorf("create hash failed: %v", err.Error())
 		return
 	}
 
@@ -179,9 +184,13 @@ func (p *Provider) readUrl(u *url.URL) (c *common.Config, changed bool, err erro
 	}
 	changed = true
 	p.files[u.String()] = hash.Sum64()
-	c = &common.Config{
-		Info: common.ConfigInfo{Url: u, Provider: "http"},
-		Raw:  b,
+	c = &dynamic.Config{
+		Info: dynamic.ConfigInfo{
+			Url:      u,
+			Provider: "http",
+			Time:     time.Now(),
+		},
+		Raw: b,
 	}
 
 	return

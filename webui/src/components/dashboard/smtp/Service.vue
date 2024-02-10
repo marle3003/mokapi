@@ -7,6 +7,7 @@ import ServiceInfoCard from '../ServiceInfoCard.vue'
 import Mails from './Mails.vue'
 import Mail from './Mail.vue'
 import Rules from './Rules.vue'
+import ConfigCard from '../ConfigCard.vue'
 
 const {fetchService} = useService()
 const route = useRoute()
@@ -36,7 +37,10 @@ if (serviceName){
                 <rules :rules="service.rules" />
             </div>
         </div>
-        </div>
+      </div>
+      <div class="card-group">
+        <config-card :configs="service.configs" />
+      </div>
       <div class="card-group">
         <mails :service="service" />
       </div>

@@ -3,7 +3,7 @@ package server
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	config "mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/engine/common"
 	"mokapi/runtime"
@@ -47,7 +47,7 @@ func (m *HttpManager) AddService(name string, u *url.URL, h http.Handler, isInte
 	return nil
 }
 
-func (m *HttpManager) Update(c *config.Config) {
+func (m *HttpManager) Update(c *dynamic.Config) {
 	if !runtime.IsHttpConfig(c) {
 		return
 	}

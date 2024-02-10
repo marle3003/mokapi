@@ -13,10 +13,11 @@ type ldapSummary struct {
 }
 
 type ldapInfo struct {
-	Name        string `json:"name"`
-	Description string `json:"description,omitempty"`
-	Version     string `json:"version,omitempty"`
-	Server      string `json:"server"`
+	Name        string   `json:"name"`
+	Description string   `json:"description,omitempty"`
+	Version     string   `json:"version,omitempty"`
+	Server      string   `json:"server"`
+	Configs     []config `json:"configs,omitempty"`
 }
 
 func getLdapServices(services map[string]*runtime.LdapInfo, m *monitor.Monitor) []interface{} {
@@ -52,6 +53,7 @@ func (h *handler) handleLdapService(w http.ResponseWriter, r *http.Request) {
 		Description: s.Info.Description,
 		Version:     s.Info.Version,
 		Server:      s.Address,
+		Configs:     getConfigs(s.Configs()),
 	}
 
 	w.Header().Set("Content-Type", "application/json")

@@ -6,7 +6,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/safe"
 	"net/url"
@@ -16,15 +16,28 @@ import (
 	"time"
 )
 
-var gitFiles = map[string]struct{}{"LICENSE": {}, "README.md": {}, "models.yml": {}, "openapi.yml": {}}
+var gitFiles = map[string]struct {
+	time time.Time
+}{
+	"LICENSE":     {time: mustTime("2021-06-18T10:38:11Z")},
+	"README.md":   {time: mustTime("2021-06-18T10:38:11Z")},
+	"models.yml":  {time: mustTime("2021-06-22T17:02:57Z")},
+	"openapi.yml": {time: mustTime("2021-06-22T17:02:57Z")},
+}
+
+func mustTime(s string) time.Time {
+	d, err := time.Parse(time.RFC3339, s)
+	if err != nil {
+		panic(err)
+	}
+	return d
+}
 
 func TestGit(t *testing.T) {
 	g := New(static.GitProvider{Url: "https://github.com/marle3003/mokapi-example.git"})
 	p := safe.NewPool(context.Background())
-	defer func() {
-		p.Stop()
-	}()
-	ch := make(chan *common.Config)
+	defer p.Stop()
+	ch := make(chan *dynamic.Config)
 	err := g.Start(ch, p)
 	require.NoError(t, err)
 
@@ -37,14 +50,15 @@ Stop:
 			break Stop
 		case c := <-ch:
 			i++
-			name := filepath.Base(c.Info.Url.String())
-			_, ok := gitFiles[name]
-			require.True(t, ok)
-			require.Equal(t, "git", c.Info.Parent.Provider)
+			name := filepath.Base(c.Info.Inner().Url.String())
+			f, ok := gitFiles[name]
+			assert.True(t, ok)
+			require.Equal(t, "git", c.Info.Provider)
 			require.Equal(t, "https://github.com/marle3003/mokapi-example.git?file=/"+name, c.Info.Path())
+			require.Equal(t, f.time, c.Info.Time.UTC())
 		}
 	}
-	assert.Equal(t, len(gitFiles), i)
+	require.Len(t, gitFiles, i)
 }
 
 func TestGit_Branch(t *testing.T) {
@@ -53,7 +67,7 @@ func TestGit_Branch(t *testing.T) {
 	defer func() {
 		p.Stop()
 	}()
-	ch := make(chan *common.Config)
+	ch := make(chan *dynamic.Config)
 	err := g.Start(ch, p)
 	require.NoError(t, err)
 
@@ -66,12 +80,12 @@ Stop:
 			break Stop
 		case c := <-ch:
 			i++
-			name := filepath.Base(c.Info.Url.String())
+			name := filepath.Base(c.Info.Inner().Url.String())
 			_, ok := gitFiles[name]
 			assert.True(t, ok)
 		}
 	}
-	assert.Equal(t, len(gitFiles), i)
+	require.Len(t, gitFiles, i)
 }
 
 func TestGit_MultipleUrls(t *testing.T) {
@@ -83,24 +97,24 @@ func TestGit_MultipleUrls(t *testing.T) {
 	defer func() {
 		p.Stop()
 	}()
-	ch := make(chan *common.Config)
+	ch := make(chan *dynamic.Config)
 	err := g.Start(ch, p)
 	require.NoError(t, err)
 
 	timeout := time.After(1 * time.Second)
-	files := map[string]*common.Config{}
+	files := map[string]*dynamic.Config{}
 Stop:
 	for {
 		select {
 		case <-timeout:
 			break Stop
 		case c := <-ch:
-			files[c.Info.Parent.Url.String()] = c
+			files[c.Info.Url.String()] = c
 		}
 	}
-	assert.Equal(t, 8, len(files))
-	assert.Contains(t, files, "https://github.com/marle3003/mokapi-example.git?file=%2FLICENSE")
-	assert.Contains(t, files, "https://github.com/marle3003/mokapi-example.git?file=%2FLICENSE&ref=main")
+	require.Len(t, files, 8)
+	require.Contains(t, files, "https://github.com/marle3003/mokapi-example.git?file=%2FLICENSE")
+	require.Contains(t, files, "https://github.com/marle3003/mokapi-example.git?file=%2FLICENSE&ref=main")
 }
 
 // go-git requires git installed for file:// repositories
@@ -117,7 +131,7 @@ func testGit_SimpleUrl(t *testing.T) {
 	p := safe.NewPool(context.Background())
 	defer p.Stop()
 
-	ch := make(chan *common.Config)
+	ch := make(chan *dynamic.Config)
 	err := g.Start(ch, p)
 	require.NoError(t, err)
 
@@ -140,7 +154,7 @@ func testGit_SparseUrl(t *testing.T) {
 	p := safe.NewPool(context.Background())
 	defer p.Stop()
 
-	ch := make(chan *common.Config)
+	ch := make(chan *dynamic.Config)
 	err := g.Start(ch, p)
 	require.NoError(t, err)
 

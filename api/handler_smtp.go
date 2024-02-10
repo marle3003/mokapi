@@ -23,6 +23,7 @@ type mailInfo struct {
 	Mailboxes     []mailbox `json:"mailboxes,omitempty"`
 	MaxRecipients int       `json:"maxRecipients,omitempty"`
 	Rules         []rule    `json:"rules,omitempty"`
+	Configs       []config  `json:"configs,omitempty"`
 }
 
 type mailbox struct {
@@ -127,6 +128,7 @@ func (h *handler) handleSmtpService(w http.ResponseWriter, r *http.Request) {
 		Version:       s.Info.Version,
 		Server:        s.Server,
 		MaxRecipients: s.MaxRecipients,
+		Configs:       getConfigs(s.Configs()),
 	}
 
 	for _, m := range s.Store.Mailboxes {

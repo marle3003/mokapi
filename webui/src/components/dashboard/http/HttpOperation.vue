@@ -1,48 +1,18 @@
 <script setup lang="ts">
-import { computed, onUnmounted, type Ref } from 'vue'
-import { useRoute } from '@/router';
-import { useService } from '@/composables/services';
-import HttpRequestCard from './request/HttpRequestCard.vue';
-import HttpResponseCard from './response/HttpResponseCard.vue';
-import Message from '@/components/Message.vue'
-import Requests from './Requests.vue';
-import Loading from '@/components/Loading.vue'
-import Markdown from 'vue3-markdown-it';
+import { type PropType } from 'vue'
+import { useRoute } from '@/router'
+import HttpRequestCard from './request/HttpRequestCard.vue'
+import HttpResponseCard from './response/HttpResponseCard.vue'
+import Requests from './Requests.vue'
+import Markdown from 'vue3-markdown-it'
 
-const { fetchService } = useService()
+defineProps({
+    service: { type: Object as PropType<HttpService>, required: true },
+    path: { type: Object as PropType<HttpPath>, required: true },
+    operation: { type: Object as PropType<HttpOperation>, required: true },
+})
+
 const route = useRoute()
-
-const { service, isLoading, close } = <{service: Ref<HttpService | null>, isLoading: Ref<boolean>, close: () => void}>fetchService(route.context.service, 'http')
-let path = computed(() => {
-    if (!service.value){
-        return null
-    }
-    for (let p of service.value.paths){
-        if (p.path.substring(1) == route.context.path){
-            return p
-        }
-    }
-    return null
-})
-const operation = computed(() => {
-    if (!path.value){
-        return null
-    }
-    for (let o of path.value.operations){
-        if (o.method == route.context.operation){
-            return o
-        }
-    }
-    return null
-})
-
-function operationNotFoundMessage() {
-    return 'Endpoint '+ route.context.operation.toUpperCase() +' /'+ route.context.path+' in '+ route.context.service +' not found'
-}
-
-onUnmounted(() => {
-    close()
-})
 </script>
 
 <template>
@@ -101,13 +71,8 @@ onUnmounted(() => {
             <http-response-card  :service="service" :path="path" :operation="operation" />
         </div>
         <div class="card-group">
-            <requests :service="service" :path="path.path" :method="route.context.operation.toUpperCase()" />
+            <requests :service="service" :path="path.path" :method="operation.method.toUpperCase()" />
         </div>
-    </div>
-    <loading v-if="isLoading && !operation"></loading>
-    <div v-if="!operation && !isLoading">
-        <message :message="operationNotFoundMessage()"></message>
-        
     </div>
 </template>
 

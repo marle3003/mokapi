@@ -7,7 +7,7 @@ import (
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	log "github.com/sirupsen/logrus"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/provider/file"
 	"mokapi/config/static"
 	"mokapi/safe"
@@ -76,11 +76,11 @@ func New(config static.GitProvider) *Provider {
 	}
 }
 
-func (p *Provider) Read(_ *url.URL) (*common.Config, error) {
+func (p *Provider) Read(_ *url.URL) (*dynamic.Config, error) {
 	return nil, fmt.Errorf("not supported")
 }
 
-func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
+func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
 	if len(p.repositories) == 0 {
 		return nil
 	}
@@ -115,10 +115,9 @@ func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
 			return fmt.Errorf("unable to get git head: %v", err.Error())
 		}
 
-		var ref plumbing.ReferenceName
 		r.pullOptions = &git.PullOptions{SingleBranch: true}
 		if len(r.ref) > 0 {
-			ref = plumbing.NewBranchReferenceName(r.ref)
+			ref := plumbing.NewBranchReferenceName(r.ref)
 
 			if h.Name() != ref {
 				r.pullOptions.ReferenceName = ref
@@ -133,7 +132,9 @@ func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
 			}
 		}
 
-		chFile := make(chan *common.Config)
+		ref, err := r.repo.Head()
+
+		chFile := make(chan *dynamic.Config)
 		p.startFileProvider(r.localPath, chFile, pool)
 
 		pool.Go(func(ctx context.Context) {
@@ -142,16 +143,29 @@ func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
 				case <-ctx.Done():
 					return
 				case c := <-chFile:
-					path := c.Info.Url.Path
-					if len(c.Info.Url.Opaque) > 0 {
-						path = c.Info.Url.Opaque
-					}
-					path = strings.TrimPrefix(path, r.localPath)
-					c.Info.Parent = &common.ConfigInfo{
+
+					u := getUrl(r, c.Info.Url)
+					gitFile := u.Query()["file"][0][1:]
+
+					info := dynamic.ConfigInfo{
 						Provider: "git",
-						Url:      addFilePath(r.url, path),
-						Parent:   nil,
+						Url:      u,
 					}
+
+					cIter, _ := r.repo.Log(&git.LogOptions{
+						From:     ref.Hash(),
+						FileName: &gitFile,
+					})
+
+					commit, err := cIter.Next()
+					if err != nil {
+						log.Warnf("resolve mod time for '%v' failed: %v", u, err)
+						info.Time = time.Now()
+					} else {
+						info.Time = commit.Author.When
+					}
+
+					dynamic.Wrap(info, c)
 					ch <- c
 				}
 			}
@@ -205,7 +219,7 @@ func (p *Provider) Start(ch chan *common.Config, pool *safe.Pool) error {
 	return nil
 }
 
-func (p *Provider) startFileProvider(dir string, ch chan *common.Config, pool *safe.Pool) {
+func (p *Provider) startFileProvider(dir string, ch chan *dynamic.Config, pool *safe.Pool) {
 	f := file.New(static.FileProvider{Directory: dir})
 	f.SkipPrefix = append(f.SkipPrefix, ".git")
 	err := f.Start(ch, pool)
@@ -223,8 +237,14 @@ func (p *Provider) cleanup() {
 	}
 }
 
-func addFilePath(repoUrl, path string) *url.URL {
-	u, _ := url.Parse(repoUrl)
+func getUrl(r *repository, file *url.URL) *url.URL {
+	path := file.Path
+	if len(file.Opaque) > 0 {
+		path = file.Opaque
+	}
+	path = strings.TrimPrefix(path, r.localPath)
+
+	u, _ := url.Parse(r.url)
 	path = filepath.ToSlash(path)
 	q := u.Query()
 	q.Add("file", path)

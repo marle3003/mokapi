@@ -10,9 +10,9 @@ import Message from '@/components/Message.vue'
 import { onUnmounted, computed } from 'vue'
 import Actions from '../Actions.vue'
 
-const {fetchById} = useEvents()
+const { fetchById } = useEvents()
 const eventId = useRoute().params.id as string
-const {event, isLoading, close} = fetchById(eventId)
+const { event, isLoading, close } = fetchById(eventId)
 
 function eventData() {
     return <HttpEventData>event.value?.data

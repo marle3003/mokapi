@@ -2,7 +2,7 @@
 import { useMetrics } from '@/composables/metrics';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { type PropType, computed } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
+import { useRouter, useRoute } from '@/router';
 
 const route = useRoute()
 const router = useRouter()
@@ -14,6 +14,9 @@ const props = defineProps({
 })
 
 const paths = computed(() => {
+    if (!props.service.paths) {
+        return []
+    }
     return props.service.paths.sort(comparePath)
 })
 
@@ -24,18 +27,14 @@ function comparePath(p1: HttpPath, p2: HttpPath) {
 }
 
 function goToPath(path: HttpPath){
-    router.push({
-        name: 'httpPath',
-        params: {service: props.service.name, path: path.path.substring(1)},
-        query: {refresh: route.query.refresh}
-    })
+    if (getSelection()?.toString()) {
+        return
+    }
+
+    router.push(route.path(props.service, path))
 }
 function goToOperation(path: HttpPath, operation: HttpOperation){
-    router.push({
-        name: 'httpOperation',
-        params: {service: props.service.name, path: path.path.substring(1), operation: operation.method},
-        query: {refresh: route.query.refresh}
-    })
+    router.push(route.operation(props.service, path, operation))
 }
 function lastRequest(path: HttpPath){
     const n = sum(props.service.metrics, 'http_request_timestamp', {name: 'endpoint', value: path.path})
@@ -63,6 +62,9 @@ function allOperationsDeprecated(path: HttpPath): boolean{
 }
 
 function operations(path: HttpPath) {
+    if (!path || !path.operations) {
+        return []
+    }
     return path.operations.sort(function (o1, o2) {
         return operationOrderValue(o1)- (operationOrderValue(o2))
     })

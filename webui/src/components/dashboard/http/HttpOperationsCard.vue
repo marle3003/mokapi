@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { type PropType, computed } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
+import { useRouter, useRoute } from '@/router';
 
 const props = defineProps({
     service: { type: Object as PropType<HttpService>, required: true },
-    path: { type: Object as PropType<HttpPath>, required: true}
+    path: { type: Object as PropType<HttpPath>, required: true }
 })
 
 const operations = computed(() => {
@@ -20,11 +20,7 @@ function comparePath(o1: HttpOperation, o2: HttpOperation) {
 const route = useRoute()
 const router = useRouter()
 function goToOperation(operation: HttpOperation){
-    router.push({
-        name: 'httpOperation',
-        params: {service: props.service.name, path: props.path.path.substring(1), operation: operation.method},
-        query: {refresh: route.query.refresh}
-    })
+    router.push(route.operation(props.service, props.path, operation))
 }
 function showWarningColumn(){
     if (!operations.value){

@@ -26,6 +26,10 @@ function lastMessage(service: Service, topic: KafkaTopic){
     return format(n)
 }
 function goToTopic(topic: KafkaTopic){
+    if (getSelection()?.toString()) {
+        return
+    }
+    
     router.push({
         name: 'kafkaTopic',
         params: {

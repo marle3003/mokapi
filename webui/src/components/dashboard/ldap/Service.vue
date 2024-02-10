@@ -6,6 +6,7 @@ import Servers from './Server.vue'
 import ServiceInfoCard from '../ServiceInfoCard.vue'
 import Searches from './Searches.vue'
 import Search from './Search.vue'
+import ConfigCard from '../ConfigCard.vue'
 
 const {fetchService} = useService()
 const route = useRoute()
@@ -27,6 +28,9 @@ if (serviceName){
       </div>
       <div class="card-group">
         <servers :service="service" />
+      </div>
+      <div class="card-group">
+          <config-card :configs="service.configs" />
       </div>
       <div class="card-group">
         <searches :service="service" />

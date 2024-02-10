@@ -2,7 +2,7 @@ package asyncapitest
 
 import (
 	"mokapi/config/dynamic/asyncApi"
-	"mokapi/config/dynamic/openapi/schema"
+	"mokapi/providers/openapi/schema"
 )
 
 type MessageOptions func(m *asyncApi.Message)

@@ -7,7 +7,7 @@ import (
 	"github.com/dop251/goja"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/js/compiler"
 	"net/url"
 	"path/filepath"
@@ -25,7 +25,7 @@ type Option func(m *requireModule)
 
 type ModuleLoader func() goja.Value
 
-type SourceLoader func(file, hint string) (*common.Config, error)
+type SourceLoader func(file, hint string) (*dynamic.Config, error)
 
 type requireModule struct {
 	native        map[string]ModuleLoader

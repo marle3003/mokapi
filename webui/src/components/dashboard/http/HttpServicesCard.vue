@@ -29,6 +29,10 @@ function errors(s: Service){
 }
 
 function goToService(s: Service) {
+    if (getSelection()?.toString()) {
+        return
+    }
+
     router.push(service(s))
 }
 

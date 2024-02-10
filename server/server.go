@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	log "github.com/sirupsen/logrus"
-	"mokapi/config/dynamic"
 	"mokapi/engine"
 	"mokapi/runtime"
 	"mokapi/safe"
@@ -11,7 +10,7 @@ import (
 
 type Server struct {
 	app     *runtime.App
-	watcher *dynamic.ConfigWatcher
+	watcher *ConfigWatcher
 	kafka   *KafkaManager
 	http    *HttpManager
 	engine  *engine.Engine
@@ -22,7 +21,7 @@ type Server struct {
 	stopChan chan bool
 }
 
-func NewServer(pool *safe.Pool, app *runtime.App, watcher *dynamic.ConfigWatcher,
+func NewServer(pool *safe.Pool, app *runtime.App, watcher *ConfigWatcher,
 	kafka *KafkaManager, http *HttpManager, smtp *SmtpManager, ldap *LdapDirectoryManager, engine *engine.Engine) *Server {
 	return &Server{
 		app:      app,

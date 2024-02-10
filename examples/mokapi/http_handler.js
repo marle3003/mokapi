@@ -1,10 +1,13 @@
 import { on } from 'mokapi'
-import { clusters, events as kafkaEvents } from 'kafka.js'
-import { apps as httpServices, events as httpEvents } from 'services_http.js'
+import { clusters, events as kafkaEvents, configs as kafkaConfigs } from 'kafka.js'
+import { apps as httpServices, events as httpEvents, configs as httpConfigs } from 'services_http.js'
 import { server as smtpServers, mails, mailEvents, getMail, getAttachment } from 'smtp.js'
 import { server as ldapServers, searches } from 'ldap.js'
 import { metrics } from 'metrics.js'
 import { fake } from 'mokapi/faker'
+import { get } from 'mokapi/http'
+
+const configs = {}
 
 export default function() {
     on('http', function(request, response) {
@@ -72,8 +75,35 @@ export default function() {
             case 'example':
                 response.data = fake(request.body)
                 return true
+            case 'config':
+                const config = getConfig(request.path.id)
+                if (config) {
+                    response.data = config
+                    return true
+                } else {
+                    console.log("config not found: "+request.path.id)
+                    response.statusCode = 404
+                    response.data = ''
+                    return true
+                }
+            case 'configdata':
+                const configData = configs[request.path.id]
+                if (configData) {
+                    response.data = configData
+                    //response.headers['Content-Type'] = 'application/json'
+                    return true
+                } else {
+                    response.statusCode = 404
+                    response.data = ''
+                    return true
+                }
         }
     }, {tags: {name: "dashboard"}})
+
+    for (const config of [...Object.values(httpConfigs),...Object.values(kafkaConfigs)]) {
+        const r = get(config.data)
+        configs[config.id] = r.body
+    }
 }
 
 function getServices() {
@@ -155,4 +185,14 @@ function matchEvent(e, traits) {
         }
     }
     return true
+}
+
+function getConfig(id) {
+    if (httpConfigs[id]) {
+        return httpConfigs[id]
+    }
+    if (kafkaConfigs[id]) {
+        return kafkaConfigs[id]
+    }
+    return null
 }

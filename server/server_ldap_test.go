@@ -3,7 +3,7 @@ package server
 import (
 	"fmt"
 	"github.com/stretchr/testify/require"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/directory"
 	"mokapi/engine/enginetest"
 	"mokapi/ldap"
@@ -16,12 +16,12 @@ import (
 func TestLdapDirectory(t *testing.T) {
 	testcases := []struct {
 		name    string
-		configs []*common.Config
+		configs []*dynamic.Config
 		test    func(t *testing.T, app *runtime.App)
 	}{
 		{
 			name: "wrong config type",
-			configs: []*common.Config{
+			configs: []*dynamic.Config{
 				newConfig("foo", "data"),
 			},
 			test: func(t *testing.T, app *runtime.App) {
@@ -30,7 +30,7 @@ func TestLdapDirectory(t *testing.T) {
 		},
 		{
 			name: "add to runtime app",
-			configs: []*common.Config{
+			configs: []*dynamic.Config{
 				newConfig("foo", &directory.Config{
 					Info: directory.Info{Name: "foo"},
 				}),
@@ -41,7 +41,7 @@ func TestLdapDirectory(t *testing.T) {
 		},
 		{
 			name: "one ldap server",
-			configs: []*common.Config{
+			configs: []*dynamic.Config{
 				newConfig("foo", &directory.Config{
 					Info:    directory.Info{Name: "foo"},
 					Address: fmt.Sprintf(":%v", try.GetFreePort()),
@@ -71,10 +71,10 @@ func TestLdapDirectory(t *testing.T) {
 	}
 }
 
-func newConfig(path string, data interface{}) *common.Config {
+func newConfig(path string, data interface{}) *dynamic.Config {
 	u, _ := url.Parse(path)
-	return &common.Config{
-		Info: common.ConfigInfo{Url: u},
+	return &dynamic.Config{
+		Info: dynamic.ConfigInfo{Url: u},
 		Data: data,
 	}
 }

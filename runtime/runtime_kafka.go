@@ -1,9 +1,9 @@
 package runtime
 
 import (
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
-	cfg "mokapi/config/dynamic/common"
 	"mokapi/kafka"
 	"mokapi/runtime/monitor"
 	"path/filepath"
@@ -13,7 +13,7 @@ import (
 type KafkaInfo struct {
 	*asyncApi.Config
 	*store.Store
-	configs map[string]*asyncApi.Config
+	configs map[string]*dynamic.Config
 }
 
 type KafkaHandler struct {
@@ -21,20 +21,18 @@ type KafkaHandler struct {
 	next  kafka.Handler
 }
 
-func NewKafkaInfo(c *cfg.Config, store *store.Store) *KafkaInfo {
+func NewKafkaInfo(c *dynamic.Config, store *store.Store) *KafkaInfo {
 	hc := &KafkaInfo{
-		configs: map[string]*asyncApi.Config{},
+		configs: map[string]*dynamic.Config{},
 		Store:   store,
 	}
 	hc.AddConfig(c)
 	return hc
 }
 
-func (c *KafkaInfo) AddConfig(config *cfg.Config) {
-	ac := config.Data.(*asyncApi.Config)
-
+func (c *KafkaInfo) AddConfig(config *dynamic.Config) {
 	key := config.Info.Url.String()
-	c.configs[key] = ac
+	c.configs[key] = config
 	c.update()
 }
 
@@ -50,9 +48,10 @@ func (c *KafkaInfo) update() {
 		return filepath.Base(x) < filepath.Base(y)
 	})
 
-	cfg := c.configs[keys[0]]
+	cfg := getKafkaConfig(c.configs[keys[0]])
 	for _, k := range keys[1:] {
-		cfg.Patch(c.configs[k])
+		p := getKafkaConfig(c.configs[k])
+		cfg.Patch(p)
 	}
 
 	c.Config = cfg
@@ -63,6 +62,15 @@ func (c *KafkaInfo) Handler(kafka *monitor.Kafka) kafka.Handler {
 	return &KafkaHandler{kafka: kafka, next: c.Store}
 }
 
+func (c *KafkaInfo) Configs() []*dynamic.Config {
+	var r []*dynamic.Config
+	for _, config := range c.configs {
+		r = append(r, config)
+		r = append(r, config.Refs.List()...)
+	}
+	return r
+}
+
 func (h *KafkaHandler) ServeMessage(rw kafka.ResponseWriter, req *kafka.Request) {
 	ctx := monitor.NewKafkaContext(req.Context, h.kafka)
 
@@ -70,7 +78,11 @@ func (h *KafkaHandler) ServeMessage(rw kafka.ResponseWriter, req *kafka.Request)
 	h.next.ServeMessage(rw, req)
 }
 
-func IsKafkaConfig(c *cfg.Config) bool {
+func IsKafkaConfig(c *dynamic.Config) bool {
 	_, ok := c.Data.(*asyncApi.Config)
 	return ok
+}
+
+func getKafkaConfig(c *dynamic.Config) *asyncApi.Config {
+	return c.Data.(*asyncApi.Config)
 }

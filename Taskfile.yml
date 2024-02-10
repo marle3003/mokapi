@@ -4,18 +4,18 @@ version: '3'
 
 tasks:
   default:
-    deps: [bindata-vueapp]
+    deps: [build-vue-app]
     cmds:
       - task: build-windows
   build-windows:
-    deps: [bindata-vueapp]
+    deps: [build-vue-app]
     cmds:
       - go build -o mokapi-windows-amd64.exe -ldflags="-X 'mokapi/version.BuildVersion=1.0'" ./cmd/mokapi
     env:
       GOOS: windows
       GOARCH: amd64
   build-linux:
-    deps: [bindata-vueapp]
+    deps: [build-vue-app]
     cmds:
       - go build -o mokapi-linux-amd64 -ldflags="-X 'mokapi/version.BuildVersion=1.0'" ./cmd/mokapi
     env:
@@ -27,10 +27,6 @@ tasks:
     env:
       GOOS: darwin
       GOARCH: arm64
-  bindata-vueapp:
-    deps: [build-vue-app]
-    cmds:
-      - go-bindata -nomemcopy -pkg api -o api/bindata.go -prefix webui/dist/ webui/dist/...
   build-vue-app:
     dir: webui
     cmds:
@@ -38,7 +34,7 @@ tasks:
       - npm run copy-docs
       - npm run build
   build-npm-package:
-    deps: [bindata-vueapp]
+    deps: [build-vue-app]
     cmds:
       - task npm-build-windows VERSION={{.VERSION}}
       - task npm-build-linux VERSION={{.VERSION}}

@@ -8,9 +8,13 @@ import (
 	"mokapi/api"
 	"mokapi/config/decoders"
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic/asyncApi"
+	"mokapi/config/dynamic/directory"
+	"mokapi/config/dynamic/mail"
 	"mokapi/config/static"
 	"mokapi/engine"
+	"mokapi/providers/openapi"
+	"mokapi/providers/swagger"
 	"mokapi/runtime"
 	"mokapi/runtime/events"
 	"mokapi/safe"
@@ -34,7 +38,8 @@ func main() {
 	configDecoders := []decoders.ConfigDecoder{decoders.NewDefaultFileDecoder(), &decoders.FlagDecoder{}}
 	err := decoders.Load(configDecoders, cfg)
 	if err != nil {
-		fmt.Println("Error", err)
+		log.Errorf("load config failed: %v", err)
+		return
 	}
 
 	if len(cfg.Services) > 0 {
@@ -43,6 +48,7 @@ func main() {
 	}
 
 	configureLogging(cfg)
+	registerDynamicTypes()
 
 	s, err := createServer(cfg)
 	if err != nil {
@@ -76,7 +82,7 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 	pool := safe.NewPool(context.Background())
 	app := runtime.New()
 
-	watcher := dynamic.NewConfigWatcher(cfg)
+	watcher := server.NewConfigWatcher(cfg)
 	scriptEngine := engine.New(watcher, app, cfg.Js)
 	certStore, err := cert.NewStore(cfg)
 	if err != nil {
@@ -87,7 +93,7 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 	smtp := server.NewSmtpManager(app, scriptEngine, certStore)
 	ldap := server.NewLdapDirectoryManager(scriptEngine, certStore, app)
 
-	watcher.AddListener(func(cfg *common.Config) {
+	watcher.AddListener(func(cfg *dynamic.Config) {
 		kafka.UpdateConfig(cfg)
 		http.Update(cfg)
 		smtp.UpdateConfig(cfg)
@@ -95,6 +101,7 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 		if err := scriptEngine.AddScript(cfg); err != nil {
 			log.Error(err)
 		}
+		app.AddConfig(cfg)
 	})
 
 	if u, err := api.BuildUrl(cfg.Api); err == nil {
@@ -126,4 +133,12 @@ func configureLogging(cfg *static.Config) {
 			log.SetFormatter(formatter)
 		}
 	}
+}
+
+func registerDynamicTypes() {
+	dynamic.Register("openapi", &openapi.Config{})
+	dynamic.Register("asyncapi", &asyncApi.Config{})
+	dynamic.Register("swagger", &swagger.Config{})
+	dynamic.Register("ldap", &directory.Config{})
+	dynamic.Register("smtp", &mail.Config{})
 }

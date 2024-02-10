@@ -4,14 +4,14 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/stretchr/testify/require"
+	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
-	common2 "mokapi/config/dynamic/common"
-	"mokapi/config/dynamic/openapi/schema/schematest"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
+	"mokapi/providers/openapi/schema/schematest"
 	"mokapi/runtime"
 	"net/url"
 	"testing"
@@ -20,11 +20,11 @@ import (
 func TestKafkaClient_Produce(t *testing.T) {
 	testcases := []struct {
 		name string
-		f    func(t *testing.T, s *store.Store, c *kafkaClient)
+		test func(t *testing.T, s *store.Store, c *kafkaClient)
 	}{
 		{
-			"random key",
-			func(t *testing.T, s *store.Store, c *kafkaClient) {
+			name: "random key",
+			test: func(t *testing.T, s *store.Store, c *kafkaClient) {
 				result, err := c.Produce(&common.KafkaProduceArgs{Topic: "foo", Cluster: "foo"})
 				require.NoError(t, err)
 				require.NotNil(t, result)
@@ -32,6 +32,17 @@ func TestKafkaClient_Produce(t *testing.T) {
 				require.Equal(t, kafka.None, kerr)
 				require.NotNil(t, b)
 				require.Equal(t, fmt.Sprintf("%v", result.Key), string(readBytes(b.Records[0].Key)))
+			},
+		},
+		{
+			name: "multiple clusters",
+			test: func(t *testing.T, s *store.Store, c *kafkaClient) {
+				for i := 0; i < 10; i++ {
+					c.app.AddKafka(getConfig(asyncapitest.NewConfig(asyncapitest.WithInfo(fmt.Sprintf("x%v", i), "", ""))), enginetest.NewEngine())
+				}
+
+				_, err := c.Produce(&common.KafkaProduceArgs{Topic: "foo"})
+				require.NoError(t, err)
 			},
 		},
 	}
@@ -50,7 +61,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 			app := runtime.New()
 			info := app.AddKafka(getConfig(config), enginetest.NewEngine())
 			c := newKafkaClient(app)
-			tc.f(t, info.Store, c)
+			tc.test(t, info.Store, c)
 		})
 	}
 }
@@ -61,9 +72,9 @@ func readBytes(b kafka.Bytes) []byte {
 	return buf.Bytes()
 }
 
-func getConfig(c *asyncApi.Config) *common2.Config {
+func getConfig(c *asyncApi.Config) *dynamic.Config {
 	u, _ := url.Parse("foo.bar")
-	cfg := &common2.Config{Data: c}
+	cfg := &dynamic.Config{Data: c}
 	cfg.Info.Url = u
 	return cfg
 }

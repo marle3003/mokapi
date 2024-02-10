@@ -5,14 +5,19 @@ import (
 	"crypto/x509"
 	"fmt"
 	"github.com/stretchr/testify/require"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 )
 
-type ResponseCondition func(t *testing.T, r *http.Response)
+type TestResponse struct {
+	res  *http.Response
+	body []byte
+}
+
+type ResponseCondition func(t *testing.T, r *TestResponse)
 
 func GetRequest(t *testing.T, url string, headers map[string]string, conditions ...ResponseCondition) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -40,13 +45,16 @@ func GetRequest(t *testing.T, url string, headers map[string]string, conditions 
 	res, err := client.Do(req)
 	require.NoError(t, err)
 
+	tr := &TestResponse{res: res}
 	for _, cond := range conditions {
-		cond(t, res)
+		cond(t, tr)
 	}
 }
 
 func Handler(t *testing.T, method string, url string, headers map[string]string, body string, handler http.Handler, conditions ...ResponseCondition) {
-	r := httptest.NewRequest(method, url, strings.NewReader(body))
+	r, err := http.NewRequest(method, url, strings.NewReader(body))
+	require.NoError(t, err)
+
 	for k, v := range headers {
 		r.Header.Set(k, v)
 	}
@@ -54,42 +62,81 @@ func Handler(t *testing.T, method string, url string, headers map[string]string,
 	rr := httptest.NewRecorder()
 	handler.ServeHTTP(rr, r)
 
+	tr := &TestResponse{res: rr.Result()}
 	for _, cond := range conditions {
-		cond(t, rr.Result())
+		cond(t, tr)
 	}
 }
 
 func HasStatusCode(status int) ResponseCondition {
-	return func(t *testing.T, r *http.Response) {
-		require.Equal(t, status, r.StatusCode)
+	return func(t *testing.T, tr *TestResponse) {
+		require.Equal(t, status, tr.res.StatusCode)
 	}
 }
 
 func HasHeader(name, value string) ResponseCondition {
-	return func(t *testing.T, r *http.Response) {
-		v := r.Header.Get(name)
+	return func(t *testing.T, tr *TestResponse) {
+		v := tr.res.Header.Get(name)
 		require.Equal(t, value, v)
 	}
 }
 
-func HasBody(expected string) ResponseCondition {
-	return func(t *testing.T, r *http.Response) {
-		b, err := ioutil.ReadAll(r.Body)
-		require.NoError(t, err)
+func HasHeaderXor(name string, values ...string) ResponseCondition {
+	return func(t *testing.T, tr *TestResponse) {
+		v := tr.res.Header.Get(name)
+		matched := ""
+		for _, exp := range values {
+			if v == exp {
+				if matched != "" {
+					require.Fail(t, fmt.Sprintf("header '%v' matches at least two values: '%v' and '%v'", name, matched, exp))
+				}
+				matched = exp
+			}
+		}
+		if matched == "" {
+			require.Fail(t, fmt.Sprintf("header '%v' does not match one of: %v", name, values))
+		}
+	}
+}
 
-		body := string(b)
+func HasBody(expected string) ResponseCondition {
+	return func(t *testing.T, tr *TestResponse) {
+		if tr.body == nil {
+			var err error
+			tr.body, err = io.ReadAll(tr.res.Body)
+			require.NoError(t, err)
+		}
+
+		body := string(tr.body)
 
 		require.Equal(t, expected, body)
 	}
 }
 
 func BodyContains(s string) ResponseCondition {
-	return func(t *testing.T, r *http.Response) {
-		b, err := ioutil.ReadAll(r.Body)
-		require.NoError(t, err)
+	return func(t *testing.T, tr *TestResponse) {
+		if tr.body == nil {
+			var err error
+			tr.body, err = io.ReadAll(tr.res.Body)
+			require.NoError(t, err)
+		}
 
-		body := string(b)
+		body := string(tr.body)
 
 		require.Contains(t, body, s)
+	}
+}
+
+func BodyMatch(regexp string) ResponseCondition {
+	return func(t *testing.T, tr *TestResponse) {
+		if tr.body == nil {
+			var err error
+			tr.body, err = io.ReadAll(tr.res.Body)
+			require.NoError(t, err)
+		}
+
+		body := string(tr.body)
+
+		require.Regexp(t, regexp, body)
 	}
 }

@@ -10,7 +10,6 @@
     "ignoreDeprecations": "5.0",
     "lib": ["es2021", "dom", "dom.iterable"],
   },
-
   "references": [
     {
       "path": "./tsconfig.config.json"

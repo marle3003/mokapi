@@ -5,6 +5,7 @@ declare interface Service {
     contact: Contact | null
     type: ServiceType
     metrics: Metric[]
+    configs: Config[]
 }
 
 declare interface Contact {
@@ -31,3 +32,18 @@ declare interface ServiceEvent {
 }
 
 declare interface Traits {[name: string]: string}
+
+declare interface Config {
+    id: string
+    url: string
+    provider: string
+    time: string
+    refs: ConfigRef[]
+}
+
+declare interface ConfigRef {
+    id: string
+    url: string
+    provider: string
+    time: string
+}

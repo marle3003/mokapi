@@ -1,7 +1,7 @@
 package api
 
 import (
-	"mokapi/config/dynamic/openapi/parameter"
+	"mokapi/providers/openapi/parameter"
 	"mokapi/runtime"
 	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
@@ -21,6 +21,7 @@ type httpInfo struct {
 	Servers     []server         `json:"servers,omitempty"`
 	Paths       []pathItem       `json:"paths,omitempty"`
 	Metrics     []metrics.Metric `json:"metrics,omitempty"`
+	Configs     []config         `json:"configs,omitempty"`
 }
 
 type pathItem struct {
@@ -210,6 +211,8 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 		}
 		result.Paths = append(result.Paths, pi)
 	}
+
+	result.Configs = getConfigs(s.Configs())
 
 	w.Header().Set("Content-Type", "application/json")
 	writeJsonBody(w, result)

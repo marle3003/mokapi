@@ -6,9 +6,13 @@ import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/api"
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/common"
+	"mokapi/config/dynamic/asyncApi"
+	"mokapi/config/dynamic/directory"
+	"mokapi/config/dynamic/mail"
 	"mokapi/config/static"
 	"mokapi/engine"
+	"mokapi/providers/openapi"
+	"mokapi/providers/swagger"
 	"mokapi/runtime"
 	"mokapi/safe"
 	"mokapi/server"
@@ -29,9 +33,10 @@ func Start(cfg *static.Config) (*Cmd, error) {
 		return nil, errors.New("static configuration Services are no longer supported. Use patching instead.")
 	}
 
+	registerDynamicTypes()
 	app := runtime.New()
 
-	watcher := dynamic.NewConfigWatcher(cfg)
+	watcher := server.NewConfigWatcher(cfg)
 
 	certStore, err := cert.NewStore(cfg)
 	if err != nil {
@@ -44,7 +49,7 @@ func Start(cfg *static.Config) (*Cmd, error) {
 	smtp := server.NewSmtpManager(app, scriptEngine, certStore)
 	ldap := server.NewLdapDirectoryManager(scriptEngine, certStore, app)
 
-	watcher.AddListener(func(cfg *common.Config) {
+	watcher.AddListener(func(cfg *dynamic.Config) {
 		kafka.UpdateConfig(cfg)
 		http.Update(cfg)
 		smtp.UpdateConfig(cfg)
@@ -52,6 +57,7 @@ func Start(cfg *static.Config) (*Cmd, error) {
 		if err := scriptEngine.AddScript(cfg); err != nil {
 			panic(err)
 		}
+		app.AddConfig(cfg)
 	})
 
 	if u, err := api.BuildUrl(cfg.Api); err == nil {
@@ -78,4 +84,12 @@ func Start(cfg *static.Config) (*Cmd, error) {
 func (cmd *Cmd) Stop() {
 	cmd.cancel()
 	cmd.server.Close()
+}
+
+func registerDynamicTypes() {
+	dynamic.Register("openapi", &openapi.Config{})
+	dynamic.Register("asyncapi", &asyncApi.Config{})
+	dynamic.Register("swagger", &swagger.Config{})
+	dynamic.Register("ldap", &directory.Config{})
+	dynamic.Register("smtp", &mail.Config{})
 }

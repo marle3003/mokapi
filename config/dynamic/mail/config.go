@@ -1,14 +1,9 @@
 package mail
 
 import (
-	"mokapi/config/dynamic/common"
 	"mokapi/smtp"
 	"regexp"
 )
-
-func init() {
-	common.Register("smtp", &Config{})
-}
 
 type Config struct {
 	ConfigPath    string   `yaml:"-" json:"-"`
