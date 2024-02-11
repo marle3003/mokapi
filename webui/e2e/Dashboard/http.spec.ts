@@ -158,7 +158,7 @@ test.describe('Visit Swagger Petstore', () => {
                     await test.step('switch response contenttype',async () => {
                         await page.getByRole('combobox', { name: 'Response content type' }).selectOption('application/xml')
 
-                        await expect(op.response.element.getByRole('tabpanel', { name: 'Body' }).locator('span').filter({ hasText: 'application/xml' })).toBeVisible()
+                        await expect(page.getByLabel('OK').getByLabel('Response content type')).toHaveValue('application/xml')
                     })
 
                     await test.step('click on HTTP status 500',async () => {
