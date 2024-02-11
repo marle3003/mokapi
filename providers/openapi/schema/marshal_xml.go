@@ -27,7 +27,7 @@ func marshalXml(i interface{}, r *Ref) ([]byte, error) {
 		seg := strings.Split(u.Fragment, "/")
 		name = seg[len(seg)-1]
 	} else {
-		return nil, fmt.Errorf("root element name is undefined: reference name and xml.name is empty")
+		return nil, fmt.Errorf("root element name is undefined: reference name of schema and attribute xml.name is empty")
 	}
 
 	if i == nil {
@@ -79,6 +79,12 @@ func writeXmlElement(name string, i interface{}, r *Ref, w io.Writer) {
 		if wrapped {
 			node.WriteEnd(w)
 		}
+	case map[string]interface{}:
+		node.WriteStart(w)
+		for name, v := range v {
+			writeXmlElement(name, v, nil, w)
+		}
+		node.WriteEnd(w)
 	case *marshalObject:
 		setAttributes(node, v.LinkedHashMap, r)
 		node.WriteStart(w)
