@@ -54,6 +54,7 @@ const pet = {
             }
         },
         tags: {
+            type: "array",
             xml: {
                 name: "tag",
                 wrapped: true
@@ -114,6 +115,10 @@ export let apps = [
                             contents: [
                                 {
                                     type: "application/json",
+                                    schema: pet
+                                },
+                                {
+                                    type: "application/xml",
                                     schema: pet
                                 }
                             ]

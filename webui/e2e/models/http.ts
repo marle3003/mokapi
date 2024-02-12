@@ -89,7 +89,7 @@ export class HttpOperationRequestModel {
 
     constructor(readonly element: Locator) {
         this.tabs = element.getByTestId('tabs')
-        this.body = element.getByTestId('body')
+        this.body = element.getByRole('code')
         this.expand = new ExpandModel(element.getByTestId('expand'))
         this.example = new ExampleModel(element.getByTestId('example'))
     }

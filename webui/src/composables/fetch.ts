@@ -40,6 +40,7 @@ export function useFetch(path: string, options?: RequestInit, doRefresh: boolean
                 response.isLoading = false
             })
             .catch((err) => {
+                console.error(err);                
                 response.error = 'Network connection error'
                 response.data = null
                 response.isLoading = false
