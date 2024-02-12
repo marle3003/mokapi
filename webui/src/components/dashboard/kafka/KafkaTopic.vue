@@ -33,7 +33,7 @@ onUnmounted(() => {
         <div class="card">
             <div class="card-body">
                 <div class="row">
-                    <div class="col header">
+                    <div class="col header mb-3">
                         <p class="label">Topic</p>
                         <p>{{ topic()?.name }}</p>
                     </div>
