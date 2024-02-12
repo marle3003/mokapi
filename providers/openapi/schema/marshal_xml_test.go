@@ -313,6 +313,7 @@ func TestMarshal_Xml(t *testing.T) {
 					"title":  "foo",
 					"x":      "2023",
 					"author": "bar",
+					"foo":    nil,
 				}
 				return []interface{}{i}
 			},

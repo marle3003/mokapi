@@ -70,11 +70,15 @@ func writeXmlElement(name string, i interface{}, r *Ref, w io.Writer) {
 		if wrapped {
 			node.WriteStart(w)
 		}
+		var sItems *Ref
+		if s != nil {
+			sItems = s.Items
+		}
 		for _, item := range v {
 			if item == nil {
 				continue
 			}
-			writeXmlElement(node.Name, item, s.Items, w)
+			writeXmlElement(node.Name, item, sItems, w)
 		}
 		if wrapped {
 			node.WriteEnd(w)
@@ -108,6 +112,9 @@ func writeXmlElement(name string, i interface{}, r *Ref, w io.Writer) {
 
 		node.WriteEnd(w)
 	default:
+		if i == nil {
+			return
+		}
 		node.Content = fmt.Sprintf("%v", i)
 		node.Write(w)
 	}
