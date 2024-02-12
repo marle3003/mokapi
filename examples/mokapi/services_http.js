@@ -174,7 +174,8 @@ export let apps = [
                                 description: "Updated name of the pet",
                                 schema: {
                                     type: "string"
-                                }
+                                },
+                                required: false
                             },
                             {
                                 name: "status",
@@ -182,7 +183,8 @@ export let apps = [
                                 description: "Updated status of the pet",
                                 schema: {
                                     type: "string"
-                                }
+                                },
+                                required: false
                             }
                         ],
                         responses: [

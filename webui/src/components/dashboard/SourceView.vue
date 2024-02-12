@@ -124,9 +124,17 @@ function copyToClipboard(event: MouseEvent) {
 }
 .source pre .hljs {
   border-radius: 0 0 6px 6px;
+  padding-left: 0.5rem;
 }
 .source code {
   display: inline-block;
   min-width: 100%;
+}
+</style>
+
+<style>
+.source .hljs-deletion {
+  background-color: transparent;
+  color: #C9D1DE;
 }
 </style>

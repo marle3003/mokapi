@@ -7,6 +7,7 @@ import (
 	"mokapi/media"
 	"mokapi/sortedmap"
 	"reflect"
+	"strconv"
 	"unicode"
 )
 
@@ -28,11 +29,20 @@ func (r *Ref) Marshal(i interface{}, contentType media.ContentType) ([]byte, err
 	case contentType.IsXml():
 		b, err = marshalXml(i, r)
 	default:
-		if s, ok := i.(string); ok {
-			b = []byte(s)
-		} else {
+		var s string
+		switch i.(type) {
+		case string:
+			s = i.(string)
+		case float64:
+			s = strconv.FormatFloat(i.(float64), 'f', -1, 64)
+		case float32:
+			s = strconv.FormatFloat(float64(i.(float32)), 'f', -1, 32)
+		case int, int32, int64:
+			s = fmt.Sprintf("%v", i)
+		default:
 			err = fmt.Errorf("unspupported encoding for content type %v", contentType)
 		}
+		b = []byte(s)
 	}
 
 	if err != nil {
