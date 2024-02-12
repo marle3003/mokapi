@@ -188,7 +188,10 @@ export let events = [
                          "category": "apparel",
                          "subcategory": "apparel"
                          }`,
-             partition: 0
+             partition: 0,
+             headers: {
+                 foo: "bar"
+             }
          }
      },
     {

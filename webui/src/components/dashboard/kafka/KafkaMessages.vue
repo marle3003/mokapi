@@ -5,6 +5,7 @@ import { usePrettyDates } from '@/composables/usePrettyDate';
 import { Modal } from 'bootstrap'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage';
 import hljs from 'highlight.js'
+import SourceView from '../SourceView.vue';
 
 const props = defineProps({
     service: { type: Object as PropType<KafkaService> },
@@ -40,7 +41,8 @@ onUnmounted(() => {
 interface DialogData {
     key: string
     message: string
-    header: string | null
+    headers: { [name: string]: string }
+    contentType: string
 }
 let message = ref<DialogData | null>(null)
 
@@ -49,18 +51,31 @@ function showMessage(event: ServiceEvent){
         return
     }
 
+    const topicName = event.traits["topic"]
+    const topic = getTopic(topicName)
+
     const data = eventData(event)
     if (!data){
         return
     }
     message.value = {
         key: hljs.highlightAuto(formatLanguage(data.key, 'text/plain')).value,
-        message: hljs.highlightAuto(formatLanguage(data.message, 'application/json')).value,
-        header: null
+        message: data.message,
+        headers: data.headers,
+        contentType: topic.configs.messageType
     }
     if (dialog){
         dialog.show()
     }
+}
+
+function getTopic(name: string): KafkaTopic {
+    for (const topic of props.service!.topics) {
+        if (topic.name === name) {
+            return topic
+        }
+    }
+    throw new Error(`topic ${name} not found`)
 }
 </script>
 
@@ -99,15 +114,15 @@ function showMessage(event: ServiceEvent){
                                     <ul class="nav nav-pills tab-sm" role="tabList">
                                         <li class="nav-link" id="pills-key-tab" data-bs-toggle="pill" data-bs-target="#pills-key" type="button" role="tab" aria-controls="'pills-key" aria-selected="false">Key</li>
                                         <li class="nav-link show active" id="pills-message-tab" data-bs-toggle="pill" data-bs-target="#pills-message" type="button" role="tab" aria-controls="'pills-message" aria-selected="true">Message</li>
-                                        <li class="nav-link" :class="message?.header ? '' : 'disabled'" id="pills-message-tab" data-bs-toggle="pill" data-bs-target="#pills-message" type="button" role="tab" aria-controls="'pills-message" aria-selected="true">Header</li>
+                                        <li class="nav-link" :class="message?.headers ? '' : 'disabled'" id="pills-message-tab" data-bs-toggle="pill" data-bs-target="#pills-message" type="button" role="tab" aria-controls="'pills-message" aria-selected="true">Header</li>
                                     </ul>
 
                                     <div class="tab-content" id="'pills-tabmessage">
                                         <div class="tab-pane fade" id="pills-key" role="tabpanel">
-                                            <pre><code class="json hljs" v-html="message?.key"></code></pre>
+                                            <source-view v-if="message" :source="message.key" content-type="application/json" :hide-content-type="true" />
                                         </div>
                                         <div class="tab-pane fade show active" id="pills-message" role="tabpanel">
-                                            <pre><code class="json hljs" v-html="message?.message"></code></pre>
+                                            <source-view v-if="message" :source="message.message" :content-type="message.contentType" />
                                         </div>
                                     </div>
                                 </div>
@@ -126,5 +141,8 @@ function showMessage(event: ServiceEvent){
     text-overflow: ellipsis;
     white-space:nowrap;
     max-width: 0;
+}
+.tab-pane {
+    padding: 0;
 }
 </style>

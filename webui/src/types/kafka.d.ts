@@ -65,4 +65,5 @@ declare interface KafkaEventData {
   key: string;
   message: string;
   partition: number;
+  headers: { [name: string]: string }
 }

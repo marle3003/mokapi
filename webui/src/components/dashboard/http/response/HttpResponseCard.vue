@@ -70,13 +70,13 @@ function selectedContentChange(event: any, statusCode: number){
                                         height="250px" class="mb-2">
                                     </source-view>
                                     <div class="row">
-                                        <div class="col-auto pe-2">
+                                        <div class="col-auto pe-2 mt-1">
                                             <schema-expand :schema="selected.contents[response.statusCode].schema" />
                                         </div>
-                                        <div class="col-auto px-2">
+                                        <div class="col-auto px-2 mt-1">
                                             <schema-example :content-type="selected.contents[response.statusCode].type" :schema="selected.contents[response.statusCode].schema"/>
                                         </div>
-                                        <div class="col-auto px-2">
+                                        <div class="col-auto px-2 mt-1">
                                             <select v-if="response.contents.length > 0" class="form-select form-select-sm" aria-label="Response content type" @change="selectedContentChange($event, response.statusCode)">
                                                 <option v-for="content in response.contents">{{ content.type }}</option>
                                             </select>

@@ -2,6 +2,7 @@
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage';
 import { useGuid } from '@/composables/guid';
 import type { PropType } from 'vue';
+import SourceView from './SourceView.vue'
 
 defineProps({
     schema: { type: Object as PropType<Schema>, required: true }
@@ -21,7 +22,7 @@ const id = createGuid()
                 <div class="modal-content">
                     <div class="modal-body">
                         <div class="codeBlock">
-                            <pre v-highlightjs="formatLanguage(JSON.stringify(schema), 'application/json')"><code class="json"></code></pre>
+                            <source-view :source="JSON.stringify(schema)" content-type="application/json" :hide-content-type="true" />
                         </div>
                     </div>
                 </div>

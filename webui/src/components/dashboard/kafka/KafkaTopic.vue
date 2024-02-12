@@ -33,13 +33,21 @@ onUnmounted(() => {
         <div class="card">
             <div class="card-body">
                 <div class="row">
-                    <div class="col header">
+                    <div class="col header mb-3">
                         <p class="label">Topic</p>
                         <p>{{ topic()?.name }}</p>
                     </div>
                     <div class="col header">
                         <p class="label">Cluster</p>
-                        <p>{{ service.name }}</p>
+                        <p>
+                          <router-link :to="{
+                              name: 'kafkaService',
+                              params: {service: service.name},
+                              query: {refresh: route.query.refresh}
+                          }">
+                          {{ service.name }}
+                        </router-link>
+                        </p>
                     </div>
                     <div class="col text-end">
                         <span class="badge bg-secondary">Kafka</span>
