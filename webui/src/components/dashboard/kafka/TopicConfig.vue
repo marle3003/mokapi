@@ -2,6 +2,8 @@
 import type { PropType } from 'vue'
 import Markdown from 'vue3-markdown-it'
 import SourceView from '../SourceView.vue'
+import SchemaExpand from '../SchemaExpand.vue'
+import SchemaExample from '../SchemaExample.vue'
 
 defineProps({
     topic: { type: Object as PropType<KafkaTopic>, required: true },
@@ -49,7 +51,15 @@ defineProps({
                     <source-view :source="JSON.stringify(topic.configs.key)" content-type="application/json" :hide-content-type="true" />
                 </div>
                 <div class="tab-pane fade show active" id="pills-config-message" role="tabpanel">
-                    <source-view :source="JSON.stringify(topic.configs.message)" content-type="application/json" :hide-content-type="true" />
+                    <source-view :source="JSON.stringify(topic.configs.message)" content-type="application/json" :hide-content-type="true" height="500px" class="mb-2" />
+                    <div class="row">
+                        <div class="col-auto pe-2 mt-1">
+                            <schema-expand :schema="topic.configs.message" />
+                        </div>
+                        <div class="col-auto pe-2 mt-1">
+                            <schema-example :content-type="topic.configs.messageType" :schema="topic.configs.message"/>
+                        </div> 
+                    </div>
                 </div>
             </div>
         </div>
