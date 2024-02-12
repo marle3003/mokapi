@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 )
 
 var reader = dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
@@ -36,22 +37,75 @@ func TestJsScriptEngine(t *testing.T) {
 }
 
 func TestJsEvery(t *testing.T) {
-	t.Parallel()
-	t.Run("simple", func(t *testing.T) {
-		t.Parallel()
-		engine := New(reader, runtime.New(), static.JsConfig{})
-		err := engine.AddScript(newScript("test.js", `
-			import mokapi from 'mokapi'
-			export default function() {
-				mokapi.every('1m', function() {});
-			}
-		`))
-		r.NoError(t, err)
-		r.Len(t, engine.scripts, 1, "script length not 1")
+	testcases := []struct {
+		name string
+		test func(t *testing.T)
+	}{
+		{
+			name: "job is registered",
+			test: func(t *testing.T) {
+				engine := New(reader, runtime.New(), static.JsConfig{})
+				err := engine.AddScript(newScript("test.js", `
+					import mokapi from 'mokapi'
+					export default function() {
+						mokapi.every('1m', function() {});
+					}
+				`))
+				r.NoError(t, err)
+				r.Len(t, engine.scripts, 1, "script length not 1")
 
-		r.Len(t, engine.scripts["test.js"].jobs, 1, "job not defined")
-		r.Len(t, engine.cron.Jobs(), 1, "job not defined")
-	})
+				r.Len(t, engine.scripts["test.js"].jobs, 1, "job not defined")
+				r.Len(t, engine.cron.Jobs(), 1, "job not defined")
+			},
+		},
+		{
+			name: "job runs immediately",
+			test: func(t *testing.T) {
+				engine := New(reader, runtime.New(), static.JsConfig{})
+				go engine.Start()
+				defer engine.Close()
+				err := engine.AddScript(newScript("test.js", `
+					import mokapi from 'mokapi'
+					export default function() {
+						mokapi.every('1h', function() {});
+					}
+				`))
+				r.NoError(t, err)
+				r.Len(t, engine.scripts, 1, "script length not 1")
+
+				time.Sleep(500 * time.Millisecond)
+
+				r.Equal(t, 1, engine.scripts["test.js"].jobs[0].RunCount(), "job run count")
+			},
+		},
+		{
+			name: "job runs only 2 times",
+			test: func(t *testing.T) {
+				engine := New(reader, runtime.New(), static.JsConfig{})
+				go engine.Start()
+				defer engine.Close()
+				err := engine.AddScript(newScript("test.js", `
+					import mokapi from 'mokapi'
+					export default function() {
+						mokapi.every('100ms', function() {}, { times: 2 });
+					}
+				`))
+				r.NoError(t, err)
+				time.Sleep(500 * time.Millisecond)
+
+				r.Equal(t, 2, engine.scripts["test.js"].jobs[0].RunCount(), "job run count")
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			tc.test(t)
+		})
+	}
 }
 
 func TestJsOn(t *testing.T) {
