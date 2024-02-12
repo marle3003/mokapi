@@ -1,23 +1,24 @@
 <script setup lang="ts">
-import type { PropType, } from 'vue';
-import { usePrettyLanguage } from '@/composables/usePrettyLanguage';
-import HttpParameters from './HttpParameters.vue';
-import SchemaExpand from '../../SchemaExpand.vue';
-import SchemaExample from '../../SchemaExample.vue';
-
-const {formatLanguage} = usePrettyLanguage()
+import { reactive, type PropType, } from 'vue'
+import HttpParameters from './HttpParameters.vue'
+import SchemaExpand from '../../SchemaExpand.vue'
+import SchemaExample from '../../SchemaExample.vue'
+import SourceView from '../../SourceView.vue'
 
 const props = defineProps({
     operation: { type: Object as PropType<HttpOperation>, required: true }
 })
-let selectContent: HttpMediaType | null = null
+const selected = reactive({
+    content: {} as HttpMediaType | null
+})
+
 if (props.operation.requestBody?.contents?.length > 0){
-    selectContent = props.operation.requestBody.contents[0]
+    selected.content = props.operation.requestBody.contents[0]
 }
 function selectedContentChange(event: any){
     for (let content of props.operation.requestBody.contents){
         if (content.type == event.target.value){
-            selectContent = content
+            selected.content = content
         }
     }
 }
@@ -38,21 +39,24 @@ function selectedContentChange(event: any){
                     <p class="label">Description</p>
                     <p>{{  operation.requestBody.description }}</p>
                     <p v-if="operation.requestBody.required">Required</p>
-                    <p class="codeBlock">
-                        <span v-if="operation.requestBody.contents.length == 1" class="label">{{ selectContent?.type }}</span>
-                        <pre v-highlightjs="formatLanguage(JSON.stringify(selectContent?.schema), 'application/json')" class="overflow-auto" style="max-height: 250px;">
-                            <code class="json" data-testid="body"></code>
-                        </pre>
-                    </p>
+                    
+                    <source-view 
+                        :source="JSON.stringify(selected.content?.schema)" 
+                        :deprecated="selected.content?.schema.deprecated" 
+                        content-type="application/json"
+                        :hide-content-type="true"
+                        height="250px" class="mb-2">
+                    </source-view>
+
                     <div class="row">
-                        <div class="col-auto pe-2" v-if="selectContent">
-                            <schema-expand :schema="selectContent.schema" />
+                        <div class="col-auto pe-2" v-if="selected.content">
+                            <schema-expand :schema="selected.content.schema" />
                         </div>
-                        <div class="col-auto px-2" v-if="selectContent">
-                            <schema-example :schema="selectContent.schema" />
+                        <div class="col-auto px-2" v-if="selected.content">
+                            <schema-example :schema="selected.content.schema" :content-type="selected.content.type" />
                         </div>
                         <div class="col-auto px-2">
-                            <select v-if="operation.requestBody.contents.length > 1" class="form-select form-select-sm" aria-label=".form-select-sm example" style="width: 30%" @change="selectedContentChange">
+                            <select v-if="operation.requestBody.contents.length > 1" class="form-select form-select-sm" aria-label="Request content type" @change="selectedContentChange">
                                 <option v-for="content in operation.requestBody.contents">{{ content.type }}</option>
                             </select>
                         </div>
@@ -65,16 +69,4 @@ function selectedContentChange(event: any){
         </div>
     </div>
 </template>
-
-<style scoped>
-.codeBlock {
-  position: relative;
-}
-.card-body .codeBlock .label {
-    position: absolute;
-    right: 20px;
-    top: 4px;
-    font-size: 0.8rem;
-}
-</style>
 

@@ -224,8 +224,11 @@ paths:
         "200":
           description: an example for given schema
           content:
-            application/json:
-              schema: {}
+            '*':
+              schema:
+                xml:
+                  name: root
+                  wrapped: true
     options:
       summary: preflight
       responses:

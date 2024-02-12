@@ -26,7 +26,10 @@ export function usePrettyBytes() : {format: FormatFunc} {
             Math.floor(Math.log(value) / Math.log(1000)),
             units.length - 1
         )
-        value = (value / Math.pow(1000, exponent)).toFixed(2)
+        value = (value / Math.pow(1000, exponent))
+        if(Math.round(value) !== value) {
+            value = value.toFixed(2);
+        }
         unit = units[exponent]
 
         return (neg ? '-' : '') + value + ' ' + unit

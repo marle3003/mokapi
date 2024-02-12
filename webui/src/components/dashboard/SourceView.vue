@@ -10,6 +10,7 @@ const props = defineProps<{
   url?: string
   deprecated?: boolean
   height?: string
+  hideContentType?: boolean
 }>()
 
 const { formatLanguage } = usePrettyLanguage()
@@ -66,7 +67,7 @@ function copyToClipboard(event: MouseEvent) {
   <div>
     <div class="header">
       <div>
-        <span>{{ contentType }}</span>
+        <span v-if="!hideContentType">{{ contentType }}</span>
         <span>{{ lines }} lines</span>
         <span>{{ size }}</span>
         <span v-if="deprecated"><i class="bi bi-exclamation-triangle-fill yellow"></i> deprecated</span>
