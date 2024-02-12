@@ -125,4 +125,8 @@ function copyToClipboard(event: MouseEvent) {
 .source pre .hljs {
   border-radius: 0 0 6px 6px;
 }
+.source code {
+  display: inline-block;
+  min-width: 100%;
+}
 </style>
