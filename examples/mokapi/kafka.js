@@ -37,7 +37,7 @@ const Product = {
 export const configs = {
     'b6fea8ac-56c7-4e73-a9c0-6337640bdca8': {
         id: 'b6fea8ac-56c7-4e73-a9c0-6337640bdca8',
-        url: 'file://kafka.json',
+        url: 'file://www.example.com/foo/bar/communication/service/asyncapi.json',
         provider: 'file',
         time: '2023-02-15T08:49:25.482366+01:00',
         data: 'http://localhost:8090/api/services/kafka/Kafka%20World'
