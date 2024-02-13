@@ -28,7 +28,7 @@ import Message from '@/components/Message.vue'
 import ConfigCard from '@/components/dashboard/ConfigCard.vue'
 
 import '@/assets/dashboard.css'
-import { onUnmounted, watch } from 'vue'
+import { onMounted, onUnmounted, watch, ref, type Ref } from 'vue'
 
 import { useMeta } from '@/composables/meta'
 import Config from '@/components/dashboard/Config.vue'
@@ -36,20 +36,18 @@ import { useFetch, type Response } from '@/composables/fetch'
 import { useRoute } from 'vue-router'
 
 const appInfo = useAppInfo()
-let configs: Response
+const configs: Ref<Response | undefined> = ref<Response>()
 onUnmounted(() => {
     appInfo.close()
-    if (configs) {
-        configs.close()
+    if (configs.value) {
+        configs.value.close()
     }
 })
 
 const route = useRoute()
-watch(() => route.name, (name) => {
-    console.log('watch')
-    console.log(name)
-    if (name === 'configs' && configs == null) {
-        configs = useFetch('/api/configs')
+onMounted(() => {
+    if (route.name === 'configs' && configs.value == null) {
+        configs.value = useFetch('/api/configs')
     }
 })
 
