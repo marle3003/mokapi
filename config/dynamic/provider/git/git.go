@@ -96,81 +96,14 @@ func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
 
 	ticker := time.NewTicker(interval)
 
-	for _, r := range p.repositories {
-		r := r
-		r.repo, err = git.PlainClone(r.localPath, false, &git.CloneOptions{
-			URL: r.repoUrl,
-		})
-		if err != nil {
-			return fmt.Errorf("unable to clone git %q: %v", r.repoUrl, err)
-		}
-
-		r.wt, err = r.repo.Worktree()
-		if err != nil {
-			return fmt.Errorf("unable to get git worktree: %v", err.Error())
-		}
-
-		h, err := r.repo.Head()
-		if err != nil {
-			return fmt.Errorf("unable to get git head: %v", err.Error())
-		}
-
-		r.pullOptions = &git.PullOptions{SingleBranch: true}
-		if len(r.ref) > 0 {
-			ref := plumbing.NewBranchReferenceName(r.ref)
-
-			if h.Name() != ref {
-				r.pullOptions.ReferenceName = ref
-				err = r.repo.Fetch(&git.FetchOptions{RefSpecs: []config.RefSpec{"refs/*:refs/*", "HEAD:refs/heads/HEAD"}})
-				if err != nil {
-					return fmt.Errorf("git fetch error %v: %v", r.url, err.Error())
-				}
-				err = r.wt.Checkout(&git.CheckoutOptions{Branch: ref})
-				if err != nil && err != git.NoErrAlreadyUpToDate {
-					return fmt.Errorf("git checkout error %v: %v", r.url, err.Error())
-				}
+	pool.Go(func(ctx context.Context) {
+		for _, r := range p.repositories {
+			err = p.initRepository(r, ch, pool)
+			if err != nil {
+				log.Errorf("init git repository failed: %v", err)
 			}
 		}
-
-		ref, err := r.repo.Head()
-
-		chFile := make(chan *dynamic.Config)
-		p.startFileProvider(r.localPath, chFile, pool)
-
-		pool.Go(func(ctx context.Context) {
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				case c := <-chFile:
-
-					u := getUrl(r, c.Info.Url)
-					gitFile := u.Query()["file"][0][1:]
-
-					info := dynamic.ConfigInfo{
-						Provider: "git",
-						Url:      u,
-					}
-
-					cIter, _ := r.repo.Log(&git.LogOptions{
-						From:     ref.Hash(),
-						FileName: &gitFile,
-					})
-
-					commit, err := cIter.Next()
-					if err != nil {
-						log.Warnf("resolve mod time for '%v' failed: %v", u, err)
-						info.Time = time.Now()
-					} else {
-						info.Time = commit.Author.When
-					}
-
-					dynamic.Wrap(info, c)
-					ch <- c
-				}
-			}
-		})
-	}
+	})
 
 	pool.Go(func(ctx context.Context) {
 		defer func() {
@@ -184,6 +117,9 @@ func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
 				return
 			case <-ticker.C:
 				for _, r := range p.repositories {
+					if r.repo == nil {
+						continue
+					}
 					err = r.repo.Fetch(&git.FetchOptions{RefSpecs: []config.RefSpec{"refs/*:refs/*", "HEAD:refs/heads/HEAD"}})
 					if err != nil {
 						if err != git.NoErrAlreadyUpToDate {
@@ -216,6 +152,83 @@ func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
 		}
 	})
 
+	return nil
+}
+
+func (p *Provider) initRepository(r *repository, ch chan *dynamic.Config, pool *safe.Pool) error {
+	var err error
+	r.repo, err = git.PlainClone(r.localPath, false, &git.CloneOptions{
+		URL: r.repoUrl,
+	})
+	if err != nil {
+		return fmt.Errorf("unable to clone git %q: %v", r.repoUrl, err)
+	}
+
+	r.wt, err = r.repo.Worktree()
+	if err != nil {
+		return fmt.Errorf("unable to get git worktree: %v", err.Error())
+	}
+
+	h, err := r.repo.Head()
+	if err != nil {
+		return fmt.Errorf("unable to get git head: %v", err.Error())
+	}
+
+	r.pullOptions = &git.PullOptions{SingleBranch: true}
+	if len(r.ref) > 0 {
+		ref := plumbing.NewBranchReferenceName(r.ref)
+
+		if h.Name() != ref {
+			r.pullOptions.ReferenceName = ref
+			err = r.repo.Fetch(&git.FetchOptions{RefSpecs: []config.RefSpec{"refs/*:refs/*", "HEAD:refs/heads/HEAD"}})
+			if err != nil {
+				return fmt.Errorf("git fetch error %v: %v", r.url, err.Error())
+			}
+			err = r.wt.Checkout(&git.CheckoutOptions{Branch: ref})
+			if err != nil && err != git.NoErrAlreadyUpToDate {
+				return fmt.Errorf("git checkout error %v: %v", r.url, err.Error())
+			}
+		}
+	}
+
+	ref, err := r.repo.Head()
+
+	chFile := make(chan *dynamic.Config)
+	p.startFileProvider(r.localPath, chFile, pool)
+
+	pool.Go(func(ctx context.Context) {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case c := <-chFile:
+
+				u := getUrl(r, c.Info.Url)
+				gitFile := u.Query()["file"][0][1:]
+
+				info := dynamic.ConfigInfo{
+					Provider: "git",
+					Url:      u,
+				}
+
+				cIter, _ := r.repo.Log(&git.LogOptions{
+					From:     ref.Hash(),
+					FileName: &gitFile,
+				})
+
+				commit, err := cIter.Next()
+				if err != nil {
+					log.Warnf("resolve mod time for '%v' failed: %v", u, err)
+					info.Time = time.Now()
+				} else {
+					info.Time = commit.Author.When
+				}
+
+				dynamic.Wrap(info, c)
+				ch <- c
+			}
+		}
+	})
 	return nil
 }
 

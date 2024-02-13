@@ -28,7 +28,7 @@ channels:
         $ref: '#/components/messages/Order'
 components:
   messages:
-    Orders:
+    Order:
       payload:
         type: object
         properties:
