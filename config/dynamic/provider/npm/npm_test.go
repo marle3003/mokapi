@@ -56,6 +56,7 @@ func TestNpmProvider(t *testing.T) {
 			cfg: static.NpmProvider{Packages: []static.NpmPackage{{Name: "foo"}}},
 			test: func(t *testing.T, configs map[string]*dynamic.Config) {
 				require.Len(t, configs, 1)
+				require.Contains(t, configs, "/node_modules/foo/foo.txt")
 				require.Equal(t, []byte("foobar"), configs["/node_modules/foo/foo.txt"].Raw)
 				require.Equal(t, mustTime("2024-01-02T15:04:05Z"), configs["/node_modules/foo/foo.txt"].Info.Time)
 			},
@@ -81,6 +82,7 @@ func TestNpmProvider(t *testing.T) {
 			cfg: static.NpmProvider{Packages: []static.NpmPackage{{Name: "foo"}}},
 			test: func(t *testing.T, configs map[string]*dynamic.Config) {
 				require.Len(t, configs, 1)
+				require.Contains(t, configs, "/node_modules/foo/foo.txt")
 				require.Equal(t, []byte("foobar"), configs["/node_modules/foo/foo.txt"].Raw)
 			},
 		},
@@ -108,6 +110,7 @@ func TestNpmProvider(t *testing.T) {
 			},
 			test: func(t *testing.T, configs map[string]*dynamic.Config) {
 				require.Len(t, configs, 1)
+				require.Contains(t, configs, "/bar/node_modules/foo/foo.txt")
 				require.Equal(t, []byte("foobar"), configs["/bar/node_modules/foo/foo.txt"].Raw)
 			},
 		},
@@ -146,7 +149,9 @@ func TestNpmProvider(t *testing.T) {
 			}},
 			test: func(t *testing.T, configs map[string]*dynamic.Config) {
 				require.Len(t, configs, 2)
+				require.Contains(t, configs, "/node_modules/foo/foo.txt")
 				require.Equal(t, []byte("foobar"), configs["/node_modules/foo/foo.txt"].Raw)
+				require.Contains(t, configs, "/node_modules/bar/bar.txt")
 				require.Equal(t, []byte("bar"), configs["/node_modules/bar/bar.txt"].Raw)
 			},
 		},
@@ -185,7 +190,9 @@ func TestNpmProvider(t *testing.T) {
 			}},
 			test: func(t *testing.T, configs map[string]*dynamic.Config) {
 				require.Len(t, configs, 2)
+				require.Contains(t, configs, "/node_modules/foo/foo.txt")
 				require.Equal(t, []byte("foobar"), configs["/node_modules/foo/foo.txt"].Raw)
+				require.Contains(t, configs, "/foo/node_modules/bar/bar.txt")
 				require.Equal(t, []byte("bar"), configs["/foo/node_modules/bar/bar.txt"].Raw)
 			},
 		},
@@ -222,6 +229,7 @@ func TestNpmProvider(t *testing.T) {
 			}},
 			test: func(t *testing.T, configs map[string]*dynamic.Config) {
 				require.Len(t, configs, 1)
+				require.Contains(t, configs, "/node_modules/foo/foo.txt")
 				require.Equal(t, []byte("foobar"), configs["/node_modules/foo/foo.txt"].Raw)
 			},
 		},
@@ -271,6 +279,7 @@ func TestNpmProvider(t *testing.T) {
 			}},
 			test: func(t *testing.T, configs map[string]*dynamic.Config) {
 				require.Len(t, configs, 1)
+				require.Contains(t, configs, "/node_modules/foo/dist/openapi/foo.json")
 				require.Equal(t, []byte("{}"), configs["/node_modules/foo/dist/openapi/foo.json"].Raw)
 			},
 		},
@@ -297,9 +306,9 @@ func TestNpmProvider(t *testing.T) {
 			for {
 				select {
 				case c := <-ch:
-					path := c.Info.Url.Path
+					path := c.Info.Inner().Url.Path
 					if len(path) == 0 {
-						path = c.Info.Url.Opaque
+						path = c.Info.Inner().Url.Opaque
 						path = strings.ReplaceAll(path, "\\", "/")
 						path = strings.ReplaceAll(path, "C:/", "/")
 					}

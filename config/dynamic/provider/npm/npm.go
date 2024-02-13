@@ -104,9 +104,15 @@ func (p *Provider) forward(ch chan *dynamic.Config, ctx context.Context) {
 						continue
 					}
 
+					u, err := url.Parse(fmt.Sprintf("npm://%v/%v", pkg.Name, relative))
+					if err != nil {
+						log.Errorf("unable to parse npm url %v: %v", c.Info.Url, err)
+						u = c.Info.Url
+					}
+
 					info := dynamic.ConfigInfo{
 						Provider: "npm",
-						Url:      c.Info.Url,
+						Url:      u,
 						Time:     c.Info.Time,
 					}
 					dynamic.Wrap(info, c)

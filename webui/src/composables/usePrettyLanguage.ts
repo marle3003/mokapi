@@ -45,6 +45,7 @@ export function usePrettyLanguage() {
             case '.json':
                 return 'application/json'
             case '.yaml':
+            case '.yml':
                 return 'application/yaml'
             default:
                 return null

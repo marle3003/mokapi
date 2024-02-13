@@ -68,7 +68,6 @@ func (c *HttpInfo) Configs() []*dynamic.Config {
 	var r []*dynamic.Config
 	for _, config := range c.configs {
 		r = append(r, config)
-		r = append(r, config.Refs.List()...)
 	}
 	return r
 }
