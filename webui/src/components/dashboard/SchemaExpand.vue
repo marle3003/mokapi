@@ -9,8 +9,6 @@ defineProps({
 })
 
 const {createGuid} = useGuid();
-const {formatLanguage} = usePrettyLanguage()
-
 const id = createGuid()
 </script>
 

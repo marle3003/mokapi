@@ -284,6 +284,20 @@ paths:
                   time:
                     type: string
                     format: date-time
+                  refs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        url:
+                          type: string
+                        provider:
+                          type: string
+                        time:
+                          type: string
+                          format: date-time
         "404":
           description: config not found
           content:

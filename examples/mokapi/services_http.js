@@ -79,7 +79,16 @@ export const configs = {
         url: 'file://foo.json',
         provider: 'file',
         time: '2023-02-15T08:49:25.482366+01:00',
-        data: 'http://localhost:8090/api/services/http/Swagger%20Petstore'
+        data: 'http://localhost:8090/api/services/http/Swagger%20Petstore',
+        refs: [
+            {
+                id: 'b6fea8ac-56c7-4e73-a9c0-6887640bdba8',
+                url: 'file://foo2.json',
+                provider: 'file',
+                time: '2023-02-28T08:49:25.482366+01:00',
+                data: 'http://localhost:8090/api/services/http/Swagger%20Petstore',
+            }
+        ]
     }
 }
 

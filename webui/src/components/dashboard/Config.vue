@@ -83,19 +83,17 @@ onUnmounted(() => {
                 </div>
             </div>
         </div>
-        <div class="card-group" v-if="config.refs">
-            <config-card :configs="config.refs" title="References" />
-        </div>
         <div class="card-group" v-if="data">
             <div class="card">
                 <div class="card-body">
                     <div class="row">
-                        <p class="codeBlock">
-                            <source-view :source="toString(data)" :content-type="contentType" :url="getDataUrl(configId)" :filename="filename" />
-                        </p>
+                        <source-view :source="toString(data)" :content-type="contentType" :url="getDataUrl(configId)" :filename="filename" height="500px" />
                     </div>
                 </div>
             </div>
+        </div>
+        <div class="card-group" v-if="config.refs">
+            <config-card :configs="config.refs" title="References" />
         </div>
     </div>
     <loading v-if="isInitLoading()"></loading>
