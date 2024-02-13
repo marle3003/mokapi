@@ -1,13 +1,21 @@
 import { reactive } from 'vue'
 import router from '@/router';
 
-let cache: {[name: string]: any} = {}
+export interface Response {
+    data: any,
+    isLoading: boolean,
+    error: any,
+    close: () => void,
+    refs: number
+}
+
+const cache: { [name: string]: Response } = {}
 
 export function useFetch(path: string, options?: RequestInit, doRefresh: boolean = true, useCache: boolean = true): Response {
     path = transformPath(path)
     const route = router.currentRoute.value
     const cached = cache[path]
-    const response = cached || reactive({
+    const response: Response = cached || reactive({
         data: null,
         isLoading: false,
         error: null,

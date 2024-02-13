@@ -52,16 +52,16 @@ function showConfig(config: Config | ConfigRef, newTab: boolean){
   <div class="card">
       <div class="card-body">
           <div class="card-title text-center">{{ title ? title : "Configs" }}</div>
-          <table class="table dataTable selectable">
+          <table class="table dataTable selectable" style="table-layout: fixed;">
               <thead>
                   <tr>
-                      <th scope="col" class="text-left w-100">URL</th>
-                      <th scope="col" class="text-center" style="min-width: 100px;">Provider</th>
-                      <th scope="col" class="text-center" style="min-width: 200px;">Last Update</th>
+                      <th scope="col" class="text-left col-6 col-md-9">URL</th>
+                      <th scope="col" class="text-center col-2">Provider</th>
+                      <th scope="col" class="text-center col-2">Last Update</th>
                   </tr>
               </thead>
               <tbody>
-                  <tr v-for="config in configs" :key="config.url" @mouseup.left="showConfig(config, false)" @mousedown.middle="showConfig(config, true)">
+                  <tr scope="row" v-for="config in configs" :key="config.url" @mouseup.left="showConfig(config, false)" @mousedown.middle="showConfig(config, true)">
                       <td>{{ config.url }}</td>
                       <td class="text-center">{{ config.provider }}</td>
                       <td class="text-center">{{ format(config.time) }}</td>

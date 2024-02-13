@@ -234,6 +234,29 @@ paths:
       responses:
         204:
           description: no content
+  /api/configs:
+    get:
+      summary: returns configs
+      operationId: configs
+      responses:
+        "200":
+          description: content of configs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    url:
+                      type: string
+                    provider:
+                      type: string
+                    time:
+                      type: string
+                      format: date-time
   /api/configs/{id}:
     get:
       summary: returns the config for given id

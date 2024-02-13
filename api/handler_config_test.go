@@ -34,6 +34,25 @@ func TestHandler_Config(t *testing.T) {
 		test       []try.ResponseCondition
 	}{
 		{
+			name: "get all configs",
+			app: func() *runtime.App {
+				return &runtime.App{Configs: map[string]*dynamic.Config{
+					"foo": {
+						Info: dynamic.ConfigInfo{
+							Url:  mustUrl("https://foo.bar/foo.yaml"),
+							Time: mustTime("2023-12-27T13:01:30+00:00"),
+						},
+						Raw: nil,
+					},
+				}}
+			},
+			requestUrl: "http://foo.api/api/configs",
+			test: []try.ResponseCondition{
+				try.HasStatusCode(http.StatusOK),
+				try.HasBody(`[{"id":"37636430-3165-3037-3435-376637313065","url":"https://foo.bar/foo.yaml","provider":"","time":"2023-12-27T13:01:30Z"}]`),
+			},
+		},
+		{
 			name: "meta: not found",
 			app: func() *runtime.App {
 				return &runtime.App{Configs: map[string]*dynamic.Config{}}

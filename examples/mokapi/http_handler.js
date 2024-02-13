@@ -75,13 +75,16 @@ export default function() {
             case 'example':
                 response.data = fake(request.body)
                 return true
+            case 'configs':
+                console.log(getConfigs())
+                response.data = getConfigs()
+                return true
             case 'config':
                 const config = getConfig(request.path.id)
                 if (config) {
                     response.data = config
                     return true
                 } else {
-                    console.log("config not found: "+request.path.id)
                     response.statusCode = 404
                     response.data = ''
                     return true
@@ -90,7 +93,6 @@ export default function() {
                 const configData = configs[request.path.id]
                 if (configData) {
                     response.data = configData
-                    //response.headers['Content-Type'] = 'application/json'
                     return true
                 } else {
                     response.statusCode = 404
@@ -195,4 +197,11 @@ function getConfig(id) {
         return kafkaConfigs[id]
     }
     return null
+}
+
+function getConfigs() {
+    return [
+        ...Object.values(httpConfigs),
+        ...Object.values(kafkaConfigs)
+    ]
 }

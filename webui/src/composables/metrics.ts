@@ -1,10 +1,9 @@
-import { useFetch } from './fetch'
-import { onUnmounted } from 'vue'
+import { useFetch, type Response } from './fetch'
 
 export function useMetrics() {
     let responses: Response[] = []
 
-    function query(query: string): Response{
+    function query(query: string): Response {
         const response = useFetch('/api/metrics?q=' + query)
         responses.push(response)
         return response
