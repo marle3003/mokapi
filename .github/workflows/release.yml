@@ -57,7 +57,7 @@ jobs:
         with:
           node-version: '16'
           registry-url: 'https://registry.npmjs.org'
-      - run: sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b ~/.local/bin
+      - run: choco install go-task
       - run: npm install
         working-directory: ./webui
       - name: Build
