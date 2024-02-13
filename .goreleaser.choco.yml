@@ -10,8 +10,6 @@ builds:
       - windows
     goarch:
       - amd64
-checksum:
-  name_template: "{{ .ProjectName }}_v{{ .Version }}_checksums.txt"
 snapshot:
   name_template: "{{ .Version }}"
 
