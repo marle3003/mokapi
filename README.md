@@ -33,7 +33,7 @@ Its core feature are:
 - **Everything as Code**: Reusing, version control, consistency and integrate mocks with your CI/CD.
 - **An embedded JavaScript engine** to control everything - status, headers, delays, errors or other edge cases.
 - **Patch Configuration** changes for mocking needs, rather than changing the original contract
-- **Multiple Provider support**: File, HTTP, GIT to gather configurations and scripts.
+- **Multiple Provider support**: File, HTTP, GIT, NPM to gather configurations and scripts.
 - **Dashboard** to see what's going on.
 
 ## Example
