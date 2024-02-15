@@ -47,7 +47,7 @@ export const configs = {
 export let clusters = [
     {
         name:'Kafka World',
-        description: fake({type: 'string', format: '{sentence:10}'}),
+        description: 'To ours significant why upon tomorrow her faithful many motionless.',
         version:fake({type: 'string', pattern: '[0-9]\\.[0-9]{2}'}),
         contact:{
             name:'mokapi',
