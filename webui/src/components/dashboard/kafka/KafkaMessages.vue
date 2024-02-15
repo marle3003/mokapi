@@ -17,14 +17,13 @@ if (props.topicName){
     labels.push({name: 'topic', value: props.topicName})
 }
 
-const {fetch} = useEvents()
-const {format} = usePrettyDates()
-const {formatLanguage} = usePrettyLanguage()
+const { fetch } = useEvents()
+const { format } = usePrettyDates()
+const { formatLanguage } = usePrettyLanguage()
 
-const {events, close} = fetch('kafka', ...labels)
+const { events, close } = fetch('kafka', ...labels)
 const messageDialog = ref<any>(null)
 let dialog:  Modal
-
 
 function eventData(event: ServiceEvent | null): KafkaEventData | null{
     if (!event) {

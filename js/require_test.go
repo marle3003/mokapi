@@ -194,6 +194,49 @@ func TestRequire(t *testing.T) {
 				r.Equal(t, "abc-def", v.Export())
 			},
 		},
+		{
+			"require file with same name but different folder",
+			func(t *testing.T) {
+				testjs := `
+import foo from './foo/foo.js'
+import data from './data.json'
+
+export default function () {
+	return {
+		data: data,
+		foo: foo()
+	}
+}`
+				dataRoot := `{"root": true }`
+				foojs := `
+import data from './data.json'
+export default function () {return data}
+`
+				dataChild := `{"root": false }`
+
+				host.openFile = func(file, hint string) (string, string, error) {
+					hint = filepath.ToSlash(hint) // if on windows
+					switch {
+					case file == "./data.json" && hint == "/":
+						return file, dataRoot, nil
+					case file == "./foo/foo.js":
+						return file, foojs, nil
+					case file == "./data.json" && hint == "foo":
+						return file, dataChild, nil
+					}
+					return "", "", fmt.Errorf("not found")
+				}
+				s, err := New(`/test.js`, testjs, host, static.JsConfig{})
+				r.NoError(t, err)
+
+				v, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, map[string]interface{}{
+					"data": map[string]interface{}{"root": true},
+					"foo":  map[string]interface{}{"root": false},
+				}, v.Export())
+			},
+		},
 	}
 	for _, tc := range testcases {
 		tc := tc

@@ -1,6 +1,4 @@
-import exp from 'constants'
 import { test, expect } from '../models/fixture-dashboard'
-import { describe } from 'node:test'
 import { formatDateTime, formatTimestamp } from '../helpers/format'
 
 test.describe('Visit Swagger Petstore', () => {

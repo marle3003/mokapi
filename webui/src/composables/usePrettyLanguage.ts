@@ -47,6 +47,8 @@ export function usePrettyLanguage() {
             case '.yaml':
             case '.yml':
                 return 'application/yaml'
+            case '.js':
+                return 'text/javascript'
             default:
                 return null
         }

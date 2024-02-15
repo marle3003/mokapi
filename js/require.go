@@ -61,7 +61,8 @@ func (m *requireModule) require(call goja.FunctionCall) (module goja.Value) {
 		panic(m.runtime.ToValue("missing argument"))
 	}
 
-	if e, ok := m.exports[modPath]; ok {
+	key := fmt.Sprintf("%v:%v", m.workingDir, modPath)
+	if e, ok := m.exports[key]; ok {
 		return e
 	}
 	if loader, ok := m.native[modPath]; ok {
@@ -75,18 +76,18 @@ func (m *requireModule) require(call goja.FunctionCall) (module goja.Value) {
 		f, err := m.sourceLoader(modPath, "")
 		if err == nil {
 			if module, err = m.loadModule(modPath, string(f.Raw)); err != nil && module != nil {
-				m.exports[modPath] = module
+				m.exports[key] = module
 			}
 		}
 	} else if strings.HasPrefix(modPath, "./") || strings.HasPrefix(modPath, "../") || strings.HasPrefix(modPath, "/") {
 		if module, err = m.loadFileModule(modPath); err == nil && module != nil {
-			m.exports[modPath] = module
+			m.exports[key] = module
 		}
 	} else {
 		if module, err = m.loadFileModule(modPath); err == nil && module != nil {
-			m.exports[modPath] = module
+			m.exports[key] = module
 		} else if module, err = m.loadNodeModule(modPath); err == nil && module != nil {
-			m.exports[modPath] = module
+			m.exports[key] = module
 		}
 	}
 
