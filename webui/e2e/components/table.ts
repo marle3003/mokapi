@@ -2,11 +2,20 @@ import { Locator } from "playwright/test"
 
 interface Table {
     headers: { [name: string]: Locator }
-    data: TabelCell[]
+    data: TableContent
 }
 
-interface TabelCell {
-    getByName(name: string): Locator
+interface TableContent {
+    /**
+     * Returns locator to the n-th content row. It's zero based, `nth(0)` selects the first element.
+     * 
+     * @param index
+     */
+    nth(index: number): TableRow
+}
+
+interface TableRow extends Locator {
+    getCellByName(name: string): Locator
 }
 
 export async function useTable(table: Locator) {
@@ -14,9 +23,10 @@ export async function useTable(table: Locator) {
     const headerCells = rows.nth(0).getByRole('columnheader')
     const count = await headerCells.count()
     
+    const content = new ContentRows()
     const result: Table = {
         headers: {},
-        data: []
+        data: content
     }
 
     const headers = []
@@ -27,18 +37,28 @@ export async function useTable(table: Locator) {
     }
 
     const rowsCount = await rows.count()
-    for (let i = 0; i < rowsCount; i++) {
-        const row = {
-            getByName: (name: string): Locator => {
-                const index = headers.indexOf(name)
-                if (index < 0) {
-                    throw Error("name not found");
-                }
-                return rows.nth(i+1).getByRole('cell').nth(index)
+    for (let i = 1; i < rowsCount; i++) {
+        let row = rows.nth(i) as TableRow
+        row.getCellByName = (name: string): Locator => {
+            const index = headers.indexOf(name)
+            if (index < 0) {
+                throw Error(`column ${name} not found`);
             }
+            return row.getByRole('cell').nth(index)
         }
-        result.data.push(row)
+        content.rows.push(row)
     }
 
     return result
+}
+
+class ContentRows {
+    rows: TableRow[] = []
+
+    nth(index: number): TableRow {
+        if (index < 0 || index >= this.rows.length) {
+            throw new Error("index out of range")
+        }
+        return this.rows[index]
+    }
 }

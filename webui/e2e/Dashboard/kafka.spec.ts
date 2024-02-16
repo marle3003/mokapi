@@ -1,28 +1,93 @@
 import { useDashboard } from '../components/dashboard'
-import { useKafka } from '../components/kafka'
+import { useKafkaOverview } from '../components/kafka'
 import { useTable } from '../components/table'
+import { formatDateTime, formatTimestamp } from '../helpers/format'
 import { test, expect } from '../models/fixture-dashboard'
 
 test.describe('Visit Kafka', () => {
     test('Visit overview', async ({ page }) => {
-        const dashboard = useDashboard(page)
-        await dashboard.open()
+        const { tabs, open } = useDashboard(page)
+        await open()
+        await tabs.kafka.click()
 
-        await dashboard.tabs.kafka.click()
-
-        const kafka = useKafka(page)
-        test.step('Check message metric', async () => {
-            await expect(kafka.metrics.messages.getByText('10')).toBeVisible()
+        const { metrics, clusters } = useKafkaOverview(page)
+        await test.step('Check message metric', async () => {
+            await expect(metrics.messages.getByText('11')).toBeVisible()
         })
 
-        test.step('Check clusters', async () => {
-            const table = await useTable(kafka.clusters.getByRole('table'))
+        await test.step('Check clusters', async () => {
+            const cluster = await clusters()
+            const data = cluster.data.nth(0)
+            await expect(data.getCellByName('Name')).toHaveText('Kafka World')
+            await expect(data.getCellByName('Description')).toHaveText('To ours significant why upon tomorrow her faithful many motionless.')
+            await expect(data.getCellByName('Last Message')).toHaveText('2022-05-10 00:34:50')
+            await expect(data.getCellByName('Messages')).toHaveText('11')
+        })
+    })
 
-            const cluster = table.data[0]
-            await expect(cluster.getByName('Name')).toHaveText('Kafka World')
-            await expect(cluster.getByName('Description')).toHaveText('To ours significant why upon tomorrow her faithful many motionless.')
-            await expect(cluster.getByName('Last Message')).toHaveText('2022-05-10 00:34:50')
-            await expect(cluster.getByName('Messages')).toHaveText('10')
+    test('Visit cluster "Kafka World"', async ({ page }) => {
+
+        await test.step('Browse to cluster "Kafka World"', async () => {
+            const { tabs, open } = useDashboard(page)
+            await open()
+            await tabs.kafka.click()
+
+            const { clusters } = useKafkaOverview(page)
+            const cluster = await clusters()
+            await cluster.data.nth(0).click()
+        })
+
+        await test.step('Check info section', async () => {
+            const info = page.getByRole('region', { name: "Info" })
+            await expect(info.getByLabel('Name')).toHaveText('Kafka World')
+            await expect(info.getByLabel('Version')).toHaveText('4.01')
+            await expect(info.getByLabel('Contact').getByTitle('mokapi - Website')).toHaveText('mokapi')
+            const mailto = info.getByLabel('Contact').getByTitle('Send email to mokapi')
+            await expect(mailto).toBeVisible()
+            await expect(mailto).toHaveAttribute("href", /^mailto:/)
+            await expect(info.getByLabel('Type of API')).toHaveText('Kafka')
+            await expect(info.getByLabel('Description')).toHaveText('To ours significant why upon tomorrow her faithful many motionless.')
+        })
+
+        await test.step('Check broker section', async () => {
+            const brokers = await useTable(page.getByRole('region', { name: "Brokers" }).getByRole('table', { name: 'Kafka Brokers' }))
+            const broker = brokers.data.nth(0)
+            await expect(broker.getCellByName('Name')).toHaveText('Broker')
+            await expect(broker.getCellByName('URL')).toHaveText('localhost:9092')
+            await expect(broker.getCellByName('Description')).toHaveText('kafka broker')
+        })
+
+        await test.step('Check topic section', async () => {
+            const topics = await useTable(page.getByRole('region', { name: "Topics" }).getByRole('table', { name: 'Kafka Topics' }))
+            const topic1 = topics.data.nth(0)
+            await expect(topic1.getCellByName('Name')).toHaveText('mokapi.shop.products')
+            await expect(topic1.getCellByName('Description')).toHaveText('Though literature second anywhere fortnightly am this either so me.')
+            await expect(topic1.getCellByName('Last Message')).toHaveText(formatTimestamp(1652135690))
+            await expect(topic1.getCellByName('Messages')).toHaveText('10')
+            const topic2 = topics.data.nth(1)
+            await expect(topic2.getCellByName('Name')).toHaveText('bar')
+            await expect(topic2.getCellByName('Description')).toHaveText('Out yourselves behind example body troop Hitlerian party of abundant.')
+            await expect(topic2.getCellByName('Last Message')).toHaveText(formatTimestamp(1652035690))
+            await expect(topic2.getCellByName('Messages')).toHaveText('1')
+        })
+
+        await test.step('Check groups section', async () => {
+            const groups = await useTable(page.getByRole('region', { name: "Groups" }).getByRole('table', { name: 'Kafka Groups' }))
+            const group = groups.data.nth(0)
+            await expect(group.getCellByName('Name')).toHaveText('foo')
+            await expect(group.getCellByName('State')).toHaveText('Stable')
+            await expect(group.getCellByName('Protocol')).toHaveText('Range')
+            await expect(group.getCellByName('Coordinator')).toHaveText('localhost:9092')
+            await expect(group.getCellByName('Leader')).toHaveText('julie')
+            const members1 = group.getCellByName('Members')
+        })
+
+        await test.step('Check config section', async () => {
+            const configs = await useTable(page.getByRole('region', { name: "Configs" }).getByRole('table', { name: 'Configs' }))
+            const config = configs.data.nth(0)
+            await expect(config.getCellByName('URL')).toHaveText('file://www.example.com/foo/bar/communication/service/asyncapi.json')
+            await expect(config.getCellByName('Provider')).toHaveText('file')
+            await expect(config.getCellByName('Last Update')).toHaveText(formatDateTime('2023-02-15T08:49:25.482366+01:00'))
         })
     })
 })

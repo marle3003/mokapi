@@ -25,12 +25,12 @@ onUnmounted(() => {
           <service-info-card :service="service" type="Kafka" />
       </div>
       <div class="card-group">
-          <div class="card">
+          <section class="card" aria-labelledby="servers">
               <div class="card-body">
-                  <div class="card-title text-center">Servers</div>
+                  <div id="servers" class="card-title text-center">Brokers</div>
                   <servers :servers="service.servers" />
               </div>
-          </div>
+          </section>
       </div>
       <div class="card-group">
           <kafka-topics-card :service="service" />

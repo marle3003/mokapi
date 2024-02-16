@@ -9,10 +9,11 @@ defineProps({
 
 <template>
     <table class="table dataTable">
+        <caption class="visually-hidden">Kafka Brokers</caption>
         <thead>
             <tr>
                 <th scope="col" class="text-left">Name</th>
-                <th scope="col" class="text-left">Url</th>
+                <th scope="col" class="text-left">URL</th>
                 <th scope="col" class="text-left">Description</th>
             </tr>
         </thead>

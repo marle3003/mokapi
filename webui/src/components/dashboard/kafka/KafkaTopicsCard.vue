@@ -1,16 +1,15 @@
 <script setup lang="ts">
-import { useRouter, useRoute } from 'vue-router';
-import { useMetrics } from '@/composables/metrics';
-import { usePrettyDates } from '@/composables/usePrettyDate';
-import type { PropType } from 'vue';
+import { useRouter, useRoute } from 'vue-router'
+import { useMetrics } from '@/composables/metrics'
+import { usePrettyDates } from '@/composables/usePrettyDate'
 import Markdown from 'vue3-markdown-it'
 
-const props = defineProps({
-    service: { type: Object as PropType<KafkaService>, required: true },
-})
+const props = defineProps<{
+    service: KafkaService,
+}>()
 
-const {sum} = useMetrics()
-const {format} = usePrettyDates()
+const { sum } = useMetrics()
+const { format } = usePrettyDates()
 const router = useRouter()
 const route = useRoute()
 
@@ -42,10 +41,11 @@ function goToTopic(topic: KafkaTopic){
 </script>
 
 <template>
-    <div class="card">
+    <section class="card" aria-labelledby="topics">
         <div class="card-body">
-            <div class="card-title text-center">Topics</div>
+            <div id="topics" class="card-title text-center">Topics</div>
             <table class="table dataTable selectable">
+                <caption class="visually-hidden">Kafka Topics</caption>
                 <thead>
                     <tr>
                         <th scope="col" class="text-left">Name</th>
@@ -64,5 +64,5 @@ function goToTopic(topic: KafkaTopic){
                 </tbody>
             </table>
         </div>
-    </div>
+    </section>
 </template>

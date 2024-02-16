@@ -22,5 +22,5 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <metric-card title="Memory Usage" :value="memoryUsage" data-testid="metric-memory-usage"></metric-card>
+    <metric-card title="Memory Usage" :value="memoryUsage" live="off" data-testid="metric-memory-usage"></metric-card>
 </template>

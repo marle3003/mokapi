@@ -43,10 +43,11 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div class="card" data-testid="kafka-service-list" role="region" aria-label="Kafka Clusters">
+    <section class="card" aria-labelledby="clusters" data-testid="kafka-service-list">
         <div class="card-body">
-            <div class="card-title text-center">Kafka Clusters</div>
+            <div class="card-title text-center" id="clusters">Kafka Clusters</div>
             <table class="table dataTable selectable">
+                <caption class="visually-hidden">Kafka Clusters</caption>
                 <thead>
                     <tr>
                         <th scope="col" class="text-left w-25">Name</th>
@@ -65,7 +66,7 @@ onUnmounted(() => {
                 </tbody>
             </table>
         </div>
-    </div>
+    </section>
 </template>
 
 <style scoped>

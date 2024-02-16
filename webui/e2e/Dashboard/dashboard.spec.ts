@@ -48,7 +48,7 @@ test.describe('Dashboard', () => {
         await test.step("metric Kafka Messages",async () => {
             const metricKafkaMessages = dashboard.kafka.metricKafkaMessages
             await expect(metricKafkaMessages.title).toHaveText('Kafka Messages')
-            await expect(metricKafkaMessages.value).toHaveText('10')
+            await expect(metricKafkaMessages.value).toHaveText('11')
             await expect(metricKafkaMessages.additional).not.toBeVisible()
         })
 
@@ -57,7 +57,7 @@ test.describe('Dashboard', () => {
             await expect(kafkaCells.nth(0)).toHaveText('Kafka World')
             await expect(kafkaCells.nth(1)).not.toHaveText('')
             await expect(kafkaCells.nth(2)).toHaveText(formatTimestamp(1652135690))
-            await expect(kafkaCells.nth(3)).toHaveText('10')
+            await expect(kafkaCells.nth(3)).toHaveText('11')
         })
 
         await test.step("metric SMTP Mails",async () => {

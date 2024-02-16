@@ -73,8 +73,9 @@ useMeta('Dashboard | mokapi.io', description, "https://mokapi.io/smtp")
 <template>
     <main>
         <div class="dashboard">
+            <h1 class="visually-hidden">Dashboard</h1>
             <div class="dashboard-tabs" v-if="appInfo.data">
-                <nav class="navbar navbar-expand-lg">
+                <nav class="navbar navbar-expand-lg" aria-label="Services">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                         <li class="nav-item">
                             <router-link class="nav-link overview" :to="{ name: 'dashboard', query: {refresh: $route.query.refresh} }">Overview</router-link>

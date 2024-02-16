@@ -1,24 +1,24 @@
 <script setup lang="ts">
 import { usePrettyDates } from '@/composables/usePrettyDate';
-import { type PropType, onMounted } from 'vue';
+import { onMounted } from 'vue';
 import { Popover } from 'bootstrap'
 import { useMetrics } from '@/composables/metrics';
 
-const props = defineProps({
-    service: { type: Object as PropType<KafkaService>, required: true },
-    topicName: { type: String, required: false }
-})
+const props = defineProps<{
+    service: KafkaService,
+    topicName?: string
+}>()
 
-const format = usePrettyDates().format
-const {sum} = useMetrics()
+const { format } = usePrettyDates()
+const { sum } = useMetrics()
 
 function memberInfo(member: KafkaMember): string {
-  return `<p class="label">Address</p>
-           <p>${member.addr}</p>
-           <p class="label">Client Software</p>
-           <p>${member.clientSoftwareName} ${member.clientSoftwareVersion}</p>
-           <p class="label">Last Heartbeat</p>
-           <p>${format(member.heartbeat)}</p>`
+    return `<p id="${member.name}-address" class="label">Address</p>
+            <p aria-labelledby="${member.name}-address">${member.addr}</p>
+            <p class="label">Client Software</p>
+            <p>${member.clientSoftwareName} ${member.clientSoftwareVersion}</p>
+            <p class="label">Last Heartbeat</p>
+            <p>${format(member.heartbeat)}</p>`
 }
 
 function getGroups(): KafkaGroup[] {
@@ -44,6 +44,7 @@ onMounted(()=> {
       html: true,
       trigger: 'hover',
       content: function(this: HTMLElement): string {
+        console.log(this)
         return this.nextElementSibling?.outerHTML ?? ''
       }
     })
@@ -52,6 +53,7 @@ onMounted(()=> {
 
 <template>
     <table class="table dataTable selectable">
+        <caption class="visually-hidden">Kafka Groups</caption>
         <thead>
             <tr>
                 <th scope="col" class="text-left">Name</th>
@@ -77,7 +79,7 @@ onMounted(()=> {
                     </div>
                 </td>
                 <td v-if="topicName" class="text-center">
-                    {{ sum(service.metrics, 'kafka_consumer_group_lag', {name: 'topic', value: topicName}, {name: 'group', value: group.name }) }}
+                    {{ sum(service.metrics, 'kafka_consumer_group_lag', { name: 'topic', value: topicName }, { name: 'group', value: group.name }) }}
                 </td>
             </tr>
         </tbody>

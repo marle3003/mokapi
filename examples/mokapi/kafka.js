@@ -47,8 +47,8 @@ export const configs = {
 export let clusters = [
     {
         name:'Kafka World',
-        description: fake({type: 'string', format: '{sentence:10}'}),
-        version:fake({type: 'string', pattern: '[0-9]\\.[0-9]{2}'}),
+        description: 'To ours significant why upon tomorrow her faithful many motionless.',
+        version: '4.01',
         contact:{
             name:'mokapi',
             url:'https://www.mokapi.io',
@@ -64,7 +64,7 @@ export let clusters = [
         topics:[
             {
                 name:'mokapi.shop.products',
-                description: fake({type: 'string', format: '{sentence:10}'}),
+                description: 'Though literature second anywhere fortnightly am this either so me.',
                 partitions: [
                     {
                         id: 0,
@@ -100,7 +100,7 @@ export let clusters = [
             },
             {
                 name:'bar',
-                description: fake({type: 'string', format: '{sentence:10}'}),
+                description: 'Out yourselves behind example body troop Hitlerian party of abundant.',
                 partitions: [
                     {
                         id: 0,
