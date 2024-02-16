@@ -177,17 +177,17 @@ export let events = [
          data: {
              offset: 0,
              key: "GGOEWXXX0827",
-             message: `{
-                         "id": "GGOEWXXX0827",
-                         "name": "Waze Women's Short Sleeve Tee",
-                         "description": "Made of soft tri-blend jersey fabric, this great t-shirt will help you find your Waze. Made in USA.",
-                         "features": "<p>Jersey knit</p>\\n<p>37.5% cotton, 50% polyester, 12.5% rayon</p>\\n<p>Made in the USA</p>",
-                         "price": "18.99",
-                         "keywords": "Waze Women's Short Sleeve Tee, Waze Short Sleeve Tee, Waze Women's Tees, Waze Women's tee, waze ladies tees, waze ladies tee, waze short sleeve tees, waze short sleeve tee",
-                         "url": "Waze+Womens+Short+Sleeve+Tee",
-                         "category": "apparel",
-                         "subcategory": "apparel"
-                         }`,
+             message: JSON.stringify({
+                         id: "GGOEWXXX0827",
+                         name: "Waze Women's Short Sleeve Tee",
+                         description: "Made of soft tri-blend jersey fabric, this great t-shirt will help you find your Waze. Made in USA.",
+                         features: "<p>Jersey knit</p>\\n<p>37.5% cotton, 50% polyester, 12.5% rayon</p>\\n<p>Made in the USA</p>",
+                         price: "18.99",
+                         keywords: "Waze Women's Short Sleeve Tee, Waze Short Sleeve Tee, Waze Women's Tees, Waze Women's tee, waze ladies tees, waze ladies tee, waze short sleeve tees, waze short sleeve tee",
+                         url: "Waze+Womens+Short+Sleeve+Tee",
+                         category: "apparel",
+                         subcategory: "apparel"
+                         }),
              partition: 0,
              headers: {
                  foo: "bar"
@@ -205,7 +205,7 @@ export let events = [
         data: {
             offset: 1,
             key: "GGOEWXXX0828",
-            message: `{
+            message: JSON.stringify({
                         "id": "GGOEWXXX0828",
                         "name": "Waze Men's Short Sleeve Tee",
                         "description": "Made of soft tri-blend jersey fabric, this great t-shirt will help you find your Waze. Made in USA.",
@@ -215,7 +215,7 @@ export let events = [
                         "url": "Waze+Mens+Short+Sleeve+Tee",
                         "category": "apparel",
                         "subcategory": "apparel"
-                      }`,
+                      }),
             partition: 1
         }
     }

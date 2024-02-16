@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { useEvents } from '@/composables/events';
-import { type PropType, onMounted, ref, onUnmounted } from 'vue';
-import { usePrettyDates } from '@/composables/usePrettyDate';
+import { useEvents } from '@/composables/events'
+import { onMounted, ref, onUnmounted } from 'vue'
+import { usePrettyDates } from '@/composables/usePrettyDate'
 import { Modal } from 'bootstrap'
-import { usePrettyLanguage } from '@/composables/usePrettyLanguage';
+import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 import hljs from 'highlight.js'
-import SourceView from '../SourceView.vue';
+import SourceView from '../SourceView.vue'
 
-const props = defineProps({
-    service: { type: Object as PropType<KafkaService> },
-    topicName: { type: String, required: false}
-})
+const props = defineProps<{
+    service: KafkaService,
+    topicName?: string
+}>()
 
 const labels = [{name: 'name', value: props.service!.name}]
 if (props.topicName){
@@ -80,6 +80,7 @@ function getTopic(name: string): KafkaTopic {
 
 <template>
     <table class="table dataTable selectable">
+        <caption class="visually-hidden">Kafka Messages</caption>
         <thead>
             <tr>
                 <th scope="col" class="text-left" style="width: 10%">Key</th>
@@ -138,7 +139,7 @@ function getTopic(name: string): KafkaTopic {
 .message, .key {
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space:nowrap;
+    white-space: nowrap;
     max-width: 0;
 }
 .tab-pane {
