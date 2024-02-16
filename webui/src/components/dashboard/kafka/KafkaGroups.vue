@@ -56,7 +56,7 @@ onMounted(()=> {
 </script>
 
 <template>
-    <table class="table dataTable selectable">
+    <table class="table dataTable">
         <caption class="visually-hidden">Kafka Groups</caption>
         <thead>
             <tr>

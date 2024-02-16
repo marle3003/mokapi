@@ -30,38 +30,38 @@ onUnmounted(() => {
 <template>
   <div v-if="$route.name == 'kafkaTopic' && service != null">
       <div class="card-group">
-        <div class="card">
+        <section class="card" aria-label="Info">
             <div class="card-body">
                 <div class="row">
                     <div class="col header mb-3">
-                        <p class="label">Topic</p>
-                        <p>{{ topic()?.name }}</p>
+                        <p id="topic" class="label">Topic</p>
+                        <p aria-labelledby="topic">{{ topic()?.name }}</p>
                     </div>
                     <div class="col header">
-                        <p class="label">Cluster</p>
+                        <p id="cluster" class="label">Cluster</p>
                         <p>
                           <router-link :to="{
                               name: 'kafkaService',
                               params: {service: service.name},
                               query: {refresh: route.query.refresh}
-                          }">
+                          }" aria-labelledby="cluster">
                           {{ service.name }}
                         </router-link>
                         </p>
                     </div>
                     <div class="col text-end">
-                        <span class="badge bg-secondary">Kafka</span>
+                        <span class="badge bg-secondary" title="Type of API" aria-label="Type of API">Kafka</span>
                     </div>
                 </div>
                 <div class="row">
                     <div class="col">
-                        <p class="label">Description</p>
-                        <markdown :source="topic()?.description"></markdown>
+                        <p id="description" class="label">Description</p>
+                        <markdown :source="topic()?.description" aria-labelledby="description" />
                     </div>
                     
                 </div>
             </div>
-        </div>
+          </section>
       </div>
       <div class="card-group">
         <div class="card">

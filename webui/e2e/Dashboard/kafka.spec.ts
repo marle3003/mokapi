@@ -1,3 +1,4 @@
+import { Locator } from 'playwright/test'
 import { useDashboard } from '../components/dashboard'
 import { useKafkaOverview } from '../components/kafka'
 import { useTable } from '../components/table'
@@ -103,23 +104,63 @@ test.describe('Visit Kafka', () => {
             await expect(config.getCellByName('Last Update')).toHaveText(formatDateTime('2023-02-15T08:49:25.482366+01:00'))
         })
 
-        await test.step('Check message log', async () => {
-            const messages = await useTable(page.getByRole('region', { name: "Recent Messages" }).getByRole('table', { name: 'Kafka Messages' }))
-            let message = messages.data.nth(0)
-            await expect(message.getCellByName('Key')).toHaveText('GGOEWXXX0827')
-            await expect(message.getCellByName('Message')).toHaveText(/^{"id":"GGOEWXXX0827","name":"Waze Women's Short Sleeve Tee",/)
-            await expect(message.getCellByName('Topic')).toHaveText('mokapi.shop.products')
-            await expect(message.getCellByName('Offset')).toHaveText('0')
-            await expect(message.getCellByName('Partition')).toHaveText('0')
-            await expect(message.getCellByName('Time')).toHaveText(formatDateTime('2023-02-13T09:49:25.482366+01:00'))
+        await checkKafkaMessage(page.getByRole('region', { name: "Recent Messages" }).getByRole('table', { name: 'Kafka Messages' }))
+    })
 
-            message = messages.data.nth(1)
-            await expect(message.getCellByName('Key')).toHaveText('GGOEWXXX0828')
-            await expect(message.getCellByName('Message')).toHaveText(/^{"id":"GGOEWXXX0828","name":"Waze Men's Short Sleeve Tee",/)
-            await expect(message.getCellByName('Topic')).toHaveText('mokapi.shop.products')
-            await expect(message.getCellByName('Offset')).toHaveText('1')
-            await expect(message.getCellByName('Partition')).toHaveText('1')
-            await expect(message.getCellByName('Time')).toHaveText(formatDateTime('2023-02-13T09:49:25.482366+01:00'))
+    test('Visit topic of "Kafka World"', async ({ page }) => {
+
+        await test.step('Browse to topic "mokapi.shop.products"', async () => {
+            const { tabs, open } = useDashboard(page)
+            await open()
+            await tabs.kafka.click()
+
+            const { clusters } = useKafkaOverview(page)
+            const cluster = await clusters()
+            await cluster.data.nth(0).click()
+            await expect(page.getByRole('region', { name: "Info" })).toBeVisible()
+
+            const topics = await useTable(page.getByRole('table', { name: 'Kafka Topics' }))
+            await topics.data.nth(0).click()
+        })
+
+        await test.step('Check info section"', async () => {
+            const info = page.getByRole('region', { name: "Info" })
+            await expect(info).toBeVisible()
+            await expect(info.getByLabel('Topic')).toHaveText('mokapi.shop.products')
+            await expect(info.getByLabel('Cluster')).toHaveText('Kafka World')
+            await expect(info.getByLabel('Type of API')).toHaveText('Kafka')
+            await expect(info.getByLabel('Description')).toHaveText('Though literature second anywhere fortnightly am this either so me.')
+        })
+
+        await checkKafkaMessage(page.getByRole('table', { name: 'Kafka Messages' }), false)
+
+        await test.step('Check partition"', async () => {
+            
         })
     })
 })
+
+async function checkKafkaMessage(table: Locator, withTopic: boolean = true) {
+    await test.step('Check message log', async () => {
+        const messages = await useTable(table)
+        let message = messages.data.nth(0)
+        await expect(message.getCellByName('Key')).toHaveText('GGOEWXXX0827')
+        await expect(message.getCellByName('Message')).toHaveText(/^{"id":"GGOEWXXX0827","name":"Waze Women's Short Sleeve Tee",/)
+        if (withTopic) {
+            await expect(message.getCellByName('Topic')).toHaveText('mokapi.shop.products')
+        }
+        await expect(message.getCellByName('Offset')).toHaveText('0')
+        await expect(message.getCellByName('Partition')).toHaveText('0')
+        await expect(message.getCellByName('Time')).toHaveText(formatDateTime('2023-02-13T09:49:25.482366+01:00'))
+
+        message = messages.data.nth(1)
+        await expect(message.getCellByName('Key')).toHaveText('GGOEWXXX0828')
+        await expect(message.getCellByName('Message')).toHaveText(/^{"id":"GGOEWXXX0828","name":"Waze Men's Short Sleeve Tee",/)
+        if (withTopic) {
+            await expect(message.getCellByName('Topic')).toHaveText('mokapi.shop.products')
+        }
+        await expect(message.getCellByName('Offset')).toHaveText('1')
+        await expect(message.getCellByName('Partition')).toHaveText('1')
+        await expect(message.getCellByName('Time')).toHaveText(formatDateTime('2023-02-13T09:49:25.482366+01:00'))
+    })
+}
