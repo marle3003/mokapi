@@ -20,7 +20,7 @@ test.describe('Visit Kafka', () => {
             const data = cluster.data.nth(0)
             await expect(data.getCellByName('Name')).toHaveText('Kafka World')
             await expect(data.getCellByName('Description')).toHaveText('To ours significant why upon tomorrow her faithful many motionless.')
-            await expect(data.getCellByName('Last Message')).toHaveText('2022-05-10 00:34:50')
+            await expect(data.getCellByName('Last Message')).toHaveText(formatTimestamp(1652135690))
             await expect(data.getCellByName('Messages')).toHaveText('11')
         })
     })
