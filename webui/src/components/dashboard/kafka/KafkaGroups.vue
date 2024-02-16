@@ -38,15 +38,16 @@ function getGroups(): KafkaGroup[] {
     return result
 }
 onMounted(()=> {
-  new Popover(document.body, {
-      selector: ".member[data-bs-toggle='popover']",
-      customClass: 'dashboard-popover',
-      html: true,
-      trigger: 'hover',
-      content: function(this: HTMLElement): string {
-        console.log(this)
-        return this.nextElementSibling?.outerHTML ?? ''
-      }
+    const elements = document.querySelectorAll('.has-popover')
+    const popovers = [...elements].map(x => {
+        new Popover(x, {
+            customClass: 'custom-popover',
+            trigger: 'hover',
+            html: true,
+            placement: 'left',
+            //animation: false,
+            content: x.nextElementSibling?.innerHTML ?? '',
+        })
     })
 })
 </script>
@@ -74,7 +75,7 @@ onMounted(()=> {
                 <td>{{ group.leader }}</td>
                 <td>
                     <div v-for="member in group.members">
-                        <div class="member" data-bs-toggle="popover" data-bs-placement="right" >{{ member.name }} <i class="bi bi-info-circle"></i></div>
+                        <div class="member has-popover">{{ member.name }} <i class="bi bi-info-circle"></i></div>
                         <span style="display:none" v-html="memberInfo(member)"></span>
                     </div>
                 </td>
