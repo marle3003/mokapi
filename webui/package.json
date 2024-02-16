@@ -36,7 +36,7 @@
     "@playwright/test": "^1.41.2",
     "@rushstack/eslint-patch": "^1.7.2",
     "@types/node": "^20.11.19",
-    "@vitejs/plugin-vue": "^4.6.2",
+    "@vitejs/plugin-vue": "^5.0.4",
     "@vue/eslint-config-prettier": "^9.0.0",
     "@vue/eslint-config-typescript": "^12.0.0",
     "@vue/tsconfig": "^0.5.1",
