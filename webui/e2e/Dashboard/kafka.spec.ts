@@ -80,6 +80,19 @@ test.describe('Visit Kafka', () => {
             await expect(group.getCellByName('Coordinator')).toHaveText('localhost:9092')
             await expect(group.getCellByName('Leader')).toHaveText('julie')
             const members1 = group.getCellByName('Members')
+            await members1.getByRole('listitem').first().hover()
+            await expect(page.getByRole('tooltip', { name: 'julie' })).toBeVisible()
+            await expect(page.getByRole('tooltip', { name: 'julie' }).getByLabel('Address')).toHaveText('127.0.0.1: 15001')
+            await expect(page.getByRole('tooltip', { name: 'julie' }).getByLabel('Client Software')).toHaveText('mokapi 1.0')
+            await expect(page.getByRole('tooltip', { name: 'julie' }).getByLabel('Last Heartbeat')).toHaveText(formatTimestamp(1654771269))
+            await expect(page.getByRole('tooltip', { name: 'julie' }).getByLabel('Partitions')).toHaveText("1, 2")
+
+            await members1.getByRole('listitem').nth(1).hover()
+            await expect(page.getByRole('tooltip', { name: 'herman' })).toBeVisible()
+            await expect(page.getByRole('tooltip', { name: 'herman' }).getByLabel('Address')).toHaveText('127.0.0.1: 15002')
+            await expect(page.getByRole('tooltip', { name: 'herman' }).getByLabel('Client Software')).toHaveText('mokapi 1.0')
+            await expect(page.getByRole('tooltip', { name: 'herman' }).getByLabel('Partitions')).toHaveText('3')
+            
         })
 
         await test.step('Check config section', async () => {

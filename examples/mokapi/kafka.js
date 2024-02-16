@@ -112,7 +112,7 @@ export let clusters = [
                 ]
             }
         ],
-        groups:[
+        groups: [
             {
                 name:'foo',
                 members:[
