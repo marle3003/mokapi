@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mokapi/media"
 	"mokapi/providers/openapi/schema"
 	"mokapi/sortedmap"
 	"net/http"
@@ -92,7 +93,20 @@ type additionalProperties struct {
 }
 
 func (h *handler) getExampleData(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
+	accept := r.Header.Get("Accept")
+	if len(accept) == 0 {
+		accept = "application/json"
+	}
+	ct := media.ParseContentType(accept)
+	if ct.IsAny() {
+		ct = media.ParseContentType("application/json")
+	}
+	if ct.Subtype != "json" && ct.Subtype != "xml" {
+		http.Error(w, fmt.Sprintf("Content type %v not supported. Only json or xml are supported", ct), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", ct.String())
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -114,7 +128,14 @@ func (h *handler) getExampleData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJsonBody(w, data)
+	b, err := s.Marshal(data, ct)
+	if err != nil {
+		writeError(w, err, http.StatusInternalServerError)
+	}
+	_, err = w.Write(b)
+	if err != nil {
+		writeError(w, err, http.StatusInternalServerError)
+	}
 }
 
 func getSchema(s *schema.Ref) *schemaInfo {

@@ -4,9 +4,22 @@ import SourceView from '../SourceView.vue'
 import SchemaExpand from '../SchemaExpand.vue'
 import SchemaExample from '../SchemaExample.vue'
 
-defineProps<{
+const props = defineProps<{
     topic: KafkaTopic,
 }>()
+
+const types: { [name: string]: string } = {
+    'application/json': '.json',
+    'application/xml': '.xml'
+}
+function filename() {
+    let ext = '.dat'
+    if (types[props.topic.configs.messageType]) {
+        ext = types[props.topic.configs.messageType]
+    }
+
+    return `${props.topic.name}-example${ext}`
+}
 </script>
 
 <template>
@@ -56,7 +69,7 @@ defineProps<{
                                 <schema-expand :schema="topic.configs.message" :title="'Message - '+topic.name" :source="{filename: topic.name+'-message.json'}" />
                             </div>
                             <div class="col-auto pe-2 mt-1">
-                                <schema-example :content-type="topic.configs.messageType" :schema="topic.configs.message"/>
+                                <schema-example :content-type="topic.configs.messageType" :schema="topic.configs.message" :title="'Message Example - ' + topic.name" :source="{ filename: filename() }"/>
                             </div> 
                         </div>
                     </section>

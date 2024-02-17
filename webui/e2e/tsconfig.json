@@ -1,5 +1,6 @@
 {
   "include": ["./**/*"],
+  "typeRoots": ["./types"],
   "compilerOptions": {
     "types": ["node"],
     "esModuleInterop": true,

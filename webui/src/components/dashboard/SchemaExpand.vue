@@ -34,11 +34,3 @@ const id = createGuid()
         </div>
     </div>
 </template>
-
-<style scoped>
-.modal-header {
-    border-color: var(--color-tabs-border);
-    padding-bottom: 15px;
-    padding-top: 15px;
-}
-</style>

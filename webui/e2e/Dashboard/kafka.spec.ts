@@ -159,6 +159,19 @@ test.describe('Visit Kafka', () => {
                     content: /"features"/,
                     filename: 'mokapi.shop.products-message.json'
                 })
+                await dialog.getByRole('button', { name: 'Close' }).click()
+            })
+
+            await test.step('Check schema example', async () => {
+                await configs.getByRole('button', { name: 'Example' }).click()
+                const dialog = page.getByRole('dialog', { name: 'Message Example - mokapi.shop.products' })
+                const { test: testSourceView } = useSourceView(dialog)
+                await testSourceView({
+                    lines: /\d+ lines/,
+                    size: /\d+ B/,
+                    content: /"features"/,
+                    filename: 'mokapi.shop.products-example.json'
+                })
             })
         })
     })

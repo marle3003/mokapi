@@ -50,6 +50,57 @@ func TestHandler_Schema(t *testing.T) {
 					try.HasBody(`{"foo":"xid1UOwQ;"}`))
 			},
 		},
+		{
+			name: "string accept application/xml",
+			app: &runtime.App{
+				Monitor: monitor.New(),
+			},
+			fn: func(t *testing.T, h http.Handler, app *runtime.App) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/schema/example",
+					map[string]string{"Accept": "application/xml"},
+					`{ "type": "string", "xml": { "name": "text" } }`,
+					h,
+					try.HasStatusCode(200),
+					try.HasHeader("Content-Type", "application/xml"),
+					try.HasBody(`<text>xid1UOwQ;</text>`))
+			},
+		},
+		{
+			name: "string accept */*",
+			app: &runtime.App{
+				Monitor: monitor.New(),
+			},
+			fn: func(t *testing.T, h http.Handler, app *runtime.App) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/schema/example",
+					map[string]string{"Accept": "*/*"},
+					`{ "type": "string", "xml": { "name": "text" } }`,
+					h,
+					try.HasStatusCode(200),
+					try.HasHeader("Content-Type", "application/json"),
+					try.HasBody(`"xid1UOwQ;"`))
+			},
+		},
+		{
+			name: "string accept application/*",
+			app: &runtime.App{
+				Monitor: monitor.New(),
+			},
+			fn: func(t *testing.T, h http.Handler, app *runtime.App) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/schema/example",
+					map[string]string{"Accept": "application/*"},
+					`{ "type": "string", "xml": { "name": "text" } }`,
+					h,
+					try.HasStatusCode(400),
+					try.HasHeader("Content-Type", "text/plain; charset=utf-8"),
+					try.HasBody("Content type application/* not supported. Only json or xml are supported\n"))
+			},
+		},
 	}
 
 	for _, tc := range testcases {

@@ -27,5 +27,5 @@ export function useExample() {
         return example
     }
 
-    return {fetchExample}
+    return { fetchExample }
 }

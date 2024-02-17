@@ -51,6 +51,11 @@ func (r *Ref) Marshal(i interface{}, contentType media.ContentType) ([]byte, err
 	return b, nil
 }
 
+func (s *Schema) Marshal(i interface{}, contentType media.ContentType) ([]byte, error) {
+	r := &Ref{Value: s}
+	return r.Marshal(i, contentType)
+}
+
 // selectData selects data by schema
 func selectData(data interface{}, ref *Ref) (interface{}, error) {
 	if ref == nil || ref.Value == nil || data == nil {
