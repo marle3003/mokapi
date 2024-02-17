@@ -84,8 +84,10 @@ test.describe('Visit Kafka', () => {
         await checkKafkaMessage(page.getByRole('region', { name: "Recent Messages" }).getByRole('table', { name: 'Kafka Messages' }))
     })
 
-    test('Visit topic of "Kafka World"', async ({ page }) => {
+    test('Visit topic of "Kafka World"', async ({ page, context }) => {
+        await context.grantPermissions(["clipboard-read", "clipboard-write"]);
 
+        const topic = cluster.topics[0]
         await test.step('Browse to topic "mokapi.shop.products"', async () => {
             const { tabs, open } = useDashboard(page)
             await open()
@@ -103,10 +105,10 @@ test.describe('Visit Kafka', () => {
         await test.step('Check info section"', async () => {
             const info = page.getByRole('region', { name: "Info" })
             await expect(info).toBeVisible()
-            await expect(info.getByLabel('Topic')).toHaveText(cluster.topics[0].name)
+            await expect(info.getByLabel('Topic')).toHaveText(topic.name)
             await expect(info.getByLabel('Cluster')).toHaveText(cluster.name)
             await expect(info.getByLabel('Type of API')).toHaveText('Kafka')
-            await expect(info.getByLabel('Description')).toHaveText(cluster.topics[0].description)
+            await expect(info.getByLabel('Description')).toHaveText(topic.description)
         })
 
         await checkKafkaMessage(page.getByRole('table', { name: 'Kafka Messages' }), false)
@@ -116,9 +118,9 @@ test.describe('Visit Kafka', () => {
             await tabList.getByRole('tab', { name: 'Partitions' }).click()
             await expect(page.getByRole('tabpanel', { name: 'Partitions' }).getByRole('table')).toBeVisible()
             const partitions = useKafkaPartitions(page)
-            await partitions.testPartition(0, cluster.topics[0].partitions[0])
-            await partitions.testPartition(1, cluster.topics[0].partitions[1])
-            await partitions.testPartition(2, cluster.topics[0].partitions[2])
+            await partitions.testPartition(0, topic.partitions[0])
+            await partitions.testPartition(1, topic.partitions[1])
+            await partitions.testPartition(2, topic.partitions[2])
         })
 
         await test.step('Check groups"', async () => {
@@ -127,6 +129,31 @@ test.describe('Visit Kafka', () => {
             await expect(table).toBeVisible()
             const group = useKafkaGroups(page)
             await group.testGroup(0, cluster.groups[0])
+        })
+
+        await test.step('Check config', async () => {
+            await tabList.getByRole('tab', { name: 'Configs' }).click()
+            const configs = page.getByRole('tabpanel', { name: 'Configs' })
+            await expect(configs.getByLabel('Title')).toHaveText(topic.configs.title)
+            await expect(configs.getByLabel('Name')).toHaveText(topic.configs.name)
+            await expect(configs.getByLabel('Summary')).toHaveText(topic.configs.summary)
+            await expect(configs.getByLabel('Description')).toHaveText(topic.configs.description)
+            await expect(configs.getByLabel('Content Type')).toHaveText(topic.configs.contentType)
+
+            const source = configs.getByRole('tabpanel', { name: 'Message' }).getByRole('region', { name: 'Source' })
+            await expect(source.getByLabel('Lines of Code')).toHaveText(topic.configs.message.lines)
+            await expect(source.getByLabel('Size of Code')).toHaveText(topic.configs.message.size)
+            await expect(source.getByRole('region', { name: 'content' })).toHaveText(/"features"/)
+
+            await source.getByRole('button', { name: 'Copy raw content' }).click()
+            let clipboardText = await page.evaluate('navigator.clipboard.readText()')
+            await expect(clipboardText).toContain('"features"')
+
+            const [ download ] = await Promise.all([
+                page.waitForEvent('download'),
+                source.getByRole('button', { name: 'Download raw content' }).click()
+            ])
+            await expect(download.suggestedFilename()).toBe('mokapi.shop.products-message.json')
         })
     })
 })
@@ -198,7 +225,18 @@ const cluster = {
                     offset: '3',
                     segments: '1'
                 }
-            ]
+            ],
+            configs: {
+                title: 'Shop New Order notification',
+                name: 'shopOrder',
+                summary: 'A message containing details of a new order',
+                description: 'More info about how the order notifications are created and used.',
+                contentType: 'application/json',
+                message: {
+                    lines: '32 lines',
+                    size: '281 B'
+                }
+            }
         },
         {
             name: 'bar',

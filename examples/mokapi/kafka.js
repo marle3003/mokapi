@@ -89,10 +89,10 @@ export let clusters = [
                     }
                 ],
                 configs: {
-                    name: "Products",
-                    title: "Products",
-                    summary: "Summary",
-                    description: "description",
+                    name: "shopOrder",
+                    title: "Shop New Order notification",
+                    summary: "A message containing details of a new order",
+                    description: "More info about how the order notifications are **created** and **used**.",
                     key: {type: "string"},
                     message: Product,
                     messageType: "application/json"

@@ -64,24 +64,24 @@ function copyToClipboard(event: MouseEvent) {
 </script>
 
 <template>
-  <div>
+  <section aria-label="Source">
     <div class="header">
       <div>
         <span v-if="!hideContentType">{{ contentType }}</span>
-        <span>{{ lines }} lines</span>
-        <span>{{ size }}</span>
+        <span aria-label="Lines of Code">{{ lines }} lines</span>
+        <span aria-label="Size of Code">{{ size }}</span>
         <span v-if="deprecated"><i class="bi bi-exclamation-triangle-fill yellow"></i> deprecated</span>
       </div>
       <div class="controls">
         <a  v-if="url" :href="url">Raw</a>
-        <a href="" @click="copyToClipboard" title="Copy source"><i class="bi bi-copy"></i></a>
-        <a href="" @click="download" title="Download source"><i class="bi bi-download"></i></a>
+        <button type="button" class="btn btn-link" @click="copyToClipboard" title="Copy raw content" aria-label="Copy raw content"><i class="bi bi-copy"></i></button>
+        <button type="button" class="btn btn-link" @click="download" title="Download raw content" aria-label="Download raw content"><i class="bi bi-download"></i></button>
       </div>
     </div>
-    <div class="source">
+    <section class="source" aria-label="Content">
       <pre v-highlightjs="code" class="overflow-auto" :style="(height) ? 'max-height: '+height : ''"><code :class="highlightClass"></code></pre>
-    </div>
-  </div>
+    </section>
+  </section>
 </template>
 
 <style scoped>
@@ -93,19 +93,36 @@ function copyToClipboard(event: MouseEvent) {
   display: flex;
   justify-content: space-between;
 }
-.header .controls a {
-  border: 1px solid var(--color-tabs-border);
-  padding: 5px 8px;
-}
-.header .controls a:hover {
-  border-color: var(--color-text-light);
+.header  button {
+  background: none !important;
+  font-size: 0.9rem;
+  border-radius: 0;
+  vertical-align: middle;
   color: var(--color-link);
 }
-.header .controls a:first-child {
+.header .controls > * {
+  border: 1px solid var(--color-tabs-border);
+  padding: 5px 8px;
+  height: 28px;
+  line-height: 18px;
+  margin-inline-end: -1px;
+  position: relative;
+}
+.header .controls a {
+  display: inline-block;
+  box-sizing: border-box;
+  vertical-align: middle;
+}
+.header .controls > *:hover {
+  border-color: var(--color-text-light);
+  color: var(--color-link);
+  z-index: 1;
+}
+.header .controls > *:first-child {
   border-top-left-radius: 6px;
   border-bottom-left-radius: 6px;
 }
-.header .controls a:last-child {
+.header .controls > *:last-child {
   border-top-right-radius: 6px;
   border-bottom-right-radius: 6px;
 }
