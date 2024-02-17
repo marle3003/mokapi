@@ -118,7 +118,7 @@ export let clusters = [
                 members:[
                     {
                         name: 'julie',
-                        addr: '127.0.0.1: 15001',
+                        addr: '127.0.0.1:15001',
                         clientSoftwareName: 'mokapi',
                         clientSoftwareVersion: '1.0',
                         heartbeat: 1654771269,
@@ -126,7 +126,7 @@ export let clusters = [
                     },
                     {
                         name:'hermann',
-                        addr: '127.0.0.1: 15002',
+                        addr: '127.0.0.1:15002',
                         clientSoftwareName: 'mokapi',
                         clientSoftwareVersion: '1.0',
                         heartbeat: 1654872269,
@@ -144,7 +144,7 @@ export let clusters = [
                 members:[
                     {
                         name:'george',
-                        addr: '127.0.0.1: 15003',
+                        addr: '127.0.0.1:15003',
                         clientSoftwareName: 'mokapi',
                         clientSoftwareVersion: '1.0',
                         heartbeat: 1654721269,

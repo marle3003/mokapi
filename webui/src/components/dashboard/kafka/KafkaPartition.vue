@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import type { PropType } from 'vue';
 
-defineProps({
-    topic: { type: Object as PropType<KafkaTopic>, required: true },
-})
+defineProps<{
+    topic: KafkaTopic,
+}>()
 </script>
 
 <template>
     <table class="table dataTable">
+        <caption class="visually-hidden">Kafka Partitions</caption>
         <thead>
             <tr>
                 <th scope="col" class="text-left">ID</th>
