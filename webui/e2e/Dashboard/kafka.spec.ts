@@ -4,6 +4,7 @@ import { useKafkaGroups, useKafkaOverview, useKafkaPartitions, useKafkaTopics } 
 import { useTable } from '../components/table'
 import { formatDateTime, formatTimestamp } from '../helpers/format'
 import { test, expect } from '../models/fixture-dashboard'
+import { useSourceView } from '../components/source'
 
 test.describe('Visit Kafka', () => {
 
@@ -140,20 +141,25 @@ test.describe('Visit Kafka', () => {
             await expect(configs.getByLabel('Description')).toHaveText(topic.configs.description)
             await expect(configs.getByLabel('Content Type')).toHaveText(topic.configs.contentType)
 
-            const source = configs.getByRole('tabpanel', { name: 'Message' }).getByRole('region', { name: 'Source' })
-            await expect(source.getByLabel('Lines of Code')).toHaveText(topic.configs.message.lines)
-            await expect(source.getByLabel('Size of Code')).toHaveText(topic.configs.message.size)
-            await expect(source.getByRole('region', { name: 'content' })).toHaveText(/"features"/)
+            const { test: testSourceView } = useSourceView(configs.getByRole('tabpanel', { name: 'Message' }))
+            await testSourceView({
+                lines: topic.configs.message.lines,
+                size: topic.configs.message.size,
+                content: /"features"/,
+                filename: 'mokapi.shop.products-message.json'
+            })
 
-            await source.getByRole('button', { name: 'Copy raw content' }).click()
-            let clipboardText = await page.evaluate('navigator.clipboard.readText()')
-            await expect(clipboardText).toContain('"features"')
-
-            const [ download ] = await Promise.all([
-                page.waitForEvent('download'),
-                source.getByRole('button', { name: 'Download raw content' }).click()
-            ])
-            await expect(download.suggestedFilename()).toBe('mokapi.shop.products-message.json')
+            await test.step('Check expand schema', async () => {
+                await configs.getByRole('button', { name: 'Expand' }).click()
+                const dialog = page.getByRole('dialog', { name: 'Message - mokapi.shop.products' })
+                const { test: testSourceView } = useSourceView(dialog)
+                await testSourceView({
+                    lines: topic.configs.message.lines,
+                    size: topic.configs.message.size,
+                    content: /"features"/,
+                    filename: 'mokapi.shop.products-message.json'
+                })
+            })
         })
     })
 })

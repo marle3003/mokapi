@@ -1,14 +1,12 @@
 <script setup lang="ts">
-import type { PropType } from 'vue'
 import Markdown from 'vue3-markdown-it'
 import SourceView from '../SourceView.vue'
 import SchemaExpand from '../SchemaExpand.vue'
 import SchemaExample from '../SchemaExample.vue'
 
-defineProps({
-    topic: { type: Object as PropType<KafkaTopic>, required: true },
-})
-
+defineProps<{
+    topic: KafkaTopic,
+}>()
 </script>
 
 <template>
@@ -55,7 +53,7 @@ defineProps({
                         <source-view :source="JSON.stringify(topic.configs.message)" content-type="application/json" :hide-content-type="true" height="500px" class="mb-2" :filename="topic.name+'-message.json'" />
                         <div class="row">
                             <div class="col-auto pe-2 mt-1">
-                                <schema-expand :schema="topic.configs.message" />
+                                <schema-expand :schema="topic.configs.message" :title="'Message - '+topic.name" :source="{filename: topic.name+'-message.json'}" />
                             </div>
                             <div class="col-auto pe-2 mt-1">
                                 <schema-example :content-type="topic.configs.messageType" :schema="topic.configs.message"/>

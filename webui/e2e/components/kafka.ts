@@ -1,4 +1,4 @@
-import test, { Locator, Page, expect } from "playwright/test"
+import { Page, expect, test } from "playwright/test"
 import { useTable } from '../components/table'
 
 export function useKafkaOverview(page: Page) {
