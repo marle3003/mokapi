@@ -61,8 +61,8 @@ onUnmounted(() => {
                 <div class="card-body">
                     <div class="row">
                         <div class="col-11 header mb-3">
-                            <p class="label">URL</p>
-                            <p>{{ config.url }}</p>
+                            <p id="url" class="label">URL</p>
+                            <p aria-labelledby="url">{{ config.url }}</p>
                         </div>
                         <div class="col-1 text-end">
                             <span class="badge bg-secondary">Config</span>
@@ -70,20 +70,20 @@ onUnmounted(() => {
                     </div>
                     <div class="row">
                         <div class="col">
-                            <p class="label">Provider</p>
-                            <p>
+                            <p id="provider" class="label">Provider</p>
+                            <p aria-labelledby="provider">
                                 <a href="/docs/configuration/providers/file">{{ config.provider }}</a>
                             </p>
                         </div>
                         <div class="col">
-                            <p class="label">Last Modified</p>
-                            <p>{{ format(config.time) }}</p>
+                            <p id="lastModified" class="label">Last Modified</p>
+                            <p aria-labelledby="lastModified">{{ format(config.time) }}</p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="card-group" v-if="data">
+        <section class="card-group" v-if="data" aria-label="Content">
             <div class="card">
                 <div class="card-body">
                     <div class="row">
@@ -91,7 +91,7 @@ onUnmounted(() => {
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
         <div class="card-group" v-if="config.refs">
             <config-card :configs="config.refs" title="References" />
         </div>

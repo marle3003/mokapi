@@ -5,7 +5,7 @@ import { test, expect } from '../../models/fixture-dashboard'
 import { useSourceView } from '../../components/source'
 
 test('Visit Kafka topic mokapi.shop.userSignedUp', async ({ page, context }) => {
-    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await context.grantPermissions(["clipboard-read", "clipboard-write"])
 
     const topic = cluster.topics[1]
     await test.step('Browse to topic "mokapi.shop.userSignedUp"', async () => {

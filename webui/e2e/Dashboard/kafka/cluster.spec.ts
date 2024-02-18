@@ -4,6 +4,7 @@ import { useKafkaTopics, useKafkaGroups, useKafkaMessages } from '../../componen
 import { test, expect } from '../../models/fixture-dashboard'
 import { useTable } from '../../components/table'
 import { formatDateTime } from '../../helpers/format'
+import { useSourceView } from '../../components/source'
 
 test('Visit Kafka cluster "Kafka World"', async ({ page }) => {
     await test.step('Browse to cluster "Kafka World"', async () => {
@@ -61,10 +62,26 @@ test('Visit Kafka cluster "Kafka World"', async ({ page }) => {
     await useKafkaMessages().test(page.getByRole('region', { name: "Recent Messages" }).getByRole('table', { name: 'Cluster Messages' }))
 })
 
-test('Visit cluster config file', async ({ page }) => {
+test('Visit Kafka cluster config file', async ({ page, context }) => {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+
     const { tabs, open } = useDashboard(page)
     await open()
     await tabs.kafka.click()
 
     await page.getByRole('table', { name: 'Kafka Clusters' }).getByText(cluster.name).click()
+    await page.getByRole('table', { name: 'Configs' }).getByText('https://www.example.com/foo/bar/communication/service/asyncapi.json').click()
+
+    await expect(page.getByLabel('URL')).toHaveText('https://www.example.com/foo/bar/communication/service/asyncapi.json')
+    await expect(page.getByLabel('Provider')).toHaveText('http')
+    await expect(page.getByLabel('Last Modified')).toHaveText(formatDateTime('2023-02-15T08:49:25.482366+01:00'))
+
+    const { test: testSourceView } = useSourceView(page.getByRole('region', { name: 'Content' }))
+    await testSourceView({
+        lines: '227 lines',
+        size: '3.45 kB',
+        content: /"name": "Kafka World"/,
+        filename: 'asyncapi.json',
+        clipboard: '"name": "Kafka World"'
+    })
 })
