@@ -17,7 +17,7 @@ To learn how Mokapi imports modules, see [Modules](/docs/javascript-api/modules.
 | [every( interval, handler, \[args\] )](/docs/javascript-api/mokapi/every.md) | Schedules a new periodic job with interval.                   |
 | [on( event, handler, \[args\]](/docs/javascript-api/mokapi/on.md) )          | Attaches an event handler for the given event.                |
 | [sleep( time )](/docs/javascript-api/mokapi/sleep.md)                        | Suspends the execution for the specified duration.            |
-| [marshal( value, \[encoding\] )](/docs/javascript-api/mokapi/marhsal.md)     | Returns marshalled string representation of value (>= v0.9.7) |
+| [marshal( value, \[encoding\] )](/docs/javascript-api/mokapi/marshal.md)     | Returns marshalled string representation of value (>= v0.9.7) |
 
 ## mokapi/http
 
