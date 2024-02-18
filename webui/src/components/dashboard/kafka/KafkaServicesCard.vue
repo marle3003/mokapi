@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { useService } from '@/composables/services';
-import { useMetrics } from '@/composables/metrics';
-import { usePrettyDates } from '@/composables/usePrettyDate';
-import { useRouter, useRoute } from 'vue-router';
-import { onUnmounted } from 'vue';
+import { useService } from '@/composables/services'
+import { useMetrics } from '@/composables/metrics'
+import { usePrettyDates } from '@/composables/usePrettyDate'
+import { useRouter, useRoute } from 'vue-router'
+import { onUnmounted } from 'vue'
 import Markdown from 'vue3-markdown-it'
 
-const {fetchServices} = useService()
+const { fetchServices } = useService()
 const { sum, max } = useMetrics()
-const {format} = usePrettyDates()
+const { format } = usePrettyDates()
 const route = useRoute()
 const router = useRouter()
-const {services, close} = fetchServices('kafka')
+const { services, close } = fetchServices('kafka')
 
 function lastMessage(service: Service){
     const n = max(service.metrics, 'kafka_message_timestamp')

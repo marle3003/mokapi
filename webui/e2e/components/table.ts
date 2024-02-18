@@ -1,7 +1,6 @@
 import { Locator } from "playwright/test"
 
 interface Table {
-    headers: { [name: string]: Locator }
     data: TableContent
 }
 
@@ -22,18 +21,16 @@ export async function useTable(table: Locator) {
     const rows = table.getByRole('row')
     const headerCells = rows.nth(0).getByRole('columnheader')
     const count = await headerCells.count()
-    
-    const content = new ContentRows()
-    const result: Table = {
-        headers: {},
-        data: content
-    }
 
     const headers = []
     for (let i = 0; i < count; i++) {
         const name = await headerCells.nth(i).textContent()
         headers.push(name)
-        result.headers[name] =  headerCells.nth(i)
+    }
+    
+    const content = new ContentRows(table, headers)
+    const result: Table = {
+        data: content
     }
 
     const rowsCount = await rows.count()
@@ -41,9 +38,6 @@ export async function useTable(table: Locator) {
         let row = rows.nth(i) as TableRow
         row.getCellByName = (name: string): Locator => {
             const index = headers.indexOf(name)
-            if (index < 0) {
-                throw Error(`column ${name} not found`);
-            }
             return row.getByRole('cell').nth(index)
         }
         content.rows.push(row)
@@ -55,9 +49,16 @@ export async function useTable(table: Locator) {
 class ContentRows {
     rows: TableRow[] = []
 
+    constructor(readonly table: Locator, readonly headers: string[]) {}
+
     nth(index: number): TableRow {
         if (index < 0 || index >= this.rows.length) {
-            throw new Error("index out of range")
+            const row = this.table.getByRole('row') as TableRow
+            row.getCellByName = (name: string): Locator => {
+                const index = this.headers.indexOf(name)
+                return row.getByRole('cell').nth(index)
+            }
+            return row
         }
         return this.rows[index]
     }

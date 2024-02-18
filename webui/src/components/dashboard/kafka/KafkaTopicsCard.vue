@@ -45,7 +45,7 @@ function goToTopic(topic: KafkaTopic){
         <div class="card-body">
             <div id="topics" class="card-title text-center">Topics</div>
             <table class="table dataTable selectable">
-                <caption class="visually-hidden">Kafka Topics</caption>
+                <caption class="visually-hidden">Cluster Topics</caption>
                 <thead>
                     <tr>
                         <th scope="col" class="text-left">Name</th>

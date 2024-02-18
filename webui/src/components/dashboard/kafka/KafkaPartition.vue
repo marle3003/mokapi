@@ -7,7 +7,7 @@ defineProps<{
 
 <template>
     <table class="table dataTable">
-        <caption class="visually-hidden">Kafka Partitions</caption>
+        <caption class="visually-hidden">Topic Partitions</caption>
         <thead>
             <tr>
                 <th scope="col" class="text-left">ID</th>

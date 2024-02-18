@@ -53,7 +53,7 @@ test.describe('Visit Kafka', () => {
         })
 
         await test.step('Check broker section', async () => {
-            const brokers = await useTable(page.getByRole('region', { name: "Brokers" }).getByRole('table', { name: 'Kafka Brokers' }))
+            const brokers = await useTable(page.getByRole('region', { name: "Brokers" }).getByRole('table', { name: 'Cluster Brokers' }))
             const broker = brokers.data.nth(0)
             await expect(broker.getCellByName('Name')).toHaveText(cluster.brokers[0].name)
             await expect(broker.getCellByName('URL')).toHaveText(cluster.brokers[0].url)
@@ -61,15 +61,17 @@ test.describe('Visit Kafka', () => {
         })
 
         await test.step('Check topic section', async () => {
-            await expect(page.getByRole('region', { name: "Topics" }).getByRole('table', { name: 'Kafka Topics' })).toBeVisible()
-            const topics = useKafkaTopics(page)
+            const table = page.getByRole('region', { name: "Topics" }).getByRole('table', { name: 'Cluster Topics' })
+            await expect(table).toBeVisible()
+            const topics = useKafkaTopics(table)
             await topics.testTopic(0, cluster.topics[0])
             await topics.testTopic(0, cluster.topics[0])
         })
 
         await test.step('Check groups section', async () => {
-            await expect(page.getByRole('region', { name: "Groups" }).getByRole('table', { name: 'Kafka Groups' })).toBeVisible()
-            const groups = useKafkaGroups(page)
+            const table = page.getByRole('region', { name: "Groups" }).getByRole('table', { name: 'Cluster Groups' })
+            await expect(table).toBeVisible()
+            const groups = useKafkaGroups(table)
             await groups.testGroup(0, cluster.groups[0])
             await groups.testGroup(1, cluster.groups[1])
         })
@@ -82,7 +84,7 @@ test.describe('Visit Kafka', () => {
             await expect(config.getCellByName('Last Update')).toHaveText(formatDateTime('2023-02-15T08:49:25.482366+01:00'))
         })
 
-        await checkKafkaMessage(page.getByRole('region', { name: "Recent Messages" }).getByRole('table', { name: 'Kafka Messages' }))
+        await checkKafkaMessage(page.getByRole('region', { name: "Recent Messages" }).getByRole('table', { name: 'Cluster Messages' }))
     })
 
     test('Visit topic of "Kafka World"', async ({ page, context }) => {
@@ -99,7 +101,7 @@ test.describe('Visit Kafka', () => {
             await cluster.data.nth(0).click()
             await expect(page.getByRole('region', { name: "Info" })).toBeVisible()
 
-            const topics = await useTable(page.getByRole('table', { name: 'Kafka Topics' }))
+            const topics = await useTable(page.getByRole('table', { name: 'Cluster Topics' }))
             await topics.data.nth(0).click()
         })
 
@@ -112,13 +114,14 @@ test.describe('Visit Kafka', () => {
             await expect(info.getByLabel('Description')).toHaveText(topic.description)
         })
 
-        await checkKafkaMessage(page.getByRole('table', { name: 'Kafka Messages' }), false)
+        await checkKafkaMessage(page.getByRole('table', { name: 'Topic Messages' }), false)
 
         const tabList = page.getByRole('region', { name: 'Topic Data' }).getByRole('tablist')
         await test.step('Check partition"', async () => {
             await tabList.getByRole('tab', { name: 'Partitions' }).click()
-            await expect(page.getByRole('tabpanel', { name: 'Partitions' }).getByRole('table')).toBeVisible()
-            const partitions = useKafkaPartitions(page)
+            const table = page.getByRole('tabpanel', { name: 'Partitions' }).getByRole('table', { name: 'Topic Partitions' })
+            await expect(table).toBeVisible()
+            const partitions = useKafkaPartitions(table)
             await partitions.testPartition(0, topic.partitions[0])
             await partitions.testPartition(1, topic.partitions[1])
             await partitions.testPartition(2, topic.partitions[2])
@@ -126,9 +129,9 @@ test.describe('Visit Kafka', () => {
 
         await test.step('Check groups"', async () => {
             await tabList.getByRole('tab', { name: 'Groups' }).click()
-            const table = page.getByRole('tabpanel', { name: 'Groups' }).getByRole('table')
+            const table = page.getByRole('tabpanel', { name: 'Groups' }).getByRole('table', { name: 'Topic Groups' })
             await expect(table).toBeVisible()
-            const group = useKafkaGroups(page)
+            const group = useKafkaGroups(table)
             await group.testGroup(0, cluster.groups[0])
         })
 
@@ -172,6 +175,12 @@ test.describe('Visit Kafka', () => {
                     content: /"features"/,
                     filename: 'mokapi.shop.products-example.json'
                 })
+                await dialog.getByRole('button', { name: 'Close' }).click()
+            })
+
+            await test.step('Go back to cluster view', async () => {
+                await page.getByRole('link', { name: 'cluster' }).click()
+                await expect(page.getByLabel('name')).toHaveText(cluster.name)
             })
         })
     })

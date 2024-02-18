@@ -1,4 +1,4 @@
-import { Page, expect, test } from "playwright/test"
+import { Locator, Page, expect, test } from "playwright/test"
 import { useTable } from '../components/table'
 
 export function useKafkaOverview(page: Page) {
@@ -27,11 +27,10 @@ export interface Topic {
     messages: string
 }
 
-export function useKafkaTopics(page: Page) {
+export function useKafkaTopics(table: Locator) {
     return {
         async testTopic(row: number, topic: Topic) {
             await test.step(`Check Kafka topic in row ${row}`, async () => {
-                const table = page.getByRole('table', { name: 'Kafka Topics' })
                 const topics = await useTable(table)
 
                 const t = topics.data.nth(row)
@@ -59,11 +58,10 @@ export interface Group {
     }[]
 }
 
-export function useKafkaGroups(page: Page) {
+export function useKafkaGroups(table: Locator) {
     return {
         async testGroup(row: number, group: Group) {
             await test.step(`Check Kafka group in row ${row}`, async () => {
-                const table = page.getByRole('table', { name: 'Kafka Groups' })
                 const groups = await useTable(table)
 
                 const g = groups.data.nth(row)
@@ -73,6 +71,7 @@ export function useKafkaGroups(page: Page) {
                 await expect(g.getCellByName('Coordinator')).toHaveText(group.coordinator)
                 await expect(g.getCellByName('Leader')).toHaveText(group.leader)
 
+                const page = table.page()
                 for (const [i, member] of group.members.entries()) {
                     await g.getCellByName('Members').getByRole('listitem').nth(i).hover()
                     await expect(page.getByRole('tooltip', { name: member.name })).toBeVisible()
@@ -94,11 +93,10 @@ export interface Partition {
     segments: string
 }
 
-export function useKafkaPartitions(page: Page) {
+export function useKafkaPartitions(table: Locator) {
     return {
         async testPartition(row: number, partition: Partition) {
             await test.step(`Check Kafka partition in row ${row}`, async () => {
-                const table = page.getByRole('table', { name: 'Kafka Partitions' })
                 const partitions = await useTable(table)
 
                 const p = partitions.data.nth(row)

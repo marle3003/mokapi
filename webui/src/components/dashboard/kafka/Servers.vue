@@ -1,15 +1,14 @@
 <script setup lang="ts">
-import type { PropType } from 'vue';
-import Markdown from 'vue3-markdown-it';
+import Markdown from 'vue3-markdown-it'
 
-defineProps({
-    servers: { type: Array as PropType<Array<KafkaServer>>, required: true },
-})
+defineProps<{
+    servers: KafkaServer[],
+}>()
 </script>
 
 <template>
     <table class="table dataTable">
-        <caption class="visually-hidden">Kafka Brokers</caption>
+        <caption class="visually-hidden">Cluster Brokers</caption>
         <thead>
             <tr>
                 <th scope="col" class="text-left">Name</th>

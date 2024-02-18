@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { usePrettyDates } from '@/composables/usePrettyDate';
-import { onMounted } from 'vue';
+import { usePrettyDates } from '@/composables/usePrettyDate'
+import { onMounted } from 'vue'
 import { Popover } from 'bootstrap'
-import { useMetrics } from '@/composables/metrics';
+import { useMetrics } from '@/composables/metrics'
 
 const props = defineProps<{
     service: KafkaService,
@@ -57,7 +57,7 @@ onMounted(()=> {
 
 <template>
     <table class="table dataTable">
-        <caption class="visually-hidden">Kafka Groups</caption>
+        <caption class="visually-hidden">{{ props.topicName ? 'Topic Groups' : 'Cluster Groups' }}</caption>
         <thead>
             <tr>
                 <th scope="col" class="text-left">Name</th>

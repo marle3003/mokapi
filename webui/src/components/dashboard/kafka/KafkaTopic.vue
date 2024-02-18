@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import { type Ref, onUnmounted } from 'vue'
-import { useRoute } from 'vue-router';
-import { useService } from '@/composables/services';
-import KafkaGroups from './KafkaGroups.vue';
-import KafkaMessages from './KafkaMessages.vue';
-import KafkaPartition from './KafkaPartition.vue';
-import TopicConfig from './TopicConfig.vue';
-import Markdown from 'vue3-markdown-it';
+import { useRoute } from 'vue-router'
+import { useService } from '@/composables/services'
+import KafkaGroups from './KafkaGroups.vue'
+import KafkaMessages from './KafkaMessages.vue'
+import KafkaPartition from './KafkaPartition.vue'
+import TopicConfig from './TopicConfig.vue'
+import Markdown from 'vue3-markdown-it'
 
-const {fetchService} = useService()
+const { fetchService } = useService()
 const route = useRoute()
 const serviceName = route.params.service?.toString()
 const topicName = route.params.topic?.toString()
-const {service, close} = <{service: Ref<KafkaService | null>, close: () => void}>fetchService(serviceName, 'kafka')
+const { service, close } = <{service: Ref<KafkaService | null>, close: () => void}>fetchService(serviceName, 'kafka')
 function topic() {
   if (!service.value) {return null}
   for (let topic of service.value?.topics){
