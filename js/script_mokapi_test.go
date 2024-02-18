@@ -713,3 +713,83 @@ func TestScript_Mokapi_Sleep(t *testing.T) {
 		})
 	}
 }
+
+func TestScript_Mokapi_Marshal(t *testing.T) {
+	testcases := []struct {
+		name string
+		f    func(t *testing.T, host *testHost)
+	}{
+		{
+			"default encoding",
+			func(t *testing.T, host *testHost) {
+				s, err := New("",
+					`import { marshal } from 'mokapi'
+						 export default function() {
+						  	return marshal({ username: 'foo' })
+						 }`,
+					host, static.JsConfig{})
+				r.NoError(t, err)
+				i, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, `{"username":"foo"}`, i.String())
+			},
+		},
+		{
+			"with schema",
+			func(t *testing.T, host *testHost) {
+				s, err := New("",
+					`import { marshal } from 'mokapi'
+						 export default function() {
+						  	return marshal({ username: 'foo' }, { 
+								schema: { 
+									type: 'object',
+									properties: {
+										username: {
+											type: 'string'
+										}
+									}
+								}
+							})
+						 }`,
+					host, static.JsConfig{})
+				r.NoError(t, err)
+				i, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, `{"username":"foo"}`, i.String())
+			},
+		},
+		{
+			"with content type xml",
+			func(t *testing.T, host *testHost) {
+				s, err := New("",
+					`import { marshal } from 'mokapi'
+						 export default function() {
+						  	return marshal({ username: 'foo' }, { 
+								schema: { 
+									type: 'object',
+									xml: { name: 'user' }
+								},
+								contentType: 'application/xml'
+							})
+						 }`,
+					host, static.JsConfig{})
+				r.NoError(t, err)
+				i, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, `<user><username>foo</username></user>`, i.String())
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			host := &testHost{}
+
+			tc.f(t, host)
+		})
+	}
+}

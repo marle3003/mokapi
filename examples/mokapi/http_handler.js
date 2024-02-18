@@ -1,4 +1,4 @@
-import { on } from 'mokapi'
+import { on, marshal } from 'mokapi'
 import { clusters, events as kafkaEvents, configs as kafkaConfigs } from 'kafka.js'
 import { apps as httpServices, events as httpEvents, configs as httpConfigs } from 'services_http.js'
 import { server as smtpServers, mails, mailEvents, getMail, getAttachment } from 'smtp.js'
@@ -73,7 +73,9 @@ export default function() {
                 }
                 return true
             case 'example':
-                response.data = fake(request.body)
+                const data = fake(request.body)
+                console.log('accept: '+request.header.Accept)
+                response.body = marshal(data, { schema: request.body, contentType: request.header.Accept })
                 return true
             case 'configs':
                 console.log(getConfigs())

@@ -5,6 +5,7 @@ export interface Source {
     size?: ExpectedString
     content: ExpectedString
     filename: ExpectedString
+    clipboard: string
 }
 
 export function useSourceView(locator: Locator) {
@@ -25,7 +26,7 @@ export function useSourceView(locator: Locator) {
 
             await source.getByRole('button', { name: 'Copy raw content' }).click()
             let clipboardText = await locator.page().evaluate('navigator.clipboard.readText()')
-            await expect(clipboardText).toContain('"features"')
+            await expect(clipboardText).toContain(expected.clipboard)
 
             await test.step('Check download', async () => {
                 const [ download ] = await Promise.all([

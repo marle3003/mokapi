@@ -9,14 +9,15 @@ To learn how Mokapi imports modules, see [Modules](/docs/javascript-api/modules.
 
 ## mokapi
 
-| Functions                                                                    | Description                                         |
-|------------------------------------------------------------------------------|-----------------------------------------------------|
-| [cron( expression, handler, \[args\] )](/docs/javascript-api/mokapi/cron.md) | Schedules a new periodic job using cron expression. |
-| [date( \[args\] )](/docs/javascript-api/mokapi/date.md)                      | Returns a textual representation of the date.       |
-| [env( name )](/docs/javascript-api/mokapi/env.md)                            | Gets the value of an environment variable.          |
-| [every( interval, handler, \[args\] )](/docs/javascript-api/mokapi/every.md) | Schedules a new periodic job with interval.         |
-| [on( event, handler, \[args\]](/docs/javascript-api/mokapi/on.md) )          | Attaches an event handler for the given event.      |
-| [sleep( time )](/docs/javascript-api/mokapi/sleep.md)                        | Suspends the execution for the specified duration.  |
+| Functions                                                                    | Description                                                   |
+|------------------------------------------------------------------------------|---------------------------------------------------------------|
+| [cron( expression, handler, \[args\] )](/docs/javascript-api/mokapi/cron.md) | Schedules a new periodic job using cron expression.           |
+| [date( \[args\] )](/docs/javascript-api/mokapi/date.md)                      | Returns a textual representation of the date.                 |
+| [env( name )](/docs/javascript-api/mokapi/env.md)                            | Gets the value of an environment variable.                    |
+| [every( interval, handler, \[args\] )](/docs/javascript-api/mokapi/every.md) | Schedules a new periodic job with interval.                   |
+| [on( event, handler, \[args\]](/docs/javascript-api/mokapi/on.md) )          | Attaches an event handler for the given event.                |
+| [sleep( time )](/docs/javascript-api/mokapi/sleep.md)                        | Suspends the execution for the specified duration.            |
+| [marshal( value, \[encoding\] )](/docs/javascript-api/mokapi/marhsal.md)     | Returns marshalled string representation of value (>= v0.9.7) |
 
 ## mokapi/http
 

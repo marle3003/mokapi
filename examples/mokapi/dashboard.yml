@@ -220,15 +220,17 @@ paths:
         content:
           application/json:
             schema: {}
+      parameters:
+        - in: header
+          name: Accept
+          schema:
+            type: string
       responses:
         "200":
           description: an example for given schema
           content:
             '*':
-              schema:
-                xml:
-                  name: root
-                  wrapped: true
+              schema: {}
     options:
       summary: preflight
       responses:
