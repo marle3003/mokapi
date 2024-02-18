@@ -101,7 +101,7 @@ export const cluster = {
                     lastHeartbeat: formatTimestamp(1654872269),
                     partitions: [3]
                 }
-            ]
+            ],
         },
         {
             name: 'bar',
@@ -117,7 +117,7 @@ export const cluster = {
                     lastHeartbeat: formatTimestamp(1654721269),
                     partitions: [1]
                 },
-            ]
+            ],
         }
     ]
 }
