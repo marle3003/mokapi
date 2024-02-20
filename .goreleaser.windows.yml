@@ -1,7 +1,6 @@
 project_name: mokapi
 builds:
-  - id: mokapi
-    env:
+  - env:
       - CGO_ENABLED=0
     ldflags:
       - -X mokapi/version.BuildVersion={{ .Version }}
@@ -10,8 +9,21 @@ builds:
       - windows
     goarch:
       - amd64
+archives:
+  - name_template: '{{ .ProjectName }}_v{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+    format: zip
+checksum:
+  name_template: "{{ .ProjectName }}_v{{ .Version }}_checksums.txt"
 snapshot:
   name_template: "{{ .Version }}"
+dockers:
+  - goos: linux
+    goarch: amd64
+    image_templates:
+      - "mokapi/mokapi:latest"
+      - "mokapi/mokapi:{{ .Tag }}"
+    dockerfile: Dockerfile-linux
+    use: buildx
 
 chocolateys:
   - name: mokapi
@@ -32,21 +44,21 @@ chocolateys:
     description: |
       **Mokapi** is an open-source tool that allows Agile, DevOps and Continuous Deployment teams
       to create and test API designs before actually building them.
-  
+      
       With Mokapi you can quickly and easily test various
       scenarios, such as delayed or failed responses without
       having to rely on a fully functional API.
       
       Mokapi helps you improve the quality of APIs and
       reduces the risk of bugs or errors in production.
-    
+      
       Its core feature are:
-    
+      
       - **Multiple Protocol support**: HTTP, HTTPS, Apache Kafka, SMTP, LDAP
       - **Everything as Code**: Reusing, version control, consistency and integrate mocks with your CI/CD.
       - **An embedded JavaScript engine** to control everything - status, headers, delays, errors or other edge cases.
       - **Patch Configuration** changes for mocking needs, rather than changing the original contract
-      - **Multiple Provider support**: File, HTTP, GIT to gather configurations and scripts.
+      - **Multiple Provider support**: File, HTTP, GIT, NPM to gather configurations and scripts.
       - **Dashboard** to see what's going on.
     release_notes: "https://github.com/marle3003/mokapi/releases/tag/v{{ .Version }}"
 

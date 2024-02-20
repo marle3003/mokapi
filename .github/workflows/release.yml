@@ -6,7 +6,7 @@ on:
       - '!v*-beta'
 
 jobs:
-  release:
+  release-linux:
     name: Release
     runs-on: ubuntu-latest
     steps:
@@ -34,13 +34,6 @@ jobs:
         run: task build-vue-app
         env:
           CGO_ENABLED: 0
-      - name: install chocolatey
-        run: |
-          mkdir -p /opt/chocolatey
-          wget -q -O - "https://github.com/chocolatey/choco/releases/download/2.2.2/chocolatey.v2.2.2.tar.gz" | tar -xz -C "/opt/chocolatey"
-          echo '#!/bin/bash' >> /usr/local/bin/choco
-          echo 'mono /opt/chocolatey/choco.exe $@' >> /usr/local/bin/choco
-          chmod +x /usr/local/bin/choco
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v2
         with:
@@ -48,8 +41,33 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
 #      - name: Publish npm
 #        run: task publish-npm-package VERSION=${GITHUB_REF##*/v}
 #        env:
 #          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+  release-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 1.20.1
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+          registry-url: 'https://registry.npmjs.org'
+      - run: choco install go-task
+      - run: npm install
+        working-directory: ./webui
+      - name: Build
+        run: task build-vue-app
+        env:
+          CGO_ENABLED: 0
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v2
+        with:
+          version: latest
+          args: release -f .goreleaser.windows.yml --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
