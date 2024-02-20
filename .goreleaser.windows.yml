@@ -16,14 +16,6 @@ checksum:
   name_template: "{{ .ProjectName }}_v{{ .Version }}_checksums.txt"
 snapshot:
   name_template: "{{ .Version }}"
-dockers:
-  - goos: linux
-    goarch: amd64
-    image_templates:
-      - "mokapi/mokapi:latest"
-      - "mokapi/mokapi:{{ .Tag }}"
-    dockerfile: Dockerfile-linux
-    use: buildx
 
 chocolateys:
   - name: mokapi
