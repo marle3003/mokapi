@@ -13,7 +13,7 @@ archives:
   - name_template: '{{ .ProjectName }}_v{{ .Version }}_{{ .Os }}_{{ .Arch }}'
     format: tar.gz
 checksum:
-  name_template: "{{ .ProjectName }}_v{{ .Version }}_checksums.txt"
+  name_template: "{{ .ProjectName }}_v{{ .Version }}_linux_checksums.txt"
 snapshot:
   name_template: "{{ .Version }}"
 dockers:
