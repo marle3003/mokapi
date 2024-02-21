@@ -24,8 +24,8 @@ Make a POST request
 import { post } from 'mokapi/http'
 
 export default function() {
-    const res = post("https://foo.bar/foo", {"foo":"bar"}, {
-        headers: {'Content-Type': "application/json"}
+    const res = post('https://foo.bar/foo', { 'foo': 'bar' }, {
+        headers: { 'Content-Type': 'application/json' }
     })
     console.log(res.json())
 }

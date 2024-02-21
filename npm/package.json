@@ -1,5 +1,5 @@
 {
-  "name": "mokapi",
+  "name": "go-mokapi",
   "version": "0.6.0",
   "description": "Easy and flexible API mocking",
   "homepage": "https://mokapi.io",
