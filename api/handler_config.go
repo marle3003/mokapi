@@ -29,11 +29,10 @@ func (h *handler) handleConfig(w http.ResponseWriter, r *http.Request) {
 	segments := strings.Split(r.URL.Path, "/")
 	if len(segments) == 3 {
 		h.getConfigs(w)
-	}
-	if len(segments) == 5 {
-		h.getConfigData(w, segments[3])
 	} else if len(segments) == 4 {
 		h.getConfigMetaData(w, segments[3])
+	} else if len(segments) == 5 {
+		h.getConfigData(w, segments[3])
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
 	}

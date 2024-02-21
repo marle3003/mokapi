@@ -118,6 +118,13 @@ export let apps = [
                         summary: "Add a new pet to the store",
                         operationId: "addPet",
                         deprecated: true,
+                        parameters: [
+                            {
+                                type: "query",
+                                name: "$format",
+                                schema: {type: "string"}
+                            }
+                        ],
                         requestBody: {
                             description: "Create a new pet in the store",
                             required: true,

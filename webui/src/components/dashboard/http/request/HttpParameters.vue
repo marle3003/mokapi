@@ -5,7 +5,7 @@ import Markdown from 'vue3-markdown-it'
 import { useExample } from '@/composables/example'
 import SourceView from '../../SourceView.vue'
 
-const {printType} = useSchema()
+const { printType } = useSchema()
 const { fetchExample } = useExample()
 
 const props = defineProps({
@@ -15,6 +15,9 @@ const props = defineProps({
 const examples: {[key: string]: Ref<string | undefined>} = {}
 if (props.parameters){
     for (let parameter of props.parameters){
+        if (!parameter.schema) {
+            continue;
+        }
         let example = fetchExample(parameter.schema, 'text/plain')
         examples[parameter.name+parameter.type] = example
     }
@@ -28,7 +31,7 @@ const sortedParameters = props.parameters?.sort((p1, p2) =>{
     return p1.name.localeCompare(p2.name)
 })
 function getParameterTypeSortOrder(type: string): number{
-    switch (type){
+    switch (type) {
         case "path": return 0
         case "query": return 1
         case "header": return 2
@@ -38,7 +41,7 @@ function getParameterTypeSortOrder(type: string): number{
 }
 function getExample(key: string){
     const example = examples[key]
-    if (!example.value){
+    if (!example || !example.value){
         return ''
     }
     return example.value
@@ -70,7 +73,7 @@ function showWarningColumn(){
             </tr>
         </thead>
         <tbody>
-            <tr v-for="parameter in sortedParameters" :key="parameter.name + parameter.type" data-bs-toggle="modal" :data-bs-target="'#modal-'+parameter.name+parameter.type">
+            <tr v-for="(parameter, index) in sortedParameters" :key="'parameter-'+index" data-bs-toggle="modal" :data-bs-target="'#modal-parameter-'+index">
                 <td>{{ parameter.name }}</td>
                 <td>{{ parameter.type }}</td>
                 <td>{{ printType(parameter.schema) }}</td>
@@ -82,8 +85,8 @@ function showWarningColumn(){
             </tr>
         </tbody>
     </table>
-    <div v-for="parameter in parameters" :key="parameter.name+parameter.type">
-        <div class="modal fade" :id="'modal-'+parameter.name+parameter.type" tabindex="-1" aria-hidden="true">
+    <div v-for="(parameter, index) in parameters" :key="'parameter-'+index">
+        <div class="modal fade" :id="'modal-parameter-'+index" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content">
                     <div class="modal-body">
@@ -123,15 +126,15 @@ function showWarningColumn(){
                                     </div>
                                     <div class="row">
                                         <ul class="nav nav-pills tab-sm tab-params" role="tabList">
-                                            <li class="nav-link show active" :id="'pills-body-tab'+parameter.name+parameter.type" data-bs-toggle="pill" :data-bs-target="'#pills-schema'+parameter.name+parameter.type" type="button" role="tab" :aria-controls="'pills-schema'+parameter.name+parameter.type" aria-selected="true">Schema</li>
-                                            <li class="nav-link" :id="'pills-header-tab'+parameter.name+parameter.type" data-bs-toggle="pill" :data-bs-target="'#pills-example'+parameter.name+parameter.type" type="button" role="tab" :aria-controls="'pills-example'+parameter.name+parameter.type" aria-selected="false">Example</li>
+                                            <li class="nav-link show active" :id="'pills-body-tab-parameter-'+index" data-bs-toggle="pill" :data-bs-target="'#pills-schema-parameter-'+index" type="button" role="tab" :aria-controls="'pills-schema-parameter-'+index" aria-selected="true">Schema</li>
+                                            <li class="nav-link" :id="'pills-header-tab-parameter-'+index" data-bs-toggle="pill" :data-bs-target="'#pills-example-parameter-'+index" type="button" role="tab" :aria-controls="'pills-example-parameter-'+index" aria-selected="false">Example</li>
                                         </ul>
 
-                                        <div class="tab-content" :id="'pills-tabParameter'+parameter.name+parameter.type">
-                                            <div class="tab-pane fade show active" :id="'pills-schema'+parameter.name+parameter.type" role="tabpanel">
+                                        <div class="tab-content" :id="'pills-tabParameter-parameter-'+index">
+                                            <div class="tab-pane fade show active" :id="'pills-schema-parameter-'+index" role="tabpanel">
                                                 <source-view :source="JSON.stringify(parameter.schema)" content-type="application/json" :hide-content-type="true" />
                                             </div>
-                                            <div class="tab-pane fade" :id="'pills-example'+parameter.name+parameter.type" role="tabpanel">
+                                            <div class="tab-pane fade" :id="'pills-example-parameter-'+index" role="tabpanel">
                                                 <source-view :source="getExample(parameter.name+parameter.type)" content-type="text/plain" :hide-content-type="true" />
                                             </div>
                                         </div>

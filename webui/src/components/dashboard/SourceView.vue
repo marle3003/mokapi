@@ -21,10 +21,16 @@ const code = computed(() => {
 })
 
 const lines = computed(() => {
+  if (!code.value) {
+    return '0'
+  }
   return code.value.split('\n').length
 })
 
 const size = computed(() => {
+  if (!props.source) {
+    return format(0)
+  }
   return format(new Blob([props.source]).size)
 })
 

@@ -197,7 +197,7 @@ func writeJsonBody(w http.ResponseWriter, i interface{}) {
 	}
 	_, err = w.Write(b)
 	if err != nil {
-		writeError(w, err, http.StatusInternalServerError)
+		log.Errorf("write response body failed: %v", err)
 	}
 }
 
