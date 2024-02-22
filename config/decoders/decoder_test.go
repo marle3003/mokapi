@@ -49,7 +49,7 @@ func TestLoad(t *testing.T) {
 				}{}
 				os.Args = append(os.Args, "mokapi.exe")
 				err := os.Setenv("MOKAPI_name", "bar")
-				defer os.Unsetenv("MOKAPI_foo")
+				defer os.Unsetenv("MOKAPI_name")
 				require.NoError(t, err)
 
 				err = Load([]ConfigDecoder{&FlagDecoder{}}, s)
@@ -66,12 +66,56 @@ func TestLoad(t *testing.T) {
 				os.Args = append(os.Args, "mokapi.exe")
 				os.Args = append(os.Args, "--name=bar")
 				err := os.Setenv("MOKAPI_name", "barr")
-				defer os.Unsetenv("MOKAPI_foo")
+				defer os.Unsetenv("MOKAPI_name")
 				require.NoError(t, err)
 
 				err = Load([]ConfigDecoder{&FlagDecoder{}}, s)
 				require.NoError(t, err)
 				require.Equal(t, "barr", s.Name)
+			},
+		},
+		{
+			name: "env var array",
+			f: func(t *testing.T) {
+				s := &struct {
+					Urls []string
+				}{}
+				os.Args = append(os.Args, "mokapi.exe")
+				err := os.Setenv("MOKAPI_urls[0]", "https://foo.bar")
+				defer os.Unsetenv("MOKAPI_urls[0]")
+				require.NoError(t, err)
+				err = os.Setenv("MOKAPI_urls[1]", "https://mokapi.io")
+				require.NoError(t, err)
+				defer os.Unsetenv("MOKAPI_urls[1]")
+
+				err = Load([]ConfigDecoder{&FlagDecoder{}}, s)
+				require.NoError(t, err)
+				require.Contains(t, s.Urls, "https://foo.bar")
+				require.Contains(t, s.Urls, "https://mokapi.io")
+			},
+		},
+		{
+			name: "env var array update index",
+			f: func(t *testing.T) {
+				s := &struct {
+					Items []struct {
+						Name  string
+						Value int64
+					}
+				}{}
+				os.Args = append(os.Args, "mokapi.exe")
+				err := os.Setenv("MOKAPI_items[0].name", "mokapi")
+				defer os.Unsetenv("MOKAPI_items[0].name")
+				require.NoError(t, err)
+				err = os.Setenv("MOKAPI_items[0].value", "123")
+				require.NoError(t, err)
+				defer os.Unsetenv("MOKAPI_items[0].value")
+
+				err = Load([]ConfigDecoder{&FlagDecoder{}}, s)
+				require.NoError(t, err)
+				require.Len(t, s.Items, 1)
+				require.Equal(t, s.Items[0].Name, "mokapi")
+				require.Equal(t, s.Items[0].Value, int64(123))
 			},
 		},
 		{

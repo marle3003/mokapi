@@ -3,6 +3,7 @@ package git
 import (
 	"context"
 	"fmt"
+	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -11,6 +12,7 @@ import (
 	"mokapi/config/dynamic/provider/file"
 	"mokapi/config/static"
 	"mokapi/safe"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -23,6 +25,7 @@ type repository struct {
 	repoUrl   string
 	localPath string
 	ref       string
+	auth      *static.GitAuth
 
 	repo        *git.Repository
 	wt          *git.Worktree
@@ -41,14 +44,24 @@ func New(config static.GitProvider) *Provider {
 		gitUrls = append(gitUrls, config.Url)
 	}
 
+	repoConfigs := config.Repositories
+	if len(config.Url) > 0 {
+		repoConfigs = append(repoConfigs, static.GitRepo{Url: config.Url})
+	}
+	for _, url := range config.Urls {
+		if len(url) > 0 {
+			repoConfigs = append(repoConfigs, static.GitRepo{Url: url})
+		}
+	}
+
 	var repos []*repository
-	for _, gitUrl := range gitUrls {
+	for _, repoConfig := range repoConfigs {
 		path, err := os.MkdirTemp("", "mokapi_git_*")
 		if err != nil {
 			log.Errorf("unable to create temp dir for git provider: %v", err)
 		}
 
-		u, err := url.Parse(gitUrl)
+		u, err := url.Parse(repoConfig.Url)
 		if err != nil {
 			log.Errorf("unable to parse git url %v: %v", config.Url, err)
 		}
@@ -62,11 +75,12 @@ func New(config static.GitProvider) *Provider {
 		}
 
 		repos = append(repos, &repository{
-			url:       gitUrl,
+			url:       repoConfig.Url,
 			repoUrl:   u.String(),
 			localPath: path,
 			ref:       ref,
 			hash:      plumbing.Hash{},
+			auth:      repoConfig.Auth,
 		})
 	}
 
@@ -156,9 +170,18 @@ func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
 }
 
 func (p *Provider) initRepository(r *repository, ch chan *dynamic.Config, pool *safe.Pool) error {
+	repoUrl := r.repoUrl
+	if r.auth != nil {
+		t, err := authGitHub(r.auth.GitHub)
+		if err != nil {
+			return err
+		}
+		repoUrl = strings.Replace(repoUrl, "://", fmt.Sprintf("://x-access-token:%s@", t), 1)
+	}
+
 	var err error
 	r.repo, err = git.PlainClone(r.localPath, false, &git.CloneOptions{
-		URL: r.repoUrl,
+		URL: repoUrl,
 	})
 	if err != nil {
 		return fmt.Errorf("unable to clone git %q: %v", r.repoUrl, err)
@@ -263,4 +286,16 @@ func getUrl(r *repository, file *url.URL) *url.URL {
 	q.Add("file", path)
 	u.RawQuery = q.Encode()
 	return u
+}
+
+func authGitHub(auth *static.GitHubAuth) (string, error) {
+	key, err := auth.PrivateKey.Read("")
+	if err != nil {
+		return "", err
+	}
+	itr, err := ghinstallation.New(http.DefaultTransport, auth.AppId, auth.InstallationId, key)
+	if err != nil {
+		return "", err
+	}
+	return itr.Token(context.Background())
 }

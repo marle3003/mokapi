@@ -53,6 +53,23 @@ type GitProvider struct {
 	Url          string
 	Urls         []string
 	PullInterval string `yaml:"pullInterval"`
+
+	Repositories []GitRepo
+}
+
+type GitRepo struct {
+	Url  string
+	Auth *GitAuth
+}
+
+type GitAuth struct {
+	GitHub *GitHubAuth
+}
+
+type GitHubAuth struct {
+	AppId          int64
+	InstallationId int64
+	PrivateKey     tls.FileOrContent
 }
 
 type HttpProvider struct {
