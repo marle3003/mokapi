@@ -21,14 +21,6 @@ Make a DELETE request
 ## Example
 
 ```javascript
-import http from 'mokapi/http'
-
-export default function() {
-    http.delete("https://foo.bar/foo")
-}
-```
-
-```javascript
 import { del } from 'mokapi/http'
 
 export default function() {

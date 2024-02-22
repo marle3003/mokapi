@@ -41,10 +41,10 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#      - name: Publish npm
-#        run: task publish-npm-package VERSION=${GITHUB_REF##*/v}
-#        env:
-#          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish npm
+        run: task publish-npm-package VERSION=${GITHUB_REF##*/v}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
   release-windows:
     runs-on: windows-latest
     steps:
