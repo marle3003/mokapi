@@ -40,7 +40,7 @@ module.exports = class Server {
             filePath = path.join(baseDir, filePath)
             fs.readFile(filePath, function(error, content) {
                 if (error) {
-                    console.log('ERROR: '+error)
+                    console.error('ERROR: '+error)
                     if(error.code == 'ENOENT'){
                         fs.readFile('./404.html', function(error, content) {
                             response.writeHead(200, { 'Content-Type': contentType });

@@ -16,7 +16,7 @@ const Server = require('./server');
       return
     }
     visited.add(url.pathname)
-    console.log(`crawling ${url.href}...`)
+    console.info(`crawling ${url.href}...`)
     const page = await browser.newPage();
     await page.goto(url.href, {
       waitUntil: 'networkidle',

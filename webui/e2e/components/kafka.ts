@@ -104,7 +104,6 @@ export function useKafkaMessages() {
                 let columns = ['Key', 'Message', 'Topic', 'Offset', 'Partition', 'Time']
                 if (!withTopic) {
                     columns.splice(2,1)
-                    console.log(columns)
                 }
 
                 const messages = await useTable(table, columns)

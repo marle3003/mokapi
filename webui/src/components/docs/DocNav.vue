@@ -7,8 +7,6 @@ const props = defineProps<{
     config: DocConfig,
 }>()
 
-console.log(props.levels)
-
 const root = computed(() => <DocEntry>props.config[props.levels[0]])
 
 function matchLevel(label: any, level: number) {
@@ -56,7 +54,6 @@ function isExpanded(item: DocEntry | string) {
     if (typeof item === 'string') {
         return false
     }
-    console.log(item.expanded)
     return item.expanded || false
 }
 </script>
