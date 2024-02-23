@@ -1,8 +1,8 @@
 ---
-title: "Javascript API: delete"
+title: del( url, [body], [args] )
 description: Make an HTTP DELETE request
 ---
-# delete( url, [body], [args] )
+# del( url, [body], [args] )
 
 Make a DELETE request
 

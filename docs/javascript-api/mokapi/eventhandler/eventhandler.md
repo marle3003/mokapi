@@ -1,5 +1,5 @@
 ---
-title: "EventHandler"
+title: EventHandler
 description: EventHandler is a function that is executed when an event is triggered.
 ---
 # EventHandler

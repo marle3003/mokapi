@@ -1,5 +1,5 @@
 ---
-title: "Javascript API: put"
+title: put( url, [body], [args] )
 description: Make an HTTP PUT request
 ---
 # put( url, [body], [args] )

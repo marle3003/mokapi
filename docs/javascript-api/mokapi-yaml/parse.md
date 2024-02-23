@@ -1,5 +1,5 @@
 ---
-title: "Javascript API: parse"
+title: parse( text )
 description: Parses a YAML string, constructing the JavaScript value or object described by the string.
 ---
 # parse( text )

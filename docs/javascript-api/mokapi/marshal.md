@@ -1,5 +1,5 @@
 ---
-title: "Javascript API: marshal"
+title: marshal( value, [encoding] )
 description: Returns marshalled string representation of value
 ---
 # marshal( value, [encoding] )

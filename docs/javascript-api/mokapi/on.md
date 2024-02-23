@@ -1,5 +1,5 @@
 ---
-title: "Javascript API: on"
+title: on( event, handler, [args] )
 description: Attaches an event handler for the given event.
 ---
 # on( event, handler, [args] )

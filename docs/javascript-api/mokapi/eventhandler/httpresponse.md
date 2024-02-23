@@ -1,5 +1,5 @@
 ---
-title: "Javascript API: HttpResponse"
+title: HttpResponse
 description: HttpResponse is an object used by HttpEventHandlers
 ---
 # HttpResponse

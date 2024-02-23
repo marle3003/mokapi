@@ -1,5 +1,5 @@
 ---
-title: "Javascript API: open"
+title: open( filePath, [args] )
 description: Opens an existing file and reads its entire contents.
 ---
 # open( filePath, [args] )

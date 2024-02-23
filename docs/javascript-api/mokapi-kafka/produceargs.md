@@ -1,5 +1,5 @@
 ---
-title: "Javascript API: ProduceArgs"
+title: ProduceArgs
 description: ProduceArgs is an object used by functions in the module mokapi/kafka
 ---
 # ProduceArgs

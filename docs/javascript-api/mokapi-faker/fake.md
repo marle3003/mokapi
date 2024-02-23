@@ -1,5 +1,5 @@
 ---
-title: "Javascript API: fake"
+title: fake( schema )
 description: Creates a fake based on the given schema.
 ---
 # fake( schema )

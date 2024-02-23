@@ -1,5 +1,5 @@
 ---
-title: "Javascript API: Response"
+title: Response
 description: Response object contains response data from an HTTP request
 ---
 # Response

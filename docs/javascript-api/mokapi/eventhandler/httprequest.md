@@ -1,5 +1,5 @@
 ---
-title: "Javascript API: HttpRequest"
+title: HttpRequest
 description: HttpRequest is an object used by HttpEventHandlers
 ---
 # HttpRequest

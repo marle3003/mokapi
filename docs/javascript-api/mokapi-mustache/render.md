@@ -1,5 +1,5 @@
 ---
-title: "Javascript API: render"
+title: render( template, scope )
 description: Renders the given mustache template with the given data
 ---
 # render( template, scope )

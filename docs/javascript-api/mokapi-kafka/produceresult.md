@@ -1,5 +1,5 @@
 ---
-title: "Javascript API: ProduceResult"
+title: ProduceResult
 description: ProduceResult is an object used by functions in the module mokapi/kafka
 ---
 # ProduceResult

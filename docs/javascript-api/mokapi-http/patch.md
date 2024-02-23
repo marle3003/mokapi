@@ -1,5 +1,5 @@
 ---
-title: "Javascript API: patch"
+title: patch( url, [body], [args] )
 description: Make an HTTP PATCH request
 ---
 # patch( url, [body], [args] )

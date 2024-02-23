@@ -1,5 +1,5 @@
 ---
-title: "Javascript API: env"
+title: env( name )
 description: Gets the value of an environment variable.
 ---
 # env( name )

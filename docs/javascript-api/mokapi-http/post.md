@@ -1,5 +1,5 @@
 ---
-title: "Javascript API: post"
+title: post( url, [body], [args] )
 description: Make an HTTP POST request
 ---
 # post( url, [body], [args] )

@@ -1,5 +1,5 @@
 ---
-title: "Javascript API: stringify"
+title: stringify( value )
 description: Converts a JavaScript value to a YAML string.
 ---
 # stringify( value )
