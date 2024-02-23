@@ -1,9 +1,10 @@
 interface DocConfig{
-  [name: string]: string | DocConfig | DocEntry
+  [name: string]: DocEntry
 }
 
 interface DocEntry {
+  expanded?: boolean
   hideInNavigation: boolean
   component?: string
-  file?: string
+  items?: {[name: string]: string | DocEntry }
 }

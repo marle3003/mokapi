@@ -58,8 +58,12 @@ type GitProvider struct {
 }
 
 type GitRepo struct {
-	Url  string
-	Auth *GitAuth
+	Url string
+	// Specifies an allow list of files to include in mokapi
+	Files []string
+	// Specifies an array of filenames pr pattern to include in mokapi
+	Include []string
+	Auth    *GitAuth
 }
 
 type GitAuth struct {

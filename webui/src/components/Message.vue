@@ -44,5 +44,6 @@ const router = useRouter()
 }
 .message{
     font-size: 1rem;
+    color: var(--color-text);
 }
 </style>

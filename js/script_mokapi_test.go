@@ -302,7 +302,7 @@ func TestScript_Mokapi_Cron(t *testing.T) {
 	}
 }
 
-func TestScript_Mokapi_On(t *testing.T) {
+func TestScript_Mokapi_On_Http(t *testing.T) {
 	testcases := []struct {
 		name string
 		f    func(t *testing.T, host *testHost)
@@ -501,6 +501,45 @@ func TestScript_Mokapi_On(t *testing.T) {
 						 export default function() {
 						  	on('http', function(data) {
 								return data.foo === 'bar'
+							})
+						 }`,
+					host, static.JsConfig{})
+				r.NoError(t, err)
+				_, err = s.RunDefault()
+				r.NoError(t, err)
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			host := &testHost{}
+
+			tc.f(t, host)
+		})
+	}
+}
+
+func TestScript_Mokapi_On_Kafka(t *testing.T) {
+	testcases := []struct {
+		name string
+		f    func(t *testing.T, host *testHost)
+	}{
+		{
+			"event",
+			func(t *testing.T, host *testHost) {
+				host.on = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+					r.Equal(t, "kafka", event)
+				}
+				s, err := New("",
+					`import { on } from 'mokapi'
+						 export default function() {
+						  	on('kafka', function(record) {
+								
 							})
 						 }`,
 					host, static.JsConfig{})

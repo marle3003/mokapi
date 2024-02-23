@@ -1,12 +1,11 @@
 ---
-title: Mokapi documentation
-description: This documentation will help you to run Mokapi in your environment
+title: Mokapi Guides
+description: These guides will help you to run Mokapi in your environment
 ---
 
-# Welcome to Mokapi documentation
+# Welcome to Mokapi guides
 
-This documentation will help you to run Mokapi in your
-environment
+These guides will help you to run Mokapi in your environment
 
 ## Get started
 

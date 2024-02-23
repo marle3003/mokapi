@@ -18,7 +18,7 @@ const imageUrl = ref<string>()
 
 const route = useRoute()
 const { resolve } = useFileResolver()
-const { level1, level2, level3, file } = resolve(nav, route)
+const { file, levels } = resolve(nav, route)
 
 let data
 let component: any
@@ -26,10 +26,8 @@ if (typeof file === 'string'){
   data = files[`/src/assets/docs/${file}`]
 } else {
   const entry = <DocEntry>file
-  if (entry.file) {
-    data = files[`/src/assets/docs/${entry.file}`]
-  } else if (entry.component) {
-    // component must be initialized in main.js
+  if (entry.component) {
+    // component must be initialized in main.ts
     component = entry.component
   }
 }
@@ -55,7 +53,8 @@ onMounted(() => {
       }
     }
   })
-  useMeta(metadata.title || level3, metadata.description, getCanonicalUrl(level1, level2, level3))
+  const title = (metadata.title || levels[3] || levels[2] || levels[1]) + ' | Mokapi ' + levels[0]
+  useMeta(title, metadata.description, getCanonicalUrl(levels))
   dialog.value = new Modal('#imageDialog', {})
 })
 function toggleSidebar() {
@@ -64,13 +63,10 @@ function toggleSidebar() {
 function toUrlPath(s: string): string {
   return s.replaceAll(/[\s\/]/g, '-').replace('&', '%26')
 }
-function getCanonicalUrl(level1: string, level2: string, level3: string | undefined) {
-  let canonical = 'https://mokapi.io/docs/' + toUrlPath(level1)
-  if (level2) {
-    canonical += `/${toUrlPath(level2)}`
-  }
-  if (level3) {
-    canonical += `/${toUrlPath(level3)}`
+function getCanonicalUrl(levels: string[]) {
+  let canonical = 'https://mokapi.io/docs/' + toUrlPath(levels[0])
+  for (let i = 1; i < levels.length; i++) {
+    canonical += `/${toUrlPath(levels[i])}`
   }
   return canonical.toLowerCase()
 }
@@ -94,10 +90,10 @@ function showImage(target: EventTarget | null) {
       </div>
       <div class="d-flex">
         <div class="text-white sidebar d-none d-md-block" :class="openSidebar ? 'open' : ''" id="sidebar">
-          <DocNav :level1="level1" :level2="level2" :level3="level3" :config="nav"/>
+          <DocNav :config="nav" :levels="levels"/>
         </div>
         <div style="flex: 1;max-width:700px;margin-bottom: 3rem;">
-          <div v-if="content" v-html="content" class="content" @click="showImage($event.target)" />
+          <div v-if="content" v-html="content" class="content" @click="showImage($event.target)"></div>
           <div v-else-if="component" class="content"><component :is="component" /></div>
           <page-not-found v-else />
         </div>
@@ -226,35 +222,6 @@ table tbody tr:hover {
 
 table.selectable tbody tr:hover {
     cursor: pointer;
-}
-
-.nav {
-  font-size: 0.94rem;
-}
-
-@media only screen and (max-width: 600px)  {
-  .nav {
-    font-size: 1.7rem;
-  }
-}
-
-.nav .nav-link {
-  padding-bottom: 5px;
-}
-
-.nav .nav-link.active {
-  color: var(--color-nav-link-active);
-}
-
-.chapter {
-  margin-bottom: 1.5rem !important;
-}
-
-.chapter-text {
-  color: var(--color-text);
-  font-weight: 700;
-  padding-left: 16px;
-  margin-bottom: 0;
 }
 
 pre {

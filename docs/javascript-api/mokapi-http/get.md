@@ -1,5 +1,5 @@
 ---
-title: "Javascript API: get"
+title: get( url, [args] )
 description: Make an HTTP GET request
 ---
 # get( url, [args] )

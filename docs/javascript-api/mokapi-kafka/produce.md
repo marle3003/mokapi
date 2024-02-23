@@ -6,9 +6,9 @@ description: Send a single message to a Kafka topic.
 
 Send a single message to a Kafka topic.
 
-| Parameter       | Type   | Description                                                                                           |
-|-----------------|--------|-------------------------------------------------------------------------------------------------------|
-| args (optional) | object | [ProduceArgs](/docs/javascript-api/mokapi-kafka/produceargs.md)  object contains definition of a type |
+| Parameter       | Type   | Description                                                                                               |
+|-----------------|--------|-----------------------------------------------------------------------------------------------------------|
+| args (optional) | object | [ProduceArgs](/docs/javascript-api/mokapi-kafka/produceargs.md) object contains Kafka produce arguments   |
 
 ## Returns
 
