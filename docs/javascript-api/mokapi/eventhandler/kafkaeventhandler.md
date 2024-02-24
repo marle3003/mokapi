@@ -24,7 +24,7 @@ import { on } from 'mokapi'
 export default function() {
     on('kafka', function(record) {
         // add header 'foo' to every Kafka message
-        record.headers = { key: 'foo', value: 'bar' }
+        record.headers = { foo: 'bar' }
     })
 }
 ```
