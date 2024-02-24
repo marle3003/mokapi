@@ -4,7 +4,7 @@ description: KafkaEventHandler is a function that is executed when a producer se
 ---
 # KafkaEventHandler
 
-KafkaEventHandler is a function that is executed when an HTTP event is triggered.
+KafkaEventHandler is a function that is executed when a Kafka message is received.
 
 | Parameter | Type    | Description                                                                                                             |
 |-----------|---------|-------------------------------------------------------------------------------------------------------------------------|

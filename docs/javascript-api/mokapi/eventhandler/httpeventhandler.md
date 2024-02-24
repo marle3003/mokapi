@@ -20,12 +20,12 @@ HttpEventHandler is a function that is executed when an HTTP event is triggered.
 ## Example
 
 ```javascript
-import { on } from 'mokapi'
+import { on, date } from 'mokapi'
 
 export default function() {
     on('http', function(request, response) {
         if (request.operationId === 'time') {
-            response.data = new Date().toISOString()
+            response.body = date()
             return true
         }
         return false

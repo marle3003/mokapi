@@ -49,7 +49,7 @@ function writeObject(obj, base) {
       xml += writeObject(obj[key], urlPath)
     }else{
       const stats = fs.statSync(path.join(docsPath, obj[key]))
-      const url = 'https://mokapi.io/docs' + urlPath
+      const url = 'https://mokapi.io/docs' + urlPath.replaceAll('/items', '')
       const node = util.format(urlTemplate, url, '0.7', stats.mtime)
       xml += node
     }

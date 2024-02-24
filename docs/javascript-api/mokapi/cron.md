@@ -24,7 +24,7 @@ Write every minute to console.
 import { every } from 'mokapi'
 
 export default function() {
-    every('* * * * *', function() {
+    cron('* * * * *', function() {
         console.log('foo')
     })
 }
