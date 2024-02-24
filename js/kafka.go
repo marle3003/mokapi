@@ -12,15 +12,6 @@ type kafkaModule struct {
 	client common.KafkaClient
 }
 
-type ProduceResult struct {
-	Cluster   string `json:"cluster"`
-	Topic     string `json:"topic"`
-	Partition int    `json:"partition"`
-	Offset    int64  `json:"offset"`
-	Key       string `json:"key"`
-	Value     string `json:"value"`
-}
-
 func newKafka(host common.Host, rt *goja.Runtime) interface{} {
 	return &kafkaModule{host: host, rt: rt, client: host.KafkaClient()}
 }
@@ -32,14 +23,7 @@ func (m *kafkaModule) Produce(v goja.Value) interface{} {
 		log.Errorf("js error: %v in %v", err, m.host.Name())
 		panic(m.rt.ToValue(err.Error()))
 	}
-	return ProduceResult{
-		Cluster:   result.Cluster,
-		Topic:     result.Topic,
-		Partition: result.Partition,
-		Offset:    result.Offset,
-		Key:       result.Key,
-		Value:     result.Value,
-	}
+	return result
 }
 
 func mapParams(args goja.Value, rt *goja.Runtime) *common.KafkaProduceArgs {

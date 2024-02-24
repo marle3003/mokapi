@@ -87,6 +87,8 @@
               "HttpEventHandler": "javascript-api/mokapi/eventhandler/httpeventhandler.md",
               "HttpRequest": "javascript-api/mokapi/eventhandler/httprequest.md",
               "HttpResponse": "javascript-api/mokapi/eventhandler/httpresponse.md",
+              "KafkaEventHandler": "javascript-api/mokapi/eventhandler/kafkaeventhandler.md",
+              "KafkaRecord": "javascript-api/mokapi/eventhandler/kafkarecord.md",
               "ScheduledEventArgs": "javascript-api/mokapi/scheduledeventargs.md"
             }
           }

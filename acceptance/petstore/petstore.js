@@ -3,11 +3,9 @@ import kafka from 'mokapi/kafka'
 
 export default function() {
     on('kafka', function (record) {
-        record.headers = []
-        record.headers.push({key: 'foo', value: 'bar'})
-        console.log(record)
+        record.headers = { foo: 'bar' }
     })
-    kafka.produce({topic: 'petstore.order-event'})
+     kafka.produce({ topic: 'petstore.order-event' })
     on('http', function(request, response) {
         if (request.operationId === "getPetById") {
             switch (request.path.petId) {

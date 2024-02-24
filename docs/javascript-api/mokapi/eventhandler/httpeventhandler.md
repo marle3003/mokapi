@@ -1,6 +1,6 @@
 ---
 title: HttpEventHandler
-description: EventHandler is a function that is executed when an event is triggered.
+description: HttpEventHandler is a function that is executed when an event is triggered.
 ---
 # HttpEventHandler
 

@@ -23,6 +23,11 @@ type BaseSuite struct {
 }
 
 func (suite *BaseSuite) initCmd(cfg *static.Config) {
+	events.SetStore(20, events.NewTraits().WithNamespace("http"))
+	events.SetStore(20, events.NewTraits().WithNamespace("kafka"))
+	events.SetStore(20, events.NewTraits().WithNamespace("smtp"))
+	events.SetStore(20, events.NewTraits().WithNamespace("ldap"))
+
 	suite.cfg = cfg
 	cmd, err := cmd.Start(cfg)
 	require.NoError(suite.T(), err)
@@ -30,18 +35,6 @@ func (suite *BaseSuite) initCmd(cfg *static.Config) {
 
 	// wait for server start
 	time.Sleep(2 * time.Second)
-}
-
-func (suite *BaseSuite) BeforeTest(_, _ string) {
-	events.SetStore(20, events.NewTraits().WithNamespace("http"))
-	events.SetStore(20, events.NewTraits().WithNamespace("kafka"))
-	events.SetStore(20, events.NewTraits().WithNamespace("smtp"))
-	events.SetStore(20, events.NewTraits().WithNamespace("ldap"))
-}
-
-func (suite *BaseSuite) AfterTest(_, _ string) {
-	events.Reset()
-	suite.cmd.App.Monitor.Reset()
 }
 
 func (suite *BaseSuite) TearDownSuite() {

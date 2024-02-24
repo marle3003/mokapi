@@ -9,7 +9,6 @@ import (
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/metaData"
 	"mokapi/kafka/produce"
-	"mokapi/runtime/events"
 	"mokapi/try"
 	"net/http"
 	"testing"
@@ -48,7 +47,7 @@ func (suite *PetStoreSuite) TestApi() {
 	})
 }
 
-func (suite *PetStoreSuite) TestJsFile() {
+func (suite *PetStoreSuite) TestJsHttpHandler() {
 	// ensure scripts are executed
 	time.Sleep(2 * time.Second)
 	try.GetRequest(suite.T(), "http://127.0.0.1:18080/pet/2",
@@ -72,8 +71,10 @@ func (suite *PetStoreSuite) TestJsFile() {
 		try.HasStatusCode(http.StatusOK),
 		try.HasBody(`{"id":8091383101528396988,"category":{"id":-5704359215120949391,"name":"P0xJebAAT"},"name":"Zoe","photoUrls":["KnumE07P","","69Iy UEz Z"],"tags":[{"id":-8563566128195698032,"name":"zlgkT3F"},{"id":4331435074819496151,"name":"RZOOB "},{"id":7252227033529500492,"name":"I6deg7ktTUqtKw"}],"status":"pending"}`))
 
-	e := events.GetEvents(events.NewTraits().WithNamespace("http"))
-	require.Len(suite.T(), e, 4)
+	// test http metrics
+	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%s/api/metrics/http?path=/pet/{petId}", suite.cfg.Api.Port), nil,
+		try.BodyContains(`http_requests_total{service=\"Swagger Petstore\",endpoint=\"/pet/{petId}\"}","value":4}`),
+	)
 }
 
 func (suite *PetStoreSuite) TestLuaFile() {
@@ -85,16 +86,16 @@ func (suite *PetStoreSuite) TestLuaFile() {
 		try.HasBody("[{\"name\":\"Gidget\",\"photoUrls\":[\"http://www.pets.com/gidget.png\"],\"status\":\"pending\"},{\"name\":\"Max\",\"photoUrls\":[\"http://www.pets.com/max.png\"],\"status\":\"available\"}]"))
 }
 
-func (suite *PetStoreSuite) TestGetPetById() {
-	try.GetRequest(suite.T(), "http://127.0.0.1:18080/pet/1",
+func (suite *PetStoreSuite) TestGetOrderById() {
+	try.GetRequest(suite.T(), "http://127.0.0.1:18080/store/order/1",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(http.StatusOK),
-		try.HasBody(`{"id":-8379641344161477543,"category":{"id":7424164296119123376,"name":"id1"},"name":"doggie","photoUrls":["OwQ;ezYvmtLRfv","ZL","evUwYR5rljgmr z"],"tags":[{"id":1502793126295339460,"name":"Wgsfi6SFflnzb"},{"id":-7391388163417809074,"name":"m"},{"id":1750077968446365139,"name":"DHXGaQPSE"},{"id":-4201786370340656298,"name":"KwoQEfHPR99"}],"status":"pending"}`))
+		try.HasBody(`{"id":-8379641344161477543,"petId":7424164296119123376,"quantity":-652938557,"shipDate":"1989-01-30T07:58:01Z","status":"approved","complete":false}`))
 
-	try.GetRequest(suite.T(), "https://localhost:18443/pet/10",
+	try.GetRequest(suite.T(), "https://localhost:18443/store/order/10",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(http.StatusOK),
-		try.HasBody(`{"id":2780694049194110144,"category":{"id":358698270060065978,"name":" qcXEuR"},"name":"doggie","photoUrls":["euX","cJQIn"],"tags":[{"id":-7925257062691635148,"name":"XLc.OqnSYDNeJn"},{"id":-8530491859977087890,"name":"Q2sq4zDyvB0Q"},{"id":-3767257451481315098,"name":"M9J7SZsU"},{"id":2343312407715696586,"name":"e"},{"id":-8004558519261086467,"name":"V"}],"status":"available"}`))
+		try.HasBody(`{"id":-3104734502000063264,"petId":5549848391338120894,"quantity":-924758850,"shipDate":"1989-11-19T16:57:16Z","status":"approved","complete":true}`))
 }
 
 func (suite *PetStoreSuite) TestKafka_TopicConfig() {
@@ -167,12 +168,24 @@ func (suite *PetStoreSuite) TestKafkaProduce() {
 }
 
 func (suite *PetStoreSuite) TestEvents() {
-	try.GetRequest(suite.T(), "http://127.0.0.1:18080/pet/1",
+	try.GetRequest(suite.T(), "http://127.0.0.1:18080/user/bob",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(http.StatusOK))
 
-	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%v/api/events?namespace=http&name=Swagger%%20Petstore", suite.cfg.Api.Port),
+	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%v/api/events?namespace=http&name=Swagger%%20Petstore&path=/user/{username}", suite.cfg.Api.Port),
 		nil,
 		try.HasStatusCode(http.StatusOK),
-		try.BodyContains("Swagger Petstore"))
+		try.BodyContains(`"url":"http://127.0.0.1:18080/user/bob"`))
+}
+
+func (suite *PetStoreSuite) TestKafkaEventAndMetrics() {
+	// test kafka metrics
+	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%s/api/metrics/kafka", suite.cfg.Api.Port), nil,
+		try.BodyContains(`kafka_messages_total{service=\"A sample AsyncApi Kafka streaming api\",topic=\"petstore.order-event\"}","value":1}`),
+	)
+
+	// test kafka events, header added by JavaScript event handler
+	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%s/api/events?namespace=kafka", suite.cfg.Api.Port), nil,
+		try.BodyContains(`"headers":{"foo":"bar"}`),
+	)
 }

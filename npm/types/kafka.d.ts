@@ -27,7 +27,7 @@ declare interface KafkaRecord {
     time: number
     key: number[]
     value: number[]
-    headers: KafkaHeader[]
+    headers: { [name: string]: string }
 }
 
 declare interface KafkaHeader {

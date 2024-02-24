@@ -34,7 +34,7 @@ func (c *kafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 		return nil, fmt.Errorf("produce kafka message to '%v' failed: invalid topic configuration", t.Name)
 	}
 
-	rb, err := c.createRecordBatch(args.Key, args.Value, ch.Value)
+	rb, err := c.createRecordBatch(args.Key, args.Value, args.Headers, ch.Value)
 	if err != nil {
 		return nil, fmt.Errorf("produce kafka message to '%v' failed: %w", t.Name, err)
 	}
@@ -48,6 +48,11 @@ func (c *kafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 	v := kafka.BytesToString(rb.Records[0].Value)
 	t.Store().UpdateMetrics(c.app.Monitor.Kafka, t, p, rb)
 
+	h := map[string]string{}
+	for _, v := range rb.Records[0].Headers {
+		h[v.Key] = string(v.Value)
+	}
+
 	return &common.KafkaProduceResult{
 		Cluster:   config.Info.Name,
 		Topic:     t.Name,
@@ -55,6 +60,7 @@ func (c *kafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 		Offset:    rb.Records[0].Offset,
 		Key:       k,
 		Value:     v,
+		Headers:   h,
 	}, nil
 
 }
@@ -152,7 +158,7 @@ func (c *kafkaClient) get(cluster string, topic string, partition int) (t *store
 	return
 }
 
-func (c *kafkaClient) createRecordBatch(key, value interface{}, config *asyncApi.Channel) (rb kafka.RecordBatch, err error) {
+func (c *kafkaClient) createRecordBatch(key, value interface{}, headers map[string]interface{}, config *asyncApi.Channel) (rb kafka.RecordBatch, err error) {
 	msg := config.Publish.Message.Value
 	if msg == nil {
 		err = fmt.Errorf("message configuration missing")
@@ -191,12 +197,40 @@ func (c *kafkaClient) createRecordBatch(key, value interface{}, config *asyncApi
 		}
 	}
 
+	var recordHeaders []kafka.RecordHeader
+	recordHeaders, err = getHeaders(headers, msg.Headers)
+	if err != nil {
+		return
+	}
+
 	rb = kafka.RecordBatch{Records: []kafka.Record{
 		{
 			Key:     kafka.NewBytes(k),
 			Value:   kafka.NewBytes(v),
-			Headers: nil,
+			Headers: recordHeaders,
 		},
 	}}
 	return
+}
+
+// todo: only specified headers should be written
+func getHeaders(headers map[string]interface{}, r *schema.Ref) ([]kafka.RecordHeader, error) {
+	var result []kafka.RecordHeader
+	for k, v := range headers {
+		var headerSchema *schema.Ref
+		if r != nil && r.Value != nil && r.Value.Type == "object" {
+			headerSchema = r.Value.Properties.Get(k)
+
+		}
+
+		b, err := headerSchema.Marshal(v, media.Any)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, kafka.RecordHeader{
+			Key:   k,
+			Value: b,
+		})
+	}
+	return result, nil
 }

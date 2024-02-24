@@ -30,6 +30,15 @@ func (suite *LdapSuite) TearDownSuite() {
 	suite.Client.Close()
 }
 
+func (suite *BaseSuite) BeforeTest(_, _ string) {
+	events.SetStore(20, events.NewTraits().WithNamespace("ldap"))
+}
+
+func (suite *LdapSuite) AfterTest(_, _ string) {
+	events.Reset()
+	suite.cmd.App.Monitor.Reset()
+}
+
 func (suite *LdapSuite) TestBind() {
 	res, err := suite.Client.Bind("", "")
 	require.NoError(suite.T(), err)
