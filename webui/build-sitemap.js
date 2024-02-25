@@ -45,9 +45,14 @@ function writeObject(obj, base) {
     let segment = key.split(' ').join('-').split('/').join('-').replace('&', '%26')
     const urlPath = base + '/' + segment.toLowerCase()
 
-    if (typeof obj[key] !== "string") {
+    if (obj[key].hasOwnProperty("index")) {
+      const stats = fs.statSync(path.join(docsPath, key))
+      const url = 'https://mokapi.io/docs' + urlPath.replaceAll('/items', '')
+      const node = util.format(urlTemplate, url, '0.7', stats.mtime)
+      xml += node
+    } else if (typeof obj[key] !== "string") {
       xml += writeObject(obj[key], urlPath)
-    }else{
+    } else{
       const stats = fs.statSync(path.join(docsPath, obj[key]))
       const url = 'https://mokapi.io/docs' + urlPath.replaceAll('/items', '')
       const node = util.format(urlTemplate, url, '0.7', stats.mtime)

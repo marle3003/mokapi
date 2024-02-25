@@ -22,16 +22,20 @@ const { file, levels } = resolve(nav, route)
 
 let data
 let component: any
+let content: string | undefined
+let metadata: any
 if (typeof file === 'string'){
-  data = files[`/src/assets/docs/${file}`]
+  data = files[`/src/assets/docs/${file}`];
+  ({ content, metadata } = useMarkdown(data))
 } else {
   const entry = <DocEntry>file
   if (entry.component) {
     // component must be initialized in main.ts
     component = entry.component
+    metadata = entry
+    console.log(entry)
   }
 }
-const { content, metadata } = useMarkdown(data)
 
 onMounted(() => {
   setTimeout(() => {
@@ -53,7 +57,7 @@ onMounted(() => {
       }
     }
   })
-  const title = (metadata.title || levels[3] || levels[2] || levels[1]) + ' | Mokapi ' + levels[0]
+  const title = (metadata.title || levels[3] || levels[2] || levels[1] || levels[0]) + ' | Mokapi ' + levels[0]
   useMeta(title, metadata.description, getCanonicalUrl(levels))
   dialog.value = new Modal('#imageDialog', {})
 })

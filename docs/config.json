@@ -133,11 +133,13 @@
     }
   },
   "Examples": {
+    "index": {
+      "component": "examples",
+      "hideInNavigation": true,
+      "title": "Learn with Mokapi's tutorials & examples",
+      "description": "Learn how to get started with Mokapi and simulate APIs that don't even exist yet."
+    },
     "items": {
-      "Index": {
-        "component": "examples",
-        "hideInNavigation": true
-      },
       "Examples": {
         "expanded": true,
         "items": {
@@ -154,11 +156,13 @@
     }
   },
   "Blogs": {
+    "index": {
+      "component": "blogs",
+      "hideInNavigation": true,
+      "title": "Mocking and Testing",
+      "description": "Learn about API mocking and contract testing. Improve your development skills."
+    },
     "items": {
-      "Index": {
-        "component": "blogs",
-        "hideInNavigation": true
-      },
       "Automation Testing in Agile Development": "blogs/automation-testing-agile-development.md"
     }
   },

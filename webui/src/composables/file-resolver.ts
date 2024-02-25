@@ -28,9 +28,13 @@ export function useFileResolver() {
     function getLevel(level: string, file: DocEntry | string) {
         if (typeof file !== 'string' && file.items) {
             if (!level) {
-                // get first element as 'index' file
-                level = Object.keys(file.items)[0];
-                ({ file } = find(level, <DocEntry>file))
+                if (file.index) {
+                    file = file.index
+                } else {
+                    // get first element as 'index' file
+                    level = Object.keys(file.items)[0];
+                    ({ file } = find(level, <DocEntry>file))
+                }
             } else{
                 ({ name: level, file } = find(level,  <DocEntry>file))
             }
