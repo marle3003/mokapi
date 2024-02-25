@@ -21,7 +21,7 @@ By default, the first execution happens immediately, check ScheduledEventArgs
 Write every minute to console.
 
 ```javascript
-import { every } from 'mokapi'
+import { cron } from 'mokapi'
 
 export default function() {
     cron('* * * * *', function() {

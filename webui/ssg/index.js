@@ -26,9 +26,9 @@ const Server = require('./server');
       for (const script of document.querySelectorAll('script')) {
         script.remove();
        }
-       for (const script of document.querySelectorAll('link'))  {
-           if (script.as === 'script') {
-               script.remove();
+       for (const link of document.querySelectorAll('link'))  {
+           if (link.as === 'script') {
+            link.remove();
            }
        }
     });
