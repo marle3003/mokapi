@@ -30,7 +30,7 @@ export default function() {
         },
         {
             orderId: 874,
-            customer: Alice
+            customer: 'Alice'
         }
     ]
     
