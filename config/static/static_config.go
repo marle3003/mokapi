@@ -62,8 +62,9 @@ type GitRepo struct {
 	// Specifies an allow list of files to include in mokapi
 	Files []string
 	// Specifies an array of filenames pr pattern to include in mokapi
-	Include []string
-	Auth    *GitAuth
+	Include      []string
+	Auth         *GitAuth
+	PullInterval string `yaml:"pullInterval"`
 }
 
 type GitAuth struct {
@@ -71,9 +72,9 @@ type GitAuth struct {
 }
 
 type GitHubAuth struct {
-	AppId          int64
-	InstallationId int64
-	PrivateKey     tls.FileOrContent
+	AppId          int64             `yaml:"appId"`
+	InstallationId int64             `yaml:"installationId"`
+	PrivateKey     tls.FileOrContent `yaml:"privateKey"`
 }
 
 type HttpProvider struct {

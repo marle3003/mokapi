@@ -27,13 +27,29 @@ A list of all options that can be used with the npm provider, refer to
 the [reference page](/docs/configuration/reference.md).
 
 ### Packages
-Defines NPM packages that Mokapi is looks for
+Defines NPM packages that Mokapi looks for.
 
 #### Files
-Specifies an allow list of files. Mokapi will only read these files
+Specifies an allow list of files. Mokapi will only read these files.
+
+```yaml tab=File (YAML)
+providers:
+  npm:
+    packages:
+      - name: name
+        files: ['dist/api.json']
+```
 
 #### Include
 Specifies an array of filenames or patterns. Mokapi will only read these files.
+
+```yaml tab=File (YAML)
+providers:
+  npm:
+    packages:
+      - name: name
+        include: [dist/**/*.json]
+```
 
 ### GlobalFolders
 By default, Mokapi begins to search for a directory named "node_modules".

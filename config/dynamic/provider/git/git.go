@@ -31,6 +31,7 @@ type repository struct {
 	wt          *git.Worktree
 	pullOptions *git.PullOptions
 	hash        plumbing.Hash
+	config      static.GitRepo
 }
 
 type Provider struct {
@@ -81,6 +82,7 @@ func New(config static.GitProvider) *Provider {
 			ref:       ref,
 			hash:      plumbing.Hash{},
 			auth:      repoConfig.Auth,
+			config:    repoConfig,
 		})
 	}
 
@@ -131,36 +133,7 @@ func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
 				return
 			case <-ticker.C:
 				for _, r := range p.repositories {
-					if r.repo == nil {
-						continue
-					}
-					err = r.repo.Fetch(&git.FetchOptions{RefSpecs: []config.RefSpec{"refs/*:refs/*", "HEAD:refs/heads/HEAD"}})
-					if err != nil {
-						if err != git.NoErrAlreadyUpToDate {
-							log.Errorf("git fetch error %v: %v", r.url, err.Error())
-						}
-						continue
-					}
-
-					err = r.wt.Pull(r.pullOptions)
-					if err != nil {
-						if err != git.NoErrAlreadyUpToDate {
-							log.Errorf("unable to pull: %v", err.Error())
-						}
-						continue
-					}
-
-					ref, err := r.repo.Head()
-					if err != nil {
-						log.Errorf("unable to get head: %v", err.Error())
-						continue
-					}
-
-					hash := ref.Hash()
-					if hash != r.hash {
-						log.Infof("updated git repository from remote")
-						r.hash = hash
-					}
+					pull(r)
 				}
 			}
 		}
@@ -219,12 +192,24 @@ func (p *Provider) initRepository(r *repository, ch chan *dynamic.Config, pool *
 	chFile := make(chan *dynamic.Config)
 	p.startFileProvider(r.localPath, chFile, pool)
 
+	err = startPullInterval(r, pool)
+	if err != nil {
+		return err
+	}
 	pool.Go(func(ctx context.Context) {
 		for {
 			select {
 			case <-ctx.Done():
 				return
 			case c := <-chFile:
+				path := c.Info.Url.Path
+				if len(c.Info.Url.Opaque) > 0 {
+					path = c.Info.Url.Opaque
+				}
+				relative := path[len(r.localPath)+1:]
+				if skip(relative, r) {
+					continue
+				}
 
 				u := getUrl(r, c.Info.Url)
 				gitFile := u.Query()["file"][0][1:]
@@ -298,4 +283,100 @@ func authGitHub(auth *static.GitHubAuth) (string, error) {
 		return "", err
 	}
 	return itr.Token(context.Background())
+}
+
+func skip(path string, repo *repository) bool {
+	if len(repo.config.Files) == 0 && len(repo.config.Include) == 0 {
+		return false
+	}
+
+	path = filepath.ToSlash(path)
+
+	if contains(repo.config.Files, path) {
+		return false
+	}
+	if match(repo.config.Include, path) {
+		return false
+	}
+
+	return true
+}
+
+func startPullInterval(r *repository, pool *safe.Pool) error {
+	if len(r.config.PullInterval) == 0 {
+		return nil
+	}
+	interval, err := time.ParseDuration(r.config.PullInterval)
+	if err != nil {
+		return fmt.Errorf("unable to parse interval %q: %v", r.config.PullInterval, err)
+	}
+
+	ticker := time.NewTicker(interval)
+
+	pool.Go(func(ctx context.Context) {
+		defer func() {
+			ticker.Stop()
+		}()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				pull(r)
+			}
+		}
+	})
+	return nil
+}
+
+func pull(r *repository) {
+	if r.repo == nil || r.config.PullInterval != "" {
+		return
+	}
+	err := r.repo.Fetch(&git.FetchOptions{RefSpecs: []config.RefSpec{"refs/*:refs/*", "HEAD:refs/heads/HEAD"}})
+	if err != nil {
+		if err != git.NoErrAlreadyUpToDate {
+			log.Errorf("git fetch error %v: %v", r.url, err.Error())
+		}
+		return
+	}
+
+	err = r.wt.Pull(r.pullOptions)
+	if err != nil {
+		if err != git.NoErrAlreadyUpToDate {
+			log.Errorf("unable to pull: %v", err.Error())
+		}
+		return
+	}
+
+	ref, err := r.repo.Head()
+	if err != nil {
+		log.Errorf("unable to get head: %v", err.Error())
+		return
+	}
+
+	hash := ref.Hash()
+	if hash != r.hash {
+		log.Infof("updated git repository from remote")
+		r.hash = hash
+	}
+}
+
+func contains(s []string, v string) bool {
+	for _, i := range s {
+		if i == v {
+			return true
+		}
+	}
+	return false
+}
+
+func match(s []string, v string) bool {
+	for _, i := range s {
+		if file.Match(i, v) {
+			return true
+		}
+	}
+	return false
 }

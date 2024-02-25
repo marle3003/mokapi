@@ -210,7 +210,17 @@ func TestMatch(t *testing.T) {
 				"/namec.file": false,
 			},
 		},
-
+		{
+			name:    "double star with extension",
+			pattern: "/foo/bar/**/*.json",
+			test: map[string]bool{
+				"/foo/test.json":          false,
+				"/foo/bar":                false,
+				"/foo/bar/hello.c":        false,
+				"/foo/bar/api.json":       true,
+				"/foo/bar/dir/hello.json": true,
+			},
+		},
 		{
 			name:    "double star at end",
 			pattern: "/foo/bar/**",
