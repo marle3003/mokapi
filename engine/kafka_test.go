@@ -158,10 +158,14 @@ func TestKafkaClient_Produce(t *testing.T) {
 
 				b, _ := s.Topic("foo").Partition(0).Read(0, 1000)
 				require.Len(t, b.Records[0].Headers, 2)
-				require.Equal(t, "foo", b.Records[0].Headers[0].Key)
-				require.Equal(t, []byte("bar"), b.Records[0].Headers[0].Value)
-				require.Equal(t, "version", b.Records[0].Headers[1].Key)
-				require.Equal(t, []byte("1.0"), b.Records[0].Headers[1].Value)
+				require.Contains(t, b.Records[0].Headers, kafka.RecordHeader{
+					Key:   "foo",
+					Value: []byte("bar"),
+				})
+				require.Contains(t, b.Records[0].Headers, kafka.RecordHeader{
+					Key:   "version",
+					Value: []byte("1.0"),
+				})
 			},
 		},
 		{
