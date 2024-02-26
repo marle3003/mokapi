@@ -20,7 +20,7 @@ func TestParse_Xml(t *testing.T) {
 			xml:    "",
 			schema: nil,
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "unmarshal data failed: EOF")
+				require.EqualError(t, err, "unmarshal data failed\nEOF")
 			},
 		},
 		{

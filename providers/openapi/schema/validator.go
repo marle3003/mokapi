@@ -216,8 +216,9 @@ func validateObject(i interface{}, schema *Schema) error {
 
 func checkValueIsInEnum(i interface{}, enum []interface{}, entrySchema *Schema) error {
 	found := false
+	p := parser{}
 	for _, e := range enum {
-		v, err := parse(e, &Ref{Value: entrySchema})
+		v, err := p.parse(e, &Ref{Value: entrySchema})
 		if err != nil {
 			log.Errorf("unable to parse enum value %v to %v: %v", toString(e), entrySchema, err)
 			continue

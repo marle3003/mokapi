@@ -232,7 +232,7 @@ func TestBodyFromRequest(t *testing.T) {
 				return r
 			},
 			test: func(t *testing.T, result *openapi.Body, err error) {
-				require.EqualError(t, err, "read request body 'application/json' failed: unmarshal data failed: invalid json format: invalid character '<' looking for beginning of value")
+				require.EqualError(t, err, "read request body 'application/json' failed: unmarshal data failed\ninvalid json format: invalid character '<' looking for beginning of value")
 				require.Equal(t, "<root><foo>bar</foo></root>", result.Raw)
 			},
 		},
@@ -338,7 +338,9 @@ func TestBodyFromRequest(t *testing.T) {
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
 					openapitest.WithRequestContent("text/html", openapitest.NewContent()),
-					openapitest.WithRequestContent("text/html; charset=utf-8", openapitest.NewContent(openapitest.WithSchema(&schema.Schema{Type: "integer", Format: "int32"}))),
+					openapitest.WithRequestContent("text/html; charset=utf-8", openapitest.NewContent(
+						openapitest.WithSchema(&schema.Schema{Type: "integer", Format: "int32"})),
+					),
 					openapitest.WithRequestContent("text/html; charset=us-ascii", openapitest.NewContent()),
 					openapitest.WithRequestContent("text/*", openapitest.NewContent()),
 				)),

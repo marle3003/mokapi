@@ -5,7 +5,7 @@ import { server as smtpServers, mails, mailEvents, getMail, getAttachment } from
 import { server as ldapServers, searches } from 'ldap.js'
 import { metrics } from 'metrics.js'
 import { fake } from 'mokapi/faker'
-import { get } from 'mokapi/http'
+import { get, post } from 'mokapi/http'
 
 const configs = {}
 
@@ -74,8 +74,15 @@ export default function() {
                 return true
             case 'example':
                 const data = fake(request.body)
-                console.log('accept: '+request.header.Accept)
                 response.body = marshal(data, { schema: request.body, contentType: request.header.Accept })
+                return true
+            case 'validate':
+                const res = post('http://localhost:8091/mokapi/api/schema/validate', request.body, { headers: { 'Data-Content-Type': request.header['Data-Content-Type']}})
+                response.statusCode = res.statusCode
+                response.headers = res.headers
+                if (res.statusCode !== 200) {
+                    response.body = res.body
+                }
                 return true
             case 'configs':
                 console.log(getConfigs())

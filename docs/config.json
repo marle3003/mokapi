@@ -63,8 +63,8 @@
     "items": {
       "Javascript API": {
         "items": {
-          "Overview": "javascript-api/javascript.md",
-          "Modules": "javascript-api/modules.md"
+          "Overview": "javascript-api/javascript-api/overview.md",
+          "Modules": "javascript-api/javascript-api/modules.md"
         }
       },
       "globals": {

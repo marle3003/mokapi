@@ -22,10 +22,10 @@ changed, the script S is also reloaded.
 
 These modules are provided by Mokapi. For example the `faker` module
 used to generate random data for a given JSON schema. For 
-a full list, see [the API documentation](/docs/references/javascript.md).
+a full list, see [the API documentation](/docs/javascript-api/javascript-api/overview.md).
 
 ```javascript
-import {fake} from 'faker'
+import { fake } from 'faker'
 ```
 
 ## Local filesystem modules
@@ -54,8 +54,8 @@ console.log(envs[0])
 ```
 ```json tab=JSON
 [  
-    {"name":"Alice", "email":"alice@foo.bar"},  
-    {"name":"Bob", "email":"bob@foo.bar"}  
+    { "name":"Alice", "email":"alice@foo.bar" },  
+    { "name":"Bob", "email":"bob@foo.bar" }  
 ]  
 ```
 ```yaml tab=YAML

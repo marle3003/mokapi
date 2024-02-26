@@ -104,9 +104,9 @@ test.describe('Visit Swagger Petstore', () => {
                         await expand.button.click()
                         await expect(expand.code).toBeVisible()
                         await expect(expand.code).not.toHaveText('')
-                        await expand.code.press('Escape', { delay: 100 })
+                        await expand.code.press('Escape', { delay: 500 })
                         // without a second time, dialog does not disappear
-                        await expand.code.press('Escape')
+                        await page.locator('body').press('Escape')
                         await expect(expand.code).not.toBeVisible()
                     })
 
@@ -115,9 +115,9 @@ test.describe('Visit Swagger Petstore', () => {
                         await example.button.click()
                         await expect(example.code).toBeVisible()
                         await expect(example.code).toContainText(`"id":`)
-                        await op.request.example.code.press('Escape', { delay: 100 })
+                        await op.request.example.code.press('Escape', { delay: 500 })
                         // without a second time, dialog does not disappear
-                        await example.code.press('Escape')
+                        await page.locator('body').press('Escape')
                         await expect(example.code).not.toBeVisible()
                     })
                 })
@@ -140,7 +140,7 @@ test.describe('Visit Swagger Petstore', () => {
                     await cells.nth(0).click()
                     const dialog = page.locator('#modal-petId')
                     await expect(dialog).toBeVisible()
-                    await dialog.press('Escape', { delay: 100 })
+                    await dialog.press('Escape', { delay: 500 })
                      // without a second time, dialog does not disappear
                      await dialog.press('Escape')
                      await expect(dialog).not.toBeVisible()

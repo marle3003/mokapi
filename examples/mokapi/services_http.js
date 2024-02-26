@@ -18,7 +18,7 @@ const tag = {
     type: "object",
     properties: {
         id: {
-            type: "string",
+            type: "integer",
             format: "int64"
         },
         name: {

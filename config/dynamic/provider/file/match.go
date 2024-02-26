@@ -75,7 +75,17 @@ Pattern:
 		Segments:
 			for i := range segments {
 				for j, chunk := range chunks {
-					if !match(chunk, segments[i+j]) {
+					seg := ""
+					if i+j < len(segments) {
+						seg = segments[i+j]
+					}
+					if chunk == "**" {
+						path := strings.Join(segments[i+j:], "/")
+						if len(path) == 0 {
+							return false
+						}
+						return Match(strings.Join(chunks[j:], "/"), path)
+					} else if !match(chunk, seg) {
 						continue Segments
 					}
 				}

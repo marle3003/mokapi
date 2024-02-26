@@ -20,15 +20,24 @@ func Resolve(ref string, element interface{}, config *Config, reader Reader) err
 
 	if len(u.Path) > 0 || len(u.Host) > 0 {
 		if !u.IsAbs() {
-			if len(config.Info.Url.Opaque) > 0 {
-				p := filepath.Join(filepath.Dir(config.Info.Url.Opaque), u.Path)
+			info := config.Info
+			for {
+				inner := info.Inner()
+				if inner == nil {
+					break
+				}
+				info = *inner
+			}
+
+			if len(info.Url.Opaque) > 0 {
+				p := filepath.Join(filepath.Dir(info.Url.Opaque), u.Path)
 				p = fmt.Sprintf("file:%v", p)
 				if len(u.Fragment) > 0 {
 					p = fmt.Sprintf("%v#%v", p, u.Fragment)
 				}
 				u, err = url.Parse(p)
 			} else {
-				u, err = config.Info.Url.Parse(ref)
+				u, err = info.Url.Parse(ref)
 			}
 		}
 

@@ -60,7 +60,7 @@ func TestGit(t *testing.T) {
 
 					}
 				}
-				require.Len(t, gitFiles, count)
+				require.Equal(t, 4, count)
 			},
 		},
 		{
@@ -81,7 +81,7 @@ func TestGit(t *testing.T) {
 
 					}
 				}
-				require.Len(t, gitFiles, count)
+				require.Equal(t, 4, count)
 			},
 		},
 		{
@@ -142,11 +142,9 @@ func TestGit(t *testing.T) {
 		},
 	}
 
-	t.Parallel()
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 
 			g := New(tc.cfg)
 			p := safe.NewPool(context.Background())

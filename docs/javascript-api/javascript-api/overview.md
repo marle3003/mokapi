@@ -5,7 +5,7 @@ description: Provides the documentation of the Mokapi Javascript API.
 # Javascript API
 
 The list of Mokapi's Javascript modules usable to extend Mokapi's behavior.
-To learn how Mokapi imports modules, see [Modules](/docs/javascript-api/modules.md).
+To learn how Mokapi imports modules, see [Modules](/docs/javascript-api/javascript-api/modules.md).
 
 ## mokapi
 
@@ -31,7 +31,7 @@ To learn how Mokapi imports modules, see [Modules](/docs/javascript-api/modules.
 | [delete( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/delete.md)   | Issues an HTTP DELETE request  |
 | [options( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/options.md) | Issues an HTTP OPTIONS request |
 
-## faker
+## mokapi/faker
 
 | Functions                                                   | Description                                |
 |-------------------------------------------------------------|--------------------------------------------|

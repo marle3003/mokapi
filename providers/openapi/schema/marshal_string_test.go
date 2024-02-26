@@ -41,6 +41,15 @@ func TestParseString(t *testing.T) {
 			},
 		},
 		{
+			name:   "float",
+			s:      "42.8",
+			schema: &schema.Schema{Type: "number", Format: "float"},
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 42.8, i)
+			},
+		},
+		{
 			name:   "string format date",
 			s:      "2021-09-21",
 			schema: &schema.Schema{Type: "string", Format: "date"},

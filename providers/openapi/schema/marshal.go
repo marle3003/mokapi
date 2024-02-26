@@ -18,7 +18,12 @@ type marshalObject struct {
 }
 
 func (r *Ref) Marshal(i interface{}, contentType media.ContentType) ([]byte, error) {
-	i, err := selectData(i, r)
+	s := selector{}
+	if contentType.Subtype != "json" {
+		s.convertStringToNumber = true
+	}
+
+	i, err := s.selectData(i, r)
 	if err != nil {
 		return nil, fmt.Errorf(marshalErrorFormat, contentType.String(), err)
 	}
@@ -56,8 +61,12 @@ func (s *Schema) Marshal(i interface{}, contentType media.ContentType) ([]byte, 
 	return r.Marshal(i, contentType)
 }
 
+type selector struct {
+	convertStringToNumber bool
+}
+
 // selectData selects data by schema
-func selectData(data interface{}, ref *Ref) (interface{}, error) {
+func (s *selector) selectData(data interface{}, ref *Ref) (interface{}, error) {
 	if ref == nil || ref.Value == nil || data == nil {
 		return data, nil
 	}
@@ -66,11 +75,11 @@ func selectData(data interface{}, ref *Ref) (interface{}, error) {
 
 	switch {
 	case len(schema.AnyOf) > 0:
-		return selectAny(schema, data)
+		return s.selectAny(schema, data)
 	case len(schema.AllOf) > 0:
-		return selectAll(schema, data)
+		return s.selectAll(schema, data)
 	case len(schema.OneOf) > 0:
-		return selectOne(schema, data)
+		return s.selectOne(schema, data)
 	}
 
 	if schema.Type == "" {
@@ -92,17 +101,18 @@ func selectData(data interface{}, ref *Ref) (interface{}, error) {
 		}
 	}
 
+	p := parser{convertStringToNumber: s.convertStringToNumber}
 	switch schema.Type {
 	case "string":
 		return data, validateString(data, schema)
 	case "number":
-		return parseNumber(data, schema)
+		return p.parseNumber(data, schema)
 	case "integer":
-		return parseInteger(data, schema)
+		return p.parseInteger(data, schema)
 	case "array":
-		return selectArray(data, schema)
+		return s.selectArray(data, schema)
 	case "object":
-		return selectObject(data, schema)
+		return s.selectObject(data, schema)
 	}
 
 	return data, nil
@@ -116,7 +126,7 @@ func unTitle(s string) string {
 	return s
 }
 
-func selectArray(data interface{}, schema *Schema) (interface{}, error) {
+func (s *selector) selectArray(data interface{}, schema *Schema) (interface{}, error) {
 	var result []interface{}
 
 	switch list := data.(type) {
@@ -124,7 +134,7 @@ func selectArray(data interface{}, schema *Schema) (interface{}, error) {
 		result = make([]interface{}, len(list))
 		for i, e := range list {
 			var err error
-			result[i], err = selectData(e, schema.Items)
+			result[i], err = s.selectData(e, schema.Items)
 			if err != nil {
 				return nil, err
 			}
@@ -132,7 +142,7 @@ func selectArray(data interface{}, schema *Schema) (interface{}, error) {
 	case map[interface{}]interface{}:
 		result = make([]interface{}, len(list))
 		for _, v := range list {
-			if i, err := selectData(v, schema.Items); err != nil {
+			if i, err := s.selectData(v, schema.Items); err != nil {
 				return nil, err
 			} else {
 				result = append(result, i)
@@ -149,9 +159,9 @@ func selectArray(data interface{}, schema *Schema) (interface{}, error) {
 	return result, nil
 }
 
-func selectObject(data interface{}, schema *Schema) (interface{}, error) {
+func (s *selector) selectObject(data interface{}, schema *Schema) (interface{}, error) {
 	if m, ok := data.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
-		return fromLinkedMap(m, schema)
+		return s.fromLinkedMap(m, schema)
 	}
 
 	v := reflect.ValueOf(data)
@@ -161,21 +171,21 @@ func selectObject(data interface{}, schema *Schema) (interface{}, error) {
 
 	switch v.Kind() {
 	case reflect.Struct:
-		return fromStruct(v, schema)
+		return s.fromStruct(v, schema)
 	case reflect.Map:
-		return reflectFromMap(v, schema)
+		return s.reflectFromMap(v, schema)
 	}
 
 	return nil, fmt.Errorf("encode '%v' to %v failed", data, schema)
 }
 
-func selectAny(schema *Schema, data interface{}) (interface{}, error) {
+func (s *selector) selectAny(schema *Schema, data interface{}) (interface{}, error) {
 	result := newMarshalObject()
 
 	isFreeFormUsed := false
 	for _, any := range schema.AnyOf {
 		if any == nil || any.Value == nil {
-			return selectData(data, nil)
+			return s.selectData(data, nil)
 		}
 
 		if any.Value.IsFreeForm() {
@@ -187,7 +197,7 @@ func selectAny(schema *Schema, data interface{}) (interface{}, error) {
 			any.Value.AdditionalProperties = &AdditionalProperties{Forbidden: true}
 		}
 
-		r, err := selectData(data, any)
+		r, err := s.selectData(data, any)
 		if err != nil {
 			continue
 		}
@@ -205,7 +215,7 @@ func selectAny(schema *Schema, data interface{}) (interface{}, error) {
 	if isFreeFormUsed {
 		// read data with free-form and add only missing values
 		// free-form returns never an error
-		i, _ := selectObject(data, &Schema{Type: "object"})
+		i, _ := s.selectObject(data, &Schema{Type: "object"})
 		o := i.(*marshalObject)
 		for it := o.Iter(); it.Next(); {
 			if _, found := result.Get(it.Key()); !found {
@@ -217,12 +227,12 @@ func selectAny(schema *Schema, data interface{}) (interface{}, error) {
 	return result, nil
 }
 
-func selectOne(schema *Schema, data interface{}) (interface{}, error) {
+func (s *selector) selectOne(schema *Schema, data interface{}) (interface{}, error) {
 	var result interface{}
 
 	for _, one := range schema.OneOf {
 		if one == nil || one.Value == nil {
-			next, err := selectData(data, nil)
+			next, err := s.selectData(data, nil)
 			if err != nil {
 				continue
 			}
@@ -233,7 +243,7 @@ func selectOne(schema *Schema, data interface{}) (interface{}, error) {
 			continue
 		}
 
-		next, err := selectData(data, one)
+		next, err := s.selectData(data, one)
 		if err != nil {
 			continue
 		}
@@ -250,7 +260,7 @@ func selectOne(schema *Schema, data interface{}) (interface{}, error) {
 	return result, nil
 }
 
-func selectAll(schema *Schema, data interface{}) (interface{}, error) {
+func (s *selector) selectAll(schema *Schema, data interface{}) (interface{}, error) {
 	r := newMarshalObject()
 
 	isFreeFormUsed := false
@@ -272,7 +282,7 @@ func selectAll(schema *Schema, data interface{}) (interface{}, error) {
 			all.Value.AdditionalProperties = &AdditionalProperties{Forbidden: true}
 		}
 
-		o, err := selectObject(data, all.Value)
+		o, err := s.selectObject(data, all.Value)
 		if err != nil {
 			err := errors.Unwrap(err)
 			return nil, fmt.Errorf("does not match %v: %w", origin, err)
@@ -288,7 +298,7 @@ func selectAll(schema *Schema, data interface{}) (interface{}, error) {
 	if isFreeFormUsed {
 		// read data with free-form and add only missing values
 		// free-form returns never an error
-		i, _ := selectObject(data, &Schema{Type: "object"})
+		i, _ := s.selectObject(data, &Schema{Type: "object"})
 		o := i.(*marshalObject)
 		for it := o.Iter(); it.Next(); {
 			if _, found := r.Get(it.Key()); !found {
@@ -300,7 +310,7 @@ func selectAll(schema *Schema, data interface{}) (interface{}, error) {
 	return r, nil
 }
 
-func fromLinkedMap(m *sortedmap.LinkedHashMap[string, interface{}], schema *Schema) (*marshalObject, error) {
+func (s *selector) fromLinkedMap(m *sortedmap.LinkedHashMap[string, interface{}], schema *Schema) (*marshalObject, error) {
 	if schema.IsDictionary() {
 		return &marshalObject{m}, validateObject(m, schema)
 	}
@@ -315,7 +325,7 @@ func fromLinkedMap(m *sortedmap.LinkedHashMap[string, interface{}], schema *Sche
 		}
 
 		if field != nil || schema.IsFreeForm() {
-			d, err := selectData(it.Value(), field)
+			d, err := s.selectData(it.Value(), field)
 			if err != nil {
 				return nil, err
 			}
@@ -330,7 +340,7 @@ func fromLinkedMap(m *sortedmap.LinkedHashMap[string, interface{}], schema *Sche
 	return obj, nil
 }
 
-func fromStruct(v reflect.Value, schema *Schema) (*marshalObject, error) {
+func (s *selector) fromStruct(v reflect.Value, schema *Schema) (*marshalObject, error) {
 	t := v.Type()
 	obj := newMarshalObject()
 	for i := 0; i < v.NumField(); i++ {
@@ -339,7 +349,7 @@ func fromStruct(v reflect.Value, schema *Schema) (*marshalObject, error) {
 		val := v.Field(i)
 
 		if p := schema.Properties.Get(name); p != nil || schema.IsFreeForm() {
-			d, err := selectData(val.Interface(), p)
+			d, err := s.selectData(val.Interface(), p)
 			if err != nil {
 				return nil, fmt.Errorf("encode property '%v' failed: %w", name, err)
 			}
@@ -354,7 +364,7 @@ func fromStruct(v reflect.Value, schema *Schema) (*marshalObject, error) {
 	return obj, nil
 }
 
-func reflectFromMap(v reflect.Value, schema *Schema) (*marshalObject, error) {
+func (s *selector) reflectFromMap(v reflect.Value, schema *Schema) (*marshalObject, error) {
 	obj := newMarshalObject()
 
 	if schema.HasProperties() {
@@ -364,7 +374,7 @@ func reflectFromMap(v reflect.Value, schema *Schema) (*marshalObject, error) {
 			if !o.IsValid() {
 				continue
 			}
-			d, err := selectData(o.Interface(), it.Value())
+			d, err := s.selectData(o.Interface(), it.Value())
 			if err != nil {
 				return nil, fmt.Errorf("parsing property '%v' failed: %w", name, err)
 			}
@@ -377,9 +387,9 @@ func reflectFromMap(v reflect.Value, schema *Schema) (*marshalObject, error) {
 			name := fmt.Sprintf("%v", k.Interface())
 			if _, found := obj.Get(name); !found {
 				o := v.MapIndex(k)
-				d, err := selectData(o.Interface(), schema.AdditionalProperties.Ref)
+				d, err := s.selectData(o.Interface(), schema.AdditionalProperties.Ref)
 				if err != nil {
-					_, err := selectData(o.Interface(), schema.AdditionalProperties.Ref)
+					_, err := s.selectData(o.Interface(), schema.AdditionalProperties.Ref)
 					return nil, err
 				}
 				obj.Set(name, d)

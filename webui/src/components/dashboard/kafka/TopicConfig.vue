@@ -3,6 +3,7 @@ import Markdown from 'vue3-markdown-it'
 import SourceView from '../SourceView.vue'
 import SchemaExpand from '../SchemaExpand.vue'
 import SchemaExample from '../SchemaExample.vue'
+import SchemaValidate from '../SchemaValidate.vue'
 
 const props = defineProps<{
     topic: KafkaTopic,
@@ -70,7 +71,10 @@ function filename() {
                             </div>
                             <div class="col-auto pe-2 mt-1">
                                 <schema-example :content-type="topic.configs.messageType" :schema="topic.configs.message" :title="'Message Example - ' + topic.name" :source="{ filename: filename() }"/>
-                            </div> 
+                            </div>
+                            <div class="col-auto pe-2 mt-1">
+                                <schema-validate :schema="topic.configs.message" :content-type="topic.configs.messageType" />
+                            </div>
                         </div>
                     </section>
                 </div>

@@ -3,6 +3,7 @@ import { reactive, type PropType, } from 'vue'
 import HttpParameters from './HttpParameters.vue'
 import SchemaExpand from '../../SchemaExpand.vue'
 import SchemaExample from '../../SchemaExample.vue'
+import SchemaValidate from '../../SchemaValidate.vue'
 import SourceView from '../../SourceView.vue'
 
 const props = defineProps({
@@ -54,6 +55,9 @@ function selectedContentChange(event: any){
                         </div>
                         <div class="col-auto px-2" v-if="selected.content">
                             <schema-example :schema="selected.content.schema" :content-type="selected.content.type" />
+                        </div>
+                        <div class="col-auto px-2" v-if="selected.content">
+                            <schema-validate :schema="selected.content.schema" :content-type="selected.content.type" />
                         </div>
                         <div class="col-auto px-2">
                             <select v-if="operation.requestBody.contents.length > 1" class="form-select form-select-sm" aria-label="Request content type" @change="selectedContentChange">

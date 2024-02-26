@@ -118,6 +118,8 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.getEvents(w, r)
 	case p == "/api/schema/example":
 		h.getExampleData(w, r)
+	case p == "/api/schema/validate":
+		h.validate(w, r)
 	case strings.HasPrefix(p, "/api/configs"):
 		h.handleConfig(w, r)
 	case h.fileServer != nil:

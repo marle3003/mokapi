@@ -236,6 +236,34 @@ paths:
       responses:
         204:
           description: no content
+  /api/schema/validate:
+    post:
+      summary: validates data against schema
+      operationId: validate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                schema: {}
+                data:
+                  type: string
+      parameters:
+        - in: header
+          name: Data-Content-Type
+          schema:
+            type: string
+      responses:
+        "200":
+          description: data is valid
+        "400":
+          description: data is not valid
+          content:
+            "text/plain":
+              schema:
+                type: string
   /api/configs:
     get:
       summary: returns configs

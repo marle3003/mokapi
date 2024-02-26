@@ -4,6 +4,7 @@ import { type PropType, reactive, computed } from 'vue'
 import HeaderTable from './HeaderTable.vue'
 import SchemaExpand from '../../SchemaExpand.vue'
 import SchemaExample from '../../SchemaExample.vue'
+import SchemaValidate from '../../SchemaValidate.vue'
 import Markdown from 'vue3-markdown-it'
 import SourceView from '../../SourceView.vue'
 
@@ -75,6 +76,9 @@ function selectedContentChange(event: any, statusCode: number){
                                         </div>
                                         <div class="col-auto px-2 mt-1">
                                             <schema-example :content-type="selected.contents[response.statusCode].type" :schema="selected.contents[response.statusCode].schema"/>
+                                        </div>
+                                        <div class="col-auto px-2 mt-1">
+                                            <schema-validate :schema="selected.contents[response.statusCode].schema" :content-type="selected.contents[response.statusCode].type" />
                                         </div>
                                         <div class="col-auto px-2 mt-1">
                                             <select v-if="response.contents.length > 0" class="form-select form-select-sm" aria-label="Response content type" @change="selectedContentChange($event, response.statusCode)">

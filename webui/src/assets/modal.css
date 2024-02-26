@@ -7,3 +7,6 @@
     color: var(--color-text);
     background: var(--color-background);
 }
+.modal-footer {
+    border-color: var(--color-tabs-border);
+}
