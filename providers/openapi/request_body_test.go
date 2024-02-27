@@ -135,7 +135,7 @@ func TestBodyFromRequest(t *testing.T) {
 		test      func(t *testing.T, result *openapi.Body, err error)
 	}{
 		{
-			name: "no ContentType header with matching MediaType",
+			name: "no Content-Type header with matching MediaType",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
 					openapitest.WithRequestContent("application/json", openapitest.NewContent()),
@@ -149,7 +149,7 @@ func TestBodyFromRequest(t *testing.T) {
 			},
 		},
 		{
-			name: "no ContentType header xml and json, body is xml",
+			name: "no Content-Type in header, requestBody specified as xml or json, request body is json",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
 					openapitest.WithRequestContent("application/xml", openapitest.NewContent()),
@@ -164,7 +164,7 @@ func TestBodyFromRequest(t *testing.T) {
 			},
 		},
 		{
-			name: "no ContentType header xml and json, body is xml",
+			name: "no Content-Type in header, requestBody specified as xml or json, request body is xml",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
 					openapitest.WithRequestContent("application/xml", openapitest.NewContent()),
@@ -179,7 +179,7 @@ func TestBodyFromRequest(t *testing.T) {
 			},
 		},
 		{
-			name: "no ContentType header no match",
+			name: "no Content-Type in header, request body does not match",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
 					openapitest.WithRequestContent("application/json", openapitest.NewContent()),
@@ -188,12 +188,12 @@ func TestBodyFromRequest(t *testing.T) {
 				return httptest.NewRequest(http.MethodPost, "https://foo.bar", strings.NewReader(`<root><foo>bar</foo></root>`))
 			},
 			test: func(t *testing.T, result *openapi.Body, err error) {
-				require.NoError(t, err)
+				require.EqualError(t, err, "read request body failed: no matching content type defined")
 				require.Equal(t, "<root><foo>bar</foo></root>", result.Raw)
 			},
 		},
 		{
-			name: "no ContentType, required but no body",
+			name: "no Content-Type in header, required but missing",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
 					openapitest.WithRequestContent("application/json", openapitest.NewContent()),
@@ -207,7 +207,7 @@ func TestBodyFromRequest(t *testing.T) {
 			},
 		},
 		{
-			name: "no ContentType, error reading body",
+			name: "no Content-Type in header, error reading body",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
 					openapitest.WithRequestContent("application/json", openapitest.NewContent()),
@@ -221,7 +221,7 @@ func TestBodyFromRequest(t *testing.T) {
 			},
 		},
 		{
-			name: "ContentType matches not body",
+			name: "Content-Type in header does not match request body",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
 					openapitest.WithRequestContent("application/json", openapitest.NewContent()),
@@ -237,7 +237,7 @@ func TestBodyFromRequest(t *testing.T) {
 			},
 		},
 		{
-			name: "ContentType error reading body",
+			name: "Content-Type in header, error while reading body",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
 					openapitest.WithRequestContent("application/json", openapitest.NewContent()),
@@ -248,12 +248,12 @@ func TestBodyFromRequest(t *testing.T) {
 				return r
 			},
 			test: func(t *testing.T, result *openapi.Body, err error) {
-				require.EqualError(t, err, "read request body failed: TESTING ERROR")
+				require.EqualError(t, err, "read request body 'application/json' failed: TESTING ERROR")
 				require.Nil(t, result)
 			},
 		},
 		{
-			name: "ContentType no matching MediaType",
+			name: "no matching MediaType for Content-Type",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
 					openapitest.WithRequestContent("application/json", openapitest.NewContent()),
@@ -269,7 +269,7 @@ func TestBodyFromRequest(t *testing.T) {
 			},
 		},
 		{
-			name: "ContentType no matching MediaType and error reading body",
+			name: "no matching MediaType for Content-Type and error while reading body",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
 					openapitest.WithRequestContent("application/json", openapitest.NewContent()),
@@ -285,7 +285,7 @@ func TestBodyFromRequest(t *testing.T) {
 			},
 		},
 		{
-			name: "ContentType text/plain MediaType text/*",
+			name: "Content-Type text/plain MediaType text/*",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
 					openapitest.WithRequestContent("text/*", openapitest.NewContent()),
@@ -301,7 +301,7 @@ func TestBodyFromRequest(t *testing.T) {
 			},
 		},
 		{
-			name: "ContentType text/plain MediaType */*",
+			name: "Content-Type text/plain MediaType */*",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
 					openapitest.WithRequestContent("*/*", openapitest.NewContent()),
@@ -317,7 +317,7 @@ func TestBodyFromRequest(t *testing.T) {
 			},
 		},
 		{
-			name: "ContentType text/plain MediaType */* and application/*",
+			name: "Content-Type text/plain MediaType */* and application/*",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
 					openapitest.WithRequestContent("application/*", openapitest.NewContent(openapitest.WithSchema(&schema.Schema{Type: "integer", Format: "int32"}))),
@@ -334,7 +334,7 @@ func TestBodyFromRequest(t *testing.T) {
 			},
 		},
 		{
-			name: "ContentType text/plain MediaType text/html, text/html; charset=us-ascii and text/html; charset=utf-8, text/*",
+			name: "Content-Type text/plain MediaType text/html, text/html; charset=us-ascii and text/html; charset=utf-8, text/*",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
 					openapitest.WithRequestContent("text/html", openapitest.NewContent()),
@@ -436,7 +436,7 @@ func TestConfig_Patch_RequestBody(t *testing.T) {
 			},
 		},
 		{
-			name: "request body reference is nil",
+			name: "request body ref is nil",
 			configs: []*openapi.Config{
 				{Components: openapi.Components{RequestBodies: map[string]*openapi.RequestBodyRef{}}},
 				openapitest.NewConfig("1.0", openapitest.WithComponentRequestBodyRef("foo", nil)),

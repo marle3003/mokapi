@@ -1,14 +1,10 @@
 package openapi
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 	"io"
-	"mime"
-	"mime/multipart"
 	"mokapi/config/dynamic"
 	"mokapi/json/ref"
 	"mokapi/media"
@@ -56,152 +52,63 @@ func BodyFromRequest(r *http.Request, op *Operation) (body *Body, err error) {
 	}
 
 	contentType := media.ParseContentType(r.Header.Get("content-type"))
-	switch {
-	case contentType.IsEmpty():
-		body, err = tryParseBody(r, op)
-	default:
-		body, err = readBody(r, op, contentType)
-	}
-	if err != nil {
-		return body, err
-	}
-
-	return body, nil
-}
-
-func readBody(r *http.Request, op *Operation, contentType media.ContentType) (*Body, error) {
 	_, mt := getMedia(contentType, op.RequestBody.Value)
-	if mt == nil {
-		data, err := io.ReadAll(r.Body)
-		if err != nil {
-			return nil, fmt.Errorf("read request body failed: %w", err)
-		}
-		return &Body{Raw: string(data)}, fmt.Errorf("read request body failed: no matching content type for '%v' defined", contentType.String())
+	if !contentType.IsEmpty() && mt == nil {
+		return noMatch(r, contentType)
 	}
 
-	if contentType.Type == "multipart" {
-		return readMultipart(r, mt, contentType)
+	var b *Body
+	if contentType.IsEmpty() {
+		b, err = readBodyDetectContentType(r, op)
 	} else {
-		data, err := io.ReadAll(r.Body)
-		if err != nil {
-			return nil, fmt.Errorf("read request body failed: %w", err)
-		}
-
-		body, err := mt.Schema.Unmarshal(data, contentType)
-		if err != nil {
-			err = fmt.Errorf("read request body '%v' failed: %w", contentType, err)
-		}
-		return &Body{Value: body, Raw: string(data)}, err
+		b, err = readBody(r, contentType, mt)
 	}
-	return nil, fmt.Errorf("ERROR")
+
+	if err != nil {
+		if !contentType.IsEmpty() {
+			err = fmt.Errorf("read request body '%v' failed: %w", contentType, err)
+		} else {
+			err = fmt.Errorf("read request body failed: %w", err)
+		}
+	}
+	return b, err
 }
 
-func tryParseBody(r *http.Request, o *Operation) (*Body, error) {
+func noMatch(r *http.Request, contentType media.ContentType) (*Body, error) {
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		return nil, fmt.Errorf("read request body failed: %w", err)
 	}
-	for _, mt := range o.RequestBody.Value.Content {
-		if b, err := mt.Schema.Unmarshal(data, mt.ContentType); err == nil {
-			return &Body{Value: b, Raw: string(data)}, nil
-		}
-	}
-
-	return &Body{Raw: string(data)}, nil
+	return &Body{Raw: string(data)}, fmt.Errorf("read request body failed: no matching content type for '%v' defined", contentType.String())
 }
 
-func readMultipart(r *http.Request, mt *MediaType, ct media.ContentType) (*Body, error) {
-	s := mt.Schema.Value
-	if s.Type != "object" {
-		return nil, fmt.Errorf("schema %q not support for content type multipart/form-data, expected 'object'", s.Type)
-	}
-	if s.Properties == nil {
-		// todo raw value
-		return nil, nil
-	}
-
-	_, params, err := mime.ParseMediaType(ct.String())
-	if err != nil {
-		return nil, err
-	}
-	multipartReader := multipart.NewReader(r.Body, params["boundary"])
-	o := make(map[string]interface{})
-	for {
-		part, err := multipartReader.NextPart()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
-
-		name := part.FormName()
-		p := s.Properties.Get(name)
-		v, err := parsePart(part, p)
-		if err != nil {
-			return nil, err
-		}
-		o[name] = v
-	}
-	return &Body{Value: o, Raw: toString(o)}, nil
-}
-
-func parsePart(part *multipart.Part, p *schema.Ref) (interface{}, error) {
-	defer part.Close()
-	b, err := io.ReadAll(part)
+func readBodyDetectContentType(r *http.Request, op *Operation) (*Body, error) {
+	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	ct := media.ParseContentType(part.Header.Get("Content-Type"))
-	return p.Unmarshal(b, ct)
-}
-
-func parseFormFile(fh *multipart.FileHeader) (interface{}, error) {
-	f, err := fh.Open()
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		err := f.Close()
-		if err != nil {
-			log.Errorf("unable to close file: %v", err)
+	for _, mt := range op.RequestBody.Value.Content {
+		if b, err := parseBody(data, mt.ContentType, mt.Schema); err == nil {
+			return b, err
 		}
-	}()
+	}
 
-	var sniff [512]byte
-	_, err = f.Read(sniff[:])
+	return &Body{Raw: string(data)}, fmt.Errorf("no matching content type defined")
+}
+
+func readBody(r *http.Request, contentType media.ContentType, mt *MediaType) (*Body, error) {
+	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	return map[string]string{
-		"filename": fh.Filename,
-		"type":     http.DetectContentType(sniff[:]),
-		"size":     prettyByteCountIEC(fh.Size),
-	}, nil
+	return parseBody(data, contentType, mt.Schema)
 }
 
-func prettyByteCountIEC(b int64) string {
-	const unit = 1024
-	if b < unit {
-		return fmt.Sprintf("%d B", b)
-	}
-	div, exp := int64(unit), 0
-	for n := b / unit; n >= unit; n /= unit {
-		div *= unit
-		exp++
-	}
-	return fmt.Sprintf("%.1f %ciB",
-		float64(b)/float64(div), "KMGTPE"[exp])
-}
-
-func toString(i interface{}) string {
-	b, err := json.Marshal(i)
-	if err != nil {
-		log.Errorf("error in schema.toString(): %v", err)
-	}
-	return string(b)
+func parseBody(body []byte, contentType media.ContentType, r *schema.Ref) (*Body, error) {
+	v, err := r.Unmarshal(body, contentType)
+	return &Body{Value: v, Raw: string(body)}, err
 }
 
 func getMedia(contentType media.ContentType, body *RequestBody) (media.ContentType, *MediaType) {

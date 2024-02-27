@@ -13,8 +13,6 @@ import (
 	"strings"
 )
 
-const unmarshalErrorFormat = "unmarshal data failed: %w"
-
 func ParseString(s string, schema *Ref) (interface{}, error) {
 	p := parser{convertStringToNumber: true}
 	return p.parse(s, schema)
@@ -31,6 +29,8 @@ func (r *Ref) Unmarshal(b []byte, contentType media.ContentType) (i interface{},
 	case contentType.IsXml():
 		p.convertStringToNumber = true
 		i, err = unmarshalXml(b, r)
+	case contentType.Type == "multipart":
+		i, err = readMultipart(b, contentType, r)
 	default:
 		p.convertStringToNumber = true
 		i = string(b)

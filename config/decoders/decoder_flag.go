@@ -90,7 +90,7 @@ func parsePath(key string) []string {
 
 func setArray(paths []string, value string, element reflect.Value) error {
 	if len(paths) > 0 {
-		index, err := strconv.Atoi(strings.TrimPrefix(strings.TrimSuffix(paths[0], "]"), "["))
+		index, err := parseArrayIndex(paths[0])
 		if err != nil {
 			return fmt.Errorf("parse array index failed: %v", err)
 		}
@@ -118,6 +118,16 @@ func setArray(paths []string, value string, element reflect.Value) error {
 	}
 
 	return nil
+}
+
+func parseArrayIndex(path string) (int, error) {
+	if strings.HasPrefix(path, "[") {
+		s := strings.TrimPrefix(path, "[")
+		s = strings.TrimSuffix(s, "]")
+		return strconv.Atoi(s)
+
+	}
+	return strconv.Atoi(path)
 }
 
 func setMap(paths []string, value string, element reflect.Value) error {

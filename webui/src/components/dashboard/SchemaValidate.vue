@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useGuid } from '@/composables/guid'
 import { useExample } from '@/composables/example'
-import { ref, reactive, computed } from 'vue'
+import { watch, reactive, computed } from 'vue'
 import { VAceEditor } from 'vue3-ace-editor'
 import ace from 'ace-builds'
 import themeGithubUrl from 'ace-builds/src-noconflict/theme-github_dark?url'
@@ -29,7 +29,10 @@ const state = reactive({
     errors: <string[]>[],
     validated: false
 })
-const example = fetchExample(props.schema, props.contentType)
+var example = fetchExample(props.schema, props.contentType)
+watch(() => props.schema, (schema) => {
+    example = fetchExample(schema, props.contentType)
+})
 
 function setExample() {
     updateContent(example.value!)

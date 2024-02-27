@@ -95,7 +95,7 @@ func TestLoad(t *testing.T) {
 			},
 		},
 		{
-			name: "env var array update index",
+			name: "env var array update index with [0]",
 			f: func(t *testing.T) {
 				s := &struct {
 					Items []struct {
@@ -110,6 +110,54 @@ func TestLoad(t *testing.T) {
 				err = os.Setenv("MOKAPI_items[0].value", "123")
 				require.NoError(t, err)
 				defer os.Unsetenv("MOKAPI_items[0].value")
+
+				err = Load([]ConfigDecoder{&FlagDecoder{}}, s)
+				require.NoError(t, err)
+				require.Len(t, s.Items, 1)
+				require.Equal(t, s.Items[0].Name, "mokapi")
+				require.Equal(t, s.Items[0].Value, int64(123))
+			},
+		},
+		{
+			name: "env var array update index with _0_",
+			f: func(t *testing.T) {
+				s := &struct {
+					Items []struct {
+						Name  string
+						Value int64
+					}
+				}{}
+				os.Args = append(os.Args, "mokapi.exe")
+				err := os.Setenv("MOKAPI_items_0_name", "mokapi")
+				defer os.Unsetenv("MOKAPI_items_0_name")
+				require.NoError(t, err)
+				err = os.Setenv("MOKAPI_items_0_value", "123")
+				require.NoError(t, err)
+				defer os.Unsetenv("MOKAPI_items_0_value")
+
+				err = Load([]ConfigDecoder{&FlagDecoder{}}, s)
+				require.NoError(t, err)
+				require.Len(t, s.Items, 1)
+				require.Equal(t, s.Items[0].Name, "mokapi")
+				require.Equal(t, s.Items[0].Value, int64(123))
+			},
+		},
+		{
+			name: "env var array update index with .0.",
+			f: func(t *testing.T) {
+				s := &struct {
+					Items []struct {
+						Name  string
+						Value int64
+					}
+				}{}
+				os.Args = append(os.Args, "mokapi.exe")
+				err := os.Setenv("MOKAPI_items.0.name", "mokapi")
+				defer os.Unsetenv("MOKAPI_items.0.name")
+				require.NoError(t, err)
+				err = os.Setenv("MOKAPI_items.0.value", "123")
+				require.NoError(t, err)
+				defer os.Unsetenv("MOKAPI_items.0.value")
 
 				err = Load([]ConfigDecoder{&FlagDecoder{}}, s)
 				require.NoError(t, err)

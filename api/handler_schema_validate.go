@@ -18,16 +18,19 @@ func (h *handler) validate(w http.ResponseWriter, r *http.Request) {
 	ct, err := getValidationDataContentType(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	s, data, err := parseValidationRequestBody(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	_, err = s.Unmarshal(data, ct)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 	w.WriteHeader(http.StatusOK)
 }
