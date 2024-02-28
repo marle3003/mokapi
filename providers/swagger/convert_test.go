@@ -403,7 +403,7 @@ func TestConvert(t *testing.T) {
 		{
 			name:   "integer with format needs to be int64",
 			config: `{"swagger": "2.0", "definitions": {"Foo": {"type": "integer", "format": "int64"}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			test: func(t *testing.T, config *openapi.Config) {
 				foo := config.Components.Schemas.Get("Foo")
 				require.Equal(t, "int64", foo.Value.Format)
 			},
@@ -421,7 +421,7 @@ func TestConvert(t *testing.T) {
 			require.NoError(t, err)
 			converted, err := Convert(c)
 			require.NoError(t, err)
-			tc.f(t, converted)
+			tc.test(t, converted)
 		})
 	}
 }
