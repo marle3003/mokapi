@@ -408,7 +408,6 @@ func TestConvert(t *testing.T) {
 				require.Equal(t, "int64", foo.Value.Format)
 			},
 		},
-		{},
 	}
 
 	t.Parallel()
