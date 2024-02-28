@@ -966,7 +966,7 @@ func TestRef_Unmarshal_Json_Object(t *testing.T) {
 				schematest.WithFreeForm(false),
 			),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.Regexp(t, "unmarshal data failed\nvalidation error too many fields on .*, expected schema type=object properties=\\[name\\] free-form=false", err.Error())
+				require.EqualError(t, err, "unmarshal data failed\nadditional properties not allowed: age, expected schema type=object properties=[name] free-form=false")
 			},
 		},
 		{
