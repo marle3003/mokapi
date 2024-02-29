@@ -7,6 +7,7 @@ import (
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
 	"mokapi/sortedmap"
+	"strings"
 	"testing"
 )
 
@@ -34,7 +35,7 @@ func TestMarshal_Xml(t *testing.T) {
 			},
 			schema: schematest.NewRef("integer"),
 			test: func(t *testing.T, s string, err error) {
-				require.EqualError(t, err, "marshal data to 'application/xml' failed: root element name is undefined: reference name and xml.name is empty")
+				require.EqualError(t, err, "marshal data to 'application/xml' failed: root element name is undefined: reference name of schema and attribute xml.name is empty")
 			},
 		},
 		{
@@ -273,7 +274,7 @@ func TestMarshal_Xml(t *testing.T) {
 			},
 		},
 		{
-			"object",
+			"object from sortedmap",
 			func() interface{} {
 				m := sortedmap.NewLinkedHashMap()
 				m.Set("id", 123)
@@ -301,6 +302,31 @@ func TestMarshal_Xml(t *testing.T) {
 			func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, `<book id="123" ns:title="foo" year="2023"><author>bar</author></book>`, s)
+			},
+		},
+		{
+			"object with map and empty schema",
+			func() interface{} {
+				var i interface{}
+				i = map[string]interface{}{
+					"id":     123,
+					"title":  "foo",
+					"x":      "2023",
+					"author": "bar",
+					"foo":    nil,
+				}
+				return []interface{}{i}
+			},
+			&schema.Ref{Value: &schema.Schema{Xml: &schema.Xml{Name: "root"}}},
+			func(t *testing.T, s string, err error) {
+				require.NoError(t, err)
+				require.Len(t, s, 74)
+				require.True(t, strings.HasPrefix(s, "<root>"))
+				require.True(t, strings.HasSuffix(s, "</root>"))
+				require.Contains(t, s, "<id>123</id>")
+				require.Contains(t, s, "<title>foo</title>")
+				require.Contains(t, s, "<x>2023</x>")
+				require.Contains(t, s, "<author>bar</author>")
 			},
 		},
 		{

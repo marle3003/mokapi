@@ -174,7 +174,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
-				result := v.Export().(ProduceResult)
+				result := v.Export().(*common.KafkaProduceResult)
 				r.Equal(t, "Cluster", result.Cluster)
 				r.Equal(t, "Topic", result.Topic)
 				r.Equal(t, 99, result.Partition)

@@ -42,18 +42,19 @@
   font-size: 0.7rem;
   margin: 0 0 0.3rem;
 }
-.dashboard-popover.show {
+
+.custom-popover {
   --bs-popover-bg: var(--color-background);
   --bs-popover-header-bg: var(--color-background);
   --bs-popover-border-color: var(--color-popover-border);
 }
-.dashboard-popover.show h3 {
+.popover h3 {
   font-size: 0.8rem;
 }
-.dashboard-popover.show .popover-body {
+.popover .popover-body {
   color: var(--color-text)
 }
-.dashboard-popover.show .label {
+.popover .label {
   font-size: 0.6rem;
   margin: 0 0 0.3rem;
 }

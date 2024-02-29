@@ -1,5 +1,5 @@
 ---
-title: "Javascript API: Args"
+title: Args
 description: Args is an object used by functions in the module mokapi/http
 ---
 # Args

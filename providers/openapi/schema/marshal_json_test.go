@@ -14,49 +14,69 @@ func TestRef_Marshal_Json(t *testing.T) {
 		name   string
 		schema *schema.Ref
 		data   interface{}
-		exp    string
+		test   func(t *testing.T, result string, err error)
 	}{
 		{
 			name:   "no schema",
 			schema: &schema.Ref{},
 			data:   "foo",
-			exp:    `"foo"`,
+			test: func(t *testing.T, result string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `"foo"`, result)
+			},
 		},
 		{
 			name:   "number",
 			schema: &schema.Ref{Value: schematest.New("number")},
 			data:   3.141,
-			exp:    `3.141`,
+			test: func(t *testing.T, result string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "3.141", result)
+			},
 		},
 		{
 			name:   "string",
 			schema: &schema.Ref{Value: schematest.New("string")},
 			data:   "12",
-			exp:    `"12"`,
+			test: func(t *testing.T, result string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `"12"`, result)
+			},
 		},
 		{
 			name:   "nullable string",
 			schema: &schema.Ref{Value: schematest.New("string")},
 			data:   nil,
-			exp:    `null`,
+			test: func(t *testing.T, result string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "null", result)
+			},
 		},
 		{
 			name:   "integer as string",
 			schema: &schema.Ref{Value: schematest.New("integer")},
 			data:   "12",
-			exp:    `12`,
+			test: func(t *testing.T, result string, err error) {
+				require.EqualError(t, err, "marshal data to 'application/json' failed: parse '12' failed, expected schema type=integer")
+			},
 		},
 		{
 			name:   "array of integer",
 			schema: &schema.Ref{Value: schematest.New("array", schematest.WithItems("integer"))},
 			data:   []interface{}{12, 13},
-			exp:    `[12,13]`,
+			test: func(t *testing.T, result string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "[12,13]", result)
+			},
 		},
 		{
 			name:   "array of string",
 			schema: &schema.Ref{Value: schematest.New("array", schematest.WithItems("string"))},
 			data:   []interface{}{"foo", "bar"},
-			exp:    `["foo","bar"]`,
+			test: func(t *testing.T, result string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `["foo","bar"]`, result)
+			},
 		},
 	}
 
@@ -67,8 +87,7 @@ func TestRef_Marshal_Json(t *testing.T) {
 			t.Parallel()
 
 			b, err := tc.schema.Marshal(tc.data, media.ParseContentType("application/json"))
-			require.NoError(t, err)
-			require.Equal(t, tc.exp, string(b))
+			tc.test(t, string(b), err)
 		})
 	}
 }
@@ -255,22 +274,22 @@ func TestRef_Marshal_Json_AnyOf(t *testing.T) {
 				schematest.New("integer"),
 				schematest.New("string"),
 			),
-			data: "12",
+			data: 12,
 			test: func(t *testing.T, result string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "12", result)
 			},
 		},
 		{
-			name: "string or integer, first matching is integer",
+			name: "string or integer, integer not in first place",
 			schema: schematest.NewAny(
 				schematest.New("string"),
 				schematest.New("integer"),
 			),
-			data: "12",
+			data: 12,
 			test: func(t *testing.T, result string, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "\"12\"", result)
+				require.Equal(t, "12", result)
 			},
 		},
 		{
@@ -335,7 +354,7 @@ func TestRef_Marshal_Json_AnyOf(t *testing.T) {
 				schematest.New("object", schematest.WithProperty("foo", schematest.New("number"))),
 				schematest.New("object", schematest.WithProperty("bar", schematest.New("integer"))),
 			),
-			data: map[string]interface{}{"foo": "3.141", "bar": "12", "name": "foobar"},
+			data: map[string]interface{}{"foo": 3.141, "bar": 12, "name": "foobar"},
 			test: func(t *testing.T, result string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, `{"foo":3.141,"bar":12,"name":"foobar"}`, result)
@@ -529,7 +548,7 @@ func TestRef_Marshal_Json_AllOf(t *testing.T) {
 				schematest.New("object", schematest.WithProperty("bar", schematest.New("integer"))),
 			),
 			data: func() interface{} {
-				return map[string]interface{}{"foo": "3.141", "bar": "12"}
+				return map[string]interface{}{"foo": 3.141, "bar": 12}
 			},
 			test: func(t *testing.T, result string, err error) {
 				require.NoError(t, err)
@@ -544,8 +563,8 @@ func TestRef_Marshal_Json_AllOf(t *testing.T) {
 			),
 			data: func() interface{} {
 				data := sortedmap.NewLinkedHashMap()
-				data.Set("foo", "3.141")
-				data.Set("bar", "12")
+				data.Set("foo", 3.141)
+				data.Set("bar", 12)
 				return data
 			},
 			test: func(t *testing.T, result string, err error) {
@@ -561,8 +580,8 @@ func TestRef_Marshal_Json_AllOf(t *testing.T) {
 			),
 			data: func() interface{} {
 				data := sortedmap.NewLinkedHashMap()
-				data.Set("foo", "3.141")
-				data.Set("bar", "12")
+				data.Set("foo", 3.141)
+				data.Set("bar", 12)
 				data.Set("name", "foobar")
 				return data
 			},

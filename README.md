@@ -8,7 +8,7 @@
 
 <p align="center">
 <a href="https://github.com/marle3003/mokapi/releases"><img src="https://img.shields.io/github/release/marle3003/mokapi.svg" alt="Github release"></a>
-<a href="https://github.com/marle3003/mokapi/actions/workflows/build.yml"><img src="https://github.com/marle3003/mokapi/actions/workflows/build.yml/badge.svg" alt="Build status"></a>
+<a href="https://github.com/marle3003/mokapi/actions/workflows/test.yml"><img src="https://github.com/marle3003/mokapi/actions/workflows/build.yml/badge.svg" alt="Build status"></a>
 <a href="https://codecov.io/gh/marle3003/mokapi"><img src="https://img.shields.io/codecov/c/gh/marle3003/mokapi/main.svg" alt="Codecov branch"></a>
 <a href="https://github.com/marle3003/mokapi/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
 </p>
@@ -33,8 +33,13 @@ Its core feature are:
 - **Everything as Code**: Reusing, version control, consistency and integrate mocks with your CI/CD.
 - **An embedded JavaScript engine** to control everything - status, headers, delays, errors or other edge cases.
 - **Patch Configuration** changes for mocking needs, rather than changing the original contract
-- **Multiple Provider support**: File, HTTP, GIT to gather configurations and scripts.
+- **Multiple Provider support**: File, HTTP, GIT, NPM to gather configurations and scripts.
 - **Dashboard** to see what's going on.
+
+&nbsp;
+<p align="center">
+<a href="https://www.buymeacoffee.com/mokapi" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
+<p align="center">
 
 ## Example
 

@@ -194,6 +194,11 @@ const router = createRouter({
           ]
         },
         {
+          path: '/dashboard/configs',
+          name: 'configs',
+          component: dashboardView,
+        },
+        {
           path: '/dashboard/config/:id',
           name: 'config',
           component: dashboardView,
@@ -209,7 +214,7 @@ const router = createRouter({
       name: 'docsStart',
       children: [
         {
-          path: '/docs/:level1/:level2?/:level3?',
+          path: '/docs/:level1/:level2?/:level3?/:level4?',
           name: 'docs',
           component: () => import('@/views/DocsView.vue')
         },

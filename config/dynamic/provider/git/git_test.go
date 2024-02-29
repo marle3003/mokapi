@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
@@ -34,58 +33,128 @@ func mustTime(s string) time.Time {
 }
 
 func TestGit(t *testing.T) {
-	g := New(static.GitProvider{Url: "https://github.com/marle3003/mokapi-example.git"})
-	p := safe.NewPool(context.Background())
-	defer p.Stop()
-	ch := make(chan *dynamic.Config)
-	err := g.Start(ch, p)
-	require.NoError(t, err)
+	testcases := []struct {
+		name string
+		cfg  static.GitProvider
+		test func(t *testing.T, ch chan *dynamic.Config)
+	}{
+		{
+			name: "clone",
+			cfg:  static.GitProvider{Url: "https://github.com/marle3003/mokapi-example.git"},
+			test: func(t *testing.T, ch chan *dynamic.Config) {
+				timeout := time.After(1 * time.Second)
+				count := 0
+			Stop:
+				for {
+					select {
+					case <-timeout:
+						break Stop
+					case c := <-ch:
+						count++
+						name := filepath.Base(c.Info.Inner().Url.String())
+						require.Equal(t, "git", c.Info.Provider)
+						require.Equal(t, "https://github.com/marle3003/mokapi-example.git?file=/"+name, c.Info.Path())
+						require.Contains(t, gitFiles, name)
+						f := gitFiles[name]
+						require.Equal(t, f.time, c.Info.Time.UTC())
 
-	timeout := time.After(1 * time.Second)
-	i := 0
-Stop:
-	for {
-		select {
-		case <-timeout:
-			break Stop
-		case c := <-ch:
-			i++
-			name := filepath.Base(c.Info.Inner().Url.String())
-			f, ok := gitFiles[name]
-			assert.True(t, ok)
-			require.Equal(t, "git", c.Info.Provider)
-			require.Equal(t, "https://github.com/marle3003/mokapi-example.git?file=/"+name, c.Info.Path())
-			require.Equal(t, f.time, c.Info.Time.UTC())
-		}
+					}
+				}
+				require.Equal(t, 4, count)
+			},
+		},
+		{
+			name: "clone a branch",
+			cfg:  static.GitProvider{Url: "https://github.com/marle3003/mokapi-example.git?ref=main"},
+			test: func(t *testing.T, ch chan *dynamic.Config) {
+				timeout := time.After(1 * time.Second)
+				count := 0
+			Stop:
+				for {
+					select {
+					case <-timeout:
+						break Stop
+					case c := <-ch:
+						count++
+						name := filepath.Base(c.Info.Inner().Url.String())
+						require.Contains(t, gitFiles, name)
+
+					}
+				}
+				require.Equal(t, 4, count)
+			},
+		},
+		{
+			name: "files only models.yml",
+			cfg: static.GitProvider{
+				Repositories: []static.GitRepo{
+					{
+						Url:   "https://github.com/marle3003/mokapi-example.git?ref=main",
+						Files: []string{"models.yml"},
+					},
+				},
+			},
+			test: func(t *testing.T, ch chan *dynamic.Config) {
+				timeout := time.After(1 * time.Second)
+				count := 0
+			Stop:
+				for {
+					select {
+					case <-timeout:
+						break Stop
+					case c := <-ch:
+						count++
+						name := filepath.Base(c.Info.Inner().Url.String())
+						require.Contains(t, gitFiles, name)
+
+					}
+				}
+				require.Equal(t, 1, count)
+			},
+		},
+		{
+			name: "include *.yml",
+			cfg: static.GitProvider{
+				Repositories: []static.GitRepo{
+					{
+						Url:     "https://github.com/marle3003/mokapi-example.git?ref=main",
+						Include: []string{"*.yml"},
+					},
+				},
+			},
+			test: func(t *testing.T, ch chan *dynamic.Config) {
+				timeout := time.After(1 * time.Second)
+				count := 0
+			Stop:
+				for {
+					select {
+					case <-timeout:
+						break Stop
+					case c := <-ch:
+						count++
+						name := filepath.Base(c.Info.Inner().Url.String())
+						require.Contains(t, gitFiles, name)
+
+					}
+				}
+				require.Equal(t, 2, count)
+			},
+		},
 	}
-	require.Len(t, gitFiles, i)
-}
 
-func TestGit_Branch(t *testing.T) {
-	g := New(static.GitProvider{Url: "https://github.com/marle3003/mokapi-example.git?ref=main"})
-	p := safe.NewPool(context.Background())
-	defer func() {
-		p.Stop()
-	}()
-	ch := make(chan *dynamic.Config)
-	err := g.Start(ch, p)
-	require.NoError(t, err)
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
 
-	timeout := time.After(1 * time.Second)
-	i := 0
-Stop:
-	for {
-		select {
-		case <-timeout:
-			break Stop
-		case c := <-ch:
-			i++
-			name := filepath.Base(c.Info.Inner().Url.String())
-			_, ok := gitFiles[name]
-			assert.True(t, ok)
-		}
+			g := New(tc.cfg)
+			p := safe.NewPool(context.Background())
+			defer p.Stop()
+			ch := make(chan *dynamic.Config)
+			err := g.Start(ch, p)
+			require.NoError(t, err)
+			tc.test(t, ch)
+		})
 	}
-	require.Len(t, gitFiles, i)
 }
 
 func TestGit_MultipleUrls(t *testing.T) {

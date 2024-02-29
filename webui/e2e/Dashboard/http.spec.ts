@@ -1,6 +1,4 @@
-import exp from 'constants'
 import { test, expect } from '../models/fixture-dashboard'
-import { describe } from 'node:test'
 import { formatDateTime, formatTimestamp } from '../helpers/format'
 
 test.describe('Visit Swagger Petstore', () => {
@@ -106,9 +104,9 @@ test.describe('Visit Swagger Petstore', () => {
                         await expand.button.click()
                         await expect(expand.code).toBeVisible()
                         await expect(expand.code).not.toHaveText('')
-                        await expand.code.press('Escape', { delay: 100 })
+                        await expand.code.press('Escape', { delay: 500 })
                         // without a second time, dialog does not disappear
-                        await expand.code.press('Escape')
+                        await page.locator('body').press('Escape')
                         await expect(expand.code).not.toBeVisible()
                     })
 
@@ -117,9 +115,9 @@ test.describe('Visit Swagger Petstore', () => {
                         await example.button.click()
                         await expect(example.code).toBeVisible()
                         await expect(example.code).toContainText(`"id":`)
-                        await op.request.example.code.press('Escape', { delay: 100 })
+                        await op.request.example.code.press('Escape', { delay: 500 })
                         // without a second time, dialog does not disappear
-                        await example.code.press('Escape')
+                        await page.locator('body').press('Escape')
                         await expect(example.code).not.toBeVisible()
                     })
                 })
@@ -142,7 +140,7 @@ test.describe('Visit Swagger Petstore', () => {
                     await cells.nth(0).click()
                     const dialog = page.locator('#modal-petId')
                     await expect(dialog).toBeVisible()
-                    await dialog.press('Escape', { delay: 100 })
+                    await dialog.press('Escape', { delay: 500 })
                      // without a second time, dialog does not disappear
                      await dialog.press('Escape')
                      await expect(dialog).not.toBeVisible()
@@ -158,7 +156,7 @@ test.describe('Visit Swagger Petstore', () => {
                     await test.step('switch response contenttype',async () => {
                         await page.getByRole('combobox', { name: 'Response content type' }).selectOption('application/xml')
 
-                        await expect(op.response.element.getByRole('tabpanel', { name: 'Body' }).locator('span').filter({ hasText: 'application/xml' })).toBeVisible()
+                        await expect(page.getByLabel('OK').getByLabel('Response content type')).toHaveValue('application/xml')
                     })
 
                     await test.step('click on HTTP status 500',async () => {

@@ -1,22 +1,27 @@
 ---
-title: Mokapi Javascript API
+title: Javascript API
 description: Provides the documentation of the Mokapi Javascript API.
 ---
-# Mokapi Javascript API
+# Javascript API
 
 The list of Mokapi's Javascript modules usable to extend Mokapi's behavior.
-To learn how Mokapi imports modules, see [Modules](/docs/javascript-api/modules.md).
+To learn how Mokapi imports modules, see [Modules](/docs/javascript-api/javascript-api/modules.md).
+
+``` box=tip
+There is a Typescript definition package for Mokapi. Use "npm install @types/mokapi --save-dev"
+```
 
 ## mokapi
 
-| Functions                                                                    | Description                                         |
-|------------------------------------------------------------------------------|-----------------------------------------------------|
-| [cron( expression, handler, \[args\] )](/docs/javascript-api/mokapi/cron.md) | Schedules a new periodic job using cron expression. |
-| [date( \[args\] )](/docs/javascript-api/mokapi/date.md)                      | Returns a textual representation of the date.       |
-| [env( name )](/docs/javascript-api/mokapi/env.md)                            | Gets the value of an environment variable.          |
-| [every( interval, handler, \[args\] )](/docs/javascript-api/mokapi/every.md) | Schedules a new periodic job with interval.         |
-| [on( event, handler, \[args\]](/docs/javascript-api/mokapi/on.md) )          | Attaches an event handler for the given event.      |
-| [sleep( time )](/docs/javascript-api/mokapi/sleep.md)                        | Suspends the execution for the specified duration.  |
+| Functions                                                                    | Description                                                   |
+|------------------------------------------------------------------------------|---------------------------------------------------------------|
+| [cron( expression, handler, \[args\] )](/docs/javascript-api/mokapi/cron.md) | Schedules a new periodic job using cron expression.           |
+| [date( \[args\] )](/docs/javascript-api/mokapi/date.md)                      | Returns a textual representation of the date.                 |
+| [env( name )](/docs/javascript-api/mokapi/env.md)                            | Gets the value of an environment variable.                    |
+| [every( interval, handler, \[args\] )](/docs/javascript-api/mokapi/every.md) | Schedules a new periodic job with interval.                   |
+| [on( event, handler, \[args\]](/docs/javascript-api/mokapi/on.md) )          | Attaches an event handler for the given event.                |
+| [sleep( time )](/docs/javascript-api/mokapi/sleep.md)                        | Suspends the execution for the specified duration.            |
+| [marshal( value, \[encoding\] )](/docs/javascript-api/mokapi/marshal.md)     | Returns marshalled string representation of value (>= v0.9.7) |
 
 ## mokapi/http
 
@@ -30,7 +35,7 @@ To learn how Mokapi imports modules, see [Modules](/docs/javascript-api/modules.
 | [delete( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/delete.md)   | Issues an HTTP DELETE request  |
 | [options( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/options.md) | Issues an HTTP OPTIONS request |
 
-## faker
+## mokapi/faker
 
 | Functions                                                   | Description                                |
 |-------------------------------------------------------------|--------------------------------------------|

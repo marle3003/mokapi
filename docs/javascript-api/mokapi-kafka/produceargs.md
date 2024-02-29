@@ -1,5 +1,5 @@
 ---
-title: "Javascript API: ProduceArgs"
+title: ProduceArgs
 description: ProduceArgs is an object used by functions in the module mokapi/kafka
 ---
 # ProduceArgs
@@ -7,13 +7,14 @@ description: ProduceArgs is an object used by functions in the module mokapi/kaf
 ProduceArgs is an object used by functions in the module mokapi/kafka 
 and contains produce-specific arguments.
 
-| Name                 | Type   | Description                                                                                                                                            |
-|----------------------|--------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
-| cluster (optional)   | string | Kafka cluster name                                                                                                                                     |
-| topic (optional)     | string | Kafka topic name                                                                                                                                       |
-| partition (optional) | number | Kafka partition index                                                                                                                                  |
-| key (optional)       | any    | Kafka message key, if null Mokapi generates a random key based on the topic configuration                                                              |
-| value (optional)     | any    | Kafka message value, if null Mokapi generates a random value based on the topic configuration. Object will be encoded based on the topic configuration |
+| Name                 | Type   | Description                                                                                                                                                       |
+|----------------------|--------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| cluster (optional)   | string | Kafka cluster name. Used when topic name is not unique.                                                                                                           |
+| topic (optional)     | string | Kafka topic name. If not specified, message will be written to a random topic.                                                                                    |
+| partition (optional) | number | /** Kafka partition index. If not specified, the message will be written to any partition                                                                         |
+| key (optional)       | any    | Kafka message key. If not specified, a random key will be generated based on the topic configuration.                                                             |
+| value (optional)     | any    | Kafka message value. If not specified, a random value will be generated based on the topic configuration. Object will be encoded based on the topic configuration |
+| headers (optional)   | object | Kafka message headers.                                                                                                                                            |
 
 ## Example
 

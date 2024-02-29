@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useAppInfo } from '@/composables/appInfo';
+import { useAppInfo } from '@/composables/appInfo'
 import AppStartCard from '../components/dashboard/AppStartCard.vue'
 import MemoryUsageCard from '../components/dashboard/MemoryCard.vue'
 
@@ -15,25 +15,40 @@ import KafkaService from '../components/dashboard/kafka/KafkaService.vue'
 import LdapServicesCard from '@/components/dashboard/ldap/LdapServicesCard.vue'
 import LdapService from '../components/dashboard/ldap/Service.vue'
 import LdapSearchMetricCard from '../components/dashboard/ldap/LdapSearchMetricCard.vue'
-import Searches from '@/components/dashboard/ldap/Searches.vue';
+import Searches from '@/components/dashboard/ldap/Searches.vue'
 
 import SmtpMessageMetricCard from '../components/dashboard/smtp/SmtpMessageMetricCard.vue'
 import SmtpServicesCard from '../components/dashboard/smtp/SmtpServicesCard.vue'
 import SmtpService from '../components/dashboard/smtp/Service.vue'
-import Mails from '@/components/dashboard/smtp/Mails.vue';
+import Mails from '@/components/dashboard/smtp/Mails.vue'
 
 import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
 
+import ConfigCard from '@/components/dashboard/ConfigCard.vue'
+
 import '@/assets/dashboard.css'
-import { onUnmounted } from 'vue';
+import { onMounted, onUnmounted, watch, ref, type Ref } from 'vue'
 
 import { useMeta } from '@/composables/meta'
-import Config from '@/components/dashboard/Config.vue';
+import Config from '@/components/dashboard/Config.vue'
+import { useFetch, type Response } from '@/composables/fetch'
+import { useRoute } from 'vue-router'
 
 const appInfo = useAppInfo()
+const configs: Ref<Response | undefined> = ref<Response>()
 onUnmounted(() => {
     appInfo.close()
+    if (configs.value) {
+        configs.value.close()
+    }
+})
+
+const route = useRoute()
+onMounted(() => {
+    if (route.name === 'configs' && configs.value == null) {
+        configs.value = useFetch('/api/configs')
+    }
 })
 
 function isServiceAvailable(service: string): Boolean{
@@ -58,8 +73,9 @@ useMeta('Dashboard | mokapi.io', description, "https://mokapi.io/smtp")
 <template>
     <main>
         <div class="dashboard">
+            <h1 class="visually-hidden">Dashboard</h1>
             <div class="dashboard-tabs" v-if="appInfo.data">
-                <nav class="navbar navbar-expand-lg">
+                <nav class="navbar navbar-expand-lg" aria-label="Services">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                         <li class="nav-item">
                             <router-link class="nav-link overview" :to="{ name: 'dashboard', query: {refresh: $route.query.refresh} }">Overview</router-link>
@@ -75,6 +91,9 @@ useMeta('Dashboard | mokapi.io', description, "https://mokapi.io/smtp")
                         </li>
                         <li class="nav-item">
                             <router-link class="nav-link" :to="{ name: 'ldap', query: {refresh: $route.query.refresh} }" v-if="isServiceAvailable('ldap')">LDAP</router-link>
+                        </li>
+                        <li class="nav-item">
+                            <router-link class="nav-link" :to="{ name: 'configs', query: {refresh: $route.query.refresh} }">Configs</router-link>
                         </li>
                     </ul>
                 </nav>
@@ -148,6 +167,12 @@ useMeta('Dashboard | mokapi.io', description, "https://mokapi.io/smtp")
                     </div>
                     <div class="card-group">
                         <searches />
+                    </div>
+                </div>
+
+                <div v-if="$route.name === 'configs'">
+                    <div class="card-group">
+                        <config-card v-if="configs" :configs="configs.data" />
                     </div>
                 </div>
 

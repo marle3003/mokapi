@@ -1,18 +1,17 @@
 <script setup lang="ts">
-import type { PropType } from 'vue';
-import KafkaMessages from './KafkaMessages.vue';
+import KafkaMessages from './KafkaMessages.vue'
 
-const props = defineProps({
-    service: { type: Object as PropType<KafkaService> },
-    topicName: { type: String, required: false}
-})
+defineProps<{
+    service: KafkaService,
+    topicName?: string
+}>()
 </script>
 
 <template>
-    <div class="card">
+    <section class="card" aria-labelledby="messages">
         <div class="card-body">
-            <div class="card-title text-center">Recent Messages</div>
+            <div id="messages" class="card-title text-center">Recent Messages</div>
             <kafka-messages :service="service" :topic-name="topicName" />
         </div>
-    </div>
+    </section>
 </template>

@@ -34,6 +34,25 @@ func TestHandler_Config(t *testing.T) {
 		test       []try.ResponseCondition
 	}{
 		{
+			name: "get all configs",
+			app: func() *runtime.App {
+				return &runtime.App{Configs: map[string]*dynamic.Config{
+					"foo": {
+						Info: dynamic.ConfigInfo{
+							Url:  mustUrl("https://foo.bar/foo.yaml"),
+							Time: mustTime("2023-12-27T13:01:30+00:00"),
+						},
+						Raw: nil,
+					},
+				}}
+			},
+			requestUrl: "http://foo.api/api/configs",
+			test: []try.ResponseCondition{
+				try.HasStatusCode(http.StatusOK),
+				try.HasBody(`[{"id":"37636430-3165-3037-3435-376637313065","url":"https://foo.bar/foo.yaml","provider":"","time":"2023-12-27T13:01:30Z"}]`),
+			},
+		},
+		{
 			name: "meta: not found",
 			app: func() *runtime.App {
 				return &runtime.App{Configs: map[string]*dynamic.Config{}}
@@ -49,8 +68,9 @@ func TestHandler_Config(t *testing.T) {
 				return &runtime.App{Configs: map[string]*dynamic.Config{
 					"foo": {
 						Info: dynamic.ConfigInfo{
-							Url:  mustUrl("https://foo.bar/foo.yaml"),
-							Time: mustTime("2023-12-27T13:01:30+00:00"),
+							Url:      mustUrl("https://foo.bar/foo.yaml"),
+							Time:     mustTime("2023-12-27T13:01:30+00:00"),
+							Provider: "file",
 						},
 						Raw: nil,
 					},
@@ -59,7 +79,7 @@ func TestHandler_Config(t *testing.T) {
 			requestUrl: "http://foo.api/api/configs/foo",
 			test: []try.ResponseCondition{
 				try.HasStatusCode(http.StatusOK),
-				try.HasBody(`{"id":"37636430-3165-3037-3435-376637313065","url":"https://foo.bar/foo.yaml","provider":"","time":"2023-12-27T13:01:30Z"}`),
+				try.HasBody(`{"id":"37636430-3165-3037-3435-376637313065","url":"https://foo.bar/foo.yaml","provider":"file","time":"2023-12-27T13:01:30Z"}`),
 			},
 		},
 		{
@@ -67,14 +87,16 @@ func TestHandler_Config(t *testing.T) {
 			app: func() *runtime.App {
 				foo := &dynamic.Config{
 					Info: dynamic.ConfigInfo{
-						Url:  mustUrl("https://foo.bar/foo.yaml"),
-						Time: mustTime("2023-12-27T13:01:30+00:00"),
+						Url:      mustUrl("https://foo.bar/foo.yaml"),
+						Time:     mustTime("2023-12-27T13:01:30+00:00"),
+						Provider: "file",
 					},
 				}
 				dynamic.AddRef(foo, &dynamic.Config{
 					Info: dynamic.ConfigInfo{
-						Url:  mustUrl("https://foo.bar/bar.yaml"),
-						Time: mustTime("2023-12-27T14:01:30+00:00"),
+						Url:      mustUrl("https://foo.bar/bar.yaml"),
+						Time:     mustTime("2023-12-27T14:01:30+00:00"),
+						Provider: "file",
 					},
 				})
 
@@ -85,7 +107,7 @@ func TestHandler_Config(t *testing.T) {
 			requestUrl: "http://foo.api/api/configs/foo",
 			test: []try.ResponseCondition{
 				try.HasStatusCode(http.StatusOK),
-				try.HasBody(`{"id":"37636430-3165-3037-3435-376637313065","url":"https://foo.bar/foo.yaml","provider":"","time":"2023-12-27T13:01:30Z","refs":[{"id":"66643630-6636-6536-6634-303165316161","url":"https://foo.bar/bar.yaml","provider":"","time":"2023-12-27T14:01:30Z"}]}`),
+				try.HasBody(`{"id":"37636430-3165-3037-3435-376637313065","url":"https://foo.bar/foo.yaml","provider":"file","time":"2023-12-27T13:01:30Z","refs":[{"id":"66643630-6636-6536-6634-303165316161","url":"https://foo.bar/bar.yaml","provider":"file","time":"2023-12-27T14:01:30Z"}]}`),
 			},
 		},
 		{
@@ -138,6 +160,31 @@ func TestHandler_Config(t *testing.T) {
 				try.HasHeader("Last-Modified", "Fri, 22 Dec 2023 13:01:30 GMT"),
 				try.HasHeader("Content-Type", "application/json"),
 				try.HasBody(`{"foo": "bar"}`),
+			},
+		},
+		{
+			name: "nested config",
+			app: func() *runtime.App {
+				foo := &dynamic.Config{
+					Info: dynamic.ConfigInfo{
+						Url:  mustUrl("https://foo.bar/foo.json"),
+						Time: mustTime("2023-12-27T13:01:30+00:00"),
+					},
+					Raw: []byte(`{"foo": "bar"}`),
+				}
+				dynamic.Wrap(dynamic.ConfigInfo{
+					Url:      mustUrl("https://foo.bar/foo.yaml"),
+					Time:     mustTime("2023-12-27T13:01:30+00:00"),
+					Provider: "npm",
+				}, foo)
+				return &runtime.App{Configs: map[string]*dynamic.Config{
+					"foo": foo,
+				}}
+			},
+			requestUrl: "http://foo.api/api/configs/foo",
+			test: []try.ResponseCondition{
+				try.HasStatusCode(http.StatusOK),
+				try.HasBody(`{"id":"37636430-3165-3037-3435-376637313065","url":"https://foo.bar/foo.yaml","provider":"npm","time":"2023-12-27T13:01:30Z"}`),
 			},
 		},
 	}

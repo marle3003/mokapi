@@ -1,5 +1,5 @@
 ---
-title: "Javascript API: cron"
+title: cron( expression, handler, [args] )
 description: Schedules a new periodic job using cron expression.
 ---
 # cron( expression, handler, [args] )
@@ -21,10 +21,10 @@ By default, the first execution happens immediately, check ScheduledEventArgs
 Write every minute to console.
 
 ```javascript
-import { every } from 'mokapi'
+import { cron } from 'mokapi'
 
 export default function() {
-    every('* * * * *', function() {
+    cron('* * * * *', function() {
         console.log('foo')
     })
 }

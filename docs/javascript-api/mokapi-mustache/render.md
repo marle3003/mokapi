@@ -1,10 +1,10 @@
 ---
-title: "Javascript API: render"
-description: Renders the given mustache template with the given data
+title: render( template, scope )
+description: Renders the given mustache template with the given data.
 ---
 # render( template, scope )
 
-Renders the given mustache template with the given data
+Renders the given mustache template with the given data.
 
 | Parameter | Type   | Description                                                          |
 |-----------|--------|----------------------------------------------------------------------|
@@ -33,6 +33,6 @@ export default function() {
     }
 
     const output = render("{{firstname}} has {{calc}} apples", scope)
-    console.log(outout)
+    console.log(output)
 }
 ```

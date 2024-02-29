@@ -1,4 +1,12 @@
+.modal-header {
+    border-color: var(--color-tabs-border);
+    padding-bottom: 15px;
+    padding-top: 15px;
+}
 .modal-content {
     color: var(--color-text);
     background: var(--color-background);
+}
+.modal-footer {
+    border-color: var(--color-tabs-border);
 }

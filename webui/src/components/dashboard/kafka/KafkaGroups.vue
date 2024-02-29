@@ -1,24 +1,28 @@
 <script setup lang="ts">
-import { usePrettyDates } from '@/composables/usePrettyDate';
-import { type PropType, onMounted } from 'vue';
+import { usePrettyDates } from '@/composables/usePrettyDate'
+import { onMounted } from 'vue'
 import { Popover } from 'bootstrap'
-import { useMetrics } from '@/composables/metrics';
+import { useMetrics } from '@/composables/metrics'
 
-const props = defineProps({
-    service: { type: Object as PropType<KafkaService>, required: true },
-    topicName: { type: String, required: false }
-})
+const props = defineProps<{
+    service: KafkaService,
+    topicName?: string
+}>()
 
-const format = usePrettyDates().format
-const {sum} = useMetrics()
+const { format } = usePrettyDates()
+const { sum } = useMetrics()
 
 function memberInfo(member: KafkaMember): string {
-  return `<p class="label">Address</p>
-           <p>${member.addr}</p>
-           <p class="label">Client Software</p>
-           <p>${member.clientSoftwareName} ${member.clientSoftwareVersion}</p>
-           <p class="label">Last Heartbeat</p>
-           <p>${format(member.heartbeat)}</p>`
+    return `<div aria-label="${member.name}">
+            <p id="${member.name}-address" class="label">Address</p>
+            <p aria-labelledby="${member.name}-address">${member.addr}</p>
+            <p id="${member.name}-client-software" class="label">Client Software</p>
+            <p aria-labelledby="${member.name}-client-software">${member.clientSoftwareName} ${member.clientSoftwareVersion}</p>
+            <p id="${member.name}-last-heartbeat" class="label">Last Heartbeat</p>
+            <p aria-labelledby="${member.name}-last-heartbeat">${format(member.heartbeat)}</p>
+            <p id="${member.name}-partitions" class="label">Partitions</p>
+            <p aria-labelledby="${member.name}-partitions">${member.partitions.join(', ')}</p>
+            </div>`
 }
 
 function getGroups(): KafkaGroup[] {
@@ -38,20 +42,22 @@ function getGroups(): KafkaGroup[] {
     return result
 }
 onMounted(()=> {
-  new Popover(document.body, {
-      selector: ".member[data-bs-toggle='popover']",
-      customClass: 'dashboard-popover',
-      html: true,
-      trigger: 'hover',
-      content: function(this: HTMLElement): string {
-        return this.nextElementSibling?.outerHTML ?? ''
-      }
+    const elements = document.querySelectorAll('.has-popover')
+    const popovers = [...elements].map(x => {
+        new Popover(x, {
+            customClass: 'custom-popover',
+            trigger: 'hover',
+            html: true,
+            placement: 'left',
+            content: () => x.querySelector('span')?.innerHTML ?? '',
+        })
     })
 })
 </script>
 
 <template>
-    <table class="table dataTable selectable">
+    <table class="table dataTable">
+        <caption class="visually-hidden">{{ props.topicName ? 'Topic Groups' : 'Cluster Groups' }}</caption>
         <thead>
             <tr>
                 <th scope="col" class="text-left">Name</th>
@@ -71,15 +77,29 @@ onMounted(()=> {
                 <td>{{ group.coordinator }}</td>
                 <td>{{ group.leader }}</td>
                 <td>
-                    <div v-for="member in group.members">
-                        <div class="member" data-bs-toggle="popover" data-bs-placement="right" >{{ member.name }} <i class="bi bi-info-circle"></i></div>
-                        <span style="display:none" v-html="memberInfo(member)"></span>
-                    </div>
+                    <ul class="members">
+                        <li v-for="member in group.members" class="has-popover">
+                            {{ member.name }} <i class="bi bi-info-circle"></i>
+                            <span style="display:none" v-html="memberInfo(member)"></span>
+                        </li>
+                        
+                    </ul>
                 </td>
                 <td v-if="topicName" class="text-center">
-                    {{ sum(service.metrics, 'kafka_consumer_group_lag', {name: 'topic', value: topicName}, {name: 'group', value: group.name }) }}
+                    {{ sum(service.metrics, 'kafka_consumer_group_lag', { name: 'topic', value: topicName }, { name: 'group', value: group.name }) }}
                 </td>
             </tr>
         </tbody>
     </table>
 </template>
+
+<style scoped>
+ul.members {
+    list-style: none; 
+    padding: 0;
+    margin: 0;
+}
+ul.members li {
+    padding-right: 0.5em;
+}
+</style>

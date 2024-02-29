@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { usePrettyHttp } from '@/composables/http';
-import { usePrettyLanguage } from '@/composables/usePrettyLanguage';
-import { type PropType, reactive, computed } from 'vue';
-import HeaderTable from './HeaderTable.vue';
-import SchemaExpand from '../../SchemaExpand.vue';
-import SchemaExample from '../../SchemaExample.vue';
+import { usePrettyHttp } from '@/composables/http'
+import { type PropType, reactive, computed } from 'vue'
+import HeaderTable from './HeaderTable.vue'
+import SchemaExpand from '../../SchemaExpand.vue'
+import SchemaExample from '../../SchemaExample.vue'
+import SchemaValidate from '../../SchemaValidate.vue'
 import Markdown from 'vue3-markdown-it'
+import SourceView from '../../SourceView.vue'
 
 const props = defineProps({
     service: { type: Object as PropType<HttpService>, required: true },
@@ -14,7 +15,6 @@ const props = defineProps({
 })
 
 const {formatStatusCode, getClassByStatusCode} = usePrettyHttp()
-const {formatLanguage} = usePrettyLanguage()
 
 const selected = reactive({
     contents: {} as  { [statusCode: number]: HttpMediaType}
@@ -63,19 +63,24 @@ function selectedContentChange(event: any, statusCode: number){
                             </ul>
                             <div class="tab-content" id="pills-tabContent">
                                 <div v-if="response.contents" class="tab-pane fade" :class="response.contents ? 'show active' : ''" id="pills-body" role="tabpanel" aria-labelledby="pills-body-tab">
-                                    <p class="codeBlock">
-                                        <span v-if="selected.contents[response.statusCode]" class="label">{{ selected.contents[response.statusCode].type }}</span>
-                                        <span v-if="selected.contents[response.statusCode].schema?.deprecated" class="warning"><i class="bi bi-exclamation-triangle-fill yellow"></i> Deprecated</span>
-                                        <pre v-highlightjs="formatLanguage(JSON.stringify(selected.contents[response.statusCode].schema), 'application/json')" class="overflow-auto" style="max-height: 250px;"><code class="json"></code></pre>
-                                    </p>
+                                    <source-view 
+                                        :source="JSON.stringify(selected.contents[response.statusCode].schema)" 
+                                        :deprecated="selected.contents[response.statusCode].schema.deprecated" 
+                                        content-type="application/json"
+                                        :hide-content-type="true"
+                                        height="250px" class="mb-2">
+                                    </source-view>
                                     <div class="row">
-                                        <div class="col-auto pe-2">
+                                        <div class="col-auto pe-2 mt-1">
                                             <schema-expand :schema="selected.contents[response.statusCode].schema" />
                                         </div>
-                                        <div class="col-auto px-2">
-                                            <schema-example :schema="selected.contents[response.statusCode].schema" />
+                                        <div class="col-auto px-2 mt-1">
+                                            <schema-example :content-type="selected.contents[response.statusCode].type" :schema="selected.contents[response.statusCode].schema"/>
                                         </div>
-                                        <div class="col-auto px-2">
+                                        <div class="col-auto px-2 mt-1">
+                                            <schema-validate :schema="selected.contents[response.statusCode].schema" :content-type="selected.contents[response.statusCode].type" />
+                                        </div>
+                                        <div class="col-auto px-2 mt-1">
                                             <select v-if="response.contents.length > 0" class="form-select form-select-sm" aria-label="Response content type" @change="selectedContentChange($event, response.statusCode)">
                                                 <option v-for="content in response.contents">{{ content.type }}</option>
                                             </select>
@@ -112,22 +117,6 @@ function selectedContentChange(event: any, statusCode: number){
 .response .nav.nav-pills button.badge.active {
     font-size: 0.75rem;
     border: 0;
-}
-.codeBlock {
-  position: relative;
-}
-.card-body .codeBlock .label {
-    position: absolute;
-    right: 20px;
-    top: 4px;
-    font-size: 0.8rem;
-}
-.card-body .codeBlock .warning {
-    position: absolute;
-    text-align: center;
-    top: 4px;
-    font-size: 1.0rem;
-    width: 100%
 }
 .response-tab li {
     padding-left: 0;

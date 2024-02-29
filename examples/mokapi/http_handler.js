@@ -1,11 +1,11 @@
-import { on } from 'mokapi'
+import { on, marshal } from 'mokapi'
 import { clusters, events as kafkaEvents, configs as kafkaConfigs } from 'kafka.js'
 import { apps as httpServices, events as httpEvents, configs as httpConfigs } from 'services_http.js'
 import { server as smtpServers, mails, mailEvents, getMail, getAttachment } from 'smtp.js'
 import { server as ldapServers, searches } from 'ldap.js'
 import { metrics } from 'metrics.js'
 import { fake } from 'mokapi/faker'
-import { get } from 'mokapi/http'
+import { get, post } from 'mokapi/http'
 
 const configs = {}
 
@@ -73,7 +73,20 @@ export default function() {
                 }
                 return true
             case 'example':
-                response.data = fake(request.body)
+                const data = fake(request.body)
+                response.body = marshal(data, { schema: request.body, contentType: request.header.Accept })
+                return true
+            case 'validate':
+                const res = post('http://localhost:8091/mokapi/api/schema/validate', request.body, { headers: { 'Data-Content-Type': request.header['Data-Content-Type']}})
+                response.statusCode = res.statusCode
+                response.headers = res.headers
+                if (res.statusCode !== 200) {
+                    response.body = res.body
+                }
+                return true
+            case 'configs':
+                console.log(getConfigs())
+                response.data = getConfigs()
                 return true
             case 'config':
                 const config = getConfig(request.path.id)
@@ -81,7 +94,6 @@ export default function() {
                     response.data = config
                     return true
                 } else {
-                    console.log("config not found: "+request.path.id)
                     response.statusCode = 404
                     response.data = ''
                     return true
@@ -90,7 +102,6 @@ export default function() {
                 const configData = configs[request.path.id]
                 if (configData) {
                     response.data = configData
-                    //response.headers['Content-Type'] = 'application/json'
                     return true
                 } else {
                     response.statusCode = 404
@@ -195,4 +206,11 @@ function getConfig(id) {
         return kafkaConfigs[id]
     }
     return null
+}
+
+function getConfigs() {
+    return [
+        ...Object.values(httpConfigs),
+        ...Object.values(kafkaConfigs)
+    ]
 }

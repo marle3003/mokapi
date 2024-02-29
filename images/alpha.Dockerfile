@@ -1,6 +1,6 @@
 ARG VERSION
 
-FROM node:16.13.1 as webui
+FROM node:20.11.1 as webui
 
 COPY ./webui ./webui
 

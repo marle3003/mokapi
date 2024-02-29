@@ -1,23 +1,25 @@
 <script setup lang="ts">
-import type { PropType } from 'vue';
+import { computed } from 'vue';
 
-const props = defineProps({
-    level1: { type: String, required: true },
-    level2: { type: String, required: true },
-    level3: { type: String },
-    config: { type: Object as PropType<DocConfig>, required: true },
-})
 
-function matchLevel2(label: any): boolean {
-  return label.toString().toLowerCase() == props.level2.toLowerCase()
+const props = defineProps<{
+    levels: string[],
+    config: DocConfig,
+}>()
+
+const root = computed(() => <DocEntry>props.config[props.levels[0]])
+
+function matchLevel(label: any, level: number) {
+    if (level > props.levels.length){
+        return false
+    }
+    return label.toString().toLowerCase() == props.levels[level - 1].toLowerCase()
 }
-function matchLevel3(label: any): boolean {
-  return label.toString().toLowerCase() == props.level3?.toLowerCase()
-}
+
 function formatParam(label: any): string {
   return label.toString().toLowerCase().split(' ').join('-').split('/').join('-')
 }
-function hasChildren(item: DocConfig | DocEntry | string) {
+function hasChildren(item: DocEntry | string) {
     if (typeof item === 'string') {
         return false
     }
@@ -27,8 +29,8 @@ function hasChildren(item: DocConfig | DocEntry | string) {
     }
     return true
 }
-function showItem(name: string, item: DocConfig | DocEntry | string){
-    if (typeof item == 'string' && props.level1 != name) {
+function showItem(name: string | number, item: DocConfig | DocEntry | string){
+    if (typeof item == 'string' && props.levels[0] != name) {
         return true
     }
     const entry = <DocEntry>item
@@ -37,18 +39,131 @@ function showItem(name: string, item: DocConfig | DocEntry | string){
     }
     return true
 }
+function getId(name: any) {
+    return name.toString().replaceAll("/", "-").replaceAll(" ", "-")
+}
+function isActive(...levels: any[]) {
+    for (let i = 0; i < levels.length; i++) {
+        if (!matchLevel(levels[i], i+2)) {
+            return false
+        }
+    }
+    return true
+}
+function isExpanded(item: DocEntry | string) {
+    if (typeof item === 'string') {
+        return false
+    }
+    return item.expanded || false
+}
 </script>
 
 <template>
     <ul class="nav nav-pills flex-column mb-auto pe-3">
-        <li class="nav-item" v-for="(v, k) of config[level1]">
-            <p v-if="hasChildren(v)" class="chapter-text">{{ k }}</p>
-            <ul v-if="hasChildren(v)" class="nav nav-pills flex-column mb-auto pe-3 chapter">
-                <li class="nav-item" v-for="(_, k2) of v">
-                    <router-link v-if="k != k2" class="nav-link" :class="matchLevel2(k) && matchLevel3(k2) ? 'active': ''" :to="{ name: 'docs', params: {level2: formatParam(k), level3: formatParam(k2)} }" style="padding-left: 2rem">{{ k2 }}</router-link>
-                </li>
-            </ul>
-            <router-link v-if="!hasChildren(v) && showItem(k, v)" class="nav-link chapter-text" :class="matchLevel2(k) ? 'active': ''" :to="{ name: 'docs', params: {level2: formatParam(k)} }">{{ k }}</router-link>
+        <li class="nav-item" v-for="(level1, k1) of root.items">
+
+            <div v-if="hasChildren(level1)" class="chapter">
+                <button type="button" class="btn btn-link" :class="isActive(k1) ? 'child-active' : ''" data-bs-toggle="collapse" :data-bs-target="'#'+getId(k1)" :aria-expanded="isActive(k1) || isExpanded(level1)" :aria-controls="getId(k1)" :id="'btn'+getId(k1)">
+                    <i class="bi bi-chevron-right"></i> 
+                    <i class="bi bi-chevron-down"></i> 
+                    {{ k1 }}
+                </button>
+
+                <section class="collapse" :class="isActive(k1) || isExpanded(level1) ? 'show' : ''" :id="getId(<string>k1)" :aria-labelledby="'btn'+getId(k1)">
+                    <ul v-if="hasChildren(level1)" class="nav nav-pills flex-column mb-auto pe-3">
+                        <li class="nav-item" v-for="(level2, k2) of (<DocEntry>level1).items">
+                            
+                            <div v-if="hasChildren(level2)" class="subchapter">
+                                <button type="button" class="btn btn-link" :class="isActive(k1, k2) ? 'child-active' : ''" data-bs-toggle="collapse" :data-bs-target="'#'+getId(k2)" :aria-expanded="isActive(k1, k2)" :aria-controls="getId(k2)">
+                                    <i class="bi bi-chevron-right"></i> 
+                                    <i class="bi bi-chevron-down"></i> 
+                                    {{ k2 }}
+                                </button>
+                            
+                                <div class="collapse" :class="isActive(k1, k2) ? 'show' : ''" :id="getId(k2)">
+                                    <ul class="nav nav-pills flex-column mb-auto pe-3">
+                                        <li class="nav-item" v-for="(_, k3) of (<DocEntry>level2).items">
+                                            <router-link v-if="k2 != k3" class="nav-link" :class="isActive(k1, k2, k3) ? 'active' : ''" :to="{ name: 'docs', params: {level2: formatParam(k1), level3: formatParam(k2), level4: formatParam(k3)} }">{{ k3 }}</router-link>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <router-link v-if="k1 != k2 && !hasChildren(level2) && showItem(k2, level2)" class="nav-link" :class="isActive(k1, k2) ? 'active' : ''" :to="{ name: 'docs', params: {level2: formatParam(k1), level3: formatParam(k2)} }">{{ k2 }}</router-link>
+                        </li>
+                    </ul>
+                </section>
+            </div>
+
+            
+            <router-link v-if="!hasChildren(level1) && showItem(k1, level1)" class="nav-link chapter-text" :to="{ name: 'docs', params: {level2: formatParam(k1)} }">{{ k1 }}</router-link>
         </li>
     </ul>   
 </template>
+
+<style scoped>
+.nav {
+  font-size: 0.94rem;
+  font-weight: 500;
+}
+
+.nav-item {
+  margin-left: 16px;
+}
+
+.nav .nav-link {
+  padding: 0;
+  padding-top: 4px;
+
+}
+
+@media only screen and (max-width: 600px)  {
+  .nav {
+    font-size: 1.7rem;
+  }
+}
+
+.nav .router-link-active, .nav .router-link-exact-active {
+  color: var(--color-nav-link-active);
+  font-weight: 600;
+}
+
+.nav .child-active {
+  color: var(--color-nav-link-active);
+}
+
+.chapter {
+  margin-bottom: 0.5rem;
+}
+
+.chapter > section, .subchapter section {
+  border-left: solid 1px var(--color-tabs-border);
+  margin-left: 5px;
+}
+
+.nav button {
+  color: var(--color-text);
+  padding: 0;
+  padding-top: 4px;
+  padding-bottom: 0px;
+  font-size: 0.94rem;
+  text-decoration: none;
+  border: 0;
+}
+
+.chapter > button {
+  font-weight: 700;
+}
+
+.nav button:hover {
+  color: var(--color-nav-link-active);
+}
+
+.nav button[aria-expanded=false] .bi-chevron-down {
+  display: none;
+}
+
+.nav button[aria-expanded=true] .bi-chevron-right {
+  display: none;
+}
+</style>

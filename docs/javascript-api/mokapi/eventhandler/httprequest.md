@@ -1,10 +1,10 @@
 ---
-title: "Javascript API: HttpRequest"
-description: HttpRequest is an object used by HttpEventHandlers
+title: HttpRequest
+description: HttpRequest is an object used by HttpEventHandler
 ---
 # HttpRequest
 
-HttpRequest is an object used by [HttpEventHandler](/docs/javascript-api/mokapi/eventhandler.md)
+HttpRequest is an object used by [HttpEventHandler](/docs/javascript-api/mokapi/eventhandler/httpeventhandler.md)
 that contains request-specific data such as HTTP headers.
 
 | Name        | Type   | Description                                                              |

@@ -2,6 +2,7 @@ package schema
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -12,13 +13,13 @@ import (
 	"strings"
 )
 
-const unmarshalErrorFormat = "unmarshal data failed: %w"
-
 func ParseString(s string, schema *Ref) (interface{}, error) {
-	return parse(s, schema)
+	p := parser{convertStringToNumber: true}
+	return p.parse(s, schema)
 }
 
 func (r *Ref) Unmarshal(b []byte, contentType media.ContentType) (i interface{}, err error) {
+	p := parser{}
 	switch {
 	case contentType.Subtype == "json":
 		err = json.Unmarshal(b, &i)
@@ -26,23 +27,28 @@ func (r *Ref) Unmarshal(b []byte, contentType media.ContentType) (i interface{},
 			err = fmt.Errorf("invalid json format: %v", err)
 		}
 	case contentType.IsXml():
+		p.convertStringToNumber = true
 		i, err = unmarshalXml(b, r)
+	case contentType.Type == "multipart":
+		i, err = readMultipart(b, contentType, r)
 	default:
+		p.convertStringToNumber = true
 		i = string(b)
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf(unmarshalErrorFormat, err)
+		return nil, errors.Join(fmt.Errorf("unmarshal data failed"), err)
 	}
 
-	i, err = parse(i, r)
+	i, err = p.parse(i, r)
 	if err != nil {
-		err = fmt.Errorf(unmarshalErrorFormat, err)
+		err = errors.Join(fmt.Errorf("unmarshal data failed"), err)
 	}
 	return
 }
 
 func UnmarshalFrom(r io.Reader, contentType media.ContentType, schema *Ref) (i interface{}, err error) {
+	p := parser{}
 	switch contentType.Subtype {
 	case "json":
 		err = json.NewDecoder(r).Decode(&i)
@@ -50,6 +56,7 @@ func UnmarshalFrom(r io.Reader, contentType media.ContentType, schema *Ref) (i i
 			return nil, fmt.Errorf("invalid json format: %v", err)
 		}
 	default:
+		p.convertStringToNumber = true
 		i, err = io.ReadAll(r)
 	}
 
@@ -57,50 +64,54 @@ func UnmarshalFrom(r io.Reader, contentType media.ContentType, schema *Ref) (i i
 		return
 	}
 
-	return parse(i, schema)
+	return p.parse(i, schema)
 }
 
-func parse(v interface{}, schema *Ref) (interface{}, error) {
+type parser struct {
+	convertStringToNumber bool
+}
+
+func (p *parser) parse(v interface{}, schema *Ref) (interface{}, error) {
 	if schema == nil || schema.Value == nil {
 		return v, nil
 	}
 
 	if len(schema.Value.AnyOf) > 0 {
-		return parseAny(v, schema.Value)
+		return p.parseAny(v, schema.Value)
 	}
 	if len(schema.Value.AllOf) > 0 {
-		return parseAllOf(v, schema.Value)
+		return p.parseAllOf(v, schema.Value)
 	}
 	if len(schema.Value.OneOf) > 0 {
-		return parseOneOf(v, schema.Value)
+		return p.parseOneOf(v, schema.Value)
 	}
 	if len(schema.Value.Type) == 0 {
 		// A schema without a type matches any data type
 		if _, ok := v.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
-			return parseObject(v, &Schema{Type: "object"})
+			return p.parseObject(v, &Schema{Type: "object"})
 		}
 		return v, nil
 	}
 
 	switch schema.Value.Type {
 	case "object":
-		return parseObject(v, schema.Value)
+		return p.parseObject(v, schema.Value)
 	case "array":
-		return parseArray(v, schema.Value)
+		return p.parseArray(v, schema.Value)
 	case "boolean":
-		return readBoolean(v, schema.Value)
+		return p.readBoolean(v, schema.Value)
 	case "integer":
-		return parseInteger(v, schema.Value)
+		return p.parseInteger(v, schema.Value)
 	case "number":
-		return parseNumber(v, schema.Value)
+		return p.parseNumber(v, schema.Value)
 	case "string":
-		return parseString(v, schema.Value)
+		return p.parseString(v, schema.Value)
 	}
 
 	return nil, fmt.Errorf("unsupported type %q", schema.Value.Type)
 }
 
-func parseAny(i interface{}, schema *Schema) (interface{}, error) {
+func (p *parser) parseAny(i interface{}, schema *Schema) (interface{}, error) {
 	var result interface{}
 
 	for _, ref := range schema.AnyOf {
@@ -109,7 +120,7 @@ func parseAny(i interface{}, schema *Schema) (interface{}, error) {
 			return i, nil
 		}
 
-		part, err := parse(i, ref)
+		part, err := p.parse(i, ref)
 		if err != nil {
 			continue
 		}
@@ -146,7 +157,7 @@ func parseAny(i interface{}, schema *Schema) (interface{}, error) {
 	return result, nil
 }
 
-func parseAllOf(i interface{}, schema *Schema) (interface{}, error) {
+func (p *parser) parseAllOf(i interface{}, schema *Schema) (interface{}, error) {
 	m := i.(map[string]interface{})
 
 	result := map[string]interface{}{}
@@ -158,7 +169,7 @@ func parseAllOf(i interface{}, schema *Schema) (interface{}, error) {
 			return m, nil
 		}
 
-		part, err := parse(m, sRef)
+		part, err := p.parse(m, sRef)
 		if err != nil {
 			return nil, fmt.Errorf("parse %v failed: value does not match part of allOf: %w", toString(i), err)
 		}
@@ -181,11 +192,11 @@ func parseAllOf(i interface{}, schema *Schema) (interface{}, error) {
 	return result, nil
 }
 
-func parseOneOf(i interface{}, schema *Schema) (interface{}, error) {
-	return parseOneOfObject(i, schema)
+func (p *parser) parseOneOf(i interface{}, schema *Schema) (interface{}, error) {
+	return p.parseOneOfObject(i, schema)
 }
 
-func parseOneOfObject(i interface{}, schema *Schema) (interface{}, error) {
+func (p *parser) parseOneOfObject(i interface{}, schema *Schema) (interface{}, error) {
 	var result interface{}
 
 	for _, ref := range schema.OneOf {
@@ -194,7 +205,7 @@ func parseOneOfObject(i interface{}, schema *Schema) (interface{}, error) {
 			result = i
 		}
 
-		part, err := parse(i, ref)
+		part, err := p.parse(i, ref)
 		if err != nil {
 			continue
 		}
@@ -213,7 +224,7 @@ func parseOneOfObject(i interface{}, schema *Schema) (interface{}, error) {
 	return result, nil
 }
 
-func parseObject(i interface{}, s *Schema) (interface{}, error) {
+func (p *parser) parseObject(i interface{}, s *Schema) (interface{}, error) {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil, fmt.Errorf("parse %v as object", toString(i))
@@ -228,11 +239,11 @@ func parseObject(i interface{}, s *Schema) (interface{}, error) {
 	if s.IsDictionary() {
 		result := make(map[string]interface{})
 		for k, v := range m {
-			v, err = parse(v, s.AdditionalProperties.Ref)
-			if err != nil {
-				return nil, err
+			parsed, valError := p.parse(v, s.AdditionalProperties.Ref)
+			if valError != nil {
+				err = errors.Join(err, valError)
 			}
-			result[k] = v
+			result[k] = parsed
 		}
 		return result, nil
 	}
@@ -245,35 +256,40 @@ func parseObject(i interface{}, s *Schema) (interface{}, error) {
 	for k, v := range m {
 		prop := s.Properties.Get(k)
 
-		v, err := parse(v, prop)
-		if err != nil {
-			return nil, fmt.Errorf("parse '%v' failed: %w", k, err)
+		parsed, propError := p.parse(v, prop)
+		if propError != nil {
+			err = errors.Join(err, fmt.Errorf("parse '%v' failed: %w", k, propError))
 		}
-		result[k] = v
+		result[k] = parsed
 	}
 
-	return result, nil
+	return result, err
 }
 
-func parseArray(i interface{}, s *Schema) (interface{}, error) {
+func (p *parser) parseArray(i interface{}, s *Schema) (interface{}, error) {
 	arr, ok := i.([]interface{})
 	if !ok {
 		return nil, fmt.Errorf("expected array but got %v", toString(i))
 	}
 
+	var err error
 	result := make([]interface{}, 0)
 	for _, o := range arr {
-		v, err := parse(o, s.Items)
-		if err != nil {
-			return nil, err
+		v, errItem := p.parse(o, s.Items)
+		if errItem != nil {
+			err = errors.Join(err, errItem)
 		}
 		result = append(result, v)
 	}
 
-	return result, validateArray(result, s)
+	if errVal := validateArray(result, s); errVal != nil {
+		err = errors.Join(errVal)
+	}
+
+	return result, err
 }
 
-func parseInteger(i interface{}, s *Schema) (n int64, err error) {
+func (p *parser) parseInteger(i interface{}, s *Schema) (n int64, err error) {
 	switch v := i.(type) {
 	case int:
 		n = int64(v)
@@ -287,6 +303,9 @@ func parseInteger(i interface{}, s *Schema) (n int64, err error) {
 	case int32:
 		n = int64(v)
 	case string:
+		if !p.convertStringToNumber {
+			return 0, fmt.Errorf("parse '%v' failed, expected %v", i, s)
+		}
 		switch s.Format {
 		case "int64":
 			n, err = strconv.ParseInt(v, 10, 64)
@@ -315,11 +334,14 @@ func parseInteger(i interface{}, s *Schema) (n int64, err error) {
 	return n, validateInt64(n, s)
 }
 
-func parseNumber(i interface{}, s *Schema) (f float64, err error) {
+func (p *parser) parseNumber(i interface{}, s *Schema) (f float64, err error) {
 	switch v := i.(type) {
 	case float64:
 		f = v
 	case string:
+		if !p.convertStringToNumber {
+			return 0, fmt.Errorf("parse '%v' failed, expected %v", i, s)
+		}
 		f, err = strconv.ParseFloat(v, 64)
 		if err != nil {
 			return 0, fmt.Errorf("parse '%v' failed, expected %v", i, s)
@@ -342,7 +364,7 @@ func parseNumber(i interface{}, s *Schema) (f float64, err error) {
 	return f, validateFloat64(f, s)
 }
 
-func parseString(v interface{}, schema *Schema) (interface{}, error) {
+func (p *parser) parseString(v interface{}, schema *Schema) (interface{}, error) {
 	s, ok := v.(string)
 	if !ok {
 		if schema.Nullable {
@@ -354,7 +376,7 @@ func parseString(v interface{}, schema *Schema) (interface{}, error) {
 	return s, validateString(s, schema)
 }
 
-func readBoolean(i interface{}, s *Schema) (bool, error) {
+func (p *parser) readBoolean(i interface{}, s *Schema) (bool, error) {
 	if b, ok := i.(bool); ok {
 		return b, nil
 	}
@@ -416,31 +438,4 @@ func toString(i interface{}) string {
 		}
 	}
 	return sb.String()
-}
-
-func getType(s *Schema) (reflect.Type, error) {
-	switch s.Type {
-	case "integer":
-		if s.Format == "int32" {
-			return reflect.TypeOf(int32(0)), nil
-		}
-		return reflect.TypeOf(int64(0)), nil
-	case "number":
-		if s.Format == "float32" {
-			return reflect.TypeOf(float32(0)), nil
-		}
-		return reflect.TypeOf(float64(0)), nil
-	case "string":
-		return reflect.TypeOf(""), nil
-	case "boolean":
-		return reflect.TypeOf(false), nil
-	case "array":
-		t, err := getType(s.Items.Value)
-		if err != nil {
-			return nil, err
-		}
-		return reflect.SliceOf(t), nil
-	}
-
-	return nil, fmt.Errorf("type %v not implemented", s.Type)
 }

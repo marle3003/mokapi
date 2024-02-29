@@ -54,6 +54,8 @@ func EventRequestFrom(r *http.Request) *common.EventRequest {
 		req.Url.Scheme = "http"
 	}
 
+	// Mokapi's goal is to provide better APIs
+	// Therefore, we only add headers that defined in specification
 	params, _ := parameter.FromContext(ctx)
 	for t, values := range params {
 		for k, v := range values {

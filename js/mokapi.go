@@ -3,6 +3,8 @@ package js
 import (
 	"github.com/dop251/goja"
 	"mokapi/engine/common"
+	"mokapi/media"
+	"mokapi/providers/openapi/schema"
 	"os"
 	"sync"
 	"time"
@@ -146,6 +148,29 @@ func (m *mokapi) Open(file string) (string, error) {
 		return "", err
 	}
 	return string(f.Raw), nil
+}
+
+type MarshalArg struct {
+	Schema      *jsonSchema `json:"schema"`
+	ContentType string      `json:"contentType"`
+}
+
+func (m *mokapi) Marshal(i interface{}, encoding *MarshalArg) string {
+	ct := media.ContentType{}
+	r := &schema.Ref{}
+	if encoding != nil {
+		ct = media.ParseContentType(encoding.ContentType)
+		r.Value = toSchema(encoding.Schema)
+	}
+	if ct.IsEmpty() {
+		ct = media.ParseContentType("application/json")
+	}
+
+	b, err := r.Marshal(i, ct)
+	if err != nil {
+		panic(m.rt.ToValue(err.Error()))
+	}
+	return string(b)
 }
 
 type DateArg struct {

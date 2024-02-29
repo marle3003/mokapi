@@ -1,5 +1,5 @@
 ---
-title: "Javascript API: date"
+title: date ( [args] )
 description: Returns a textual representation of the date.
 ---
 # date ( [args] )

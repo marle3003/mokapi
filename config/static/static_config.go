@@ -53,6 +53,28 @@ type GitProvider struct {
 	Url          string
 	Urls         []string
 	PullInterval string `yaml:"pullInterval"`
+
+	Repositories []GitRepo
+}
+
+type GitRepo struct {
+	Url string
+	// Specifies an allow list of files to include in mokapi
+	Files []string
+	// Specifies an array of filenames pr pattern to include in mokapi
+	Include      []string
+	Auth         *GitAuth
+	PullInterval string `yaml:"pullInterval"`
+}
+
+type GitAuth struct {
+	GitHub *GitHubAuth
+}
+
+type GitHubAuth struct {
+	AppId          int64             `yaml:"appId"`
+	InstallationId int64             `yaml:"installationId"`
+	PrivateKey     tls.FileOrContent `yaml:"privateKey"`
 }
 
 type HttpProvider struct {

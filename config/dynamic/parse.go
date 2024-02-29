@@ -26,11 +26,7 @@ type Parser interface {
 }
 
 func Parse(c *Config, r Reader) error {
-	path := c.Info.Url.Path
-	if len(c.Info.Url.Opaque) > 0 {
-		path = c.Info.Url.Opaque
-	}
-	_, name := filepath.Split(path)
+	name := getFileName(c)
 
 	var data []byte
 	if filepath.Ext(name) == ".tmpl" {
@@ -124,4 +120,22 @@ func (d *dynamicObject) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	return nil
+}
+
+func getFileName(c *Config) string {
+	info := c.Info
+	for {
+		inner := info.Inner()
+		if inner == nil {
+			break
+		}
+		info = *inner
+	}
+
+	path := info.Url.Path
+	if len(info.Url.Opaque) > 0 {
+		path = info.Url.Opaque
+	}
+	_, name := filepath.Split(path)
+	return name
 }

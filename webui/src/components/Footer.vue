@@ -110,7 +110,10 @@
               </ul>
             </div>
           </div>
-        </div>
+        </div>        
+      </div>
+      <div class="d-flex justify-content-center mt-3">
+        <a href="https://www.buymeacoffee.com/mokapi" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;" ></a>
       </div>
     </div>
   </footer>

@@ -8,6 +8,9 @@ const props = defineProps<{
   contentType: string
   filename?: string
   url?: string
+  deprecated?: boolean
+  height?: string
+  hideContentType?: boolean
 }>()
 
 const { formatLanguage } = usePrettyLanguage()
@@ -18,10 +21,16 @@ const code = computed(() => {
 })
 
 const lines = computed(() => {
+  if (!code.value) {
+    return '0'
+  }
   return code.value.split('\n').length
 })
 
 const size = computed(() => {
+  if (!props.source) {
+    return format(0)
+  }
   return format(new Blob([props.source]).size)
 })
 
@@ -53,24 +62,32 @@ function download(event: MouseEvent) {
   event.preventDefault()
 }
 
+function copyToClipboard(event: MouseEvent) {
+  navigator.clipboard.writeText(code.value)
+  event.preventDefault()
+}
+
 </script>
 
 <template>
-  <div>
+  <section aria-label="Source">
     <div class="header">
       <div>
-        <span>{{ lines }} lines</span> · 
-        <span>{{ size }}</span>
+        <span v-if="!hideContentType">{{ contentType }}</span>
+        <span aria-label="Lines of Code">{{ lines }} lines</span>
+        <span aria-label="Size of Code">{{ size }}</span>
+        <span v-if="deprecated"><i class="bi bi-exclamation-triangle-fill yellow"></i> deprecated</span>
       </div>
-      <div class="controls" v-if="url">
-        <a :href="url">Raw</a>
-        <a href="" @click="download" title="Download config"><i class="bi bi-download"></i></a>
+      <div class="controls">
+        <a  v-if="url" :href="url">Raw</a>
+        <button type="button" class="btn btn-link" @click="copyToClipboard" title="Copy raw content" aria-label="Copy raw content"><i class="bi bi-copy"></i></button>
+        <button type="button" class="btn btn-link" @click="download" title="Download raw content" aria-label="Download raw content"><i class="bi bi-download"></i></button>
       </div>
     </div>
-    <div class="source">
-      <pre v-highlightjs="code" class="overflow-auto"><code :class="highlightClass"></code></pre>
-    </div>
-  </div>
+    <section class="source" aria-label="Content">
+      <pre v-highlightjs="code" class="overflow-auto" :style="(height) ? 'max-height: '+height : ''"><code :class="highlightClass"></code></pre>
+    </section>
+  </section>
 </template>
 
 <style scoped>
@@ -82,26 +99,47 @@ function download(event: MouseEvent) {
   display: flex;
   justify-content: space-between;
 }
-.header .controls a {
-  border: 1px solid var(--color-tabs-border);
-  padding: 5px 8px;
-}
-.header .controls a:hover {
-  border-color: var(--color-text-light);
+.header  button {
+  background: none !important;
+  font-size: 0.9rem;
+  border-radius: 0;
+  vertical-align: middle;
   color: var(--color-link);
 }
-.header .controls a:first-child {
+.header .controls > * {
+  border: 1px solid var(--color-tabs-border);
+  padding: 5px 8px;
+  height: 28px;
+  line-height: 18px;
+  margin-inline-end: -1px;
+  position: relative;
+}
+.header .controls a {
+  display: inline-block;
+  box-sizing: border-box;
+  vertical-align: middle;
+}
+.header .controls > *:hover {
+  border-color: var(--color-text-light);
+  color: var(--color-link);
+  z-index: 1;
+}
+.header .controls > *:first-child {
   border-top-left-radius: 6px;
   border-bottom-left-radius: 6px;
 }
-.header .controls a:last-child {
+.header .controls > *:last-child {
   border-top-right-radius: 6px;
   border-bottom-right-radius: 6px;
+}
+.header span + span::before {
+  content: ' · ';
 }
 .source {
   border: 1px solid var(--color-tabs-border);
   border-top: 0;
   border-radius: 0 0 6px 6px;
+  overflow: hidden;
 }
 .source pre {
   margin-bottom: 0;
@@ -109,5 +147,17 @@ function download(event: MouseEvent) {
 }
 .source pre .hljs {
   border-radius: 0 0 6px 6px;
+  padding-left: 0.5rem;
+}
+.source code {
+  display: inline-block;
+  min-width: 100%;
+}
+</style>
+
+<style>
+.source .hljs-deletion {
+  background-color: transparent;
+  color: #C9D1DE;
 }
 </style>

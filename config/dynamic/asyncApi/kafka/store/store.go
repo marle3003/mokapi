@@ -281,8 +281,29 @@ func (s *Store) log(record kafka.Record, partition int, traits events.Traits) {
 }
 
 func (s *Store) trigger(record *kafka.Record) {
-	//record.Headers = make([]kafka.RecordHeader, 0)
-	s.eventEmitter.Emit("kafka", record)
+	h := map[string]string{}
+	for _, v := range record.Headers {
+		h[v.Key] = string(v.Value)
+	}
+
+	r := &EventRecord{
+		Offset:  record.Offset,
+		Key:     kafka.BytesToString(record.Key),
+		Value:   kafka.BytesToString(record.Value),
+		Headers: h,
+	}
+	s.eventEmitter.Emit("kafka", r)
+
+	record.Key = kafka.NewBytes([]byte(r.Key))
+	record.Value = kafka.NewBytes([]byte(r.Value))
+
+	record.Headers = make([]kafka.RecordHeader, 0, len(r.Headers))
+	for k, v := range r.Headers {
+		record.Headers = append(record.Headers, kafka.RecordHeader{
+			Key:   k,
+			Value: []byte(v),
+		})
+	}
 }
 
 func parseHostAndPort(s string) (host string, port int) {

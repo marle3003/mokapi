@@ -1,14 +1,12 @@
 <script setup lang="ts">
-import type { PropType, Ref } from 'vue';
-import { usePrettyLanguage } from '@/composables/usePrettyLanguage';
-import { useSchema } from '@/composables/schema';
-import Markdown from 'vue3-markdown-it';
-import { useExample } from '@/composables/example';
-import hljs from 'highlight.js'
+import type { PropType, Ref } from 'vue'
+import { useSchema } from '@/composables/schema'
+import Markdown from 'vue3-markdown-it'
+import { useExample } from '@/composables/example'
+import SourceView from '../../SourceView.vue'
 
-const {formatLanguage} = usePrettyLanguage()
-const {printType} = useSchema()
-const {fetchExample} = useExample()
+const { printType } = useSchema()
+const { fetchExample } = useExample()
 
 const props = defineProps({
     parameters: { type: Array as PropType<Array<HttpParameter>> }
@@ -17,7 +15,10 @@ const props = defineProps({
 const examples: {[key: string]: Ref<string | undefined>} = {}
 if (props.parameters){
     for (let parameter of props.parameters){
-        let example = fetchExample(parameter.schema)
+        if (!parameter.schema) {
+            continue;
+        }
+        let example = fetchExample(parameter.schema, 'text/plain')
         examples[parameter.name+parameter.type] = example
     }
 }
@@ -30,7 +31,7 @@ const sortedParameters = props.parameters?.sort((p1, p2) =>{
     return p1.name.localeCompare(p2.name)
 })
 function getParameterTypeSortOrder(type: string): number{
-    switch (type){
+    switch (type) {
         case "path": return 0
         case "query": return 1
         case "header": return 2
@@ -40,10 +41,10 @@ function getParameterTypeSortOrder(type: string): number{
 }
 function getExample(key: string){
     const example = examples[key]
-    if (!example.value){
+    if (!example || !example.value){
         return ''
     }
-    return hljs.highlightAuto(example.value).value
+    return example.value
 }
 
 function showWarningColumn(){
@@ -72,7 +73,7 @@ function showWarningColumn(){
             </tr>
         </thead>
         <tbody>
-            <tr v-for="parameter in sortedParameters" :key="parameter.name + parameter.type" data-bs-toggle="modal" :data-bs-target="'#modal-'+parameter.name+parameter.type">
+            <tr v-for="(parameter, index) in sortedParameters" :key="'parameter-'+index" data-bs-toggle="modal" :data-bs-target="'#modal-parameter-'+index">
                 <td>{{ parameter.name }}</td>
                 <td>{{ parameter.type }}</td>
                 <td>{{ printType(parameter.schema) }}</td>
@@ -84,8 +85,8 @@ function showWarningColumn(){
             </tr>
         </tbody>
     </table>
-    <div v-for="parameter in parameters" :key="parameter.name+parameter.type">
-        <div class="modal fade" :id="'modal-'+parameter.name+parameter.type" tabindex="-1" aria-hidden="true">
+    <div v-for="(parameter, index) in parameters" :key="'parameter-'+index">
+        <div class="modal fade" :id="'modal-parameter-'+index" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content">
                     <div class="modal-body">
@@ -97,20 +98,15 @@ function showWarningColumn(){
                                             <p class="label">Name</p>
                                             <p>{{ parameter.name }}</p>
                                         </div>
-                                        <div class="col" v-if="parameter.deprecated">
-                                            <p><i class="bi bi-exclamation-triangle-fill yellow"></i> Deprecated</p>
+                                        <div class="col">
+                                            <p class="label">Location</p>
+                                            <p>{{ parameter.type }}</p>
+                                        </div>
+                                        <div class="col">
+                                            <p v-if="parameter.deprecated"><i class="bi bi-exclamation-triangle-fill yellow"></i> Deprecated</p>
                                         </div>
                                     </div>
-                                    <p class="label">Description</p>
-                                    <markdown :source="parameter.description"></markdown>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-group">
-                            <div class="card">
-                                <div class="card-body">
-                                    <div class="card-title text-center">Query</div>
-                                    <div class="row">
+                                    <div class="row mt-2">
                                         <div class="col">
                                             <p class="label">Required</p>
                                             <p>{{ parameter.required }}</p>
@@ -124,18 +120,22 @@ function showWarningColumn(){
                                             <p>{{ parameter.explode ?? false }}</p>
                                         </div>
                                     </div>
+                                    <div class="row mt-2">
+                                        <p class="label">Description</p>
+                                        <markdown :source="parameter.description"></markdown>
+                                    </div>
                                     <div class="row">
-                                        <ul class="nav nav-pills schema-tab" role="tabList">
-                                            <li class="nav-link show active" :id="'pills-body-tab'+parameter.name+parameter.type" data-bs-toggle="pill" :data-bs-target="'#pills-schema'+parameter.name+parameter.type" type="button" role="tab" :aria-controls="'pills-schema'+parameter.name+parameter.type" aria-selected="true">Schema</li>
-                                            <li class="nav-link" :id="'pills-header-tab'+parameter.name+parameter.type" data-bs-toggle="pill" :data-bs-target="'#pills-example'+parameter.name+parameter.type" type="button" role="tab" :aria-controls="'pills-example'+parameter.name+parameter.type" aria-selected="false">Example</li>
+                                        <ul class="nav nav-pills tab-sm tab-params" role="tabList">
+                                            <li class="nav-link show active" :id="'pills-body-tab-parameter-'+index" data-bs-toggle="pill" :data-bs-target="'#pills-schema-parameter-'+index" type="button" role="tab" :aria-controls="'pills-schema-parameter-'+index" aria-selected="true">Schema</li>
+                                            <li class="nav-link" :id="'pills-header-tab-parameter-'+index" data-bs-toggle="pill" :data-bs-target="'#pills-example-parameter-'+index" type="button" role="tab" :aria-controls="'pills-example-parameter-'+index" aria-selected="false">Example</li>
                                         </ul>
 
-                                        <div class="tab-content" :id="'pills-tabParameter'+parameter.name+parameter.type">
-                                            <div class="tab-pane fade show active" :id="'pills-schema'+parameter.name+parameter.type" role="tabpanel">
-                                                <pre v-highlightjs="formatLanguage(JSON.stringify(parameter.schema), 'application/json')"><code class="json"></code></pre>
+                                        <div class="tab-content" :id="'pills-tabParameter-parameter-'+index">
+                                            <div class="tab-pane fade show active" :id="'pills-schema-parameter-'+index" role="tabpanel">
+                                                <source-view :source="JSON.stringify(parameter.schema)" content-type="application/json" :hide-content-type="true" />
                                             </div>
-                                            <div class="tab-pane fade" :id="'pills-example'+parameter.name+parameter.type" role="tabpanel">
-                                                <pre><code class="json hljs" v-html="getExample(parameter.name+parameter.type)"></code></pre>
+                                            <div class="tab-pane fade" :id="'pills-example-parameter-'+index" role="tabpanel">
+                                                <source-view :source="getExample(parameter.name+parameter.type)" content-type="text/plain" :hide-content-type="true" />
                                             </div>
                                         </div>
                                     </div>
@@ -150,15 +150,14 @@ function showWarningColumn(){
 </template>
 
 <style scoped>
-.schema-tab li {
-    padding-right: 0;
+.nav-pills li:first-child {
+    padding-left: 12px;
 }
-.schema-tab li:not(:first-child) {
-    padding-left: 0;
+.tab-sm.tab-params li + li::before {
+    padding-left: 6px;
+    padding-right: 6px;
 }
-.schema-tab li + li::before {
-    padding-right: 7px;
-    padding-left: 7px;
-    content: " | ";
+.tab-pane {
+    padding: 0;
 }
 </style>

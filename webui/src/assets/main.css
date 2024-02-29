@@ -52,6 +52,11 @@ h3 {
   font-weight: 700;
 }
 
+h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
 a {
   color: var(--color-link);
   text-decoration: none;

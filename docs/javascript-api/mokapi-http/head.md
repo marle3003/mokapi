@@ -1,5 +1,5 @@
 ---
-title: "Javascript API: head"
+title: head( url, [args] )
 description: Make an HTTP HEAD request
 ---
 # head( url, [args] )

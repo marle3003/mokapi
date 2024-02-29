@@ -1,44 +1,61 @@
 import type { RouteLocationNormalizedLoaded } from "vue-router"
 
+const MAX_LEVEL = 4
+
 export function useFileResolver() {
     
     function resolve(config: DocConfig, route: RouteLocationNormalizedLoaded) {
         let level1 = <string>route.params.level1
-        let file: DocConfig | DocEntry | string
-        ({ name: level1, file } = find(level1, config))
+        let file: DocEntry | string
+        ({ name: level1, file} = select(config, level1))
 
-        let level2 = <string>route.params.level2
-        if (!level2 && typeof file !== 'string' && !isEntry(file)) {
-            // get first element as 'index' file
-            level2 = Object.keys(file)[0];
-            ({ file } = find(level2, <DocConfig>file))
-        } else {
-            ({ name: level2, file } = find(level2, <DocConfig>file))
+        const levels = [ level1 ]
+        for (let index = 2; index <= MAX_LEVEL; index++) {
+            let level = <string>route.params[`level${index}`];
+            if (typeof file === 'string') {
+                break
+            }
+            ({ level: level, file } = getLevel(level, file))
+            if (!level) {
+                break
+            }
+            levels.push(level)
         }
 
-        let level3 = <string>route.params.level3
-        if (level3 || typeof file !== 'string' && !isEntry(file)) {
-            if (!level3) {
-                // get first element as 'index' file
-                level3 = Object.keys(file)[0];
-                ({ file } = find(level3, <DocConfig>file))
+        return { file, levels }
+    }
+
+    function getLevel(level: string, file: DocEntry | string) {
+        if (typeof file !== 'string' && file.items) {
+            if (!level) {
+                if (file.index) {
+                    file = file.index
+                } else {
+                    // get first element as 'index' file
+                    level = Object.keys(file.items)[0];
+                    ({ file } = find(level, <DocEntry>file))
+                }
             } else{
-                ({ name: level3, file } = find(level3, <DocConfig>file))
+                ({ name: level, file } = find(level,  <DocEntry>file))
             }
         }
-
-        return { level1, level2, level3, file }
+        return { level, file }
     }
 
-    function find(name: string, config: DocConfig) {
+    function find(name: string, config: DocEntry) {
+        name = getField(config.items, name)
+        return { name: name, file: config.items![name] }
+    }
+
+    function select(obj: DocConfig, name: string) {
+        name = getField(obj, name)
+        return { name: name, file: obj[name] }
+    }
+
+    function getField(obj: any,name: string) {
         const searchFor = name.toLowerCase().replaceAll(/[-]/g, ' ')
-        name = Object.keys(config).find(
+        return Object.keys(obj).find(
             key => key.toLowerCase().replaceAll(/[\/]/g, ' ') === searchFor)!
-        return { name: name, file: config[name] }
-    }
-
-    function isEntry(obj: any) {
-        return 'file' in obj || 'component' in obj
     }
 
     return { resolve }

@@ -12,7 +12,7 @@ export function usePrettyLanguage() {
                 try{ 
                     return JSON.stringify(JSON.parse(s), null, 2)
                 }catch {
-                    console.log("unable to parse json: "+s)
+                    console.error("unable to parse json: "+s)
                     return s
                 }
             case 'xml':
@@ -45,7 +45,10 @@ export function usePrettyLanguage() {
             case '.json':
                 return 'application/json'
             case '.yaml':
+            case '.yml':
                 return 'application/yaml'
+            case '.js':
+                return 'text/javascript'
             default:
                 return null
         }

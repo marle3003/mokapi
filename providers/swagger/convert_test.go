@@ -13,112 +13,112 @@ func TestConvert(t *testing.T) {
 	testcases := []struct {
 		name   string
 		config string
-		f      func(t *testing.T, config *openapi.Config)
+		test   func(t *testing.T, config *openapi.Config)
 	}{
 		{
-			"header",
-			`{"swagger": "2.0"}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "header",
+			config: `{"swagger": "2.0"}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Equal(t, "3.0.1", config.OpenApi)
 			},
 		},
 		{
-			"info title",
-			`{"swagger": "2.0", "info": {"title": "foo"}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "info title",
+			config: `{"swagger": "2.0", "info": {"title": "foo"}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Equal(t, "foo", config.Info.Name)
 			},
 		},
 		{
-			"info description",
-			`{"swagger": "2.0", "info": {"description": "foo"}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "info description",
+			config: `{"swagger": "2.0", "info": {"description": "foo"}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Equal(t, "foo", config.Info.Description)
 			},
 		},
 		{
-			"contact",
-			`{"swagger": "2.0", "info": {"contact": {"name": "foo","url":"http://foo.bar","email":"foo@bar.com"}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "contact",
+			config: `{"swagger": "2.0", "info": {"contact": {"name": "foo","url":"http://foo.bar","email":"foo@bar.com"}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Equal(t, "foo", config.Info.Contact.Name)
 				require.Equal(t, "http://foo.bar", config.Info.Contact.Url)
 				require.Equal(t, "foo@bar.com", config.Info.Contact.Email)
 			},
 		},
 		{
-			"version",
-			`{"swagger": "2.0", "info": {"version": "1.0"}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "version",
+			config: `{"swagger": "2.0", "info": {"version": "1.0"}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Equal(t, "1.0", config.Info.Version)
 			},
 		},
 		{
-			"host",
-			`{"swagger": "2.0", "host": "server:8080"}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "host",
+			config: `{"swagger": "2.0", "host": "server:8080"}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Len(t, config.Servers, 1)
 				require.Equal(t, "http://server:8080", config.Servers[0].Url)
 			},
 		},
 		{
-			"basePath",
-			`{"swagger": "2.0", "basePath": "/foo"}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "basePath",
+			config: `{"swagger": "2.0", "basePath": "/foo"}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Len(t, config.Servers, 1)
 				require.Equal(t, "/foo", config.Servers[0].Url)
 			},
 		},
 		{
-			"host",
-			`{"swagger": "2.0", "host": "foo"}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "host",
+			config: `{"swagger": "2.0", "host": "foo"}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Len(t, config.Servers, 1)
 				require.Equal(t, "http://foo", config.Servers[0].Url)
 			},
 		},
 		{
-			"host with port",
-			`{"swagger": "2.0", "host": "foo:8080"}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "host with port",
+			config: `{"swagger": "2.0", "host": "foo:8080"}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Len(t, config.Servers, 1)
 				require.Equal(t, "http://foo:8080", config.Servers[0].Url)
 			},
 		},
 		{
-			"host with port and basePath",
-			`{"swagger": "2.0", "host": "foo:8080", "basePath": "/bar"}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "host with port and basePath",
+			config: `{"swagger": "2.0", "host": "foo:8080", "basePath": "/bar"}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Len(t, config.Servers, 1)
 				require.Equal(t, "http://foo:8080/bar", config.Servers[0].Url)
 			},
 		},
 		{
-			"scheme with basePath",
-			`{"swagger": "2.0","schemes":["https"],"basePath": "/bar"}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "scheme with basePath",
+			config: `{"swagger": "2.0","schemes":["https"],"basePath": "/bar"}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Len(t, config.Servers, 1)
 				require.Equal(t, "https:///bar", config.Servers[0].Url)
 			},
 		},
 		{
-			"scheme with host and basePath",
-			`{"swagger": "2.0","schemes":["https"],"host":"foo","basePath": "/bar"}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "scheme with host and basePath",
+			config: `{"swagger": "2.0","schemes":["https"],"host":"foo","basePath": "/bar"}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Len(t, config.Servers, 1)
 				require.Equal(t, "https://foo/bar", config.Servers[0].Url)
 			},
 		},
 		{
-			"path ref",
-			`{"swagger": "2.0","paths":{"/foo":{"$ref":"./foo.json"}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "path ref",
+			config: `{"swagger": "2.0","paths":{"/foo":{"$ref":"./foo.json"}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Equal(t, "./foo.json", config.Paths["/foo"].Ref)
 			},
 		},
 		{
-			"GET /foo",
-			`{"swagger": "2.0","paths":{"/foo":{"get":{}}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "GET /foo",
+			config: `{"swagger": "2.0","paths":{"/foo":{"get":{}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.NotNil(t, config.Paths["/foo"].Value.Get)
 			},
 		},
@@ -130,44 +130,44 @@ func TestConvert(t *testing.T) {
 			},
 		},
 		{
-			"POST /foo",
-			`{"swagger": "2.0","paths":{"/foo":{"post":{}}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "POST /foo",
+			config: `{"swagger": "2.0","paths":{"/foo":{"post":{}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.NotNil(t, config.Paths["/foo"].Value.Post)
 			},
 		},
 		{
-			"DELETE /foo",
-			`{"swagger": "2.0","paths":{"/foo":{"delete":{}}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "DELETE /foo",
+			config: `{"swagger": "2.0","paths":{"/foo":{"delete":{}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.NotNil(t, config.Paths["/foo"].Value.Delete)
 			},
 		},
 		{
-			"OPTIONS /foo",
-			`{"swagger": "2.0","paths":{"/foo":{"options":{}}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "OPTIONS /foo",
+			config: `{"swagger": "2.0","paths":{"/foo":{"options":{}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.NotNil(t, config.Paths["/foo"].Value.Options)
 			},
 		},
 		{
-			"HEAD /foo",
-			`{"swagger": "2.0","paths":{"/foo":{"head":{}}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "HEAD /foo",
+			config: `{"swagger": "2.0","paths":{"/foo":{"head":{}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.NotNil(t, config.Paths["/foo"].Value.Head)
 			},
 		},
 		{
-			"PATCH /foo",
-			`{"swagger": "2.0","paths":{"/foo":{"patch":{}}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "PATCH /foo",
+			config: `{"swagger": "2.0","paths":{"/foo":{"patch":{}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.NotNil(t, config.Paths["/foo"].Value.Patch)
 			},
 		},
 		{
-			"path parameter",
-			`{"swagger": "2.0", "paths": {"/foo/{id}":{"parameters": [{"name": "id","in":"path","required":true,"description":"id parameter","type":"integer","format":"int64"}]}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "path parameter",
+			config: `{"swagger": "2.0", "paths": {"/foo/{id}":{"parameters": [{"name": "id","in":"path","required":true,"description":"id parameter","type":"integer","format":"int64"}]}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Contains(t, config.Paths, "/foo/{id}")
 				p := config.Paths["/foo/{id}"].Value
 				require.Equal(t, parameter.Path, p.Parameters[0].Value.Type)
@@ -179,63 +179,63 @@ func TestConvert(t *testing.T) {
 			},
 		},
 		{
-			"operation tags",
-			`{"swagger": "2.0", "paths": {"/foo": {"get": {"tags": ["foo","bar"]}}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "operation tags",
+			config: `{"swagger": "2.0", "paths": {"/foo": {"get": {"tags": ["foo","bar"]}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Contains(t, config.Paths, "/foo")
 				get := config.Paths["/foo"].Value.Get
 				require.Equal(t, []string{"foo", "bar"}, get.Tags)
 			},
 		},
 		{
-			"operation summary",
-			`{"swagger": "2.0", "paths": {"/foo": {"get": {"summary": "foo"}}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "operation summary",
+			config: `{"swagger": "2.0", "paths": {"/foo": {"get": {"summary": "foo"}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Contains(t, config.Paths, "/foo")
 				get := config.Paths["/foo"].Value.Get
 				require.Equal(t, "foo", get.Summary)
 			},
 		},
 		{
-			"operation summary",
-			`{"swagger": "2.0", "paths": {"/foo": {"get": {"summary": "foo"}}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "operation summary",
+			config: `{"swagger": "2.0", "paths": {"/foo": {"get": {"summary": "foo"}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Contains(t, config.Paths, "/foo")
 				get := config.Paths["/foo"].Value.Get
 				require.Equal(t, "foo", get.Summary)
 			},
 		},
 		{
-			"operation description",
-			`{"swagger": "2.0", "paths": {"/foo": {"get": {"description": "foo"}}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "operation description",
+			config: `{"swagger": "2.0", "paths": {"/foo": {"get": {"description": "foo"}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Contains(t, config.Paths, "/foo")
 				get := config.Paths["/foo"].Value.Get
 				require.Equal(t, "foo", get.Description)
 			},
 		},
 		{
-			"operation operationId",
-			`{"swagger": "2.0", "paths": {"/foo": {"get": {"operationId": "foo"}}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "operation operationId",
+			config: `{"swagger": "2.0", "paths": {"/foo": {"get": {"operationId": "foo"}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Contains(t, config.Paths, "/foo")
 				get := config.Paths["/foo"].Value.Get
 				require.Equal(t, "foo", get.OperationId)
 			},
 		},
 		{
-			"operation consumes without parameter body",
-			`{"swagger": "2.0", "paths": {"/foo": {"get": {"consumes": ["application/json"]}}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "operation consumes without parameter body",
+			config: `{"swagger": "2.0", "paths": {"/foo": {"get": {"consumes": ["application/json"]}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Contains(t, config.Paths, "/foo")
 				get := config.Paths["/foo"].Value.Get
 				require.Nil(t, get.RequestBody)
 			},
 		},
 		{
-			"operation parameter body and empty consumes",
-			`{"swagger": "2.0", "paths": {"/foo": {"get": {"parameters": [{"in":"body","name":"body","schema":{"type":"string"}}]}}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "operation parameter body and empty consumes",
+			config: `{"swagger": "2.0", "paths": {"/foo": {"get": {"parameters": [{"in":"body","name":"body","schema":{"type":"string"}}]}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Contains(t, config.Paths, "/foo")
 				get := config.Paths["/foo"].Value.Get
 				require.NotNil(t, get.RequestBody)
@@ -244,9 +244,9 @@ func TestConvert(t *testing.T) {
 			},
 		},
 		{
-			"operation parameter body required",
-			`{"swagger": "2.0", "paths": {"/foo": {"get": {"parameters": [{"in":"body","name":"body","required":true,"schema":{"type":"string"}}]}}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "operation parameter body required",
+			config: `{"swagger": "2.0", "paths": {"/foo": {"get": {"parameters": [{"in":"body","name":"body","required":true,"schema":{"type":"string"}}]}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Contains(t, config.Paths, "/foo")
 				get := config.Paths["/foo"].Value.Get
 				require.NotNil(t, get.RequestBody)
@@ -254,9 +254,9 @@ func TestConvert(t *testing.T) {
 			},
 		},
 		{
-			"operation parameter body and consumes",
-			`{"swagger": "2.0", "paths": {"/foo": {"get": {"consumes":["application/json"],"parameters": [{"in":"body","name":"body","schema":{"type":"string"}}]}}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "operation parameter body and consumes",
+			config: `{"swagger": "2.0", "paths": {"/foo": {"get": {"consumes":["application/json"],"parameters": [{"in":"body","name":"body","schema":{"type":"string"}}]}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Contains(t, config.Paths, "/foo")
 				get := config.Paths["/foo"].Value.Get
 				require.NotNil(t, get.RequestBody)
@@ -265,9 +265,9 @@ func TestConvert(t *testing.T) {
 			},
 		},
 		{
-			"operation parameter body and global consumes",
-			`{"swagger": "2.0","consumes":["application/json"],"paths": {"/foo": {"get": {"parameters": [{"in":"body","name":"body","schema":{"type":"string"}}]}}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "operation parameter body and global consumes",
+			config: `{"swagger": "2.0","consumes":["application/json"],"paths": {"/foo": {"get": {"parameters": [{"in":"body","name":"body","schema":{"type":"string"}}]}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Contains(t, config.Paths, "/foo")
 				get := config.Paths["/foo"].Value.Get
 				require.NotNil(t, get.RequestBody)
@@ -276,9 +276,9 @@ func TestConvert(t *testing.T) {
 			},
 		},
 		{
-			"operation parameter body empty consumes and global consumes",
-			`{"swagger": "2.0","consumes":["application/json"],"paths": {"/foo": {"get": {"consumes":[],"parameters": [{"in":"body","name":"body","schema":{"type":"string"}}]}}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "operation parameter body empty consumes and global consumes",
+			config: `{"swagger": "2.0","consumes":["application/json"],"paths": {"/foo": {"get": {"consumes":[],"parameters": [{"in":"body","name":"body","schema":{"type":"string"}}]}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Contains(t, config.Paths, "/foo")
 				get := config.Paths["/foo"].Value.Get
 				require.NotNil(t, get.RequestBody)
@@ -287,9 +287,9 @@ func TestConvert(t *testing.T) {
 			},
 		},
 		{
-			"operation parameter body empty consumes and global consumes",
-			`{"swagger": "2.0","consumes":["text/plain"],"paths": {"/foo": {"get": {"consumes":["application/json"],"parameters": [{"in":"body","name":"body","schema":{"type":"string"}}]}}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "operation parameter body empty consumes and global consumes",
+			config: `{"swagger": "2.0","consumes":["text/plain"],"paths": {"/foo": {"get": {"consumes":["application/json"],"parameters": [{"in":"body","name":"body","schema":{"type":"string"}}]}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Contains(t, config.Paths, "/foo")
 				get := config.Paths["/foo"].Value.Get
 				require.NotNil(t, get.RequestBody)
@@ -298,36 +298,36 @@ func TestConvert(t *testing.T) {
 			},
 		},
 		{
-			"operation parameter path",
-			`{"swagger": "2.0","paths": {"/foo": {"get": {"parameters": [{"in":"path","name":"id"}]}}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "operation parameter path",
+			config: `{"swagger": "2.0","paths": {"/foo": {"get": {"parameters": [{"in":"path","name":"id"}]}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Contains(t, config.Paths, "/foo")
 				get := config.Paths["/foo"].Value.Get
 				require.Equal(t, "path", get.Parameters[0].Value.Type.String())
 			},
 		},
 		{
-			"operation parameter query",
-			`{"swagger": "2.0","paths": {"/foo": {"get": {"parameters": [{"in":"query","name":"id"}]}}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "operation parameter query",
+			config: `{"swagger": "2.0","paths": {"/foo": {"get": {"parameters": [{"in":"query","name":"id"}]}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Contains(t, config.Paths, "/foo")
 				get := config.Paths["/foo"].Value.Get
 				require.Equal(t, "query", get.Parameters[0].Value.Type.String())
 			},
 		},
 		{
-			"operation parameter header",
-			`{"swagger": "2.0","paths": {"/foo": {"get": {"parameters": [{"in":"header","name":"id"}]}}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "operation parameter header",
+			config: `{"swagger": "2.0","paths": {"/foo": {"get": {"parameters": [{"in":"header","name":"id"}]}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Contains(t, config.Paths, "/foo")
 				get := config.Paths["/foo"].Value.Get
 				require.Equal(t, "header", get.Parameters[0].Value.Type.String())
 			},
 		},
 		{
-			"path parameter body",
-			`{"swagger": "2.0", "paths": {"/foo/{id}":{"parameters": [{"name": "id","in":"body","required":true,"description":"id parameter","schema":{"type": "string"}}],"get":{"consumes":["application/json"]}}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "path parameter body",
+			config: `{"swagger": "2.0", "paths": {"/foo/{id}":{"parameters": [{"name": "id","in":"body","required":true,"description":"id parameter","schema":{"type": "string"}}],"get":{"consumes":["application/json"]}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Contains(t, config.Paths, "/foo/{id}")
 				p := config.Paths["/foo/{id}"].Value
 				require.NotNil(t, p.Get.RequestBody)
@@ -339,9 +339,9 @@ func TestConvert(t *testing.T) {
 			},
 		},
 		{
-			"path response",
-			`{"swagger": "2.0", "paths": {"/foo": {"get": {"produces": ["application/json"], "responses": {"200": {"description": "response description", "schema": {"$ref": "#/definitions/foo"}}}}}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "path response",
+			config: `{"swagger": "2.0", "paths": {"/foo": {"get": {"produces": ["application/json"], "responses": {"200": {"description": "response description", "schema": {"$ref": "#/definitions/foo"}}}}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Contains(t, config.Paths, "/foo")
 				p := config.Paths["/foo"]
 				require.NotNil(t, p.Value.Get)
@@ -353,9 +353,9 @@ func TestConvert(t *testing.T) {
 			},
 		},
 		{
-			"path response root produces",
-			`{"swagger": "2.0", "produces": ["application/json"], "paths": {"/foo": {"get": {"responses": {"200": {"description": "response description", "schema": {"$ref": "#/definitions/foo"}}}}}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "path response root produces",
+			config: `{"swagger": "2.0", "produces": ["application/json"], "paths": {"/foo": {"get": {"responses": {"200": {"description": "response description", "schema": {"$ref": "#/definitions/foo"}}}}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Contains(t, config.Paths, "/foo")
 				p := config.Paths["/foo"]
 				require.NotNil(t, p.Value.Get)
@@ -367,9 +367,9 @@ func TestConvert(t *testing.T) {
 			},
 		},
 		{
-			"path response with default MIME type",
-			`{"swagger": "2.0", "paths": {"/foo": {"get": {"responses": {"200": {"description": "response description", "schema": {"$ref": "#/definitions/foo"}}}}}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "path response with default MIME type",
+			config: `{"swagger": "2.0", "paths": {"/foo": {"get": {"responses": {"200": {"description": "response description", "schema": {"$ref": "#/definitions/foo"}}}}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				require.Contains(t, config.Paths, "/foo")
 				p := config.Paths["/foo"]
 				require.NotNil(t, p.Value.Get)
@@ -381,9 +381,9 @@ func TestConvert(t *testing.T) {
 			},
 		},
 		{
-			"definitions",
-			`{"swagger": "2.0", "definitions": {"Foo": {"type": "string"}, "Bar": {"type": "object","properties": {"title":{"type": "string"}}}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "definitions",
+			config: `{"swagger": "2.0", "definitions": {"Foo": {"type": "string"}, "Bar": {"type": "object","properties": {"title":{"type": "string"}}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				foo := config.Components.Schemas.Get("Foo")
 				require.Equal(t, "string", foo.Value.Type)
 				bar := config.Components.Schemas.Get("Bar")
@@ -393,17 +393,17 @@ func TestConvert(t *testing.T) {
 			},
 		},
 		{
-			"integer with empty format needs to be int32",
-			`{"swagger": "2.0", "definitions": {"Foo": {"type": "integer"}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "integer with empty format needs to be int32",
+			config: `{"swagger": "2.0", "definitions": {"Foo": {"type": "integer"}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				foo := config.Components.Schemas.Get("Foo")
 				require.Equal(t, "int32", foo.Value.Format)
 			},
 		},
 		{
-			"integer with format needs to be int64",
-			`{"swagger": "2.0", "definitions": {"Foo": {"type": "integer", "format": "int64"}}}`,
-			func(t *testing.T, config *openapi.Config) {
+			name:   "integer with format needs to be int64",
+			config: `{"swagger": "2.0", "definitions": {"Foo": {"type": "integer", "format": "int64"}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
 				foo := config.Components.Schemas.Get("Foo")
 				require.Equal(t, "int64", foo.Value.Format)
 			},
@@ -420,7 +420,7 @@ func TestConvert(t *testing.T) {
 			require.NoError(t, err)
 			converted, err := Convert(c)
 			require.NoError(t, err)
-			tc.f(t, converted)
+			tc.test(t, converted)
 		})
 	}
 }

@@ -1,8 +1,8 @@
 ---
-title: "Javascript API: delete"
+title: del( url, [body], [args] )
 description: Make an HTTP DELETE request
 ---
-# delete( url, [body], [args] )
+# del( url, [body], [args] )
 
 Make a DELETE request
 
@@ -19,14 +19,6 @@ Make a DELETE request
 | Response | [Response](/docs/javascript-api/mokapi-http/response.md) object |
 
 ## Example
-
-```javascript
-import http from 'mokapi/http'
-
-export default function() {
-    http.delete("https://foo.bar/foo")
-}
-```
 
 ```javascript
 import { del } from 'mokapi/http'

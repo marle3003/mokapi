@@ -1,5 +1,5 @@
 ---
-title: "Javascript API: ProduceResult"
+title: ProduceResult
 description: ProduceResult is an object used by functions in the module mokapi/kafka
 ---
 # ProduceResult
@@ -7,14 +7,14 @@ description: ProduceResult is an object used by functions in the module mokapi/k
 ProduceResult is an object used by functions in the module mokapi/kafka 
 and contains information of the written Kafka message.
 
-| Name      | Type   | Description                                              |
-|-----------|--------|----------------------------------------------------------|
-| cluster   | string | Name of the  Kafka cluster where the message was written |
-| topic     | string | Kafka topic name where the message was written           |
-| partition | number | Kafka partition where the message was written            |
-| offset    | number | The offset of the written message                        |
-| key       | string | The key of the written message                           |
-| value     | string | The value of the written message                         |
+| Name      | Type   | Description                                               |
+|-----------|--------|-----------------------------------------------------------|
+| cluster   | string | Name of the  Kafka cluster where the message was written. |
+| topic     | string | Kafka topic name where the message was written.           |
+| partition | number | Kafka partition where the message was written.            |
+| offset    | number | The offset of the written message.                        |
+| key       | string | The key of the written message.                           |
+| value     | string | The value of the written message.                         |
 
 ## Example
 

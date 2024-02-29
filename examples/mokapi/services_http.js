@@ -18,7 +18,7 @@ const tag = {
     type: "object",
     properties: {
         id: {
-            type: "string",
+            type: "integer",
             format: "int64"
         },
         name: {
@@ -54,6 +54,7 @@ const pet = {
             }
         },
         tags: {
+            type: "array",
             xml: {
                 name: "tag",
                 wrapped: true
@@ -78,7 +79,16 @@ export const configs = {
         url: 'file://foo.json',
         provider: 'file',
         time: '2023-02-15T08:49:25.482366+01:00',
-        data: 'http://localhost:8090/api/services/http/Swagger%20Petstore'
+        data: 'http://localhost:8090/api/services/http/Swagger%20Petstore',
+        refs: [
+            {
+                id: 'b6fea8ac-56c7-4e73-a9c0-6887640bdba8',
+                url: 'file://foo2.json',
+                provider: 'file',
+                time: '2023-02-28T08:49:25.482366+01:00',
+                data: 'http://localhost:8090/api/services/http/Swagger%20Petstore',
+            }
+        ]
     }
 }
 
@@ -108,12 +118,23 @@ export let apps = [
                         summary: "Add a new pet to the store",
                         operationId: "addPet",
                         deprecated: true,
+                        parameters: [
+                            {
+                                type: "query",
+                                name: "$format",
+                                schema: {type: "string"}
+                            }
+                        ],
                         requestBody: {
                             description: "Create a new pet in the store",
                             required: true,
                             contents: [
                                 {
                                     type: "application/json",
+                                    schema: pet
+                                },
+                                {
+                                    type: "application/xml",
                                     schema: pet
                                 }
                             ]
@@ -169,7 +190,8 @@ export let apps = [
                                 description: "Updated name of the pet",
                                 schema: {
                                     type: "string"
-                                }
+                                },
+                                required: false
                             },
                             {
                                 name: "status",
@@ -177,7 +199,8 @@ export let apps = [
                                 description: "Updated status of the pet",
                                 schema: {
                                     type: "string"
-                                }
+                                },
+                                required: false
                             }
                         ],
                         responses: [

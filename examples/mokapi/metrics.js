@@ -32,16 +32,24 @@ export let metrics = [
         value: 1652237690
     },
     {
-        name: 'kafka_messages_total{service="Kafka World",topic="foo"}"',
+        name: 'kafka_messages_total{service="Kafka World",topic="mokapi.shop.products"}"',
         value: 10
     },
     {
-        name: 'kafka_message_timestamp{service="Kafka World",topic="foo"}"',
+        name: 'kafka_message_timestamp{service="Kafka World",topic="mokapi.shop.products"}"',
         value: 1652135690
     },
     {
-        name: 'kafka_consumer_group_lag{service="Kafka World",group="foo",topic="foo",partition="0"}"',
+        name: 'kafka_consumer_group_lag{service="Kafka World",group="foo",topic="mokapi.shop.products",partition="0"}"',
         value: 10
+    },
+    {
+        name: 'kafka_messages_total{service="Kafka World",topic="bar"}"',
+        value: 1
+    },
+    {
+        name: 'kafka_message_timestamp{service="Kafka World",topic="bar"}"',
+        value: 1652035690
     },
     {
         name: 'smtp_mails_total{service="Smtp Testserver"}"',

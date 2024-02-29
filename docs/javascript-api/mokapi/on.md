@@ -1,16 +1,16 @@
 ---
-title: "Javascript API: on"
+title: on( event, handler, [args] )
 description: Attaches an event handler for the given event.
 ---
 # on( event, handler, [args] )
 
 Attaches an event handler for the given event.
 
-| Parameter       | Type     | Description                                                                                           |
-|-----------------|----------|-------------------------------------------------------------------------------------------------------|
-| event           | string   | Event type such as `http                                                                              |
- | handler         | function | An [EventHandler](/docs/javascript-api/mokapi/eventhandler.md) to execute when the event is triggered |
- | args (optional) | object   | [EventArgs](/docs/javascript-api/mokapi/eventargs.md) object contains additional event arguments.     | 
+| Parameter        | Type     | Description                                                                                            |
+|------------------|----------|--------------------------------------------------------------------------------------------------------|
+| event            | string   | Event type such as `http                                                                               |
+| handler          | function | An [EventHandler](/docs/javascript-api/mokapi/eventhandler.md) to execute when the event is triggered  |
+| args (optional)  | object   | [EventArgs](/docs/javascript-api/mokapi/eventargs.md) object contains additional event arguments.      | 
 
 ## Example Echo Server
 

@@ -5,8 +5,8 @@ import { parseMetadata } from '@/composables/markdown'
 const files = inject<Record<string, string>>('files')!
 
 const nav = inject<DocConfig>('nav')!
-const exampleFiles = <DocConfig>(<DocConfig>nav['Examples'])['Examples'] ?? {}
-const tutorialsFiles = <DocConfig>(<DocConfig>nav['Examples'])['Tutorials'] ?? {}
+const exampleFiles = (<DocEntry>nav['Examples'].items!['Examples']).items ?? {}
+const tutorialsFiles = (<DocEntry>nav['Examples'].items!['Tutorials']).items ?? {}
 
 const examples: any[] = []
 for (const key in exampleFiles) {
@@ -29,7 +29,7 @@ function formatParam(label: any): string {
 
 <template>
     <div v-if="examples.length > 0">
-        <h1>Examples</h1>
+        <h2>Examples</h2>
         <ul class="link-list">
             <li v-for="example of examples">
                 <router-link :to="{ name: 'docs', params: {level2: 'examples', level3: formatParam(example.key)} }">
@@ -40,7 +40,7 @@ function formatParam(label: any): string {
         </ul>
     </div>
     <div v-if="tutorials.length > 0">
-        <h1>Tutorials</h1>
+        <h2>Tutorials</h2>
         <ul class="link-list">
             <li v-for="tutorial of tutorials">
                 <router-link :to="{ name: 'docs', params: {level2: 'tutorials', level3: formatParam(tutorial.key)} }">

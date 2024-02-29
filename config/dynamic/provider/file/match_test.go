@@ -170,7 +170,17 @@ func TestMatch(t *testing.T) {
 				"/name/lib/log.file":           false,
 			},
 		},
-
+		{
+			name:    "double star at end",
+			pattern: "/lib/name/**",
+			test: map[string]bool{
+				"/lib/test/ver1/name/log.file": false,
+				"/lib/name":                    false,
+				"/lib/name/log.file":           true,
+				"/lib/name/foo/log.file":       true,
+				"/name/lib/log.file":           false,
+			},
+		},
 		{
 			name:    "name?.file",
 			pattern: "name?.file",
@@ -210,7 +220,17 @@ func TestMatch(t *testing.T) {
 				"/namec.file": false,
 			},
 		},
-
+		{
+			name:    "double star with extension",
+			pattern: "/foo/bar/**/*.json",
+			test: map[string]bool{
+				"/foo/test.json":          false,
+				"/foo/bar":                false,
+				"/foo/bar/hello.c":        false,
+				"/foo/bar/api.json":       true,
+				"/foo/bar/dir/hello.json": true,
+			},
+		},
 		{
 			name:    "double star at end",
 			pattern: "/foo/bar/**",
@@ -219,6 +239,17 @@ func TestMatch(t *testing.T) {
 				"/foo/bar":             false,
 				"/foo/bar/hello.c":     true,
 				"/foo/bar/dir/hello.c": true,
+			},
+		},
+		{
+			name:    "double star start and end",
+			pattern: "**/mokapi/**",
+			test: map[string]bool{
+				"/foo/test.json":           false,
+				"/foo/mokapi":              false,
+				"/foo/mokapi/hello.c":      true,
+				"/foo/bar/mokapi/hello.c":  true,
+				"/foo/bar/mokapi/api.json": true,
 			},
 		},
 	}

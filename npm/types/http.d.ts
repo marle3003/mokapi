@@ -9,7 +9,7 @@ declare module 'mokapi/http' {
 }
 
 declare interface Args {
-    header?: { [name: string]: any };
+    headers?: { [name: string]: any };
 }
 
 declare interface Response {

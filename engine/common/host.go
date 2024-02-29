@@ -66,6 +66,7 @@ type KafkaProduceResult struct {
 	Offset    int64
 	Key       string
 	Value     string
+	Headers   map[string]string
 }
 
 type HttpClient interface {
@@ -73,7 +74,7 @@ type HttpClient interface {
 }
 
 type Action struct {
-	Duration int64             `json:duration`
+	Duration int64             `json:"duration"`
 	Tags     map[string]string `json:"tags"`
 }
 

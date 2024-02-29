@@ -31,6 +31,25 @@ func TestScript_Console(t *testing.T) {
 				r.Equal(t, "foo", log)
 			},
 		},
+		{
+			"log",
+			func(t *testing.T, host *testHost) {
+				var log interface{}
+				host.info = func(args ...interface{}) {
+					log = args[0]
+				}
+				s, err := New("",
+					`import {fake} from 'mokapi/faker'
+						 export default function() {
+						 	console.log({foo: 123, bar: 'mokapi'})
+						 }`,
+					host, static.JsConfig{})
+				r.NoError(t, err)
+				_, err = s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, `{"foo":123,"bar":"mokapi"}`, log)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

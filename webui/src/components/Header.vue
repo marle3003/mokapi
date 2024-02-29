@@ -100,7 +100,6 @@ header {
 .version{
     text-decoration: none;
     font-size: 0.8rem;
-    color: var(--color-version)
 }
 .nav-link {
     color: var(--color-header-link);

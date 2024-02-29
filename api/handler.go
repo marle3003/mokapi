@@ -118,6 +118,8 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.getEvents(w, r)
 	case p == "/api/schema/example":
 		h.getExampleData(w, r)
+	case p == "/api/schema/validate":
+		h.validate(w, r)
 	case strings.HasPrefix(p, "/api/configs"):
 		h.handleConfig(w, r)
 	case h.fileServer != nil:
@@ -197,7 +199,7 @@ func writeJsonBody(w http.ResponseWriter, i interface{}) {
 	}
 	_, err = w.Write(b)
 	if err != nil {
-		writeError(w, err, http.StatusInternalServerError)
+		log.Errorf("write response body failed: %v", err)
 	}
 }
 

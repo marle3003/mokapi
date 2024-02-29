@@ -20,7 +20,7 @@ const router = useRouter()
                             <img src="/icon.svg" width="50"/>
                             </div>
                         </div>
-                        <div class="col-sm-9">
+                        <div class="col-sm-9 card-text">
                             <div class="d-flex flex-wrap align-items-center h-100 message">
                                 {{ message }}
                             </div>
@@ -44,5 +44,6 @@ const router = useRouter()
 }
 .message{
     font-size: 1rem;
+    color: var(--color-text);
 }
 </style>

@@ -1,12 +1,11 @@
 ---
-title: Mokapi documentation
-description: This documentation will help you to run Mokapi in your environment
+title: Mokapi Guides
+description: These guides will help you to run Mokapi in your environment
 ---
 
-# Welcome to Mokapi documentation
+# Welcome to Mokapi guides
 
-This documentation will help you to run Mokapi in your
-environment
+These guides will help you to run Mokapi in your environment
 
 ## Get started
 
@@ -33,5 +32,5 @@ reduces the risk of bugs or errors in production.
 - **Everything as Code**: Reusing, version control, consistency and integrate mocks with your CI/CD.
 - **An embedded JavaScript engine** to control everything - status, headers, delays, errors or other edge cases.
 - **Patch Configuration** changes for mocking needs, rather than changing the original contract
-- **Multiple Provider support**: File, HTTP, GIT to gather configurations and scripts.
+- **Multiple Provider support**: File, HTTP, GIT, NPM to gather configurations and scripts.
 - **Dashboard** to see what's going on.

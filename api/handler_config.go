@@ -27,13 +27,24 @@ type configRef struct {
 
 func (h *handler) handleConfig(w http.ResponseWriter, r *http.Request) {
 	segments := strings.Split(r.URL.Path, "/")
-	if len(segments) == 5 {
-		h.getConfigData(w, segments[3])
+	if len(segments) == 3 {
+		h.getConfigs(w)
 	} else if len(segments) == 4 {
 		h.getConfigMetaData(w, segments[3])
+	} else if len(segments) == 5 {
+		h.getConfigData(w, segments[3])
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
 	}
+}
+
+func (h *handler) getConfigs(w http.ResponseWriter) {
+	var configs []config
+	for _, c := range h.app.Configs {
+		configs = append(configs, toConfig(c))
+	}
+	w.Header().Set("Content-Type", "application/json")
+	writeJsonBody(w, configs)
 }
 
 func (h *handler) getConfigMetaData(w http.ResponseWriter, key string) {

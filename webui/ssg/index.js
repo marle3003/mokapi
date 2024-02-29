@@ -16,7 +16,7 @@ const Server = require('./server');
       return
     }
     visited.add(url.pathname)
-    console.log(`crawling ${url.href}...`)
+    console.info(`crawling ${url.href}...`)
     const page = await browser.newPage();
     await page.goto(url.href, {
       waitUntil: 'networkidle',
@@ -26,9 +26,9 @@ const Server = require('./server');
       for (const script of document.querySelectorAll('script')) {
         script.remove();
        }
-       for (const script of document.querySelectorAll('link'))  {
-           if (script.as === 'script') {
-               script.remove();
+       for (const link of document.querySelectorAll('link'))  {
+           if (link.as === 'script') {
+            link.remove();
            }
        }
     });

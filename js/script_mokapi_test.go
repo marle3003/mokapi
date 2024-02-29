@@ -302,7 +302,7 @@ func TestScript_Mokapi_Cron(t *testing.T) {
 	}
 }
 
-func TestScript_Mokapi_On(t *testing.T) {
+func TestScript_Mokapi_On_Http(t *testing.T) {
 	testcases := []struct {
 		name string
 		f    func(t *testing.T, host *testHost)
@@ -524,6 +524,45 @@ func TestScript_Mokapi_On(t *testing.T) {
 	}
 }
 
+func TestScript_Mokapi_On_Kafka(t *testing.T) {
+	testcases := []struct {
+		name string
+		f    func(t *testing.T, host *testHost)
+	}{
+		{
+			"event",
+			func(t *testing.T, host *testHost) {
+				host.on = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+					r.Equal(t, "kafka", event)
+				}
+				s, err := New("",
+					`import { on } from 'mokapi'
+						 export default function() {
+						  	on('kafka', function(record) {
+								
+							})
+						 }`,
+					host, static.JsConfig{})
+				r.NoError(t, err)
+				_, err = s.RunDefault()
+				r.NoError(t, err)
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			host := &testHost{}
+
+			tc.f(t, host)
+		})
+	}
+}
+
 func TestScript_Mokapi_Env(t *testing.T) {
 	testcases := []struct {
 		name string
@@ -697,6 +736,86 @@ func TestScript_Mokapi_Sleep(t *testing.T) {
 				v, err := s.RunDefault()
 				r.NoError(t, err)
 				r.Equal(t, "time: unknown unit \"-\" in duration \"300-\"", v.String())
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			host := &testHost{}
+
+			tc.f(t, host)
+		})
+	}
+}
+
+func TestScript_Mokapi_Marshal(t *testing.T) {
+	testcases := []struct {
+		name string
+		f    func(t *testing.T, host *testHost)
+	}{
+		{
+			"default encoding",
+			func(t *testing.T, host *testHost) {
+				s, err := New("",
+					`import { marshal } from 'mokapi'
+						 export default function() {
+						  	return marshal({ username: 'foo' })
+						 }`,
+					host, static.JsConfig{})
+				r.NoError(t, err)
+				i, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, `{"username":"foo"}`, i.String())
+			},
+		},
+		{
+			"with schema",
+			func(t *testing.T, host *testHost) {
+				s, err := New("",
+					`import { marshal } from 'mokapi'
+						 export default function() {
+						  	return marshal({ username: 'foo' }, { 
+								schema: { 
+									type: 'object',
+									properties: {
+										username: {
+											type: 'string'
+										}
+									}
+								}
+							})
+						 }`,
+					host, static.JsConfig{})
+				r.NoError(t, err)
+				i, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, `{"username":"foo"}`, i.String())
+			},
+		},
+		{
+			"with content type xml",
+			func(t *testing.T, host *testHost) {
+				s, err := New("",
+					`import { marshal } from 'mokapi'
+						 export default function() {
+						  	return marshal({ username: 'foo' }, { 
+								schema: { 
+									type: 'object',
+									xml: { name: 'user' }
+								},
+								contentType: 'application/xml'
+							})
+						 }`,
+					host, static.JsConfig{})
+				r.NoError(t, err)
+				i, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, `<user><username>foo</username></user>`, i.String())
 			},
 		},
 	}

@@ -1,11 +1,12 @@
 {
   "include": ["./**/*"],
+  "typeRoots": ["./types"],
   "compilerOptions": {
     "types": ["node"],
     "esModuleInterop": true,
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "lib": ["es2021", "dom"],
+    "lib": ["es2021", "dom", "dom.iterable"],
     "target": "ES6"
   },
 }

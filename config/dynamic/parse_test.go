@@ -214,6 +214,25 @@ func TestParse(t *testing.T) {
 				require.Equal(t, "foobar", c.Data)
 			},
 		},
+		{
+			name: "wrapped config",
+			test: func(t *testing.T) {
+				c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: mustUrl("foo.json")}}
+				c.Raw = []byte(`{"user": "foo"}`)
+				c.Data = &data{}
+
+				info := dynamic.ConfigInfo{
+					Provider: "git",
+					Url:      mustUrl("https://github.com/user/repo.git?file=/foo.json"),
+				}
+
+				dynamic.Wrap(info, c)
+
+				err := dynamic.Parse(c, &dynamictest.Reader{})
+				require.NoError(t, err)
+				require.Equal(t, "foo", c.Data.(*data).User)
+			},
+		},
 	}
 
 	t.Parallel()

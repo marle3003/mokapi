@@ -5,7 +5,7 @@ import { parseMetadata } from '@/composables/markdown'
 const files = inject<Record<string, string>>('files')!
 
 const nav = inject<DocConfig>('nav')!
-const blogFiles = <DocConfig>(<DocConfig>nav['Blogs']) ?? {}
+const blogFiles = (<DocEntry>nav['Blogs']).items ?? {}
 
 const blogs: any[] = []
 for (const key in blogFiles) {

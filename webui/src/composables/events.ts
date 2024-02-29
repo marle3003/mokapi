@@ -1,5 +1,5 @@
 import { ref, watchEffect } from 'vue'
-import { useFetch } from './fetch'
+import { useFetch, type Response } from './fetch'
 
 export function useEvents() {
     let responses: Response[] = []
