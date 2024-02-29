@@ -125,21 +125,23 @@ func TestHttpManager_Update(t *testing.T) {
 			}},
 		{"patching server",
 			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
-				port := try.GetFreePort()
+				port1 := try.GetFreePort()
+				port2 := try.GetFreePort()
 
-				c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}}
+				url := fmt.Sprintf("http://:%v", port1)
+				c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: url}}}
 				m.Update(&dynamic.Config{Data: c, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}})
-				url := fmt.Sprintf("http://:%v", port)
+				url = fmt.Sprintf("http://:%v", port2)
 				c = &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: url + "/foo"}}}
 				m.Update(&dynamic.Config{Data: c, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}})
 
 				entries := hook.Entries
 				require.Len(t, entries, 6)
-				require.Equal(t, fmt.Sprintf("adding new host '' on binding :80"), entries[0].Message)
-				require.Equal(t, fmt.Sprintf("adding service foo on binding :80 on path /"), entries[1].Message)
+				require.Equal(t, fmt.Sprintf("adding new host '' on binding :%v", port1), entries[0].Message)
+				require.Equal(t, fmt.Sprintf("adding service foo on binding :%v on path /", port1), entries[1].Message)
 				require.Equal(t, "processed foo.yml", entries[2].Message)
-				require.Equal(t, fmt.Sprintf("adding new host '' on binding :%v", port), entries[3].Message)
-				require.Equal(t, fmt.Sprintf("adding service foo on binding :%v on path /foo", port), entries[4].Message)
+				require.Equal(t, fmt.Sprintf("adding new host '' on binding :%v", port2), entries[3].Message)
+				require.Equal(t, fmt.Sprintf("adding service foo on binding :%v on path /foo", port2), entries[4].Message)
 				require.Equal(t, "processed foo.yml", entries[5].Message)
 			}},
 	}
