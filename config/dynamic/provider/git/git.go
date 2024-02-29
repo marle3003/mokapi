@@ -2,17 +2,18 @@ package git
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"github.com/bradleyfalzon/ghinstallation/v2"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/transport/client"
+	"github.com/go-git/go-git/v5/plumbing/transport/http"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/provider/file"
 	"mokapi/config/static"
 	"mokapi/safe"
-	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -37,6 +38,7 @@ type repository struct {
 type Provider struct {
 	repositories []*repository
 	pullInterval string
+	transport    *transport
 }
 
 func New(config static.GitProvider) *Provider {
@@ -86,9 +88,14 @@ func New(config static.GitProvider) *Provider {
 		})
 	}
 
+	t := newTransport()
+	client.InstallProtocol("http", http.NewClient(newClient(t)))
+	client.InstallProtocol("https", http.NewClient(newClient(t)))
+
 	return &Provider{
 		repositories: repos,
 		pullInterval: config.PullInterval,
+		transport:    t,
 	}
 }
 
@@ -143,18 +150,13 @@ func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
 }
 
 func (p *Provider) initRepository(r *repository, ch chan *dynamic.Config, pool *safe.Pool) error {
-	repoUrl := r.repoUrl
-	if r.auth != nil {
-		t, err := authGitHub(r.auth.GitHub)
-		if err != nil {
-			return err
-		}
-		repoUrl = strings.Replace(repoUrl, "://", fmt.Sprintf("://x-access-token:%s@", t), 1)
+	err := p.transport.addAuth(r)
+	if err != nil {
+		return err
 	}
 
-	var err error
 	r.repo, err = git.PlainClone(r.localPath, false, &git.CloneOptions{
-		URL: repoUrl,
+		URL: r.repoUrl,
 	})
 	if err != nil {
 		return fmt.Errorf("unable to clone git %q: %v", r.repoUrl, err)
@@ -273,18 +275,6 @@ func getUrl(r *repository, file *url.URL) *url.URL {
 	return u
 }
 
-func authGitHub(auth *static.GitHubAuth) (string, error) {
-	key, err := auth.PrivateKey.Read("")
-	if err != nil {
-		return "", err
-	}
-	itr, err := ghinstallation.New(http.DefaultTransport, auth.AppId, auth.InstallationId, key)
-	if err != nil {
-		return "", err
-	}
-	return itr.Token(context.Background())
-}
-
 func skip(path string, repo *repository) bool {
 	if len(repo.config.Files) == 0 && len(repo.config.Include) == 0 {
 		return false
@@ -336,7 +326,7 @@ func pull(r *repository) {
 	}
 	err := r.repo.Fetch(&git.FetchOptions{RefSpecs: []config.RefSpec{"refs/*:refs/*", "HEAD:refs/heads/HEAD"}})
 	if err != nil {
-		if err != git.NoErrAlreadyUpToDate {
+		if !errors.Is(err, git.NoErrAlreadyUpToDate) {
 			log.Errorf("git fetch error %v: %v", r.url, err.Error())
 		}
 		return
@@ -344,7 +334,7 @@ func pull(r *repository) {
 
 	err = r.wt.Pull(r.pullOptions)
 	if err != nil {
-		if err != git.NoErrAlreadyUpToDate {
+		if !errors.Is(err, git.NoErrAlreadyUpToDate) {
 			log.Errorf("unable to pull: %v", err.Error())
 		}
 		return

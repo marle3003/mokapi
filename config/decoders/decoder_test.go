@@ -75,6 +75,24 @@ func TestLoad(t *testing.T) {
 			},
 		},
 		{
+			name: "env var array single",
+			f: func(t *testing.T) {
+				s := &struct {
+					Urls []string
+				}{}
+				os.Args = append(os.Args, "mokapi.exe")
+				err := os.Setenv("MOKAPI_urls", "https://foo.bar")
+				defer os.Unsetenv("MOKAPI_urls")
+				require.NoError(t, err)
+
+				err = Load([]ConfigDecoder{&FlagDecoder{}}, s)
+				require.NoError(t, err)
+				require.Contains(t, s.Urls, "https://foo.bar")
+				require.Equal(t, 1, len(s.Urls))
+				require.Equal(t, 1, cap(s.Urls))
+			},
+		},
+		{
 			name: "env var array",
 			f: func(t *testing.T) {
 				s := &struct {
@@ -87,11 +105,21 @@ func TestLoad(t *testing.T) {
 				err = os.Setenv("MOKAPI_urls[1]", "https://mokapi.io")
 				require.NoError(t, err)
 				defer os.Unsetenv("MOKAPI_urls[1]")
+				err = os.Setenv("MOKAPI_urls_2", "https://foo.com")
+				require.NoError(t, err)
+				defer os.Unsetenv("MOKAPI_urls_2")
+				err = os.Setenv("MOKAPI_urls.10", "https://bar.com")
+				require.NoError(t, err)
+				defer os.Unsetenv("MOKAPI_urls.10")
 
 				err = Load([]ConfigDecoder{&FlagDecoder{}}, s)
 				require.NoError(t, err)
 				require.Contains(t, s.Urls, "https://foo.bar")
 				require.Contains(t, s.Urls, "https://mokapi.io")
+				require.Contains(t, s.Urls, "https://foo.com")
+				require.Contains(t, s.Urls, "https://bar.com")
+				require.Equal(t, 11, len(s.Urls))
+				require.Equal(t, 22, cap(s.Urls))
 			},
 		},
 		{
