@@ -1,5 +1,8 @@
 name: build and publish test coverage
-on: push
+on:
+  push:
+    branches:
+      - '**'
 
 jobs:
   test:
