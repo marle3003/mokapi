@@ -94,18 +94,27 @@ func setArray(paths []string, value string, element reflect.Value) error {
 		if err != nil {
 			return fmt.Errorf("parse array index failed: %v", err)
 		}
-		if index < element.Len() {
-			// update existing array item
-			return setValue(paths[1:], value, element.Index(index))
+
+		if index >= element.Cap() {
+			n := index + 1
+			nCap := 2 * n
+			if nCap < 4 {
+				nCap = 4
+			}
+			if element.IsNil() {
+				s := reflect.MakeSlice(element.Type(), n, nCap)
+				element.Set(s)
+			} else {
+				s := reflect.MakeSlice(element.Type(), n, nCap)
+				reflect.Copy(s, element)
+				element.Set(s)
+			}
+		}
+		if index >= element.Len() {
+			element.SetLen(index + 1)
 		}
 
-		// create new array item
-		ptr := reflect.New(reflect.PointerTo(element.Type().Elem()))
-		err = setValue(paths[1:], value, ptr)
-		if err != nil {
-			return err
-		}
-		element.Set(reflect.Append(element, ptr.Elem().Elem()))
+		return setValue(paths[1:], value, element.Index(index))
 	} else {
 		values := strings.Split(value, ",")
 		for _, v := range values {

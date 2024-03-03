@@ -9,6 +9,7 @@ import (
 	"net/mail"
 	"reflect"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 	"unicode"
@@ -187,7 +188,10 @@ func validateObject(i interface{}, schema *Schema) error {
 					add = append(add, name)
 				}
 			}
-			return fmt.Errorf("additional properties not allowed: %v, expected %v", strings.Join(add, ", "), schema)
+			if len(add) > 0 {
+				sort.Strings(add)
+				return fmt.Errorf("additional properties not allowed: %v, expected %v", strings.Join(add, ", "), schema)
+			}
 		}
 
 		for _, p := range schema.Required {
@@ -203,8 +207,18 @@ func validateObject(i interface{}, schema *Schema) error {
 			return fmt.Errorf("validation error maxProperties on %v, expected %v", m, schema)
 		}
 
-		if !schema.IsFreeForm() && schema.Properties != nil && m.Len() > schema.Properties.Len() {
-			return fmt.Errorf("validation error too many fields on %v, expected %v", toString(i), schema)
+		if !schema.IsFreeForm() && schema.Properties != nil {
+			var add []string
+			for it := m.Iter(); it.Next(); {
+				name := it.Key()
+				if r := schema.Properties.Get(name); r == nil {
+					add = append(add, name)
+				}
+			}
+			if len(add) > 0 {
+				sort.Strings(add)
+				return fmt.Errorf("additional properties not allowed: %v, expected %v", strings.Join(add, ", "), schema)
+			}
 		}
 
 		for _, p := range schema.Required {
