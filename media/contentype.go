@@ -100,6 +100,16 @@ func (c ContentType) IsXml() bool {
 	return c.Subtype == "xml" || c.Subtype == "rss+xml" || c.Subtype == "xhtml+xml" || c.Subtype == "atom+xml" || c.Subtype == "xslt+xml"
 }
 
+func (c ContentType) IsDerivedFrom(contentType ContentType) bool {
+	if contentType.IsAny() {
+		return true
+	}
+	if !contentType.IsRange() {
+		return c.Match(contentType)
+	}
+	return c.Type == contentType.Type
+}
+
 func Equal(c1, c2 ContentType) bool {
 	return c1.raw == c2.raw
 }

@@ -10,6 +10,7 @@ import (
 	"mokapi/media"
 	"mokapi/providers/openapi/schema"
 	"net/http"
+	"strings"
 )
 
 type RequestBodies map[string]*RequestBodyRef
@@ -89,7 +90,7 @@ func readBodyDetectContentType(r *http.Request, op *Operation) (*Body, error) {
 	}
 
 	for _, mt := range op.RequestBody.Value.Content {
-		if b, err := parseBody(data, mt.ContentType, mt.Schema); err == nil {
+		if b, err := parseBody(data, mt.ContentType, mt); err == nil {
 			return b, err
 		}
 	}
@@ -103,11 +104,11 @@ func readBody(r *http.Request, contentType media.ContentType, mt *MediaType) (*B
 		return nil, err
 	}
 
-	return parseBody(data, contentType, mt.Schema)
+	return parseBody(data, contentType, mt)
 }
 
-func parseBody(body []byte, contentType media.ContentType, r *schema.Ref) (*Body, error) {
-	v, err := r.Unmarshal(body, contentType)
+func parseBody(body []byte, contentType media.ContentType, mt *MediaType) (*Body, error) {
+	v, err := mt.Parse(body, contentType)
 	return &Body{Value: v, Raw: string(body)}, err
 }
 
@@ -204,4 +205,47 @@ func (r *RequestBody) patch(patch *RequestBody) {
 	}
 
 	r.Content.patch(patch.Content)
+}
+
+func getParser(ct media.ContentType) schema.Parser {
+	if ct.Type == "text" {
+		return schema.Parser{ConvertStringToNumber: true}
+	}
+	if ct.String() == "application/x-www-form-urlencoded" {
+		return schema.Parser{ConvertStringToNumber: true}
+	}
+	return schema.Parser{}
+}
+
+type urlValueDecoder struct {
+	mt *MediaType
+}
+
+func (d urlValueDecoder) decode(propName string, val interface{}) (interface{}, error) {
+	values := val.([]string)
+
+	prop := d.mt.Schema.Value.Properties.Get(propName)
+	switch prop.Value.Type {
+	case "integer", "number", "string":
+		return values[0], nil
+	case "array":
+		return d.decodeArray(propName, values)
+	default:
+		return nil, fmt.Errorf("unsupported type %v", prop.Value.Type)
+	}
+}
+
+func (d urlValueDecoder) decodeArray(propName string, values []string) (interface{}, error) {
+	enc, ok := d.mt.Encoding[propName]
+	if !ok || enc.Explode {
+		return values, nil
+	}
+	switch enc.Style {
+	case "spaceDelimited":
+		return strings.Split(values[0], " "), nil
+	case "pipeDelimited":
+		return strings.Split(values[0], "|"), nil
+	default:
+		return strings.Split(values[0], ","), nil
+	}
 }

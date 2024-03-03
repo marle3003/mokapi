@@ -67,7 +67,6 @@ func TestHandler_Schema_Validate(t *testing.T) {
 					},
 					`{ "schema": {"type": "object", "properties": { "foo":{ "type": "string" }, "bar":{ "type": "integer" } } }, "data":"{\"foo\": 12, \"bar\": \"text\" }" }`,
 					h,
-					try.BodyContains("unmarshal data failed\n"),
 					try.BodyContains("parse 'bar' failed: parse 'text' failed, expected schema type=integer\n"),
 					try.BodyContains("parse 'foo' failed: parse 12 failed, expected schema type=string\n"),
 					try.HasStatusCode(400),
@@ -107,7 +106,6 @@ func TestHandler_Schema_Validate(t *testing.T) {
 					},
 					`{ "schema": {"type": "object", "properties": { "foo":{ "type": "string" } }, "additionalProperties": false }, "data":"{ \"foo\":\"bar\", \"foo2\": \"val\" }" }`,
 					h,
-					try.BodyContains("unmarshal data failed"),
 					try.BodyContains("additional properties not allowed: foo2"),
 					try.HasStatusCode(400),
 				)
@@ -127,7 +125,6 @@ func TestHandler_Schema_Validate(t *testing.T) {
 					},
 					`{ "schema": {"type": "object", "properties": { "foo":{ "type": "string" } }, "additionalProperties": false }, "data":"{\"foo2\": \"val\" }" }`,
 					h,
-					try.BodyContains("unmarshal data failed"),
 					try.BodyContains("additional properties not allowed: foo2"),
 					try.HasStatusCode(400),
 				)
@@ -147,7 +144,6 @@ func TestHandler_Schema_Validate(t *testing.T) {
 					},
 					`{ "schema": {"type": "object", "properties": { "foo":{ "type": "string" } }, "additionalProperties": false }, "data":"{ \"foo\":\"bar\", \"foo2\": \"val\", \"foo3\": \"val\" }" }`,
 					h,
-					try.BodyMatch("unmarshal data failed"),
 					try.BodyMatch("additional properties not allowed: foo2, foo3"),
 					try.HasStatusCode(400),
 				)

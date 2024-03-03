@@ -232,7 +232,7 @@ func TestBodyFromRequest(t *testing.T) {
 				return r
 			},
 			test: func(t *testing.T, result *openapi.Body, err error) {
-				require.EqualError(t, err, "read request body 'application/json' failed: unmarshal data failed\ninvalid json format: invalid character '<' looking for beginning of value")
+				require.EqualError(t, err, "read request body 'application/json' failed: invalid json format: invalid character '<' looking for beginning of value")
 				require.Equal(t, "<root><foo>bar</foo></root>", result.Raw)
 			},
 		},
@@ -475,6 +475,80 @@ func TestConfig_Patch_RequestBody(t *testing.T) {
 				c.Patch(p)
 			}
 			tc.test(t, c)
+		})
+	}
+}
+
+func TestBodyFromRequest_FormUrlEncoded(t *testing.T) {
+	testcases := []struct {
+		name string
+		mt   *openapi.MediaType
+		body string
+		test func(t *testing.T, result *openapi.Body, err error)
+	}{
+		{
+			name: "primitive fields",
+			mt: openapitest.NewContent(
+				openapitest.WithSchema(
+					schematest.New("object",
+						schematest.WithProperty("name", schematest.New("string")),
+						schematest.WithProperty("fav_number", schematest.New("integer")),
+					),
+				),
+			),
+			body: "name=Amy+Smith&fav_number=42",
+			test: func(t *testing.T, result *openapi.Body, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"name": "Amy Smith", "fav_number": int64(42)}, result.Value)
+			},
+		},
+		{
+			name: "array",
+			mt: openapitest.NewContent(
+				openapitest.WithSchema(
+					schematest.New("object",
+						schematest.WithProperty("array_name",
+							schematest.New("array", schematest.WithItems("string"))),
+					),
+				),
+			),
+			body: "array_name=value1&array_name=value2",
+			test: func(t *testing.T, result *openapi.Body, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"array_name": []interface{}{"value1", "value2"}}, result.Value)
+			},
+		},
+		{
+			name: "array with encoding explode false",
+			mt: openapitest.NewContent(
+				openapitest.WithEncoding("array_name", &openapi.Encoding{Explode: false}),
+				openapitest.WithSchema(
+					schematest.New("object",
+						schematest.WithProperty("array_name",
+							schematest.New("array", schematest.WithItems("string"))),
+					),
+				),
+			),
+			body: "array_name=value1,value2",
+			test: func(t *testing.T, result *openapi.Body, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"array_name": []interface{}{"value1", "value2"}}, result.Value)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			op := openapitest.NewOperation(
+				openapitest.WithRequestBody("foo", true,
+					openapitest.WithRequestContent("application/x-www-form-urlencoded", tc.mt),
+				))
+			r := httptest.NewRequest(http.MethodPost, "https://foo.bar", strings.NewReader(tc.body))
+			r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+			b, err := openapi.BodyFromRequest(r, op)
+			tc.test(t, b, err)
 		})
 	}
 }

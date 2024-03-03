@@ -70,6 +70,16 @@ func NewContent(opts ...ContentOptions) *openapi.MediaType {
 	return mt
 }
 
+func WithEncoding(propName string, encoding *openapi.Encoding) ContentOptions {
+	return func(c *openapi.MediaType) {
+		if c.Encoding == nil {
+			c.Encoding = map[string]*openapi.Encoding{}
+		}
+
+		c.Encoding[propName] = encoding
+	}
+}
+
 func WithExample(example interface{}) ContentOptions {
 	return func(c *openapi.MediaType) {
 		c.Example = example

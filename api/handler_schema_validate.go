@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mokapi/decoding"
 	"mokapi/media"
 	"mokapi/providers/openapi/schema"
 	"net/http"
@@ -27,7 +28,14 @@ func (h *handler) validate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = s.Unmarshal(data, ct)
+	v, err := decoding.Decode(data, ct, nil)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	p := schema.Parser{}
+	v, err = p.Parse(v, s)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

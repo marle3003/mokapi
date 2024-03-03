@@ -2,6 +2,7 @@ package schema_test
 
 import (
 	"github.com/stretchr/testify/require"
+	"mokapi/decoding"
 	"mokapi/media"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
@@ -20,7 +21,7 @@ func TestParse_Xml(t *testing.T) {
 			xml:    "",
 			schema: nil,
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "unmarshal data failed\nEOF")
+				require.EqualError(t, err, "EOF")
 			},
 		},
 		{
@@ -39,6 +40,18 @@ func TestParse_Xml(t *testing.T) {
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []interface{}{"one", "two"}, i)
+			},
+		},
+		{
+			name: "wrapped array",
+			xml:  "<root><books><books>one</books><books>two</books></books></root>",
+			schema: schematest.New("object", schematest.WithProperty("books",
+				schematest.New("array", schematest.WithItems("string"), schematest.WithXml(&schema.Xml{
+					Wrapped: true,
+				})))),
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"books": []interface{}{"one", "two"}}, i)
 			},
 		},
 		{
@@ -76,7 +89,14 @@ func TestParse_Xml(t *testing.T) {
 			t.Parallel()
 
 			r := &schema.Ref{Value: tc.schema}
-			i, err := r.Unmarshal([]byte(tc.xml), media.ParseContentType("application/xml"))
+			v, err := decoding.Decode([]byte(tc.xml), media.ParseContentType("application/xml"), nil)
+			if err != nil {
+				tc.test(t, v, err)
+				return
+			}
+
+			p := schema.Parser{ConvertStringToNumber: true, Xml: true}
+			i, err := p.Parse(v, r)
 			tc.test(t, i, err)
 		})
 	}

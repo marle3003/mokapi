@@ -18,35 +18,6 @@ func ParseString(s string, schema *Ref) (interface{}, error) {
 	return p.parse(s, schema)
 }
 
-func (r *Ref) Unmarshal(b []byte, contentType media.ContentType) (i interface{}, err error) {
-	p := parser{}
-	switch {
-	case contentType.Subtype == "json":
-		err = json.Unmarshal(b, &i)
-		if err != nil {
-			err = fmt.Errorf("invalid json format: %v", err)
-		}
-	case contentType.IsXml():
-		p.convertStringToNumber = true
-		i, err = unmarshalXml(b, r)
-	case contentType.Type == "multipart":
-		i, err = readMultipart(b, contentType, r)
-	default:
-		p.convertStringToNumber = true
-		i = string(b)
-	}
-
-	if err != nil {
-		return nil, errors.Join(fmt.Errorf("unmarshal data failed"), err)
-	}
-
-	i, err = p.parse(i, r)
-	if err != nil {
-		err = errors.Join(fmt.Errorf("unmarshal data failed"), err)
-	}
-	return
-}
-
 func UnmarshalFrom(r io.Reader, contentType media.ContentType, schema *Ref) (i interface{}, err error) {
 	p := parser{}
 	switch contentType.Subtype {
@@ -69,6 +40,7 @@ func UnmarshalFrom(r io.Reader, contentType media.ContentType, schema *Ref) (i i
 
 type parser struct {
 	convertStringToNumber bool
+	xml                   bool
 }
 
 func (p *parser) parse(v interface{}, schema *Ref) (interface{}, error) {
@@ -254,28 +226,54 @@ func (p *parser) parseObject(i interface{}, s *Schema) (interface{}, error) {
 
 	result := map[string]interface{}{}
 	for k, v := range m {
-		prop := s.Properties.Get(k)
+		name, prop := p.getProperty(k, s.Properties)
 
 		parsed, propError := p.parse(v, prop)
 		if propError != nil {
 			err = errors.Join(err, fmt.Errorf("parse '%v' failed: %w", k, propError))
 		}
-		result[k] = parsed
+		result[name] = parsed
 	}
 
 	return result, err
 }
 
+func (p *parser) getProperty(name string, props *Schemas) (string, *Ref) {
+	if !p.xml {
+		return name, props.Get(name)
+	}
+
+	for it := props.Iter(); it.Next(); {
+		k := it.Key()
+		r := it.Value()
+		if r.Value == nil && k == name {
+			return name, r
+		}
+		if r.Value == nil {
+			continue
+		}
+		if r.Value.Xml != nil && name == r.Value.Xml.Name {
+			return it.Key(), r
+		}
+		if k == name {
+			return name, r
+		}
+	}
+
+	return "", nil
+}
+
 func (p *parser) parseArray(i interface{}, s *Schema) (interface{}, error) {
-	arr, ok := i.([]interface{})
-	if !ok {
+	v := reflect.ValueOf(i)
+	if v.Kind() != reflect.Slice {
 		return nil, fmt.Errorf("expected array but got %v", toString(i))
 	}
 
 	var err error
 	result := make([]interface{}, 0)
-	for _, o := range arr {
-		v, errItem := p.parse(o, s.Items)
+	for i := 0; i < v.Len(); i++ {
+		o := v.Index(i)
+		v, errItem := p.parse(o.Interface(), s.Items)
 		if errItem != nil {
 			err = errors.Join(err, errItem)
 		}

@@ -73,3 +73,7 @@ func (r *Ref) getPropertyXml(name string) *Xml {
 	}
 	return prop.getXml()
 }
+
+func (r *Ref) IsXmlWrapped() bool {
+	return r.Value != nil && r.Value.Xml != nil && r.Value.Xml.Wrapped
+}

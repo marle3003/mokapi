@@ -1,7 +1,9 @@
 package openapi
 
 import (
+	"fmt"
 	"mokapi/config/dynamic"
+	"mokapi/decoding"
 	"mokapi/media"
 	"mokapi/providers/openapi/schema"
 )
@@ -11,7 +13,8 @@ type MediaType struct {
 	Example  interface{} `yaml:"example,omitempty" json:"example,omitempty"`
 	Examples Examples    `yaml:"examples,omitempty" json:"examples,omitempty"`
 
-	ContentType media.ContentType `yaml:"-" json:"-"`
+	ContentType media.ContentType    `yaml:"-" json:"-"`
+	Encoding    map[string]*Encoding `yaml:"encoding,omitempty" json:"encoding,omitempty"`
 }
 
 func (m *MediaType) parse(config *dynamic.Config, reader dynamic.Reader) error {
@@ -50,4 +53,21 @@ func (m *MediaType) patch(patch *MediaType) {
 		m.Examples.patch(patch.Examples)
 		m.Example = nil
 	}
+}
+
+func (m *MediaType) Parse(b []byte, contentType media.ContentType) (interface{}, error) {
+	if !contentType.IsDerivedFrom(m.ContentType) {
+		return nil, fmt.Errorf("content type '%v' does not match: %v", m.ContentType, contentType)
+	}
+	var decoder decoding.DecodeFunc
+	if contentType.String() == "application/x-www-form-urlencoded" {
+		decoder = urlValueDecoder{mt: m}.decode
+	}
+
+	v, err := decoding.Decode(b, contentType, decoder)
+	if err != nil {
+		return nil, err
+	}
+	p := getParser(contentType)
+	return p.Parse(v, m.Schema)
 }
