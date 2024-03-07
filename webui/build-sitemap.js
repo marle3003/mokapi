@@ -46,7 +46,7 @@ function writeObject(obj, base) {
     const urlPath = base + '/' + segment.toLowerCase()
 
     if (obj[key].hasOwnProperty("index")) {
-      const stats = fs.statSync(path.join(docsPath, key))
+      const stats = fs.statSync(path.join(docsPath, key.toLowerCase()))
       const url = 'https://mokapi.io/docs' + urlPath.replaceAll('/items', '')
       const node = util.format(urlTemplate, url, '0.7', stats.mtime)
       xml += node
