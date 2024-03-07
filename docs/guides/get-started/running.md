@@ -1,5 +1,5 @@
 ---
-title: Running Mokapi
+title: How to start Running Mokapi - A Beginners Guide
 description: Here you will learn how to run Mokapi
 ---
 # Running Mokapi

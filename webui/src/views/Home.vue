@@ -113,9 +113,9 @@ function showImage(target: EventTarget | null) {
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
               <h2>Control Everything with JavaScript</h2>
-              <p>Write the behavior of your mock in Javascript and control everything: status, headers, delays, errors or other edge cases.</p>
+              <p>Write the behavior of your mock in JavaScript and control everything: status, headers, delays, errors or other edge cases.</p>
               <router-link :to="{ path: '/docs/javascript-api' }">
-                <button type="button" class="btn btn-outline-primary btn-sm">Javascript API</button>
+                <button type="button" class="btn btn-outline-primary btn-sm">JavaScript API</button>
               </router-link>
             </div>
           </div>

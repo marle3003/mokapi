@@ -1,5 +1,5 @@
 ---
-title: HTTP Quick Start
+title: HTTP Quick Start - Mock an HTTP API that don't exists yet
 description: A quick tutorial how to run Swagger's Petstore in Mokapi
 ---
 # Quick Start

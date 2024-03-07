@@ -1,5 +1,5 @@
 ---
-title: Providers
+title: Configure your Mokapi with powerful providers
 description: Mokapi gathers configurations and scripts via providers.
 ---
 

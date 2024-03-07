@@ -1,3 +1,7 @@
+---
+title: Use Patches to add or override configurations.
+description: Patch configuration changes for mocking needs, rather than changing the original contract.
+---
 # Configuration Patching
 
 You use patch files to add or change dynamic configurations. 
