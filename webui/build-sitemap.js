@@ -81,6 +81,10 @@ try {
   // write to file
   const xml = util.format(xmlTemplate, content)
   fs.writeFileSync('./public/sitemap.xml', xml, { flag: 'w' })
-  } catch (err) {
+  if (!fs.existsSync('dist')) {
+    fs.mkdirSync('dist')
+  }
+  fs.writeFileSync('./dist/sitemap.xml', xml, { flag: 'w' })
+} catch (err) {
   console.error(err);
 }
