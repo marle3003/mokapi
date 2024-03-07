@@ -41,6 +41,6 @@ into our system under test.
 
 This can help us to improve the speed, accuracy, and efficiency of testing. The 
 software development team can identify and fix issues faster and ultimately deliver higher quality software
-to the end user.
+faster to the end user.
 
 <img src="/betterfaster.png" width="300" alt="Testing in Agile Development" title="Testing in Agile Development" style="text-align: center;display: block;" />
