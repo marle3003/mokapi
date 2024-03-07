@@ -37,6 +37,9 @@ func (m *LinkedHashMap[K, V]) Set(key K, value V) {
 }
 
 func (m *LinkedHashMap[K, V]) Len() int {
+	if m == nil {
+		return 0
+	}
 	return len(m.pairs)
 }
 
@@ -116,4 +119,12 @@ func (m *LinkedHashMap[K, V]) MarshalJSON() ([]byte, error) {
 	buf.WriteString("}")
 
 	return buf.Bytes(), nil
+}
+
+func (m *LinkedHashMap[K, V]) ToMap() map[K]V {
+	result := map[K]V{}
+	for it := m.Iter(); it.Next(); {
+		result[it.Key()] = it.Value()
+	}
+	return result
 }

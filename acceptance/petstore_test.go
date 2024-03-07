@@ -69,7 +69,7 @@ func (suite *PetStoreSuite) TestJsHttpHandler() {
 	try.GetRequest(suite.T(), "http://127.0.0.1:18080/pet/5",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(http.StatusOK),
-		try.HasBody(`{"id":8091383101528396988,"category":{"id":-5704359215120949391,"name":"P0xJebAAT"},"name":"Zoe","photoUrls":["KnumE07P","","69Iy UEz Z"],"tags":[{"id":-8563566128195698032,"name":"zlgkT3F"},{"id":4331435074819496151,"name":"RZOOB "},{"id":7252227033529500492,"name":"I6deg7ktTUqtKw"}],"status":"pending"}`))
+		try.HasBody(`{"id":8765000238079473523,"category":{"id":5235714632582460599,"name":""},"name":"Zoe","photoUrls":["https://www.chiefcompelling.name/magnetic","https://www.centralintuitive.name/seamless/turn-key","https://www.internalbrand.io/utilize/e-enable"],"tags":[{"id":4872749828161766412,"name":" xx6DpbG"},{"id":4957932974854356178,"name":"jP0xJebAATiK"},{"id":2565205193432314342,"name":"u"},{"id":2245131204381567511,"name":"E07P"},{"id":2377565070429723201,"name":"69Iy UEz Z"}],"status":"available"}`))
 
 	// test http metrics
 	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%s/api/metrics/http?path=/pet/{petId}", suite.cfg.Api.Port), nil,
@@ -90,12 +90,12 @@ func (suite *PetStoreSuite) TestGetOrderById() {
 	try.GetRequest(suite.T(), "http://127.0.0.1:18080/store/order/1",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(http.StatusOK),
-		try.HasBody(`{"id":-8379641344161477543,"petId":7424164296119123376,"quantity":-652938557,"shipDate":"1989-01-30T07:58:01Z","status":"approved","complete":false}`))
+		try.HasBody(`{"id":843730692693298266,"petId":7424164296119123377,"quantity":-652938557,"shipDate":"1989-01-30T07:58:01Z","status":"approved","complete":false}`))
 
 	try.GetRequest(suite.T(), "https://localhost:18443/store/order/10",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(http.StatusOK),
-		try.HasBody(`{"id":-3104734502000063264,"petId":5549848391338120894,"quantity":-924758850,"shipDate":"1989-11-19T16:57:16Z","status":"approved","complete":true}`))
+		try.HasBody(`{"id":6118637534854712545,"petId":5549848391338120895,"quantity":-924758850,"shipDate":"1989-11-19T16:57:16Z","status":"approved","complete":true}`))
 }
 
 func (suite *PetStoreSuite) TestKafka_TopicConfig() {

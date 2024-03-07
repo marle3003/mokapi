@@ -3,10 +3,11 @@ package generator
 import (
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
+	"mokapi/json/schema"
+	"strings"
 )
 
 const (
-	defaultMinStringLength = 0
 	defaultMaxStringLength = 15
 
 	lowerChars   = "abcdefghijklmnopqrstuvwxyz"
@@ -16,8 +17,120 @@ const (
 	spaceChar    = " "
 )
 
+func StringTree() *Tree {
+	return &Tree{
+		Name: "String",
+		nodes: []*Tree{
+			Uri(),
+			Uris(),
+			StringFormat(),
+			String(),
+		},
+	}
+}
+
+func String() *Tree {
+	return &Tree{
+		Name: "String",
+		compare: func(r *Request) bool {
+			return r.Schema.IsString()
+		},
+		resolve: func(r *Request) (interface{}, error) {
+			opt := StringOptions{
+				MaxLength: r.Schema.MaxLength,
+				Format:    r.Schema.Format,
+				Pattern:   r.Schema.Pattern,
+			}
+			if r.Schema.MinLength != nil {
+				opt.MinLength = *r.Schema.MinLength
+			}
+			return NewString(opt), nil
+		},
+	}
+}
+
+func StringFormat() *Tree {
+	return &Tree{
+		Name: "StringFormat",
+		compare: func(r *Request) bool {
+			return r.Schema.IsString() && len(r.Schema.Format) > 0
+		},
+		resolve: func(r *Request) (interface{}, error) {
+			switch r.Schema.Format {
+			case "date":
+				return gofakeit.Date().Format("2006-01-02"), nil
+			case "date-time":
+				return gofakeit.Generate("{date}"), nil
+			case "password":
+				return gofakeit.Generate("{password}"), nil
+			case "email":
+				return gofakeit.Generate("{email}"), nil
+			case "uuid":
+				return gofakeit.Generate("{uuid}"), nil
+			case "uri":
+				return gofakeit.Generate("{url}"), nil
+			case "hostname":
+				return gofakeit.Generate("{domainname}"), nil
+			case "ipv4":
+				return gofakeit.Generate("{ipv4address}"), nil
+			case "ipv6":
+				return gofakeit.Generate("{ipv6address}"), nil
+			default:
+				return gofakeit.Generate(r.Schema.Format), nil
+			}
+		},
+	}
+}
+
+func Uri() *Tree {
+	return &Tree{
+		Name: "URI",
+		compare: func(r *Request) bool {
+			if len(r.Names) == 0 || (!r.Schema.IsString() && !r.Schema.IsAny()) {
+				return false
+			}
+			name := strings.ToLower(r.LastName())
+			return len(r.Names) > 0 &&
+				(name == "uri" || name == "url" ||
+					strings.HasSuffix(name, "url") || strings.HasSuffix(name, "uri"))
+		},
+		resolve: func(r *Request) (interface{}, error) {
+			return gofakeit.URL(), nil
+		},
+	}
+}
+
+func Uris() *Tree {
+	return &Tree{
+		Name: "URIs",
+		compare: func(r *Request) bool {
+			if len(r.Names) == 0 {
+				return false
+			}
+			if !r.Schema.IsArray() && !r.Schema.IsAny() {
+				return false
+			}
+			var items *schema.Ref
+			if r.Schema != nil {
+				items = r.Schema.Items
+			}
+			if !items.IsString() && !items.IsAny() {
+				return false
+			}
+
+			name := strings.ToLower(r.LastName())
+			return len(r.Names) > 0 &&
+				(name == "uris" || name == "urls" ||
+					strings.HasSuffix(name, "urls") || strings.HasSuffix(name, "uris"))
+		},
+		resolve: func(r *Request) (interface{}, error) {
+			return r.g.tree.Resolve(r.With(Name("url")))
+		},
+	}
+}
+
 type StringOptions struct {
-	MinLength *int
+	MinLength int
 	MaxLength *int
 	Format    string
 	Pattern   string
@@ -38,12 +151,9 @@ func NewString(opt StringOptions) interface{} {
 		return gofakeit.Generate(fmt.Sprintf("{regex:%v}", opt.Pattern))
 	}
 
-	minLength := defaultMinStringLength
+	minLength := opt.MinLength
 	maxLength := defaultMaxStringLength
 
-	if opt.MinLength != nil {
-		minLength = *opt.MinLength
-	}
 	if opt.MaxLength != nil {
 		maxLength = *opt.MaxLength
 	} else if minLength > maxLength {

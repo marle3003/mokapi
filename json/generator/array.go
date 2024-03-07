@@ -3,6 +3,7 @@ package generator
 import (
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
+	"mokapi/json/schema"
 	"reflect"
 )
 
@@ -12,6 +13,81 @@ type ArrayOptions struct {
 	Shuffle     bool
 	UniqueItems bool
 	Nullable    bool
+}
+
+func Array() *Tree {
+	return &Tree{
+		Name:  "Array",
+		nodes: nil,
+		compare: func(r *Request) bool {
+			return r.Schema.IsArray()
+		},
+		resolve: func(r *Request) (interface{}, error) {
+			maxItems := 5
+			if r.Schema.MaxItems != nil {
+				maxItems = *r.Schema.MaxItems
+			}
+			minItems := 0
+			if r.Schema.MinItems != nil {
+				minItems = *r.Schema.MinItems
+			}
+			length := minItems
+			if maxItems-minItems > 0 {
+				length = gofakeit.Number(minItems, maxItems)
+			}
+
+			var items *schema.Schema
+			if r.Schema.Items != nil {
+				items = r.Schema.Items.Value
+			}
+
+			elem := r.With(Schema(items))
+			arr := make([]interface{}, length)
+			for i := range arr {
+				var v interface{}
+				var err error
+				if r.Schema.UniqueItems {
+					v, err = nextUnique(arr, elem)
+				} else {
+					v, err = r.g.tree.Resolve(elem)
+				}
+				if err != nil {
+					return nil, fmt.Errorf("%v: %v", err, r.Schema)
+				}
+				arr[i] = v
+			}
+
+			if r.Schema.ShuffleItems {
+				r.g.rand.Shuffle(len(arr), func(i, j int) { arr[i], arr[j] = arr[j], arr[i] })
+			}
+
+			return arr, nil
+		},
+	}
+}
+
+func nextUnique(arr []interface{}, r *Request) (interface{}, error) {
+	if r.Schema.Enum != nil {
+		n := gofakeit.Number(0, len(r.Schema.Enum)-1)
+		for i := 0; i < len(r.Schema.Enum); i++ {
+			index := (n + i) % len(r.Schema.Enum)
+			v := r.Schema.Enum[index]
+			if !contains(arr, v) {
+				return v, nil
+			}
+		}
+	} else {
+		for i := 0; i < 10; i++ {
+			v, err := r.g.tree.Resolve(r)
+			if err != nil {
+				return nil, err
+			}
+			if !contains(arr, v) {
+				return v, nil
+			}
+		}
+	}
+	return nil, fmt.Errorf("can not fill array with unique items")
 }
 
 func NewArray(opt ArrayOptions, gen func() (interface{}, error)) (r []interface{}, err error) {
