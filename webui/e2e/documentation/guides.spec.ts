@@ -53,7 +53,7 @@ test('Visit Guides', async ({ page, home }) => {
 
         await test.step('meta information are available', async () => {
             await expect(page).toHaveURL('/docs/guides/http/quick-start')
-            await expect(page).toHaveTitle('HTTP Quick Start | Mokapi Guides')
+            await expect(page).toHaveTitle('HTTP Quick Start - Mock an HTTP API that don\'t exists yet | Mokapi Guides')
             await expect(page.locator('meta[name="description"]')).toHaveAttribute(
                 'content',
                 'A quick tutorial how to run Swagger\'s Petstore in Mokapi'
