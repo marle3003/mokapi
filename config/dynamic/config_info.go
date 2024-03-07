@@ -65,3 +65,14 @@ func (ci *ConfigInfo) Key() string {
 	}
 	return id.String()
 }
+
+func (ci *ConfigInfo) Kernel() *ConfigInfo {
+	current := ci
+	for {
+		next := current.Inner()
+		if next == nil {
+			return current
+		}
+		current = next
+	}
+}
