@@ -59,9 +59,9 @@
       "Reference": "configuration/reference.md"
     }
   },
-  "Javascript API": {
+  "JavaScript API": {
     "items": {
-      "Javascript API": {
+      "JavaScript API": {
         "items": {
           "Overview": "javascript-api/javascript-api/overview.md",
           "Modules": "javascript-api/javascript-api/modules.md"

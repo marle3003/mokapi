@@ -1,5 +1,5 @@
 ---
-title: Kafka Quick Start
+title: Apache Kafka Quick Start - Mock a topic in seconds with AsyncAPI
 description: A simple Use Case to use Mokapi to produce orders into a Kafka topic
 ---
 # Quick Start
@@ -49,7 +49,7 @@ components:
 This specification defines a topic called "orders" that accepts messages in the format of an "Order" object which has an orderId, a customer name, and an array of items, each with an itemId and a quantity.
 
 ## Create a Producer
-Next, create a javascript file `orders.js` to generate messages for your topic
+Next, create a JavaScript file `orders.js` to generate messages for your topic
 
 ```javascript
 import { produce } from 'mokapi/kafka'

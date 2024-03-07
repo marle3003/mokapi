@@ -36,11 +36,11 @@ paths:
 This specification defines an endpoint /api/users that returns an array of strings containing usernames.
 
 ## Create Mokapi Scripts
-Next, create a javascript file `users.js` which sets the content of the response
+Next, create a JavaScript file `users.js` which sets the content of the response
 
 ```javascript
-import {on} from 'mokapi'
-import {fake} from 'mokapi/faker'
+import { on } from 'mokapi'
+import { fake } from 'mokapi/faker'
 
 export default function() {
     on('http', function(request, response) {

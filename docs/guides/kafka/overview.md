@@ -1,5 +1,5 @@
 ---
-title: Kafka Documentation
+title: How to mock Apache Kafka with Mokapi
 description: Mock your Kafka topics with AsyncAPI specification
 ---
 # Kafka
