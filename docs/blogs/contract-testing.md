@@ -1,3 +1,7 @@
+---
+title: Contract Testing - An Introduction
+description: Take a closer look at why you can achieve better time to market with contract testing.
+---
 # Contract Testing
 
 Contract testing gets increasingly more crucial with a micro service architecture. Especially in an agile development team to be able to test interactions between service as the system changes quickly in the production. Contract testing ensures that the *contract* or agreement between a service and its consumers remains intact and unbroken.
