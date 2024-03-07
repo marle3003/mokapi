@@ -19,11 +19,11 @@ func TestScript_Console(t *testing.T) {
 				host.info = func(args ...interface{}) {
 					log = args[0]
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`import {fake} from 'mokapi/faker'
 						 export default function() {
 						 	console.log('foo')
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
@@ -38,11 +38,11 @@ func TestScript_Console(t *testing.T) {
 				host.info = func(args ...interface{}) {
 					log = args[0]
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`import {fake} from 'mokapi/faker'
 						 export default function() {
 						 	console.log({foo: 123, bar: 'mokapi'})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()

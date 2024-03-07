@@ -18,10 +18,10 @@ func TestScript_Open(t *testing.T) {
 				host.openFile = func(file, hint string) (string, string, error) {
 					return "", "bar", nil
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`export default function() {
 						  	return open('foo')
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				v, err := s.RunDefault()
@@ -35,10 +35,10 @@ func TestScript_Open(t *testing.T) {
 				host.openFile = func(file, hint string) (string, string, error) {
 					return "", "", fmt.Errorf("test error")
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`export default function() {
 						  	return open('foo')
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
@@ -51,10 +51,10 @@ func TestScript_Open(t *testing.T) {
 				host.openFile = func(file, hint string) (string, string, error) {
 					return "", "foo", nil
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`export default function() {
 						  	return open('foo', { as: 'binary' })
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				v, err := s.RunDefault()

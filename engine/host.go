@@ -235,21 +235,21 @@ func (sh *scriptHost) CanClose() bool {
 	return len(sh.events) == 0 && len(sh.jobs) == 0
 }
 
-func getScriptPath(u *url.URL) string {
-	if len(u.Path) > 0 {
-		return u.Path
-	}
-	return u.Opaque
-}
-
 func (sh *scriptHost) compile() (common.Script, error) {
 	s := sh.file.Data.(*script.Script)
 	switch filepath.Ext(s.Filename) {
 	case ".js":
-		return js.New(getScriptPath(sh.file.Info.Url), s.Code, sh, sh.engine.jsConfig)
+		return js.New(sh.file, sh, sh.engine.jsConfig)
 	case ".lua":
 		return lua.New(getScriptPath(sh.file.Info.Url), s.Code, sh)
 	default:
 		return nil, fmt.Errorf("unsupported script %v", s.Filename)
 	}
+}
+
+func getScriptPath(u *url.URL) string {
+	if len(u.Path) > 0 {
+		return u.Path
+	}
+	return u.Opaque
 }

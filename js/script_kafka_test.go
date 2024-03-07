@@ -21,11 +21,11 @@ func TestScript_Kafka_Produce(t *testing.T) {
 					return &common.KafkaProduceResult{}, nil
 				}
 
-				s, err := New("",
+				s, err := New(newScript("",
 					`import {produce} from 'mokapi/kafka'
 						 export default function() {
 						  	return produce({topic: 'foo'})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()
@@ -41,11 +41,11 @@ func TestScript_Kafka_Produce(t *testing.T) {
 					return &common.KafkaProduceResult{}, nil
 				}
 
-				s, err := New("",
+				s, err := New(newScript("",
 					`import {produce} from 'mokapi/kafka'
 						 export default function() {
   							return produce({topic: 'foo', cluster: 'bar'})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()
@@ -60,11 +60,11 @@ func TestScript_Kafka_Produce(t *testing.T) {
 					return &common.KafkaProduceResult{}, nil
 				}
 
-				s, err := New("",
+				s, err := New(newScript("",
 					`import {produce} from 'mokapi/kafka'
 						 export default function() {
   							return produce({cluster: null})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()
@@ -81,11 +81,11 @@ func TestScript_Kafka_Produce(t *testing.T) {
 					return &common.KafkaProduceResult{}, nil
 				}
 
-				s, err := New("",
+				s, err := New(newScript("",
 					`import {produce} from 'mokapi/kafka'
 						 export default function() {
 						  	return produce({value: 'value', key: 'key', partition: 2})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()
@@ -102,11 +102,11 @@ func TestScript_Kafka_Produce(t *testing.T) {
 					return &common.KafkaProduceResult{}, nil
 				}
 
-				s, err := New("",
+				s, err := New(newScript("",
 					`import {produce} from 'mokapi/kafka'
 						 export default function() {
 						  	return produce({value: 'value', key: 'key', partition: 2})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()
@@ -121,11 +121,11 @@ func TestScript_Kafka_Produce(t *testing.T) {
 					return &common.KafkaProduceResult{}, nil
 				}
 
-				s, err := New("",
+				s, err := New(newScript("",
 					`import {produce} from 'mokapi/kafka'
 						 export default function() {
 						  	return produce({headers: {foo: 'bar'}})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()
@@ -140,11 +140,11 @@ func TestScript_Kafka_Produce(t *testing.T) {
 					return &common.KafkaProduceResult{}, nil
 				}
 
-				s, err := New("",
+				s, err := New(newScript("",
 					`import {produce} from 'mokapi/kafka'
 						 export default function() {
 						  	return produce({headers: {foo: 'bar'}})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()
@@ -165,11 +165,11 @@ func TestScript_Kafka_Produce(t *testing.T) {
 					}, nil
 				}
 
-				s, err := New("",
+				s, err := New(newScript("",
 					`import {produce} from 'mokapi/kafka'
 						 export default function() {
 						  	return produce()
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				v, err := s.RunDefault()
@@ -192,11 +192,11 @@ func TestScript_Kafka_Produce(t *testing.T) {
 					return &common.KafkaProduceResult{}, nil
 				}
 
-				s, err := New("",
+				s, err := New(newScript("",
 					`import {produce} from 'kafka'
 						 export default function() {
 						  	return produce({topic: 'foo'})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()

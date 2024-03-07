@@ -25,9 +25,9 @@ func TestScript_Data(t *testing.T) {
 					r.True(t, b)
 					r.Equal(t, []interface{}{int64(1), int64(2), int64(3), int64(4)}, response.Data)
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`
-export const mokapi = {http: {"bar": [1, 2, 3, 4]}}`,
+export const mokapi = {http: {"bar": [1, 2, 3, 4]}}`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()
@@ -47,9 +47,9 @@ export const mokapi = {http: {"bar": [1, 2, 3, 4]}}`,
 					r.True(t, b)
 					r.Equal(t, []interface{}{int64(1), int64(2), int64(3), int64(4)}, response.Data)
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`
-export const mokapi = {"http": {"bar": [5,6], "foo": {"bar": [1, 2, 3, 4]}}}`,
+export const mokapi = {"http": {"bar": [5,6], "foo": {"bar": [1, 2, 3, 4]}}}`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()
@@ -69,7 +69,7 @@ export const mokapi = {"http": {"bar": [5,6], "foo": {"bar": [1, 2, 3, 4]}}}`,
 					r.True(t, b)
 					r.Equal(t, []interface{}{int64(1), int64(2), int64(3), int64(4)}, response.Data)
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`
 export default () => {
 	return {
@@ -80,7 +80,7 @@ export default () => {
 			}
 		}
 	}
-}`,
+}`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()

@@ -15,11 +15,11 @@ func TestYaml(t *testing.T) {
 		{
 			"parse",
 			func(t *testing.T) {
-				s, err := New("test",
+				s, err := New(newScript("test",
 					`import {parse} from 'mokapi/yaml';
 						 export default function() {
 						 	return parse('foo: bar')
-						}`,
+						}`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 
@@ -33,11 +33,11 @@ func TestYaml(t *testing.T) {
 		{
 			"parse array",
 			func(t *testing.T) {
-				s, err := New("test",
+				s, err := New(newScript("test",
 					`import {parse} from 'mokapi/yaml';
 						 export default function() {
 						 	return parse('- a\n- b\n- c')
-						}`,
+						}`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 
@@ -51,12 +51,12 @@ func TestYaml(t *testing.T) {
 		{
 			"access array element",
 			func(t *testing.T) {
-				s, err := New("test",
+				s, err := New(newScript("test",
 					`import {parse} from 'mokapi/yaml';
 						 export default function() {
 						 	const o = parse('- a\n- b\n- c')
 							return o[1]
-						}`,
+						}`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 
@@ -70,11 +70,11 @@ func TestYaml(t *testing.T) {
 		{
 			"stringify",
 			func(t *testing.T) {
-				s, err := New("test",
+				s, err := New(newScript("test",
 					`import {stringify} from 'mokapi/yaml';
 						 export default function() {
 						 	return stringify({foo: "bar"})
-						}`,
+						}`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 
@@ -88,11 +88,11 @@ func TestYaml(t *testing.T) {
 		{
 			"using deprecated module",
 			func(t *testing.T) {
-				s, err := New("test",
+				s, err := New(newScript("test",
 					`import {parse} from 'yaml';
 						 export default function() {
 						 	return parse('foo: bar')
-						}`,
+						}`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 

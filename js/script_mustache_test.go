@@ -16,11 +16,11 @@ func Test_Mustache(t *testing.T) {
 		{
 			"render",
 			func(t *testing.T) {
-				s, err := New("test",
+				s, err := New(newScript("test",
 					`import {render} from 'mokapi/mustache';
 						 export default function() {
 						 	return render('foo{{x}}', {x: 'bar'})
-						}`,
+						}`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 
@@ -32,7 +32,7 @@ func Test_Mustache(t *testing.T) {
 		{
 			"render with fake and function",
 			func(t *testing.T) {
-				s, err := New("test",
+				s, err := New(newScript("test",
 					`import { render } from 'mokapi/mustache';
 						 import { fake } from 'mokapi/faker'
 
@@ -46,7 +46,7 @@ func Test_Mustache(t *testing.T) {
 							};
 						
 							return render("{{firstname}} has {{calc}} apples", scope);
-						}`,
+						}`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 
@@ -58,11 +58,11 @@ func Test_Mustache(t *testing.T) {
 		{
 			"using deprecated module",
 			func(t *testing.T) {
-				s, err := New("test",
+				s, err := New(newScript("test",
 					`import {render} from 'mustache';
 						 export default function() {
 						 	return render('foo{{x}}', {x: 'bar'})
-						}`,
+						}`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 

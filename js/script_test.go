@@ -18,21 +18,21 @@ func TestScript(t *testing.T) {
 	t.Parallel()
 	t.Run("blank", func(t *testing.T) {
 		t.Parallel()
-		s, err := New("", "", &testHost{}, static.JsConfig{})
+		s, err := New(newScript("", ""), &testHost{}, static.JsConfig{})
 		r.NoError(t, err)
 		err = s.Run()
 		r.NoError(t, err)
 	})
 	t.Run("null", func(t *testing.T) {
 		t.Parallel()
-		s, err := New("", "exports = null", &testHost{}, static.JsConfig{})
+		s, err := New(newScript("", "exports = null"), &testHost{}, static.JsConfig{})
 		r.NoError(t, err)
 		err = s.Run()
 		r.NoError(t, err)
 	})
 	t.Run("emptyFunction", func(t *testing.T) {
 		t.Parallel()
-		s, err := New("test", `export default function() {}`, &testHost{}, static.JsConfig{})
+		s, err := New(newScript("test", `export default function() {}`), &testHost{}, static.JsConfig{})
 		r.NoError(t, err)
 		r.NoError(t, s.Run())
 	})
@@ -42,7 +42,7 @@ func TestScript(t *testing.T) {
 		host.info = func(args ...interface{}) {
 			r.Equal(t, "foo", args[0])
 		}
-		s, err := New("test", `export default function() {console.log("foo")}`, host, static.JsConfig{})
+		s, err := New(newScript("test", `export default function() {console.log("foo")}`), host, static.JsConfig{})
 		r.NoError(t, err)
 		r.NoError(t, s.Run())
 	})
@@ -52,7 +52,7 @@ func TestScript(t *testing.T) {
 		host.warn = func(args ...interface{}) {
 			r.Equal(t, "foo", args[0])
 		}
-		s, err := New("test", `export default function() {console.warn("foo")}`, host, static.JsConfig{})
+		s, err := New(newScript("test", `export default function() {console.warn("foo")}`), host, static.JsConfig{})
 		r.NoError(t, err)
 		r.NoError(t, s.Run())
 	})
@@ -62,13 +62,13 @@ func TestScript(t *testing.T) {
 		host.error = func(args ...interface{}) {
 			r.Equal(t, "foo", args[0])
 		}
-		s, err := New("test", `export default function() {console.error("foo")}`, host, static.JsConfig{})
+		s, err := New(newScript("test", `export default function() {console.error("foo")}`), host, static.JsConfig{})
 		r.NoError(t, err)
 		r.NoError(t, s.Run())
 	})
 	t.Run("returnValueFunction", func(t *testing.T) {
 		t.Parallel()
-		s, err := New("test", `export default function() {return 2}`, &testHost{}, static.JsConfig{})
+		s, err := New(newScript("test", `export default function() {return 2}`), &testHost{}, static.JsConfig{})
 		r.NoError(t, err)
 		r.NoError(t, s.Run())
 		err = s.Run()
@@ -80,7 +80,7 @@ func TestScript(t *testing.T) {
 	})
 	t.Run("customFunction", func(t *testing.T) {
 		t.Parallel()
-		s, err := New("test", `function custom() {return 2}; export {custom}`, &testHost{}, static.JsConfig{})
+		s, err := New(newScript("test", `function custom() {return 2}; export {custom}`), &testHost{}, static.JsConfig{})
 		r.NoError(t, err)
 		r.NoError(t, s.Run())
 		f, ok := goja.AssertFunction(s.exports.ToObject(s.runtime).Get("custom"))
@@ -91,7 +91,7 @@ func TestScript(t *testing.T) {
 	})
 	t.Run("interrupt", func(t *testing.T) {
 		t.Parallel()
-		s, err := New("test", `export default function() {while(true) {}}`, &testHost{}, static.JsConfig{})
+		s, err := New(newScript("test", `export default function() {while(true) {}}`), &testHost{}, static.JsConfig{})
 		r.NoError(t, err)
 		ch := make(chan bool)
 		go func() {
@@ -108,8 +108,8 @@ func TestScript(t *testing.T) {
 	t.Run("warn deprecated module", func(t *testing.T) {
 		t.Parallel()
 		host := &testHost{}
-		s, err := New("test", `import http from 'http'
-											export default function() {}`, host, static.JsConfig{})
+		s, err := New(newScript("test", `import http from 'http'
+											export default function() {}`), host, static.JsConfig{})
 		r.NoError(t, err)
 		var warn interface{}
 		host.warn = func(args ...interface{}) {

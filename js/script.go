@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"github.com/dop251/goja"
 	"github.com/pkg/errors"
+	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	engine "mokapi/engine/common"
 	"mokapi/js/compiler"
+	"net/url"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -20,17 +22,15 @@ type Script struct {
 	compiler *compiler.Compiler
 	host     engine.Host
 	require  *requireModule
-	filename string
-	source   string
+	file     *dynamic.Config
 	config   static.JsConfig
 }
 
-func New(filename, src string, host engine.Host, config static.JsConfig) (*Script, error) {
+func New(file *dynamic.Config, host engine.Host, config static.JsConfig) (*Script, error) {
 	s := &Script{
-		host:     host,
-		filename: filename,
-		source:   src,
-		config:   config,
+		host:   host,
+		file:   file,
+		config: config,
 	}
 
 	var err error
@@ -103,12 +103,14 @@ func (s *Script) ensureRuntime() (err error) {
 		return nil
 	}
 	s.runtime = goja.New()
+	path := getScriptPath(s.file.Info.Kernel().Url)
+	workingDir := filepath.Dir(path)
 
 	s.runtime.SetFieldNameMapper(&customFieldNameMapper{})
 	s.require = newRequire(
 		s.host.OpenFile,
 		s.compiler,
-		filepath.Dir(s.filename),
+		workingDir,
 		map[string]ModuleLoader{
 			"mokapi":          s.loadNativeModule(newMokapi),
 			"mokapi/faker":    s.loadNativeModule(newFaker),
@@ -122,7 +124,7 @@ func (s *Script) ensureRuntime() (err error) {
 			"mokapi/yaml":     s.loadNativeModule(newYaml),
 			"yaml":            s.loadDeprecatedNativeModule(newYaml, "deprecated module yaml: Please use mokapi/yaml instead"),
 			"mokapi/mail": s.loadNativeModule(func(host engine.Host, runtime *goja.Runtime) interface{} {
-				return newMail(host, runtime, filepath.Dir(s.filename))
+				return newMail(host, runtime, filepath.Dir(workingDir))
 			}),
 			"mokapi/ldap": func() goja.Value {
 				return NewLdapModule(s.runtime)
@@ -132,7 +134,7 @@ func (s *Script) ensureRuntime() (err error) {
 	enableConsole(s.runtime, s.host)
 	enableOpen(s.runtime, s.host)
 
-	s.exports, err = s.openScript(s.filename, s.source)
+	s.exports, err = s.openScript(path, string(s.file.Raw))
 	return
 }
 
@@ -170,8 +172,9 @@ func (s *Script) loadNativeModule(f func(engine.Host, *goja.Runtime) interface{}
 }
 
 func (s *Script) loadDeprecatedNativeModule(f func(engine.Host, *goja.Runtime) interface{}, msg string) ModuleLoader {
+	filename := getScriptPath(s.file.Info.Url)
 	return func() goja.Value {
-		s.host.Warn(fmt.Sprintf("%v: %v", msg, s.filename))
+		s.host.Warn(fmt.Sprintf("%v: %v", msg, filename))
 		m := f(s.host, s.runtime)
 		return mapToJSValue(s.runtime, m)
 	}
@@ -201,4 +204,11 @@ func (cfm customFieldNameMapper) MethodName(_ reflect.Type, m reflect.Method) st
 
 func uncapitalize(s string) string {
 	return strings.ToLower(s[0:1]) + s[1:]
+}
+
+func getScriptPath(u *url.URL) string {
+	if len(u.Path) > 0 {
+		return u.Path
+	}
+	return u.Opaque
 }

@@ -204,11 +204,11 @@ func Test_Mail(t *testing.T) {
 			defer server.Close()
 
 			js := fmt.Sprintf(tc.js, port)
-			s, err := New("test",
+			s, err := New(newScript("test",
 				fmt.Sprintf(`import {send} from 'mokapi/mail';
 						 export default function() {
 						 	%v
-						}`, js),
+						}`, js)),
 				tc.host, static.JsConfig{})
 			r.NoError(t, err)
 

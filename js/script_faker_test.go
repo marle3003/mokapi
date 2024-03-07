@@ -16,11 +16,11 @@ func TestScript_Faker(t *testing.T) {
 		{
 			"fake string",
 			func(t *testing.T, host *testHost) {
-				s, err := New("",
+				s, err := New(newScript("",
 					`import {fake} from 'mokapi/faker'
 						 export default function() {
 						 	return fake({type: 'string'})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				v, err := s.RunDefault()
@@ -31,11 +31,11 @@ func TestScript_Faker(t *testing.T) {
 		{
 			"fake enum",
 			func(t *testing.T, host *testHost) {
-				s, err := New("",
+				s, err := New(newScript("",
 					`import {fake} from 'mokapi/faker'
 						 export default function() {
 						 	return fake({type: 'string', enum: ['foo', 'bar']})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				v, err := s.RunDefault()
@@ -46,11 +46,11 @@ func TestScript_Faker(t *testing.T) {
 		{
 			"invalid format",
 			func(t *testing.T, host *testHost) {
-				s, err := New("",
+				s, err := New(newScript("",
 					`import {fake} from 'mokapi/faker'
 						 export default function() {
 						 	return fake("")
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
@@ -60,11 +60,11 @@ func TestScript_Faker(t *testing.T) {
 		{
 			"using deprecated module",
 			func(t *testing.T, host *testHost) {
-				s, err := New("",
+				s, err := New(newScript("",
 					`import {fake} from 'faker'
 						 export default function() {
 						 	return fake({type: 'string'})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				v, err := s.RunDefault()
@@ -74,18 +74,18 @@ func TestScript_Faker(t *testing.T) {
 		}, {
 			"object with properties",
 			func(t *testing.T, host *testHost) {
-				s, err := New("",
+				s, err := New(newScript("",
 					`import {fake} from 'faker'
 						 export default function() {
 						 	return fake({type: 'object', properties: {id: {type: 'integer', format: 'int64'}}})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
 				b, err := json.Marshal(v)
 				r.NoError(t, err)
-				r.Equal(t, `{"id":-8379641344161478000}`, string(b))
+				r.Equal(t, `{"id":843730692693298300}`, string(b))
 			},
 		},
 	}

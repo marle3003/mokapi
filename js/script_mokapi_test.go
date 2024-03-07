@@ -19,11 +19,11 @@ func TestScript_Mokapi_Date(t *testing.T) {
 		{
 			"now default",
 			func(t *testing.T, host *testHost) {
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { date } from 'mokapi'
 						 export default function() {
 						  	return date({timestamp:  new Date(Date.UTC(2022, 5, 9, 12, 0, 0, 0)).getTime()}); // january is 0
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				i, err := s.RunDefault()
@@ -35,11 +35,11 @@ func TestScript_Mokapi_Date(t *testing.T) {
 		{
 			"utc time ends with Z",
 			func(t *testing.T, host *testHost) {
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { date } from 'mokapi'
 						 export default function() {
 						  	return date()
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				i, err := s.RunDefault()
@@ -50,11 +50,11 @@ func TestScript_Mokapi_Date(t *testing.T) {
 		{
 			"utc time ends with Z",
 			func(t *testing.T, host *testHost) {
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { date } from 'mokapi'
 						 export default function() {
 						  	return date({timestamp: Date.now()})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				i, err := s.RunDefault()
@@ -65,11 +65,11 @@ func TestScript_Mokapi_Date(t *testing.T) {
 		{
 			"custom format",
 			func(t *testing.T, host *testHost) {
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { date } from 'mokapi'
 						 export default function() {
 						  	return date({layout: 'DateTime', timestamp: new Date(Date.UTC(2022, 5, 9, 12, 0, 0, 0)).getTime()})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				i, err := s.RunDefault()
@@ -103,11 +103,11 @@ func TestScript_Mokapi_Every(t *testing.T) {
 				host.every = func(every string, do func(), opt common.JobOptions) {
 					r.Equal(t, "1s", every)
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { every } from 'mokapi'
 						 export default function() {
 						  	every('1s', function() {})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
@@ -120,11 +120,11 @@ func TestScript_Mokapi_Every(t *testing.T) {
 				host.every = func(every string, do func(), opt common.JobOptions) {
 					r.Equal(t, 1, opt.Times)
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { every } from 'mokapi'
 						 export default function() {
 						  	every('1s', function() {}, {times: 1})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
@@ -137,11 +137,11 @@ func TestScript_Mokapi_Every(t *testing.T) {
 				host.every = func(every string, do func(), opt common.JobOptions) {
 					r.Equal(t, "bar", opt.Tags["foo"])
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { every } from 'mokapi'
 						 export default function() {
 						  	every('1s', function() {}, {tags: {foo: 'bar'}})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
@@ -151,11 +151,11 @@ func TestScript_Mokapi_Every(t *testing.T) {
 		{
 			"tags set to null",
 			func(t *testing.T, host *testHost) {
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { every } from 'mokapi'
 						 export default function() {
 						  	every('1s', function() {}, {tags: null})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
@@ -168,13 +168,13 @@ func TestScript_Mokapi_Every(t *testing.T) {
 				host.every = func(every string, do func(), opt common.JobOptions) {
 					do()
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { every } from 'mokapi'
 						 export default function() {
 							let counter = 1
 						  	every('1s', function() {counter++}, {tags: {foo: 'bar'}})
 							return counter
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				v, err := s.RunDefault()
@@ -208,11 +208,11 @@ func TestScript_Mokapi_Cron(t *testing.T) {
 				host.cron = func(every string, do func(), opt common.JobOptions) {
 					r.Equal(t, "0/1 0 0 ? * * *", every)
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { cron } from 'mokapi'
 						 export default function() {
 						  	cron('0/1 0 0 ? * * *', function() {})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
@@ -225,11 +225,11 @@ func TestScript_Mokapi_Cron(t *testing.T) {
 				host.cron = func(every string, do func(), opt common.JobOptions) {
 					r.Equal(t, 1, opt.Times)
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { cron } from 'mokapi'
 						 export default function() {
 						  	cron('0/1 0 0 ? * * *', function() {}, {times: 1})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
@@ -242,11 +242,11 @@ func TestScript_Mokapi_Cron(t *testing.T) {
 				host.cron = func(every string, do func(), opt common.JobOptions) {
 					r.Equal(t, "bar", opt.Tags["foo"])
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { cron } from 'mokapi'
 						 export default function() {
 						  	cron('0/1 0 0 ? * * *', function() {}, {tags: {foo: 'bar'}})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
@@ -256,11 +256,11 @@ func TestScript_Mokapi_Cron(t *testing.T) {
 		{
 			"tags set to null",
 			func(t *testing.T, host *testHost) {
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { cron } from 'mokapi'
 						 export default function() {
 						  	cron('0/1 0 0 ? * * *', function() {}, {tags: null})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
@@ -273,13 +273,13 @@ func TestScript_Mokapi_Cron(t *testing.T) {
 				host.cron = func(every string, do func(), opt common.JobOptions) {
 					do()
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { cron } from 'mokapi'
 						 export default function() {
 							let counter = 1
 						  	cron('0/1 0 0 ? * * *', function() {counter++}, {tags: {foo: 'bar'}})
 							return counter
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				v, err := s.RunDefault()
@@ -313,11 +313,11 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 				host.on = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
 					r.Equal(t, "http", event)
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { on } from 'mokapi'
 						 export default function() {
 						  	on('http', function() {})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
@@ -330,11 +330,11 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 				host.on = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
 					r.Equal(t, "bar", tags["foo"])
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { on } from 'mokapi'
 						 export default function() {
 						  	on('http', function() {}, {tags: {foo: 'bar'}})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
@@ -344,11 +344,11 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 		{
 			"tags set to null",
 			func(t *testing.T, host *testHost) {
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { on } from 'mokapi'
 						 export default function() {
 						  	on('http', function() {}, {tags: null})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
@@ -361,13 +361,13 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 				host.on = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
 					do(10)
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { on } from 'mokapi'
 						 export default function() {
 							let counter = 0
 						  	on('http', function(arg) {counter = arg})
 							return counter
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				v, err := s.RunDefault()
@@ -383,11 +383,11 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 					r.NoError(t, err)
 					r.False(t, b, "default return value should be false")
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { on } from 'mokapi'
 						 export default function() {
 						  	on('http', function() {})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
@@ -402,11 +402,11 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 					r.NoError(t, err)
 					r.True(t, b, "return value should be true")
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { on } from 'mokapi'
 						 export default function() {
 						  	on('http', function() {return true})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
@@ -421,11 +421,11 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 					r.EqualError(t, err, "Error: test error at <eval>:3:46(3)")
 					r.False(t, b, "return value should be false on error")
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { on } from 'mokapi'
 						 export default function() {
 						  	on('http', function() {throw new Error('test error')})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
@@ -446,13 +446,13 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 					r.NoError(t, err)
 					r.True(t, b, "return value should be true")
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { on } from 'mokapi'
 						 export default function() {
 						  	on('http', function(data) {
 								return data.shipDate === '2022-01-01'
 							})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
@@ -473,13 +473,13 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 					r.NoError(t, err)
 					r.True(t, b, "return value should be true")
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { on } from 'mokapi'
 						 export default function() {
 						  	on('http', function(data) {
 								return data['ship-date'] === '2022-01-01'
 							})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
@@ -496,13 +496,13 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 					r.NoError(t, err)
 					r.True(t, b, "return value should be true")
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { on } from 'mokapi'
 						 export default function() {
 						  	on('http', function(data) {
 								return data.foo === 'bar'
 							})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
@@ -535,13 +535,13 @@ func TestScript_Mokapi_On_Kafka(t *testing.T) {
 				host.on = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
 					r.Equal(t, "kafka", event)
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { on } from 'mokapi'
 						 export default function() {
 						  	on('kafka', function(record) {
 								
 							})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
@@ -572,11 +572,11 @@ func TestScript_Mokapi_Env(t *testing.T) {
 			"env",
 			func(t *testing.T, host *testHost) {
 				os.Setenv("foo", "bar")
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { env } from 'mokapi'
 						 export default function() {
 						  	return env('foo')
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				v, err := s.RunDefault()
@@ -610,11 +610,11 @@ func TestScript_Mokapi_Open(t *testing.T) {
 				host.openFile = func(file, hint string) (string, string, error) {
 					return "", "bar", nil
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { open } from 'mokapi'
 						 export default function() {
 						  	return open('foo')
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				v, err := s.RunDefault()
@@ -628,11 +628,11 @@ func TestScript_Mokapi_Open(t *testing.T) {
 				host.openFile = func(file, hint string) (string, string, error) {
 					return "", "", fmt.Errorf("test error")
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { open } from 'mokapi'
 						 export default function() {
 						  	return open('foo')
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
@@ -665,11 +665,11 @@ func TestScript_Mokapi_Sleep(t *testing.T) {
 				host.openFile = func(file, hint string) (string, string, error) {
 					return "", "bar", nil
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { sleep } from 'mokapi'
 						 export default function() {
 							sleep(300);
-						}`,
+						}`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				start := time.Now()
@@ -685,11 +685,11 @@ func TestScript_Mokapi_Sleep(t *testing.T) {
 				host.openFile = func(file, hint string) (string, string, error) {
 					return "", "bar", nil
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { sleep } from 'mokapi'
 						 export default function() {
 							sleep('300ms');
-						}`,
+						}`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				start := time.Now()
@@ -705,11 +705,11 @@ func TestScript_Mokapi_Sleep(t *testing.T) {
 				host.openFile = func(file, hint string) (string, string, error) {
 					return "", "bar", nil
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { sleep } from 'mokapi'
 						 export default function() {
 							sleep('300-');
-						}`,
+						}`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				_, err = s.RunDefault()
@@ -722,7 +722,7 @@ func TestScript_Mokapi_Sleep(t *testing.T) {
 				host.openFile = func(file, hint string) (string, string, error) {
 					return "", "bar", nil
 				}
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { sleep } from 'mokapi'
 						 export default function() {
 							try {
@@ -730,7 +730,7 @@ func TestScript_Mokapi_Sleep(t *testing.T) {
 							} catch(e){
 								return e
 							}
-						}`,
+						}`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				v, err := s.RunDefault()
@@ -761,11 +761,11 @@ func TestScript_Mokapi_Marshal(t *testing.T) {
 		{
 			"default encoding",
 			func(t *testing.T, host *testHost) {
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { marshal } from 'mokapi'
 						 export default function() {
 						  	return marshal({ username: 'foo' })
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				i, err := s.RunDefault()
@@ -776,7 +776,7 @@ func TestScript_Mokapi_Marshal(t *testing.T) {
 		{
 			"with schema",
 			func(t *testing.T, host *testHost) {
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { marshal } from 'mokapi'
 						 export default function() {
 						  	return marshal({ username: 'foo' }, { 
@@ -789,7 +789,7 @@ func TestScript_Mokapi_Marshal(t *testing.T) {
 									}
 								}
 							})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				i, err := s.RunDefault()
@@ -800,7 +800,7 @@ func TestScript_Mokapi_Marshal(t *testing.T) {
 		{
 			"with content type xml",
 			func(t *testing.T, host *testHost) {
-				s, err := New("",
+				s, err := New(newScript("",
 					`import { marshal } from 'mokapi'
 						 export default function() {
 						  	return marshal({ username: 'foo' }, { 
@@ -810,7 +810,7 @@ func TestScript_Mokapi_Marshal(t *testing.T) {
 								},
 								contentType: 'application/xml'
 							})
-						 }`,
+						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				i, err := s.RunDefault()
