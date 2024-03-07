@@ -33,7 +33,6 @@ if (typeof file === 'string'){
     // component must be initialized in main.ts
     component = entry.component
     metadata = entry
-    console.log(entry)
   }
 }
 
