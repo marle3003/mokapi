@@ -29,7 +29,8 @@ function formatParam(label: any): string {
 
 <template>
     <div v-if="examples.length > 0">
-        <h2>Examples</h2>
+        <h1 class="visually-hidden">Examples & Tutorials</h1>
+        <h2 style="margin-top:0">Examples</h2>
         <ul class="link-list">
             <li v-for="example of examples">
                 <router-link :to="{ name: 'docs', params: {level2: 'examples', level3: formatParam(example.key)} }">

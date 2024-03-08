@@ -59,7 +59,7 @@ function isExpanded(item: DocEntry | string) {
 </script>
 
 <template>
-    <ul class="nav nav-pills flex-column mb-auto pe-3">
+    <ul class="nav nav-pills root flex-column mb-auto pe-3">
         <li class="nav-item" v-for="(level1, k1) of root.items">
 
             <div v-if="hasChildren(level1)" class="chapter">
@@ -105,6 +105,10 @@ function isExpanded(item: DocEntry | string) {
 .nav {
   font-size: 0.94rem;
   font-weight: 500;
+
+}
+.nav.root {
+  padding-top: 2rem;
 }
 
 .nav-item {
