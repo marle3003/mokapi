@@ -83,6 +83,11 @@
                     Automation Testing in Agile Development
                   </router-link>
                 </li>
+                <li>
+                  <router-link :to="{ path: '/docs/blogs/contract-testing' }">
+                    Contract Testing
+                  </router-link>
+                </li>
               </ul>
             </div>
           </div>
