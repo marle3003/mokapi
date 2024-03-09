@@ -6,9 +6,10 @@ import (
 )
 
 type Schema struct {
-	Type  Types         `yaml:"type,omitempty" json:"type,omitempty"`
-	Enum  []interface{} `yaml:"enum,omitempty" json:"enum,omitempty"`
-	Const interface{}   `yaml:"const,omitempty" json:"const,omitempty"`
+	Type     Types         `yaml:"type,omitempty" json:"type,omitempty"`
+	Enum     []interface{} `yaml:"enum,omitempty" json:"enum,omitempty"`
+	Const    interface{}   `yaml:"const,omitempty" json:"const,omitempty"`
+	Examples []interface{} `yaml:"examples,omitempty" json:"examples,omitempty"`
 
 	// Numbers
 	MultipleOf       *float64 `yaml:"multipleOf,omitempty" json:"multipleOf,omitempty"`

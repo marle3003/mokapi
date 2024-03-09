@@ -69,6 +69,7 @@ func NewTree() *Tree {
 					return len(r.Names) > 0
 				},
 			},
+			Examples(),
 			Number(),
 			StringTree(),
 			Object(),

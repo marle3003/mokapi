@@ -110,6 +110,10 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 		js.Type = append(js.Type, "null")
 	}
 
+	if s.Example != nil {
+		js.Examples = append(js.Examples, s.Example)
+	}
+
 	return js
 }
 
