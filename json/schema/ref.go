@@ -47,3 +47,7 @@ func (r *Ref) Type() string {
 	}
 	return fmt.Sprintf("%v", r.Value.Type)
 }
+
+func (r *Ref) UnmarshalJSON(b []byte) error {
+	return r.UnmarshalJson(b, &r.Value)
+}

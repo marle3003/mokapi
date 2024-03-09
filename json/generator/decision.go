@@ -61,6 +61,7 @@ func NewTree() *Tree {
 			AllOf(),
 			OneOf(),
 			PetTree(),
+			PersonTree(),
 			{
 				Name:  "Names",
 				nodes: []*Tree{AddressTree()},

@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"encoding/json"
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
 	"mokapi/json/schema"
@@ -64,6 +65,17 @@ func TestPet(t *testing.T) {
 				require.Equal(t, []interface{}{"elk", "fish"}, v)
 			},
 		},
+		{
+			name: "pet category with schema",
+			req: &Request{
+				Names:  []string{"pet"},
+				Schema: mustParse(`{"type": "object", "properties": {"category": {"type": "object", "properties": {"name": {"type": "string"},"id": {"type": "integer"}} }}}`),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"category": map[string]interface{}{"id": 5571200078501983580, "name": "bat"}}, v)
+			},
+		},
 	}
 
 	for _, tc := range testcases {
@@ -74,4 +86,13 @@ func TestPet(t *testing.T) {
 			tc.test(t, v, err)
 		})
 	}
+}
+
+func mustParse(b string) *schema.Schema {
+	var s *schema.Schema
+	err := json.Unmarshal([]byte(b), &s)
+	if err != nil {
+		panic(err)
+	}
+	return s
 }

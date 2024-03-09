@@ -5,6 +5,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"mokapi/engine/common"
+	"mokapi/json/generator"
 	"mokapi/media"
 	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/schema"
@@ -75,7 +76,7 @@ func EventRequestFrom(r *http.Request) *common.EventRequest {
 	return req
 }
 
-func setResponseData(r *common.EventResponse, m *MediaType) error {
+func setResponseData(r *common.EventResponse, m *MediaType, path string) error {
 	if m != nil {
 		if len(m.Examples) > 0 {
 			keys := reflect.ValueOf(m.Examples).MapKeys()
@@ -84,7 +85,16 @@ func setResponseData(r *common.EventResponse, m *MediaType) error {
 		} else if m.Example != nil {
 			r.Data = m.Example
 		} else {
-			if data, err := schema.CreateValue(m.Schema); err != nil {
+			segments := strings.Split(path, "/")
+			var names []string
+			for _, seg := range segments[1:] {
+				if !strings.HasPrefix(seg, "{") {
+					names = append(names, seg)
+				}
+			}
+
+			data, err := generator.New(generator.NewRequest(generator.Name(names...), generator.Ref(schema.ConvertToJsonSchema(m.Schema))))
+			if err != nil {
 				return fmt.Errorf("generate response data failed: %v", err)
 			} else {
 				r.Data = data

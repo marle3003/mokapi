@@ -83,7 +83,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	response := NewEventResponse(status, contentType)
 
-	err = setResponseData(response, mediaType)
+	err = setResponseData(response, mediaType, request.Key)
 	if err != nil {
 		writeError(rw, r, err, h.config.Info.Name)
 		return

@@ -21,9 +21,11 @@ func StringTree() *Tree {
 	return &Tree{
 		Name: "String",
 		nodes: []*Tree{
+			StringFormat(),
 			Uri(),
 			Uris(),
-			StringFormat(),
+			Language(),
+			Error(),
 			String(),
 		},
 	}
@@ -125,6 +127,49 @@ func Uris() *Tree {
 		},
 		resolve: func(r *Request) (interface{}, error) {
 			return r.g.tree.Resolve(r.With(Name("url")))
+		},
+	}
+}
+
+func Language() *Tree {
+	return &Tree{
+		Name: "Language",
+		nodes: []*Tree{
+			{
+				Name: "LanguageString",
+				compare: func(r *Request) bool {
+					last := strings.ToLower(r.LastName())
+					return (last == "language" || last == "lang") && (r.Schema.IsString() || r.Schema.IsAny())
+				},
+				resolve: func(r *Request) (interface{}, error) {
+					return gofakeit.LanguageBCP(), nil
+				},
+			}, {
+				Name: "Languages",
+				compare: func(r *Request) bool {
+					last := strings.ToLower(r.LastName())
+					return (last == "languages" || last == "langs") && (r.Schema.IsArray() || r.Schema.IsAny())
+				},
+				resolve: func(r *Request) (interface{}, error) {
+					next := r.With(Name("language"))
+					if r.Schema.IsAny() {
+						next = next.With(Schema(&schema.Schema{Type: []string{"array"}}))
+					}
+					return r.g.tree.Resolve(next)
+				},
+			},
+		},
+	}
+}
+
+func Error() *Tree {
+	return &Tree{
+		Name: "Error",
+		compare: func(r *Request) bool {
+			return strings.ToLower(r.LastName()) == "error" && (r.Schema.IsString() || r.Schema.IsAny())
+		},
+		resolve: func(r *Request) (interface{}, error) {
+			return fmt.Sprintf("%v", gofakeit.ErrorHTTP()), nil
 		},
 	}
 }

@@ -69,7 +69,7 @@ func (suite *PetStoreSuite) TestJsHttpHandler() {
 	try.GetRequest(suite.T(), "http://127.0.0.1:18080/pet/5",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(http.StatusOK),
-		try.HasBody(`{"id":8765000238079473523,"category":{"id":5235714632582460599,"name":""},"name":"Zoe","photoUrls":["https://www.chiefcompelling.name/magnetic","https://www.centralintuitive.name/seamless/turn-key","https://www.internalbrand.io/utilize/e-enable"],"tags":[{"id":4872749828161766412,"name":" xx6DpbG"},{"id":4957932974854356178,"name":"jP0xJebAATiK"},{"id":2565205193432314342,"name":"u"},{"id":2245131204381567511,"name":"E07P"},{"id":2377565070429723201,"name":"69Iy UEz Z"}],"status":"available"}`))
+		try.HasBody(`{"id":5811170300440913590,"category":{"id":2184265880946780973,"name":"mammoth"},"name":"Zoe","photoUrls":[],"tags":[{"id":1199055728336032006,"name":"B0QSM9J7SZsUL"},{"id":1064945961200669001,"name":""}],"status":"pending"}`))
 
 	// test http metrics
 	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%s/api/metrics/http?path=/pet/{petId}", suite.cfg.Api.Port), nil,

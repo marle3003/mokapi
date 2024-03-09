@@ -46,8 +46,6 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 		MaxItems:             s.MaxItems,
 		UniqueItems:          s.UniqueItems,
 		ShuffleItems:         s.ShuffleItems,
-		MaxContains:          0,
-		MinContains:          0,
 		MaxProperties:        s.MaxProperties,
 		MinProperties:        s.MinProperties,
 		Required:             nil,

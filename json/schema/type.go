@@ -1,5 +1,31 @@
 package schema
 
+import "encoding/json"
+
+type Types []string
+
+func (t *Types) UnmarshalJSON(b []byte) error {
+	var v interface{}
+	err := json.Unmarshal(b, &v)
+	if err != nil {
+		return err
+	}
+	if str, ok := v.(string); ok {
+		*t = append(*t, str)
+	} else if arr, ok := v.([]interface{}); ok {
+		for _, i := range arr {
+			if str, ok := i.(string); ok {
+				*t = append(*t, str)
+			} else {
+				return &UnmarshalError{Value: i, Field: "type"}
+			}
+		}
+	} else {
+		return &UnmarshalError{Value: v, Field: "type"}
+	}
+	return nil
+}
+
 func (s *Schema) IsAny() bool {
 	return s == nil || len(s.Type) == 0
 }

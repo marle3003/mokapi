@@ -66,7 +66,7 @@ func PetCategory() *Tree {
 	return &Tree{
 		Name: "PetCategory",
 		compare: func(r *Request) bool {
-			if r.Schema.IsArray() {
+			if r.Schema.IsArray() || r.Schema.IsObject() {
 				return false
 			}
 			if r.matchLast([]string{"pet", "category"}, true) {

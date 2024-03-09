@@ -14,6 +14,14 @@ type Request struct {
 	context map[string]interface{}
 }
 
+func NewRequest(opts ...RequestOption) *Request {
+	r := &Request{}
+	for _, opt := range opts {
+		opt(r)
+	}
+	return r
+}
+
 func (r *Request) With(opts ...RequestOption) *Request {
 	r1 := &Request{
 		Names:   r.Names,

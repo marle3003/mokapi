@@ -17,7 +17,7 @@ func TestSchemaJson(t *testing.T) {
 			data: `{"type": "string"}`,
 			test: func(t *testing.T, s *Schema, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []string{"string"}, s.Type)
+				require.Equal(t, Types{"string"}, s.Type)
 			},
 		},
 		{
@@ -25,7 +25,7 @@ func TestSchemaJson(t *testing.T) {
 			data: `{"type": ["string", "integer"] }`,
 			test: func(t *testing.T, s *Schema, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []string{"string", "integer"}, s.Type)
+				require.Equal(t, Types{"string", "integer"}, s.Type)
 			},
 		},
 		{
@@ -67,14 +67,15 @@ func TestSchemaJson(t *testing.T) {
 			data: `{"multipleOf": 12}`,
 			test: func(t *testing.T, s *Schema, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 12, *s.MultipleOf)
+				require.Equal(t, 12.0, *s.MultipleOf)
 			},
 		},
 		{
-			name: "multipleOf is not integer",
+			name: "multipleOf can be a floating point number",
 			data: `{"multipleOf": 12.5}`,
 			test: func(t *testing.T, s *Schema, err error) {
-				require.EqualError(t, err, "cannot unmarshal 12.5 into field multipleOf of type schema")
+				require.NoError(t, err)
+				require.Equal(t, 12.5, *s.MultipleOf)
 			},
 		},
 		{
@@ -121,25 +122,11 @@ func TestSchemaJson(t *testing.T) {
 			},
 		},
 		{
-			name: "maxLength negative",
-			data: `{"maxLength": -12}`,
-			test: func(t *testing.T, s *Schema, err error) {
-				require.EqualError(t, err, "maxLength must be a non-negative integer: -12")
-			},
-		},
-		{
 			name: "minLength",
 			data: `{"minLength": 12}`,
 			test: func(t *testing.T, s *Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 12, *s.MinLength)
-			},
-		},
-		{
-			name: "minLength negative",
-			data: `{"minLength": -12}`,
-			test: func(t *testing.T, s *Schema, err error) {
-				require.EqualError(t, err, "minLength must be a non-negative integer: -12")
 			},
 		},
 		{
@@ -170,25 +157,11 @@ func TestSchemaJson(t *testing.T) {
 			},
 		},
 		{
-			name: "maxItems negative",
-			data: `{"maxItems": -12}`,
-			test: func(t *testing.T, s *Schema, err error) {
-				require.EqualError(t, err, "maxItems must be a non-negative integer: -12")
-			},
-		},
-		{
 			name: "minItems",
 			data: `{"minItems": 12}`,
 			test: func(t *testing.T, s *Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 12, *s.MinItems)
-			},
-		},
-		{
-			name: "minItems negative",
-			data: `{"minItems": -12}`,
-			test: func(t *testing.T, s *Schema, err error) {
-				require.EqualError(t, err, "minItems must be a non-negative integer: -12")
 			},
 		},
 		{
@@ -204,14 +177,7 @@ func TestSchemaJson(t *testing.T) {
 			data: `{"maxContains": 12}`,
 			test: func(t *testing.T, s *Schema, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 12, s.MaxContains)
-			},
-		},
-		{
-			name: "maxContains negative",
-			data: `{"maxContains": -12}`,
-			test: func(t *testing.T, s *Schema, err error) {
-				require.EqualError(t, err, "maxContains must be a non-negative integer: -12")
+				require.Equal(t, 12, *s.MaxContains)
 			},
 		},
 		{
@@ -219,19 +185,20 @@ func TestSchemaJson(t *testing.T) {
 			data: `{"minContains": 12}`,
 			test: func(t *testing.T, s *Schema, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 12, s.MinContains)
-			},
-		},
-		{
-			name: "minContains negative",
-			data: `{"minContains": -12}`,
-			test: func(t *testing.T, s *Schema, err error) {
-				require.EqualError(t, err, "minContains must be a non-negative integer: -12")
+				require.Equal(t, 12, *s.MinContains)
 			},
 		},
 		/*
 		 * Objects
 		 */
+		{
+			name: "properties",
+			data: `{"properties": {"name": {"type": "string"} }}`,
+			test: func(t *testing.T, s *Schema, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 1, s.Properties.Len())
+			},
+		},
 		{
 			name: "maxProperties",
 			data: `{"maxProperties": 12}`,
@@ -241,25 +208,11 @@ func TestSchemaJson(t *testing.T) {
 			},
 		},
 		{
-			name: "maxProperties negative",
-			data: `{"maxProperties": -12}`,
-			test: func(t *testing.T, s *Schema, err error) {
-				require.EqualError(t, err, "maxProperties must be a non-negative integer: -12")
-			},
-		},
-		{
 			name: "minProperties",
 			data: `{"minProperties": 12}`,
 			test: func(t *testing.T, s *Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 12, *s.MinProperties)
-			},
-		},
-		{
-			name: "minProperties negative",
-			data: `{"minProperties": -12}`,
-			test: func(t *testing.T, s *Schema, err error) {
-				require.EqualError(t, err, "minProperties must be a non-negative integer: -12")
 			},
 		},
 		{
