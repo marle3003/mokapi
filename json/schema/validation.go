@@ -148,7 +148,9 @@ func (s *Schema) validateNumber(v interface{}) error {
 	case s.IsInteger():
 		f, ok := v.(int64)
 		if !ok {
-			return fmt.Errorf("validation error on %v, expected %v", v, s)
+			if _, ok = v.(int); !ok {
+				return fmt.Errorf("validation error on %v, expected %v", v, s)
+			}
 		}
 		n = float64(f)
 	}
