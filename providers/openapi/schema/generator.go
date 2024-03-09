@@ -36,7 +36,6 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 
 	js := &schema.Schema{
 		Enum:                 s.Enum,
-		Const:                s.Example,
 		MinLength:            s.MinLength,
 		MaxLength:            s.MaxLength,
 		Pattern:              s.Pattern,
