@@ -17,13 +17,12 @@ You can open a browser and go to Mokapi's Dashabord (`http://localhost:8080`) to
 
 ## Make HTTP request
 You can now make HTTP requests to the Petstore's API and Mokapi creates responses with randomly generated data.
-Your request and the response is shown on Mokapi's Dashboard.
 
 ```
 curl --header "Accept: application/json" http://localhost/api/v3/pet/4
 ```
 
-A possible response could be as shown below.
+Your request and the response is shown on Mokapi's Dashboard and a possible response of your request could be as follows.
 
 ```json
 {
