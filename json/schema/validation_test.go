@@ -395,3 +395,53 @@ func TestSchema_Validate_OneOf(t *testing.T) {
 		})
 	}
 }
+
+func TestSchema_Validate_AllOf(t *testing.T) {
+	testcases := []struct {
+		name   string
+		data   string
+		schema *schema.Schema
+		test   func(t *testing.T, err error)
+	}{
+		{
+			name: "valid",
+			data: `{"foo": 12, "bar": true}`,
+			schema: schematest.New("object",
+				schematest.AllOf(
+					schematest.New("object", schematest.WithProperty("foo", schematest.New("integer"))),
+					schematest.New("object", schematest.WithProperty("bar", schematest.New("boolean"))),
+				)),
+			test: func(t *testing.T, err error) {
+				require.NoError(t, err)
+			},
+		},
+		{
+			name: "missing required",
+			data: `{"foo": 12}`,
+			schema: schematest.New("object",
+				schematest.AllOf(
+					schematest.New("object", schematest.WithProperty("foo", schematest.New("integer"))),
+					schematest.New("object",
+						schematest.WithRequired("bar"),
+						schematest.WithProperty("bar", schematest.New("boolean"))),
+				)),
+			test: func(t *testing.T, err error) {
+				require.EqualError(t, err, "validation error {foo: 12}: value does not match part of allOf: missing required field(s) [bar]")
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			var v interface{}
+			err := json.Unmarshal([]byte(tc.data), &v)
+			require.NoError(t, err)
+			err = tc.schema.Validate(v)
+			tc.test(t, err)
+		})
+	}
+}

@@ -22,6 +22,9 @@ func (s *Schema) Validate(v interface{}) error {
 	if len(s.OneOf) > 0 {
 		return s.validateOneOf(v)
 	}
+	if len(s.AllOf) > 0 {
+		return s.validateAllOf(v)
+	}
 
 	if len(s.Type) == 0 {
 		return nil
@@ -322,6 +325,24 @@ func (s *Schema) validateOneOf(v interface{}) error {
 	return nil
 }
 
+func (s *Schema) validateAllOf(v interface{}) error {
+	for _, r := range s.AllOf {
+		one := r.Value
+
+		// free-form object
+		if one.Properties == nil {
+			return nil
+		}
+
+		err := one.Validate(v)
+		if err != nil {
+			return fmt.Errorf("validation error %v: value does not match part of allOf: %w", toString(v), err)
+		}
+	}
+
+	return nil
+}
+
 func checkValueIsInEnum(v interface{}, enum []interface{}) error {
 	found := false
 	for _, x := range enum {
@@ -331,7 +352,7 @@ func checkValueIsInEnum(v interface{}, enum []interface{}) error {
 		}
 	}
 	if !found {
-		return fmt.Errorf("value '%v' does not match one in the enumeration %v", toString(v), toString(enum))
+		return fmt.Errorf("validation error %v: value does not match one in the enumeration %v", toString(v), toString(enum))
 	}
 
 	return nil
