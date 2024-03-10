@@ -15,19 +15,37 @@ import (
 )
 
 func (s *Schema) Validate(v interface{}) error {
+	if s == nil {
+		return nil
+	}
+
+	if len(s.OneOf) > 0 {
+		return s.validateOneOf(v)
+	}
+
+	if len(s.Type) == 0 {
+		return nil
+	}
+
 	var errs []error
 	for _, t := range s.Type {
+		var err error
 		switch t {
 		case "string":
-			return s.validateString(v)
+			err = s.validateString(v)
 		case "number", "integer":
-			return s.validateNumber(v)
+			err = s.validateNumber(v)
 		case "array":
-			return s.validateArray(v)
+			err = s.validateArray(v)
 		case "object":
-			return s.validateObject(v)
+			err = s.validateObject(v)
+		case "null":
+			continue
 		default:
 			return fmt.Errorf("unsupported type %v", s.Type[0])
+		}
+		if err != nil {
+			errs = append(errs, err)
 		}
 	}
 
@@ -47,13 +65,12 @@ func (r *Ref) Validate(v interface{}) error {
 	return r.Value.Validate(v)
 }
 
-func (s *Schema) validateString(i interface{}) error {
-	v := reflect.ValueOf(i)
-	if v.Kind() != reflect.String {
-		return fmt.Errorf("validation error on %v, expected %v", v.Kind(), s)
+func (s *Schema) validateString(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("validation error on %v, expected %v", v, s)
 	}
 
-	str := i.(string)
 	switch s.Format {
 	case "date":
 		_, err := time.Parse("2006-01-02", str)
@@ -126,33 +143,35 @@ func (s *Schema) validateString(i interface{}) error {
 
 func (s *Schema) validateNumber(v interface{}) error {
 	var n float64
+
+	switch i := v.(type) {
+	case int:
+		n = float64(i)
+	case int32:
+		n = float64(i)
+	case int64:
+		n = float64(i)
+	case float32:
+		n = float64(i)
+	case float64:
+		n = i
+	default:
+		return fmt.Errorf("validation error on %v, expected %v", v, s)
+	}
+
 	switch {
 	case s.IsNumber() && s.Format == "float":
-		f, ok := v.(float32)
-		if !ok {
+		if float64(float32(n)) != n {
 			return fmt.Errorf("validation error on %v, expected %v", v, s)
 		}
-		n = float64(f)
-	case s.IsNumber():
-		f, ok := v.(float64)
-		if !ok {
-			return fmt.Errorf("validation error on %v, expected %v", v, s)
-		}
-		n = f
 	case s.IsInteger() && s.Format == "int32":
-		f, ok := v.(int32)
-		if !ok {
+		if float64(int32(n)) != n {
 			return fmt.Errorf("validation error on %v, expected %v", v, s)
 		}
-		n = float64(f)
 	case s.IsInteger():
-		f, ok := v.(int64)
-		if !ok {
-			if _, ok = v.(int); !ok {
-				return fmt.Errorf("validation error on %v, expected %v", v, s)
-			}
+		if float64(int64(n)) != n {
+			return fmt.Errorf("validation error on %v, expected %v", v, s)
 		}
-		n = float64(f)
 	}
 
 	if s.Minimum != nil && n < *s.Minimum {
@@ -260,6 +279,35 @@ func (s *Schema) validateObject(v interface{}) error {
 				return err
 			}
 		}
+	}
+
+	return nil
+}
+
+func (s *Schema) validateOneOf(v interface{}) error {
+	var result interface{}
+
+	for _, ref := range s.OneOf {
+		// free-form object
+		if ref.IsObject() && ref.Value.Properties == nil {
+			result = v
+			continue
+		}
+
+		err := ref.Validate(v)
+		if err != nil {
+			continue
+		}
+
+		if result != nil {
+			return fmt.Errorf("validation error %v: it is valid for more than one schema, expected %v", toString(v), s)
+		}
+
+		result = v
+	}
+
+	if result == nil {
+		return fmt.Errorf("validation error %v: expected to match one of schema but it matches none", toString(v))
 	}
 
 	return nil

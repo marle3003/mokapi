@@ -212,18 +212,27 @@ func newTopic(s *store.Store, t *store.Topic, config *asyncApi.Channel) topic {
 		Partitions:  partitions,
 	}
 
-	if config.Publish.Message.Value != nil {
-		msg := config.Publish.Message.Value
-		result.Configs = &topicConfig{
-			Name:        msg.Name,
-			Title:       msg.Title,
-			Summary:     msg.Summary,
-			Description: msg.Description,
-			Key:         getSchema(msg.Bindings.Kafka.Key),
-			Message:     getSchema(msg.Payload),
-			Header:      getSchema(msg.Headers),
-			MessageType: msg.ContentType,
-		}
+	var msg *asyncApi.Message
+	if config.Publish != nil && config.Publish.Message.Value != nil {
+		msg = config.Publish.Message.Value
+
+	} else if config.Subscribe != nil && config.Subscribe.Message.Value != nil {
+		msg = config.Subscribe.Message.Value
+	}
+
+	if msg == nil {
+		return result
+	}
+
+	result.Configs = &topicConfig{
+		Name:        msg.Name,
+		Title:       msg.Title,
+		Summary:     msg.Summary,
+		Description: msg.Description,
+		Key:         getSchema(msg.Bindings.Kafka.Key),
+		Message:     getSchema(msg.Payload),
+		Header:      getSchema(msg.Headers),
+		MessageType: msg.ContentType,
 	}
 
 	return result

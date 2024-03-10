@@ -48,6 +48,13 @@ func (r *Ref) Type() string {
 	return fmt.Sprintf("%v", r.Value.Type)
 }
 
+func (r *Ref) String() string {
+	if r == nil || r.Value == nil {
+		return ""
+	}
+	return r.Value.String()
+}
+
 func (r *Ref) UnmarshalJSON(b []byte) error {
 	return r.UnmarshalJson(b, &r.Value)
 }

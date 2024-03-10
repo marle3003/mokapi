@@ -8,36 +8,36 @@ import (
 func (s *Schema) String() string {
 	var sb strings.Builder
 
-	//if len(s.AnyOf) > 0 {
-	//	sb.WriteString("any of ")
-	//	for _, i := range s.AnyOf {
-	//		if sb.Len() > 7 {
-	//			sb.WriteString(", ")
-	//		}
-	//		sb.WriteString(i.String())
-	//	}
-	//	return sb.String()
-	//}
-	//if len(s.AllOf) > 0 {
-	//	sb.WriteString("all of ")
-	//	for _, i := range s.AllOf {
-	//		if sb.Len() > 7 {
-	//			sb.WriteString(", ")
-	//		}
-	//		sb.WriteString(i.String())
-	//	}
-	//	return sb.String()
-	//}
-	//if len(s.OneOf) > 0 {
-	//	sb.WriteString("one of ")
-	//	for _, i := range s.OneOf {
-	//		if sb.Len() > 7 {
-	//			sb.WriteString(", ")
-	//		}
-	//		sb.WriteString(i.String())
-	//	}
-	//	return sb.String()
-	//}
+	if len(s.AnyOf) > 0 {
+		sb.WriteString("any of ")
+		for _, i := range s.AnyOf {
+			if sb.Len() > 7 {
+				sb.WriteString(", ")
+			}
+			sb.WriteString(i.String())
+		}
+		return sb.String()
+	}
+	if len(s.AllOf) > 0 {
+		sb.WriteString("all of ")
+		for _, r := range s.AllOf {
+			if sb.Len() > 7 {
+				sb.WriteString(", ")
+			}
+			sb.WriteString(r.String())
+		}
+		return sb.String()
+	}
+	if len(s.OneOf) > 0 {
+		sb.WriteString("one of ")
+		for _, r := range s.OneOf {
+			if sb.Len() > 7 {
+				sb.WriteString(", ")
+			}
+			sb.WriteString(r.String())
+		}
+		return sb.String()
+	}
 
 	if len(s.Type) == 1 {
 		sb.WriteString(fmt.Sprintf("schema type=%v", s.Type[0]))
@@ -52,7 +52,7 @@ func (s *Schema) String() string {
 		sb.WriteString(fmt.Sprintf(" pattern=%v", s.Pattern))
 	}
 	if s.MinLength != nil {
-		sb.WriteString(fmt.Sprintf(" minLength=%v", s.MinLength))
+		sb.WriteString(fmt.Sprintf(" minLength=%v", *s.MinLength))
 	}
 	if s.MaxLength != nil {
 		sb.WriteString(fmt.Sprintf(" maxLength=%v", *s.MaxLength))
@@ -75,8 +75,8 @@ func (s *Schema) String() string {
 	if s.MaxItems != nil {
 		sb.WriteString(fmt.Sprintf(" maxItems=%v", *s.MaxItems))
 	}
-	if s.IsObject() {
-		sb.WriteString(fmt.Sprintf(" minProperties=%v", s.MinProperties))
+	if s.MinProperties != nil {
+		sb.WriteString(fmt.Sprintf(" minProperties=%v", *s.MinProperties))
 	}
 	if s.MaxProperties != nil {
 		sb.WriteString(fmt.Sprintf(" maxProperties=%v", *s.MaxProperties))

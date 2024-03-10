@@ -15,6 +15,15 @@ func New(typeName string, opts ...SchemaOptions) *schema.Schema {
 	return s
 }
 
+func NewTypes(typeNames []string, opts ...SchemaOptions) *schema.Schema {
+	s := new(schema.Schema)
+	s.Type = append(s.Type, typeNames...)
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
+}
+
 func NewRef(typeName string, opts ...SchemaOptions) *schema.Ref {
 	s := new(schema.Schema)
 	s.Type = append(s.Type, typeName)
@@ -204,6 +213,12 @@ func WithEnum(e []interface{}) SchemaOptions {
 func WithMinLength(n int) SchemaOptions {
 	return func(s *schema.Schema) {
 		s.MinLength = &n
+	}
+}
+
+func WithMaxLength(n int) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.MaxLength = &n
 	}
 }
 
