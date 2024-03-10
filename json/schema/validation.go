@@ -31,6 +31,8 @@ func (s *Schema) Validate(v interface{}) error {
 	for _, t := range s.Type {
 		var err error
 		switch t {
+		case "boolean":
+			err = s.validateBool(v)
 		case "string":
 			err = s.validateString(v)
 		case "number", "integer":
@@ -63,6 +65,13 @@ func (r *Ref) Validate(v interface{}) error {
 		return nil
 	}
 	return r.Value.Validate(v)
+}
+
+func (s *Schema) validateBool(i interface{}) error {
+	if _, ok := i.(bool); ok {
+		return nil
+	}
+	return fmt.Errorf("validation error on %v, expected %v", i, s)
 }
 
 func (s *Schema) validateString(v interface{}) error {
