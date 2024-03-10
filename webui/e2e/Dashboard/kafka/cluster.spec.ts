@@ -28,11 +28,12 @@ test('Visit Kafka cluster "Kafka World"', async ({ page }) => {
     })
 
     await test.step('Check broker section', async () => {
-        const brokers = useTable(page.getByRole('region', { name: "Brokers" }).getByRole('table', { name: 'Cluster Brokers' }), ['Name', 'URL', 'Description'])
+        const brokers = useTable(page.getByRole('region', { name: "Brokers" }).getByRole('table', { name: 'Cluster Brokers' }), ['Name', 'URL', 'Tags', 'Description'])
         const broker = brokers.getRow(1)
         await expect(broker.getCellByName('Name')).toHaveText(cluster.brokers[0].name)
         await expect(broker.getCellByName('URL')).toHaveText(cluster.brokers[0].url)
-        await expect(broker.getCellByName('Description')).toHaveText(cluster.brokers[0].description)
+        await expect(broker.getCellByName('Tags').getByRole('listitem')).toHaveText('env:test', { useInnerText: true})
+        await expect(broker.getCellByName('Description')).toHaveText('Dashwood contempt on mr unlocked resolved provided of of. Stanhill wondered it it welcomed oh. Hundred no prudent he however smiling at an offence. If earnestly extremity he he propriety something admitting convinced ye.')
     })
 
     await test.step('Check topic section', async () => {
@@ -78,8 +79,8 @@ test('Visit Kafka cluster config file', async ({ page, context }) => {
 
     const { test: testSourceView } = useSourceView(page.getByRole('region', { name: 'Content' }))
     await testSourceView({
-        lines: '227 lines',
-        size: '3.45 kB',
+        lines: '233 lines',
+        size: '3.75 kB',
         content: /"name": "Kafka World"/,
         filename: 'asyncapi.json',
         clipboard: '"name": "Kafka World"'

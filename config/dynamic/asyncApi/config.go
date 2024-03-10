@@ -15,6 +15,9 @@ var supportedVersions = []*version.Version{
 	version.New("2.1.0"),
 	version.New("2.2.0"),
 	version.New("2.3.0"),
+	version.New("2.4.0"),
+	version.New("2.5.0"),
+	version.New("2.6.0"),
 }
 
 type Config struct {

@@ -46,6 +46,27 @@ func TestConfig_Validate(t *testing.T) {
 				require.NoError(t, err)
 			},
 		},
+		{
+			name: "2.4.0",
+			cfg:  &Config{AsyncApi: "2.4.0"},
+			test: func(t *testing.T, err error) {
+				require.NoError(t, err)
+			},
+		},
+		{
+			name: "2.5.0",
+			cfg:  &Config{AsyncApi: "2.5.0"},
+			test: func(t *testing.T, err error) {
+				require.NoError(t, err)
+			},
+		},
+		{
+			name: "2.6.0",
+			cfg:  &Config{AsyncApi: "2.6.0"},
+			test: func(t *testing.T, err error) {
+				require.NoError(t, err)
+			},
+		},
 	}
 
 	t.Parallel()
