@@ -11,7 +11,7 @@ func NewConfig(opts ...ConfigOptions) *asyncApi.Config {
 	c := &asyncApi.Config{
 		AsyncApi: "2.0.0",
 		Info:     asyncApi.Info{Name: "test", Version: "1.0"},
-		Servers:  map[string]asyncApi.Server{}}
+		Servers:  map[string]*asyncApi.ServerRef{}}
 	for _, opt := range opts {
 		opt(c)
 	}
@@ -103,19 +103,19 @@ type ServerOptions func(s *asyncApi.Server)
 func WithServer(name, protocol, url string, opts ...ServerOptions) ConfigOptions {
 	return func(c *asyncApi.Config) {
 		if c.Servers == nil {
-			c.Servers = make(map[string]asyncApi.Server)
+			c.Servers = make(map[string]*asyncApi.ServerRef)
 		}
 
-		s := asyncApi.Server{
+		s := &asyncApi.Server{
 			Url:      url,
 			Protocol: protocol,
 		}
 		s.Bindings.Kafka.Config = make(map[string]string)
 		for _, opt := range opts {
-			opt(&s)
+			opt(s)
 		}
 
-		c.Servers[name] = s
+		c.Servers[name] = &asyncApi.ServerRef{Value: s}
 	}
 }
 

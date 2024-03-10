@@ -131,19 +131,19 @@ func (s *Store) GetOrCreateGroup(name string, brokerId int) *Group {
 func (s *Store) Update(c *asyncApi.Config) {
 	s.cluster = c.Info.Name
 	for n, server := range c.Servers {
-		if server.Protocol != "" && server.Protocol != "kafka" {
+		if server.Value.Protocol != "" && server.Value.Protocol != "kafka" {
 			continue
 		}
 		if b := s.getBroker(n); b != nil {
-			host, port := parseHostAndPort(server.Url)
+			host, port := parseHostAndPort(server.Value.Url)
 			if len(host) == 0 {
-				log.Errorf("unable to update broker '%v' to cluster '%v': missing host in url '%v'", n, s.cluster, server.Url)
+				log.Errorf("unable to update broker '%v' to cluster '%v': missing host in url '%v'", n, s.cluster, server.Value.Url)
 				continue
 			}
 			b.Host = host
 			b.Port = port
 		} else {
-			s.addBroker(n, server)
+			s.addBroker(n, *server.Value)
 		}
 	}
 	for _, b := range s.brokers {

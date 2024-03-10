@@ -147,10 +147,13 @@ func getKafka(info *runtime.KafkaInfo) kafka {
 	}
 
 	for name, s := range info.Servers {
+		if s == nil || s.Value == nil {
+			continue
+		}
 		k.Servers = append(k.Servers, kafkaServer{
 			Name:        name,
-			Url:         s.Url,
-			Description: s.Description,
+			Url:         s.Value.Url,
+			Description: s.Value.Description,
 		})
 	}
 	sort.Slice(k.Servers, func(i, j int) bool {

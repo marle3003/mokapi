@@ -65,13 +65,35 @@ func (c *Config) patchServer(patch *Config) {
 	}
 }
 
-func (s *Server) patch(patch Server) {
+func (s *ServerRef) patch(patch *ServerRef) {
+	if patch == nil {
+		return
+	}
+	if s.Value == nil {
+		s.Value = patch.Value
+	} else {
+		s.Value.patch(patch.Value)
+	}
+}
+
+func (s *Server) patch(patch *Server) {
+	if patch == nil {
+		return
+	}
+
 	if len(patch.Url) > 0 {
 		s.Url = patch.Url
 	}
 
 	if len(patch.Description) > 0 {
 		s.Description = patch.Description
+	}
+
+	if len(patch.Protocol) > 0 {
+		s.Protocol = patch.Protocol
+	}
+	if len(patch.ProtocolVersion) > 0 {
+		s.ProtocolVersion = patch.ProtocolVersion
 	}
 
 	s.Bindings.Kafka.Patch(patch.Bindings.Kafka)
@@ -194,7 +216,21 @@ func (c *Config) patchComponents(patch *Config) {
 	}
 	if c.Components == nil {
 		c.Components = patch.Components
+		return
 	}
+
+	if c.Components.Servers == nil {
+		c.Components.Servers = patch.Components.Servers
+	} else {
+		for k, p := range patch.Components.Servers {
+			if v, ok := c.Components.Servers[k]; ok {
+				v.patch(p)
+			} else {
+				c.Components.Servers[k] = p
+			}
+		}
+	}
+
 	if c.Components.Schemas == nil {
 		c.Components.Schemas = patch.Components.Schemas
 	} else {

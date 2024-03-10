@@ -5,6 +5,15 @@ import (
 )
 
 func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
+	for _, server := range c.Servers {
+		if server == nil || len(server.Ref) == 0 {
+			continue
+		}
+		if err := dynamic.Resolve(server.Ref, &server.Value, config, reader); err != nil {
+			return err
+		}
+	}
+
 	for _, ch := range c.Channels {
 		if ch == nil {
 			continue

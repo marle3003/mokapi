@@ -14,12 +14,13 @@ var supportedVersions = []*version.Version{
 	version.New("2.0.0"),
 	version.New("2.1.0"),
 	version.New("2.2.0"),
+	version.New("2.3.0"),
 }
 
 type Config struct {
 	AsyncApi   string                 `yaml:"asyncapi" json:"asyncapi"`
 	Info       Info                   `yaml:"info" json:"info"`
-	Servers    map[string]Server      `yaml:"servers,omitempty" json:"servers,omitempty"`
+	Servers    map[string]*ServerRef  `yaml:"servers,omitempty" json:"servers,omitempty"`
 	Channels   map[string]*ChannelRef `yaml:"channels" json:"channels"`
 	Components *Components            `yaml:"components,omitempty" json:"components,omitempty"`
 }
@@ -50,6 +51,11 @@ type Server struct {
 	ProtocolVersion string         `yaml:"protocolVersion" json:"protocolVersion"`
 	Description     string         `yaml:"description" json:"description"`
 	Bindings        ServerBindings `yaml:"bindings" json:"bindings"`
+}
+
+type ServerRef struct {
+	Ref   string
+	Value *Server
 }
 
 type ServerBindings struct {
@@ -106,6 +112,8 @@ type MessageBinding struct {
 }
 
 type Components struct {
+	Servers  map[string]*Server  `yaml:"servers" json:"servers"`
+	Channels map[string]*Channel `yaml:"channels" json:"channels"`
 	Schemas  *schema.Schemas     `yaml:"schemas" json:"schemas"`
 	Messages map[string]*Message `yaml:"messages" json:"messages"`
 }
@@ -117,7 +125,7 @@ func (c *Config) Validate() error {
 
 	v := version.New(c.AsyncApi)
 	if !v.IsSupported(supportedVersions...) {
-		return fmt.Errorf("unsupported version: %v", c.AsyncApi)
+		return fmt.Errorf("not supported version: %v", c.AsyncApi)
 	}
 	return nil
 }

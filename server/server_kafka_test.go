@@ -63,10 +63,10 @@ func TestKafkaServer_Update(t *testing.T) {
 
 				port = try.GetFreePort()
 				addr = fmt.Sprintf("127.0.0.1:%v", port)
-				cfg.Servers["broker"] = asyncApi.Server{
+				cfg.Servers["broker"] = &asyncApi.ServerRef{Value: &asyncApi.Server{
 					Url:      addr,
 					Protocol: "kafka",
-				}
+				}}
 
 				m.UpdateConfig(&dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}})
 
@@ -91,10 +91,10 @@ func TestKafkaServer_Update(t *testing.T) {
 				)
 				m.UpdateConfig(&dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}})
 
-				cfg.Servers["broker"] = asyncApi.Server{
+				cfg.Servers["broker"] = &asyncApi.ServerRef{Value: &asyncApi.Server{
 					Url:      addr,
 					Protocol: "kafka",
-				}
+				}}
 
 				m.UpdateConfig(&dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}})
 
@@ -149,10 +149,10 @@ func TestKafkaServer_Update(t *testing.T) {
 				m.UpdateConfig(&dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}})
 
 				delete(cfg.Servers, "kafka")
-				cfg.Servers["broker"] = asyncApi.Server{
+				cfg.Servers["broker"] = &asyncApi.ServerRef{Value: &asyncApi.Server{
 					Url:      addr,
 					Protocol: "kafka",
-				}
+				}}
 
 				// wait for kafka start
 				time.Sleep(500 * time.Millisecond)

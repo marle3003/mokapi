@@ -114,8 +114,8 @@ func TestConfig_Patch_Server(t *testing.T) {
 			},
 			test: func(t *testing.T, result *asyncApi.Config) {
 				require.Len(t, result.Servers, 1)
-				require.Equal(t, "foo.bar", result.Servers["foo"].Url)
-				require.Equal(t, "description", result.Servers["foo"].Description)
+				require.Equal(t, "foo.bar", result.Servers["foo"].Value.Url)
+				require.Equal(t, "description", result.Servers["foo"].Value.Description)
 			},
 		},
 		{
@@ -126,8 +126,8 @@ func TestConfig_Patch_Server(t *testing.T) {
 			},
 			test: func(t *testing.T, result *asyncApi.Config) {
 				require.Len(t, result.Servers, 1)
-				require.Equal(t, "foo.bar", result.Servers["foo"].Url)
-				require.Equal(t, "description", result.Servers["foo"].Description)
+				require.Equal(t, "foo.bar", result.Servers["foo"].Value.Url)
+				require.Equal(t, "description", result.Servers["foo"].Value.Description)
 			},
 		},
 		{
@@ -138,7 +138,7 @@ func TestConfig_Patch_Server(t *testing.T) {
 			},
 			test: func(t *testing.T, result *asyncApi.Config) {
 				require.Len(t, result.Servers, 1)
-				require.Equal(t, "bar.foo", result.Servers["foo"].Url)
+				require.Equal(t, "bar.foo", result.Servers["foo"].Value.Url)
 			},
 		},
 		{
@@ -149,10 +149,10 @@ func TestConfig_Patch_Server(t *testing.T) {
 			},
 			test: func(t *testing.T, result *asyncApi.Config) {
 				require.Len(t, result.Servers, 2)
-				require.Equal(t, "foo.bar", result.Servers["foo"].Url)
-				require.Equal(t, "description", result.Servers["foo"].Description)
-				require.Equal(t, "bar.foo", result.Servers["bar"].Url)
-				require.Equal(t, "other", result.Servers["bar"].Description)
+				require.Equal(t, "foo.bar", result.Servers["foo"].Value.Url)
+				require.Equal(t, "description", result.Servers["foo"].Value.Description)
+				require.Equal(t, "bar.foo", result.Servers["bar"].Value.Url)
+				require.Equal(t, "other", result.Servers["bar"].Value.Description)
 			},
 		},
 		{
@@ -163,8 +163,8 @@ func TestConfig_Patch_Server(t *testing.T) {
 			},
 			test: func(t *testing.T, result *asyncApi.Config) {
 				require.Len(t, result.Servers, 1)
-				require.Equal(t, "foo.bar", result.Servers["foo"].Url)
-				require.Equal(t, "mokapi", result.Servers["foo"].Description)
+				require.Equal(t, "foo.bar", result.Servers["foo"].Value.Url)
+				require.Equal(t, "mokapi", result.Servers["foo"].Value.Description)
 			},
 		},
 		{
@@ -175,8 +175,8 @@ func TestConfig_Patch_Server(t *testing.T) {
 			},
 			test: func(t *testing.T, result *asyncApi.Config) {
 				require.Len(t, result.Servers, 1)
-				require.Equal(t, "foo.bar", result.Servers["foo"].Url)
-				require.Equal(t, "mokapi", result.Servers["foo"].Description)
+				require.Equal(t, "foo.bar", result.Servers["foo"].Value.Url)
+				require.Equal(t, "mokapi", result.Servers["foo"].Value.Description)
 			},
 		},
 		{
@@ -187,7 +187,7 @@ func TestConfig_Patch_Server(t *testing.T) {
 					asyncapitest.WithKafkaBinding("foo", "bar"))),
 			},
 			test: func(t *testing.T, result *asyncApi.Config) {
-				config := result.Servers["foo"].Bindings.Kafka.Config
+				config := result.Servers["foo"].Value.Bindings.Kafka.Config
 				require.Len(t, config, 1)
 				require.Equal(t, "bar", config["foo"])
 			},
@@ -201,7 +201,7 @@ func TestConfig_Patch_Server(t *testing.T) {
 					asyncapitest.WithKafkaBinding("foo", "bar"))),
 			},
 			test: func(t *testing.T, result *asyncApi.Config) {
-				config := result.Servers["foo"].Bindings.Kafka.Config
+				config := result.Servers["foo"].Value.Bindings.Kafka.Config
 				require.Len(t, config, 1)
 				require.Equal(t, "bar", config["foo"])
 			},
@@ -215,7 +215,7 @@ func TestConfig_Patch_Server(t *testing.T) {
 					asyncapitest.WithKafkaBinding("foo", "12"))),
 			},
 			test: func(t *testing.T, result *asyncApi.Config) {
-				config := result.Servers["foo"].Bindings.Kafka.Config
+				config := result.Servers["foo"].Value.Bindings.Kafka.Config
 				require.Len(t, config, 1)
 				require.Equal(t, "bar", config["foo"])
 			},
@@ -229,7 +229,7 @@ func TestConfig_Patch_Server(t *testing.T) {
 					asyncapitest.WithKafkaBinding("bar", "foo"))),
 			},
 			test: func(t *testing.T, result *asyncApi.Config) {
-				config := result.Servers["foo"].Bindings.Kafka.Config
+				config := result.Servers["foo"].Value.Bindings.Kafka.Config
 				require.Len(t, config, 2)
 				require.Equal(t, "bar", config["foo"])
 				require.Equal(t, "foo", config["bar"])
@@ -421,6 +421,31 @@ func TestConfig_Patch_Components(t *testing.T) {
 		configs []*asyncApi.Config
 		test    func(t *testing.T, result *asyncApi.Config)
 	}{
+		{
+			name: "patch add server",
+			configs: []*asyncApi.Config{
+				asyncapitest.NewConfig(),
+				{Components: &asyncApi.Components{Servers: map[string]*asyncApi.Server{"foo": {Protocol: "kafka"}}}},
+			},
+			test: func(t *testing.T, result *asyncApi.Config) {
+				require.Len(t, result.Components.Servers, 1)
+				s := result.Components.Servers["foo"]
+				require.Equal(t, "kafka", s.Protocol)
+			},
+		},
+		{
+			name: "patch server",
+			configs: []*asyncApi.Config{
+				{Components: &asyncApi.Components{Servers: map[string]*asyncApi.Server{"foo": {Protocol: "kafka"}}}},
+				{Components: &asyncApi.Components{Servers: map[string]*asyncApi.Server{"foo": {Protocol: "kafka", ProtocolVersion: "1.0"}}}},
+			},
+			test: func(t *testing.T, result *asyncApi.Config) {
+				require.Len(t, result.Components.Servers, 1)
+				s := result.Components.Servers["foo"]
+				require.Equal(t, "kafka", s.Protocol)
+				require.Equal(t, "1.0", s.ProtocolVersion)
+			},
+		},
 		{
 			name: "patch add schema",
 			configs: []*asyncApi.Config{

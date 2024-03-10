@@ -22,7 +22,7 @@ servers:
 	c := &Config{}
 	err := yaml.Unmarshal([]byte(src), &c)
 	require.NoError(t, err)
-	require.Equal(t, int64(1000), c.Servers["broker"].Bindings.Kafka.LogRetentionBytes)
+	require.Equal(t, int64(1000), c.Servers["broker"].Value.Bindings.Kafka.LogRetentionBytes)
 }
 
 func TestChannelBindings(t *testing.T) {

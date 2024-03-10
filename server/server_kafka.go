@@ -69,9 +69,12 @@ func (c *cluster) updateBrokers(cfg *runtime.KafkaInfo, kafkaMonitor *monitor.Ka
 	brokers := c.brokers
 	c.brokers = make(map[string]*service.KafkaBroker)
 	for name, server := range cfg.Servers {
-		port, err := getPortFromUrl(server.Url)
+		if server == nil || server.Value == nil {
+			continue
+		}
+		port, err := getPortFromUrl(server.Value.Url)
 		if err != nil {
-			log.Errorf("unable to start broker %v for cluster %v: ", server.Url, cfg.Info.Name)
+			log.Errorf("unable to start broker %v for cluster %v: ", server.Value.Url, cfg.Info.Name)
 			continue
 		}
 
