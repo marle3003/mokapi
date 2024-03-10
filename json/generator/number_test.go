@@ -4,6 +4,7 @@ import (
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
 	"mokapi/json/schema"
+	"mokapi/json/schematest"
 	"testing"
 )
 
@@ -45,6 +46,25 @@ func TestNumber(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 18, v)
+			},
+		},
+		{
+			name:    "price",
+			request: &Request{Names: []string{"price"}},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 60959.16, v)
+			},
+		},
+		{
+			name: "price with max",
+			request: &Request{
+				Names:  []string{"price"},
+				Schema: schematest.New("number", schematest.WithMaximum(100)),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 60.95, v)
 			},
 		},
 	}

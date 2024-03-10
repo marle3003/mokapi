@@ -15,6 +15,8 @@ func Number() *Tree {
 		Name: "Number",
 		nodes: []*Tree{
 			Id(),
+			Budget(),
+			Price(),
 			Integer32(),
 			Integer64(),
 			Float32(),
@@ -31,34 +33,38 @@ func Id() *Tree {
 				(r.Schema.IsAny() || r.Schema.IsString() || r.Schema.IsInteger())
 		},
 		resolve: func(r *Request) (interface{}, error) {
+			return newPositiveNumber(r.Schema)
+		},
+	}
+}
+
+func Budget() *Tree {
+	return &Tree{
+		Name: "Budget",
+		compare: func(r *Request) bool {
+			return (r.LastName() == "budget" || strings.HasSuffix(r.LastName(), "Budget")) &&
+				(r.Schema.IsAny() || r.Schema.IsInteger())
+		},
+		resolve: func(r *Request) (interface{}, error) {
+			return newPositiveNumber(r.Schema)
+		},
+	}
+}
+
+func Price() *Tree {
+	return &Tree{
+		Name: "Price",
+		compare: func(r *Request) bool {
+			return (r.LastName() == "price" || strings.HasSuffix(r.LastName(), "Price")) &&
+				(r.Schema.IsAny() || r.Schema.IsInteger() || r.Schema.IsNumber())
+		},
+		resolve: func(r *Request) (interface{}, error) {
+			s := r.Schema
 			if r.Schema.IsAny() {
-				return gofakeit.Number(1, math.MaxInt64), nil
+				s = &schema.Schema{Type: []string{"number"}}
 			}
-			if r.Schema.IsString() {
-				return gofakeit.UUID(), nil
-			} else if r.Schema.IsInteger() {
-				min := 1
-				max := math.MaxInt64
-
-				if r.Schema.Format == "int32" {
-					max = math.MaxInt32
-				}
-				if r.Schema.Minimum != nil {
-					min = int(*r.Schema.Minimum)
-				}
-				if r.Schema.ExclusiveMinimum != nil {
-					min = int(*r.Schema.ExclusiveMinimum) + 1
-				}
-				if r.Schema.Maximum != nil {
-					max = int(*r.Schema.Maximum)
-				}
-				if r.Schema.ExclusiveMaximum != nil {
-					max = int(*r.Schema.ExclusiveMaximum) - 1
-				}
-
-				return gofakeit.Number(min, max), nil
-			}
-			return nil, ErrUnsupported
+			min, max := getRangeWithDefault(s, 0, 100000)
+			return gofakeit.Price(min, max), nil
 		},
 	}
 }
@@ -201,6 +207,10 @@ func getRange(s *schema.Schema) (float64, float64) {
 		}
 	}
 
+	return getRangeWithDefault(s, min, max)
+}
+
+func getRangeWithDefault(s *schema.Schema, min, max float64) (float64, float64) {
 	if s.Minimum != nil {
 		min = *s.Minimum
 	}
@@ -215,4 +225,35 @@ func getRange(s *schema.Schema) (float64, float64) {
 	}
 
 	return min, max
+}
+
+func newPositiveNumber(s *schema.Schema) (interface{}, error) {
+	if s.IsAny() {
+		return gofakeit.Number(1, math.MaxInt64), nil
+	}
+	if s.IsString() {
+		return gofakeit.UUID(), nil
+	} else if s.IsInteger() {
+		min := 1
+		max := math.MaxInt64
+
+		if s.Format == "int32" {
+			max = math.MaxInt32
+		}
+		if s.Minimum != nil {
+			min = int(*s.Minimum)
+		}
+		if s.ExclusiveMinimum != nil {
+			min = int(*s.ExclusiveMinimum) + 1
+		}
+		if s.Maximum != nil {
+			max = int(*s.Maximum)
+		}
+		if s.ExclusiveMaximum != nil {
+			max = int(*s.ExclusiveMaximum) - 1
+		}
+
+		return gofakeit.Number(min, max), nil
+	}
+	return nil, ErrUnsupported
 }

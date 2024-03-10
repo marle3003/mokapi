@@ -62,13 +62,8 @@ func NewTree() *Tree {
 			OneOf(),
 			PetTree(),
 			PersonTree(),
-			{
-				Name:  "Names",
-				nodes: []*Tree{AddressTree()},
-				compare: func(r *Request) bool {
-					return len(r.Names) > 0
-				},
-			},
+			AddressTree(),
+			NameTree(),
 			Examples(),
 			Number(),
 			StringTree(),
