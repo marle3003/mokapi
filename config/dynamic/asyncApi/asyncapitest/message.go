@@ -41,3 +41,9 @@ func WithMessageInfo(name, title, summary, description string) MessageOptions {
 		m.Description = description
 	}
 }
+
+func WithMessageId(messageId string) MessageOptions {
+	return func(m *asyncApi.Message) {
+		m.MessageId = messageId
+	}
+}

@@ -371,11 +371,13 @@ func TestConfig_Patch_Message(t *testing.T) {
 					asyncapitest.WithPublish(
 						asyncapitest.WithMessage(
 							asyncapitest.WithMessageInfo("name", "title", "summary", "description"),
+							asyncapitest.WithMessageId("foo"),
 							asyncapitest.WithContentType("application/json")),
 					))),
 			},
 			test: func(t *testing.T, result *asyncApi.Config) {
 				msg := result.Channels["foo"].Value.Publish.Message.Value
+				require.Equal(t, "foo", msg.MessageId)
 				require.Equal(t, "name", msg.Name)
 				require.Equal(t, "title", msg.Title)
 				require.Equal(t, "summary", msg.Summary)

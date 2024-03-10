@@ -51,6 +51,12 @@ type Server struct {
 	ProtocolVersion string         `yaml:"protocolVersion" json:"protocolVersion"`
 	Description     string         `yaml:"description" json:"description"`
 	Bindings        ServerBindings `yaml:"bindings" json:"bindings"`
+	Tags            []ServerTag    `yaml:"tags" json:"tags"`
+}
+
+type ServerTag struct {
+	Name        string `yaml:"name" json:"name"`
+	Description string `yaml:"description" json:"description"`
 }
 
 type ServerRef struct {
@@ -97,6 +103,7 @@ type MessageRef struct {
 }
 
 type Message struct {
+	MessageId   string         `yaml:"messageId" json:"messageId"`
 	Name        string         `yaml:"name" json:"name"`
 	Title       string         `yaml:"title" json:"title"`
 	Summary     string         `yaml:"summary" json:"summary"`

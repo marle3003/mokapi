@@ -182,6 +182,9 @@ func (m *Message) patch(patch *Message) {
 	if patch == nil {
 		return
 	}
+	if len(patch.MessageId) > 0 {
+		m.MessageId = patch.MessageId
+	}
 	if len(patch.Name) > 0 {
 		m.Name = patch.Name
 	}

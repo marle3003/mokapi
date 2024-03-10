@@ -29,8 +29,14 @@ type kafka struct {
 }
 
 type kafkaServer struct {
+	Name        string           `json:"name"`
+	Url         string           `json:"url"`
+	Description string           `json:"description"`
+	Tags        []kafkaServerTag `json:"tags,omitempty"`
+}
+
+type kafkaServerTag struct {
 	Name        string `json:"name"`
-	Url         string `json:"url"`
 	Description string `json:"description"`
 }
 
@@ -150,11 +156,19 @@ func getKafka(info *runtime.KafkaInfo) kafka {
 		if s == nil || s.Value == nil {
 			continue
 		}
-		k.Servers = append(k.Servers, kafkaServer{
+
+		ks := kafkaServer{
 			Name:        name,
 			Url:         s.Value.Url,
 			Description: s.Value.Description,
-		})
+		}
+		for _, t := range s.Value.Tags {
+			ks.Tags = append(ks.Tags, kafkaServerTag{
+				Name:        t.Name,
+				Description: t.Description,
+			})
+		}
+		k.Servers = append(k.Servers, ks)
 	}
 	sort.Slice(k.Servers, func(i, j int) bool {
 		return strings.Compare(k.Servers[i].Name, k.Servers[j].Name) < 0

@@ -113,6 +113,27 @@ func TestHandler_Kafka(t *testing.T) {
 			responseBody: `{"name":"foo","description":"bar","version":"1.0","servers":[{"name":"foo","url":"foo.bar","description":"bar"}]}`,
 		},
 		{
+			name: "server with tags",
+			app: func() *runtime.App {
+				return &runtime.App{
+					Monitor: monitor.New(),
+					Kafka: map[string]*runtime.KafkaInfo{
+						"foo": getKafkaInfo(asyncapitest.NewConfig(
+							asyncapitest.WithInfo("foo", "bar", "1.0"),
+							asyncapitest.WithServer("foo", "kafka", "foo.bar",
+								asyncapitest.WithServerDescription("bar"),
+								asyncapitest.WithServerTags(asyncApi.ServerTag{
+									Name:        "env:test",
+									Description: "This environment is for running internal tests",
+								}),
+							))),
+					},
+				}
+			},
+			requestUrl:   "http://foo.api/api/services/kafka/foo",
+			responseBody: `{"name":"foo","description":"bar","version":"1.0","servers":[{"name":"foo","url":"foo.bar","description":"bar","tags":[{"name":"env:test","description":"This environment is for running internal tests"}]}]}`,
+		},
+		{
 			name: "get specific with topic",
 			app: func() *runtime.App {
 				return &runtime.App{

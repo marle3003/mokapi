@@ -76,7 +76,8 @@ export let clusters = [
             {
                 name: 'Broker',
                 url: 'localhost:9092',
-                description: 'kafka broker'
+                tags: [{name: 'env:test', description: 'This environment is for running internal tests'}],
+                description: 'Dashwood contempt on mr unlocked resolved provided of of. Stanhill wondered it it welcomed oh. Hundred no prudent he however smiling at an offence. If earnestly extremity he he propriety something admitting convinced ye.'
             }
         ],
         topics: [

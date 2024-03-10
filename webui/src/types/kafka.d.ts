@@ -8,6 +8,12 @@ declare interface KafkaServer {
   name: string;
   url: string;
   description: string;
+  tags: KafkaServerTag[]
+}
+
+declare interface KafkaServerTag {
+  name: string
+  description: string
 }
 
 declare interface KafkaTopic {

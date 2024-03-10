@@ -125,6 +125,12 @@ func WithServerDescription(description string) ServerOptions {
 	}
 }
 
+func WithServerTags(tags ...asyncApi.ServerTag) ServerOptions {
+	return func(s *asyncApi.Server) {
+		s.Tags = append(s.Tags, tags...)
+	}
+}
+
 func WithKafkaBinding(key, value string) ServerOptions {
 	return func(s *asyncApi.Server) {
 		s.Bindings.Kafka.Config[key] = value
