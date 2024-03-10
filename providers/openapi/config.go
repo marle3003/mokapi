@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"mokapi/config/dynamic"
 	"mokapi/media"
+	"mokapi/version"
 	"net/http"
-	"strconv"
-	"strings"
 )
 
 type Config struct {
@@ -39,8 +38,8 @@ func (c *Config) Validate() error {
 	if len(c.OpenApi) == 0 {
 		return fmt.Errorf("no OpenApi version defined")
 	}
-	v := parseVersion(c.OpenApi)
-	if v.major != 3 {
+	v := version.New(c.OpenApi)
+	if v.Major != 3 {
 		return fmt.Errorf("unsupported version: %v", c.OpenApi)
 	}
 
@@ -86,39 +85,4 @@ func (r *RequestBody) GetMedia(contentType media.ContentType) *MediaType {
 	}
 
 	return nil
-}
-
-type version struct {
-	major int
-	minor int
-	build int
-}
-
-func parseVersion(s string) (v version) {
-	numbers := strings.Split(s, ".")
-	if len(numbers) == 0 {
-		return
-	}
-	if len(numbers) > 0 {
-		i, err := strconv.Atoi(numbers[0])
-		if err != nil {
-			return
-		}
-		v.major = i
-	}
-	if len(numbers) > 1 {
-		i, err := strconv.Atoi(numbers[1])
-		if err != nil {
-			return
-		}
-		v.minor = i
-	}
-	if len(numbers) > 2 {
-		i, err := strconv.Atoi(numbers[2])
-		if err != nil {
-			return
-		}
-		v.build = i
-	}
-	return
 }

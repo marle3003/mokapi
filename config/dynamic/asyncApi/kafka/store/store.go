@@ -131,6 +131,9 @@ func (s *Store) GetOrCreateGroup(name string, brokerId int) *Group {
 func (s *Store) Update(c *asyncApi.Config) {
 	s.cluster = c.Info.Name
 	for n, server := range c.Servers {
+		if server.Protocol != "" && server.Protocol != "kafka" {
+			continue
+		}
 		if b := s.getBroker(n); b != nil {
 			host, port := parseHostAndPort(server.Url)
 			if len(host) == 0 {

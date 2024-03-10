@@ -134,6 +134,53 @@ func TestMetadata(t *testing.T) {
 				}
 			},
 		},
+		{
+			"only server with empty protocol (backward compatibility) and kafka",
+			func(t *testing.T, s *store.Store) {
+				s.Update(asyncapitest.NewConfig(
+					asyncapitest.WithServer("foo", "kafka", "127.0.0.1:9092"),
+					asyncapitest.WithServer("bar", "amqp", "127.0.0.1:9093"),
+					asyncapitest.WithChannel("foo", asyncapitest.AssignToServer("foo")),
+				))
+				rr := kafkatest.NewRecorder()
+				r := kafkatest.NewRequest("kafkatest", 4, &metaData.Request{})
+				s.ServeMessage(rr, r)
+
+				res, ok := rr.Message.(*metaData.Response)
+				require.True(t, ok)
+
+				require.Len(t, res.Brokers, 1)
+				require.Equal(t, int32(9092), res.Brokers[0].Port)
+			},
+		},
+		{
+			"2.2.0 assigning channels to servers",
+			func(t *testing.T, s *store.Store) {
+				s.Update(asyncapitest.NewConfig(
+					asyncapitest.WithServer("foo", "kafka", "127.0.0.1:9092"),
+					asyncapitest.WithServer("bar", "kafka", "127.0.0.1:9093"),
+					asyncapitest.WithChannel("foo", asyncapitest.AssignToServer("foo")),
+				))
+				rr := kafkatest.NewRecorder()
+				r := kafkatest.NewRequest("kafkatest", 4, &metaData.Request{})
+				r.Host = "127.0.0.1:9092"
+				s.ServeMessage(rr, r)
+
+				res, ok := rr.Message.(*metaData.Response)
+				require.True(t, ok)
+
+				require.Len(t, res.Topics, 1)
+				require.Equal(t, "foo", res.Topics[0].Name)
+
+				r = kafkatest.NewRequest("kafkatest", 4, &metaData.Request{})
+				r.Host = "127.0.0.1:9093"
+				s.ServeMessage(rr, r)
+
+				res, ok = rr.Message.(*metaData.Response)
+				require.True(t, ok)
+				require.Len(t, res.Topics, 0)
+			},
+		},
 	}
 
 	t.Parallel()

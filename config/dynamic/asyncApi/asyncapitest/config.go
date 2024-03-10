@@ -92,6 +92,12 @@ func WithChannelDescription(description string) ChannelOptions {
 	}
 }
 
+func AssignToServer(server string) ChannelOptions {
+	return func(c *asyncApi.Channel) {
+		c.Servers = append(c.Servers, server)
+	}
+}
+
 type ServerOptions func(s *asyncApi.Server)
 
 func WithServer(name, protocol, url string, opts ...ServerOptions) ConfigOptions {

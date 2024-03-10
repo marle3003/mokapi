@@ -26,6 +26,7 @@ func (s *Store) metadata(rw kafka.ResponseWriter, req *kafka.Request) error {
 		})
 	}
 
+	b := s.getBrokerByHost(req.Host)
 	var getTopic func(string) (*Topic, kafka.ErrorCode)
 
 	if len(r.Topics) > 0 {
@@ -34,7 +35,7 @@ func (s *Store) metadata(rw kafka.ResponseWriter, req *kafka.Request) error {
 				return nil, kafka.InvalidTopic
 			} else {
 				topic := s.Topic(name)
-				if topic != nil {
+				if topic != nil && isTopicAvailable(topic, b) {
 					return topic, kafka.None
 				} else {
 					return nil, kafka.UnknownTopicOrPartition
@@ -44,6 +45,9 @@ func (s *Store) metadata(rw kafka.ResponseWriter, req *kafka.Request) error {
 	} else {
 		topics := make(map[string]*Topic)
 		for _, t := range s.Topics() {
+			if !isTopicAvailable(t, b) {
+				continue
+			}
 			topics[t.Name] = t
 			r.Topics = append(r.Topics, metaData.TopicName{Name: t.Name})
 		}
@@ -84,4 +88,16 @@ func (s *Store) metadata(rw kafka.ResponseWriter, req *kafka.Request) error {
 	}
 
 	return rw.Write(res)
+}
+
+func isTopicAvailable(t *Topic, b *Broker) bool {
+	if len(t.servers) == 0 {
+		return true
+	}
+	for _, s := range t.servers {
+		if s == b.Name {
+			return true
+		}
+	}
+	return false
 }

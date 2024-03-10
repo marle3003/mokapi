@@ -11,11 +11,13 @@ import (
 type Topic struct {
 	Name       string
 	Partitions []*Partition
-	logger     LogRecord
-	s          *Store
-	config     kafkaconfig.TopicBindings
 	Subscribe  Operation
 	Publish    Operation
+
+	logger  LogRecord
+	s       *Store
+	config  kafkaconfig.TopicBindings
+	servers []string
 }
 
 type Operation struct {
@@ -37,7 +39,7 @@ func (t *Topic) delete() {
 }
 
 func newTopic(name string, config *asyncApi.Channel, brokers Brokers, logger LogRecord, trigger Trigger, s *Store) *Topic {
-	t := &Topic{Name: name, logger: logger, s: s, config: config.Bindings.Kafka}
+	t := &Topic{Name: name, logger: logger, s: s, config: config.Bindings.Kafka, servers: config.Servers}
 
 	numPartitions := config.Bindings.Kafka.Partitions
 	if numPartitions == 0 {

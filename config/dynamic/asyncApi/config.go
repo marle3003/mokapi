@@ -5,9 +5,16 @@ import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/asyncApi/kafka"
 	"mokapi/providers/openapi/schema"
+	"mokapi/version"
 	"net/url"
 	"strconv"
 )
+
+var supportedVersions = []*version.Version{
+	version.New("2.0.0"),
+	version.New("2.1.0"),
+	version.New("2.2.0"),
+}
 
 type Config struct {
 	AsyncApi   string                 `yaml:"asyncapi" json:"asyncapi"`
@@ -59,6 +66,7 @@ type Channel struct {
 	Subscribe   *Operation      `yaml:"subscribe" json:"subscribe"`
 	Publish     *Operation      `yaml:"publish" json:"publish"`
 	Bindings    ChannelBindings `yaml:"bindings" json:"bindings"`
+	Servers     []string        `yaml:"servers" json:"servers"`
 }
 
 type ChannelBindings struct {
@@ -106,7 +114,9 @@ func (c *Config) Validate() error {
 	if len(c.AsyncApi) == 0 {
 		return fmt.Errorf("no version defined")
 	}
-	if c.AsyncApi != "2.0.0" {
+
+	v := version.New(c.AsyncApi)
+	if !v.IsSupported(supportedVersions...) {
 		return fmt.Errorf("unsupported version: %v", c.AsyncApi)
 	}
 	return nil
