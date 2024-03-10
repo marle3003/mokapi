@@ -304,7 +304,7 @@ func TestSchema_Validate_String(t *testing.T) {
 			data:   `"foo"`,
 			schema: schematest.New("string", schematest.WithEnum([]interface{}{"bar"})),
 			test: func(t *testing.T, err error) {
-				require.EqualError(t, err, "value 'foo' does not match one in the enumeration [bar]")
+				require.EqualError(t, err, "validation error foo: value does not match one in the enumeration [bar]")
 			},
 		},
 		{
