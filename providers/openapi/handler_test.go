@@ -603,6 +603,7 @@ func TestHandler_Event(t *testing.T) {
 			func(event string, args ...interface{}) []*common.Action {
 				r := args[1].(*common.EventResponse)
 				r.Headers["Content-Type"] = "text/plain"
+				r.Body = "Hello"
 				return nil
 			},
 		},
