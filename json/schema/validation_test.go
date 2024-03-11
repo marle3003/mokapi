@@ -363,7 +363,7 @@ func TestSchema_Validate_OneOf(t *testing.T) {
 			)),
 			test: func(t *testing.T, err error) {
 				require.Error(t, err)
-				require.Regexp(t, "validation error {foo: bar, bar: 12}: expected to match one of schema but it matches none", err.Error())
+				require.EqualError(t, err, "validation error {foo: bar, bar: 12}: expected to match one of schema but it matches none")
 			},
 		},
 		{
