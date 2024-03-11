@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"crypto/sha1"
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
 	"mokapi/json/schema"
@@ -22,11 +23,87 @@ func StringTree() *Tree {
 		Name: "String",
 		nodes: []*Tree{
 			StringFormat(),
+			StringNumber(),
+			StringKey(),
+			StringEmail(),
 			Uri(),
 			Uris(),
 			Language(),
 			Error(),
+			StringHash(),
 			String(),
+		},
+	}
+}
+
+func StringNumber() *Tree {
+	return &Tree{
+		Name: "StringNumber",
+		compare: func(r *Request) bool {
+			return strings.HasSuffix(r.LastName(), "Number") &&
+				r.Schema.IsString() && r.Schema.Pattern == "" && r.Schema.Format == ""
+		},
+		resolve: func(r *Request) (interface{}, error) {
+			min := 11
+			max := 11
+			if r.Schema.MinLength != nil {
+				min = *r.Schema.MinLength
+			}
+			if r.Schema.MaxLength != nil {
+				max = *r.Schema.MaxLength
+			}
+			var n int
+			if min == max {
+				n = min
+			} else {
+				n = gofakeit.Number(min, max)
+			}
+			return gofakeit.Numerify(strings.Repeat("#", n)), nil
+		},
+	}
+}
+
+func StringKey() *Tree {
+	return &Tree{
+		Name: "StringKey",
+		compare: func(r *Request) bool {
+			last := r.LastName()
+			return (strings.ToLower(last) == "key" || strings.HasSuffix(last, "Key")) &&
+				r.Schema.IsString() && r.Schema.Pattern == "" && r.Schema.Format == ""
+		},
+		resolve: func(r *Request) (interface{}, error) {
+			return gofakeit.UUID(), nil
+		},
+	}
+}
+
+func StringHash() *Tree {
+	hash := sha1.New()
+	return &Tree{
+		Name: "StringKey",
+		compare: func(r *Request) bool {
+			last := r.LastName()
+			return (strings.ToLower(last) == "hash" || strings.HasSuffix(last, "Hash")) &&
+				r.Schema.IsString() && r.Schema.Pattern == "" && r.Schema.Format == ""
+		},
+		resolve: func(r *Request) (interface{}, error) {
+			s := gofakeit.SentenceSimple()
+			b := hash.Sum([]byte(s))
+			return fmt.Sprintf("%x", b), nil
+		},
+	}
+}
+
+func StringEmail() *Tree {
+	return &Tree{
+		Name: "StringKey",
+		compare: func(r *Request) bool {
+			last := r.LastName()
+			return strings.ToLower(last) == "email" &&
+				r.Schema.IsString() && r.Schema.Pattern == "" && r.Schema.Format == ""
+		},
+		resolve: func(r *Request) (interface{}, error) {
+			return gofakeit.Email(), nil
 		},
 	}
 }

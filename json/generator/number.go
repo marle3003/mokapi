@@ -17,6 +17,7 @@ func Number() *Tree {
 			Id(),
 			Budget(),
 			Price(),
+			Year(),
 			Integer32(),
 			Integer64(),
 			Float32(),
@@ -65,6 +66,21 @@ func Price() *Tree {
 			}
 			min, max := getRangeWithDefault(s, 0, 100000)
 			return gofakeit.Price(min, max), nil
+		},
+	}
+}
+
+func Year() *Tree {
+	return &Tree{
+		Name: "Year",
+		compare: func(r *Request) bool {
+			last := r.LastName()
+			return (strings.ToLower(last) == "year" || strings.HasSuffix(last, "Year")) &&
+				(r.Schema.IsInteger() || r.Schema.IsNumber())
+		},
+		resolve: func(r *Request) (interface{}, error) {
+			min, max := getRangeWithDefault(r.Schema, 1900, 2199)
+			return gofakeit.IntRange(int(min), int(max)), nil
 		},
 	}
 }

@@ -35,7 +35,7 @@ func TestAddress(t *testing.T) {
 			request: &Request{Names: []string{"zip"}},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(64863), v)
+				require.Equal(t, "7291", v)
 			},
 		},
 		{
@@ -43,7 +43,18 @@ func TestAddress(t *testing.T) {
 			request: &Request{Names: []string{"postcode"}},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(64863), v)
+				require.Equal(t, "7291", v)
+			},
+		},
+		{
+			name: "postcode",
+			request: &Request{
+				Names:  []string{"postcode"},
+				Schema: schematest.New("string", schematest.WithMinLength(5), schematest.WithMaxLength(5)),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "80291", v)
 			},
 		},
 		{
@@ -57,7 +68,7 @@ func TestAddress(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(6486), v)
+				require.Equal(t, int64(8029), v)
 			},
 		},
 		{
@@ -65,7 +76,7 @@ func TestAddress(t *testing.T) {
 			request: &Request{Names: []string{"postcodes"}},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{int64(64362), int64(60304)}, v)
+				require.Equal(t, []interface{}{"29109", "6489"}, v)
 			},
 		},
 		{
@@ -80,7 +91,7 @@ func TestAddress(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{int64(6436), int64(6030)}, v)
+				require.Equal(t, []interface{}{int64(7291), int64(9364)}, v)
 			},
 		},
 		{
@@ -97,6 +108,60 @@ func TestAddress(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 19.726494, v)
+			},
+		},
+		{
+			name: "coAddress",
+			request: &Request{
+				Names:  []string{"coAddress"},
+				Schema: schematest.New("string"),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "Shanelle Wehner", v)
+			},
+		},
+		{
+			name: "country",
+			request: &Request{
+				Names:  []string{"country"},
+				Schema: schematest.New("string"),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "Slovenia", v)
+			},
+		},
+		{
+			name: "address - country",
+			request: &Request{
+				Names:  []string{"address", "country"},
+				Schema: schematest.New("string"),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "SI", v)
+			},
+		},
+		{
+			name: "open address",
+			request: &Request{
+				Names: []string{"address"},
+				Schema: schematest.New("object",
+					schematest.WithProperty("line1", schematest.New("string")),
+					schematest.WithProperty("line2", schematest.New("string")),
+					schematest.WithProperty("line3", schematest.New("string")),
+					schematest.WithProperty("country", schematest.New("string")),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{
+					"line1":   "Shanelle Wehner",
+					"line2":   "1093 Lockstown",
+					"line3":   "Newark VT 41180",
+					"country": "FJ",
+				}, v)
 			},
 		},
 	}

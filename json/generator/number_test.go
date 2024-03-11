@@ -67,6 +67,39 @@ func TestNumber(t *testing.T) {
 				require.Equal(t, 60.95, v)
 			},
 		},
+		{
+			name: "year",
+			request: &Request{
+				Names:  []string{"year"},
+				Schema: schematest.New("integer"),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 1926, v)
+			},
+		},
+		{
+			name: "year min",
+			request: &Request{
+				Names:  []string{"year"},
+				Schema: schematest.New("integer", schematest.WithMinimum(1990)),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 2196, v)
+			},
+		},
+		{
+			name: "year min max",
+			request: &Request{
+				Names:  []string{"year"},
+				Schema: schematest.New("integer", schematest.WithMinimum(1990), schematest.WithMaximum(2049)),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 2016, v)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

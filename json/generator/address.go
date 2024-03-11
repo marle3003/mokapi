@@ -1,8 +1,10 @@
 package generator
 
 import (
+	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
 	"mokapi/json/schema"
+	"strconv"
 	"strings"
 )
 
@@ -17,17 +19,34 @@ func AddressTree() *Tree {
 			Postcode(),
 			Longitude(),
 			Latitude(),
+			CoAddress(),
+			Street(),
+			OpenAddress(),
 			AnyAddress(),
 		},
 	}
 	return root
 }
 
+func CoAddress() *Tree {
+	return &Tree{
+		Name: "City",
+		compare: func(r *Request) bool {
+			last := strings.ToLower(r.LastName())
+			return last == "coaddress" && r.Schema.IsString()
+		},
+		resolve: func(r *Request) (interface{}, error) {
+			return gofakeit.Name(), nil
+		},
+	}
+}
+
 func AnyAddress() *Tree {
 	return &Tree{
 		Name: "AnyAddress",
 		compare: func(r *Request) bool {
-			return r.LastName() == "address" && r.Schema.IsAny()
+			last := strings.ToLower(r.LastName())
+			return last == "address" && r.Schema.IsAny()
 		},
 		resolve: func(r *Request) (interface{}, error) {
 			addr := gofakeit.Address()
@@ -81,6 +100,10 @@ func Country() *Tree {
 			return r.LastName() == "country" && (r.Schema.IsAny() || r.Schema.IsString())
 		},
 		resolve: func(r *Request) (interface{}, error) {
+			address := r.GetName(-2)
+			if strings.HasSuffix(address, "Address") || strings.ToLower(address) == "address" {
+				return gofakeit.CountryAbr(), nil
+			}
 			return gofakeit.Country(), nil
 		},
 	}
@@ -110,10 +133,10 @@ func Postcode() *Tree {
 		compare: func(r *Request) bool {
 			last := strings.ToLower(r.LastName())
 			return (last == "postcode" || last == "zip") &&
-				(r.Schema.IsNumber() || r.Schema.IsInteger() || r.Schema.IsAny())
+				(r.Schema.IsNumber() || r.Schema.IsInteger() || r.Schema.IsString() || r.Schema.IsAny())
 		},
 		resolve: func(r *Request) (interface{}, error) {
-			return newPostCode(r.g, r.Schema)
+			return newPostCode(r.Schema), nil
 		},
 	}
 }
@@ -144,18 +167,91 @@ func Latitude() *Tree {
 	}
 }
 
-func newPostCode(g *generator, s *schema.Schema) (interface{}, error) {
+func Street() *Tree {
+	return &Tree{
+		Name: "Street",
+		compare: func(r *Request) bool {
+			last := strings.ToLower(r.LastName())
+			return last == "street" && r.Schema.IsString()
+		},
+		resolve: func(r *Request) (interface{}, error) {
+			return gofakeit.Street(), nil
+		},
+	}
+}
+
+func OpenAddress() *Tree {
+	return &Tree{
+		Name: "OpenAddress",
+		nodes: []*Tree{
+			{
+				Name: "Line1",
+				compare: func(r *Request) bool {
+					return strings.ToLower(r.LastName()) == "line1"
+				},
+				resolve: func(r *Request) (interface{}, error) {
+					return gofakeit.Name(), nil
+				},
+			},
+			{
+				Name: "Line2",
+				compare: func(r *Request) bool {
+					return strings.ToLower(r.LastName()) == "line2"
+				},
+				resolve: func(r *Request) (interface{}, error) {
+					return gofakeit.Street(), nil
+				},
+			},
+			{
+				Name: "Line3",
+				compare: func(r *Request) bool {
+					return strings.ToLower(r.LastName()) == "line3"
+				},
+				resolve: func(r *Request) (interface{}, error) {
+					return fmt.Sprintf("%v %v %v", gofakeit.City(), gofakeit.StateAbr(), gofakeit.Zip()), nil
+				},
+			},
+		},
+		compare: func(r *Request) bool {
+			name := r.GetName(-2)
+			return strings.ToLower(name) == "address" || strings.HasSuffix(name, "Address")
+		},
+	}
+}
+
+func newPostCode(s *schema.Schema) interface{} {
 	if s == nil || s.IsAny() {
-		s = &schema.Schema{Type: []string{"integer"}}
+		s = &schema.Schema{Type: []string{"string"}}
+	}
+	min := 4
+	max := 6
+	if s.IsInteger() {
+		if s.Minimum != nil {
+			min = len(fmt.Sprintf("%v", *s.Minimum))
+		}
+		if s.Maximum != nil {
+			max = len(fmt.Sprintf("%v", *s.Maximum))
+		}
+	} else if s.IsString() {
+		if s.MinLength != nil {
+			min = *s.MinLength
+		}
+		if s.MaxLength != nil {
+			max = *s.MaxLength
+		}
 	}
 
-	min := float64(10000)
-	max := float64(99999)
-	if s.Minimum == nil {
-		s.Minimum = &min
+	var n int
+	if min == max {
+		n = min
+	} else {
+		n = gofakeit.Number(min, max)
 	}
-	if s.Maximum == nil {
-		s.Maximum = &max
+
+	code := gofakeit.Numerify(strings.Repeat("#", n))
+	if s.IsInteger() {
+		codeN, _ := strconv.ParseInt(code, 10, 64)
+		return codeN
 	}
-	return g.tree.Resolve(&Request{Schema: s})
+	return code
 }
