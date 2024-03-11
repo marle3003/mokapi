@@ -57,7 +57,7 @@ func TestUser(t *testing.T) {
 					"sex":       "male",
 					"email":     "brookmuller@yundt.info",
 					"phone":     "+438893011",
-					"contact":   map[string]interface{}{"email": "darronbartell@lowe.net", "phone": "+26057350186"},
+					"contact":   map[string]interface{}{"email": "eastoncormier@marvin.com", "phone": "+26057350186"},
 				}, v)
 			},
 		},
@@ -107,7 +107,7 @@ func TestUser(t *testing.T) {
 			req:  &Request{Names: []string{"contact"}},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"email": "nolankuhlman@wiza.name", "phone": "+28829109"}, v)
+				require.Equal(t, map[string]interface{}{"email": "porterkiehn@gerhold.name", "phone": "+28829109"}, v)
 			},
 		},
 		{

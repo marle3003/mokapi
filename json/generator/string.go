@@ -100,7 +100,7 @@ func StringEmail() *Tree {
 		compare: func(r *Request) bool {
 			last := r.LastName()
 			return strings.ToLower(last) == "email" &&
-				r.Schema.IsString() && r.Schema.Pattern == "" && r.Schema.Format == ""
+				((r.Schema.IsString() && r.Schema.Pattern == "" && r.Schema.Format == "") || r.Schema.IsAny())
 		},
 		resolve: func(r *Request) (interface{}, error) {
 			return gofakeit.Email(), nil
