@@ -56,8 +56,8 @@ func TestUser(t *testing.T) {
 					"gender":    "male",
 					"sex":       "male",
 					"email":     "brookmuller@yundt.info",
-					"phone":     "6489301180",
-					"contact":   map[string]interface{}{"email": "darronbartell@lowe.net", "phone": "5735018614"},
+					"phone":     "+438893011",
+					"contact":   map[string]interface{}{"email": "darronbartell@lowe.net", "phone": "+26057350186"},
 				}, v)
 			},
 		},
@@ -107,7 +107,7 @@ func TestUser(t *testing.T) {
 			req:  &Request{Names: []string{"contact"}},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"email": "nolankuhlman@wiza.name", "phone": "8029109364"}, v)
+				require.Equal(t, map[string]interface{}{"email": "nolankuhlman@wiza.name", "phone": "+28829109"}, v)
 			},
 		},
 		{
@@ -155,6 +155,36 @@ func TestUser(t *testing.T) {
 						"exp":    "01/31",
 					},
 				}, v)
+			},
+		},
+		{
+			name: "phone any schema",
+			req:  &Request{Names: []string{"phone"}},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "+28829109", v)
+			},
+		},
+		{
+			name: "phone schema string",
+			req: &Request{
+				Names:  []string{"phone"},
+				Schema: schematest.New("string"),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "+28829109", v)
+			},
+		},
+		{
+			name: "phone but expect object",
+			req: &Request{
+				Names:  []string{"phone"},
+				Schema: schematest.New("object"),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.IsType(t, map[string]interface{}{}, v)
 			},
 		},
 	}

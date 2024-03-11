@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
 	"mokapi/json/schema"
 	"strings"
@@ -25,8 +26,8 @@ func Person() *Tree {
 		},
 		nodes: []*Tree{
 			PersonName(),
-			PersonFirstName(),
-			PersonLastName(),
+			FirstName(),
+			LastName(),
 			Gender(),
 			Phone(),
 			Username(),
@@ -49,11 +50,11 @@ func PersonName() *Tree {
 	}
 }
 
-func PersonFirstName() *Tree {
+func FirstName() *Tree {
 	return &Tree{
-		Name: "PersonFirstName",
+		Name: "FirstName",
 		compare: func(r *Request) bool {
-			return r.matchLast([]string{"person", "firstname"}, true)
+			return strings.ToLower(r.LastName()) == "firstname"
 		},
 		resolve: func(r *Request) (interface{}, error) {
 			return gofakeit.FirstName(), nil
@@ -61,11 +62,11 @@ func PersonFirstName() *Tree {
 	}
 }
 
-func PersonLastName() *Tree {
+func LastName() *Tree {
 	return &Tree{
-		Name: "PersonLastName",
+		Name: "LastName",
 		compare: func(r *Request) bool {
-			return r.matchLast([]string{"person", "lastname"}, true)
+			return strings.ToLower(r.LastName()) == "lastname"
 		},
 		resolve: func(r *Request) (interface{}, error) {
 			return gofakeit.LastName(), nil
@@ -90,17 +91,29 @@ func Phone() *Tree {
 	return &Tree{
 		Name: "Phone",
 		compare: func(r *Request) bool {
-			return r.matchLast([]string{"phone"}, true)
+			last := strings.ToLower(r.LastName())
+			return (last == "phone" || last == "phonenumber") && (r.Schema.IsString() || r.Schema.IsAny())
 		},
 		resolve: func(r *Request) (interface{}, error) {
-			return gofakeit.Phone(), nil
+			countryCode := gofakeit.IntRange(1, 999)
+			countryCodeLen := len(fmt.Sprintf("%v", countryCode))
+			max := 15 - countryCodeLen
+			min := 4
+			if r.Schema != nil && r.Schema.MinLength != nil {
+				min = *r.Schema.MinLength - countryCodeLen - 1
+			}
+			if r.Schema != nil && r.Schema.MaxLength != nil {
+				max = *r.Schema.MaxLength - countryCodeLen - 1
+			}
+			nationalCodeLen := gofakeit.IntRange(min, max)
+			return fmt.Sprintf("+%v%v", countryCode, gofakeit.Numerify(strings.Repeat("#", nationalCodeLen))), nil
 		},
 	}
 }
 
 func Contact() *Tree {
 	return &Tree{
-		Name: "PetCategory",
+		Name: "Contact",
 		compare: func(r *Request) bool {
 			if !r.Schema.IsObject() && !r.Schema.IsAny() {
 				return false
@@ -108,10 +121,18 @@ func Contact() *Tree {
 			return r.matchLast([]string{"contact"}, true)
 		},
 		resolve: func(r *Request) (interface{}, error) {
-			contact := gofakeit.Contact()
+			phone, err := r.g.tree.Resolve(r.With(Name("phone")))
+			if err != nil {
+				return nil, err
+			}
+			email, err := r.g.tree.Resolve(r.With(Name("email")))
+			if err != nil {
+				return nil, err
+			}
+
 			return map[string]interface{}{
-				"phone": contact.Phone,
-				"email": contact.Email,
+				"phone": phone,
+				"email": email,
 			}, nil
 		},
 	}
@@ -156,7 +177,11 @@ func Username() *Tree {
 	return &Tree{
 		Name: "Username",
 		compare: func(r *Request) bool {
-			return r.LastName() == "username"
+			if !r.Schema.IsString() {
+				return false
+			}
+			last := r.LastName()
+			return strings.ToLower(last) == "username" || strings.HasSuffix(last, "UserName") || strings.HasSuffix(last, "Username")
 		},
 		resolve: func(r *Request) (interface{}, error) {
 			return gofakeit.Username(), nil
