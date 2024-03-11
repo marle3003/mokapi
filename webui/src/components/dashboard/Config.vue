@@ -12,7 +12,7 @@ import SourceView from './SourceView.vue'
 const configId = useRoute().params.id as string
 const { fetch, fetchData, getDataUrl } = useConfig()
 const { format } = usePrettyDates()
-const { getContentType } = usePrettyLanguage()
+const { getContentType, formatLanguage } = usePrettyLanguage()
 const defaultContentType = 'plain/text'
 
 const { config, isLoading, close } = fetch(configId)
@@ -87,7 +87,7 @@ onUnmounted(() => {
             <div class="card">
                 <div class="card-body">
                     <div class="row">
-                        <source-view :source="toString(data)" :content-type="contentType" :url="getDataUrl(configId)" :filename="filename" height="500px" />
+                        <source-view :source="formatLanguage(data, contentType)" :content-type="contentType" :url="getDataUrl(configId)" :filename="filename"  />
                     </div>
                 </div>
             </div>
@@ -98,6 +98,6 @@ onUnmounted(() => {
     </div>
     <loading v-if="isInitLoading()"></loading>
     <div v-if="!config && !isLoading">
-        <message message="HTTP Request not found"></message>
+        <message message="Config not found"></message>
     </div>
 </template>

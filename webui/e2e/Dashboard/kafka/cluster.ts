@@ -51,7 +51,7 @@ export const cluster = {
                 contentType: 'application/json',
                 message: {
                     lines: '32 lines',
-                    size: '281 B'
+                    size: '464 B'
                 }
             }
         },
@@ -74,7 +74,7 @@ export const cluster = {
                 contentType: 'application/xml',
                 message: {
                     lines: '18 lines',
-                    size: '262 B'
+                    size: '357 B'
                 }
             }
         }

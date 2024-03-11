@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import type { PropType } from 'vue';
-import { useSchema } from '@/composables/schema';
-import { usePrettyLanguage } from '@/composables/usePrettyLanguage';
-import Markdown from 'vue3-markdown-it';
+import type { PropType } from 'vue'
+import { useSchema } from '@/composables/schema'
+import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
+import Markdown from 'vue3-markdown-it'
+import SourceView from '../../SourceView.vue'
 
 defineProps({
     headers: { type: Array as PropType<Array<HttpParameter>> },
 })
 
-const {printType} = useSchema()
-const {formatLanguage} = usePrettyLanguage()
+const { printType } = useSchema()
+const { formatSchema } = usePrettyLanguage()
 </script>
 
 <template>
@@ -40,7 +41,13 @@ const {formatLanguage} = usePrettyLanguage()
                         <markdown :source="header.description"></markdown>
                         <p class="label">Schema</p>
                         <div class="codeBlock">
-                            <pre v-highlightjs="formatLanguage(JSON.stringify(header.schema), 'application/json')"><code class="json"></code></pre>
+                            <source-view 
+                                :source="formatSchema(header.schema)" 
+                                :deprecated="header.schema.deprecated" 
+                                content-type="application/json"
+                                :hide-content-type="true"
+                                :height="250" class="mb-2">
+                            </source-view>
                         </div>
                     </div>
                 </div>

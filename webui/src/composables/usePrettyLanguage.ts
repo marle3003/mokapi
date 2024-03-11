@@ -29,6 +29,10 @@ export function usePrettyLanguage() {
         switch (mimeType.subtype){
             case 'rss+xml':
                 return 'xml'
+            case 'plain':
+                return 'text'
+            case 'javascript':
+                return 'javascript'
             default:
                 return mimeType.subtype
 
@@ -54,5 +58,12 @@ export function usePrettyLanguage() {
         }
     }
 
-    return { formatLanguage, getLanguage, getContentType}
+    function formatSchema(s: Schema | undefined): string {
+        if (!s) {
+            return ''
+        }
+        return formatLanguage(JSON.stringify(s), 'application/json')
+    }
+
+    return { formatLanguage, getLanguage, getContentType, formatSchema }
 }

@@ -1,16 +1,11 @@
 <script setup lang="ts">
 import { useGuid } from '@/composables/guid'
 import { useExample } from '@/composables/example'
-import { watch, reactive, computed } from 'vue'
-import { VAceEditor } from 'vue3-ace-editor'
-import ace from 'ace-builds'
-import themeGithubUrl from 'ace-builds/src-noconflict/theme-github_dark?url'
+import { watch, reactive, watchEffect } from 'vue'
+import '../../ace-editor/ace-config';
+import SourceView from './SourceView.vue'
 
-import modeJsonUrl from 'ace-builds/src-noconflict/mode-json?url';
 import { transformPath } from '@/composables/fetch'
-ace.config.setModuleUrl('ace/mode/json', modeJsonUrl);
-
-ace.config.setModuleUrl('ace/theme/github_dark', themeGithubUrl)
 
 const props = withDefaults(defineProps<{
   schema: Schema
@@ -35,7 +30,8 @@ watch(() => props.schema, (schema) => {
 })
 
 function setExample() {
-    updateContent(example.value!)
+    state.content = example.data
+    example.next()
 }
 
 function validate() {
@@ -47,27 +43,20 @@ function validate() {
     fetch(transformPath('/api/schema/validate'), { method: 'POST', body: JSON.stringify(body), headers: { 'Data-Content-Type': props.contentType, 'Content-Type': 'application/json' } })
     .then(res => {
         if (res.status === 200){
-            console.log('Valid')
             return ''
         }else {
-            console.log('not valid')
             return res.text()
         }
     }).then(errors => {
         if (errors === '') {
             state.errors = []
         } else{
-            state.errors = errors.split('\n').filter(i => i).slice(1)
+            state.errors = errors.split('\n').filter(i => i)
         }
         state.validated = true
     })
 }
-const editorHeight = computed(() => Math.max(500, state.content.split('\n').length * 19) + 'px')
 
-function updateContent(event: string) {
-    state.content = event
-    state.validated = false
-}
 </script>
 
 <template>
@@ -86,12 +75,7 @@ function updateContent(event: string) {
                                 <li v-for="err in state.errors">{{ err }}</li>
                             </ul>
                         </div>
-                        <v-ace-editor
-                            :value="state.content"
-                            @update:value="updateContent($event)"
-                            lang="json"
-                            theme="github_dark"
-                            style="font-size: 16px;" :style="'height: '+editorHeight"/>
+                        <source-view ref="source" v-model:source="state.content" :content-type="contentType" :readonly="false" @update="(source) => state.content = source" />
                     </div>
                     <div class="modal-footer justify-content-between">
                         <span class="float-start">

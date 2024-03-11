@@ -1,0 +1,106 @@
+.ace-mokapi-dark {
+    background-color: #0d1117;
+    color: rgb(230, 237, 243);
+}
+.ace-mokapi-dark .ace_gutter {
+    background-color: #0d1117;
+    color: rgb(132, 141, 151);
+}
+.ace_scroller {
+    left: 61px !important;
+}
+.ace-mokapi-dark .ace_marker-layer .ace_selected-word, .ace_marker-layer .ace_selection {
+    background: #1e4173;
+}
+.ace-mokapi-light .ace_marker-layer .ace_selected-word, .ace_marker-layer .ace_selection {
+    background: rgb(187, 223, 255);
+}
+
+.yaml .ace_tag {
+    color:rgb(126, 231, 135);
+}
+.yaml .ace-mokapi-dark {
+    color: rgb(165, 214, 255);
+}
+
+
+/* json */
+.json .ace-mokapi-dark .ace_variable {
+    color:rgb(126, 231, 135);
+}
+.json .ace-mokapi-light  .ace_variable  {
+    color: rgb(17, 99, 41);
+}
+.json .ace-mokapi-dark .ace_string {
+    color: rgb(165, 214, 255);
+}
+.json .ace-mokapi-light .ace_string {
+    color: rgb(10, 48, 105);
+}
+.json .ace-mokapi-dark .ace_constant.ace_numeric {
+    color: rgb(121, 192, 255);
+}
+.json .ace-mokapi-light .ace_constant.ace_numeric {
+    color: rgb(31, 35, 40);
+}
+
+/* xml */
+.xml .ace-mokapi-dark .ace_tag-name {
+    color:rgb(126, 231, 135);
+}
+.xml .ace-mokapi-light .ace_tag-name {
+    color:rgb(17, 99, 41);
+}
+.xml .ace-mokapi-dark .ace_attribute-name {
+    color: rgb(210, 168, 255);
+}
+.xml .ace-mokapi-light .ace_attribute-name {
+    color: rgb(102, 57, 186);
+}
+.xml .ace-mokapi-dark .ace_attribute-value {
+    color: rgb(165, 214, 255);
+}
+.xml .ace-mokapi-light .ace_attribute-value {
+    color: rgb(10, 48, 105);
+}
+
+/* js */
+.javascript .ace-mokapi-dark .ace_keyword, .javascript .ace-mokapi-dark .ace_type {
+    color: rgb(255, 123, 114)
+}
+.javascript .ace-mokapi-light .ace_keyword, .javascript .ace-mokapi-light .ace_type {
+    color: rgb(207, 34, 46)
+}
+.javascript .ace-mokapi-dark .ace_string {
+    color: rgb(165, 214, 255);
+}
+.javascript .ace-mokapi-light .ace_string {
+    color: rgb(10, 48, 105);
+}
+.javascript .ace-mokapi-dark .ace_constant.ace_numeric, .javascript .ace-mokapi-dark .ace_keyword.ace_operator {
+    color: rgb(121, 192, 255);
+}
+.javascript .ace-mokapi-light .ace_constant.ace_numeric, .javascript .ace-mokapi-light .ace_keyword.ace_operator {
+    color: rgb(31, 35, 40);
+}
+.javascript .ace-mokapi-dark .ace_function {
+    color: rgb(210, 168, 255)
+}
+.javascript .ace-mokapi-light .ace_function {
+    color: rgb(102, 57, 186)
+}
+.javascript .ace-mokapi-dark .ace_punctuation.ace_operator + .ace_identifier,
+.javascript .ace-mokapi-dark .ace_identifier:has(+ .ace_punctuation.ace_operator::content(':'))
+{
+    color: rgb(121, 192, 255)
+}
+.javascript .ace-mokapi-light .ace_punctuation.ace_operator + .ace_identifier {
+    color: rgb(5, 80, 174)
+}
+
+.javascript .ace-mokapi-dark .ace_identifier:has(+ .ace_paren.ace_lparen) {
+    color: rgb(210, 168, 255)
+}
+.javascript .ace-mokapi-light .ace_identifier:has(+ .ace_paren.ace_lparen) {
+    color: rgb(102, 57, 186)
+}

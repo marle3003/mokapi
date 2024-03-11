@@ -35,7 +35,7 @@ const id = createGuid()
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <source-view v-if="example" :source="example" :content-type="props.contentType" :filename="source?.filename" />
+                        <source-view v-if="example" :source="example.data" :content-type="contentType" :filename="source?.filename" />
                     </div>
                 </div>
             </div>

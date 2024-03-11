@@ -85,7 +85,6 @@ export default function() {
                 }
                 return true
             case 'configs':
-                console.log(getConfigs())
                 response.data = getConfigs()
                 return true
             case 'config':

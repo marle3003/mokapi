@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 
-defineProps({
-    message: { type: String, required: true },
-    showBackToHome: {type: Boolean, required: false}
-})
+defineProps<{
+    message: string
+    showBackToHome?: boolean
+}>()
 
 const router = useRouter()
 </script>

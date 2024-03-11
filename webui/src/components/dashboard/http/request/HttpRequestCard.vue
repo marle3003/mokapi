@@ -5,12 +5,15 @@ import SchemaExpand from '../../SchemaExpand.vue'
 import SchemaExample from '../../SchemaExample.vue'
 import SchemaValidate from '../../SchemaValidate.vue'
 import SourceView from '../../SourceView.vue'
+import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
+
+const { formatSchema } = usePrettyLanguage()
 
 const props = defineProps({
     operation: { type: Object as PropType<HttpOperation>, required: true }
 })
 const selected = reactive({
-    content: {} as HttpMediaType | null
+    content: {} as HttpMediaType | null,
 })
 
 if (props.operation.requestBody?.contents?.length > 0){
@@ -42,11 +45,11 @@ function selectedContentChange(event: any){
                     <p v-if="operation.requestBody.required">Required</p>
                     
                     <source-view 
-                        :source="JSON.stringify(selected.content?.schema)" 
+                        :source="formatSchema(selected.content?.schema)" 
                         :deprecated="selected.content?.schema.deprecated" 
                         content-type="application/json"
                         :hide-content-type="true"
-                        height="250px" class="mb-2">
+                        :height="250" class="mb-2">
                     </source-view>
 
                     <div class="row">

@@ -1,4 +1,4 @@
-import { watchEffect, ref } from 'vue'
+import { watchEffect, reactive } from 'vue'
 import { useFetch } from './fetch'
 import { usePrettyLanguage } from './usePrettyLanguage'
 
@@ -11,18 +11,22 @@ export function useExample() {
         }
         
         const response = useFetch('/api/schema/example', {method: 'POST', body: JSON.stringify(schema), headers: {'Content-Type': 'application/json', 'Accept': contentType}}, false, false)
-        const example = ref<string>()
+        const example =  reactive({
+            data: '',
+            next: () => response.refresh()
+        })
 
         watchEffect(() => {
             if (response.isLoading) {
                 return
             }
+            let data = ''
             if (typeof response.data === 'string') {
-                example.value = response.data
+                data = response.data
             } else {
-                example.value = JSON.stringify(response.data)
+                data = JSON.stringify(response.data)
             }
-            example.value = formatLanguage(example.value, contentType!)
+            example.data = formatLanguage(data, contentType!)
         })
         return example
     }

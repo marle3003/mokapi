@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { RouterView, isNavigationFailure } from 'vue-router'
+import { RouterView } from 'vue-router'
 import Header from './components/Header.vue'
 
 var theme = 'dark';
@@ -7,8 +7,6 @@ if (localStorage.getItem('theme')) {
     if(localStorage.getItem('theme') == 'light'){
         theme = 'light';
     }
-} else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
-    theme = 'light';
 }
 
 document.documentElement.setAttribute('data-theme', theme);

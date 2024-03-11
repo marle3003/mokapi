@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useGuid } from '@/composables/guid'
 import SourceView from './SourceView.vue'
+import { usePrettyLanguage } from '@/composables/usePrettyLanguage';
 
 defineProps<{
     schema: Schema
@@ -10,6 +11,7 @@ defineProps<{
     }
 }>()
 
+const { formatSchema } = usePrettyLanguage()
 const { createGuid } = useGuid();
 const id = createGuid()
 </script>
@@ -26,7 +28,7 @@ const id = createGuid()
                     </div>
                     <div class="modal-body">
                         <div class="codeBlock">
-                            <source-view :source="JSON.stringify(schema)" content-type="application/json" :hide-content-type="true" :filename="source?.filename" />
+                            <source-view :source="formatSchema(schema)" content-type="application/json" :hide-content-type="true" :filename="source?.filename" />
                         </div>
                     </div>
                 </div>

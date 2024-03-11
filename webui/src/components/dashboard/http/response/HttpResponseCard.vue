@@ -7,6 +7,7 @@ import SchemaExample from '../../SchemaExample.vue'
 import SchemaValidate from '../../SchemaValidate.vue'
 import Markdown from 'vue3-markdown-it'
 import SourceView from '../../SourceView.vue'
+import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 
 const props = defineProps({
     service: { type: Object as PropType<HttpService>, required: true },
@@ -14,7 +15,8 @@ const props = defineProps({
     operation: { type: Object as PropType<HttpOperation>, required: true }
 })
 
-const {formatStatusCode, getClassByStatusCode} = usePrettyHttp()
+const { formatStatusCode, getClassByStatusCode } = usePrettyHttp()
+const { formatSchema } = usePrettyLanguage()
 
 const selected = reactive({
     contents: {} as  { [statusCode: number]: HttpMediaType}
@@ -35,8 +37,8 @@ function selectedContentChange(event: any, statusCode: number){
     for (let response of props.operation.responses){
         if (response.statusCode == statusCode){
             for (let content of response.contents){
-                if (content.type == event.target.value){
-                selected.contents[statusCode] = content
+                if (content.type == event.target.value) {
+                    selected.contents[statusCode] = content
                 }
             }
         }
@@ -64,11 +66,11 @@ function selectedContentChange(event: any, statusCode: number){
                             <div class="tab-content" id="pills-tabContent">
                                 <div v-if="response.contents" class="tab-pane fade" :class="response.contents ? 'show active' : ''" id="pills-body" role="tabpanel" aria-labelledby="pills-body-tab">
                                     <source-view 
-                                        :source="JSON.stringify(selected.contents[response.statusCode].schema)" 
+                                        :source="formatSchema(selected.contents[response.statusCode].schema)" 
                                         :deprecated="selected.contents[response.statusCode].schema.deprecated" 
                                         content-type="application/json"
                                         :hide-content-type="true"
-                                        height="250px" class="mb-2">
+                                        :height="250" class="mb-2">
                                     </source-view>
                                     <div class="row">
                                         <div class="col-auto pe-2 mt-1">

@@ -89,7 +89,7 @@ export class HttpOperationRequestModel {
 
     constructor(readonly element: Locator) {
         this.tabs = element.getByTestId('tabs')
-        this.body = element.getByRole('code')
+        this.body = element.getByRole('region', { name: 'Content' })
         this.expand = new ExpandModel(element.getByTestId('expand'))
         this.example = new ExampleModel(element.getByTestId('example'))
     }
@@ -109,7 +109,7 @@ export class ExpandModel {
 
     constructor(element: Locator) {
         this.button = element.getByRole('button', { name: 'Expand' })
-        this.code = element.locator('code')
+        this.code = element.getByRole('region', { name: 'Content' })
     }
 }
 
@@ -119,6 +119,6 @@ export class ExampleModel {
 
     constructor(element: Locator) {
         this.button = element.getByRole('button', { name: 'Example' })
-        this.code = element.locator('code')
+        this.code = element.getByRole('region', { name: 'Content' })
     }
 }

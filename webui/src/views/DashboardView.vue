@@ -183,6 +183,7 @@ useMeta('Dashboard | mokapi.io', description, "https://mokapi.io/smtp")
                 <config v-if="$route.name === 'config'"></config>
             </div>
         </div>
+
         <message :message="appInfo.error" v-if="!appInfo.data && !appInfo.isLoading"></message>
         <message message="No service available" v-if="appInfo.data && !isAnyServiceAvailable()"></message>
         <loading v-if="isInitLoading()"></loading>

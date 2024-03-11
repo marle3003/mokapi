@@ -2,11 +2,12 @@ import { reactive } from 'vue'
 import router from '@/router';
 
 export interface Response {
-    data: any,
-    isLoading: boolean,
-    error: any,
-    close: () => void,
+    data: any
+    isLoading: boolean
+    error: any
+    close: () => void
     refs: number
+    refresh: () => void
 }
 
 const cache: { [name: string]: Response } = {}
@@ -19,8 +20,9 @@ export function useFetch(path: string, options?: RequestInit, doRefresh: boolean
         data: null,
         isLoading: false,
         error: null,
-        close: function() {},
-        refs: 1
+        close: () => {},
+        refs: 1,
+        refresh: doFetch
     })
 
     if (cache[path]) {
@@ -36,6 +38,9 @@ export function useFetch(path: string, options?: RequestInit, doRefresh: boolean
         response.isLoading = true
         fetch(path, options)
             .then((res) => {
+                if (!res.ok) {
+                    throw new Error(res.statusText)
+                }
                 const contentType = res.headers.get("content-type");
                 if (contentType && contentType.indexOf("application/json") !== -1) {
                     return res.json()
@@ -48,7 +53,7 @@ export function useFetch(path: string, options?: RequestInit, doRefresh: boolean
                 response.isLoading = false
             })
             .catch((err) => {
-                console.error(err);                
+                console.error(err)
                 response.error = 'Network connection error'
                 response.data = null
                 response.isLoading = false

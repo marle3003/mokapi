@@ -2,29 +2,34 @@
 import { computed } from 'vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 import { usePrettyBytes } from '@/composables/usePrettyBytes'
+import { VAceEditor } from 'vue3-ace-editor'
+import '../../ace-editor/ace-config'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   source: string
   contentType: string
   filename?: string
   url?: string
   deprecated?: boolean
-  height?: string
+  height?: number
+  maxHeight?: number
   hideContentType?: boolean
+  readonly?: boolean
+}>(), { readonly: true })
+
+const emit = defineEmits<{
+  (e: 'update', value: string): void
 }>()
 
-const { formatLanguage } = usePrettyLanguage()
+const { getLanguage } = usePrettyLanguage()
 const { format } = usePrettyBytes()
 
-const code = computed(() => {
-  return formatLanguage(props.source, props.contentType)
-})
 
 const lines = computed(() => {
-  if (!code.value) {
-    return '0'
+  if (!props.source) {
+    return 0
   }
-  return code.value.split('\n').length
+  return props.source.split('\n').length
 })
 
 const size = computed(() => {
@@ -34,16 +39,23 @@ const size = computed(() => {
   return format(new Blob([props.source]).size)
 })
 
-const highlightClass = computed(() => {
-  if (!props.contentType) {
-    return ''
+const viewHeight = computed(() => {
+  if (props.height) {
+    return props.height
   }
-  switch (props.contentType) {
-    case 'application/json': return 'json'
-    case 'application/yaml': return 'yaml'
-    case 'application/xml': return 'xml'
-    default: return ''
+  if (props.readonly) {
+    let height = lines.value * 20 + 10
+    if (props.maxHeight && height > props.maxHeight) {
+      return props.maxHeight
+    }
+    return height
   }
+  return 500
+})
+
+const theme = computed(() => {
+  const theme = document.documentElement.getAttribute('data-theme')
+  return `mokapi-${theme}`
 })
 
 function download(event: MouseEvent) {
@@ -63,16 +75,15 @@ function download(event: MouseEvent) {
 }
 
 function copyToClipboard(event: MouseEvent) {
-  navigator.clipboard.writeText(code.value)
+  navigator.clipboard.writeText(props.source)
   event.preventDefault()
 }
-
 </script>
 
 <template>
   <section aria-label="Source">
     <div class="header">
-      <div>
+      <div class="info">
         <span v-if="!hideContentType">{{ contentType }}</span>
         <span aria-label="Lines of Code">{{ lines }} lines</span>
         <span aria-label="Size of Code">{{ size }}</span>
@@ -84,8 +95,18 @@ function copyToClipboard(event: MouseEvent) {
         <button type="button" class="btn btn-link" @click="download" title="Download raw content" aria-label="Download raw content"><i class="bi bi-download"></i></button>
       </div>
     </div>
-    <section class="source" aria-label="Content">
-      <pre v-highlightjs="code" class="overflow-auto" :style="(height) ? 'max-height: '+height : ''"><code :class="highlightClass"></code></pre>
+    <section class="source" aria-label="Content" :class="getLanguage(contentType)">
+      <v-ace-editor
+        :value="source"
+        @update:value="emit('update', $event)"
+        :lang="getLanguage(contentType)"
+        :theme="theme"
+        style="font-size: 16px;"
+        :style="`height: ${viewHeight}px`"
+        :options="{
+          readOnly: props.readonly
+        }"
+      />
     </section>
   </section>
 </template>
@@ -99,14 +120,19 @@ function copyToClipboard(event: MouseEvent) {
   display: flex;
   justify-content: space-between;
 }
+.header .info span {
+  vertical-align: middle;
+}
 .header  button {
   background: none !important;
   font-size: 0.9rem;
   border-radius: 0;
   vertical-align: middle;
   color: var(--color-link);
+  display: inline-grid;
+  place-content: center;
 }
-.header .controls > * {
+.header .controls > button {
   border: 1px solid var(--color-tabs-border);
   padding: 5px 8px;
   height: 28px;

@@ -136,6 +136,10 @@ export let apps = [
                                 {
                                     type: "application/xml",
                                     schema: pet
+                                },
+                                {
+                                    type: "application/yaml",
+                                    schema: pet
                                 }
                             ]
                         },

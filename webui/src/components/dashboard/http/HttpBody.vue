@@ -1,14 +1,22 @@
 <script setup lang="ts">
-import SourceView from '../SourceView.vue';
+import { computed } from 'vue'
+import SourceView from '../SourceView.vue'
+import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 
-defineProps({
-    contentType: { type: String, required: true },
-    body: {type: String, required: true}
+const props = defineProps<{
+    contentType: string,
+    body: string
+}>()
+
+const { formatLanguage } = usePrettyLanguage()
+
+const source = computed(() => {
+  return formatLanguage(props.body, props.contentType)
 })
 </script>
 
 <template>
-  <source-view v-if="body" :source="body" :content-type="contentType" style="max-height: 500px;"></source-view>
+  <source-view v-if="body" :source="source" :content-type="contentType" :max-height="500"></source-view>
   <div v-else>No body returned for response</div>
 </template>
 

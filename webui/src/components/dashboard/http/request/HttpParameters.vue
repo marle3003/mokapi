@@ -4,22 +4,24 @@ import { useSchema } from '@/composables/schema'
 import Markdown from 'vue3-markdown-it'
 import { useExample } from '@/composables/example'
 import SourceView from '../../SourceView.vue'
+import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 
 const { printType } = useSchema()
 const { fetchExample } = useExample()
+const { formatSchema } = usePrettyLanguage()
 
 const props = defineProps({
     parameters: { type: Array as PropType<Array<HttpParameter>> }
 })
 
-const examples: {[key: string]: Ref<string | undefined>} = {}
+const examples: {[key: string]: string} = {}
 if (props.parameters){
     for (let parameter of props.parameters){
         if (!parameter.schema) {
             continue;
         }
         let example = fetchExample(parameter.schema, 'text/plain')
-        examples[parameter.name+parameter.type] = example
+        examples[parameter.name+parameter.type] = example.data
     }
 }
 
@@ -41,10 +43,10 @@ function getParameterTypeSortOrder(type: string): number{
 }
 function getExample(key: string){
     const example = examples[key]
-    if (!example || !example.value){
+    if (!example || !example){
         return ''
     }
-    return example.value
+    return example
 }
 
 function showWarningColumn(){
@@ -132,7 +134,7 @@ function showWarningColumn(){
 
                                         <div class="tab-content" :id="'pills-tabParameter-parameter-'+index">
                                             <div class="tab-pane fade show active" :id="'pills-schema-parameter-'+index" role="tabpanel">
-                                                <source-view :source="JSON.stringify(parameter.schema)" content-type="application/json" :hide-content-type="true" />
+                                                <source-view :source="formatSchema(parameter.schema)" content-type="application/json" :hide-content-type="true" />
                                             </div>
                                             <div class="tab-pane fade" :id="'pills-example-parameter-'+index" role="tabpanel">
                                                 <source-view :source="getExample(parameter.name+parameter.type)" content-type="text/plain" :hide-content-type="true" />
