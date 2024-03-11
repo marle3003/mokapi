@@ -35,7 +35,7 @@ func TestAddress(t *testing.T) {
 			request: &Request{Names: []string{"zip"}},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "7291", v)
+				require.Equal(t, "229109", v)
 			},
 		},
 		{
@@ -43,7 +43,7 @@ func TestAddress(t *testing.T) {
 			request: &Request{Names: []string{"postcode"}},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "7291", v)
+				require.Equal(t, "229109", v)
 			},
 		},
 		{
@@ -76,7 +76,7 @@ func TestAddress(t *testing.T) {
 			request: &Request{Names: []string{"postcodes"}},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{"29109", "6489"}, v)
+				require.Equal(t, []interface{}{"29109", "648930"}, v)
 			},
 		},
 		{
