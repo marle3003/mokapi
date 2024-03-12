@@ -14,6 +14,7 @@ func Number() *Tree {
 	return &Tree{
 		Name: "Number",
 		nodes: []*Tree{
+			Ids(),
 			Id(),
 			Budget(),
 			Price(),
@@ -29,12 +30,54 @@ func Number() *Tree {
 func Id() *Tree {
 	return &Tree{
 		Name: "Id",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			return (r.LastName() == "id" || strings.HasSuffix(r.LastName(), "Id")) &&
-				(r.Schema.IsAny() || r.Schema.IsString() || r.Schema.IsInteger())
+				(r.Schema.IsAny() || r.Schema.IsInteger() ||
+					(r.Schema.IsString() && r.Schema.Format == "" && r.Schema.Pattern == ""))
 		},
-		resolve: func(r *Request) (interface{}, error) {
-			return newPositiveNumber(r.Schema)
+		Fake: func(r *Request) (interface{}, error) {
+			if r.Schema.IsAny() || r.Schema.IsInteger() {
+				return newPositiveNumber(r.Schema)
+			}
+			min := 37
+			max := 37
+			if r.Schema.MaxLength != nil {
+				max = *r.Schema.MaxLength
+			}
+			if r.Schema.MinLength != nil {
+				min = *r.Schema.MinLength
+			} else if r.Schema.MaxLength != nil {
+				min = max
+			}
+
+			if min <= 37 && max >= 37 {
+				return gofakeit.UUID(), nil
+			}
+			n := gofakeit.Number(min, max)
+			return gofakeit.Numerify(strings.Repeat("#", n)), nil
+		},
+	}
+}
+
+func Ids() *Tree {
+	return &Tree{
+		Name: "Ids",
+		Test: func(r *Request) bool {
+			return (r.LastName() == "ids" || strings.HasSuffix(r.LastName(), "Ids")) &&
+				(r.Schema.IsArray() || r.Schema.IsAny())
+		},
+		Fake: func(r *Request) (interface{}, error) {
+			var next *Request
+			last := r.LastName()
+			if strings.ToLower(last) == "ids" {
+				next = r.With(Name("id"))
+			} else {
+				next = r.With(Name(strings.TrimSuffix(last, "s")))
+			}
+			if r.Schema.IsAny() {
+				next = next.With(Schema(&schema.Schema{Type: []string{"array"}}))
+			}
+			return r.g.tree.Resolve(next)
 		},
 	}
 }
@@ -42,11 +85,11 @@ func Id() *Tree {
 func Budget() *Tree {
 	return &Tree{
 		Name: "Budget",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			return (r.LastName() == "budget" || strings.HasSuffix(r.LastName(), "Budget")) &&
 				(r.Schema.IsAny() || r.Schema.IsInteger())
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			return newPositiveNumber(r.Schema)
 		},
 	}
@@ -55,11 +98,11 @@ func Budget() *Tree {
 func Price() *Tree {
 	return &Tree{
 		Name: "Price",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			return (r.LastName() == "price" || strings.HasSuffix(r.LastName(), "Price")) &&
 				(r.Schema.IsAny() || r.Schema.IsInteger() || r.Schema.IsNumber())
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			s := r.Schema
 			if r.Schema.IsAny() {
 				s = &schema.Schema{Type: []string{"number"}}
@@ -73,12 +116,12 @@ func Price() *Tree {
 func Year() *Tree {
 	return &Tree{
 		Name: "Year",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			last := r.LastName()
-			return (strings.ToLower(last) == "year" || strings.HasSuffix(last, "Year")) &&
-				(r.Schema.IsInteger() || r.Schema.IsNumber())
+			return (strings.ToLower(last) == "year" || strings.HasSuffix(last, "Year") || strings.HasPrefix(last, "year")) &&
+				r.Schema.IsInteger()
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			min, max := getRangeWithDefault(r.Schema, 1900, 2199)
 			return gofakeit.IntRange(int(min), int(max)), nil
 		},
@@ -88,10 +131,10 @@ func Year() *Tree {
 func Integer32() *Tree {
 	return &Tree{
 		Name: "Integer32",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			return r.Schema.IsInteger() && r.Schema.Format == "int32"
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			if !hasNumberRange(r.Schema) {
 				return gofakeit.Int32(), nil
 			}
@@ -116,10 +159,10 @@ func Integer32() *Tree {
 func Integer64() *Tree {
 	return &Tree{
 		Name: "Integer64",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			return r.Schema.IsInteger()
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			if !hasNumberRange(r.Schema) {
 				return gofakeit.Int64(), nil
 			}
@@ -144,10 +187,10 @@ func Integer64() *Tree {
 func Float32() *Tree {
 	return &Tree{
 		Name: "Float32",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			return r.Schema.IsNumber() && r.Schema.Format == "float"
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			if !hasNumberRange(r.Schema) {
 				return gofakeit.Float32(), nil
 			}
@@ -169,10 +212,10 @@ func Float32() *Tree {
 func Float64() *Tree {
 	return &Tree{
 		Name: "Float64",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			return r.Schema.IsNumber()
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			if !hasNumberRange(r.Schema) {
 				return gofakeit.Float64(), nil
 			}
@@ -247,29 +290,24 @@ func newPositiveNumber(s *schema.Schema) (interface{}, error) {
 	if s.IsAny() {
 		return gofakeit.Number(1, math.MaxInt64), nil
 	}
-	if s.IsString() {
-		return gofakeit.UUID(), nil
-	} else if s.IsInteger() {
-		min := 1
-		max := math.MaxInt64
+	min := 1
+	max := math.MaxInt64
 
-		if s.Format == "int32" {
-			max = math.MaxInt32
-		}
-		if s.Minimum != nil {
-			min = int(*s.Minimum)
-		}
-		if s.ExclusiveMinimum != nil {
-			min = int(*s.ExclusiveMinimum) + 1
-		}
-		if s.Maximum != nil {
-			max = int(*s.Maximum)
-		}
-		if s.ExclusiveMaximum != nil {
-			max = int(*s.ExclusiveMaximum) - 1
-		}
-
-		return gofakeit.Number(min, max), nil
+	if s.Format == "int32" {
+		max = math.MaxInt32
 	}
-	return nil, ErrUnsupported
+	if s.Minimum != nil {
+		min = int(*s.Minimum)
+	}
+	if s.ExclusiveMinimum != nil {
+		min = int(*s.ExclusiveMinimum) + 1
+	}
+	if s.Maximum != nil {
+		max = int(*s.Maximum)
+	}
+	if s.ExclusiveMaximum != nil {
+		max = int(*s.ExclusiveMaximum) - 1
+	}
+
+	return gofakeit.Number(min, max), nil
 }

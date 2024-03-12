@@ -16,6 +16,7 @@ const (
 	numericChars = "0123456789"
 	specialChars = "!@#$%&*+-_=?:;,.|(){}<>"
 	spaceChar    = " "
+	allStr       = lowerChars + upperChars + numericChars + specialChars + spaceChar
 )
 
 func StringTree() *Tree {
@@ -23,6 +24,7 @@ func StringTree() *Tree {
 		Name: "String",
 		nodes: []*Tree{
 			StringFormat(),
+			StringPattern(),
 			StringNumber(),
 			StringKey(),
 			StringEmail(),
@@ -31,6 +33,9 @@ func StringTree() *Tree {
 			Language(),
 			Error(),
 			StringHash(),
+			StringDescription(),
+			StringCurrency(),
+			StringColor(),
 			String(),
 		},
 	}
@@ -39,18 +44,20 @@ func StringTree() *Tree {
 func StringNumber() *Tree {
 	return &Tree{
 		Name: "StringNumber",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			return strings.HasSuffix(r.LastName(), "Number") &&
 				r.Schema.IsString() && r.Schema.Pattern == "" && r.Schema.Format == ""
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			min := 11
 			max := 11
-			if r.Schema.MinLength != nil {
-				min = *r.Schema.MinLength
-			}
 			if r.Schema.MaxLength != nil {
 				max = *r.Schema.MaxLength
+			}
+			if r.Schema.MinLength != nil {
+				min = *r.Schema.MinLength
+			} else if r.Schema.MaxLength != nil {
+				min = 0
 			}
 			var n int
 			if min == max {
@@ -66,12 +73,12 @@ func StringNumber() *Tree {
 func StringKey() *Tree {
 	return &Tree{
 		Name: "StringKey",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			last := r.LastName()
 			return (strings.ToLower(last) == "key" || strings.HasSuffix(last, "Key")) &&
-				r.Schema.IsString() && r.Schema.Pattern == "" && r.Schema.Format == ""
+				r.Schema.IsAnyString()
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			return gofakeit.UUID(), nil
 		},
 	}
@@ -80,13 +87,13 @@ func StringKey() *Tree {
 func StringHash() *Tree {
 	hash := sha1.New()
 	return &Tree{
-		Name: "StringKey",
-		compare: func(r *Request) bool {
+		Name: "StringHash",
+		Test: func(r *Request) bool {
 			last := r.LastName()
 			return (strings.ToLower(last) == "hash" || strings.HasSuffix(last, "Hash")) &&
-				r.Schema.IsString() && r.Schema.Pattern == "" && r.Schema.Format == ""
+				r.Schema.IsAnyString()
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			s := gofakeit.SentenceSimple()
 			b := hash.Sum([]byte(s))
 			return fmt.Sprintf("%x", b), nil
@@ -96,14 +103,60 @@ func StringHash() *Tree {
 
 func StringEmail() *Tree {
 	return &Tree{
-		Name: "StringKey",
-		compare: func(r *Request) bool {
+		Name: "StringEmail",
+		Test: func(r *Request) bool {
 			last := r.LastName()
 			return strings.ToLower(last) == "email" &&
-				((r.Schema.IsString() && r.Schema.Pattern == "" && r.Schema.Format == "") || r.Schema.IsAny())
+				(r.Schema.IsAny() || (r.Schema.IsString() && r.Schema.Pattern == "" && r.Schema.Format == ""))
 		},
-		resolve: func(r *Request) (interface{}, error) {
-			return gofakeit.Email(), nil
+		Fake: func(r *Request) (interface{}, error) {
+			for i := 0; i < 10; i++ {
+				s := gofakeit.Email()
+				if r.Schema.Validate(s) == nil {
+					return s, nil
+				}
+			}
+			return nil, ErrUnsupported
+		},
+	}
+}
+
+func StringDescription() *Tree {
+	return &Tree{
+		Name: "StringDescription",
+		Test: func(r *Request) bool {
+			last := r.LastName()
+			return (strings.ToLower(last) == "description" || strings.HasSuffix(last, "Description")) &&
+				r.Schema.IsAnyString()
+		},
+		Fake: func(r *Request) (interface{}, error) {
+			return gofakeit.Sentence(15), nil
+		},
+	}
+}
+
+func StringCurrency() *Tree {
+	return &Tree{
+		Name: "StringCurrency",
+		Test: func(r *Request) bool {
+			last := r.LastName()
+			return strings.ToLower(last) == "currency" && r.Schema.IsAnyString()
+		},
+		Fake: func(r *Request) (interface{}, error) {
+			return gofakeit.CurrencyShort(), nil
+		},
+	}
+}
+
+func StringColor() *Tree {
+	return &Tree{
+		Name: "StringColor",
+		Test: func(r *Request) bool {
+			last := r.LastName()
+			return strings.ToLower(last) == "color" && r.Schema.IsAnyString()
+		},
+		Fake: func(r *Request) (interface{}, error) {
+			return gofakeit.Color(), nil
 		},
 	}
 }
@@ -111,10 +164,10 @@ func StringEmail() *Tree {
 func String() *Tree {
 	return &Tree{
 		Name: "String",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			return r.Schema.IsString()
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			opt := StringOptions{
 				MaxLength: r.Schema.MaxLength,
 				Format:    r.Schema.Format,
@@ -131,10 +184,10 @@ func String() *Tree {
 func StringFormat() *Tree {
 	return &Tree{
 		Name: "StringFormat",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			return r.Schema.IsString() && len(r.Schema.Format) > 0
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			switch r.Schema.Format {
 			case "date":
 				return gofakeit.Date().Format("2006-01-02"), nil
@@ -164,8 +217,8 @@ func StringFormat() *Tree {
 func Uri() *Tree {
 	return &Tree{
 		Name: "URI",
-		compare: func(r *Request) bool {
-			if len(r.Names) == 0 || (!r.Schema.IsString() && !r.Schema.IsAny()) {
+		Test: func(r *Request) bool {
+			if len(r.Names) == 0 || (!r.Schema.IsAnyString() && !r.Schema.IsAny()) {
 				return false
 			}
 			name := strings.ToLower(r.LastName())
@@ -173,7 +226,7 @@ func Uri() *Tree {
 				(name == "uri" || name == "url" ||
 					strings.HasSuffix(name, "url") || strings.HasSuffix(name, "uri"))
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			return gofakeit.URL(), nil
 		},
 	}
@@ -182,7 +235,7 @@ func Uri() *Tree {
 func Uris() *Tree {
 	return &Tree{
 		Name: "URIs",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			if len(r.Names) == 0 {
 				return false
 			}
@@ -202,7 +255,7 @@ func Uris() *Tree {
 				(name == "uris" || name == "urls" ||
 					strings.HasSuffix(name, "urls") || strings.HasSuffix(name, "uris"))
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			return r.g.tree.Resolve(r.With(Name("url")))
 		},
 	}
@@ -214,20 +267,36 @@ func Language() *Tree {
 		nodes: []*Tree{
 			{
 				Name: "LanguageString",
-				compare: func(r *Request) bool {
+				Test: func(r *Request) bool {
 					last := strings.ToLower(r.LastName())
-					return (last == "language" || last == "lang") && (r.Schema.IsString() || r.Schema.IsAny())
+					return (last == "language" || last == "lang") && (r.Schema.IsAny() || (r.Schema.IsString() && r.Schema.Pattern == "" && r.Schema.Format == ""))
 				},
-				resolve: func(r *Request) (interface{}, error) {
-					return gofakeit.LanguageBCP(), nil
+				Fake: func(r *Request) (interface{}, error) {
+					max := 5
+					if r.Schema != nil && r.Schema.MaxLength != nil {
+						max = *r.Schema.MaxLength
+					}
+					if max == 2 {
+						return gofakeit.LanguageAbbreviation(), nil
+					}
+					if max == 5 {
+						return gofakeit.LanguageBCP(), nil
+					}
+					for i := 0; i < 10; i++ {
+						lang := gofakeit.Language()
+						if r.Schema.Validate(lang) == nil {
+							return lang, nil
+						}
+					}
+					return nil, ErrUnsupported
 				},
 			}, {
 				Name: "Languages",
-				compare: func(r *Request) bool {
+				Test: func(r *Request) bool {
 					last := strings.ToLower(r.LastName())
 					return (last == "languages" || last == "langs") && (r.Schema.IsArray() || r.Schema.IsAny())
 				},
-				resolve: func(r *Request) (interface{}, error) {
+				Fake: func(r *Request) (interface{}, error) {
 					next := r.With(Name("language"))
 					if r.Schema.IsAny() {
 						next = next.With(Schema(&schema.Schema{Type: []string{"array"}}))
@@ -242,10 +311,10 @@ func Language() *Tree {
 func Error() *Tree {
 	return &Tree{
 		Name: "Error",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			return strings.ToLower(r.LastName()) == "error" && (r.Schema.IsString() || r.Schema.IsAny())
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			return fmt.Sprintf("%v", gofakeit.ErrorHTTP()), nil
 		},
 	}
@@ -270,7 +339,7 @@ func NewString(opt StringOptions) interface{} {
 	if len(opt.Format) > 0 {
 		return newStringByFormat(opt.Format)
 	} else if len(opt.Pattern) > 0 {
-		return gofakeit.Generate(fmt.Sprintf("{regex:%v}", opt.Pattern))
+		return gofakeit.Regex(opt.Pattern)
 	}
 
 	minLength := opt.MinLength

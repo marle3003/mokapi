@@ -14,10 +14,10 @@ func Object() *Tree {
 			{
 				nodes: []*Tree{},
 				Name:  "Object",
-				compare: func(r *Request) bool {
+				Test: func(r *Request) bool {
 					return r.Schema.IsObject() && !r.Schema.IsFreeFrom()
 				},
-				resolve: func(r *Request) (interface{}, error) {
+				Fake: func(r *Request) (interface{}, error) {
 					return createObject(r)
 				},
 			},
@@ -29,10 +29,10 @@ func Object() *Tree {
 func AnyObject() *Tree {
 	return &Tree{
 		Name: "AnyObject",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			return r.Schema.IsObject() && r.Schema.IsFreeFrom()
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			r.Schema.Properties = &schema.Schemas{LinkedHashMap: sortedmap.LinkedHashMap[string, *schema.Ref]{}}
 
 			minProps := 1
@@ -62,10 +62,10 @@ func AnyObject() *Tree {
 func Dictionary() *Tree {
 	return &Tree{
 		Name: "Dictionary",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			return r.Schema.IsDictionary()
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			length := gofakeit.Number(1, 10)
 			var value *schema.Schema
 			if r.Schema.AdditionalProperties.Ref != nil {

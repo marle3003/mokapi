@@ -3,6 +3,7 @@ package generator
 import (
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
+	"github.com/pkg/errors"
 	"mokapi/json/schema"
 )
 
@@ -11,8 +12,8 @@ type Tree struct {
 
 	nodes []*Tree
 
-	compare func(r *Request) bool
-	resolve func(r *Request) (interface{}, error)
+	Test func(r *Request) bool
+	Fake func(r *Request) (interface{}, error)
 }
 
 func (t *Tree) Add(node *Tree) {
@@ -20,35 +21,37 @@ func (t *Tree) Add(node *Tree) {
 }
 
 func (t *Tree) Resolve(r *Request) (interface{}, error) {
-	sel := compare(t, r)
-
-	if sel != nil {
-		return sel.resolve(r)
+	v, err := resolve(t, r)
+	if err != nil {
+		if errors.Is(err, ErrUnsupported) {
+			return nil, fmt.Errorf("unsupported schema: %v", r.Schema)
+		}
+		return nil, err
 	}
-
-	return nil, fmt.Errorf("unsupported schema: %v", r.Schema)
+	return v, nil
 }
 
-func compare(t *Tree, r *Request) *Tree {
-	for _, n := range t.nodes {
-		if n.compare != nil {
-			if n.compare(r) {
-				if n.resolve == nil {
-					sel := compare(n, r)
-					if sel != nil {
-						return sel
-					}
+func resolve(node *Tree, r *Request) (v interface{}, err error) {
+	for _, n := range node.nodes {
+		if n.Test != nil {
+			if n.Test(r) {
+				if n.Fake == nil {
+					v, err = resolve(n, r)
 				} else {
-					return n
+					v, err = n.Fake(r)
+				}
+				if err == nil || !errors.Is(err, ErrUnsupported) {
+					return
 				}
 			}
-		} else if n.compare == nil {
-			if sel := compare(n, r); sel != nil {
-				return sel
+		} else {
+			v, err = resolve(n, r)
+			if err == nil || !errors.Is(err, ErrUnsupported) {
+				return
 			}
 		}
 	}
-	return nil
+	return nil, ErrUnsupported
 }
 
 func NewTree() *Tree {
@@ -63,6 +66,7 @@ func NewTree() *Tree {
 			PetTree(),
 			PersonTree(),
 			AddressTree(),
+			ProductTree(),
 			NameTree(),
 			Examples(),
 			Number(),
@@ -101,10 +105,10 @@ func Any() *Tree {
 
 	return &Tree{
 		Name: "Any",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			return r.Schema.IsAny()
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			t := getRandomType(r)
 			r = r.With(Schema(&schema.Schema{
 				Type: []string{t},
@@ -121,14 +125,14 @@ func Any() *Tree {
 func Null() *Tree {
 	return &Tree{
 		Name: "Null",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			if !r.Schema.IsNullable() {
 				return false
 			}
 			n := gofakeit.Float32Range(0, 1)
 			return n < 0.05
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			return nil, nil
 		},
 	}

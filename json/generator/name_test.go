@@ -18,7 +18,7 @@ func TestName(t *testing.T) {
 			req:  &Request{Names: []string{"name"}},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "EchoValley", v)
+				require.Equal(t, "Ink", v)
 			},
 		},
 		{
@@ -29,7 +29,7 @@ func TestName(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "EchoValley", v)
+				require.Equal(t, "Ink", v)
 			},
 		},
 		{
@@ -37,7 +37,7 @@ func TestName(t *testing.T) {
 			req:  &Request{Names: []string{"customerName"}},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "EchoValley", v)
+				require.Equal(t, "Ink", v)
 			},
 		},
 		{
@@ -45,6 +45,87 @@ func TestName(t *testing.T) {
 			req: &Request{
 				Names:  []string{"campaignName"},
 				Schema: schematest.New("string"),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "Ink", v)
+			},
+		},
+		{
+			name: "name with max length 3",
+			req: &Request{
+				Names: []string{"name"},
+				Schema: schematest.New("string",
+					schematest.WithMaxLength(3),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "Neo", v)
+			},
+		},
+		{
+			name: "name with min and max length 4",
+			req: &Request{
+				Names: []string{"name"},
+				Schema: schematest.New("string",
+					schematest.WithMinLength(4),
+					schematest.WithMaxLength(4),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "Apex", v)
+			},
+		},
+		{
+			name: "name with min length 4",
+			req: &Request{
+				Names: []string{"name"},
+				Schema: schematest.New("string",
+					schematest.WithMinLength(4),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "TerraCove", v)
+			},
+		},
+		{
+			name: "name with min and max length 5",
+			req: &Request{
+				Names: []string{"name"},
+				Schema: schematest.New("string",
+					schematest.WithMinLength(5),
+					schematest.WithMaxLength(5),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "Exalt", v)
+			},
+		},
+		{
+			name: "name with min and max length 6",
+			req: &Request{
+				Names: []string{"name"},
+				Schema: schematest.New("string",
+					schematest.WithMinLength(6),
+					schematest.WithMaxLength(6),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "Spirit", v)
+			},
+		},
+		{
+			name: "name with min length 7",
+			req: &Request{
+				Names: []string{"name"},
+				Schema: schematest.New("string",
+					schematest.WithMinLength(7),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)

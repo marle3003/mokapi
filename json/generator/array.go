@@ -19,10 +19,10 @@ func Array() *Tree {
 	return &Tree{
 		Name:  "Array",
 		nodes: nil,
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			return r.Schema.IsArray()
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			maxItems := 5
 			if r.Schema.MaxItems != nil {
 				maxItems = *r.Schema.MaxItems

@@ -224,6 +224,7 @@ func TestGeneratorString(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			gofakeit.Seed(11)
+			generator.Seed(11)
 
 			v, err := schema.CreateValue(&schema.Ref{Value: tc.schema})
 			tc.test(v, err)

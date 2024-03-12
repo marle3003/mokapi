@@ -31,11 +31,11 @@ func AddressTree() *Tree {
 func CoAddress() *Tree {
 	return &Tree{
 		Name: "City",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			last := strings.ToLower(r.LastName())
 			return last == "coaddress" && r.Schema.IsString()
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			return gofakeit.Name(), nil
 		},
 	}
@@ -44,11 +44,11 @@ func CoAddress() *Tree {
 func AnyAddress() *Tree {
 	return &Tree{
 		Name: "AnyAddress",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			last := strings.ToLower(r.LastName())
 			return last == "address" && r.Schema.IsAny()
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			addr := gofakeit.Address()
 			return map[string]interface{}{
 				"address":   addr.Address,
@@ -67,10 +67,10 @@ func AnyAddress() *Tree {
 func City() *Tree {
 	return &Tree{
 		Name: "City",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			return r.LastName() == "city" && (r.Schema.IsAny() || r.Schema.IsString() || r.Schema.IsInteger())
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			if r.Schema.IsAny() || r.Schema.IsString() {
 				return gofakeit.City(), nil
 			} else if r.Schema.IsInteger() {
@@ -84,10 +84,10 @@ func City() *Tree {
 func Cities() *Tree {
 	return &Tree{
 		Name: "Cities",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			return r.LastName() == "cities" && (r.Schema.IsAny() || r.Schema.IsArray())
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			return r.g.tree.Resolve(r.With(Name("city")))
 		},
 	}
@@ -96,10 +96,10 @@ func Cities() *Tree {
 func Country() *Tree {
 	return &Tree{
 		Name: "Country",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			return r.LastName() == "country" && (r.Schema.IsAny() || r.Schema.IsString())
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			address := r.GetName(-2)
 			if strings.HasSuffix(address, "Address") || strings.ToLower(address) == "address" {
 				return gofakeit.CountryAbr(), nil
@@ -112,12 +112,12 @@ func Country() *Tree {
 func Postcodes() *Tree {
 	return &Tree{
 		Name: "Postcodes",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			last := strings.ToLower(r.LastName())
 			return (last == "postcodes" || last == "zips") &&
 				(r.Schema.IsArray() || r.Schema.IsAny())
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			next := r.With(Name("postcode"))
 			if r.Schema.IsAny() {
 				next = next.With(Schema(&schema.Schema{Type: []string{"array"}}))
@@ -130,12 +130,12 @@ func Postcodes() *Tree {
 func Postcode() *Tree {
 	return &Tree{
 		Name: "Postcode",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			last := strings.ToLower(r.LastName())
 			return (last == "postcode" || last == "zip") &&
 				(r.Schema.IsNumber() || r.Schema.IsInteger() || r.Schema.IsString() || r.Schema.IsAny())
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			return newPostCode(r.Schema), nil
 		},
 	}
@@ -144,11 +144,11 @@ func Postcode() *Tree {
 func Longitude() *Tree {
 	return &Tree{
 		Name: "Longitude",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			last := strings.ToLower(r.LastName())
 			return last == "longitude" && (r.Schema.IsNumber() || r.Schema.IsAny())
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			return gofakeit.Longitude(), nil
 		},
 	}
@@ -157,11 +157,11 @@ func Longitude() *Tree {
 func Latitude() *Tree {
 	return &Tree{
 		Name: "Latitude",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			last := strings.ToLower(r.LastName())
 			return last == "latitude" && (r.Schema.IsNumber() || r.Schema.IsAny())
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			return gofakeit.Latitude(), nil
 		},
 	}
@@ -170,11 +170,11 @@ func Latitude() *Tree {
 func Street() *Tree {
 	return &Tree{
 		Name: "Street",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			last := strings.ToLower(r.LastName())
 			return last == "street" && r.Schema.IsString()
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			return gofakeit.Street(), nil
 		},
 	}
@@ -186,33 +186,33 @@ func OpenAddress() *Tree {
 		nodes: []*Tree{
 			{
 				Name: "Line1",
-				compare: func(r *Request) bool {
+				Test: func(r *Request) bool {
 					return strings.ToLower(r.LastName()) == "line1"
 				},
-				resolve: func(r *Request) (interface{}, error) {
+				Fake: func(r *Request) (interface{}, error) {
 					return gofakeit.Name(), nil
 				},
 			},
 			{
 				Name: "Line2",
-				compare: func(r *Request) bool {
+				Test: func(r *Request) bool {
 					return strings.ToLower(r.LastName()) == "line2"
 				},
-				resolve: func(r *Request) (interface{}, error) {
+				Fake: func(r *Request) (interface{}, error) {
 					return gofakeit.Street(), nil
 				},
 			},
 			{
 				Name: "Line3",
-				compare: func(r *Request) bool {
+				Test: func(r *Request) bool {
 					return strings.ToLower(r.LastName()) == "line3"
 				},
-				resolve: func(r *Request) (interface{}, error) {
+				Fake: func(r *Request) (interface{}, error) {
 					return fmt.Sprintf("%v %v %v", gofakeit.City(), gofakeit.StateAbr(), gofakeit.Zip()), nil
 				},
 			},
 		},
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			name := r.GetName(-2)
 			return strings.ToLower(name) == "address" || strings.HasSuffix(name, "Address")
 		},

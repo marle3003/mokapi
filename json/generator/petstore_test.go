@@ -40,7 +40,7 @@ func TestPetStore(t *testing.T) {
 					"id":        5622490442062937727,
 					"photoUrls": []interface{}{"https://www.principalapplications.biz/cultivate/e-enable/integrated"},
 					"status":    "sold",
-					"tags":      map[string]interface{}{"id": 1725511503074869949, "name": "CirrusGate"}},
+					"tags":      map[string]interface{}{"id": 1725511503074869949, "name": "Sol"}},
 					v)
 				err = pet.Validate(v)
 				require.NoError(t, err)

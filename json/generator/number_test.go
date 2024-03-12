@@ -3,7 +3,6 @@ package generator
 import (
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
-	"mokapi/json/schema"
 	"mokapi/json/schematest"
 	"testing"
 )
@@ -18,8 +17,10 @@ func TestNumber(t *testing.T) {
 		test    func(t *testing.T, v interface{}, err error)
 	}{
 		{
-			name:    "id",
-			request: &Request{Names: []string{"id"}},
+			name: "id",
+			request: &Request{
+				Names: []string{"id"},
+			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 5622490442062937727, v)
@@ -27,10 +28,12 @@ func TestNumber(t *testing.T) {
 		},
 		{
 			name: "id with max",
-			request: &Request{Names: []string{"id"}, Schema: &schema.Schema{
-				Type:    []string{"integer"},
-				Maximum: toFloat64P(10000),
-			}},
+			request: &Request{
+				Names: []string{"id"},
+				Schema: schematest.New("integer",
+					schematest.WithMaximum(10000),
+				),
+			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 7727, v)
@@ -38,19 +41,36 @@ func TestNumber(t *testing.T) {
 		},
 		{
 			name: "id with min & max",
-			request: &Request{Names: []string{"id"}, Schema: &schema.Schema{
-				Type:    []string{"integer"},
-				Minimum: toFloat64P(10),
-				Maximum: toFloat64P(20),
-			}},
+			request: &Request{
+				Names: []string{"id"},
+				Schema: schematest.New("integer",
+					schematest.WithMinimum(10),
+					schematest.WithMaximum(20),
+				),
+			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 18, v)
 			},
 		},
 		{
-			name:    "price",
-			request: &Request{Names: []string{"price"}},
+			name: "id string with max",
+			request: &Request{
+				Names: []string{"id"},
+				Schema: schematest.New("string",
+					schematest.WithMaxLength(30),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "802910936489301180573501861460", v)
+			},
+		},
+		{
+			name: "price",
+			request: &Request{
+				Names: []string{"price"},
+			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 60959.16, v)

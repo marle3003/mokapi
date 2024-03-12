@@ -69,7 +69,7 @@ func (suite *PetStoreSuite) TestJsHttpHandler() {
 	try.GetRequest(suite.T(), "http://127.0.0.1:18080/pet/5",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(http.StatusOK),
-		try.HasBody(`{"id":3088591419926615836,"category":{"id":5330969541296731069,"name":"water buffalo"},"name":"Zoe","photoUrls":[],"tags":[{"id":3989664552501193969,"name":"NovaLink"}],"status":"available"}`))
+		try.HasBody(`{"id":3088591419926615836,"category":{"id":5330969541296731069,"name":"water buffalo"},"name":"Zoe","photoUrls":[],"tags":[{"id":3989664552501193969,"name":"Utopia"}],"status":"available"}`))
 
 	// test http metrics
 	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%s/api/metrics/http?path=/pet/{petId}", suite.cfg.Api.Port), nil,

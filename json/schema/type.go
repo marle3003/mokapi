@@ -76,3 +76,10 @@ func (s *Schema) Is(typeName string) bool {
 func (s *Schema) IsFreeFrom() bool {
 	return s.IsObject() && s.Properties == nil || s.Properties.Len() == 0
 }
+
+func (s *Schema) IsAnyString() bool {
+	if !s.IsString() {
+		return false
+	}
+	return s.Pattern == "" && s.Format == "" && s.MinLength == nil && s.MaxLength == nil
+}

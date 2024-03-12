@@ -20,7 +20,7 @@ func PetTree() *Tree {
 func Pet() *Tree {
 	return &Tree{
 		Name: "Pet",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			return !r.Schema.IsArray()
 
 		},
@@ -34,13 +34,13 @@ func Pet() *Tree {
 func Pets() *Tree {
 	return &Tree{
 		Name: "Pet",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			if !r.Schema.IsArray() && !r.Schema.IsAny() {
 				return false
 			}
 			return strings.ToLower(r.GetName(-2)) == "pets"
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			next := r.With(Name("pet", r.LastName()))
 			if r.Schema.IsAny() {
 				next = next.With(Schema(&schema.Schema{Type: []string{"array"}}))
@@ -53,10 +53,10 @@ func Pets() *Tree {
 func PetName() *Tree {
 	return &Tree{
 		Name: "PetName",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			return r.matchLast([]string{"pet", "name"}, true)
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			return gofakeit.PetName(), nil
 		},
 	}
@@ -65,7 +65,7 @@ func PetName() *Tree {
 func PetCategory() *Tree {
 	return &Tree{
 		Name: "PetCategory",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			if r.Schema.IsArray() || r.Schema.IsObject() {
 				return false
 			}
@@ -74,7 +74,7 @@ func PetCategory() *Tree {
 			}
 			return r.matchLast([]string{"pet", "category", "name"}, true)
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			return gofakeit.Animal(), nil
 		},
 	}
@@ -83,13 +83,13 @@ func PetCategory() *Tree {
 func PetCategories() *Tree {
 	return &Tree{
 		Name: "PetCategories",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			if !r.Schema.IsArray() && !r.Schema.IsAny() {
 				return false
 			}
 			return r.matchLast([]string{"pet", "categories"}, true)
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			next := r.With(Name("pet", "category"))
 			if r.Schema.IsAny() {
 				next = next.With(Schema(&schema.Schema{Type: []string{"array"}}))

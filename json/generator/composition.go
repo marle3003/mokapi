@@ -9,10 +9,10 @@ import (
 func AnyOf() *Tree {
 	return &Tree{
 		Name: "AnyOf",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			return r.Schema != nil && r.Schema.AnyOf != nil && len(r.Schema.AnyOf) > 0
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			i := gofakeit.Number(0, len(r.Schema.AnyOf)-1)
 			return r.g.tree.Resolve(r.With(Ref(r.Schema.AnyOf[i])))
 		},
@@ -22,10 +22,10 @@ func AnyOf() *Tree {
 func AllOf() *Tree {
 	return &Tree{
 		Name: "AllOf",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			return r.Schema != nil && r.Schema.AllOf != nil && len(r.Schema.AllOf) > 0
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			result := map[string]interface{}{}
 			for _, one := range r.Schema.AllOf {
 				if one.IsAny() {
@@ -55,10 +55,10 @@ func AllOf() *Tree {
 func OneOf() *Tree {
 	return &Tree{
 		Name: "OneOf",
-		compare: func(r *Request) bool {
+		Test: func(r *Request) bool {
 			return r.Schema != nil && r.Schema.OneOf != nil && len(r.Schema.OneOf) > 0
 		},
-		resolve: func(r *Request) (interface{}, error) {
+		Fake: func(r *Request) (interface{}, error) {
 			selected := gofakeit.Number(0, len(r.Schema.OneOf)-1)
 			v, err := r.g.tree.Resolve(r.With(Ref(r.Schema.OneOf[selected])))
 			if err != nil {
