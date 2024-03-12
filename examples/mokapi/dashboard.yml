@@ -231,6 +231,18 @@ paths:
           content:
             '*':
               schema: {}
+        "400":
+          description: failed to generate example
+          content:
+            'text/plain':
+              schema:
+                type: string
+        "500":
+          description: failed to generate example
+          content:
+            'text/plain':
+              schema:
+                type: string
     options:
       summary: preflight
       responses:

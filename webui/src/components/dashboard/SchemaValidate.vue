@@ -30,6 +30,12 @@ watch(() => props.schema, (schema) => {
 })
 
 function setExample() {
+    if (example.error) {
+        state.errors = [example.error]
+        return
+    }else{
+        state.errors = []
+    }
     state.content = example.data
     example.next()
 }
@@ -70,7 +76,7 @@ function validate() {
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <div class="alert alert-danger" role="alert" v-if="state.errors.length > 0 && state.validated">
+                        <div class="alert alert-danger" role="alert" v-if="state.errors.length > 0">
                             <ul class="error-list">
                                 <li v-for="err in state.errors">{{ err }}</li>
                             </ul>

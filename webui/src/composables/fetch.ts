@@ -37,9 +37,10 @@ export function useFetch(path: string, options?: RequestInit, doRefresh: boolean
     function doFetch() {
         response.isLoading = true
         fetch(path, options)
-            .then((res) => {
+            .then(async (res) => {
                 if (!res.ok) {
-                    throw new Error(res.statusText)
+                    let text = await res.text()
+                    throw new Error(res.statusText + ': ' + text)
                 }
                 const contentType = res.headers.get("content-type");
                 if (contentType && contentType.indexOf("application/json") !== -1) {
@@ -53,8 +54,14 @@ export function useFetch(path: string, options?: RequestInit, doRefresh: boolean
                 response.isLoading = false
             })
             .catch((err) => {
+                let msg = err.toString()
+                if (!msg) {
+                    msg = 'Network connection error'
+                } else {
+                    msg = msg.substring('Error: '.length)
+                }
                 console.error(err)
-                response.error = 'Network connection error'
+                response.error = msg
                 response.data = null
                 response.isLoading = false
             })
