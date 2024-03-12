@@ -3,6 +3,7 @@ package js
 import (
 	"github.com/dop251/goja"
 	"mokapi/engine/common"
+	"mokapi/json/generator"
 	"mokapi/providers/openapi/schema"
 )
 
@@ -133,4 +134,57 @@ func toSchema(js *jsonSchema) *schema.Schema {
 	}
 
 	return s
+}
+
+type node struct {
+	t  *generator.Tree
+	rt *goja.Runtime
+}
+
+func (m *fakerModule) FindByName(name string) *node {
+	t := generator.FindByName(name)
+	return &node{t: t, rt: m.rt}
+}
+
+func (n *node) Append(v goja.Value) {
+	t := n.createTree(v)
+	n.t.Append(t)
+}
+
+func (n *node) Insert(index int, v goja.Value) {
+	t := n.createTree(v)
+	n.t.Insert(index, t)
+}
+
+func (n *node) createTree(v goja.Value) *generator.Tree {
+	if v != nil && !goja.IsUndefined(v) && !goja.IsNull(v) {
+		newNode := &generator.Tree{}
+		obj := v.ToObject(n.rt)
+		for _, k := range obj.Keys() {
+			switch k {
+			case "name":
+				name := obj.Get(k)
+				newNode.Name = name.String()
+			case "test":
+				test, _ := goja.AssertFunction(obj.Get(k))
+				newNode.Test = func(r *generator.Request) bool {
+					param := n.rt.ToValue(r)
+					v, _ := test(goja.Undefined(), param)
+					return v.ToBoolean()
+				}
+			case "fake":
+				fake, _ := goja.AssertFunction(obj.Get(k))
+				newNode.Fake = func(r *generator.Request) (interface{}, error) {
+					param := n.rt.ToValue(r)
+					v, err := fake(goja.Undefined(), param)
+					return v.Export(), err
+				}
+			}
+		}
+		if newNode.Name == "" {
+			panic(n.rt.ToValue("node must have a name"))
+		}
+		return newNode
+	}
+	panic(n.rt.ToValue("unexpected function parameter"))
 }

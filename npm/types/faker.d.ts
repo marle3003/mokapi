@@ -14,6 +14,81 @@ import { JSONValue } from ".";
  */
 export function fake(schema: Schema): JSONValue;
 
+/**
+ * Gets the tree node with the given name
+ * @param name name - tree node's name
+ * @example
+ * export default function() {
+ *   const root = findByName(RootName)
+ *   root.insert(0, { name: 'foo', test: () => { return true }, fake: () => { return 'foobar' } })
+ *   console.log(fake({type: 'string'}))
+ * }
+ */
+export function findByName(name: string): Tree
+
+export const RootName = ''
+
+export interface Tree {
+    name: string
+    test: () => boolean
+    fake: () => JSONValue
+
+    append?: (node: Tree) => void
+    insert?: (index: number, node: Tree) => void
+}
+
+export interface Request {
+    names: string[]
+    schema: JSONSchema
+}
+
+export interface JSONSchema {
+    type: string | string[]
+    enum: unknown[]
+    const: unknown
+    examples: unknown[]
+
+    // Numbers
+    multipleOf: number | undefined
+    maximum: number | undefined
+    exclusiveMaximum: number | undefined
+    minimum: number | undefined
+    exclusiveMinimum: number | undefined
+
+    // Strings
+    maxLength: number | undefined
+    minLength: number | undefined
+    pattern: string
+    format: string
+
+    // Arrays
+    items: JSONSchema | undefined
+    maxItems: number | undefined
+    minItems: number | undefined
+    uniqueItems: boolean
+
+    // Objects
+    properties: { [name: string]: JSONSchema }
+    maxProperties: number | undefined
+    minProperties: number | undefined
+    required: string[] | undefined
+    additionalProperties: boolean | JSONSchema | undefined
+
+    allOf: JSONSchema[] | undefined
+    anyOf: JSONSchema[] | undefined
+    oneOf: JSONSchema[] | undefined
+
+    isAny: () => boolean
+    isString: () => boolean
+    isInteger: () => boolean
+    isNumber: () => boolean
+    isArray: () => boolean
+    isObject: () => boolean
+    isNullable: () => boolean
+    isDictionary: () => boolean
+    is: (typeName: string) => boolean
+}
+
 export interface Schema {
     /** Type of fake value */
     type?: "object" | "array" | "number" | "integer" | "string" | "boolean";
