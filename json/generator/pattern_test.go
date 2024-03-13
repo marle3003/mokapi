@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
 	"mokapi/json/schematest"
@@ -65,7 +66,7 @@ func TestPattern(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "1510", v)
+				require.Equal(t, "2135", v)
 			},
 		},
 		{
@@ -90,11 +91,11 @@ func TestPattern(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "auR@j\\Cc\\8J\\UWN9\\AeG7k\\AzsB5UK7vwW", v)
+				require.Equal(t, "auR@j\\Cc\\8J\\UWg72G7", v)
 			},
 		},
 		{
-			name: "complex pattern",
+			name: "complex pattern with minLength",
 			req: &Request{
 				Schema: schematest.New("string",
 					schematest.WithPattern("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"),
@@ -103,7 +104,21 @@ func TestPattern(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "au/R@j\\fF38QbCuGvgHbbYW1THqmk9Qcj\\*cAHT2\\uMeKvpeve4x7M\\8J\\UWN9\\AeG7k\\AzsB5UK7vwW", v)
+				require.GreaterOrEqual(t, len(fmt.Sprintf("%v", v)), 50)
+				require.Equal(t, "CF4au0w7SH9R@juGvgHbxY\\)AHqmk9jx7n\\*c\\*II5M\\4OpeveiwsB\\Cc\\8J\\UU\\QYKXfcKWg72G7", v)
+			},
+		},
+		{
+			name: "fix length",
+			req: &Request{
+				Schema: schematest.New("string",
+					schematest.WithPattern("\\d{16}"),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Len(t, v, 16)
+				require.Equal(t, "8029109364893011", v)
 			},
 		},
 	}

@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 import { usePrettyBytes } from '@/composables/usePrettyBytes'
 import { VAceEditor } from 'vue3-ace-editor'
-import '../../ace-editor/ace-config'
+import '@/ace-editor/ace-config'
 
 const props = withDefaults(defineProps<{
   source: string
@@ -48,6 +48,7 @@ const viewHeight = computed(() => {
     if (props.maxHeight && height > props.maxHeight) {
       return props.maxHeight
     }
+    console.log(height)
     return height
   }
   return 500
