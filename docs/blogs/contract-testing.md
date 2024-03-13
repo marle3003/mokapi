@@ -4,6 +4,11 @@ description: Take a closer look at why you can achieve better time to market wit
 ---
 # Contract Testing
 
+**Why invest in testing if you can't ensure the service you rely on is providing the right data? 
+Without mocks, you can't gain confidence in automated testing over systems you don't control. 
+Using a mock tool like [Mokapi](https://mokapi.io), you can write easy, quick, deterministic and reliable tests even at 
+higher levels of the testing pyramid.**
+
 Contract testing gets increasingly more crucial with a microservice architecture. Especially in an agile development team to be able to test interactions between service as the system changes quickly in the production. Contract testing ensures that the *contract* or agreement between a service and its consumers remains intact and unbroken.
 
 This type of testing allows us to identify discrepancies between expected and actual data formats and response codes and thereby preventing integration issues. By automating these checks, agile teams can detect problems early in the development cycle, reducing the risk of production outages and facilitating smoother deployments.
