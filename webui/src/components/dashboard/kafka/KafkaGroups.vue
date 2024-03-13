@@ -13,6 +13,10 @@ const { format } = usePrettyDates()
 const { sum } = useMetrics()
 
 function memberInfo(member: KafkaMember): string {
+    let partitions = ''
+    if (member.partitions) {
+        partitions = member.partitions.join(', ')
+    }
     return `<div aria-label="${member.name}">
             <p id="${member.name}-address" class="label">Address</p>
             <p aria-labelledby="${member.name}-address">${member.addr}</p>
@@ -21,7 +25,7 @@ function memberInfo(member: KafkaMember): string {
             <p id="${member.name}-last-heartbeat" class="label">Last Heartbeat</p>
             <p aria-labelledby="${member.name}-last-heartbeat">${format(member.heartbeat)}</p>
             <p id="${member.name}-partitions" class="label">Partitions</p>
-            <p aria-labelledby="${member.name}-partitions">${member.partitions.join(', ')}</p>
+            <p aria-labelledby="${member.name}-partitions">${partitions}</p>
             </div>`
 }
 

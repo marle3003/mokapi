@@ -87,7 +87,7 @@ onUnmounted(() => {
             <div class="card">
                 <div class="card-body">
                     <div class="row">
-                        <source-view :source="formatLanguage(data, contentType)" :content-type="contentType" :url="getDataUrl(configId)" :filename="filename"  />
+                        <source-view :source="formatLanguage(toString(data), contentType)" :content-type="contentType" :url="getDataUrl(configId)" :filename="filename"  />
                     </div>
                 </div>
             </div>
