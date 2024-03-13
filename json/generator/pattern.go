@@ -57,6 +57,8 @@ func (g *regexGenerator) refill(min, max int) error {
 		return fmt.Errorf("no fillers exists")
 	}
 
+	const limit = 30
+	counter := 0
 	for g.sb.Len() < min {
 		nOld := g.sb.Len()
 		for _, fill := range g.fillers {
@@ -64,7 +66,10 @@ func (g *regexGenerator) refill(min, max int) error {
 			fill(max - n)
 		}
 		if nOld == g.sb.Len() {
-			return fmt.Errorf("fillers no longer provide data")
+			if counter == limit {
+				return fmt.Errorf("fillers no longer provide data")
+			}
+			counter++
 		}
 	}
 	return nil
@@ -72,7 +77,7 @@ func (g *regexGenerator) refill(min, max int) error {
 
 // regexGenerate based on https://github.com/brianvoe/gofakeit
 func (g *regexGenerator) regexGenerate(re *syntax.Regexp, max int) {
-	if max <= 0 {
+	if max-g.sb.Len() <= 0 {
 		panic("length limit reached when generating output")
 	}
 
@@ -182,7 +187,7 @@ func (g *regexGenerator) regexGenerate(re *syntax.Regexp, max int) {
 		})
 	case syntax.OpConcat: // matches concatenation of Subs
 		for _, rs := range re.Sub {
-			g.regexGenerate(rs, max-g.sb.Len())
+			g.regexGenerate(rs, max)
 		}
 	case syntax.OpAlternate: // matches alternation of Subs
 		g.regexGenerate(re.Sub[gofakeit.Number(0, len(re.Sub)-1)], max)
@@ -193,7 +198,7 @@ func (g *regexGenerator) opStar(re *syntax.Regexp, limit int) {
 	max := int(math.Min(float64(limit), float64(10)))
 	for i := 0; i < gofakeit.Number(0, max); i++ {
 		for _, rs := range re.Sub {
-			g.regexGenerate(rs, limit-g.sb.Len())
+			g.regexGenerate(rs, limit)
 		}
 	}
 }
@@ -202,7 +207,7 @@ func (g *regexGenerator) opPlus(re *syntax.Regexp, min, limit int) {
 	max := int(math.Min(10, float64(limit)))
 	for i := 0; i < gofakeit.Number(min, max); i++ {
 		for _, rs := range re.Sub {
-			g.regexGenerate(rs, limit-g.sb.Len())
+			g.regexGenerate(rs, limit)
 
 		}
 	}
@@ -210,10 +215,14 @@ func (g *regexGenerator) opPlus(re *syntax.Regexp, min, limit int) {
 
 func (g *regexGenerator) opRepeat(re *syntax.Regexp, limit int) int {
 	max := int(math.Min(float64(re.Max), math.Min(float64(limit), float64(10))))
-	count := gofakeit.Number(re.Min, max)
+	count := 0
+	if re.Max > re.Min {
+		count = g.ra.Intn(max - re.Min + 1)
+	}
+	count = int(math.Max(float64(re.Min), float64(re.Min+count)))
 	for i := 0; i < count; i++ {
 		for _, rs := range re.Sub {
-			g.regexGenerate(rs, limit-g.sb.Len())
+			g.regexGenerate(rs, limit)
 		}
 	}
 	return count
@@ -223,7 +232,7 @@ func (g *regexGenerator) opQuest(re *syntax.Regexp, limit int) bool {
 	n := gofakeit.Number(0, 1)
 	if n == 1 {
 		for _, rs := range re.Sub {
-			g.regexGenerate(rs, limit-g.sb.Len())
+			g.regexGenerate(rs, limit)
 		}
 		return true
 	}
