@@ -6,7 +6,7 @@ description: Automated tests are essential for Agile or CI teams. Learn how Moka
 
 **Mock tools like [Mokapi](https://mokapi.io) can provide many opportunities to iterate better and faster 
 by enabling team members to communicate expectations, decouple dependencies from other teams and services, 
-and identify defects earlier and thereby increase time to market**
+and identify defects earlier and thereby improve time to market**
 
 Automated tests are essential for agile development. They ensure that our software system is still 
 easy to change. In an agile development process, software systems are changed and new feature are 
