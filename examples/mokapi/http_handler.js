@@ -4,12 +4,17 @@ import { apps as httpServices, events as httpEvents, configs as httpConfigs } fr
 import { server as smtpServers, mails, mailEvents, getMail, getAttachment } from 'smtp.js'
 import { server as ldapServers, searches } from 'ldap.js'
 import { metrics } from 'metrics.js'
-import { fake } from 'mokapi/faker'
+import { fake, findByName, RootName } from 'mokapi/faker'
 import { get, post } from 'mokapi/http'
 
 const configs = {}
 
 export default function() {
+    if (!findByName('CustomLongNameWithSpecial')) {
+        const root = findByName(RootName)
+        root.insert(0, { name: 'CustomLongNameWithSpecial' })
+    }
+
     on('http', function(request, response) {
         response.headers["Access-Control-Allow-Methods"] = "*"
         response.headers["Access-Control-Allow-Headers"] = "*"
@@ -107,6 +112,9 @@ export default function() {
                     response.data = ''
                     return true
                 }
+            case 'fakertree':
+                const resp = get('http://localhost:8091/mokapi/api/faker/tree')
+                response.body = resp.body
         }
     }, {tags: {name: "dashboard"}})
 

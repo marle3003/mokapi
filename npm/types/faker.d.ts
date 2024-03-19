@@ -26,15 +26,22 @@ export function fake(schema: Schema): JSONValue;
  */
 export function findByName(name: string): Tree
 
-export const RootName = ''
+export const RootName = 'Faker'
 
 export interface Tree {
     name: string
+    readonly test: () => boolean
+    readonly fake: () => JSONValue
+
+    append: (node: Tree | CustomTree) => void
+    insert: (index: number, node: Tree | CustomTree) => void
+    remove: (index: number) => void
+}
+
+export interface CustomTree {
+    name: string
     test: () => boolean
     fake: () => JSONValue
-
-    append?: (node: Tree) => void
-    insert?: (index: number, node: Tree) => void
 }
 
 export interface Request {

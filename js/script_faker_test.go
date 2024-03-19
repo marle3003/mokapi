@@ -26,7 +26,7 @@ func TestScript_Faker(t *testing.T) {
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
-				r.Equal(t, "xid1UOwQ;", v.String())
+				r.Equal(t, "XidZuoWq ", v.String())
 			},
 		},
 		{
@@ -70,7 +70,7 @@ func TestScript_Faker(t *testing.T) {
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
-				r.Equal(t, "xid1UOwQ;", v.String())
+				r.Equal(t, "XidZuoWq ", v.String())
 			},
 		},
 		{
@@ -96,14 +96,14 @@ func TestScript_Faker(t *testing.T) {
 				s, err := New(newScript("",
 					`import {fake, findByName} from 'mokapi/faker'
 						 export default function() {
-						 	let root = findByName('')
+						 	let root = findByName('Faker')
 							root.insert(0, {
 								name: 'foo',
 								test: () => { return true },
 								fake: (r) => {
 									return {
-										isString: r.schema.isString(),
-										schema:	r.schema.string()
+										isString: r.lastSchema().isString(),
+										schema:	r.lastSchema().string()
 									}
 								}
 							})

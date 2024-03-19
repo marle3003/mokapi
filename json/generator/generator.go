@@ -31,11 +31,14 @@ func FindByName(name string) *Tree {
 	if len(name) == 0 {
 		return g.tree
 	}
+	if g.tree.Name == name {
+		return g.tree
+	}
 	return g.tree.FindByName(name)
 }
 
 func (t *Tree) FindByName(name string) *Tree {
-	for _, node := range t.nodes {
+	for _, node := range t.Nodes {
 		if node.Name == name {
 			return node
 		}
@@ -47,18 +50,18 @@ func (t *Tree) FindByName(name string) *Tree {
 }
 
 func (t *Tree) Append(node *Tree) {
-	t.nodes = append(t.nodes, node)
+	t.Nodes = append(t.Nodes, node)
 }
 
 func (t *Tree) Insert(index int, node *Tree) error {
 	if index < 0 {
 		return fmt.Errorf("index must be positive: %v", index)
 	}
-	if index >= len(t.nodes) {
+	if index >= len(t.Nodes) {
 		return fmt.Errorf("index outside of array: %v", index)
 	}
-	t.nodes = append(t.nodes[:index+1], t.nodes[index:]...)
-	t.nodes[index] = node
+	t.Nodes = append(t.Nodes[:index+1], t.Nodes[index:]...)
+	t.Nodes[index] = node
 	return nil
 }
 
@@ -66,9 +69,9 @@ func (t *Tree) Remove(index int) error {
 	if index < 0 {
 		return fmt.Errorf("index must be positive: %v", index)
 	}
-	if index >= len(t.nodes) {
+	if index >= len(t.Nodes) {
 		return fmt.Errorf("index outside of array: %v", index)
 	}
-	t.nodes = append(t.nodes[:index], t.nodes[index+1:]...)
+	t.Nodes = append(t.Nodes[:index], t.Nodes[index+1:]...)
 	return nil
 }

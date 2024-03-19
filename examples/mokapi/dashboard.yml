@@ -369,3 +369,27 @@ paths:
             text/plain:
               schema:
                 type: string
+  /api/faker/tree:
+    get:
+      summary: returns faker tree
+      operationId: fakertree
+      responses:
+        "200":
+          description: content of config
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/FakerTree'
+components:
+  schemas:
+    FakerTree:
+      type: object
+      properties:
+        name:
+          type: string
+        value:
+          type: string
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/FakerTree'

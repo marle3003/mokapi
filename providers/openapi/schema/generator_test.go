@@ -27,7 +27,7 @@ func TestGenerator(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t,
-					map[string]interface{}{"buckles": true, "kitchen": 1.5185513854953036e+308, "problem": true, "sand": true, "sock": "HgpevUwYR", "thing": "Y Yvm", "tribe": int64(9082579350789565885)},
+					map[string]interface{}{"buckles": 1.414946145709964e+308, "kitchen": true, "problem": 1.410477402203964e+308, "sand": true, "sock": 2.3090412168364615e+307, "thing": "Y5elX", "tribe": int64(9082579350789565885)},
 					v)
 			},
 		},
@@ -37,7 +37,7 @@ func TestGenerator(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t,
-					map[string]interface{}{"buckles": true, "kitchen": 1.5185513854953036e+308, "problem": true, "sand": true, "sock": "HgpevUwYR", "thing": "Y Yvm", "tribe": int64(9082579350789565885)},
+					map[string]interface{}{"buckles": 1.414946145709964e+308, "kitchen": true, "problem": 1.410477402203964e+308, "sand": true, "sock": 2.3090412168364615e+307, "thing": "Y5elX", "tribe": int64(9082579350789565885)},
 					v)
 			},
 		},
@@ -71,7 +71,7 @@ func TestGeneratorString(t *testing.T) {
 			schema: &schema.Schema{Type: "string"},
 			test: func(v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "xid1UOwQ;", v)
+				require.Equal(t, "XidZuoWq ", v)
 			},
 		},
 		{
@@ -183,7 +183,7 @@ func TestGeneratorString(t *testing.T) {
 			schema: &schema.Schema{Type: "string", MinLength: toIntP(25)},
 			test: func(v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "xid1UOwQ;ezYvmtLRfvHgpevUwYR5rljgm", v)
+				require.Equal(t, "XidZuoWq vY5elXhlD4ezlYe", v)
 			},
 		},
 		{
@@ -199,7 +199,7 @@ func TestGeneratorString(t *testing.T) {
 			schema: &schema.Schema{Type: "string", MaxLength: toIntP(12)},
 			test: func(v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "xid1UOwQ;ez", v)
+				require.Equal(t, "XidZuoWq vY", v)
 			},
 		},
 		{
@@ -207,7 +207,7 @@ func TestGeneratorString(t *testing.T) {
 			schema: &schema.Schema{Type: "string", MinLength: toIntP(3), MaxLength: toIntP(6)},
 			test: func(v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "xid1", v)
+				require.Equal(t, "XidZ", v)
 			},
 		},
 		{
@@ -215,7 +215,7 @@ func TestGeneratorString(t *testing.T) {
 			schema: &schema.Schema{Type: "string", MinLength: toIntP(4), MaxLength: toIntP(4)},
 			test: func(v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "SXpo", v)
+				require.Equal(t, "sXPO", v)
 			},
 		},
 	}
@@ -284,7 +284,7 @@ func TestGeneratorInt(t *testing.T) {
 			schema: &schema.Schema{Type: "integer", Format: "int32", Maximum: toFloatP(0)},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int32(-1072427943), i)
+				require.Equal(t, int32(-1951037312), i)
 			},
 		},
 		{
@@ -602,7 +602,7 @@ func TestGeneratorArray(t *testing.T) {
 			schema: &schema.Schema{Type: "array"},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{"id1", false, "", []interface{}{}, map[string]interface{}{"shower": 1.3433890851076963e+308}}, i)
+				require.Equal(t, []interface{}{"idZ", false, "", []interface{}{}, map[string]interface{}{"shower": 1.3433890851076963e+308}}, i)
 			},
 		},
 	}
@@ -649,7 +649,7 @@ func TestGeneratorObject(t *testing.T) {
 		},
 		{
 			name: "dictionary",
-			exp:  map[string]interface{}{"bridge": "Q;ezYvmtLRfvHg", "gang": "", "grapes": "zKw11KQGjL4Xkt", "pod": "EhCIa 5rljgm", "problem": "zw", "tribe": ""},
+			exp:  map[string]interface{}{"effect": "q vY5elXhlD4ez", "gang": "", "problem": "zw", "tribe": "", "way": "1JKqGj", "wisp": "evuwyrNrLJgmr9a"},
 			schema: schematest.New("object",
 				schematest.WithAdditionalProperties(schematest.New("string"))),
 		},
@@ -673,6 +673,7 @@ func TestGeneratorObject(t *testing.T) {
 	for _, data := range testdata {
 		t.Run(data.name, func(t *testing.T) {
 			gofakeit.Seed(11)
+			generator.Seed(11)
 
 			v, err := schema.CreateValue(&schema.Ref{Value: data.schema})
 			require.NoError(t, err)
@@ -707,7 +708,7 @@ func TestGenerator_AnyOf(t *testing.T) {
 				require.NoError(t, err)
 				b, err := json.Marshal(o)
 				require.NoError(t, err)
-				require.Equal(t, `[{"foo":"id1"}]`, string(b))
+				require.Equal(t, `[{"foo":"idZ"}]`, string(b))
 			},
 		},
 	}
@@ -735,7 +736,7 @@ func TestGenerator_AllOf(t *testing.T) {
 			)),
 			test: func(t *testing.T, result interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": "xid1UOwQ;", "bar": float64(1.1291386311317026e+308)}, result)
+				require.Equal(t, map[string]interface{}{"foo": "XidZuoWq ", "bar": 5.58584061532191e+307}, result)
 			},
 		},
 		{

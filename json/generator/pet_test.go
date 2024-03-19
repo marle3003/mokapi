@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
+	"mokapi/json/ref"
 	"mokapi/json/schema"
+	"mokapi/json/schematest"
 	"testing"
 )
 
@@ -15,61 +17,122 @@ func TestPet(t *testing.T) {
 		test func(t *testing.T, v interface{}, err error)
 	}{
 		{
-			name: "pet name",
-			req:  &Request{Names: []string{"pet", "name"}},
+			name: "pet-name",
+			req: &Request{
+				Path: Path{
+					&PathElement{Name: "pet", Schema: schematest.NewRef("object",
+						schematest.WithProperty("name", nil),
+					)},
+				},
+			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "Betty", v)
+				require.Equal(t, map[string]interface{}{"name": "Betty"}, v)
 			},
 		},
 		{
-			name: "pets name",
-			req:  &Request{Names: []string{"pets", "name"}},
+			name: "pet-name as string",
+			req: &Request{
+				Path: Path{
+					&PathElement{Name: "pet", Schema: schematest.NewRef("object",
+						schematest.WithProperty("name", schematest.New("string")),
+					)},
+				},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"name": "Betty"}, v)
+			},
+		},
+		{
+			name: "pets-name",
+			req: &Request{
+				Path: Path{
+					&PathElement{Name: "pets", Schema: schematest.NewRef("array", schematest.WithItemsRef(
+						&schema.Ref{Reference: ref.Reference{Ref: "#/components/schemas/Pet"}, Value: schematest.New("string")},
+					))},
+				},
+			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []interface{}{"Fyodor Dogstoevsky", "Woofgang Puck"}, v)
 			},
 		},
 		{
-			name: "pets name",
+			name: "pets-name within object",
 			req: &Request{
-				Names:  []string{"pets", "name"},
-				Schema: &schema.Schema{Type: []string{"array"}, MinItems: toIntP(4)},
+				Path: Path{
+					&PathElement{Name: "pets", Schema: schematest.NewRef("array", schematest.WithItems(
+						"object", schematest.WithProperty("name", nil),
+					))},
+				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{"Fyodor Dogstoevsky", "Woofgang Puck", "Chompers", "Khaleesi"}, v)
+				require.Equal(t, []interface{}{
+					map[string]interface{}{"name": "Fyodor Dogstoevsky"},
+					map[string]interface{}{"name": "Woofgang Puck"},
+				}, v)
 			},
 		},
 		{
-			name: "pet category",
-			req:  &Request{Names: []string{"pet", "category"}},
+			name: "pet-category",
+			req: &Request{
+				Path: Path{
+					&PathElement{Name: "pet", Schema: schematest.NewRef("object", schematest.WithProperty("category", nil))},
+				},
+			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "bat", v)
+				require.Equal(t, map[string]interface{}{"category": "bat"}, v)
 			},
 		},
 		{
-			name: "pet category object",
-			req:  &Request{Names: []string{"pet", "category", "name"}},
+			name: "pet-category-name",
+			req: &Request{
+				Path: Path{
+					&PathElement{
+						Name: "pet", Schema: schematest.NewRef("object",
+							schematest.WithProperty("category", schematest.New("object",
+								schematest.WithProperty("name", nil)),
+							),
+						),
+					},
+				},
+			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "bat", v)
+				require.Equal(t, map[string]interface{}{"category": map[string]interface{}{"name": "bat"}}, v)
 			},
 		},
 		{
-			name: "pet categories",
-			req:  &Request{Names: []string{"pet", "categories"}},
+			name: "pet-categories",
+			req: &Request{
+				Path: Path{
+					&PathElement{Name: "pet", Schema: schematest.NewRef("array", schematest.WithItemsRef(
+						&schema.Ref{Reference: ref.Reference{Ref: "#/components/schemas/Category"}, Value: schematest.New("string")},
+					))},
+				},
+			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []interface{}{"elk", "fish"}, v)
 			},
 		},
 		{
-			name: "pet category with schema",
+			name: "pet-category with schema",
 			req: &Request{
-				Names:  []string{"pet"},
-				Schema: mustParse(`{"type": "object", "properties": {"category": {"type": "object", "properties": {"name": {"type": "string"},"id": {"type": "integer"}} }}}`),
+				Path: Path{
+					&PathElement{
+						Name: "pet",
+						Schema: schematest.NewRef("object",
+							schematest.WithProperty("category", schematest.New("object",
+								schematest.WithProperty("name", schematest.New("string")),
+								schematest.WithProperty("id", schematest.New("integer")),
+							)),
+						),
+					},
+				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)

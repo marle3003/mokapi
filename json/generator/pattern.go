@@ -13,12 +13,14 @@ func StringPattern() *Tree {
 	return &Tree{
 		Name: "Pattern",
 		Test: func(r *Request) bool {
-			return r.Schema.IsString() && r.Schema.Pattern != ""
+			s := r.LastSchema()
+			return s.IsString() && s.Pattern != ""
 		},
 		Fake: func(r *Request) (v interface{}, err error) {
-			re, err := syntax.Parse(r.Schema.Pattern, syntax.Perl)
+			s := r.LastSchema()
+			re, err := syntax.Parse(s.Pattern, syntax.Perl)
 			if err != nil {
-				return nil, fmt.Errorf("could not parse regex string: %v", r.Schema.Pattern)
+				return nil, fmt.Errorf("could not parse regex string: %v", s.Pattern)
 			}
 
 			// Panic catch
@@ -29,17 +31,17 @@ func StringPattern() *Tree {
 			}()
 
 			g := regexGenerator{ra: r.g.rand}
-			g.regexGenerate(re, len(r.Schema.Pattern)*100)
-			if r.Schema != nil && r.Schema.MinLength != nil {
-				min := *r.Schema.MinLength
+			g.regexGenerate(re, len(s.Pattern)*100)
+			if s != nil && s.MinLength != nil {
+				min := *s.MinLength
 				max := min + 100
-				if r.Schema.MaxLength != nil {
-					max = *r.Schema.MaxLength
+				if s.MaxLength != nil {
+					max = *s.MaxLength
 				}
 				err = g.refill(min, max)
 			}
 			if err != nil {
-				return nil, fmt.Errorf("cannot generate value for pattern %v and minimum length %v", r.Schema.Pattern, *r.Schema.MinLength)
+				return nil, fmt.Errorf("cannot generate value for pattern %v and minimum length %v", s.Pattern, *s.MinLength)
 			}
 			return g.sb.String(), nil
 		},

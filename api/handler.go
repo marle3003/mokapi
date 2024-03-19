@@ -122,6 +122,8 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.validate(w, r)
 	case strings.HasPrefix(p, "/api/configs"):
 		h.handleConfig(w, r)
+	case strings.HasPrefix(p, "/api/faker/tree"):
+		h.handleFakerTree(w, r)
 	case h.fileServer != nil:
 		if isAsset(r.URL.Path) {
 			r.URL.Path = "/assets/" + filepath.Base(r.URL.Path)

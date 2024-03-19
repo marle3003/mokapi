@@ -7,24 +7,27 @@ import (
 	"mokapi/json/schema"
 )
 
+var ErrUnsupported = errors.New("unsupported operation")
+
 type Tree struct {
-	Name string
+	Name   string `json:"name"`
+	Custom bool   `json:"custom"`
 
-	nodes []*Tree
-
-	Test func(r *Request) bool
-	Fake func(r *Request) (interface{}, error)
+	Test  func(r *Request) bool                 `json:"-"`
+	Nodes []*Tree                               `json:"nodes,omitempty"`
+	Fake  func(r *Request) (interface{}, error) `json:"-"`
 }
 
 func (t *Tree) Add(node *Tree) {
-	t.nodes = append(t.nodes, node)
+	t.Nodes = append(t.Nodes, node)
 }
 
 func (t *Tree) Resolve(r *Request) (interface{}, error) {
 	v, err := resolve(t, r)
 	if err != nil {
+
 		if errors.Is(err, ErrUnsupported) {
-			return nil, fmt.Errorf("unsupported schema: %v", r.Schema)
+			return nil, fmt.Errorf("unsupported schema: %v", r.Last().Schema)
 		}
 		return nil, err
 	}
@@ -32,7 +35,7 @@ func (t *Tree) Resolve(r *Request) (interface{}, error) {
 }
 
 func resolve(node *Tree, r *Request) (v interface{}, err error) {
-	for _, n := range node.nodes {
+	for _, n := range node.Nodes {
 		if n.Test != nil {
 			if n.Test(r) {
 				if n.Fake == nil {
@@ -56,32 +59,32 @@ func resolve(node *Tree, r *Request) (v interface{}, err error) {
 
 func NewTree() *Tree {
 	root := &Tree{
-		nodes: []*Tree{
-			Null(),
-			Const(),
-			Enum(),
-			AnyOf(),
-			AllOf(),
-			OneOf(),
-			PetTree(),
-			PersonTree(),
-			AddressTree(),
-			ProductTree(),
-			NameTree(),
+		Name: "Faker",
+		Nodes: []*Tree{
+			Generic(),
+			Compositions(),
+			Pets(),
+			Persons(),
+			Addresses(),
+			Products(),
+			//Material(),
+			Category(),
+			Currency(),
+			Colors(),
 			Examples(),
-			Number(),
-			StringTree(),
+			Numbers(),
+			Strings(),
 			Object(),
 			Array(),
 			Bool(),
-			Any(),
+			AnyType(),
 		},
 	}
 
 	return root
 }
 
-func Any() *Tree {
+func AnyType() *Tree {
 	simpleTypes := []string{
 		"string",
 		"number",
@@ -106,34 +109,22 @@ func Any() *Tree {
 	return &Tree{
 		Name: "Any",
 		Test: func(r *Request) bool {
-			return r.Schema.IsAny()
+			return r.Path.MatchLast(IsSchemaAny())
 		},
 		Fake: func(r *Request) (interface{}, error) {
 			t := getRandomType(r)
-			r = r.With(Schema(&schema.Schema{
-				Type: []string{t},
+			r = r.With(PathElements(&PathElement{
+				Schema: &schema.Ref{
+					Value: &schema.Schema{
+						Type: []string{t},
+					},
+				},
 			}))
 			if _, ok := r.context["any"]; !ok {
 				r.context["any"] = true
 				defer delete(r.context, "any")
 			}
 			return r.g.tree.Resolve(r)
-		},
-	}
-}
-
-func Null() *Tree {
-	return &Tree{
-		Name: "Null",
-		Test: func(r *Request) bool {
-			if !r.Schema.IsNullable() {
-				return false
-			}
-			n := gofakeit.Float32Range(0, 1)
-			return n < 0.05
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			return nil, nil
 		},
 	}
 }

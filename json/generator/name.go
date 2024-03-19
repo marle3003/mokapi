@@ -5,23 +5,25 @@ import (
 	"strings"
 )
 
-func NameTree() *Tree {
+func Name() *Tree {
 	return &Tree{
 		Name: "Name",
 		Test: func(r *Request) bool {
-			last := r.LastName()
-			return (strings.ToLower(last) == "name" || strings.HasSuffix(last, "Name")) &&
-				(r.Schema.IsAny() || (r.Schema.IsString() && r.Schema.Pattern == "" && r.Schema.Format == ""))
+			last := r.Last()
+			schema := last.Schema
+			return (strings.ToLower(last.Name) == "name" || strings.HasSuffix(last.Name, "Name")) &&
+				!hasPattern(schema) && !hasFormat(schema)
 		},
 		Fake: func(r *Request) (interface{}, error) {
+			schema := r.LastSchema()
 			var collection []string
 			min := 0
 			max := 12
-			if r.Schema != nil && r.Schema.MinLength != nil {
-				min = *r.Schema.MinLength
+			if schema != nil && schema.MinLength != nil {
+				min = *schema.MinLength
 			}
-			if r.Schema != nil && r.Schema.MaxLength != nil {
-				max = *r.Schema.MaxLength
+			if schema != nil && schema.MaxLength != nil {
+				max = *schema.MaxLength
 			}
 			if min <= 3 && max >= 3 {
 				collection = append(collection, names3...)

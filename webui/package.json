@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@popperjs/core": "^2.11.6",
+    "@ssthouse/vue3-tree-chart": "^0.2.6",
     "@types/bootstrap": "^5.2.10",
     "@types/whatwg-mimetype": "^3.0.2",
     "ace-builds": "^1.32.7",

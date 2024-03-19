@@ -10,19 +10,18 @@ import (
 
 const smallestFloat = 1e-20
 
-func Number() *Tree {
+func Numbers() *Tree {
 	return &Tree{
-		Name: "Number",
-		nodes: []*Tree{
-			Ids(),
+		Name: "Numbers",
+		Nodes: []*Tree{
+			MultipleOf(),
 			Id(),
-			Budget(),
-			Price(),
+			IdList(),
 			Year(),
 			Integer32(),
 			Integer64(),
 			Float32(),
-			Float64(),
+			Number(),
 		},
 	}
 }
@@ -31,84 +30,47 @@ func Id() *Tree {
 	return &Tree{
 		Name: "Id",
 		Test: func(r *Request) bool {
-			return (r.LastName() == "id" || strings.HasSuffix(r.LastName(), "Id")) &&
-				(r.Schema.IsAny() || r.Schema.IsInteger() ||
-					(r.Schema.IsString() && r.Schema.Format == "" && r.Schema.Pattern == ""))
+			return r.Path.MatchLast(ComparerFunc(func(p *PathElement) bool {
+				return (strings.ToLower(p.Name) == "id" || strings.HasSuffix(p.Name, "Id")) &&
+					(p.Schema.IsInteger() || p.Schema.IsAny())
+			}))
 		},
 		Fake: func(r *Request) (interface{}, error) {
-			if r.Schema.IsAny() || r.Schema.IsInteger() {
-				return newPositiveNumber(r.Schema)
-			}
-			min := 37
-			max := 37
-			if r.Schema.MaxLength != nil {
-				max = *r.Schema.MaxLength
-			}
-			if r.Schema.MinLength != nil {
-				min = *r.Schema.MinLength
-			} else if r.Schema.MaxLength != nil {
-				min = max
-			}
-
-			if min <= 37 && max >= 37 {
-				return gofakeit.UUID(), nil
-			}
-			n := gofakeit.Number(min, max)
-			return gofakeit.Numerify(strings.Repeat("#", n)), nil
+			s := r.LastSchema()
+			return newPositiveNumber(s)
 		},
 	}
 }
 
-func Ids() *Tree {
+func IdList() *Tree {
 	return &Tree{
-		Name: "Ids",
+		Name: "ID-List",
 		Test: func(r *Request) bool {
-			return (r.LastName() == "ids" || strings.HasSuffix(r.LastName(), "Ids")) &&
-				(r.Schema.IsArray() || r.Schema.IsAny())
+			return r.Path.MatchLast(ComparerFunc(func(p *PathElement) bool {
+				name := strings.ToLower(p.Name)
+				if name == "ids" {
+					return p.Schema.IsArray() || p.Schema.IsAny()
+				}
+				if strings.HasSuffix(name, "ids") {
+					return p.Schema.IsArray()
+				}
+
+				return false
+			}))
 		},
 		Fake: func(r *Request) (interface{}, error) {
-			var next *Request
-			last := r.LastName()
-			if strings.ToLower(last) == "ids" {
-				next = r.With(Name("id"))
-			} else {
-				next = r.With(Name(strings.TrimSuffix(last, "s")))
+			last := r.Last()
+			s := last.Schema
+			if s.IsAny() {
+				s = &schema.Ref{Value: &schema.Schema{Type: []string{"array"}}}
 			}
-			if r.Schema.IsAny() {
-				next = next.With(Schema(&schema.Schema{Type: []string{"array"}}))
-			}
+
+			next := r.With()
+			next.Path = Path{&PathElement{
+				Name:   strings.TrimSuffix(last.Name, "s"),
+				Schema: s,
+			}}
 			return r.g.tree.Resolve(next)
-		},
-	}
-}
-
-func Budget() *Tree {
-	return &Tree{
-		Name: "Budget",
-		Test: func(r *Request) bool {
-			return (r.LastName() == "budget" || strings.HasSuffix(r.LastName(), "Budget")) &&
-				(r.Schema.IsAny() || r.Schema.IsInteger())
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			return newPositiveNumber(r.Schema)
-		},
-	}
-}
-
-func Price() *Tree {
-	return &Tree{
-		Name: "Price",
-		Test: func(r *Request) bool {
-			return (r.LastName() == "price" || strings.HasSuffix(r.LastName(), "Price")) &&
-				(r.Schema.IsAny() || r.Schema.IsInteger() || r.Schema.IsNumber())
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			s := r.Schema
-			if r.Schema.IsAny() {
-				s = &schema.Schema{Type: []string{"number"}}
-			}
-			min, max := getRangeWithDefault(s, 0, 100000)
-			return gofakeit.Price(min, max), nil
 		},
 	}
 }
@@ -117,13 +79,41 @@ func Year() *Tree {
 	return &Tree{
 		Name: "Year",
 		Test: func(r *Request) bool {
-			last := r.LastName()
-			return (strings.ToLower(last) == "year" || strings.HasSuffix(last, "Year") || strings.HasPrefix(last, "year")) &&
-				r.Schema.IsInteger()
+			last := r.Last()
+			return (strings.ToLower(last.Name) == "year" || strings.HasSuffix(last.Name, "Year") ||
+				strings.HasPrefix(last.Name, "year")) && (last.Schema.IsInteger() || last.Schema.IsAny())
 		},
 		Fake: func(r *Request) (interface{}, error) {
-			min, max := getRangeWithDefault(r.Schema, 1900, 2199)
+			s := r.LastSchema()
+			if s.IsAny() {
+				s = &schema.Schema{Type: []string{"integer"}}
+			}
+			min, max := getRangeWithDefault(s, 1900, 2199)
 			return gofakeit.IntRange(int(min), int(max)), nil
+		},
+	}
+}
+
+func MultipleOf() *Tree {
+	return &Tree{
+		Name: "MultipleOf",
+		Test: func(r *Request) bool {
+			s := r.LastSchema()
+			return (s.IsNumber() || s.IsInteger()) && s.MultipleOf != nil
+		},
+		Fake: func(r *Request) (interface{}, error) {
+			s := r.LastSchema()
+			min := 0
+			max := 100
+			n := gofakeit.Number(min, max)
+			v := *s.MultipleOf * float64(n)
+			if s.Maximum != nil && v > *s.Maximum {
+				for v > *s.Maximum {
+					n--
+					v = *s.MultipleOf * float64(n)
+				}
+			}
+			return v, nil
 		},
 	}
 }
@@ -132,22 +122,21 @@ func Integer32() *Tree {
 	return &Tree{
 		Name: "Integer32",
 		Test: func(r *Request) bool {
-			return r.Schema.IsInteger() && r.Schema.Format == "int32"
+			s := r.LastSchema()
+			return s.IsInteger() && s.Format == "int32"
 		},
 		Fake: func(r *Request) (interface{}, error) {
-			if !hasNumberRange(r.Schema) {
+			s := r.LastSchema()
+			if !hasNumberRange(s) {
 				return gofakeit.Int32(), nil
 			}
 
-			min, max := getRange(r.Schema)
+			min, max := getRange(s)
 			min = math.Ceil(min)
 			max = math.Floor(max)
 
 			if err := validateRange(min, max); err != nil {
-				return 0, fmt.Errorf("%w in %s", err, r.Schema)
-			}
-			if max-min > math.MaxInt32 {
-				return gofakeit.Int32(), nil
+				return 0, fmt.Errorf("%w in %s", err, s)
 			}
 
 			// gofakeit uses Intn function which panics if number is <= 0
@@ -158,21 +147,22 @@ func Integer32() *Tree {
 
 func Integer64() *Tree {
 	return &Tree{
-		Name: "Integer64",
+		Name: "Integer",
 		Test: func(r *Request) bool {
-			return r.Schema.IsInteger()
+			return r.LastSchema().IsInteger()
 		},
 		Fake: func(r *Request) (interface{}, error) {
-			if !hasNumberRange(r.Schema) {
+			s := r.LastSchema()
+			if !hasNumberRange(s) {
 				return gofakeit.Int64(), nil
 			}
 
-			min, max := getRange(r.Schema)
+			min, max := getRange(s)
 			min = math.Ceil(min)
 			max = math.Floor(max)
 
 			if err := validateRange(min, max); err != nil {
-				return 0, fmt.Errorf("%w in %s", err, r.Schema)
+				return 0, fmt.Errorf("%w in %s", err, s)
 			}
 			if math.IsInf(max-min, 0) {
 				return gofakeit.Int64(), nil
@@ -188,20 +178,19 @@ func Float32() *Tree {
 	return &Tree{
 		Name: "Float32",
 		Test: func(r *Request) bool {
-			return r.Schema.IsNumber() && r.Schema.Format == "float"
+			s := r.LastSchema()
+			return s.IsNumber() && s.Format == "float"
 		},
 		Fake: func(r *Request) (interface{}, error) {
-			if !hasNumberRange(r.Schema) {
+			s := r.LastSchema()
+			if !hasNumberRange(s) {
 				return gofakeit.Float32(), nil
 			}
 
-			min, max := getRange(r.Schema)
+			min, max := getRange(s)
 
 			if err := validateRange(min, max); err != nil {
-				return 0, fmt.Errorf("%w in %s", err, r.Schema)
-			}
-			if max-min > math.MaxFloat32 {
-				return gofakeit.Float32(), nil
+				return 0, fmt.Errorf("%w in %s", err, s)
 			}
 
 			return gofakeit.Float32Range(float32(min), float32(max)), nil
@@ -209,21 +198,23 @@ func Float32() *Tree {
 	}
 }
 
-func Float64() *Tree {
+func Number() *Tree {
 	return &Tree{
-		Name: "Float64",
+		Name: "Number",
 		Test: func(r *Request) bool {
-			return r.Schema.IsNumber()
+			s := r.LastSchema()
+			return s.IsNumber()
 		},
 		Fake: func(r *Request) (interface{}, error) {
-			if !hasNumberRange(r.Schema) {
+			s := r.LastSchema()
+			if !hasNumberRange(s) {
 				return gofakeit.Float64(), nil
 			}
 
-			min, max := getRange(r.Schema)
+			min, max := getRange(s)
 
 			if err := validateRange(min, max); err != nil {
-				return 0, fmt.Errorf("%w in %s", err, r.Schema)
+				return 0, fmt.Errorf("%w in %s", err, s)
 			}
 			if math.IsInf(max-min, 0) {
 				return gofakeit.Float64(), nil

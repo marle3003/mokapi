@@ -38,6 +38,14 @@ func (r *Ref) IsDictionary() bool {
 	return r != nil && r.Value != nil && r.Value.IsDictionary()
 }
 
+func (r *Ref) HasProperties() bool {
+	return r != nil && r.Value != nil && r.Value.HasProperties()
+}
+
+func (r *Ref) IsAnyString() bool {
+	return r != nil && r.Value != nil && r.Value.IsAnyString()
+}
+
 func (r *Ref) Type() string {
 	if r == nil || r.Value == nil || len(r.Value.Type) == 0 {
 		return ""
