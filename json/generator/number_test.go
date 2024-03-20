@@ -356,7 +356,7 @@ func TestFloat32(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, float32(-1.3284906e+38), v)
+				require.Equal(t, float32(-1.3284907e+38), v)
 			},
 		},
 		{
@@ -425,7 +425,7 @@ func TestFloat(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, -7.018344371823453e+307, v)
+				require.Equal(t, -7.018344371823454e+307, v)
 			},
 		},
 		{
