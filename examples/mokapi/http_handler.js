@@ -73,6 +73,7 @@ export default function() {
                 }
                 return true
             case 'example':
+                console.log(request.body)
                 const data = fake(request.body)
                 response.body = marshal(data, { schema: request.body, contentType: request.header.Accept })
                 return true
