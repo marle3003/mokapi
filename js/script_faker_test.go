@@ -87,7 +87,7 @@ func TestScript_Faker(t *testing.T) {
 				r.NoError(t, err)
 				b, err := json.Marshal(v)
 				r.NoError(t, err)
-				r.Equal(t, `{"id":843730692693298300}`, string(b))
+				r.Equal(t, `{"id":98266}`, string(b))
 			},
 		},
 		{
