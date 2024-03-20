@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { usePrettyHttp } from '@/composables/http'
-import { type PropType, reactive, computed } from 'vue'
+import { reactive, computed } from 'vue'
 import HeaderTable from './HeaderTable.vue'
 import SchemaExpand from '../../SchemaExpand.vue'
 import SchemaExample from '../../SchemaExample.vue'
@@ -9,11 +9,11 @@ import Markdown from 'vue3-markdown-it'
 import SourceView from '../../SourceView.vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 
-const props = defineProps({
-    service: { type: Object as PropType<HttpService>, required: true },
-    path: { type: Object as PropType<HttpPath>, required: true },
-    operation: { type: Object as PropType<HttpOperation>, required: true }
-})
+const props = defineProps<{
+    service: HttpService,
+    path: HttpPath,
+    operation: HttpOperation
+}>()
 
 const { formatStatusCode, getClassByStatusCode } = usePrettyHttp()
 const { formatSchema } = usePrettyLanguage()
@@ -44,6 +44,18 @@ function selectedContentChange(event: any, statusCode: number){
         }
     }
 }
+const name = computed(() => {
+    const segments = props.path.path.split('/').reverse()
+    for (const seg of segments) {
+        if (seg === '') {
+            continue
+        }
+        if (!seg.startsWith('{')) {
+            return seg
+        }
+    }
+    return ''
+})
 </script>
 
 <template>
@@ -80,7 +92,7 @@ function selectedContentChange(event: any, statusCode: number){
                                             <schema-example :content-type="selected.contents[response.statusCode].type" :schema="selected.contents[response.statusCode].schema"/>
                                         </div>
                                         <div class="col-auto px-2 mt-1">
-                                            <schema-validate :schema="selected.contents[response.statusCode].schema" :content-type="selected.contents[response.statusCode].type" />
+                                            <schema-validate :schema="selected.contents[response.statusCode].schema" :content-type="selected.contents[response.statusCode].type" :name="name" />
                                         </div>
                                         <div class="col-auto px-2 mt-1">
                                             <select v-if="response.contents.length > 0" class="form-select form-select-sm" aria-label="Response content type" @change="selectedContentChange($event, response.statusCode)">

@@ -78,6 +78,11 @@ function handleScroll(event: WheelEvent) {
           </div>
         </template>
       </vue-tree>
+      <div class="info" style="">
+        <router-link :to="{ path: '/docs/guides/get-started/test-data' }">
+          <i class="bi bi-question-circle-fill"></i>
+        </router-link>
+      </div>
     </div>
   </section>
 </template>
@@ -92,6 +97,19 @@ function handleScroll(event: WheelEvent) {
     width: 100%;
     height:800px; 
   }
+  .decisionTree {
+    position: relative;
+  }
+  .decisionTree > .info {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+    color: var(--color-link);
+  }
+  .decisionTree > .info:hover {
+    color: var(--color-link-active);
+  }
   .rich-media-node {
     width: 150px;
     padding: 8px;
@@ -102,7 +120,7 @@ function handleScroll(event: WheelEvent) {
     justify-content: center;
     text-align: center;
     color: white;
-    background-color: rgb(234, 186, 171);
+    background-color: var(--color-link);
     color: var(--color-button-text-hover);
     border-radius: 4px;
     position: relative;

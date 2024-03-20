@@ -16,9 +16,9 @@ const props = defineProps<{
 const { createGuid } = useGuid()
 const { fetchExample } = useExample()
 
-var example = fetchExample(props.schema, props.contentType)
+var example = fetchExample({schema: props.schema, contentType: props.contentType})
 watch(() => props.schema, (schema) => {
-    example = fetchExample(schema, props.contentType)
+    example = fetchExample({schema: schema, contentType: props.contentType})
 })
 
 const id = createGuid()

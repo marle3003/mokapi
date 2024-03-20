@@ -413,6 +413,20 @@ func TestStringNumber(t *testing.T) {
 			},
 		},
 		{
+			name: "partyNumbers as array",
+			req: &Request{
+				Path: Path{
+					&PathElement{
+						Name:   "partyNumbers",
+						Schema: schematest.NewRef("array", schematest.WithItems("string"))},
+				},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []interface{}{"22910936489", "71180573501"}, v)
+			},
+		},
+		{
 			name: "employeeNumber with min=max",
 			req: &Request{
 				Path: Path{

@@ -51,26 +51,6 @@ func TestColor(t *testing.T) {
 				require.Equal(t, []int{126, 91, 203}, v)
 			},
 		},
-		{
-			name: "price object",
-			req: &Request{
-				Path: Path{
-					&PathElement{Name: "price", Schema: schematest.NewRef("object",
-						schematest.WithProperty("value", schematest.New("integer")),
-						schematest.WithProperty("currency", schematest.New("string")),
-						schematest.WithProperty("name", schematest.New("string")),
-					)},
-				},
-			},
-			test: func(t *testing.T, v interface{}, err error) {
-				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{
-					"currency": "MAD",
-					"name":     "Velvet",
-					"value":    60959.16,
-				}, v)
-			},
-		},
 	}
 
 	for _, tc := range testcases {

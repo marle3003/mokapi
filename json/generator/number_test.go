@@ -27,7 +27,7 @@ func TestNumber(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 5622490442062937727, v)
+				require.Equal(t, 37727, v)
 			},
 		},
 		{
@@ -72,7 +72,7 @@ func TestNumber(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{5571200078501983580, 5155350187252080588}, v)
+				require.Equal(t, []interface{}{83580, 80588}, v)
 			},
 		},
 		{
@@ -135,6 +135,39 @@ func TestNumber(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 2016, v)
+			},
+		},
+		{
+			name: "quantity",
+			request: &Request{
+				Path: Path{
+					&PathElement{
+						Name:   "quantity",
+						Schema: schematest.NewRef("integer"),
+					},
+				},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 79, v)
+			},
+		},
+		{
+			name: "quantity min max",
+			request: &Request{
+				Path: Path{
+					&PathElement{
+						Name: "year",
+						Schema: schematest.NewRef("integer",
+							schematest.WithMinimum(0),
+							schematest.WithMaximum(50),
+						),
+					},
+				},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 23, v)
 			},
 		},
 	}
@@ -323,7 +356,7 @@ func TestFloat32(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, float32(-1.3284907e+38), v)
+				require.Equal(t, float32(-1.3284906e+38), v)
 			},
 		},
 		{
@@ -392,7 +425,7 @@ func TestFloat(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, -7.018344371823454e+307, v)
+				require.Equal(t, -7.018344371823453e+307, v)
 			},
 		},
 		{

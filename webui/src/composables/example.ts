@@ -8,15 +8,21 @@ export interface Example {
     next:  () => void
 }
 
+export interface Request {
+    name?: string
+    schema: Schema
+    contentType?: string
+}
+
 export function useExample() {
     const { formatLanguage } = usePrettyLanguage()
 
-    function fetchExample(schema: Schema, contentType?: string) {
-        if (!contentType) {
-            contentType = 'application/json'
+    function fetchExample(request: Request) {
+        if (!request.contentType) {
+            request.contentType = 'application/json'
         }
         
-        const response = useFetch('/api/schema/example', {method: 'POST', body: JSON.stringify(schema), headers: {'Content-Type': 'application/json', 'Accept': contentType}}, false, false)
+        const response = useFetch('/api/schema/example', {method: 'POST', body: JSON.stringify({name: request.name, schema: request.schema}), headers: {'Content-Type': 'application/json', 'Accept': request.contentType}}, false, false)
         const example: Example =  reactive({
             data: '',
             next: () => response.refresh(),
@@ -38,7 +44,7 @@ export function useExample() {
             } else {
                 data = JSON.stringify(response.data)
             }
-            example.data = formatLanguage(data, contentType!)
+            example.data = formatLanguage(data, request.contentType!)
         })
         return example
     }

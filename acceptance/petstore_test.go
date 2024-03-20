@@ -69,7 +69,7 @@ func (suite *PetStoreSuite) TestJsHttpHandler() {
 	try.GetRequest(suite.T(), "http://127.0.0.1:18080/pet/5",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(http.StatusOK),
-		try.HasBody(`{"id":3088591419926615836,"category":{"id":5330969541296731069,"name":"water buffalo"},"name":"Zoe","photoUrls":[],"tags":[{"id":3989664552501193969,"name":"Utopia"}],"status":"available"}`))
+		try.HasBody(`{"id":15836,"category":{"id":31069,"name":"water buffalo"},"name":"Zoe","photoUrls":[],"tags":[{"id":93969,"name":"Utopia"}],"status":"available"}`))
 
 	// test http metrics
 	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%s/api/metrics/http?path=/pet/{petId}", suite.cfg.Api.Port), nil,
@@ -90,12 +90,12 @@ func (suite *PetStoreSuite) TestGetOrderById() {
 	try.GetRequest(suite.T(), "http://127.0.0.1:18080/store/order/1",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(http.StatusOK),
-		try.HasBody(`{"id":843730692693298266,"petId":7424164296119123377,"quantity":-652938557,"shipDate":"1989-01-30T07:58:01Z","status":"approved","complete":false}`))
+		try.HasBody(`{"id":98266,"petId":23377,"quantity":92,"shipDate":"1989-01-30T07:58:01Z","status":"approved","complete":false}`))
 
 	try.GetRequest(suite.T(), "https://localhost:18443/store/order/10",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(http.StatusOK),
-		try.HasBody(`{"id":6118637534854712545,"petId":5549848391338120895,"quantity":-924758850,"shipDate":"1989-11-19T16:57:16Z","status":"approved","complete":true}`))
+		try.HasBody(`{"id":12545,"petId":20895,"quantity":16,"shipDate":"1989-11-19T16:57:16Z","status":"approved","complete":true}`))
 }
 
 func (suite *PetStoreSuite) TestKafka_TopicConfig() {

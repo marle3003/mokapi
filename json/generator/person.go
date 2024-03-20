@@ -16,6 +16,11 @@ func Persons() *Tree {
 			Phone(),
 			Contact(),
 			CreditCard(),
+			Username(),
+			FirstName(),
+			LastName(),
+			Gender(),
+			Phone(),
 		},
 	}
 }
@@ -29,11 +34,6 @@ func Person() *Tree {
 		},
 		Nodes: []*Tree{
 			PersonName(),
-			FirstName(),
-			LastName(),
-			Gender(),
-			Phone(),
-			Username(),
 		},
 	}
 }

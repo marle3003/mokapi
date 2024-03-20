@@ -626,19 +626,19 @@ func TestGeneratorObject(t *testing.T) {
 	}{
 		{
 			name:   "simple",
-			exp:    map[string]interface{}{"id": 1467948426},
+			exp:    map[string]interface{}{"id": 98266},
 			schema: schematest.New("object", schematest.WithProperty("id", &schema.Schema{Type: "integer", Format: "int32"})),
 		},
 		{
 			name: "more fields",
-			exp:  map[string]interface{}{"id": 1467948426, "date": "1901-12-28"},
+			exp:  map[string]interface{}{"id": 98266, "date": "1901-12-28"},
 			schema: schematest.New("object",
 				schematest.WithProperty("id", schematest.New("integer", schematest.WithFormat("int32"))),
 				schematest.WithProperty("date", schematest.New("string", schematest.WithFormat("date")))),
 		},
 		{
 			name: "nested",
-			exp:  map[string]interface{}{"nested": map[string]interface{}{"id": 1467948426, "date": "1901-12-28"}},
+			exp:  map[string]interface{}{"nested": map[string]interface{}{"id": 98266, "date": "1901-12-28"}},
 			schema: schematest.New("object",
 				schematest.WithProperty("nested", schematest.New("object",
 					schematest.WithProperty("id", schematest.New("integer", schematest.WithFormat("int32"))),

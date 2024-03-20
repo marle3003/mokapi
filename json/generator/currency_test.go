@@ -34,7 +34,7 @@ func TestCurrency(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 60959.16, v)
+				require.Equal(t, 609591.63, v)
 			},
 		},
 		{
@@ -65,7 +65,7 @@ func TestCurrency(t *testing.T) {
 				require.Equal(t, map[string]interface{}{
 					"currency": "MAD",
 					"name":     "Velvet",
-					"value":    60959.16,
+					"value":    609591.63,
 				}, v)
 			},
 		},

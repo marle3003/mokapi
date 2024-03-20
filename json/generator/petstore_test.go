@@ -2,6 +2,7 @@ package generator
 
 import (
 	"github.com/brianvoe/gofakeit/v6"
+	"github.com/stretchr/testify/require"
 	"mokapi/json/schematest"
 	"testing"
 )
@@ -26,24 +27,29 @@ func TestPetStore(t *testing.T) {
 		req  *Request
 		test func(t *testing.T, v interface{}, err error)
 	}{
-		//{
-		//	name: "pet",
-		//	req: &Request{
-		//		Path: Path{&PathElement{Name: "pet", Schema: pet}},
-		//	},
-		//	test: func(t *testing.T, v interface{}, err error) {
-		//		require.NoError(t, err)
-		//		require.Equal(t, map[string]interface{}{
-		//			"category":  map[string]interface{}{"id": 5571200078501983580, "name": "fish"},
-		//			"id":        5622490442062937727,
-		//			"photoUrls": []interface{}{"https://www.principalapplications.biz/cultivate/e-enable/integrated"},
-		//			"status":    "sold",
-		//			"tags":      map[string]interface{}{"id": 1725511503074869949, "name": "Sol"}},
-		//			v)
-		//		err = pet.Validate(v)
-		//		require.NoError(t, err)
-		//	},
-		//},
+		{
+			name: "pet",
+			req: &Request{
+				Path: Path{
+					&PathElement{
+						Name:   "pet",
+						Schema: pet,
+					},
+				},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{
+					"category":  map[string]interface{}{"id": 83580, "name": "fish"},
+					"id":        37727,
+					"photoUrls": []interface{}{"https://www.principalapplications.biz/cultivate/e-enable/integrated"},
+					"status":    "sold",
+					"tags":      map[string]interface{}{"id": 69949, "name": "Sol"}},
+					v)
+				err = pet.Validate(v)
+				require.NoError(t, err)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

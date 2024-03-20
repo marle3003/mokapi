@@ -65,7 +65,7 @@ const route = useRoute()
             </div>
         </div>
         <div class="card-group">
-            <http-request-card :operation="operation" />
+            <http-request-card :operation="operation" :path="path.path" />
         </div>
         <div class="card-group">
             <http-response-card  :service="service" :path="path" :operation="operation" />

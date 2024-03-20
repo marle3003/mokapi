@@ -15,6 +15,7 @@ const nav = inject<DocConfig>('nav')!
 const openSidebar = ref(false);
 const dialog = ref<Modal>()
 const imageUrl = ref<string>()
+const imageDescription = ref<string>()
 
 const route = useRoute()
 const { resolve } = useFileResolver()
@@ -79,6 +80,7 @@ function showImage(target: EventTarget | null) {
   }
   const element = target as HTMLImageElement
   imageUrl.value = element.src
+  imageDescription.value = element.title
   dialog.value?.show()
 }
 </script>
@@ -108,7 +110,10 @@ function showImage(target: EventTarget | null) {
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content">
         <div class="modal-body">
-          <img :src="imageUrl" style="width:100%" />
+          <img :src="imageUrl" style="width:100%;" />
+          <div class="pt-2" style="text-align:center; font-size:0.9rem;">
+            {{ imageDescription }}
+          </div>
         </div>
       </div>
     </div>
@@ -187,6 +192,7 @@ function showImage(target: EventTarget | null) {
   max-height:100%;
   cursor: pointer;
   margin: auto auto;
+  margin-bottom: 1.5rem;
 }
 
 table {

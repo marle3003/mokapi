@@ -91,7 +91,7 @@ func Budget() *Tree {
 				(last.Schema.IsAny() || last.Schema.IsInteger())
 		},
 		Fake: func(r *Request) (interface{}, error) {
-			return newPositiveNumber(r.LastSchema())
+			return getPriceValue(r.LastSchema())
 		},
 	}
 }
@@ -100,6 +100,6 @@ func getPriceValue(s *schema.Schema) (float64, error) {
 	if s.IsAny() {
 		s = &schema.Schema{Type: []string{"number"}}
 	}
-	min, max := getRangeWithDefault(s, 0, 100000)
+	min, max := getRangeWithDefault(s, 0, 1000000)
 	return gofakeit.Price(min, max), nil
 }

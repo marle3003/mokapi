@@ -30,32 +30,6 @@ func PetObject() *Tree {
 	}
 }
 
-//func Pet() *Tree {
-//	return &Tree{
-//		Name: "Pet",
-//		Test: func(r *Request) bool {
-//			return !r.Schema.IsArray()
-//		},
-//		Nodes: []*Tree{
-//			PetName(),
-//			PetCategory(),
-//		},
-//	}
-//}
-
-func PetList() *Tree {
-	return &Tree{
-		Name: "PetList",
-		Test: func(r *Request) bool {
-			return r.LastSchema().IsArray()
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			r.Last().Name = "pet"
-			return r.g.tree.Resolve(r)
-		},
-	}
-}
-
 func PetName() *Tree {
 	return &Tree{
 		Name: "PetName",
@@ -120,23 +94,3 @@ func PetCategory() *Tree {
 		},
 	}
 }
-
-//
-//func PetCategories() *Tree {
-//	return &Tree{
-//		Name: "PetCategories",
-//		Test: func(r *Request) bool {
-//			if !r.Schema.IsArray() && !r.Schema.IsAny() {
-//				return false
-//			}
-//			return r.matchLast([]string{"pet", "categories"}, true)
-//		},
-//		Fake: func(r *Request) (interface{}, error) {
-//			next := r.With(Name("pet", "category"))
-//			if r.Schema.IsAny() {
-//				next = next.With(Schema(&schema.Schema{Type: []string{"array"}}))
-//			}
-//			return r.g.tree.Resolve(next)
-//		},
-//	}
-//}

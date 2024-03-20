@@ -3,6 +3,7 @@ package generator
 import (
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
+	"github.com/jinzhu/inflection"
 	"reflect"
 )
 
@@ -37,7 +38,7 @@ func Array() *Tree {
 
 			name := RefName(s.Items)
 			if name == "" {
-				name = r.LastName()
+				name = inflection.Singular(r.LastName())
 			}
 
 			elem := r.With(UsePathElement(name, s.Items))

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mokapi/json/generator"
 	"mokapi/media"
 	"mokapi/providers/openapi/schema"
 	"mokapi/sortedmap"
@@ -92,6 +93,11 @@ type additionalProperties struct {
 	Forbidden bool        `json:"forbidden,omitempty"`
 }
 
+type requestExample struct {
+	Name   string      `json:"name,omitempty"`
+	Schema *schemaInfo `json:"schema,omitempty"`
+}
+
 func (h *handler) getExampleData(w http.ResponseWriter, r *http.Request) {
 	accept := r.Header.Get("Accept")
 	if len(accept) == 0 {
@@ -114,15 +120,20 @@ func (h *handler) getExampleData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	si := &schemaInfo{}
-	err = json.Unmarshal(body, &si)
+	re := &requestExample{}
+	err = json.Unmarshal(body, &re)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	s := toSchema(si)
-	data, err := schema.CreateValue(&schema.Ref{Value: s})
+	s := toSchema(re.Schema)
+	data, err := generator.New(&generator.Request{
+		Path: generator.Path{
+			&generator.PathElement{Name: re.Name, Schema: schema.ConvertToJsonSchema(&schema.Ref{Value: s})},
+		},
+	})
+	//data, err := schema.CreateValue(&schema.Ref{Value: s})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

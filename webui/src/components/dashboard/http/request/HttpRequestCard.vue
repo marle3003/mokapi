@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, type PropType, } from 'vue'
+import { computed, reactive, } from 'vue'
 import HttpParameters from './HttpParameters.vue'
 import SchemaExpand from '../../SchemaExpand.vue'
 import SchemaExample from '../../SchemaExample.vue'
@@ -9,9 +9,10 @@ import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 
 const { formatSchema } = usePrettyLanguage()
 
-const props = defineProps({
-    operation: { type: Object as PropType<HttpOperation>, required: true }
-})
+const props = defineProps<{
+    operation: HttpOperation
+    path: string
+}>()
 const selected = reactive({
     content: {} as HttpMediaType | null,
 })
@@ -26,6 +27,19 @@ function selectedContentChange(event: any){
         }
     }
 }
+
+const name = computed(() => {
+    const segments = props.path.split('/').reverse()
+    for (const seg of segments) {
+        if (seg === '') {
+            continue
+        }
+        if (!seg.startsWith('{')) {
+            return seg
+        }
+    }
+    return ''
+})
 </script>
 
 <template>
@@ -60,7 +74,7 @@ function selectedContentChange(event: any){
                             <schema-example :schema="selected.content.schema" :content-type="selected.content.type" />
                         </div>
                         <div class="col-auto px-2" v-if="selected.content">
-                            <schema-validate :schema="selected.content.schema" :content-type="selected.content.type" />
+                            <schema-validate :schema="selected.content.schema" :content-type="selected.content.type" :name="name" />
                         </div>
                         <div class="col-auto px-2">
                             <select v-if="operation.requestBody.contents.length > 1" class="form-select form-select-sm" aria-label="Request content type" @change="selectedContentChange">

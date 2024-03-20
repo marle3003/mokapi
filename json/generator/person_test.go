@@ -230,6 +230,39 @@ func TestPerson(t *testing.T) {
 				require.IsType(t, map[string]interface{}{}, v)
 			},
 		},
+		{
+			name: "windowsUserName",
+			req: &Request{
+				Path: Path{
+					&PathElement{
+						Name:   "windowsUserName",
+						Schema: schematest.NewRef("string"),
+					},
+				},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "Lockman7291", v)
+			},
+		},
+		{
+			name: "person data without person in parent name",
+			req: &Request{
+				Path: Path{
+					&PathElement{
+						Name: "individual",
+						Schema: schematest.NewRef("object",
+							schematest.WithProperty("firstname", schematest.New("string")),
+							schematest.WithProperty("lastname", schematest.New("string")),
+						),
+					},
+				},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"firstname": "Shanelle", "lastname": "Wehner"}, v)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

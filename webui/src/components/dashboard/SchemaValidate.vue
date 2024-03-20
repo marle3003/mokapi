@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useGuid } from '@/composables/guid'
 import { useExample } from '@/composables/example'
-import { watch, reactive, watchEffect } from 'vue'
+import { watch, reactive } from 'vue'
 import '../../ace-editor/ace-config';
 import SourceView from './SourceView.vue'
 
@@ -9,6 +9,7 @@ import { transformPath } from '@/composables/fetch'
 
 const props = withDefaults(defineProps<{
   schema: Schema
+  name?: string
   contentType: string
   title?: string
 }>(), {
@@ -24,9 +25,9 @@ const state = reactive({
     errors: <string[]>[],
     validated: false
 })
-var example = fetchExample(props.schema, props.contentType)
+var example = fetchExample({name: props.name, schema: props.schema, contentType: props.contentType})
 watch(() => props.schema, (schema) => {
-    example = fetchExample(schema, props.contentType)
+    example = fetchExample({name: props.name, schema: schema, contentType: props.contentType})
 })
 
 function setExample() {
