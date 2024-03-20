@@ -3,7 +3,6 @@ package generator
 import (
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
-	"mokapi/json/schema"
 	"reflect"
 )
 
@@ -17,47 +16,47 @@ type ArrayOptions struct {
 
 func Array() *Tree {
 	return &Tree{
-		Name:  "Array",
-		nodes: nil,
+		Name: "Array",
 		Test: func(r *Request) bool {
-			return r.Schema.IsArray()
+			return r.LastSchema().IsArray()
 		},
 		Fake: func(r *Request) (interface{}, error) {
+			s := r.LastSchema()
 			maxItems := 5
-			if r.Schema.MaxItems != nil {
-				maxItems = *r.Schema.MaxItems
+			if s.MaxItems != nil {
+				maxItems = *s.MaxItems
 			}
 			minItems := 0
-			if r.Schema.MinItems != nil {
-				minItems = *r.Schema.MinItems
+			if s.MinItems != nil {
+				minItems = *s.MinItems
 			}
 			length := minItems
 			if maxItems-minItems > 0 {
 				length = gofakeit.Number(minItems, maxItems)
 			}
 
-			var items *schema.Schema
-			if r.Schema.Items != nil {
-				items = r.Schema.Items.Value
+			name := RefName(s.Items)
+			if name == "" {
+				name = r.LastName()
 			}
 
-			elem := r.With(Schema(items))
+			elem := r.With(UsePathElement(name, s.Items))
 			arr := make([]interface{}, length)
 			for i := range arr {
 				var v interface{}
 				var err error
-				if r.Schema.UniqueItems {
+				if s.UniqueItems {
 					v, err = nextUnique(arr, elem)
 				} else {
 					v, err = r.g.tree.Resolve(elem)
 				}
 				if err != nil {
-					return nil, fmt.Errorf("%v: %v", err, r.Schema)
+					return nil, fmt.Errorf("%v: %v", err, s)
 				}
 				arr[i] = v
 			}
 
-			if r.Schema.ShuffleItems {
+			if s.ShuffleItems {
 				r.g.rand.Shuffle(len(arr), func(i, j int) { arr[i], arr[j] = arr[j], arr[i] })
 			}
 
@@ -67,11 +66,12 @@ func Array() *Tree {
 }
 
 func nextUnique(arr []interface{}, r *Request) (interface{}, error) {
-	if r.Schema.Enum != nil {
-		n := gofakeit.Number(0, len(r.Schema.Enum)-1)
-		for i := 0; i < len(r.Schema.Enum); i++ {
-			index := (n + i) % len(r.Schema.Enum)
-			v := r.Schema.Enum[index]
+	s := r.LastSchema()
+	if s.Enum != nil {
+		n := gofakeit.Number(0, len(s.Enum)-1)
+		for i := 0; i < len(s.Enum); i++ {
+			index := (n + i) % len(s.Enum)
+			v := s.Enum[index]
 			if !contains(arr, v) {
 				return v, nil
 			}

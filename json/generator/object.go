@@ -9,13 +9,16 @@ import (
 
 func Object() *Tree {
 	return &Tree{
-		nodes: []*Tree{
+		Name: "Objects",
+		Nodes: []*Tree{
 			Dictionary(),
 			{
-				nodes: []*Tree{},
+				Nodes: []*Tree{},
 				Name:  "Object",
 				Test: func(r *Request) bool {
-					return r.Schema.IsObject() && !r.Schema.IsFreeFrom()
+					return r.Path.MatchLast(ComparerFunc(func(p *PathElement) bool {
+						return p.Schema.IsObject() && p.Schema.HasProperties()
+					}))
 				},
 				Fake: func(r *Request) (interface{}, error) {
 					return createObject(r)
@@ -30,18 +33,20 @@ func AnyObject() *Tree {
 	return &Tree{
 		Name: "AnyObject",
 		Test: func(r *Request) bool {
-			return r.Schema.IsObject() && r.Schema.IsFreeFrom()
+			s := r.LastSchema()
+			return s.IsObject() && s.IsFreeFrom()
 		},
 		Fake: func(r *Request) (interface{}, error) {
-			r.Schema.Properties = &schema.Schemas{LinkedHashMap: sortedmap.LinkedHashMap[string, *schema.Ref]{}}
+			s := r.LastSchema()
+			s.Properties = &schema.Schemas{LinkedHashMap: sortedmap.LinkedHashMap[string, *schema.Ref]{}}
 
 			minProps := 1
 			maxProps := 10
-			if r.Schema.MinProperties != nil {
-				minProps = *r.Schema.MinProperties
+			if s.MinProperties != nil {
+				minProps = *s.MinProperties
 			}
-			if r.Schema.MaxProperties != nil {
-				maxProps = *r.Schema.MaxProperties
+			if s.MaxProperties != nil {
+				maxProps = *s.MaxProperties
 			}
 
 			length := gofakeit.Number(minProps, maxProps)
@@ -52,7 +57,7 @@ func AnyObject() *Tree {
 			for i := 0; i < length; i++ {
 
 				name := firstLetterToLower(gofakeit.Noun())
-				r.Schema.Properties.Set(name, nil)
+				s.Properties.Set(name, nil)
 			}
 			return r.g.tree.Resolve(r)
 		},
@@ -63,17 +68,14 @@ func Dictionary() *Tree {
 	return &Tree{
 		Name: "Dictionary",
 		Test: func(r *Request) bool {
-			return r.Schema.IsDictionary()
+			return r.LastSchema().IsDictionary()
 		},
 		Fake: func(r *Request) (interface{}, error) {
+			s := r.LastSchema()
 			length := gofakeit.Number(1, 10)
-			var value *schema.Schema
-			if r.Schema.AdditionalProperties.Ref != nil {
-				value = r.Schema.AdditionalProperties.Ref.Value
-			}
 			m := map[string]interface{}{}
 			for i := 0; i < length; i++ {
-				v, err := r.g.tree.Resolve(r.With(Schema(value)))
+				v, err := r.g.tree.Resolve(r.With(UsePathElement("", s.AdditionalProperties.Ref)))
 				if err != nil {
 					return nil, err
 				}
@@ -86,10 +88,11 @@ func Dictionary() *Tree {
 }
 
 func createObject(r *Request) (interface{}, error) {
+	s := r.Last().Schema
 	// recursion guard. Currently, we use a fixed depth: 1
 	numRequestsSameAsThisOne := 0
 	for _, h := range r.history {
-		if r.Schema == h {
+		if s == h {
 			numRequestsSameAsThisOne++
 		}
 	}
@@ -99,16 +102,12 @@ func createObject(r *Request) (interface{}, error) {
 
 	m := map[string]interface{}{}
 
-	if r.Schema.Properties == nil {
+	if s.Value.Properties == nil {
 		return m, nil
 	}
 
-	for it := r.Schema.Properties.Iter(); it.Next(); {
-		var propSchema *schema.Schema
-		if it.Value() != nil {
-			propSchema = it.Value().Value
-		}
-		prop := r.With(Name(it.Key()), Schema(propSchema))
+	for it := s.Value.Properties.Iter(); it.Next(); {
+		prop := r.With(UsePathElement(it.Key(), it.Value()))
 		v, err := r.g.tree.Resolve(prop)
 		if err != nil {
 			return nil, err

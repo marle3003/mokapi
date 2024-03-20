@@ -3,16 +3,19 @@ package generator
 import (
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
-	"mokapi/json/schema"
 	"strings"
 )
 
-func PersonTree() *Tree {
+func Persons() *Tree {
 	return &Tree{
 		Name: "Person",
-		nodes: []*Tree{
+		Nodes: []*Tree{
 			Person(),
-			People(),
+			//People(),
+			PersonAny(),
+			Phone(),
+			Contact(),
+			CreditCard(),
 		},
 	}
 }
@@ -21,19 +24,16 @@ func Person() *Tree {
 	return &Tree{
 		Name: "Person",
 		Test: func(r *Request) bool {
-			return !r.Schema.IsArray()
+			return r.Path.MatchLast(NameIgnoreCase("person", "persons"), Any())
 
 		},
-		nodes: []*Tree{
+		Nodes: []*Tree{
 			PersonName(),
 			FirstName(),
 			LastName(),
 			Gender(),
 			Phone(),
 			Username(),
-			Contact(),
-			CreditCard(),
-			PersonAny(),
 		},
 	}
 }
@@ -42,7 +42,7 @@ func PersonName() *Tree {
 	return &Tree{
 		Name: "PersonName",
 		Test: func(r *Request) bool {
-			return r.matchLast([]string{"person", "name"}, true)
+			return r.LastName() == "name"
 		},
 		Fake: func(r *Request) (interface{}, error) {
 			return gofakeit.Name(), nil
@@ -78,8 +78,8 @@ func Gender() *Tree {
 	return &Tree{
 		Name: "PersonGender",
 		Test: func(r *Request) bool {
-			return r.matchLast([]string{"gender"}, true) ||
-				r.matchLast([]string{"sex"}, true)
+			name := r.LastName()
+			return name == "gender" || name == "sex"
 		},
 		Fake: func(r *Request) (interface{}, error) {
 			return gofakeit.Gender(), nil
@@ -91,22 +91,22 @@ func Phone() *Tree {
 	return &Tree{
 		Name: "Phone",
 		Test: func(r *Request) bool {
-			if !r.Schema.IsString() && !r.Schema.IsAny() {
-				return false
-			}
-			last := strings.ToLower(r.LastName())
-			return last == "phone" || last == "phonenumber" || strings.HasSuffix(r.LastName(), "Phone")
+			last := r.Last()
+			name := strings.ToLower(last.Name)
+			return (name == "phone" || name == "phonenumber" || strings.HasSuffix(last.Name, "Phone")) &&
+				(last.Schema.IsString() || last.Schema.IsAny())
 		},
 		Fake: func(r *Request) (interface{}, error) {
 			countryCode := gofakeit.IntRange(1, 999)
 			countryCodeLen := len(fmt.Sprintf("%v", countryCode))
 			max := 15 - countryCodeLen
 			min := 4
-			if r.Schema != nil && r.Schema.MinLength != nil {
-				min = *r.Schema.MinLength - countryCodeLen - 1
+			s := r.LastSchema()
+			if s != nil && s.MinLength != nil {
+				min = *s.MinLength - countryCodeLen - 1
 			}
-			if r.Schema != nil && r.Schema.MaxLength != nil {
-				max = *r.Schema.MaxLength - countryCodeLen - 1
+			if s != nil && s.MaxLength != nil {
+				max = *s.MaxLength - countryCodeLen - 1
 			}
 			nationalCodeLen := gofakeit.IntRange(min, max)
 			return fmt.Sprintf("+%v%v", countryCode, gofakeit.Numerify(strings.Repeat("#", nationalCodeLen))), nil
@@ -118,17 +118,18 @@ func Contact() *Tree {
 	return &Tree{
 		Name: "Contact",
 		Test: func(r *Request) bool {
-			if !r.Schema.IsObject() && !r.Schema.IsAny() {
+			last := r.Last()
+			if !last.Schema.IsObject() && !last.Schema.IsAny() {
 				return false
 			}
-			return r.matchLast([]string{"contact"}, true)
+			return last.Name == "contact"
 		},
 		Fake: func(r *Request) (interface{}, error) {
-			phone, err := r.g.tree.Resolve(r.With(Name("phone")))
+			phone, err := r.g.tree.Resolve(r.With(UsePathElement("phone", nil)))
 			if err != nil {
 				return nil, err
 			}
-			email, err := r.g.tree.Resolve(r.With(Name("email")))
+			email, err := r.g.tree.Resolve(r.With(UsePathElement("email", nil)))
 			if err != nil {
 				return nil, err
 			}
@@ -143,9 +144,10 @@ func Contact() *Tree {
 
 func PersonAny() *Tree {
 	return &Tree{
-		Name: "PersonAny",
+		Name: "AnyPerson",
 		Test: func(r *Request) bool {
-			return r.LastName() == "person" && r.Schema.IsAny()
+			last := r.Last()
+			return last.Name == "person" && last.Schema.IsAny()
 		},
 		Fake: func(r *Request) (interface{}, error) {
 			return map[string]interface{}{
@@ -158,33 +160,34 @@ func PersonAny() *Tree {
 	}
 }
 
-func People() *Tree {
-	return &Tree{
-		Name: "People",
-		Test: func(r *Request) bool {
-			last := strings.ToLower(r.LastName())
-			return (last == "persons" || last == "users" || last == "people") &&
-				(r.Schema.IsArray() || r.Schema.IsAny())
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			next := r.With(Name("person"))
-			if r.Schema.IsAny() {
-				next = next.With(Schema(&schema.Schema{Type: []string{"array"}}))
-			}
-			return r.g.tree.Resolve(next)
-		},
-	}
-}
+//func People() *Tree {
+//	return &Tree{
+//		Name: "People",
+//		Test: func(r *Request) bool {
+//			last := strings.ToLower(r.LastName())
+//			return (last == "persons" || last == "users" || last == "people") &&
+//				(r.Schema.IsArray() || r.Schema.IsAny())
+//		},
+//		Fake: func(r *Request) (interface{}, error) {
+//			next := r.With(Name("person"))
+//			if r.Schema.IsAny() {
+//				next = next.With(Schema(&schema.Schema{Type: []string{"array"}}))
+//			}
+//			return r.g.tree.Resolve(next)
+//		},
+//	}
+//}
 
 func Username() *Tree {
 	return &Tree{
 		Name: "Username",
 		Test: func(r *Request) bool {
-			if !r.Schema.IsString() {
+			last := r.Last()
+			if !last.Schema.IsString() {
 				return false
 			}
-			last := r.LastName()
-			return strings.ToLower(last) == "username" || strings.HasSuffix(last, "UserName") || strings.HasSuffix(last, "Username")
+			return strings.ToLower(last.Name) == "username" || strings.HasSuffix(last.Name, "UserName") ||
+				strings.HasSuffix(last.Name, "Username")
 		},
 		Fake: func(r *Request) (interface{}, error) {
 			return gofakeit.Username(), nil
@@ -194,11 +197,12 @@ func Username() *Tree {
 
 func CreditCard() *Tree {
 	isCreditCardObject := func(r *Request) bool {
-		return strings.ToLower(r.LastName()) == "creditcard" || strings.ToLower(r.GetName(-2)) == "creditcard"
+		name := strings.ToLower(r.LastName())
+		return r.Path.MatchLast(NameIgnoreCase("creditcard"), Any()) || name == "creditcard"
 	}
 	return &Tree{
 		Name: "CreditCard",
-		nodes: []*Tree{
+		Nodes: []*Tree{
 			{
 				Name: "CreditCardNumber",
 				Test: func(r *Request) bool {
@@ -238,13 +242,15 @@ func CreditCard() *Tree {
 			{
 				Name: "CreditCard",
 				Test: func(r *Request) bool {
-					return isCreditCardObject(r) && (r.Schema.IsString() || r.Schema.IsAny())
+					s := r.LastSchema()
+					return isCreditCardObject(r) && (s.IsString() || s.IsAny())
 				},
 				Fake: func(r *Request) (interface{}, error) {
-					if r.Schema.IsString() {
+					s := r.LastSchema()
+					if s.IsString() {
 						return gofakeit.CreditCardNumber(nil), nil
 					}
-					if r.Schema.IsAny() {
+					if s.IsAny() {
 						cc := gofakeit.CreditCard()
 						return map[string]interface{}{
 							"type":   cc.Type,

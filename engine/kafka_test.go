@@ -42,8 +42,8 @@ func TestKafkaClient_Produce(t *testing.T) {
 				b, errCode := s.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
-				require.Equal(t, "xid1UOwQ;", string(readBytes(b.Records[0].Key)))
-				require.Equal(t, "\"Y Yvm\"", string(readBytes(b.Records[0].Value)))
+				require.Equal(t, "XidZuoWq ", string(readBytes(b.Records[0].Key)))
+				require.Equal(t, "\"\"", string(readBytes(b.Records[0].Value)))
 			},
 		},
 		{

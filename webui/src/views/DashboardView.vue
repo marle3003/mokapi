@@ -26,6 +26,7 @@ import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
 
 import ConfigCard from '@/components/dashboard/ConfigCard.vue'
+import FakerTree from '@/components/dashboard/FakerTree.vue'
 
 import '@/assets/dashboard.css'
 import { onMounted, onUnmounted, watch, ref, type Ref } from 'vue'
@@ -94,6 +95,9 @@ useMeta('Dashboard | mokapi.io', description, "https://mokapi.io/smtp")
                         </li>
                         <li class="nav-item">
                             <router-link class="nav-link" :to="{ name: 'configs', query: {refresh: $route.query.refresh} }">Configs</router-link>
+                        </li>
+                        <li class="nav-item">
+                            <router-link class="nav-link" :to="{ name: 'tree', query: {refresh: $route.query.refresh} }">Faker</router-link>
                         </li>
                     </ul>
                 </nav>
@@ -173,6 +177,11 @@ useMeta('Dashboard | mokapi.io', description, "https://mokapi.io/smtp")
                 <div v-if="$route.name === 'configs'">
                     <div class="card-group">
                         <config-card v-if="configs" :configs="configs.data" />
+                    </div>
+                </div>
+                <div v-if="$route.name === 'tree'" >
+                    <div class="card-group">
+                        <faker-tree v-if="$route.name === 'tree'"></faker-tree>
                     </div>
                 </div>
 

@@ -93,7 +93,8 @@ func setResponseData(r *common.EventResponse, m *MediaType, path string) error {
 				}
 			}
 
-			data, err := generator.New(generator.NewRequest(generator.Name(names...), generator.Ref(schema.ConvertToJsonSchema(m.Schema))))
+			req := generator.NewRequest(generator.UsePathElement(names[len(names)-1], schema.ConvertToJsonSchema(m.Schema)))
+			data, err := generator.New(req)
 			if err != nil {
 				return fmt.Errorf("generate response data failed: %v", err)
 			} else {

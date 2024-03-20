@@ -11,7 +11,7 @@ func CreateValue(ref *Ref) (interface{}, error) {
 	}
 	c := &JsonSchemaConverter{}
 	r := c.ConvertToJsonRef(ref)
-	return generator.New(&generator.Request{Schema: r.Value})
+	return generator.New(&generator.Request{Path: generator.Path{&generator.PathElement{Schema: r}}})
 }
 
 func ConvertToJsonSchema(ref *Ref) *schema.Ref {

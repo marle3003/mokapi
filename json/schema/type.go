@@ -61,6 +61,13 @@ func (s *Schema) IsDictionary() bool {
 	return s.AdditionalProperties.Ref != nil && s.AdditionalProperties.Value != nil
 }
 
+func (s *Schema) HasProperties() bool {
+	if s == nil {
+		return false
+	}
+	return s.Properties != nil && s.Properties.Len() > 0
+}
+
 func (s *Schema) Is(typeName string) bool {
 	if s == nil {
 		return false

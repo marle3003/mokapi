@@ -143,6 +143,9 @@ type node struct {
 
 func (m *fakerModule) FindByName(name string) *node {
 	t := generator.FindByName(name)
+	if t == nil {
+		return nil
+	}
 	return &node{t: t, rt: m.rt}
 }
 
@@ -153,12 +156,21 @@ func (n *node) Append(v goja.Value) {
 
 func (n *node) Insert(index int, v goja.Value) {
 	t := n.createTree(v)
-	n.t.Insert(index, t)
+	err := n.t.Insert(index, t)
+	if err != nil {
+		panic(n.rt.ToValue(err))
+	}
+}
+
+func (n *node) Remove(index int) {
+	if err := n.t.Remove(index); err != nil {
+		panic(n.rt.ToValue(err))
+	}
 }
 
 func (n *node) createTree(v goja.Value) *generator.Tree {
 	if v != nil && !goja.IsUndefined(v) && !goja.IsNull(v) {
-		newNode := &generator.Tree{}
+		newNode := &generator.Tree{Custom: true}
 		obj := v.ToObject(n.rt)
 		for _, k := range obj.Keys() {
 			switch k {

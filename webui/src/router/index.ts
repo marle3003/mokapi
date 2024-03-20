@@ -203,6 +203,11 @@ const router = createRouter({
           name: 'config',
           component: dashboardView,
         },
+        {
+          path: '/dashboard/tree',
+          name: 'tree',
+          component: dashboardView,
+        },
       ]
     },
     {

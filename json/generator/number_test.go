@@ -19,7 +19,11 @@ func TestNumber(t *testing.T) {
 		{
 			name: "id",
 			request: &Request{
-				Names: []string{"id"},
+				Path: Path{
+					&PathElement{
+						Name: "id",
+					},
+				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -29,10 +33,9 @@ func TestNumber(t *testing.T) {
 		{
 			name: "id with max",
 			request: &Request{
-				Names: []string{"id"},
-				Schema: schematest.New("integer",
-					schematest.WithMaximum(10000),
-				),
+				Path: Path{
+					&PathElement{Name: "id", Schema: schematest.NewRef("integer", schematest.WithMaximum(10000))},
+				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -42,11 +45,15 @@ func TestNumber(t *testing.T) {
 		{
 			name: "id with min & max",
 			request: &Request{
-				Names: []string{"id"},
-				Schema: schematest.New("integer",
-					schematest.WithMinimum(10),
-					schematest.WithMaximum(20),
-				),
+				Path: Path{
+					&PathElement{
+						Name: "id",
+						Schema: schematest.NewRef("integer",
+							schematest.WithMinimum(10),
+							schematest.WithMaximum(20),
+						),
+					},
+				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -54,44 +61,43 @@ func TestNumber(t *testing.T) {
 			},
 		},
 		{
-			name: "id string with max",
+			name: "ids",
 			request: &Request{
-				Names: []string{"id"},
-				Schema: schematest.New("string",
-					schematest.WithMaxLength(30),
-				),
+				Path: Path{
+					&PathElement{
+						Name:   "ids",
+						Schema: schematest.NewRef("array"),
+					},
+				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "802910936489301180573501861460", v)
+				require.Equal(t, []interface{}{5571200078501983580, 5155350187252080588}, v)
 			},
 		},
 		{
-			name: "price",
+			name: "year no schema",
 			request: &Request{
-				Names: []string{"price"},
+				Path: Path{
+					&PathElement{
+						Name: "year",
+					},
+				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 60959.16, v)
-			},
-		},
-		{
-			name: "price with max",
-			request: &Request{
-				Names:  []string{"price"},
-				Schema: schematest.New("number", schematest.WithMaximum(100)),
-			},
-			test: func(t *testing.T, v interface{}, err error) {
-				require.NoError(t, err)
-				require.Equal(t, 60.95, v)
+				require.Equal(t, 1926, v)
 			},
 		},
 		{
 			name: "year",
 			request: &Request{
-				Names:  []string{"year"},
-				Schema: schematest.New("integer"),
+				Path: Path{
+					&PathElement{
+						Name:   "year",
+						Schema: schematest.NewRef("integer"),
+					},
+				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -101,8 +107,12 @@ func TestNumber(t *testing.T) {
 		{
 			name: "year min",
 			request: &Request{
-				Names:  []string{"year"},
-				Schema: schematest.New("integer", schematest.WithMinimum(1990)),
+				Path: Path{
+					&PathElement{
+						Name:   "year",
+						Schema: schematest.NewRef("integer", schematest.WithMinimum(1990)),
+					},
+				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -112,12 +122,295 @@ func TestNumber(t *testing.T) {
 		{
 			name: "year min max",
 			request: &Request{
-				Names:  []string{"year"},
-				Schema: schematest.New("integer", schematest.WithMinimum(1990), schematest.WithMaximum(2049)),
+				Path: Path{
+					&PathElement{
+						Name: "year",
+						Schema: schematest.NewRef("integer",
+							schematest.WithMinimum(1990),
+							schematest.WithMaximum(2049),
+						),
+					},
+				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 2016, v)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			gofakeit.Seed(1234567)
+
+			v, err := New(tc.request)
+			tc.test(t, v, err)
+		})
+	}
+}
+
+func TestInt32(t *testing.T) {
+	testcases := []struct {
+		name    string
+		request *Request
+		test    func(t *testing.T, v interface{}, err error)
+	}{
+		{
+			name: "int32",
+			request: &Request{
+				Path: Path{
+					&PathElement{
+						Name:   "size",
+						Schema: schematest.NewRef("integer", schematest.WithFormat("int32")),
+					},
+				},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int32(271629950), v)
+			},
+		},
+		{
+			name: "int32 with max=15",
+			request: &Request{
+				Path: Path{
+					&PathElement{
+						Name: "size",
+						Schema: schematest.NewRef("integer",
+							schematest.WithFormat("int32"),
+							schematest.WithMaximum(15),
+						),
+					},
+				},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int32(-838395520), v)
+			},
+		},
+		{
+			name: "int32 with min=0, max=15",
+			request: &Request{
+				Path: Path{
+					&PathElement{
+						Name: "size",
+						Schema: schematest.NewRef("integer",
+							schematest.WithFormat("int32"),
+							schematest.WithMinimum(0),
+							schematest.WithMaximum(15),
+						),
+					},
+				},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int32(9), v)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			gofakeit.Seed(1234567)
+
+			v, err := New(tc.request)
+			tc.test(t, v, err)
+		})
+	}
+}
+
+func TestInteger(t *testing.T) {
+	testcases := []struct {
+		name    string
+		request *Request
+		test    func(t *testing.T, v interface{}, err error)
+	}{
+		{
+			name: "integer",
+			request: &Request{
+				Path: Path{
+					&PathElement{
+						Name:   "size",
+						Schema: schematest.NewRef("integer"),
+					},
+				},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int64(-3600881594791838082), v)
+			},
+		},
+		{
+			name: "integer with max=15",
+			request: &Request{
+				Path: Path{
+					&PathElement{
+						Name: "size",
+						Schema: schematest.NewRef("integer",
+							schematest.WithMaximum(15),
+						),
+					},
+				},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int64(-3600881594791837696), v)
+			},
+		},
+		{
+			name: "integer with min=0, max=15",
+			request: &Request{
+				Path: Path{
+					&PathElement{
+						Name: "size",
+						Schema: schematest.NewRef("integer",
+							schematest.WithMinimum(0),
+							schematest.WithMaximum(15),
+						),
+					},
+				},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int64(9), v)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			gofakeit.Seed(1234567)
+
+			v, err := New(tc.request)
+			tc.test(t, v, err)
+		})
+	}
+}
+
+func TestFloat32(t *testing.T) {
+	testcases := []struct {
+		name    string
+		request *Request
+		test    func(t *testing.T, v interface{}, err error)
+	}{
+		{
+			name: "float",
+			request: &Request{
+				Path: Path{
+					&PathElement{
+						Name:   "size",
+						Schema: schematest.NewRef("number", schematest.WithFormat("float")),
+					},
+				},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, float32(2.0743327e+38), v)
+			},
+		},
+		{
+			name: "float with max=15",
+			request: &Request{
+				Path: Path{
+					&PathElement{
+						Name: "size",
+						Schema: schematest.NewRef("number",
+							schematest.WithFormat("float"),
+							schematest.WithMaximum(15),
+						),
+					},
+				},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, float32(-1.3284907e+38), v)
+			},
+		},
+		{
+			name: "float with min=0, max=15",
+			request: &Request{
+				Path: Path{
+					&PathElement{
+						Name: "size",
+						Schema: schematest.NewRef("number",
+							schematest.WithFormat("float"),
+							schematest.WithMinimum(0),
+							schematest.WithMaximum(15),
+						),
+					},
+				},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, float32(9.143875), v)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			gofakeit.Seed(1234567)
+
+			v, err := New(tc.request)
+			tc.test(t, v, err)
+		})
+	}
+}
+
+func TestFloat(t *testing.T) {
+	testcases := []struct {
+		name    string
+		request *Request
+		test    func(t *testing.T, v interface{}, err error)
+	}{
+		{
+			name: "number",
+			request: &Request{
+				Path: Path{
+					&PathElement{
+						Name:   "size",
+						Schema: schematest.NewRef("number"),
+					},
+				},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 1.0958586976799703e+308, v)
+			},
+		},
+		{
+			name: "number with max=15",
+			request: &Request{
+				Path: Path{
+					&PathElement{
+						Name: "size",
+						Schema: schematest.NewRef("number",
+							schematest.WithMaximum(15),
+						),
+					},
+				},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, -7.018344371823454e+307, v)
+			},
+		},
+		{
+			name: "number with min=0, max=15",
+			request: &Request{
+				Path: Path{
+					&PathElement{
+						Name: "size",
+						Schema: schematest.NewRef("number",
+							schematest.WithMinimum(0),
+							schematest.WithMaximum(15),
+						),
+					},
+				},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 9.143874528095433, v)
 			},
 		},
 	}

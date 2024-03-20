@@ -30,7 +30,7 @@ func TestHandler_Schema(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`"xid1UOwQ;"`))
+					try.HasBody(`"XidZuoWq "`))
 			},
 		},
 		{
@@ -47,7 +47,7 @@ func TestHandler_Schema(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"foo":"xid1UOwQ;"}`))
+					try.HasBody(`{"foo":"XidZuoWq "}`))
 			},
 		},
 		{
@@ -64,7 +64,7 @@ func TestHandler_Schema(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/xml"),
-					try.HasBody(`<text>xid1UOwQ;</text>`))
+					try.HasBody(`<text>XidZuoWq </text>`))
 			},
 		},
 		{
@@ -81,7 +81,7 @@ func TestHandler_Schema(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`"xid1UOwQ;"`))
+					try.HasBody(`"XidZuoWq "`))
 			},
 		},
 		{

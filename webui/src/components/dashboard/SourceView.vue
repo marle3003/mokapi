@@ -48,7 +48,6 @@ const viewHeight = computed(() => {
     if (props.maxHeight && height > props.maxHeight) {
       return props.maxHeight
     }
-    console.log(height)
     return height
   }
   return 500

@@ -6,10 +6,12 @@ func Examples() *Tree {
 	return &Tree{
 		Name: "Examples",
 		Test: func(r *Request) bool {
-			return r.Schema != nil && r.Schema.Examples != nil && len(r.Schema.Examples) > 0
+			s := r.LastSchema()
+			return s != nil && s.Examples != nil && len(s.Examples) > 0
 		},
 		Fake: func(r *Request) (interface{}, error) {
-			return r.Schema.Examples[gofakeit.Number(0, len(r.Schema.Examples)-1)], nil
+			s := r.LastSchema()
+			return s.Examples[gofakeit.Number(0, len(s.Examples)-1)], nil
 		},
 	}
 }

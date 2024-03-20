@@ -48,6 +48,12 @@ func WithItems(typeName string, opts ...SchemaOptions) SchemaOptions {
 	}
 }
 
+func WithItemsRef(ref *schema.Ref) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Items = ref
+	}
+}
+
 func WithRequired(names ...string) SchemaOptions {
 	return func(s *schema.Schema) {
 		for _, n := range names {
@@ -189,6 +195,12 @@ func WithMinimum(min float64) SchemaOptions {
 func WithMaximum(max float64) SchemaOptions {
 	return func(s *schema.Schema) {
 		s.Maximum = &max
+	}
+}
+
+func WithMultipleOf(n float64) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.MultipleOf = &n
 	}
 }
 
