@@ -254,7 +254,7 @@ export let apps = [
                                 contents: [
                                     {
                                         type: "application/json",
-                                        schema: {}
+                                        schema: pet
                                     }
                                 ]
                             }
