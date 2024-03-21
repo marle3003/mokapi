@@ -73,9 +73,8 @@ export default function() {
                 }
                 return true
             case 'example':
-                console.log(request.body)
                 const data = fake(request.body)
-                response.body = marshal(data, { schema: request.body, contentType: request.header.Accept })
+                response.body = marshal(data, { schema: request.body.schema, contentType: request.header.Accept })
                 return true
             case 'validate':
                 const res = post('http://localhost:8091/mokapi/api/schema/validate', request.body, { headers: { 'Data-Content-Type': request.header['Data-Content-Type']}})

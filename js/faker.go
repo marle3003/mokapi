@@ -46,13 +46,33 @@ type jsonXml struct {
 	Namespace string `json:"namespace"`
 }
 
+type requestExample struct {
+	Name   string      `json:"name"`
+	Schema *jsonSchema `json:"schema"`
+}
+
 func newFaker(_ common.Host, rt *goja.Runtime) interface{} {
 	return &fakerModule{rt: rt}
 }
 
 func (m *fakerModule) Fake(v goja.Value) interface{} {
+	r := &requestExample{}
+	err := m.rt.ExportTo(v, &r)
+	if err == nil && r.Schema != nil {
+		i, err := generator.New(&generator.Request{Path: generator.Path{
+			&generator.PathElement{
+				Name:   r.Name,
+				Schema: schema.ConvertToJsonSchema(&schema.Ref{Value: toSchema(r.Schema)}),
+			},
+		}})
+		if err != nil {
+			panic(m.rt.ToValue(err.Error()))
+		}
+		return i
+	}
+
 	s := &jsonSchema{}
-	err := m.rt.ExportTo(v, &s)
+	err = m.rt.ExportTo(v, &s)
 	if err != nil {
 		panic(m.rt.ToValue("expected parameter type of OpenAPI schema"))
 	}
