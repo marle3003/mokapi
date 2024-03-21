@@ -10,11 +10,6 @@ import { get, post } from 'mokapi/http'
 const configs = {}
 
 export default function() {
-    if (!findByName('CustomLongNameWithSpecial')) {
-        const root = findByName(RootName)
-        root.insert(0, { name: 'CustomLongNameWithSpecial' })
-    }
-
     on('http', function(request, response) {
         response.headers["Access-Control-Allow-Methods"] = "*"
         response.headers["Access-Control-Allow-Headers"] = "*"
