@@ -141,7 +141,7 @@ func TestProvider_Start(t *testing.T) {
 			name: "change poll timeout",
 			init: func() (static.HttpProvider, *httptest.Server) {
 				server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					time.Sleep(2 * time.Second)
+					time.Sleep(4 * time.Second)
 				}))
 
 				cfg := static.HttpProvider{
