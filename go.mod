@@ -4,13 +4,14 @@ go 1.18
 
 require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
-	github.com/bradleyfalzon/ghinstallation/v2 v2.9.0
+	github.com/bradleyfalzon/ghinstallation/v2 v2.10.0
 	github.com/brianvoe/gofakeit/v6 v6.28.0
 	github.com/dop251/goja v0.0.0-20220408131256-ffe77e20c6f1
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-co-op/gocron v1.37.0
 	github.com/go-git/go-git/v5 v5.11.0
 	github.com/google/uuid v1.6.0
+	github.com/jinzhu/inflection v1.0.0
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.9.0
@@ -37,12 +38,11 @@ require (
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
-	github.com/google/go-github/v57 v57.0.0 // indirect
+	github.com/google/go-github/v60 v60.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/huandu/xstrings v1.3.2 // indirect
 	github.com/imdario/mergo v0.3.14 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
-	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/mitchellh/copystructure v1.0.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.0 // indirect
