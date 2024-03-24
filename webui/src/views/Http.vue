@@ -38,7 +38,7 @@ useMeta(title, description, "https://mokapi.io/http")
           </div>
           <div class="col-12 col-lg-6 justify-content-center">
             <a href="#requestdialog" data-bs-toggle="modal" data-bs-target="#requestdialog">
-              <img src="/http-request.png" />
+              <img src="/http-request.png" alt="Analyze HTTP request in Mokapi's Dashboard" />
             </a>
           </div>
           <div class="col-12 d-block d-md-none">
@@ -114,6 +114,9 @@ useMeta(title, description, "https://mokapi.io/http")
         <div class="modal-content">
           <div class="modal-body">
             <img src="/http-request.png" width="100%" />
+            <div class="pt-2" style="text-align:center; font-size:0.9rem;">
+              Analyze HTTP requests in Mokapi's Dashboard
+            </div>
           </div>
         </div>
       </div>
@@ -123,6 +126,9 @@ useMeta(title, description, "https://mokapi.io/http")
         <div class="modal-content">
           <div class="modal-body">
             <img src="/http.png" style="width:100%" />
+            <div class="pt-2" style="text-align:center; font-size:0.9rem;">
+              Analyze HTTP requests in Mokapi's Dashboard
+            </div>
           </div>
         </div>
       </div>

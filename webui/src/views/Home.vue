@@ -10,6 +10,7 @@ useMeta('API Mocking and Testing | mokapi.io', description, 'https://mokapi.io')
 
 const dialog = ref<Modal>()
 const imageUrl = ref<string>()
+const imageDescription = ref<string>()
 
 onMounted(() => {
   dialog.value = new Modal('#imageDialog', {})
@@ -21,6 +22,7 @@ function showImage(target: EventTarget | null) {
   }
   const element = target as HTMLImageElement
   imageUrl.value = element.src
+  imageDescription.value = element.alt
   dialog.value?.show()
 }
 </script>
@@ -157,19 +159,36 @@ function showImage(target: EventTarget | null) {
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
             <div class="text-lg-start text-center">
-              <h2>Patch Configuration</h2>
-              <p>Patch configuration changes for mocking needs, rather than changing the original contract</p>
-              <router-link :to="{ path: 'docs/configuration/configuration/patching' }">
-                <button type="button" class="btn btn-outline-primary btn-sm">Discover Patching</button>
+              <h2>Powerful Data Generator</h2>
+              <p>
+                Mokapi has a powerful data generator that can produce a wide range of meaningful fake data for your APIs. 
+                Customize it to suit your specific needs.
+              </p>
+              <router-link :to="{ path: '/docs/guides/get-started/test-data' }">
+                <button type="button" class="btn btn-outline-primary btn-sm">Explore Data Generator</button>
               </router-link>
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 order-lg-2">
-            <img src="/patching.png" @click="showImage($event.target)" alt="Patching allows more flexibility in mocking APIs" />
+            <img src="/faker-tree.png" @click="showImage($event.target)" alt="Mokapi provides a powerful data generator"/>
           </div>
         </div>
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-2">
+            <div class="text-lg-start text-center">
+              <h2>Patch Configuration</h2>
+              <p>Patch configuration changes for mocking needs, rather than changing the original contract</p>
+              <router-link :to="{ path: '/docs/configuration/configuration/patching' }">
+                <button type="button" class="btn btn-outline-primary btn-sm">Discover Patching</button>
+              </router-link>
+            </div>
+          </div>
+          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 order-lg-1">
+            <img src="/patching.png" @click="showImage($event.target)" alt="Patching allows more flexibility in mocking APIs" />
+          </div>
+        </div>
+        <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
+          <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
             <div class="text-lg-start text-center">
               <h2>End-to-End Tests</h2>
               <p>Test only system that you are responsible for and fake all others with Mokapi. Simulate 
@@ -180,12 +199,12 @@ function showImage(target: EventTarget | null) {
               </router-link>
             </div>
           </div>
-          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 order-lg-1">
+          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 order-lg-2">
             <img src="/systemtest.png" @click="showImage($event.target)" alt="Mokapi helps you to simulate interfaces like REST API or Apache Kafka and allows to bring the really important information into the system under test." />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
-          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-1">
+          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
               <h2>See what's going on</h2>
               <p>Quickly analyze and inspect all requests and responses in the dashboard to gather insights on how your mock APIs are used.</p>
@@ -194,32 +213,32 @@ function showImage(target: EventTarget | null) {
               </router-link>
             </div>
           </div>
-          <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-2">
+          <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
             <img src="/dashboard.png" @click="showImage($event.target)" alt="Analyzing data in real-time using the powerful dashboard" />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5">
-          <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-2">
+          <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
             <div class="text-lg-start text-center">
               <h2>Contract Testing</h2>
               <p>Fake interactions under test control between your software and systems that it collaborates.</p>
-              <router-link :to="{ path: '/docs/blogs/automation-testing-in-agile-development' }">
-                <button type="button" class="btn btn-outline-primary btn-sm">Read more</button>
+              <router-link :to="{ path: '/docs/blogs/contract-testing' }">
+                <button type="button" class="btn btn-outline-primary btn-sm">Take a look</button>
               </router-link>
             </div>
           </div>
-          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-1">
+          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
             <img src="/systemcontracts.png" @click="showImage($event.target)" alt="Test only system that we are responsible for and fake all others" />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5">
-          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-1">
+          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
               <h2>Build better software faster</h2>
               <p>Good tests are deterministic and durable. Test your software if it is ready to release. Only your software, nothing else.</p>
             </div>
           </div>
-          <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 order-lg-2">
+          <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 order-lg-1">
             <img src="/betterfaster.png" class="float-lg-end mx-auto d-block" style="width: 80%" @click="showImage($event.target)" alt="Improve speed, accuracy and efficiency of testing and deliver higher quality" />
           </div>
         </div>
@@ -232,6 +251,9 @@ function showImage(target: EventTarget | null) {
       <div class="modal-content">
         <div class="modal-body">
           <img :src="imageUrl" style="width:100%" />
+          <div class="pt-2" style="text-align:center; font-size:0.9rem;">
+            {{ imageDescription }}
+          </div>
         </div>
       </div>
     </div>

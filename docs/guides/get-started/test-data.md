@@ -1,13 +1,14 @@
 ---
-title: Test Data Generator
+title: Faker - Test Data Generator
 description: Use randomly generated test data or use Mokapi Script to create responses that can simulate a wide range of scenarios and edge cases.
 ---
 
-# Test Data Generator
+# Faker - Test Data Generator
 
 By default, Mokapi generates test data randomly depending on 
-the data types. If you need more dynamic responses, you can 
-use Mokapi Script to generate responses based on specific 
+the data types and structure with a tree algorithm. You can extend and 
+modify this tree for your individual needs.  If you need more dynamic 
+responses, you can use Mokapi Script to generate responses based on specific
 conditions or parameters. Mokapi Scripts allows you to 
 create responses that can simulate a wide range of scenarios
 and edge cases.
@@ -15,6 +16,131 @@ and edge cases.
 ``` box=tip
 You can also use Mokapi's endpoint to generate test data on the fly,
 see Mokapi's Dashboard for details
+```
+
+## Faker Tree
+
+<img src="/faker-tree.png" width="700" alt="Mokapi provides a powerful data generator" title="Visible in Mokapi's Dashboard" />
+<br />
+
+Mokapi analysis the data structure and data types using a tree to generate meaningful random data.
+A possible response from the mocked Swaggers Petstore could be as follows
+
+```json tab=Data
+{
+  "id": 26601,
+  "name": "Hercules",
+  "category": {
+    "id": 83009,
+    "name": "cheetah"
+  },
+  "photoUrls": [
+    "https://www.chiefniches.com/monetize/systems/markets",
+    "http://www.globalholistic.com/rich"
+  ],
+  "tags": [
+    {
+      "id": 39278,
+      "name": "BerylBay"
+    },
+    {
+      "id": 51507,
+      "name": "OrionTrail"
+    }
+  ],
+  "status": "available"
+}
+```
+
+```yaml tab=Schema
+{
+  "type": "object",
+  "properties": {
+    "tags": {
+      "type": "array",
+      "items": {
+        "ref": "#/components/schemas/Tag",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "xml": {
+          "name": "Tag"
+        }
+      },
+      "xml": {
+        "name": "tag",
+        "wrapped": true
+      }
+    },
+    "status": {
+      "type": "string",
+      "description": "pet status in the store",
+      "enum": ["available", "pending", "sold"]
+    },
+    "id": {
+      "type": "integer",
+      "format": "int64"
+    },
+    "category": {
+      "ref": "#/components/schemas/Category",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "xml": {
+        "name": "Category"
+      }
+    },
+    "name": {
+      "type": "string",
+      "example": "doggie"
+    },
+    "photoUrls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "xml": {
+        "name": "photoUrl",
+        "wrapped": true
+      }
+    }
+  },
+  "xml": {
+    "name": "Pet"
+  }
+}
+```
+
+You can extend and modify this tree, and see it in the dashboard at runtime.
+
+```javascript
+export default function() {
+    if (!findByName('Frequency')) {
+        const frequencyItems = ['never', 'daily', 'weekly', 'monthly', 'yearly']
+        const node = findByName('Strings')
+        node.append({
+            name: 'Frequency',
+            test: (r) => { return r.lastName() === 'frequency' },
+            fake: (r) => {
+                return frequencyItems[Math.floor(Math.random()*frequencyItems.length)]
+            }
+        })
+    }
+}
 ```
 
 ## Declarative Test Data
