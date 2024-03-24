@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -123,17 +124,19 @@ func TestScript(t *testing.T) {
 }
 
 type testHost struct {
-	openFile    func(file, hint string) (string, string, error)
-	open        func(file, hint string) (*dynamic.Config, error)
-	info        func(args ...interface{})
-	warn        func(args ...interface{})
-	error       func(args ...interface{})
-	debug       func(args ...interface{})
-	httpClient  *testClient
-	kafkaClient *kafkaClient
-	every       func(every string, do func(), opt common.JobOptions)
-	cron        func(every string, do func(), opt common.JobOptions)
-	on          func(event string, do func(args ...interface{}) (bool, error), tags map[string]string)
+	openFile      func(file, hint string) (string, string, error)
+	open          func(file, hint string) (*dynamic.Config, error)
+	info          func(args ...interface{})
+	warn          func(args ...interface{})
+	error         func(args ...interface{})
+	debug         func(args ...interface{})
+	httpClient    *testClient
+	kafkaClient   *kafkaClient
+	every         func(every string, do func(), opt common.JobOptions)
+	cron          func(every string, do func(), opt common.JobOptions)
+	on            func(event string, do func(args ...interface{}) (bool, error), tags map[string]string)
+	findFakerTree func(name string) common.FakerTree
+	m             sync.Mutex
 }
 
 func (th *testHost) Info(args ...interface{}) {
@@ -232,6 +235,21 @@ func (th *testHost) Cancel(jobId int) error {
 
 func (th *testHost) Name() string {
 	return "test host"
+}
+
+func (th *testHost) FindFakerTree(name string) common.FakerTree {
+	if th.findFakerTree != nil {
+		return th.findFakerTree(name)
+	}
+	return nil
+}
+
+func (th *testHost) Lock() {
+	th.m.Lock()
+}
+
+func (th *testHost) Unlock() {
+	th.m.Unlock()
 }
 
 func mustParse(s string) *url.URL {

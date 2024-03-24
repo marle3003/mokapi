@@ -9,10 +9,12 @@ import (
 	"mokapi/config/dynamic/script"
 	"mokapi/engine/common"
 	"mokapi/js"
+	"mokapi/json/generator"
 	"mokapi/lua"
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"sync"
 	"time"
 )
 
@@ -22,15 +24,17 @@ type eventHandler struct {
 }
 
 type scriptHost struct {
-	id       int
-	name     string
-	engine   *Engine
-	script   common.Script
-	jobs     map[int]*gocron.Job
-	events   map[string][]*eventHandler
-	cwd      string
-	file     *dynamic.Config
-	checksum []byte
+	id         int
+	name       string
+	engine     *Engine
+	script     common.Script
+	jobs       map[int]*gocron.Job
+	events     map[string][]*eventHandler
+	cwd        string
+	file       *dynamic.Config
+	checksum   []byte
+	fakerNodes []*fakerTree
+	m          sync.Mutex
 }
 
 func newScriptHost(file *dynamic.Config, e *Engine) *scriptHost {
@@ -166,6 +170,9 @@ func (sh *scriptHost) On(event string, handler func(args ...interface{}) (bool, 
 }
 
 func (sh *scriptHost) close() {
+	sh.Lock()
+	defer sh.Unlock()
+
 	if sh.jobs != nil {
 		for _, j := range sh.jobs {
 			sh.engine.cron.RemoveByReference(j)
@@ -175,6 +182,13 @@ func (sh *scriptHost) close() {
 
 	if sh.script != nil {
 		sh.script.Close()
+	}
+
+	for _, n := range sh.fakerNodes {
+		err := n.Restore()
+		if err != nil {
+			log.Errorf("failed to close script properly: %v", err)
+		}
 	}
 }
 
@@ -232,7 +246,24 @@ func (sh *scriptHost) HttpClient() common.HttpClient {
 }
 
 func (sh *scriptHost) CanClose() bool {
-	return len(sh.events) == 0 && len(sh.jobs) == 0
+	return len(sh.events) == 0 && len(sh.jobs) == 0 && len(sh.fakerNodes) == 0
+}
+
+func (sh *scriptHost) FindFakerTree(name string) common.FakerTree {
+	t := generator.FindByName(name)
+	ft := &fakerTree{
+		t: t,
+	}
+	sh.fakerNodes = append(sh.fakerNodes, ft)
+	return ft
+}
+
+func (sh *scriptHost) Lock() {
+	sh.m.Lock()
+}
+
+func (sh *scriptHost) Unlock() {
+	sh.m.Unlock()
 }
 
 func (sh *scriptHost) compile() (common.Script, error) {

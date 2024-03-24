@@ -35,7 +35,8 @@ export interface Tree {
 
     append: (node: Tree | CustomTree) => void
     insert: (index: number, node: Tree | CustomTree) => void
-    remove: (index: number) => void
+    removeAt: (index: number) => void
+    remove: (name: string) => void
 }
 
 export interface CustomTree {
