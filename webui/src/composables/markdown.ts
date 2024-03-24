@@ -37,23 +37,12 @@ function replaceImageUrls(data: string) {
             console.log(images)
             const path = `/src/assets${m[2]}`
             let imageUrl = images[path]
-            if (!imageUrl) {
-                imageUrl = m[2]
+            if (imageUrl) {
+                data = data.replace(m[0], `<img${m[1]} src="${imageUrl}"`)
             }
-            imageUrl = transformPath(imageUrl)
-            data = data.replace(m[0], `<img${m[1]} src="${imageUrl}"`)
         }
     } while(m)
     return data
-}
-
-function transformPath(path: string): string {
-    let base = document.querySelector('base')?.href
-    if (base) {
-        base = base.substring(0, base.length - 1)
-        path = base + path
-    }
-    return path
 }
 
 export function parseMetadata(data: string) {
