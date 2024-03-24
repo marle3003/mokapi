@@ -134,61 +134,6 @@ func TestPerson(t *testing.T) {
 			},
 		},
 		{
-			name: "creditcard",
-			req: &Request{
-				Path: Path{
-					&PathElement{
-						Name: "creditcard",
-						Schema: schematest.NewRef("object",
-							schematest.WithProperty("type", nil),
-							schematest.WithProperty("number", nil),
-						),
-					},
-				},
-			},
-			test: func(t *testing.T, v interface{}, err error) {
-				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"number": "6504859109364908", "type": "American Express"}, v)
-			},
-		},
-		{
-			name: "person with address, username and creditcard",
-			req: &Request{
-				Path: Path{
-					&PathElement{
-						Name: "person",
-						Schema: schematest.NewRef("object",
-							schematest.WithProperty("username", schematest.New("string")),
-							schematest.WithProperty("address", nil),
-							schematest.WithProperty("creditcard", nil),
-						),
-					},
-				},
-			},
-			test: func(t *testing.T, v interface{}, err error) {
-				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{
-					"address": map[string]interface{}{
-						"address":   "64893 South Harborshaven, St. Paul, South Dakota 73501",
-						"city":      "St. Paul",
-						"country":   "Martinique",
-						"latitude":  -27.033468,
-						"longitude": -154.420938,
-						"state":     "South Dakota",
-						"street":    "64893 South Harborshaven",
-						"zip":       "73501",
-					},
-					"username": "Lockman7291",
-					"creditcard": map[string]interface{}{
-						"type":   "Diners Club",
-						"number": "2298465535548962",
-						"cvv":    "367",
-						"exp":    "01/31",
-					},
-				}, v)
-			},
-		},
-		{
 			name: "phone any schema",
 			req: &Request{
 				Path: Path{

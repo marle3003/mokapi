@@ -143,6 +143,11 @@ export default function() {
 }
 ```
 
+``` box=warning title="Warning: JavaScript file is not thread-safe"
+A JavaScript file cannot have 
+an event handler and a faker extension. You need to have these in different files.
+```
+
 ## Declarative Test Data
 
 Providing a detailed specification for data types can greatly

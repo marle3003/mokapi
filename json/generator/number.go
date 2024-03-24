@@ -234,10 +234,10 @@ func getRange(s *schema.Schema) (float64, float64) {
 	} else if len(s.Type) == 1 && s.Type[0] == "number" {
 		if s.Format == "float" {
 			max = math.MaxFloat32
-			min = max * -1
+			min = -math.MaxFloat32
 		} else {
 			max = math.MaxFloat64
-			min = max * -1
+			min = -math.MaxFloat64
 		}
 	}
 

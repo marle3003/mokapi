@@ -70,7 +70,7 @@ func NewTree() *Tree {
 			It(),
 			//Material(),
 			Category(),
-			Commerce(),
+			Business(),
 			Examples(),
 			Basic(),
 		},

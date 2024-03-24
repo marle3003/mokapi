@@ -7,7 +7,8 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
     var defaultRender = md.renderer.rules.fence!,
         unescapeAll = md.utils.unescapeAll,
         boxExpr = /box=(\w*)/,
-        noTitleExpre = /noTitle/
+        noTitleExpre = /noTitle/,
+        title = /title=\"([^"]*)\"/
 
     function getInfo(token: Token) {
         return token.info ? unescapeAll(token.info).trim() : ''
@@ -21,6 +22,11 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
     function showTitle(token: Token): boolean {
         var info = getInfo(token)
         return noTitleExpre.exec(info) == null
+    }
+
+    function getTitle(token: Token) {
+        var info = getInfo(token) 
+        return title.exec(info)?.slice(1)
     }
 
     function fenceGroup(tokens: Token[], idx: number, options: Options, env: any, slf: Renderer): string {
@@ -43,8 +49,15 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
             token.hidden = true
 
             if (showTitle(tokens[i])) {
+                let title = getTitle(token)
+                let heading = ''
+                if (!title) {
+                    title = name
+                } else {
+                    heading = 'box-custom-heading'
+                }
                 alert += `<div class="box ${name}" role="alert">
-                        <p class="box-heading">${name}</p>
+                        <p class="box-heading ${heading}">${title}</p>
                         <p class="box-body">${token.content}</p>
                         </div>`
             }
