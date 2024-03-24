@@ -127,7 +127,7 @@ public class Producer
 }
 ```
 
-<img src="/docs/examples/simple-kafka-example.png" alt="Mokapi Kafka Dashboard" title="Mokapi Kafka Dashboard" />
+<img src="/docs/examples/tutorials/simple-kafka-example.png" alt="Mokapi Kafka Dashboard" title="Mokapi Kafka Dashboard" />
 
 ## Create a Kafka Consumer
 
