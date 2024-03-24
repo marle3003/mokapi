@@ -178,7 +178,10 @@ func (p *Provider) initRepository(r *repository, ch chan *dynamic.Config, pool *
 
 		if h.Name() != ref {
 			r.pullOptions.ReferenceName = ref
-			err = r.repo.Fetch(&git.FetchOptions{RefSpecs: []config.RefSpec{"+refs/*:refs/*", "HEAD:refs/heads/HEAD"}})
+			err = r.repo.Fetch(&git.FetchOptions{RefSpecs: []config.RefSpec{"refs/*:refs/*", "HEAD:refs/heads/HEAD"}})
+			if errors.Is(err, git.ErrForceNeeded) {
+				err = r.repo.Fetch(&git.FetchOptions{RefSpecs: []config.RefSpec{"+refs/*:refs/*", "HEAD:refs/heads/HEAD"}})
+			}
 			if err != nil {
 				return fmt.Errorf("git fetch error %v: %v", r.url, err.Error())
 			}
@@ -190,6 +193,7 @@ func (p *Provider) initRepository(r *repository, ch chan *dynamic.Config, pool *
 	}
 
 	ref, err := r.repo.Head()
+	r.hash = ref.Hash()
 
 	chFile := make(chan *dynamic.Config)
 	p.startFileProvider(r.localPath, chFile, pool)
@@ -222,7 +226,7 @@ func (p *Provider) initRepository(r *repository, ch chan *dynamic.Config, pool *
 				}
 
 				cIter, _ := r.repo.Log(&git.LogOptions{
-					From:     ref.Hash(),
+					From:     r.hash,
 					FileName: &gitFile,
 				})
 
