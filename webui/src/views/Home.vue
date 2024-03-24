@@ -162,7 +162,7 @@ function showImage(target: EventTarget | null) {
               <h2>Powerful Data Generator</h2>
               <p>
                 Mokapi has a powerful data generator that can produce a wide range of meaningful fake data for your APIs. 
-                Customize it to suit your specific needs.
+                Customize it to fit your needs.
               </p>
               <router-link :to="{ path: '/docs/guides/get-started/test-data' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Explore Data Generator</button>
