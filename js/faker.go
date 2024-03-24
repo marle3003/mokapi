@@ -8,7 +8,8 @@ import (
 )
 
 type fakerModule struct {
-	rt *goja.Runtime
+	rt   *goja.Runtime
+	host common.Host
 }
 
 type jsonSchema struct {
@@ -51,8 +52,8 @@ type requestExample struct {
 	Schema *jsonSchema `json:"schema"`
 }
 
-func newFaker(_ common.Host, rt *goja.Runtime) interface{} {
-	return &fakerModule{rt: rt}
+func newFaker(h common.Host, rt *goja.Runtime) interface{} {
+	return &fakerModule{rt: rt, host: h}
 }
 
 func (m *fakerModule) Fake(v goja.Value) interface{} {
@@ -157,16 +158,28 @@ func toSchema(js *jsonSchema) *schema.Schema {
 }
 
 type node struct {
-	t  *generator.Tree
-	rt *goja.Runtime
+	t    common.FakerTree
+	f    *fakerModule
+	name string
+	test func(r *generator.Request) bool
+	fake func(r *generator.Request) (interface{}, error)
 }
 
 func (m *fakerModule) FindByName(name string) *node {
-	t := generator.FindByName(name)
-	if t == nil {
-		return nil
-	}
-	return &node{t: t, rt: m.rt}
+	ft := m.host.FindFakerTree(name)
+	return &node{t: ft, f: m}
+}
+
+func (n *node) Name() string {
+	return n.name
+}
+
+func (n *node) Test(r *generator.Request) bool {
+	return n.test(r)
+}
+
+func (n *node) Fake(r *generator.Request) (interface{}, error) {
+	return n.fake(r)
 }
 
 func (n *node) Append(v goja.Value) {
@@ -178,45 +191,57 @@ func (n *node) Insert(index int, v goja.Value) {
 	t := n.createTree(v)
 	err := n.t.Insert(index, t)
 	if err != nil {
-		panic(n.rt.ToValue(err))
+		panic(n.f.rt.ToValue(err))
 	}
 }
 
-func (n *node) Remove(index int) {
-	if err := n.t.Remove(index); err != nil {
-		panic(n.rt.ToValue(err))
+func (n *node) RemoveAt(index int) {
+	if err := n.t.RemoveAt(index); err != nil {
+		panic(n.f.rt.ToValue(err))
 	}
 }
 
-func (n *node) createTree(v goja.Value) *generator.Tree {
+func (n *node) Remove(name string) {
+	if err := n.t.Remove(name); err != nil {
+		panic(n.f.rt.ToValue(err))
+	}
+}
+
+func (n *node) createTree(v goja.Value) *node {
 	if v != nil && !goja.IsUndefined(v) && !goja.IsNull(v) {
-		newNode := &generator.Tree{Custom: true}
-		obj := v.ToObject(n.rt)
+		newNode := &node{}
+		obj := v.ToObject(n.f.rt)
 		for _, k := range obj.Keys() {
 			switch k {
 			case "name":
 				name := obj.Get(k)
-				newNode.Name = name.String()
+				newNode.name = name.String()
 			case "test":
 				test, _ := goja.AssertFunction(obj.Get(k))
-				newNode.Test = func(r *generator.Request) bool {
-					param := n.rt.ToValue(r)
+				newNode.test = func(r *generator.Request) bool {
+					n.f.host.Lock()
+					defer n.f.host.Unlock()
+
+					param := n.f.rt.ToValue(r)
 					v, _ := test(goja.Undefined(), param)
 					return v.ToBoolean()
 				}
 			case "fake":
 				fake, _ := goja.AssertFunction(obj.Get(k))
-				newNode.Fake = func(r *generator.Request) (interface{}, error) {
-					param := n.rt.ToValue(r)
+				newNode.fake = func(r *generator.Request) (interface{}, error) {
+					n.f.host.Lock()
+					defer n.f.host.Unlock()
+
+					param := n.f.rt.ToValue(r)
 					v, err := fake(goja.Undefined(), param)
 					return v.Export(), err
 				}
 			}
 		}
-		if newNode.Name == "" {
-			panic(n.rt.ToValue("node must have a name"))
+		if newNode.name == "" {
+			panic(n.f.rt.ToValue("node must have a name"))
 		}
 		return newNode
 	}
-	panic(n.rt.ToValue("unexpected function parameter"))
+	panic(n.f.rt.ToValue("unexpected function parameter"))
 }

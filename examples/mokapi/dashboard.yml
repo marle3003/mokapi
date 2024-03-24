@@ -28,9 +28,7 @@ paths:
               schema:
                 type: array
                 items:
-                  anyOf:
-                    - $ref: 'http.yml#/components/schemas/HttpInfo'
-                    - $ref: 'kafka.yml#/components/schemas/KafkaInfo'
+                  $ref: '#/components/schemas/ServiceInfo'
   /api/services/http/{name}:
     get:
       summary: Information about the http service
@@ -393,3 +391,32 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FakerTree'
+    ServiceInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        contact:
+          type: object
+          properties:
+            name:
+              type: string
+            url:
+              type: string
+            email:
+              type: string
+        version:
+          type: string
+        type:
+          type: string
+        metrics:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              value:
+                type: integer

@@ -790,7 +790,7 @@ func TestGenerator_AllOf(t *testing.T) {
 				schematest.New("object", schematest.WithProperty("bar", schematest.New("number"))),
 			)),
 			test: func(t *testing.T, result interface{}, err error) {
-				require.EqualError(t, err, "allOf expects to be valid against all of subschemas: can not fill array with unique items: schema type=array unique-items items=schema type=integer minimum=0 maximum=3 minItems=5")
+				require.EqualError(t, err, "generate random data for schema failed: schema type=object properties=[a]: can not fill array with unique items: schema type=array unique-items items=schema type=integer minimum=0 maximum=3 minItems=5")
 				require.Nil(t, result)
 			},
 		},

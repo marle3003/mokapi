@@ -1,8 +1,6 @@
 package generator
 
 import (
-	"crypto/sha1"
-	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
 	"mokapi/json/schema"
 	"strings"
@@ -27,14 +25,9 @@ func Strings() *Tree {
 			StringFormat(),
 			StringPattern(),
 			Name(),
-			StringId(),
 			StringNumber(),
 			StringKey(),
-			StringEmail(),
-			Uri(),
-			Language(),
-			Error(),
-			StringHash(),
+
 			StringDescription(),
 			String(),
 		},
@@ -147,36 +140,6 @@ func StringEmail() *Tree {
 		},
 		Fake: func(r *Request) (interface{}, error) {
 			return gofakeit.Email(), nil
-		},
-	}
-}
-
-func Error() *Tree {
-	return &Tree{
-		Name: "Error",
-		Test: func(r *Request) bool {
-			last := r.Last()
-			return strings.ToLower(last.Name) == "error" && (last.Schema.IsAnyString() || last.Schema.IsAny())
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			return fmt.Sprintf("%v", gofakeit.Error()), nil
-		},
-	}
-}
-
-func StringHash() *Tree {
-	hash := sha1.New()
-	return &Tree{
-		Name: "StringHash",
-		Test: func(r *Request) bool {
-			last := r.Last()
-			return (strings.ToLower(last.Name) == "hash" || strings.HasSuffix(last.Name, "Hash")) &&
-				last.Schema.IsAnyString()
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			s := gofakeit.SentenceSimple()
-			b := hash.Sum([]byte(s))
-			return fmt.Sprintf("%x", b), nil
 		},
 	}
 }

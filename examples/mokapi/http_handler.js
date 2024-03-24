@@ -4,7 +4,7 @@ import { apps as httpServices, events as httpEvents, configs as httpConfigs } fr
 import { server as smtpServers, mails, mailEvents, getMail, getAttachment } from 'smtp.js'
 import { server as ldapServers, searches } from 'ldap.js'
 import { metrics } from 'metrics.js'
-import { fake, findByName, RootName } from 'mokapi/faker'
+import { fake } from 'mokapi/faker'
 import { get, post } from 'mokapi/http'
 
 const configs = {}
@@ -120,24 +120,10 @@ export default function() {
 }
 
 function getServices() {
-    let http = httpServices.map(x => {
-        x.type = "http"
-        return x
-    })
-    let kafka = clusters.map(x => {
-        let c = {...x}
-        c.type = "kafka"
-        c.topics = c.topics.map(t => t.name)
-        return c
-    })
-    let smtp = smtpServers.map(x => {
-        x.type = "smtp"
-        return x
-    })
-    let ldap = ldapServers.map(x => {
-        x.type = "ldap"
-        return x
-    })
+    let http = httpServices.map(x => getInfo(x, 'http'))
+    let kafka = clusters.map(x => getInfo(x, 'kafka'))
+    let smtp = smtpServers.map(x => getInfo(x, 'smtp'))
+    let ldap = ldapServers.map(x => getInfo(x, 'ldap'))
 
     return http.concat(kafka).concat(smtp).concat(ldap)
 }
@@ -215,4 +201,22 @@ function getConfigs() {
         ...Object.values(httpConfigs),
         ...Object.values(kafkaConfigs)
     ]
+}
+
+function getInfo(config, type) {
+    const info = {
+        name: config.name,
+        description: config.description,
+        version: config.version,
+        metrics: config.metrics,
+        type: type
+    }
+    if (config.contact) {
+        config.contact = {
+            name: config.contact.name,
+            email: config.contact.email,
+            url: config.contact.url
+        }
+    }
+    return info
 }

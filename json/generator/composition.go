@@ -55,7 +55,7 @@ func AllOf() *Tree {
 				}
 				o, err := r.g.tree.Resolve(r.With(UsePathElement("", one)))
 				if err != nil {
-					return nil, fmt.Errorf("allOf expects to be valid against all of subschemas: %v", err)
+					return nil, fmt.Errorf("generate random data for schema failed: %v: %v", one, err)
 				}
 				m := o.(map[string]interface{})
 				for k, v := range m {

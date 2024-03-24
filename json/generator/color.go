@@ -5,9 +5,9 @@ import (
 	"strings"
 )
 
-func Colors() *Tree {
+func Color() *Tree {
 	return &Tree{
-		Name: "Colors",
+		Name: "Color",
 		Nodes: []*Tree{
 			HexColor(),
 			RGBColor(),

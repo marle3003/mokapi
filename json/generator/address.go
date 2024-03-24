@@ -8,17 +8,12 @@ import (
 	"strings"
 )
 
-func Addresses() *Tree {
+func Address() *Tree {
 	root := &Tree{
 		Name: "Address",
 		Nodes: []*Tree{
 			CoAddress(),
-			City(),
-			Country(),
-			//Postcodes(),
 			Postcode(),
-			Longitude(),
-			Latitude(),
 			Street(),
 			OpenAddress(),
 			AnyAddress(),
@@ -82,48 +77,6 @@ func City() *Tree {
 	}
 }
 
-func Country() *Tree {
-	return &Tree{
-		Name: "Country",
-		Test: func(r *Request) bool {
-			last := r.Last()
-			return last.Name == "country" && (last.Schema.IsAny() || last.Schema.IsString())
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			s := r.LastSchema()
-			max := 2
-			if s != nil && s.MaxLength != nil {
-				max = *s.MaxLength
-			}
-
-			if max == 2 {
-				return gofakeit.CountryAbr(), nil
-			}
-
-			return gofakeit.Country(), nil
-		},
-	}
-}
-
-//
-//func Postcodes() *Tree {
-//	return &Tree{
-//		Name: "Postcodes",
-//		Test: func(r *Request) bool {
-//			last := strings.ToLower(r.LastName())
-//			return (last == "postcodes" || last == "zips") &&
-//				(r.Schema.IsArray() || r.Schema.IsAny())
-//		},
-//		Fake: func(r *Request) (interface{}, error) {
-//			next := r.With(Name("postcode"))
-//			if r.Schema.IsAny() {
-//				next = next.With(Schema(&schema.Schema{Type: []string{"array"}}))
-//			}
-//			return r.g.tree.Resolve(next)
-//		},
-//	}
-//}
-
 func Postcode() *Tree {
 	return &Tree{
 		Name: "Postcode",
@@ -136,34 +89,6 @@ func Postcode() *Tree {
 		},
 		Fake: func(r *Request) (interface{}, error) {
 			return newPostCode(r.LastSchema()), nil
-		},
-	}
-}
-
-func Longitude() *Tree {
-	return &Tree{
-		Name: "Longitude",
-		Test: func(r *Request) bool {
-			last := r.Last()
-			name := strings.ToLower(last.Name)
-			return name == "longitude" && (last.Schema.IsNumber() || last.Schema.IsAny())
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			return gofakeit.Longitude(), nil
-		},
-	}
-}
-
-func Latitude() *Tree {
-	return &Tree{
-		Name: "Latitude",
-		Test: func(r *Request) bool {
-			last := r.Last()
-			name := strings.ToLower(last.Name)
-			return name == "latitude" && (last.Schema.IsNumber() || last.Schema.IsAny())
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			return gofakeit.Latitude(), nil
 		},
 	}
 }

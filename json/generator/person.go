@@ -6,21 +6,19 @@ import (
 	"strings"
 )
 
-func Persons() *Tree {
+func Personal() *Tree {
 	return &Tree{
-		Name: "Person",
+		Name: "Personal",
 		Nodes: []*Tree{
 			Person(),
-			//People(),
-			PersonAny(),
 			Phone(),
 			Contact(),
-			CreditCard(),
-			Username(),
 			FirstName(),
 			LastName(),
 			Gender(),
 			Phone(),
+			Language(),
+			PersonAny(),
 		},
 	}
 }
@@ -42,7 +40,8 @@ func PersonName() *Tree {
 	return &Tree{
 		Name: "PersonName",
 		Test: func(r *Request) bool {
-			return r.LastName() == "name"
+			name := strings.ToLower(r.LastName())
+			return name == "name" || name == "fullname"
 		},
 		Fake: func(r *Request) (interface{}, error) {
 			return gofakeit.Name(), nil
@@ -156,112 +155,6 @@ func PersonAny() *Tree {
 				"gender":    gofakeit.Gender(),
 				"email":     gofakeit.Email(),
 			}, nil
-		},
-	}
-}
-
-//func People() *Tree {
-//	return &Tree{
-//		Name: "People",
-//		Test: func(r *Request) bool {
-//			last := strings.ToLower(r.LastName())
-//			return (last == "persons" || last == "users" || last == "people") &&
-//				(r.Schema.IsArray() || r.Schema.IsAny())
-//		},
-//		Fake: func(r *Request) (interface{}, error) {
-//			next := r.With(Name("person"))
-//			if r.Schema.IsAny() {
-//				next = next.With(Schema(&schema.Schema{Type: []string{"array"}}))
-//			}
-//			return r.g.tree.Resolve(next)
-//		},
-//	}
-//}
-
-func Username() *Tree {
-	return &Tree{
-		Name: "Username",
-		Test: func(r *Request) bool {
-			last := r.Last()
-			if !last.Schema.IsString() {
-				return false
-			}
-			return strings.ToLower(last.Name) == "username" || strings.HasSuffix(last.Name, "UserName") ||
-				strings.HasSuffix(last.Name, "Username")
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			return gofakeit.Username(), nil
-		},
-	}
-}
-
-func CreditCard() *Tree {
-	isCreditCardObject := func(r *Request) bool {
-		name := strings.ToLower(r.LastName())
-		return r.Path.MatchLast(NameIgnoreCase("creditcard"), Any()) || name == "creditcard"
-	}
-	return &Tree{
-		Name: "CreditCard",
-		Nodes: []*Tree{
-			{
-				Name: "CreditCardNumber",
-				Test: func(r *Request) bool {
-					return (isCreditCardObject(r) && r.LastName() == "number") || strings.ToLower(r.LastName()) == "creditcardnumber"
-				},
-				Fake: func(r *Request) (interface{}, error) {
-					return gofakeit.CreditCardNumber(nil), nil
-				},
-			},
-			{
-				Name: "CreditCardType",
-				Test: func(r *Request) bool {
-					return (isCreditCardObject(r) && r.LastName() == "type") || strings.ToLower(r.LastName()) == "creditcardtype"
-				},
-				Fake: func(r *Request) (interface{}, error) {
-					return gofakeit.CreditCardType(), nil
-				},
-			},
-			{
-				Name: "CreditCardCvv",
-				Test: func(r *Request) bool {
-					return r.LastName() == "cvv"
-				},
-				Fake: func(r *Request) (interface{}, error) {
-					return gofakeit.CreditCardCvv(), nil
-				},
-			},
-			{
-				Name: "CreditCardExp",
-				Test: func(r *Request) bool {
-					return r.LastName() == "exp"
-				},
-				Fake: func(r *Request) (interface{}, error) {
-					return gofakeit.CreditCardExp(), nil
-				},
-			},
-			{
-				Name: "CreditCard",
-				Test: func(r *Request) bool {
-					s := r.LastSchema()
-					return isCreditCardObject(r) && (s.IsString() || s.IsAny())
-				},
-				Fake: func(r *Request) (interface{}, error) {
-					s := r.LastSchema()
-					if s.IsString() {
-						return gofakeit.CreditCardNumber(nil), nil
-					}
-					if s.IsAny() {
-						cc := gofakeit.CreditCard()
-						return map[string]interface{}{
-							"type":   cc.Type,
-							"number": cc.Number,
-							"cvv":    cc.Cvv,
-							"exp":    cc.Exp,
-						}, nil
-					}
-					return nil, ErrUnsupported
-				},
-			},
 		},
 	}
 }
