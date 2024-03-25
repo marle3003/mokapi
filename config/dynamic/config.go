@@ -64,6 +64,7 @@ func (l *Listeners) Invoke(c *Config) {
 
 func Wrap(i ConfigInfo, c *Config) {
 	inner := c.Info
+	i.Checksum = inner.Checksum
 	c.Info = i
 	c.Info.inner = &inner
 

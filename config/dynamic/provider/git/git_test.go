@@ -45,6 +45,7 @@ func TestGit(t *testing.T) {
 						require.Equal(t, "git", c.Info.Provider)
 						require.Equal(t, "https://github.com/marle3003/mokapi-example.git?file=/"+name, c.Info.Path())
 						require.Contains(t, gitFiles, name)
+						require.NotNil(t, c.Info.Checksum)
 					}
 				}
 				require.Equal(t, 4, count)
