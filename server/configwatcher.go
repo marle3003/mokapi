@@ -45,8 +45,6 @@ func NewConfigWatcher(cfg *static.Config) *ConfigWatcher {
 }
 
 func (w *ConfigWatcher) Read(u *url.URL, v any) (*dynamic.Config, error) {
-	log.Infof("READ SPECIFIC: %s", u)
-
 	p, ok := w.providers[u.Scheme]
 	if !ok {
 		return nil, fmt.Errorf("unsupported scheme: %v", u.String())
@@ -57,6 +55,7 @@ func (w *ConfigWatcher) Read(u *url.URL, v any) (*dynamic.Config, error) {
 	var parse bool
 	var c *dynamic.Config
 	e, exists := w.getConfig(u)
+
 	if !exists {
 		c, err = p.Read(u)
 		if err != nil {
@@ -128,7 +127,24 @@ func (w *ConfigWatcher) AddListener(f func(config *dynamic.Config)) {
 func (w *ConfigWatcher) addOrUpdate(c *dynamic.Config) error {
 	w.m.Lock()
 
-	e, ok := w.configs[c.Info.Url.String()]
+	e, ok := w.getConfig(c.Info.Url)
+	if !ok && c.Info.Inner() != nil {
+		current := c.Info.Inner()
+		for !ok {
+			if current == nil {
+				break
+			}
+			e, ok = w.getConfig(current.Url)
+			current = current.Inner()
+		}
+		if ok {
+			key := e.config.Info.Url.String()
+			delete(w.configs, key)
+			dynamic.Wrap(c.Info, e.config)
+			w.configs[key] = e
+		}
+	}
+
 	if !ok {
 		e = &entry{config: c}
 		w.configs[c.Info.Url.String()] = e
@@ -156,7 +172,6 @@ func (w *ConfigWatcher) configChanged(c *dynamic.Config) {
 	w.m.Unlock()
 
 	err := dynamic.Parse(c, w)
-
 	if err != nil {
 		log.Errorf("parse error %v: %v", c.Info.Path(), err)
 		return
@@ -182,6 +197,10 @@ func (w *ConfigWatcher) configChanged(c *dynamic.Config) {
 }
 
 func (w *ConfigWatcher) getConfig(u *url.URL) (*entry, bool) {
+	if e, ok := w.configs[u.String()]; ok {
+		return e, true
+	}
+
 	for _, cfg := range w.configs {
 		if cfg.config.Info.Match(u) {
 			return cfg, true

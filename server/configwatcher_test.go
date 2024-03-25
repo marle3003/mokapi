@@ -401,6 +401,66 @@ func TestConfigWatcher_New(t *testing.T) {
 	}
 }
 
+func TestConfigWatcher_Wrapping(t *testing.T) {
+	testcases := []struct {
+		name string
+		test func(t *testing.T)
+	}{
+		{
+			name: "when file is read first by reference and after by (outer) provider",
+			test: func(t *testing.T) {
+				w := NewConfigWatcher(&static.Config{})
+				w.providers["foo"] = &testprovider{
+					read: func(u *url.URL) (*dynamic.Config, error) {
+						return &dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("foo://foo.yml")}, Raw: []byte("foo")}, nil
+					},
+					start: func(configs chan *dynamic.Config, pool *safe.Pool) error {
+						return nil
+					},
+				}
+				var ch chan *dynamic.Config
+				w.providers["bar"] = &testprovider{
+					read: func(u *url.URL) (*dynamic.Config, error) {
+						t.Fatal("read should not be called")
+						return nil, nil
+					},
+					start: func(configs chan *dynamic.Config, pool *safe.Pool) error {
+						ch = configs
+						return nil
+					},
+				}
+				c, err := w.Read(mustParse("foo://foo.yml"), nil)
+				require.NoError(t, err)
+				require.Equal(t, "foo", string(c.Raw))
+				require.Equal(t, "foo://foo.yml", c.Info.Url.String())
+
+				wrapped := &dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("foo://foo.yml")}, Raw: []byte("foo")}
+				dynamic.Wrap(dynamic.ConfigInfo{Url: mustParse("bar://foo.yml")}, wrapped)
+
+				pool := safe.NewPool(context.Background())
+				defer pool.Stop()
+				err = w.Start(pool)
+				require.NoError(t, err)
+
+				ch <- wrapped
+
+				time.Sleep(2 * time.Second)
+
+				c, err = w.Read(mustParse("bar://foo.yml"), nil)
+				require.NoError(t, err)
+				require.Equal(t, "bar://foo.yml", c.Info.Url.String())
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			tc.test(t)
+		})
+	}
+}
+
 type data struct {
 	parse func(config *dynamic.Config, reader dynamic.Reader) error
 }

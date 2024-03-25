@@ -15,21 +15,11 @@ import (
 	"time"
 )
 
-var gitFiles = map[string]struct {
-	time time.Time
-}{
-	"LICENSE":     {time: mustTime("2021-06-18T10:38:11Z")},
-	"README.md":   {time: mustTime("2021-06-18T10:38:11Z")},
-	"models.yml":  {time: mustTime("2021-06-22T17:02:57Z")},
-	"openapi.yml": {time: mustTime("2021-06-22T17:02:57Z")},
-}
-
-func mustTime(s string) time.Time {
-	d, err := time.Parse(time.RFC3339, s)
-	if err != nil {
-		panic(err)
-	}
-	return d
+var gitFiles = map[string]struct{}{
+	"LICENSE":     {},
+	"README.md":   {},
+	"models.yml":  {},
+	"openapi.yml": {},
 }
 
 func TestGit(t *testing.T) {
@@ -55,9 +45,6 @@ func TestGit(t *testing.T) {
 						require.Equal(t, "git", c.Info.Provider)
 						require.Equal(t, "https://github.com/marle3003/mokapi-example.git?file=/"+name, c.Info.Path())
 						require.Contains(t, gitFiles, name)
-						f := gitFiles[name]
-						require.Equal(t, f.time, c.Info.Time.UTC())
-
 					}
 				}
 				require.Equal(t, 4, count)

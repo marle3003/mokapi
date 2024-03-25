@@ -110,6 +110,7 @@ func (s *Script) ensureRuntime() (err error) {
 	s.require = newRequire(
 		s.host.OpenFile,
 		s.compiler,
+		s.file.Info.Url.String(),
 		workingDir,
 		map[string]ModuleLoader{
 			"mokapi":          s.loadNativeModule(newMokapi),

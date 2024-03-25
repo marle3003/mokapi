@@ -360,27 +360,11 @@ func match(s []string, v string) bool {
 
 func wrapConfig(c *dynamic.Config, r *repository) {
 	u := getUrl(r, c.Info.Url)
-	if !strings.HasPrefix(u.String(), r.repoUrl) {
-		return
-	}
-	gitFile := u.Query()["file"][0][1:]
-
 	info := dynamic.ConfigInfo{
 		Provider: "git",
 		Url:      u,
-	}
-
-	cIter, _ := r.repo.Log(&git.LogOptions{
-		From:     r.hash,
-		FileName: &gitFile,
-	})
-
-	commit, err := cIter.Next()
-	if err != nil {
-		log.Warnf("resolve mod time for '%v' failed: %v", u, err)
-		info.Time = time.Now()
-	} else {
-		info.Time = commit.Author.When
+		// to query git log takes too long
+		Time: time.Now(),
 	}
 
 	dynamic.Wrap(info, c)

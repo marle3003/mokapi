@@ -23,11 +23,11 @@ func TestRequire(t *testing.T) {
 				host.openFile = func(file, hint string) (string, string, error) {
 					return "", "", fmt.Errorf("file not found")
 				}
-				s, err := New(newScript("test", `import foo from 'foo'`), host, static.JsConfig{})
+				s, err := New(newScript("test.js", `import foo from 'foo'`), host, static.JsConfig{})
 				r.NoError(t, err)
 
 				err = s.Run()
-				r.EqualError(t, err, "module foo not found: node module does not exist at mokapi/js.(*requireModule).require-fm (native)")
+				r.EqualError(t, err, "module foo not found in test.js: node module does not exist at mokapi/js.(*requireModule).require-fm (native)")
 			},
 		},
 		{
