@@ -120,6 +120,7 @@ func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
 	ticker := time.NewTicker(interval)
 
 	for _, r := range p.repositories {
+		r := r
 		pool.Go(func(ctx context.Context) {
 			err = p.initRepository(r, ch, pool)
 			if err != nil {
