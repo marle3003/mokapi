@@ -45,6 +45,8 @@ func NewConfigWatcher(cfg *static.Config) *ConfigWatcher {
 }
 
 func (w *ConfigWatcher) Read(u *url.URL, v any) (*dynamic.Config, error) {
+	log.Infof("READ SPECIFIC: %s", u)
+
 	p, ok := w.providers[u.Scheme]
 	if !ok {
 		return nil, fmt.Errorf("unsupported scheme: %v", u.String())
@@ -54,7 +56,7 @@ func (w *ConfigWatcher) Read(u *url.URL, v any) (*dynamic.Config, error) {
 	var err error
 	var parse bool
 	var c *dynamic.Config
-	e, exists := w.configs[u.String()]
+	e, exists := w.getConfig(u)
 	if !exists {
 		c, err = p.Read(u)
 		if err != nil {
@@ -177,4 +179,13 @@ func (w *ConfigWatcher) configChanged(c *dynamic.Config) {
 	for _, l := range w.listener {
 		l(e.config)
 	}
+}
+
+func (w *ConfigWatcher) getConfig(u *url.URL) (*entry, bool) {
+	for _, cfg := range w.configs {
+		if cfg.config.Info.Match(u) {
+			return cfg, true
+		}
+	}
+	return nil, false
 }

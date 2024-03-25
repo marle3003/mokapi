@@ -119,14 +119,14 @@ func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
 
 	ticker := time.NewTicker(interval)
 
-	pool.Go(func(ctx context.Context) {
-		for _, r := range p.repositories {
+	for _, r := range p.repositories {
+		pool.Go(func(ctx context.Context) {
 			err = p.initRepository(r, ch, pool)
 			if err != nil {
 				log.Errorf("init git repository failed: %v", err)
 			}
-		}
-	})
+		})
+	}
 
 	pool.Go(func(ctx context.Context) {
 		defer func() {
@@ -217,28 +217,7 @@ func (p *Provider) initRepository(r *repository, ch chan *dynamic.Config, pool *
 					continue
 				}
 
-				u := getUrl(r, c.Info.Url)
-				gitFile := u.Query()["file"][0][1:]
-
-				info := dynamic.ConfigInfo{
-					Provider: "git",
-					Url:      u,
-				}
-
-				cIter, _ := r.repo.Log(&git.LogOptions{
-					From:     r.hash,
-					FileName: &gitFile,
-				})
-
-				commit, err := cIter.Next()
-				if err != nil {
-					log.Warnf("resolve mod time for '%v' failed: %v", u, err)
-					info.Time = time.Now()
-				} else {
-					info.Time = commit.Author.When
-				}
-
-				dynamic.Wrap(info, c)
+				wrapConfig(c, r)
 				ch <- c
 			}
 		}
@@ -329,6 +308,9 @@ func pull(r *repository) {
 		return
 	}
 	err := r.repo.Fetch(&git.FetchOptions{RefSpecs: []config.RefSpec{"refs/*:refs/*", "HEAD:refs/heads/HEAD"}})
+	if errors.Is(err, git.ErrForceNeeded) {
+		err = r.repo.Fetch(&git.FetchOptions{RefSpecs: []config.RefSpec{"+refs/*:refs/*", "HEAD:refs/heads/HEAD"}})
+	}
 	if err != nil {
 		if !errors.Is(err, git.NoErrAlreadyUpToDate) {
 			log.Errorf("git fetch error %v: %v", r.url, err.Error())
@@ -373,4 +355,32 @@ func match(s []string, v string) bool {
 		}
 	}
 	return false
+}
+
+func wrapConfig(c *dynamic.Config, r *repository) {
+	u := getUrl(r, c.Info.Url)
+	if !strings.HasPrefix(u.String(), r.repoUrl) {
+		return
+	}
+	gitFile := u.Query()["file"][0][1:]
+
+	info := dynamic.ConfigInfo{
+		Provider: "git",
+		Url:      u,
+	}
+
+	cIter, _ := r.repo.Log(&git.LogOptions{
+		From:     r.hash,
+		FileName: &gitFile,
+	})
+
+	commit, err := cIter.Next()
+	if err != nil {
+		log.Warnf("resolve mod time for '%v' failed: %v", u, err)
+		info.Time = time.Now()
+	} else {
+		info.Time = commit.Author.When
+	}
+
+	dynamic.Wrap(info, c)
 }

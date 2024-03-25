@@ -33,7 +33,7 @@ type Listeners struct {
 	m    sync.Mutex
 }
 
-func AddRef(parent *Config, ref *Config) {
+func AddRef(parent, ref *Config) {
 	parent.Refs.Add(ref)
 	ref.Listeners.Add(parent.Info.Url.String(), func(config *Config) {
 		parent.Info.Time = ref.Info.Time
