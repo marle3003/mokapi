@@ -7,81 +7,75 @@ description: Reference the static configuration in Mokapi.
 ## Log
 Mokapi log level (Default info)
 ```bash tab=CLI
---providers.log.level=warn
+--log.level=warn
 ```
 ```bash tab=Env
 MOKAPI_Log_Level=warn
 ```
 ```yaml tab=File (YAML)
-providers:
-  log:
-    level: warn
+log:
+  level: warn
 ```
 
 Mokapi log format: json|default (Default default)
 ```bash tab=CLI
---providers.log.format=json
+--log.format=json
 ```
 ```bash tab=Env
-MOKAPI_Log_Formatl=json
+MOKAPI_Log_Format=json
 ```
 ```yaml tab=File (YAML)
-providers:
-  log:
-    format: json
+log:
+  format: json
 ```
 
 ## API & Dashboard
 API port (Default 8080)
 ```bash tab=CLI
---providers.api.port=5000
+--api.port=5000
 ```
 ```bash tab=Env
 MOKAPI_API_Port=5000
 ```
 ```yaml tab=File (YAML)
-providers:
-  api:
-    port: 5000
+api:
+  port: 5000
 ```
 
 Activate dashboard (Default true)
 ```bash tab=CLI
---providers.api.dashboard=true
+--api.dashboard=true
 ```
 ```bash tab=Env
 MOKAPI_API_Dashboard=true
 ```
 ```yaml tab=File (YAML)
-providers:
-  api:
-    dashboard: true
+api:
+  dashboard: true
 ```
 
 The path prefix where dashboard is served (Default empty)
 ```bash tab=CLI
---providers.api.path=/mokapi/dashboard
+--api.path=/mokapi/dashboard
 ```
 ```bash tab=Env
 MOKAPI_API_Path=/mokapi/dashboard
 ```
 ```yaml tab=File (YAML)
-providers:
-  api:
-    path: /mokapi/dashboard
+api:
+  path: /mokapi/dashboard
 ```
 
 The base path of the dashboard useful in case of url rewriting (Default empty)
 ```bash tab=CLI
---providers.api.base=/mokapi/dashboard
+--api.base=/mokapi/dashboard
 ```
 ```bash tab=Env
 MOKAPI_API_Base=/mokapi/dashboard
 ```
 ```yaml tab=File (YAML)
-providers:
-  api:
-    base: /mokapi/dashboard
+api:
+  base: /mokapi/dashboard
 ```
 
 ## File Provider
