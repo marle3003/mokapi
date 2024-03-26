@@ -224,19 +224,19 @@ func TestHandler_Config(t *testing.T) {
 			},
 		},
 		{
-			name: "nested config",
+			name: "nested config meta info",
 			app: func() *runtime.App {
 				foo := &dynamic.Config{
 					Info: dynamic.ConfigInfo{
-						Url:  mustUrl("https://foo.bar/foo.json"),
+						Url:  mustUrl("file:///foo/foo.json"),
 						Time: mustTime("2023-12-27T13:01:30+00:00"),
 					},
 					Raw: []byte(`{"foo": "bar"}`),
 				}
 				dynamic.Wrap(dynamic.ConfigInfo{
-					Url:      mustUrl("https://foo.bar/foo.yaml"),
+					Url:      mustUrl("https://git.bar?file=/foo/foo.json&ref=main"),
 					Time:     mustTime("2023-12-27T13:01:30+00:00"),
-					Provider: "npm",
+					Provider: "git",
 				}, foo)
 				return &runtime.App{Configs: map[string]*dynamic.Config{
 					"foo": foo,
@@ -245,7 +245,34 @@ func TestHandler_Config(t *testing.T) {
 			requestUrl: "http://foo.api/api/configs/foo",
 			test: []try.ResponseCondition{
 				try.HasStatusCode(http.StatusOK),
-				try.HasBody(`{"id":"37636430-3165-3037-3435-376637313065","url":"https://foo.bar/foo.yaml","provider":"npm","time":"2023-12-27T13:01:30Z"}`),
+				try.HasHeader("Content-Type", "application/json"),
+				try.HasBody(`{"id":"61373430-3061-3131-6663-326332386638","url":"https://git.bar?file=/foo/foo.json\u0026ref=main","provider":"git","time":"2023-12-27T13:01:30Z"}`),
+			},
+		},
+		{
+			name: "nested config data",
+			app: func() *runtime.App {
+				foo := &dynamic.Config{
+					Info: dynamic.ConfigInfo{
+						Url:  mustUrl("file:///foo/foo.json"),
+						Time: mustTime("2023-12-27T13:01:30+00:00"),
+					},
+					Raw: []byte(`{"foo": "bar"}`),
+				}
+				dynamic.Wrap(dynamic.ConfigInfo{
+					Url:      mustUrl("https://git.bar?file=/foo/foo.json&ref=main"),
+					Time:     mustTime("2023-12-27T13:01:30+00:00"),
+					Provider: "git",
+				}, foo)
+				return &runtime.App{Configs: map[string]*dynamic.Config{
+					"foo": foo,
+				}}
+			},
+			requestUrl: "http://foo.api/api/configs/foo/data",
+			test: []try.ResponseCondition{
+				try.HasStatusCode(http.StatusOK),
+				try.HasHeader("Content-Type", "application/json"),
+				try.HasBody(`{"foo": "bar"}`),
 			},
 		},
 	}

@@ -73,7 +73,7 @@ func (h *handler) getConfigData(w http.ResponseWriter, r *http.Request, key stri
 		return
 	}
 
-	path := c.Info.Path()
+	path := c.Info.Kernel().Path()
 	ext := filepath.Ext(path)
 	mt := mime.TypeByExtension(filepath.Ext(ext))
 	if mt == "" {
