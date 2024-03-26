@@ -202,8 +202,9 @@ useMeta('Dashboard | mokapi.io', description, "https://mokapi.io/smtp")
 
 <style scoped>
 .router-link-active.overview {
-    background-color: transparent;
+    background-color: rgba(0,0,0,0);
     color: var(--color-text);
+    opacity: 1;
 }
 .router-link-exact-active.overview {
     background-color: var(--color-background-mute);
