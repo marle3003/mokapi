@@ -33,11 +33,12 @@ function replaceImageUrls(data: string) {
     do {
         m = regex.exec(data)
         if (m) {
-            console.log('image: '+m[2])
-            console.log(images)
             const path = `/src/assets${m[2]}`
             let imageUrl = images[path]
             if (imageUrl) {
+                data = data.replace(m[0], `<img${m[1]} src="${imageUrl}"`)
+            } else {
+                imageUrl = transformPath(m[2])
                 data = data.replace(m[0], `<img${m[1]} src="${imageUrl}"`)
             }
         }
@@ -49,22 +50,31 @@ export function parseMetadata(data: string) {
     const metadataMatch = data.match(metadataRegex);
   
     if (!metadataMatch) {
-      return {};
+      return {}
     }
   
     const metadataLines = metadataMatch[1].split("\n")
   
     // Use reduce to accumulate the metadata as an object
     const metadata = metadataLines.reduce((acc: any, line) => {
-        const i = line.indexOf(':');
-        const splits = [line.slice(0,i), line.slice(i+1)];
+        const i = line.indexOf(':')
+        const splits = [line.slice(0,i), line.slice(i+1)]
 
         const [key, value] = splits.map(part => part.trim())
         if(key) {
             acc[key] = value
         }
-        return acc;
-    }, {});
+        return acc
+    }, {})
   
-    return metadata;
-  };
+    return metadata
+}
+
+export function transformPath(path: string): string {
+    let base = document.querySelector('base')?.href
+    if (base) {
+        base = base.substring(0, base.length - 1)
+        path = base + path
+    }
+    return path
+}
