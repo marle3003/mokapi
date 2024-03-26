@@ -63,40 +63,145 @@ export interface PathElement {
     schema: JSONSchema
 }
 
+/**
+ * JSON Schema defines a JSON-based format for describing the structure of JSON data
+ * @example
+ * {
+ *   "type": "string",
+ *   "format": "email"
+ * }
+ */
 export interface JSONSchema {
+    /**
+     * Specifies the data type for a schema.
+     */
     type: string | string[]
+
+    /**
+     * The enum keyword is used to restrict a value to a fixed set of values.
+     */
     enum: unknown[]
+
+    /**
+     * The const keyword is used to restrict a value to a single value.
+     */
     const: unknown
+
+    /**
+     * Contains a list of valid examples.
+     */
     examples: unknown[]
 
     // Numbers
+    /**
+     * Restricts the number to a multiple of the given number
+     */
     multipleOf: number | undefined
+
+    /**
+     * Restricts the number to a maximum number
+     */
     maximum: number | undefined
+
+    /**
+     * Restricts the number to a exclusive maximum number
+     */
     exclusiveMaximum: number | undefined
+
+    /**
+     * Restricts the number to a minimum number
+     */
     minimum: number | undefined
+
+    /**
+     * Restricts the number to a exclusive minimum number
+     */
     exclusiveMinimum: number | undefined
 
     // Strings
+    /**
+     * Restricts the string to a maximum length
+     */
     maxLength: number | undefined
+
+    /**
+     * Restricts the string to a minimum length
+     */
     minLength: number | undefined
+
+    /**
+     * The pattern keyword is used to restrict a string to a particular regular expression.
+     */
     pattern: string
+
+    /**
+     * The format keyword allows for basic semantic identification of certain kinds of string values that are commonly used.
+     */
     format: string
 
     // Arrays
+    /**
+     * Specifies the schema of the items in the array.
+     */
     items: JSONSchema | undefined
+
+    /**
+     * Restricts the array to have a maximum length
+     */
     maxItems: number | undefined
+
+    /**
+     * Restricts the array to have a minimum length
+     */
     minItems: number | undefined
+
+    /**
+     * Restricts the array to have unique items
+     */
     uniqueItems: boolean
 
     // Objects
+    /**
+     * Specifies the properties of an object
+     */
     properties: { [name: string]: JSONSchema }
+
+    /**
+     * Restricts the object to have a maximum of properties
+     */
     maxProperties: number | undefined
+
+    /**
+     * Restricts the object to have a minimum of properties
+     */
     minProperties: number | undefined
+
+    /**
+     * Specifies the required properties for an object
+     */
     required: string[] | undefined
+
+    /**
+     * The additionalProperties keyword is used to control the handling of extra stuff,
+     * that is, properties whose names are not listed in the properties keyword or match
+     * any of the regular expressions in the patternProperties keyword. By default, any
+     * additional properties are allowed.
+     */
     additionalProperties: boolean | JSONSchema | undefined
 
+    /**
+     * A value must be valid against all the schemas
+     */
     allOf: JSONSchema[] | undefined
+
+    /**
+     * A value must be valid against any the schemas
+     */
     anyOf: JSONSchema[] | undefined
+
+    /**
+     * A value must be valid against exactly one the schemas
+     */
     oneOf: JSONSchema[] | undefined
 
     isAny: () => boolean
