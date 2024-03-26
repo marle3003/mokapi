@@ -387,6 +387,7 @@ func TestProvider_Read(t *testing.T) {
 				c, err := p.Read(u)
 				require.NoError(t, err)
 				require.Equal(t, "foobar", string(c.Raw))
+				require.Equal(t, "npm://bar/foo.txt?scope=@foo", c.Info.Url.String())
 			},
 		},
 	}

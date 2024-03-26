@@ -33,7 +33,7 @@ type Listeners struct {
 	m    sync.Mutex
 }
 
-func AddRef(parent *Config, ref *Config) {
+func AddRef(parent, ref *Config) {
 	parent.Refs.Add(ref)
 	ref.Listeners.Add(parent.Info.Url.String(), func(config *Config) {
 		parent.Info.Time = ref.Info.Time
@@ -64,6 +64,7 @@ func (l *Listeners) Invoke(c *Config) {
 
 func Wrap(i ConfigInfo, c *Config) {
 	inner := c.Info
+	i.Checksum = inner.Checksum
 	c.Info = i
 	c.Info.inner = &inner
 

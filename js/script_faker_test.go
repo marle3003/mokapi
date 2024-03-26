@@ -5,6 +5,7 @@ import (
 	"github.com/brianvoe/gofakeit/v6"
 	r "github.com/stretchr/testify/require"
 	"mokapi/config/static"
+	"mokapi/engine/common"
 	"mokapi/json/generator"
 	"testing"
 )
@@ -93,6 +94,10 @@ func TestScript_Faker(t *testing.T) {
 		{
 			"find node",
 			func(t *testing.T, host *testHost) {
+				host.findFakerTree = func(name string) common.FakerTree {
+					return &fakerTree{t: generator.FindByName("Faker")}
+				}
+
 				s, err := New(newScript("",
 					`import {fake, findByName} from 'mokapi/faker'
 						 export default function() {
@@ -117,8 +122,9 @@ func TestScript_Faker(t *testing.T) {
 					"isString": true,
 					"schema":   "schema type=string",
 				}, v.Export())
-				root := generator.FindByName("")
-				err = root.Remove(0)
+				r.NoError(t, err)
+				n := generator.FindByName("Faker")
+				err = n.RemoveAt(0)
 				r.NoError(t, err)
 			},
 		},
@@ -133,4 +139,47 @@ func TestScript_Faker(t *testing.T) {
 			tc.f(t, host)
 		})
 	}
+}
+
+type fakerTree struct {
+	t *generator.Tree
+}
+
+func (ft *fakerTree) Name() string {
+	return ft.t.Name
+}
+
+func (ft *fakerTree) Test(r *generator.Request) bool {
+	return ft.t.Test(r)
+}
+
+func (ft *fakerTree) Fake(r *generator.Request) (interface{}, error) {
+	return ft.t.Fake(r)
+}
+
+func (ft *fakerTree) Append(node common.FakerNode) {
+	t := &generator.Tree{
+		Name:   node.Name(),
+		Test:   node.Test,
+		Fake:   node.Fake,
+		Custom: true,
+	}
+	ft.t.Append(t)
+}
+
+func (ft *fakerTree) Insert(index int, node common.FakerNode) error {
+	return ft.t.Insert(index, &generator.Tree{
+		Name:   node.Name(),
+		Test:   node.Test,
+		Fake:   node.Fake,
+		Custom: true,
+	})
+}
+
+func (ft *fakerTree) RemoveAt(index int) error {
+	return ft.t.RemoveAt(index)
+}
+
+func (ft *fakerTree) Remove(name string) error {
+	return ft.t.Remove(name)
 }

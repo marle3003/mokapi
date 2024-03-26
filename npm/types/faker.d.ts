@@ -12,7 +12,7 @@ import { JSONValue } from ".";
  *   console.log(fake({type: 'string', pattern: '^\d{3}-\d{2}-\d{4}$'})) // 123-45-6789
  * }
  */
-export function fake(schema: Schema): JSONValue;
+export function fake(schema: Schema | FakeRequest): JSONValue;
 
 /**
  * Gets the tree node with the given name
@@ -35,17 +35,31 @@ export interface Tree {
 
     append: (node: Tree | CustomTree) => void
     insert: (index: number, node: Tree | CustomTree) => void
-    remove: (index: number) => void
+    removeAt: (index: number) => void
+    remove: (name: string) => void
 }
 
 export interface CustomTree {
     name: string
-    test: () => boolean
-    fake: () => JSONValue
+    test: (r: Request) => boolean
+    fake: (r: Request) => JSONValue
+}
+
+export interface FakeRequest {
+    names: string[]
+    schema: JSONSchema
 }
 
 export interface Request {
-    names: string[]
+    Path: PathElement[]
+
+    last: () => PathElement
+    lastName: () => string
+    lastSchema: () => JSONSchema
+}
+
+export interface PathElement {
+    name: string
     schema: JSONSchema
 }
 

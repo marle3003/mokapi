@@ -10,14 +10,30 @@ import (
 )
 
 func TestWrap(t *testing.T) {
-	info := dynamictest.NewConfigInfo()
-	config := &dynamic.Config{Info: dynamictest.NewConfigInfo()}
-	inner := config.Info
+	testcases := []struct {
+		name string
+		test func(t *testing.T)
+	}{
+		{
+			name: "wrap simple",
+			test: func(t *testing.T) {
+				info := dynamictest.NewConfigInfo()
+				config := &dynamic.Config{Info: dynamictest.NewConfigInfo()}
+				inner := config.Info
 
-	dynamic.Wrap(info, config)
+				dynamic.Wrap(info, config)
 
-	require.Equal(t, info.Key(), config.Info.Key())
-	require.Equal(t, inner.Key(), config.Info.Inner().Key())
+				require.Equal(t, info.Key(), config.Info.Key())
+				require.Equal(t, inner.Key(), config.Info.Inner().Key())
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.test(t)
+		})
+	}
 }
 
 func TestAddRef(t *testing.T) {

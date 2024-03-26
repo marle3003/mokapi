@@ -64,14 +64,26 @@ func NewTree() *Tree {
 			Generic(),
 			Compositions(),
 			Pets(),
-			Persons(),
-			Addresses(),
+			Personal(),
+			Location(),
 			Products(),
+			It(),
 			//Material(),
 			Category(),
-			Currency(),
-			Colors(),
+			Business(),
 			Examples(),
+			Basic(),
+		},
+	}
+
+	return root
+}
+
+func Basic() *Tree {
+	return &Tree{
+		Name: "Basic",
+		Nodes: []*Tree{
+			Color(),
 			Numbers(),
 			Strings(),
 			Object(),
@@ -80,8 +92,6 @@ func NewTree() *Tree {
 			AnyType(),
 		},
 	}
-
-	return root
 }
 
 func AnyType() *Tree {

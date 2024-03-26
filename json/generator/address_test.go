@@ -198,21 +198,6 @@ func TestAddress(t *testing.T) {
 			},
 		},
 		{
-			name: "country",
-			request: &Request{
-				Path: Path{
-					&PathElement{
-						Name:   "country",
-						Schema: schematest.NewRef("string"),
-					},
-				},
-			},
-			test: func(t *testing.T, v interface{}, err error) {
-				require.NoError(t, err)
-				require.Equal(t, "SI", v)
-			},
-		},
-		{
 			name: "address - country",
 			request: &Request{
 				Path: Path{

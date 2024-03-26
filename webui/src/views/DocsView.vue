@@ -272,6 +272,8 @@ pre {
 .box .box-heading {
   margin: -0.6rem -0.6rem 0 -0.6rem;
   padding: 0.3rem 0 0.3rem 1rem;
+}
+.box .box-heading:not(.box-custom-heading) {
   text-transform: capitalize;
 }
 .box .box-body {

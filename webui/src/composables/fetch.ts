@@ -57,8 +57,6 @@ export function useFetch(path: string, options?: RequestInit, doRefresh: boolean
                 let msg = err.toString()
                 if (!msg) {
                     msg = 'Network connection error'
-                } else {
-                    msg = msg.substring('Error: '.length)
                 }
                 console.error(err)
                 response.error = msg

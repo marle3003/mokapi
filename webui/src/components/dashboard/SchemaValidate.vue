@@ -46,7 +46,6 @@ function validate() {
         schema: props.schema,
         data: state.content
     }
-    console.log(state.content)
     fetch(transformPath('/api/schema/validate'), { method: 'POST', body: JSON.stringify(body), headers: { 'Data-Content-Type': props.contentType, 'Content-Type': 'application/json' } })
     .then(res => {
         if (res.status === 200){

@@ -76,3 +76,18 @@ func (ci *ConfigInfo) Kernel() *ConfigInfo {
 		current = next
 	}
 }
+
+func (ci *ConfigInfo) Match(u *url.URL) bool {
+	current := ci
+	for {
+		if current.Url.String() == u.String() {
+			return true
+		}
+
+		next := current.Inner()
+		if next == nil {
+			return false
+		}
+		current = next
+	}
+}

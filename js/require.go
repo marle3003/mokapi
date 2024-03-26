@@ -32,17 +32,19 @@ type requireModule struct {
 	sourceLoader  SourceLoader
 	compiler      *compiler.Compiler
 	workingDir    string
+	file          string
 	runtime       *goja.Runtime
 	exports       map[string]goja.Value
 	globalFolders []string
 }
 
-func newRequire(loader SourceLoader, c *compiler.Compiler, workingDir string, native map[string]ModuleLoader) *requireModule {
+func newRequire(loader SourceLoader, c *compiler.Compiler, file string, workingDir string, native map[string]ModuleLoader) *requireModule {
 	m := &requireModule{
 		native:       native,
 		exports:      map[string]goja.Value{},
 		sourceLoader: loader,
 		compiler:     c,
+		file:         file,
 		workingDir:   workingDir,
 	}
 	return m
@@ -92,7 +94,7 @@ func (m *requireModule) require(call goja.FunctionCall) (module goja.Value) {
 	}
 
 	if module == nil {
-		panic(m.runtime.ToValue(fmt.Sprintf("module %v not found: %v", modPath, err)))
+		panic(m.runtime.ToValue(fmt.Sprintf("module %v not found in %v: %v", modPath, m.file, err)))
 	}
 
 	return

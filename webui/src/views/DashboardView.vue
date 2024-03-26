@@ -126,6 +126,8 @@ useMeta('Dashboard | mokapi.io', description, "https://mokapi.io/smtp")
                     <div class="card-group"  v-if="isServiceAvailable('ldap')">
                         <ldap-services-card />
                     </div>
+
+                    <message message="No service available" v-if="appInfo.data && !isAnyServiceAvailable()"></message>
                 </div>
 
                 <div v-if="$route.name === 'http'">
@@ -194,7 +196,6 @@ useMeta('Dashboard | mokapi.io', description, "https://mokapi.io/smtp")
         </div>
 
         <message :message="appInfo.error" v-if="!appInfo.data && !appInfo.isLoading"></message>
-        <message message="No service available" v-if="appInfo.data && !isAnyServiceAvailable()"></message>
         <loading v-if="isInitLoading()"></loading>
     </main>
 </template>

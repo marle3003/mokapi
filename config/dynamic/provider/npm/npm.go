@@ -50,9 +50,24 @@ func (p *Provider) Read(u *url.URL) (*dynamic.Config, error) {
 	}
 
 	path := filepath.Join(dir, u.Path)
-	u, _ = url.Parse(fmt.Sprintf("file:%v", path))
+	fileUrl, err := url.Parse(fmt.Sprintf("file:%v", path))
+	if err != nil {
+		return nil, err
+	}
 
-	return p.f.Read(u)
+	c, err := p.f.Read(fileUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	info := dynamic.ConfigInfo{
+		Provider: "npm",
+		Url:      u,
+		Time:     c.Info.Time,
+	}
+
+	dynamic.Wrap(info, c)
+	return c, nil
 }
 
 func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
@@ -104,7 +119,7 @@ func (p *Provider) forward(ch chan *dynamic.Config, ctx context.Context) {
 						continue
 					}
 
-					u, err := url.Parse(fmt.Sprintf("npm://%v/%v", pkg.Name, relative))
+					u, err := toUrl(pkg.Name, relative)
 					if err != nil {
 						log.Errorf("unable to parse npm url %v: %v", c.Info.Url, err)
 						u = c.Info.Url
@@ -182,4 +197,13 @@ func match(s []string, v string) bool {
 		}
 	}
 	return false
+}
+
+func toUrl(pkgName, relative string) (*url.URL, error) {
+	query := ""
+	if strings.HasPrefix(pkgName, "@") {
+		index := strings.Index(pkgName, "/")
+		query = fmt.Sprintf("?scope=%v", pkgName[0:index])
+	}
+	return url.Parse(fmt.Sprintf("npm://%v/%v%v", pkgName, relative, query))
 }

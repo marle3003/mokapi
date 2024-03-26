@@ -6,15 +6,12 @@ import (
 	"mokapi/media"
 	"mokapi/providers/openapi/schema"
 	"os"
-	"sync"
 	"time"
 )
 
 type mokapi struct {
 	host common.Host
 	rt   *goja.Runtime
-	// goja scripts are not thread-safe
-	m sync.Mutex
 }
 
 func newMokapi(host common.Host, rt *goja.Runtime) interface{} {
@@ -59,8 +56,8 @@ func (m *mokapi) Every(every string, do func(), args goja.Value) (int, error) {
 	}
 
 	f := func() {
-		m.m.Lock()
-		defer m.m.Unlock()
+		m.host.Lock()
+		defer m.host.Unlock()
 		do()
 	}
 
@@ -91,8 +88,8 @@ func (m *mokapi) Cron(expr string, do func(), args goja.Value) (int, error) {
 	}
 
 	f := func() {
-		m.m.Lock()
-		defer m.m.Unlock()
+		m.host.Lock()
+		defer m.host.Unlock()
 		do()
 	}
 
@@ -120,8 +117,8 @@ func (m *mokapi) On(event string, do goja.Value, args goja.Value) {
 	}
 
 	f := func(args ...interface{}) (bool, error) {
-		m.m.Lock()
-		defer m.m.Unlock()
+		m.host.Lock()
+		defer m.host.Unlock()
 
 		call, _ := goja.AssertFunction(do)
 		var params []goja.Value
