@@ -159,9 +159,9 @@ function showImage(target: EventTarget | null) {
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
             <div class="text-lg-start text-center">
-              <h2>Powerful Data Generator</h2>
+              <h2>Powerful Random Data Generator</h2>
               <p>
-                Mokapi has a powerful data generator that can produce a wide range of meaningful fake data for your APIs. 
+                Mokapi has a powerful random data generator that can produce a wide range of meaningful fake data for your APIs. 
                 Customize it to fit your needs.
               </p>
               <router-link :to="{ path: '/docs/guides/get-started/test-data' }">

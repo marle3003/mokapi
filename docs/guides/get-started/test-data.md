@@ -1,9 +1,9 @@
 ---
-title: Faker - Test Data Generator
+title: Faker - Random Test Data Generator
 description: Use randomly generated test data or use Mokapi Script to create responses that can simulate a wide range of scenarios and edge cases.
 ---
 
-# Faker - Test Data Generator
+# Faker - Random Test Data Generator
 
 By default, Mokapi generates test data randomly depending on 
 the data types and structure with a tree algorithm. You can extend and 
