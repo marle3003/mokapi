@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"mime"
 	"mokapi/config/dynamic"
@@ -32,7 +33,7 @@ func (h *handler) handleConfig(w http.ResponseWriter, r *http.Request) {
 	} else if len(segments) == 4 {
 		h.getConfigMetaData(w, segments[3])
 	} else if len(segments) == 5 {
-		h.getConfigData(w, segments[3])
+		h.getConfigData(w, r, segments[3])
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
 	}
@@ -58,10 +59,17 @@ func (h *handler) getConfigMetaData(w http.ResponseWriter, key string) {
 	writeJsonBody(w, toConfig(c))
 }
 
-func (h *handler) getConfigData(w http.ResponseWriter, key string) {
+func (h *handler) getConfigData(w http.ResponseWriter, r *http.Request, key string) {
 	c, ok := h.app.Configs[key]
 	if !ok {
 		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	token := r.Header.Get("If-None-Match")
+	checksum := fmt.Sprintf("%x", c.Info.Checksum)
+	if token != "" && token == checksum {
+		w.WriteHeader(http.StatusNotModified)
 		return
 	}
 
@@ -74,6 +82,7 @@ func (h *handler) getConfigData(w http.ResponseWriter, key string) {
 	w.Header().Set("Last-Modified", c.Info.Time.UTC().Format(http.TimeFormat))
 	w.Header().Set("Content-Type", mt)
 	w.Header().Set("Content-Disposition", "inline; filename=\""+filepath.Base(path)+"\"")
+	w.Header().Set("ETag", checksum)
 	w.WriteHeader(http.StatusOK)
 
 	_, err := w.Write(c.Raw)

@@ -1,6 +1,9 @@
 package api
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"io"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/runtime"
@@ -26,11 +29,13 @@ func TestHandler_Config(t *testing.T) {
 		}
 		return u
 	}
+	h := sha256.New()
 
 	testcases := []struct {
 		name       string
 		app        func() *runtime.App
 		requestUrl string
+		headers    map[string]string
 		test       []try.ResponseCondition
 	}{
 		{
@@ -53,7 +58,7 @@ func TestHandler_Config(t *testing.T) {
 			},
 		},
 		{
-			name: "meta: not found",
+			name: "request meta info: not found",
 			app: func() *runtime.App {
 				return &runtime.App{Configs: map[string]*dynamic.Config{}}
 			},
@@ -63,7 +68,7 @@ func TestHandler_Config(t *testing.T) {
 			},
 		},
 		{
-			name: "meta: found",
+			name: "request meta info: found",
 			app: func() *runtime.App {
 				return &runtime.App{Configs: map[string]*dynamic.Config{
 					"foo": {
@@ -83,7 +88,7 @@ func TestHandler_Config(t *testing.T) {
 			},
 		},
 		{
-			name: "meta: found",
+			name: "request meta info: found with reference",
 			app: func() *runtime.App {
 				foo := &dynamic.Config{
 					Info: dynamic.ConfigInfo{
@@ -111,7 +116,7 @@ func TestHandler_Config(t *testing.T) {
 			},
 		},
 		{
-			name: "data: not found",
+			name: "config data: not found",
 			app: func() *runtime.App {
 				return &runtime.App{Configs: map[string]*dynamic.Config{}}
 			},
@@ -121,7 +126,7 @@ func TestHandler_Config(t *testing.T) {
 			},
 		},
 		{
-			name: "data: yaml file empty",
+			name: "config data: yaml file empty",
 			app: func() *runtime.App {
 				return &runtime.App{Configs: map[string]*dynamic.Config{
 					"foo": {
@@ -142,15 +147,22 @@ func TestHandler_Config(t *testing.T) {
 			},
 		},
 		{
-			name: "data: json file with content",
+			name: "config data: json file with content",
 			app: func() *runtime.App {
+				data := []byte(`{"foo": "bar"}`)
+				_, err := io.Copy(h, bytes.NewReader(data))
+				if err != nil {
+					panic(err)
+				}
+
 				return &runtime.App{Configs: map[string]*dynamic.Config{
 					"foo": {
 						Info: dynamic.ConfigInfo{
-							Url:  mustUrl("https://foo.bar/foo.json"),
-							Time: mustTime("2023-12-22T13:01:30+00:00"),
+							Url:      mustUrl("https://foo.bar/foo.json"),
+							Time:     mustTime("2023-12-22T13:01:30+00:00"),
+							Checksum: h.Sum(nil),
 						},
-						Raw: []byte(`{"foo": "bar"}`),
+						Raw: data,
 					},
 				}}
 			},
@@ -159,6 +171,64 @@ func TestHandler_Config(t *testing.T) {
 				try.HasStatusCode(http.StatusOK),
 				try.HasHeader("Last-Modified", "Fri, 22 Dec 2023 13:01:30 GMT"),
 				try.HasHeader("Content-Type", "application/json"),
+				try.HasHeader("Etag", "426fc04f04bf8fdb5831dc37bbb6dcf70f63a37e05a68c6ea5f63e85ae579376"),
+				try.HasBody(`{"foo": "bar"}`),
+			},
+		},
+		{
+			name: "config data: not changed should return 304",
+			app: func() *runtime.App {
+				data := []byte(`{"foo": "bar"}`)
+				_, err := io.Copy(h, bytes.NewReader(data))
+				if err != nil {
+					panic(err)
+				}
+
+				return &runtime.App{Configs: map[string]*dynamic.Config{
+					"foo": {
+						Info: dynamic.ConfigInfo{
+							Url:      mustUrl("https://foo.bar/foo.json"),
+							Time:     mustTime("2023-12-22T13:01:30+00:00"),
+							Checksum: h.Sum(nil),
+						},
+						Raw: data,
+					},
+				}}
+			},
+			requestUrl: "http://foo.api/api/configs/foo/data",
+			headers:    map[string]string{"If-None-Match": "426fc04f04bf8fdb5831dc37bbb6dcf70f63a37e05a68c6ea5f63e85ae579376"},
+			test: []try.ResponseCondition{
+				try.HasStatusCode(http.StatusNotModified),
+				try.HasBody(""),
+			},
+		},
+		{
+			name: "config data: hash not match",
+			app: func() *runtime.App {
+				data := []byte(`{"foo": "bar"}`)
+				_, err := io.Copy(h, bytes.NewReader(data))
+				if err != nil {
+					panic(err)
+				}
+
+				return &runtime.App{Configs: map[string]*dynamic.Config{
+					"foo": {
+						Info: dynamic.ConfigInfo{
+							Url:      mustUrl("https://foo.bar/foo.json"),
+							Time:     mustTime("2023-12-22T13:01:30+00:00"),
+							Checksum: h.Sum(nil),
+						},
+						Raw: data,
+					},
+				}}
+			},
+			requestUrl: "http://foo.api/api/configs/foo/data",
+			headers:    map[string]string{"If-None-Match": "426fc04f04bf8fdb5831dc37bbb6dcf70f63a37e05a68c6ea5f63e85ae579300"},
+			test: []try.ResponseCondition{
+				try.HasStatusCode(http.StatusOK),
+				try.HasHeader("Last-Modified", "Fri, 22 Dec 2023 13:01:30 GMT"),
+				try.HasHeader("Content-Type", "application/json"),
+				try.HasHeader("Etag", "426fc04f04bf8fdb5831dc37bbb6dcf70f63a37e05a68c6ea5f63e85ae579376"),
 				try.HasBody(`{"foo": "bar"}`),
 			},
 		},
@@ -200,7 +270,7 @@ func TestHandler_Config(t *testing.T) {
 			try.Handler(t,
 				http.MethodGet,
 				tc.requestUrl,
-				nil,
+				tc.headers,
 				"",
 				h,
 				tc.test...)

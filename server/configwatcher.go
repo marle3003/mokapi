@@ -152,11 +152,13 @@ func (w *ConfigWatcher) addOrUpdate(c *dynamic.Config) error {
 			w.configChanged(cfg)
 		})
 	} else if bytes.Equal(e.config.Info.Checksum, c.Info.Checksum) {
+		log.Debugf("Checksum not changed. Skip reloading %v", e.config.Info.Url.String())
 		w.m.Unlock()
 		return nil
 	} else {
 		e.config.Raw = c.Raw
 		e.config.Info.Update(c.Info.Checksum)
+		log.Debugf("reloading %v", e.config.Info.Url.String())
 	}
 
 	w.m.Unlock()
