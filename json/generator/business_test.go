@@ -32,6 +32,23 @@ func TestCommerce(t *testing.T) {
 			},
 		},
 		{
+			name: "creditcardtype",
+			req: &Request{
+				Path: Path{
+					&PathElement{
+						Name: "creditcardtype",
+						Schema: schematest.NewRef("string",
+							schematest.WithMaxLength(4),
+						),
+					},
+				},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "F", v)
+			},
+		},
+		{
 			name: "person with address, username and creditcard",
 			req: &Request{
 				Path: Path{

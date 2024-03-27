@@ -30,7 +30,13 @@ func Country() *Tree {
 					p := last.Schema.Value.Pattern
 					return p == "[A-Z]{2}" || p == "[a-z]{2}"
 				}
-				return !hasFormat(last.Schema)
+				if hasFormat(last.Schema) {
+					return false
+				}
+				if last.Schema.IsString() {
+					return last.Schema.Value.MaxLength == nil || *last.Schema.Value.MaxLength >= 56 &&
+						last.Schema.Value.MinLength == nil || *last.Schema.Value.MinLength <= 4
+				}
 			}
 			return false
 		},
