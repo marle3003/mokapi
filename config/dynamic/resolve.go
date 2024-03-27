@@ -20,15 +20,7 @@ func Resolve(ref string, element interface{}, config *Config, reader Reader) err
 
 	if len(u.Path) > 0 || len(u.Host) > 0 {
 		if !u.IsAbs() {
-			info := config.Info
-			for {
-				inner := info.Inner()
-				if inner == nil {
-					break
-				}
-				info = *inner
-			}
-
+			info := config.Info.Kernel()
 			if len(info.Url.Opaque) > 0 {
 				p := filepath.Join(filepath.Dir(info.Url.Opaque), u.Path)
 				p = fmt.Sprintf("file:%v", p)

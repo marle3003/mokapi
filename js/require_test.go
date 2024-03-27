@@ -12,14 +12,13 @@ import (
 )
 
 func TestRequire(t *testing.T) {
-	host := &testHost{}
 	testcases := []struct {
 		name string
-		f    func(t *testing.T)
+		test func(t *testing.T, host *testHost)
 	}{
 		{
-			"module not found",
-			func(t *testing.T) {
+			name: "module not found",
+			test: func(t *testing.T, host *testHost) {
 				host.openFile = func(file, hint string) (string, string, error) {
 					return "", "", fmt.Errorf("file not found")
 				}
@@ -31,8 +30,8 @@ func TestRequire(t *testing.T) {
 			},
 		},
 		{
-			"mokapi",
-			func(t *testing.T) {
+			name: "require module mokapi",
+			test: func(t *testing.T, host *testHost) {
 				s, err := New(newScript("test", `import {sleep} from 'mokapi'; export let _sleep = sleep; sleep(12); export default function() {}`), host, static.JsConfig{})
 				r.NoError(t, err)
 
@@ -44,8 +43,8 @@ func TestRequire(t *testing.T) {
 			},
 		},
 		{
-			"require custom file",
-			func(t *testing.T) {
+			name: "require custom file",
+			test: func(t *testing.T, host *testHost) {
 				host.openFile = func(file, hint string) (string, string, error) {
 					// first request is foo, second is foo.js
 					if file == "foo" {
@@ -64,8 +63,8 @@ func TestRequire(t *testing.T) {
 			},
 		},
 		{
-			"require custom relative file",
-			func(t *testing.T) {
+			name: "require custom relative file",
+			test: func(t *testing.T, host *testHost) {
 				host.openFile = func(file, hint string) (string, string, error) {
 					r.Equal(t, "./foo.js", file)
 					return "", "export var bar = {demo: 'demo'};", nil
@@ -82,8 +81,8 @@ func TestRequire(t *testing.T) {
 			},
 		},
 		{
-			"require json file",
-			func(t *testing.T) {
+			name: "require json file",
+			test: func(t *testing.T, host *testHost) {
 				host.openFile = func(file, hint string) (string, string, error) {
 					return "", `{"foo":"bar"}`, nil
 				}
@@ -96,8 +95,8 @@ func TestRequire(t *testing.T) {
 			},
 		},
 		{
-			"require yaml file",
-			func(t *testing.T) {
+			name: "require yaml file",
+			test: func(t *testing.T, host *testHost) {
 				host.openFile = func(file, hint string) (string, string, error) {
 					return "", `foo: bar`, nil
 				}
@@ -110,8 +109,8 @@ func TestRequire(t *testing.T) {
 			},
 		},
 		{
-			"require http",
-			func(t *testing.T) {
+			name: "require http",
+			test: func(t *testing.T, host *testHost) {
 				host.openFile = func(file, hint string) (string, string, error) {
 					r.Equal(t, "http://foo.bar", file)
 					return "", `export var bar = {demo: 'demo'}`, nil
@@ -125,8 +124,8 @@ func TestRequire(t *testing.T) {
 			},
 		},
 		{
-			"require http but script error",
-			func(t *testing.T) {
+			name: "require http but script error",
+			test: func(t *testing.T, host *testHost) {
 				host.openFile = func(file, hint string) (string, string, error) {
 					return "", `foo`, nil
 				}
@@ -138,8 +137,8 @@ func TestRequire(t *testing.T) {
 			},
 		},
 		{
-			"require node module with package.json and main",
-			func(t *testing.T) {
+			name: "require node module with package.json and main",
+			test: func(t *testing.T, host *testHost) {
 				host.openFile = func(file, hint string) (string, string, error) {
 					hint = filepath.ToSlash(hint) // if on windows
 					switch {
@@ -159,8 +158,8 @@ func TestRequire(t *testing.T) {
 			},
 		},
 		{
-			"require node module with index.js",
-			func(t *testing.T) {
+			name: "require node module with index.js",
+			test: func(t *testing.T, host *testHost) {
 				host.openFile = func(file, hint string) (string, string, error) {
 					hint = filepath.ToSlash(hint) // if on windows
 					switch {
@@ -178,8 +177,8 @@ func TestRequire(t *testing.T) {
 			},
 		},
 		{
-			"require node module in parent folder",
-			func(t *testing.T) {
+			name: "require node module in parent folder",
+			test: func(t *testing.T, host *testHost) {
 				host.openFile = func(file, hint string) (string, string, error) {
 					hint = filepath.ToSlash(hint) // if on windows
 					switch {
@@ -197,8 +196,8 @@ func TestRequire(t *testing.T) {
 			},
 		},
 		{
-			"require file with same name but different folder",
-			func(t *testing.T) {
+			name: "require file with same name but different folder",
+			test: func(t *testing.T, host *testHost) {
 				testjs := `
 import foo from './foo/foo.js'
 import data from './data.json'
@@ -240,8 +239,8 @@ export default function () {return data}
 			},
 		},
 		{
-			"require node module in parent folder with nested provider",
-			func(t *testing.T) {
+			name: "require node module in parent folder with nested provider",
+			test: func(t *testing.T, host *testHost) {
 				host.openFile = func(file, hint string) (string, string, error) {
 					hint = filepath.ToSlash(hint) // if on windows
 					switch {
@@ -260,11 +259,46 @@ export default function () {return data}
 				r.Equal(t, "abc-def", v.Export())
 			},
 		},
+		{
+			name: "require file with nested provider",
+			test: func(t *testing.T, host *testHost) {
+				foo := &dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("/foo/foo.js")}, Raw: []byte(`import users from '../users'; export function foo() { return users }`)}
+				dynamic.Wrap(dynamic.ConfigInfo{Provider: "git", Url: mustParse("https://git.bar/projects/mokapi.git?file=/foo/foo.js&ref=main")}, foo)
+
+				users := &dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("/users.json")}, Raw: []byte(`["user1", "user2"]`)}
+				dynamic.Wrap(dynamic.ConfigInfo{Provider: "git", Url: mustParse("https://git.bar/projects/mokapi.git?file=/users.json&ref=main")}, users)
+
+				host.open = func(file, hint string) (*dynamic.Config, error) {
+					hint = filepath.ToSlash(hint) // if on windows
+					switch {
+					case file == "./foo.js" && hint == "/foo":
+						return foo, nil
+					case file == "../users.json" && hint == "/foo":
+						return users, nil
+					}
+					return nil, fmt.Errorf("not found")
+				}
+
+				index := &dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("/foo/index.js")}, Raw: []byte(`import { foo } from './foo'; export default () => foo()`)}
+				dynamic.Wrap(dynamic.ConfigInfo{Provider: "git", Url: mustParse("https://git.bar/projects/mokapi.git?file=/foo/index.js&ref=main")}, index)
+				s, err := New(index, host, static.JsConfig{})
+				r.NoError(t, err)
+
+				v, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, []interface{}{"user1", "user2"}, v.Export())
+			},
+		},
 	}
+
+	t.Parallel()
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			tc.f(t)
+			t.Parallel()
+
+			host := &testHost{}
+			tc.test(t, host)
 		})
 	}
 }

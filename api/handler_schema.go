@@ -141,7 +141,7 @@ func (h *handler) getExampleData(w http.ResponseWriter, r *http.Request) {
 
 	b, err := s.Marshal(data, ct)
 	if err != nil {
-		writeError(w, err, http.StatusInternalServerError)
+		writeError(w, fmt.Errorf("failed request %v: %w", r.URL.String(), err), http.StatusInternalServerError)
 	}
 	_, err = w.Write(b)
 	if err != nil {

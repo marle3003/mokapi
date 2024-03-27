@@ -38,7 +38,7 @@ func CreditCard() *Tree {
 			{
 				Name: "CreditCardType",
 				Test: func(r *Request) bool {
-					return (isCreditCardObject(r) && r.LastName() == "type") || strings.ToLower(r.LastName()) == "creditcardtype"
+					return (isCreditCardObject(r) && r.LastName() == "type") || (strings.ToLower(r.LastName()) == "creditcardtype" && r.LastSchema().IsAnyString())
 				},
 				Fake: func(r *Request) (interface{}, error) {
 					return gofakeit.CreditCardType(), nil
