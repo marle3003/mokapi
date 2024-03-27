@@ -77,6 +77,21 @@ func TestLocation(t *testing.T) {
 			},
 		},
 		{
+			name: "country maxlength 15",
+			request: &Request{
+				Path: Path{
+					&PathElement{
+						Name:   "country",
+						Schema: schematest.NewRef("string", schematest.WithMaxLength(15)),
+					},
+				},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "FqwCrwMfkOjojx", v)
+			},
+		},
+		{
 			name: "countryName",
 			request: &Request{
 				Path: Path{

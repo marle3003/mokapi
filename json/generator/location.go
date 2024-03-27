@@ -34,8 +34,8 @@ func Country() *Tree {
 					return false
 				}
 				if last.Schema.IsString() {
-					return last.Schema.Value.MaxLength == nil || *last.Schema.Value.MaxLength >= 56 &&
-						last.Schema.Value.MinLength == nil || *last.Schema.Value.MinLength <= 4
+					return (last.Schema.Value.MaxLength == nil || *last.Schema.Value.MaxLength >= 56) &&
+						(last.Schema.Value.MinLength == nil || *last.Schema.Value.MinLength <= 4)
 				}
 			}
 			return false
