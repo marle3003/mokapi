@@ -35,7 +35,7 @@ Its core feature are:
 
 ## Web UI
 
-<img src="https://github.com/marle3003/mokapi/raw/v0.5.0/webui.png" alt="Mokapi Web UI" title="Mokapi Web UI" />
+<img src="https://github.com/marle3003/mokapi/raw/main/webui.png" alt="Mokapi Web UI" title="Mokapi Web UI" />
 
 ## Usage
 
@@ -51,4 +51,5 @@ npx mokapi --Providers.File.Directory=./mokapi
 - [LDAP](https://mokapi.io/docs/guides/ldap/overview)
 - [SMTP](https://mokapi.io/docs/guides/smtp/overview)
 - [Javascript API](https://mokapi.io/docs/javascript-api)
-- [Examples](https://mokapi.io/docs/examples)
+- [Examples & Tutorials](https://mokapi.io/docs/examples)
+- [Blogs](https://mokapi.io/docs/blogs)
