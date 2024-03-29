@@ -61,6 +61,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		writeError(rw, r, err, h.config.Info.Name)
 		return
 	}
+	log.Debugf("selected response %v for: %v", status, r.URL.String())
 	contentType, mediaType, err := ContentTypeFromRequest(r, res)
 	if err != nil {
 		writeError(rw, r, err, h.config.Info.Name)
