@@ -198,6 +198,18 @@ func WithMaximum(max float64) SchemaOptions {
 	}
 }
 
+func WithExclusiveMinimum(min float64) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.ExclusiveMinimum = &min
+	}
+}
+
+func WithExclusiveMaximum(max float64) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.ExclusiveMaximum = &max
+	}
+}
+
 func WithMultipleOf(n float64) SchemaOptions {
 	return func(s *schema.Schema) {
 		s.MultipleOf = &n

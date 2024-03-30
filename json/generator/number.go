@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-const smallestFloat = 1e-20
+const smallestFloat = 1e-15
 
 func Numbers() *Tree {
 	return &Tree{
@@ -210,7 +210,7 @@ func Number() *Tree {
 }
 
 func validateRange(min, max float64) error {
-	if min >= max {
+	if min > max {
 		return fmt.Errorf("invalid minimum '%v' and maximum '%v'", min, max)
 	}
 	return nil
