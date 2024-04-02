@@ -56,10 +56,10 @@ test('Visit Kafka topic mokapi.shop.userSignedUp', async ({ page, context }) => 
         await expect(configs.getByLabel('Description')).not.toBeVisible()
         await expect(configs.getByLabel('Content Type')).toHaveText(topic.configs.contentType)
 
-        const { test: testSourceView } = useSourceView(configs.getByRole('tabpanel', { name: 'Message' }))
+        const { test: testSourceView } = useSourceView(configs.getByRole('tabpanel', { name: 'Value' }))
         await testSourceView({
-            lines: topic.configs.message.lines,
-            size: topic.configs.message.size,
+            lines: topic.configs.value.lines,
+            size: topic.configs.value.size,
             content: /"xml"/,
             filename: 'mokapi.shop.userSignedUp-message.json',
             clipboard: 'xml'
@@ -67,11 +67,11 @@ test('Visit Kafka topic mokapi.shop.userSignedUp', async ({ page, context }) => 
 
         await test.step('Check expand schema', async () => {
             await configs.getByRole('button', { name: 'Expand' }).click()
-            const dialog = page.getByRole('dialog', { name: 'Message - mokapi.shop.userSignedUp' })
+            const dialog = page.getByRole('dialog', { name: 'Value - mokapi.shop.userSignedUp' })
             const { test: testSourceView } = useSourceView(dialog)
             await testSourceView({
-                lines: topic.configs.message.lines,
-                size: topic.configs.message.size,
+                lines: topic.configs.value.lines,
+                size: topic.configs.value.size,
                 content: /"xml"/,
                 filename: 'mokapi.shop.userSignedUp-message.json',
                 clipboard: 'xml'
@@ -81,7 +81,7 @@ test('Visit Kafka topic mokapi.shop.userSignedUp', async ({ page, context }) => 
 
         await test.step('Check schema example', async () => {
             await configs.getByRole('button', { name: 'Example' }).click()
-            const dialog = page.getByRole('dialog', { name: 'Message Example - mokapi.shop.userSignedUp' })
+            const dialog = page.getByRole('dialog', { name: 'Value Example - mokapi.shop.userSignedUp' })
             const { test: testSourceView } = useSourceView(dialog)
             await testSourceView({
                 lines: /\d+ lines/,

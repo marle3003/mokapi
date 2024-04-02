@@ -1,24 +1,24 @@
-import { Locator, Page, expect, test } from "playwright/test"
+import { Locator, expect, test } from "playwright/test"
 import { useTable } from '../components/table'
 import { formatDateTime } from "../helpers/format"
 
 export interface Topic {
     name: string
     description: string
-    lastMessage: string
-    messages: string
+    lastRecord: string
+    records: string
 }
 
 export function useKafkaTopics(table: Locator) {
-    const topics = useTable(table, ['Name', 'Description', 'Last Message', 'Messages'])
+    const topics = useTable(table, ['Name', 'Description', 'Last Record', 'Records'])
     return {
         async testTopic(row: number, topic: Topic) {
             await test.step(`Check Kafka topic in row ${row}`, async () => {
                 const t = topics.getRow(row + 1)
                 await expect(t.getCellByName('Name')).toHaveText(topic.name)
                 await expect(t.getCellByName('Description')).toHaveText(topic.description)
-                await expect(t.getCellByName('Last Message')).toHaveText(topic.lastMessage)
-                await expect(t.getCellByName('Messages')).toHaveText(topic.messages)
+                await expect(t.getCellByName('Last Record')).toHaveText(topic.lastRecord)
+                await expect(t.getCellByName('Records')).toHaveText(topic.records)
             })
         }
     }
@@ -100,8 +100,8 @@ export function useKafkaPartitions(table: Locator) {
 export function useKafkaMessages() {
     return {
         test: async (table: Locator, withTopic: boolean = true) => {
-            await test.step('Check message log', async () => {
-                let columns = ['Key', 'Message', 'Topic', 'Offset', 'Partition', 'Time']
+            await test.step('Check records log', async () => {
+                let columns = ['Key', 'Value', 'Topic', 'Time']
                 if (!withTopic) {
                     columns.splice(2,1)
                 }
@@ -109,22 +109,18 @@ export function useKafkaMessages() {
                 const messages = await useTable(table, columns)
                 let message = messages.getRow(1)
                 await expect(message.getCellByName('Key')).toHaveText('GGOEWXXX0827')
-                await expect(message.getCellByName('Message')).toHaveText(/^{"id":"GGOEWXXX0827","name":"Waze Women's Short Sleeve Tee",/)
+                await expect(message.getCellByName('Value')).toHaveText(/^{"id":"GGOEWXXX0827","name":"Waze Women's Short Sleeve Tee",/)
                 if (withTopic) {
                     await expect(message.getCellByName('Topic')).toHaveText('mokapi.shop.products')
                 }
-                await expect(message.getCellByName('Offset')).toHaveText('0')
-                await expect(message.getCellByName('Partition')).toHaveText('0')
                 await expect(message.getCellByName('Time')).toHaveText(formatDateTime('2023-02-13T09:49:25.482366+01:00'))
         
                 message = messages.getRow(2)
                 await expect(message.getCellByName('Key')).toHaveText('GGOEWXXX0828')
-                await expect(message.getCellByName('Message')).toHaveText(/^{"id":"GGOEWXXX0828","name":"Waze Men's Short Sleeve Tee",/)
+                await expect(message.getCellByName('Value')).toHaveText(/^{"id":"GGOEWXXX0828","name":"Waze Men's Short Sleeve Tee",/)
                 if (withTopic) {
                     await expect(message.getCellByName('Topic')).toHaveText('mokapi.shop.products')
                 }
-                await expect(message.getCellByName('Offset')).toHaveText('1')
-                await expect(message.getCellByName('Partition')).toHaveText('1')
                 await expect(message.getCellByName('Time')).toHaveText(formatDateTime('2023-02-13T09:49:25.482366+01:00'))
             })
         }

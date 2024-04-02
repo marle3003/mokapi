@@ -8,7 +8,7 @@ export const cluster = {
     },
     description: 'To ours significant why upon tomorrow her faithful many motionless.',
     lastMessage: formatTimestamp(1652135690),
-    messages: '11',
+    records: '11',
     brokers: [{
         name: 'Broker',
         url: 'localhost:9092',
@@ -18,8 +18,8 @@ export const cluster = {
         {
             name: 'mokapi.shop.products',
             description: 'Though literature second anywhere fortnightly am this either so me.',
-            lastMessage: formatTimestamp(1652135690),
-            messages: '10',
+            lastRecord: formatTimestamp(1652135690),
+            records: '10',
             partitions: [
                 {
                     id: '0',
@@ -49,7 +49,7 @@ export const cluster = {
                 summary: 'A message containing details of a new order',
                 description: 'More info about how the order notifications are created and used.',
                 contentType: 'application/json',
-                message: {
+                value: {
                     lines: '32 lines',
                     size: '464 B'
                 }
@@ -58,8 +58,8 @@ export const cluster = {
         {
             name: 'mokapi.shop.userSignedUp',
             description: 'This channel contains a message per each user who signs up in our application.',
-            lastMessage: formatTimestamp(1652035690),
-            messages: '1',
+            lastRecord: formatTimestamp(1652035690),
+            records: '1',
             partitions: [
                 {
                     id: '0',
@@ -72,7 +72,7 @@ export const cluster = {
             configs: {
                 name: 'userSignedUp',
                 contentType: 'application/xml',
-                message: {
+                value: {
                     lines: '18 lines',
                     size: '357 B'
                 }

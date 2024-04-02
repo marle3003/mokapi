@@ -28,7 +28,7 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
         await expect(info.getByLabel('Description')).toHaveText(topic.description)
     })
 
-    await useKafkaMessages().test(page.getByRole('table', { name: 'Topic Messages' }), false)
+    await useKafkaMessages().test(page.getByRole('table', { name: 'Topic Records' }), false)
 
     const tabList = page.getByRole('region', { name: 'Topic Data' }).getByRole('tablist')
     await test.step('Check partition"', async () => {
@@ -60,10 +60,10 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
 
         
 
-        const { test: testSourceView } = useSourceView(configs.getByRole('tabpanel', { name: 'Message' }))
+        const { test: testSourceView } = useSourceView(configs.getByRole('tabpanel', { name: 'Value' }))
         await testSourceView({
-            lines: topic.configs.message.lines,
-            size: topic.configs.message.size,
+            lines: topic.configs.value.lines,
+            size: topic.configs.value.size,
             content: /"features"/,
             filename: 'mokapi.shop.products-message.json',
             clipboard: '"features"'
@@ -71,11 +71,11 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
 
         await test.step('Check expand schema', async () => {
             await configs.getByRole('button', { name: 'Expand' }).click()
-            const dialog = page.getByRole('dialog', { name: 'Message - mokapi.shop.products' })
+            const dialog = page.getByRole('dialog', { name: 'Value - mokapi.shop.products' })
             const { test: testSourceView } = useSourceView(dialog)
             await testSourceView({
-                lines: topic.configs.message.lines,
-                size: topic.configs.message.size,
+                lines: topic.configs.value.lines,
+                size: topic.configs.value.size,
                 content: /"features"/,
                 filename: 'mokapi.shop.products-message.json',
                 clipboard: '"features"'
@@ -85,7 +85,7 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
 
         await test.step('Check schema example', async () => {
             await configs.getByRole('button', { name: 'Example' }).click()
-            const dialog = page.getByRole('dialog', { name: 'Message Example - mokapi.shop.products' })
+            const dialog = page.getByRole('dialog', { name: 'Value Example - mokapi.shop.products' })
             const { test: testSourceView } = useSourceView(dialog)
             await testSourceView({
                 lines: /\d+ lines/,

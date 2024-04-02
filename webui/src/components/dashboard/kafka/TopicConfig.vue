@@ -58,7 +58,7 @@ function filename() {
         <div class="row mt-2">
             <ul class="nav nav-pills tab-sm" role="tablist">
                 <li class="nav-link" :class="topic.configs.key ? '' : 'disabled'" id="tab-config-schemas-key" data-bs-toggle="pill" data-bs-target="#tabpanel-config-schemas-key" type="button" role="tab" aria-controls="tabpanel-config-schemas-key" aria-selected="false">Key</li>
-                <li class="nav-link active" id="tab-config-schemas-message" data-bs-toggle="pill" data-bs-target="#tabpanel-config-schemas-message" type="button" role="tab" aria-controls="tabpanel-config-schemas-message" aria-selected="true">Message</li>
+                <li class="nav-link active" id="tab-config-schemas-message" data-bs-toggle="pill" data-bs-target="#tabpanel-config-schemas-message" type="button" role="tab" aria-controls="tabpanel-config-schemas-message" aria-selected="true">Value</li>
             </ul>
 
             <div class="tab-content" id="tab-config-schemas">
