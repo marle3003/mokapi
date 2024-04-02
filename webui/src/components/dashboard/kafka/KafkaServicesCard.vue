@@ -52,8 +52,8 @@ onUnmounted(() => {
                     <tr>
                         <th scope="col" class="text-left w-25">Name</th>
                         <th scope="col" class="text-left w-50">Description</th>
-                        <th scope="col" class="text-center" style="width: 15%">Last Message</th>
-                        <th scope="col" class="text-center">Messages</th>
+                        <th scope="col" class="text-center" style="width: 15%">Last Record</th>
+                        <th scope="col" class="text-center">Records</th>
                     </tr>
                 </thead>
                 <tbody>

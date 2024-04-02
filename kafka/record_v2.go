@@ -60,8 +60,8 @@ func (rb *RecordBatch) readFromV2(d *Decoder) error {
 			r.Headers = make([]RecordHeader, headerLen)
 			for i := range r.Headers {
 				r.Headers[i] = RecordHeader{
-					Key:   d.ReadString(),
-					Value: d.ReadBytes(),
+					Key:   d.ReadVarString(),
+					Value: d.ReadVarBytes(),
 				}
 			}
 		}

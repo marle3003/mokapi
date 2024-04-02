@@ -67,7 +67,7 @@ onUnmounted(() => {
         <section class="card" aria-label="Topic Data">
           <div class="card-body">
             <div class="nav card-tabs" id="myTab" role="tablist">
-              <button class="active" id="messages-tab" data-bs-toggle="tab" data-bs-target="#messages" type="button" role="tab" aria-controls="messages" aria-selected="true">Messages</button>
+              <button class="active" id="messages-tab" data-bs-toggle="tab" data-bs-target="#messages" type="button" role="tab" aria-controls="messages" aria-selected="true">Records</button>
               <button id="partitions-tab" data-bs-toggle="tab" data-bs-target="#partitions" type="button" role="tab" aria-controls="partitions" aria-selected="false">Partitions</button>
               <button id="groups-tab" data-bs-toggle="tab" data-bs-target="#groups" type="button" role="tab" aria-controls="groups" aria-selected="false">Groups</button>
               <button id="configs-tab" data-bs-toggle="tab" data-bs-target="#configs" type="button" role="tab" aria-controls="configs" aria-selected="false">Configs</button>

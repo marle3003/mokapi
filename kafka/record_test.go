@@ -15,32 +15,32 @@ func bytesToString(bytes Bytes) string {
 }
 
 func TestRecord_ReadFrom(t *testing.T) {
-	testdata := []struct {
+	testcases := []struct {
 		name string
-		b    []byte
-		fn   func(*testing.T, *Decoder)
+		data []byte
+		test func(*testing.T, *Decoder)
 	}{
 		{
-			"empty",
-			[]byte{},
-			func(t *testing.T, d *Decoder) {
+			name: "empty",
+			data: []byte{},
+			test: func(t *testing.T, d *Decoder) {
 				record := RecordBatch{}
 				err := record.ReadFrom(d)
 				require.NoError(t, err)
 			},
 		},
 		{
-			"size zero",
-			[]byte{0, 0, 0, 0},
-			func(t *testing.T, d *Decoder) {
+			name: "size zero",
+			data: []byte{0, 0, 0, 0},
+			test: func(t *testing.T, d *Decoder) {
 				batch := RecordBatch{}
 				err := batch.ReadFrom(d)
 				require.NoError(t, err)
 			},
 		},
 		{
-			"one record",
-			[]byte{
+			name: "one record v2",
+			data: []byte{
 				0, 0, 0, 81, // length
 				0, 0, 0, 0, 0, 0, 0, 12, // base offset
 				0, 0, 0, 0, // batch length
@@ -61,9 +61,9 @@ func TestRecord_ReadFrom(t *testing.T) {
 				2,                // delta offset 1
 				6, 'f', 'o', 'o', // key
 				6, 'b', 'a', 'r', // value
-				0, // header
+				0, // header length
 			},
-			func(t *testing.T, d *Decoder) {
+			test: func(t *testing.T, d *Decoder) {
 				batch := RecordBatch{}
 				err := batch.ReadFrom(d)
 				require.NoError(t, err)
@@ -82,8 +82,8 @@ func TestRecord_ReadFrom(t *testing.T) {
 			},
 		},
 		{
-			"one record",
-			[]byte{
+			name: "two record",
+			data: []byte{
 				0, 0, 0, 81, // length
 				0, 0, 0, 0, 0, 0, 0, 12, // base offset
 				0, 0, 0, 0, // batch length
@@ -111,24 +111,70 @@ func TestRecord_ReadFrom(t *testing.T) {
 				2,                // delta offset 1
 				6, 'f', 'o', 'o', // key
 				6, 'b', 'a', 'r', // value
-				0, // header
+				0, // header length
 			},
-			func(t *testing.T, d *Decoder) {
+			test: func(t *testing.T, d *Decoder) {
 				batch := RecordBatch{}
 				err := batch.ReadFrom(d)
 				require.NoError(t, err)
 				require.Len(t, batch.Records, 2)
 			},
 		},
+		{
+			name: "with header v2",
+			data: []byte{
+				0, 0, 0, 81, // length
+				0, 0, 0, 0, 0, 0, 0, 12, // base offset
+				0, 0, 0, 0, // batch length
+				0, 0, 0, 0, // leader epoch
+				2,          // magic
+				0, 0, 0, 0, // crc
+				0, 0, // attributes
+				0, 0, 0, 0, // last offset delta
+				0, 0, 1, 125, 158, 189, 76, 76, // first timestamp
+				0, 0, 0, 0, 0, 0, 0, 0, // max timestamp
+				0, 0, 0, 0, 0, 0, 0, 0, // producer id
+				0, 0, // producer epoch
+				0, 0, 0, 0, // base sequence
+				0, 0, 0, 1, // number of records
+				24,               // record length 12
+				0,                // attributes
+				0,                // delta timestamp
+				2,                // delta offset 1
+				6, 'f', 'o', 'o', // key
+				6, 'b', 'a', 'r', // value
+				6,                                                         // header length
+				22, 't', 'r', 'a', 'c', 'e', 'p', 'a', 'r', 'e', 'n', 't', // first header name
+				6, 'f', 'o', 'o', // first header value
+				24, 'x', '-', 'm', 'e', 's', 's', 'a', 'g', 'e', '-', 'i', 'd', // 2nd header name
+				6, 'b', 'a', 'r', // 2nd header value
+				28, 'x', '-', 'm', 'e', 's', 's', 'a', 'g', 'e', '-', 't', 'y', 'p', 'e', // 2nd header name
+				6, 'o', 'n', 'e', // 2nd header value
+			},
+			test: func(t *testing.T, d *Decoder) {
+				batch := RecordBatch{}
+				err := batch.ReadFrom(d)
+				require.NoError(t, err)
+				require.Len(t, batch.Records[0].Headers, 3)
+				require.Equal(t, "traceparent", batch.Records[0].Headers[0].Key)
+				require.Equal(t, []byte("foo"), batch.Records[0].Headers[0].Value)
+				require.Equal(t, "x-message-id", batch.Records[0].Headers[1].Key)
+				require.Equal(t, []byte("bar"), batch.Records[0].Headers[1].Value)
+				require.Equal(t, "x-message-type", batch.Records[0].Headers[2].Key)
+				require.Equal(t, []byte("one"), batch.Records[0].Headers[2].Value)
+			},
+		},
 	}
 
-	for _, data := range testdata {
-		t.Run(data.name, func(t *testing.T) {
-			r := bufio.NewReader(bytes.NewReader(data.b))
-			d := NewDecoder(r, len(data.b))
-			t.Run(data.name, func(t *testing.T) {
-				data.fn(t, d)
-			})
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			r := bufio.NewReader(bytes.NewReader(tc.data))
+			d := NewDecoder(r, len(tc.data))
+			tc.test(t, d)
 		})
 	}
 }

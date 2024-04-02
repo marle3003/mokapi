@@ -50,8 +50,8 @@ function goToTopic(topic: KafkaTopic){
                     <tr>
                         <th scope="col" class="text-left">Name</th>
                         <th scope="col" class="text-left">Description</th>
-                        <th scope="col" class="text-center">Last Message</th>
-                        <th scope="col" class="text-center">Messages</th>
+                        <th scope="col" class="text-center">Last Record</th>
+                        <th scope="col" class="text-center">Records</th>
                     </tr>
                 </thead>
                 <tbody>
