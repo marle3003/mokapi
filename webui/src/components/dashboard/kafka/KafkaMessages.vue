@@ -66,7 +66,7 @@ function showMessage(event: ServiceEvent){
         return
     }
     message.value = {
-        key: hljs.highlightAuto(formatLanguage(data.key, 'text/plain')).value,
+        key: data.key,
         message: formatLanguage(data.message, topic.configs.messageType),
         headers: data.headers,
         contentType: topic.configs.messageType,
