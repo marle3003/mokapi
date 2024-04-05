@@ -88,7 +88,17 @@ export const configs = {
                 time: '2023-02-28T08:49:25.482366+01:00',
                 data: 'http://localhost:8090/api/services/http/Swagger%20Petstore',
             }
-        ]
+        ],
+        filename: 'petstore.json'
+    },
+    'b6fea8ac-56c7-4e73-a9c0-4487640bdca8': {
+        id: 'b6fea8ac-56c7-4e73-a9c0-4487640bdca8',
+        url: 'https://github.com/marle3003/mokapi.git?file=foo.json&ref=main',
+        provider: 'git',
+        time: '2023-02-15T08:49:25.482366+01:00',
+        data: 'http://localhost:8090/api/services/http/Swagger%20Petstore',
+        refs: [],
+        filename: 'petstore.json'
     }
 }
 

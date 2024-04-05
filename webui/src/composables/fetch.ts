@@ -8,6 +8,7 @@ export interface Response {
     close: () => void
     refs: number
     refresh: () => void
+    header: Headers
 }
 
 const cache: { [name: string]: Response } = {}
@@ -22,7 +23,8 @@ export function useFetch(path: string, options?: RequestInit, doRefresh: boolean
         error: null,
         close: () => {},
         refs: 1,
-        refresh: doFetch
+        refresh: doFetch,
+        header: {}
     })
 
     if (cache[path]) {
@@ -43,6 +45,7 @@ export function useFetch(path: string, options?: RequestInit, doRefresh: boolean
                     throw new Error(res.statusText + ': ' + text)
                 }
                 const contentType = res.headers.get("content-type");
+                response.header = res.headers
                 if (contentType && contentType.indexOf("application/json") !== -1) {
                     return res.json()
                 } else{

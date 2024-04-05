@@ -16,17 +16,18 @@ const { getContentType, formatLanguage } = usePrettyLanguage()
 const defaultContentType = 'plain/text'
 
 const { config, isLoading, close } = fetch(configId)
-const { data, isLoading: isLoadingData, close: closeData } = fetchData(configId)
+const responseData = fetchData(configId)
 
 function isInitLoading() {
-    return isLoading.value && !config.value && isLoadingData
+    return isLoading.value && !config.value && responseData.isLoading
 }
 
 const contentType = computed(() => {
-    if (!config.value) {
+    const name = filename.value
+    if (!name) {
         return defaultContentType
     }
-    const ct = getContentType(config.value?.url)
+    const ct = getContentType(name)
     if (ct) {
         return ct
     }
@@ -34,6 +35,14 @@ const contentType = computed(() => {
 })
 
 const filename = computed(() => {
+    if (responseData.header) {
+        const h = responseData.header.get('Content-Disposition')!
+        const matches = h.match(/filename="([^\"]*)"/)
+        if (matches && matches.length > 1) {
+            return matches[1]
+        }
+    }
+
     if (!config.value) {
         return ''
     }
@@ -50,7 +59,7 @@ function toString(arg: any): string {
 
 onUnmounted(() => {
     close()
-    closeData()
+    responseData.close()
 })
 </script>
 
@@ -83,11 +92,11 @@ onUnmounted(() => {
                 </div>
             </div>
         </div>
-        <section class="card-group" v-if="data" aria-label="Content">
+        <section class="card-group" v-if="responseData.data" aria-label="Content">
             <div class="card">
                 <div class="card-body">
                     <div class="row">
-                        <source-view :source="formatLanguage(toString(data), contentType)" :content-type="contentType" :url="getDataUrl(configId)" :filename="filename"  />
+                        <source-view :source="formatLanguage(toString(responseData.data), contentType)" :content-type="contentType" :url="getDataUrl(configId)" :filename="filename"  />
                     </div>
                 </div>
             </div>
