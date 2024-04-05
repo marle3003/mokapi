@@ -134,6 +134,7 @@ func (s *Script) ensureRuntime() (err error) {
 	s.require.Enable(s.runtime)
 	enableConsole(s.runtime, s.host)
 	enableOpen(s.runtime, s.host)
+	enableProcess(s.runtime)
 
 	s.exports, err = s.openScript(path, string(s.file.Raw))
 	return
