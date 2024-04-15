@@ -10,7 +10,9 @@ const clientKey = "client"
 
 type UUIDGenerator func() string
 
-var uuidGenerator UUIDGenerator = uuid.New().String
+var uuidGenerator UUIDGenerator = func() string {
+	return uuid.New().String()
+}
 
 func SetUUIDGenerator(g UUIDGenerator) {
 	uuidGenerator = g
