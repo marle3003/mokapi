@@ -21,7 +21,7 @@ chocolateys:
   - name: mokapi
     owners: Marcel Lehmann
     title: Mokapi
-    authors: https://github.com/marle3003/mokapi/graphs/contributors
+    authors: Marcel Lehmann
     project_url: https://mokapi.io
     package_source_url: https://github.com/marle3003/mokapi
     icon_url: https://cdn.jsdelivr.net/gh/marle3003/mokapi/webui/public/logo.svg
