@@ -22,6 +22,6 @@ import { every } from 'mokapi'
 export default function() {
     every('1m', function() {
         console.log('foo')
-    }, {times: 1, runFirstTimeImmediately: false})
+    }, { times: 1, runFirstTimeImmediately: false })
 }
 ```
