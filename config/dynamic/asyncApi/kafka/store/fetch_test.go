@@ -16,11 +16,11 @@ import (
 func TestFetch(t *testing.T) {
 	testcases := []struct {
 		name string
-		fn   func(t *testing.T, s *store.Store)
+		test func(t *testing.T, s *store.Store)
 	}{
 		{
-			"topic not exists",
-			func(t *testing.T, s *store.Store) {
+			name: "topic not exists",
+			test: func(t *testing.T, s *store.Store) {
 				rr := kafkatest.NewRecorder()
 				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &fetch.Request{Topics: []fetch.Topic{
 					{
@@ -39,8 +39,8 @@ func TestFetch(t *testing.T) {
 			},
 		},
 		{
-			"partition not exists",
-			func(t *testing.T, s *store.Store) {
+			name: "partition not exists",
+			test: func(t *testing.T, s *store.Store) {
 				s.Update(asyncapitest.NewConfig(asyncapitest.WithChannel("foo")))
 
 				rr := kafkatest.NewRecorder()
@@ -61,8 +61,8 @@ func TestFetch(t *testing.T) {
 			},
 		},
 		{
-			"empty",
-			func(t *testing.T, s *store.Store) {
+			name: "empty",
+			test: func(t *testing.T, s *store.Store) {
 				s.Update(asyncapitest.NewConfig(asyncapitest.WithChannel("foo", asyncapitest.WithChannelKafka(kafka2.TopicBindings{Partitions: 1}))))
 
 				rr := kafkatest.NewRecorder()
@@ -84,8 +84,8 @@ func TestFetch(t *testing.T) {
 			},
 		},
 		{
-			"empty with max wait time",
-			func(t *testing.T, s *store.Store) {
+			name: "empty with max wait time",
+			test: func(t *testing.T, s *store.Store) {
 				start := time.Now()
 
 				rr := kafkatest.NewRecorder()
@@ -105,8 +105,8 @@ func TestFetch(t *testing.T) {
 			},
 		},
 		{
-			"empty with max wait time and min bytes",
-			func(t *testing.T, s *store.Store) {
+			name: "empty with max wait time and min bytes",
+			test: func(t *testing.T, s *store.Store) {
 				start := time.Now()
 
 				rr := kafkatest.NewRecorder()
@@ -126,16 +126,17 @@ func TestFetch(t *testing.T) {
 			},
 		},
 		{
-			"fetch one record",
-			func(t *testing.T, s *store.Store) {
+			name: "fetch one record",
+			test: func(t *testing.T, s *store.Store) {
 				s.Update(asyncapitest.NewConfig(asyncapitest.WithChannel("foo")))
-				_, err := s.Topic("foo").Partition(0).Write(kafka.RecordBatch{Records: []kafka.Record{
+				_, records, err := s.Topic("foo").Partition(0).Write(kafka.RecordBatch{Records: []kafka.Record{
 					{
 						Key:   kafka.NewBytes([]byte("foo")),
 						Value: kafka.NewBytes([]byte("bar")),
 					},
 				}})
 				require.NoError(t, err)
+				require.Len(t, records, 0)
 
 				rr := kafkatest.NewRecorder()
 				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &fetch.Request{
@@ -160,10 +161,10 @@ func TestFetch(t *testing.T) {
 			},
 		},
 		{
-			"fetch one record with MaxBytes 15",
-			func(t *testing.T, s *store.Store) {
+			name: "fetch one record with MaxBytes 15",
+			test: func(t *testing.T, s *store.Store) {
 				s.Update(asyncapitest.NewConfig(asyncapitest.WithChannel("foo")))
-				_, err := s.Topic("foo").Partition(0).Write(kafka.RecordBatch{Records: []kafka.Record{
+				_, records, err := s.Topic("foo").Partition(0).Write(kafka.RecordBatch{Records: []kafka.Record{
 					{
 						Key:   kafka.NewBytes([]byte("key-1")),
 						Value: kafka.NewBytes([]byte("value-1")),
@@ -174,6 +175,7 @@ func TestFetch(t *testing.T) {
 					},
 				}})
 				require.NoError(t, err)
+				require.Len(t, records, 0)
 
 				rr := kafkatest.NewRecorder()
 				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &fetch.Request{
@@ -198,16 +200,17 @@ func TestFetch(t *testing.T) {
 			},
 		},
 		{
-			"fetch next not available record",
-			func(t *testing.T, s *store.Store) {
+			name: "fetch next not available record",
+			test: func(t *testing.T, s *store.Store) {
 				s.Update(asyncapitest.NewConfig(asyncapitest.WithChannel("foo")))
-				_, err := s.Topic("foo").Partition(0).Write(kafka.RecordBatch{Records: []kafka.Record{
+				_, records, err := s.Topic("foo").Partition(0).Write(kafka.RecordBatch{Records: []kafka.Record{
 					{
 						Key:   kafka.NewBytes([]byte("foo")),
 						Value: kafka.NewBytes([]byte("bar")),
 					},
 				}})
 				require.NoError(t, err)
+				require.Len(t, records, 0)
 
 				rr := kafkatest.NewRecorder()
 				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &fetch.Request{Topics: []fetch.Topic{
@@ -224,10 +227,10 @@ func TestFetch(t *testing.T) {
 			},
 		},
 		{
-			"fetch both records",
-			func(t *testing.T, s *store.Store) {
+			name: "fetch both records",
+			test: func(t *testing.T, s *store.Store) {
 				s.Update(asyncapitest.NewConfig(asyncapitest.WithChannel("foo")))
-				_, err := s.Topic("foo").Partition(0).Write(kafka.RecordBatch{Records: []kafka.Record{
+				_, records, err := s.Topic("foo").Partition(0).Write(kafka.RecordBatch{Records: []kafka.Record{
 					{
 						Key:   kafka.NewBytes([]byte("key-1")),
 						Value: kafka.NewBytes([]byte("value-1")),
@@ -238,6 +241,7 @@ func TestFetch(t *testing.T) {
 					},
 				}})
 				require.NoError(t, err)
+				require.Len(t, records, 0)
 
 				rr := kafkatest.NewRecorder()
 				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &fetch.Request{
@@ -266,8 +270,8 @@ func TestFetch(t *testing.T) {
 			},
 		},
 		{
-			"wait fetch for MinBytes",
-			func(t *testing.T, s *store.Store) {
+			name: "wait fetch for MinBytes",
+			test: func(t *testing.T, s *store.Store) {
 				s.Update(asyncapitest.NewConfig(asyncapitest.WithChannel("foo")))
 
 				ch := make(chan *fetch.Response, 1)
@@ -286,7 +290,7 @@ func TestFetch(t *testing.T) {
 					ch <- res
 				}()
 				time.Sleep(300 * time.Millisecond)
-				_, err := s.Topic("foo").Partition(0).Write(kafka.RecordBatch{
+				_, records, err := s.Topic("foo").Partition(0).Write(kafka.RecordBatch{
 					[]kafka.Record{
 						{
 							Key:   kafka.NewBytes([]byte("foo")),
@@ -295,6 +299,7 @@ func TestFetch(t *testing.T) {
 					},
 				})
 				require.NoError(t, err)
+				require.Len(t, records, 0)
 
 				r := <-ch
 
@@ -308,8 +313,8 @@ func TestFetch(t *testing.T) {
 			},
 		},
 		{
-			"fetch offset out of range when empty",
-			func(t *testing.T, s *store.Store) {
+			name: "fetch offset out of range when empty",
+			test: func(t *testing.T, s *store.Store) {
 				s.Update(asyncapitest.NewConfig(asyncapitest.WithChannel("foo")))
 
 				rr := kafkatest.NewRecorder()
@@ -327,16 +332,17 @@ func TestFetch(t *testing.T) {
 			},
 		},
 		{
-			"fetch offset out of range",
-			func(t *testing.T, s *store.Store) {
+			name: "fetch offset out of range",
+			test: func(t *testing.T, s *store.Store) {
 				s.Update(asyncapitest.NewConfig(asyncapitest.WithChannel("foo")))
-				_, err := s.Topic("foo").Partition(0).Write(kafka.RecordBatch{Records: []kafka.Record{
+				_, records, err := s.Topic("foo").Partition(0).Write(kafka.RecordBatch{Records: []kafka.Record{
 					{
 						Key:   kafka.NewBytes([]byte("foo")),
 						Value: kafka.NewBytes([]byte("bar")),
 					},
 				}})
 				require.NoError(t, err)
+				require.Len(t, records, 0)
 
 				rr := kafkatest.NewRecorder()
 				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &fetch.Request{Topics: []fetch.Topic{
@@ -362,7 +368,7 @@ func TestFetch(t *testing.T) {
 			s := store.New(asyncapitest.NewConfig(), enginetest.NewEngine())
 			defer s.Close()
 
-			tc.fn(t, s)
+			tc.test(t, s)
 		})
 	}
 }

@@ -2,6 +2,7 @@ package asyncapitest
 
 import (
 	"mokapi/config/dynamic/asyncApi"
+	binding "mokapi/config/dynamic/asyncApi/kafka"
 	"mokapi/providers/openapi/schema"
 )
 
@@ -95,6 +96,12 @@ func WithChannelDescription(description string) ChannelOptions {
 func AssignToServer(server string) ChannelOptions {
 	return func(c *asyncApi.Channel) {
 		c.Servers = append(c.Servers, server)
+	}
+}
+
+func WithTopicBinding(bindings binding.TopicBindings) ChannelOptions {
+	return func(c *asyncApi.Channel) {
+		c.Bindings.Kafka = bindings
 	}
 }
 

@@ -1,8 +1,10 @@
 package store
 
 import (
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"mokapi/kafka"
+	"mokapi/kafka/produce"
 	"mokapi/runtime/events"
 	"strconv"
 	"sync"
@@ -91,13 +93,16 @@ func (p *Partition) Read(offset int64, maxBytes int) (kafka.RecordBatch, kafka.E
 	}
 }
 
-func (p *Partition) Write(batch kafka.RecordBatch) (baseOffset int64, err error) {
-	if p.validator != nil {
+func (p *Partition) Write(batch kafka.RecordBatch) (baseOffset int64, records []produce.RecordError, err error) {
+	if p.validator != nil && p.Topic.config.ValueSchemaValidation {
 		for _, r := range batch.Records {
 			err := p.validator.Payload(r.Value)
 			if err != nil {
-				return p.Tail, err
+				records = append(records, produce.RecordError{BatchIndex: int32(r.Offset), BatchIndexErrorMessage: err.Error()})
 			}
+		}
+		if len(records) > 0 {
+			return p.Tail, records, fmt.Errorf("validation error")
 		}
 	}
 
@@ -231,6 +236,7 @@ func (s *Segment) record(offset int64) kafka.Record {
 
 func (s *Segment) delete() {
 	for _, r := range s.Log {
+		log.Debugf("delete record: %v", r.Offset)
 		r.Key.Close()
 		r.Value.Close()
 	}

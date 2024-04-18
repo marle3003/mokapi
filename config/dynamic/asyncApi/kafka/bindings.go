@@ -64,6 +64,8 @@ type TopicBindings struct {
 	// SegmentMs This configuration controls the period of time after which Kafka will force the log to roll even if
 	// the segment file isn’t full to ensure that retention can delete or compact old data.
 	SegmentMs int64
+
+	ValueSchemaValidation bool
 }
 
 func (b *BrokerBindings) UnmarshalYAML(value *yaml.Node) error {
@@ -140,6 +142,10 @@ func (t *TopicBindings) UnmarshalYAML(value *yaml.Node) error {
 	if err != nil {
 		return err
 	}
+	t.ValueSchemaValidation, err = getBool(m, "confluent.value.schema.validation")
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -186,6 +192,19 @@ func getInt64(m map[string]interface{}, keys ...string) (int64, error) {
 		}
 	}
 	return 0, nil
+}
+
+func getBool(m map[string]interface{}, keys ...string) (bool, error) {
+	i := getValue(m, keys...)
+	if i != nil {
+		switch v := i.(type) {
+		case bool:
+			return v, nil
+		default:
+			return true, fmt.Errorf("cannot unmarshal %T to bool", i)
+		}
+	}
+	return true, nil
 }
 
 func getValue(m map[string]interface{}, keys ...string) interface{} {

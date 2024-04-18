@@ -179,11 +179,14 @@ func TestProduce(t *testing.T) {
 			"invalid message value format",
 			func(t *testing.T, s *store.Store) {
 				s.Update(asyncapitest.NewConfig(
-					asyncapitest.WithChannel("foo", asyncapitest.WithSubscribeAndPublish(
-						asyncapitest.WithMessage(
-							asyncapitest.WithContentType("application/json"),
-							asyncapitest.WithPayload(schematest.New("integer"))),
-					)),
+					asyncapitest.WithChannel("foo",
+						asyncapitest.WithSubscribeAndPublish(
+							asyncapitest.WithMessage(
+								asyncapitest.WithContentType("application/json"),
+								asyncapitest.WithPayload(schematest.New("integer"))),
+						),
+						asyncapitest.WithTopicBinding(binding.TopicBindings{ValueSchemaValidation: true}),
+					),
 				))
 
 				rr := kafkatest.NewRecorder()
