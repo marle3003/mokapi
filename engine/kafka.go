@@ -7,9 +7,11 @@ import (
 	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/engine/common"
 	"mokapi/kafka"
+	"mokapi/kafka/produce"
 	"mokapi/media"
 	"mokapi/providers/openapi/schema"
 	"mokapi/runtime"
+	"strings"
 	"time"
 )
 
@@ -39,9 +41,14 @@ func (c *kafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 		return nil, fmt.Errorf("produce kafka message to '%v' failed: %w", t.Name, err)
 	}
 
-	_, err = p.Write(rb)
+	var records []produce.RecordError
+	_, records, err = p.Write(rb)
 	if err != nil {
-		return nil, fmt.Errorf("produce kafka message to '%v' failed: %w", t.Name, err)
+		var sb strings.Builder
+		for _, r := range records {
+			sb.WriteString(fmt.Sprintf("%v: %v\n", r.BatchIndex, r.BatchIndexErrorMessage))
+		}
+		return nil, fmt.Errorf("produce kafka message to '%v' failed: %w \n%v", t.Name, err, sb.String())
 	}
 
 	k := kafka.BytesToString(rb.Records[0].Key)
@@ -63,56 +70,6 @@ func (c *kafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 		Headers:   h,
 	}, nil
 
-}
-
-func (c *kafkaClient) write(partition *store.Partition, config *asyncApi.Channel, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error) {
-	msg := config.Publish.Message.Value
-	if msg == nil {
-		return nil, nil, fmt.Errorf("message configuration missing")
-	}
-	var err error
-
-	if key == nil {
-		key, err = schema.CreateValue(msg.Bindings.Kafka.Key)
-		if err != nil {
-			return nil, nil, fmt.Errorf("unable to generate kafka key: %v", err)
-		}
-	}
-	if value == nil {
-		value, err = schema.CreateValue(msg.Payload)
-		if err != nil {
-			return nil, nil, fmt.Errorf("unable to generate kafka data: %v", err)
-		}
-	}
-
-	var k []byte
-	switch msg.Bindings.Kafka.Key.Value.Type {
-	case "object", "array":
-		k, err = msg.Bindings.Kafka.Key.Marshal(key, media.ParseContentType("application/json"))
-		if err != nil {
-			return nil, nil, err
-		}
-	default:
-		k = []byte(fmt.Sprintf("%v", key))
-	}
-
-	v, err := msg.Payload.Marshal(value, media.ParseContentType("application/json"))
-	if err != nil {
-		return nil, nil, err
-	}
-
-	_, err = partition.Write(kafka.RecordBatch{Records: []kafka.Record{
-		{
-			Key:     kafka.NewBytes(k),
-			Value:   kafka.NewBytes(v),
-			Headers: nil,
-		},
-	}})
-
-	if err != nil {
-		return nil, nil, err
-	}
-	return key, value, nil
 }
 
 func (c *kafkaClient) get(cluster string, topic string, partition int) (t *store.Topic, p *store.Partition, config *asyncApi.Config, err error) {
