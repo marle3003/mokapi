@@ -132,6 +132,23 @@ func TestScript_Mokapi_Every(t *testing.T) {
 			},
 		},
 		{
+			"skip immediate first run ",
+			func(t *testing.T, host *testHost) {
+				host.every = func(every string, do func(), opt common.JobOptions) {
+					r.True(t, opt.SkipImmediateFirstRun)
+				}
+				s, err := New(newScript("",
+					`import { every } from 'mokapi'
+						 export default function() {
+						  	every('1s', function() {}, { skipImmediateFirstRun : true })
+						 }`),
+					host, static.JsConfig{})
+				r.NoError(t, err)
+				_, err = s.RunDefault()
+				r.NoError(t, err)
+			},
+		},
+		{
 			"with custom tags",
 			func(t *testing.T, host *testHost) {
 				host.every = func(every string, do func(), opt common.JobOptions) {
@@ -229,6 +246,23 @@ func TestScript_Mokapi_Cron(t *testing.T) {
 					`import { cron } from 'mokapi'
 						 export default function() {
 						  	cron('0/1 0 0 ? * * *', function() {}, {times: 1})
+						 }`),
+					host, static.JsConfig{})
+				r.NoError(t, err)
+				_, err = s.RunDefault()
+				r.NoError(t, err)
+			},
+		},
+		{
+			"skip immediate first run",
+			func(t *testing.T, host *testHost) {
+				host.cron = func(every string, do func(), opt common.JobOptions) {
+					r.True(t, opt.SkipImmediateFirstRun)
+				}
+				s, err := New(newScript("",
+					`import { cron } from 'mokapi'
+						 export default function() {
+						  	cron('0/1 0 0 ? * * *', function() {}, { skipImmediateFirstRun: true })
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)

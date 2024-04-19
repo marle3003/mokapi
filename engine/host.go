@@ -99,7 +99,7 @@ func (sh *scriptHost) Every(every string, handler func(), opt common.JobOptions)
 	if opt.Times > 0 {
 		sh.engine.cron.LimitRunsTo(opt.Times)
 	}
-	if !opt.RunFirstTimeImmediately {
+	if opt.SkipImmediateFirstRun {
 		sh.engine.cron.WaitForSchedule()
 	}
 
@@ -128,7 +128,7 @@ func (sh *scriptHost) Cron(expr string, handler func(), opt common.JobOptions) (
 	if opt.Times >= 0 {
 		sh.engine.cron.LimitRunsTo(opt.Times)
 	}
-	if !opt.RunFirstTimeImmediately {
+	if opt.SkipImmediateFirstRun {
 		sh.engine.cron.WaitForSchedule()
 	}
 

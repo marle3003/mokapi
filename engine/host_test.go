@@ -18,7 +18,7 @@ func TestHost_Every(t *testing.T) {
 		{
 			"every but one time",
 			func(t *testing.T, host *scriptHost) {
-				opt := common.JobOptions{Times: 1, RunFirstTimeImmediately: true}
+				opt := common.JobOptions{Times: 1}
 				var err error
 				ch := make(chan bool, 1)
 				_, err = host.Every("100ms", func() {
@@ -40,7 +40,7 @@ func TestHost_Every(t *testing.T) {
 		{
 			"every but one time and not immediately",
 			func(t *testing.T, host *scriptHost) {
-				opt := common.JobOptions{Times: 1, RunFirstTimeImmediately: false}
+				opt := common.JobOptions{Times: 1, SkipImmediateFirstRun: true}
 				var err error
 				ch := make(chan bool, 1)
 				_, err = host.Every("100ms", func() {
@@ -57,6 +57,15 @@ func TestHost_Every(t *testing.T) {
 				}
 
 				require.Equal(t, 0, counter)
+
+				select {
+				case <-ch:
+					counter++
+				case <-time.After(150 * time.Millisecond):
+					break
+				}
+
+				require.Equal(t, 1, counter)
 			},
 		},
 	}

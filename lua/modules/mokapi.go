@@ -52,9 +52,9 @@ func (m *Mokapi) every(l *lua.LState) int {
 	}
 
 	opt := common.JobOptions{
-		Times:                   args.Times,
-		Tags:                    args.Tags,
-		RunFirstTimeImmediately: true,
+		Times:                 args.Times,
+		Tags:                  args.Tags,
+		SkipImmediateFirstRun: false,
 	}
 	id, err := m.host.Every(every, fn, opt)
 
