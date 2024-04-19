@@ -51,6 +51,9 @@ func (m *mokapi) Every(every string, do func(), args goja.Value) (int, error) {
 			case "times":
 				times := params.Get(k)
 				options.Times = int(times.ToInteger())
+			case "skipImmediateFirstRun":
+				skip := params.Get(k)
+				options.SkipImmediateFirstRun = skip.ToBoolean()
 			}
 		}
 	}
@@ -83,6 +86,9 @@ func (m *mokapi) Cron(expr string, do func(), args goja.Value) (int, error) {
 			case "times":
 				times := params.Get(k)
 				options.Times = int(times.ToInteger())
+			case "skipImmediateFirstRun":
+				skip := params.Get(k)
+				options.SkipImmediateFirstRun = skip.ToBoolean()
 			}
 		}
 	}

@@ -129,9 +129,10 @@ declare interface ScheduledEventArgs {
     times?: number
 
     /**
-     * Toggles behavior of first execution. Default is true
+     * Toggles behavior of first execution. If true job does not start
+     * immediately but rather wait until the first scheduled interval.
      */
-    runFirstTimeImmediately?: boolean
+    skipImmediateFirstRun?: boolean
 }
 
 declare const RFC3339 = "RFC3339"

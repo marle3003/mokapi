@@ -18,9 +18,9 @@ type Script interface {
 }
 
 type JobOptions struct {
-	Times                   int
-	RunFirstTimeImmediately bool
-	Tags                    map[string]string
+	Times                 int
+	SkipImmediateFirstRun bool
+	Tags                  map[string]string
 }
 
 type Host interface {
@@ -86,9 +86,9 @@ type Action struct {
 
 func NewJobOptions() JobOptions {
 	return JobOptions{
-		Tags:                    map[string]string{},
-		Times:                   -1,
-		RunFirstTimeImmediately: true,
+		Tags:                  map[string]string{},
+		Times:                 -1,
+		SkipImmediateFirstRun: false,
 	}
 }
 
