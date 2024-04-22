@@ -42,7 +42,7 @@ test('Visit Kafka topic mokapi.shop.userSignedUp', async ({ page, context }) => 
         await tabList.getByRole('tab', { name: 'Groups' }).click()
         const table = page.getByRole('tabpanel', { name: 'Groups' }).getByRole('table', { name: 'Topic Groups' })
         await expect(table).toBeVisible()
-        const group = useKafkaGroups(table)
+        const group = useKafkaGroups(table, 'mokapi.shop.userSignedUp')
         await group.testGroup(0, cluster.groups[0], '0')
         await group.testGroup(1, cluster.groups[1], '0')
     })

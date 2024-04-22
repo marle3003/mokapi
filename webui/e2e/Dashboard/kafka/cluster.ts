@@ -92,14 +92,14 @@ export const cluster = {
                     address: '127.0.0.1:15001',
                     clientSoftware: 'mokapi 1.0',
                     lastHeartbeat: formatTimestamp(1654771269),
-                    partitions: [1,2]
+                    partitions: { 'mokapi.shop.products': [ 0, 1 ], 'mokapi.shop.userSignedUp': [ 0 ] }
                 },
                 {
                     name: 'herman',
                     address: '127.0.0.1:15002',
                     clientSoftware: 'mokapi 1.0',
                     lastHeartbeat: formatTimestamp(1654872269),
-                    partitions: [3]
+                    partitions: { 'mokapi.shop.products': [ 2 ], 'mokapi.shop.userSignedUp': [ ] }
                 }
             ],
         },
@@ -115,7 +115,7 @@ export const cluster = {
                     address: '127.0.0.1:15003',
                     clientSoftware: 'mokapi 1.0',
                     lastHeartbeat: formatTimestamp(1654721269),
-                    partitions: [1]
+                    partitions: { 'mokapi.shop.userSignedUp': [ 0 ] }
                 },
             ],
         }
