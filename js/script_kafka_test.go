@@ -10,11 +10,11 @@ import (
 func TestScript_Kafka_Produce(t *testing.T) {
 	testcases := []struct {
 		name string
-		f    func(t *testing.T, host *testHost)
+		test func(t *testing.T, host *testHost)
 	}{
 		{
-			"set topic",
-			func(t *testing.T, host *testHost) {
+			name: "set topic",
+			test: func(t *testing.T, host *testHost) {
 				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					r.Equal(t, "foo", args.Topic)
 					r.Equal(t, "", args.Cluster)
@@ -22,9 +22,9 @@ func TestScript_Kafka_Produce(t *testing.T) {
 				}
 
 				s, err := New(newScript("",
-					`import {produce} from 'mokapi/kafka'
+					`import { produce } from 'mokapi/kafka'
 						 export default function() {
-						  	return produce({topic: 'foo'})
+						  	return produce({ topic: 'foo' })
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
@@ -33,8 +33,8 @@ func TestScript_Kafka_Produce(t *testing.T) {
 			},
 		},
 		{
-			"set topic and cluster",
-			func(t *testing.T, host *testHost) {
+			name: "set topic and cluster",
+			test: func(t *testing.T, host *testHost) {
 				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					r.Equal(t, "foo", args.Topic)
 					r.Equal(t, "bar", args.Cluster)
@@ -42,9 +42,9 @@ func TestScript_Kafka_Produce(t *testing.T) {
 				}
 
 				s, err := New(newScript("",
-					`import {produce} from 'mokapi/kafka'
+					`import { produce } from 'mokapi/kafka'
 						 export default function() {
-  							return produce({topic: 'foo', cluster: 'bar'})
+  							return produce({ topic: 'foo', cluster: 'bar' })
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
@@ -53,17 +53,17 @@ func TestScript_Kafka_Produce(t *testing.T) {
 			},
 		},
 		{
-			"set cluster to null",
-			func(t *testing.T, host *testHost) {
+			name: "set cluster to null",
+			test: func(t *testing.T, host *testHost) {
 				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					r.Equal(t, "", args.Cluster)
 					return &common.KafkaProduceResult{}, nil
 				}
 
 				s, err := New(newScript("",
-					`import {produce} from 'mokapi/kafka'
+					`import { produce } from 'mokapi/kafka'
 						 export default function() {
-  							return produce({cluster: null})
+  							return produce({ cluster: null })
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
@@ -72,8 +72,8 @@ func TestScript_Kafka_Produce(t *testing.T) {
 			},
 		},
 		{
-			"set key, value and partition",
-			func(t *testing.T, host *testHost) {
+			name: "set key, value and partition",
+			test: func(t *testing.T, host *testHost) {
 				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					r.Equal(t, "key", args.Key)
 					r.Equal(t, "value", args.Value)
@@ -82,9 +82,9 @@ func TestScript_Kafka_Produce(t *testing.T) {
 				}
 
 				s, err := New(newScript("",
-					`import {produce} from 'mokapi/kafka'
+					`import { produce } from 'mokapi/kafka'
 						 export default function() {
-						  	return produce({value: 'value', key: 'key', partition: 2})
+						  	return produce({ value: 'value', key: 'key', partition: 2 })
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
@@ -93,8 +93,8 @@ func TestScript_Kafka_Produce(t *testing.T) {
 			},
 		},
 		{
-			"set key, value and partition",
-			func(t *testing.T, host *testHost) {
+			name: "set key, value and partition",
+			test: func(t *testing.T, host *testHost) {
 				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					r.Equal(t, "key", args.Key)
 					r.Equal(t, "value", args.Value)
@@ -103,9 +103,9 @@ func TestScript_Kafka_Produce(t *testing.T) {
 				}
 
 				s, err := New(newScript("",
-					`import {produce} from 'mokapi/kafka'
+					`import { produce } from 'mokapi/kafka'
 						 export default function() {
-						  	return produce({value: 'value', key: 'key', partition: 2})
+						  	return produce({ value: 'value', key: 'key', partition: 2 })
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
@@ -114,17 +114,17 @@ func TestScript_Kafka_Produce(t *testing.T) {
 			},
 		},
 		{
-			"set headers",
-			func(t *testing.T, host *testHost) {
+			name: "set headers",
+			test: func(t *testing.T, host *testHost) {
 				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					r.Equal(t, map[string]interface{}{"foo": "bar"}, args.Headers)
 					return &common.KafkaProduceResult{}, nil
 				}
 
 				s, err := New(newScript("",
-					`import {produce} from 'mokapi/kafka'
+					`import { produce } from 'mokapi/kafka'
 						 export default function() {
-						  	return produce({headers: {foo: 'bar'}})
+						  	return produce({ headers: { foo: 'bar' } })
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
@@ -133,17 +133,17 @@ func TestScript_Kafka_Produce(t *testing.T) {
 			},
 		},
 		{
-			"set timeout",
-			func(t *testing.T, host *testHost) {
+			name: "set timeout",
+			test: func(t *testing.T, host *testHost) {
 				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					r.Equal(t, map[string]interface{}{"foo": "bar"}, args.Headers)
 					return &common.KafkaProduceResult{}, nil
 				}
 
 				s, err := New(newScript("",
-					`import {produce} from 'mokapi/kafka'
+					`import { produce } from 'mokapi/kafka'
 						 export default function() {
-						  	return produce({headers: {foo: 'bar'}})
+						  	return produce({ headers: { foo: 'bar' } })
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
@@ -152,8 +152,8 @@ func TestScript_Kafka_Produce(t *testing.T) {
 			},
 		},
 		{
-			"result",
-			func(t *testing.T, host *testHost) {
+			name: "result",
+			test: func(t *testing.T, host *testHost) {
 				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					return &common.KafkaProduceResult{
 						Cluster:   "Cluster",
@@ -166,7 +166,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 				}
 
 				s, err := New(newScript("",
-					`import {produce} from 'mokapi/kafka'
+					`import { produce } from 'mokapi/kafka'
 						 export default function() {
 						  	return produce()
 						 }`),
@@ -184,8 +184,8 @@ func TestScript_Kafka_Produce(t *testing.T) {
 			},
 		},
 		{
-			"using deprecated module",
-			func(t *testing.T, host *testHost) {
+			name: "using deprecated module",
+			test: func(t *testing.T, host *testHost) {
 				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					r.Equal(t, "foo", args.Topic)
 					r.Equal(t, "", args.Cluster)
@@ -193,9 +193,9 @@ func TestScript_Kafka_Produce(t *testing.T) {
 				}
 
 				s, err := New(newScript("",
-					`import {produce} from 'kafka'
+					`import { produce } from 'kafka'
 						 export default function() {
-						  	return produce({topic: 'foo'})
+						  	return produce({ topic: 'foo' })
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
@@ -215,7 +215,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 				kafkaClient: &kafkaClient{},
 			}
 
-			tc.f(t, host)
+			tc.test(t, host)
 		})
 	}
 }
