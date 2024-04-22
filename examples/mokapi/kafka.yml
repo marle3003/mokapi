@@ -111,9 +111,11 @@ components:
         heartbeat:
           type: integer
         partitions:
-          type: array
-          items:
-            type: integer
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: integer
     Broker:
       type: object
       properties:

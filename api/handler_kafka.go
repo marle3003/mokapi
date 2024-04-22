@@ -51,12 +51,12 @@ type group struct {
 }
 
 type member struct {
-	Name                  string    `json:"name"`
-	Addr                  string    `json:"addr"`
-	ClientSoftwareName    string    `json:"clientSoftwareName"`
-	ClientSoftwareVersion string    `json:"clientSoftwareVersion"`
-	Heartbeat             time.Time `json:"heartbeat"`
-	Partitions            []int     `json:"partitions"`
+	Name                  string           `json:"name"`
+	Addr                  string           `json:"addr"`
+	ClientSoftwareName    string           `json:"clientSoftwareName"`
+	ClientSoftwareVersion string           `json:"clientSoftwareVersion"`
+	Heartbeat             time.Time        `json:"heartbeat"`
+	Partitions            map[string][]int `json:"partitions"`
 }
 
 type kafkaContact struct {
@@ -249,17 +249,13 @@ func newGroup(g *store.Group) group {
 		grp.AssignmentStrategy = g.Generation.Protocol
 
 		for id, m := range g.Generation.Members {
-			var partitions []int
-			for _, p := range m.Partitions {
-				partitions = append(partitions, p.Index)
-			}
 			grp.Members = append(grp.Members, member{
 				Name:                  id,
 				Addr:                  m.Client.Addr,
 				ClientSoftwareName:    m.Client.ClientSoftwareName,
 				ClientSoftwareVersion: m.Client.ClientSoftwareVersion,
 				Heartbeat:             m.Client.Heartbeat,
-				Partitions:            partitions,
+				Partitions:            m.Partitions,
 			})
 		}
 		sort.Slice(grp.Members, func(i, j int) bool {

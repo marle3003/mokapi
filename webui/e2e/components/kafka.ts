@@ -35,11 +35,11 @@ export interface Group {
         address: string
         clientSoftware: string
         lastHeartbeat: string
-        partitions: number[]
+        partitions: { [topicName: string]: number[] }
     }[],
 }
 
-export function useKafkaGroups(table: Locator) {
+export function useKafkaGroups(table: Locator, topic?: string) {
     return {
         async testGroup(row: number, group: Group, lags?: string) {
             await test.step(`Check Kafka group in row ${row}`, async () => {
@@ -66,7 +66,11 @@ export function useKafkaGroups(table: Locator) {
                     await expect(page.getByRole('tooltip', { name: member.name }).getByLabel('Address')).toHaveText(member.address)
                     await expect(page.getByRole('tooltip', { name: member.name }).getByLabel('Client Software')).toHaveText(member.clientSoftware)
                     await expect(page.getByRole('tooltip', { name: member.name }).getByLabel('Last Heartbeat')).toHaveText(member.lastHeartbeat)
-                    await expect(page.getByRole('tooltip', { name: member.name }).getByLabel('Partitions')).toHaveText(member.partitions.join(', '))
+                    if (topic) {
+                        await expect(page.getByRole('tooltip', { name: member.name }).getByLabel('Partitions')).toHaveText(member.partitions[topic].join(', '))
+                    }else {
+                        await expect(page.getByRole('tooltip', { name: member.name }).getByLabel('Topics')).toHaveText(Object.keys(member.partitions).join(','))
+                    }
                 }
             })
         }

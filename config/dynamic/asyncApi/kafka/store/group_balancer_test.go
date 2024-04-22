@@ -223,6 +223,16 @@ func TestGroupBalancing(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, kafka.None, sync.ErrorCode)
 				require.Equal(t, assign, sync.Assignment)
+
+				g, ok := s.Group("TestGroup")
+				require.True(t, ok, "group must exist")
+				require.NotNil(t, g.Generation, "generation must exist")
+				require.Len(t, g.Generation.Members, 1, "group must contain one members")
+				require.Contains(t, g.Generation.Members, "foo")
+				m := g.Generation.Members["foo"]
+				require.Len(t, m.Partitions, 1)
+				require.Contains(t, m.Partitions, "foo")
+				require.Equal(t, m.Partitions["foo"], []int{1})
 			}},
 		{
 			name: "sync group with wrong generation id",
@@ -268,7 +278,7 @@ func TestGroupBalancing(t *testing.T) {
 						0, 0, 0, 1, // topic array length
 						0, 3, 'f', 'o', 'o', // topic foo
 						0, 0, 0, 1, // partition array length
-						0, 0, 0, 2, // partition 1
+						0, 0, 0, 2, // partition 2
 						0, 0, 0, 3, 0x01, 0x02, 0x03, // userdata
 					}, nil},
 				}
@@ -325,6 +335,26 @@ func TestGroupBalancing(t *testing.T) {
 				require.Equal(t, "leader", join.Leader)
 				require.Equal(t, "member", join.MemberId)
 				require.Equal(t, uint8(2), sync.Assignment[18]) // partition 2
+
+				// group
+				g, ok := s.Group("TestGroup")
+				require.True(t, ok, "group must exist")
+				require.NotNil(t, g.Generation, "generation must exist")
+				require.Len(t, g.Generation.Members, 2, "group must contain two members")
+				require.Contains(t, g.Generation.Members, "leader")
+				require.Contains(t, g.Generation.Members, "member")
+
+				// leader
+				m := g.Generation.Members["leader"]
+				require.Len(t, m.Partitions, 1)
+				require.Contains(t, m.Partitions, "foo")
+				require.Equal(t, m.Partitions["foo"], []int{1})
+
+				// member
+				m = g.Generation.Members["member"]
+				require.Len(t, m.Partitions, 1)
+				require.Contains(t, m.Partitions, "foo")
+				require.Equal(t, m.Partitions["foo"], []int{2})
 			}},
 	}
 

@@ -63,7 +63,7 @@ declare interface KafkaMember {
   clientSoftwareName: string;
   clientSoftwareVersion: string;
   heartbeat: number;
-  partitions: KafkaPartition[];
+  partitions: { [topicName: string]: number[] };
 }
 
 declare interface KafkaEventData {
