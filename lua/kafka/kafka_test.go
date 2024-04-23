@@ -50,7 +50,7 @@ func TestModule_Produce(t *testing.T) {
 			"partition should be -1",
 			func(t *testing.T, l *lua.LState, m *Module, c *client) {
 				c.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
-					require.Equal(t, -1, args.Partition)
+					require.Equal(t, -1, args.Records[0].Partition)
 					return nil, nil
 				}
 				err := l.DoString(`
@@ -64,7 +64,7 @@ func TestModule_Produce(t *testing.T) {
 			"partition should be 10",
 			func(t *testing.T, l *lua.LState, m *Module, c *client) {
 				c.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
-					require.Equal(t, 10, args.Partition)
+					require.Equal(t, 10, args.Records[0].Partition)
 					return nil, nil
 				}
 				err := l.DoString(`
@@ -78,7 +78,7 @@ func TestModule_Produce(t *testing.T) {
 			"key should be foo",
 			func(t *testing.T, l *lua.LState, m *Module, c *client) {
 				c.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
-					require.Equal(t, "foo", args.Key)
+					require.Equal(t, "foo", args.Records[0].Key)
 					return nil, nil
 				}
 				err := l.DoString(`
@@ -92,8 +92,8 @@ func TestModule_Produce(t *testing.T) {
 			"value",
 			func(t *testing.T, l *lua.LState, m *Module, c *client) {
 				c.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
-					require.IsType(t, &sortedmap.LinkedHashMap[string, interface{}]{}, args.Value)
-					foo, _ := args.Value.(*sortedmap.LinkedHashMap[string, interface{}]).Get("foo")
+					require.IsType(t, &sortedmap.LinkedHashMap[string, interface{}]{}, args.Records[0].Value)
+					foo, _ := args.Records[0].Value.(*sortedmap.LinkedHashMap[string, interface{}]).Get("foo")
 					require.Equal(t, "bar", foo)
 					return nil, nil
 				}

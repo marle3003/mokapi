@@ -7,7 +7,6 @@ import (
 	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/engine/common"
 	"mokapi/kafka"
-	"mokapi/kafka/produce"
 	"mokapi/media"
 	"mokapi/providers/openapi/schema"
 	"mokapi/runtime"
@@ -26,7 +25,7 @@ func newKafkaClient(app *runtime.App) *kafkaClient {
 }
 
 func (c *kafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
-	t, p, config, err := c.get(args.Cluster, args.Topic, args.Partition)
+	t, config, err := c.get(args.Cluster, args.Topic)
 	if err != nil {
 		return nil, err
 	}
@@ -36,43 +35,49 @@ func (c *kafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 		return nil, fmt.Errorf("produce kafka message to '%v' failed: invalid topic configuration", t.Name)
 	}
 
-	rb, err := c.createRecordBatch(args.Key, args.Value, args.Headers, ch.Value)
-	if err != nil {
-		return nil, fmt.Errorf("produce kafka message to '%v' failed: %w", t.Name, err)
-	}
-
-	var records []produce.RecordError
-	_, records, err = p.Write(rb)
-	if err != nil {
-		var sb strings.Builder
-		for _, r := range records {
-			sb.WriteString(fmt.Sprintf("%v: %v\n", r.BatchIndex, r.BatchIndexErrorMessage))
+	var produced []common.KafkaProducedRecord
+	for _, r := range args.Records {
+		p, err := c.getPartition(t, r.Partition)
+		if err != nil {
+			return nil, err
 		}
-		return nil, fmt.Errorf("produce kafka message to '%v' failed: %w \n%v", t.Name, err, sb.String())
-	}
+		rb, err := c.createRecordBatch(r.Key, r.Value, r.Headers, ch.Value)
+		if err != nil {
+			return nil, fmt.Errorf("produce kafka message to '%v' failed: %w", t.Name, err)
+		}
+		_, records, err := p.Write(rb)
+		if err != nil {
+			var sb strings.Builder
+			for _, r := range records {
+				sb.WriteString(fmt.Sprintf("%v: %v\n", r.BatchIndex, r.BatchIndexErrorMessage))
+			}
+			return nil, fmt.Errorf("produce kafka message to '%v' failed: %w \n%v", t.Name, err, sb.String())
+		}
+		t.Store().UpdateMetrics(c.app.Monitor.Kafka, t, p, rb)
 
-	k := kafka.BytesToString(rb.Records[0].Key)
-	v := kafka.BytesToString(rb.Records[0].Value)
-	t.Store().UpdateMetrics(c.app.Monitor.Kafka, t, p, rb)
+		h := map[string]string{}
+		for _, v := range rb.Records[0].Headers {
+			h[v.Key] = string(v.Value)
+		}
 
-	h := map[string]string{}
-	for _, v := range rb.Records[0].Headers {
-		h[v.Key] = string(v.Value)
+		produced = append(produced, common.KafkaProducedRecord{
+			Key:       kafka.BytesToString(rb.Records[0].Key),
+			Value:     kafka.BytesToString(rb.Records[0].Value),
+			Offset:    rb.Records[0].Offset,
+			Headers:   h,
+			Partition: p.Index,
+		})
 	}
 
 	return &common.KafkaProduceResult{
-		Cluster:   config.Info.Name,
-		Topic:     t.Name,
-		Partition: p.Index,
-		Offset:    rb.Records[0].Offset,
-		Key:       k,
-		Value:     v,
-		Headers:   h,
+		Cluster: config.Info.Name,
+		Topic:   t.Name,
+		Records: produced,
 	}, nil
 
 }
 
-func (c *kafkaClient) get(cluster string, topic string, partition int) (t *store.Topic, p *store.Partition, config *asyncApi.Config, err error) {
+func (c *kafkaClient) get(cluster string, topic string) (t *store.Topic, config *asyncApi.Config, err error) {
 	if len(cluster) == 0 {
 		var topics []*store.Topic
 		for _, v := range c.app.Kafka {
@@ -102,17 +107,18 @@ func (c *kafkaClient) get(cluster string, topic string, partition int) (t *store
 		return
 	}
 
+	return
+}
+
+func (c *kafkaClient) getPartition(t *store.Topic, partition int) (*store.Partition, error) {
 	if partition < 0 {
 		r := rand.New(rand.NewSource(time.Now().Unix()))
 		partition = r.Intn(len(t.Partitions))
 	} else if partition >= len(t.Partitions) {
-		err = fmt.Errorf("partiton %v does not exist", partition)
-		return
+		return nil, fmt.Errorf("partiton %v does not exist", partition)
 	}
 
-	p = t.Partition(partition)
-
-	return
+	return t.Partition(partition), nil
 }
 
 func (c *kafkaClient) createRecordBatch(key, value interface{}, headers map[string]interface{}, config *asyncApi.Channel) (rb kafka.RecordBatch, err error) {

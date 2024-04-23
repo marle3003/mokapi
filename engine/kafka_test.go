@@ -73,7 +73,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 				require.Equal(t, "version", b.Records[0].Headers[0].Key)
 				require.Equal(t, []byte("1.0"), b.Records[0].Headers[0].Value)
 
-				require.Equal(t, `{"cluster":"foo","topic":"foo","partition":0,"offset":0,"key":"foo","value":"\"bar\"","headers":{"version":"1.0"}}`, hook.LastEntry().Message)
+				require.Equal(t, `{"cluster":"foo","topic":"foo","records":[{"key":"foo","value":"\"bar\"","offset":0,"headers":{"version":"1.0"},"partition":0}]}`, hook.LastEntry().Message)
 			},
 		},
 		{

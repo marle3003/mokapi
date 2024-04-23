@@ -75,9 +75,10 @@ func TestScript_Kafka_Produce(t *testing.T) {
 			name: "set key, value and partition",
 			test: func(t *testing.T, host *testHost) {
 				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
-					r.Equal(t, "key", args.Key)
-					r.Equal(t, "value", args.Value)
-					r.Equal(t, 2, args.Partition)
+					msg := args.Records[0]
+					r.Equal(t, "key", msg.Key)
+					r.Equal(t, "value", msg.Value)
+					r.Equal(t, 2, msg.Partition)
 					return &common.KafkaProduceResult{}, nil
 				}
 
@@ -96,9 +97,10 @@ func TestScript_Kafka_Produce(t *testing.T) {
 			name: "set key, value and partition",
 			test: func(t *testing.T, host *testHost) {
 				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
-					r.Equal(t, "key", args.Key)
-					r.Equal(t, "value", args.Value)
-					r.Equal(t, 2, args.Partition)
+					msg := args.Records[0]
+					r.Equal(t, "key", msg.Key)
+					r.Equal(t, "value", msg.Value)
+					r.Equal(t, 2, msg.Partition)
 					return &common.KafkaProduceResult{}, nil
 				}
 
@@ -117,7 +119,8 @@ func TestScript_Kafka_Produce(t *testing.T) {
 			name: "set headers",
 			test: func(t *testing.T, host *testHost) {
 				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
-					r.Equal(t, map[string]interface{}{"foo": "bar"}, args.Headers)
+					msg := args.Records[0]
+					r.Equal(t, map[string]interface{}{"foo": "bar"}, msg.Headers)
 					return &common.KafkaProduceResult{}, nil
 				}
 
@@ -136,7 +139,8 @@ func TestScript_Kafka_Produce(t *testing.T) {
 			name: "set timeout",
 			test: func(t *testing.T, host *testHost) {
 				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
-					r.Equal(t, map[string]interface{}{"foo": "bar"}, args.Headers)
+					msg := args.Records[0]
+					r.Equal(t, map[string]interface{}{"foo": "bar"}, msg.Headers)
 					return &common.KafkaProduceResult{}, nil
 				}
 
@@ -152,16 +156,62 @@ func TestScript_Kafka_Produce(t *testing.T) {
 			},
 		},
 		{
+			name: "use messages",
+			test: func(t *testing.T, host *testHost) {
+				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					msg := args.Records[0]
+					r.Equal(t, msg.Key, "key1")
+					r.Equal(t, msg.Value, "hello world")
+					r.Equal(t, map[string]interface{}{"system-id": "foo"}, msg.Headers)
+					r.Equal(t, msg.Partition, 12)
+					return &common.KafkaProduceResult{}, nil
+				}
+
+				s, err := New(newScript("",
+					`import { produce } from 'mokapi/kafka'
+						 export default function() {
+						  	return produce({ messages: { key: 'key1', value: 'hello world', headers: { 'system-id': 'foo' }, partition: 12 } })
+						 }`),
+					host, static.JsConfig{})
+				r.NoError(t, err)
+				err = s.Run()
+				r.NoError(t, err)
+			},
+		},
+		{
+			name: "skip validation",
+			test: func(t *testing.T, host *testHost) {
+				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					r.True(t, args.SkipValidation, "SkipValidation should be true")
+					return &common.KafkaProduceResult{}, nil
+				}
+
+				s, err := New(newScript("",
+					`import { produce } from 'mokapi/kafka'
+						 export default function() {
+						  	return produce({ skipValidation: true })
+						 }`),
+					host, static.JsConfig{})
+				r.NoError(t, err)
+				err = s.Run()
+				r.NoError(t, err)
+			},
+		},
+		{
 			name: "result",
 			test: func(t *testing.T, host *testHost) {
 				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					return &common.KafkaProduceResult{
-						Cluster:   "Cluster",
-						Topic:     "Topic",
-						Partition: 99,
-						Offset:    3451345,
-						Key:       "foo",
-						Value:     "bar",
+						Cluster: "Cluster",
+						Topic:   "Topic",
+						Records: []common.KafkaProducedRecord{
+							{
+								Key:       "foo",
+								Value:     "bar",
+								Offset:    3451345,
+								Partition: 99,
+							},
+						},
 					}, nil
 				}
 
@@ -177,10 +227,10 @@ func TestScript_Kafka_Produce(t *testing.T) {
 				result := v.Export().(*common.KafkaProduceResult)
 				r.Equal(t, "Cluster", result.Cluster)
 				r.Equal(t, "Topic", result.Topic)
-				r.Equal(t, 99, result.Partition)
-				r.Equal(t, int64(3451345), result.Offset)
-				r.Equal(t, "foo", result.Key)
-				r.Equal(t, "bar", result.Value)
+				r.Equal(t, 99, result.Records[0].Partition)
+				r.Equal(t, int64(3451345), result.Records[0].Offset)
+				r.Equal(t, "foo", result.Records[0].Key)
+				r.Equal(t, "bar", result.Records[0].Value)
 			},
 		},
 		{

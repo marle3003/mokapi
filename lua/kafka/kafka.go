@@ -15,13 +15,22 @@ type Module struct {
 }
 
 type produceOptions struct {
-	Cluster   string
-	Topic     string
+	*common.KafkaProduceArgs
 	Partition int
 	Key       interface{}
 	Value     interface{}
 	Headers   map[string]interface{}
 	Timeout   int
+}
+
+type kafkaResult struct {
+	*common.KafkaProduceResult
+
+	Key       interface{}
+	Value     interface{}
+	Offset    int64
+	Headers   map[string]string
+	Partition int
 }
 
 func New(c common.KafkaClient) *Module {
@@ -31,18 +40,32 @@ func New(c common.KafkaClient) *Module {
 }
 
 func (m *Module) Produce(state *lua.LState) int {
-	args := &common.KafkaProduceArgs{Timeout: 30, Partition: -1}
+	opts := &produceOptions{Timeout: 30, Partition: -1, KafkaProduceArgs: &common.KafkaProduceArgs{}}
 	if lArg := state.Get(1); lArg != lua.LNil {
-		if err := convert.FromLua(lArg, &args); err != nil {
+		if err := convert.FromLua(lArg, &opts); err != nil {
 			log.Error(err)
 		}
 	}
+	args := &common.KafkaProduceArgs{Cluster: opts.Cluster, Topic: opts.Topic, Timeout: opts.Timeout}
+	args.Records = append(args.Records, common.KafkaRecord{
+		Key:       opts.Key,
+		Value:     opts.Value,
+		Headers:   opts.Headers,
+		Partition: opts.Partition,
+	})
 
 	var err error
 	timeout := time.Duration(args.Timeout) * time.Second
 	for start := time.Now(); time.Since(start) < timeout; {
 		if result, err := m.client.Produce(args); err == nil {
-			state.Push(luar.New(state, result))
+			r := &kafkaResult{KafkaProduceResult: result}
+			if result != nil && len(result.Records) == 1 {
+				r.Key = result.Records[0].Key
+				r.Value = result.Records[0].Value
+				r.Headers = result.Records[0].Headers
+				r.Partition = result.Records[0].Partition
+			}
+			state.Push(luar.New(state, r))
 			return 1
 		} else if !strings.HasPrefix(err.Error(), "no broker found at") {
 			break
