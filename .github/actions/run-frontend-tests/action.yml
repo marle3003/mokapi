@@ -25,9 +25,9 @@ runs:
     - name: Run mokapi image
       run: docker run --name mokapi --rm -d -p 8090:8090 --mount type=bind,source=$(pwd)/examples/mokapi,target=/data --env MOKAPI_Log_Level=Debug --env MOKAPI_Api_Port=8090 --env MOKAPI_Providers_File_Directory=/data ${{ inputs.image-name }}
       shell: bash
-    - uses: actions/setup-node@v3
+    - uses: actions/setup-node@v4
       with:
-        node-version: '16'
+        node-version: 20
     - name: Install and Build
       working-directory: ./webui
       run: |
