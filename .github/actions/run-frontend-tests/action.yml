@@ -15,7 +15,7 @@ runs:
   steps:
     - name: Download image
       id: download
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: ${{ inputs.artifact-image-name }}
         path: /tmp
@@ -45,7 +45,7 @@ runs:
       shell: bash
     - name: Upload test results
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ inputs.artifact-test-report }}
         path: webui/playwright-report
@@ -55,7 +55,7 @@ runs:
       shell: bash
     - name: Archive Mokapi logs
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: mokapi-test-logs
         path: /var/tmp/mokapi.log
