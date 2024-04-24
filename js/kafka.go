@@ -92,7 +92,7 @@ func mapParams(args goja.Value, rt *goja.Runtime) *common.KafkaProduceArgs {
 				if goja.IsUndefined(value) || goja.IsNull(value) {
 					continue
 				}
-				record.Value = value.Export()
+				record.Data = value.Export()
 			case "headers":
 				if record == nil {
 					record = &common.KafkaRecord{Partition: -1}
@@ -103,28 +103,36 @@ func mapParams(args goja.Value, rt *goja.Runtime) *common.KafkaProduceArgs {
 					continue
 				}
 				record.Headers = headers.Export().(map[string]interface{})
-			case "messages":
-				list := params.Get(k).Export().(map[string]interface{})
-				r := common.KafkaRecord{Partition: -1}
-				if k, ok := list["key"]; ok {
-					r.Key = k
-				}
-				if v, ok := list["value"]; ok {
-					r.Value = v
-				}
-				if h, ok := list["headers"]; ok {
-					if header, ok := h.(map[string]interface{}); ok {
-						r.Headers = header
+			case "records":
+				records := params.Get(k).Export().([]interface{})
+				for _, item := range records {
+					rec := item.(map[string]interface{})
+					r := common.KafkaRecord{Partition: -1}
+					if k, ok := rec["key"]; ok {
+						r.Key = k
 					}
-				}
-				if p, ok := list["partition"]; ok {
-					if i, ok := p.(int64); ok {
-						r.Partition = int(i)
+					if v, ok := rec["value"]; ok {
+						if b, ok := v.([]byte); ok {
+							r.Value = b
+						} else if s, ok := v.(string); ok {
+							r.Value = []byte(s)
+						}
 					}
+					if d, ok := rec["data"]; ok {
+						r.Data = d
+					}
+					if h, ok := rec["headers"]; ok {
+						if header, ok := h.(map[string]interface{}); ok {
+							r.Headers = header
+						}
+					}
+					if p, ok := rec["partition"]; ok {
+						if i, ok := p.(int64); ok {
+							r.Partition = int(i)
+						}
+					}
+					opt.Records = append(opt.Records, r)
 				}
-				opt.Records = append(opt.Records, r)
-			case "skipValidation":
-				opt.SkipValidation = params.Get(k).ToBoolean()
 			}
 		}
 		if record != nil {

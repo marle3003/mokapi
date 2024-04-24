@@ -110,6 +110,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 				b, errCode := s.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
+				require.Len(t, b.Records, 1)
 			},
 		},
 		{
@@ -187,6 +188,40 @@ func TestKafkaClient_Produce(t *testing.T) {
 				require.Len(t, b.Records[0].Headers, 0)
 			},
 		},
+		{
+			name: "validation error",
+			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *Engine) {
+				err := engine.AddScript(newScript("test.js", `
+					import { produce } from 'mokapi/kafka'
+					export default function() {
+						produce({ topic: 'foo', records: [{ data: 12 }] })
+					}
+				`))
+				require.EqualError(t, err, "produce kafka message to 'foo' failed: marshal data to 'application/json' failed: validation error on int64, expected schema type=string at reflect.methodValueCall (native)")
+
+				b, errCode := s.Topic("foo").Partition(0).Read(0, 1000)
+				require.Equal(t, kafka.None, errCode)
+				require.NotNil(t, b)
+				require.Len(t, b.Records, 0, "no record should be written")
+			},
+		},
+		{
+			name: "using value instead of data (skip validation)",
+			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *Engine) {
+				err := engine.AddScript(newScript("test.js", `
+					import { produce } from 'mokapi/kafka'
+					export default function() {
+						produce({ topic: 'foo', records: [{ value: 12 }], skipValidation: true })
+					}
+				`))
+				require.NoError(t, err)
+
+				b, errCode := s.Topic("foo").Partition(0).Read(0, 1000)
+				require.Equal(t, kafka.None, errCode)
+				require.NotNil(t, b)
+				require.Len(t, b.Records, 1, "message should be written despite validation error")
+			},
+		},
 	}
 
 	for _, tc := range testcases {
@@ -201,7 +236,11 @@ func TestKafkaClient_Produce(t *testing.T) {
 						asyncapitest.WithMessage(
 							asyncapitest.WithContentType("application/json"),
 							asyncapitest.WithPayload(schematest.New("string")),
-							asyncapitest.WithKey(schematest.New("string"))))),
+							asyncapitest.WithKey(schematest.New("string")),
+						),
+					),
+					asyncapitest.WithTopicBinding(bindings.TopicBindings{ValueSchemaValidation: true}),
+				),
 				asyncapitest.WithChannel("bar",
 					asyncapitest.WithChannelKafka(bindings.TopicBindings{Partitions: 10}),
 					asyncapitest.WithSubscribeAndPublish(

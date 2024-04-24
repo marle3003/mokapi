@@ -56,16 +56,16 @@ type KafkaClient interface {
 }
 
 type KafkaProduceArgs struct {
-	Cluster        string
-	Topic          string
-	Records        []KafkaRecord
-	Timeout        int
-	SkipValidation bool
+	Cluster string
+	Topic   string
+	Records []KafkaRecord
+	Timeout int
 }
 
 type KafkaRecord struct {
 	Key       interface{}
-	Value     interface{}
+	Value     []byte
+	Data      interface{}
 	Headers   map[string]interface{}
 	Partition int
 }

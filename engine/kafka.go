@@ -37,11 +37,24 @@ func (c *kafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 
 	var produced []common.KafkaProducedRecord
 	for _, r := range args.Records {
+		var options []store.WriteOptions
+		if r.Value != nil {
+			options = append(options, func(args *store.WriteArgs) {
+				args.SkipValidation = true
+			})
+		}
+
 		p, err := c.getPartition(t, r.Partition)
 		if err != nil {
 			return nil, err
 		}
-		rb, err := c.createRecordBatch(r.Key, r.Value, r.Headers, ch.Value)
+
+		v := r.Data
+		if r.Value != nil {
+			v = r.Value
+		}
+
+		rb, err := c.createRecordBatch(r.Key, v, r.Headers, ch.Value)
 		if err != nil {
 			return nil, fmt.Errorf("produce kafka message to '%v' failed: %w", t.Name, err)
 		}
@@ -142,9 +155,13 @@ func (c *kafkaClient) createRecordBatch(key, value interface{}, headers map[stri
 	}
 
 	var v []byte
-	v, err = msg.Payload.Marshal(value, media.ParseContentType("application/json"))
-	if err != nil {
-		return
+	if b, ok := value.([]byte); ok {
+		v = b
+	} else {
+		v, err = msg.Payload.Marshal(value, media.ParseContentType("application/json"))
+		if err != nil {
+			return
+		}
 	}
 
 	var k []byte

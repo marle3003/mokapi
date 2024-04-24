@@ -77,7 +77,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					msg := args.Records[0]
 					r.Equal(t, "key", msg.Key)
-					r.Equal(t, "value", msg.Value)
+					r.Equal(t, "value", msg.Data)
 					r.Equal(t, 2, msg.Partition)
 					return &common.KafkaProduceResult{}, nil
 				}
@@ -99,7 +99,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					msg := args.Records[0]
 					r.Equal(t, "key", msg.Key)
-					r.Equal(t, "value", msg.Value)
+					r.Equal(t, "value", msg.Data)
 					r.Equal(t, 2, msg.Partition)
 					return &common.KafkaProduceResult{}, nil
 				}
@@ -156,12 +156,12 @@ func TestScript_Kafka_Produce(t *testing.T) {
 			},
 		},
 		{
-			name: "use messages",
+			name: "use records",
 			test: func(t *testing.T, host *testHost) {
 				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					msg := args.Records[0]
-					r.Equal(t, msg.Key, "key1")
-					r.Equal(t, msg.Value, "hello world")
+					r.Equal(t, "key1", msg.Key)
+					r.Equal(t, []byte("hello world"), msg.Value)
 					r.Equal(t, map[string]interface{}{"system-id": "foo"}, msg.Headers)
 					r.Equal(t, msg.Partition, 12)
 					return &common.KafkaProduceResult{}, nil
@@ -170,7 +170,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 				s, err := New(newScript("",
 					`import { produce } from 'mokapi/kafka'
 						 export default function() {
-						  	return produce({ messages: { key: 'key1', value: 'hello world', headers: { 'system-id': 'foo' }, partition: 12 } })
+						  	return produce({ records: [{ key: 'key1', value: 'hello world', headers: { 'system-id': 'foo' }, partition: 12 }] })
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
@@ -179,17 +179,18 @@ func TestScript_Kafka_Produce(t *testing.T) {
 			},
 		},
 		{
-			name: "skip validation",
+			name: "use records with data",
 			test: func(t *testing.T, host *testHost) {
 				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
-					r.True(t, args.SkipValidation, "SkipValidation should be true")
+					msg := args.Records[0]
+					r.Equal(t, "hello world", msg.Data)
 					return &common.KafkaProduceResult{}, nil
 				}
 
 				s, err := New(newScript("",
 					`import { produce } from 'mokapi/kafka'
 						 export default function() {
-						  	return produce({ skipValidation: true })
+						  	return produce({ records: [{ data: 'hello world' }] })
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)

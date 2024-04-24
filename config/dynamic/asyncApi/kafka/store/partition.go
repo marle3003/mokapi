@@ -39,6 +39,12 @@ type Segment struct {
 	LastWritten time.Time
 }
 
+type WriteOptions func(args *WriteArgs)
+
+type WriteArgs struct {
+	SkipValidation bool
+}
+
 func newPartition(index int, brokers Brokers, logger LogRecord, trigger Trigger, topic *Topic) *Partition {
 	brokerList := make([]int, 0, len(brokers))
 	for i, _ := range brokers {
@@ -93,8 +99,13 @@ func (p *Partition) Read(offset int64, maxBytes int) (kafka.RecordBatch, kafka.E
 	}
 }
 
-func (p *Partition) Write(batch kafka.RecordBatch) (baseOffset int64, records []produce.RecordError, err error) {
-	if p.validator != nil && p.Topic.config.ValueSchemaValidation {
+func (p *Partition) Write(batch kafka.RecordBatch, options ...WriteOptions) (baseOffset int64, records []produce.RecordError, err error) {
+	args := WriteArgs{}
+	for _, opt := range options {
+		opt(&args)
+	}
+
+	if p.validator != nil && p.Topic.config.ValueSchemaValidation && !args.SkipValidation {
 		for _, r := range batch.Records {
 			err := p.validator.Payload(r.Value)
 			if err != nil {

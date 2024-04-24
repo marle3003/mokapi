@@ -49,7 +49,7 @@ func (m *Module) Produce(state *lua.LState) int {
 	args := &common.KafkaProduceArgs{Cluster: opts.Cluster, Topic: opts.Topic, Timeout: opts.Timeout}
 	args.Records = append(args.Records, common.KafkaRecord{
 		Key:       opts.Key,
-		Value:     opts.Value,
+		Data:      opts.Value,
 		Headers:   opts.Headers,
 		Partition: opts.Partition,
 	})
