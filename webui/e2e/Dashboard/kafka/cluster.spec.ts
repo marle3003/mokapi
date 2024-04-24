@@ -60,7 +60,7 @@ test('Visit Kafka cluster "Kafka World"', async ({ page }) => {
         await expect(config.getCellByName('Last Update')).toHaveText(formatDateTime('2023-02-15T08:49:25.482366+01:00'))
     })
 
-    await useKafkaMessages().test(page.getByRole('region', { name: "Recent Records" }).getByRole('table', { name: 'Cluster Records' }))
+    await useKafkaMessages().test(page.getByRole('region', { name: "Recent Messages" }).getByRole('table', { name: 'Cluster Messages' }))
 })
 
 test('Visit Kafka cluster config file', async ({ page, context }) => {

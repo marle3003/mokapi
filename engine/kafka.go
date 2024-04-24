@@ -35,8 +35,8 @@ func (c *kafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 		return nil, fmt.Errorf("produce kafka message to '%v' failed: invalid topic configuration", t.Name)
 	}
 
-	var produced []common.KafkaProducedRecord
-	for _, r := range args.Records {
+	var produced []common.KafkaProducedMessage
+	for _, r := range args.Messages {
 		var options []store.WriteOptions
 		if r.Value != nil {
 			options = append(options, func(args *store.WriteArgs) {
@@ -73,7 +73,7 @@ func (c *kafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 			h[v.Key] = string(v.Value)
 		}
 
-		produced = append(produced, common.KafkaProducedRecord{
+		produced = append(produced, common.KafkaProducedMessage{
 			Key:       kafka.BytesToString(rb.Records[0].Key),
 			Value:     kafka.BytesToString(rb.Records[0].Value),
 			Offset:    rb.Records[0].Offset,
@@ -83,9 +83,9 @@ func (c *kafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 	}
 
 	return &common.KafkaProduceResult{
-		Cluster: config.Info.Name,
-		Topic:   t.Name,
-		Records: produced,
+		Cluster:  config.Info.Name,
+		Topic:    t.Name,
+		Messages: produced,
 	}, nil
 
 }

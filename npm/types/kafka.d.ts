@@ -86,19 +86,19 @@ export interface ProduceResult {
  * https://mokapi.io/docs/javascript-api/mokapi/eventhandler/KafkaEventHandler
  * @example
  * export default function() {
- *   on('kafka', function(record) {
+ *   on('kafka', function(msg) {
  *     // add header 'foo' to every Kafka message
- *     record.headers = { foo: 'bar' }
+ *     msg.headers = { foo: 'bar' }
  *   })
  * }
  */
-export type KafkaEventHandler = (record: KafkaRecord) => boolean;
+export type KafkaEventHandler = (message: KafkaMessage) => boolean;
 
 /**
- * KafkaRecord is an object used by KafkaEventHandler that contains Kafka-specific message data.
+ * KafkaMessage is an object used by KafkaEventHandler that contains Kafka-specific message data.
  * https://mokapi.io/docs/javascript-api/mokapi/eventhandler/KafkaRecord
  */
-export interface KafkaRecord {
+export interface KafkaMessage {
     /** Kafka partition where the message was written to (read-only). */
     readonly offset: number;
 

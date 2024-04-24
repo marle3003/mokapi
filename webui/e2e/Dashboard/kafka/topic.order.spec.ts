@@ -28,7 +28,7 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
         await expect(info.getByLabel('Description')).toHaveText(topic.description)
     })
 
-    await useKafkaMessages().test(page.getByRole('table', { name: 'Topic Records' }), false)
+    await useKafkaMessages().test(page.getByRole('table', { name: 'Topic Messages' }), false)
 
     const tabList = page.getByRole('region', { name: 'Topic Data' }).getByRole('tablist')
     await test.step('Check partition"', async () => {

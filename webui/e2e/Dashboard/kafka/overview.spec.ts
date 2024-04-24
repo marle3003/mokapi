@@ -8,8 +8,8 @@ test('Visit Kafka overview', async ({ page }) => {
     await open()
     await tabs.kafka.click()
 
-    await test.step('Check records metric', async () => {
-        await expect(page.getByRole('status', { name: 'Kafka Records' })).toHaveText('11')
+    await test.step('Check messages metric', async () => {
+        await expect(page.getByRole('status', { name: 'Kafka Messages' })).toHaveText('11')
     })
 
     await test.step('Check clusters', async () => {
@@ -19,6 +19,6 @@ test('Visit Kafka overview', async ({ page }) => {
         await expect(row.getCellByName('Name')).toHaveText(cluster.name)
         await expect(row.getCellByName('Description')).toHaveText(cluster.description)
         await expect(row.getCellByName('Last Message')).toHaveText(cluster.lastMessage)
-        await expect(row.getCellByName('Records')).toHaveText(cluster.records)
+        await expect(row.getCellByName('Messages')).toHaveText(cluster.messages)
     })
 })

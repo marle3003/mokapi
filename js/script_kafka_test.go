@@ -75,7 +75,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 			name: "set key, value and partition",
 			test: func(t *testing.T, host *testHost) {
 				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
-					msg := args.Records[0]
+					msg := args.Messages[0]
 					r.Equal(t, "key", msg.Key)
 					r.Equal(t, "value", msg.Data)
 					r.Equal(t, 2, msg.Partition)
@@ -97,7 +97,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 			name: "set key, value and partition",
 			test: func(t *testing.T, host *testHost) {
 				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
-					msg := args.Records[0]
+					msg := args.Messages[0]
 					r.Equal(t, "key", msg.Key)
 					r.Equal(t, "value", msg.Data)
 					r.Equal(t, 2, msg.Partition)
@@ -119,7 +119,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 			name: "set headers",
 			test: func(t *testing.T, host *testHost) {
 				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
-					msg := args.Records[0]
+					msg := args.Messages[0]
 					r.Equal(t, map[string]interface{}{"foo": "bar"}, msg.Headers)
 					return &common.KafkaProduceResult{}, nil
 				}
@@ -139,7 +139,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 			name: "set timeout",
 			test: func(t *testing.T, host *testHost) {
 				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
-					msg := args.Records[0]
+					msg := args.Messages[0]
 					r.Equal(t, map[string]interface{}{"foo": "bar"}, msg.Headers)
 					return &common.KafkaProduceResult{}, nil
 				}
@@ -156,10 +156,10 @@ func TestScript_Kafka_Produce(t *testing.T) {
 			},
 		},
 		{
-			name: "use records",
+			name: "use messages",
 			test: func(t *testing.T, host *testHost) {
 				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
-					msg := args.Records[0]
+					msg := args.Messages[0]
 					r.Equal(t, "key1", msg.Key)
 					r.Equal(t, []byte("hello world"), msg.Value)
 					r.Equal(t, map[string]interface{}{"system-id": "foo"}, msg.Headers)
@@ -170,7 +170,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 				s, err := New(newScript("",
 					`import { produce } from 'mokapi/kafka'
 						 export default function() {
-						  	return produce({ records: [{ key: 'key1', value: 'hello world', headers: { 'system-id': 'foo' }, partition: 12 }] })
+						  	return produce({ messages: [{ key: 'key1', value: 'hello world', headers: { 'system-id': 'foo' }, partition: 12 }] })
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
@@ -179,10 +179,10 @@ func TestScript_Kafka_Produce(t *testing.T) {
 			},
 		},
 		{
-			name: "use records with data",
+			name: "use messages with data",
 			test: func(t *testing.T, host *testHost) {
 				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
-					msg := args.Records[0]
+					msg := args.Messages[0]
 					r.Equal(t, "hello world", msg.Data)
 					return &common.KafkaProduceResult{}, nil
 				}
@@ -190,7 +190,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 				s, err := New(newScript("",
 					`import { produce } from 'mokapi/kafka'
 						 export default function() {
-						  	return produce({ records: [{ data: 'hello world' }] })
+						  	return produce({ messages: [{ data: 'hello world' }] })
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
@@ -205,7 +205,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 					return &common.KafkaProduceResult{
 						Cluster: "Cluster",
 						Topic:   "Topic",
-						Records: []common.KafkaProducedRecord{
+						Messages: []common.KafkaProducedMessage{
 							{
 								Key:       "foo",
 								Value:     "bar",
@@ -228,10 +228,10 @@ func TestScript_Kafka_Produce(t *testing.T) {
 				result := v.Export().(*common.KafkaProduceResult)
 				r.Equal(t, "Cluster", result.Cluster)
 				r.Equal(t, "Topic", result.Topic)
-				r.Equal(t, 99, result.Records[0].Partition)
-				r.Equal(t, int64(3451345), result.Records[0].Offset)
-				r.Equal(t, "foo", result.Records[0].Key)
-				r.Equal(t, "bar", result.Records[0].Value)
+				r.Equal(t, 99, result.Messages[0].Partition)
+				r.Equal(t, int64(3451345), result.Messages[0].Offset)
+				r.Equal(t, "foo", result.Messages[0].Key)
+				r.Equal(t, "bar", result.Messages[0].Value)
 			},
 		},
 		{

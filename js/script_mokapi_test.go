@@ -572,7 +572,7 @@ func TestScript_Mokapi_On_Kafka(t *testing.T) {
 				s, err := New(newScript("",
 					`import { on } from 'mokapi'
 						 export default function() {
-						  	on('kafka', function(record) {
+						  	on('kafka', function(message) {
 								
 							})
 						 }`),

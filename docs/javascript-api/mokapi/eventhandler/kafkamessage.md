@@ -1,10 +1,10 @@
 ---
-title: KafkaRecord
-description: KafkaRecord is an object used by KafkaEventHandler
+title: KafkaMessage
+description: KafkaMessage is an object used by KafkaEventHandler
 ---
-# KafkaRecord
+# KafkaMessage
 
-KafkaRecord is an object used by [KafkaEventHandler](/docs/javascript-api/mokapi/eventhandler/kafkaeventhandler.md)
+KafkaMessage is an object used by [KafkaEventHandler](/docs/javascript-api/mokapi/eventhandler/kafkaeventhandler.md)
 that contains Kafka-specific message data.
 
 | Name    | Type   | Description                                                   |

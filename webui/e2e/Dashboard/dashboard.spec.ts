@@ -47,7 +47,7 @@ test.describe('Dashboard', () => {
 
         await test.step("metric Kafka Messages",async () => {
             const metricKafkaMessages = dashboard.kafka.metricKafkaMessages
-            await expect(metricKafkaMessages.title).toHaveText('Kafka Records')
+            await expect(metricKafkaMessages.title).toHaveText('Kafka Messages')
             await expect(metricKafkaMessages.value).toHaveText('11')
             await expect(metricKafkaMessages.additional).not.toBeVisible()
         })

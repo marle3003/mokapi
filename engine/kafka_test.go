@@ -73,7 +73,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 				require.Equal(t, "version", b.Records[0].Headers[0].Key)
 				require.Equal(t, []byte("1.0"), b.Records[0].Headers[0].Value)
 
-				require.Equal(t, `{"cluster":"foo","topic":"foo","records":[{"key":"foo","value":"\"bar\"","offset":0,"headers":{"version":"1.0"},"partition":0}]}`, hook.LastEntry().Message)
+				require.Equal(t, `{"cluster":"foo","topic":"foo","messages":[{"key":"foo","value":"\"bar\"","offset":0,"headers":{"version":"1.0"},"partition":0}]}`, hook.LastEntry().Message)
 			},
 		},
 		{
@@ -119,10 +119,10 @@ func TestKafkaClient_Produce(t *testing.T) {
 				err := engine.AddScript(newScript("test.js", `
 					import { on } from 'mokapi'
 					export default function() {
-						on('kafka', function(record) {
-							console.log(record)
-							record.value = 'mokapi'
-							record.headers = { version: '1.0' }
+						on('kafka', function(message) {
+							console.log(message)
+							message.value = 'mokapi'
+							message.headers = { version: '1.0' }
 						})
 					}
 				`))
@@ -148,8 +148,8 @@ func TestKafkaClient_Produce(t *testing.T) {
 				err := engine.AddScript(newScript("test.js", `
 					import { on } from 'mokapi'
 					export default function() {
-						on('kafka', function(record) {
-							record.headers = { version: '1.0' }
+						on('kafka', function(message) {
+							message.headers = { version: '1.0' }
 						})
 					}
 				`))
@@ -175,8 +175,8 @@ func TestKafkaClient_Produce(t *testing.T) {
 				err := engine.AddScript(newScript("test.js", `
 					import { on } from 'mokapi'
 					export default function() {
-						on('kafka', function(record) {
-							record.headers = null
+						on('kafka', function(message) {
+							message.headers = null
 						})
 					}
 				`))
@@ -194,7 +194,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 				err := engine.AddScript(newScript("test.js", `
 					import { produce } from 'mokapi/kafka'
 					export default function() {
-						produce({ topic: 'foo', records: [{ data: 12 }] })
+						produce({ topic: 'foo', messages: [{ data: 12 }] })
 					}
 				`))
 				require.EqualError(t, err, "produce kafka message to 'foo' failed: marshal data to 'application/json' failed: validation error on int64, expected schema type=string at reflect.methodValueCall (native)")
@@ -211,7 +211,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 				err := engine.AddScript(newScript("test.js", `
 					import { produce } from 'mokapi/kafka'
 					export default function() {
-						produce({ topic: 'foo', records: [{ value: 12 }], skipValidation: true })
+						produce({ topic: 'foo', messages: [{ value: 12 }], skipValidation: true })
 					}
 				`))
 				require.NoError(t, err)

@@ -8,7 +8,7 @@ export const cluster = {
     },
     description: 'To ours significant why upon tomorrow her faithful many motionless.',
     lastMessage: formatTimestamp(1652135690),
-    records: '11',
+    messages: '11',
     brokers: [{
         name: 'Broker',
         url: 'localhost:9092',
@@ -18,8 +18,8 @@ export const cluster = {
         {
             name: 'mokapi.shop.products',
             description: 'Though literature second anywhere fortnightly am this either so me.',
-            lastRecord: formatTimestamp(1652135690),
-            records: '10',
+            lastMessage: formatTimestamp(1652135690),
+            messages: '10',
             partitions: [
                 {
                     id: '0',
@@ -58,8 +58,8 @@ export const cluster = {
         {
             name: 'mokapi.shop.userSignedUp',
             description: 'This channel contains a message per each user who signs up in our application.',
-            lastRecord: formatTimestamp(1652035690),
-            records: '1',
+            lastMessage: formatTimestamp(1652035690),
+            messages: '1',
             partitions: [
                 {
                     id: '0',

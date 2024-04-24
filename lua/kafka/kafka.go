@@ -47,7 +47,7 @@ func (m *Module) Produce(state *lua.LState) int {
 		}
 	}
 	args := &common.KafkaProduceArgs{Cluster: opts.Cluster, Topic: opts.Topic, Timeout: opts.Timeout}
-	args.Records = append(args.Records, common.KafkaRecord{
+	args.Messages = append(args.Messages, common.KafkaMessage{
 		Key:       opts.Key,
 		Data:      opts.Value,
 		Headers:   opts.Headers,
@@ -59,11 +59,11 @@ func (m *Module) Produce(state *lua.LState) int {
 	for start := time.Now(); time.Since(start) < timeout; {
 		if result, err := m.client.Produce(args); err == nil {
 			r := &kafkaResult{KafkaProduceResult: result}
-			if result != nil && len(result.Records) == 1 {
-				r.Key = result.Records[0].Key
-				r.Value = result.Records[0].Value
-				r.Headers = result.Records[0].Headers
-				r.Partition = result.Records[0].Partition
+			if result != nil && len(result.Messages) == 1 {
+				r.Key = result.Messages[0].Key
+				r.Value = result.Messages[0].Value
+				r.Headers = result.Messages[0].Headers
+				r.Partition = result.Messages[0].Partition
 			}
 			state.Push(luar.New(state, r))
 			return 1

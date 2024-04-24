@@ -34,12 +34,12 @@ func (m *kafkaModule) Produce(v goja.Value) interface{} {
 		log.Errorf("js error: %v in %v", err, m.host.Name())
 		panic(m.rt.ToValue(err.Error()))
 	}
-	if len(result.Records) == 1 {
+	if len(result.Messages) == 1 {
 		deprecatedResult := &kafkaResult{KafkaProduceResult: result}
-		deprecatedResult.Key = result.Records[0].Key
-		deprecatedResult.Value = result.Records[0].Value
-		deprecatedResult.Headers = result.Records[0].Headers
-		deprecatedResult.Partition = result.Records[0].Partition
+		deprecatedResult.Key = result.Messages[0].Key
+		deprecatedResult.Value = result.Messages[0].Value
+		deprecatedResult.Headers = result.Messages[0].Headers
+		deprecatedResult.Partition = result.Messages[0].Partition
 	}
 	return result
 }
@@ -48,7 +48,7 @@ func mapParams(args goja.Value, rt *goja.Runtime) *common.KafkaProduceArgs {
 	opt := &common.KafkaProduceArgs{}
 	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
 		params := args.ToObject(rt)
-		var record *common.KafkaRecord
+		var message *common.KafkaMessage
 		for _, k := range params.Keys() {
 			switch k {
 			case "cluster":
@@ -64,50 +64,50 @@ func mapParams(args goja.Value, rt *goja.Runtime) *common.KafkaProduceArgs {
 				}
 				opt.Topic = topic.String()
 			case "partition":
-				if record == nil {
-					record = &common.KafkaRecord{}
+				if message == nil {
+					message = &common.KafkaMessage{}
 				}
 
 				partition := params.Get(k)
 				if goja.IsUndefined(partition) || goja.IsNull(partition) {
 					continue
 				}
-				record.Partition = int(partition.ToInteger())
+				message.Partition = int(partition.ToInteger())
 			case "key":
-				if record == nil {
-					record = &common.KafkaRecord{Partition: -1}
+				if message == nil {
+					message = &common.KafkaMessage{Partition: -1}
 				}
 
 				key := params.Get(k)
 				if goja.IsUndefined(key) || goja.IsNull(key) {
 					continue
 				}
-				record.Key = key.Export()
+				message.Key = key.Export()
 			case "value":
-				if record == nil {
-					record = &common.KafkaRecord{Partition: -1}
+				if message == nil {
+					message = &common.KafkaMessage{Partition: -1}
 				}
 
 				value := params.Get(k)
 				if goja.IsUndefined(value) || goja.IsNull(value) {
 					continue
 				}
-				record.Data = value.Export()
+				message.Data = value.Export()
 			case "headers":
-				if record == nil {
-					record = &common.KafkaRecord{Partition: -1}
+				if message == nil {
+					message = &common.KafkaMessage{Partition: -1}
 				}
 
 				headers := params.Get(k)
 				if goja.IsUndefined(headers) || goja.IsNull(headers) {
 					continue
 				}
-				record.Headers = headers.Export().(map[string]interface{})
-			case "records":
+				message.Headers = headers.Export().(map[string]interface{})
+			case "messages":
 				records := params.Get(k).Export().([]interface{})
 				for _, item := range records {
 					rec := item.(map[string]interface{})
-					r := common.KafkaRecord{Partition: -1}
+					r := common.KafkaMessage{Partition: -1}
 					if k, ok := rec["key"]; ok {
 						r.Key = k
 					}
@@ -131,14 +131,14 @@ func mapParams(args goja.Value, rt *goja.Runtime) *common.KafkaProduceArgs {
 							r.Partition = int(i)
 						}
 					}
-					opt.Records = append(opt.Records, r)
+					opt.Messages = append(opt.Messages, r)
 				}
 			}
 		}
-		if record != nil {
-			opt.Records = append(opt.Records, *record)
-		} else if len(opt.Records) == 0 {
-			opt.Records = append(opt.Records, common.KafkaRecord{})
+		if message != nil {
+			opt.Messages = append(opt.Messages, *message)
+		} else if len(opt.Messages) == 0 {
+			opt.Messages = append(opt.Messages, common.KafkaMessage{})
 		}
 	}
 	return opt

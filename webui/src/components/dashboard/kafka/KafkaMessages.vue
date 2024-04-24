@@ -94,7 +94,7 @@ function getTopic(name: string): KafkaTopic {
 
 <template>
     <table class="table dataTable selectable">
-        <caption class="visually-hidden">{{ props.topicName ? 'Topic Records' : 'Cluster Records' }}</caption>
+        <caption class="visually-hidden">{{ props.topicName ? 'Topic Messages' : 'Cluster Messages' }}</caption>
         <thead>
             <tr>
                 <th scope="col" class="text-left" style="width: 10%">Key</th>

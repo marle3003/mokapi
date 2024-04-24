@@ -56,13 +56,13 @@ type KafkaClient interface {
 }
 
 type KafkaProduceArgs struct {
-	Cluster string
-	Topic   string
-	Records []KafkaRecord
-	Timeout int
+	Cluster  string
+	Topic    string
+	Messages []KafkaMessage
+	Timeout  int
 }
 
-type KafkaRecord struct {
+type KafkaMessage struct {
 	Key       interface{}
 	Value     []byte
 	Data      interface{}
@@ -71,12 +71,12 @@ type KafkaRecord struct {
 }
 
 type KafkaProduceResult struct {
-	Cluster string
-	Topic   string
-	Records []KafkaProducedRecord
+	Cluster  string
+	Topic    string
+	Messages []KafkaProducedMessage
 }
 
-type KafkaProducedRecord struct {
+type KafkaProducedMessage struct {
 	Key       string
 	Value     string
 	Offset    int64
