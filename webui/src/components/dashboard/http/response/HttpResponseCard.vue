@@ -64,7 +64,7 @@ const name = computed(() => {
             <div class="card-title text-center">Response</div>
             <div class="d-flex align-items-start align-items-stretch">
                 <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
-                    <button v-for="(response, index) of operation.responses" class="badge status-code" :class="getClassByStatusCode(response.statusCode) + (index==0 ? ' active' : '')" :id="'v-pills-'+response.statusCode+'-tab'" data-bs-toggle="pill" :data-bs-target="'#v-pills-'+response.statusCode" type="button" role="tab" :aria-controls="'v-pills-'+response.statusCode" aria-selected="true">{{ formatStatusCode(response.statusCode) }}</button>
+                    <button v-for="(response, index) of operation.responses" class="badge status-code" :class="getClassByStatusCode(response.statusCode) + (index==0 ? ' active' : '')" :id="'v-pills-'+response.statusCode+'-tab'" data-bs-toggle="pill" :data-bs-target="'#v-pills-'+response.statusCode" type="button" role="tab" :aria-controls="'v-pills-'+response.statusCode" :aria-selected="index === 0">{{ formatStatusCode(response.statusCode) }}</button>
                 </div>
                 <div class="tab-content ms-3 ps-3 responses-tab" style="width: 100%" id="v-pills-tabContent">
                     <div v-for="(response, index) of responses" class="tab-pane fade" :class="index==0 ? 'show active' : ''" :id="'v-pills-'+response.statusCode" role="tabpanel" :aria-labelledby="'v-pills-'+response.statusCode+'-tab'">
@@ -150,7 +150,7 @@ const name = computed(() => {
     content: " | ";
 }
 .response .tab-pane {
-    padding-left: 0;
-    padding-top: 0.5rem;
+    padding: 0;
+    margin-top: -5px;
  }
 </style>
