@@ -211,7 +211,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 				err := engine.AddScript(newScript("test.js", `
 					import { produce } from 'mokapi/kafka'
 					export default function() {
-						produce({ topic: 'foo', messages: [{ value: 12 }], skipValidation: true })
+						produce({ topic: 'foo', messages: [{ value: 12 }] })
 					}
 				`))
 				require.NoError(t, err)
@@ -220,6 +220,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
 				require.Len(t, b.Records, 1, "message should be written despite validation error")
+				require.Equal(t, "12", kafka.BytesToString(b.Records[0].Value))
 			},
 		},
 	}

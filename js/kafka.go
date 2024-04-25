@@ -1,6 +1,7 @@
 package js
 
 import (
+	"fmt"
 	"github.com/dop251/goja"
 	log "github.com/sirupsen/logrus"
 	"mokapi/engine/common"
@@ -116,6 +117,8 @@ func mapParams(args goja.Value, rt *goja.Runtime) *common.KafkaProduceArgs {
 							r.Value = b
 						} else if s, ok := v.(string); ok {
 							r.Value = []byte(s)
+						} else {
+							r.Value = []byte(fmt.Sprintf("%v", v))
 						}
 					}
 					if d, ok := rec["data"]; ok {
