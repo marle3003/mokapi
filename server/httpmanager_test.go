@@ -45,16 +45,17 @@ func TestHttpServers_Monitor(t *testing.T) {
 func TestHttpManager_Update(t *testing.T) {
 	testdata := []struct {
 		name string
-		fn   func(t *testing.T, m *HttpManager, hook *logtest.Hook)
+		test func(t *testing.T, m *HttpManager, hook *logtest.Hook)
 	}{
-		{"nil config",
-			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
+		{
+			name: "nil config",
+			test: func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
 				m.Update(&dynamic.Config{Data: nil})
 				require.Nil(t, hook.LastEntry())
 			}},
 		{
-			"app contains config",
-			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
+			name: "app contains config",
+			test: func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
 				c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: "http://:80"}}}
 				m.Update(&dynamic.Config{Data: c, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}})
 
@@ -62,8 +63,8 @@ func TestHttpManager_Update(t *testing.T) {
 			},
 		},
 		{
-			"app contains both config",
-			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
+			name: "app contains both config",
+			test: func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
 				port := try.GetFreePort()
 				url := fmt.Sprintf("http://localhost:%v", port)
 				foo := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: url + "/foo"}}}
@@ -75,8 +76,9 @@ func TestHttpManager_Update(t *testing.T) {
 				require.Contains(t, m.app.Http, "bar")
 			},
 		},
-		{"add new host http://:X",
-			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
+		{
+			name: "add new host http://:X",
+			test: func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
 				port := try.GetFreePort()
 				c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: fmt.Sprintf("http://:%v", port)}}}
 				m.Update(&dynamic.Config{Data: c, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}})
@@ -86,9 +88,11 @@ func TestHttpManager_Update(t *testing.T) {
 				require.Equal(t, fmt.Sprintf("adding new host '' on binding :%v", port), entries[0].Message)
 				require.Equal(t, fmt.Sprintf("adding service foo on binding :%v on path /", port), entries[1].Message)
 				require.Equal(t, "processed foo.yml", entries[2].Message)
-			}},
-		{"invalid port format",
-			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
+			},
+		},
+		{
+			name: "invalid port format",
+			test: func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
 				c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: "http://localhost:foo"}}}
 				m.Update(&dynamic.Config{Data: c, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}})
 
@@ -97,8 +101,9 @@ func TestHttpManager_Update(t *testing.T) {
 				require.Equal(t, "url syntax error foo.yml: parse \"http://localhost:foo\": invalid port \":foo\" after host", entries[0].Message)
 				require.Equal(t, "processed foo.yml", entries[1].Message)
 			}},
-		{"invalid url format",
-			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
+		{
+			name: "invalid url format",
+			test: func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
 				c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: "$://"}}}
 				m.Update(&dynamic.Config{Data: c, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}})
 
@@ -106,9 +111,11 @@ func TestHttpManager_Update(t *testing.T) {
 				require.Len(t, entries, 2)
 				require.Equal(t, "url syntax error foo.yml: parse \"$://\": first path segment in URL cannot contain colon", entries[0].Message)
 				require.Equal(t, "processed foo.yml", entries[1].Message)
-			}},
-		{"add on same path",
-			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
+			},
+		},
+		{
+			name: "add on same path",
+			test: func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
 				port := try.GetFreePort()
 				url := fmt.Sprintf("http://:%v", port)
 				c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: url + "/foo"}}}
@@ -122,9 +129,11 @@ func TestHttpManager_Update(t *testing.T) {
 				require.Equal(t, fmt.Sprintf("adding service foo on binding :%v on path /foo", port), entries[1].Message)
 				require.Equal(t, "processed foo.yml", entries[2].Message)
 				require.Equal(t, fmt.Sprintf("unable to add 'bar' on %v/foo: service 'foo' is already defined on path '/foo'", url), entries[3].Message)
-			}},
-		{"patching server",
-			func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
+			},
+		},
+		{
+			name: "patching server",
+			test: func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
 				port1 := try.GetFreePort()
 				port2 := try.GetFreePort()
 
@@ -143,7 +152,8 @@ func TestHttpManager_Update(t *testing.T) {
 				require.Equal(t, fmt.Sprintf("adding new host '' on binding :%v", port2), entries[3].Message)
 				require.Equal(t, fmt.Sprintf("adding service foo on binding :%v on path /foo", port2), entries[4].Message)
 				require.Equal(t, "processed foo.yml", entries[5].Message)
-			}},
+			},
+		},
 	}
 
 	for _, data := range testdata {
@@ -157,7 +167,7 @@ func TestHttpManager_Update(t *testing.T) {
 			m := NewHttpManager(&engine.Engine{}, store, runtime.New())
 			defer m.Stop()
 
-			data.fn(t, m, hook)
+			data.test(t, m, hook)
 		})
 
 	}
