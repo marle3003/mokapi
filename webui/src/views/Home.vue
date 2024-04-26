@@ -130,7 +130,7 @@ function showImage(target: EventTarget | null) {
             <div class="text-lg-start text-center">
               <h2>Run Everywhere</h2>
               <p>
-                Use the <a href="https://hub.docker.com/r/mokapi/mokapi">Docker image</a>, the <a href="https://www.npmjs.com/package/go-mokapi">NPM package</a> or directly as an <a href="https://github.com/marle3003/mokapi/releases">executable</a>.
+                Use the <a href="https://hub.docker.com/r/mokapi/mokapi">Docker image</a>, <a href="https://community.chocolatey.org/packages/mokapi">Chocolatey on Windows</a>, the <a href="https://www.npmjs.com/package/go-mokapi">NPM package</a> or directly as an <a href="https://github.com/marle3003/mokapi/releases">executable</a>.
                 Use CLI arguments, environment variable or file configuration and take advantage from hot-reloading of dynamic configurations.
               </p>
               <router-link :to="{ path: '/docs/guides/get-started/running' }">
