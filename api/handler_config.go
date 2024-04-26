@@ -83,6 +83,7 @@ func (h *handler) getConfigData(w http.ResponseWriter, r *http.Request, key stri
 	w.Header().Set("Content-Type", mt)
 	w.Header().Set("Content-Disposition", "inline; filename=\""+filepath.Base(path)+"\"")
 	w.Header().Set("ETag", checksum)
+	w.Header().Set("Cache-Control", "no-cache")
 	w.WriteHeader(http.StatusOK)
 
 	_, err := w.Write(c.Raw)
