@@ -58,7 +58,8 @@ func (c *kafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 		if err != nil {
 			return nil, fmt.Errorf("produce kafka message to '%v' failed: %w", t.Name, err)
 		}
-		_, records, err := p.Write(rb)
+
+		_, records, err := p.Write(rb, options...)
 		if err != nil {
 			var sb strings.Builder
 			for _, r := range records {
