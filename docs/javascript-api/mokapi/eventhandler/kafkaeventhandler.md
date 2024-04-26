@@ -6,9 +6,9 @@ description: KafkaEventHandler is a function that is executed when a producer se
 
 KafkaEventHandler is a function that is executed when a Kafka message is received.
 
-| Parameter | Type    | Description                                                                                                               |
-|-----------|---------|---------------------------------------------------------------------------------------------------------------------------|
-| message   | object  | [KafkaMessage](/docs/javascript-api/mokapi/eventhandler/kafkamessage.md) object contains data of a Kafka produce message. |
+| Parameter | Type    | Description                                                                                                                         |
+|-----------|---------|-------------------------------------------------------------------------------------------------------------------------------------|
+| message   | object  | [KafkaEventMessage](/docs/javascript-api/mokapi/eventhandler/kafkaeventmessage.md) object contains data of a Kafka produce message. |
 
 ## Returns
 

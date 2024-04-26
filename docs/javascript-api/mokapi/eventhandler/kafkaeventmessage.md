@@ -1,8 +1,8 @@
 ---
-title: KafkaMessage
-description: KafkaMessage is an object used by KafkaEventHandler
+title: KafkaEventMessage
+description: KafkaEventMessage is an object used by KafkaEventHandler
 ---
-# KafkaMessage
+# KafkaEventMessage
 
 KafkaMessage is an object used by [KafkaEventHandler](/docs/javascript-api/mokapi/eventhandler/kafkaeventhandler.md)
 that contains Kafka-specific message data.

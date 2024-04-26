@@ -26,27 +26,144 @@ export function fake(schema: Schema | FakeRequest): JSONValue;
  */
 export function findByName(name: string): Tree
 
+/**
+ * The name of the root faker tree
+ */
 export const RootName = 'Faker'
 
+/**
+ * The Tree object represents a node in the faker tree
+ */
 export interface Tree {
+    /**
+     * Gets the name of the tree node
+     */
     name: string
-    readonly test: () => boolean
-    readonly fake: () => JSONValue
 
+    /**
+     * Tests whether the tree node supports the request.
+     * @param request request - Request for a new fake value
+     * @example
+     * export default function() {
+     *   const frequencyItems = ['never', 'daily', 'weekly', 'monthly', 'yearly']
+     *   const node = findByName('Strings')
+     *   node.append({
+     *     name: 'Frequency',
+     *     test: (r) => { return r.lastName() === 'frequency' },
+     *     fake: (r) => {
+     *       return frequencyItems[Math.floor(Math.random()*frequencyItems.length)]
+     *     }
+     *   })
+     *   return fake({ type: 'string' })
+     * }
+     */
+    readonly test: (request: FakeRequest) => boolean
+
+    /**
+     * Gets a new fake value
+     * @param request request - Request for a new fake value
+     * @example
+     * export default function() {
+     *   const frequencyItems = ['never', 'daily', 'weekly', 'monthly', 'yearly']
+     *   const node = findByName('Strings')
+     *   node.append({
+     *     name: 'Frequency',
+     *     test: (r) => { return r.lastName() === 'frequency' },
+     *     fake: (r) => {
+     *       return frequencyItems[Math.floor(Math.random()*frequencyItems.length)]
+     *     }
+     *   })
+     *   return fake({ type: 'string' })
+     * }
+     */
+    readonly fake: (request: FakeRequest) => JSONValue
+
+    /**
+     * Inserts a Tree objects after the last child of this tree.
+     * @param node node - A Tree node to insert after the last child.
+     */
     append: (node: Tree | CustomTree) => void
+
+    /**
+     * Inserts a Tree objects at a specified index position
+     * @param index index - The zero-based index position of the insertion.
+     * @param node node - The tree node to insert
+     */
     insert: (index: number, node: Tree | CustomTree) => void
+
+    /**
+     * Removes a Tree node at the specific index position
+     * @param index index - The zero-based index position to remove.
+     */
     removeAt: (index: number) => void
+
+    /**
+     * Removes a Tree node with the given name
+     * @param name name - The name of a node to remove
+     */
     remove: (name: string) => void
 }
 
+/**
+ * The CustomTree object represents a custom node in the faker tree
+ */
 export interface CustomTree {
+    /**
+     * Gets the name of the custom tree node
+     */
     name: string
+
+    /**
+     * Tests whether the tree node supports the request.
+     * @param request request - Request for a new fake value
+     * @example
+     * export default function() {
+     *   const frequencyItems = ['never', 'daily', 'weekly', 'monthly', 'yearly']
+     *   const node = findByName('Strings')
+     *   node.append({
+     *     name: 'Frequency',
+     *     test: (r) => { return r.lastName() === 'frequency' },
+     *     fake: (r) => {
+     *       return frequencyItems[Math.floor(Math.random()*frequencyItems.length)]
+     *     }
+     *   })
+     *   return fake({ type: 'string' })
+     * }
+     */
     test: (r: Request) => boolean
+
+    /**
+     * Gets a new fake value
+     * @param request request - Request for a new fake value
+     * @example
+     * export default function() {
+     *   const frequencyItems = ['never', 'daily', 'weekly', 'monthly', 'yearly']
+     *   const node = findByName('Strings')
+     *   node.append({
+     *     name: 'Frequency',
+     *     test: (r) => { return r.lastName() === 'frequency' },
+     *     fake: (r) => {
+     *       return frequencyItems[Math.floor(Math.random()*frequencyItems.length)]
+     *     }
+     *   })
+     *   return fake({ type: 'string' })
+     * }
+     */
     fake: (r: Request) => JSONValue
 }
 
+/**
+ * Represents a request for a fake value
+ */
 export interface FakeRequest {
+    /**
+     * Contains a list of attribute names representing the object graph for which a new value is to be faked
+     */
     names: string[]
+
+    /**
+     * Describing the structure of JSON data to be faked
+     */
     schema: JSONSchema
 }
 

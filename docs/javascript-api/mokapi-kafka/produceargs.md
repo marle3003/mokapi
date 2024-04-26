@@ -7,14 +7,15 @@ description: ProduceArgs is an object used by functions in the module mokapi/kaf
 ProduceArgs is an object used by functions in the module mokapi/kafka 
 and contains produce-specific arguments.
 
-| Name                 | Type   | Description                                                                                                                                                       |
-|----------------------|--------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| cluster (optional)   | string | Kafka cluster name. Used when topic name is not unique.                                                                                                           |
-| topic (optional)     | string | Kafka topic name. If not specified, message will be written to a random topic.                                                                                    |
-| partition (optional) | number | /** Kafka partition index. If not specified, the message will be written to any partition                                                                         |
-| key (optional)       | any    | Kafka message key. If not specified, a random key will be generated based on the topic configuration.                                                             |
-| value (optional)     | any    | Kafka message value. If not specified, a random value will be generated based on the topic configuration. Object will be encoded based on the topic configuration |
-| headers (optional)   | object | Kafka message headers.                                                                                                                                            |
+| Name                              | Type                                                                | Description                                                                                                                                                       |
+|-----------------------------------|---------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| cluster (optional)                | string                                                              | Kafka cluster name. Used when topic name is not unique.                                                                                                           |
+| topic (optional)                  | string                                                              | Kafka topic name. If not specified, message will be written to a random topic.                                                                                    |
+| messages                          | [KafkaMessage[]](/docs/javascript-api/mokapi-kafka/kafkamessage.md) | A list of Kafka messages to produce in the given topic                                                                                                            |
+| partition (optional, deprecated ) | number                                                              | /** Kafka partition index. If not specified, the message will be written to any partition                                                                         |
+| key (optional, deprecated)        | any                                                                 | Kafka message key. If not specified, a random key will be generated based on the topic configuration.                                                             |
+| value (optional, deprecated)      | any                                                                 | Kafka message value. If not specified, a random value will be generated based on the topic configuration. Object will be encoded based on the topic configuration |
+| headers (optional, deprecated)    | object                                                              | Kafka message headers.                                                                                                                                            |
 
 ## Example
 
@@ -24,8 +25,17 @@ import { produce } from 'mokapi/kafka'
 export default function() {
     produce({
         topic: 'foo',
-        key: 'foo-1',
-        value: {foo: 'bar'}
+        messages: [
+            {
+                key: 'foo-1',
+                data: { foo: 'bar-1' }
+            },
+            {
+                key: 'foo-2',
+                // value is not validated against schema
+                value: 'hello mokapi'
+            }
+        ]
     })
 }
 ```

@@ -9,8 +9,12 @@ import { JSONValue } from ".";
  * export default function() {
  *   const res = produce({
  *     topic: 'foo',
- *     key: 'foo-1',
- *     value: { foo: "bar" }
+ *     messages: [
+ *       {
+ *         key: 'foo-1',
+ *         data: { foo: 'bar' }
+ *       }
+ *     ]
  *   });
  *   console.log(`new kafka message written with offset: ${res.offset}`)
  * }
@@ -24,8 +28,16 @@ export function produce(args: ProduceArgs): ProduceResult;
  * export default function() {
  *   const res = produce({
  *     topic: 'foo',
- *     key: 'foo-1',
- *     value: { foo: "bar"}
+ *     messages: [
+ *       {
+ *         key: 'foo-1',
+ *         data: { foo: 'bar-1' }
+ *       },
+ *       {
+ *         key: 'foo-2',
+ *         data: { foo: 'bar-2' }
+ *       }
+ *     ]
  *   });
  * }
  */
@@ -47,6 +59,28 @@ export interface ProduceArgs {
 
     /** Kafka message headers. */
     headers?: { [name: string]: JSONValue };
+
+    messages: KafkaMessage[]
+}
+
+/**
+ * Represents a Kafka message
+ */
+export interface KafkaMessage {
+    /** Kafka partition index. If not specified, the message will be written to any partition */
+    partition?: number;
+
+    /** Kafka message key. If not specified, a random key will be generated based on the topic configuration. */
+    key?: JSONValue;
+
+    /** Kafka message value. If data and value are not specified, a random value will be generated based on the topic configuration. */
+    data?: JSONValue;
+
+    /** Kafka message value not validating against schema. If data and value are not specified, a random value will be generated based on the topic configuration. */
+    value?: string | number | boolean | null
+
+    /** Kafka message headers. */
+    headers?: { [name: string]: JSONValue };
 }
 
 /**
@@ -65,6 +99,8 @@ export interface ProduceResult {
     /** Kafka topic name where the message was written. */
     readonly topic: string;
 
+    messages: KafkaMessageResult[]
+
     /** Kafka partition where the message was written. */
     readonly partition: number;
 
@@ -82,6 +118,38 @@ export interface ProduceResult {
 }
 
 /**
+ * Contains information of the written Kafka message.
+ * https://mokapi.io/docs/javascript-api/mokapi-kafka/kafkamessageresult
+ */
+export interface KafkaMessageResult {
+    /**
+     * Kafka partition index in which the message was written.
+     */
+    readonly partition: number
+
+    /**
+     * Kafka offset of the written message.
+     */
+    readonly offset: number
+
+    /**
+     * Kafka written message key.
+     */
+    readonly key: string
+
+    /**
+     * Kafka written message value.
+     */
+    readonly value: string
+
+    /**
+     * Kafka written message headers.
+     */
+    readonly headers: { [name: string]: string }
+
+}
+
+/**
  * KafkaEventHandler is a function that is executed when a Kafka message is received.
  * https://mokapi.io/docs/javascript-api/mokapi/eventhandler/KafkaEventHandler
  * @example
@@ -92,13 +160,13 @@ export interface ProduceResult {
  *   })
  * }
  */
-export type KafkaEventHandler = (message: KafkaMessage) => boolean;
+export type KafkaEventHandler = (message: KafkaEventMessage) => boolean;
 
 /**
- * KafkaMessage is an object used by KafkaEventHandler that contains Kafka-specific message data.
- * https://mokapi.io/docs/javascript-api/mokapi/eventhandler/KafkaRecord
+ * KafkaEventMessage is an object used by KafkaEventHandler that contains Kafka-specific message data.
+ * https://mokapi.io/docs/javascript-api/mokapi/eventhandler/KafkaEventMessage
  */
-export interface KafkaMessage {
+export interface KafkaEventMessage {
     /** Kafka partition where the message was written to (read-only). */
     readonly offset: number;
 
