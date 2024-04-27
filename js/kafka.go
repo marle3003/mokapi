@@ -5,6 +5,7 @@ import (
 	"github.com/dop251/goja"
 	log "github.com/sirupsen/logrus"
 	"mokapi/engine/common"
+	"time"
 )
 
 type kafkaModule struct {
@@ -46,7 +47,12 @@ func (m *kafkaModule) Produce(v goja.Value) interface{} {
 }
 
 func mapParams(args goja.Value, rt *goja.Runtime) *common.KafkaProduceArgs {
-	opt := &common.KafkaProduceArgs{}
+	opt := &common.KafkaProduceArgs{Retry: common.KafkaProduceRetry{
+		MaxRetryMs:     30000,
+		InitialRetryMs: 200,
+		Retries:        5,
+	}}
+
 	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
 		params := args.ToObject(rt)
 		var message *common.KafkaMessage
@@ -135,6 +141,17 @@ func mapParams(args goja.Value, rt *goja.Runtime) *common.KafkaProduceArgs {
 						}
 					}
 					opt.Messages = append(opt.Messages, r)
+				}
+			case "retry":
+				retry := params.Get(k).Export().(map[string]interface{})
+				if v, ok := retry["maxRetryMs"]; ok {
+					opt.Retry.MaxRetryMs = time.Duration(v.(int64))
+				}
+				if v, ok := retry["initialRetryMs"]; ok {
+					opt.Retry.InitialRetryMs = time.Duration(v.(int64))
+				}
+				if v, ok := retry["retries"]; ok {
+					opt.Retry.Retries = int(v.(int64))
 				}
 			}
 		}

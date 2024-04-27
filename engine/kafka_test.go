@@ -223,6 +223,39 @@ func TestKafkaClient_Produce(t *testing.T) {
 				require.Equal(t, "12", kafka.BytesToString(b.Records[0].Value))
 			},
 		},
+		{
+			name: "test retry",
+			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *Engine) {
+				go func() {
+					time.Sleep(time.Second * 2)
+
+					config := asyncapitest.NewConfig(
+						asyncapitest.WithInfo("foo", "", ""),
+						asyncapitest.WithChannel("retry",
+							asyncapitest.WithSubscribeAndPublish(
+								asyncapitest.WithMessage(
+									asyncapitest.WithContentType("application/json"),
+									asyncapitest.WithPayload(schematest.New("string")),
+									asyncapitest.WithKey(schematest.New("string"))))),
+					)
+					app.AddKafka(getConfig(config), nil)
+				}()
+
+				err := engine.AddScript(newScript("test.js", `
+					import { produce } from 'mokapi/kafka'
+					export default function() {
+						produce({ topic: 'retry', messages: [{ value: 12 }] })
+					}
+				`))
+				require.NoError(t, err)
+
+				b, errCode := s.Topic("retry").Partition(0).Read(0, 1000)
+				require.Equal(t, kafka.None, errCode)
+				require.NotNil(t, b)
+				require.Len(t, b.Records, 1, "message should be written despite validation error")
+				require.Equal(t, "12", kafka.BytesToString(b.Records[0].Value))
+			},
+		},
 	}
 
 	for _, tc := range testcases {
@@ -251,7 +284,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 							asyncapitest.WithKey(schematest.New("string"))))),
 			)
 			app := runtime.New()
-			engine := New(reader, app, static.JsConfig{})
+			engine := New(reader, app, static.JsConfig{}, false)
 			info := app.AddKafka(getConfig(config), engine)
 			tc.test(t, app, info.Store, engine)
 		})

@@ -21,7 +21,7 @@ type HttpManager struct {
 	certStore    *cert.Store
 	app          *runtime.App
 	services     static.Services
-	m            sync.Mutex
+	m            sync.RWMutex
 }
 
 func NewHttpManager(emitter common.EventEmitter, store *cert.Store, app *runtime.App) *HttpManager {
@@ -34,7 +34,7 @@ func NewHttpManager(emitter common.EventEmitter, store *cert.Store, app *runtime
 }
 
 func (m *HttpManager) AddService(name string, u *url.URL, h http.Handler, isInternal bool) error {
-	server := m.getOrCreateServer(u)
+	server := m.getOrCreateServer(u.Scheme, u.Port())
 	err := server.AddOrUpdate(&service.HttpService{
 		Url:        u,
 		Handler:    h,
@@ -75,22 +75,25 @@ func (m *HttpManager) Stop() {
 	}
 }
 
-func (m *HttpManager) getOrCreateServer(u *url.URL) *service.HttpServer {
-	m.m.Lock()
-	defer m.m.Unlock()
-
-	server, found := m.servers[u.Port()]
+func (m *HttpManager) getOrCreateServer(scheme string, port string) *service.HttpServer {
+	m.m.RLock()
+	server, found := m.servers[port]
 	if found {
+		m.m.RUnlock()
 		return server
 	}
 
-	if u.Scheme == "https" {
-		server = service.NewHttpServerTls(u.Port(), m.certStore)
+	m.m.RUnlock()
+	m.m.Lock()
+	defer m.m.Unlock()
+
+	if scheme == "https" {
+		server = service.NewHttpServerTls(port, m.certStore)
 	} else {
-		server = service.NewHttpServer(u.Port())
+		server = service.NewHttpServer(port)
 	}
 
-	m.servers[u.Port()] = server
+	m.servers[port] = server
 	server.Start()
 	return server
 }

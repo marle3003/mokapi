@@ -6,6 +6,7 @@ import (
 	"mokapi/json/generator"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type EventEmitter interface {
@@ -60,6 +61,7 @@ type KafkaProduceArgs struct {
 	Topic    string
 	Messages []KafkaMessage
 	Timeout  int
+	Retry    KafkaProduceRetry
 }
 
 type KafkaMessage struct {
@@ -70,13 +72,19 @@ type KafkaMessage struct {
 	Partition int
 }
 
+type KafkaProduceRetry struct {
+	MaxRetryMs     time.Duration
+	InitialRetryMs time.Duration
+	Retries        int
+}
+
 type KafkaProduceResult struct {
 	Cluster  string
 	Topic    string
-	Messages []KafkaProducedMessage
+	Messages []KafkaMessageResult
 }
 
-type KafkaProducedMessage struct {
+type KafkaMessageResult struct {
 	Key       string
 	Value     string
 	Offset    int64

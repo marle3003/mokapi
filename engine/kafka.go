@@ -25,7 +25,7 @@ func newKafkaClient(app *runtime.App) *kafkaClient {
 }
 
 func (c *kafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
-	t, config, err := c.get(args.Cluster, args.Topic)
+	t, config, err := c.tryGet(args.Cluster, args.Topic, args.Retry)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +35,7 @@ func (c *kafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 		return nil, fmt.Errorf("produce kafka message to '%v' failed: invalid topic configuration", t.Name)
 	}
 
-	var produced []common.KafkaProducedMessage
+	var produced []common.KafkaMessageResult
 	for _, r := range args.Messages {
 		var options []store.WriteOptions
 		if r.Value != nil {
@@ -74,7 +74,7 @@ func (c *kafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 			h[v.Key] = string(v.Value)
 		}
 
-		produced = append(produced, common.KafkaProducedMessage{
+		produced = append(produced, common.KafkaMessageResult{
 			Key:       kafka.BytesToString(rb.Records[0].Key),
 			Value:     kafka.BytesToString(rb.Records[0].Value),
 			Offset:    rb.Records[0].Offset,
@@ -89,6 +89,23 @@ func (c *kafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 		Messages: produced,
 	}, nil
 
+}
+
+func (c *kafkaClient) tryGet(cluster string, topic string, retry common.KafkaProduceRetry) (t *store.Topic, config *asyncApi.Config, err error) {
+	count := 0
+	backoff := retry.InitialRetryMs
+	for {
+		t, config, err = c.get(cluster, topic)
+		if err == nil {
+			return
+		}
+		count++
+		if count >= retry.Retries || backoff > retry.MaxRetryMs {
+			return
+		}
+		time.Sleep(time.Millisecond * backoff)
+		backoff *= 4
+	}
 }
 
 func (c *kafkaClient) get(cluster string, topic string) (t *store.Topic, config *asyncApi.Config, err error) {

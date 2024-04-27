@@ -5,6 +5,7 @@ import (
 	"mokapi/config/static"
 	"mokapi/engine/common"
 	"testing"
+	"time"
 )
 
 func TestScript_Kafka_Produce(t *testing.T) {
@@ -136,26 +137,6 @@ func TestScript_Kafka_Produce(t *testing.T) {
 			},
 		},
 		{
-			name: "set timeout",
-			test: func(t *testing.T, host *testHost) {
-				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
-					msg := args.Messages[0]
-					r.Equal(t, map[string]interface{}{"foo": "bar"}, msg.Headers)
-					return &common.KafkaProduceResult{}, nil
-				}
-
-				s, err := New(newScript("",
-					`import { produce } from 'mokapi/kafka'
-						 export default function() {
-						  	return produce({ headers: { foo: 'bar' } })
-						 }`),
-					host, static.JsConfig{})
-				r.NoError(t, err)
-				err = s.Run()
-				r.NoError(t, err)
-			},
-		},
-		{
 			name: "use messages",
 			test: func(t *testing.T, host *testHost) {
 				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
@@ -205,7 +186,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 					return &common.KafkaProduceResult{
 						Cluster: "Cluster",
 						Topic:   "Topic",
-						Messages: []common.KafkaProducedMessage{
+						Messages: []common.KafkaMessageResult{
 							{
 								Key:       "foo",
 								Value:     "bar",
@@ -247,6 +228,48 @@ func TestScript_Kafka_Produce(t *testing.T) {
 					`import { produce } from 'kafka'
 						 export default function() {
 						  	return produce({ topic: 'foo' })
+						 }`),
+					host, static.JsConfig{})
+				r.NoError(t, err)
+				err = s.Run()
+				r.NoError(t, err)
+			},
+		},
+		{
+			name: "default retry",
+			test: func(t *testing.T, host *testHost) {
+				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					r.Equal(t, time.Duration(30000), args.Retry.MaxRetryMs)
+					r.Equal(t, time.Duration(200), args.Retry.InitialRetryMs)
+					r.Equal(t, 5, args.Retry.Retries)
+					return &common.KafkaProduceResult{}, nil
+				}
+
+				s, err := New(newScript("",
+					`import { produce } from 'mokapi/kafka'
+						 export default function() {
+						  	return produce({})
+						 }`),
+					host, static.JsConfig{})
+				r.NoError(t, err)
+				err = s.Run()
+				r.NoError(t, err)
+			},
+		},
+		{
+			name: "set retry",
+			test: func(t *testing.T, host *testHost) {
+				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					r.Equal(t, time.Duration(1000), args.Retry.MaxRetryMs)
+					r.Equal(t, time.Duration(0), args.Retry.InitialRetryMs)
+					r.Equal(t, 100, args.Retry.Retries)
+					return &common.KafkaProduceResult{}, nil
+				}
+
+				s, err := New(newScript("",
+					`import { produce } from 'mokapi/kafka'
+						 export default function() {
+						  	return produce({ retry: { maxRetryMs: 1000, initialRetryMs: 0, retries: 100 } })
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)

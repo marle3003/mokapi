@@ -20,9 +20,10 @@ type Engine struct {
 	kafkaClient *kafkaClient
 	m           sync.Mutex
 	jsConfig    static.JsConfig
+	parallel    bool
 }
 
-func New(reader dynamic.Reader, app *runtime.App, jsConfig static.JsConfig) *Engine {
+func New(reader dynamic.Reader, app *runtime.App, jsConfig static.JsConfig, parallel bool) *Engine {
 	return &Engine{
 		scripts:     make(map[string]*scriptHost),
 		cron:        gocron.NewScheduler(time.UTC),
@@ -30,6 +31,7 @@ func New(reader dynamic.Reader, app *runtime.App, jsConfig static.JsConfig) *Eng
 		reader:      reader,
 		kafkaClient: newKafkaClient(app),
 		jsConfig:    jsConfig,
+		parallel:    parallel,
 	}
 }
 
@@ -46,19 +48,15 @@ func (e *Engine) AddScript(cfg *dynamic.Config) error {
 	sh := newScriptHost(cfg, e)
 	e.scripts[sh.name] = sh
 
-	err := sh.Compile()
-	if err != nil {
-		return err
-	}
-
-	err = sh.Run()
-	if err != nil {
-		return err
-	}
-
-	if sh.CanClose() {
-		sh.close()
-		delete(e.scripts, sh.name)
+	if e.parallel {
+		go func() {
+			err := e.compileAndRun(sh)
+			if err != nil {
+				log.Error(err)
+			}
+		}()
+	} else {
+		return e.compileAndRun(sh)
 	}
 
 	return nil
@@ -94,4 +92,28 @@ func (e *Engine) remove(cfg *dynamic.Config) {
 	} else {
 		log.Debugf("parsing script %v", cfg.Info.Path())
 	}
+}
+
+func (e *Engine) compileAndRun(sh *scriptHost) error {
+	err := sh.Compile()
+	if err != nil {
+		return err
+	}
+
+	err = sh.Run()
+	if err != nil {
+		return err
+	}
+
+	if sh.CanClose() {
+		if e.parallel {
+			e.m.Lock()
+			defer e.m.Unlock()
+		}
+
+		sh.close()
+		delete(e.scripts, sh.name)
+	}
+
+	return nil
 }

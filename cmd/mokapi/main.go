@@ -83,7 +83,7 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 	app := runtime.New()
 
 	watcher := server.NewConfigWatcher(cfg)
-	scriptEngine := engine.New(watcher, app, cfg.Js)
+	scriptEngine := engine.New(watcher, app, cfg.Js, true)
 	certStore, err := cert.NewStore(cfg)
 	if err != nil {
 		return nil, err

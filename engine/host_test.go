@@ -76,7 +76,7 @@ func TestHost_Every(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			engine := New(&dynamictest.Reader{}, runtime.New(), static.JsConfig{})
+			engine := New(&dynamictest.Reader{}, runtime.New(), static.JsConfig{}, false)
 			engine.Start()
 			defer engine.Close()
 
