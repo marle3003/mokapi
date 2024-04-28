@@ -119,8 +119,8 @@
           "ProduceArgs": "javascript-api/mokapi-kafka/produceargs.md",
           "ProduceResult": "javascript-api/mokapi-kafka/produceresult.md",
           "Message": "javascript-api/mokapi-kafka/message.md",
-          "KafkaMessageResult": "javascript-api/mokapi-kafka/messageresult.md",
-          "KafkaProduceRetry": "javascript-api/mokapi-kafka/produceretry.md"
+          "MessageResult": "javascript-api/mokapi-kafka/messageresult.md",
+          "ProduceRetry": "javascript-api/mokapi-kafka/produceretry.md"
         }
       },
       "mokapi/mustache": {
