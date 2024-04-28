@@ -32,7 +32,7 @@ brews:
   - repository:
       owner: marle3003
       name: homebrew-tap
-    folder: Formula
+    directory: Formula
     homepage: https://mokapi.io
     description: "Easy and flexible API mocking using Go and Javascript - https://mokapi.io"
 

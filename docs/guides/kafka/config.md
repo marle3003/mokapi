@@ -42,3 +42,6 @@ The maximum size of a segment before deleting it. Default value is *-1*
 
 ### retention.ms
 The numbers of milliseconds to keep a segment before deleting it.
+
+### confluent.value.schema.validation
+Skip validation of Kafka messages. Default value is *true*
