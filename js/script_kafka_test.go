@@ -239,8 +239,8 @@ func TestScript_Kafka_Produce(t *testing.T) {
 			name: "default retry",
 			test: func(t *testing.T, host *testHost) {
 				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
-					r.Equal(t, time.Duration(30000), args.Retry.MaxRetryMs)
-					r.Equal(t, time.Duration(200), args.Retry.InitialRetryMs)
+					r.Equal(t, 30000*time.Millisecond, args.Retry.MaxRetryTime)
+					r.Equal(t, 200*time.Millisecond, args.Retry.InitialRetryTime)
 					r.Equal(t, 5, args.Retry.Retries)
 					return &common.KafkaProduceResult{}, nil
 				}
@@ -257,11 +257,11 @@ func TestScript_Kafka_Produce(t *testing.T) {
 			},
 		},
 		{
-			name: "set retry",
+			name: "set retry using number",
 			test: func(t *testing.T, host *testHost) {
 				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
-					r.Equal(t, time.Duration(1000), args.Retry.MaxRetryMs)
-					r.Equal(t, time.Duration(0), args.Retry.InitialRetryMs)
+					r.Equal(t, 1000*time.Millisecond, args.Retry.MaxRetryTime)
+					r.Equal(t, time.Duration(0), args.Retry.InitialRetryTime)
 					r.Equal(t, 100, args.Retry.Retries)
 					return &common.KafkaProduceResult{}, nil
 				}
@@ -269,12 +269,51 @@ func TestScript_Kafka_Produce(t *testing.T) {
 				s, err := New(newScript("",
 					`import { produce } from 'mokapi/kafka'
 						 export default function() {
-						  	return produce({ retry: { maxRetryMs: 1000, initialRetryMs: 0, retries: 100 } })
+						  	return produce({ retry: { maxRetryTime: 1000, initialRetryTime: 0, retries: 100 } })
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
+			},
+		},
+		{
+			name: "set retry using string",
+			test: func(t *testing.T, host *testHost) {
+				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					r.Equal(t, 30*time.Second, args.Retry.MaxRetryTime)
+					r.Equal(t, 200*time.Millisecond, args.Retry.InitialRetryTime)
+					r.Equal(t, 100, args.Retry.Retries)
+					return &common.KafkaProduceResult{}, nil
+				}
+
+				s, err := New(newScript("",
+					`import { produce } from 'mokapi/kafka'
+						 export default function() {
+						  	return produce({ retry: { maxRetryTime: '30s', initialRetryTime: '200ms', retries: 100 } })
+						 }`),
+					host, static.JsConfig{})
+				r.NoError(t, err)
+				err = s.Run()
+				r.NoError(t, err)
+			},
+		},
+		{
+			name: "set retry using invalid type",
+			test: func(t *testing.T, host *testHost) {
+				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					return &common.KafkaProduceResult{}, nil
+				}
+
+				s, err := New(newScript("",
+					`import { produce } from 'mokapi/kafka'
+						 export default function() {
+						  	return produce({ retry: { maxRetryTime: [12], initialRetryTime: '200ms', retries: 100 } })
+						 }`),
+					host, static.JsConfig{})
+				r.NoError(t, err)
+				err = s.Run()
+				r.EqualError(t, err, "type []interface {} for maxRetryTime not supported at reflect.methodValueCall (native)")
 			},
 		},
 	}

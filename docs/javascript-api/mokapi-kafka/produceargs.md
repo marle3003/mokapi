@@ -16,6 +16,7 @@ and contains produce-specific arguments.
 | key (optional, deprecated)        | any    | Kafka message key. If not specified, a random key will be generated based on the topic configuration.                                                             |
 | value (optional, deprecated)      | any    | Kafka message value. If not specified, a random value will be generated based on the topic configuration. Object will be encoded based on the topic configuration |
 | headers (optional, deprecated)    | object | Kafka message headers.                                                                                                                                            |
+| retry                             | object | [KafkaProduceRetry](/docs/javascript-api/mokapi-kafka/kafkaproduceretry.md) object is used if script is executed before Kafka topic is set up.                    |
 
 ## Example
 

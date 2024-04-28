@@ -30,7 +30,11 @@ func newKafka(host common.Host, rt *goja.Runtime) interface{} {
 }
 
 func (m *kafkaModule) Produce(v goja.Value) interface{} {
-	args := mapParams(v, m.rt)
+	args, err := mapParams(v, m.rt)
+	if err != nil {
+		panic(m.rt.ToValue(err.Error()))
+	}
+
 	result, err := m.client.Produce(args)
 	if err != nil {
 		log.Errorf("js error: %v in %v", err, m.host.Name())
@@ -46,11 +50,12 @@ func (m *kafkaModule) Produce(v goja.Value) interface{} {
 	return result
 }
 
-func mapParams(args goja.Value, rt *goja.Runtime) *common.KafkaProduceArgs {
+func mapParams(args goja.Value, rt *goja.Runtime) (*common.KafkaProduceArgs, error) {
 	opt := &common.KafkaProduceArgs{Retry: common.KafkaProduceRetry{
-		MaxRetryMs:     30000,
-		InitialRetryMs: 200,
-		Retries:        5,
+		MaxRetryTime:     30000 * time.Millisecond,
+		InitialRetryTime: 200 * time.Millisecond,
+		Retries:          5,
+		Factor:           4,
 	}}
 
 	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
@@ -144,14 +149,40 @@ func mapParams(args goja.Value, rt *goja.Runtime) *common.KafkaProduceArgs {
 				}
 			case "retry":
 				retry := params.Get(k).Export().(map[string]interface{})
-				if v, ok := retry["maxRetryMs"]; ok {
-					opt.Retry.MaxRetryMs = time.Duration(v.(int64))
+				if i, ok := retry["maxRetryTime"]; ok {
+					switch v := i.(type) {
+					case int64:
+						opt.Retry.MaxRetryTime = time.Duration(v) * time.Millisecond
+					case string:
+						d, err := time.ParseDuration(v)
+						if err != nil {
+							return nil, fmt.Errorf("parse maxRetryTime failed: %w", err)
+						}
+						opt.Retry.MaxRetryTime = d
+					default:
+						return nil, fmt.Errorf("type %T for maxRetryTime not supported", v)
+					}
+
 				}
-				if v, ok := retry["initialRetryMs"]; ok {
-					opt.Retry.InitialRetryMs = time.Duration(v.(int64))
+				if i, ok := retry["initialRetryTime"]; ok {
+					switch v := i.(type) {
+					case int64:
+						opt.Retry.InitialRetryTime = time.Duration(v) * time.Millisecond
+					case string:
+						d, err := time.ParseDuration(v)
+						if err != nil {
+							return nil, fmt.Errorf("parse initialRetryTime failed: %w", err)
+						}
+						opt.Retry.InitialRetryTime = d
+					default:
+						return nil, fmt.Errorf("type %T for initialRetryTime not supported", v)
+					}
 				}
 				if v, ok := retry["retries"]; ok {
 					opt.Retry.Retries = int(v.(int64))
+				}
+				if v, ok := retry["factor"]; ok {
+					opt.Retry.Factor = int(v.(int64))
 				}
 			}
 		}
@@ -161,5 +192,5 @@ func mapParams(args goja.Value, rt *goja.Runtime) *common.KafkaProduceArgs {
 			opt.Messages = append(opt.Messages, common.KafkaMessage{})
 		}
 	}
-	return opt
+	return opt, nil
 }

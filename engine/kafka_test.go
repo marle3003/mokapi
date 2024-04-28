@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
+	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
+	"io"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
@@ -226,8 +228,12 @@ func TestKafkaClient_Produce(t *testing.T) {
 		{
 			name: "test retry",
 			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *Engine) {
+				logrus.SetOutput(io.Discard)
+				logrus.SetLevel(logrus.DebugLevel)
+				hook := test.NewGlobal()
+
 				go func() {
-					time.Sleep(time.Second * 2)
+					time.Sleep(time.Second * 1)
 
 					config := asyncapitest.NewConfig(
 						asyncapitest.WithInfo("foo", "", ""),
@@ -254,6 +260,11 @@ func TestKafkaClient_Produce(t *testing.T) {
 				require.NotNil(t, b)
 				require.Len(t, b.Records, 1, "message should be written despite validation error")
 				require.Equal(t, "12", kafka.BytesToString(b.Records[0].Value))
+				require.Equal(t, []string([]string{
+					"parsing script test.js",
+					"kafka topic 'retry' not found. Retry in 200ms",
+					"kafka topic 'retry' not found. Retry in 800ms",
+				}), getMessages(hook))
 			},
 		},
 	}
@@ -335,4 +346,12 @@ func sendMessage(s *store.Store, headers map[string]string) {
 	m := monitor.New()
 	r.Context = monitor.NewKafkaContext(r.Context, m.Kafka)
 	s.ServeMessage(rr, r)
+}
+
+func getMessages(hook *test.Hook) []string {
+	var result []string
+	for _, e := range hook.Entries {
+		result = append(result, e.Message)
+	}
+	return result
 }

@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
@@ -93,18 +94,19 @@ func (c *kafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 
 func (c *kafkaClient) tryGet(cluster string, topic string, retry common.KafkaProduceRetry) (t *store.Topic, config *asyncApi.Config, err error) {
 	count := 0
-	backoff := retry.InitialRetryMs
+	backoff := retry.InitialRetryTime
 	for {
 		t, config, err = c.get(cluster, topic)
 		if err == nil {
 			return
 		}
 		count++
-		if count >= retry.Retries || backoff > retry.MaxRetryMs {
+		if count >= retry.Retries || backoff > retry.MaxRetryTime {
 			return
 		}
-		time.Sleep(time.Millisecond * backoff)
-		backoff *= 4
+		log.Debugf("kafka topic '%v' not found. Retry in %v", topic, backoff)
+		time.Sleep(backoff)
+		backoff *= time.Duration(retry.Factor)
 	}
 }
 

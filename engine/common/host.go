@@ -73,9 +73,10 @@ type KafkaMessage struct {
 }
 
 type KafkaProduceRetry struct {
-	MaxRetryMs     time.Duration
-	InitialRetryMs time.Duration
-	Retries        int
+	MaxRetryTime     time.Duration
+	InitialRetryTime time.Duration
+	Factor           int
+	Retries          int
 }
 
 type KafkaProduceResult struct {

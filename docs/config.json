@@ -119,7 +119,8 @@
           "ProduceArgs": "javascript-api/mokapi-kafka/produceargs.md",
           "ProduceResult": "javascript-api/mokapi-kafka/produceresult.md",
           "KafkaMessage": "javascript-api/mokapi-kafka/kafkamessage.md",
-          "KafkaMessageResult": "javascript-api/mokapi-kafka/kafkamessageresult.md"
+          "KafkaMessageResult": "javascript-api/mokapi-kafka/kafkamessageresult.md",
+          "KafkaProduceRetry": "javascript-api/mokapi-kafka/kafkaproduceretry.md"
         }
       },
       "mokapi/mustache": {
