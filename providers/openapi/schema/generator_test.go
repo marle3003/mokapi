@@ -341,7 +341,7 @@ func TestGeneratorInt(t *testing.T) {
 				Type:             "integer",
 				Format:           "int64",
 				Minimum:          toFloatP(3),
-				Maximum:          toFloatP(6),
+				Maximum:          toFloatP(5),
 				ExclusiveMinimum: toBoolP(true),
 				ExclusiveMaximum: toBoolP(true),
 			},
@@ -361,7 +361,7 @@ func TestGeneratorInt(t *testing.T) {
 				ExclusiveMaximum: toBoolP(true),
 			},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "invalid minimum '5' and maximum '4' in schema type=integer format=int64 exclusiveMinimum=5 exclusiveMaximum=4")
+				require.EqualError(t, err, "invalid minimum '5' and maximum '4' in schema type=integer format=int64 exclusiveMinimum=4 exclusiveMaximum=5")
 			},
 		},
 	}
@@ -434,7 +434,7 @@ func TestGeneratorFloat(t *testing.T) {
 		},
 		{
 			"exclusive minimum",
-			0.11829549300021547,
+			0.11829549300021638,
 			&schema.Schema{Type: "number", Format: "double",
 				Minimum: toFloatP(0.1), ExclusiveMinimum: toBoolP(true),
 				Maximum: toFloatP(0.3),
@@ -442,7 +442,7 @@ func TestGeneratorFloat(t *testing.T) {
 		},
 		{
 			"exclusive maximum",
-			0.2545738732500539,
+			0.25457387325005376,
 			&schema.Schema{Type: "number", Format: "double",
 				Minimum: toFloatP(0.25),
 				Maximum: toFloatP(0.3), ExclusiveMaximum: toBoolP(true),

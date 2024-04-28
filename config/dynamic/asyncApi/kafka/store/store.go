@@ -291,10 +291,16 @@ func (s *Store) trigger(record *kafka.Record) {
 
 	r := &EventRecord{
 		Offset:  record.Offset,
-		Key:     kafka.BytesToString(record.Key),
-		Value:   kafka.BytesToString(record.Value),
 		Headers: h,
 	}
+
+	if record.Key != nil {
+		r.Key = kafka.BytesToString(record.Key)
+	}
+	if record.Value != nil {
+		r.Value = kafka.BytesToString(record.Value)
+	}
+
 	s.eventEmitter.Emit("kafka", r)
 
 	record.Key = kafka.NewBytes([]byte(r.Key))

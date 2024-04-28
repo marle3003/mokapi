@@ -100,7 +100,8 @@ export default function() {
             case 'configdata':
                 const configData = configs[request.path.id]
                 if (configData) {
-                    response.data = configData
+                    response.data = configData.data
+                    response.headers = configData.headers
                     return true
                 } else {
                     response.statusCode = 404
@@ -115,7 +116,12 @@ export default function() {
 
     for (const config of [...Object.values(httpConfigs),...Object.values(kafkaConfigs)]) {
         const r = get(config.data)
-        configs[config.id] = r.body
+        configs[config.id] = {
+            data:   r.body,
+            headers: {
+                'Content-Disposition': `inline; filename="${config.filename}"`
+            }
+        }
     }
 }
 

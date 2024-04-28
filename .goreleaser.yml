@@ -7,8 +7,10 @@ builds:
     main: ./cmd/mokapi
     goos:
       - linux
+      - darwin
     goarch:
       - amd64
+      - arm64
 archives:
   - name_template: '{{ .ProjectName }}_v{{ .Version }}_{{ .Os }}_{{ .Arch }}'
     format: tar.gz
@@ -16,6 +18,7 @@ checksum:
   name_template: "{{ .ProjectName }}_v{{ .Version }}_linux_checksums.txt"
 snapshot:
   name_template: "{{ .Version }}"
+
 dockers:
   - goos: linux
     goarch: amd64
@@ -24,3 +27,20 @@ dockers:
       - "mokapi/mokapi:{{ .Tag }}"
     dockerfile: Dockerfile-linux
     use: buildx
+
+brews:
+  - repository:
+      owner: marle3003
+      name: homebrew-tap
+    directory: Formula
+    homepage: https://mokapi.io
+    description: "Easy and flexible API mocking using Go and Javascript - https://mokapi.io"
+
+nfpms:
+  - license: MIT
+    maintainer: Marcel Lehmann
+    homepage: https://mokapi.io
+    description: "Easy and flexible API mocking using Go and Javascript - https://mokapi.io"
+    formats:
+      - rpm
+      - deb

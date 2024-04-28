@@ -22,7 +22,7 @@ runs:
         git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
       shell: bash
     - name: Download Report
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: ${{ inputs.artifact-test-report }}
         path: gh-pages/${{ inputs.test-report-path }}

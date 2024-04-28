@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
@@ -10,6 +11,7 @@ import (
 	"mokapi/media"
 	"mokapi/providers/openapi/schema"
 	"mokapi/runtime"
+	"strings"
 	"time"
 )
 
@@ -24,7 +26,7 @@ func newKafkaClient(app *runtime.App) *kafkaClient {
 }
 
 func (c *kafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
-	t, p, config, err := c.get(args.Cluster, args.Topic, args.Partition)
+	t, config, err := c.tryGet(args.Cluster, args.Topic, args.Retry)
 	if err != nil {
 		return nil, err
 	}
@@ -34,88 +36,81 @@ func (c *kafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 		return nil, fmt.Errorf("produce kafka message to '%v' failed: invalid topic configuration", t.Name)
 	}
 
-	rb, err := c.createRecordBatch(args.Key, args.Value, args.Headers, ch.Value)
-	if err != nil {
-		return nil, fmt.Errorf("produce kafka message to '%v' failed: %w", t.Name, err)
-	}
+	var produced []common.KafkaMessageResult
+	for _, r := range args.Messages {
+		var options []store.WriteOptions
+		if r.Value != nil {
+			options = append(options, func(args *store.WriteArgs) {
+				args.SkipValidation = true
+			})
+		}
 
-	_, err = p.Write(rb)
-	if err != nil {
-		return nil, fmt.Errorf("produce kafka message to '%v' failed: %w", t.Name, err)
-	}
+		p, err := c.getPartition(t, r.Partition)
+		if err != nil {
+			return nil, err
+		}
 
-	k := kafka.BytesToString(rb.Records[0].Key)
-	v := kafka.BytesToString(rb.Records[0].Value)
-	t.Store().UpdateMetrics(c.app.Monitor.Kafka, t, p, rb)
+		v := r.Data
+		if r.Value != nil {
+			v = r.Value
+		}
 
-	h := map[string]string{}
-	for _, v := range rb.Records[0].Headers {
-		h[v.Key] = string(v.Value)
+		rb, err := c.createRecordBatch(r.Key, v, r.Headers, ch.Value)
+		if err != nil {
+			return nil, fmt.Errorf("produce kafka message to '%v' failed: %w", t.Name, err)
+		}
+
+		_, records, err := p.Write(rb, options...)
+		if err != nil {
+			var sb strings.Builder
+			for _, r := range records {
+				sb.WriteString(fmt.Sprintf("%v: %v\n", r.BatchIndex, r.BatchIndexErrorMessage))
+			}
+			return nil, fmt.Errorf("produce kafka message to '%v' failed: %w \n%v", t.Name, err, sb.String())
+		}
+		t.Store().UpdateMetrics(c.app.Monitor.Kafka, t, p, rb)
+
+		h := map[string]string{}
+		for _, v := range rb.Records[0].Headers {
+			h[v.Key] = string(v.Value)
+		}
+
+		produced = append(produced, common.KafkaMessageResult{
+			Key:       kafka.BytesToString(rb.Records[0].Key),
+			Value:     kafka.BytesToString(rb.Records[0].Value),
+			Offset:    rb.Records[0].Offset,
+			Headers:   h,
+			Partition: p.Index,
+		})
 	}
 
 	return &common.KafkaProduceResult{
-		Cluster:   config.Info.Name,
-		Topic:     t.Name,
-		Partition: p.Index,
-		Offset:    rb.Records[0].Offset,
-		Key:       k,
-		Value:     v,
-		Headers:   h,
+		Cluster:  config.Info.Name,
+		Topic:    t.Name,
+		Messages: produced,
 	}, nil
 
 }
 
-func (c *kafkaClient) write(partition *store.Partition, config *asyncApi.Channel, key, value interface{}, headers map[string]interface{}) (interface{}, interface{}, error) {
-	msg := config.Publish.Message.Value
-	if msg == nil {
-		return nil, nil, fmt.Errorf("message configuration missing")
-	}
-	var err error
-
-	if key == nil {
-		key, err = schema.CreateValue(msg.Bindings.Kafka.Key)
-		if err != nil {
-			return nil, nil, fmt.Errorf("unable to generate kafka key: %v", err)
+func (c *kafkaClient) tryGet(cluster string, topic string, retry common.KafkaProduceRetry) (t *store.Topic, config *asyncApi.Config, err error) {
+	count := 0
+	backoff := retry.InitialRetryTime
+	for {
+		t, config, err = c.get(cluster, topic)
+		if err == nil {
+			return
 		}
-	}
-	if value == nil {
-		value, err = schema.CreateValue(msg.Payload)
-		if err != nil {
-			return nil, nil, fmt.Errorf("unable to generate kafka data: %v", err)
+		count++
+		if count >= retry.Retries || backoff > retry.MaxRetryTime {
+			return
 		}
+		log.Debugf("kafka topic '%v' not found. Retry in %v", topic, backoff)
+		time.Sleep(backoff)
+		backoff *= time.Duration(retry.Factor)
 	}
-
-	var k []byte
-	switch msg.Bindings.Kafka.Key.Value.Type {
-	case "object", "array":
-		k, err = msg.Bindings.Kafka.Key.Marshal(key, media.ParseContentType("application/json"))
-		if err != nil {
-			return nil, nil, err
-		}
-	default:
-		k = []byte(fmt.Sprintf("%v", key))
-	}
-
-	v, err := msg.Payload.Marshal(value, media.ParseContentType("application/json"))
-	if err != nil {
-		return nil, nil, err
-	}
-
-	_, err = partition.Write(kafka.RecordBatch{Records: []kafka.Record{
-		{
-			Key:     kafka.NewBytes(k),
-			Value:   kafka.NewBytes(v),
-			Headers: nil,
-		},
-	}})
-
-	if err != nil {
-		return nil, nil, err
-	}
-	return key, value, nil
 }
 
-func (c *kafkaClient) get(cluster string, topic string, partition int) (t *store.Topic, p *store.Partition, config *asyncApi.Config, err error) {
+func (c *kafkaClient) get(cluster string, topic string) (t *store.Topic, config *asyncApi.Config, err error) {
 	if len(cluster) == 0 {
 		var topics []*store.Topic
 		for _, v := range c.app.Kafka {
@@ -145,17 +140,18 @@ func (c *kafkaClient) get(cluster string, topic string, partition int) (t *store
 		return
 	}
 
+	return
+}
+
+func (c *kafkaClient) getPartition(t *store.Topic, partition int) (*store.Partition, error) {
 	if partition < 0 {
 		r := rand.New(rand.NewSource(time.Now().Unix()))
 		partition = r.Intn(len(t.Partitions))
 	} else if partition >= len(t.Partitions) {
-		err = fmt.Errorf("partiton %v does not exist", partition)
-		return
+		return nil, fmt.Errorf("partiton %v does not exist", partition)
 	}
 
-	p = t.Partition(partition)
-
-	return
+	return t.Partition(partition), nil
 }
 
 func (c *kafkaClient) createRecordBatch(key, value interface{}, headers map[string]interface{}, config *asyncApi.Channel) (rb kafka.RecordBatch, err error) {
@@ -179,9 +175,13 @@ func (c *kafkaClient) createRecordBatch(key, value interface{}, headers map[stri
 	}
 
 	var v []byte
-	v, err = msg.Payload.Marshal(value, media.ParseContentType("application/json"))
-	if err != nil {
-		return
+	if b, ok := value.([]byte); ok {
+		v = b
+	} else {
+		v, err = msg.Payload.Marshal(value, media.ParseContentType("application/json"))
+		if err != nil {
+			return
+		}
 	}
 
 	var k []byte

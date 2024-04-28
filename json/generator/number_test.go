@@ -7,9 +7,6 @@ import (
 	"testing"
 )
 
-func toFloat64P(f float64) *float64 { return &f }
-func toIntP(i int) *int             { return &i }
-
 func TestNumber(t *testing.T) {
 	testcases := []struct {
 		name    string
@@ -231,6 +228,25 @@ func TestInt32(t *testing.T) {
 							schematest.WithFormat("int32"),
 							schematest.WithMinimum(0),
 							schematest.WithMaximum(15),
+						),
+					},
+				},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int32(9), v)
+			},
+		},
+		{
+			name: "int32 exclusive",
+			request: &Request{
+				Path: Path{
+					&PathElement{
+						Name: "size",
+						Schema: schematest.NewRef("integer",
+							schematest.WithFormat("int32"),
+							schematest.WithExclusiveMinimum(0),
+							schematest.WithExclusiveMaximum(15),
 						),
 					},
 				},

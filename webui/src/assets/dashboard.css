@@ -37,10 +37,12 @@
 .dashboard .card .header .label {
   font-size: 0.7rem;
   margin: 0 0 0.3rem;
+  color: var(--color-text-light);
 }
 .dashboard .card .label {
   font-size: 0.7rem;
   margin: 0 0 0.3rem;
+  color: var(--color-text-light);
 }
 
 .custom-popover {

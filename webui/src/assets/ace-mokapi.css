@@ -9,10 +9,10 @@
 .ace_scroller {
     left: 61px !important;
 }
-.ace-mokapi-dark .ace_marker-layer .ace_selected-word, .ace_marker-layer .ace_selection {
+.ace-mokapi-dark .ace_marker-layer .ace_selected-word, .ace-mokapi-dark  .ace_marker-layer .ace_selection {
     background: #1e4173;
 }
-.ace-mokapi-light .ace_marker-layer .ace_selected-word, .ace_marker-layer .ace_selection {
+.ace-mokapi-light .ace_marker-layer .ace_selected-word, .ace-mokapi-light .ace_marker-layer .ace_selection {
     background: rgb(187, 223, 255);
 }
 

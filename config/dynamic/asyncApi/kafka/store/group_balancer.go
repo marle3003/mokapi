@@ -113,11 +113,20 @@ func (b *groupBalancer) run() {
 				log.Infof("kafka: group %v state changed from %v to %v", b.group.Name, states[b.group.State], states[Stable])
 				b.group.State = Stable
 				for _, s := range syncs {
+					memberName := s.client.Member[b.group.Name]
+					assign := assigns[memberName]
 					res := &syncGroup.Response{
-						Assignment: assigns[s.client.Member[b.group.Name]].raw,
+						Assignment: assign.raw,
 					}
 					go b.respond(s.writer, res)
 				}
+
+				for memberName, assign := range assigns {
+					for topicName, partitions := range assign.topics {
+						b.group.Generation.Members[memberName].Partitions[topicName] = partitions
+					}
+				}
+
 				log.Infof("kafka: received assignments from leader '%v' for group '%v'", s.client.ClientId, b.group.Name)
 			case assigns == nil: // waiting for leader
 				syncs = append(syncs, s)
@@ -170,7 +179,7 @@ StopWaitingForConsumers:
 	var protocol string
 	for _, j := range b.joins {
 		memberId := j.client.GetOrCreateMemberId(b.group.Name)
-		generation.Members[memberId] = &Member{Client: j.client, SessionTimeout: j.sessionTimeout}
+		generation.Members[memberId] = newMember(j.client, j.sessionTimeout)
 
 		for _, proto := range j.protocols {
 			if _, ok := counter[proto.Name]; !ok {

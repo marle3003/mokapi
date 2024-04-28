@@ -53,7 +53,7 @@ type Generation struct {
 }
 
 type Member struct {
-	Partitions     []*Partition
+	Partitions     map[string][]int
 	Client         *kafka.ClientContext
 	SessionTimeout int
 }
@@ -109,4 +109,12 @@ func (g GroupState) String() string {
 		return "Stable"
 	}
 	return "Unknown"
+}
+
+func newMember(ctx *kafka.ClientContext, sessionTimeout int) *Member {
+	return &Member{
+		Partitions:     map[string][]int{},
+		Client:         ctx,
+		SessionTimeout: sessionTimeout,
+	}
 }

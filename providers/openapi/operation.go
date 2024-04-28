@@ -44,21 +44,18 @@ type Operation struct {
 }
 
 func (o *Operation) getFirstSuccessResponse() (int, *Response, error) {
-	var successStatus int
 	for it := o.Responses.Iter(); it.Next(); {
 		status := it.Key()
 		if IsHttpStatusSuccess(status) {
-			successStatus = status
-			break
+			r := it.Value()
+			if r != nil {
+				return status, r.Value, nil
+			}
+			return status, nil, nil
 		}
 	}
 
-	if successStatus == 0 {
-		return 0, nil, fmt.Errorf("no success response (HTTP 2xx) in configuration")
-	}
-
-	r := o.Responses.GetResponse(successStatus)
-	return successStatus, r, nil
+	return 0, nil, fmt.Errorf("no success response (HTTP 2xx) in configuration")
 }
 
 func (o *Operation) getResponse(statusCode int) *Response {

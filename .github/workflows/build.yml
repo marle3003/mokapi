@@ -18,9 +18,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Setup node
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
-          node-version: '16'
+          node-version: 20
       - name: build webui
         working-directory: ./webui
         run: |

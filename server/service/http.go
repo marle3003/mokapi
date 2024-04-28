@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"io"
 	"mokapi/lib"
@@ -92,7 +93,7 @@ func (s *HttpServer) Start() {
 		default:
 			err = s.server.ListenAndServe()
 		}
-		if err != http.ErrServerClosed {
+		if !errors.Is(err, http.ErrServerClosed) {
 			log.Errorf("unable to start http server %v: %v", s.server.Addr, err)
 		}
 	}()

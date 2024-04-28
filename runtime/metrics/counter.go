@@ -9,6 +9,7 @@ import (
 type Counter struct {
 	info  *Info
 	value float64
+	m     sync.Mutex
 }
 
 func NewCounter(opt ...Options) *Counter {
@@ -20,6 +21,9 @@ func NewCounter(opt ...Options) *Counter {
 }
 
 func (c *Counter) Add(v float64) {
+	c.m.Lock()
+	defer c.m.Unlock()
+
 	c.value += v
 }
 

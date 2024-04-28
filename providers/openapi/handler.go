@@ -61,6 +61,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		writeError(rw, r, err, h.config.Info.Name)
 		return
 	}
+
 	contentType, mediaType, err := ContentTypeFromRequest(r, res)
 	if err != nil {
 		writeError(rw, r, err, h.config.Info.Name)

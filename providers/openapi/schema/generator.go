@@ -55,24 +55,14 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 
 	if s.Minimum != nil {
 		if s.ExclusiveMinimum != nil && *s.ExclusiveMinimum {
-			if s.Type == "integer" {
-				min := *s.Minimum + 1
-				js.ExclusiveMinimum = &min
-			} else {
-				js.ExclusiveMinimum = s.Minimum
-			}
+			js.ExclusiveMinimum = s.Minimum
 		} else {
 			js.Minimum = s.Minimum
 		}
 	}
 	if s.Maximum != nil {
 		if s.ExclusiveMaximum != nil && *s.ExclusiveMaximum {
-			if s.Type == "integer" {
-				max := *s.Maximum - 1
-				js.ExclusiveMaximum = &max
-			} else {
-				js.ExclusiveMaximum = s.Maximum
-			}
+			js.ExclusiveMaximum = s.Maximum
 		} else {
 			js.Maximum = s.Maximum
 		}

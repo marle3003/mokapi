@@ -112,6 +112,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, c)
 
+				time.Sleep(500 * time.Millisecond)
 				ch <- &dynamic.Config{Info: dynamic.ConfigInfo{Url: configPath, Checksum: []byte{10}}, Raw: []byte("foobar")}
 				time.Sleep(5 * time.Millisecond)
 				require.Equal(t, "foobar", c.Data)

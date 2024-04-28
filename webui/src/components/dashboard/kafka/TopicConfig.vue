@@ -58,7 +58,7 @@ function filename() {
         <div class="row mt-2">
             <ul class="nav nav-pills tab-sm" role="tablist">
                 <li class="nav-link" :class="topic.configs.key ? '' : 'disabled'" id="tab-config-schemas-key" data-bs-toggle="pill" data-bs-target="#tabpanel-config-schemas-key" type="button" role="tab" aria-controls="tabpanel-config-schemas-key" aria-selected="false">Key</li>
-                <li class="nav-link active" id="tab-config-schemas-message" data-bs-toggle="pill" data-bs-target="#tabpanel-config-schemas-message" type="button" role="tab" aria-controls="tabpanel-config-schemas-message" aria-selected="true">Message</li>
+                <li class="nav-link active" id="tab-config-schemas-message" data-bs-toggle="pill" data-bs-target="#tabpanel-config-schemas-message" type="button" role="tab" aria-controls="tabpanel-config-schemas-message" aria-selected="true">Value</li>
             </ul>
 
             <div class="tab-content" id="tab-config-schemas">
@@ -70,10 +70,10 @@ function filename() {
                         <source-view :source="formatSchema(topic.configs.message)" content-type="application/json" :hide-content-type="true" :height="500" class="mb-2" :filename="topic.name+'-message.json'" />
                         <div class="row">
                             <div class="col-auto pe-2 mt-1">
-                                <schema-expand :schema="topic.configs.message" :title="'Message - '+topic.name" :source="{filename: topic.name+'-message.json'}" />
+                                <schema-expand :schema="topic.configs.message" :title="'Value - '+topic.name" :source="{filename: topic.name+'-message.json'}" />
                             </div>
                             <div class="col-auto pe-2 mt-1">
-                                <schema-example :content-type="topic.configs.messageType" :schema="topic.configs.message" :title="'Message Example - ' + topic.name" :source="{ filename: filename() }"/>
+                                <schema-example :content-type="topic.configs.messageType" :schema="topic.configs.message" :title="'Value Example - ' + topic.name" :source="{ filename: filename() }"/>
                             </div>
                             <div class="col-auto pe-2 mt-1">
                                 <schema-validate :schema="topic.configs.message" :content-type="topic.configs.messageType" />

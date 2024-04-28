@@ -1,11 +1,14 @@
 package store
 
 import (
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
+	"io"
 	"testing"
 )
 
 func TestGroup_NewGeneration(t *testing.T) {
+	logrus.SetOutput(io.Discard)
 	g := &Group{}
 
 	g.NewGeneration()
@@ -18,6 +21,8 @@ func TestGroup_NewGeneration(t *testing.T) {
 }
 
 func TestGroup_Commit(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	g := &Group{}
 	require.Equal(t, int64(-1), g.Offset("foo", 0))
 	require.Equal(t, int64(-1), g.Offset("foo", 1))

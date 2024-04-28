@@ -71,6 +71,16 @@ func TestResponse_UnmarshalJSON(t *testing.T) {
 				require.Equal(t, 0, res.Len())
 			},
 		},
+		{
+			name: "check order of response",
+			test: func(t *testing.T) {
+				res := openapi.Responses[int]{}
+				err := json.Unmarshal([]byte(`{ "200": { "description": "200" }, "204": { "description": "200" }, "202": { "description": "200" }, "301": { "description": "301" }, "404": { "description": "404" } }`), &res)
+				require.NoError(t, err)
+				require.Equal(t, 5, res.Len())
+				require.Equal(t, []int{200, 204, 202, 301, 404}, res.Keys())
+			},
+		},
 	}
 
 	t.Parallel()

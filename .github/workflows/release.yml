@@ -23,9 +23,9 @@ jobs:
       - uses: actions/setup-go@v3
         with:
           go-version: 1.20.1
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v4
         with:
-          node-version: '16'
+          node-version: 20
           registry-url: 'https://registry.npmjs.org'
       - run: sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b ~/.local/bin
       - run: npm install
@@ -52,9 +52,9 @@ jobs:
       - uses: actions/setup-go@v3
         with:
           go-version: 1.20.1
-      - uses: actions/setup-node@v2
+      - uses: actions/setup-node@v4
         with:
-          node-version: '16'
+          node-version: 20
           registry-url: 'https://registry.npmjs.org'
       - run: choco install go-task
       - run: npm install

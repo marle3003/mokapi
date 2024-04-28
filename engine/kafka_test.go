@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
+	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
+	"io"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
@@ -73,7 +75,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 				require.Equal(t, "version", b.Records[0].Headers[0].Key)
 				require.Equal(t, []byte("1.0"), b.Records[0].Headers[0].Value)
 
-				require.Equal(t, `{"cluster":"foo","topic":"foo","partition":0,"offset":0,"key":"foo","value":"\"bar\"","headers":{"version":"1.0"}}`, hook.LastEntry().Message)
+				require.Equal(t, `{"cluster":"foo","topic":"foo","messages":[{"key":"foo","value":"\"bar\"","offset":0,"headers":{"version":"1.0"},"partition":0}]}`, hook.LastEntry().Message)
 			},
 		},
 		{
@@ -110,6 +112,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 				b, errCode := s.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
+				require.Len(t, b.Records, 1)
 			},
 		},
 		{
@@ -118,10 +121,10 @@ func TestKafkaClient_Produce(t *testing.T) {
 				err := engine.AddScript(newScript("test.js", `
 					import { on } from 'mokapi'
 					export default function() {
-						on('kafka', function(record) {
-							console.log(record)
-							record.value = 'mokapi'
-							record.headers = { version: '1.0' }
+						on('kafka', function(message) {
+							console.log(message)
+							message.value = 'mokapi'
+							message.headers = { version: '1.0' }
 						})
 					}
 				`))
@@ -147,8 +150,8 @@ func TestKafkaClient_Produce(t *testing.T) {
 				err := engine.AddScript(newScript("test.js", `
 					import { on } from 'mokapi'
 					export default function() {
-						on('kafka', function(record) {
-							record.headers = { version: '1.0' }
+						on('kafka', function(message) {
+							message.headers = { version: '1.0' }
 						})
 					}
 				`))
@@ -174,8 +177,8 @@ func TestKafkaClient_Produce(t *testing.T) {
 				err := engine.AddScript(newScript("test.js", `
 					import { on } from 'mokapi'
 					export default function() {
-						on('kafka', function(record) {
-							record.headers = null
+						on('kafka', function(message) {
+							message.headers = null
 						})
 					}
 				`))
@@ -185,6 +188,83 @@ func TestKafkaClient_Produce(t *testing.T) {
 
 				b, _ := s.Topic("foo").Partition(0).Read(0, 1000)
 				require.Len(t, b.Records[0].Headers, 0)
+			},
+		},
+		{
+			name: "validation error",
+			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *Engine) {
+				err := engine.AddScript(newScript("test.js", `
+					import { produce } from 'mokapi/kafka'
+					export default function() {
+						produce({ topic: 'foo', messages: [{ data: 12 }] })
+					}
+				`))
+				require.EqualError(t, err, "produce kafka message to 'foo' failed: marshal data to 'application/json' failed: validation error on int64, expected schema type=string at reflect.methodValueCall (native)")
+
+				b, errCode := s.Topic("foo").Partition(0).Read(0, 1000)
+				require.Equal(t, kafka.None, errCode)
+				require.NotNil(t, b)
+				require.Len(t, b.Records, 0, "no record should be written")
+			},
+		},
+		{
+			name: "using value instead of data (skip validation)",
+			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *Engine) {
+				err := engine.AddScript(newScript("test.js", `
+					import { produce } from 'mokapi/kafka'
+					export default function() {
+						produce({ topic: 'foo', messages: [{ value: 12 }] })
+					}
+				`))
+				require.NoError(t, err)
+
+				b, errCode := s.Topic("foo").Partition(0).Read(0, 1000)
+				require.Equal(t, kafka.None, errCode)
+				require.NotNil(t, b)
+				require.Len(t, b.Records, 1, "message should be written despite validation error")
+				require.Equal(t, "12", kafka.BytesToString(b.Records[0].Value))
+			},
+		},
+		{
+			name: "test retry",
+			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *Engine) {
+				logrus.SetOutput(io.Discard)
+				logrus.SetLevel(logrus.DebugLevel)
+				hook := test.NewGlobal()
+
+				go func() {
+					time.Sleep(time.Second * 1)
+
+					config := asyncapitest.NewConfig(
+						asyncapitest.WithInfo("foo", "", ""),
+						asyncapitest.WithChannel("retry",
+							asyncapitest.WithSubscribeAndPublish(
+								asyncapitest.WithMessage(
+									asyncapitest.WithContentType("application/json"),
+									asyncapitest.WithPayload(schematest.New("string")),
+									asyncapitest.WithKey(schematest.New("string"))))),
+					)
+					app.AddKafka(getConfig(config), nil)
+				}()
+
+				err := engine.AddScript(newScript("test.js", `
+					import { produce } from 'mokapi/kafka'
+					export default function() {
+						produce({ topic: 'retry', messages: [{ value: 12 }] })
+					}
+				`))
+				require.NoError(t, err)
+
+				b, errCode := s.Topic("retry").Partition(0).Read(0, 1000)
+				require.Equal(t, kafka.None, errCode)
+				require.NotNil(t, b)
+				require.Len(t, b.Records, 1, "message should be written despite validation error")
+				require.Equal(t, "12", kafka.BytesToString(b.Records[0].Value))
+				require.Equal(t, []string([]string{
+					"parsing script test.js",
+					"kafka topic 'retry' not found. Retry in 200ms",
+					"kafka topic 'retry' not found. Retry in 800ms",
+				}), getMessages(hook))
 			},
 		},
 	}
@@ -201,7 +281,11 @@ func TestKafkaClient_Produce(t *testing.T) {
 						asyncapitest.WithMessage(
 							asyncapitest.WithContentType("application/json"),
 							asyncapitest.WithPayload(schematest.New("string")),
-							asyncapitest.WithKey(schematest.New("string"))))),
+							asyncapitest.WithKey(schematest.New("string")),
+						),
+					),
+					asyncapitest.WithTopicBinding(bindings.TopicBindings{ValueSchemaValidation: true}),
+				),
 				asyncapitest.WithChannel("bar",
 					asyncapitest.WithChannelKafka(bindings.TopicBindings{Partitions: 10}),
 					asyncapitest.WithSubscribeAndPublish(
@@ -211,7 +295,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 							asyncapitest.WithKey(schematest.New("string"))))),
 			)
 			app := runtime.New()
-			engine := New(reader, app, static.JsConfig{})
+			engine := New(reader, app, static.JsConfig{}, false)
 			info := app.AddKafka(getConfig(config), engine)
 			tc.test(t, app, info.Store, engine)
 		})
@@ -262,4 +346,12 @@ func sendMessage(s *store.Store, headers map[string]string) {
 	m := monitor.New()
 	r.Context = monitor.NewKafkaContext(r.Context, m.Kafka)
 	s.ServeMessage(rr, r)
+}
+
+func getMessages(hook *test.Hook) []string {
+	var result []string
+	for _, e := range hook.Entries {
+		result = append(result, e.Message)
+	}
+	return result
 }

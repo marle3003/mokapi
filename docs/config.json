@@ -84,11 +84,12 @@
           "EventHandler": {
             "items": {
               "EventHandler": "javascript-api/mokapi/eventhandler/eventhandler.md",
+              "EventArgs": "javascript-api/mokapi/eventhandler/eventargs.md",
               "HttpEventHandler": "javascript-api/mokapi/eventhandler/httpeventhandler.md",
               "HttpRequest": "javascript-api/mokapi/eventhandler/httprequest.md",
               "HttpResponse": "javascript-api/mokapi/eventhandler/httpresponse.md",
               "KafkaEventHandler": "javascript-api/mokapi/eventhandler/kafkaeventhandler.md",
-              "KafkaRecord": "javascript-api/mokapi/eventhandler/kafkarecord.md",
+              "KafkaEventMessage": "javascript-api/mokapi/eventhandler/kafkaeventmessage.md",
               "ScheduledEventArgs": "javascript-api/mokapi/eventhandler/scheduledeventargs.md"
             }
           }
@@ -116,7 +117,10 @@
         "items": {
           "produce": "javascript-api/mokapi-kafka/produce.md",
           "ProduceArgs": "javascript-api/mokapi-kafka/produceargs.md",
-          "ProduceResult": "javascript-api/mokapi-kafka/produceresult.md"
+          "ProduceResult": "javascript-api/mokapi-kafka/produceresult.md",
+          "Message": "javascript-api/mokapi-kafka/message.md",
+          "MessageResult": "javascript-api/mokapi-kafka/messageresult.md",
+          "ProduceRetry": "javascript-api/mokapi-kafka/produceretry.md"
         }
       },
       "mokapi/mustache": {
@@ -143,7 +147,8 @@
       "Examples": {
         "expanded": true,
         "items": {
-          "Mokapi behind Reverse Proxy": "examples/examples/mokapi-behind-proxy.md"
+          "Mokapi behind Reverse Proxy": "examples/examples/mokapi-behind-proxy.md",
+          "Mokapi with custom base image": "examples/examples/mokapi-with-custom-base-image.md"
         }
       },
       "Tutorials": {

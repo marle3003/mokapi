@@ -194,7 +194,7 @@ func (w *ConfigWatcher) configChanged(c *dynamic.Config) {
 	log.Debugf("processing %v", c.Info.Path())
 
 	for _, l := range w.listener {
-		l(e.config)
+		go l(e.config)
 	}
 }
 

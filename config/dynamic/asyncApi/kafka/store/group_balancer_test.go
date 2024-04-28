@@ -16,10 +16,11 @@ import (
 func TestGroupBalancing(t *testing.T) {
 	testcases := []struct {
 		name string
-		fn   func(t *testing.T, b *kafkatest.Broker)
+		test func(t *testing.T, b *kafkatest.Broker, s *store.Store)
 	}{
-		{"join group",
-			func(t *testing.T, b *kafkatest.Broker) {
+		{
+			name: "join group",
+			test: func(t *testing.T, b *kafkatest.Broker, s *store.Store) {
 				meta := []byte{
 					0, 1, // version
 					0, 0, 0, 1, // topic array length
@@ -43,8 +44,56 @@ func TestGroupBalancing(t *testing.T) {
 				require.Equal(t, join.MemberId, join.Members[0].MemberId)
 				require.Equal(t, meta, join.Members[0].MetaData)
 			}},
-		{"two members join same group",
-			func(t *testing.T, b *kafkatest.Broker) {
+		{
+			name: "join without memberId",
+			test: func(t *testing.T, b *kafkatest.Broker, s *store.Store) {
+				join, err := b.Client().JoinGroup(3, &joinGroup.Request{
+					GroupId:      "TestGroup",
+					ProtocolType: "consumer",
+					Protocols: []joinGroup.Protocol{{
+						Name: "range",
+					}},
+				})
+				require.NoError(t, err)
+				require.Equal(t, kafka.None, join.ErrorCode)
+			},
+		},
+		{
+			name: "two consumer join without memberId",
+			test: func(t *testing.T, b *kafkatest.Broker, s *store.Store) {
+				ch := make(chan *joinGroup.Response, 2)
+				runJoin := func() {
+					c := kafkatest.NewClient(b.Addr, "kafkatest")
+					defer c.Close()
+					join, err := c.JoinGroup(3, &joinGroup.Request{
+						GroupId:      "TestGroup",
+						ProtocolType: "consumer",
+						Protocols: []joinGroup.Protocol{{
+							Name: "range",
+						}},
+					})
+					if err != nil {
+						panic(err)
+					}
+					ch <- join
+				}
+
+				go runJoin()
+				go runJoin()
+
+				j1 := <-ch
+				j2 := <-ch
+
+				require.Equal(t, kafka.None, j1.ErrorCode)
+				require.Equal(t, kafka.None, j2.ErrorCode)
+
+				g, _ := s.Group("TestGroup")
+				require.Len(t, g.Generation.Members, 2)
+			},
+		},
+		{
+			name: "two members join same group",
+			test: func(t *testing.T, b *kafkatest.Broker, s *store.Store) {
 				meta := []byte{
 					0, 1, // version
 					0, 0, 0, 1, // topic array length
@@ -99,8 +148,9 @@ func TestGroupBalancing(t *testing.T) {
 				require.Equal(t, "foo1", leader.Members[0].MemberId)
 				require.Equal(t, meta, leader.Members[0].MetaData)
 			}},
-		{"sync group but not member",
-			func(t *testing.T, b *kafkatest.Broker) {
+		{
+			name: "sync group but not member",
+			test: func(t *testing.T, b *kafkatest.Broker, s *store.Store) {
 				sync, err := b.Client().SyncGroup(3, &syncGroup.Request{
 					GroupId:      "TestGroup",
 					GenerationId: 0,
@@ -109,8 +159,9 @@ func TestGroupBalancing(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, kafka.IllegalGeneration, sync.ErrorCode)
 			}},
-		{"sync group but joining state",
-			func(t *testing.T, b *kafkatest.Broker) {
+		{
+			name: "sync group but joining state",
+			test: func(t *testing.T, b *kafkatest.Broker, s *store.Store) {
 				ch := make(chan *joinGroup.Response)
 				go func() {
 					c := kafkatest.NewClient(b.Addr, "kafkatest")
@@ -137,8 +188,9 @@ func TestGroupBalancing(t *testing.T) {
 				// wait for join response
 				<-ch
 			}},
-		{"sync group successfully",
-			func(t *testing.T, b *kafkatest.Broker) {
+		{
+			name: "sync group successfully",
+			test: func(t *testing.T, b *kafkatest.Broker, s *store.Store) {
 				join, err := b.Client().JoinGroup(3, &joinGroup.Request{
 					GroupId:      "TestGroup",
 					MemberId:     "foo",
@@ -171,9 +223,20 @@ func TestGroupBalancing(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, kafka.None, sync.ErrorCode)
 				require.Equal(t, assign, sync.Assignment)
+
+				g, ok := s.Group("TestGroup")
+				require.True(t, ok, "group must exist")
+				require.NotNil(t, g.Generation, "generation must exist")
+				require.Len(t, g.Generation.Members, 1, "group must contain one members")
+				require.Contains(t, g.Generation.Members, "foo")
+				m := g.Generation.Members["foo"]
+				require.Len(t, m.Partitions, 1)
+				require.Contains(t, m.Partitions, "foo")
+				require.Equal(t, m.Partitions["foo"], []int{1})
 			}},
-		{"sync group with wrong generation id",
-			func(t *testing.T, b *kafkatest.Broker) {
+		{
+			name: "sync group with wrong generation id",
+			test: func(t *testing.T, b *kafkatest.Broker, s *store.Store) {
 				join, err := b.Client().JoinGroup(3, &joinGroup.Request{
 					GroupId:      "TestGroup",
 					MemberId:     "foo",
@@ -198,8 +261,9 @@ func TestGroupBalancing(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, kafka.IllegalGeneration, sync.ErrorCode)
 			}},
-		{"sync group successfully with two consumers",
-			func(t *testing.T, b *kafkatest.Broker) {
+		{
+			name: "sync group successfully with two consumers",
+			test: func(t *testing.T, b *kafkatest.Broker, s *store.Store) {
 				groupAssign := []syncGroup.GroupAssignment{
 					{"leader", []byte{
 						0, 1, // version
@@ -214,7 +278,7 @@ func TestGroupBalancing(t *testing.T) {
 						0, 0, 0, 1, // topic array length
 						0, 3, 'f', 'o', 'o', // topic foo
 						0, 0, 0, 1, // partition array length
-						0, 0, 0, 2, // partition 1
+						0, 0, 0, 2, // partition 2
 						0, 0, 0, 3, 0x01, 0x02, 0x03, // userdata
 					}, nil},
 				}
@@ -271,6 +335,26 @@ func TestGroupBalancing(t *testing.T) {
 				require.Equal(t, "leader", join.Leader)
 				require.Equal(t, "member", join.MemberId)
 				require.Equal(t, uint8(2), sync.Assignment[18]) // partition 2
+
+				// group
+				g, ok := s.Group("TestGroup")
+				require.True(t, ok, "group must exist")
+				require.NotNil(t, g.Generation, "generation must exist")
+				require.Len(t, g.Generation.Members, 2, "group must contain two members")
+				require.Contains(t, g.Generation.Members, "leader")
+				require.Contains(t, g.Generation.Members, "member")
+
+				// leader
+				m := g.Generation.Members["leader"]
+				require.Len(t, m.Partitions, 1)
+				require.Contains(t, m.Partitions, "foo")
+				require.Equal(t, m.Partitions["foo"], []int{1})
+
+				// member
+				m = g.Generation.Members["member"]
+				require.Len(t, m.Partitions, 1)
+				require.Contains(t, m.Partitions, "foo")
+				require.Equal(t, m.Partitions["foo"], []int{2})
 			}},
 	}
 
@@ -285,7 +369,7 @@ func TestGroupBalancing(t *testing.T) {
 			defer b.Close()
 			s.Update(asyncapitest.NewConfig(asyncapitest.WithServer("", "kafka", b.Addr)))
 
-			tc.fn(t, b)
+			tc.test(t, b, s)
 		})
 	}
 }

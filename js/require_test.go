@@ -177,6 +177,26 @@ func TestRequire(t *testing.T) {
 			},
 		},
 		{
+			name: "require custom module with index.js",
+			test: func(t *testing.T, host *testHost) {
+				host.openFile = func(file, hint string) (string, string, error) {
+					path := filepath.Join(hint, file)
+					path = filepath.ToSlash(path) // if on windows
+					switch {
+					case path == "/foo/users/index.js":
+						return file, "export const users = ['bob', 'alice']", nil
+					}
+					return "", "", fmt.Errorf("not found")
+				}
+				s, err := New(newScript(`/foo/bar/test.js`, `import { users } from '../users'; export default () => users`), host, static.JsConfig{})
+				r.NoError(t, err)
+
+				v, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, []interface{}{"bob", "alice"}, v.Export())
+			},
+		},
+		{
 			name: "require node module in parent folder",
 			test: func(t *testing.T, host *testHost) {
 				host.openFile = func(file, hint string) (string, string, error) {

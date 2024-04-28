@@ -43,10 +43,11 @@ func (s *Store) produce(rw kafka.ResponseWriter, req *kafka.Request) error {
 					resPartition.ErrorMessage = fmt.Sprintf("unknown partition %v", rp.Index)
 					log.Errorf("kafka Produce: %v", resPartition.ErrorMessage)
 				} else {
-					baseOffset, err := p.Write(rp.Record)
+					baseOffset, records, err := p.Write(rp.Record)
 					if err != nil {
 						resPartition.ErrorCode = kafka.CorruptMessage
 						resPartition.ErrorMessage = fmt.Sprintf("invalid message received for topic %v: %v", rt.Name, err)
+						resPartition.RecordErrors = records
 						log.Errorf("kafka Produce: %v", resPartition.ErrorMessage)
 					} else {
 						resPartition.BaseOffset = baseOffset

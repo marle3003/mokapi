@@ -58,7 +58,8 @@ export const configs = {
         url: 'https://www.example.com/foo/bar/communication/service/asyncapi.json',
         provider: 'http',
         time: '2023-02-15T08:49:25.482366+01:00',
-        data: 'http://localhost:8090/api/services/kafka/Kafka%20World'
+        data: 'http://localhost:8090/api/services/kafka/Kafka%20World',
+        filename: 'asyncapi.json'
     }
 }
 
@@ -147,7 +148,7 @@ export let clusters = [
                         clientSoftwareName: 'mokapi',
                         clientSoftwareVersion: '1.0',
                         heartbeat: 1654771269,
-                        partitions: [ 1, 2 ]
+                        partitions: { 'mokapi.shop.products': [ 0,1 ], 'mokapi.shop.userSignedUp': [ 0 ] }
                     },
                     {
                         name: 'hermann',
@@ -155,7 +156,7 @@ export let clusters = [
                         clientSoftwareName: 'mokapi',
                         clientSoftwareVersion: '1.0',
                         heartbeat: 1654872269,
-                        partitions: [ 3 ]
+                        partitions: { 'mokapi.shop.products': [ 2 ], 'mokapi.shop.userSignedUp': [ ] }
                     }
                 ],
                 coordinator: 'localhost:9092',
@@ -173,7 +174,7 @@ export let clusters = [
                         clientSoftwareName: 'mokapi',
                         clientSoftwareVersion: '1.0',
                         heartbeat: 1654721269,
-                        partitions: [ 1 ]
+                        partitions: { 'mokapi.shop.userSignedUp': [ 0 ] }
                     }
                 ],
                 coordinator: 'localhost:9092',

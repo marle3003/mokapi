@@ -12,11 +12,11 @@ optional fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m".
 By default, the first execution happens immediately, check ScheduledEventArgs
 ```
 
-| Parameter       | Type     | Description                                                                                                         |
-|-----------------|----------|---------------------------------------------------------------------------------------------------------------------|
-| interval        | string   | Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".                                                     |
-| handler         | function | The handler function to be executed every `interval`. By default, the first execution happens immediately.          |
-| args (optional) | object   | [ScheduledEventArgs](/docs/javascript-api/mokapi/scheduledeventargs.md) object contains additional event arguments. | 
+| Parameter       | Type     | Description                                                                                                                      |
+|-----------------|----------|----------------------------------------------------------------------------------------------------------------------------------|
+| interval        | string   | Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".                                                                  |
+| handler         | function | The handler function to be executed every `interval`. By default, the first execution happens immediately.                       |
+| args (optional) | object   | [ScheduledEventArgs](/docs/javascript-api/mokapi/eventhandler/scheduledeventargs.md) object contains additional event arguments. | 
 
 ## Example
 

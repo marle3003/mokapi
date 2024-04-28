@@ -325,6 +325,33 @@ func TestConvert(t *testing.T) {
 			},
 		},
 		{
+			name:   "operation default response",
+			config: `{"swagger": "2.0", "paths": {"/foo": {"get": {"responses": {   "default": { "description": "default" }  }}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
+				require.Contains(t, config.Paths, "/foo")
+				p := config.Paths["/foo"]
+				require.NotNil(t, p.Value.Get)
+				get := p.Value.Get
+				res, ok := get.Responses.Get(0)
+				require.True(t, ok)
+				require.NotNil(t, res)
+				require.Equal(t, "default", res.Value.Description)
+			},
+		},
+		{
+			name:   "operation responses order",
+			config: `{"swagger": "2.0", "paths": {"/foo": {"get": {"responses": {   "200": { "description": "200" }, "204": { "description": "200" }, "202": { "description": "200" }, "301": { "description": "301" }, "404": { "description": "404" }  }}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
+				require.Contains(t, config.Paths, "/foo")
+				p := config.Paths["/foo"]
+				require.NotNil(t, p.Value.Get)
+				get := p.Value.Get
+				res := get.Responses
+				require.Equal(t, 5, res.Len())
+				require.Equal(t, []int{200, 204, 202, 301, 404}, res.Keys())
+			},
+		},
+		{
 			name:   "path parameter body",
 			config: `{"swagger": "2.0", "paths": {"/foo/{id}":{"parameters": [{"name": "id","in":"body","required":true,"description":"id parameter","schema":{"type": "string"}}],"get":{"consumes":["application/json"]}}}}`,
 			test: func(t *testing.T, config *openapi.Config) {

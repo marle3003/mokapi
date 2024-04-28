@@ -1,9 +1,15 @@
 package swagger
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"gopkg.in/yaml.v3"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/schema"
+	"mokapi/sortedmap"
 	"net/http"
+	"strconv"
 )
 
 type Config struct {
@@ -35,17 +41,21 @@ type PathItem struct {
 }
 
 type Operation struct {
-	Summary     string               `yaml:"summary,omitempty" json:"summary,omitempty"`
-	Description string               `yaml:"description,omitempty" json:"description,omitempty"`
-	Tags        []string             `yaml:"tags,omitempty" json:"tags,omitempty"`
-	OperationID string               `yaml:"operationId,omitempty" json:"operationId,omitempty"`
-	Deprecated  bool                 `yaml:"deprecated" json:"deprecated"`
-	Parameters  Parameters           `yaml:"parameters,omitempty" json:"parameters,omitempty"`
-	Responses   map[string]*Response `yaml:"responses" json:"responses"`
-	Consumes    []string             `yaml:"consumes,omitempty" json:"consumes,omitempty"`
-	Produces    []string             `yaml:"produces,omitempty" json:"produces,omitempty"`
-	Schemes     []string             `yaml:"schemes,omitempty" json:"schemes,omitempty"`
+	Summary     string          `yaml:"summary,omitempty" json:"summary,omitempty"`
+	Description string          `yaml:"description,omitempty" json:"description,omitempty"`
+	Tags        []string        `yaml:"tags,omitempty" json:"tags,omitempty"`
+	OperationID string          `yaml:"operationId,omitempty" json:"operationId,omitempty"`
+	Deprecated  bool            `yaml:"deprecated" json:"deprecated"`
+	Parameters  Parameters      `yaml:"parameters,omitempty" json:"parameters,omitempty"`
+	Responses   *Responses[int] `yaml:"responses" json:"responses"`
+	Consumes    []string        `yaml:"consumes,omitempty" json:"consumes,omitempty"`
+	Produces    []string        `yaml:"produces,omitempty" json:"produces,omitempty"`
+	Schemes     []string        `yaml:"schemes,omitempty" json:"schemes,omitempty"`
 }
+
+type Responses[K string | int] struct {
+	sortedmap.LinkedHashMap[K, *Response]
+} // map[HttpStatus]*ResponseRef
 
 type Response struct {
 	Ref         string                 `yaml:"$ref,omitempty" json:"$ref,omitempty"`
@@ -123,4 +133,80 @@ func (p PathItems) Resolve(token string) (interface{}, error) {
 		return v, nil
 	}
 	return nil, nil
+}
+
+func (r *Responses[K]) UnmarshalJSON(b []byte) error {
+	dec := json.NewDecoder(bytes.NewReader(b))
+	token, err := dec.Token()
+	if err != nil {
+		return err
+	}
+	if delim, ok := token.(json.Delim); ok && delim != '{' {
+		return fmt.Errorf("expected openapi.Responses map, got %s", token)
+	}
+	r.LinkedHashMap = sortedmap.LinkedHashMap[K, *Response]{}
+	for {
+		token, err = dec.Token()
+		if err != nil {
+			return err
+		}
+		if delim, ok := token.(json.Delim); ok && delim == '}' {
+			return nil
+		}
+		key := token.(string)
+		val := &Response{}
+		err = dec.Decode(&val)
+		if err != nil {
+			return err
+		}
+		switch m := any(&r.LinkedHashMap).(type) {
+		case *sortedmap.LinkedHashMap[string, *Response]:
+			m.Set(key, val)
+		case *sortedmap.LinkedHashMap[int, *Response]:
+			if key == "default" {
+				m.Set(0, val)
+			} else {
+				statusCode, err := strconv.Atoi(key)
+				if err != nil {
+					return fmt.Errorf("unable to parse http status %v", key)
+				}
+				m.Set(statusCode, val)
+			}
+		}
+	}
+}
+
+func (r *Responses[K]) UnmarshalYAML(value *yaml.Node) error {
+	if value.Kind != yaml.MappingNode {
+		return fmt.Errorf("expected openapi.Responses map, got %v", value.Tag)
+	}
+	r.LinkedHashMap = sortedmap.LinkedHashMap[K, *Response]{}
+	for i := 0; i < len(value.Content); i += 2 {
+		var key string
+		err := value.Content[i].Decode(&key)
+		if err != nil {
+			return err
+		}
+		val := &Response{}
+		err = value.Content[i+1].Decode(&val)
+		if err != nil {
+			return err
+		}
+		switch m := any(&r.LinkedHashMap).(type) {
+		case *sortedmap.LinkedHashMap[string, *Response]:
+			m.Set(key, val)
+		case *sortedmap.LinkedHashMap[int, *Response]:
+			if key == "default" {
+				m.Set(0, val)
+			} else {
+				statusCode, err := strconv.Atoi(key)
+				if err != nil {
+					return fmt.Errorf("unable to parse http status %v", key)
+				}
+				m.Set(statusCode, val)
+			}
+		}
+	}
+
+	return nil
 }

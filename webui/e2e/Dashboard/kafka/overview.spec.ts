@@ -8,7 +8,7 @@ test('Visit Kafka overview', async ({ page }) => {
     await open()
     await tabs.kafka.click()
 
-    await test.step('Check message metric', async () => {
+    await test.step('Check messages metric', async () => {
         await expect(page.getByRole('status', { name: 'Kafka Messages' })).toHaveText('11')
     })
 

@@ -8,7 +8,6 @@ import (
 	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/schema"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
@@ -157,16 +156,14 @@ func (c *converter) convertOperation(o *Operation) (*openapi.Operation, error) {
 		}
 	}
 
-	for statusCode, r := range o.Responses {
-		converted, err := c.convertResponse(r, produces)
-		if err != nil {
-			return nil, err
+	if o.Responses != nil {
+		for it := o.Responses.Iter(); it.Next(); {
+			converted, err := c.convertResponse(it.Value(), produces)
+			if err != nil {
+				return nil, err
+			}
+			result.Responses.Set(it.Key(), converted)
 		}
-		i, err := strconv.Atoi(statusCode)
-		if err != nil {
-			return nil, fmt.Errorf("status code %v is not a valid integer", statusCode)
-		}
-		result.Responses.Set(i, converted)
 	}
 
 	return result, nil

@@ -8,6 +8,7 @@ import (
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/engine/enginetest"
+	kafka2 "mokapi/kafka"
 	"mokapi/providers/openapi/schema/schematest"
 	"mokapi/runtime"
 	"mokapi/runtime/monitor"
@@ -183,6 +184,64 @@ func TestHandler_Kafka(t *testing.T) {
 			},
 			requestUrl:   "http://foo.api/api/services/kafka/foo",
 			responseBody: `{"name":"foo","description":"bar","version":"1.0","servers":[{"name":"foo","url":"foo.bar","description":""}],"groups":[{"name":"foo","members":null,"coordinator":"foo.bar:9092","leader":"","state":"PreparingRebalance","protocol":"range","topics":null}]}`,
+		},
+		{
+			name: "get specific with group containing members",
+			app: func() *runtime.App {
+				mustTime := func(s string) time.Time {
+					t1, err := time.Parse(time.RFC3339, s)
+					if err != nil {
+						panic(err)
+					}
+					return t1
+				}
+
+				return &runtime.App{
+					Monitor: monitor.New(),
+					Kafka: map[string]*runtime.KafkaInfo{
+						"foo": getKafkaInfoWithGroup(asyncapitest.NewConfig(
+							asyncapitest.WithInfo("foo", "bar", "1.0"),
+							asyncapitest.WithServer("foo", "kafka", "foo.bar"),
+						),
+							&store.Group{
+								Name:  "foo",
+								State: store.PreparingRebalance,
+								Generation: &store.Generation{
+									Id:                 3,
+									Protocol:           "range",
+									LeaderId:           "m1",
+									RebalanceTimeoutMs: 0,
+									Members: map[string]*store.Member{
+										"m1": {
+											Client: &kafka2.ClientContext{
+												Addr:                  "192.168.0.100",
+												ClientId:              "client1",
+												ClientSoftwareName:    "mokapi",
+												ClientSoftwareVersion: "1.0",
+												Heartbeat:             mustTime("2024-04-22T15:04:05+07:00"),
+											},
+											Partitions: map[string][]int{"topic": {1, 2, 5}},
+										},
+										"m2": {
+											Client: &kafka2.ClientContext{
+												Addr:                  "192.168.0.200",
+												ClientId:              "client2",
+												ClientSoftwareName:    "mokapi",
+												ClientSoftwareVersion: "1.0",
+												Heartbeat:             mustTime("2024-04-22T15:04:10+07:00"),
+											},
+											Partitions: map[string][]int{"topic": {3, 4, 6}},
+										},
+									},
+								},
+								Commits: nil,
+							},
+						),
+					},
+				}
+			},
+			requestUrl:   "http://foo.api/api/services/kafka/foo",
+			responseBody: `{"name":"foo","description":"bar","version":"1.0","servers":[{"name":"foo","url":"foo.bar","description":""}],"groups":[{"name":"foo","members":[{"name":"m1","addr":"192.168.0.100","clientSoftwareName":"mokapi","clientSoftwareVersion":"1.0","heartbeat":"2024-04-22T15:04:05+07:00","partitions":{"topic":[1,2,5]}},{"name":"m2","addr":"192.168.0.200","clientSoftwareName":"mokapi","clientSoftwareVersion":"1.0","heartbeat":"2024-04-22T15:04:10+07:00","partitions":{"topic":[3,4,6]}}],"coordinator":"foo.bar:9092","leader":"m1","state":"PreparingRebalance","protocol":"range","topics":null}]}`,
 		},
 	}
 

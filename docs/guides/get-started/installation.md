@@ -13,9 +13,19 @@ or using npm package
 docker pull mokapi/mokapi
 ```
 
+You can also use a custom base Docker image as shown in [this example](/docs/examples/examples/mokapi-with-custom-base-image.md).
+
+## Windows
+
+Install Mokapi by [Chocolatey package manager](https://chocolatey.org/) with:
+
+```Powershell
+choco install mokapi
+```
+
 ## NodeJS npm package
 
-```
+```bash
 npm install go-mokapi
 ```
 

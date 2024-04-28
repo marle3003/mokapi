@@ -6,9 +6,9 @@ description: KafkaEventHandler is a function that is executed when a producer se
 
 KafkaEventHandler is a function that is executed when a Kafka message is received.
 
-| Parameter | Type    | Description                                                                                                             |
-|-----------|---------|-------------------------------------------------------------------------------------------------------------------------|
-| record    | object  | [KafkaRecord](/docs/javascript-api/mokapi/eventhandler/kafkarecord.md) object contains data of a Kafka produce message. |
+| Parameter | Type    | Description                                                                                                                         |
+|-----------|---------|-------------------------------------------------------------------------------------------------------------------------------------|
+| message   | object  | [KafkaEventMessage](/docs/javascript-api/mokapi/eventhandler/kafkaeventmessage.md) object contains data of a Kafka produce message. |
 
 ## Returns
 
@@ -22,9 +22,9 @@ KafkaEventHandler is a function that is executed when a Kafka message is receive
 import { on } from 'mokapi'
 
 export default function() {
-    on('kafka', function(record) {
+    on('kafka', function(message) {
         // add header 'foo' to every Kafka message
-        record.headers = { foo: 'bar' }
+        message.headers = { foo: 'bar' }
     })
 }
 ```

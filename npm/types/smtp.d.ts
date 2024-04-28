@@ -1,15 +1,11 @@
-declare module 'mokapi/mail' {
-    /**
-     * Sends an email message to an SMTP server for delivery.
-     * @param server Host to which the message is to be sent.
-     * @param message a Message that contains the message to send.
-     */
-    function send(server: string, message: Message)
-}
+/**
+ * Sends an email message to an SMTP server for delivery.
+ * @param server Host to which the message is to be sent.
+ * @param message a Message that contains the message to send.
+ */
+export function send(server: string, message: Message)
 
-type SmtpEventHandler = (record: Message) => boolean
-
-declare interface Message {
+export interface Message {
     server: string
     sender?: Address
     from: Address[]
@@ -27,12 +23,12 @@ declare interface Message {
     attachments: Attachment[]
 }
 
-declare interface Address {
+export interface Address {
     name?: string
     address: string
 }
 
-declare interface Attachment {
+export interface Attachment {
     name: string
     contentType: string
     data: Uint8Array

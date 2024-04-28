@@ -132,7 +132,7 @@ function copyToClipboard(event: MouseEvent) {
   display: inline-grid;
   place-content: center;
 }
-.header .controls > button {
+.header .controls > button, .header .controls > a {
   border: 1px solid var(--color-tabs-border);
   padding: 5px 8px;
   height: 28px;

@@ -226,6 +226,18 @@ func (d *Decoder) ReadString() string {
 	return ""
 }
 
+func (d *Decoder) ReadVarString() string {
+	if n := d.ReadVarInt(); n < 0 {
+		return ""
+	} else {
+		b := make([]byte, n)
+		if d.ReadFull(b) {
+			return string(b[0:])
+		}
+	}
+	return ""
+}
+
 func (d *Decoder) ReadUvarint() uint64 {
 	var x uint64
 	var s uint
@@ -306,10 +318,10 @@ func (d *Decoder) ReadBytes() []byte {
 	}
 }
 
-func (d *Decoder) ReadVarNullBytes() []byte {
+func (d *Decoder) ReadVarBytes() []byte {
 	n := d.ReadVarInt()
 	if n == -1 {
-		return []byte{}
+		return nil
 	}
 	b := make([]byte, n)
 	d.ReadFull(b)

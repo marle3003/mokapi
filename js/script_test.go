@@ -9,6 +9,7 @@ import (
 	"mokapi/engine/common"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"sync"
 	"testing"
@@ -120,6 +121,18 @@ func TestScript(t *testing.T) {
 		r.NoError(t, err)
 		r.Equal(t, "deprecated module http: Please use mokapi/http instead: test", warn)
 		s.Close()
+	})
+	t.Run("access process environment variable", func(t *testing.T) {
+		t.Parallel()
+		os.Setenv("MOKAPI_IS_AWESOME", "true")
+		defer os.Unsetenv("MOKAPI_IS_AWESOME")
+
+		host := &testHost{}
+		s, err := New(newScript("", `export default function() { return process.env['MOKAPI_IS_AWESOME'] }`), host, static.JsConfig{})
+		r.NoError(t, err)
+		v, err := s.RunDefault()
+		r.NoError(t, err)
+		r.True(t, v.ToBoolean())
 	})
 }
 

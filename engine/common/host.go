@@ -6,6 +6,7 @@ import (
 	"mokapi/json/generator"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type EventEmitter interface {
@@ -18,9 +19,9 @@ type Script interface {
 }
 
 type JobOptions struct {
-	Times                   int
-	RunFirstTimeImmediately bool
-	Tags                    map[string]string
+	Times                 int
+	SkipImmediateFirstRun bool
+	Tags                  map[string]string
 }
 
 type Host interface {
@@ -56,23 +57,40 @@ type KafkaClient interface {
 }
 
 type KafkaProduceArgs struct {
-	Cluster   string
-	Topic     string
-	Partition int
+	Cluster  string
+	Topic    string
+	Messages []KafkaMessage
+	Timeout  int
+	Retry    KafkaProduceRetry
+}
+
+type KafkaMessage struct {
 	Key       interface{}
-	Value     interface{}
+	Value     []byte
+	Data      interface{}
 	Headers   map[string]interface{}
-	Timeout   int
+	Partition int
+}
+
+type KafkaProduceRetry struct {
+	MaxRetryTime     time.Duration
+	InitialRetryTime time.Duration
+	Factor           int
+	Retries          int
 }
 
 type KafkaProduceResult struct {
-	Cluster   string
-	Topic     string
-	Partition int
-	Offset    int64
+	Cluster  string
+	Topic    string
+	Messages []KafkaMessageResult
+}
+
+type KafkaMessageResult struct {
 	Key       string
 	Value     string
+	Offset    int64
 	Headers   map[string]string
+	Partition int
 }
 
 type HttpClient interface {
@@ -86,9 +104,9 @@ type Action struct {
 
 func NewJobOptions() JobOptions {
 	return JobOptions{
-		Tags:                    map[string]string{},
-		Times:                   -1,
-		RunFirstTimeImmediately: true,
+		Tags:                  map[string]string{},
+		Times:                 -1,
+		SkipImmediateFirstRun: false,
 	}
 }
 
