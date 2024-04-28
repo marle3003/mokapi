@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { usePrettyDates } from '@/composables/usePrettyDate';
-import { usePrettyLanguage } from '@/composables/usePrettyLanguage';
-import type { PropType } from 'vue';
+import { usePrettyDates } from '@/composables/usePrettyDate'
+import type { PropType } from 'vue'
+import { useRoute } from 'vue-router'
 
 defineProps({
     actions: { type: Object as PropType<Action[]>, required: true },
 })
 
-const {duration} = usePrettyDates()
+const route = useRoute()
+const { duration } = usePrettyDates()
 
 function getName(action: Action){
     for (const key in action.tags){
@@ -52,7 +53,12 @@ function getName(action: Action){
                                     <template v-for="(value, key) of action.tags">
                                         <tr>
                                             <td>{{ key }}</td>
-                                            <td>{{ value }}</td>
+                                            <td>
+                                                <router-link v-if="key === 'file' && action.tags.fileKey" :to="{ name: 'config', params: { id: action.tags.fileKey }, query: { refresh: route.query.refresh }}">
+                                                {{ value }}
+                                                </router-link>
+                                                <span v-else>{{ value }}</span>
+                                            </td>
                                         </tr>
                                     </template>
                                 </tbody>
@@ -74,7 +80,6 @@ function getName(action: Action){
 .actions tbody tr.collapse-row td{
     border-bottom-width: 2px;
     border-top-width: 0;
-    padding: 0;
     background-color: var(--color-background-soft);
 }
 .collapse {

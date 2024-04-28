@@ -156,9 +156,10 @@ func (sh *scriptHost) On(event string, handler func(args ...interface{}) (bool, 
 	h := &eventHandler{
 		handler: handler,
 		tags: map[string]string{
-			"name":  sh.name,
-			"file":  sh.name,
-			"event": event,
+			"name":    sh.name,
+			"file":    sh.name,
+			"fileKey": sh.file.Info.Key(),
+			"event":   event,
 		},
 	}
 
