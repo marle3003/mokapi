@@ -1,8 +1,10 @@
 package acceptance
 
 import (
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"io"
 	"mokapi/acceptance/cmd"
 	"mokapi/config/static"
 	"mokapi/runtime/events"
@@ -23,6 +25,8 @@ type BaseSuite struct {
 }
 
 func (suite *BaseSuite) initCmd(cfg *static.Config) {
+	logrus.SetOutput(io.Discard)
+
 	events.SetStore(20, events.NewTraits().WithNamespace("http"))
 	events.SetStore(20, events.NewTraits().WithNamespace("kafka"))
 	events.SetStore(20, events.NewTraits().WithNamespace("smtp"))
