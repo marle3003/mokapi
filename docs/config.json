@@ -118,7 +118,7 @@
           "produce": "javascript-api/mokapi-kafka/produce.md",
           "ProduceArgs": "javascript-api/mokapi-kafka/produceargs.md",
           "ProduceResult": "javascript-api/mokapi-kafka/produceresult.md",
-          "KafkaMessage": "javascript-api/mokapi-kafka/kafkamessage.md",
+          "Message": "javascript-api/mokapi-kafka/message.md",
           "KafkaMessageResult": "javascript-api/mokapi-kafka/kafkamessageresult.md",
           "KafkaProduceRetry": "javascript-api/mokapi-kafka/kafkaproduceretry.md"
         }

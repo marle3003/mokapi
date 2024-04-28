@@ -80,18 +80,18 @@ export interface ProduceArgs {
      *   });
      * }
      */
-    messages: KafkaMessage[]
+    messages: Message[]
 
     /**
      * The retry option is used if script is executed before Kafka topic is set up.
      */
-    retry: KafkaProduceRetry
+    retry: ProduceRetry
 }
 
 /**
  * Represents a Kafka message
  */
-export interface KafkaMessage {
+export interface Message {
     /** Kafka partition index. If not specified, the message will be written to any partition */
     partition?: number;
 
@@ -124,7 +124,7 @@ export interface ProduceResult {
     /** Kafka topic name where the message was written. */
     readonly topic: string;
 
-    messages: KafkaMessageResult[]
+    messages: MessageResult[]
 
     /** Kafka partition where the message was written. */
     readonly partition: number;
@@ -146,7 +146,7 @@ export interface ProduceResult {
  * Contains information of the written Kafka message.
  * https://mokapi.io/docs/javascript-api/mokapi-kafka/kafkamessageresult
  */
-export interface KafkaMessageResult {
+export interface MessageResult {
     /**
      * Kafka partition index in which the message was written.
      */
@@ -176,7 +176,7 @@ export interface KafkaMessageResult {
 /**
  * The retry option can be used to customize the configuration of the retry mechanism.
  */
-export interface KafkaProduceRetry {
+export interface ProduceRetry {
     /**
      * Maximum wait time for a retry
      * MaxRetryTime number express the wait time in milliseconds.
@@ -221,35 +221,4 @@ export interface KafkaProduceRetry {
      * @default 5
      */
     retries: number
-}
-
-/**
- * KafkaEventHandler is a function that is executed when a Kafka message is received.
- * https://mokapi.io/docs/javascript-api/mokapi/eventhandler/KafkaEventHandler
- * @example
- * export default function() {
- *   on('kafka', function(msg) {
- *     // add header 'foo' to every Kafka message
- *     msg.headers = { foo: 'bar' }
- *   })
- * }
- */
-export type KafkaEventHandler = (message: KafkaEventMessage) => boolean;
-
-/**
- * KafkaEventMessage is an object used by KafkaEventHandler that contains Kafka-specific message data.
- * https://mokapi.io/docs/javascript-api/mokapi/eventhandler/KafkaEventMessage
- */
-export interface KafkaEventMessage {
-    /** Kafka partition where the message was written to (read-only). */
-    readonly offset: number;
-
-    /** Kafka message key  */
-    key: string;
-
-    /** Kafka message value */
-    value: string;
-
-    /** Kafka message headers */
-    headers: { [name: string]: string } | null;
 }

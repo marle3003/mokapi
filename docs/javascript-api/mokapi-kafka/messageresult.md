@@ -1,11 +1,10 @@
 ---
-title: KafkaMessageResult
-description: KafkaMessageResult is an object used by functions in the module mokapi/kafka
+title: MessageResult
+description: MessageResult represents a (deserialized) Kafka message
 ---
-# KafkaMessageResult
+# MessageResult
 
-KafkaMessage is an object used by functions in the module mokapi/kafka 
-and contains written message result.
+MessageResult represents a (deserialized) Kafka message
 
 | Name      | Type   | Description                                             |
 |-----------|--------|---------------------------------------------------------|

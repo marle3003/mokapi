@@ -1,11 +1,10 @@
 ---
-title: KafkaMessage
-description: KafkaMessage is an object used by functions in the module mokapi/kafka
+title: Message
+description: Message represents a Kafka message
 ---
-# KafkaMessage
+# Message
 
-KafkaMessage is an object used by functions in the module mokapi/kafka 
-and contains produce-specific arguments.
+Message represents a Kafka message
 
 | Name                 | Type                          | Description                                                                                                                                                                                                             |
 |----------------------|-------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|

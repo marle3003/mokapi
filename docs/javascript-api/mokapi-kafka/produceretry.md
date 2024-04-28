@@ -1,10 +1,10 @@
 ---
-title: KafkaProduceRetry
+title: ProduceRetry
 description: The retry option can be used to customize the configuration of the retry mechanism.
 ---
-# KafkaProduceRetry
+# ProduceRetry
 
-The retry option can be used to customize the configuration of the retry mechanism.
+The retry option can be used to customize the configuration of the retry mechanism used by [produce](/docs/javascript-api/mokapi-kafka/produce.md) function.
 
 | Name             | Type           | Description                                                                                                                                     |
 |------------------|----------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
