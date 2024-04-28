@@ -1,18 +1,18 @@
 ---
 title: Message
-description: Message represents a Kafka message
+description: Message represents a Kafka message used by produce function.
 ---
 # Message
 
-Message represents a Kafka message
+Message represents a Kafka message used by [produce](/docs/javascript-api/mokapi-kafka/produce.md) function
 
-| Name                 | Type                          | Description                                                                                                                                                                                                             |
-|----------------------|-------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| partition (optional) | number                        | Kafka partition index. If not specified, the message will be written to any partition                                                                                                                                   |
-| key  (optional)      | any                           | Kafka message key. If not specified, a random key will be generated based on the topic configuration.                                                                                                                   |
-| data (optional)      | any                           | Kafka message data that is validated against schema. If data and value not specified, a random value will be generated based on the topic configuration. Object will be encoded based on the topic configuration        |
-| value (optional)     | string, number, boolean, null | Kafka message value that is *not* validated against schema. If value and data not specified, a random value will be generated based on the topic configuration. Object will be encoded based on the topic configuration |
-| headers (optional)   | object                        | Kafka message headers.                                                                                                                                                                                                  |
+| Name                 | Type                          | Description                                                                                                                                                                                                                 |
+|----------------------|-------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| partition (optional) | number                        | Kafka partition index. If not specified, the message will be written to any partition                                                                                                                                       |
+| key  (optional)      | any                           | Kafka message key. If not specified, a random key will be generated based on the topic configuration.                                                                                                                       |
+| data (optional)      | any                           | Kafka message data that is validated against schema. If data and value are not specified, a random value will be generated based on the topic configuration. Object will be encoded based on the topic configuration        |
+| value (optional)     | string, number, boolean, null | Kafka message value that is *not* validated against schema. If value and data are not specified, a random value will be generated based on the topic configuration. Object will be encoded based on the topic configuration |
+| headers (optional)   | object                        | Kafka message headers.                                                                                                                                                                                                      |
 
 ## Example
 
