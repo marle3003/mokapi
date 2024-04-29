@@ -193,6 +193,9 @@ func TestKafkaClient_Produce(t *testing.T) {
 		{
 			name: "validation error",
 			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *Engine) {
+				logrus.SetOutput(io.Discard)
+				hook := test.NewGlobal()
+
 				err := engine.AddScript(newScript("test.js", `
 					import { produce } from 'mokapi/kafka'
 					export default function() {
@@ -205,6 +208,10 @@ func TestKafkaClient_Produce(t *testing.T) {
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
 				require.Len(t, b.Records, 0, "no record should be written")
+
+				// logs
+				require.Len(t, hook.Entries, 1)
+				require.Equal(t, "js error: produce kafka message to 'foo' failed: marshal data to 'application/json' failed: validation error on int64, expected schema type=string in test.js", hook.LastEntry().Message)
 			},
 		},
 		{

@@ -332,3 +332,114 @@ func TestScript_Kafka_Produce(t *testing.T) {
 		})
 	}
 }
+
+func TestKafkaModule_Produce_DeprecatedAttributes(t *testing.T) {
+	testcases := []struct {
+		name string
+		test func(t *testing.T, host *testHost)
+	}{
+		{
+			name: "key",
+			test: func(t *testing.T, host *testHost) {
+				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					return &common.KafkaProduceResult{}, nil
+				}
+				var warn string
+				host.warn = func(args ...interface{}) {
+					warn = args[0].(string)
+				}
+
+				s, err := New(newScript("",
+					`import { produce } from 'mokapi/kafka'
+						 export default function() {
+						  	return produce({ key: 'foo' })
+						 }`),
+					host, static.JsConfig{})
+				r.NoError(t, err)
+				err = s.Run()
+				r.NoError(t, err)
+				r.Equal(t, "DEPRECATED: 'key' should not be used anymore: check https://mokapi.io/docs/javascript-api/mokapi-kafka/produceargs for more info in test host", warn)
+			},
+		},
+		{
+			name: "value",
+			test: func(t *testing.T, host *testHost) {
+				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					return &common.KafkaProduceResult{}, nil
+				}
+				var warn string
+				host.warn = func(args ...interface{}) {
+					warn = args[0].(string)
+				}
+
+				s, err := New(newScript("",
+					`import { produce } from 'mokapi/kafka'
+						 export default function() {
+						  	return produce({ value: 'foo' })
+						 }`),
+					host, static.JsConfig{})
+				r.NoError(t, err)
+				err = s.Run()
+				r.NoError(t, err)
+				r.Equal(t, "DEPRECATED: 'value' should not be used anymore: check https://mokapi.io/docs/javascript-api/mokapi-kafka/produceargs for more info in test host", warn)
+			},
+		},
+		{
+			name: "headers",
+			test: func(t *testing.T, host *testHost) {
+				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					return &common.KafkaProduceResult{}, nil
+				}
+				var warn string
+				host.warn = func(args ...interface{}) {
+					warn = args[0].(string)
+				}
+
+				s, err := New(newScript("",
+					`import { produce } from 'mokapi/kafka'
+						 export default function() {
+						  	return produce({ headers: { 'foo': 'bar' } })
+						 }`),
+					host, static.JsConfig{})
+				r.NoError(t, err)
+				err = s.Run()
+				r.NoError(t, err)
+				r.Equal(t, "DEPRECATED: 'headers' should not be used anymore: check https://mokapi.io/docs/javascript-api/mokapi-kafka/produceargs for more info in test host", warn)
+			},
+		},
+		{
+			name: "partition",
+			test: func(t *testing.T, host *testHost) {
+				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					return &common.KafkaProduceResult{}, nil
+				}
+				var warn string
+				host.warn = func(args ...interface{}) {
+					warn = args[0].(string)
+				}
+
+				s, err := New(newScript("",
+					`import { produce } from 'mokapi/kafka'
+						 export default function() {
+						  	return produce({ partition: 1 })
+						 }`),
+					host, static.JsConfig{})
+				r.NoError(t, err)
+				err = s.Run()
+				r.NoError(t, err)
+				r.Equal(t, "DEPRECATED: 'partition' should not be used anymore: check https://mokapi.io/docs/javascript-api/mokapi-kafka/produceargs for more info in test host", warn)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			host := &testHost{
+				kafkaClient: &kafkaClient{},
+			}
+
+			tc.test(t, host)
+		})
+	}
+}
