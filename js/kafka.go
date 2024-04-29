@@ -30,7 +30,7 @@ func newKafka(host common.Host, rt *goja.Runtime) interface{} {
 }
 
 func (m *kafkaModule) Produce(v goja.Value) interface{} {
-	args, err := mapParams(v, m.rt)
+	args, err := m.mapParams(v)
 	if err != nil {
 		panic(m.rt.ToValue(err.Error()))
 	}
@@ -50,7 +50,7 @@ func (m *kafkaModule) Produce(v goja.Value) interface{} {
 	return result
 }
 
-func mapParams(args goja.Value, rt *goja.Runtime) (*common.KafkaProduceArgs, error) {
+func (m *kafkaModule) mapParams(args goja.Value) (*common.KafkaProduceArgs, error) {
 	opt := &common.KafkaProduceArgs{Retry: common.KafkaProduceRetry{
 		MaxRetryTime:     30000 * time.Millisecond,
 		InitialRetryTime: 200 * time.Millisecond,
@@ -59,7 +59,7 @@ func mapParams(args goja.Value, rt *goja.Runtime) (*common.KafkaProduceArgs, err
 	}}
 
 	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
-		params := args.ToObject(rt)
+		params := args.ToObject(m.rt)
 		var message *common.KafkaMessage
 		for _, k := range params.Keys() {
 			switch k {
@@ -79,6 +79,7 @@ func mapParams(args goja.Value, rt *goja.Runtime) (*common.KafkaProduceArgs, err
 				if message == nil {
 					message = &common.KafkaMessage{}
 				}
+				m.warnDeprecatedAttribute("partition")
 
 				partition := params.Get(k)
 				if goja.IsUndefined(partition) || goja.IsNull(partition) {
@@ -89,6 +90,7 @@ func mapParams(args goja.Value, rt *goja.Runtime) (*common.KafkaProduceArgs, err
 				if message == nil {
 					message = &common.KafkaMessage{Partition: -1}
 				}
+				m.warnDeprecatedAttribute("key")
 
 				key := params.Get(k)
 				if goja.IsUndefined(key) || goja.IsNull(key) {
@@ -99,6 +101,7 @@ func mapParams(args goja.Value, rt *goja.Runtime) (*common.KafkaProduceArgs, err
 				if message == nil {
 					message = &common.KafkaMessage{Partition: -1}
 				}
+				m.warnDeprecatedAttribute("value")
 
 				value := params.Get(k)
 				if goja.IsUndefined(value) || goja.IsNull(value) {
@@ -109,6 +112,7 @@ func mapParams(args goja.Value, rt *goja.Runtime) (*common.KafkaProduceArgs, err
 				if message == nil {
 					message = &common.KafkaMessage{Partition: -1}
 				}
+				m.warnDeprecatedAttribute("headers")
 
 				headers := params.Get(k)
 				if goja.IsUndefined(headers) || goja.IsNull(headers) {
@@ -193,4 +197,8 @@ func mapParams(args goja.Value, rt *goja.Runtime) (*common.KafkaProduceArgs, err
 		}
 	}
 	return opt, nil
+}
+
+func (m *kafkaModule) warnDeprecatedAttribute(name string) {
+	m.host.Warn(fmt.Sprintf("DEPRECATED: '%v' should not be used anymore: check https://mokapi.io/docs/javascript-api/mokapi-kafka/produceargs for more info in %v", name, m.host.Name()))
 }
