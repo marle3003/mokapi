@@ -448,6 +448,25 @@ func TestParseQuery(t *testing.T) {
 				require.Len(t, result[parameter.Query], 0)
 			},
 		},
+		{
+			name: "boolean value true",
+			params: parameter.Parameters{
+				{Value: &parameter.Parameter{
+					Name:     "enabled",
+					Type:     parameter.Query,
+					Schema:   &schema.Ref{Value: schematest.New("boolean")},
+					Required: true,
+				}},
+			},
+			request: func() *http.Request {
+				return httptest.NewRequest(http.MethodGet, "https://foo.bar?enabled=true", nil)
+			},
+			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+				require.NoError(t, err)
+				require.Equal(t, true, result[parameter.Query]["enabled"].Value)
+				require.Equal(t, "true", result[parameter.Query]["enabled"].Raw)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

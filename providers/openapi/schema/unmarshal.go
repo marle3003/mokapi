@@ -14,7 +14,7 @@ import (
 )
 
 func ParseString(s string, schema *Ref) (interface{}, error) {
-	p := parser{convertStringToNumber: true}
+	p := parser{convertStringToNumber: true, convertStrintToBoolean: true}
 	return p.parse(s, schema)
 }
 
@@ -39,8 +39,9 @@ func UnmarshalFrom(r io.Reader, contentType media.ContentType, schema *Ref) (i i
 }
 
 type parser struct {
-	convertStringToNumber bool
-	xml                   bool
+	convertStringToNumber  bool
+	convertStrintToBoolean bool
+	xml                    bool
 }
 
 func (p *parser) parse(v interface{}, schema *Ref) (interface{}, error) {
@@ -375,8 +376,21 @@ func (p *parser) parseString(v interface{}, schema *Schema) (interface{}, error)
 }
 
 func (p *parser) readBoolean(i interface{}, s *Schema) (bool, error) {
-	if b, ok := i.(bool); ok {
-		return b, nil
+	switch v := i.(type) {
+	case bool:
+		return v, nil
+	case string:
+		if p.convertStrintToBoolean {
+			switch strings.ToLower(v) {
+			case "true":
+				return true, nil
+			case "false":
+				return false, nil
+			}
+		}
+		return false, fmt.Errorf("parse %v failed, expected %v", i, s)
+	case int, int64:
+		return v != 0, nil
 	}
 	return false, fmt.Errorf("parse %v failed, expected %v", i, s)
 }
