@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -41,7 +42,14 @@ func TestGit(t *testing.T) {
 						break Stop
 					case c := <-ch:
 						count++
-						name := filepath.Base(c.Info.Inner().Url.String())
+						inner := c.Info.Inner()
+						name := filepath.Base(inner.Url.String())
+						path := inner.Url.Path
+						if len(inner.Url.Opaque) > 0 {
+							path = inner.Url.Opaque
+						}
+
+						require.True(t, strings.HasPrefix(path, os.TempDir()), "file is in system default temp path: %v", path)
 						require.Equal(t, "git", c.Info.Provider)
 						require.Equal(t, "https://github.com/marle3003/mokapi-example.git?file=/"+name, c.Info.Path())
 						require.Contains(t, gitFiles, name)
@@ -172,6 +180,46 @@ Stop:
 	require.Len(t, files, 8)
 	require.Contains(t, files, "https://github.com/marle3003/mokapi-example.git?file=%2FLICENSE")
 	require.Contains(t, files, "https://github.com/marle3003/mokapi-example.git?file=%2FLICENSE&ref=main")
+}
+
+func TestCustomTempDir(t *testing.T) {
+	cfg := static.GitProvider{
+		Repositories: []static.GitRepo{
+			{
+				Url:   "https://github.com/marle3003/mokapi-example.git?ref=main",
+				Files: []string{"models.yml"},
+			},
+		},
+		TempDir: t.TempDir(),
+	}
+	t.Cleanup(func() { os.RemoveAll(cfg.TempDir) })
+
+	g := New(cfg)
+	p := safe.NewPool(context.Background())
+	defer p.Stop()
+	ch := make(chan *dynamic.Config)
+	err := g.Start(ch, p)
+	require.NoError(t, err)
+
+	timeout := time.After(1 * time.Second)
+	files := map[string]*dynamic.Config{}
+Stop:
+	for {
+		select {
+		case <-timeout:
+			break Stop
+		case c := <-ch:
+			files[c.Info.Url.String()] = c
+			path := c.Info.Inner().Url.Path
+			if len(c.Info.Inner().Url.Opaque) > 0 {
+				path = c.Info.Inner().Url.Opaque
+			}
+
+			require.True(t, strings.HasPrefix(path, os.TempDir()), "file is in custom  temp path: %v", cfg.TempDir)
+		}
+	}
+
+	require.Len(t, files, 1)
 }
 
 // go-git requires git installed for file:// repositories

@@ -112,6 +112,21 @@ providers:
         pullInterval: 2h45m
 ```
 
+### TempDir
+
+By default, Mokapi checkouts all repository to systems temp directory. You can use the tempDir option to override the default path.
+
+Default path
+- On Unix systems, it uses $TMPDIR if non-empty, else /tmp.
+- On Windows, it uses the first non-empty value from %TMP%, %TEMP%, %USERPROFILE%, or the Windows directory.
+
+```yaml tab=File (YAML)
+providers:
+  git:
+    url: https://github.com/PATH-TO/REPOSITORY?ref=branch-name
+    tempDir: /path-to/repositories
+```
+
 ### GitHub App Authentication
 
 ```yaml tab=File (YAML)

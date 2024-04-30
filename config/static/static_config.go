@@ -53,6 +53,7 @@ type GitProvider struct {
 	Url          string
 	Urls         []string
 	PullInterval string `yaml:"pullInterval"`
+	TempDir      string `yaml:"tempDir"`
 
 	Repositories []GitRepo
 }
