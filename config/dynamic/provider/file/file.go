@@ -242,7 +242,7 @@ func (p *Provider) walk(root string) error {
 				log.Debugf("skip dir: %v", path)
 				return filepath.SkipDir
 			}
-			p.readMokapiIgnore(root)
+			p.readMokapiIgnore(path)
 			p.watchPath(path)
 		} else if !p.skip(path) {
 			if c, err := p.readFile(path); err != nil {
