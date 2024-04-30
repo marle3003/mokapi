@@ -34,6 +34,13 @@ func TestJsScriptEngine(t *testing.T) {
 		r.NoError(t, err)
 		r.Len(t, engine.scripts, 0, "no events and jobs, script should be closed")
 	})
+	t.Run("typescript", func(t *testing.T) {
+		t.Parallel()
+		engine := New(reader, runtime.New(), static.JsConfig{}, false)
+		err := engine.AddScript(newScript("test.ts", "const msg: string = 'Hello World';"))
+		r.NoError(t, err)
+		r.Len(t, engine.scripts, 0, "no events and jobs, script should be closed")
+	})
 }
 
 func TestJsEvery(t *testing.T) {

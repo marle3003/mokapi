@@ -270,7 +270,7 @@ func (sh *scriptHost) Unlock() {
 func (sh *scriptHost) compile() (common.Script, error) {
 	s := sh.file.Data.(*script.Script)
 	switch filepath.Ext(s.Filename) {
-	case ".js":
+	case ".js", ".ts":
 		return js.New(sh.file, sh, sh.engine.jsConfig)
 	case ".lua":
 		return lua.New(getScriptPath(sh.file.Info.Url), s.Code, sh)

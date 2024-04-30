@@ -21,7 +21,7 @@ func TestScript(t *testing.T) {
 	})
 	t.Run("syntax error", func(t *testing.T) {
 		t.Parallel()
-		_, err := c.Compile("", "function test()")
-		require.Equal(t, "SyntaxError: /babel.js: Unexpected token, expected \"{\" (1:15)\n\n> 1 | function test()\n    |                ^ at dispatchException (mokapi/babel.min.js:2:728337(7))", err.Error())
+		_, err := c.Compile("test.js", "function test()")
+		require.Equal(t, "SyntaxError: /test.js: Unexpected token, expected \"{\" (1:15)\n\n> 1 | function test()\n    |                ^ at dispatchException (mokapi/babel.min.js:2:728337(7))", err.Error())
 	})
 }

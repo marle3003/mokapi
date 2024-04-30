@@ -63,6 +63,24 @@ func TestRequire(t *testing.T) {
 			},
 		},
 		{
+			name: "require custom typescript file",
+			test: func(t *testing.T, host *testHost) {
+				host.openFile = func(file, hint string) (string, string, error) {
+					if file == "foo.ts" {
+						return "", "export var bar = {demo: 'demo'};", nil
+					}
+					return "", "", fmt.Errorf("TEST ERROR NOT FOUND")
+				}
+				host.info = func(args ...interface{}) {
+					r.Equal(t, "demo", args[0])
+				}
+				s, err := New(newScript("test.ts", `import {bar} from 'foo'; export default function() {console.log(bar.demo);}`), host, static.JsConfig{})
+				r.NoError(t, err)
+
+				r.NoError(t, s.Run())
+			},
+		},
+		{
 			name: "require custom relative file",
 			test: func(t *testing.T, host *testHost) {
 				host.openFile = func(file, hint string) (string, string, error) {

@@ -3,6 +3,7 @@ package compiler
 import (
 	_ "embed"
 	"github.com/dop251/goja"
+	"path"
 	"sync"
 )
 
@@ -59,7 +60,7 @@ func newBabel() (*babel, error) {
 	return babel, nil
 }
 
-func (b *babel) Transform(src string) (code string, err error) {
+func (b *babel) Transform(filename, src string) (code string, err error) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 
@@ -74,7 +75,12 @@ func (b *babel) Transform(src string) (code string, err error) {
 		"compact":       false,
 		"retainLines":   true,
 		"highlightCode": false,
-		"filename":      "babel.js"}
+		"filename":      filename}
+
+	if path.Ext(filename) == ".ts" {
+		opts["presets"] = []string{"env", "typescript"}
+	}
+
 	v, err := b.transform(b.this, b.runtime.ToValue(src), b.runtime.ToValue(opts))
 	if err != nil {
 		return

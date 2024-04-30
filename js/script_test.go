@@ -134,6 +134,16 @@ func TestScript(t *testing.T) {
 		r.NoError(t, err)
 		r.True(t, v.ToBoolean())
 	})
+	t.Run("typescript", func(t *testing.T) {
+		t.Parallel()
+
+		host := &testHost{}
+		s, err := New(newScript("test.ts", `const msg: string = 'Hello World'; export default function() { return msg }`), host, static.JsConfig{})
+		r.NoError(t, err)
+		v, err := s.RunDefault()
+		r.NoError(t, err)
+		r.Equal(t, "Hello World", v.String())
+	})
 }
 
 type testHost struct {
