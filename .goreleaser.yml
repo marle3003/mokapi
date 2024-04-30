@@ -25,7 +25,13 @@ dockers:
     image_templates:
       - "mokapi/mokapi:latest"
       - "mokapi/mokapi:{{ .Tag }}"
-    dockerfile: Dockerfile-linux
+    dockerfile: images/release-alpine.Dockerfile
+    use: buildx
+  - goos: linux
+    goarch: amd64
+    image_templates:
+      - "mokapi/mokapi:{{ .Tag }}-noble"
+    dockerfile: images/release-ubuntu.Dockerfile
     use: buildx
 
 brews:

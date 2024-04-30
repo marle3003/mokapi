@@ -1,5 +1,0 @@
-FROM alpine
-
-ADD mokapi.exe /
-
-ENTRYPOINT ["mokapi.exe"]
