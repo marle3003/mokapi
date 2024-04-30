@@ -114,7 +114,7 @@ providers:
 
 ### TempDir
 
-By default, Mokapi checkouts all repository to systems temp directory. You can use the tempDir option to override the default path.
+By default, Mokapi checks out all repositories to system's temp directory. You can use the tempDir option to override the default path.
 
 Default path
 - On Unix systems, it uses $TMPDIR if non-empty, else /tmp.
