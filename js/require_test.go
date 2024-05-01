@@ -25,7 +25,7 @@ func TestRequire(t *testing.T) {
 				s, err := New(newScript("test.js", `import foo from 'foo'`), host, static.JsConfig{})
 				r.NoError(t, err)
 
-				err = s.Run()
+				_, err = s.RunDefault()
 				r.EqualError(t, err, "module foo not found in test.js: node module does not exist at mokapi/js.(*requireModule).require-fm (native)")
 			},
 		},
@@ -150,7 +150,7 @@ func TestRequire(t *testing.T) {
 				s, err := New(newScript("test", `import bar from 'http://foo.bar'`), host, static.JsConfig{})
 				r.NoError(t, err)
 
-				err = s.Run()
+				_, err = s.RunDefault()
 				r.EqualError(t, err, "ReferenceError: foo is not defined at http://foo.bar:1:42(1)")
 			},
 		},

@@ -247,7 +247,7 @@ func (sh *scriptHost) HttpClient() common.HttpClient {
 }
 
 func (sh *scriptHost) CanClose() bool {
-	return len(sh.events) == 0 && len(sh.jobs) == 0 && len(sh.fakerNodes) == 0
+	return len(sh.events) == 0 && len(sh.jobs) == 0 && len(sh.fakerNodes) == 0 && sh.script.CanClose()
 }
 
 func (sh *scriptHost) FindFakerTree(name string) common.FakerTree {

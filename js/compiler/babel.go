@@ -25,35 +25,35 @@ type babel struct {
 
 func newBabel() (*babel, error) {
 	babelOne.Do(func() {
-		babelPrg, babelErr = goja.Compile("mokapi/babel.min.js", babelSource, false)
+		babelPrg, babelErr = goja.Compile("<mokapi/babel.min.js>", babelSource, false)
 	})
 	if babelErr != nil {
 		return nil, babelErr
 	}
 
-	rt := goja.New()
+	vm := goja.New()
 
 	logFunc := func(goja.FunctionCall) goja.Value { return nil }
-	rt.Set("console", map[string]func(goja.FunctionCall) goja.Value{
+	vm.Set("console", map[string]func(goja.FunctionCall) goja.Value{
 		"log":   logFunc,
 		"error": logFunc,
 		"warn":  logFunc,
 	})
 
-	_, err := rt.RunProgram(babelPrg)
+	_, err := vm.RunProgram(babelPrg)
 	if err != nil {
 		return nil, err
 	}
 
-	jObj := rt.Get("Babel")
+	jObj := vm.Get("Babel")
 
 	babel := &babel{
-		runtime: rt,
+		runtime: vm,
 		this:    jObj,
 		mutex:   sync.Mutex{},
 	}
 
-	if err = rt.ExportTo(jObj.ToObject(rt).Get("transform"), &babel.transform); err != nil {
+	if err = vm.ExportTo(jObj.ToObject(vm).Get("transform"), &babel.transform); err != nil {
 		return nil, err
 	}
 
@@ -79,6 +79,10 @@ func (b *babel) Transform(filename, src string) (code string, err error) {
 
 	if path.Ext(filename) == ".ts" {
 		opts["presets"] = []string{"env", "typescript"}
+		opts["plugins"] = []interface{}{
+			"transform-exponentiation-operator",
+			"transform-async-to-generator",
+		}
 	}
 
 	v, err := b.transform(b.this, b.runtime.ToValue(src), b.runtime.ToValue(opts))

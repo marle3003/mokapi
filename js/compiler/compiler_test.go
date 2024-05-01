@@ -11,17 +11,17 @@ func TestScript(t *testing.T) {
 	require.NoError(t, err)
 	t.Run("blank", func(t *testing.T) {
 		t.Parallel()
-		_, err := c.Compile("", "")
+		_, err = c.Compile("", "")
 		require.NoError(t, err)
 	})
 	t.Run("code", func(t *testing.T) {
 		t.Parallel()
-		_, err := c.Compile("", "function test() {}")
+		_, err = c.Compile("", "function test() {}")
 		require.NoError(t, err)
 	})
 	t.Run("syntax error", func(t *testing.T) {
 		t.Parallel()
-		_, err := c.Compile("test.js", "function test()")
-		require.Equal(t, "SyntaxError: /test.js: Unexpected token, expected \"{\" (1:15)\n\n> 1 | function test()\n    |                ^ at dispatchException (mokapi/babel.min.js:2:728337(7))", err.Error())
+		_, err = c.Compile("test.js", "function test()")
+		require.EqualError(t, err, "SyntaxError: /test.js: Unexpected token, expected \"{\" (1:15)\n\n> 1 | function test()\n    |                ^ at dispatchException (<mokapi/babel.min.js>:2:6239(7))")
 	})
 }
