@@ -13,11 +13,11 @@ import (
 func TestHost_Every(t *testing.T) {
 	testcases := []struct {
 		name string
-		f    func(t *testing.T, host *scriptHost)
+		test func(t *testing.T, host *scriptHost)
 	}{
 		{
-			"every but one time",
-			func(t *testing.T, host *scriptHost) {
+			name: "every but one time",
+			test: func(t *testing.T, host *scriptHost) {
 				opt := common.JobOptions{Times: 1}
 				var err error
 				ch := make(chan bool, 1)
@@ -38,8 +38,8 @@ func TestHost_Every(t *testing.T) {
 			},
 		},
 		{
-			"every but one time and not immediately",
-			func(t *testing.T, host *scriptHost) {
+			name: "every but one time and not immediately",
+			test: func(t *testing.T, host *scriptHost) {
 				opt := common.JobOptions{Times: 1, SkipImmediateFirstRun: true}
 				var err error
 				ch := make(chan bool, 1)
@@ -80,7 +80,7 @@ func TestHost_Every(t *testing.T) {
 			engine.Start()
 			defer engine.Close()
 
-			tc.f(t, newScriptHost(newScript("test.js", ""), engine))
+			tc.test(t, newScriptHost(newScript("test.js", ""), engine))
 		})
 	}
 }

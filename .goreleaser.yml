@@ -25,13 +25,21 @@ dockers:
     image_templates:
       - "mokapi/mokapi:latest"
       - "mokapi/mokapi:{{ .Tag }}"
-    dockerfile: Dockerfile-linux
+    dockerfile: images/release-alpine.Dockerfile
+    use: buildx
+  - goos: linux
+    goarch: amd64
+    image_templates:
+      - "mokapi/mokapi:noble"
+      - "mokapi/mokapi:{{ .Tag }}-noble"
+    dockerfile: images/release-ubuntu.Dockerfile
     use: buildx
 
 brews:
   - repository:
       owner: marle3003
       name: mokapi-tap
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
     homepage: https://mokapi.io
     description: "Easy and flexible API mocking using Go and Javascript - https://mokapi.io"
 

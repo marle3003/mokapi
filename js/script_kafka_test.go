@@ -29,7 +29,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
-				err = s.Run()
+				_, err = s.RunDefault()
 				r.NoError(t, err)
 			},
 		},
@@ -49,7 +49,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
-				err = s.Run()
+				_, err = s.RunDefault()
 				r.NoError(t, err)
 			},
 		},
@@ -68,7 +68,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
-				err = s.Run()
+				_, err = s.RunDefault()
 				r.NoError(t, err)
 			},
 		},
@@ -90,7 +90,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
-				err = s.Run()
+				_, err = s.RunDefault()
 				r.NoError(t, err)
 			},
 		},
@@ -112,7 +112,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
-				err = s.Run()
+				_, err = s.RunDefault()
 				r.NoError(t, err)
 			},
 		},
@@ -132,7 +132,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
-				err = s.Run()
+				_, err = s.RunDefault()
 				r.NoError(t, err)
 			},
 		},
@@ -155,7 +155,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
-				err = s.Run()
+				_, err = s.RunDefault()
 				r.NoError(t, err)
 			},
 		},
@@ -175,7 +175,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
-				err = s.Run()
+				_, err = s.RunDefault()
 				r.NoError(t, err)
 			},
 		},
@@ -231,7 +231,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
-				err = s.Run()
+				_, err = s.RunDefault()
 				r.NoError(t, err)
 			},
 		},
@@ -252,7 +252,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
-				err = s.Run()
+				_, err = s.RunDefault()
 				r.NoError(t, err)
 			},
 		},
@@ -273,7 +273,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
-				err = s.Run()
+				_, err = s.RunDefault()
 				r.NoError(t, err)
 			},
 		},
@@ -294,7 +294,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
-				err = s.Run()
+				_, err = s.RunDefault()
 				r.NoError(t, err)
 			},
 		},
@@ -312,7 +312,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
-				err = s.Run()
+				_, err = s.RunDefault()
 				r.EqualError(t, err, "type []interface {} for maxRetryTime not supported at reflect.methodValueCall (native)")
 			},
 		},

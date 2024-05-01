@@ -18,12 +18,12 @@ var NoDefaultFunction = errors.New("js: no default function found")
 
 type Script struct {
 	runtime  *goja.Runtime
-	exports  goja.Value
 	compiler *compiler.Compiler
 	host     engine.Host
 	require  *requireModule
 	file     *dynamic.Config
 	config   static.JsConfig
+	runner   *runner
 }
 
 func New(file *dynamic.Config, host engine.Host, config static.JsConfig) (*Script, error) {
@@ -42,67 +42,86 @@ func New(file *dynamic.Config, host engine.Host, config static.JsConfig) (*Scrip
 }
 
 func (s *Script) Run() error {
-	_, err := s.RunDefault()
-	if err == NoDefaultFunction {
-		s.runtime = nil
-		return nil
+	if err := s.ensureRuntime(); err != nil {
+		return err
 	}
-	return err
+
+	_, err := s.RunDefault()
+	if err != nil {
+		if errors.Is(err, NoDefaultFunction) {
+			return nil
+		}
+		return err
+	}
+	s.runner.StartLoop()
+
+	return nil
 }
 
 func (s *Script) RunDefault() (goja.Value, error) {
 	if err := s.ensureRuntime(); err != nil {
 		return nil, err
 	}
-	o := s.exports.ToObject(s.runtime)
-	if f, ok := goja.AssertFunction(o.Get("default")); ok {
-		i, err := f(goja.Undefined())
-		if err != nil {
-			return nil, err
+
+	var result goja.Value
+	var err error
+	s.runner.Run(func(vm *goja.Runtime) {
+		v := vm.Get("exports")
+		if v == goja.Null() {
+			return
 		}
-		s.processObject(i)
-		return i, nil
-	} else {
-		data := o.Get("mokapi")
-		if data != nil && !goja.IsUndefined(data) && !goja.IsNull(data) {
-			s.processObject(data)
-			return data, nil
+		exports := v.ToObject(vm)
+		if f, ok := goja.AssertFunction(exports.Get("default")); ok {
+			result, err = f(goja.Undefined())
+		} else {
+			data := exports.Get("mokapi")
+			if data != nil && !goja.IsUndefined(data) && !goja.IsNull(data) {
+				s.processObject(data)
+			} else {
+				err = NoDefaultFunction
+			}
 		}
+	})
+
+	if err != nil {
+		return nil, err
 	}
-	return nil, NoDefaultFunction
+
+	s.processObject(result)
+	return result, nil
 }
 
-func (s *Script) openScript(filename, src string) (goja.Value, error) {
-	exports := s.runtime.NewObject()
-	s.runtime.Set("exports", exports)
-	prg, err := s.compiler.Compile(filename, src)
-	if err != nil {
-		return nil, err
+func (s *Script) RunFunc(fn func(vm *goja.Runtime)) error {
+	if err := s.ensureRuntime(); err != nil {
+		return err
 	}
-	_, err = s.runtime.RunProgram(prg)
-	if err != nil {
-		return nil, err
-	}
-	return exports, nil
+
+	s.runner.Run(fn)
+	return nil
 }
 
 func (s *Script) Close() {
+	s.runner.Stop()
 	if s.runtime != nil {
 		s.runtime.Interrupt(fmt.Errorf("closing"))
 		s.runtime = nil
 	}
 	s.compiler = nil
-	s.exports = nil
 	if s.require != nil {
 		s.require.Close()
 	}
 }
 
-func (s *Script) ensureRuntime() (err error) {
+func (s *Script) CanClose() bool {
+	return !s.runner.HasJobs()
+}
+
+func (s *Script) ensureRuntime() error {
 	if s.runtime != nil {
 		return nil
 	}
 	s.runtime = goja.New()
+	s.runner = newRunner(s.runtime)
 	path := getScriptPath(s.file.Info.Kernel().Url)
 	workingDir := filepath.Dir(path)
 
@@ -136,8 +155,15 @@ func (s *Script) ensureRuntime() (err error) {
 	enableOpen(s.runtime, s.host)
 	enableProcess(s.runtime)
 
-	s.exports, err = s.openScript(path, string(s.file.Raw))
-	return
+	prg, err := s.compiler.Compile(path, string(s.file.Raw))
+	if err != nil {
+		return err
+	}
+
+	s.runner.Run(func(vm *goja.Runtime) {
+		_, err = vm.RunProgram(prg)
+	})
+	return err
 }
 
 func (s *Script) processObject(v goja.Value) {

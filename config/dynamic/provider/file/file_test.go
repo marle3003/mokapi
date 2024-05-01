@@ -181,6 +181,58 @@ func TestProvider(t *testing.T) {
 			},
 		},
 		{
+			name: "mokapiignore in subfolder",
+			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
+				"dir": {
+					Name:  "_dir",
+					IsDir: true,
+				},
+				"dir/.mokapiignore": {
+					Name:  ".mokapiignore",
+					IsDir: false,
+					Data:  []byte("foo.txt"),
+				},
+				"dir/foo.txt": {
+					Name:  "foo.txt",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+			}},
+			cfg: static.FileProvider{Directory: "./"},
+			test: func(t *testing.T, configs []*dynamic.Config) {
+				require.Len(t, configs, 0)
+			},
+		},
+		{
+			name: "mokapiignore in subfolder overrides parent",
+			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
+				".mokapiignore": {
+					Name:  ".mokapiignore",
+					IsDir: false,
+					Data:  []byte("foo.txt"),
+				},
+				"dir": {
+					Name:  "_dir",
+					IsDir: true,
+				},
+				"dir/.mokapiignore": {
+					Name:  ".mokapiignore",
+					IsDir: false,
+					Data:  []byte(""),
+				},
+				"dir/foo.txt": {
+					Name:  "foo.txt",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+			}},
+			cfg: static.FileProvider{Directory: "./"},
+			test: func(t *testing.T, configs []*dynamic.Config) {
+				require.Len(t, configs, 1)
+				require.Equal(t, "foobar", string(configs[0].Raw))
+			},
+		},
+		{
 			name: "mokapiignore but re-include",
 			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
 				".mokapiignore": {

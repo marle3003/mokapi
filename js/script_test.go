@@ -1,6 +1,7 @@
 package js
 
 import (
+	"errors"
 	"fmt"
 	"github.com/dop251/goja"
 	r "github.com/stretchr/testify/require"
@@ -22,21 +23,25 @@ func TestScript(t *testing.T) {
 		t.Parallel()
 		s, err := New(newScript("", ""), &testHost{}, static.JsConfig{})
 		r.NoError(t, err)
-		err = s.Run()
-		r.NoError(t, err)
+		_, err = s.RunDefault()
+		r.Equal(t, err, NoDefaultFunction)
+		s.Close()
 	})
 	t.Run("null", func(t *testing.T) {
 		t.Parallel()
-		s, err := New(newScript("", "exports = null"), &testHost{}, static.JsConfig{})
+		s, err := New(newScript("test.js", "exports = null"), &testHost{}, static.JsConfig{})
 		r.NoError(t, err)
-		err = s.Run()
+		_, err = s.RunDefault()
 		r.NoError(t, err)
+		s.Close()
 	})
 	t.Run("emptyFunction", func(t *testing.T) {
 		t.Parallel()
-		s, err := New(newScript("test", `export default function() {}`), &testHost{}, static.JsConfig{})
+		s, err := New(newScript("test.js", `export default function() {}`), &testHost{}, static.JsConfig{})
 		r.NoError(t, err)
-		r.NoError(t, s.Run())
+		_, err = s.RunDefault()
+		r.NoError(t, err)
+		s.Close()
 	})
 	t.Run("console.log", func(t *testing.T) {
 		t.Parallel()
@@ -46,7 +51,9 @@ func TestScript(t *testing.T) {
 		}
 		s, err := New(newScript("test", `export default function() {console.log("foo")}`), host, static.JsConfig{})
 		r.NoError(t, err)
-		r.NoError(t, s.Run())
+		_, err = s.RunDefault()
+		r.NoError(t, err)
+		s.Close()
 	})
 	t.Run("console.warn", func(t *testing.T) {
 		t.Parallel()
@@ -56,7 +63,9 @@ func TestScript(t *testing.T) {
 		}
 		s, err := New(newScript("test", `export default function() {console.warn("foo")}`), host, static.JsConfig{})
 		r.NoError(t, err)
-		r.NoError(t, s.Run())
+		_, err = s.RunDefault()
+		r.NoError(t, err)
+		s.Close()
 	})
 	t.Run("console.err", func(t *testing.T) {
 		t.Parallel()
@@ -66,30 +75,32 @@ func TestScript(t *testing.T) {
 		}
 		s, err := New(newScript("test", `export default function() {console.error("foo")}`), host, static.JsConfig{})
 		r.NoError(t, err)
-		r.NoError(t, s.Run())
+		_, err = s.RunDefault()
+		r.NoError(t, err)
+		s.Close()
 	})
 	t.Run("returnValueFunction", func(t *testing.T) {
 		t.Parallel()
-		s, err := New(newScript("test", `export default function() {return 2}`), &testHost{}, static.JsConfig{})
+		s, err := New(newScript("test.js", `export default function() {return 2}`), &testHost{}, static.JsConfig{})
 		r.NoError(t, err)
-		r.NoError(t, s.Run())
-		err = s.Run()
-		f, ok := goja.AssertFunction(s.exports.ToObject(s.runtime).Get("default"))
-		r.True(t, ok)
-		v, err := f(goja.Undefined())
+		returnValue, err := s.RunDefault()
 		r.NoError(t, err)
-		r.Equal(t, int64(2), v.ToInteger())
+		r.Equal(t, int64(2), returnValue.ToInteger())
+		s.Close()
 	})
 	t.Run("customFunction", func(t *testing.T) {
 		t.Parallel()
-		s, err := New(newScript("test", `function custom() {return 2}; export {custom}`), &testHost{}, static.JsConfig{})
+		s, err := New(newScript("test.js", `function custom() {return 2}; export {custom}`), &testHost{}, static.JsConfig{})
 		r.NoError(t, err)
-		r.NoError(t, s.Run())
-		f, ok := goja.AssertFunction(s.exports.ToObject(s.runtime).Get("custom"))
-		r.True(t, ok)
-		v, err := f(goja.Undefined())
+		err = s.RunFunc(func(vm *goja.Runtime) {
+			exports := vm.Get("exports").ToObject(vm)
+			f, _ := goja.AssertFunction(exports.Get("custom"))
+			v, err := f(goja.Undefined())
+			r.NoError(t, err)
+			r.Equal(t, int64(2), v.ToInteger())
+		})
 		r.NoError(t, err)
-		r.Equal(t, int64(2), v.ToInteger())
+		s.Close()
 	})
 	t.Run("interrupt", func(t *testing.T) {
 		t.Parallel()
@@ -98,8 +109,9 @@ func TestScript(t *testing.T) {
 		ch := make(chan bool)
 		go func() {
 			ch <- true
-			err := s.Run()
-			iErr := err.(*goja.InterruptedError)
+			_, err := s.RunDefault()
+			var iErr *goja.InterruptedError
+			errors.As(err, &iErr)
 			r.True(t, strings.HasPrefix(iErr.String(), "closing"), fmt.Sprintf("error prefix expected closing but got: %v", iErr.String()))
 		}()
 
@@ -133,6 +145,18 @@ func TestScript(t *testing.T) {
 		v, err := s.RunDefault()
 		r.NoError(t, err)
 		r.True(t, v.ToBoolean())
+		s.Close()
+	})
+	t.Run("typescript", func(t *testing.T) {
+		t.Parallel()
+
+		host := &testHost{}
+		s, err := New(newScript("test.ts", `const msg: string = 'Hello World'; export default function() { return msg }`), host, static.JsConfig{})
+		r.NoError(t, err)
+		v, err := s.RunDefault()
+		r.NoError(t, err)
+		r.Equal(t, "Hello World", v.String())
+		s.Close()
 	})
 }
 

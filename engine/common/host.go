@@ -16,6 +16,7 @@ type EventEmitter interface {
 type Script interface {
 	Run() error
 	Close()
+	CanClose() bool
 }
 
 type JobOptions struct {

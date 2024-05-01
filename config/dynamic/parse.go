@@ -55,7 +55,7 @@ func Parse(c *Config, r Reader) error {
 			return err
 		}
 		c.Data = d.data
-	case ".lua", ".js":
+	case ".lua", ".js", ".ts":
 		if c.Data == nil {
 			c.Data = script.New(name, data)
 		} else {

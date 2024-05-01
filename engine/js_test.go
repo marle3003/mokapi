@@ -26,6 +26,7 @@ func TestJsScriptEngine(t *testing.T) {
 		err := engine.AddScript(newScript("test.js", "export default function(){}"))
 		r.NoError(t, err)
 		r.Len(t, engine.scripts, 0, "no events and jobs, script should be closed")
+		engine.Close()
 	})
 	t.Run("blank", func(t *testing.T) {
 		t.Parallel()
@@ -33,6 +34,23 @@ func TestJsScriptEngine(t *testing.T) {
 		err := engine.AddScript(newScript("test.js", ""))
 		r.NoError(t, err)
 		r.Len(t, engine.scripts, 0, "no events and jobs, script should be closed")
+		engine.Close()
+	})
+	t.Run("typescript", func(t *testing.T) {
+		t.Parallel()
+		engine := New(reader, runtime.New(), static.JsConfig{}, false)
+		err := engine.AddScript(newScript("test.ts", "const msg: string = 'Hello World';"))
+		r.NoError(t, err)
+		r.Len(t, engine.scripts, 0, "no events and jobs, script should be closed")
+		engine.Close()
+	})
+	t.Run("typescript async default function", func(t *testing.T) {
+		t.Parallel()
+		engine := New(reader, runtime.New(), static.JsConfig{}, false)
+		err := engine.AddScript(newScript("test.js", "export default async function(){ setTimeout(() => { mokapi.every('1m', function() {}) }, 500)}"))
+		r.NoError(t, err)
+		r.Len(t, engine.scripts, 1, "no events and jobs, script should be closed")
+		engine.Close()
 	})
 }
 

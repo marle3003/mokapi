@@ -22,7 +22,7 @@ func New() (*Compiler, error) {
 }
 
 func (c *Compiler) CompileModule(filename, src string) (*goja.Program, error) {
-	source, err := c.babel.Transform(src)
+	source, err := c.babel.Transform(filename, src)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +31,7 @@ func (c *Compiler) CompileModule(filename, src string) (*goja.Program, error) {
 }
 
 func (c *Compiler) Compile(filename, src string) (*goja.Program, error) {
-	source, err := c.babel.Transform(src)
+	source, err := c.babel.Transform(filename, src)
 	if err != nil {
 		return nil, err
 	}

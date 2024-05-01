@@ -59,7 +59,7 @@ func New(config static.GitProvider) *Provider {
 
 	var repos []*repository
 	for _, repoConfig := range repoConfigs {
-		path, err := os.MkdirTemp("", "mokapi_git_*")
+		path, err := os.MkdirTemp(config.TempDir, "mokapi_git_*")
 		if err != nil {
 			log.Errorf("unable to create temp dir for git provider: %v", err)
 		}

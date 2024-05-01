@@ -123,23 +123,16 @@ func (m *requireModule) loadFileModule(modPath string) (goja.Value, error) {
 		}
 		return m.loadModule(path, string(f.Raw))
 	} else {
-		if v, err := m.loadFileModule(modPath + ".js"); err == nil {
-			return v, nil
+		files := []string{
+			modPath + ".js",
+			modPath + ".ts",
+			filepath.Join(modPath, "index.js"),
+			filepath.Join(modPath, "index.ts"),
+			modPath + ".json",
+			modPath + ".yaml",
 		}
-
-		if v, err := m.loadFileModule(filepath.Join(modPath, "index.js")); err == nil {
-			return v, nil
-		}
-
-		if v, err := m.loadFileModule(modPath + ".json"); err == nil {
-			return v, nil
-		}
-		if v, err := m.loadFileModule(modPath + ".yaml"); err == nil {
-			return v, nil
-		}
+		return m.tryLoadFileModule(files...)
 	}
-
-	return nil, ModuleFileNotFound
 }
 
 func (m *requireModule) loadNodeModule(mod string) (goja.Value, error) {
@@ -224,6 +217,15 @@ func (m *requireModule) loadModule(modPath, source string) (goja.Value, error) {
 	}
 
 	return exports, nil
+}
+
+func (m *requireModule) tryLoadFileModule(files ...string) (goja.Value, error) {
+	for _, file := range files {
+		if v, err := m.loadFileModule(file); err == nil {
+			return v, nil
+		}
+	}
+	return nil, ModuleFileNotFound
 }
 
 func (m *requireModule) Close() {

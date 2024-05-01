@@ -65,3 +65,7 @@ func (s *Script) Close() {
 		s.state.Close()
 	}
 }
+
+func (s *Script) CanClose() bool {
+	return true
+}

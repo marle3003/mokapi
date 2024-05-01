@@ -26,7 +26,7 @@ func TestScript_Http_Get(t *testing.T) {
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
-				err = s.Run()
+				_, err = s.RunDefault()
 				r.NoError(t, err)
 				r.Equal(t, "GET", host.httpClient.req.Method)
 				r.Equal(t, "http://foo.bar", host.httpClient.req.URL.String())
@@ -42,7 +42,7 @@ func TestScript_Http_Get(t *testing.T) {
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
-				err = s.Run()
+				_, err = s.RunDefault()
 				r.NoError(t, err)
 				r.Equal(t, "bar", host.httpClient.req.Header.Get("foo"))
 			},
@@ -57,7 +57,7 @@ func TestScript_Http_Get(t *testing.T) {
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
-				err = s.Run()
+				_, err = s.RunDefault()
 				r.NoError(t, err)
 				r.Equal(t, []string{"hello", "world"}, host.httpClient.req.Header.Values("foo"))
 			},
@@ -72,7 +72,7 @@ func TestScript_Http_Get(t *testing.T) {
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
-				err = s.Run()
+				_, err = s.RunDefault()
 				r.NoError(t, err)
 				r.Len(t, host.httpClient.req.Header, 0)
 			},
@@ -87,7 +87,7 @@ func TestScript_Http_Get(t *testing.T) {
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
-				err = s.Run()
+				_, err = s.RunDefault()
 				r.Error(t, err)
 			},
 		},
@@ -162,7 +162,7 @@ func TestScript_Http_Get(t *testing.T) {
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
-				err = s.Run()
+				_, err = s.RunDefault()
 				r.Error(t, err)
 			},
 		},
@@ -176,7 +176,7 @@ func TestScript_Http_Get(t *testing.T) {
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
-				err = s.Run()
+				_, err = s.RunDefault()
 				r.NoError(t, err)
 				r.Equal(t, "GET", host.httpClient.req.Method)
 				r.Equal(t, "http://foo.bar", host.httpClient.req.URL.String())
@@ -214,7 +214,7 @@ func TestScript_Http_Post(t *testing.T) {
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
-				err = s.Run()
+				_, err = s.RunDefault()
 				r.NoError(t, err)
 				r.Equal(t, "POST", host.httpClient.req.Method)
 				r.Equal(t, "http://foo.bar", host.httpClient.req.URL.String())
@@ -230,7 +230,7 @@ func TestScript_Http_Post(t *testing.T) {
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
-				err = s.Run()
+				_, err = s.RunDefault()
 				r.NoError(t, err)
 				b, err := ioutil.ReadAll(host.httpClient.req.Body)
 				r.Equal(t, "body", string(b))
@@ -247,7 +247,7 @@ func TestScript_Http_Post(t *testing.T) {
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
-				err = s.Run()
+				_, err = s.RunDefault()
 				r.NoError(t, err)
 				b, err := io.ReadAll(host.httpClient.req.Body)
 				r.Equal(t, `{"foo":"bar"}`, string(b))
@@ -264,7 +264,7 @@ func TestScript_Http_Post(t *testing.T) {
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
-				err = s.Run()
+				_, err = s.RunDefault()
 				r.NoError(t, err)
 				b, err := io.ReadAll(host.httpClient.req.Body)
 				r.Equal(t, `{"foo":"bar"}`, string(b))
@@ -359,7 +359,7 @@ func TestScript_Http(t *testing.T) {
 						 }`, strings.ToLower(tc.name))),
 				host, static.JsConfig{})
 			r.NoError(t, err)
-			err = s.Run()
+			_, err = s.RunDefault()
 			r.NoError(t, err)
 
 			tc.f(t, host)
