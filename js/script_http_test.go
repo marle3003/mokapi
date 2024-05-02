@@ -14,11 +14,11 @@ import (
 func TestScript_Http_Get(t *testing.T) {
 	testcases := []struct {
 		name string
-		f    func(t *testing.T, host *testHost)
+		test func(t *testing.T, host *testHost)
 	}{
 		{
-			"simple",
-			func(t *testing.T, host *testHost) {
+			name: "simple",
+			test: func(t *testing.T, host *testHost) {
 				s, err := New(newScript("",
 					`import http from 'mokapi/http'
 						 export default function() {
@@ -33,8 +33,8 @@ func TestScript_Http_Get(t *testing.T) {
 			},
 		},
 		{
-			"header",
-			func(t *testing.T, host *testHost) {
+			name: "header",
+			test: func(t *testing.T, host *testHost) {
 				s, err := New(newScript("",
 					`import http from 'mokapi/http'
 						 export default function() {
@@ -48,8 +48,8 @@ func TestScript_Http_Get(t *testing.T) {
 			},
 		},
 		{
-			"header with array",
-			func(t *testing.T, host *testHost) {
+			name: "header with array",
+			test: func(t *testing.T, host *testHost) {
 				s, err := New(newScript("",
 					`import http from 'mokapi/http'
 						 export default function() {
@@ -63,8 +63,8 @@ func TestScript_Http_Get(t *testing.T) {
 			},
 		},
 		{
-			"header set to null",
-			func(t *testing.T, host *testHost) {
+			name: "header set to null",
+			test: func(t *testing.T, host *testHost) {
 				s, err := New(newScript("",
 					`import http from 'mokapi/http'
 						 export default function() {
@@ -78,8 +78,8 @@ func TestScript_Http_Get(t *testing.T) {
 			},
 		},
 		{
-			"invalid url",
-			func(t *testing.T, host *testHost) {
+			name: "invalid url",
+			test: func(t *testing.T, host *testHost) {
 				s, err := New(newScript("",
 					`import http from 'mokapi/http'
 						 export default function() {
@@ -92,8 +92,8 @@ func TestScript_Http_Get(t *testing.T) {
 			},
 		},
 		{
-			"response body",
-			func(t *testing.T, host *testHost) {
+			name: "response body",
+			test: func(t *testing.T, host *testHost) {
 				host.httpClient.doFunc = func(request *http.Request) (*http.Response, error) {
 					return &http.Response{Body: io.NopCloser(strings.NewReader("hello world"))}, nil
 				}
@@ -111,8 +111,8 @@ func TestScript_Http_Get(t *testing.T) {
 			},
 		},
 		{
-			"response body json",
-			func(t *testing.T, host *testHost) {
+			name: "response body json",
+			test: func(t *testing.T, host *testHost) {
 				host.httpClient.doFunc = func(request *http.Request) (*http.Response, error) {
 					return &http.Response{Body: io.NopCloser(strings.NewReader(`{"foo": "bar"}`))}, nil
 				}
@@ -130,8 +130,8 @@ func TestScript_Http_Get(t *testing.T) {
 			},
 		},
 		{
-			"response header",
-			func(t *testing.T, host *testHost) {
+			name: "response header",
+			test: func(t *testing.T, host *testHost) {
 				host.httpClient.doFunc = func(request *http.Request) (*http.Response, error) {
 					return &http.Response{Header: map[string][]string{"Allow": {"OPTIONS", "GET", "HEAD", "POST"}}}, nil
 				}
@@ -150,8 +150,8 @@ func TestScript_Http_Get(t *testing.T) {
 			},
 		},
 		{
-			"client error",
-			func(t *testing.T, host *testHost) {
+			name: "client error",
+			test: func(t *testing.T, host *testHost) {
 				host.httpClient.doFunc = func(request *http.Request) (*http.Response, error) {
 					return nil, fmt.Errorf("test error")
 				}
@@ -167,8 +167,8 @@ func TestScript_Http_Get(t *testing.T) {
 			},
 		},
 		{
-			"using deprecated module",
-			func(t *testing.T, host *testHost) {
+			name: "using deprecated module",
+			test: func(t *testing.T, host *testHost) {
 				s, err := New(newScript("",
 					`import http from 'http'
 						 export default function() {
@@ -194,7 +194,7 @@ func TestScript_Http_Get(t *testing.T) {
 				httpClient: &testClient{},
 			}
 
-			tc.f(t, host)
+			tc.test(t, host)
 		})
 	}
 }
@@ -202,11 +202,11 @@ func TestScript_Http_Get(t *testing.T) {
 func TestScript_Http_Post(t *testing.T) {
 	testcases := []struct {
 		name string
-		f    func(t *testing.T, host *testHost)
+		test func(t *testing.T, host *testHost)
 	}{
 		{
-			"simple",
-			func(t *testing.T, host *testHost) {
+			name: "simple",
+			test: func(t *testing.T, host *testHost) {
 				s, err := New(newScript("",
 					`import http from 'mokapi/http'
 						 export default function() {
@@ -221,8 +221,8 @@ func TestScript_Http_Post(t *testing.T) {
 			},
 		},
 		{
-			"json with body as string",
-			func(t *testing.T, host *testHost) {
+			name: "json with body as string",
+			test: func(t *testing.T, host *testHost) {
 				s, err := New(newScript("",
 					`import http from 'mokapi/http'
 						 export default function() {
@@ -238,8 +238,8 @@ func TestScript_Http_Post(t *testing.T) {
 			},
 		},
 		{
-			"json with body as object",
-			func(t *testing.T, host *testHost) {
+			name: "json with body as object",
+			test: func(t *testing.T, host *testHost) {
 				s, err := New(newScript("",
 					`import http from 'mokapi/http'
 						 export default function() {
@@ -255,8 +255,8 @@ func TestScript_Http_Post(t *testing.T) {
 			},
 		},
 		{
-			"json with body as object without Content-Type",
-			func(t *testing.T, host *testHost) {
+			name: "json with body as object without Content-Type",
+			test: func(t *testing.T, host *testHost) {
 				s, err := New(newScript("",
 					`import http from 'mokapi/http'
 						 export default function() {
@@ -282,7 +282,7 @@ func TestScript_Http_Post(t *testing.T) {
 				httpClient: &testClient{},
 			}
 
-			tc.f(t, host)
+			tc.test(t, host)
 		})
 	}
 }
@@ -290,53 +290,53 @@ func TestScript_Http_Post(t *testing.T) {
 func TestScript_Http(t *testing.T) {
 	testcases := []struct {
 		name string
-		f    func(t *testing.T, host *testHost)
+		test func(t *testing.T, host *testHost)
 	}{
 		{
-			"GET",
-			func(t *testing.T, host *testHost) {
+			name: "GET",
+			test: func(t *testing.T, host *testHost) {
 				r.Equal(t, "GET", host.httpClient.req.Method)
 			},
 		},
 		{
-			"POST",
-			func(t *testing.T, host *testHost) {
+			name: "POST",
+			test: func(t *testing.T, host *testHost) {
 				r.Equal(t, "POST", host.httpClient.req.Method)
 			},
 		},
 		{
-			"PUT",
-			func(t *testing.T, host *testHost) {
+			name: "PUT",
+			test: func(t *testing.T, host *testHost) {
 				r.Equal(t, "PUT", host.httpClient.req.Method)
 			},
 		},
 		{
-			"HEAD",
-			func(t *testing.T, host *testHost) {
+			name: "HEAD",
+			test: func(t *testing.T, host *testHost) {
 				r.Equal(t, "HEAD", host.httpClient.req.Method)
 			},
 		},
 		{
-			"PATCH",
-			func(t *testing.T, host *testHost) {
+			name: "PATCH",
+			test: func(t *testing.T, host *testHost) {
 				r.Equal(t, "PATCH", host.httpClient.req.Method)
 			},
 		},
 		{
-			"DEL",
-			func(t *testing.T, host *testHost) {
+			name: "DEL",
+			test: func(t *testing.T, host *testHost) {
 				r.Equal(t, "DELETE", host.httpClient.req.Method)
 			},
 		},
 		{
-			"DELETE",
-			func(t *testing.T, host *testHost) {
+			name: "DELETE",
+			test: func(t *testing.T, host *testHost) {
 				r.Equal(t, "DELETE", host.httpClient.req.Method)
 			},
 		},
 		{
-			"OPTIONS",
-			func(t *testing.T, host *testHost) {
+			name: "OPTIONS",
+			test: func(t *testing.T, host *testHost) {
 				r.Equal(t, "OPTIONS", host.httpClient.req.Method)
 			},
 		},
@@ -362,7 +362,7 @@ func TestScript_Http(t *testing.T) {
 			_, err = s.RunDefault()
 			r.NoError(t, err)
 
-			tc.f(t, host)
+			tc.test(t, host)
 		})
 	}
 }
