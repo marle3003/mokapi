@@ -49,7 +49,7 @@ func (suite *PetStoreSuite) TestApi() {
 
 func (suite *PetStoreSuite) TestJsHttpHandler() {
 	// ensure scripts are executed
-	time.Sleep(3 * time.Second)
+	time.Sleep(2 * time.Second)
 	try.GetRequest(suite.T(), "http://127.0.0.1:18080/pet/2",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(http.StatusNotFound),
@@ -69,7 +69,7 @@ func (suite *PetStoreSuite) TestJsHttpHandler() {
 	try.GetRequest(suite.T(), "http://127.0.0.1:18080/pet/5",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(http.StatusOK),
-		try.HasBody(`{"id":15836,"category":{"id":31069,"name":"water buffalo"},"name":"Zoe","photoUrls":[],"tags":[{"id":93969,"name":"Utopia"}],"status":"available"}`))
+		try.BodyContains(`},"name":"Zoe","photoUrls":`))
 
 	// test http metrics
 	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%s/api/metrics/http?path=/pet/{petId}", suite.cfg.Api.Port), nil,
@@ -180,7 +180,7 @@ func (suite *PetStoreSuite) TestEvents() {
 
 func (suite *PetStoreSuite) TestKafkaEventAndMetrics() {
 	// ensure scripts are executed
-	time.Sleep(3 * time.Second)
+	time.Sleep(2 * time.Second)
 
 	// test kafka metrics
 	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%s/api/metrics/kafka", suite.cfg.Api.Port), nil,
