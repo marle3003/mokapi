@@ -142,7 +142,9 @@ func (r *runner) getScheduledFunc(call goja.FunctionCall) (int64, func()) {
 func (r *runner) wait() {
 	r.waitLock.Lock()
 	defer r.waitLock.Unlock()
+	r.jobCount++
 	r.waitCond.Wait()
+	r.jobCount--
 }
 
 func (r *runner) wakeup() {
