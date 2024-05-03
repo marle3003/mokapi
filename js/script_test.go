@@ -31,7 +31,7 @@ func TestScript(t *testing.T) {
 		t.Parallel()
 		s, err := New(newScript("test.js", "exports = null"), &testHost{}, static.JsConfig{})
 		r.NoError(t, err)
-		_, err = s.RunDefault()
+		err = s.Run()
 		r.NoError(t, err)
 		s.Close()
 	})

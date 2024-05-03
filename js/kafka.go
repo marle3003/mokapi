@@ -12,6 +12,7 @@ type kafkaModule struct {
 	host   common.Host
 	rt     *goja.Runtime
 	client common.KafkaClient
+	runner *runner
 }
 
 type kafkaResult struct {
@@ -25,8 +26,8 @@ type kafkaResult struct {
 	Partition int
 }
 
-func newKafka(host common.Host, rt *goja.Runtime) interface{} {
-	return &kafkaModule{host: host, rt: rt, client: host.KafkaClient()}
+func newKafka(host common.Host, rt *goja.Runtime, runner *runner) interface{} {
+	return &kafkaModule{host: host, rt: rt, client: host.KafkaClient(), runner: runner}
 }
 
 func (m *kafkaModule) Produce(v goja.Value) interface{} {
@@ -48,6 +49,17 @@ func (m *kafkaModule) Produce(v goja.Value) interface{} {
 		deprecatedResult.Partition = result.Messages[0].Partition
 	}
 	return result
+}
+
+func (m *kafkaModule) ProduceAsync(v goja.Value) interface{} {
+	p, resolve, _ := m.rt.NewPromise()
+	go func() {
+		result := m.Produce(v)
+		m.runner.Run(func(vm *goja.Runtime) {
+			resolve(result)
+		})
+	}()
+	return p
 }
 
 func (m *kafkaModule) mapParams(args goja.Value) (*common.KafkaProduceArgs, error) {

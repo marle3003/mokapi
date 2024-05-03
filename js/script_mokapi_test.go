@@ -2,6 +2,7 @@ package js
 
 import (
 	"fmt"
+	"github.com/dop251/goja"
 	r "github.com/stretchr/testify/require"
 	"mokapi/config/static"
 	"mokapi/engine/common"
@@ -392,30 +393,39 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 		{
 			"run function",
 			func(t *testing.T, host *testHost) {
+				var doFunc func(args ...interface{}) (bool, error)
 				host.on = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
-					do(10)
+					doFunc = do
 				}
 				s, err := New(newScript("",
 					`import { on } from 'mokapi'
+						let counter = 0
 						 export default function() {
-							let counter = 0
 						  	on('http', function(arg) {counter = arg})
-							return counter
 						 }`),
 					host, static.JsConfig{})
+
 				r.NoError(t, err)
-				v, err := s.RunDefault()
+				err = s.Run()
 				r.NoError(t, err)
+				doFunc(10)
+
+				var v goja.Value
+				err = s.RunFunc(func(vm *goja.Runtime) {
+					v = vm.Get("counter")
+				})
+
+				time.Sleep(100 * time.Millisecond)
 				r.Equal(t, int64(10), v.ToInteger())
+				s.Close()
 			},
 		},
 		{
 			"return value default is false",
 			func(t *testing.T, host *testHost) {
+				var doFunc func(args ...interface{}) (bool, error)
 				host.on = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
-					b, err := do()
-					r.NoError(t, err)
-					r.False(t, b, "default return value should be false")
+					doFunc = do
 				}
 				s, err := New(newScript("",
 					`import { on } from 'mokapi'
@@ -424,17 +434,20 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
-				_, err = s.RunDefault()
+				err = s.Run()
 				r.NoError(t, err)
+				b, err := doFunc()
+				r.NoError(t, err)
+				r.False(t, b, "default return value should be false")
+				s.Close()
 			},
 		},
 		{
 			"return value true",
 			func(t *testing.T, host *testHost) {
+				var doFunc func(args ...interface{}) (bool, error)
 				host.on = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
-					b, err := do()
-					r.NoError(t, err)
-					r.True(t, b, "return value should be true")
+					doFunc = do
 				}
 				s, err := New(newScript("",
 					`import { on } from 'mokapi'
@@ -443,17 +456,20 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
-				_, err = s.RunDefault()
+				err = s.Run()
+				b, err := doFunc()
 				r.NoError(t, err)
+				r.True(t, b, "return value should be true")
+				r.NoError(t, err)
+				s.Close()
 			},
 		},
 		{
 			"on error",
 			func(t *testing.T, host *testHost) {
+				var doFunc func(args ...interface{}) (bool, error)
 				host.on = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
-					b, err := do()
-					r.EqualError(t, err, "Error: test error at <eval>:3:46(3)")
-					r.False(t, b, "return value should be false on error")
+					doFunc = do
 				}
 				s, err := New(newScript("",
 					`import { on } from 'mokapi'
@@ -462,8 +478,12 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
-				_, err = s.RunDefault()
+				err = s.Run()
 				r.NoError(t, err)
+				b, err := doFunc()
+				r.EqualError(t, err, "Error: test error at <eval>:3:46(3)")
+				r.False(t, b, "return value should be false on error")
+				s.Close()
 			},
 		},
 		{
@@ -475,10 +495,9 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 					ShipDate: "2022-01-01",
 				}
 
+				var doFunc func(args ...interface{}) (bool, error)
 				host.on = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
-					b, err := do(data)
-					r.NoError(t, err)
-					r.True(t, b, "return value should be true")
+					doFunc = do
 				}
 				s, err := New(newScript("",
 					`import { on } from 'mokapi'
@@ -489,8 +508,12 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
-				_, err = s.RunDefault()
+				err = s.Run()
 				r.NoError(t, err)
+				b, err := doFunc(data)
+				r.NoError(t, err)
+				r.True(t, b, "return value should be true")
+				s.Close()
 			},
 		},
 		{
@@ -502,10 +525,9 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 					Ship_date: "2022-01-01",
 				}
 
+				var doFunc func(args ...interface{}) (bool, error)
 				host.on = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
-					b, err := do(data)
-					r.NoError(t, err)
-					r.True(t, b, "return value should be true")
+					doFunc = do
 				}
 				s, err := New(newScript("",
 					`import { on } from 'mokapi'
@@ -516,8 +538,12 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
-				_, err = s.RunDefault()
+				err = s.Run()
 				r.NoError(t, err)
+				b, err := doFunc(data)
+				r.NoError(t, err)
+				r.True(t, b, "return value should be true")
+				s.Close()
 			},
 		},
 		{
@@ -525,10 +551,9 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 			func(t *testing.T, host *testHost) {
 				data := map[string]string{"foo": "bar"}
 
+				var doFunc func(args ...interface{}) (bool, error)
 				host.on = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
-					b, err := do(data)
-					r.NoError(t, err)
-					r.True(t, b, "return value should be true")
+					doFunc = do
 				}
 				s, err := New(newScript("",
 					`import { on } from 'mokapi'
@@ -539,8 +564,12 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 						 }`),
 					host, static.JsConfig{})
 				r.NoError(t, err)
-				_, err = s.RunDefault()
+				err = s.Run()
 				r.NoError(t, err)
+				b, err := doFunc(data)
+				r.NoError(t, err)
+				r.True(t, b, "return value should be true")
+				s.Close()
 			},
 		},
 	}

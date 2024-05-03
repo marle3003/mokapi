@@ -1,7 +1,9 @@
 package js
 
 import (
+	"fmt"
 	"github.com/dop251/goja"
+	"sync"
 	"time"
 )
 
@@ -20,14 +22,18 @@ type runner struct {
 	stopChan  chan struct{}
 	running   bool
 	jobCount  int
+
+	waitCond *sync.Cond
+	waitLock sync.Mutex
 }
 
 func newRunner(vm *goja.Runtime) *runner {
 	r := &runner{
 		vm:        vm,
-		queueChan: make(chan func()),
-		stopChan:  make(chan struct{}),
+		queueChan: make(chan func(), 1),
+		stopChan:  make(chan struct{}, 1),
 	}
+	r.waitCond = sync.NewCond(&r.waitLock)
 
 	r.exports = vm.NewObject()
 	_ = vm.Set("exports", r.exports)
@@ -44,6 +50,35 @@ func (r *runner) Run(fn func(vm *goja.Runtime)) {
 	}
 }
 
+func (r *runner) RunAsync(fn func(vm *goja.Runtime) (goja.Value, error)) (goja.Value, error) {
+	if r.running {
+		var result goja.Value
+		var err error
+		done := make(chan struct{})
+		r.queueChan <- func() {
+			result, err = fn(r.vm)
+			done <- struct{}{}
+		}
+
+		<-done
+
+		if err != nil {
+			return nil, err
+		}
+
+		if p, ok := result.Export().(*goja.Promise); ok {
+			for p.State() == goja.PromiseStatePending && r.running {
+				r.wait()
+			}
+			return p.Result(), nil
+		}
+
+		return result, nil
+	}
+
+	return nil, fmt.Errorf("runner not started")
+}
+
 func (r *runner) StartLoop() {
 	r.running = true
 	go func() {
@@ -52,7 +87,9 @@ func (r *runner) StartLoop() {
 			select {
 			case job := <-r.queueChan:
 				job()
+				r.wakeup()
 			case <-r.stopChan:
+				r.wakeup()
 				break LOOP
 			}
 		}
@@ -100,4 +137,16 @@ func (r *runner) getScheduledFunc(call goja.FunctionCall) (int64, func()) {
 		return delay, f
 	}
 	return 0, nil
+}
+
+func (r *runner) wait() {
+	r.waitLock.Lock()
+	defer r.waitLock.Unlock()
+	r.waitCond.Wait()
+}
+
+func (r *runner) wakeup() {
+	r.waitLock.Lock()
+	defer r.waitLock.Unlock()
+	r.waitCond.Broadcast()
 }

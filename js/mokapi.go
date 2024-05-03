@@ -10,12 +10,13 @@ import (
 )
 
 type mokapi struct {
-	host common.Host
-	rt   *goja.Runtime
+	host   common.Host
+	rt     *goja.Runtime
+	runner *runner
 }
 
-func newMokapi(host common.Host, rt *goja.Runtime) interface{} {
-	return &mokapi{host: host, rt: rt}
+func newMokapi(host common.Host, rt *goja.Runtime, runner *runner) interface{} {
+	return &mokapi{host: host, rt: rt, runner: runner}
 }
 
 func (m *mokapi) Sleep(i interface{}) error {
@@ -126,15 +127,23 @@ func (m *mokapi) On(event string, do goja.Value, args goja.Value) {
 		m.host.Lock()
 		defer m.host.Unlock()
 
-		call, _ := goja.AssertFunction(do)
-		var params []goja.Value
-		for _, v := range args {
-			params = append(params, m.rt.ToValue(v))
-		}
-		r, err := call(goja.Undefined(), params...)
+		r, err := m.runner.RunAsync(func(vm *goja.Runtime) (goja.Value, error) {
+			call, _ := goja.AssertFunction(do)
+			var params []goja.Value
+			for _, v := range args {
+				params = append(params, m.rt.ToValue(v))
+			}
+			v, err := call(goja.Undefined(), params...)
+			if err != nil {
+				return nil, err
+			}
+			return v, nil
+		})
+
 		if err != nil {
 			return false, err
 		}
+
 		return r.ToBoolean(), nil
 	}
 

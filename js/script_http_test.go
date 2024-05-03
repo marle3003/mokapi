@@ -366,3 +366,48 @@ func TestScript_Http(t *testing.T) {
 		})
 	}
 }
+
+func TestFetch(t *testing.T) {
+	testcases := []struct {
+		name string
+		test func(t *testing.T, host *testHost)
+	}{
+		{
+			name: "simple",
+			test: func(t *testing.T, host *testHost) {
+				host.httpClient.doFunc = func(request *http.Request) (*http.Response, error) {
+					r.Equal(t, "GET", request.Method)
+					r.Equal(t, "https://foo.bar", request.URL.String())
+
+					return &http.Response{StatusCode: http.StatusOK}, nil
+				}
+
+				s, err := New(newScript("",
+					`import http from 'mokapi/http'
+						 export default async function() {
+						 	const res = await http.fetch('https://foo.bar')
+							return { status: res.statusCode }
+						 }`),
+					host, static.JsConfig{})
+				r.NoError(t, err)
+				v, err := s.RunDefault()
+				r.NoError(t, err)
+				res := v.Export().(map[string]interface{})
+				r.Equal(t, int64(http.StatusOK), res["status"])
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			host := &testHost{
+				httpClient: &testClient{},
+			}
+			tc.test(t, host)
+		})
+	}
+}

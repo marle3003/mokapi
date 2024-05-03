@@ -164,7 +164,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	_, err = rw.Write(body)
 	if err != nil {
-		log.Errorf("unable to write body: %v", err)
+		log.Errorf("write HTTP body failed for %v: %v", r.URL.String(), err)
 	}
 	if logHttp != nil {
 		logHttp.Response.Body = string(body)

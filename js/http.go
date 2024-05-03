@@ -19,6 +19,7 @@ type httpModule struct {
 	host   common.Host
 	rt     *goja.Runtime
 	client HttpClient
+	runner *runner
 }
 
 type requestArgs struct {
@@ -32,8 +33,12 @@ type response struct {
 	Headers    map[string][]string `json:"headers"`
 }
 
-func newHttp(host common.Host, rt *goja.Runtime) interface{} {
-	return &httpModule{host: host, rt: rt, client: host.HttpClient()}
+type fetchArgs struct {
+	method string
+}
+
+func newHttp(host common.Host, rt *goja.Runtime, runner *runner) interface{} {
+	return &httpModule{host: host, rt: rt, client: host.HttpClient(), runner: runner}
 }
 
 func (m *httpModule) Get(url string, args goja.Value) interface{} {
@@ -66,6 +71,18 @@ func (m *httpModule) Del(url string, body interface{}, args goja.Value) interfac
 
 func (m *httpModule) Options(url string, body interface{}, args goja.Value) interface{} {
 	return m.doRequest("OPTIONS", url, body, args)
+}
+
+func (m *httpModule) Fetch(url string, v goja.Value) *goja.Promise {
+	p, resolve, _ := m.rt.NewPromise()
+	go func() {
+		args := getFetchArgs(v)
+		res := m.doRequest(args.method, url, nil, nil)
+		m.runner.Run(func(vm *goja.Runtime) {
+			resolve(res)
+		})
+	}()
+	return p
 }
 
 func (m *httpModule) doRequest(method, url string, body interface{}, args goja.Value) interface{} {
@@ -166,4 +183,8 @@ func (r response) Json() interface{} {
 		panic(r.rt.ToValue(err.Error()))
 	}
 	return i
+}
+
+func getFetchArgs(v goja.Value) fetchArgs {
+	return fetchArgs{method: http.MethodGet}
 }

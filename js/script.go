@@ -53,7 +53,6 @@ func (s *Script) Run() error {
 		}
 		return err
 	}
-	s.runner.StartLoop()
 
 	return nil
 }
@@ -63,24 +62,23 @@ func (s *Script) RunDefault() (goja.Value, error) {
 		return nil, err
 	}
 
-	var result goja.Value
-	var err error
-	s.runner.Run(func(vm *goja.Runtime) {
+	s.runner.StartLoop()
+
+	result, err := s.runner.RunAsync(func(vm *goja.Runtime) (goja.Value, error) {
 		v := vm.Get("exports")
 		if v == goja.Null() {
-			return
+			return nil, NoDefaultFunction
 		}
 		exports := v.ToObject(vm)
 		if f, ok := goja.AssertFunction(exports.Get("default")); ok {
-			result, err = f(goja.Undefined())
+			return f(goja.Undefined())
 		} else {
 			data := exports.Get("mokapi")
 			if data != nil && !goja.IsUndefined(data) && !goja.IsNull(data) {
-				s.processObject(data)
-			} else {
-				err = NoDefaultFunction
+				return data, nil
 			}
 		}
+		return nil, NoDefaultFunction
 	})
 
 	if err != nil {
@@ -132,13 +130,13 @@ func (s *Script) ensureRuntime() error {
 		s.file.Info.Url.String(),
 		workingDir,
 		map[string]ModuleLoader{
-			"mokapi":          s.loadNativeModule(newMokapi),
+			"mokapi":          s.loadNativeModule2(newMokapi),
 			"mokapi/faker":    s.loadNativeModule(newFaker),
 			"faker":           s.loadDeprecatedNativeModule(newFaker, "deprecated module faker: Please use mokapi/faker instead"),
-			"mokapi/http":     s.loadNativeModule(newHttp),
-			"http":            s.loadDeprecatedNativeModule(newHttp, "deprecated module http: Please use mokapi/http instead"),
-			"mokapi/kafka":    s.loadNativeModule(newKafka),
-			"kafka":           s.loadDeprecatedNativeModule(newKafka, "deprecated module kafka: Please use mokapi/kafka instead"),
+			"mokapi/http":     s.loadNativeModule2(newHttp),
+			"http":            s.loadDeprecatedNativeModule2(newHttp, "deprecated module http: Please use mokapi/http instead"),
+			"mokapi/kafka":    s.loadNativeModule2(newKafka),
+			"kafka":           s.loadDeprecatedNativeModule2(newKafka, "deprecated module kafka: Please use mokapi/kafka instead"),
 			"mokapi/mustache": s.loadNativeModule(newMustache),
 			"mustache":        s.loadDeprecatedNativeModule(newMustache, "deprecated module mustache: Please use mokapi/mustache instead"),
 			"mokapi/yaml":     s.loadNativeModule(newYaml),
@@ -199,11 +197,27 @@ func (s *Script) loadNativeModule(f func(engine.Host, *goja.Runtime) interface{}
 	}
 }
 
+func (s *Script) loadNativeModule2(f func(engine.Host, *goja.Runtime, *runner) interface{}) ModuleLoader {
+	return func() goja.Value {
+		m := f(s.host, s.runtime, s.runner)
+		return mapToJSValue(s.runtime, m)
+	}
+}
+
 func (s *Script) loadDeprecatedNativeModule(f func(engine.Host, *goja.Runtime) interface{}, msg string) ModuleLoader {
 	filename := getScriptPath(s.file.Info.Url)
 	return func() goja.Value {
 		s.host.Warn(fmt.Sprintf("%v: %v", msg, filename))
 		m := f(s.host, s.runtime)
+		return mapToJSValue(s.runtime, m)
+	}
+}
+
+func (s *Script) loadDeprecatedNativeModule2(f func(engine.Host, *goja.Runtime, *runner) interface{}, msg string) ModuleLoader {
+	filename := getScriptPath(s.file.Info.Url)
+	return func() goja.Value {
+		s.host.Warn(fmt.Sprintf("%v: %v", msg, filename))
+		m := f(s.host, s.runtime, s.runner)
 		return mapToJSValue(s.runtime, m)
 	}
 }

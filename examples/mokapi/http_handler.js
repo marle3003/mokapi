@@ -5,11 +5,11 @@ import { server as smtpServers, mails, mailEvents, getMail, getAttachment } from
 import { server as ldapServers, searches } from 'ldap.js'
 import { metrics } from 'metrics.js'
 import { fake } from 'mokapi/faker'
-import { get, post } from 'mokapi/http'
+import { get, post, fetch } from 'mokapi/http'
 
 const configs = {}
 
-export default function() {
+export default async function() {
     on('http', function(request, response) {
         response.headers["Access-Control-Allow-Methods"] = "*"
         response.headers["Access-Control-Allow-Headers"] = "*"
@@ -115,7 +115,8 @@ export default function() {
     }, {tags: {name: "dashboard"}})
 
     for (const config of [...Object.values(httpConfigs),...Object.values(kafkaConfigs)]) {
-        const r = get(config.data)
+        console.log('get config data for ' + config.url)
+        const r = await fetch(config.data)
         configs[config.id] = {
             data:   r.body,
             headers: {

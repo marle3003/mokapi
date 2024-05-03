@@ -4,13 +4,20 @@ import (
 	"context"
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
+	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
+	"mokapi/config/dynamic/script"
+	"mokapi/config/static"
+	engine2 "mokapi/engine"
 	"mokapi/engine/common"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/providers/openapi/schema/schematest"
+	"mokapi/runtime"
 	"mokapi/runtime/events"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 )
@@ -761,6 +768,67 @@ func TestHandler_Log(t *testing.T) {
 	}
 }
 
+func TestHandler_Event_TypeScript(t *testing.T) {
+	testcases := []struct {
+		name string
+		test func(t *testing.T)
+	}{
+		{
+			name: "async event handler",
+			test: func(t *testing.T) {
+				e := engine2.New(&dynamictest.Reader{}, runtime.New(), static.JsConfig{}, false)
+				err := e.AddScript(newScript("test.ts", `
+					import {on, sleep} from 'mokapi'
+					export default function() {
+						on('http', async (request, response) => {
+							response.data = await getData()
+						});
+					}
+					let getData = async () => {
+						return new Promise(async (resolve, reject) => {
+						  setTimeout(() => {
+							resolve('foo');
+						  }, 800);
+						});
+					}
+				`))
+				require.NoError(t, err)
+
+				config := &openapi.Config{
+					Info:       openapi.Info{Name: "Testing"},
+					Servers:    []*openapi.Server{{Url: "http://localhost"}},
+					Components: openapi.Components{},
+				}
+
+				h := func(rw http.ResponseWriter, r *http.Request) {
+					h := openapi.NewHandler(config, e)
+					h.ServeHTTP(rw, r)
+				}
+
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
+				openapitest.AppendPath("/foo", config, openapitest.WithOperation("get", op))
+				r := httptest.NewRequest("get", "http://localhost/foo", nil)
+				r.Header.Set("accept", "application/json")
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.Equal(t, `"foo"`, rr.Body.String())
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			tc.test(t)
+		})
+	}
+}
+
 type engine struct {
 	emit func(event string, args ...interface{}) []*common.Action
 }
@@ -770,4 +838,20 @@ func (e *engine) Emit(event string, args ...interface{}) []*common.Action {
 		return e.emit(event, args...)
 	}
 	return nil
+}
+
+func newScript(path, src string) *dynamic.Config {
+	return &dynamic.Config{
+		Info: dynamic.ConfigInfo{Url: mustParse(path)},
+		Raw:  []byte(src),
+		Data: &script.Script{Code: src, Filename: path},
+	}
+}
+
+func mustParse(s string) *url.URL {
+	u, err := url.Parse(s)
+	if err != nil {
+		panic(err)
+	}
+	return u
 }
