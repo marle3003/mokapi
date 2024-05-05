@@ -49,7 +49,7 @@ func (suite *PetStoreSuite) TestApi() {
 
 func (suite *PetStoreSuite) TestJsHttpHandler() {
 	// ensure scripts are executed
-	time.Sleep(2 * time.Second)
+	time.Sleep(3 * time.Second)
 	try.GetRequest(suite.T(), "http://127.0.0.1:18080/pet/2",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(http.StatusNotFound),
@@ -180,7 +180,7 @@ func (suite *PetStoreSuite) TestEvents() {
 
 func (suite *PetStoreSuite) TestKafkaEventAndMetrics() {
 	// ensure scripts are executed
-	time.Sleep(2 * time.Second)
+	time.Sleep(3 * time.Second)
 
 	// test kafka metrics
 	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%s/api/metrics/kafka", suite.cfg.Api.Port), nil,
