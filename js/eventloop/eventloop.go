@@ -38,6 +38,7 @@ func New(vm *goja.Runtime) *EventLoop {
 	r.exports = vm.NewObject()
 	_ = vm.Set("exports", r.exports)
 	_ = vm.Set("setTimeout", r.setTimeout)
+	_ = vm.Set("clearTimeout", r.clearTimeout)
 
 	return r
 }
@@ -48,6 +49,16 @@ func (loop *EventLoop) Run(fn func(vm *goja.Runtime)) {
 	} else {
 		fn(loop.vm)
 	}
+}
+
+func (loop *EventLoop) RunSync(fn func(vm *goja.Runtime)) {
+	done := make(chan struct{})
+	loop.queueChan <- func() {
+		fn(loop.vm)
+		done <- struct{}{}
+	}
+
+	<-done
 }
 
 func (loop *EventLoop) RunAsync(fn func(vm *goja.Runtime) (goja.Value, error)) (goja.Value, error) {
@@ -119,6 +130,12 @@ func (loop *EventLoop) setTimeout(call goja.FunctionCall) goja.Value {
 	})
 
 	return loop.vm.ToValue(t)
+}
+
+func (loop *EventLoop) clearTimeout(t *timer) {
+	t.timer.Stop()
+	t.cancelled = true
+	loop.jobCount--
 }
 
 func (loop *EventLoop) getScheduledFunc(call goja.FunctionCall) (int64, func()) {
