@@ -7,10 +7,14 @@ import (
 	"time"
 )
 
-type timer struct {
-	fn        func()
-	timer     *time.Timer
-	cancelled bool
+type timeout struct {
+	timer *time.Timer
+}
+
+type interval struct {
+	run    func()
+	ticker *time.Ticker
+	stop   chan struct{}
 }
 
 type EventLoop struct {
@@ -39,6 +43,8 @@ func New(vm *goja.Runtime) *EventLoop {
 	_ = vm.Set("exports", r.exports)
 	_ = vm.Set("setTimeout", r.setTimeout)
 	_ = vm.Set("clearTimeout", r.clearTimeout)
+	_ = vm.Set("setInterval", r.setInterval)
+	_ = vm.Set("clearInterval", r.clearInterval)
 
 	return r
 }
@@ -119,23 +125,43 @@ func (loop *EventLoop) HasJobs() bool {
 
 func (loop *EventLoop) setTimeout(call goja.FunctionCall) goja.Value {
 	loop.jobCount++
-	delay, f := loop.getScheduledFunc(call)
-	t := &timer{
-		fn: f,
-	}
+	delay, run := loop.getScheduledFunc(call)
+	t := &timeout{}
 	t.timer = time.AfterFunc(time.Duration(delay)*time.Millisecond, func() {
-		t.cancelled = true
 		loop.jobCount--
-		loop.queueChan <- f
+		loop.queueChan <- run
 	})
 
 	return loop.vm.ToValue(t)
 }
 
-func (loop *EventLoop) clearTimeout(t *timer) {
+func (loop *EventLoop) clearTimeout(t *timeout) {
 	t.timer.Stop()
-	t.cancelled = true
 	loop.jobCount--
+}
+
+func (loop *EventLoop) setInterval(call goja.FunctionCall) goja.Value {
+	loop.jobCount++
+	v, run := loop.getScheduledFunc(call)
+	milliseconds := time.Duration(v) * time.Millisecond
+	// https://nodejs.org/api/timers.html#timers_setinterval_callback_delay_args
+	if milliseconds <= 0 {
+		milliseconds = time.Millisecond
+	}
+
+	i := &interval{
+		run:  run,
+		stop: make(chan struct{}),
+	}
+	i.ticker = time.NewTicker(milliseconds)
+	go i.start(loop)
+
+	return loop.vm.ToValue(i)
+}
+
+func (loop *EventLoop) clearInterval(i *interval) {
+	loop.jobCount--
+	close(i.stop)
 }
 
 func (loop *EventLoop) getScheduledFunc(call goja.FunctionCall) (int64, func()) {
@@ -168,4 +194,17 @@ func (loop *EventLoop) wakeup() {
 	loop.waitLock.Lock()
 	defer loop.waitLock.Unlock()
 	loop.waitCond.Broadcast()
+}
+
+func (i *interval) start(loop *EventLoop) {
+Stop:
+	for {
+		select {
+		case <-i.stop:
+			i.ticker.Stop()
+			break Stop
+		case <-i.ticker.C:
+			loop.queueChan <- i.run
+		}
+	}
 }

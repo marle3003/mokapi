@@ -38,7 +38,6 @@ func TestEventLoop(t *testing.T) {
 					require.NoError(t, err)
 				})
 
-				time.Sleep(1 * time.Second)
 				require.False(t, calledAt.IsZero(), "calledAt should not be zero")
 				require.Greater(t, calledAt.Sub(startTime), time.Second, "code should wait for a second")
 			},
@@ -60,6 +59,56 @@ func TestEventLoop(t *testing.T) {
 						clearTimeout(id)`)
 					require.NoError(t, err)
 				})
+				require.False(t, loop.HasJobs())
+			},
+		},
+		{
+			name: "setInterval",
+			test: func(t *testing.T, loop *eventloop.EventLoop) {
+				loop.Run(func(vm *goja.Runtime) {
+					_, err := vm.RunString(`
+						var counter = 0;
+						setInterval(() => {
+							counter++
+						}, 100)`)
+					require.NoError(t, err)
+				})
+
+				time.Sleep(500 * time.Millisecond)
+				var counter int64
+				loop.RunSync(func(vm *goja.Runtime) {
+					v := vm.Get("counter")
+					counter = v.ToInteger()
+				})
+
+				require.Greater(t, counter, int64(3))
+			},
+		},
+		{
+			name: "clearInterval",
+			test: func(t *testing.T, loop *eventloop.EventLoop) {
+				loop.Run(func(vm *goja.Runtime) {
+					_, err := vm.RunString(`
+						var counter = 0;
+						const i = setInterval(() => {
+							counter++
+						}, 100)`)
+					require.NoError(t, err)
+				})
+
+				time.Sleep(300 * time.Millisecond)
+				loop.RunSync(func(vm *goja.Runtime) {
+					_, err := vm.RunString("clearInterval(i)")
+					require.NoError(t, err)
+				})
+
+				var counter int64
+				loop.RunSync(func(vm *goja.Runtime) {
+					v := vm.Get("counter")
+					counter = v.ToInteger()
+				})
+
+				require.LessOrEqual(t, counter, int64(3))
 				require.False(t, loop.HasJobs())
 			},
 		},
