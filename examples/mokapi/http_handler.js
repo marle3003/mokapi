@@ -115,7 +115,6 @@ export default async function() {
     }, {tags: {name: "dashboard"}})
 
     for (const config of [...Object.values(httpConfigs),...Object.values(kafkaConfigs)]) {
-        console.log('get config data for ' + config.url)
         const r = await fetch(config.data)
         configs[config.id] = {
             data:   r.body,

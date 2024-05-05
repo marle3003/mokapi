@@ -40,7 +40,7 @@ func (m *module) requireModule(modPath string) *goja.Object {
 	if loader, ok := m.registry.native[modPath]; ok {
 		mod := m.createModuleObject()
 		loader(m.vm, mod)
-		m.modules[modPath] = mod
+		m.modules[key] = mod
 		return mod
 	}
 	if u, err := url.Parse(modPath); err == nil && len(u.Scheme) > 0 {

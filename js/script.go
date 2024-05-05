@@ -14,6 +14,7 @@ import (
 	"mokapi/js/file"
 	"mokapi/js/http"
 	"mokapi/js/kafka"
+	"mokapi/js/ldap"
 	"mokapi/js/mail"
 	"mokapi/js/mokapi"
 	"mokapi/js/mustache"
@@ -258,4 +259,5 @@ func RegisterNativeModules(registry *require.Registry) {
 	registry.RegisterNativeModule("mokapi/mustache", mustache.Require)
 	registry.RegisterNativeModule("mokapi/yaml", yaml.Require)
 	registry.RegisterNativeModule("mokapi/mail", mail.Require)
+	registry.RegisterNativeModule("mokapi/ldap", ldap.Require)
 }

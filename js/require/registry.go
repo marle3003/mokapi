@@ -15,8 +15,9 @@ type ModuleLoader func(vm *goja.Runtime, module *goja.Object)
 type SourceLoader func(file, hint string) (*dynamic.Config, error)
 
 type Registry struct {
-	native   map[string]ModuleLoader
-	compiled map[string]*goja.Program
+	native  map[string]ModuleLoader
+	modules map[string]*goja.Program
+	scripts map[string]*goja.Program
 
 	srcLoader SourceLoader
 	compiler  *compiler.Compiler
@@ -27,7 +28,8 @@ type Registry struct {
 func NewRegistry(srcLoader SourceLoader) (*Registry, error) {
 	reg := &Registry{
 		native:    map[string]ModuleLoader{},
-		compiled:  map[string]*goja.Program{},
+		modules:   map[string]*goja.Program{},
+		scripts:   map[string]*goja.Program{},
 		srcLoader: srcLoader,
 	}
 	var err error
@@ -57,7 +59,7 @@ func (r *Registry) getModuleProgram(modPath, source string) (*goja.Program, erro
 	r.m.Lock()
 	defer r.m.Unlock()
 
-	prg := r.compiled[modPath]
+	prg := r.modules[modPath]
 	if prg == nil {
 		if path.Ext(modPath) == ".json" {
 			source = "module.exports = JSON.parse('" + template.JSEscapeString(source) + "')"
@@ -68,7 +70,7 @@ func (r *Registry) getModuleProgram(modPath, source string) (*goja.Program, erro
 		if err != nil {
 			return nil, err
 		}
-		r.compiled[modPath] = prg
+		r.modules[modPath] = prg
 	}
 	return prg, nil
 }
@@ -77,14 +79,14 @@ func (r *Registry) GetProgram(path, source string) (*goja.Program, error) {
 	r.m.Lock()
 	defer r.m.Unlock()
 
-	prg := r.compiled[path]
+	prg := r.scripts[path]
 	if prg == nil {
 		var err error
 		prg, err = r.compiler.Compile(path, source)
 		if err != nil {
 			return nil, err
 		}
-		r.compiled[path] = prg
+		r.scripts[path] = prg
 	}
 	return prg, nil
 }
