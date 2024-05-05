@@ -1,4 +1,4 @@
-package js
+package mail
 
 import (
 	"bufio"
@@ -18,7 +18,7 @@ import (
 	"strings"
 )
 
-type mailModule struct {
+type Module struct {
 	rt         *goja.Runtime
 	host       common.Host
 	workingDir string
@@ -48,11 +48,18 @@ type Attachment struct {
 	ContentType string `json:"contentType"`
 }
 
-func newMail(h common.Host, rt *goja.Runtime, workingDir string) interface{} {
-	return &mailModule{rt: rt, host: h, workingDir: workingDir}
+func Require(vm *goja.Runtime, module *goja.Object) {
+	o := vm.Get("mokapi/internal").(*goja.Object)
+	host := o.Get("host").Export().(common.Host)
+	f := &Module{
+		rt:   vm,
+		host: host,
+	}
+	obj := module.Get("exports").(*goja.Object)
+	obj.Set("send", f.Send)
 }
 
-func (m *mailModule) Send(addr string, msg *Mail) {
+func (m *Module) Send(addr string, msg *Mail) {
 	var body bytes.Buffer
 	w := textproto.NewWriter(bufio.NewWriter(&body))
 
@@ -152,7 +159,7 @@ func (m *mailModule) Send(addr string, msg *Mail) {
 	}
 }
 
-func (m *mailModule) writeAttachments(w *textproto.Writer, msg *Mail) error {
+func (m *Module) writeAttachments(w *textproto.Writer, msg *Mail) error {
 	boundary := fmt.Sprintf("boundary_%v", uuid.New().String())
 	_ = w.PrintfLine("Content-Type: multipart/mixed; boundary=%v", boundary)
 	_ = w.PrintfLine("")

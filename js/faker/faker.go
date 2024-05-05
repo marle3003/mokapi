@@ -1,4 +1,4 @@
-package js
+package faker
 
 import (
 	"fmt"
@@ -9,18 +9,18 @@ import (
 	"mokapi/providers/openapi/schema"
 )
 
-type fakerModule struct {
+type Faker struct {
 	rt   *goja.Runtime
 	host common.Host
 }
 
-type jsonSchema struct {
+type JsonSchema struct {
 	Type                 string                 `json:"type"`
 	Format               string                 `json:"format"`
 	Pattern              string                 `json:"pattern"`
-	Properties           map[string]*jsonSchema `json:"properties"`
-	AdditionalProperties *jsonSchema            `json:"additionalProperties,omitempty"`
-	Items                *jsonSchema            `json:"items"`
+	Properties           map[string]*JsonSchema `json:"properties"`
+	AdditionalProperties *JsonSchema            `json:"additionalProperties,omitempty"`
+	Items                *JsonSchema            `json:"items"`
 	Required             []string               `json:"required"`
 	Nullable             bool                   `json:"nullable"`
 	Example              interface{}            `json:"example"`
@@ -29,9 +29,9 @@ type jsonSchema struct {
 	Maximum              *float64               `json:"maximum,omitempty"`
 	ExclusiveMinimum     *bool                  `json:"exclusiveMinimum,omitempty"`
 	ExclusiveMaximum     *bool                  `json:"exclusiveMaximum,omitempty"`
-	AnyOf                []*jsonSchema          `json:"anyOf"`
-	AllOf                []*jsonSchema          `json:"allOf"`
-	OneOf                []*jsonSchema          `json:"oneOf"`
+	AnyOf                []*JsonSchema          `json:"anyOf"`
+	AllOf                []*JsonSchema          `json:"allOf"`
+	OneOf                []*JsonSchema          `json:"oneOf"`
 	UniqueItems          bool                   `json:"uniqueItems"`
 	MinItems             *int                   `json:"minItems"`
 	MaxItems             *int                   `json:"maxItems"`
@@ -51,14 +51,22 @@ type jsonXml struct {
 
 type requestExample struct {
 	Name   string      `json:"name"`
-	Schema *jsonSchema `json:"schema"`
+	Schema *JsonSchema `json:"schema"`
 }
 
-func newFaker(h common.Host, rt *goja.Runtime) interface{} {
-	return &fakerModule{rt: rt, host: h}
+func Require(rt *goja.Runtime, module *goja.Object) {
+	o := rt.Get("mokapi/internal").(*goja.Object)
+	host := o.Get("host").Export().(common.Host)
+	f := &Faker{
+		rt:   rt,
+		host: host,
+	}
+	obj := module.Get("exports").(*goja.Object)
+	obj.Set("fake", f.Fake)
+	obj.Set("findByName", f.FindByName)
 }
 
-func (m *fakerModule) Fake(v goja.Value) interface{} {
+func (m *Faker) Fake(v goja.Value) interface{} {
 	r := toRequest(v, m.rt)
 	err := m.rt.ExportTo(v, &r)
 	if err == nil && r.Path != nil {
@@ -69,19 +77,19 @@ func (m *fakerModule) Fake(v goja.Value) interface{} {
 		return v
 	}
 
-	s := &jsonSchema{}
+	s := &JsonSchema{}
 	err = m.rt.ExportTo(v, &s)
 	if err != nil {
 		panic(m.rt.ToValue("expected parameter type of OpenAPI schema"))
 	}
-	i, err := schema.CreateValue(&schema.Ref{Value: toSchema(s)})
+	i, err := schema.CreateValue(&schema.Ref{Value: ConvertToSchema(s)})
 	if err != nil {
 		panic(m.rt.ToValue(err.Error()))
 	}
 	return i
 }
 
-func toSchema(js *jsonSchema) *schema.Schema {
+func ConvertToSchema(js *JsonSchema) *schema.Schema {
 	s := &schema.Schema{
 		Type:             js.Type,
 		Format:           js.Format,
@@ -105,39 +113,39 @@ func toSchema(js *jsonSchema) *schema.Schema {
 	if len(js.Properties) > 0 {
 		s.Properties = &schema.Schemas{}
 		for name, prop := range js.Properties {
-			s.Properties.Set(name, &schema.Ref{Value: toSchema(prop)})
+			s.Properties.Set(name, &schema.Ref{Value: ConvertToSchema(prop)})
 		}
 	}
 
 	if js.AdditionalProperties != nil {
 		s.AdditionalProperties = &schema.AdditionalProperties{
 			Ref: &schema.Ref{
-				Value: toSchema(js.AdditionalProperties),
+				Value: ConvertToSchema(js.AdditionalProperties),
 			},
 		}
 	}
 
 	if js.Items != nil {
 		s.Items = &schema.Ref{
-			Value: toSchema(js.Items),
+			Value: ConvertToSchema(js.Items),
 		}
 	}
 
 	if len(js.AnyOf) > 0 {
 		for _, any := range js.AnyOf {
-			s.AnyOf = append(s.AnyOf, &schema.Ref{Value: toSchema(any)})
+			s.AnyOf = append(s.AnyOf, &schema.Ref{Value: ConvertToSchema(any)})
 		}
 	}
 
 	if len(js.AllOf) > 0 {
 		for _, all := range js.AllOf {
-			s.AllOf = append(s.AllOf, &schema.Ref{Value: toSchema(all)})
+			s.AllOf = append(s.AllOf, &schema.Ref{Value: ConvertToSchema(all)})
 		}
 	}
 
 	if len(js.OneOf) > 0 {
 		for _, one := range js.OneOf {
-			s.OneOf = append(s.OneOf, &schema.Ref{Value: toSchema(one)})
+			s.OneOf = append(s.OneOf, &schema.Ref{Value: ConvertToSchema(one)})
 		}
 	}
 
@@ -156,13 +164,13 @@ func toSchema(js *jsonSchema) *schema.Schema {
 
 type node struct {
 	t    common.FakerTree
-	f    *fakerModule
+	f    *Faker
 	name string
 	test func(r *generator.Request) bool
 	fake func(r *generator.Request) (interface{}, error)
 }
 
-func (m *fakerModule) FindByName(name string) *node {
+func (m *Faker) FindByName(name string) *node {
 	ft := m.host.FindFakerTree(name)
 	return &node{t: ft, f: m}
 }

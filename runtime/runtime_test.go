@@ -1,7 +1,8 @@
-package runtime
+package runtime_test
 
 import (
 	"github.com/stretchr/testify/require"
+	"mokapi/runtime"
 	"mokapi/version"
 	"testing"
 )
@@ -11,7 +12,7 @@ func TestNew(t *testing.T) {
 	defer func() {
 		version.BuildVersion = ""
 	}()
-	app := New()
+	app := runtime.New()
 	require.NotNil(t, app.Monitor)
 	require.Equal(t, "1.0", app.Version)
 	require.Len(t, app.Http, 0)

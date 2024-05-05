@@ -1,4 +1,4 @@
-package js
+package console
 
 import (
 	"encoding/json"
@@ -8,36 +8,43 @@ import (
 	"strings"
 )
 
-type console struct {
-	runtime *goja.Runtime
-	logger  common.Logger
+type Module struct {
+	rt     *goja.Runtime
+	logger common.Logger
 }
 
-func enableConsole(runtime *goja.Runtime, logger common.Logger) {
-	c := &console{
-		runtime: runtime,
-		logger:  logger,
+func Enable(vm *goja.Runtime) {
+	o := vm.Get("mokapi/internal").(*goja.Object)
+	host := o.Get("host").Export().(common.Host)
+	f := &Module{
+		rt:     vm,
+		logger: host,
 	}
-	runtime.Set("console", mapToJSValue(runtime, c))
+	obj := vm.NewObject()
+	obj.Set("log", f.Log)
+	obj.Set("warn", f.Warn)
+	obj.Set("error", f.Error)
+	obj.Set("debug", f.Debug)
+	vm.Set("console", obj)
 }
 
-func (c *console) Log(args ...goja.Value) {
+func (c *Module) Log(args ...goja.Value) {
 	c.log(logrus.InfoLevel, args...)
 }
 
-func (c *console) Warn(args ...goja.Value) {
+func (c *Module) Warn(args ...goja.Value) {
 	c.log(logrus.WarnLevel, args...)
 }
 
-func (c *console) Error(args ...goja.Value) {
+func (c *Module) Error(args ...goja.Value) {
 	c.log(logrus.ErrorLevel, args...)
 }
 
-func (c *console) Debug(args ...goja.Value) {
+func (c *Module) Debug(args ...goja.Value) {
 	c.log(logrus.DebugLevel, args...)
 }
 
-func (c *console) log(level logrus.Level, args ...goja.Value) {
+func (c *Module) log(level logrus.Level, args ...goja.Value) {
 	var sb strings.Builder
 	for i, arg := range args {
 		if i > 1 {
@@ -59,7 +66,7 @@ func (c *console) log(level logrus.Level, args ...goja.Value) {
 	}
 }
 
-func (c *console) toString(v goja.Value) string {
+func (c *Module) toString(v goja.Value) string {
 	m, ok := v.(json.Marshaler)
 	if !ok {
 		return v.String()

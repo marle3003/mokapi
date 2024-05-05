@@ -1,21 +1,24 @@
-package js
+package mustache
 
 import (
 	"github.com/dop251/goja"
-	"mokapi/engine/common"
 	"mokapi/lib/mustache"
 	"reflect"
 )
 
-type mustacheModule struct {
+type Module struct {
 	rt *goja.Runtime
 }
 
-func newMustache(_ common.Host, rt *goja.Runtime) interface{} {
-	return &mustacheModule{rt: rt}
+func Require(vm *goja.Runtime, module *goja.Object) {
+	f := &Module{
+		rt: vm,
+	}
+	obj := module.Get("exports").(*goja.Object)
+	obj.Set("render", f.Render)
 }
 
-func (m *mustacheModule) Render(template string, scopeValue goja.Value) string {
+func (m *Module) Render(template string, scopeValue goja.Value) string {
 	scope := m.parseScope(scopeValue)
 
 	s, err := mustache.Render(template, scope)
@@ -25,7 +28,7 @@ func (m *mustacheModule) Render(template string, scopeValue goja.Value) string {
 	return s
 }
 
-func (m *mustacheModule) parseScope(scopeValue goja.Value) interface{} {
+func (m *Module) parseScope(scopeValue goja.Value) interface{} {
 	if scopeValue == nil && goja.IsUndefined(scopeValue) && goja.IsNull(scopeValue) {
 		return nil
 	}

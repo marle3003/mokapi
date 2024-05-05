@@ -1,4 +1,4 @@
-package js
+package process
 
 import (
 	"github.com/dop251/goja"
@@ -6,12 +6,12 @@ import (
 	"strings"
 )
 
-type processModule struct {
+type Module struct {
 	env map[string]string
 }
 
-func enableProcess(runtime *goja.Runtime) {
-	p := &processModule{env: map[string]string{}}
+func Enable(runtime *goja.Runtime) {
+	p := &Module{env: map[string]string{}}
 	for _, e := range os.Environ() {
 		kv := strings.SplitN(e, "=", 2)
 		p.env[kv[0]] = kv[1]

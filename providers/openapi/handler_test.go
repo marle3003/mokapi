@@ -5,15 +5,12 @@ import (
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/dynamic/script"
-	"mokapi/config/static"
-	engine2 "mokapi/engine"
 	"mokapi/engine/common"
+	"mokapi/engine/enginetest"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/providers/openapi/schema/schematest"
-	"mokapi/runtime"
 	"mokapi/runtime/events"
 	"net/http"
 	"net/http/httptest"
@@ -776,7 +773,7 @@ func TestHandler_Event_TypeScript(t *testing.T) {
 		{
 			name: "async event handler",
 			test: func(t *testing.T) {
-				e := engine2.New(&dynamictest.Reader{}, runtime.New(), static.JsConfig{}, false)
+				e := enginetest.NewEngine()
 				err := e.AddScript(newScript("test.ts", `
 					import {on, sleep} from 'mokapi'
 					export default function() {

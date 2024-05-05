@@ -1,21 +1,23 @@
-package js
+package js_test
 
 import (
 	r "github.com/stretchr/testify/require"
-	"mokapi/config/static"
 	"mokapi/engine/common"
+	"mokapi/engine/enginetest"
+	"mokapi/js"
+	"mokapi/js/jstest"
 	"testing"
 )
 
 func TestScript_Data(t *testing.T) {
 	testcases := []struct {
 		name string
-		f    func(t *testing.T, host *testHost)
+		test func(t *testing.T, host *enginetest.Host)
 	}{
 		{
-			"resource array",
-			func(t *testing.T, host *testHost) {
-				host.on = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+			name: "resource array",
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.OnFunc = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
 					r.Equal(t, "http", event)
 					request := &common.EventRequest{}
 					request.Url.Path = "/foo/bar"
@@ -25,19 +27,18 @@ func TestScript_Data(t *testing.T) {
 					r.True(t, b)
 					r.Equal(t, []interface{}{int64(1), int64(2), int64(3), int64(4)}, response.Data)
 				}
-				s, err := New(newScript("",
-					`
+				s, err := jstest.New(jstest.WithSource(`
 export const mokapi = {http: {"bar": [1, 2, 3, 4]}}`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
 			},
 		},
 		{
-			"resource absolute precedence ",
-			func(t *testing.T, host *testHost) {
-				host.on = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+			name: "resource absolute precedence ",
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.OnFunc = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
 					r.Equal(t, "http", event)
 					request := &common.EventRequest{}
 					request.Url.Path = "/foo/bar"
@@ -47,19 +48,18 @@ export const mokapi = {http: {"bar": [1, 2, 3, 4]}}`),
 					r.True(t, b)
 					r.Equal(t, []interface{}{int64(1), int64(2), int64(3), int64(4)}, response.Data)
 				}
-				s, err := New(newScript("",
-					`
+				s, err := jstest.New(jstest.WithSource(`
 export const mokapi = {"http": {"bar": [5,6], "foo": {"bar": [1, 2, 3, 4]}}}`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
 			},
 		},
 		{
-			"using default function",
-			func(t *testing.T, host *testHost) {
-				host.on = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+			name: "using default function",
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.OnFunc = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
 					r.Equal(t, "http", event)
 					request := &common.EventRequest{}
 					request.Url.Path = "/foo/bar"
@@ -69,8 +69,7 @@ export const mokapi = {"http": {"bar": [5,6], "foo": {"bar": [1, 2, 3, 4]}}}`),
 					r.True(t, b)
 					r.Equal(t, []interface{}{int64(1), int64(2), int64(3), int64(4)}, response.Data)
 				}
-				s, err := New(newScript("",
-					`
+				s, err := jstest.New(jstest.WithSource(`
 export default () => {
 	return {
 		"http": {
@@ -81,7 +80,7 @@ export default () => {
 		}
 	}
 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
@@ -94,10 +93,7 @@ export default () => {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-
-			host := &testHost{}
-
-			tc.f(t, host)
+			tc.test(t, &enginetest.Host{})
 		})
 	}
 }

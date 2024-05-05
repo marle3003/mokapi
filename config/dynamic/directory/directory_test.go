@@ -1,16 +1,17 @@
-package directory
+package directory_test
 
 import (
 	"github.com/stretchr/testify/require"
+	"mokapi/config/dynamic/directory"
 	"mokapi/engine/enginetest"
 	"mokapi/ldap"
 	"mokapi/ldap/ldaptest"
 	"testing"
 )
 
-var testConfig = &Config{
-	Info: Info{Name: "foo"},
-	Entries: map[string]Entry{
+var testConfig = &directory.Config{
+	Info: directory.Info{Name: "foo"},
+	Entries: map[string]directory.Entry{
 		"": {
 			Dn: "dc=foo,dc=com",
 			Attributes: map[string][]string{
@@ -38,12 +39,12 @@ var testConfig = &Config{
 func TestDirectory_ServeBind(t *testing.T) {
 	testcases := []struct {
 		name   string
-		config *Config
+		config *directory.Config
 		fn     func(t *testing.T, h ldap.Handler)
 	}{
 		{
 			name:   "anonymous bind",
-			config: &Config{Info: Info{Name: "foo"}},
+			config: &directory.Config{Info: directory.Info{Name: "foo"}},
 			fn: func(t *testing.T, h ldap.Handler) {
 				rr := ldaptest.NewRecorder()
 				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.BindRequest{Version: 3, Auth: ldap.Simple}))
@@ -55,7 +56,7 @@ func TestDirectory_ServeBind(t *testing.T) {
 		},
 		{
 			name:   "unsupported bind request",
-			config: &Config{},
+			config: &directory.Config{},
 			fn: func(t *testing.T, h ldap.Handler) {
 				rr := ldaptest.NewRecorder()
 				r := &ldap.BindRequest{
@@ -71,7 +72,7 @@ func TestDirectory_ServeBind(t *testing.T) {
 		},
 		{
 			name:   "unsupported ldap version",
-			config: &Config{},
+			config: &directory.Config{},
 			fn: func(t *testing.T, h ldap.Handler) {
 				rr := ldaptest.NewRecorder()
 				r := &ldap.BindRequest{
@@ -89,7 +90,7 @@ func TestDirectory_ServeBind(t *testing.T) {
 
 	for _, test := range testcases {
 		t.Run(test.name, func(t *testing.T) {
-			d := NewHandler(test.config, enginetest.NewEngine())
+			d := directory.NewHandler(test.config, enginetest.NewEngine())
 			test.fn(t, d)
 		})
 	}
@@ -98,12 +99,12 @@ func TestDirectory_ServeBind(t *testing.T) {
 func TestDirectory_ServeSearch(t *testing.T) {
 	testcases := []struct {
 		name   string
-		config *Config
+		config *directory.Config
 		fn     func(t *testing.T, h ldap.Handler)
 	}{
 		{
 			name:   "empty base object",
-			config: &Config{Info: Info{Name: "foo"}},
+			config: &directory.Config{Info: directory.Info{Name: "foo"}},
 			fn: func(t *testing.T, h ldap.Handler) {
 				rr := ldaptest.NewRecorder()
 				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
@@ -120,8 +121,8 @@ func TestDirectory_ServeSearch(t *testing.T) {
 		},
 		{
 			name: "base object",
-			config: &Config{Info: Info{Name: "foo"},
-				Root: Entry{Dn: "root", Attributes: map[string][]string{"foo": {"bar"}}}},
+			config: &directory.Config{Info: directory.Info{Name: "foo"},
+				Root: directory.Entry{Dn: "root", Attributes: map[string][]string{"foo": {"bar"}}}},
 			fn: func(t *testing.T, h ldap.Handler) {
 				rr := ldaptest.NewRecorder()
 				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
@@ -140,8 +141,8 @@ func TestDirectory_ServeSearch(t *testing.T) {
 		},
 		{
 			name: "objectclass=* scope=ScopeBaseObject",
-			config: &Config{Info: Info{Name: "foo"},
-				Entries: map[string]Entry{
+			config: &directory.Config{Info: directory.Info{Name: "foo"},
+				Entries: map[string]directory.Entry{
 					"": {
 						Dn: "dc=foo,dc=com",
 						Attributes: map[string][]string{
@@ -474,7 +475,7 @@ func TestDirectory_ServeSearch(t *testing.T) {
 		},
 		{
 			name: "exceed size limit",
-			config: &Config{
+			config: &directory.Config{
 				Info:      testConfig.Info,
 				Address:   testConfig.Address,
 				Root:      testConfig.Root,
@@ -501,7 +502,7 @@ func TestDirectory_ServeSearch(t *testing.T) {
 
 	for _, test := range testcases {
 		t.Run(test.name, func(t *testing.T) {
-			h := NewHandler(test.config, enginetest.NewEngine())
+			h := directory.NewHandler(test.config, enginetest.NewEngine())
 			test.fn(t, h)
 		})
 	}

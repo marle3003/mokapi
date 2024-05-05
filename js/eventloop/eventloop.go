@@ -1,4 +1,4 @@
-package js
+package eventloop
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ type timer struct {
 	cancelled bool
 }
 
-type runner struct {
+type EventLoop struct {
 	vm *goja.Runtime
 
 	exports goja.Value
@@ -27,8 +27,8 @@ type runner struct {
 	waitLock sync.Mutex
 }
 
-func newRunner(vm *goja.Runtime) *runner {
-	r := &runner{
+func New(vm *goja.Runtime) *EventLoop {
+	r := &EventLoop{
 		vm:        vm,
 		queueChan: make(chan func(), 1),
 		stopChan:  make(chan struct{}, 1),
@@ -42,21 +42,21 @@ func newRunner(vm *goja.Runtime) *runner {
 	return r
 }
 
-func (r *runner) Run(fn func(vm *goja.Runtime)) {
-	if r.running {
-		r.queueChan <- func() { fn(r.vm) }
+func (loop *EventLoop) Run(fn func(vm *goja.Runtime)) {
+	if loop.running {
+		loop.queueChan <- func() { fn(loop.vm) }
 	} else {
-		fn(r.vm)
+		fn(loop.vm)
 	}
 }
 
-func (r *runner) RunAsync(fn func(vm *goja.Runtime) (goja.Value, error)) (goja.Value, error) {
-	if r.running {
+func (loop *EventLoop) RunAsync(fn func(vm *goja.Runtime) (goja.Value, error)) (goja.Value, error) {
+	if loop.running {
 		var result goja.Value
 		var err error
 		done := make(chan struct{})
-		r.queueChan <- func() {
-			result, err = fn(r.vm)
+		loop.queueChan <- func() {
+			result, err = fn(loop.vm)
 			done <- struct{}{}
 		}
 
@@ -67,8 +67,8 @@ func (r *runner) RunAsync(fn func(vm *goja.Runtime) (goja.Value, error)) (goja.V
 		}
 
 		if p, ok := result.Export().(*goja.Promise); ok {
-			for p.State() == goja.PromiseStatePending && r.running {
-				r.wait()
+			for p.State() == goja.PromiseStatePending && loop.running {
+				loop.wait()
 			}
 			return p.Result(), nil
 		}
@@ -79,49 +79,49 @@ func (r *runner) RunAsync(fn func(vm *goja.Runtime) (goja.Value, error)) (goja.V
 	return nil, fmt.Errorf("runner not started")
 }
 
-func (r *runner) StartLoop() {
-	r.running = true
+func (loop *EventLoop) StartLoop() {
+	loop.running = true
 	go func() {
 	LOOP:
 		for {
 			select {
-			case job := <-r.queueChan:
+			case job := <-loop.queueChan:
 				job()
-				r.wakeup()
-			case <-r.stopChan:
-				r.wakeup()
+				loop.wakeup()
+			case <-loop.stopChan:
+				loop.wakeup()
 				break LOOP
 			}
 		}
 	}()
 }
 
-func (r *runner) Stop() {
-	if r.running {
-		r.stopChan <- struct{}{}
+func (loop *EventLoop) Stop() {
+	if loop.running {
+		loop.stopChan <- struct{}{}
 	}
 }
 
-func (r *runner) HasJobs() bool {
-	return r.jobCount > 0
+func (loop *EventLoop) HasJobs() bool {
+	return loop.jobCount > 0
 }
 
-func (r *runner) setTimeout(call goja.FunctionCall) goja.Value {
-	r.jobCount++
-	delay, f := r.getScheduledFunc(call)
+func (loop *EventLoop) setTimeout(call goja.FunctionCall) goja.Value {
+	loop.jobCount++
+	delay, f := loop.getScheduledFunc(call)
 	t := &timer{
 		fn: f,
 	}
 	t.timer = time.AfterFunc(time.Duration(delay)*time.Millisecond, func() {
 		t.cancelled = true
-		r.jobCount--
-		r.queueChan <- f
+		loop.jobCount--
+		loop.queueChan <- f
 	})
 
-	return r.vm.ToValue(t)
+	return loop.vm.ToValue(t)
 }
 
-func (r *runner) getScheduledFunc(call goja.FunctionCall) (int64, func()) {
+func (loop *EventLoop) getScheduledFunc(call goja.FunctionCall) (int64, func()) {
 	if fn, ok := goja.AssertFunction(call.Argument(0)); ok {
 		delay := call.Argument(1).ToInteger()
 		var args []goja.Value
@@ -131,7 +131,7 @@ func (r *runner) getScheduledFunc(call goja.FunctionCall) (int64, func()) {
 		f := func() {
 			_, err := fn(nil, args...)
 			if err != nil {
-				panic(r.vm.ToValue(err.Error()))
+				panic(loop.vm.ToValue(err.Error()))
 			}
 		}
 		return delay, f
@@ -139,16 +139,16 @@ func (r *runner) getScheduledFunc(call goja.FunctionCall) (int64, func()) {
 	return 0, nil
 }
 
-func (r *runner) wait() {
-	r.waitLock.Lock()
-	defer r.waitLock.Unlock()
-	r.jobCount++
-	r.waitCond.Wait()
-	r.jobCount--
+func (loop *EventLoop) wait() {
+	loop.waitLock.Lock()
+	defer loop.waitLock.Unlock()
+	loop.jobCount++
+	loop.waitCond.Wait()
+	loop.jobCount--
 }
 
-func (r *runner) wakeup() {
-	r.waitLock.Lock()
-	defer r.waitLock.Unlock()
-	r.waitCond.Broadcast()
+func (loop *EventLoop) wakeup() {
+	loop.waitLock.Lock()
+	defer loop.waitLock.Unlock()
+	loop.waitCond.Broadcast()
 }

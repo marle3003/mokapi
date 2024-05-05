@@ -1,4 +1,4 @@
-package engine
+package engine_test
 
 //func TestTypeScript_OnEvent(t *testing.T) {
 //	testcases := []struct {

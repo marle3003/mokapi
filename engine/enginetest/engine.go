@@ -1,22 +1,26 @@
 package enginetest
 
-import "mokapi/engine/common"
+import (
+	"mokapi/config/dynamic"
+	"mokapi/config/static"
+	"mokapi/engine"
+	"mokapi/engine/common"
+	"mokapi/js"
+	"mokapi/js/jstest"
+	"path"
+)
 
-type engine struct {
-	emit func(event string, args ...interface{}) []*common.Action
-}
+func NewEngine(opts ...engine.Options) *engine.Engine {
+	loader := engine.NewDefaultScriptLoader(&static.Config{})
 
-func NewEngine() common.EventEmitter {
-	return &engine{}
-}
-
-func NewEngineWithHandler(handler func(event string, args ...interface{}) []*common.Action) common.EventEmitter {
-	return &engine{emit: handler}
-}
-
-func (e *engine) Emit(event string, args ...interface{}) []*common.Action {
-	if e.emit != nil {
-		return e.emit(event, args...)
-	}
-	return nil
+	opts = append([]engine.Options{
+		engine.WithScriptLoader(engine.ScriptLoaderFunc(func(file *dynamic.Config, host common.Host) (common.Script, error) {
+			if path.Ext(file.Info.Kernel().Path()) == ".js" {
+				return jstest.New(js.WithFile(file), js.WithHost(host))
+			}
+			return loader.Load(file, host)
+		})),
+		engine.WithLogger(&Logger{}),
+	}, opts...)
+	return engine.NewEngine(opts...)
 }

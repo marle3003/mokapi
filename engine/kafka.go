@@ -15,17 +15,17 @@ import (
 	"time"
 )
 
-type kafkaClient struct {
+type KafkaClient struct {
 	app *runtime.App
 }
 
-func newKafkaClient(app *runtime.App) *kafkaClient {
-	return &kafkaClient{
+func NewKafkaClient(app *runtime.App) *KafkaClient {
+	return &KafkaClient{
 		app: app,
 	}
 }
 
-func (c *kafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 	t, config, err := c.tryGet(args.Cluster, args.Topic, args.Retry)
 	if err != nil {
 		return nil, err
@@ -92,7 +92,7 @@ func (c *kafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 
 }
 
-func (c *kafkaClient) tryGet(cluster string, topic string, retry common.KafkaProduceRetry) (t *store.Topic, config *asyncApi.Config, err error) {
+func (c *KafkaClient) tryGet(cluster string, topic string, retry common.KafkaProduceRetry) (t *store.Topic, config *asyncApi.Config, err error) {
 	count := 0
 	backoff := retry.InitialRetryTime
 	for {
@@ -110,7 +110,7 @@ func (c *kafkaClient) tryGet(cluster string, topic string, retry common.KafkaPro
 	}
 }
 
-func (c *kafkaClient) get(cluster string, topic string) (t *store.Topic, config *asyncApi.Config, err error) {
+func (c *KafkaClient) get(cluster string, topic string) (t *store.Topic, config *asyncApi.Config, err error) {
 	if len(cluster) == 0 {
 		var topics []*store.Topic
 		for _, v := range c.app.Kafka {
@@ -143,7 +143,7 @@ func (c *kafkaClient) get(cluster string, topic string) (t *store.Topic, config 
 	return
 }
 
-func (c *kafkaClient) getPartition(t *store.Topic, partition int) (*store.Partition, error) {
+func (c *KafkaClient) getPartition(t *store.Topic, partition int) (*store.Partition, error) {
 	if partition < 0 {
 		r := rand.New(rand.NewSource(time.Now().Unix()))
 		partition = r.Intn(len(t.Partitions))
@@ -154,7 +154,7 @@ func (c *kafkaClient) getPartition(t *store.Topic, partition int) (*store.Partit
 	return t.Partition(partition), nil
 }
 
-func (c *kafkaClient) createRecordBatch(key, value interface{}, headers map[string]interface{}, config *asyncApi.Channel) (rb kafka.RecordBatch, err error) {
+func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[string]interface{}, config *asyncApi.Channel) (rb kafka.RecordBatch, err error) {
 	msg := config.Publish.Message.Value
 	if msg == nil {
 		err = fmt.Errorf("message configuration missing")

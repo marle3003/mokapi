@@ -1,4 +1,4 @@
-package engine
+package engine_test
 
 import (
 	"errors"
@@ -6,38 +6,48 @@ import (
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
-	"mokapi/config/static"
-	"mokapi/runtime"
+	"mokapi/engine"
+	"mokapi/engine/common"
+	"mokapi/engine/enginetest"
 	"net/url"
 	"testing"
 )
 
 func TestEngine_AddScript(t *testing.T) {
-	engine := New(&dynamictest.Reader{}, runtime.New(), static.JsConfig{}, false)
+	registered := 0
+	scheduler := &enginetest.Scheduler{
+		EveryFunc: func(every string, handler func(), opt common.JobOptions) (engine.Job, error) {
+			registered++
+			require.Equal(t, "1m", every)
+			return nil, nil
+		},
+	}
+	e := enginetest.NewEngine(engine.WithScheduler(scheduler))
 	src := `
 			local mokapi = require "mokapi"
 			mokapi.every("1m", function() end);
 `
-	err := engine.AddScript(newScript("test.lua", src))
+	err := e.AddScript(newScript("test.lua", src))
 	require.NoError(t, err)
-	err = engine.AddScript(newScript("test.lua", src))
+	err = e.AddScript(newScript("test.lua", src))
 	require.NoError(t, err)
 
-	require.Len(t, engine.cron.Jobs(), 1, "only one job should exists")
+	require.Equal(t, 1, e.Scripts(), "only one script should exists")
+	require.Equal(t, 2, registered)
 }
 
 func TestLuaScriptEngine(t *testing.T) {
 	t.Parallel()
 	t.Run("blank", func(t *testing.T) {
 		t.Parallel()
-		engine := New(&dynamictest.Reader{}, runtime.New(), static.JsConfig{}, false)
-		err := engine.AddScript(newScript("test.lua", ""))
+		e := enginetest.NewEngine()
+		err := e.AddScript(newScript("test.lua", ""))
 		require.NoError(t, err)
 	})
 	t.Run("print", func(t *testing.T) {
 		t.Parallel()
-		engine := New(&dynamictest.Reader{}, runtime.New(), static.JsConfig{}, false)
-		err := engine.AddScript(newScript("test.lua", `print("Hello World")`))
+		e := enginetest.NewEngine()
+		err := e.AddScript(newScript("test.lua", `print("Hello World")`))
 		require.NoError(t, err)
 	})
 }
@@ -46,16 +56,13 @@ func TestLuaEvery(t *testing.T) {
 	t.Parallel()
 	t.Run("simple", func(t *testing.T) {
 		t.Parallel()
-		engine := New(&dynamictest.Reader{}, runtime.New(), static.JsConfig{}, false)
-		err := engine.AddScript(newScript("test.lua", `
+		e := enginetest.NewEngine()
+		err := e.AddScript(newScript("test.lua", `
 			local mokapi = require "mokapi"
 			id = mokapi.every("1m", function() end);
 		`))
 		require.NoError(t, err)
-		require.Len(t, engine.scripts, 1, "script length not 1")
-
-		require.Len(t, engine.scripts["test.lua"].jobs, 1, "job not defined")
-		require.Len(t, engine.cron.Jobs(), 1, "job not defined")
+		require.Equal(t, 1, e.Scripts(), "script length not 1")
 	})
 }
 
@@ -63,17 +70,17 @@ func TestLuaOn(t *testing.T) {
 	t.Parallel()
 	t.Run("noEvent", func(t *testing.T) {
 		t.Parallel()
-		engine := New(&dynamictest.Reader{}, runtime.New(), static.JsConfig{}, false)
-		err := engine.AddScript(newScript("test.lua", `
+		e := enginetest.NewEngine()
+		err := e.AddScript(newScript("test.lua", `
 			local mokapi = require "mokapi"
 		`))
 		require.NoError(t, err)
-		require.Len(t, engine.scripts, 0, "script should be closed because no event and no jobs")
+		require.Equal(t, 0, e.Scripts(), "script should be closed because no event and no jobs")
 	})
 	t.Run("withoutSummary", func(t *testing.T) {
 		t.Parallel()
-		engine := New(&dynamictest.Reader{}, runtime.New(), static.JsConfig{}, false)
-		err := engine.AddScript(newScript("test.lua", `
+		e := enginetest.NewEngine()
+		err := e.AddScript(newScript("test.lua", `
 			local mokapi = require "mokapi"
 			mokapi.on(
 				'http',
@@ -83,17 +90,15 @@ func TestLuaOn(t *testing.T) {
 			);
 		`))
 		require.NoError(t, err)
-		require.Len(t, engine.scripts, 1, "script length not 1")
-		require.Len(t, engine.scripts["test.lua"].events["http"], 1, "event not defined")
 
-		summaries := engine.Run("http")
+		summaries := e.Run("http")
 
 		require.Len(t, summaries, 0, "summary length not 0")
 	})
 	t.Run("simple", func(t *testing.T) {
 		t.Parallel()
-		engine := New(&dynamictest.Reader{}, runtime.New(), static.JsConfig{}, false)
-		err := engine.AddScript(newScript("test.lua", `
+		e := enginetest.NewEngine()
+		err := e.AddScript(newScript("test.lua", `
 			local mokapi = require "mokapi"
 			mokapi.on(
 				'http',
@@ -103,10 +108,8 @@ func TestLuaOn(t *testing.T) {
 			);
 		`))
 		require.NoError(t, err)
-		require.Len(t, engine.scripts, 1, "script length not 1")
-		require.Len(t, engine.scripts["test.lua"].events["http"], 1, "event not defined")
 
-		summaries := engine.Run("http")
+		summaries := e.Run("http")
 
 		require.Len(t, summaries, 1, "summary length not 1")
 		summary := summaries[0]
@@ -116,8 +119,8 @@ func TestLuaOn(t *testing.T) {
 	})
 	t.Run("duration", func(t *testing.T) {
 		t.Parallel()
-		engine := New(&dynamictest.Reader{}, runtime.New(), static.JsConfig{}, false)
-		err := engine.AddScript(newScript("test.lua", `
+		e := enginetest.NewEngine()
+		err := e.AddScript(newScript("test.lua", `
 			local mokapi = require "mokapi"
 			mokapi.on(
 				'http',
@@ -129,7 +132,7 @@ func TestLuaOn(t *testing.T) {
 		`))
 		require.NoError(t, err)
 
-		summaries := engine.Run("http")
+		summaries := e.Run("http")
 
 		require.Len(t, summaries, 1, "summary length not 1")
 		summary := summaries[0]
@@ -137,8 +140,8 @@ func TestLuaOn(t *testing.T) {
 	})
 	t.Run("tag name", func(t *testing.T) {
 		t.Parallel()
-		engine := New(&dynamictest.Reader{}, runtime.New(), static.JsConfig{}, false)
-		err := engine.AddScript(newScript("test.lua", `
+		e := enginetest.NewEngine()
+		err := e.AddScript(newScript("test.lua", `
 			local mokapi = require "mokapi"
 			mokapi.on(
 				'http',
@@ -150,15 +153,15 @@ func TestLuaOn(t *testing.T) {
 		`))
 		require.NoError(t, err)
 
-		summaries := engine.Run("http")
+		summaries := e.Run("http")
 
 		require.Len(t, summaries, 1, "summary length not 1")
 		require.Equal(t, "foobar", summaries[0].Tags["name"], "tag name not correct")
 	})
 	t.Run("custom tag", func(t *testing.T) {
 		t.Parallel()
-		engine := New(&dynamictest.Reader{}, runtime.New(), static.JsConfig{}, false)
-		err := engine.AddScript(newScript("test.lua", `
+		e := enginetest.NewEngine()
+		err := e.AddScript(newScript("test.lua", `
 			local mokapi = require "mokapi"
 			mokapi.on(
 				'http',
@@ -170,7 +173,7 @@ func TestLuaOn(t *testing.T) {
 		`))
 		require.NoError(t, err)
 
-		summaries := engine.Run("http")
+		summaries := e.Run("http")
 
 		require.Len(t, summaries, 1, "summary length not 1")
 		require.Equal(t, "bar", summaries[0].Tags["foo"], "tag name not correct")
@@ -185,15 +188,14 @@ func TestLuaOn(t *testing.T) {
 		}
 
 		var msg string
-		logger := &testLogger{
-			info: func(args ...interface{}) {
+		logger := &enginetest.Logger{
+			InfoFunc: func(args ...interface{}) {
 				msg = fmt.Sprintf("%v", args[0])
 			},
 		}
 
-		engine := New(&dynamictest.Reader{}, runtime.New(), static.JsConfig{}, false)
-		engine.logger = logger
-		err := engine.AddScript(newScript("test.lua", `
+		e := enginetest.NewEngine(engine.WithLogger(logger))
+		err := e.AddScript(newScript("test.lua", `
 			local mokapi = require "mokapi"
 			local log = require "log"
 			mokapi.on(
@@ -206,7 +208,7 @@ func TestLuaOn(t *testing.T) {
 		`))
 		require.NoError(t, err)
 
-		engine.Run("http", p)
+		e.Run("http", p)
 
 		require.Equal(t, "bar", msg)
 	})
@@ -217,8 +219,8 @@ func TestLuaOpen(t *testing.T) {
 	t.Run("fileExists", func(t *testing.T) {
 		t.Parallel()
 		var msg string
-		logger := &testLogger{
-			info: func(args ...interface{}) {
+		logger := &enginetest.Logger{
+			InfoFunc: func(args ...interface{}) {
 				msg = fmt.Sprintf("%v", args[0])
 			},
 		}
@@ -230,9 +232,8 @@ func TestLuaOpen(t *testing.T) {
 			}, nil
 		})
 
-		engine := New(reader, runtime.New(), static.JsConfig{}, false)
-		engine.logger = logger
-		err := engine.AddScript(newScript("./test.lua", `
+		e := enginetest.NewEngine(engine.WithLogger(logger), engine.WithReader(reader))
+		err := e.AddScript(newScript("./test.lua", `
 			local file = open('test.txt')
 			local log = require "log"
 			log.info(file)
@@ -244,8 +245,8 @@ func TestLuaOpen(t *testing.T) {
 		t.Parallel()
 
 		var msg string
-		logger := &testLogger{
-			info: func(args ...interface{}) {
+		logger := &enginetest.Logger{
+			InfoFunc: func(args ...interface{}) {
 				msg = fmt.Sprintf("%v", args[0])
 			},
 		}
@@ -254,9 +255,8 @@ func TestLuaOpen(t *testing.T) {
 			return nil, errors.New("file not found")
 		})
 
-		engine := New(reader, runtime.New(), static.JsConfig{}, false)
-		engine.logger = logger
-		err := engine.AddScript(newScript("./test.lua", `
+		e := enginetest.NewEngine(engine.WithLogger(logger), engine.WithReader(reader))
+		err := e.AddScript(newScript("./test.lua", `
 			local file, err = open('test.txt')
 			local log = require "log"
 			log.info(err)
@@ -264,12 +264,4 @@ func TestLuaOpen(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "file not found", msg)
 	})
-}
-
-func mustParse(s string) *url.URL {
-	u, err := url.Parse(s)
-	if err != nil {
-		panic(err)
-	}
-	return u
 }

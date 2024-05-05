@@ -1,4 +1,4 @@
-package js
+package http
 
 import (
 	"bytes"
@@ -7,26 +7,26 @@ import (
 	"github.com/dop251/goja"
 	"io"
 	"mokapi/engine/common"
+	"mokapi/js/eventloop"
 	"mokapi/media"
 	"net/http"
 )
 
-type HttpClient interface {
+type Client interface {
 	Do(r *http.Request) (*http.Response, error)
 }
 
-type httpModule struct {
-	host   common.Host
-	rt     *goja.Runtime
-	client HttpClient
-	runner *runner
+type Module struct {
+	host common.Host
+	rt   *goja.Runtime
+	loop *eventloop.EventLoop
 }
 
-type requestArgs struct {
+type RequestArgs struct {
 	Headers map[string]interface{}
 }
 
-type response struct {
+type Response struct {
 	rt         *goja.Runtime
 	Body       string              `json:"body"`
 	StatusCode int                 `json:"statusCode"`
@@ -37,56 +37,69 @@ type fetchArgs struct {
 	method string
 }
 
-func newHttp(host common.Host, rt *goja.Runtime, runner *runner) interface{} {
-	return &httpModule{host: host, rt: rt, client: host.HttpClient(), runner: runner}
+func Require(vm *goja.Runtime, module *goja.Object) {
+	o := vm.Get("mokapi/internal").(*goja.Object)
+	host := o.Get("host").Export().(common.Host)
+	loop := o.Get("loop").Export().(*eventloop.EventLoop)
+	f := &Module{
+		rt:   vm,
+		host: host,
+		loop: loop,
+	}
+	obj := module.Get("exports").(*goja.Object)
+	obj.Set("get", f.Get)
+	obj.Set("post", f.Post)
+	obj.Set("put", f.Put)
+	obj.Set("head", f.Head)
+	obj.Set("patch", f.Patch)
+	obj.Set("delete", f.Delete)
+	obj.Set("del", f.Delete)
+	obj.Set("options", f.Options)
+	obj.Set("fetch", f.Fetch)
 }
 
-func (m *httpModule) Get(url string, args goja.Value) interface{} {
-	return m.doRequest("GET", url, "", args)
+func (m *Module) Get(url string, args goja.Value) interface{} {
+	return m.doRequest(http.MethodGet, url, "", args)
 }
 
-func (m *httpModule) Post(url string, body interface{}, args goja.Value) interface{} {
-	return m.doRequest("POST", url, body, args)
+func (m *Module) Post(url string, body interface{}, args goja.Value) interface{} {
+	return m.doRequest(http.MethodPost, url, body, args)
 }
 
-func (m *httpModule) Put(url string, body interface{}, args goja.Value) interface{} {
-	return m.doRequest("PUT", url, body, args)
+func (m *Module) Put(url string, body interface{}, args goja.Value) interface{} {
+	return m.doRequest(http.MethodPut, url, body, args)
 }
 
-func (m *httpModule) Head(url string, args goja.Value) interface{} {
-	return m.doRequest("HEAD", url, "", args)
+func (m *Module) Head(url string, args goja.Value) interface{} {
+	return m.doRequest(http.MethodHead, url, "", args)
 }
 
-func (m *httpModule) Patch(url string, body interface{}, args goja.Value) interface{} {
-	return m.doRequest("PATCH", url, body, args)
+func (m *Module) Patch(url string, body interface{}, args goja.Value) interface{} {
+	return m.doRequest(http.MethodPatch, url, body, args)
 }
 
-func (m *httpModule) Delete(url string, body interface{}, args goja.Value) interface{} {
-	return m.doRequest("DELETE", url, body, args)
+func (m *Module) Delete(url string, body interface{}, args goja.Value) interface{} {
+	return m.doRequest(http.MethodDelete, url, body, args)
 }
 
-func (m *httpModule) Del(url string, body interface{}, args goja.Value) interface{} {
-	return m.Delete(url, body, args)
+func (m *Module) Options(url string, body interface{}, args goja.Value) interface{} {
+	return m.doRequest(http.MethodOptions, url, body, args)
 }
 
-func (m *httpModule) Options(url string, body interface{}, args goja.Value) interface{} {
-	return m.doRequest("OPTIONS", url, body, args)
-}
-
-func (m *httpModule) Fetch(url string, v goja.Value) *goja.Promise {
+func (m *Module) Fetch(url string, v goja.Value) *goja.Promise {
 	p, resolve, _ := m.rt.NewPromise()
 	go func() {
 		args := getFetchArgs(v)
 		res := m.doRequest(args.method, url, nil, nil)
-		m.runner.Run(func(vm *goja.Runtime) {
+		m.loop.Run(func(vm *goja.Runtime) {
 			resolve(res)
 		})
 	}()
 	return p
 }
 
-func (m *httpModule) doRequest(method, url string, body interface{}, args goja.Value) interface{} {
-	rArgs := &requestArgs{Headers: make(map[string]interface{})}
+func (m *Module) doRequest(method, url string, body interface{}, args goja.Value) interface{} {
+	rArgs := &RequestArgs{Headers: make(map[string]interface{})}
 	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
 		params := args.ToObject(m.rt)
 		for _, k := range params.Keys() {
@@ -107,7 +120,8 @@ func (m *httpModule) doRequest(method, url string, body interface{}, args goja.V
 		panic(m.rt.ToValue(err.Error()))
 	}
 
-	res, err := m.client.Do(req)
+	client := m.host.HttpClient()
+	res, err := client.Do(req)
 	if err != nil {
 		panic(m.rt.ToValue(err.Error()))
 	}
@@ -115,7 +129,7 @@ func (m *httpModule) doRequest(method, url string, body interface{}, args goja.V
 	return m.parseResponse(res)
 }
 
-func createRequest(method, url string, body interface{}, args *requestArgs) (*http.Request, error) {
+func createRequest(method, url string, body interface{}, args *RequestArgs) (*http.Request, error) {
 	r, err := encode(body, args)
 	if err != nil {
 		return nil, err
@@ -139,8 +153,8 @@ func createRequest(method, url string, body interface{}, args *requestArgs) (*ht
 	return req, nil
 }
 
-func (m *httpModule) parseResponse(r *http.Response) response {
-	result := response{StatusCode: r.StatusCode, Headers: make(map[string][]string), rt: m.rt}
+func (m *Module) parseResponse(r *http.Response) Response {
+	result := Response{StatusCode: r.StatusCode, Headers: make(map[string][]string), rt: m.rt}
 	if r.Body != nil {
 		if b, err := io.ReadAll(r.Body); err == nil {
 			result.Body = string(b)
@@ -152,7 +166,7 @@ func (m *httpModule) parseResponse(r *http.Response) response {
 	return result
 }
 
-func encode(i interface{}, args *requestArgs) (io.Reader, error) {
+func encode(i interface{}, args *RequestArgs) (io.Reader, error) {
 	if s, ok := i.(string); ok {
 		return bytes.NewBufferString(s), nil
 	}
@@ -176,7 +190,7 @@ func encode(i interface{}, args *requestArgs) (io.Reader, error) {
 	}
 }
 
-func (r response) Json() interface{} {
+func (r Response) Json() interface{} {
 	var i interface{}
 	err := json.Unmarshal([]byte(r.Body), &i)
 	if err != nil {

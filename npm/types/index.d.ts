@@ -445,7 +445,7 @@ export interface ScheduledEventArgs {
 /**
  * JavaScript value representable with JSON.
  */
-export type JSONValue = null | boolean | number | string | JSONValue[] | JSONObject;
+export type JSONValue = null | undefined | boolean | number | string | JSONValue[] | JSONObject;
 
 /**
  * Object representable with JSON.

@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"github.com/go-co-op/gocron"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/script"
@@ -9,54 +8,66 @@ import (
 	"mokapi/engine/common"
 	"mokapi/runtime"
 	"sync"
-	"time"
 )
+
+type Options func(e *Engine)
 
 type Engine struct {
 	scripts     map[string]*scriptHost
-	cron        *gocron.Scheduler
+	scheduler   Scheduler
 	logger      common.Logger
 	reader      dynamic.Reader
-	kafkaClient *kafkaClient
+	kafkaClient common.KafkaClient
 	m           sync.Mutex
-	jsConfig    static.JsConfig
+	loader      ScriptLoader
 	parallel    bool
 }
 
-func New(reader dynamic.Reader, app *runtime.App, jsConfig static.JsConfig, parallel bool) *Engine {
+func New(reader dynamic.Reader, app *runtime.App, config *static.Config, parallel bool) *Engine {
 	return &Engine{
 		scripts:     make(map[string]*scriptHost),
-		cron:        gocron.NewScheduler(time.UTC),
+		scheduler:   NewDefaultScheduler(),
 		logger:      log.StandardLogger(),
 		reader:      reader,
-		kafkaClient: newKafkaClient(app),
-		jsConfig:    jsConfig,
+		kafkaClient: NewKafkaClient(app),
 		parallel:    parallel,
+		loader:      NewDefaultScriptLoader(config),
 	}
 }
 
-func (e *Engine) AddScript(cfg *dynamic.Config) error {
-	if _, ok := cfg.Data.(*script.Script); !ok {
+func NewEngine(opts ...Options) *Engine {
+	e := &Engine{
+		scripts:   make(map[string]*scriptHost),
+		scheduler: NewDefaultScheduler(),
+		logger:    log.StandardLogger(),
+	}
+	for _, opt := range opts {
+		opt(e)
+	}
+	return e
+}
+
+func (e *Engine) AddScript(file *dynamic.Config) error {
+	if _, ok := file.Data.(*script.Script); !ok {
 		return nil
 	}
 
 	e.m.Lock()
 	defer e.m.Unlock()
 
-	e.remove(cfg)
-
-	sh := newScriptHost(cfg, e)
-	e.scripts[sh.name] = sh
+	host := newScriptHost(file, e)
+	e.addOrUpdate(host)
+	e.scripts[host.name] = host
 
 	if e.parallel {
 		go func() {
-			err := e.compileAndRun(sh)
+			err := e.run(host)
 			if err != nil {
 				log.Error(err)
 			}
 		}()
 	} else {
-		return e.compileAndRun(sh)
+		return e.run(host)
 	}
 
 	return nil
@@ -76,44 +87,45 @@ func (e *Engine) Emit(event string, args ...interface{}) []*common.Action {
 }
 
 func (e *Engine) Start() {
-	e.cron.StartAsync()
+	e.scheduler.Start()
 }
 
 func (e *Engine) Close() {
-	e.cron.Stop()
+	e.scheduler.Close()
 }
 
-func (e *Engine) remove(cfg *dynamic.Config) {
-	name := cfg.Info.Path()
-	if h, ok := e.scripts[name]; ok {
-		log.Debugf("updating script %v", cfg.Info.Path())
+func (e *Engine) addOrUpdate(host *scriptHost) {
+	if h, ok := e.scripts[host.name]; ok {
+		log.Debugf("updating script %v", host.name)
 		h.close()
-		delete(e.scripts, name)
+		delete(e.scripts, host.name)
 	} else {
-		log.Debugf("parsing script %v", cfg.Info.Path())
+		log.Debugf("parsing script %v", host.name)
 	}
+	e.scripts[host.name] = host
 }
 
-func (e *Engine) compileAndRun(sh *scriptHost) error {
-	err := sh.Compile()
+func (e *Engine) run(host *scriptHost) error {
+	err := host.Run()
 	if err != nil {
 		return err
 	}
 
-	err = sh.Run()
-	if err != nil {
-		return err
-	}
-
-	if sh.CanClose() {
+	if host.CanClose() {
 		if e.parallel {
 			e.m.Lock()
 			defer e.m.Unlock()
 		}
 
-		sh.close()
-		delete(e.scripts, sh.name)
+		host.close()
+		delete(e.scripts, host.name)
 	}
 
 	return nil
+}
+
+func (e *Engine) Scripts() int {
+	e.m.Lock()
+	defer e.m.Unlock()
+	return len(e.scripts)
 }

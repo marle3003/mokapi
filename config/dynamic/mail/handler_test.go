@@ -1,8 +1,9 @@
-package mail
+package mail_test
 
 import (
 	"context"
 	"github.com/stretchr/testify/require"
+	"mokapi/config/dynamic/mail"
 	"mokapi/engine/enginetest"
 	"mokapi/smtp"
 	"mokapi/smtp/smtptest"
@@ -12,20 +13,20 @@ import (
 )
 
 func TestHandler_ServeSMTP(t *testing.T) {
-	mustCompile := func(s string) *RuleExpr {
+	mustCompile := func(s string) *mail.RuleExpr {
 		r, _ := regexp.Compile(s)
-		return NewRuleExpr(r)
+		return mail.NewRuleExpr(r)
 	}
 
 	testcases := []struct {
 		name   string
-		config *Config
-		test   func(t *testing.T, h *Handler)
+		config *mail.Config
+		test   func(t *testing.T, h *mail.Handler)
 	}{
 		{
 			name:   "no auth required",
-			config: &Config{},
-			test: func(t *testing.T, h *Handler) {
+			config: &mail.Config{},
+			test: func(t *testing.T, h *mail.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendMail(t, h, ctx)
 				require.Equal(t, smtp.Ok, r.Result)
@@ -33,15 +34,15 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		},
 		{
 			name: "auth required without login",
-			config: &Config{
-				Mailboxes: []MailboxConfig{
+			config: &mail.Config{
+				Mailboxes: []mail.MailboxConfig{
 					{
 						Name:     "alice@foo.bar",
 						Username: "foo", Password: "bar",
 					},
 				},
 			},
-			test: func(t *testing.T, h *Handler) {
+			test: func(t *testing.T, h *mail.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendMail(t, h, ctx)
 				require.Equal(t, &smtp.AuthRequired, r.Result)
@@ -49,12 +50,12 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		},
 		{
 			name: "auth invalid credentials",
-			config: &Config{
-				Mailboxes: []MailboxConfig{
+			config: &mail.Config{
+				Mailboxes: []mail.MailboxConfig{
 					{Username: "alice", Password: "foo"},
 				},
 			},
-			test: func(t *testing.T, h *Handler) {
+			test: func(t *testing.T, h *mail.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendLogin(t, h, ctx, "foo", "foo")
 				require.Equal(t, &smtp.InvalidAuthCredentials, r.Result)
@@ -62,12 +63,12 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		},
 		{
 			name: "auth valid",
-			config: &Config{
-				Mailboxes: []MailboxConfig{
+			config: &mail.Config{
+				Mailboxes: []mail.MailboxConfig{
 					{Username: "alice", Password: "foo"},
 				},
 			},
-			test: func(t *testing.T, h *Handler) {
+			test: func(t *testing.T, h *mail.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendLogin(t, h, ctx, "alice", "foo")
 				require.Equal(t, &smtp.InvalidAuthCredentials, r.Result)
@@ -75,12 +76,12 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		},
 		{
 			name: "mail invalid mailbox",
-			config: &Config{
-				Mailboxes: []MailboxConfig{
+			config: &mail.Config{
+				Mailboxes: []mail.MailboxConfig{
 					{Name: "bob@foo.bar"},
 				},
 			},
-			test: func(t *testing.T, h *Handler) {
+			test: func(t *testing.T, h *mail.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendMail(t, h, ctx)
 				exp := smtp.AddressRejected
@@ -90,12 +91,12 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		},
 		{
 			name: "mail valid mailbox",
-			config: &Config{
-				Mailboxes: []MailboxConfig{
+			config: &mail.Config{
+				Mailboxes: []mail.MailboxConfig{
 					{Name: "alice@foo.bar"},
 				},
 			},
-			test: func(t *testing.T, h *Handler) {
+			test: func(t *testing.T, h *mail.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendMail(t, h, ctx)
 				require.Equal(t, smtp.Ok, r.Result)
@@ -103,8 +104,8 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		},
 		{
 			name:   "mail any is valid",
-			config: &Config{},
-			test: func(t *testing.T, h *Handler) {
+			config: &mail.Config{},
+			test: func(t *testing.T, h *mail.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendMail(t, h, ctx)
 				require.Equal(t, smtp.Ok, r.Result)
@@ -112,12 +113,12 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		},
 		{
 			name: "rcpt invalid mailbox",
-			config: &Config{
-				Mailboxes: []MailboxConfig{
+			config: &mail.Config{
+				Mailboxes: []mail.MailboxConfig{
 					{Name: "alice@foo.bar"},
 				},
 			},
-			test: func(t *testing.T, h *Handler) {
+			test: func(t *testing.T, h *mail.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendRcpt(t, h, ctx)
 				exp := smtp.AddressRejected
@@ -127,13 +128,13 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		},
 		{
 			name: "rcpt valid mailbox",
-			config: &Config{
-				Mailboxes: []MailboxConfig{
+			config: &mail.Config{
+				Mailboxes: []mail.MailboxConfig{
 					{Name: "alice@foo.bar"},
 					{Name: "bob@foo.bar"},
 				},
 			},
-			test: func(t *testing.T, h *Handler) {
+			test: func(t *testing.T, h *mail.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendRcpt(t, h, ctx)
 				require.Equal(t, smtp.Ok, r.Result)
@@ -141,8 +142,8 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		},
 		{
 			name:   "rcpt any is valid",
-			config: &Config{},
-			test: func(t *testing.T, h *Handler) {
+			config: &mail.Config{},
+			test: func(t *testing.T, h *mail.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendRcpt(t, h, ctx)
 				require.Equal(t, smtp.Ok, r.Result)
@@ -150,8 +151,8 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		},
 		{
 			name:   "max recipients valid",
-			config: &Config{MaxRecipients: 5},
-			test: func(t *testing.T, h *Handler) {
+			config: &mail.Config{MaxRecipients: 5},
+			test: func(t *testing.T, h *mail.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendRcpt(t, h, ctx)
 				require.Equal(t, smtp.Ok, r.Result)
@@ -163,8 +164,8 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		},
 		{
 			name:   "max recipients not valid",
-			config: &Config{MaxRecipients: 2},
-			test: func(t *testing.T, h *Handler) {
+			config: &mail.Config{MaxRecipients: 2},
+			test: func(t *testing.T, h *mail.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendRcpt(t, h, ctx)
 				require.Equal(t, smtp.Ok, r.Result)
@@ -178,8 +179,8 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		},
 		{
 			name:   "data",
-			config: &Config{},
-			test: func(t *testing.T, h *Handler) {
+			config: &mail.Config{},
+			test: func(t *testing.T, h *mail.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendData(t, h, ctx)
 				require.Equal(t, smtp.Ok, r.Result)
@@ -187,8 +188,8 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		},
 		{
 			name:   "server should add message into mailbox",
-			config: &Config{},
-			test: func(t *testing.T, h *Handler) {
+			config: &mail.Config{},
+			test: func(t *testing.T, h *mail.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendData(t, h, ctx)
 				require.Equal(t, smtp.Ok, r.Result)
@@ -200,12 +201,12 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		},
 		{
 			name: "data with allow rule not match sender",
-			config: &Config{Rules: []Rule{
+			config: &mail.Config{Rules: []mail.Rule{
 				{
 					Sender: mustCompile(".*@mokapi.io"),
-					Action: Allow,
+					Action: mail.Allow,
 				}}},
-			test: func(t *testing.T, h *Handler) {
+			test: func(t *testing.T, h *mail.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendMail(t, h, ctx)
 				require.Equal(t, "sender alice@foo.bar does not match allow rule: .*@mokapi.io", r.Result.Message)
@@ -213,12 +214,12 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		},
 		{
 			name: "data with deny rule",
-			config: &Config{Rules: []Rule{
+			config: &mail.Config{Rules: []mail.Rule{
 				{
 					Sender: mustCompile("@foo.bar"),
-					Action: Deny,
+					Action: mail.Deny,
 				}}},
-			test: func(t *testing.T, h *Handler) {
+			test: func(t *testing.T, h *mail.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendMail(t, h, ctx)
 				require.Equal(t, "sender alice@foo.bar does match deny rule: @foo.bar", r.Result.Message)
@@ -228,17 +229,17 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		},
 		{
 			name: "data with deny rule custom response",
-			config: &Config{Rules: []Rule{
+			config: &mail.Config{Rules: []mail.Rule{
 				{
 					Sender: mustCompile(".*@foo.bar"),
-					Action: Deny,
-					RejectResponse: &RejectResponse{
+					Action: mail.Deny,
+					RejectResponse: &mail.RejectResponse{
 						StatusCode:         500,
 						EnhancedStatusCode: smtp.EnhancedStatusCode{5, 1, 2},
 						Text:               "custom error message",
 					},
 				}}},
-			test: func(t *testing.T, h *Handler) {
+			test: func(t *testing.T, h *mail.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendMail(t, h, ctx)
 				require.Equal(t, "custom error message", r.Result.Message)
@@ -251,7 +252,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			h := NewHandler(tc.config, NewStore(tc.config), enginetest.NewEngine())
+			h := mail.NewHandler(tc.config, mail.NewStore(tc.config), enginetest.NewEngine())
 			tc.test(t, h)
 		})
 	}

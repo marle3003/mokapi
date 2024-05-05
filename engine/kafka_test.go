@@ -1,4 +1,4 @@
-package engine
+package engine_test
 
 import (
 	"bytes"
@@ -13,7 +13,7 @@ import (
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
 	bindings "mokapi/config/dynamic/asyncApi/kafka"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
-	"mokapi/config/static"
+	"mokapi/engine"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/kafkatest"
@@ -29,11 +29,11 @@ import (
 func TestKafkaClient_Produce(t *testing.T) {
 	testcases := []struct {
 		name string
-		test func(t *testing.T, app *runtime.App, s *store.Store, engine *Engine)
+		test func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine)
 	}{
 		{
 			name: "random message",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *Engine) {
+			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
 				err := engine.AddScript(newScript("test.js", `
 					import { produce } from 'mokapi/kafka'
 					export default function() {
@@ -50,7 +50,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 		},
 		{
 			name: "non random values",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *Engine) {
+			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
 				hook := test.NewGlobal()
 
 				err := engine.AddScript(newScript("test.js", `
@@ -80,7 +80,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 		},
 		{
 			name: "to partition 5",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *Engine) {
+			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
 				err := engine.AddScript(newScript("test.js", `
 					import { produce } from 'mokapi/kafka'
 					export default function() {
@@ -95,7 +95,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 		},
 		{
 			name: "multiple clusters",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *Engine) {
+			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
 				for i := 0; i < 10; i++ {
 					app.AddKafka(getConfig(
 						asyncapitest.NewConfig(asyncapitest.WithInfo(fmt.Sprintf("x%v", i), "", ""))), enginetest.NewEngine())
@@ -117,7 +117,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 		},
 		{
 			name: "trigger event",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *Engine) {
+			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
 				err := engine.AddScript(newScript("test.js", `
 					import { on } from 'mokapi'
 					export default function() {
@@ -146,7 +146,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 		},
 		{
 			name: "add header",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *Engine) {
+			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
 				err := engine.AddScript(newScript("test.js", `
 					import { on } from 'mokapi'
 					export default function() {
@@ -173,7 +173,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 		},
 		{
 			name: "remove all headers",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *Engine) {
+			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
 				err := engine.AddScript(newScript("test.js", `
 					import { on } from 'mokapi'
 					export default function() {
@@ -192,7 +192,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 		},
 		{
 			name: "validation error",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *Engine) {
+			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
 				logrus.SetOutput(io.Discard)
 				hook := test.NewGlobal()
 
@@ -202,7 +202,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 						produce({ topic: 'foo', messages: [{ data: 12 }] })
 					}
 				`))
-				require.EqualError(t, err, "produce kafka message to 'foo' failed: marshal data to 'application/json' failed: validation error on int64, expected schema type=string at reflect.methodValueCall (native)")
+				require.EqualError(t, err, "produce kafka message to 'foo' failed: marshal data to 'application/json' failed: validation error on int64, expected schema type=string at mokapi/js/kafka.(*Module).Produce-fm (native)")
 
 				b, errCode := s.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
@@ -216,7 +216,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 		},
 		{
 			name: "using value instead of data (skip validation)",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *Engine) {
+			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
 				err := engine.AddScript(newScript("test.js", `
 					import { produce } from 'mokapi/kafka'
 					export default function() {
@@ -234,7 +234,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 		},
 		{
 			name: "test retry",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *Engine) {
+			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
 				logrus.SetOutput(io.Discard)
 				logrus.SetLevel(logrus.DebugLevel)
 				hook := test.NewGlobal()
@@ -302,7 +302,11 @@ func TestKafkaClient_Produce(t *testing.T) {
 							asyncapitest.WithKey(schematest.New("string"))))),
 			)
 			app := runtime.New()
-			engine := New(reader, app, static.JsConfig{}, false)
+			engine := enginetest.NewEngine(
+				engine.WithKafkaClient(engine.NewKafkaClient(app)),
+				engine.WithLogger(logrus.StandardLogger()),
+			)
+
 			info := app.AddKafka(getConfig(config), engine)
 			tc.test(t, app, info.Store, engine)
 		})

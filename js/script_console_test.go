@@ -1,64 +1,65 @@
-package js
+package js_test
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
 	r "github.com/stretchr/testify/require"
-	"mokapi/config/static"
+	"mokapi/engine/enginetest"
+	"mokapi/js"
+	"mokapi/js/jstest"
 	"testing"
 )
 
 func TestScript_Console(t *testing.T) {
 	testcases := []struct {
 		name string
-		f    func(t *testing.T, host *testHost)
+		test func(t *testing.T, host *enginetest.Host)
 	}{
 		{
-			"log",
-			func(t *testing.T, host *testHost) {
+			name: "log",
+			test: func(t *testing.T, host *enginetest.Host) {
 				var log interface{}
-				host.info = func(args ...interface{}) {
+				host.InfoFunc = func(args ...interface{}) {
 					log = args[0]
 				}
-				s, err := New(newScript("",
-					`import {fake} from 'mokapi/faker'
-						 export default function() {
+				s, err := jstest.New(
+					jstest.WithSource(
+						`export default function() {
 						 	console.log('foo')
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
-				_, err = s.RunDefault()
+				err = s.Run()
 				r.NoError(t, err)
 				r.Equal(t, "foo", log)
 			},
 		},
 		{
-			"log",
-			func(t *testing.T, host *testHost) {
+			name: "log",
+			test: func(t *testing.T, host *enginetest.Host) {
 				var log interface{}
-				host.info = func(args ...interface{}) {
+				host.InfoFunc = func(args ...interface{}) {
 					log = args[0]
 				}
-				s, err := New(newScript("",
-					`import {fake} from 'mokapi/faker'
-						 export default function() {
-						 	console.log({foo: 123, bar: 'mokapi'})
+				s, err := jstest.New(
+					jstest.WithSource(
+						`export default function() {
+						 	console.log({ foo: 123, bar: 'mokapi' })
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
-				_, err = s.RunDefault()
+				err = s.Run()
 				r.NoError(t, err)
 				r.Equal(t, `{"foo":123,"bar":"mokapi"}`, log)
 			},
 		},
 	}
 
+	t.Parallel()
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			gofakeit.Seed(11)
-			host := &testHost{}
+			t.Parallel()
 
-			tc.f(t, host)
+			tc.test(t, &enginetest.Host{})
 		})
 	}
 }

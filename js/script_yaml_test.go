@@ -1,26 +1,28 @@
-package js
+package js_test
 
 import (
 	r "github.com/stretchr/testify/require"
-	"mokapi/config/static"
+	"mokapi/engine/enginetest"
+	"mokapi/js"
+	"mokapi/js/jstest"
 	"testing"
 )
 
 func TestYaml(t *testing.T) {
-	host := &testHost{}
+	host := &enginetest.Host{}
 	testcases := []struct {
 		name string
-		f    func(t *testing.T)
+		test func(t *testing.T)
 	}{
 		{
-			"parse",
-			func(t *testing.T) {
-				s, err := New(newScript("test",
+			name: "parse",
+			test: func(t *testing.T) {
+				s, err := jstest.New(jstest.WithSource(
 					`import {parse} from 'mokapi/yaml';
 						 export default function() {
 						 	return parse('foo: bar')
 						}`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 
 				v, err := s.RunDefault()
@@ -31,14 +33,14 @@ func TestYaml(t *testing.T) {
 			},
 		},
 		{
-			"parse array",
-			func(t *testing.T) {
-				s, err := New(newScript("test",
+			name: "parse array",
+			test: func(t *testing.T) {
+				s, err := jstest.New(jstest.WithSource(
 					`import {parse} from 'mokapi/yaml';
 						 export default function() {
 						 	return parse('- a\n- b\n- c')
 						}`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 
 				v, err := s.RunDefault()
@@ -49,15 +51,15 @@ func TestYaml(t *testing.T) {
 			},
 		},
 		{
-			"access array element",
-			func(t *testing.T) {
-				s, err := New(newScript("test",
+			name: "access array element",
+			test: func(t *testing.T) {
+				s, err := jstest.New(jstest.WithSource(
 					`import {parse} from 'mokapi/yaml';
 						 export default function() {
 						 	const o = parse('- a\n- b\n- c')
 							return o[1]
 						}`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 
 				v, err := s.RunDefault()
@@ -68,14 +70,14 @@ func TestYaml(t *testing.T) {
 			},
 		},
 		{
-			"stringify",
-			func(t *testing.T) {
-				s, err := New(newScript("test",
+			name: "stringify",
+			test: func(t *testing.T) {
+				s, err := jstest.New(jstest.WithSource(
 					`import {stringify} from 'mokapi/yaml';
 						 export default function() {
 						 	return stringify({foo: "bar"})
 						}`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 
 				v, err := s.RunDefault()
@@ -85,29 +87,14 @@ func TestYaml(t *testing.T) {
 				r.Equal(t, "foo: bar\n", result)
 			},
 		},
-		{
-			"using deprecated module",
-			func(t *testing.T) {
-				s, err := New(newScript("test",
-					`import {parse} from 'yaml';
-						 export default function() {
-						 	return parse('foo: bar')
-						}`),
-					host, static.JsConfig{})
-				r.NoError(t, err)
-
-				v, err := s.RunDefault()
-				r.NoError(t, err)
-
-				result := v.Export().(map[string]interface{})
-				r.Equal(t, "bar", result["foo"])
-			},
-		},
 	}
+
+	t.Parallel()
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			tc.f(t)
+			t.Parallel()
+			tc.test(t)
 		})
 	}
 }

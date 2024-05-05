@@ -1,9 +1,11 @@
-package js
+package js_test
 
 import (
 	"github.com/dop251/goja"
 	r "github.com/stretchr/testify/require"
-	"mokapi/config/static"
+	"mokapi/engine/enginetest"
+	"mokapi/js"
+	"mokapi/js/jstest"
 	"testing"
 	"time"
 )
@@ -11,23 +13,20 @@ import (
 func TestTypeScript(t *testing.T) {
 	testcases := []struct {
 		name string
-		test func(t *testing.T, host *testHost)
+		test func(t *testing.T, host *enginetest.Host)
 	}{
 		{
 			name: "setTimeout",
-			test: func(t *testing.T, host *testHost) {
-				s, err := New(
-					newScript(
-						"test.ts",
-						`
+			test: func(t *testing.T, host *enginetest.Host) {
+				s, err := jstest.New(jstest.WithPathSource(
+					"test.ts",
+					`
 var calledAt;
 export default function() {
 	setTimeout(() => { calledAt = now() }, 1000)
 }
 `),
-					host,
-					static.JsConfig{},
-				)
+					js.WithHost(host))
 				r.NoError(t, err)
 				defer s.Close()
 
@@ -54,11 +53,10 @@ export default function() {
 		},
 		{
 			name: "async",
-			test: func(t *testing.T, host *testHost) {
-				s, err := New(
-					newScript(
-						"test.ts",
-						`
+			test: func(t *testing.T, host *enginetest.Host) {
+				s, err := jstest.New(jstest.WithPathSource(
+					"test.ts",
+					`
 let msg1;
 let msg2;
 export default function() {
@@ -71,13 +69,11 @@ let getMessage = async () => {
 	return new Promise(async (resolve, reject) => {
 	  setTimeout(() => {
 		resolve('foo');
-	  }, 800);
+	  }, 500);
 	});
 }
 `),
-					host,
-					static.JsConfig{},
-				)
+					js.WithHost(host))
 				r.NoError(t, err)
 				defer s.Close()
 
@@ -107,9 +103,7 @@ let getMessage = async () => {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-
-			host := &testHost{}
-			tc.test(t, host)
+			tc.test(t, &enginetest.Host{})
 		})
 	}
 }

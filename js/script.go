@@ -8,22 +8,40 @@ import (
 	"mokapi/config/static"
 	engine "mokapi/engine/common"
 	"mokapi/js/compiler"
+	"mokapi/js/console"
+	"mokapi/js/eventloop"
+	"mokapi/js/faker"
+	"mokapi/js/file"
+	"mokapi/js/http"
+	"mokapi/js/kafka"
+	"mokapi/js/mail"
+	"mokapi/js/mokapi"
+	"mokapi/js/mustache"
+	"mokapi/js/process"
+	"mokapi/js/require"
+	"mokapi/js/yaml"
 	"net/url"
-	"path/filepath"
 	"reflect"
 	"strings"
+	"sync"
 )
 
-var NoDefaultFunction = errors.New("js: no default function found")
+var (
+	NoDefaultFunction = errors.New("js: no default function found")
+
+	singletonRegistry *require.Registry
+	registryOne       sync.Once
+	registryErr       error
+)
 
 type Script struct {
 	runtime  *goja.Runtime
 	compiler *compiler.Compiler
 	host     engine.Host
-	require  *requireModule
 	file     *dynamic.Config
 	config   static.JsConfig
-	runner   *runner
+	runner   *eventloop.EventLoop
+	registry *require.Registry
 }
 
 func New(file *dynamic.Config, host engine.Host, config static.JsConfig) (*Script, error) {
@@ -39,6 +57,14 @@ func New(file *dynamic.Config, host engine.Host, config static.JsConfig) (*Scrip
 	}
 
 	return s, err
+}
+
+func NewScript(opts ...Option) (*Script, error) {
+	s := &Script{}
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s, nil
 }
 
 func (s *Script) Run() error {
@@ -105,9 +131,6 @@ func (s *Script) Close() {
 		s.runtime = nil
 	}
 	s.compiler = nil
-	if s.require != nil {
-		s.require.Close()
-	}
 }
 
 func (s *Script) CanClose() bool {
@@ -119,41 +142,21 @@ func (s *Script) ensureRuntime() error {
 		return nil
 	}
 	s.runtime = goja.New()
-	s.runner = newRunner(s.runtime)
+	s.runner = eventloop.New(s.runtime)
 	path := getScriptPath(s.file.Info.Kernel().Url)
-	workingDir := filepath.Dir(path)
 
 	s.runtime.SetFieldNameMapper(&customFieldNameMapper{})
-	s.require = newRequire(
-		s.host.OpenFile,
-		s.compiler,
-		s.file.Info.Url.String(),
-		workingDir,
-		map[string]ModuleLoader{
-			"mokapi":          s.loadNativeModule2(newMokapi),
-			"mokapi/faker":    s.loadNativeModule(newFaker),
-			"faker":           s.loadDeprecatedNativeModule(newFaker, "deprecated module faker: Please use mokapi/faker instead"),
-			"mokapi/http":     s.loadNativeModule2(newHttp),
-			"http":            s.loadDeprecatedNativeModule2(newHttp, "deprecated module http: Please use mokapi/http instead"),
-			"mokapi/kafka":    s.loadNativeModule2(newKafka),
-			"kafka":           s.loadDeprecatedNativeModule2(newKafka, "deprecated module kafka: Please use mokapi/kafka instead"),
-			"mokapi/mustache": s.loadNativeModule(newMustache),
-			"mustache":        s.loadDeprecatedNativeModule(newMustache, "deprecated module mustache: Please use mokapi/mustache instead"),
-			"mokapi/yaml":     s.loadNativeModule(newYaml),
-			"yaml":            s.loadDeprecatedNativeModule(newYaml, "deprecated module yaml: Please use mokapi/yaml instead"),
-			"mokapi/mail": s.loadNativeModule(func(host engine.Host, runtime *goja.Runtime) interface{} {
-				return newMail(host, runtime, filepath.Dir(workingDir))
-			}),
-			"mokapi/ldap": func() goja.Value {
-				return NewLdapModule(s.runtime)
-			},
-		})
-	s.require.Enable(s.runtime)
-	enableConsole(s.runtime, s.host)
-	enableOpen(s.runtime, s.host)
-	enableProcess(s.runtime)
+	registry, err := s.getRegistry()
+	if err != nil {
+		return err
+	}
+	registry.Enable(s.runtime)
+	s.enableInternal()
+	console.Enable(s.runtime)
+	file.Enable(s.runtime, s.host)
+	process.Enable(s.runtime)
 
-	prg, err := s.compiler.Compile(path, string(s.file.Raw))
+	prg, err := registry.GetProgram(path, string(s.file.Raw))
 	if err != nil {
 		return err
 	}
@@ -162,6 +165,14 @@ func (s *Script) ensureRuntime() error {
 		_, err = vm.RunProgram(prg)
 	})
 	return err
+}
+
+func (s *Script) enableInternal() {
+	o := s.runtime.NewObject()
+	o.Set("host", s.host)
+	o.Set("loop", s.runner)
+	s.runtime.Set("mokapi/internal", o)
+
 }
 
 func (s *Script) processObject(v goja.Value) {
@@ -188,38 +199,6 @@ func (s *Script) addHttpEvent(i interface{}) {
 	}
 
 	s.host.On("http", f, nil)
-}
-
-func (s *Script) loadNativeModule(f func(engine.Host, *goja.Runtime) interface{}) ModuleLoader {
-	return func() goja.Value {
-		m := f(s.host, s.runtime)
-		return mapToJSValue(s.runtime, m)
-	}
-}
-
-func (s *Script) loadNativeModule2(f func(engine.Host, *goja.Runtime, *runner) interface{}) ModuleLoader {
-	return func() goja.Value {
-		m := f(s.host, s.runtime, s.runner)
-		return mapToJSValue(s.runtime, m)
-	}
-}
-
-func (s *Script) loadDeprecatedNativeModule(f func(engine.Host, *goja.Runtime) interface{}, msg string) ModuleLoader {
-	filename := getScriptPath(s.file.Info.Url)
-	return func() goja.Value {
-		s.host.Warn(fmt.Sprintf("%v: %v", msg, filename))
-		m := f(s.host, s.runtime)
-		return mapToJSValue(s.runtime, m)
-	}
-}
-
-func (s *Script) loadDeprecatedNativeModule2(f func(engine.Host, *goja.Runtime, *runner) interface{}, msg string) ModuleLoader {
-	filename := getScriptPath(s.file.Info.Url)
-	return func() goja.Value {
-		s.host.Warn(fmt.Sprintf("%v: %v", msg, filename))
-		m := f(s.host, s.runtime, s.runner)
-		return mapToJSValue(s.runtime, m)
-	}
 }
 
 // customFieldNameMapper default implementation filters out
@@ -253,4 +232,30 @@ func getScriptPath(u *url.URL) string {
 		return u.Path
 	}
 	return u.Opaque
+}
+
+func (s *Script) getRegistry() (*require.Registry, error) {
+	if s.registry != nil {
+		return s.registry, nil
+	}
+
+	registryOne.Do(func() {
+		singletonRegistry, registryErr = require.NewRegistry(s.host.OpenFile)
+		if registryErr != nil {
+			return
+		}
+
+		RegisterNativeModules(singletonRegistry)
+	})
+	return singletonRegistry, registryErr
+}
+
+func RegisterNativeModules(registry *require.Registry) {
+	registry.RegisterNativeModule("mokapi", mokapi.Require)
+	registry.RegisterNativeModule("mokapi/faker", faker.Require)
+	registry.RegisterNativeModule("mokapi/kafka", kafka.Require)
+	registry.RegisterNativeModule("mokapi/http", http.Require)
+	registry.RegisterNativeModule("mokapi/mustache", mustache.Require)
+	registry.RegisterNativeModule("mokapi/yaml", yaml.Require)
+	registry.RegisterNativeModule("mokapi/mail", mail.Require)
 }

@@ -1,43 +1,60 @@
-package js
+package mokapi
 
 import (
 	"github.com/dop251/goja"
 	"mokapi/engine/common"
+	"mokapi/js/eventloop"
+	"mokapi/js/faker"
 	"mokapi/media"
 	"mokapi/providers/openapi/schema"
 	"os"
 	"time"
 )
 
-type mokapi struct {
-	host   common.Host
-	rt     *goja.Runtime
-	runner *runner
+type Module struct {
+	host common.Host
+	vm   *goja.Runtime
+	loop *eventloop.EventLoop
 }
 
-func newMokapi(host common.Host, rt *goja.Runtime, runner *runner) interface{} {
-	return &mokapi{host: host, rt: rt, runner: runner}
+func Require(vm *goja.Runtime, module *goja.Object) {
+	o := vm.Get("mokapi/internal").(*goja.Object)
+	host := o.Get("host").Export().(common.Host)
+	loop := o.Get("loop").Export().(*eventloop.EventLoop)
+	f := &Module{
+		vm:   vm,
+		host: host,
+		loop: loop,
+	}
+	obj := module.Get("exports").(*goja.Object)
+	obj.Set("sleep", f.Sleep)
+	obj.Set("every", f.Every)
+	obj.Set("cron", f.Cron)
+	obj.Set("on", f.On)
+	obj.Set("env", f.Env)
+	obj.Set("marshal", f.Marshal)
+	obj.Set("date", f.Date)
 }
 
-func (m *mokapi) Sleep(i interface{}) error {
+func (m *Module) Sleep(i interface{}) error {
 	switch t := i.(type) {
 	case int64:
 		time.Sleep(time.Duration(t) * time.Millisecond)
 	case string:
 		d, err := time.ParseDuration(t)
 		if err != nil {
-			panic(m.rt.ToValue(err.Error()))
+			panic(m.vm.ToValue(err.Error()))
 		}
 		time.Sleep(d)
 	}
 	return nil
 }
 
-func (m *mokapi) Every(every string, do func(), args goja.Value) (int, error) {
+func (m *Module) Every(every string, do func(), args goja.Value) (int, error) {
 	options := common.NewJobOptions()
 
 	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
-		params := args.ToObject(m.rt)
+		params := args.ToObject(m.vm)
 		for _, k := range params.Keys() {
 			switch k {
 			case "tags":
@@ -45,7 +62,7 @@ func (m *mokapi) Every(every string, do func(), args goja.Value) (int, error) {
 				if goja.IsUndefined(tagsV) || goja.IsNull(tagsV) {
 					continue
 				}
-				tags := tagsV.ToObject(m.rt)
+				tags := tagsV.ToObject(m.vm)
 				for _, key := range tags.Keys() {
 					options.Tags[key] = tags.Get(key).String()
 				}
@@ -68,11 +85,11 @@ func (m *mokapi) Every(every string, do func(), args goja.Value) (int, error) {
 	return m.host.Every(every, f, options)
 }
 
-func (m *mokapi) Cron(expr string, do func(), args goja.Value) (int, error) {
+func (m *Module) Cron(expr string, do func(), args goja.Value) (int, error) {
 	options := common.NewJobOptions()
 
 	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
-		params := args.ToObject(m.rt)
+		params := args.ToObject(m.vm)
 		for _, k := range params.Keys() {
 			switch k {
 			case "tags":
@@ -80,7 +97,7 @@ func (m *mokapi) Cron(expr string, do func(), args goja.Value) (int, error) {
 				if goja.IsUndefined(tagsV) || goja.IsNull(tagsV) {
 					continue
 				}
-				tags := tagsV.ToObject(m.rt)
+				tags := tagsV.ToObject(m.vm)
 				for _, key := range tags.Keys() {
 					options.Tags[key] = tags.Get(key).String()
 				}
@@ -103,11 +120,11 @@ func (m *mokapi) Cron(expr string, do func(), args goja.Value) (int, error) {
 	return m.host.Cron(expr, f, options)
 }
 
-func (m *mokapi) On(event string, do goja.Value, args goja.Value) {
+func (m *Module) On(event string, do goja.Value, args goja.Value) {
 	tags := make(map[string]string)
 
 	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
-		params := args.ToObject(m.rt)
+		params := args.ToObject(m.vm)
 		for _, k := range params.Keys() {
 			switch k {
 			case "tags":
@@ -115,7 +132,7 @@ func (m *mokapi) On(event string, do goja.Value, args goja.Value) {
 				if goja.IsUndefined(tagsV) || goja.IsNull(tagsV) {
 					continue
 				}
-				tagsO := tagsV.ToObject(m.rt)
+				tagsO := tagsV.ToObject(m.vm)
 				for _, key := range tagsO.Keys() {
 					tags[key] = tagsO.Get(key).String()
 				}
@@ -127,11 +144,11 @@ func (m *mokapi) On(event string, do goja.Value, args goja.Value) {
 		m.host.Lock()
 		defer m.host.Unlock()
 
-		r, err := m.runner.RunAsync(func(vm *goja.Runtime) (goja.Value, error) {
+		r, err := m.loop.RunAsync(func(vm *goja.Runtime) (goja.Value, error) {
 			call, _ := goja.AssertFunction(do)
 			var params []goja.Value
 			for _, v := range args {
-				params = append(params, m.rt.ToValue(v))
+				params = append(params, vm.ToValue(v))
 			}
 			v, err := call(goja.Undefined(), params...)
 			if err != nil {
@@ -150,11 +167,11 @@ func (m *mokapi) On(event string, do goja.Value, args goja.Value) {
 	m.host.On(event, f, tags)
 }
 
-func (m *mokapi) Env(name string) string {
+func (m *Module) Env(name string) string {
 	return os.Getenv(name)
 }
 
-func (m *mokapi) Open(file string) (string, error) {
+func (m *Module) Open(file string) (string, error) {
 	f, err := m.host.OpenFile(file, "")
 	if err != nil {
 		return "", err
@@ -163,16 +180,16 @@ func (m *mokapi) Open(file string) (string, error) {
 }
 
 type MarshalArg struct {
-	Schema      *jsonSchema `json:"schema"`
-	ContentType string      `json:"contentType"`
+	Schema      *faker.JsonSchema `json:"schema"`
+	ContentType string            `json:"contentType"`
 }
 
-func (m *mokapi) Marshal(i interface{}, encoding *MarshalArg) string {
+func (m *Module) Marshal(i interface{}, encoding *MarshalArg) string {
 	ct := media.ContentType{}
 	r := &schema.Ref{}
 	if encoding != nil {
 		ct = media.ParseContentType(encoding.ContentType)
-		r.Value = toSchema(encoding.Schema)
+		r.Value = faker.ConvertToSchema(encoding.Schema)
 	}
 	if ct.IsEmpty() {
 		ct = media.ParseContentType("application/json")
@@ -180,7 +197,7 @@ func (m *mokapi) Marshal(i interface{}, encoding *MarshalArg) string {
 
 	b, err := r.Marshal(i, ct)
 	if err != nil {
-		panic(m.rt.ToValue(err.Error()))
+		panic(m.vm.ToValue(err.Error()))
 	}
 	return string(b)
 }
@@ -190,7 +207,7 @@ type DateArg struct {
 	Timestamp int64  `json:"timestamp"`
 }
 
-func (m *mokapi) Date(args DateArg) string {
+func (m *Module) Date(args DateArg) string {
 	var layout string
 	switch args.Layout {
 	case "DateTime":

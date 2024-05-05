@@ -1,18 +1,18 @@
-package js
+package kafka
 
 import (
 	"fmt"
 	"github.com/dop251/goja"
 	log "github.com/sirupsen/logrus"
 	"mokapi/engine/common"
+	"mokapi/js/eventloop"
 	"time"
 )
 
-type kafkaModule struct {
-	host   common.Host
-	rt     *goja.Runtime
-	client common.KafkaClient
-	runner *runner
+type Module struct {
+	host common.Host
+	rt   *goja.Runtime
+	loop *eventloop.EventLoop
 }
 
 type kafkaResult struct {
@@ -26,17 +26,28 @@ type kafkaResult struct {
 	Partition int
 }
 
-func newKafka(host common.Host, rt *goja.Runtime, runner *runner) interface{} {
-	return &kafkaModule{host: host, rt: rt, client: host.KafkaClient(), runner: runner}
+func Require(vm *goja.Runtime, module *goja.Object) {
+	o := vm.Get("mokapi/internal").(*goja.Object)
+	host := o.Get("host").Export().(common.Host)
+	loop := o.Get("loop").Export().(*eventloop.EventLoop)
+	f := &Module{
+		rt:   vm,
+		host: host,
+		loop: loop,
+	}
+	obj := module.Get("exports").(*goja.Object)
+	obj.Set("produce", f.Produce)
+	obj.Set("produceAsync", f.ProduceAsync)
 }
 
-func (m *kafkaModule) Produce(v goja.Value) interface{} {
+func (m *Module) Produce(v goja.Value) interface{} {
 	args, err := m.mapParams(v)
 	if err != nil {
 		panic(m.rt.ToValue(err.Error()))
 	}
+	client := m.host.KafkaClient()
 
-	result, err := m.client.Produce(args)
+	result, err := client.Produce(args)
 	if err != nil {
 		log.Errorf("js error: %v in %v", err, m.host.Name())
 		panic(m.rt.ToValue(err.Error()))
@@ -51,18 +62,18 @@ func (m *kafkaModule) Produce(v goja.Value) interface{} {
 	return result
 }
 
-func (m *kafkaModule) ProduceAsync(v goja.Value) interface{} {
+func (m *Module) ProduceAsync(v goja.Value) interface{} {
 	p, resolve, _ := m.rt.NewPromise()
 	go func() {
 		result := m.Produce(v)
-		m.runner.Run(func(vm *goja.Runtime) {
+		m.loop.Run(func(vm *goja.Runtime) {
 			resolve(result)
 		})
 	}()
 	return p
 }
 
-func (m *kafkaModule) mapParams(args goja.Value) (*common.KafkaProduceArgs, error) {
+func (m *Module) mapParams(args goja.Value) (*common.KafkaProduceArgs, error) {
 	opt := &common.KafkaProduceArgs{Retry: common.KafkaProduceRetry{
 		MaxRetryTime:     30000 * time.Millisecond,
 		InitialRetryTime: 200 * time.Millisecond,
@@ -211,6 +222,6 @@ func (m *kafkaModule) mapParams(args goja.Value) (*common.KafkaProduceArgs, erro
 	return opt, nil
 }
 
-func (m *kafkaModule) warnDeprecatedAttribute(name string) {
+func (m *Module) warnDeprecatedAttribute(name string) {
 	m.host.Warn(fmt.Sprintf("DEPRECATED: '%v' should not be used anymore: check https://mokapi.io/docs/javascript-api/mokapi-kafka/produceargs for more info in %v", name, m.host.Name()))
 }

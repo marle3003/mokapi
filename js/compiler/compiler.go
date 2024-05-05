@@ -26,7 +26,7 @@ func (c *Compiler) CompileModule(filename, src string) (*goja.Program, error) {
 	if err != nil {
 		return nil, err
 	}
-	source = fmt.Sprintf("(function(exports, module) {%s\n})", source)
+	source = fmt.Sprintf("(function(exports, module, require) {%s\n})", source)
 	return goja.Compile(filename, source, false)
 }
 

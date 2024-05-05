@@ -1,11 +1,13 @@
-package js
+package js_test
 
 import (
 	"fmt"
 	r "github.com/stretchr/testify/require"
 	"io"
-	"io/ioutil"
-	"mokapi/config/static"
+	"mokapi/engine/enginetest"
+	"mokapi/js"
+	module "mokapi/js/http"
+	"mokapi/js/jstest"
 	"net/http"
 	"strings"
 	"testing"
@@ -14,114 +16,114 @@ import (
 func TestScript_Http_Get(t *testing.T) {
 	testcases := []struct {
 		name string
-		test func(t *testing.T, host *testHost)
+		test func(t *testing.T, host *enginetest.Host)
 	}{
 		{
 			name: "simple",
-			test: func(t *testing.T, host *testHost) {
-				s, err := New(newScript("",
+			test: func(t *testing.T, host *enginetest.Host) {
+				s, err := jstest.New(jstest.WithSource(
 					`import http from 'mokapi/http'
 						 export default function() {
-						 	return http.get('http://foo.bar')
+						 	return http.get('https://foo.bar')
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
-				_, err = s.RunDefault()
+				err = s.Run()
 				r.NoError(t, err)
-				r.Equal(t, "GET", host.httpClient.req.Method)
-				r.Equal(t, "http://foo.bar", host.httpClient.req.URL.String())
+				r.Equal(t, "GET", host.HttpClientTest.LastRequest.Method)
+				r.Equal(t, "https://foo.bar", host.HttpClientTest.LastRequest.URL.String())
 			},
 		},
 		{
 			name: "header",
-			test: func(t *testing.T, host *testHost) {
-				s, err := New(newScript("",
+			test: func(t *testing.T, host *enginetest.Host) {
+				s, err := jstest.New(jstest.WithSource(
 					`import http from 'mokapi/http'
 						 export default function() {
-						  	return http.get('http://foo.bar', {headers: {foo: "bar"}})
+						  	return http.get('https://foo.bar', {headers: {foo: "bar"}})
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
-				_, err = s.RunDefault()
+				err = s.Run()
 				r.NoError(t, err)
-				r.Equal(t, "bar", host.httpClient.req.Header.Get("foo"))
+				r.Equal(t, "bar", host.HttpClientTest.LastRequest.Header.Get("foo"))
 			},
 		},
 		{
 			name: "header with array",
-			test: func(t *testing.T, host *testHost) {
-				s, err := New(newScript("",
+			test: func(t *testing.T, host *enginetest.Host) {
+				s, err := jstest.New(jstest.WithSource(
 					`import http from 'mokapi/http'
 						 export default function() {
-						  	return http.get('http://foo.bar', {headers: {foo: ["hello", "world"]}})
+						  	return http.get('https://foo.bar', {headers: {foo: ["hello", "world"]}})
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
-				_, err = s.RunDefault()
+				err = s.Run()
 				r.NoError(t, err)
-				r.Equal(t, []string{"hello", "world"}, host.httpClient.req.Header.Values("foo"))
+				r.Equal(t, []string{"hello", "world"}, host.HttpClientTest.LastRequest.Header.Values("foo"))
 			},
 		},
 		{
 			name: "header set to null",
-			test: func(t *testing.T, host *testHost) {
-				s, err := New(newScript("",
+			test: func(t *testing.T, host *enginetest.Host) {
+				s, err := jstest.New(jstest.WithSource(
 					`import http from 'mokapi/http'
 						 export default function() {
-						  	return http.get('http://foo.bar', {headers: null})
+						  	return http.get('https://foo.bar', {headers: null})
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
-				_, err = s.RunDefault()
+				err = s.Run()
 				r.NoError(t, err)
-				r.Len(t, host.httpClient.req.Header, 0)
+				r.Len(t, host.HttpClientTest.LastRequest.Header, 0)
 			},
 		},
 		{
 			name: "invalid url",
-			test: func(t *testing.T, host *testHost) {
-				s, err := New(newScript("",
+			test: func(t *testing.T, host *enginetest.Host) {
+				s, err := jstest.New(jstest.WithSource(
 					`import http from 'mokapi/http'
 						 export default function() {
 						  	return http.get('://')
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
-				_, err = s.RunDefault()
+				err = s.Run()
 				r.Error(t, err)
 			},
 		},
 		{
 			name: "response body",
-			test: func(t *testing.T, host *testHost) {
-				host.httpClient.doFunc = func(request *http.Request) (*http.Response, error) {
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.HttpClientTest.DoFunc = func(request *http.Request) (*http.Response, error) {
 					return &http.Response{Body: io.NopCloser(strings.NewReader("hello world"))}, nil
 				}
-				s, err := New(newScript("",
+				s, err := jstest.New(jstest.WithSource(
 					`import http from 'mokapi/http'
 						 export default function() {
-						  	return http.get('http://foo.bar')
+						  	return http.get('https://foo.bar')
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
-				result := v.Export().(response)
+				result := v.Export().(module.Response)
 				r.Equal(t, "hello world", result.Body)
 			},
 		},
 		{
 			name: "response body json",
-			test: func(t *testing.T, host *testHost) {
-				host.httpClient.doFunc = func(request *http.Request) (*http.Response, error) {
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.HttpClientTest.DoFunc = func(request *http.Request) (*http.Response, error) {
 					return &http.Response{Body: io.NopCloser(strings.NewReader(`{"foo": "bar"}`))}, nil
 				}
-				s, err := New(newScript("",
+				s, err := jstest.New(jstest.WithSource(
 					`import http from 'mokapi/http'
 						 export default function() {
-						  	return http.get('http://foo.bar').json()
+						  	return http.get('https://foo.bar').json()
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
@@ -131,17 +133,17 @@ func TestScript_Http_Get(t *testing.T) {
 		},
 		{
 			name: "response header",
-			test: func(t *testing.T, host *testHost) {
-				host.httpClient.doFunc = func(request *http.Request) (*http.Response, error) {
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.HttpClientTest.DoFunc = func(request *http.Request) (*http.Response, error) {
 					return &http.Response{Header: map[string][]string{"Allow": {"OPTIONS", "GET", "HEAD", "POST"}}}, nil
 				}
-				s, err := New(newScript("",
+				s, err := jstest.New(jstest.WithSource(
 					`import http from 'mokapi/http'
 						 export default function() {
 						  	const res = http.options('https://foo.bar')
 							return res.headers['Allow']
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
@@ -151,35 +153,19 @@ func TestScript_Http_Get(t *testing.T) {
 		},
 		{
 			name: "client error",
-			test: func(t *testing.T, host *testHost) {
-				host.httpClient.doFunc = func(request *http.Request) (*http.Response, error) {
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.HttpClientTest.DoFunc = func(request *http.Request) (*http.Response, error) {
 					return nil, fmt.Errorf("test error")
 				}
-				s, err := New(newScript("",
+				s, err := jstest.New(jstest.WithSource(
 					`import http from 'mokapi/http'
 						 export default function() {
-						  	return http.get('http://foo.bar')
+						  	return http.get('https://foo.bar')
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
-				_, err = s.RunDefault()
+				err = s.Run()
 				r.Error(t, err)
-			},
-		},
-		{
-			name: "using deprecated module",
-			test: func(t *testing.T, host *testHost) {
-				s, err := New(newScript("",
-					`import http from 'http'
-						 export default function() {
-						 	return http.get('http://foo.bar')
-						 }`),
-					host, static.JsConfig{})
-				r.NoError(t, err)
-				_, err = s.RunDefault()
-				r.NoError(t, err)
-				r.Equal(t, "GET", host.httpClient.req.Method)
-				r.Equal(t, "http://foo.bar", host.httpClient.req.URL.String())
 			},
 		},
 	}
@@ -190,8 +176,8 @@ func TestScript_Http_Get(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			host := &testHost{
-				httpClient: &testClient{},
+			host := &enginetest.Host{
+				HttpClientTest: &enginetest.HttpClient{},
 			}
 
 			tc.test(t, host)
@@ -202,71 +188,71 @@ func TestScript_Http_Get(t *testing.T) {
 func TestScript_Http_Post(t *testing.T) {
 	testcases := []struct {
 		name string
-		test func(t *testing.T, host *testHost)
+		test func(t *testing.T, host *enginetest.Host)
 	}{
 		{
 			name: "simple",
-			test: func(t *testing.T, host *testHost) {
-				s, err := New(newScript("",
+			test: func(t *testing.T, host *enginetest.Host) {
+				s, err := jstest.New(jstest.WithSource(
 					`import http from 'mokapi/http'
 						 export default function() {
-  							return http.post('http://foo.bar')
+  							return http.post('https://foo.bar')
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
-				_, err = s.RunDefault()
+				err = s.Run()
 				r.NoError(t, err)
-				r.Equal(t, "POST", host.httpClient.req.Method)
-				r.Equal(t, "http://foo.bar", host.httpClient.req.URL.String())
+				r.Equal(t, "POST", host.HttpClientTest.LastRequest.Method)
+				r.Equal(t, "https://foo.bar", host.HttpClientTest.LastRequest.URL.String())
 			},
 		},
 		{
 			name: "json with body as string",
-			test: func(t *testing.T, host *testHost) {
-				s, err := New(newScript("",
+			test: func(t *testing.T, host *enginetest.Host) {
+				s, err := jstest.New(jstest.WithSource(
 					`import http from 'mokapi/http'
 						 export default function() {
 						  	return http.post("http://localhost/foo", "body", {headers: {'Content-Type': "application/json"}})
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
-				_, err = s.RunDefault()
+				err = s.Run()
 				r.NoError(t, err)
-				b, err := ioutil.ReadAll(host.httpClient.req.Body)
+				b, err := io.ReadAll(host.HttpClientTest.LastRequest.Body)
 				r.Equal(t, "body", string(b))
-				r.Equal(t, "application/json", host.httpClient.req.Header.Get("Content-Type"))
+				r.Equal(t, "application/json", host.HttpClientTest.LastRequest.Header.Get("Content-Type"))
 			},
 		},
 		{
 			name: "json with body as object",
-			test: func(t *testing.T, host *testHost) {
-				s, err := New(newScript("",
+			test: func(t *testing.T, host *enginetest.Host) {
+				s, err := jstest.New(jstest.WithSource(
 					`import http from 'mokapi/http'
 						 export default function() {
 						  	return http.post("http://localhost/foo", {"foo":"bar"}, {headers: {'Content-Type': "application/json"}})
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
-				_, err = s.RunDefault()
+				err = s.Run()
 				r.NoError(t, err)
-				b, err := io.ReadAll(host.httpClient.req.Body)
+				b, err := io.ReadAll(host.HttpClientTest.LastRequest.Body)
 				r.Equal(t, `{"foo":"bar"}`, string(b))
-				r.Equal(t, "application/json", host.httpClient.req.Header.Get("Content-Type"))
+				r.Equal(t, "application/json", host.HttpClientTest.LastRequest.Header.Get("Content-Type"))
 			},
 		},
 		{
 			name: "json with body as object without Content-Type",
-			test: func(t *testing.T, host *testHost) {
-				s, err := New(newScript("",
+			test: func(t *testing.T, host *enginetest.Host) {
+				s, err := jstest.New(jstest.WithSource(
 					`import http from 'mokapi/http'
 						 export default function() {
 						  	return http.post("http://localhost/foo", {"foo":"bar"})
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
-				_, err = s.RunDefault()
+				err = s.Run()
 				r.NoError(t, err)
-				b, err := io.ReadAll(host.httpClient.req.Body)
+				b, err := io.ReadAll(host.HttpClientTest.LastRequest.Body)
 				r.Equal(t, `{"foo":"bar"}`, string(b))
 			},
 		},
@@ -278,8 +264,8 @@ func TestScript_Http_Post(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			host := &testHost{
-				httpClient: &testClient{},
+			host := &enginetest.Host{
+				HttpClientTest: &enginetest.HttpClient{},
 			}
 
 			tc.test(t, host)
@@ -290,54 +276,54 @@ func TestScript_Http_Post(t *testing.T) {
 func TestScript_Http(t *testing.T) {
 	testcases := []struct {
 		name string
-		test func(t *testing.T, host *testHost)
+		test func(t *testing.T, host *enginetest.Host)
 	}{
 		{
 			name: "GET",
-			test: func(t *testing.T, host *testHost) {
-				r.Equal(t, "GET", host.httpClient.req.Method)
+			test: func(t *testing.T, host *enginetest.Host) {
+				r.Equal(t, "GET", host.HttpClientTest.LastRequest.Method)
 			},
 		},
 		{
 			name: "POST",
-			test: func(t *testing.T, host *testHost) {
-				r.Equal(t, "POST", host.httpClient.req.Method)
+			test: func(t *testing.T, host *enginetest.Host) {
+				r.Equal(t, "POST", host.HttpClientTest.LastRequest.Method)
 			},
 		},
 		{
 			name: "PUT",
-			test: func(t *testing.T, host *testHost) {
-				r.Equal(t, "PUT", host.httpClient.req.Method)
+			test: func(t *testing.T, host *enginetest.Host) {
+				r.Equal(t, "PUT", host.HttpClientTest.LastRequest.Method)
 			},
 		},
 		{
 			name: "HEAD",
-			test: func(t *testing.T, host *testHost) {
-				r.Equal(t, "HEAD", host.httpClient.req.Method)
+			test: func(t *testing.T, host *enginetest.Host) {
+				r.Equal(t, "HEAD", host.HttpClientTest.LastRequest.Method)
 			},
 		},
 		{
 			name: "PATCH",
-			test: func(t *testing.T, host *testHost) {
-				r.Equal(t, "PATCH", host.httpClient.req.Method)
+			test: func(t *testing.T, host *enginetest.Host) {
+				r.Equal(t, "PATCH", host.HttpClientTest.LastRequest.Method)
 			},
 		},
 		{
 			name: "DEL",
-			test: func(t *testing.T, host *testHost) {
-				r.Equal(t, "DELETE", host.httpClient.req.Method)
+			test: func(t *testing.T, host *enginetest.Host) {
+				r.Equal(t, "DELETE", host.HttpClientTest.LastRequest.Method)
 			},
 		},
 		{
 			name: "DELETE",
-			test: func(t *testing.T, host *testHost) {
-				r.Equal(t, "DELETE", host.httpClient.req.Method)
+			test: func(t *testing.T, host *enginetest.Host) {
+				r.Equal(t, "DELETE", host.HttpClientTest.LastRequest.Method)
 			},
 		},
 		{
 			name: "OPTIONS",
-			test: func(t *testing.T, host *testHost) {
-				r.Equal(t, "OPTIONS", host.httpClient.req.Method)
+			test: func(t *testing.T, host *enginetest.Host) {
+				r.Equal(t, "OPTIONS", host.HttpClientTest.LastRequest.Method)
 			},
 		},
 	}
@@ -348,18 +334,18 @@ func TestScript_Http(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			host := &testHost{
-				httpClient: &testClient{},
+			host := &enginetest.Host{
+				HttpClientTest: &enginetest.HttpClient{},
 			}
 
-			s, err := New(newScript("",
+			s, err := jstest.New(jstest.WithSource(
 				fmt.Sprintf(`import http from 'mokapi/http'
 						 export default function() {
-						 	return http.%v('http://foo.bar')
+						 	return http.%v('https://foo.bar')
 						 }`, strings.ToLower(tc.name))),
-				host, static.JsConfig{})
+				js.WithHost(host))
 			r.NoError(t, err)
-			_, err = s.RunDefault()
+			err = s.Run()
 			r.NoError(t, err)
 
 			tc.test(t, host)
@@ -370,25 +356,25 @@ func TestScript_Http(t *testing.T) {
 func TestFetch(t *testing.T) {
 	testcases := []struct {
 		name string
-		test func(t *testing.T, host *testHost)
+		test func(t *testing.T, host *enginetest.Host)
 	}{
 		{
 			name: "simple",
-			test: func(t *testing.T, host *testHost) {
-				host.httpClient.doFunc = func(request *http.Request) (*http.Response, error) {
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.HttpClientTest.DoFunc = func(request *http.Request) (*http.Response, error) {
 					r.Equal(t, "GET", request.Method)
 					r.Equal(t, "https://foo.bar", request.URL.String())
 
 					return &http.Response{StatusCode: http.StatusOK}, nil
 				}
 
-				s, err := New(newScript("",
+				s, err := jstest.New(jstest.WithSource(
 					`import http from 'mokapi/http'
 						 export default async function() {
 						 	const res = await http.fetch('https://foo.bar')
 							return { status: res.statusCode }
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
@@ -404,8 +390,8 @@ func TestFetch(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			host := &testHost{
-				httpClient: &testClient{},
+			host := &enginetest.Host{
+				HttpClientTest: &enginetest.HttpClient{},
 			}
 			tc.test(t, host)
 		})
