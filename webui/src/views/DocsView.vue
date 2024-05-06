@@ -175,6 +175,15 @@ function showImage(target: EventTarget | null) {
   margin-bottom: 1.5rem;
 }
 
+.content h2 > * {
+  vertical-align: middle;display: inline-block;
+  padding-right: 5px;
+}
+
+.content h2 > svg path {
+  fill: var(--color-link);
+}
+
 .content h3 {
   margin-bottom: 1rem;
 }

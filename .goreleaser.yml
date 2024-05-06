@@ -38,7 +38,7 @@ dockers:
 brews:
   - repository:
       owner: marle3003
-      name: mokapi-tap
+      name: homebrew-tap
       token: "{{ .Env.TAP_GITHUB_TOKEN }}"
     homepage: https://mokapi.io
     description: "Easy and flexible API mocking using Go and Javascript - https://mokapi.io"
