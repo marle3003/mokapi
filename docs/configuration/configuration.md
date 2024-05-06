@@ -1,5 +1,5 @@
 ---
-title: Mokapi Configuration Documentation
+title: Introduction
 description: This page will introduce you to the startup and dynamic configurations.
 ---
 # Configuration Introduction

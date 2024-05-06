@@ -6,7 +6,7 @@ test('Visit Configuration', async ({ page, home }) => {
 
     await test.step('meta information are available', async () => {
         await expect(page).toHaveURL('/docs/configuration')
-        await expect(page).toHaveTitle('Overview | Mokapi Configuration')
+        await expect(page).toHaveTitle('Introduction | Mokapi Configuration')
         await expect(page.locator('meta[name="description"]')).toHaveAttribute(
             'content',
             'This page will introduce you to the startup and dynamic configurations.'
