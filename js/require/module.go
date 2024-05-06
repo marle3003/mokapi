@@ -7,7 +7,6 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 	"net/url"
-	"path"
 	"path/filepath"
 )
 
@@ -18,8 +17,10 @@ var (
 
 type module struct {
 	registry *Registry
-	vm       *goja.Runtime
-	modules  map[string]*goja.Object
+	host     SourceLoader
+
+	vm      *goja.Runtime
+	modules map[string]*goja.Object
 }
 
 func (m *module) require(call goja.FunctionCall) (module goja.Value) {
@@ -32,7 +33,7 @@ func (m *module) requireModule(modPath string) *goja.Object {
 		panic(m.vm.ToValue("missing argument"))
 	}
 	cmp := m.getCurrentModulePath()
-	key := fmt.Sprintf("%v:%v", path.Dir(cmp), modPath)
+	key := fmt.Sprintf("%v:%v", filepath.Dir(cmp), modPath)
 
 	if v, ok := m.modules[key]; ok {
 		return v
@@ -44,7 +45,7 @@ func (m *module) requireModule(modPath string) *goja.Object {
 		return mod
 	}
 	if u, err := url.Parse(modPath); err == nil && len(u.Scheme) > 0 {
-		src, err := m.registry.loadSource(modPath)
+		src, err := m.getSource(modPath)
 		if err == nil {
 			if mod, err := m.loadModule(modPath, src); err == nil && mod != nil {
 				m.modules[key] = mod
@@ -53,7 +54,7 @@ func (m *module) requireModule(modPath string) *goja.Object {
 		}
 	}
 
-	dir := path.Dir(cmp)
+	dir := filepath.Dir(cmp)
 	if mod, err := m.loadFileModule(filepath.Join(dir, modPath)); err == nil && mod != nil {
 		m.modules[key] = mod
 		return mod
@@ -67,13 +68,13 @@ func (m *module) requireModule(modPath string) *goja.Object {
 }
 
 func (m *module) loadFileModule(modPath string) (*goja.Object, error) {
-	if len(path.Ext(modPath)) > 0 {
-		src, err := m.registry.loadSource(modPath)
+	if len(filepath.Ext(modPath)) > 0 {
+		src, err := m.getSource(modPath)
 		if err != nil {
 			return nil, err
 		}
 
-		if path.Ext(modPath) == ".yaml" {
+		if filepath.Ext(modPath) == ".yaml" {
 			return m.loadYaml(src)
 		}
 
@@ -97,13 +98,13 @@ func (m *module) loadDirectoryModule(modPath string) (*goja.Object, error) {
 	if mod, err := m.loadFromPackageFile(modPath); err == nil {
 		return mod, err
 	}
-	if mod, err := m.loadFileModule(path.Join(modPath, "index.js")); err == nil {
+	if mod, err := m.loadFileModule(filepath.Join(modPath, "index.js")); err == nil {
 		return mod, nil
 	}
-	if mod, err := m.loadFileModule(path.Join(modPath, "index.ts")); err == nil {
+	if mod, err := m.loadFileModule(filepath.Join(modPath, "index.ts")); err == nil {
 		return mod, nil
 	}
-	if mod, err := m.loadFileModule(path.Join(modPath, "index.json")); err == nil {
+	if mod, err := m.loadFileModule(filepath.Join(modPath, "index.json")); err == nil {
 		return mod, nil
 	}
 
@@ -111,7 +112,7 @@ func (m *module) loadDirectoryModule(modPath string) (*goja.Object, error) {
 }
 
 func (m *module) loadFromPackageFile(modPath string) (*goja.Object, error) {
-	src, err := m.registry.loadSource(path.Join(modPath, "package.json"))
+	src, err := m.getSource(filepath.Join(modPath, "package.json"))
 	if err != nil {
 		return nil, err
 	}
@@ -124,20 +125,20 @@ func (m *module) loadFromPackageFile(modPath string) (*goja.Object, error) {
 		return nil, fmt.Errorf("unable to parse package.json")
 	}
 
-	modPath = path.Join(modPath, pkg.Main)
+	modPath = filepath.Join(modPath, pkg.Main)
 	return m.loadFileModule(modPath)
 }
 
 func (m *module) loadNodeModule(modPath, dir string) (*goja.Object, error) {
 	for len(dir) > 0 {
-		p := path.Join(dir, "node_modules", modPath)
+		p := filepath.Join(dir, "node_modules", modPath)
 		if mod, err := m.loadDirectoryModule(p); err == nil {
 			return mod, nil
 		}
 		if p == string(filepath.Separator) {
 			break
 		}
-		parent := path.Dir(dir)
+		parent := filepath.Dir(dir)
 		if parent == dir {
 			break
 		}
@@ -191,4 +192,12 @@ func (m *module) loadYaml(source string) (*goja.Object, error) {
 	}
 	mod.Set("exports", m.vm.ToValue(result))
 	return mod, nil
+}
+
+func (m *module) getSource(path string) (string, error) {
+	f, err := m.host.OpenFile(path, "")
+	if err != nil {
+		return "", err
+	}
+	return string(f.Raw), nil
 }

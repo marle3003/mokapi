@@ -3,6 +3,7 @@ package dynamic
 import (
 	"bytes"
 	"github.com/Masterminds/sprig"
+	log "github.com/sirupsen/logrus"
 	"mokapi/sortedmap"
 	"strings"
 	"sync"
@@ -34,7 +35,14 @@ type Listeners struct {
 }
 
 func AddRef(parent, ref *Config) {
-	parent.Refs.Add(ref)
+	if parent.Info.Key() == ref.Info.Key() {
+		return
+	}
+
+	added := parent.Refs.Add(ref)
+	if !added {
+		return
+	}
 	ref.Listeners.Add(parent.Info.Url.String(), func(config *Config) {
 		parent.Info.Time = ref.Info.Time
 		parent.Listeners.Invoke(parent)
@@ -78,15 +86,26 @@ func Validate(c *Config) error {
 }
 
 func (r *Refs) List() []*Config {
+	return r.list(20)
+}
+
+func (r *Refs) list(maxCall int) []*Config {
+	if maxCall == 0 {
+		return nil
+	}
+
 	var refs []*Config
 	for _, v := range r.refs {
+		if len(refs) > 20 {
+			log.Debugf("RRR")
+		}
 		refs = append(refs, v)
-		refs = append(refs, v.Refs.List()...)
+		refs = append(refs, v.Refs.list(maxCall-1)...)
 	}
 	return refs
 }
 
-func (r *Refs) Add(ref *Config) {
+func (r *Refs) Add(ref *Config) bool {
 	r.m.Lock()
 	defer r.m.Unlock()
 
@@ -96,9 +115,10 @@ func (r *Refs) Add(ref *Config) {
 
 	key := ref.Info.Path()
 	if _, ok := r.refs[key]; ok {
-		return
+		return false
 	}
 	r.refs[key] = ref
+	return true
 }
 
 func renderTemplate(b []byte) ([]byte, error) {

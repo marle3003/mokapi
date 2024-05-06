@@ -56,6 +56,10 @@ func (ci *ConfigInfo) Update(checksum []byte) {
 }
 
 func (ci *ConfigInfo) Key() string {
+	if ci.Url == nil {
+		return ""
+	}
+
 	hash := md5.New()
 	hash.Write([]byte(ci.Url.String()))
 	s := hex.EncodeToString(hash.Sum(nil))

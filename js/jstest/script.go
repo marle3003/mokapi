@@ -13,9 +13,7 @@ type Script struct {
 }
 
 func New(opts ...js.Option) (*Script, error) {
-	registry, err := require.NewRegistry(func(file, hint string) (*dynamic.Config, error) {
-		return nil, require.ModuleFileNotFound
-	})
+	registry, err := require.NewRegistry()
 	js.RegisterNativeModules(registry)
 
 	opts = append([]js.Option{js.WithRegistry(registry)}, opts...)

@@ -3,7 +3,7 @@ package compiler
 import (
 	_ "embed"
 	"github.com/dop251/goja"
-	"path"
+	"path/filepath"
 	"sync"
 )
 
@@ -77,7 +77,7 @@ func (b *babel) Transform(filename, src string) (code string, err error) {
 		"highlightCode": false,
 		"filename":      filename}
 
-	if path.Ext(filename) == ".ts" {
+	if filepath.Ext(filename) == ".ts" {
 		opts["presets"] = []string{"env", "typescript"}
 		opts["plugins"] = []interface{}{
 			"transform-exponentiation-operator",

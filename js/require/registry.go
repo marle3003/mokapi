@@ -4,33 +4,34 @@ import (
 	"github.com/dop251/goja"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
+	"mokapi/engine/common"
 	"mokapi/js/compiler"
-	"path"
+	"path/filepath"
 	"sync"
 	"text/template"
 )
 
 type ModuleLoader func(vm *goja.Runtime, module *goja.Object)
 
-type SourceLoader func(file, hint string) (*dynamic.Config, error)
+type SourceLoader interface {
+	OpenFile(file, hint string) (*dynamic.Config, error)
+}
 
 type Registry struct {
 	native  map[string]ModuleLoader
 	modules map[string]*goja.Program
 	scripts map[string]*goja.Program
 
-	srcLoader SourceLoader
-	compiler  *compiler.Compiler
+	compiler *compiler.Compiler
 
 	m sync.Mutex
 }
 
-func NewRegistry(srcLoader SourceLoader) (*Registry, error) {
+func NewRegistry() (*Registry, error) {
 	reg := &Registry{
-		native:    map[string]ModuleLoader{},
-		modules:   map[string]*goja.Program{},
-		scripts:   map[string]*goja.Program{},
-		srcLoader: srcLoader,
+		native:  map[string]ModuleLoader{},
+		modules: map[string]*goja.Program{},
+		scripts: map[string]*goja.Program{},
 	}
 	var err error
 	reg.compiler, err = compiler.New()
@@ -38,8 +39,12 @@ func NewRegistry(srcLoader SourceLoader) (*Registry, error) {
 }
 
 func (r *Registry) Enable(vm *goja.Runtime) {
+	o := vm.Get("mokapi/internal").(*goja.Object)
+	host := o.Get("host").Export().(common.Host)
+
 	m := &module{
 		registry: r,
+		host:     host,
 		vm:       vm,
 		modules:  map[string]*goja.Object{},
 	}
@@ -61,7 +66,7 @@ func (r *Registry) getModuleProgram(modPath, source string) (*goja.Program, erro
 
 	prg := r.modules[modPath]
 	if prg == nil {
-		if path.Ext(modPath) == ".json" {
+		if filepath.Ext(modPath) == ".json" {
 			source = "module.exports = JSON.parse('" + template.JSEscapeString(source) + "')"
 		}
 
@@ -89,12 +94,4 @@ func (r *Registry) GetProgram(path, source string) (*goja.Program, error) {
 		r.scripts[path] = prg
 	}
 	return prg, nil
-}
-
-func (r *Registry) loadSource(path string) (string, error) {
-	f, err := r.srcLoader(path, "")
-	if err != nil {
-		return "", err
-	}
-	return string(f.Raw), nil
 }

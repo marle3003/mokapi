@@ -41,7 +41,7 @@ type Script struct {
 	host     engine.Host
 	file     *dynamic.Config
 	config   static.JsConfig
-	runner   *eventloop.EventLoop
+	loop     *eventloop.EventLoop
 	registry *require.Registry
 }
 
@@ -89,9 +89,9 @@ func (s *Script) RunDefault() (goja.Value, error) {
 		return nil, err
 	}
 
-	s.runner.StartLoop()
+	s.loop.StartLoop()
 
-	result, err := s.runner.RunAsync(func(vm *goja.Runtime) (goja.Value, error) {
+	result, err := s.loop.RunAsync(func(vm *goja.Runtime) (goja.Value, error) {
 		v := vm.Get("exports")
 		if v == goja.Null() {
 			return nil, NoDefaultFunction
@@ -121,12 +121,12 @@ func (s *Script) RunFunc(fn func(vm *goja.Runtime)) error {
 		return err
 	}
 
-	s.runner.Run(fn)
+	s.loop.Run(fn)
 	return nil
 }
 
 func (s *Script) Close() {
-	s.runner.Stop()
+	s.loop.Stop()
 	if s.runtime != nil {
 		s.runtime.Interrupt(fmt.Errorf("closing"))
 		s.runtime = nil
@@ -135,7 +135,7 @@ func (s *Script) Close() {
 }
 
 func (s *Script) CanClose() bool {
-	return !s.runner.HasJobs()
+	return !s.loop.HasJobs()
 }
 
 func (s *Script) ensureRuntime() error {
@@ -143,7 +143,7 @@ func (s *Script) ensureRuntime() error {
 		return nil
 	}
 	s.runtime = goja.New()
-	s.runner = eventloop.New(s.runtime)
+	s.loop = eventloop.New(s.runtime)
 	path := getScriptPath(s.file.Info.Kernel().Url)
 
 	s.runtime.SetFieldNameMapper(&customFieldNameMapper{})
@@ -151,8 +151,10 @@ func (s *Script) ensureRuntime() error {
 	if err != nil {
 		return err
 	}
+
+	EnableInternal(s.runtime, s.host, s.loop)
+
 	registry.Enable(s.runtime)
-	s.enableInternal()
 	console.Enable(s.runtime)
 	file.Enable(s.runtime, s.host)
 	process.Enable(s.runtime)
@@ -162,17 +164,17 @@ func (s *Script) ensureRuntime() error {
 		return err
 	}
 
-	s.runner.Run(func(vm *goja.Runtime) {
+	s.loop.Run(func(vm *goja.Runtime) {
 		_, err = vm.RunProgram(prg)
 	})
 	return err
 }
 
-func (s *Script) enableInternal() {
-	o := s.runtime.NewObject()
-	o.Set("host", s.host)
-	o.Set("loop", s.runner)
-	s.runtime.Set("mokapi/internal", o)
+func EnableInternal(vm *goja.Runtime, host engine.Host, loop *eventloop.EventLoop) {
+	o := vm.NewObject()
+	o.Set("host", host)
+	o.Set("loop", loop)
+	vm.Set("mokapi/internal", o)
 
 }
 
@@ -241,7 +243,7 @@ func (s *Script) getRegistry() (*require.Registry, error) {
 	}
 
 	registryOne.Do(func() {
-		singletonRegistry, registryErr = require.NewRegistry(s.host.OpenFile)
+		singletonRegistry, registryErr = require.NewRegistry()
 		if registryErr != nil {
 			return
 		}

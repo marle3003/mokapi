@@ -56,8 +56,8 @@ func TestAddRef(t *testing.T) {
 		{
 			name: "ref updates parent time",
 			test: func(t *testing.T) {
-				parent := &dynamic.Config{Info: dynamictest.NewConfigInfo()}
-				ref := &dynamic.Config{Info: dynamictest.NewConfigInfo()}
+				parent := &dynamic.Config{Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("file://parent.yaml"))}
+				ref := &dynamic.Config{Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("file://ref.yaml"))}
 				d, _ := time.Parse(time.RFC3339, "2006-01-02T15:04:05Z")
 				ref.Info.Time = d
 
@@ -70,13 +70,23 @@ func TestAddRef(t *testing.T) {
 		{
 			name: "same ref is added only once",
 			test: func(t *testing.T) {
-				parent := &dynamic.Config{Info: dynamictest.NewConfigInfo()}
-				ref := &dynamic.Config{Info: dynamictest.NewConfigInfo()}
+				parent := &dynamic.Config{Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("file://parent.yaml"))}
+				ref := &dynamic.Config{Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("file://ref.yaml"))}
 
 				dynamic.AddRef(parent, ref)
 				dynamic.AddRef(parent, ref)
 
 				require.Len(t, parent.Refs.List(), 1)
+			},
+		},
+		{
+			name: "add ref itself",
+			test: func(t *testing.T) {
+				parent := &dynamic.Config{Info: dynamictest.NewConfigInfo()}
+
+				dynamic.AddRef(parent, parent)
+
+				require.Len(t, parent.Refs.List(), 0)
 			},
 		},
 	}

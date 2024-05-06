@@ -194,7 +194,7 @@ func (sh *scriptHost) Debug(args ...interface{}) {
 
 func (sh *scriptHost) OpenFile(path string, hint string) (*dynamic.Config, error) {
 	u, err := url.Parse(path)
-	if err != nil || len(u.Scheme) == 0 {
+	if err != nil || len(u.Scheme) == 0 || len(u.Opaque) > 0 {
 		if !filepath.IsAbs(path) {
 			if len(hint) > 0 {
 				path = filepath.Join(hint, path)

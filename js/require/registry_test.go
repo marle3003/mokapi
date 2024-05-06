@@ -5,6 +5,9 @@ import (
 	"github.com/dop251/goja"
 	r "github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
+	"mokapi/engine/common"
+	"mokapi/engine/enginetest"
+	"mokapi/js"
 	"mokapi/js/require"
 	"net/url"
 	"testing"
@@ -20,7 +23,7 @@ func TestRegistry(t *testing.T) {
 	testcases := []struct {
 		name    string
 		sources map[string]source
-		test    func(t *testing.T, loader require.SourceLoader)
+		test    func(t *testing.T, host common.Host)
 	}{
 		{
 			name: "export array",
@@ -30,11 +33,12 @@ func TestRegistry(t *testing.T) {
 					code: `export let items = ['foo']`,
 				},
 			},
-			test: func(t *testing.T, loader require.SourceLoader) {
-				reg, err := require.NewRegistry(loader)
+			test: func(t *testing.T, host common.Host) {
+				reg, err := require.NewRegistry()
 				r.NoError(t, err)
 
 				vm := goja.New()
+				js.EnableInternal(vm, host, nil)
 				reg.Enable(vm)
 
 				_, err = vm.RunString(`
@@ -58,11 +62,12 @@ func TestRegistry(t *testing.T) {
 					code: "",
 				},
 			},
-			test: func(t *testing.T, loader require.SourceLoader) {
-				reg, err := require.NewRegistry(loader)
+			test: func(t *testing.T, host common.Host) {
+				reg, err := require.NewRegistry()
 				r.NoError(t, err)
 
 				vm := goja.New()
+				js.EnableInternal(vm, host, nil)
 				reg.Enable(vm)
 
 				_, err = vm.RunString(`
@@ -77,25 +82,27 @@ func TestRegistry(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			loader := func(file, hint string) (*dynamic.Config, error) {
-				if src, ok := tc.sources[file]; ok {
-					return &dynamic.Config{
-						Info: dynamic.ConfigInfo{
-							Provider: "test",
-							Url:      mustParse(src.name),
-							Checksum: nil,
-							Time:     time.Time{},
-						},
-						Raw:       []byte(src.code),
-						Data:      nil,
-						Refs:      dynamic.Refs{},
-						Listeners: dynamic.Listeners{},
-					}, nil
-				}
-				return nil, fmt.Errorf("file not found")
+			host := &enginetest.Host{
+				OpenFunc: func(file, hint string) (*dynamic.Config, error) {
+					if src, ok := tc.sources[file]; ok {
+						return &dynamic.Config{
+							Info: dynamic.ConfigInfo{
+								Provider: "test",
+								Url:      mustParse(src.name),
+								Checksum: nil,
+								Time:     time.Time{},
+							},
+							Raw:       []byte(src.code),
+							Data:      nil,
+							Refs:      dynamic.Refs{},
+							Listeners: dynamic.Listeners{},
+						}, nil
+					}
+					return nil, fmt.Errorf("file not found")
+				},
 			}
 
-			tc.test(t, loader)
+			tc.test(t, host)
 		})
 	}
 }

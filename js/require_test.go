@@ -93,6 +93,7 @@ func TestRequire(t *testing.T) {
 			name: "require custom relative file",
 			test: func(t *testing.T, host *enginetest.Host, registry *require.Registry) {
 				host.OpenFileFunc = func(file, hint string) (string, string, error) {
+					file = filepath.ToSlash(file) // if on windows
 					r.Equal(t, "/foo/bar/foo.js", file)
 					return "", "export var bar = {demo: 'demo'};", nil
 				}
@@ -344,7 +345,7 @@ export default function () {return data}
 			t.Parallel()
 
 			host := &enginetest.Host{}
-			registry, err := require.NewRegistry(host.OpenFile)
+			registry, err := require.NewRegistry()
 			js.RegisterNativeModules(registry)
 			r.NoError(t, err)
 
