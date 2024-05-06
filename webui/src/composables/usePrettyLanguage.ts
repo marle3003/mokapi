@@ -33,6 +33,8 @@ export function usePrettyLanguage() {
                 return 'text'
             case 'javascript':
                 return 'javascript'
+            case 'typescript':
+                return 'javascript'
             default:
                 return mimeType.subtype
 
@@ -53,6 +55,8 @@ export function usePrettyLanguage() {
                 return 'application/yaml'
             case '.js':
                 return 'text/javascript'
+            case '.ts':
+                return 'text/typescript'
             default:
                 return null
         }
