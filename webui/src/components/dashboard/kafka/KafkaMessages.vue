@@ -138,7 +138,7 @@ function getTopic(name: string): KafkaTopic {
                                             <source-view :source="message.message" :content-type="message.contentType" />
                                         </div>
                                         <div class="tab-pane fade" id="detail-header" role="tabpanel">
-                                            <table class="table dataTable selectable">
+                                            <table class="table dataTable">
                                                 <caption class="visually-hidden">Message Headers</caption>
                                                 <thead>
                                                     <tr>
