@@ -3,7 +3,6 @@ package dynamic
 import (
 	"bytes"
 	"github.com/Masterminds/sprig"
-	log "github.com/sirupsen/logrus"
 	"mokapi/sortedmap"
 	"strings"
 	"sync"
@@ -85,22 +84,21 @@ func Validate(c *Config) error {
 	return nil
 }
 
-func (r *Refs) List() []*Config {
-	return r.list(20)
+func (r *Refs) List(recursive bool) []*Config {
+	return r.list(20, recursive)
 }
 
-func (r *Refs) list(maxCall int) []*Config {
+func (r *Refs) list(maxCall int, recursive bool) []*Config {
 	if maxCall == 0 {
 		return nil
 	}
 
 	var refs []*Config
 	for _, v := range r.refs {
-		if len(refs) > 20 {
-			log.Debugf("RRR")
-		}
 		refs = append(refs, v)
-		refs = append(refs, v.Refs.list(maxCall-1)...)
+		if recursive {
+			refs = append(refs, v.Refs.list(maxCall-1, recursive)...)
+		}
 	}
 	return refs
 }

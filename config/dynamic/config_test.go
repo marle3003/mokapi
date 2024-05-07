@@ -49,8 +49,8 @@ func TestAddRef(t *testing.T) {
 
 				dynamic.AddRef(parent, ref)
 
-				require.Len(t, parent.Refs.List(), 1)
-				require.Equal(t, ref, parent.Refs.List()[0])
+				require.Len(t, parent.Refs.List(true), 1)
+				require.Equal(t, ref, parent.Refs.List(true)[0])
 			},
 		},
 		{
@@ -76,7 +76,7 @@ func TestAddRef(t *testing.T) {
 				dynamic.AddRef(parent, ref)
 				dynamic.AddRef(parent, ref)
 
-				require.Len(t, parent.Refs.List(), 1)
+				require.Len(t, parent.Refs.List(true), 1)
 			},
 		},
 		{
@@ -86,7 +86,7 @@ func TestAddRef(t *testing.T) {
 
 				dynamic.AddRef(parent, parent)
 
-				require.Len(t, parent.Refs.List(), 0)
+				require.Len(t, parent.Refs.List(true), 0)
 			},
 		},
 	}

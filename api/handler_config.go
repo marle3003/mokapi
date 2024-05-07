@@ -101,7 +101,7 @@ func getConfigs(src []*dynamic.Config) (dst []config) {
 
 func toConfig(cfg *dynamic.Config) config {
 	var refs []configRef
-	for _, ref := range cfg.Refs.List() {
+	for _, ref := range cfg.Refs.List(false) {
 		refs = append(refs, configRef{
 			Id:       ref.Info.Key(),
 			Url:      filepath.ToSlash(ref.Info.Path()),

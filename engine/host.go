@@ -218,7 +218,6 @@ func (sh *scriptHost) OpenFile(path string, hint string) (*dynamic.Config, error
 		return nil, err
 	}
 
-	dynamic.AddRef(sh.file, f)
 	return f, nil
 }
 

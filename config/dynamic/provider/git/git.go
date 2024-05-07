@@ -215,6 +215,7 @@ func (p *Provider) initRepository(r *repository, ch chan *dynamic.Config, pool *
 				}
 				relative := path[len(r.localPath)+1:]
 				if skip(relative, r) {
+					log.Debugf("skip file: %v", getUrl(r, c.Info.Url))
 					continue
 				}
 

@@ -144,7 +144,7 @@ func (a *App) AddConfig(c *dynamic.Config) {
 	defer a.m.Unlock()
 
 	a.Configs[c.Info.Key()] = c
-	for _, r := range c.Refs.List() {
+	for _, r := range c.Refs.List(true) {
 		a.Configs[r.Info.Key()] = r
 	}
 }

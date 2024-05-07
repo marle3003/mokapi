@@ -6,6 +6,7 @@ import (
 	"github.com/dop251/goja"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
+	"mokapi/config/dynamic"
 	"net/url"
 	"path/filepath"
 )
@@ -21,6 +22,8 @@ type module struct {
 
 	vm      *goja.Runtime
 	modules map[string]*goja.Object
+
+	currentSource *dynamic.Config
 }
 
 func (m *module) require(call goja.FunctionCall) (module goja.Value) {
@@ -45,7 +48,7 @@ func (m *module) requireModule(modPath string) *goja.Object {
 		return mod
 	}
 	if u, err := url.Parse(modPath); err == nil && len(u.Scheme) > 0 {
-		src, err := m.getSource(modPath)
+		src, err := m.host.OpenFile(modPath, "")
 		if err == nil {
 			if mod, err := m.loadModule(modPath, src); err == nil && mod != nil {
 				m.modules[key] = mod
@@ -69,13 +72,13 @@ func (m *module) requireModule(modPath string) *goja.Object {
 
 func (m *module) loadFileModule(modPath string) (*goja.Object, error) {
 	if len(filepath.Ext(modPath)) > 0 {
-		src, err := m.getSource(modPath)
+		src, err := m.host.OpenFile(modPath, "")
 		if err != nil {
 			return nil, err
 		}
 
 		if filepath.Ext(modPath) == ".yaml" {
-			return m.loadYaml(src)
+			return m.loadYaml(string(src.Raw))
 		}
 
 		return m.loadModule(modPath, src)
@@ -112,7 +115,7 @@ func (m *module) loadDirectoryModule(modPath string) (*goja.Object, error) {
 }
 
 func (m *module) loadFromPackageFile(modPath string) (*goja.Object, error) {
-	src, err := m.getSource(filepath.Join(modPath, "package.json"))
+	src, err := m.host.OpenFile(filepath.Join(modPath, "package.json"), "")
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +123,7 @@ func (m *module) loadFromPackageFile(modPath string) (*goja.Object, error) {
 	pkg := struct {
 		Main string
 	}{}
-	err = json.Unmarshal([]byte(src), &pkg)
+	err = json.Unmarshal(src.Raw, &pkg)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse package.json")
 	}
@@ -148,11 +151,19 @@ func (m *module) loadNodeModule(modPath, dir string) (*goja.Object, error) {
 	return nil, ModuleFileNotFound
 }
 
-func (m *module) loadModule(modPath, source string) (*goja.Object, error) {
-	prg, err := m.registry.getModuleProgram(modPath, source)
+func (m *module) loadModule(modPath string, source *dynamic.Config) (*goja.Object, error) {
+	prg, err := m.registry.getModuleProgram(modPath, string(source.Raw))
 	if err != nil {
 		return nil, err
 	}
+
+	parent := m.currentSource
+	dynamic.AddRef(parent, source)
+	m.currentSource = source
+	defer func() {
+		m.currentSource = parent
+	}()
+
 	f, err := m.vm.RunProgram(prg)
 	if err != nil {
 		return nil, err
@@ -192,12 +203,4 @@ func (m *module) loadYaml(source string) (*goja.Object, error) {
 	}
 	mod.Set("exports", m.vm.ToValue(result))
 	return mod, nil
-}
-
-func (m *module) getSource(path string) (string, error) {
-	f, err := m.host.OpenFile(path, "")
-	if err != nil {
-		return "", err
-	}
-	return string(f.Raw), nil
 }

@@ -5,6 +5,7 @@ import (
 	"github.com/dop251/goja"
 	r "github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/js"
@@ -38,7 +39,7 @@ func TestRegistry(t *testing.T) {
 				r.NoError(t, err)
 
 				vm := goja.New()
-				js.EnableInternal(vm, host, nil)
+				js.EnableInternal(vm, host, nil, &dynamic.Config{Info: dynamictest.NewConfigInfo()})
 				reg.Enable(vm)
 
 				_, err = vm.RunString(`
@@ -67,7 +68,7 @@ func TestRegistry(t *testing.T) {
 				r.NoError(t, err)
 
 				vm := goja.New()
-				js.EnableInternal(vm, host, nil)
+				js.EnableInternal(vm, host, nil, &dynamic.Config{Info: dynamictest.NewConfigInfo()})
 				reg.Enable(vm)
 
 				_, err = vm.RunString(`

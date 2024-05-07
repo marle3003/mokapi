@@ -295,7 +295,7 @@ func TestProvider(t *testing.T) {
 			},
 		},
 		{
-			name: "mokapiignore only js files",
+			name: "mokapiignore ignore all but js files",
 			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
 				".mokapiignore": {
 					Name:  ".mokapiignore",
@@ -322,6 +322,42 @@ func TestProvider(t *testing.T) {
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 1)
 				require.True(t, strings.HasSuffix(configs[0].Info.Path(), filepath.Join("dir", "foo.js")))
+			},
+		},
+		{
+			name: "mokapiignore ignore all but js and ts files",
+			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
+				".mokapiignore": {
+					Name:  ".mokapiignore",
+					IsDir: false,
+					Data:  []byte("**/*.*\n!*.js\n!mokapi.ts"),
+				},
+				"/bar.txt": {
+					Name:  "foo.txt",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+				"dir/bar.txt": {
+					Name:  "foo.txt",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+				"dir/foo.js": {
+					Name:  "foo.js",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+				"dir/mokapi.ts": {
+					Name:  "foo.ts",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+			}},
+			cfg: static.FileProvider{Directory: "./"},
+			test: func(t *testing.T, configs []*dynamic.Config) {
+				require.Len(t, configs, 2)
+				require.True(t, strings.HasSuffix(configs[0].Info.Path(), filepath.Join("dir", "foo.js")))
+				require.True(t, strings.HasSuffix(configs[1].Info.Path(), filepath.Join("dir", "mokapi.ts")))
 			},
 		},
 		{

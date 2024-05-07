@@ -41,12 +41,14 @@ func NewRegistry() (*Registry, error) {
 func (r *Registry) Enable(vm *goja.Runtime) {
 	o := vm.Get("mokapi/internal").(*goja.Object)
 	host := o.Get("host").Export().(common.Host)
+	file := o.Get("file").Export().(*dynamic.Config)
 
 	m := &module{
-		registry: r,
-		host:     host,
-		vm:       vm,
-		modules:  map[string]*goja.Object{},
+		registry:      r,
+		host:          host,
+		vm:            vm,
+		modules:       map[string]*goja.Object{},
+		currentSource: file,
 	}
 	if err := vm.Set("require", m.require); err != nil {
 		log.Errorf("enabling require module: %v", err)

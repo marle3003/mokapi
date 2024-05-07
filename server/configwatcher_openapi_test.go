@@ -68,7 +68,7 @@ paths:
 					require.NotNil(t, c)
 					cfg := c.Data.(*openapi.Config)
 					require.NotNil(t, cfg)
-					refs := c.Refs.List()
+					refs := c.Refs.List(false)
 					require.Len(t, refs, 1)
 					require.Equal(t, "/paths.yml", refs[0].Info.Url.Path)
 					ch <- cfg

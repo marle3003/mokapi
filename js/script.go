@@ -152,7 +152,7 @@ func (s *Script) ensureRuntime() error {
 		return err
 	}
 
-	EnableInternal(s.runtime, s.host, s.loop)
+	EnableInternal(s.runtime, s.host, s.loop, s.file)
 
 	registry.Enable(s.runtime)
 	console.Enable(s.runtime)
@@ -170,10 +170,11 @@ func (s *Script) ensureRuntime() error {
 	return err
 }
 
-func EnableInternal(vm *goja.Runtime, host engine.Host, loop *eventloop.EventLoop) {
+func EnableInternal(vm *goja.Runtime, host engine.Host, loop *eventloop.EventLoop, file *dynamic.Config) {
 	o := vm.NewObject()
 	o.Set("host", host)
 	o.Set("loop", loop)
+	o.Set("file", file)
 	vm.Set("mokapi/internal", o)
 
 }
