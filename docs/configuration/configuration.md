@@ -2,7 +2,7 @@
 title: Introduction
 description: This page will introduce you to the startup and dynamic configurations.
 ---
-# Configuration Introduction
+# Introduction
 
 Mokapi has two types of configuration:
 - The startup configuration (referred as the static configuration)

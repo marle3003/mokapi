@@ -42,7 +42,7 @@
     "items": {
       "Configuration": {
         "items": {
-          "Overview": "configuration/configuration.md",
+          "Introduction": "configuration/configuration.md",
           "Patching": "configuration/patching.md"
         }
       },
