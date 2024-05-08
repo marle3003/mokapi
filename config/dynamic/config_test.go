@@ -89,6 +89,37 @@ func TestAddRef(t *testing.T) {
 				require.Len(t, parent.Refs.List(true), 0)
 			},
 		},
+		{
+			name: "add nested references and get all references",
+			test: func(t *testing.T) {
+				parent := &dynamic.Config{Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("file://parent.yaml"))}
+				child := &dynamic.Config{Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("file://child.yaml"))}
+				nested := &dynamic.Config{Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("file://nested.yaml"))}
+
+				dynamic.AddRef(parent, child)
+				dynamic.AddRef(child, nested)
+
+				list := parent.Refs.List(true)
+				require.Len(t, list, 2)
+				require.Contains(t, list, child)
+				require.Contains(t, list, nested)
+			},
+		},
+		{
+			name: "add nested references but get only first level",
+			test: func(t *testing.T) {
+				parent := &dynamic.Config{Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("file://parent.yaml"))}
+				child := &dynamic.Config{Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("file://child.yaml"))}
+				nested := &dynamic.Config{Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("file://nested.yaml"))}
+
+				dynamic.AddRef(parent, child)
+				dynamic.AddRef(child, nested)
+
+				list := parent.Refs.List(false)
+				require.Len(t, list, 1)
+				require.Contains(t, list, child)
+			},
+		},
 	}
 
 	t.Parallel()

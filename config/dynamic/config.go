@@ -85,20 +85,22 @@ func Validate(c *Config) error {
 }
 
 func (r *Refs) List(recursive bool) []*Config {
-	return r.list(20, recursive)
+	max := 20
+	if !recursive {
+		max = 1
+	}
+	return r.list(max)
 }
 
-func (r *Refs) list(maxCall int, recursive bool) []*Config {
-	if maxCall == 0 {
+func (r *Refs) list(max int) []*Config {
+	if max == 0 {
 		return nil
 	}
 
 	var refs []*Config
 	for _, v := range r.refs {
 		refs = append(refs, v)
-		if recursive {
-			refs = append(refs, v.Refs.list(maxCall-1, recursive)...)
-		}
+		refs = append(refs, v.Refs.list(max-1)...)
 	}
 	return refs
 }
