@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"mokapi/json/generator"
+	jsonSchema "mokapi/json/schema"
 	"mokapi/media"
 	"mokapi/providers/openapi/schema"
 	"mokapi/sortedmap"
@@ -47,7 +48,7 @@ type schemaInfo struct {
 	Description string `json:"description,omitempty"`
 	Ref         string `json:"ref,omitempty"`
 
-	Type       string        `json:"type"`
+	Type       interface{}   `json:"type"`
 	AnyOf      []*schemaInfo `json:"anyOf,omitempty"`
 	AllOf      []*schemaInfo `json:"allOf,omitempty"`
 	OneOf      []*schemaInfo `json:"oneOf,omitempty"`
@@ -175,11 +176,10 @@ func (c *schemaConverter) getSchema(s *schema.Ref) *schemaInfo {
 		Description: s.Value.Description,
 		Ref:         s.Ref,
 
-		Type:     s.Value.Type,
-		Example:  s.Value.Example,
-		Enum:     s.Value.Enum,
-		Format:   s.Value.Format,
-		Nullable: s.Value.Nullable,
+		Type:    s.Value.Type,
+		Example: s.Value.Example,
+		Enum:    s.Value.Enum,
+		Format:  s.Value.Format,
 
 		Pattern:   s.Value.Pattern,
 		MinLength: s.Value.MinLength,
@@ -198,6 +198,16 @@ func (c *schemaConverter) getSchema(s *schema.Ref) *schemaInfo {
 		Required:      s.Value.Required,
 		MinProperties: s.Value.MinProperties,
 		MaxProperties: s.Value.MaxProperties,
+	}
+
+	if len(s.Value.Type) == 0 {
+		result.Type = ""
+	} else if len(s.Value.Type) == 1 {
+		result.Type = s.Value.Type[0]
+	}
+
+	if s.Value.Nullable && !s.Value.Type.IsNullable() {
+		result.Type = append(s.Value.Type, "null")
 	}
 
 	if len(s.Ref) > 0 {
@@ -257,7 +267,6 @@ func toSchema(s *schemaInfo) *schema.Schema {
 	result := &schema.Schema{
 		Description: s.Description,
 
-		Type:       s.Type,
 		Deprecated: s.Deprecated,
 		Example:    s.Example,
 		Enum:       s.Enum,
@@ -282,6 +291,18 @@ func toSchema(s *schemaInfo) *schema.Schema {
 		MinProperties: s.MinProperties,
 		MaxProperties: s.MaxProperties,
 	}
+
+	if s.Type != nil {
+		switch v := s.Type.(type) {
+		case string:
+			result.Type = jsonSchema.Types{fmt.Sprintf("%v", s.Type)}
+		case []interface{}:
+			for _, typeName := range v {
+				result.Type = append(result.Type, fmt.Sprintf("%v", typeName))
+			}
+		}
+	}
+
 	if s.Properties != nil && s.Properties.Len() > 0 {
 		result.Properties = &schema.Schemas{}
 		for it := s.Properties.Iter(); it.Next(); {

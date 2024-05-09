@@ -2,6 +2,7 @@ package parameter_test
 
 import (
 	"github.com/stretchr/testify/require"
+	jsonSchema "mokapi/json/schema"
 	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
@@ -23,7 +24,7 @@ func TestParsePath(t *testing.T) {
 			param: &parameter.Parameter{
 				Name:    "foo",
 				Type:    parameter.Path,
-				Schema:  &schema.Ref{Value: &schema.Schema{Type: "string"}},
+				Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"string"}}},
 				Style:   "",
 				Explode: explode(false),
 			},
@@ -46,7 +47,7 @@ func TestParsePath(t *testing.T) {
 			param: &parameter.Parameter{
 				Name:    "foo",
 				Type:    parameter.Path,
-				Schema:  &schema.Ref{Value: &schema.Schema{Type: "string"}},
+				Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"string"}}},
 				Style:   "",
 				Explode: explode(false),
 			},
@@ -69,7 +70,7 @@ func TestParsePath(t *testing.T) {
 			param: &parameter.Parameter{
 				Name:    "foo",
 				Type:    parameter.Path,
-				Schema:  &schema.Ref{Value: &schema.Schema{Type: "string"}},
+				Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"string"}}},
 				Style:   "label",
 				Explode: explode(false),
 			},
@@ -92,7 +93,7 @@ func TestParsePath(t *testing.T) {
 			param: &parameter.Parameter{
 				Name:    "foo",
 				Type:    parameter.Path,
-				Schema:  &schema.Ref{Value: &schema.Schema{Type: "string"}},
+				Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"string"}}},
 				Style:   "matrix",
 				Explode: explode(false),
 			},
@@ -116,7 +117,7 @@ func TestParsePath(t *testing.T) {
 
 				Name:    "foo",
 				Type:    parameter.Path,
-				Schema:  &schema.Ref{Value: &schema.Schema{Type: "array", Items: &schema.Ref{Value: &schema.Schema{Type: "integer"}}}},
+				Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"array"}, Items: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}}}},
 				Style:   "",
 				Explode: explode(false),
 			},
@@ -139,7 +140,7 @@ func TestParsePath(t *testing.T) {
 			param: &parameter.Parameter{
 				Name:    "foo",
 				Type:    parameter.Path,
-				Schema:  &schema.Ref{Value: &schema.Schema{Type: "array", Items: &schema.Ref{Value: &schema.Schema{Type: "integer"}}}},
+				Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"array"}, Items: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}}}},
 				Style:   "label",
 				Explode: explode(false),
 			},
@@ -163,7 +164,7 @@ func TestParsePath(t *testing.T) {
 
 				Name:    "foo",
 				Type:    parameter.Path,
-				Schema:  &schema.Ref{Value: &schema.Schema{Type: "array", Items: &schema.Ref{Value: &schema.Schema{Type: "integer"}}}},
+				Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"array"}, Items: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}}}},
 				Style:   "matrix",
 				Explode: explode(false),
 			},

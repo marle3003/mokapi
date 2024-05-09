@@ -192,7 +192,7 @@ export interface JSONSchema {
     /**
      * Specifies the data type for a schema.
      */
-    type: string | string[]
+    type: SchemaType | SchemaType[];
 
     /**
      * The enum keyword is used to restrict a value to a fixed set of values.
@@ -332,9 +332,11 @@ export interface JSONSchema {
     is: (typeName: string) => boolean
 }
 
+export type SchemaType = "object" | "array" | "number" | "integer" | "string" | "boolean" | "null";
+
 export interface Schema {
     /** Type of fake value */
-    type?: "object" | "array" | "number" | "integer" | "string" | "boolean";
+    type?: SchemaType | SchemaType[];
 
     /** Serves as a hint at the contents and format of the string.  */
     format?: string;

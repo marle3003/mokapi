@@ -6,7 +6,9 @@ components:
         ref:
           type: string
         type:
-          type: string
+          type: [string, array]
+          items:
+            type: string
         format:
           type: string
         pattern:

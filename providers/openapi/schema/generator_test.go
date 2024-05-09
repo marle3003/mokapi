@@ -5,6 +5,7 @@ import (
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
 	"mokapi/json/generator"
+	jsonSchema "mokapi/json/schema"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
 	"testing"
@@ -43,7 +44,7 @@ func TestGenerator(t *testing.T) {
 		},
 		{
 			name:   "invalid type",
-			schema: &schema.Schema{Type: "foobar"},
+			schema: &schema.Schema{Type: jsonSchema.Types{"foobar"}},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.EqualError(t, err, "unsupported schema: schema type=foobar")
 			},
@@ -68,7 +69,7 @@ func TestGeneratorString(t *testing.T) {
 	}{
 		{
 			name:   "string",
-			schema: &schema.Schema{Type: "string"},
+			schema: &schema.Schema{Type: jsonSchema.Types{"string"}},
 			test: func(v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "XidZuoWq ", v)
@@ -76,7 +77,7 @@ func TestGeneratorString(t *testing.T) {
 		},
 		{
 			name:   "by pattern",
-			schema: &schema.Schema{Type: "string", Pattern: "^\\d{3}-\\d{2}-\\d{4}$"},
+			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Pattern: "^\\d{3}-\\d{2}-\\d{4}$"},
 			test: func(v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "013-64-5994", v)
@@ -84,7 +85,7 @@ func TestGeneratorString(t *testing.T) {
 		},
 		{
 			name:   "date",
-			schema: &schema.Schema{Type: "string", Format: "date"},
+			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Format: "date"},
 			test: func(v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "1915-01-24", v)
@@ -92,7 +93,7 @@ func TestGeneratorString(t *testing.T) {
 		},
 		{
 			name:   "date-time",
-			schema: &schema.Schema{Type: "string", Format: "date-time"},
+			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Format: "date-time"},
 			test: func(v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "1915-01-24T13:00:35Z", v)
@@ -100,7 +101,7 @@ func TestGeneratorString(t *testing.T) {
 		},
 		{
 			name:   "password",
-			schema: &schema.Schema{Type: "string", Format: "password"},
+			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Format: "password"},
 			test: func(v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "sX!54wZ8!69V", v)
@@ -108,7 +109,7 @@ func TestGeneratorString(t *testing.T) {
 		},
 		{
 			name:   "email",
-			schema: &schema.Schema{Type: "string", Format: "email"},
+			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Format: "email"},
 			test: func(v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "markusmoen@pagac.net", v)
@@ -116,7 +117,7 @@ func TestGeneratorString(t *testing.T) {
 		},
 		{
 			name:   "uuid",
-			schema: &schema.Schema{Type: "string", Format: "uuid"},
+			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Format: "uuid"},
 			test: func(v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "98173564-6619-4557-888e-65b16bb5def5", v)
@@ -124,7 +125,7 @@ func TestGeneratorString(t *testing.T) {
 		},
 		{
 			name:   "url",
-			schema: &schema.Schema{Type: "string", Format: "{url}"},
+			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Format: "{url}"},
 			test: func(v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "https://www.dynamiciterate.name/target/seamless", v)
@@ -132,7 +133,7 @@ func TestGeneratorString(t *testing.T) {
 		},
 		{
 			name:   "hostname",
-			schema: &schema.Schema{Type: "string", Format: "hostname"},
+			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Format: "hostname"},
 			test: func(v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "centraltarget.biz", v)
@@ -140,7 +141,7 @@ func TestGeneratorString(t *testing.T) {
 		},
 		{
 			name:   "ipv4",
-			schema: &schema.Schema{Type: "string", Format: "ipv4"},
+			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Format: "ipv4"},
 			test: func(v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "152.23.53.100", v)
@@ -148,7 +149,7 @@ func TestGeneratorString(t *testing.T) {
 		},
 		{
 			name:   "ipv6",
-			schema: &schema.Schema{Type: "string", Format: "ipv6"},
+			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Format: "ipv6"},
 			test: func(v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "8898:ee17:bc35:9064:5866:d019:3b95:7857", v)
@@ -156,7 +157,7 @@ func TestGeneratorString(t *testing.T) {
 		},
 		{
 			name:   "beername",
-			schema: &schema.Schema{Type: "string", Format: "{beername}"},
+			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Format: "{beername}"},
 			test: func(v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "Duvel", v)
@@ -164,7 +165,7 @@ func TestGeneratorString(t *testing.T) {
 		},
 		{
 			name:   "address",
-			schema: &schema.Schema{Type: "string", Format: "{zip} {city}"},
+			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Format: "{zip} {city}"},
 			test: func(v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "13645 Houston", v)
@@ -172,7 +173,7 @@ func TestGeneratorString(t *testing.T) {
 		},
 		{
 			name:   "uri",
-			schema: &schema.Schema{Type: "string", Format: "uri"},
+			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Format: "uri"},
 			test: func(v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "https://www.dynamiciterate.name/target/seamless", v)
@@ -180,7 +181,7 @@ func TestGeneratorString(t *testing.T) {
 		},
 		{
 			name:   "minLength",
-			schema: &schema.Schema{Type: "string", MinLength: toIntP(25)},
+			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, MinLength: toIntP(25)},
 			test: func(v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "XidZuoWq vY5elXhlD4ezlYe", v)
@@ -188,7 +189,7 @@ func TestGeneratorString(t *testing.T) {
 		},
 		{
 			name:   "maxLength",
-			schema: &schema.Schema{Type: "string", MaxLength: toIntP(4)},
+			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, MaxLength: toIntP(4)},
 			test: func(v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "", v)
@@ -196,7 +197,7 @@ func TestGeneratorString(t *testing.T) {
 		},
 		{
 			name:   "maxLength",
-			schema: &schema.Schema{Type: "string", MaxLength: toIntP(12)},
+			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, MaxLength: toIntP(12)},
 			test: func(v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "XidZuoWq vY", v)
@@ -204,7 +205,7 @@ func TestGeneratorString(t *testing.T) {
 		},
 		{
 			name:   "minLength with maxLength",
-			schema: &schema.Schema{Type: "string", MinLength: toIntP(3), MaxLength: toIntP(6)},
+			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, MinLength: toIntP(3), MaxLength: toIntP(6)},
 			test: func(v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "XidZ", v)
@@ -212,7 +213,7 @@ func TestGeneratorString(t *testing.T) {
 		},
 		{
 			name:   "minLength equals maxLength",
-			schema: &schema.Schema{Type: "string", MinLength: toIntP(4), MaxLength: toIntP(4)},
+			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, MinLength: toIntP(4), MaxLength: toIntP(4)},
 			test: func(v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "sXPO", v)
@@ -241,7 +242,7 @@ func TestGeneratorBool(t *testing.T) {
 		{
 			"false",
 			true,
-			&schema.Schema{Type: "boolean"},
+			&schema.Schema{Type: jsonSchema.Types{"boolean"}},
 		},
 	}
 
@@ -264,7 +265,7 @@ func TestGeneratorInt(t *testing.T) {
 	}{
 		{
 			name:   "int32",
-			schema: &schema.Schema{Type: "integer", Format: "int32"},
+			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Format: "int32"},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, int32(-1072427943), i)
@@ -272,7 +273,7 @@ func TestGeneratorInt(t *testing.T) {
 		},
 		{
 			name:   "int32 min",
-			schema: &schema.Schema{Type: "integer", Format: "int32", Minimum: toFloatP(10)},
+			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Format: "int32", Minimum: toFloatP(10)},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, int32(196446384), i)
@@ -281,7 +282,7 @@ func TestGeneratorInt(t *testing.T) {
 		{
 			name: "int32 max",
 
-			schema: &schema.Schema{Type: "integer", Format: "int32", Maximum: toFloatP(0)},
+			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Format: "int32", Maximum: toFloatP(0)},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, int32(-1951037312), i)
@@ -289,7 +290,7 @@ func TestGeneratorInt(t *testing.T) {
 		},
 		{
 			name:   "int32 min max",
-			schema: &schema.Schema{Type: "integer", Format: "int32", Minimum: toFloatP(-5), Maximum: toFloatP(5)},
+			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Format: "int32", Minimum: toFloatP(-5), Maximum: toFloatP(5)},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, int32(-4), i)
@@ -297,7 +298,7 @@ func TestGeneratorInt(t *testing.T) {
 		},
 		{
 			name:   "int64",
-			schema: &schema.Schema{Type: "integer", Format: "int64"},
+			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Format: "int64"},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, int64(-8379641344161477543), i)
@@ -305,7 +306,7 @@ func TestGeneratorInt(t *testing.T) {
 		},
 		{
 			name:   "int64 min",
-			schema: &schema.Schema{Type: "integer", Format: "int64", Minimum: toFloatP(10)},
+			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Format: "int64", Minimum: toFloatP(10)},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, int64(843730692693298304), i)
@@ -313,7 +314,7 @@ func TestGeneratorInt(t *testing.T) {
 		},
 		{
 			name:   "int64 max",
-			schema: &schema.Schema{Type: "integer", Format: "int64", Maximum: toFloatP(0)},
+			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Format: "int64", Maximum: toFloatP(0)},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, int64(-8379641344161477632), i)
@@ -321,7 +322,7 @@ func TestGeneratorInt(t *testing.T) {
 		},
 		{
 			name:   "int64 min max",
-			schema: &schema.Schema{Type: "integer", Format: "int64", Minimum: toFloatP(-5), Maximum: toFloatP(5)},
+			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Format: "int64", Minimum: toFloatP(-5), Maximum: toFloatP(5)},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, int64(-4), i)
@@ -329,7 +330,7 @@ func TestGeneratorInt(t *testing.T) {
 		},
 		{
 			name:   "int64 min max positive",
-			schema: &schema.Schema{Type: "integer", Format: "int64", Minimum: toFloatP(4), Maximum: toFloatP(10)},
+			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Format: "int64", Minimum: toFloatP(4), Maximum: toFloatP(10)},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, int64(5), i)
@@ -338,7 +339,7 @@ func TestGeneratorInt(t *testing.T) {
 		{
 			name: "int64 min max positive exclusive",
 			schema: &schema.Schema{
-				Type:             "integer",
+				Type:             jsonSchema.Types{"integer"},
 				Format:           "int64",
 				Minimum:          toFloatP(3),
 				Maximum:          toFloatP(5),
@@ -353,7 +354,7 @@ func TestGeneratorInt(t *testing.T) {
 		{
 			name: "int64 min max positive exclusive but error",
 			schema: &schema.Schema{
-				Type:             "integer",
+				Type:             jsonSchema.Types{"integer"},
 				Format:           "int64",
 				Minimum:          toFloatP(4),
 				Maximum:          toFloatP(5),
@@ -385,57 +386,57 @@ func TestGeneratorFloat(t *testing.T) {
 		{
 			"float",
 			float32(3.1128167e+37),
-			&schema.Schema{Type: "number", Format: "float"},
+			&schema.Schema{Type: jsonSchema.Types{"number"}, Format: "float"},
 		},
 		{
 			"float min",
 			float32(3.1128167e+37),
-			&schema.Schema{Type: "number", Format: "float", Minimum: toFloatP(10)},
+			&schema.Schema{Type: jsonSchema.Types{"number"}, Format: "float", Minimum: toFloatP(10)},
 		},
 		{
 			"float max",
 			float32(-3.0915418e+38),
-			&schema.Schema{Type: "number", Format: "float", Maximum: toFloatP(0)},
+			&schema.Schema{Type: jsonSchema.Types{"number"}, Format: "float", Maximum: toFloatP(0)},
 		},
 		{
 			"float min max",
 			float32(-4.085225),
-			&schema.Schema{Type: "number", Format: "float", Minimum: toFloatP(-5), Maximum: toFloatP(5)},
+			&schema.Schema{Type: jsonSchema.Types{"number"}, Format: "float", Minimum: toFloatP(-5), Maximum: toFloatP(5)},
 		},
 		{
 			"double",
 			1.644484108270445e+307,
-			&schema.Schema{Type: "number", Format: "double"},
+			&schema.Schema{Type: jsonSchema.Types{"number"}, Format: "double"},
 		},
 		{
 			"double min",
 			1.644484108270445e+307,
-			&schema.Schema{Type: "number", Format: "double", Minimum: toFloatP(10)},
+			&schema.Schema{Type: jsonSchema.Types{"number"}, Format: "double", Minimum: toFloatP(10)},
 		},
 		{
 			"double max",
 			-1.6332447240352712e+308,
-			&schema.Schema{Type: "number", Format: "double", Maximum: toFloatP(0)},
+			&schema.Schema{Type: jsonSchema.Types{"number"}, Format: "double", Maximum: toFloatP(0)},
 		},
 		{
 			"double min max",
 			-4.085225349989226,
-			&schema.Schema{Type: "number", Format: "double", Minimum: toFloatP(-5), Maximum: toFloatP(5)},
+			&schema.Schema{Type: jsonSchema.Types{"number"}, Format: "double", Minimum: toFloatP(-5), Maximum: toFloatP(5)},
 		},
 		{
 			"example",
 			1,
-			&schema.Schema{Type: "number", Format: "double", Example: 1},
+			&schema.Schema{Type: jsonSchema.Types{"number"}, Format: "double", Example: 1},
 		},
 		{
 			"enum",
 			2,
-			&schema.Schema{Type: "number", Format: "double", Enum: []interface{}{1, 2, 3, 4}},
+			&schema.Schema{Type: jsonSchema.Types{"number"}, Format: "double", Enum: []interface{}{1, 2, 3, 4}},
 		},
 		{
 			"exclusive minimum",
 			0.11829549300021638,
-			&schema.Schema{Type: "number", Format: "double",
+			&schema.Schema{Type: jsonSchema.Types{"number"}, Format: "double",
 				Minimum: toFloatP(0.1), ExclusiveMinimum: toBoolP(true),
 				Maximum: toFloatP(0.3),
 			},
@@ -443,7 +444,7 @@ func TestGeneratorFloat(t *testing.T) {
 		{
 			"exclusive maximum",
 			0.25457387325005376,
-			&schema.Schema{Type: "number", Format: "double",
+			&schema.Schema{Type: jsonSchema.Types{"number"}, Format: "double",
 				Minimum: toFloatP(0.25),
 				Maximum: toFloatP(0.3), ExclusiveMaximum: toBoolP(true),
 			},
@@ -470,9 +471,9 @@ func TestGeneratorArray(t *testing.T) {
 	}{
 		{
 			name: "int32",
-			schema: &schema.Schema{Type: "array", Items: &schema.Ref{
+			schema: &schema.Schema{Type: jsonSchema.Types{"array"}, Items: &schema.Ref{
 				Value: &schema.Schema{
-					Type: "integer", Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(10)}}},
+					Type: jsonSchema.Types{"integer"}, Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(10)}}},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []interface{}{int32(8), int32(8), int32(6), int32(7), int32(1)}, i)
@@ -480,9 +481,9 @@ func TestGeneratorArray(t *testing.T) {
 		},
 		{
 			name: "min items",
-			schema: &schema.Schema{Type: "array", MinItems: toIntP(5), Items: &schema.Ref{
+			schema: &schema.Schema{Type: jsonSchema.Types{"array"}, MinItems: toIntP(5), Items: &schema.Ref{
 				Value: &schema.Schema{
-					Type: "integer", Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(10)}}},
+					Type: jsonSchema.Types{"integer"}, Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(10)}}},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []interface{}{int32(1), int32(8), int32(8), int32(6), int32(7)}, i)
@@ -490,9 +491,9 @@ func TestGeneratorArray(t *testing.T) {
 		},
 		{
 			name: "min & max items",
-			schema: &schema.Schema{Type: "array", MinItems: toIntP(5), MaxItems: toIntP(10), Items: &schema.Ref{
+			schema: &schema.Schema{Type: jsonSchema.Types{"array"}, MinItems: toIntP(5), MaxItems: toIntP(10), Items: &schema.Ref{
 				Value: &schema.Schema{
-					Type: "integer", Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(10)}}},
+					Type: jsonSchema.Types{"integer"}, Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(10)}}},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []interface{}{int32(8), int32(8), int32(6), int32(7), int32(1), int32(8), int32(9), int32(5), int32(3), int32(1)}, i)
@@ -500,10 +501,10 @@ func TestGeneratorArray(t *testing.T) {
 		},
 		{
 			name: "unique items",
-			schema: &schema.Schema{Type: "array", MinItems: toIntP(5), MaxItems: toIntP(10), UniqueItems: true,
+			schema: &schema.Schema{Type: jsonSchema.Types{"array"}, MinItems: toIntP(5), MaxItems: toIntP(10), UniqueItems: true,
 				Items: &schema.Ref{
 					Value: &schema.Schema{
-						Type: "integer", Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(10)}}},
+						Type: jsonSchema.Types{"integer"}, Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(10)}}},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []interface{}{int32(8), int32(6), int32(7), int32(1), int32(9), int32(5), int32(3), int32(2), int32(4), int32(10)}, i)
@@ -511,10 +512,10 @@ func TestGeneratorArray(t *testing.T) {
 		},
 		{
 			name: "unique and shuffle items",
-			schema: &schema.Schema{Type: "array", MinItems: toIntP(2), MaxItems: toIntP(5), UniqueItems: true,
+			schema: &schema.Schema{Type: jsonSchema.Types{"array"}, MinItems: toIntP(2), MaxItems: toIntP(5), UniqueItems: true,
 				Items: &schema.Ref{
 					Value: &schema.Schema{
-						Type:    "integer",
+						Type:    jsonSchema.Types{"integer"},
 						Format:  "int32",
 						Minimum: toFloatP(0),
 						Maximum: toFloatP(10),
@@ -529,14 +530,14 @@ func TestGeneratorArray(t *testing.T) {
 		},
 		{
 			name: "enum ignores items config",
-			schema: &schema.Schema{Type: "array", MinItems: toIntP(5), MaxItems: toIntP(10), UniqueItems: true,
+			schema: &schema.Schema{Type: jsonSchema.Types{"array"}, MinItems: toIntP(5), MaxItems: toIntP(10), UniqueItems: true,
 				Enum: []interface{}{
 					[]interface{}{1, 2, 3},
 					[]interface{}{3, 2, 1},
 				},
 				Items: &schema.Ref{
 					Value: &schema.Schema{
-						Type: "integer", Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(3)}}},
+						Type: jsonSchema.Types{"integer"}, Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(3)}}},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []interface{}{3, 2, 1}, i)
@@ -544,11 +545,11 @@ func TestGeneratorArray(t *testing.T) {
 		},
 		{
 			name: "example",
-			schema: &schema.Schema{Type: "array", MinItems: toIntP(5), MaxItems: toIntP(10), UniqueItems: true,
+			schema: &schema.Schema{Type: jsonSchema.Types{"array"}, MinItems: toIntP(5), MaxItems: toIntP(10), UniqueItems: true,
 				Example: []interface{}{1, 2, 3},
 				Items: &schema.Ref{
 					Value: &schema.Schema{
-						Type: "integer", Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(3)}}},
+						Type: jsonSchema.Types{"integer"}, Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(3)}}},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []interface{}{1, 2, 3}, i)
@@ -556,20 +557,20 @@ func TestGeneratorArray(t *testing.T) {
 		},
 		{
 			name: "unique items with error",
-			schema: &schema.Schema{Type: "array", MinItems: toIntP(5), MaxItems: toIntP(10), UniqueItems: true,
+			schema: &schema.Schema{Type: jsonSchema.Types{"array"}, MinItems: toIntP(5), MaxItems: toIntP(10), UniqueItems: true,
 				Items: &schema.Ref{
 					Value: &schema.Schema{
-						Type: "integer", Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(3)}}},
+						Type: jsonSchema.Types{"integer"}, Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(3)}}},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.EqualError(t, err, "can not fill array with unique items: schema type=array minItems=5 maxItems=10 unique-items items=schema type=integer format=int32 minimum=0 maximum=3")
 			},
 		},
 		{
 			name: "unique items with enum",
-			schema: &schema.Schema{Type: "array", MinItems: toIntP(5), MaxItems: toIntP(10), UniqueItems: true,
+			schema: &schema.Schema{Type: jsonSchema.Types{"array"}, MinItems: toIntP(5), MaxItems: toIntP(10), UniqueItems: true,
 				Items: &schema.Ref{
 					Value: &schema.Schema{
-						Type:   "integer",
+						Type:   jsonSchema.Types{"integer"},
 						Format: "int32",
 						Enum:   []interface{}{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 					},
@@ -582,10 +583,10 @@ func TestGeneratorArray(t *testing.T) {
 		},
 		{
 			name: "unique items with enum and shuffle",
-			schema: &schema.Schema{Type: "array", MinItems: toIntP(5), MaxItems: toIntP(10), UniqueItems: true,
+			schema: &schema.Schema{Type: jsonSchema.Types{"array"}, MinItems: toIntP(5), MaxItems: toIntP(10), UniqueItems: true,
 				Items: &schema.Ref{
 					Value: &schema.Schema{
-						Type:   "integer",
+						Type:   jsonSchema.Types{"integer"},
 						Format: "int32",
 						Enum:   []interface{}{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 					},
@@ -599,7 +600,7 @@ func TestGeneratorArray(t *testing.T) {
 		},
 		{
 			name:   "items not defined",
-			schema: &schema.Schema{Type: "array"},
+			schema: &schema.Schema{Type: jsonSchema.Types{"array"}},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []interface{}{"idZ", false, "", []interface{}{}, map[string]interface{}{"shower": 1.3433890851076963e+308}}, i)
@@ -627,7 +628,7 @@ func TestGeneratorObject(t *testing.T) {
 		{
 			name:   "simple",
 			exp:    map[string]interface{}{"id": 98266},
-			schema: schematest.New("object", schematest.WithProperty("id", &schema.Schema{Type: "integer", Format: "int32"})),
+			schema: schematest.New("object", schematest.WithProperty("id", &schema.Schema{Type: jsonSchema.Types{"integer"}, Format: "int32"})),
 		},
 		{
 			name: "more fields",
@@ -656,12 +657,12 @@ func TestGeneratorObject(t *testing.T) {
 		{
 			name:   "no fields defined",
 			exp:    map[string]interface{}{"bunch": map[string]interface{}{"shower": 1.3433890851076963e+308}, "gang": []interface{}{false}, "growth": "m", "hall": 1.018301155186648e+308, "woman": []interface{}{}},
-			schema: &schema.Schema{Type: "object"},
+			schema: &schema.Schema{Type: jsonSchema.Types{"object"}},
 		},
 		{
 			name:   "with property _metadata",
 			exp:    map[string]interface{}{"_metadata": int64(-8379641344161477543)},
-			schema: schematest.New("object", schematest.WithProperty("_metadata", &schema.Schema{Type: "integer", Format: "int64"})),
+			schema: schematest.New("object", schematest.WithProperty("_metadata", &schema.Schema{Type: jsonSchema.Types{"integer"}, Format: "int64"})),
 		},
 		{
 			name:   "with property address as any",

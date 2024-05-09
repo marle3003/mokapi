@@ -5,7 +5,7 @@ import (
 	"github.com/dop251/goja"
 	"mokapi/engine/common"
 	"mokapi/json/generator"
-	schema2 "mokapi/json/schema"
+	jsonSchema "mokapi/json/schema"
 	"mokapi/providers/openapi/schema"
 )
 
@@ -15,7 +15,7 @@ type Faker struct {
 }
 
 type JsonSchema struct {
-	Type                 string                 `json:"type"`
+	Type                 interface{}            `json:"type"`
 	Format               string                 `json:"format"`
 	Pattern              string                 `json:"pattern"`
 	Properties           map[string]*JsonSchema `json:"properties"`
@@ -91,7 +91,6 @@ func (m *Faker) Fake(v goja.Value) interface{} {
 
 func ConvertToSchema(js *JsonSchema) *schema.Schema {
 	s := &schema.Schema{
-		Type:             js.Type,
 		Format:           js.Format,
 		Pattern:          js.Pattern,
 		Required:         js.Required,
@@ -108,6 +107,17 @@ func ConvertToSchema(js *JsonSchema) *schema.Schema {
 		ShuffleItems:     js.ShuffleItems,
 		MinProperties:    js.MinProperties,
 		MaxProperties:    js.MaxProperties,
+	}
+
+	if js.Type != nil {
+		switch v := js.Type.(type) {
+		case string:
+			s.Type = append(s.Type, v)
+		case []interface{}:
+			for _, typeName := range v {
+				s.Type = append(s.Type, fmt.Sprintf("%v", typeName))
+			}
+		}
 	}
 
 	if len(js.Properties) > 0 {
@@ -277,8 +287,8 @@ func toRequest(v goja.Value, rt *goja.Runtime) *generator.Request {
 	return r
 }
 
-func toJsonSchema(v goja.Value, rt *goja.Runtime) (*schema2.Ref, error) {
-	s := &schema2.Schema{}
+func toJsonSchema(v goja.Value, rt *goja.Runtime) (*jsonSchema.Ref, error) {
+	s := &jsonSchema.Schema{}
 	obj := v.ToObject(rt)
 	for _, k := range obj.Keys() {
 		switch k {
@@ -361,7 +371,7 @@ func toJsonSchema(v goja.Value, rt *goja.Runtime) (*schema2.Ref, error) {
 		case "x-shuffleItems":
 			s.ShuffleItems = obj.Get(k).ToBoolean()
 		case "properties":
-			s.Properties = &schema2.Schemas{}
+			s.Properties = &jsonSchema.Schemas{}
 			propsObj := obj.Get(k).ToObject(rt)
 			for _, name := range propsObj.Keys() {
 				prop, err := toJsonSchema(propsObj.Get(name), rt)
@@ -389,5 +399,5 @@ func toJsonSchema(v goja.Value, rt *goja.Runtime) (*schema2.Ref, error) {
 			}
 		}
 	}
-	return &schema2.Ref{Value: s}, nil
+	return &jsonSchema.Ref{Value: s}, nil
 }

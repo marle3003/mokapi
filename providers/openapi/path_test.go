@@ -597,7 +597,7 @@ func TestConfig_Patch_Path(t *testing.T) {
 			test: func(t *testing.T, result *openapi.Config) {
 				e := result.Paths["/foo"].Value
 				require.Len(t, e.Parameters, 1)
-				require.Equal(t, "number", e.Parameters[0].Value.Schema.Value.Type)
+				require.Equal(t, "number", e.Parameters[0].Value.Schema.Value.Type.String())
 			},
 		},
 	}

@@ -98,7 +98,7 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 			test: func(t *testing.T, result *openapi.Config) {
 				body := result.Paths["/foo"].Value.Post.RequestBody.Value
 				require.Len(t, body.Content, 1)
-				require.Equal(t, "number", body.Content["text/plain"].Schema.Value.Type)
+				require.Equal(t, "number", body.Content["text/plain"].Schema.Value.Type.String())
 			},
 		},
 		{
@@ -124,7 +124,7 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 			test: func(t *testing.T, result *openapi.Config) {
 				body := result.Paths["/foo"].Value.Post.RequestBody.Value
 				require.Len(t, body.Content, 1)
-				require.Equal(t, "number", body.Content["text/plain"].Schema.Value.Type)
+				require.Equal(t, "number", body.Content["text/plain"].Schema.Value.Type.String())
 				require.Equal(t, "double", body.Content["text/plain"].Schema.Value.Format)
 			},
 		},

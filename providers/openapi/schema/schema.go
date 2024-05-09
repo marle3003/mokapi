@@ -3,13 +3,14 @@ package schema
 import (
 	"fmt"
 	"mokapi/config/dynamic"
+	"mokapi/json/schema"
 	"strings"
 )
 
 type Schema struct {
 	Description string `yaml:"description" json:"description"`
 
-	Type       string        `yaml:"type" json:"type"`
+	Type       schema.Types  `yaml:"type" json:"type"`
 	AnyOf      []*Ref        `yaml:"anyOf" json:"anyOf"`
 	AllOf      []*Ref        `yaml:"allOf" json:"allOf"`
 	OneOf      []*Ref        `yaml:"oneOf" json:"oneOf"`
@@ -123,8 +124,9 @@ func (s *Schema) String() string {
 	}
 
 	if len(s.Type) > 0 {
-		sb.WriteString(fmt.Sprintf("schema type=%v", s.Type))
+		sb.WriteString(fmt.Sprintf("schema type=%v", s.Type.String()))
 	}
+
 	if len(s.Format) > 0 {
 		sb.WriteString(fmt.Sprintf(" format=%v", s.Format))
 	}
@@ -165,7 +167,7 @@ func (s *Schema) String() string {
 		sb.WriteString(" unique-items")
 	}
 
-	if s.Type == "object" && s.Properties != nil {
+	if s.Type.Includes("object") && s.Properties != nil {
 		var sbProp strings.Builder
 		for _, p := range s.Properties.Keys() {
 			if sbProp.Len() > 0 {
@@ -178,11 +180,11 @@ func (s *Schema) String() string {
 	if len(s.Required) > 0 {
 		sb.WriteString(fmt.Sprintf(" required=%v", s.Required))
 	}
-	if s.Type == "object" && !s.IsFreeForm() {
+	if s.Type.Includes("object") && !s.IsFreeForm() {
 		sb.WriteString(" free-form=false")
 	}
 
-	if s.Type == "array" && s.Items != nil {
+	if s.Type.Includes("array") && s.Items != nil {
 		sb.WriteString(" items=")
 		sb.WriteString(s.Items.String())
 	}
@@ -191,10 +193,10 @@ func (s *Schema) String() string {
 }
 
 func (s *Schema) IsFreeForm() bool {
-	if s.Type != "object" {
+	if !s.Type.Includes("object") {
 		return false
 	}
-	free := s.Type == "object" && (s.Properties == nil || s.Properties.Len() == 0)
+	free := s.Type.Includes("object") && (s.Properties == nil || s.Properties.Len() == 0)
 	if s.AdditionalProperties == nil || free {
 		return true
 	}
@@ -202,5 +204,9 @@ func (s *Schema) IsFreeForm() bool {
 }
 
 func (s *Schema) IsDictionary() bool {
-	return s.AdditionalProperties != nil && s.AdditionalProperties.Ref != nil && s.AdditionalProperties.Value != nil && s.AdditionalProperties.Value.Type != ""
+	return s.AdditionalProperties != nil && s.AdditionalProperties.Ref != nil && s.AdditionalProperties.Value != nil && len(s.AdditionalProperties.Value.Type) > 0
+}
+
+func (s *Schema) IsNullable() bool {
+	return s.Nullable || s.Type.IsNullable()
 }

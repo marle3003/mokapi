@@ -186,8 +186,8 @@ func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[stri
 
 	var k []byte
 	if msg.Bindings.Kafka.Key != nil {
-		switch msg.Bindings.Kafka.Key.Value.Type {
-		case "object", "array":
+		switch {
+		case msg.Bindings.Kafka.Key.Value.Type.IsOneOf("object", "array"):
 			k, err = msg.Bindings.Kafka.Key.Marshal(key, media.ParseContentType("application/json"))
 			if err != nil {
 				return
@@ -218,7 +218,7 @@ func getHeaders(headers map[string]interface{}, r *schema.Ref) ([]kafka.RecordHe
 	var result []kafka.RecordHeader
 	for k, v := range headers {
 		var headerSchema *schema.Ref
-		if r != nil && r.Value != nil && r.Value.Type == "object" {
+		if r != nil && r.Value != nil && r.Value.Type.IsObject() {
 			headerSchema = r.Value.Properties.Get(k)
 
 		}

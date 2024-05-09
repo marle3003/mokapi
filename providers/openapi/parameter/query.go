@@ -12,11 +12,11 @@ func parseQuery(p *Parameter, u *url.URL) (*RequestParameterValue, error) {
 	var err error
 
 	switch {
-	case p.Schema != nil && p.Schema.Value.Type == "array":
+	case p.Schema != nil && p.Schema.Value.Type.IsArray():
 		rp := &RequestParameterValue{}
 		rp.Raw, rp.Value, err = parseQueryArray(p, u)
 		return rp, err
-	case p.Schema != nil && p.Schema.Value.Type == "object":
+	case p.Schema != nil && p.Schema.Value.Type.IsObject():
 		rp := &RequestParameterValue{}
 		rp.Raw, rp.Value, err = parseQueryObject(p, u)
 		return rp, err

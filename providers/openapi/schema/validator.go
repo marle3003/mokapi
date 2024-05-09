@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
+	jsonSchema "mokapi/json/schema"
 	"mokapi/sortedmap"
 	"net"
 	"net/mail"
@@ -86,7 +87,7 @@ func validateString(i interface{}, s *Schema) error {
 	}
 
 	if len(s.Enum) > 0 {
-		return checkValueIsInEnum(str, s.Enum, &Schema{Type: "string"})
+		return checkValueIsInEnum(str, s.Enum, &Schema{Type: jsonSchema.Types{"string"}})
 	}
 
 	return nil
@@ -111,7 +112,7 @@ func validateFloat64(n float64, schema *Schema) error {
 	}
 
 	if len(schema.Enum) > 0 {
-		return checkValueIsInEnum(n, schema.Enum, &Schema{Type: "number", Format: "double"})
+		return checkValueIsInEnum(n, schema.Enum, &Schema{Type: jsonSchema.Types{"number"}, Format: "double"})
 	}
 
 	return nil
@@ -136,7 +137,7 @@ func validateInt64(n int64, schema *Schema) error {
 	}
 
 	if len(schema.Enum) > 0 {
-		return checkValueIsInEnum(n, schema.Enum, &Schema{Type: "integer", Format: "int64"})
+		return checkValueIsInEnum(n, schema.Enum, &Schema{Type: jsonSchema.Types{"integer"}, Format: "int64"})
 	}
 
 	return nil
@@ -152,7 +153,7 @@ func validateArray(a interface{}, schema *Schema) error {
 	}
 
 	if len(schema.Enum) > 0 {
-		return checkValueIsInEnum(a, schema.Enum, &Schema{Type: "array", Items: schema.Items})
+		return checkValueIsInEnum(a, schema.Enum, &Schema{Type: jsonSchema.Types{"array"}, Items: schema.Items})
 	}
 
 	if schema.UniqueItems {
@@ -229,7 +230,7 @@ func validateObject(i interface{}, schema *Schema) error {
 	}
 
 	if len(schema.Enum) > 0 {
-		return checkValueIsInEnum(i, schema.Enum, &Schema{Type: "object"})
+		return checkValueIsInEnum(i, schema.Enum, &Schema{Type: jsonSchema.Types{"object"}})
 	}
 
 	return nil

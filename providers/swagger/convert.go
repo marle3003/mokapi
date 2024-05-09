@@ -3,6 +3,7 @@ package swagger
 import (
 	"fmt"
 	"mokapi/json/ref"
+	jsonSchema "mokapi/json/schema"
 	"mokapi/media"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/parameter"
@@ -202,7 +203,7 @@ func (c *converter) convertSchema(s *schema.Ref) *schema.Ref {
 		return s
 	}
 
-	if s.Value.Type == "integer" && s.Value.Format == "" {
+	if s.Value.Type.IsInteger() && s.Value.Format == "" {
 		s.Value.Format = "int32"
 	}
 
@@ -245,7 +246,7 @@ func convertParameter(p *Parameter) *parameter.Ref {
 		Name: p.Name,
 		Type: parameter.Location(p.In),
 		Schema: &schema.Ref{Value: &schema.Schema{
-			Type:             p.Type,
+			Type:             jsonSchema.Types{p.Type},
 			Format:           p.Format,
 			Pattern:          p.Pattern,
 			Items:            p.Items,

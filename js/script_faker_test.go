@@ -32,6 +32,20 @@ func TestScript_Faker(t *testing.T) {
 			},
 		},
 		{
+			name: "fake string or number",
+			test: func(t *testing.T, host *enginetest.Host) {
+				s, err := jstest.New(jstest.WithSource(`import faker from 'mokapi/faker'
+						 export default function() {
+						 	return faker.fake({ type: ['string', 'number'] })
+						 }`),
+					js.WithHost(host))
+				r.NoError(t, err)
+				v, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, "1.644484108270445e+307", v.String())
+			},
+		},
+		{
 			name: "fake enum",
 			test: func(t *testing.T, host *enginetest.Host) {
 				s, err := jstest.New(jstest.WithSource(

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	jsonSchema "mokapi/json/schema"
 	"mokapi/media"
 	"mokapi/sortedmap"
 	"reflect"
@@ -61,27 +62,36 @@ func (p *parser) parse(v interface{}, schema *Ref) (interface{}, error) {
 	if len(schema.Value.Type) == 0 {
 		// A schema without a type matches any data type
 		if _, ok := v.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
-			return p.parseObject(v, &Schema{Type: "object"})
+			return p.parseObject(v, &Schema{Type: jsonSchema.Types{"object"}})
 		}
 		return v, nil
 	}
 
-	switch schema.Value.Type {
-	case "object":
-		return p.parseObject(v, schema.Value)
-	case "array":
-		return p.parseArray(v, schema.Value)
-	case "boolean":
-		return p.readBoolean(v, schema.Value)
-	case "integer":
-		return p.parseInteger(v, schema.Value)
-	case "number":
-		return p.parseNumber(v, schema.Value)
-	case "string":
-		return p.parseString(v, schema.Value)
+	var err error
+	for _, typeName := range schema.Value.Type {
+		var result interface{}
+		switch typeName {
+		case "object":
+			result, err = p.parseObject(v, schema.Value)
+		case "array":
+			result, err = p.parseArray(v, schema.Value)
+		case "boolean":
+			result, err = p.readBoolean(v, schema.Value)
+		case "integer":
+			result, err = p.parseInteger(v, schema.Value)
+		case "number":
+			result, err = p.parseNumber(v, schema.Value)
+		case "string":
+			result, err = p.parseString(v, schema.Value)
+		default:
+			err = fmt.Errorf("unsupported type %q", typeName)
+		}
+		if err == nil {
+			return result, nil
+		}
 	}
 
-	return nil, fmt.Errorf("unsupported type %q", schema.Value.Type)
+	return nil, err
 }
 
 func (p *parser) parseAny(i interface{}, schema *Schema) (interface{}, error) {
@@ -89,7 +99,7 @@ func (p *parser) parseAny(i interface{}, schema *Schema) (interface{}, error) {
 
 	for _, ref := range schema.AnyOf {
 		// free-form object
-		if ref.Value.Type == "object" && ref.Value.Properties == nil {
+		if ref.Value.Type.Includes("object") && ref.Value.Properties == nil {
 			return i, nil
 		}
 
@@ -174,7 +184,7 @@ func (p *parser) parseOneOfObject(i interface{}, schema *Schema) (interface{}, e
 
 	for _, ref := range schema.OneOf {
 		// free-form object
-		if ref.Value.Type == "object" && ref.Value.Properties == nil {
+		if ref.Value.Type.Includes("object") && ref.Value.Properties == nil {
 			result = i
 		}
 
@@ -366,7 +376,7 @@ func (p *parser) parseNumber(i interface{}, s *Schema) (f float64, err error) {
 func (p *parser) parseString(v interface{}, schema *Schema) (interface{}, error) {
 	s, ok := v.(string)
 	if !ok {
-		if schema.Nullable {
+		if schema.IsNullable() {
 			return nil, nil
 		}
 		return nil, fmt.Errorf("parse %v failed, expected %v", v, schema)

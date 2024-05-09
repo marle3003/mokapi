@@ -1,5 +1,5 @@
 declare interface Schema {
-  type: string
+  type: string[] | string
   format: string
   pattern: string
   description: string

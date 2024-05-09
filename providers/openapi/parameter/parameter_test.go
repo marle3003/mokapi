@@ -8,6 +8,7 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/json/ref"
+	jsonSchema "mokapi/json/schema"
 	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/schema"
 	"net/url"
@@ -322,13 +323,13 @@ func TestHeader_Parse(t *testing.T) {
 			name: "schema reference",
 			test: func(t *testing.T) {
 				reader := dynamictest.ReaderFunc(func(u *url.URL, _ any) (*dynamic.Config, error) {
-					cfg := &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}, Data: &schema.Schema{Type: "string"}}
+					cfg := &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}, Data: &schema.Schema{Type: jsonSchema.Types{"string"}}}
 					return cfg, nil
 				})
 				param := parameter.Parameters{&parameter.Ref{Value: &parameter.Parameter{Schema: &schema.Ref{Reference: ref.Reference{Ref: "foo.yml"}}}}}
 				err := param.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: param}, reader)
 				require.NoError(t, err)
-				require.Equal(t, "string", param[0].Value.Schema.Value.Type)
+				require.Equal(t, "string", param[0].Value.Schema.Value.Type.String())
 			},
 		},
 		{
@@ -410,22 +411,22 @@ func TestParameters_Patch(t *testing.T) {
 			name: "set schema",
 			configs: []parameter.Parameters{
 				{&parameter.Ref{Value: &parameter.Parameter{}}},
-				{&parameter.Ref{Value: &parameter.Parameter{Schema: &schema.Ref{Value: &schema.Schema{Type: "string"}}}}},
+				{&parameter.Ref{Value: &parameter.Parameter{Schema: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"string"}}}}}},
 			},
 			test: func(t *testing.T, result parameter.Parameters) {
 				require.Len(t, result, 1)
-				require.Equal(t, "string", result[0].Value.Schema.Value.Type)
+				require.Equal(t, "string", result[0].Value.Schema.Value.Type.String())
 			},
 		},
 		{
 			name: "patch schema",
 			configs: []parameter.Parameters{
-				{&parameter.Ref{Value: &parameter.Parameter{Schema: &schema.Ref{Value: &schema.Schema{Type: "number"}}}}},
-				{&parameter.Ref{Value: &parameter.Parameter{Schema: &schema.Ref{Value: &schema.Schema{Type: "string"}}}}},
+				{&parameter.Ref{Value: &parameter.Parameter{Schema: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"number"}}}}}},
+				{&parameter.Ref{Value: &parameter.Parameter{Schema: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"string"}}}}}},
 			},
 			test: func(t *testing.T, result parameter.Parameters) {
 				require.Len(t, result, 1)
-				require.Equal(t, "string", result[0].Value.Schema.Value.Type)
+				require.Equal(t, "[number string]", result[0].Value.Schema.Value.Type.String())
 			},
 		},
 		{

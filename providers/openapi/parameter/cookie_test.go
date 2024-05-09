@@ -2,6 +2,7 @@ package parameter_test
 
 import (
 	"github.com/stretchr/testify/require"
+	jsonSchema "mokapi/json/schema"
 	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
@@ -22,7 +23,7 @@ func TestFromRequest_Cookie(t *testing.T) {
 			params: parameter.Parameters{{Value: &parameter.Parameter{
 				Type:   parameter.Cookie,
 				Name:   "debug",
-				Schema: &schema.Ref{Value: &schema.Schema{Type: "integer", Enum: []interface{}{0, 1}}},
+				Schema: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}, Enum: []interface{}{0, 1}}},
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
@@ -66,7 +67,7 @@ func TestFromRequest_Cookie(t *testing.T) {
 				Type:     parameter.Cookie,
 				Name:     "debug",
 				Required: false,
-				Schema:   &schema.Ref{Value: &schema.Schema{Type: "integer", Enum: []interface{}{0, 1}}},
+				Schema:   &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}, Enum: []interface{}{0, 1}}},
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
@@ -83,7 +84,7 @@ func TestFromRequest_Cookie(t *testing.T) {
 				Type:     parameter.Cookie,
 				Name:     "debug",
 				Required: true,
-				Schema:   &schema.Ref{Value: &schema.Schema{Type: "integer", Enum: []interface{}{0, 1}}},
+				Schema:   &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}, Enum: []interface{}{0, 1}}},
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
@@ -100,7 +101,7 @@ func TestFromRequest_Cookie(t *testing.T) {
 				Type:     parameter.Cookie,
 				Name:     "debug",
 				Required: true,
-				Schema:   &schema.Ref{Value: &schema.Schema{Type: "integer", Enum: []interface{}{0, 1}}},
+				Schema:   &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}, Enum: []interface{}{0, 1}}},
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
@@ -120,7 +121,7 @@ func TestFromRequest_Cookie(t *testing.T) {
 			params: parameter.Parameters{{Value: &parameter.Parameter{
 				Type:   parameter.Cookie,
 				Name:   "debug",
-				Schema: &schema.Ref{Value: &schema.Schema{Type: "integer", Enum: []interface{}{0, 1}}},
+				Schema: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}, Enum: []interface{}{0, 1}}},
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
@@ -142,9 +143,9 @@ func TestFromRequest_Cookie(t *testing.T) {
 				Name: "foo",
 				Schema: &schema.Ref{
 					Value: &schema.Schema{
-						Type: "array",
+						Type: jsonSchema.Types{"array"},
 						Items: &schema.Ref{Value: &schema.Schema{
-							Type: "integer"}},
+							Type: jsonSchema.Types{"integer"}}},
 					}},
 			}}},
 			request: func() *http.Request {
@@ -169,9 +170,9 @@ func TestFromRequest_Cookie(t *testing.T) {
 				Name: "foo",
 				Schema: &schema.Ref{
 					Value: &schema.Schema{
-						Type: "array",
+						Type: jsonSchema.Types{"array"},
 						Items: &schema.Ref{Value: &schema.Schema{
-							Type: "integer"}},
+							Type: jsonSchema.Types{"integer"}}},
 					}},
 			}}},
 			request: func() *http.Request {

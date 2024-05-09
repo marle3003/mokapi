@@ -68,9 +68,7 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 		}
 	}
 
-	if len(s.Type) > 0 {
-		js.Type = append(js.Type, s.Type)
-	}
+	js.Type = s.Type
 
 	if s.Properties != nil {
 		js.Properties = &schema.Schemas{}

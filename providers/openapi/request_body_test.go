@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
+	jsonSchema "mokapi/json/schema"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/providers/openapi/schema"
@@ -320,7 +321,7 @@ func TestBodyFromRequest(t *testing.T) {
 			name: "Content-Type text/plain MediaType */* and application/*",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
-					openapitest.WithRequestContent("application/*", openapitest.NewContent(openapitest.WithSchema(&schema.Schema{Type: "integer", Format: "int32"}))),
+					openapitest.WithRequestContent("application/*", openapitest.NewContent(openapitest.WithSchema(&schema.Schema{Type: jsonSchema.Types{"integer"}, Format: "int32"}))),
 					openapitest.WithRequestContent("*/*", openapitest.NewContent()),
 				)),
 			request: func() *http.Request {
@@ -339,7 +340,7 @@ func TestBodyFromRequest(t *testing.T) {
 				openapitest.WithRequestBody("foo", true,
 					openapitest.WithRequestContent("text/html", openapitest.NewContent()),
 					openapitest.WithRequestContent("text/html; charset=utf-8", openapitest.NewContent(
-						openapitest.WithSchema(&schema.Schema{Type: "integer", Format: "int32"})),
+						openapitest.WithSchema(&schema.Schema{Type: jsonSchema.Types{"integer"}, Format: "int32"})),
 					),
 					openapitest.WithRequestContent("text/html; charset=us-ascii", openapitest.NewContent()),
 					openapitest.WithRequestContent("text/*", openapitest.NewContent()),

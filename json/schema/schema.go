@@ -61,7 +61,7 @@ func (s *Schema) Parse() error {
 		case "string", "integer", "boolean", "null", "array", "object":
 			continue
 		default:
-			return fmt.Errorf("unsupported type %v", s.Type[0])
+			return fmt.Errorf("unsupported type %v", t)
 		}
 	}
 

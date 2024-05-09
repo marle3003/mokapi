@@ -31,10 +31,10 @@ func parsePath(p *Parameter, route string, r *http.Request) (*RequestParameterVa
 
 	var err error
 	if p.Schema != nil {
-		switch p.Schema.Value.Type {
-		case "array":
+		switch {
+		case p.Schema.Value.Type.IsArray():
 			rp.Value, err = parseArray(p, path, ",")
-		case "object":
+		case p.Schema.Value.Type.IsObject():
 			rp.Value, err = parseObject(p, path, ",", p.IsExplode(), defaultDecode)
 		default:
 			rp.Value, err = schema.ParseString(path, p.Schema)

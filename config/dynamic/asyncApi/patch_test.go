@@ -400,7 +400,7 @@ func TestConfig_Patch_Message(t *testing.T) {
 			},
 			test: func(t *testing.T, result *asyncApi.Config) {
 				msg := result.Channels["foo"].Value.Publish.Message.Value
-				require.Equal(t, "string", msg.Payload.Value.Type)
+				require.Equal(t, "string", msg.Payload.Value.Type.String())
 			},
 		},
 	}
@@ -457,7 +457,7 @@ func TestConfig_Patch_Components(t *testing.T) {
 			test: func(t *testing.T, result *asyncApi.Config) {
 				require.Equal(t, 1, result.Components.Schemas.Len())
 				s := result.Components.Schemas.Get("foo")
-				require.Equal(t, "number", s.Value.Type)
+				require.Equal(t, "number", s.Value.Type.String())
 			},
 		},
 		{
@@ -469,9 +469,9 @@ func TestConfig_Patch_Components(t *testing.T) {
 			test: func(t *testing.T, result *asyncApi.Config) {
 				require.Equal(t, 2, result.Components.Schemas.Len())
 				s := result.Components.Schemas.Get("foo")
-				require.Equal(t, "number", s.Value.Type)
+				require.Equal(t, "number", s.Value.Type.String())
 				s = result.Components.Schemas.Get("bar")
-				require.Equal(t, "string", s.Value.Type)
+				require.Equal(t, "string", s.Value.Type.String())
 			},
 		},
 		{
@@ -483,7 +483,7 @@ func TestConfig_Patch_Components(t *testing.T) {
 			test: func(t *testing.T, result *asyncApi.Config) {
 				require.Equal(t, 1, result.Components.Schemas.Len())
 				s := result.Components.Schemas.Get("foo")
-				require.Equal(t, "number", s.Value.Type)
+				require.Equal(t, "number", s.Value.Type.String())
 				require.Equal(t, "double", s.Value.Format)
 			},
 		},

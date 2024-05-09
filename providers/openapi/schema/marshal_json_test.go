@@ -78,6 +78,32 @@ func TestRef_Marshal_Json(t *testing.T) {
 				require.Equal(t, `["foo","bar"]`, result)
 			},
 		},
+		{
+			name:   "accept strings or numbers, value is string",
+			schema: &schema.Ref{Value: schematest.New("string", schematest.And("number"))},
+			data:   "foo",
+			test: func(t *testing.T, result string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `"foo"`, result)
+			},
+		},
+		{
+			name:   "accept strings or numbers, value is number",
+			schema: &schema.Ref{Value: schematest.New("string", schematest.And("number"))},
+			data:   12,
+			test: func(t *testing.T, result string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `12`, result)
+			},
+		},
+		{
+			name:   "accept strings or numbers, value is boolean",
+			schema: &schema.Ref{Value: schematest.New("string", schematest.And("number"))},
+			data:   true,
+			test: func(t *testing.T, result string, err error) {
+				require.EqualError(t, err, "marshal data to 'application/json' failed: parse 'true' failed, expected schema type=[string number]")
+			},
+		},
 	}
 
 	t.Parallel()

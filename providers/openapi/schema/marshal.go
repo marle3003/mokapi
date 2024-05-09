@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
+	jsonSchema "mokapi/json/schema"
 	"mokapi/media"
 	"mokapi/sortedmap"
 	"reflect"
@@ -82,27 +83,40 @@ func (s *selector) selectData(data interface{}, ref *Ref) (interface{}, error) {
 		return s.selectOne(schema, data)
 	}
 
-	if schema.Type == "" {
+	if len(schema.Type) == 0 {
 		return data, nil
 	}
 
+	var v interface{}
+	var err error
+	for _, typeName := range schema.Type {
+		v, err = s.selectDataByType(data, schema, typeName)
+		if err == nil {
+			return v, nil
+		}
+	}
+
+	return nil, err
+}
+
+func (s *selector) selectDataByType(data interface{}, schema *Schema, typeName string) (interface{}, error) {
 	switch data.(type) {
 	case []interface{}:
-		if schema.Type != "array" {
+		if typeName != "array" {
 			return nil, fmt.Errorf("found array, expected %v: %v", schema, data)
 		}
 	case map[string]interface{}:
-		if schema.Type != "object" {
+		if typeName != "object" {
 			return nil, fmt.Errorf("found object, expected %v: %v", schema, data)
 		}
 	case struct{}:
-		if schema.Type != "object" {
+		if typeName != "object" {
 			return nil, fmt.Errorf("found object, expected %v: %v", schema, data)
 		}
 	}
 
 	p := parser{convertStringToNumber: s.convertStringToNumber}
-	switch schema.Type {
+	switch typeName {
 	case "string":
 		return data, validateString(data, schema)
 	case "number":
@@ -215,7 +229,7 @@ func (s *selector) selectAny(schema *Schema, data interface{}) (interface{}, err
 	if isFreeFormUsed {
 		// read data with free-form and add only missing values
 		// free-form returns never an error
-		i, _ := s.selectObject(data, &Schema{Type: "object"})
+		i, _ := s.selectObject(data, &Schema{Type: jsonSchema.Types{"object"}})
 		o := i.(*marshalObject)
 		for it := o.Iter(); it.Next(); {
 			if _, found := result.Get(it.Key()); !found {
@@ -268,8 +282,8 @@ func (s *selector) selectAll(schema *Schema, data interface{}) (interface{}, err
 		if all == nil || all.Value == nil {
 			return nil, fmt.Errorf("schema is not defined: allOf only supports type of object")
 		}
-		if all.Value.Type != "object" {
-			return nil, fmt.Errorf("type of '%v' is not allowed: allOf only supports type of object", all.Value.Type)
+		if !all.Value.Type.Includes("object") {
+			return nil, fmt.Errorf("type of '%v' is not allowed: allOf only supports type of object", all.Value.Type.String())
 		}
 
 		origin := all
@@ -298,7 +312,7 @@ func (s *selector) selectAll(schema *Schema, data interface{}) (interface{}, err
 	if isFreeFormUsed {
 		// read data with free-form and add only missing values
 		// free-form returns never an error
-		i, _ := s.selectObject(data, &Schema{Type: "object"})
+		i, _ := s.selectObject(data, &Schema{Type: jsonSchema.Types{"object"}})
 		o := i.(*marshalObject)
 		for it := o.Iter(); it.Next(); {
 			if _, found := r.Get(it.Key()); !found {
