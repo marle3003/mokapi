@@ -50,11 +50,6 @@ func (m IgnoreFiles) Match(path string) bool {
 			continue
 		}
 		p := len(strings.Split(k, string(filepath.Separator)))
-		if k == "." && precedence > StartPrecedence {
-			// The ignore file in current directory has the key "."; For example, an ignore file in the first level
-			// folder "dir" has the same precedence value.
-			continue
-		}
 		if k == "." && precedence == StartPrecedence {
 			file = v
 			precedence = 0
