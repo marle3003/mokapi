@@ -421,7 +421,7 @@ func TestProvider(t *testing.T) {
 				select {
 				case c := <-ch:
 					configs = append(configs, c)
-				case <-time.After(3 * time.Second):
+				case <-time.After(2 * time.Second):
 					break Collect
 				}
 			}
