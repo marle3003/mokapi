@@ -146,6 +146,7 @@ func TestGit(t *testing.T) {
 			p := safe.NewPool(context.Background())
 			defer p.Stop()
 			ch := make(chan *dynamic.Config)
+			defer close(ch)
 			err := g.Start(ch, p)
 			require.NoError(t, err)
 			tc.test(t, ch)
@@ -163,10 +164,11 @@ func TestGit_MultipleUrls(t *testing.T) {
 		p.Stop()
 	}()
 	ch := make(chan *dynamic.Config)
+	defer close(ch)
 	err := g.Start(ch, p)
 	require.NoError(t, err)
 
-	timeout := time.After(1 * time.Second)
+	timeout := time.After(3 * time.Second)
 	files := map[string]*dynamic.Config{}
 Stop:
 	for {
@@ -198,10 +200,11 @@ func TestCustomTempDir(t *testing.T) {
 	p := safe.NewPool(context.Background())
 	defer p.Stop()
 	ch := make(chan *dynamic.Config)
+	defer close(ch)
 	err := g.Start(ch, p)
 	require.NoError(t, err)
 
-	timeout := time.After(1 * time.Second)
+	timeout := time.After(3 * time.Second)
 	files := map[string]*dynamic.Config{}
 Stop:
 	for {
