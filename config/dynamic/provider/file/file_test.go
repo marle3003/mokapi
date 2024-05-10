@@ -33,9 +33,9 @@ func TestProvider(t *testing.T) {
 	}{
 		{
 			name: "not in same dir",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				"bar/foo.txt": {
-					Name:  "foo.txt",
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
+					Name:  "bar/foo.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				}}},
@@ -46,8 +46,8 @@ func TestProvider(t *testing.T) {
 		},
 		{
 			name: "one file",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				"foo.txt": {
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
 					Name:    "foo.txt",
 					IsDir:   false,
 					Data:    []byte("foobar"),
@@ -63,8 +63,8 @@ func TestProvider(t *testing.T) {
 		},
 		{
 			name: "file no UTF-8-BOM",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				"foo.txt": {
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
 					Name:  "foo.txt",
 					IsDir: false,
 					Data:  []byte("fo"),
@@ -78,8 +78,8 @@ func TestProvider(t *testing.T) {
 		},
 		{
 			name: "file UTF-8-BOM",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				"foo.txt": {
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
 					Name:  "foo.txt",
 					IsDir: false,
 					Data:  []byte{0xEF, 0xBB, 0xBF, 'f', 'o', 'o', 'b', 'a', 'r'},
@@ -93,8 +93,8 @@ func TestProvider(t *testing.T) {
 		},
 		{
 			name: "skipped file",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				"_foo.txt": {
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
 					Name:  "_foo.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
@@ -106,13 +106,13 @@ func TestProvider(t *testing.T) {
 		},
 		{
 			name: "custom skip file overwrites default skip",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				"$foo.txt": {
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
 					Name:  "$foo.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
-				"_foo.txt": {
+				{
 					Name:  "_foo.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
@@ -126,13 +126,13 @@ func TestProvider(t *testing.T) {
 		},
 		{
 			name: "file in directory",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				"dir": {
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
 					Name:  "dir",
 					IsDir: true,
 				},
-				"dir/foo.txt": {
-					Name:  "foo.txt",
+				{
+					Name:  "dir/foo.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
@@ -145,13 +145,13 @@ func TestProvider(t *testing.T) {
 		},
 		{
 			name: "file in skipped directory",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				"_dir": {
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
 					Name:  "_dir",
 					IsDir: true,
 				},
-				"_dir/foo.txt": {
-					Name:  "foo.txt",
+				{
+					Name:  "_dir/foo.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
@@ -163,13 +163,13 @@ func TestProvider(t *testing.T) {
 		},
 		{
 			name: "mokapiignore",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				".mokapiignore": {
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
 					Name:  ".mokapiignore",
 					IsDir: false,
 					Data:  []byte("foo.txt"),
 				},
-				"foo.txt": {
+				{
 					Name:  "foo.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
@@ -182,18 +182,18 @@ func TestProvider(t *testing.T) {
 		},
 		{
 			name: "mokapiignore in subfolder",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				"dir": {
-					Name:  "_dir",
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
+					Name:  "dir",
 					IsDir: true,
 				},
-				"dir/.mokapiignore": {
-					Name:  ".mokapiignore",
+				{
+					Name:  "dir/.mokapiignore",
 					IsDir: false,
 					Data:  []byte("foo.txt"),
 				},
-				"dir/foo.txt": {
-					Name:  "foo.txt",
+				{
+					Name:  "dir/foo.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
@@ -205,23 +205,23 @@ func TestProvider(t *testing.T) {
 		},
 		{
 			name: "mokapiignore in subfolder overrides parent",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				".mokapiignore": {
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
 					Name:  ".mokapiignore",
 					IsDir: false,
 					Data:  []byte("foo.txt"),
 				},
-				"dir": {
-					Name:  "_dir",
+				{
+					Name:  "dir",
 					IsDir: true,
 				},
-				"dir/.mokapiignore": {
-					Name:  ".mokapiignore",
+				{
+					Name:  "dir/.mokapiignore",
 					IsDir: false,
 					Data:  []byte(""),
 				},
-				"dir/foo.txt": {
-					Name:  "foo.txt",
+				{
+					Name:  "dir/foo.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
@@ -234,14 +234,14 @@ func TestProvider(t *testing.T) {
 		},
 		{
 			name: "mokapiignore but re-include",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				".mokapiignore": {
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
 					Name:  ".mokapiignore",
 					IsDir: false,
 					Data:  []byte("*.txt\n!dir/foo.txt"),
 				},
-				"dir/foo.txt": {
-					Name:  "foo.txt",
+				{
+					Name:  "dir/foo.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
@@ -253,14 +253,14 @@ func TestProvider(t *testing.T) {
 		},
 		{
 			name: "mokapiignore with re-include but excluding again",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				".mokapiignore": {
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
 					Name:  ".mokapiignore",
 					IsDir: false,
 					Data:  []byte("dir\n!dir/foo.txt\ndir"),
 				},
-				"dir/foo.txt": {
-					Name:  "foo.txt",
+				{
+					Name:  "dir/foo.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
@@ -272,19 +272,19 @@ func TestProvider(t *testing.T) {
 		},
 		{
 			name: "ignoring all files but re-include some",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				".mokapiignore": {
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
 					Name:  ".mokapiignore",
 					IsDir: false,
 					Data:  []byte("/*\n!/dir/bar"),
 				},
-				"/bar.txt": {
-					Name:  "bar.txt",
+				{
+					Name:  "/bar.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
-				"/dir/bar/foo.txt": {
-					Name:  "foo.txt",
+				{
+					Name:  "/dir/bar/foo.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
@@ -296,24 +296,24 @@ func TestProvider(t *testing.T) {
 		},
 		{
 			name: "mokapiignore ignore all but js files",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				".mokapiignore": {
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
 					Name:  ".mokapiignore",
 					IsDir: false,
 					Data:  []byte("**/*.*\n!*.js"),
 				},
-				"/bar.txt": {
-					Name:  "foo.txt",
+				{
+					Name:  "/bar.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
-				"dir/bar.txt": {
-					Name:  "foo.txt",
+				{
+					Name:  "dir/bar.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
-				"dir/foo.js": {
-					Name:  "foo.js",
+				{
+					Name:  "dir/foo.js",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
@@ -326,29 +326,29 @@ func TestProvider(t *testing.T) {
 		},
 		{
 			name: "mokapiignore ignore all but js and ts files",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				".mokapiignore": {
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
 					Name:  ".mokapiignore",
 					IsDir: false,
 					Data:  []byte("**/*.*\n!*.js\n!mokapi.ts"),
 				},
-				"/bar.txt": {
-					Name:  "foo.txt",
+				{
+					Name:  "/bar.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
-				"dir/bar.txt": {
-					Name:  "foo.txt",
+				{
+					Name:  "dir/bar.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
-				"dir/foo.js": {
-					Name:  "foo.js",
+				{
+					Name:  "dir/foo.js",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
-				"dir/mokapi.ts": {
-					Name:  "foo.ts",
+				{
+					Name:  "dir/mokapi.ts",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
@@ -362,29 +362,29 @@ func TestProvider(t *testing.T) {
 		},
 		{
 			name: "mokapiignore all files but specific sub folder",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				".mokapiignore": {
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
 					Name:  ".mokapiignore",
 					IsDir: false,
 					Data:  []byte("**/*.*\n!/foo/bar/**"),
 				},
-				"/bar.txt": {
-					Name:  "foo.txt",
+				{
+					Name:  "/bar.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
-				"dir/bar.txt": {
-					Name:  "foo.txt",
+				{
+					Name:  "dir/bar.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
-				"foo/bar/foo.js": {
-					Name:  "foo.js",
+				{
+					Name:  "foo/bar/foo.js",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
-				"foo/bar/dir/foo.js": {
-					Name:  "foo.js",
+				{
+					Name:  "foo/bar/dir/foo.js",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
@@ -421,7 +421,7 @@ func TestProvider(t *testing.T) {
 				select {
 				case c := <-ch:
 					configs = append(configs, c)
-				case <-time.After(5 * time.Second):
+				case <-time.After(3 * time.Second):
 					break Collect
 				}
 			}

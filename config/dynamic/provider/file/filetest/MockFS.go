@@ -5,7 +5,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"time"
 )
@@ -18,7 +17,7 @@ type Entry struct {
 }
 
 type MockFS struct {
-	Entries    map[string]*Entry
+	Entries    []*Entry
 	WorkingDir string
 }
 
@@ -29,8 +28,10 @@ type fileInfo struct {
 func (m *MockFS) ReadFile(path string) ([]byte, error) {
 	path = strings.ReplaceAll(path, string(filepath.Separator), "/")
 	path = strings.ReplaceAll(path, "C:/", "/")
-	if f, ok := m.Entries[path]; ok {
-		return f.Data, nil
+	for _, entry := range m.Entries {
+		if entry.Name == path {
+			return entry.Data, nil
+		}
 	}
 	return nil, fmt.Errorf("not found")
 }
@@ -38,27 +39,21 @@ func (m *MockFS) ReadFile(path string) ([]byte, error) {
 func (m *MockFS) Walk(root string, visit fs.WalkDirFunc) error {
 	var ignoreDirs []string
 
-	// loop order in a map is not safe, order path to ensure SkipDir
-	keys := make([]string, 0, len(m.Entries))
-	for k := range m.Entries {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
 Walk:
-	for _, path := range keys {
-		tmp := strings.ReplaceAll(path, "/", string(filepath.Separator))
+	for _, entry := range m.Entries {
+		tmp := strings.ReplaceAll(entry.Name, "/", string(filepath.Separator))
 		rel, _ := filepath.Rel(root, tmp)
 		if strings.HasPrefix(rel, "..") {
 			continue
 		}
 		for _, dir := range ignoreDirs {
-			if strings.HasPrefix(path, dir) {
+			if strings.HasPrefix(entry.Name, dir) {
 				continue Walk
 			}
 		}
-		f := &fileInfo{entry: m.Entries[path]}
-		if err := visit(path, f, nil); err == fs.SkipDir {
-			ignoreDirs = append(ignoreDirs, path)
+		f := &fileInfo{entry: entry}
+		if err := visit(entry.Name, f, nil); err == fs.SkipDir {
+			ignoreDirs = append(ignoreDirs, entry.Name)
 		}
 	}
 	return nil
@@ -71,8 +66,10 @@ func (m *MockFS) GetWorkingDir() (string, error) {
 func (m *MockFS) Stat(name string) (fs.FileInfo, error) {
 	path := strings.ReplaceAll(name, string(filepath.Separator), "/")
 	path = strings.ReplaceAll(path, "C:/", "/")
-	if e, ok := m.Entries[path]; ok {
-		return &fileInfo{entry: e}, nil
+	for _, entry := range m.Entries {
+		if entry.Name == path {
+			return &fileInfo{entry: entry}, nil
+		}
 	}
 	return nil, fmt.Errorf("not found")
 }
