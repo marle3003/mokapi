@@ -7,9 +7,10 @@ import (
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
-	"mokapi/json/ref"
+	jsonRef "mokapi/json/ref"
 	jsonSchema "mokapi/json/schema"
 	"mokapi/providers/openapi/parameter"
+	"mokapi/providers/openapi/ref"
 	"mokapi/providers/openapi/schema"
 	"net/url"
 	"testing"
@@ -326,7 +327,7 @@ func TestHeader_Parse(t *testing.T) {
 					cfg := &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}, Data: &schema.Schema{Type: jsonSchema.Types{"string"}}}
 					return cfg, nil
 				})
-				param := parameter.Parameters{&parameter.Ref{Value: &parameter.Parameter{Schema: &schema.Ref{Reference: ref.Reference{Ref: "foo.yml"}}}}}
+				param := parameter.Parameters{&parameter.Ref{Value: &parameter.Parameter{Schema: &schema.Ref{Reference: jsonRef.Reference{Ref: "foo.yml"}}}}}
 				err := param.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: param}, reader)
 				require.NoError(t, err)
 				require.Equal(t, "string", param[0].Value.Schema.Value.Type.String())
@@ -349,7 +350,7 @@ func TestHeader_Parse(t *testing.T) {
 				reader := dynamictest.ReaderFunc(func(_ *url.URL, _ any) (*dynamic.Config, error) {
 					return nil, fmt.Errorf("TEST ERROR")
 				})
-				param := parameter.Parameters{&parameter.Ref{Value: &parameter.Parameter{Schema: &schema.Ref{Reference: ref.Reference{Ref: "foo.yml"}}}}}
+				param := parameter.Parameters{&parameter.Ref{Value: &parameter.Parameter{Schema: &schema.Ref{Reference: jsonRef.Reference{Ref: "foo.yml"}}}}}
 				err := param.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: param}, reader)
 				require.EqualError(t, err, "parse parameter index '0' failed: parse schema failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},

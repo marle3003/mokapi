@@ -8,6 +8,8 @@ import (
 )
 
 type Schema struct {
+	Schema string `yaml:"$schema,omitempty" json:"$schema,omitempty"`
+
 	Description string `yaml:"description" json:"description"`
 
 	Type       schema.Types  `yaml:"type" json:"type"`
@@ -16,6 +18,7 @@ type Schema struct {
 	OneOf      []*Ref        `yaml:"oneOf" json:"oneOf"`
 	Deprecated bool          `yaml:"deprecated" json:"deprecated"`
 	Example    interface{}   `yaml:"example" json:"example"`
+	Examples   []interface{} `yaml:"examples" json:"examples"`
 	Enum       []interface{} `yaml:"enum" json:"enum"`
 	Xml        *Xml          `yaml:"xml" json:"xml"`
 	Format     string        `yaml:"format" json:"format"`
@@ -45,6 +48,10 @@ type Schema struct {
 	AdditionalProperties *AdditionalProperties `yaml:"additionalProperties,omitempty" json:"additionalProperties,omitempty"`
 	MinProperties        *int                  `yaml:"minProperties" json:"minProperties"`
 	MaxProperties        *int                  `yaml:"maxProperties" json:"maxProperties"`
+
+	// Media
+	ContentMediaType string `yaml:"contentMediaType,omitempty" json:"contentMediaType,omitempty"`
+	ContentEncoding  string `yaml:"contentEncoding,omitempty" json:"contentEncoding,omitempty"`
 }
 
 func (s *Schema) HasProperties() bool {

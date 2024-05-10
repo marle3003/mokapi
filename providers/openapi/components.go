@@ -14,6 +14,7 @@ type Components struct {
 	Parameters    Parameters         `yaml:"parameters,omitempty" json:"parameters,omitempty"`
 	Examples      Examples           `yaml:"examples,omitempty" json:"examples,omitempty"`
 	Headers       Headers            `yaml:"headers,omitempty" json:"headers,omitempty"`
+	PathItems     PathItems          `yaml:"pathItems,omitempty" json:"pathItems,omitempty"`
 }
 
 type Parameters map[string]*parameter.Ref
@@ -35,6 +36,9 @@ func (c *Components) parse(config *dynamic.Config, reader dynamic.Reader) error 
 		return fmt.Errorf("parse components failed: %w", err)
 	}
 	if err := c.Headers.parse(config, reader); err != nil {
+		return fmt.Errorf("parse components failed: %w", err)
+	}
+	if err := c.PathItems.parse(config, reader); err != nil {
 		return fmt.Errorf("parse components failed: %w", err)
 	}
 

@@ -2,11 +2,12 @@ package swagger
 
 import (
 	"fmt"
-	"mokapi/json/ref"
+	jsonRef "mokapi/json/ref"
 	jsonSchema "mokapi/json/schema"
 	"mokapi/media"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/parameter"
+	"mokapi/providers/openapi/ref"
 	"mokapi/providers/openapi/schema"
 	"net/http"
 	"strings"
@@ -196,7 +197,7 @@ func (c *converter) convertSchema(s *schema.Ref) *schema.Ref {
 	}
 
 	if len(s.Ref) > 0 {
-		return &schema.Ref{Reference: ref.Reference{Ref: convertRef(s.Ref)}}
+		return &schema.Ref{Reference: jsonRef.Reference{Ref: convertRef(s.Ref)}}
 	}
 
 	if s.Value == nil {

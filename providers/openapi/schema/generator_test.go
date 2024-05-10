@@ -429,6 +429,16 @@ func TestGeneratorFloat(t *testing.T) {
 			&schema.Schema{Type: jsonSchema.Types{"number"}, Format: "double", Example: 1},
 		},
 		{
+			"examples",
+			7,
+			&schema.Schema{Type: jsonSchema.Types{"number"}, Format: "double", Examples: []interface{}{5, 6, 7}},
+		},
+		{
+			"examples over example",
+			7,
+			&schema.Schema{Type: jsonSchema.Types{"number"}, Format: "double", Example: 1, Examples: []interface{}{5, 6, 7}},
+		},
+		{
 			"enum",
 			2,
 			&schema.Schema{Type: jsonSchema.Types{"number"}, Format: "double", Enum: []interface{}{1, 2, 3, 4}},

@@ -137,3 +137,16 @@ func WithComponentHeaderRef(name string, r *openapi.HeaderRef) ConfigOptions {
 		c.Components.Headers[name] = r
 	}
 }
+
+func WithComponentPathItem(name string, r *openapi.Path) ConfigOptions {
+	return WithComponentPathItemRef(name, &openapi.PathRef{Value: r})
+}
+
+func WithComponentPathItemRef(name string, r *openapi.PathRef) ConfigOptions {
+	return func(c *openapi.Config) {
+		if c.Components.PathItems == nil {
+			c.Components.PathItems = openapi.PathItems{}
+		}
+		c.Components.PathItems[name] = r
+	}
+}

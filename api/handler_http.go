@@ -154,6 +154,12 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 			Summary:     p.Value.Summary,
 			Description: p.Value.Description,
 		}
+		if len(p.Summary) > 0 {
+			pi.Summary = p.Summary
+		}
+		if len(p.Description) > 0 {
+			pi.Description = p.Description
+		}
 
 		for m, o := range p.Value.Operations() {
 			op := operation{
@@ -168,6 +174,13 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 					Description: o.RequestBody.Value.Description,
 					Required:    o.RequestBody.Value.Required,
 				}
+				if len(o.RequestBody.Summary) > 0 {
+					op.Summary = o.RequestBody.Summary
+				}
+				if len(o.RequestBody.Description) > 0 {
+					pi.Description = o.RequestBody.Description
+				}
+
 				for ct, rb := range o.RequestBody.Value.Content {
 					op.RequestBody.Contents = append(op.RequestBody.Contents, mediaType{
 						Type:   ct,
@@ -188,6 +201,10 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 					StatusCode:  statusCode,
 					Description: r.Value.Description,
 				}
+				if len(r.Description) > 0 {
+					res.Description = r.Description
+				}
+
 				for ct, r := range r.Value.Content {
 					res.Contents = append(res.Contents, mediaType{
 						Type:   ct,
@@ -198,11 +215,17 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 					if h.Value == nil {
 						continue
 					}
-					res.Headers = append(res.Headers, header{
+
+					hi := header{
 						Name:        name,
 						Description: h.Value.Description,
 						Schema:      getSchema(h.Value.Schema),
-					})
+					}
+					if len(h.Description) > 0 {
+						hi.Description = h.Description
+					}
+
+					res.Headers = append(res.Headers, hi)
 				}
 
 				op.Responses = append(op.Responses, res)
@@ -223,7 +246,8 @@ func getParameters(params parameter.Parameters) (result []param) {
 		if p.Value == nil {
 			continue
 		}
-		result = append(result, param{
+
+		pi := param{
 			Name:        p.Value.Name,
 			Type:        string(p.Value.Type),
 			Description: p.Value.Description,
@@ -232,7 +256,12 @@ func getParameters(params parameter.Parameters) (result []param) {
 			Style:       p.Value.Style,
 			Exploded:    p.Value.IsExplode(),
 			Schema:      getSchema(p.Value.Schema),
-		})
+		}
+		if len(p.Description) > 0 {
+			pi.Description = p.Description
+		}
+
+		result = append(result, pi)
 	}
 	return
 }

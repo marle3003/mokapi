@@ -35,6 +35,7 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 	}
 
 	js := &schema.Schema{
+		Schema:               s.Schema,
 		Enum:                 s.Enum,
 		MinLength:            s.MinLength,
 		MaxLength:            s.MaxLength,
@@ -103,9 +104,13 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 		js.Type = append(js.Type, "null")
 	}
 
-	if s.Example != nil {
+	js.Examples = s.Examples
+	if s.Example != nil && s.Examples == nil {
 		js.Examples = append(js.Examples, s.Example)
 	}
+
+	js.ContentMediaType = s.ContentMediaType
+	js.ContentEncoding = s.ContentEncoding
 
 	return js
 }

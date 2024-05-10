@@ -3,7 +3,7 @@ package parameter
 import (
 	"fmt"
 	"mokapi/config/dynamic"
-	"mokapi/json/ref"
+	"mokapi/providers/openapi/ref"
 	"mokapi/providers/openapi/schema"
 )
 

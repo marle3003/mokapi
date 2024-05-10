@@ -4,7 +4,9 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
+	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
+	"mokapi/providers/openapi/ref"
 	"mokapi/providers/openapi/schema/schematest"
 	"mokapi/runtime"
 	"mokapi/runtime/monitor"
@@ -187,6 +189,52 @@ func TestHandler_Http(t *testing.T) {
 			},
 			requestUrl:   "http://foo.api/api/services/http/foo",
 			responseBody: `{"name":"","paths":[{"path":"/foo/{bar}","operations":[{"method":"get","deprecated":false,"responses":[{"statusCode":200,"description":"foo description","contents":[{"type":"application/json","schema":{"type":"string"}}],"headers":[{"name":"foo","description":"bar","schema":{"type":"string"}}]}]}]}]}`,
+		},
+		{
+			name: "reference override summary/description",
+			app: func() *runtime.App {
+				c := openapitest.NewConfig("3.0.0",
+					openapitest.WithPathRef("/foo/{bar}", &openapi.PathRef{
+						Reference: ref.Reference{
+							Ref:         "#/components/pathItems/foo",
+							Summary:     "Summary",
+							Description: "Description",
+						},
+						Value: openapitest.NewPath(
+							openapitest.WithPathInfo("foo", "bar"),
+							openapitest.WithOperation("get", openapitest.NewOperation(
+								openapitest.WithResponseRef(http.StatusOK,
+									&openapi.ResponseRef{
+										Reference: ref.Reference{
+											Ref:         "#/components/pathItems/foo",
+											Description: "Description",
+										},
+										Value: openapitest.NewResponse(openapitest.WithResponseDescription("foo description"),
+											openapitest.WithContent(
+												"application/json",
+												openapitest.NewContent(
+													openapitest.WithSchema(schematest.New("string")),
+												),
+											),
+											openapitest.WithResponseHeader("foo", "bar", schematest.New("string")),
+										),
+									},
+								),
+							)),
+						),
+					}),
+				)
+
+				return &runtime.App{
+					Http: map[string]*runtime.HttpInfo{
+						"foo": {
+							Config: c,
+						},
+					},
+				}
+			},
+			requestUrl:   "http://foo.api/api/services/http/foo",
+			responseBody: `{"name":"","paths":[{"path":"/foo/{bar}","summary":"Summary","description":"Description","operations":[{"method":"get","deprecated":false,"responses":[{"statusCode":200,"description":"Description","contents":[{"type":"application/json","schema":{"type":"string"}}],"headers":[{"name":"foo","description":"bar","schema":{"type":"string"}}]}]}]}]}`,
 		},
 		{
 			name: "schema with string or number",
