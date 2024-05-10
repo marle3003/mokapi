@@ -376,40 +376,40 @@ func TestSchema_Patch(t *testing.T) {
 			name: "patch exclusive minimum",
 			schemas: []*schema.Schema{
 				{},
-				{ExclusiveMinimum: toBoolP(true)},
+				{ExclusiveMinimum: schema.NewUnionTypeB[float64, bool](true)},
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.True(t, *result.ExclusiveMinimum)
+				require.True(t, result.ExclusiveMinimum.B)
 			},
 		},
 		{
 			name: "patch overwrite minimum",
 			schemas: []*schema.Schema{
-				{ExclusiveMinimum: toBoolP(true)},
-				{ExclusiveMinimum: toBoolP(false)},
+				{ExclusiveMinimum: schema.NewUnionTypeB[float64, bool](true)},
+				{ExclusiveMinimum: schema.NewUnionTypeB[float64, bool](false)},
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.False(t, *result.ExclusiveMinimum)
+				require.False(t, result.ExclusiveMinimum.B)
 			},
 		},
 		{
 			name: "patch exclusive maximum",
 			schemas: []*schema.Schema{
 				{},
-				{ExclusiveMaximum: toBoolP(true)},
+				{ExclusiveMaximum: schema.NewUnionTypeB[float64, bool](true)},
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.True(t, *result.ExclusiveMaximum)
+				require.True(t, result.ExclusiveMaximum.B)
 			},
 		},
 		{
 			name: "patch overwrite maximum",
 			schemas: []*schema.Schema{
-				{ExclusiveMaximum: toBoolP(true)},
-				{ExclusiveMaximum: toBoolP(false)},
+				{ExclusiveMaximum: schema.NewUnionTypeB[float64, bool](true)},
+				{ExclusiveMaximum: schema.NewUnionTypeB[float64, bool](false)},
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.False(t, *result.ExclusiveMaximum)
+				require.False(t, result.ExclusiveMaximum.B)
 			},
 		},
 		{

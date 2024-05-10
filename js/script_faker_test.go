@@ -46,6 +46,73 @@ func TestScript_Faker(t *testing.T) {
 			},
 		},
 		{
+			name: "invalid type for type",
+			test: func(t *testing.T, host *enginetest.Host) {
+				s, err := jstest.New(jstest.WithSource(`import faker from 'mokapi/faker'
+						 export default function() {
+						 	return faker.fake({ type: {} })
+						 }`),
+					js.WithHost(host))
+				r.NoError(t, err)
+				_, err = s.RunDefault()
+				r.EqualError(t, err, "unexpected type for 'type': map[string]interface {} at mokapi/js/faker.(*Faker).Fake-fm (native)")
+			},
+		},
+		{
+			name: "fake exclusiveMinimum",
+			test: func(t *testing.T, host *enginetest.Host) {
+				s, err := jstest.New(jstest.WithSource(`import faker from 'mokapi/faker'
+						 export default function() {
+						 	return faker.fake({ type: 'integer', exclusiveMinimum: 3, maximum: 10 })
+						 }`),
+					js.WithHost(host))
+				r.NoError(t, err)
+				v, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, "5", v.String())
+			},
+		},
+		{
+			name: "fake exclusiveMinimum but wrong type",
+			test: func(t *testing.T, host *enginetest.Host) {
+				s, err := jstest.New(jstest.WithSource(`import faker from 'mokapi/faker'
+						 export default function() {
+						 	return faker.fake({ type: 'integer', exclusiveMinimum: '3', maximum: 10 })
+						 }`),
+					js.WithHost(host))
+				r.NoError(t, err)
+				_, err = s.RunDefault()
+				r.EqualError(t, err, "unexpected type for 'exclusiveMinimum': string at mokapi/js/faker.(*Faker).Fake-fm (native)")
+			},
+		},
+		{
+			name: "fake exclusiveMaximum",
+			test: func(t *testing.T, host *enginetest.Host) {
+				s, err := jstest.New(jstest.WithSource(`import faker from 'mokapi/faker'
+						 export default function() {
+						 	return faker.fake({ type: 'integer', exclusiveMaximum: 3, minimum: 2 })
+						 }`),
+					js.WithHost(host))
+				r.NoError(t, err)
+				v, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, "2", v.String())
+			},
+		},
+		{
+			name: "fake exclusiveMinimum but wrong type",
+			test: func(t *testing.T, host *enginetest.Host) {
+				s, err := jstest.New(jstest.WithSource(`import faker from 'mokapi/faker'
+						 export default function() {
+						 	return faker.fake({ type: 'integer', exclusiveMaximum: '3', minimum: 10 })
+						 }`),
+					js.WithHost(host))
+				r.NoError(t, err)
+				_, err = s.RunDefault()
+				r.EqualError(t, err, "unexpected type for 'exclusiveMaximum': string at mokapi/js/faker.(*Faker).Fake-fm (native)")
+			},
+		},
+		{
 			name: "fake enum",
 			test: func(t *testing.T, host *enginetest.Host) {
 				s, err := jstest.New(jstest.WithSource(

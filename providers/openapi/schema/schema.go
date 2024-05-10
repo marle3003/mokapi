@@ -27,10 +27,10 @@ type Schema struct {
 	MaxLength *int   `yaml:"maxLength" json:"maxLength"`
 
 	// Numbers
-	Minimum          *float64 `yaml:"minimum,omitempty" json:"minimum,omitempty"`
-	Maximum          *float64 `yaml:"maximum,omitempty" json:"maximum,omitempty"`
-	ExclusiveMinimum *bool    `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
-	ExclusiveMaximum *bool    `yaml:"exclusiveMaximum,omitempty" json:"exclusiveMaximum,omitempty"`
+	Minimum          *float64                  `yaml:"minimum,omitempty" json:"minimum,omitempty"`
+	Maximum          *float64                  `yaml:"maximum,omitempty" json:"maximum,omitempty"`
+	ExclusiveMinimum *UnionType[float64, bool] `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
+	ExclusiveMaximum *UnionType[float64, bool] `yaml:"exclusiveMaximum,omitempty" json:"exclusiveMaximum,omitempty"`
 
 	// Array
 	Items        *Ref `yaml:"items" json:"items"`
@@ -139,18 +139,27 @@ func (s *Schema) String() string {
 	if s.MaxLength != nil {
 		sb.WriteString(fmt.Sprintf(" maxLength=%v", *s.MaxLength))
 	}
-	if s.Minimum != nil {
+
+	if s.ExclusiveMinimum != nil {
+		if s.ExclusiveMinimum.IsA() {
+			sb.WriteString(fmt.Sprintf(" exclusiveMinimum=%v", s.ExclusiveMinimum.Value()))
+		} else if s.ExclusiveMinimum.B {
+			sb.WriteString(fmt.Sprintf(" exclusiveMinimum=%v", *s.Minimum))
+		}
+	} else if s.Minimum != nil {
 		sb.WriteString(fmt.Sprintf(" minimum=%v", *s.Minimum))
 	}
-	if s.Maximum != nil {
+
+	if s.ExclusiveMaximum != nil {
+		if s.ExclusiveMaximum.IsA() {
+			sb.WriteString(fmt.Sprintf(" exclusiveMaximum=%v", s.ExclusiveMaximum.Value()))
+		} else if s.ExclusiveMaximum.B {
+			sb.WriteString(fmt.Sprintf(" exclusiveMaximum=%v", *s.Maximum))
+		}
+	} else if s.Maximum != nil {
 		sb.WriteString(fmt.Sprintf(" maximum=%v", *s.Maximum))
 	}
-	if s.ExclusiveMinimum != nil && *s.ExclusiveMinimum {
-		sb.WriteString(" exclusiveMinimum")
-	}
-	if s.ExclusiveMaximum != nil && *s.ExclusiveMaximum {
-		sb.WriteString(" exclusiveMaximum")
-	}
+
 	if s.MinItems != nil {
 		sb.WriteString(fmt.Sprintf(" minItems=%v", *s.MinItems))
 	}

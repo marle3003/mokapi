@@ -651,7 +651,7 @@ func TestRef_Unmarshal_Json_Integer(t *testing.T) {
 			},
 		},
 		{
-			name:   "not min",
+			name:   "minimum=12 and value=12",
 			s:      "12",
 			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Minimum: toFloatP(13)},
 			test: func(t *testing.T, i interface{}, err error) {
@@ -659,11 +659,36 @@ func TestRef_Unmarshal_Json_Integer(t *testing.T) {
 			},
 		},
 		{
-			name:   "not exclusive min",
+			name:   "minimum=12, exclusiveMinimum=true and value=12",
 			s:      "12",
-			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Minimum: toFloatP(12), ExclusiveMinimum: toBoolP(true)},
+			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Minimum: toFloatP(12), ExclusiveMinimum: schema.NewUnionTypeB[float64, bool](true)},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "12 is lower or equal as the required minimum 12, expected schema type=integer minimum=12 exclusiveMinimum")
+				require.EqualError(t, err, "12 is lower or equal as the required minimum 12, expected schema type=integer exclusiveMinimum=12")
+			},
+		},
+		{
+			name:   "minimum=12, exclusiveMinimum=false and value=12",
+			s:      "12",
+			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Minimum: toFloatP(12), ExclusiveMinimum: schema.NewUnionTypeB[float64, bool](false)},
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int64(12), i)
+			},
+		},
+		{
+			name:   "exclusiveMinimum=12 and value=12",
+			s:      "12",
+			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, ExclusiveMinimum: schema.NewUnionTypeA[float64, bool](12)},
+			test: func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, "12 is lower or equal as the required minimum 12, expected schema type=integer exclusiveMinimum=12")
+			},
+		},
+		{
+			name:   "exclusiveMinimum=12 but no minimum is set",
+			s:      "12",
+			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, ExclusiveMinimum: schema.NewUnionTypeB[float64, bool](true)},
+			test: func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, "exclusiveMinimum is set to true but no minimum is set")
 			},
 		},
 		{
@@ -686,9 +711,9 @@ func TestRef_Unmarshal_Json_Integer(t *testing.T) {
 		{
 			name:   "not exclusive max",
 			s:      "12",
-			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Maximum: toFloatP(12), ExclusiveMaximum: toBoolP(true)},
+			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Maximum: toFloatP(12), ExclusiveMaximum: schema.NewUnionTypeB[float64, bool](true)},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "12 is greater or equal as the required maximum 12, expected schema type=integer maximum=12 exclusiveMaximum")
+				require.EqualError(t, err, "12 is greater or equal as the required maximum 12, expected schema type=integer exclusiveMaximum=12")
 			},
 		},
 		{
@@ -811,9 +836,17 @@ func TestParse_Number(t *testing.T) {
 		{
 			name:   "not max exclusive",
 			s:      "3.6",
-			schema: &schema.Schema{Type: jsonSchema.Types{"number"}, Maximum: toFloatP(3.6), ExclusiveMaximum: toBoolP(true)},
+			schema: &schema.Schema{Type: jsonSchema.Types{"number"}, Maximum: toFloatP(3.6), ExclusiveMaximum: schema.NewUnionTypeB[float64, bool](true)},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "3.6 is greater or equal as the required maximum 3.6, expected schema type=number maximum=3.6 exclusiveMaximum")
+				require.EqualError(t, err, "3.6 is greater or equal as the required maximum 3.6, expected schema type=number exclusiveMaximum=3.6")
+			},
+		},
+		{
+			name:   "exclusiveMaximum=true but no maximum value is set",
+			s:      "3.6",
+			schema: &schema.Schema{Type: jsonSchema.Types{"number"}, ExclusiveMaximum: schema.NewUnionTypeB[float64, bool](true)},
+			test: func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, "exclusiveMaximum is set to true but no maximum is set")
 			},
 		},
 		{

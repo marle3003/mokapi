@@ -27,8 +27,8 @@ type JsonSchema struct {
 	Enum                 []interface{}          `json:"enum"`
 	Minimum              *float64               `json:"minimum,omitempty"`
 	Maximum              *float64               `json:"maximum,omitempty"`
-	ExclusiveMinimum     *bool                  `json:"exclusiveMinimum,omitempty"`
-	ExclusiveMaximum     *bool                  `json:"exclusiveMaximum,omitempty"`
+	ExclusiveMinimum     interface{}            `json:"exclusiveMinimum,omitempty"`
+	ExclusiveMaximum     interface{}            `json:"exclusiveMaximum,omitempty"`
 	AnyOf                []*JsonSchema          `json:"anyOf"`
 	AllOf                []*JsonSchema          `json:"allOf"`
 	OneOf                []*JsonSchema          `json:"oneOf"`
@@ -82,31 +82,33 @@ func (m *Faker) Fake(v goja.Value) interface{} {
 	if err != nil {
 		panic(m.rt.ToValue("expected parameter type of OpenAPI schema"))
 	}
-	i, err := schema.CreateValue(&schema.Ref{Value: ConvertToSchema(s)})
+	s2, err := ConvertToSchema(s)
+	if err != nil {
+		panic(m.rt.ToValue(err.Error()))
+	}
+	i, err := schema.CreateValue(&schema.Ref{Value: s2})
 	if err != nil {
 		panic(m.rt.ToValue(err.Error()))
 	}
 	return i
 }
 
-func ConvertToSchema(js *JsonSchema) *schema.Schema {
+func ConvertToSchema(js *JsonSchema) (*schema.Schema, error) {
 	s := &schema.Schema{
-		Format:           js.Format,
-		Pattern:          js.Pattern,
-		Required:         js.Required,
-		Nullable:         js.Nullable,
-		Example:          js.Example,
-		Enum:             js.Enum,
-		Minimum:          js.Minimum,
-		Maximum:          js.Maximum,
-		ExclusiveMinimum: js.ExclusiveMinimum,
-		ExclusiveMaximum: js.ExclusiveMaximum,
-		UniqueItems:      js.UniqueItems,
-		MinItems:         js.MinItems,
-		MaxItems:         js.MaxItems,
-		ShuffleItems:     js.ShuffleItems,
-		MinProperties:    js.MinProperties,
-		MaxProperties:    js.MaxProperties,
+		Format:        js.Format,
+		Pattern:       js.Pattern,
+		Required:      js.Required,
+		Nullable:      js.Nullable,
+		Example:       js.Example,
+		Enum:          js.Enum,
+		Minimum:       js.Minimum,
+		Maximum:       js.Maximum,
+		UniqueItems:   js.UniqueItems,
+		MinItems:      js.MinItems,
+		MaxItems:      js.MaxItems,
+		ShuffleItems:  js.ShuffleItems,
+		MinProperties: js.MinProperties,
+		MaxProperties: js.MaxProperties,
 	}
 
 	if js.Type != nil {
@@ -117,45 +119,97 @@ func ConvertToSchema(js *JsonSchema) *schema.Schema {
 			for _, typeName := range v {
 				s.Type = append(s.Type, fmt.Sprintf("%v", typeName))
 			}
+		default:
+			return nil, fmt.Errorf("unexpected type for 'type': %T", v)
 		}
 	}
 
 	if len(js.Properties) > 0 {
 		s.Properties = &schema.Schemas{}
 		for name, prop := range js.Properties {
-			s.Properties.Set(name, &schema.Ref{Value: ConvertToSchema(prop)})
+			v, err := ConvertToSchema(prop)
+			if err != nil {
+				return nil, err
+			}
+			s.Properties.Set(name, &schema.Ref{Value: v})
+		}
+	}
+
+	if js.ExclusiveMinimum != nil {
+		switch v := js.ExclusiveMinimum.(type) {
+		case bool:
+			s.ExclusiveMinimum = schema.NewUnionTypeB[float64, bool](v)
+		case float64:
+			s.ExclusiveMinimum = schema.NewUnionTypeA[float64, bool](v)
+		case int64:
+			s.ExclusiveMinimum = schema.NewUnionTypeA[float64, bool](float64(v))
+		default:
+			return nil, fmt.Errorf("unexpected type for 'exclusiveMinimum': %T", v)
+		}
+	}
+
+	if js.ExclusiveMaximum != nil {
+		switch v := js.ExclusiveMaximum.(type) {
+		case bool:
+			s.ExclusiveMaximum = schema.NewUnionTypeB[float64, bool](v)
+		case float64:
+			s.ExclusiveMaximum = schema.NewUnionTypeA[float64, bool](v)
+		case int64:
+			s.ExclusiveMaximum = schema.NewUnionTypeA[float64, bool](float64(v))
+		default:
+			return nil, fmt.Errorf("unexpected type for 'exclusiveMaximum': %T", v)
 		}
 	}
 
 	if js.AdditionalProperties != nil {
+		v, err := ConvertToSchema(js.AdditionalProperties)
+		if err != nil {
+			return nil, err
+		}
 		s.AdditionalProperties = &schema.AdditionalProperties{
 			Ref: &schema.Ref{
-				Value: ConvertToSchema(js.AdditionalProperties),
+				Value: v,
 			},
 		}
 	}
 
 	if js.Items != nil {
+		v, err := ConvertToSchema(js.Items)
+		if err != nil {
+			return nil, err
+		}
 		s.Items = &schema.Ref{
-			Value: ConvertToSchema(js.Items),
+			Value: v,
 		}
 	}
 
 	if len(js.AnyOf) > 0 {
 		for _, any := range js.AnyOf {
-			s.AnyOf = append(s.AnyOf, &schema.Ref{Value: ConvertToSchema(any)})
+			v, err := ConvertToSchema(any)
+			if err != nil {
+				return nil, err
+			}
+			s.AnyOf = append(s.AnyOf, &schema.Ref{Value: v})
 		}
 	}
 
 	if len(js.AllOf) > 0 {
 		for _, all := range js.AllOf {
-			s.AllOf = append(s.AllOf, &schema.Ref{Value: ConvertToSchema(all)})
+			v, err := ConvertToSchema(all)
+			if err != nil {
+				return nil, err
+			}
+			s.AllOf = append(s.AllOf, &schema.Ref{Value: v})
 		}
 	}
 
 	if len(js.OneOf) > 0 {
 		for _, one := range js.OneOf {
-			s.OneOf = append(s.OneOf, &schema.Ref{Value: ConvertToSchema(one)})
+			v, err := ConvertToSchema(one)
+			if err != nil {
+				return nil, err
+			}
+			s.OneOf = append(s.OneOf, &schema.Ref{Value: v})
 		}
 	}
 
@@ -169,7 +223,7 @@ func ConvertToSchema(js *JsonSchema) *schema.Schema {
 		}
 	}
 
-	return s
+	return s, nil
 }
 
 type node struct {

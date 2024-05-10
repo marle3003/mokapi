@@ -188,6 +188,33 @@ func TestHandler_Http(t *testing.T) {
 			requestUrl:   "http://foo.api/api/services/http/foo",
 			responseBody: `{"name":"","paths":[{"path":"/foo/{bar}","operations":[{"method":"get","deprecated":false,"responses":[{"statusCode":200,"description":"foo description","contents":[{"type":"application/json","schema":{"type":"string"}}],"headers":[{"name":"foo","description":"bar","schema":{"type":"string"}}]}]}]}]}`,
 		},
+		{
+			name: "schema with string or number",
+			app: func() *runtime.App {
+				return &runtime.App{
+					Http: map[string]*runtime.HttpInfo{
+						"foo": {
+							Config: openapitest.NewConfig("3.0.0",
+								openapitest.WithPath("/foo/{bar}", openapitest.NewPath(
+									openapitest.WithOperation("get", openapitest.NewOperation(
+										openapitest.WithResponse(http.StatusOK,
+											openapitest.WithResponseDescription("foo description"),
+											openapitest.WithContent(
+												"application/json",
+												openapitest.NewContent(
+													openapitest.WithSchema(schematest.New("string", schematest.And("number"))),
+												),
+											),
+										),
+									)),
+								))),
+						},
+					},
+				}
+			},
+			requestUrl:   "http://foo.api/api/services/http/foo",
+			responseBody: `{"name":"","paths":[{"path":"/foo/{bar}","operations":[{"method":"get","deprecated":false,"responses":[{"statusCode":200,"description":"foo description","contents":[{"type":"application/json","schema":{"type":["string","number"]}}]}]}]}]}`,
+		},
 	}
 
 	t.Parallel()

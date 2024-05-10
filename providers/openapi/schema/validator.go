@@ -94,21 +94,36 @@ func validateString(i interface{}, s *Schema) error {
 }
 
 func validateFloat64(n float64, schema *Schema) error {
-	if schema.Minimum != nil {
-		min := *schema.Minimum
-		if schema.ExclusiveMinimum != nil && (*schema.ExclusiveMinimum) && n <= min {
+	if schema.ExclusiveMinimum != nil && (schema.ExclusiveMinimum.IsA() || schema.ExclusiveMinimum.B) {
+		min := 0.0
+		if schema.ExclusiveMinimum.IsA() {
+			min = schema.ExclusiveMinimum.A
+		} else if schema.Minimum != nil {
+			min = *schema.Minimum
+		} else {
+			return fmt.Errorf("exclusiveMinimum is set to true but no minimum is set")
+		}
+		if n <= min {
 			return fmt.Errorf("%v is lower or equal as the required minimum %v, expected %v", n, min, schema)
-		} else if n < min {
-			return fmt.Errorf("%v is lower as the required minimum %v, expected %v", n, min, schema)
 		}
+	} else if schema.Minimum != nil && n < *schema.Minimum {
+		return fmt.Errorf("%v is lower as the required minimum %v, expected %v", n, *schema.Minimum, schema)
 	}
-	if schema.Maximum != nil {
-		max := *schema.Maximum
-		if schema.ExclusiveMaximum != nil && (*schema.ExclusiveMaximum) && n >= max {
-			return fmt.Errorf("%v is greater or equal as the required maximum %v, expected %v", n, max, schema)
-		} else if n > max {
-			return fmt.Errorf("%v is greater as the required maximum %v, expected %v", n, max, schema)
+
+	if schema.ExclusiveMaximum != nil && (schema.ExclusiveMaximum.IsA() || schema.ExclusiveMaximum.B) {
+		max := 0.0
+		if schema.ExclusiveMaximum.IsA() {
+			max = schema.ExclusiveMaximum.A
+		} else if schema.Maximum != nil {
+			max = *schema.Maximum
+		} else {
+			return fmt.Errorf("exclusiveMaximum is set to true but no maximum is set")
 		}
+		if n >= max {
+			return fmt.Errorf("%v is greater or equal as the required maximum %v, expected %v", n, max, schema)
+		}
+	} else if schema.Maximum != nil && n > *schema.Maximum {
+		return fmt.Errorf("%v is greater as the required maximum %v, expected %v", n, *schema.Maximum, schema)
 	}
 
 	if len(schema.Enum) > 0 {
@@ -119,21 +134,36 @@ func validateFloat64(n float64, schema *Schema) error {
 }
 
 func validateInt64(n int64, schema *Schema) error {
-	if schema.Minimum != nil {
-		min := int64(*schema.Minimum)
-		if schema.ExclusiveMinimum != nil && (*schema.ExclusiveMinimum) && n <= min {
+	if schema.ExclusiveMinimum != nil && (schema.ExclusiveMinimum.IsA() || schema.ExclusiveMinimum.B) {
+		min := int64(0)
+		if schema.ExclusiveMinimum.IsA() {
+			min = int64(schema.ExclusiveMinimum.A)
+		} else if schema.Minimum != nil {
+			min = int64(*schema.Minimum)
+		} else {
+			return fmt.Errorf("exclusiveMinimum is set to true but no minimum is set")
+		}
+		if n <= min {
 			return fmt.Errorf("%v is lower or equal as the required minimum %v, expected %v", n, min, schema)
-		} else if n < min {
-			return fmt.Errorf("%v is lower as the required minimum %v, expected %v", n, min, schema)
 		}
+	} else if schema.Minimum != nil && n < int64(*schema.Minimum) {
+		return fmt.Errorf("%v is lower as the required minimum %v, expected %v", n, *schema.Minimum, schema)
 	}
-	if schema.Maximum != nil {
-		max := int64(*schema.Maximum)
-		if schema.ExclusiveMaximum != nil && (*schema.ExclusiveMaximum) && n >= max {
-			return fmt.Errorf("%v is greater or equal as the required maximum %v, expected %v", n, max, schema)
-		} else if n > max {
-			return fmt.Errorf("%v is greater as the required maximum %v, expected %v", n, max, schema)
+
+	if schema.ExclusiveMaximum != nil && (schema.ExclusiveMaximum.IsA() || schema.ExclusiveMaximum.B) {
+		max := int64(0)
+		if schema.ExclusiveMaximum.IsA() {
+			max = int64(schema.ExclusiveMaximum.A)
+		} else if schema.Maximum != nil {
+			max = int64(*schema.Maximum)
+		} else {
+			return fmt.Errorf("exclusiveMaximum is set to true but no maximum is set")
 		}
+		if n >= max {
+			return fmt.Errorf("%v is greater or equal as the required maximum %v, expected %v", n, max, schema)
+		}
+	} else if schema.Maximum != nil && n > int64(*schema.Maximum) {
+		return fmt.Errorf("%v is greater as the required maximum %v, expected %v", n, *schema.Maximum, schema)
 	}
 
 	if len(schema.Enum) > 0 {

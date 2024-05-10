@@ -34,6 +34,23 @@ func TestHandler_Schema(t *testing.T) {
 			},
 		},
 		{
+			name: "string or number",
+			app: &runtime.App{
+				Monitor: monitor.New(),
+			},
+			fn: func(t *testing.T, h http.Handler, app *runtime.App) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/schema/example",
+					nil,
+					`{"name": "", "schema": {"type": ["string","number"]}}`,
+					h,
+					try.HasStatusCode(200),
+					try.HasHeader("Content-Type", "application/json"),
+					try.HasBody("1.644484108270445e+307"))
+			},
+		},
+		{
 			name: "object",
 			app: &runtime.App{
 				Monitor: monitor.New(),

@@ -63,10 +63,10 @@ type schemaInfo struct {
 	MinLength *int   `yaml:"minLength" json:"minLength,omitempty"`
 	MaxLength *int   `yaml:"maxLength" json:"maxLength,omitempty"`
 
-	Minimum          *float64 `json:"minimum,omitempty"`
-	Maximum          *float64 `json:"maximum,omitempty"`
-	ExclusiveMinimum *bool    `json:"exclusiveMinimum,omitempty"`
-	ExclusiveMaximum *bool    `json:"exclusiveMaximum,omitempty"`
+	Minimum          *float64    `json:"minimum,omitempty"`
+	Maximum          *float64    `json:"maximum,omitempty"`
+	ExclusiveMinimum interface{} `json:"exclusiveMinimum,omitempty"`
+	ExclusiveMaximum interface{} `json:"exclusiveMaximum,omitempty"`
 
 	Items        *schemaInfo `json:"items,omitempty"`
 	UniqueItems  bool        `json:"uniqueItems,omitempty"`
@@ -185,10 +185,8 @@ func (c *schemaConverter) getSchema(s *schema.Ref) *schemaInfo {
 		MinLength: s.Value.MinLength,
 		MaxLength: s.Value.MaxLength,
 
-		Minimum:          s.Value.Minimum,
-		Maximum:          s.Value.Maximum,
-		ExclusiveMinimum: s.Value.ExclusiveMinimum,
-		ExclusiveMaximum: s.Value.ExclusiveMaximum,
+		Minimum: s.Value.Minimum,
+		Maximum: s.Value.Maximum,
 
 		UniqueItems:  s.Value.UniqueItems,
 		MinItems:     s.Value.MinItems,
@@ -204,6 +202,24 @@ func (c *schemaConverter) getSchema(s *schema.Ref) *schemaInfo {
 		result.Type = ""
 	} else if len(s.Value.Type) == 1 {
 		result.Type = s.Value.Type[0]
+	}
+
+	if s.Value.ExclusiveMinimum != nil {
+		if s.Value.ExclusiveMinimum.IsA() {
+			result.ExclusiveMinimum = s.Value.ExclusiveMinimum.A
+		} else if s.Value.ExclusiveMinimum.B {
+			result.ExclusiveMinimum = *s.Value.Minimum
+			result.Minimum = nil
+		}
+	}
+
+	if s.Value.ExclusiveMaximum != nil {
+		if s.Value.ExclusiveMaximum.IsA() {
+			result.ExclusiveMaximum = s.Value.ExclusiveMaximum.A
+		} else if s.Value.ExclusiveMaximum.B {
+			result.ExclusiveMaximum = *s.Value.Maximum
+			result.Maximum = nil
+		}
 	}
 
 	if s.Value.Nullable && !s.Value.Type.IsNullable() {
@@ -277,10 +293,8 @@ func toSchema(s *schemaInfo) *schema.Schema {
 		MinLength: s.MinLength,
 		MaxLength: s.MaxLength,
 
-		Minimum:          s.Minimum,
-		Maximum:          s.Maximum,
-		ExclusiveMinimum: s.ExclusiveMinimum,
-		ExclusiveMaximum: s.ExclusiveMaximum,
+		Minimum: s.Minimum,
+		Maximum: s.Maximum,
 
 		UniqueItems:  s.UniqueItems,
 		MinItems:     s.MinItems,
@@ -300,6 +314,24 @@ func toSchema(s *schemaInfo) *schema.Schema {
 			for _, typeName := range v {
 				result.Type = append(result.Type, fmt.Sprintf("%v", typeName))
 			}
+		}
+	}
+
+	if s.ExclusiveMinimum != nil {
+		switch v := s.ExclusiveMinimum.(type) {
+		case bool:
+			result.ExclusiveMinimum = schema.NewUnionTypeB[float64, bool](v)
+		case float64:
+			result.ExclusiveMinimum = schema.NewUnionTypeA[float64, bool](v)
+		}
+	}
+
+	if s.ExclusiveMaximum != nil {
+		switch v := s.ExclusiveMaximum.(type) {
+		case bool:
+			result.ExclusiveMaximum = schema.NewUnionTypeB[float64, bool](v)
+		case float64:
+			result.ExclusiveMaximum = schema.NewUnionTypeA[float64, bool](v)
 		}
 	}
 

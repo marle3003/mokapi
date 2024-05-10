@@ -53,19 +53,24 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 	}
 	c.history[s] = js
 
-	if s.Minimum != nil {
-		if s.ExclusiveMinimum != nil && *s.ExclusiveMinimum {
+	if s.ExclusiveMinimum != nil {
+		if s.ExclusiveMinimum.IsA() {
+			js.ExclusiveMinimum = &s.ExclusiveMinimum.A
+		} else if s.ExclusiveMinimum.B {
 			js.ExclusiveMinimum = s.Minimum
-		} else {
-			js.Minimum = s.Minimum
 		}
+	} else {
+		js.Minimum = s.Minimum
 	}
-	if s.Maximum != nil {
-		if s.ExclusiveMaximum != nil && *s.ExclusiveMaximum {
+
+	if s.ExclusiveMaximum != nil {
+		if s.ExclusiveMaximum.IsA() {
+			js.ExclusiveMaximum = &s.ExclusiveMaximum.A
+		} else if s.ExclusiveMaximum.B {
 			js.ExclusiveMaximum = s.Maximum
-		} else {
-			js.Maximum = s.Maximum
 		}
+	} else {
+		js.Maximum = s.Maximum
 	}
 
 	js.Type = s.Type

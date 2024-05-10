@@ -360,10 +360,10 @@ export interface Schema {
     maximum?: number;
 
     /** Specifies whether minimum value is exluded. Default is false. */
-    exclusiveMinimum?: boolean;
+    exclusiveMinimum?: number | boolean;
 
     /** ** Specifies whether maximum value is exluded. Default is false. */
-    exclusiveMaximum?: boolean;
+    exclusiveMaximum?: number | boolean;
 
     /** Valid against one of the specified schemas. */
     anyOf?: Schema[];

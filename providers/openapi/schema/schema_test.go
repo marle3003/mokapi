@@ -190,17 +190,31 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 			},
 		},
 		{
-			name: "exclusiveMinimum",
+			name: "exclusiveMinimum bool",
 			s:    `{ "exclusiveMinimum": true }`,
 			fn: func(t *testing.T, r *schema.Ref) {
-				require.True(t, *r.Value.ExclusiveMinimum)
+				require.Equal(t, true, r.Value.ExclusiveMinimum.Value())
 			},
 		},
 		{
-			name: "exclusiveMaximum",
+			name: "exclusiveMinimum float",
+			s:    `{ "exclusiveMinimum": 1.5 }`,
+			fn: func(t *testing.T, r *schema.Ref) {
+				require.Equal(t, 1.5, r.Value.ExclusiveMinimum.Value())
+			},
+		},
+		{
+			name: "exclusiveMaximum bool",
 			s:    `{ "exclusiveMaximum": true }`,
 			fn: func(t *testing.T, r *schema.Ref) {
-				require.True(t, *r.Value.ExclusiveMaximum)
+				require.Equal(t, true, r.Value.ExclusiveMaximum.Value())
+			},
+		},
+		{
+			name: "exclusiveMaximum float",
+			s:    `{ "exclusiveMaximum": 1.5 }`,
+			fn: func(t *testing.T, r *schema.Ref) {
+				require.Equal(t, 1.5, r.Value.ExclusiveMaximum.Value())
 			},
 		},
 		{
@@ -404,21 +418,39 @@ maxItems: 3
 			},
 		},
 		{
-			name: "exclusiveMinimum",
+			name: "exclusiveMinimum bool",
 			s: `
 exclusiveMinimum: true
 `,
 			fn: func(t *testing.T, r *schema.Schema) {
-				require.True(t, *r.ExclusiveMinimum)
+				require.Equal(t, true, r.ExclusiveMinimum.Value())
 			},
 		},
 		{
-			name: "exclusiveMaximum",
+			name: "exclusiveMinimum float",
+			s: `
+exclusiveMinimum: 1.5
+`,
+			fn: func(t *testing.T, r *schema.Schema) {
+				require.Equal(t, 1.5, r.ExclusiveMinimum.Value())
+			},
+		},
+		{
+			name: "exclusiveMaximum bool",
 			s: `
 exclusiveMaximum: true
 `,
 			fn: func(t *testing.T, r *schema.Schema) {
-				require.True(t, *r.ExclusiveMaximum)
+				require.Equal(t, true, r.ExclusiveMaximum.Value())
+			},
+		},
+		{
+			name: "exclusiveMaximum float",
+			s: `
+exclusiveMaximum: 1.5
+`,
+			fn: func(t *testing.T, r *schema.Schema) {
+				require.Equal(t, 1.5, r.ExclusiveMaximum.Value())
 			},
 		},
 		{
