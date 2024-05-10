@@ -400,9 +400,13 @@ func TestProvider(t *testing.T) {
 			},
 		},
 	}
+
+	t.Parallel()
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			p := NewWithWalker(tc.cfg, tc.fs)
 			pool := safe.NewPool(context.Background())
 			t.Cleanup(func() {
@@ -417,11 +421,12 @@ func TestProvider(t *testing.T) {
 				select {
 				case c := <-ch:
 					configs = append(configs, c)
-				case <-time.After(3 * time.Second):
+				case <-time.After(5 * time.Second):
 					break Collect
 				}
 			}
 			tc.test(t, configs)
+			close(ch)
 		})
 	}
 }
