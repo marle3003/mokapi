@@ -12,6 +12,7 @@ import (
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/providers/openapi/schema/schematest"
 	"mokapi/runtime/events"
+	"mokapi/version"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -84,6 +85,19 @@ func TestResolveEndpoint(t *testing.T) {
 				h(rr, r)
 				require.Equal(t, 500, rr.Code)
 				require.Equal(t, "no success response (HTTP 2xx) in configuration\n", rr.Body.String())
+			},
+		},
+		{
+			name: "no success response specified",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+				c.OpenApi = version.New("3.1")
+				op := openapitest.NewOperation()
+				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				r := httptest.NewRequest("GET", "http://localhost/foo", nil)
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, 200, rr.Code)
+				require.Greater(t, len(rr.Body.String()), 0) // random body
 			},
 		},
 		{

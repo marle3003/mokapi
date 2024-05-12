@@ -9,6 +9,7 @@ import (
 	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/ref"
 	"mokapi/providers/openapi/schema"
+	"mokapi/version"
 	"net/http"
 	"strings"
 )
@@ -24,7 +25,7 @@ func Convert(config *Config) (*openapi.Config, error) {
 
 func (c *converter) Convert() (*openapi.Config, error) {
 	result := &openapi.Config{
-		OpenApi: "3.0.1",
+		OpenApi: version.New("3.0.3"),
 		Info:    c.config.Info,
 		Paths:   make(map[string]*openapi.PathRef),
 	}

@@ -3,12 +3,14 @@ package openapi
 import (
 	"context"
 	"fmt"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"mokapi/engine/common"
 	"mokapi/media"
 	"mokapi/providers/openapi/parameter"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
+	"mokapi/version"
 	"net/http"
 	"regexp"
 	"strings"
@@ -58,8 +60,12 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	status, res, err := op.getFirstSuccessResponse()
 	if err != nil {
-		writeError(rw, r, err, h.config.Info.Name)
-		return
+		if errors.Is(err, NoSuccessResponse) && !h.config.OpenApi.IsLower(version.New("3.1")) {
+			status, res = getDefaultResponse()
+		} else {
+			writeError(rw, r, err, h.config.Info.Name)
+			return
+		}
 	}
 
 	contentType, mediaType, err := ContentTypeFromRequest(r, res)
@@ -100,14 +106,16 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	actions := h.eventEmitter.Emit("http", request, response)
 
-	res = op.getResponse(response.StatusCode)
-	if res == nil {
-		writeError(rw, r,
-			fmt.Errorf(
-				"no configuration was found for HTTP status code %v, https://swagger.io/docs/specification/describing-responses",
-				response.StatusCode),
-			h.config.Info.Name)
-		return
+	if status != response.StatusCode {
+		res = op.getResponse(response.StatusCode)
+		if res == nil {
+			writeError(rw, r,
+				fmt.Errorf(
+					"no configuration was found for HTTP status code %v, https://swagger.io/docs/specification/describing-responses",
+					response.StatusCode),
+				h.config.Info.Name)
+			return
+		}
 	}
 
 	// todo: only specified headers should be written

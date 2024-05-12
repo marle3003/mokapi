@@ -1,10 +1,14 @@
 package openapi
 
 import (
-	"fmt"
+	"github.com/pkg/errors"
 	"mokapi/config/dynamic"
+	"mokapi/media"
 	"mokapi/providers/openapi/parameter"
+	"net/http"
 )
+
+var NoSuccessResponse = errors.New("no success response (HTTP 2xx) in configuration")
 
 type Operation struct {
 	// A list of tags for API documentation control. Tags can be used for
@@ -55,7 +59,20 @@ func (o *Operation) getFirstSuccessResponse() (int, *Response, error) {
 		}
 	}
 
-	return 0, nil, fmt.Errorf("no success response (HTTP 2xx) in configuration")
+	return 0, nil, NoSuccessResponse
+}
+
+func getDefaultResponse() (int, *Response) {
+	r := &Response{
+		Content: Content{
+			"application/json": &MediaType{
+				Schema:      nil,
+				ContentType: media.ParseContentType("application/json"),
+			},
+		},
+	}
+
+	return http.StatusOK, r
 }
 
 func (o *Operation) getResponse(statusCode int) *Response {

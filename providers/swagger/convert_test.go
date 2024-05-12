@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/parameter"
+	"mokapi/version"
 	"net/http"
 	"testing"
 )
@@ -19,7 +20,7 @@ func TestConvert(t *testing.T) {
 			name:   "header",
 			config: `{"swagger": "2.0"}`,
 			test: func(t *testing.T, config *openapi.Config) {
-				require.Equal(t, "3.0.1", config.OpenApi)
+				require.Equal(t, version.New("3.0.3"), config.OpenApi)
 			},
 		},
 		{

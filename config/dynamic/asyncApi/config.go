@@ -10,7 +10,7 @@ import (
 	"strconv"
 )
 
-var supportedVersions = []*version.Version{
+var supportedVersions = []version.Version{
 	version.New("2.0.0"),
 	version.New("2.1.0"),
 	version.New("2.2.0"),

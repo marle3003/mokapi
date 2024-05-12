@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+const StartPrecedence = -1
+
 type IgnoreFiles map[string]*IgnoreFile
 
 type IgnoreFile struct {
@@ -41,7 +43,6 @@ func (i *IgnoreFile) Match(path string) bool {
 }
 
 func (m IgnoreFiles) Match(path string) bool {
-	const StartPrecedence = -1
 	var file *IgnoreFile
 	precedence := StartPrecedence
 	for k, v := range m {

@@ -48,15 +48,30 @@ info:
 		},
 		{
 			`
+openapi: 3.1
+info:
+  title: foo
+`,
+			nil,
+		},
+		{
+			`
 openapi: 2
 info:
   title: foo
 `,
-			fmt.Errorf("unsupported version: 2"),
+			fmt.Errorf("not supported version: 2.0.0"),
 		},
 		{
 			`
 openapi: 3
+info:
+`,
+			fmt.Errorf("an openapi title is required"),
+		},
+		{
+			`
+openapi: 3.0.3
 info:
 `,
 			fmt.Errorf("an openapi title is required"),
