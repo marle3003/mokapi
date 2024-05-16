@@ -164,8 +164,8 @@ func parseXml(n *xml.Node, r *Ref) (interface{}, error) {
 	}
 
 	s := r.Value
-	switch s.Type {
-	case "object":
+	switch {
+	case s.Type.Includes("object"):
 		if s.Properties == nil && s.IsFreeForm() {
 			return parseFreeForm(n)
 		}
@@ -194,7 +194,7 @@ func parseXml(n *xml.Node, r *Ref) (interface{}, error) {
 			}
 		}
 		return props, nil
-	case "array":
+	case s.Type.Includes("array"):
 		if n == nil {
 			return nil, fmt.Errorf("expected array but found null")
 		}

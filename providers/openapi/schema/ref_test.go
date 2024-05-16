@@ -8,6 +8,7 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/json/ref"
+	jsonSchema "mokapi/json/schema"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
 	"net/url"
@@ -38,7 +39,7 @@ func TestRef_String(t *testing.T) {
 	r.Value = &schema.Schema{}
 	require.Equal(t, "", r.String())
 
-	r.Value.Type = "number"
+	r.Value.Type = jsonSchema.Types{"number"}
 	require.Equal(t, "schema type=number", r.String())
 }
 
@@ -69,7 +70,7 @@ func TestRef_Parse(t *testing.T) {
 				err := r.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: r}, reader)
 				require.NoError(t, err)
 				require.NotNil(t, r.Value)
-				require.Equal(t, "number", r.Value.Type)
+				require.Equal(t, "number", r.Value.Type.String())
 			},
 		},
 		{

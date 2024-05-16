@@ -18,7 +18,7 @@ func (ap *AdditionalProperties) IsFreeForm() bool {
 	if ap.Ref == nil || ap.Value == nil {
 		return !ap.Forbidden
 	}
-	if ap.Value != nil && ap.Value.Type == "" {
+	if ap.Value != nil && len(ap.Value.Type) == 0 {
 		return true
 	}
 	return false

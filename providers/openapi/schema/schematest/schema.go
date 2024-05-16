@@ -1,6 +1,7 @@
 package schematest
 
 import (
+	jsonSchema "mokapi/json/schema"
 	"mokapi/providers/openapi/schema"
 )
 
@@ -8,7 +9,7 @@ type SchemaOptions func(s *schema.Schema)
 
 func New(typeName string, opts ...SchemaOptions) *schema.Schema {
 	s := new(schema.Schema)
-	s.Type = typeName
+	s.Type = jsonSchema.Types{typeName}
 	for _, opt := range opts {
 		opt(s)
 	}
@@ -17,11 +18,17 @@ func New(typeName string, opts ...SchemaOptions) *schema.Schema {
 
 func NewRef(typeName string, opts ...SchemaOptions) *schema.Ref {
 	s := new(schema.Schema)
-	s.Type = typeName
+	s.Type = jsonSchema.Types{typeName}
 	for _, opt := range opts {
 		opt(s)
 	}
 	return &schema.Ref{Value: s}
+}
+
+func And(typeName string) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Type = append(s.Type, typeName)
+	}
 }
 
 func WithProperty(name string, ps *schema.Schema) SchemaOptions {

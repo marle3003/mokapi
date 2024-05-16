@@ -13,6 +13,14 @@ func TestSchemaJson(t *testing.T) {
 		test func(t *testing.T, s *Schema, err error)
 	}{
 		{
+			name: "schema",
+			data: `{"$schema": "http://json-schema.org/draft-07/schema#"}`,
+			test: func(t *testing.T, s *Schema, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "http://json-schema.org/draft-07/schema#", s.Schema)
+			},
+		},
+		{
 			name: "single type",
 			data: `{"type": "string"}`,
 			test: func(t *testing.T, s *Schema, err error) {
@@ -229,6 +237,23 @@ func TestSchemaJson(t *testing.T) {
 			test: func(t *testing.T, s *Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string][]string{"foo": {"bar"}}, s.DependentRequired)
+			},
+		},
+		// Media
+		{
+			name: "contentMediaType",
+			data: `{"contentMediaType": "text/html" }`,
+			test: func(t *testing.T, s *Schema, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "text/html", s.ContentMediaType)
+			},
+		},
+		{
+			name: "contentMediaType",
+			data: `{"contentEncoding": "base64" }`,
+			test: func(t *testing.T, s *Schema, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "base64", s.ContentEncoding)
 			},
 		},
 	}

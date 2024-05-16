@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestJsScriptEngine(t *testing.T) {
@@ -43,9 +44,11 @@ func TestJsScriptEngine(t *testing.T) {
 	t.Run("typescript async default function", func(t *testing.T) {
 		t.Parallel()
 		e := enginetest.NewEngine()
-		err := e.AddScript(newScript("test.js", "export default async function(){ setTimeout(() => { mokapi.every('1m', function() {}) }, 500)}"))
+		err := e.AddScript(newScript("test.js", "import { every } from 'mokapi'; export default async function(){ setTimeout(() => { every('1m', function() {}) }, 500)}"))
 		r.NoError(t, err)
-		r.Equal(t, 1, e.Scripts(), "no events and jobs, script should be closed")
+		r.Equal(t, 1, e.Scripts())
+		time.Sleep(2 * time.Second)
+		e.Close()
 	})
 }
 

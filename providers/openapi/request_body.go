@@ -6,8 +6,8 @@ import (
 	"gopkg.in/yaml.v3"
 	"io"
 	"mokapi/config/dynamic"
-	"mokapi/json/ref"
 	"mokapi/media"
+	"mokapi/providers/openapi/ref"
 	"mokapi/providers/openapi/schema"
 	"net/http"
 	"strings"
@@ -225,10 +225,10 @@ func (d urlValueDecoder) decode(propName string, val interface{}) (interface{}, 
 	values := val.([]string)
 
 	prop := d.mt.Schema.Value.Properties.Get(propName)
-	switch prop.Value.Type {
-	case "integer", "number", "string":
+	switch {
+	case prop.Value.Type.IsOneOf("integer", "number", "string"):
 		return values[0], nil
-	case "array":
+	case prop.Value.Type.IsArray():
 		return d.decodeArray(propName, values)
 	default:
 		return nil, fmt.Errorf("unsupported type %v", prop.Value.Type)

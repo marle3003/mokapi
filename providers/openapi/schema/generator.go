@@ -35,6 +35,7 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 	}
 
 	js := &schema.Schema{
+		Schema:               s.Schema,
 		Enum:                 s.Enum,
 		MinLength:            s.MinLength,
 		MaxLength:            s.MaxLength,
@@ -53,24 +54,27 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 	}
 	c.history[s] = js
 
-	if s.Minimum != nil {
-		if s.ExclusiveMinimum != nil && *s.ExclusiveMinimum {
+	if s.ExclusiveMinimum != nil {
+		if s.ExclusiveMinimum.IsA() {
+			js.ExclusiveMinimum = &s.ExclusiveMinimum.A
+		} else if s.ExclusiveMinimum.B {
 			js.ExclusiveMinimum = s.Minimum
-		} else {
-			js.Minimum = s.Minimum
 		}
-	}
-	if s.Maximum != nil {
-		if s.ExclusiveMaximum != nil && *s.ExclusiveMaximum {
-			js.ExclusiveMaximum = s.Maximum
-		} else {
-			js.Maximum = s.Maximum
-		}
+	} else {
+		js.Minimum = s.Minimum
 	}
 
-	if len(s.Type) > 0 {
-		js.Type = append(js.Type, s.Type)
+	if s.ExclusiveMaximum != nil {
+		if s.ExclusiveMaximum.IsA() {
+			js.ExclusiveMaximum = &s.ExclusiveMaximum.A
+		} else if s.ExclusiveMaximum.B {
+			js.ExclusiveMaximum = s.Maximum
+		}
+	} else {
+		js.Maximum = s.Maximum
 	}
+
+	js.Type = s.Type
 
 	if s.Properties != nil {
 		js.Properties = &schema.Schemas{}
@@ -100,9 +104,13 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 		js.Type = append(js.Type, "null")
 	}
 
-	if s.Example != nil {
+	js.Examples = s.Examples
+	if s.Example != nil && s.Examples == nil {
 		js.Examples = append(js.Examples, s.Example)
 	}
+
+	js.ContentMediaType = s.ContentMediaType
+	js.ContentEncoding = s.ContentEncoding
 
 	return js
 }

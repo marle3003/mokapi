@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
-	"mokapi/json/ref"
 	"mokapi/media"
+	"mokapi/providers/openapi/ref"
 	"mokapi/sortedmap"
 	"strconv"
 )

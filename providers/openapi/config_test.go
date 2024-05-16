@@ -48,15 +48,30 @@ info:
 		},
 		{
 			`
+openapi: 3.1
+info:
+  title: foo
+`,
+			nil,
+		},
+		{
+			`
 openapi: 2
 info:
   title: foo
 `,
-			fmt.Errorf("unsupported version: 2"),
+			fmt.Errorf("not supported version: 2.0.0"),
 		},
 		{
 			`
 openapi: 3
+info:
+`,
+			fmt.Errorf("an openapi title is required"),
+		},
+		{
+			`
+openapi: 3.0.3
 info:
 `,
 			fmt.Errorf("an openapi title is required"),
@@ -169,7 +184,7 @@ components:
 			f: func(t *testing.T, c *openapi.Config) {
 				require.Equal(t, 1, c.Components.Schemas.Len())
 				foo := c.Components.Schemas.Get("Foo")
-				require.Equal(t, "string", foo.Value.Type)
+				require.Equal(t, "string", foo.Value.Type.String())
 			},
 		},
 		{
@@ -232,43 +247,43 @@ func TestConfig_PetStore_PetSchema(t *testing.T) {
 
 	pet := config.Components.Schemas.Get("Pet")
 	require.Equal(t, []string{"name", "photoUrls"}, pet.Value.Required)
-	require.Equal(t, "object", pet.Value.Type)
+	require.Equal(t, "object", pet.Value.Type.String())
 	require.Equal(t, "Pet", pet.Value.Xml.Name)
 
 	// id
 	id := pet.Value.Properties.Get("id")
-	require.Equal(t, "integer", id.Value.Type)
+	require.Equal(t, "integer", id.Value.Type.String())
 	require.Equal(t, "int64", id.Value.Format)
 
 	// category
 	category := pet.Value.Properties.Get("category")
 	require.Equal(t, "#/components/schemas/Category", category.Ref)
 	require.NotNil(t, category.Value, "ref resolved")
-	require.Equal(t, "object", category.Value.Type)
+	require.Equal(t, "object", category.Value.Type.String())
 
 	// name
 	name := pet.Value.Properties.Get("name")
-	require.Equal(t, "string", name.Value.Type)
+	require.Equal(t, "string", name.Value.Type.String())
 	require.Equal(t, "doggie", name.Value.Example)
 
 	// photoUrls
 	photoUrls := pet.Value.Properties.Get("photoUrls")
-	require.Equal(t, "array", photoUrls.Value.Type)
-	require.Equal(t, "string", photoUrls.Value.Items.Value.Type)
+	require.Equal(t, "array", photoUrls.Value.Type.String())
+	require.Equal(t, "string", photoUrls.Value.Items.Value.Type.String())
 	require.Equal(t, "photoUrl", photoUrls.Value.Xml.Name)
 	require.True(t, photoUrls.Value.Xml.Wrapped)
 
 	// tags
 	tags := pet.Value.Properties.Get("tags")
-	require.Equal(t, "array", tags.Value.Type)
+	require.Equal(t, "array", tags.Value.Type.String())
 	require.Equal(t, "#/components/schemas/Tag", tags.Value.Items.Ref)
-	require.Equal(t, "object", tags.Value.Items.Value.Type)
+	require.Equal(t, "object", tags.Value.Items.Value.Type.String())
 	require.Equal(t, "tag", tags.Value.Xml.Name)
 	require.True(t, tags.Value.Xml.Wrapped)
 
 	// status
 	status := pet.Value.Properties.Get("status")
-	require.Equal(t, "string", status.Value.Type)
+	require.Equal(t, "string", status.Value.Type.String())
 	require.Equal(t, "pet status in the store", status.Value.Description)
 	require.Equal(t, []interface{}{"available", "pending", "sold"}, status.Value.Enum)
 
@@ -336,13 +351,13 @@ func TestPetStore_Paramters(t *testing.T) {
 	require.Len(t, params, 2)
 	require.Equal(t, "api_key", params[0].Value.Name)
 	require.Equal(t, parameter.Header, params[0].Value.Type)
-	require.Equal(t, "string", params[0].Value.Schema.Value.Type)
+	require.Equal(t, "string", params[0].Value.Schema.Value.Type.String())
 
 	require.Equal(t, "petId", params[1].Value.Name)
 	require.Equal(t, parameter.Path, params[1].Value.Type)
 	require.Equal(t, "Pet id to delete", params[1].Value.Description)
 	require.True(t, params[1].Value.Required)
-	require.Equal(t, "integer", params[1].Value.Schema.Value.Type)
+	require.Equal(t, "integer", params[1].Value.Schema.Value.Type.String())
 	require.Equal(t, "int64", params[1].Value.Schema.Value.Format)
 }
 
@@ -392,7 +407,7 @@ func TestConfig_Patch(t *testing.T) {
 			test: func(t *testing.T, result *openapi.Config) {
 				require.Equal(t, 1, result.Components.Schemas.Len())
 				require.NotNil(t, result.Components.Schemas.Get("Foo"))
-				require.Equal(t, "string", result.Components.Schemas.Get("Foo").Value.Type)
+				require.Equal(t, "string", result.Components.Schemas.Get("Foo").Value.Type.String())
 			},
 		},
 	}

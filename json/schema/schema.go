@@ -6,6 +6,8 @@ import (
 )
 
 type Schema struct {
+	Schema string `yaml:"$schema,omitempty" json:"$schema,omitempty"`
+
 	Type     Types         `yaml:"type,omitempty" json:"type,omitempty"`
 	Enum     []interface{} `yaml:"enum,omitempty" json:"enum,omitempty"`
 	Const    interface{}   `yaml:"const,omitempty" json:"const,omitempty"`
@@ -44,6 +46,9 @@ type Schema struct {
 	AllOf []*Ref `yaml:"allOf,omitempty" json:"allOf,omitempty"`
 	AnyOf []*Ref `yaml:"anyOf,omitempty" json:"anyOf,omitempty"`
 	OneOf []*Ref `yaml:"oneOf,omitempty" json:"oneOf,omitempty"`
+
+	ContentMediaType string `yaml:"contentMediaType,omitempty" json:"contentMediaType,omitempty"`
+	ContentEncoding  string `yaml:"contentEncoding,omitempty" json:"contentEncoding,omitempty"`
 }
 
 type UnmarshalError struct {
@@ -61,7 +66,7 @@ func (s *Schema) Parse() error {
 		case "string", "integer", "boolean", "null", "array", "object":
 			continue
 		default:
-			return fmt.Errorf("unsupported type %v", s.Type[0])
+			return fmt.Errorf("unsupported type %v", t)
 		}
 	}
 

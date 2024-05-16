@@ -2,11 +2,14 @@ package swagger
 
 import (
 	"fmt"
-	"mokapi/json/ref"
+	jsonRef "mokapi/json/ref"
+	jsonSchema "mokapi/json/schema"
 	"mokapi/media"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/parameter"
+	"mokapi/providers/openapi/ref"
 	"mokapi/providers/openapi/schema"
+	"mokapi/version"
 	"net/http"
 	"strings"
 )
@@ -22,7 +25,7 @@ func Convert(config *Config) (*openapi.Config, error) {
 
 func (c *converter) Convert() (*openapi.Config, error) {
 	result := &openapi.Config{
-		OpenApi: "3.0.1",
+		OpenApi: version.New("3.0.3"),
 		Info:    c.config.Info,
 		Paths:   make(map[string]*openapi.PathRef),
 	}
@@ -195,14 +198,14 @@ func (c *converter) convertSchema(s *schema.Ref) *schema.Ref {
 	}
 
 	if len(s.Ref) > 0 {
-		return &schema.Ref{Reference: ref.Reference{Ref: convertRef(s.Ref)}}
+		return &schema.Ref{Reference: jsonRef.Reference{Ref: convertRef(s.Ref)}}
 	}
 
 	if s.Value == nil {
 		return s
 	}
 
-	if s.Value.Type == "integer" && s.Value.Format == "" {
+	if s.Value.Type.IsInteger() && s.Value.Format == "" {
 		s.Value.Format = "int32"
 	}
 
@@ -245,14 +248,14 @@ func convertParameter(p *Parameter) *parameter.Ref {
 		Name: p.Name,
 		Type: parameter.Location(p.In),
 		Schema: &schema.Ref{Value: &schema.Schema{
-			Type:             p.Type,
+			Type:             jsonSchema.Types{p.Type},
 			Format:           p.Format,
 			Pattern:          p.Pattern,
 			Items:            p.Items,
 			Minimum:          p.Minimum,
 			Maximum:          p.Maximum,
-			ExclusiveMinimum: &p.ExclusiveMin,
-			ExclusiveMaximum: &p.ExclusiveMax,
+			ExclusiveMinimum: schema.NewUnionTypeB[float64, bool](p.ExclusiveMin),
+			ExclusiveMaximum: schema.NewUnionTypeB[float64, bool](p.ExclusiveMin),
 			UniqueItems:      p.UniqueItems,
 			MinItems:         &p.MinItems,
 			MaxItems:         p.MaxItems,

@@ -2,6 +2,7 @@ package schema_test
 
 import (
 	"github.com/stretchr/testify/require"
+	jsonSchema "mokapi/json/schema"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
 	"testing"
@@ -13,6 +14,36 @@ func TestSchema_Patch(t *testing.T) {
 		schemas []*schema.Schema
 		test    func(t *testing.T, result *schema.Schema)
 	}{
+		{
+			name: "patch type",
+			schemas: []*schema.Schema{
+				{},
+				{Type: jsonSchema.Types{"integer"}},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, "integer", result.Type.String())
+			},
+		},
+		{
+			name: "patch type merge",
+			schemas: []*schema.Schema{
+				{Type: jsonSchema.Types{"string"}},
+				{Type: jsonSchema.Types{"integer"}},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, "[string integer]", result.Type.String())
+			},
+		},
+		{
+			name: "patch types result list should be unique",
+			schemas: []*schema.Schema{
+				{Type: jsonSchema.Types{"string"}},
+				{Type: jsonSchema.Types{"string"}},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, "string", result.Type.String())
+			},
+		},
 		{
 			name: "patch format",
 			schemas: []*schema.Schema{
@@ -97,10 +128,10 @@ func TestSchema_Patch(t *testing.T) {
 				require.Equal(t, 2, result.Properties.Len())
 				foo := result.Properties.Get("foo")
 				require.NotNil(t, foo)
-				require.Equal(t, "string", foo.Value.Type)
+				require.Equal(t, "string", foo.Value.Type.String())
 				bar := result.Properties.Get("bar")
 				require.NotNil(t, bar)
-				require.Equal(t, "number", bar.Value.Type)
+				require.Equal(t, "number", bar.Value.Type.String())
 			},
 		},
 		{
@@ -115,7 +146,7 @@ func TestSchema_Patch(t *testing.T) {
 				require.Equal(t, 1, result.Properties.Len())
 				foo := result.Properties.Get("foo")
 				require.NotNil(t, foo)
-				require.Equal(t, "number", foo.Value.Type)
+				require.Equal(t, "[string number]", foo.Value.Type.String())
 			},
 		},
 		{
@@ -126,8 +157,8 @@ func TestSchema_Patch(t *testing.T) {
 					schematest.WithItems("string")),
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, "array", result.Type)
-				require.Equal(t, "string", result.Items.Value.Type)
+				require.Equal(t, "array", result.Type.String())
+				require.Equal(t, "string", result.Items.Value.Type.String())
 			},
 		},
 		{
@@ -139,8 +170,8 @@ func TestSchema_Patch(t *testing.T) {
 					schematest.WithItems("string", schematest.WithFormat("foo"))),
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, "array", result.Type)
-				require.Equal(t, "string", result.Items.Value.Type)
+				require.Equal(t, "array", result.Type.String())
+				require.Equal(t, "string", result.Items.Value.Type.String())
 				require.Equal(t, "foo", result.Items.Value.Format)
 			},
 		},
@@ -345,40 +376,40 @@ func TestSchema_Patch(t *testing.T) {
 			name: "patch exclusive minimum",
 			schemas: []*schema.Schema{
 				{},
-				{ExclusiveMinimum: toBoolP(true)},
+				{ExclusiveMinimum: schema.NewUnionTypeB[float64, bool](true)},
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.True(t, *result.ExclusiveMinimum)
+				require.True(t, result.ExclusiveMinimum.B)
 			},
 		},
 		{
 			name: "patch overwrite minimum",
 			schemas: []*schema.Schema{
-				{ExclusiveMinimum: toBoolP(true)},
-				{ExclusiveMinimum: toBoolP(false)},
+				{ExclusiveMinimum: schema.NewUnionTypeB[float64, bool](true)},
+				{ExclusiveMinimum: schema.NewUnionTypeB[float64, bool](false)},
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.False(t, *result.ExclusiveMinimum)
+				require.False(t, result.ExclusiveMinimum.B)
 			},
 		},
 		{
 			name: "patch exclusive maximum",
 			schemas: []*schema.Schema{
 				{},
-				{ExclusiveMaximum: toBoolP(true)},
+				{ExclusiveMaximum: schema.NewUnionTypeB[float64, bool](true)},
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.True(t, *result.ExclusiveMaximum)
+				require.True(t, result.ExclusiveMaximum.B)
 			},
 		},
 		{
 			name: "patch overwrite maximum",
 			schemas: []*schema.Schema{
-				{ExclusiveMaximum: toBoolP(true)},
-				{ExclusiveMaximum: toBoolP(false)},
+				{ExclusiveMaximum: schema.NewUnionTypeB[float64, bool](true)},
+				{ExclusiveMaximum: schema.NewUnionTypeB[float64, bool](false)},
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.False(t, *result.ExclusiveMaximum)
+				require.False(t, result.ExclusiveMaximum.B)
 			},
 		},
 		{
@@ -508,7 +539,7 @@ func TestRef_Patch(t *testing.T) {
 				{},
 			},
 			test: func(t *testing.T, result *schema.Ref) {
-				require.Equal(t, "object", result.Value.Type)
+				require.Equal(t, "object", result.Value.Type.String())
 			},
 		},
 		{
@@ -518,7 +549,7 @@ func TestRef_Patch(t *testing.T) {
 				{Value: schematest.New("object")},
 			},
 			test: func(t *testing.T, result *schema.Ref) {
-				require.Equal(t, "object", result.Value.Type)
+				require.Equal(t, "object", result.Value.Type.String())
 			},
 		},
 	}

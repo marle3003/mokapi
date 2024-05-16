@@ -45,7 +45,7 @@ interface DialogData {
     message: string
     headers: { [name: string]: string }
     contentType: string
-    keyType: string
+    keyType: string | string[]
     partition: number
     offset: number
     time: string

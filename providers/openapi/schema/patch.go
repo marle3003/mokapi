@@ -1,5 +1,7 @@
 package schema
 
+import jsonSchema "mokapi/json/schema"
+
 func (r *Ref) Patch(patch *Ref) {
 	if patch == nil || patch.Value == nil {
 		return
@@ -14,7 +16,7 @@ func (r *Ref) Patch(patch *Ref) {
 
 func (s *Schema) Patch(patch *Schema) {
 	if len(patch.Type) > 0 {
-		s.Type = patch.Type
+		s.Type = mergeTypes(s.Type, patch.Type)
 	}
 	if len(patch.Format) > 0 {
 		s.Format = patch.Format
@@ -130,4 +132,17 @@ func (s *Schemas) Patch(patch *Schemas) {
 			s.Set(it.Key(), it.Value())
 		}
 	}
+}
+
+func mergeTypes(origin, patch jsonSchema.Types) jsonSchema.Types {
+	m := map[string]struct{}{}
+	for _, t := range origin {
+		m[t] = struct{}{}
+	}
+	for _, t := range patch {
+		if _, exists := m[t]; !exists {
+			origin = append(origin, t)
+		}
+	}
+	return origin
 }

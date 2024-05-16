@@ -189,7 +189,11 @@ func (m *Module) Marshal(i interface{}, encoding *MarshalArg) string {
 	r := &schema.Ref{}
 	if encoding != nil {
 		ct = media.ParseContentType(encoding.ContentType)
-		r.Value = faker.ConvertToSchema(encoding.Schema)
+		v, err := faker.ConvertToSchema(encoding.Schema)
+		if err != nil {
+			panic(m.vm.ToValue(err.Error()))
+		}
+		r.Value = v
 	}
 	if ct.IsEmpty() {
 		ct = media.ParseContentType("application/json")

@@ -39,11 +39,7 @@ func (s *Schema) String() string {
 		return sb.String()
 	}
 
-	if len(s.Type) == 1 {
-		sb.WriteString(fmt.Sprintf("schema type=%v", s.Type[0]))
-	} else if len(s.Type) > 1 {
-		sb.WriteString(fmt.Sprintf("schema type=%v", s.Type))
-	}
+	sb.WriteString(fmt.Sprintf("schema type=%v", s.Type.String()))
 
 	if len(s.Format) > 0 {
 		sb.WriteString(fmt.Sprintf(" format=%v", s.Format))
@@ -108,6 +104,15 @@ func (s *Schema) String() string {
 	}
 
 	return sb.String()
+}
+
+func (t *Types) String() string {
+	if len(*t) == 1 {
+		return (*t)[0]
+	} else if len(*t) > 1 {
+		return fmt.Sprintf("%v", *t)
+	}
+	return ""
 }
 
 //func (s *Schema) IsFreeForm() bool {

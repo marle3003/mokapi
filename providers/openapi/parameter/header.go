@@ -19,10 +19,10 @@ func parseHeader(p *Parameter, r *http.Request) (*RequestParameterValue, error) 
 	rp := &RequestParameterValue{Raw: header, Value: header}
 	var err error
 	if p.Schema != nil {
-		switch p.Schema.Value.Type {
-		case "array":
+		switch {
+		case p.Schema.Value.Type.IsArray():
 			rp.Value, err = parseArray(p, header, ",")
-		case "object":
+		case p.Schema.Value.Type.IsObject():
 			rp.Value, err = parseObject(p, header, ",", p.IsExplode(), defaultDecode)
 		default:
 			rp.Value, err = schema.ParseString(header, p.Schema)

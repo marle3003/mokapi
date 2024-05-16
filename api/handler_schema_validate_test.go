@@ -27,7 +27,7 @@ func TestHandler_Schema_Validate(t *testing.T) {
 					map[string]string{
 						"Data-Content-Type": "application/json",
 					},
-					`{ "schema": {"type": "string"}, "data":"\"foo\"" }`,
+					`{ "schema": {"type": ["string"]}, "data":"\"foo\"" }`,
 					h,
 					try.HasBody(""),
 					try.HasStatusCode(200),
@@ -46,7 +46,7 @@ func TestHandler_Schema_Validate(t *testing.T) {
 					map[string]string{
 						"Data-Content-Type": "application/json",
 					},
-					`{ "schema": {"type": "object", "properties": { "foo":{ "type": "string" } } }, "data":"{\"foo\": \"bar\" }" }`,
+					`{ "schema": {"type": ["object"], "properties": { "foo":{ "type": ["string"] } } }, "data":"{\"foo\": \"bar\" }" }`,
 					h,
 					try.HasBody(""),
 					try.HasStatusCode(200),
@@ -65,7 +65,7 @@ func TestHandler_Schema_Validate(t *testing.T) {
 					map[string]string{
 						"Data-Content-Type": "application/json",
 					},
-					`{ "schema": {"type": "object", "properties": { "foo":{ "type": "string" }, "bar":{ "type": "integer" } } }, "data":"{\"foo\": 12, \"bar\": \"text\" }" }`,
+					`{ "schema": {"type": ["object"], "properties": { "foo":{ "type": ["string"] }, "bar":{ "type": ["integer"] } } }, "data":"{\"foo\": 12, \"bar\": \"text\" }" }`,
 					h,
 					try.BodyContains("parse 'bar' failed: parse 'text' failed, expected schema type=integer\n"),
 					try.BodyContains("parse 'foo' failed: parse 12 failed, expected schema type=string\n"),
@@ -85,7 +85,7 @@ func TestHandler_Schema_Validate(t *testing.T) {
 					map[string]string{
 						"Data-Content-Type": "application/xml",
 					},
-					`{ "schema": {"type": "object", "properties": { "foo":{ "type": "string" } }, "xml": { "name": "root" } }, "data":"<root><foo>bar</foo></root>" }`,
+					`{ "schema": {"type": ["object"], "properties": { "foo":{ "type": ["string"] } }, "xml": { "name": "root" } }, "data":"<root><foo>bar</foo></root>" }`,
 					h,
 					try.HasBody(""),
 					try.HasStatusCode(200),
@@ -104,7 +104,7 @@ func TestHandler_Schema_Validate(t *testing.T) {
 					map[string]string{
 						"Data-Content-Type": "application/json",
 					},
-					`{ "schema": {"type": "object", "properties": { "foo":{ "type": "string" } }, "additionalProperties": false }, "data":"{ \"foo\":\"bar\", \"foo2\": \"val\" }" }`,
+					`{ "schema": {"type": ["object"], "properties": { "foo":{ "type": ["string"] } }, "additionalProperties": false }, "data":"{ \"foo\":\"bar\", \"foo2\": \"val\" }" }`,
 					h,
 					try.BodyContains("additional properties not allowed: foo2"),
 					try.HasStatusCode(400),
@@ -123,7 +123,7 @@ func TestHandler_Schema_Validate(t *testing.T) {
 					map[string]string{
 						"Data-Content-Type": "application/json",
 					},
-					`{ "schema": {"type": "object", "properties": { "foo":{ "type": "string" } }, "additionalProperties": false }, "data":"{\"foo2\": \"val\" }" }`,
+					`{ "schema": {"type": ["object"], "properties": { "foo":{ "type": ["string"] } }, "additionalProperties": false }, "data":"{\"foo2\": \"val\" }" }`,
 					h,
 					try.BodyContains("additional properties not allowed: foo2"),
 					try.HasStatusCode(400),
@@ -142,7 +142,7 @@ func TestHandler_Schema_Validate(t *testing.T) {
 					map[string]string{
 						"Data-Content-Type": "application/json",
 					},
-					`{ "schema": {"type": "object", "properties": { "foo":{ "type": "string" } }, "additionalProperties": false }, "data":"{ \"foo\":\"bar\", \"foo2\": \"val\", \"foo3\": \"val\" }" }`,
+					`{ "schema": {"type": ["object"], "properties": { "foo":{ "type": ["string"] } }, "additionalProperties": false }, "data":"{ \"foo\":\"bar\", \"foo2\": \"val\", \"foo3\": \"val\" }" }`,
 					h,
 					try.BodyMatch("additional properties not allowed: foo2, foo3"),
 					try.HasStatusCode(400),

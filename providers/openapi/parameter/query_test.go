@@ -2,6 +2,7 @@ package parameter_test
 
 import (
 	"github.com/stretchr/testify/require"
+	jsonSchema "mokapi/json/schema"
 	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
@@ -23,7 +24,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:   "id",
 					Type:   parameter.Query,
-					Schema: &schema.Ref{Value: &schema.Schema{Type: "integer"}},
+					Schema: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}},
 					Style:  "form",
 				}},
 			},
@@ -41,7 +42,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:   "foo",
 					Type:   parameter.Query,
-					Schema: &schema.Ref{Value: &schema.Schema{Type: "string"}},
+					Schema: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"string"}}},
 					Style:  "form",
 				}},
 			},
@@ -59,7 +60,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:    "id",
 					Type:    parameter.Query,
-					Schema:  &schema.Ref{Value: &schema.Schema{Type: "integer"}},
+					Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}},
 					Style:   "form",
 					Explode: explode(false),
 				}},
@@ -78,7 +79,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:     "id",
 					Type:     parameter.Query,
-					Schema:   &schema.Ref{Value: &schema.Schema{Type: "integer"}},
+					Schema:   &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}},
 					Required: true,
 					Style:    "form",
 				}},
@@ -97,7 +98,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:    "id",
 					Type:    parameter.Query,
-					Schema:  &schema.Ref{Value: &schema.Schema{Type: "array", Items: &schema.Ref{Value: &schema.Schema{Type: "integer"}}}},
+					Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"array"}, Items: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}}}},
 					Style:   "form",
 					Explode: explode(true),
 				}},
@@ -116,7 +117,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:    "id",
 					Type:    parameter.Query,
-					Schema:  &schema.Ref{Value: &schema.Schema{Type: "array", Items: &schema.Ref{Value: &schema.Schema{Type: "integer"}}}},
+					Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"array"}, Items: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}}}},
 					Style:   "form",
 					Explode: explode(false),
 				}},
@@ -135,7 +136,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:    "id",
 					Type:    parameter.Query,
-					Schema:  &schema.Ref{Value: &schema.Schema{Type: "array", Items: &schema.Ref{Value: &schema.Schema{Type: "integer"}}}},
+					Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"array"}, Items: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}}}},
 					Style:   "spaceDelimited",
 					Explode: explode(true),
 				}},
@@ -154,7 +155,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:    "id",
 					Type:    parameter.Query,
-					Schema:  &schema.Ref{Value: &schema.Schema{Type: "array", Items: &schema.Ref{Value: &schema.Schema{Type: "integer"}}}},
+					Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"array"}, Items: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}}}},
 					Style:   "spaceDelimited",
 					Explode: explode(false),
 				}},
@@ -173,7 +174,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:    "id",
 					Type:    parameter.Query,
-					Schema:  &schema.Ref{Value: &schema.Schema{Type: "array", Items: &schema.Ref{Value: &schema.Schema{Type: "integer"}}}},
+					Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"array"}, Items: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}}}},
 					Style:   "pipeDelimited",
 					Explode: explode(true),
 				}},
@@ -192,7 +193,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:    "id",
 					Type:    parameter.Query,
-					Schema:  &schema.Ref{Value: &schema.Schema{Type: "array", Items: &schema.Ref{Value: &schema.Schema{Type: "integer"}}}},
+					Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"array"}, Items: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}}}},
 					Style:   "pipeDelimited",
 					Explode: explode(false),
 				}},

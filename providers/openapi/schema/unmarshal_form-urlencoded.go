@@ -8,8 +8,8 @@ func readFormUrlEncoded(data []byte, r *Ref) (interface{}, error) {
 	p := parser{convertStringToNumber: true}
 	for k, v := range values {
 		s := r.Value.Properties.Get(k)
-		switch s.Value.Type {
-		case "array":
+		switch {
+		case s.Value.Type.Includes("array"):
 			m[k], err = p.parse(v, s)
 		default:
 			m[k], err = p.parse(v[0], s)

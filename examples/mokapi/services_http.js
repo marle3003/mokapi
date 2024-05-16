@@ -29,7 +29,7 @@ const tag = {
 }
 
 const pet = {
-    type: "object",
+    type: ["object"],
     properties: {
         id: {
             type: "integer",

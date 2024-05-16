@@ -17,10 +17,10 @@ func parseCookie(p *Parameter, r *http.Request) (*RequestParameterValue, error) 
 
 	rp := &RequestParameterValue{Raw: cookie.Value, Value: cookie.Value}
 	if p.Schema != nil {
-		switch p.Schema.Value.Type {
-		case "array":
+		switch {
+		case p.Schema.Value.Type.IsArray():
 			rp.Value, err = parseArray(p, cookie.Value, ",")
-		case "object":
+		case p.Schema.Value.Type.IsObject():
 			rp.Value, err = parseObject(p, cookie.Value, ",", p.IsExplode(), defaultDecode)
 		default:
 			rp.Value, err = schema.ParseString(cookie.Value, p.Schema)

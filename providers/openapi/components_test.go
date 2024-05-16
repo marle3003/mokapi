@@ -7,10 +7,12 @@ import (
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
-	"mokapi/json/ref"
+	jsonRef "mokapi/json/ref"
+	jsonSchema "mokapi/json/schema"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/providers/openapi/parameter"
+	"mokapi/providers/openapi/ref"
 	"mokapi/providers/openapi/schema"
 	"net/url"
 	"testing"
@@ -28,7 +30,7 @@ func TestComponents_UnmarshalJSON(t *testing.T) {
 				err := json.Unmarshal([]byte(`{ "schemas": {"foo": {"type": "string"}} }`), &c)
 				require.NoError(t, err)
 				require.Equal(t, 1, c.Schemas.Len())
-				require.Equal(t, "string", c.Schemas.Get("foo").Value.Type)
+				require.Equal(t, "string", c.Schemas.Get("foo").Value.Type.String())
 			},
 		},
 		{
@@ -115,7 +117,7 @@ func TestComponents_UnmarshalYAML(t *testing.T) {
 				err := yaml.Unmarshal([]byte(`schemas: {foo: {type: string}}`), &c)
 				require.NoError(t, err)
 				require.Equal(t, 1, c.Schemas.Len())
-				require.Equal(t, "string", c.Schemas.Get("foo").Value.Type)
+				require.Equal(t, "string", c.Schemas.Get("foo").Value.Type.String())
 			},
 		},
 		{
@@ -202,17 +204,17 @@ func TestComponents_Parse(t *testing.T) {
 					cfg := &dynamic.Config{
 						Info: dynamic.ConfigInfo{Url: u},
 						Data: openapitest.NewConfig("3.0",
-							openapitest.WithComponentSchema("foo", &schema.Schema{Type: "string"}),
+							openapitest.WithComponentSchema("foo", &schema.Schema{Type: jsonSchema.Types{"string"}}),
 						),
 					}
 					return cfg, nil
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithComponentSchemaRef("foo", &schema.Ref{Reference: ref.Reference{Ref: "foo.yml#/components/schemas/foo"}}),
+					openapitest.WithComponentSchemaRef("foo", &schema.Ref{Reference: jsonRef.Reference{Ref: "foo.yml#/components/schemas/foo"}}),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
-				require.Equal(t, "string", config.Components.Schemas.Get("foo").Value.Type)
+				require.Equal(t, "string", config.Components.Schemas.Get("foo").Value.Type.String())
 			},
 		},
 		{
@@ -222,7 +224,7 @@ func TestComponents_Parse(t *testing.T) {
 					return nil, fmt.Errorf("TESTING ERROR")
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithComponentSchemaRef("foo", &schema.Ref{Reference: ref.Reference{Ref: "foo.yml#/components/schemas/foo"}}),
+					openapitest.WithComponentSchemaRef("foo", &schema.Ref{Reference: jsonRef.Reference{Ref: "foo.yml#/components/schemas/foo"}}),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse components failed: parse schema 'foo' failed: resolve reference 'foo.yml#/components/schemas/foo' failed: TESTING ERROR")
@@ -341,7 +343,7 @@ func TestComponents_Parse(t *testing.T) {
 					return cfg, nil
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithComponentExampleRef("foo", &openapi.ExampleRef{Reference: ref.Reference{Ref: "foo.yml#/components/examples/foo"}}),
+					openapitest.WithComponentExampleRef("foo", &openapi.ExampleRef{Reference: jsonRef.Reference{Ref: "foo.yml#/components/examples/foo"}}),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
@@ -355,7 +357,7 @@ func TestComponents_Parse(t *testing.T) {
 					return nil, fmt.Errorf("TESTING ERROR")
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithComponentExampleRef("foo", &openapi.ExampleRef{Reference: ref.Reference{Ref: "foo.yml#/components/parameters/foo"}}),
+					openapitest.WithComponentExampleRef("foo", &openapi.ExampleRef{Reference: jsonRef.Reference{Ref: "foo.yml#/components/parameters/foo"}}),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse components failed: parse example 'foo' failed: resolve reference 'foo.yml#/components/parameters/foo' failed: TESTING ERROR")
@@ -416,20 +418,20 @@ func TestConfig_Patch_Components(t *testing.T) {
 			name: "add schema",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0"),
-				openapitest.NewConfig("1.0", openapitest.WithComponentSchema("foo", &schema.Schema{Type: "string"})),
+				openapitest.NewConfig("1.0", openapitest.WithComponentSchema("foo", &schema.Schema{Type: jsonSchema.Types{"string"}})),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				require.Equal(t, "string", result.Components.Schemas.Get("foo").Value.Type)
+				require.Equal(t, "string", result.Components.Schemas.Get("foo").Value.Type.String())
 			},
 		},
 		{
 			name: "patch schema",
 			configs: []*openapi.Config{
-				openapitest.NewConfig("1.0", openapitest.WithComponentSchema("foo", &schema.Schema{Type: "string"})),
+				openapitest.NewConfig("1.0", openapitest.WithComponentSchema("foo", &schema.Schema{Type: jsonSchema.Types{"string"}})),
 				openapitest.NewConfig("1.0", openapitest.WithComponentSchema("foo", &schema.Schema{Format: "bar"})),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				require.Equal(t, "string", result.Components.Schemas.Get("foo").Value.Type)
+				require.Equal(t, "string", result.Components.Schemas.Get("foo").Value.Type.String())
 				require.Equal(t, "bar", result.Components.Schemas.Get("foo").Value.Format)
 			},
 		},

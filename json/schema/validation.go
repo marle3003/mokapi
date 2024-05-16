@@ -47,7 +47,7 @@ func (s *Schema) Validate(v interface{}) error {
 		case "null":
 			continue
 		default:
-			return fmt.Errorf("unsupported type %v", s.Type[0])
+			return fmt.Errorf("unsupported type %v", t)
 		}
 		if err != nil {
 			errs = append(errs, err)

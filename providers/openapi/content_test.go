@@ -224,7 +224,7 @@ func TestConfig_Patch_Content(t *testing.T) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
 				require.Len(t, res.Content, 1)
 				require.NotNil(t, res.Content["text/plain"])
-				require.Equal(t, "string", res.Content["text/plain"].Schema.Value.Type)
+				require.Equal(t, "string", res.Content["text/plain"].Schema.Value.Type.String())
 			},
 		},
 	}

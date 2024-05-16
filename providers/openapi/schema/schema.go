@@ -3,18 +3,22 @@ package schema
 import (
 	"fmt"
 	"mokapi/config/dynamic"
+	"mokapi/json/schema"
 	"strings"
 )
 
 type Schema struct {
+	Schema string `yaml:"$schema,omitempty" json:"$schema,omitempty"`
+
 	Description string `yaml:"description" json:"description"`
 
-	Type       string        `yaml:"type" json:"type"`
+	Type       schema.Types  `yaml:"type" json:"type"`
 	AnyOf      []*Ref        `yaml:"anyOf" json:"anyOf"`
 	AllOf      []*Ref        `yaml:"allOf" json:"allOf"`
 	OneOf      []*Ref        `yaml:"oneOf" json:"oneOf"`
 	Deprecated bool          `yaml:"deprecated" json:"deprecated"`
 	Example    interface{}   `yaml:"example" json:"example"`
+	Examples   []interface{} `yaml:"examples" json:"examples"`
 	Enum       []interface{} `yaml:"enum" json:"enum"`
 	Xml        *Xml          `yaml:"xml" json:"xml"`
 	Format     string        `yaml:"format" json:"format"`
@@ -26,10 +30,10 @@ type Schema struct {
 	MaxLength *int   `yaml:"maxLength" json:"maxLength"`
 
 	// Numbers
-	Minimum          *float64 `yaml:"minimum,omitempty" json:"minimum,omitempty"`
-	Maximum          *float64 `yaml:"maximum,omitempty" json:"maximum,omitempty"`
-	ExclusiveMinimum *bool    `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
-	ExclusiveMaximum *bool    `yaml:"exclusiveMaximum,omitempty" json:"exclusiveMaximum,omitempty"`
+	Minimum          *float64                  `yaml:"minimum,omitempty" json:"minimum,omitempty"`
+	Maximum          *float64                  `yaml:"maximum,omitempty" json:"maximum,omitempty"`
+	ExclusiveMinimum *UnionType[float64, bool] `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
+	ExclusiveMaximum *UnionType[float64, bool] `yaml:"exclusiveMaximum,omitempty" json:"exclusiveMaximum,omitempty"`
 
 	// Array
 	Items        *Ref `yaml:"items" json:"items"`
@@ -44,6 +48,10 @@ type Schema struct {
 	AdditionalProperties *AdditionalProperties `yaml:"additionalProperties,omitempty" json:"additionalProperties,omitempty"`
 	MinProperties        *int                  `yaml:"minProperties" json:"minProperties"`
 	MaxProperties        *int                  `yaml:"maxProperties" json:"maxProperties"`
+
+	// Media
+	ContentMediaType string `yaml:"contentMediaType,omitempty" json:"contentMediaType,omitempty"`
+	ContentEncoding  string `yaml:"contentEncoding,omitempty" json:"contentEncoding,omitempty"`
 }
 
 func (s *Schema) HasProperties() bool {
@@ -123,8 +131,9 @@ func (s *Schema) String() string {
 	}
 
 	if len(s.Type) > 0 {
-		sb.WriteString(fmt.Sprintf("schema type=%v", s.Type))
+		sb.WriteString(fmt.Sprintf("schema type=%v", s.Type.String()))
 	}
+
 	if len(s.Format) > 0 {
 		sb.WriteString(fmt.Sprintf(" format=%v", s.Format))
 	}
@@ -137,18 +146,27 @@ func (s *Schema) String() string {
 	if s.MaxLength != nil {
 		sb.WriteString(fmt.Sprintf(" maxLength=%v", *s.MaxLength))
 	}
-	if s.Minimum != nil {
+
+	if s.ExclusiveMinimum != nil {
+		if s.ExclusiveMinimum.IsA() {
+			sb.WriteString(fmt.Sprintf(" exclusiveMinimum=%v", s.ExclusiveMinimum.Value()))
+		} else if s.ExclusiveMinimum.B {
+			sb.WriteString(fmt.Sprintf(" exclusiveMinimum=%v", *s.Minimum))
+		}
+	} else if s.Minimum != nil {
 		sb.WriteString(fmt.Sprintf(" minimum=%v", *s.Minimum))
 	}
-	if s.Maximum != nil {
+
+	if s.ExclusiveMaximum != nil {
+		if s.ExclusiveMaximum.IsA() {
+			sb.WriteString(fmt.Sprintf(" exclusiveMaximum=%v", s.ExclusiveMaximum.Value()))
+		} else if s.ExclusiveMaximum.B {
+			sb.WriteString(fmt.Sprintf(" exclusiveMaximum=%v", *s.Maximum))
+		}
+	} else if s.Maximum != nil {
 		sb.WriteString(fmt.Sprintf(" maximum=%v", *s.Maximum))
 	}
-	if s.ExclusiveMinimum != nil && *s.ExclusiveMinimum {
-		sb.WriteString(" exclusiveMinimum")
-	}
-	if s.ExclusiveMaximum != nil && *s.ExclusiveMaximum {
-		sb.WriteString(" exclusiveMaximum")
-	}
+
 	if s.MinItems != nil {
 		sb.WriteString(fmt.Sprintf(" minItems=%v", *s.MinItems))
 	}
@@ -165,7 +183,7 @@ func (s *Schema) String() string {
 		sb.WriteString(" unique-items")
 	}
 
-	if s.Type == "object" && s.Properties != nil {
+	if s.Type.Includes("object") && s.Properties != nil {
 		var sbProp strings.Builder
 		for _, p := range s.Properties.Keys() {
 			if sbProp.Len() > 0 {
@@ -178,11 +196,11 @@ func (s *Schema) String() string {
 	if len(s.Required) > 0 {
 		sb.WriteString(fmt.Sprintf(" required=%v", s.Required))
 	}
-	if s.Type == "object" && !s.IsFreeForm() {
+	if s.Type.Includes("object") && !s.IsFreeForm() {
 		sb.WriteString(" free-form=false")
 	}
 
-	if s.Type == "array" && s.Items != nil {
+	if s.Type.Includes("array") && s.Items != nil {
 		sb.WriteString(" items=")
 		sb.WriteString(s.Items.String())
 	}
@@ -191,10 +209,10 @@ func (s *Schema) String() string {
 }
 
 func (s *Schema) IsFreeForm() bool {
-	if s.Type != "object" {
+	if !s.Type.Includes("object") {
 		return false
 	}
-	free := s.Type == "object" && (s.Properties == nil || s.Properties.Len() == 0)
+	free := s.Type.Includes("object") && (s.Properties == nil || s.Properties.Len() == 0)
 	if s.AdditionalProperties == nil || free {
 		return true
 	}
@@ -202,5 +220,9 @@ func (s *Schema) IsFreeForm() bool {
 }
 
 func (s *Schema) IsDictionary() bool {
-	return s.AdditionalProperties != nil && s.AdditionalProperties.Ref != nil && s.AdditionalProperties.Value != nil && s.AdditionalProperties.Value.Type != ""
+	return s.AdditionalProperties != nil && s.AdditionalProperties.Ref != nil && s.AdditionalProperties.Value != nil && len(s.AdditionalProperties.Value.Type) > 0
+}
+
+func (s *Schema) IsNullable() bool {
+	return s.Nullable || s.Type.IsNullable()
 }

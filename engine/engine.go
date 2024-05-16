@@ -91,6 +91,9 @@ func (e *Engine) Start() {
 }
 
 func (e *Engine) Close() {
+	for _, s := range e.scripts {
+		s.close()
+	}
 	e.scheduler.Close()
 }
 

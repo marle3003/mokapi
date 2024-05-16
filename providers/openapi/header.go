@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
-	"mokapi/json/ref"
 	"mokapi/providers/openapi/parameter"
+	"mokapi/providers/openapi/ref"
 )
 
 type Headers map[string]*HeaderRef

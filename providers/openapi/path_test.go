@@ -7,10 +7,10 @@ import (
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
-	"mokapi/json/ref"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/providers/openapi/parameter"
+	"mokapi/providers/openapi/ref"
 	"mokapi/providers/openapi/schema/schematest"
 	"net/http"
 	"net/url"
@@ -25,7 +25,7 @@ func TestPath_UnmarshalJSON(t *testing.T) {
 		{
 			name: "paths",
 			test: func(t *testing.T) {
-				p := openapi.Paths{}
+				p := openapi.PathItems{}
 				err := json.Unmarshal([]byte(`{ "/foo": {} }`), &p)
 				require.NoError(t, err)
 				require.Contains(t, p, "/foo")
@@ -46,9 +46,11 @@ func TestPath_UnmarshalJSON(t *testing.T) {
 			name: "path ref",
 			test: func(t *testing.T) {
 				p := &openapi.PathRef{}
-				err := json.Unmarshal([]byte(`{ "$ref": "#/foo/bar" }`), &p)
+				err := json.Unmarshal([]byte(`{ "$ref": "#/foo/bar", "summary": "The specific item summary", "description": "The specific item description" }`), &p)
 				require.NoError(t, err)
 				require.Equal(t, "#/foo/bar", p.Ref)
+				require.Equal(t, "The specific item summary", p.Summary)
+				require.Equal(t, "The specific item description", p.Description)
 				require.Nil(t, p.Value)
 			},
 		},
@@ -153,7 +155,7 @@ func TestPath_UnmarshalYAML(t *testing.T) {
 		{
 			name: "paths value",
 			test: func(t *testing.T) {
-				p := openapi.Paths{}
+				p := openapi.PathItems{}
 				err := yaml.Unmarshal([]byte(`/foo: {}`), &p)
 				require.NoError(t, err)
 				require.Contains(t, p, "/foo")
@@ -447,7 +449,7 @@ func TestPath_Parse(t *testing.T) {
 				reader := dynamictest.ReaderFunc(func(u *url.URL, _ any) (*dynamic.Config, error) {
 					require.Equal(t, "/foo.yml", u.String())
 					config := openapitest.NewConfig("3.0")
-					config.Paths = openapi.Paths{}
+					config.Paths = openapi.PathItems{}
 					cfg := &dynamic.Config{Info: dynamic.ConfigInfo{Url: u},
 						Data: config,
 					}
@@ -473,6 +475,23 @@ func TestPath_Parse(t *testing.T) {
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse path '/foo' failed: resolve reference 'foo.yml' failed: TEST ERROR")
+			},
+		},
+		{
+			name: "path as reference",
+			test: func(t *testing.T) {
+				reader := dynamictest.ReaderFunc(func(_ *url.URL, _ any) (*dynamic.Config, error) {
+					return nil, fmt.Errorf("TEST ERROR")
+				})
+				config := openapitest.NewConfig("3.0",
+					openapitest.WithPathRef("foo",
+						&openapi.PathRef{Reference: ref.Reference{Ref: "#/components/pathItems/foo"}},
+					),
+					openapitest.WithComponentPathItem("foo", openapitest.NewPath()),
+				)
+				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
+				require.NoError(t, err)
+				require.NotNil(t, config.Paths["foo"].Value)
 			},
 		},
 	}
@@ -597,7 +616,7 @@ func TestConfig_Patch_Path(t *testing.T) {
 			test: func(t *testing.T, result *openapi.Config) {
 				e := result.Paths["/foo"].Value
 				require.Len(t, e.Parameters, 1)
-				require.Equal(t, "number", e.Parameters[0].Value.Schema.Value.Type)
+				require.Equal(t, "number", e.Parameters[0].Value.Schema.Value.Type.String())
 			},
 		},
 	}

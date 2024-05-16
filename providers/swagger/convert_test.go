@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/parameter"
+	"mokapi/version"
 	"net/http"
 	"testing"
 )
@@ -19,7 +20,7 @@ func TestConvert(t *testing.T) {
 			name:   "header",
 			config: `{"swagger": "2.0"}`,
 			test: func(t *testing.T, config *openapi.Config) {
-				require.Equal(t, "3.0.1", config.OpenApi)
+				require.Equal(t, version.New("3.0.3"), config.OpenApi)
 			},
 		},
 		{
@@ -173,7 +174,7 @@ func TestConvert(t *testing.T) {
 				require.Equal(t, parameter.Path, p.Parameters[0].Value.Type)
 				require.Equal(t, "id", p.Parameters[0].Value.Name)
 				require.True(t, p.Parameters[0].Value.Required)
-				require.Equal(t, "integer", p.Parameters[0].Value.Schema.Value.Type)
+				require.Equal(t, "integer", p.Parameters[0].Value.Schema.Value.Type.String())
 				require.Equal(t, "int64", p.Parameters[0].Value.Schema.Value.Format)
 				require.Equal(t, "id parameter", p.Parameters[0].Value.Description)
 			},
@@ -234,18 +235,18 @@ func TestConvert(t *testing.T) {
 		},
 		{
 			name:   "operation parameter body and empty consumes",
-			config: `{"swagger": "2.0", "paths": {"/foo": {"get": {"parameters": [{"in":"body","name":"body","schema":{"type":"string"}}]}}}}`,
+			config: `{"swagger": "2.0", "paths": {"/foo": {"get": {"parameters": [{"in":"body","name":"body","schema":{"type":["string"]}}]}}}}`,
 			test: func(t *testing.T, config *openapi.Config) {
 				require.Contains(t, config.Paths, "/foo")
 				get := config.Paths["/foo"].Value.Get
 				require.NotNil(t, get.RequestBody)
 				require.Contains(t, get.RequestBody.Value.Content, "application/json")
-				require.Equal(t, "string", get.RequestBody.Value.Content["application/json"].Schema.Value.Type)
+				require.Equal(t, "string", get.RequestBody.Value.Content["application/json"].Schema.Value.Type.String())
 			},
 		},
 		{
 			name:   "operation parameter body required",
-			config: `{"swagger": "2.0", "paths": {"/foo": {"get": {"parameters": [{"in":"body","name":"body","required":true,"schema":{"type":"string"}}]}}}}`,
+			config: `{"swagger": "2.0", "paths": {"/foo": {"get": {"parameters": [{"in":"body","name":"body","required":true,"schema":{"type":["string"]}}]}}}}`,
 			test: func(t *testing.T, config *openapi.Config) {
 				require.Contains(t, config.Paths, "/foo")
 				get := config.Paths["/foo"].Value.Get
@@ -255,46 +256,46 @@ func TestConvert(t *testing.T) {
 		},
 		{
 			name:   "operation parameter body and consumes",
-			config: `{"swagger": "2.0", "paths": {"/foo": {"get": {"consumes":["application/json"],"parameters": [{"in":"body","name":"body","schema":{"type":"string"}}]}}}}`,
+			config: `{"swagger": "2.0", "paths": {"/foo": {"get": {"consumes":["application/json"],"parameters": [{"in":"body","name":"body","schema":{"type":["string"]}}]}}}}`,
 			test: func(t *testing.T, config *openapi.Config) {
 				require.Contains(t, config.Paths, "/foo")
 				get := config.Paths["/foo"].Value.Get
 				require.NotNil(t, get.RequestBody)
 				require.Contains(t, get.RequestBody.Value.Content, "application/json")
-				require.Equal(t, "string", get.RequestBody.Value.Content["application/json"].Schema.Value.Type)
+				require.Equal(t, "string", get.RequestBody.Value.Content["application/json"].Schema.Value.Type.String())
 			},
 		},
 		{
 			name:   "operation parameter body and global consumes",
-			config: `{"swagger": "2.0","consumes":["application/json"],"paths": {"/foo": {"get": {"parameters": [{"in":"body","name":"body","schema":{"type":"string"}}]}}}}`,
+			config: `{"swagger": "2.0","consumes":["application/json"],"paths": {"/foo": {"get": {"parameters": [{"in":"body","name":"body","schema":{"type":["string"]}}]}}}}`,
 			test: func(t *testing.T, config *openapi.Config) {
 				require.Contains(t, config.Paths, "/foo")
 				get := config.Paths["/foo"].Value.Get
 				require.NotNil(t, get.RequestBody)
 				require.Contains(t, get.RequestBody.Value.Content, "application/json")
-				require.Equal(t, "string", get.RequestBody.Value.Content["application/json"].Schema.Value.Type)
+				require.Equal(t, "string", get.RequestBody.Value.Content["application/json"].Schema.Value.Type.String())
 			},
 		},
 		{
 			name:   "operation parameter body empty consumes and global consumes",
-			config: `{"swagger": "2.0","consumes":["application/json"],"paths": {"/foo": {"get": {"consumes":[],"parameters": [{"in":"body","name":"body","schema":{"type":"string"}}]}}}}`,
+			config: `{"swagger": "2.0","consumes":["application/json"],"paths": {"/foo": {"get": {"consumes":[],"parameters": [{"in":"body","name":"body","schema":{"type":["string"]}}]}}}}`,
 			test: func(t *testing.T, config *openapi.Config) {
 				require.Contains(t, config.Paths, "/foo")
 				get := config.Paths["/foo"].Value.Get
 				require.NotNil(t, get.RequestBody)
 				require.Contains(t, get.RequestBody.Value.Content, "application/json")
-				require.Equal(t, "string", get.RequestBody.Value.Content["application/json"].Schema.Value.Type)
+				require.Equal(t, "string", get.RequestBody.Value.Content["application/json"].Schema.Value.Type.String())
 			},
 		},
 		{
 			name:   "operation parameter body empty consumes and global consumes",
-			config: `{"swagger": "2.0","consumes":["text/plain"],"paths": {"/foo": {"get": {"consumes":["application/json"],"parameters": [{"in":"body","name":"body","schema":{"type":"string"}}]}}}}`,
+			config: `{"swagger": "2.0","consumes":["text/plain"],"paths": {"/foo": {"get": {"consumes":["application/json"],"parameters": [{"in":"body","name":"body","schema":{"type":["string"]}}]}}}}`,
 			test: func(t *testing.T, config *openapi.Config) {
 				require.Contains(t, config.Paths, "/foo")
 				get := config.Paths["/foo"].Value.Get
 				require.NotNil(t, get.RequestBody)
 				require.Contains(t, get.RequestBody.Value.Content, "application/json")
-				require.Equal(t, "string", get.RequestBody.Value.Content["application/json"].Schema.Value.Type)
+				require.Equal(t, "string", get.RequestBody.Value.Content["application/json"].Schema.Value.Type.String())
 			},
 		},
 		{
@@ -362,7 +363,7 @@ func TestConvert(t *testing.T) {
 				require.Equal(t, "id parameter", p.Get.RequestBody.Value.Description)
 				require.Contains(t, p.Get.RequestBody.Value.Content, "application/json")
 				content := p.Get.RequestBody.Value.Content["application/json"]
-				require.Equal(t, "string", content.Schema.Value.Type)
+				require.Equal(t, "string", content.Schema.Value.Type.String())
 			},
 		},
 		{
@@ -409,19 +410,19 @@ func TestConvert(t *testing.T) {
 		},
 		{
 			name:   "definitions",
-			config: `{"swagger": "2.0", "definitions": {"Foo": {"type": "string"}, "Bar": {"type": "object","properties": {"title":{"type": "string"}}}}}`,
+			config: `{"swagger": "2.0", "definitions": {"Foo": {"type": "string"}, "Bar": {"type": "object","properties": {"title":{"type": ["string"]}}}}}`,
 			test: func(t *testing.T, config *openapi.Config) {
 				foo := config.Components.Schemas.Get("Foo")
-				require.Equal(t, "string", foo.Value.Type)
+				require.Equal(t, "string", foo.Value.Type.String())
 				bar := config.Components.Schemas.Get("Bar")
-				require.Equal(t, "object", bar.Value.Type)
+				require.Equal(t, "object", bar.Value.Type.String())
 				title := bar.Value.Properties.Get("title")
-				require.Equal(t, "string", title.Value.Type)
+				require.Equal(t, "string", title.Value.Type.String())
 			},
 		},
 		{
 			name:   "integer with empty format needs to be int32",
-			config: `{"swagger": "2.0", "definitions": {"Foo": {"type": "integer"}}}`,
+			config: `{"swagger": "2.0", "definitions": {"Foo": {"type": ["integer"]}}}`,
 			test: func(t *testing.T, config *openapi.Config) {
 				foo := config.Components.Schemas.Get("Foo")
 				require.Equal(t, "int32", foo.Value.Format)
@@ -429,7 +430,7 @@ func TestConvert(t *testing.T) {
 		},
 		{
 			name:   "integer with format needs to be int64",
-			config: `{"swagger": "2.0", "definitions": {"Foo": {"type": "integer", "format": "int64"}}}`,
+			config: `{"swagger": "2.0", "definitions": {"Foo": {"type": ["integer"], "format": "int64"}}}`,
 			test: func(t *testing.T, config *openapi.Config) {
 				foo := config.Components.Schemas.Get("Foo")
 				require.Equal(t, "int64", foo.Value.Format)

@@ -1,6 +1,9 @@
 package schema
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"gopkg.in/yaml.v3"
+)
 
 type Types []string
 
@@ -26,8 +29,79 @@ func (t *Types) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+func (t *Types) UnmarshalYAML(value *yaml.Node) error {
+	var v interface{}
+	err := value.Decode(&v)
+	if err != nil {
+		return err
+	}
+	if str, ok := v.(string); ok {
+		*t = append(*t, str)
+	} else if arr, ok := v.([]interface{}); ok {
+		for _, i := range arr {
+			if str, ok := i.(string); ok {
+				*t = append(*t, str)
+			} else {
+				return &UnmarshalError{Value: i, Field: "type"}
+			}
+		}
+	} else {
+		return &UnmarshalError{Value: v, Field: "type"}
+	}
+	return nil
+}
+
+func (t *Types) Includes(typeName string) bool {
+	if t == nil {
+		return false
+	}
+	for _, v := range *t {
+		if v == typeName {
+			return true
+		}
+	}
+	return false
+}
+
+func (t *Types) IsOneOf(typeNames ...string) bool {
+	for _, typeName := range typeNames {
+		if t.Includes(typeName) {
+			return true
+		}
+	}
+	return false
+}
+
+func (t *Types) IsAny() bool {
+	return len(*t) == 0
+}
+
+func (t *Types) IsString() bool {
+	return t.Includes("string")
+}
+
+func (t *Types) IsInteger() bool {
+	return t.Includes("integer")
+}
+
+func (t *Types) IsNumber() bool {
+	return t.Includes("number")
+}
+
+func (t *Types) IsArray() bool {
+	return t.Includes("array")
+}
+
+func (t *Types) IsObject() bool {
+	return t.Includes("object")
+}
+
+func (t *Types) IsNullable() bool {
+	return t.Includes("null")
+}
+
 func (s *Schema) IsAny() bool {
-	return s == nil || len(s.Type) == 0
+	return s == nil || s.Type.IsAny()
 }
 
 func (s *Schema) IsString() bool {
@@ -69,15 +143,7 @@ func (s *Schema) HasProperties() bool {
 }
 
 func (s *Schema) Is(typeName string) bool {
-	if s == nil {
-		return false
-	}
-	for _, t := range s.Type {
-		if t == typeName {
-			return true
-		}
-	}
-	return false
+	return s != nil && s.Type.Includes(typeName)
 }
 
 func (s *Schema) IsFreeFrom() bool {
