@@ -50,7 +50,7 @@ func AddRef(parent, ref *Config) {
 
 func (l *Listeners) Add(key string, fn ConfigListener) {
 	l.m.Lock()
-	l.m.Unlock()
+	defer l.m.Unlock()
 
 	if l.list == nil {
 		l.list = &sortedmap.LinkedHashMap[string, ConfigListener]{}
