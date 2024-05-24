@@ -3,6 +3,7 @@ package engine
 import (
 	"github.com/go-co-op/gocron"
 	"mokapi/engine/common"
+	"sync"
 	"time"
 )
 
@@ -20,6 +21,7 @@ type Job interface {
 
 type DefaultScheduler struct {
 	scheduler *gocron.Scheduler
+	m         sync.Mutex
 }
 
 func NewDefaultScheduler() Scheduler {
@@ -27,6 +29,9 @@ func NewDefaultScheduler() Scheduler {
 }
 
 func (s *DefaultScheduler) Every(every string, handler func(), opt common.JobOptions) (Job, error) {
+	s.m.Lock()
+	defer s.m.Unlock()
+
 	s.scheduler.Every(every)
 
 	if opt.Times > 0 {
@@ -40,6 +45,9 @@ func (s *DefaultScheduler) Every(every string, handler func(), opt common.JobOpt
 }
 
 func (s *DefaultScheduler) Cron(expr string, handler func(), opt common.JobOptions) (Job, error) {
+	s.m.Lock()
+	defer s.m.Unlock()
+
 	s.scheduler.Cron(expr)
 
 	if opt.Times > 0 {
@@ -53,13 +61,22 @@ func (s *DefaultScheduler) Cron(expr string, handler func(), opt common.JobOptio
 }
 
 func (s *DefaultScheduler) Remove(job Job) {
+	s.m.Lock()
+	defer s.m.Unlock()
+
 	s.scheduler.RemoveByReference(job.(*gocron.Job))
 }
 
 func (s *DefaultScheduler) Start() {
+	s.m.Lock()
+	defer s.m.Unlock()
+
 	s.scheduler.StartAsync()
 }
 
 func (s *DefaultScheduler) Close() {
+	s.m.Lock()
+	defer s.m.Unlock()
+
 	s.scheduler.Stop()
 }
