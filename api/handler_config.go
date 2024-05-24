@@ -49,8 +49,8 @@ func (h *handler) getConfigs(w http.ResponseWriter) {
 }
 
 func (h *handler) getConfigMetaData(w http.ResponseWriter, key string) {
-	c, ok := h.app.Configs[key]
-	if !ok {
+	c := h.app.FindConfig(key)
+	if c == nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -60,8 +60,8 @@ func (h *handler) getConfigMetaData(w http.ResponseWriter, key string) {
 }
 
 func (h *handler) getConfigData(w http.ResponseWriter, r *http.Request, key string) {
-	c, ok := h.app.Configs[key]
-	if !ok {
+	c := h.app.FindConfig(key)
+	if c == nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
