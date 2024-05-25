@@ -17,6 +17,14 @@ func (p *Parser) Parse(data interface{}, ref *schema.Ref) (interface{}, error) {
 	if ref == nil || ref.Value == nil {
 		return data, nil
 	}
+
+	if data == nil {
+		if ref.Value.IsNullable() {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("parse NULL failed, expected %v", ref)
+	}
+
 	switch {
 	case len(ref.Value.AnyOf) > 0:
 		return p.ParseAny(ref.Value, data)

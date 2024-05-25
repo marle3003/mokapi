@@ -100,7 +100,7 @@ func TestRef_Unmarshal_Json(t *testing.T) {
 			data:   `{ "foo": null }`,
 			schema: schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "parse property 'foo' failed: parse <nil> failed, expected schema type=string")
+				require.EqualError(t, err, "parse property 'foo' failed: parse NULL failed, expected schema type=string")
 			},
 		},
 		{
@@ -970,7 +970,7 @@ func TestRef_Unmarshal_Json_Object(t *testing.T) {
 				schematest.WithProperty("age", schematest.New("integer")),
 			),
 			test: func(t *testing.T, _ interface{}, err error) {
-				require.EqualError(t, err, "parse property 'name' failed: parse <nil> failed, expected schema type=string minLength=6")
+				require.EqualError(t, err, "parse property 'name' failed: parse NULL failed, expected schema type=string minLength=6")
 			},
 		},
 		{

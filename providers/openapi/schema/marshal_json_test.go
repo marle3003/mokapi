@@ -26,6 +26,41 @@ func TestRef_Marshal_Json(t *testing.T) {
 			},
 		},
 		{
+			name:   "NULL no schema",
+			schema: &schema.Ref{},
+			data:   nil,
+			test: func(t *testing.T, result string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "null", result)
+			},
+		},
+		{
+			name:   "NULL not allowed",
+			schema: &schema.Ref{Value: schematest.New("number")},
+			data:   nil,
+			test: func(t *testing.T, result string, err error) {
+				require.EqualError(t, err, "encoding data to 'application/json' failed: parse NULL failed, expected schema type=number")
+			},
+		},
+		{
+			name:   "NULL and nullable=true",
+			schema: &schema.Ref{Value: schematest.New("number", schematest.IsNullable(true))},
+			data:   nil,
+			test: func(t *testing.T, result string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "null", result)
+			},
+		},
+		{
+			name:   "NULL and type=null",
+			schema: &schema.Ref{Value: schematest.New("number", schematest.And("null"))},
+			data:   nil,
+			test: func(t *testing.T, result string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "null", result)
+			},
+		},
+		{
 			name:   "number",
 			schema: &schema.Ref{Value: schematest.New("number")},
 			data:   3.141,
