@@ -46,6 +46,20 @@ func TestKafka(t *testing.T) {
 				r.NoError(t, err)
 			},
 		},
+		{
+			name: "messages contains wrong type",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				host.KafkaClientTest = &enginetest.KafkaClient{ProduceFunc: func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					return &common.KafkaProduceResult{}, nil
+				}}
+
+				_, err := vm.RunString(`
+					const kafka = require("mokapi/kafka")
+					kafka.produce({ messages: [ [] ] })
+				`)
+				r.EqualError(t, err, "invalid type in messages: expected Object but got Array at mokapi/js/kafka.(*Module).Produce-fm (native)")
+			},
+		},
 	}
 
 	for _, tc := range testcases {

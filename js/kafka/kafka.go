@@ -6,6 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/engine/common"
 	"mokapi/js/eventloop"
+	"reflect"
 	"time"
 )
 
@@ -145,7 +146,10 @@ func (m *Module) mapParams(args goja.Value) (*common.KafkaProduceArgs, error) {
 			case "messages":
 				records := params.Get(k).Export().([]interface{})
 				for _, item := range records {
-					rec := item.(map[string]interface{})
+					rec, ok := item.(map[string]interface{})
+					if !ok {
+						return nil, fmt.Errorf("invalid type in messages: expected Object but got %v", getJsType(item))
+					}
 					r := common.KafkaMessage{Partition: -1}
 					if k, ok := rec["key"]; ok {
 						r.Key = k
@@ -224,4 +228,23 @@ func (m *Module) mapParams(args goja.Value) (*common.KafkaProduceArgs, error) {
 
 func (m *Module) warnDeprecatedAttribute(name string) {
 	m.host.Warn(fmt.Sprintf("DEPRECATED: '%v' should not be used anymore: check https://mokapi.io/docs/javascript-api/mokapi-kafka/produceargs for more info in %v", name, m.host.Name()))
+}
+
+func getJsType(v interface{}) string {
+	switch reflect.TypeOf(v).Kind() {
+	case reflect.Array, reflect.Slice:
+		return "Array"
+	case reflect.Int64:
+		return "Integer"
+	case reflect.Float64:
+		return "Number"
+	case reflect.Bool:
+		return "Boolean"
+	case reflect.Map:
+		return "Object"
+	case reflect.String:
+		return "String"
+	default:
+		return "Unknown"
+	}
 }

@@ -148,3 +148,20 @@ func (a *App) AddConfig(c *dynamic.Config) {
 		a.Configs[r.Info.Key()] = r
 	}
 }
+
+func (a *App) FindConfig(key string) *dynamic.Config {
+	c, ok := a.Configs[key]
+	if ok {
+		return c
+	}
+
+	for _, c = range a.Configs {
+		for _, ref := range c.Refs.List(true) {
+			if ref.Info.Key() == key {
+				return ref
+			}
+		}
+	}
+
+	return nil
+}

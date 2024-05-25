@@ -52,6 +52,31 @@ func TestRegistry(t *testing.T) {
 			},
 		},
 		{
+			name: "export default object",
+			sources: map[string]source{
+				"mod.js": {
+					name: "",
+					code: `export default { foo: 'bar' }`,
+				},
+			},
+			test: func(t *testing.T, host common.Host) {
+				reg, err := require.NewRegistry()
+				r.NoError(t, err)
+
+				vm := goja.New()
+				js.EnableInternal(vm, host, nil, &dynamic.Config{Info: dynamictest.NewConfigInfo()})
+				reg.Enable(vm)
+
+				_, err = vm.RunString(`
+					const m = require("mod")
+					if (m.default.foo !== 'bar') {
+						throw new Error('m test failed')
+					}
+				`)
+				r.NoError(t, err)
+			},
+		},
+		{
 			name: "requesting same file multiple",
 			sources: map[string]source{
 				"mod.js": {

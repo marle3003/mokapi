@@ -90,6 +90,21 @@ func TestRequire(t *testing.T) {
 			},
 		},
 		{
+			name: "export default object",
+			test: func(t *testing.T, host *enginetest.Host, registry *require.Registry) {
+				host.OpenFileFunc = func(file, hint string) (string, string, error) {
+					return "", "export default {demo: 'demo'};", nil
+				}
+				host.InfoFunc = func(args ...interface{}) {
+					r.Equal(t, "demo", args[0])
+				}
+				s, err := jstest.New(jstest.WithSource(`import bar from 'foo'; export default function() {console.log(bar.demo);}`), js.WithHost(host), js.WithRegistry(registry))
+				r.NoError(t, err)
+
+				r.NoError(t, s.Run())
+			},
+		},
+		{
 			name: "require custom relative file",
 			test: func(t *testing.T, host *enginetest.Host, registry *require.Registry) {
 				host.OpenFileFunc = func(file, hint string) (string, string, error) {
