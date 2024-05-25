@@ -209,6 +209,11 @@ export interface JSONSchema {
      */
     examples: unknown[]
 
+    /**
+     * Specifies a default value.
+     */
+    default: unknown
+
     // Numbers
     /**
      * Restricts the number to a multiple of the given number

@@ -1,0 +1,47 @@
+package generator
+
+import (
+	"github.com/brianvoe/gofakeit/v6"
+	"github.com/stretchr/testify/require"
+	"mokapi/schema/json/schema"
+	"testing"
+)
+
+func TestExamples(t *testing.T) {
+	testcases := []struct {
+		name string
+		req  *Request
+		test func(t *testing.T, v interface{}, err error)
+	}{
+		{
+			name: "examples",
+			req: &Request{
+				Path: Path{
+					&PathElement{
+						Schema: &schema.Ref{
+							Value: &schema.Schema{
+								Examples: []interface{}{
+									"Anything", 4035,
+								},
+							},
+						},
+					},
+				},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "Anything", v)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			gofakeit.Seed(1234567)
+			Seed(1234567)
+
+			v, err := New(tc.req)
+			tc.test(t, v, err)
+		})
+	}
+}

@@ -1,8 +1,8 @@
 package schematest
 
 import (
-	jsonSchema "mokapi/json/schema"
 	"mokapi/providers/openapi/schema"
+	jsonSchema "mokapi/schema/json/schema"
 )
 
 type SchemaOptions func(s *schema.Schema)

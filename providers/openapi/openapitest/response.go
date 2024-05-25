@@ -1,11 +1,11 @@
 package openapitest
 
 import (
-	"mokapi/json/ref"
 	"mokapi/media"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/schema"
+	"mokapi/schema/json/ref"
 )
 
 type ResponseOptions func(o *openapi.Response)

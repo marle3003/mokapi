@@ -2,9 +2,9 @@ package schema_test
 
 import (
 	"github.com/stretchr/testify/require"
-	jsonSchema "mokapi/json/schema"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
+	jsonSchema "mokapi/schema/json/schema"
 	"testing"
 )
 

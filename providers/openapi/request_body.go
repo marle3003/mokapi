@@ -8,7 +8,7 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/media"
 	"mokapi/providers/openapi/ref"
-	"mokapi/providers/openapi/schema"
+	"mokapi/schema/json/parser"
 	"net/http"
 	"strings"
 )
@@ -207,14 +207,14 @@ func (r *RequestBody) patch(patch *RequestBody) {
 	r.Content.patch(patch.Content)
 }
 
-func getParser(ct media.ContentType) schema.Parser {
+func getParser(ct media.ContentType) parser.Parser {
 	if ct.Type == "text" {
-		return schema.Parser{ConvertStringToNumber: true}
+		return parser.Parser{ConvertStringToNumber: true}
 	}
 	if ct.String() == "application/x-www-form-urlencoded" {
-		return schema.Parser{ConvertStringToNumber: true}
+		return parser.Parser{ConvertStringToNumber: true}
 	}
-	return schema.Parser{}
+	return parser.Parser{}
 }
 
 type urlValueDecoder struct {

@@ -8,7 +8,7 @@ import (
 	"mokapi/engine/enginetest"
 	"mokapi/js"
 	"mokapi/js/jstest"
-	"mokapi/json/generator"
+	"mokapi/schema/json/generator"
 	"testing"
 )
 
@@ -55,7 +55,7 @@ func TestScript_Faker(t *testing.T) {
 					js.WithHost(host))
 				r.NoError(t, err)
 				_, err = s.RunDefault()
-				r.EqualError(t, err, "unexpected type for 'type': map[string]interface {} at mokapi/js/faker.(*Faker).Fake-fm (native)")
+				r.EqualError(t, err, "unexpected type for attribute 'type': map[string]interface {} at mokapi/js/faker.(*Faker).Fake-fm (native)")
 			},
 		},
 		{
@@ -77,7 +77,7 @@ func TestScript_Faker(t *testing.T) {
 			test: func(t *testing.T, host *enginetest.Host) {
 				s, err := jstest.New(jstest.WithSource(`import faker from 'mokapi/faker'
 						 export default function() {
-						 	return faker.fake({ type: 'integer', exclusiveMinimum: '3', maximum: 10 })
+						 	return faker.fake({ type: 'integer', exclusiveMinimum: 'str', maximum: 10 })
 						 }`),
 					js.WithHost(host))
 				r.NoError(t, err)
@@ -100,11 +100,11 @@ func TestScript_Faker(t *testing.T) {
 			},
 		},
 		{
-			name: "fake exclusiveMinimum but wrong type",
+			name: "fake exclusiveMaximum but wrong type",
 			test: func(t *testing.T, host *enginetest.Host) {
 				s, err := jstest.New(jstest.WithSource(`import faker from 'mokapi/faker'
 						 export default function() {
-						 	return faker.fake({ type: 'integer', exclusiveMaximum: '3', minimum: 10 })
+						 	return faker.fake({ type: 'integer', exclusiveMaximum: 'str', minimum: 10 })
 						 }`),
 					js.WithHost(host))
 				r.NoError(t, err)
@@ -138,7 +138,7 @@ func TestScript_Faker(t *testing.T) {
 					js.WithHost(host))
 				r.NoError(t, err)
 				err = s.Run()
-				r.Error(t, err)
+				r.EqualError(t, err, "expect JSON schema but got: string at mokapi/js/faker.(*Faker).Fake-fm (native)")
 			},
 		},
 		{

@@ -3,7 +3,7 @@ package common
 import (
 	"fmt"
 	"mokapi/config/dynamic"
-	"mokapi/json/generator"
+	"mokapi/schema/json/generator"
 	"net/http"
 	"strings"
 	"time"

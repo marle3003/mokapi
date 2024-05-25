@@ -2,10 +2,10 @@ package parameter_test
 
 import (
 	"github.com/stretchr/testify/require"
-	jsonSchema "mokapi/json/schema"
 	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
+	jsonSchema "mokapi/schema/json/schema"
 	"net/http"
 	"net/http/httptest"
 	"testing"

@@ -2,13 +2,13 @@ package swagger
 
 import (
 	"fmt"
-	jsonRef "mokapi/json/ref"
-	jsonSchema "mokapi/json/schema"
 	"mokapi/media"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/ref"
 	"mokapi/providers/openapi/schema"
+	jsonRef "mokapi/schema/json/ref"
+	jsonSchema "mokapi/schema/json/schema"
 	"mokapi/version"
 	"net/http"
 	"strings"

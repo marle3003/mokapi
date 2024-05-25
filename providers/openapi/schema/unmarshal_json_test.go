@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/require"
 	"math"
-	jsonSchema "mokapi/json/schema"
 	"mokapi/media"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
+	jsonSchema "mokapi/schema/json/schema"
 	"testing"
 )
 
@@ -100,7 +100,7 @@ func TestRef_Unmarshal_Json(t *testing.T) {
 			data:   `{ "foo": null }`,
 			schema: schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "parse 'foo' failed: parse <nil> failed, expected schema type=string")
+				require.EqualError(t, err, "parse property 'foo' failed: parse <nil> failed, expected schema type=string")
 			},
 		},
 		{
@@ -528,6 +528,7 @@ func TestRef_Unmarshal_Json_OneOf(t *testing.T) {
 					schematest.WithProperty("bar", schematest.New("boolean"))),
 			)),
 			test: func(t *testing.T, i interface{}, err error) {
+				require.Error(t, err)
 				require.Regexp(t, "parse .* failed: expected to match one of schema but it matches none", err.Error())
 			},
 		},
@@ -579,7 +580,7 @@ func TestRef_Unmarshal_Json_AllOf(t *testing.T) {
 			},
 		},
 		{
-			name: "missing required",
+			name: "missing required property",
 			s:    `{"foo": 12}`,
 			schema: schematest.New("object",
 				schematest.AllOf(
@@ -589,7 +590,7 @@ func TestRef_Unmarshal_Json_AllOf(t *testing.T) {
 						schematest.WithProperty("bar", schematest.New("boolean"))),
 				)),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "parse {foo: 12} failed: value does not match part of allOf: missing required field 'bar'")
+				require.EqualError(t, err, "parse {foo: 12} failed: value does not match part of allOf: missing required field 'bar', expected schema type=object properties=[bar] required=[bar] free-form=false")
 			},
 		},
 	}
@@ -688,7 +689,8 @@ func TestRef_Unmarshal_Json_Integer(t *testing.T) {
 			s:      "12",
 			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, ExclusiveMinimum: schema.NewUnionTypeB[float64, bool](true)},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "exclusiveMinimum is set to true but no minimum is set")
+				require.NoError(t, err)
+				require.Equal(t, int64(12), i)
 			},
 		},
 		{
@@ -846,7 +848,8 @@ func TestParse_Number(t *testing.T) {
 			s:      "3.6",
 			schema: &schema.Schema{Type: jsonSchema.Types{"number"}, ExclusiveMaximum: schema.NewUnionTypeB[float64, bool](true)},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "exclusiveMaximum is set to true but no maximum is set")
+				require.NoError(t, err)
+				require.Equal(t, 3.6, i)
 			},
 		},
 		{
@@ -956,7 +959,7 @@ func TestRef_Unmarshal_Json_Object(t *testing.T) {
 				schematest.WithProperty("age", schematest.New("integer")),
 			),
 			test: func(t *testing.T, _ interface{}, err error) {
-				require.EqualError(t, err, "missing required field 'age'")
+				require.EqualError(t, err, "missing required field 'age', expected schema type=object properties=[name, age] required=[name age]")
 			},
 		},
 		{
@@ -967,7 +970,7 @@ func TestRef_Unmarshal_Json_Object(t *testing.T) {
 				schematest.WithProperty("age", schematest.New("integer")),
 			),
 			test: func(t *testing.T, _ interface{}, err error) {
-				require.EqualError(t, err, "parse 'name' failed: parse <nil> failed, expected schema type=string minLength=6")
+				require.EqualError(t, err, "parse property 'name' failed: parse <nil> failed, expected schema type=string minLength=6")
 			},
 		},
 		{
@@ -1027,7 +1030,7 @@ func TestRef_Unmarshal_Json_Object(t *testing.T) {
 				schematest.WithFreeForm(false),
 			),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "additional properties not allowed: age, expected schema type=object properties=[name] free-form=false")
+				require.EqualError(t, err, "additional properties 'age' not allowed, expected schema type=object properties=[name] free-form=false")
 			},
 		},
 		{
@@ -1117,7 +1120,7 @@ func TestRef_Unmarshal_Json_Array(t *testing.T) {
 				MinItems: toIntP(3),
 			},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "should NOT have less than 3 items")
+				require.EqualError(t, err, "should NOT have less than 3 items, expected schema type=array minItems=3 items=schema type=string")
 			},
 		},
 		{
@@ -1146,7 +1149,7 @@ func TestRef_Unmarshal_Json_Array(t *testing.T) {
 				MaxItems: toIntP(1),
 			},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "should NOT have more than 1 items")
+				require.EqualError(t, err, "should NOT have more than 1 items, expected schema type=array maxItems=1 items=schema type=string")
 			},
 		},
 		{
@@ -1218,7 +1221,7 @@ func TestRef_Unmarshal_Json_Array(t *testing.T) {
 				UniqueItems: true,
 			},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "should NOT have duplicate items (foo)")
+				require.EqualError(t, err, "should NOT have duplicate items (foo), expected schema type=array unique-items items=schema type=string")
 			},
 		},
 		{

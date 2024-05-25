@@ -32,7 +32,7 @@ func Require(vm *goja.Runtime, module *goja.Object) {
 	obj.Set("cron", f.Cron)
 	obj.Set("on", f.On)
 	obj.Set("env", f.Env)
-	obj.Set("marshal", f.Marshal)
+	obj.Set("encoding", f.Marshal)
 	obj.Set("date", f.Date)
 }
 
@@ -180,20 +180,20 @@ func (m *Module) Open(file string) (string, error) {
 }
 
 type MarshalArg struct {
-	Schema      *faker.JsonSchema `json:"schema"`
-	ContentType string            `json:"contentType"`
+	Schema      goja.Value `json:"schema"`
+	ContentType string     `json:"contentType"`
 }
 
-func (m *Module) Marshal(i interface{}, encoding *MarshalArg) string {
+func (m *Module) Marshal(i interface{}, args *MarshalArg) string {
 	ct := media.ContentType{}
-	r := &schema.Ref{}
-	if encoding != nil {
-		ct = media.ParseContentType(encoding.ContentType)
-		v, err := faker.ConvertToSchema(encoding.Schema)
+	var r *schema.Ref
+	if args != nil {
+		ct = media.ParseContentType(args.ContentType)
+		var err error
+		r, err = faker.ToOpenAPISchema(args.Schema, m.vm)
 		if err != nil {
 			panic(m.vm.ToValue(err.Error()))
 		}
-		r.Value = v
 	}
 	if ct.IsEmpty() {
 		ct = media.ParseContentType("application/json")

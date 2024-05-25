@@ -1,6 +1,6 @@
 package schema
 
-import jsonSchema "mokapi/json/schema"
+import jsonSchema "mokapi/schema/json/schema"
 
 func (r *Ref) Patch(patch *Ref) {
 	if patch == nil || patch.Value == nil {

@@ -1,11 +1,13 @@
 package openapi
 
 import (
+	"bytes"
 	"fmt"
 	"mokapi/config/dynamic"
-	"mokapi/decoding"
 	"mokapi/media"
 	"mokapi/providers/openapi/schema"
+	"mokapi/schema/encoding"
+	"mokapi/schema/json/parser"
 )
 
 type MediaType struct {
@@ -59,15 +61,26 @@ func (m *MediaType) Parse(b []byte, contentType media.ContentType) (interface{},
 	if !contentType.IsDerivedFrom(m.ContentType) {
 		return nil, fmt.Errorf("content type '%v' does not match: %v", m.ContentType, contentType)
 	}
-	var decoder decoding.DecodeFunc
+
+	if contentType.IsXml() {
+		return schema.UnmarshalXML(bytes.NewReader(b), m.Schema)
+	}
+
+	var decoder encoding.DecodeFunc
+	p := &parser.Parser{ValidateAdditionalProperties: true}
+	if contentType.Type == "text" {
+		p.ConvertStringToNumber = true
+	}
 	if contentType.String() == "application/x-www-form-urlencoded" {
+		p.ConvertStringToNumber = true
 		decoder = urlValueDecoder{mt: m}.decode
 	}
 
-	v, err := decoding.Decode(b, contentType, decoder)
-	if err != nil {
-		return nil, err
-	}
-	p := getParser(contentType)
-	return p.Parse(v, m.Schema)
+	return encoding.Decode(
+		b,
+		encoding.WithContentType(contentType),
+		encoding.WithDecodeProperty(decoder),
+		encoding.WithSchema(schema.ConvertToJsonSchema(m.Schema)),
+		encoding.WithParser(p),
+	)
 }

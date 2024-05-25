@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"mokapi/json/generator"
-	jsonSchema "mokapi/json/schema"
 	"mokapi/media"
 	"mokapi/providers/openapi/schema"
+	"mokapi/schema/json/generator"
+	jsonSchema "mokapi/schema/json/schema"
 	"mokapi/sortedmap"
 	"net/http"
 )
@@ -45,19 +45,17 @@ func (p *Properties) UnmarshalJSON(b []byte) error {
 }
 
 type schemaInfo struct {
-	Description string `json:"description,omitempty"`
-	Ref         string `json:"ref,omitempty"`
+	Ref string `json:"ref,omitempty"`
 
-	Type       interface{}   `json:"type"`
-	AnyOf      []*schemaInfo `json:"anyOf,omitempty"`
-	AllOf      []*schemaInfo `json:"allOf,omitempty"`
-	OneOf      []*schemaInfo `json:"oneOf,omitempty"`
-	Deprecated bool          `json:"deprecated,omitempty"`
-	Example    interface{}   `json:"example,omitempty"`
-	Enum       []interface{} `json:"enum,omitempty"`
-	Xml        *xml          `json:"xml,omitempty"`
-	Format     string        `json:"format,omitempty"`
-	Nullable   bool          `json:"nullable,omitempty"`
+	Type  interface{}   `json:"type"`
+	AnyOf []*schemaInfo `json:"anyOf,omitempty"`
+	AllOf []*schemaInfo `json:"allOf,omitempty"`
+	OneOf []*schemaInfo `json:"oneOf,omitempty"`
+
+	Enum     []interface{} `json:"enum,omitempty"`
+	Xml      *xml          `json:"xml,omitempty"`
+	Format   string        `json:"format,omitempty"`
+	Nullable bool          `json:"nullable,omitempty"`
 
 	Pattern   string `json:"pattern,omitempty"`
 	MinLength *int   `yaml:"minLength" json:"minLength,omitempty"`
@@ -79,6 +77,14 @@ type schemaInfo struct {
 	AdditionalProperties interface{} `json:"additionalProperties,omitempty"`
 	MinProperties        *int        `json:"minProperties,omitempty"`
 	MaxProperties        *int        `json:"maxProperties,omitempty"`
+
+	// Annotations
+	Title       string        `json:"title,omitempty"`
+	Description string        `json:"description,omitempty"`
+	Default     interface{}   `json:"default,omitempty"`
+	Deprecated  bool          `json:"deprecated,omitempty"`
+	Examples    []interface{} `json:"examples,omitempty"`
+	Example     interface{}   `json:"example,omitempty"` // OpenAPI <= 3.0
 }
 
 type xml struct {
@@ -173,13 +179,11 @@ func (c *schemaConverter) getSchema(s *schema.Ref) *schemaInfo {
 	}()
 
 	result := &schemaInfo{
-		Description: s.Value.Description,
-		Ref:         s.Ref,
+		Ref: s.Ref,
 
-		Type:    s.Value.Type,
-		Example: s.Value.Example,
-		Enum:    s.Value.Enum,
-		Format:  s.Value.Format,
+		Type:   s.Value.Type,
+		Enum:   s.Value.Enum,
+		Format: s.Value.Format,
 
 		Pattern:   s.Value.Pattern,
 		MinLength: s.Value.MinLength,
@@ -196,6 +200,14 @@ func (c *schemaConverter) getSchema(s *schema.Ref) *schemaInfo {
 		Required:      s.Value.Required,
 		MinProperties: s.Value.MinProperties,
 		MaxProperties: s.Value.MaxProperties,
+
+		// Annotations
+		Title:       s.Value.Title,
+		Description: s.Value.Description,
+		Default:     s.Value.Default,
+		Deprecated:  s.Value.Deprecated,
+		Examples:    s.Value.Examples,
+		Example:     s.Value.Example,
 	}
 
 	if len(s.Value.Type) == 0 {

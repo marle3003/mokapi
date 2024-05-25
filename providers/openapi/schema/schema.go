@@ -3,26 +3,23 @@ package schema
 import (
 	"fmt"
 	"mokapi/config/dynamic"
-	"mokapi/json/schema"
+	"mokapi/schema/json/schema"
 	"strings"
 )
 
 type Schema struct {
 	Schema string `yaml:"$schema,omitempty" json:"$schema,omitempty"`
 
-	Description string `yaml:"description" json:"description"`
+	Type  schema.Types `yaml:"type" json:"type"`
+	AnyOf []*Ref       `yaml:"anyOf" json:"anyOf"`
+	AllOf []*Ref       `yaml:"allOf" json:"allOf"`
+	OneOf []*Ref       `yaml:"oneOf" json:"oneOf"`
 
-	Type       schema.Types  `yaml:"type" json:"type"`
-	AnyOf      []*Ref        `yaml:"anyOf" json:"anyOf"`
-	AllOf      []*Ref        `yaml:"allOf" json:"allOf"`
-	OneOf      []*Ref        `yaml:"oneOf" json:"oneOf"`
-	Deprecated bool          `yaml:"deprecated" json:"deprecated"`
-	Example    interface{}   `yaml:"example" json:"example"`
-	Examples   []interface{} `yaml:"examples" json:"examples"`
-	Enum       []interface{} `yaml:"enum" json:"enum"`
-	Xml        *Xml          `yaml:"xml" json:"xml"`
-	Format     string        `yaml:"format" json:"format"`
-	Nullable   bool          `yaml:"nullable" json:"nullable"`
+	Enum     []interface{} `yaml:"enum" json:"enum"`
+	Const    interface{}   `yaml:"const,omitempty" json:"const,omitempty"`
+	Xml      *Xml          `yaml:"xml" json:"xml"`
+	Format   string        `yaml:"format" json:"format"`
+	Nullable bool          `yaml:"nullable" json:"nullable"`
 
 	// String
 	Pattern   string `yaml:"pattern" json:"pattern"`
@@ -30,6 +27,7 @@ type Schema struct {
 	MaxLength *int   `yaml:"maxLength" json:"maxLength"`
 
 	// Numbers
+	MultipleOf       *float64                  `yaml:"multipleOf,omitempty" json:"multipleOf,omitempty"`
 	Minimum          *float64                  `yaml:"minimum,omitempty" json:"minimum,omitempty"`
 	Maximum          *float64                  `yaml:"maximum,omitempty" json:"maximum,omitempty"`
 	ExclusiveMinimum *UnionType[float64, bool] `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
@@ -48,6 +46,14 @@ type Schema struct {
 	AdditionalProperties *AdditionalProperties `yaml:"additionalProperties,omitempty" json:"additionalProperties,omitempty"`
 	MinProperties        *int                  `yaml:"minProperties" json:"minProperties"`
 	MaxProperties        *int                  `yaml:"maxProperties" json:"maxProperties"`
+
+	// Annotations
+	Title       string        `yaml:"title" json:"title"`
+	Description string        `yaml:"description" json:"description"`
+	Default     interface{}   `yaml:"default" json:"default"`
+	Deprecated  bool          `yaml:"deprecated" json:"deprecated"`
+	Examples    []interface{} `yaml:"examples" json:"examples"`
+	Example     interface{}   `yaml:"example" json:"example"`
 
 	// Media
 	ContentMediaType string `yaml:"contentMediaType,omitempty" json:"contentMediaType,omitempty"`

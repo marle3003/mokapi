@@ -63,7 +63,7 @@ func (suite *PetStoreSuite) TestJsHttpHandler() {
 	try.GetRequest(suite.T(), "http://127.0.0.1:18080/pet/4",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(http.StatusInternalServerError),
-		try.HasBody("marshal data to 'application/json' failed: does not match schema type=object properties=[id, category, name, photoUrls, tags, status] required=[name photoUrls]: missing required field 'name'\n"))
+		try.HasBody("encoding data to 'application/json' failed: missing required field 'name', expected schema type=object properties=[id, category, name, photoUrls, tags, status] required=[name photoUrls]\n"))
 
 	// use generated data but change pet's name
 	try.GetRequest(suite.T(), "http://127.0.0.1:18080/pet/5",

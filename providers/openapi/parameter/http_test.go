@@ -2,8 +2,8 @@ package parameter
 
 import (
 	"github.com/stretchr/testify/require"
-	jsonSchema "mokapi/json/schema"
 	"mokapi/providers/openapi/schema"
+	jsonSchema "mokapi/schema/json/schema"
 	"net/http"
 	"net/url"
 	"testing"

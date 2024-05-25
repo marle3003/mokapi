@@ -750,9 +750,9 @@ func TestScript_Mokapi_Marshal(t *testing.T) {
 			name: "default encoding",
 			test: func(t *testing.T, host *enginetest.Host) {
 				s, err := jstest.New(jstest.WithSource(
-					`import { marshal } from 'mokapi'
+					`import { encoding } from 'mokapi'
 						 export default function() {
-						  	return marshal({ username: 'foo' })
+						  	return encoding({ username: 'foo' })
 						 }`),
 					js.WithHost(host))
 				r.NoError(t, err)
@@ -765,9 +765,9 @@ func TestScript_Mokapi_Marshal(t *testing.T) {
 			name: "with schema",
 			test: func(t *testing.T, host *enginetest.Host) {
 				s, err := jstest.New(jstest.WithSource(
-					`import { marshal } from 'mokapi'
+					`import { encoding } from 'mokapi'
 						 export default function() {
-						  	return marshal({ username: 'foo' }, { 
+						  	return encoding({ username: 'foo' }, { 
 								schema: { 
 									type: 'object',
 									properties: {
@@ -789,9 +789,9 @@ func TestScript_Mokapi_Marshal(t *testing.T) {
 			name: "with content type xml",
 			test: func(t *testing.T, host *enginetest.Host) {
 				s, err := jstest.New(jstest.WithSource(
-					`import { marshal } from 'mokapi'
+					`import { encoding } from 'mokapi'
 						 export default function() {
-						  	return marshal({ username: 'foo' }, { 
+						  	return encoding({ username: 'foo' }, { 
 								schema: { 
 									type: 'object',
 									xml: { name: 'user' }

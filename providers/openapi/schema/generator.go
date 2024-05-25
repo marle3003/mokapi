@@ -1,8 +1,8 @@
 package schema
 
 import (
-	"mokapi/json/generator"
-	"mokapi/json/schema"
+	"mokapi/schema/json/generator"
+	"mokapi/schema/json/schema"
 )
 
 func CreateValue(ref *Ref) (interface{}, error) {
@@ -21,6 +21,7 @@ func ConvertToJsonSchema(ref *Ref) *schema.Ref {
 
 type JsonSchemaConverter struct {
 	history map[*Schema]*schema.Schema
+	useXml  bool
 }
 
 func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
@@ -37,10 +38,13 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 	js := &schema.Schema{
 		Schema:               s.Schema,
 		Enum:                 s.Enum,
+		Const:                s.Const,
+		Default:              s.Default,
 		MinLength:            s.MinLength,
 		MaxLength:            s.MaxLength,
 		Pattern:              s.Pattern,
 		Format:               s.Format,
+		MultipleOf:           s.MultipleOf,
 		Items:                c.ConvertToJsonRef(s.Items),
 		MinItems:             s.MinItems,
 		MaxItems:             s.MaxItems,
@@ -48,7 +52,7 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 		ShuffleItems:         s.ShuffleItems,
 		MaxProperties:        s.MaxProperties,
 		MinProperties:        s.MinProperties,
-		Required:             nil,
+		Required:             s.Required,
 		DependentRequired:    nil,
 		AdditionalProperties: schema.AdditionalProperties{},
 	}
@@ -79,7 +83,12 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 	if s.Properties != nil {
 		js.Properties = &schema.Schemas{}
 		for it := s.Properties.Iter(); it.Next(); {
-			js.Properties.Set(it.Key(), c.ConvertToJsonRef(it.Value()))
+			propName := it.Key()
+			xml := it.Value().getXml()
+			if c.useXml && xml != nil {
+				propName = xml.Name
+			}
+			js.Properties.Set(propName, c.ConvertToJsonRef(it.Value()))
 		}
 	}
 

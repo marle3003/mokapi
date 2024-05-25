@@ -6,7 +6,7 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/provider/file"
 	"mokapi/engine/common"
-	"mokapi/json/generator"
+	"mokapi/schema/json/generator"
 	"net/http"
 	"net/url"
 	"path/filepath"

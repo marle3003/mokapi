@@ -3,10 +3,10 @@ package schema
 import (
 	"bufio"
 	"bytes"
+	"encoding/xml"
 	"fmt"
 	"io"
 	"mokapi/sortedmap"
-	"mokapi/xml"
 	"net/url"
 	"strings"
 )
@@ -46,29 +46,29 @@ func writeXmlElement(name string, i interface{}, r *Ref, w io.Writer) {
 		s = r.Value
 	}
 
-	node := xml.NewNode(name)
 	wrapped := false
+	attrs := &sortedmap.LinkedHashMap[string, string]{}
 	if s != nil && s.Xml != nil {
 		wrapped = s.Xml.Wrapped
 		if len(s.Xml.Name) > 0 {
-			node.Name = s.Xml.Name
+			name = s.Xml.Name
 		}
 		if s.Xml.Prefix != "" {
-			node.Name = fmt.Sprintf("%s:%s", s.Xml.Prefix, node.Name)
+			name = fmt.Sprintf("%s:%s", s.Xml.Prefix, name)
 		}
 		if s.Xml.Namespace != "" {
 			attrName := "xmlns"
 			if len(s.Xml.Prefix) > 0 {
 				attrName += fmt.Sprintf(":%v", s.Xml.Prefix)
 			}
-			node.Attributes.Set(attrName, s.Xml.Namespace)
+			attrs.Set(attrName, s.Xml.Namespace)
 		}
 	}
 
 	switch v := i.(type) {
 	case []interface{}:
 		if wrapped {
-			node.WriteStart(w)
+			writeXmlStart(w, name, attrs)
 		}
 		var sItems *Ref
 		if s != nil {
@@ -78,22 +78,22 @@ func writeXmlElement(name string, i interface{}, r *Ref, w io.Writer) {
 			if item == nil {
 				continue
 			}
-			writeXmlElement(node.Name, item, sItems, w)
+			writeXmlElement(name, item, sItems, w)
 		}
 		if wrapped {
-			node.WriteEnd(w)
+			writeXmlEnd(w, name)
 		}
 	case map[string]interface{}:
-		node.WriteStart(w)
+		writeXmlStart(w, name, attrs)
 		for name, v := range v {
 			writeXmlElement(name, v, nil, w)
 		}
-		node.WriteEnd(w)
-	case *marshalObject:
-		setAttributes(node, v.LinkedHashMap, r)
-		node.WriteStart(w)
+		writeXmlEnd(w, name)
+	case *sortedmap.LinkedHashMap[string, interface{}]:
+		attrs.Merge(getAttributes(v, r))
+		writeXmlStart(w, name, attrs)
 
-		for it := v.LinkedHashMap.Iter(); it.Next(); {
+		for it := v.Iter(); it.Next(); {
 			if it.Value() == nil {
 				continue
 			}
@@ -110,17 +110,19 @@ func writeXmlElement(name string, i interface{}, r *Ref, w io.Writer) {
 			writeXmlElement(propName, it.Value(), prop, w)
 		}
 
-		node.WriteEnd(w)
+		writeXmlEnd(w, name)
 	default:
 		if i == nil {
 			return
 		}
-		node.Content = fmt.Sprintf("%v", i)
-		node.Write(w)
+		writeXmlStart(w, name, attrs)
+		writeXmlContent(w, fmt.Sprintf("%v", i))
+		writeXmlEnd(w, name)
 	}
 }
 
-func setAttributes(n *xml.Node, m *sortedmap.LinkedHashMap[string, interface{}], r *Ref) {
+func getAttributes(m *sortedmap.LinkedHashMap[string, interface{}], r *Ref) *sortedmap.LinkedHashMap[string, string] {
+	attrs := &sortedmap.LinkedHashMap[string, string]{}
 	for it := m.Iter(); it.Next(); {
 		if it.Value() == nil {
 			continue
@@ -139,122 +141,29 @@ func setAttributes(n *xml.Node, m *sortedmap.LinkedHashMap[string, interface{}],
 			attrName = fmt.Sprintf("%s:%s", x.Prefix, attrName)
 		}
 
-		n.Attributes.Set(attrName, fmt.Sprintf("%v", it.Value()))
+		attrs.Set(attrName, fmt.Sprintf("%v", it.Value()))
 	}
+	return attrs
 }
 
-func unmarshalXml(b []byte, r *Ref) (interface{}, error) {
-	n, err := xml.Read(b)
-	if err != nil {
-		return nil, err
+func writeXmlStart(w io.Writer, name string, attrs *sortedmap.LinkedHashMap[string, string]) {
+	writeString(w, "<"+name)
+
+	for it := attrs.Iter(); it.Next(); {
+		writeString(w, fmt.Sprintf(" %v=\"%v\"", it.Key(), it.Value()))
 	}
-	if len(n.Children) == 0 {
-		return nil, nil
-	}
-	return parseXml(n, r)
+
+	writeString(w, ">")
 }
 
-func parseXml(n *xml.Node, r *Ref) (interface{}, error) {
-	if len(n.Content) > 0 {
-		return n.Content, nil
-	}
-
-	if r == nil || r.Value == nil {
-		return parseFreeForm(n)
-	}
-
-	s := r.Value
-	switch {
-	case s.Type.Includes("object"):
-		if s.Properties == nil && s.IsFreeForm() {
-			return parseFreeForm(n)
-		}
-		props := map[string]interface{}{}
-		for it := s.Properties.Iter(); it.Next(); {
-			name := it.Key()
-			xmlName := name
-			prop := it.Value()
-			if prop.Value.Xml != nil && len(prop.Value.Xml.Name) > 0 {
-				xmlName = prop.Value.Xml.Name
-			}
-			if prop.Value.Xml != nil && prop.Value.Xml.Attribute {
-				if v, found := n.Attributes.Get(xmlName); found {
-					props[name] = v
-				}
-			} else {
-				c := n.GetFirstElement(xmlName)
-				if c == nil {
-					continue
-				}
-				v, err := parseXml(c, prop)
-				if err != nil {
-					return nil, err
-				}
-				props[name] = v
-			}
-		}
-		return props, nil
-	case s.Type.Includes("array"):
-		if n == nil {
-			return nil, fmt.Errorf("expected array but found null")
-		}
-		elements := n.Children
-		if s.Xml != nil && s.Xml.Wrapped {
-			if len(n.Children) == 0 {
-				return make([]interface{}, 0), nil
-			}
-			elements = n.Children[0].Children
-		}
-		array := make([]interface{}, len(elements))
-		for i, item := range n.Children {
-			v, err := parseXml(item, s.Items)
-			if err != nil {
-				return nil, err
-			}
-			array[i] = v
-		}
-		return array, nil
-	default:
-		return n.Content, nil
-	}
+func writeXmlContent(w io.Writer, s string) {
+	_ = xml.EscapeText(w, []byte(s))
 }
 
-func parseFreeForm(n *xml.Node) (interface{}, error) {
-	if isArray(n) {
-		result := make([]interface{}, 0, len(n.Children))
-		for _, c := range n.Children {
-			v, err := parseXml(c, nil)
-			if err != nil {
-				return nil, err
-			}
-			result = append(result, v)
-		}
-		return result, nil
-	} else {
-		result := map[string]interface{}{}
-		for it := n.Attributes.Iter(); it.Next(); {
-			result[it.Key()] = it.Value()
-		}
-		for _, c := range n.Children {
-			v, err := parseXml(c, nil)
-			if err != nil {
-				return nil, err
-			}
-			result[c.Name] = v
-		}
-		return result, nil
-	}
+func writeXmlEnd(w io.Writer, name string) {
+	writeString(w, fmt.Sprintf("</%v>", name))
 }
 
-func isArray(n *xml.Node) bool {
-	if len(n.Children) <= 1 {
-		return false
-	}
-	name := n.Children[0].Name
-	for i := 1; i < len(n.Children); i++ {
-		if name != n.Children[i].Name {
-			return false
-		}
-	}
-	return true
+func writeString(w io.Writer, s string) {
+	_, _ = w.Write([]byte(s))
 }

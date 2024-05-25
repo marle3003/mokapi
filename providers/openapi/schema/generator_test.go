@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
-	"mokapi/json/generator"
-	jsonSchema "mokapi/json/schema"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
+	"mokapi/schema/json/generator"
+	jsonSchema "mokapi/schema/json/schema"
 	"testing"
 )
 

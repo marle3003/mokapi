@@ -7,11 +7,11 @@ import (
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
-	jsonRef "mokapi/json/ref"
-	jsonSchema "mokapi/json/schema"
 	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/ref"
 	"mokapi/providers/openapi/schema"
+	jsonRef "mokapi/schema/json/ref"
+	jsonSchema "mokapi/schema/json/schema"
 	"net/url"
 	"testing"
 )

@@ -2,7 +2,7 @@ package enginetest
 
 import (
 	"mokapi/engine/common"
-	"mokapi/json/generator"
+	"mokapi/schema/json/generator"
 )
 
 type FakerTree struct {

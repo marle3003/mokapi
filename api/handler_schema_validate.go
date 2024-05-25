@@ -1,12 +1,14 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
-	"mokapi/decoding"
 	"mokapi/media"
 	"mokapi/providers/openapi/schema"
+	"mokapi/schema/encoding"
+	"mokapi/schema/json/parser"
 	"net/http"
 )
 
@@ -28,14 +30,19 @@ func (h *handler) validate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	v, err := decoding.Decode(data, ct, nil)
+	var v interface{}
+	if ct.IsXml() {
+		v, err = schema.UnmarshalXML(bytes.NewReader(data), s)
+	} else {
+		v, err = encoding.Decode(data, encoding.WithContentType(ct))
+	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	p := schema.Parser{}
-	v, err = p.Parse(v, s)
+	p := parser.Parser{ValidateAdditionalProperties: true}
+	v, err = p.Parse(v, schema.ConvertToJsonSchema(s))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

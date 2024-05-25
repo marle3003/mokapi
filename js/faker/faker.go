@@ -1,44 +1,16 @@
 package faker
 
 import (
-	"fmt"
 	"github.com/dop251/goja"
 	"mokapi/engine/common"
-	"mokapi/json/generator"
-	jsonSchema "mokapi/json/schema"
 	"mokapi/providers/openapi/schema"
+	"mokapi/schema/json/generator"
+	jsonSchema "mokapi/schema/json/schema"
 )
 
 type Faker struct {
 	rt   *goja.Runtime
 	host common.Host
-}
-
-type JsonSchema struct {
-	Type                 interface{}            `json:"type"`
-	Format               string                 `json:"format"`
-	Pattern              string                 `json:"pattern"`
-	Properties           map[string]*JsonSchema `json:"properties"`
-	AdditionalProperties *JsonSchema            `json:"additionalProperties,omitempty"`
-	Items                *JsonSchema            `json:"items"`
-	Required             []string               `json:"required"`
-	Nullable             bool                   `json:"nullable"`
-	Example              interface{}            `json:"example"`
-	Enum                 []interface{}          `json:"enum"`
-	Minimum              *float64               `json:"minimum,omitempty"`
-	Maximum              *float64               `json:"maximum,omitempty"`
-	ExclusiveMinimum     interface{}            `json:"exclusiveMinimum,omitempty"`
-	ExclusiveMaximum     interface{}            `json:"exclusiveMaximum,omitempty"`
-	AnyOf                []*JsonSchema          `json:"anyOf"`
-	AllOf                []*JsonSchema          `json:"allOf"`
-	OneOf                []*JsonSchema          `json:"oneOf"`
-	UniqueItems          bool                   `json:"uniqueItems"`
-	MinItems             *int                   `json:"minItems"`
-	MaxItems             *int                   `json:"maxItems"`
-	ShuffleItems         bool                   `json:"x-shuffleItems"`
-	MinProperties        *int                   `json:"minProperties"`
-	MaxProperties        *int                   `json:"maxProperties"`
-	Xml                  *jsonXml               `json:"xml"`
 }
 
 type jsonXml struct {
@@ -50,8 +22,8 @@ type jsonXml struct {
 }
 
 type requestExample struct {
-	Name   string      `json:"name"`
-	Schema *JsonSchema `json:"schema"`
+	Name   string             `json:"name"`
+	Schema *jsonSchema.Schema `json:"schema"`
 }
 
 func Require(rt *goja.Runtime, module *goja.Object) {
@@ -67,7 +39,7 @@ func Require(rt *goja.Runtime, module *goja.Object) {
 }
 
 func (m *Faker) Fake(v goja.Value) interface{} {
-	r := toRequest(v, m.rt)
+	r := &generator.Request{}
 	err := m.rt.ExportTo(v, &r)
 	if err == nil && r.Path != nil {
 		v, err := generator.New(r)
@@ -77,153 +49,28 @@ func (m *Faker) Fake(v goja.Value) interface{} {
 		return v
 	}
 
-	s := &JsonSchema{}
-	err = m.rt.ExportTo(v, &s)
-	if err != nil {
-		panic(m.rt.ToValue("expected parameter type of OpenAPI schema"))
-	}
-	s2, err := ConvertToSchema(s)
+	s, err := ToOpenAPISchema(v, m.rt)
+	//s, err := ToJsonSchema(v, m.rt)
 	if err != nil {
 		panic(m.rt.ToValue(err.Error()))
 	}
-	i, err := schema.CreateValue(&schema.Ref{Value: s2})
+	if err != nil {
+		panic(m.rt.ToValue(err.Error()))
+	}
+
+	r = &generator.Request{
+		Path: generator.Path{
+			&generator.PathElement{
+				Schema: schema.ConvertToJsonSchema(s),
+			},
+		},
+	}
+
+	i, err := generator.New(r)
 	if err != nil {
 		panic(m.rt.ToValue(err.Error()))
 	}
 	return i
-}
-
-func ConvertToSchema(js *JsonSchema) (*schema.Schema, error) {
-	s := &schema.Schema{
-		Format:        js.Format,
-		Pattern:       js.Pattern,
-		Required:      js.Required,
-		Nullable:      js.Nullable,
-		Example:       js.Example,
-		Enum:          js.Enum,
-		Minimum:       js.Minimum,
-		Maximum:       js.Maximum,
-		UniqueItems:   js.UniqueItems,
-		MinItems:      js.MinItems,
-		MaxItems:      js.MaxItems,
-		ShuffleItems:  js.ShuffleItems,
-		MinProperties: js.MinProperties,
-		MaxProperties: js.MaxProperties,
-	}
-
-	if js.Type != nil {
-		switch v := js.Type.(type) {
-		case string:
-			s.Type = append(s.Type, v)
-		case []interface{}:
-			for _, typeName := range v {
-				s.Type = append(s.Type, fmt.Sprintf("%v", typeName))
-			}
-		default:
-			return nil, fmt.Errorf("unexpected type for 'type': %T", v)
-		}
-	}
-
-	if len(js.Properties) > 0 {
-		s.Properties = &schema.Schemas{}
-		for name, prop := range js.Properties {
-			v, err := ConvertToSchema(prop)
-			if err != nil {
-				return nil, err
-			}
-			s.Properties.Set(name, &schema.Ref{Value: v})
-		}
-	}
-
-	if js.ExclusiveMinimum != nil {
-		switch v := js.ExclusiveMinimum.(type) {
-		case bool:
-			s.ExclusiveMinimum = schema.NewUnionTypeB[float64, bool](v)
-		case float64:
-			s.ExclusiveMinimum = schema.NewUnionTypeA[float64, bool](v)
-		case int64:
-			s.ExclusiveMinimum = schema.NewUnionTypeA[float64, bool](float64(v))
-		default:
-			return nil, fmt.Errorf("unexpected type for 'exclusiveMinimum': %T", v)
-		}
-	}
-
-	if js.ExclusiveMaximum != nil {
-		switch v := js.ExclusiveMaximum.(type) {
-		case bool:
-			s.ExclusiveMaximum = schema.NewUnionTypeB[float64, bool](v)
-		case float64:
-			s.ExclusiveMaximum = schema.NewUnionTypeA[float64, bool](v)
-		case int64:
-			s.ExclusiveMaximum = schema.NewUnionTypeA[float64, bool](float64(v))
-		default:
-			return nil, fmt.Errorf("unexpected type for 'exclusiveMaximum': %T", v)
-		}
-	}
-
-	if js.AdditionalProperties != nil {
-		v, err := ConvertToSchema(js.AdditionalProperties)
-		if err != nil {
-			return nil, err
-		}
-		s.AdditionalProperties = &schema.AdditionalProperties{
-			Ref: &schema.Ref{
-				Value: v,
-			},
-		}
-	}
-
-	if js.Items != nil {
-		v, err := ConvertToSchema(js.Items)
-		if err != nil {
-			return nil, err
-		}
-		s.Items = &schema.Ref{
-			Value: v,
-		}
-	}
-
-	if len(js.AnyOf) > 0 {
-		for _, any := range js.AnyOf {
-			v, err := ConvertToSchema(any)
-			if err != nil {
-				return nil, err
-			}
-			s.AnyOf = append(s.AnyOf, &schema.Ref{Value: v})
-		}
-	}
-
-	if len(js.AllOf) > 0 {
-		for _, all := range js.AllOf {
-			v, err := ConvertToSchema(all)
-			if err != nil {
-				return nil, err
-			}
-			s.AllOf = append(s.AllOf, &schema.Ref{Value: v})
-		}
-	}
-
-	if len(js.OneOf) > 0 {
-		for _, one := range js.OneOf {
-			v, err := ConvertToSchema(one)
-			if err != nil {
-				return nil, err
-			}
-			s.OneOf = append(s.OneOf, &schema.Ref{Value: v})
-		}
-	}
-
-	if js.Xml != nil {
-		s.Xml = &schema.Xml{
-			Wrapped:   js.Xml.Wrapped,
-			Name:      js.Xml.Name,
-			Attribute: js.Xml.Attribute,
-			Prefix:    js.Xml.Prefix,
-			Namespace: js.Xml.Namespace,
-		}
-	}
-
-	return s, nil
 }
 
 type node struct {
@@ -330,7 +177,7 @@ func toRequest(v goja.Value, rt *goja.Runtime) *generator.Request {
 			r.Path[0].Name = name.String()
 		case "schema":
 			s := obj.Get(k)
-			r.Path[0].Schema, err = toJsonSchema(s, rt)
+			r.Path[0].Schema, err = ToJsonSchema(s, rt)
 			if err != nil {
 				return nil
 			}
@@ -339,119 +186,4 @@ func toRequest(v goja.Value, rt *goja.Runtime) *generator.Request {
 		}
 	}
 	return r
-}
-
-func toJsonSchema(v goja.Value, rt *goja.Runtime) (*jsonSchema.Ref, error) {
-	s := &jsonSchema.Schema{}
-	obj := v.ToObject(rt)
-	for _, k := range obj.Keys() {
-		switch k {
-		case "type":
-			i := obj.Get(k).Export()
-			if arr, ok := i.([]interface{}); ok {
-				for _, t := range arr {
-					tn, ok := t.(string)
-					if !ok {
-						return nil, fmt.Errorf("unexpected type: %v", t)
-					}
-					s.Type = append(s.Type, tn)
-				}
-			} else if t, ok := i.(string); ok {
-				s.Type = []string{t}
-			} else {
-				return nil, fmt.Errorf("unexpected type for attribute 'type'")
-			}
-		case "enum":
-			i := obj.Get(k).Export()
-			if enums, ok := i.([]interface{}); ok {
-				s.Enum = enums
-			} else {
-				return nil, fmt.Errorf("unexpected type for attribute 'enum'")
-			}
-		case "const":
-			s.Const = obj.Get(k).Export()
-		case "examples":
-			i := obj.Get(k).Export()
-			if examples, ok := i.([]interface{}); ok {
-				s.Examples = examples
-			} else {
-				return nil, fmt.Errorf("unexpected type for attribute 'examples'")
-			}
-		case "multipleOf":
-			f := obj.Get(k).ToFloat()
-			s.MultipleOf = &f
-		case "maximum":
-			f := obj.Get(k).ToFloat()
-			s.MultipleOf = &f
-		case "exclusiveMaximum":
-			f := obj.Get(k).ToFloat()
-			s.ExclusiveMaximum = &f
-		case "minimum":
-			f := obj.Get(k).ToFloat()
-			s.Minimum = &f
-		case "exclusiveMinimum":
-			f := obj.Get(k).ToFloat()
-			s.ExclusiveMinimum = &f
-		case "maxLength":
-			i := int(obj.Get(k).ToInteger())
-			s.MaxLength = &i
-		case "minLength":
-			i := int(obj.Get(k).ToInteger())
-			s.MinLength = &i
-		case "pattern":
-			s.Pattern = obj.Get(k).String()
-		case "format":
-			s.Format = obj.Get(k).String()
-		case "items":
-			items, err := toJsonSchema(obj.Get(k), rt)
-			if err != nil {
-				return nil, err
-			}
-			s.Items = items
-		case "maxItems":
-			i := int(obj.Get(k).ToInteger())
-			s.MaxItems = &i
-		case "minItems":
-			i := int(obj.Get(k).ToInteger())
-			s.MinItems = &i
-		case "uniqueItems":
-			s.UniqueItems = obj.Get(k).ToBoolean()
-		case "maxContains":
-			i := int(obj.Get(k).ToInteger())
-			s.MaxContains = &i
-		case "minContains":
-			i := int(obj.Get(k).ToInteger())
-			s.MinContains = &i
-		case "x-shuffleItems":
-			s.ShuffleItems = obj.Get(k).ToBoolean()
-		case "properties":
-			s.Properties = &jsonSchema.Schemas{}
-			propsObj := obj.Get(k).ToObject(rt)
-			for _, name := range propsObj.Keys() {
-				prop, err := toJsonSchema(propsObj.Get(name), rt)
-				if err != nil {
-					return nil, err
-				}
-				s.Properties.Set(name, prop)
-			}
-		case "maxProperties":
-			i := int(obj.Get(k).ToInteger())
-			s.MaxProperties = &i
-		case "minProperties":
-			i := int(obj.Get(k).ToInteger())
-			s.MinProperties = &i
-		case "required":
-			i := obj.Get(k).Export()
-			if arr, ok := i.([]interface{}); ok {
-				for _, t := range arr {
-					req, ok := t.(string)
-					if !ok {
-						return nil, fmt.Errorf("unexpected type: %v", t)
-					}
-					s.Required = append(s.Type, req)
-				}
-			}
-		}
-	}
-	return &jsonSchema.Ref{Value: s}, nil
 }

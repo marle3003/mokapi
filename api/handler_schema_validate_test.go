@@ -67,8 +67,8 @@ func TestHandler_Schema_Validate(t *testing.T) {
 					},
 					`{ "schema": {"type": ["object"], "properties": { "foo":{ "type": ["string"] }, "bar":{ "type": ["integer"] } } }, "data":"{\"foo\": 12, \"bar\": \"text\" }" }`,
 					h,
-					try.BodyContains("parse 'bar' failed: parse 'text' failed, expected schema type=integer\n"),
-					try.BodyContains("parse 'foo' failed: parse 12 failed, expected schema type=string\n"),
+					try.BodyContains("parse property 'bar' failed: parse 'text' failed, expected schema type=integer\n"),
+					try.BodyContains("parse property 'foo' failed: parse 12 failed, expected schema type=string\n"),
 					try.HasStatusCode(400),
 				)
 			},
@@ -93,7 +93,7 @@ func TestHandler_Schema_Validate(t *testing.T) {
 			},
 		},
 		{
-			name: "object with additionalProperty false",
+			name: "object with additionalProperty=false contains one not defined properties",
 			app: &runtime.App{
 				Monitor: monitor.New(),
 			},
@@ -106,32 +106,13 @@ func TestHandler_Schema_Validate(t *testing.T) {
 					},
 					`{ "schema": {"type": ["object"], "properties": { "foo":{ "type": ["string"] } }, "additionalProperties": false }, "data":"{ \"foo\":\"bar\", \"foo2\": \"val\" }" }`,
 					h,
-					try.BodyContains("additional properties not allowed: foo2"),
 					try.HasStatusCode(400),
+					try.HasBody("additional properties 'foo2' not allowed, expected schema type=object properties=[foo] free-form=false\n"),
 				)
 			},
 		},
 		{
-			name: "object with additionalProperty false but match length",
-			app: &runtime.App{
-				Monitor: monitor.New(),
-			},
-			fn: func(t *testing.T, h http.Handler, app *runtime.App) {
-				try.Handler(t,
-					http.MethodGet,
-					"http://foo.api/api/schema/validate",
-					map[string]string{
-						"Data-Content-Type": "application/json",
-					},
-					`{ "schema": {"type": ["object"], "properties": { "foo":{ "type": ["string"] } }, "additionalProperties": false }, "data":"{\"foo2\": \"val\" }" }`,
-					h,
-					try.BodyContains("additional properties not allowed: foo2"),
-					try.HasStatusCode(400),
-				)
-			},
-		},
-		{
-			name: "object with additionalProperty false and two more properties received",
+			name: "object with additionalProperty=false contains two not defined properties",
 			app: &runtime.App{
 				Monitor: monitor.New(),
 			},
@@ -144,8 +125,27 @@ func TestHandler_Schema_Validate(t *testing.T) {
 					},
 					`{ "schema": {"type": ["object"], "properties": { "foo":{ "type": ["string"] } }, "additionalProperties": false }, "data":"{ \"foo\":\"bar\", \"foo2\": \"val\", \"foo3\": \"val\" }" }`,
 					h,
-					try.BodyMatch("additional properties not allowed: foo2, foo3"),
 					try.HasStatusCode(400),
+					try.HasBody("additional properties 'foo2, foo3' not allowed, expected schema type=object properties=[foo] free-form=false\n"),
+				)
+			},
+		},
+		{
+			name: "object with additionalProperty=false but match number of properties",
+			app: &runtime.App{
+				Monitor: monitor.New(),
+			},
+			fn: func(t *testing.T, h http.Handler, app *runtime.App) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/schema/validate",
+					map[string]string{
+						"Data-Content-Type": "application/json",
+					},
+					`{ "schema": {"type": ["object"], "properties": { "foo":{ "type": ["string"] } }, "additionalProperties": false }, "data":"{\"foo2\": \"val\" }" }`,
+					h,
+					try.HasStatusCode(400),
+					try.HasBody("additional properties 'foo2' not allowed, expected schema type=object properties=[foo] free-form=false\n"),
 				)
 			},
 		},
