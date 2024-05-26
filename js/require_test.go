@@ -176,7 +176,7 @@ func TestRequire(t *testing.T) {
 				r.NoError(t, err)
 
 				_, err = s.RunDefault()
-				r.EqualError(t, err, "module https://foo.bar not found in test.js at mokapi/js/require.(*module).require-fm (native)")
+				r.EqualError(t, err, "loaded module https://foo.bar contains error: ReferenceError: foo is not defined at https:/foo.bar:1:51(1) at mokapi/js/require.(*module).require-fm (native)")
 			},
 		},
 		{
