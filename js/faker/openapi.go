@@ -10,6 +10,10 @@ import (
 func ToOpenAPISchema(v goja.Value, rt *goja.Runtime) (*schema.Ref, error) {
 	s := &schema.Schema{}
 
+	if v == nil {
+		return nil, nil
+	}
+
 	if v.ExportType().Kind() != reflect.Map {
 		return nil, fmt.Errorf("expect JSON schema but got: %T", v.Export())
 	}

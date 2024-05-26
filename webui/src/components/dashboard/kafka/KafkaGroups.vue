@@ -17,7 +17,8 @@ function memberInfo(member: KafkaMember): string {
     if (props.topicName) {
         addition = `<p id="${member.name}-partitions" class="label">Partitions</p><p aria-labelledby="${member.name}-partitions">${member.partitions[props.topicName].join(', ')}</p>`
     } else {
-        addition = `<p id="${member.name}-topics" class="label">Topics</p><p aria-labelledby="${member.name}-topics">${Object.keys(member.partitions).join(',<br />')}</p>`
+        const topics = Object.keys(member.partitions).sort((x, y) => x.localeCompare(y)).join(',<br />')
+        addition = `<p id="${member.name}-topics" class="label">Topics</p><p aria-labelledby="${member.name}-topics">${topics}</p>`
     }
     return `<div aria-label="${member.name}">
             <p id="${member.name}-address" class="label">Address</p>

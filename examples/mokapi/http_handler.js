@@ -73,7 +73,7 @@ export default async function() {
                 }
                 return true
             case 'example':
-                const data = fake(request.body)
+                const data = fake(request.body.schema)
                 response.body = marshal(data, { schema: request.body.schema, contentType: request.header.Accept })
                 return true
             case 'validate':

@@ -87,8 +87,17 @@ func (m *Module) Options(url string, body interface{}, args goja.Value) interfac
 }
 
 func (m *Module) Fetch(url string, v goja.Value) *goja.Promise {
-	p, resolve, _ := m.rt.NewPromise()
+	p, resolve, reject := m.rt.NewPromise()
 	go func() {
+		defer func() {
+			r := recover()
+			if r != nil {
+				m.loop.Run(func(vm *goja.Runtime) {
+					reject(r)
+				})
+			}
+		}()
+
 		args := getFetchArgs(v)
 		res := m.doRequest(args.method, url, nil, nil)
 		m.loop.Run(func(vm *goja.Runtime) {

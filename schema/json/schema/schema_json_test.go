@@ -37,6 +37,14 @@ func TestSchemaJson(t *testing.T) {
 			},
 		},
 		{
+			name: "type null",
+			data: `{"type": "null" }`,
+			test: func(t *testing.T, s *Schema, err error) {
+				require.NoError(t, err)
+				require.Equal(t, Types{"null"}, s.Type)
+			},
+		},
+		{
 			name: "type is not a string value",
 			data: `{"type": ["string", 123] }`,
 			test: func(t *testing.T, s *Schema, err error) {
