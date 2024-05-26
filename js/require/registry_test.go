@@ -17,15 +17,41 @@ import (
 
 func TestRegistry(t *testing.T) {
 	type source struct {
-		name string
-		code string
+		name     string
+		code     string
+		checksum []byte
 	}
 
 	testcases := []struct {
 		name    string
 		sources map[string]source
-		test    func(t *testing.T, host common.Host)
+		test    func(t *testing.T, host common.Host, sources map[string]source)
 	}{
+		{
+			name: "module with syntax error",
+			sources: map[string]source{
+				"mod.js": {
+					name: "",
+					code: `"`,
+				},
+			},
+			test: func(t *testing.T, host common.Host, _ map[string]source) {
+				reg, err := require.NewRegistry()
+				r.NoError(t, err)
+
+				vm := goja.New()
+				js.EnableInternal(vm, host, nil, &dynamic.Config{Info: dynamictest.NewConfigInfo()})
+				reg.Enable(vm)
+
+				_, err = vm.RunString(`
+					const m = require("mod")
+					if (m.items[0] !== 'foo') {
+						throw new Error('m test failed')
+					}
+				`)
+				r.EqualError(t, err, "loaded module mod contains error: SyntaxError: /mod.js: Unterminated string constant. (1:0)\n\n> 1 | \"\n    | ^ at dispatchException (<mokapi/babel.min.js>:2:6239(7)) at mokapi/js/require.(*module).require-fm (native)")
+			},
+		},
 		{
 			name: "export array",
 			sources: map[string]source{
@@ -34,7 +60,7 @@ func TestRegistry(t *testing.T) {
 					code: `export let items = ['foo']`,
 				},
 			},
-			test: func(t *testing.T, host common.Host) {
+			test: func(t *testing.T, host common.Host, _ map[string]source) {
 				reg, err := require.NewRegistry()
 				r.NoError(t, err)
 
@@ -59,7 +85,7 @@ func TestRegistry(t *testing.T) {
 					code: `export default { foo: 'bar' }`,
 				},
 			},
-			test: func(t *testing.T, host common.Host) {
+			test: func(t *testing.T, host common.Host, _ map[string]source) {
 				reg, err := require.NewRegistry()
 				r.NoError(t, err)
 
@@ -88,7 +114,7 @@ func TestRegistry(t *testing.T) {
 					code: "",
 				},
 			},
-			test: func(t *testing.T, host common.Host) {
+			test: func(t *testing.T, host common.Host, _ map[string]source) {
 				reg, err := require.NewRegistry()
 				r.NoError(t, err)
 
@@ -103,6 +129,87 @@ func TestRegistry(t *testing.T) {
 				r.NoError(t, err)
 			},
 		},
+		{
+			name: "update mod file",
+			sources: map[string]source{
+				"mod.js": {
+					name:     "",
+					code:     `export default 2+2`,
+					checksum: []byte("1"),
+				},
+			},
+			test: func(t *testing.T, host common.Host, sources map[string]source) {
+				reg, err := require.NewRegistry()
+				r.NoError(t, err)
+
+				vm := goja.New()
+				js.EnableInternal(vm, host, nil, &dynamic.Config{Info: dynamictest.NewConfigInfo()})
+				reg.Enable(vm)
+
+				v, err := vm.RunString(`
+					const m = require("mod");
+					m.default + 2
+				`)
+				r.NoError(t, err)
+				r.Equal(t, int64(6), v.Export())
+
+				// update mod
+				sources["mod.js"] = source{
+					name:     "",
+					code:     `export default 3+3`,
+					checksum: []byte("2"),
+				}
+				vm = goja.New()
+				js.EnableInternal(vm, host, nil, &dynamic.Config{Info: dynamictest.NewConfigInfo()})
+				reg.Enable(vm)
+
+				v, err = vm.RunString(`
+					const m = require("mod")
+					m.default + 2
+				`)
+				r.NoError(t, err)
+				r.Equal(t, int64(8), v.Export())
+			},
+		},
+		{
+			name: "getProgram updated file should return new result",
+			test: func(t *testing.T, host common.Host, _ map[string]source) {
+				reg, err := require.NewRegistry()
+				r.NoError(t, err)
+
+				p, err := reg.GetProgram(&dynamic.Config{
+					Info: dynamic.ConfigInfo{
+						Provider: "test",
+						Url:      mustParse("foo.js"),
+						Checksum: []byte("12345"),
+						Time:     time.Time{},
+					},
+					Raw: []byte("2+2"),
+				})
+				r.NoError(t, err)
+
+				// create new vm and run updated file
+				vm := goja.New()
+				v, err := vm.RunProgram(p)
+				r.NoError(t, err)
+				r.Equal(t, int64(4), v.Export())
+
+				vm = goja.New()
+				p, err = reg.GetProgram(&dynamic.Config{
+					Info: dynamic.ConfigInfo{
+						Provider: "test",
+						Url:      mustParse("foo.js"),
+						Checksum: []byte("54321"),
+						Time:     time.Time{},
+					},
+					Raw: []byte("4+4"),
+				})
+				r.NoError(t, err)
+
+				v, err = vm.RunProgram(p)
+				r.Equal(t, int64(8), v.Export())
+			},
+		},
 	}
 
 	for _, tc := range testcases {
@@ -115,7 +222,7 @@ func TestRegistry(t *testing.T) {
 							Info: dynamic.ConfigInfo{
 								Provider: "test",
 								Url:      mustParse(src.name),
-								Checksum: nil,
+								Checksum: src.checksum,
 								Time:     time.Time{},
 							},
 							Raw:       []byte(src.code),
@@ -128,7 +235,7 @@ func TestRegistry(t *testing.T) {
 				},
 			}
 
-			tc.test(t, host)
+			tc.test(t, host, tc.sources)
 		})
 	}
 }

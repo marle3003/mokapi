@@ -58,13 +58,18 @@ func (m *module) requireModule(modPath string) *goja.Object {
 	}
 
 	dir := filepath.Dir(cmp)
-	if mod, err := m.loadFileModule(filepath.Join(dir, modPath)); err == nil && mod != nil {
-		m.modules[key] = mod
+	mod, err := m.loadFileModule(filepath.Join(dir, modPath))
+	if err == nil && mod != nil {
 		return mod
+	} else if !errors.Is(err, ModuleFileNotFound) {
+		panic(m.vm.ToValue(fmt.Sprintf("loaded module %v contains error: %v", modPath, err)))
 	}
-	if mod, err := m.loadNodeModule(modPath, dir); err == nil && mod != nil {
-		m.modules[key] = mod
+
+	mod, err = m.loadNodeModule(modPath, dir)
+	if err == nil && mod != nil {
 		return mod
+	} else if !errors.Is(err, ModuleFileNotFound) {
+		panic(m.vm.ToValue(fmt.Sprintf("loaded module %v contains error: %v", modPath, err)))
 	}
 
 	panic(m.vm.ToValue(fmt.Sprintf("module %v not found in %v", modPath, cmp)))
@@ -74,7 +79,7 @@ func (m *module) loadFileModule(modPath string) (*goja.Object, error) {
 	if len(filepath.Ext(modPath)) > 0 {
 		src, err := m.host.OpenFile(modPath, "")
 		if err != nil {
-			return nil, err
+			return nil, ModuleFileNotFound
 		}
 
 		if filepath.Ext(modPath) == ".yaml" {
@@ -88,6 +93,8 @@ func (m *module) loadFileModule(modPath string) (*goja.Object, error) {
 		p := modPath + ext
 		if mod, err := m.loadFileModule(p); err == nil {
 			return mod, nil
+		} else if !errors.Is(err, ModuleFileNotFound) {
+			return nil, err
 		}
 	}
 
@@ -152,7 +159,7 @@ func (m *module) loadNodeModule(modPath, dir string) (*goja.Object, error) {
 }
 
 func (m *module) loadModule(modPath string, source *dynamic.Config) (*goja.Object, error) {
-	prg, err := m.registry.getModuleProgram(modPath, string(source.Raw))
+	prg, err := m.registry.getModuleProgram(modPath, source)
 	if err != nil {
 		return nil, err
 	}

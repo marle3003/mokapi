@@ -21,7 +21,6 @@ import (
 	"mokapi/js/process"
 	"mokapi/js/require"
 	"mokapi/js/yaml"
-	"net/url"
 	"reflect"
 	"strings"
 	"sync"
@@ -144,7 +143,6 @@ func (s *Script) ensureRuntime() error {
 	}
 	s.runtime = goja.New()
 	s.loop = eventloop.New(s.runtime)
-	path := getScriptPath(s.file.Info.Kernel().Url)
 
 	s.runtime.SetFieldNameMapper(&customFieldNameMapper{})
 	registry, err := s.getRegistry()
@@ -159,7 +157,7 @@ func (s *Script) ensureRuntime() error {
 	file.Enable(s.runtime, s.host)
 	process.Enable(s.runtime)
 
-	prg, err := registry.GetProgram(path, string(s.file.Raw))
+	prg, err := registry.GetProgram(s.file)
 	if err != nil {
 		return err
 	}
@@ -229,13 +227,6 @@ func (cfm customFieldNameMapper) MethodName(_ reflect.Type, m reflect.Method) st
 
 func uncapitalize(s string) string {
 	return strings.ToLower(s[0:1]) + s[1:]
-}
-
-func getScriptPath(u *url.URL) string {
-	if len(u.Path) > 0 {
-		return u.Path
-	}
-	return u.Opaque
 }
 
 func (s *Script) getRegistry() (*require.Registry, error) {

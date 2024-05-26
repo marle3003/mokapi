@@ -1,11 +1,13 @@
 package require
 
 import (
+	"bytes"
 	"github.com/dop251/goja"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/engine/common"
 	"mokapi/js/compiler"
+	"net/url"
 	"path/filepath"
 	"sync"
 	"text/template"
@@ -17,10 +19,16 @@ type SourceLoader interface {
 	OpenFile(file, hint string) (*dynamic.Config, error)
 }
 
+type entry struct {
+	program *goja.Program
+	hash    []byte
+}
+
+// TODO: registry does not reload file after file change event
 type Registry struct {
 	native  map[string]ModuleLoader
-	modules map[string]*goja.Program
-	scripts map[string]*goja.Program
+	modules map[string]*entry
+	scripts map[string]*entry
 
 	compiler *compiler.Compiler
 
@@ -30,8 +38,8 @@ type Registry struct {
 func NewRegistry() (*Registry, error) {
 	reg := &Registry{
 		native:  map[string]ModuleLoader{},
-		modules: map[string]*goja.Program{},
-		scripts: map[string]*goja.Program{},
+		modules: map[string]*entry{},
+		scripts: map[string]*entry{},
 	}
 	var err error
 	reg.compiler, err = compiler.New()
@@ -62,38 +70,54 @@ func (r *Registry) RegisterNativeModule(name string, loader ModuleLoader) {
 	r.native[name] = loader
 }
 
-func (r *Registry) getModuleProgram(modPath, source string) (*goja.Program, error) {
+func (r *Registry) getModuleProgram(modPath string, file *dynamic.Config) (*goja.Program, error) {
 	r.m.Lock()
 	defer r.m.Unlock()
 
-	prg := r.modules[modPath]
-	if prg == nil {
+	e := r.modules[modPath]
+	if e == nil || !bytes.Equal(e.hash, file.Info.Checksum) {
+		source := string(file.Raw)
 		if filepath.Ext(modPath) == ".json" {
 			source = "module.exports = JSON.parse('" + template.JSEscapeString(source) + "')"
 		}
 
-		var err error
-		prg, err = r.compiler.CompileModule(modPath, source)
+		prg, err := r.compiler.CompileModule(modPath, source)
 		if err != nil {
 			return nil, err
 		}
-		r.modules[modPath] = prg
+		e = &entry{
+			program: prg,
+			hash:    file.Info.Checksum,
+		}
+		r.modules[modPath] = e
 	}
-	return prg, nil
+	return e.program, nil
 }
 
-func (r *Registry) GetProgram(path, source string) (*goja.Program, error) {
+func (r *Registry) GetProgram(file *dynamic.Config) (*goja.Program, error) {
 	r.m.Lock()
 	defer r.m.Unlock()
 
-	prg := r.scripts[path]
-	if prg == nil {
-		var err error
-		prg, err = r.compiler.Compile(path, source)
+	path := getScriptPath(file.Info.Kernel().Url)
+
+	e := r.scripts[path]
+	if e == nil || !bytes.Equal(e.hash, file.Info.Checksum) {
+		prg, err := r.compiler.Compile(path, string(file.Raw))
 		if err != nil {
 			return nil, err
 		}
-		r.scripts[path] = prg
+		e = &entry{
+			program: prg,
+			hash:    file.Info.Checksum,
+		}
+		r.scripts[path] = e
 	}
-	return prg, nil
+	return e.program, nil
+}
+
+func getScriptPath(u *url.URL) string {
+	if len(u.Path) > 0 {
+		return u.Path
+	}
+	return u.Opaque
 }
