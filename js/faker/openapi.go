@@ -3,6 +3,7 @@ package faker
 import (
 	"fmt"
 	"github.com/dop251/goja"
+	"mokapi/js/util"
 	"mokapi/providers/openapi/schema"
 	"reflect"
 )
@@ -27,14 +28,14 @@ func ToOpenAPISchema(v goja.Value, rt *goja.Runtime) (*schema.Ref, error) {
 				for _, t := range arr {
 					tn, ok := t.(string)
 					if !ok {
-						return nil, fmt.Errorf("unexpected type: %v", t)
+						return nil, fmt.Errorf("unexpected type: %v", util.JsType(t))
 					}
 					s.Type = append(s.Type, tn)
 				}
 			} else if t, ok := i.(string); ok {
 				s.Type = []string{t}
 			} else {
-				return nil, fmt.Errorf("unexpected type for attribute 'type': %T", i)
+				return nil, fmt.Errorf("unexpected type for attribute 'type': %v", util.JsType(i))
 			}
 		case "enum":
 			i := obj.Get(k).Export()

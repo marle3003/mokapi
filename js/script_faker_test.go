@@ -55,7 +55,7 @@ func TestScript_Faker(t *testing.T) {
 					js.WithHost(host))
 				r.NoError(t, err)
 				_, err = s.RunDefault()
-				r.EqualError(t, err, "unexpected type for attribute 'type': map[string]interface {} at mokapi/js/faker.(*Faker).Fake-fm (native)")
+				r.EqualError(t, err, "unexpected type for attribute 'type': Object at mokapi/js/faker.(*Faker).Fake-fm (native)")
 			},
 		},
 		{

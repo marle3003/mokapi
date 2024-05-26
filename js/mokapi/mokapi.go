@@ -1,6 +1,7 @@
 package mokapi
 
 import (
+	"fmt"
 	"github.com/dop251/goja"
 	"mokapi/engine/common"
 	"mokapi/js/eventloop"
@@ -37,7 +38,7 @@ func Require(vm *goja.Runtime, module *goja.Object) {
 	obj.Set("marshal", f.Marshal)
 }
 
-func (m *Module) Sleep(i interface{}) error {
+func (m *Module) Sleep(i interface{}) {
 	switch t := i.(type) {
 	case int64:
 		time.Sleep(time.Duration(t) * time.Millisecond)
@@ -47,137 +48,13 @@ func (m *Module) Sleep(i interface{}) error {
 			panic(m.vm.ToValue(err.Error()))
 		}
 		time.Sleep(d)
+	default:
+		panic(m.vm.ToValue(fmt.Errorf("unexpected type for time: %v", i)))
 	}
-	return nil
-}
-
-func (m *Module) Every(every string, do func(), args goja.Value) (int, error) {
-	options := common.NewJobOptions()
-
-	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
-		params := args.ToObject(m.vm)
-		for _, k := range params.Keys() {
-			switch k {
-			case "tags":
-				tagsV := params.Get(k)
-				if goja.IsUndefined(tagsV) || goja.IsNull(tagsV) {
-					continue
-				}
-				tags := tagsV.ToObject(m.vm)
-				for _, key := range tags.Keys() {
-					options.Tags[key] = tags.Get(key).String()
-				}
-			case "times":
-				times := params.Get(k)
-				options.Times = int(times.ToInteger())
-			case "skipImmediateFirstRun":
-				skip := params.Get(k)
-				options.SkipImmediateFirstRun = skip.ToBoolean()
-			}
-		}
-	}
-
-	f := func() {
-		m.host.Lock()
-		defer m.host.Unlock()
-		do()
-	}
-
-	return m.host.Every(every, f, options)
-}
-
-func (m *Module) Cron(expr string, do func(), args goja.Value) (int, error) {
-	options := common.NewJobOptions()
-
-	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
-		params := args.ToObject(m.vm)
-		for _, k := range params.Keys() {
-			switch k {
-			case "tags":
-				tagsV := params.Get(k)
-				if goja.IsUndefined(tagsV) || goja.IsNull(tagsV) {
-					continue
-				}
-				tags := tagsV.ToObject(m.vm)
-				for _, key := range tags.Keys() {
-					options.Tags[key] = tags.Get(key).String()
-				}
-			case "times":
-				times := params.Get(k)
-				options.Times = int(times.ToInteger())
-			case "skipImmediateFirstRun":
-				skip := params.Get(k)
-				options.SkipImmediateFirstRun = skip.ToBoolean()
-			}
-		}
-	}
-
-	f := func() {
-		m.host.Lock()
-		defer m.host.Unlock()
-		do()
-	}
-
-	return m.host.Cron(expr, f, options)
-}
-
-func (m *Module) On(event string, do goja.Value, args goja.Value) {
-	tags := make(map[string]string)
-
-	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
-		params := args.ToObject(m.vm)
-		for _, k := range params.Keys() {
-			switch k {
-			case "tags":
-				tagsV := params.Get(k)
-				if goja.IsUndefined(tagsV) || goja.IsNull(tagsV) {
-					continue
-				}
-				tagsO := tagsV.ToObject(m.vm)
-				for _, key := range tagsO.Keys() {
-					tags[key] = tagsO.Get(key).String()
-				}
-			}
-		}
-	}
-
-	f := func(args ...interface{}) (bool, error) {
-		m.host.Lock()
-		defer m.host.Unlock()
-
-		r, err := m.loop.RunAsync(func(vm *goja.Runtime) (goja.Value, error) {
-			call, _ := goja.AssertFunction(do)
-			var params []goja.Value
-			for _, v := range args {
-				params = append(params, vm.ToValue(v))
-			}
-			v, err := call(goja.Undefined(), params...)
-			if err != nil {
-				return nil, err
-			}
-			return v, nil
-		})
-
-		if err != nil {
-			return false, err
-		}
-
-		return r.ToBoolean(), nil
-	}
-
-	m.host.On(event, f, tags)
 }
 
 func (m *Module) Env(name string) string {
 	return os.Getenv(name)
-}
-
-func (m *Module) Open(file string) (string, error) {
-	f, err := m.host.OpenFile(file, "")
-	if err != nil {
-		return "", err
-	}
-	return string(f.Raw), nil
 }
 
 type MarshalArg struct {

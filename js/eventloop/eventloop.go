@@ -93,7 +93,7 @@ func (loop *EventLoop) RunAsync(fn func(vm *goja.Runtime) (goja.Value, error)) (
 		return result, nil
 	}
 
-	return nil, fmt.Errorf("runner not started")
+	return nil, fmt.Errorf("eventloop not started")
 }
 
 func (loop *EventLoop) StartLoop() {
