@@ -24,7 +24,6 @@ type entry struct {
 	hash    []byte
 }
 
-// TODO: registry does not reload file after file change event
 type Registry struct {
 	native  map[string]ModuleLoader
 	modules map[string]*entry
