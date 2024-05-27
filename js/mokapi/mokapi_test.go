@@ -151,7 +151,7 @@ func TestModule(t *testing.T) {
 					const m = require('mokapi')
 					m.marshal('foo', { schema: {type: {}}, contentType: 'application/json' })
 				`)
-				r.EqualError(t, err, "unexpected type for attribute 'type': Object at mokapi/js/mokapi.(*Module).Marshal-fm (native)")
+				r.EqualError(t, err, "unexpected type for 'type': Object at mokapi/js/mokapi.(*Module).Marshal-fm (native)")
 			},
 		},
 	}

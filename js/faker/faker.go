@@ -6,19 +6,12 @@ import (
 	"mokapi/providers/openapi/schema"
 	"mokapi/schema/json/generator"
 	jsonSchema "mokapi/schema/json/schema"
+	"reflect"
 )
 
 type Faker struct {
 	rt   *goja.Runtime
 	host common.Host
-}
-
-type jsonXml struct {
-	Wrapped   bool   `json:"wrapped"`
-	Name      string `json:"name"`
-	Attribute bool   `json:"attribute"`
-	Prefix    string `json:"prefix"`
-	Namespace string `json:"namespace"`
 }
 
 type requestExample struct {
@@ -39,31 +32,40 @@ func Require(rt *goja.Runtime, module *goja.Object) {
 }
 
 func (m *Faker) Fake(v goja.Value) interface{} {
+	o := v.ToObject(m.rt)
+	if p := o.Get("path"); p != nil {
+		r := &generator.Request{}
+		err := m.rt.ExportTo(v, &r)
+		if err == nil && r.Path != nil {
+			v, err := generator.New(r)
+			if err != nil {
+				panic(m.rt.ToValue(err.Error()))
+			}
+			return v
+		}
+	}
+
 	r := &generator.Request{}
-	err := m.rt.ExportTo(v, &r)
-	if err == nil && r.Path != nil {
-		v, err := generator.New(r)
+	if isOpenApiSchema(v.ToObject(m.rt)) {
+		s, err := ToOpenAPISchema(v, m.rt)
 		if err != nil {
 			panic(m.rt.ToValue(err.Error()))
 		}
-		return v
-	}
-
-	s, err := ToOpenAPISchema(v, m.rt)
-	//s, err := ToJsonSchema(v, m.rt)
-	if err != nil {
-		panic(m.rt.ToValue(err.Error()))
-	}
-	if err != nil {
-		panic(m.rt.ToValue(err.Error()))
-	}
-
-	r = &generator.Request{
-		Path: generator.Path{
+		r.Path = generator.Path{
 			&generator.PathElement{
 				Schema: schema.ConvertToJsonSchema(s),
 			},
-		},
+		}
+	} else {
+		s, err := ToJsonSchema(v, m.rt)
+		if err != nil {
+			panic(m.rt.ToValue(err.Error()))
+		}
+		r.Path = generator.Path{
+			&generator.PathElement{
+				Schema: s,
+			},
+		}
 	}
 
 	i, err := generator.New(r)
@@ -71,6 +73,25 @@ func (m *Faker) Fake(v goja.Value) interface{} {
 		panic(m.rt.ToValue(err.Error()))
 	}
 	return i
+}
+
+func isOpenApiSchema(o *goja.Object) bool {
+	if v := o.Get("xml"); v != nil {
+		return true
+	}
+	if v := o.Get("example"); v != nil {
+		return true
+	}
+
+	if schemaDef := o.Get("$schema"); schemaDef != nil && schemaDef.ExportType().Kind() == reflect.String {
+		def := schemaDef.String()
+		switch def {
+		case "https://spec.openapis.org/oas/3.1/dialect/base":
+			return true
+		}
+	}
+
+	return false
 }
 
 type node struct {

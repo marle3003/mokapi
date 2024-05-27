@@ -55,7 +55,7 @@ func TestScript_Faker(t *testing.T) {
 					js.WithHost(host))
 				r.NoError(t, err)
 				_, err = s.RunDefault()
-				r.EqualError(t, err, "unexpected type for attribute 'type': Object at mokapi/js/faker.(*Faker).Fake-fm (native)")
+				r.EqualError(t, err, "unexpected type for 'type': Object at mokapi/js/faker.(*Faker).Fake-fm (native)")
 			},
 		},
 		{
@@ -82,7 +82,7 @@ func TestScript_Faker(t *testing.T) {
 					js.WithHost(host))
 				r.NoError(t, err)
 				_, err = s.RunDefault()
-				r.EqualError(t, err, "unexpected type for 'exclusiveMinimum': string at mokapi/js/faker.(*Faker).Fake-fm (native)")
+				r.EqualError(t, err, "unexpected type for 'exclusiveMinimum': String at mokapi/js/faker.(*Faker).Fake-fm (native)")
 			},
 		},
 		{
@@ -109,7 +109,7 @@ func TestScript_Faker(t *testing.T) {
 					js.WithHost(host))
 				r.NoError(t, err)
 				_, err = s.RunDefault()
-				r.EqualError(t, err, "unexpected type for 'exclusiveMaximum': string at mokapi/js/faker.(*Faker).Fake-fm (native)")
+				r.EqualError(t, err, "unexpected type for 'exclusiveMaximum': String at mokapi/js/faker.(*Faker).Fake-fm (native)")
 			},
 		},
 		{

@@ -3,6 +3,7 @@ package faker
 import (
 	"fmt"
 	"github.com/dop251/goja"
+	"mokapi/js/util"
 	jsonSchema "mokapi/schema/json/schema"
 	"reflect"
 )
@@ -23,21 +24,21 @@ func ToJsonSchema(v goja.Value, rt *goja.Runtime) (*jsonSchema.Ref, error) {
 				for _, t := range arr {
 					tn, ok := t.(string)
 					if !ok {
-						return nil, fmt.Errorf("unexpected type: %v", t)
+						return nil, fmt.Errorf("unexpected type: %v", util.JsType(t))
 					}
 					s.Type = append(s.Type, tn)
 				}
 			} else if t, ok := i.(string); ok {
 				s.Type = []string{t}
 			} else {
-				return nil, fmt.Errorf("unexpected type for attribute 'type': %T", i)
+				return nil, fmt.Errorf("unexpected type for 'type': %v", util.JsType(i))
 			}
 		case "enum":
 			i := obj.Get(k).Export()
 			if enums, ok := i.([]interface{}); ok {
 				s.Enum = enums
 			} else {
-				return nil, fmt.Errorf("unexpected type for attribute 'enum'")
+				return nil, fmt.Errorf("unexpected type for 'enum': %v", util.JsType(i))
 			}
 		case "const":
 			s.Const = obj.Get(k).Export()
@@ -48,7 +49,7 @@ func ToJsonSchema(v goja.Value, rt *goja.Runtime) (*jsonSchema.Ref, error) {
 			if examples, ok := i.([]interface{}); ok {
 				s.Examples = examples
 			} else {
-				return nil, fmt.Errorf("unexpected type for attribute 'examples'")
+				return nil, fmt.Errorf("unexpected type for 'examples': %v", util.JsType(i))
 			}
 		case "multipleOf":
 			f := obj.Get(k).ToFloat()
@@ -60,7 +61,7 @@ func ToJsonSchema(v goja.Value, rt *goja.Runtime) (*jsonSchema.Ref, error) {
 			ex := obj.Get(k)
 			kind := ex.ExportType().Kind()
 			if kind != reflect.Float64 && kind != reflect.Int64 {
-				return nil, fmt.Errorf("unexpected type for 'exclusiveMaximum': %T", ex.Export())
+				return nil, fmt.Errorf("unexpected type for 'exclusiveMaximum': %v", util.JsType(ex.Export()))
 			}
 			f := obj.Get(k).ToFloat()
 			s.ExclusiveMaximum = &f
@@ -71,7 +72,7 @@ func ToJsonSchema(v goja.Value, rt *goja.Runtime) (*jsonSchema.Ref, error) {
 			ex := obj.Get(k)
 			kind := ex.ExportType().Kind()
 			if kind != reflect.Float64 && kind != reflect.Int64 {
-				return nil, fmt.Errorf("unexpected type for 'exclusiveMinimum': %T", ex.Export())
+				return nil, fmt.Errorf("unexpected type for 'exclusiveMinimum': %v", util.JsType(ex.Export()))
 			}
 			f := ex.ToFloat()
 			s.ExclusiveMinimum = &f
@@ -129,10 +130,12 @@ func ToJsonSchema(v goja.Value, rt *goja.Runtime) (*jsonSchema.Ref, error) {
 				for _, t := range arr {
 					req, ok := t.(string)
 					if !ok {
-						return nil, fmt.Errorf("unexpected type: %v", t)
+						return nil, fmt.Errorf("unexpected type for 'required': %v", util.JsType(t))
 					}
 					s.Required = append(s.Type, req)
 				}
+			} else {
+				return nil, fmt.Errorf("unexpected type for 'required': %v", util.JsType(i))
 			}
 		}
 	}

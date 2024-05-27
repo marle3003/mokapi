@@ -16,7 +16,7 @@ func ToOpenAPISchema(v goja.Value, rt *goja.Runtime) (*schema.Ref, error) {
 	}
 
 	if v.ExportType().Kind() != reflect.Map {
-		return nil, fmt.Errorf("expect JSON schema but got: %T", v.Export())
+		return nil, fmt.Errorf("expect JSON schema but got: %v", util.JsType(v.Export()))
 	}
 
 	obj := v.ToObject(rt)
@@ -28,32 +28,35 @@ func ToOpenAPISchema(v goja.Value, rt *goja.Runtime) (*schema.Ref, error) {
 				for _, t := range arr {
 					tn, ok := t.(string)
 					if !ok {
-						return nil, fmt.Errorf("unexpected type: %v", util.JsType(t))
+						return nil, fmt.Errorf("unexpected type for 'type': %v", util.JsType(t))
 					}
 					s.Type = append(s.Type, tn)
 				}
 			} else if t, ok := i.(string); ok {
 				s.Type = []string{t}
 			} else {
-				return nil, fmt.Errorf("unexpected type for attribute 'type': %v", util.JsType(i))
+				return nil, fmt.Errorf("unexpected type for 'type': %v", util.JsType(i))
 			}
 		case "enum":
 			i := obj.Get(k).Export()
 			if enums, ok := i.([]interface{}); ok {
 				s.Enum = enums
 			} else {
-				return nil, fmt.Errorf("unexpected type for attribute 'enum'")
+				return nil, fmt.Errorf("unexpected type for 'enum'")
 			}
 		case "const":
 			s.Const = obj.Get(k).Export()
 		case "default":
 			s.Default = obj.Get(k).Export()
+		case "example":
+			i := obj.Get(k).Export()
+			s.Example = i
 		case "examples":
 			i := obj.Get(k).Export()
 			if examples, ok := i.([]interface{}); ok {
 				s.Examples = examples
 			} else {
-				return nil, fmt.Errorf("unexpected type for attribute 'examples'")
+				return nil, fmt.Errorf("unexpected type for 'examples'")
 			}
 		case "multipleOf":
 			f := obj.Get(k).ToFloat()
@@ -69,7 +72,7 @@ func ToOpenAPISchema(v goja.Value, rt *goja.Runtime) (*schema.Ref, error) {
 			} else if kind == reflect.Bool {
 				s.ExclusiveMaximum = schema.NewUnionTypeB[float64, bool](val.ToBoolean())
 			} else {
-				return nil, fmt.Errorf("unexpected type for 'exclusiveMaximum': %T", val.Export())
+				return nil, fmt.Errorf("unexpected type for 'exclusiveMaximum': %v", util.JsType(val.Export()))
 			}
 		case "minimum":
 			f := obj.Get(k).ToFloat()
@@ -82,7 +85,7 @@ func ToOpenAPISchema(v goja.Value, rt *goja.Runtime) (*schema.Ref, error) {
 			} else if kind == reflect.Bool {
 				s.ExclusiveMinimum = schema.NewUnionTypeB[float64, bool](val.ToBoolean())
 			} else {
-				return nil, fmt.Errorf("unexpected type for 'exclusiveMinimum': %T", val.Export())
+				return nil, fmt.Errorf("unexpected type for 'exclusiveMinimum': %v", util.JsType(val.Export()))
 			}
 		case "maxLength":
 			i := int(obj.Get(k).ToInteger())
@@ -138,10 +141,12 @@ func ToOpenAPISchema(v goja.Value, rt *goja.Runtime) (*schema.Ref, error) {
 				for _, t := range arr {
 					req, ok := t.(string)
 					if !ok {
-						return nil, fmt.Errorf("unexpected type: %v", t)
+						return nil, fmt.Errorf("unexpected type for 'required': %v", util.JsType(t))
 					}
 					s.Required = append(s.Type, req)
 				}
+			} else {
+				return nil, fmt.Errorf("unexpected type for 'required': %v", util.JsType(i))
 			}
 		case "xml":
 			xml := &schema.Xml{}
