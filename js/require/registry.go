@@ -80,7 +80,7 @@ func (r *Registry) getModuleProgram(modPath string, file *dynamic.Config) (*goja
 			source = "module.exports = JSON.parse('" + template.JSEscapeString(source) + "')"
 		}
 
-		prg, err := r.compiler.CompileModule(modPath, source)
+		prg, err := r.compiler.CompileModule(file.Info.Kernel().Path(), source)
 		if err != nil {
 			return nil, err
 		}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"mokapi/sortedmap"
 	"reflect"
+	"sort"
 	"strings"
 	"unicode"
 )
@@ -21,15 +22,23 @@ func toString(i interface{}) string {
 		}
 		sb.WriteRune(']')
 	case map[string]interface{}:
+		// order object by property names to avoid random output
+		keys := make([]string, 0, len(o))
+		for k := range o {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+
 		sb.WriteRune('{')
-		for key, val := range o {
+		for _, key := range keys {
+			val := o[key]
 			if sb.Len() > 1 {
 				sb.WriteString(", ")
 			}
 			sb.WriteString(fmt.Sprintf("%v: %v", key, toString(val)))
 		}
 		sb.WriteRune('}')
-	case string, int, int32, int64, float32, float64:
+	case string, int, int32, int64, float32, float64, bool:
 		sb.WriteString(fmt.Sprintf("%v", o))
 	case *sortedmap.LinkedHashMap[string, interface{}]:
 		return o.String()

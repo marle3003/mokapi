@@ -170,13 +170,13 @@ func TestRequire(t *testing.T) {
 			name: "require http but script error",
 			test: func(t *testing.T, host *enginetest.Host, registry *require.Registry) {
 				host.OpenFileFunc = func(file, hint string) (string, string, error) {
-					return "", `foo`, nil
+					return "https://foo.bar", `foo`, nil
 				}
 				s, err := jstest.New(jstest.WithSource(`import bar from 'https://foo.bar'`), js.WithHost(host), js.WithRegistry(registry))
 				r.NoError(t, err)
 
 				_, err = s.RunDefault()
-				r.EqualError(t, err, "loaded module https://foo.bar contains error: ReferenceError: foo is not defined at https:/foo.bar:1:51(1) at mokapi/js/require.(*module).require-fm (native)")
+				r.EqualError(t, err, "loaded module https://foo.bar contains error: ReferenceError: foo is not defined at https://foo.bar:1:51(1) at mokapi/js/require.(*module).require-fm (native)")
 			},
 		},
 		{

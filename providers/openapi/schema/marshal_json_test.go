@@ -487,7 +487,7 @@ func TestRef_Marshal_Json_OneOf(t *testing.T) {
 			),
 			data: map[string]interface{}{"bark": true, "breed": "Dingo"},
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "encoding data to 'application/json' failed: parse {bark: , breed: Dingo} failed: it is valid for more than one schema, expected one of schema type=object properties=[bark, breed], schema type=object properties=[hunts, age]")
+				require.EqualError(t, err, "encoding data to 'application/json' failed: parse {bark: true, breed: Dingo} failed: it is valid for more than one schema, expected one of schema type=object properties=[bark, breed], schema type=object properties=[hunts, age]")
 				require.Len(t, result, 0)
 			},
 		},

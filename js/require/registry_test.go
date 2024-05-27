@@ -31,7 +31,7 @@ func TestRegistry(t *testing.T) {
 			name: "module with syntax error",
 			sources: map[string]source{
 				"mod.js": {
-					name: "",
+					name: "mod.js",
 					code: `"`,
 				},
 			},
@@ -56,7 +56,7 @@ func TestRegistry(t *testing.T) {
 			name: "export array",
 			sources: map[string]source{
 				"mod.js": {
-					name: "",
+					name: "mod.js",
 					code: `export let items = ['foo']`,
 				},
 			},
@@ -81,7 +81,7 @@ func TestRegistry(t *testing.T) {
 			name: "export default object",
 			sources: map[string]source{
 				"mod.js": {
-					name: "",
+					name: "mod.js",
 					code: `export default { foo: 'bar' }`,
 				},
 			},
@@ -106,7 +106,7 @@ func TestRegistry(t *testing.T) {
 			name: "requesting same file multiple",
 			sources: map[string]source{
 				"mod.js": {
-					name: "",
+					name: "mod.js",
 					code: `const c = require("child")`,
 				},
 				"child.js": {
@@ -133,7 +133,7 @@ func TestRegistry(t *testing.T) {
 			name: "update mod file",
 			sources: map[string]source{
 				"mod.js": {
-					name:     "",
+					name:     "mod.js",
 					code:     `export default 2+2`,
 					checksum: []byte("1"),
 				},
