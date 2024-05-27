@@ -77,10 +77,7 @@ func (p *Provider) Read(u *url.URL) (*dynamic.Config, error) {
 		return nil, err
 	}
 
-	err = p.watcher.Add(file)
-	if err != nil {
-		log.Warnf("unable to add watcher on file %v: %v", file, err)
-	}
+	p.watchPath(file)
 	return config, nil
 }
 
@@ -182,6 +179,10 @@ func (p *Provider) watch(pool *safe.Pool) error {
 }
 
 func (p *Provider) skip(path string) bool {
+	if p.isWatchPath(path) {
+		return false
+	}
+
 	name := filepath.Base(path)
 	if name == mokapiIgnoreFile {
 		return true
@@ -284,4 +285,12 @@ func (p *Provider) watchPath(path string) {
 	}
 	p.watched[path] = struct{}{}
 	p.watcher.Add(path)
+}
+
+func (p *Provider) isWatchPath(path string) bool {
+	p.m.Lock()
+	defer p.m.Unlock()
+
+	_, ok := p.watched[path]
+	return ok
 }

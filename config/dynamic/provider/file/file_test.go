@@ -8,6 +8,7 @@ import (
 	"mokapi/config/dynamic/provider/file/filetest"
 	"mokapi/config/static"
 	"mokapi/safe"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
@@ -559,6 +560,38 @@ func TestWatch_Create_SubFolder_And_Add_File(t *testing.T) {
 	}
 }
 
+func TestWatch_UpdateFile_When_Skipped_But_Referenced(t *testing.T) {
+	ch := make(chan *dynamic.Config)
+	defer close(ch)
+
+	tempDir := t.TempDir()
+	t.Cleanup(func() { os.RemoveAll(tempDir) })
+
+	p := New(static.FileProvider{Directory: tempDir})
+	pool := safe.NewPool(context.Background())
+	defer pool.Stop()
+
+	err := p.Start(ch, pool)
+	require.NoError(t, err)
+	time.Sleep(500 * time.Millisecond)
+
+	err = createFile(filepath.Join(tempDir, "foo.js"), "foo")
+	require.NoError(t, err)
+	parent := waitFileUpdate(t, ch)
+	err = createFile(filepath.Join(tempDir, "_bar.skip"), "bar")
+	u, err := url.Parse("file:" + filepath.Join(tempDir, "_bar.skip"))
+	require.NoError(t, err)
+	child, err := p.Read(u)
+	require.NoError(t, err)
+	dynamic.AddRef(parent, child)
+
+	err = os.WriteFile(filepath.Join(tempDir, "_bar.skip"), []byte("update"), 0700)
+	require.NoError(t, err)
+
+	file := waitFileUpdate(t, ch)
+	require.NotNil(t, file)
+}
+
 func createAndStartFileProvider(t *testing.T, files ...string) (*Provider, chan *dynamic.Config) {
 	tempDir := t.TempDir()
 	t.Cleanup(func() { os.RemoveAll(tempDir) })
@@ -617,4 +650,31 @@ func createTempFile(srcPath string, destPath string) error {
 	_, err = io.Copy(file, src)
 
 	return err
+}
+
+func createFile(path, content string) error {
+	err := os.MkdirAll(filepath.Dir(path), 0700)
+	if err != nil {
+		return err
+	}
+	file, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	file.Write([]byte(content))
+	file.Close()
+
+	return err
+}
+
+func waitFileUpdate(t *testing.T, ch chan *dynamic.Config) *dynamic.Config {
+	timeout := time.After(5 * time.Second)
+	select {
+	case c := <-ch:
+		return c
+	case <-timeout:
+		t.Fatal("timeout while waiting for file event")
+	}
+
+	return nil
 }
