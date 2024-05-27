@@ -80,11 +80,11 @@ func TestApiVersion_Raw(t *testing.T) {
 
 		0, 1, // Fetch
 		0, 0, // min
-		0, 11, // max
+		0, 12, // max
 
 		0, 2, // Offset
 		0, 0, // min
-		0, 7, // max
+		0, 8, // max
 	}
 
 	require.Equal(t, expect, buf[0:len(expect)])

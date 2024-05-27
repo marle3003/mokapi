@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"github.com/stretchr/testify/require"
 	"mokapi/kafka"
+	"mokapi/kafka/offset"
 	"mokapi/kafka/offsetFetch"
 	"mokapi/kafka/produce"
 	"testing"
@@ -121,4 +122,82 @@ func TestRequest_Write_Produce(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, 393334, b.Len())
+}
+
+func Test_Offset(t *testing.T) {
+	b := []byte{
+		0, 0, 0, 88, // length
+		0, 2, // API: Offset
+		0, 7, // version
+		0, 0, 0, 5, // correlation id
+		0, 3, 'f', 'o', 'o', // client id: foo
+		0,                  // TagFields header
+		255, 255, 255, 255, // replica ID
+		1,                          // isolation
+		2,                          // topics length: n+1
+		6, 't', 'o', 'p', 'i', 'c', // topic  name
+		2,          // partition indexes length: n+1
+		0, 0, 0, 1, // index: 1
+		0, 0, 0, 0, // LeaderEpoch
+		255, 255, 255, 255, 255, 255, 255, 254, // timestamp
+		0, // TagFields partition array
+		0, // TagFields topic array
+		0, // TagFields request
+	}
+
+	r := &kafka.Request{}
+	reader := bytes.NewReader(b)
+	err := r.Read(reader)
+	require.NoError(t, err)
+	require.Equal(t, 0, reader.Len(), "all bytes read")
+
+	res := &kafka.Response{
+		Header: &kafka.Header{
+			ApiKey:        2,
+			ApiVersion:    7,
+			CorrelationId: 5,
+			TagFields:     nil,
+		},
+		Message: &offset.Response{
+			ThrottleTimeMs: 0,
+			Topics: []offset.ResponseTopic{
+				{
+					Name: "topic",
+					Partitions: []offset.ResponsePartition{
+						{
+							Index:     1,
+							Timestamp: 0,
+							Offset:    89,
+						},
+					},
+				},
+			},
+		},
+	}
+	var buf bytes.Buffer
+	w := bufio.NewWriter(&buf)
+	err = res.Write(w)
+	require.NoError(t, err)
+
+	err = w.Flush()
+	require.NoError(t, err)
+
+	b = []byte{
+		0, 0, 0, 46, // length
+		0, 0, 0, 5, // correlation id
+		0,          // TagFields header
+		0, 0, 0, 0, // ThrottleTimeMs
+		2,                          // topics length: n+1
+		6, 't', 'o', 'p', 'i', 'c', // topic  name
+		2,          // partition indexes length: n+1
+		0, 0, 0, 1, // index: 1
+		0, 0, // error code
+		0, 0, 0, 0, 0, 0, 0, 0, // timestamp
+		0, 0, 0, 0, 0, 0, 0, 89, // timestamp
+		0, 0, 0, 0, // LeaderEpoch
+		0, // TagFields partition array
+		0, // TagFields topic array
+		0, // TagFields request
+	}
+	require.Equal(t, b, buf.Bytes())
 }

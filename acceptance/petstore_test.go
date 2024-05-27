@@ -49,7 +49,7 @@ func (suite *PetStoreSuite) TestApi() {
 
 func (suite *PetStoreSuite) TestJsHttpHandler() {
 	// ensure scripts are executed
-	time.Sleep(3 * time.Second)
+	time.Sleep(4 * time.Second)
 	try.GetRequest(suite.T(), "http://127.0.0.1:18080/pet/2",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(http.StatusNotFound),
