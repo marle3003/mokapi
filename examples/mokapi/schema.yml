@@ -2,6 +2,7 @@ components:
   schemas:
     Schema:
       type: object
+      nullable: true
       properties:
         ref:
           type: string
