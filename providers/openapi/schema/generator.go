@@ -2,6 +2,7 @@ package schema
 
 import (
 	"mokapi/schema/json/generator"
+	jsonRef "mokapi/schema/json/ref"
 	"mokapi/schema/json/schema"
 )
 
@@ -36,6 +37,7 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 	}
 
 	js := &schema.Schema{
+		Type:                 s.Type,
 		Schema:               s.Schema,
 		Enum:                 s.Enum,
 		Const:                s.Const,
@@ -77,8 +79,6 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 	} else {
 		js.Maximum = s.Maximum
 	}
-
-	js.Type = s.Type
 
 	if s.Properties != nil {
 		js.Properties = &schema.Schemas{}
@@ -128,7 +128,7 @@ func (c *JsonSchemaConverter) ConvertToJsonRef(r *Ref) *schema.Ref {
 	if r == nil {
 		return nil
 	}
-	js := &schema.Ref{Reference: r.Reference}
+	js := &schema.Ref{Reference: jsonRef.Reference{Ref: r.Ref}}
 	if r.Value == nil {
 		return js
 	}
