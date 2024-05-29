@@ -47,7 +47,7 @@ func (p *Properties) UnmarshalJSON(b []byte) error {
 type schemaInfo struct {
 	Ref string `json:"ref,omitempty"`
 
-	Type  interface{}   `json:"type"`
+	Type  interface{}   `json:"type,omitempty"`
 	AnyOf []*schemaInfo `json:"anyOf,omitempty"`
 	AllOf []*schemaInfo `json:"allOf,omitempty"`
 	OneOf []*schemaInfo `json:"oneOf,omitempty"`
@@ -114,7 +114,7 @@ func (h *handler) getExampleData(w http.ResponseWriter, r *http.Request) {
 	if ct.IsAny() {
 		ct = media.ParseContentType("application/json")
 	}
-	if ct.Subtype != "json" && ct.Subtype != "xml" {
+	if ct.Subtype != "json" && ct.Subtype != "xml" && ct.String() != "text/plain" {
 		http.Error(w, fmt.Sprintf("Content type %v not supported. Only json or xml are supported", ct), http.StatusBadRequest)
 		return
 	}

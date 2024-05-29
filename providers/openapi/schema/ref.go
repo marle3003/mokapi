@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
-	"mokapi/schema/json/ref"
+	"mokapi/providers/openapi/ref"
 )
 
 type Ref struct {

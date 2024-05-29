@@ -34,6 +34,10 @@ func (r *Ref) IsObject() bool {
 	return r != nil && r.Value != nil && r.Value.IsObject()
 }
 
+func (r *Ref) IsNullable() bool {
+	return r != nil && r.Value != nil && r.Value.IsNullable()
+}
+
 func (r *Ref) IsDictionary() bool {
 	return r != nil && r.Value != nil && r.Value.IsDictionary()
 }

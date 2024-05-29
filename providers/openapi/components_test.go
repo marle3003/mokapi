@@ -210,7 +210,7 @@ func TestComponents_Parse(t *testing.T) {
 					return cfg, nil
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithComponentSchemaRef("foo", &schema.Ref{Reference: jsonRef.Reference{Ref: "foo.yml#/components/schemas/foo"}}),
+					openapitest.WithComponentSchemaRef("foo", &schema.Ref{Reference: ref.Reference{Ref: "foo.yml#/components/schemas/foo"}}),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
@@ -224,7 +224,7 @@ func TestComponents_Parse(t *testing.T) {
 					return nil, fmt.Errorf("TESTING ERROR")
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithComponentSchemaRef("foo", &schema.Ref{Reference: jsonRef.Reference{Ref: "foo.yml#/components/schemas/foo"}}),
+					openapitest.WithComponentSchemaRef("foo", &schema.Ref{Reference: ref.Reference{Ref: "foo.yml#/components/schemas/foo"}}),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse components failed: parse schema 'foo' failed: resolve reference 'foo.yml#/components/schemas/foo' failed: TESTING ERROR")

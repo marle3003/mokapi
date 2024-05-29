@@ -3,9 +3,9 @@ package schema_test
 import (
 	"github.com/stretchr/testify/require"
 	"mokapi/media"
+	"mokapi/providers/openapi/ref"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
-	"mokapi/schema/json/ref"
 	"mokapi/sortedmap"
 	"strings"
 	"testing"

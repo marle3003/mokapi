@@ -34,6 +34,23 @@ func TestHandler_Schema(t *testing.T) {
 			},
 		},
 		{
+			name: "parameter with type: string",
+			app: &runtime.App{
+				Monitor: monitor.New(),
+			},
+			fn: func(t *testing.T, h http.Handler, app *runtime.App) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/schema/example",
+					map[string]string{"Accept": "text/plain"},
+					`{"name": "", "schema": {"type": ["string"]}}`,
+					h,
+					try.HasStatusCode(200),
+					try.HasHeader("Content-Type", "text/plain"),
+					try.HasBody("XidZuoWq "))
+			},
+		},
+		{
 			name: "string or number",
 			app: &runtime.App{
 				Monitor: monitor.New(),

@@ -7,7 +7,6 @@ import (
 	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/ref"
 	"mokapi/providers/openapi/schema"
-	jsonRef "mokapi/schema/json/ref"
 	jsonSchema "mokapi/schema/json/schema"
 	"mokapi/version"
 	"net/http"
@@ -198,7 +197,7 @@ func (c *converter) convertSchema(s *schema.Ref) *schema.Ref {
 	}
 
 	if len(s.Ref) > 0 {
-		return &schema.Ref{Reference: jsonRef.Reference{Ref: convertRef(s.Ref)}}
+		return &schema.Ref{Reference: ref.Reference{Ref: convertRef(s.Ref)}}
 	}
 
 	if s.Value == nil {
