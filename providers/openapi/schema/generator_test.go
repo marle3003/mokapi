@@ -858,7 +858,7 @@ func TestGenerator_Recursions(t *testing.T) {
 		{
 			"recursion depth 1",
 			func(t *testing.T) {
-				s := schematest.New("object")
+				s := schematest.New("object", schematest.And("null"))
 				props := &schema.Schemas{}
 				props.Set("foo", &schema.Ref{Value: s})
 				s.Properties = props
@@ -874,7 +874,7 @@ func TestGenerator_Recursions(t *testing.T) {
 		{
 			"recursion across two objects depth 1",
 			func(t *testing.T) {
-				child := schematest.New("object")
+				child := schematest.New("object", schematest.And("null"))
 				s := schematest.New("object", schematest.WithProperty("bar", child))
 				props := &schema.Schemas{}
 				props.Set("foo", &schema.Ref{Value: s})
@@ -892,7 +892,7 @@ func TestGenerator_Recursions(t *testing.T) {
 		{
 			"array",
 			func(t *testing.T) {
-				obj := schematest.New("object")
+				obj := schematest.New("object", schematest.And("null"))
 				props := &schema.Schemas{}
 				props.Set("foo", &schema.Ref{Value: obj})
 				obj.Properties = props
