@@ -1,7 +1,6 @@
 package generator
 
 import (
-	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
 	"mokapi/schema/json/schema"
 	"mokapi/sortedmap"
@@ -99,7 +98,7 @@ func createObject(r *Request) (interface{}, error) {
 	}
 	if numRequestsSameAsThisOne > 1 {
 		if !s.IsNullable() {
-			return nil, fmt.Errorf("recursion in object path found but schema does not allow null: %v", s)
+			return nil, &RecursionGuard{s: s}
 		}
 		return nil, nil
 	}

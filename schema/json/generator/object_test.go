@@ -92,6 +92,37 @@ func TestObject(t *testing.T) {
 					v)
 			},
 		},
+		{
+			name: "loop with array",
+			req: func() *Request {
+				loop := schematest.NewRef("object")
+				loop.Value.Properties = &schema.Schemas{}
+				loop.Value.Properties.Set("array", &schema.Ref{Value: &schema.Schema{
+					Type:  schema.Types{"array"},
+					Items: loop,
+				}})
+
+				return &Request{
+					Path: Path{
+						&PathElement{Schema: loop},
+					},
+				}
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{
+					"array": []interface{}{
+						map[string]interface{}{
+							"array": []interface{}{},
+						},
+						map[string]interface{}{
+							"array": []interface{}{},
+						},
+					},
+				},
+					v)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

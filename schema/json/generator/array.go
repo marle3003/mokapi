@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/jinzhu/inflection"
+	"github.com/pkg/errors"
 	"reflect"
 )
 
@@ -42,8 +43,8 @@ func Array() *Tree {
 			}
 
 			elem := r.With(UsePathElement(name, s.Items))
-			arr := make([]interface{}, length)
-			for i := range arr {
+			arr := make([]interface{}, 0, length)
+			for i := 0; i < length; i++ {
 				var v interface{}
 				var err error
 				if s.UniqueItems {
@@ -52,9 +53,13 @@ func Array() *Tree {
 					v, err = r.g.tree.Resolve(elem)
 				}
 				if err != nil {
+					var rec *RecursionGuard
+					if errors.As(err, &rec) {
+						continue
+					}
 					return nil, fmt.Errorf("%v: %v", err, s)
 				}
-				arr[i] = v
+				arr = append(arr, v)
 			}
 
 			if s.ShuffleItems {

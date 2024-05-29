@@ -7,7 +7,9 @@ import (
 	"mokapi/schema/json/schema"
 )
 
-var ErrUnsupported = errors.New("unsupported operation")
+var (
+	ErrUnsupported = errors.New("unsupported operation")
+)
 
 type Tree struct {
 	Name   string `json:"name"`
@@ -137,4 +139,12 @@ func AnyType() *Tree {
 			return r.g.tree.Resolve(r)
 		},
 	}
+}
+
+type RecursionGuard struct {
+	s *schema.Ref
+}
+
+func (e *RecursionGuard) Error() string {
+	return fmt.Sprintf("recursion in object path found but schema does not allow null: %v", e.s)
 }
