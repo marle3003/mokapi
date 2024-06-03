@@ -163,12 +163,16 @@ func (p *Provider) watch(pool *safe.Pool) error {
 							}
 							p.ch <- c
 						}
-					} else if !p.skip(evt.Name) {
-						c, err := p.readFile(evt.Name)
-						if err != nil {
-							log.Errorf("unable to read file %v", evt.Name)
+					} else {
+						if !p.skip(evt.Name) {
+							c, err := p.readFile(evt.Name)
+							if err != nil {
+								log.Errorf("unable to read file %v", evt.Name)
+							}
+							p.ch <- c
+						} else {
+							log.Debugf("skip updating file %v", evt.Name)
 						}
-						p.ch <- c
 					}
 				}
 				events = make([]fsnotify.Event, 0)
