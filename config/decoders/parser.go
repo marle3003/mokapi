@@ -70,6 +70,7 @@ func parseArgs(args []string) (map[string]string, error) {
 				value = name[i+1:]
 				name = name[0:i]
 				hasValue = true
+				break
 			}
 		}
 

@@ -107,7 +107,7 @@ func TestFlagDecoder_Decode(t *testing.T) {
 					Key []string
 				}{}
 				d := &FlagDecoder{}
-				err := d.Decode(map[string]string{"Key": "bar,foo"}, s)
+				err := d.Decode(map[string]string{"Key": "bar foo"}, s)
 				require.NoError(t, err)
 				require.Equal(t, []string{"bar", "foo"}, s.Key)
 			},

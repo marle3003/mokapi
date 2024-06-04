@@ -1,6 +1,7 @@
 package decoders
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
 	"reflect"
@@ -38,11 +39,28 @@ func setValue(paths []string, value string, element reflect.Value) error {
 
 	switch element.Kind() {
 	case reflect.Struct:
-		element = element.FieldByNameFunc(func(f string) bool { return strings.ToLower(f) == strings.ToLower(paths[0]) })
-		if !element.IsValid() {
-			return fmt.Errorf("configuration not found")
+		field := element.FieldByNameFunc(func(f string) bool { return strings.ToLower(f) == strings.ToLower(paths[0]) })
+		if !field.IsValid() {
+			err := explode(element, paths[0], value)
+			if err != nil {
+				return fmt.Errorf("configuration not found")
+			}
+			return nil
 		}
-		return setValue(paths[1:], value, element)
+
+		k := field.Type().Kind()
+		if len(paths) == 1 && (k == reflect.Struct || k == reflect.Slice) {
+			p := reflect.New(field.Type())
+			p.Elem().Set(field)
+			i, err := convert(value, p)
+			if err != nil {
+				return err
+			}
+			field.Set(reflect.ValueOf(i).Elem())
+			return nil
+		} else {
+			return setValue(paths[1:], value, field)
+		}
 	case reflect.Pointer:
 		if element.IsNil() {
 			element.Set(reflect.New(element.Type().Elem()))
@@ -159,4 +177,79 @@ func setMap(paths []string, value string, element reflect.Value) error {
 	element.SetMapIndex(key, ptr.Elem().Elem())
 
 	return nil
+}
+
+func explode(v reflect.Value, name string, value string) error {
+	f := getFieldByTag(v, name)
+	if !f.IsValid() {
+		return fmt.Errorf("not found")
+	}
+
+	p := reflect.New(f.Type().Elem())
+	i, err := convertJson(value, p)
+	if err != nil {
+		return err
+	}
+	f.Set(reflect.Append(f, reflect.ValueOf(i).Elem()))
+	return nil
+}
+
+func getFieldByTag(v reflect.Value, name string) reflect.Value {
+	for i := 0; i < v.NumField(); i++ {
+		explode := v.Type().Field(i).Tag.Get("explode")
+		if explode == name {
+			return v.Field(i)
+		}
+	}
+	return reflect.Value{}
+}
+
+func convert(s string, v reflect.Value) (interface{}, error) {
+	i, err := convertJson(s, v)
+	if err == nil {
+		return i, nil
+	}
+
+	if v.Elem().Type().Kind() == reflect.Struct {
+		pairs := strings.Split(s, ",")
+		for _, pair := range pairs {
+			kv := strings.Split(pair, "=")
+			if len(kv) != 2 {
+				return nil, fmt.Errorf("parse shorthand failed: %v", s)
+			}
+			field := v.Elem().FieldByNameFunc(func(f string) bool { return strings.ToLower(f) == strings.ToLower(kv[0]) })
+			if !field.IsValid() {
+				return nil, fmt.Errorf("field %v not found", kv[0])
+			}
+			if field.Type().Kind() != reflect.String {
+				return s, fmt.Errorf("not supported shorthand with nested objects")
+			}
+
+			field.Set(reflect.ValueOf(kv[1]))
+		}
+	} else if v.Elem().Type().Kind() == reflect.Slice {
+		items := strings.Split(s, " ")
+		for _, item := range items {
+			p := reflect.New(v.Elem().Type().Elem())
+			i, err := convert(item, p)
+			if err != nil {
+				return nil, err
+			}
+			vItem := reflect.ValueOf(i)
+			if vItem.Type().Kind() == reflect.Pointer {
+				vItem = vItem.Elem()
+			}
+			v.Elem().Set(reflect.Append(v.Elem(), vItem))
+		}
+	} else if v.Elem().Type().Kind() == reflect.String {
+		return s, nil
+	}
+
+	return v.Interface(), nil
+}
+
+func convertJson(s string, v reflect.Value) (interface{}, error) {
+	i := v.Interface()
+	err := json.Unmarshal([]byte(s), i)
+	return i, err
 }

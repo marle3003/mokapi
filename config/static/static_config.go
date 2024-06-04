@@ -55,7 +55,7 @@ type GitProvider struct {
 	PullInterval string `yaml:"pullInterval"`
 	TempDir      string `yaml:"tempDir"`
 
-	Repositories []GitRepo
+	Repositories []GitRepo `explode:"repository"`
 }
 
 type GitRepo struct {
