@@ -577,19 +577,19 @@ func TestWatch_UpdateFile_When_Skipped_But_Referenced(t *testing.T) {
 
 	err = createFile(filepath.Join(tempDir, "foo.js"), "foo")
 	require.NoError(t, err)
-	parent := waitFileUpdate(t, ch)
+	waitFileUpdate(t, ch)
 	err = createFile(filepath.Join(tempDir, "_bar.skip"), "bar")
 	u, err := url.Parse("file:" + filepath.Join(tempDir, "_bar.skip"))
 	require.NoError(t, err)
-	child, err := p.Read(u)
+	_, err = p.Read(u)
 	require.NoError(t, err)
-	dynamic.AddRef(parent, child)
 
 	err = os.WriteFile(filepath.Join(tempDir, "_bar.skip"), []byte("update"), 0700)
 	require.NoError(t, err)
 
 	file := waitFileUpdate(t, ch)
 	require.NotNil(t, file)
+	require.Equal(t, "_bar.skip", filepath.Base(file.Info.Path()))
 }
 
 func createAndStartFileProvider(t *testing.T, files ...string) (*Provider, chan *dynamic.Config) {

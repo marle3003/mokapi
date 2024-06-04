@@ -170,8 +170,6 @@ func (p *Provider) watch(pool *safe.Pool) error {
 								log.Errorf("unable to read file %v", evt.Name)
 							}
 							p.ch <- c
-						} else {
-							log.Debugf("skip updating file %v", evt.Name)
 						}
 					}
 				}
@@ -288,6 +286,17 @@ func (p *Provider) watchPath(path string) {
 		return
 	}
 	p.watched[path] = struct{}{}
+
+	// add watcher to file does not work, see watcher.Add
+	fileInfo, _ := os.Stat(path)
+	if !fileInfo.IsDir() {
+		path = filepath.Dir(path)
+
+		if _, ok := p.watched[path]; ok {
+			return
+		}
+	}
+
 	p.watcher.Add(path)
 }
 
