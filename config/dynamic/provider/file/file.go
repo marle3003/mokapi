@@ -128,7 +128,7 @@ func (p *Provider) watch(pool *safe.Pool) error {
 			case evt := <-p.watcher.Events:
 				// temporary files ends with '~' in name
 				if len(evt.Name) > 0 && !strings.HasSuffix(evt.Name, "~") {
-					fileInfo, err := os.Stat(evt.Name)
+					fileInfo, err := p.fs.Stat(evt.Name)
 					if err != nil {
 						// skip
 						continue
@@ -163,12 +163,14 @@ func (p *Provider) watch(pool *safe.Pool) error {
 							}
 							p.ch <- c
 						}
-					} else if !p.skip(evt.Name) {
-						c, err := p.readFile(evt.Name)
-						if err != nil {
-							log.Errorf("unable to read file %v", evt.Name)
+					} else {
+						if !p.skip(evt.Name) {
+							c, err := p.readFile(evt.Name)
+							if err != nil {
+								log.Errorf("unable to read file %v", evt.Name)
+							}
+							p.ch <- c
 						}
-						p.ch <- c
 					}
 				}
 				events = make([]fsnotify.Event, 0)
@@ -284,6 +286,20 @@ func (p *Provider) watchPath(path string) {
 		return
 	}
 	p.watched[path] = struct{}{}
+
+	// add watcher to file does not work, see watcher.Add
+	fileInfo, err := p.fs.Stat(path)
+	if err != nil {
+		return
+	}
+	if !fileInfo.IsDir() {
+		path = filepath.Dir(path)
+
+		if _, ok := p.watched[path]; ok {
+			return
+		}
+	}
+
 	p.watcher.Add(path)
 }
 
