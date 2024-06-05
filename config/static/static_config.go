@@ -14,6 +14,7 @@ type Config struct {
 	RootCaKey  tls.FileOrContent
 	Services   Services
 	Js         JsConfig
+	Configs    []string `explode:"config"`
 }
 
 func NewConfig() *Config {

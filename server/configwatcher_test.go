@@ -8,6 +8,7 @@ import (
 	"mokapi/config/static"
 	"mokapi/providers/openapi"
 	"mokapi/safe"
+	"mokapi/try"
 	"net/url"
 	"testing"
 	"time"
@@ -26,6 +27,27 @@ func TestConfigWatcher_Read(t *testing.T) {
 				c, err := w.Read(u, nil)
 				require.EqualError(t, err, "unsupported scheme: file.yml")
 				require.Nil(t, c)
+			},
+		},
+		{
+			name: "cli configs",
+			test: func(t *testing.T) {
+				dynamic.Register("openapi", &openapi.Config{})
+				w := NewConfigWatcher(&static.Config{Configs: []string{`{"openapi":"3.0","info":{"title":"foo"}}`}})
+
+				ch := make(chan *dynamic.Config, 1)
+				w.AddListener(func(config *dynamic.Config) {
+					ch <- config
+				})
+
+				pool := safe.NewPool(context.Background())
+				w.Start(pool)
+				defer pool.Stop()
+
+				c := try.GetConfig(t, ch, 1*time.Second)
+				require.NotNil(t, c)
+				require.IsType(t, &openapi.Config{}, c.Data)
+				require.Equal(t, "foo", c.Data.(*openapi.Config).Info.Name)
 			},
 		},
 		{

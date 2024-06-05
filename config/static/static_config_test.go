@@ -127,6 +127,20 @@ func TestGitConfig(t *testing.T) {
 				require.Equal(t, "3m", cfg.Providers.Git.Repositories[0].PullInterval)
 			},
 		},
+		{
+			name: "config",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe")
+				os.Args = append(os.Args, "--config", `{"openapi": "3.0"}`)
+
+				cfg := Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
+				require.NoError(t, err)
+
+				require.Len(t, cfg.Configs, 1)
+				require.Equal(t, "{\"openapi\": \"3.0\"}", cfg.Configs[0])
+			},
+		},
 	}
 
 	for _, tc := range testcases {

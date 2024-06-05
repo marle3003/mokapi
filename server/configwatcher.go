@@ -14,12 +14,14 @@ import (
 	"mokapi/safe"
 	"net/url"
 	"sync"
+	"time"
 )
 
 type ConfigWatcher struct {
 	providers map[string]dynamic.Provider
 	listener  []dynamic.ConfigListener
 	configs   map[string]*entry
+	cfg       *static.Config
 	m         sync.Mutex
 }
 
@@ -32,6 +34,7 @@ func NewConfigWatcher(cfg *static.Config) *ConfigWatcher {
 	w := &ConfigWatcher{
 		providers: make(map[string]dynamic.Provider),
 		configs:   make(map[string]*entry),
+		cfg:       cfg,
 	}
 
 	w.providers["file"] = file.New(cfg.Providers.File)
@@ -105,6 +108,22 @@ func (w *ConfigWatcher) Start(pool *safe.Pool) error {
 	}
 
 	pool.Go(func(ctx context.Context) {
+		for i, cfg := range w.cfg.Configs {
+			u, _ := url.Parse(fmt.Sprintf("cli://configs/%v.json", i))
+			c := &dynamic.Config{
+				Info: dynamic.ConfigInfo{
+					Provider: "cli",
+					Url:      u,
+					Checksum: nil,
+					Time:     time.Now(),
+				},
+				Raw: []byte(cfg),
+			}
+			if err := w.addOrUpdate(c); err != nil {
+				log.Error(err)
+			}
+		}
+
 		for {
 			select {
 			case <-ctx.Done():

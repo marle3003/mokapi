@@ -186,11 +186,15 @@ func explode(v reflect.Value, name string, value string) error {
 	}
 
 	p := reflect.New(f.Type().Elem())
-	i, err := convertJson(value, p)
+	i, err := convert(value, p)
 	if err != nil {
 		return err
 	}
-	f.Set(reflect.Append(f, reflect.ValueOf(i).Elem()))
+	vItem := reflect.ValueOf(i)
+	if vItem.Type().Kind() == reflect.Pointer {
+		vItem = vItem.Elem()
+	}
+	f.Set(reflect.Append(f, vItem))
 	return nil
 }
 
