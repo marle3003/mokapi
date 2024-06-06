@@ -39,6 +39,17 @@ func setValue(paths []string, value string, element reflect.Value) error {
 
 	switch element.Kind() {
 	case reflect.Struct:
+		if len(paths) == 0 {
+			p := reflect.New(element.Type())
+			p.Elem().Set(element)
+			i, err := convert(value, p)
+			if err != nil {
+				return err
+			}
+			element.Set(reflect.ValueOf(i).Elem())
+			return nil
+		}
+
 		field := element.FieldByNameFunc(func(f string) bool { return strings.ToLower(f) == strings.ToLower(paths[0]) })
 		if !field.IsValid() {
 			err := explode(element, paths[0], value)
@@ -48,19 +59,7 @@ func setValue(paths []string, value string, element reflect.Value) error {
 			return nil
 		}
 
-		k := field.Type().Kind()
-		if len(paths) == 1 && (k == reflect.Struct || k == reflect.Slice) {
-			p := reflect.New(field.Type())
-			p.Elem().Set(field)
-			i, err := convert(value, p)
-			if err != nil {
-				return err
-			}
-			field.Set(reflect.ValueOf(i).Elem())
-			return nil
-		} else {
-			return setValue(paths[1:], value, field)
-		}
+		return setValue(paths[1:], value, field)
 	case reflect.Pointer:
 		if element.IsNil() {
 			element.Set(reflect.New(element.Type().Elem()))
@@ -134,13 +133,13 @@ func setArray(paths []string, value string, element reflect.Value) error {
 
 		return setValue(paths[1:], value, element.Index(index))
 	} else {
-		values := strings.Split(value, ",")
+		values := strings.Split(value, " ")
 		for _, v := range values {
-			ptr := reflect.New(reflect.PointerTo(element.Type().Elem()))
+			ptr := reflect.New(element.Type().Elem())
 			if err := setValue(paths, v, ptr); err != nil {
 				return err
 			}
-			element.Set(reflect.Append(element, ptr.Elem().Elem()))
+			element.Set(reflect.Append(element, ptr.Elem()))
 		}
 	}
 
@@ -221,29 +220,15 @@ func convert(s string, v reflect.Value) (interface{}, error) {
 			if len(kv) != 2 {
 				return nil, fmt.Errorf("parse shorthand failed: %v", s)
 			}
-			field := v.Elem().FieldByNameFunc(func(f string) bool { return strings.ToLower(f) == strings.ToLower(kv[0]) })
-			if !field.IsValid() {
-				return nil, fmt.Errorf("field %v not found", kv[0])
-			}
-			if field.Type().Kind() != reflect.String {
-				return s, fmt.Errorf("not supported shorthand with nested objects")
-			}
-
-			field.Set(reflect.ValueOf(kv[1]))
-		}
-	} else if v.Elem().Type().Kind() == reflect.Slice {
-		items := strings.Split(s, " ")
-		for _, item := range items {
-			p := reflect.New(v.Elem().Type().Elem())
-			i, err := convert(item, p)
+			err = setValue([]string{kv[0]}, kv[1], v)
 			if err != nil {
 				return nil, err
 			}
-			vItem := reflect.ValueOf(i)
-			if vItem.Type().Kind() == reflect.Pointer {
-				vItem = vItem.Elem()
-			}
-			v.Elem().Set(reflect.Append(v.Elem(), vItem))
+		}
+	} else if v.Elem().Type().Kind() == reflect.Slice {
+		err = setValue([]string{}, s, v)
+		if err != nil {
+			return nil, err
 		}
 	} else if v.Elem().Type().Kind() == reflect.String {
 		return s, nil

@@ -101,7 +101,7 @@ func TestFlagDecoder_Decode(t *testing.T) {
 			},
 		},
 		{
-			name: "array with split",
+			name: "array shorthand",
 			f: func(t *testing.T) {
 				s := &struct {
 					Key []string

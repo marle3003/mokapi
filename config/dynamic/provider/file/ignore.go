@@ -22,7 +22,11 @@ func newIgnoreFile(path string, b []byte) (*IgnoreFile, error) {
 }
 
 func (i *IgnoreFile) Match(path string) bool {
-	path = strings.TrimPrefix(path, filepath.Dir(i.path))
+	base := filepath.Dir(i.path)
+	if base != "." {
+		path = strings.TrimPrefix(path, base)
+	}
+
 	result := false
 	for _, e := range i.entries {
 		e = strings.TrimSpace(e)

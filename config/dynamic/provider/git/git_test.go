@@ -31,7 +31,7 @@ func TestGit(t *testing.T) {
 	}{
 		{
 			name: "clone",
-			cfg:  static.GitProvider{Url: "https://github.com/marle3003/mokapi-example.git"},
+			cfg:  static.GitProvider{Urls: []string{"https://github.com/marle3003/mokapi-example.git"}},
 			test: func(t *testing.T, ch chan *dynamic.Config) {
 				timeout := time.After(1 * time.Second)
 				count := 0
@@ -61,7 +61,7 @@ func TestGit(t *testing.T) {
 		},
 		{
 			name: "clone a branch",
-			cfg:  static.GitProvider{Url: "https://github.com/marle3003/mokapi-example.git?ref=main"},
+			cfg:  static.GitProvider{Urls: []string{"https://github.com/marle3003/mokapi-example.git?ref=main"}},
 			test: func(t *testing.T, ch chan *dynamic.Config) {
 				timeout := time.After(1 * time.Second)
 				count := 0
@@ -235,7 +235,7 @@ func testGit_SimpleUrl(t *testing.T) {
 
 	repo.commit(t, "foo.txt", "bar")
 
-	g := New(static.GitProvider{Url: repo.url.String()})
+	g := New(static.GitProvider{Urls: []string{repo.url.String()}})
 	p := safe.NewPool(context.Background())
 	defer p.Stop()
 
@@ -258,7 +258,7 @@ func testGit_SparseUrl(t *testing.T) {
 	repo.commit(t, "foo/foo.txt", "bar")
 	repo.commit(t, "bar/bar.txt", "bar")
 
-	g := New(static.GitProvider{Url: repo.url.String() + "//foo"})
+	g := New(static.GitProvider{Urls: []string{repo.url.String() + "//foo"}})
 	p := safe.NewPool(context.Background())
 	defer p.Stop()
 

@@ -376,7 +376,7 @@ func TestConfigWatcher_New(t *testing.T) {
 					&static.Config{
 						Providers: static.Providers{
 							Http: static.HttpProvider{
-								Url: "foo",
+								Urls: []string{"foo"},
 							},
 						},
 					},
@@ -391,7 +391,7 @@ func TestConfigWatcher_New(t *testing.T) {
 					&static.Config{
 						Providers: static.Providers{
 							Git: static.GitProvider{
-								Url: "git",
+								Urls: []string{"git"},
 							},
 						},
 					},

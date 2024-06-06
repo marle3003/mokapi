@@ -400,6 +400,44 @@ func TestProvider(t *testing.T) {
 				require.True(t, strings.HasSuffix(configs[1].Info.Path(), filepath.Join("bar", "foo.js")), "%v does not match suffix %v", configs[0].Info.Path(), filepath.Join("bar", "foo.js"))
 			},
 		},
+		{
+			name: ".git",
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
+					Name:  ".mokapiignore",
+					IsDir: false,
+					Data:  []byte(".git/"),
+				},
+				{
+					Name:  ".git/foo",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+			}},
+			cfg: static.FileProvider{Directory: "./"},
+			test: func(t *testing.T, configs []*dynamic.Config) {
+				require.Len(t, configs, 0)
+			},
+		},
+		{
+			name: "include",
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
+					Name:  "foo",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+				{
+					Name:  "bar",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+			}},
+			cfg: static.FileProvider{Directory: "./", Include: []string{"foo"}},
+			test: func(t *testing.T, configs []*dynamic.Config) {
+				require.Len(t, configs, 1)
+			},
+		},
 	}
 
 	t.Parallel()

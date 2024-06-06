@@ -184,6 +184,9 @@ func (p *Provider) skip(path string) bool {
 	if p.isWatchPath(path) {
 		return false
 	}
+	if len(p.cfg.Include) > 0 {
+		return !include(p.cfg.Include, path)
+	}
 
 	name := filepath.Base(path)
 	if name == mokapiIgnoreFile {
@@ -241,7 +244,7 @@ func (p *Provider) walk(root string) error {
 			return err
 		}
 		if fi.IsDir() {
-			if p.skip(path) {
+			if p.skip(path) && path != root {
 				log.Debugf("skip dir: %v", path)
 				return filepath.SkipDir
 			}
@@ -309,4 +312,13 @@ func (p *Provider) isWatchPath(path string) bool {
 
 	_, ok := p.watched[path]
 	return ok
+}
+
+func include(s []string, v string) bool {
+	for _, i := range s {
+		if Match(i, v) {
+			return true
+		}
+	}
+	return false
 }

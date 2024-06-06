@@ -141,6 +141,89 @@ func TestGitConfig(t *testing.T) {
 				require.Equal(t, "{\"openapi\": \"3.0\"}", cfg.Configs[0])
 			},
 		},
+		{
+			name: "git provider set url",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe")
+				os.Args = append(os.Args, "--Providers.git.Url", `foo`)
+
+				cfg := Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
+				require.NoError(t, err)
+
+				require.Equal(t, []string{"foo"}, cfg.Providers.Git.Urls)
+			},
+		},
+		{
+			name: "git provider set urls",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe")
+				os.Args = append(os.Args, "--Providers.git.Urls", `foo`)
+
+				cfg := Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
+				require.NoError(t, err)
+
+				require.Equal(t, []string{"foo"}, cfg.Providers.Git.Urls)
+			},
+		},
+		{
+			name: "http provider set url",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe")
+				os.Args = append(os.Args, "--Providers.Http.Url", `foo`)
+
+				cfg := Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
+				require.NoError(t, err)
+
+				require.Equal(t, []string{"foo"}, cfg.Providers.Http.Urls)
+			},
+		},
+		{
+			name: "http provider set urls exploded override first one",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe")
+				os.Args = append(os.Args, "--Providers.Http.Url", `foo`)
+				os.Args = append(os.Args, "--Providers.Http.Url", `bar`)
+
+				cfg := Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
+				require.NoError(t, err)
+
+				require.Equal(t, []string{"bar"}, cfg.Providers.Http.Urls)
+			},
+		},
+		{
+			name: "http provider set urls",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe")
+				os.Args = append(os.Args, "--Providers.Http.Urls", `foo bar`)
+
+				cfg := Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
+				require.NoError(t, err)
+
+				require.Equal(t, []string{"foo", "bar"}, cfg.Providers.Http.Urls)
+			},
+		},
+		{
+			name: "http provider",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe")
+				os.Args = append(os.Args, "--Providers.Http", `urls=foo bar,pollInterval=5s,pollTimeout=30s,proxy=bar,tlsSkipVerify=true`)
+
+				cfg := Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
+				require.NoError(t, err)
+
+				require.Equal(t, []string{"foo", "bar"}, cfg.Providers.Http.Urls)
+				require.Equal(t, "5s", cfg.Providers.Http.PollInterval)
+				require.Equal(t, "30s", cfg.Providers.Http.PollTimeout)
+				require.Equal(t, true, cfg.Providers.Http.TlsSkipVerify)
+				require.Equal(t, "bar", cfg.Providers.Http.Proxy)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

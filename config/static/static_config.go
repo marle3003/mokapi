@@ -48,13 +48,13 @@ type FileProvider struct {
 	Filename   string
 	Directory  string
 	SkipPrefix []string
+	Include    []string
 }
 
 type GitProvider struct {
-	Url          string
-	Urls         []string
-	PullInterval string `yaml:"pullInterval"`
-	TempDir      string `yaml:"tempDir"`
+	Urls         []string `explode:"url"`
+	PullInterval string   `yaml:"pullInterval"`
+	TempDir      string   `yaml:"tempDir"`
 
 	Repositories []GitRepo `explode:"repository"`
 }
@@ -80,10 +80,9 @@ type GitHubAuth struct {
 }
 
 type HttpProvider struct {
-	Url           string
-	Urls          []string
-	PollInterval  string `yaml:"pollInterval"`
-	PollTimeout   string `yaml:"pollTimeout"`
+	Urls          []string `explode:"url"`
+	PollInterval  string   `yaml:"pollInterval"`
+	PollTimeout   string   `yaml:"pollTimeout"`
 	Proxy         string
 	TlsSkipVerify bool              `yaml:"tlsSkipVerify"`
 	Ca            tls.FileOrContent `yaml:"ca"`

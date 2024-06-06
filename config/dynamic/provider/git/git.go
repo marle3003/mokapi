@@ -42,15 +42,7 @@ type Provider struct {
 }
 
 func New(config static.GitProvider) *Provider {
-	gitUrls := config.Urls
-	if len(config.Url) > 0 {
-		gitUrls = append(gitUrls, config.Url)
-	}
-
 	repoConfigs := config.Repositories
-	if len(config.Url) > 0 {
-		repoConfigs = append(repoConfigs, static.GitRepo{Url: config.Url})
-	}
 	for _, url := range config.Urls {
 		if len(url) > 0 {
 			repoConfigs = append(repoConfigs, static.GitRepo{Url: url})
@@ -66,7 +58,7 @@ func New(config static.GitProvider) *Provider {
 
 		u, err := url.Parse(repoConfig.Url)
 		if err != nil {
-			log.Errorf("unable to parse git url %v: %v", config.Url, err)
+			log.Errorf("unable to parse git url %v: %v", repoConfig.Url, err)
 		}
 
 		var ref string
