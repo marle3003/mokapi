@@ -29,7 +29,7 @@ type scriptHost struct {
 	events map[string][]*eventHandler
 	file   *dynamic.Config
 
-	fakerNodes []*fakerTree
+	fakerNodes []*common.FakerTree
 	m          sync.Mutex
 }
 
@@ -233,11 +233,9 @@ func (sh *scriptHost) CanClose() bool {
 	return len(sh.events) == 0 && len(sh.jobs) == 0 && len(sh.fakerNodes) == 0 && sh.script.CanClose()
 }
 
-func (sh *scriptHost) FindFakerTree(name string) common.FakerTree {
+func (sh *scriptHost) FindFakerTree(name string) *common.FakerTree {
 	t := generator.FindByName(name)
-	ft := &fakerTree{
-		t: t,
-	}
+	ft := common.NewFakerTree(t)
 	sh.fakerNodes = append(sh.fakerNodes, ft)
 	return ft
 }

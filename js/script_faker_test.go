@@ -138,7 +138,7 @@ func TestScript_Faker(t *testing.T) {
 					js.WithHost(host))
 				r.NoError(t, err)
 				err = s.Run()
-				r.EqualError(t, err, "expect JSON schema but got: string at mokapi/js/faker.(*Faker).Fake-fm (native)")
+				r.EqualError(t, err, "expect object parameter but got: String at mokapi/js/faker.(*Faker).Fake-fm (native)")
 			},
 		},
 		{
@@ -161,8 +161,8 @@ func TestScript_Faker(t *testing.T) {
 		{
 			name: "find node",
 			test: func(t *testing.T, host *enginetest.Host) {
-				host.FindFakerTreeFunc = func(name string) common.FakerTree {
-					return &enginetest.FakerTree{Tree: generator.FindByName("Faker")}
+				host.FindFakerTreeFunc = func(name string) *common.FakerTree {
+					return common.NewFakerTree(generator.FindByName("Faker"))
 				}
 
 				s, err := jstest.New(jstest.WithSource(
