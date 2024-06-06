@@ -33,7 +33,7 @@ func (m *MockFS) ReadFile(path string) ([]byte, error) {
 			return entry.Data, nil
 		}
 	}
-	return nil, fmt.Errorf("not found")
+	return nil, fmt.Errorf("file not found: %v", path)
 }
 
 func (m *MockFS) Walk(root string, visit fs.WalkDirFunc) error {

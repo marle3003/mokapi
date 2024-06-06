@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
+	"mokapi/config/dynamic/provider/file"
+	"net/url"
 	"reflect"
 	"sort"
 	"strconv"
@@ -11,6 +13,7 @@ import (
 )
 
 type FlagDecoder struct {
+	fs file.FSReader
 }
 
 func (f *FlagDecoder) Decode(flags map[string]string, element interface{}) error {
@@ -22,8 +25,8 @@ func (f *FlagDecoder) Decode(flags map[string]string, element interface{}) error
 
 	for _, name := range keys {
 		value := flags[name]
-		paths := parsePath(name)
-		err := setValue(paths, value, reflect.ValueOf(element))
+		paths := f.parsePath(name)
+		err := f.setValue(paths, value, reflect.ValueOf(element))
 		if err != nil {
 			return errors.Wrapf(err, "configuration error %v", name)
 		}
@@ -32,7 +35,7 @@ func (f *FlagDecoder) Decode(flags map[string]string, element interface{}) error
 	return nil
 }
 
-func setValue(paths []string, value string, element reflect.Value) error {
+func (f *FlagDecoder) setValue(paths []string, value string, element reflect.Value) error {
 	if len(value) == 0 {
 		return nil
 	}
@@ -42,7 +45,7 @@ func setValue(paths []string, value string, element reflect.Value) error {
 		if len(paths) == 0 {
 			p := reflect.New(element.Type())
 			p.Elem().Set(element)
-			i, err := convert(value, p)
+			i, err := f.convert(value, p)
 			if err != nil {
 				return err
 			}
@@ -52,19 +55,19 @@ func setValue(paths []string, value string, element reflect.Value) error {
 
 		field := element.FieldByNameFunc(func(f string) bool { return strings.ToLower(f) == strings.ToLower(paths[0]) })
 		if !field.IsValid() {
-			err := explode(element, paths[0], value)
+			err := f.explode(element, paths[0], value)
 			if err != nil {
 				return fmt.Errorf("configuration not found")
 			}
 			return nil
 		}
 
-		return setValue(paths[1:], value, field)
+		return f.setValue(paths[1:], value, field)
 	case reflect.Pointer:
 		if element.IsNil() {
 			element.Set(reflect.New(element.Type().Elem()))
 		}
-		return setValue(paths, value, element.Elem())
+		return f.setValue(paths, value, element.Elem())
 	case reflect.String:
 		element.SetString(value)
 		return nil
@@ -83,15 +86,15 @@ func setValue(paths []string, value string, element reflect.Value) error {
 		element.SetBool(b)
 		return nil
 	case reflect.Slice:
-		return setArray(paths, value, element)
+		return f.setArray(paths, value, element)
 	case reflect.Map:
-		return setMap(paths, value, element)
+		return f.setMap(paths, value, element)
 	}
 
 	panic(fmt.Errorf("unsupported config type: %v", element.Kind()))
 }
 
-func parsePath(key string) []string {
+func (f *FlagDecoder) parsePath(key string) []string {
 	var paths []string
 	split := strings.Split(key, ".")
 	for _, v := range split {
@@ -105,9 +108,9 @@ func parsePath(key string) []string {
 	return paths
 }
 
-func setArray(paths []string, value string, element reflect.Value) error {
+func (f *FlagDecoder) setArray(paths []string, value string, element reflect.Value) error {
 	if len(paths) > 0 {
-		index, err := parseArrayIndex(paths[0])
+		index, err := f.parseArrayIndex(paths[0])
 		if err != nil {
 			return fmt.Errorf("parse array index failed: %v", err)
 		}
@@ -131,12 +134,12 @@ func setArray(paths []string, value string, element reflect.Value) error {
 			element.SetLen(index + 1)
 		}
 
-		return setValue(paths[1:], value, element.Index(index))
+		return f.setValue(paths[1:], value, element.Index(index))
 	} else {
 		values := strings.Split(value, " ")
 		for _, v := range values {
 			ptr := reflect.New(element.Type().Elem())
-			if err := setValue(paths, v, ptr); err != nil {
+			if err := f.setValue(paths, v, ptr); err != nil {
 				return err
 			}
 			element.Set(reflect.Append(element, ptr.Elem()))
@@ -146,7 +149,7 @@ func setArray(paths []string, value string, element reflect.Value) error {
 	return nil
 }
 
-func parseArrayIndex(path string) (int, error) {
+func (f *FlagDecoder) parseArrayIndex(path string) (int, error) {
 	if strings.HasPrefix(path, "[") {
 		s := strings.TrimPrefix(path, "[")
 		s = strings.TrimSuffix(s, "]")
@@ -156,7 +159,7 @@ func parseArrayIndex(path string) (int, error) {
 	return strconv.Atoi(path)
 }
 
-func setMap(paths []string, value string, element reflect.Value) error {
+func (f *FlagDecoder) setMap(paths []string, value string, element reflect.Value) error {
 	if element.IsNil() {
 		element.Set(reflect.MakeMap(element.Type()))
 	}
@@ -169,7 +172,7 @@ func setMap(paths []string, value string, element reflect.Value) error {
 		ptr.Elem().Set(reflect.New(element.Type().Elem()))
 		ptr.Elem().Elem().Set(element.MapIndex(key))
 	}
-	if err := setValue(paths[1:], value, ptr); err != nil {
+	if err := f.setValue(paths[1:], value, ptr); err != nil {
 		return err
 	}
 
@@ -178,14 +181,14 @@ func setMap(paths []string, value string, element reflect.Value) error {
 	return nil
 }
 
-func explode(v reflect.Value, name string, value string) error {
-	f := getFieldByTag(v, name)
-	if !f.IsValid() {
+func (f *FlagDecoder) explode(v reflect.Value, name string, value string) error {
+	field := f.getFieldByTag(v, name)
+	if !field.IsValid() {
 		return fmt.Errorf("not found")
 	}
 
-	p := reflect.New(f.Type().Elem())
-	i, err := convert(value, p)
+	p := reflect.New(field.Type().Elem())
+	i, err := f.convert(value, p)
 	if err != nil {
 		return err
 	}
@@ -193,11 +196,11 @@ func explode(v reflect.Value, name string, value string) error {
 	if vItem.Type().Kind() == reflect.Pointer {
 		vItem = vItem.Elem()
 	}
-	f.Set(reflect.Append(f, vItem))
+	field.Set(reflect.Append(field, vItem))
 	return nil
 }
 
-func getFieldByTag(v reflect.Value, name string) reflect.Value {
+func (f *FlagDecoder) getFieldByTag(v reflect.Value, name string) reflect.Value {
 	for i := 0; i < v.NumField(); i++ {
 		explode := v.Type().Field(i).Tag.Get("explode")
 		if explode == name {
@@ -207,8 +210,29 @@ func getFieldByTag(v reflect.Value, name string) reflect.Value {
 	return reflect.Value{}
 }
 
-func convert(s string, v reflect.Value) (interface{}, error) {
-	i, err := convertJson(s, v)
+func (f *FlagDecoder) convert(s string, v reflect.Value) (interface{}, error) {
+	u, err := url.ParseRequestURI(s)
+	if err == nil {
+		switch u.Scheme {
+		case "file":
+			var path string
+			if len(u.Host) > 0 {
+				path = u.Host
+			} else if len(u.Path) > 0 {
+				path = u.Path
+			}
+			if len(u.Opaque) > 0 {
+				path = u.Opaque
+			}
+			b, err := f.fs.ReadFile(path)
+			if err != nil {
+				return nil, err
+			}
+			s = string(b)
+		}
+	}
+
+	i, err := f.convertJson(s, v)
 	if err == nil {
 		return i, nil
 	}
@@ -220,13 +244,13 @@ func convert(s string, v reflect.Value) (interface{}, error) {
 			if len(kv) != 2 {
 				return nil, fmt.Errorf("parse shorthand failed: %v", s)
 			}
-			err = setValue([]string{kv[0]}, kv[1], v)
+			err = f.setValue([]string{kv[0]}, kv[1], v)
 			if err != nil {
 				return nil, err
 			}
 		}
 	} else if v.Elem().Type().Kind() == reflect.Slice {
-		err = setValue([]string{}, s, v)
+		err = f.setValue([]string{}, s, v)
 		if err != nil {
 			return nil, err
 		}
@@ -237,7 +261,7 @@ func convert(s string, v reflect.Value) (interface{}, error) {
 	return v.Interface(), nil
 }
 
-func convertJson(s string, v reflect.Value) (interface{}, error) {
+func (f *FlagDecoder) convertJson(s string, v reflect.Value) (interface{}, error) {
 	i := v.Interface()
 	err := json.Unmarshal([]byte(s), i)
 	return i, err

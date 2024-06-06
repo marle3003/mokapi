@@ -2,6 +2,7 @@ package decoders
 
 import (
 	"github.com/stretchr/testify/require"
+	"mokapi/config/dynamic/provider/file/filetest"
 	"testing"
 )
 
@@ -153,6 +154,56 @@ func TestFlagDecoder_Decode(t *testing.T) {
 				}{}
 				d := &FlagDecoder{}
 				err := d.Decode(map[string]string{"Key.foo.Name": "Bob", "Key.foo.Foo": "bar"}, s)
+				require.NoError(t, err)
+				require.Equal(t, "Bob", s.Key["foo"].Name)
+				require.Equal(t, "bar", s.Key["foo"].Foo)
+			},
+		},
+		{
+			name: "parameters from file in current directory",
+			f: func(t *testing.T) {
+				type test struct {
+					Name string
+					Foo  string
+				}
+				s := &struct {
+					Key map[string]test
+				}{}
+
+				fs := &filetest.MockFS{Entries: []*filetest.Entry{
+					{
+						Name:  "test.json",
+						IsDir: false,
+						Data:  []byte(`{"name": "Bob", "foo": "bar"}`),
+					}}}
+
+				d := &FlagDecoder{fs: fs}
+				err := d.Decode(map[string]string{"Key.foo": "file://test.json"}, s)
+				require.NoError(t, err)
+				require.Equal(t, "Bob", s.Key["foo"].Name)
+				require.Equal(t, "bar", s.Key["foo"].Foo)
+			},
+		},
+		{
+			name: "parameters from file absolute path",
+			f: func(t *testing.T) {
+				type test struct {
+					Name string
+					Foo  string
+				}
+				s := &struct {
+					Key map[string]test
+				}{}
+
+				fs := &filetest.MockFS{Entries: []*filetest.Entry{
+					{
+						Name:  "/tmp/test.json",
+						IsDir: false,
+						Data:  []byte(`{"name": "Bob", "foo": "bar"}`),
+					}}}
+
+				d := &FlagDecoder{fs: fs}
+				err := d.Decode(map[string]string{"Key.foo": "file:///tmp/test.json"}, s)
 				require.NoError(t, err)
 				require.Equal(t, "Bob", s.Key["foo"].Name)
 				require.Equal(t, "bar", s.Key["foo"].Foo)

@@ -1,8 +1,9 @@
-package static
+package static_test
 
 import (
 	"github.com/stretchr/testify/require"
 	"mokapi/config/decoders"
+	"mokapi/config/static"
 	"os"
 	"testing"
 )
@@ -18,7 +19,7 @@ func TestGitConfig(t *testing.T) {
 				os.Args = append(os.Args, "mokapi.exe")
 				os.Args = append(os.Args, `--ConfigFile=foo`)
 
-				cfg := Config{}
+				cfg := static.Config{}
 				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
 				require.NoError(t, err)
 				require.Equal(t, "foo", cfg.ConfigFile)
@@ -30,7 +31,7 @@ func TestGitConfig(t *testing.T) {
 				os.Args = append(os.Args, "mokapi.exe")
 				os.Args = append(os.Args, `--ConfigFile`, "foo")
 
-				cfg := Config{}
+				cfg := static.Config{}
 				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
 				require.NoError(t, err)
 				require.Equal(t, "foo", cfg.ConfigFile)
@@ -42,7 +43,7 @@ func TestGitConfig(t *testing.T) {
 				os.Args = append(os.Args, "mokapi.exe")
 				os.Args = append(os.Args, `--providers.file={"filename":"foo.yaml","directory":"foo", "skipPrefix":["_"]}`)
 
-				cfg := Config{}
+				cfg := static.Config{}
 				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
 				require.NoError(t, err)
 				require.Equal(t, "foo.yaml", cfg.Providers.File.Filename)
@@ -56,7 +57,7 @@ func TestGitConfig(t *testing.T) {
 				os.Args = append(os.Args, "mokapi.exe")
 				os.Args = append(os.Args, `--providers.file`, "filename=foo.yaml")
 
-				cfg := Config{}
+				cfg := static.Config{}
 				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
 				require.NoError(t, err)
 				require.Equal(t, "foo.yaml", cfg.Providers.File.Filename)
@@ -70,7 +71,7 @@ func TestGitConfig(t *testing.T) {
 				os.Args = append(os.Args, "--providers.git.repositories[0].pullInterval=5m")
 				os.Args = append(os.Args, "--providers.git.repositories[1].pullInterval=5h")
 
-				cfg := Config{}
+				cfg := static.Config{}
 				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
 				require.NoError(t, err)
 				require.Equal(t, "https://github.com/PATH-TO/REPOSITORY?ref=branch-name", cfg.Providers.Git.Repositories[0].Url)
@@ -85,7 +86,7 @@ func TestGitConfig(t *testing.T) {
 				os.Args = append(os.Args, "mokapi.exe")
 				os.Args = append(os.Args, `--providers.git.repositories`, "url=foo,pullInterval=5m url=bar,pullInterval=5h")
 
-				cfg := Config{}
+				cfg := static.Config{}
 				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
 				require.NoError(t, err)
 				require.Len(t, cfg.Providers.Git.Repositories, 2)
@@ -101,7 +102,7 @@ func TestGitConfig(t *testing.T) {
 				os.Args = append(os.Args, "mokapi.exe")
 				os.Args = append(os.Args, `--providers.git.repository={"url":"https://github.com/PATH-TO/REPOSITORY?ref=branch-name","pullInterval":"5m"}`)
 
-				cfg := Config{}
+				cfg := static.Config{}
 				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
 				require.NoError(t, err)
 				require.Equal(t, "https://github.com/PATH-TO/REPOSITORY?ref=branch-name", cfg.Providers.Git.Repositories[0].Url)
@@ -119,7 +120,7 @@ func TestGitConfig(t *testing.T) {
 				require.NoError(t, err)
 				defer os.Unsetenv("MOKAPI_Providers_GIT_Repositories[0]_PullInterval")
 
-				cfg := Config{}
+				cfg := static.Config{}
 				err = decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
 				require.NoError(t, err)
 
@@ -133,7 +134,7 @@ func TestGitConfig(t *testing.T) {
 				os.Args = append(os.Args, "mokapi.exe")
 				os.Args = append(os.Args, "--config", `{"openapi": "3.0"}`)
 
-				cfg := Config{}
+				cfg := static.Config{}
 				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
 				require.NoError(t, err)
 
@@ -147,7 +148,7 @@ func TestGitConfig(t *testing.T) {
 				os.Args = append(os.Args, "mokapi.exe")
 				os.Args = append(os.Args, "--Providers.git.Url", `foo`)
 
-				cfg := Config{}
+				cfg := static.Config{}
 				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
 				require.NoError(t, err)
 
@@ -160,7 +161,7 @@ func TestGitConfig(t *testing.T) {
 				os.Args = append(os.Args, "mokapi.exe")
 				os.Args = append(os.Args, "--Providers.git.Urls", `foo`)
 
-				cfg := Config{}
+				cfg := static.Config{}
 				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
 				require.NoError(t, err)
 
@@ -173,7 +174,7 @@ func TestGitConfig(t *testing.T) {
 				os.Args = append(os.Args, "mokapi.exe")
 				os.Args = append(os.Args, "--Providers.Http.Url", `foo`)
 
-				cfg := Config{}
+				cfg := static.Config{}
 				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
 				require.NoError(t, err)
 
@@ -187,7 +188,7 @@ func TestGitConfig(t *testing.T) {
 				os.Args = append(os.Args, "--Providers.Http.Url", `foo`)
 				os.Args = append(os.Args, "--Providers.Http.Url", `bar`)
 
-				cfg := Config{}
+				cfg := static.Config{}
 				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
 				require.NoError(t, err)
 
@@ -200,7 +201,7 @@ func TestGitConfig(t *testing.T) {
 				os.Args = append(os.Args, "mokapi.exe")
 				os.Args = append(os.Args, "--Providers.Http.Urls", `foo bar`)
 
-				cfg := Config{}
+				cfg := static.Config{}
 				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
 				require.NoError(t, err)
 
@@ -213,7 +214,7 @@ func TestGitConfig(t *testing.T) {
 				os.Args = append(os.Args, "mokapi.exe")
 				os.Args = append(os.Args, "--Providers.Http", `urls=foo bar,pollInterval=5s,pollTimeout=30s,proxy=bar,tlsSkipVerify=true`)
 
-				cfg := Config{}
+				cfg := static.Config{}
 				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
 				require.NoError(t, err)
 
