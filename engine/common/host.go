@@ -40,7 +40,7 @@ type Host interface {
 
 	Name() string
 
-	FindFakerTree(name string) FakerTree
+	FindFakerTree(name string) *FakerTree
 
 	Lock()
 	Unlock()
@@ -120,17 +120,6 @@ func (a *Action) String() string {
 		sb.WriteString(fmt.Sprintf("%v=%v", k, v))
 	}
 	return sb.String()
-}
-
-type FakerTree interface {
-	Name() string
-	Test(r *generator.Request) bool
-	Fake(r *generator.Request) (interface{}, error)
-
-	Append(tree FakerNode)
-	Insert(index int, tree FakerNode) error
-	RemoveAt(index int) error
-	Remove(name string) error
 }
 
 type FakerNode interface {

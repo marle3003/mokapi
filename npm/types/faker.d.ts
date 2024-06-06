@@ -12,7 +12,7 @@ import { JSONValue } from ".";
  *   console.log(fake({type: 'string', pattern: '^\d{3}-\d{2}-\d{4}$'})) // 123-45-6789
  * }
  */
-export function fake(schema: Schema | FakeRequest): JSONValue;
+export function fake(schema: Schema | JSONSchema): JSONValue;
 
 /**
  * Gets the tree node with the given name
@@ -39,44 +39,6 @@ export interface Tree {
      * Gets the name of the tree node
      */
     name: string
-
-    /**
-     * Tests whether the tree node supports the request.
-     * @param request request - Request for a new fake value
-     * @example
-     * export default function() {
-     *   const frequencyItems = ['never', 'daily', 'weekly', 'monthly', 'yearly']
-     *   const node = findByName('Strings')
-     *   node.append({
-     *     name: 'Frequency',
-     *     test: (r) => { return r.lastName() === 'frequency' },
-     *     fake: (r) => {
-     *       return frequencyItems[Math.floor(Math.random()*frequencyItems.length)]
-     *     }
-     *   })
-     *   return fake({ type: 'string' })
-     * }
-     */
-    readonly test: (request: FakeRequest) => boolean
-
-    /**
-     * Gets a new fake value
-     * @param request request - Request for a new fake value
-     * @example
-     * export default function() {
-     *   const frequencyItems = ['never', 'daily', 'weekly', 'monthly', 'yearly']
-     *   const node = findByName('Strings')
-     *   node.append({
-     *     name: 'Frequency',
-     *     test: (r) => { return r.lastName() === 'frequency' },
-     *     fake: (r) => {
-     *       return frequencyItems[Math.floor(Math.random()*frequencyItems.length)]
-     *     }
-     *   })
-     *   return fake({ type: 'string' })
-     * }
-     */
-    readonly fake: (request: FakeRequest) => JSONValue
 
     /**
      * Inserts a Tree objects after the last child of this tree.
@@ -152,23 +114,8 @@ export interface CustomTree {
     fake: (r: Request) => JSONValue
 }
 
-/**
- * Represents a request for a fake value
- */
-export interface FakeRequest {
-    /**
-     * Contains a list of attribute names representing the object graph for which a new value is to be faked
-     */
-    names: string[]
-
-    /**
-     * Describing the structure of JSON data to be faked
-     */
-    schema: JSONSchema
-}
-
 export interface Request {
-    Path: PathElement[]
+    path: PathElement[]
 
     last: () => PathElement
     lastName: () => string

@@ -1,28 +1,31 @@
-package engine
+package common
 
 import (
-	"mokapi/engine/common"
 	"mokapi/schema/json/generator"
 )
 
-type fakerTree struct {
+type FakerTree struct {
 	restore []func() error
 	t       *generator.Tree
 }
 
-func (ft *fakerTree) Name() string {
+func NewFakerTree(t *generator.Tree) *FakerTree {
+	return &FakerTree{t: t}
+}
+
+func (ft *FakerTree) Name() string {
 	return ft.t.Name
 }
 
-func (ft *fakerTree) Test(r *generator.Request) bool {
+func (ft *FakerTree) Test(r *generator.Request) bool {
 	return ft.t.Test(r)
 }
 
-func (ft *fakerTree) Fake(r *generator.Request) (interface{}, error) {
+func (ft *FakerTree) Fake(r *generator.Request) (interface{}, error) {
 	return ft.t.Fake(r)
 }
 
-func (ft *fakerTree) Append(node common.FakerNode) {
+func (ft *FakerTree) Append(node FakerNode) {
 	t := &generator.Tree{
 		Name:   node.Name(),
 		Test:   node.Test,
@@ -35,7 +38,7 @@ func (ft *fakerTree) Append(node common.FakerNode) {
 	})
 }
 
-func (ft *fakerTree) Insert(index int, node common.FakerNode) error {
+func (ft *FakerTree) Insert(index int, node FakerNode) error {
 	new := &generator.Tree{
 		Name:   node.Name(),
 		Test:   node.Test,
@@ -52,15 +55,15 @@ func (ft *fakerTree) Insert(index int, node common.FakerNode) error {
 	return nil
 }
 
-func (ft *fakerTree) RemoveAt(index int) error {
+func (ft *FakerTree) RemoveAt(index int) error {
 	return ft.t.RemoveAt(index)
 }
 
-func (ft *fakerTree) Remove(name string) error {
+func (ft *FakerTree) Remove(name string) error {
 	return ft.t.Remove(name)
 }
 
-func (ft *fakerTree) Restore() error {
+func (ft *FakerTree) Restore() error {
 	for _, f := range ft.restore {
 		err := f()
 		if err != nil {

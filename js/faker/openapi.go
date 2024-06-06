@@ -8,6 +8,25 @@ import (
 	"reflect"
 )
 
+func isOpenApiSchema(o *goja.Object) bool {
+	if v := o.Get("xml"); v != nil {
+		return true
+	}
+	if v := o.Get("example"); v != nil {
+		return true
+	}
+
+	if schemaDef := o.Get("$schema"); schemaDef != nil && schemaDef.ExportType().Kind() == reflect.String {
+		def := schemaDef.String()
+		switch def {
+		case "https://spec.openapis.org/oas/3.1/dialect/base":
+			return true
+		}
+	}
+
+	return false
+}
+
 func ToOpenAPISchema(v goja.Value, rt *goja.Runtime) (*schema.Ref, error) {
 	s := &schema.Schema{}
 

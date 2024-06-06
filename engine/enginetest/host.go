@@ -21,7 +21,7 @@ type Host struct {
 	EveryFunc         func(every string, do func(), opt common.JobOptions)
 	CronFunc          func(every string, do func(), opt common.JobOptions)
 	OnFunc            func(event string, do func(args ...interface{}) (bool, error), tags map[string]string)
-	FindFakerTreeFunc func(name string) common.FakerTree
+	FindFakerTreeFunc func(name string) *common.FakerTree
 	m                 sync.Mutex
 }
 
@@ -100,7 +100,7 @@ func (h *Host) Name() string {
 	return "test host"
 }
 
-func (h *Host) FindFakerTree(name string) common.FakerTree {
+func (h *Host) FindFakerTree(name string) *common.FakerTree {
 	if h.FindFakerTreeFunc != nil {
 		return h.FindFakerTreeFunc(name)
 	}
