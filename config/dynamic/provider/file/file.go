@@ -22,7 +22,7 @@ import (
 
 const mokapiIgnoreFile = ".mokapiignore"
 
-var bom = []byte{0xEF, 0xBB, 0xBF}
+var Bom = []byte{0xEF, 0xBB, 0xBF}
 
 type Provider struct {
 	cfg        static.FileProvider
@@ -211,7 +211,7 @@ func (p *Provider) readFile(path string) (*dynamic.Config, error) {
 	}
 
 	// remove bom sequence if present
-	if len(data) >= 4 && bytes.Equal(data[0:3], bom) {
+	if len(data) >= 4 && bytes.Equal(data[0:3], Bom) {
 		data = data[3:]
 	}
 

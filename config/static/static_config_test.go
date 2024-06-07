@@ -182,6 +182,19 @@ func TestGitConfig(t *testing.T) {
 			},
 		},
 		{
+			name: "file provider include overwrite",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe")
+				os.Args = append(os.Args, "--Providers.file.include", "foo", "--Providers.file.include[0]", "bar")
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
+				require.NoError(t, err)
+
+				require.Equal(t, []string{"bar"}, cfg.Providers.File.Include)
+			},
+		},
+		{
 			name: "git provider set url",
 			test: func(t *testing.T) {
 				os.Args = append(os.Args, "mokapi.exe")

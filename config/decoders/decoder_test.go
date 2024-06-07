@@ -79,6 +79,20 @@ func TestLoad(t *testing.T) {
 			},
 		},
 		{
+			name: "array override with index operator",
+			f: func(t *testing.T) {
+				s := &struct {
+					Names []string `explode:"name"`
+				}{}
+				os.Args = append(os.Args, "mokapi.exe")
+				os.Args = append(os.Args, "--name", "foo", "--name", "bar", "--names[0]", "x")
+
+				err := Load([]ConfigDecoder{&FlagDecoder{}}, s)
+				require.NoError(t, err)
+				require.Equal(t, []string{"x", "bar"}, s.Names)
+			},
+		},
+		{
 			name: "env var",
 			f: func(t *testing.T) {
 				s := &struct {

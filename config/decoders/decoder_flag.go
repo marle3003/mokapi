@@ -1,6 +1,7 @@
 package decoders
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
@@ -224,6 +225,10 @@ func (f *FlagDecoder) convert(s string, v reflect.Value) error {
 			b, err := f.fs.ReadFile(path)
 			if err != nil {
 				return err
+			}
+			// remove bom sequence if present
+			if len(b) >= 4 && bytes.Equal(b[0:3], file.Bom) {
+				b = b[3:]
 			}
 			s = string(b)
 		}
