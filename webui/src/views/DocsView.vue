@@ -37,6 +37,7 @@ if (typeof file === 'string'){
   }
 }
 
+let title = ''
 onMounted(() => {
   setTimeout(() => {
     for (var pre of document.querySelectorAll('pre')) {
@@ -57,7 +58,7 @@ onMounted(() => {
       }
     }
   })
-  const title = (metadata.title || levels[3] || levels[2] || levels[1] || levels[0]) + ' | Mokapi ' + levels[0]
+  title = (metadata.title || levels[3] || levels[2] || levels[1] || levels[0]) + ' | Mokapi ' + levels[0]
   useMeta(title, metadata.description, getCanonicalUrl(levels))
   dialog.value = new Modal('#imageDialog', {})
 })
@@ -95,9 +96,9 @@ function showImage(target: EventTarget | null) {
       </div>
       <div class="d-flex">
         <div class="text-white sidebar d-none d-md-block" :class="openSidebar ? 'open' : ''" id="sidebar">
-          <DocNav :config="nav" :levels="levels"/>
+          <DocNav :config="nav" :levels="levels" :title="title"/>
         </div>
-        <div style="flex: 1;max-width:700px;margin-bottom: 3rem;">
+        <div style="flex: 1;max-width:760px;margin-bottom: 3rem;">
           <div v-if="content" v-html="content" class="content" @click="showImage($event.target)"></div>
           <div v-else-if="component" class="content"><component :is="component" /></div>
           <page-not-found v-else />
@@ -143,7 +144,7 @@ function showImage(target: EventTarget | null) {
   position: sticky;
   top: 4rem;
   align-self: flex-start;
-  width: 340px;
+  width: 270px;
   padding-top: 2rem;
 }
 .sidebar.open{
@@ -151,11 +152,12 @@ function showImage(target: EventTarget | null) {
   z-index: 100;
   display: block !important;
   position:fixed;
-  top: 0;
+  top: 64px;
   left: 0;
-  bottom: 0;
+  width: 100%;
+  height: 100%;
   box-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.05), 0 0.25rem 0.5rem rgba(0, 0, 0, 0.05);
-  padding-top: 1.5rem;
+  padding-top: 1.3rem;
   overflow-y: scroll;
 }
 .sidebar.open .nav-pills .nav-link.active, .sidebar.show  .nav-pills .show > .nav-link {
@@ -169,6 +171,7 @@ function showImage(target: EventTarget | null) {
 
 .content h1 {
   margin-bottom: 2.5rem;
+  margin-top: 1rem;
 }
 
 .content h2 {
@@ -243,7 +246,7 @@ table.selectable tbody tr:hover {
 }
 
 pre {
-  max-width: 700px;
+  max-width: 760px;
   margin: 0 auto auto;
   margin-bottom: 1rem;
   white-space: pre-wrap;

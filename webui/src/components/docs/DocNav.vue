@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted, onRenderTriggered } from 'vue';
 
 
 const props = defineProps<{
     levels: string[],
     config: DocConfig,
+    title: string
 }>()
 
 const root = computed(() => <DocEntry>props.config[props.levels[0]])
@@ -56,9 +57,17 @@ function isExpanded(item: DocEntry | string) {
     }
     return item.expanded || false
 }
+
 </script>
 
 <template>
+    <div>
+      <div class="d-md-none">
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="inset-inline-end: 16px; position:absolute"></button>
+        <div>
+          <h2>{{ title }}</h2>
+        </div>
+      </div>
     <ul class="nav nav-pills root flex-column mb-auto pe-3">
         <li class="nav-item" v-for="(level1, k1) of root.items">
 
@@ -99,16 +108,29 @@ function isExpanded(item: DocEntry | string) {
             <router-link v-if="!hasChildren(level1) && showItem(k1, level1)" class="nav-link chapter-text" :to="{ name: 'docs', params: {level2: formatParam(k1)} }">{{ k1 }}</router-link>
         </li>
     </ul>   
+    </div>
 </template>
 
 <style scoped>
+h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  padding-left: 16px;
+  padding-right: 16px;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-bottom: 1.3rem;
+  border-bottom-color: var(--color-background-light);
+  border-bottom-style: solid;
+  border-bottom-width: 1px;
+}
 .nav {
   font-size: 0.94rem;
   font-weight: 500;
 
 }
 .nav.root {
-  padding-top: 2rem;
+  padding-top: 1rem;
 }
 
 .nav-item {

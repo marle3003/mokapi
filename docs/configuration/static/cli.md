@@ -2,7 +2,7 @@
 title: Use Mokapi CLI
 description: This page provides information on how to configure Mokapi using CLI parameters.
 ---
-# Introduction
+# Use Mokapi CLI
 
 This page provides information on how to configure Mokapi using CLI parameters. A list of available parameters can be found [here](/docs/configuration/reference.md)
 
@@ -67,7 +67,7 @@ mokapi --providers.git.repositories[0].auth.github.appId 12345
 
 ## Parameters from file
 
-Some parameters expect file names directly, from which Mokapi loads the data. Other parameters require a file URL to read data from a file
+Some parameters expect either file name or string value directly. Other parameters require a file URL explicitly to read data from a file
 
 ```shell
 mokapi --providers.file file:///tmp/file.json
