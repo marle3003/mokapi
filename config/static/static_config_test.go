@@ -46,8 +46,8 @@ func TestGitConfig(t *testing.T) {
 				cfg := static.Config{}
 				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
 				require.NoError(t, err)
-				require.Equal(t, "foo.yaml", cfg.Providers.File.Filename)
-				require.Equal(t, "foo", cfg.Providers.File.Directory)
+				require.Equal(t, []string{"foo.yaml"}, cfg.Providers.File.Filenames)
+				require.Equal(t, []string{"foo"}, cfg.Providers.File.Directories)
 				require.Equal(t, []string{"_"}, cfg.Providers.File.SkipPrefix)
 			},
 		},
@@ -60,7 +60,7 @@ func TestGitConfig(t *testing.T) {
 				cfg := static.Config{}
 				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
 				require.NoError(t, err)
-				require.Equal(t, "foo.yaml", cfg.Providers.File.Filename)
+				require.Equal(t, []string{"foo.yaml"}, cfg.Providers.File.Filenames)
 			},
 		},
 		{
@@ -143,6 +143,45 @@ func TestGitConfig(t *testing.T) {
 			},
 		},
 		{
+			name: "file provider include",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe")
+				os.Args = append(os.Args, "--Providers.file.include", `mokapi/**/*.json mokapi/**/*.yaml "foo bar/**/*.yaml"`)
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
+				require.NoError(t, err)
+
+				require.Equal(t, []string{"mokapi/**/*.json", "mokapi/**/*.yaml", "foo bar/**/*.yaml"}, cfg.Providers.File.Include)
+			},
+		},
+		{
+			name: "file provider include with space",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe")
+				os.Args = append(os.Args, "--Providers.file.include", `"C:\Documents and Settings\" C:\Work"`)
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
+				require.NoError(t, err)
+
+				require.Equal(t, []string{"C:\\Documents and Settings\\", "C:\\Work"}, cfg.Providers.File.Include)
+			},
+		},
+		{
+			name: "file provider include twice",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe")
+				os.Args = append(os.Args, "--Providers.file.include", "foo", "--Providers.file.include", "bar")
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
+				require.NoError(t, err)
+
+				require.Equal(t, []string{"foo", "bar"}, cfg.Providers.File.Include)
+			},
+		},
+		{
 			name: "git provider set url",
 			test: func(t *testing.T) {
 				os.Args = append(os.Args, "mokapi.exe")
@@ -182,7 +221,7 @@ func TestGitConfig(t *testing.T) {
 			},
 		},
 		{
-			name: "http provider set urls exploded override first one",
+			name: "http provider set urls using explode",
 			test: func(t *testing.T) {
 				os.Args = append(os.Args, "mokapi.exe")
 				os.Args = append(os.Args, "--Providers.Http.Url", `foo`)
@@ -192,7 +231,7 @@ func TestGitConfig(t *testing.T) {
 				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
 				require.NoError(t, err)
 
-				require.Equal(t, []string{"bar"}, cfg.Providers.Http.Urls)
+				require.Equal(t, []string{"foo", "bar"}, cfg.Providers.Http.Urls)
 			},
 		},
 		{

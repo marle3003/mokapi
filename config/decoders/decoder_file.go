@@ -27,10 +27,10 @@ func NewFileDecoder(readFile ReadFileFS) *FileDecoder {
 	return &FileDecoder{readFile: readFile}
 }
 
-func (f *FileDecoder) Decode(flags map[string]string, element interface{}) error {
+func (f *FileDecoder) Decode(flags map[string][]string, element interface{}) error {
 	if len(f.filename) == 0 {
 		if val, ok := flags["configfile"]; ok {
-			f.filename = val
+			f.filename = val[0]
 		}
 	}
 

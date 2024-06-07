@@ -11,7 +11,7 @@ type MailSuite struct{ BaseSuite }
 
 func (suite *MailSuite) SetupSuite() {
 	cfg := static.NewConfig()
-	cfg.Providers.File.Directory = "./mail"
+	cfg.Providers.File.Directories = []string{"./mail"}
 	suite.initCmd(cfg)
 }
 

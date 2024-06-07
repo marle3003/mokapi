@@ -45,10 +45,10 @@ type Api struct {
 }
 
 type FileProvider struct {
-	Filename   string
-	Directory  string
-	SkipPrefix []string
-	Include    []string
+	Filenames   []string `explode:"filename"`
+	Directories []string `explode:"directory"`
+	SkipPrefix  []string
+	Include     []string
 }
 
 type GitProvider struct {

@@ -20,7 +20,7 @@ func NewFlagDecoder() *FlagDecoder {
 	return &FlagDecoder{fs: &file.Reader{}}
 }
 
-func (f *FlagDecoder) Decode(flags map[string]string, element interface{}) error {
+func (f *FlagDecoder) Decode(flags map[string][]string, element interface{}) error {
 	keys := make([]string, 0, len(flags))
 	for k := range flags {
 		keys = append(keys, k)
@@ -28,11 +28,12 @@ func (f *FlagDecoder) Decode(flags map[string]string, element interface{}) error
 	sort.Strings(keys)
 
 	for _, name := range keys {
-		value := flags[name]
 		paths := f.parsePath(name)
-		err := f.setValue(paths, value, reflect.ValueOf(element))
-		if err != nil {
-			return errors.Wrapf(err, "configuration error %v", name)
+		for _, value := range flags[name] {
+			err := f.setValue(paths, value, reflect.ValueOf(element))
+			if err != nil {
+				return errors.Wrapf(err, "configuration error %v", name)
+			}
 		}
 	}
 
@@ -40,30 +41,19 @@ func (f *FlagDecoder) Decode(flags map[string]string, element interface{}) error
 }
 
 func (f *FlagDecoder) setValue(paths []string, value string, element reflect.Value) error {
-	if len(value) == 0 {
-		return nil
-	}
-
 	switch element.Kind() {
 	case reflect.Struct:
 		if len(paths) == 0 {
-			p := reflect.New(element.Type())
-			p.Elem().Set(element)
-			i, err := f.convert(value, p)
-			if err != nil {
-				return err
-			}
-			element.Set(reflect.ValueOf(i).Elem())
-			return nil
+			return f.convert(value, element)
 		}
-
-		field := element.FieldByNameFunc(func(f string) bool { return strings.ToLower(f) == strings.ToLower(paths[0]) })
+		name := strings.ToLower(paths[0])
+		field := element.FieldByNameFunc(func(f string) bool { return strings.ToLower(f) == name })
 		if !field.IsValid() {
-			err := f.explode(element, paths[0], value)
-			if err != nil {
-				return fmt.Errorf("configuration not found")
+			if strings.HasPrefix(paths[0], "no-") {
+				return invertFlag(paths[0], value, element)
+			} else {
+				return f.explode(element, paths[0], value)
 			}
-			return nil
 		}
 
 		return f.setValue(paths[1:], value, field)
@@ -73,7 +63,8 @@ func (f *FlagDecoder) setValue(paths []string, value string, element reflect.Val
 		}
 		return f.setValue(paths, value, element.Elem())
 	case reflect.String:
-		element.SetString(value)
+		s := strings.Trim(value, "\"")
+		element.SetString(s)
 		return nil
 	case reflect.Int64:
 		i, err := strconv.ParseInt(value, 10, 64)
@@ -83,9 +74,15 @@ func (f *FlagDecoder) setValue(paths []string, value string, element reflect.Val
 		element.SetInt(i)
 		return nil
 	case reflect.Bool:
-		b, err := strconv.ParseBool(value)
-		if err != nil {
-			return fmt.Errorf("value %v cannot be parsed as bool: %v", value, err.Error())
+		b := false
+		if value == "" {
+			b = true
+		} else {
+			var err error
+			b, err = strconv.ParseBool(value)
+			if err != nil {
+				return fmt.Errorf("value %v cannot be parsed as bool: %v", value, err.Error())
+			}
 		}
 		element.SetBool(b)
 		return nil
@@ -140,7 +137,7 @@ func (f *FlagDecoder) setArray(paths []string, value string, element reflect.Val
 
 		return f.setValue(paths[1:], value, element.Index(index))
 	} else {
-		values := strings.Split(value, " ")
+		values := splitArrayItems(value)
 		for _, v := range values {
 			ptr := reflect.New(element.Type().Elem())
 			if err := f.setValue(paths, v, ptr); err != nil {
@@ -191,16 +188,12 @@ func (f *FlagDecoder) explode(v reflect.Value, name string, value string) error 
 		return fmt.Errorf("not found")
 	}
 
-	p := reflect.New(field.Type().Elem())
-	i, err := f.convert(value, p)
+	o := reflect.New(field.Type().Elem())
+	err := f.convert(value, o.Elem())
 	if err != nil {
 		return err
 	}
-	vItem := reflect.ValueOf(i)
-	if vItem.Type().Kind() == reflect.Pointer {
-		vItem = vItem.Elem()
-	}
-	field.Set(reflect.Append(field, vItem))
+	field.Set(reflect.Append(field, o.Elem()))
 	return nil
 }
 
@@ -214,7 +207,7 @@ func (f *FlagDecoder) getFieldByTag(v reflect.Value, name string) reflect.Value 
 	return reflect.Value{}
 }
 
-func (f *FlagDecoder) convert(s string, v reflect.Value) (interface{}, error) {
+func (f *FlagDecoder) convert(s string, v reflect.Value) error {
 	u, err := url.ParseRequestURI(s)
 	if err == nil {
 		switch u.Scheme {
@@ -230,43 +223,116 @@ func (f *FlagDecoder) convert(s string, v reflect.Value) (interface{}, error) {
 			}
 			b, err := f.fs.ReadFile(path)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			s = string(b)
 		}
 	}
 
-	i, err := f.convertJson(s, v)
-	if err == nil {
-		return i, nil
+	kind := v.Type().Kind()
+	if kind == reflect.Struct {
+		err = f.convertJson(s, v)
+		if err == nil {
+			return nil
+		}
 	}
 
-	if v.Elem().Type().Kind() == reflect.Struct {
+	if kind == reflect.Struct {
 		pairs := strings.Split(s, ",")
 		for _, pair := range pairs {
 			kv := strings.Split(pair, "=")
 			if len(kv) != 2 {
-				return nil, fmt.Errorf("parse shorthand failed: %v", s)
+				return fmt.Errorf("parse shorthand failed: %v", s)
 			}
 			err = f.setValue([]string{kv[0]}, kv[1], v)
 			if err != nil {
-				return nil, err
+				return err
 			}
 		}
-	} else if v.Elem().Type().Kind() == reflect.Slice {
-		err = f.setValue([]string{}, s, v)
-		if err != nil {
-			return nil, err
-		}
-	} else if v.Elem().Type().Kind() == reflect.String {
-		return s, nil
+		return nil
+	} else if kind == reflect.Slice {
+		return f.setValue([]string{}, s, v)
+	} else if kind == reflect.String {
+		v.Set(reflect.ValueOf(s))
+		return nil
 	}
 
-	return v.Interface(), nil
+	return fmt.Errorf("not supported")
 }
 
-func (f *FlagDecoder) convertJson(s string, v reflect.Value) (interface{}, error) {
-	i := v.Interface()
-	err := json.Unmarshal([]byte(s), i)
-	return i, err
+func (f *FlagDecoder) convertJson(s string, v reflect.Value) error {
+	m := map[string]interface{}{}
+	err := json.Unmarshal([]byte(s), &m)
+	if err != nil {
+		return err
+	}
+
+	return f.set(v, m)
+}
+
+func splitArrayItems(s string) []string {
+	quoted := false
+	return strings.FieldsFunc(s, func(r rune) bool {
+		if r == '"' {
+			quoted = !quoted
+		}
+		return !quoted && r == ' '
+	})
+}
+
+func (f *FlagDecoder) set(element reflect.Value, i interface{}) error {
+	switch o := i.(type) {
+	case int64, string, bool:
+		element.Set(reflect.ValueOf(i))
+	case []interface{}:
+		for _, item := range o {
+			ptr := reflect.New(element.Type().Elem())
+			err := f.set(ptr.Elem(), item)
+			if err != nil {
+				return err
+			}
+			element.Set(reflect.Append(element, ptr.Elem()))
+		}
+	case map[string]interface{}:
+		for k, v := range o {
+			field := element.FieldByNameFunc(func(f string) bool { return strings.ToLower(f) == strings.ToLower(k) })
+			if field.IsValid() {
+				err := f.set(field, v)
+				if err != nil {
+					return err
+				}
+			} else {
+				field = f.getFieldByTag(element, k)
+				if !field.IsValid() {
+					return fmt.Errorf("configuration not found")
+				}
+				ptr := reflect.New(field.Type().Elem())
+				err := f.set(ptr.Elem(), v)
+				if err != nil {
+					return err
+				}
+				field.Set(reflect.Append(field, ptr.Elem()))
+			}
+		}
+	}
+
+	return nil
+}
+
+func invertFlag(name string, value string, element reflect.Value) error {
+	name = strings.ToLower(strings.TrimPrefix(name, "no-"))
+	field := element.FieldByNameFunc(func(f string) bool { return strings.ToLower(f) == name })
+	if !field.IsValid() {
+		return fmt.Errorf("configuration not found")
+	}
+	flag := false
+	if value != "" {
+		b, err := strconv.ParseBool(value)
+		if err != nil {
+			return fmt.Errorf("value %v cannot be parsed as bool: %v", value, err.Error())
+		}
+		flag = !b
+	}
+	field.Set(reflect.ValueOf(flag))
+	return nil
 }

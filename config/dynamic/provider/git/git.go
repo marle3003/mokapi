@@ -220,7 +220,7 @@ func (p *Provider) initRepository(r *repository, ch chan *dynamic.Config, pool *
 }
 
 func (p *Provider) startFileProvider(dir string, ch chan *dynamic.Config, pool *safe.Pool) {
-	f := file.New(static.FileProvider{Directory: dir})
+	f := file.New(static.FileProvider{Directories: []string{dir}})
 	f.SkipPrefix = append(f.SkipPrefix, ".git")
 	err := f.Start(ch, pool)
 	if err != nil {

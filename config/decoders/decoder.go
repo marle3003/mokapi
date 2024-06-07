@@ -1,7 +1,7 @@
 package decoders
 
 type ConfigDecoder interface {
-	Decode(flags map[string]string, element interface{}) error
+	Decode(flags map[string][]string, element interface{}) error
 }
 
 func Load(decoders []ConfigDecoder, config interface{}) error {

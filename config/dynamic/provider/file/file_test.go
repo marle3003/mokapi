@@ -40,7 +40,7 @@ func TestProvider(t *testing.T) {
 					IsDir: false,
 					Data:  []byte("foobar"),
 				}}},
-			cfg: static.FileProvider{Directory: "./foo"},
+			cfg: static.FileProvider{Directories: []string{"./foo"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 0)
 			},
@@ -54,7 +54,7 @@ func TestProvider(t *testing.T) {
 					Data:    []byte("foobar"),
 					ModTime: mustTime("2024-01-02T15:04:05Z"),
 				}}},
-			cfg: static.FileProvider{Directory: "./"},
+			cfg: static.FileProvider{Directories: []string{"./"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 1)
 				require.Equal(t, "foo.txt", filepath.Base(configs[0].Info.Path()))
@@ -70,7 +70,7 @@ func TestProvider(t *testing.T) {
 					IsDir: false,
 					Data:  []byte("fo"),
 				}}},
-			cfg: static.FileProvider{Directory: "./"},
+			cfg: static.FileProvider{Directories: []string{"./"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 1)
 				require.Equal(t, "foo.txt", filepath.Base(configs[0].Info.Path()))
@@ -85,7 +85,7 @@ func TestProvider(t *testing.T) {
 					IsDir: false,
 					Data:  []byte{0xEF, 0xBB, 0xBF, 'f', 'o', 'o', 'b', 'a', 'r'},
 				}}},
-			cfg: static.FileProvider{Directory: "./"},
+			cfg: static.FileProvider{Directories: []string{"./"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 1)
 				require.Equal(t, "foo.txt", filepath.Base(configs[0].Info.Path()))
@@ -100,7 +100,7 @@ func TestProvider(t *testing.T) {
 					IsDir: false,
 					Data:  []byte("foobar"),
 				}}},
-			cfg: static.FileProvider{Directory: "./"},
+			cfg: static.FileProvider{Directories: []string{"./"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 0)
 			},
@@ -119,7 +119,7 @@ func TestProvider(t *testing.T) {
 					Data:  []byte("foobar"),
 				},
 			}},
-			cfg: static.FileProvider{Directory: "./", SkipPrefix: []string{"$"}},
+			cfg: static.FileProvider{Directories: []string{"./"}, SkipPrefix: []string{"$"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 1)
 				require.Equal(t, "_foo.txt", filepath.Base(configs[0].Info.Path()))
@@ -138,7 +138,7 @@ func TestProvider(t *testing.T) {
 					Data:  []byte("foobar"),
 				},
 			}},
-			cfg: static.FileProvider{Directory: "./"},
+			cfg: static.FileProvider{Directories: []string{"./"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 1)
 				require.Equal(t, "foo.txt", filepath.Base(configs[0].Info.Path()))
@@ -157,7 +157,7 @@ func TestProvider(t *testing.T) {
 					Data:  []byte("foobar"),
 				},
 			}},
-			cfg: static.FileProvider{Directory: "./"},
+			cfg: static.FileProvider{Directories: []string{"./"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 0)
 			},
@@ -176,7 +176,7 @@ func TestProvider(t *testing.T) {
 					Data:  []byte("foobar"),
 				},
 			}},
-			cfg: static.FileProvider{Directory: "./"},
+			cfg: static.FileProvider{Directories: []string{"./"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 0)
 			},
@@ -199,7 +199,7 @@ func TestProvider(t *testing.T) {
 					Data:  []byte("foobar"),
 				},
 			}},
-			cfg: static.FileProvider{Directory: "./"},
+			cfg: static.FileProvider{Directories: []string{"./"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 0)
 			},
@@ -227,7 +227,7 @@ func TestProvider(t *testing.T) {
 					Data:  []byte("foobar"),
 				},
 			}},
-			cfg: static.FileProvider{Directory: "./"},
+			cfg: static.FileProvider{Directories: []string{"./"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 1)
 				require.Equal(t, "foobar", string(configs[0].Raw))
@@ -247,7 +247,7 @@ func TestProvider(t *testing.T) {
 					Data:  []byte("foobar"),
 				},
 			}},
-			cfg: static.FileProvider{Directory: "./"},
+			cfg: static.FileProvider{Directories: []string{"./"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 1)
 			},
@@ -266,7 +266,7 @@ func TestProvider(t *testing.T) {
 					Data:  []byte("foobar"),
 				},
 			}},
-			cfg: static.FileProvider{Directory: "./"},
+			cfg: static.FileProvider{Directories: []string{"./"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 0)
 			},
@@ -290,7 +290,7 @@ func TestProvider(t *testing.T) {
 					Data:  []byte("foobar"),
 				},
 			}},
-			cfg: static.FileProvider{Directory: "./"},
+			cfg: static.FileProvider{Directories: []string{"./"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 1)
 			},
@@ -319,7 +319,7 @@ func TestProvider(t *testing.T) {
 					Data:  []byte("foobar"),
 				},
 			}},
-			cfg: static.FileProvider{Directory: "./"},
+			cfg: static.FileProvider{Directories: []string{"./"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 1)
 				require.True(t, strings.HasSuffix(configs[0].Info.Path(), filepath.Join("dir", "foo.js")))
@@ -354,7 +354,7 @@ func TestProvider(t *testing.T) {
 					Data:  []byte("foobar"),
 				},
 			}},
-			cfg: static.FileProvider{Directory: "./"},
+			cfg: static.FileProvider{Directories: []string{"./"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 2)
 				require.True(t, strings.HasSuffix(configs[0].Info.Path(), filepath.Join("dir", "foo.js")))
@@ -390,7 +390,7 @@ func TestProvider(t *testing.T) {
 					Data:  []byte("foobar"),
 				},
 			}},
-			cfg: static.FileProvider{Directory: "./"},
+			cfg: static.FileProvider{Directories: []string{"./"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 2)
 				sort.Slice(configs, func(i, j int) bool {
@@ -414,7 +414,7 @@ func TestProvider(t *testing.T) {
 					Data:  []byte("foobar"),
 				},
 			}},
-			cfg: static.FileProvider{Directory: "./"},
+			cfg: static.FileProvider{Directories: []string{"./"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 0)
 			},
@@ -433,7 +433,7 @@ func TestProvider(t *testing.T) {
 					Data:  []byte("foobar"),
 				},
 			}},
-			cfg: static.FileProvider{Directory: "./", Include: []string{"foo"}},
+			cfg: static.FileProvider{Directories: []string{"./"}, Include: []string{"foo"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 1)
 			},
@@ -552,7 +552,7 @@ func TestWatch_AddFile(t *testing.T) {
 	ch := make(chan *dynamic.Config)
 	tempDir := t.TempDir()
 	t.Cleanup(func() { os.RemoveAll(tempDir) })
-	p := New(static.FileProvider{Directory: tempDir})
+	p := New(static.FileProvider{Directories: []string{tempDir}})
 	pool := safe.NewPool(context.Background())
 	defer pool.Stop()
 
@@ -560,7 +560,7 @@ func TestWatch_AddFile(t *testing.T) {
 	require.NoError(t, err)
 
 	time.Sleep(500 * time.Millisecond)
-	err = createTempFile("./test/openapi.yml", p.cfg.Directory)
+	err = createTempFile("./test/openapi.yml", p.cfg.Directories[0])
 	require.NoError(t, err)
 
 	timeout := time.After(5 * time.Second)
@@ -577,7 +577,7 @@ func TestWatch_Create_SubFolder_And_Add_File(t *testing.T) {
 	ch := make(chan *dynamic.Config)
 	tempDir := t.TempDir()
 	t.Cleanup(func() { os.RemoveAll(tempDir) })
-	p := New(static.FileProvider{Directory: tempDir})
+	p := New(static.FileProvider{Directories: []string{tempDir}})
 	pool := safe.NewPool(context.Background())
 	defer pool.Stop()
 
@@ -585,7 +585,7 @@ func TestWatch_Create_SubFolder_And_Add_File(t *testing.T) {
 	require.NoError(t, err)
 
 	time.Sleep(500 * time.Millisecond)
-	err = createTempFile("./test/openapi.yml", filepath.Join(p.cfg.Directory, "foo"))
+	err = createTempFile("./test/openapi.yml", filepath.Join(p.cfg.Directories[0], "foo"))
 	require.NoError(t, err)
 
 	timeout := time.After(5 * time.Second)
@@ -605,7 +605,7 @@ func TestWatch_UpdateFile_When_Skipped_But_Referenced(t *testing.T) {
 	tempDir := t.TempDir()
 	t.Cleanup(func() { os.RemoveAll(tempDir) })
 
-	p := New(static.FileProvider{Directory: tempDir})
+	p := New(static.FileProvider{Directories: []string{tempDir}})
 	pool := safe.NewPool(context.Background())
 	defer pool.Stop()
 
@@ -641,7 +641,7 @@ func createAndStartFileProvider(t *testing.T, files ...string) (*Provider, chan 
 		}
 	}
 
-	p := New(static.FileProvider{Filename: strings.Join(files, string(os.PathListSeparator))})
+	p := New(static.FileProvider{Filenames: []string{strings.Join(files, string(os.PathListSeparator))}})
 	pool := safe.NewPool(context.Background())
 	t.Cleanup(func() {
 		pool.Stop()
@@ -665,7 +665,7 @@ func createDirectoryProvider(t *testing.T, files ...string) *Provider {
 		}
 	}
 
-	p := New(static.FileProvider{Directory: strings.Join(dirs, string(os.PathListSeparator))})
+	p := New(static.FileProvider{Directories: []string{strings.Join(dirs, string(os.PathListSeparator))}})
 	return p
 }
 

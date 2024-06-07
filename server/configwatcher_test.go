@@ -361,7 +361,7 @@ func TestConfigWatcher_New(t *testing.T) {
 					&static.Config{
 						Providers: static.Providers{
 							File: static.FileProvider{
-								Filename: "foo.yml",
+								Filenames: []string{"foo.yml"},
 							},
 						},
 					},

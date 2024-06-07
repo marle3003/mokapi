@@ -21,7 +21,7 @@ func (suite *PetStoreSuite) SetupSuite() {
 	cfg := static.NewConfig()
 	port := try.GetFreePort()
 	cfg.Api.Port = fmt.Sprintf("%v", port)
-	cfg.Providers.File.Directory = "./petstore"
+	cfg.Providers.File.Directories = []string{"./petstore"}
 	suite.initCmd(cfg)
 }
 

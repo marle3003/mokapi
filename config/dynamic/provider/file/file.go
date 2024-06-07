@@ -83,18 +83,20 @@ func (p *Provider) Read(u *url.URL) (*dynamic.Config, error) {
 
 func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
 	p.ch = ch
-	var path string
-	if len(p.cfg.Directory) > 0 {
-		path = p.cfg.Directory
+	var path []string
+	if len(p.cfg.Directories) > 0 {
+		path = p.cfg.Directories
 
-	} else if len(p.cfg.Filename) > 0 {
-		path = p.cfg.Filename
+	} else if len(p.cfg.Filenames) > 0 {
+		path = p.cfg.Filenames
 	}
 	if len(path) > 0 {
 		pool.Go(func(ctx context.Context) {
-			for _, i := range strings.Split(path, string(os.PathListSeparator)) {
-				if err := p.walk(i); err != nil {
-					log.Errorf("file provider: %v", err)
+			for _, pathItem := range path {
+				for _, i := range strings.Split(pathItem, string(os.PathListSeparator)) {
+					if err := p.walk(i); err != nil {
+						log.Errorf("file provider: %v", err)
+					}
 				}
 			}
 			p.isInit = false
@@ -155,13 +157,15 @@ func (p *Provider) watch(pool *safe.Pool) error {
 					dir, file := filepath.Split(evt.Name)
 					if dir == evt.Name && !p.skip(dir) {
 						p.watchPath(dir)
-					} else if p.cfg.Filename != "" {
-						if _, configFile := filepath.Split(p.cfg.Filename); file == configFile {
-							c, err := p.readFile(evt.Name)
-							if err != nil {
-								log.Errorf("unable to read file %v", evt.Name)
+					} else if len(p.cfg.Filenames) > 0 {
+						for _, filename := range p.cfg.Filenames {
+							if _, configFile := filepath.Split(filename); file == configFile {
+								c, err := p.readFile(evt.Name)
+								if err != nil {
+									log.Errorf("unable to read file %v", evt.Name)
+								}
+								p.ch <- c
 							}
-							p.ch <- c
 						}
 					} else {
 						if !p.skip(evt.Name) {
