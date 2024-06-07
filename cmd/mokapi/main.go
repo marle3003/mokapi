@@ -35,7 +35,7 @@ func main() {
 	fmt.Printf(logo, version.BuildVersion, strings.Repeat(" ", 17-len(versionString)))
 
 	cfg := static.NewConfig()
-	configDecoders := []decoders.ConfigDecoder{decoders.NewDefaultFileDecoder(), &decoders.FlagDecoder{}}
+	configDecoders := []decoders.ConfigDecoder{decoders.NewDefaultFileDecoder(), decoders.NewFlagDecoder()}
 	err := decoders.Load(configDecoders, cfg)
 	if err != nil {
 		log.Errorf("load config failed: %v", err)

@@ -16,6 +16,10 @@ type FlagDecoder struct {
 	fs file.FSReader
 }
 
+func NewFlagDecoder() *FlagDecoder {
+	return &FlagDecoder{fs: &file.Reader{}}
+}
+
 func (f *FlagDecoder) Decode(flags map[string]string, element interface{}) error {
 	keys := make([]string, 0, len(flags))
 	for k := range flags {
