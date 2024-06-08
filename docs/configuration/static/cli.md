@@ -67,9 +67,47 @@ mokapi --providers.git.repositories[0].auth.github.appId 12345
 
 ## Parameters from file
 
-Some parameters expect either file name or string value directly. Other parameters require a file URL explicitly to read data from a file
+For some parameters the file name can be specified directly, for others a file URL is required.
+The parameter `--configfile` provides the ability to define all parameters in a file.
 
 ```shell
 mokapi --providers.file file:///tmp/file.json
 mokapi --providers.git.rootCaCert=/path/to/caCert.pem
+mokapi ---configfile=/path/to/config.json
+```
+
+## Shorthand Syntax
+
+Mokapi's parameters can accept values in JSON format to simplify the configuration.
+However, entering large JSON lists or structures into the command line can be tedious and difficult to read.
+Therefore, Mokapi supports a shorthand syntax that allows a simpler representation of your configuration.
+
+### Structure parameters
+
+The shorthand syntax for flat (non-nested) structures makes it easier for you to define your inputs.
+
+```shell
+--parameter = key1=value1,key2,value2,key3=value3
+```
+
+This is equivalent to the following JSON example.
+
+```shell
+--parameter = '{"key1":"value1","key2","value2","key3"="value3"}'
+```
+
+This corresponds to the following example, where each parameter is defined separately.
+
+```shell
+--parameter.key1 value1 --parameter.key2 value2 --parameter.key3 value3
+```
+
+### List parameters
+
+Lists can also be defined as JSON or in short form.
+
+```shell
+--parameter value1 value2 value3
+--parameter '[value1,value2,value3]'
+--parameter value1 --parameter value2 --parameter value3
 ```
