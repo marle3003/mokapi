@@ -1,6 +1,7 @@
 package decoders
 
 import (
+	"encoding/json"
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"os"
@@ -31,6 +32,8 @@ func (f *FileDecoder) Decode(flags map[string][]string, element interface{}) err
 	if len(f.filename) == 0 {
 		if val, ok := flags["configfile"]; ok {
 			f.filename = val[0]
+		} else if val, ok := flags["config-file"]; ok {
+			f.filename = val[0]
 		}
 	}
 
@@ -57,7 +60,15 @@ func (f *FileDecoder) read(path string, element interface{}) error {
 	if err != nil {
 		return err
 	}
-	err = yaml.Unmarshal(data, element)
+	switch filepath.Ext(path) {
+	case ".yaml", ".yml":
+		err = yaml.Unmarshal(data, element)
+	case ".json":
+		err = json.Unmarshal(data, element)
+	default:
+		err = fmt.Errorf("unsupported file extension: %v", filepath.Ext(path))
+	}
+
 	if err != nil {
 		return fmt.Errorf("parse file '%v' failed: %w", path, err)
 	}

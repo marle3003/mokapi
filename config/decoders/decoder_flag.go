@@ -17,6 +17,12 @@ type FlagDecoder struct {
 	fs file.FSReader
 }
 
+type context struct {
+	paths   []string
+	element reflect.Value
+	value   string
+}
+
 func NewFlagDecoder() *FlagDecoder {
 	return &FlagDecoder{fs: &file.Reader{}}
 }
@@ -31,7 +37,8 @@ func (f *FlagDecoder) Decode(flags map[string][]string, element interface{}) err
 	for _, name := range keys {
 		paths := f.parsePath(name)
 		for _, value := range flags[name] {
-			err := f.setValue(paths, value, reflect.ValueOf(element))
+			ctx := &context{paths: paths, value: value, element: reflect.ValueOf(element)}
+			err := f.setValue(ctx)
 			if err != nil {
 				return errors.Wrapf(err, "configuration error %v", name)
 			}
@@ -41,64 +48,62 @@ func (f *FlagDecoder) Decode(flags map[string][]string, element interface{}) err
 	return nil
 }
 
-func (f *FlagDecoder) setValue(paths []string, value string, element reflect.Value) error {
-	switch element.Kind() {
+func (f *FlagDecoder) setValue(ctx *context) error {
+	switch ctx.element.Kind() {
 	case reflect.Struct:
-		if len(paths) == 0 {
-			return f.convert(value, element)
+		if len(ctx.paths) == 0 {
+			return f.convert(ctx.value, ctx.element)
 		}
-		name := strings.ToLower(paths[0])
-		field := element.FieldByNameFunc(func(f string) bool { return strings.ToLower(f) == name })
-		if !field.IsValid() {
-			if strings.HasPrefix(paths[0], "no-") {
-				return invertFlag(paths[0], value, element)
-			} else {
-				return f.explode(element, paths[0], value)
-			}
+		err := ctx.setFieldFromStruct()
+		if err != nil {
+			return f.explode(ctx.element, ctx.paths[0], ctx.value)
 		}
-
-		return f.setValue(paths[1:], value, field)
+		return f.setValue(ctx)
 	case reflect.Pointer:
-		if element.IsNil() {
-			element.Set(reflect.New(element.Type().Elem()))
+		if ctx.element.IsNil() {
+			ctx.element.Set(reflect.New(ctx.element.Type().Elem()))
 		}
-		return f.setValue(paths, value, element.Elem())
+		ctx.element = ctx.element.Elem()
+		return f.setValue(ctx)
 	case reflect.String:
-		s := strings.Trim(value, "\"")
-		element.SetString(s)
+		s := strings.Trim(ctx.value, "\"")
+		ctx.element.SetString(s)
 		return nil
 	case reflect.Int64:
-		i, err := strconv.ParseInt(value, 10, 64)
+		i, err := strconv.ParseInt(ctx.value, 10, 64)
 		if err != nil {
 			return fmt.Errorf("parse int64 failed: %v", err)
 		}
-		element.SetInt(i)
+		ctx.element.SetInt(i)
 		return nil
 	case reflect.Bool:
 		b := false
-		if value == "" {
+		if ctx.value == "" {
 			b = true
 		} else {
 			var err error
-			b, err = strconv.ParseBool(value)
+			b, err = strconv.ParseBool(ctx.value)
 			if err != nil {
-				return fmt.Errorf("value %v cannot be parsed as bool: %v", value, err.Error())
+				return fmt.Errorf("value %v cannot be parsed as bool: %v", ctx.value, err.Error())
 			}
 		}
-		element.SetBool(b)
+		ctx.element.SetBool(b)
 		return nil
 	case reflect.Slice:
-		return f.setArray(paths, value, element)
+		return f.setArray(ctx)
 	case reflect.Map:
-		return f.setMap(paths, value, element)
+		return f.setMap(ctx)
 	}
 
-	panic(fmt.Errorf("unsupported config type: %v", element.Kind()))
+	return fmt.Errorf("unsupported config type: %v", ctx.element.Kind())
 }
 
 func (f *FlagDecoder) parsePath(key string) []string {
 	var paths []string
-	split := strings.Split(key, ".")
+	split := strings.FieldsFunc(key, func(r rune) bool {
+		return r == '.' || r == '-'
+	})
+
 	for _, v := range split {
 		if strings.HasSuffix(v, "]") {
 			index := strings.Index(v, "[")
@@ -110,41 +115,46 @@ func (f *FlagDecoder) parsePath(key string) []string {
 	return paths
 }
 
-func (f *FlagDecoder) setArray(paths []string, value string, element reflect.Value) error {
-	if len(paths) > 0 {
-		index, err := f.parseArrayIndex(paths[0])
+func (f *FlagDecoder) setArray(ctx *context) error {
+	if len(ctx.paths) > 0 {
+		index, err := f.parseArrayIndex(ctx.paths[0])
 		if err != nil {
 			return fmt.Errorf("parse array index failed: %v", err)
 		}
 
-		if index >= element.Cap() {
+		if index >= ctx.element.Cap() {
 			n := index + 1
 			nCap := 2 * n
 			if nCap < 4 {
 				nCap = 4
 			}
-			if element.IsNil() {
-				s := reflect.MakeSlice(element.Type(), n, nCap)
-				element.Set(s)
+			if ctx.element.IsNil() {
+				s := reflect.MakeSlice(ctx.element.Type(), n, nCap)
+				ctx.element.Set(s)
 			} else {
-				s := reflect.MakeSlice(element.Type(), n, nCap)
-				reflect.Copy(s, element)
-				element.Set(s)
+				s := reflect.MakeSlice(ctx.element.Type(), n, nCap)
+				reflect.Copy(s, ctx.element)
+				ctx.element.Set(s)
 			}
 		}
-		if index >= element.Len() {
-			element.SetLen(index + 1)
+		if index >= ctx.element.Len() {
+			ctx.element.SetLen(index + 1)
 		}
 
-		return f.setValue(paths[1:], value, element.Index(index))
+		return f.setValue(ctx.Next(ctx.element.Index(index)))
 	} else {
-		values := splitArrayItems(value)
+		values := splitArrayItems(ctx.value)
 		for _, v := range values {
-			ptr := reflect.New(element.Type().Elem())
-			if err := f.setValue(paths, v, ptr); err != nil {
+			ptr := reflect.New(ctx.element.Type().Elem())
+			ctxItem := &context{
+				paths:   ctx.paths,
+				element: ptr,
+				value:   v,
+			}
+			if err := f.setValue(ctxItem); err != nil {
 				return err
 			}
-			element.Set(reflect.Append(element, ptr.Elem()))
+			ctx.element.Set(reflect.Append(ctx.element, ptr.Elem()))
 		}
 	}
 
@@ -161,24 +171,25 @@ func (f *FlagDecoder) parseArrayIndex(path string) (int, error) {
 	return strconv.Atoi(path)
 }
 
-func (f *FlagDecoder) setMap(paths []string, value string, element reflect.Value) error {
-	if element.IsNil() {
-		element.Set(reflect.MakeMap(element.Type()))
+func (f *FlagDecoder) setMap(ctx *context) error {
+	m := ctx.element
+	if m.IsNil() {
+		m.Set(reflect.MakeMap(ctx.element.Type()))
 	}
 
-	key := reflect.ValueOf(paths[0])
+	key := reflect.ValueOf(ctx.paths[0])
 	var ptr reflect.Value
-	ptr = reflect.New(reflect.PointerTo(element.Type().Elem()))
+	ptr = reflect.New(reflect.PointerTo(ctx.element.Type().Elem()))
 
-	if element.MapIndex(key).IsValid() {
-		ptr.Elem().Set(reflect.New(element.Type().Elem()))
-		ptr.Elem().Elem().Set(element.MapIndex(key))
+	if m.MapIndex(key).IsValid() {
+		ptr.Elem().Set(reflect.New(ctx.element.Type().Elem()))
+		ptr.Elem().Elem().Set(ctx.element.MapIndex(key))
 	}
-	if err := f.setValue(paths[1:], value, ptr); err != nil {
+	if err := f.setValue(ctx.Next(ptr)); err != nil {
 		return err
 	}
 
-	element.SetMapIndex(key, ptr.Elem().Elem())
+	m.SetMapIndex(key, ptr.Elem().Elem())
 
 	return nil
 }
@@ -249,14 +260,14 @@ func (f *FlagDecoder) convert(s string, v reflect.Value) error {
 			if len(kv) != 2 {
 				return fmt.Errorf("parse shorthand failed: %v", s)
 			}
-			err = f.setValue([]string{kv[0]}, kv[1], v)
+			err = f.setValue(&context{paths: []string{kv[0]}, value: kv[1], element: v})
 			if err != nil {
 				return err
 			}
 		}
 		return nil
 	} else if kind == reflect.Slice {
-		return f.setValue([]string{}, s, v)
+		return f.setValue(&context{paths: []string{}, element: v, value: s})
 	} else if kind == reflect.String {
 		v.Set(reflect.ValueOf(s))
 		return nil
@@ -324,20 +335,64 @@ func (f *FlagDecoder) set(element reflect.Value, i interface{}) error {
 	return nil
 }
 
-func invertFlag(name string, value string, element reflect.Value) error {
-	name = strings.ToLower(strings.TrimPrefix(name, "no-"))
-	field := element.FieldByNameFunc(func(f string) bool { return strings.ToLower(f) == name })
-	if !field.IsValid() {
-		return fmt.Errorf("configuration not found")
-	}
+func invertFlag(value string) (string, error) {
 	flag := false
 	if value != "" {
 		b, err := strconv.ParseBool(value)
 		if err != nil {
-			return fmt.Errorf("value %v cannot be parsed as bool: %v", value, err.Error())
+			return "", fmt.Errorf("value %v cannot be parsed as bool: %v", value, err.Error())
 		}
 		flag = !b
 	}
-	field.Set(reflect.ValueOf(flag))
-	return nil
+	return fmt.Sprintf("%v", flag), nil
+}
+
+func (c *context) setFieldFromStruct() error {
+	name := strings.ToLower(c.paths[0])
+	field := c.element.FieldByNameFunc(func(f string) bool {
+		return strings.ToLower(f) == name
+	})
+	if field.IsValid() {
+		c.Next(field)
+		return nil
+	}
+
+	if c.paths[0] == "no" && len(c.paths) == 2 {
+		name = strings.ToLower(c.paths[1])
+		field = c.element.FieldByNameFunc(func(f string) bool {
+			return strings.ToLower(f) == c.paths[1]
+		})
+		if field.IsValid() {
+			value, err := invertFlag(c.value)
+			if err != nil {
+				return err
+			}
+			c.value = value
+			c.Next(field)
+			return nil
+		}
+	}
+
+	for i := 0; i < c.element.NumField(); i++ {
+		flag := c.element.Type().Field(i).Tag.Get("flag")
+		name = ""
+		for j := 0; j < len(c.paths); j++ {
+			if len(name) > 0 {
+				name += "-"
+			}
+			name += c.paths[j]
+			if flag == name {
+				c.element = c.element.Field(i)
+				c.paths = c.paths[j+1:]
+				return nil
+			}
+		}
+	}
+	return fmt.Errorf("no configuration found")
+}
+
+func (c *context) Next(element reflect.Value) *context {
+	c.paths = c.paths[1:]
+	c.element = element
+	return c
 }

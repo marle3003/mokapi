@@ -32,7 +32,6 @@ const logo = "888b     d888          888             d8888          d8b \n8888b 
 
 func main() {
 	versionString := version.BuildVersion
-	fmt.Printf(logo, version.BuildVersion, strings.Repeat(" ", 17-len(versionString)))
 
 	cfg := static.NewConfig()
 	configDecoders := []decoders.ConfigDecoder{decoders.NewDefaultFileDecoder(), decoders.NewFlagDecoder()}
@@ -41,6 +40,12 @@ func main() {
 		log.Errorf("load config failed: %v", err)
 		return
 	}
+
+	if cfg.Help {
+		printHelp()
+		return
+	}
+	fmt.Printf(logo, version.BuildVersion, strings.Repeat(" ", 17-len(versionString)))
 
 	if len(cfg.Services) > 0 {
 		fmt.Println("static configuration Services are no longer supported. Use patching instead.")

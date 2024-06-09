@@ -96,16 +96,21 @@ func TestLoad(t *testing.T) {
 			name: "env var",
 			f: func(t *testing.T) {
 				s := &struct {
-					Name string
+					Name     string
+					SkipName string `flag:"skip-name"`
 				}{}
 				os.Args = append(os.Args, "mokapi.exe")
 				err := os.Setenv("MOKAPI_name", "bar")
 				defer os.Unsetenv("MOKAPI_name")
 				require.NoError(t, err)
+				err = os.Setenv("MOKAPI_SKIP_NAME", "bar")
+				defer os.Unsetenv("MOKAPI_SKIP_NAME")
+				require.NoError(t, err)
 
 				err = Load([]ConfigDecoder{&FlagDecoder{}}, s)
 				require.NoError(t, err)
 				require.Equal(t, "bar", s.Name)
+				require.Equal(t, "bar", s.SkipName)
 			},
 		},
 		{
@@ -248,9 +253,12 @@ func TestLoad(t *testing.T) {
 					}
 				}{}
 				os.Args = append(os.Args, "mokapi.exe")
-				err := os.Setenv("MOKAPI_items.0.name", "mokapi")
-				defer os.Unsetenv("MOKAPI_items.0.name")
+				err := os.Setenv("MOKAPI_items_0_name", "mokapi")
+				defer os.Unsetenv("MOKAPI_items_0_name")
 				require.NoError(t, err)
+				err = os.Setenv("MOKAPI_ITEMS_0_VALUE", "123")
+				require.NoError(t, err)
+				defer os.Unsetenv("MOKAPI_ITEMS_0_VALUE.0.value")
 				err = os.Setenv("MOKAPI_items.0.value", "123")
 				require.NoError(t, err)
 				defer os.Unsetenv("MOKAPI_items.0.value")

@@ -15,10 +15,14 @@ providers:
     directory: /path/to/dynamic/config
 ```
 ```bash tab=CLI
---providers.file.directory=/path/to/dynamic/config
+--providers-file-directory /path/to/dynamic/config
 ```
 ```bash tab=Env
-MOKAPI_Providers_File_Directory=/path/to/dynamic/config
+MOKAPI_PROVIDERS_FILE_DIRECTORY=/path/to/dynamic/config
+```
+
+``` box=tip
+You also can use CLI JSON or shorthand syntax to, see [CLI](/docs/configuration/static/cli.md)
 ```
 
 ## Provider Configuration
@@ -44,10 +48,10 @@ providers:
     filename: foobar.yaml
 ```
 ```bash tab=CLI
---providers.file.filename=foobar.yaml
+--providers-file-filename foobar.yaml
 ```
 ```bash tab=Env
-MOKAPI_Providers_File_Filename=foobar.yaml
+MOKAPI_PROVIDERS_FILE_FILENAME=foobar.yaml
 ```
 
 ### Directory
@@ -64,15 +68,34 @@ providers:
     directory: /foobar
 ```
 ```bash tab=CLI
---providers.file.directory=/foobar
+--providers-file-directory /foobar
 ```
 ```bash tab=Env
-MOKAPI_Providers_File_Directory=/foobar
+MOKAPI_PROVIDERS_FILE_DIRECTORY=/foobar
 ```
 
 ``` box=tip
-You can define multiple file names or directory by separating them with system's path separator
+You can define multiple file names or directory using CLI JSON or shorthand syntax, see [CLI](/docs/configuration/static/cli.md)
+```
+
+``` box=tip
+You can also define multiple file names or directory by separating them with system's path separator
 (Unix=':', Windows=';')
+```
+
+### Include
+One or more patterns that a file must match, except when empty.
+
+```yaml tab=File (YAML)
+providers:
+  file:
+    include: ["*.json", "*.yaml"]
+```
+```bash tab=CLI
+--providers-file-include *.json *.yaml
+```
+```bash tab=Env
+MOKAPI_PROVIDERS_FILE_INCLUDE="*.json *.yaml"
 ```
 
 ### Ignoring Files and Directories

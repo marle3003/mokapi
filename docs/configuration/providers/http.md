@@ -17,16 +17,20 @@ providers:
     url: http://127.0.0.1/api
 ```
 ```bash tab=CLI
---providers.file.directory=http://127.0.0.1/api
+--providers-file-directory http://127.0.0.1/api
 ```
 ```bash tab=Env
-MOKAPI_Providers_File_Directory=http://127.0.0.1/api
+MOKAPI_PROVIDERS_FILE_DIRECTORY=http://127.0.0.1/api
 ```
 
 ## Provider Configuration
 
 A list of all options that can be used with the HTTP provider, refer to
 the [reference page](/docs/configuration/reference.md).
+
+``` box=tip
+You also can use CLI JSON or shorthand syntax to, see [CLI](/docs/configuration/static/cli.md)
+```
 
 ``` box=tip
 HTTP provider is also used to get resources defined by `$ref` using HTTP scheme.
@@ -42,10 +46,10 @@ providers:
     url: http://127.0.0.1/api
 ```
 ```bash tab=CLI
---providers.http.url="http://127.0.0.1/api"
+--providers-http-url "http://127.0.0.1/api"
 ```
 ```bash tab=Env
-MOKAPI_Providers_HTTP_URL=http://127.0.0.1/api
+MOKAPI_PROVIDERS_HTTP_URL=http://127.0.0.1/api
 ```
 
 ### Poll Interval
@@ -58,10 +62,10 @@ providers:
     pollInterval: 2h45m
 ```
 ```bash tab=CLI
---providers.http.pollInterval="2h45m"
+--providers-http-poll-interval 2h45m
 ```
 ```bash tab=Env
-MOKAPI_Providers_HTTP_PollInterval=2h45m
+MOKAPI_PROVIDERS_HTTP_POLL_INTERVAL=2h45m
 ```
 
 ### Poll Timeout
@@ -74,10 +78,10 @@ providers:
     pollTimeout: 10s
 ```
 ```bash tab=CLI
---providers.http.pollTimeout="10s"
+--providers-http-poll-timeout 10s
 ```
 ```bash tab=Env
-MOKAPI_Providers_HTTP_PollTimeout=10s
+MOKAPI_PROVIDERS_HTTP_POLL_TIMEOUT=10s
 ```
 
 ### Proxy
@@ -90,10 +94,10 @@ providers:
     proxy: http://localhost:3128
 ```
 ```bash tab=CLI
---providers.http.proxy=http://localhost:3128
+--providers-http-proxy http://localhost:3128
 ```
 ```bash tab=Env
-MOKAPI_Providers_HTTP_Proxy=http://localhost:3128
+MOKAPI_PROVIDERS_HTTP_PROXY=http://localhost:3128
 ```
 
 ### CA (Certificate Authority)
@@ -108,13 +112,13 @@ Use at your own risk.
 ```yaml tab=File (YAML)
 providers:
   http:
-    tlsSkipVerify: true
+    ca: /path/to/mycert.pem
 ```
 ```bash tab=CLI
---providers.http.tlsSkipVerify=true
+--providers-http-ca=/path/to/mycert.pem
 ```
 ```bash tab=Env
-MOKAPI_Providers_HTTP_TlsSkipVerify=true
+MOKAPI_Providers_HTTP_CA=/path/to/mycert.pem
 ```
 
 ### Skip TLS Verification
@@ -132,8 +136,8 @@ providers:
     tlsSkipVerify: true
 ```
 ```bash tab=CLI
---providers.http.tlsSkipVerify=true
+--providers-http-tls-skip-verify
 ```
 ```bash tab=Env
-MOKAPI_Providers_HTTP_TlsSkipVerify=true
+MOKAPI_PROVIDERS_HTTP_TLS_SKIP_VERIFY=true
 ```

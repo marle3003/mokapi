@@ -1,6 +1,9 @@
 package static
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"mokapi/config/tls"
 	"strings"
 )
@@ -14,12 +17,13 @@ type Config struct {
 	RootCaKey  tls.FileOrContent
 	Services   Services
 	Js         JsConfig
-	Configs    []string `explode:"config"`
+	Configs    Configs `json:"configs" explode:"config"`
+	Help       bool
 }
 
 func NewConfig() *Config {
 	cfg := &Config{}
-	cfg.Log = &MokApiLog{Level: "info", Format: "default"}
+	cfg.Log = &MokApiLog{Level: "info", Format: "text"}
 	cfg.Api.Port = "8080"
 	cfg.Api.Dashboard = true
 	return cfg
@@ -47,7 +51,7 @@ type Api struct {
 type FileProvider struct {
 	Filenames   []string `explode:"filename"`
 	Directories []string `explode:"directory"`
-	SkipPrefix  []string
+	SkipPrefix  []string `flag:"skip-prefix"`
 	Include     []string
 }
 
@@ -81,10 +85,10 @@ type GitHubAuth struct {
 
 type HttpProvider struct {
 	Urls          []string `explode:"url"`
-	PollInterval  string   `yaml:"pollInterval"`
-	PollTimeout   string   `yaml:"pollTimeout"`
+	PollInterval  string   `yaml:"pollInterval" flag:"poll-interval"`
+	PollTimeout   string   `yaml:"pollTimeout" flag:"poll-timeout"`
 	Proxy         string
-	TlsSkipVerify bool              `yaml:"tlsSkipVerify"`
+	TlsSkipVerify bool              `yaml:"tlsSkipVerify" flag:"tls-skip-verify"`
 	Ca            tls.FileOrContent `yaml:"ca"`
 }
 
@@ -129,4 +133,34 @@ type HttpServer struct {
 
 type JsConfig struct {
 	GlobalFolders []string
+}
+
+type Configs []string
+
+func (c *Configs) UnmarshalJSON(b []byte) error {
+	dec := json.NewDecoder(bytes.NewReader(b))
+	token, err := dec.Token()
+	if err != nil {
+		return err
+	}
+	if delim, ok := token.(json.Delim); ok && delim != '[' {
+		return fmt.Errorf("unexpected token %s; expected '['", token)
+	}
+	for {
+		msg := json.RawMessage{}
+		err = dec.Decode(&msg)
+		if err != nil {
+			return err
+		}
+		*c = append(*c, string(msg))
+
+		token, err = dec.Token()
+		if err != nil {
+			return err
+		}
+		if delim, ok := token.(json.Delim); ok && delim == ']' {
+			return nil
+		}
+
+	}
 }

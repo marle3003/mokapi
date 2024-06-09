@@ -31,7 +31,7 @@ func parseEnv(environ []string) map[string]string {
 		kv := strings.SplitN(s, "=", 2)
 		if strings.HasPrefix(strings.ToUpper(kv[0]), DefaultEnvNamePrefix) {
 			key := strings.Replace(kv[0], DefaultEnvNamePrefix, "", 1)
-			name := strings.ReplaceAll(strings.ToLower(key), "_", ".")
+			name := strings.ReplaceAll(strings.ToLower(key), "_", "-")
 			dictionary[name] = kv[1]
 		}
 	}

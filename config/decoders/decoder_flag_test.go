@@ -57,7 +57,7 @@ func TestFlagDecoder_Decode(t *testing.T) {
 			},
 		},
 		{
-			name: "nested",
+			name: "nested with dot (old)",
 			f: func(t *testing.T) {
 				s := &struct {
 					Key   string
@@ -67,6 +67,22 @@ func TestFlagDecoder_Decode(t *testing.T) {
 				}{}
 				d := &FlagDecoder{}
 				err := d.Decode(map[string][]string{"key": {"foo"}, "value.flag": {"true"}}, s)
+				require.NoError(t, err)
+				require.Equal(t, "foo", s.Key)
+				require.True(t, s.Value.Flag)
+			},
+		},
+		{
+			name: "nested with - (new)",
+			f: func(t *testing.T) {
+				s := &struct {
+					Key   string
+					Value struct {
+						Flag bool
+					}
+				}{}
+				d := &FlagDecoder{}
+				err := d.Decode(map[string][]string{"key": {"foo"}, "value-flag": {"true"}}, s)
 				require.NoError(t, err)
 				require.Equal(t, "foo", s.Key)
 				require.True(t, s.Value.Flag)
@@ -226,6 +242,19 @@ func TestFlagDecoder_Decode(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, "Bob", s.Key["foo"].Name)
 				require.Equal(t, "bar", s.Key["foo"].Foo)
+			},
+		},
+		{
+			name: "parameters from file absolute path",
+			f: func(t *testing.T) {
+				s := &struct {
+					SkipName string `flag:"skip-name"`
+				}{}
+
+				d := &FlagDecoder{}
+				err := d.Decode(map[string][]string{"skip-name": {"foo"}}, s)
+				require.NoError(t, err)
+				require.Equal(t, "foo", s.SkipName)
 			},
 		},
 	}

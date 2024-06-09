@@ -41,6 +41,7 @@
   "Configuration": {
     "items": {
       "Configuration": {
+        "expanded": true,
         "items": {
           "Introduction": "configuration/configuration.md",
           "Patching": "configuration/patching.md"
