@@ -57,8 +57,8 @@ type FileProvider struct {
 
 type GitProvider struct {
 	Urls         []string `explode:"url"`
-	PullInterval string   `yaml:"pullInterval"`
-	TempDir      string   `yaml:"tempDir"`
+	PullInterval string   `yaml:"pullInterval" name:"pull-interval"`
+	TempDir      string   `yaml:"tempDir" name:"temp-dir"`
 
 	Repositories []GitRepo `explode:"repository"`
 }
@@ -93,14 +93,14 @@ type HttpProvider struct {
 }
 
 type NpmProvider struct {
-	GlobalFolders []string `yaml:"globalFolders"`
-	Packages      []NpmPackage
+	GlobalFolders []string     `yaml:"globalFolders" flag:"global-folders"`
+	Packages      []NpmPackage `explode:"package"`
 }
 
 type NpmPackage struct {
 	Name string
 	// Specifies an allow list of files to include in mokapi
-	Files []string
+	Files []string `explode:"file"`
 	// Specifies an array of filenames pr pattern to include in mokapi
 	Include []string
 }

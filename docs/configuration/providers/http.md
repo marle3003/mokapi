@@ -29,7 +29,7 @@ A list of all options that can be used with the HTTP provider, refer to
 the [reference page](/docs/configuration/reference.md).
 
 ``` box=tip
-You also can use CLI JSON or shorthand syntax to, see [CLI](/docs/configuration/static/cli.md)
+You can also use CLI JSON or shorthand syntax, see [CLI](/docs/configuration/static/cli.md)
 ```
 
 ``` box=tip

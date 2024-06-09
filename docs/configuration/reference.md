@@ -226,10 +226,10 @@ providers:
 ## GIT Provider
 Load one or more dynamic configuration from a GIT repository
 ```bash tab=CLI
---providers.git.url=https://github.com/foo/foo.git
+--providers-git-url=https://github.com/foo/foo.git
 ```
 ```bash tab=Env
-MOKAPI_Providers_Git_URL=https://github.com/foo/foo.git
+MOKAPI_PROVIDERS_GIT_URL=https://github.com/foo/foo.git
 ```
 ```yaml tab=File (YAML)
 providers:
@@ -237,17 +237,58 @@ providers:
     url: https://github.com/foo/foo.git
 ```
 
-Pulling interval for URL in seconds (default 5)
+Pulling interval for URL in seconds (default 5s)
 ```bash tab=CLI
---providers.git.pullInterval=10
+--providers-git-pull-interval=10s
 ```
 ```bash tab=Env
-MOKAPI_Providers_Git_PullInterval=10
+MOKAPI_PROVIDERS_GIT_PULL_IINTERVAL=10s
 ```
 ```yaml tab=File (YAML)
 providers:
   git:
-    pullInterval: 10
+    pullInterval: 10s
+```
+
+Pulling interval for URL in seconds (default 5s)
+```bash tab=CLI
+--providers-git-pul-interval=10s
+```
+```bash tab=Env
+MOKAPI_PROVIDERS_GIT_PULL_IINTERVAL=10s
+```
+```yaml tab=File (YAML)
+providers:
+  git:
+    pullInterval: 10s
+```
+
+Specifies the folder to checkout all GIT repositories
+```bash tab=CLI
+--providers-git-pull-interval=10s
+```
+```bash tab=Env
+MOKAPI_PROVIDERS_GIT_PULL_INTERVAL=10s
+```
+```yaml tab=File (YAML)
+providers:
+  git:
+    pullInterval: 10s
+```
+
+## NPM Provider
+
+Specifies NPM package that Mokapi looks for.
+```bash tab=CLI
+--providers-npm-package=foo
+```
+```bash tab=Env
+MOKAPI_PROVIDERS_NPM_PACKAGE=foo
+```
+```yaml tab=File (YAML)
+providers:
+  npm:
+    package: foo
 ```
 
 ## Certificates
