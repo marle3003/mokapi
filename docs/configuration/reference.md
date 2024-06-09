@@ -294,10 +294,10 @@ providers:
 ## Certificates
 CA Certificate for signing certificate generated at runtime
 ```bash tab=CLI
---providers.git.rootCaCert=/path/to/caCert.pem
+--rootCaCert=/path/to/caCert.pem
 ```
 ```bash tab=Env
-MOKAPI_Providers_RootCaCert=/path/to/caCert.pem
+MOKAPI_RootCaCert=/path/to/caCert.pem
 ```
 ```yaml tab=File (YAML)
 providers:
@@ -306,10 +306,10 @@ providers:
 
 Private Key of CA for signing certificate generated at runtime
 ```bash tab=CLI
---providers.rootCaKey=/path/to/caKey.pem
+--rootCaKey=/path/to/caKey.pem
 ```
 ```bash tab=Env
-MOKAPI_Providers_RootCaKey=/path/to/caKey.pem
+MOKAPI_RootCaKey=/path/to/caKey.pem
 ```
 ```yaml tab=File (YAML)
 providers:

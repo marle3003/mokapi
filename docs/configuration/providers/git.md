@@ -19,10 +19,10 @@ providers:
     url: https://github.com//PATH-TO/REPOSITORY
 ```
 ```bash tab=CLI
---providers.git.url="https://github.com//PATH-TO/REPOSITORY"
+--providers-git-url https://github.com//PATH-TO/REPOSITORY
 ```
 ```bash tab=Env
-MOKAPI_Providers_GIT_URL=https://github.com//PATH-TO/REPOSITORY
+MOKAPI_PROVIDERS_GIT_URL=https://github.com//PATH-TO/REPOSITORY
 ```
 
 ## Provider Configuration
@@ -41,10 +41,10 @@ providers:
     url: https://github.com/PATH-TO/REPOSITORY?ref=branch-name
 ```
 ```bash tab=CLI
---providers.git.url="https://github.com/PATH-TO/REPOSITORY?ref=branch-name"
+--providers-git-url="https://github.com/PATH-TO/REPOSITORY?ref=branch-name"
 ```
 ```bash tab=Env
-MOKAPI_Providers_GIT_URL=https://github.com/PATH-TO/REPOSITORY?ref=branch-name
+MOKAPI_PROVIDERS_GIT_URL=https://github.com/PATH-TO/REPOSITORY?ref=branch-name
 ```
 
 ### Pull Interval
@@ -57,10 +57,10 @@ providers:
     pullInterval: 2h45m
 ```
 ```bash tab=CLI
---providers.git.pullInterval="2h45m"
+--providers-git-pull-interval 2h45m
 ```
 ```bash tab=Env
-MOKAPI_Providers_GIT_PullInterval=2h45m
+MOKAPI_PROVIDERS_GIT_PULL-INTERVAL=2h45m
 ```
 
 ## Advanced Repository Settings
@@ -72,11 +72,11 @@ providers:
       pullInterval: 5m
 ```
 ```bash tab=CLI
---providers.git.repositories[0].url="https://github.com/PATH-TO/REPOSITORY" --providers.git.repositories[0].pullInterval="5m"
+--providers-git-repositories[0]-url="https://github.com/PATH-TO/REPOSITORY" --providers.git.repositories[0].pullInterval="5m"
 ```
 ```bash tab=Env
-MOKAPI_Providers_GIT_Repositories[0]_Url=https://github.com/PATH-TO/REPOSITORY
-MOKAPI_Providers_GIT_Repositories[0]_PullInterval=5m
+MOKAPI_PROVIDERS_GIT_REPOSITORIES[0]_URL=https://github.com/PATH-TO/REPOSITORY
+MOKAPI_PROVIDERS_GIT_REPOSITORIES[0]_PULL_INTERVAL=5m
 ```
 
 ### Files
