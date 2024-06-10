@@ -88,13 +88,18 @@ Therefore, Mokapi supports a shorthand syntax that allows a simpler representati
 The shorthand syntax for flat (non-nested) structures makes it easier for you to define your inputs.
 
 ```shell
---parameter = key1=value1,key2,value2,key3=value3
+--parameter key1=value1,key2,value2,key3=value3
 ```
 
 This is equivalent to the following JSON example.
 
 ```shell
---parameter = '{"key1":"value1","key2","value2","key3"="value3"}'
+--parameter '{"key1":"value1","key2","value2","key3"="value3"}'
+```
+
+``` box=warning title=PowerShell
+When using PowerShell, you must place the stop-parsing symbol (--%) before any arguments and escape quotation marks.
+--parameter --% "{\"key1\":\"value1\",\"key2\",\"value2\",\"key3\"=\"value3\"}" 
 ```
 
 This corresponds to the following example, where each parameter is defined separately.

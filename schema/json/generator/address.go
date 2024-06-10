@@ -195,6 +195,9 @@ func newPostCode(s *schema.Schema) interface{} {
 	if s.IsInteger() {
 		codeN, _ := strconv.ParseInt(code, 10, 32)
 		return int(codeN)
+	} else if s.IsNumber() {
+		codeN, _ := strconv.ParseInt(code, 10, 32)
+		return float64(codeN)
 	}
 	return code
 }
