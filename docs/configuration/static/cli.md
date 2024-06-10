@@ -11,7 +11,7 @@ This page provides information on how to configure Mokapi using CLI parameters. 
 Mokapi has a simple command structure that contains
 
 1. mokapi as the command name
-2. optional a list of parameters
+2. optional a list of options and parameters
 
 ```shell
 mokapi [options and parameters]
@@ -22,12 +22,13 @@ Parameters can take various types of input values, such as strings, numbers, boo
 
 ## Specify parameter values
 
-Many parameters are simple string or numeric values, such as the `providers.file.directory`. An equal sign (=) between 
+Many parameters are simple string or numeric values, such as the `providers-file-directory`. An equal sign (=) between 
 parameter and value is optional.
 
 ```shell
-mokapi --providers.file.directory /foo
-mokapi --providers.file.directory=/foo
+mokapi --providers-file-directory /foo
+mokapi --providers-file-directory=/foo # equal sign is optional
+mokapi --providers.file.directory=/foo # Separation by dot is also possible as old style (previous v0.10)
 ```
 
 ### List
@@ -36,10 +37,10 @@ One or more value separated by spaces. If any value contain a space, you must pu
 Using index operator is also possible which can overwrite values. The include list in the last example only contains `*.yaml`
 
 ```shell
-mokapi --providers.file.include *.json *.yaml
-mokapi --providers.file.include *.json --providers.file.include *.yaml
-mokapi --providers.file.include "C:\Documents and Settings\" C:\Work
-mokapi --providers.file.include *.json --providers.file.include[0] *.yaml
+mokapi --providers-file-include *.json *.yaml
+mokapi --providers-file-include *.json --providers.file.include *.yaml
+mokapi --providers-file-include "C:\Documents and Settings\" C:\Work
+mokapi --providers-file-include *.json --providers.file.include[0] *.yaml
 ```
 
 ### Boolean
@@ -62,7 +63,7 @@ Enabling dashboard is not necessary as this is the default behavior. The last ex
 There is nothing special about using integer values.
 
 ```shell
-mokapi --providers.git.repositories[0].auth.github.appId 12345
+mokapi --providers-git-repositories[0]-auth-github-appId 12345
 ```
 
 ## Parameters from file
@@ -71,9 +72,9 @@ For some parameters the file name can be specified directly, for others a file U
 The parameter `--configfile` provides the ability to define all parameters in a file.
 
 ```shell
-mokapi --providers.file file:///tmp/file.json
-mokapi --providers.git.rootCaCert=/path/to/caCert.pem
-mokapi ---configfile=/path/to/config.json
+mokapi --providers-file file:///tmp/file.json
+mokapi --providers-git-rootCaCert=/path/to/caCert.pem
+mokapi ---cli-input=/path/to/config.json
 ```
 
 ## Shorthand Syntax
@@ -99,7 +100,7 @@ This is equivalent to the following JSON example.
 This corresponds to the following example, where each parameter is defined separately.
 
 ```shell
---parameter.key1 value1 --parameter.key2 value2 --parameter.key3 value3
+--parameter-key1 value1 --parameter.key2 value2 --parameter.key3 value3
 ```
 
 ### List parameters
