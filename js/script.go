@@ -7,7 +7,6 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	engine "mokapi/engine/common"
-	"mokapi/js/compiler"
 	"mokapi/js/console"
 	"mokapi/js/eventloop"
 	"mokapi/js/faker"
@@ -36,7 +35,6 @@ var (
 
 type Script struct {
 	runtime  *goja.Runtime
-	compiler *compiler.Compiler
 	host     engine.Host
 	file     *dynamic.Config
 	config   static.JsConfig
@@ -52,9 +50,6 @@ func New(file *dynamic.Config, host engine.Host, config static.JsConfig) (*Scrip
 	}
 
 	var err error
-	if s.compiler, err = compiler.New(); err != nil {
-		return nil, err
-	}
 
 	return s, err
 }
@@ -130,7 +125,6 @@ func (s *Script) Close() {
 		s.runtime.Interrupt(fmt.Errorf("closing"))
 		s.runtime = nil
 	}
-	s.compiler = nil
 }
 
 func (s *Script) CanClose() bool {
