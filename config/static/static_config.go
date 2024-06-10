@@ -9,16 +9,16 @@ import (
 )
 
 type Config struct {
-	Log        *MokApiLog
-	ConfigFile string
-	Providers  Providers
-	Api        Api
-	RootCaCert tls.FileOrContent
-	RootCaKey  tls.FileOrContent
+	Log        *MokApiLog        `json:"log" yaml:"log"`
+	ConfigFile string            `json:"-" yaml:"-"`
+	Providers  Providers         `json:"providers" yaml:"providers"`
+	Api        Api               `json:"api" yaml:"api"`
+	RootCaCert tls.FileOrContent `json:"rootCaCert" yaml:"rootCaCert"`
+	RootCaKey  tls.FileOrContent `json:"rootCaKey" yaml:"rootCaKey"`
 	Services   Services
-	Js         JsConfig
-	Configs    Configs `json:"configs" explode:"config"`
-	Help       bool
+	Js         JsConfig `json:"js" yaml:"js"`
+	Configs    Configs  `json:"configs" yaml:"configs" explode:"config"`
+	Help       bool     `json:"-" yaml:"-"`
 }
 
 func NewConfig() *Config {

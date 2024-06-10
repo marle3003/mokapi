@@ -27,6 +27,10 @@ func NewFlagDecoder() *FlagDecoder {
 	return &FlagDecoder{fs: &file.Reader{}}
 }
 
+func NewFlagDecoderWithReader(reader file.FSReader) *FlagDecoder {
+	return &FlagDecoder{fs: reader}
+}
+
 func (f *FlagDecoder) Decode(flags map[string][]string, element interface{}) error {
 	keys := make([]string, 0, len(flags))
 	for k := range flags {
@@ -195,7 +199,7 @@ func (f *FlagDecoder) setMap(ctx *context) error {
 }
 
 func (f *FlagDecoder) explode(v reflect.Value, name string, value string) error {
-	field := f.getFieldByTag(v, name)
+	field := getFieldByTag(v, name, "explode")
 	if !field.IsValid() {
 		return fmt.Errorf("not found")
 	}
@@ -209,9 +213,9 @@ func (f *FlagDecoder) explode(v reflect.Value, name string, value string) error 
 	return nil
 }
 
-func (f *FlagDecoder) getFieldByTag(v reflect.Value, name string) reflect.Value {
+func getFieldByTag(v reflect.Value, name, tag string) reflect.Value {
 	for i := 0; i < v.NumField(); i++ {
-		explode := v.Type().Field(i).Tag.Get("explode")
+		explode := v.Type().Field(i).Tag.Get(tag)
 		if explode == name {
 			return v.Field(i)
 		}
@@ -227,8 +231,9 @@ func (f *FlagDecoder) convert(s string, v reflect.Value) error {
 			var path string
 			if len(u.Host) > 0 {
 				path = u.Host
-			} else if len(u.Path) > 0 {
-				path = u.Path
+			}
+			if len(u.Path) > 0 {
+				path += u.Path
 			}
 			if len(u.Opaque) > 0 {
 				path = u.Opaque
@@ -318,7 +323,7 @@ func (f *FlagDecoder) set(element reflect.Value, i interface{}) error {
 					return err
 				}
 			} else {
-				field = f.getFieldByTag(element, k)
+				field = getFieldByTag(element, k, "explode")
 				if !field.IsValid() {
 					return fmt.Errorf("configuration not found")
 				}
