@@ -33,6 +33,7 @@ type repository struct {
 	pullOptions *git.PullOptions
 	hash        plumbing.Hash
 	config      static.GitRepo
+	init        bool
 }
 
 type Provider struct {
@@ -100,49 +101,24 @@ func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
 		return nil
 	}
 
-	var err error
-	interval := time.Second * 5
-	if len(p.pullInterval) > 0 {
-		interval, err = time.ParseDuration(p.pullInterval)
-		if err != nil {
-			return fmt.Errorf("unable to parse interval %q: %v", p.pullInterval, err)
-		}
-	}
-
-	ticker := time.NewTicker(interval)
-
 	for _, r := range p.repositories {
 		r := r
 		pool.Go(func(ctx context.Context) {
-			err = p.initRepository(r, ch, pool)
+			err := p.initRepository(r, ch, pool)
 			if err != nil {
 				log.Errorf("init git repository failed: %v", err)
 			}
 		})
 	}
 
-	pool.Go(func(ctx context.Context) {
-		defer func() {
-			ticker.Stop()
-			p.cleanup()
-		}()
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				for _, r := range p.repositories {
-					pull(r)
-				}
-			}
-		}
-	})
-
 	return nil
 }
 
 func (p *Provider) initRepository(r *repository, ch chan *dynamic.Config, pool *safe.Pool) error {
+	if len(r.config.PullInterval) == 0 {
+		r.config.PullInterval = p.pullInterval
+	}
+
 	err := p.transport.addAuth(r)
 	if err != nil {
 		return err

@@ -42,6 +42,13 @@ func Require(vm *goja.Runtime, module *goja.Object) {
 }
 
 func (m *Module) Produce(v goja.Value) interface{} {
+	defer func() {
+		r := recover()
+		if r != nil {
+			panic(m.rt.ToValue(fmt.Sprintf("%v", r)))
+		}
+	}()
+
 	args, err := m.mapParams(v)
 	if err != nil {
 		panic(m.rt.ToValue(err.Error()))

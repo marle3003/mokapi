@@ -27,6 +27,9 @@ func CoAddress() *Tree {
 		Name: "CoAddress",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			return strings.ToLower(last.Name) == "coaddress" && last.Schema.IsString()
 		},
 		Fake: func(r *Request) (interface{}, error) {
@@ -40,6 +43,9 @@ func AnyAddress() *Tree {
 		Name: "AnyAddress",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			return strings.ToLower(last.Name) == "address" && last.Schema.IsAny()
 		},
 		Fake: func(r *Request) (interface{}, error) {
@@ -63,6 +69,9 @@ func City() *Tree {
 		Name: "City",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			return last.Name == "city" && (last.Schema.IsAny() || last.Schema.IsString() || last.Schema.IsInteger())
 		},
 		Fake: func(r *Request) (interface{}, error) {
@@ -82,6 +91,9 @@ func Postcode() *Tree {
 		Name: "Postcode",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			name := strings.ToLower(last.Name)
 			s := last.Schema
 			return (name == "postcode" || name == "zip") &&
@@ -98,6 +110,9 @@ func Street() *Tree {
 		Name: "Street",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			name := strings.ToLower(last.Name)
 			return name == "street" && last.Schema.IsString()
 		},

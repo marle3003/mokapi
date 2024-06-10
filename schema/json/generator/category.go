@@ -10,6 +10,9 @@ func Category() *Tree {
 		Name: "Category",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			name := strings.ToLower(last.Name)
 			s := last.Schema
 			return name == "category" && (s.IsAnyString() || s.IsAny())

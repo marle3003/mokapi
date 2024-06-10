@@ -306,6 +306,38 @@ func TestGitConfig(t *testing.T) {
 				require.Equal(t, `{ "openapi": "3.0", "info": { "name": "foo" } }`, cfg.Configs[0])
 			},
 		},
+		{
+			name: "config-file",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe", "--config-file", "foo.json")
+
+				read := func(path string) ([]byte, error) {
+					return []byte(`{"log": { "level": "error" } }`), nil
+				}
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{decoders.NewFileDecoder(read), decoders.NewFlagDecoder()}, &cfg)
+				require.NoError(t, err)
+
+				require.Equal(t, "error", cfg.Log.Level)
+			},
+		},
+		{
+			name: "cli-input",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe", "--cli-input", "foo.json")
+
+				read := func(path string) ([]byte, error) {
+					return []byte(`{"log": { "level": "error" } }`), nil
+				}
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{decoders.NewFileDecoder(read), decoders.NewFlagDecoder()}, &cfg)
+				require.NoError(t, err)
+
+				require.Equal(t, "error", cfg.Log.Level)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

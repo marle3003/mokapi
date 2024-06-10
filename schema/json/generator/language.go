@@ -7,6 +7,9 @@ func Language() *Tree {
 		Name: "Language",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			return (last.Name == "language" || last.Name == "lang") &&
 				((last.Schema.IsString() && !hasFormat(last.Schema) && !hasPattern(last.Schema)) || last.Schema.IsAny())
 		},

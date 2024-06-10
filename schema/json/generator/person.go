@@ -16,7 +16,6 @@ func Personal() *Tree {
 			FirstName(),
 			LastName(),
 			Gender(),
-			Phone(),
 			Language(),
 			PersonAny(),
 		},
@@ -91,6 +90,9 @@ func Phone() *Tree {
 		Name: "Phone",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			name := strings.ToLower(last.Name)
 			return (name == "phone" || name == "phonenumber" || strings.HasSuffix(last.Name, "Phone")) &&
 				(last.Schema.IsString() || last.Schema.IsAny())
@@ -118,6 +120,9 @@ func Contact() *Tree {
 		Name: "Contact",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			if !last.Schema.IsObject() && !last.Schema.IsAny() {
 				return false
 			}
@@ -146,6 +151,9 @@ func PersonAny() *Tree {
 		Name: "AnyPerson",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			return last.Name == "person" && last.Schema.IsAny()
 		},
 		Fake: func(r *Request) (interface{}, error) {

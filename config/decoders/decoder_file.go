@@ -31,8 +31,13 @@ func NewFileDecoder(readFile ReadFileFS) *FileDecoder {
 func (f *FileDecoder) Decode(flags map[string][]string, element interface{}) error {
 	if len(f.filename) == 0 {
 		if val, ok := flags["configfile"]; ok {
+			delete(flags, "configfile")
 			f.filename = val[0]
 		} else if val, ok := flags["config-file"]; ok {
+			delete(flags, "config-file")
+			f.filename = val[0]
+		} else if val, ok := flags["cli-input"]; ok {
+			delete(flags, "cli-input")
 			f.filename = val[0]
 		}
 	}

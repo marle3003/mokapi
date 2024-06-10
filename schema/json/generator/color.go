@@ -21,6 +21,9 @@ func ColorName() *Tree {
 		Name: "ColorName",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			return strings.ToLower(last.Name) == "color" && last.Schema.IsAnyString()
 		},
 		Fake: func(r *Request) (interface{}, error) {
@@ -34,6 +37,9 @@ func HexColor() *Tree {
 		Name: "HEX-Color",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			if strings.ToLower(last.Name) != "color" || !last.Schema.IsString() {
 				return false
 			}
@@ -54,6 +60,9 @@ func RGBColor() *Tree {
 		Name: "RGB-Color",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			if strings.ToLower(last.Name) != "color" || !last.Schema.IsArray() {
 				return false
 			}

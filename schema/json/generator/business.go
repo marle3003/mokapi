@@ -94,6 +94,9 @@ func DepartmentName() *Tree {
 		Name: "DepartmentName",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			return strings.ToLower(last.Name) == "department" &&
 				(last.Schema.IsAnyString() || last.Schema.IsAny())
 		},
@@ -109,6 +112,9 @@ func CompanyName() *Tree {
 		Name: "ComanyName",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			return strings.ToLower(last.Name) == "company" &&
 				(last.Schema.IsAnyString() || last.Schema.IsAny())
 		},
@@ -124,6 +130,9 @@ func JobTitle() *Tree {
 		Name: "JobTitle",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			name := strings.ToLower(last.Name)
 			return (name == "jobtitle" || name == "job_title") &&
 				(last.Schema.IsAnyString() || last.Schema.IsAny())
