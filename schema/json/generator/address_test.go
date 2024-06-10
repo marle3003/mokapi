@@ -72,7 +72,7 @@ func TestAddress(t *testing.T) {
 			},
 		},
 		{
-			name: "postcode",
+			name: "postcode any type",
 			request: &Request{
 				Path: Path{
 					&PathElement{Name: "postcode"},
@@ -84,7 +84,37 @@ func TestAddress(t *testing.T) {
 			},
 		},
 		{
-			name: "postcode",
+			name: "postcode integer",
+			request: &Request{
+				Path: Path{
+					&PathElement{
+						Name:   "postcode",
+						Schema: schematest.NewRef("integer"),
+					},
+				},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 229109, v)
+			},
+		},
+		{
+			name: "postcode number",
+			request: &Request{
+				Path: Path{
+					&PathElement{
+						Name:   "postcode",
+						Schema: schematest.NewRef("number"),
+					},
+				},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, float64(229109), v)
+			},
+		},
+		{
+			name: "postcode string min and max",
 			request: &Request{
 				Path: Path{
 					&PathElement{

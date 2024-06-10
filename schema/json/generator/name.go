@@ -10,6 +10,9 @@ func Name() *Tree {
 		Name: "Name",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			schema := last.Schema
 			return (strings.ToLower(last.Name) == "name" || strings.HasSuffix(last.Name, "Name")) &&
 				!hasPattern(schema) && !hasFormat(schema)

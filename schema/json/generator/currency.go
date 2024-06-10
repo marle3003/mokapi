@@ -23,6 +23,9 @@ func ISO4217() *Tree {
 		Name: "ISO-4217",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			if strings.ToLower(last.Name) != "currency" {
 				return false
 			}
@@ -48,6 +51,9 @@ func Price() *Tree {
 		Name: "Price",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			return (last.Name == "price" || strings.HasSuffix(last.Name, "Price")) &&
 				(last.Schema.IsAny() || last.Schema.IsInteger() || last.Schema.IsNumber())
 		},
@@ -87,6 +93,9 @@ func Budget() *Tree {
 		Name: "Budget",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			return (last.Name == "budget" || strings.HasSuffix(last.Name, "Budget")) &&
 				(last.Schema.IsAny() || last.Schema.IsInteger())
 		},

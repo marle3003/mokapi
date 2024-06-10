@@ -24,6 +24,9 @@ func Country() *Tree {
 		Name: "Country",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			if last.Name == "country" &&
 				(last.Schema.IsAny() || last.Schema.IsString()) {
 				if hasPattern(last.Schema) {
@@ -65,6 +68,9 @@ func CountryName() *Tree {
 		Name: "CountryName",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			return last.Name == "countryName" &&
 				(last.Schema.IsAny() || last.Schema.IsAnyString())
 		},
@@ -79,6 +85,9 @@ func Longitude() *Tree {
 		Name: "Longitude",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			name := strings.ToLower(last.Name)
 			return name == "longitude" && (last.Schema.IsNumber() || last.Schema.IsAny())
 		},
@@ -93,6 +102,9 @@ func Latitude() *Tree {
 		Name: "Latitude",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			name := strings.ToLower(last.Name)
 			return name == "latitude" && (last.Schema.IsNumber() || last.Schema.IsAny())
 		},

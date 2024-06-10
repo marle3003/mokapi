@@ -121,6 +121,9 @@ func StringKey() *Tree {
 		Name: "StringKey",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			return (strings.ToLower(last.Name) == "key" || strings.HasSuffix(last.Name, "Key")) &&
 				last.Schema.IsString() && !hasPattern(last.Schema) && !hasFormat(last.Schema)
 		},
@@ -135,6 +138,9 @@ func StringEmail() *Tree {
 		Name: "Email",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			return strings.ToLower(last.Name) == "email" &&
 				(last.Schema.IsAnyString() || last.Schema.IsAny())
 		},
@@ -149,6 +155,9 @@ func StringDescription() *Tree {
 		Name: "StringDescription",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			return (strings.ToLower(last.Name) == "description" || strings.HasSuffix(last.Name, "Description")) &&
 				last.Schema.IsAnyString()
 		},

@@ -121,6 +121,9 @@ func AnyType() *Tree {
 	return &Tree{
 		Name: "Any",
 		Test: func(r *Request) bool {
+			if r.Last() == nil {
+				return true
+			}
 			return r.Path.MatchLast(IsSchemaAny())
 		},
 		Fake: func(r *Request) (interface{}, error) {

@@ -47,6 +47,9 @@ func Year() *Tree {
 		Name: "Year",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			return (strings.ToLower(last.Name) == "year" || strings.HasSuffix(last.Name, "Year") ||
 				strings.HasPrefix(last.Name, "year")) && (last.Schema.IsInteger() || last.Schema.IsAny())
 		},
@@ -66,6 +69,9 @@ func Quantity() *Tree {
 		Name: "Quantity",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			return (strings.ToLower(last.Name) == "quantity" || strings.HasSuffix(last.Name, "Quantity")) && (last.Schema.IsInteger() || last.Schema.IsAny())
 		},
 		Fake: func(r *Request) (interface{}, error) {

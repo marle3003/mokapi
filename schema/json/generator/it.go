@@ -26,6 +26,9 @@ func Username() *Tree {
 		Name: "Username",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			if !last.Schema.IsString() {
 				return false
 			}
@@ -43,6 +46,9 @@ func Error() *Tree {
 		Name: "Error",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			return strings.ToLower(last.Name) == "error" && (last.Schema.IsAnyString() || last.Schema.IsAny())
 		},
 		Fake: func(r *Request) (interface{}, error) {
@@ -57,6 +63,9 @@ func StringHash() *Tree {
 		Name: "StringHash",
 		Test: func(r *Request) bool {
 			last := r.Last()
+			if last == nil {
+				return false
+			}
 			return (strings.ToLower(last.Name) == "hash" || strings.HasSuffix(last.Name, "Hash")) &&
 				last.Schema.IsAnyString()
 		},

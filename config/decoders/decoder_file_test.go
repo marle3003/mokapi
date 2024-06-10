@@ -63,11 +63,11 @@ func TestFileDecoder_Decode(t *testing.T) {
 		{
 			name: "yaml schema error",
 			test: func(t *testing.T) {
-				s := &struct{ Name string }{}
+				s := &struct{ Name int }{}
 				f := func(path string) ([]byte, error) { return []byte("name: {}"), nil }
 				d := &FileDecoder{filename: "mokapi.yml", readFile: f}
 				err := d.Decode(map[string][]string{}, s)
-				require.EqualError(t, err, "parse file 'mokapi.yml' failed: yaml: unmarshal errors:\n  line 1: cannot unmarshal !!map into string")
+				require.EqualError(t, err, "parse file 'mokapi.yml' failed: cannot unmarshal object into int")
 			},
 		},
 		{

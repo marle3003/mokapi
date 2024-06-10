@@ -1,8 +1,10 @@
 package static_test
 
 import (
+	"encoding/json"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/decoders"
+	"mokapi/config/dynamic/provider/file/filetest"
 	"mokapi/config/static"
 	"os"
 	"testing"
@@ -290,7 +292,31 @@ func TestGitConfig(t *testing.T) {
 			},
 		},
 		{
-			name: "configfile",
+			name: "config file://",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe")
+				os.Args = append(os.Args, "--config", `file://C:/temp/patch.yaml`)
+
+				cfg := static.Config{}
+				err := decoders.Load(
+					[]decoders.ConfigDecoder{
+						decoders.NewFlagDecoderWithReader(&filetest.MockFS{
+							Entries: []*filetest.Entry{
+								{
+									Name: "/temp/patch.yaml",
+									Data: []byte("{\"openapi\": \"3.0\"}"),
+								},
+							},
+							WorkingDir: "",
+						})}, &cfg)
+				require.NoError(t, err)
+
+				require.Len(t, cfg.Configs, 1)
+				require.Equal(t, "{\"openapi\": \"3.0\"}", cfg.Configs[0])
+			},
+		},
+		{
+			name: "configfile json",
 			test: func(t *testing.T) {
 				os.Args = append(os.Args, "mokapi.exe", "--configfile", "foo.json")
 
@@ -303,7 +329,137 @@ func TestGitConfig(t *testing.T) {
 				require.NoError(t, err)
 
 				require.Len(t, cfg.Configs, 1)
-				require.Equal(t, `{ "openapi": "3.0", "info": { "name": "foo" } }`, cfg.Configs[0])
+
+				actual := map[string]interface{}{}
+				err = json.Unmarshal([]byte(cfg.Configs[0]), &actual)
+				require.NoError(t, err)
+				expected := map[string]interface{}{
+					"openapi": "3.0",
+					"info": map[string]interface{}{
+						"name": "foo",
+					},
+				}
+				require.Equal(t, expected, actual)
+			},
+		},
+		{
+			name: "configfile yaml",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe", "--configfile", "foo.yaml")
+
+				read := func(path string) ([]byte, error) {
+					return []byte(`
+configs:
+  - openapi: "3.0"
+    info: 
+      name: foo
+`), nil
+				}
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{decoders.NewFileDecoder(read), decoders.NewFlagDecoder()}, &cfg)
+				require.NoError(t, err)
+
+				actual := map[string]interface{}{}
+				err = json.Unmarshal([]byte(cfg.Configs[0]), &actual)
+				require.NoError(t, err)
+				expected := map[string]interface{}{
+					"openapi": "3.0",
+					"info": map[string]interface{}{
+						"name": "foo",
+					},
+				}
+
+				require.Len(t, cfg.Configs, 1)
+				require.Equal(t, expected, actual)
+			},
+		},
+		{
+			name: "config-file",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe", "--config-file", "foo.json")
+
+				read := func(path string) ([]byte, error) {
+					return []byte(`{"log": { "level": "error" } }`), nil
+				}
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{decoders.NewFileDecoder(read), decoders.NewFlagDecoder()}, &cfg)
+				require.NoError(t, err)
+
+				require.Equal(t, "error", cfg.Log.Level)
+			},
+		},
+		{
+			name: "cli-input",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe", "--cli-input", "foo.json")
+
+				read := func(path string) ([]byte, error) {
+					return []byte(`{"log": { "level": "error" } }`), nil
+				}
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{decoders.NewFileDecoder(read), decoders.NewFlagDecoder()}, &cfg)
+				require.NoError(t, err)
+
+				require.Equal(t, "error", cfg.Log.Level)
+			},
+		},
+		{
+			name: "cli-input file provider directories",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe", "--cli-input", "foo.yaml")
+
+				read := func(path string) ([]byte, error) {
+					return []byte(`
+providers:
+  file:
+    directory: foo
+`), nil
+				}
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{decoders.NewFileDecoder(read), decoders.NewFlagDecoder()}, &cfg)
+				require.NoError(t, err)
+
+				require.Equal(t, []string{"foo"}, cfg.Providers.File.Directories)
+			},
+		},
+		{
+			name: "cli-input file provider directories",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe", "--cli-input", "foo.yaml")
+
+				read := func(path string) ([]byte, error) {
+					return []byte(`
+providers:
+  file:
+    directories: ["/foo", "/bar"]
+`), nil
+				}
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{decoders.NewFileDecoder(read), decoders.NewFlagDecoder()}, &cfg)
+				require.NoError(t, err)
+
+				require.Equal(t, []string{"/foo", "/bar"}, cfg.Providers.File.Directories)
+			},
+		},
+		{
+			name: "cli-input file provider directory",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe", "--cli-input", "foo.json")
+
+				read := func(path string) ([]byte, error) {
+					return []byte(`{"providers":{"file":{"directory":"foo"}}}`), nil
+				}
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{decoders.NewFileDecoder(read), decoders.NewFlagDecoder()}, &cfg)
+				require.NoError(t, err)
+
+				require.Equal(t, []string{"foo"}, cfg.Providers.File.Directories)
 			},
 		},
 	}
