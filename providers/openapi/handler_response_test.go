@@ -92,6 +92,34 @@ func TestHandler_Response(t *testing.T) {
 				require.Equal(t, `{"foo":"bar"}`, rr.Body.String())
 			},
 		},
+		{
+			name:   "application/octet-stream with string",
+			config: getConfig(schematest.New("string"), "application/octet-stream"),
+			handler: func(event string, req *common.EventRequest, res *common.EventResponse) {
+				res.Data = "foo"
+			},
+			req: func() *http.Request {
+				return httptest.NewRequest("get", "http://localhost/foo", nil)
+			},
+			test: func(t *testing.T, rr *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.Equal(t, "foo", rr.Body.String())
+			},
+		},
+		{
+			name:   "application/octet-stream with object",
+			config: getConfig(schematest.New("object"), "application/octet-stream"),
+			handler: func(event string, req *common.EventRequest, res *common.EventResponse) {
+				res.Data = map[string]interface{}{"foo": "bar"}
+			},
+			req: func() *http.Request {
+				return httptest.NewRequest("get", "http://localhost/foo", nil)
+			},
+			test: func(t *testing.T, rr *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusInternalServerError, rr.Code)
+				require.Equal(t, "encoding data to 'application/octet-stream' failed: not supported encoding of content types 'application/octet-stream', except simple data types\n", rr.Body.String())
+			},
+		},
 	}
 
 	for _, tc := range testcases {
