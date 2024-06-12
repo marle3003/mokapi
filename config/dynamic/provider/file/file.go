@@ -155,7 +155,7 @@ func (p *Provider) watch(pool *safe.Pool) error {
 					m[evt.Name] = struct{}{}
 
 					dir, file := filepath.Split(evt.Name)
-					if dir == evt.Name && !p.skip(dir) {
+					if dir == evt.Name && !p.skip(dir, true) {
 						p.watchPath(dir)
 					} else if len(p.cfg.Filenames) > 0 {
 						for _, filename := range p.cfg.Filenames {
@@ -168,7 +168,7 @@ func (p *Provider) watch(pool *safe.Pool) error {
 							}
 						}
 					} else {
-						if !p.skip(evt.Name) {
+						if !p.skip(evt.Name, false) {
 							c, err := p.readFile(evt.Name)
 							if err != nil {
 								log.Errorf("unable to read file %v", evt.Name)
@@ -184,11 +184,12 @@ func (p *Provider) watch(pool *safe.Pool) error {
 	return nil
 }
 
-func (p *Provider) skip(path string) bool {
+func (p *Provider) skip(path string, isDir bool) bool {
 	if p.isWatchPath(path) {
 		return false
 	}
-	if len(p.cfg.Include) > 0 {
+
+	if !isDir && len(p.cfg.Include) > 0 {
 		return !include(p.cfg.Include, path)
 	}
 
@@ -248,13 +249,13 @@ func (p *Provider) walk(root string) error {
 			return err
 		}
 		if fi.IsDir() {
-			if p.skip(path) && path != root {
+			if p.skip(path, true) && path != root {
 				log.Debugf("skip dir: %v", path)
 				return filepath.SkipDir
 			}
 			p.readMokapiIgnore(path)
 			p.watchPath(path)
-		} else if !p.skip(path) {
+		} else if !p.skip(path, false) {
 			if c, err := p.readFile(path); err != nil {
 				log.Error(err)
 			} else if len(c.Raw) > 0 {
