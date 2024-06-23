@@ -84,7 +84,7 @@ You can also define multiple file names or directory by separating them with sys
 ```
 
 ### Include
-One or more patterns that a file must match, except when empty.
+One or more patterns that a file must match, except when empty. The filter is only applied to files.
 
 ```yaml tab=File (YAML)
 providers:

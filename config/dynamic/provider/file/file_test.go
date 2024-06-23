@@ -438,6 +438,50 @@ func TestProvider(t *testing.T) {
 				require.Len(t, configs, 1)
 			},
 		},
+		{
+			name: "include with folders",
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
+					Name:  "foo.js",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+				{
+					Name:  "foo",
+					IsDir: true,
+					Data:  []byte("foobar"),
+				},
+				{
+					Name:  "foo/foo.js",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+				{
+					Name:  "foo/bar.js",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+				{
+					Name:  "bar",
+					IsDir: true,
+					Data:  []byte("foobar"),
+				},
+				{
+					Name:  "bar/foo.js",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+				{
+					Name:  "bar/test.txt",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+			}},
+			cfg: static.FileProvider{Directories: []string{"./"}, Include: []string{"*.js"}},
+			test: func(t *testing.T, configs []*dynamic.Config) {
+				require.Len(t, configs, 4)
+			},
+		},
 	}
 
 	t.Parallel()

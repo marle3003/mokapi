@@ -70,7 +70,7 @@ function showMessage(event: ServiceEvent){
         message: formatLanguage(data.message, topic.configs.messageType),
         headers: data.headers,
         contentType: topic.configs.messageType,
-        keyType: topic.configs.key.type,
+        keyType: topic.configs.key?.type,
         partition: data.partition,
         offset: data.offset,
         time: format(event.time),

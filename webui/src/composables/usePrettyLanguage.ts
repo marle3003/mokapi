@@ -36,7 +36,7 @@ export function usePrettyLanguage() {
             case 'typescript':
                 return 'javascript'
             default:
-                return mimeType.subtype
+                return 'text'
 
         }
     }

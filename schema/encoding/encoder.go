@@ -55,7 +55,7 @@ func (e *Encoder) Write(v interface{}, contentType media.ContentType) ([]byte, e
 		case int, int32, int64:
 			s = fmt.Sprintf("%v", i)
 		default:
-			err = fmt.Errorf("unspupported encoding for content type %v", contentType)
+			err = fmt.Errorf("not supported encoding of content types '%v', except simple data types", contentType)
 		}
 		b = []byte(s)
 	}
