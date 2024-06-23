@@ -14,6 +14,8 @@ export function useMarkdown(content: string | undefined) {
     const metadata = parseMetadata(content)
     content = replaceImageUrls(content).replace(metadataRegex, '')
 
+    content = content.replaceAll(/__APP_VERSION__/g, APP_VERSION)
+
     if (content) {
         content = new MarkdownIt()
           .use(MarkdownItHighlightjs)
