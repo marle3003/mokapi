@@ -21,6 +21,7 @@ runs:
       working-directory: ./webui
       run: |
         npm install
+        npm version ${GITHUB_REF##*/v}
         npm run copy-docs
         npm run build-sitemap
         npm run build-website
