@@ -47,12 +47,14 @@ choco install mokapi
 ```
 
 ``` box=tip
-If current version (__APP_VERSION__) is still under moderation, you can install the newest version with: choco install mokapi -version=__APP_VERSION__
+If current version (__APP_VERSION__) is still under moderation, you can install the newest version with the additional parameter 'version'.
+```
+
+```Powershell
+choco install mokapi -version="__APP_VERSION__"
 ```
 
 ## <svg style="width:1.125em;" viewBox="0 0 128 128"><path fill="#cb3837" d="M2 38.5h124v43.71H64v7.29H36.44v-7.29H2zm6.89 36.43h13.78V53.07h6.89v21.86h6.89V45.79H8.89zm34.44-29.14v36.42h13.78v-7.28h13.78V45.79zm13.78 7.29H64v14.56h-6.89zm20.67-7.29v29.14h13.78V53.07h6.89v21.86h6.89V53.07h6.89v21.86h6.89V45.79z"></path></svg><span>NodeJS npm package</span>
-
-Current version: __APP_VERSION__
 
 ```bash
 npm install go-mokapi
