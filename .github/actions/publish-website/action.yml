@@ -10,6 +10,9 @@ inputs:
   server:
     required: true
     description: ftp server
+  token:
+    required: true
+    description: GITHUB Token
 runs:
   using: "composite"
   steps:
@@ -22,7 +25,7 @@ runs:
       with:
         repository: marle3003/mokapi
         excludes: prerelease, draft
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ inputs.token }}
     - name: build website
       working-directory: ./webui
       run: |
