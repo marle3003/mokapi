@@ -17,11 +17,17 @@ runs:
       with:
         node-version: 20
         registry-url: 'https://registry.npmjs.org'
+    - id: release
+      uses: pozetroninc/github-action-get-latest-release@master
+      with:
+        repository: marle3003/mokapi
+        excludes: prerelease, draft
+        token: ${{ secrets.GITHUB_TOKEN }}
     - name: build website
       working-directory: ./webui
       run: |
         npm install
-        npm version ${GITHUB_REF##*/v}
+        npm version ${{ steps.release.outputs.release#v }}
         npm run copy-docs
         npm run build-sitemap
         npm run build-website
