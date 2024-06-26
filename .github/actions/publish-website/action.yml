@@ -30,7 +30,7 @@ runs:
       working-directory: ./webui
       run: |
         npm install
-        npm version ${{ steps.release.outputs.release#v }}
+        npm version ${{ steps.release.outputs.release##*/v }}
         npm run copy-docs
         npm run build-sitemap
         npm run build-website
