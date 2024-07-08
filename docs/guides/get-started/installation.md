@@ -48,6 +48,7 @@ choco install mokapi
 
 ``` box=tip
 If current version (__APP_VERSION__) is still under moderation, you can install the newest version with the additional parameter 'version'.
+The status of the current version can be found at <a href="https://community.chocolatey.org/packages/mokapi/__APP_VERSION__" target="_blank">Chocolatey</a>.
 ```
 
 ```Powershell
