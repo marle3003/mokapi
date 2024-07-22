@@ -10,7 +10,6 @@ import (
 	"mokapi/media"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
-	"mokapi/providers/openapi/ref"
 	"mokapi/providers/openapi/schema/schematest"
 	"net/http"
 	"net/url"
@@ -67,7 +66,7 @@ func TestResponse_UnmarshalJSON(t *testing.T) {
 			test: func(t *testing.T) {
 				res := openapi.Responses[int]{}
 				err := json.Unmarshal([]byte(`{ "200": [{ "description": "foo" }] }`), &res)
-				require.EqualError(t, err, "json: cannot unmarshal array into Go value of type openapi.Response")
+				require.EqualError(t, err, "semantic error at 200: expected object but received an array")
 				require.Equal(t, 0, res.Len())
 			},
 		},
@@ -335,7 +334,7 @@ func TestResponse_Parse(t *testing.T) {
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithPath("/foo", openapitest.NewPath(
 						openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
-							openapitest.WithResponseRef(http.StatusOK, &openapi.ResponseRef{Reference: ref.Reference{Ref: "foo.yml"}}),
+							openapitest.WithResponseRef(http.StatusOK, &openapi.ResponseRef{Reference: dynamic.Reference{Ref: "foo.yml"}}),
 						)),
 					)),
 				)
@@ -352,7 +351,7 @@ func TestResponse_Parse(t *testing.T) {
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithPath("/foo", openapitest.NewPath(
 						openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
-							openapitest.WithResponse(http.StatusOK, openapitest.WithResponseHeaderRef("foo", &openapi.HeaderRef{Reference: ref.Reference{Ref: "foo.yml"}})),
+							openapitest.WithResponse(http.StatusOK, openapitest.WithResponseHeaderRef("foo", &openapi.HeaderRef{Reference: dynamic.Reference{Ref: "foo.yml"}})),
 						)),
 					)),
 				)

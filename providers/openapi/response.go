@@ -7,7 +7,6 @@ import (
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/media"
-	"mokapi/providers/openapi/ref"
 	"mokapi/sortedmap"
 	"strconv"
 )
@@ -17,7 +16,7 @@ type Responses[K string | int] struct {
 } // map[HttpStatus]*ResponseRef
 
 type ResponseRef struct {
-	ref.Reference
+	dynamic.Reference
 	Value *Response
 }
 
@@ -57,10 +56,12 @@ func (r *Responses[K]) UnmarshalJSON(b []byte) error {
 			return nil
 		}
 		key := token.(string)
+		offset := dec.InputOffset()
 		val := &ResponseRef{}
 		err = dec.Decode(&val)
 		if err != nil {
-			return err
+			offset += dynamic.NextTokenIndex(b[offset:])
+			return dynamic.NewSemanticErrorWithField(err, offset, dec, key)
 		}
 		switch m := any(&r.LinkedHashMap).(type) {
 		case *sortedmap.LinkedHashMap[string, *ResponseRef]:

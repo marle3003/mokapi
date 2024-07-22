@@ -6,7 +6,6 @@ import (
 	"mokapi/config/static"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
-	"mokapi/providers/openapi/ref"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
 	"mokapi/runtime"
@@ -196,7 +195,7 @@ func TestHandler_Http(t *testing.T) {
 			app: func() *runtime.App {
 				c := openapitest.NewConfig("3.0.0",
 					openapitest.WithPathRef("/foo/{bar}", &openapi.PathRef{
-						Reference: ref.Reference{
+						Reference: dynamic.Reference{
 							Ref:         "#/components/pathItems/foo",
 							Summary:     "Summary",
 							Description: "Description",
@@ -206,7 +205,7 @@ func TestHandler_Http(t *testing.T) {
 							openapitest.WithOperation("get", openapitest.NewOperation(
 								openapitest.WithResponseRef(http.StatusOK,
 									&openapi.ResponseRef{
-										Reference: ref.Reference{
+										Reference: dynamic.Reference{
 											Ref:         "#/components/pathItems/foo",
 											Description: "Description",
 										},
@@ -269,7 +268,7 @@ func TestHandler_Http(t *testing.T) {
 			app: func() *runtime.App {
 				s := schematest.New("object")
 				s.Properties = &schema.Schemas{}
-				s.Properties.Set("loop", &schema.Ref{Reference: ref.Reference{Ref: "#/components/schemas/loop"}, Value: s})
+				s.Properties.Set("loop", &schema.Ref{Reference: dynamic.Reference{Ref: "#/components/schemas/loop"}, Value: s})
 
 				return &runtime.App{
 					Http: map[string]*runtime.HttpInfo{

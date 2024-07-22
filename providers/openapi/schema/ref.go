@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
-	"mokapi/providers/openapi/ref"
 )
 
 type Ref struct {
-	ref.Reference
+	dynamic.Reference
 	Value *Schema
 }
 

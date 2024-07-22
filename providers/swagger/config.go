@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"gopkg.in/yaml.v3"
+	"mokapi/config/dynamic"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/schema"
 	"mokapi/sortedmap"
@@ -13,17 +14,18 @@ import (
 )
 
 type Config struct {
-	Swagger     string                 `yaml:"swagger" json:"swagger"`
-	Info        openapi.Info           `yaml:"info" json:"info"`
-	Schemes     []string               `yaml:"schemes,omitempty" json:"schemes,omitempty"`
-	Consumes    []string               `yaml:"consumes,omitempty" json:"consumes,omitempty"`
-	Produces    []string               `yaml:"produces,omitempty" json:"produces,omitempty"`
-	Host        string                 `yaml:"host,omitempty" json:"host,omitempty"`
-	BasePath    string                 `yaml:"basePath,omitempty" json:"basePath,omitempty"`
-	Paths       PathItems              `yaml:"paths,omitempty" json:"paths,omitempty"`
-	Definitions map[string]*schema.Ref `yaml:"definitions,omitempty" json:"definitions,omitempty"`
-	Parameters  map[string]*Parameter  `yaml:"parameters,omitempty" json:"parameters,omitempty"`
-	Responses   map[string]*Response   `yaml:"responses,omitempty" json:"responses,omitempty"`
+	Swagger      string                 `yaml:"swagger" json:"swagger"`
+	Info         openapi.Info           `yaml:"info" json:"info"`
+	Schemes      []string               `yaml:"schemes,omitempty" json:"schemes,omitempty"`
+	Consumes     []string               `yaml:"consumes,omitempty" json:"consumes,omitempty"`
+	Produces     []string               `yaml:"produces,omitempty" json:"produces,omitempty"`
+	Host         string                 `yaml:"host,omitempty" json:"host,omitempty"`
+	BasePath     string                 `yaml:"basePath,omitempty" json:"basePath,omitempty"`
+	Paths        PathItems              `yaml:"paths,omitempty" json:"paths,omitempty"`
+	Definitions  map[string]*schema.Ref `yaml:"definitions,omitempty" json:"definitions,omitempty"`
+	Parameters   map[string]*Parameter  `yaml:"parameters,omitempty" json:"parameters,omitempty"`
+	Responses    map[string]*Response   `yaml:"responses,omitempty" json:"responses,omitempty"`
+	ExternalDocs *openapi.ExternalDocs  `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
 }
 
 type PathItems map[string]*PathItem
@@ -208,5 +210,16 @@ func (r *Responses[K]) UnmarshalYAML(value *yaml.Node) error {
 		}
 	}
 
+	return nil
+}
+
+func (c *Config) UnmarshalJSON(b []byte) error {
+	type alias Config
+	a := alias(*c)
+	err := dynamic.UnmarshalJSON(b, &a)
+	if err != nil {
+		return err
+	}
+	*c = Config(a)
 	return nil
 }

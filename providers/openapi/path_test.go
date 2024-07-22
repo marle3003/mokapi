@@ -10,7 +10,6 @@ import (
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/providers/openapi/parameter"
-	"mokapi/providers/openapi/ref"
 	"mokapi/providers/openapi/schema/schematest"
 	"net/http"
 	"net/url"
@@ -387,7 +386,7 @@ func TestPath_Parse(t *testing.T) {
 				})
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithPathRef("foo",
-						&openapi.PathRef{Reference: ref.Reference{Ref: "foo.yml#/paths/foo"}}))
+						&openapi.PathRef{Reference: dynamic.Reference{Ref: "foo.yml#/paths/foo"}}))
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse path 'foo' failed: resolve reference 'foo.yml#/paths/foo' failed: TEST ERROR")
 			},
@@ -418,7 +417,7 @@ func TestPath_Parse(t *testing.T) {
 				})
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithPathRef("/foo",
-						&openapi.PathRef{Reference: ref.Reference{Ref: "foo.yml#/paths/foo"}}))
+						&openapi.PathRef{Reference: dynamic.Reference{Ref: "foo.yml#/paths/foo"}}))
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
 				require.Equal(t, target, config.Paths["/foo"].Value)
@@ -437,7 +436,7 @@ func TestPath_Parse(t *testing.T) {
 				})
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithPathRef("/foo",
-						&openapi.PathRef{Reference: ref.Reference{Ref: "foo.yml#/paths/foo"}}))
+						&openapi.PathRef{Reference: dynamic.Reference{Ref: "foo.yml#/paths/foo"}}))
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
 				require.Nil(t, config.Paths["/foo"].Value)
@@ -457,7 +456,7 @@ func TestPath_Parse(t *testing.T) {
 				})
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithPathRef("/foo",
-						&openapi.PathRef{Reference: ref.Reference{Ref: "foo.yml#/paths/foo"}}))
+						&openapi.PathRef{Reference: dynamic.Reference{Ref: "foo.yml#/paths/foo"}}))
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse path '/foo' failed: resolve reference 'foo.yml#/paths/foo' failed: path '/paths/foo' not found")
 			},
@@ -470,7 +469,7 @@ func TestPath_Parse(t *testing.T) {
 				})
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithPathParamRef(&parameter.Ref{Reference: ref.Reference{Ref: "foo.yml"}}),
+						openapitest.WithPathParamRef(&parameter.Ref{Reference: dynamic.Reference{Ref: "foo.yml"}}),
 					)),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
@@ -485,7 +484,7 @@ func TestPath_Parse(t *testing.T) {
 				})
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithPathRef("foo",
-						&openapi.PathRef{Reference: ref.Reference{Ref: "#/components/pathItems/foo"}},
+						&openapi.PathRef{Reference: dynamic.Reference{Ref: "#/components/pathItems/foo"}},
 					),
 					openapitest.WithComponentPathItem("foo", openapitest.NewPath()),
 				)

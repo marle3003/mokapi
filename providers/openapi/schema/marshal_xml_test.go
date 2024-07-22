@@ -2,8 +2,8 @@ package schema_test
 
 import (
 	"github.com/stretchr/testify/require"
+	"mokapi/config/dynamic"
 	"mokapi/media"
-	"mokapi/providers/openapi/ref"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
 	"mokapi/sortedmap"
@@ -54,7 +54,7 @@ func TestMarshal_Xml(t *testing.T) {
 			data: func() interface{} {
 				return 4
 			},
-			schema: &schema.Ref{Reference: ref.Reference{Ref: "#/components/schemas/foo"}, Value: schematest.New("integer")},
+			schema: &schema.Ref{Reference: dynamic.Reference{Ref: "#/components/schemas/foo"}, Value: schematest.New("integer")},
 			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "<foo>4</foo>", s)

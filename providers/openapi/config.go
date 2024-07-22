@@ -27,6 +27,13 @@ type Config struct {
 	// server objects url field in order to construct the full URL
 	Paths      PathItems  `yaml:"paths,omitempty" json:"paths,omitempty"`
 	Components Components `yaml:"components,omitempty" json:"components,omitempty"`
+
+	ExternalDocs *ExternalDocs `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
+}
+
+type ExternalDocs struct {
+	Description string `yaml:"description" json:"description"`
+	Url         string `yaml:"url" json:"url"`
 }
 
 func IsHttpStatusSuccess(status int) bool {
@@ -91,5 +98,16 @@ func (r *RequestBody) GetMedia(contentType media.ContentType) *MediaType {
 		}
 	}
 
+	return nil
+}
+
+func (c *Config) UnmarshalJSON(b []byte) error {
+	type alias Config
+	a := alias(*c)
+	err := dynamic.UnmarshalJSON(b, &a)
+	if err != nil {
+		return err
+	}
+	*c = Config(a)
 	return nil
 }

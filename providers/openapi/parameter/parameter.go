@@ -3,7 +3,6 @@ package parameter
 import (
 	"fmt"
 	"mokapi/config/dynamic"
-	"mokapi/providers/openapi/ref"
 	"mokapi/providers/openapi/schema"
 )
 
@@ -17,7 +16,7 @@ const (
 type Parameters []*Ref
 
 type Ref struct {
-	ref.Reference
+	dynamic.Reference
 	Value *Parameter
 }
 

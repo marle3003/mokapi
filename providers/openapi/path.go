@@ -5,7 +5,6 @@ import (
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/providers/openapi/parameter"
-	"mokapi/providers/openapi/ref"
 	"net/http"
 	"strings"
 )
@@ -13,7 +12,7 @@ import (
 type PathItems map[string]*PathRef
 
 type PathRef struct {
-	ref.Reference
+	dynamic.Reference
 	Value *Path
 }
 

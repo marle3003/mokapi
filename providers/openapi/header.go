@@ -6,13 +6,12 @@ import (
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/providers/openapi/parameter"
-	"mokapi/providers/openapi/ref"
 )
 
 type Headers map[string]*HeaderRef
 
 type HeaderRef struct {
-	ref.Reference
+	dynamic.Reference
 	Value *Header
 }
 

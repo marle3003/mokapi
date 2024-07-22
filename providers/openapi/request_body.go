@@ -7,7 +7,6 @@ import (
 	"io"
 	"mokapi/config/dynamic"
 	"mokapi/media"
-	"mokapi/providers/openapi/ref"
 	"mokapi/schema/json/parser"
 	"net/http"
 	"strings"
@@ -16,7 +15,7 @@ import (
 type RequestBodies map[string]*RequestBodyRef
 
 type RequestBodyRef struct {
-	ref.Reference
+	dynamic.Reference
 	Value *RequestBody
 }
 
