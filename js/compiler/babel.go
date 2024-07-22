@@ -64,10 +64,12 @@ func (b *babel) Transform(filename, src string) (code string, err error) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 
+	// https://babeljs.io/docs/options
 	opts := map[string]interface{}{
 		"presets": []string{"env"},
 		"plugins": []interface{}{
 			"transform-exponentiation-operator",
+			"transform-async-to-generator",
 		},
 		"ast":           false,
 		"sourceMaps":    false,
@@ -75,14 +77,11 @@ func (b *babel) Transform(filename, src string) (code string, err error) {
 		"compact":       false,
 		"retainLines":   true,
 		"highlightCode": false,
-		"filename":      filename}
+		"filename":      filename,
+	}
 
 	if filepath.Ext(filename) == ".ts" {
 		opts["presets"] = []string{"env", "typescript"}
-		opts["plugins"] = []interface{}{
-			"transform-exponentiation-operator",
-			"transform-async-to-generator",
-		}
 	}
 
 	v, err := b.transform(b.this, b.runtime.ToValue(src), b.runtime.ToValue(opts))
