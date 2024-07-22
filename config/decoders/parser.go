@@ -80,14 +80,18 @@ func parseArgs(args []string) (map[string][]string, error) {
 			continue
 		}
 
-		// value is next arg
-		vIndex := i + 1
-		if vIndex >= len(args) || strings.HasPrefix(args[vIndex], "--") {
-			dictionary[param] = append(dictionary[param], "")
-		} else {
-			value = args[vIndex]
+		// value is next args
+		for i++; i < len(args); i++ {
+			if strings.HasPrefix(args[i], "--") {
+				i--
+				break
+			}
+			value = args[i]
 			dictionary[param] = append(dictionary[param], value)
-			i++
+		}
+
+		if len(dictionary[param]) == 0 {
+			dictionary[param] = append(dictionary[param], "")
 		}
 	}
 
