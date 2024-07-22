@@ -1,6 +1,14 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
+	"mokapi/config/decoders"
+	"mokapi/config/static"
+	"reflect"
+	"strings"
+)
 
 func printHelp() {
 	fmt.Print("\nMokapi is an easy, modern and flexible API mocking tool using Go and Javascript.\n")
@@ -38,6 +46,40 @@ func printHelp() {
 	fmt.Print("\n")
 
 	fmt.Print("\n  --providers-npm-package (string)\n\tLoad one or more dynamic configuration from a GIT repository")
+	fmt.Print("\n")
+
+	fmt.Print("\n  --generate-cli-skeleton [string]\n\tGenerates the skeleton configuration file")
 
 	fmt.Print("\n\nGet help with Mokapi CLI: https://mokapi.io/docs/configuration/static/cli")
+}
+
+func writeSkeleton(cfg *static.Config) {
+	var skeleton interface{}
+	if s, ok := cfg.GenerateSkeleton.(string); ok {
+		paths := decoders.ParsePath(s)
+		current := reflect.ValueOf(static.NewConfig())
+		for _, path := range paths {
+			if current.Kind() == reflect.Pointer {
+				current = current.Elem()
+			}
+			field := current.FieldByNameFunc(func(f string) bool {
+				return strings.ToLower(f) == path
+			})
+			if !field.IsValid() {
+				log.Errorf("unable to find config element: %v", cfg.GenerateSkeleton.(string))
+				return
+			}
+			current = field
+		}
+		skeleton = current.Interface()
+	} else {
+		skeleton = static.NewConfig()
+	}
+
+	b, err := yaml.Marshal(skeleton)
+	if err != nil {
+		log.Errorf("unable to write skeleton: %v", err)
+		return
+	}
+	fmt.Print(string(b))
 }

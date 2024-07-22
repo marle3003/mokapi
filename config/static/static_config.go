@@ -9,16 +9,17 @@ import (
 )
 
 type Config struct {
-	Log        *MokApiLog        `json:"log" yaml:"log"`
-	ConfigFile string            `json:"-" yaml:"-"`
-	Providers  Providers         `json:"providers" yaml:"providers"`
-	Api        Api               `json:"api" yaml:"api"`
-	RootCaCert tls.FileOrContent `json:"rootCaCert" yaml:"rootCaCert"`
-	RootCaKey  tls.FileOrContent `json:"rootCaKey" yaml:"rootCaKey"`
-	Services   Services
-	Js         JsConfig `json:"js" yaml:"js"`
-	Configs    Configs  `json:"configs" yaml:"configs" explode:"config"`
-	Help       bool     `json:"-" yaml:"-"`
+	Log              *MokApiLog        `json:"log" yaml:"log"`
+	ConfigFile       string            `json:"-" yaml:"-"`
+	Providers        Providers         `json:"providers" yaml:"providers"`
+	Api              Api               `json:"api" yaml:"api"`
+	RootCaCert       tls.FileOrContent `json:"rootCaCert" yaml:"rootCaCert"`
+	RootCaKey        tls.FileOrContent `json:"rootCaKey" yaml:"rootCaKey"`
+	Services         Services          `json:"-" yaml:"-"`
+	Js               JsConfig          `json:"js" yaml:"js"`
+	Configs          Configs           `json:"configs" yaml:"configs" explode:"config"`
+	Help             bool              `json:"-" yaml:"-"`
+	GenerateSkeleton interface{}       `json:"-" yaml:"-" flag:"generate-cli-skeleton"`
 }
 
 func NewConfig() *Config {
@@ -26,6 +27,7 @@ func NewConfig() *Config {
 	cfg.Log = &MokApiLog{Level: "info", Format: "text"}
 	cfg.Api.Port = "8080"
 	cfg.Api.Dashboard = true
+	cfg.Providers.File.SkipPrefix = []string{"_"}
 	return cfg
 }
 

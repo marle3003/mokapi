@@ -472,3 +472,45 @@ providers:
 		})
 	}
 }
+
+func TestFileProvider(t *testing.T) {
+	testcases := []struct {
+		name string
+		args []string
+		test func(t *testing.T, cfg *static.Config)
+	}{
+		{
+			name: "skipPrefix single element appends to default value",
+			args: []string{"--providers-file-skip-prefix", "foo"},
+			test: func(t *testing.T, cfg *static.Config) {
+				require.Len(t, cfg.Providers.File.SkipPrefix, 2)
+				require.Contains(t, cfg.Providers.File.SkipPrefix, "foo")
+				require.Contains(t, cfg.Providers.File.SkipPrefix, "_")
+			},
+		},
+		{
+			name: "skipPrefix list replace default value",
+			args: []string{"--providers-file-skip-prefix", "foo", "bar"},
+			test: func(t *testing.T, cfg *static.Config) {
+				require.Len(t, cfg.Providers.File.SkipPrefix, 2)
+				require.Contains(t, cfg.Providers.File.SkipPrefix, "foo")
+				require.Contains(t, cfg.Providers.File.SkipPrefix, "bar")
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			os.Args = nil
+			os.Args = append(os.Args, "mokapi.exe")
+			os.Args = append(os.Args, tc.args...)
+
+			cfg := static.NewConfig()
+			err := decoders.Load([]decoders.ConfigDecoder{decoders.NewDefaultFileDecoder(), decoders.NewFlagDecoder()}, cfg)
+			require.NoError(t, err)
+
+			tc.test(t, cfg)
+		})
+	}
+}

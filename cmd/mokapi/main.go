@@ -44,7 +44,11 @@ func main() {
 	if cfg.Help {
 		printHelp()
 		return
+	} else if cfg.GenerateSkeleton != nil {
+		writeSkeleton(cfg)
+		return
 	}
+
 	fmt.Printf(logo, version.BuildVersion, strings.Repeat(" ", 17-len(versionString)))
 
 	if len(cfg.Services) > 0 {
