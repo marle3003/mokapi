@@ -18,9 +18,10 @@ type FlagDecoder struct {
 }
 
 type context struct {
+	path    string
 	paths   []string
 	element reflect.Value
-	value   string
+	value   []string
 }
 
 func NewFlagDecoder() *FlagDecoder {
@@ -39,13 +40,11 @@ func (f *FlagDecoder) Decode(flags map[string][]string, element interface{}) err
 	sort.Strings(keys)
 
 	for _, name := range keys {
-		paths := f.parsePath(name)
-		for _, value := range flags[name] {
-			ctx := &context{paths: paths, value: value, element: reflect.ValueOf(element)}
-			err := f.setValue(ctx)
-			if err != nil {
-				return errors.Wrapf(err, "configuration error %v", name)
-			}
+		paths := ParsePath(name)
+		ctx := &context{path: name, paths: paths, value: flags[name], element: reflect.ValueOf(element)}
+		err := f.setValue(ctx)
+		if err != nil {
+			return errors.Wrapf(err, "configuration error %v", name)
 		}
 	}
 
@@ -56,7 +55,7 @@ func (f *FlagDecoder) setValue(ctx *context) error {
 	switch ctx.element.Kind() {
 	case reflect.Struct:
 		if len(ctx.paths) == 0 {
-			return f.convert(ctx.value, ctx.element)
+			return f.convert(ctx.value[0], ctx.element)
 		}
 		err := ctx.setFieldFromStruct()
 		if err != nil {
@@ -70,11 +69,11 @@ func (f *FlagDecoder) setValue(ctx *context) error {
 		ctx.element = ctx.element.Elem()
 		return f.setValue(ctx)
 	case reflect.String:
-		s := strings.Trim(ctx.value, "\"")
+		s := strings.Trim(ctx.value[0], "\"")
 		ctx.element.SetString(s)
 		return nil
 	case reflect.Int64:
-		i, err := strconv.ParseInt(ctx.value, 10, 64)
+		i, err := strconv.ParseInt(ctx.value[0], 10, 64)
 		if err != nil {
 			return fmt.Errorf("parse int64 failed: %v", err)
 		}
@@ -82,13 +81,13 @@ func (f *FlagDecoder) setValue(ctx *context) error {
 		return nil
 	case reflect.Bool:
 		b := false
-		if ctx.value == "" {
+		if ctx.value[0] == "" {
 			b = true
 		} else {
 			var err error
-			b, err = strconv.ParseBool(ctx.value)
+			b, err = strconv.ParseBool(ctx.value[0])
 			if err != nil {
-				return fmt.Errorf("value %v cannot be parsed as bool: %v", ctx.value, err.Error())
+				return fmt.Errorf("value %v cannot be parsed as bool: %v", ctx.value[0], err.Error())
 			}
 		}
 		ctx.element.SetBool(b)
@@ -97,12 +96,19 @@ func (f *FlagDecoder) setValue(ctx *context) error {
 		return f.setArray(ctx)
 	case reflect.Map:
 		return f.setMap(ctx)
+	case reflect.Interface:
+		if len(ctx.value) == 0 || ctx.value[0] == "" {
+			ctx.element.Set(reflect.ValueOf(true))
+		} else {
+			ctx.element.Set(reflect.ValueOf(ctx.value[0]))
+		}
+		return nil
 	}
 
 	return fmt.Errorf("unsupported config type: %v", ctx.element.Kind())
 }
 
-func (f *FlagDecoder) parsePath(key string) []string {
+func ParsePath(key string) []string {
 	var paths []string
 	split := strings.FieldsFunc(key, func(r rune) bool {
 		return r == '.' || r == '-'
@@ -147,13 +153,21 @@ func (f *FlagDecoder) setArray(ctx *context) error {
 
 		return f.setValue(ctx.Next(ctx.element.Index(index)))
 	} else {
-		values := splitArrayItems(ctx.value)
-		for _, v := range values {
+		if len(ctx.value) == 1 {
+			ctx.value = splitArrayItems(ctx.value[0])
+		}
+
+		if len(ctx.value) > 1 {
+			// reset slice; remove default values
+			ctx.element.Set(reflect.MakeSlice(ctx.element.Type(), 0, len(ctx.value)))
+		}
+
+		for _, v := range ctx.value {
 			ptr := reflect.New(ctx.element.Type().Elem())
 			ctxItem := &context{
 				paths:   ctx.paths,
 				element: ptr,
-				value:   v,
+				value:   []string{v},
 			}
 			if err := f.setValue(ctxItem); err != nil {
 				return err
@@ -198,18 +212,21 @@ func (f *FlagDecoder) setMap(ctx *context) error {
 	return nil
 }
 
-func (f *FlagDecoder) explode(v reflect.Value, name string, value string) error {
+func (f *FlagDecoder) explode(v reflect.Value, name string, value []string) error {
 	field := getFieldByTag(v, name, "explode")
 	if !field.IsValid() {
 		return fmt.Errorf("not found")
 	}
 
-	o := reflect.New(field.Type().Elem())
-	err := f.convert(value, o.Elem())
-	if err != nil {
-		return err
+	for _, val := range value {
+		o := reflect.New(field.Type().Elem())
+		err := f.convert(val, o.Elem())
+		if err != nil {
+			return err
+		}
+		field.Set(reflect.Append(field, o.Elem()))
 	}
-	field.Set(reflect.Append(field, o.Elem()))
+
 	return nil
 }
 
@@ -265,14 +282,14 @@ func (f *FlagDecoder) convert(s string, v reflect.Value) error {
 			if len(kv) != 2 {
 				return fmt.Errorf("parse shorthand failed: %v", s)
 			}
-			err = f.setValue(&context{paths: []string{kv[0]}, value: kv[1], element: v})
+			err = f.setValue(&context{paths: []string{kv[0]}, value: []string{kv[1]}, element: v})
 			if err != nil {
 				return err
 			}
 		}
 		return nil
 	} else if kind == reflect.Slice {
-		return f.setValue(&context{paths: []string{}, element: v, value: s})
+		return f.setValue(&context{paths: []string{}, element: v, value: []string{s}})
 	} else if kind == reflect.String {
 		v.Set(reflect.ValueOf(s))
 		return nil
@@ -288,7 +305,7 @@ func (f *FlagDecoder) convertJson(s string, v reflect.Value) error {
 		return err
 	}
 
-	return f.set(v, m)
+	return f.setJson(v, m)
 }
 
 func splitArrayItems(s string) []string {
@@ -301,14 +318,14 @@ func splitArrayItems(s string) []string {
 	})
 }
 
-func (f *FlagDecoder) set(element reflect.Value, i interface{}) error {
+func (f *FlagDecoder) setJson(element reflect.Value, i interface{}) error {
 	switch o := i.(type) {
 	case int64, string, bool:
 		element.Set(reflect.ValueOf(i))
 	case []interface{}:
 		for _, item := range o {
 			ptr := reflect.New(element.Type().Elem())
-			err := f.set(ptr.Elem(), item)
+			err := f.setJson(ptr.Elem(), item)
 			if err != nil {
 				return err
 			}
@@ -318,7 +335,7 @@ func (f *FlagDecoder) set(element reflect.Value, i interface{}) error {
 		for k, v := range o {
 			field := element.FieldByNameFunc(func(f string) bool { return strings.ToLower(f) == strings.ToLower(k) })
 			if field.IsValid() {
-				err := f.set(field, v)
+				err := f.setJson(field, v)
 				if err != nil {
 					return err
 				}
@@ -328,7 +345,7 @@ func (f *FlagDecoder) set(element reflect.Value, i interface{}) error {
 					return fmt.Errorf("configuration not found")
 				}
 				ptr := reflect.New(field.Type().Elem())
-				err := f.set(ptr.Elem(), v)
+				err := f.setJson(ptr.Elem(), v)
 				if err != nil {
 					return err
 				}
@@ -368,25 +385,33 @@ func (c *context) setFieldFromStruct() error {
 			return strings.ToLower(f) == c.paths[1]
 		})
 		if field.IsValid() {
-			value, err := invertFlag(c.value)
+			value, err := invertFlag(c.value[0])
 			if err != nil {
 				return err
 			}
-			c.value = value
+			c.value = []string{value}
 			c.Next(field)
 			return nil
 		}
 	}
 
 	for i := 0; i < c.element.NumField(); i++ {
-		flag := c.element.Type().Field(i).Tag.Get("flag")
+		f := c.element.Type().Field(i)
+
+		tag := f.Tag.Get("flag")
+		if len(tag) == 0 {
+			tag = f.Tag.Get("name")
+			if len(tag) == 0 {
+				continue
+			}
+		}
 		name = ""
 		for j := 0; j < len(c.paths); j++ {
 			if len(name) > 0 {
 				name += "-"
 			}
 			name += c.paths[j]
-			if flag == name {
+			if tag == name {
 				c.element = c.element.Field(i)
 				c.paths = c.paths[j+1:]
 				return nil

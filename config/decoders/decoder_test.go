@@ -64,6 +64,20 @@ func TestLoad(t *testing.T) {
 			},
 		},
 		{
+			name: "array list",
+			f: func(t *testing.T) {
+				s := &struct {
+					Names []string `explode:"name"`
+				}{}
+				os.Args = append(os.Args, "mokapi.exe")
+				os.Args = append(os.Args, "--name", "foo", "bar")
+
+				err := Load([]ConfigDecoder{&FlagDecoder{}}, s)
+				require.NoError(t, err)
+				require.Equal(t, []string{"foo", "bar"}, s.Names)
+			},
+		},
+		{
 			name: "array with item contains a space",
 			f: func(t *testing.T) {
 				s := &struct {
@@ -71,7 +85,7 @@ func TestLoad(t *testing.T) {
 				}{}
 				os.Args = append(os.Args, "mokapi.exe")
 				os.Args = append(os.Args, "--names")
-				os.Args = append(os.Args, "bar foo \"foo bar\"")
+				os.Args = append(os.Args, "bar", "foo", "foo bar")
 
 				err := Load([]ConfigDecoder{&FlagDecoder{}}, s)
 				require.NoError(t, err)
