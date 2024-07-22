@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
-	"mokapi/providers/openapi/ref"
 	"mokapi/providers/openapi/schema"
 	"net/url"
 	"testing"
@@ -396,7 +395,7 @@ func TestSchema(t *testing.T) {
 		schemas := &schema.Schemas{}
 		schemas.Set("foo", &schema.Ref{Value: target})
 		config.Components = &Components{Schemas: schemas}
-		message.Payload = &schema.Ref{Reference: ref.Reference{Ref: "#/components/Schemas/foo"}}
+		message.Payload = &schema.Ref{Reference: dynamic.Reference{Ref: "#/components/Schemas/foo"}}
 		reader := &testReader{readFunc: func(cfg *dynamic.Config) error { return nil }}
 
 		err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
@@ -405,7 +404,7 @@ func TestSchema(t *testing.T) {
 	})
 	t.Run("file reference direct", func(t *testing.T) {
 		target := &schema.Schema{}
-		message.Payload = &schema.Ref{Reference: ref.Reference{Ref: "foo.yml"}}
+		message.Payload = &schema.Ref{Reference: dynamic.Reference{Ref: "foo.yml"}}
 		reader := &testReader{readFunc: func(cfg *dynamic.Config) error {
 			cfg.Data = target
 			return nil
@@ -417,7 +416,7 @@ func TestSchema(t *testing.T) {
 	})
 	t.Run("modify file reference direct", func(t *testing.T) {
 		target := &schema.Schema{}
-		message.Payload = &schema.Ref{Reference: ref.Reference{Ref: "foo.yml"}}
+		message.Payload = &schema.Ref{Reference: dynamic.Reference{Ref: "foo.yml"}}
 		var fooConfig *dynamic.Config
 		reader := &testReader{readFunc: func(file *dynamic.Config) error {
 			file.Data = &schema.Schema{}
