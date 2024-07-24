@@ -61,7 +61,7 @@ func (r *Responses[K]) UnmarshalJSON(b []byte) error {
 		err = dec.Decode(&val)
 		if err != nil {
 			offset += dynamic.NextTokenIndex(b[offset:])
-			return dynamic.NewSemanticErrorWithField(err, offset, dec, key)
+			return dynamic.NewStructuralErrorWithField(err, offset, dec, key)
 		}
 		switch m := any(&r.LinkedHashMap).(type) {
 		case *sortedmap.LinkedHashMap[string, *ResponseRef]:

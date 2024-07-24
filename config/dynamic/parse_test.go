@@ -6,6 +6,7 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/dynamic/script"
+	"mokapi/providers/openapi"
 	"net/url"
 	"os"
 	"testing"
@@ -51,6 +52,17 @@ func TestParse(t *testing.T) {
 				c.Raw = []byte(`{"name": "foo"`)
 				err := dynamic.Parse(c, &dynamictest.Reader{})
 				require.EqualError(t, err, "unexpected end of JSON input")
+				require.Nil(t, c.Data)
+			},
+		},
+		{
+			name: "json structure error",
+			test: func(t *testing.T) {
+				dynamic.Register("openapi", &openapi.Config{})
+				c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: mustUrl("foo.json")}}
+				c.Raw = []byte(`{ "openapi": "3.0", "info": []}`)
+				err := dynamic.Parse(c, &dynamictest.Reader{})
+				require.EqualError(t, err, "structural error at info: expected object but received an array at line 1, column 29")
 				require.Nil(t, c.Data)
 			},
 		},
@@ -235,11 +247,9 @@ func TestParse(t *testing.T) {
 		},
 	}
 
-	t.Parallel()
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 			tc.test(t)
 		})
 	}

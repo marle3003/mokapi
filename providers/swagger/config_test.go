@@ -34,16 +34,16 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 			name: "wrong type in schema attribute",
 			s:    `{"definitions": { "Foo": { "items": [] } }}`,
 			test: func(t *testing.T, c *Config, err error) {
-				require.EqualError(t, err, "semantic error at definitions.Foo.items: expected object but received an array")
-				require.Equal(t, int64(38), err.(*dynamic.SemanticError).Offset)
+				require.EqualError(t, err, "structural error at definitions.Foo.items: expected object but received an array")
+				require.Equal(t, int64(38), err.(*dynamic.StructuralError).Offset)
 			},
 		},
 		{
 			name: "wrong type in schema properties attribute",
 			s:    `{"definitions": { "Foo": { "properties": { "value": { "items": [] } } } }}`,
 			test: func(t *testing.T, c *Config, err error) {
-				require.EqualError(t, err, "semantic error at definitions.Foo.properties.value.items: expected object but received an array")
-				require.Equal(t, int64(65), err.(*dynamic.SemanticError).Offset)
+				require.EqualError(t, err, "structural error at definitions.Foo.properties.value.items: expected object but received an array")
+				require.Equal(t, int64(65), err.(*dynamic.StructuralError).Offset)
 			},
 		},
 	}

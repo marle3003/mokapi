@@ -69,7 +69,7 @@ func (s *Schemas) UnmarshalJSON(b []byte) error {
 		err = dec.Decode(&val)
 		if err != nil {
 			offset += dynamic.NextTokenIndex(b[offset:])
-			return dynamic.NewSemanticErrorWithField(err, offset, dec, key)
+			return dynamic.NewStructuralErrorWithField(err, offset, dec, key)
 		}
 		s.Set(key, val)
 	}

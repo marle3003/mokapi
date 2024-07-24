@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"io"
 	"reflect"
 	"strings"
 	"unicode"
@@ -21,7 +23,11 @@ func UnmarshalJSON(b []byte, v interface{}) error {
 		b: b,
 	}
 
-	return unmarshalJSON(d, reflect.ValueOf(v))
+	err := unmarshalJSON(d, reflect.ValueOf(v))
+	if errors.Is(err, io.ErrUnexpectedEOF) {
+		return fmt.Errorf("unexpected end of JSON input")
+	}
+	return err
 }
 
 func NextTokenIndex(b []byte) int64 {
@@ -119,7 +125,7 @@ func object(d *decoder, v reflect.Value) error {
 		key := token.(string)
 		field, err := getField(v, key)
 		if err != nil {
-			return NewSemanticError(err, offset, d.d)
+			return NewStructuralError(err, offset, d.d)
 		} else if !field.IsValid() {
 			err = skip(d.d)
 			if err != nil {
@@ -132,7 +138,7 @@ func object(d *decoder, v reflect.Value) error {
 		err = unmarshalJSON(d, field)
 		if err != nil {
 			offset += NextTokenIndex(d.b[offset:])
-			return NewSemanticErrorWithField(err, offset, d.d, key)
+			return NewStructuralErrorWithField(err, offset, d.d, key)
 		}
 
 		// write value back to map

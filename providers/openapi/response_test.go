@@ -66,7 +66,7 @@ func TestResponse_UnmarshalJSON(t *testing.T) {
 			test: func(t *testing.T) {
 				res := openapi.Responses[int]{}
 				err := json.Unmarshal([]byte(`{ "200": [{ "description": "foo" }] }`), &res)
-				require.EqualError(t, err, "semantic error at 200: expected object but received an array")
+				require.EqualError(t, err, "structural error at 200: expected object but received an array")
 				require.Equal(t, 0, res.Len())
 			},
 		},

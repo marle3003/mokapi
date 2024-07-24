@@ -332,7 +332,7 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 			name: "items: wrong type",
 			s:    `{ "items": [] }`,
 			test: func(t *testing.T, r *schema.Ref, err error) {
-				require.EqualError(t, err, "semantic error at items: expected object but received an array")
+				require.EqualError(t, err, "structural error at items: expected object but received an array")
 			},
 		},
 	} {
