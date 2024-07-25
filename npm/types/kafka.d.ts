@@ -80,12 +80,12 @@ export interface ProduceArgs {
      *   });
      * }
      */
-    messages: Message[]
+    messages?: Message[]
 
     /**
      * The retry option is used if script is executed before Kafka topic is set up.
      */
-    retry: ProduceRetry
+    retry?: ProduceRetry
 }
 
 /**
