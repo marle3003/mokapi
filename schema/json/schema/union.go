@@ -2,6 +2,7 @@ package schema
 
 import (
 	"encoding/json"
+	"fmt"
 	"gopkg.in/yaml.v3"
 )
 
@@ -47,4 +48,11 @@ func (ut *UnionType[T1, T2]) UnmarshalJSON(b []byte) error {
 
 	ut.t = 1
 	return json.Unmarshal(b, &ut.B)
+}
+
+func (ut *UnionType[T1, T2]) String() string {
+	if ut.IsA() {
+		return fmt.Sprintf("%v", ut.A)
+	}
+	return fmt.Sprintf("%v", ut.B)
 }

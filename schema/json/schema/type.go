@@ -151,14 +151,11 @@ func (s *Schema) Is(typeName string) bool {
 }
 
 func (s *Schema) IsFreeForm() bool {
-	if s == nil {
+	if s == nil || !s.IsObject() {
 		return false
 	}
-	noProps := s.IsObject() && (s.Properties == nil || s.Properties.Len() == 0)
-	if noProps {
-		return true
-	}
-	return s.IsObject() && !s.AdditionalProperties.Forbidden
+
+	return !s.AdditionalProperties.Forbidden
 }
 
 func (s *Schema) IsAnyString() bool {

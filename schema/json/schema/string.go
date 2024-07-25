@@ -60,10 +60,18 @@ func (s *Schema) String() string {
 		sb.WriteString(fmt.Sprintf(" maximum=%v", *s.Maximum))
 	}
 	if s.ExclusiveMinimum != nil {
-		sb.WriteString(fmt.Sprintf(" exclusiveMinimum=%v", *s.ExclusiveMinimum))
+		if s.ExclusiveMinimum.IsA() {
+			sb.WriteString(fmt.Sprintf(" exclusiveMinimum=%v", s.ExclusiveMinimum.A))
+		} else {
+			sb.WriteString(fmt.Sprintf(" exclusiveMinimum=%v", s.ExclusiveMinimum.B))
+		}
 	}
 	if s.ExclusiveMaximum != nil {
-		sb.WriteString(fmt.Sprintf(" exclusiveMaximum=%v", *s.ExclusiveMaximum))
+		if s.ExclusiveMaximum.IsA() {
+			sb.WriteString(fmt.Sprintf(" exclusiveMaximum=%v", s.ExclusiveMaximum.A))
+		} else {
+			sb.WriteString(fmt.Sprintf(" exclusiveMaximum=%v", s.ExclusiveMaximum.B))
+		}
 	}
 	if s.MinItems != nil {
 		sb.WriteString(fmt.Sprintf(" minItems=%v", *s.MinItems))

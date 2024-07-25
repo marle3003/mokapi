@@ -200,13 +200,13 @@ func WithMaximum(max float64) SchemaOptions {
 
 func WithExclusiveMinimum(min float64) SchemaOptions {
 	return func(s *schema.Schema) {
-		s.ExclusiveMinimum = &min
+		s.ExclusiveMinimum = schema.NewUnionTypeA[float64, bool](min)
 	}
 }
 
 func WithExclusiveMaximum(max float64) SchemaOptions {
 	return func(s *schema.Schema) {
-		s.ExclusiveMaximum = &max
+		s.ExclusiveMaximum = schema.NewUnionTypeA[float64, bool](max)
 	}
 }
 
@@ -215,12 +215,6 @@ func WithMultipleOf(n float64) SchemaOptions {
 		s.MultipleOf = &n
 	}
 }
-
-//func WithXml(xml *schema.Xml) SchemaOptions {
-//	return func(s *schema.Schema) {
-//		s.Xml = xml
-//	}
-//}
 
 func WithPattern(p string) SchemaOptions {
 	return func(s *schema.Schema) {

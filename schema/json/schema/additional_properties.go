@@ -1,10 +1,22 @@
 package schema
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"gopkg.in/yaml.v3"
+	"mokapi/config/dynamic"
+)
 
 type AdditionalProperties struct {
 	*Ref
 	Forbidden bool
+}
+
+func (ap *AdditionalProperties) Parse(config *dynamic.Config, reader dynamic.Reader) error {
+	if ap == nil {
+		return nil
+	}
+
+	return ap.Ref.Parse(config, reader)
 }
 
 func (ap *AdditionalProperties) UnmarshalJSON(b []byte) error {
@@ -15,4 +27,18 @@ func (ap *AdditionalProperties) UnmarshalJSON(b []byte) error {
 		return nil
 	}
 	return json.Unmarshal(b, &ap.Ref)
+}
+
+func (ap *AdditionalProperties) UnmarshalYAML(node *yaml.Node) error {
+	if node.Kind == yaml.ScalarNode {
+		var b bool
+		err := node.Decode(&b)
+		if err != nil {
+			return err
+		}
+		ap.Forbidden = !b
+		return err
+	} else {
+		return node.Decode(&ap.Ref)
+	}
 }

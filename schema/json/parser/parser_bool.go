@@ -19,7 +19,7 @@ func (p *Parser) ParseBoolean(i interface{}, s *schema.Schema) (bool, error) {
 				return false, nil
 			}
 		}
-		return false, fmt.Errorf("parse %v failed, expected %v", i, s)
+		return false, fmt.Errorf("parse '%v' (string) failed, expected %v", i, s)
 	case int, int64:
 		return v != 0, nil
 	}

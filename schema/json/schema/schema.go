@@ -3,6 +3,7 @@ package schema
 import (
 	"encoding/json"
 	"fmt"
+	"mokapi/config/dynamic"
 )
 
 type Schema struct {
@@ -13,11 +14,11 @@ type Schema struct {
 	Const interface{}   `yaml:"const,omitempty" json:"const,omitempty"`
 
 	// Numbers
-	MultipleOf       *float64 `yaml:"multipleOf,omitempty" json:"multipleOf,omitempty"`
-	Maximum          *float64 `yaml:"maximum,omitempty" json:"maximum,omitempty"`
-	ExclusiveMaximum *float64 `yaml:"exclusiveMaximum,omitempty" json:"exclusiveMaximum,omitempty"`
-	Minimum          *float64 `yaml:"minimum,omitempty" json:"minimum,omitempty"`
-	ExclusiveMinimum *float64 `yaml:"exclusiveMinimum,omitempty" json:"ExclusiveMinimum,omitempty"`
+	MultipleOf       *float64                  `yaml:"multipleOf,omitempty" json:"multipleOf,omitempty"`
+	Maximum          *float64                  `yaml:"maximum,omitempty" json:"maximum,omitempty"`
+	ExclusiveMaximum *UnionType[float64, bool] `yaml:"exclusiveMaximum,omitempty" json:"exclusiveMaximum,omitempty"`
+	Minimum          *float64                  `yaml:"minimum,omitempty" json:"minimum,omitempty"`
+	ExclusiveMinimum *UnionType[float64, bool] `yaml:"exclusiveMinimum,omitempty" json:"ExclusiveMinimum,omitempty"`
 
 	// Strings
 	MaxLength *int   `yaml:"maxLength,omitempty" json:"maxLength,omitempty"`
@@ -56,6 +57,8 @@ type Schema struct {
 	// Media
 	ContentMediaType string `yaml:"contentMediaType,omitempty" json:"contentMediaType,omitempty"`
 	ContentEncoding  string `yaml:"contentEncoding,omitempty" json:"contentEncoding,omitempty"`
+
+	Definitions map[string]*Schema
 }
 
 type UnmarshalError struct {
@@ -67,7 +70,7 @@ func (e *UnmarshalError) Error() string {
 	return fmt.Sprintf("cannot unmarshal %v into field %v of type schema", e.Value, e.Field)
 }
 
-func (s *Schema) Parse() error {
+func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	for _, t := range s.Type {
 		switch t {
 		case "string", "integer", "boolean", "null", "array", "object":
@@ -113,6 +116,25 @@ func (s *Schema) Parse() error {
 	if s.MinProperties != nil && s.MaxProperties != nil && *s.MinProperties > *s.MaxProperties {
 		return fmt.Errorf("minProperties cannot be greater than maxProperties: %v, %v", *s.MinProperties, *s.MaxProperties)
 	}
+	if s.ExclusiveMinimum != nil && !s.ExclusiveMinimum.IsA() && s.Minimum == nil {
+		return fmt.Errorf("exclusiveMinimum is set to true but no minimum value is specified")
+	}
+	if s.ExclusiveMaximum != nil && !s.ExclusiveMaximum.IsA() && s.Maximum == nil {
+		return fmt.Errorf("exclusiveMaximum is set to true but no maximum value is specified")
+	}
+
+	if err := s.Properties.Parse(config, reader); err != nil {
+		return err
+	}
+
+	if err := s.AdditionalProperties.Parse(config, reader); err != nil {
+		return err
+	}
+
+	if err := s.Items.Parse(config, reader); err != nil {
+		return err
+	}
+
 	return nil
 }
 

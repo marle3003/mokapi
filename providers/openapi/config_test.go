@@ -27,80 +27,108 @@ func TestResolve(t *testing.T) {
 
 func TestConfig_Validate(t *testing.T) {
 	testdata := []struct {
-		s   string
-		err error
+		name string
+		data string
+		test func(t *testing.T, err error)
 	}{
 		{
-			`
+			name: "simple valid config 3",
+			data: `
 openapi: 3
 info:
   title: foo
 `,
-			nil,
+			test: func(t *testing.T, err error) {
+				require.NoError(t, err)
+			},
 		},
 		{
-			`
+			name: "simple valid config 3.0",
+			data: `
 openapi: 3.0
 info:
   title: foo
 `,
-			nil,
+			test: func(t *testing.T, err error) {
+				require.NoError(t, err)
+			},
 		},
 		{
-			`
+			name: "simple valid config 3.1",
+			data: `
 openapi: 3.1
 info:
   title: foo
 `,
-			nil,
+			test: func(t *testing.T, err error) {
+				require.NoError(t, err)
+			},
 		},
 		{
-			`
+			name: "simple valid config 2",
+			data: `
 openapi: 2
 info:
   title: foo
 `,
-			fmt.Errorf("not supported version: 2.0.0"),
+			test: func(t *testing.T, err error) {
+				require.EqualError(t, err, "not supported version: 2.0.0")
+			},
 		},
 		{
-			`
-openapi: 3
+			name: "missing title in 2.0",
+			data: `
+openapi: 2.0
 info:
 `,
-			fmt.Errorf("an openapi title is required"),
+			test: func(t *testing.T, err error) {
+				require.EqualError(t, err, "not supported version: 2.0.0\nan openapi title is required")
+			},
 		},
 		{
-			`
+			name: "missing title in 3.0",
+			data: `
 openapi: 3.0.3
 info:
 `,
-			fmt.Errorf("an openapi title is required"),
+			test: func(t *testing.T, err error) {
+				require.EqualError(t, err, "an openapi title is required")
+			},
 		},
 		{
-			`
+			name: "simple valid config 3.f",
+			data: `
 openapi: 3.f
 info:
   title: foo
 `,
-			nil,
+			test: func(t *testing.T, err error) {
+				require.NoError(t, err)
+			},
 		},
 		{
-			`
+			name: "no version",
+			data: `
 openapi: ""
 info:
   title: foo
 `,
-			fmt.Errorf("no OpenApi version defined"),
+			test: func(t *testing.T, err error) {
+				require.EqualError(t, err, "no OpenApi version defined")
+			},
 		},
 	}
+
 	t.Parallel()
-	for _, data := range testdata {
-		d := data
-		t.Run(d.s, func(t *testing.T) {
+	for _, tc := range testdata {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			c := &openapi.Config{}
-			err := yaml.Unmarshal([]byte(d.s), c)
+			err := yaml.Unmarshal([]byte(tc.data), c)
 			require.NoError(t, err)
-			require.Equal(t, d.err, c.Validate())
+			tc.test(t, c.Validate())
 		})
 	}
 }

@@ -15,6 +15,11 @@ type StructuralError struct {
 	d       *json.Decoder
 }
 
+type SemanticError struct {
+	Fields  []string
+	Message string
+}
+
 func NewStructuralError(err error, offset int64, d *json.Decoder) error {
 	var errType *json.UnmarshalTypeError
 	if errors.As(err, &errType) {
@@ -38,7 +43,7 @@ func NewStructuralErrorWithField(err error, offset int64, d *json.Decoder, field
 	}
 	var semantic *StructuralError
 	if errors.As(err, &semantic) {
-		return semantic.Wrap(field, offset, d)
+		return semantic.wrap(field, offset, d)
 	}
 
 	return &StructuralError{Fields: []string{field}, Message: err.Error(), Offset: d.InputOffset(), d: d}
@@ -53,11 +58,28 @@ func (s *StructuralError) Error() string {
 	return fmt.Sprintf("structural error at %s", strings.Join(s.Fields, "."))
 }
 
-func (s *StructuralError) Wrap(field string, offset int64, d *json.Decoder) *StructuralError {
+func (s *StructuralError) wrap(field string, offset int64, d *json.Decoder) *StructuralError {
 	s.Fields = append([]string{field}, s.Fields...)
 	if s.d != d {
 		s.Offset += offset
 		s.d = d
 	}
 	return s
+}
+
+func NewSemanticError(err error, field string) *SemanticError {
+	var semantic *SemanticError
+	if errors.As(err, &semantic) {
+		return semantic.wrap(field)
+	}
+	return &SemanticError{Message: err.Error(), Fields: []string{field}}
+}
+
+func (s *SemanticError) wrap(field string) *SemanticError {
+	s.Fields = append([]string{field}, s.Fields...)
+	return s
+}
+
+func (s *SemanticError) Error() string {
+	return fmt.Sprintf("semantic error at %s: %s", strings.Join(s.Fields, "."), s.Message)
 }

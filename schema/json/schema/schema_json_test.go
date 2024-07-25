@@ -107,7 +107,7 @@ func TestSchemaJson(t *testing.T) {
 			data: `{"exclusiveMaximum": 12}`,
 			test: func(t *testing.T, s *Schema, err error) {
 				require.NoError(t, err)
-				require.Equal(t, float64(12), *s.ExclusiveMaximum)
+				require.Equal(t, float64(12), s.ExclusiveMaximum.A)
 			},
 		},
 		{
@@ -123,7 +123,7 @@ func TestSchemaJson(t *testing.T) {
 			data: `{"exclusiveMinimum": 12}`,
 			test: func(t *testing.T, s *Schema, err error) {
 				require.NoError(t, err)
-				require.Equal(t, float64(12), *s.ExclusiveMinimum)
+				require.Equal(t, float64(12), s.ExclusiveMinimum.A)
 			},
 		},
 		/*

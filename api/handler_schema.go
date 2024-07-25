@@ -332,18 +332,18 @@ func toSchema(s *schemaInfo) *schema.Schema {
 	if s.ExclusiveMinimum != nil {
 		switch v := s.ExclusiveMinimum.(type) {
 		case bool:
-			result.ExclusiveMinimum = schema.NewUnionTypeB[float64, bool](v)
+			result.ExclusiveMinimum = jsonSchema.NewUnionTypeB[float64, bool](v)
 		case float64:
-			result.ExclusiveMinimum = schema.NewUnionTypeA[float64, bool](v)
+			result.ExclusiveMinimum = jsonSchema.NewUnionTypeA[float64, bool](v)
 		}
 	}
 
 	if s.ExclusiveMaximum != nil {
 		switch v := s.ExclusiveMaximum.(type) {
 		case bool:
-			result.ExclusiveMaximum = schema.NewUnionTypeB[float64, bool](v)
+			result.ExclusiveMaximum = jsonSchema.NewUnionTypeB[float64, bool](v)
 		case float64:
-			result.ExclusiveMaximum = schema.NewUnionTypeA[float64, bool](v)
+			result.ExclusiveMaximum = jsonSchema.NewUnionTypeA[float64, bool](v)
 		}
 	}
 

@@ -343,8 +343,8 @@ func TestGeneratorInt(t *testing.T) {
 				Format:           "int64",
 				Minimum:          toFloatP(3),
 				Maximum:          toFloatP(5),
-				ExclusiveMinimum: schema.NewUnionTypeB[float64, bool](true),
-				ExclusiveMaximum: schema.NewUnionTypeB[float64, bool](true),
+				ExclusiveMinimum: jsonSchema.NewUnionTypeB[float64, bool](true),
+				ExclusiveMaximum: jsonSchema.NewUnionTypeB[float64, bool](true),
 			},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
@@ -358,11 +358,11 @@ func TestGeneratorInt(t *testing.T) {
 				Format:           "int64",
 				Minimum:          toFloatP(4),
 				Maximum:          toFloatP(5),
-				ExclusiveMinimum: schema.NewUnionTypeB[float64, bool](true),
-				ExclusiveMaximum: schema.NewUnionTypeB[float64, bool](true),
+				ExclusiveMinimum: jsonSchema.NewUnionTypeB[float64, bool](true),
+				ExclusiveMaximum: jsonSchema.NewUnionTypeB[float64, bool](true),
 			},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "invalid minimum '5' and maximum '4' in schema type=integer format=int64 exclusiveMinimum=4 exclusiveMaximum=5")
+				require.EqualError(t, err, "invalid minimum '5' and maximum '4' in schema type=integer format=int64 minimum=4 maximum=5 exclusiveMinimum=true exclusiveMaximum=true")
 			},
 		},
 	}
@@ -447,7 +447,7 @@ func TestGeneratorFloat(t *testing.T) {
 			"exclusive minimum",
 			0.11829549300021638,
 			&schema.Schema{Type: jsonSchema.Types{"number"}, Format: "double",
-				Minimum: toFloatP(0.1), ExclusiveMinimum: schema.NewUnionTypeB[float64, bool](true),
+				Minimum: toFloatP(0.1), ExclusiveMinimum: jsonSchema.NewUnionTypeB[float64, bool](true),
 				Maximum: toFloatP(0.3),
 			},
 		},
@@ -456,7 +456,7 @@ func TestGeneratorFloat(t *testing.T) {
 			0.25457387325005376,
 			&schema.Schema{Type: jsonSchema.Types{"number"}, Format: "double",
 				Minimum: toFloatP(0.25),
-				Maximum: toFloatP(0.3), ExclusiveMaximum: schema.NewUnionTypeB[float64, bool](true),
+				Maximum: toFloatP(0.3), ExclusiveMaximum: jsonSchema.NewUnionTypeB[float64, bool](true),
 			},
 		},
 	}

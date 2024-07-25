@@ -11,6 +11,7 @@ import (
 	"mokapi/config/dynamic/mail"
 	"mokapi/config/static"
 	"mokapi/engine"
+	"mokapi/feature"
 	"mokapi/providers/openapi"
 	"mokapi/providers/swagger"
 	"mokapi/runtime"
@@ -32,6 +33,8 @@ func Start(cfg *static.Config) (*Cmd, error) {
 	if len(cfg.Services) > 0 {
 		return nil, errors.New("static configuration Services are no longer supported. Use patching instead.")
 	}
+
+	feature.Enable(cfg.Features)
 
 	registerDynamicTypes()
 	app := runtime.New()

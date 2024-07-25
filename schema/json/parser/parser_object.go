@@ -3,6 +3,7 @@ package parser
 import (
 	"errors"
 	"fmt"
+	"mokapi/config/dynamic"
 	"mokapi/schema/json/schema"
 	"mokapi/sortedmap"
 	"reflect"
@@ -79,12 +80,17 @@ func (p *Parser) parseStruct(v reflect.Value, s *schema.Schema) (*sortedmap.Link
 	for i := 0; i < v.NumField(); i++ {
 		ft := t.Field(i)
 		name := unTitle(ft.Name)
+		tag := ft.Tag.Get("json")
+		if len(tag) > 0 {
+			name = strings.Split(tag, ",")[0]
+		}
 		val := v.Field(i)
 
 		if prop, ok := s.Properties.Get(name); ok || s.IsFreeForm() {
 			d, err := p.Parse(val.Interface(), prop)
 			if err != nil {
-				return nil, fmt.Errorf("encode property '%v' failed: %w", name, err)
+				return nil, dynamic.NewSemanticError(err, name)
+				//return nil, fmt.Errorf("encode property '%v' failed: %w", name, err)
 			}
 			obj.Set(name, d)
 		}
@@ -192,6 +198,8 @@ func validateObject(i interface{}, s *schema.Schema) error {
 		for _, p := range s.Required {
 			if e := v.MapIndex(reflect.ValueOf(p)); !e.IsValid() {
 				return fmt.Errorf("missing required field '%v', expected %v", p, s)
+			} else if e.Kind() == reflect.String && e.Len() == 0 {
+				return fmt.Errorf("missing required field '%v', expected %v", p, s)
 			}
 		}
 	} else if m, ok := i.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
@@ -217,7 +225,9 @@ func validateObject(i interface{}, s *schema.Schema) error {
 		}
 
 		for _, p := range s.Required {
-			if _, found := m.Get(p); !found {
+			if val, found := m.Get(p); !found {
+				return fmt.Errorf("missing required field '%v', expected %v", p, s)
+			} else if str, ok := val.(string); ok && str == "" {
 				return fmt.Errorf("missing required field '%v', expected %v", p, s)
 			}
 		}

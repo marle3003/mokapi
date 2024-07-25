@@ -60,17 +60,35 @@ func (p *Parser) ParseInteger(i interface{}, s *schema.Schema) (n int64, err err
 }
 
 func validateInt64(n int64, s *schema.Schema) error {
-	if s.ExclusiveMinimum != nil {
-		if n <= int64(*s.ExclusiveMinimum) {
-			return fmt.Errorf("%v is lower or equal as the required minimum %v, expected %v", n, *s.ExclusiveMinimum, s)
+	if s.ExclusiveMinimum != nil && (s.ExclusiveMinimum.IsA() || s.ExclusiveMinimum.B) {
+		var min int64
+		if s.ExclusiveMinimum.IsA() {
+			min = int64(s.ExclusiveMinimum.A)
+		} else {
+			if s.Minimum == nil {
+				return fmt.Errorf("exclusiveMinimum is set to true but no minimum value is specified")
+			}
+			min = int64(*s.Minimum)
+		}
+		if n <= min {
+			return fmt.Errorf("%v is lower or equal as the required minimum %v, expected %v", n, min, s)
 		}
 	} else if s.Minimum != nil && n < int64(*s.Minimum) {
 		return fmt.Errorf("%v is lower as the required minimum %v, expected %v", n, *s.Minimum, s)
 	}
 
-	if s.ExclusiveMaximum != nil {
-		if n >= int64(*s.ExclusiveMaximum) {
-			return fmt.Errorf("%v is greater or equal as the required maximum %v, expected %v", n, *s.ExclusiveMaximum, s)
+	if s.ExclusiveMaximum != nil && (s.ExclusiveMaximum.IsA() || s.ExclusiveMaximum.B) {
+		var max int64
+		if s.ExclusiveMaximum.IsA() {
+			max = int64(s.ExclusiveMaximum.A)
+		} else {
+			if s.Maximum == nil {
+				return fmt.Errorf("exclusiveMaximum is set to true but no maximum value is specified")
+			}
+			max = int64(*s.Maximum)
+		}
+		if n >= max {
+			return fmt.Errorf("%v is greater or equal as the required maximum %v, expected %v", n, max, s)
 		}
 	} else if s.Maximum != nil && n > int64(*s.Maximum) {
 		return fmt.Errorf("%v is greater as the required maximum %v, expected %v", n, *s.Maximum, s)

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"mokapi/schema/json/schema"
+	"mokapi/version"
 	"net"
 	"net/mail"
 	"reflect"
@@ -13,9 +14,14 @@ import (
 )
 
 func (p *Parser) ParseString(data interface{}, schema *schema.Schema) (interface{}, error) {
-	s, ok := data.(string)
-	if !ok {
-		if schema.IsNullable() {
+	var s string
+	switch v := data.(type) {
+	case string:
+		s = v
+	case version.Version:
+		s = v.String()
+	default:
+		if v == nil && schema.IsNullable() {
 			return nil, nil
 		}
 		return nil, fmt.Errorf("parse %v failed, expected %v", data, schema)

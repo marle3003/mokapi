@@ -64,7 +64,7 @@ func ToJsonSchema(v goja.Value, rt *goja.Runtime) (*jsonSchema.Ref, error) {
 				return nil, fmt.Errorf("unexpected type for 'exclusiveMaximum': %v", util.JsType(ex.Export()))
 			}
 			f := obj.Get(k).ToFloat()
-			s.ExclusiveMaximum = &f
+			s.ExclusiveMaximum = jsonSchema.NewUnionTypeA[float64, bool](f)
 		case "minimum":
 			f := obj.Get(k).ToFloat()
 			s.Minimum = &f
@@ -75,7 +75,7 @@ func ToJsonSchema(v goja.Value, rt *goja.Runtime) (*jsonSchema.Ref, error) {
 				return nil, fmt.Errorf("unexpected type for 'exclusiveMinimum': %v", util.JsType(ex.Export()))
 			}
 			f := ex.ToFloat()
-			s.ExclusiveMinimum = &f
+			s.ExclusiveMinimum = jsonSchema.NewUnionTypeA[float64, bool](f)
 		case "maxLength":
 			i := int(obj.Get(k).ToInteger())
 			s.MaxLength = &i

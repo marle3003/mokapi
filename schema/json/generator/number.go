@@ -258,10 +258,18 @@ func getRangeWithDefault(s *schema.Schema, min, max float64) (float64, float64) 
 		max = *s.Maximum
 	}
 	if s.ExclusiveMinimum != nil {
-		min = *s.ExclusiveMinimum + smallestFloat
+		if s.ExclusiveMinimum.IsA() {
+			min = s.ExclusiveMinimum.A + smallestFloat
+		} else {
+			min = *s.Minimum + smallestFloat
+		}
 	}
 	if s.ExclusiveMaximum != nil {
-		max = *s.ExclusiveMaximum - smallestFloat
+		if s.ExclusiveMaximum.IsA() {
+			max = s.ExclusiveMaximum.A - smallestFloat
+		} else {
+			max = *s.Maximum - smallestFloat
+		}
 	}
 
 	return min, max
@@ -279,13 +287,22 @@ func newInteger(s *schema.Schema, min, max int) (interface{}, error) {
 		min = int(*s.Minimum)
 	}
 	if s.ExclusiveMinimum != nil {
-		min = int(*s.ExclusiveMinimum) + 1
+		if s.ExclusiveMinimum.IsA() {
+			min = int(s.ExclusiveMinimum.A) + 1
+		} else {
+			min = int(*s.Minimum) + 1
+		}
 	}
 	if s.Maximum != nil {
 		max = int(*s.Maximum)
 	}
 	if s.ExclusiveMaximum != nil {
-		max = int(*s.ExclusiveMaximum) - 1
+		if s.ExclusiveMaximum.IsA() {
+			max = int(s.ExclusiveMaximum.A) - 1
+		} else {
+			max = int(*s.Maximum) - 1
+		}
+
 	}
 
 	return gofakeit.Number(min, max), nil

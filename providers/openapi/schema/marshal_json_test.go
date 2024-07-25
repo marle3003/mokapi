@@ -209,7 +209,7 @@ func TestRef_Marshal_Json_Object(t *testing.T) {
 				Value string
 			}{"foo", "foo"},
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "encoding data to 'application/json' failed: encode property 'value' failed: parse 'foo' failed, expected schema type=integer")
+				require.EqualError(t, err, "encoding data to 'application/json' failed: semantic error at value: parse 'foo' failed, expected schema type=integer")
 				require.Len(t, result, 0)
 			},
 		},

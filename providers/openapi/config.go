@@ -1,20 +1,42 @@
 package openapi
 
 import (
+	_ "embed"
 	"errors"
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
+	"mokapi/feature"
 	"mokapi/media"
+	"mokapi/schema/json/parser"
+	jsonSchema "mokapi/schema/json/schema"
 	"mokapi/version"
 	"net/http"
 )
 
-var supportedVersions = []version.Version{
-	version.New("3.0.0"),
-	version.New("3.0.1"),
-	version.New("3.0.2"),
-	version.New("3.0.3"),
-	version.New("3.1.0"),
+var (
+	supportedVersions = []version.Version{
+		version.New("3.0.0"),
+		version.New("3.0.1"),
+		version.New("3.0.2"),
+		version.New("3.0.3"),
+		version.New("3.1.0"),
+	}
+
+	//go:embed schema.yaml
+	validation_schema_raw []byte
+	validation_schema     *jsonSchema.Ref
+)
+
+func init() {
+	err := yaml.Unmarshal(validation_schema_raw, &validation_schema)
+	if err != nil {
+		panic(err)
+	}
+	err = validation_schema.Parse(&dynamic.Config{Data: validation_schema}, nil)
+	if err != nil {
+		panic(err)
+	}
 }
 
 type Config struct {
@@ -49,19 +71,28 @@ func IsHttpStatusSuccess(status int) bool {
 		status == http.StatusIMUsed
 }
 
-func (c *Config) Validate() error {
+func (c *Config) Validate() (err error) {
 	if c.OpenApi.IsEmpty() {
-		return fmt.Errorf("no OpenApi version defined")
-	}
-	if !c.OpenApi.IsSupported(supportedVersions...) {
-		return fmt.Errorf("not supported version: %v", &c.OpenApi)
+		err = errors.Join(err, fmt.Errorf("no OpenApi version defined"))
+	} else {
+		if !c.OpenApi.IsSupported(supportedVersions...) {
+			err = errors.Join(err, fmt.Errorf("not supported version: %v", &c.OpenApi))
+		}
 	}
 
 	if len(c.Info.Name) == 0 {
-		return errors.New("an openapi title is required")
+		err = errors.Join(err, errors.New("an openapi title is required"))
 	}
 
-	return nil
+	if feature.IsEnabled("openapi-validation") {
+		p := &parser.Parser{}
+		_, errParse := p.Parse(c, validation_schema)
+		if errParse != nil {
+			err = errors.Join(err, errParse)
+		}
+	}
+
+	return err
 }
 
 func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {

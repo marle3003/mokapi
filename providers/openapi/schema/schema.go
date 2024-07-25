@@ -27,11 +27,11 @@ type Schema struct {
 	MaxLength *int   `yaml:"maxLength" json:"maxLength"`
 
 	// Numbers
-	MultipleOf       *float64                  `yaml:"multipleOf,omitempty" json:"multipleOf,omitempty"`
-	Minimum          *float64                  `yaml:"minimum,omitempty" json:"minimum,omitempty"`
-	Maximum          *float64                  `yaml:"maximum,omitempty" json:"maximum,omitempty"`
-	ExclusiveMinimum *UnionType[float64, bool] `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
-	ExclusiveMaximum *UnionType[float64, bool] `yaml:"exclusiveMaximum,omitempty" json:"exclusiveMaximum,omitempty"`
+	MultipleOf       *float64                         `yaml:"multipleOf,omitempty" json:"multipleOf,omitempty"`
+	Minimum          *float64                         `yaml:"minimum,omitempty" json:"minimum,omitempty"`
+	Maximum          *float64                         `yaml:"maximum,omitempty" json:"maximum,omitempty"`
+	ExclusiveMinimum *schema.UnionType[float64, bool] `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
+	ExclusiveMaximum *schema.UnionType[float64, bool] `yaml:"exclusiveMaximum,omitempty" json:"exclusiveMaximum,omitempty"`
 
 	// Array
 	Items        *Ref `yaml:"items" json:"items"`

@@ -13,6 +13,7 @@ import (
 	"mokapi/config/dynamic/mail"
 	"mokapi/config/static"
 	"mokapi/engine"
+	"mokapi/feature"
 	"mokapi/providers/openapi"
 	"mokapi/providers/swagger"
 	"mokapi/runtime"
@@ -48,6 +49,8 @@ func main() {
 		writeSkeleton(cfg)
 		return
 	}
+
+	feature.Enable(cfg.Features)
 
 	fmt.Printf(logo, version.BuildVersion, strings.Repeat(" ", 17-len(versionString)))
 

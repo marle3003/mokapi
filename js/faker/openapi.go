@@ -5,6 +5,7 @@ import (
 	"github.com/dop251/goja"
 	"mokapi/js/util"
 	"mokapi/providers/openapi/schema"
+	jsonSchema "mokapi/schema/json/schema"
 	"reflect"
 )
 
@@ -87,9 +88,9 @@ func ToOpenAPISchema(v goja.Value, rt *goja.Runtime) (*schema.Ref, error) {
 			val := obj.Get(k)
 			kind := val.ExportType().Kind()
 			if kind == reflect.Float64 || kind == reflect.Int64 {
-				s.ExclusiveMaximum = schema.NewUnionTypeA[float64, bool](val.ToFloat())
+				s.ExclusiveMaximum = jsonSchema.NewUnionTypeA[float64, bool](val.ToFloat())
 			} else if kind == reflect.Bool {
-				s.ExclusiveMaximum = schema.NewUnionTypeB[float64, bool](val.ToBoolean())
+				s.ExclusiveMaximum = jsonSchema.NewUnionTypeB[float64, bool](val.ToBoolean())
 			} else {
 				return nil, fmt.Errorf("unexpected type for 'exclusiveMaximum': %v", util.JsType(val.Export()))
 			}
@@ -100,9 +101,9 @@ func ToOpenAPISchema(v goja.Value, rt *goja.Runtime) (*schema.Ref, error) {
 			val := obj.Get(k)
 			kind := val.ExportType().Kind()
 			if kind == reflect.Float64 || kind == reflect.Int64 {
-				s.ExclusiveMinimum = schema.NewUnionTypeA[float64, bool](val.ToFloat())
+				s.ExclusiveMinimum = jsonSchema.NewUnionTypeA[float64, bool](val.ToFloat())
 			} else if kind == reflect.Bool {
-				s.ExclusiveMinimum = schema.NewUnionTypeB[float64, bool](val.ToBoolean())
+				s.ExclusiveMinimum = jsonSchema.NewUnionTypeB[float64, bool](val.ToBoolean())
 			} else {
 				return nil, fmt.Errorf("unexpected type for 'exclusiveMinimum': %v", util.JsType(val.Export()))
 			}

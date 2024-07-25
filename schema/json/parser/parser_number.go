@@ -39,16 +39,34 @@ func (p *Parser) ParseNumber(i interface{}, s *schema.Schema) (f float64, err er
 
 func validateFloat64(n float64, s *schema.Schema) error {
 	if s.ExclusiveMinimum != nil {
-		if n <= *s.ExclusiveMinimum {
+		var min float64
+		if s.ExclusiveMinimum.IsA() && (s.ExclusiveMinimum.IsA() || s.ExclusiveMinimum.B) {
+			min = s.ExclusiveMinimum.A
+		} else {
+			if s.Minimum == nil {
+				return fmt.Errorf("exclusiveMinimum is set to true but no minimum value is specified")
+			}
+			min = *s.Minimum
+		}
+		if n <= min {
 			return fmt.Errorf("%v is lower or equal as the required minimum %v, expected %v", n, *s.ExclusiveMinimum, s)
 		}
 	} else if s.Minimum != nil && n < *s.Minimum {
 		return fmt.Errorf("%v is lower as the required minimum %v, expected %v", n, *s.Minimum, s)
 	}
 
-	if s.ExclusiveMaximum != nil {
-		if n >= *s.ExclusiveMaximum {
-			return fmt.Errorf("%v is greater or equal as the required maximum %v, expected %v", n, *s.ExclusiveMaximum, s)
+	if s.ExclusiveMaximum != nil && (s.ExclusiveMaximum.IsA() || s.ExclusiveMaximum.B) {
+		var max float64
+		if s.ExclusiveMaximum.IsA() {
+			max = s.ExclusiveMaximum.A
+		} else {
+			if s.Maximum == nil {
+				return fmt.Errorf("exclusiveMaximum is set to true but no maximum value is specified")
+			}
+			max = *s.Maximum
+		}
+		if n >= max {
+			return fmt.Errorf("%v is greater or equal as the required maximum %v, expected %v", n, max, s)
 		}
 	} else if s.Maximum != nil && n > *s.Maximum {
 		return fmt.Errorf("%v is greater as the required maximum %v, expected %v", n, *s.Maximum, s)

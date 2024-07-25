@@ -497,6 +497,14 @@ func TestFileProvider(t *testing.T) {
 				require.Contains(t, cfg.Providers.File.SkipPrefix, "bar")
 			},
 		},
+		{
+			name: "feature foo",
+			args: []string{"--feature", "foo"},
+			test: func(t *testing.T, cfg *static.Config) {
+				require.Len(t, cfg.Features, 1)
+				require.Equal(t, "foo", cfg.Features[0])
+			},
+		},
 	}
 
 	for _, tc := range testcases {
