@@ -40,7 +40,7 @@ function showImage(target: EventTarget | null) {
               <span class="badge">SMTP</span>
             </div>
             <h1>Easy and flexible API mocking</h1>
-            <p class="description">Mock your APIs in Seconds - No registration, <b>free</b> and <b>open-source</b></p>
+            <p class="description">Mock your APIs in Seconds - No registration, no data in the cloud, <b>free</b> and <b>open-source</b></p>
             <p class="d-none d-md-block">
               <router-link :to="{ path: '/docs/Guides' }">
                 <button type="button" class="btn btn-outline-primary">Guides</button>
@@ -69,6 +69,7 @@ function showImage(target: EventTarget | null) {
     <section>
       <div class="container">
         <h2>Mock your APIs with one tool</h2>
+        <p class="text-center mb-5">Mokapi is a mocking tool for Agile, DevOps and Continuous Delivery teams to <br /><b>prototype</b>, <b>test</b> and <b>demonstrate</b> APIs in software solutions using realistic data and scenarios.</p>
         <div class="card-group">
           <div class="card">
             <router-link :to="{path: '/http'}">
