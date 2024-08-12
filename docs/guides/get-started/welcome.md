@@ -19,7 +19,7 @@ reduces the risk of bugs or errors in production.
 
 - **Multiple Protocol support**
 
-  Mokapi can mock APIs for [HTTP(S)](/docs/guides/http/overview.md), [Apache Kafka](/docs/guides/kafka/overview.md), [SMTP](/docs/guides/smtp/smtp.md) and [LDAP](/docs/guides/ldap/ldap.md)
+  Mokapi can mock APIs for [HTTP(S)](/docs/guides/http/overview.md), [Apache Kafka](/docs/guides/kafka/overview.md), [SMTP](/docs/guides/smtp/overview.md) and [LDAP](/docs/guides/ldap/overview.md)
   With Mokapi HTTP you can simulate any REST or SOAP API.
 
 - **Everything as Code**
