@@ -52,5 +52,5 @@ A list of available environment variables can be found [here](/docs/configuratio
 
 ## Dynamic Configuration
 
-Mokapi reads dynamic configuration and script using [providers](/docs/configuration/providers/overview.md).
+Mokapi reads dynamic configuration and script using [providers](/docs/configuration/dynamic/overview.md).
 

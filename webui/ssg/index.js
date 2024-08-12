@@ -33,6 +33,17 @@ const Server = require('./server');
        }
     });
 
+    const pageFound = await page.evaluate(async () => {
+      const header = document.querySelector('h1')
+      if (header.innerText === `Sorry, this page isn't available`) {
+        return false
+      }
+      return true
+    })
+    if (!pageFound) {
+      throw new Error(`page ${url.href} not found`)
+    }
+
     const p = path.join('../dist', url.pathname)
     if (!fs.existsSync(path.dirname(p))){
       fs.mkdirSync(path.dirname(p), { recursive: true });
@@ -51,8 +62,15 @@ const Server = require('./server');
 
     //const promises = [];
     for (const u of links) {
+      try {
       //promises.push(crawl(u))
       await crawl(u)
+      } catch (err) {
+        if (err.message && err.message.startsWith('page ')) { 
+          throw new Error(`crawl link on page ${url.href} failed: ${err}`)
+        }
+        throw err
+      }
     }
     //await Promise.all(promises)
   }

@@ -3,7 +3,6 @@ import { onMounted, ref, inject  } from 'vue';
 import { useRoute } from 'vue-router';
 import { useMarkdown } from '@/composables/markdown'
 import { useMeta } from '@/composables/meta'
-import PageNotFound from './PageNotFound.vue';
 import Footer from '@/components/Footer.vue'
 import { Modal } from 'bootstrap'
 import { useFileResolver } from '@/composables/file-resolver';
@@ -18,7 +17,7 @@ const imageUrl = ref<string>()
 const imageDescription = ref<string>()
 
 const route = useRoute()
-const { resolve } = useFileResolver()
+const { resolve, isKnown } = useFileResolver()
 const { file, levels } = resolve(nav, route)
 
 let data
@@ -30,7 +29,7 @@ if (typeof file === 'string'){
   ({ content, metadata } = useMarkdown(data))
 } else {
   const entry = <DocEntry>file
-  if (entry.component) {
+  if (entry && entry.component) {
     // component must be initialized in main.ts
     component = entry.component
     metadata = entry
@@ -58,8 +57,12 @@ onMounted(() => {
       }
     }
   })
-  title = (metadata.title || levels[3] || levels[2] || levels[1] || levels[0]) + ' | Mokapi ' + levels[0]
-  useMeta(title, metadata.description, getCanonicalUrl(levels))
+  if (metadata) {
+    title = (metadata.title || levels[3] || levels[2] || levels[1] || levels[0]) + ' | Mokapi ' + levels[0]
+    useMeta(title, metadata.description, getCanonicalUrl(levels))
+  } else{
+    title = "Page not found | mokapi.io"
+  }
   dialog.value = new Modal('#imageDialog', {})
 })
 function toggleSidebar() {
@@ -101,7 +104,16 @@ function showImage(target: EventTarget | null) {
         <div style="flex: 1;max-width:760px;margin-bottom: 3rem;">
           <div v-if="content" v-html="content" class="content" @click="showImage($event.target)"></div>
           <div v-else-if="component" class="content"><component :is="component" /></div>
-          <page-not-found v-else />
+          <div v-else class="content">
+            <h1>Sorry, this page isn't available</h1>
+            <p>The link you followed may be broken, or the page may have been removed.</p>
+            <ul>
+              <li v-if="levels.length > 0 && isKnown(nav, levels[0])">Go back to <a :href="levels[0]">{{ levels[0] }}</a></li>
+              <li>Go back to <a href="/docs">Welcome to Mokapi guides</a></li>
+              <li>Go back to <a href="/">mokapi.io.</a></li>
+            </ul>
+          </div>
+          <!-- <page-not-found v-else /> -->
         </div>
       </div>
     </div>

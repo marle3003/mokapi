@@ -56,11 +56,11 @@
       "Dynamic": {
         "expanded": true,
         "items": {
-          "Overview": "configuration/providers/overview.md",
-          "File": "configuration/providers/file.md",
-          "HTTP": "configuration/providers/http.md",
-          "GIT": "configuration/providers/git.md",
-          "NPM": "configuration/providers/npm.md"
+          "Overview": "configuration/dynamic/overview.md",
+          "File": "configuration/dynamic/file.md",
+          "HTTP": "configuration/dynamic/http.md",
+          "GIT": "configuration/dynamic/git.md",
+          "NPM": "configuration/dynamic/npm.md"
         }
       },
       "Reference": "configuration/reference.md"
