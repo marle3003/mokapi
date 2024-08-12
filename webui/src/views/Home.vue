@@ -40,7 +40,7 @@ function showImage(target: EventTarget | null) {
               <span class="badge">SMTP</span>
             </div>
             <h1>Easy and flexible API mocking</h1>
-            <p class="description">Mock your APIs in Seconds - No registration, <b>free</b> and <b>open-source</b></p>
+            <p class="description">Mock your APIs in Seconds - No registration, no data in the cloud, <b>free</b> and <b>open-source</b></p>
             <p class="d-none d-md-block">
               <router-link :to="{ path: '/docs/Guides' }">
                 <button type="button" class="btn btn-outline-primary">Guides</button>
@@ -51,7 +51,7 @@ function showImage(target: EventTarget | null) {
             </p>
           </div>
           <div class="col-12 col-lg-5">
-            <img src="/logo.svg" alt="mokapi" class="mx-auto d-block" />
+            <img src="/logo.svg" alt="Mokapi logo - Mockapi became an Okapi" class="mx-auto d-block" />
           </div>
           <div class="col-12 d-block d-md-none">
             <p style="margin-top: 2rem;">
@@ -69,6 +69,7 @@ function showImage(target: EventTarget | null) {
     <section>
       <div class="container">
         <h2>Mock your APIs with one tool</h2>
+        <p class="text-center mb-5">Mokapi is a mocking tool for Agile, DevOps and Continuous Delivery teams to <br /><b>prototype</b>, <b>test</b> and <b>demonstrate</b> APIs in software solutions using realistic data and scenarios.</p>
         <div class="card-group">
           <div class="card">
             <router-link :to="{path: '/http'}">
@@ -122,7 +123,7 @@ function showImage(target: EventTarget | null) {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
-            <img src="/controleverything.png" @click="showImage($event.target)" alt="Control in Mokapi everything with JavaScript" />
+            <img src="/controleverything.png" @click="showImage($event.target)" alt="Script shows how to control everything with JavaScript in Mokapi" />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
@@ -139,7 +140,7 @@ function showImage(target: EventTarget | null) {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
-            <img src="/anywhere.png" @click="showImage($event.target)" alt="Run Mokapi in Docker Container or in NodeJS with powerful configuration options" />
+            <img src="/anywhere.png" @click="showImage($event.target)" alt="Shows logs in a console containing Docker and NodeJS logos where Mokapi can be run." />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5mb-lg-5 mt-lg-5">
@@ -153,7 +154,7 @@ function showImage(target: EventTarget | null) {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
-            <img src="/everythingcode.png" @click="showImage($event.target)" alt="Mokapi uses everything as code approach" />
+            <img src="/everythingcode.png" @click="showImage($event.target)" alt="Shows scripts ans configuration file to demostrate feature Everything as Code." />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
@@ -161,8 +162,8 @@ function showImage(target: EventTarget | null) {
             <div class="text-lg-start text-center">
               <h2>Powerful Random Data Generator</h2>
               <p>
-                Mokapi has a powerful random data generator that can produce a wide range of meaningful fake data for your APIs. 
-                Customize it to fit your needs.
+                Mokapi uses a decision tree to automatically create a wide range of meaningful fake data for your APIs.
+                This tree can easily be extended to meet your own specific requirements.
               </p>
               <router-link :to="{ path: '/docs/guides/get-started/test-data' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Explore Data Generator</button>
@@ -170,21 +171,21 @@ function showImage(target: EventTarget | null) {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 order-lg-2">
-            <img src="/faker-tree.png" @click="showImage($event.target)" alt="Mokapi provides a powerful data generator"/>
+            <img src="/faker-tree.png" @click="showImage($event.target)" alt="Shows a section of Mokapi's Decision Tree to generate useful random data."/>
           </div>
         </div>
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
               <h2>Patch Configuration</h2>
-              <p>Patch configuration changes for mocking needs, rather than changing the original contract</p>
+              <p>Mokapi supports configuration patch files so that adjustments required for the mock do not have to be made to the original contract.. This makes updating the original contract a breeze.</p>
               <router-link :to="{ path: '/docs/configuration/configuration/patching' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Discover Patching</button>
               </router-link>
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 order-lg-1">
-            <img src="/patching.png" @click="showImage($event.target)" alt="Patching allows more flexibility in mocking APIs" />
+            <img src="/patching.png" @click="showImage($event.target)" alt="Shows an example of patching that allows more flexibility in mocking APIs" />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
@@ -214,7 +215,7 @@ function showImage(target: EventTarget | null) {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
-            <img src="/dashboard.png" @click="showImage($event.target)" alt="Analyzing data in real-time using the powerful dashboard" />
+            <img src="/dashboard.png" @click="showImage($event.target)" alt="Shows a screenshot of Mokapi's dashboard with an overview of all mocked services." />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5">
