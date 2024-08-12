@@ -13,9 +13,9 @@ Make a GET request
 
 ## Returns
 
-| Type     | Description                                                     |
-|----------|-----------------------------------------------------------------|
-| Response | [Response](/docs/javascript-api/mokapi-http/response.md) object |
+| Type     | Description                                                         |
+|----------|---------------------------------------------------------------------|
+| Response | [Response](/docs/javascript-api/mokapi-http/httpresponse.md) object |
 
 ## Example
 

@@ -148,7 +148,7 @@ function showImage(target: EventTarget | null) {
             <div class="text-lg-start text-center">
               <h2>Everything as Code</h2>
               <p>Get all benefits of everything as code - Reusing, version control, consistency and integrate mocks with your CI/CD.</p>
-              <router-link :to="{ path: '/docs/configuration/configuration/overview' }">
+              <router-link :to="{ path: '/docs/configuration' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Learn more</button>
               </router-link>
             </div>
