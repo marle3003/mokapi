@@ -178,7 +178,7 @@ function showImage(target: EventTarget | null) {
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
               <h2>Patch Configuration</h2>
-              <p>Mokapi supports configuration patch files so that adjustments required for the mock do not have to be made to the original contract.. This makes updating the original contract a breeze.</p>
+              <p>Mokapi supports configuration patch files so that adjustments required for the mock do not have to be made to the original contract. This makes updating the original contract a breeze.</p>
               <router-link :to="{ path: '/docs/configuration/configuration/patching' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Discover Patching</button>
               </router-link>
@@ -208,7 +208,7 @@ function showImage(target: EventTarget | null) {
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
               <h2>See what's going on</h2>
-              <p>Quickly analyze and inspect all requests and responses in the dashboard to gather insights on how your mock APIs are used.</p>
+              <p>Quickly analyze and inspect all requests and responses in the dashboard to gather insights on how your mocked APIs are used.</p>
               <router-link :to="{ path: '/docs/guides/get-started/dashboard' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Mokapi's Dashboard</button>
               </router-link>

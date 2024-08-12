@@ -203,6 +203,10 @@ function showImage(target: EventTarget | null) {
   margin-bottom: 1rem;
 }
 
+.content p {
+  margin-bottom: 0.75rem;
+}
+
 .content a {
   color: var(--color-doc-link);
 }
