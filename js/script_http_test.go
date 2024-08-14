@@ -46,7 +46,7 @@ func TestScript_Http_Get(t *testing.T) {
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
-				r.Equal(t, "bar", host.HttpClientTest.LastRequest.Header.Get("foo"))
+				r.Equal(t, []string{"bar"}, host.HttpClientTest.LastRequest.Header["foo"])
 			},
 		},
 		{
@@ -61,7 +61,7 @@ func TestScript_Http_Get(t *testing.T) {
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
-				r.Equal(t, []string{"hello", "world"}, host.HttpClientTest.LastRequest.Header.Values("foo"))
+				r.Equal(t, []string{"hello", "world"}, host.HttpClientTest.LastRequest.Header["foo"])
 			},
 		},
 		{
