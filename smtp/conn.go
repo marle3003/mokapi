@@ -260,5 +260,5 @@ func (c *conn) reset() {
 }
 
 func clientDisconnected(err error) bool {
-	return err == io.EOF || errors.Is(err, net.ErrClosed) || errors.Is(err, syscall.ECONNRESET) || errors.Is(err, syscall.WSAECONNRESET)
+	return err == io.EOF || errors.Is(err, net.ErrClosed) || errors.Is(err, syscall.ECONNRESET)
 }
