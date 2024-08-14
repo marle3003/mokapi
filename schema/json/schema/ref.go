@@ -2,6 +2,8 @@ package schema
 
 import (
 	"fmt"
+	"gopkg.in/yaml.v3"
+	"mokapi/config/dynamic"
 	"mokapi/schema/json/ref"
 )
 
@@ -67,6 +69,28 @@ func (r *Ref) String() string {
 	return r.Value.String()
 }
 
+func (r *Ref) UnmarshalYAML(node *yaml.Node) error {
+	return r.UnmarshalYaml(node, &r.Value)
+}
+
 func (r *Ref) UnmarshalJSON(b []byte) error {
 	return r.UnmarshalJson(b, &r.Value)
+}
+
+func (r *Ref) Parse(config *dynamic.Config, reader dynamic.Reader) error {
+	if r == nil {
+		return nil
+	}
+	if len(r.Ref) > 0 {
+		if err := dynamic.Resolve(r.Ref, &r.Value, config, reader); err != nil {
+			return fmt.Errorf("parse schema failed: %w", err)
+		}
+		return nil
+	}
+
+	if r.Value == nil {
+		return nil
+	}
+
+	return r.Value.Parse(config, reader)
 }

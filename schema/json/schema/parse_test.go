@@ -110,7 +110,7 @@ func TestSchema_Parse(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			err := tc.s.Parse()
+			err := tc.s.Validate()
 			tc.test(t, err)
 		})
 	}

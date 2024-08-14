@@ -47,10 +47,10 @@ func (p *Parser) ParseAny(s *schema.Schema, data interface{}) (interface{}, erro
 			result = o
 		} else {
 			for it := o.Iter(); it.Next(); {
-				_, propFound := any.Value.Properties.Get(it.Key())
+				prop := any.Value.Properties.Get(it.Key())
 				if _, found := result.Get(it.Key()); !found {
 					result.Set(it.Key(), it.Value())
-				} else if found && propFound {
+				} else if found && prop != nil {
 					// only overwrite value if prop is defined in schema
 					// to get best matching value
 					result.Set(it.Key(), it.Value())
