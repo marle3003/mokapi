@@ -51,7 +51,7 @@ function formatParam(label: any): string {
   <header>
     <nav class="navbar navbar-expand-md">
       <div class="container-fluid">
-        <a class="navbar-brand" href="./"><img src="/logo-header.svg" height="30" alt="mokapi"/></a>
+        <a class="navbar-brand" href="./"><img src="/logo-header.svg" height="30" alt="Mokapi home"/></a>
         <button id="hamburger_menu_button" class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>

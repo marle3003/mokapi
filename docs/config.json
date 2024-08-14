@@ -26,12 +26,12 @@
       },
       "LDAP": {
         "items": {
-          "Overview": "guides/ldap/ldap.md"
+          "Overview": "guides/ldap/overview.md"
         }
       },
       "SMTP": {
         "items": {
-          "Overview": "guides/smtp/smtp.md",
+          "Overview": "guides/smtp/overview.md",
           "Quick Start": "guides/smtp/quick-start.md",
           "Rules": "guides/smtp/rules.md"
         }
@@ -43,7 +43,7 @@
       "Configuration": {
         "expanded": true,
         "items": {
-          "Introduction": "configuration/configuration.md",
+          "Introduction": "configuration/introduction.md",
           "Patching": "configuration/patching.md"
         }
       },

@@ -52,7 +52,7 @@ function showImage(target: EventTarget | null) {
             <h1>End-to-end email testing for a smooth email experience</h1>
             <p class="description">Test SMTP emails safely and no risk of spamming mailboxes</p>
             <p class="d-none d-md-block">
-              <router-link :to="{ path: '/docs/Guides' }">
+              <router-link :to="{ path: '/docs/guides' }">
                 <button type="button" class="btn btn-outline-primary">Guides</button>
               </router-link>
               <router-link :to="{ path: '/docs/examples' }">
@@ -67,7 +67,7 @@ function showImage(target: EventTarget | null) {
           </div>
           <div class="col-12 d-block d-md-none">
             <p style="margin-top: 2rem;">
-                <router-link :to="{ path: '/docs/Guides' }">
+                <router-link :to="{ path: '/docs/guides' }">
                   <button type="button" class="btn btn-outline-primary">Guides</button>
                 </router-link>
                 <router-link :to="{ path: '/docs/examples' }">
