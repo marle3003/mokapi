@@ -21,7 +21,7 @@ import { send } from 'mokapi/mail'
 export default function() {
     on('smtp', function(mail) {
         mail.to = [{address: 'test@foo.bar'}]
-        send('foo.bar', mail)
+        send('smtp://foo.bar:25', mail)
     })
 }
 `

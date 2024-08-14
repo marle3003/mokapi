@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"github.com/dop251/goja"
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	"mokapi/engine/common"
 	"mokapi/smtp"
+	"net"
 	"net/http"
 	"net/mail"
 	netsmtp "net/smtp"
@@ -59,7 +61,7 @@ func Require(vm *goja.Runtime, module *goja.Object) {
 	obj.Set("send", f.Send)
 }
 
-func (m *Module) Send(addr string, msg *Mail) {
+func (m *Module) Send(addr string, msg *Mail, auth *Auth) {
 	var body bytes.Buffer
 	w := textproto.NewWriter(bufio.NewWriter(&body))
 
@@ -153,7 +155,7 @@ func (m *Module) Send(addr string, msg *Mail) {
 		}
 	}
 
-	err = netsmtp.SendMail(host, nil, sender, to, body.Bytes())
+	err = netsmtp.SendMail(host, auth.getAuth(), sender, to, body.Bytes())
 	if err != nil {
 		toJsError(m.rt, err)
 	}
@@ -243,7 +245,11 @@ func toMailAddress(i interface{}) (*mail.Address, error) {
 			return nil, fmt.Errorf("expected address field in %v", i)
 		}
 		name := v["name"]
-		return &mail.Address{Name: fmt.Sprintf("%s", name), Address: fmt.Sprintf("%s", address)}, nil
+		addr := &mail.Address{Address: fmt.Sprintf("%s", address)}
+		if name != nil {
+			addr.Name = fmt.Sprintf("%s", name)
+		}
+		return addr, nil
 	case smtp.Address:
 		return &mail.Address{Name: v.Name, Address: v.Address}, nil
 	}
@@ -270,4 +276,25 @@ func toList(i interface{}) []interface{} {
 		}
 		return nil
 	}
+}
+
+func parseAddr(addr string) (string, error) {
+	u, err := url.Parse(addr)
+	host := addr
+	if err == nil && u.Scheme != "" {
+		host = u.Host
+	}
+	h, port, err := net.SplitHostPort(host)
+	if err != nil {
+		if errors.Is(err, &net.AddrError{}) {
+
+		}
+		return "", fmt.Errorf("unable to parse host '%v': %w", host, err)
+	}
+	if port == "" {
+		port = "25"
+	}
+	host = fmt.Sprintf("%v:%v", h, port)
+
+	return "", nil
 }
