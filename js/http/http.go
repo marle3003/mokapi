@@ -10,6 +10,7 @@ import (
 	"mokapi/js/eventloop"
 	"mokapi/media"
 	"net/http"
+	"strings"
 )
 
 type Client interface {
@@ -98,8 +99,21 @@ func (m *Module) Fetch(url string, v goja.Value) *goja.Promise {
 			}
 		}()
 
-		args := getFetchArgs(v)
-		res := m.doRequest(args.method, url, nil, nil)
+		method := http.MethodGet
+		var body interface{}
+		if v != nil {
+			obj := v.ToObject(m.rt)
+			vMethod := obj.Get("method")
+			if vMethod != nil {
+				method = strings.ToUpper(vMethod.String())
+			}
+			vBody := obj.Get("body")
+			if vBody != nil {
+				body = vBody.Export()
+			}
+		}
+
+		res := m.doRequest(method, url, body, v)
 		m.loop.Run(func(vm *goja.Runtime) {
 			resolve(res)
 		})
@@ -107,7 +121,11 @@ func (m *Module) Fetch(url string, v goja.Value) *goja.Promise {
 	return p
 }
 
-func (m *Module) doRequest(method, url string, body interface{}, args goja.Value) interface{} {
+func (m *Module) doRequest(method, url string, body interface{}, args goja.Value) Response {
+	if len(url) == 0 {
+		panic(m.rt.ToValue(fmt.Errorf("url cannot be empty")))
+	}
+
 	rArgs := &RequestArgs{Headers: make(map[string]interface{})}
 	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
 		params := args.ToObject(m.rt)
@@ -152,10 +170,10 @@ func createRequest(method, url string, body interface{}, args *RequestArgs) (*ht
 	for k, v := range args.Headers {
 		if a, ok := v.([]interface{}); ok {
 			for _, i := range a {
-				req.Header.Add(k, fmt.Sprintf("%v", i))
+				req.Header[k] = append(req.Header[k], fmt.Sprintf("%v", i))
 			}
 		} else {
-			req.Header.Set(k, fmt.Sprintf("%v", v))
+			req.Header[k] = []string{fmt.Sprintf("%v", v)}
 		}
 	}
 
@@ -195,7 +213,7 @@ func encode(i interface{}, args *RequestArgs) (io.Reader, error) {
 		}
 		return bytes.NewReader(b), nil
 	default:
-		return nil, fmt.Errorf("encoding %v is not supported", contentType)
+		return nil, fmt.Errorf("encoding request body failed: content type '%v' is not supported", contentType)
 	}
 }
 
@@ -203,11 +221,8 @@ func (r Response) Json() interface{} {
 	var i interface{}
 	err := json.Unmarshal([]byte(r.Body), &i)
 	if err != nil {
+		err = fmt.Errorf("response is not a valid JSON response: %w", err)
 		panic(r.rt.ToValue(err.Error()))
 	}
 	return i
-}
-
-func getFetchArgs(v goja.Value) fetchArgs {
-	return fetchArgs{method: http.MethodGet}
 }
