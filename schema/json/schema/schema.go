@@ -3,6 +3,7 @@ package schema
 import (
 	"encoding/json"
 	"fmt"
+	"mokapi/config/dynamic"
 )
 
 type Schema struct {
@@ -13,11 +14,11 @@ type Schema struct {
 	Const interface{}   `yaml:"const,omitempty" json:"const,omitempty"`
 
 	// Numbers
-	MultipleOf       *float64 `yaml:"multipleOf,omitempty" json:"multipleOf,omitempty"`
-	Maximum          *float64 `yaml:"maximum,omitempty" json:"maximum,omitempty"`
-	ExclusiveMaximum *float64 `yaml:"exclusiveMaximum,omitempty" json:"exclusiveMaximum,omitempty"`
-	Minimum          *float64 `yaml:"minimum,omitempty" json:"minimum,omitempty"`
-	ExclusiveMinimum *float64 `yaml:"exclusiveMinimum,omitempty" json:"ExclusiveMinimum,omitempty"`
+	MultipleOf       *float64                  `yaml:"multipleOf,omitempty" json:"multipleOf,omitempty"`
+	Maximum          *float64                  `yaml:"maximum,omitempty" json:"maximum,omitempty"`
+	ExclusiveMaximum *UnionType[float64, bool] `yaml:"exclusiveMaximum,omitempty" json:"exclusiveMaximum,omitempty"`
+	Minimum          *float64                  `yaml:"minimum,omitempty" json:"minimum,omitempty"`
+	ExclusiveMinimum *UnionType[float64, bool] `yaml:"exclusiveMinimum,omitempty" json:"ExclusiveMinimum,omitempty"`
 
 	// Strings
 	MaxLength *int   `yaml:"maxLength,omitempty" json:"maxLength,omitempty"`
@@ -120,18 +121,6 @@ func (s *Schema) Validate() error {
 	}
 	if s.ExclusiveMaximum != nil && !s.ExclusiveMaximum.IsA() && s.Maximum == nil {
 		return fmt.Errorf("exclusiveMaximum is set to true but no maximum value is specified")
-	}
-
-	if err := s.Properties.Parse(config, reader); err != nil {
-		return err
-	}
-
-	if err := s.AdditionalProperties.Parse(config, reader); err != nil {
-		return err
-	}
-
-	if err := s.Items.Parse(config, reader); err != nil {
-		return err
 	}
 
 	return nil
