@@ -29,3 +29,7 @@ func unmarshalRef(node *yaml.Node, ref *string, val interface{}) error {
 
 	return node.Decode(val)
 }
+
+func (r *ParameterRef) UnmarshalYAML(node *yaml.Node) error {
+	return r.Reference.UnmarshalYaml(node, &r.Value)
+}

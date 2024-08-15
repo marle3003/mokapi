@@ -57,7 +57,7 @@ func (p *Parser) parseLinkedMap(m *sortedmap.LinkedHashMap[string, interface{}],
 
 		var field *schema.Ref
 		if s.Properties != nil {
-			field, _ = s.Properties.Get(name)
+			field = s.Properties.Get(name)
 		}
 
 		if field != nil || s.IsFreeForm() {
@@ -86,7 +86,7 @@ func (p *Parser) parseStruct(v reflect.Value, s *schema.Schema) (*sortedmap.Link
 		}
 		val := v.Field(i)
 
-		if prop, ok := s.Properties.Get(name); ok || s.IsFreeForm() {
+		if prop := s.Properties.Get(name); prop != nil || s.IsFreeForm() {
 			d, err := p.Parse(val.Interface(), prop)
 			if err != nil {
 				return nil, dynamic.NewSemanticError(err, name)
@@ -153,8 +153,8 @@ func (p *Parser) parseMap(v reflect.Value, s *schema.Schema) (*sortedmap.LinkedH
 		var additionalProps []string
 		for _, vKey := range v.MapKeys() {
 			key := fmt.Sprintf("%v", vKey.Interface())
-			_, ok := s.Properties.Get(key)
-			if !ok {
+			prop := s.Properties.Get(key)
+			if prop == nil {
 				additionalProps = append(additionalProps, key)
 			}
 		}
@@ -165,11 +165,6 @@ func (p *Parser) parseMap(v reflect.Value, s *schema.Schema) (*sortedmap.LinkedH
 	}
 
 	return obj, err
-}
-
-func (p *Parser) getProperty(name string, props *schema.Schemas) (string, *schema.Ref) {
-	prop, _ := props.Get(name)
-	return name, prop
 }
 
 func validateObject(i interface{}, s *schema.Schema) error {
@@ -185,7 +180,7 @@ func validateObject(i interface{}, s *schema.Schema) error {
 			var add []string
 			for _, k := range v.MapKeys() {
 				name := k.Interface().(string)
-				if _, ok := s.Properties.Get(name); !ok {
+				if prop := s.Properties.Get(name); prop == nil {
 					add = append(add, name)
 				}
 			}
@@ -214,7 +209,7 @@ func validateObject(i interface{}, s *schema.Schema) error {
 			var add []string
 			for it := m.Iter(); it.Next(); {
 				name := it.Key()
-				if _, ok := s.Properties.Get(name); !ok {
+				if prop := s.Properties.Get(name); prop == nil {
 					add = append(add, name)
 				}
 			}

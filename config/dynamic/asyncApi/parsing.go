@@ -47,6 +47,12 @@ func (c *ChannelRef) Parse(config *dynamic.Config, reader dynamic.Reader) error 
 		}
 	}
 
+	for _, param := range c.Value.Parameters {
+		if err := param.Parse(config, reader); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -74,5 +80,24 @@ func (r *MessageRef) Parse(config *dynamic.Config, reader dynamic.Reader) error 
 		}
 	}
 
+	if r.Value.CorrelationId != nil {
+		if err := r.Value.CorrelationId.parse(config, reader); err != nil {
+			return err
+		}
+	}
+
+	for _, trait := range r.Value.Traits {
+		if err := trait.parse(config, reader); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (r *ParameterRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
+	if len(r.Ref) > 0 {
+		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
+	}
 	return nil
 }

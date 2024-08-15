@@ -3,6 +3,7 @@ package smtp
 import (
 	"context"
 	"crypto/tls"
+	"encoding/base64"
 	"fmt"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -151,21 +152,61 @@ func (c *conn) serveData(conn *textproto.Conn, param string) error {
 }
 
 func (c *conn) serveAuth(conn *textproto.Conn, param string) error {
-	r := &LoginRequest{ctx: c.ctx}
-	var err error
-
 	parts := strings.Fields(param)
-	if len(parts) == 1 {
+	switch strings.ToUpper(parts[0]) {
+	case "PLAIN":
+		if len(parts) != 2 {
+			return write(conn, 501, SyntaxError, "Expected plain message")
+		}
+		return c.servePlainAuth(conn, parts[1])
+	case "LOGIN":
+		msg := ""
+		if len(parts) == 2 {
+			msg = parts[1]
+		}
+		return c.serveLoginAuth(conn, msg)
+	default:
+		return write(conn, 504, SyntaxError, fmt.Sprintf("Command parameter %v is not supported", parts[0]))
+	}
+}
+
+func (c *conn) servePlainAuth(conn *textproto.Conn, message string) error {
+	b, err := base64.StdEncoding.DecodeString(message)
+	if err != nil {
+		return write(conn, 501, SyntaxError, "Expected plain credentials encoded base64")
+	}
+	data := strings.Split(string(b), "\x00")
+	if len(data) != 3 {
+		return write(conn, 501, SyntaxError, "invalid plain auth message format")
+	}
+
+	r := &LoginRequest{
+		ctx:      c.ctx,
+		Username: data[1],
+		Password: data[2],
+	}
+
+	c.server.Handler.ServeSMTP(&response{
+		conn: conn,
+	}, r)
+	return nil
+}
+
+func (c *conn) serveLoginAuth(conn *textproto.Conn, message string) error {
+	var err error
+	var username, password string
+
+	if message == "" {
 		err = write(conn, StatusAuthMethodAccepted, Undefined, "VXNlcm5hbWU6") // base64(Username:)
 		if err != nil {
 			return err
 		}
-		r.Username, err = conn.ReadLine()
+		username, err = conn.ReadLine()
 		if err != nil {
 			return err
 		}
 	} else {
-		r.Username = parts[1]
+		username = message
 	}
 
 	err = write(conn, StatusAuthMethodAccepted, Undefined, "UGFzc3dvcmQ6") // base64(Password:)
@@ -173,9 +214,24 @@ func (c *conn) serveAuth(conn *textproto.Conn, param string) error {
 		return err
 	}
 
-	r.Password, err = conn.ReadLine()
+	password, err = conn.ReadLine()
 	if err != nil {
 		return err
+	}
+
+	r := &LoginRequest{ctx: c.ctx}
+	var b []byte
+	b, err = base64.StdEncoding.DecodeString(username)
+	if err != nil {
+		return write(conn, 501, SyntaxError, "Expected username encoded base64")
+	} else {
+		r.Username = string(b)
+	}
+	b, err = base64.StdEncoding.DecodeString(password)
+	if err != nil {
+		return write(conn, 501, SyntaxError, "Expected password encoded base64")
+	} else {
+		r.Password = string(b)
 	}
 
 	c.server.Handler.ServeSMTP(&response{
@@ -204,5 +260,5 @@ func (c *conn) reset() {
 }
 
 func clientDisconnected(err error) bool {
-	return err == io.EOF || errors.Is(err, net.ErrClosed) || errors.Is(err, syscall.ECONNRESET)
+	return err == io.EOF || errors.Is(err, net.ErrClosed) || errors.Is(err, syscall.ECONNRESET) || errors.Is(err, syscall.WSAECONNRESET)
 }

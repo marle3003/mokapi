@@ -44,6 +44,7 @@ type Attachment struct {
 	ContentType string `json:"contentType"`
 	Disposition string `json:"disposition"`
 	Data        []byte `json:"data"`
+	ContentId   string `json:"contentId"`
 }
 
 func (m *Message) Size() int64 {
@@ -151,6 +152,43 @@ func (m *Message) readFrom(tc textproto.Reader) error {
 				m.Body = string(b)
 			}
 		}
+	// https://www.ietf.org/rfc/rfc2387.txt
+	case mime.Key() == "multipart/related":
+		r := multipart.NewReader(tc.DotReader(), mime.Parameters["boundary"])
+		m.ContentType = strings.Trim(mime.Parameters["type"], "\"")
+		first := true
+		for {
+			p, err := r.NextPart()
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+				log.Errorf("smtp: unable to read message part: %v", err)
+				break
+			}
+
+			if first {
+				partContentType := p.Header.Get("Content-Type")
+				partType := media.ParseContentType(partContentType)
+				root := media.ParseContentType(m.ContentType)
+				if !root.Match(partType) {
+					log.Warnf("received mail message multipart/related '%v' type parameter and root body part differ", m.Subject)
+				}
+				encoding := p.Header.Get("Content-Transfer-Encoding")
+				b, err := parse(p, encoding)
+				if err != nil {
+					return err
+				}
+				m.Body = string(b)
+			} else {
+				a, err := newAttachment(p)
+				if err != nil {
+					return err
+				}
+				m.Attachments = append(m.Attachments, a)
+			}
+			first = false
+		}
 	default:
 		b, err := parse(tc.DotReader(), m.Encoding)
 		if err != nil {
@@ -195,12 +233,19 @@ func newAttachment(part *multipart.Part) (Attachment, error) {
 	if err != nil {
 		return Attachment{}, err
 	}
-	return Attachment{
+	att := Attachment{
 		Name:        name,
 		ContentType: part.Header.Get("Content-Type"),
 		Disposition: part.Header.Get("Content-Disposition"),
 		Data:        b,
-	}, nil
+	}
+
+	contentId := part.Header.Get("Content-ID")
+	if len(contentId) > 0 {
+		att.ContentId = strings.Trim(contentId, "<>")
+	}
+
+	return att, nil
 }
 
 func newMessageId() string {

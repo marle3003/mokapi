@@ -2,6 +2,7 @@ package mail_test
 
 import (
 	"context"
+	"encoding/base64"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/mail"
 	"mokapi/engine/enginetest"
@@ -297,6 +298,8 @@ func sendData(t *testing.T, h smtp.Handler, ctx context.Context) *smtp.DataRespo
 
 func sendLogin(t *testing.T, h smtp.Handler, ctx context.Context, username, password string) *smtp.LoginResponse {
 	rr := smtptest.NewRecorder()
+	username = base64.StdEncoding.EncodeToString([]byte(username))
+	password = base64.StdEncoding.EncodeToString([]byte(password))
 	h.ServeSMTP(rr, smtp.NewLoginRequest(username, password, ctx))
 	return expectLoginResponse(t, rr.Response)
 }

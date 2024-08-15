@@ -5,7 +5,7 @@ description: Reads your dynamic configuration from an HTTP(S) source.
 # HTTP
 
 Reads your dynamic configuration from an HTTP(S) source. The HTTP provider downloads your
-configuration, which is then read by the [File Provider](/docs/configuration/providers/file.md).
+configuration, which is then read by the [File Provider](/docs/configuration/dynamic/file.md).
 By default, it uses HTTP proxies as directed by the environment variables HTTP_PROXY, HTTPS_PROXY
 and NO_PROXY (or the lowercase versions thereof).
 

@@ -7,7 +7,7 @@ description: Pull your dynamic configuration from a GIT repository.
 Pull your dynamic configuration from a GIT repository.
 
 ``` box=tip
-After cloning a GIT repository Mokapi uses the <a href="/docs/configuration/providers/file">File Provider</a> to read the
+After cloning a GIT repository Mokapi uses the <a href="/docs/configuration/dynamic/file">File Provider</a> to read the
 containing files.
 ```
 

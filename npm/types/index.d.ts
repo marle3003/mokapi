@@ -135,19 +135,19 @@ export interface HttpRequest {
     readonly url: Url;
 
     /** Body contains request body specified by OpenAPI request body. */
-    readonly body: JSONValue;
+    readonly body: any;
 
     /** Object contains path parameters specified by OpenAPI path parameters. */
-    readonly path: { [key: string]: JSONValue };
+    readonly path: { [key: string]: any };
 
     /** Object contains query parameters specified by OpenAPI query parameters. */
-    readonly query: { [key: string]: JSONValue };
+    readonly query: { [key: string]: any };
 
     /** Object contains header parameters specified by OpenAPI header parameters. */
-    readonly header: { [key: string]: JSONValue };
+    readonly header: { [key: string]: any };
 
     /** Object contains cookie parameters specified by OpenAPI cookie parameters. */
-    readonly cookie: { [key: string]: JSONValue };
+    readonly cookie: { [key: string]: any };
 
     /** Path value specified by the OpenAPI path */
     readonly key: string;

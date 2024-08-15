@@ -2,7 +2,7 @@
 title: Install Mokapi
 description: Mokapi has packages for Linux, Mac and Windows. You can also use Mokapi inside a Docker container, a standalone binary or using NPM package
 ---
-# Installation
+# Install Mokapi
 
 You can use Mokapi inside a Docker container, standalone binary
 or using npm package

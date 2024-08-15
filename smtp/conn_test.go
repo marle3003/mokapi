@@ -47,6 +47,9 @@ func TestServer(t *testing.T) {
 			name: "auth successfully",
 			handler: func(rw smtp.ResponseWriter, req smtp.Request) {
 				require.IsType(t, &smtp.LoginRequest{}, req)
+				login := req.(*smtp.LoginRequest)
+				require.Equal(t, "foo", login.Username)
+				require.Equal(t, "bar", login.Password)
 				rw.Write(&smtp.LoginResponse{Result: &smtp.AuthSucceeded})
 			},
 			test: func(t *testing.T, conn *textproto.Conn) {

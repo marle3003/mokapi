@@ -48,14 +48,14 @@ function writeObject(obj, base) {
     if (obj[key].hasOwnProperty("index")) {
       const stats = fs.statSync(path.join(docsPath, key.toLowerCase()))
       const url = 'https://mokapi.io/docs' + urlPath.replaceAll('/items', '')
-      const node = util.format(urlTemplate, url, '0.7', stats.mtime)
+      const node = util.format(urlTemplate, url, '0.7', stats.mtime.toISOString())
       xml += node
     } else if (typeof obj[key] !== "string") {
       xml += writeObject(obj[key], urlPath)
     } else{
       const stats = fs.statSync(path.join(docsPath, obj[key]))
       const url = 'https://mokapi.io/docs' + urlPath.replaceAll('/items', '')
-      const node = util.format(urlTemplate, url, '0.7', stats.mtime)
+      const node = util.format(urlTemplate, url, '0.7', stats.mtime.toISOString())
       xml += node
     }
   }
@@ -70,7 +70,7 @@ try {
   // write pages
   for (let page of pages) {
     const stats = fs.statSync(page.file)
-    content += util.format(urlTemplate, page.url, '1.0', stats.mtime)
+    content += util.format(urlTemplate, page.url, '1.0', stats.mtime.toISOString())
   }
 
   // write docs

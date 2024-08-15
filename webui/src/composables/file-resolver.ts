@@ -8,6 +8,9 @@ export function useFileResolver() {
         let level1 = <string>route.params.level1
         let file: DocEntry | string
         ({ name: level1, file} = select(config, level1))
+        if (!file) {
+            return { file, levels: [] }
+        }
 
         const levels = [ level1 ]
         for (let index = 2; index <= MAX_LEVEL; index++) {
@@ -58,5 +61,12 @@ export function useFileResolver() {
             key => key.toLowerCase().replaceAll(/[\/]/g, ' ') === searchFor)!
     }
 
-    return { resolve }
+    function isKnown(config: DocConfig, level: string): boolean {
+        if (getField(config, level)) {
+            return true
+        }
+        return false
+    }
+
+    return { resolve, isKnown }
 }

@@ -2,7 +2,6 @@ package schema
 
 import (
 	"github.com/stretchr/testify/require"
-	"mokapi/config/dynamic"
 	"testing"
 )
 
@@ -111,7 +110,7 @@ func TestSchema_Parse(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			err := tc.s.Parse(&dynamic.Config{Data: tc.s}, nil)
+			err := tc.s.Validate()
 			tc.test(t, err)
 		})
 	}
