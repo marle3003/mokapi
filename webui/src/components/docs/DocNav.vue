@@ -65,7 +65,7 @@ function isExpanded(item: DocEntry | string) {
       <div class="d-md-none">
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="inset-inline-end: 16px; position:absolute"></button>
         <div>
-          <h2>{{ title }}</h2>
+          <h2>{{ title) }}</h2>
         </div>
       </div>
     <ul class="nav nav-pills root flex-column mb-auto pe-3">
