@@ -1,14 +1,18 @@
 package smtp
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/base64"
 	"fmt"
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	"io"
+	"mime"
 	"mime/multipart"
 	"mime/quotedprintable"
 	"mokapi/media"
+	"net/http"
 	"net/mail"
 	"net/textproto"
 	"os"
@@ -202,6 +206,110 @@ func (m *Message) readFrom(tc textproto.Reader) error {
 	return nil
 }
 
+func (m *Message) WriteTo(w io.WriteCloser) error {
+	text := textproto.NewWriter(bufio.NewWriter(w))
+	var err error
+
+	if len(m.MessageId) > 0 {
+		err = text.PrintfLine("Message-ID: %s", m.MessageId)
+		if err != nil {
+			return err
+		}
+	}
+	if len(m.Sender.Address) > 0 {
+		err = text.PrintfLine("Sender: %s", m.Sender.Address)
+		if err != nil {
+			return err
+		}
+	}
+
+	var to []string
+	for _, addr := range m.To {
+		to = append(to, addr.String())
+	}
+	if len(to) > 0 {
+		err = text.PrintfLine("From: %s", strings.Join(to, ","))
+		if err != nil {
+			return err
+		}
+	}
+
+	var cc []string
+	for _, addr := range m.Cc {
+		cc = append(cc, addr.String())
+	}
+	if len(cc) > 0 {
+		err = text.PrintfLine("From: %s", strings.Join(cc, ","))
+		if err != nil {
+			return err
+		}
+	}
+
+	var bcc []string
+	for _, addr := range m.Bcc {
+		bcc = append(bcc, addr.String())
+	}
+	if len(bcc) > 0 {
+		err = text.PrintfLine("From: %s", strings.Join(bcc, ","))
+		if err != nil {
+			return err
+		}
+	}
+
+	var replyTo []string
+	for _, addr := range m.ReplyTo {
+		replyTo = append(replyTo, addr.String())
+	}
+	if len(replyTo) > 0 {
+		err = text.PrintfLine("From: %s", strings.Join(replyTo, ","))
+		if err != nil {
+			return err
+		}
+	}
+
+	if len(m.InReplyTo) > 0 {
+		err = text.PrintfLine("In-Reply-To: %s", m.InReplyTo)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = text.PrintfLine("Subject: %v", m.Subject)
+	if err != nil {
+		return err
+	}
+
+	if len(m.Attachments) == 0 {
+		if len(m.ContentType) == 0 {
+			m.ContentType = "text/plain; charset=UTF-8"
+		}
+		err = text.PrintfLine("Content-Type: %v", m.ContentType)
+		if err != nil {
+			return err
+		}
+
+		if len(m.Encoding) > 0 {
+			_ = text.PrintfLine("Content-Transfer-Encoding: %s", m.Encoding)
+			if err != nil {
+				return err
+			}
+		}
+
+		_, err = w.Write([]byte(fmt.Sprintf("\n%s", m.Body)))
+		if err != nil {
+			return err
+		}
+	} else {
+		for _, att := range m.Attachments {
+			err = att.WriteTo(text, m)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 func parse(r io.Reader, encoding string) ([]byte, error) {
 	switch strings.ToLower(encoding) {
 	case "quoted-printable":
@@ -281,4 +389,108 @@ func parseAddressList(s string) ([]Address, error) {
 		})
 	}
 	return r, nil
+}
+
+func (a *Address) String() string {
+	s := fmt.Sprintf("<%s>", a.Address)
+	if a.Name == "" {
+		return s
+	}
+
+	// Text in an encoded-word in a display-name must not contain certain
+	// characters like quotes or parentheses (see RFC 2047 section 5.3).
+	// When this is the case encode the name using base64 encoding.
+	if strings.ContainsAny(a.Name, "\"#$%&'(),.:;<>@[]^`{|}~") {
+		return fmt.Sprintf("%s %s", mime.BEncoding.Encode("utf-8", a.Name), s)
+	}
+	return fmt.Sprintf("%s %s", mime.QEncoding.Encode("utf-8", a.Name), s)
+}
+
+func (a *Attachment) WriteTo(w *textproto.Writer, m *Message) error {
+	boundary := fmt.Sprintf("boundary_%v", uuid.New().String())
+	err := w.PrintfLine("Content-Type: multipart/mixed; boundary=%v", boundary)
+	if err != nil {
+		return err
+	}
+	err = w.PrintfLine("")
+	if err != nil {
+		return err
+	}
+
+	err = w.PrintfLine("--%v", boundary)
+	if err != nil {
+		return err
+	}
+	if len(m.ContentType) == 0 {
+		m.ContentType = "text/plain; charset=UTF-8"
+	}
+	err = w.PrintfLine("Content-Type: %v", m.ContentType)
+	if err != nil {
+		return err
+	}
+
+	if len(m.Encoding) > 0 {
+		err = w.PrintfLine("Content-Transfer-Encoding: %s", m.Encoding)
+		if err != nil {
+			return err
+		}
+	}
+	_, err = w.W.WriteString(fmt.Sprintf("\n%s\n", m.Body))
+	if err != nil {
+		return err
+	}
+
+	for _, attach := range m.Attachments {
+		content := attach.Data
+		name := attach.Name
+		contentType := attach.ContentType
+		if len(contentType) == 0 {
+			contentType = http.DetectContentType(content)
+		}
+		if len(name) > 0 {
+			contentType += fmt.Sprintf("; name=%s", name)
+		}
+
+		err = w.PrintfLine("--%v", boundary)
+		if err != nil {
+			return err
+		}
+		err = w.PrintfLine("Content-Type: %v", contentType)
+		if err != nil {
+			return err
+		}
+		err = w.PrintfLine("Content-Transfer-Encoding: base64")
+		if err != nil {
+			return err
+		}
+		disposition := attach.Disposition
+		if len(disposition) == 0 {
+			disposition = "attachment"
+		}
+		err = w.PrintfLine("Content-Disposition: %v", disposition)
+		if err != nil {
+			return err
+		}
+		err = w.PrintfLine("")
+		if err != nil {
+			return err
+		}
+		data := base64.StdEncoding.EncodeToString(content)
+		_, err = w.W.WriteString(data)
+		if err != nil {
+			return err
+		}
+		_, err = w.W.WriteRune('\n')
+		if err != nil {
+			return err
+		}
+	}
+
+	err = w.PrintfLine("--%v--", boundary)
+	if err != nil {
+		return err
+	}
+	err = w.PrintfLine("")
+
+	return err
 }

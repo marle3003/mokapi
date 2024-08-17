@@ -59,9 +59,13 @@ func (store *Store) AddCertificate(domain string, certificate *tls.Certificate) 
 	store.Certificates[domain] = certificate
 }
 
-func DefaultRootCert() (*x509.Certificate, error) {
+func DefaultRootCert() *x509.Certificate {
 	block, _ := pem.Decode(defaultCaCert)
-	return x509.ParseCertificate(block.Bytes)
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		panic(err)
+	}
+	return cert
 }
 
 var (
