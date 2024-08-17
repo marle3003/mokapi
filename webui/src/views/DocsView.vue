@@ -255,7 +255,7 @@ pre {
 }
 @media only screen and (max-width: 600px)  {
   pre {
-    max-width: 350 !important;
+    max-width: 350px !important;
   }
 }
 
