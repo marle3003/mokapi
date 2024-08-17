@@ -10,11 +10,11 @@ Schedules a new periodic job using cron expression.
 By default, the first execution happens immediately, check ScheduledEventArgs
 ```
 
-| Parameter       | Type     | Description                                                                                                         |
-|-----------------|----------|---------------------------------------------------------------------------------------------------------------------|
-| expression      | string   | Cron expression                                                                                                     |
-| handler         | function | The handler function to be executed every `expression`. By default, the first execution happens immediately.        |
-| args (optional) | object   | [ScheduledEventArgs](/docs/javascript-api/mokapi/scheduledeventargs.md) object contains additional event arguments. | 
+| Parameter       | Type     | Description                                                                                                                      |
+|-----------------|----------|----------------------------------------------------------------------------------------------------------------------------------|
+| expression      | string   | Cron expression                                                                                                                  |
+| handler         | function | The handler function to be executed every `expression`. By default, the first execution happens immediately.                     |
+| args (optional) | object   | [ScheduledEventArgs](/docs/javascript-api/mokapi/eventhandler/scheduledeventargs.md) object contains additional event arguments. | 
 
 ## Example
 

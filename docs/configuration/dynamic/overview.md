@@ -11,7 +11,7 @@ Mokapi gathers configurations and scripts via providers.
 
 Below is the list of supported providers in Mokapi
 
-- [File](/docs/configuration/providers/file.md)
-- [HTTP](/docs/configuration/providers/http.md)
-- [GIT](/docs/configuration/providers/git.md)
-- [NPM](/docs/configuration/providers/npm.md)
+- [File](/docs/configuration/dynamic/file.md)
+- [HTTP](/docs/configuration/dynamic/http.md)
+- [GIT](/docs/configuration/dynamic/git.md)
+- [NPM](/docs/configuration/dynamic/npm.md)

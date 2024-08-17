@@ -47,6 +47,9 @@ func TestServer(t *testing.T) {
 			name: "auth successfully",
 			handler: func(rw smtp.ResponseWriter, req smtp.Request) {
 				require.IsType(t, &smtp.LoginRequest{}, req)
+				login := req.(*smtp.LoginRequest)
+				require.Equal(t, "foo", login.Username)
+				require.Equal(t, "bar", login.Password)
 				rw.Write(&smtp.LoginResponse{Result: &smtp.AuthSucceeded})
 			},
 			test: func(t *testing.T, conn *textproto.Conn) {
@@ -123,7 +126,7 @@ func TestServer(t *testing.T) {
 				testGetGreeting(t, conn)
 				testSendElho(t, conn)
 				mustSendLine(t, conn, "DATA")
-				mustReadLine(t, conn, "503 [5 5 1] Missing MAIL/RCPT command.")
+				mustReadLine(t, conn, "503 [5 5 1] Missing MAIL command.")
 			},
 		},
 		{
@@ -141,7 +144,7 @@ func TestServer(t *testing.T) {
 				testSendElho(t, conn)
 				testSendMail(t, conn)
 				mustSendLine(t, conn, "DATA")
-				mustReadLine(t, conn, "503 [5 5 1] Missing MAIL/RCPT command.")
+				mustReadLine(t, conn, "503 [5 5 1] Missing RCPT command.")
 			},
 		},
 		{
@@ -193,7 +196,7 @@ func testGetGreeting(t *testing.T, conn *textproto.Conn) {
 func testSendElho(t *testing.T, conn *textproto.Conn) {
 	mustSendLine(t, conn, "EHLO localhost")
 	mustReadLine(t, conn, "250-Hello localhost")
-	mustReadLine(t, conn, "250 AUTH LOGIN")
+	mustReadLine(t, conn, "250 AUTH LOGIN PLAIN")
 }
 
 func testSendMail(t *testing.T, conn *textproto.Conn) {

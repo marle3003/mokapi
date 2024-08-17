@@ -13,7 +13,7 @@ func NewServer(h smtp.HandlerFunc) (*smtp.Server, net.Conn, error) {
 		return nil, nil, err
 	}
 
-	server := &smtp.Server{Handler: h}
+	server := &smtp.Server{Handler: h, Addr: l.Addr().String()}
 	go server.Serve(l)
 
 	backoff := 50 * time.Millisecond

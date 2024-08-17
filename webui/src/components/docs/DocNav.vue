@@ -68,7 +68,7 @@ function isExpanded(item: DocEntry | string) {
           <h2>{{ title) }}</h2>
         </div>
       </div>
-    <ul class="nav nav-pills root flex-column mb-auto pe-3">
+    <ul class="nav nav-pills root flex-column mb-auto pe-3" v-if="root && root.items">
         <li class="nav-item" v-for="(level1, k1) of root.items">
 
             <div v-if="hasChildren(level1)" class="chapter">

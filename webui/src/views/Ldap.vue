@@ -25,7 +25,7 @@ useMeta(title, description, "https://mokapi.io/ldap")
             <h1>Integrate your App with a fake LDAP server</h1>
             <p class="description">Develop and test independently from company's LDAP directory</p>
             <p class="d-none d-md-block">
-              <router-link :to="{ path: '/docs/Guides' }">
+              <router-link :to="{ path: '/docs/guides' }">
                 <button type="button" class="btn btn-outline-primary">Guides</button>
               </router-link>
               <router-link :to="{ path: '/docs/examples' }">
@@ -40,7 +40,7 @@ useMeta(title, description, "https://mokapi.io/ldap")
           </div>
           <div class="col-12 d-block d-md-none">
             <p style="margin-top: 2rem;">
-                <router-link :to="{ path: '/docs/Guides' }">
+                <router-link :to="{ path: '/docs/guides' }">
                   <button type="button" class="btn btn-outline-primary">Guides</button>
                 </router-link>
                 <router-link :to="{ path: '/docs/examples' }">

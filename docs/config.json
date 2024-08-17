@@ -26,12 +26,12 @@
       },
       "LDAP": {
         "items": {
-          "Overview": "guides/ldap/ldap.md"
+          "Overview": "guides/ldap/overview.md"
         }
       },
       "SMTP": {
         "items": {
-          "Overview": "guides/smtp/smtp.md",
+          "Overview": "guides/smtp/overview.md",
           "Quick Start": "guides/smtp/quick-start.md",
           "Rules": "guides/smtp/rules.md"
         }
@@ -43,7 +43,7 @@
       "Configuration": {
         "expanded": true,
         "items": {
-          "Introduction": "configuration/configuration.md",
+          "Introduction": "configuration/introduction.md",
           "Patching": "configuration/patching.md"
         }
       },
@@ -56,11 +56,11 @@
       "Dynamic": {
         "expanded": true,
         "items": {
-          "Overview": "configuration/providers/overview.md",
-          "File": "configuration/providers/file.md",
-          "HTTP": "configuration/providers/http.md",
-          "GIT": "configuration/providers/git.md",
-          "NPM": "configuration/providers/npm.md"
+          "Overview": "configuration/dynamic/overview.md",
+          "File": "configuration/dynamic/file.md",
+          "HTTP": "configuration/dynamic/http.md",
+          "GIT": "configuration/dynamic/git.md",
+          "NPM": "configuration/dynamic/npm.md"
         }
       },
       "Reference": "configuration/reference.md"

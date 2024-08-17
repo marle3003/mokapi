@@ -70,7 +70,7 @@ func (e *UnmarshalError) Error() string {
 	return fmt.Sprintf("cannot unmarshal %v into field %v of type schema", e.Value, e.Field)
 }
 
-func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
+func (s *Schema) Validate() error {
 	for _, t := range s.Type {
 		switch t {
 		case "string", "integer", "boolean", "null", "array", "object":
@@ -123,18 +123,6 @@ func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		return fmt.Errorf("exclusiveMaximum is set to true but no maximum value is specified")
 	}
 
-	if err := s.Properties.Parse(config, reader); err != nil {
-		return err
-	}
-
-	if err := s.AdditionalProperties.Parse(config, reader); err != nil {
-		return err
-	}
-
-	if err := s.Items.Parse(config, reader); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -151,5 +139,47 @@ func (s *Schema) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	*s = Schema(a)
+	return nil
+}
+
+func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
+	if s == nil {
+		return nil
+	}
+
+	if err := s.Validate(); err != nil {
+		return err
+	}
+
+	if err := s.Items.Parse(config, reader); err != nil {
+		return err
+	}
+
+	if err := s.Properties.parse(config, reader); err != nil {
+		return err
+	}
+
+	if err := s.AdditionalProperties.Parse(config, reader); err != nil {
+		return err
+	}
+
+	for _, r := range s.AnyOf {
+		if err := r.Parse(config, reader); err != nil {
+			return err
+		}
+	}
+
+	for _, r := range s.AllOf {
+		if err := r.Parse(config, reader); err != nil {
+			return err
+		}
+	}
+
+	for _, r := range s.OneOf {
+		if err := r.Parse(config, reader); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }

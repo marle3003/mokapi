@@ -37,7 +37,7 @@ if (typeof file === 'string'){
   }
 }
 
-const title = ref<string>('')
+let title = ''
 onMounted(() => {
   setTimeout(() => {
     for (var pre of document.querySelectorAll('pre')) {
@@ -58,8 +58,8 @@ onMounted(() => {
       }
     }
   })
-  title.value = (metadata.title || levels[3] || levels[2] || levels[1] || levels[0]) + ' | Mokapi ' + levels[0]
-  useMeta(title.value, metadata.description, getCanonicalUrl(levels))
+  title = (metadata.title || levels[3] || levels[2] || levels[1] || levels[0]) + ' | Mokapi ' + levels[0]
+  useMeta(title, metadata.description, getCanonicalUrl(levels))
   dialog.value = new Modal('#imageDialog', {})
 })
 function toggleSidebar() {
@@ -96,7 +96,7 @@ function showImage(target: EventTarget | null) {
       </div>
       <div class="d-flex">
         <div class="text-white sidebar d-none d-md-block" :class="openSidebar ? 'open' : ''" id="sidebar">
-          <DocNav :config="nav" :levels="levels" :title="levels[3] || levels[2] || levels[1] || levels[0]"/>
+          <DocNav :config="nav" :levels="levels" :title="title"/>
         </div>
         <div style="flex: 1;max-width:760px;margin-bottom: 3rem;">
           <div v-if="content" v-html="content" class="content" @click="showImage($event.target)"></div>
@@ -255,7 +255,7 @@ pre {
 }
 @media only screen and (max-width: 600px)  {
   pre {
-    max-width: 350px !important;
+    max-width: none !important;
   }
 }
 
