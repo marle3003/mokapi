@@ -28,9 +28,14 @@ When you use Mokapi behind a corporate proxy, you probably need
 to skip SSL verification: "--providers-http-tls-skip-verify".
 ```
 
+## Analyze API and HTTP Request/Response
+
+Mokapi provides a dashboard where you can see your mocked Petstore API and analyze your HTTP request.
+Open `http://localhost:8080` from your browser.
+
 ## Read more
 
-- [HTTP API](/docs/guides/http/overview.md)
 - [Test-Data](/docs/guides/get-started/test-data.md)
 - [Dashboard](/docs/guides/get-started/dashboard.md)
+- [Mocking HTTP API](/docs/guides/http/overview.md)
 
