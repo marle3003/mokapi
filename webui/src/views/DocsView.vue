@@ -89,10 +89,12 @@ function showImage(target: EventTarget | null) {
 <template>
   <main class="d-flex">
     <div style="width: 100%; height: 100%;display: flex;flex-direction: column;">
-      <div class="subheader d-block d-md-none">
-        <button @click="toggleSidebar" id="sidebarToggler">
-          <i class="bi bi-list"></i> Menu
+      <div class="subheader d-flex d-md-none">
+        <button @click="toggleSidebar" id="sidebarToggler" :class="openSidebar ? '' : 'collapsed'">
+          <i class="bi bi-list"></i> 
+          <i class="bi bi-x"></i>       
         </button>
+        <span class="ms-2">{{ levels[3] || levels[2] || levels[1] || levels[0] }}</span>
       </div>
       <div class="d-flex">
         <div class="text-white sidebar d-none d-md-block" :class="openSidebar ? 'open' : ''" id="sidebar">
@@ -132,13 +134,25 @@ function showImage(target: EventTarget | null) {
   display: flex;
   border-bottom: 1px solid;
   border-top: 1px solid;
-  border-color: var(--color-datatable-border)
+  border-color: var(--color-datatable-border);
+  align-items: center;
+  font-weight: 700;
 }
 .subheader button {
   background-color: var(--color-background);
   border: 0;
   color: var(--color-text);
   font-size: 1.3rem;
+  opacity: 0.8;
+}
+.subheader button:not(.collapsed) .bi-list {
+  display: none;
+}
+.subheader button.collapsed .bi-x {
+  display: none;
+}
+.subheader span {
+  opacity: 0.8;
 }
 .sidebar {
   position: sticky;
@@ -147,21 +161,17 @@ function showImage(target: EventTarget | null) {
   width: 270px;
   padding-top: 2rem;
 }
-.sidebar.open{
-  background-color: var(--color-background-mute);
+.sidebar.open {
+  background-color: var(--color-background);
   z-index: 100;
   display: block !important;
   position:fixed;
-  top: 64px;
+  top: 102px;
   left: 0;
   width: 100%;
   height: 100%;
-  box-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.05), 0 0.25rem 0.5rem rgba(0, 0, 0, 0.05);
-  padding-top: 1.3rem;
+  padding-top: 0;
   overflow-y: scroll;
-}
-.sidebar.open .nav-pills .nav-link.active, .sidebar.show  .nav-pills .show > .nav-link {
-  background-color: var(--color-background-mute);
 }
 .content {
   margin-left: 1.2rem;

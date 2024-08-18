@@ -61,13 +61,7 @@ function isExpanded(item: DocEntry | string) {
 </script>
 
 <template>
-    <div>
-      <div class="d-md-none">
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="inset-inline-end: 16px; position:absolute"></button>
-        <div>
-          <h2>{{ title }}</h2>
-        </div>
-      </div>
+    <nav>
     <ul class="nav nav-pills root flex-column mb-auto pe-3" v-if="root && root.items">
         <li class="nav-item" v-for="(level1, k1) of root.items">
 
@@ -108,11 +102,11 @@ function isExpanded(item: DocEntry | string) {
             <router-link v-if="!hasChildren(level1) && showItem(k1, level1)" class="nav-link chapter-text" :to="{ name: 'docs', params: {level2: formatParam(k1)} }">{{ k1 }}</router-link>
         </li>
     </ul>   
-    </div>
+  </nav>
 </template>
 
 <style scoped>
-h2 {
+.page-title {
   font-size: 1.15rem;
   font-weight: 700;
   padding-left: 16px;
@@ -133,6 +127,10 @@ h2 {
   padding-top: 1rem;
 }
 
+.sidebar.open .nav.root {
+  padding-top: 0.6rem;;
+}
+
 .nav-item {
   margin-left: 16px;
 }
@@ -143,7 +141,7 @@ h2 {
 
 }
 
-@media only screen and (max-width: 600px)  {
+@media only screen and (max-width: 768px)  {
   .nav {
     font-size: 1.7rem;
   }
