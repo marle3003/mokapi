@@ -1,8 +1,11 @@
 ---
-title: Static Configuration
-description: Reference the static configuration in Mokapi.
+title: Complete Options Reference
+description: A complete list of all Mokapi options and how to set the option in your config files, environment variables, or CLI.
 ---
-# Static Configuration
+# Complete Options Reference
+
+Options define Mokapi's run behavior that can be passed in multiple places.
+Mokapi chooses the value from the [highest order of precedence](/docs/configuration/configuration/introduction.md).
 
 ## Log
 Mokapi log level (default is info)
