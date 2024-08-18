@@ -7,7 +7,7 @@ description: Here you will learn how to run Mokapi
 This quick start shows you how to start Mokapi and mock an HTTP REST API. We will use [Swagger](https://swagger.io/)'s 
 Petstore to mock your first API with Mokapi. If you have not installed Mokapi yet, visit [Installation](/docs/guides/get-started/installation.md)
 
-## Start Mokapi
+## Mocking Petstore API
 Start Mokapi with the following command:
 
 ```  
