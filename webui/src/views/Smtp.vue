@@ -33,14 +33,16 @@ onMounted(() => {
 })
 
 function showImage(target: EventTarget | null) {
-  if (!target || !(target instanceof HTMLImageElement)) {
+  if (hasTouchSupport() || !target || !(target instanceof HTMLImageElement)) {
     return
   }
   const element = target as HTMLImageElement
   imageUrl.value = element.src
   dialog.value?.show()
 }
-
+function hasTouchSupport() {
+  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+}
 </script>
 
 <template>

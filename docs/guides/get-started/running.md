@@ -36,11 +36,11 @@ Open `http://localhost:8080` from your browser.
 
 After navigating to the Petstore API, you can see all mocked endpoints including your logged request.
 
-<img src="/petstore-endpoints.jpg" width="700" alt="Dashboard shows all mocked Petstore's endpoints including logged requests." title="" />
+<img src="/petstore-rest-api-endpoints.jpg" width="700" alt="Dashboard shows all mocked Petstore's endpoints including logged requests." title="" />
 
 You can analyze your request and the corresponding response by clicking on the logged request in the *Recent Requests* table.
 
-<img src="/petstore-request.jpg" width="700" alt="Logged request to the mocked Petstore REST API containing headers, body and metrics" title="" />
+<img src="/petstore-rest-api-request.jpg" width="700" alt="Logged request to the mocked Petstore REST API containing headers, body and metrics" title="" />
 
 ## Read more
 
