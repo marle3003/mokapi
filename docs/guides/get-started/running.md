@@ -1,37 +1,36 @@
 ---
-title: How to start Running Mokapi - A Beginners Guide
+title: How to run Mokapi
 description: Here you will learn how to run Mokapi
 ---
-# Running Mokapi
+# How to run Mokapi
 
-In this quick start we will run [Swagger](https://swagger.io/)'s Petstore in Mokapi
+This quick start shows you how to start Mokapi and mock an HTTP REST API. We will use [Swagger](https://swagger.io/)'s 
+Petstore to mock your first API with Mokapi. If you have not installed Mokapi yet, visit [Installation](/docs/guides/get-started/installation.md)
 
 ## Start Mokapi
-Start Mokapi with the following command
+Start Mokapi with the following command:
 
-```bash tab=Docker  
-docker run -it --rm -p 80:80 -p 8080:8080 -e MOKAPI_Providers_Http_Url=https://petstore3.swagger.io/api/v3/openapi.json mokapi/mokapi:latest
+```  
+mokapi --providers-http-url https://petstore3.swagger.io/api/v3/openapi.json
 ```
 
-```bash tab=NPM
-npm install go-mokapi
-npx mokapi --Providers.Http.Url=https://petstore3.swagger.io/api/v3/openapi.json
-```
-``` box=tip
-When you use Mokapi behind a corporate proxy, you probably need 
-to skip SSL verification: "-e MOKAPI_Providers_Http_TlsSkipVerify=true".
-```
-
-## Mokapi's Dashboard
-
-You can now open a browser and go to Mokapi's Dashabord 
-(`http://localhost:8080`) to browse the Petstore's API.
-
-## Make HTTP request
-Now make a HTTP request to the Petstore's API and Mokapi 
-creates a response with randomly generated data.
+This starts Mokapi with the Petstore on port 80 and the dashboard on port 8080.
+Let's check to see if it's working:
 
 ```
 curl --header "Accept: application/json" http://localhost/api/v3/pet/4
 ```
-In Mokapi's Dashboard you can see your request and the response.
+
+Mokapi will create a response with randomly generated data.
+
+``` box=tip
+When you use Mokapi behind a corporate proxy, you probably need 
+to skip SSL verification: "--providers-http-tls-skip-verify".
+```
+
+## Read more
+
+- [HTTP API](/docs/guides/http/overview.md)
+- [Test-Data](/docs/guides/get-started/test-data.md)
+- [Dashboard](/docs/guides/get-started/dashboard.md)
+

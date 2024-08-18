@@ -183,7 +183,7 @@ transmitting data from a resource or producing data for a
 Kafka topic. Mokapi reads your custom scripts from 
 [providers](/docs/configuration/dynamic/overview.md).
 
-A simple Time API might look like this:
+A simple Time API might look like the script below. To learn more about how to write Mokapi Script, see [JavaScript API](/docs/javascript-api/javascript-api/overview.md).
 
 ```javascript tab=time.js
 import {on} from 'mokapi'
@@ -220,4 +220,3 @@ paths:
                 type: string
                 format: date-time
 ```
-To learn more about how to write Mokapi Script, see [JavaScript API](/docs/javascript-api/javascript-api/overview.md).

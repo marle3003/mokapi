@@ -60,10 +60,7 @@ mokapi --providers-http-url https://petstore3.swagger.io/api/v3/openapi.json --p
 Browse [http://localhost/api/v3/pet/12](http://localhost/api/v3/pet/12) and see Mokapi's response with Garfield as a cat. 
 Requests with a different pet ID will still return random data.
 
-More information about data generation:
-
-- [Declarative Data Generation](/docs/guides/get-started/test-data.md)
-- [Mokapi Scripts](/docs/guides/get-started/test-data.md)
+For more information on data generation, see [Test-Data](/docs/guides/get-started/test-data.md).
 
 ## Swagger 2.0 support
 Mokapi also supports Swagger 2.0 specification. After parsing a Swagger 2.0 file, mokapi converts it to OpenAPI 3.0

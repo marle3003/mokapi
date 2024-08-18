@@ -177,6 +177,8 @@ function showImage(target: EventTarget | null) {
   margin-left: 1.2rem;
   margin-right: 1.2rem;
   padding-top: 2rem;
+  line-height: 1.6;
+  font-size: 1.1rem;
 }
 
 .content h1 {
@@ -284,7 +286,7 @@ pre {
   border-left-width: 0.2rem ;
   border-left-style: solid;
   border-radius: 0.2rem;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   box-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.2), 0 0.25rem 0.5rem rgba(0, 0, 0, 0.2);
 }
 .box.no-title {
@@ -339,14 +341,14 @@ pre {
 }
 
 blockquote {
-  width:100%;
-  margin:50px auto;
-  font-family:Open Sans;
-  font-style:italic;
-  padding:1.2em 30px 1.2em 70px;
-  line-height:1.6;
+  width: 100%;
+  margin: 50px auto;
+  font-family: Open Sans;
+  font-style: italic;
+  padding: 1.2em 30px 1.2em 70px;
+  line-height: 1.6;
   font-size: 1.2rem;
-  border-left:8px solid #eabaabff;
+  border-left: 8px solid #eabaabff;
   position: relative;
   background: var(--color-background-soft);
 }

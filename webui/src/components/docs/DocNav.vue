@@ -119,7 +119,8 @@ function isExpanded(item: DocEntry | string) {
   border-bottom-width: 1px;
 }
 .nav {
-  font-size: 0.94rem;
+  line-height: 1.6;
+  font-size: 1.1rem;
   font-weight: 500;
 
 }
