@@ -26,6 +26,9 @@ curl --header "Accept: application/json" http://localhost/api/v3/pet/4
 ```
 
 Mokapi will create a response with randomly generated data.
+Petstore API defines two content types for the response. Therefore, we specify which one 
+we want to receive in the response. Otherwise, Mokapi would randomly choose a content type 
+from the specification.
 
 ``` box=tip
 When you use Mokapi behind a corporate proxy, you probably need 
