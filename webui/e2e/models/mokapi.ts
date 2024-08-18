@@ -14,7 +14,7 @@ export class Header {
 
     constructor(element: Locator){
         this.nav = element.locator('.navbar-nav')
-        this.version = element.locator('.version')
+        this.version = element.locator('.version:visible')
     }
 
     getNavLinks() {
