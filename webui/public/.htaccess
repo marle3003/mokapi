@@ -9,7 +9,7 @@
 
   # rewrite www to non-www
   RewriteCond %{HTTP_HOST} ^www.mokapi.io [NC]
-  RewriteRule ^(.*)$ https://mokapi.io/$1
+  RewriteRule ^(.*)$ https://mokapi.io/$1 [L,R=301]
 
   # rewrite for bots if tailing /
   RewriteCond %{HTTP_USER_AGENT} googlebot|bingbot|Seobility|yandex|baiduspider|facebookexternalhit|twitterbot|rogerbot|linkedinbot|embedly|quora\ link\ preview|showyoubot|outbrain|pinterest\/0\.|pinterestbot|slackbot|vkShare|W3C_Validator|whatsapp|redditbot|applebot|flipboard|tumblr|bitlybot|skypeuripreview|nuzzel|discordbot|google\ page\ speed|qwantify|bitrix\ link\ preview|xing-contenttabreceiver|google-inspectiontool|chrome-lighthouse|telegrambot [NC]
