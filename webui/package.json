@@ -39,6 +39,7 @@
   "devDependencies": {
     "@playwright/test": "^1.43.1",
     "@rushstack/eslint-patch": "^1.10.2",
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.12.7",
     "@vitejs/plugin-vue": "^5.0.4",
     "@vue/eslint-config-prettier": "^9.0.0",
