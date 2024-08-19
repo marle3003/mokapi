@@ -372,4 +372,23 @@ blockquote span{
   font-weight: bold;
   margin-top:1em;
 }
+
+.content a.card {
+  background-color: var(--color-tabs-background);
+  color: var(--color-text);
+  border-color: var(--color-tabs-border);
+  cursor: pointer;
+  border-radius: 10px;
+}
+.content a.card:hover {
+  border-color: var(--color-background-mute);
+  box-shadow: 0 2px 5px rgba(82,85,93,.7);
+}
+.content a.card .card-title {
+  font-weight: 500;
+}
+.content a.card .card-text {
+  font-weight: 400;
+  font-size: 1rem;
+}
 </style>

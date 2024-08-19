@@ -9,15 +9,18 @@ Petstore specification to mock your first API with Mokapi. If you have not insta
 [Installation](/docs/guides/get-started/installation.md).
 
 ## Mocking Petstore API
-Start Mokapi with the following command:
+Start Mokapi with the following command using Petstore OpenAPI specification directly from the web:
 
 ```  
 mokapi --providers-http-url https://petstore3.swagger.io/api/v3/openapi.json
 ```
 
 This starts Mokapi with the Petstore on port 80 and the dashboard on port 8080.
-Mokapi supports many options that can be passed in multiple places, check 
+Petstore is available on port 80 because the server URL is defined in the specification as `/api/v3` 
+and port 80 is default for HTTP. Mokapi supports many options that can be passed in multiple places, check 
 [options reference](/docs/configuration/reference.md) for more info.
+
+## Test your mock REST API
 
 Let's check to see if it's working:
 
@@ -40,7 +43,7 @@ to skip SSL verification: "--providers-http-tls-skip-verify".
 Mokapi provides a dashboard where you can see your mocked Petstore API and analyze your HTTP request.
 Open `http://localhost:8080` from your browser.
 
-After navigating to the Petstore API, you can see all mocked endpoints including your logged request.
+After navigating to the Petstore REST API, you can see all mocked endpoints including your logged request.
 
 <img src="/petstore-rest-api-endpoints.jpg" width="700" alt="Dashboard shows all mocked Petstore's endpoints including logged requests." title="" />
 

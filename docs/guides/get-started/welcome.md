@@ -1,9 +1,29 @@
 ---
-title: Mokapi Guides
-description: These guides will help you to run Mokapi in your environment
+title: Welcome to Mokapi Getting Started Guides
+description: These guides covers everything you need to know about Mokapi and mocking APIs
+cards:
+  items:
+    - title: Run your first mocked REST API
+      href: /docs/guides/get-started/running
+      description: Learn how to run your first mock and view results in the dashboard.
+    - title: Using Mokapi
+      href: /docs/configuration/configuration/introduction
+      description: Learn about Mokapi options, patching and the concept of configuration providers.
+    - title: Mock event-driven API based on Apache Kafka
+      href: /docs/guides/kafka/quick-start
+      description: Discover how you can mock a Kafka topic with Mokapi and simulate realistic events.
+    - title: Mokapi JavaScript API
+      href: /docs/javascript-api/javascript-api/overview
+      description: Learn how you can control the behavior of your mocked APIs with the Mokapi APIs
+    - title: Random Data Generator
+      href: /docs/guides/get-started/test-data
+      description: Explore how Mokapi generates random test data and how you can influence it.
+    - title: Mokapi Dashboard
+      href: /docs/guides/get-started/dashboard
+      description: Discover how to analyze and review APIs and all requests and their responses.
 ---
 
-# Welcome to Mokapi guides
+# Welcome to Mokapi Getting Started Guides
 
 Mokapi is an open-source mocking tool for Agile, DevOps and Continuous Deployment teams to
 **prototype**, **test** and **demonstrate** APIs in software solutions using realistic data and scenarios.
@@ -52,9 +72,6 @@ reduces the risk of bugs or errors in production.
 
   Quickly analyze and inspect all requests and responses in the dashboard to gather insights on how your mocked APIs are used.
 
-## Get started
+## Explore how you can mock your APIs with Mokapi
 
-- [Installation](/docs/guides/get-started/installation.md)
-- [Running](/docs/guides/get-started/running.md)
-- [Test Data](/docs/guides/get-started/test-data.md)
-- [Dashboard](/docs/guides/get-started/dashboard.md)
+{{ card-grid key="cards" }}
