@@ -1,6 +1,6 @@
 {
   "name": "mokapi",
-  "version": "0.0.0",
+  "version": "0.10.0",
   "private": true,
   "scripts": {
     "dev": "vite",
@@ -26,6 +26,7 @@
     "dayjs": "^1.11.11",
     "del-cli": "^5.1.0",
     "http-status-codes": "^2.3.0",
+    "js-yaml": "^4.1.0",
     "ncp": "^2.0.0",
     "vue": "^3.4.26",
     "vue-router": "^4.3.2",
