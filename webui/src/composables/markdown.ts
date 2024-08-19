@@ -3,6 +3,8 @@ import MarkdownIt from 'markdown-it';
 import { MarkdownItTabs } from '@/composables/markdown-tabs';
 import { MarkdownItBox } from '@/composables/markdown-box';
 import { MarkdownItLinks } from '@/composables/mardown-links'
+import { MarkdownItCard } from '@/composables/markdown-card'
+import yaml from 'js-yaml'
 
 const images =  import.meta.glob('/src/assets/docs/**/*.png', {as: 'url', eager: true})
 const metadataRegex = /^---([\s\S]*?)---/;
@@ -22,6 +24,7 @@ export function useMarkdown(content: string | undefined) {
           .use(MarkdownItTabs)
           .use(MarkdownItBox)
           .use(MarkdownItLinks)
+          .use(MarkdownItCard(metadata))
           .set({html: true})
           .render(content)
     }
@@ -49,27 +52,12 @@ function replaceImageUrls(data: string) {
 }
 
 export function parseMetadata(data: string) {
-    const metadataMatch = data.match(metadataRegex);
-  
+    const metadataMatch = data.match(metadataRegex)
     if (!metadataMatch) {
-      return {}
+        return {}
     }
   
-    const metadataLines = metadataMatch[1].split("\n")
-  
-    // Use reduce to accumulate the metadata as an object
-    const metadata = metadataLines.reduce((acc: any, line) => {
-        const i = line.indexOf(':')
-        const splits = [line.slice(0,i), line.slice(i+1)]
-
-        const [key, value] = splits.map(part => part.trim())
-        if(key) {
-            acc[key] = value
-        }
-        return acc
-    }, {})
-  
-    return metadata
+    return yaml.load(metadataMatch[1])
 }
 
 export function transformPath(path: string): string {
