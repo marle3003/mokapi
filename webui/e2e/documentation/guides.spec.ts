@@ -7,7 +7,7 @@ test('Visit Guides', async ({ page, home }) => {
 
     await test.step('meta information are available', async () => {
         await expect(page).toHaveURL('/docs/guides')
-        await expect(page).toHaveTitle('Understanding mocking APIs with Mokapi | Mokapi Guides')
+        await expect(page).toHaveTitle('Mocking APIs with Mokapi | Mokapi Guides')
         await expect(page.locator('meta[name="description"]')).toHaveAttribute(
             'content',
             'These guides covers everything you need to know about Mokapi and mocking APIs.'
@@ -28,7 +28,7 @@ test('Visit Guides', async ({ page, home }) => {
     })
 
     await test.step('page has h1', async () => {
-        await expect(page.getByRole('heading', { level: 1})).toHaveText('Understanding mocking APIs with Mokapi')
+        await expect(page.getByRole('heading', { level: 1})).toHaveText('Mocking APIs with Mokapi')
     })
 
     await test.step('click on Welcome change to canonical url', async () => {
