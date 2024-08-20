@@ -1,6 +1,6 @@
 ---
-title: Welcome to Mokapi Getting Started Guides
-description: These guides covers everything you need to know about Mokapi and mocking APIs
+title: Understanding mocking APIs with Mokapi
+description: These guides covers everything you need to know about Mokapi and mocking APIs.
 cards:
   items:
     - title: Run your first mocked REST API
@@ -23,52 +23,53 @@ cards:
       description: Discover how to analyze and review APIs and all requests and their responses.
 ---
 
-# Welcome to Mokapi Getting Started Guides
+# Understanding mocking APIs with Mokapi
 
-Mokapi is an open-source mocking tool for Agile, DevOps and Continuous Deployment teams to
+Mokapi is an open-source and developer-friendly mocking API tool. Mokapi allows you to
 **prototype**, **test** and **demonstrate** APIs in software solutions using realistic data and scenarios.
 
-With Mokapi you can quickly and easily test various
-scenarios with your APIs, such as delayed or failed responses without
+## Overview
+
+Using Mokapi, you can quickly and easily test various scenarios of your APIs without
 having to rely on a fully functional API.
 
-Mokapi helps you improve the quality of APIs and
-reduces the risk of bugs or errors in production.
+Mokapi helps Agile, DevOps and Continuous Deployment teams prevent bugs or errors in production. 
+This enables them to build resilient, reliable and error-free communication between applications.
 
-## Key features
+Mokapi provides you with the following key features:
 
-- **Multiple Protocol support**
+- ### Multiple Protocol support
 
   Mokapi can mock APIs for [HTTP(S)](/docs/guides/http/overview.md), [Apache Kafka](/docs/guides/kafka/overview.md), [SMTP](/docs/guides/smtp/overview.md) and [LDAP](/docs/guides/ldap/overview.md)
-  With Mokapi HTTP you can simulate any REST or SOAP API.
+  With Mokapi HTTP you can mock any REST or SOAP API.
 
-- **Everything as Code**
+- ### Everything as Code
 
   Reusing, version control, consistency and integrate mocks with your CI/CD.
 
-- **An embedded JavaScript engine**
+- ### An embedded JavaScript engine
 
   Write the behavior of your mock in JavaScript and control everything: status, headers, delays, errors or other edge cases.
 
-- **Configuration Options**
+- ### Configuration Options
 
   Use CLI arguments, environment variable or file configuration and take advantage from hot-reloading of dynamic configurations.
 
-- **Patch Configuration**
+- ### Patch Configuration
 
   Mokapi supports configuration patch files so that adjustments required for the mock do not have to be made to the
   original contract. This makes updating the original contract a breeze.
 
-- **Multiple Configuration Provider**
+- ### Multiple Configuration Provider
 
   Mokapi can read configuration and scripts from [File](/docs/configuration/dynamic/file.md), [HTTP](/docs/configuration/dynamic/http.md), [GIT](/docs/configuration/dynamic/git.md), [NPM](/docs/configuration/dynamic/npm.md). 
   Every provider can be customized.
 
-- **Run Everywhere**
-  
-  Use the Docker image, Chocolatey on Windows, the NPM package or directly as an executable.
+- ### Run Everywhere
 
-- **Dashboard**
+  Mokapi can be installed via packages, used in a Docker container or as a standalone binary.
+
+- ### Dashboard
 
   Quickly analyze and inspect all requests and responses in the dashboard to gather insights on how your mocked APIs are used.
 

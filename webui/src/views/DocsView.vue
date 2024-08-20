@@ -274,6 +274,11 @@ pre {
   }
 }
 
+.content ul li h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+
 .code-tabs {
   margin-top: 1rem;
 }
