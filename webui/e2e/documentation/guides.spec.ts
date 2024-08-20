@@ -10,7 +10,7 @@ test('Visit Guides', async ({ page, home }) => {
         await expect(page).toHaveTitle('Understanding mocking APIs with Mokapi | Mokapi Guides')
         await expect(page.locator('meta[name="description"]')).toHaveAttribute(
             'content',
-            'These guides covers everything you need to know about Mokapi and mocking APIs'
+            'These guides covers everything you need to know about Mokapi and mocking APIs.'
         )
         await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://mokapi.io/docs/guides/get-started/welcome')
     })
