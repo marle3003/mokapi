@@ -7,10 +7,10 @@ test('Visit Guides', async ({ page, home }) => {
 
     await test.step('meta information are available', async () => {
         await expect(page).toHaveURL('/docs/guides')
-        await expect(page).toHaveTitle('Mokapi Guides | Mokapi Guides')
+        await expect(page).toHaveTitle('Welcome to Mokapi Getting Started Guides | Mokapi Guides')
         await expect(page.locator('meta[name="description"]')).toHaveAttribute(
             'content',
-            'These guides will help you to run Mokapi in your environment'
+            'These guides covers everything you need to know about Mokapi and mocking APIs'
         )
         await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://mokapi.io/docs/guides/get-started/welcome')
     })
@@ -28,7 +28,7 @@ test('Visit Guides', async ({ page, home }) => {
     })
 
     await test.step('page has h1', async () => {
-        await expect(page.getByRole('heading', { level: 1})).toHaveText('Welcome to Mokapi guides')
+        await expect(page.getByRole('heading', { level: 1})).toHaveText('Welcome to Mokapi Getting Started Guides')
     })
 
     await test.step('click on Welcome change to canonical url', async () => {
