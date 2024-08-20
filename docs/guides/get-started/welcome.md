@@ -1,5 +1,5 @@
 ---
-title: Understanding mocking APIs with Mokapi
+title: Mocking APIs with Mokapi
 description: These guides covers everything you need to know about Mokapi and mocking APIs.
 cards:
   items:
@@ -23,7 +23,7 @@ cards:
       description: Discover how to analyze and review APIs and all requests and their responses.
 ---
 
-# Understanding mocking APIs with Mokapi
+# Mocking APIs with Mokapi
 
 Mokapi is an open-source and developer-friendly mocking API tool. Mokapi allows you to
 **prototype**, **test** and **demonstrate** APIs in software solutions using realistic data and scenarios.
