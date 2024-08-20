@@ -1,26 +1,24 @@
 ---
-title: Faker - Random Test Data Generator
-description: Use randomly generated test data or use Mokapi Script to create responses that can simulate a wide range of scenarios and edge cases.
+title: Learn how to mock your API with realistic test data
+description: Mokapi can randomly mock realistic test data or you can control it with JavaScript to create responses that fit your use case.
 ---
 
-# Faker - Random Test Data Generator
+# Learn how to mock your API with realistic test data
 
 By default, Mokapi generates test data randomly depending on 
 the data types and structure with a tree algorithm. You can extend and 
-modify this tree for your individual needs.  If you need more dynamic 
-responses, you can use Mokapi Script to generate responses based on specific
-conditions or parameters. Mokapi Scripts allows you to 
-create responses that can simulate a wide range of scenarios
-and edge cases.
+modify this tree for your individual needs. If you need more dynamic 
+responses, you can use Mokapi JavaScript to have more control over responses based on your specific
+conditions or parameters. Mokapi Scripts allows you to create responses that can simulate a wide 
+range of scenarios and edge cases.
 
 ``` box=tip
-You can also use Mokapi's endpoint to generate test data on the fly,
-see Mokapi's Dashboard for details
+Additionally, the dashboard allows you to quickly generate realistic test data for any mocked API.
 ```
 
 ## Faker Tree
 
-<img src="/faker-tree.png" width="700" alt="Mokapi provides a powerful data generator" title="Visible in Mokapi's Dashboard" />
+<img src="/mock-realistic-test-data.png" width="700" alt="Mokapi provides a powerful data generator" title="Visible in Mokapi's Dashboard" />
 <br />
 
 Mokapi analysis the data structure and data types using a tree to generate meaningful random data.
