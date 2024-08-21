@@ -188,7 +188,7 @@ function hasTouchSupport() {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 order-lg-1">
-            <img src="//patch-mock-api-configuration.png" @click="showImage($event.target)" alt="The original OpenAPI specification is patched with two additional files at runtime." />
+            <img src="/patch-mock-api-configuration.png" @click="showImage($event.target)" alt="The original OpenAPI specification is patched with two additional files at runtime." />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
