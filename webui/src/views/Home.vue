@@ -174,7 +174,7 @@ function hasTouchSupport() {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 order-lg-2">
-            <img src="/mock-random-data-generator.png" @click="showImage($event.target)" alt="A part of Mokapi's Faker decision tree for generating realistic random data depending on the data structure."/>
+            <img src="/mock-realistic-test-data.png" @click="showImage($event.target)" alt="A part of Mokapi's Faker decision tree for generating realistic random data depending on the data structure."/>
           </div>
         </div>
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
@@ -188,7 +188,7 @@ function hasTouchSupport() {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 order-lg-1">
-            <img src="/patch-mock-api-configuration.png" @click="showImage($event.target)" alt="The original OpenAPI specification is patched with two additional files at runtime." />
+            <img src="//patch-mock-api-configuration.png" @click="showImage($event.target)" alt="The original OpenAPI specification is patched with two additional files at runtime." />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
