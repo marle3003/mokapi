@@ -126,7 +126,7 @@ function hasTouchSupport() {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
-            <img src="/controleverything.png" @click="showImage($event.target)" alt="A JavaScript code that shows how easy it is to realistically mock an API and control everything." />
+            <img src="/control-mock-api-everything.png" @click="showImage($event.target)" alt="A JavaScript code that shows how easy it is to realistically mock an API and control everything." />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
@@ -143,7 +143,7 @@ function hasTouchSupport() {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
-            <img src="/anywhere.png" @click="showImage($event.target)" alt="Log output starting Mokapi in a Docker image." />
+            <img src="/run-mock-api-anywhere.png" @click="showImage($event.target)" alt="Log output starting Mokapi in a Docker image." />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5mb-lg-5 mt-lg-5">
@@ -157,7 +157,7 @@ function hasTouchSupport() {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
-            <img src="/everythingcode.png" @click="showImage($event.target)" alt="Example OpenAPI specification, a script to generate Kafka mock data and forward emails sent to a mock SMTP server." />
+            <img src="/mock-api-everything-as-code.png" @click="showImage($event.target)" alt="Example OpenAPI specification, a script to generate Kafka mock data and forward emails sent to a mock SMTP server." />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
@@ -174,7 +174,7 @@ function hasTouchSupport() {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 order-lg-2">
-            <img src="/faker-tree.png" @click="showImage($event.target)" alt="A part of Mokapi's Faker decision tree for generating realistic random data depending on the data structure."/>
+            <img src="/mock-random-data-generator.png" @click="showImage($event.target)" alt="A part of Mokapi's Faker decision tree for generating realistic random data depending on the data structure."/>
           </div>
         </div>
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
@@ -188,7 +188,7 @@ function hasTouchSupport() {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 order-lg-1">
-            <img src="/patching.png" @click="showImage($event.target)" alt="The original OpenAPI specification is patched with two additional files at runtime." />
+            <img src="/patch-mock-api-configuration.png" @click="showImage($event.target)" alt="The original OpenAPI specification is patched with two additional files at runtime." />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
@@ -204,7 +204,7 @@ function hasTouchSupport() {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 order-lg-2">
-            <img src="/systemtest.png" @click="showImage($event.target)" alt="A variant of how Mokapi can be used to test a system with realistic data." />
+            <img src="/use-case-mock-api.png" @click="showImage($event.target)" alt="A variant of how Mokapi can be used to test a system with realistic data." />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
@@ -218,7 +218,7 @@ function hasTouchSupport() {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
-            <img src="/dashboard.png" @click="showImage($event.target)" alt="Mokapi's dashboard with an overview of all faked services including metrics and logs." />
+            <img src="/dashboard-overview-mock-api.jpg" @click="showImage($event.target)" alt="Mokapi's dashboard with an overview of all mocked APIs including metrics and logs." />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5">
@@ -232,7 +232,7 @@ function hasTouchSupport() {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
-            <img src="/systemcontracts.png" @click="showImage($event.target)" alt="A contract test with Mokapi to test edge cases that are difficult to produce in a real environment." />
+            <img src="/mokapi-contract-testing.png" @click="showImage($event.target)" alt="A contract test with Mokapi to test edge cases that are difficult to produce in a real environment." />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5">
@@ -243,7 +243,7 @@ function hasTouchSupport() {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 order-lg-1">
-            <img src="/betterfaster.png" class="float-lg-end mx-auto d-block" style="width: 80%" @click="showImage($event.target)" alt="Mokapi can support you in both the development and testing process" />
+            <img src="/build-better-software-with-mokapi.png" class="float-lg-end mx-auto d-block" style="width: 80%" @click="showImage($event.target)" alt="Mokapi can support you in both the development and testing process" />
           </div>
         </div>
       </div>
