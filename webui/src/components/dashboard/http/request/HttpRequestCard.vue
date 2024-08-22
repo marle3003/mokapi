@@ -2,7 +2,6 @@
 import { computed, reactive, } from 'vue'
 import HttpParameters from './HttpParameters.vue'
 import SchemaExpand from '../../SchemaExpand.vue'
-import SchemaExample from '../../SchemaExample.vue'
 import SchemaValidate from '../../SchemaValidate.vue'
 import SourceView from '../../SourceView.vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
@@ -69,9 +68,6 @@ const name = computed(() => {
                     <div class="row">
                         <div class="col-auto pe-2" v-if="selected.content">
                             <schema-expand :schema="selected.content.schema" />
-                        </div>
-                        <div class="col-auto px-2" v-if="selected.content">
-                            <schema-example :schema="selected.content.schema" :content-type="selected.content.type" />
                         </div>
                         <div class="col-auto px-2" v-if="selected.content">
                             <schema-validate :schema="selected.content.schema" :content-type="selected.content.type" :name="name" />

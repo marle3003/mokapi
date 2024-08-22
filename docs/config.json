@@ -14,7 +14,8 @@
         "items": {
           "Overview": "guides/http/overview.md",
           "Quick Start": "guides/http/quick-start.md",
-          "HTTPS & TLS": "guides/http/tls.md"
+          "HTTPS & TLS": "guides/http/tls.md",
+          "Dashboard": "guides/http/dashboard.md"
         }
       },
       "Kafka": {

@@ -17,7 +17,7 @@ export default async function() {
 
         switch (request.operationId) {
             case 'info':
-                response.data = {version: "0.5.0", activeServices: ["http", "kafka", "ldap", "smtp"]}
+                response.data = {version: "0.11.0", activeServices: ["http", "kafka", "ldap", "smtp"]}
                 return true
             case 'services':
                 response.data = getServices()

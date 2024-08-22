@@ -1,11 +1,14 @@
+const app_start = new Date()
+app_start.setHours(new Date().getHours() - 2)
+
 export let metrics = [
     {
         name: 'app_start_timestamp',
-        value: 1652025690,
+        value: app_start.getTime() / 1000,// 1652025690,
     },
     {
         name: 'app_memory_usage_bytes',
-        value: 124506000
+        value: 52450600
     },
     {
         name: 'http_requests_total{service="Swagger Petstore",endpoint="/pet"}"',
@@ -17,7 +20,7 @@ export let metrics = [
     },
     {
         name: 'http_requests_total{service="Swagger Petstore",endpoint="/pet/findByStatus"}"',
-        value: 1
+        value: 2
     },
     {
         name: 'http_requests_errors_total{service="Swagger Petstore",endpoint="/pet/findByStatus"}"',

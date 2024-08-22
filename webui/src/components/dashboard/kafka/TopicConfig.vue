@@ -2,7 +2,6 @@
 import Markdown from 'vue3-markdown-it'
 import SourceView from '../SourceView.vue'
 import SchemaExpand from '../SchemaExpand.vue'
-import SchemaExample from '../SchemaExample.vue'
 import SchemaValidate from '../SchemaValidate.vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 
@@ -71,9 +70,6 @@ function filename() {
                         <div class="row">
                             <div class="col-auto pe-2 mt-1">
                                 <schema-expand :schema="topic.configs.message" :title="'Value - '+topic.name" :source="{filename: topic.name+'-message.json'}" />
-                            </div>
-                            <div class="col-auto pe-2 mt-1">
-                                <schema-example :content-type="topic.configs.messageType" :schema="topic.configs.message" :title="'Value Example - ' + topic.name" :source="{ filename: filename() }"/>
                             </div>
                             <div class="col-auto pe-2 mt-1">
                                 <schema-validate :schema="topic.configs.message" :content-type="topic.configs.messageType" />

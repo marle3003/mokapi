@@ -3,7 +3,6 @@ import { usePrettyHttp } from '@/composables/http'
 import { reactive, computed } from 'vue'
 import HeaderTable from './HeaderTable.vue'
 import SchemaExpand from '../../SchemaExpand.vue'
-import SchemaExample from '../../SchemaExample.vue'
 import SchemaValidate from '../../SchemaValidate.vue'
 import Markdown from 'vue3-markdown-it'
 import SourceView from '../../SourceView.vue'
@@ -87,9 +86,6 @@ const name = computed(() => {
                                     <div class="row">
                                         <div class="col-auto pe-2 mt-1">
                                             <schema-expand :schema="selected.contents[response.statusCode].schema" />
-                                        </div>
-                                        <div class="col-auto px-2 mt-1">
-                                            <schema-example :content-type="selected.contents[response.statusCode].type" :schema="selected.contents[response.statusCode].schema"/>
                                         </div>
                                         <div class="col-auto px-2 mt-1">
                                             <schema-validate :schema="selected.contents[response.statusCode].schema" :content-type="selected.contents[response.statusCode].type" :name="name" />

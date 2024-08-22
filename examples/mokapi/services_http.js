@@ -562,7 +562,7 @@ export let events = [
                 body: `{"id": 0,"category": {"id": 0,"name": "string"},"name": "doggie","photoUrls": ["string"],"tags":[{"id": 0,"name": "string"}],"status": "available"}`,
             },
             response: {
-                statusCode: 200,
+                statusCode: 500,
                 headers: {
                     "Content-Type": "application/json",
                 },
