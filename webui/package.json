@@ -28,7 +28,7 @@
     "http-status-codes": "^2.3.0",
     "js-yaml": "^4.1.0",
     "ncp": "^2.0.0",
-    "vue": "^3.4.26",
+    "vue": "^3.4.38",
     "vue-router": "^4.3.2",
     "vue3-ace-editor": "^2.2.4",
     "vue3-highlightjs": "^1.0.5",
