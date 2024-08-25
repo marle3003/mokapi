@@ -7,13 +7,11 @@ description: Mokapi provides you a dashboard where you can view your mocked APIs
 The dashboard provides graphical displays of your mocked APIs handled by Mokapi. It allows 
 you to validate data against the specification as well as generate new random, realistic and valid data.
 
-## Navigating to the Dashboard
-
 The dashboard is available on port 8080 by default. Open `http://localhost:8080` from your browser.
 
 <img src="/dashboard-overview-mock-api.jpg" width="700" alt="Dashboard shows the current mocked APIs and runtime metrics of Mokapi." title="" />
 
-## Working with Dashboard
+## Overview of mocked APIs
 
 The overview shows a comprehensive overview of all mocked APIs including the main 
 metrics of the respective API type. Below you can find the list of API types in the dashboard:
@@ -30,18 +28,18 @@ your sample data.
 
 <img src="/dashboard-rest-api-endpoint-example-validate.jpg" alt="Localizes the sample and validation functionality in the REST API endpoint view." />
 
-### Data Validation in the Dashboard
+### Validate data
 
 In the same dialog where we can create sample data, we can also validate it. The next image
 shows an example of an HTTP REST request body that is not valid according to the specification.
 
 <img src="/dashboard-rest-api-data-validation-with-error.jpg" width="700" alt="Indicates an error validating an HTTP REST request body" />
 
-## How to customize the dashboard
+## How to customize?
 
 There are several options to customize the dashboard to fit your environment.
 
-### How to change the default port for the Dashboard
+### How to change the default port?
 
 You can change the default port on which the dashboard should run as follows:
 
@@ -73,7 +71,7 @@ api:
  path: /mokapi
 ```
 
-### Dashboard behind a Reverse Proxy
+### Behind a Reverse Proxy
 
 If the dashboard is running behind a reverse proxy and the proxy strips segments from the request 
 URL, you must set the base path. For example, the URL to the dashboard is `example.com/app/mokapi`
