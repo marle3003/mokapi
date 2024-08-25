@@ -1,8 +1,8 @@
 ---
-title: Using Mokapi Dashboard
+title: Using Mock API Dashboard
 description: Mokapi provides you a dashboard where you can view your mocked APIs or analyze traffic like a HTTP request/response.
 ---
-# Using Mokapi Dashboard
+# Using Mock API Dashboard
 
 The dashboard provides graphical displays of your mocked APIs handled by Mokapi. It allows 
 you to validate data against the specification as well as generate new random, realistic and valid data.
