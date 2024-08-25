@@ -11,7 +11,7 @@ The dashboard is available on port 8080 by default. Open `http://localhost:8080`
 
 <img src="/dashboard-overview-mock-api.jpg" width="700" alt="Dashboard shows the current mocked APIs and runtime metrics of Mokapi." title="" />
 
-## Overview of mocked APIs
+## Working with Dashboard
 
 The overview shows a comprehensive overview of all mocked APIs including the main 
 metrics of the respective API type. Below you can find the list of API types in the dashboard:
