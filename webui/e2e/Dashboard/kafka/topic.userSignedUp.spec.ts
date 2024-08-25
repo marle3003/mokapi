@@ -81,7 +81,8 @@ test('Visit Kafka topic mokapi.shop.userSignedUp', async ({ page, context }) => 
 
         await test.step('Check schema example', async () => {
             await configs.getByRole('button', { name: 'Example' }).click()
-            const dialog = page.getByRole('dialog', { name: 'Value Example - mokapi.shop.userSignedUp' })
+            const dialog = page.getByRole('dialog', { name: 'Value Validator - mokapi.shop.userSignedUp' })
+            await dialog.getByRole('button', { name: 'Example' }).click()
             const { test: testSourceView } = useSourceView(dialog)
             await testSourceView({
                 lines: /\d+ lines/,

@@ -12,6 +12,9 @@ const props = withDefaults(defineProps<{
   name?: string
   contentType: string
   title?: string
+  source?: {
+        filename: string
+  }
 }>(), {
     title: 'Data Validator'
 })
@@ -81,7 +84,7 @@ function validate() {
                                 <li v-for="err in state.errors">{{ err }}</li>
                             </ul>
                         </div>
-                        <source-view ref="source" v-model:source="state.content" :content-type="contentType" :readonly="false" @update="(source) => state.content = source" />
+                        <source-view ref="source" :filename="source?.filename" v-model:source="state.content" :content-type="contentType" :readonly="false" @update="(source) => state.content = source" />
                     </div>
                     <div class="modal-footer justify-content-between">
                         <span class="float-start">

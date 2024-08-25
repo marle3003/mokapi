@@ -91,7 +91,7 @@ export class HttpOperationRequestModel {
         this.tabs = element.getByTestId('tabs')
         this.body = element.getByRole('region', { name: 'Content' })
         this.expand = new ExpandModel(element.getByTestId('expand'))
-        this.example = new ExampleModel(element.getByTestId('example'))
+        this.example = new ExampleModel(element)
     }
 }
 
@@ -116,9 +116,11 @@ export class ExpandModel {
 export class ExampleModel {
     readonly button: Locator
     readonly code: Locator
+    readonly example: Locator
 
     constructor(element: Locator) {
-        this.button = element.getByRole('button', { name: 'Example' })
-        this.code = element.getByRole('region', { name: 'Content' })
+        this.button = element.getByRole('button', { name: 'Example & Validate' })
+        this.code = element.getByRole('dialog', { name: 'Data Validator' }).getByRole('region', { name: 'Source' })
+        this.example = element.getByRole('dialog', { name: 'Data Validator' }).getByRole('button', { name: 'Example' })
     }
 }

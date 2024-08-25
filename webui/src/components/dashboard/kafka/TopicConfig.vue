@@ -72,7 +72,7 @@ function filename() {
                                 <schema-expand :schema="topic.configs.message" :title="'Value - '+topic.name" :source="{filename: topic.name+'-message.json'}" />
                             </div>
                             <div class="col-auto pe-2 mt-1">
-                                <schema-validate :schema="topic.configs.message" :content-type="topic.configs.messageType" />
+                                <schema-validate :title="'Value Validator - '+topic.name" :schema="topic.configs.message" :content-type="topic.configs.messageType" :source="{filename: filename()}" />
                             </div>
                         </div>
                     </section>

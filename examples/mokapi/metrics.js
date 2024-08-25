@@ -4,7 +4,7 @@ app_start.setHours(new Date().getHours() - 2)
 export let metrics = [
     {
         name: 'app_start_timestamp',
-        value: app_start.getTime() / 1000,// 1652025690,
+        value:  1652025690 //app_start.getTime() / 1000,// 1652025690,
     },
     {
         name: 'app_memory_usage_bytes',
