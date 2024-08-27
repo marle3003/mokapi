@@ -4,7 +4,7 @@ import Footer from '@/components/Footer.vue'
 import { ref, onMounted } from 'vue'
 import { Modal } from 'bootstrap'
 
-const description = `Mokapi is a developer-friendly open-source API mocking tool that allows you to prototype, test, and demonstrate APIs using realistic data and scenarios. Easily test various scenarios without relying on a fully functional API to prevent bugs or errors in production.`
+const description = `Mokapi is a developer-friendly open-source API mocking tool that allows you to prototype, test, and demonstrate APIs using realistic data and scenarios.`
 
 useMeta('The Ultimate API Mock Tool for Agile Development | mokapi.io', description, 'https://mokapi.io')
 
@@ -119,9 +119,9 @@ function hasTouchSupport() {
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
               <h2>Control Everything with JavaScript</h2>
-              <p>Write the behavior of your mock in JavaScript and control everything: status, headers, delays, errors or other edge cases.</p>
+              <p>Learn how to mock APIs with JavaScript to fully control state, headers, delays, and errors in your applications.</p>
               <router-link :to="{ path: '/docs/javascript-api' }">
-                <button type="button" class="btn btn-outline-primary btn-sm">JavaScript API</button>
+                <button type="button" class="btn btn-outline-primary btn-sm">Unlock seamless testing</button>
               </router-link>
             </div>
           </div>
@@ -132,10 +132,10 @@ function hasTouchSupport() {
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
             <div class="text-lg-start text-center">
-              <h2>Run Everywhere</h2>
+              <h2>Run your mocks Everywhere</h2>
               <p>
-                Use the <a href="https://hub.docker.com/r/mokapi/mokapi">Docker image</a>, <a href="https://community.chocolatey.org/packages/mokapi">Chocolatey on Windows</a>, the <a href="https://www.npmjs.com/package/go-mokapi">NPM package</a> or directly as an <a href="https://github.com/marle3003/mokapi/releases">executable</a>.
-                Use CLI arguments, environment variable or file configuration and take advantage from hot-reloading of dynamic configurations.
+                Discover how to run your mock API anywhere, no dependencies.
+                Unleash the power by using CLI arguments, environment variables or file configurations with dynamic hot reloading for seamless development.
               </p>
               <router-link :to="{ path: '/docs/guides/get-started/running' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Run Mokapi</button>
@@ -149,8 +149,8 @@ function hasTouchSupport() {
         <div class="row pb-4 pb-lg-5mb-lg-5 mt-lg-5">
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
-              <h2>Everything as Code</h2>
-              <p>Get all benefits of everything as code - Reusing, version control, consistency and integrate mocks with your CI/CD.</p>
+              <h2>Everything as Code: Simplify Auditing & Reduce Errors</h2>
+              <p>Discover how Everything as Code can enhance repeatability, simplify audits, and minimize human errors for your deployment process.</p>
               <router-link :to="{ path: '/docs/configuration' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Learn more</button>
               </router-link>
@@ -181,7 +181,7 @@ function hasTouchSupport() {
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
               <h2>Patch Configuration</h2>
-              <p>Mokapi supports configuration patch files so that adjustments required for the mock do not have to be made to the original contract. This makes updating the original contract a breeze.</p>
+              <p>Discover how patching enables effortless, environment-dependent adaptations to specifications without changing the original document.</p>
               <router-link :to="{ path: '/docs/configuration/configuration/patching' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Discover Patching</button>
               </router-link>
@@ -198,7 +198,7 @@ function hasTouchSupport() {
               <p>Improve your end-to-end testing performance with Mokapi and easily simulate real-world scenarios and edge cases with Mokapi Script.
               </p>
               <router-link :to="{ path: '/docs/blogs/automation-testing-in-agile-development' }">
-                <button type="button" class="btn btn-outline-primary btn-sm">Read more</button>
+                <button type="button" class="btn btn-outline-primary btn-sm">Discover the blog article</button>
               </router-link>
             </div>
           </div>
@@ -224,7 +224,7 @@ function hasTouchSupport() {
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
             <div class="text-lg-start text-center">
               <h2>Enhance Software Quality with Contract Testing</h2>
-              <p>Discover the benefits of contract testing to ensure fake interactions under test control between your software and systems that it collaborates with. Improve collaboration and reliability with this effective quality assurance technique.</p>
+              <p>Discover the benefits of contract testing to ensure mock interactions under test control between your software and systems that it collaborates with. Improve collaboration and reliability with this effective quality assurance technique.</p>
               <router-link :to="{ path: '/docs/blogs/contract-testing' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Take a look</button>
               </router-link>
