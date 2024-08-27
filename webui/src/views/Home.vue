@@ -4,9 +4,9 @@ import Footer from '@/components/Footer.vue'
 import { ref, onMounted } from 'vue'
 import { Modal } from 'bootstrap'
 
-const description = `Mock tool for Agile, DevOps and Continuous Deployment teams. Mock your REST API, Apache Kafka, SMTP or LDAP interfaces and control everything.`
+const description = `Mokapi is a developer-friendly open-source API mocking tool that allows you to prototype, test, and demonstrate APIs using realistic data and scenarios. Easily test various scenarios without relying on a fully functional API to prevent bugs or errors in production.`
 
-useMeta('API Mocking and Testing | mokapi.io', description, 'https://mokapi.io')
+useMeta('The Ultimate API Mock Tool for Agile Development | mokapi.io', description, 'https://mokapi.io')
 
 const dialog = ref<Modal>()
 const imageUrl = ref<string>()
@@ -42,7 +42,7 @@ function hasTouchSupport() {
               <span class="badge">LDAP</span>
               <span class="badge">SMTP</span>
             </div>
-            <h1>Easy and flexible API mocking</h1>
+            <h1>The Ultimate API Mock Tool for Agile Development</h1>
             <p class="description">Mock your APIs in Seconds - No registration, no data in the cloud, <b>free</b> and <b>open-source</b></p>
             <p class="d-none d-md-block">
               <router-link :to="{ path: '/docs/guides' }">
@@ -54,7 +54,7 @@ function hasTouchSupport() {
             </p>
           </div>
           <div class="col-12 col-lg-5">
-            <img src="/logo.svg" alt="Mokapi" class="mx-auto d-block" />
+            <img src="/logo.svg" alt="Mokapi API Mock Tool" class="mx-auto d-block" />
           </div>
           <div class="col-12 d-block d-md-none">
             <p style="margin-top: 2rem;">
@@ -72,7 +72,7 @@ function hasTouchSupport() {
     <section>
       <div class="container">
         <h2>Mock your APIs with one tool</h2>
-        <p class="text-center mb-5">Mokapi is a mocking tool for Agile, DevOps and Continuous Delivery teams to <br /><b>prototype</b>, <b>test</b> and <b>demonstrate</b> APIs in software solutions using realistic data and scenarios.</p>
+        <p class="text-center mb-5 w-80">Mokapi allows you to <b>prototype</b>, <b>test</b> and <b>demonstrate</b> APIs in software solutions using realistic data and scenarios.</p>
         <div class="card-group">
           <div class="card">
             <router-link :to="{path: '/http'}">
@@ -163,7 +163,7 @@ function hasTouchSupport() {
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
             <div class="text-lg-start text-center">
-              <h2>Powerful Random Data Generator</h2>
+              <h2>Fake Data Generator</h2>
               <p>
                 Mokapi uses a decision tree to automatically create a wide range of meaningful fake data for your APIs.
                 This tree can easily be extended to meet your own specific requirements.
@@ -194,9 +194,8 @@ function hasTouchSupport() {
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
             <div class="text-lg-start text-center">
-              <h2>End-to-End Tests</h2>
-              <p>Test only system that you are responsible for and fake all others with Mokapi. Simulate 
-                real-life scenarios and edge cases with Mokapi Script
+              <h2>Boost Your Testing Efforts</h2>
+              <p>Improve your end-to-end testing performance with Mokapi and easily simulate real-world scenarios and edge cases with Mokapi Script.
               </p>
               <router-link :to="{ path: '/docs/blogs/automation-testing-in-agile-development' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Read more</button>
@@ -210,7 +209,7 @@ function hasTouchSupport() {
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
-              <h2>See what's going on</h2>
+              <h2>Visualize Your Mock APIs</h2>
               <p>Quickly analyze and inspect all requests and responses in the dashboard to gather insights on how your mocked APIs are used.</p>
               <router-link :to="{ path: '/docs/guides/get-started/dashboard' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Mokapi's Dashboard</button>
@@ -224,8 +223,8 @@ function hasTouchSupport() {
         <div class="row pb-4 pb-lg-5">
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
             <div class="text-lg-start text-center">
-              <h2>Contract Testing</h2>
-              <p>Fake interactions under test control between your software and systems that it collaborates.</p>
+              <h2>Enhance Software Quality with Contract Testing</h2>
+              <p>Discover the benefits of contract testing to ensure fake interactions under test control between your software and systems that it collaborates with. Improve collaboration and reliability with this effective quality assurance technique.</p>
               <router-link :to="{ path: '/docs/blogs/contract-testing' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Take a look</button>
               </router-link>
