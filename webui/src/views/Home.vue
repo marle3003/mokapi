@@ -36,13 +36,14 @@ function hasTouchSupport() {
       <div class="container">
         <div class="row hero-title justify-content-center">
           <div class="col-12 col-lg-6 px-0">
-            <div class="mb-lg-2">
+            
+            <h1>The Ultimate API Mock Tool for Agile Development</h1>
+            <div class="mb-3">
               <span class="badge">HTTP</span>
               <span class="badge">Kafka</span>
               <span class="badge">LDAP</span>
               <span class="badge">SMTP</span>
             </div>
-            <h1>The Ultimate API Mock Tool for Agile Development</h1>
             <p class="description">Mock your APIs in Seconds - No registration, no data in the cloud, <b>free</b> and <b>open-source</b></p>
             <p class="d-none d-md-block">
               <router-link :to="{ path: '/docs/guides' }">
