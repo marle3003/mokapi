@@ -4,9 +4,9 @@ import Footer from '@/components/Footer.vue'
 import { ref, onMounted } from 'vue'
 import { Modal } from 'bootstrap'
 
-const description = `Mokapi is a developer-friendly open-source API mocking tool that allows you to prototype, test, and demonstrate APIs using realistic data and scenarios.`
+const description = `Mokapi is a developer-friendly open-source API mocking tool that allows you to prototype, test, and demonstrate APIs using realistic data, scenarios.`
 
-useMeta('The Ultimate API Mock Tool for Agile Development | mokapi.io', description, 'https://mokapi.io')
+useMeta('Easy and flexible API Mock Tool | mokapi.io', description, 'https://mokapi.io')
 
 const dialog = ref<Modal>()
 const imageUrl = ref<string>()
