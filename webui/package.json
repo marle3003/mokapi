@@ -24,7 +24,7 @@
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",
     "dayjs": "^1.11.13",
-    "del-cli": "^5.1.0",
+    "del-cli": "^6.0.0",
     "http-status-codes": "^2.3.0",
     "js-yaml": "^4.1.0",
     "ncp": "^2.0.0",
