@@ -5,15 +5,52 @@ import (
 	"fmt"
 	"mokapi/schema/json/schema"
 	"mokapi/sortedmap"
+	"reflect"
 )
 
 func (p *Parser) ParseAll(s *schema.Schema, data interface{}) (interface{}, error) {
+	if len(s.AllOf) == 1 {
+		return p.Parse(data, s.AllOf[0])
+	}
+	types := getTypeIntersection(s.AllOf)
+	if len(types) == 0 {
+		return nil, fmt.Errorf("allOf contains different types: %v", s)
+	}
+
+	switch reflect.ValueOf(data).Kind() {
+	case reflect.Struct:
+	case reflect.Map:
+		if !types.Includes("object") {
+			return nil, fmt.Errorf("parse value failed, got %v expected %v", toString(data), s)
+		}
+		return p.parseAllObject(s, data)
+	default:
+		for _, all := range s.AllOf {
+			if all == nil || all.Value == nil {
+				return nil, fmt.Errorf("schema is not defined")
+			}
+
+			copySchema := *all
+			copySchema.Value.Type = types
+			var err error
+			data, err = p.Parse(data, &copySchema)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	return data, nil
+}
+
+func (p *Parser) parseAllObject(s *schema.Schema, data interface{}) (interface{}, error) {
 	r := sortedmap.NewLinkedHashMap()
 
 	isFreeFormUsed := false
 	for _, all := range s.AllOf {
+
 		if all == nil || all.Value == nil {
-			return nil, fmt.Errorf("schema is not defined: allOf only supports type of object")
+			return nil, fmt.Errorf("schema is not defined")
 		}
 		if !all.Value.Type.Includes("object") {
 			return nil, fmt.Errorf("type of '%v' is not allowed: allOf only supports type of object", all.Value.Type.String())
@@ -45,6 +82,7 @@ func (p *Parser) ParseAll(s *schema.Schema, data interface{}) (interface{}, erro
 				return nil, fmt.Errorf("parse %v failed: value does not match part of allOf: %w", toString(data), err)
 			}
 		}
+
 		for it := obj.Iter(); it.Next(); {
 			if _, found := r.Get(it.Key()); !found {
 				r.Set(it.Key(), it.Value())
@@ -68,4 +106,32 @@ func (p *Parser) ParseAll(s *schema.Schema, data interface{}) (interface{}, erro
 	}
 
 	return r.ToMap(), nil
+}
+
+func getTypeIntersection(sets []*schema.Ref) schema.Types {
+	m := map[string]struct{}{}
+
+	for _, set := range sets {
+		if set.Value == nil {
+			continue
+		}
+
+		if len(m) == 0 {
+			for _, t := range set.Value.Type {
+				m[t] = struct{}{}
+			}
+		} else {
+			for k := range m {
+				if !set.Value.Type.Includes(k) {
+					delete(m, k)
+				}
+			}
+		}
+	}
+
+	var result schema.Types
+	for k := range m {
+		result = append(result, k)
+	}
+	return result
 }
