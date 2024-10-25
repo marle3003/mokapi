@@ -127,6 +127,7 @@ func (m *Module) doRequest(method, url string, body interface{}, args goja.Value
 	}
 
 	rArgs := &RequestArgs{Headers: make(map[string]interface{})}
+	maxRedirects := 5
 	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
 		params := args.ToObject(m.rt)
 		for _, k := range params.Keys() {
@@ -137,6 +138,14 @@ func (m *Module) doRequest(method, url string, body interface{}, args goja.Value
 					continue
 				}
 				rArgs.Headers = headers.Export().(map[string]interface{})
+			case "maxRedirects":
+				v := params.Get(k)
+				if goja.IsUndefined(v) || goja.IsNull(v) {
+					continue
+				}
+				if redirects, ok := v.Export().(int); ok {
+					maxRedirects = redirects
+				}
 			}
 		}
 	}
@@ -147,7 +156,7 @@ func (m *Module) doRequest(method, url string, body interface{}, args goja.Value
 		panic(m.rt.ToValue(err.Error()))
 	}
 
-	client := m.host.HttpClient()
+	client := m.host.HttpClient(common.HttpClientOptions{MaxRedirects: maxRedirects})
 	res, err := client.Do(req)
 	if err != nil {
 		panic(m.rt.ToValue(err.Error()))

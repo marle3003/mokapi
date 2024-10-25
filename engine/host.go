@@ -50,6 +50,9 @@ func (sh *scriptHost) Name() string {
 }
 
 func (sh *scriptHost) Run() (err error) {
+	if sh.engine.loader == nil {
+		return fmt.Errorf("loader not defined")
+	}
 	if sh.script == nil {
 		sh.script, err = sh.engine.loader.Load(sh.file, sh)
 		if err != nil {
@@ -225,8 +228,17 @@ func (sh *scriptHost) KafkaClient() common.KafkaClient {
 	return sh.engine.kafkaClient
 }
 
-func (sh *scriptHost) HttpClient() common.HttpClient {
-	return &http.Client{Timeout: time.Second * 30}
+func (sh *scriptHost) HttpClient(opts common.HttpClientOptions) common.HttpClient {
+	return &http.Client{
+		Timeout: time.Second * 30,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if l := len(via); l > opts.MaxRedirects {
+				log.Warnf("Stopped after %d redirects, original URL was %s", opts.MaxRedirects, via[0].URL)
+				return http.ErrUseLastResponse
+			}
+			return nil
+		},
+	}
 }
 
 func (sh *scriptHost) CanClose() bool {

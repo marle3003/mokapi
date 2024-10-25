@@ -2,13 +2,20 @@ package js_test
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus/hooks/test"
 	r "github.com/stretchr/testify/require"
 	"io"
+	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/script"
+	"mokapi/config/static"
+	"mokapi/engine"
 	"mokapi/engine/enginetest"
 	"mokapi/js"
 	module "mokapi/js/http"
 	"mokapi/js/jstest"
 	"net/http"
+	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -394,6 +401,58 @@ func TestFetch(t *testing.T) {
 				HttpClientTest: &enginetest.HttpClient{},
 			}
 			tc.test(t, host)
+		})
+	}
+}
+
+func TestMaxRedirects(t *testing.T) {
+	var server *httptest.Server
+	server = httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		n := 0
+		if len(request.URL.Path) > 1 {
+			var err error
+			n, err = strconv.Atoi(request.URL.Path[1:])
+			if err != nil {
+				panic(err)
+			}
+		}
+
+		writer.Header().Set("Location", fmt.Sprintf("%s/%d", server.URL, n+1))
+		writer.WriteHeader(302)
+	}))
+
+	testcases := []struct {
+		name string
+		code string
+	}{{
+		name: "max redirects 0",
+		code: fmt.Sprintf(`import http from 'mokapi/http'
+export default function() {
+	const res = http.get('%s', { maxRedirects: 0 });
+	console.log(res.headers.Location[0]); 
+}
+`, server.URL),
+	}}
+
+	hook := test.NewGlobal()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			e := engine.NewEngine(engine.WithScriptLoader(engine.NewDefaultScriptLoader(&static.Config{})))
+			err := e.AddScript(&dynamic.Config{
+				Info: dynamic.ConfigInfo{
+					Url: mustParse("test.ts"),
+				},
+				Raw:  []byte(tc.code),
+				Data: &script.Script{Filename: "test.ts"},
+			})
+			r.NoError(t, err)
+			r.Len(t, hook.Entries, 2)
+			r.Equal(t, fmt.Sprintf("Stopped after 5 redirects, original URL was %s", server.URL), hook.Entries[0].Message)
+			r.Equal(t, fmt.Sprintf("%s/6", server.URL), hook.Entries[1].Message)
+
+			hook.Reset()
+
 		})
 	}
 }

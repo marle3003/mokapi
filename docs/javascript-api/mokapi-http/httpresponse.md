@@ -7,12 +7,12 @@ description: Returned by HTTP request methods in module mokapi/http.
 Response object contains response data from an HTTP request 
 from methods in the module mokapi/http.
 
-| Name       | Type     | Description                                                           |
-|------------|----------|-----------------------------------------------------------------------|
-| body       | string   | Response body content                                                 |
-| headers    | object   | Request headers as \[string\]string[]                                 |
-| statusCode | number   | HTTP status code returned by the server                               |
-| json()     | function | Parses the response body as JSON. Returns a JS object, array or value |
+| Name       | Type     | Description                                                                                                                                   |
+|------------|----------|-----------------------------------------------------------------------------------------------------------------------------------------------|
+| body       | string   | Response body content                                                                                                                         |
+| headers    | object   | All response headers sent by the server in canonical form (for example 'Content-Type'). Accessing a header value returns an array of strings. |
+| statusCode | number   | HTTP status code returned by the server                                                                                                       |
+| json()     | function | Parses the response body as JSON. Returns a JS object, array or value                                                                         |
 
 ## Example
 
@@ -26,6 +26,7 @@ export default function() {
     for (const name in res.headers) {
         console.log(`${header}: ${res.headers[name]}`)
     }
+    console.log(`content type: ${res.headers['Content-Type'][0]}`)
     console.log(`body: ${res.json()}`)
 }
 ```

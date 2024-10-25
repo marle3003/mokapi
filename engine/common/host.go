@@ -36,7 +36,7 @@ type Host interface {
 	On(event string, do func(args ...interface{}) (bool, error), tags map[string]string)
 
 	KafkaClient() KafkaClient
-	HttpClient() HttpClient
+	HttpClient(HttpClientOptions) HttpClient
 
 	Name() string
 
@@ -96,6 +96,10 @@ type KafkaMessageResult struct {
 
 type HttpClient interface {
 	Do(r *http.Request) (*http.Response, error)
+}
+
+type HttpClientOptions struct {
+	MaxRedirects int
 }
 
 type Action struct {

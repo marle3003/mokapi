@@ -115,7 +115,7 @@ func (h *Host) Unlock() {
 	h.m.Unlock()
 }
 
-func (h *Host) HttpClient() common.HttpClient {
+func (h *Host) HttpClient(opts common.HttpClientOptions) common.HttpClient {
 	return h.HttpClientTest
 }
 
