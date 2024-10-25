@@ -15,6 +15,16 @@ func TestParser_ParseObject(t *testing.T) {
 		test   func(t *testing.T, v interface{}, err error)
 	}{
 		{
+			name: "expect object but got integer",
+			data: 12,
+			schema: schematest.New("object",
+				schematest.WithProperty("foo", schematest.New("string")),
+				schematest.WithRequired("foo")),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "parse object failed, got 12 expected schema type=object properties=[foo] required=[foo]")
+			},
+		},
+		{
 			name: "required string but it is empty",
 			data: map[string]interface{}{"foo": ""},
 			schema: schematest.New("object",

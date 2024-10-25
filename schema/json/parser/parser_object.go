@@ -39,7 +39,7 @@ func (p *Parser) ParseObject(data interface{}, s *schema.Schema) (*sortedmap.Lin
 		case reflect.Map:
 			result, err = p.parseMap(v, s)
 		default:
-			return nil, fmt.Errorf("encode '%v' to %v failed", data, s)
+			return nil, fmt.Errorf("parse object failed, got %v expected %v", toString(data), s)
 		}
 	}
 
