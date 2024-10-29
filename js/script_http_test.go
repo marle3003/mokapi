@@ -447,9 +447,9 @@ export default function() {
 				Data: &script.Script{Filename: "test.ts"},
 			})
 			r.NoError(t, err)
-			r.Len(t, hook.Entries, 2)
-			r.Equal(t, fmt.Sprintf("Stopped after 5 redirects, original URL was %s", server.URL), hook.Entries[0].Message)
-			r.Equal(t, fmt.Sprintf("%s/6", server.URL), hook.Entries[1].Message)
+			r.Len(t, hook.Entries, 3)
+			r.Equal(t, fmt.Sprintf("Stopped after 5 redirects, original URL was %s", server.URL), hook.Entries[1].Message)
+			r.Equal(t, fmt.Sprintf("%s/6", server.URL), hook.Entries[2].Message)
 
 			hook.Reset()
 

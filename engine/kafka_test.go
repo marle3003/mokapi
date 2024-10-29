@@ -210,7 +210,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 				require.Len(t, b.Records, 0, "no record should be written")
 
 				// logs
-				require.Len(t, hook.Entries, 1)
+				require.Len(t, hook.Entries, 2)
 				require.Equal(t, "js error: produce kafka message to 'foo' failed: encoding data to 'application/json' failed: parse 12 failed, expected schema type=string in test.js", hook.LastEntry().Message)
 			},
 		},
@@ -269,6 +269,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 				require.Equal(t, "12", kafka.BytesToString(b.Records[0].Value))
 				require.Equal(t, []string([]string{
 					"parsing script test.js",
+					"executing script test.js",
 					"kafka topic 'retry' not found. Retry in 200ms",
 					"kafka topic 'retry' not found. Retry in 800ms",
 				}), getMessages(hook))
@@ -302,20 +303,23 @@ func TestKafkaClient_Produce(t *testing.T) {
 							asyncapitest.WithKey(schematest.New("string"))))),
 			)
 			app := runtime.New()
-			engine := enginetest.NewEngine(
+			e := enginetest.NewEngine(
 				engine.WithKafkaClient(engine.NewKafkaClient(app)),
 				engine.WithLogger(logrus.StandardLogger()),
 			)
 
-			info := app.AddKafka(getConfig(config), engine)
-			tc.test(t, app, info.Store, engine)
+			info := app.AddKafka(getConfig(config), e)
+			tc.test(t, app, info.Store, e)
 		})
 	}
 }
 
 func readBytes(b kafka.Bytes) []byte {
 	buf := new(bytes.Buffer)
-	buf.ReadFrom(b)
+	_, err := buf.ReadFrom(b)
+	if err != nil {
+		panic(err)
+	}
 	return buf.Bytes()
 }
 
