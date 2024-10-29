@@ -59,6 +59,7 @@ func (e *Engine) AddScript(file *dynamic.Config) error {
 	e.addOrUpdate(host)
 	e.scripts[host.name] = host
 
+	log.Infof("executing script %v", file.Info.Url)
 	if e.parallel {
 		go func() {
 			err := e.run(host)
