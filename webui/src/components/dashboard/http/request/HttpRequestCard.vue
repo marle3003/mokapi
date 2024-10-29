@@ -53,9 +53,12 @@ const name = computed(() => {
 
             <div class="tab-content" id="tabRequest">
               <div class="tab-pane fade" :class="operation.requestBody ? 'show active' : ''" id="body" role="tabpanel" aria-labelledby="body-tab" v-if="operation.requestBody">
-                    <p class="label">Description</p>
-                    <p>{{  operation.requestBody.description }}</p>
+                    <p class="label" v-if="operation.requestBody.description">Description</p>
+                    <p v-if="operation.requestBody.description">{{  operation.requestBody.description }}</p>
                     <p v-if="operation.requestBody.required">Required</p>
+
+                    <p class="label" v-if="operation.requestBody.contents.length == 1">Request content type</p>
+                    <p v-if="operation.requestBody.contents.length == 1">{{ operation.requestBody.contents[0].type }}</p>
                     
                     <source-view 
                         :source="formatSchema(selected.content?.schema)" 

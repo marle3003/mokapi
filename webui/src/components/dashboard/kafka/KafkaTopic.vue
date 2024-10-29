@@ -56,7 +56,7 @@ onUnmounted(() => {
                 <div class="row">
                     <div class="col">
                         <p id="description" class="label">Description</p>
-                        <markdown :source="topic()?.description" aria-labelledby="description" />
+                        <markdown :source="topic()?.description" aria-labelledby="description" html="true" />
                     </div>
                     
                 </div>

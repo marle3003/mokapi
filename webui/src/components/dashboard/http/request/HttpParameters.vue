@@ -83,7 +83,7 @@ function showWarningColumn(){
                 <td v-if="showWarningColumn()">
                     <span v-if="parameter.deprecated"><i class="bi bi-exclamation-triangle-fill yellow"></i> deprecated</span>
                 </td>
-                <td><markdown :source="parameter.description" class="description"></markdown></td>
+                <td><markdown :source="parameter.description" class="description" html="true"></markdown></td>
             </tr>
         </tbody>
     </table>
@@ -124,7 +124,7 @@ function showWarningColumn(){
                                     </div>
                                     <div class="row mt-2">
                                         <p class="label">Description</p>
-                                        <markdown :source="parameter.description"></markdown>
+                                        <markdown :source="parameter.description" html="true"></markdown>
                                     </div>
                                     <div class="row">
                                         <ul class="nav nav-pills tab-sm tab-params" role="tabList">

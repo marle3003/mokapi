@@ -44,7 +44,7 @@ function filename() {
             </div>
             <div class="col" v-if="topic.configs.description">
                 <p id="message-description" class="label">Description</p>
-                <markdown :source="topic.configs.description" aria-labelledby="message-description"></markdown>
+                <markdown :source="topic.configs.description" aria-labelledby="message-description" html="true"></markdown>
             </div>
         </div>
         <div class="row mt-2">

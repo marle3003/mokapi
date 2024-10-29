@@ -45,7 +45,7 @@ onMounted(()=> {
                         
                     </ul>
                 </td>
-                <td><markdown :source="server.description" class="description"></markdown></td>
+                <td><markdown :source="server.description" class="description" html="true"></markdown></td>
             </tr>
         </tbody>
     </table>
