@@ -39,7 +39,9 @@ func (s *Schema) String() string {
 		return sb.String()
 	}
 
-	sb.WriteString(fmt.Sprintf("schema type=%v", s.Type.String()))
+	if len(s.Type) > 0 {
+		sb.WriteString(fmt.Sprintf("schema type=%v", s.Type.String()))
+	}
 
 	if len(s.Format) > 0 {
 		sb.WriteString(fmt.Sprintf(" format=%v", s.Format))
@@ -111,7 +113,12 @@ func (s *Schema) String() string {
 		sb.WriteString(fmt.Sprintf("%v", s.Items.Value))
 	}
 
-	return sb.String()
+	str := sb.String()
+	if string(str[0]) == " " {
+		return str[1:]
+	}
+
+	return str
 }
 
 func (t *Types) String() string {

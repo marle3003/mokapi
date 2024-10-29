@@ -20,7 +20,7 @@ func TestParser_ParseAll(t *testing.T) {
 			schema: schematest.NewAllOf(),
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 12, v)
+				require.Equal(t, int64(12), v)
 			},
 		},
 		{
@@ -38,6 +38,18 @@ func TestParser_ParseAll(t *testing.T) {
 			schema: schematest.NewAllOf(
 				schematest.New("integer"),
 				schematest.New("integer", schematest.WithMaximum(12)),
+			),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int64(12), v)
+			},
+		},
+		{
+			name: "AllOf with two types one is empty",
+			data: 12,
+			schema: schematest.NewAllOf(
+				schematest.New("integer"),
+				schematest.NewTypes(nil),
 			),
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)

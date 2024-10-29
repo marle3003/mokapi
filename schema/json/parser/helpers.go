@@ -2,11 +2,11 @@ package parser
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"mokapi/sortedmap"
 	"reflect"
 	"sort"
 	"strings"
-	"unicode"
 )
 
 func toString(i interface{}) string {
@@ -69,6 +69,8 @@ func toString(i interface{}) string {
 				sb.WriteString(fmt.Sprintf("%v: %v", name, fv))
 			}
 			sb.WriteRune('}')
+		default:
+			log.Errorf("JSON schema to string: unsupported type: %v", v.Kind())
 		}
 	}
 	return sb.String()
@@ -137,8 +139,25 @@ func compareStruct(a, b reflect.Value) bool {
 	return true
 }
 
-func toFieldName(s string) string {
-	r := []rune(s)
-	r[0] = unicode.ToUpper(r[0])
-	return string(r)
+func toType(i interface{}) string {
+	v := reflect.ValueOf(i)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+
+	switch v.Kind() {
+	case reflect.Slice, reflect.Array:
+		return "array"
+	case reflect.Struct, reflect.Map:
+		return "object"
+	case reflect.Int, reflect.Int32, reflect.Int64:
+		return "integer"
+	case reflect.Float32, reflect.Float64:
+		return "number"
+	case reflect.String:
+		return "string"
+	default:
+		log.Errorf("unable to resolve JSON type from value: %v", toString(i))
+		return "string"
+	}
 }

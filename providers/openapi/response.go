@@ -72,7 +72,8 @@ func (r *Responses[K]) UnmarshalJSON(b []byte) error {
 			} else {
 				statusCode, err := strconv.Atoi(key)
 				if err != nil {
-					return fmt.Errorf("unable to parse http status %v", key)
+					offset += dynamic.NextTokenIndex(b[offset:])
+					return dynamic.NewStructuralErrorWithField(fmt.Errorf("unable to parse http status '%v': only HTTP status codes are allowed", key), offset, dec, key)
 				}
 				m.Set(statusCode, val)
 			}
@@ -109,7 +110,7 @@ func (r *Responses[K]) UnmarshalYAML(value *yaml.Node) error {
 			} else {
 				statusCode, err := strconv.Atoi(key)
 				if err != nil {
-					return fmt.Errorf("unable to parse http status %v", key)
+					return fmt.Errorf("unable to parse http status '%v': only HTTP status codes are allowed at line %d, column %d", key, value.Line, value.Column)
 				}
 				m.Set(statusCode, val)
 			}

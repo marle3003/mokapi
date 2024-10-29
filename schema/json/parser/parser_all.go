@@ -12,7 +12,10 @@ func (p *Parser) ParseAll(s *schema.Schema, data interface{}) (interface{}, erro
 	if len(s.AllOf) == 1 {
 		return p.Parse(data, s.AllOf[0])
 	}
-	types := getTypeIntersection(s.AllOf)
+	types, err := getTypeIntersection(s.AllOf)
+	if err != nil {
+		return nil, fmt.Errorf("allOf contains error: %w", err)
+	}
 	if len(types) == 0 {
 		return nil, fmt.Errorf("allOf contains different types: %v", s)
 	}
@@ -51,9 +54,6 @@ func (p *Parser) parseAllObject(s *schema.Schema, data interface{}) (interface{}
 
 		if all == nil || all.Value == nil {
 			return nil, fmt.Errorf("schema is not defined")
-		}
-		if !all.Value.Type.Includes("object") {
-			return nil, fmt.Errorf("type of '%v' is not allowed: allOf only supports type of object", all.Value.Type.String())
 		}
 
 		if all.Value.IsFreeForm() {
@@ -108,11 +108,17 @@ func (p *Parser) parseAllObject(s *schema.Schema, data interface{}) (interface{}
 	return r.ToMap(), nil
 }
 
-func getTypeIntersection(sets []*schema.Ref) schema.Types {
+func getTypeIntersection(sets []*schema.Ref) (schema.Types, error) {
 	m := map[string]struct{}{}
 
+	countNoSchemaDefined := 0
 	for _, set := range sets {
-		if set.Value == nil {
+		if set == nil || set.Value == nil {
+			countNoSchemaDefined++
+			continue
+		}
+		if set.Value.Type == nil {
+			// JSON schema does not require a type
 			continue
 		}
 
@@ -129,9 +135,13 @@ func getTypeIntersection(sets []*schema.Ref) schema.Types {
 		}
 	}
 
+	if len(sets) == countNoSchemaDefined {
+		return nil, fmt.Errorf("no schema available")
+	}
+
 	var result schema.Types
 	for k := range m {
 		result = append(result, k)
 	}
-	return result
+	return result, nil
 }

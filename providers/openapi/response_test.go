@@ -48,7 +48,8 @@ func TestResponse_UnmarshalJSON(t *testing.T) {
 			test: func(t *testing.T) {
 				res := openapi.Responses[int]{}
 				err := json.Unmarshal([]byte(`{ "foo": { "description": "foo" } }`), &res)
-				require.EqualError(t, err, "unable to parse http status foo")
+				// For JSON files, line and column position for error is handled in dynamic package
+				require.EqualError(t, err, "structural error at foo: unable to parse http status 'foo': only HTTP status codes are allowed")
 				require.Equal(t, 0, res.Len())
 			},
 		},
@@ -124,7 +125,7 @@ func TestResponse_UnmarshalYAML(t *testing.T) {
 			test: func(t *testing.T) {
 				res := openapi.Responses[int]{}
 				err := yaml.Unmarshal([]byte(`foo: { description: foo }`), &res)
-				require.EqualError(t, err, "unable to parse http status foo")
+				require.EqualError(t, err, "unable to parse http status 'foo': only HTTP status codes are allowed at line 1, column 1")
 				require.Equal(t, 0, res.Len())
 			},
 		},

@@ -167,7 +167,7 @@ func TestRef_Marshal_Json_Object(t *testing.T) {
 				schematest.WithProperty("value", schematest.New("integer"))),
 			data: 12,
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "encoding data to 'application/json' failed: encode '12' to schema type=object properties=[name, value] failed")
+				require.EqualError(t, err, "encoding data to 'application/json' failed: parse object failed, got 12 expected schema type=object properties=[name, value]")
 				require.Len(t, result, 0)
 			},
 		},
@@ -689,7 +689,7 @@ func TestRef_Marshal_Json_AllOf(t *testing.T) {
 				return map[string]interface{}{"bar": "bar"}
 			},
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "encoding data to 'application/json' failed: type of 'integer' is not allowed: allOf only supports type of object")
+				require.EqualError(t, err, "encoding data to 'application/json' failed: allOf contains different types: all of schema type=object properties=[foo], schema type=integer")
 				require.Len(t, result, 0)
 			},
 		},
@@ -703,7 +703,7 @@ func TestRef_Marshal_Json_AllOf(t *testing.T) {
 				return map[string]interface{}{"bar": "bar"}
 			},
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "encoding data to 'application/json' failed: schema is not defined: allOf only supports type of object")
+				require.EqualError(t, err, "encoding data to 'application/json' failed: allOf contains error: no schema available")
 				require.Len(t, result, 0)
 			},
 		},

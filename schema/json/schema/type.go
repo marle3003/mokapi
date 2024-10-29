@@ -151,7 +151,7 @@ func (s *Schema) Is(typeName string) bool {
 }
 
 func (s *Schema) IsFreeForm() bool {
-	if s == nil || !s.IsObject() {
+	if s == nil || (!s.IsObject() && len(s.Type) > 0) {
 		return false
 	}
 

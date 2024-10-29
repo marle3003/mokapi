@@ -35,7 +35,8 @@ func (p *Parser) Parse(data interface{}, ref *schema.Ref) (interface{}, error) {
 	}
 
 	if len(ref.Value.Type) == 0 {
-		return data, nil
+		t := toType(data)
+		return p.parseType(data, ref.Value, t)
 	}
 
 	var v interface{}
