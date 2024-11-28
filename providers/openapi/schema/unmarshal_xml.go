@@ -69,7 +69,11 @@ func parse(n *node, ref *Ref) (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		m[name] = v
+		if _, ok := m[name]; ok {
+			m[name] = []interface{}{m[name], v}
+		} else {
+			m[name] = v
+		}
 	}
 	for _, attr := range n.Attrs {
 		name, prop := getProperty(attr.Name, s, true)
