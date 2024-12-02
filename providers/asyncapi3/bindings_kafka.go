@@ -1,4 +1,4 @@
-package kafka
+package asyncapi3
 
 import (
 	"fmt"
@@ -34,13 +34,13 @@ type BrokerBindings struct {
 	GroupMinSessionTimeoutMs int64
 }
 
-type Operation struct {
+type KafkaOperation struct {
 	GroupId  *schema.Schema `yaml:"groupId" json:"groupId"`
 	ClientId *schema.Schema `yaml:"clientId" json:"clientId"`
 }
 
-type MessageBinding struct {
-	Key *schema.Ref
+type KafkaMessageBinding struct {
+	Key *SchemaRef
 }
 
 type TopicBindings struct {
@@ -77,11 +77,7 @@ func (b *BrokerBindings) UnmarshalYAML(value *yaml.Node) error {
 
 	b.LogRetentionBytes, err = getInt64(m, "log.retention.bytes")
 	if err != nil {
-		return err
-	}
-	b.LogRetentionMs, err = getInt64(m, "log.retention.ms")
-	if err != nil {
-		return err
+		return fmt.Errorf("invalid log.retention.bytes: %w", err)
 	}
 	b.LogRetentionMs, err = getMs(m, "log.retention")
 	if err != nil {
@@ -89,11 +85,11 @@ func (b *BrokerBindings) UnmarshalYAML(value *yaml.Node) error {
 	}
 	b.LogRetentionCheckIntervalMs, err = getInt64(m, "log.retention.check.interval.ms")
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid log.retention.check.interval.ms: %w", err)
 	}
 	b.LogSegmentDeleteDelayMs, err = getInt64(m, "log.segment.delete.delay.ms")
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid log.segment.delete.delay.ms: %w", err)
 	}
 	b.LogRollMs, err = getMs(m, "log.roll")
 	if err != nil {
@@ -101,15 +97,15 @@ func (b *BrokerBindings) UnmarshalYAML(value *yaml.Node) error {
 	}
 	b.LogSegmentBytes, err = getInt64(m, "log.segment.bytes")
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid log.segment.bytes: %w", err)
 	}
 	b.GroupInitialRebalanceDelayMs, err = getInt64(m, "group.initial.rebalance.delay.ms")
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid group.initial.rebalance.delay.ms: %w", err)
 	}
 	b.GroupMinSessionTimeoutMs, err = getInt64(m, "group.min.session.timeout.ms")
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid group.min.session.timeout.ms: %w", err)
 	}
 
 	return nil
@@ -124,45 +120,54 @@ func (t *TopicBindings) UnmarshalYAML(value *yaml.Node) error {
 
 	t.Partitions, err = getInt(m, "partitions")
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid partition: %w", err)
 	}
 	t.RetentionBytes, err = getInt64(m, "retention.bytes")
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid retention.bytes: %w", err)
 	}
 	t.RetentionMs, err = getInt64(m, "retention.ms")
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid retention.ms: %w", err)
 	}
 	t.SegmentBytes, err = getInt64(m, "segment.bytes")
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid segment.bytes: %w", err)
 	}
 	t.SegmentMs, err = getInt64(m, "segment.ms")
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid segment.ms: %w", err)
 	}
 	t.ValueSchemaValidation, err = getBool(m, "confluent.value.schema.validation")
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid confluent.value.schema.validation: %w", err)
 	}
 
 	return nil
 }
 
 func getMs(m map[string]interface{}, baseKey string) (int64, error) {
-	i, err := getInt64(m, baseKey+".ms")
-	if i > 0 || err != nil {
-		return i, err
+	key := baseKey + ".ms"
+	if i, err := getInt64(m, key); err != nil {
+		return 0, fmt.Errorf("invalid %s: %w", key, err)
+	} else if i > 0 {
+		return i, nil
 	}
-	i, err = getInt64(m, baseKey+".minutes")
-	if i > 0 || err != nil {
-		return i * 60 * 1000, err
+
+	key = baseKey + ".minutes"
+	if i, err := getInt64(m, key); err != nil {
+		return 0, fmt.Errorf("invalid %s: %w", key, err)
+	} else if i > 0 {
+		return i * 60 * 1000, nil
 	}
-	i, err = getInt64(m, baseKey+".hours")
-	if i > 0 || err != nil {
-		return i * 60 * 60 * 1000, err
+
+	key = baseKey + ".hours"
+	if i, err := getInt64(m, key); err != nil {
+		return 0, fmt.Errorf("invalid %s: %w", key, err)
+	} else if i > 0 {
+		return i * 60 * 60 * 1000, nil
 	}
+
 	return 0, nil
 }
 
@@ -173,7 +178,7 @@ func getInt(m map[string]interface{}, keys ...string) (int, error) {
 		case int:
 			return v, nil
 		default:
-			return 0, fmt.Errorf("cannot unmarshal %T to int", i)
+			return 0, fmt.Errorf("cannot unmarshal %T to int: %v", i, i)
 		}
 	}
 	return 0, nil
@@ -188,7 +193,7 @@ func getInt64(m map[string]interface{}, keys ...string) (int64, error) {
 		case int64:
 			return v, nil
 		default:
-			return 0, fmt.Errorf("cannot unmarshal %T to int64", i)
+			return 0, fmt.Errorf("cannot unmarshal %T to int64: %v", i, i)
 		}
 	}
 	return 0, nil
@@ -201,7 +206,7 @@ func getBool(m map[string]interface{}, keys ...string) (bool, error) {
 		case bool:
 			return v, nil
 		default:
-			return true, fmt.Errorf("cannot unmarshal %T to bool", i)
+			return true, fmt.Errorf("cannot unmarshal %T to bool: %v", i, i)
 		}
 	}
 	return true, nil

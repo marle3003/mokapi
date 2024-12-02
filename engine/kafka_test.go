@@ -11,16 +11,15 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
-	bindings "mokapi/config/dynamic/asyncApi/kafka"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/engine"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/produce"
-	"mokapi/providers/openapi/schema/schematest"
 	"mokapi/runtime"
 	"mokapi/runtime/monitor"
+	"mokapi/schema/json/schematest"
 	"net/url"
 	"testing"
 	"time"
@@ -292,10 +291,10 @@ func TestKafkaClient_Produce(t *testing.T) {
 							asyncapitest.WithKey(schematest.New("string")),
 						),
 					),
-					asyncapitest.WithTopicBinding(bindings.TopicBindings{ValueSchemaValidation: true}),
+					asyncapitest.WithTopicBinding(asyncApi.TopicBindings{ValueSchemaValidation: true}),
 				),
 				asyncapitest.WithChannel("bar",
-					asyncapitest.WithChannelKafka(bindings.TopicBindings{Partitions: 10}),
+					asyncapitest.WithChannelKafka(asyncApi.TopicBindings{Partitions: 10}),
 					asyncapitest.WithSubscribeAndPublish(
 						asyncapitest.WithMessage(
 							asyncapitest.WithContentType("application/json"),

@@ -3,18 +3,39 @@ package asyncApi
 import (
 	"fmt"
 	"mokapi/config/dynamic"
-	"mokapi/providers/openapi/schema"
+	"mokapi/providers/asyncapi3"
+	"mokapi/schema/json/schema"
 	"net/url"
 	"strings"
 )
 
-func (c *Config) Convert() (*Config3, error) {
-	target := &Config3{
+func (c *Config) Convert() (*asyncapi3.Config, error) {
+	target := &asyncapi3.Config{
 		Version:            "3.0.0",
 		Id:                 c.Id,
 		DefaultContentType: c.DefaultContentType,
 	}
-	target.Info = c.Info
+	target.Info = asyncapi3.Info{
+		Name:           c.Info.Name,
+		Description:    c.Info.Description,
+		Version:        c.Info.Version,
+		TermsOfService: c.Info.TermsOfService,
+	}
+
+	if c.Info.Contact != nil {
+		target.Info.Contact = &asyncapi3.Contact{
+			Name:  c.Info.Contact.Name,
+			Url:   c.Info.Contact.Url,
+			Email: c.Info.Contact.Email,
+		}
+	}
+
+	if c.Info.License != nil {
+		target.Info.License = &asyncapi3.License{
+			Name: c.Info.License.Name,
+			Url:  c.Info.License.Url,
+		}
+	}
 
 	convertServers(target, c.Servers)
 	if err := convertChannels(target, c.Channels); err != nil {
@@ -24,21 +45,21 @@ func (c *Config) Convert() (*Config3, error) {
 	return target, nil
 }
 
-func convertChannels(cfg *Config3, channels map[string]*ChannelRef) error {
+func convertChannels(cfg *asyncapi3.Config, channels map[string]*ChannelRef) error {
 	for name, orig := range channels {
-		target := &Channel3Ref{Reference: dynamic.Reference{Ref: orig.Ref}}
+		target := &asyncapi3.ChannelRef{Reference: dynamic.Reference{Ref: orig.Ref}}
 		if orig.Value != nil {
-			target.Value = &Channel3{
+			target.Value = &asyncapi3.Channel{
 				Address:     name,
 				Summary:     "",
 				Description: orig.Value.Description,
-				Bindings:    orig.Value.Bindings,
+				Bindings:    convertChannelBinding(orig.Value.Bindings),
 			}
 
 			for _, server := range orig.Value.Servers {
 				target.Value.Servers = append(
 					target.Value.Servers,
-					&Server3Ref{Reference: dynamic.Reference{
+					&asyncapi3.ServerRef{Reference: dynamic.Reference{
 						Ref: fmt.Sprintf("#/servers/%s", server),
 					}})
 			}
@@ -52,7 +73,7 @@ func convertChannels(cfg *Config3, channels map[string]*ChannelRef) error {
 		}
 
 		if cfg.Channels == nil {
-			cfg.Channels = map[string]*Channel3Ref{}
+			cfg.Channels = map[string]*asyncapi3.ChannelRef{}
 		}
 
 		cfg.Channels[name] = target
@@ -61,7 +82,7 @@ func convertChannels(cfg *Config3, channels map[string]*ChannelRef) error {
 	return nil
 }
 
-func convertOperation(channel *Channel3, op *Operation, opName string) {
+func convertOperation(channel *asyncapi3.Channel, op *Operation, opName string) {
 	if op == nil {
 		return
 	}
@@ -75,43 +96,68 @@ func convertOperation(channel *Channel3, op *Operation, opName string) {
 	}
 
 	if channel.Messages == nil {
-		channel.Messages = map[string]*Message3Ref{}
+		channel.Messages = map[string]*asyncapi3.MessageRef{}
 	}
 
 	channel.Messages[msgId] = msg
 }
 
-func convertMessage(msg *MessageRef) *Message3Ref {
-	target := &Message3Ref{Reference: dynamic.Reference{Ref: msg.Ref}}
+func convertMessage(msg *MessageRef) *asyncapi3.MessageRef {
+	target := &asyncapi3.MessageRef{Reference: dynamic.Reference{Ref: msg.Ref}}
 	if msg.Value != nil {
-		target.Value = &Message3{
-			Title:         msg.Value.Title,
-			Name:          msg.Value.Name,
-			Summary:       msg.Value.Summary,
-			Description:   msg.Value.Description,
-			CorrelationId: msg.Value.CorrelationId,
-			ContentType:   msg.Value.ContentType,
-			Payload:       nil,
-			Bindings:      msg.Value.Bindings,
-			Traits:        msg.Value.Traits,
-			ExternalDocs:  nil,
+		target.Value = &asyncapi3.Message{
+			Title:        msg.Value.Title,
+			Name:         msg.Value.Name,
+			Summary:      msg.Value.Summary,
+			Description:  msg.Value.Description,
+			ContentType:  msg.Value.ContentType,
+			Payload:      nil,
+			Bindings:     convertMessageBinding(msg.Value.Bindings),
+			ExternalDocs: nil,
 		}
 
 		if msg.Value.Payload != nil {
-			target.Value.Payload = convertSchema(msg.Value.Payload, msg.Value.SchemaFormat)
+			target.Value.Payload = convertJsonSchema(msg.Value.Payload)
 		}
 		if msg.Value.Headers != nil {
-			target.Value.Headers = convertSchema(msg.Value.Headers, "")
+			target.Value.Headers = convertJsonSchema(msg.Value.Headers)
+		}
+		for _, trait := range msg.Value.Traits {
+			if trait.Value == nil {
+				continue
+			}
+			target.Value.Traits = append(target.Value.Traits, convertMessageTrait(trait.Value))
 		}
 	}
 	return target
 }
 
-func convertSchema(s *schema.Ref, schemaFormat string) *SchemaRef {
-	target := &SchemaRef{Reference: dynamic.Reference{Ref: s.Ref}}
+func convertMessageTrait(trait *MessageTrait) *asyncapi3.MessageTraitRef {
+	target := &asyncapi3.MessageTrait{
+		Name:        trait.Name,
+		Title:       trait.Title,
+		Summary:     trait.Summary,
+		Description: trait.Description,
+		ContentType: trait.ContentType,
+		Bindings:    convertMessageBinding(trait.Bindings),
+	}
+
+	if trait.Headers != nil && trait.Headers.Value != nil {
+		target.Headers = &asyncapi3.SchemaRef{
+			Value: trait.Headers.Value,
+		}
+	}
+	return &asyncapi3.MessageTraitRef{Value: target}
+}
+
+func convertSchema(s *SchemaRef, schemaFormat string) *asyncapi3.SchemaRef {
+	if s == nil {
+		return nil
+	}
+	target := &asyncapi3.SchemaRef{Reference: dynamic.Reference{Ref: s.Ref}}
 
 	if schemaFormat == "" {
-		target.Value = schema.ConvertToJsonSchema(s).Value
+		target.Value = s.Value
 	} else {
 		target.Value = &MultiSchemaFormat{
 			Format: schemaFormat,
@@ -121,11 +167,15 @@ func convertSchema(s *schema.Ref, schemaFormat string) *SchemaRef {
 	return target
 }
 
-func convertParameters(channel *Channel3, params map[string]*ParameterRef) error {
+func convertJsonSchema(s *schema.Ref) *asyncapi3.SchemaRef {
+	return &asyncapi3.SchemaRef{Reference: dynamic.Reference{Ref: s.Ref}, Value: s}
+}
+
+func convertParameters(channel *asyncapi3.Channel, params map[string]*ParameterRef) error {
 	for name, orig := range params {
-		target := &Parameter3Ref{Reference: dynamic.Reference{Ref: orig.Ref}}
+		target := &asyncapi3.ParameterRef{Reference: dynamic.Reference{Ref: orig.Ref}}
 		if orig.Value != nil {
-			target.Value = &Parameter3{
+			target.Value = &asyncapi3.Parameter{
 				Description: orig.Value.Description,
 				Location:    orig.Value.Location,
 			}
@@ -158,7 +208,7 @@ func convertParameters(channel *Channel3, params map[string]*ParameterRef) error
 		}
 
 		if channel.Parameters == nil {
-			channel.Parameters = map[string]*Parameter3Ref{}
+			channel.Parameters = map[string]*asyncapi3.ParameterRef{}
 		}
 
 		channel.Parameters[name] = target
@@ -166,16 +216,15 @@ func convertParameters(channel *Channel3, params map[string]*ParameterRef) error
 	return nil
 }
 
-func convertServers(cfg *Config3, servers map[string]*ServerRef) {
+func convertServers(cfg *asyncapi3.Config, servers map[string]*ServerRef) {
 	for name, orig := range servers {
-		target := &Server3Ref{Reference: dynamic.Reference{Ref: orig.Ref}}
+		target := &asyncapi3.ServerRef{Reference: dynamic.Reference{Ref: orig.Ref}}
 		if orig.Value != nil {
-			target.Value = &Server3{
+			target.Value = &asyncapi3.Server{
 				Protocol:        orig.Value.Protocol,
 				Description:     orig.Value.Description,
 				ProtocolVersion: orig.Value.ProtocolVersion,
-				Variables:       orig.Value.Variables,
-				Bindings:        orig.Value.Bindings,
+				Bindings:        convertServerBinding(orig.Value.Bindings),
 			}
 
 			protocol, host, path := resolveServerUrl(orig.Value.Url)
@@ -187,7 +236,7 @@ func convertServers(cfg *Config3, servers map[string]*ServerRef) {
 		}
 
 		if cfg.Servers == nil {
-			cfg.Servers = map[string]*Server3Ref{}
+			cfg.Servers = map[string]*asyncapi3.ServerRef{}
 		}
 
 		cfg.Servers[name] = target
@@ -208,4 +257,32 @@ func resolveServerUrl(s string) (protocol, host, path string) {
 		path = split[1]
 	}
 	return
+}
+
+func convertServerBinding(b ServerBindings) asyncapi3.ServerBindings {
+	return asyncapi3.ServerBindings{Kafka: asyncapi3.BrokerBindings{
+		LogRetentionBytes:            b.Kafka.LogRetentionBytes,
+		LogRetentionMs:               b.Kafka.LogRetentionMs,
+		LogRetentionCheckIntervalMs:  b.Kafka.LogRetentionCheckIntervalMs,
+		LogSegmentDeleteDelayMs:      b.Kafka.LogSegmentDeleteDelayMs,
+		LogRollMs:                    b.Kafka.LogRollMs,
+		LogSegmentBytes:              b.Kafka.LogSegmentBytes,
+		GroupInitialRebalanceDelayMs: b.Kafka.GroupInitialRebalanceDelayMs,
+		GroupMinSessionTimeoutMs:     b.Kafka.GroupMinSessionTimeoutMs,
+	}}
+}
+
+func convertMessageBinding(b MessageBinding) asyncapi3.MessageBinding {
+	return asyncapi3.MessageBinding{Kafka: asyncapi3.KafkaMessageBinding{Key: convertSchema(b.Kafka.Key, "")}}
+}
+
+func convertChannelBinding(b ChannelBindings) asyncapi3.ChannelBindings {
+	return asyncapi3.ChannelBindings{Kafka: asyncapi3.TopicBindings{
+		Partitions:            b.Kafka.Partitions,
+		RetentionBytes:        b.Kafka.RetentionBytes,
+		RetentionMs:           b.Kafka.RetentionMs,
+		SegmentBytes:          b.Kafka.SegmentBytes,
+		SegmentMs:             b.Kafka.SegmentMs,
+		ValueSchemaValidation: b.Kafka.ValueSchemaValidation,
+	}}
 }

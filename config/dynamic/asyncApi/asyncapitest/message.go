@@ -2,7 +2,7 @@ package asyncapitest
 
 import (
 	"mokapi/config/dynamic/asyncApi"
-	"mokapi/providers/openapi/schema"
+	"mokapi/schema/json/schema"
 )
 
 type MessageOptions func(m *asyncApi.Message)
@@ -29,7 +29,7 @@ func WithContentType(s string) MessageOptions {
 
 func WithKey(s *schema.Schema) MessageOptions {
 	return func(m *asyncApi.Message) {
-		m.Bindings.Kafka.Key = &schema.Ref{Value: s}
+		m.Bindings.Kafka.Key = &asyncApi.SchemaRef{Value: &schema.Ref{Value: s}}
 	}
 }
 
@@ -45,5 +45,11 @@ func WithMessageInfo(name, title, summary, description string) MessageOptions {
 func WithMessageId(messageId string) MessageOptions {
 	return func(m *asyncApi.Message) {
 		m.MessageId = messageId
+	}
+}
+
+func WithMessageTrait(trait *asyncApi.MessageTrait) MessageOptions {
+	return func(m *asyncApi.Message) {
+		m.Traits = append(m.Traits, &asyncApi.MessageTraitRef{Value: trait})
 	}
 }

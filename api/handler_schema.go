@@ -161,6 +161,11 @@ func getSchema(s *schema.Ref) *schemaInfo {
 	return converter.getSchema(s)
 }
 
+func getSchemaFromJson(s *jsonSchema.Ref) *schemaInfo {
+	converter := &jsonSchemaConverter{map[string]*schemaInfo{}}
+	return converter.getSchema(s)
+}
+
 type schemaConverter struct {
 	schemas map[string]*schemaInfo
 }
@@ -381,6 +386,116 @@ func toSchema(s *schemaInfo) *schema.Schema {
 		} else if additional, ok := s.AdditionalProperties.(*schemaInfo); ok {
 			result.AdditionalProperties.Ref = &schema.Ref{Value: toSchema(additional)}
 		}
+	}
+
+	return result
+}
+
+type jsonSchemaConverter struct {
+	schemas map[string]*schemaInfo
+}
+
+func (c *jsonSchemaConverter) getSchema(s *jsonSchema.Ref) *schemaInfo {
+	if s == nil || s.Value == nil {
+		return nil
+	}
+
+	// loop protection, only return reference
+	if _, ok := c.schemas[s.Ref]; ok {
+		return &schemaInfo{Ref: s.Ref}
+	}
+	defer func() {
+		delete(c.schemas, s.Ref)
+	}()
+
+	result := &schemaInfo{
+		Ref: s.Ref,
+
+		Type:   s.Value.Type,
+		Enum:   s.Value.Enum,
+		Format: s.Value.Format,
+
+		Pattern:   s.Value.Pattern,
+		MinLength: s.Value.MinLength,
+		MaxLength: s.Value.MaxLength,
+
+		Minimum: s.Value.Minimum,
+		Maximum: s.Value.Maximum,
+
+		UniqueItems:  s.Value.UniqueItems,
+		MinItems:     s.Value.MinItems,
+		MaxItems:     s.Value.MaxItems,
+		ShuffleItems: s.Value.ShuffleItems,
+
+		Required:      s.Value.Required,
+		MinProperties: s.Value.MinProperties,
+		MaxProperties: s.Value.MaxProperties,
+
+		// Annotations
+		Title:       s.Value.Title,
+		Description: s.Value.Description,
+		Default:     s.Value.Default,
+		Deprecated:  s.Value.Deprecated,
+		Examples:    s.Value.Examples,
+	}
+
+	if len(s.Value.Type) == 0 {
+		result.Type = ""
+	} else if len(s.Value.Type) == 1 {
+		result.Type = s.Value.Type[0]
+	}
+
+	if s.Value.ExclusiveMinimum != nil {
+		if s.Value.ExclusiveMinimum.IsA() {
+			result.ExclusiveMinimum = s.Value.ExclusiveMinimum.A
+		} else if s.Value.ExclusiveMinimum.B {
+			result.ExclusiveMinimum = *s.Value.Minimum
+			result.Minimum = nil
+		}
+	}
+
+	if s.Value.ExclusiveMaximum != nil {
+		if s.Value.ExclusiveMaximum.IsA() {
+			result.ExclusiveMaximum = s.Value.ExclusiveMaximum.A
+		} else if s.Value.ExclusiveMaximum.B {
+			result.ExclusiveMaximum = *s.Value.Maximum
+			result.Maximum = nil
+		}
+	}
+
+	if len(s.Ref) > 0 {
+		c.schemas[s.Ref] = result
+	}
+
+	result.Items = c.getSchema(s.Value.Items)
+
+	if s.Value.Properties != nil {
+		result.Properties = &Properties{}
+		for it := s.Value.Properties.Iter(); it.Next(); {
+			key := it.Key()
+			_ = key
+			prop := c.getSchema(it.Value())
+			if prop == nil {
+				continue
+			}
+			result.Properties.Set(it.Key(), prop)
+		}
+	}
+
+	for _, any := range s.Value.AnyOf {
+		result.AnyOf = append(result.AnyOf, c.getSchema(any))
+	}
+	for _, all := range s.Value.AllOf {
+		result.AllOf = append(result.AnyOf, c.getSchema(all))
+	}
+	for _, one := range s.Value.OneOf {
+		result.OneOf = append(result.AnyOf, c.getSchema(one))
+	}
+
+	if s.Value.AdditionalProperties.Forbidden {
+		result.AdditionalProperties = !s.Value.AdditionalProperties.Forbidden
+	} else if s.Value.AdditionalProperties.Ref != nil {
+		result.AdditionalProperties = c.getSchema(s.Value.AdditionalProperties.Ref)
 	}
 
 	return result

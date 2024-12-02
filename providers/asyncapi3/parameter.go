@@ -1,16 +1,16 @@
-package asyncApi
+package asyncapi3
 
 import (
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 )
 
-type Parameter3Ref struct {
+type ParameterRef struct {
 	dynamic.Reference
-	Value *Parameter3
+	Value *Parameter
 }
 
-type Parameter3 struct {
+type Parameter struct {
 	Description string   `yaml:"description" json:"description"`
 	Enum        []string `yaml:"enum" json:"enum"`
 	Default     string   `yaml:"default" json:"default"`
@@ -18,15 +18,15 @@ type Parameter3 struct {
 	Location    string   `yaml:"location" json:"location"`
 }
 
-func (r *Parameter3Ref) UnmarshalYAML(node *yaml.Node) error {
+func (r *ParameterRef) UnmarshalYAML(node *yaml.Node) error {
 	return r.Reference.UnmarshalYaml(node, &r.Value)
 }
 
-func (r *Parameter3Ref) UnmarshalJSON(b []byte) error {
+func (r *ParameterRef) UnmarshalJSON(b []byte) error {
 	return r.Reference.UnmarshalJson(b, &r.Value)
 }
 
-func (r *Parameter3Ref) parse(config *dynamic.Config, reader dynamic.Reader) error {
+func (r *ParameterRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(r.Ref) > 0 {
 		if err := dynamic.Resolve(r.Ref, &r.Value, config, reader); err != nil {
 			return err

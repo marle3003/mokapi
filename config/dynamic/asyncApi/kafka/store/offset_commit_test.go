@@ -4,14 +4,14 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
+	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
-	kafka2 "mokapi/config/dynamic/asyncApi/kafka"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/offsetCommit"
-	"mokapi/providers/openapi/schema/schematest"
+	"mokapi/schema/json/schematest"
 	"testing"
 )
 
@@ -154,7 +154,7 @@ func TestOffsetCommit(t *testing.T) {
 			"partition not exists",
 			func(t *testing.T, s *store.Store) {
 				s.Update(asyncapitest.NewConfig(
-					asyncapitest.WithChannel("foo", asyncapitest.WithChannelKafka(kafka2.TopicBindings{Partitions: 1}))))
+					asyncapitest.WithChannel("foo", asyncapitest.WithChannelKafka(asyncApi.TopicBindings{Partitions: 1}))))
 
 				rr := kafkatest.NewRecorder()
 				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 2, &offsetCommit.Request{
@@ -206,7 +206,7 @@ func TestOffsetCommit_Validation(t *testing.T) {
 				s.Update(asyncapitest.NewConfig(
 					asyncapitest.WithServer("", "kafka", b.Addr),
 					asyncapitest.WithChannel("foo", asyncapitest.WithSubscribeAndPublish(
-						asyncapitest.WithOperationBinding(kafka2.Operation{ClientId: schematest.New("string", schematest.WithPattern("^[A-Z]{10}[0-5]$"))}),
+						asyncapitest.WithOperationBinding(asyncApi.KafkaOperation{ClientId: schematest.New("string", schematest.WithPattern("^[A-Z]{10}[0-5]$"))}),
 					))))
 
 				err := b.Client().JoinSyncGroup("foo", "bar", 3, 3)
@@ -243,7 +243,7 @@ func TestOffsetCommit_Validation(t *testing.T) {
 				s.Update(asyncapitest.NewConfig(
 					asyncapitest.WithServer("", "kafka", b.Addr),
 					asyncapitest.WithChannel("foo", asyncapitest.WithSubscribeAndPublish(
-						asyncapitest.WithOperationBinding(kafka2.Operation{GroupId: schematest.New("string", schematest.WithPattern("^[A-Z]{10}[0-5]$"))}),
+						asyncapitest.WithOperationBinding(asyncApi.KafkaOperation{GroupId: schematest.New("string", schematest.WithPattern("^[A-Z]{10}[0-5]$"))}),
 					))))
 
 				err := b.Client().JoinSyncGroup("foo", "bar", 3, 3)
@@ -281,7 +281,7 @@ func TestOffsetCommit_Validation(t *testing.T) {
 				s.Update(asyncapitest.NewConfig(
 					asyncapitest.WithServer("", "kafka", b.Addr),
 					asyncapitest.WithChannel("foo", asyncapitest.WithSubscribeAndPublish(
-						asyncapitest.WithOperationBinding(kafka2.Operation{
+						asyncapitest.WithOperationBinding(asyncApi.KafkaOperation{
 							ClientId: schematest.New("string", schematest.WithPattern("^[A-Z]{10}[0-5]$")),
 							GroupId:  schematest.New("string", schematest.WithPattern("^[A-Z]{5}[0-5]$")),
 						}),

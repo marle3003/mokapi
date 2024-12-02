@@ -2,10 +2,9 @@ package store
 
 import (
 	"mokapi/config/dynamic/asyncApi"
-	kafkaconfig "mokapi/config/dynamic/asyncApi/kafka"
 	"mokapi/kafka"
-	"mokapi/providers/openapi/schema"
 	"mokapi/runtime/events"
+	"mokapi/schema/json/schema"
 )
 
 type Topic struct {
@@ -16,7 +15,7 @@ type Topic struct {
 
 	logger  LogRecord
 	s       *Store
-	config  kafkaconfig.TopicBindings
+	config  asyncApi.TopicBindings
 	servers []string
 }
 

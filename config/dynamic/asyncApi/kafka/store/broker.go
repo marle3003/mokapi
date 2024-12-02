@@ -3,7 +3,6 @@ package store
 import (
 	"fmt"
 	"mokapi/config/dynamic/asyncApi"
-	"mokapi/config/dynamic/asyncApi/kafka"
 	"time"
 )
 
@@ -17,7 +16,7 @@ type Broker struct {
 	Host string
 	Port int
 
-	kafkaConfig     kafka.BrokerBindings
+	kafkaConfig     asyncApi.BrokerBindings
 	stopCleanerChan chan bool
 }
 

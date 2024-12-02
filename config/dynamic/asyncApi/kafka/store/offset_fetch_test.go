@@ -4,15 +4,15 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
+	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
-	binding "mokapi/config/dynamic/asyncApi/kafka"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/offsetCommit"
 	"mokapi/kafka/offsetFetch"
-	"mokapi/providers/openapi/schema/schematest"
+	"mokapi/schema/json/schematest"
 	"testing"
 )
 
@@ -270,7 +270,7 @@ func TestOffsetFetch_Validation(t *testing.T) {
 				s.Update(asyncapitest.NewConfig(
 					asyncapitest.WithServer("", "kafka", b.Addr),
 					asyncapitest.WithChannel("foo", asyncapitest.WithSubscribeAndPublish(
-						asyncapitest.WithOperationBinding(binding.Operation{ClientId: schematest.New("string", schematest.WithPattern("^[A-Z]{10}[0-5]$"))}),
+						asyncapitest.WithOperationBinding(asyncApi.KafkaOperation{ClientId: schematest.New("string", schematest.WithPattern("^[A-Z]{10}[0-5]$"))}),
 					))))
 
 				err := b.Client().JoinSyncGroup("foo", "bar", 3, 3)
@@ -307,7 +307,7 @@ func TestOffsetFetch_Validation(t *testing.T) {
 				s.Update(asyncapitest.NewConfig(
 					asyncapitest.WithServer("", "kafka", b.Addr),
 					asyncapitest.WithChannel("foo", asyncapitest.WithSubscribeAndPublish(
-						asyncapitest.WithOperationBinding(binding.Operation{GroupId: schematest.New("string", schematest.WithPattern("^[A-Z]{10}[0-5]$"))}),
+						asyncapitest.WithOperationBinding(asyncApi.KafkaOperation{GroupId: schematest.New("string", schematest.WithPattern("^[A-Z]{10}[0-5]$"))}),
 					))))
 
 				err := b.Client().JoinSyncGroup("foo", "bar", 3, 3)
@@ -345,7 +345,7 @@ func TestOffsetFetch_Validation(t *testing.T) {
 				s.Update(asyncapitest.NewConfig(
 					asyncapitest.WithServer("", "kafka", b.Addr),
 					asyncapitest.WithChannel("foo", asyncapitest.WithSubscribeAndPublish(
-						asyncapitest.WithOperationBinding(binding.Operation{
+						asyncapitest.WithOperationBinding(asyncApi.KafkaOperation{
 							ClientId: schematest.New("string", schematest.WithPattern("^[A-Z]{10}[0-5]$")),
 							GroupId:  schematest.New("string", schematest.WithPattern("^[A-Z]{5}[0-5]$")),
 						}),

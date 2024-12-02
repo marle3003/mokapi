@@ -4,7 +4,8 @@ import (
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/kafka"
 	"mokapi/media"
-	"mokapi/providers/openapi/schema"
+	"mokapi/schema/encoding"
+	"mokapi/schema/json/schema"
 )
 
 type validator struct {
@@ -29,7 +30,7 @@ func (v *validator) Payload(payload kafka.Bytes) error {
 		return nil
 	}
 
-	_, err := schema.UnmarshalFrom(payload, media.ParseContentType(v.contentType), v.payload)
+	_, err := encoding.DecodeFrom(payload, encoding.WithContentType(media.ParseContentType(v.contentType)), encoding.WithSchema(v.payload))
 	return err
 }
 

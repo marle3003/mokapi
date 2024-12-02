@@ -80,19 +80,61 @@ func (r *MessageRef) Parse(config *dynamic.Config, reader dynamic.Reader) error 
 		}
 	}
 
-	if r.Value.CorrelationId != nil {
-		if err := r.Value.CorrelationId.parse(config, reader); err != nil {
+	for _, trait := range r.Value.Traits {
+		if err := trait.parse(config, reader); err != nil {
+			return err
+		}
+		r.Value.applyTrait(trait.Value)
+	}
+
+	return nil
+}
+
+func (r *MessageTraitRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
+	if len(r.Ref) > 0 {
+		if err := dynamic.Resolve(r.Ref, &r.Value, config, reader); err != nil {
 			return err
 		}
 	}
 
-	for _, trait := range r.Value.Traits {
-		if err := trait.parse(config, reader); err != nil {
+	if r.Value == nil {
+		return nil
+	}
+
+	if r.Value.Headers != nil {
+		if err := r.Value.Headers.Parse(config, reader); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func (m *Message) applyTrait(trait *MessageTrait) {
+	if len(trait.MessageId) > 0 {
+		m.MessageId = trait.MessageId
+	}
+	if len(trait.Name) > 0 {
+		m.Name = trait.Name
+	}
+	if len(trait.Title) > 0 {
+		m.Title = trait.Title
+	}
+	if len(trait.Summary) > 0 {
+		m.Summary = trait.Summary
+	}
+	if len(trait.Description) > 0 {
+		m.Description = trait.Description
+	}
+	if len(trait.ContentType) > 0 {
+		m.ContentType = trait.ContentType
+	}
+	if trait.Headers != nil {
+		m.Headers = trait.Headers
+	}
+	if trait.Bindings.Kafka.Key != nil {
+		m.Bindings.Kafka.Key = trait.Bindings.Kafka.Key
+	}
 }
 
 func (r *ParameterRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {

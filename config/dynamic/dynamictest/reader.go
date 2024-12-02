@@ -6,7 +6,7 @@ import (
 	"net/url"
 )
 
-var NotFound = errors.New("no config found")
+var NotFound = errors.New("config not found")
 
 type Reader struct {
 	Data map[*url.URL]*dynamic.Config

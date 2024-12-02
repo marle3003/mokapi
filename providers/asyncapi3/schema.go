@@ -1,4 +1,4 @@
-package asyncApi
+package asyncapi3
 
 import (
 	"fmt"
@@ -34,7 +34,7 @@ func (r *SchemaRef) UnmarshalYAML(node *yaml.Node) error {
 		return nil
 	}
 
-	var s *schema.Ref
+	var s *schema.Schema
 	err = node.Decode(&s)
 	if err == nil {
 		r.Value = s

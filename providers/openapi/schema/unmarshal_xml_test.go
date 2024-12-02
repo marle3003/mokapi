@@ -293,3 +293,47 @@ func TestUnmarshalXML_Old(t *testing.T) {
 		})
 	}
 }
+
+func TestUnmarshalXML_NoSchema(t *testing.T) {
+	testcases := []struct {
+		name string
+		xml  string
+		test func(t *testing.T, i interface{}, err error)
+	}{
+		{
+			name: "string",
+			xml:  "<root>foo</root>",
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "foo", i)
+			},
+		},
+		{
+			name: "same name",
+			xml:  "<root><name>alice</name><name>carol</name></root>",
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []interface{}{"alice", "carol"}, i)
+			},
+		},
+		{
+			name: "mixed with same name",
+			xml:  "<root><foo>bar</foo><name>alice</name><name>carol</name></root>",
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"foo": "bar", "name": []interface{}{"alice", "carol"}}, i)
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			v, err := schema.UnmarshalXML(strings.NewReader(tc.xml), nil)
+			tc.test(t, v, err)
+		})
+	}
+}

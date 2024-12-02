@@ -2,11 +2,11 @@ package store
 
 import (
 	"github.com/stretchr/testify/require"
-	binding "mokapi/config/dynamic/asyncApi/kafka"
+	"mokapi/config/dynamic/asyncApi"
 	"mokapi/kafka"
-	"mokapi/providers/openapi/schema"
-	"mokapi/providers/openapi/schema/schematest"
 	"mokapi/runtime/events"
+	"mokapi/schema/json/schema"
+	"mokapi/schema/json/schematest"
 	"testing"
 	"time"
 )
@@ -138,7 +138,7 @@ func TestPartition_Write_Value_Validator(t *testing.T) {
 	p := newPartition(
 		0,
 		map[int]*Broker{1: {Id: 1}},
-		func(_ kafka.Record, partition int, _ events.Traits) {}, func(record *kafka.Record) {}, &Topic{config: binding.TopicBindings{ValueSchemaValidation: true}})
+		func(_ kafka.Record, partition int, _ events.Traits) {}, func(record *kafka.Record) {}, &Topic{config: asyncApi.TopicBindings{ValueSchemaValidation: true}})
 	p.validator = &validator{
 		payload:     &schema.Ref{Value: schematest.New("string")},
 		contentType: "application/json",

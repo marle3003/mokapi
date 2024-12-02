@@ -128,3 +128,12 @@ func (m *LinkedHashMap[K, V]) ToMap() map[K]V {
 	}
 	return result
 }
+
+func (m *LinkedHashMap[K, V]) Resolve(token string) (interface{}, error) {
+	for k, v := range m.pairs {
+		if k == token {
+			return v.value, nil
+		}
+	}
+	return nil, fmt.Errorf("unable to resolve %v", token)
+}

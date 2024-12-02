@@ -5,8 +5,9 @@ import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/kafka"
 	"mokapi/kafka/produce"
-	"mokapi/providers/openapi/schema"
 	"mokapi/runtime/monitor"
+	"mokapi/schema/encoding"
+	"mokapi/schema/json/schema"
 )
 
 func (s *Store) produce(rw kafka.ResponseWriter, req *kafka.Request) error {
@@ -69,7 +70,7 @@ func (s *Store) produce(rw kafka.ResponseWriter, req *kafka.Request) error {
 
 func validateProducer(t *Topic, ctx *kafka.ClientContext) (err error) {
 	if t.Publish.ClientId != nil {
-		_, err = schema.ParseString(ctx.ClientId, &schema.Ref{Value: t.Publish.ClientId})
+		_, err = encoding.Decode([]byte(ctx.ClientId), encoding.WithSchema(&schema.Ref{Value: t.Publish.ClientId}))
 	}
 	return
 }

@@ -5,7 +5,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/kafka"
 	"mokapi/kafka/offsetFetch"
-	"mokapi/providers/openapi/schema"
+	"mokapi/schema/encoding"
+	"mokapi/schema/json/schema"
 )
 
 func (s *Store) offsetFetch(rw kafka.ResponseWriter, req *kafka.Request) error {
@@ -63,13 +64,13 @@ func (s *Store) offsetFetch(rw kafka.ResponseWriter, req *kafka.Request) error {
 
 func validateConsumer(t *Topic, clientId, groupId string) (err error, code kafka.ErrorCode) {
 	if t.Subscribe.ClientId != nil {
-		_, err = schema.ParseString(clientId, &schema.Ref{Value: t.Publish.ClientId})
+		_, err = encoding.Decode([]byte(clientId), encoding.WithSchema(&schema.Ref{Value: t.Publish.ClientId}))
 		if err != nil {
 			return fmt.Errorf("invalid clientId: %v", err), kafka.UnknownServerError
 		}
 	}
 	if t.Subscribe.GroupId != nil {
-		_, err = schema.ParseString(groupId, &schema.Ref{Value: t.Publish.GroupId})
+		_, err = encoding.Decode([]byte(groupId), encoding.WithSchema(&schema.Ref{Value: t.Publish.GroupId}))
 		if err != nil {
 			return fmt.Errorf("invalid groupId: %v", err), kafka.InvalidGroupId
 		}

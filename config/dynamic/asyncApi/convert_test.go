@@ -40,10 +40,6 @@ func TestConfig_Convert(t *testing.T) {
 	require.Equal(t, "test.mosquitto.org:{port}", cfg3.Servers["production"].Value.Host)
 	require.Equal(t, "mqtt", cfg3.Servers["production"].Value.Protocol)
 	require.Equal(t, "Test broker", cfg3.Servers["production"].Value.Description)
-	// Variable
-	port := cfg3.Servers["production"].Value.Variables["port"].Value
-	require.Equal(t, "Secure connection (TLS) is available through port 8883.", port.Description)
-	require.Equal(t, []string{"1883", "8883"}, port.Enum)
 
 	// Channel
 	channel := cfg3.Channels["smartylighting/streetlights/1/0/event/{streetlightId}/lighting/measured"].Value
@@ -66,7 +62,7 @@ func TestConfig_Convert(t *testing.T) {
 
 	// payload
 	payload := msg.Payload.Value
-	require.IsType(t, &schema.Schema{}, payload)
-	s := payload.(*schema.Schema)
-	require.Equal(t, "object", s.Type[0])
+	require.IsType(t, &schema.Ref{}, payload)
+	s := payload.(*schema.Ref)
+	require.Equal(t, "object", s.Value.Type[0])
 }

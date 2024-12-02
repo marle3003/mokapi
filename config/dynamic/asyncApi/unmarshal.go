@@ -33,3 +33,11 @@ func unmarshalRef(node *yaml.Node, ref *string, val interface{}) error {
 func (r *ParameterRef) UnmarshalYAML(node *yaml.Node) error {
 	return r.Reference.UnmarshalYaml(node, &r.Value)
 }
+
+func (r *MessageTraitRef) UnmarshalYAML(node *yaml.Node) error {
+	return r.Reference.UnmarshalYaml(node, &r.Value)
+}
+
+func (r *MessageTraitRef) UnmarshalJSON(b []byte) error {
+	return r.Reference.UnmarshalJson(b, &r.Value)
+}

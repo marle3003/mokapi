@@ -1,10 +1,12 @@
-package asyncApi
+package asyncApi_test
 
 import (
 	"fmt"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
-	"mokapi/providers/openapi/schema"
+	"mokapi/config/dynamic/asyncApi"
+	"mokapi/schema/json/ref"
+	"mokapi/schema/json/schema"
 	"net/url"
 	"testing"
 )
@@ -31,17 +33,17 @@ func (tr *testReader) Close() {}
 func TestServerResolve(t *testing.T) {
 	testcases := []struct {
 		name string
-		cfg  *Config
+		cfg  *asyncApi.Config
 		read readFunc
-		test func(t *testing.T, cfg *Config, err error)
+		test func(t *testing.T, cfg *asyncApi.Config, err error)
 	}{
 		{
 			name: "no error when server value is nil",
 			read: func(cfg *dynamic.Config) error {
 				return nil
 			},
-			cfg: &Config{Servers: map[string]*ServerRef{"foo": nil}},
-			test: func(t *testing.T, cfg *Config, err error) {
+			cfg: &asyncApi.Config{Servers: map[string]*asyncApi.ServerRef{"foo": nil}},
+			test: func(t *testing.T, cfg *asyncApi.Config, err error) {
 				require.NoError(t, err)
 			},
 		},
@@ -50,13 +52,13 @@ func TestServerResolve(t *testing.T) {
 			read: func(cfg *dynamic.Config) error {
 				return nil
 			},
-			cfg: &Config{
-				Servers: map[string]*ServerRef{
+			cfg: &asyncApi.Config{
+				Servers: map[string]*asyncApi.ServerRef{
 					"foo": {Ref: "#/components/servers/foo"},
 				},
-				Components: &Components{Servers: map[string]*Server{"foo": {Description: "foo"}}},
+				Components: &asyncApi.Components{Servers: map[string]*asyncApi.Server{"foo": {Description: "foo"}}},
 			},
-			test: func(t *testing.T, cfg *Config, err error) {
+			test: func(t *testing.T, cfg *asyncApi.Config, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "foo", cfg.Servers["foo"].Value.Description)
 			},
@@ -65,16 +67,16 @@ func TestServerResolve(t *testing.T) {
 			name: "server with reference",
 			read: func(cfg *dynamic.Config) error {
 				require.Equal(t, "/foo.yml", cfg.Info.Url.String())
-				config := &Config{Servers: map[string]*ServerRef{
-					"foo": {Value: &Server{Description: "foo"}},
+				config := &asyncApi.Config{Servers: map[string]*asyncApi.ServerRef{
+					"foo": {Value: &asyncApi.Server{Description: "foo"}},
 				}}
 				cfg.Data = config
 				return nil
 			},
-			cfg: &Config{Servers: map[string]*ServerRef{
+			cfg: &asyncApi.Config{Servers: map[string]*asyncApi.ServerRef{
 				"foo": {Ref: "foo.yml#/servers/foo"},
 			}},
-			test: func(t *testing.T, cfg *Config, err error) {
+			test: func(t *testing.T, cfg *asyncApi.Config, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "foo", cfg.Servers["foo"].Value.Description)
 			},
@@ -83,14 +85,14 @@ func TestServerResolve(t *testing.T) {
 			name: "server with reference components",
 			read: func(cfg *dynamic.Config) error {
 				require.Equal(t, "/foo.yml", cfg.Info.Url.String())
-				config := &Config{Components: &Components{Servers: map[string]*Server{"foo": {Description: "foo"}}}}
+				config := &asyncApi.Config{Components: &asyncApi.Components{Servers: map[string]*asyncApi.Server{"foo": {Description: "foo"}}}}
 				cfg.Data = config
 				return nil
 			},
-			cfg: &Config{Servers: map[string]*ServerRef{
+			cfg: &asyncApi.Config{Servers: map[string]*asyncApi.ServerRef{
 				"foo": {Ref: "foo.yml#/components/servers/foo"},
 			}},
-			test: func(t *testing.T, cfg *Config, err error) {
+			test: func(t *testing.T, cfg *asyncApi.Config, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "foo", cfg.Servers["foo"].Value.Description)
 			},
@@ -99,16 +101,16 @@ func TestServerResolve(t *testing.T) {
 			name: "file reference but nil",
 			read: func(cfg *dynamic.Config) error {
 				require.Equal(t, "/foo.yml", cfg.Info.Url.String())
-				config := &Config{Servers: map[string]*ServerRef{
+				config := &asyncApi.Config{Servers: map[string]*asyncApi.ServerRef{
 					"foo": {},
 				}}
 				cfg.Data = config
 				return nil
 			},
-			cfg: &Config{Servers: map[string]*ServerRef{
+			cfg: &asyncApi.Config{Servers: map[string]*asyncApi.ServerRef{
 				"foo": {Ref: "foo.yml#/servers/foo"},
 			}},
-			test: func(t *testing.T, cfg *Config, err error) {
+			test: func(t *testing.T, cfg *asyncApi.Config, err error) {
 				require.NoError(t, err)
 				require.Nil(t, cfg.Servers["foo"].Value)
 			},
@@ -118,10 +120,10 @@ func TestServerResolve(t *testing.T) {
 			read: func(cfg *dynamic.Config) error {
 				return fmt.Errorf("TEST ERROR")
 			},
-			cfg: &Config{Servers: map[string]*ServerRef{
+			cfg: &asyncApi.Config{Servers: map[string]*asyncApi.ServerRef{
 				"foo": {Ref: "foo.yml#/servers/foo"},
 			}},
-			test: func(t *testing.T, cfg *Config, err error) {
+			test: func(t *testing.T, cfg *asyncApi.Config, err error) {
 				require.EqualError(t, err, "resolve reference 'foo.yml#/servers/foo' failed: TEST ERROR")
 			},
 		},
@@ -142,17 +144,17 @@ func TestServerResolve(t *testing.T) {
 func TestChannelResolve(t *testing.T) {
 	testcases := []struct {
 		name string
-		cfg  *Config
+		cfg  *asyncApi.Config
 		read readFunc
-		test func(t *testing.T, cfg *Config, err error)
+		test func(t *testing.T, cfg *asyncApi.Config, err error)
 	}{
 		{
 			name: "empty should not error",
 			read: func(cfg *dynamic.Config) error {
 				return nil
 			},
-			cfg: &Config{},
-			test: func(t *testing.T, cfg *Config, err error) {
+			cfg: &asyncApi.Config{},
+			test: func(t *testing.T, cfg *asyncApi.Config, err error) {
 				require.NoError(t, err)
 			},
 		},
@@ -161,8 +163,8 @@ func TestChannelResolve(t *testing.T) {
 			read: func(cfg *dynamic.Config) error {
 				return nil
 			},
-			cfg: &Config{Channels: map[string]*ChannelRef{"foo": nil}},
-			test: func(t *testing.T, cfg *Config, err error) {
+			cfg: &asyncApi.Config{Channels: map[string]*asyncApi.ChannelRef{"foo": nil}},
+			test: func(t *testing.T, cfg *asyncApi.Config, err error) {
 				require.NoError(t, err)
 			},
 		},
@@ -170,17 +172,17 @@ func TestChannelResolve(t *testing.T) {
 			name: "channel with reference",
 			read: func(cfg *dynamic.Config) error {
 				require.Equal(t, "/foo.yml", cfg.Info.Url.String())
-				target := &Channel{Description: "reference"}
-				config := &Config{Channels: map[string]*ChannelRef{
+				target := &asyncApi.Channel{Description: "reference"}
+				config := &asyncApi.Config{Channels: map[string]*asyncApi.ChannelRef{
 					"foo": {Value: target},
 				}}
 				cfg.Data = config
 				return nil
 			},
-			cfg: &Config{Channels: map[string]*ChannelRef{
+			cfg: &asyncApi.Config{Channels: map[string]*asyncApi.ChannelRef{
 				"foo": {Ref: "foo.yml#/channels/foo"},
 			}},
-			test: func(t *testing.T, cfg *Config, err error) {
+			test: func(t *testing.T, cfg *asyncApi.Config, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "reference", cfg.Channels["foo"].Value.Description)
 			},
@@ -189,16 +191,16 @@ func TestChannelResolve(t *testing.T) {
 			name: "file reference but nil",
 			read: func(cfg *dynamic.Config) error {
 				require.Equal(t, "/foo.yml", cfg.Info.Url.String())
-				config := &Config{Channels: map[string]*ChannelRef{
+				config := &asyncApi.Config{Channels: map[string]*asyncApi.ChannelRef{
 					"foo": {},
 				}}
 				cfg.Data = config
 				return nil
 			},
-			cfg: &Config{Channels: map[string]*ChannelRef{
+			cfg: &asyncApi.Config{Channels: map[string]*asyncApi.ChannelRef{
 				"foo": {Ref: "foo.yml#/channels/foo"},
 			}},
-			test: func(t *testing.T, cfg *Config, err error) {
+			test: func(t *testing.T, cfg *asyncApi.Config, err error) {
 				require.NoError(t, err)
 				require.Nil(t, cfg.Channels["foo"].Value)
 			},
@@ -208,10 +210,10 @@ func TestChannelResolve(t *testing.T) {
 			read: func(cfg *dynamic.Config) error {
 				return fmt.Errorf("TEST ERROR")
 			},
-			cfg: &Config{Channels: map[string]*ChannelRef{
+			cfg: &asyncApi.Config{Channels: map[string]*asyncApi.ChannelRef{
 				"foo": {Ref: "foo.yml#/channels/foo"},
 			}},
-			test: func(t *testing.T, cfg *Config, err error) {
+			test: func(t *testing.T, cfg *asyncApi.Config, err error) {
 				require.EqualError(t, err, "resolve reference 'foo.yml#/channels/foo' failed: TEST ERROR")
 			},
 		},
@@ -229,24 +231,24 @@ func TestChannelResolve(t *testing.T) {
 	}
 }
 
-func TestMessageResolve(t *testing.T) {
+func TestMessage(t *testing.T) {
 	testcases := []struct {
 		name string
-		cfg  *Config
+		cfg  *asyncApi.Config
 		read readFunc
-		test func(t *testing.T, cfg *Config, err error)
+		test func(t *testing.T, cfg *asyncApi.Config, err error)
 	}{
 		{
 			name: "local subscribe message reference",
 			read: func(cfg *dynamic.Config) error {
 				return nil
 			},
-			cfg: &Config{Channels: map[string]*ChannelRef{
-				"foo": {Value: &Channel{Subscribe: &Operation{Message: &MessageRef{Ref: "#/components/messages/foo"}}}},
-			}, Components: &Components{
-				Messages: map[string]*Message{"foo": {Description: "foo"}},
+			cfg: &asyncApi.Config{Channels: map[string]*asyncApi.ChannelRef{
+				"foo": {Value: &asyncApi.Channel{Subscribe: &asyncApi.Operation{Message: &asyncApi.MessageRef{Ref: "#/components/messages/foo"}}}},
+			}, Components: &asyncApi.Components{
+				Messages: map[string]*asyncApi.Message{"foo": {Description: "foo"}},
 			}},
-			test: func(t *testing.T, cfg *Config, err error) {
+			test: func(t *testing.T, cfg *asyncApi.Config, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "foo", cfg.Channels["foo"].Value.Subscribe.Message.Value.Description)
 			},
@@ -256,12 +258,12 @@ func TestMessageResolve(t *testing.T) {
 			read: func(cfg *dynamic.Config) error {
 				return nil
 			},
-			cfg: &Config{Channels: map[string]*ChannelRef{
-				"foo": {Value: &Channel{Publish: &Operation{Message: &MessageRef{Ref: "#/components/messages/foo"}}}},
-			}, Components: &Components{
-				Messages: map[string]*Message{"foo": {Description: "foo"}},
+			cfg: &asyncApi.Config{Channels: map[string]*asyncApi.ChannelRef{
+				"foo": {Value: &asyncApi.Channel{Publish: &asyncApi.Operation{Message: &asyncApi.MessageRef{Ref: "#/components/messages/foo"}}}},
+			}, Components: &asyncApi.Components{
+				Messages: map[string]*asyncApi.Message{"foo": {Description: "foo"}},
 			}},
-			test: func(t *testing.T, cfg *Config, err error) {
+			test: func(t *testing.T, cfg *asyncApi.Config, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "foo", cfg.Channels["foo"].Value.Publish.Message.Value.Description)
 			},
@@ -270,16 +272,16 @@ func TestMessageResolve(t *testing.T) {
 			name: "subscribe message file reference",
 			read: func(cfg *dynamic.Config) error {
 				require.Equal(t, "/foo.yml", cfg.Info.Url.String())
-				config := &Config{Components: &Components{
-					Messages: map[string]*Message{"foo": {Description: "foo"}},
+				config := &asyncApi.Config{Components: &asyncApi.Components{
+					Messages: map[string]*asyncApi.Message{"foo": {Description: "foo"}},
 				}}
 				cfg.Data = config
 				return nil
 			},
-			cfg: &Config{Channels: map[string]*ChannelRef{
-				"foo": {Value: &Channel{Subscribe: &Operation{Message: &MessageRef{Ref: "foo.yml#/components/messages/foo"}}}},
+			cfg: &asyncApi.Config{Channels: map[string]*asyncApi.ChannelRef{
+				"foo": {Value: &asyncApi.Channel{Subscribe: &asyncApi.Operation{Message: &asyncApi.MessageRef{Ref: "foo.yml#/components/messages/foo"}}}},
 			}},
-			test: func(t *testing.T, cfg *Config, err error) {
+			test: func(t *testing.T, cfg *asyncApi.Config, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "foo", cfg.Channels["foo"].Value.Subscribe.Message.Value.Description)
 			},
@@ -288,16 +290,16 @@ func TestMessageResolve(t *testing.T) {
 			name: "publish message file reference",
 			read: func(cfg *dynamic.Config) error {
 				require.Equal(t, "/foo.yml", cfg.Info.Url.String())
-				config := &Config{Components: &Components{
-					Messages: map[string]*Message{"foo": {Description: "foo"}},
+				config := &asyncApi.Config{Components: &asyncApi.Components{
+					Messages: map[string]*asyncApi.Message{"foo": {Description: "foo"}},
 				}}
 				cfg.Data = config
 				return nil
 			},
-			cfg: &Config{Channels: map[string]*ChannelRef{
-				"foo": {Value: &Channel{Publish: &Operation{Message: &MessageRef{Ref: "foo.yml#/components/messages/foo"}}}},
+			cfg: &asyncApi.Config{Channels: map[string]*asyncApi.ChannelRef{
+				"foo": {Value: &asyncApi.Channel{Publish: &asyncApi.Operation{Message: &asyncApi.MessageRef{Ref: "foo.yml#/components/messages/foo"}}}},
 			}},
-			test: func(t *testing.T, cfg *Config, err error) {
+			test: func(t *testing.T, cfg *asyncApi.Config, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "foo", cfg.Channels["foo"].Value.Publish.Message.Value.Description)
 			},
@@ -307,10 +309,10 @@ func TestMessageResolve(t *testing.T) {
 			read: func(cfg *dynamic.Config) error {
 				return fmt.Errorf("TEST ERROR")
 			},
-			cfg: &Config{Channels: map[string]*ChannelRef{
-				"foo": {Value: &Channel{Subscribe: &Operation{Message: &MessageRef{Ref: "foo.yml#/components/messages/foo"}}}},
+			cfg: &asyncApi.Config{Channels: map[string]*asyncApi.ChannelRef{
+				"foo": {Value: &asyncApi.Channel{Subscribe: &asyncApi.Operation{Message: &asyncApi.MessageRef{Ref: "foo.yml#/components/messages/foo"}}}},
 			}},
-			test: func(t *testing.T, cfg *Config, err error) {
+			test: func(t *testing.T, cfg *asyncApi.Config, err error) {
 				require.EqualError(t, err, "resolve reference 'foo.yml#/components/messages/foo' failed: TEST ERROR")
 			},
 		},
@@ -328,18 +330,18 @@ func TestMessageResolve(t *testing.T) {
 	}
 
 	t.Run("modify file", func(t *testing.T) {
-		target := &Message{}
+		target := &asyncApi.Message{}
 		reader := &testReader{readFunc: func(cfg *dynamic.Config) error { return nil }}
-		config := &Config{Channels: map[string]*ChannelRef{
-			"foo": {Value: &Channel{Publish: &Operation{Message: &MessageRef{Ref: "#/components/messages/foo"}}}},
-		}, Components: &Components{
-			Messages: map[string]*Message{"foo": {}},
+		config := &asyncApi.Config{Channels: map[string]*asyncApi.ChannelRef{
+			"foo": {Value: &asyncApi.Channel{Publish: &asyncApi.Operation{Message: &asyncApi.MessageRef{Ref: "#/components/messages/foo"}}}},
+		}, Components: &asyncApi.Components{
+			Messages: map[string]*asyncApi.Message{"foo": {}},
 		}}
 		file := &dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}
 		err := config.Parse(file, reader)
 
 		// modify file
-		file.Data.(*Config).Components.Messages["foo"] = target
+		file.Data.(*asyncApi.Config).Components.Messages["foo"] = target
 
 		require.NoError(t, err)
 		require.Equal(t, target, config.Channels["foo"].Value.Publish.Message.Value)
@@ -347,24 +349,24 @@ func TestMessageResolve(t *testing.T) {
 }
 
 func TestModifyFileResolve(t *testing.T) {
-	target := &Channel{}
+	target := &asyncApi.Channel{}
 	var fooConfig *dynamic.Config
 	reader := &testReader{readFunc: func(cfg *dynamic.Config) error {
 		require.Equal(t, "/foo.yml", cfg.Info.Url.String())
-		config := &Config{Channels: map[string]*ChannelRef{
-			"foo": {Value: &Channel{}},
+		config := &asyncApi.Config{Channels: map[string]*asyncApi.ChannelRef{
+			"foo": {Value: &asyncApi.Channel{}},
 		}}
 		cfg.Data = config
 		fooConfig = cfg
 		return nil
 	}}
-	config := &Config{Channels: map[string]*ChannelRef{
+	config := &asyncApi.Config{Channels: map[string]*asyncApi.ChannelRef{
 		"foo": {Ref: "foo.yml#/channels/foo"},
 	}}
 	err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 	require.NoError(t, err)
 
-	fooConfig.Data.(*Config).Channels["foo"].Value = target
+	fooConfig.Data.(*asyncApi.Config).Channels["foo"].Value = target
 	err = fooConfig.Data.(dynamic.Parser).Parse(fooConfig, reader)
 
 	require.NoError(t, err)
@@ -372,12 +374,12 @@ func TestModifyFileResolve(t *testing.T) {
 }
 
 func TestSchema(t *testing.T) {
-	message := &Message{}
-	config := &Config{
-		Channels: map[string]*ChannelRef{
-			"foo": {Value: &Channel{
-				Publish: &Operation{
-					Message: &MessageRef{
+	message := &asyncApi.Message{}
+	config := &asyncApi.Config{
+		Channels: map[string]*asyncApi.ChannelRef{
+			"foo": {Value: &asyncApi.Channel{
+				Publish: &asyncApi.Operation{
+					Message: &asyncApi.MessageRef{
 						Value: message,
 					},
 				},
@@ -394,8 +396,8 @@ func TestSchema(t *testing.T) {
 		target := &schema.Schema{}
 		schemas := &schema.Schemas{}
 		schemas.Set("foo", &schema.Ref{Value: target})
-		config.Components = &Components{Schemas: schemas}
-		message.Payload = &schema.Ref{Reference: dynamic.Reference{Ref: "#/components/Schemas/foo"}}
+		config.Components = &asyncApi.Components{Schemas: schemas}
+		message.Payload = &schema.Ref{Reference: ref.Reference{Ref: "#/components/Schemas/foo"}}
 		reader := &testReader{readFunc: func(cfg *dynamic.Config) error { return nil }}
 
 		err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
@@ -404,7 +406,7 @@ func TestSchema(t *testing.T) {
 	})
 	t.Run("file reference direct", func(t *testing.T) {
 		target := &schema.Schema{}
-		message.Payload = &schema.Ref{Reference: dynamic.Reference{Ref: "foo.yml"}}
+		message.Payload = &schema.Ref{Reference: ref.Reference{Ref: "foo.yml"}}
 		reader := &testReader{readFunc: func(cfg *dynamic.Config) error {
 			cfg.Data = target
 			return nil
@@ -416,7 +418,7 @@ func TestSchema(t *testing.T) {
 	})
 	t.Run("modify file reference direct", func(t *testing.T) {
 		target := &schema.Schema{}
-		message.Payload = &schema.Ref{Reference: dynamic.Reference{Ref: "foo.yml"}}
+		message.Payload = &schema.Ref{Reference: ref.Reference{Ref: "foo.yml"}}
 		var fooConfig *dynamic.Config
 		reader := &testReader{readFunc: func(file *dynamic.Config) error {
 			file.Data = &schema.Schema{}

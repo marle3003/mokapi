@@ -52,6 +52,10 @@ func (r *Ref) IsAnyString() bool {
 	return r != nil && r.Value != nil && r.Value.IsAnyString()
 }
 
+func (r *Ref) IsOneOf(typeNames ...string) bool {
+	return r != nil && r.Value != nil && r.Value.Type.IsOneOf(typeNames...)
+}
+
 func (r *Ref) Type() string {
 	if r == nil || r.Value == nil || len(r.Value.Type) == 0 {
 		return ""

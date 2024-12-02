@@ -9,8 +9,10 @@ import (
 	"mokapi/engine/common"
 	"mokapi/kafka"
 	"mokapi/media"
-	"mokapi/providers/openapi/schema"
 	"mokapi/runtime"
+	"mokapi/schema/encoding"
+	"mokapi/schema/json/generator"
+	"mokapi/schema/json/schema"
 	"strings"
 	"time"
 )
@@ -162,13 +164,13 @@ func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[stri
 	}
 
 	if key == nil {
-		key, err = schema.CreateValue(msg.Bindings.Kafka.Key)
+		key, err = createValue(msg.Bindings.Kafka.Key.Value.(*schema.Ref))
 		if err != nil {
 			return rb, fmt.Errorf("unable to generate kafka key: %v", err)
 		}
 	}
 	if value == nil {
-		value, err = schema.CreateValue(msg.Payload)
+		value, err = createValue(msg.Payload)
 		if err != nil {
 			return rb, fmt.Errorf("unable to generate kafka data: %v", err)
 		}
@@ -178,7 +180,7 @@ func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[stri
 	if b, ok := value.([]byte); ok {
 		v = b
 	} else {
-		v, err = msg.Payload.Marshal(value, media.ParseContentType("application/json"))
+		v, err = encoding.NewEncoder(msg.Payload).Write(value, media.ParseContentType("application/json"))
 		if err != nil {
 			return
 		}
@@ -186,9 +188,10 @@ func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[stri
 
 	var k []byte
 	if msg.Bindings.Kafka.Key != nil {
+		s := msg.Bindings.Kafka.Key.Value.(*schema.Ref)
 		switch {
-		case msg.Bindings.Kafka.Key.Value.Type.IsOneOf("object", "array"):
-			k, err = msg.Bindings.Kafka.Key.Marshal(key, media.ParseContentType("application/json"))
+		case s.IsOneOf("object", "array"):
+			k, err = encoding.NewEncoder(s).Write(key, media.ParseContentType("application/json"))
 			if err != nil {
 				return
 			}
@@ -223,7 +226,7 @@ func getHeaders(headers map[string]interface{}, r *schema.Ref) ([]kafka.RecordHe
 
 		}
 
-		b, err := headerSchema.Marshal(v, media.Any)
+		b, err := encoding.NewEncoder(headerSchema).Write(v, media.Any)
 		if err != nil {
 			return nil, err
 		}
@@ -233,4 +236,8 @@ func getHeaders(headers map[string]interface{}, r *schema.Ref) ([]kafka.RecordHe
 		})
 	}
 	return result, nil
+}
+
+func createValue(s *schema.Ref) (interface{}, error) {
+	return generator.New(&generator.Request{Path: generator.Path{&generator.PathElement{Schema: s}}})
 }

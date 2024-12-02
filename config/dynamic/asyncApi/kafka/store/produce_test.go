@@ -4,8 +4,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
+	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
-	binding "mokapi/config/dynamic/asyncApi/kafka"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
@@ -14,9 +14,9 @@ import (
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/offset"
 	"mokapi/kafka/produce"
-	"mokapi/providers/openapi/schema/schematest"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
+	"mokapi/schema/json/schematest"
 	"testing"
 	"time"
 )
@@ -185,7 +185,7 @@ func TestProduce(t *testing.T) {
 								asyncapitest.WithContentType("application/json"),
 								asyncapitest.WithPayload(schematest.New("integer"))),
 						),
-						asyncapitest.WithTopicBinding(binding.TopicBindings{ValueSchemaValidation: true}),
+						asyncapitest.WithTopicBinding(asyncApi.TopicBindings{ValueSchemaValidation: true}),
 					),
 				))
 
@@ -226,7 +226,7 @@ func TestProduce(t *testing.T) {
 						asyncapitest.WithMessage(
 							asyncapitest.WithContentType("application/json"),
 							asyncapitest.WithPayload(schematest.New("integer"))),
-						asyncapitest.WithOperationBinding(binding.Operation{ClientId: schematest.New("string", schematest.WithPattern("^[A-Z]{10}[0-5]$"))}),
+						asyncapitest.WithOperationBinding(asyncApi.KafkaOperation{ClientId: schematest.New("string", schematest.WithPattern("^[A-Z]{10}[0-5]$"))}),
 					)),
 				))
 				hook := test.NewGlobal()
@@ -273,7 +273,7 @@ func TestProduce(t *testing.T) {
 						asyncapitest.WithMessage(
 							asyncapitest.WithContentType("application/json"),
 							asyncapitest.WithPayload(schematest.New("integer"))),
-						asyncapitest.WithOperationBinding(binding.Operation{ClientId: schematest.New("string", schematest.WithPattern("^[A-Z]{10}[0-5]$"))}),
+						asyncapitest.WithOperationBinding(asyncApi.KafkaOperation{ClientId: schematest.New("string", schematest.WithPattern("^[A-Z]{10}[0-5]$"))}),
 					)),
 				))
 				hook := test.NewGlobal()

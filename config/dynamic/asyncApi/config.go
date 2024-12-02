@@ -4,8 +4,7 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/asyncApi/kafka"
-	"mokapi/providers/openapi/schema"
+	"mokapi/schema/json/schema"
 	"mokapi/version"
 	"net/url"
 	"strconv"
@@ -29,10 +28,18 @@ type Config struct {
 	// Default content type to use when encoding/decoding a message's payload.
 	DefaultContentType string `yaml:"defaultContentType" json:"defaultContentType"`
 
-	Servers      map[string]*ServerRef  `yaml:"servers,omitempty" json:"servers,omitempty"`
-	Channels     map[string]*ChannelRef `yaml:"channels" json:"channels"`
-	Components   *Components            `yaml:"components,omitempty" json:"components,omitempty"`
-	ExternalDocs []ExternalDocRef       `yaml:"externalDocs" json:"externalDocs"`
+	Servers    map[string]*ServerRef  `yaml:"servers,omitempty" json:"servers,omitempty"`
+	Channels   map[string]*ChannelRef `yaml:"channels" json:"channels"`
+	Components *Components            `yaml:"components,omitempty" json:"components,omitempty"`
+}
+
+type Info struct {
+	Name           string   `yaml:"title" json:"title"`
+	Description    string   `yaml:"description,omitempty" json:"description,omitempty"`
+	Version        string   `yaml:"version" json:"version"`
+	TermsOfService string   `yaml:"termsOfService,omitempty" json:"termsOfService,omitempty"`
+	Contact        *Contact `yaml:"contact,omitempty" json:"contact,omitempty"`
+	License        *License `yaml:"license,omitempty" json:"license,omitempty"`
 }
 
 type Contact struct {
@@ -47,13 +54,12 @@ type License struct {
 }
 
 type Server struct {
-	Url             string                        `yaml:"url" json:"url"`
-	Protocol        string                        `yaml:"protocol" json:"protocol"`
-	ProtocolVersion string                        `yaml:"protocolVersion" json:"protocolVersion"`
-	Description     string                        `yaml:"description" json:"description"`
-	Bindings        ServerBindings                `yaml:"bindings" json:"bindings"`
-	Tags            []ServerTag                   `yaml:"tags" json:"tags"`
-	Variables       map[string]*ServerVariableRef `yaml:"variables" json:"variables"`
+	Url             string         `yaml:"url" json:"url"`
+	Protocol        string         `yaml:"protocol" json:"protocol"`
+	ProtocolVersion string         `yaml:"protocolVersion" json:"protocolVersion"`
+	Description     string         `yaml:"description" json:"description"`
+	Bindings        ServerBindings `yaml:"bindings" json:"bindings"`
+	Tags            []ServerTag    `yaml:"tags" json:"tags"`
 }
 
 type ServerTag struct {
@@ -67,7 +73,7 @@ type ServerRef struct {
 }
 
 type ServerBindings struct {
-	Kafka kafka.BrokerBindings `yaml:"kafka" json:"kafka"`
+	Kafka BrokerBindings `yaml:"kafka" json:"kafka"`
 }
 
 type ChannelRef struct {
@@ -85,7 +91,7 @@ type Channel struct {
 }
 
 type ChannelBindings struct {
-	Kafka kafka.TopicBindings `yaml:"kafka" json:"kafka"`
+	Kafka TopicBindings `yaml:"kafka" json:"kafka"`
 }
 
 type Operation struct {
@@ -97,7 +103,7 @@ type Operation struct {
 }
 
 type OperationBindings struct {
-	Kafka kafka.Operation `yaml:"kafka" json:"kafka"`
+	Kafka KafkaOperation `yaml:"kafka" json:"kafka"`
 }
 
 type MessageRef struct {
@@ -106,32 +112,30 @@ type MessageRef struct {
 }
 
 type Message struct {
-	MessageId     string             `yaml:"messageId" json:"messageId"`
-	Name          string             `yaml:"name" json:"name"`
-	Title         string             `yaml:"title" json:"title"`
-	Summary       string             `yaml:"summary" json:"summary"`
-	Description   string             `yaml:"description" json:"description"`
-	ContentType   string             `yaml:"contentType" json:"contentType"`
-	SchemaFormat  string             `yaml:"schemaFormat" json:"schemaFormat"`
-	Payload       *schema.Ref        `yaml:"payload" json:"payload"`
-	Bindings      MessageBinding     `yaml:"bindings" json:"bindings"`
-	Headers       *schema.Ref        `yaml:"headers" json:"headers"`
-	Traits        []*MessageTraitRef `yaml:"traits" json:"traits"`
-	CorrelationId *CorrelationIdRef  `yaml:"correlationId" json:"correlationId"`
+	MessageId    string             `yaml:"messageId" json:"messageId"`
+	Name         string             `yaml:"name" json:"name"`
+	Title        string             `yaml:"title" json:"title"`
+	Summary      string             `yaml:"summary" json:"summary"`
+	Description  string             `yaml:"description" json:"description"`
+	ContentType  string             `yaml:"contentType" json:"contentType"`
+	SchemaFormat string             `yaml:"schemaFormat" json:"schemaFormat"`
+	Payload      *schema.Ref        `yaml:"payload" json:"payload"`
+	Bindings     MessageBinding     `yaml:"bindings" json:"bindings"`
+	Headers      *schema.Ref        `yaml:"headers" json:"headers"`
+	Traits       []*MessageTraitRef `yaml:"traits" json:"traits"`
 }
 
 type MessageBinding struct {
-	Kafka kafka.MessageBinding `yaml:"kafka" json:"kafka"`
+	Kafka KafkaMessageBinding `yaml:"kafka" json:"kafka"`
 }
 
 type Components struct {
-	Servers         map[string]*Server           `yaml:"servers" json:"servers"`
-	Channels        map[string]*Channel          `yaml:"channels" json:"channels"`
-	Schemas         *schema.Schemas              `yaml:"schemas" json:"schemas"`
-	Messages        map[string]*Message          `yaml:"messages" json:"messages"`
-	Parameters      map[string]*ParameterRef     `yaml:"parameters" json:"parameters"`
-	OperationTraits map[string]OperationTraitRef `yaml:"operationTraits" json:"operationTraits"`
-	MessageTraits   map[string]MessageTraitRef   `yaml:"messageTraits" json:"messageTraits"`
+	Servers       map[string]*Server         `yaml:"servers" json:"servers"`
+	Channels      map[string]*Channel        `yaml:"channels" json:"channels"`
+	Schemas       *schema.Schemas            `yaml:"schemas" json:"schemas"`
+	Messages      map[string]*Message        `yaml:"messages" json:"messages"`
+	Parameters    map[string]*ParameterRef   `yaml:"parameters" json:"parameters"`
+	MessageTraits map[string]MessageTraitRef `yaml:"messageTraits" json:"messageTraits"`
 }
 
 type ParameterRef struct {
@@ -143,6 +147,25 @@ type Parameter struct {
 	Description string         `yaml:"description" json:"description"`
 	Schema      *schema.Schema `yaml:"schema" json:"schema"`
 	Location    string         `yaml:"location" json:"location"`
+}
+
+type MessageTraitRef struct {
+	dynamic.Reference
+	Value *MessageTrait
+}
+
+type MessageTrait struct {
+	MessageId string `yaml:"messageId" json:"messageId"`
+
+	Name        string `yaml:"name" json:"name"`
+	Title       string `yaml:"title" json:"title"`
+	Summary     string `yaml:"summary" json:"summary"`
+	Description string `yaml:"description" json:"description"`
+
+	SchemaFormat string         `yaml:"schemaFormat" json:"schemaFormat"`
+	ContentType  string         `yaml:"contentType" json:"contentType"`
+	Headers      *schema.Ref    `yaml:"headers" json:"headers"`
+	Bindings     MessageBinding `yaml:"bindings" json:"bindings"`
 }
 
 func (c *Config) Validate() error {

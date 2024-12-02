@@ -6,6 +6,7 @@ import (
 	"mokapi/runtime"
 	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
+	jsonSchema "mokapi/schema/json/schema"
 	"net/http"
 	"sort"
 	"strings"
@@ -229,10 +230,13 @@ func newTopic(s *store.Store, t *store.Topic, config *asyncApi.Channel) topic {
 		Title:       msg.Title,
 		Summary:     msg.Summary,
 		Description: msg.Description,
-		Key:         getSchema(msg.Bindings.Kafka.Key),
-		Message:     getSchema(msg.Payload),
-		Header:      getSchema(msg.Headers),
+		Message:     getSchemaFromJson(msg.Payload),
+		Header:      getSchemaFromJson(msg.Headers),
 		MessageType: msg.ContentType,
+	}
+
+	if msg.Bindings.Kafka.Key != nil {
+		result.Configs.Key = getSchemaFromJson(msg.Bindings.Kafka.Key.Value.(*jsonSchema.Ref))
 	}
 
 	return result
@@ -291,4 +295,8 @@ func newBroker(b *store.Broker) broker {
 		Name: b.Name,
 		Addr: b.Addr(),
 	}
+}
+
+func getSchemaFromAysncAPI(s *asyncApi.SchemaRef) *jsonSchema.Ref {
+	return s.Value.(*jsonSchema.Ref)
 }

@@ -3,8 +3,8 @@ package store_test
 import (
 	"fmt"
 	"github.com/stretchr/testify/require"
+	kafka2 "mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
-	kafka2 "mokapi/config/dynamic/asyncApi/kafka"
 	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"

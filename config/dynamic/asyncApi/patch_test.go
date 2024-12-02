@@ -4,8 +4,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
-	"mokapi/config/dynamic/asyncApi/kafka"
-	"mokapi/providers/openapi/schema/schematest"
+	"mokapi/schema/json/schematest"
 	"testing"
 )
 
@@ -333,7 +332,7 @@ func TestConfig_Patch_Channel(t *testing.T) {
 				asyncapitest.NewConfig(asyncapitest.WithChannel("foo",
 					asyncapitest.WithSubscribe())),
 				asyncapitest.NewConfig(asyncapitest.WithChannel("foo",
-					asyncapitest.WithChannelKafka(kafka.TopicBindings{Partitions: 10}))),
+					asyncapitest.WithChannelKafka(asyncApi.TopicBindings{Partitions: 10}))),
 			},
 			test: func(t *testing.T, result *asyncApi.Config) {
 				ch := result.Channels["foo"]

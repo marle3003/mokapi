@@ -2,6 +2,7 @@ package dynamic
 
 import (
 	"fmt"
+	"mokapi/sortedmap"
 	"net/url"
 	"path/filepath"
 	"reflect"
@@ -124,6 +125,12 @@ func resolvePath(path string, cursor interface{}, resolved interface{}) (err err
 func get(token string, node interface{}) (interface{}, error) {
 	if len(token) == 0 {
 		return node, nil
+	}
+
+	if m, ok := node.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
+		if mv, ok := m.Get(token); ok {
+			return mv, nil
+		}
 	}
 
 	rValue := reflect.Indirect(reflect.ValueOf(node))
