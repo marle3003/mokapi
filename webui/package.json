@@ -37,7 +37,7 @@
     "xml-formatter": "^3.6.3"
   },
   "devDependencies": {
-    "@playwright/test": "^1.49.0",
+    "@playwright/test": "^1.49.1",
     "@rushstack/eslint-patch": "^1.10.4",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.10.1",
