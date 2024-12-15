@@ -4,10 +4,10 @@ import (
 	"bufio"
 	"bytes"
 	log "github.com/sirupsen/logrus"
-	"mokapi/config/dynamic/asyncApi"
 	"mokapi/kafka"
 	"mokapi/kafka/joinGroup"
 	"mokapi/kafka/syncGroup"
+	"mokapi/providers/asyncapi3"
 	"time"
 )
 
@@ -18,7 +18,7 @@ type groupBalancer struct {
 	stop  chan bool
 
 	joins  []joindata
-	config asyncApi.BrokerBindings
+	config asyncapi3.BrokerBindings
 }
 
 type joindata struct {
@@ -47,7 +47,7 @@ type groupAssignment struct {
 	raw      []byte
 }
 
-func newGroupBalancer(group *Group, config asyncApi.BrokerBindings) *groupBalancer {
+func newGroupBalancer(group *Group, config asyncapi3.BrokerBindings) *groupBalancer {
 	return &groupBalancer{
 		group:  group,
 		join:   make(chan joindata),

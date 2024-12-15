@@ -43,17 +43,19 @@ export const cluster = {
                     segments: '1'
                 }
             ],
-            configs: {
-                title: 'Shop New Order notification',
-                name: 'shopOrder',
-                summary: 'A message containing details of a new order',
-                description: 'More info about how the order notifications are created and used.',
-                contentType: 'application/json',
-                value: {
-                    lines: '32 lines',
-                    size: '464 B'
+            messageConfigs: [
+                {
+                    title: 'Shop New Order notification',
+                    name: 'shopOrder',
+                    summary: 'A message containing details of a new order',
+                    description: 'More info about how the order notifications are created and used.',
+                    contentType: 'application/json',
+                    value: {
+                        lines: '32 lines',
+                        size: '464 B'
+                    }
                 }
-            }
+            ]
         },
         {
             name: 'mokapi.shop.userSignedUp',
@@ -69,14 +71,29 @@ export const cluster = {
                     segments: '1'
                 },
             ],
-            configs: {
-                name: 'userSignedUp',
-                contentType: 'application/xml',
-                value: {
-                    lines: '18 lines',
-                    size: '357 B'
+            messageConfigs: [
+                {
+                    name: 'userSignedUp',
+                    title: 'title',
+                    summary: '',
+                    description: '',
+                    contentType: 'application/xml',
+                    value: {
+                        lines: '18 lines',
+                        size: '357 B'
+                    }
+                },
+                {
+                    name: 'second',
+                    summary: '',
+                    description: '',
+                    contentType: 'application/json',
+                    value: {
+                        lines: '11 lines',
+                        size: '131 B'
+                    }
                 }
-            }
+            ]
         }
     ],
     groups: [

@@ -111,6 +111,7 @@ export default async function() {
             case 'fakertree':
                 const resp = get('http://localhost:8091/mokapi/api/faker/tree')
                 response.body = resp.body
+                return true
         }
     }, {tags: {name: "dashboard"}})
 

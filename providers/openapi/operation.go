@@ -1,6 +1,7 @@
 package openapi
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
 	"mokapi/config/dynamic"
 	"mokapi/media"
@@ -91,7 +92,7 @@ func (o *Operation) parse(p *Path, config *dynamic.Config, reader dynamic.Reader
 	}
 
 	if err := o.RequestBody.parse(config, reader); err != nil {
-		return err
+		return fmt.Errorf("parse request body failed: %w", err)
 	}
 
 	return o.Responses.parse(config, reader)

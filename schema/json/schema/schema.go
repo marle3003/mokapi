@@ -73,7 +73,7 @@ func (e *UnmarshalError) Error() string {
 func (s *Schema) Validate() error {
 	for _, t := range s.Type {
 		switch t {
-		case "string", "integer", "boolean", "null", "array", "object":
+		case "string", "integer", "number", "boolean", "null", "array", "object":
 			continue
 		default:
 			return fmt.Errorf("unsupported type %v", t)

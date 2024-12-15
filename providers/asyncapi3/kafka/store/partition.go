@@ -32,7 +32,7 @@ type Partition struct {
 type Segment struct {
 	Head        int64
 	Tail        int64
-	Log         []kafka.Record
+	Log         []*kafka.Record
 	Size        int
 	Opened      time.Time
 	Closed      time.Time
@@ -105,9 +105,9 @@ func (p *Partition) Write(batch kafka.RecordBatch, options ...WriteOptions) (bas
 		opt(&args)
 	}
 
-	if p.validator != nil && p.Topic.config.ValueSchemaValidation && !args.SkipValidation {
+	if p.validator != nil && p.Topic.channel.Bindings.Kafka.ValueSchemaValidation && !args.SkipValidation {
 		for _, r := range batch.Records {
-			err := p.validator.Payload(r.Value)
+			err := p.validator.Validate(r)
 			if err != nil {
 				records = append(records, produce.RecordError{BatchIndex: int32(r.Offset), BatchIndexErrorMessage: err.Error()})
 			}
@@ -124,7 +124,7 @@ func (p *Partition) Write(batch kafka.RecordBatch, options ...WriteOptions) (bas
 	baseOffset = p.Tail
 	for _, r := range batch.Records {
 		r.Offset = p.Tail
-		p.trigger(&r)
+		p.trigger(r)
 		switch {
 		case len(p.Segments) == 0:
 			p.Segments[p.ActiveSegment] = newSegment(p.Tail)
@@ -231,7 +231,7 @@ func newSegment(offset int64) *Segment {
 	return &Segment{
 		Head:   offset,
 		Tail:   offset,
-		Log:    make([]kafka.Record, 0),
+		Log:    make([]*kafka.Record, 0),
 		Opened: time.Now(),
 	}
 }
@@ -240,7 +240,7 @@ func (s *Segment) contains(offset int64) bool {
 	return offset >= s.Head && offset < s.Tail
 }
 
-func (s *Segment) record(offset int64) kafka.Record {
+func (s *Segment) record(offset int64) *kafka.Record {
 	index := offset - s.Head
 	return s.Log[index]
 }

@@ -2,12 +2,12 @@ package store_test
 
 import (
 	"github.com/stretchr/testify/require"
-	"mokapi/config/dynamic/asyncApi/asyncapitest"
-	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/listgroup"
+	"mokapi/providers/asyncapi3/asyncapi3test"
+	"mokapi/providers/asyncapi3/kafka/store"
 	"testing"
 )
 
@@ -32,7 +32,7 @@ func TestListGroup(t *testing.T) {
 		{
 			"with group state",
 			func(t *testing.T, s *store.Store) {
-				s.Update(asyncapitest.NewConfig(asyncapitest.WithServer("", "kafka", "127.0.0.1")))
+				s.Update(asyncapi3test.NewConfig(asyncapi3test.WithServer("", "kafka", "127.0.0.1")))
 				group := s.GetOrCreateGroup("foo", 0)
 				group.State = store.PreparingRebalance
 				g := group.NewGeneration()
@@ -52,7 +52,7 @@ func TestListGroup(t *testing.T) {
 		{
 			"filtering",
 			func(t *testing.T, s *store.Store) {
-				s.Update(asyncapitest.NewConfig(asyncapitest.WithServer("", "kafka", "127.0.0.1")))
+				s.Update(asyncapi3test.NewConfig(asyncapi3test.WithServer("", "kafka", "127.0.0.1")))
 				s.GetOrCreateGroup("foo", 0)
 				group := s.GetOrCreateGroup("bar", 0)
 				group.State = store.CompletingRebalance
@@ -79,7 +79,7 @@ func TestListGroup(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			s := store.New(asyncapitest.NewConfig(), enginetest.NewEngine())
+			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine())
 			defer s.Close()
 			tc.fn(t, s)
 		})

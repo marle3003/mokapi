@@ -5,6 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic/script"
+	"mokapi/version"
 	"net/url"
 	"path/filepath"
 	"reflect"
@@ -79,15 +80,13 @@ func (d *dynamicObject) UnmarshalJSON(b []byte) error {
 	data := make(map[string]string)
 	_ = UnmarshalJSON(b, &data)
 
-	for _, ct := range configTypes {
-		if _, ok := data[ct.header]; ok {
-			d.data = reflect.New(ct.configType).Interface()
-			err := UnmarshalJSON(b, d.data)
-			if err != nil {
-				return formatError(b, err)
-			}
-			return nil
+	if ct := getConfigType(data); ct != nil {
+		d.data = reflect.New(ct.configType).Interface()
+		err := UnmarshalJSON(b, d.data)
+		if err != nil {
+			return formatError(b, err)
 		}
+		return nil
 	}
 
 	if d.data == nil {
@@ -106,11 +105,9 @@ func (d *dynamicObject) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	data := make(map[string]string)
 	_ = unmarshal(data)
 
-	for _, ct := range configTypes {
-		if _, ok := data[ct.header]; ok {
-			d.data = reflect.New(ct.configType).Interface()
-			return unmarshal(d.data)
-		}
+	if ct := getConfigType(data); ct != nil {
+		d.data = reflect.New(ct.configType).Interface()
+		return unmarshal(d.data)
 	}
 
 	if d.data == nil {
@@ -171,4 +168,15 @@ func formatError(input []byte, err error) error {
 	}
 
 	return fmt.Errorf("%w at line %d, column %d", err, line, column)
+}
+
+func getConfigType(data map[string]string) *configType {
+	for _, ct := range configTypes {
+		if s, ok := data[ct.header]; ok {
+			if ct.checkVersion(version.New(s)) {
+				return ct
+			}
+		}
+	}
+	return nil
 }

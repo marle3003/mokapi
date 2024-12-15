@@ -2,7 +2,7 @@ package store
 
 import (
 	"fmt"
-	"mokapi/config/dynamic/asyncApi"
+	"mokapi/providers/asyncapi3"
 	"time"
 )
 
@@ -16,12 +16,12 @@ type Broker struct {
 	Host string
 	Port int
 
-	kafkaConfig     asyncApi.BrokerBindings
+	kafkaConfig     asyncapi3.BrokerBindings
 	stopCleanerChan chan bool
 }
 
-func newBroker(id int, name string, config asyncApi.Server) *Broker {
-	h, p := parseHostAndPort(config.Url)
+func newBroker(id int, name string, config asyncapi3.Server) *Broker {
+	h, p := parseHostAndPort(config.Host)
 
 	return &Broker{
 		Id:              id,

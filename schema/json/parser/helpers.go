@@ -156,6 +156,8 @@ func toType(i interface{}) string {
 		return "number"
 	case reflect.String:
 		return "string"
+	case reflect.Bool:
+		return "boolean"
 	default:
 		log.Errorf("unable to resolve JSON type from value: %v", toString(i))
 		return "string"

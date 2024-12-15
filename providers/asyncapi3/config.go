@@ -44,9 +44,7 @@ type License struct {
 func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	for _, server := range c.Servers {
 		if len(server.Ref) > 0 {
-			if err := dynamic.Resolve(server.Ref, &server.Value, config, reader); err != nil {
-				return err
-			}
+			return dynamic.Resolve(server.Ref, &server.Value, config, reader)
 		}
 		if server.Value == nil {
 			return nil

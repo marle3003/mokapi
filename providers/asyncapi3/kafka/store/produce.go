@@ -68,9 +68,22 @@ func (s *Store) produce(rw kafka.ResponseWriter, req *kafka.Request) error {
 	return rw.Write(res)
 }
 
-func validateProducer(t *Topic, ctx *kafka.ClientContext) (err error) {
-	if t.Publish.ClientId != nil {
-		_, err = encoding.Decode([]byte(ctx.ClientId), encoding.WithSchema(&schema.Ref{Value: t.Publish.ClientId}))
+func validateProducer(t *Topic, ctx *kafka.ClientContext) error {
+	var err error
+	var last error
+	for _, op := range t.operations {
+		if op.Action != "send" {
+			continue
+		}
+		if op.Bindings.Kafka.ClientId != nil {
+			_, err = encoding.Decode([]byte(ctx.ClientId), encoding.WithSchema(&schema.Ref{Value: op.Bindings.Kafka.ClientId}))
+			if err != nil {
+				last = err
+			} else {
+				return nil
+			}
+		}
 	}
-	return
+
+	return last
 }

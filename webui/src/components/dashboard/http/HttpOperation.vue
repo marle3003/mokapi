@@ -59,7 +59,7 @@ const route = useRoute()
                     </div>
                     <div class="row" v-if="operation.description">
                         <p class="label">Description</p>
-                        <markdown :source="operation.description" data-testid="description" html="true"></markdown>
+                        <markdown :source="operation.description" data-testid="description" :html="true"></markdown>
                     </div>
                 </div>
             </div>

@@ -3,7 +3,6 @@ package store
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"mokapi/config/dynamic/asyncApi"
 	"mokapi/engine/common"
 	"mokapi/kafka"
 	"mokapi/kafka/apiVersion"
@@ -19,6 +18,7 @@ import (
 	"mokapi/kafka/offsetFetch"
 	"mokapi/kafka/produce"
 	"mokapi/kafka/syncGroup"
+	"mokapi/providers/asyncapi3"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"net"
@@ -47,7 +47,7 @@ func NewEmpty(eventEmitter common.EventEmitter) *Store {
 	}
 }
 
-func New(config *asyncApi.Config, eventEmitter common.EventEmitter) *Store {
+func New(config *asyncapi3.Config, eventEmitter common.EventEmitter) *Store {
 	s := NewEmpty(eventEmitter)
 	s.Update(config)
 	return s
@@ -69,8 +69,8 @@ func (s *Store) Topic(name string) *Topic {
 	return nil
 }
 
-func (s *Store) NewTopic(name string, config *asyncApi.Channel) (*Topic, error) {
-	return s.addTopic(name, config)
+func (s *Store) NewTopic(name string, config *asyncapi3.Channel, ops []*asyncapi3.Operation) (*Topic, error) {
+	return s.addTopic(name, config, ops)
 }
 
 func (s *Store) Topics() []*Topic {
@@ -128,16 +128,16 @@ func (s *Store) GetOrCreateGroup(name string, brokerId int) *Group {
 	return g
 }
 
-func (s *Store) Update(c *asyncApi.Config) {
+func (s *Store) Update(c *asyncapi3.Config) {
 	s.cluster = c.Info.Name
 	for n, server := range c.Servers {
 		if server.Value.Protocol != "" && server.Value.Protocol != "kafka" {
 			continue
 		}
 		if b := s.getBroker(n); b != nil {
-			host, port := parseHostAndPort(server.Value.Url)
+			host, port := parseHostAndPort(server.Value.Host)
 			if len(host) == 0 {
-				log.Errorf("unable to update broker '%v' to cluster '%v': missing host in url '%v'", n, s.cluster, server.Value.Url)
+				log.Errorf("unable to update broker '%v' to cluster '%v': missing host in url '%v'", n, s.cluster, server.Value.Host)
 				continue
 			}
 			b.Host = host
@@ -162,7 +162,9 @@ func (s *Store) Update(c *asyncApi.Config) {
 				p.delete()
 			}
 		} else {
-			s.addTopic(n, ch.Value)
+			if _, err := s.addTopic(n, ch.Value, getOperations(ch.Value, c)); err != nil {
+				log.Errorf("unable to add topic '%v' to broker '%v': %v", n, s.cluster, err)
+			}
 		}
 	}
 	for name := range s.topics {
@@ -210,14 +212,14 @@ func (s *Store) ServeMessage(rw kafka.ResponseWriter, req *kafka.Request) {
 	}
 }
 
-func (s *Store) addTopic(name string, config *asyncApi.Channel) (*Topic, error) {
+func (s *Store) addTopic(name string, channel *asyncapi3.Channel, ops []*asyncapi3.Operation) (*Topic, error) {
 	s.m.Lock()
 	defer s.m.Unlock()
 
 	if _, ok := s.topics[name]; ok {
 		return nil, fmt.Errorf("topic %v already exists", name)
 	}
-	t := newTopic(name, config, s.brokers, s.log, s.trigger, s)
+	t := newTopic(name, channel, ops, s.brokers, s.log, s.trigger, s)
 	s.topics[name] = t
 	return t, nil
 }
@@ -234,7 +236,7 @@ func (s *Store) deleteTopic(name string) {
 	delete(s.topics, name)
 }
 
-func (s *Store) addBroker(name string, config asyncApi.Server) {
+func (s *Store) addBroker(name string, config asyncapi3.Server) {
 	s.m.Lock()
 	defer s.m.Unlock()
 
@@ -279,7 +281,7 @@ func (s *Store) getBrokerByHost(addr string) *Broker {
 	return nil
 }
 
-func (s *Store) log(record kafka.Record, partition int, traits events.Traits) {
+func (s *Store) log(record *kafka.Record, partition int, traits events.Traits) {
 	events.Push(NewKafkaLog(record, partition), traits.WithNamespace("kafka").WithName(s.cluster))
 }
 
@@ -362,4 +364,17 @@ func (s *Store) UpdateMetrics(m *monitor.Kafka, topic *Topic, partition *Partiti
 		lag := float64(partition.Offset() - commit)
 		m.Lags.WithLabel(s.cluster, name, topic.Name, strconv.Itoa(partition.Index)).Set(lag)
 	}
+}
+
+func getOperations(channel *asyncapi3.Channel, config *asyncapi3.Config) []*asyncapi3.Operation {
+	var ops []*asyncapi3.Operation
+	for _, op := range config.Operations {
+		if op.Value == nil {
+			continue
+		}
+		if op.Value.Channel.Value == channel {
+			ops = append(ops, op.Value)
+		}
+	}
+	return ops
 }

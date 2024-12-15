@@ -13,6 +13,10 @@ type PathResolver interface {
 	Resolve(token string) (interface{}, error)
 }
 
+type Converter interface {
+	ConvertTo(i interface{}) (interface{}, error)
+}
+
 func Resolve(ref string, element interface{}, config *Config, reader Reader) error {
 	u, err := url.Parse(ref)
 	if err != nil {
@@ -62,8 +66,9 @@ func Resolve(ref string, element interface{}, config *Config, reader Reader) err
 	return nil
 }
 
-func resolvePath(path string, cursor interface{}, resolved interface{}) (err error) {
+func resolvePath(path string, root interface{}, resolved interface{}) (err error) {
 	tokens := strings.Split(path, "/")
+	cursor := root
 
 	for i, t := range tokens[1:] {
 		if r, ok := cursor.(PathResolver); ok {
@@ -110,7 +115,13 @@ func resolvePath(path string, cursor interface{}, resolved interface{}) (err err
 
 	v2 := reflect.Indirect(reflect.ValueOf(resolved))
 	if !vCursor.Type().AssignableTo(v2.Type()) && vCursor.Kind() == reflect.Ptr {
-		vCursor = vCursor.Elem()
+		if c, ok := cursor.(Converter); ok {
+			if converted, err := c.ConvertTo(v2.Interface()); err == nil {
+				vCursor = reflect.ValueOf(converted)
+			}
+		} else {
+			vCursor = vCursor.Elem()
+		}
 	}
 
 	if !vCursor.Type().AssignableTo(v2.Type()) {

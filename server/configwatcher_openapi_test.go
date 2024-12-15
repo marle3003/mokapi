@@ -18,7 +18,7 @@ import (
 )
 
 func TestConfigWatcher_Openapi(t *testing.T) {
-	dynamic.Register("openapi", &openapi.Config{})
+	dynamic.Register("openapi", dynamic.AnyVersion, &openapi.Config{})
 
 	testcases := []struct {
 		name string
@@ -36,7 +36,7 @@ paths:
     $ref: 'paths.yml#/paths/users'`
 				// referenced files have to contain the header.
 				// If it is missing, updates will not work
-				path := `
+				path := `openapi: 3.0.1
 paths:
   /users:
     get:
@@ -111,7 +111,7 @@ paths:
     $ref: 'paths.yml#/paths/users'`
 				// referenced files have to contain the header.
 				// If it is missing, updates will not work
-				path := `
+				path := `openapi: 3.0.1
 paths:
   /users:
     get:

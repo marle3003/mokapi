@@ -2,12 +2,12 @@ package store_test
 
 import (
 	"github.com/stretchr/testify/require"
-	"mokapi/config/dynamic/asyncApi/asyncapitest"
-	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/findCoordinator"
 	"mokapi/kafka/kafkatest"
+	"mokapi/providers/asyncapi3/asyncapi3test"
+	"mokapi/providers/asyncapi3/kafka/store"
 	"testing"
 )
 
@@ -19,7 +19,7 @@ func TestFindCoordinator(t *testing.T) {
 		{
 			"find group",
 			func(t *testing.T, s *store.Store) {
-				s.Update(asyncapitest.NewConfig(asyncapitest.WithServer("foo", "kafka", "127.0.0.1:9092")))
+				s.Update(asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "127.0.0.1:9092")))
 				r := kafkatest.NewRequest("kafkatest", 3, &findCoordinator.Request{
 					Key:     "foo",
 					KeyType: findCoordinator.KeyTypeGroup,
@@ -70,7 +70,7 @@ func TestFindCoordinator(t *testing.T) {
 		{
 			"broker without host",
 			func(t *testing.T, s *store.Store) {
-				s.Update(asyncapitest.NewConfig(asyncapitest.WithServer("foo", "kafka", ":9092")))
+				s.Update(asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", ":9092")))
 
 				r := kafkatest.NewRequest("kafkatest", 3, &findCoordinator.Request{
 					Key:     "foo",
@@ -96,7 +96,7 @@ func TestFindCoordinator(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			s := store.New(asyncapitest.NewConfig(), enginetest.NewEngine())
+			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine())
 			defer s.Close()
 			tc.fn(t, s)
 		})

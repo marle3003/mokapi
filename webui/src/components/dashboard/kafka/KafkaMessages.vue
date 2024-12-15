@@ -4,7 +4,6 @@ import { onMounted, ref, onUnmounted } from 'vue'
 import { usePrettyDates } from '@/composables/usePrettyDate'
 import { Modal, Tab } from 'bootstrap'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
-import hljs from 'highlight.js'
 import SourceView from '../SourceView.vue'
 
 const props = defineProps<{
@@ -58,19 +57,25 @@ function showMessage(event: ServiceEvent){
         return
     }
 
-    const topicName = event.traits["topic"]
-    const topic = getTopic(topicName)
-
     const data = eventData(event)
     if (!data){
         return
     }
+
+    const topicName = event.traits["topic"]
+    const topic = getTopic(topicName)
+    const messageConfig = getMessageConfig(data?.headers['x-specification-message-id'], topic)
+    if (!messageConfig) {
+        console.error('message-id not found: '+ data?.headers['x-specification-message-id'])
+        return
+    }
+
     message.value = {
         key: data.key,
-        message: formatLanguage(data.message, topic.configs.messageType),
+        message: formatLanguage(data.message, messageConfig.contentType),
         headers: data.headers,
-        contentType: topic.configs.messageType,
-        keyType: topic.configs.key?.type,
+        contentType: messageConfig.contentType,
+        keyType: messageConfig.key?.type,
         partition: data.partition,
         offset: data.offset,
         time: format(event.time),
@@ -89,6 +94,14 @@ function getTopic(name: string): KafkaTopic {
         }
     }
     throw new Error(`topic ${name} not found`)
+}
+function getMessageConfig(messageId: string | undefined, topic: KafkaTopic): KafkaMessage | undefined {
+    for (const id in topic.messages){
+        if (id === messageId) {
+            return topic.messages[id]
+        }
+    }
+    return undefined
 }
 </script>
 

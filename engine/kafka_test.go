@@ -9,14 +9,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"io"
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/asyncApi"
-	"mokapi/config/dynamic/asyncApi/asyncapitest"
-	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/engine"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/produce"
+	"mokapi/providers/asyncapi3"
+	"mokapi/providers/asyncapi3/asyncapi3test"
+	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/runtime"
 	"mokapi/runtime/monitor"
 	"mokapi/schema/json/schematest"
@@ -97,7 +97,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
 				for i := 0; i < 10; i++ {
 					app.AddKafka(getConfig(
-						asyncapitest.NewConfig(asyncapitest.WithInfo(fmt.Sprintf("x%v", i), "", ""))), enginetest.NewEngine())
+						asyncapi3test.NewConfig(asyncapi3test.WithInfo(fmt.Sprintf("x%v", i), "", ""))), enginetest.NewEngine())
 				}
 
 				err := engine.AddScript(newScript("test.js", `
@@ -241,14 +241,13 @@ func TestKafkaClient_Produce(t *testing.T) {
 				go func() {
 					time.Sleep(time.Second * 1)
 
-					config := asyncapitest.NewConfig(
-						asyncapitest.WithInfo("foo", "", ""),
-						asyncapitest.WithChannel("retry",
-							asyncapitest.WithSubscribeAndPublish(
-								asyncapitest.WithMessage(
-									asyncapitest.WithContentType("application/json"),
-									asyncapitest.WithPayload(schematest.New("string")),
-									asyncapitest.WithKey(schematest.New("string"))))),
+					config := asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "", ""),
+						asyncapi3test.WithChannel("retry",
+							asyncapi3test.WithMessage("foo",
+								asyncapi3test.WithContentType("application/json"),
+								asyncapi3test.WithPayload(schematest.New("string")),
+								asyncapi3test.WithKey(schematest.New("string")))),
 					)
 					app.AddKafka(getConfig(config), nil)
 				}()
@@ -281,25 +280,22 @@ func TestKafkaClient_Produce(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			gofakeit.Seed(11)
 
-			config := asyncapitest.NewConfig(
-				asyncapitest.WithInfo("foo", "", ""),
-				asyncapitest.WithChannel("foo",
-					asyncapitest.WithSubscribeAndPublish(
-						asyncapitest.WithMessage(
-							asyncapitest.WithContentType("application/json"),
-							asyncapitest.WithPayload(schematest.New("string")),
-							asyncapitest.WithKey(schematest.New("string")),
-						),
+			config := asyncapi3test.NewConfig(
+				asyncapi3test.WithInfo("foo", "", ""),
+				asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithMessage("foo",
+						asyncapi3test.WithContentType("application/json"),
+						asyncapi3test.WithPayload(schematest.New("string")),
+						asyncapi3test.WithKey(schematest.New("string")),
 					),
-					asyncapitest.WithTopicBinding(asyncApi.TopicBindings{ValueSchemaValidation: true}),
+					asyncapi3test.WithTopicBinding(asyncapi3.TopicBindings{ValueSchemaValidation: true}),
 				),
-				asyncapitest.WithChannel("bar",
-					asyncapitest.WithChannelKafka(asyncApi.TopicBindings{Partitions: 10}),
-					asyncapitest.WithSubscribeAndPublish(
-						asyncapitest.WithMessage(
-							asyncapitest.WithContentType("application/json"),
-							asyncapitest.WithPayload(schematest.New("string")),
-							asyncapitest.WithKey(schematest.New("string"))))),
+				asyncapi3test.WithChannel("bar",
+					asyncapi3test.WithChannelKafka(asyncapi3.TopicBindings{Partitions: 10}),
+					asyncapi3test.WithMessage("foo",
+						asyncapi3test.WithContentType("application/json"),
+						asyncapi3test.WithPayload(schematest.New("string")),
+						asyncapi3test.WithKey(schematest.New("string")))),
 			)
 			app := runtime.New()
 			e := enginetest.NewEngine(
@@ -307,7 +303,8 @@ func TestKafkaClient_Produce(t *testing.T) {
 				engine.WithLogger(logrus.StandardLogger()),
 			)
 
-			info := app.AddKafka(getConfig(config), e)
+			info, err := app.AddKafka(getConfig(config), e)
+			require.NoError(t, err)
 			tc.test(t, app, info.Store, e)
 		})
 	}
@@ -322,7 +319,7 @@ func readBytes(b kafka.Bytes) []byte {
 	return buf.Bytes()
 }
 
-func getConfig(c *asyncApi.Config) *dynamic.Config {
+func getConfig(c *asyncapi3.Config) *dynamic.Config {
 	u, _ := url.Parse("foo.bar")
 	cfg := &dynamic.Config{Data: c}
 	cfg.Info.Url = u

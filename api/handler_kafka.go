@@ -1,8 +1,8 @@
 package api
 
 import (
-	"mokapi/config/dynamic/asyncApi"
-	"mokapi/config/dynamic/asyncApi/kafka/store"
+	"mokapi/providers/asyncapi3"
+	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/runtime"
 	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
@@ -67,10 +67,10 @@ type kafkaContact struct {
 }
 
 type topic struct {
-	Name        string       `json:"name"`
-	Description string       `json:"description"`
-	Partitions  []partition  `json:"partitions"`
-	Configs     *topicConfig `json:"configs"`
+	Name        string                   `json:"name"`
+	Description string                   `json:"description"`
+	Partitions  []partition              `json:"partitions"`
+	Messages    map[string]messageConfig `json:"messages,omitempty"`
 }
 
 type partition struct {
@@ -86,15 +86,15 @@ type broker struct {
 	Addr string `json:"addr"`
 }
 
-type topicConfig struct {
+type messageConfig struct {
 	Name        string      `json:"name,omitempty"`
 	Title       string      `json:"title,omitempty"`
 	Summary     string      `json:"summary,omitempty"`
 	Description string      `json:"description,omitempty"`
 	Key         *schemaInfo `json:"key,omitempty"`
-	Message     *schemaInfo `json:"message"`
+	Payload     *schemaInfo `json:"payload"`
 	Header      *schemaInfo `json:"header,omitempty"`
-	MessageType string      `json:"messageType"`
+	ContentType string      `json:"contentType"`
 }
 
 func getKafkaServices(services map[string]*runtime.KafkaInfo, m *monitor.Monitor) []interface{} {
@@ -160,10 +160,14 @@ func getKafka(info *runtime.KafkaInfo) kafka {
 
 		ks := kafkaServer{
 			Name:        name,
-			Url:         s.Value.Url,
+			Url:         s.Value.Host,
 			Description: s.Value.Description,
 		}
-		for _, t := range s.Value.Tags {
+		for _, r := range s.Value.Tags {
+			if r.Value == nil {
+				continue
+			}
+			t := r.Value
 			ks.Tags = append(ks.Tags, kafkaServerTag{
 				Name:        t.Name,
 				Description: t.Description,
@@ -198,7 +202,7 @@ func getKafka(info *runtime.KafkaInfo) kafka {
 	return k
 }
 
-func newTopic(s *store.Store, t *store.Topic, config *asyncApi.Channel) topic {
+func newTopic(s *store.Store, t *store.Topic, config *asyncapi3.Channel) topic {
 	var partitions []partition
 	for _, p := range t.Partitions {
 		partitions = append(partitions, newPartition(s, p))
@@ -213,30 +217,29 @@ func newTopic(s *store.Store, t *store.Topic, config *asyncApi.Channel) topic {
 		Partitions:  partitions,
 	}
 
-	var msg *asyncApi.Message
-	if config.Publish != nil && config.Publish.Message.Value != nil {
-		msg = config.Publish.Message.Value
+	for messageId, ref := range config.Messages {
+		if ref.Value == nil {
+			continue
+		}
+		msg := ref.Value
 
-	} else if config.Subscribe != nil && config.Subscribe.Message.Value != nil {
-		msg = config.Subscribe.Message.Value
-	}
+		m := messageConfig{
+			Name:        msg.Name,
+			Title:       msg.Title,
+			Summary:     msg.Summary,
+			Description: msg.Description,
+			Payload:     getSchemaFromAsyncAPI(msg.Payload),
+			Header:      getSchemaFromAsyncAPI(msg.Headers),
+			ContentType: msg.ContentType,
+		}
 
-	if msg == nil {
-		return result
-	}
-
-	result.Configs = &topicConfig{
-		Name:        msg.Name,
-		Title:       msg.Title,
-		Summary:     msg.Summary,
-		Description: msg.Description,
-		Message:     getSchemaFromJson(msg.Payload),
-		Header:      getSchemaFromJson(msg.Headers),
-		MessageType: msg.ContentType,
-	}
-
-	if msg.Bindings.Kafka.Key != nil {
-		result.Configs.Key = getSchemaFromJson(msg.Bindings.Kafka.Key.Value.(*jsonSchema.Ref))
+		if msg.Bindings.Kafka.Key != nil {
+			m.Key = getSchemaFromJson(msg.Bindings.Kafka.Key.Value.(*jsonSchema.Ref))
+		}
+		if result.Messages == nil {
+			result.Messages = map[string]messageConfig{}
+		}
+		result.Messages[messageId] = m
 	}
 
 	return result
@@ -295,8 +298,4 @@ func newBroker(b *store.Broker) broker {
 		Name: b.Name,
 		Addr: b.Addr(),
 	}
-}
-
-func getSchemaFromAysncAPI(s *asyncApi.SchemaRef) *jsonSchema.Ref {
-	return s.Value.(*jsonSchema.Ref)
 }

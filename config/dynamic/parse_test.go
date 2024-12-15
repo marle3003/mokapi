@@ -7,6 +7,7 @@ import (
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/dynamic/script"
 	"mokapi/providers/openapi"
+	"mokapi/version"
 	"net/url"
 	"os"
 	"testing"
@@ -58,7 +59,9 @@ func TestParse(t *testing.T) {
 		{
 			name: "json structure error",
 			test: func(t *testing.T) {
-				dynamic.Register("openapi", &openapi.Config{})
+				dynamic.Register("openapi", func(version version.Version) bool {
+					return version.Major == 3
+				}, &openapi.Config{})
 				c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: mustUrl("foo.json")}}
 				c.Raw = []byte(`{ "openapi": "3.0", "info": []}`)
 				err := dynamic.Parse(c, &dynamictest.Reader{})

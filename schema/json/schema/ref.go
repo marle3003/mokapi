@@ -78,10 +78,7 @@ func (r *Ref) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		return nil
 	}
 	if len(r.Ref) > 0 {
-		if err := dynamic.Resolve(r.Ref, &r.Value, config, reader); err != nil {
-			return fmt.Errorf("parse schema failed: %w", err)
-		}
-		return nil
+		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
 	}
 
 	if r.Value == nil {

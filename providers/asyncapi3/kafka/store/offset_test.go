@@ -2,12 +2,12 @@ package store_test
 
 import (
 	"github.com/stretchr/testify/require"
-	"mokapi/config/dynamic/asyncApi/asyncapitest"
-	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/offset"
+	"mokapi/providers/asyncapi3/asyncapi3test"
+	"mokapi/providers/asyncapi3/kafka/store"
 	"testing"
 )
 
@@ -19,8 +19,8 @@ func TestOffsets(t *testing.T) {
 		{
 			"empty earliest",
 			func(t *testing.T, s *store.Store) {
-				s.Update(asyncapitest.NewConfig(
-					asyncapitest.WithChannel("foo")))
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithChannel("foo")))
 
 				rr := kafkatest.NewRecorder()
 				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &offset.Request{
@@ -48,8 +48,8 @@ func TestOffsets(t *testing.T) {
 		{
 			"empty latest",
 			func(t *testing.T, s *store.Store) {
-				s.Update(asyncapitest.NewConfig(
-					asyncapitest.WithChannel("foo")))
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithChannel("foo")))
 
 				rr := kafkatest.NewRecorder()
 				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &offset.Request{
@@ -77,10 +77,10 @@ func TestOffsets(t *testing.T) {
 		{
 			"one record earliest",
 			func(t *testing.T, s *store.Store) {
-				s.Update(asyncapitest.NewConfig(
-					asyncapitest.WithChannel("foo")))
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithChannel("foo")))
 				s.Topic("foo").Partition(0).Write(kafka.RecordBatch{
-					Records: []kafka.Record{
+					Records: []*kafka.Record{
 						{
 							Key:   kafka.NewBytes([]byte("foo")),
 							Value: kafka.NewBytes([]byte("bar")),
@@ -112,10 +112,10 @@ func TestOffsets(t *testing.T) {
 		{
 			"one record latest",
 			func(t *testing.T, s *store.Store) {
-				s.Update(asyncapitest.NewConfig(
-					asyncapitest.WithChannel("foo")))
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithChannel("foo")))
 				s.Topic("foo").Partition(0).Write(kafka.RecordBatch{
-					Records: []kafka.Record{
+					Records: []*kafka.Record{
 						{
 							Key:   kafka.NewBytes([]byte("foo")),
 							Value: kafka.NewBytes([]byte("bar")),
@@ -191,10 +191,10 @@ func TestOffsets(t *testing.T) {
 		{
 			"version 0",
 			func(t *testing.T, s *store.Store) {
-				s.Update(asyncapitest.NewConfig(
-					asyncapitest.WithChannel("foo")))
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithChannel("foo")))
 				s.Topic("foo").Partition(0).Write(kafka.RecordBatch{
-					Records: []kafka.Record{
+					Records: []*kafka.Record{
 						{
 							Key:   kafka.NewBytes([]byte("foo")),
 							Value: kafka.NewBytes([]byte("bar")),
@@ -229,7 +229,7 @@ func TestOffsets(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			s := store.New(asyncapitest.NewConfig(), enginetest.NewEngine())
+			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine())
 			defer s.Close()
 			tc.fn(t, s)
 		})

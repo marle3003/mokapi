@@ -57,7 +57,7 @@ function goToTopic(topic: KafkaTopic){
                 <tbody>
                     <tr v-for="topic in service.topics" :key="topic.name" @click="goToTopic(topic)">
                         <td>{{ topic.name }}</td>
-                        <td><markdown :source="topic.description" class="description" html="true"></markdown></td>
+                        <td><markdown :source="topic.description" class="description" :html="true"></markdown></td>
                         <td class="text-center">{{ lastMessage(service, topic) }}</td>
                         <td class="text-center">{{ messages(service, topic) }}</td>
                     </tr>

@@ -32,7 +32,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 		{
 			name: "cli configs",
 			test: func(t *testing.T) {
-				dynamic.Register("openapi", &openapi.Config{})
+				dynamic.Register("openapi", dynamic.AnyVersion, &openapi.Config{})
 				w := NewConfigWatcher(&static.Config{Configs: []string{`{"openapi":"3.0","info":{"title":"foo"}}`}})
 
 				ch := make(chan *dynamic.Config, 1)
@@ -308,7 +308,7 @@ func TestConfigWatcher_Start(t *testing.T) {
 		{
 			name: "closing",
 			f: func(t *testing.T) {
-				dynamic.Register("openapi", &openapi.Config{})
+				dynamic.Register("openapi", dynamic.AnyVersion, &openapi.Config{})
 
 				w := NewConfigWatcher(&static.Config{})
 				var listenerReceived []*dynamic.Config

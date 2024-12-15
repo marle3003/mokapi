@@ -3,12 +3,12 @@ package runtime_test
 import (
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/asyncApi"
-	"mokapi/config/dynamic/asyncApi/asyncapitest"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/produce"
+	"mokapi/providers/asyncapi3"
+	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/runtime"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
@@ -25,7 +25,7 @@ func TestApp_AddKafka(t *testing.T) {
 		{
 			name: "event store available",
 			test: func(t *testing.T, app *runtime.App) {
-				c := asyncapitest.NewConfig(asyncapitest.WithInfo("foo", "", ""))
+				c := asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""))
 				app.AddKafka(getConfig("foo.bar", c), enginetest.NewEngine())
 
 				require.Contains(t, app.Kafka, "foo")
@@ -36,7 +36,7 @@ func TestApp_AddKafka(t *testing.T) {
 		{
 			name: "event store for topic available",
 			test: func(t *testing.T, app *runtime.App) {
-				c := asyncapitest.NewConfig(asyncapitest.WithInfo("foo", "", ""), asyncapitest.WithChannel("bar"))
+				c := asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""), asyncapi3test.WithChannel("bar"))
 				app.AddKafka(getConfig("foo.bar", c), enginetest.NewEngine())
 
 				require.Contains(t, app.Kafka, "foo")
@@ -47,9 +47,10 @@ func TestApp_AddKafka(t *testing.T) {
 		{
 			name: "",
 			test: func(t *testing.T, app *runtime.App) {
-				c := asyncapitest.NewConfig(asyncapitest.WithInfo("foo", "", ""),
-					asyncapitest.WithChannel("bar"))
-				info := app.AddKafka(getConfig("foo.bar", c), enginetest.NewEngine())
+				c := asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""),
+					asyncapi3test.WithChannel("bar"))
+				info, err := app.AddKafka(getConfig("foo.bar", c), enginetest.NewEngine())
+				require.NoError(t, err)
 				m := monitor.NewKafka()
 				h := info.Handler(m)
 
@@ -64,9 +65,10 @@ func TestApp_AddKafka(t *testing.T) {
 		{
 			name: "retrieve configs",
 			test: func(t *testing.T, app *runtime.App) {
-				c := asyncapitest.NewConfig(asyncapitest.WithInfo("foo", "", ""),
-					asyncapitest.WithChannel("bar"))
-				info := app.AddKafka(getConfig("foo.bar", c), enginetest.NewEngine())
+				c := asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""),
+					asyncapi3test.WithChannel("bar"))
+				info, err := app.AddKafka(getConfig("foo.bar", c), enginetest.NewEngine())
+				require.NoError(t, err)
 
 				configs := info.Configs()
 				require.Len(t, configs, 1)
@@ -94,8 +96,8 @@ func TestApp_AddKafka_Patching(t *testing.T) {
 		{
 			name: "overwrite value",
 			configs: []*dynamic.Config{
-				getConfig("https://mokapi.io/a", asyncapitest.NewConfig(asyncapitest.WithInfo("foo", "foo", ""))),
-				getConfig("https://mokapi.io/b", asyncapitest.NewConfig(asyncapitest.WithInfo("foo", "bar", ""))),
+				getConfig("https://mokapi.io/a", asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "foo", ""))),
+				getConfig("https://mokapi.io/b", asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "bar", ""))),
 			},
 			test: func(t *testing.T, app *runtime.App) {
 				info := app.Kafka["foo"]
@@ -107,8 +109,8 @@ func TestApp_AddKafka_Patching(t *testing.T) {
 		{
 			name: "a is patched with b",
 			configs: []*dynamic.Config{
-				getConfig("https://mokapi.io/b", asyncapitest.NewConfig(asyncapitest.WithInfo("foo", "foo", ""))),
-				getConfig("https://mokapi.io/a", asyncapitest.NewConfig(asyncapitest.WithInfo("foo", "bar", ""))),
+				getConfig("https://mokapi.io/b", asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "foo", ""))),
+				getConfig("https://mokapi.io/a", asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "bar", ""))),
 			},
 			test: func(t *testing.T, app *runtime.App) {
 				info := app.Kafka["foo"]
@@ -118,8 +120,8 @@ func TestApp_AddKafka_Patching(t *testing.T) {
 		{
 			name: "order only by filename",
 			configs: []*dynamic.Config{
-				getConfig("https://a.io/b", asyncapitest.NewConfig(asyncapitest.WithInfo("foo", "foo", ""))),
-				getConfig("https://mokapi.io/a", asyncapitest.NewConfig(asyncapitest.WithInfo("foo", "bar", ""))),
+				getConfig("https://a.io/b", asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "foo", ""))),
+				getConfig("https://mokapi.io/a", asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "bar", ""))),
 			},
 			test: func(t *testing.T, app *runtime.App) {
 				info := app.Kafka["foo"]
@@ -140,11 +142,11 @@ func TestApp_AddKafka_Patching(t *testing.T) {
 }
 
 func TestIsKafkaConfig(t *testing.T) {
-	require.True(t, runtime.IsKafkaConfig(&dynamic.Config{Data: asyncapitest.NewConfig()}))
+	require.True(t, runtime.IsKafkaConfig(&dynamic.Config{Data: asyncapi3test.NewConfig()}))
 	require.False(t, runtime.IsKafkaConfig(&dynamic.Config{Data: "foo"}))
 }
 
-func getConfig(name string, c *asyncApi.Config) *dynamic.Config {
+func getConfig(name string, c *asyncapi3.Config) *dynamic.Config {
 	u, _ := url.Parse(name)
 	cfg := &dynamic.Config{Data: c}
 	cfg.Info.Url = u

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"mokapi/media"
+	"mokapi/providers/asyncapi3"
 	"mokapi/providers/openapi/schema"
 	"mokapi/schema/json/generator"
 	jsonSchema "mokapi/schema/json/schema"
@@ -164,6 +165,17 @@ func getSchema(s *schema.Ref) *schemaInfo {
 func getSchemaFromJson(s *jsonSchema.Ref) *schemaInfo {
 	converter := &jsonSchemaConverter{map[string]*schemaInfo{}}
 	return converter.getSchema(s)
+}
+
+func getSchemaFromAsyncAPI(ref *asyncapi3.SchemaRef) *schemaInfo {
+	if ref == nil || ref.Value == nil {
+		return nil
+	}
+	if s, ok := ref.Value.(*jsonSchema.Ref); ok {
+		converter := &jsonSchemaConverter{map[string]*schemaInfo{}}
+		return converter.getSchema(s)
+	}
+	return nil
 }
 
 type schemaConverter struct {

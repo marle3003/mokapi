@@ -1,7 +1,6 @@
 package openapi
 
 import (
-	"errors"
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"io"
@@ -145,8 +144,7 @@ func (r RequestBodies) parse(config *dynamic.Config, reader dynamic.Reader) erro
 
 	for name, body := range r {
 		if err := body.parse(config, reader); err != nil {
-			inner := errors.Unwrap(err)
-			return fmt.Errorf("parse request body '%v' failed: %w", name, inner)
+			return fmt.Errorf("parse request body '%v' failed: %w", name, err)
 		}
 	}
 
@@ -159,10 +157,7 @@ func (r *RequestBodyRef) parse(config *dynamic.Config, reader dynamic.Reader) er
 	}
 
 	if len(r.Ref) > 0 {
-		if err := dynamic.Resolve(r.Ref, &r.Value, config, reader); err != nil {
-			return fmt.Errorf("parse request body failed: %w", err)
-		}
-		return nil
+		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
 	}
 
 	return r.Value.Content.parse(config, reader)

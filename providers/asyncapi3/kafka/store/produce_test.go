@@ -4,9 +4,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
-	"mokapi/config/dynamic/asyncApi"
-	"mokapi/config/dynamic/asyncApi/asyncapitest"
-	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
@@ -14,6 +11,9 @@ import (
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/offset"
 	"mokapi/kafka/produce"
+	"mokapi/providers/asyncapi3"
+	"mokapi/providers/asyncapi3/asyncapi3test"
+	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"mokapi/schema/json/schematest"
@@ -29,9 +29,9 @@ func TestProduce(t *testing.T) {
 		{
 			"default",
 			func(t *testing.T, s *store.Store) {
-				s.Update(asyncapitest.NewConfig(
-					asyncapitest.WithServer("foo", "kafka", "127.0.0.1"),
-					asyncapitest.WithChannel("foo")))
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithServer("foo", "kafka", "127.0.0.1"),
+					asyncapi3test.WithChannel("foo")))
 				g := s.GetOrCreateGroup("foo", 0)
 				g.Commit("foo", 0, 0)
 				events.SetStore(5, events.NewTraits().WithNamespace("kafka"))
@@ -42,7 +42,7 @@ func TestProduce(t *testing.T) {
 						{Name: "foo", Partitions: []produce.RequestPartition{
 							{
 								Record: kafka.RecordBatch{
-									Records: []kafka.Record{
+									Records: []*kafka.Record{
 										{
 											Offset:  0,
 											Time:    time.Now(),
@@ -137,9 +137,9 @@ func TestProduce(t *testing.T) {
 		{
 			"Base Offset",
 			func(t *testing.T, s *store.Store) {
-				s.Update(asyncapitest.NewConfig(
-					asyncapitest.WithChannel("foo")))
-				s.Topic("foo").Partition(0).Write(kafka.RecordBatch{Records: []kafka.Record{
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithChannel("foo")))
+				s.Topic("foo").Partition(0).Write(kafka.RecordBatch{Records: []*kafka.Record{
 					{
 						Key:   kafka.NewBytes([]byte("foo")),
 						Value: kafka.NewBytes([]byte("bar")),
@@ -154,7 +154,7 @@ func TestProduce(t *testing.T) {
 							{
 								Index: 0,
 								Record: kafka.RecordBatch{
-									Records: []kafka.Record{
+									Records: []*kafka.Record{
 										{
 											Time:    time.Now(),
 											Key:     kafka.NewBytes([]byte("foo-1")),
@@ -178,14 +178,12 @@ func TestProduce(t *testing.T) {
 		{
 			"invalid message value format",
 			func(t *testing.T, s *store.Store) {
-				s.Update(asyncapitest.NewConfig(
-					asyncapitest.WithChannel("foo",
-						asyncapitest.WithSubscribeAndPublish(
-							asyncapitest.WithMessage(
-								asyncapitest.WithContentType("application/json"),
-								asyncapitest.WithPayload(schematest.New("integer"))),
-						),
-						asyncapitest.WithTopicBinding(asyncApi.TopicBindings{ValueSchemaValidation: true}),
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithChannel("foo",
+						asyncapi3test.WithMessage("foo",
+							asyncapi3test.WithContentType("application/json"),
+							asyncapi3test.WithPayload(schematest.New("integer"))),
+						asyncapi3test.WithTopicBinding(asyncapi3.TopicBindings{ValueSchemaValidation: true}),
 					),
 				))
 
@@ -196,7 +194,7 @@ func TestProduce(t *testing.T) {
 							{
 								Index: 0,
 								Record: kafka.RecordBatch{
-									Records: []kafka.Record{
+									Records: []*kafka.Record{
 										{
 											Offset:  0,
 											Time:    time.Now(),
@@ -221,13 +219,18 @@ func TestProduce(t *testing.T) {
 		{
 			"invalid client id",
 			func(t *testing.T, s *store.Store) {
-				s.Update(asyncapitest.NewConfig(
-					asyncapitest.WithChannel("foo", asyncapitest.WithSubscribeAndPublish(
-						asyncapitest.WithMessage(
-							asyncapitest.WithContentType("application/json"),
-							asyncapitest.WithPayload(schematest.New("integer"))),
-						asyncapitest.WithOperationBinding(asyncApi.KafkaOperation{ClientId: schematest.New("string", schematest.WithPattern("^[A-Z]{10}[0-5]$"))}),
-					)),
+				ch := asyncapi3test.NewChannel(
+					asyncapi3test.WithMessage("foo",
+						asyncapi3test.WithContentType("application/json"),
+						asyncapi3test.WithPayload(schematest.New("integer"))),
+				)
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.AddChannel("foo", ch),
+					asyncapi3test.WithOperation("foo",
+						asyncapi3test.WithOperationAction("send"),
+						asyncapi3test.WithOperationChannel(ch),
+						asyncapi3test.WithOperationBinding(asyncapi3.KafkaOperationBinding{ClientId: schematest.New("string", schematest.WithPattern("^[A-Z]{10}[0-5]$"))}),
+					),
 				))
 				hook := test.NewGlobal()
 
@@ -238,7 +241,7 @@ func TestProduce(t *testing.T) {
 							{
 								Index: 0,
 								Record: kafka.RecordBatch{
-									Records: []kafka.Record{
+									Records: []*kafka.Record{
 										{
 											Offset:  0,
 											Time:    time.Now(),
@@ -268,13 +271,18 @@ func TestProduce(t *testing.T) {
 		{
 			"valid client id",
 			func(t *testing.T, s *store.Store) {
-				s.Update(asyncapitest.NewConfig(
-					asyncapitest.WithChannel("foo", asyncapitest.WithSubscribeAndPublish(
-						asyncapitest.WithMessage(
-							asyncapitest.WithContentType("application/json"),
-							asyncapitest.WithPayload(schematest.New("integer"))),
-						asyncapitest.WithOperationBinding(asyncApi.KafkaOperation{ClientId: schematest.New("string", schematest.WithPattern("^[A-Z]{10}[0-5]$"))}),
-					)),
+				ch := asyncapi3test.NewChannel(
+					asyncapi3test.WithMessage("foo",
+						asyncapi3test.WithContentType("application/json"),
+						asyncapi3test.WithPayload(schematest.New("integer"))),
+				)
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.AddChannel("foo", ch),
+					asyncapi3test.WithOperation("foo",
+						asyncapi3test.WithOperationAction("send"),
+						asyncapi3test.WithOperationChannel(ch),
+						asyncapi3test.WithOperationBinding(asyncapi3.KafkaOperationBinding{ClientId: schematest.New("string", schematest.WithPattern("^[A-Z]{10}[0-5]$"))}),
+					),
 				))
 				hook := test.NewGlobal()
 
@@ -285,7 +293,7 @@ func TestProduce(t *testing.T) {
 							{
 								Index: 0,
 								Record: kafka.RecordBatch{
-									Records: []kafka.Record{
+									Records: []*kafka.Record{
 										{
 											Offset:  0,
 											Time:    time.Now(),
@@ -317,7 +325,7 @@ func TestProduce(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			defer events.Reset()
 
-			s := store.New(asyncapitest.NewConfig(), enginetest.NewEngine())
+			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine())
 			defer s.Close()
 			tc.fn(t, s)
 		})
@@ -327,15 +335,15 @@ func TestProduce(t *testing.T) {
 func TestProduceTriggersEvent(t *testing.T) {
 	defer events.Reset()
 	triggerCount := 0
-	s := store.New(asyncapitest.NewConfig(), enginetest.NewEngineWithHandler(func(event string, args ...interface{}) []*common.Action {
+	s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngineWithHandler(func(event string, args ...interface{}) []*common.Action {
 		triggerCount++
 		return nil
 	}))
 	defer s.Close()
 
-	s.Update(asyncapitest.NewConfig(
-		asyncapitest.WithServer("foo", "kafka", "127.0.0.1"),
-		asyncapitest.WithChannel("foo")))
+	s.Update(asyncapi3test.NewConfig(
+		asyncapi3test.WithServer("foo", "kafka", "127.0.0.1"),
+		asyncapi3test.WithChannel("foo")))
 	g := s.GetOrCreateGroup("foo", 0)
 	g.Commit("foo", 0, 0)
 	events.SetStore(5, events.NewTraits().WithNamespace("kafka"))
@@ -346,7 +354,7 @@ func TestProduceTriggersEvent(t *testing.T) {
 			{Name: "foo", Partitions: []produce.RequestPartition{
 				{
 					Record: kafka.RecordBatch{
-						Records: []kafka.Record{
+						Records: []*kafka.Record{
 							{
 								Offset:  0,
 								Time:    time.Now(),

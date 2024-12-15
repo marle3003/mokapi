@@ -1,17 +1,19 @@
 package runtime
 
 import (
+	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi"
-	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/kafka"
+	"mokapi/providers/asyncapi3"
+	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/runtime/monitor"
 	"path/filepath"
 	"sort"
 )
 
 type KafkaInfo struct {
-	*asyncApi.Config
+	*asyncapi3.Config
 	*store.Store
 	configs map[string]*dynamic.Config
 }
@@ -48,10 +50,17 @@ func (c *KafkaInfo) update() {
 		return filepath.Base(x) < filepath.Base(y)
 	})
 
-	cfg := getKafkaConfig(c.configs[keys[0]])
-	for _, k := range keys[1:] {
-		p := getKafkaConfig(c.configs[k])
-		cfg.Patch(p)
+	var cfg *asyncapi3.Config
+	for _, k := range keys {
+		p, err := getKafkaConfig(c.configs[k])
+		if err != nil {
+			log.Errorf("patch %v failed: %v", c.configs[k].Info.Url, err)
+		}
+		if cfg == nil {
+			cfg = p
+		} else {
+			cfg.Patch(p)
+		}
 	}
 
 	c.Config = cfg
@@ -78,10 +87,20 @@ func (h *KafkaHandler) ServeMessage(rw kafka.ResponseWriter, req *kafka.Request)
 }
 
 func IsKafkaConfig(c *dynamic.Config) bool {
-	_, ok := c.Data.(*asyncApi.Config)
-	return ok
+	if _, ok := c.Data.(*asyncapi3.Config); ok {
+		return true
+	}
+	if _, ok := c.Data.(*asyncApi.Config); ok {
+		return true
+	}
+	return false
 }
 
-func getKafkaConfig(c *dynamic.Config) *asyncApi.Config {
-	return c.Data.(*asyncApi.Config)
+func getKafkaConfig(c *dynamic.Config) (*asyncapi3.Config, error) {
+	if _, ok := c.Data.(*asyncapi3.Config); ok {
+		return c.Data.(*asyncapi3.Config), nil
+	} else {
+		old := c.Data.(*asyncApi.Config)
+		return old.Convert()
+	}
 }

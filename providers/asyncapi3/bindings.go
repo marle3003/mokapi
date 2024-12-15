@@ -9,7 +9,7 @@ type ChannelBindings struct {
 }
 
 type OperationBindings struct {
-	Kafka KafkaOperation `yaml:"kafka" json:"kafka"`
+	Kafka KafkaOperationBinding `yaml:"kafka" json:"kafka"`
 }
 
 type MessageBinding struct {

@@ -43,7 +43,7 @@ func NextTokenIndex(b []byte) int64 {
 
 func unmarshalJSON(d *decoder, v reflect.Value) error {
 	if unmarshaler(v) {
-		v = indirect(v)
+		v = indirect(v, false)
 		p := reflect.New(v.Type())
 		p.Elem().Set(v)
 		err := d.d.Decode(p.Interface())
@@ -71,14 +71,12 @@ func value(token json.Token, d *decoder, v reflect.Value) error {
 			return array(d, v)
 		}
 	case string:
-		v = indirect(v)
+		v = indirect(v, false)
 		switch v.Kind() {
 		case reflect.String:
 			v.SetString(t)
 		case reflect.Interface:
 			v.Set(reflect.ValueOf(t))
-			i := v.Interface()
-			_ = i
 		default:
 			return fmt.Errorf("unsupported cast string '%s' to %s", t, toTypeName(v))
 		}
@@ -87,16 +85,26 @@ func value(token json.Token, d *decoder, v reflect.Value) error {
 	case float64:
 		return number(t, v)
 	case bool:
-		v = indirect(v)
+		v = indirect(v, false)
 		v.Set(reflect.ValueOf(t))
 		return nil
+	case nil:
+		switch v.Kind() {
+		case reflect.Interface, reflect.Pointer, reflect.Map, reflect.Slice:
+			v = indirect(v, true)
+			v.Set(reflect.Zero(v.Type()))
+			return nil
+		default:
+			// otherwise, ignore null for primitives/string
+			return nil
+		}
 	default:
 		return fmt.Errorf("unsupported token: %v, %T", token, token)
 	}
 }
 
 func object(d *decoder, v reflect.Value) error {
-	v = indirect(v)
+	v = indirect(v, false)
 	// check type
 	switch v.Kind() {
 	case reflect.Struct, reflect.Map:
@@ -149,7 +157,7 @@ func object(d *decoder, v reflect.Value) error {
 }
 
 func array(d *decoder, v reflect.Value) error {
-	v = indirect(v)
+	v = indirect(v, false)
 	isAny := false
 	// check type
 	switch v.Kind() {
@@ -214,7 +222,7 @@ func array(d *decoder, v reflect.Value) error {
 }
 
 func number(f float64, v reflect.Value) error {
-	v = indirect(v)
+	v = indirect(v, false)
 	switch v.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		n := int64(f)
@@ -258,9 +266,6 @@ func unmarshaler(v reflect.Value) bool {
 	}
 
 	for {
-		i := v.Interface()
-		_ = i
-
 		if v.Kind() != reflect.Pointer {
 			break
 		}
@@ -277,9 +282,13 @@ func unmarshaler(v reflect.Value) bool {
 	return false
 }
 
-func indirect(v reflect.Value) reflect.Value {
+func indirect(v reflect.Value, isNil bool) reflect.Value {
 	for {
 		if v.Kind() != reflect.Pointer {
+			break
+		}
+
+		if isNil && v.CanSet() {
 			break
 		}
 
@@ -299,17 +308,9 @@ func getField(v reflect.Value, name string) (reflect.Value, error) {
 
 		key := reflect.ValueOf(name)
 		mv := v.MapIndex(key)
+		elemType := v.Type().Elem()
 		if !mv.IsValid() {
-			isPointer := v.Type().Elem().Kind() == reflect.Pointer
-			t := v.Type().Elem()
-			if isPointer {
-				t = t.Elem()
-			}
-
-			mv = reflect.New(t)
-			if !isPointer {
-				mv = mv.Elem()
-			}
+			mv = reflect.New(elemType).Elem()
 			v.SetMapIndex(key, mv)
 		}
 		return mv, nil

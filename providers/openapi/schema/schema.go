@@ -232,3 +232,10 @@ func (s *Schema) IsDictionary() bool {
 func (s *Schema) IsNullable() bool {
 	return s.Nullable || s.Type.IsNullable()
 }
+
+func (s *Schema) ConvertTo(i interface{}) (interface{}, error) {
+	if _, ok := i.(*schema.Schema); ok {
+		return ConvertToJsonSchema(&Ref{Value: s}).Value, nil
+	}
+	return nil, fmt.Errorf("cannot convert %v to json schema", i)
+}

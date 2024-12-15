@@ -1,7 +1,6 @@
 package asyncapi3test
 
 import (
-	"mokapi/config/dynamic"
 	"mokapi/providers/asyncapi3"
 )
 
@@ -15,6 +14,7 @@ func NewConfig(opts ...ConfigOptions) *asyncapi3.Config {
 	for _, opt := range opts {
 		opt(c)
 	}
+
 	return c
 }
 
@@ -52,26 +52,6 @@ func WithContact(name, url, mail string) ConfigOptions {
 	}
 }
 
-func WithChannelDescription(description string) ChannelOptions {
-	return func(c *asyncapi3.Channel) {
-		c.Description = description
-	}
-}
-
-func AssignToServer(ref string) ChannelOptions {
-	return func(c *asyncapi3.Channel) {
-		c.Servers = append(c.Servers, &asyncapi3.ServerRef{Reference: dynamic.Reference{Ref: ref}})
-	}
-}
-
-func WithTopicBinding(bindings asyncapi3.TopicBindings) ChannelOptions {
-	return func(c *asyncapi3.Channel) {
-		c.Bindings.Kafka = bindings
-	}
-}
-
-type ServerOptions func(s *asyncapi3.Server)
-
 func WithServer(name, protocol, host string, opts ...ServerOptions) ConfigOptions {
 	return func(c *asyncapi3.Config) {
 		if c.Servers == nil {
@@ -91,22 +71,36 @@ func WithServer(name, protocol, host string, opts ...ServerOptions) ConfigOption
 	}
 }
 
-func WithServerDescription(description string) ServerOptions {
-	return func(s *asyncapi3.Server) {
-		s.Description = description
-	}
-}
-
-func WithServerTags(tags ...asyncapi3.Tag) ServerOptions {
-	return func(s *asyncapi3.Server) {
-		for _, tag := range tags {
-			s.Tags = append(s.Tags, &asyncapi3.TagRef{Value: &tag})
+func WithChannel(name string, opts ...ChannelOptions) ConfigOptions {
+	return func(c *asyncapi3.Config) {
+		if c.Channels == nil {
+			c.Channels = make(map[string]*asyncapi3.ChannelRef)
 		}
+		ch := NewChannel(opts...)
+		c.Channels[name] = &asyncapi3.ChannelRef{Value: ch}
 	}
 }
 
-func WithKafkaBinding(key, value string) ServerOptions {
-	return func(s *asyncapi3.Server) {
-		s.Bindings.Kafka.Config[key] = value
+func AddChannel(name string, ch *asyncapi3.Channel) ConfigOptions {
+	return func(c *asyncapi3.Config) {
+		if c.Channels == nil {
+			c.Channels = make(map[string]*asyncapi3.ChannelRef)
+		}
+		c.Channels[name] = &asyncapi3.ChannelRef{Value: ch}
+	}
+}
+
+func WithOperation(name string, opts ...OperationOptions) ConfigOptions {
+	return func(c *asyncapi3.Config) {
+		if c.Operations == nil {
+			c.Operations = make(map[string]*asyncapi3.OperationRef)
+		}
+		op := NewOperation(opts...)
+		switch op.Action {
+		case "send", "receive":
+		default:
+			panic("no valid action set: expected send or receive")
+		}
+		c.Operations[name] = &asyncapi3.OperationRef{Value: op}
 	}
 }

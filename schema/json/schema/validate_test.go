@@ -13,12 +13,61 @@ func toIntP(i int) *int {
 	return &i
 }
 
-func TestSchema_Parse(t *testing.T) {
+func TestSchema_Validate(t *testing.T) {
 	testcases := []struct {
 		name string
 		s    *Schema
 		test func(t *testing.T, err error)
 	}{
+		{
+			name: "string",
+			s:    &Schema{Type: Types{"string"}},
+			test: func(t *testing.T, err error) {
+				require.NoError(t, err)
+			},
+		},
+		{
+			name: "integer",
+			s:    &Schema{Type: Types{"integer"}},
+			test: func(t *testing.T, err error) {
+				require.NoError(t, err)
+			},
+		},
+		{
+			name: "number",
+			s:    &Schema{Type: Types{"number"}},
+			test: func(t *testing.T, err error) {
+				require.NoError(t, err)
+			},
+		},
+		{
+			name: "object",
+			s:    &Schema{Type: Types{"object"}},
+			test: func(t *testing.T, err error) {
+				require.NoError(t, err)
+			},
+		},
+		{
+			name: "array",
+			s:    &Schema{Type: Types{"array"}},
+			test: func(t *testing.T, err error) {
+				require.NoError(t, err)
+			},
+		},
+		{
+			name: "boolean",
+			s:    &Schema{Type: Types{"boolean"}},
+			test: func(t *testing.T, err error) {
+				require.NoError(t, err)
+			},
+		},
+		{
+			name: "null",
+			s:    &Schema{Type: Types{"null"}},
+			test: func(t *testing.T, err error) {
+				require.NoError(t, err)
+			},
+		},
 		{
 			name: "multipleOf negative",
 			s:    &Schema{MultipleOf: toFloatP(-1)},

@@ -38,9 +38,7 @@ type ServerVariable struct {
 
 func (r *ServerRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(r.Ref) > 0 {
-		if err := dynamic.Resolve(r.Ref, &r.Value, config, reader); err != nil {
-			return err
-		}
+		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
 	}
 
 	if r.Value == nil {
@@ -76,9 +74,7 @@ func (r *ServerRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
 
 func (r *ServerVariableRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(r.Ref) > 0 {
-		if err := dynamic.Resolve(r.Ref, &r.Value, config, reader); err != nil {
-			return err
-		}
+		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
 	}
 
 	return nil

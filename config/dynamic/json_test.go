@@ -199,6 +199,34 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 				require.Equal(t, map[string]interface{}{"foo": "bar"}, v.Value)
 			},
 		},
+		{
+			name: "map[string]string",
+			test: func(t *testing.T) {
+				v := make(map[string]string)
+				err := UnmarshalJSON([]byte(`{"value": { "name": { "foo": "bar" } }}`), &v)
+				require.Error(t, err)
+				require.Equal(t, map[string]string{"value": ""}, v)
+			},
+		},
+		{
+			name: "string with null value",
+			test: func(t *testing.T) {
+				v := make(map[string]string)
+				err := UnmarshalJSON([]byte(`{"value": null }`), &v)
+				require.NoError(t, err)
+				require.Equal(t, map[string]string{"value": ""}, v)
+			},
+		},
+		{
+			name: "struct with null value",
+			test: func(t *testing.T) {
+				type t1 struct{}
+				v := map[string]*t1{}
+				err := UnmarshalJSON([]byte(`{"value": null }`), &v)
+				require.NoError(t, err)
+				require.Equal(t, map[string]*t1{"value": nil}, v)
+			},
+		},
 	}
 
 	t.Parallel()

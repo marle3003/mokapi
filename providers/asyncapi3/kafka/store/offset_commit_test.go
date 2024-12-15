@@ -4,13 +4,13 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
-	"mokapi/config/dynamic/asyncApi"
-	"mokapi/config/dynamic/asyncApi/asyncapitest"
-	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/offsetCommit"
+	"mokapi/providers/asyncapi3"
+	"mokapi/providers/asyncapi3/asyncapi3test"
+	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/schema/json/schematest"
 	"testing"
 )
@@ -23,8 +23,8 @@ func TestOffsetCommit(t *testing.T) {
 		{
 			"group not exists",
 			func(t *testing.T, s *store.Store) {
-				s.Update(asyncapitest.NewConfig(
-					asyncapitest.WithChannel("foo")))
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithChannel("foo")))
 
 				rr := kafkatest.NewRecorder()
 				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 2,
@@ -54,9 +54,9 @@ func TestOffsetCommit(t *testing.T) {
 			func(t *testing.T, s *store.Store) {
 				b := kafkatest.NewBroker(kafkatest.WithHandler(s))
 				defer b.Close()
-				s.Update(asyncapitest.NewConfig(
-					asyncapitest.WithServer("", "kafka", b.Addr),
-					asyncapitest.WithChannel("foo")),
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithServer("", "kafka", b.Addr),
+					asyncapi3test.WithChannel("foo")),
 				)
 
 				err := b.Client().JoinSyncGroup("foo", "bar", 3, 3)
@@ -91,11 +91,11 @@ func TestOffsetCommit(t *testing.T) {
 			func(t *testing.T, s *store.Store) {
 				b := kafkatest.NewBroker(kafkatest.WithHandler(s))
 				defer b.Close()
-				s.Update(asyncapitest.NewConfig(
-					asyncapitest.WithServer("", "kafka", b.Addr),
-					asyncapitest.WithChannel("foo")))
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithServer("", "kafka", b.Addr),
+					asyncapi3test.WithChannel("foo")))
 				s.Topic("foo").Partition(0).Write(kafka.RecordBatch{
-					Records: []kafka.Record{
+					Records: []*kafka.Record{
 						{
 							Key:   kafka.NewBytes([]byte("foo")),
 							Value: kafka.NewBytes([]byte("bar")),
@@ -153,8 +153,8 @@ func TestOffsetCommit(t *testing.T) {
 		{
 			"partition not exists",
 			func(t *testing.T, s *store.Store) {
-				s.Update(asyncapitest.NewConfig(
-					asyncapitest.WithChannel("foo", asyncapitest.WithChannelKafka(asyncApi.TopicBindings{Partitions: 1}))))
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithChannel("foo", asyncapi3test.WithChannelKafka(asyncapi3.TopicBindings{Partitions: 1}))))
 
 				rr := kafkatest.NewRecorder()
 				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 2, &offsetCommit.Request{
@@ -185,7 +185,7 @@ func TestOffsetCommit(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			s := store.New(asyncapitest.NewConfig(), enginetest.NewEngine())
+			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine())
 			defer s.Close()
 			tc.fn(t, s)
 		})
@@ -203,11 +203,16 @@ func TestOffsetCommit_Validation(t *testing.T) {
 				b := kafkatest.NewBroker(kafkatest.WithHandler(s))
 				defer b.Close()
 
-				s.Update(asyncapitest.NewConfig(
-					asyncapitest.WithServer("", "kafka", b.Addr),
-					asyncapitest.WithChannel("foo", asyncapitest.WithSubscribeAndPublish(
-						asyncapitest.WithOperationBinding(asyncApi.KafkaOperation{ClientId: schematest.New("string", schematest.WithPattern("^[A-Z]{10}[0-5]$"))}),
-					))))
+				ch := asyncapi3test.NewChannel()
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithServer("", "kafka", b.Addr),
+					asyncapi3test.AddChannel("foo", ch),
+					asyncapi3test.WithOperation("foo",
+						asyncapi3test.WithOperationAction("receive"),
+						asyncapi3test.WithOperationChannel(ch),
+						asyncapi3test.WithOperationBinding(asyncapi3.KafkaOperationBinding{ClientId: schematest.New("string", schematest.WithPattern("^[A-Z]{10}[0-5]$"))}),
+					),
+				))
 
 				err := b.Client().JoinSyncGroup("foo", "bar", 3, 3)
 				require.NoError(t, err)
@@ -240,11 +245,15 @@ func TestOffsetCommit_Validation(t *testing.T) {
 				b := kafkatest.NewBroker(kafkatest.WithHandler(s))
 				defer b.Close()
 
-				s.Update(asyncapitest.NewConfig(
-					asyncapitest.WithServer("", "kafka", b.Addr),
-					asyncapitest.WithChannel("foo", asyncapitest.WithSubscribeAndPublish(
-						asyncapitest.WithOperationBinding(asyncApi.KafkaOperation{GroupId: schematest.New("string", schematest.WithPattern("^[A-Z]{10}[0-5]$"))}),
-					))))
+				ch := asyncapi3test.NewChannel()
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithServer("", "kafka", b.Addr),
+					asyncapi3test.AddChannel("foo", ch),
+					asyncapi3test.WithOperation("foo",
+						asyncapi3test.WithOperationAction("receive"),
+						asyncapi3test.WithOperationChannel(ch),
+						asyncapi3test.WithOperationBinding(asyncapi3.KafkaOperationBinding{GroupId: schematest.New("string", schematest.WithPattern("^[A-Z]{10}[0-5]$"))}),
+					)))
 
 				err := b.Client().JoinSyncGroup("foo", "bar", 3, 3)
 				require.NoError(t, err)
@@ -278,14 +287,18 @@ func TestOffsetCommit_Validation(t *testing.T) {
 				c := kafkatest.NewClient(b.Addr, "MOKAPITEST1")
 				defer b.Close()
 
-				s.Update(asyncapitest.NewConfig(
-					asyncapitest.WithServer("", "kafka", b.Addr),
-					asyncapitest.WithChannel("foo", asyncapitest.WithSubscribeAndPublish(
-						asyncapitest.WithOperationBinding(asyncApi.KafkaOperation{
+				ch := asyncapi3test.NewChannel()
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithServer("", "kafka", b.Addr),
+					asyncapi3test.AddChannel("foo", ch),
+					asyncapi3test.WithOperation("foo",
+						asyncapi3test.WithOperationAction("receive"),
+						asyncapi3test.WithOperationChannel(ch),
+						asyncapi3test.WithOperationBinding(asyncapi3.KafkaOperationBinding{
 							ClientId: schematest.New("string", schematest.WithPattern("^[A-Z]{10}[0-5]$")),
 							GroupId:  schematest.New("string", schematest.WithPattern("^[A-Z]{5}[0-5]$")),
 						}),
-					))))
+					)))
 
 				err := c.JoinSyncGroup("member1", "GROUP1", 3, 3)
 				require.NoError(t, err)
@@ -317,7 +330,7 @@ func TestOffsetCommit_Validation(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			s := store.New(asyncapitest.NewConfig(), enginetest.NewEngine())
+			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine())
 			defer s.Close()
 			hook := test.NewGlobal()
 			tc.fn(t, s, hook)

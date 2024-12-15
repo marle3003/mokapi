@@ -2,11 +2,10 @@ package runtime
 
 import (
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/asyncApi"
-	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/config/dynamic/directory"
 	"mokapi/config/dynamic/mail"
 	"mokapi/engine/common"
+	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/providers/openapi"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
@@ -63,7 +62,7 @@ func (a *App) AddHttp(c *dynamic.Config) *HttpInfo {
 	return hc
 }
 
-func (a *App) AddKafka(c *dynamic.Config, emitter common.EventEmitter) *KafkaInfo {
+func (a *App) AddKafka(c *dynamic.Config, emitter common.EventEmitter) (*KafkaInfo, error) {
 	a.m.Lock()
 	defer a.m.Unlock()
 
@@ -71,7 +70,11 @@ func (a *App) AddKafka(c *dynamic.Config, emitter common.EventEmitter) *KafkaInf
 		a.Kafka = make(map[string]*KafkaInfo)
 	}
 
-	cfg := c.Data.(*asyncApi.Config)
+	cfg, err := getKafkaConfig(c)
+	if err != nil {
+		return nil, err
+	}
+
 	name := cfg.Info.Name
 	hc, ok := a.Kafka[name]
 	if !ok {
@@ -88,7 +91,7 @@ func (a *App) AddKafka(c *dynamic.Config, emitter common.EventEmitter) *KafkaInf
 		a.Monitor.Kafka.LastMessage.WithLabel(cfg.Info.Name, name).Set(0)
 		events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name).With("topic", name))
 	}
-	return hc
+	return hc, nil
 }
 
 func (a *App) AddSmtp(c *dynamic.Config) *SmtpInfo {

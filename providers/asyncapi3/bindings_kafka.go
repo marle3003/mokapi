@@ -3,7 +3,7 @@ package asyncapi3
 import (
 	"fmt"
 	"gopkg.in/yaml.v3"
-	"mokapi/providers/openapi/schema"
+	"mokapi/schema/json/schema"
 )
 
 type BrokerBindings struct {
@@ -34,7 +34,7 @@ type BrokerBindings struct {
 	GroupMinSessionTimeoutMs int64
 }
 
-type KafkaOperation struct {
+type KafkaOperationBinding struct {
 	GroupId  *schema.Schema `yaml:"groupId" json:"groupId"`
 	ClientId *schema.Schema `yaml:"clientId" json:"clientId"`
 }

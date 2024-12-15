@@ -52,6 +52,19 @@ const UserSignedUp = {
     }
 }
 
+const SecondMessage = {
+    type: 'object',
+    properties: {
+        foo: {
+            type: 'string'
+        },
+        bar: {
+            type: 'integer'
+        }
+    },
+}
+
+
 export const configs = {
     'b6fea8ac-56c7-4e73-a9c0-6337640bdca8': {
         id: 'b6fea8ac-56c7-4e73-a9c0-6337640bdca8',
@@ -108,14 +121,16 @@ export let clusters = [
                         segments: 1
                     }
                 ],
-                configs: {
-                    name: 'shopOrder',
-                    title: 'Shop New Order notification',
-                    summary: 'A message containing details of a new order',
-                    description: 'More info about how the order notifications are **created** and **used**.',
-                    key: { type: 'string' },
-                    message: Product,
-                    messageType: 'application/json'
+                messages: {
+                    'shopOrder': {
+                        name: 'shopOrder',
+                        title: 'Shop New Order notification',
+                        summary: 'A message containing details of a new order',
+                        description: 'More info about how the order notifications are **created** and **used**.',
+                        key: {type: 'string'},
+                        payload: Product,
+                        contentType: 'application/json'
+                    }
                 }
             },
             {
@@ -130,11 +145,20 @@ export let clusters = [
                         segments: 1
                     }
                 ],
-                configs: {
-                    name: 'userSignedUp',
-                    key: { type: 'string' },
-                    message: UserSignedUp,
-                    messageType: 'application/xml'
+                messages: {
+                    'userSignedUp': {
+                        name: 'userSignedUp',
+                        title: 'title',
+                        key: {type: 'string'},
+                        payload: UserSignedUp,
+                        contentType: 'application/xml'
+                    },
+                    'second': {
+                        name: 'second',
+                        key: {type: 'string'},
+                        payload: SecondMessage,
+                        contentType: 'application/json'
+                    }
                 }
             }
         ],
@@ -216,7 +240,8 @@ export let events = [
                          }),
              partition: 0,
              headers: {
-                 foo: 'bar'
+                 foo: 'bar',
+                 'x-specification-message-id': 'shopOrder'
              }
          }
      },
@@ -242,7 +267,10 @@ export let events = [
                         category: 'apparel',
                         subcategory: 'apparel'
                       }),
-            partition: 1
+            partition: 1,
+            headers: {
+                'x-specification-message-id': 'shopOrder'
+            }
         }
     }
  ]

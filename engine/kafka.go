@@ -4,11 +4,11 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"math/rand"
-	"mokapi/config/dynamic/asyncApi"
-	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/engine/common"
 	"mokapi/kafka"
 	"mokapi/media"
+	"mokapi/providers/asyncapi3"
+	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/runtime"
 	"mokapi/schema/encoding"
 	"mokapi/schema/json/generator"
@@ -94,7 +94,7 @@ func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 
 }
 
-func (c *KafkaClient) tryGet(cluster string, topic string, retry common.KafkaProduceRetry) (t *store.Topic, config *asyncApi.Config, err error) {
+func (c *KafkaClient) tryGet(cluster string, topic string, retry common.KafkaProduceRetry) (t *store.Topic, config *asyncapi3.Config, err error) {
 	count := 0
 	backoff := retry.InitialRetryTime
 	for {
@@ -112,7 +112,7 @@ func (c *KafkaClient) tryGet(cluster string, topic string, retry common.KafkaPro
 	}
 }
 
-func (c *KafkaClient) get(cluster string, topic string) (t *store.Topic, config *asyncApi.Config, err error) {
+func (c *KafkaClient) get(cluster string, topic string) (t *store.Topic, config *asyncapi3.Config, err error) {
 	if len(cluster) == 0 {
 		var topics []*store.Topic
 		for _, v := range c.app.Kafka {
@@ -156,8 +156,21 @@ func (c *KafkaClient) getPartition(t *store.Topic, partition int) (*store.Partit
 	return t.Partition(partition), nil
 }
 
-func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[string]interface{}, config *asyncApi.Channel) (rb kafka.RecordBatch, err error) {
-	msg := config.Publish.Message.Value
+func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[string]interface{}, config *asyncapi3.Channel) (rb kafka.RecordBatch, err error) {
+	n := len(config.Messages)
+	if n == 0 {
+		err = fmt.Errorf("message configuration missing")
+		return
+	}
+	var msg *asyncapi3.Message
+	// select first message
+	for _, m := range config.Messages {
+		if m.Value == nil {
+			continue
+		}
+		msg = m.Value
+		break
+	}
 	if msg == nil {
 		err = fmt.Errorf("message configuration missing")
 		return
@@ -169,8 +182,17 @@ func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[stri
 			return rb, fmt.Errorf("unable to generate kafka key: %v", err)
 		}
 	}
+
+	s, ok := msg.Payload.Value.(*schema.Ref)
+	if !ok {
+		if _, ok = value.([]byte); !ok {
+			err = fmt.Errorf("currently only json schema supported")
+			return
+		}
+	}
+
 	if value == nil {
-		value, err = createValue(msg.Payload)
+		value, err = createValue(s)
 		if err != nil {
 			return rb, fmt.Errorf("unable to generate kafka data: %v", err)
 		}
@@ -180,7 +202,7 @@ func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[stri
 	if b, ok := value.([]byte); ok {
 		v = b
 	} else {
-		v, err = encoding.NewEncoder(msg.Payload).Write(value, media.ParseContentType("application/json"))
+		v, err = encoding.NewEncoder(s).Write(value, media.ParseContentType("application/json"))
 		if err != nil {
 			return
 		}
@@ -201,12 +223,20 @@ func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[stri
 	}
 
 	var recordHeaders []kafka.RecordHeader
-	recordHeaders, err = getHeaders(headers, msg.Headers)
+	var hs *schema.Ref
+	if msg.Headers != nil {
+		hs, ok = msg.Headers.Value.(*schema.Ref)
+		if !ok {
+			err = fmt.Errorf("currently only json schema supported")
+			return
+		}
+	}
+	recordHeaders, err = getHeaders(headers, hs)
 	if err != nil {
 		return
 	}
 
-	rb = kafka.RecordBatch{Records: []kafka.Record{
+	rb = kafka.RecordBatch{Records: []*kafka.Record{
 		{
 			Key:     kafka.NewBytes(k),
 			Value:   kafka.NewBytes(v),

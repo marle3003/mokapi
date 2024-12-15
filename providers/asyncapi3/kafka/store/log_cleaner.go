@@ -25,14 +25,14 @@ func (s *Store) cleanLog(b *Broker) {
 		retentionBytes := brokerRetentionBytes
 		rollingTime := time.Duration(brokerRollingMs) * time.Millisecond
 
-		if topic.config.RetentionMs > 0 {
-			retentionTime = time.Duration(topic.config.RetentionMs) * time.Millisecond
+		if topic.channel.Bindings.Kafka.RetentionMs > 0 {
+			retentionTime = time.Duration(topic.channel.Bindings.Kafka.RetentionMs) * time.Millisecond
 		}
-		if topic.config.RetentionBytes > 0 {
-			retentionBytes = topic.config.RetentionBytes
+		if topic.channel.Bindings.Kafka.RetentionBytes > 0 {
+			retentionBytes = topic.channel.Bindings.Kafka.RetentionBytes
 		}
-		if topic.config.SegmentMs > 0 {
-			rollingTime = time.Duration(topic.config.SegmentMs) * time.Millisecond
+		if topic.channel.Bindings.Kafka.SegmentMs > 0 {
+			rollingTime = time.Duration(topic.channel.Bindings.Kafka.SegmentMs) * time.Millisecond
 		}
 
 		for _, p := range topic.Partitions {

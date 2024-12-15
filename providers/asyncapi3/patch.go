@@ -1,4 +1,6 @@
-package asyncApi
+package asyncapi3
+
+import "mokapi/schema/json/schema"
 
 func (c *Config) Patch(patch *Config) {
 	c.patchInfo(patch)
@@ -81,8 +83,8 @@ func (s *Server) patch(patch *Server) {
 		return
 	}
 
-	if len(patch.Url) > 0 {
-		s.Url = patch.Url
+	if len(patch.Host) > 0 {
+		s.Host = patch.Host
 	}
 
 	if len(patch.Description) > 0 {
@@ -134,16 +136,19 @@ func (c *Channel) patch(patch *Channel) {
 	if len(patch.Description) > 0 {
 		c.Description = patch.Description
 	}
-	if c.Subscribe == nil {
-		c.Subscribe = patch.Subscribe
+
+	if c.Messages == nil {
+		c.Messages = patch.Messages
 	} else {
-		c.Subscribe.patch(patch.Subscribe)
+		for k, p := range patch.Messages {
+			if v, ok := c.Messages[k]; ok {
+				v.patch(p)
+			} else {
+				c.Messages[k] = p
+			}
+		}
 	}
-	if c.Publish == nil {
-		c.Publish = patch.Publish
-	} else {
-		c.Publish.patch(patch.Publish)
-	}
+
 	c.Bindings.Kafka.Patch(patch.Bindings.Kafka)
 }
 
@@ -151,19 +156,14 @@ func (o *Operation) patch(patch *Operation) {
 	if patch == nil {
 		return
 	}
-	if len(patch.OperationId) > 0 {
-		o.OperationId = patch.OperationId
+	if len(patch.Title) > 0 {
+		o.Title = patch.Title
 	}
 	if len(patch.Summary) > 0 {
 		o.Summary = patch.Summary
 	}
 	if len(patch.Description) > 0 {
 		o.Description = patch.Description
-	}
-	if o.Message == nil {
-		o.Message = patch.Message
-	} else {
-		o.Message.patch(patch.Message)
 	}
 }
 
@@ -181,9 +181,6 @@ func (r *MessageRef) patch(patch *MessageRef) {
 func (m *Message) patch(patch *Message) {
 	if patch == nil {
 		return
-	}
-	if len(patch.MessageId) > 0 {
-		m.MessageId = patch.MessageId
 	}
 	if len(patch.Name) > 0 {
 		m.Name = patch.Name
@@ -203,12 +200,24 @@ func (m *Message) patch(patch *Message) {
 	if m.Payload == nil {
 		m.Payload = patch.Payload
 	} else {
-		m.Payload.Patch(patch.Payload)
+		if m.Payload.Value != nil && patch.Payload.Value != nil {
+			s, ok1 := m.Payload.Value.(*schema.Schema)
+			ps, ok2 := patch.Payload.Value.(*schema.Schema)
+			if ok1 && ok2 {
+				s.Patch(ps)
+			}
+		}
 	}
-	if m.Headers == nil {
+	if m.Headers == nil || m.Headers.Value == nil {
 		m.Headers = patch.Headers
 	} else {
-		m.Headers.Patch(patch.Headers)
+		if m.Headers.Value != nil && patch.Headers.Value != nil {
+			s, ok1 := m.Headers.Value.(*schema.Schema)
+			ps, ok2 := patch.Headers.Value.(*schema.Schema)
+			if ok1 && ok2 {
+				s.Patch(ps)
+			}
+		}
 	}
 	m.Bindings.Kafka.Patch(patch.Bindings.Kafka)
 }
@@ -237,7 +246,22 @@ func (c *Config) patchComponents(patch *Config) {
 	if c.Components.Schemas == nil {
 		c.Components.Schemas = patch.Components.Schemas
 	} else {
-		c.Components.Schemas.Patch(patch.Components.Schemas)
+		for k, r := range patch.Components.Schemas {
+			if r.Value == nil {
+				continue
+			}
+			s, ok := r.Value.(*schema.Schema)
+			if !ok {
+				continue
+			}
+			if r2, ok := c.Components.Schemas[k]; ok {
+				if s2, ok := r2.Value.(*schema.Schema); ok {
+					s2.Patch(s)
+				}
+			} else {
+				c.Components.Schemas[k] = r
+			}
+		}
 	}
 
 	if c.Components.Messages == nil {

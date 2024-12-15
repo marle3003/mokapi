@@ -3,13 +3,13 @@ package store_test
 import (
 	"fmt"
 	"github.com/stretchr/testify/require"
-	kafka2 "mokapi/config/dynamic/asyncApi"
-	"mokapi/config/dynamic/asyncApi/asyncapitest"
-	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/metaData"
+	"mokapi/providers/asyncapi3"
+	"mokapi/providers/asyncapi3/asyncapi3test"
+	"mokapi/providers/asyncapi3/kafka/store"
 	"strings"
 	"testing"
 )
@@ -22,9 +22,9 @@ func TestMetadata(t *testing.T) {
 		{
 			"default",
 			func(t *testing.T, s *store.Store) {
-				s.Update(asyncapitest.NewConfig(
-					asyncapitest.WithServer("", "kafka", "127.0.0.1:9092"),
-					asyncapitest.WithChannel("foo"),
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithServer("", "kafka", "127.0.0.1:9092"),
+					asyncapi3test.WithChannel("foo"),
 				))
 				rr := kafkatest.NewRecorder()
 				r := kafkatest.NewRequest("kafkatest", 4, &metaData.Request{})
@@ -60,9 +60,9 @@ func TestMetadata(t *testing.T) {
 		{
 			"with specific topic and two partitions",
 			func(t *testing.T, s *store.Store) {
-				s.Update(asyncapitest.NewConfig(
-					asyncapitest.WithChannel("foo", asyncapitest.WithChannelKafka(kafka2.TopicBindings{Partitions: 2})),
-					asyncapitest.WithChannel("foo2", asyncapitest.WithChannelKafka(kafka2.TopicBindings{Partitions: 2})),
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithChannel("foo", asyncapi3test.WithChannelKafka(asyncapi3.TopicBindings{Partitions: 2})),
+					asyncapi3test.WithChannel("foo2", asyncapi3test.WithChannelKafka(asyncapi3.TopicBindings{Partitions: 2})),
 				))
 
 				rr := kafkatest.NewRecorder()
@@ -82,8 +82,8 @@ func TestMetadata(t *testing.T) {
 		{
 			"with invalid topic",
 			func(t *testing.T, s *store.Store) {
-				s.Update(asyncapitest.NewConfig(
-					asyncapitest.WithChannel("foo")))
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithChannel("foo")))
 
 				rr := kafkatest.NewRecorder()
 				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 4, &metaData.Request{
@@ -100,8 +100,8 @@ func TestMetadata(t *testing.T) {
 		{
 			"create auto topic true",
 			func(t *testing.T, s *store.Store) {
-				s.Update(asyncapitest.NewConfig(
-					asyncapitest.WithChannel("foo")))
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithChannel("foo")))
 
 				rr := kafkatest.NewRecorder()
 				r := kafkatest.NewRequest("kafkatest", 4, &metaData.Request{
@@ -137,10 +137,10 @@ func TestMetadata(t *testing.T) {
 		{
 			"only server with empty protocol (backward compatibility) and kafka",
 			func(t *testing.T, s *store.Store) {
-				s.Update(asyncapitest.NewConfig(
-					asyncapitest.WithServer("foo", "kafka", "127.0.0.1:9092"),
-					asyncapitest.WithServer("bar", "amqp", "127.0.0.1:9093"),
-					asyncapitest.WithChannel("foo", asyncapitest.AssignToServer("foo")),
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithServer("foo", "kafka", "127.0.0.1:9092"),
+					asyncapi3test.WithServer("bar", "amqp", "127.0.0.1:9093"),
+					asyncapi3test.WithChannel("foo", asyncapi3test.AssignToServer("foo")),
 				))
 				rr := kafkatest.NewRecorder()
 				r := kafkatest.NewRequest("kafkatest", 4, &metaData.Request{})
@@ -156,10 +156,10 @@ func TestMetadata(t *testing.T) {
 		{
 			"2.2.0 assigning channels to servers",
 			func(t *testing.T, s *store.Store) {
-				s.Update(asyncapitest.NewConfig(
-					asyncapitest.WithServer("foo", "kafka", "127.0.0.1:9092"),
-					asyncapitest.WithServer("bar", "kafka", "127.0.0.1:9093"),
-					asyncapitest.WithChannel("foo", asyncapitest.AssignToServer("foo")),
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithServer("foo", "kafka", "127.0.0.1:9092"),
+					asyncapi3test.WithServer("bar", "kafka", "127.0.0.1:9093"),
+					asyncapi3test.WithChannel("foo", asyncapi3test.AssignToServer("foo")),
 				))
 				rr := kafkatest.NewRecorder()
 				r := kafkatest.NewRequest("kafkatest", 4, &metaData.Request{})
@@ -189,7 +189,7 @@ func TestMetadata(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			s := store.New(asyncapitest.NewConfig(), enginetest.NewEngine())
+			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine())
 			defer s.Close()
 			tc.fn(t, s)
 		})

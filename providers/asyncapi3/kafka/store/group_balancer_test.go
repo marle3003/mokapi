@@ -2,13 +2,13 @@ package store_test
 
 import (
 	"github.com/stretchr/testify/require"
-	"mokapi/config/dynamic/asyncApi/asyncapitest"
-	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/joinGroup"
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/syncGroup"
+	"mokapi/providers/asyncapi3/asyncapi3test"
+	"mokapi/providers/asyncapi3/kafka/store"
 	"testing"
 	"time"
 )
@@ -118,7 +118,7 @@ func TestGroupBalancing(t *testing.T) {
 					}
 					ch <- join
 				}()
-				time.Sleep(500 * time.Millisecond)
+				time.Sleep(800 * time.Millisecond)
 				member, err := b.Client().JoinGroup(3, &joinGroup.Request{
 					GroupId:      "TestGroup",
 					MemberId:     "foo2",
@@ -363,11 +363,11 @@ func TestGroupBalancing(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			s := store.New(asyncapitest.NewConfig(), enginetest.NewEngine())
+			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine())
 			defer s.Close()
 			b := kafkatest.NewBroker(kafkatest.WithHandler(s))
 			defer b.Close()
-			s.Update(asyncapitest.NewConfig(asyncapitest.WithServer("", "kafka", b.Addr)))
+			s.Update(asyncapi3test.NewConfig(asyncapi3test.WithServer("", "kafka", b.Addr)))
 
 			tc.test(t, b, s)
 		})

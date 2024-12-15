@@ -5,7 +5,7 @@ import (
 	"mokapi/runtime/events"
 )
 
-type LogRecord func(record kafka.Record, partition int, traits events.Traits)
+type LogRecord func(record *kafka.Record, partition int, traits events.Traits)
 
 type KafkaLog struct {
 	Offset    int64             `json:"offset"`
@@ -15,7 +15,7 @@ type KafkaLog struct {
 	Headers   map[string]string `json:"headers"`
 }
 
-func NewKafkaLog(record kafka.Record, partition int) *KafkaLog {
+func NewKafkaLog(record *kafka.Record, partition int) *KafkaLog {
 	log := &KafkaLog{
 		Offset:    record.Offset,
 		Key:       kafka.BytesToString(record.Key),

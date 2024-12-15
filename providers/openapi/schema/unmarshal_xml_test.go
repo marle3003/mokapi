@@ -324,6 +324,14 @@ func TestUnmarshalXML_NoSchema(t *testing.T) {
 				require.Equal(t, map[string]interface{}{"foo": "bar", "name": []interface{}{"alice", "carol"}}, i)
 			},
 		},
+		{
+			name: "mixed object property and array list containing multiple entries",
+			xml:  "<root><foo>bar</foo><name>alice</name><name>carol</name><name>sarah</name></root>",
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"foo": "bar", "name": []interface{}{"alice", "carol", "sarah"}}, i)
+			},
+		},
 	}
 
 	t.Parallel()

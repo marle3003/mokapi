@@ -70,7 +70,11 @@ func parse(n *node, ref *Ref) (interface{}, error) {
 			return nil, err
 		}
 		if _, ok := m[name]; ok {
-			m[name] = []interface{}{m[name], v}
+			if arr, isArray := m[name].([]interface{}); isArray {
+				m[name] = append(arr, v)
+			} else {
+				m[name] = []interface{}{m[name], v}
+			}
 		} else {
 			m[name] = v
 		}

@@ -2,7 +2,7 @@ package store_test
 
 import (
 	"github.com/stretchr/testify/require"
-	"mokapi/config/dynamic/asyncApi/kafka/store"
+	"mokapi/providers/asyncapi3/kafka/store"
 	"testing"
 )
 

@@ -11,7 +11,7 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 
 	converted, err := Convert(c)
 	if err != nil {
-		return nil
+		return err
 	}
 	config.Data = converted
 	return converted.Parse(config, reader)

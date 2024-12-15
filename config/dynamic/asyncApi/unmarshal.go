@@ -12,12 +12,12 @@ func (r *MessageRef) UnmarshalYAML(node *yaml.Node) error {
 	return unmarshalRef(node, &r.Ref, &r.Value)
 }
 
-func (c *ChannelRef) UnmarshalYAML(node *yaml.Node) error {
-	return unmarshalRef(node, &c.Ref, &c.Value)
+func (r *ChannelRef) UnmarshalYAML(node *yaml.Node) error {
+	return unmarshalRef(node, &r.Ref, &r.Value)
 }
 
-func (c *ServerRef) UnmarshalYAML(node *yaml.Node) error {
-	return unmarshalRef(node, &c.Ref, &c.Value)
+func (r *ServerRef) UnmarshalYAML(node *yaml.Node) error {
+	return unmarshalRef(node, &r.Ref, &r.Value)
 }
 
 func unmarshalRef(node *yaml.Node, ref *string, val interface{}) error {

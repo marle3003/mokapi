@@ -62,18 +62,32 @@ func (s *Store) offsetFetch(rw kafka.ResponseWriter, req *kafka.Request) error {
 	return rw.Write(res)
 }
 
-func validateConsumer(t *Topic, clientId, groupId string) (err error, code kafka.ErrorCode) {
-	if t.Subscribe.ClientId != nil {
-		_, err = encoding.Decode([]byte(clientId), encoding.WithSchema(&schema.Ref{Value: t.Publish.ClientId}))
-		if err != nil {
-			return fmt.Errorf("invalid clientId: %v", err), kafka.UnknownServerError
+func validateConsumer(t *Topic, clientId, groupId string) (error, kafka.ErrorCode) {
+	var last error
+	var code kafka.ErrorCode
+	var err error
+	for _, op := range t.operations {
+		if op.Action != "receive" {
+			continue
 		}
-	}
-	if t.Subscribe.GroupId != nil {
-		_, err = encoding.Decode([]byte(groupId), encoding.WithSchema(&schema.Ref{Value: t.Publish.GroupId}))
-		if err != nil {
-			return fmt.Errorf("invalid groupId: %v", err), kafka.InvalidGroupId
+		if op.Bindings.Kafka.ClientId != nil {
+			_, err = encoding.Decode([]byte(clientId), encoding.WithSchema(&schema.Ref{Value: op.Bindings.Kafka.ClientId}))
+			if err != nil {
+				last = fmt.Errorf("invalid clientId: %v", err)
+				code = kafka.UnknownServerError
+				continue
+			}
 		}
+		if op.Bindings.Kafka.GroupId != nil {
+			_, err = encoding.Decode([]byte(groupId), encoding.WithSchema(&schema.Ref{Value: op.Bindings.Kafka.GroupId}))
+			if err != nil {
+				last = fmt.Errorf("invalid groupId: %v", err)
+				code = kafka.InvalidGroupId
+				continue
+			}
+		}
+		return nil, kafka.None
 	}
-	return
+
+	return last, code
 }

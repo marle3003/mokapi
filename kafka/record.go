@@ -14,11 +14,11 @@ const magicOffset = 16
 type Attributes int16
 
 type RecordBatch struct {
-	Records []Record
+	Records []*Record
 }
 
 func NewRecordBatch() RecordBatch {
-	return RecordBatch{Records: make([]Record, 0)}
+	return RecordBatch{Records: make([]*Record, 0)}
 }
 
 func (rb *RecordBatch) ReadFrom(d *Decoder) error {

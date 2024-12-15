@@ -26,9 +26,7 @@ func (r *TagRef) UnmarshalJSON(b []byte) error {
 
 func (r *TagRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(r.Ref) > 0 {
-		if err := dynamic.Resolve(r.Ref, &r.Value, config, reader); err != nil {
-			return err
-		}
+		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
 	}
 
 	if r.Value == nil {

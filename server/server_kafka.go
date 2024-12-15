@@ -37,7 +37,10 @@ func (m *KafkaManager) UpdateConfig(c *dynamic.Config) {
 	if !runtime.IsKafkaConfig(c) {
 		return
 	}
-	cfg := m.app.AddKafka(c, m.emitter)
+	cfg, err := m.app.AddKafka(c, m.emitter)
+	if err != nil {
+		log.Errorf("add kafka config %v failed: %v", c.Info.Url, err)
+	}
 
 	m.addOrUpdateCluster(cfg)
 	log.Debugf("processed %v", c.Info.Path())
@@ -72,9 +75,9 @@ func (c *cluster) updateBrokers(cfg *runtime.KafkaInfo, kafkaMonitor *monitor.Ka
 		if server == nil || server.Value == nil {
 			continue
 		}
-		port, err := getPortFromUrl(server.Value.Url)
+		port, err := getPortFromUrl(server.Value.Host)
 		if err != nil {
-			log.Errorf("unable to start broker %v for cluster %v: ", server.Value.Url, cfg.Info.Name)
+			log.Errorf("unable to start broker %v for cluster %v: ", server.Value.Host, cfg.Info.Name)
 			continue
 		}
 

@@ -20,18 +20,18 @@ declare interface KafkaTopic {
   name: string;
   description: string;
   partitions: KafkaPartition[];
-  configs: KafkaTopicConfig;
+  messages: { [messageId: string]: KafkaMessage }
 }
 
-declare interface KafkaTopicConfig {
+declare interface KafkaMessage {
   name: string
   title: string
   summary: string
   description: string
   key: Schema;
-  message: Schema;
+  payload: Schema;
   header: Schema
-  messageType: string;
+  contentType: string;
 }
 
 declare interface KafkaPartition {

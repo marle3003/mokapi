@@ -2,9 +2,10 @@ package store_test
 
 import (
 	"github.com/stretchr/testify/require"
-	"mokapi/config/dynamic/asyncApi/asyncapitest"
-	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/engine/enginetest"
+	"mokapi/providers/asyncapi3"
+	"mokapi/providers/asyncapi3/asyncapi3test"
+	"mokapi/providers/asyncapi3/kafka/store"
 	"testing"
 )
 
@@ -16,7 +17,7 @@ func TestStore(t *testing.T) {
 		{
 			"empty",
 			func(t *testing.T) {
-				s := store.New(asyncapitest.NewConfig(), enginetest.NewEngine())
+				s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine())
 				defer s.Close()
 				require.Equal(t, 0, len(s.Brokers()))
 				require.Equal(t, 0, len(s.Topics()))
@@ -27,8 +28,8 @@ func TestStore(t *testing.T) {
 		{
 			"server",
 			func(t *testing.T) {
-				s := store.New(asyncapitest.NewConfig(
-					asyncapitest.WithServer("foo", "kafka", "foo:9092"),
+				s := store.New(asyncapi3test.NewConfig(
+					asyncapi3test.WithServer("foo", "kafka", "foo:9092"),
 				), enginetest.NewEngine())
 				defer s.Close()
 				require.Equal(t, 1, len(s.Brokers()))
@@ -42,8 +43,8 @@ func TestStore(t *testing.T) {
 		{
 			"topic",
 			func(t *testing.T) {
-				s := store.New(asyncapitest.NewConfig(
-					asyncapitest.WithChannel("foo"),
+				s := store.New(asyncapi3test.NewConfig(
+					asyncapi3test.WithChannel("foo"),
 				), enginetest.NewEngine())
 				defer s.Close()
 				require.Equal(t, 0, len(s.Brokers()))
@@ -58,9 +59,9 @@ func TestStore(t *testing.T) {
 		{
 			"create topic",
 			func(t *testing.T) {
-				s := store.New(asyncapitest.NewConfig(), enginetest.NewEngine())
+				s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine())
 				defer s.Close()
-				topic, err := s.NewTopic("foo", asyncapitest.NewChannel())
+				topic, err := s.NewTopic("foo", asyncapi3test.NewChannel(), []*asyncapi3.Operation{})
 				require.NoError(t, err)
 				require.Equal(t, "foo", topic.Name)
 				require.Equal(t, 1, len(topic.Partitions))
@@ -69,9 +70,9 @@ func TestStore(t *testing.T) {
 		{
 			"create topic, already exists",
 			func(t *testing.T) {
-				s := store.New(asyncapitest.NewConfig(asyncapitest.WithChannel("foo")), enginetest.NewEngine())
+				s := store.New(asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo")), enginetest.NewEngine())
 				defer s.Close()
-				_, err := s.NewTopic("foo", asyncapitest.NewChannel())
+				_, err := s.NewTopic("foo", asyncapi3test.NewChannel(), []*asyncapi3.Operation{})
 				require.Error(t, err, "topic foo already exists")
 			},
 		},

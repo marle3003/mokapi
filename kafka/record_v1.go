@@ -38,7 +38,7 @@ func (rb *RecordBatch) readFromV1(d *Decoder) error {
 			r.Value = pb.fragment(valueOffset, int(valueLength))
 		}
 
-		rb.Records = append(rb.Records, r)
+		rb.Records = append(rb.Records, &r)
 	}
 
 	return nil

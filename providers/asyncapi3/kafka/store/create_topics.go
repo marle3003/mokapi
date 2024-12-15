@@ -1,9 +1,9 @@
 package store
 
 import (
-	"mokapi/config/dynamic/asyncApi"
 	"mokapi/kafka"
 	"mokapi/kafka/createTopics"
+	"mokapi/providers/asyncapi3"
 )
 
 func (s *Store) createtopics(rw kafka.ResponseWriter, req *kafka.Request) error {
@@ -11,14 +11,22 @@ func (s *Store) createtopics(rw kafka.ResponseWriter, req *kafka.Request) error 
 	res := &createTopics.Response{}
 
 	for _, t := range r.Topics {
-		op := &asyncApi.Operation{}
-		config := &asyncApi.Channel{
-			Subscribe: op,
-			Publish:   op,
+		channel := &asyncapi3.Channel{
+			Title: t.Name,
 		}
-		config.Bindings.Kafka.Partitions = int(t.NumPartitions)
+		channel.Bindings.Kafka.Partitions = int(t.NumPartitions)
+		ops := []*asyncapi3.Operation{
+			{
+				Action:  "send",
+				Channel: asyncapi3.ChannelRef{Value: channel},
+			},
+			{
+				Action:  "receive",
+				Channel: asyncapi3.ChannelRef{Value: channel},
+			},
+		}
 
-		_, err := s.NewTopic(t.Name, config)
+		_, err := s.NewTopic(t.Name, channel, ops)
 		errCode := kafka.None
 		if err != nil {
 			errCode = kafka.TopicAlreadyExists
