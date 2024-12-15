@@ -36,7 +36,7 @@ would be dependent on external systems in relation to runtime, changes and bugs.
 
 ## Test only system that we are responsible for and fake all others
 
-<img src="/systemtest.png" width="700" alt="End-to-End Testing" title="End-to-End Testing" />
+<img src="/use-case-mock-api.png" width="700" alt="End-to-End Testing" title="End-to-End Testing" />
 
 For stable tests, we need to simulate all interactions with external systems. This way, we only test 
 what we are responsible for, and thus have a much more controlled testing strategy. [Mokapi](https://mokapi.io) can 
@@ -47,4 +47,4 @@ This can help us to improve the speed, accuracy, and efficiency of testing. The
 software development team can identify and fix issues faster and ultimately deliver higher quality software
 faster to the end user.
 
-<img src="/betterfaster.png" width="300" alt="Testing in Agile Development" title="Testing in Agile Development" style="text-align: center;display: block;" />
+<img src="/build-better-software-with-mokapi.png" width="300" alt="Testing in Agile Development" title="Testing in Agile Development" style="text-align: center;display: block;" />
