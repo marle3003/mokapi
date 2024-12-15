@@ -209,6 +209,15 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 			},
 		},
 		{
+			name: "map[string]string and bool value",
+			test: func(t *testing.T) {
+				v := make(map[string]string)
+				err := UnmarshalJSON([]byte(`{"value": true}`), &v)
+				require.EqualError(t, err, "structural error at value: bool is not assignable to string")
+				require.Equal(t, map[string]string{"value": ""}, v)
+			},
+		},
+		{
 			name: "string with null value",
 			test: func(t *testing.T) {
 				v := make(map[string]string)

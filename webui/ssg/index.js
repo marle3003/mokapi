@@ -38,6 +38,9 @@ const Server = require('./server');
 
     const pageFound = await page.evaluate(async () => {
       const header = document.querySelector('h1')
+      if (!header) {
+        return false
+      }
       if (header.innerText === `Sorry, this page isn't available`) {
         return false
       }
@@ -70,7 +73,7 @@ const Server = require('./server');
       await crawl(u)
       } catch (err) {
         if (err.message && err.message.startsWith('page ')) { 
-          throw new Error(`crawl link on page ${url.href} failed: ${err}`)
+          throw new Error(`crawl link on page ${u.href} failed: ${err}`)
         }
         throw err
       }

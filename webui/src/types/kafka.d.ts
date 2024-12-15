@@ -6,7 +6,7 @@ declare interface KafkaService extends Service {
 
 declare interface KafkaServer {
   name: string;
-  url: string;
+  host: string;
   description: string;
   tags: KafkaServerTag[]
 }

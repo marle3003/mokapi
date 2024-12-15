@@ -11,7 +11,7 @@ COPY ./docs ./src/assets/docs
 RUN npm install
 RUN npm run build
 
-FROM golang:1.20.1-alpine AS gobuild
+FROM golang:1.23.4-alpine AS gobuild
 
 ARG VERSION=dev
 

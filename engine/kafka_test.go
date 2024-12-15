@@ -135,8 +135,9 @@ func TestKafkaClient_Produce(t *testing.T) {
 				require.NotNil(t, b)
 				require.Equal(t, "mokapi", string(readBytes(b.Records[0].Value)))
 				require.Len(t, b.Records[0].Headers, 2)
-				require.Equal(t, "version", b.Records[0].Headers[1].Key)
-				require.Equal(t, []byte("1.0"), b.Records[0].Headers[1].Value)
+				version, found := getHeader("version", b.Records[0].Headers)
+				require.True(t, found, "version header not found")
+				require.Equal(t, []byte("1.0"), version.Value)
 			},
 		},
 		{
@@ -361,4 +362,13 @@ func getMessages(hook *test.Hook) []string {
 		result = append(result, e.Message)
 	}
 	return result
+}
+
+func getHeader(name string, headers []kafka.RecordHeader) (kafka.RecordHeader, bool) {
+	for _, h := range headers {
+		if h.Key == name {
+			return h, true
+		}
+	}
+	return kafka.RecordHeader{}, false
 }
