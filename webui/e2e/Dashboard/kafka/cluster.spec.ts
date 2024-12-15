@@ -80,7 +80,7 @@ test('Visit Kafka cluster config file', async ({ page, context }) => {
     const { test: testSourceView } = useSourceView(page.getByRole('region', { name: 'Content' }))
     await testSourceView({
         lines: '267 lines',
-        size: '6.96 kB',
+        size: '7.00 kB',
         content: /"name": "Kafka World"/,
         filename: 'asyncapi.json',
         clipboard: '"name": "Kafka World"'

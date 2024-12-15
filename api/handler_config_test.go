@@ -150,7 +150,7 @@ func TestHandler_Config(t *testing.T) {
 			test: []try.ResponseCondition{
 				try.HasStatusCode(http.StatusOK),
 				try.HasHeader("Last-Modified", "Wed, 27 Dec 2023 13:01:30 GMT"),
-				try.HasHeaderXor("Content-Type", "text/plain", "application/x-yaml"),
+				try.HasHeaderXor("Content-Type", "text/plain", "application/yaml"),
 				try.HasHeader("Cache-Control", "no-cache"),
 				try.HasBody(""),
 			},
