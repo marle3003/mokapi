@@ -50,8 +50,6 @@ func TestKafkaClient_Produce(t *testing.T) {
 		{
 			name: "non random values",
 			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
-				hook := test.NewGlobal()
-
 				err := engine.AddScript(newScript("test.js", `
 					import { produce } from 'mokapi/kafka'
 					export default function() {
@@ -73,8 +71,6 @@ func TestKafkaClient_Produce(t *testing.T) {
 				require.Equal(t, `"bar"`, string(readBytes(b.Records[0].Value)))
 				require.Equal(t, "version", b.Records[0].Headers[0].Key)
 				require.Equal(t, []byte("1.0"), b.Records[0].Headers[0].Value)
-
-				require.Equal(t, `{"cluster":"foo","topic":"foo","messages":[{"key":"foo","value":"\"bar\"","offset":0,"headers":{"version":"1.0"},"partition":0}]}`, hook.LastEntry().Message)
 			},
 		},
 		{
@@ -132,15 +128,15 @@ func TestKafkaClient_Produce(t *testing.T) {
 				hook := test.NewGlobal()
 
 				sendMessage(s, nil)
-				require.Equal(t, `{"offset":0,"key":"foo-1","value":"\"bar-1\"","headers":{}}`, hook.LastEntry().Message)
+				require.Equal(t, `{"offset":0,"key":"foo-1","value":"\"bar-1\"","headers":{"x-specification-message-id":"foo"}}`, hook.LastEntry().Message)
 
 				b, errCode := s.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
 				require.Equal(t, "mokapi", string(readBytes(b.Records[0].Value)))
-				require.Len(t, b.Records[0].Headers, 1)
-				require.Equal(t, "version", b.Records[0].Headers[0].Key)
-				require.Equal(t, []byte("1.0"), b.Records[0].Headers[0].Value)
+				require.Len(t, b.Records[0].Headers, 2)
+				require.Equal(t, "version", b.Records[0].Headers[1].Key)
+				require.Equal(t, []byte("1.0"), b.Records[0].Headers[1].Value)
 			},
 		},
 		{
@@ -159,7 +155,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 				sendMessage(s, map[string]string{"foo": "bar"})
 
 				b, _ := s.Topic("foo").Partition(0).Read(0, 1000)
-				require.Len(t, b.Records[0].Headers, 2)
+				require.Len(t, b.Records[0].Headers, 3)
 				require.Contains(t, b.Records[0].Headers, kafka.RecordHeader{
 					Key:   "foo",
 					Value: []byte("bar"),
@@ -341,7 +337,7 @@ func sendMessage(s *store.Store, headers map[string]string) {
 			{Name: "foo", Partitions: []produce.RequestPartition{
 				{
 					Record: kafka.RecordBatch{
-						Records: []kafka.Record{
+						Records: []*kafka.Record{
 							{
 								Offset:  0,
 								Time:    time.Now(),

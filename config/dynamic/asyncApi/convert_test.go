@@ -49,7 +49,7 @@ func TestConfig_Convert(t *testing.T) {
 	require.Equal(t, "The ID of the streetlight.", param.Description)
 
 	// message
-	msg := channel.Messages["receiveLightMeasurement.message"].Value
+	msg := channel.Messages["receiveLightMeasurement"].Value
 	require.Equal(t, "lightMeasured", msg.Name)
 	require.Equal(t, "Light measured", msg.Title)
 	require.Equal(t, "Inform about environmental lighting conditions of a particular streetlight.", msg.Summary)

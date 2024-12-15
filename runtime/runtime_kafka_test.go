@@ -160,7 +160,7 @@ func newProduceMessage(topic string) *kafka.Request {
 				Name: topic, Partitions: []produce.RequestPartition{
 					{
 						Record: kafka.RecordBatch{
-							Records: []kafka.Record{
+							Records: []*kafka.Record{
 								{
 									Offset:  0,
 									Time:    time.Now(),

@@ -120,7 +120,7 @@ func (suite *PetStoreSuite) TestKafka_Produce_InvalidFormat() {
 			{
 				Index: 0,
 				Record: kafka.RecordBatch{
-					Records: []kafka.Record{
+					Records: []*kafka.Record{
 						{
 							Offset:  0,
 							Time:    time.Now(),
@@ -148,7 +148,7 @@ func (suite *PetStoreSuite) TestKafkaProduce() {
 			{
 				Index: 0,
 				Record: kafka.RecordBatch{
-					Records: []kafka.Record{
+					Records: []*kafka.Record{
 						{
 							Offset:  0,
 							Time:    time.Now(),
@@ -189,6 +189,6 @@ func (suite *PetStoreSuite) TestKafkaEventAndMetrics() {
 
 	// test kafka events, header added by JavaScript event handler
 	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%s/api/events?namespace=kafka", suite.cfg.Api.Port), nil,
-		try.BodyContains(`"headers":{"foo":"bar"}`),
+		try.BodyContains(`"headers":{"foo":"bar","x-specification-message-id":`),
 	)
 }

@@ -101,7 +101,7 @@ func TestRequest_Write_Produce(t *testing.T) {
 				Partitions: []produce.RequestPartition{
 					{Index: 0,
 						Record: kafka.RecordBatch{
-							Records: []kafka.Record{
+							Records: []*kafka.Record{
 								{Offset: 0,
 									Time:  time.Time{},
 									Key:   kafka.NewBytes([]byte{}),

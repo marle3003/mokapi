@@ -190,7 +190,7 @@ func TestRecordBatch_WriteTo(t *testing.T) {
 		},
 		{
 			"single record",
-			RecordBatch{Records: []Record{
+			RecordBatch{Records: []*Record{
 				{
 					Time:    ToTime(Timestamp(time.Now())),
 					Key:     NewBytes([]byte("foo")),
@@ -201,7 +201,7 @@ func TestRecordBatch_WriteTo(t *testing.T) {
 		},
 		{
 			"two records",
-			RecordBatch{Records: []Record{
+			RecordBatch{Records: []*Record{
 				{
 					Offset:  2,
 					Time:    ToTime(Timestamp(time.Now())),
@@ -262,7 +262,7 @@ func TestRecord_Size(t *testing.T) {
 		{
 			"single record",
 			6,
-			RecordBatch{Records: []Record{
+			RecordBatch{Records: []*Record{
 				{
 					Time:    ToTime(Timestamp(time.Now())),
 					Key:     NewBytes([]byte("foo")),
@@ -274,7 +274,7 @@ func TestRecord_Size(t *testing.T) {
 		{
 			"two records",
 			24,
-			RecordBatch{Records: []Record{
+			RecordBatch{Records: []*Record{
 				{
 					Time:    ToTime(Timestamp(time.Now())),
 					Key:     NewBytes([]byte("key-1")),
@@ -300,7 +300,7 @@ func TestRecord_Size(t *testing.T) {
 }
 
 func TestRecordBatch_WriteTo_Bytes_Compare(t *testing.T) {
-	records := RecordBatch{Records: []Record{
+	records := RecordBatch{Records: []*Record{
 		{
 			Offset:  0,
 			Time:    ToTime(1657010762684),
