@@ -94,7 +94,7 @@ func HasHeaderXor(name string, values ...string) ResponseCondition {
 			}
 		}
 		if matched == "" {
-			require.Fail(t, fmt.Sprintf("header '%v' does not match one of: %v", name, values))
+			require.Fail(t, fmt.Sprintf("header '%v' value '%v' does not match one of: %v", name, v, values))
 		}
 	}
 }
