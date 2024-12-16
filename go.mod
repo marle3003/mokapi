@@ -1,8 +1,6 @@
 module mokapi
 
-go 1.21
-
-toolchain go1.23.4
+go 1.23.4
 
 require (
 	github.com/Masterminds/sprig v2.22.0+incompatible

@@ -86,7 +86,11 @@ func value(token json.Token, d *decoder, v reflect.Value) error {
 		return number(t, v)
 	case bool:
 		v = indirect(v, false)
-		v.Set(reflect.ValueOf(t))
+		if v.Type().AssignableTo(reflect.TypeOf(t)) {
+			v.Set(reflect.ValueOf(t))
+		} else {
+			return fmt.Errorf("bool is not assignable to string")
+		}
 		return nil
 	case nil:
 		switch v.Kind() {
