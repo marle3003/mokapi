@@ -21,8 +21,11 @@ func (p *Parser) Parse(data interface{}, ref *schema.Ref) (interface{}, error) {
 	if data == nil {
 		if ref.Value.IsNullable() {
 			return nil, nil
+		} else if ref.Value.Default != nil {
+			data = ref.Value.Default
+		} else {
+			return nil, fmt.Errorf("parse NULL failed, expected %v", ref)
 		}
-		return nil, fmt.Errorf("parse NULL failed, expected %v", ref)
 	}
 
 	switch {

@@ -56,7 +56,7 @@ func TestPartition_Write(t *testing.T) {
 	require.Equal(t, int64(2), p.Offset())
 	require.Equal(t, int64(0), p.StartOffset())
 
-	b, errCode := p.Read(0, 14)
+	b, errCode := p.Read(0, 4)
 	require.Equal(t, kafka.None, errCode)
 	require.Equal(t, 1, len(b.Records))
 

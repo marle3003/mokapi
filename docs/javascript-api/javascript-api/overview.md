@@ -60,6 +60,15 @@ There is a TypeScript definition package for Mokapi. Use "npm install @types/mok
 | [parse( text )](/docs/javascript-api/mokapi-yaml/parse.md)          | Parses a YAML string, constructing the JavaScript value or object described by the string. |
 | [stringify( value )](/docs/javascript-api/mokapi-yaml/stringify.md) | Converts a JavaScript value to a YAML string.                                              |
 
+## mokapi/encoding
+
+| Functions                                                                       | Description                                                                                            |
+|---------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
+| [base64.encode( input )](/docs/javascript-api/mokapi-encoding/base64-encode.md) | Encodes a string value to its equivalent string representation that is encoded with base-64.           |
+| [base64.decode( input )](/docs/javascript-api/mokapi-encoding/base64-decode.md) | Decodes a string value that is encoded with base-64 to its equivalent unencoded string representation. |
+
+
+
 
 
 

@@ -88,6 +88,10 @@ func (s *Schema) Patch(patch *Schema) {
 	if patch.Required != nil {
 		s.Required = patch.Required
 	}
+
+	if patch.Default != nil {
+		s.Default = patch.Default
+	}
 }
 
 func (s *Schemas) Patch(patch *Schemas) {

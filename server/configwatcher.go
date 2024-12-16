@@ -177,7 +177,7 @@ func (w *ConfigWatcher) addOrUpdate(c *dynamic.Config) error {
 	} else {
 		e.config.Raw = c.Raw
 		e.config.Info.Update(c.Info.Checksum)
-		log.Debugf("reloading %v", e.config.Info.Url.String())
+		log.Infof("reloading %v", e.config.Info.Url.String())
 	}
 
 	w.m.Unlock()
@@ -195,6 +195,7 @@ func (w *ConfigWatcher) configChanged(c *dynamic.Config) {
 	err := dynamic.Parse(c, w)
 	if err != nil {
 		log.Errorf("parse error %v: %v", c.Info.Path(), err)
+		e.m.Unlock()
 		return
 	}
 

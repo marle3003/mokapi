@@ -5,11 +5,17 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"mokapi/providers/openapi/schema"
+	"mokapi/schema/json/parser"
 	"net/http"
 	"strings"
 )
 
 const requestKey = "requestParameters"
+
+var p = parser.Parser{
+	ConvertStringToNumber:  true,
+	ConvertStringToBoolean: true,
+}
 
 type RequestParameters map[Location]RequestParameter
 
@@ -26,7 +32,7 @@ type RequestParameter map[string]RequestParameterValue
 
 type RequestParameterValue struct {
 	Value interface{}
-	Raw   string
+	Raw   *string
 }
 
 type decoder func(string) (string, error)
@@ -96,7 +102,7 @@ func parseObject(p *Parameter, value string, separator string, explode bool, dec
 	}
 }
 
-func parseExplodeObject(p *Parameter, value, separator string, decode decoder) (map[string]interface{}, error) {
+func parseExplodeObject(param *Parameter, value, separator string, decode decoder) (map[string]interface{}, error) {
 	m := make(map[string]interface{})
 	values := strings.Split(value, separator)
 	for _, i := range values {
@@ -112,12 +118,12 @@ func parseExplodeObject(p *Parameter, value, separator string, decode decoder) (
 		if err != nil {
 			return nil, err
 		}
-		prop := p.Schema.Value.Properties.Get(key)
-		if prop == nil && !p.Schema.Value.IsFreeForm() && !p.Schema.Value.IsDictionary() {
-			return nil, fmt.Errorf("property '%v' not defined in schema: %s", kv[0], p.Schema)
+		prop := param.Schema.Value.Properties.Get(key)
+		if prop == nil && !param.Schema.Value.IsFreeForm() && !param.Schema.Value.IsDictionary() {
+			return nil, fmt.Errorf("property '%v' not defined in schema: %s", kv[0], param.Schema)
 		}
 
-		if v, err := schema.ParseString(val, prop); err == nil {
+		if v, err := p.Parse(val, schema.ConvertToJsonSchema(prop)); err == nil {
 			m[key] = v
 		} else {
 			return nil, err
@@ -126,7 +132,7 @@ func parseExplodeObject(p *Parameter, value, separator string, decode decoder) (
 	return m, nil
 }
 
-func parseUnExplodeObject(p *Parameter, value, separator string) (map[string]interface{}, error) {
+func parseUnExplodeObject(param *Parameter, value, separator string) (map[string]interface{}, error) {
 	m := make(map[string]interface{})
 	elements := strings.Split(value, ",")
 	i := 0
@@ -137,14 +143,14 @@ func parseUnExplodeObject(p *Parameter, value, separator string) (map[string]int
 		key := elements[i]
 		i++
 
-		p := p.Schema.Value.Properties.Get(key)
-		if p == nil {
+		prop := param.Schema.Value.Properties.Get(key)
+		if prop == nil {
 			continue
 		}
 		if i >= len(elements) {
 			return nil, fmt.Errorf("invalid number of property pairs")
 		}
-		if v, err := schema.ParseString(elements[i], p); err != nil {
+		if v, err := p.Parse(elements[i], schema.ConvertToJsonSchema(prop)); err != nil {
 			return nil, fmt.Errorf("parse property '%v' failed: %w", key, err)
 		} else {
 			m[key] = v
@@ -154,18 +160,8 @@ func parseUnExplodeObject(p *Parameter, value, separator string) (map[string]int
 	return m, nil
 }
 
-func parseArray(p *Parameter, value string, separator string) ([]interface{}, error) {
-	values := make([]interface{}, 0)
-
-	for _, v := range strings.Split(value, separator) {
-		if i, err := schema.ParseString(v, p.Schema.Value.Items); err != nil {
-			return nil, err
-		} else {
-			values = append(values, i)
-		}
-	}
-
-	return values, nil
+func parseArray(param *Parameter, value []string) (interface{}, error) {
+	return p.Parse(value, schema.ConvertToJsonSchema(param.Schema))
 }
 
 func defaultDecode(s string) (string, error) {

@@ -125,6 +125,10 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case strings.HasPrefix(p, "/api/faker/tree"):
 		h.handleFakerTree(w, r)
 	case h.fileServer != nil:
+		if r.Method != "GET" {
+			http.Error(w, fmt.Sprintf("method %v is not allowed", r.Method), http.StatusMethodNotAllowed)
+			return
+		}
 		if isAsset(r.URL.Path) {
 			r.URL.Path = "/assets/" + filepath.Base(r.URL.Path)
 		} else if filepath.Ext(r.URL.Path) == ".svg" || filepath.Ext(r.URL.Path) == ".png" {

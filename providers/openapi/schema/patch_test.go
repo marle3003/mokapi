@@ -512,6 +512,26 @@ func TestSchema_Patch(t *testing.T) {
 				require.Equal(t, []string{"foo"}, result.Required)
 			},
 		},
+		{
+			name: "patch default",
+			schemas: []*schema.Schema{
+				{},
+				{Default: []string{"foo"}},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, []string{"foo"}, result.Default)
+			},
+		},
+		{
+			name: "patch overwrite default",
+			schemas: []*schema.Schema{
+				{Default: []string{"bar"}},
+				{Default: []string{"foo"}},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, []string{"foo"}, result.Default)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

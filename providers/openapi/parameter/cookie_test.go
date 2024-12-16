@@ -37,7 +37,7 @@ func TestFromRequest_Cookie(t *testing.T) {
 				require.NoError(t, err)
 				cookie := result[parameter.Cookie]["debug"]
 				require.Equal(t, int64(1), cookie.Value)
-				require.Equal(t, "1", cookie.Raw)
+				require.Equal(t, "1", *cookie.Raw)
 			},
 		},
 		{
@@ -58,7 +58,7 @@ func TestFromRequest_Cookie(t *testing.T) {
 				require.NoError(t, err)
 				cookie := result[parameter.Cookie]["debug"]
 				require.Equal(t, "1", cookie.Value)
-				require.Equal(t, "1", cookie.Raw)
+				require.Equal(t, "1", *cookie.Raw)
 			},
 		},
 		{
@@ -160,7 +160,7 @@ func TestFromRequest_Cookie(t *testing.T) {
 				require.NoError(t, err)
 				cookie := result[parameter.Cookie]["foo"]
 				require.Equal(t, []interface{}{int64(1), int64(2), int64(3)}, cookie.Value)
-				require.Equal(t, "1,2,3", cookie.Raw)
+				require.Equal(t, "1,2,3", *cookie.Raw)
 			},
 		},
 		{
@@ -211,7 +211,7 @@ func TestFromRequest_Cookie(t *testing.T) {
 				require.NoError(t, err)
 				cookie := result[parameter.Cookie]["foo"]
 				require.Equal(t, map[string]interface{}{"firstName": "Alex", "role": "admin"}, cookie.Value)
-				require.Equal(t, "role,admin,firstName,Alex", cookie.Raw)
+				require.Equal(t, "role,admin,firstName,Alex", *cookie.Raw)
 			},
 		},
 		{
@@ -236,7 +236,7 @@ func TestFromRequest_Cookie(t *testing.T) {
 				require.NoError(t, err)
 				cookie := result[parameter.Cookie]["foo"]
 				require.Equal(t, map[string]interface{}{"role": "admin"}, cookie.Value)
-				require.Equal(t, "role,admin,firstName,Alex", cookie.Raw)
+				require.Equal(t, "role,admin,firstName,Alex", *cookie.Raw)
 			},
 		},
 		{

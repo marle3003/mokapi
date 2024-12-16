@@ -138,4 +138,18 @@ func TestScript(t *testing.T) {
 		r.Equal(t, "Hello World", v.String())
 		s.Close()
 	})
+	t.Run("base64 encode", func(t *testing.T) {
+		t.Parallel()
+		src := `import { base64 } from 'mokapi/encoding'
+export default function() {
+	return base64.encode('foobar');
+}
+`
+		s, err := jstest.New(jstest.WithPathSource("test.ts", src), js.WithHost(&enginetest.Host{}))
+		r.NoError(t, err)
+		v, err := s.RunDefault()
+		r.NoError(t, err)
+		r.Equal(t, "Zm9vYmFy", v.String())
+		s.Close()
+	})
 }

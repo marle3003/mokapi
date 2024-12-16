@@ -31,6 +31,13 @@ func (p *Parser) ParseArray(data interface{}, s *schema.Schema) (interface{}, er
 		}
 	default:
 		v := reflect.ValueOf(data)
+		if v == reflect.Zero(v.Type()) && !s.IsNullable() {
+			if s.Default != nil {
+				v = reflect.ValueOf(s.Default)
+			} else {
+				return nil, fmt.Errorf("TEST")
+			}
+		}
 		if v.Kind() != reflect.Slice {
 			return nil, fmt.Errorf("expected array but got: %v", toString(data))
 		}

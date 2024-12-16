@@ -8,6 +8,7 @@ import "./global";
 import "./http";
 import "./mustache";
 import "./yaml";
+import "./encoding"
 
 /**
  * Attaches an event handler for the given event.
@@ -171,7 +172,7 @@ export interface HttpResponse {
     body: string;
 
     /** Data will be encoded with the OpenAPI response definition. */
-    data: JSONValue;
+    data: any;
 }
 
 /**
@@ -341,35 +342,35 @@ export enum LdapResultStatus {
     SizeLimitExceeded = 4,
 }
 
-type SmtpEventHandler = (record: SmtpEventMessage) => boolean
+export type SmtpEventHandler = (record: SmtpEventMessage) => boolean;
 
-declare interface SmtpEventMessage {
-    server: string
-    sender?: Address
-    from: Address[]
-    to: Address[]
-    replyTo?: Address[]
-    cc?: Address[]
-    bcc?: Address[]
-    messageId: string
-    inReplyTo?: string
-    time?: Date
-    subject: string
-    contentType: string
-    encoding: string
-    body: string
-    attachments: Attachment[]
+export interface SmtpEventMessage {
+    server: string;
+    sender?: Address;
+    from: Address[];
+    to: Address[];
+    replyTo?: Address[];
+    cc?: Address[];
+    bcc?: Address[];
+    messageId: string;
+    inReplyTo?: string;
+    time?: Date;
+    subject: string;
+    contentType: string;
+    encoding: string;
+    body: string;
+    attachments: Attachment[];
 }
 
-declare interface Address {
-    name?: string
-    address: string
+export interface Address {
+    name?: string;
+    address: string;
 }
 
-declare interface Attachment {
-    name: string
-    contentType: string
-    data: Uint8Array
+export interface Attachment {
+    name: string;
+    contentType: string;
+    data: Uint8Array;
 }
 
 /**
@@ -454,4 +455,4 @@ export interface JSONObject {
     [key: string]: JSONValue;
 }
 
-declare const RFC3339 = "RFC3339"
+export const RFC3339 = "RFC3339";

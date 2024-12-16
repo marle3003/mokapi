@@ -278,6 +278,19 @@ func TestGitConfig(t *testing.T) {
 			},
 		},
 		{
+			name: "npm provider global folders",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe")
+				os.Args = append(os.Args, "--providers-npm-global-folders", `/etc/foo`)
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
+				require.NoError(t, err)
+
+				require.Equal(t, "/etc/foo", cfg.Providers.Npm.GlobalFolders[0])
+			},
+		},
+		{
 			name: "config",
 			test: func(t *testing.T) {
 				os.Args = append(os.Args, "mokapi.exe")

@@ -8,6 +8,7 @@ import (
 	"mokapi/config/static"
 	engine "mokapi/engine/common"
 	"mokapi/js/console"
+	"mokapi/js/encoding"
 	"mokapi/js/eventloop"
 	"mokapi/js/faker"
 	"mokapi/js/file"
@@ -248,4 +249,5 @@ func RegisterNativeModules(registry *require.Registry) {
 	registry.RegisterNativeModule("mokapi/yaml", yaml.Require)
 	registry.RegisterNativeModule("mokapi/mail", mail.Require)
 	registry.RegisterNativeModule("mokapi/ldap", ldap.Require)
+	registry.RegisterNativeModule("mokapi/encoding", encoding.Require)
 }

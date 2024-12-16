@@ -125,4 +125,6 @@ func (o *Operation) patch(patch *Operation) {
 	} else {
 		o.Responses.patch(patch.Responses)
 	}
+
+	o.Parameters.Patch(patch.Parameters)
 }

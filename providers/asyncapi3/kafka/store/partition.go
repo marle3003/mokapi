@@ -89,10 +89,10 @@ func (p *Partition) Read(offset int64, maxBytes int) (kafka.RecordBatch, kafka.E
 
 		for seg.contains(offset) {
 			r := seg.record(offset)
-			size += r.Size()
 			if size > maxBytes {
 				return batch, kafka.None
 			}
+			size += r.Size()
 			batch.Records = append(batch.Records, r)
 			offset++
 		}

@@ -161,7 +161,7 @@ func TestFetch(t *testing.T) {
 			},
 		},
 		{
-			name: "fetch one record with MaxBytes 15",
+			name: "fetch one record with MaxBytes 4",
 			test: func(t *testing.T, s *store.Store) {
 				s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo")))
 				_, records, err := s.Topic("foo").Partition(0).Write(kafka.RecordBatch{Records: []*kafka.Record{
@@ -183,7 +183,7 @@ func TestFetch(t *testing.T) {
 					Topics: []fetch.Topic{
 						{
 							Name:       "foo",
-							Partitions: []fetch.RequestPartition{{MaxBytes: 15}},
+							Partitions: []fetch.RequestPartition{{MaxBytes: 4}},
 						},
 					}}))
 

@@ -70,7 +70,9 @@ func TestParseQuery(t *testing.T) {
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
 				require.NoError(t, err)
-				require.Len(t, result[parameter.Query], 0)
+				require.Len(t, result[parameter.Query], 1)
+				require.Nil(t, result[parameter.Query]["id"].Value)
+				require.Nil(t, result[parameter.Query]["id"].Raw)
 			},
 		},
 		{
@@ -465,7 +467,7 @@ func TestParseQuery(t *testing.T) {
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
 				require.NoError(t, err)
 				require.Equal(t, true, result[parameter.Query]["enabled"].Value)
-				require.Equal(t, "true", result[parameter.Query]["enabled"].Raw)
+				require.Equal(t, "true", *(result[parameter.Query]["enabled"].Raw))
 			},
 		},
 	}
