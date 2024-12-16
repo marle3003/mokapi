@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onRenderTriggered } from 'vue';
+import { computed } from 'vue';
 
 
 const props = defineProps<{
@@ -139,7 +139,7 @@ function isExpanded(item: DocEntry | string) {
 .nav .nav-link {
   padding: 0;
   padding-top: 4px;
-
+  font-size: 0.93rem;
 }
 
 @media only screen and (max-width: 768px)  {

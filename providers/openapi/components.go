@@ -8,13 +8,14 @@ import (
 )
 
 type Components struct {
-	Schemas       *schema.Schemas    `yaml:"schemas,omitempty" json:"schemas,omitempty"`
-	Responses     *Responses[string] `yaml:"responses,omitempty" json:"responses,omitempty"`
-	RequestBodies RequestBodies      `yaml:"requestBodies,omitempty" json:"requestBodies,omitempty"`
-	Parameters    Parameters         `yaml:"parameters,omitempty" json:"parameters,omitempty"`
-	Examples      Examples           `yaml:"examples,omitempty" json:"examples,omitempty"`
-	Headers       Headers            `yaml:"headers,omitempty" json:"headers,omitempty"`
-	PathItems     PathItems          `yaml:"pathItems,omitempty" json:"pathItems,omitempty"`
+	Schemas         *schema.Schemas    `yaml:"schemas,omitempty" json:"schemas,omitempty"`
+	Responses       *Responses[string] `yaml:"responses,omitempty" json:"responses,omitempty"`
+	RequestBodies   RequestBodies      `yaml:"requestBodies,omitempty" json:"requestBodies,omitempty"`
+	Parameters      Parameters         `yaml:"parameters,omitempty" json:"parameters,omitempty"`
+	Examples        Examples           `yaml:"examples,omitempty" json:"examples,omitempty"`
+	Headers         Headers            `yaml:"headers,omitempty" json:"headers,omitempty"`
+	PathItems       PathItems          `yaml:"pathItems,omitempty" json:"pathItems,omitempty"`
+	SecuritySchemes SecuritySchemes    `yaml:"securitySchemes,omitempty" json:"securitySchemes,omitempty"`
 }
 
 type Parameters map[string]*parameter.Ref

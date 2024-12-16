@@ -90,6 +90,11 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	if op.Path != nil {
+		processSecurity(r, op.Path.Security, request)
+	}
+	processSecurity(r, op.Security, request)
+
 	response := NewEventResponse(status, contentType)
 
 	err = setResponseData(response, mediaType, request.Key)
@@ -294,6 +299,25 @@ func writeError(rw http.ResponseWriter, r *http.Request, err error, serviceName 
 		logHttp.Response.Size = len([]byte(message))
 		for k, v := range rw.Header() {
 			logHttp.Response.Headers[k] = strings.Join(v, ",")
+		}
+	}
+}
+
+func processSecurity(r *http.Request, security Security, event *common.EventRequest) {
+	if security != nil {
+		for _, v := range security {
+			for k := range v {
+				switch k {
+				case "bearerAuth":
+					auth := r.Header.Get("Authorization")
+					if auth != "" {
+						event.Header["Authorization"] = []string{auth}
+						return
+					}
+				default:
+					log.Warnf("security scheme not supported: %s", k)
+				}
+			}
 		}
 	}
 }
