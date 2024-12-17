@@ -423,7 +423,7 @@ func TestRef_Marshal_Json_AnyOf(t *testing.T) {
 		},
 		{
 			name: "anyOf ignores additional properties when free-form is false",
-			schema: schematest.NewAllOf(
+			schema: schematest.NewAny(
 				schematest.New("object", schematest.WithProperty("foo", schematest.New("string")), schematest.WithFreeForm(false)),
 				schematest.New("object", schematest.WithProperty("bar", schematest.New("string")), schematest.WithFreeForm(false)),
 			),
@@ -675,7 +675,7 @@ func TestRef_Marshal_Json_AllOf(t *testing.T) {
 				return map[string]interface{}{"bar": "bar"}
 			},
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "encoding data to 'application/json' failed: parse {bar: bar} failed: value does not match part of allOf: missing required field 'foo', expected schema type=object properties=[foo] required=[foo] free-form=false")
+				require.EqualError(t, err, "encoding data to 'application/json' failed: parse {bar: bar} failed: does not match all of schema type=object properties=[foo] required=[foo], schema type=object properties=[bar]:\nmissing required field 'foo', expected schema type=object properties=[foo] required=[foo]")
 				require.Len(t, result, 0)
 			},
 		},
@@ -689,7 +689,7 @@ func TestRef_Marshal_Json_AllOf(t *testing.T) {
 				return map[string]interface{}{"bar": "bar"}
 			},
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "encoding data to 'application/json' failed: allOf contains different types: all of schema type=object properties=[foo], schema type=integer")
+				require.EqualError(t, err, "encoding data to 'application/json' failed: parse {bar: bar} failed: does not match all of schema type=object properties=[foo], schema type=integer:\ninvalid type object, expected schema type=integer")
 				require.Len(t, result, 0)
 			},
 		},
@@ -703,8 +703,8 @@ func TestRef_Marshal_Json_AllOf(t *testing.T) {
 				return map[string]interface{}{"bar": "bar"}
 			},
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "encoding data to 'application/json' failed: allOf contains error: no schema available")
-				require.Len(t, result, 0)
+				require.NoError(t, err)
+				require.Equal(t, `{"bar":"bar"}`, result)
 			},
 		},
 	}

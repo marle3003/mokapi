@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
 	"mokapi/schema/json/parser"
-	"mokapi/schema/json/schema"
 )
 
 func Compositions() *Tree {
@@ -33,40 +32,41 @@ func AnyOf() *Tree {
 	}
 }
 
-func AllOf() *Tree {
-	return &Tree{
-		Name: "AllOf",
-		Test: func(r *Request) bool {
-			s := r.LastSchema()
-			return s != nil && s.AllOf != nil && len(s.AllOf) > 0
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			s := r.LastSchema()
-			result := map[string]interface{}{}
-			for _, one := range s.AllOf {
-				if one.IsAny() {
-					if one.Value == nil {
-						one.Value = &schema.Schema{Type: []string{"object"}}
-					} else {
-						one.Value.Type = []string{"object"}
-					}
-				}
-				if !one.IsObject() {
-					return nil, fmt.Errorf("allOf expects type of object but got %v", one.Type())
-				}
-				o, err := r.g.tree.Resolve(r.With(UsePathElement("", one)))
-				if err != nil {
-					return nil, fmt.Errorf("generate random data for schema failed: %v: %v", one, err)
-				}
-				m := o.(map[string]interface{})
-				for k, v := range m {
-					result[k] = v
-				}
-			}
-			return result, nil
-		},
-	}
-}
+//func AllOf() *Tree {
+//	return &Tree{
+//		Name: "AllOf",
+//		Test: func(r *Request) bool {
+//			s := r.LastSchema()
+//			return s != nil && s.AllOf != nil && len(s.AllOf) > 0
+//		},
+//		Fake: func(r *Request) (interface{}, error) {
+//			s := r.LastSchema()
+//			return buildAllOf(s)
+//			result := map[string]interface{}{}
+//			for _, one := range s.AllOf {
+//				if one.IsAny() {
+//					if one.Value == nil {
+//						one.Value = &schema.Schema{Type: []string{"object"}}
+//					} else {
+//						one.Value.Type = []string{"object"}
+//					}
+//				}
+//				if !one.IsObject() {
+//					return nil, fmt.Errorf("allOf expects type of object but got %v", one.Type())
+//				}
+//				o, err := r.g.tree.Resolve(r.With(UsePathElement("", one)))
+//				if err != nil {
+//					return nil, fmt.Errorf("generate random data for schema failed: %v: %v", one, err)
+//				}
+//				m := o.(map[string]interface{})
+//				for k, v := range m {
+//					result[k] = v
+//				}
+//			}
+//			return result, nil
+//		},
+//	}
+//}
 
 func OneOf() *Tree {
 	p := parser.Parser{}

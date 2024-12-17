@@ -219,3 +219,9 @@ func IsNullable(b bool) SchemaOptions {
 		s.Nullable = b
 	}
 }
+
+func WithDefault(d interface{}) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Default = d
+	}
+}

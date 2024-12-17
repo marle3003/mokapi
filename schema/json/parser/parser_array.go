@@ -39,7 +39,7 @@ func (p *Parser) ParseArray(data interface{}, s *schema.Schema) (interface{}, er
 			}
 		}
 		if v.Kind() != reflect.Slice {
-			return nil, fmt.Errorf("expected array but got: %v", toString(data))
+			return nil, fmt.Errorf("expected array but got: %v", ToString(data))
 		}
 		var err error
 		result = make([]interface{}, 0)
@@ -83,7 +83,7 @@ func validateArray(a interface{}, s *schema.Schema) error {
 			item := v.Index(i).Interface()
 			for _, u := range unique {
 				if compare(item, u) {
-					return fmt.Errorf("should NOT have duplicate items (%v), expected %v", toString(item), s)
+					return fmt.Errorf("should NOT have duplicate items (%v), expected %v", ToString(item), s)
 				}
 			}
 			unique = append(unique, item)

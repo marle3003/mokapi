@@ -12,7 +12,7 @@ func checkValueIsInEnum(i interface{}, enum []interface{}, entrySchema *schema.S
 	for _, e := range enum {
 		v, err := p.Parse(e, &schema.Ref{Value: entrySchema})
 		if err != nil {
-			log.Errorf("unable to parse enum value %v to %v: %v", toString(e), entrySchema, err)
+			log.Errorf("unable to parse enum value %v to %v: %v", ToString(e), entrySchema, err)
 			continue
 		}
 		if compare(i, v) {
@@ -21,7 +21,7 @@ func checkValueIsInEnum(i interface{}, enum []interface{}, entrySchema *schema.S
 		}
 	}
 	if !found {
-		return fmt.Errorf("value '%v' does not match one in the enumeration %v", toString(i), toString(enum))
+		return fmt.Errorf("value '%v' does not match one in the enumeration %v", ToString(i), ToString(enum))
 	}
 
 	return nil

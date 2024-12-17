@@ -25,6 +25,7 @@ declare interface Schema {
   minProperties: number | undefined
   maxProperties: number | undefined
   deprecated: boolean
+  default: any
 }
 
 declare interface XmlSchmea {

@@ -64,7 +64,7 @@ func TestParser_ParseAll(t *testing.T) {
 				schematest.New("integer", schematest.WithMaximum(11)),
 			),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "12 is greater as the required maximum 11, expected schema type=integer maximum=11")
+				require.EqualError(t, err, "parse 12 failed: does not match all of schema type=integer, schema type=integer maximum=11: 12 is greater as the required maximum 11, expected schema type=integer maximum=11")
 			},
 		},
 		{
@@ -75,7 +75,7 @@ func TestParser_ParseAll(t *testing.T) {
 				schematest.New("string"),
 			),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "allOf contains different types: all of schema type=integer, schema type=string")
+				require.EqualError(t, err, "parse 12 failed: does not match all of schema type=integer, schema type=string: parse 12 failed, expected schema type=string")
 			},
 		},
 		{
@@ -91,6 +91,35 @@ func TestParser_ParseAll(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{"age": int64(28), "name": "carol"}, v)
+			},
+		},
+		{
+			name: "AllOf with two objects, one defines a property without type",
+			data: map[string]interface{}{
+				"name": "carol",
+				"age":  28,
+			},
+			schema: schematest.NewAllOf(
+				schematest.New("object", schematest.WithProperty("name", schematest.New("string")), schematest.WithProperty("age", schematest.New(""))),
+				schematest.New("object", schematest.WithProperty("age", schematest.New("integer"))),
+			),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"age": int64(28), "name": "carol"}, v)
+			},
+		},
+		{
+			name: "AllOf with two objects free-form false and errors - error message should contain free-form=false",
+			data: map[string]interface{}{
+				"name": 12,
+				"age":  "28",
+			},
+			schema: schematest.NewAllOf(
+				schematest.New("object", schematest.WithProperty("name", schematest.New("string")), schematest.WithFreeForm(false)),
+				schematest.New("object", schematest.WithProperty("age", schematest.New("integer")), schematest.WithFreeForm(false)),
+			),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "parse {age: 28, name: 12} failed: does not match all of schema type=object properties=[name] free-form=false, schema type=object properties=[age] free-form=false:\nparse property 'name' failed: parse 12 failed, expected schema type=string\nparse property 'age' failed: parse '28' failed, expected schema type=integer")
 			},
 		},
 	}

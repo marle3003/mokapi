@@ -590,7 +590,7 @@ func TestRef_Unmarshal_Json_AllOf(t *testing.T) {
 						schematest.WithProperty("bar", schematest.New("boolean"))),
 				)),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "parse {foo: 12} failed: value does not match part of allOf: missing required field 'bar', expected schema type=object properties=[bar] required=[bar] free-form=false")
+				require.EqualError(t, err, "parse {foo: 12} failed: does not match all of schema type=object properties=[foo], schema type=object properties=[bar] required=[bar]:\nmissing required field 'bar', expected schema type=object properties=[bar] required=[bar]")
 			},
 		},
 	}

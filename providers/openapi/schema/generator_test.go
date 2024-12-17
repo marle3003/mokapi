@@ -556,13 +556,13 @@ func TestGeneratorArray(t *testing.T) {
 		{
 			name: "example",
 			schema: &schema.Schema{Type: jsonSchema.Types{"array"}, MinItems: toIntP(5), MaxItems: toIntP(10), UniqueItems: true,
-				Example: []interface{}{1, 2, 3},
+				Example: []interface{}{1, 2, 3, 4, 5},
 				Items: &schema.Ref{
 					Value: &schema.Schema{
-						Type: jsonSchema.Types{"integer"}, Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(3)}}},
+						Type: jsonSchema.Types{"integer"}, Format: "int32", Minimum: toFloatP(0), Maximum: toFloatP(8)}}},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{1, 2, 3}, i)
+				require.Equal(t, []interface{}{1, 2, 3, 4, 5}, i)
 			},
 		},
 		{
@@ -758,7 +758,7 @@ func TestGenerator_AllOf(t *testing.T) {
 			),
 			test: func(t *testing.T, result interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}(map[string]interface{}{"bar": 1.025479772807108e+308, "bunch": map[string]interface{}{"shower": 1.3433890851076963e+308}, "gang": []interface{}{false}, "growth": "m", "hall": 1.018301155186648e+308, "woman": []interface{}{}}), result)
+				require.Equal(t, map[string]interface{}{"bar": 1.644484108270445e+307}, result)
 			},
 		},
 		{
@@ -771,7 +771,7 @@ func TestGenerator_AllOf(t *testing.T) {
 			),
 			test: func(t *testing.T, result interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"bar": 1.025479772807108e+308, "bunch": map[string]interface{}{"shower": 1.3433890851076963e+308}, "gang": []interface{}{false}, "growth": "m", "hall": 1.018301155186648e+308, "woman": []interface{}{}}, result)
+				require.Equal(t, map[string]interface{}{"bar": 1.644484108270445e+307}, result)
 			},
 		},
 		{
@@ -781,7 +781,7 @@ func TestGenerator_AllOf(t *testing.T) {
 				schematest.New("object", schematest.WithProperty("bar", schematest.New("number"))),
 			)),
 			test: func(t *testing.T, result interface{}, err error) {
-				require.EqualError(t, err, "allOf expects type of object but got integer")
+				require.EqualError(t, err, "generate random data for schema failed: all of schema type=integer, schema type=object properties=[bar]: no shared types found")
 				require.Nil(t, result)
 			},
 		},

@@ -39,7 +39,7 @@ func (p *Parser) ParseObject(data interface{}, s *schema.Schema) (*sortedmap.Lin
 		case reflect.Map:
 			result, err = p.parseMap(v, s)
 		default:
-			return nil, fmt.Errorf("parse object failed, got %v expected %v", toString(data), s)
+			return nil, fmt.Errorf("parse object failed, got %v expected %v", ToString(data), s)
 		}
 	}
 
@@ -171,10 +171,10 @@ func validateObject(i interface{}, s *schema.Schema) error {
 	v := reflect.ValueOf(i)
 	if v.Kind() == reflect.Map {
 		if s.MinProperties != nil && v.Len() < *s.MinProperties {
-			return fmt.Errorf("validation error minProperties on %v, expected %v", toString(i), s)
+			return fmt.Errorf("validation error minProperties on %v, expected %v", ToString(i), s)
 		}
 		if s.MaxProperties != nil && v.Len() > *s.MaxProperties {
-			return fmt.Errorf("validation error maxProperties on %v, expected %v", toString(i), s)
+			return fmt.Errorf("validation error maxProperties on %v, expected %v", ToString(i), s)
 		}
 		if !s.IsFreeForm() && s.Properties != nil {
 			var add []string

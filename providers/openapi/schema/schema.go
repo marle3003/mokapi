@@ -211,6 +211,12 @@ func (s *Schema) String() string {
 		sb.WriteString(s.Items.String())
 	}
 
+	if len(s.Title) > 0 {
+		sb.WriteString(fmt.Sprintf(" title=%v", s.Title))
+	} else if len(s.Description) > 0 {
+		sb.WriteString(fmt.Sprintf(" description=%v", s.Description))
+	}
+
 	return sb.String()
 }
 

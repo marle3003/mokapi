@@ -31,13 +31,13 @@ func (p *Parser) ParseOne(s *schema.Schema, data interface{}) (interface{}, erro
 			continue
 		}
 		if result != nil {
-			return nil, fmt.Errorf("parse %v failed: it is valid for more than one schema, expected %v", toString(data), s)
+			return nil, fmt.Errorf("parse %v failed: it is valid for more than one schema, expected %v", ToString(data), s)
 		}
 		result = next
 	}
 
 	if result == nil {
-		return nil, fmt.Errorf("parse %v failed: expected to match one of schema but it matches none", toString(data))
+		return nil, fmt.Errorf("parse %v failed: expected to match one of schema but it matches none", ToString(data))
 	}
 
 	return result, nil

@@ -251,3 +251,15 @@ func WithDefault(v interface{}) SchemaOptions {
 		s.Default = v
 	}
 }
+
+func WithExample(v interface{}) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Examples = append(s.Examples, v)
+	}
+}
+
+func WithExamples(v ...interface{}) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Examples = append(s.Examples, v...)
+	}
+}

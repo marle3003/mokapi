@@ -113,6 +113,12 @@ func (s *Schema) String() string {
 		sb.WriteString(fmt.Sprintf("%v", s.Items.Value))
 	}
 
+	if len(s.Title) > 0 {
+		sb.WriteString(fmt.Sprintf(" title=%v", s.Title))
+	} else if len(s.Description) > 0 {
+		sb.WriteString(fmt.Sprintf(" description=%v", s.Description))
+	}
+
 	str := sb.String()
 	if string(str[0]) == " " {
 		return str[1:]
@@ -129,18 +135,3 @@ func (t *Types) String() string {
 	}
 	return ""
 }
-
-//func (s *Schema) IsFreeForm() bool {
-//	if s.Type != "object" {
-//		return false
-//	}
-//	free := s.Type == "object" && (s.Properties == nil || s.Properties.Len() == 0)
-//	if s.AdditionalProperties == nil || free {
-//		return true
-//	}
-//	return s.AdditionalProperties.IsFreeForm()
-//}
-//
-//func (s *Schema) IsDictionary() bool {
-//	return s.AdditionalProperties != nil && s.AdditionalProperties.Ref != nil && s.AdditionalProperties.Value != nil && s.AdditionalProperties.Value.Type != ""
-//}

@@ -7,9 +7,10 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"unicode"
 )
 
-func toString(i interface{}) string {
+func ToString(i interface{}) string {
 	var sb strings.Builder
 	switch o := i.(type) {
 	case []interface{}:
@@ -18,7 +19,7 @@ func toString(i interface{}) string {
 			if i > 0 {
 				sb.WriteString(", ")
 			}
-			sb.WriteString(toString(v))
+			sb.WriteString(ToString(v))
 		}
 		sb.WriteRune(']')
 	case map[string]interface{}:
@@ -35,7 +36,7 @@ func toString(i interface{}) string {
 			if sb.Len() > 1 {
 				sb.WriteString(", ")
 			}
-			sb.WriteString(fmt.Sprintf("%v: %v", key, toString(val)))
+			sb.WriteString(fmt.Sprintf("%v: %v", key, ToString(val)))
 		}
 		sb.WriteRune('}')
 	case string, int, int32, int64, float32, float64, bool:
@@ -55,20 +56,26 @@ func toString(i interface{}) string {
 				if i > 0 {
 					sb.WriteString(", ")
 				}
-				sb.WriteString(toString(v.Index(i).Interface()))
+				sb.WriteString(ToString(v.Index(i).Interface()))
 			}
 			sb.WriteRune(']')
 		case reflect.Struct:
-			sb.WriteRune('{')
+			fields := strings.Builder{}
 			for i := 0; i < v.NumField(); i++ {
 				if i > 0 {
-					sb.WriteString(", ")
+					fields.WriteString(", ")
 				}
 				name := t.Field(i).Name
-				fv := v.Field(i).Interface()
-				sb.WriteString(fmt.Sprintf("%v: %v", name, fv))
+				if unicode.IsUpper(rune(name[0])) {
+					fv := v.Field(i).Interface()
+					fields.WriteString(fmt.Sprintf("%v: %v", name, fv))
+				}
 			}
-			sb.WriteRune('}')
+			if fields.Len() > 0 {
+				sb.WriteString(fmt.Sprintf("%v", i))
+			} else {
+				sb.WriteString(fmt.Sprintf("{%s}", fields.String()))
+			}
 		default:
 			log.Errorf("JSON schema to string: unsupported type: %v", v.Kind())
 		}
@@ -159,7 +166,7 @@ func toType(i interface{}) string {
 	case reflect.Bool:
 		return "boolean"
 	default:
-		log.Errorf("unable to resolve JSON type from value: %v", toString(i))
+		log.Errorf("unable to resolve JSON type from value: %v", ToString(i))
 		return "string"
 	}
 }
