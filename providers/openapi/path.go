@@ -54,8 +54,6 @@ type Path struct {
 	// parameters can be overridden at the operation level,
 	// but cannot be removed there
 	Parameters parameter.Parameters
-
-	Security Security `yaml:"security" json:"security"`
 }
 
 func (r *PathRef) UnmarshalJSON(b []byte) error {

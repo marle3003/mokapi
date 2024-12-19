@@ -47,7 +47,10 @@ type Config struct {
 	// A relative path to an individual endpoint. The path MUST begin
 	// with a forward slash ('/'). The path is appended to the url from
 	// server objects url field in order to construct the full URL
-	Paths      PathItems  `yaml:"paths,omitempty" json:"paths,omitempty"`
+	Paths PathItems `yaml:"paths,omitempty" json:"paths,omitempty"`
+
+	Security []SecurityRequirement `yaml:"security" json:"security"`
+
 	Components Components `yaml:"components,omitempty" json:"components,omitempty"`
 
 	ExternalDocs *ExternalDocs `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`

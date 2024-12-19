@@ -535,3 +535,51 @@ func TestFileProvider(t *testing.T) {
 		})
 	}
 }
+
+func TestFileProvider_File(t *testing.T) {
+	testcases := []struct {
+		name    string
+		content string
+		test    func(t *testing.T, cfg *static.Config, err error)
+	}{
+		{
+			name:    "empty file",
+			content: "",
+			test: func(t *testing.T, cfg *static.Config, err error) {
+				require.NoError(t, err)
+			},
+		},
+		{
+			name: "git repo with GitHub Auth",
+			content: `
+providers:
+  git:
+    repositories:
+      - auth:
+          github:
+            appId: 1234
+`,
+			test: func(t *testing.T, cfg *static.Config, err error) {
+				require.NoError(t, err)
+				require.Len(t, cfg.Providers.Git.Repositories, 1)
+				require.NotNil(t, cfg.Providers.Git.Repositories[0].Auth.GitHub)
+				require.Equal(t, int64(1234), cfg.Providers.Git.Repositories[0].Auth.GitHub.AppId)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := static.NewConfig()
+
+			read := func(path string) ([]byte, error) {
+				return []byte(tc.content), nil
+			}
+
+			err := decoders.Load([]decoders.ConfigDecoder{decoders.NewFileDecoder(read)}, cfg)
+
+			tc.test(t, cfg, err)
+		})
+	}
+}

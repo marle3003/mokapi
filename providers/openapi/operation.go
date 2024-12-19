@@ -45,7 +45,7 @@ type Operation struct {
 	// operation.
 	Responses *Responses[int] `yaml:"responses" json:"responses"`
 
-	Security Security `yaml:"security" json:"security"`
+	Security []SecurityRequirement `yaml:"security" json:"security"`
 
 	Path *Path `yaml:"-" json:"-"`
 }

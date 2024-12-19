@@ -705,6 +705,31 @@ func TestHandler_Event(t *testing.T) {
 				return nil
 			},
 		},
+		{
+			name: "path parameter",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(http.StatusOK,
+						openapitest.WithContent("application/json", openapitest.NewContent()),
+					))
+				openapitest.AppendPath("/foo/{id}", c,
+					openapitest.WithOperation(http.MethodPost, op),
+					openapitest.WithPathParam("id", openapitest.WithParamSchema(schematest.New("string"))),
+				)
+				r := httptest.NewRequest("post", "http://localhost/foo/123", strings.NewReader(`{ "foo": "bar" }`))
+				r.Header.Set("Content-Type", "application/json")
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.Equal(t, `"123"`, rr.Body.String())
+			},
+			event: func(event string, args ...interface{}) []*common.Action {
+				req := args[0].(*common.EventRequest)
+				res := args[1].(*common.EventResponse)
+				res.Data = req.Path["id"]
+				return nil
+			},
+		},
 	}
 
 	t.Parallel()

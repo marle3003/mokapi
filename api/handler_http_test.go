@@ -131,7 +131,7 @@ func TestHandler_Http(t *testing.T) {
 						"foo": {
 							Config: openapitest.NewConfig("3.0.0",
 								openapitest.WithPath("/foo/{bar}", openapitest.NewPath(
-									openapitest.WithPathParam("bar", "path", true, openapitest.WithParamSchema(schematest.New("string"))),
+									openapitest.WithPathParam("bar", openapitest.WithParamSchema(schematest.New("string"))),
 									openapitest.WithOperation("get", openapitest.NewOperation()),
 								))),
 						},

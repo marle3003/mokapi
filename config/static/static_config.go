@@ -77,7 +77,7 @@ type GitRepo struct {
 }
 
 type GitAuth struct {
-	GitHub *GitHubAuth
+	GitHub *GitHubAuth `yaml:"gitHub,github"`
 }
 
 type GitHubAuth struct {

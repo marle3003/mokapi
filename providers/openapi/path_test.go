@@ -597,7 +597,7 @@ func TestConfig_Patch_Path(t *testing.T) {
 				openapitest.NewConfig("1.0", openapitest.WithPath(
 					"/foo", openapitest.NewPath())),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithPathParam("foo", "path", true)))),
+					"/foo", openapitest.NewPath(openapitest.WithPathParam("foo")))),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				e := result.Paths["/foo"].Value
@@ -608,9 +608,9 @@ func TestConfig_Patch_Path(t *testing.T) {
 			name: "patch parameters",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithPathParam("foo", "path", true)))),
+					"/foo", openapitest.NewPath(openapitest.WithPathParam("foo")))),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithPathParam("foo", "path", true, openapitest.WithParamSchema(schematest.New("number")))))),
+					"/foo", openapitest.NewPath(openapitest.WithPathParam("foo", openapitest.WithParamSchema(schematest.New("number")))))),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				e := result.Paths["/foo"].Value

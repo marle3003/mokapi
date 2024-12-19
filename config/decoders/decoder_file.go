@@ -121,9 +121,24 @@ func mapConfig(value interface{}, element reflect.Value, format string) (err err
 		return mapConfig(value, element.Elem(), format)
 	case reflect.Bool, reflect.Int, reflect.Float64:
 		element.Set(reflect.ValueOf(value))
+	case reflect.Int64:
+		switch i := value.(type) {
+		case int:
+			element.SetInt(int64(i))
+		case int64:
+			element.SetInt(i)
+		default:
+			return fmt.Errorf("cannot unmarshal %v into %v", toTypeName(reflect.ValueOf(value)), toTypeName(element))
+		}
+
 	case reflect.String:
 		if _, ok := value.(string); ok {
-			element.Set(reflect.ValueOf(value))
+			t := element.Type()
+			if !reflect.TypeOf(value).AssignableTo(t) {
+				element.Set(reflect.ValueOf(value).Convert(t))
+			} else {
+				element.Set(reflect.ValueOf(value))
+			}
 		} else {
 			var b []byte
 			b, err = json.Marshal(value)

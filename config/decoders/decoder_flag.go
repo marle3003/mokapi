@@ -230,11 +230,14 @@ func (f *FlagDecoder) explode(v reflect.Value, name string, value []string) erro
 	return nil
 }
 
-func getFieldByTag(v reflect.Value, name, tag string) reflect.Value {
-	for i := 0; i < v.NumField(); i++ {
-		explode := v.Type().Field(i).Tag.Get(tag)
-		if explode == name {
-			return v.Field(i)
+func getFieldByTag(structValue reflect.Value, name, tag string) reflect.Value {
+	for i := 0; i < structValue.NumField(); i++ {
+		v := structValue.Type().Field(i).Tag.Get(tag)
+		tagValues := strings.Split(v, ",")
+		for _, tagValue := range tagValues {
+			if tagValue == name {
+				return structValue.Field(i)
+			}
 		}
 	}
 	return reflect.Value{}

@@ -2,8 +2,8 @@ package openapi
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"mokapi/engine/common"
 	"mokapi/media"
@@ -74,7 +74,8 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	request := EventRequestFrom(r)
+	request, ctx := NewEventRequest(r)
+	r = r.WithContext(ctx)
 
 	if op.RequestBody != nil {
 		body, err := BodyFromRequest(r, op)
@@ -90,10 +91,17 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if op.Path != nil {
-		processSecurity(r, op.Path.Security, request)
+	if len(op.Security) > 0 {
+		if err = h.serveSecurity(r, op.Security); err != nil {
+			writeError(rw, r, err, h.config.Info.Name)
+			return
+		}
+	} else if len(h.config.Security) > 0 {
+		if err = h.serveSecurity(r, h.config.Security); err != nil {
+			writeError(rw, r, err, h.config.Info.Name)
+			return
+		}
 	}
-	processSecurity(r, op.Security, request)
 
 	response := NewEventResponse(status, contentType)
 
@@ -303,21 +311,20 @@ func writeError(rw http.ResponseWriter, r *http.Request, err error, serviceName 
 	}
 }
 
-func processSecurity(r *http.Request, security Security, event *common.EventRequest) {
-	if security != nil {
-		for _, v := range security {
-			for k := range v {
-				switch k {
-				case "bearerAuth":
-					auth := r.Header.Get("Authorization")
-					if auth != "" {
-						event.Header["Authorization"] = []string{auth}
-						return
-					}
-				default:
-					log.Warnf("security scheme not supported: %s", k)
-				}
+func (h *responseHandler) serveSecurity(r *http.Request, requirements []SecurityRequirement) error {
+	var errs error
+	for _, req := range requirements {
+		for name := range req {
+			config, ok := h.config.Components.SecuritySchemes[name]
+			if !ok {
+				return newHttpError(http.StatusInternalServerError, fmt.Sprintf("no security scheme found for %v", name))
 			}
+			err := config.Serve(r)
+			if err == nil {
+				return nil
+			}
+			errs = errors.Join(errs, err)
 		}
 	}
+	return newHttpError(http.StatusForbidden, errs.Error())
 }

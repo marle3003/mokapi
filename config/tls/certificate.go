@@ -9,7 +9,7 @@ type FileOrContent string
 
 func (f FileOrContent) Read(currentDir string) ([]byte, error) {
 	path := f.String()
-	if strings.HasPrefix(path, "./") {
+	if strings.HasPrefix(path, "./") && currentDir != "" {
 		path = strings.Replace(path, ".", currentDir, 1)
 	}
 
