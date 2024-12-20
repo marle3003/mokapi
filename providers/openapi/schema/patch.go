@@ -18,6 +18,28 @@ func (s *Schema) Patch(patch *Schema) {
 	if len(patch.Type) > 0 {
 		s.Type = mergeTypes(s.Type, patch.Type)
 	}
+	if len(patch.AnyOf) > 0 {
+		if len(s.AnyOf) == 0 {
+			s.AnyOf = patch.AnyOf
+		} else {
+			s.AnyOf = patchComposition(s.AnyOf, patch.AnyOf)
+		}
+	}
+	if len(patch.AllOf) > 0 {
+		if len(s.AllOf) == 0 {
+			s.AllOf = patch.AllOf
+		} else {
+			s.AllOf = patchComposition(s.AllOf, patch.AllOf)
+		}
+	}
+	if len(patch.OneOf) > 0 {
+		if len(s.OneOf) == 0 {
+			s.OneOf = patch.OneOf
+		} else {
+			s.OneOf = patchComposition(s.OneOf, patch.OneOf)
+		}
+	}
+
 	if patch.Enum != nil {
 		s.Enum = patch.Enum
 	}
@@ -169,4 +191,25 @@ func mergeTypes(origin, patch jsonSchema.Types) jsonSchema.Types {
 		}
 	}
 	return origin
+}
+
+func patchComposition(s []*Ref, patch []*Ref) []*Ref {
+Patch:
+	for _, p := range patch {
+		if p == nil || p.Value == nil {
+			continue
+		}
+		if p.Value.Title == "" {
+			s = append(s, p)
+		} else {
+			for _, r := range s {
+				if r.Value.Title == p.Value.Title {
+					r.Patch(p)
+					continue Patch
+				}
+			}
+			s = append(s, p)
+		}
+	}
+	return s
 }

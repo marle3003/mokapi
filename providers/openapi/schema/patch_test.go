@@ -818,3 +818,141 @@ func TestRef_Patch(t *testing.T) {
 		})
 	}
 }
+
+func TestPatch_Composition(t *testing.T) {
+	testcases := []struct {
+		name    string
+		schemas []*schema.Schema
+		test    func(t *testing.T, result *schema.Schema)
+	}{
+		{
+			name: "add anyOf",
+			schemas: []*schema.Schema{
+				schematest.NewAny(),
+				schematest.NewAny(schematest.New("string")),
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.NotNil(t, result.AnyOf)
+				require.Len(t, result.AnyOf, 1)
+				require.Equal(t, "string", result.AnyOf[0].Value.Type.String())
+			},
+		},
+		{
+			name: "append anyOf",
+			schemas: []*schema.Schema{
+				schematest.NewAny(schematest.New("string")),
+				schematest.NewAny(schematest.New("string")),
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.NotNil(t, result.AnyOf)
+				require.Len(t, result.AnyOf, 2)
+				require.Equal(t, "string", result.AnyOf[0].Value.Type.String())
+				require.Equal(t, "string", result.AnyOf[1].Value.Type.String())
+			},
+		},
+		{
+			name: "patch anyOf",
+			schemas: []*schema.Schema{
+				schematest.NewAny(schematest.New("string", schematest.WithTitle("foo"))),
+				schematest.NewAny(schematest.New("integer", schematest.WithTitle("foo"))),
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.NotNil(t, result.AnyOf)
+				require.Len(t, result.AnyOf, 1)
+				require.Equal(t, jsonSchema.Types{"string", "integer"}, result.AnyOf[0].Value.Type)
+			},
+		},
+		{
+			name: "add allOf",
+			schemas: []*schema.Schema{
+				schematest.NewAny(),
+				schematest.NewAllOf(schematest.New("string")),
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.NotNil(t, result.AllOf)
+				require.Len(t, result.AllOf, 1)
+				require.Equal(t, "string", result.AllOf[0].Value.Type.String())
+			},
+		},
+		{
+			name: "append allOf",
+			schemas: []*schema.Schema{
+				schematest.NewAllOf(schematest.New("string")),
+				schematest.NewAllOf(schematest.New("string")),
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.NotNil(t, result.AllOf)
+				require.Len(t, result.AllOf, 2)
+				require.Equal(t, "string", result.AllOf[0].Value.Type.String())
+				require.Equal(t, "string", result.AllOf[1].Value.Type.String())
+			},
+		},
+		{
+			name: "patch allOf",
+			schemas: []*schema.Schema{
+				schematest.NewAllOf(schematest.New("string", schematest.WithTitle("foo"))),
+				schematest.NewAllOf(schematest.New("integer", schematest.WithTitle("foo"))),
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.NotNil(t, result.AllOf)
+				require.Len(t, result.AllOf, 1)
+				require.Equal(t, jsonSchema.Types{"string", "integer"}, result.AllOf[0].Value.Type)
+			},
+		},
+		{
+			name: "add OneOf",
+			schemas: []*schema.Schema{
+				schematest.NewAny(),
+				schematest.NewOneOf(schematest.New("string")),
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.NotNil(t, result.OneOf)
+				require.Len(t, result.OneOf, 1)
+				require.Equal(t, "string", result.OneOf[0].Value.Type.String())
+			},
+		},
+		{
+			name: "append OneOf",
+			schemas: []*schema.Schema{
+				schematest.NewOneOf(schematest.New("string")),
+				schematest.NewOneOf(schematest.New("string")),
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.NotNil(t, result.OneOf)
+				require.Len(t, result.OneOf, 2)
+				require.Equal(t, "string", result.OneOf[0].Value.Type.String())
+				require.Equal(t, "string", result.OneOf[1].Value.Type.String())
+			},
+		},
+		{
+			name: "patch OneOf",
+			schemas: []*schema.Schema{
+				schematest.NewOneOf(schematest.New("string", schematest.WithTitle("foo"))),
+				schematest.NewOneOf(schematest.New("integer", schematest.WithTitle("foo"))),
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.NotNil(t, result.OneOf)
+				require.Len(t, result.OneOf, 1)
+				require.Equal(t, jsonSchema.Types{"string", "integer"}, result.OneOf[0].Value.Type)
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			var s *schema.Schema
+			for _, p := range tc.schemas {
+				if s == nil {
+					s = p
+				} else {
+					s.Patch(p)
+				}
+			}
+			tc.test(t, s)
+		})
+	}
+}
