@@ -47,6 +47,46 @@ func TestSchema_Patch(t *testing.T) {
 			},
 		},
 		{
+			name: "patch enum",
+			schemas: []*schema.Schema{
+				{},
+				{Enum: []interface{}{"foo"}},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, []interface{}{"foo"}, result.Enum)
+			},
+		},
+		{
+			name: "patch overwrite enum",
+			schemas: []*schema.Schema{
+				{Enum: []interface{}{"bar"}},
+				{Enum: []interface{}{"foo"}},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, []interface{}{"foo"}, result.Enum)
+			},
+		},
+		{
+			name: "patch const",
+			schemas: []*schema.Schema{
+				{},
+				{Const: []interface{}{"foo"}},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, []interface{}{"foo"}, result.Const)
+			},
+		},
+		{
+			name: "patch overwrite const",
+			schemas: []*schema.Schema{
+				{Const: []interface{}{"bar"}},
+				{Const: []interface{}{"foo"}},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, []interface{}{"foo"}, result.Const)
+			},
+		},
+		{
 			name: "patch format",
 			schemas: []*schema.Schema{
 				{},
@@ -84,97 +124,6 @@ func TestSchema_Patch(t *testing.T) {
 			},
 			test: func(t *testing.T, result *schema.Schema) {
 				require.Equal(t, "foo", result.Pattern)
-			},
-		},
-		{
-			name: "patch description",
-			schemas: []*schema.Schema{
-				{},
-				{Description: "foo"},
-			},
-			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, "foo", result.Description)
-			},
-		},
-		{
-			name: "patch overwrite description",
-			schemas: []*schema.Schema{
-				{Description: "bar"},
-				{Description: "foo"},
-			},
-			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, "foo", result.Description)
-			},
-		},
-		{
-			name: "patch properties",
-			schemas: []*schema.Schema{
-				{},
-				schematest.New("object",
-					schematest.WithProperty("foo", schematest.New("string"))),
-			},
-			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, 1, result.Properties.Len())
-				require.NotNil(t, result.Properties.Get("foo"))
-			},
-		},
-		{
-			name: "patch extend properties",
-			schemas: []*schema.Schema{
-				schematest.New("object",
-					schematest.WithProperty("foo", schematest.New("string"))),
-				schematest.New("object",
-					schematest.WithProperty("bar", schematest.New("number"))),
-			},
-			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, 2, result.Properties.Len())
-				foo := result.Properties.Get("foo")
-				require.NotNil(t, foo)
-				require.Equal(t, "string", foo.Value.Type.String())
-				bar := result.Properties.Get("bar")
-				require.NotNil(t, bar)
-				require.Equal(t, "number", bar.Value.Type.String())
-			},
-		},
-		{
-			name: "patch change property type",
-			schemas: []*schema.Schema{
-				schematest.New("object",
-					schematest.WithProperty("foo", schematest.New("string"))),
-				schematest.New("object",
-					schematest.WithProperty("foo", schematest.New("number"))),
-			},
-			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, 1, result.Properties.Len())
-				foo := result.Properties.Get("foo")
-				require.NotNil(t, foo)
-				require.Equal(t, "[string number]", foo.Value.Type.String())
-			},
-		},
-		{
-			name: "patch array items",
-			schemas: []*schema.Schema{
-				{},
-				schematest.New("array",
-					schematest.WithItems("string")),
-			},
-			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, "array", result.Type.String())
-				require.Equal(t, "string", result.Items.Value.Type.String())
-			},
-		},
-		{
-			name: "patch array items format",
-			schemas: []*schema.Schema{
-				schematest.New("array",
-					schematest.WithItems("string")),
-				schematest.New("array",
-					schematest.WithItems("string", schematest.WithFormat("foo"))),
-			},
-			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, "array", result.Type.String())
-				require.Equal(t, "string", result.Items.Value.Type.String())
-				require.Equal(t, "foo", result.Items.Value.Format)
 			},
 		},
 		{
@@ -218,43 +167,24 @@ func TestSchema_Patch(t *testing.T) {
 			},
 		},
 		{
-			name: "patch enum",
+			name: "patch multipleOf",
 			schemas: []*schema.Schema{
 				{},
-				{Enum: []interface{}{"foo"}},
+				{MultipleOf: toFloatP(3)},
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, []interface{}{"foo"}, result.Enum)
+				require.NotNil(t, result.MultipleOf)
+				require.Equal(t, float64(3), *result.MultipleOf)
 			},
 		},
 		{
-			name: "patch overwrite enum",
+			name: "patch overwrite multipleOf",
 			schemas: []*schema.Schema{
-				{Enum: []interface{}{"bar"}},
-				{Enum: []interface{}{"foo"}},
+				{MultipleOf: toFloatP(10)},
+				{MultipleOf: toFloatP(3)},
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, []interface{}{"foo"}, result.Enum)
-			},
-		},
-		{
-			name: "patch example",
-			schemas: []*schema.Schema{
-				{},
-				{Examples: []interface{}{"foo"}},
-			},
-			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, []interface{}{"foo"}, result.Examples)
-			},
-		},
-		{
-			name: "patch overwrite example",
-			schemas: []*schema.Schema{
-				{Examples: []interface{}{"bar"}},
-				{Examples: []interface{}{"foo"}},
-			},
-			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, []interface{}{"foo"}, result.Examples)
+				require.Equal(t, float64(3), *result.MultipleOf)
 			},
 		},
 		{
@@ -338,6 +268,52 @@ func TestSchema_Patch(t *testing.T) {
 			},
 		},
 		{
+			name: "patch array items",
+			schemas: []*schema.Schema{
+				{},
+				schematest.New("array",
+					schematest.WithItems("string")),
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, "array", result.Type.String())
+				require.Equal(t, "string", result.Items.Value.Type.String())
+			},
+		},
+		{
+			name: "patch array items format",
+			schemas: []*schema.Schema{
+				schematest.New("array",
+					schematest.WithItems("string")),
+				schematest.New("array",
+					schematest.WithItems("string", schematest.WithFormat("foo"))),
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, "array", result.Type.String())
+				require.Equal(t, "string", result.Items.Value.Type.String())
+				require.Equal(t, "foo", result.Items.Value.Format)
+			},
+		},
+		{
+			name: "patch exclusive uniqueItems",
+			schemas: []*schema.Schema{
+				{},
+				{UniqueItems: true},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.True(t, result.UniqueItems)
+			},
+		},
+		{
+			name: "patch overwrite uniqueItems",
+			schemas: []*schema.Schema{
+				{UniqueItems: true},
+				{UniqueItems: false},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.False(t, result.UniqueItems)
+			},
+		},
+		{
 			name: "patch minItems",
 			schemas: []*schema.Schema{
 				{},
@@ -375,6 +351,123 @@ func TestSchema_Patch(t *testing.T) {
 			},
 			test: func(t *testing.T, result *schema.Schema) {
 				require.Equal(t, 5, *result.MaxItems)
+			},
+		},
+		{
+			name: "patch exclusive shuffleItems",
+			schemas: []*schema.Schema{
+				{},
+				{ShuffleItems: true},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.True(t, result.ShuffleItems)
+			},
+		},
+		{
+			name: "patch overwrite uniqueItems",
+			schemas: []*schema.Schema{
+				{ShuffleItems: true},
+				{ShuffleItems: false},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.False(t, result.ShuffleItems)
+			},
+		},
+		{
+			name: "patch properties",
+			schemas: []*schema.Schema{
+				{},
+				schematest.New("object",
+					schematest.WithProperty("foo", schematest.New("string"))),
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, 1, result.Properties.Len())
+				require.NotNil(t, result.Properties.Get("foo"))
+			},
+		},
+		{
+			name: "patch extend properties",
+			schemas: []*schema.Schema{
+				schematest.New("object",
+					schematest.WithProperty("foo", schematest.New("string"))),
+				schematest.New("object",
+					schematest.WithProperty("bar", schematest.New("number"))),
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, 2, result.Properties.Len())
+				foo := result.Properties.Get("foo")
+				require.NotNil(t, foo)
+				require.Equal(t, "string", foo.Value.Type.String())
+				bar := result.Properties.Get("bar")
+				require.NotNil(t, bar)
+				require.Equal(t, "number", bar.Value.Type.String())
+			},
+		},
+		{
+			name: "patch change property type",
+			schemas: []*schema.Schema{
+				schematest.New("object",
+					schematest.WithProperty("foo", schematest.New("string"))),
+				schematest.New("object",
+					schematest.WithProperty("foo", schematest.New("number"))),
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, 1, result.Properties.Len())
+				foo := result.Properties.Get("foo")
+				require.NotNil(t, foo)
+				require.Equal(t, "[string number]", foo.Value.Type.String())
+			},
+		},
+		{
+			name: "patch required",
+			schemas: []*schema.Schema{
+				{},
+				{Required: []string{"foo"}},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, []string{"foo"}, result.Required)
+			},
+		},
+		{
+			name: "patch overwrite required",
+			schemas: []*schema.Schema{
+				{Required: []string{"bar"}},
+				{Required: []string{"foo"}},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, []string{"foo"}, result.Required)
+			},
+		},
+		{
+			name: "patch additionalProperties",
+			schemas: []*schema.Schema{
+				{},
+				{AdditionalProperties: schema.AdditionalProperties{Forbidden: true}},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.NotNil(t, result.AdditionalProperties)
+				require.Equal(t, true, result.AdditionalProperties.Forbidden)
+			},
+		},
+		{
+			name: "patch overwrite additionalProperties",
+			schemas: []*schema.Schema{
+				{AdditionalProperties: schema.AdditionalProperties{Forbidden: true}},
+				{AdditionalProperties: schema.AdditionalProperties{Forbidden: false}},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, false, result.AdditionalProperties.Forbidden)
+			},
+		},
+		{
+			name: "patch overwrite additionalProperties schema",
+			schemas: []*schema.Schema{
+				{AdditionalProperties: schema.AdditionalProperties{Ref: schematest.NewRef("string")}},
+				{AdditionalProperties: schema.AdditionalProperties{Ref: schematest.NewRef("integer")}},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.NotNil(t, result.AdditionalProperties.Ref)
+				require.Equal(t, schema.Types{"string", "integer"}, result.AdditionalProperties.Ref.Value.Type)
 			},
 		},
 		{
@@ -418,23 +511,43 @@ func TestSchema_Patch(t *testing.T) {
 			},
 		},
 		{
-			name: "patch required",
+			name: "patch title",
 			schemas: []*schema.Schema{
 				{},
-				{Required: []string{"foo"}},
+				{Title: "foo"},
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, []string{"foo"}, result.Required)
+				require.Equal(t, "foo", result.Title)
 			},
 		},
 		{
-			name: "patch overwrite required",
+			name: "patch overwrite title",
 			schemas: []*schema.Schema{
-				{Required: []string{"bar"}},
-				{Required: []string{"foo"}},
+				{Title: "bar"},
+				{Title: "foo"},
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, []string{"foo"}, result.Required)
+				require.Equal(t, "foo", result.Title)
+			},
+		},
+		{
+			name: "patch description",
+			schemas: []*schema.Schema{
+				{},
+				{Description: "foo"},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, "foo", result.Description)
+			},
+		},
+		{
+			name: "patch overwrite description",
+			schemas: []*schema.Schema{
+				{Description: "bar"},
+				{Description: "foo"},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, "foo", result.Description)
 			},
 		},
 		{
@@ -455,6 +568,86 @@ func TestSchema_Patch(t *testing.T) {
 			},
 			test: func(t *testing.T, result *schema.Schema) {
 				require.Equal(t, []string{"foo"}, result.Default)
+			},
+		},
+		{
+			name: "patch deprecated",
+			schemas: []*schema.Schema{
+				{},
+				{Deprecated: true},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, true, result.Deprecated)
+			},
+		},
+		{
+			name: "patch overwrite default",
+			schemas: []*schema.Schema{
+				{Deprecated: true},
+				{Deprecated: false},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, false, result.Deprecated)
+			},
+		},
+		{
+			name: "patch examples",
+			schemas: []*schema.Schema{
+				{},
+				{Examples: []interface{}{"foo"}},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, []interface{}{"foo"}, result.Examples)
+			},
+		},
+		{
+			name: "patch overwrite examples",
+			schemas: []*schema.Schema{
+				{Examples: []interface{}{"bar"}},
+				{Examples: []interface{}{"foo"}},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, []interface{}{"foo"}, result.Examples)
+			},
+		},
+		{
+			name: "patch contentMediaType",
+			schemas: []*schema.Schema{
+				{},
+				{ContentMediaType: "foo"},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, "foo", result.ContentMediaType)
+			},
+		},
+		{
+			name: "patch overwrite contentMediaType",
+			schemas: []*schema.Schema{
+				{ContentMediaType: "foo"},
+				{ContentMediaType: "bar"},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, "bar", result.ContentMediaType)
+			},
+		},
+		{
+			name: "patch contentEncoding",
+			schemas: []*schema.Schema{
+				{},
+				{ContentEncoding: "foo"},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, "foo", result.ContentEncoding)
+			},
+		},
+		{
+			name: "patch overwrite contentEncoding",
+			schemas: []*schema.Schema{
+				{ContentEncoding: "foo"},
+				{ContentEncoding: "bar"},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, "bar", result.ContentEncoding)
 			},
 		},
 	}
