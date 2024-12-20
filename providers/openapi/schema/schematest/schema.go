@@ -67,6 +67,12 @@ func WithUniqueItems() SchemaOptions {
 	}
 }
 
+func WithShuffleItems() SchemaOptions {
+	return func(s *schema.Schema) {
+		s.ShuffleItems = true
+	}
+}
+
 func Any(schemas ...*schema.Schema) SchemaOptions {
 	return func(s *schema.Schema) {
 		for _, any := range schemas {
@@ -197,6 +203,18 @@ func WithMaximum(max float64) SchemaOptions {
 	}
 }
 
+func WithExclusiveMinimum(min float64) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.ExclusiveMinimum = jsonSchema.NewUnionTypeA[float64, bool](min)
+	}
+}
+
+func WithExclusiveMaximum(max float64) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.ExclusiveMaximum = jsonSchema.NewUnionTypeA[float64, bool](max)
+	}
+}
+
 func WithXml(xml *schema.Xml) SchemaOptions {
 	return func(s *schema.Schema) {
 		s.Xml = xml
@@ -221,6 +239,18 @@ func WithMinLength(n int) SchemaOptions {
 	}
 }
 
+func WithMaxLength(n int) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.MaxLength = &n
+	}
+}
+
+func WithMultipleOf(f float64) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.MultipleOf = &f
+	}
+}
+
 func IsNullable(b bool) SchemaOptions {
 	return func(s *schema.Schema) {
 		s.Nullable = b
@@ -230,5 +260,59 @@ func IsNullable(b bool) SchemaOptions {
 func WithDefault(d interface{}) SchemaOptions {
 	return func(s *schema.Schema) {
 		s.Default = d
+	}
+}
+
+func WithSchema(value string) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Schema = value
+	}
+}
+
+func WithTitle(title string) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Title = title
+	}
+}
+
+func WithDescription(description string) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Description = description
+	}
+}
+
+func WithConst(c interface{}) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Const = c
+	}
+}
+
+func WithDeprecated(b bool) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Deprecated = b
+	}
+}
+
+func WithExample(e interface{}) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Example = e
+	}
+}
+
+func WithExamples(e ...interface{}) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Examples = e
+	}
+}
+
+func WithContentMediaType(value string) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.ContentMediaType = value
+	}
+}
+
+func WithContentEncoding(value string) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.ContentEncoding = value
 	}
 }

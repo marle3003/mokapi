@@ -49,6 +49,7 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 		AdditionalProperties: schema.AdditionalProperties{},
 		Title:                s.Title,
 		Description:          s.Description,
+		Deprecated:           s.Deprecated,
 	}
 	c.history[s] = js
 
