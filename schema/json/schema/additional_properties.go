@@ -19,6 +19,12 @@ func (ap *AdditionalProperties) Parse(config *dynamic.Config, reader dynamic.Rea
 	return ap.Ref.Parse(config, reader)
 }
 
+func (ap *AdditionalProperties) Patch(patch AdditionalProperties) {
+	ap.Forbidden = patch.Forbidden
+
+	ap.Ref.Patch(patch.Ref)
+}
+
 func (ap *AdditionalProperties) UnmarshalJSON(b []byte) error {
 	var allowed bool
 	err := json.Unmarshal(b, &allowed)
