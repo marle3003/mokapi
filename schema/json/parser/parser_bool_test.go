@@ -62,21 +62,21 @@ func TestParser_ParseBoolean(t *testing.T) {
 			},
 		},
 		{
+			// Values that evaluate to true or false are still not accepted by the schema:
 			name:   "0",
 			data:   0,
 			schema: schematest.New("boolean"),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.NoError(t, err)
-				require.False(t, v.(bool))
+				require.EqualError(t, err, "parse '0' (int) failed, expected schema type=boolean: invalid type")
 			},
 		},
 		{
+			// Values that evaluate to true or false are still not accepted by the schema:
 			name:   "1",
 			data:   1,
 			schema: schematest.New("boolean"),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.NoError(t, err)
-				require.True(t, v.(bool))
+				require.EqualError(t, err, "parse '1' (int) failed, expected schema type=boolean: invalid type")
 			},
 		},
 		{

@@ -44,11 +44,14 @@ func ToString(i interface{}) string {
 	case *sortedmap.LinkedHashMap[string, interface{}]:
 		return o.String()
 	default:
+		if i == nil {
+			return "null"
+		}
 		v := reflect.ValueOf(i)
 		if v.Kind() == reflect.Ptr {
 			v = v.Elem()
 		}
-		t := reflect.TypeOf(i)
+		t := v.Type()
 		switch v.Kind() {
 		case reflect.Slice:
 			sb.WriteRune('[')
@@ -61,17 +64,19 @@ func ToString(i interface{}) string {
 			sb.WriteRune(']')
 		case reflect.Struct:
 			fields := strings.Builder{}
-			for i := 0; i < v.NumField(); i++ {
+			exportedFields := 0
+			for i := 0; i < t.NumField(); i++ {
 				if i > 0 {
 					fields.WriteString(", ")
 				}
 				name := t.Field(i).Name
 				if unicode.IsUpper(rune(name[0])) {
+					exportedFields++
 					fv := v.Field(i).Interface()
-					fields.WriteString(fmt.Sprintf("%v: %v", name, fv))
+					fields.WriteString(fmt.Sprintf("%v: %v", firstLetterToLower(name), fv))
 				}
 			}
-			if fields.Len() > 0 {
+			if exportedFields == 0 {
 				sb.WriteString(fmt.Sprintf("%v", i))
 			} else {
 				sb.WriteString(fmt.Sprintf("{%s}", fields.String()))
@@ -169,4 +174,16 @@ func toType(i interface{}) string {
 		log.Errorf("unable to resolve JSON type from value: %v", ToString(i))
 		return "string"
 	}
+}
+
+func firstLetterToLower(s string) string {
+
+	if len(s) == 0 {
+		return s
+	}
+
+	r := []rune(s)
+	r[0] = unicode.ToLower(r[0])
+
+	return string(r)
 }

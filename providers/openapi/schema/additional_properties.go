@@ -32,6 +32,15 @@ func (ap *AdditionalProperties) Parse(config *dynamic.Config, reader dynamic.Rea
 	return ap.Ref.Parse(config, reader)
 }
 
+func (ap *AdditionalProperties) Patch(patch *AdditionalProperties) {
+	if patch == nil {
+		return
+	}
+	ap.Forbidden = patch.Forbidden
+
+	ap.Ref.Patch(patch.Ref)
+}
+
 func (ap *AdditionalProperties) UnmarshalYAML(node *yaml.Node) error {
 	if node.Kind == yaml.ScalarNode {
 		var b bool

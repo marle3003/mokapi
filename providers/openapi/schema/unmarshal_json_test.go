@@ -529,7 +529,7 @@ func TestRef_Unmarshal_Json_OneOf(t *testing.T) {
 			)),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.Error(t, err)
-				require.Regexp(t, "parse .* failed: expected to match one of schema but it matches none", err.Error())
+				require.Regexp(t, "parse .* failed: valid against no schemas from 'oneOf':", err.Error())
 			},
 		},
 		{
@@ -542,7 +542,7 @@ func TestRef_Unmarshal_Json_OneOf(t *testing.T) {
 					schematest.WithProperty("foo", schematest.New("number"))),
 			)),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "parse {foo: 12} failed: it is valid for more than one schema, expected one of schema type=object properties=[foo], schema type=object properties=[foo]")
+				require.EqualError(t, err, "parse {foo: 12} failed: valid against more than one schema from 'oneOf': one of schema type=object properties=[foo], schema type=object properties=[foo]")
 			},
 		},
 	}
