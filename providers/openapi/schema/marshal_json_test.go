@@ -487,7 +487,7 @@ func TestRef_Marshal_Json_OneOf(t *testing.T) {
 			),
 			data: map[string]interface{}{"bark": true, "breed": "Dingo"},
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "encoding data to 'application/json' failed: parse {bark: true, breed: Dingo} failed: it is valid for more than one schema, expected one of schema type=object properties=[bark, breed], schema type=object properties=[hunts, age]")
+				require.EqualError(t, err, "encoding data to 'application/json' failed: parse {bark: true, breed: Dingo} failed: valid against more than one schema from 'oneOf': one of schema type=object properties=[bark, breed], schema type=object properties=[hunts, age]")
 				require.Len(t, result, 0)
 			},
 		},
@@ -505,27 +505,6 @@ func TestRef_Marshal_Json_OneOf(t *testing.T) {
 					schematest.WithProperty("hunts", schematest.New("boolean")),
 					schematest.WithProperty("age", schematest.New("integer")),
 					schematest.WithRequired("hunts", "age"),
-				),
-			),
-			data: map[string]interface{}{"bark": true, "breed": "Dingo"},
-			test: func(t *testing.T, result string, err error) {
-				require.NoError(t, err)
-				require.Equal(t, `{"bark":true,"breed":"Dingo"}`, result)
-			},
-		},
-		{
-			name: "example from swagger.io but cat does not allow additional properties",
-			schema: schematest.NewOneOf(
-				schematest.New("object",
-					schematest.WithProperty("bark", schematest.New("boolean")),
-					schematest.WithProperty("breed", schematest.New("string",
-						schematest.WithEnum([]interface{}{"Dingo", "Husky", "Retriever", "Shepherd"})),
-					),
-				),
-				schematest.New("object",
-					schematest.WithProperty("hunts", schematest.New("boolean")),
-					schematest.WithProperty("age", schematest.New("integer")),
-					schematest.WithFreeForm(false),
 				),
 			),
 			data: map[string]interface{}{"bark": true, "breed": "Dingo"},
@@ -558,7 +537,7 @@ func TestRef_Marshal_Json_OneOf(t *testing.T) {
 			),
 			data: map[string]interface{}{"bark": true, "breed": "Dingo"},
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "encoding data to 'application/json' failed: oneOf can only match exactly one schema")
+				require.EqualError(t, err, "encoding data to 'application/json' failed: parse {bark: true, breed: Dingo} failed: valid against more than one schema from 'oneOf': one of schema type=object properties=[bark, breed], empty schema")
 				require.Len(t, result, 0)
 			},
 		},
@@ -575,7 +554,7 @@ func TestRef_Marshal_Json_OneOf(t *testing.T) {
 			),
 			data: map[string]interface{}{"bark": true, "breed": "Dingo"},
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "encoding data to 'application/json' failed: oneOf can only match exactly one schema")
+				require.EqualError(t, err, "encoding data to 'application/json' failed: parse {bark: true, breed: Dingo} failed: valid against more than one schema from 'oneOf': one of schema type=object properties=[bark, breed], empty schema")
 				require.Len(t, result, 0)
 			},
 		},

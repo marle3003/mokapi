@@ -68,7 +68,7 @@ func (r *Ref) Type() string {
 
 func (r *Ref) String() string {
 	if r == nil || r.Value == nil {
-		return ""
+		return "empty schema"
 	}
 	return r.Value.String()
 }

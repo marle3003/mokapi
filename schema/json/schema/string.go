@@ -61,6 +61,9 @@ func (s *Schema) String() string {
 	if s.Maximum != nil {
 		sb.WriteString(fmt.Sprintf(" maximum=%v", *s.Maximum))
 	}
+	if s.MultipleOf != nil {
+		sb.WriteString(fmt.Sprintf(" multipleOf=%v", *s.MultipleOf))
+	}
 	if s.ExclusiveMinimum != nil {
 		if s.ExclusiveMinimum.IsA() {
 			sb.WriteString(fmt.Sprintf(" exclusiveMinimum=%v", s.ExclusiveMinimum.A))
@@ -117,6 +120,10 @@ func (s *Schema) String() string {
 		sb.WriteString(fmt.Sprintf(" title=%v", s.Title))
 	} else if len(s.Description) > 0 {
 		sb.WriteString(fmt.Sprintf(" description=%v", s.Description))
+	}
+
+	if sb.Len() == 0 {
+		return "empty schema"
 	}
 
 	str := sb.String()

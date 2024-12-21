@@ -34,6 +34,17 @@ func TestParser_ParseObject(t *testing.T) {
 				require.EqualError(t, err, "missing required field 'foo', expected schema type=object properties=[foo] required=[foo]")
 			},
 		},
+		{
+			name: "free-form but has additional properties",
+			data: map[string]interface{}{"foo": "bar", "bar": "foo"},
+			schema: schematest.New("object",
+				schematest.WithProperty("foo", schematest.New("string")),
+				schematest.WithFreeForm(false),
+			),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "additional properties 'bar' not allowed, expected schema type=object properties=[foo] free-form=false")
+			},
+		},
 	}
 
 	t.Parallel()
@@ -42,7 +53,7 @@ func TestParser_ParseObject(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			p := &Parser{}
+			p := &Parser{ValidateAdditionalProperties: true}
 			v, err := p.ParseObject(tc.data, tc.schema)
 			tc.test(t, v, err)
 		})

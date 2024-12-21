@@ -7,9 +7,11 @@ import (
 )
 
 type Parser struct {
-	ConvertStringToNumber        bool
-	ConvertStringToBoolean       bool
-	ConvertToSortedMap           bool
+	ConvertStringToNumber  bool
+	ConvertStringToBoolean bool
+	ConvertToSortedMap     bool
+	// To avoid having to filter out additional properties in the JavaScript scripts by the developer,
+	// this option is offered in the parser. For example response.data = { ... }
 	ValidateAdditionalProperties bool
 }
 
