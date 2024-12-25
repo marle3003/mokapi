@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 	"mokapi/schema/json/schema"
+	"mokapi/sortedmap"
 	"unicode"
 )
 
@@ -102,7 +103,7 @@ func (p *Parser) parse(data interface{}, ref *schema.Ref) (interface{}, error) {
 	return nil, err
 }
 
-func (p *Parser) parseType(data interface{}, schema *schema.Schema, typeName string, evaluatedProperties map[string]bool, evaluatedItems map[int]bool) (interface{}, error) {
+func (p *Parser) parseType(data interface{}, s *schema.Schema, typeName string, evaluatedProperties map[string]bool, evaluatedItems map[int]bool) (interface{}, error) {
 	switch data.(type) {
 	case []interface{}:
 		if typeName != "array" {
@@ -118,29 +119,44 @@ func (p *Parser) parseType(data interface{}, schema *schema.Schema, typeName str
 		}
 	}
 
+	var err error
 	switch typeName {
 	case "string":
-		return p.ParseString(data, schema)
+		data, err = p.ParseString(data, s)
 	case "number":
-		return p.ParseNumber(data, schema)
+		data, err = p.ParseNumber(data, s)
 	case "integer":
-		return p.ParseInteger(data, schema)
+		data, err = p.ParseInteger(data, s)
 	case "boolean":
-		return p.ParseBoolean(data, schema)
+		data, err = p.parseBoolean(data, s)
 	case "array":
-		return p.ParseArray(data, schema, evaluatedItems)
+		data, err = p.ParseArray(data, s, evaluatedItems)
 	case "object":
-		obj, err := p.parseObject(data, schema, evaluatedProperties)
+		var m *sortedmap.LinkedHashMap[string, interface{}]
+		m, err = p.parseObject(data, s, evaluatedProperties)
 		if err != nil {
 			return nil, err
 		}
 		if p.ConvertToSortedMap {
-			return obj, nil
+			data = m
+		} else {
+			data = m.ToMap()
 		}
-		return obj.ToMap(), nil
 	}
 
-	return data, nil
+	if s.Const != nil {
+		s2 := *s
+		s2.Const = nil
+		c, constErr := p.parse(*s.Const, &schema.Ref{Value: &s2})
+		if constErr != nil {
+			return data, Errorf("const", "const value does not match schema: %v", constErr)
+		}
+		if !compare(data, c) {
+			return data, Errorf("const", "value '%v' does not match const '%v'", ToString(data), ToString(c))
+		}
+	}
+
+	return data, err
 }
 
 // UnTitle returns a copy of the string s with first letter mapped to its Unicode lower case

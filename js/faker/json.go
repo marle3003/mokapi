@@ -41,7 +41,8 @@ func ToJsonSchema(v goja.Value, rt *goja.Runtime) (*jsonSchema.Ref, error) {
 				return nil, fmt.Errorf("unexpected type for 'enum': %v", util.JsType(i))
 			}
 		case "const":
-			s.Const = obj.Get(k).Export()
+			c := obj.Get(k).Export()
+			s.Const = &c
 		case "default":
 			s.Default = obj.Get(k).Export()
 		case "examples":

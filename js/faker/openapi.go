@@ -65,7 +65,8 @@ func ToOpenAPISchema(v goja.Value, rt *goja.Runtime) (*schema.Ref, error) {
 				return nil, fmt.Errorf("unexpected type for 'enum'")
 			}
 		case "const":
-			s.Const = obj.Get(k).Export()
+			c := obj.Get(k).Export()
+			s.Const = &c
 		case "default":
 			s.Default = obj.Get(k).Export()
 		case "example":

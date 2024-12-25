@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func (p *Parser) ParseBoolean(i interface{}, s *schema.Schema) (bool, error) {
+func (p *Parser) parseBoolean(i interface{}, s *schema.Schema) (bool, error) {
 	var b bool
 	switch v := i.(type) {
 	case bool:

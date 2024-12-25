@@ -63,11 +63,7 @@ func TestHandler_Response(t *testing.T) {
 			name:   "object with null property",
 			config: getConfig(schematest.New("object", schematest.WithProperty("foo", schematest.New("string", schematest.IsNullable(true)))), "application/json"),
 			handler: func(event string, req *common.EventRequest, res *common.EventResponse) {
-				res.Data = &struct {
-					Foo interface{}
-				}{
-					Foo: nil,
-				}
+				res.Data = map[string]interface{}{"foo": nil}
 			},
 			req: func() *http.Request {
 				return httptest.NewRequest("get", "http://localhost/foo", nil)

@@ -34,7 +34,7 @@ func TestParser_ParseAny(t *testing.T) {
 				schematest.New("string"),
 				schematest.New("integer")),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nparse 12.6 failed, expected any of schema type=string, schema type=integer")
+				require.EqualError(t, err, "found 1 error:\ndoes not match any schemas of 'anyOf'\nschema path #/anyOf")
 			},
 		},
 		{

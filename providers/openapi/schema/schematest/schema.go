@@ -287,7 +287,7 @@ func WithDescription(description string) SchemaOptions {
 
 func WithConst(c interface{}) SchemaOptions {
 	return func(s *schema.Schema) {
-		s.Const = c
+		s.Const = &c
 	}
 }
 

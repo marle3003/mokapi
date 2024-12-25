@@ -280,6 +280,23 @@ func TestParse_Number(t *testing.T) {
 				require.Equal(t, 2.0, v)
 			},
 		},
+		{
+			name: "const error",
+			s:    schematest.New("number", schematest.WithConst(10.5)),
+			d:    3,
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "found 1 error:\nvalue '3' does not match const '10.5'\nschema path #/const")
+			},
+		},
+		{
+			name: "const",
+			s:    schematest.New("number", schematest.WithConst(10.5)),
+			d:    10.5,
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 10.5, v)
+			},
+		},
 	}
 
 	t.Parallel()

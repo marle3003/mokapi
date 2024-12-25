@@ -233,6 +233,23 @@ func TestParser_ParseObject(t *testing.T) {
 				require.Equal(t, map[string]interface{}{"foo": ""}, v)
 			},
 		},
+		{
+			name:   "const error",
+			schema: schematest.New("object", schematest.WithConst(map[string]interface{}{"foo": "bar"})),
+			data:   map[string]interface{}{"foo": "foobar"},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "found 1 error:\nvalue '{foo: foobar}' does not match const '{foo: bar}'\nschema path #/const")
+			},
+		},
+		{
+			name:   "const",
+			schema: schematest.New("object", schematest.WithConst(map[string]interface{}{"foo": "bar"})),
+			data:   map[string]interface{}{"foo": "bar"},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"foo": "bar"}, v)
+			},
+		},
 	}
 
 	t.Parallel()

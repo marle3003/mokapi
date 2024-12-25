@@ -317,6 +317,23 @@ func TestParse_String(t *testing.T) {
 
 			skipValidationFormat: true,
 		},
+		{
+			name: "const error",
+			s:    schematest.New("string", schematest.WithConst("foo")),
+			d:    "bar",
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "found 1 error:\nvalue 'bar' does not match const 'foo'\nschema path #/const")
+			},
+		},
+		{
+			name: "const",
+			s:    schematest.New("string", schematest.WithConst("foo")),
+			d:    "foo",
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "foo", v)
+			},
+		},
 	}
 
 	t.Parallel()

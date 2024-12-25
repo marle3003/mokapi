@@ -264,6 +264,27 @@ func TestParser_Array(t *testing.T) {
 				require.Equal(t, []interface{}{"foo", 1, 2}, v)
 			},
 		},
+		{
+			name: "const error",
+			schema: schematest.New("array",
+				schematest.WithConst([]string{"a", "b", "c"}),
+			),
+			data: []string{"a", "b"},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "found 1 error:\nvalue '[a, b]' does not match const '[a, b, c]'\nschema path #/const")
+			},
+		},
+		{
+			name: "uniqueItems",
+			schema: schematest.New("array",
+				schematest.WithConst([]string{"a", "b", "c"}),
+			),
+			data: []string{"a", "b", "c"},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []interface{}{"a", "b", "c"}, v)
+			},
+		},
 	}
 
 	t.Parallel()

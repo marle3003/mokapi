@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"github.com/pkg/errors"
 	"mokapi/schema/json/schema"
 	"mokapi/sortedmap"
@@ -84,7 +83,7 @@ NextAny:
 	}
 
 	if result == nil {
-		return nil, fmt.Errorf("parse %v failed, expected %v", data, s)
+		return nil, Errorf("anyOf", "does not match any schemas of 'anyOf'")
 	}
 
 	if p.ConvertToSortedMap {

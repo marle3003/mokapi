@@ -289,6 +289,23 @@ func TestParse_Integer(t *testing.T) {
 				require.Equal(t, int64(2), v)
 			},
 		},
+		{
+			name: "const error",
+			s:    schematest.New("integer", schematest.WithConst(10)),
+			d:    3,
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "found 1 error:\nvalue '3' does not match const '10'\nschema path #/const")
+			},
+		},
+		{
+			name: "const",
+			s:    schematest.New("integer", schematest.WithConst(10)),
+			d:    10,
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int64(10), v)
+			},
+		},
 	}
 
 	t.Parallel()

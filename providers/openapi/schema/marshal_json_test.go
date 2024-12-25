@@ -172,48 +172,6 @@ func TestRef_Marshal_Json_Object(t *testing.T) {
 			},
 		},
 		{
-			name: "struct",
-			schema: schematest.New("object",
-				schematest.WithProperty("name", schematest.New("string")),
-				schematest.WithProperty("value", schematest.New("integer"))),
-			data: struct {
-				Name  string
-				Value int
-			}{"foo", 12},
-			test: func(t *testing.T, result string, err error) {
-				require.NoError(t, err)
-				require.Equal(t, `{"name":"foo","value":12}`, result)
-			},
-		},
-		{
-			name: "struct pointer",
-			schema: schematest.New("object",
-				schematest.WithProperty("name", schematest.New("string")),
-				schematest.WithProperty("value", schematest.New("integer"))),
-			data: &struct {
-				Name  string
-				Value int
-			}{"foo", 12},
-			test: func(t *testing.T, result string, err error) {
-				require.NoError(t, err)
-				require.Equal(t, `{"name":"foo","value":12}`, result)
-			},
-		},
-		{
-			name: "struct but property matches not schema",
-			schema: schematest.New("object",
-				schematest.WithProperty("name", schematest.New("string")),
-				schematest.WithProperty("value", schematest.New("integer"))),
-			data: struct {
-				Name  string
-				Value string
-			}{"foo", "foo"},
-			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "encoding data to 'application/json' failed: found 1 error:\ninvalid type, expected integer but got string\nschema path #/type")
-				require.Len(t, result, 0)
-			},
-		},
-		{
 			name: "map with key string",
 			schema: schematest.New("object",
 				schematest.WithProperty("name", schematest.New("string")),

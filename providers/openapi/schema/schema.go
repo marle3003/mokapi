@@ -19,7 +19,7 @@ type Schema struct {
 	OneOf []*Ref       `yaml:"oneOf" json:"oneOf"`
 
 	Enum     []interface{} `yaml:"enum" json:"enum"`
-	Const    interface{}   `yaml:"const,omitempty" json:"const,omitempty"`
+	Const    *interface{}  `yaml:"const,omitempty" json:"const,omitempty"`
 	Xml      *Xml          `yaml:"xml" json:"xml"`
 	Format   string        `yaml:"format" json:"format"`
 	Nullable bool          `yaml:"nullable" json:"nullable"`

@@ -39,7 +39,7 @@ func TestParser_ParseBoolean(t *testing.T) {
 			data:   "true",
 			schema: schematest.New("boolean"),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "parse 'true' (string) failed, expected schema type=boolean")
+				require.EqualError(t, err, "found 1 error:\nparse 'true' (string) failed, expected schema type=boolean")
 			},
 		},
 		{
@@ -68,7 +68,7 @@ func TestParser_ParseBoolean(t *testing.T) {
 			data:   0,
 			schema: schematest.New("boolean"),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "parse '0' (int) failed, expected schema type=boolean: invalid type")
+				require.EqualError(t, err, "found 1 error:\nparse '0' (int) failed, expected schema type=boolean: invalid type")
 			},
 		},
 		{
@@ -77,7 +77,7 @@ func TestParser_ParseBoolean(t *testing.T) {
 			data:   1,
 			schema: schematest.New("boolean"),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "parse '1' (int) failed, expected schema type=boolean: invalid type")
+				require.EqualError(t, err, "found 1 error:\nparse '1' (int) failed, expected schema type=boolean: invalid type")
 			},
 		},
 		{
@@ -85,7 +85,24 @@ func TestParser_ParseBoolean(t *testing.T) {
 			data:   []bool{true},
 			schema: schematest.New("boolean"),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "parse [true] failed, expected schema type=boolean")
+				require.EqualError(t, err, "found 1 error:\nparse [true] failed, expected schema type=boolean")
+			},
+		},
+		{
+			name:   "const error",
+			data:   false,
+			schema: schematest.New("boolean", schematest.WithConst(true)),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "found 1 error:\nvalue 'false' does not match const 'true'\nschema path #/const")
+			},
+		},
+		{
+			name:   "const",
+			data:   true,
+			schema: schematest.New("boolean", schematest.WithConst(true)),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, true, v)
 			},
 		},
 	}
@@ -97,7 +114,7 @@ func TestParser_ParseBoolean(t *testing.T) {
 			t.Parallel()
 
 			p := &parser.Parser{ConvertStringToBoolean: tc.convertStringToBoolean}
-			v, err := p.ParseBoolean(tc.data, tc.schema)
+			v, err := p.Parse(tc.data, &schema.Ref{Value: tc.schema})
 			tc.test(t, v, err)
 		})
 	}

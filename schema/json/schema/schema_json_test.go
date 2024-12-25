@@ -72,7 +72,7 @@ func TestSchemaJson(t *testing.T) {
 			data: `{"const": "foo"}`,
 			test: func(t *testing.T, s *Schema, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "foo", s.Const)
+				require.Equal(t, "foo", *s.Const)
 			},
 		},
 		/*

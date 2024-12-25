@@ -75,7 +75,7 @@ func TestConvert(t *testing.T) {
 			s:    schematest.New("string", schematest.WithConst("foo")),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
 				require.NotNil(t, s.Const)
-				require.Equal(t, "foo", s.Const)
+				require.Equal(t, "foo", *s.Const)
 			},
 		},
 		{

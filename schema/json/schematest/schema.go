@@ -349,3 +349,9 @@ func WithMaxContains(n int) SchemaOptions {
 		s.MaxContains = &n
 	}
 }
+
+func WithConst(c interface{}) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Const = &c
+	}
+}

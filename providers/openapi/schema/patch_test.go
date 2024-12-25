@@ -68,20 +68,20 @@ func TestSchema_Patch(t *testing.T) {
 			name: "patch const",
 			schemas: []*schema.Schema{
 				{},
-				{Const: []interface{}{"foo"}},
+				schematest.New("array", schematest.WithConst([]interface{}{"foo"})),
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, []interface{}{"foo"}, result.Const)
+				require.Equal(t, []interface{}{"foo"}, *result.Const)
 			},
 		},
 		{
 			name: "patch overwrite const",
 			schemas: []*schema.Schema{
-				{Const: []interface{}{"bar"}},
-				{Const: []interface{}{"foo"}},
+				schematest.New("array", schematest.WithConst([]interface{}{"bar"})),
+				schematest.New("array", schematest.WithConst([]interface{}{"foo"})),
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, []interface{}{"foo"}, result.Const)
+				require.Equal(t, []interface{}{"foo"}, *result.Const)
 			},
 		},
 		{
