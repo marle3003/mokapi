@@ -308,22 +308,27 @@ func (s *Store) trigger(record *kafka.Record) {
 	record.Key = kafka.NewBytes([]byte(r.Key))
 	record.Value = kafka.NewBytes([]byte(r.Value))
 
-	// first loop trough array to ensure order of header values
-	headers := record.Headers
-	for _, h := range headers {
-		v, ok := r.Headers[h.Key]
-		if ok {
-			h.Value = []byte(v)
-			delete(r.Headers, h.Key)
+	if r.Headers == nil {
+		record.Headers = nil
+	} else {
+		// first loop trough array to ensure order of header values
+		headers := record.Headers
+		for _, h := range headers {
+			v, ok := r.Headers[h.Key]
+			if ok {
+				h.Value = []byte(v)
+				delete(r.Headers, h.Key)
+			}
+		}
+
+		for k, v := range r.Headers {
+			record.Headers = append(record.Headers, kafka.RecordHeader{
+				Key:   k,
+				Value: []byte(v),
+			})
 		}
 	}
 
-	for k, v := range r.Headers {
-		record.Headers = append(record.Headers, kafka.RecordHeader{
-			Key:   k,
-			Value: []byte(v),
-		})
-	}
 }
 
 func parseHostAndPort(s string) (host string, port int) {
