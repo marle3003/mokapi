@@ -42,7 +42,7 @@ func TestParse_Integer(t *testing.T) {
 			d:    int64(1e10),
 			test: func(t *testing.T, v interface{}, err error) {
 				require.IsType(t, &parser.Error{}, err)
-				require.EqualError(t, err, "found 1 error:\ninteger '10000000000' does not match format 'int32': value is greater than int32 max value\nschema path #/format")
+				require.EqualError(t, err, "found 1 error:\ninteger '10000000000' does not match format 'int32'\nschema path #/format")
 			},
 		},
 		{
@@ -51,7 +51,7 @@ func TestParse_Integer(t *testing.T) {
 			d:    int64(-1e10),
 			test: func(t *testing.T, v interface{}, err error) {
 				require.IsType(t, &parser.Error{}, err)
-				require.EqualError(t, err, "found 1 error:\ninteger '-10000000000' does not match format 'int32': value is lower than int32 min value\nschema path #/format")
+				require.EqualError(t, err, "found 1 error:\ninteger '-10000000000' does not match format 'int32'\nschema path #/format")
 			},
 		},
 		{
