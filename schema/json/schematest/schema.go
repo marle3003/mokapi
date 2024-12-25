@@ -63,6 +63,21 @@ func WithItemsRef(ref *schema.Ref) SchemaOptions {
 	}
 }
 
+func WithUnevaluatedItems(ref *schema.Ref) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.UnevaluatedItems = ref
+	}
+}
+
+func WithPrefixItems(items ...*schema.Schema) SchemaOptions {
+	return func(s *schema.Schema) {
+		for _, item := range items {
+			s.PrefixItems = append(s.PrefixItems, &schema.Ref{Value: item})
+		}
+
+	}
+}
+
 func WithRequired(names ...string) SchemaOptions {
 	return func(s *schema.Schema) {
 		for _, n := range names {
@@ -314,5 +329,23 @@ func WithUnevaluatedProperties(b bool) SchemaOptions {
 func WithPropertyNames(propSchema *schema.Schema) SchemaOptions {
 	return func(s *schema.Schema) {
 		s.PropertyNames = &schema.Ref{Value: propSchema}
+	}
+}
+
+func WithContains(ref *schema.Ref) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Contains = ref
+	}
+}
+
+func WithMinContains(n int) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.MinContains = &n
+	}
+}
+
+func WithMaxContains(n int) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.MaxContains = &n
 	}
 }

@@ -1,7 +1,8 @@
-package parser
+package parser_test
 
 import (
 	"github.com/stretchr/testify/require"
+	"mokapi/schema/json/parser"
 	"testing"
 	"time"
 )
@@ -74,7 +75,7 @@ func TestToString(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			s := ToString(tc.value)
+			s := parser.ToString(tc.value)
 			require.Equal(t, tc.expected, s)
 		})
 	}

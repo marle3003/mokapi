@@ -28,13 +28,16 @@ type Schema struct {
 	Format    string `yaml:"format,omitempty" json:"format,omitempty"`
 
 	// Arrays
-	Items        *Ref `yaml:"items,omitempty" json:"items,omitempty"`
-	MaxItems     *int `yaml:"maxItems,omitempty" json:"maxItems,omitempty"`
-	MinItems     *int `yaml:"minItems,omitempty" json:"minItems,omitempty"`
-	UniqueItems  bool `yaml:"uniqueItems,omitempty" json:"uniqueItems,omitempty"`
-	MaxContains  *int `yaml:"maxContains,omitempty" json:"maxContains,omitempty"`
-	MinContains  *int `yaml:"minContains,omitempty" json:"minContains,omitempty"`
-	ShuffleItems bool `yaml:"x-shuffleItems,omitempty" json:"x-shuffleItems,omitempty"`
+	Items            *Ref   `yaml:"items,omitempty" json:"items,omitempty"`
+	PrefixItems      []*Ref `yaml:"prefixItems,omitempty" json:"prefixItems,omitempty"`
+	UnevaluatedItems *Ref   `yaml:"unevaluatedItems,omitempty" json:"unevaluatedItems,omitempty"`
+	Contains         *Ref   `yaml:"contains,omitempty" json:"contains,omitempty"`
+	MaxContains      *int   `yaml:"maxContains,omitempty" json:"maxContains,omitempty"`
+	MinContains      *int   `yaml:"minContains,omitempty" json:"minContains,omitempty"`
+	MaxItems         *int   `yaml:"maxItems,omitempty" json:"maxItems,omitempty"`
+	MinItems         *int   `yaml:"minItems,omitempty" json:"minItems,omitempty"`
+	UniqueItems      bool   `yaml:"uniqueItems,omitempty" json:"uniqueItems,omitempty"`
+	ShuffleItems     bool   `yaml:"x-shuffleItems,omitempty" json:"x-shuffleItems,omitempty"`
 
 	// Objects
 	Properties            *Schemas            `yaml:"properties,omitempty" json:"properties,omitempty"`

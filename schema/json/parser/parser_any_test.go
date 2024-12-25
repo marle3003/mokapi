@@ -1,8 +1,9 @@
-package parser
+package parser_test
 
 import (
 	"encoding/json"
 	"github.com/stretchr/testify/require"
+	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 	"mokapi/schema/json/schematest"
 	"testing"
@@ -164,7 +165,7 @@ func TestParser_ParseAny(t *testing.T) {
 			err := json.Unmarshal([]byte(tc.s), &v)
 			require.NoError(t, err)
 
-			p := &Parser{}
+			p := &parser.Parser{}
 			r, err := p.Parse(v, &schema.Ref{Value: tc.schema})
 
 			tc.test(t, r, err)

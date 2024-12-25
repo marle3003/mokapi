@@ -1115,7 +1115,7 @@ func TestRef_Unmarshal_Json_Array(t *testing.T) {
 				MinItems: toIntP(3),
 			},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nshould NOT have less than 3 items, expected schema type=array minItems=3 items=schema type=string")
+				require.EqualError(t, err, "found 1 error:\nitem count 2 is less than minimum count of 3\nschema path #/minItems")
 			},
 		},
 		{
@@ -1144,7 +1144,7 @@ func TestRef_Unmarshal_Json_Array(t *testing.T) {
 				MaxItems: toIntP(1),
 			},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nshould NOT have more than 1 items, expected schema type=array maxItems=1 items=schema type=string")
+				require.EqualError(t, err, "found 1 error:\nitem count 2 exceeds maximum count of 1\nschema path #/maxItems")
 			},
 		},
 		{
@@ -1216,7 +1216,7 @@ func TestRef_Unmarshal_Json_Array(t *testing.T) {
 				UniqueItems: true,
 			},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nshould NOT have duplicate items (foo), expected schema type=array unique-items items=schema type=string")
+				require.EqualError(t, err, "found 1 error:\nnon-unique array item at index 1\nschema path #/uniqueItems")
 			},
 		},
 		{

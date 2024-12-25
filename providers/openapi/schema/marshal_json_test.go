@@ -700,13 +700,13 @@ func TestRef_Marshal_Json_Invalid(t *testing.T) {
 			name:   "min array",
 			schema: &schema.Ref{Value: schematest.New("array", schematest.WithItems("integer"), schematest.WithMinItems(3))},
 			data:   []interface{}{12, 13},
-			exp:    "encoding data to 'application/json' failed: found 1 error:\nshould NOT have less than 3 items, expected schema type=array minItems=3 items=schema type=integer",
+			exp:    "encoding data to 'application/json' failed: found 1 error:\nitem count 2 is less than minimum count of 3\nschema path #/minItems",
 		},
 		{
 			name:   "max array",
 			schema: &schema.Ref{Value: schematest.New("array", schematest.WithItems("integer"), schematest.WithMaxItems(1))},
 			data:   []interface{}{12, 13},
-			exp:    "encoding data to 'application/json' failed: found 1 error:\nshould NOT have more than 1 items, expected schema type=array maxItems=1 items=schema type=integer",
+			exp:    "encoding data to 'application/json' failed: found 1 error:\nitem count 2 exceeds maximum count of 1\nschema path #/maxItems",
 		},
 		{
 			name: "map missing required property",

@@ -1,7 +1,8 @@
-package parser
+package parser_test
 
 import (
 	"github.com/stretchr/testify/require"
+	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 	"mokapi/schema/json/schematest"
 	"testing"
@@ -95,7 +96,7 @@ func TestParser_ParseBoolean(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			p := &Parser{ConvertStringToBoolean: tc.convertStringToBoolean}
+			p := &parser.Parser{ConvertStringToBoolean: tc.convertStringToBoolean}
 			v, err := p.ParseBoolean(tc.data, tc.schema)
 			tc.test(t, v, err)
 		})

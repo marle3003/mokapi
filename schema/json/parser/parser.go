@@ -29,7 +29,16 @@ func (p *Parser) Parse(data interface{}, ref *schema.Ref) (interface{}, error) {
 }
 
 func (p *Parser) parse(data interface{}, ref *schema.Ref) (interface{}, error) {
-	if ref == nil || ref.Value == nil {
+	if ref == nil {
+		return data, nil
+	}
+	if ref.Boolean != nil {
+		if *ref.Boolean {
+			return data, nil
+		}
+		return data, Errorf("valid", "schema always fails validation")
+	}
+	if ref.Value == nil {
 		return data, nil
 	}
 
@@ -43,17 +52,18 @@ func (p *Parser) parse(data interface{}, ref *schema.Ref) (interface{}, error) {
 		}
 	}
 
-	evaluated := map[string]bool{}
+	evaluatedProperties := map[string]bool{}
+	evaluatedItems := map[int]bool{}
 
 	switch {
 	case len(ref.Value.AnyOf) > 0:
-		v, err := p.ParseAny(ref.Value, data, evaluated)
+		v, err := p.ParseAny(ref.Value, data, evaluatedProperties)
 		if err != nil {
 			return nil, err
 		}
 		data = v
 	case len(ref.Value.AllOf) > 0:
-		v, err := p.ParseAll(ref.Value, data, evaluated)
+		v, err := p.ParseAll(ref.Value, data, evaluatedProperties)
 		if err != nil {
 			return nil, err
 		}
@@ -68,26 +78,31 @@ func (p *Parser) parse(data interface{}, ref *schema.Ref) (interface{}, error) {
 
 	if len(ref.Value.Type) == 0 {
 		t := toType(data)
-		return p.parseType(data, ref.Value, t, evaluated)
+		return p.parseType(data, ref.Value, t, evaluatedProperties, evaluatedItems)
 	}
 
 	var v interface{}
 	var err error
 	for _, typeName := range ref.Value.Type {
-		v, err = p.parseType(data, ref.Value, typeName, evaluated)
+		v, err = p.parseType(data, ref.Value, typeName, evaluatedProperties, evaluatedItems)
 		if err != nil {
 			continue
 		}
-		v, err = p.evaluateUnevaluatedProperties(v, ref.Value, evaluated)
-		if err == nil {
-			return v, nil
+		v, err = p.evaluateUnevaluatedProperties(v, ref.Value, evaluatedProperties)
+		if err != nil {
+			continue
 		}
+		v, err = p.evaluateUnevaluatedItems(v, ref.Value, evaluatedItems)
+		if err != nil {
+			continue
+		}
+		return v, nil
 	}
 
 	return nil, err
 }
 
-func (p *Parser) parseType(data interface{}, schema *schema.Schema, typeName string, evaluated map[string]bool) (interface{}, error) {
+func (p *Parser) parseType(data interface{}, schema *schema.Schema, typeName string, evaluatedProperties map[string]bool, evaluatedItems map[int]bool) (interface{}, error) {
 	switch data.(type) {
 	case []interface{}:
 		if typeName != "array" {
@@ -113,9 +128,9 @@ func (p *Parser) parseType(data interface{}, schema *schema.Schema, typeName str
 	case "boolean":
 		return p.ParseBoolean(data, schema)
 	case "array":
-		return p.ParseArray(data, schema)
+		return p.ParseArray(data, schema, evaluatedItems)
 	case "object":
-		obj, err := p.parseObject(data, schema, evaluated)
+		obj, err := p.parseObject(data, schema, evaluatedProperties)
 		if err != nil {
 			return nil, err
 		}
@@ -136,7 +151,7 @@ func unTitle(s string) string {
 	return s
 }
 
-func (p *Parser) evaluateUnevaluatedProperties(data interface{}, schema *schema.Schema, evaluated map[string]bool) (interface{}, error) {
+func (p *Parser) evaluateUnevaluatedProperties(data interface{}, schema *schema.Schema, evaluatedProperties map[string]bool) (interface{}, error) {
 	if schema.UnevaluatedProperties == nil {
 		return data, nil
 	}
@@ -144,7 +159,7 @@ func (p *Parser) evaluateUnevaluatedProperties(data interface{}, schema *schema.
 
 	if object, ok := data.(map[string]interface{}); ok {
 		for name, val := range object {
-			if _, evaluated := evaluated[name]; !evaluated {
+			if _, evaluated := evaluatedProperties[name]; !evaluated {
 				if schema.UnevaluatedProperties.Boolean != nil && !*schema.UnevaluatedProperties.Boolean {
 					err = append(err, Errorf("unevaluatedProperties", "property %s not successfully evaluated and schema does not allow unevaluated properties", name))
 				} else {
@@ -153,6 +168,36 @@ func (p *Parser) evaluateUnevaluatedProperties(data interface{}, schema *schema.
 						err = append(err, wrapError("unevaluatedProperties", evalErr))
 					} else {
 						object[name] = v
+					}
+				}
+			}
+		}
+	}
+
+	if len(err) > 0 {
+		return nil, &err
+	}
+
+	return data, nil
+}
+
+func (p *Parser) evaluateUnevaluatedItems(data interface{}, schema *schema.Schema, evaluatedItems map[int]bool) (interface{}, error) {
+	if schema.UnevaluatedItems == nil {
+		return data, nil
+	}
+	var err PathErrors
+
+	if arr, ok := data.([]interface{}); ok {
+		for i, val := range arr {
+			if _, evaluated := evaluatedItems[i]; !evaluated {
+				if schema.UnevaluatedItems.Boolean != nil && !*schema.UnevaluatedItems.Boolean {
+					err = append(err, Errorf("unevaluatedItems", "item at index %v has not been successfully evaluated and the schema does not allow unevaluated items.", i))
+				} else {
+					v, evalErr := p.parse(val, schema.UnevaluatedItems)
+					if evalErr != nil {
+						err = append(err, wrapError("unevaluatedItems", evalErr))
+					} else {
+						arr[i] = v
 					}
 				}
 			}

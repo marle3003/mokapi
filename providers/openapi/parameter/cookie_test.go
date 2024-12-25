@@ -184,7 +184,7 @@ func TestFromRequest_Cookie(t *testing.T) {
 				return r
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
-				require.EqualError(t, err, "parse cookie parameter 'foo' failed: found 1 error:\ninvalid type, expected integer but got string\nschema path #/type")
+				require.EqualError(t, err, "parse cookie parameter 'foo' failed: found 1 error:\ninvalid type, expected integer but got string\nschema path #/items/type")
 				require.Len(t, result[parameter.Cookie], 0)
 			},
 		},
