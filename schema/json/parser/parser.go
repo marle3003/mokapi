@@ -156,6 +156,12 @@ func (p *Parser) parseType(data interface{}, s *schema.Schema, typeName string, 
 		}
 	}
 
+	if s.Not != nil {
+		if _, notErr := p.parse(data, s.Not); notErr == nil {
+			return data, Errorf("not", "is valid against schema from 'not'")
+		}
+	}
+
 	return data, err
 }
 

@@ -53,6 +53,7 @@ type Schema struct {
 	AllOf []*Ref `yaml:"allOf,omitempty" json:"allOf,omitempty"`
 	AnyOf []*Ref `yaml:"anyOf,omitempty" json:"anyOf,omitempty"`
 	OneOf []*Ref `yaml:"oneOf,omitempty" json:"oneOf,omitempty"`
+	Not   *Ref   `yaml:"not,omitempty" json:"not,omitempty"`
 
 	// Annotations
 	Title       string        `yaml:"title" json:"title"`

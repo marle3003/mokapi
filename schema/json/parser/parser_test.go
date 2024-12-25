@@ -99,6 +99,23 @@ func TestParser_NoType(t *testing.T) {
 				require.EqualError(t, err, "found 1 error:\nconst value does not match schema: invalid type, expected string but got integer\nschema path #/type\nschema path #/const")
 			},
 		},
+		{
+			name:   "not string error",
+			data:   "foo",
+			schema: schematest.NewTypes(nil, schematest.WithNot(schematest.NewRef("string"))),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "found 1 error:\nis valid against schema from 'not'\nschema path #/not")
+			},
+		},
+		{
+			name:   "not string",
+			data:   12,
+			schema: schematest.NewTypes(nil, schematest.WithNot(schematest.NewRef("string"))),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int64(12), v)
+			},
+		},
 	}
 
 	t.Parallel()

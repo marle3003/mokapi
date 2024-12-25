@@ -355,3 +355,9 @@ func WithConst(c interface{}) SchemaOptions {
 		s.Const = &c
 	}
 }
+
+func WithNot(not *schema.Ref) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Not = not
+	}
+}
