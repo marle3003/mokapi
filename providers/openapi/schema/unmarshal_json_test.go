@@ -634,7 +634,7 @@ func TestRef_Unmarshal_Json_Integer(t *testing.T) {
 			s:      fmt.Sprintf("%v", math.MaxInt64),
 			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Format: "int32"},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ninteger '9.223372036854776e+18' does not match format 'int32': value is greater than int32 max value\nschema path #/format")
+				require.EqualError(t, err, "found 1 error:\ninteger '9.223372036854776e+18' does not match format 'int32'\nschema path #/format")
 			},
 		},
 		{

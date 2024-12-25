@@ -43,11 +43,8 @@ func (p *Parser) ParseInteger(i interface{}, s *schema.Schema) (n int64, err err
 	if !p.SkipValidationFormatKeyword {
 		switch s.Format {
 		case "int32":
-			if n < math.MinInt32 {
-				return 0, Errorf("format", "integer '%v' does not match format 'int32': value is lower than int32 min value", i)
-			}
-			if n > math.MaxInt32 {
-				return 0, Errorf("format", "integer '%v' does not match format 'int32': value is greater than int32 max value", i)
+			if n < math.MinInt32 || n > math.MaxInt32 {
+				return 0, Errorf("format", "integer '%v' does not match format 'int32'", i)
 			}
 		}
 	}
