@@ -148,8 +148,8 @@ func TestRecord_ReadFrom(t *testing.T) {
 				6, 'f', 'o', 'o', // first header value
 				24, 'x', '-', 'm', 'e', 's', 's', 'a', 'g', 'e', '-', 'i', 'd', // 2nd header name
 				6, 'b', 'a', 'r', // 2nd header value
-				28, 'x', '-', 'm', 'e', 's', 's', 'a', 'g', 'e', '-', 't', 'y', 'p', 'e', // 2nd header name
-				6, 'o', 'n', 'e', // 2nd header value
+				28, 'x', '-', 'm', 'e', 's', 's', 'a', 'g', 'e', '-', 't', 'y', 'p', 'e', // 3. header name
+				6, 'o', 'n', 'e', // 3. header value
 			},
 			test: func(t *testing.T, d *Decoder) {
 				batch := RecordBatch{}
