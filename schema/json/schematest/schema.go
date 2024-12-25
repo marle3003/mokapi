@@ -361,3 +361,12 @@ func WithNot(not *schema.Ref) SchemaOptions {
 		s.Not = not
 	}
 }
+
+func WithDependentRequired(prop string, required ...string) SchemaOptions {
+	return func(s *schema.Schema) {
+		if s.DependentRequired == nil {
+			s.DependentRequired = map[string][]string{}
+		}
+		s.DependentRequired[prop] = required
+	}
+}

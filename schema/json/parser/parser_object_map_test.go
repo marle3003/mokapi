@@ -250,6 +250,23 @@ func TestParser_ParseObject(t *testing.T) {
 				require.Equal(t, map[string]interface{}{"foo": "bar"}, v)
 			},
 		},
+		{
+			name:   "dependentRequired error",
+			schema: schematest.New("object", schematest.WithDependentRequired("foo", "bar")),
+			data:   map[string]interface{}{"foo": "foobar"},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "found 1 error:\ndependencies for property 'foo' failed: missing required keys: bar.\nschema path #/dependentRequired")
+			},
+		},
+		{
+			name:   "dependentRequired",
+			schema: schematest.New("object", schematest.WithDependentRequired("foo", "bar")),
+			data:   map[string]interface{}{"foo": "foobar", "bar": 12},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"foo": "foobar", "bar": 12}, v)
+			},
+		},
 	}
 
 	t.Parallel()

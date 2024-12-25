@@ -216,6 +216,22 @@ func (p *Parser) validateObject(obj *sortedmap.LinkedHashMap[string, interface{}
 		}
 	}
 
+	if s.DependentRequired != nil {
+		for k, required := range s.DependentRequired {
+			if _, found := obj.Get(k); found {
+				missing := []string{}
+				for _, req := range required {
+					if _, found = obj.Get(req); !found {
+						missing = append(missing, req)
+					}
+				}
+				if len(missing) > 0 {
+					err = append(err, Errorf("dependentRequired", "dependencies for property '%v' failed: missing required keys: %v.", k, strings.Join(missing, ", ")))
+				}
+			}
+		}
+	}
+
 	if len(s.Enum) > 0 {
 		if enumErr := checkValueIsInEnum(obj, s.Enum, &schema.Schema{Type: schema.Types{"object"}}); enumErr != nil {
 			err = append(err, enumErr)
