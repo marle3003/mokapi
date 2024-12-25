@@ -3,7 +3,13 @@ package schema
 import jsonSchema "mokapi/schema/json/schema"
 
 func (r *Ref) Patch(patch *Ref) {
-	if patch == nil || patch.Value == nil {
+	if patch == nil {
+		return
+	}
+	if patch.Boolean != nil {
+		r.Boolean = patch.Boolean
+	}
+	if patch.Value == nil {
 		return
 	}
 	if r.Value == nil {
@@ -15,6 +21,13 @@ func (r *Ref) Patch(patch *Ref) {
 }
 
 func (s *Schema) Patch(patch *Schema) {
+	if patch == nil {
+		return
+	}
+	if patch.Boolean != nil {
+		s.Boolean = patch.Boolean
+	}
+
 	if len(patch.Type) > 0 {
 		s.Type = mergeTypes(s.Type, patch.Type)
 	}

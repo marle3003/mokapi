@@ -68,14 +68,18 @@ func Dictionary() *Tree {
 	return &Tree{
 		Name: "Dictionary",
 		Test: func(r *Request) bool {
-			return r.LastSchema().IsDictionary()
+			s := r.LastSchema()
+			if s == nil {
+				return false
+			}
+			return s.AdditionalProperties != nil && s.AdditionalProperties.Value != nil
 		},
 		Fake: func(r *Request) (interface{}, error) {
 			s := r.LastSchema()
 			length := gofakeit.Number(1, 10)
 			m := map[string]interface{}{}
 			for i := 0; i < length; i++ {
-				v, err := r.g.tree.Resolve(r.With(UsePathElement("", s.AdditionalProperties.Ref)))
+				v, err := r.g.tree.Resolve(r.With(UsePathElement("", s.AdditionalProperties)))
 				if err != nil {
 					return nil, err
 				}

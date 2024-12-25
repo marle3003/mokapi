@@ -239,7 +239,7 @@ func TestMarshal_Xml(t *testing.T) {
 					Wrapped: true,
 				})),
 			test: func(t *testing.T, s string, err error) {
-				require.EqualError(t, err, "encoding data to 'application/xml' failed: expected array but got: 4")
+				require.EqualError(t, err, "encoding data to 'application/xml' failed: found 1 error:\nexpected array but got: 4")
 			},
 		},
 		{

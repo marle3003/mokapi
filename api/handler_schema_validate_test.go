@@ -67,8 +67,8 @@ func TestHandler_Schema_Validate(t *testing.T) {
 					},
 					`{ "schema": {"type": ["object"], "properties": { "foo":{ "type": ["string"] }, "bar":{ "type": ["integer"] } } }, "data":"{\"foo\": 12, \"bar\": \"text\" }" }`,
 					h,
-					try.BodyContains("parse property 'bar' failed: parse 'text' failed, expected schema type=integer\n"),
-					try.BodyContains("parse property 'foo' failed: parse 12 failed, expected schema type=string\n"),
+					try.BodyContains("invalid type, expected string but got number\nschema path #/foo/type\n"),
+					try.BodyContains("invalid type, expected integer but got string\nschema path #/bar/type\n"),
 					try.HasStatusCode(400),
 				)
 			},
@@ -107,7 +107,7 @@ func TestHandler_Schema_Validate(t *testing.T) {
 					`{ "schema": {"type": ["object"], "properties": { "foo":{ "type": ["string"] } }, "additionalProperties": false }, "data":"{ \"foo\":\"bar\", \"foo2\": \"val\" }" }`,
 					h,
 					try.HasStatusCode(400),
-					try.HasBody("additional properties 'foo2' not allowed, expected schema type=object properties=[foo] free-form=false\n"),
+					try.HasBody("found 1 error:\nproperty 'foo2' not defined and the schema does not allow additional properties\nschema path #/additionalProperties\n"),
 				)
 			},
 		},
@@ -126,7 +126,8 @@ func TestHandler_Schema_Validate(t *testing.T) {
 					`{ "schema": {"type": ["object"], "properties": { "foo":{ "type": ["string"] } }, "additionalProperties": false }, "data":"{ \"foo\":\"bar\", \"foo2\": \"val\", \"foo3\": \"val\" }" }`,
 					h,
 					try.HasStatusCode(400),
-					try.HasBody("additional properties 'foo2, foo3' not allowed, expected schema type=object properties=[foo] free-form=false\n"),
+					try.BodyContains("property 'foo2' not defined and the schema does not allow additional properties\n"),
+					try.BodyContains("property 'foo3' not defined and the schema does not allow additional properties\nschema path #/additionalProperties\n"),
 				)
 			},
 		},
@@ -145,7 +146,7 @@ func TestHandler_Schema_Validate(t *testing.T) {
 					`{ "schema": {"type": ["object"], "properties": { "foo":{ "type": ["string"] } }, "additionalProperties": false }, "data":"{\"foo2\": \"val\" }" }`,
 					h,
 					try.HasStatusCode(400),
-					try.HasBody("additional properties 'foo2' not allowed, expected schema type=object properties=[foo] free-form=false\n"),
+					try.HasBody("found 1 error:\nproperty 'foo2' not defined and the schema does not allow additional properties\nschema path #/additionalProperties\n"),
 				)
 			},
 		},

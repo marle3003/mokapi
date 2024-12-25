@@ -1,26 +1,29 @@
 package parser
 
 import (
-	"fmt"
 	"mokapi/schema/json/schema"
 )
 
 func (p *Parser) ParseOne(s *schema.Schema, data interface{}) (interface{}, error) {
 	var result interface{}
+	validIndex := -1
 
-	for _, one := range s.OneOf {
-		next, err := p.Parse(data, one)
+	// TODO evaluatedProperties
+
+	for index, one := range s.OneOf {
+		next, err := p.parse(data, one)
 		if err != nil {
 			continue
 		}
 		if result != nil {
-			return nil, fmt.Errorf("parse %v failed: valid against more than one schema from 'oneOf': %s", ToString(data), s)
+			return nil, Errorf("oneOf", "valid against more than one schema from 'oneOf': valid schema indexes: %v, %v", validIndex, index)
 		}
 		result = next
+		validIndex = index
 	}
 
 	if result == nil {
-		return nil, fmt.Errorf("parse %v failed: valid against no schemas from 'oneOf': %s", ToString(data), s)
+		return nil, Errorf("oneOf", "valid against no schemas from 'oneOf'")
 	}
 
 	return result, nil

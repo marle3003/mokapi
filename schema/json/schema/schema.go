@@ -7,7 +7,8 @@ import (
 )
 
 type Schema struct {
-	Schema string `yaml:"$schema,omitempty" json:"$schema,omitempty"`
+	Schema  string `yaml:"$schema,omitempty" json:"$schema,omitempty"`
+	Boolean *bool  `yaml:"-" json:"-"`
 
 	Type  Types         `yaml:"type,omitempty" json:"type,omitempty"`
 	Enum  []interface{} `yaml:"enum,omitempty" json:"enum,omitempty"`
@@ -36,12 +37,15 @@ type Schema struct {
 	ShuffleItems bool `yaml:"x-shuffleItems,omitempty" json:"x-shuffleItems,omitempty"`
 
 	// Objects
-	Properties           *Schemas             `yaml:"properties,omitempty" json:"properties,omitempty"`
-	MaxProperties        *int                 `yaml:"maxProperties,omitempty" json:"maxProperties,omitempty"`
-	MinProperties        *int                 `yaml:"minProperties,omitempty" json:"minProperties,omitempty"`
-	Required             []string             `yaml:"required,omitempty" json:"required,omitempty"`
-	DependentRequired    map[string][]string  `yaml:"dependentRequired,omitempty" json:"dependentRequired,omitempty"`
-	AdditionalProperties AdditionalProperties `yaml:"additionalProperties,omitempty" json:"additionalProperties,omitempty"`
+	Properties            *Schemas            `yaml:"properties,omitempty" json:"properties,omitempty"`
+	PatternProperties     map[string]*Ref     `yaml:"patternProperties,omitempty" json:"patternProperties,omitempty"`
+	MaxProperties         *int                `yaml:"maxProperties,omitempty" json:"maxProperties,omitempty"`
+	MinProperties         *int                `yaml:"minProperties,omitempty" json:"minProperties,omitempty"`
+	Required              []string            `yaml:"required,omitempty" json:"required,omitempty"`
+	DependentRequired     map[string][]string `yaml:"dependentRequired,omitempty" json:"dependentRequired,omitempty"`
+	AdditionalProperties  *Ref                `yaml:"additionalProperties,omitempty" json:"additionalProperties,omitempty"`
+	UnevaluatedProperties *Ref                `yaml:"unevaluatedProperties,omitempty" json:"unevaluatedProperties,omitempty"`
+	PropertyNames         *Ref                `yaml:"propertyNames,omitempty" json:"propertyNames,omitempty"`
 
 	AllOf []*Ref `yaml:"allOf,omitempty" json:"allOf,omitempty"`
 	AnyOf []*Ref `yaml:"anyOf,omitempty" json:"anyOf,omitempty"`
@@ -127,6 +131,12 @@ func (s *Schema) Validate() error {
 }
 
 func (s *Schema) UnmarshalJSON(b []byte) error {
+	var boolVal bool
+	if err := json.Unmarshal(b, &boolVal); err == nil {
+		s.Boolean = &boolVal
+		return nil
+	}
+
 	type alias Schema
 	a := alias{}
 	err := json.Unmarshal(b, &a)

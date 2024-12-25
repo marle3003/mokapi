@@ -191,7 +191,7 @@ func TestComposition_AllOf(t *testing.T) {
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "generate random data for schema failed: all of schema type=[integer string], schema type=[number boolean]: no shared types found")
+				require.EqualError(t, err, "generate random data for schema failed: all of schema type=[integer, string], schema type=[number, boolean]: no shared types found")
 			},
 		},
 	}

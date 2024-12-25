@@ -1,49 +1,50 @@
 package parser
 
 import (
-	"errors"
 	"fmt"
+	"github.com/pkg/errors"
 	"mokapi/schema/json/schema"
 	"mokapi/sortedmap"
 	"reflect"
 )
 
-func (p *Parser) ParseAll(s *schema.Schema, data interface{}) (interface{}, error) {
+func (p *Parser) ParseAll(s *schema.Schema, data interface{}, evaluated map[string]bool) (interface{}, error) {
 	switch reflect.ValueOf(data).Kind() {
 	case reflect.Struct:
 	case reflect.Map:
-		obj, err := p.parseAllObject(s, data)
-		if err != nil {
-			return nil, fmt.Errorf("parse %s failed: does not match %s:\n%w", ToString(data), s, err)
-		}
-		return obj, nil
+		return p.parseAllObject(s, data, evaluated)
 	}
 
 	var orig = data
 	var err error
 	for _, one := range s.AllOf {
-		data, err = p.Parse(data, one)
+		data, err = p.parse(data, one)
 		if err != nil {
-			return nil, fmt.Errorf("parse %v failed: does not match %s: %w", orig, s, err)
+			return nil, fmt.Errorf("parse %v failed: does not match all schemas from 'allOf': %s: %w", orig, s, err)
 		}
 	}
 	return data, nil
 }
 
-func (p *Parser) parseAllObject(s *schema.Schema, data interface{}) (interface{}, error) {
+func (p *Parser) parseAllObject(s *schema.Schema, data interface{}, evaluated map[string]bool) (interface{}, error) {
 	r := sortedmap.NewLinkedHashMap()
-	var err error
+	p2 := *p
+	p2.ValidateAdditionalProperties = true
+	err := &PathCompositionError{Path: "allOf", Message: "does not match all schemas from 'allOf'"}
 
 	countNoSchemaDefined := 0
 	isFreeFormUsed := false
-	for _, one := range s.AllOf {
+	for index, one := range s.AllOf {
+		path := fmt.Sprintf("%v", index)
 		if one == nil || one.Value == nil {
 			countNoSchemaDefined++
 			continue
 		}
 
-		if !one.IsObject() {
-			return nil, fmt.Errorf("invalid type object, expected %s", one.String())
+		if !one.IsObject() && !one.IsAny() {
+			typeErr := Errorf("type", "invalid type, expected %v but got %v", one.Type(), toType(data))
+			err.append(wrapError(path, typeErr))
+			continue
 		}
 
 		isLocalFreeForm := false
@@ -54,42 +55,40 @@ func (p *Parser) parseAllObject(s *schema.Schema, data interface{}) (interface{}
 			one = &schema.Ref{Value: &copySchema}
 			isFreeFormUsed = true
 			isLocalFreeForm = true
-			one.Value.AdditionalProperties = schema.AdditionalProperties{Forbidden: true}
+			one.Value.AdditionalProperties = schema.NewRef(false)
 		}
 
-		obj, oneErr := p.ParseObject(data, one.Value)
-		if oneErr != nil {
-			if isLocalFreeForm {
-				var additionalError *AdditionalPropertiesNotAllowed
-				if errors.As(oneErr, &additionalError) {
-					if additionalError.Schema != one.Value {
-						err = errors.Join(err, removeFreeForm(oneErr))
+		eval := map[string]bool{}
+		obj, oneErr := p2.parseObject(data, one.Value, eval)
+		if oneErr != nil && isLocalFreeForm {
+			var list *PathErrors
+			if errors.As(oneErr, &list) {
+				for _, e := range *list {
+					var pathError *PathError
+					if !errors.As(e, &pathError) {
+						err.append(wrapError(path, e))
+					} else if pathError.Path != "additionalProperties" {
 						continue
 					}
-					if uw, ok := oneErr.(interface{ Unwrap() []error }); ok {
-						errs := uw.Unwrap()
-						if len(errs) > 1 {
-							err = errors.Join(err, removeFreeForm(errors.Join(errs[:len(errs)-1]...)))
-							continue
-						}
-					}
-				} else {
-					err = errors.Join(err, removeFreeForm(oneErr))
-					continue
 				}
-			} else {
-				err = errors.Join(err, oneErr)
-				continue
 			}
+		} else if oneErr != nil {
+			err.append(wrapError(path, oneErr))
+			continue
 		}
 
-		for it := obj.Iter(); it.Next(); {
-			if _, found := r.Get(it.Key()); !found {
-				r.Set(it.Key(), it.Value())
-			} else if prop := one.Value.Properties.Get(it.Key()); !prop.IsAny() {
-				// overwrite value with possible more precise type
-				r.Set(it.Key(), it.Value())
+		if obj != nil {
+			for it := obj.Iter(); it.Next(); {
+				if _, found := r.Get(it.Key()); !found {
+					r.Set(it.Key(), it.Value())
+				} else if prop := one.Value.Properties.Get(it.Key()); !prop.IsAny() {
+					// overwrite value with possible more precise type
+					r.Set(it.Key(), it.Value())
+				}
 			}
+		}
+		for k, v := range eval {
+			evaluated[k] = v
 		}
 	}
 
@@ -97,14 +96,14 @@ func (p *Parser) parseAllObject(s *schema.Schema, data interface{}) (interface{}
 		return data, nil
 	}
 
-	if err != nil {
-		return nil, err
+	if len(err.Errs) > 0 {
+		return data, err
 	}
 
 	if isFreeFormUsed {
 		// read data with free-form and add only missing values
 		// free-form returns never an error
-		obj, _ := p.ParseObject(data, &schema.Schema{Type: schema.Types{"object"}})
+		obj, _ := p.parseObject(data, &schema.Schema{Type: schema.Types{"object"}}, evaluated)
 		for it := obj.Iter(); it.Next(); {
 			if _, found := r.Get(it.Key()); !found {
 				r.Set(it.Key(), it.Value())
@@ -117,15 +116,4 @@ func (p *Parser) parseAllObject(s *schema.Schema, data interface{}) (interface{}
 	}
 
 	return r.ToMap(), nil
-}
-
-func removeFreeForm(errs ...error) error {
-	var r []error
-	for _, err := range errs {
-		s := err.Error()
-		n := len(s)
-		s = s[0 : n-len(" free-form=false")]
-		r = append(r, fmt.Errorf(s))
-	}
-	return errors.Join(r...)
 }

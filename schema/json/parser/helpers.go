@@ -51,6 +51,9 @@ func ToString(i interface{}) string {
 		if v.Kind() == reflect.Ptr {
 			v = v.Elem()
 		}
+		if !v.IsValid() {
+			return "null"
+		}
 		t := v.Type()
 		switch v.Kind() {
 		case reflect.Slice:
@@ -171,7 +174,7 @@ func toType(i interface{}) string {
 	case reflect.Bool:
 		return "boolean"
 	default:
-		log.Errorf("unable to resolve JSON type from value: %v", ToString(i))
+		log.Errorf("unable to resolve JSON type from value %v kind %v", ToString(i), v.Kind())
 		return "string"
 	}
 }

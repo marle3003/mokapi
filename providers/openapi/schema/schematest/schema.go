@@ -177,17 +177,13 @@ func WithMaxProperties(n int) SchemaOptions {
 
 func WithAdditionalProperties(additional *schema.Schema) SchemaOptions {
 	return func(s *schema.Schema) {
-		s.AdditionalProperties = &schema.AdditionalProperties{Ref: &schema.Ref{Value: additional}}
+		s.AdditionalProperties = &schema.Ref{Value: additional}
 	}
 }
 
 func WithFreeForm(allowed bool) SchemaOptions {
 	return func(s *schema.Schema) {
-		if allowed {
-			s.AdditionalProperties = &schema.AdditionalProperties{}
-		} else {
-			s.AdditionalProperties = &schema.AdditionalProperties{Forbidden: true}
-		}
+		s.AdditionalProperties = &schema.Ref{Boolean: &allowed}
 	}
 }
 
@@ -205,13 +201,21 @@ func WithMaximum(max float64) SchemaOptions {
 
 func WithExclusiveMinimum(min float64) SchemaOptions {
 	return func(s *schema.Schema) {
-		s.ExclusiveMinimum = jsonSchema.NewUnionTypeA[float64, bool](min)
+		if s.ExclusiveMinimum == nil {
+			s.ExclusiveMinimum = jsonSchema.NewUnionTypeA[float64, bool](min)
+		} else {
+			s.ExclusiveMinimum.A = min
+		}
 	}
 }
 
 func WithExclusiveMaximum(max float64) SchemaOptions {
 	return func(s *schema.Schema) {
-		s.ExclusiveMaximum = jsonSchema.NewUnionTypeA[float64, bool](max)
+		if s.ExclusiveMaximum == nil {
+			s.ExclusiveMaximum = jsonSchema.NewUnionTypeA[float64, bool](max)
+		} else {
+			s.ExclusiveMaximum.A = max
+		}
 	}
 }
 
@@ -314,5 +318,15 @@ func WithContentMediaType(value string) SchemaOptions {
 func WithContentEncoding(value string) SchemaOptions {
 	return func(s *schema.Schema) {
 		s.ContentEncoding = value
+	}
+}
+
+func WithExclusiveMinimumFlag(b bool) SchemaOptions {
+	return func(s *schema.Schema) {
+		if s.ExclusiveMinimum != nil {
+			s.ExclusiveMinimum.B = b
+		} else {
+			s.ExclusiveMinimum = jsonSchema.NewUnionTypeB[float64, bool](b)
+		}
 	}
 }

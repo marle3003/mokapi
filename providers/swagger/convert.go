@@ -218,8 +218,8 @@ func (c *converter) convertSchema(s *schema.Ref) *schema.Ref {
 		}
 	}
 
-	if s.Value.AdditionalProperties != nil && s.Value.AdditionalProperties.Ref != nil {
-		s.Value.AdditionalProperties.Ref.Ref = convertRef(s.Value.AdditionalProperties.Ref.Ref)
+	if s.Value.AdditionalProperties != nil && len(s.Value.AdditionalProperties.Ref) > 0 {
+		s.Value.AdditionalProperties.Ref = convertRef(s.Value.AdditionalProperties.Ref)
 	}
 	for i, v := range s.Value.AllOf {
 		s.Value.AllOf[i] = c.convertSchema(v)

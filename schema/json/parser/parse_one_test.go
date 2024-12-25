@@ -47,7 +47,7 @@ func TestParser_ParseOne(t *testing.T) {
 			),
 			data: 15,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "parse 15 failed: valid against more than one schema from 'oneOf': one of schema type=integer multipleOf=5, schema type=integer multipleOf=3")
+				require.EqualError(t, err, "valid against more than one schema from 'oneOf': valid schema indexes: 0, 1\nschema path #/oneOf")
 			},
 		},
 		{
@@ -58,7 +58,7 @@ func TestParser_ParseOne(t *testing.T) {
 			),
 			data: 15,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "parse 15 failed: valid against more than one schema from 'oneOf': one of schema type=integer, empty schema")
+				require.EqualError(t, err, "valid against more than one schema from 'oneOf': valid schema indexes: 0, 1\nschema path #/oneOf")
 			},
 		},
 		{
@@ -69,7 +69,7 @@ func TestParser_ParseOne(t *testing.T) {
 			),
 			data: 15,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "parse 15 failed: valid against more than one schema from 'oneOf': one of schema type=integer, empty schema")
+				require.EqualError(t, err, "valid against more than one schema from 'oneOf': valid schema indexes: 0, 1\nschema path #/oneOf")
 			},
 		},
 		{
@@ -80,7 +80,7 @@ func TestParser_ParseOne(t *testing.T) {
 			),
 			data: "foo",
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "parse foo failed: valid against no schemas from 'oneOf': one of schema type=integer, schema type=boolean")
+				require.EqualError(t, err, "valid against no schemas from 'oneOf'\nschema path #/oneOf")
 			},
 		},
 		{
@@ -91,7 +91,7 @@ func TestParser_ParseOne(t *testing.T) {
 			),
 			data: map[string]interface{}{},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "parse {} failed: valid against more than one schema from 'oneOf': one of schema type=object properties=[foo], schema type=object properties=[bar]")
+				require.EqualError(t, err, "valid against more than one schema from 'oneOf': valid schema indexes: 0, 1\nschema path #/oneOf")
 			},
 		},
 		{

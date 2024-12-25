@@ -133,12 +133,3 @@ func (s *Schema) String() string {
 
 	return str
 }
-
-func (t *Types) String() string {
-	if len(*t) == 1 {
-		return (*t)[0]
-	} else if len(*t) > 1 {
-		return fmt.Sprintf("%v", *t)
-	}
-	return ""
-}

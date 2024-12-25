@@ -27,29 +27,28 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 	}
 
 	js := &schema.Schema{
-		Type:                 s.Type,
-		Schema:               s.Schema,
-		Enum:                 s.Enum,
-		Const:                s.Const,
-		Default:              s.Default,
-		MinLength:            s.MinLength,
-		MaxLength:            s.MaxLength,
-		Pattern:              s.Pattern,
-		Format:               s.Format,
-		MultipleOf:           s.MultipleOf,
-		Items:                c.ConvertToJsonRef(s.Items),
-		MinItems:             s.MinItems,
-		MaxItems:             s.MaxItems,
-		UniqueItems:          s.UniqueItems,
-		ShuffleItems:         s.ShuffleItems,
-		MaxProperties:        s.MaxProperties,
-		MinProperties:        s.MinProperties,
-		Required:             s.Required,
-		DependentRequired:    nil,
-		AdditionalProperties: schema.AdditionalProperties{},
-		Title:                s.Title,
-		Description:          s.Description,
-		Deprecated:           s.Deprecated,
+		Type:              s.Type,
+		Schema:            s.Schema,
+		Enum:              s.Enum,
+		Const:             s.Const,
+		Default:           s.Default,
+		MinLength:         s.MinLength,
+		MaxLength:         s.MaxLength,
+		Pattern:           s.Pattern,
+		Format:            s.Format,
+		MultipleOf:        s.MultipleOf,
+		Items:             c.ConvertToJsonRef(s.Items),
+		MinItems:          s.MinItems,
+		MaxItems:          s.MaxItems,
+		UniqueItems:       s.UniqueItems,
+		ShuffleItems:      s.ShuffleItems,
+		MaxProperties:     s.MaxProperties,
+		MinProperties:     s.MinProperties,
+		Required:          s.Required,
+		DependentRequired: nil,
+		Title:             s.Title,
+		Description:       s.Description,
+		Deprecated:        s.Deprecated,
 	}
 	c.history[s] = js
 
@@ -72,8 +71,7 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 	}
 
 	if s.AdditionalProperties != nil {
-		js.AdditionalProperties.Forbidden = s.AdditionalProperties.Forbidden
-		js.AdditionalProperties.Ref = c.ConvertToJsonRef(s.AdditionalProperties.Ref)
+		js.AdditionalProperties = c.ConvertToJsonRef(s.AdditionalProperties)
 	}
 
 	for _, anyOf := range s.AnyOf {
@@ -107,7 +105,7 @@ func (c *JsonSchemaConverter) ConvertToJsonRef(r *Ref) *schema.Ref {
 	if r == nil {
 		return nil
 	}
-	js := &schema.Ref{Reference: jsonRef.Reference{Ref: r.Ref}}
+	js := &schema.Ref{Reference: jsonRef.Reference{Ref: r.Ref}, Boolean: r.Boolean}
 	if r.Value == nil {
 		return js
 	}

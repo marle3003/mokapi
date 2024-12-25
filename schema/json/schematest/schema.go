@@ -42,6 +42,15 @@ func WithProperty(name string, ps *schema.Schema) SchemaOptions {
 	}
 }
 
+func WithPatternProperty(pattern string, ps *schema.Schema) SchemaOptions {
+	return func(s *schema.Schema) {
+		if s.PatternProperties == nil {
+			s.PatternProperties = map[string]*schema.Ref{}
+		}
+		s.PatternProperties[pattern] = &schema.Ref{Value: ps}
+	}
+}
+
 func WithItems(typeName string, opts ...SchemaOptions) SchemaOptions {
 	return func(s *schema.Schema) {
 		s.Items = NewRef(typeName, opts...)
@@ -132,6 +141,14 @@ func NewAllOf(schemas ...*schema.Schema) *schema.Schema {
 	return s
 }
 
+func WithAllOf(schemas ...*schema.Schema) SchemaOptions {
+	return func(s *schema.Schema) {
+		for _, all := range schemas {
+			s.AllOf = append(s.AllOf, &schema.Ref{Value: all})
+		}
+	}
+}
+
 func NewAllOfRefs(schemas ...*schema.Ref) *schema.Schema {
 	s := &schema.Schema{}
 	for _, all := range schemas {
@@ -172,17 +189,13 @@ func WithMaxProperties(n int) SchemaOptions {
 
 func WithAdditionalProperties(additional *schema.Schema) SchemaOptions {
 	return func(s *schema.Schema) {
-		s.AdditionalProperties = schema.AdditionalProperties{Ref: &schema.Ref{Value: additional}}
+		s.AdditionalProperties = &schema.Ref{Value: additional}
 	}
 }
 
 func WithFreeForm(allowed bool) SchemaOptions {
 	return func(s *schema.Schema) {
-		if allowed {
-			s.AdditionalProperties = schema.AdditionalProperties{}
-		} else {
-			s.AdditionalProperties = schema.AdditionalProperties{Forbidden: true}
-		}
+		s.AdditionalProperties = &schema.Ref{Boolean: &allowed}
 	}
 }
 
@@ -200,13 +213,41 @@ func WithMaximum(max float64) SchemaOptions {
 
 func WithExclusiveMinimum(min float64) SchemaOptions {
 	return func(s *schema.Schema) {
-		s.ExclusiveMinimum = schema.NewUnionTypeA[float64, bool](min)
+		if s.ExclusiveMinimum == nil {
+			s.ExclusiveMinimum = schema.NewUnionTypeA[float64, bool](min)
+		} else {
+			s.ExclusiveMinimum.A = min
+		}
+	}
+}
+
+func WithExclusiveMinimumFlag(b bool) SchemaOptions {
+	return func(s *schema.Schema) {
+		if s.ExclusiveMinimum == nil {
+			s.ExclusiveMinimum = schema.NewUnionTypeB[float64, bool](b)
+		} else {
+			s.ExclusiveMinimum.B = b
+		}
 	}
 }
 
 func WithExclusiveMaximum(max float64) SchemaOptions {
 	return func(s *schema.Schema) {
-		s.ExclusiveMaximum = schema.NewUnionTypeA[float64, bool](max)
+		if s.ExclusiveMaximum == nil {
+			s.ExclusiveMaximum = schema.NewUnionTypeA[float64, bool](max)
+		} else {
+			s.ExclusiveMaximum.A = max
+		}
+	}
+}
+
+func WithExclusiveMaximumFlag(b bool) SchemaOptions {
+	return func(s *schema.Schema) {
+		if s.ExclusiveMaximum == nil {
+			s.ExclusiveMaximum = schema.NewUnionTypeB[float64, bool](b)
+		} else {
+			s.ExclusiveMaximum.B = b
+		}
 	}
 }
 
@@ -261,5 +302,17 @@ func WithExample(v interface{}) SchemaOptions {
 func WithExamples(v ...interface{}) SchemaOptions {
 	return func(s *schema.Schema) {
 		s.Examples = append(s.Examples, v...)
+	}
+}
+
+func WithUnevaluatedProperties(b bool) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.UnevaluatedProperties = &schema.Ref{Boolean: &b}
+	}
+}
+
+func WithPropertyNames(propSchema *schema.Schema) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.PropertyNames = &schema.Ref{Value: propSchema}
 	}
 }

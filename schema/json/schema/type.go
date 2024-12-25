@@ -3,9 +3,31 @@ package schema
 import (
 	"encoding/json"
 	"gopkg.in/yaml.v3"
+	"strings"
 )
 
 type Types []string
+
+//goland:noinspection GoMixedReceiverTypes
+func (t Types) String() string {
+	if t == nil || len(t) == 0 {
+		return ""
+	}
+	if len(t) == 1 {
+		return (t)[0]
+	}
+
+	var sb strings.Builder
+	sb.WriteString("[")
+	for i, s := range t {
+		if i > 0 {
+			sb.WriteString(", ")
+		}
+		sb.WriteString(s)
+	}
+	sb.WriteString("]")
+	return sb.String()
+}
 
 func (t *Types) UnmarshalJSON(b []byte) error {
 	var v interface{}
@@ -132,13 +154,6 @@ func (s *Schema) IsNullable() bool {
 	return s.Is("null")
 }
 
-func (s *Schema) IsDictionary() bool {
-	if s == nil {
-		return false
-	}
-	return s.AdditionalProperties.Ref != nil && s.AdditionalProperties.Value != nil
-}
-
 func (s *Schema) HasProperties() bool {
 	if s == nil {
 		return false
@@ -151,11 +166,20 @@ func (s *Schema) Is(typeName string) bool {
 }
 
 func (s *Schema) IsFreeForm() bool {
-	if s == nil || (!s.IsObject() && len(s.Type) > 0) {
+	if s == nil {
 		return false
 	}
+	if !s.IsObject() && len(s.Type) > 0 {
+		return false
+	}
+	if s.AdditionalProperties == nil {
+		return true
+	}
+	if s.AdditionalProperties.Boolean != nil {
+		return *s.AdditionalProperties.Boolean
+	}
 
-	return !s.AdditionalProperties.Forbidden
+	return s.AdditionalProperties.Value == nil
 }
 
 func (s *Schema) IsAnyString() bool {
@@ -163,4 +187,8 @@ func (s *Schema) IsAnyString() bool {
 		return false
 	}
 	return s.Pattern == "" && s.Format == "" && s.MinLength == nil && s.MaxLength == nil
+}
+
+func (s *Schema) IsFalse() bool {
+	return s != nil && s.Boolean != nil && !*s.Boolean
 }

@@ -1,87 +1,96 @@
 package parser
 
 import (
-	"fmt"
-	"math"
 	"mokapi/schema/json/schema"
 	"strconv"
 )
 
 func (p *Parser) ParseNumber(i interface{}, s *schema.Schema) (f float64, err error) {
 	switch v := i.(type) {
+	case float32:
+		f = float64(v)
 	case float64:
 		f = v
+
+		if !p.SkipValidationFormatKeyword {
+			switch s.Format {
+			case "float":
+				f32 := float32(v)
+
+				if float64(f32) != v {
+					return 0, Errorf("format", "number '%v' does not match format 'float'", i)
+				}
+			}
+		}
 	case string:
 		if !p.ConvertStringToNumber {
-			return 0, fmt.Errorf("parse '%v' failed, expected %v", i, s)
+			return 0, Errorf("type", "invalid type, expected number but got %v", toType(i))
 		}
 		f, err = strconv.ParseFloat(v, 64)
 		if err != nil {
-			return 0, fmt.Errorf("parse '%v' failed, expected %v", i, s)
+			return 0, Errorf("type", "invalid type, expected number but got %v", toType(i))
 		}
 	case int:
 		f = float64(v)
 	case int64:
 		f = float64(v)
 	default:
-		return 0, fmt.Errorf("parse '%v' failed, expected %v", v, s)
-	}
-
-	switch s.Format {
-	case "float":
-		if f > math.MaxFloat32 {
-			return 0, fmt.Errorf("parse %v failed, expected %v", i, s)
-		}
-	}
-
-	return f, validateFloat64(f, s)
-}
-
-func validateFloat64(n float64, s *schema.Schema) error {
-	if s.ExclusiveMinimum != nil {
-		var min float64
-		if s.ExclusiveMinimum.IsA() && (s.ExclusiveMinimum.IsA() || s.ExclusiveMinimum.B) {
-			min = s.ExclusiveMinimum.A
-		} else {
-			if s.Minimum == nil {
-				return fmt.Errorf("exclusiveMinimum is set to true but no minimum value is specified")
-			}
-			min = *s.Minimum
-		}
-		if n <= min {
-			return fmt.Errorf("%v is lower or equal as the required minimum %v, expected %v", n, *s.ExclusiveMinimum, s)
-		}
-	} else if s.Minimum != nil && n < *s.Minimum {
-		return fmt.Errorf("%v is lower as the required minimum %v, expected %v", n, *s.Minimum, s)
-	}
-
-	if s.ExclusiveMaximum != nil && (s.ExclusiveMaximum.IsA() || s.ExclusiveMaximum.B) {
-		var max float64
-		if s.ExclusiveMaximum.IsA() {
-			max = s.ExclusiveMaximum.A
-		} else {
-			if s.Maximum == nil {
-				return fmt.Errorf("exclusiveMaximum is set to true but no maximum value is specified")
-			}
-			max = *s.Maximum
-		}
-		if n >= max {
-			return fmt.Errorf("%v is greater or equal as the required maximum %v, expected %v", n, max, s)
-		}
-	} else if s.Maximum != nil && n > *s.Maximum {
-		return fmt.Errorf("%v is greater as the required maximum %v, expected %v", n, *s.Maximum, s)
-	}
-
-	if len(s.Enum) > 0 {
-		return checkValueIsInEnum(n, s.Enum, &schema.Schema{Type: schema.Types{"number"}, Format: "double"})
+		return 0, Errorf("type", "invalid type, expected number but got %v", toType(i))
 	}
 
 	if s.MultipleOf != nil {
-		m := n / *s.MultipleOf
+		m := f / *s.MultipleOf
 		if m != float64(int(m)) {
-			return fmt.Errorf("%v is not a multiple of %v: %v", n, *s.MultipleOf, s)
+			return 0, Errorf("multipleOf", "number %v is not a multiple of %v", f, *s.MultipleOf)
 		}
 	}
 
+	if err := validateNumberMinimum(f, s); err != nil {
+		return 0, err
+	}
+	if err := validateNumberMaximum(f, s); err != nil {
+		return 0, err
+	}
+
+	if len(s.Enum) > 0 {
+		return f, checkValueIsInEnum(f, s.Enum, &schema.Schema{Type: schema.Types{"number"}})
+	}
+
+	return f, nil
+}
+
+func validateNumberMinimum(n float64, s *schema.Schema) error {
+	if s.Minimum != nil {
+		if n < *s.Minimum {
+			return Errorf("minimum", "number %v is less than minimum value of %v", n, *s.Minimum)
+		} else if n == *s.Minimum && s.ExclusiveMinimum != nil && s.ExclusiveMinimum.B {
+			return Errorf("minimum", "number %v equals minimum value of %v and exclusive minimum is true", n, *s.Minimum)
+		}
+	}
+	if s.ExclusiveMinimum != nil && s.ExclusiveMinimum.IsA() {
+		if n < s.ExclusiveMinimum.A {
+			return Errorf("exclusiveMinimum", "number %v is less than minimum value of %v", n, s.ExclusiveMinimum.A)
+		} else if n == s.ExclusiveMinimum.A {
+			return Errorf("exclusiveMinimum", "number %v equals minimum value of %v", n, s.ExclusiveMinimum.A)
+		}
+	}
+	return nil
+}
+
+func validateNumberMaximum(n float64, s *schema.Schema) error {
+	if s.Maximum != nil {
+		if n > *s.Maximum {
+			return Errorf("maximum", "number %v exceeds maximum value of %v", n, *s.Maximum)
+		} else if n == *s.Maximum && s.ExclusiveMaximum != nil && s.ExclusiveMaximum.B {
+			return Errorf("maximum", "number %v equals maximum value of %v and exclusive maximum is true", n, *s.Maximum)
+		}
+	}
+	if s.ExclusiveMaximum != nil && s.ExclusiveMaximum.IsA() {
+		if n > s.ExclusiveMaximum.A {
+			return Errorf("exclusiveMaximum", "number %v exceeds maximum value of %v", n, s.ExclusiveMaximum.A)
+		} else if n == s.ExclusiveMaximum.A {
+			return Errorf("exclusiveMaximum", "number %v equals maximum value of %v", n, s.ExclusiveMaximum.A)
+		}
+	}
 	return nil
 }

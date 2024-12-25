@@ -120,7 +120,7 @@ func TestFromRequest_Header(t *testing.T) {
 				return r
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
-				require.EqualError(t, err, "parse header parameter 'debug' failed: parse 'foo' failed, expected schema type=integer")
+				require.EqualError(t, err, "parse header parameter 'debug' failed: found 1 error:\ninvalid type, expected integer but got string\nschema path #/type")
 				require.Len(t, result[parameter.Header], 0)
 			},
 		},
@@ -168,7 +168,7 @@ func TestFromRequest_Header(t *testing.T) {
 				return r
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
-				require.EqualError(t, err, "parse header parameter 'foo' failed: parse 'foo' failed, expected schema type=integer")
+				require.EqualError(t, err, "parse header parameter 'foo' failed: found 1 error:\ninvalid type, expected integer but got string\nschema path #/type")
 				require.Len(t, result[parameter.Header], 0)
 			},
 		},
@@ -255,7 +255,7 @@ func TestFromRequest_Header(t *testing.T) {
 				return r
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
-				require.EqualError(t, err, "parse header parameter 'foo' failed: parse property 'age' failed: parse 'Alex' failed, expected schema type=number")
+				require.EqualError(t, err, "parse header parameter 'foo' failed: parse property 'age' failed: found 1 error:\ninvalid type, expected number but got string\nschema path #/type")
 				require.Len(t, result[parameter.Header], 0)
 			},
 		},

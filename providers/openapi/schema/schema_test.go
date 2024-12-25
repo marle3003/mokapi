@@ -771,7 +771,7 @@ func TestSchema_IsFreeForm(t *testing.T) {
 			"object with empty additional properties",
 			func(t *testing.T) {
 				s := schematest.New("object")
-				s.AdditionalProperties = &schema.AdditionalProperties{}
+				s.AdditionalProperties = &schema.Ref{}
 				require.True(t, s.IsFreeForm())
 			},
 		},

@@ -56,7 +56,7 @@ func TestHandler_Response(t *testing.T) {
 			},
 			test: func(t *testing.T, rr *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, rr.Code)
-				require.Equal(t, "encoding data to 'application/json' failed: value 'foo' does not match format 'date' (RFC3339), expected schema type=string format=date\n", rr.Body.String())
+				require.Equal(t, "encoding data to 'application/json' failed: found 1 error:\nstring 'foo' does not match format 'date'\nschema path #/format\n", rr.Body.String())
 			},
 		},
 		{

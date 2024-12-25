@@ -31,7 +31,7 @@ func TestSchema_Patch(t *testing.T) {
 				{Type: jsonSchema.Types{"integer"}},
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, "[string integer]", result.Type.String())
+				require.Equal(t, "[string, integer]", result.Type.String())
 			},
 		},
 		{
@@ -510,7 +510,7 @@ func TestSchema_Patch(t *testing.T) {
 				require.Equal(t, 1, result.Properties.Len())
 				foo := result.Properties.Get("foo")
 				require.NotNil(t, foo)
-				require.Equal(t, "[string number]", foo.Value.Type.String())
+				require.Equal(t, "[string, number]", foo.Value.Type.String())
 			},
 		},
 		{
@@ -537,32 +537,32 @@ func TestSchema_Patch(t *testing.T) {
 			name: "patch additionalProperties",
 			schemas: []*schema.Schema{
 				{},
-				{AdditionalProperties: &schema.AdditionalProperties{Forbidden: true}},
+				{AdditionalProperties: &schema.Ref{Boolean: toBoolP(false)}},
 			},
 			test: func(t *testing.T, result *schema.Schema) {
 				require.NotNil(t, result.AdditionalProperties)
-				require.Equal(t, true, result.AdditionalProperties.Forbidden)
+				require.Equal(t, false, *result.AdditionalProperties.Boolean)
 			},
 		},
 		{
 			name: "patch overwrite additionalProperties",
 			schemas: []*schema.Schema{
-				{AdditionalProperties: &schema.AdditionalProperties{Forbidden: true}},
-				{AdditionalProperties: &schema.AdditionalProperties{Forbidden: false}},
+				{AdditionalProperties: &schema.Ref{Boolean: toBoolP(false)}},
+				{AdditionalProperties: &schema.Ref{Boolean: toBoolP(true)}},
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, false, result.AdditionalProperties.Forbidden)
+				require.Equal(t, true, *result.AdditionalProperties.Boolean)
 			},
 		},
 		{
 			name: "patch overwrite additionalProperties schema",
 			schemas: []*schema.Schema{
-				{AdditionalProperties: &schema.AdditionalProperties{Ref: schematest.NewRef("string")}},
-				{AdditionalProperties: &schema.AdditionalProperties{Ref: schematest.NewRef("integer")}},
+				{AdditionalProperties: schematest.NewRef("string")},
+				{AdditionalProperties: schematest.NewRef("integer")},
 			},
 			test: func(t *testing.T, result *schema.Schema) {
 				require.NotNil(t, result.AdditionalProperties.Ref)
-				require.Equal(t, jsonSchema.Types{"string", "integer"}, result.AdditionalProperties.Ref.Value.Type)
+				require.Equal(t, jsonSchema.Types{"string", "integer"}, result.AdditionalProperties.Value.Type)
 			},
 		},
 		{

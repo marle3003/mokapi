@@ -60,7 +60,7 @@ func TestParser_NoType(t *testing.T) {
 				schematest.WithMaxLength(10),
 			),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "length of 'foobar1234567' is too long, expected maxLength=10")
+				require.EqualError(t, err, "found 1 error:\nstring 'foobar1234567' exceeds maximum of 10\nschema path #/maxLength")
 			},
 		},
 		{
@@ -68,7 +68,7 @@ func TestParser_NoType(t *testing.T) {
 			data:   nil,
 			schema: schematest.New("string"),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "parse NULL failed, expected schema type=string")
+				require.EqualError(t, err, "found 1 error:\nparse NULL failed, expected schema type=string")
 			},
 		},
 		{

@@ -33,7 +33,7 @@ func TestParser_ParseAny(t *testing.T) {
 				schematest.New("string"),
 				schematest.New("integer")),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "parse 12.6 failed, expected any of schema type=string, schema type=integer")
+				require.EqualError(t, err, "found 1 error:\nparse 12.6 failed, expected any of schema type=string, schema type=integer")
 			},
 		},
 		{
@@ -165,7 +165,7 @@ func TestParser_ParseAny(t *testing.T) {
 			require.NoError(t, err)
 
 			p := &Parser{}
-			r, err := p.ParseAny(tc.schema, v)
+			r, err := p.Parse(v, &schema.Ref{Value: tc.schema})
 
 			tc.test(t, r, err)
 		})

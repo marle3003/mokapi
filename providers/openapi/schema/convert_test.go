@@ -223,16 +223,16 @@ func TestConvert(t *testing.T) {
 			name: "additionalProperties forbidden",
 			s:    schematest.New("object", schematest.WithFreeForm(false)),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
-				require.Nil(t, s.AdditionalProperties.Ref)
-				require.Equal(t, true, s.AdditionalProperties.Forbidden)
+				require.Nil(t, s.AdditionalProperties.Value)
+				require.Equal(t, false, *s.AdditionalProperties.Boolean)
 			},
 		},
 		{
 			name: "additionalProperties free-form",
 			s:    schematest.New("object", schematest.WithFreeForm(true)),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
-				require.Nil(t, s.AdditionalProperties.Ref)
-				require.Equal(t, false, s.AdditionalProperties.Forbidden)
+				require.Nil(t, s.AdditionalProperties.Value)
+				require.Equal(t, true, *s.AdditionalProperties.Boolean)
 			},
 		},
 		{

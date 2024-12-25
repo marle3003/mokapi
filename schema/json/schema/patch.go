@@ -1,18 +1,24 @@
 package schema
 
 func (r *Ref) Patch(patch *Ref) {
-	if patch == nil || patch.Value == nil {
+	if patch == nil {
 		return
+	}
+	if patch.Boolean != nil {
+		r.Boolean = patch.Boolean
 	}
 	if r.Value == nil {
 		r.Value = patch.Value
-		return
+	} else {
+		r.Value.Patch(patch.Value)
 	}
-
-	r.Value.Patch(patch.Value)
 }
 
 func (s *Schema) Patch(patch *Schema) {
+	if patch == nil {
+		return
+	}
+
 	if len(patch.Type) > 0 {
 		s.Type = mergeTypes(s.Type, patch.Type)
 	}
@@ -77,7 +83,11 @@ func (s *Schema) Patch(patch *Schema) {
 		s.Required = patch.Required
 	}
 
-	s.AdditionalProperties.Patch(patch.AdditionalProperties)
+	if s.AdditionalProperties == nil {
+		s.AdditionalProperties = patch.AdditionalProperties
+	} else {
+		s.AdditionalProperties.Patch(patch.AdditionalProperties)
+	}
 
 	if patch.MinProperties != nil {
 		s.MinProperties = patch.MinProperties

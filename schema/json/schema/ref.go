@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"encoding/json"
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
@@ -9,7 +10,8 @@ import (
 
 type Ref struct {
 	ref.Reference
-	Value *Schema
+	Boolean *bool
+	Value   *Schema
 }
 
 func (r *Ref) IsAny() bool {
@@ -40,10 +42,6 @@ func (r *Ref) IsNullable() bool {
 	return r != nil && r.Value != nil && r.Value.IsNullable()
 }
 
-func (r *Ref) IsDictionary() bool {
-	return r != nil && r.Value != nil && r.Value.IsDictionary()
-}
-
 func (r *Ref) HasProperties() bool {
 	return r != nil && r.Value != nil && r.Value.HasProperties()
 }
@@ -57,13 +55,10 @@ func (r *Ref) IsOneOf(typeNames ...string) bool {
 }
 
 func (r *Ref) Type() string {
-	if r == nil || r.Value == nil || len(r.Value.Type) == 0 {
+	if r == nil || r.Value == nil {
 		return ""
 	}
-	if len(r.Value.Type) == 1 {
-		return r.Value.Type[0]
-	}
-	return fmt.Sprintf("%v", r.Value.Type)
+	return fmt.Sprintf("%s", r.Value.Type)
 }
 
 func (r *Ref) String() string {
@@ -88,10 +83,46 @@ func (r *Ref) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	return r.Value.Parse(config, reader)
 }
 
+func (r *Ref) IsFreeForm() bool {
+	if r == nil {
+		return true
+	}
+	if r.Boolean != nil {
+		return *r.Boolean
+	}
+	return r.Value.IsFreeForm()
+}
+
 func (r *Ref) UnmarshalJSON(b []byte) error {
+	var boolVal bool
+	if err := json.Unmarshal(b, &boolVal); err == nil {
+		r.Boolean = &boolVal
+		return nil
+	}
+
 	return r.UnmarshalJson(b, &r.Value)
 }
 
 func (r *Ref) UnmarshalYAML(node *yaml.Node) error {
+	var boolVal bool
+	if err := node.Decode(&boolVal); err == nil {
+		r.Boolean = &boolVal
+		return nil
+	}
+
 	return r.UnmarshalYaml(node, &r.Value)
+}
+
+func NewRef(b bool) *Ref {
+	return &Ref{Boolean: &b}
+}
+
+func (r *Ref) IsFalse() bool {
+	if r == nil {
+		return false
+	}
+	if r.Boolean != nil {
+		return !*r.Boolean
+	}
+	return r.Value.IsFalse()
 }

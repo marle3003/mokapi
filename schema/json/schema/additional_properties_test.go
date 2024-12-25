@@ -17,7 +17,7 @@ func TestAdditionalProperties_Unmarshal(t *testing.T) {
 			s:    `{ "type": "object", "additionalProperties": true }`,
 			test: func(t *testing.T, r *Ref, err error) {
 				require.NoError(t, err)
-				require.False(t, r.Value.AdditionalProperties.Forbidden)
+				require.True(t, r.Value.AdditionalProperties.IsFreeForm())
 			},
 		},
 		{
@@ -25,7 +25,7 @@ func TestAdditionalProperties_Unmarshal(t *testing.T) {
 			s:    `{ "type": "object", "additionalProperties": false }`,
 			test: func(t *testing.T, r *Ref, err error) {
 				require.NoError(t, err)
-				require.True(t, r.Value.AdditionalProperties.Forbidden)
+				require.False(t, r.Value.AdditionalProperties.IsFreeForm())
 			},
 		},
 		{

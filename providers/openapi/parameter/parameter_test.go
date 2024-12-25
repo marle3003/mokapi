@@ -425,7 +425,7 @@ func TestParameters_Patch(t *testing.T) {
 			},
 			test: func(t *testing.T, result parameter.Parameters) {
 				require.Len(t, result, 1)
-				require.Equal(t, "[number string]", result[0].Value.Schema.Value.Type.String())
+				require.Equal(t, "[number, string]", result[0].Value.Schema.Value.Type.String())
 			},
 		},
 		{

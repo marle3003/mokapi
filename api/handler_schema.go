@@ -295,10 +295,10 @@ func (c *schemaConverter) getSchema(s *schema.Ref) *schemaInfo {
 	}
 
 	if s.Value.AdditionalProperties != nil {
-		if s.Value.AdditionalProperties.Forbidden {
-			result.AdditionalProperties = !s.Value.AdditionalProperties.Forbidden
-		} else if s.Value.AdditionalProperties.Ref != nil {
-			result.AdditionalProperties = getSchema(s.Value.AdditionalProperties.Ref)
+		if s.Value.AdditionalProperties.Boolean != nil {
+			result.AdditionalProperties = *s.Value.AdditionalProperties.Boolean
+		} else if s.Value.AdditionalProperties.Value != nil {
+			result.AdditionalProperties = getSchema(s.Value.AdditionalProperties)
 		}
 	}
 
@@ -394,9 +394,9 @@ func toSchema(s *schemaInfo) *schema.Schema {
 
 	if s.AdditionalProperties != nil {
 		if b, ok := s.AdditionalProperties.(bool); ok {
-			result.AdditionalProperties = &schema.AdditionalProperties{Forbidden: !b}
+			result.AdditionalProperties = &schema.Ref{Boolean: &b}
 		} else if additional, ok := s.AdditionalProperties.(*schemaInfo); ok {
-			result.AdditionalProperties.Ref = &schema.Ref{Value: toSchema(additional)}
+			result.AdditionalProperties = &schema.Ref{Value: toSchema(additional)}
 		}
 	}
 
@@ -504,10 +504,12 @@ func (c *jsonSchemaConverter) getSchema(s *jsonSchema.Ref) *schemaInfo {
 		result.OneOf = append(result.AnyOf, c.getSchema(one))
 	}
 
-	if s.Value.AdditionalProperties.Forbidden {
-		result.AdditionalProperties = !s.Value.AdditionalProperties.Forbidden
-	} else if s.Value.AdditionalProperties.Ref != nil {
-		result.AdditionalProperties = c.getSchema(s.Value.AdditionalProperties.Ref)
+	if s.Value.AdditionalProperties != nil {
+		if s.Value.AdditionalProperties.Boolean != nil {
+			result.AdditionalProperties = *s.Value.AdditionalProperties.Boolean
+		} else if s.Value.AdditionalProperties.Value != nil {
+			result.AdditionalProperties = c.getSchema(s.Value.AdditionalProperties)
+		}
 	}
 
 	return result

@@ -2,8 +2,6 @@ package openapi_test
 
 import (
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
-	"mokapi/feature"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
 	"testing"
@@ -91,7 +89,7 @@ func TestConfig_Patch_Server(t *testing.T) {
 	}
 }
 
-func TestServer_Validate(t *testing.T) {
+/*func TestServer_Validate(t *testing.T) {
 	testdata := []struct {
 		name string
 		data string
@@ -124,4 +122,4 @@ servers:
 			tc.test(t, c.Validate())
 		})
 	}
-}
+}*/

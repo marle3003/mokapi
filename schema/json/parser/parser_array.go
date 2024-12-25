@@ -15,7 +15,7 @@ func (p *Parser) ParseArray(data interface{}, s *schema.Schema) (interface{}, er
 		result = make([]interface{}, len(list))
 		for i, e := range list {
 			var err error
-			result[i], err = p.Parse(e, s.Items)
+			result[i], err = p.parse(e, s.Items)
 			if err != nil {
 				return nil, err
 			}
@@ -23,7 +23,7 @@ func (p *Parser) ParseArray(data interface{}, s *schema.Schema) (interface{}, er
 	case map[interface{}]interface{}:
 		result = make([]interface{}, len(list))
 		for _, v := range list {
-			if i, err := p.Parse(v, s.Items); err != nil {
+			if i, err := p.parse(v, s.Items); err != nil {
 				return nil, err
 			} else {
 				result = append(result, i)
@@ -45,7 +45,7 @@ func (p *Parser) ParseArray(data interface{}, s *schema.Schema) (interface{}, er
 		result = make([]interface{}, 0)
 		for i := 0; i < v.Len(); i++ {
 			o := v.Index(i)
-			v, errItem := p.Parse(o.Interface(), s.Items)
+			v, errItem := p.parse(o.Interface(), s.Items)
 			if errItem != nil {
 				err = errors.Join(err, errItem)
 			} else {

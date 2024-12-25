@@ -174,7 +174,7 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				h(rr, r)
 				require.Equal(t, 500, rr.Code)
-				require.Equal(t, "read request body 'application/json' failed: length of 'foo' is too short, expected schema type=string minLength=4\n", rr.Body.String())
+				require.Equal(t, "read request body 'application/json' failed: found 1 error:\nstring 'foo' is less than minimum of 4\nschema path #/minLength\n", rr.Body.String())
 			},
 		},
 		//

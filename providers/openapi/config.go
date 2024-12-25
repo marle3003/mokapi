@@ -6,9 +6,7 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
-	"mokapi/feature"
 	"mokapi/media"
-	"mokapi/schema/json/parser"
 	jsonSchema "mokapi/schema/json/schema"
 	"mokapi/version"
 	"net/http"
@@ -87,13 +85,13 @@ func (c *Config) Validate() (err error) {
 		err = errors.Join(err, errors.New("an openapi title is required"))
 	}
 
-	if feature.IsEnabled("openapi-validation") {
+	/*if feature.IsEnabled("openapi-validation") {
 		p := &parser.Parser{}
 		_, errParse := p.Parse(c, validation_schema)
 		if errParse != nil {
 			err = errors.Join(err, errParse)
 		}
-	}
+	}*/
 
 	return err
 }

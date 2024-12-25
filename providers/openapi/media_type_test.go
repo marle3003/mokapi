@@ -256,7 +256,7 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
 				mt := res.Content["text/html"]
-				require.Equal(t, "[string object]", mt.Schema.Value.Type.String())
+				require.Equal(t, "[string, object]", mt.Schema.Value.Type.String())
 			},
 		},
 		{

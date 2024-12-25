@@ -166,7 +166,7 @@ func TestPartition_Write_Value_Validator(t *testing.T) {
 	require.EqualError(t, err, "validation error")
 	require.Len(t, recordsWithError, 1)
 	require.Equal(t, int32(0), recordsWithError[0].BatchIndex)
-	require.Equal(t, "parse 12 failed, expected schema type=string", recordsWithError[0].BatchIndexErrorMessage)
+	require.Equal(t, "found 1 error:\ninvalid type, expected string but got number\nschema path #/type", recordsWithError[0].BatchIndexErrorMessage)
 	require.Equal(t, int64(0), offset)
 	require.Equal(t, int64(0), p.Offset())
 	require.Equal(t, int64(0), p.StartOffset())

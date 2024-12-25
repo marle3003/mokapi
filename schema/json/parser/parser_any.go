@@ -7,13 +7,16 @@ import (
 	"mokapi/sortedmap"
 )
 
-func (p *Parser) ParseAny(s *schema.Schema, data interface{}) (interface{}, error) {
+func (p *Parser) ParseAny(s *schema.Schema, data interface{}, evaluated map[string]bool) (interface{}, error) {
 	var result *sortedmap.LinkedHashMap[string, interface{}]
+	p2 := *p
+	p2.ValidateAdditionalProperties = true
 
 	isFreeFormUsed := false
+NextAny:
 	for _, any := range s.AnyOf {
 		if any == nil || any.Value == nil {
-			return p.Parse(data, nil)
+			return p.parse(data, nil)
 		}
 
 		if any.Value.IsFreeForm() {
@@ -22,22 +25,26 @@ func (p *Parser) ParseAny(s *schema.Schema, data interface{}) (interface{}, erro
 			copySchema := *any.Value
 			any = &schema.Ref{Value: &copySchema}
 			isFreeFormUsed = true
-			any.Value.AdditionalProperties = schema.AdditionalProperties{Forbidden: true}
+			any.Value.AdditionalProperties = schema.NewRef(false)
 		}
 
 		if !any.IsObject() {
-			r, err := p.Parse(data, any)
+			r, err := p2.parse(data, any)
 			if err == nil {
 				return r, nil
 			}
 			continue
 		}
-		o, err := p.ParseObject(data, any.Value)
+		eval := map[string]bool{}
+		o, err := p2.parseObject(data, any.Value, eval)
 		if err != nil {
-			var additionalError *AdditionalPropertiesNotAllowed
-			if errors.As(err, &additionalError) {
-				if additionalError.Schema != any.Value {
-					continue
+			var list *PathErrors
+			if errors.As(err, &list) {
+				for _, e := range *list {
+					var pathError *PathError
+					if !errors.As(e, &pathError) || pathError.Path != "additionalProperties" {
+						continue NextAny
+					}
 				}
 			} else {
 				continue
@@ -52,6 +59,10 @@ func (p *Parser) ParseAny(s *schema.Schema, data interface{}) (interface{}, erro
 				}
 			}
 		}
+
+		for k, v := range eval {
+			evaluated[k] = v
+		}
 	}
 
 	if isFreeFormUsed {
@@ -62,7 +73,7 @@ func (p *Parser) ParseAny(s *schema.Schema, data interface{}) (interface{}, erro
 			result = sortedmap.NewLinkedHashMap()
 		}
 
-		obj, _ := p.ParseObject(data, &schema.Schema{Type: schema.Types{"object"}})
+		obj, _ := p.parseObject(data, &schema.Schema{Type: schema.Types{"object"}}, evaluated)
 		if obj != nil {
 			for it := obj.Iter(); it.Next(); {
 				if _, found := result.Get(it.Key()); !found {

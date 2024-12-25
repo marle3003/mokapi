@@ -1,14 +1,17 @@
 package schema
 
 import (
+	"encoding/json"
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/schema/json/schema"
 	"strings"
 )
 
 type Schema struct {
-	Schema string `yaml:"$schema,omitempty" json:"$schema,omitempty"`
+	Schema  string `yaml:"$schema,omitempty" json:"$schema,omitempty"`
+	Boolean *bool  `yaml:"-" json:"-"`
 
 	Type  schema.Types `yaml:"type" json:"type"`
 	AnyOf []*Ref       `yaml:"anyOf" json:"anyOf"`
@@ -41,11 +44,11 @@ type Schema struct {
 	ShuffleItems bool `yaml:"x-shuffleItems" json:"x-shuffleItems"`
 
 	// Object
-	Properties           *Schemas              `yaml:"properties" json:"properties"`
-	Required             []string              `yaml:"required" json:"required"`
-	AdditionalProperties *AdditionalProperties `yaml:"additionalProperties,omitempty" json:"additionalProperties,omitempty"`
-	MinProperties        *int                  `yaml:"minProperties" json:"minProperties"`
-	MaxProperties        *int                  `yaml:"maxProperties" json:"maxProperties"`
+	Properties           *Schemas `yaml:"properties" json:"properties"`
+	Required             []string `yaml:"required" json:"required"`
+	AdditionalProperties *Ref     `yaml:"additionalProperties,omitempty" json:"additionalProperties,omitempty"`
+	MinProperties        *int     `yaml:"minProperties" json:"minProperties"`
+	MaxProperties        *int     `yaml:"maxProperties" json:"maxProperties"`
 
 	// Annotations
 	Title       string        `yaml:"title" json:"title"`
@@ -232,7 +235,7 @@ func (s *Schema) IsFreeForm() bool {
 }
 
 func (s *Schema) IsDictionary() bool {
-	return s.AdditionalProperties != nil && s.AdditionalProperties.Ref != nil && s.AdditionalProperties.Value != nil && len(s.AdditionalProperties.Value.Type) > 0
+	return s.AdditionalProperties != nil && s.AdditionalProperties.Value != nil && len(s.AdditionalProperties.Value.Type) > 0
 }
 
 func (s *Schema) IsNullable() bool {
@@ -244,4 +247,38 @@ func (s *Schema) ConvertTo(i interface{}) (interface{}, error) {
 		return ConvertToJsonSchema(&Ref{Value: s}).Value, nil
 	}
 	return nil, fmt.Errorf("cannot convert %v to json schema", i)
+}
+
+func (s *Schema) UnmarshalJSON(b []byte) error {
+	var boolVal bool
+	if err := json.Unmarshal(b, &boolVal); err == nil {
+		s.Boolean = &boolVal
+		return nil
+	}
+
+	type alias Schema
+	a := alias{}
+	err := dynamic.UnmarshalJSON(b, &a)
+	if err != nil {
+		return err
+	}
+	*s = Schema(a)
+	return nil
+}
+
+func (s *Schema) UnmarshalYAML(node *yaml.Node) error {
+	var boolVal bool
+	if err := node.Decode(&boolVal); err == nil {
+		s.Boolean = &boolVal
+		return nil
+	}
+
+	type alias Schema
+	a := alias{}
+	err := node.Decode(&a)
+	if err != nil {
+		return err
+	}
+	*s = Schema(a)
+	return nil
 }

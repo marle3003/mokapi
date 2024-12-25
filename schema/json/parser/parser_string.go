@@ -1,14 +1,14 @@
 package parser
 
 import (
-	"fmt"
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	"mokapi/schema/json/schema"
 	"mokapi/version"
 	"net"
 	"net/mail"
-	"reflect"
 	"regexp"
+	"regexp/syntax"
 	"strings"
 	"time"
 )
@@ -24,80 +24,86 @@ func (p *Parser) ParseString(data interface{}, schema *schema.Schema) (interface
 		if v == nil && schema.IsNullable() {
 			return nil, nil
 		}
-		return nil, fmt.Errorf("parse %v failed, expected %v", data, schema)
+		return nil, Errorf("type", "invalid type, expected %v but got %v", schema.Type, toType(data))
 	}
 
-	return s, validateString(s, schema)
+	return s, validateString(s, schema, p.SkipValidationFormatKeyword)
 }
 
-func validateString(i interface{}, s *schema.Schema) error {
-	v := reflect.ValueOf(i)
-	if v.Kind() != reflect.String {
-		return fmt.Errorf("validation error on %v, expected %v", v.Kind(), s)
-	}
-
-	str := i.(string)
-	switch s.Format {
-	case "date":
-		_, err := time.Parse("2006-01-02", str)
-		if err != nil {
-			return fmt.Errorf("value '%v' does not match format 'date' (RFC3339), expected %v", str, s)
+func validateString(str string, s *schema.Schema, skipValidationFormatKeyword bool) error {
+	if !skipValidationFormatKeyword {
+		switch s.Format {
+		case "date":
+			_, err := time.Parse("2006-01-02", str)
+			if err != nil {
+				return Errorf("format", "string '%v' does not match format 'date'", str)
+			}
+		case "date-time":
+			_, err := time.Parse(time.RFC3339, str)
+			if err != nil {
+				return Errorf("format", "string '%v' does not match format 'date-time'", str)
+			}
+		case "time":
+			_, err := time.Parse("15:04:05Z07:00", str)
+			if err != nil {
+				return Errorf("format", "string '%v' does not match format 'time'", str)
+			}
+		case "duration":
+			err := ParseDuration(str)
+			if err != nil {
+				return Errorf("format", "string '%v' does not match format 'duration'", str)
+			}
+		case "email":
+			_, err := mail.ParseAddress(str)
+			if err != nil {
+				return Errorf("format", "string '%v' does not match format 'email'", str)
+			}
+		case "uuid":
+			_, err := uuid.Parse(str)
+			if err != nil {
+				return Errorf("format", "string '%v' does not match format 'uuid'", str)
+			}
+		case "ipv4":
+			ip := net.ParseIP(str)
+			if ip == nil {
+				return Errorf("format", "string '%v' does not match format 'ipv4'", str)
+			}
+			if len(strings.Split(str, ".")) != 4 {
+				return Errorf("format", "string '%v' does not match format 'ipv4'", str)
+			}
+		case "ipv6":
+			ip := net.ParseIP(str)
+			if ip == nil {
+				return Errorf("format", "string '%v' does not match format 'ipv6'", str)
+			}
+			if len(strings.Split(str, ":")) != 8 {
+				return Errorf("format", "string '%v' does not match format 'ipv6'", str)
+			}
 		}
-		return nil
-	case "date-time":
-		_, err := time.Parse(time.RFC3339, str)
-		if err != nil {
-			return fmt.Errorf("value '%v' does not match format 'date-time' (RFC3339), expected %v", str, s)
-		}
-		return nil
-	case "email":
-		_, err := mail.ParseAddress(str)
-		if err != nil {
-			return fmt.Errorf("value '%v' does not match format 'email', expected %v", str, s)
-		}
-		return nil
-	case "uuid":
-		_, err := uuid.Parse(str)
-		if err != nil {
-			return fmt.Errorf("value '%v' does not match format 'uuid', expected %v", str, s)
-		}
-		return nil
-	case "ipv4":
-		ip := net.ParseIP(str)
-		if ip == nil {
-			return fmt.Errorf("value '%v' does not match format 'ipv4', expected %v", str, s)
-		}
-		if len(strings.Split(str, ".")) != 4 {
-			return fmt.Errorf("value '%v' does not match format 'ipv4', expected %v", str, s)
-		}
-		return nil
-	case "ipv6":
-		ip := net.ParseIP(str)
-		if ip == nil {
-			return fmt.Errorf("value '%v' does not match format 'ipv6', expected %v", str, s)
-		}
-		if len(strings.Split(str, ":")) != 8 {
-			return fmt.Errorf("value '%v' does not match format 'ipv6', expected %v", str, s)
-		}
-		return nil
 	}
 
 	if len(s.Pattern) > 0 {
 		p, err := regexp.Compile(s.Pattern)
 		if err != nil {
-			return err
+			var sErr *syntax.Error
+			var msg string
+			if errors.As(err, &sErr) {
+				msg = sErr.Code.String()
+			} else {
+				msg = err.Error()
+			}
+			return Errorf("pattern", "validate string '%s' with regex pattern '%s' failed: error parsing regex: %s", str, s.Pattern, msg)
 		}
-		if p.MatchString(str) {
-			return nil
+		if !p.MatchString(str) {
+			return Errorf("pattern", "string '%v' does not match regex pattern '%v'", str, s.Pattern)
 		}
-		return fmt.Errorf("value '%v' does not match pattern, expected %v", str, s)
 	}
 
 	if s.MinLength != nil && *s.MinLength > len(str) {
-		return fmt.Errorf("length of '%v' is too short, expected %v", str, s)
+		return Errorf("minLength", "string '%v' is less than minimum of %v", str, *s.MinLength)
 	}
 	if s.MaxLength != nil && *s.MaxLength < len(str) {
-		return fmt.Errorf("length of '%v' is too long, expected %v", str, s)
+		return Errorf("maxLength", "string '%v' exceeds maximum of %v", str, *s.MaxLength)
 	}
 
 	if len(s.Enum) > 0 {
