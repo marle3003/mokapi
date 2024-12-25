@@ -69,7 +69,7 @@ let getMessage = async () => {
 	return new Promise(async (resolve, reject) => {
 	  setTimeout(() => {
 		resolve('foo');
-	  }, 500);
+	  }, 200);
 	});
 }
 `),
