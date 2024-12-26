@@ -5,6 +5,7 @@ import (
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 	"mokapi/schema/json/schematest"
+	"mokapi/sortedmap"
 	"testing"
 )
 
@@ -40,6 +41,17 @@ func TestParser_ParseObject(t *testing.T) {
 			),
 			test: func(t *testing.T, v interface{}, err error) {
 				require.EqualError(t, err, "found 2 errors:\ninvalid type, expected string but got integer\nschema path #/foo/type\ninvalid type, expected string but got integer\nschema path #/bar/type")
+			},
+		},
+		{
+			name: "property with default",
+			data: map[string]interface{}{},
+			schema: schematest.New("object",
+				schematest.WithProperty("foo", schematest.New("string", schematest.WithDefault("bar"))),
+			),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"foo": "bar"}, v)
 			},
 		},
 		{
@@ -267,6 +279,155 @@ func TestParser_ParseObject(t *testing.T) {
 				require.Equal(t, map[string]interface{}{"foo": "foobar", "bar": 12}, v)
 			},
 		},
+		{
+			name: "dependentSchemas error",
+			schema: schematest.New("object",
+				schematest.WithDependentSchemas("foo",
+					schematest.NewTypes(nil,
+						schematest.WithProperty("bar", schematest.New("string")),
+						schematest.WithRequired("bar"),
+					),
+				),
+			),
+			data: map[string]interface{}{"foo": "foobar"},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "found 1 error:\ndependencies for property 'foo' failed:\nrequired properties are missing: bar\nschema path #/dependentSchemas/foo/required")
+			},
+		},
+		{
+			name: "dependentSchemas",
+			schema: schematest.New("object",
+				schematest.WithDependentSchemas("foo",
+					schematest.NewTypes(nil,
+						schematest.WithProperty("bar", schematest.New("string")),
+						schematest.WithRequired("bar"),
+					),
+				),
+			),
+			data: map[string]interface{}{"foo": "foobar", "bar": "123"},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"foo": "foobar", "bar": "123"}, v)
+			},
+		},
+		{
+			name: "if-then then error",
+			schema: schematest.New("object",
+				schematest.WithIf(
+					schematest.NewRefTypes(nil,
+						schematest.WithProperty("foo", schematest.NewTypes(nil, schematest.WithConst("bar"))),
+					),
+				),
+				schematest.WithThen(
+					schematest.NewRefTypes(nil,
+						schematest.WithProperty("bar", schematest.New("string", schematest.WithPattern("[0-9]+"))),
+					),
+				),
+			),
+			data: map[string]interface{}{"foo": "bar", "bar": "abc"},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "found 1 error:\ndoes not match schema from 'then':\nstring 'abc' does not match regex pattern '[0-9]+'\nschema path #/then/bar/pattern")
+			},
+		},
+		{
+			name: "if-then if=false",
+			schema: schematest.New("object",
+				schematest.WithIf(
+					schematest.NewRefTypes(nil,
+						schematest.WithProperty("foo", schematest.NewTypes(nil, schematest.WithConst("bar"))),
+					),
+				),
+				schematest.WithThen(
+					schematest.NewRefTypes(nil,
+						schematest.WithProperty("bar", schematest.New("string", schematest.WithPattern("[0-9]+"))),
+					),
+				),
+			),
+			data: map[string]interface{}{"foo": "bar2", "bar": "abc"},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"foo": "bar2", "bar": "abc"}, v)
+			},
+		},
+		{
+			name: "if-then",
+			schema: schematest.New("object",
+				schematest.WithIf(
+					schematest.NewRefTypes(nil,
+						schematest.WithProperty("foo", schematest.NewTypes(nil, schematest.WithConst("bar"))),
+					),
+				),
+				schematest.WithThen(
+					schematest.NewRefTypes(nil,
+						schematest.WithProperty("bar", schematest.New("string", schematest.WithPattern("[0-9]+"))),
+					),
+				),
+			),
+			data: map[string]interface{}{"foo": "bar", "bar": "123"},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"foo": "bar", "bar": "123"}, v)
+			},
+		},
+		{
+			name: "if-else else error",
+			schema: schematest.New("object",
+				schematest.WithIf(
+					schematest.NewRefTypes(nil,
+						schematest.WithProperty("foo", schematest.NewTypes(nil, schematest.WithConst("bar"))),
+					),
+				),
+				schematest.WithElse(
+					schematest.NewRefTypes(nil,
+						schematest.WithProperty("zzz", schematest.New("string", schematest.WithPattern("[0-9]+"))),
+					),
+				),
+			),
+			data: map[string]interface{}{"foo": "bar2", "zzz": "abc"},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "found 1 error:\ndoes not match schema from 'else':\nstring 'abc' does not match regex pattern '[0-9]+'\nschema path #/else/zzz/pattern")
+			},
+		},
+		{
+			name: "if-then if=true",
+			schema: schematest.New("object",
+				schematest.WithIf(
+					schematest.NewRefTypes(nil,
+						schematest.WithProperty("foo", schematest.NewTypes(nil, schematest.WithConst("bar"))),
+					),
+				),
+				schematest.WithElse(
+					schematest.NewRefTypes(nil,
+						schematest.WithProperty("bar", schematest.New("string", schematest.WithPattern("[0-9]+"))),
+					),
+				),
+			),
+			data: map[string]interface{}{"foo": "bar", "bar": "abc"},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"foo": "bar", "bar": "abc"}, v)
+			},
+		},
+		{
+			name: "if-else if=true",
+			schema: schematest.New("object",
+				schematest.WithIf(
+					schematest.NewRefTypes(nil,
+						schematest.WithProperty("foo", schematest.NewTypes(nil, schematest.WithConst("bar"))),
+					),
+				),
+				schematest.WithElse(
+					schematest.NewRefTypes(nil,
+						schematest.WithProperty("bar", schematest.New("string", schematest.WithPattern("[0-9]+"))),
+					),
+				),
+			),
+			data: map[string]interface{}{"foo": "bar", "bar": "abc"},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"foo": "bar", "bar": "abc"}, v)
+			},
+		},
 	}
 
 	t.Parallel()
@@ -276,8 +437,27 @@ func TestParser_ParseObject(t *testing.T) {
 			t.Parallel()
 
 			p := &parser.Parser{ValidateAdditionalProperties: true}
-			v, err := p.Parse(tc.data, &schema.Ref{Value: tc.schema})
-			tc.test(t, v, err)
+
+			// test as map and as sorted map if data is a map
+			if m, ok := tc.data.(map[string]interface{}); ok {
+
+				t.Run("map", func(t *testing.T) {
+					v, err := p.Parse(tc.data, &schema.Ref{Value: tc.schema})
+					tc.test(t, v, err)
+				})
+
+				t.Run("sorted map", func(t *testing.T) {
+					sm := sortedmap.NewLinkedHashMap()
+					for key, val := range m {
+						sm.Set(key, val)
+					}
+					v, err := p.Parse(sm, &schema.Ref{Value: tc.schema})
+					tc.test(t, v, err)
+				})
+			} else {
+				v, err := p.Parse(tc.data, &schema.Ref{Value: tc.schema})
+				tc.test(t, v, err)
+			}
 		})
 	}
 }

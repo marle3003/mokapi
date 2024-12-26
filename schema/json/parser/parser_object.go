@@ -57,26 +57,85 @@ func (p *Parser) parseObject(data interface{}, s *schema.Schema, evaluated map[s
 
 func (p *Parser) parseLinkedMap(m *sortedmap.LinkedHashMap[string, interface{}], s *schema.Schema, evaluated map[string]bool) (*sortedmap.LinkedHashMap[string, interface{}], error) {
 	obj := sortedmap.NewLinkedHashMap()
-	for it := m.Iter(); it.Next(); {
-		name := it.Key()
+	var err PathErrors
 
-		var field *schema.Ref
-		if s.Properties != nil {
-			field = s.Properties.Get(name)
-		}
+	if s.HasProperties() {
+		for it := s.Properties.Iter(); it.Next(); {
+			name := it.Key()
+			prop := it.Value()
+			v, ok := m.Get(it.Key())
+			if !ok {
+				if prop.Value != nil && prop.Value.Default != nil {
+					obj.Set(name, prop.Value.Default)
+					evaluated[name] = true
+				}
+				continue
+			}
 
-		if field != nil || s.IsFreeForm() {
-			d, err := p.parse(it.Value(), field)
-			if err != nil {
-				return nil, err
+			d, valErr := p.parse(v, prop)
+			if valErr != nil {
+				err = append(err, wrapError(name, valErr))
 			}
 			obj.Set(name, d)
+			evaluated[name] = true
 		}
 	}
 
-	err := p.validateObject(obj, s)
+	if len(s.PatternProperties) > 0 {
+		for it := m.Iter(); it.Next(); {
+			key := it.Key()
+			value := it.Value()
+			if pErr := p.ValidatePatternProperty(key, value, s.PatternProperties); pErr != nil {
+				err = append(err, wrapError("patternProperties", pErr))
+			}
+			evaluated[key] = true
+		}
+	}
 
-	return obj, err
+	if !s.IsFreeForm() {
+		var additionalProps []string
+		for it := m.Iter(); it.Next(); {
+			name := fmt.Sprintf("%v", it.Key())
+			if _, found := obj.Get(name); !found {
+				if s.AdditionalProperties.IsFalse() {
+					if !p.ValidateAdditionalProperties {
+						continue
+					}
+					additionalProps = append(additionalProps, name)
+					continue
+				}
+
+				d, valErr := p.parse(it.Value(), s.AdditionalProperties)
+				if valErr != nil {
+					err = append(err, wrapError("additionalProperties", wrapError(name, valErr)))
+				}
+				obj.Set(name, d)
+				evaluated[name] = true
+			}
+		}
+		if len(additionalProps) > 0 {
+			sort.Strings(additionalProps)
+			err = append(err, wrapError("additionalProperties", &AdditionalPropertiesNotAllowed{Properties: additionalProps}))
+		}
+	} else {
+		for it := m.Iter(); it.Next(); {
+			name := fmt.Sprintf("%v", it.Key())
+			if _, found := obj.Get(name); !found {
+				obj.Set(name, it.Value())
+			}
+		}
+	}
+
+	valErr := p.validateObject(obj, s)
+	if valErr != nil {
+		err = append(err, valErr)
+	}
+
+	if len(err) > 0 {
+		return obj, &err
+	}
+
+	return obj, nil
 }
 
 func (p *Parser) parseStruct(v reflect.Value, s *schema.Schema, evaluated map[string]bool) (*sortedmap.LinkedHashMap[string, interface{}], error) {
@@ -97,6 +156,7 @@ func (p *Parser) parseStruct(v reflect.Value, s *schema.Schema, evaluated map[st
 				return nil, err
 			}
 			obj.Set(name, d)
+			evaluated[name] = true
 		}
 	}
 
@@ -112,11 +172,16 @@ func (p *Parser) parseMap(v reflect.Value, s *schema.Schema, evaluated map[strin
 	if s.HasProperties() {
 		for it := s.Properties.Iter(); it.Next(); {
 			name := it.Key()
+			prop := it.Value()
 			o := v.MapIndex(reflect.ValueOf(name))
 			if !o.IsValid() {
+				if prop.Value != nil && prop.Value.Default != nil {
+					obj.Set(name, prop.Value.Default)
+					evaluated[name] = true
+				}
 				continue
 			}
-			d, valErr := p.parse(o.Interface(), it.Value())
+			d, valErr := p.parse(o.Interface(), prop)
 			if valErr != nil {
 				err = append(err, wrapError(name, valErr))
 			}
@@ -216,18 +281,54 @@ func (p *Parser) validateObject(obj *sortedmap.LinkedHashMap[string, interface{}
 		}
 	}
 
-	if s.DependentRequired != nil {
-		for k, required := range s.DependentRequired {
-			if _, found := obj.Get(k); found {
-				missing := []string{}
-				for _, req := range required {
-					if _, found = obj.Get(req); !found {
-						missing = append(missing, req)
+	for k, required := range s.DependentRequired {
+		if _, found := obj.Get(k); found {
+			var missing []string
+			for _, req := range required {
+				if _, found = obj.Get(req); !found {
+					missing = append(missing, req)
+				}
+			}
+			if len(missing) > 0 {
+				err = append(err, Errorf("dependentRequired", "dependencies for property '%v' failed: missing required keys: %v.", k, strings.Join(missing, ", ")))
+			}
+		}
+	}
+
+	for k, required := range s.DependentSchemas {
+		if _, found := obj.Get(k); found {
+			_, reqErr := p.parse(obj, required)
+			if reqErr != nil {
+				pe := &PathCompositionError{
+					Path:    k,
+					Message: fmt.Sprintf("dependencies for property '%v' failed", k),
+				}
+				pe.append(reqErr)
+				err = append(err, wrapError("dependentSchemas", pe))
+			}
+		}
+	}
+
+	if s.If != nil {
+		if _, ifErr := p.parse(obj, s.If); ifErr == nil {
+			if s.Then != nil {
+				if _, thenErr := p.parse(obj, s.Then); thenErr != nil {
+					pe := &PathCompositionError{
+						Path:    "then",
+						Message: fmt.Sprintf("does not match schema from 'then'"),
 					}
+					pe.append(thenErr)
+					err = append(err, pe)
 				}
-				if len(missing) > 0 {
-					err = append(err, Errorf("dependentRequired", "dependencies for property '%v' failed: missing required keys: %v.", k, strings.Join(missing, ", ")))
+			}
+		} else if s.Else != nil {
+			if _, elseErr := p.parse(obj, s.Else); elseErr != nil {
+				pe := &PathCompositionError{
+					Path:    "else",
+					Message: fmt.Sprintf("does not match schema from 'else'"),
 				}
+				pe.append(elseErr)
+				err = append(err, pe)
 			}
 		}
 	}

@@ -355,16 +355,8 @@ func TestRef_Marshal_Json_AnyOf(t *testing.T) {
 			),
 			data: map[string]interface{}{"foo": "foo", "bar": "bar", "value": 12},
 			test: func(t *testing.T, result string, err error) {
-				s := &schema.Ref{Value: schematest.New("",
-					schematest.Any(
-						schematest.New("object", schematest.WithProperty("foo", schematest.New("integer")), schematest.WithFreeForm(false)),
-						schematest.New("object", schematest.WithProperty("bar", schematest.New("string")), schematest.WithFreeForm(false)),
-					))}
-				data := map[string]interface{}{"foo": "foo", "bar": "bar", "value": 12}
-
-				b, err := s.Marshal(data, media.ParseContentType("application/json"))
 				require.NoError(t, err)
-				require.Equal(t, `{"bar":"bar"}`, string(b))
+				require.Equal(t, `{"bar":"bar"}`, result)
 			},
 		},
 		{

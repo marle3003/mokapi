@@ -153,6 +153,18 @@ func TestParser_ParseAny(t *testing.T) {
 				require.Equal(t, map[string]interface{}{"foo": int64(12), "bar": float64(12)}, i)
 			},
 		},
+		{
+			name: "one with error",
+			s:    `{"foo": 12}`,
+			schema: schematest.NewAny(
+				schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
+				schematest.New("object", schematest.WithProperty("foo", schematest.New("integer"))),
+			),
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"foo": int64(12)}, i)
+			},
+		},
 	}
 
 	t.Parallel()

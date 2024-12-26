@@ -24,6 +24,15 @@ func NewTypes(typeNames []string, opts ...SchemaOptions) *schema.Schema {
 	return s
 }
 
+func NewRefTypes(typeNames []string, opts ...SchemaOptions) *schema.Ref {
+	s := new(schema.Schema)
+	s.Type = append(s.Type, typeNames...)
+	for _, opt := range opts {
+		opt(s)
+	}
+	return &schema.Ref{Value: s}
+}
+
 func NewRef(typeName string, opts ...SchemaOptions) *schema.Ref {
 	s := new(schema.Schema)
 	s.Type = append(s.Type, typeName)
@@ -368,5 +377,32 @@ func WithDependentRequired(prop string, required ...string) SchemaOptions {
 			s.DependentRequired = map[string][]string{}
 		}
 		s.DependentRequired[prop] = required
+	}
+}
+
+func WithDependentSchemas(prop string, dependentSchema *schema.Schema) SchemaOptions {
+	return func(s *schema.Schema) {
+		if s.DependentSchemas == nil {
+			s.DependentSchemas = map[string]*schema.Ref{}
+		}
+		s.DependentSchemas[prop] = &schema.Ref{Value: dependentSchema}
+	}
+}
+
+func WithIf(condition *schema.Ref) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.If = condition
+	}
+}
+
+func WithThen(condition *schema.Ref) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Then = condition
+	}
+}
+
+func WithElse(condition *schema.Ref) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Else = condition
 	}
 }

@@ -26,6 +26,7 @@ func (p *Parser) Parse(data interface{}, ref *schema.Ref) (interface{}, error) {
 			Err:       err,
 		}
 	}
+
 	return v, nil
 }
 
@@ -56,51 +57,64 @@ func (p *Parser) parse(data interface{}, ref *schema.Ref) (interface{}, error) {
 	evaluatedProperties := map[string]bool{}
 	evaluatedItems := map[int]bool{}
 
-	switch {
-	case len(ref.Value.AnyOf) > 0:
-		v, err := p.ParseAny(ref.Value, data, evaluatedProperties)
-		if err != nil {
-			return nil, err
-		}
-		data = v
-	case len(ref.Value.AllOf) > 0:
-		v, err := p.ParseAll(ref.Value, data, evaluatedProperties)
-		if err != nil {
-			return nil, err
-		}
-		data = v
-	case len(ref.Value.OneOf) > 0:
-		v, err := p.ParseOne(ref.Value, data)
-		if err != nil {
-			return nil, err
-		}
-		data = v
-	}
-
-	if len(ref.Value.Type) == 0 {
-		t := toType(data)
-		return p.parseType(data, ref.Value, t, evaluatedProperties, evaluatedItems)
-	}
-
 	var v interface{}
 	var err error
+	if len(ref.Value.Type) == 0 {
+		t := toType(data)
+		v, err = p.parseType(data, ref.Value, t, evaluatedProperties, evaluatedItems)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	for _, typeName := range ref.Value.Type {
 		v, err = p.parseType(data, ref.Value, typeName, evaluatedProperties, evaluatedItems)
 		if err != nil {
 			continue
 		}
-		v, err = p.evaluateUnevaluatedProperties(v, ref.Value, evaluatedProperties)
-		if err != nil {
-			continue
-		}
-		v, err = p.evaluateUnevaluatedItems(v, ref.Value, evaluatedItems)
-		if err != nil {
-			continue
-		}
-		return v, nil
+		break
 	}
 
-	return nil, err
+	if err != nil {
+		return nil, err
+	}
+
+	switch {
+	case len(ref.Value.AnyOf) > 0:
+		v, err = p.ParseAny(ref.Value, v, evaluatedProperties)
+		if err != nil {
+			return nil, err
+		}
+	case len(ref.Value.AllOf) > 0:
+		v, err = p.ParseAll(ref.Value, v, evaluatedProperties)
+		if err != nil {
+			return nil, err
+		}
+	case len(ref.Value.OneOf) > 0:
+		v, err = p.ParseOne(ref.Value, v)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	v, err = p.evaluateUnevaluatedProperties(v, ref.Value, evaluatedProperties)
+	if err != nil {
+		return nil, err
+	}
+	v, err = p.evaluateUnevaluatedItems(v, ref.Value, evaluatedItems)
+	if err != nil {
+		return nil, err
+	}
+
+	if m, ok := v.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
+		if p.ConvertToSortedMap {
+			v = m
+		} else {
+			v = m.ToMap()
+		}
+	}
+
+	return v, nil
 }
 
 func (p *Parser) parseType(data interface{}, s *schema.Schema, typeName string, evaluatedProperties map[string]bool, evaluatedItems map[int]bool) (interface{}, error) {
@@ -132,22 +146,14 @@ func (p *Parser) parseType(data interface{}, s *schema.Schema, typeName string, 
 	case "array":
 		data, err = p.ParseArray(data, s, evaluatedItems)
 	case "object":
-		var m *sortedmap.LinkedHashMap[string, interface{}]
-		m, err = p.parseObject(data, s, evaluatedProperties)
-		if err != nil {
-			return nil, err
-		}
-		if p.ConvertToSortedMap {
-			data = m
-		} else {
-			data = m.ToMap()
-		}
+		data, err = p.parseObject(data, s, evaluatedProperties)
 	}
 
 	if s.Const != nil {
 		s2 := *s
 		s2.Const = nil
-		c, constErr := p.parse(*s.Const, &schema.Ref{Value: &s2})
+		p2 := Parser{ConvertToSortedMap: true}
+		c, constErr := p2.parse(*s.Const, &schema.Ref{Value: &s2})
 		if constErr != nil {
 			return data, Errorf("const", "const value does not match schema: %v", constErr)
 		}
@@ -179,8 +185,10 @@ func (p *Parser) evaluateUnevaluatedProperties(data interface{}, schema *schema.
 	}
 	var err PathErrors
 
-	if object, ok := data.(map[string]interface{}); ok {
-		for name, val := range object {
+	if object, ok := data.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
+		for it := object.Iter(); it.Next(); {
+			name := it.Key()
+			val := it.Value()
 			if _, evaluated := evaluatedProperties[name]; !evaluated {
 				if schema.UnevaluatedProperties.Boolean != nil && !*schema.UnevaluatedProperties.Boolean {
 					err = append(err, Errorf("unevaluatedProperties", "property %s not successfully evaluated and schema does not allow unevaluated properties", name))
@@ -189,7 +197,7 @@ func (p *Parser) evaluateUnevaluatedProperties(data interface{}, schema *schema.
 					if evalErr != nil {
 						err = append(err, wrapError("unevaluatedProperties", evalErr))
 					} else {
-						object[name] = v
+						object.Set(name, v)
 					}
 				}
 			}

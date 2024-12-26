@@ -46,6 +46,7 @@ type Schema struct {
 	MinProperties         *int                `yaml:"minProperties,omitempty" json:"minProperties,omitempty"`
 	Required              []string            `yaml:"required,omitempty" json:"required,omitempty"`
 	DependentRequired     map[string][]string `yaml:"dependentRequired,omitempty" json:"dependentRequired,omitempty"`
+	DependentSchemas      map[string]*Ref     `yaml:"dependentSchemas,omitempty" json:"dependentSchemas,omitempty"`
 	AdditionalProperties  *Ref                `yaml:"additionalProperties,omitempty" json:"additionalProperties,omitempty"`
 	UnevaluatedProperties *Ref                `yaml:"unevaluatedProperties,omitempty" json:"unevaluatedProperties,omitempty"`
 	PropertyNames         *Ref                `yaml:"propertyNames,omitempty" json:"propertyNames,omitempty"`
@@ -54,6 +55,10 @@ type Schema struct {
 	AnyOf []*Ref `yaml:"anyOf,omitempty" json:"anyOf,omitempty"`
 	OneOf []*Ref `yaml:"oneOf,omitempty" json:"oneOf,omitempty"`
 	Not   *Ref   `yaml:"not,omitempty" json:"not,omitempty"`
+
+	If   *Ref `yaml:"if,omitempty" json:"if,omitempty"`
+	Then *Ref `yaml:"then,omitempty" json:"then,omitempty"`
+	Else *Ref `yaml:"else,omitempty" json:"else,omitempty"`
 
 	// Annotations
 	Title       string        `yaml:"title" json:"title"`

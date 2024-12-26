@@ -81,9 +81,13 @@ func (e *Error) Error() string {
 }
 
 func (e *PathCompositionError) Error() string {
+	return e.ToString("#")
+}
+
+func (e *PathCompositionError) ToString(path string) string {
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("%s:\n", e.Message))
-	path := fmt.Sprintf("#/%s", e.Path)
+	path = fmt.Sprintf("%s/%s", path, e.Path)
 	for i, err := range e.Errs {
 		if i > 0 {
 			sb.WriteString("\n")
@@ -100,7 +104,12 @@ func (e *PathCompositionError) Error() string {
 }
 
 func (e *PathCompositionError) append(err error) {
-	e.Errs = append(e.Errs, err)
+	var target *PathErrors
+	if errors.As(err, &target) {
+		e.Errs = append(e.Errs, *target...)
+	} else {
+		e.Errs = append(e.Errs, err)
+	}
 }
 
 func (e *PathErrors) Error() string {

@@ -262,3 +262,122 @@ func TestParser_ParseAll(t *testing.T) {
 		})
 	}
 }
+
+func TestParser_AllOf_If_Then(t *testing.T) {
+	s := schematest.New("object",
+		schematest.WithProperty("street_address", schematest.New("string")),
+		schematest.WithProperty("country", schematest.NewTypes(nil,
+			schematest.WithDefault("United States of America"),
+			schematest.WithEnum([]interface{}{"United States of America", "Canada", "Netherlands"}),
+		)),
+		schematest.WithAllOf(
+			schematest.NewTypes(nil,
+				schematest.WithIf(schematest.NewRefTypes(nil,
+					schematest.WithProperty("country", schematest.NewTypes(nil, schematest.WithConst("United States of America"))),
+				)),
+				schematest.WithThen(schematest.NewRefTypes(nil,
+					schematest.WithProperty("postal_code", schematest.NewTypes(nil, schematest.WithPattern("[0-9]{5}(-[0-9]{4})?"))),
+				)),
+			),
+			schematest.NewTypes(nil,
+				schematest.WithIf(schematest.NewRefTypes(nil,
+					schematest.WithProperty("country", schematest.NewTypes(nil, schematest.WithConst("Canada"))),
+				)),
+				schematest.WithThen(schematest.NewRefTypes(nil,
+					schematest.WithProperty("postal_code", schematest.NewTypes(nil, schematest.WithPattern("[A-Z][0-9][A-Z] [0-9][A-Z][0-9]"))),
+				)),
+			),
+			schematest.NewTypes(nil,
+				schematest.WithIf(schematest.NewRefTypes(nil,
+					schematest.WithProperty("country", schematest.NewTypes(nil, schematest.WithConst("Netherlands"))),
+				)),
+				schematest.WithThen(schematest.NewRefTypes(nil,
+					schematest.WithProperty("postal_code", schematest.NewTypes(nil, schematest.WithPattern("[0-9]{4} [A-Z]{2}"))),
+				)),
+			),
+		),
+	)
+
+	testcases := []struct {
+		name string
+		d    interface{}
+		test func(t *testing.T, v interface{}, err error)
+	}{
+		{
+			name: "USA",
+			d: map[string]interface{}{
+				"street_address": "1600 Pennsylvania Avenue NW",
+				"country":        "United States of America",
+				"postal_code":    "20500",
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+			},
+		},
+		{
+			name: "no country",
+			d: map[string]interface{}{
+				"street_address": "1600 Pennsylvania Avenue NW",
+				"postal_code":    "20500",
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+			},
+		},
+		{
+			name: "Canada",
+			d: map[string]interface{}{
+				"street_address": "24 Sussex Drive",
+				"country":        "Canada",
+				"postal_code":    "K1M 1M4",
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+			},
+		},
+		{
+			name: "Canada error",
+			d: map[string]interface{}{
+				"street_address": "24 Sussex Drive",
+				"country":        "Canada",
+				"postal_code":    "10000",
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "found 1 error:\ndoes not match all schemas from 'allOf':\ndoes not match schema from 'then':\nstring '10000' does not match regex pattern '[A-Z][0-9][A-Z] [0-9][A-Z][0-9]'\nschema path #/allOf/1/then/postal_code/pattern")
+			},
+		},
+		{
+			name: "Netherlands",
+			d: map[string]interface{}{
+				"street_address": "Adriaan Goekooplaan",
+				"country":        "Netherlands",
+				"postal_code":    "2517 JX",
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+			},
+		},
+		{
+			name: "default error",
+			d: map[string]interface{}{
+				"street_address": "1600 Pennsylvania Avenue NW",
+				"postal_code":    "K1M 1M4",
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "found 1 error:\ndoes not match all schemas from 'allOf':\ndoes not match schema from 'then':\nstring 'K1M 1M4' does not match regex pattern '[0-9]{5}(-[0-9]{4})?'\nschema path #/allOf/0/then/postal_code/pattern")
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			p := &parser.Parser{ValidateAdditionalProperties: true}
+			v, err := p.Parse(tc.d, &schema.Ref{Value: s})
+			tc.test(t, v, err)
+		})
+	}
+}
