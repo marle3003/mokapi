@@ -173,6 +173,23 @@ func TestParser_ParseAll(t *testing.T) {
 			},
 		},
 		{
+			name: "unevaluatedProperties",
+			data: map[string]interface{}{
+				"name": "carol",
+				"age":  28,
+			},
+			schema: schematest.NewAllOf(
+				schematest.New("object",
+					schematest.WithProperty("name", schematest.New("string")),
+					schematest.WithUnevaluatedProperties(&schema.Ref{Boolean: toBoolP(false)}),
+				),
+				schematest.New("object", schematest.WithProperty("age", schematest.New("integer"))),
+			),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "found 1 error:\ndoes not match all schemas from 'allOf':\nproperty age not successfully evaluated and schema does not allow unevaluated properties\nschema path #/allOf/0/unevaluatedProperties")
+			},
+		},
+		{
 			name: "AllOf example from Spec: extending closed schema",
 			schema: schematest.New("object",
 				schematest.WithAllOf(
@@ -210,7 +227,7 @@ func TestParser_ParseAll(t *testing.T) {
 				),
 				schematest.WithProperty("type", schematest.NewTypes(nil, schematest.WithEnum([]interface{}{"residential", "business"}))),
 				schematest.WithRequired("type"),
-				schematest.WithUnevaluatedProperties(false),
+				schematest.WithUnevaluatedProperties(&schema.Ref{Boolean: toBoolP(false)}),
 			),
 			data: map[string]interface{}{
 				"street_address":                "1600 Pennsylvania Avenue NW",
@@ -236,7 +253,7 @@ func TestParser_ParseAll(t *testing.T) {
 				),
 				schematest.WithProperty("type", schematest.NewTypes(nil, schematest.WithEnum([]interface{}{"residential", "business"}))),
 				schematest.WithRequired("type"),
-				schematest.WithUnevaluatedProperties(false),
+				schematest.WithUnevaluatedProperties(&schema.Ref{Boolean: toBoolP(false)}),
 			),
 			data: map[string]interface{}{
 				"street_address": "1600 Pennsylvania Avenue NW",
@@ -246,6 +263,33 @@ func TestParser_ParseAll(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
+			},
+		},
+		{
+			name: "UnevaluatedProperties must be string",
+			schema: schematest.New("object",
+				schematest.WithAllOf(
+					schematest.New("object",
+						schematest.WithProperty("street_address", schematest.New("string")),
+						schematest.WithProperty("city", schematest.New("string")),
+						schematest.WithProperty("state", schematest.New("string")),
+						schematest.WithRequired("street_address", "city", "state"),
+					),
+				),
+				schematest.WithProperty("type", schematest.NewTypes(nil, schematest.WithEnum([]interface{}{"residential", "business"}))),
+				schematest.WithRequired("type"),
+				schematest.WithUnevaluatedProperties(schematest.NewRef("string")),
+			),
+			data: map[string]interface{}{
+				"street_address":                "1600 Pennsylvania Avenue NW",
+				"city":                          "Washington",
+				"state":                         "DC",
+				"type":                          "business",
+				"something that doesn't belong": "hi!",
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"city": "Washington", "something that doesn't belong": "hi!", "state": "DC", "street_address": "1600 Pennsylvania Avenue NW", "type": "business"}, v)
 			},
 		},
 	}
@@ -264,6 +308,7 @@ func TestParser_ParseAll(t *testing.T) {
 }
 
 func TestParser_AllOf_If_Then(t *testing.T) {
+	// examples from https://json-schema.org/understanding-json-schema/reference/conditionals
 	s := schematest.New("object",
 		schematest.WithProperty("street_address", schematest.New("string")),
 		schematest.WithProperty("country", schematest.NewTypes(nil,

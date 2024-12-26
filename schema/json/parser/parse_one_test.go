@@ -47,7 +47,7 @@ func TestParser_ParseOne(t *testing.T) {
 			),
 			data: 15,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "valid against more than one schema from 'oneOf': valid schema indexes: 0, 1\nschema path #/oneOf")
+				require.EqualError(t, err, "found 1 error:\nvalid against more than one schema from 'oneOf': valid schema indexes: 0, 1\nschema path #/oneOf")
 			},
 		},
 		{
@@ -58,7 +58,7 @@ func TestParser_ParseOne(t *testing.T) {
 			),
 			data: 15,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "valid against more than one schema from 'oneOf': valid schema indexes: 0, 1\nschema path #/oneOf")
+				require.EqualError(t, err, "found 1 error:\nvalid against more than one schema from 'oneOf': valid schema indexes: 0, 1\nschema path #/oneOf")
 			},
 		},
 		{
@@ -69,7 +69,7 @@ func TestParser_ParseOne(t *testing.T) {
 			),
 			data: 15,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "valid against more than one schema from 'oneOf': valid schema indexes: 0, 1\nschema path #/oneOf")
+				require.EqualError(t, err, "found 1 error:\nvalid against more than one schema from 'oneOf': valid schema indexes: 0, 1\nschema path #/oneOf")
 			},
 		},
 		{
@@ -80,7 +80,7 @@ func TestParser_ParseOne(t *testing.T) {
 			),
 			data: "foo",
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "valid against no schemas from 'oneOf'\nschema path #/oneOf")
+				require.EqualError(t, err, "found 1 error:\nvalid against no schemas from 'oneOf'\nschema path #/oneOf")
 			},
 		},
 		{
@@ -91,7 +91,7 @@ func TestParser_ParseOne(t *testing.T) {
 			),
 			data: map[string]interface{}{},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "valid against more than one schema from 'oneOf': valid schema indexes: 0, 1\nschema path #/oneOf")
+				require.EqualError(t, err, "found 1 error:\nvalid against more than one schema from 'oneOf': valid schema indexes: 0, 1\nschema path #/oneOf")
 			},
 		},
 		{
@@ -115,6 +115,16 @@ func TestParser_ParseOne(t *testing.T) {
 				require.Equal(t, map[string]interface{}{"bark": true, "breed": "Dingo"}, result)
 			},
 		},
+		{
+			name: "unevaluatedProperty",
+			s: schematest.NewOneOf(
+				schematest.New("object", schematest.WithUnevaluatedProperties(&schema.Ref{Boolean: toBoolP(false)})),
+			),
+			data: map[string]interface{}{"foo": "bar"},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "found 1 error:\nvalid against no schemas from 'oneOf':\nproperty foo not successfully evaluated and schema does not allow unevaluated properties\nschema path #/oneOf/0/unevaluatedProperties")
+			},
+		},
 	}
 
 	t.Parallel()
@@ -124,7 +134,7 @@ func TestParser_ParseOne(t *testing.T) {
 			t.Parallel()
 
 			p := parser.Parser{ValidateAdditionalProperties: true}
-			v, err := p.ParseOne(tc.s, tc.data)
+			v, err := p.Parse(tc.data, &schema.Ref{Value: tc.s})
 			tc.test(t, v, err)
 		})
 	}

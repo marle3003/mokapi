@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"mokapi/schema/json/schema"
 	"mokapi/sortedmap"
 )
@@ -28,18 +29,30 @@ func (p *Parser) parseAnyObject(m *sortedmap.LinkedHashMap[string, interface{}],
 	var result *sortedmap.LinkedHashMap[string, interface{}]
 	p2 := *p
 	p2.ValidateAdditionalProperties = true
+	var err error
+	index := 0
+	var one *schema.Ref
 
-	for _, one := range s.AnyOf {
+	for index, one = range s.AnyOf {
 		if one == nil || one.Value == nil {
 			result = m
 			continue
 		}
 
 		eval := map[string]bool{}
-		obj, err := p2.parseObject(m, one.Value, eval)
+		var obj *sortedmap.LinkedHashMap[string, interface{}]
+		obj, err = p2.parseObject(m, one.Value, eval)
 		if err != nil {
 			continue
 		}
+
+		var v interface{}
+		v, err = p.evaluateUnevaluatedProperties(obj, one.Value, eval)
+		if err != nil {
+			continue
+		}
+		obj = v.(*sortedmap.LinkedHashMap[string, interface{}])
+
 		if result == nil {
 			result = obj
 		} else if obj != nil {
@@ -58,7 +71,12 @@ func (p *Parser) parseAnyObject(m *sortedmap.LinkedHashMap[string, interface{}],
 	}
 
 	if result == nil {
-		return nil, Errorf("anyOf", "does not match any schemas of 'anyOf'")
+		pe := &PathCompositionError{
+			Path:    fmt.Sprintf("%v", index),
+			Message: "does not match any schemas of 'anyOf'",
+		}
+		pe.append(err)
+		return nil, wrapError("anyOf", pe)
 	}
 
 	return result, nil

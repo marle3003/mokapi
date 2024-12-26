@@ -39,7 +39,7 @@ func TestParser_ParseBoolean(t *testing.T) {
 			data:   "true",
 			schema: schematest.New("boolean"),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nparse 'true' (string) failed, expected schema type=boolean")
+				require.EqualError(t, err, "found 1 error:\ninvalid type, expected boolean but got string\nschema path #/type")
 			},
 		},
 		{
@@ -68,7 +68,7 @@ func TestParser_ParseBoolean(t *testing.T) {
 			data:   0,
 			schema: schematest.New("boolean"),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nparse '0' (int) failed, expected schema type=boolean: invalid type")
+				require.EqualError(t, err, "found 1 error:\ninvalid type, expected boolean but got integer\nschema path #/type")
 			},
 		},
 		{
@@ -77,7 +77,7 @@ func TestParser_ParseBoolean(t *testing.T) {
 			data:   1,
 			schema: schematest.New("boolean"),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nparse '1' (int) failed, expected schema type=boolean: invalid type")
+				require.EqualError(t, err, "found 1 error:\ninvalid type, expected boolean but got integer\nschema path #/type")
 			},
 		},
 		{
@@ -85,7 +85,7 @@ func TestParser_ParseBoolean(t *testing.T) {
 			data:   []bool{true},
 			schema: schematest.New("boolean"),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nparse [true] failed, expected schema type=boolean")
+				require.EqualError(t, err, "found 1 error:\ninvalid type, expected boolean but got array\nschema path #/type")
 			},
 		},
 		{

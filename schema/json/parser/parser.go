@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"mokapi/schema/json/schema"
 	"mokapi/sortedmap"
 	"unicode"
@@ -50,7 +49,7 @@ func (p *Parser) parse(data interface{}, ref *schema.Ref) (interface{}, error) {
 		} else if ref.Value.Default != nil {
 			data = ref.Value.Default
 		} else {
-			return nil, fmt.Errorf("parse NULL failed, expected %v", ref)
+			return nil, Errorf("type", "invalid type, expected %v but got null", ref.Type())
 		}
 	}
 
@@ -91,7 +90,7 @@ func (p *Parser) parse(data interface{}, ref *schema.Ref) (interface{}, error) {
 			return nil, err
 		}
 	case len(ref.Value.OneOf) > 0:
-		v, err = p.ParseOne(ref.Value, v)
+		v, err = p.ParseOne(ref.Value, v, evaluatedProperties)
 		if err != nil {
 			return nil, err
 		}

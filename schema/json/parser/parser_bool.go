@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"mokapi/schema/json/schema"
 	"strings"
 )
@@ -19,15 +18,13 @@ func (p *Parser) parseBoolean(i interface{}, s *schema.Schema) (bool, error) {
 			case "false":
 				b = false
 			default:
-				return false, fmt.Errorf("parse '%v' (string) failed, expected %v", i, s)
+				return false, Errorf("type", "invalid type, expected boolean but got %v", toType(i))
 			}
 		} else {
-			return false, fmt.Errorf("parse '%v' (string) failed, expected %v", i, s)
+			return false, Errorf("type", "invalid type, expected boolean but got %v", toType(i))
 		}
-	case int, int64:
-		return false, fmt.Errorf("parse '%v' (int) failed, expected %v: invalid type", i, s)
 	default:
-		return false, fmt.Errorf("parse %v failed, expected %v", i, s)
+		return false, Errorf("type", "invalid type, expected boolean but got %v", toType(i))
 	}
 
 	if len(s.Enum) > 0 {

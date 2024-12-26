@@ -71,7 +71,7 @@ func TestParser_NoType(t *testing.T) {
 			data:   nil,
 			schema: schematest.New("string"),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nparse NULL failed, expected schema type=string")
+				require.EqualError(t, err, "found 1 error:\ninvalid type, expected string but got null\nschema path #/type")
 			},
 		},
 		{

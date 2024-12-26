@@ -1,7 +1,6 @@
 package parser_test
 
 import (
-	"encoding/json"
 	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
@@ -12,13 +11,13 @@ import (
 func TestParser_ParseAny(t *testing.T) {
 	testcases := []struct {
 		name   string
-		s      string
+		data   interface{}
 		schema *schema.Schema
 		test   func(t *testing.T, i interface{}, err error)
 	}{
 		{
 			name: "any",
-			s:    "12",
+			data: 12,
 			schema: schematest.NewAny(
 				schematest.New("string"),
 				schematest.New("integer")),
@@ -29,7 +28,7 @@ func TestParser_ParseAny(t *testing.T) {
 		},
 		{
 			name: "not match any",
-			s:    "12.6",
+			data: 12.6,
 			schema: schematest.NewAny(
 				schematest.New("string"),
 				schematest.New("integer")),
@@ -39,7 +38,7 @@ func TestParser_ParseAny(t *testing.T) {
 		},
 		{
 			name: "any object",
-			s:    `{"foo": "bar"}`,
+			data: map[string]interface{}{"foo": "bar"},
 			schema: schematest.NewAny(
 				schematest.New("object",
 					schematest.WithProperty("foo", schematest.New("integer"))),
@@ -52,7 +51,7 @@ func TestParser_ParseAny(t *testing.T) {
 		},
 		{
 			name: "missing required property should not error",
-			s:    `{"name": "bar"}`,
+			data: map[string]interface{}{"name": "bar"},
 			schema: schematest.NewAny(
 				schematest.New("object",
 					schematest.WithProperty("name", schematest.New("string"))),
@@ -68,7 +67,7 @@ func TestParser_ParseAny(t *testing.T) {
 		},
 		{
 			name: "merge",
-			s:    `{"name": "bar", "age": 12}`,
+			data: map[string]interface{}{"name": "bar", "age": 12},
 			schema: schematest.NewAny(
 				schematest.New("object",
 					schematest.WithProperty("name", schematest.New("string"))),
@@ -83,7 +82,7 @@ func TestParser_ParseAny(t *testing.T) {
 		},
 		{
 			name: "anyOf: object containing both properties",
-			s:    `{"test": 12, "test2": true}`,
+			data: map[string]interface{}{"test": 12, "test2": true},
 			schema: schematest.NewAny(
 				schematest.New("object", schematest.WithProperty("test", schematest.New("integer"))),
 				schematest.New("object", schematest.WithProperty("test2", schematest.New("boolean"))),
@@ -95,7 +94,7 @@ func TestParser_ParseAny(t *testing.T) {
 		},
 		{
 			name: "anyOf",
-			s:    `"hello world"`,
+			data: "hello world",
 			schema: schematest.NewAny(
 				schematest.New("object", schematest.WithProperty("test", schematest.New("integer"))),
 				schematest.New("string"),
@@ -107,19 +106,19 @@ func TestParser_ParseAny(t *testing.T) {
 		},
 		{
 			name: "free-form but not override",
-			s:    `{"foo": 12, "bar": 12}`,
+			data: map[string]interface{}{"foo": 12, "bar": 12},
 			schema: schematest.NewAny(
 				schematest.New("object", schematest.WithFreeForm(true)),
 				schematest.New("object", schematest.WithProperty("bar", schematest.New("integer"))),
 			),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": float64(12), "bar": int64(12)}, i)
+				require.Equal(t, map[string]interface{}{"foo": 12, "bar": int64(12)}, i)
 			},
 		},
 		{
 			name: "free-form overriding value",
-			s:    `{"foo": 12}`,
+			data: map[string]interface{}{"foo": 12},
 			schema: schematest.NewAny(
 				schematest.New("object", schematest.WithFreeForm(true)),
 				schematest.New("object", schematest.WithProperty("foo", schematest.New("integer"))),
@@ -131,31 +130,31 @@ func TestParser_ParseAny(t *testing.T) {
 		},
 		{
 			name: "free-form and second object defines no property",
-			s:    `{"foo": 12}`,
+			data: map[string]interface{}{"foo": 12},
 			schema: schematest.NewAny(
 				schematest.New("object", schematest.WithFreeForm(true)),
 				schematest.New("object"),
 			),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": float64(12)}, i)
+				require.Equal(t, map[string]interface{}{"foo": 12}, i)
 			},
 		},
 		{
 			name: "first is not free-form",
-			s:    `{"foo": 12, "bar": 12}`,
+			data: map[string]interface{}{"foo": "12", "bar": 12},
 			schema: schematest.NewAny(
 				schematest.New("object", schematest.WithProperty("foo", schematest.New("integer")), schematest.WithFreeForm(false)),
 				schematest.New("object"),
 			),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": float64(12), "bar": float64(12)}, i)
+				require.Equal(t, map[string]interface{}{"foo": "12", "bar": 12}, i)
 			},
 		},
 		{
 			name: "one with error",
-			s:    `{"foo": 12}`,
+			data: map[string]interface{}{"foo": 12},
 			schema: schematest.NewAny(
 				schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
 				schematest.New("object", schematest.WithProperty("foo", schematest.New("integer"))),
@@ -163,6 +162,39 @@ func TestParser_ParseAny(t *testing.T) {
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{"foo": int64(12)}, i)
+			},
+		},
+		{
+			name: "unevaluatedProperties error",
+			data: map[string]interface{}{"foo": "bar", "yuh": "abc"},
+			schema: schematest.NewAny(
+				schematest.New("object",
+					schematest.WithProperty("foo", schematest.New("string")),
+					schematest.WithUnevaluatedProperties(schematest.NewRef("boolean")),
+				),
+			),
+			test: func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, "found 1 error:\ndoes not match any schemas of 'anyOf':\ninvalid type, expected boolean but got string\nschema path #/anyOf/0/unevaluatedProperties/type")
+			},
+		},
+		{
+			name: "unevaluatedProperties should only considered on valid ones",
+			data: map[string]interface{}{"foo": 12, "bar": 123},
+			schema: schematest.NewTypes(nil,
+				schematest.Any(
+					schematest.New("object",
+						schematest.WithProperty("foo", schematest.New("string")),
+					),
+					schematest.New("object",
+						schematest.WithProperty("foo", schematest.New("integer")),
+						schematest.WithProperty("bar", schematest.New("integer")),
+					),
+				),
+				schematest.WithUnevaluatedProperties(schematest.NewRef("boolean")),
+			),
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"foo": int64(12), "bar": int64(123)}, i)
 			},
 		},
 	}
@@ -173,12 +205,8 @@ func TestParser_ParseAny(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			var v interface{}
-			err := json.Unmarshal([]byte(tc.s), &v)
-			require.NoError(t, err)
-
 			p := &parser.Parser{}
-			r, err := p.Parse(v, &schema.Ref{Value: tc.schema})
+			r, err := p.Parse(tc.data, &schema.Ref{Value: tc.schema})
 
 			tc.test(t, r, err)
 		})

@@ -40,7 +40,7 @@ func TestRef_Marshal_Json(t *testing.T) {
 			schema: &schema.Ref{Value: schematest.New("number")},
 			data:   nil,
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "encoding data to 'application/json' failed: found 1 error:\nparse NULL failed, expected schema type=number")
+				require.EqualError(t, err, "encoding data to 'application/json' failed: found 1 error:\ninvalid type, expected number but got null\nschema path #/type")
 			},
 		},
 		{
@@ -384,7 +384,7 @@ func TestRef_Marshal_Json_AnyOf(t *testing.T) {
 			),
 			data: map[string]interface{}{"foo": "foo", "bar": "bar", "value": "test"},
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "encoding data to 'application/json' failed: found 1 error:\ndoes not match any schemas of 'anyOf'\nschema path #/anyOf")
+				require.EqualError(t, err, "encoding data to 'application/json' failed: found 1 error:\ndoes not match any schemas of 'anyOf':\nproperty 'foo' not defined and the schema does not allow additional properties\nproperty 'value' not defined and the schema does not allow additional properties\nschema path #/anyOf/1/additionalProperties")
 			},
 		},
 		{

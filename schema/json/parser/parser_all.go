@@ -47,6 +47,13 @@ func (p *Parser) parseAllObject(m *sortedmap.LinkedHashMap[string, interface{}],
 			continue
 		}
 
+		v, unEvalErr := p.evaluateUnevaluatedProperties(obj, one.Value, eval)
+		if unEvalErr != nil {
+			err.append(wrapError(path, unEvalErr))
+			continue
+		}
+		obj = v.(*sortedmap.LinkedHashMap[string, interface{}])
+
 		if obj != nil {
 			for it := obj.Iter(); it.Next(); {
 				if _, found := eval[it.Key()]; found {

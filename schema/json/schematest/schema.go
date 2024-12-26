@@ -329,9 +329,9 @@ func WithExamples(v ...interface{}) SchemaOptions {
 	}
 }
 
-func WithUnevaluatedProperties(b bool) SchemaOptions {
+func WithUnevaluatedProperties(ref *schema.Ref) SchemaOptions {
 	return func(s *schema.Schema) {
-		s.UnevaluatedProperties = &schema.Ref{Boolean: &b}
+		s.UnevaluatedProperties = ref
 	}
 }
 

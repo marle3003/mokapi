@@ -100,7 +100,7 @@ func TestRef_Unmarshal_Json(t *testing.T) {
 			data:   `{ "foo": null }`,
 			schema: schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nparse NULL failed, expected schema type=string\nschema path #/foo")
+				require.EqualError(t, err, "found 1 error:\ninvalid type, expected string but got null\nschema path #/foo/type")
 			},
 		},
 		{
@@ -524,7 +524,7 @@ func TestRef_Unmarshal_Json_OneOf(t *testing.T) {
 					schematest.WithProperty("bar", schematest.New("boolean"))),
 			),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nvalid against no schemas from 'oneOf'\nschema path #/oneOf")
+				require.EqualError(t, err, "found 1 error:\nvalid against no schemas from 'oneOf':\ninvalid type, expected boolean but got number\nschema path #/oneOf/1/bar/type")
 			},
 		},
 		{
@@ -959,13 +959,13 @@ func TestRef_Unmarshal_Json_Object(t *testing.T) {
 		},
 		{
 			name: "property is not valid",
-			s:    `{"name": null}`,
+			s:    `{"name": "abc"}`,
 			schema: schematest.New("object",
 				schematest.WithProperty("name", schematest.New("string", schematest.WithMinLength(6))),
 				schematest.WithProperty("age", schematest.New("integer")),
 			),
 			test: func(t *testing.T, _ interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nparse NULL failed, expected schema type=string minLength=6\nschema path #/name")
+				require.EqualError(t, err, "found 1 error:\nstring 'abc' is less than minimum of 6\nschema path #/name/minLength")
 			},
 		},
 		{
@@ -1287,7 +1287,7 @@ func TestRef_Unmarshal_Json_Bool(t *testing.T) {
 			s:      `1`,
 			schema: &schema.Schema{Type: jsonSchema.Types{"boolean"}},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nparse 1 failed, expected schema type=boolean")
+				require.EqualError(t, err, "found 1 error:\ninvalid type, expected boolean but got number\nschema path #/type")
 			},
 		},
 		{
