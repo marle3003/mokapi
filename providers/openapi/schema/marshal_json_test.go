@@ -1,6 +1,7 @@
 package schema_test
 
 import (
+	"encoding/json"
 	"github.com/stretchr/testify/require"
 	"mokapi/media"
 	"mokapi/providers/openapi/schema"
@@ -314,10 +315,10 @@ func TestRef_Marshal_Json_AnyOf(t *testing.T) {
 		{
 			name: "any",
 			schema: schematest.NewAny(
-				schematest.New("object", schematest.WithProperty("foo", schematest.New("string")), schematest.WithFreeForm(false)),
-				schematest.New("object", schematest.WithProperty("bar", schematest.New("string")), schematest.WithFreeForm(false)),
+				schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
+				schematest.New("object", schematest.WithProperty("bar", schematest.New("string"))),
 			),
-			data: map[string]interface{}{"foo": "foo", "value": 12},
+			data: map[string]interface{}{"foo": "foo"},
 			test: func(t *testing.T, result string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, `{"foo":"foo"}`, result)
@@ -326,10 +327,10 @@ func TestRef_Marshal_Json_AnyOf(t *testing.T) {
 		{
 			name: "any matches both",
 			schema: schematest.NewAny(
-				schematest.New("object", schematest.WithProperty("foo", schematest.New("string")), schematest.WithFreeForm(false)),
-				schematest.New("object", schematest.WithProperty("bar", schematest.New("string")), schematest.WithFreeForm(false)),
+				schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
+				schematest.New("object", schematest.WithProperty("bar", schematest.New("string"))),
 			),
-			data: map[string]interface{}{"foo": "foo", "bar": "bar", "value": 12},
+			data: map[string]interface{}{"foo": "foo", "bar": "bar"},
 			test: func(t *testing.T, result string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, `{"foo":"foo","bar":"bar"}`, result)
@@ -350,13 +351,17 @@ func TestRef_Marshal_Json_AnyOf(t *testing.T) {
 		{
 			name: "any with one error should be skipped",
 			schema: schematest.NewAny(
-				schematest.New("object", schematest.WithProperty("foo", schematest.New("integer")), schematest.WithFreeForm(false)),
-				schematest.New("object", schematest.WithProperty("bar", schematest.New("string")), schematest.WithFreeForm(false)),
+				schematest.New("object", schematest.WithProperty("foo", schematest.New("integer"))),
+				schematest.New("object", schematest.WithProperty("bar", schematest.New("string"))),
 			),
-			data: map[string]interface{}{"foo": "foo", "bar": "bar", "value": 12},
+			data: map[string]interface{}{"foo": "foo", "bar": "bar"},
 			test: func(t *testing.T, result string, err error) {
 				require.NoError(t, err)
-				require.Equal(t, `{"bar":"bar"}`, result)
+				// parse as map because order is random with free-form
+				var m map[string]interface{}
+				err = json.Unmarshal([]byte(result), &m)
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"foo": "foo", "bar": "bar"}, m)
 			},
 		},
 		{
@@ -372,15 +377,14 @@ func TestRef_Marshal_Json_AnyOf(t *testing.T) {
 			},
 		},
 		{
-			name: "anyOf ignores additional properties when free-form is false",
+			name: "anyOf both invalid",
 			schema: schematest.NewAny(
 				schematest.New("object", schematest.WithProperty("foo", schematest.New("string")), schematest.WithFreeForm(false)),
 				schematest.New("object", schematest.WithProperty("bar", schematest.New("string")), schematest.WithFreeForm(false)),
 			),
 			data: map[string]interface{}{"foo": "foo", "bar": "bar", "value": "test"},
 			test: func(t *testing.T, result string, err error) {
-				require.NoError(t, err)
-				require.Equal(t, `{"foo":"foo","bar":"bar"}`, result)
+				require.EqualError(t, err, "encoding data to 'application/json' failed: found 1 error:\ndoes not match any schemas of 'anyOf'\nschema path #/anyOf")
 			},
 		},
 		{

@@ -1,59 +1,52 @@
 package parser
 
 import (
-	"github.com/pkg/errors"
 	"mokapi/schema/json/schema"
 	"mokapi/sortedmap"
 )
 
 func (p *Parser) ParseAny(s *schema.Schema, data interface{}, evaluated map[string]bool) (interface{}, error) {
+	if m, ok := data.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
+		p2 := *p
+		p2.ValidateAdditionalProperties = true
+		return p2.parseAnyObject(m, s, evaluated)
+	}
+
+	var result interface{}
+	var err error
+	for _, one := range s.AnyOf {
+		result, err = p.parse(data, one)
+		if err == nil {
+			return result, nil
+		}
+	}
+
+	return nil, Errorf("anyOf", "does not match any schemas of 'anyOf'")
+}
+
+func (p *Parser) parseAnyObject(m *sortedmap.LinkedHashMap[string, interface{}], s *schema.Schema, evaluated map[string]bool) (interface{}, error) {
 	var result *sortedmap.LinkedHashMap[string, interface{}]
 	p2 := *p
 	p2.ValidateAdditionalProperties = true
 
-	isFreeFormUsed := false
-NextAny:
-	for _, any := range s.AnyOf {
-		if any == nil || any.Value == nil {
-			return p.parse(data, nil)
-		}
-
-		if any.Value.IsFreeForm() {
-			// first we read data without free-form to get best matching data types
-			// after we processed all schemas we read with free-form
-			copySchema := *any.Value
-			any = &schema.Ref{Value: &copySchema}
-			isFreeFormUsed = true
-			any.Value.AdditionalProperties = schema.NewRef(false)
-		}
-
-		if !any.IsObject() {
-			r, err := p2.parse(data, any)
-			if err == nil {
-				return r, nil
-			}
+	for _, one := range s.AnyOf {
+		if one == nil || one.Value == nil {
+			result = m
 			continue
 		}
+
 		eval := map[string]bool{}
-		o, err := p2.parseObject(data, any.Value, eval)
+		obj, err := p2.parseObject(m, one.Value, eval)
 		if err != nil {
-			var list *PathErrors
-			if errors.As(err, &list) {
-				for _, e := range *list {
-					var pathError *PathError
-					if !errors.As(e, &pathError) || pathError.Path != "additionalProperties" {
-						continue NextAny
-					}
-				}
-			} else {
-				continue
-			}
+			continue
 		}
 		if result == nil {
-			result = o
-		} else {
-			for it := o.Iter(); it.Next(); {
-				if _, found := result.Get(it.Key()); !found {
+			result = obj
+		} else if obj != nil {
+			for it := obj.Iter(); it.Next(); {
+				if _, found := eval[it.Key()]; found {
+					result.Set(it.Key(), it.Value())
+				} else if _, found = result.Get(it.Key()); !found {
 					result.Set(it.Key(), it.Value())
 				}
 			}
@@ -64,31 +57,9 @@ NextAny:
 		}
 	}
 
-	if isFreeFormUsed {
-		// read data with free-form and add only missing values
-		// free-form returns never an error
-
-		if result == nil {
-			result = sortedmap.NewLinkedHashMap()
-		}
-
-		obj, _ := p.parseObject(data, &schema.Schema{Type: schema.Types{"object"}}, evaluated)
-		if obj != nil {
-			for it := obj.Iter(); it.Next(); {
-				if _, found := result.Get(it.Key()); !found {
-					result.Set(it.Key(), it.Value())
-				}
-			}
-		}
-	}
-
 	if result == nil {
 		return nil, Errorf("anyOf", "does not match any schemas of 'anyOf'")
 	}
 
-	if p.ConvertToSortedMap {
-		return result, nil
-	}
-
-	return result.ToMap(), nil
+	return result, nil
 }

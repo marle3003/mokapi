@@ -150,7 +150,7 @@ func TestParser_ParseAny(t *testing.T) {
 			),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": int64(12), "bar": float64(12)}, i)
+				require.Equal(t, map[string]interface{}{"foo": float64(12), "bar": float64(12)}, i)
 			},
 		},
 		{

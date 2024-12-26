@@ -51,7 +51,7 @@ func (p *Parser) parseAllObject(m *sortedmap.LinkedHashMap[string, interface{}],
 			for it := obj.Iter(); it.Next(); {
 				if _, found := eval[it.Key()]; found {
 					r.Set(it.Key(), it.Value())
-				} else if _, found := r.Get(it.Key()); !found {
+				} else if _, found = r.Get(it.Key()); !found {
 					r.Set(it.Key(), it.Value())
 				}
 			}
