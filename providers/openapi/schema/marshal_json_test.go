@@ -345,7 +345,10 @@ func TestRef_Marshal_Json_AnyOf(t *testing.T) {
 			data: map[string]interface{}{"foo": "foo", "bar": "bar", "value": 12},
 			test: func(t *testing.T, result string, err error) {
 				require.NoError(t, err)
-				require.Equal(t, `{"foo":"foo","bar":"bar","value":12}`, result)
+				var m map[string]interface{}
+				err = json.Unmarshal([]byte(result), &m)
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"bar": "bar", "foo": "foo", "value": float64(12)}, m)
 			},
 		},
 		{

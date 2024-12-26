@@ -40,8 +40,6 @@ func (p *Parser) parseOneObject(m *sortedmap.LinkedHashMap[string, interface{}],
 	index := 0
 	var one *schema.Ref
 
-	// TODO evaluatedProperties
-
 	for index, one = range s.OneOf {
 		if one == nil || one.Value == nil {
 			if result != nil {
