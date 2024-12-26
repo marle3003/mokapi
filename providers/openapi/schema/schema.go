@@ -13,21 +13,9 @@ type Schema struct {
 	Schema  string `yaml:"$schema,omitempty" json:"$schema,omitempty"`
 	Boolean *bool  `yaml:"-" json:"-"`
 
-	Type  schema.Types `yaml:"type" json:"type"`
-	AnyOf []*Ref       `yaml:"anyOf" json:"anyOf"`
-	AllOf []*Ref       `yaml:"allOf" json:"allOf"`
-	OneOf []*Ref       `yaml:"oneOf" json:"oneOf"`
-
-	Enum     []interface{} `yaml:"enum" json:"enum"`
-	Const    *interface{}  `yaml:"const,omitempty" json:"const,omitempty"`
-	Xml      *Xml          `yaml:"xml" json:"xml"`
-	Format   string        `yaml:"format" json:"format"`
-	Nullable bool          `yaml:"nullable" json:"nullable"`
-
-	// String
-	Pattern   string `yaml:"pattern" json:"pattern"`
-	MinLength *int   `yaml:"minLength" json:"minLength"`
-	MaxLength *int   `yaml:"maxLength" json:"maxLength"`
+	Type  schema.Types  `yaml:"type" json:"type"`
+	Enum  []interface{} `yaml:"enum" json:"enum"`
+	Const *interface{}  `yaml:"const,omitempty" json:"const,omitempty"`
 
 	// Numbers
 	MultipleOf       *float64                         `yaml:"multipleOf,omitempty" json:"multipleOf,omitempty"`
@@ -36,19 +24,44 @@ type Schema struct {
 	ExclusiveMinimum *schema.UnionType[float64, bool] `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
 	ExclusiveMaximum *schema.UnionType[float64, bool] `yaml:"exclusiveMaximum,omitempty" json:"exclusiveMaximum,omitempty"`
 
+	// String
+	Pattern   string `yaml:"pattern" json:"pattern"`
+	MinLength *int   `yaml:"minLength" json:"minLength"`
+	MaxLength *int   `yaml:"maxLength" json:"maxLength"`
+	Format    string `yaml:"format" json:"format"`
+
 	// Array
-	Items        *Ref `yaml:"items" json:"items"`
-	UniqueItems  bool `yaml:"uniqueItems" json:"uniqueItems"`
-	MinItems     *int `yaml:"minItems" json:"minItems"`
-	MaxItems     *int `yaml:"maxItems" json:"maxItems"`
-	ShuffleItems bool `yaml:"x-shuffleItems" json:"x-shuffleItems"`
+	Items            *Ref   `yaml:"items" json:"items"`
+	PrefixItems      []*Ref `yaml:"prefixItems,omitempty" json:"prefixItems,omitempty"`
+	UnevaluatedItems *Ref   `yaml:"unevaluatedItems,omitempty" json:"unevaluatedItems,omitempty"`
+	Contains         *Ref   `yaml:"contains,omitempty" json:"contains,omitempty"`
+	MaxContains      *int   `yaml:"maxContains,omitempty" json:"maxContains,omitempty"`
+	MinContains      *int   `yaml:"minContains,omitempty" json:"minContains,omitempty"`
+	MinItems         *int   `yaml:"minItems" json:"minItems"`
+	MaxItems         *int   `yaml:"maxItems" json:"maxItems"`
+	UniqueItems      bool   `yaml:"uniqueItems" json:"uniqueItems"`
+	ShuffleItems     bool   `yaml:"x-shuffleItems" json:"x-shuffleItems"`
 
 	// Object
-	Properties           *Schemas `yaml:"properties" json:"properties"`
-	Required             []string `yaml:"required" json:"required"`
-	AdditionalProperties *Ref     `yaml:"additionalProperties,omitempty" json:"additionalProperties,omitempty"`
-	MinProperties        *int     `yaml:"minProperties" json:"minProperties"`
-	MaxProperties        *int     `yaml:"maxProperties" json:"maxProperties"`
+	Properties            *Schemas            `yaml:"properties" json:"properties"`
+	PatternProperties     map[string]*Ref     `yaml:"patternProperties,omitempty" json:"patternProperties,omitempty"`
+	MinProperties         *int                `yaml:"minProperties" json:"minProperties"`
+	MaxProperties         *int                `yaml:"maxProperties" json:"maxProperties"`
+	Required              []string            `yaml:"required" json:"required"`
+	DependentRequired     map[string][]string `yaml:"dependentRequired,omitempty" json:"dependentRequired,omitempty"`
+	DependentSchemas      map[string]*Ref     `yaml:"dependentSchemas,omitempty" json:"dependentSchemas,omitempty"`
+	AdditionalProperties  *Ref                `yaml:"additionalProperties,omitempty" json:"additionalProperties,omitempty"`
+	UnevaluatedProperties *Ref                `yaml:"unevaluatedProperties,omitempty" json:"unevaluatedProperties,omitempty"`
+	PropertyNames         *Ref                `yaml:"propertyNames,omitempty" json:"propertyNames,omitempty"`
+
+	AnyOf []*Ref `yaml:"anyOf" json:"anyOf"`
+	AllOf []*Ref `yaml:"allOf" json:"allOf"`
+	OneOf []*Ref `yaml:"oneOf" json:"oneOf"`
+	Not   *Ref   `yaml:"not,omitempty" json:"not,omitempty"`
+
+	If   *Ref `yaml:"if,omitempty" json:"if,omitempty"`
+	Then *Ref `yaml:"then,omitempty" json:"then,omitempty"`
+	Else *Ref `yaml:"else,omitempty" json:"else,omitempty"`
 
 	// Annotations
 	Title       string        `yaml:"title" json:"title"`
@@ -61,6 +74,10 @@ type Schema struct {
 	// Media
 	ContentMediaType string `yaml:"contentMediaType,omitempty" json:"contentMediaType,omitempty"`
 	ContentEncoding  string `yaml:"contentEncoding,omitempty" json:"contentEncoding,omitempty"`
+
+	// OpenAPI
+	Xml      *Xml `yaml:"xml" json:"xml"`
+	Nullable bool `yaml:"nullable" json:"nullable"`
 }
 
 func (s *Schema) HasProperties() bool {

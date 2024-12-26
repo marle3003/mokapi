@@ -17,6 +17,15 @@ func New(typeName string, opts ...SchemaOptions) *schema.Schema {
 	return s
 }
 
+func NewTypes(types []string, opts ...SchemaOptions) *schema.Schema {
+	s := new(schema.Schema)
+	s.Type = types
+	for _, opt := range opts {
+		opt(s)
+	}
+	return s
+}
+
 func NewRef(typeName string, opts ...SchemaOptions) *schema.Ref {
 	s := new(schema.Schema)
 	s.Type = jsonSchema.Types{typeName}
@@ -32,15 +41,6 @@ func And(typeName string) SchemaOptions {
 	}
 }
 
-func WithProperty(name string, ps *schema.Schema) SchemaOptions {
-	return func(s *schema.Schema) {
-		if s.Properties == nil {
-			s.Properties = &schema.Schemas{}
-		}
-		s.Properties.Set(name, &schema.Ref{Value: ps})
-	}
-}
-
 func WithItems(typeName string, opts ...SchemaOptions) SchemaOptions {
 	return func(s *schema.Schema) {
 		s.Items = NewRef(typeName, opts...)
@@ -53,11 +53,35 @@ func WithItemsRef(ref string) SchemaOptions {
 	}
 }
 
-func WithRequired(names ...string) SchemaOptions {
+func WithPrefixItems(items ...*schema.Schema) SchemaOptions {
 	return func(s *schema.Schema) {
-		for _, n := range names {
-			s.Required = append(s.Required, n)
+		for _, item := range items {
+			s.PrefixItems = append(s.PrefixItems, &schema.Ref{Value: item})
 		}
+	}
+}
+
+func WithUnevaluatedItems(ref *schema.Ref) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.UnevaluatedItems = ref
+	}
+}
+
+func WithContains(ref *schema.Ref) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Contains = ref
+	}
+}
+
+func WithMinContains(n int) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.MinContains = &n
+	}
+}
+
+func WithMaxContains(n int) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.MaxContains = &n
 	}
 }
 
@@ -70,6 +94,62 @@ func WithUniqueItems() SchemaOptions {
 func WithShuffleItems() SchemaOptions {
 	return func(s *schema.Schema) {
 		s.ShuffleItems = true
+	}
+}
+
+func WithProperty(name string, ps *schema.Schema) SchemaOptions {
+	return func(s *schema.Schema) {
+		if s.Properties == nil {
+			s.Properties = &schema.Schemas{}
+		}
+		s.Properties.Set(name, &schema.Ref{Value: ps})
+	}
+}
+
+func WithPatternProperty(pattern string, ps *schema.Schema) SchemaOptions {
+	return func(s *schema.Schema) {
+		if s.PatternProperties == nil {
+			s.PatternProperties = map[string]*schema.Ref{}
+		}
+		s.PatternProperties[pattern] = &schema.Ref{Value: ps}
+	}
+}
+
+func WithRequired(names ...string) SchemaOptions {
+	return func(s *schema.Schema) {
+		for _, n := range names {
+			s.Required = append(s.Required, n)
+		}
+	}
+}
+
+func WithDependentRequired(prop string, required ...string) SchemaOptions {
+	return func(s *schema.Schema) {
+		if s.DependentRequired == nil {
+			s.DependentRequired = map[string][]string{}
+		}
+		s.DependentRequired[prop] = required
+	}
+}
+
+func WithDependentSchemas(prop string, dependentSchema *schema.Schema) SchemaOptions {
+	return func(s *schema.Schema) {
+		if s.DependentSchemas == nil {
+			s.DependentSchemas = map[string]*schema.Ref{}
+		}
+		s.DependentSchemas[prop] = &schema.Ref{Value: dependentSchema}
+	}
+}
+
+func WithUnevaluatedProperties(ref *schema.Ref) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.UnevaluatedProperties = ref
+	}
+}
+
+func WithPropertyNames(propSchema *schema.Schema) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.PropertyNames = &schema.Ref{Value: propSchema}
 	}
 }
 
@@ -143,6 +223,12 @@ func NewAllOfRefs(schemas ...*schema.Ref) *schema.Schema {
 		s.AllOf = append(s.AllOf, all)
 	}
 	return s
+}
+
+func WithNot(not *schema.Ref) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Not = not
+	}
 }
 
 func WithFormat(format string) SchemaOptions {
@@ -321,12 +407,20 @@ func WithContentEncoding(value string) SchemaOptions {
 	}
 }
 
-func WithExclusiveMinimumFlag(b bool) SchemaOptions {
+func WithIf(condition *schema.Ref) SchemaOptions {
 	return func(s *schema.Schema) {
-		if s.ExclusiveMinimum != nil {
-			s.ExclusiveMinimum.B = b
-		} else {
-			s.ExclusiveMinimum = jsonSchema.NewUnionTypeB[float64, bool](b)
-		}
+		s.If = condition
+	}
+}
+
+func WithThen(condition *schema.Ref) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Then = condition
+	}
+}
+
+func WithElse(condition *schema.Ref) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Else = condition
 	}
 }

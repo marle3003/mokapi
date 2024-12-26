@@ -27,28 +27,38 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 	}
 
 	js := &schema.Schema{
-		Type:              s.Type,
-		Schema:            s.Schema,
-		Enum:              s.Enum,
-		Const:             s.Const,
-		Default:           s.Default,
-		MinLength:         s.MinLength,
-		MaxLength:         s.MaxLength,
-		Pattern:           s.Pattern,
-		Format:            s.Format,
-		MultipleOf:        s.MultipleOf,
-		Items:             c.ConvertToJsonRef(s.Items),
-		MinItems:          s.MinItems,
-		MaxItems:          s.MaxItems,
-		UniqueItems:       s.UniqueItems,
-		ShuffleItems:      s.ShuffleItems,
-		MaxProperties:     s.MaxProperties,
-		MinProperties:     s.MinProperties,
-		Required:          s.Required,
-		DependentRequired: nil,
-		Title:             s.Title,
-		Description:       s.Description,
-		Deprecated:        s.Deprecated,
+		Type:                  s.Type,
+		Schema:                s.Schema,
+		Enum:                  s.Enum,
+		Const:                 s.Const,
+		Default:               s.Default,
+		MinLength:             s.MinLength,
+		MaxLength:             s.MaxLength,
+		Pattern:               s.Pattern,
+		Format:                s.Format,
+		MultipleOf:            s.MultipleOf,
+		Items:                 c.ConvertToJsonRef(s.Items),
+		UnevaluatedItems:      c.ConvertToJsonRef(s.UnevaluatedItems),
+		Contains:              c.ConvertToJsonRef(s.Contains),
+		MaxContains:           s.MaxContains,
+		MinContains:           s.MinContains,
+		MinItems:              s.MinItems,
+		MaxItems:              s.MaxItems,
+		UniqueItems:           s.UniqueItems,
+		ShuffleItems:          s.ShuffleItems,
+		MaxProperties:         s.MaxProperties,
+		MinProperties:         s.MinProperties,
+		Required:              s.Required,
+		DependentRequired:     s.DependentRequired,
+		UnevaluatedProperties: c.ConvertToJsonRef(s.UnevaluatedProperties),
+		PropertyNames:         c.ConvertToJsonRef(s.PropertyNames),
+		Not:                   c.ConvertToJsonRef(s.Not),
+		If:                    c.ConvertToJsonRef(s.If),
+		Then:                  c.ConvertToJsonRef(s.Then),
+		Else:                  c.ConvertToJsonRef(s.Else),
+		Title:                 s.Title,
+		Description:           s.Description,
+		Deprecated:            s.Deprecated,
 	}
 	c.history[s] = js
 
@@ -57,6 +67,10 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 
 	js.Maximum = s.Maximum
 	js.ExclusiveMaximum = s.ExclusiveMaximum
+
+	for _, ref := range s.PrefixItems {
+		js.PrefixItems = append(js.PrefixItems, c.ConvertToJsonRef(ref))
+	}
 
 	if s.Properties != nil {
 		js.Properties = &schema.Schemas{}
@@ -68,6 +82,20 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 			}
 			js.Properties.Set(propName, c.ConvertToJsonRef(it.Value()))
 		}
+	}
+
+	for k, ref := range s.PatternProperties {
+		if js.PatternProperties == nil {
+			js.PatternProperties = map[string]*schema.Ref{}
+		}
+		js.PatternProperties[k] = c.ConvertToJsonRef(ref)
+	}
+
+	for k, ref := range s.DependentSchemas {
+		if js.DependentSchemas == nil {
+			js.DependentSchemas = map[string]*schema.Ref{}
+		}
+		js.DependentSchemas[k] = c.ConvertToJsonRef(ref)
 	}
 
 	if s.AdditionalProperties != nil {
