@@ -154,7 +154,7 @@ func TestOffsetCommit(t *testing.T) {
 			"partition not exists",
 			func(t *testing.T, s *store.Store) {
 				s.Update(asyncapi3test.NewConfig(
-					asyncapi3test.WithChannel("foo", asyncapi3test.WithChannelKafka(asyncapi3.TopicBindings{Partitions: 1}))))
+					asyncapi3test.WithChannel("foo", asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 1}))))
 
 				rr := kafkatest.NewRecorder()
 				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 2, &offsetCommit.Request{

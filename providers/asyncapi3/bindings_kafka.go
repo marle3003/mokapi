@@ -7,8 +7,6 @@ import (
 )
 
 type BrokerBindings struct {
-	Config map[string]string
-
 	// LogRetentionBytes the maximum size of the log before deleting it
 	LogRetentionBytes int64
 

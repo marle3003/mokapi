@@ -180,59 +180,203 @@ func TestConfig_Patch_Server(t *testing.T) {
 			},
 		},
 		{
-			name: "patch server bindings",
+			name: "patch server bindings LogRetentionBytes",
 			configs: []*asyncapi3.Config{
 				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar")),
 				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar",
-					asyncapi3test.WithKafkaBinding("foo", "bar"))),
+					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{LogRetentionBytes: 1}))),
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
-				config := result.Servers["foo"].Value.Bindings.Kafka.Config
-				require.Len(t, config, 1)
-				require.Equal(t, "bar", config["foo"])
+				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.LogRetentionBytes)
 			},
 		},
 		{
-			name: "patch server bindings empty value",
+			name: "patch server bindings LogRetentionBytes overwrite",
 			configs: []*asyncapi3.Config{
 				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar",
-					asyncapi3test.WithKafkaBinding("foo", ""))),
+					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{LogRetentionBytes: 5}),
+				)),
 				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar",
-					asyncapi3test.WithKafkaBinding("foo", "bar"))),
+					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{LogRetentionBytes: 1}),
+				)),
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
-				config := result.Servers["foo"].Value.Bindings.Kafka.Config
-				require.Len(t, config, 1)
-				require.Equal(t, "bar", config["foo"])
+				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.LogRetentionBytes)
 			},
 		},
 		{
-			name: "patch server bindings not overwrite",
+			name: "patch server bindings LogRetentionMs",
 			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar")),
 				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar",
-					asyncapi3test.WithKafkaBinding("foo", "bar"))),
-				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar",
-					asyncapi3test.WithKafkaBinding("foo", "12"))),
+					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{LogRetentionMs: 1}))),
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
-				config := result.Servers["foo"].Value.Bindings.Kafka.Config
-				require.Len(t, config, 1)
-				require.Equal(t, "bar", config["foo"])
+				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.LogRetentionMs)
 			},
 		},
 		{
-			name: "patch server bindings add",
+			name: "patch server bindings LogRetentionMs overwrite",
 			configs: []*asyncapi3.Config{
 				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar",
-					asyncapi3test.WithKafkaBinding("foo", "bar"))),
+					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{LogRetentionMs: 5}),
+				)),
 				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar",
-					asyncapi3test.WithKafkaBinding("bar", "foo"))),
+					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{LogRetentionMs: 1}),
+				)),
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
-				config := result.Servers["foo"].Value.Bindings.Kafka.Config
-				require.Len(t, config, 2)
-				require.Equal(t, "bar", config["foo"])
-				require.Equal(t, "foo", config["bar"])
+				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.LogRetentionMs)
+			},
+		},
+		{
+			name: "patch server bindings LogRetentionCheckIntervalMs",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar")),
+				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar",
+					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{LogRetentionCheckIntervalMs: 1}))),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.LogRetentionCheckIntervalMs)
+			},
+		},
+		{
+			name: "patch server bindings LogRetentionCheckIntervalMs overwrite",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar",
+					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{LogRetentionCheckIntervalMs: 5}),
+				)),
+				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar",
+					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{LogRetentionCheckIntervalMs: 1}),
+				)),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.LogRetentionCheckIntervalMs)
+			},
+		},
+		{
+			name: "patch server bindings LogSegmentDeleteDelayMs",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar")),
+				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar",
+					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{LogSegmentDeleteDelayMs: 1}))),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.LogSegmentDeleteDelayMs)
+			},
+		},
+		{
+			name: "patch server bindings LogSegmentDeleteDelayMs overwrite",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar",
+					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{LogSegmentDeleteDelayMs: 5}),
+				)),
+				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar",
+					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{LogSegmentDeleteDelayMs: 1}),
+				)),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.LogSegmentDeleteDelayMs)
+			},
+		},
+		{
+			name: "patch server bindings LogRollMs",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar")),
+				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar",
+					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{LogRollMs: 1}))),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.LogRollMs)
+			},
+		},
+		{
+			name: "patch server bindings LogRollMs overwrite",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar",
+					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{LogRollMs: 5}),
+				)),
+				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar",
+					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{LogRollMs: 1}),
+				)),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.LogRollMs)
+			},
+		},
+		{
+			name: "patch server bindings LogSegmentBytes",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar")),
+				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar",
+					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{LogSegmentBytes: 1}))),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.LogSegmentBytes)
+			},
+		},
+		{
+			name: "patch server bindings LogSegmentBytes overwrite",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar",
+					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{LogSegmentBytes: 5}),
+				)),
+				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar",
+					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{LogSegmentBytes: 1}),
+				)),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.LogSegmentBytes)
+			},
+		},
+		{
+			name: "patch server bindings GroupInitialRebalanceDelayMs",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar")),
+				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar",
+					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{GroupInitialRebalanceDelayMs: 1}))),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.GroupInitialRebalanceDelayMs)
+			},
+		},
+		{
+			name: "patch server bindings GroupInitialRebalanceDelayMs overwrite",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar",
+					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{GroupInitialRebalanceDelayMs: 5}),
+				)),
+				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar",
+					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{GroupInitialRebalanceDelayMs: 1}),
+				)),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.GroupInitialRebalanceDelayMs)
+			},
+		},
+		{
+			name: "patch server bindings GroupMinSessionTimeoutMs",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar")),
+				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar",
+					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{GroupMinSessionTimeoutMs: 1}))),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.GroupMinSessionTimeoutMs)
+			},
+		},
+		{
+			name: "patch server bindings GroupMinSessionTimeoutMs overwrite",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar",
+					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{GroupMinSessionTimeoutMs: 5}),
+				)),
+				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar",
+					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{GroupMinSessionTimeoutMs: 1}),
+				)),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.GroupMinSessionTimeoutMs)
 			},
 		},
 	}
@@ -279,6 +423,162 @@ func TestConfig_Patch_Channel(t *testing.T) {
 				require.Len(t, result.Channels, 2)
 				require.Equal(t, "bar", result.Channels["foo"].Value.Description)
 				require.Equal(t, "foo", result.Channels["bar"].Value.Description)
+			},
+		},
+		{
+			name: "add channel Partition",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo")),
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 1}),
+				)),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, 1, result.Channels["foo"].Value.Bindings.Kafka.Partitions)
+			},
+		},
+		{
+			name: "add channel Partition overwrite",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 5}),
+				)),
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 1}),
+				)),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, 1, result.Channels["foo"].Value.Bindings.Kafka.Partitions)
+			},
+		},
+		{
+			name: "add channel RetentionBytes",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo")),
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{RetentionBytes: 1}),
+				)),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, int64(1), result.Channels["foo"].Value.Bindings.Kafka.RetentionBytes)
+			},
+		},
+		{
+			name: "add channel RetentionBytes overwrite",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{RetentionBytes: 5}),
+				)),
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{RetentionBytes: 1}),
+				)),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, int64(1), result.Channels["foo"].Value.Bindings.Kafka.RetentionBytes)
+			},
+		},
+		{
+			name: "add channel RetentionMs",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo")),
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{RetentionMs: 1}),
+				)),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, int64(1), result.Channels["foo"].Value.Bindings.Kafka.RetentionMs)
+			},
+		},
+		{
+			name: "add channel RetentionMs overwrite",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{RetentionMs: 5}),
+				)),
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{RetentionMs: 1}),
+				)),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, int64(1), result.Channels["foo"].Value.Bindings.Kafka.RetentionMs)
+			},
+		},
+		{
+			name: "add channel SegmentBytes",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo")),
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{SegmentBytes: 1}),
+				)),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, int64(1), result.Channels["foo"].Value.Bindings.Kafka.SegmentBytes)
+			},
+		},
+		{
+			name: "add channel SegmentBytes overwrite",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{SegmentBytes: 5}),
+				)),
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{SegmentBytes: 1}),
+				)),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, int64(1), result.Channels["foo"].Value.Bindings.Kafka.SegmentBytes)
+			},
+		},
+		{
+			name: "add channel SegmentMs",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo")),
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{SegmentMs: 1}),
+				)),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, int64(1), result.Channels["foo"].Value.Bindings.Kafka.SegmentMs)
+			},
+		},
+		{
+			name: "add channel SegmentMs overwrite",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{SegmentMs: 5}),
+				)),
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{SegmentMs: 1}),
+				)),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, int64(1), result.Channels["foo"].Value.Bindings.Kafka.SegmentMs)
+			},
+		},
+		{
+			name: "add channel ValueSchemaValidation",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo")),
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{ValueSchemaValidation: true}),
+				)),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, true, result.Channels["foo"].Value.Bindings.Kafka.ValueSchemaValidation)
+			},
+		},
+		{
+			name: "add channel ValueSchemaValidation overwrite",
+			configs: []*asyncapi3.Config{
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{ValueSchemaValidation: true}),
+				)),
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{ValueSchemaValidation: false}),
+				)),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, false, result.Channels["foo"].Value.Bindings.Kafka.ValueSchemaValidation)
 			},
 		},
 	}

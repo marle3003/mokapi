@@ -18,8 +18,8 @@ func WithServerTags(tags ...asyncapi3.Tag) ServerOptions {
 	}
 }
 
-func WithKafkaBinding(key, value string) ServerOptions {
+func WithKafkaServerBinding(k asyncapi3.BrokerBindings) ServerOptions {
 	return func(s *asyncapi3.Server) {
-		s.Bindings.Kafka.Config[key] = value
+		s.Bindings.Kafka = k
 	}
 }

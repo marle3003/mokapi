@@ -277,30 +277,51 @@ func (c *Config) patchComponents(patch *Config) {
 	}
 }
 
-func (b BrokerBindings) Patch(patch BrokerBindings) {
-	for k, v := range patch.Config {
-		if c, ok := b.Config[k]; !ok || len(c) == 0 {
-			b.Config[k] = v
-		}
+func (b *BrokerBindings) Patch(patch BrokerBindings) {
+	if patch.LogRetentionBytes != 0 {
+		b.LogRetentionBytes = patch.LogRetentionBytes
+	}
+	if patch.LogRetentionMs != 0 {
+		b.LogRetentionMs = patch.LogRetentionMs
+	}
+	if patch.LogRetentionCheckIntervalMs != 0 {
+		b.LogRetentionCheckIntervalMs = patch.LogRetentionCheckIntervalMs
+	}
+	if patch.LogSegmentDeleteDelayMs != 0 {
+		b.LogSegmentDeleteDelayMs = patch.LogSegmentDeleteDelayMs
+	}
+	if patch.LogRollMs != 0 {
+		b.LogRollMs = patch.LogRollMs
+	}
+	if patch.LogSegmentBytes != 0 {
+		b.LogSegmentBytes = patch.LogSegmentBytes
+	}
+	if patch.GroupInitialRebalanceDelayMs != 0 {
+		b.GroupInitialRebalanceDelayMs = patch.GroupInitialRebalanceDelayMs
+	}
+	if patch.GroupMinSessionTimeoutMs != 0 {
+		b.GroupMinSessionTimeoutMs = patch.GroupMinSessionTimeoutMs
 	}
 }
 
 func (t *TopicBindings) Patch(patch TopicBindings) {
-	if t.Partitions == 0 {
+	if patch.Partitions != 0 {
 		t.Partitions = patch.Partitions
 	}
-	if t.RetentionBytes == 0 {
+	if patch.RetentionBytes != 0 {
 		t.RetentionBytes = patch.RetentionBytes
 	}
-	if t.RetentionMs == 0 {
+	if patch.RetentionMs != 0 {
 		t.RetentionMs = patch.RetentionMs
 	}
-	if t.SegmentBytes == 0 {
+	if patch.SegmentBytes != 0 {
 		t.SegmentBytes = patch.SegmentBytes
 	}
-	if t.SegmentMs == 0 {
+	if patch.SegmentMs != 0 {
 		t.SegmentMs = patch.SegmentMs
 	}
+
+	t.ValueSchemaValidation = patch.ValueSchemaValidation
 }
 
 func (m *KafkaMessageBinding) Patch(patch KafkaMessageBinding) {

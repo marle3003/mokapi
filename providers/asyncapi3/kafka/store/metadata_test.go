@@ -61,8 +61,8 @@ func TestMetadata(t *testing.T) {
 			"with specific topic and two partitions",
 			func(t *testing.T, s *store.Store) {
 				s.Update(asyncapi3test.NewConfig(
-					asyncapi3test.WithChannel("foo", asyncapi3test.WithChannelKafka(asyncapi3.TopicBindings{Partitions: 2})),
-					asyncapi3test.WithChannel("foo2", asyncapi3test.WithChannelKafka(asyncapi3.TopicBindings{Partitions: 2})),
+					asyncapi3test.WithChannel("foo", asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 2})),
+					asyncapi3test.WithChannel("foo2", asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 2})),
 				))
 
 				rr := kafkatest.NewRecorder()

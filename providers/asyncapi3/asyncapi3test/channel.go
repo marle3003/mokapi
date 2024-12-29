@@ -25,7 +25,7 @@ func WithMessage(name string, opts ...MessageOptions) ChannelOptions {
 	}
 }
 
-func WithChannelKafka(bindings asyncapi3.TopicBindings) ChannelOptions {
+func WithKafkaChannelBinding(bindings asyncapi3.TopicBindings) ChannelOptions {
 	return func(c *asyncapi3.Channel) {
 		c.Bindings.Kafka = bindings
 	}

@@ -288,7 +288,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 					asyncapi3test.WithTopicBinding(asyncapi3.TopicBindings{ValueSchemaValidation: true}),
 				),
 				asyncapi3test.WithChannel("bar",
-					asyncapi3test.WithChannelKafka(asyncapi3.TopicBindings{Partitions: 10}),
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 10}),
 					asyncapi3test.WithMessage("foo",
 						asyncapi3test.WithContentType("application/json"),
 						asyncapi3test.WithPayload(schematest.New("string")),

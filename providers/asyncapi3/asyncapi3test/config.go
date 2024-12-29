@@ -62,7 +62,6 @@ func WithServer(name, protocol, host string, opts ...ServerOptions) ConfigOption
 			Host:     host,
 			Protocol: protocol,
 		}
-		s.Bindings.Kafka.Config = make(map[string]string)
 		for _, opt := range opts {
 			opt(s)
 		}
