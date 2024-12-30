@@ -12,12 +12,12 @@ func (d *FormUrlEncodeDecoder) IsSupporting(contentType media.ContentType) bool 
 	return contentType.String() == "application/x-www-form-urlencoded"
 }
 
-func (d *FormUrlEncodeDecoder) Decode(b []byte, _ media.ContentType, decode DecodeFunc) (i interface{}, err error) {
+func (d *FormUrlEncodeDecoder) Decode(b []byte, state *DecodeState) (i interface{}, err error) {
 	values, err := url.ParseQuery(string(b))
 	m := map[string]interface{}{}
 	for k, v := range values {
-		if decode != nil {
-			i, err = decode(k, v)
+		if state.decodeProperty != nil {
+			i, err = state.decodeProperty(k, v)
 			if err != nil {
 				return nil, err
 			}

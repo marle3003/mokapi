@@ -133,8 +133,8 @@ func TestParser_ParseOne(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			p := parser.Parser{ValidateAdditionalProperties: true}
-			v, err := p.Parse(tc.data, &schema.Ref{Value: tc.s})
+			p := parser.Parser{Schema: &schema.Ref{Value: tc.s}, ValidateAdditionalProperties: true}
+			v, err := p.Parse(tc.data)
 			tc.test(t, v, err)
 		})
 	}

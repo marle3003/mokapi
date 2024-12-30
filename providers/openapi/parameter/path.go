@@ -37,7 +37,7 @@ func parsePath(param *Parameter, route string, r *http.Request) (*RequestParamet
 		case param.Schema.Value.Type.IsObject():
 			rp.Value, err = parseObject(param, path, ",", param.IsExplode(), defaultDecode)
 		default:
-			rp.Value, err = p.Parse(path, schema.ConvertToJsonSchema(param.Schema))
+			rp.Value, err = p.ParseWith(path, schema.ConvertToJsonSchema(param.Schema))
 		}
 	}
 

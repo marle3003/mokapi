@@ -4,6 +4,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
+	"mokapi/schema/json/schema"
 	"mokapi/schema/json/schematest"
 	"testing"
 )
@@ -399,7 +400,8 @@ func TestConfig_Patch_Message(t *testing.T) {
 			},
 			test: func(t *testing.T, result *asyncApi.Config) {
 				msg := result.Channels["foo"].Value.Publish.Message.Value
-				require.Equal(t, "string", msg.Payload.Value.Type.String())
+				s := msg.Payload.Value.Schema.(*schema.Ref)
+				require.Equal(t, "string", s.Type())
 			},
 		},
 	}
@@ -454,8 +456,8 @@ func TestConfig_Patch_Components(t *testing.T) {
 				asyncapitest.NewConfig(asyncapitest.WithSchemas("foo", schematest.New("number"))),
 			},
 			test: func(t *testing.T, result *asyncApi.Config) {
-				require.Equal(t, 1, result.Components.Schemas.Len())
-				s := result.Components.Schemas.Get("foo")
+				require.Len(t, result.Components.Schemas, 1)
+				s := result.Components.Schemas["foo"].Value.Schema.(*schema.Ref)
 				require.Equal(t, "number", s.Value.Type.String())
 			},
 		},
@@ -466,10 +468,10 @@ func TestConfig_Patch_Components(t *testing.T) {
 				asyncapitest.NewConfig(asyncapitest.WithSchemas("bar", schematest.New("string"))),
 			},
 			test: func(t *testing.T, result *asyncApi.Config) {
-				require.Equal(t, 2, result.Components.Schemas.Len())
-				s := result.Components.Schemas.Get("foo")
+				require.Len(t, result.Components.Schemas, 2)
+				s := result.Components.Schemas["foo"].Value.Schema.(*schema.Ref)
 				require.Equal(t, "number", s.Value.Type.String())
-				s = result.Components.Schemas.Get("bar")
+				s = result.Components.Schemas["bar"].Value.Schema.(*schema.Ref)
 				require.Equal(t, "string", s.Value.Type.String())
 			},
 		},
@@ -480,8 +482,8 @@ func TestConfig_Patch_Components(t *testing.T) {
 				asyncapitest.NewConfig(asyncapitest.WithSchemas("foo", schematest.New("number", schematest.WithFormat("double")))),
 			},
 			test: func(t *testing.T, result *asyncApi.Config) {
-				require.Equal(t, 1, result.Components.Schemas.Len())
-				s := result.Components.Schemas.Get("foo")
+				require.Len(t, result.Components.Schemas, 1)
+				s := result.Components.Schemas["foo"].Value.Schema.(*schema.Ref)
 				require.Equal(t, "number", s.Value.Type.String())
 				require.Equal(t, "double", s.Value.Format)
 			},

@@ -184,7 +184,7 @@ func getKafka(info *runtime.KafkaInfo) kafka {
 			continue
 		}
 		t := info.Store.Topic(name)
-		k.Topics = append(k.Topics, newTopic(info.Store, t, ch.Value))
+		k.Topics = append(k.Topics, newTopic(info.Store, t, ch.Value, info.DefaultContentType))
 	}
 	sort.Slice(k.Topics, func(i, j int) bool {
 		return strings.Compare(k.Topics[i].Name, k.Topics[j].Name) < 0
@@ -202,7 +202,7 @@ func getKafka(info *runtime.KafkaInfo) kafka {
 	return k
 }
 
-func newTopic(s *store.Store, t *store.Topic, config *asyncapi3.Channel) topic {
+func newTopic(s *store.Store, t *store.Topic, config *asyncapi3.Channel, defaultContentType string) topic {
 	var partitions []partition
 	for _, p := range t.Partitions {
 		partitions = append(partitions, newPartition(s, p))
@@ -233,8 +233,12 @@ func newTopic(s *store.Store, t *store.Topic, config *asyncapi3.Channel) topic {
 			ContentType: msg.ContentType,
 		}
 
+		if m.ContentType == "" {
+			m.ContentType = defaultContentType
+		}
+
 		if msg.Bindings.Kafka.Key != nil {
-			m.Key = getSchemaFromJson(msg.Bindings.Kafka.Key.Value.(*jsonSchema.Ref))
+			m.Key = getSchemaFromJson(msg.Bindings.Kafka.Key.Value.Schema.(*jsonSchema.Ref))
 		}
 		if result.Messages == nil {
 			result.Messages = map[string]messageConfig{}

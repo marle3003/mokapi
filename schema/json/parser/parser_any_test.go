@@ -205,8 +205,8 @@ func TestParser_ParseAny(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			p := &parser.Parser{}
-			r, err := p.Parse(tc.data, &schema.Ref{Value: tc.schema})
+			p := &parser.Parser{Schema: &schema.Ref{Value: tc.schema}}
+			r, err := p.Parse(tc.data)
 
 			tc.test(t, r, err)
 		})

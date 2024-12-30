@@ -38,7 +38,7 @@ func parseQuery(param *Parameter, u *url.URL) (*RequestParameterValue, error) {
 				return nil, nil
 			}
 		}
-		rp.Value, err = p.Parse(*rp.Raw, schema.ConvertToJsonSchema(param.Schema))
+		rp.Value, err = p.ParseWith(*rp.Raw, schema.ConvertToJsonSchema(param.Schema))
 		return rp, err
 	}
 }
@@ -72,7 +72,7 @@ func parseQueryObject(param *Parameter, u *url.URL) (string, interface{}, error)
 			}
 			s := strings.Join(values, ",")
 			raw.WriteString(fmt.Sprintf("%v[%v]=%v", param.Name, name, s))
-			if v, err := p.Parse(s, schema.ConvertToJsonSchema(prop)); err != nil {
+			if v, err := p.ParseWith(s, schema.ConvertToJsonSchema(prop)); err != nil {
 				return "", nil, err
 			} else {
 				obj[name] = v

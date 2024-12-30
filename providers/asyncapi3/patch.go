@@ -1,7 +1,5 @@
 package asyncapi3
 
-import "mokapi/schema/json/schema"
-
 func (c *Config) Patch(patch *Config) {
 	c.patchInfo(patch)
 	c.patchServer(patch)
@@ -200,24 +198,12 @@ func (m *Message) patch(patch *Message) {
 	if m.Payload == nil {
 		m.Payload = patch.Payload
 	} else {
-		if m.Payload.Value != nil && patch.Payload.Value != nil {
-			s, ok1 := m.Payload.Value.(*schema.Schema)
-			ps, ok2 := patch.Payload.Value.(*schema.Schema)
-			if ok1 && ok2 {
-				s.Patch(ps)
-			}
-		}
+		m.Payload.patch(patch.Payload)
 	}
-	if m.Headers == nil || m.Headers.Value == nil {
+	if m.Headers == nil {
 		m.Headers = patch.Headers
 	} else {
-		if m.Headers.Value != nil && patch.Headers.Value != nil {
-			s, ok1 := m.Headers.Value.(*schema.Schema)
-			ps, ok2 := patch.Headers.Value.(*schema.Schema)
-			if ok1 && ok2 {
-				s.Patch(ps)
-			}
-		}
+		m.Headers.patch(patch.Headers)
 	}
 	m.Bindings.Kafka.Patch(patch.Bindings.Kafka)
 }
@@ -246,20 +232,11 @@ func (c *Config) patchComponents(patch *Config) {
 	if c.Components.Schemas == nil {
 		c.Components.Schemas = patch.Components.Schemas
 	} else {
-		for k, r := range patch.Components.Schemas {
-			if r.Value == nil {
-				continue
-			}
-			s, ok := r.Value.(*schema.Schema)
-			if !ok {
-				continue
-			}
-			if r2, ok := c.Components.Schemas[k]; ok {
-				if s2, ok := r2.Value.(*schema.Schema); ok {
-					s2.Patch(s)
-				}
+		for k, p := range patch.Components.Schemas {
+			if v, ok := c.Components.Schemas[k]; ok {
+				v.patch(p)
 			} else {
-				c.Components.Schemas[k] = r
+				c.Components.Schemas[k] = p
 			}
 		}
 	}
@@ -301,6 +278,12 @@ func (b *BrokerBindings) Patch(patch BrokerBindings) {
 	}
 	if patch.GroupMinSessionTimeoutMs != 0 {
 		b.GroupMinSessionTimeoutMs = patch.GroupMinSessionTimeoutMs
+	}
+	if len(patch.SchemaRegistryUrl) > 0 {
+		b.SchemaRegistryUrl = patch.SchemaRegistryUrl
+	}
+	if len(patch.SchemaRegistryVendor) > 0 {
+		b.SchemaRegistryVendor = patch.SchemaRegistryVendor
 	}
 }
 

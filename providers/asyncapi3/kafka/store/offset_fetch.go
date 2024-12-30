@@ -6,6 +6,7 @@ import (
 	"mokapi/kafka"
 	"mokapi/kafka/offsetFetch"
 	"mokapi/schema/encoding"
+	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 )
 
@@ -71,7 +72,7 @@ func validateConsumer(t *Topic, clientId, groupId string) (error, kafka.ErrorCod
 			continue
 		}
 		if op.Bindings.Kafka.ClientId != nil {
-			_, err = encoding.Decode([]byte(clientId), encoding.WithSchema(&schema.Ref{Value: op.Bindings.Kafka.ClientId}))
+			_, err = encoding.Decode([]byte(clientId), encoding.WithParser(&parser.Parser{Schema: &schema.Ref{Value: op.Bindings.Kafka.ClientId}}))
 			if err != nil {
 				last = fmt.Errorf("invalid clientId: %v", err)
 				code = kafka.UnknownServerError
@@ -79,7 +80,7 @@ func validateConsumer(t *Topic, clientId, groupId string) (error, kafka.ErrorCod
 			}
 		}
 		if op.Bindings.Kafka.GroupId != nil {
-			_, err = encoding.Decode([]byte(groupId), encoding.WithSchema(&schema.Ref{Value: op.Bindings.Kafka.GroupId}))
+			_, err = encoding.Decode([]byte(groupId), encoding.WithParser(&parser.Parser{Schema: &schema.Ref{Value: op.Bindings.Kafka.GroupId}}))
 			if err != nil {
 				last = fmt.Errorf("invalid groupId: %v", err)
 				code = kafka.InvalidGroupId

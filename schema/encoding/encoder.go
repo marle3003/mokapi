@@ -28,7 +28,7 @@ func (e *Encoder) Write(v interface{}, contentType media.ContentType) ([]byte, e
 		p.ConvertStringToNumber = true
 	}
 
-	i, err := p.Parse(v, e.r)
+	i, err := p.ParseWith(v, e.r)
 	if err != nil {
 		if uw, ok := err.(interface{ Unwrap() []error }); ok {
 			errs := uw.Unwrap()

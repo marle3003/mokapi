@@ -203,12 +203,12 @@ func (m *Message) patch(patch *Message) {
 	if m.Payload == nil {
 		m.Payload = patch.Payload
 	} else {
-		m.Payload.Patch(patch.Payload)
+		m.Payload.patch(patch.Payload)
 	}
 	if m.Headers == nil {
 		m.Headers = patch.Headers
 	} else {
-		m.Headers.Patch(patch.Headers)
+		m.Headers.patch(patch.Headers)
 	}
 	m.Bindings.Kafka.Patch(patch.Bindings.Kafka)
 }
@@ -237,7 +237,13 @@ func (c *Config) patchComponents(patch *Config) {
 	if c.Components.Schemas == nil {
 		c.Components.Schemas = patch.Components.Schemas
 	} else {
-		c.Components.Schemas.Patch(patch.Components.Schemas)
+		for k, p := range patch.Components.Schemas {
+			if v, ok := c.Components.Schemas[k]; ok {
+				v.patch(p)
+			} else {
+				c.Components.Schemas[k] = p
+			}
+		}
 	}
 
 	if c.Components.Messages == nil {

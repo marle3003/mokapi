@@ -5,7 +5,9 @@ import (
 	"mokapi/kafka"
 	"mokapi/media"
 	"mokapi/providers/asyncapi3"
+	avro "mokapi/schema/avro/schema"
 	"mokapi/schema/encoding"
+	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 )
 
@@ -47,18 +49,20 @@ func (v *validator) Validate(record *kafka.Record) error {
 
 type messageValidator struct {
 	messageId string
-	payload   schemaValidator
+	payload   *schemaValidator
 }
 
 func newMessageValidator(messageId string, msg *asyncapi3.Message) *messageValidator {
 	v := &messageValidator{messageId: messageId}
 
-	switch s := msg.Payload.Value.(type) {
+	switch s := msg.Payload.Value.Schema.(type) {
 	case *schema.Ref:
-		v.payload = &jsonSchemaValidator{
-			schema:      s,
+		v.payload = &schemaValidator{
+			parser:      &parser.Parser{Schema: s},
 			contentType: msg.ContentType,
 		}
+	case *avro.Schema:
+		v.payload = &schemaValidator{parser: &avro.Parser{Schema: s}, contentType: msg.ContentType}
 	default:
 		log.Errorf("unsupported payload type: %T", msg.Payload.Value)
 	}
@@ -80,20 +84,16 @@ func (mv *messageValidator) Validate(record *kafka.Record) error {
 	return nil
 }
 
-type schemaValidator interface {
-	Validate(record kafka.Bytes) error
-}
-
-type jsonSchemaValidator struct {
-	schema      *schema.Ref
+type schemaValidator struct {
+	parser      encoding.Parser
 	contentType string
 }
 
-func (v *jsonSchemaValidator) Validate(data kafka.Bytes) error {
-	if len(v.contentType) == 0 || v.schema == nil {
+func (v *schemaValidator) Validate(data kafka.Bytes) error {
+	if len(v.contentType) == 0 {
 		return nil
 	}
 
-	_, err := encoding.DecodeFrom(data, encoding.WithContentType(media.ParseContentType(v.contentType)), encoding.WithSchema(v.schema))
+	_, err := encoding.DecodeFrom(data, encoding.WithContentType(media.ParseContentType(v.contentType)), encoding.WithParser(v.parser))
 	return err
 }

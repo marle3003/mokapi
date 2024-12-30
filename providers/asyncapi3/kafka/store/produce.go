@@ -7,6 +7,7 @@ import (
 	"mokapi/kafka/produce"
 	"mokapi/runtime/monitor"
 	"mokapi/schema/encoding"
+	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 )
 
@@ -46,7 +47,7 @@ func (s *Store) produce(rw kafka.ResponseWriter, req *kafka.Request) error {
 				} else {
 					baseOffset, records, err := p.Write(rp.Record)
 					if err != nil {
-						resPartition.ErrorCode = kafka.CorruptMessage
+						resPartition.ErrorCode = kafka.InvalidRecord
 						resPartition.ErrorMessage = fmt.Sprintf("invalid message received for topic %v: %v", rt.Name, err)
 						resPartition.RecordErrors = records
 						log.Errorf("kafka Produce: %v", resPartition.ErrorMessage)
@@ -76,7 +77,7 @@ func validateProducer(t *Topic, ctx *kafka.ClientContext) error {
 			continue
 		}
 		if op.Bindings.Kafka.ClientId != nil {
-			_, err = encoding.Decode([]byte(ctx.ClientId), encoding.WithSchema(&schema.Ref{Value: op.Bindings.Kafka.ClientId}))
+			_, err = encoding.Decode([]byte(ctx.ClientId), encoding.WithParser(&parser.Parser{Schema: &schema.Ref{Value: op.Bindings.Kafka.ClientId}}))
 			if err != nil {
 				last = err
 			} else {

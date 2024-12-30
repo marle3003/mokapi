@@ -306,11 +306,12 @@ func TestParse_Number(t *testing.T) {
 			t.Parallel()
 
 			p := parser.Parser{
+				Schema:                      &schema.Ref{Value: tc.s},
 				SkipValidationFormatKeyword: tc.skipValidationFormat,
 				ConvertStringToNumber:       tc.convertStringToNumber,
 			}
 
-			v, err := p.Parse(tc.d, &schema.Ref{Value: tc.s})
+			v, err := p.Parse(tc.d)
 			tc.test(t, v, err)
 		})
 	}

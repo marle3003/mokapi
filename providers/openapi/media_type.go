@@ -67,7 +67,7 @@ func (m *MediaType) Parse(b []byte, contentType media.ContentType) (interface{},
 	}
 
 	var decoder encoding.DecodeFunc
-	p := &parser.Parser{ValidateAdditionalProperties: true}
+	p := &parser.Parser{Schema: schema.ConvertToJsonSchema(m.Schema), ValidateAdditionalProperties: true}
 	if contentType.Type == "text" {
 		p.ConvertStringToNumber = true
 	}
@@ -80,7 +80,6 @@ func (m *MediaType) Parse(b []byte, contentType media.ContentType) (interface{},
 		b,
 		encoding.WithContentType(contentType),
 		encoding.WithDecodeProperty(decoder),
-		encoding.WithSchema(schema.ConvertToJsonSchema(m.Schema)),
 		encoding.WithParser(p),
 	)
 }

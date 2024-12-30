@@ -113,8 +113,8 @@ func TestParser_ParseBoolean(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			p := &parser.Parser{ConvertStringToBoolean: tc.convertStringToBoolean}
-			v, err := p.Parse(tc.data, &schema.Ref{Value: tc.schema})
+			p := &parser.Parser{Schema: &schema.Ref{Value: tc.schema}, ConvertStringToBoolean: tc.convertStringToBoolean}
+			v, err := p.Parse(tc.data)
 			tc.test(t, v, err)
 		})
 	}

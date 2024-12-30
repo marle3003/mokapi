@@ -4,13 +4,16 @@ import (
 	"io"
 	"mokapi/media"
 	"mokapi/schema/json/parser"
-	"mokapi/schema/json/schema"
 	"sync"
 )
 
 type Decoder interface {
 	IsSupporting(contentType media.ContentType) bool
-	Decode([]byte, media.ContentType, DecodeFunc) (interface{}, error)
+	Decode([]byte, *DecodeState) (interface{}, error)
+}
+
+type Parser interface {
+	Parse(data interface{}) (interface{}, error)
 }
 
 type DecodeFunc func(propName string, val interface{}) (interface{}, error)
@@ -23,13 +26,14 @@ func init() {
 	RegisterDecoder(&MultipartDecoder{})
 	RegisterDecoder(&FileDecoder{})
 	RegisterDecoder(&TextDecoder{})
+	RegisterDecoder(&AvroDecoder{})
 }
 
 func RegisterDecoder(d Decoder) {
 	decoders = append(decoders, d)
 }
 
-type DecodeOptions func(state *decodeState)
+type DecodeOptions func(state *DecodeState)
 
 func DecodeFrom(r io.Reader, opts ...DecodeOptions) (interface{}, error) {
 	b, err := io.ReadAll(r)
@@ -51,62 +55,54 @@ func Decode(b []byte, opts ...DecodeOptions) (interface{}, error) {
 
 	for _, d := range decoders {
 		if d.IsSupporting(state.contentType) {
-			v, err := d.Decode(b, state.contentType, state.decodeProperty)
+			v, err := d.Decode(b, state)
 			if err != nil {
 				return nil, err
 			}
-			return state.parser.Parse(v, state.schema)
+			return state.parser.Parse(v)
 		}
 	}
-	return state.parser.Parse(string(b), state.schema)
+	return state.parser.Parse(string(b))
 }
 
 func WithContentType(contentType media.ContentType) DecodeOptions {
-	return func(state *decodeState) {
+	return func(state *DecodeState) {
 		state.contentType = contentType
 	}
 }
 
 func WithDecodeProperty(decodeFunc DecodeFunc) DecodeOptions {
-	return func(state *decodeState) {
+	return func(state *DecodeState) {
 		state.decodeProperty = decodeFunc
 	}
 }
 
-func WithSchema(s *schema.Ref) DecodeOptions {
-	return func(state *decodeState) {
-		state.schema = s
-	}
-}
-
-func WithParser(p *parser.Parser) DecodeOptions {
-	return func(state *decodeState) {
+func WithParser(p Parser) DecodeOptions {
+	return func(state *DecodeState) {
 		state.parser = p
 	}
 }
 
-type decodeState struct {
-	schema         *schema.Ref
+type DecodeState struct {
 	contentType    media.ContentType
 	decodeProperty DecodeFunc
-	parser         *parser.Parser
+	parser         Parser
 }
 
 var decodeStatePool sync.Pool
 
-func newDecodeState() *decodeState {
+func newDecodeState() *DecodeState {
 	if v := decodeStatePool.Get(); v != nil {
-		d := v.(*decodeState)
+		d := v.(*DecodeState)
 		d.Reset()
 		return d
 	}
-	d := &decodeState{}
+	d := &DecodeState{}
 	d.Reset()
 	return d
 }
 
-func (d *decodeState) Reset() {
-	d.schema = nil
+func (d *DecodeState) Reset() {
 	d.contentType = media.Empty
 	d.decodeProperty = nil
 	d.parser = &parser.Parser{}

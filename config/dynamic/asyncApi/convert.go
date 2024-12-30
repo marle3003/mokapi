@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"mokapi/config/dynamic"
 	"mokapi/providers/asyncapi3"
-	"mokapi/schema/json/schema"
 	"net/url"
 	"path"
 	"strings"
@@ -151,11 +150,17 @@ func convertMessage(msg *MessageRef) *asyncapi3.MessageRef {
 			ExternalDocs: nil,
 		}
 
-		if msg.Value.Payload != nil {
-			target.Value.Payload = convertJsonSchema(msg.Value.Payload)
+		if msg.Value.Payload != nil && msg.Value.Payload.Value != nil {
+			target.Value.Payload = &asyncapi3.SchemaRef{Value: &asyncapi3.MultiSchemaFormat{
+				Format: msg.Value.Payload.Value.Format,
+				Schema: msg.Value.Payload.Value.Schema,
+			}}
 		}
-		if msg.Value.Headers != nil {
-			target.Value.Headers = convertJsonSchema(msg.Value.Headers)
+		if msg.Value.Headers != nil && msg.Value.Headers.Value != nil {
+			target.Value.Headers = &asyncapi3.SchemaRef{Value: &asyncapi3.MultiSchemaFormat{
+				Format: msg.Value.Headers.Value.Format,
+				Schema: msg.Value.Headers.Value.Schema,
+			}}
 		}
 		for _, orig := range msg.Value.Traits {
 			trait := &asyncapi3.MessageTraitRef{}
@@ -183,31 +188,21 @@ func convertMessageTrait(trait *MessageTrait) *asyncapi3.MessageTraitRef {
 
 	if trait.Headers != nil && trait.Headers.Value != nil {
 		target.Headers = &asyncapi3.SchemaRef{
-			Value: trait.Headers.Value,
+			Value: &asyncapi3.MultiSchemaFormat{Schema: trait.Headers.Value.Schema, Format: trait.Headers.Value.Format},
 		}
 	}
 	return &asyncapi3.MessageTraitRef{Value: target}
 }
 
-func convertSchema(s *SchemaRef, schemaFormat string) *asyncapi3.SchemaRef {
-	if s == nil {
+func convertSchema(s *SchemaRef) *asyncapi3.SchemaRef {
+	if s == nil || s.Value == nil {
 		return nil
 	}
+
 	target := &asyncapi3.SchemaRef{Reference: dynamic.Reference{Ref: s.Ref}}
+	target.Value = &asyncapi3.MultiSchemaFormat{Schema: s.Value.Schema, Format: s.Value.Format}
 
-	if schemaFormat == "" {
-		target.Value = s.Value
-	} else {
-		target.Value = &MultiSchemaFormat{
-			Format: schemaFormat,
-			Schema: s,
-		}
-	}
 	return target
-}
-
-func convertJsonSchema(s *schema.Ref) *asyncapi3.SchemaRef {
-	return &asyncapi3.SchemaRef{Value: s}
 }
 
 func convertParameters(channel *asyncapi3.Channel, params map[string]*ParameterRef) error {
@@ -336,7 +331,7 @@ func convertServerBinding(b ServerBindings) asyncapi3.ServerBindings {
 func convertMessageBinding(b MessageBinding) asyncapi3.MessageBinding {
 	return asyncapi3.MessageBinding{
 		Kafka: asyncapi3.KafkaMessageBinding{
-			Key: convertSchema(b.Kafka.Key, ""),
+			Key: convertSchema(b.Kafka.Key),
 		},
 	}
 }
@@ -381,11 +376,11 @@ func convertComponents(c *Components) (*asyncapi3.Components, error) {
 	}
 
 	if c.Schemas != nil {
-		for it := c.Schemas.Iter(); it.Next(); {
+		for name, orig := range c.Schemas {
 			if target.Schemas == nil {
 				target.Schemas = map[string]*asyncapi3.SchemaRef{}
 			}
-			target.Schemas[it.Key()] = convertSchema(&SchemaRef{Value: it.Value()}, "")
+			target.Schemas[name] = convertSchema(orig)
 		}
 	}
 

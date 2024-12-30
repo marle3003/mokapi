@@ -66,7 +66,7 @@ function showMessage(event: ServiceEvent){
     const topic = getTopic(topicName)
     const messageConfig = getMessageConfig(data?.headers['x-specification-message-id'], topic)
     if (!messageConfig) {
-        console.error('message-id not found: '+ data?.headers['x-specification-message-id'])
+        console.error('x-specification-message-id: '+ data?.headers['x-specification-message-id'])
         return
     }
 
@@ -96,6 +96,11 @@ function getTopic(name: string): KafkaTopic {
     throw new Error(`topic ${name} not found`)
 }
 function getMessageConfig(messageId: string | undefined, topic: KafkaTopic): KafkaMessage | undefined {
+    const keys = Object.keys(topic.messages)
+    if (keys.length === 1) {
+        return topic.messages[keys[0]]
+    }
+
     for (const id in topic.messages){
         if (id === messageId) {
             return topic.messages[id]

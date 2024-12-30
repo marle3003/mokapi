@@ -7,6 +7,8 @@ import (
 )
 
 type Parser struct {
+	Schema *schema.Ref
+
 	ConvertStringToNumber  bool
 	ConvertStringToBoolean bool
 	ConvertToSortedMap     bool
@@ -17,8 +19,20 @@ type Parser struct {
 	SkipValidationFormatKeyword bool
 }
 
-func (p *Parser) Parse(data interface{}, ref *schema.Ref) (interface{}, error) {
-	v, err := p.parse(data, ref)
+func (p *Parser) ParseWith(data interface{}, schema *schema.Ref) (interface{}, error) {
+	v, err := p.parse(data, schema)
+	if err != nil {
+		return v, &Error{
+			NumErrors: NumErrors(err),
+			Err:       err,
+		}
+	}
+
+	return v, nil
+}
+
+func (p *Parser) Parse(data interface{}) (interface{}, error) {
+	v, err := p.parse(data, p.Schema)
 	if err != nil {
 		return v, &Error{
 			NumErrors: NumErrors(err),

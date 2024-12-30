@@ -136,7 +136,7 @@ func (suite *PetStoreSuite) TestKafka_Produce_InvalidFormat() {
 	})
 	require.NoError(suite.T(), err)
 	require.Equal(suite.T(), "petstore.order-event", r.Topics[0].Name)
-	require.Equal(suite.T(), kafka.CorruptMessage, r.Topics[0].Partitions[0].ErrorCode)
+	require.Equal(suite.T(), kafka.InvalidRecord, r.Topics[0].Partitions[0].ErrorCode)
 	require.Equal(suite.T(), int64(0), r.Topics[0].Partitions[0].BaseOffset)
 }
 

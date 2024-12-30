@@ -1,6 +1,7 @@
 package asyncapi3
 
 import (
+	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 )
 
@@ -67,4 +68,32 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	}
 
 	return c.Components.parse(config, reader)
+}
+
+func (c *Config) UnmarshalYAML(node *yaml.Node) error {
+	// set default: https://github.com/asyncapi/spec/issues/319
+	c.DefaultContentType = "application/json"
+
+	type alias Config
+	a := alias(*c)
+	err := node.Decode(&a)
+	if err != nil {
+		return err
+	}
+	*c = Config(a)
+	return nil
+}
+
+func (c *Config) UnmarshalJSON(b []byte) error {
+	// set default: https://github.com/asyncapi/spec/issues/319
+	c.DefaultContentType = "application/json"
+
+	type alias Config
+	a := alias(*c)
+	err := dynamic.UnmarshalJSON(b, &a)
+	if err != nil {
+		return err
+	}
+	*c = Config(a)
+	return nil
 }

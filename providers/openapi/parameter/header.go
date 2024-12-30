@@ -26,7 +26,7 @@ func parseHeader(param *Parameter, r *http.Request) (*RequestParameterValue, err
 		case param.Schema.Value.Type.IsObject():
 			rp.Value, err = parseObject(param, header, ",", param.IsExplode(), defaultDecode)
 		default:
-			rp.Value, err = p.Parse(header, schema.ConvertToJsonSchema(param.Schema))
+			rp.Value, err = p.ParseWith(header, schema.ConvertToJsonSchema(param.Schema))
 		}
 	}
 

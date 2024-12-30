@@ -89,7 +89,7 @@ func OneOf() *Tree {
 					if i == selected {
 						continue
 					}
-					_, err = p.Parse(v, one)
+					_, err = p.ParseWith(v, one)
 					if err == nil {
 						continue Next
 					}

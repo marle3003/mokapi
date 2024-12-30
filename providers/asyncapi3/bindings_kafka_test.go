@@ -337,6 +337,32 @@ servers:
 				require.EqualError(t, err, "invalid group.min.session.timeout.ms: cannot unmarshal string to int64: foo")
 			},
 		},
+		{
+			name: "schemaRegistryUrl",
+			config: `
+servers:
+  test:
+    bindings:
+      kafka:
+        schemaRegistryUrl: foo.bar
+`,
+			test: func(t *testing.T, config *asyncapi3.Config, err error) {
+				require.Equal(t, "foo.bar", config.Servers["test"].Value.Bindings.Kafka.SchemaRegistryUrl)
+			},
+		},
+		{
+			name: "schemaRegistryVendor",
+			config: `
+servers:
+  test:
+    bindings:
+      kafka:
+        schemaRegistryVendor: foo
+`,
+			test: func(t *testing.T, config *asyncapi3.Config, err error) {
+				require.Equal(t, "foo", config.Servers["test"].Value.Bindings.Kafka.SchemaRegistryVendor)
+			},
+		},
 	}
 
 	t.Parallel()

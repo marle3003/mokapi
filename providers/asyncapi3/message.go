@@ -27,7 +27,7 @@ type Message struct {
 
 	Examples []interface{} `yaml:"examples" json:"examples"`
 
-	ExternalDocs []ExternalDocRef `yaml:"externalDocs" json:"externalDocs"`
+	ExternalDocs []*ExternalDocRef `yaml:"externalDocs" json:"externalDocs"`
 }
 
 type MessageTraitRef struct {
@@ -49,7 +49,7 @@ type MessageTrait struct {
 
 	Examples []*MessageExample `yaml:"examples" json:"examples"`
 
-	ExternalDocs []ExternalDocRef `yaml:"externalDocs" json:"externalDocs"`
+	ExternalDocs []*ExternalDocRef `yaml:"externalDocs" json:"externalDocs"`
 }
 
 func (r *MessageRef) UnmarshalYAML(node *yaml.Node) error {

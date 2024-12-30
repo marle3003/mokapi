@@ -6,7 +6,8 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/asyncapi3"
-	"mokapi/schema/json/schema"
+	avro "mokapi/schema/avro/schema"
+	json "mokapi/schema/json/schema"
 	"os"
 	"strings"
 	"testing"
@@ -27,12 +28,15 @@ components:
 	err := yaml.Unmarshal(b, &cfg)
 	require.NoError(t, err)
 
-	multi := cfg.Components.Schemas["Foo"].Value.(*asyncapi3.MultiSchemaFormat)
+	multi := cfg.Components.Schemas["Foo"].Value
 	require.Equal(t, "application/vnd.apache.avro;version=1.9.0", multi.Format)
-	require.Equal(t, map[string]interface{}{"type": "record"}, multi.Schema)
+	avroSchema := multi.Schema.(*avro.Schema)
+	require.Equal(t, "record", avroSchema.Type[0])
 
-	single := cfg.Components.Schemas["Bar"].Value.(*schema.Schema)
-	require.Equal(t, "object", single.Type[0])
+	jsonSchema := cfg.Components.Schemas["Bar"].Value.Schema.(*json.Ref)
+	require.Equal(t, "object", jsonSchema.Type())
+
+	require.Equal(t, "application/json", cfg.DefaultContentType)
 }
 
 func TestStreetlightKafka(t *testing.T) {
@@ -84,17 +88,17 @@ func TestStreetlightKafka(t *testing.T) {
 	require.True(t, strings.HasPrefix(message.Value.Summary, "Inform about environmental"))
 	require.Equal(t, "application/json", message.Value.ContentType)
 	// header from message trait should be applied
-	s := asyncapi3.ConvertToJsonSchema(message.Value.Headers.Value)
-	require.Equal(t, "integer", s.Properties.Get("my-app-header").Value.Type[0])
+	s := message.Value.Headers.Value.Schema.(*json.Ref)
+	require.Equal(t, "integer", s.Value.Properties.Get("my-app-header").Value.Type[0])
 
-	payload := message.Value.Payload.Value.(*schema.Schema)
-	require.Equal(t, "Light intensity measured in lumens.", payload.Properties.Get("lumens").Value.Description)
+	payload := message.Value.Payload.Value.Schema.(*json.Ref)
+	require.Equal(t, "Light intensity measured in lumens.", payload.Value.Properties.Get("lumens").Value.Description)
 
 	// message trait
 	require.Equal(t, "#/components/messageTraits/commonHeaders", message.Value.Traits[0].Ref)
 	trait := message.Value.Traits[0].Value
-	s = trait.Headers.Value.(*schema.Schema)
-	require.Equal(t, "integer", s.Properties.Get("my-app-header").Value.Type[0])
+	s = trait.Headers.Value.Schema.(*json.Ref)
+	require.Equal(t, "integer", s.Value.Properties.Get("my-app-header").Value.Type[0])
 
 	param := channel.Value.Parameters["streetlightId"]
 	require.Equal(t, "The ID of the streetlight.", param.Value.Description)

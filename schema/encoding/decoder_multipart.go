@@ -14,8 +14,8 @@ func (d *MultipartDecoder) IsSupporting(contentType media.ContentType) bool {
 	return contentType.Type == "multipart"
 }
 
-func (d *MultipartDecoder) Decode(b []byte, contentType media.ContentType, decode DecodeFunc) (i interface{}, err error) {
-	boundary := contentType.Parameters["boundary"]
+func (d *MultipartDecoder) Decode(b []byte, state *DecodeState) (i interface{}, err error) {
+	boundary := state.contentType.Parameters["boundary"]
 	reader := multipart.NewReader(bytes.NewReader(b), boundary)
 
 	m := make(map[string]interface{})
@@ -28,7 +28,7 @@ func (d *MultipartDecoder) Decode(b []byte, contentType media.ContentType, decod
 			return nil, err
 		}
 
-		v, err := d.decodePart(part, decode)
+		v, err := d.decodePart(part, state.decodeProperty)
 		if err != nil {
 			return nil, err
 		}

@@ -42,7 +42,7 @@ func (h *handler) validate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	p := parser.Parser{ValidateAdditionalProperties: true}
-	v, err = p.Parse(v, schema.ConvertToJsonSchema(s))
+	v, err = p.ParseWith(v, schema.ConvertToJsonSchema(s))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

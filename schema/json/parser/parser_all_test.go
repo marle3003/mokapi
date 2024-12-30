@@ -300,8 +300,8 @@ func TestParser_ParseAll(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			p := &parser.Parser{ValidateAdditionalProperties: true}
-			v, err := p.Parse(tc.data, &schema.Ref{Value: tc.schema})
+			p := &parser.Parser{Schema: &schema.Ref{Value: tc.schema}, ValidateAdditionalProperties: true}
+			v, err := p.Parse(tc.data)
 			tc.test(t, v, err)
 		})
 	}
@@ -420,8 +420,8 @@ func TestParser_AllOf_If_Then(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			p := &parser.Parser{ValidateAdditionalProperties: true}
-			v, err := p.Parse(tc.d, &schema.Ref{Value: s})
+			p := &parser.Parser{Schema: &schema.Ref{Value: s}, ValidateAdditionalProperties: true}
+			v, err := p.Parse(tc.d)
 			tc.test(t, v, err)
 		})
 	}

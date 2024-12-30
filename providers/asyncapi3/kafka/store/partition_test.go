@@ -5,6 +5,7 @@ import (
 	"mokapi/kafka"
 	"mokapi/providers/asyncapi3"
 	"mokapi/runtime/events"
+	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 	"mokapi/schema/json/schematest"
 	"testing"
@@ -145,8 +146,8 @@ func TestPartition_Write_Value_Validator(t *testing.T) {
 		validators: []recordValidator{
 			&messageValidator{
 				messageId: "message-foo-id",
-				payload: &jsonSchemaValidator{
-					schema:      &schema.Ref{Value: schematest.New("string")},
+				payload: &schemaValidator{
+					parser:      &parser.Parser{Schema: &schema.Ref{Value: schematest.New("string")}},
 					contentType: "application/json",
 				},
 			},

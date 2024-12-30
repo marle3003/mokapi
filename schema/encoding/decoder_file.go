@@ -15,8 +15,8 @@ func (d *FileDecoder) IsSupporting(contentType media.ContentType) bool {
 	return contentType.String() == "application/octet-stream"
 }
 
-func (d *FileDecoder) Decode(b []byte, _ media.ContentType, _ DecodeFunc) (i interface{}, err error) {
-	return string(b), nil
+func (d *FileDecoder) Decode(b []byte, state *DecodeState) (i interface{}, err error) {
+	return state.parser.Parse(string(b))
 }
 
 func parseFormFile(fh *multipart.FileHeader) (interface{}, error) {

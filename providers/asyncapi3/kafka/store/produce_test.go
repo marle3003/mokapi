@@ -212,7 +212,7 @@ func TestProduce(t *testing.T) {
 				res, ok := rr.Message.(*produce.Response)
 				require.True(t, ok)
 				require.Equal(t, "foo", res.Topics[0].Name)
-				require.Equal(t, kafka.CorruptMessage, res.Topics[0].Partitions[0].ErrorCode)
+				require.Equal(t, kafka.InvalidRecord, res.Topics[0].Partitions[0].ErrorCode)
 				require.Equal(t, int64(0), res.Topics[0].Partitions[0].BaseOffset)
 			},
 		},

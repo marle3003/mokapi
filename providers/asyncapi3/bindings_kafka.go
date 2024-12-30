@@ -30,6 +30,10 @@ type BrokerBindings struct {
 	GroupInitialRebalanceDelayMs int64
 
 	GroupMinSessionTimeoutMs int64
+
+	SchemaRegistryUrl string
+
+	SchemaRegistryVendor string
 }
 
 type KafkaOperationBinding struct {
@@ -106,10 +110,19 @@ func (b *BrokerBindings) UnmarshalYAML(value *yaml.Node) error {
 		return fmt.Errorf("invalid group.min.session.timeout.ms: %w", err)
 	}
 
+	if s, ok := m["schemaRegistryUrl"]; ok {
+		b.SchemaRegistryUrl = s.(string)
+	}
+	if s, ok := m["schemaRegistryVendor"]; ok {
+		b.SchemaRegistryVendor = s.(string)
+	}
+
 	return nil
 }
 
 func (t *TopicBindings) UnmarshalYAML(value *yaml.Node) error {
+	t.ValueSchemaValidation = true
+
 	m := make(map[string]interface{})
 	err := value.Decode(m)
 	if err != nil {

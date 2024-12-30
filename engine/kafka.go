@@ -177,13 +177,13 @@ func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[stri
 	}
 
 	if key == nil {
-		key, err = createValue(msg.Bindings.Kafka.Key.Value.(*schema.Ref))
+		key, err = createValue(msg.Bindings.Kafka.Key.Value.Schema.(*schema.Ref))
 		if err != nil {
 			return rb, fmt.Errorf("unable to generate kafka key: %v", err)
 		}
 	}
 
-	s, ok := msg.Payload.Value.(*schema.Ref)
+	s, ok := msg.Payload.Value.Schema.(*schema.Ref)
 	if !ok {
 		if _, ok = value.([]byte); !ok {
 			err = fmt.Errorf("currently only json schema supported")
@@ -210,7 +210,7 @@ func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[stri
 
 	var k []byte
 	if msg.Bindings.Kafka.Key != nil {
-		s := msg.Bindings.Kafka.Key.Value.(*schema.Ref)
+		s := msg.Bindings.Kafka.Key.Value.Schema.(*schema.Ref)
 		switch {
 		case s.IsOneOf("object", "array"):
 			k, err = encoding.NewEncoder(s).Write(key, media.ParseContentType("application/json"))
@@ -225,7 +225,7 @@ func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[stri
 	var recordHeaders []kafka.RecordHeader
 	var hs *schema.Ref
 	if msg.Headers != nil {
-		hs, ok = msg.Headers.Value.(*schema.Ref)
+		hs, ok = msg.Headers.Value.Schema.(*schema.Ref)
 		if !ok {
 			err = fmt.Errorf("currently only json schema supported")
 			return

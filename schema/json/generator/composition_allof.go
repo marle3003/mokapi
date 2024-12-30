@@ -10,7 +10,7 @@ func AllOf() *Tree {
 	p := parser.Parser{}
 	validate := func(data interface{}, schemas []*schema.Ref) error {
 		for _, s := range schemas {
-			if _, err := p.Parse(data, s); err != nil {
+			if _, err := p.ParseWith(data, s); err != nil {
 				return err
 			}
 		}
@@ -46,7 +46,7 @@ func AllOf() *Tree {
 				// for an object all properties are expected even if the existing result is already valid
 				obj, isObject := result.(map[string]interface{})
 				if result != nil && !isObject {
-					if _, err = p.Parse(result, &copySchema); err == nil {
+					if _, err = p.ParseWith(result, &copySchema); err == nil {
 						continue
 					}
 				}
@@ -66,7 +66,7 @@ func AllOf() *Tree {
 
 					for it := copySchema.Value.Properties.Iter(); it.Next(); {
 						if v, found := obj[it.Key()]; found {
-							if _, err = p.Parse(v, it.Value()); err != nil {
+							if _, err = p.ParseWith(v, it.Value()); err != nil {
 								obj[it.Key()] = nextObj[it.Key()]
 							}
 						} else {

@@ -10,7 +10,7 @@ import (
 func (r *Ref) Marshal(i interface{}, contentType media.ContentType) ([]byte, error) {
 	if contentType.IsXml() {
 		p := parser.Parser{ConvertStringToNumber: true, ConvertToSortedMap: true, ValidateAdditionalProperties: false}
-		i, err := p.Parse(i, ConvertToJsonSchema(r))
+		i, err := p.ParseWith(i, ConvertToJsonSchema(r))
 		if err == nil {
 			var b []byte
 			b, err = marshalXml(i, r)

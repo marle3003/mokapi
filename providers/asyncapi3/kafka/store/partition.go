@@ -105,14 +105,14 @@ func (p *Partition) Write(batch kafka.RecordBatch, options ...WriteOptions) (bas
 		opt(&args)
 	}
 
-	if p.validator != nil && p.Topic.channel.Bindings.Kafka.ValueSchemaValidation && !args.SkipValidation {
+	if p.validator != nil {
 		for _, r := range batch.Records {
 			err := p.validator.Validate(r)
 			if err != nil {
 				records = append(records, produce.RecordError{BatchIndex: int32(r.Offset), BatchIndexErrorMessage: err.Error()})
 			}
 		}
-		if len(records) > 0 {
+		if len(records) > 0 && p.Topic.channel.Bindings.Kafka.ValueSchemaValidation && !args.SkipValidation {
 			return p.Tail, records, fmt.Errorf("validation error")
 		}
 	}

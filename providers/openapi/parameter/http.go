@@ -123,7 +123,7 @@ func parseExplodeObject(param *Parameter, value, separator string, decode decode
 			return nil, fmt.Errorf("property '%v' not defined in schema: %s", kv[0], param.Schema)
 		}
 
-		if v, err := p.Parse(val, schema.ConvertToJsonSchema(prop)); err == nil {
+		if v, err := p.ParseWith(val, schema.ConvertToJsonSchema(prop)); err == nil {
 			m[key] = v
 		} else {
 			return nil, err
@@ -150,7 +150,7 @@ func parseUnExplodeObject(param *Parameter, value, separator string) (map[string
 		if i >= len(elements) {
 			return nil, fmt.Errorf("invalid number of property pairs")
 		}
-		if v, err := p.Parse(elements[i], schema.ConvertToJsonSchema(prop)); err != nil {
+		if v, err := p.ParseWith(elements[i], schema.ConvertToJsonSchema(prop)); err != nil {
 			return nil, fmt.Errorf("parse property '%v' failed: %w", key, err)
 		} else {
 			m[key] = v
@@ -161,7 +161,7 @@ func parseUnExplodeObject(param *Parameter, value, separator string) (map[string
 }
 
 func parseArray(param *Parameter, value []string) (interface{}, error) {
-	return p.Parse(value, schema.ConvertToJsonSchema(param.Schema))
+	return p.ParseWith(value, schema.ConvertToJsonSchema(param.Schema))
 }
 
 func defaultDecode(s string) (string, error) {

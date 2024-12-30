@@ -73,3 +73,31 @@ func (r *ChannelRef) parse(config *dynamic.Config, reader dynamic.Reader) error 
 
 	return nil
 }
+
+func (c *Channel) UnmarshalYAML(node *yaml.Node) error {
+	// set default
+	c.Bindings.Kafka.ValueSchemaValidation = true
+
+	type alias Channel
+	a := alias(*c)
+	err := node.Decode(&a)
+	if err != nil {
+		return err
+	}
+	*c = Channel(a)
+	return nil
+}
+
+func (c *Channel) UnmarshalJSON(b []byte) error {
+	// set default
+	c.Bindings.Kafka.ValueSchemaValidation = true
+
+	type alias Channel
+	a := alias(*c)
+	err := dynamic.UnmarshalJSON(b, &a)
+	if err != nil {
+		return err
+	}
+	*c = Channel(a)
+	return nil
+}

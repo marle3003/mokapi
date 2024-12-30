@@ -436,13 +436,13 @@ func TestParser_ParseObject(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			p := &parser.Parser{ValidateAdditionalProperties: true}
+			p := &parser.Parser{Schema: &schema.Ref{Value: tc.schema}, ValidateAdditionalProperties: true}
 
 			// test as map and as sorted map if data is a map
 			if m, ok := tc.data.(map[string]interface{}); ok {
 
 				t.Run("map", func(t *testing.T) {
-					v, err := p.Parse(tc.data, &schema.Ref{Value: tc.schema})
+					v, err := p.Parse(tc.data)
 					tc.test(t, v, err)
 				})
 
@@ -451,11 +451,11 @@ func TestParser_ParseObject(t *testing.T) {
 					for key, val := range m {
 						sm.Set(key, val)
 					}
-					v, err := p.Parse(sm, &schema.Ref{Value: tc.schema})
+					v, err := p.Parse(sm)
 					tc.test(t, v, err)
 				})
 			} else {
-				v, err := p.Parse(tc.data, &schema.Ref{Value: tc.schema})
+				v, err := p.Parse(tc.data)
 				tc.test(t, v, err)
 			}
 		})

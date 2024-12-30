@@ -119,9 +119,9 @@ type Message struct {
 	Description  string             `yaml:"description" json:"description"`
 	ContentType  string             `yaml:"contentType" json:"contentType"`
 	SchemaFormat string             `yaml:"schemaFormat" json:"schemaFormat"`
-	Payload      *schema.Ref        `yaml:"payload" json:"payload"`
+	Payload      *SchemaRef         `yaml:"payload" json:"payload"`
 	Bindings     MessageBinding     `yaml:"bindings" json:"bindings"`
-	Headers      *schema.Ref        `yaml:"headers" json:"headers"`
+	Headers      *SchemaRef         `yaml:"headers" json:"headers"`
 	Traits       []*MessageTraitRef `yaml:"traits" json:"traits"`
 }
 
@@ -132,7 +132,7 @@ type MessageBinding struct {
 type Components struct {
 	Servers       map[string]*Server         `yaml:"servers" json:"servers"`
 	Channels      map[string]*Channel        `yaml:"channels" json:"channels"`
-	Schemas       *schema.Schemas            `yaml:"schemas" json:"schemas"`
+	Schemas       map[string]*SchemaRef      `yaml:"schemas" json:"schemas"`
 	Messages      map[string]*Message        `yaml:"messages" json:"messages"`
 	Parameters    map[string]*ParameterRef   `yaml:"parameters" json:"parameters"`
 	MessageTraits map[string]MessageTraitRef `yaml:"messageTraits" json:"messageTraits"`
@@ -164,7 +164,7 @@ type MessageTrait struct {
 
 	SchemaFormat string         `yaml:"schemaFormat" json:"schemaFormat"`
 	ContentType  string         `yaml:"contentType" json:"contentType"`
-	Headers      *schema.Ref    `yaml:"headers" json:"headers"`
+	Headers      *SchemaRef     `yaml:"headers" json:"headers"`
 	Bindings     MessageBinding `yaml:"bindings" json:"bindings"`
 }
 

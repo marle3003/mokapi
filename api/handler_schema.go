@@ -171,7 +171,7 @@ func getSchemaFromAsyncAPI(ref *asyncapi3.SchemaRef) *schemaInfo {
 	if ref == nil || ref.Value == nil {
 		return nil
 	}
-	if s, ok := ref.Value.(*jsonSchema.Ref); ok {
+	if s, ok := ref.Value.Schema.(*jsonSchema.Ref); ok {
 		converter := &jsonSchemaConverter{map[string]*schemaInfo{}}
 		return converter.getSchema(s)
 	}

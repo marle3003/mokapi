@@ -105,7 +105,7 @@ components:
 					return &dynamic.Config{Data: asyncapi3test.NewConfig(asyncapi3test.WithComponentSchema("foo", schematest.New("string")))}, nil
 				}))
 				require.NoError(t, err)
-				require.Equal(t, "string", cfg.Components.Schemas["foo"].Value.(*schema.Schema).Type[0])
+				require.Equal(t, "string", cfg.Components.Schemas["foo"].Value.Schema.(*schema.Ref).Value.Type[0])
 			},
 		},
 		{

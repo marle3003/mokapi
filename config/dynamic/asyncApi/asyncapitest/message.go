@@ -17,7 +17,7 @@ func NewMessage(opts ...MessageOptions) *asyncApi.Message {
 
 func WithPayload(s *schema.Schema) MessageOptions {
 	return func(m *asyncApi.Message) {
-		m.Payload = &schema.Ref{Value: s}
+		m.Payload = &asyncApi.SchemaRef{Value: &asyncApi.MultiSchemaFormat{Schema: &schema.Ref{Value: s}}}
 	}
 }
 
@@ -29,7 +29,7 @@ func WithContentType(s string) MessageOptions {
 
 func WithKey(s *schema.Schema) MessageOptions {
 	return func(m *asyncApi.Message) {
-		m.Bindings.Kafka.Key = &asyncApi.SchemaRef{Value: &schema.Ref{Value: s}}
+		m.Bindings.Kafka.Key = &asyncApi.SchemaRef{Value: &asyncApi.MultiSchemaFormat{Schema: &schema.Ref{Value: s}}}
 	}
 }
 

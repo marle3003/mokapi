@@ -634,7 +634,7 @@ func TestConfig_Patch_Message(t *testing.T) {
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
 				msg := result.Channels["foo"].Value.Messages["foo"].Value
-				r := msg.Payload.Value.(*schema.Ref)
+				r := msg.Payload.Value.Schema.(*schema.Ref)
 				require.Equal(t, "string", r.Value.Type.String())
 			},
 		},
@@ -691,7 +691,7 @@ func TestConfig_Patch_Components(t *testing.T) {
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
 				require.Len(t, result.Components.Schemas, 1)
-				s := result.Components.Schemas["foo"].Value.(*schema.Schema)
+				s := result.Components.Schemas["foo"].Value.Schema.(*schema.Schema)
 				require.Equal(t, "number", s.Type.String())
 			},
 		},
@@ -703,23 +703,23 @@ func TestConfig_Patch_Components(t *testing.T) {
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
 				require.Len(t, result.Components.Schemas, 2)
-				s := result.Components.Schemas["foo"].Value.(*schema.Schema)
+				s := result.Components.Schemas["foo"].Value.Schema.(*schema.Schema)
 				require.Equal(t, "number", s.Type.String())
-				s = result.Components.Schemas["bar"].Value.(*schema.Schema)
+				s = result.Components.Schemas["bar"].Value.Schema.(*schema.Schema)
 				require.Equal(t, "string", s.Type.String())
 			},
 		},
 		{
 			name: "patch schema",
 			configs: []*asyncapi3.Config{
-				asyncapi3test.NewConfig(asyncapi3test.WithComponentSchema("foo", schematest.New("number"))),
-				asyncapi3test.NewConfig(asyncapi3test.WithComponentSchema("foo", schematest.New("number", schematest.WithFormat("double")))),
+				asyncapi3test.NewConfig(asyncapi3test.WithComponentSchema("foo", schematest.NewRef("number"))),
+				asyncapi3test.NewConfig(asyncapi3test.WithComponentSchema("foo", schematest.NewRef("number", schematest.WithFormat("double")))),
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
 				require.Len(t, result.Components.Schemas, 1)
-				s := result.Components.Schemas["foo"].Value.(*schema.Schema)
-				require.Equal(t, "number", s.Type.String())
-				require.Equal(t, "double", s.Format)
+				s := result.Components.Schemas["foo"].Value.Schema.(*schema.Ref)
+				require.Equal(t, "number", s.Type())
+				require.Equal(t, "double", s.Value.Format)
 			},
 		},
 		{

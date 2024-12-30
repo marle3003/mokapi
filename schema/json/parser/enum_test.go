@@ -137,8 +137,8 @@ func TestParse_Enum(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			p := parser.Parser{}
-			v, err := p.Parse(tc.d, &schema.Ref{Value: tc.s})
+			p := parser.Parser{Schema: &schema.Ref{Value: tc.s}}
+			v, err := p.Parse(tc.d)
 			tc.test(t, v, err)
 		})
 	}

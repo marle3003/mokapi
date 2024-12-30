@@ -68,9 +68,11 @@ func WithSchemas(name string, s *schema.Schema) ConfigOptions {
 			c.Components = &asyncApi.Components{}
 		}
 		if c.Components.Schemas == nil {
-			c.Components.Schemas = &schema.Schemas{}
+			c.Components.Schemas = map[string]*asyncApi.SchemaRef{}
 		}
-		c.Components.Schemas.Set(name, &schema.Ref{Value: s})
+		c.Components.Schemas[name] = &asyncApi.SchemaRef{
+			Value: &asyncApi.MultiSchemaFormat{Schema: &schema.Ref{Value: s}},
+		}
 	}
 }
 
