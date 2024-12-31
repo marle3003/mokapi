@@ -8,15 +8,15 @@ import (
 	"net/http"
 )
 
-type FileDecoder struct {
+type BinaryDecoder struct {
 }
 
-func (d *FileDecoder) IsSupporting(contentType media.ContentType) bool {
+func (d *BinaryDecoder) IsSupporting(contentType media.ContentType) bool {
 	return contentType.String() == "application/octet-stream"
 }
 
-func (d *FileDecoder) Decode(b []byte, state *DecodeState) (i interface{}, err error) {
-	return state.parser.Parse(string(b))
+func (d *BinaryDecoder) Decode(b []byte, state *DecodeState) (i interface{}, err error) {
+	return state.parser.Parse(b)
 }
 
 func parseFormFile(fh *multipart.FileHeader) (interface{}, error) {

@@ -153,7 +153,7 @@ function getMessageConfig(messageId: string | undefined, topic: KafkaTopic): Kaf
                                                     <p aria-labelledby="dialog-message-key">{{ message.key }}</p>
                                                 </div>
                                             </div>
-                                            <source-view :source="message.message" :content-type="message.contentType" />
+                                            <source-view :source="formatLanguage(message.message, message.contentType)" :content-type="message.contentType" />
                                         </div>
                                         <div class="tab-pane fade" id="detail-header" role="tabpanel">
                                             <table class="table dataTable">

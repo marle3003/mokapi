@@ -24,7 +24,7 @@ func init() {
 	RegisterDecoder(&JsonDecoder{})
 	RegisterDecoder(&FormUrlEncodeDecoder{})
 	RegisterDecoder(&MultipartDecoder{})
-	RegisterDecoder(&FileDecoder{})
+	RegisterDecoder(&BinaryDecoder{})
 	RegisterDecoder(&TextDecoder{})
 	RegisterDecoder(&AvroDecoder{})
 }

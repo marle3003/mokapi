@@ -105,45 +105,53 @@ func (p *Partition) Write(batch kafka.RecordBatch, options ...WriteOptions) (bas
 		opt(&args)
 	}
 
-	if p.validator != nil {
-		for _, r := range batch.Records {
-			err := p.validator.Validate(r)
-			if err != nil {
-				records = append(records, produce.RecordError{BatchIndex: int32(r.Offset), BatchIndexErrorMessage: err.Error()})
-			}
-		}
-		if len(records) > 0 && p.Topic.channel.Bindings.Kafka.ValueSchemaValidation && !args.SkipValidation {
-			return p.Tail, records, fmt.Errorf("validation error")
-		}
-	}
-
 	p.m.Lock()
 	defer p.m.Unlock()
+
+	var writeFuncs []func()
 
 	now := time.Now()
 	baseOffset = p.Tail
 	for _, r := range batch.Records {
-		r.Offset = p.Tail
-		p.trigger(r)
-		switch {
-		case len(p.Segments) == 0:
-			p.Segments[p.ActiveSegment] = newSegment(p.Tail)
+
+		key, payload, err := p.validator.Validate(r)
+		if err != nil {
+			records = append(records, produce.RecordError{BatchIndex: int32(r.Offset), BatchIndexErrorMessage: err.Error()})
 		}
-		segment, ok := p.Segments[p.ActiveSegment]
-		if !ok {
-			segment = p.addSegment()
+
+		if len(records) > 0 && p.Topic.channel.Bindings.Kafka.ValueSchemaValidation && !args.SkipValidation {
+			return p.Tail, records, fmt.Errorf("validation error")
 		}
 
 		if r.Time.IsZero() {
 			r.Time = now
 		}
-		segment.Log = append(segment.Log, r)
-		segment.Tail++
-		segment.LastWritten = now
-		segment.Size += r.Size()
-		p.Tail++
 
-		p.logger(r, p.Index, events.NewTraits().With("partition", strconv.Itoa(p.Index)))
+		writeFuncs = append(writeFuncs, func() {
+			r.Offset = p.Tail
+			p.trigger(r)
+
+			if len(p.Segments) == 0 {
+				p.Segments[p.ActiveSegment] = newSegment(p.Tail)
+			}
+
+			segment, ok := p.Segments[p.ActiveSegment]
+			if !ok {
+				segment = p.addSegment()
+			}
+
+			segment.Log = append(segment.Log, r)
+			segment.Tail++
+			segment.LastWritten = now
+			segment.Size += r.Size()
+			p.Tail++
+
+			p.logger(key, payload, r.Headers, p.Index, r.Offset, events.NewTraits().With("partition", strconv.Itoa(p.Index)))
+		})
+	}
+
+	for _, writeFunc := range writeFuncs {
+		writeFunc()
 	}
 
 	return

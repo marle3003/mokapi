@@ -20,6 +20,8 @@ func (p *Parser) ParseString(data interface{}, schema *schema.Schema) (interface
 		s = v
 	case version.Version:
 		s = v.String()
+	case []byte:
+		s = string(v)
 	default:
 		if v == nil && schema.IsNullable() {
 			return nil, nil

@@ -71,8 +71,15 @@ func (m *Module) Produce(v goja.Value) interface{} {
 }
 
 func (m *Module) ProduceAsync(v goja.Value) interface{} {
-	p, resolve, _ := m.rt.NewPromise()
+	p, resolve, reject := m.rt.NewPromise()
 	go func() {
+		defer func() {
+			r := recover()
+			if r != nil {
+				reject(r)
+			}
+		}()
+
 		result := m.Produce(v)
 		m.loop.Run(func(vm *goja.Runtime) {
 			resolve(result)

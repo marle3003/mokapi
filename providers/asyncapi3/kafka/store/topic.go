@@ -68,8 +68,8 @@ func (t *Topic) update(config *asyncapi3.Channel, s *Store) {
 	t.Partitions = t.Partitions[:numPartitions]
 }
 
-func (t *Topic) log(record *kafka.Record, partition int, traits events.Traits) {
-	t.logger(record, partition, traits.With("topic", t.Name))
+func (t *Topic) log(key, payload interface{}, headers []kafka.RecordHeader, partition int, offset int64, traits events.Traits) {
+	t.logger(key, payload, headers, partition, offset, traits.With("topic", t.Name))
 }
 
 func (t *Topic) Store() *Store {

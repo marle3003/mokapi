@@ -18,7 +18,16 @@ export function usePrettyLanguage() {
             case 'xml':
             case 'rss+xml':
                 return XmlFormatter(s, {collapseContent: true})
+        }
 
+        switch (contentType) {
+            case 'avro/binary':
+                try{ 
+                    return JSON.stringify(JSON.parse(s), null, 2)
+                }catch {
+                    console.error("unable to parse json: "+s)
+                    return s
+                }
         }
 
         return s
@@ -35,9 +44,14 @@ export function usePrettyLanguage() {
                 return 'javascript'
             case 'typescript':
                 return 'javascript'
+        }
+
+        switch (contentType) {
+            case 'avro/binary':
+                // display avro content as JSON
+                return "javascript"
             default:
                 return 'text'
-
         }
     }
 

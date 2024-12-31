@@ -16,7 +16,8 @@ func TestPartition(t *testing.T) {
 	p := newPartition(
 		0,
 		map[int]*Broker{1: {Id: 1}},
-		func(record *kafka.Record, partition int, traits events.Traits) {}, func(record *kafka.Record) {}, &Topic{})
+		func(key, payload interface{}, headers []kafka.RecordHeader, partition int, offset int64, traits events.Traits) {
+		}, func(record *kafka.Record) {}, &Topic{})
 
 	require.Equal(t, 0, p.Index)
 	require.Equal(t, int64(0), p.StartOffset())
@@ -26,12 +27,12 @@ func TestPartition(t *testing.T) {
 }
 
 func TestPartition_Write(t *testing.T) {
-	var log []*kafka.Record
+	var log []int64
 	p := newPartition(
 		0,
 		map[int]*Broker{1: {Id: 1}},
-		func(record *kafka.Record, partition int, traits events.Traits) {
-			log = append(log, record)
+		func(key, payload interface{}, headers []kafka.RecordHeader, partition int, offset int64, traits events.Traits) {
+			log = append(log, offset)
 		}, func(record *kafka.Record) {}, &Topic{})
 
 	offset, records, err := p.Write(kafka.RecordBatch{
@@ -74,7 +75,8 @@ func TestPartition_Read_Empty(t *testing.T) {
 	p := newPartition(
 		0,
 		map[int]*Broker{1: {Id: 1}},
-		func(_ *kafka.Record, partition int, _ events.Traits) {}, func(record *kafka.Record) {}, &Topic{})
+		func(key, payload interface{}, headers []kafka.RecordHeader, partition int, offset int64, _ events.Traits) {
+		}, func(record *kafka.Record) {}, &Topic{})
 	b, errCode := p.Read(0, 1)
 	require.Equal(t, kafka.None, errCode)
 	require.Equal(t, 0, len(b.Records))
@@ -84,7 +86,8 @@ func TestPartition_Read(t *testing.T) {
 	p := newPartition(
 		0,
 		map[int]*Broker{1: {Id: 1}},
-		func(_ *kafka.Record, partition int, _ events.Traits) {}, func(record *kafka.Record) {}, &Topic{})
+		func(key, payload interface{}, headers []kafka.RecordHeader, partition int, offset int64, _ events.Traits) {
+		}, func(record *kafka.Record) {}, &Topic{})
 	offset, records, err := p.Write(kafka.RecordBatch{
 		Records: []*kafka.Record{
 			{
@@ -108,7 +111,8 @@ func TestPartition_Read_OutOfOffset_Empty(t *testing.T) {
 	p := newPartition(
 		0,
 		map[int]*Broker{1: {Id: 1}},
-		func(_ *kafka.Record, partition int, _ events.Traits) {}, func(record *kafka.Record) {}, &Topic{})
+		func(key, payload interface{}, headers []kafka.RecordHeader, partition int, offset int64, _ events.Traits) {
+		}, func(record *kafka.Record) {}, &Topic{})
 	b, errCode := p.Read(10, 1)
 	require.Equal(t, kafka.None, errCode)
 	require.Equal(t, 0, len(b.Records))
@@ -118,7 +122,8 @@ func TestPartition_Read_OutOfOffset(t *testing.T) {
 	p := newPartition(
 		0,
 		map[int]*Broker{1: {Id: 1}},
-		func(_ *kafka.Record, partition int, _ events.Traits) {}, func(record *kafka.Record) {}, &Topic{})
+		func(key, payload interface{}, headers []kafka.RecordHeader, partition int, offset int64, _ events.Traits) {
+		}, func(record *kafka.Record) {}, &Topic{})
 	_, _, _ = p.Write(kafka.RecordBatch{
 		Records: []*kafka.Record{
 			{
@@ -139,7 +144,8 @@ func TestPartition_Write_Value_Validator(t *testing.T) {
 	p := newPartition(
 		0,
 		map[int]*Broker{1: {Id: 1}},
-		func(_ *kafka.Record, partition int, _ events.Traits) {}, func(record *kafka.Record) {}, &Topic{channel: &asyncapi3.Channel{Bindings: asyncapi3.ChannelBindings{
+		func(key, payload interface{}, headers []kafka.RecordHeader, partition int, offset int64, _ events.Traits) {
+		}, func(record *kafka.Record) {}, &Topic{channel: &asyncapi3.Channel{Bindings: asyncapi3.ChannelBindings{
 			Kafka: asyncapi3.TopicBindings{ValueSchemaValidation: true},
 		}}})
 	p.validator = &validator{
@@ -167,7 +173,7 @@ func TestPartition_Write_Value_Validator(t *testing.T) {
 	require.EqualError(t, err, "validation error")
 	require.Len(t, recordsWithError, 1)
 	require.Equal(t, int32(0), recordsWithError[0].BatchIndex)
-	require.Equal(t, "found 1 error:\ninvalid type, expected string but got number\nschema path #/type", recordsWithError[0].BatchIndexErrorMessage)
+	require.Equal(t, "invalid message: found 1 error:\ninvalid type, expected string but got number\nschema path #/type", recordsWithError[0].BatchIndexErrorMessage)
 	require.Equal(t, int64(0), offset)
 	require.Equal(t, int64(0), p.Offset())
 	require.Equal(t, int64(0), p.StartOffset())
@@ -201,7 +207,8 @@ func TestPartition_Write_Value_Validator(t *testing.T) {
 
 func TestPatition_Retention(t *testing.T) {
 	p := newPartition(0, map[int]*Broker{1: {Id: 1}},
-		func(_ *kafka.Record, partition int, _ events.Traits) {},
+		func(key, payload interface{}, headers []kafka.RecordHeader, partition int, offset int64, _ events.Traits) {
+		},
 		func(record *kafka.Record) {}, &Topic{})
 	require.Equal(t, int64(0), p.Head)
 	offset, records, err := p.Write(kafka.RecordBatch{
