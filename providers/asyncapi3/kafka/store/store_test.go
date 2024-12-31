@@ -3,9 +3,11 @@ package store_test
 import (
 	"github.com/stretchr/testify/require"
 	"mokapi/engine/enginetest"
+	"mokapi/kafka"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/providers/asyncapi3/kafka/store"
+	"mokapi/schema/json/schematest"
 	"testing"
 )
 
@@ -74,6 +76,60 @@ func TestStore(t *testing.T) {
 				defer s.Close()
 				_, err := s.NewTopic("foo", asyncapi3test.NewChannel(), []*asyncapi3.Operation{})
 				require.Error(t, err, "topic foo already exists")
+			},
+		},
+		{
+			"update topic add partition",
+			func(t *testing.T) {
+				s := store.New(asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo", asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 1}))), enginetest.NewEngine())
+				defer s.Close()
+
+				s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo", asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 2}))))
+
+				require.Len(t, s.Topic("foo").Partitions, 2)
+			},
+		},
+		{
+			"update topic remove partition",
+			func(t *testing.T) {
+				s := store.New(asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo", asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 2}))), enginetest.NewEngine())
+				defer s.Close()
+
+				s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo", asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 1}))))
+
+				require.Len(t, s.Topic("foo").Partitions, 1)
+			},
+		},
+		{
+			"update topic change schema",
+			func(t *testing.T) {
+				s := store.New(asyncapi3test.NewConfig(
+					asyncapi3test.WithChannel("foo",
+						asyncapi3test.WithMessage("foo",
+							asyncapi3test.WithPayload(schematest.New("integer")),
+							asyncapi3test.WithContentType("application/json"),
+						),
+					)),
+					enginetest.NewEngine())
+				defer s.Close()
+
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithChannel("foo",
+						asyncapi3test.WithMessage("foo",
+							asyncapi3test.WithPayload(schematest.New("string")),
+							asyncapi3test.WithContentType("application/json"),
+						),
+					),
+				))
+
+				_, _, err := s.Topic("foo").Partitions[0].Write(
+					kafka.RecordBatch{Records: []*kafka.Record{
+						{
+							Value: kafka.NewBytes([]byte("123")),
+						},
+					}},
+				)
+				require.EqualError(t, err, "validation error")
 			},
 		},
 	}

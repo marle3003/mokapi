@@ -102,6 +102,15 @@ func (r *MessageRef) parse(config *dynamic.Config, reader dynamic.Reader) error 
 		r.Value.applyTrait(trait.Value)
 	}
 
+	if r.Value.ContentType == "" {
+		cfg, ok := config.Data.(*Config)
+		if ok {
+			r.Value.ContentType = cfg.DefaultContentType
+		} else {
+			r.Value.ContentType = "application/json"
+		}
+	}
+
 	return nil
 }
 

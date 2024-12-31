@@ -183,7 +183,6 @@ func TestProduce(t *testing.T) {
 						asyncapi3test.WithMessage("foo",
 							asyncapi3test.WithContentType("application/json"),
 							asyncapi3test.WithPayload(schematest.New("integer"))),
-						asyncapi3test.WithTopicBinding(asyncapi3.TopicBindings{ValueSchemaValidation: true}),
 					),
 				))
 

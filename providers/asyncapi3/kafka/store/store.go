@@ -156,11 +156,8 @@ func (s *Store) Update(c *asyncapi3.Config) {
 		if ch.Value == nil {
 			continue
 		}
-		k := ch.Value.Bindings.Kafka
 		if t, ok := s.topics[n]; ok {
-			for _, p := range t.Partitions[k.Partitions:] {
-				p.delete()
-			}
+			t.update(ch.Value, s)
 		} else {
 			if _, err := s.addTopic(n, ch.Value, getOperations(ch.Value, c)); err != nil {
 				log.Errorf("unable to add topic '%v' to broker '%v': %v", n, s.cluster, err)
@@ -219,7 +216,7 @@ func (s *Store) addTopic(name string, channel *asyncapi3.Channel, ops []*asyncap
 	if _, ok := s.topics[name]; ok {
 		return nil, fmt.Errorf("topic %v already exists", name)
 	}
-	t := newTopic(name, channel, ops, s.brokers, s.log, s.trigger, s)
+	t := newTopic(name, channel, ops, s)
 	s.topics[name] = t
 	return t, nil
 }

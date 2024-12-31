@@ -21,12 +21,6 @@ type recordValidator interface {
 
 func newValidator(c *asyncapi3.Channel) *validator {
 	v := &validator{}
-	v.update(c)
-	return v
-}
-
-func (v *validator) update(c *asyncapi3.Channel) {
-	v.validators = nil
 
 	for id, msg := range c.Messages {
 		if msg.Value == nil || msg.Value.Payload == nil {
@@ -34,6 +28,8 @@ func (v *validator) update(c *asyncapi3.Channel) {
 		}
 		v.validators = append(v.validators, newMessageValidator(id, msg.Value))
 	}
+
+	return v
 }
 
 func (v *validator) Validate(record *kafka.Record) error {

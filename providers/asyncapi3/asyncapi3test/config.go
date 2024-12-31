@@ -8,9 +8,11 @@ type ConfigOptions func(c *asyncapi3.Config)
 
 func NewConfig(opts ...ConfigOptions) *asyncapi3.Config {
 	c := &asyncapi3.Config{
-		Version: "2.0.0",
-		Info:    asyncapi3.Info{Name: "test", Version: "1.0"},
-		Servers: map[string]*asyncapi3.ServerRef{}}
+		Version:            "2.0.0",
+		Info:               asyncapi3.Info{Name: "test", Version: "1.0"},
+		Servers:            map[string]*asyncapi3.ServerRef{},
+		DefaultContentType: "application/json",
+	}
 	for _, opt := range opts {
 		opt(c)
 	}

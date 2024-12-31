@@ -41,7 +41,7 @@ func (s *Store) produce(rw kafka.ResponseWriter, req *kafka.Request) error {
 			} else {
 				p := topic.Partition(int(rp.Index))
 				if p == nil {
-					resPartition.ErrorCode = kafka.UnknownServerError
+					resPartition.ErrorCode = kafka.UnknownTopicOrPartition
 					resPartition.ErrorMessage = fmt.Sprintf("unknown partition %v", rp.Index)
 					log.Errorf("kafka Produce: %v", resPartition.ErrorMessage)
 				} else {

@@ -35,20 +35,37 @@ func (t *Topic) delete() {
 	}
 }
 
-func newTopic(name string, channel *asyncapi3.Channel, ops []*asyncapi3.Operation, brokers Brokers, logger LogRecord, trigger Trigger, s *Store) *Topic {
-	t := &Topic{Name: name, logger: logger, s: s, channel: channel, operations: ops}
+func newTopic(name string, channel *asyncapi3.Channel, ops []*asyncapi3.Operation, s *Store) *Topic {
+	t := &Topic{Name: name, logger: s.log, s: s, channel: channel, operations: ops}
 
 	numPartitions := channel.Bindings.Kafka.Partitions
-	if numPartitions == 0 {
-		numPartitions = 1
-	}
 	for i := 0; i < numPartitions; i++ {
-		part := newPartition(i, brokers, t.log, trigger, t)
+		part := newPartition(i, s.brokers, t.log, s.trigger, t)
 		part.validator = newValidator(channel)
 		t.Partitions = append(t.Partitions, part)
 	}
 
 	return t
+}
+
+func (t *Topic) update(config *asyncapi3.Channel, s *Store) {
+	numPartitions := config.Bindings.Kafka.Partitions
+
+	for i, p := range t.Partitions {
+		if i >= numPartitions {
+			p.delete()
+		} else {
+			p.validator = newValidator(config)
+		}
+	}
+
+	for i := len(t.Partitions); i < numPartitions; i++ {
+		part := newPartition(i, s.brokers, t.log, s.trigger, t)
+		part.validator = newValidator(config)
+		t.Partitions = append(t.Partitions, part)
+	}
+
+	t.Partitions = t.Partitions[:numPartitions]
 }
 
 func (t *Topic) log(record *kafka.Record, partition int, traits events.Traits) {

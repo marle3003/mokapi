@@ -9,6 +9,9 @@ type ChannelOptions func(c *asyncapi3.Channel)
 
 func NewChannel(opts ...ChannelOptions) *asyncapi3.Channel {
 	ch := &asyncapi3.Channel{}
+	// default enable validation
+	ch.Bindings.Kafka.ValueSchemaValidation = true
+	ch.Bindings.Kafka.Partitions = 1
 	for _, opt := range opts {
 		opt(ch)
 	}

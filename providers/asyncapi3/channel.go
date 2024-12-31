@@ -77,6 +77,7 @@ func (r *ChannelRef) parse(config *dynamic.Config, reader dynamic.Reader) error 
 func (c *Channel) UnmarshalYAML(node *yaml.Node) error {
 	// set default
 	c.Bindings.Kafka.ValueSchemaValidation = true
+	c.Bindings.Kafka.Partitions = 1
 
 	type alias Channel
 	a := alias(*c)
@@ -91,6 +92,7 @@ func (c *Channel) UnmarshalYAML(node *yaml.Node) error {
 func (c *Channel) UnmarshalJSON(b []byte) error {
 	// set default
 	c.Bindings.Kafka.ValueSchemaValidation = true
+	c.Bindings.Kafka.Partitions = 1
 
 	type alias Channel
 	a := alias(*c)
