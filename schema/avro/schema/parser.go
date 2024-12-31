@@ -42,100 +42,146 @@ func (p *Parser) parseFromByte(b []byte) (interface{}, error) {
 }
 
 func (p *Parser) parse(r *bytes.Reader, s *Schema) (interface{}, error) {
-	for _, t := range s.Type {
-		switch t {
-		case "null":
-			return nil, nil
-		case "boolean":
-			b, err := r.ReadByte()
-			if err != nil {
-				return nil, err
-			}
-			return b != 0, nil
-		case "int", "long":
-			n, err := binary.ReadVarint(r)
-			if err != nil {
-				return nil, err
-			}
-			return n, nil
-		case "float":
-			var bits float32
-			err := binary.Read(r, binary.LittleEndian, &bits)
-			if err != nil {
-				return nil, err
-			}
-			return bits, nil
-		case "double":
-			var bits float64
-			err := binary.Read(r, binary.LittleEndian, &bits)
-			if err != nil {
-				return nil, err
-			}
-			return bits, nil
-		case "string":
-			n, err := binary.ReadVarint(r)
-			if err != nil {
-				return nil, err
-			}
-			b := make([]byte, n)
-			_, err = r.Read(b)
-			if err != nil {
-				return nil, err
-			}
-			return string(b), nil
-		case "byte":
-			n, err := binary.ReadVarint(r)
-			if err != nil {
-				return nil, err
-			}
-			_ = n
-			b := make([]byte, n)
-			_, err = r.Read(b)
-			if err != nil {
-				return nil, err
-			}
-			return b, nil
-		case "record":
-			m := make(map[string]interface{})
-			for _, f := range s.Fields {
-				v, err := p.parse(r, &f)
-				if err != nil {
-					return nil, err
-				}
-				m[f.Name] = v
-			}
-			return m, nil
-		case "array":
-			var a []interface{}
-			n, err := binary.ReadVarint(r)
-			if err != nil {
-				return nil, err
-			}
-			for i := 0; i < int(n); i++ {
-				var item interface{}
-				item, err = p.parse(r, s.Items)
-				if err != nil {
-					return nil, err
-				}
-				a = append(a, item)
-			}
-			b, err := r.ReadByte()
-			if err != nil {
-				return nil, err
-			}
-			if b != byte(0) {
-				return nil, fmt.Errorf("invalid array end")
-			}
-			return a, nil
+	if len(s.Type) == 0 {
+		if len(s.Schema) == 1 {
+			return p.parse(r, s.Schema[0])
 		}
+		n, err := binary.ReadVarint(r)
+		if err != nil {
+			return nil, err
+		}
+		return p.parse(r, s.Schema[n])
 	}
 
-	for _, nested := range s.Schema {
-		v, err := p.parse(r, nested)
-		if err == nil {
-			return v, nil
+	typeName := s.Type[0]
+	if len(s.Type) > 1 {
+		n, err := binary.ReadVarint(r)
+		if err != nil {
+			return nil, err
 		}
+		typeName = s.Type[n]
+	}
+
+	switch typeName {
+	case "null":
+		return nil, nil
+	case "boolean":
+		b, err := r.ReadByte()
+		if err != nil {
+			return nil, err
+		}
+		return b != 0, nil
+	case "int", "long":
+		n, err := binary.ReadVarint(r)
+		if err != nil {
+			return nil, err
+		}
+		return n, nil
+	case "float":
+		var bits float32
+		err := binary.Read(r, binary.LittleEndian, &bits)
+		if err != nil {
+			return nil, err
+		}
+		return bits, nil
+	case "double":
+		var bits float64
+		err := binary.Read(r, binary.LittleEndian, &bits)
+		if err != nil {
+			return nil, err
+		}
+		return bits, nil
+	case "string":
+		return readString(r)
+	case "byte":
+		n, err := binary.ReadVarint(r)
+		if err != nil {
+			return nil, err
+		}
+		_ = n
+		b := make([]byte, n)
+		_, err = r.Read(b)
+		if err != nil {
+			return nil, err
+		}
+		return b, nil
+	case "record":
+		m := make(map[string]interface{})
+		for _, f := range s.Fields {
+			v, err := p.parse(r, &f)
+			if err != nil {
+				return nil, err
+			}
+			m[f.Name] = v
+		}
+		return m, nil
+	case "array":
+		var a []interface{}
+		n, err := binary.ReadVarint(r)
+		if err != nil {
+			return nil, err
+		}
+		for i := 0; i < int(n); i++ {
+			var item interface{}
+			item, err = p.parse(r, s.Items)
+			if err != nil {
+				return nil, err
+			}
+			a = append(a, item)
+		}
+		b, err := r.ReadByte()
+		if err != nil {
+			return nil, err
+		}
+		if b != byte(0) {
+			return nil, fmt.Errorf("invalid array end")
+		}
+		return a, nil
+	case "enum":
+		n, err := binary.ReadVarint(r)
+		if err != nil {
+			return nil, err
+		}
+		if n < 0 || int(n) > len(s.Symbols) {
+			return nil, fmt.Errorf("index %v out of enum range", n)
+		}
+		return s.Symbols[n], nil
+	case "map":
+		m := make(map[string]interface{})
+		n, err := binary.ReadVarint(r)
+		if err != nil {
+			return nil, err
+		}
+		for i := 0; i < int(n); i++ {
+			key, err := readString(r)
+			if err != nil {
+				return nil, err
+			}
+			val, err := p.parse(r, s.Values)
+			if err != nil {
+				return nil, err
+			}
+			m[key] = val
+		}
+		return m, nil
+	case "fixed":
+		b := make([]byte, s.Size)
+		_, err := r.Read(b)
+		return b, err
 	}
 
 	return nil, fmt.Errorf("unknown schema type: %s", s.Type)
+}
+
+func readString(r *bytes.Reader) (string, error) {
+	n, err := binary.ReadVarint(r)
+	if err != nil {
+		return "", err
+	}
+	b := make([]byte, n)
+	_, err = r.Read(b)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
 }

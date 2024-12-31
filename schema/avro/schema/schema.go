@@ -19,7 +19,7 @@ type Schema struct {
 	Fields  []Schema `yaml:"fields" json:"fields"`
 	Symbols []string `yaml:"symbols" json:"symbols"`
 	Items   *Schema  `yaml:"items" json:"items"`
-	Values  string   `yaml:"values" json:"values"`
+	Values  *Schema  `yaml:"values" json:"values"`
 
 	Order []string `yaml:"order" json:"order"`
 	Size  int      `yaml:"size" json:"size"`
@@ -123,22 +123,17 @@ func (s *Schema) fromMap(m map[string]interface{}) error {
 				s.Symbols = append(s.Symbols, symbol.(string))
 			}
 		case "items":
-			items := &Schema{}
-			switch val := v.(type) {
-			case string:
-				items.Type = append(items.Type, val)
-			case []string:
-				items.Type = append(items.Type, val...)
-			case map[string]interface{}:
-				nested := &Schema{}
-				if err := nested.fromMap(val); err != nil {
-					return err
-				}
-				items.Schema = append(items.Schema, nested)
+			items, err := parseSchema(v)
+			if err != nil {
+				return err
 			}
 			s.Items = items
 		case "values":
-			s.Values = v.(string)
+			values, err := parseSchema(v)
+			if err != nil {
+				return err
+			}
+			s.Values = values
 		case "order":
 			s.Order = v.([]string)
 		case "size":
@@ -146,4 +141,21 @@ func (s *Schema) fromMap(m map[string]interface{}) error {
 		}
 	}
 	return nil
+}
+
+func parseSchema(v interface{}) (*Schema, error) {
+	s := &Schema{}
+	switch val := v.(type) {
+	case string:
+		s.Type = append(s.Type, val)
+	case []string:
+		s.Type = append(s.Type, val...)
+	case map[string]interface{}:
+		nested := &Schema{}
+		if err := nested.fromMap(val); err != nil {
+			return nil, err
+		}
+		s.Schema = append(s.Schema, nested)
+	}
+	return s, nil
 }
