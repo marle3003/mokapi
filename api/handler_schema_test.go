@@ -141,6 +141,23 @@ func TestHandler_Schema_Example(t *testing.T) {
 			},
 		},
 		{
+			name: "OpenAPI schema: string",
+			app: &runtime.App{
+				Monitor: monitor.New(),
+			},
+			fn: func(t *testing.T, h http.Handler, app *runtime.App) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/schema/example",
+					nil,
+					`{"name": "", "schema": {"type": ["string"]}, "format": "application/vnd.oai.openapi+json;version=3.0.0"}`,
+					h,
+					try.HasStatusCode(200),
+					try.HasHeader("Content-Type", "application/json"),
+					try.HasBody(`"XidZuoWq "`))
+			},
+		},
+		{
 			name: "avro schema: string",
 			app: &runtime.App{
 				Monitor: monitor.New(),
@@ -155,6 +172,51 @@ func TestHandler_Schema_Example(t *testing.T) {
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
 					try.HasBody(`"XidZuoWq "`))
+			},
+		},
+		{
+			name: "schema without format",
+			app:  &runtime.App{},
+			fn: func(t *testing.T, h http.Handler, app *runtime.App) {
+				try.Handler(t, http.MethodPost, "http://foo.api/api/schema/example", nil, `
+{
+  "schema": {
+    "properties": {
+      "category": {
+        "type": "string"
+      },
+      "description": {
+        "type": "string"
+      },
+      "features": {
+        "type": "string"
+      },
+      "id": {
+        "type": "string"
+      },
+      "keywords": {
+        "type": "string"
+      },
+      "name": {
+        "type": "string"
+      },
+      "price": {
+        "type": "number"
+      },
+      "subcategory": {
+        "type": "string"
+      },
+      "url": {
+        "type": "string"
+      }
+    },
+    "type": "object"
+  }
+}`,
+					h,
+					try.HasStatusCode(200),
+					try.BodyContainsData(map[string]interface{}{"id": "eed4888d-99c1-4e10-85d6-8fce0adeb762"}),
+				)
 			},
 		},
 	}

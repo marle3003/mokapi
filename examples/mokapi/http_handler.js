@@ -4,21 +4,28 @@ import { apps as httpServices, events as httpEvents, configs as httpConfigs } fr
 import { server as smtpServers, mails, mailEvents, getMail, getAttachment } from 'smtp.js'
 import { server as ldapServers, searches } from 'ldap.js'
 import { metrics } from 'metrics.js'
-import { fake } from 'mokapi/faker'
 import { get, post, fetch } from 'mokapi/http'
 
 const configs = {}
 
 export default async function() {
+    const res = get('http://localhost:8091/mokapi/api/info')
+    const version = res.body.version
+    const buildTime = res.body.buildTime
+
     on('http', function(request, response) {
         response.headers["Access-Control-Allow-Methods"] = "*"
         response.headers["Access-Control-Allow-Headers"] = "*"
         response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers['Mokapi-Version'] = version
+        response.headers['Mokapi-Build-Time'] = buildTime
 
         switch (request.operationId) {
-            case 'info':
+            case 'info': {
+
                 response.data = {version: "0.11.0", activeServices: ["http", "kafka", "ldap", "smtp"]}
                 return true
+            }
             case 'services':
                 response.data = getServices()
                 return true
