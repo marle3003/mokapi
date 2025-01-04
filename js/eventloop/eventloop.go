@@ -94,6 +94,10 @@ func (loop *EventLoop) RunAsync(fn func(vm *goja.Runtime) (goja.Value, error)) (
 			for p.State() == goja.PromiseStatePending && loop.running {
 				loop.wait()
 			}
+			if p.State() == goja.PromiseStateRejected {
+				r := p.Result()
+				return nil, fmt.Errorf("%v", r.ToString())
+			}
 			return p.Result(), nil
 		}
 

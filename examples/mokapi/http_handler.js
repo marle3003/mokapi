@@ -10,8 +10,7 @@ const configs = {}
 
 export default async function() {
     const res = get('http://localhost:8091/mokapi/api/info')
-    const version = res.body.version
-    const buildTime = res.body.buildTime
+    const { version, buildTime } = res.json()
 
     on('http', function(request, response) {
         response.headers["Access-Control-Allow-Methods"] = "*"
