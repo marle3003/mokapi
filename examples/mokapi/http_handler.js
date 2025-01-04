@@ -1,4 +1,4 @@
-import { on, marshal } from 'mokapi'
+import { on, env } from 'mokapi'
 import { clusters, events as kafkaEvents, configs as kafkaConfigs } from 'kafka.js'
 import { apps as httpServices, events as httpEvents, configs as httpConfigs } from 'services_http.js'
 import { server as smtpServers, mails, mailEvents, getMail, getAttachment } from 'smtp.js'
@@ -9,7 +9,11 @@ import { get, post, fetch } from 'mokapi/http'
 const configs = {}
 
 export default async function() {
-    const res = get('http://localhost:8091/mokapi/api/info')
+    let port = env('MOKAPI_Api_Port')
+    if (!port) {
+        port = 8091
+    }
+    const res = get(`http://localhost:${port}/mokapi/api/info`)
     const { version, buildTime } = res.json()
 
     on('http', function(request, response) {
@@ -79,14 +83,14 @@ export default async function() {
                 }
                 return true
             case 'example': {
-                const res = post('http://localhost:8091/mokapi/api/schema/example', request.body, {headers: {'Accept': request.header['Accept']}})
+                const res = post(`http://localhost:${port}/mokapi/api/schema/example`, request.body, {headers: {'Accept': request.header['Accept']}})
                 response.statusCode = res.statusCode
                 response.headers = res.headers
                 response.body = res.body
                 return true
             }
             case 'validate':
-                const res = post('http://localhost:8091/mokapi/api/schema/validate', request.body, { headers: { 'Data-Content-Type': request.header['Data-Content-Type']}})
+                const res = post(`http://localhost:${port}/mokapi/api/schema/validate`, request.body, { headers: { 'Data-Content-Type': request.header['Data-Content-Type']}})
                 response.statusCode = res.statusCode
                 response.headers = res.headers
                 if (res.statusCode !== 200) {
@@ -118,7 +122,7 @@ export default async function() {
                     return true
                 }
             case 'fakertree':
-                const resp = get('http://localhost:8091/mokapi/api/faker/tree')
+                const resp = get(`http://localhost:${port}/mokapi/api/faker/tree`)
                 response.body = resp.body
                 return true
         }
