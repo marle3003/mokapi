@@ -120,7 +120,7 @@ export class ExampleModel {
 
     constructor(element: Locator) {
         this.button = element.getByRole('button', { name: 'Example & Validate' })
-        this.code = element.getByRole('dialog', { name: 'Data Validator' }).getByRole('region', { name: 'Source' })
+        this.code = element.getByRole('dialog', { name: 'Data Validator' }).getByRole('region', { name: 'Source' }).getByRole('region', { name: 'Content' })
         this.example = element.getByRole('dialog', { name: 'Data Validator' }).getByRole('button', { name: 'Example' })
     }
 }
