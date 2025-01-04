@@ -54,7 +54,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"version":""}`))
+					try.HasBody(`{"version":"","buildTime":""}`))
 			},
 		},
 		{
@@ -68,7 +68,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"version":""}`))
+					try.HasBody(`{"version":"","buildTime":""}`))
 			},
 		},
 		{
@@ -105,7 +105,7 @@ func TestHandler_Api_Info(t *testing.T) {
 	}{
 		{
 			name: "version 1.0",
-			app:  &runtime.App{Version: "1.0"},
+			app:  &runtime.App{Version: "1.0", BuildTime: "2025-01-04T23:20:50.52Z"},
 			fn: func(t *testing.T, h http.Handler) {
 				try.Handler(t,
 					http.MethodGet,
@@ -115,7 +115,7 @@ func TestHandler_Api_Info(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"version":"1.0"}`))
+					try.HasBody(`{"version":"1.0","buildTime":"2025-01-04T23:20:50.52Z"}`))
 			},
 		},
 		{
@@ -130,7 +130,7 @@ func TestHandler_Api_Info(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"version":"","activeServices":["http"]}`))
+					try.HasBody(`{"version":"","buildTime":"","activeServices":["http"]}`))
 			},
 		},
 		{
@@ -145,7 +145,7 @@ func TestHandler_Api_Info(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"version":"","activeServices":["kafka"]}`))
+					try.HasBody(`{"version":"","buildTime":"","activeServices":["kafka"]}`))
 			},
 		},
 		{
@@ -160,7 +160,7 @@ func TestHandler_Api_Info(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"version":"","activeServices":["smtp"]}`))
+					try.HasBody(`{"version":"","buildTime":"","activeServices":["smtp"]}`))
 			},
 		},
 		{
@@ -175,7 +175,7 @@ func TestHandler_Api_Info(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"version":"","activeServices":["ldap"]}`))
+					try.HasBody(`{"version":"","buildTime":"","activeServices":["ldap"]}`))
 			},
 		},
 	}
