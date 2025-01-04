@@ -10,7 +10,7 @@ export function useSchema() {
                 if (types.length > 0) {
                     types += ', '
                 }
-                if (type === 'array'){
+                if (type === 'array' && schema.items){
                     types += `${schema.items.type}[]`
                 } else {
                     types += type
@@ -18,7 +18,7 @@ export function useSchema() {
             }
             return types
         } else {
-            if (schema.type === 'array'){
+            if (schema.type === 'array' && schema.items){
                 return `${schema.items.type}[]`
             }
             return schema.type

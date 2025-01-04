@@ -43,8 +43,6 @@ export function MarkdownItCard(metadata: any): (md: MarkdownIt, opts: Options) =
                 console.error('missing metadata for cards: '+card.key)
             }
 
-            console.log(cards)
-
             let items = ''
             for (const item of cards.items) {
                 items += `<div class="col">

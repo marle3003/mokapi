@@ -42,27 +42,20 @@ func (p *Parser) parseFromByte(b []byte) (interface{}, error) {
 }
 
 func (p *Parser) parse(r *bytes.Reader, s *Schema) (interface{}, error) {
-	if len(s.Type) == 0 {
-		if len(s.Schema) == 1 {
-			return p.parse(r, s.Schema[0])
-		}
-		n, err := binary.ReadVarint(r)
-		if err != nil {
-			return nil, err
-		}
-		return p.parse(r, s.Schema[n])
-	}
-
-	typeName := s.Type[0]
+	t := s.Type[0]
 	if len(s.Type) > 1 {
 		n, err := binary.ReadVarint(r)
 		if err != nil {
 			return nil, err
 		}
-		typeName = s.Type[n]
+		t = s.Type[n]
 	}
 
-	switch typeName {
+	if wrapped, ok := t.(*Schema); ok {
+		return p.parse(r, wrapped)
+	}
+
+	switch t {
 	case "null":
 		return nil, nil
 	case "boolean":

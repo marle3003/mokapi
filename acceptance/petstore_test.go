@@ -37,12 +37,92 @@ func (suite *PetStoreSuite) TestApi() {
 			try.HasHeader("Access-Control-Allow-Origin", "*"))
 	})
 
-	suite.T().Run("get service", func(t *testing.T) {
+	suite.T().Run("get Swagger HTTP service", func(t *testing.T) {
 		try.GetRequest(t, fmt.Sprintf("http://127.0.0.1:%v/api/services/http/Swagger%%20Petstore", suite.cfg.Api.Port),
 			nil,
 			try.HasStatusCode(http.StatusOK),
 			try.BodyContains(`{"name":"Swagger Petstore","description":"This is a sample server Petstore server.  You can find out more about `),
 			try.BodyMatch(`"configs":\[{"id":".*","url":".*\/acceptance\/petstore\/openapi\.yml","provider":"file","time":".*"}\]`),
+		)
+	})
+
+	suite.T().Run("get AsyncAPI service", func(t *testing.T) {
+		expected := map[string]interface{}{
+			"version":     "1.0.0",
+			"name":        "A sample AsyncApi Kafka streaming api",
+			"description": "",
+			"servers": []interface{}{
+				map[string]interface{}{
+					"description": "",
+					"host":        "127.0.0.1:19092",
+					"name":        "broker",
+				},
+			},
+
+			"topics": []interface{}{map[string]interface{}{
+				"description": "",
+				"messages": map[string]interface{}{
+					"#/components/messages/order": map[string]interface{}{
+						"contentType": "application/json",
+						"header": map[string]interface{}{
+							"schema": map[string]interface{}{
+								"properties": map[string]interface{}{
+									"number": map[string]interface{}{
+										"type": "number",
+									}, "test": map[string]interface{}{
+										"type": "string",
+									},
+								}, "type": "object",
+							},
+						},
+						"key": map[string]interface{}{
+							"schema": map[string]interface{}{
+								"type": "string",
+							},
+						},
+						"payload": map[string]interface{}{
+							"schema": map[string]interface{}{
+								"properties": map[string]interface{}{
+									"accepted": map[string]interface{}{
+										"properties": map[string]interface{}{
+											"timestamp": map[string]interface{}{"format": "date-time", "type": "string"},
+										},
+										"type": "object",
+									},
+									"completed": map[string]interface{}{
+										"properties": map[string]interface{}{
+											"timestamp": map[string]interface{}{"format": "date-time", "type": "string"},
+										},
+										"type": "object",
+									},
+									"id": map[string]interface{}{"type": "integer"},
+									"placed": map[string]interface{}{
+										"properties": map[string]interface{}{
+											"petid":     map[string]interface{}{"type": "integer"},
+											"quantity":  map[string]interface{}{"format": "int32", "type": "integer"},
+											"ship-date": map[string]interface{}{"format": "date-time", "type": "string"},
+										},
+										"type": "object",
+									},
+								},
+								"required": []interface{}{"id"},
+								"type":     "object",
+							},
+						},
+					},
+				},
+				"name": "petstore.order-event",
+				"partitions": []interface{}{
+					map[string]interface{}{"id": float64(0), "leader": map[string]interface{}{"addr": "127.0.0.1:19092", "name": "broker"}, "offset": float64(1), "segments": float64(1), "startOffset": float64(0)},
+					map[string]interface{}{"id": float64(1), "leader": map[string]interface{}{"addr": "127.0.0.1:19092", "name": "broker"}, "offset": float64(0), "segments": float64(0), "startOffset": float64(0)},
+				},
+			}},
+		}
+
+		try.GetRequest(t, fmt.Sprintf("http://127.0.0.1:%v/api/services/kafka/A%%20sample%%20AsyncApi%%20Kafka%%20streaming%%20api", suite.cfg.Api.Port),
+			nil,
+			try.HasStatusCode(http.StatusOK),
+			try.BodyContainsData(expected),
 		)
 	})
 }
@@ -90,12 +170,12 @@ func (suite *PetStoreSuite) TestGetOrderById() {
 	try.GetRequest(suite.T(), "http://127.0.0.1:18080/store/order/1",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(http.StatusOK),
-		try.HasBody(`{"id":98266,"petId":23377,"quantity":92,"shipDate":"1989-01-30T07:58:01Z","status":"approved","complete":false}`))
+		try.HasBody(`{"id":98266,"petId":23377,"quantity":92,"shipDate":"2012-01-30T07:58:01Z","status":"approved","complete":false}`))
 
 	try.GetRequest(suite.T(), "https://localhost:18443/store/order/10",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(http.StatusOK),
-		try.HasBody(`{"id":12545,"petId":20895,"quantity":16,"shipDate":"1989-11-19T16:57:16Z","status":"approved","complete":true}`))
+		try.HasBody(`{"id":12545,"petId":20895,"quantity":16,"shipDate":"2027-11-26T16:57:16Z","status":"approved","complete":true}`))
 }
 
 func (suite *PetStoreSuite) TestKafka_TopicConfig() {

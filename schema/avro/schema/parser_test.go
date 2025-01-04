@@ -14,7 +14,7 @@ func TestParser_Parse(t *testing.T) {
 	}{
 		{
 			name: "null",
-			s:    &Schema{Type: []string{"null"}},
+			s:    &Schema{Type: []interface{}{"null"}},
 			b:    []byte{0, 0, 0, 0, 1},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -23,7 +23,7 @@ func TestParser_Parse(t *testing.T) {
 		},
 		{
 			name: "boolean true",
-			s:    &Schema{Type: []string{"boolean"}},
+			s:    &Schema{Type: []interface{}{"boolean"}},
 			b:    []byte{0, 0, 0, 0, 1, 1},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -32,7 +32,7 @@ func TestParser_Parse(t *testing.T) {
 		},
 		{
 			name: "boolean false",
-			s:    &Schema{Type: []string{"boolean"}},
+			s:    &Schema{Type: []interface{}{"boolean"}},
 			b:    []byte{0, 0, 0, 0, 1, 0},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -41,7 +41,7 @@ func TestParser_Parse(t *testing.T) {
 		},
 		{
 			name: "integer 1",
-			s:    &Schema{Type: []string{"int"}},
+			s:    &Schema{Type: []interface{}{"int"}},
 			b:    []byte{0, 0, 0, 0, 1, 0x2},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -50,7 +50,7 @@ func TestParser_Parse(t *testing.T) {
 		},
 		{
 			name: "integer -64",
-			s:    &Schema{Type: []string{"int"}},
+			s:    &Schema{Type: []interface{}{"int"}},
 			b:    []byte{0, 0, 0, 0, 1, 0x7f},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -59,7 +59,7 @@ func TestParser_Parse(t *testing.T) {
 		},
 		{
 			name: "integer 64",
-			s:    &Schema{Type: []string{"int"}},
+			s:    &Schema{Type: []interface{}{"int"}},
 			b:    []byte{0, 0, 0, 0, 1, 0x80, 0x01},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -68,7 +68,7 @@ func TestParser_Parse(t *testing.T) {
 		},
 		{
 			name: "float 3.14159",
-			s:    &Schema{Type: []string{"float"}},
+			s:    &Schema{Type: []interface{}{"float"}},
 			b:    []byte{0, 0, 0, 0, 1, 0xD0, 0xF, 0x49, 0x40},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -77,7 +77,7 @@ func TestParser_Parse(t *testing.T) {
 		},
 		{
 			name: "double 3.14163",
-			s:    &Schema{Type: []string{"double"}},
+			s:    &Schema{Type: []interface{}{"double"}},
 			b:    []byte{0, 0, 0, 0, 1, 0x6E, 0x86, 0x1B, 0xF0, 0xF9, 0x21, 0x9, 0x40},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -86,7 +86,7 @@ func TestParser_Parse(t *testing.T) {
 		},
 		{
 			name: "string",
-			s:    &Schema{Type: []string{"string"}},
+			s:    &Schema{Type: []interface{}{"string"}},
 			b:    []byte{0, 0, 0, 0, 1, 0x06, 0x66, 0x6f, 0x6f},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -96,9 +96,9 @@ func TestParser_Parse(t *testing.T) {
 		{
 			name: "record",
 			s: &Schema{
-				Type: []string{"record"},
+				Type: []interface{}{"record"},
 				Fields: []Schema{
-					{Type: []string{"string"}, Name: "foo"},
+					{Type: []interface{}{"string"}, Name: "foo"},
 				},
 			},
 			b: []byte{0, 0, 0, 0, 1, 0x06, 0x66, 0x6f, 0x6f},
@@ -110,8 +110,8 @@ func TestParser_Parse(t *testing.T) {
 		{
 			name: "array",
 			s: &Schema{
-				Type:  []string{"array"},
-				Items: &Schema{Type: []string{"int"}},
+				Type:  []interface{}{"array"},
+				Items: &Schema{Type: []interface{}{"int"}},
 			},
 			b: []byte{0, 0, 0, 0, 1, 0x06, 0x2, 0x4, 0x6, 0x0},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -122,10 +122,10 @@ func TestParser_Parse(t *testing.T) {
 		{
 			name: "record with array and string - make sure last 0 is read from array",
 			s: &Schema{
-				Type: []string{"record"},
+				Type: []interface{}{"record"},
 				Fields: []Schema{
-					{Name: "list", Type: []string{"array"}, Items: &Schema{Type: []string{"int"}}},
-					{Name: "foo", Type: []string{"string"}},
+					{Name: "list", Type: []interface{}{"array"}, Items: &Schema{Type: []interface{}{"int"}}},
+					{Name: "foo", Type: []interface{}{"string"}},
 				},
 			},
 			b: []byte{0, 0, 0, 0, 1, 0x06, 0x2, 0x4, 0x6, 0x0, 0x06, 0x66, 0x6f, 0x6f},
@@ -137,7 +137,7 @@ func TestParser_Parse(t *testing.T) {
 		{
 			name: "enum",
 			s: &Schema{
-				Type:    []string{"enum"},
+				Type:    []interface{}{"enum"},
 				Symbols: []string{"foo", "bar", "yuh"},
 			},
 			b: []byte{0, 0, 0, 0, 1, 0},
@@ -149,7 +149,7 @@ func TestParser_Parse(t *testing.T) {
 		{
 			name: "enum negative index",
 			s: &Schema{
-				Type:    []string{"enum"},
+				Type:    []interface{}{"enum"},
 				Symbols: []string{"foo", "bar", "yuh"},
 			},
 			b: []byte{0, 0, 0, 0, 1, 0x1},
@@ -160,7 +160,7 @@ func TestParser_Parse(t *testing.T) {
 		{
 			name: "enum index out of range",
 			s: &Schema{
-				Type:    []string{"enum"},
+				Type:    []interface{}{"enum"},
 				Symbols: []string{"foo", "bar", "yuh"},
 			},
 			b: []byte{0, 0, 0, 0, 1, 0x8},
@@ -171,8 +171,8 @@ func TestParser_Parse(t *testing.T) {
 		{
 			name: "map",
 			s: &Schema{
-				Type:   []string{"map"},
-				Values: &Schema{Type: []string{"long"}},
+				Type:   []interface{}{"map"},
+				Values: &Schema{Type: []interface{}{"long"}},
 			},
 			b: []byte{0, 0, 0, 0, 1, 0x2, 0x06, 0x66, 0x6f, 0x6f, 0x12},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -183,7 +183,7 @@ func TestParser_Parse(t *testing.T) {
 		{
 			name: "union [null, string] with value NULL",
 			s: &Schema{
-				Type: []string{"null", "string"},
+				Type: []interface{}{"null", "string"},
 			},
 			b: []byte{0, 0, 0, 0, 1, 0x0},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -194,7 +194,7 @@ func TestParser_Parse(t *testing.T) {
 		{
 			name: "union [null, string] with value foo",
 			s: &Schema{
-				Type: []string{"null", "string"},
+				Type: []interface{}{"null", "string"},
 			},
 			b: []byte{0, 0, 0, 0, 1, 0x2, 0x06, 0x66, 0x6f, 0x6f},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -205,9 +205,9 @@ func TestParser_Parse(t *testing.T) {
 		{
 			name: "union schema [null, string] with value foo",
 			s: &Schema{
-				Schema: []*Schema{
-					{Type: []string{"null"}},
-					{Type: []string{"string"}},
+				Type: []interface{}{
+					&Schema{Type: []interface{}{"null"}},
+					&Schema{Type: []interface{}{"string"}},
 				},
 			},
 			b: []byte{0, 0, 0, 0, 1, 0x2, 0x06, 0x66, 0x6f, 0x6f},
@@ -219,7 +219,7 @@ func TestParser_Parse(t *testing.T) {
 		{
 			name: "fixed",
 			s: &Schema{
-				Type: []string{"fixed"},
+				Type: []interface{}{"fixed"},
 				Size: 3,
 			},
 			b: []byte{0, 0, 0, 0, 1, 0x1, 0x2, 0x3},

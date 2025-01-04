@@ -22,7 +22,7 @@ func TestStringFormat(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "2001-08-26", v)
+				require.Equal(t, "2007-08-26", v)
 			},
 		},
 		{
@@ -34,7 +34,7 @@ func TestStringFormat(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "2001-08-26T07:02:11Z", v)
+				require.Equal(t, "2007-08-26T07:02:11Z", v)
 			},
 		},
 		{

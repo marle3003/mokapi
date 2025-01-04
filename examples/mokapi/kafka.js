@@ -127,8 +127,8 @@ export let clusters = [
                         title: 'Shop New Order notification',
                         summary: 'A message containing details of a new order',
                         description: 'More info about how the order notifications are **created** and **used**.',
-                        key: {type: 'string'},
-                        payload: Product,
+                        key: { schema: {type: 'string'} },
+                        payload: { schema: Product },
                         contentType: 'application/json'
                     }
                 }
@@ -149,16 +149,45 @@ export let clusters = [
                     'userSignedUp': {
                         name: 'userSignedUp',
                         title: 'title',
-                        key: {type: 'string'},
-                        payload: UserSignedUp,
+                        key: { schema: {type: 'string'} },
+                        payload: { schema: UserSignedUp, format: 'application/vnd.oai.openapi+json;version=3.0.0' },
                         contentType: 'application/xml'
                     },
                     'second': {
                         name: 'second',
-                        key: {type: 'string'},
-                        payload: SecondMessage,
+                        key: { schema: {type: 'string'} },
+                        payload: { schema: SecondMessage },
                         contentType: 'application/json'
                     }
+                }
+            },
+            {
+                name: 'mokapi.shop.avro',
+                description: 'A channel with avro messages',
+                partitions: [
+                    {
+                        id: 0,
+                        startOffset: 0,
+                        offset: 0,
+                        leader: { name: 'foo', addr: 'localhost:9002' },
+                        segments: 1
+                    }
+                ],
+                messages: {
+                    'avro': {
+                        name: 'avro',
+                        title: 'avro',
+                        key: { schema: {type: 'string'}, format: 'application/vnd.apache.avro;version=1.9.0' },
+                        payload: {
+                            schema: {
+                                type: 'record', fields: [
+                                    { name: 'foo', type: 'string' },
+                                    { name: 'bar', type: 'int' }
+                                ]
+                            }, format: 'application/vnd.apache.avro;version=1.9.0'
+                        },
+                        contentType: 'avro/binary'
+                    },
                 }
             }
         ],

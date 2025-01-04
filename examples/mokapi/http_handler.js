@@ -72,10 +72,13 @@ export default async function() {
                     response.data = e
                 }
                 return true
-            case 'example':
-                const data = fake(request.body.schema)
-                response.body = marshal(data, { schema: request.body.schema, contentType: request.header.Accept })
+            case 'example': {
+                const res = post('http://localhost:8091/mokapi/api/schema/example', request.body, {headers: {'Accept': request.header['Accept']}})
+                response.statusCode = res.statusCode
+                response.headers = res.headers
+                response.body = res.body
                 return true
+            }
             case 'validate':
                 const res = post('http://localhost:8091/mokapi/api/schema/validate', request.body, { headers: { 'Data-Content-Type': request.header['Data-Content-Type']}})
                 response.statusCode = res.statusCode

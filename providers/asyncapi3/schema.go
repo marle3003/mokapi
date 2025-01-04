@@ -20,7 +20,7 @@ type Schema interface {
 }
 
 type MultiSchemaFormat struct {
-	Format string `yaml:"schemaFormat" json:"schemaFormat"`
+	Format string `yaml:"schemaFormat,omitempty" json:"schemaFormat,omitempty"`
 	Schema Schema `yaml:"schema" json:"schema"`
 }
 

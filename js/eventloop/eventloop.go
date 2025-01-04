@@ -73,6 +73,13 @@ func (loop *EventLoop) RunAsync(fn func(vm *goja.Runtime) (goja.Value, error)) (
 		var err error
 		done := make(chan struct{})
 		loop.queueChan <- func() {
+			defer func() {
+				if r := recover(); r != nil {
+					err = r.(error)
+					done <- struct{}{}
+				}
+			}()
+
 			result, err = fn(loop.vm)
 			done <- struct{}{}
 		}
