@@ -9,13 +9,16 @@ import { get, post, fetch } from 'mokapi/http'
 const configs = {}
 
 export default async function() {
+    // overridable for local development
     let port = env('MOKAPI_Api_Port')
     if (!port) {
-        port = 8091
+        port = 8090
     }
+    const apiPath = env('MOKAPI_Api_Path')
+    const apiBaseUrl = `http://localhost:${port}${apiPath}`
     let version = ''
     try {
-        const res = get(`http://localhost:${port}/mokapi/api/info`)
+        const res = get(`${apiBaseUrl}/api/info`)
         version = res.body
     } catch(e) {
         version = e
@@ -88,14 +91,14 @@ export default async function() {
                 }
                 return true
             case 'example': {
-                const res = post(`http://localhost:${port}/mokapi/api/schema/example`, request.body, {headers: {'Accept': request.header['Accept']}})
+                const res = post(`${apiBaseUrl}/api/schema/example`, request.body, {headers: {'Accept': request.header['Accept']}})
                 response.statusCode = res.statusCode
                 response.headers = res.headers
                 response.body = res.body
                 return true
             }
             case 'validate':
-                const res = post(`http://localhost:${port}/mokapi/api/schema/validate`, request.body, { headers: { 'Data-Content-Type': request.header['Data-Content-Type']}})
+                const res = post(`${apiBaseUrl}/api/schema/validate`, request.body, { headers: { 'Data-Content-Type': request.header['Data-Content-Type']}})
                 response.statusCode = res.statusCode
                 response.headers = res.headers
                 if (res.statusCode !== 200) {
