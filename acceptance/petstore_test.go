@@ -47,6 +47,9 @@ func (suite *PetStoreSuite) TestApi() {
 	})
 
 	suite.T().Run("get AsyncAPI service", func(t *testing.T) {
+		// ensure scripts are executed
+		time.Sleep(3 * time.Second)
+
 		expected := map[string]interface{}{
 			"version":     "1.0.0",
 			"name":        "A sample AsyncApi Kafka streaming api",
