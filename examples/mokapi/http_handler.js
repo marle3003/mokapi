@@ -16,7 +16,7 @@ export default async function() {
     let version = ''
     try {
         const res = get(`http://localhost:${port}/mokapi/api/info`)
-        version = res.json().version
+        version = res.body
     } catch(e) {
         version = e
     }
