@@ -13,15 +13,20 @@ export default async function() {
     if (!port) {
         port = 8091
     }
-    const res = get(`http://localhost:${port}/mokapi/api/info`)
-    const { version, buildTime } = res.json()
+    let version = ''
+    try {
+        const res = get(`http://localhost:${port}/mokapi/api/info`)
+        version = res.json().version
+    } catch(e) {
+        version = e
+    }
 
     on('http', function(request, response) {
         response.headers["Access-Control-Allow-Methods"] = "*"
         response.headers["Access-Control-Allow-Headers"] = "*"
         response.headers["Access-Control-Allow-Origin"] = "*"
-        response.headers['Mokapi-Version'] = version
-        response.headers['Mokapi-Build-Time'] = buildTime
+        //response.headers['Mokapi-Version'] = version
+        //response.headers['Mokapi-Build-Time'] = buildTime
 
         switch (request.operationId) {
             case 'info': {
