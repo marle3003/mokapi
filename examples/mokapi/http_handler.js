@@ -25,7 +25,7 @@ export default async function() {
         response.headers["Access-Control-Allow-Methods"] = "*"
         response.headers["Access-Control-Allow-Headers"] = "*"
         response.headers["Access-Control-Allow-Origin"] = "*"
-        //response.headers['Mokapi-Version'] = version
+        response.headers['Mokapi-Version'] = version
         //response.headers['Mokapi-Build-Time'] = buildTime
 
         switch (request.operationId) {
