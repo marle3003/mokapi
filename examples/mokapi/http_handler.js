@@ -9,27 +9,16 @@ import { get, post, fetch } from 'mokapi/http'
 const configs = {}
 
 export default async function() {
-    // overridable for local development
-    let port = env('MOKAPI_Api_Port')
-    if (!port) {
-        port = 8090
-    }
-    const apiPath = env('MOKAPI_Api_Path')
-    const apiBaseUrl = `http://localhost:${port}${apiPath}`
-    let version = ''
-    try {
-        const res = get(`${apiBaseUrl}/api/info`)
-        version = res.body
-    } catch(e) {
-        version = e
-    }
+    const apiBaseUrl = `http://localhost:8091/mokapi`
+    const res = get(`${apiBaseUrl}/api/info`)
+    const { version, buildTime } = res.json()
 
     on('http', function(request, response) {
         response.headers["Access-Control-Allow-Methods"] = "*"
         response.headers["Access-Control-Allow-Headers"] = "*"
         response.headers["Access-Control-Allow-Origin"] = "*"
         response.headers['Mokapi-Version'] = version
-        //response.headers['Mokapi-Build-Time'] = buildTime
+        response.headers['Mokapi-Build-Time'] = buildTime
 
         switch (request.operationId) {
             case 'info': {
