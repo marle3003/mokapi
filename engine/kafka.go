@@ -9,7 +9,9 @@ import (
 	"mokapi/media"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/kafka/store"
+	openapi "mokapi/providers/openapi/schema"
 	"mokapi/runtime"
+	avro "mokapi/schema/avro/schema"
 	"mokapi/schema/encoding"
 	"mokapi/schema/json/generator"
 	"mokapi/schema/json/schema"
@@ -183,6 +185,37 @@ func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[stri
 		}
 	}
 
+	s := msg.Payload.Value.Schema
+	var jsSchema *schema.Ref
+	switch v := s.(type) {
+	case *schema.Ref:
+		if value == nil {
+			value, err = createValue(v)
+			if err != nil {
+				return rb, fmt.Errorf("unable to generate kafka data: %v", err)
+			}
+		}
+		jsSchema = v
+	case *openapi.Ref:
+		if value == nil {
+			value, err = openapi.CreateValue(v)
+			if err != nil {
+				return rb, fmt.Errorf("unable to generate kafka data: %v", err)
+			}
+		}
+		jsSchema = openapi.ConvertToJsonSchema(v)
+	case *avro.Schema:
+		jsSchema = &schema.Ref{Value: v.Convert()}
+		if value == nil {
+			value, err = createValue(jsSchema)
+			if err != nil {
+				return rb, fmt.Errorf("unable to generate kafka data: %v", err)
+			}
+		}
+	default:
+		err = fmt.Errorf("schema format not supported: %v", msg.Payload.Value.Format)
+		return
+	}
 	s, ok := msg.Payload.Value.Schema.(*schema.Ref)
 	if !ok {
 		if _, ok = value.([]byte); !ok {
@@ -191,18 +224,15 @@ func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[stri
 		}
 	}
 
-	if value == nil {
-		value, err = createValue(s)
-		if err != nil {
-			return rb, fmt.Errorf("unable to generate kafka data: %v", err)
-		}
-	}
-
 	var v []byte
 	if b, ok := value.([]byte); ok {
 		v = b
 	} else {
-		v, err = encoding.NewEncoder(s).Write(value, media.ParseContentType("application/json"))
+		if sOpenApi, ok := msg.Payload.Value.Schema.(*openapi.Ref); ok {
+			v, err = sOpenApi.Marshal(value, media.ParseContentType(msg.ContentType))
+		} else {
+			v, err = encoding.NewEncoder(jsSchema).Write(value, media.ParseContentType(msg.ContentType))
+		}
 		if err != nil {
 			return
 		}

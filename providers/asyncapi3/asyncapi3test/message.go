@@ -21,6 +21,15 @@ func WithPayload(s *schema.Schema) MessageOptions {
 	}
 }
 
+func WithPayloadMulti(format string, schema asyncapi3.Schema) MessageOptions {
+	return func(m *asyncapi3.Message) {
+		m.Payload = &asyncapi3.SchemaRef{Value: &asyncapi3.MultiSchemaFormat{
+			Format: format,
+			Schema: schema,
+		}}
+	}
+}
+
 func WithContentType(s string) MessageOptions {
 	return func(m *asyncapi3.Message) {
 		m.ContentType = s

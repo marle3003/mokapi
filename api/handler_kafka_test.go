@@ -9,6 +9,7 @@ import (
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/providers/asyncapi3/kafka/store"
+	schematest2 "mokapi/providers/openapi/schema/schematest"
 	"mokapi/runtime"
 	"mokapi/runtime/monitor"
 	"mokapi/schema/json/schematest"
@@ -157,6 +158,28 @@ func TestHandler_Kafka(t *testing.T) {
 			responseBody: `{"name":"foo","description":"bar","version":"1.0","topics":[{"name":"foo","description":"bar","partitions":[{"id":0,"startOffset":0,"offset":0,"leader":{"name":"","addr":""},"segments":0}],"messages":{"foo":{"payload":{"schema":{"type":"string"}},"contentType":"application/json"}}}]}`,
 		},
 		{
+			name: "get specific with topic and multi schema format",
+			app: func() *runtime.App {
+				return &runtime.App{
+					Monitor: monitor.New(),
+					Kafka: map[string]*runtime.KafkaInfo{
+						"foo": getKafkaInfo(asyncapi3test.NewConfig(
+							asyncapi3test.WithInfo("foo", "bar", "1.0"),
+							asyncapi3test.WithChannel("foo",
+								asyncapi3test.WithChannelDescription("bar"),
+								asyncapi3test.WithMessage("foo",
+									asyncapi3test.WithPayloadMulti("foo", schematest.New("string")),
+									asyncapi3test.WithContentType("application/json"),
+								),
+							),
+						)),
+					},
+				}
+			},
+			requestUrl:   "http://foo.api/api/services/kafka/foo",
+			responseBody: `{"name":"foo","description":"bar","version":"1.0","topics":[{"name":"foo","description":"bar","partitions":[{"id":0,"startOffset":0,"offset":0,"leader":{"name":"","addr":""},"segments":0}],"messages":{"foo":{"payload":{"format":"foo","schema":{"type":"string"}},"contentType":"application/json"}}}]}`,
+		},
+		{
 			name: "get specific with group",
 			app: func() *runtime.App {
 				return &runtime.App{
@@ -241,6 +264,28 @@ func TestHandler_Kafka(t *testing.T) {
 			},
 			requestUrl:   "http://foo.api/api/services/kafka/foo",
 			responseBody: `{"name":"foo","description":"bar","version":"1.0","servers":[{"name":"foo","host":"foo.bar","description":""}],"groups":[{"name":"foo","members":[{"name":"m1","addr":"192.168.0.100","clientSoftwareName":"mokapi","clientSoftwareVersion":"1.0","heartbeat":"2024-04-22T15:04:05+07:00","partitions":{"topic":[1,2,5]}},{"name":"m2","addr":"192.168.0.200","clientSoftwareName":"mokapi","clientSoftwareVersion":"1.0","heartbeat":"2024-04-22T15:04:10+07:00","partitions":{"topic":[3,4,6]}}],"coordinator":"foo.bar:9092","leader":"m1","state":"PreparingRebalance","protocol":"range","topics":null}]}`,
+		},
+		{
+			name: "get specific with topic and openapi schema",
+			app: func() *runtime.App {
+				return &runtime.App{
+					Monitor: monitor.New(),
+					Kafka: map[string]*runtime.KafkaInfo{
+						"foo": getKafkaInfo(asyncapi3test.NewConfig(
+							asyncapi3test.WithInfo("foo", "bar", "1.0"),
+							asyncapi3test.WithChannel("foo",
+								asyncapi3test.WithChannelDescription("bar"),
+								asyncapi3test.WithMessage("foo",
+									asyncapi3test.WithPayloadMulti("foo", schematest2.New("string")),
+									asyncapi3test.WithContentType("application/json"),
+								),
+							),
+						)),
+					},
+				}
+			},
+			requestUrl:   "http://foo.api/api/services/kafka/foo",
+			responseBody: `{"name":"foo","description":"bar","version":"1.0","topics":[{"name":"foo","description":"bar","partitions":[{"id":0,"startOffset":0,"offset":0,"leader":{"name":"","addr":""},"segments":0}],"messages":{"foo":{"payload":{"format":"foo","schema":{"type":"string"}},"contentType":"application/json"}}}]}`,
 		},
 	}
 
