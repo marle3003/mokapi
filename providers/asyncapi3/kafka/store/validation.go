@@ -6,6 +6,7 @@ import (
 	"mokapi/kafka"
 	"mokapi/media"
 	"mokapi/providers/asyncapi3"
+	openapi "mokapi/providers/openapi/schema"
 	avro "mokapi/schema/avro/schema"
 	"mokapi/schema/encoding"
 	"mokapi/schema/json/parser"
@@ -59,7 +60,14 @@ func newMessageValidator(messageId string, msg *asyncapi3.Message) *messageValid
 	var msgParser encoding.Parser
 	switch s := msg.Payload.Value.Schema.(type) {
 	case *schema.Ref:
-		msgParser = &parser.Parser{Schema: s}
+		msgParser = &parser.Parser{Schema: s, ConvertToSortedMap: true}
+	case *openapi.Ref:
+		mt := media.ParseContentType(msg.ContentType)
+		if mt.IsXml() {
+			log.Warnf("unsupported payload type: %T", msg.Payload.Value)
+		} else {
+			msgParser = &parser.Parser{Schema: openapi.ConvertToJsonSchema(s), ConvertToSortedMap: true}
+		}
 	case *avro.Schema:
 		msgParser = &avro.Parser{Schema: s}
 	default:
@@ -100,6 +108,8 @@ func (mv *messageValidator) Validate(record *kafka.Record) (key interface{}, pay
 			err = fmt.Errorf("invalid message: %w", err)
 			return
 		}
+	} else {
+		payload = kafka.BytesToString(record.Value)
 	}
 
 	if mv.key != nil {

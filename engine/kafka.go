@@ -216,13 +216,6 @@ func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[stri
 		err = fmt.Errorf("schema format not supported: %v", msg.Payload.Value.Format)
 		return
 	}
-	s, ok := msg.Payload.Value.Schema.(*schema.Ref)
-	if !ok {
-		if _, ok = value.([]byte); !ok {
-			err = fmt.Errorf("currently only json schema supported")
-			return
-		}
-	}
 
 	var v []byte
 	if b, ok := value.([]byte); ok {
@@ -255,6 +248,7 @@ func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[stri
 	var recordHeaders []kafka.RecordHeader
 	var hs *schema.Ref
 	if msg.Headers != nil {
+		var ok bool
 		hs, ok = msg.Headers.Value.Schema.(*schema.Ref)
 		if !ok {
 			err = fmt.Errorf("currently only json schema supported")
