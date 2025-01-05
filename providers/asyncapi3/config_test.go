@@ -6,8 +6,12 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/asyncapi3"
+	"mokapi/providers/openapi/schema"
+	"mokapi/providers/openapi/schema/schematest"
+	"mokapi/providers/swagger"
 	avro "mokapi/schema/avro/schema"
 	json "mokapi/schema/json/schema"
+	"net/url"
 	"os"
 	"strings"
 	"testing"
@@ -119,5 +123,29 @@ func TestStreetlightKafka(t *testing.T) {
 	// Trait
 	require.Equal(t, "string", op.Value.Bindings.Kafka.ClientId.Type[0])
 	require.Contains(t, op.Value.Bindings.Kafka.ClientId.Enum, "my-app-id")
+}
 
+func TestConfig_ReferenceSwagger(t *testing.T) {
+	cr := dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
+		return &dynamic.Config{Data: swagger.Config{Definitions: map[string]*schema.Ref{"foo": schematest.NewRef("string")}}}, nil
+	})
+
+	cfg := &asyncapi3.Config{
+		Components: &asyncapi3.Components{
+			Schemas: map[string]*asyncapi3.SchemaRef{
+				"foo": {
+					Value: &asyncapi3.MultiSchemaFormat{
+						Format: "application/vnd.oai.openapi;version=3.0.0",
+						Schema: &schema.Ref{
+							Reference: dynamic.Reference{Ref: "swagger.json#/definitions/foo"},
+						},
+					},
+				},
+			},
+		},
+	}
+	err := cfg.Parse(&dynamic.Config{Info: dynamictest.NewConfigInfo(), Data: cfg}, cr)
+	require.NoError(t, err)
+	s := cfg.Components.Schemas["foo"].Value.Schema.(*schema.Ref)
+	require.Equal(t, "string", s.Value.Type.String())
 }

@@ -1,12 +1,14 @@
 package asyncapi3
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	openapi "mokapi/providers/openapi/schema"
 	avro "mokapi/schema/avro/schema"
-	json "mokapi/schema/json/schema"
+	jsonSchema "mokapi/schema/json/schema"
 	"reflect"
 )
 
@@ -37,7 +39,7 @@ func (r *SchemaRef) UnmarshalYAML(node *yaml.Node) error {
 		return nil
 	}
 
-	var s *json.Ref
+	var s *jsonSchema.Ref
 	err = node.Decode(&s)
 	if err == nil {
 		r.Value = &MultiSchemaFormat{Schema: s}
@@ -54,14 +56,14 @@ func (r *SchemaRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
 		err := dynamic.Resolve(r.Ref, &r.Value, config, reader)
 		if err != nil {
 			type t struct {
-				s *json.Schema
+				s *jsonSchema.Schema
 			}
 			s := &t{}
 			err = dynamic.Resolve(r.Ref, &s.s, config, reader)
 			if err != nil {
 				return err
 			}
-			r.Value = &MultiSchemaFormat{Schema: &json.Ref{Value: s.s}}
+			r.Value = &MultiSchemaFormat{Schema: &jsonSchema.Ref{Value: s.s}}
 		}
 	}
 
@@ -77,12 +79,55 @@ func (m *MultiSchemaFormat) parse(config *dynamic.Config, reader dynamic.Reader)
 
 func (m *MultiSchemaFormat) Resolve(token string) (interface{}, error) {
 	if token == "" {
-		if js, ok := m.Schema.(*json.Ref); ok {
+		if js, ok := m.Schema.(*jsonSchema.Ref); ok {
 			return js.Value, nil
 		}
 		return m.Schema, nil
 	}
 	return m, nil
+}
+
+func (m *MultiSchemaFormat) UnmarshalJSON(b []byte) error {
+	d := json.NewDecoder(bytes.NewReader(b))
+
+	token, err := d.Token()
+	if err != nil {
+		return err
+	}
+
+	if delim, ok := token.(json.Delim); ok && delim != '{' {
+		return fmt.Errorf("unexpected token %s; expected '{'", token)
+	}
+
+	var raw json.RawMessage
+	for {
+		token, err = d.Token()
+		if err != nil {
+			return err
+		}
+
+		if delim, ok := token.(json.Delim); ok && delim == '}' {
+			break
+		}
+
+		switch token.(string) {
+		case "format":
+			token, err = d.Token()
+			if err != nil {
+				return err
+			}
+			m.Format = token.(string)
+		case "schema":
+			err = d.Decode(&raw)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	m.Schema, err = unmarshal(raw, m.Format)
+
+	return err
 }
 
 func (m *MultiSchemaFormat) UnmarshalYAML(node *yaml.Node) error {
@@ -101,23 +146,23 @@ func (m *MultiSchemaFormat) UnmarshalYAML(node *yaml.Node) error {
 	}
 
 	m.Format = format
-	switch format {
-	case "application/vnd.oai.openapi;version=3.0.0", "application/vnd.oai.openapi+json;version=3.0.0", "application/vnd.oai.openapi+yaml;version=3.0.0":
+	switch {
+	case isOpenApi(format):
 		var s *openapi.Ref
 		err := schemaNode.Decode(&s)
 		if err != nil {
 			return err
 		}
 		m.Schema = s
-	case "application/vnd.apache.avro;version=1.9.0", "application/vnd.apache.avro+json;version=1.9.0", "application/vnd.apache.avro+yaml;version=1.9.0":
+	case isAvro(format):
 		var s *avro.Schema
 		err := schemaNode.Decode(&s)
 		if err != nil {
 			return err
 		}
 		m.Schema = s
-	case "":
-		var s *json.Ref
+	default:
+		var s *jsonSchema.Ref
 		err := node.Decode(&s)
 		if err != nil {
 			return err
@@ -162,9 +207,49 @@ func (m *MultiSchemaFormat) patch(patch *MultiSchemaFormat) {
 		} else {
 			switch s := m.Schema.(type) {
 			case *avro.Schema:
-			case *json.Ref:
-				s.Patch(patch.Schema.(*json.Ref))
+			case *jsonSchema.Ref:
+				s.Patch(patch.Schema.(*jsonSchema.Ref))
 			}
 		}
+	}
+}
+
+func unmarshal(raw json.RawMessage, format string) (Schema, error) {
+	if raw != nil {
+		switch {
+		case isOpenApi(format):
+			var r *openapi.Ref
+			err := json.Unmarshal(raw, &r)
+			return r, err
+		case isAvro(format):
+			var a *avro.Schema
+			err := json.Unmarshal(raw, &a)
+			return a, err
+		default:
+			var r *jsonSchema.Ref
+			err := json.Unmarshal(raw, &r)
+			return r, err
+		}
+	}
+	return nil, nil
+}
+
+func isAvro(format string) bool {
+	switch format {
+	case "application/vnd.apache.avro;version=1.9.0",
+		"application/vnd.apache.avro+json;version=1.9.0":
+		return true
+	default:
+		return false
+	}
+}
+
+func isOpenApi(format string) bool {
+	switch format {
+	case "application/vnd.oai.openapi+json;version=3.0.0",
+		"application/vnd.oai.openapi;version=3.0.0":
+		return true
+	default:
+		return false
 	}
 }
