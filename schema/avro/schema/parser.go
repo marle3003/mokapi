@@ -15,7 +15,7 @@ func (p *Parser) Parse(data interface{}) (interface{}, error) {
 	if b, ok := data.([]byte); ok {
 		return p.parseFromByte(b)
 	}
-	return data, nil
+	return p.parseFromInterface(data)
 }
 
 func (p *Parser) parseFromByte(b []byte) (interface{}, error) {
