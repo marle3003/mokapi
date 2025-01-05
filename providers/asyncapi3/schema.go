@@ -48,7 +48,28 @@ func (r *SchemaRef) UnmarshalYAML(node *yaml.Node) error {
 }
 
 func (r *SchemaRef) UnmarshalJSON(b []byte) error {
-	return r.Reference.UnmarshalJson(b, &r.Value)
+	d := json.NewDecoder(bytes.NewReader(b))
+
+	err := d.Decode(&r.Ref)
+	if err == nil {
+		return nil
+	}
+
+	d = json.NewDecoder(bytes.NewReader(b))
+	var multi *MultiSchemaFormat
+	err = d.Decode(&multi)
+	if err == nil && multi.Format != "" {
+		r.Value = multi
+		return nil
+	}
+
+	d = json.NewDecoder(bytes.NewReader(b))
+	var s *jsonSchema.Ref
+	err = d.Decode(&s)
+	if err == nil {
+		r.Value = &MultiSchemaFormat{Schema: s}
+	}
+	return err
 }
 
 func (r *SchemaRef) parse(config *dynamic.Config, reader dynamic.Reader) error {

@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/openapi/schema"
+	jsonSchema "mokapi/schema/json/schema"
 	"testing"
 )
 
@@ -15,7 +16,7 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 		test func(t *testing.T, cfg *asyncapi3.Message, err error)
 	}{
 		{
-			name: "payload ref",
+			name: "payload OpenAPI ref",
 			data: `{ "payload": { "format": "application/vnd.oai.openapi;version=3.0.0", "schema": { "$ref": "foo.json#foo" } }}`,
 			test: func(t *testing.T, cfg *asyncapi3.Message, err error) {
 				require.NoError(t, err)
@@ -23,6 +24,15 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 				s := cfg.Payload.Value.Schema.(*schema.Ref)
 				require.NotNil(t, s)
 				require.Equal(t, "foo.json#foo", s.Ref)
+			},
+		},
+		{
+			name: "payload schema",
+			data: `{ "payload": { "type": "string" }}`,
+			test: func(t *testing.T, cfg *asyncapi3.Message, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "", cfg.Payload.Value.Format)
+				require.Equal(t, "string", cfg.Payload.Value.Schema.(*jsonSchema.Ref).Type())
 			},
 		},
 	}
