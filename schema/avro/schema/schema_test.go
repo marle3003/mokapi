@@ -11,56 +11,64 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 	testcases := []struct {
 		name  string
 		input string
-		test  func(t *testing.T, schema *schema.Schema, err error)
+		test  func(t *testing.T, s *schema.Schema, err error)
 	}{
 		{
 			name:  "empty",
 			input: "{}",
-			test: func(t *testing.T, schema *schema.Schema, err error) {
+			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 			},
 		},
 		{
 			name:  "a JSON string, naming a defined type.",
 			input: `"string"`,
-			test: func(t *testing.T, schema *schema.Schema, err error) {
+			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "string", schema.Type[0])
+				require.Equal(t, "string", s.Type[0])
 			},
 		},
 		{
 			name:  "a JSON object",
 			input: `{"type": "string"}`,
-			test: func(t *testing.T, schema *schema.Schema, err error) {
+			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "string", schema.Type[0])
+				require.Equal(t, "string", s.Type[0])
 			},
 		},
 		{
 			name:  "a JSON array",
 			input: `["string", "boolean"]`,
-			test: func(t *testing.T, schema *schema.Schema, err error) {
+			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "string", schema.Type[0])
-				require.Equal(t, "boolean", schema.Type[1])
+				require.Equal(t, "string", s.Type[0])
+				require.Equal(t, "boolean", s.Type[1])
 			},
 		},
 		{
 			name:  "nested JSON object",
 			input: `{ "type": { "type": "string" } }`,
-			test: func(t *testing.T, schema *schema.Schema, err error) {
+			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "string", schema.Schema[0].Type[0])
+				require.Equal(t, "string", s.Type[0].(*schema.Schema).Type[0])
 			},
 		},
 		{
 			name:  "JSON object with array field",
 			input: `{"type": "record", "fields": [{ "name": "list", "type": { "type": "array", "items": "long" } }] }`,
-			test: func(t *testing.T, schema *schema.Schema, err error) {
+			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "record", schema.Type[0])
-				require.Equal(t, "array", schema.Fields[0].Schema[0].Type[0])
-				require.Equal(t, "long", schema.Fields[0].Schema[0].Items.Type[0])
+				require.Equal(t, "record", s.Type[0])
+				require.Equal(t, "array", s.Fields[0].Type[0].(*schema.Schema).Type[0])
+				require.Equal(t, "long", s.Fields[0].Type[0].(*schema.Schema).Items.Type[0])
+			},
+		},
+		{
+			name:  "union",
+			input: `{ "type": [{"type": "string"}, {"type": "boolean"}] }`,
+			test: func(t *testing.T, s *schema.Schema, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "string", s.Type[0].(*schema.Schema).Type[0])
 			},
 		},
 	}
@@ -78,6 +86,73 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 	}
 }
 
+func TestSchema_MarshalJSON(t *testing.T) {
+	testcases := []struct {
+		name string
+		s    *schema.Schema
+		test func(t *testing.T, s string, err error)
+	}{
+		{
+			name: "empty",
+			s:    &schema.Schema{},
+			test: func(t *testing.T, s string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "{}", s)
+			},
+		},
+		{
+			name: "type string",
+			s:    &schema.Schema{Type: []interface{}{"string"}},
+			test: func(t *testing.T, s string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"type":"string"}`, s)
+			},
+		},
+		{
+			name: "type string,int",
+			s:    &schema.Schema{Type: []interface{}{"string", "int"}},
+			test: func(t *testing.T, s string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"type":["string","int"]}`, s)
+			},
+		},
+		{
+			name: "type schema",
+			s:    &schema.Schema{Type: []interface{}{&schema.Schema{Type: []interface{}{"string"}}}},
+			test: func(t *testing.T, s string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"type":{"type":"string"}}`, s)
+			},
+		},
+		{
+			name: "type schema and string",
+			s:    &schema.Schema{Type: []interface{}{&schema.Schema{Type: []interface{}{"string"}}, "string"}},
+			test: func(t *testing.T, s string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"type":[{"type":"string"},"string"]}`, s)
+			},
+		},
+		{
+			name: "type record with field",
+			s:    &schema.Schema{Type: []interface{}{"record"}, Fields: []schema.Schema{{Name: "foo", Type: []interface{}{"string"}}}},
+			test: func(t *testing.T, s string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"type":"record","fields":[{"type":"string","name":"foo"}]}`, s)
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			b, err := tc.s.MarshalJSON()
+			tc.test(t, string(b), err)
+		})
+	}
+}
+
 func TestSchema(t *testing.T) {
 	var s *schema.Schema
 	b := jsonString
@@ -89,10 +164,10 @@ func TestSchema(t *testing.T) {
 	require.Equal(t, "A simple name (attribute) and no namespace attribute: use the null namespace (\"\"); the fullname is 'Example'.", s.Doc)
 	require.Len(t, s.Fields, 3)
 	require.Equal(t, "inheritNull", s.Fields[0].Name)
-	require.Equal(t, "enum", s.Fields[0].Schema[0].Type[0])
-	require.Equal(t, "Simple", s.Fields[0].Schema[0].Name)
-	require.Equal(t, "A simple name (attribute) and no namespace attribute: inherit the null namespace of the enclosing type 'Example'. The fullname is 'Simple'.", s.Fields[0].Schema[0].Doc)
-	require.Equal(t, []string{"a", "b"}, s.Fields[0].Schema[0].Symbols)
+	require.Equal(t, "enum", s.Fields[0].Type[0].(*schema.Schema).Type[0])
+	require.Equal(t, "Simple", s.Fields[0].Type[0].(*schema.Schema).Name)
+	require.Equal(t, "A simple name (attribute) and no namespace attribute: inherit the null namespace of the enclosing type 'Example'. The fullname is 'Simple'.", s.Fields[0].Type[0].(*schema.Schema).Doc)
+	require.Equal(t, []string{"a", "b"}, s.Fields[0].Type[0].(*schema.Schema).Symbols)
 
 }
 

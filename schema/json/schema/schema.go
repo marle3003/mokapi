@@ -61,17 +61,17 @@ type Schema struct {
 	Else *Ref `yaml:"else,omitempty" json:"else,omitempty"`
 
 	// Annotations
-	Title       string        `yaml:"title" json:"title"`
-	Description string        `yaml:"description" json:"description"`
-	Default     interface{}   `yaml:"default" json:"default"`
-	Deprecated  bool          `yaml:"deprecated" json:"deprecated"`
+	Title       string        `yaml:"title,omitempty" json:"title,omitempty"`
+	Description string        `yaml:"description,omitempty" json:"description,omitempty"`
+	Default     interface{}   `yaml:"default,omitempty" json:"default,omitempty"`
+	Deprecated  bool          `yaml:"deprecated,omitempty" json:"deprecated,omitempty"`
 	Examples    []interface{} `yaml:"examples,omitempty" json:"examples,omitempty"`
 
 	// Media
 	ContentMediaType string `yaml:"contentMediaType,omitempty" json:"contentMediaType,omitempty"`
 	ContentEncoding  string `yaml:"contentEncoding,omitempty" json:"contentEncoding,omitempty"`
 
-	Definitions map[string]*Schema
+	Definitions map[string]*Schema `yaml:"definitions,omitempty" json:"definitions,omitempty"`
 }
 
 type UnmarshalError struct {

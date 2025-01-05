@@ -88,7 +88,7 @@ const name = computed(() => {
                                             <schema-expand :schema="selected.contents[response.statusCode].schema" />
                                         </div>
                                         <div class="col-auto px-2 mt-1">
-                                            <schema-validate :schema="selected.contents[response.statusCode].schema" :content-type="selected.contents[response.statusCode].type" :name="name" />
+                                            <schema-validate :schema="{schema: selected.contents[response.statusCode].schema, format: 'application/vnd.oai.openapi+json;version=3.0.0'}" :content-type="selected.contents[response.statusCode].type" :name="name" />
                                         </div>
                                         <div class="col-auto px-2 mt-1">
                                             <select v-if="response.contents.length > 0" class="form-select form-select-sm" aria-label="Response content type" @change="selectedContentChange($event, response.statusCode)">

@@ -166,3 +166,46 @@ func TestRef_UnmarshalYAML(t *testing.T) {
 		})
 	}
 }
+
+func TestRef_MarshalJSON(t *testing.T) {
+	testcases := []struct {
+		name string
+		s    *schema.Ref
+		test func(t *testing.T, s string, err error)
+	}{
+		{
+			name: "empty type",
+			s:    &schema.Ref{},
+			test: func(t *testing.T, s string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "{}", s)
+			},
+		},
+		{
+			name: "with type",
+			s:    &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"string"}}},
+			test: func(t *testing.T, s string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"type":"string"}`, s)
+			},
+		},
+		{
+			name: "with properties",
+			s:    schematest.NewRef("object", schematest.WithProperty("foo", schematest.New("string"))),
+			test: func(t *testing.T, s string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"type":"object","properties":{"foo":{"type":"string"}}}`, s)
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			b, err := json.Marshal(tc.s)
+			tc.test(t, string(b), err)
+		})
+	}
+}

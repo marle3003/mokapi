@@ -73,6 +73,13 @@ func (loop *EventLoop) RunAsync(fn func(vm *goja.Runtime) (goja.Value, error)) (
 		var err error
 		done := make(chan struct{})
 		loop.queueChan <- func() {
+			defer func() {
+				if r := recover(); r != nil {
+					err = r.(error)
+					done <- struct{}{}
+				}
+			}()
+
 			result, err = fn(loop.vm)
 			done <- struct{}{}
 		}
@@ -86,6 +93,10 @@ func (loop *EventLoop) RunAsync(fn func(vm *goja.Runtime) (goja.Value, error)) (
 		if p, ok := result.Export().(*goja.Promise); ok {
 			for p.State() == goja.PromiseStatePending && loop.running {
 				loop.wait()
+			}
+			if p.State() == goja.PromiseStateRejected {
+				r := p.Result()
+				return nil, fmt.Errorf("%v", r.ToString())
 			}
 			return p.Result(), nil
 		}

@@ -101,3 +101,8 @@ func (r *Ref) IsFreeForm() bool {
 	}
 	return r.Value.IsFreeForm()
 }
+
+func (r *Ref) MarshalJSON() ([]byte, error) {
+	e := encoder{refs: map[string]bool{}}
+	return e.encode(r)
+}

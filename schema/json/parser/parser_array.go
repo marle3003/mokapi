@@ -8,13 +8,6 @@ import (
 
 func (p *Parser) ParseArray(data interface{}, s *schema.Schema, evaluated map[int]bool) (interface{}, error) {
 	arr := reflect.ValueOf(data)
-	if arr == reflect.Zero(arr.Type()) && !s.IsNullable() {
-		if s.Default != nil {
-			arr = reflect.ValueOf(s.Default)
-		} else {
-			return nil, fmt.Errorf("TEST")
-		}
-	}
 	if arr.Kind() != reflect.Slice {
 		return nil, fmt.Errorf("expected array but got: %v", ToString(data))
 	}

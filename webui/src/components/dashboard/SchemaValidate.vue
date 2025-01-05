@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useGuid } from '@/composables/guid'
-import { useExample } from '@/composables/example'
+import { useExample, type Request } from '@/composables/example'
 import { watch, reactive } from 'vue'
 import '../../ace-editor/ace-config';
 import SourceView from './SourceView.vue'
@@ -8,12 +8,13 @@ import SourceView from './SourceView.vue'
 import { transformPath } from '@/composables/fetch'
 
 const props = withDefaults(defineProps<{
-  schema: Schema
+  schema: SchemaFormat
   name?: string
   contentType: string
   title?: string
   source?: {
         filename: string
+        showAvroInfo?: boolean
   }
 }>(), {
     title: 'Data Validator'
@@ -84,7 +85,7 @@ function validate() {
                                 <li v-for="err in state.errors">{{ err }}</li>
                             </ul>
                         </div>
-                        <source-view ref="source" :filename="source?.filename" v-model:source="state.content" :content-type="contentType" :readonly="false" @update="(source) => state.content = source" />
+                        <source-view ref="source" :filename="source?.filename" :show-avro-info="source?.showAvroInfo" v-model:source="state.content" :content-type="contentType" :readonly="false" @update="(source) => state.content = source" />
                     </div>
                     <div class="modal-footer justify-content-between">
                         <span class="float-start">

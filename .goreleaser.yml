@@ -5,6 +5,7 @@ builds:
       - CGO_ENABLED=0
     ldflags:
       - -X mokapi/version.BuildVersion={{ .Version }}
+      - -X mokapi/version.BuildTime={{ .Date }}
     main: ./cmd/mokapi
     goos:
       - linux

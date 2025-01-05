@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"reflect"
 	"strings"
@@ -336,8 +335,6 @@ func getField(v reflect.Value, name string) (reflect.Value, error) {
 		return field, nil
 	}
 
-	i := v.Interface()
-	_ = i
 	for i := 0; i < v.NumField(); i++ {
 		f := v.Type().Field(i)
 
@@ -352,7 +349,6 @@ func getField(v reflect.Value, name string) (reflect.Value, error) {
 		}
 	}
 
-	log.Debugf("field %v not found", name)
 	return reflect.Value{}, nil
 }
 

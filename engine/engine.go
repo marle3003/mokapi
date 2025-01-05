@@ -64,7 +64,7 @@ func (e *Engine) AddScript(file *dynamic.Config) error {
 		go func() {
 			err := e.run(host)
 			if err != nil {
-				log.Error(err)
+				log.Errorf("error executing script %v: %v", file.Info.Url, err)
 			}
 		}()
 	} else {

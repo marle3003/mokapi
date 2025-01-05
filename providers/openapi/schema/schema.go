@@ -1,11 +1,13 @@
 package schema
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/schema/json/schema"
+	"reflect"
 	"strings"
 )
 
@@ -13,8 +15,8 @@ type Schema struct {
 	Schema  string `yaml:"$schema,omitempty" json:"$schema,omitempty"`
 	Boolean *bool  `yaml:"-" json:"-"`
 
-	Type  schema.Types  `yaml:"type" json:"type"`
-	Enum  []interface{} `yaml:"enum" json:"enum"`
+	Type  schema.Types  `yaml:"type,omitempty" json:"type,omitempty"`
+	Enum  []interface{} `yaml:"enum,omitempty" json:"enum,omitempty"`
 	Const *interface{}  `yaml:"const,omitempty" json:"const,omitempty"`
 
 	// Numbers
@@ -25,38 +27,38 @@ type Schema struct {
 	ExclusiveMaximum *schema.UnionType[float64, bool] `yaml:"exclusiveMaximum,omitempty" json:"exclusiveMaximum,omitempty"`
 
 	// String
-	Pattern   string `yaml:"pattern" json:"pattern"`
-	MinLength *int   `yaml:"minLength" json:"minLength"`
-	MaxLength *int   `yaml:"maxLength" json:"maxLength"`
-	Format    string `yaml:"format" json:"format"`
+	Pattern   string `yaml:"pattern,omitempty" json:"pattern,omitempty"`
+	MinLength *int   `yaml:"minLength,omitempty" json:"minLength,omitempty"`
+	MaxLength *int   `yaml:"maxLength,omitempty" json:"maxLength,omitempty"`
+	Format    string `yaml:"format,omitempty" json:"format,omitempty"`
 
 	// Array
-	Items            *Ref   `yaml:"items" json:"items"`
+	Items            *Ref   `yaml:"items,omitempty" json:"items,omitempty"`
 	PrefixItems      []*Ref `yaml:"prefixItems,omitempty" json:"prefixItems,omitempty"`
 	UnevaluatedItems *Ref   `yaml:"unevaluatedItems,omitempty" json:"unevaluatedItems,omitempty"`
 	Contains         *Ref   `yaml:"contains,omitempty" json:"contains,omitempty"`
 	MaxContains      *int   `yaml:"maxContains,omitempty" json:"maxContains,omitempty"`
 	MinContains      *int   `yaml:"minContains,omitempty" json:"minContains,omitempty"`
-	MinItems         *int   `yaml:"minItems" json:"minItems"`
-	MaxItems         *int   `yaml:"maxItems" json:"maxItems"`
-	UniqueItems      bool   `yaml:"uniqueItems" json:"uniqueItems"`
-	ShuffleItems     bool   `yaml:"x-shuffleItems" json:"x-shuffleItems"`
+	MinItems         *int   `yaml:"minItems,omitempty" json:"minItems,omitempty"`
+	MaxItems         *int   `yaml:"maxItems,omitempty" json:"maxItems,omitempty"`
+	UniqueItems      bool   `yaml:"uniqueItems,omitempty" json:"uniqueItems,omitempty"`
+	ShuffleItems     bool   `yaml:"x-shuffleItems,omitempty" json:"x-shuffleItems,omitempty"`
 
 	// Object
-	Properties            *Schemas            `yaml:"properties" json:"properties"`
+	Properties            *Schemas            `yaml:"properties,omitempty" json:"properties,omitempty"`
 	PatternProperties     map[string]*Ref     `yaml:"patternProperties,omitempty" json:"patternProperties,omitempty"`
-	MinProperties         *int                `yaml:"minProperties" json:"minProperties"`
-	MaxProperties         *int                `yaml:"maxProperties" json:"maxProperties"`
-	Required              []string            `yaml:"required" json:"required"`
+	MinProperties         *int                `yaml:"minProperties,omitempty" json:"minProperties,omitempty"`
+	MaxProperties         *int                `yaml:"maxProperties,omitempty" json:"maxProperties,omitempty"`
+	Required              []string            `yaml:"required,omitempty" json:"required,omitempty"`
 	DependentRequired     map[string][]string `yaml:"dependentRequired,omitempty" json:"dependentRequired,omitempty"`
 	DependentSchemas      map[string]*Ref     `yaml:"dependentSchemas,omitempty" json:"dependentSchemas,omitempty"`
 	AdditionalProperties  *Ref                `yaml:"additionalProperties,omitempty" json:"additionalProperties,omitempty"`
 	UnevaluatedProperties *Ref                `yaml:"unevaluatedProperties,omitempty" json:"unevaluatedProperties,omitempty"`
 	PropertyNames         *Ref                `yaml:"propertyNames,omitempty" json:"propertyNames,omitempty"`
 
-	AnyOf []*Ref `yaml:"anyOf" json:"anyOf"`
-	AllOf []*Ref `yaml:"allOf" json:"allOf"`
-	OneOf []*Ref `yaml:"oneOf" json:"oneOf"`
+	AnyOf []*Ref `yaml:"anyOf,omitempty" json:"anyOf,omitempty"`
+	AllOf []*Ref `yaml:"allOf,omitempty" json:"allOf,omitempty"`
+	OneOf []*Ref `yaml:"oneOf,omitempty" json:"oneOf,omitempty"`
 	Not   *Ref   `yaml:"not,omitempty" json:"not,omitempty"`
 
 	If   *Ref `yaml:"if,omitempty" json:"if,omitempty"`
@@ -64,20 +66,20 @@ type Schema struct {
 	Else *Ref `yaml:"else,omitempty" json:"else,omitempty"`
 
 	// Annotations
-	Title       string        `yaml:"title" json:"title"`
-	Description string        `yaml:"description" json:"description"`
-	Default     interface{}   `yaml:"default" json:"default"`
-	Deprecated  bool          `yaml:"deprecated" json:"deprecated"`
-	Examples    []interface{} `yaml:"examples" json:"examples"`
-	Example     interface{}   `yaml:"example" json:"example"`
+	Title       string        `yaml:"title,omitempty" json:"title,omitempty"`
+	Description string        `yaml:"description,omitempty" json:"description,omitempty"`
+	Default     interface{}   `yaml:"default,omitempty" json:"default,omitempty"`
+	Deprecated  bool          `yaml:"deprecated,omitempty" json:"deprecated,omitempty"`
+	Examples    []interface{} `yaml:"examples,omitempty" json:"examples,omitempty"`
+	Example     interface{}   `yaml:"example,omitempty" json:"example,omitempty"`
 
 	// Media
 	ContentMediaType string `yaml:"contentMediaType,omitempty" json:"contentMediaType,omitempty"`
 	ContentEncoding  string `yaml:"contentEncoding,omitempty" json:"contentEncoding,omitempty"`
 
 	// OpenAPI
-	Xml      *Xml `yaml:"xml" json:"xml"`
-	Nullable bool `yaml:"nullable" json:"nullable"`
+	Xml      *Xml `yaml:"xml,omitempty" json:"xml,omitempty"`
+	Nullable bool `yaml:"nullable,omitempty" json:"nullable,omitempty"`
 }
 
 func (s *Schema) HasProperties() bool {
@@ -298,4 +300,109 @@ func (s *Schema) UnmarshalYAML(node *yaml.Node) error {
 	}
 	*s = Schema(a)
 	return nil
+}
+
+type encoder struct {
+	refs map[string]bool
+}
+
+func (e *encoder) encode(r *Ref) ([]byte, error) {
+	var b bytes.Buffer
+	if r.Boolean != nil {
+		b.Write([]byte(fmt.Sprintf("%v", *r.Boolean)))
+		return b.Bytes(), nil
+	}
+
+	b.WriteRune('{')
+
+	if r.Ref != "" {
+		b.Write([]byte(fmt.Sprintf(`"ref":"%v"`, r.Ref)))
+
+		// loop protection, only return reference
+		if _, ok := e.refs[r.Ref]; ok {
+			b.WriteRune('}')
+			return b.Bytes(), nil
+		}
+		e.refs[r.Ref] = true
+		defer func() {
+			delete(e.refs, r.Ref)
+		}()
+	}
+
+	if r.Value != nil {
+		v := reflect.ValueOf(r.Value).Elem()
+		t := v.Type()
+		var err error
+		for i := 0; i < v.NumField(); i++ {
+			f := v.Field(i)
+			if isEmptyValue(f) {
+				continue
+			}
+
+			fv := f.Interface()
+			var bVal []byte
+			switch val := fv.(type) {
+			case schema.Types:
+				if len(val) == 0 {
+					continue
+				}
+				bVal, err = val.MarshalJSON()
+			case *Ref:
+				if val == nil {
+					continue
+				}
+				bVal, err = e.encode(val)
+			case *Schemas:
+				var fields bytes.Buffer
+				fields.WriteRune('{')
+				for it := val.Iter(); it.Next(); {
+					if fields.Len() > 1 {
+						fields.WriteRune(',')
+					}
+					sField, err := e.encode(it.Value())
+					if err != nil {
+						return nil, err
+					}
+					fields.WriteString(fmt.Sprintf(`"%v":`, it.Key()))
+					fields.Write(sField)
+				}
+				fields.WriteRune('}')
+				bVal = fields.Bytes()
+			default:
+				bVal, err = json.Marshal(val)
+			}
+
+			if err != nil {
+				return nil, err
+			}
+
+			if b.Len() > 1 {
+				b.Write([]byte{','})
+			}
+
+			tag := t.Field(i).Tag.Get("json")
+			name := strings.Split(tag, ",")[0]
+
+			b.WriteString(fmt.Sprintf(`"%v":`, name))
+			b.Write(bVal)
+		}
+	}
+
+	b.WriteRune('}')
+	return b.Bytes(), nil
+}
+
+func isEmptyValue(v reflect.Value) bool {
+	switch v.Kind() {
+	case reflect.Array, reflect.Map, reflect.Slice, reflect.String:
+		return v.Len() == 0
+	case reflect.Bool,
+		reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,
+		reflect.Float32, reflect.Float64,
+		reflect.Interface, reflect.Pointer:
+		return v.IsZero()
+	default:
+		return false
+	}
 }

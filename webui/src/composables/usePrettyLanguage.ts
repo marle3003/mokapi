@@ -76,9 +76,13 @@ export function usePrettyLanguage() {
         }
     }
 
-    function formatSchema(s: Schema | undefined): string {
+    function formatSchema(s: Schema | SchemaFormat | undefined): string {
         if (!s) {
             return ''
+        }
+        const sf = s as SchemaFormat
+        if (sf && sf.schema) {
+            return formatLanguage(JSON.stringify(sf.schema), 'application/json')
         }
         return formatLanguage(JSON.stringify(s), 'application/json')
     }

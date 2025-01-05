@@ -20,7 +20,7 @@ if (props.parameters){
         if (!parameter.schema) {
             continue;
         }
-        let example = fetchExample({schema: parameter.schema, contentType: 'text/plain'})
+        let example = fetchExample({schema: { schema: parameter.schema }, contentType: 'text/plain'})
         examples[parameter.name+parameter.type] = example.data
     }
 }
