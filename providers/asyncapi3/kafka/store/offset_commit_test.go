@@ -234,7 +234,7 @@ func TestOffsetCommit_Validation(t *testing.T) {
 				p := res.Topics[0].Partitions[0]
 				require.Equal(t, kafka.UnknownServerError, p.ErrorCode)
 
-				require.Equal(t, 7, len(hook.Entries))
+				require.Equal(t, 7, len(hook.Entries), hook.Entries)
 				require.Equal(t, logrus.ErrorLevel, hook.LastEntry().Level)
 				require.Equal(t, "kafka OffsetCommit: invalid consumer 'kafkatest' for topic foo: invalid clientId: found 1 error:\nstring 'kafkatest' does not match regex pattern '^[A-Z]{10}[0-5]$'\nschema path #/pattern", hook.LastEntry().Message)
 			},

@@ -75,7 +75,7 @@ function showMessage(event: ServiceEvent){
         message: formatLanguage(data.message, messageConfig.contentType),
         headers: data.headers,
         contentType: messageConfig.contentType,
-        keyType: messageConfig.key?.type,
+        keyType: messageConfig.key?.schema?.type,
         partition: data.partition,
         offset: data.offset,
         time: format(event.time),

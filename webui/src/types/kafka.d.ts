@@ -28,9 +28,9 @@ declare interface KafkaMessage {
   title: string
   summary: string
   description: string
-  key: Schema;
-  payload: Schema;
-  header: Schema
+  key: SchemaFormat;
+  payload: SchemaFormat;
+  header: SchemaFormat
   contentType: string;
 }
 

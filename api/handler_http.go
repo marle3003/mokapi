@@ -2,6 +2,7 @@ package api
 
 import (
 	"mokapi/providers/openapi/parameter"
+	"mokapi/providers/openapi/schema"
 	"mokapi/runtime"
 	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
@@ -50,7 +51,7 @@ type param struct {
 	Deprecated  bool        `json:"deprecated"`
 	Style       string      `json:"style,omitempty"`
 	Exploded    bool        `json:"exploded"`
-	Schema      *schemaInfo `json:"schema"`
+	Schema      *schema.Ref `json:"schema"`
 }
 
 type response struct {
@@ -63,7 +64,7 @@ type response struct {
 type header struct {
 	Name        string      `json:"name"`
 	Description string      `json:"description"`
-	Schema      *schemaInfo `json:"schema"`
+	Schema      *schema.Ref `json:"schema"`
 }
 
 type requestBody struct {
@@ -74,7 +75,7 @@ type requestBody struct {
 
 type mediaType struct {
 	Type   string      `json:"type"`
-	Schema *schemaInfo `json:"schema"`
+	Schema *schema.Ref `json:"schema"`
 }
 
 type server struct {
@@ -184,7 +185,7 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 				for ct, rb := range o.RequestBody.Value.Content {
 					op.RequestBody.Contents = append(op.RequestBody.Contents, mediaType{
 						Type:   ct,
-						Schema: getSchema(rb.Schema),
+						Schema: rb.Schema,
 					})
 				}
 			}
@@ -208,7 +209,7 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 				for ct, r := range r.Value.Content {
 					res.Contents = append(res.Contents, mediaType{
 						Type:   ct,
-						Schema: getSchema(r.Schema),
+						Schema: r.Schema,
 					})
 				}
 				for name, h := range r.Value.Headers {
@@ -219,7 +220,7 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 					hi := header{
 						Name:        name,
 						Description: h.Value.Description,
-						Schema:      getSchema(h.Value.Schema),
+						Schema:      h.Value.Schema,
 					}
 					if len(h.Description) > 0 {
 						hi.Description = h.Description
@@ -255,7 +256,7 @@ func getParameters(params parameter.Parameters) (result []param) {
 			Deprecated:  p.Value.Deprecated,
 			Style:       p.Value.Style,
 			Exploded:    p.Value.IsExplode(),
-			Schema:      getSchema(p.Value.Schema),
+			Schema:      p.Value.Schema,
 		}
 		if len(p.Description) > 0 {
 			pi.Description = p.Description

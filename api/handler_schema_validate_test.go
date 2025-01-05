@@ -85,7 +85,7 @@ func TestHandler_Schema_Validate(t *testing.T) {
 					map[string]string{
 						"Data-Content-Type": "application/xml",
 					},
-					`{ "schema": {"type": ["object"], "properties": { "foo":{ "type": ["string"] } }, "xml": { "name": "root" } }, "data":"<root><foo>bar</foo></root>" }`,
+					`{ "schema": {"type": ["object"], "properties": { "foo":{ "type": ["string"] } }, "xml": { "name": "root" } }, "data":"<root><foo>bar</foo></root>", "format": "application/vnd.oai.openapi;version=3.0.0" }`,
 					h,
 					try.HasBody(""),
 					try.HasStatusCode(200),

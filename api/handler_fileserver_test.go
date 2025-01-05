@@ -35,7 +35,7 @@ func TestHandler_FileServer(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"version":""}`))
+					try.HasBody(`{"version":"","buildTime":""}`))
 			},
 			fileServer: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 				if request.URL.Path != "/index.html" {

@@ -16,11 +16,12 @@ import (
 const sizeEventStore = 20
 
 type App struct {
-	Version string
-	Http    map[string]*HttpInfo
-	Ldap    map[string]*LdapInfo
-	Kafka   map[string]*KafkaInfo
-	Smtp    map[string]*SmtpInfo
+	Version   string
+	BuildTime string
+	Http      map[string]*HttpInfo
+	Ldap      map[string]*LdapInfo
+	Kafka     map[string]*KafkaInfo
+	Smtp      map[string]*SmtpInfo
 
 	Monitor *monitor.Monitor
 	m       sync.Mutex
@@ -30,9 +31,10 @@ type App struct {
 
 func New() *App {
 	return &App{
-		Version: version.BuildVersion,
-		Monitor: monitor.New(),
-		Configs: map[string]*dynamic.Config{},
+		Version:   version.BuildVersion,
+		BuildTime: version.BuildTime,
+		Monitor:   monitor.New(),
+		Configs:   map[string]*dynamic.Config{},
 	}
 }
 

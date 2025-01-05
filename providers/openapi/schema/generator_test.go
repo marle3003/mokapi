@@ -88,7 +88,7 @@ func TestGeneratorString(t *testing.T) {
 			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Format: "date"},
 			test: func(v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "1915-01-24", v)
+				require.Equal(t, "2035-01-24", v)
 			},
 		},
 		{
@@ -96,7 +96,7 @@ func TestGeneratorString(t *testing.T) {
 			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Format: "date-time"},
 			test: func(v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "1915-01-24T13:00:35Z", v)
+				require.Equal(t, "2035-01-24T13:00:35Z", v)
 			},
 		},
 		{
@@ -642,14 +642,14 @@ func TestGeneratorObject(t *testing.T) {
 		},
 		{
 			name: "more fields",
-			exp:  map[string]interface{}{"id": 98266, "date": "1901-12-28"},
+			exp:  map[string]interface{}{"id": 98266, "date": "2038-12-28"},
 			schema: schematest.New("object",
 				schematest.WithProperty("id", schematest.New("integer", schematest.WithFormat("int32"))),
 				schematest.WithProperty("date", schematest.New("string", schematest.WithFormat("date")))),
 		},
 		{
 			name: "nested",
-			exp:  map[string]interface{}{"nested": map[string]interface{}{"id": 98266, "date": "1901-12-28"}},
+			exp:  map[string]interface{}{"nested": map[string]interface{}{"id": 98266, "date": "2038-12-28"}},
 			schema: schematest.New("object",
 				schematest.WithProperty("nested", schematest.New("object",
 					schematest.WithProperty("id", schematest.New("integer", schematest.WithFormat("int32"))),
