@@ -59,6 +59,7 @@ func (c *KafkaInfo) update() {
 		if cfg == nil {
 			cfg = p
 		} else {
+			log.Infof("applying patch for %s: %s", c.Info.Name, k)
 			cfg.Patch(p)
 		}
 	}

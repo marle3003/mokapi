@@ -117,7 +117,7 @@ func (s *HttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				"url":    r.URL.String(),
 				"host":   r.Host,
 				"method": r.Method,
-			}).Info("Processing http request")
+			}).Info("processing http request")
 		}
 
 		if service.Handler == nil {
