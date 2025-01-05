@@ -4,6 +4,7 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
+	"mokapi/providers/asyncapi3"
 	"mokapi/schema/json/schema"
 	"mokapi/version"
 	"net/url"
@@ -112,17 +113,17 @@ type MessageRef struct {
 }
 
 type Message struct {
-	MessageId    string             `yaml:"messageId" json:"messageId"`
-	Name         string             `yaml:"name" json:"name"`
-	Title        string             `yaml:"title" json:"title"`
-	Summary      string             `yaml:"summary" json:"summary"`
-	Description  string             `yaml:"description" json:"description"`
-	ContentType  string             `yaml:"contentType" json:"contentType"`
-	SchemaFormat string             `yaml:"schemaFormat" json:"schemaFormat"`
-	Payload      *SchemaRef         `yaml:"payload" json:"payload"`
-	Bindings     MessageBinding     `yaml:"bindings" json:"bindings"`
-	Headers      *SchemaRef         `yaml:"headers" json:"headers"`
-	Traits       []*MessageTraitRef `yaml:"traits" json:"traits"`
+	MessageId    string               `yaml:"messageId" json:"messageId"`
+	Name         string               `yaml:"name" json:"name"`
+	Title        string               `yaml:"title" json:"title"`
+	Summary      string               `yaml:"summary" json:"summary"`
+	Description  string               `yaml:"description" json:"description"`
+	ContentType  string               `yaml:"contentType" json:"contentType"`
+	SchemaFormat string               `yaml:"schemaFormat" json:"schemaFormat"`
+	Payload      *asyncapi3.SchemaRef `yaml:"payload" json:"payload"`
+	Bindings     MessageBinding       `yaml:"bindings" json:"bindings"`
+	Headers      *asyncapi3.SchemaRef `yaml:"headers" json:"headers"`
+	Traits       []*MessageTraitRef   `yaml:"traits" json:"traits"`
 }
 
 type MessageBinding struct {
@@ -130,12 +131,12 @@ type MessageBinding struct {
 }
 
 type Components struct {
-	Servers       map[string]*Server         `yaml:"servers" json:"servers"`
-	Channels      map[string]*Channel        `yaml:"channels" json:"channels"`
-	Schemas       map[string]*SchemaRef      `yaml:"schemas" json:"schemas"`
-	Messages      map[string]*Message        `yaml:"messages" json:"messages"`
-	Parameters    map[string]*ParameterRef   `yaml:"parameters" json:"parameters"`
-	MessageTraits map[string]MessageTraitRef `yaml:"messageTraits" json:"messageTraits"`
+	Servers       map[string]*Server              `yaml:"servers" json:"servers"`
+	Channels      map[string]*Channel             `yaml:"channels" json:"channels"`
+	Schemas       map[string]*asyncapi3.SchemaRef `yaml:"schemas" json:"schemas"`
+	Messages      map[string]*Message             `yaml:"messages" json:"messages"`
+	Parameters    map[string]*ParameterRef        `yaml:"parameters" json:"parameters"`
+	MessageTraits map[string]MessageTraitRef      `yaml:"messageTraits" json:"messageTraits"`
 }
 
 type ParameterRef struct {
@@ -162,10 +163,10 @@ type MessageTrait struct {
 	Summary     string `yaml:"summary" json:"summary"`
 	Description string `yaml:"description" json:"description"`
 
-	SchemaFormat string         `yaml:"schemaFormat" json:"schemaFormat"`
-	ContentType  string         `yaml:"contentType" json:"contentType"`
-	Headers      *SchemaRef     `yaml:"headers" json:"headers"`
-	Bindings     MessageBinding `yaml:"bindings" json:"bindings"`
+	SchemaFormat string               `yaml:"schemaFormat" json:"schemaFormat"`
+	ContentType  string               `yaml:"contentType" json:"contentType"`
+	Headers      *asyncapi3.SchemaRef `yaml:"headers" json:"headers"`
+	Bindings     MessageBinding       `yaml:"bindings" json:"bindings"`
 }
 
 func (c *Config) Validate() error {

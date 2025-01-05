@@ -72,7 +72,7 @@ func (r *SchemaRef) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-func (r *SchemaRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
+func (r *SchemaRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(r.Ref) > 0 {
 		err := dynamic.Resolve(r.Ref, &r.Value, config, reader)
 		if err != nil {
@@ -132,7 +132,7 @@ func (m *MultiSchemaFormat) UnmarshalJSON(b []byte) error {
 		}
 
 		switch token.(string) {
-		case "format":
+		case "schemaFormat":
 			token, err = d.Token()
 			if err != nil {
 				return err
@@ -194,7 +194,7 @@ func (m *MultiSchemaFormat) UnmarshalYAML(node *yaml.Node) error {
 	return nil
 }
 
-func (r *SchemaRef) patch(patch *SchemaRef) {
+func (r *SchemaRef) Patch(patch *SchemaRef) {
 	if r == nil || patch == nil {
 		return
 	}

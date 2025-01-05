@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi"
+	"mokapi/providers/asyncapi3"
 	"mokapi/schema/json/ref"
 	"mokapi/schema/json/schema"
 	"net/url"
@@ -394,10 +395,10 @@ func TestSchema(t *testing.T) {
 	})
 	t.Run("reference inside", func(t *testing.T) {
 		target := &schema.Schema{}
-		schemas := map[string]*asyncApi.SchemaRef{}
-		schemas["foo"] = &asyncApi.SchemaRef{Value: &asyncApi.MultiSchemaFormat{Schema: &schema.Ref{Value: target}}}
+		schemas := map[string]*asyncapi3.SchemaRef{}
+		schemas["foo"] = &asyncapi3.SchemaRef{Value: &asyncapi3.MultiSchemaFormat{Schema: &schema.Ref{Value: target}}}
 		config.Components = &asyncApi.Components{Schemas: schemas}
-		message.Payload = &asyncApi.SchemaRef{Reference: dynamic.Reference{Ref: "#/components/schemas/foo"}}
+		message.Payload = &asyncapi3.SchemaRef{Reference: dynamic.Reference{Ref: "#/components/schemas/foo"}}
 		reader := &testReader{readFunc: func(cfg *dynamic.Config) error { return nil }}
 
 		err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
@@ -406,7 +407,7 @@ func TestSchema(t *testing.T) {
 	})
 	t.Run("file reference direct", func(t *testing.T) {
 		target := &schema.Ref{Value: &schema.Schema{}}
-		message.Payload = &asyncApi.SchemaRef{Reference: dynamic.Reference{Ref: "foo.yml"}}
+		message.Payload = &asyncapi3.SchemaRef{Reference: dynamic.Reference{Ref: "foo.yml"}}
 		reader := &testReader{readFunc: func(cfg *dynamic.Config) error {
 			cfg.Data = target
 			return nil
@@ -418,7 +419,7 @@ func TestSchema(t *testing.T) {
 	})
 	t.Run("modify file reference direct", func(t *testing.T) {
 		target := &schema.Schema{}
-		message.Payload = &asyncApi.SchemaRef{Value: &asyncApi.MultiSchemaFormat{Schema: &schema.Ref{Reference: ref.Reference{Ref: "foo.yml"}}}}
+		message.Payload = &asyncapi3.SchemaRef{Value: &asyncapi3.MultiSchemaFormat{Schema: &schema.Ref{Reference: ref.Reference{Ref: "foo.yml"}}}}
 		var fooConfig *dynamic.Config
 		reader := &testReader{readFunc: func(file *dynamic.Config) error {
 			file.Data = &schema.Schema{}

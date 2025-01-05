@@ -2,6 +2,7 @@ package asyncapitest
 
 import (
 	"mokapi/config/dynamic/asyncApi"
+	"mokapi/providers/asyncapi3"
 	"mokapi/schema/json/schema"
 )
 
@@ -17,7 +18,7 @@ func NewMessage(opts ...MessageOptions) *asyncApi.Message {
 
 func WithPayload(s *schema.Schema) MessageOptions {
 	return func(m *asyncApi.Message) {
-		m.Payload = &asyncApi.SchemaRef{Value: &asyncApi.MultiSchemaFormat{Schema: &schema.Ref{Value: s}}}
+		m.Payload = &asyncapi3.SchemaRef{Value: &asyncapi3.MultiSchemaFormat{Schema: &schema.Ref{Value: s}}}
 	}
 }
 
@@ -29,7 +30,7 @@ func WithContentType(s string) MessageOptions {
 
 func WithKey(s *schema.Schema) MessageOptions {
 	return func(m *asyncApi.Message) {
-		m.Bindings.Kafka.Key = &asyncApi.SchemaRef{Value: &asyncApi.MultiSchemaFormat{Schema: &schema.Ref{Value: s}}}
+		m.Bindings.Kafka.Key = &asyncapi3.SchemaRef{Value: &asyncapi3.MultiSchemaFormat{Schema: &schema.Ref{Value: s}}}
 	}
 }
 

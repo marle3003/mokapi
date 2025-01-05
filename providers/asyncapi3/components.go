@@ -40,7 +40,7 @@ func (c *Components) parse(config *dynamic.Config, reader dynamic.Reader) error 
 	}
 
 	for _, s := range c.Schemas {
-		if err := s.parse(config, reader); err != nil {
+		if err := s.Parse(config, reader); err != nil {
 			return err
 		}
 	}

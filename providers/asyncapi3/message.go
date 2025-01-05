@@ -78,13 +78,13 @@ func (r *MessageRef) parse(config *dynamic.Config, reader dynamic.Reader) error 
 	}
 
 	if r.Value.Payload != nil {
-		if err := r.Value.Payload.parse(config, reader); err != nil {
+		if err := r.Value.Payload.Parse(config, reader); err != nil {
 			return err
 		}
 	}
 
 	if r.Value.Headers != nil {
-		if err := r.Value.Headers.parse(config, reader); err != nil {
+		if err := r.Value.Headers.Parse(config, reader); err != nil {
 			return err
 		}
 	}
@@ -124,7 +124,7 @@ func (r *MessageTraitRef) parse(config *dynamic.Config, reader dynamic.Reader) e
 	}
 
 	if r.Value.Headers != nil {
-		if err := r.Value.Headers.parse(config, reader); err != nil {
+		if err := r.Value.Headers.Parse(config, reader); err != nil {
 			return err
 		}
 	}

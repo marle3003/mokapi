@@ -2,6 +2,7 @@ package asyncapitest
 
 import (
 	"mokapi/config/dynamic/asyncApi"
+	"mokapi/providers/asyncapi3"
 	"mokapi/schema/json/schema"
 )
 
@@ -68,10 +69,10 @@ func WithSchemas(name string, s *schema.Schema) ConfigOptions {
 			c.Components = &asyncApi.Components{}
 		}
 		if c.Components.Schemas == nil {
-			c.Components.Schemas = map[string]*asyncApi.SchemaRef{}
+			c.Components.Schemas = map[string]*asyncapi3.SchemaRef{}
 		}
-		c.Components.Schemas[name] = &asyncApi.SchemaRef{
-			Value: &asyncApi.MultiSchemaFormat{Schema: &schema.Ref{Value: s}},
+		c.Components.Schemas[name] = &asyncapi3.SchemaRef{
+			Value: &asyncapi3.MultiSchemaFormat{Schema: &schema.Ref{Value: s}},
 		}
 	}
 }

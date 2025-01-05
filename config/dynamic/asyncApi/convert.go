@@ -194,7 +194,7 @@ func convertMessageTrait(trait *MessageTrait) *asyncapi3.MessageTraitRef {
 	return &asyncapi3.MessageTraitRef{Value: target}
 }
 
-func convertSchema(s *SchemaRef) *asyncapi3.SchemaRef {
+func convertSchema(s *asyncapi3.SchemaRef) *asyncapi3.SchemaRef {
 	if s == nil || s.Value == nil {
 		return nil
 	}

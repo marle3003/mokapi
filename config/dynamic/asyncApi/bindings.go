@@ -3,6 +3,7 @@ package asyncApi
 import (
 	"fmt"
 	"gopkg.in/yaml.v3"
+	"mokapi/providers/asyncapi3"
 	"mokapi/schema/json/schema"
 )
 
@@ -40,7 +41,7 @@ type KafkaOperation struct {
 }
 
 type KafkaMessageBinding struct {
-	Key *SchemaRef
+	Key *asyncapi3.SchemaRef
 }
 
 type TopicBindings struct {
