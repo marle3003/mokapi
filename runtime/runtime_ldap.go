@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"context"
+	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/directory"
 	engine "mokapi/engine/common"
@@ -52,6 +53,7 @@ func (c *LdapInfo) update() {
 	cfg := getLdapConfig(c.configs[keys[0]])
 	for _, k := range keys[1:] {
 		p := getLdapConfig(c.configs[k])
+		log.Infof("applying patch for %s: %s", c.Info.Name, k)
 		cfg.Patch(p)
 	}
 
