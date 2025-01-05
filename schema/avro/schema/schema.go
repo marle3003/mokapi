@@ -5,24 +5,24 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
+	"strings"
 )
 
 type Schema struct {
-	Type   []string  `yaml:"-" json:"-"`
-	Schema []*Schema `yaml:"-" json:"-"`
+	Type []interface{} `yaml:"-" json:"-"`
 
-	Name      string   `yaml:"name" json:"name"`
-	Namespace string   `yaml:"namespace" json:"namespace"`
-	Doc       string   `yaml:"doc" json:"doc"`
-	Aliases   []string `yaml:"aliases" json:"aliases"`
+	Name      string   `yaml:"name,omitempty" json:"name,omitempty"`
+	Namespace string   `yaml:"namespace,omitempty" json:"namespace,omitempty"`
+	Doc       string   `yaml:"doc,omitempty" json:"doc,omitempty"`
+	Aliases   []string `yaml:"aliases,omitempty" json:"aliases,omitempty"`
 
-	Fields  []Schema `yaml:"fields" json:"fields"`
-	Symbols []string `yaml:"symbols" json:"symbols"`
-	Items   *Schema  `yaml:"items" json:"items"`
-	Values  *Schema  `yaml:"values" json:"values"`
+	Fields  []Schema `yaml:"fields,omitempty" json:"fields,omitempty"`
+	Symbols []string `yaml:"symbols,omitempty" json:"symbols,omitempty"`
+	Items   *Schema  `yaml:"items,omitempty" json:"items,omitempty"`
+	Values  *Schema  `yaml:"values,omitempty" json:"values,omitempty"`
 
-	Order []string `yaml:"order" json:"order"`
-	Size  int      `yaml:"size" json:"size"`
+	Order []string `yaml:"order,omitempty" json:"order,omitempty"`
+	Size  int      `yaml:"size,omitempty" json:"size,omitempty"`
 }
 
 func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
@@ -48,7 +48,9 @@ func (s *Schema) UnmarshalJSON(b []byte) error {
 	var arr []string
 	err = json.Unmarshal(b, &arr)
 	if err == nil {
-		s.Type = append(s.Type, arr...)
+		for _, t := range arr {
+			s.Type = append(s.Type, t)
+		}
 		return nil
 	}
 
@@ -71,7 +73,9 @@ func (s *Schema) UnmarshalYAML(node *yaml.Node) error {
 	var arr []string
 	err = node.Decode(&arr)
 	if err == nil {
-		s.Type = append(s.Type, arr...)
+		for _, t := range arr {
+			s.Type = append(s.Type, t)
+		}
 		return nil
 	}
 
@@ -92,13 +96,28 @@ func (s *Schema) fromMap(m map[string]interface{}) error {
 			case string:
 				s.Type = append(s.Type, val)
 			case []string:
-				s.Type = append(s.Type, val...)
+				for _, t := range val {
+					s.Type = append(s.Type, t)
+				}
+			case []interface{}:
+				for _, t := range val {
+					switch u := t.(type) {
+					case string:
+						s.Type = append(s.Type, u)
+					case map[string]interface{}:
+						nested := &Schema{}
+						if err := nested.fromMap(u); err != nil {
+							return err
+						}
+						s.Type = append(s.Type, nested)
+					}
+				}
 			case map[string]interface{}:
 				nested := &Schema{}
 				if err := nested.fromMap(val); err != nil {
 					return err
 				}
-				s.Schema = append(s.Schema, nested)
+				s.Type = append(s.Type, nested)
 			}
 		case "name":
 			s.Name = v.(string)
@@ -149,13 +168,45 @@ func parseSchema(v interface{}) (*Schema, error) {
 	case string:
 		s.Type = append(s.Type, val)
 	case []string:
-		s.Type = append(s.Type, val...)
+		for _, t := range val {
+			s.Type = append(s.Type, t)
+		}
 	case map[string]interface{}:
 		nested := &Schema{}
 		if err := nested.fromMap(val); err != nil {
 			return nil, err
 		}
-		s.Schema = append(s.Schema, nested)
+		s.Type = append(s.Type, nested)
 	}
 	return s, nil
+}
+
+func (s *Schema) MarshalJSON() ([]byte, error) {
+	type alias Schema
+	a := alias(*s)
+	b, err := json.Marshal(a)
+	if err != nil {
+		return nil, err
+	}
+
+	var typeValue strings.Builder
+	if len(s.Type) == 1 {
+		single, err := json.Marshal(s.Type[0])
+		if err != nil {
+			return nil, err
+		}
+		typeValue.WriteString(fmt.Sprintf(`"type":%s`, single))
+	} else if len(s.Type) > 1 {
+		list, err := json.Marshal(s.Type)
+		if err != nil {
+			return nil, err
+		}
+		typeValue.WriteString(fmt.Sprintf(`"type":%s`, list))
+	}
+
+	content := b[1 : len(b)-1]
+	if len(content) > 0 {
+		return []byte(fmt.Sprintf(`{%s,%s}`, typeValue.String(), content)), nil
+	}
+	return []byte(fmt.Sprintf(`{%s}`, typeValue.String())), nil
 }

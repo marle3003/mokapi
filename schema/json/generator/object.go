@@ -2,6 +2,7 @@ package generator
 
 import (
 	"github.com/brianvoe/gofakeit/v6"
+	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 	"mokapi/sortedmap"
 	"unicode"
@@ -120,6 +121,28 @@ func createObject(r *Request) (interface{}, error) {
 			return nil, err
 		}
 		m[it.Key()] = v
+	}
+
+	if s.Value != nil && s.Value.If != nil {
+		p := parser.Parser{}
+		_, err := p.ParseWith(m, s.Value.If)
+		var cond *schema.Ref
+		if err == nil && s.Value.Then != nil {
+			cond = s.Value.Then
+		} else if err != nil && s.Value.Else != nil {
+			cond = s.Value.Else
+		}
+		if cond != nil {
+			v, err := r.g.tree.Resolve(r.With(UsePathElement(r.LastName(), cond)))
+			if err != nil {
+				return nil, err
+			}
+			if m2, ok := v.(map[string]interface{}); ok {
+				for key, val := range m2 {
+					m[key] = val
+				}
+			}
+		}
 	}
 
 	return m, nil

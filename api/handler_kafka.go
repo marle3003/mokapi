@@ -6,7 +6,6 @@ import (
 	"mokapi/runtime"
 	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
-	jsonSchema "mokapi/schema/json/schema"
 	"net/http"
 	"sort"
 	"strings"
@@ -228,9 +227,14 @@ func newTopic(s *store.Store, t *store.Topic, config *asyncapi3.Channel, default
 			Title:       msg.Title,
 			Summary:     msg.Summary,
 			Description: msg.Description,
-			Payload:     getSchemaFromAsyncAPI(msg.Payload),
-			Header:      getSchemaFromAsyncAPI(msg.Headers),
 			ContentType: msg.ContentType,
+		}
+
+		if msg.Payload != nil && msg.Payload.Value != nil {
+			m.Payload = &schemaInfo{Schema: msg.Payload.Value.Schema, Format: msg.Payload.Value.Format}
+		}
+		if msg.Headers != nil && msg.Headers.Value != nil {
+			m.Header = &schemaInfo{Schema: msg.Headers.Value.Schema, Format: msg.Headers.Value.Format}
 		}
 
 		if m.ContentType == "" {
@@ -238,7 +242,7 @@ func newTopic(s *store.Store, t *store.Topic, config *asyncapi3.Channel, default
 		}
 
 		if msg.Bindings.Kafka.Key != nil {
-			m.Key = getSchemaFromJson(msg.Bindings.Kafka.Key.Value.Schema.(*jsonSchema.Ref))
+			m.Key = &schemaInfo{Schema: msg.Bindings.Kafka.Key.Value.Schema}
 		}
 		if result.Messages == nil {
 			result.Messages = map[string]messageConfig{}

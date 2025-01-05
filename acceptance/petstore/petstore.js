@@ -29,5 +29,5 @@ export default async function() {
         }
         return false
     });
-    await kafka.produceAsync({ topic: 'petstore.order-event' })
+    await kafka.produceAsync({ topic: 'petstore.order-event', messages: [{partition: 0}] })
 }

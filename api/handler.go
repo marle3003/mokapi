@@ -25,6 +25,7 @@ type handler struct {
 
 type info struct {
 	Version        string   `json:"version"`
+	BuildTime      string   `json:"buildTime"`
 	ActiveServices []string `json:"activeServices,omitempty"`
 }
 
@@ -181,7 +182,7 @@ func writeError(w http.ResponseWriter, err error, status int) {
 func (h *handler) getInfo(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	i := info{Version: h.app.Version}
+	i := info{Version: h.app.Version, BuildTime: h.app.BuildTime}
 	if len(h.app.Http) > 0 {
 		i.ActiveServices = append(i.ActiveServices, "http")
 	}

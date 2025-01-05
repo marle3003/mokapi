@@ -7,18 +7,12 @@ import (
 	"mokapi/js/util"
 	"mokapi/providers/openapi/schema"
 	"mokapi/schema/json/generator"
-	jsonSchema "mokapi/schema/json/schema"
 	"reflect"
 )
 
 type Faker struct {
 	rt   *goja.Runtime
 	host common.Host
-}
-
-type requestExample struct {
-	Name   string             `json:"name"`
-	Schema *jsonSchema.Schema `json:"schema"`
 }
 
 func Require(rt *goja.Runtime, module *goja.Object) {
@@ -34,6 +28,10 @@ func Require(rt *goja.Runtime, module *goja.Object) {
 }
 
 func (m *Faker) Fake(v goja.Value) interface{} {
+	if v == nil {
+		return nil
+	}
+
 	t := v.ExportType()
 	if t.Kind() != reflect.Map {
 		panic(m.rt.ToValue(fmt.Errorf("expect object parameter but got: %v", util.JsType(v.Export()))))

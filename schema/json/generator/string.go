@@ -4,6 +4,7 @@ import (
 	"github.com/brianvoe/gofakeit/v6"
 	"mokapi/schema/json/schema"
 	"strings"
+	"time"
 )
 
 var (
@@ -45,9 +46,9 @@ func StringFormat() *Tree {
 			s := r.LastSchema()
 			switch s.Format {
 			case "date":
-				return gofakeit.Date().Format("2006-01-02"), nil
+				return date().Format("2006-01-02"), nil
 			case "date-time":
-				return gofakeit.Generate("{date}"), nil
+				return date().Format(time.RFC3339), nil
 			case "password":
 				return gofakeit.Generate("{password}"), nil
 			case "email":
@@ -237,4 +238,31 @@ func newId(s *schema.Schema) (string, error) {
 	}
 	n := gofakeit.Number(min, max)
 	return gofakeit.Numerify(strings.Repeat("#", n)), nil
+}
+
+var maxDayInMonth = []int{
+	31, // january
+	28, // february
+	31, // march
+	30, // april
+	31, // may
+	30, // june
+	31, // july
+	31, // august
+	30, // september
+	31, // october
+	30, // november
+	31, // december
+}
+
+// gofakeit uses year range between 1900 and now
+func date() time.Time {
+	year := gofakeit.Number(1970, 2040)
+	month := gofakeit.Number(1, 12)
+	day := gofakeit.Number(1, maxDayInMonth[month-1])
+	hour := gofakeit.Number(0, 23)
+	minute := gofakeit.Number(0, 59)
+	second := gofakeit.Number(0, 59)
+	nanosecond := gofakeit.Number(0, 999999999)
+	return time.Date(year, time.Month(month), day, hour, minute, second, nanosecond, time.UTC)
 }

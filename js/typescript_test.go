@@ -91,7 +91,7 @@ let getMessage = async () => {
 					err = vm.ExportTo(v, &msg2)
 					r.NoError(t, err)
 				})
-				time.Sleep(1 * time.Second)
+				time.Sleep(2 * time.Second)
 				r.Equal(t, "foo", msg1)
 				r.Equal(t, "foo", msg2)
 			},

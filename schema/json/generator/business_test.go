@@ -49,7 +49,7 @@ func TestCommerce(t *testing.T) {
 			},
 		},
 		{
-			name: "person with address, username and creditcard",
+			name: "person with address, username and credit card",
 			req: &Request{
 				Path: Path{
 					&PathElement{
@@ -80,7 +80,7 @@ func TestCommerce(t *testing.T) {
 						"type":   "Diners Club",
 						"number": "2298465535548962",
 						"cvv":    "367",
-						"exp":    "01/31",
+						"exp":    "01/32",
 					},
 				}, v)
 			},

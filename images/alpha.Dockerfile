@@ -15,6 +15,8 @@ FROM golang:1.23.4-alpine AS gobuild
 
 ARG VERSION=dev
 
+ARG BUILD_TIME=dev
+
 COPY . /go/src/github.com/mokapi
 
 WORKDIR /go/src/github.com/mokapi
@@ -24,7 +26,7 @@ COPY --from=webui /webui webui
 
 RUN go test -v ./...
 
-RUN go build -o mokapi -ldflags="-X mokapi/version.BuildVersion=$VERSION" ./cmd/mokapi
+RUN go build -o mokapi -ldflags="-X mokapi/version.BuildVersion=$VERSION -X mokapi/version.BuildTime=$BUILD_TIME" ./cmd/mokapi
 
 FROM alpine
 

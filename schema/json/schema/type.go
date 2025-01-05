@@ -2,6 +2,7 @@ package schema
 
 import (
 	"encoding/json"
+	"fmt"
 	"gopkg.in/yaml.v3"
 	"strings"
 )
@@ -191,4 +192,22 @@ func (s *Schema) IsAnyString() bool {
 
 func (s *Schema) IsFalse() bool {
 	return s != nil && s.Boolean != nil && !*s.Boolean
+}
+
+func (t *Types) MarshalJSON() ([]byte, error) {
+	if t == nil {
+		return []byte(""), nil
+	}
+
+	if len(*t) == 1 {
+		return []byte(fmt.Sprintf(`"%v"`, (*t)[0])), nil
+	}
+	var sb strings.Builder
+	for _, item := range *t {
+		if sb.Len() > 0 {
+			sb.WriteString(",")
+		}
+		sb.WriteString(fmt.Sprintf(`"%v"`, item))
+	}
+	return []byte(fmt.Sprintf("[%v]", sb.String())), nil
 }

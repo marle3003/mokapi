@@ -1,6 +1,7 @@
 package dynamic
 
 import (
+	"encoding/json"
 	"gopkg.in/yaml.v3"
 )
 
@@ -20,8 +21,11 @@ func (r *Reference) UnmarshalYaml(node *yaml.Node, val interface{}) error {
 }
 
 func (r *Reference) UnmarshalJson(b []byte, val interface{}) error {
-	if err := UnmarshalJSON(b, r); err == nil && len(r.Ref) > 0 {
-		return nil
+	var m map[string]string
+	_ = json.Unmarshal(b, &m)
+	if _, ok := m["$ref"]; ok {
+		return UnmarshalJSON(b, r)
 	}
+
 	return UnmarshalJSON(b, val)
 }

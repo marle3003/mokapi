@@ -10,7 +10,7 @@ export interface Example {
 
 export interface Request {
     name?: string
-    schema: Schema
+    schema: SchemaFormat
     contentType?: string
 }
 
@@ -22,7 +22,11 @@ export function useExample() {
             request.contentType = 'application/json'
         }
         
-        const response = useFetch('/api/schema/example', {method: 'POST', body: JSON.stringify({name: request.name, schema: request.schema}), headers: {'Content-Type': 'application/json', 'Accept': request.contentType}}, false, false)
+        const response = useFetch('/api/schema/example', {
+            method: 'POST', 
+            body: JSON.stringify({name: request.name, schema: request.schema.schema, format: request.schema.format}), 
+            headers: {'Content-Type': 'application/json', 'Accept': request.contentType}},
+            false, false)
         const example: Example =  reactive({
             data: '',
             next: () => response.refresh(),
