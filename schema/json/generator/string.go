@@ -96,21 +96,21 @@ func StringNumber() *Tree {
 		},
 		Fake: func(r *Request) (interface{}, error) {
 			s := r.LastSchema()
-			min := 11
-			max := 11
+			minLength := 11
+			maxLength := 11
 			if s.MaxLength != nil {
-				max = *s.MaxLength
+				maxLength = *s.MaxLength
 			}
 			if s.MinLength != nil {
-				min = *s.MinLength
+				minLength = *s.MinLength
 			} else if s.MaxLength != nil {
-				min = 0
+				minLength = 0
 			}
 			var n int
-			if min == max {
-				n = min
+			if minLength == maxLength {
+				n = minLength
 			} else {
-				n = gofakeit.Number(min, max)
+				n = gofakeit.Number(minLength, maxLength)
 			}
 			return gofakeit.Numerify(strings.Repeat("#", n)), nil
 		},
@@ -222,21 +222,21 @@ func hasFormat(r *schema.Ref) bool {
 }
 
 func newId(s *schema.Schema) (string, error) {
-	min := 37
-	max := 37
+	minLength := 37
+	maxLength := 37
 	if s.MaxLength != nil {
-		max = *s.MaxLength
+		maxLength = *s.MaxLength
 	}
 	if s.MinLength != nil {
-		min = *s.MinLength
+		minLength = *s.MinLength
 	} else if s.MaxLength != nil {
-		min = max
+		minLength = maxLength
 	}
 
-	if min <= 37 && max >= 37 {
+	if minLength <= 37 && maxLength >= 37 {
 		return gofakeit.UUID(), nil
 	}
-	n := gofakeit.Number(min, max)
+	n := gofakeit.Number(minLength, maxLength)
 	return gofakeit.Numerify(strings.Repeat("#", n)), nil
 }
 
