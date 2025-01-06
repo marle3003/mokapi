@@ -2,6 +2,7 @@ package dynamic
 
 import (
 	"fmt"
+	"mokapi/sortedmap"
 	"net/url"
 	"path/filepath"
 	"reflect"
@@ -10,6 +11,10 @@ import (
 
 type PathResolver interface {
 	Resolve(token string) (interface{}, error)
+}
+
+type Converter interface {
+	ConvertTo(i interface{}) (interface{}, error)
 }
 
 func Resolve(ref string, element interface{}, config *Config, reader Reader) error {
@@ -61,8 +66,9 @@ func Resolve(ref string, element interface{}, config *Config, reader Reader) err
 	return nil
 }
 
-func resolvePath(path string, cursor interface{}, resolved interface{}) (err error) {
+func resolvePath(path string, root interface{}, resolved interface{}) (err error) {
 	tokens := strings.Split(path, "/")
+	cursor := root
 
 	for i, t := range tokens[1:] {
 		if r, ok := cursor.(PathResolver); ok {
@@ -109,7 +115,13 @@ func resolvePath(path string, cursor interface{}, resolved interface{}) (err err
 
 	v2 := reflect.Indirect(reflect.ValueOf(resolved))
 	if !vCursor.Type().AssignableTo(v2.Type()) && vCursor.Kind() == reflect.Ptr {
-		vCursor = vCursor.Elem()
+		if c, ok := cursor.(Converter); ok {
+			if converted, err := c.ConvertTo(v2.Interface()); err == nil {
+				vCursor = reflect.ValueOf(converted)
+			}
+		} else {
+			vCursor = vCursor.Elem()
+		}
 	}
 
 	if !vCursor.Type().AssignableTo(v2.Type()) {
@@ -124,6 +136,12 @@ func resolvePath(path string, cursor interface{}, resolved interface{}) (err err
 func get(token string, node interface{}) (interface{}, error) {
 	if len(token) == 0 {
 		return node, nil
+	}
+
+	if m, ok := node.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
+		if mv, ok := m.Get(token); ok {
+			return mv, nil
+		}
 	}
 
 	rValue := reflect.Indirect(reflect.ValueOf(node))

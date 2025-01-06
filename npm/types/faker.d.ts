@@ -1,5 +1,3 @@
-import { JSONValue } from ".";
-
 /**
  * Creates a fake based on the given schema
  * https://mokapi.io/docs/javascript-api/mokapi-faker/fake
@@ -12,7 +10,7 @@ import { JSONValue } from ".";
  *   console.log(fake({type: 'string', pattern: '^\d{3}-\d{2}-\d{4}$'})) // 123-45-6789
  * }
  */
-export function fake(schema: Schema | FakeRequest): JSONValue;
+export function fake(schema: Schema | JSONSchema): any;
 
 /**
  * Gets the tree node with the given name
@@ -24,12 +22,12 @@ export function fake(schema: Schema | FakeRequest): JSONValue;
  *   console.log(fake({type: 'string'}))
  * }
  */
-export function findByName(name: string): Tree
+export function findByName(name: string): Tree;
 
 /**
  * The name of the root faker tree
  */
-export const RootName = 'Faker'
+export const RootName = "Faker";
 
 /**
  * The Tree object represents a node in the faker tree
@@ -38,70 +36,32 @@ export interface Tree {
     /**
      * Gets the name of the tree node
      */
-    name: string
-
-    /**
-     * Tests whether the tree node supports the request.
-     * @param request request - Request for a new fake value
-     * @example
-     * export default function() {
-     *   const frequencyItems = ['never', 'daily', 'weekly', 'monthly', 'yearly']
-     *   const node = findByName('Strings')
-     *   node.append({
-     *     name: 'Frequency',
-     *     test: (r) => { return r.lastName() === 'frequency' },
-     *     fake: (r) => {
-     *       return frequencyItems[Math.floor(Math.random()*frequencyItems.length)]
-     *     }
-     *   })
-     *   return fake({ type: 'string' })
-     * }
-     */
-    readonly test: (request: FakeRequest) => boolean
-
-    /**
-     * Gets a new fake value
-     * @param request request - Request for a new fake value
-     * @example
-     * export default function() {
-     *   const frequencyItems = ['never', 'daily', 'weekly', 'monthly', 'yearly']
-     *   const node = findByName('Strings')
-     *   node.append({
-     *     name: 'Frequency',
-     *     test: (r) => { return r.lastName() === 'frequency' },
-     *     fake: (r) => {
-     *       return frequencyItems[Math.floor(Math.random()*frequencyItems.length)]
-     *     }
-     *   })
-     *   return fake({ type: 'string' })
-     * }
-     */
-    readonly fake: (request: FakeRequest) => JSONValue
+    name: string;
 
     /**
      * Inserts a Tree objects after the last child of this tree.
      * @param node node - A Tree node to insert after the last child.
      */
-    append: (node: Tree | CustomTree) => void
+    append: (node: Tree | CustomTree) => void;
 
     /**
      * Inserts a Tree objects at a specified index position
      * @param index index - The zero-based index position of the insertion.
      * @param node node - The tree node to insert
      */
-    insert: (index: number, node: Tree | CustomTree) => void
+    insert: (index: number, node: Tree | CustomTree) => void;
 
     /**
      * Removes a Tree node at the specific index position
      * @param index index - The zero-based index position to remove.
      */
-    removeAt: (index: number) => void
+    removeAt: (index: number) => void;
 
     /**
      * Removes a Tree node with the given name
      * @param name name - The name of a node to remove
      */
-    remove: (name: string) => void
+    remove: (name: string) => void;
 }
 
 /**
@@ -111,7 +71,7 @@ export interface CustomTree {
     /**
      * Gets the name of the custom tree node
      */
-    name: string
+    name: string;
 
     /**
      * Tests whether the tree node supports the request.
@@ -130,7 +90,7 @@ export interface CustomTree {
      *   return fake({ type: 'string' })
      * }
      */
-    test: (r: Request) => boolean
+    test: (r: Request) => boolean;
 
     /**
      * Gets a new fake value
@@ -149,35 +109,20 @@ export interface CustomTree {
      *   return fake({ type: 'string' })
      * }
      */
-    fake: (r: Request) => JSONValue
-}
-
-/**
- * Represents a request for a fake value
- */
-export interface FakeRequest {
-    /**
-     * Contains a list of attribute names representing the object graph for which a new value is to be faked
-     */
-    names: string[]
-
-    /**
-     * Describing the structure of JSON data to be faked
-     */
-    schema: JSONSchema
+    fake: (r: Request) => any;
 }
 
 export interface Request {
-    Path: PathElement[]
+    path: PathElement[];
 
-    last: () => PathElement
-    lastName: () => string
-    lastSchema: () => JSONSchema
+    last: () => PathElement;
+    lastName: () => string;
+    lastSchema: () => JSONSchema;
 }
 
 export interface PathElement {
-    name: string
-    schema: JSONSchema
+    name: string;
+    schema: JSONSchema;
 }
 
 /**
@@ -192,111 +137,116 @@ export interface JSONSchema {
     /**
      * Specifies the data type for a schema.
      */
-    type: string | string[]
+    type?: SchemaType | SchemaType[];
 
     /**
      * The enum keyword is used to restrict a value to a fixed set of values.
      */
-    enum: unknown[]
+    enum?: any[];
 
     /**
      * The const keyword is used to restrict a value to a single value.
      */
-    const: unknown
+    const?: any;
 
     /**
      * Contains a list of valid examples.
      */
-    examples: unknown[]
+    examples?: any[];
+
+    /**
+     * Specifies a default value.
+     */
+    default?: any;
 
     // Numbers
     /**
      * Restricts the number to a multiple of the given number
      */
-    multipleOf: number | undefined
+    multipleOf?: number;
 
     /**
      * Restricts the number to a maximum number
      */
-    maximum: number | undefined
+    maximum?: number;
 
     /**
      * Restricts the number to a exclusive maximum number
      */
-    exclusiveMaximum: number | undefined
+    exclusiveMaximum?: number;
 
     /**
      * Restricts the number to a minimum number
      */
-    minimum: number | undefined
+    minimum?: number;
 
     /**
      * Restricts the number to a exclusive minimum number
      */
-    exclusiveMinimum: number | undefined
+    exclusiveMinimum?: number;
 
     // Strings
     /**
      * Restricts the string to a maximum length
      */
-    maxLength: number | undefined
+    maxLength?: number;
 
     /**
      * Restricts the string to a minimum length
      */
-    minLength: number | undefined
+    minLength?: number;
 
     /**
      * The pattern keyword is used to restrict a string to a particular regular expression.
      */
-    pattern: string
+    pattern?: string;
 
     /**
      * The format keyword allows for basic semantic identification of certain kinds of string values that are commonly used.
      */
-    format: string
+    format?: string;
 
     // Arrays
     /**
      * Specifies the schema of the items in the array.
      */
-    items: JSONSchema | undefined
+    items?: JSONSchema;
 
     /**
      * Restricts the array to have a maximum length
      */
-    maxItems: number | undefined
+    maxItems?: number;
 
     /**
      * Restricts the array to have a minimum length
      */
-    minItems: number | undefined
+    minItems?: number;
 
     /**
      * Restricts the array to have unique items
      */
-    uniqueItems: boolean
+    uniqueItems?: boolean;
 
     // Objects
     /**
      * Specifies the properties of an object
      */
-    properties: { [name: string]: JSONSchema }
+    properties?: { [name: string]: JSONSchema };
 
     /**
      * Restricts the object to have a maximum of properties
      */
-    maxProperties: number | undefined
+    maxProperties?: number;
 
     /**
      * Restricts the object to have a minimum of properties
      */
-    minProperties: number | undefined
+    minProperties?: number;
 
     /**
      * Specifies the required properties for an object
      */
-    required: string[] | undefined
+    required?: string[];
 
     /**
      * The additionalProperties keyword is used to control the handling of extra stuff,
@@ -304,43 +254,45 @@ export interface JSONSchema {
      * any of the regular expressions in the patternProperties keyword. By default, any
      * additional properties are allowed.
      */
-    additionalProperties: boolean | JSONSchema | undefined
+    additionalProperties?: boolean | JSONSchema;
 
     /**
      * A value must be valid against all the schemas
      */
-    allOf: JSONSchema[] | undefined
+    allOf?: JSONSchema[];
 
     /**
      * A value must be valid against any the schemas
      */
-    anyOf: JSONSchema[] | undefined
+    anyOf?: JSONSchema[];
 
     /**
      * A value must be valid against exactly one the schemas
      */
-    oneOf: JSONSchema[] | undefined
-
-    isAny: () => boolean
-    isString: () => boolean
-    isInteger: () => boolean
-    isNumber: () => boolean
-    isArray: () => boolean
-    isObject: () => boolean
-    isNullable: () => boolean
-    isDictionary: () => boolean
-    is: (typeName: string) => boolean
+    oneOf?: JSONSchema[];
 }
+
+export type SchemaType = "object" | "array" | "number" | "integer" | "string" | "boolean" | "null";
 
 export interface Schema {
     /** Type of fake value */
-    type?: "object" | "array" | "number" | "integer" | "string" | "boolean";
+    type?: SchemaType | SchemaType[];
 
     /** Serves as a hint at the contents and format of the string.  */
     format?: string;
 
     /** Specifies regular expression that fake must match.  */
     pattern?: string;
+
+    /**
+     * Restricts the string to a minimum length
+     */
+    minLength?: number;
+
+    /**
+     * Restricts the string to a maximum length
+     */
+    maxLength?: number;
 
     /** Describes the type and format of array items. */
     items?: Schema;
@@ -349,7 +301,7 @@ export interface Schema {
     required?: string[];
 
     /** Specify possible value for this schema. */
-    enum?: JSONValue[];
+    enum?: any[];
 
     /** Specifies the minimum range of possible values. */
     minimum?: number;
@@ -358,10 +310,23 @@ export interface Schema {
     maximum?: number;
 
     /** Specifies whether minimum value is exluded. Default is false. */
-    exclusiveMinimum?: boolean;
+    exclusiveMinimum?: number | boolean;
 
     /** ** Specifies whether maximum value is exluded. Default is false. */
-    exclusiveMaximum?: boolean;
+    exclusiveMaximum?: number | boolean;
+
+    /**
+     * Specifies the properties of an object
+     */
+    properties?: { [name: string]: Schema };
+
+    /**
+     * The additionalProperties keyword is used to control the handling of extra stuff,
+     * that is, properties whose names are not listed in the properties keyword or match
+     * any of the regular expressions in the patternProperties keyword. By default, any
+     * additional properties are allowed.
+     */
+    additionalProperties?: boolean | Schema | undefined;
 
     /** Valid against one of the specified schemas. */
     anyOf?: Schema[];

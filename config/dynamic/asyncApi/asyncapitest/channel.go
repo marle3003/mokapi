@@ -2,7 +2,6 @@ package asyncapitest
 
 import (
 	"mokapi/config/dynamic/asyncApi"
-	"mokapi/config/dynamic/asyncApi/kafka"
 )
 
 type ChannelOptions func(c *asyncApi.Channel)
@@ -67,13 +66,13 @@ func WithOperationInfo(id, summary, description string) OperationOptions {
 	}
 }
 
-func WithOperationBinding(b kafka.Operation) OperationOptions {
+func WithOperationBinding(b asyncApi.KafkaOperation) OperationOptions {
 	return func(o *asyncApi.Operation) {
 		o.Bindings.Kafka = b
 	}
 }
 
-func WithChannelKafka(bindings kafka.TopicBindings) ChannelOptions {
+func WithChannelKafka(bindings asyncApi.TopicBindings) ChannelOptions {
 	return func(c *asyncApi.Channel) {
 		c.Bindings.Kafka = bindings
 	}

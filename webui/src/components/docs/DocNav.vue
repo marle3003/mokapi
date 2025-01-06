@@ -5,6 +5,7 @@ import { computed } from 'vue';
 const props = defineProps<{
     levels: string[],
     config: DocConfig,
+    title: string
 }>()
 
 const root = computed(() => <DocEntry>props.config[props.levels[0]])
@@ -56,10 +57,12 @@ function isExpanded(item: DocEntry | string) {
     }
     return item.expanded || false
 }
+
 </script>
 
 <template>
-    <ul class="nav nav-pills root flex-column mb-auto pe-3">
+    <nav>
+    <ul class="nav nav-pills root flex-column mb-auto pe-3" v-if="root && root.items">
         <li class="nav-item" v-for="(level1, k1) of root.items">
 
             <div v-if="hasChildren(level1)" class="chapter">
@@ -99,16 +102,34 @@ function isExpanded(item: DocEntry | string) {
             <router-link v-if="!hasChildren(level1) && showItem(k1, level1)" class="nav-link chapter-text" :to="{ name: 'docs', params: {level2: formatParam(k1)} }">{{ k1 }}</router-link>
         </li>
     </ul>   
+  </nav>
 </template>
 
 <style scoped>
+.page-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  padding-left: 16px;
+  padding-right: 16px;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-bottom: 1.3rem;
+  border-bottom-color: var(--color-background-light);
+  border-bottom-style: solid;
+  border-bottom-width: 1px;
+}
 .nav {
-  font-size: 0.94rem;
+  line-height: 1.6;
+  font-size: 1.1rem;
   font-weight: 500;
 
 }
 .nav.root {
-  padding-top: 2rem;
+  padding-top: 1rem;
+}
+
+.sidebar.open .nav.root {
+  padding-top: 0.6rem;;
 }
 
 .nav-item {
@@ -118,10 +139,10 @@ function isExpanded(item: DocEntry | string) {
 .nav .nav-link {
   padding: 0;
   padding-top: 4px;
-
+  font-size: 0.93rem;
 }
 
-@media only screen and (max-width: 600px)  {
+@media only screen and (max-width: 768px)  {
   .nav {
     font-size: 1.7rem;
   }

@@ -27,6 +27,7 @@ const (
 	TopicAlreadyExists      ErrorCode = 36
 	GroupIdNotFound         ErrorCode = 69
 	MemberIdRequired        ErrorCode = 79
+	InvalidRecord           ErrorCode = 87
 )
 
 var (

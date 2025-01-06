@@ -13,6 +13,8 @@ import (
 	"mokapi/config/dynamic/mail"
 	"mokapi/config/static"
 	"mokapi/engine"
+	"mokapi/feature"
+	"mokapi/providers/asyncapi3"
 	"mokapi/providers/openapi"
 	"mokapi/providers/swagger"
 	"mokapi/runtime"
@@ -32,15 +34,26 @@ const logo = "888b     d888          888             d8888          d8b \n8888b 
 
 func main() {
 	versionString := version.BuildVersion
-	fmt.Printf(logo, version.BuildVersion, strings.Repeat(" ", 17-len(versionString)))
 
 	cfg := static.NewConfig()
-	configDecoders := []decoders.ConfigDecoder{decoders.NewDefaultFileDecoder(), &decoders.FlagDecoder{}}
+	configDecoders := []decoders.ConfigDecoder{decoders.NewDefaultFileDecoder(), decoders.NewFlagDecoder()}
 	err := decoders.Load(configDecoders, cfg)
 	if err != nil {
 		log.Errorf("load config failed: %v", err)
 		return
 	}
+
+	if cfg.Help {
+		printHelp()
+		return
+	} else if cfg.GenerateSkeleton != nil {
+		writeSkeleton(cfg)
+		return
+	}
+
+	feature.Enable(cfg.Features)
+
+	fmt.Printf(logo, version.BuildVersion, strings.Repeat(" ", 17-len(versionString)))
 
 	if len(cfg.Services) > 0 {
 		fmt.Println("static configuration Services are no longer supported. Use patching instead.")
@@ -83,7 +96,7 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 	app := runtime.New()
 
 	watcher := server.NewConfigWatcher(cfg)
-	scriptEngine := engine.New(watcher, app, cfg.Js, true)
+	scriptEngine := engine.New(watcher, app, cfg, true)
 	certStore, err := cert.NewStore(cfg)
 	if err != nil {
 		return nil, err
@@ -136,9 +149,22 @@ func configureLogging(cfg *static.Config) {
 }
 
 func registerDynamicTypes() {
-	dynamic.Register("openapi", &openapi.Config{})
-	dynamic.Register("asyncapi", &asyncApi.Config{})
-	dynamic.Register("swagger", &swagger.Config{})
-	dynamic.Register("ldap", &directory.Config{})
-	dynamic.Register("smtp", &mail.Config{})
+	dynamic.Register("openapi", func(v version.Version) bool {
+		return true
+	}, &openapi.Config{})
+	dynamic.Register("asyncapi", func(v version.Version) bool {
+		return v.Major == 2
+	}, &asyncApi.Config{})
+	dynamic.Register("asyncapi", func(v version.Version) bool {
+		return v.Major == 3
+	}, &asyncapi3.Config{})
+	dynamic.Register("swagger", func(v version.Version) bool {
+		return true
+	}, &swagger.Config{})
+	dynamic.Register("ldap", func(v version.Version) bool {
+		return true
+	}, &directory.Config{})
+	dynamic.Register("smtp", func(v version.Version) bool {
+		return true
+	}, &mail.Config{})
 }

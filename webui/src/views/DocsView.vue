@@ -37,6 +37,7 @@ if (typeof file === 'string'){
   }
 }
 
+const title = ref<string>('')
 onMounted(() => {
   setTimeout(() => {
     for (var pre of document.querySelectorAll('pre')) {
@@ -57,8 +58,8 @@ onMounted(() => {
       }
     }
   })
-  const title = (metadata.title || levels[3] || levels[2] || levels[1] || levels[0]) + ' | Mokapi ' + levels[0]
-  useMeta(title, metadata.description, getCanonicalUrl(levels))
+  title.value = (metadata.title || levels[3] || levels[2] || levels[1] || levels[0]) + ' | Mokapi ' + levels[0]
+  useMeta(title.value, metadata.description, getCanonicalUrl(levels))
   dialog.value = new Modal('#imageDialog', {})
 })
 function toggleSidebar() {
@@ -75,7 +76,7 @@ function getCanonicalUrl(levels: string[]) {
   return canonical.toLowerCase()
 }
 function showImage(target: EventTarget | null) {
-  if (!target || !(target instanceof HTMLImageElement)) {
+  if (hasTouchSupport() || !target || !(target instanceof HTMLImageElement)) {
     return
   }
   const element = target as HTMLImageElement
@@ -83,21 +84,26 @@ function showImage(target: EventTarget | null) {
   imageDescription.value = element.title
   dialog.value?.show()
 }
+function hasTouchSupport() {
+  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+}
 </script>
 
 <template>
   <main class="d-flex">
     <div style="width: 100%; height: 100%;display: flex;flex-direction: column;">
-      <div class="subheader d-block d-md-none">
-        <button @click="toggleSidebar" id="sidebarToggler">
-          <i class="bi bi-list"></i> Menu
+      <div class="subheader d-flex d-md-none">
+        <button @click="toggleSidebar" id="sidebarToggler" :class="openSidebar ? '' : 'collapsed'">
+          <i class="bi bi-list"></i> 
+          <i class="bi bi-x"></i>       
         </button>
+        <span class="ms-2">{{ levels[3] || levels[2] || levels[1] || levels[0] }}</span>
       </div>
       <div class="d-flex">
         <div class="text-white sidebar d-none d-md-block" :class="openSidebar ? 'open' : ''" id="sidebar">
-          <DocNav :config="nav" :levels="levels"/>
+          <DocNav :config="nav" :levels="levels" :title="levels[3] || levels[2] || levels[1] || levels[0]"/>
         </div>
-        <div style="flex: 1;max-width:700px;margin-bottom: 3rem;">
+        <div style="flex: 1;max-width:760px;margin-bottom: 3rem;">
           <div v-if="content" v-html="content" class="content" @click="showImage($event.target)"></div>
           <div v-else-if="component" class="content"><component :is="component" /></div>
           <page-not-found v-else />
@@ -131,51 +137,73 @@ function showImage(target: EventTarget | null) {
   display: flex;
   border-bottom: 1px solid;
   border-top: 1px solid;
-  border-color: var(--color-datatable-border)
+  border-color: var(--color-datatable-border);
+  align-items: center;
+  font-weight: 700;
 }
 .subheader button {
   background-color: var(--color-background);
   border: 0;
   color: var(--color-text);
   font-size: 1.3rem;
+  opacity: 0.8;
+}
+.subheader button:not(.collapsed) .bi-list {
+  display: none;
+}
+.subheader button.collapsed .bi-x {
+  display: none;
+}
+.subheader span {
+  opacity: 0.8;
 }
 .sidebar {
   position: sticky;
   top: 4rem;
   align-self: flex-start;
-  width: 340px;
+  width: 270px;
   padding-top: 2rem;
 }
-.sidebar.open{
-  background-color: var(--color-background-mute);
+.sidebar.open {
+  background-color: var(--color-background);
   z-index: 100;
   display: block !important;
   position:fixed;
-  top: 0;
+  top: 102px;
   left: 0;
-  bottom: 0;
-  box-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.05), 0 0.25rem 0.5rem rgba(0, 0, 0, 0.05);
-  padding-top: 1.5rem;
+  width: 100%;
+  height: 100%;
+  padding-top: 0;
   overflow-y: scroll;
-}
-.sidebar.open .nav-pills .nav-link.active, .sidebar.show  .nav-pills .show > .nav-link {
-  background-color: var(--color-background-mute);
 }
 .content {
   margin-left: 1.2rem;
   margin-right: 1.2rem;
   padding-top: 2rem;
+  line-height: 1.6;
+  font-size: 1.1rem;
 }
 
 .content h1 {
   margin-bottom: 2.5rem;
+  margin-top: 1rem;
 }
 
 .content h2 {
   margin-bottom: 1.5rem;
 }
 
+.content h2 > * {
+  vertical-align: middle;display: inline-block;
+  padding-right: 5px;
+}
+
+.content h2 > svg path {
+  fill: var(--color-link);
+}
+
 .content h3 {
+  margin-top: 2.5rem;
   margin-bottom: 1rem;
 }
 
@@ -234,7 +262,7 @@ table.selectable tbody tr:hover {
 }
 
 pre {
-  max-width: 700px;
+  max-width: 760px;
   margin: 0 auto auto;
   margin-bottom: 1rem;
   white-space: pre-wrap;
@@ -243,8 +271,13 @@ pre {
 }
 @media only screen and (max-width: 600px)  {
   pre {
-    max-width: none !important;
+    max-width: 350px !important;
   }
+}
+
+.content ul li h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
 }
 
 .code-tabs {
@@ -262,7 +295,7 @@ pre {
   border-left-width: 0.2rem ;
   border-left-style: solid;
   border-radius: 0.2rem;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   box-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.2), 0 0.25rem 0.5rem rgba(0, 0, 0, 0.2);
 }
 .box.no-title {
@@ -317,14 +350,14 @@ pre {
 }
 
 blockquote {
-  width:100%;
-  margin:50px auto;
-  font-family:Open Sans;
-  font-style:italic;
-  padding:1.2em 30px 1.2em 70px;
-  line-height:1.6;
+  width: 100%;
+  margin: 50px auto;
+  font-family: Open Sans;
+  font-style: italic;
+  padding: 1.2em 30px 1.2em 70px;
+  line-height: 1.6;
   font-size: 1.2rem;
-  border-left:8px solid #eabaabff;
+  border-left: 8px solid #eabaabff;
   position: relative;
   background: var(--color-background-soft);
 }
@@ -344,5 +377,24 @@ blockquote span{
   font-style: normal;
   font-weight: bold;
   margin-top:1em;
+}
+
+.content a.card {
+  background-color: var(--color-tabs-background);
+  color: var(--color-text);
+  border-color: var(--color-tabs-border);
+  cursor: pointer;
+  border-radius: 10px;
+}
+.content a.card:hover {
+  border-color: var(--color-background-mute);
+  box-shadow: 0 2px 5px rgba(82,85,93,.7);
+}
+.content a.card .card-title {
+  font-weight: 500;
+}
+.content a.card .card-text {
+  font-weight: 400;
+  font-size: 1rem;
 }
 </style>

@@ -8,7 +8,7 @@ export interface Response {
     close: () => void
     refs: number
     refresh: () => void
-    header: Headers
+    header?: Headers
 }
 
 const cache: { [name: string]: Response } = {}
@@ -24,7 +24,6 @@ export function useFetch(path: string, options?: RequestInit, doRefresh: boolean
         close: () => {},
         refs: 1,
         refresh: doFetch,
-        header: {}
     })
 
     if (cache[path]) {

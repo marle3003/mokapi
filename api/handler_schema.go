@@ -5,97 +5,24 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"mokapi/json/generator"
 	"mokapi/media"
 	"mokapi/providers/openapi/schema"
-	"mokapi/sortedmap"
+	avro "mokapi/schema/avro/schema"
+	"mokapi/schema/encoding"
+	"mokapi/schema/json/generator"
+	jsonSchema "mokapi/schema/json/schema"
 	"net/http"
 )
 
-type Properties struct {
-	sortedmap.LinkedHashMap[string, *schemaInfo]
-}
-
-func (p *Properties) UnmarshalJSON(b []byte) error {
-	dec := json.NewDecoder(bytes.NewReader(b))
-	token, err := dec.Token()
-	if err != nil {
-		return err
-	}
-	if delim, ok := token.(json.Delim); ok && delim != '{' {
-		return fmt.Errorf("unexpected token %s; expected '{'", token)
-	}
-	for {
-		token, err = dec.Token()
-		if err != nil {
-			return err
-		}
-		if delim, ok := token.(json.Delim); ok && delim == '}' {
-			return nil
-		}
-		key := token.(string)
-		s := &schemaInfo{}
-		err = dec.Decode(&s)
-		if err != nil {
-			return err
-		}
-		p.Set(key, s)
-	}
-}
-
 type schemaInfo struct {
-	Description string `json:"description,omitempty"`
-	Ref         string `json:"ref,omitempty"`
-
-	Type       string        `json:"type"`
-	AnyOf      []*schemaInfo `json:"anyOf,omitempty"`
-	AllOf      []*schemaInfo `json:"allOf,omitempty"`
-	OneOf      []*schemaInfo `json:"oneOf,omitempty"`
-	Deprecated bool          `json:"deprecated,omitempty"`
-	Example    interface{}   `json:"example,omitempty"`
-	Enum       []interface{} `json:"enum,omitempty"`
-	Xml        *xml          `json:"xml,omitempty"`
-	Format     string        `json:"format,omitempty"`
-	Nullable   bool          `json:"nullable,omitempty"`
-
-	Pattern   string `json:"pattern,omitempty"`
-	MinLength *int   `yaml:"minLength" json:"minLength,omitempty"`
-	MaxLength *int   `yaml:"maxLength" json:"maxLength,omitempty"`
-
-	Minimum          *float64 `json:"minimum,omitempty"`
-	Maximum          *float64 `json:"maximum,omitempty"`
-	ExclusiveMinimum *bool    `json:"exclusiveMinimum,omitempty"`
-	ExclusiveMaximum *bool    `json:"exclusiveMaximum,omitempty"`
-
-	Items        *schemaInfo `json:"items,omitempty"`
-	UniqueItems  bool        `json:"uniqueItems,omitempty"`
-	MinItems     *int        `json:"minItems,omitempty"`
-	MaxItems     *int        `json:"maxItems,omitempty"`
-	ShuffleItems bool        `json:"shuffleItems,omitempty"`
-
-	Properties           *Properties `json:"properties,omitempty"`
-	Required             []string    `json:"required,omitempty"`
-	AdditionalProperties interface{} `json:"additionalProperties,omitempty"`
-	MinProperties        *int        `json:"minProperties,omitempty"`
-	MaxProperties        *int        `json:"maxProperties,omitempty"`
-}
-
-type xml struct {
-	Wrapped   bool   `json:"wrapped,omitempty"`
-	Name      string `json:"name,omitempty"`
-	Attribute bool   `json:"attribute,omitempty"`
-	Prefix    string `json:"prefix,omitempty"`
-	Namespace string `json:"namespace,omitempty"`
-}
-
-type additionalProperties struct {
-	Schema    *schemaInfo `json:"schema,omitempty"`
-	Forbidden bool        `json:"forbidden,omitempty"`
+	Format string      `json:"format,omitempty"`
+	Schema interface{} `json:"schema,omitempty"`
 }
 
 type requestExample struct {
 	Name   string      `json:"name,omitempty"`
-	Schema *schemaInfo `json:"schema,omitempty"`
+	Format string      `json:"format"`
+	Schema interface{} `json:"schema"`
 }
 
 func (h *handler) getExampleData(w http.ResponseWriter, r *http.Request) {
@@ -107,12 +34,6 @@ func (h *handler) getExampleData(w http.ResponseWriter, r *http.Request) {
 	if ct.IsAny() {
 		ct = media.ParseContentType("application/json")
 	}
-	if ct.Subtype != "json" && ct.Subtype != "xml" {
-		http.Error(w, fmt.Sprintf("Content type %v not supported. Only json or xml are supported", ct), http.StatusBadRequest)
-		return
-	}
-
-	w.Header().Set("Content-Type", ct.String())
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -126,197 +47,198 @@ func (h *handler) getExampleData(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	if re.Format == "" {
+		re.Format = "application/schema+json;version=2020-12"
+	}
 
-	s := toSchema(re.Schema)
-	data, err := generator.New(&generator.Request{
-		Path: generator.Path{
-			&generator.PathElement{Name: re.Name, Schema: schema.ConvertToJsonSchema(&schema.Ref{Value: s})},
-		},
-	})
-	//data, err := schema.CreateValue(&schema.Ref{Value: s})
+	switch {
+	case ct.Subtype == "json":
+		break
+	case ct.Subtype == "xml":
+		break
+	case ct.Key() == "text/plain":
+		break
+	case ct.Key() == "avro/binary" && isAvro(re.Format):
+		break
+	case ct.Key() == "application/octet-stream" && isAvro(re.Format):
+		break
+	default:
+		http.Error(w, fmt.Sprintf("Content type %s with schema format %s is not supported", ct, re.Format), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", ct.String())
+
+	var data []byte
+	switch s := re.Schema.(type) {
+	case *schema.Ref:
+		data, err = getRandomByOpenApi(re.Name, s, ct)
+	case *avro.Schema:
+		data, err = getRandomByJson(re.Name, &jsonSchema.Ref{Value: s.Convert()}, ct)
+	default:
+		data, err = getRandomByJson(re.Name, s.(*jsonSchema.Ref), ct)
+	}
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	b, err := s.Marshal(data, ct)
-	if err != nil {
-		writeError(w, fmt.Errorf("failed request %v: %w", r.URL.String(), err), http.StatusInternalServerError)
-	}
-	_, err = w.Write(b)
+	_, err = w.Write(data)
 	if err != nil {
 		writeError(w, err, http.StatusInternalServerError)
 	}
 }
 
-func getSchema(s *schema.Ref) *schemaInfo {
-	converter := &schemaConverter{map[string]*schemaInfo{}}
-	return converter.getSchema(s)
+func getRandomByOpenApi(name string, r *schema.Ref, ct media.ContentType) ([]byte, error) {
+	j := schema.ConvertToJsonSchema(r)
+	data, err := generator.New(&generator.Request{
+		Path: generator.Path{
+			&generator.PathElement{Name: name, Schema: j},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return r.Marshal(data, ct)
 }
 
-type schemaConverter struct {
-	schemas map[string]*schemaInfo
+func getRandomByJson(name string, r *jsonSchema.Ref, ct media.ContentType) ([]byte, error) {
+	data, err := generator.New(&generator.Request{
+		Path: generator.Path{
+			&generator.PathElement{Name: name, Schema: r},
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return encoding.NewEncoder(r).Write(data, ct)
 }
 
-func (c *schemaConverter) getSchema(s *schema.Ref) *schemaInfo {
-	if s == nil || s.Value == nil {
-		return nil
+func (s *schemaInfo) UnmarshalJSON(data []byte) error {
+	d := json.NewDecoder(bytes.NewReader(data))
+	t, err := d.Token()
+	if err != nil {
+		return err
+	}
+	if delim, ok := t.(json.Delim); ok && delim != '{' {
+		return fmt.Errorf("unexpected token %s; expected '{'", t)
 	}
 
-	// loop protection, only return reference
-	if _, ok := c.schemas[s.Ref]; ok {
-		return &schemaInfo{Ref: s.Ref}
-	}
-	defer func() {
-		delete(c.schemas, s.Ref)
-	}()
+	var raw json.RawMessage
+	for {
+		t, err = d.Token()
+		if err != nil {
+			return err
+		}
 
-	result := &schemaInfo{
-		Description: s.Value.Description,
-		Ref:         s.Ref,
+		if delim, ok := t.(json.Delim); ok && delim == '}' {
+			break
+		}
 
-		Type:     s.Value.Type,
-		Example:  s.Value.Example,
-		Enum:     s.Value.Enum,
-		Format:   s.Value.Format,
-		Nullable: s.Value.Nullable,
-
-		Pattern:   s.Value.Pattern,
-		MinLength: s.Value.MinLength,
-		MaxLength: s.Value.MaxLength,
-
-		Minimum:          s.Value.Minimum,
-		Maximum:          s.Value.Maximum,
-		ExclusiveMinimum: s.Value.ExclusiveMinimum,
-		ExclusiveMaximum: s.Value.ExclusiveMaximum,
-
-		UniqueItems:  s.Value.UniqueItems,
-		MinItems:     s.Value.MinItems,
-		MaxItems:     s.Value.MaxItems,
-		ShuffleItems: s.Value.ShuffleItems,
-
-		Required:      s.Value.Required,
-		MinProperties: s.Value.MinProperties,
-		MaxProperties: s.Value.MaxProperties,
-	}
-
-	if len(s.Ref) > 0 {
-		c.schemas[s.Ref] = result
-	}
-
-	result.Items = c.getSchema(s.Value.Items)
-
-	if s.Value.Properties != nil {
-		result.Properties = &Properties{}
-		for it := s.Value.Properties.Iter(); it.Next(); {
-			key := it.Key()
-			_ = key
-			prop := c.getSchema(it.Value())
-			if prop == nil {
-				continue
+		switch t.(string) {
+		case "format":
+			t, err = d.Token()
+			if err != nil {
+				return err
 			}
-			result.Properties.Set(it.Key(), prop)
+			s.Format = t.(string)
+		case "schema":
+			err = d.Decode(&raw)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
-	if s.Value.Xml != nil {
-		result.Xml = &xml{
-			Wrapped:   s.Value.Xml.Wrapped,
-			Name:      s.Value.Xml.Name,
-			Attribute: s.Value.Xml.Attribute,
-			Prefix:    s.Value.Xml.Prefix,
-			Namespace: s.Value.Xml.Namespace,
-		}
-	}
+	s.Schema, err = unmarshal(raw, s.Format)
 
-	for _, any := range s.Value.AnyOf {
-		result.AnyOf = append(result.AnyOf, c.getSchema(any))
-	}
-	for _, all := range s.Value.AllOf {
-		result.AllOf = append(result.AnyOf, c.getSchema(all))
-	}
-	for _, one := range s.Value.OneOf {
-		result.OneOf = append(result.AnyOf, c.getSchema(one))
-	}
-
-	if s.Value.AdditionalProperties != nil {
-		if s.Value.AdditionalProperties.Forbidden {
-			result.AdditionalProperties = !s.Value.AdditionalProperties.Forbidden
-		} else if s.Value.AdditionalProperties.Ref != nil {
-			result.AdditionalProperties = getSchema(s.Value.AdditionalProperties.Ref)
-		}
-	}
-
-	return result
+	return nil
 }
 
-func toSchema(s *schemaInfo) *schema.Schema {
-	if s == nil {
-		return nil
+func (r *requestExample) UnmarshalJSON(data []byte) error {
+	d := json.NewDecoder(bytes.NewReader(data))
+	t, err := d.Token()
+	if err != nil {
+		return err
 	}
-	result := &schema.Schema{
-		Description: s.Description,
-
-		Type:       s.Type,
-		Deprecated: s.Deprecated,
-		Example:    s.Example,
-		Enum:       s.Enum,
-		Format:     s.Format,
-		Nullable:   s.Nullable,
-
-		Pattern:   s.Pattern,
-		MinLength: s.MinLength,
-		MaxLength: s.MaxLength,
-
-		Minimum:          s.Minimum,
-		Maximum:          s.Maximum,
-		ExclusiveMinimum: s.ExclusiveMinimum,
-		ExclusiveMaximum: s.ExclusiveMaximum,
-
-		UniqueItems:  s.UniqueItems,
-		MinItems:     s.MinItems,
-		MaxItems:     s.MaxItems,
-		ShuffleItems: s.ShuffleItems,
-
-		Required:      s.Required,
-		MinProperties: s.MinProperties,
-		MaxProperties: s.MaxProperties,
+	if delim, ok := t.(json.Delim); ok && delim != '{' {
+		return fmt.Errorf("unexpected token %s; expected '{'", t)
 	}
-	if s.Properties != nil && s.Properties.Len() > 0 {
-		result.Properties = &schema.Schemas{}
-		for it := s.Properties.Iter(); it.Next(); {
-			result.Properties.Set(it.Key(), &schema.Ref{Value: toSchema(it.Value())})
+
+	var raw json.RawMessage
+	for {
+		t, err = d.Token()
+		if err != nil {
+			return err
 		}
-	}
-	if s.Items != nil {
-		result.Items = &schema.Ref{Value: toSchema(s.Items)}
-	}
-	if s.Xml != nil {
-		result.Xml = &schema.Xml{
-			Wrapped:   s.Xml.Wrapped,
-			Name:      s.Xml.Name,
-			Attribute: s.Xml.Attribute,
-			Prefix:    s.Xml.Prefix,
-			Namespace: s.Xml.Namespace,
-		}
-	}
-	for _, any := range s.AnyOf {
-		result.AnyOf = append(result.AnyOf, &schema.Ref{Value: toSchema(any)})
-	}
-	for _, all := range s.AllOf {
-		result.AllOf = append(result.AllOf, &schema.Ref{Value: toSchema(all)})
-	}
-	for _, one := range s.OneOf {
-		result.OneOf = append(result.OneOf, &schema.Ref{Value: toSchema(one)})
-	}
 
-	if s.AdditionalProperties != nil {
-		if b, ok := s.AdditionalProperties.(bool); ok {
-			result.AdditionalProperties = &schema.AdditionalProperties{Forbidden: !b}
-		} else if additional, ok := s.AdditionalProperties.(*schemaInfo); ok {
-			result.AdditionalProperties.Ref = &schema.Ref{Value: toSchema(additional)}
+		if delim, ok := t.(json.Delim); ok && delim == '}' {
+			break
+		}
+
+		switch t.(string) {
+		case "name":
+			t, err = d.Token()
+			if err != nil {
+				return err
+			}
+			r.Name = t.(string)
+		case "format":
+			t, err = d.Token()
+			if err != nil {
+				return err
+			}
+			r.Format = t.(string)
+		case "schema":
+			err = d.Decode(&raw)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
-	return result
+	r.Schema, err = unmarshal(raw, r.Format)
+
+	return err
+}
+
+func unmarshal(raw json.RawMessage, format string) (interface{}, error) {
+	if raw != nil {
+		switch {
+		case isOpenApi(format):
+			var r *schema.Ref
+			err := json.Unmarshal(raw, &r)
+			return r, err
+		case isAvro(format):
+			var a *avro.Schema
+			err := json.Unmarshal(raw, &a)
+			return a, err
+		default:
+			var r *jsonSchema.Ref
+			err := json.Unmarshal(raw, &r)
+			return r, err
+		}
+	}
+	return nil, nil
+}
+
+func isAvro(format string) bool {
+	switch format {
+	case "application/vnd.apache.avro;version=1.9.0",
+		"application/vnd.apache.avro+json;version=1.9.0":
+		return true
+	default:
+		return false
+	}
+}
+
+func isOpenApi(format string) bool {
+	switch format {
+	case "application/vnd.oai.openapi+json;version=3.0.0",
+		"application/vnd.oai.openapi;version=3.0.0":
+		return true
+	default:
+		return false
+	}
 }

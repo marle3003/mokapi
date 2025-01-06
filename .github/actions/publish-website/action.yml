@@ -10,6 +10,9 @@ inputs:
   server:
     required: true
     description: ftp server
+  token:
+    required: true
+    description: GITHUB Token
 runs:
   using: "composite"
   steps:
@@ -17,10 +20,17 @@ runs:
       with:
         node-version: 20
         registry-url: 'https://registry.npmjs.org'
+    - id: release
+      uses: pozetroninc/github-action-get-latest-release@master
+      with:
+        repository: marle3003/mokapi
+        excludes: prerelease, draft
+        token: ${{ inputs.token }}
     - name: build website
       working-directory: ./webui
       run: |
         npm install
+        npm version ${{ steps.release.outputs.release }}
         npm run copy-docs
         npm run build-sitemap
         npm run build-website

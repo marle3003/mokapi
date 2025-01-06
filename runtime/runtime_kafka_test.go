@@ -1,14 +1,15 @@
-package runtime
+package runtime_test
 
 import (
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/asyncApi"
-	"mokapi/config/dynamic/asyncApi/asyncapitest"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/produce"
+	"mokapi/providers/asyncapi3"
+	"mokapi/providers/asyncapi3/asyncapi3test"
+	"mokapi/runtime"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"net/url"
@@ -19,12 +20,12 @@ import (
 func TestApp_AddKafka(t *testing.T) {
 	testcases := []struct {
 		name string
-		test func(t *testing.T, app *App)
+		test func(t *testing.T, app *runtime.App)
 	}{
 		{
 			name: "event store available",
-			test: func(t *testing.T, app *App) {
-				c := asyncapitest.NewConfig(asyncapitest.WithInfo("foo", "", ""))
+			test: func(t *testing.T, app *runtime.App) {
+				c := asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""))
 				app.AddKafka(getConfig("foo.bar", c), enginetest.NewEngine())
 
 				require.Contains(t, app.Kafka, "foo")
@@ -34,8 +35,8 @@ func TestApp_AddKafka(t *testing.T) {
 		},
 		{
 			name: "event store for topic available",
-			test: func(t *testing.T, app *App) {
-				c := asyncapitest.NewConfig(asyncapitest.WithInfo("foo", "", ""), asyncapitest.WithChannel("bar"))
+			test: func(t *testing.T, app *runtime.App) {
+				c := asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""), asyncapi3test.WithChannel("bar"))
 				app.AddKafka(getConfig("foo.bar", c), enginetest.NewEngine())
 
 				require.Contains(t, app.Kafka, "foo")
@@ -45,10 +46,11 @@ func TestApp_AddKafka(t *testing.T) {
 		},
 		{
 			name: "",
-			test: func(t *testing.T, app *App) {
-				c := asyncapitest.NewConfig(asyncapitest.WithInfo("foo", "", ""),
-					asyncapitest.WithChannel("bar"))
-				info := app.AddKafka(getConfig("foo.bar", c), enginetest.NewEngine())
+			test: func(t *testing.T, app *runtime.App) {
+				c := asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""),
+					asyncapi3test.WithChannel("bar"))
+				info, err := app.AddKafka(getConfig("foo.bar", c), enginetest.NewEngine())
+				require.NoError(t, err)
 				m := monitor.NewKafka()
 				h := info.Handler(m)
 
@@ -62,10 +64,11 @@ func TestApp_AddKafka(t *testing.T) {
 		},
 		{
 			name: "retrieve configs",
-			test: func(t *testing.T, app *App) {
-				c := asyncapitest.NewConfig(asyncapitest.WithInfo("foo", "", ""),
-					asyncapitest.WithChannel("bar"))
-				info := app.AddKafka(getConfig("foo.bar", c), enginetest.NewEngine())
+			test: func(t *testing.T, app *runtime.App) {
+				c := asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""),
+					asyncapi3test.WithChannel("bar"))
+				info, err := app.AddKafka(getConfig("foo.bar", c), enginetest.NewEngine())
+				require.NoError(t, err)
 
 				configs := info.Configs()
 				require.Len(t, configs, 1)
@@ -78,7 +81,7 @@ func TestApp_AddKafka(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			defer events.Reset()
 
-			app := New()
+			app := runtime.New()
 			tc.test(t, app)
 		})
 	}
@@ -88,15 +91,15 @@ func TestApp_AddKafka_Patching(t *testing.T) {
 	testcases := []struct {
 		name    string
 		configs []*dynamic.Config
-		test    func(t *testing.T, app *App)
+		test    func(t *testing.T, app *runtime.App)
 	}{
 		{
 			name: "overwrite value",
 			configs: []*dynamic.Config{
-				getConfig("https://mokapi.io/a", asyncapitest.NewConfig(asyncapitest.WithInfo("foo", "foo", ""))),
-				getConfig("https://mokapi.io/b", asyncapitest.NewConfig(asyncapitest.WithInfo("foo", "bar", ""))),
+				getConfig("https://mokapi.io/a", asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "foo", ""))),
+				getConfig("https://mokapi.io/b", asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "bar", ""))),
 			},
-			test: func(t *testing.T, app *App) {
+			test: func(t *testing.T, app *runtime.App) {
 				info := app.Kafka["foo"]
 				require.Equal(t, "bar", info.Info.Description)
 				configs := info.Configs()
@@ -106,10 +109,10 @@ func TestApp_AddKafka_Patching(t *testing.T) {
 		{
 			name: "a is patched with b",
 			configs: []*dynamic.Config{
-				getConfig("https://mokapi.io/b", asyncapitest.NewConfig(asyncapitest.WithInfo("foo", "foo", ""))),
-				getConfig("https://mokapi.io/a", asyncapitest.NewConfig(asyncapitest.WithInfo("foo", "bar", ""))),
+				getConfig("https://mokapi.io/b", asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "foo", ""))),
+				getConfig("https://mokapi.io/a", asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "bar", ""))),
 			},
-			test: func(t *testing.T, app *App) {
+			test: func(t *testing.T, app *runtime.App) {
 				info := app.Kafka["foo"]
 				require.Equal(t, "foo", info.Info.Description)
 			},
@@ -117,10 +120,10 @@ func TestApp_AddKafka_Patching(t *testing.T) {
 		{
 			name: "order only by filename",
 			configs: []*dynamic.Config{
-				getConfig("https://a.io/b", asyncapitest.NewConfig(asyncapitest.WithInfo("foo", "foo", ""))),
-				getConfig("https://mokapi.io/a", asyncapitest.NewConfig(asyncapitest.WithInfo("foo", "bar", ""))),
+				getConfig("https://a.io/b", asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "foo", ""))),
+				getConfig("https://mokapi.io/a", asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "bar", ""))),
 			},
-			test: func(t *testing.T, app *App) {
+			test: func(t *testing.T, app *runtime.App) {
 				info := app.Kafka["foo"]
 				require.Equal(t, "foo", info.Info.Description)
 			},
@@ -129,7 +132,7 @@ func TestApp_AddKafka_Patching(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app := New()
+			app := runtime.New()
 			for _, c := range tc.configs {
 				app.AddKafka(c, enginetest.NewEngine())
 			}
@@ -139,11 +142,11 @@ func TestApp_AddKafka_Patching(t *testing.T) {
 }
 
 func TestIsKafkaConfig(t *testing.T) {
-	require.True(t, IsKafkaConfig(&dynamic.Config{Data: asyncapitest.NewConfig()}))
-	require.False(t, IsKafkaConfig(&dynamic.Config{Data: "foo"}))
+	require.True(t, runtime.IsKafkaConfig(&dynamic.Config{Data: asyncapi3test.NewConfig()}))
+	require.False(t, runtime.IsKafkaConfig(&dynamic.Config{Data: "foo"}))
 }
 
-func getConfig(name string, c *asyncApi.Config) *dynamic.Config {
+func getConfig(name string, c *asyncapi3.Config) *dynamic.Config {
 	u, _ := url.Parse(name)
 	cfg := &dynamic.Config{Data: c}
 	cfg.Info.Url = u
@@ -157,7 +160,7 @@ func newProduceMessage(topic string) *kafka.Request {
 				Name: topic, Partitions: []produce.RequestPartition{
 					{
 						Record: kafka.RecordBatch{
-							Records: []kafka.Record{
+							Records: []*kafka.Record{
 								{
 									Offset:  0,
 									Time:    time.Now(),

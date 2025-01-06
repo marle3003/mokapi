@@ -4,9 +4,9 @@ import Footer from '@/components/Footer.vue'
 import { ref, onMounted } from 'vue'
 import { Modal } from 'bootstrap'
 
-const description = `Mock tool for Agile, DevOps and Continuous Deployment teams. Mock your REST API, Apache Kafka, SMTP or LDAP interfaces and control everything.`
+const description = `Mokapi is a developer-friendly open-source API mocking tool that allows you to prototype, test, and demonstrate APIs using realistic data, scenarios.`
 
-useMeta('API Mocking and Testing | mokapi.io', description, 'https://mokapi.io')
+useMeta('Easy and flexible API Mock Tool | mokapi.io', description, 'https://mokapi.io')
 
 const dialog = ref<Modal>()
 const imageUrl = ref<string>()
@@ -17,13 +17,16 @@ onMounted(() => {
 })
 
 function showImage(target: EventTarget | null) {
-  if (!target) {
+  if (hasTouchSupport() || !target) {
     return
   }
   const element = target as HTMLImageElement
   imageUrl.value = element.src
   imageDescription.value = element.alt
   dialog.value?.show()
+}
+function hasTouchSupport() {
+  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 }
 </script>
 
@@ -33,16 +36,17 @@ function showImage(target: EventTarget | null) {
       <div class="container">
         <div class="row hero-title justify-content-center">
           <div class="col-12 col-lg-6 px-0">
-            <div class="mb-lg-2">
+            
+            <h1>The Ultimate API Mock Tool for Agile Development</h1>
+            <div class="mb-3">
               <span class="badge">HTTP</span>
               <span class="badge">Kafka</span>
               <span class="badge">LDAP</span>
               <span class="badge">SMTP</span>
             </div>
-            <h1>Easy and flexible API mocking</h1>
-            <p class="description">Mock your APIs in Seconds - No registration, <b>free</b> and <b>open-source</b></p>
+            <p class="description">Mock your APIs in Seconds - No registration, no data in the cloud, <b>free</b> and <b>open-source</b></p>
             <p class="d-none d-md-block">
-              <router-link :to="{ path: '/docs/Guides' }">
+              <router-link :to="{ path: '/docs/guides' }">
                 <button type="button" class="btn btn-outline-primary">Guides</button>
               </router-link>
               <router-link :to="{ path: '/docs/examples' }">
@@ -51,11 +55,11 @@ function showImage(target: EventTarget | null) {
             </p>
           </div>
           <div class="col-12 col-lg-5">
-            <img src="/logo.svg" alt="mokapi" class="mx-auto d-block" />
+            <img src="/logo.svg" alt="Mokapi API Mock Tool" class="mx-auto d-block" />
           </div>
           <div class="col-12 d-block d-md-none">
             <p style="margin-top: 2rem;">
-                <router-link :to="{ path: '/docs/Guides' }">
+                <router-link :to="{ path: '/docs/guides' }">
                   <button type="button" class="btn btn-outline-primary">Guides</button>
                 </router-link>
                 <router-link :to="{ path: '/docs/examples' }">
@@ -69,6 +73,7 @@ function showImage(target: EventTarget | null) {
     <section>
       <div class="container">
         <h2>Mock your APIs with one tool</h2>
+        <p class="text-center mb-5 w-80">Mokapi allows you to <b>prototype</b>, <b>test</b> and <b>demonstrate</b> APIs in software solutions using realistic data and scenarios.</p>
         <div class="card-group">
           <div class="card">
             <router-link :to="{path: '/http'}">
@@ -115,23 +120,23 @@ function showImage(target: EventTarget | null) {
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
               <h2>Control Everything with JavaScript</h2>
-              <p>Write the behavior of your mock in JavaScript and control everything: status, headers, delays, errors or other edge cases.</p>
+              <p>Learn how to mock APIs with JavaScript to fully control state, headers, delays, and errors in your applications.</p>
               <router-link :to="{ path: '/docs/javascript-api' }">
-                <button type="button" class="btn btn-outline-primary btn-sm">JavaScript API</button>
+                <button type="button" class="btn btn-outline-primary btn-sm">Unlock seamless testing</button>
               </router-link>
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
-            <img src="/controleverything.png" @click="showImage($event.target)" alt="Control in Mokapi everything with JavaScript" />
+            <img src="/control-mock-api-everything.png" @click="showImage($event.target)" alt="A JavaScript code that shows how easy it is to realistically mock an API and control everything." />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
             <div class="text-lg-start text-center">
-              <h2>Run Everywhere</h2>
+              <h2>Run your mocks Everywhere</h2>
               <p>
-                Use the <a href="https://hub.docker.com/r/mokapi/mokapi">Docker image</a>, <a href="https://community.chocolatey.org/packages/mokapi">Chocolatey on Windows</a>, the <a href="https://www.npmjs.com/package/go-mokapi">NPM package</a> or directly as an <a href="https://github.com/marle3003/mokapi/releases">executable</a>.
-                Use CLI arguments, environment variable or file configuration and take advantage from hot-reloading of dynamic configurations.
+                Discover how to run your mock API anywhere, no dependencies.
+                Unleash the power by using CLI arguments, environment variables or file configurations with dynamic hot reloading for seamless development.
               </p>
               <router-link :to="{ path: '/docs/guides/get-started/running' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Run Mokapi</button>
@@ -139,30 +144,30 @@ function showImage(target: EventTarget | null) {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
-            <img src="/anywhere.png" @click="showImage($event.target)" alt="Run Mokapi in Docker Container or in NodeJS with powerful configuration options" />
+            <img src="/run-mock-api-anywhere.png" @click="showImage($event.target)" alt="Log output starting Mokapi in a Docker image." />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5mb-lg-5 mt-lg-5">
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
-              <h2>Everything as Code</h2>
-              <p>Get all benefits of everything as code - Reusing, version control, consistency and integrate mocks with your CI/CD.</p>
-              <router-link :to="{ path: '/docs/configuration/configuration/overview' }">
+              <h2>Everything as Code: Simplify Auditing & Reduce Errors</h2>
+              <p>Discover how Everything as Code can enhance repeatability, simplify audits, and minimize human errors for your deployment process.</p>
+              <router-link :to="{ path: '/docs/configuration' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Learn more</button>
               </router-link>
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
-            <img src="/everythingcode.png" @click="showImage($event.target)" alt="Mokapi uses everything as code approach" />
+            <img src="/mock-api-everything-as-code.png" @click="showImage($event.target)" alt="Example OpenAPI specification, a script to generate Kafka mock data and forward emails sent to a mock SMTP server." />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
             <div class="text-lg-start text-center">
-              <h2>Powerful Random Data Generator</h2>
+              <h2>Fake Data Generator</h2>
               <p>
-                Mokapi has a powerful random data generator that can produce a wide range of meaningful fake data for your APIs. 
-                Customize it to fit your needs.
+                Mokapi uses a decision tree to automatically create a wide range of meaningful fake data for your APIs.
+                This tree can easily be extended to meet your own specific requirements.
               </p>
               <router-link :to="{ path: '/docs/guides/get-started/test-data' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Explore Data Generator</button>
@@ -170,65 +175,64 @@ function showImage(target: EventTarget | null) {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 order-lg-2">
-            <img src="/faker-tree.png" @click="showImage($event.target)" alt="Mokapi provides a powerful data generator"/>
+            <img src="/mock-realistic-test-data.png" @click="showImage($event.target)" alt="A part of Mokapi's Faker decision tree for generating realistic random data depending on the data structure."/>
           </div>
         </div>
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
               <h2>Patch Configuration</h2>
-              <p>Patch configuration changes for mocking needs, rather than changing the original contract</p>
+              <p>Discover how patching enables effortless, environment-dependent adaptations to specifications without changing the original document.</p>
               <router-link :to="{ path: '/docs/configuration/configuration/patching' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Discover Patching</button>
               </router-link>
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 order-lg-1">
-            <img src="/patching.png" @click="showImage($event.target)" alt="Patching allows more flexibility in mocking APIs" />
+            <img src="/patch-mock-api-configuration.png" @click="showImage($event.target)" alt="The original OpenAPI specification is patched with two additional files at runtime." />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
             <div class="text-lg-start text-center">
-              <h2>End-to-End Tests</h2>
-              <p>Test only system that you are responsible for and fake all others with Mokapi. Simulate 
-                real-life scenarios and edge cases with Mokapi Script
+              <h2>Boost Your Testing Efforts</h2>
+              <p>Improve your end-to-end testing performance with Mokapi and easily simulate real-world scenarios and edge cases with Mokapi Script.
               </p>
               <router-link :to="{ path: '/docs/blogs/automation-testing-in-agile-development' }">
-                <button type="button" class="btn btn-outline-primary btn-sm">Read more</button>
+                <button type="button" class="btn btn-outline-primary btn-sm">Discover the blog article</button>
               </router-link>
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 order-lg-2">
-            <img src="/systemtest.png" @click="showImage($event.target)" alt="Mokapi helps you to simulate interfaces like REST API or Apache Kafka and allows to bring the really important information into the system under test." />
+            <img src="/use-case-mock-api.png" @click="showImage($event.target)" alt="A variant of how Mokapi can be used to test a system with realistic data." />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
-              <h2>See what's going on</h2>
-              <p>Quickly analyze and inspect all requests and responses in the dashboard to gather insights on how your mock APIs are used.</p>
+              <h2>Visualize Your Mock APIs</h2>
+              <p>Quickly analyze and inspect all requests and responses in the dashboard to gather insights on how your mocked APIs are used.</p>
               <router-link :to="{ path: '/docs/guides/get-started/dashboard' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Mokapi's Dashboard</button>
               </router-link>
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
-            <img src="/dashboard.png" @click="showImage($event.target)" alt="Analyzing data in real-time using the powerful dashboard" />
+            <img src="/dashboard-overview-mock-api.jpg" @click="showImage($event.target)" alt="Mokapi's dashboard with an overview of all mocked APIs including metrics and logs." />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5">
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
             <div class="text-lg-start text-center">
-              <h2>Contract Testing</h2>
-              <p>Fake interactions under test control between your software and systems that it collaborates.</p>
+              <h2>Enhance Software Quality with Contract Testing</h2>
+              <p>Discover the benefits of contract testing to ensure mock interactions under test control between your software and systems that it collaborates with. Improve collaboration and reliability with this effective quality assurance technique.</p>
               <router-link :to="{ path: '/docs/blogs/contract-testing' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Take a look</button>
               </router-link>
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
-            <img src="/systemcontracts.png" @click="showImage($event.target)" alt="Test only system that we are responsible for and fake all others" />
+            <img src="/mokapi-contract-testing.png" @click="showImage($event.target)" alt="A contract test with Mokapi to test edge cases that are difficult to produce in a real environment." />
           </div>
         </div>
         <div class="row pb-4 pb-lg-5">
@@ -239,7 +243,7 @@ function showImage(target: EventTarget | null) {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 order-lg-1">
-            <img src="/betterfaster.png" class="float-lg-end mx-auto d-block" style="width: 80%" @click="showImage($event.target)" alt="Improve speed, accuracy and efficiency of testing and deliver higher quality" />
+            <img src="/build-better-software-with-mokapi.png" class="float-lg-end mx-auto d-block" style="width: 80%" @click="showImage($event.target)" alt="Mokapi can support you in both the development and testing process" />
           </div>
         </div>
       </div>

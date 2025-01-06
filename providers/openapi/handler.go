@@ -2,6 +2,7 @@ package openapi
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"mokapi/engine/common"
@@ -9,6 +10,7 @@ import (
 	"mokapi/providers/openapi/parameter"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
+	"mokapi/version"
 	"net/http"
 	"regexp"
 	"strings"
@@ -58,8 +60,12 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	status, res, err := op.getFirstSuccessResponse()
 	if err != nil {
-		writeError(rw, r, err, h.config.Info.Name)
-		return
+		if errors.Is(err, NoSuccessResponse) && !h.config.OpenApi.IsLower(version.New("3.1")) {
+			status, res = getDefaultResponse()
+		} else {
+			writeError(rw, r, err, h.config.Info.Name)
+			return
+		}
 	}
 
 	contentType, mediaType, err := ContentTypeFromRequest(r, res)
@@ -68,15 +74,30 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	request := EventRequestFrom(r)
+	request, ctx := NewEventRequest(r)
+	r = r.WithContext(ctx)
 
 	if op.RequestBody != nil {
 		body, err := BodyFromRequest(r, op)
 		if body != nil {
-			logHttp.Request.Body = body.Raw
+			if logHttp != nil {
+				logHttp.Request.Body = body.Raw
+			}
 			request.Body = body.Value
 		}
 		if err != nil {
+			writeError(rw, r, err, h.config.Info.Name)
+			return
+		}
+	}
+
+	if len(op.Security) > 0 {
+		if err = h.serveSecurity(r, op.Security); err != nil {
+			writeError(rw, r, err, h.config.Info.Name)
+			return
+		}
+	} else if len(h.config.Security) > 0 {
+		if err = h.serveSecurity(r, h.config.Security); err != nil {
 			writeError(rw, r, err, h.config.Info.Name)
 			return
 		}
@@ -98,14 +119,16 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	actions := h.eventEmitter.Emit("http", request, response)
 
-	res = op.getResponse(response.StatusCode)
-	if res == nil {
-		writeError(rw, r,
-			fmt.Errorf(
-				"no configuration was found for HTTP status code %v, https://swagger.io/docs/specification/describing-responses",
-				response.StatusCode),
-			h.config.Info.Name)
-		return
+	if status != response.StatusCode {
+		res = op.getResponse(response.StatusCode)
+		if res == nil {
+			writeError(rw, r,
+				fmt.Errorf(
+					"no configuration was found for HTTP status code %v, https://swagger.io/docs/specification/describing-responses",
+					response.StatusCode),
+				h.config.Info.Name)
+			return
+		}
 	}
 
 	// todo: only specified headers should be written
@@ -162,7 +185,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	_, err = rw.Write(body)
 	if err != nil {
-		log.Errorf("unable to write body: %v", err)
+		log.Errorf("write HTTP body failed for %v: %v", r.URL.String(), err)
 	}
 	if logHttp != nil {
 		logHttp.Response.Body = string(body)
@@ -286,4 +309,22 @@ func writeError(rw http.ResponseWriter, r *http.Request, err error, serviceName 
 			logHttp.Response.Headers[k] = strings.Join(v, ",")
 		}
 	}
+}
+
+func (h *responseHandler) serveSecurity(r *http.Request, requirements []SecurityRequirement) error {
+	var errs error
+	for _, req := range requirements {
+		for name := range req {
+			config, ok := h.config.Components.SecuritySchemes[name]
+			if !ok {
+				return newHttpError(http.StatusInternalServerError, fmt.Sprintf("no security scheme found for %v", name))
+			}
+			err := config.Serve(r)
+			if err == nil {
+				return nil
+			}
+			errs = errors.Join(errs, err)
+		}
+	}
+	return newHttpError(http.StatusForbidden, errs.Error())
 }

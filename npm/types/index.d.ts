@@ -8,6 +8,7 @@ import "./global";
 import "./http";
 import "./mustache";
 import "./yaml";
+import "./encoding"
 
 /**
  * Attaches an event handler for the given event.
@@ -135,19 +136,19 @@ export interface HttpRequest {
     readonly url: Url;
 
     /** Body contains request body specified by OpenAPI request body. */
-    readonly body: JSONValue;
+    readonly body: any;
 
     /** Object contains path parameters specified by OpenAPI path parameters. */
-    readonly path: { [key: string]: JSONValue };
+    readonly path: { [key: string]: any };
 
     /** Object contains query parameters specified by OpenAPI query parameters. */
-    readonly query: { [key: string]: JSONValue };
+    readonly query: { [key: string]: any };
 
     /** Object contains header parameters specified by OpenAPI header parameters. */
-    readonly header: { [key: string]: JSONValue };
+    readonly header: { [key: string]: any };
 
     /** Object contains cookie parameters specified by OpenAPI cookie parameters. */
-    readonly cookie: { [key: string]: JSONValue };
+    readonly cookie: { [key: string]: any };
 
     /** Path value specified by the OpenAPI path */
     readonly key: string;
@@ -171,7 +172,7 @@ export interface HttpResponse {
     body: string;
 
     /** Data will be encoded with the OpenAPI response definition. */
-    data: JSONValue;
+    data: any;
 }
 
 /**
@@ -341,35 +342,35 @@ export enum LdapResultStatus {
     SizeLimitExceeded = 4,
 }
 
-type SmtpEventHandler = (record: SmtpEventMessage) => boolean
+export type SmtpEventHandler = (record: SmtpEventMessage) => boolean;
 
-declare interface SmtpEventMessage {
-    server: string
-    sender?: Address
-    from: Address[]
-    to: Address[]
-    replyTo?: Address[]
-    cc?: Address[]
-    bcc?: Address[]
-    messageId: string
-    inReplyTo?: string
-    time?: Date
-    subject: string
-    contentType: string
-    encoding: string
-    body: string
-    attachments: Attachment[]
+export interface SmtpEventMessage {
+    server: string;
+    sender?: Address;
+    from: Address[];
+    to: Address[];
+    replyTo?: Address[];
+    cc?: Address[];
+    bcc?: Address[];
+    messageId: string;
+    inReplyTo?: string;
+    time?: Date;
+    subject: string;
+    contentType: string;
+    encoding: string;
+    body: string;
+    attachments: Attachment[];
 }
 
-declare interface Address {
-    name?: string
-    address: string
+export interface Address {
+    name?: string;
+    address: string;
 }
 
-declare interface Attachment {
-    name: string
-    contentType: string
-    data: Uint8Array
+export interface Attachment {
+    name: string;
+    contentType: string;
+    data: Uint8Array;
 }
 
 /**
@@ -445,7 +446,7 @@ export interface ScheduledEventArgs {
 /**
  * JavaScript value representable with JSON.
  */
-export type JSONValue = null | boolean | number | string | JSONValue[] | JSONObject;
+export type JSONValue = null | undefined | boolean | number | string | JSONValue[] | JSONObject;
 
 /**
  * Object representable with JSON.
@@ -454,4 +455,4 @@ export interface JSONObject {
     [key: string]: JSONValue;
 }
 
-declare const RFC3339 = "RFC3339"
+export const RFC3339 = "RFC3339";

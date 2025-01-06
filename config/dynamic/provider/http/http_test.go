@@ -29,7 +29,7 @@ func TestProvider_Start(t *testing.T) {
 				server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 
 				cfg := static.HttpProvider{
-					Url: ":80",
+					Urls: []string{":80"},
 				}
 
 				return cfg, server
@@ -45,7 +45,7 @@ func TestProvider_Start(t *testing.T) {
 				server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
 
 				cfg := static.HttpProvider{
-					Url:          server.URL,
+					Urls:         []string{server.URL},
 					PollInterval: ":8",
 				}
 
@@ -63,7 +63,7 @@ func TestProvider_Start(t *testing.T) {
 				}))
 
 				cfg := static.HttpProvider{
-					Url: server.URL,
+					Urls: []string{server.URL},
 				}
 
 				return cfg, server
@@ -87,7 +87,7 @@ func TestProvider_Start(t *testing.T) {
 				}))
 
 				cfg := static.HttpProvider{
-					Url: server.URL,
+					Urls: []string{server.URL},
 				}
 
 				return cfg, server
@@ -125,7 +125,7 @@ func TestProvider_Start(t *testing.T) {
 				}))
 
 				cfg := static.HttpProvider{
-					Url:          server.URL,
+					Urls:         []string{server.URL},
 					PollInterval: "30s",
 				}
 
@@ -138,14 +138,14 @@ func TestProvider_Start(t *testing.T) {
 			},
 		},
 		{
-			name: "change poll timeout",
+			name: "change poll timeout to 2s",
 			init: func() (static.HttpProvider, *httptest.Server) {
 				server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					time.Sleep(4 * time.Second)
 				}))
 
 				cfg := static.HttpProvider{
-					Url:          server.URL,
+					Urls:         []string{server.URL},
 					PollTimeout:  "2s",
 					PollInterval: "30s",
 				}
@@ -175,7 +175,7 @@ func TestProvider_Start(t *testing.T) {
 			ch := make(chan *dynamic.Config)
 			err := p.Start(ch, pool)
 
-			tc.test(t, cfg.Url, ch, hook, err)
+			tc.test(t, cfg.Urls[0], ch, hook, err)
 		})
 	}
 }
@@ -244,7 +244,7 @@ func TestProxy(t *testing.T) {
 
 	ch := make(chan *dynamic.Config)
 	p := New(static.HttpProvider{
-		Url:   "http://foo.bar",
+		Urls:  []string{"http://foo.bar"},
 		Proxy: server.URL,
 	})
 	err := p.Start(ch, pool)
@@ -275,8 +275,8 @@ func TestTlsWithCA(t *testing.T) {
 	defer server.Close()
 
 	config := static.HttpProvider{
-		Url: server.URL,
-		Ca:  tls.FileOrContent(server.TLS.Certificates[0].Certificate[0]),
+		Urls: []string{server.URL},
+		Ca:   tls.FileOrContent(server.TLS.Certificates[0].Certificate[0]),
 	}
 
 	pool := safe.NewPool(context.Background())
@@ -312,7 +312,7 @@ func TestTlsWithSkipCertVerification(t *testing.T) {
 	defer server.Close()
 
 	config := static.HttpProvider{
-		Url:           server.URL,
+		Urls:          []string{server.URL},
 		TlsSkipVerify: true,
 	}
 
@@ -347,7 +347,7 @@ func TestTlsWithCertError(t *testing.T) {
 	defer server.Close()
 
 	config := static.HttpProvider{
-		Url: server.URL,
+		Urls: []string{server.URL},
 	}
 
 	pool := safe.NewPool(context.Background())

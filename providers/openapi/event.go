@@ -1,18 +1,21 @@
 package openapi
 
 import (
+	"context"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"mokapi/engine/common"
-	"mokapi/json/generator"
 	"mokapi/media"
 	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/schema"
+	"mokapi/schema/json/generator"
 	"net/http"
 	"reflect"
 	"strings"
 )
+
+const eventKey = "event"
 
 func NewEventResponse(status int, ct media.ContentType) *common.EventResponse {
 	r := &common.EventResponse{
@@ -27,7 +30,12 @@ func NewEventResponse(status int, ct media.ContentType) *common.EventResponse {
 	return r
 }
 
-func EventRequestFrom(r *http.Request) *common.EventRequest {
+func EventRequestFromContext(ctx context.Context) *common.EventRequest {
+	e := ctx.Value(eventKey).(*common.EventRequest)
+	return e
+}
+
+func NewEventRequest(r *http.Request) (*common.EventRequest, context.Context) {
 	ctx := r.Context()
 	endpointPath := ctx.Value("endpointPath").(string)
 	op, _ := OperationFromContext(ctx)
@@ -73,7 +81,7 @@ func EventRequestFrom(r *http.Request) *common.EventRequest {
 		}
 	}
 
-	return req
+	return req, context.WithValue(ctx, eventKey, req)
 }
 
 func setResponseData(r *common.EventResponse, m *MediaType, path string) error {

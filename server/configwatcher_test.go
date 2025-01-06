@@ -8,6 +8,7 @@ import (
 	"mokapi/config/static"
 	"mokapi/providers/openapi"
 	"mokapi/safe"
+	"mokapi/try"
 	"net/url"
 	"testing"
 	"time"
@@ -26,6 +27,27 @@ func TestConfigWatcher_Read(t *testing.T) {
 				c, err := w.Read(u, nil)
 				require.EqualError(t, err, "unsupported scheme: file.yml")
 				require.Nil(t, c)
+			},
+		},
+		{
+			name: "cli configs",
+			test: func(t *testing.T) {
+				dynamic.Register("openapi", dynamic.AnyVersion, &openapi.Config{})
+				w := NewConfigWatcher(&static.Config{Configs: []string{`{"openapi":"3.0","info":{"title":"foo"}}`}})
+
+				ch := make(chan *dynamic.Config, 1)
+				w.AddListener(func(config *dynamic.Config) {
+					ch <- config
+				})
+
+				pool := safe.NewPool(context.Background())
+				w.Start(pool)
+				defer pool.Stop()
+
+				c := try.GetConfig(t, ch, 1*time.Second)
+				require.NotNil(t, c)
+				require.IsType(t, &openapi.Config{}, c.Data)
+				require.Equal(t, "foo", c.Data.(*openapi.Config).Info.Name)
 			},
 		},
 		{
@@ -286,7 +308,7 @@ func TestConfigWatcher_Start(t *testing.T) {
 		{
 			name: "closing",
 			f: func(t *testing.T) {
-				dynamic.Register("openapi", &openapi.Config{})
+				dynamic.Register("openapi", dynamic.AnyVersion, &openapi.Config{})
 
 				w := NewConfigWatcher(&static.Config{})
 				var listenerReceived []*dynamic.Config
@@ -339,7 +361,7 @@ func TestConfigWatcher_New(t *testing.T) {
 					&static.Config{
 						Providers: static.Providers{
 							File: static.FileProvider{
-								Filename: "foo.yml",
+								Filenames: []string{"foo.yml"},
 							},
 						},
 					},
@@ -354,7 +376,7 @@ func TestConfigWatcher_New(t *testing.T) {
 					&static.Config{
 						Providers: static.Providers{
 							Http: static.HttpProvider{
-								Url: "foo",
+								Urls: []string{"foo"},
 							},
 						},
 					},
@@ -369,7 +391,7 @@ func TestConfigWatcher_New(t *testing.T) {
 					&static.Config{
 						Providers: static.Providers{
 							Git: static.GitProvider{
-								Url: "git",
+								Urls: []string{"git"},
 							},
 						},
 					},

@@ -52,6 +52,19 @@ const UserSignedUp = {
     }
 }
 
+const SecondMessage = {
+    type: 'object',
+    properties: {
+        foo: {
+            type: 'string'
+        },
+        bar: {
+            type: 'integer'
+        }
+    },
+}
+
+
 export const configs = {
     'b6fea8ac-56c7-4e73-a9c0-6337640bdca8': {
         id: 'b6fea8ac-56c7-4e73-a9c0-6337640bdca8',
@@ -76,7 +89,7 @@ export let clusters = [
         servers: [
             {
                 name: 'Broker',
-                url: 'localhost:9092',
+                host: 'localhost:9092',
                 tags: [{name: 'env:test', description: 'This environment is for running internal tests'}],
                 description: 'Dashwood contempt on mr unlocked resolved provided of of. Stanhill wondered it it welcomed oh. Hundred no prudent he however smiling at an offence. If earnestly extremity he he propriety something admitting convinced ye.'
             }
@@ -108,14 +121,16 @@ export let clusters = [
                         segments: 1
                     }
                 ],
-                configs: {
-                    name: 'shopOrder',
-                    title: 'Shop New Order notification',
-                    summary: 'A message containing details of a new order',
-                    description: 'More info about how the order notifications are **created** and **used**.',
-                    key: { type: 'string' },
-                    message: Product,
-                    messageType: 'application/json'
+                messages: {
+                    'shopOrder': {
+                        name: 'shopOrder',
+                        title: 'Shop New Order notification',
+                        summary: 'A message containing details of a new order',
+                        description: 'More info about how the order notifications are **created** and **used**.',
+                        key: { schema: {type: 'string'} },
+                        payload: { schema: Product },
+                        contentType: 'application/json'
+                    }
                 }
             },
             {
@@ -130,11 +145,49 @@ export let clusters = [
                         segments: 1
                     }
                 ],
-                configs: {
-                    name: 'userSignedUp',
-                    key: { type: 'string' },
-                    message: UserSignedUp,
-                    messageType: 'application/xml'
+                messages: {
+                    'userSignedUp': {
+                        name: 'userSignedUp',
+                        title: 'title',
+                        key: { schema: {type: 'string'} },
+                        payload: { schema: UserSignedUp, format: 'application/vnd.oai.openapi+json;version=3.0.0' },
+                        contentType: 'application/xml'
+                    },
+                    'second': {
+                        name: 'second',
+                        key: { schema: {type: 'string'} },
+                        payload: { schema: SecondMessage },
+                        contentType: 'application/json'
+                    }
+                }
+            },
+            {
+                name: 'mokapi.shop.avro',
+                description: 'A channel with avro messages',
+                partitions: [
+                    {
+                        id: 0,
+                        startOffset: 0,
+                        offset: 0,
+                        leader: { name: 'foo', addr: 'localhost:9002' },
+                        segments: 1
+                    }
+                ],
+                messages: {
+                    'avro': {
+                        name: 'avro',
+                        title: 'avro',
+                        key: { schema: {type: 'string'}, format: 'application/vnd.apache.avro;version=1.9.0' },
+                        payload: {
+                            schema: {
+                                type: 'record', fields: [
+                                    { name: 'foo', type: 'string' },
+                                    { name: 'bar', type: 'int' }
+                                ]
+                            }, format: 'application/vnd.apache.avro;version=1.9.0'
+                        },
+                        contentType: 'avro/binary'
+                    },
                 }
             }
         ],
@@ -216,7 +269,8 @@ export let events = [
                          }),
              partition: 0,
              headers: {
-                 foo: 'bar'
+                 foo: 'bar',
+                 'x-specification-message-id': 'shopOrder'
              }
          }
      },
@@ -242,7 +296,10 @@ export let events = [
                         category: 'apparel',
                         subcategory: 'apparel'
                       }),
-            partition: 1
+            partition: 1,
+            headers: {
+                'x-specification-message-id': 'shopOrder'
+            }
         }
     }
  ]

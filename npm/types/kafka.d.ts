@@ -19,7 +19,28 @@ import { JSONValue } from ".";
  *   console.log(`new kafka message written with offset: ${res.offset}`)
  * }
  */
-export function produce(args: ProduceArgs): ProduceResult;
+export function produce(args?: ProduceArgs): ProduceResult;
+
+/**
+ * Sends a single message to a Kafka topic asynchronously.
+ * https://mokapi.io/docs/javascript-api/mokapi-kafka/produce
+ * @param args - ProduceArgs object contains Kafka produce arguments.
+ * @returns The produce result.
+ * @example
+ * export default function() {
+ *   const res = produce({
+ *     topic: 'foo',
+ *     messages: [
+ *       {
+ *         key: 'foo-1',
+ *         data: { foo: 'bar' }
+ *       }
+ *     ]
+ *   });
+ *   console.log(`new kafka message written with offset: ${res.offset}`)
+ * }
+ */
+export function produceAsync(args?: ProduceArgs): Promise<ProduceResult>;
 
 /**
  * Contains produce-specific arguments.
@@ -62,7 +83,7 @@ export interface ProduceArgs {
 
     /**
      * An array of Kafka messages
-     * @see KafkaMessage
+     * @see Message
      * @example
      * export default function() {
      *   const res = produce({
@@ -80,12 +101,12 @@ export interface ProduceArgs {
      *   });
      * }
      */
-    messages: Message[]
+    messages?: Message[];
 
     /**
      * The retry option is used if script is executed before Kafka topic is set up.
      */
-    retry: ProduceRetry
+    retry?: ProduceRetry;
 }
 
 /**
@@ -102,7 +123,7 @@ export interface Message {
     data?: JSONValue;
 
     /** Kafka message value not validating against schema. If data and value are not specified, a random value will be generated based on the topic configuration. */
-    value?: string | number | boolean | null
+    value?: string | number | boolean | null;
 
     /** Kafka message headers. */
     headers?: { [name: string]: JSONValue };
@@ -124,7 +145,8 @@ export interface ProduceResult {
     /** Kafka topic name where the message was written. */
     readonly topic: string;
 
-    messages: MessageResult[]
+    // ** List of produced Kafka messages */
+    messages: MessageResult[];
 
     /** Kafka partition where the message was written. */
     readonly partition: number;
@@ -150,27 +172,27 @@ export interface MessageResult {
     /**
      * Kafka partition index in which the message was written.
      */
-    readonly partition: number
+    readonly partition: number;
 
     /**
      * Kafka offset of the written message.
      */
-    readonly offset: number
+    readonly offset: number;
 
     /**
      * Kafka written message key.
      */
-    readonly key: string
+    readonly key: string;
 
     /**
      * Kafka written message value.
      */
-    readonly value: string
+    readonly value: string;
 
     /**
      * Kafka written message headers.
      */
-    readonly headers: { [name: string]: string }
+    readonly headers: { [name: string]: string };
 }
 
 /**
@@ -190,7 +212,7 @@ export interface ProduceRetry {
      *   produce({ topic: 'foo', messages: [{ value: 'value-1' }], retry: { maxRetryTime: '30s' } })
      * }
      */
-    maxRetryTime: string | number
+    maxRetryTime: string | number;
 
     /**
      * Initial value used to calculate the wait time
@@ -205,7 +227,7 @@ export interface ProduceRetry {
      *   produce({ topic: 'foo', messages: [{ value: 'value-1' }], retry: { initialRetryTime: '2s' } })
      * }
      */
-    initialRetryTime: string | number
+    initialRetryTime: string | number;
 
     /**
      * Factor for increasing the wait time for next retry.
@@ -214,11 +236,11 @@ export interface ProduceRetry {
      * 3th retry: 4 * 800ms = 3200ms
      * @default 4
      */
-    factor: number
+    factor: number;
 
     /**
      * Max number of retries
      * @default 5
      */
-    retries: number
+    retries: number;
 }

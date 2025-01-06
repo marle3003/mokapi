@@ -88,3 +88,38 @@ func TestConfig_Patch_Server(t *testing.T) {
 		})
 	}
 }
+
+/*func TestServer_Validate(t *testing.T) {
+	testdata := []struct {
+		name string
+		data string
+		test func(t *testing.T, err error)
+	}{
+		{
+			name: "server without url",
+			data: `
+openapi: 3
+info:
+  title: foo
+servers:
+ - description: foo
+`,
+			test: func(t *testing.T, err error) {
+				require.EqualError(t, err, "semantic error at info: missing required field 'version', expected schema type=object properties=[title, description, termsOfService, contact, license, version] required=[title version] free-form=false")
+			},
+		},
+	}
+
+	feature.Enable([]string{"openapi-validation"})
+	defer feature.Reset()
+
+	for _, tc := range testdata {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			c := &openapi.Config{}
+			err := yaml.Unmarshal([]byte(tc.data), c)
+			require.NoError(t, err)
+			tc.test(t, c.Validate())
+		})
+	}
+}*/

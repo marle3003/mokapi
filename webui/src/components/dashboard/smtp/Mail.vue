@@ -81,7 +81,7 @@ const { mail, isLoading: isLoading } = fetchMail(messageId)
           <div class="row">
             <p class="col">
               <p class="label">Subject</p>
-              <p>{{ mail.subject }}</p>
+              <p class="subject">{{ mail.subject }}</p>
             </p>
           </div>
         </div>
@@ -118,5 +118,8 @@ const { mail, isLoading: isLoading } = fetchMail(messageId)
 .address-name {
   font-weight:700;
   padding-right: 0.3rem;
+}
+.dashboard .card p.subject {
+  font-size: 1.4rem;
 }
 </style>

@@ -38,10 +38,14 @@ func NewBytes(b []byte) Bytes {
 }
 
 func BytesToString(bytes Bytes) string {
+	return string(Read(bytes))
+}
+
+func Read(bytes Bytes) []byte {
 	bytes.Seek(0, io.SeekStart)
 	b := make([]byte, bytes.Len())
 	bytes.Read(b)
-	return string(b)
+	return b
 }
 
 func (b *bytesReader) Close() error { return nil }

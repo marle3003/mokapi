@@ -1,12 +1,15 @@
 package api
 
 import (
+	"fmt"
 	"mokapi/config/dynamic/mail"
+	"mokapi/media"
 	"mokapi/runtime"
 	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
 	"mokapi/smtp"
 	"net/http"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -75,6 +78,7 @@ type attachment struct {
 	Name        string `json:"name"`
 	ContentType string `json:"contentType"`
 	Size        int    `json:"size"`
+	ContentId   string `json:"contentId"`
 }
 
 func getMailServices(services map[string]*runtime.SmtpInfo, m *monitor.Monitor) []interface{} {
@@ -103,6 +107,7 @@ func (h *handler) handleSmtpService(w http.ResponseWriter, r *http.Request) {
 	if n > 5 && segments[4] == "mails" {
 		if n > 6 && segments[6] == "attachments" {
 			h.getMailAttachment(w, segments[5], segments[7])
+			return
 		} else {
 			h.getMail(w, segments[5])
 			return
@@ -186,11 +191,22 @@ func (h *handler) getMailAttachment(w http.ResponseWriter, messageId, name strin
 
 	var att smtp.Attachment
 	for _, a := range m.Attachments {
-		if a.Name == name {
+		if a.Name == name || a.ContentId == name {
 			att = a
+			break
 		}
 	}
 
+	contentType := att.ContentType
+	if contentType == "application/octet-stream" && filepath.Ext(name) == "" {
+		contentType = http.DetectContentType(att.Data)
+		ct := media.ParseContentType(contentType)
+		if len(ct.Subtype) > 0 {
+			name = fmt.Sprintf("%v.%v", name, ct.Subtype)
+		}
+	}
+
+	w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", name))
 	w.Header().Set("Content-Type", att.ContentType)
 	w.Write(att.Data)
 }
@@ -252,8 +268,12 @@ func toMessage(m *smtp.Message) *message {
 	}
 
 	for _, a := range m.Attachments {
+		name := a.Name
+		if len(a.ContentId) > 0 {
+			name = a.ContentId
+		}
 		r.Attachments = append(r.Attachments, attachment{
-			Name:        a.Name,
+			Name:        name,
 			ContentType: a.ContentType,
 			Size:        len(a.Data),
 		})

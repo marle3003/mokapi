@@ -1,14 +1,15 @@
 package openapi
 
 import (
-	"errors"
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"io"
+	"mime/multipart"
 	"mokapi/config/dynamic"
-	"mokapi/json/ref"
 	"mokapi/media"
 	"mokapi/providers/openapi/schema"
+	"mokapi/schema/encoding"
+	"mokapi/schema/json/parser"
 	"net/http"
 	"strings"
 )
@@ -16,7 +17,7 @@ import (
 type RequestBodies map[string]*RequestBodyRef
 
 type RequestBodyRef struct {
-	ref.Reference
+	dynamic.Reference
 	Value *RequestBody
 }
 
@@ -146,8 +147,7 @@ func (r RequestBodies) parse(config *dynamic.Config, reader dynamic.Reader) erro
 
 	for name, body := range r {
 		if err := body.parse(config, reader); err != nil {
-			inner := errors.Unwrap(err)
-			return fmt.Errorf("parse request body '%v' failed: %w", name, inner)
+			return fmt.Errorf("parse request body '%v' failed: %w", name, err)
 		}
 	}
 
@@ -160,10 +160,7 @@ func (r *RequestBodyRef) parse(config *dynamic.Config, reader dynamic.Reader) er
 	}
 
 	if len(r.Ref) > 0 {
-		if err := dynamic.Resolve(r.Ref, &r.Value, config, reader); err != nil {
-			return fmt.Errorf("parse request body failed: %w", err)
-		}
-		return nil
+		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
 	}
 
 	return r.Value.Content.parse(config, reader)
@@ -207,16 +204,6 @@ func (r *RequestBody) patch(patch *RequestBody) {
 	r.Content.patch(patch.Content)
 }
 
-func getParser(ct media.ContentType) schema.Parser {
-	if ct.Type == "text" {
-		return schema.Parser{ConvertStringToNumber: true}
-	}
-	if ct.String() == "application/x-www-form-urlencoded" {
-		return schema.Parser{ConvertStringToNumber: true}
-	}
-	return schema.Parser{}
-}
-
 type urlValueDecoder struct {
 	mt *MediaType
 }
@@ -225,10 +212,10 @@ func (d urlValueDecoder) decode(propName string, val interface{}) (interface{}, 
 	values := val.([]string)
 
 	prop := d.mt.Schema.Value.Properties.Get(propName)
-	switch prop.Value.Type {
-	case "integer", "number", "string":
+	switch {
+	case prop.Value.Type.IsOneOf("integer", "number", "string"):
 		return values[0], nil
-	case "array":
+	case prop.Value.Type.IsArray():
 		return d.decodeArray(propName, values)
 	default:
 		return nil, fmt.Errorf("unsupported type %v", prop.Value.Type)
@@ -248,4 +235,61 @@ func (d urlValueDecoder) decodeArray(propName string, values []string) (interfac
 	default:
 		return strings.Split(values[0], ","), nil
 	}
+}
+
+type multipartForm struct {
+	mt *MediaType
+	p  parser.Parser
+}
+
+func (d multipartForm) decode(m map[string]interface{}, part *multipart.Part) error {
+	name := part.FormName()
+	b, err := io.ReadAll(part)
+	if err != nil {
+		return err
+	}
+	if d.mt.Schema == nil || d.mt.Schema.Value == nil {
+		m[name] = b
+		return nil
+	}
+
+	prop := d.mt.Schema.Value.Properties.Get(name)
+	if prop == nil || prop.Value == nil {
+		m[name] = b
+		return nil
+	}
+
+	p := &parser.Parser{}
+	if prop.Value.Type.IsArray() {
+		// Array properties are handled by applying the same name to multiple parts, as is recommended by RFC7578
+		p.Schema = schema.ConvertToJsonSchema(prop.Value.Items)
+	} else {
+		p.Schema = schema.ConvertToJsonSchema(prop)
+	}
+
+	ct := media.ParseContentType(part.Header.Get("Content-Type"))
+	if e, ok := d.mt.Encoding[name]; ok && e.ContentType != "" {
+		if !ct.Match(media.ParseContentType(e.ContentType)) {
+			return fmt.Errorf("part '%s' does not match content type: %v", name, e.ContentType)
+		}
+	}
+
+	v, err := encoding.Decode(b,
+		encoding.WithContentType(ct),
+		encoding.WithParser(p),
+	)
+
+	if prop.Value.Type.IsArray() {
+		var arr []interface{}
+		if m[name] == nil {
+			arr = make([]interface{}, 0)
+		} else {
+			arr = m[name].([]interface{})
+		}
+		m[name] = append(arr, v)
+	} else {
+		m[name] = v
+	}
+
+	return nil
 }

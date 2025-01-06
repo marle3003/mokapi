@@ -15,6 +15,7 @@ const props = withDefaults(defineProps<{
   maxHeight?: number
   hideContentType?: boolean
   readonly?: boolean
+  showAvroInfo?: boolean
 }>(), { readonly: true })
 
 const emit = defineEmits<{
@@ -88,6 +89,7 @@ function copyToClipboard(event: MouseEvent) {
         <span aria-label="Lines of Code">{{ lines }} lines</span>
         <span aria-label="Size of Code">{{ size }}</span>
         <span v-if="deprecated"><i class="bi bi-exclamation-triangle-fill yellow"></i> deprecated</span>
+        <span v-if="showAvroInfo">Avro content in JSON format</span>
       </div>
       <div class="controls">
         <a  v-if="url" :href="url">Raw</a>

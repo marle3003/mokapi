@@ -11,15 +11,14 @@ type MailSuite struct{ BaseSuite }
 
 func (suite *MailSuite) SetupSuite() {
 	cfg := static.NewConfig()
-	cfg.Providers.File.Directory = "./mail"
+	cfg.Providers.File.Directories = []string{"./mail"}
 	suite.initCmd(cfg)
 }
 
 func (suite *MailSuite) TestSendMail() {
-	ca, err := cert.DefaultRootCert()
-	require.NoError(suite.T(), err)
+	ca := cert.DefaultRootCert()
 
-	err = smtptest.SendMail("from@foo.bar",
+	err := smtptest.SendMail("from@foo.bar",
 		"rcipient@foo.bar",
 		"smtps://localhost:8025",
 		smtptest.WithSubject("Test Mail"),

@@ -32,6 +32,7 @@ func (h *Handler) ServeSMTP(rw smtp.ResponseWriter, r smtp.Request) {
 			if acc.Username == req.Username && acc.Password == req.Password {
 				rw.Write(&smtp.LoginResponse{Result: &smtp.AuthSucceeded})
 				ctx.Auth = acc.Username
+				return
 			}
 		}
 		h.writeErrorResponse(rw, r, smtp.InvalidAuthCredentials, "")

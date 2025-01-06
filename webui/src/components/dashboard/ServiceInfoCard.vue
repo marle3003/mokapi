@@ -48,7 +48,7 @@ const developer = computed(() => {
                 <div class="row">
                     <div class="col">
                         <p id="description" class="label">Description</p>
-                        <markdown :source="service.description" data-testid="service-description" aria-labelledby="description"></markdown>
+                        <markdown :source="service.description" data-testid="service-description" aria-labelledby="description" :html="true"></markdown>
                     </div>
                 </div>
             </div>

@@ -22,16 +22,16 @@ func New() (*Compiler, error) {
 }
 
 func (c *Compiler) CompileModule(filename, src string) (*goja.Program, error) {
-	source, err := c.babel.Transform(src)
+	source, err := c.babel.Transform(filename, src)
 	if err != nil {
 		return nil, err
 	}
-	source = fmt.Sprintf("(function(exports, module) {%s\n})", source)
+	source = fmt.Sprintf("(function(exports, module, require) {%s\n})", source)
 	return goja.Compile(filename, source, false)
 }
 
 func (c *Compiler) Compile(filename, src string) (*goja.Program, error) {
-	source, err := c.babel.Transform(src)
+	source, err := c.babel.Transform(filename, src)
 	if err != nil {
 		return nil, err
 	}

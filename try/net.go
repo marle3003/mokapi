@@ -1,6 +1,9 @@
 package try
 
-import "net"
+import (
+	"net"
+	"net/url"
+)
 
 func GetFreePort() int {
 	addr, err := net.ResolveTCPAddr("tcp", "localhost:")
@@ -14,4 +17,12 @@ func GetFreePort() int {
 	}
 	defer func() { _ = l.Close() }()
 	return l.Addr().(*net.TCPAddr).Port
+}
+
+func MustUrl(s string) *url.URL {
+	u, err := url.Parse(s)
+	if err != nil {
+		panic(err)
+	}
+	return u
 }

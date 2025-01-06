@@ -3,14 +3,15 @@ package asyncApi
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"mokapi/config/dynamic/asyncApi/kafka"
-	"mokapi/providers/openapi/schema"
+	"mokapi/config/dynamic"
+	"mokapi/providers/asyncapi3"
+	"mokapi/schema/json/schema"
 	"mokapi/version"
 	"net/url"
 	"strconv"
 )
 
-var supportedVersions = []*version.Version{
+var supportedVersions = []version.Version{
 	version.New("2.0.0"),
 	version.New("2.1.0"),
 	version.New("2.2.0"),
@@ -21,8 +22,13 @@ var supportedVersions = []*version.Version{
 }
 
 type Config struct {
-	AsyncApi   string                 `yaml:"asyncapi" json:"asyncapi"`
-	Info       Info                   `yaml:"info" json:"info"`
+	AsyncApi string `yaml:"asyncapi" json:"asyncapi"`
+	Id       string `yaml:"id" json:"id"`
+	Info     Info   `yaml:"info" json:"info"`
+
+	// Default content type to use when encoding/decoding a message's payload.
+	DefaultContentType string `yaml:"defaultContentType" json:"defaultContentType"`
+
 	Servers    map[string]*ServerRef  `yaml:"servers,omitempty" json:"servers,omitempty"`
 	Channels   map[string]*ChannelRef `yaml:"channels" json:"channels"`
 	Components *Components            `yaml:"components,omitempty" json:"components,omitempty"`
@@ -68,7 +74,7 @@ type ServerRef struct {
 }
 
 type ServerBindings struct {
-	Kafka kafka.BrokerBindings `yaml:"kafka" json:"kafka"`
+	Kafka BrokerBindings `yaml:"kafka" json:"kafka"`
 }
 
 type ChannelRef struct {
@@ -77,15 +83,16 @@ type ChannelRef struct {
 }
 
 type Channel struct {
-	Description string          `yaml:"description" json:"description"`
-	Subscribe   *Operation      `yaml:"subscribe" json:"subscribe"`
-	Publish     *Operation      `yaml:"publish" json:"publish"`
-	Bindings    ChannelBindings `yaml:"bindings" json:"bindings"`
-	Servers     []string        `yaml:"servers" json:"servers"`
+	Description string                   `yaml:"description" json:"description"`
+	Subscribe   *Operation               `yaml:"subscribe" json:"subscribe"`
+	Publish     *Operation               `yaml:"publish" json:"publish"`
+	Bindings    ChannelBindings          `yaml:"bindings" json:"bindings"`
+	Servers     []string                 `yaml:"servers" json:"servers"`
+	Parameters  map[string]*ParameterRef `yaml:"parameters" json:"parameters"`
 }
 
 type ChannelBindings struct {
-	Kafka kafka.TopicBindings `yaml:"kafka" json:"kafka"`
+	Kafka TopicBindings `yaml:"kafka" json:"kafka"`
 }
 
 type Operation struct {
@@ -97,7 +104,7 @@ type Operation struct {
 }
 
 type OperationBindings struct {
-	Kafka kafka.Operation `yaml:"kafka" json:"kafka"`
+	Kafka KafkaOperation `yaml:"kafka" json:"kafka"`
 }
 
 type MessageRef struct {
@@ -106,26 +113,60 @@ type MessageRef struct {
 }
 
 type Message struct {
-	MessageId   string         `yaml:"messageId" json:"messageId"`
-	Name        string         `yaml:"name" json:"name"`
-	Title       string         `yaml:"title" json:"title"`
-	Summary     string         `yaml:"summary" json:"summary"`
-	Description string         `yaml:"description" json:"description"`
-	ContentType string         `yaml:"contentType" json:"contentType"`
-	Payload     *schema.Ref    `yaml:"payload" json:"payload"`
-	Bindings    MessageBinding `yaml:"bindings" json:"bindings"`
-	Headers     *schema.Ref    `yaml:"headers" json:"headers"`
+	MessageId    string               `yaml:"messageId" json:"messageId"`
+	Name         string               `yaml:"name" json:"name"`
+	Title        string               `yaml:"title" json:"title"`
+	Summary      string               `yaml:"summary" json:"summary"`
+	Description  string               `yaml:"description" json:"description"`
+	ContentType  string               `yaml:"contentType" json:"contentType"`
+	SchemaFormat string               `yaml:"schemaFormat" json:"schemaFormat"`
+	Payload      *asyncapi3.SchemaRef `yaml:"payload" json:"payload"`
+	Bindings     MessageBinding       `yaml:"bindings" json:"bindings"`
+	Headers      *asyncapi3.SchemaRef `yaml:"headers" json:"headers"`
+	Traits       []*MessageTraitRef   `yaml:"traits" json:"traits"`
 }
 
 type MessageBinding struct {
-	Kafka kafka.MessageBinding `yaml:"kafka" json:"kafka"`
+	Kafka KafkaMessageBinding `yaml:"kafka" json:"kafka"`
 }
 
 type Components struct {
-	Servers  map[string]*Server  `yaml:"servers" json:"servers"`
-	Channels map[string]*Channel `yaml:"channels" json:"channels"`
-	Schemas  *schema.Schemas     `yaml:"schemas" json:"schemas"`
-	Messages map[string]*Message `yaml:"messages" json:"messages"`
+	Servers       map[string]*Server              `yaml:"servers" json:"servers"`
+	Channels      map[string]*Channel             `yaml:"channels" json:"channels"`
+	Schemas       map[string]*asyncapi3.SchemaRef `yaml:"schemas" json:"schemas"`
+	Messages      map[string]*Message             `yaml:"messages" json:"messages"`
+	Parameters    map[string]*ParameterRef        `yaml:"parameters" json:"parameters"`
+	MessageTraits map[string]MessageTraitRef      `yaml:"messageTraits" json:"messageTraits"`
+}
+
+type ParameterRef struct {
+	dynamic.Reference
+	Value *Parameter
+}
+
+type Parameter struct {
+	Description string         `yaml:"description" json:"description"`
+	Schema      *schema.Schema `yaml:"schema" json:"schema"`
+	Location    string         `yaml:"location" json:"location"`
+}
+
+type MessageTraitRef struct {
+	dynamic.Reference
+	Value *MessageTrait
+}
+
+type MessageTrait struct {
+	MessageId string `yaml:"messageId" json:"messageId"`
+
+	Name        string `yaml:"name" json:"name"`
+	Title       string `yaml:"title" json:"title"`
+	Summary     string `yaml:"summary" json:"summary"`
+	Description string `yaml:"description" json:"description"`
+
+	SchemaFormat string               `yaml:"schemaFormat" json:"schemaFormat"`
+	ContentType  string               `yaml:"contentType" json:"contentType"`
+	Headers      *asyncapi3.SchemaRef `yaml:"headers" json:"headers"`
+	Bindings     MessageBinding       `yaml:"bindings" json:"bindings"`
 }
 
 func (c *Config) Validate() error {

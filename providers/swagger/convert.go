@@ -2,11 +2,13 @@ package swagger
 
 import (
 	"fmt"
-	"mokapi/json/ref"
+	"mokapi/config/dynamic"
 	"mokapi/media"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/schema"
+	jsonSchema "mokapi/schema/json/schema"
+	"mokapi/version"
 	"net/http"
 	"strings"
 )
@@ -22,7 +24,7 @@ func Convert(config *Config) (*openapi.Config, error) {
 
 func (c *converter) Convert() (*openapi.Config, error) {
 	result := &openapi.Config{
-		OpenApi: "3.0.1",
+		OpenApi: version.New("3.0.3"),
 		Info:    c.config.Info,
 		Paths:   make(map[string]*openapi.PathRef),
 	}
@@ -59,7 +61,7 @@ func (c *converter) Convert() (*openapi.Config, error) {
 
 func (c *converter) convertPath(p *PathItem) (*openapi.PathRef, error) {
 	if len(p.Ref) > 0 {
-		return &openapi.PathRef{Reference: ref.Reference{Ref: convertRef(p.Ref)}}, nil
+		return &openapi.PathRef{Reference: dynamic.Reference{Ref: convertRef(p.Ref)}}, nil
 	}
 
 	result := &openapi.Path{}
@@ -171,7 +173,7 @@ func (c *converter) convertOperation(o *Operation) (*openapi.Operation, error) {
 
 func (c *converter) convertResponse(r *Response, produces []string) (*openapi.ResponseRef, error) {
 	if len(r.Ref) > 0 {
-		return &openapi.ResponseRef{Reference: ref.Reference{Ref: convertRef(r.Ref)}}, nil
+		return &openapi.ResponseRef{Reference: dynamic.Reference{Ref: convertRef(r.Ref)}}, nil
 	}
 	result := &openapi.Response{
 		Description: r.Description,
@@ -195,14 +197,14 @@ func (c *converter) convertSchema(s *schema.Ref) *schema.Ref {
 	}
 
 	if len(s.Ref) > 0 {
-		return &schema.Ref{Reference: ref.Reference{Ref: convertRef(s.Ref)}}
+		return &schema.Ref{Reference: dynamic.Reference{Ref: convertRef(s.Ref)}}
 	}
 
 	if s.Value == nil {
 		return s
 	}
 
-	if s.Value.Type == "integer" && s.Value.Format == "" {
+	if s.Value.Type.IsInteger() && s.Value.Format == "" {
 		s.Value.Format = "int32"
 	}
 
@@ -216,8 +218,8 @@ func (c *converter) convertSchema(s *schema.Ref) *schema.Ref {
 		}
 	}
 
-	if s.Value.AdditionalProperties != nil && s.Value.AdditionalProperties.Ref != nil {
-		s.Value.AdditionalProperties.Ref.Ref = convertRef(s.Value.AdditionalProperties.Ref.Ref)
+	if s.Value.AdditionalProperties != nil && len(s.Value.AdditionalProperties.Ref) > 0 {
+		s.Value.AdditionalProperties.Ref = convertRef(s.Value.AdditionalProperties.Ref)
 	}
 	for i, v := range s.Value.AllOf {
 		s.Value.AllOf[i] = c.convertSchema(v)
@@ -245,14 +247,14 @@ func convertParameter(p *Parameter) *parameter.Ref {
 		Name: p.Name,
 		Type: parameter.Location(p.In),
 		Schema: &schema.Ref{Value: &schema.Schema{
-			Type:             p.Type,
+			Type:             jsonSchema.Types{p.Type},
 			Format:           p.Format,
 			Pattern:          p.Pattern,
 			Items:            p.Items,
 			Minimum:          p.Minimum,
 			Maximum:          p.Maximum,
-			ExclusiveMinimum: &p.ExclusiveMin,
-			ExclusiveMaximum: &p.ExclusiveMax,
+			ExclusiveMinimum: jsonSchema.NewUnionTypeB[float64, bool](p.ExclusiveMin),
+			ExclusiveMaximum: jsonSchema.NewUnionTypeB[float64, bool](p.ExclusiveMin),
 			UniqueItems:      p.UniqueItems,
 			MinItems:         &p.MinItems,
 			MaxItems:         p.MaxItems,

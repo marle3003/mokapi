@@ -1,4 +1,4 @@
-package engine
+package engine_test
 
 import (
 	"bytes"
@@ -9,18 +9,17 @@ import (
 	"github.com/stretchr/testify/require"
 	"io"
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/asyncApi"
-	"mokapi/config/dynamic/asyncApi/asyncapitest"
-	bindings "mokapi/config/dynamic/asyncApi/kafka"
-	"mokapi/config/dynamic/asyncApi/kafka/store"
-	"mokapi/config/static"
+	"mokapi/engine"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/produce"
-	"mokapi/providers/openapi/schema/schematest"
+	"mokapi/providers/asyncapi3"
+	"mokapi/providers/asyncapi3/asyncapi3test"
+	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/runtime"
 	"mokapi/runtime/monitor"
+	"mokapi/schema/json/schematest"
 	"net/url"
 	"testing"
 	"time"
@@ -29,11 +28,11 @@ import (
 func TestKafkaClient_Produce(t *testing.T) {
 	testcases := []struct {
 		name string
-		test func(t *testing.T, app *runtime.App, s *store.Store, engine *Engine)
+		test func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine)
 	}{
 		{
 			name: "random message",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *Engine) {
+			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
 				err := engine.AddScript(newScript("test.js", `
 					import { produce } from 'mokapi/kafka'
 					export default function() {
@@ -50,9 +49,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 		},
 		{
 			name: "non random values",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *Engine) {
-				hook := test.NewGlobal()
-
+			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
 				err := engine.AddScript(newScript("test.js", `
 					import { produce } from 'mokapi/kafka'
 					export default function() {
@@ -74,13 +71,11 @@ func TestKafkaClient_Produce(t *testing.T) {
 				require.Equal(t, `"bar"`, string(readBytes(b.Records[0].Value)))
 				require.Equal(t, "version", b.Records[0].Headers[0].Key)
 				require.Equal(t, []byte("1.0"), b.Records[0].Headers[0].Value)
-
-				require.Equal(t, `{"cluster":"foo","topic":"foo","messages":[{"key":"foo","value":"\"bar\"","offset":0,"headers":{"version":"1.0"},"partition":0}]}`, hook.LastEntry().Message)
 			},
 		},
 		{
 			name: "to partition 5",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *Engine) {
+			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
 				err := engine.AddScript(newScript("test.js", `
 					import { produce } from 'mokapi/kafka'
 					export default function() {
@@ -95,10 +90,10 @@ func TestKafkaClient_Produce(t *testing.T) {
 		},
 		{
 			name: "multiple clusters",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *Engine) {
+			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
 				for i := 0; i < 10; i++ {
 					app.AddKafka(getConfig(
-						asyncapitest.NewConfig(asyncapitest.WithInfo(fmt.Sprintf("x%v", i), "", ""))), enginetest.NewEngine())
+						asyncapi3test.NewConfig(asyncapi3test.WithInfo(fmt.Sprintf("x%v", i), "", ""))), enginetest.NewEngine())
 				}
 
 				err := engine.AddScript(newScript("test.js", `
@@ -117,7 +112,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 		},
 		{
 			name: "trigger event",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *Engine) {
+			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
 				err := engine.AddScript(newScript("test.js", `
 					import { on } from 'mokapi'
 					export default function() {
@@ -133,20 +128,21 @@ func TestKafkaClient_Produce(t *testing.T) {
 				hook := test.NewGlobal()
 
 				sendMessage(s, nil)
-				require.Equal(t, `{"offset":0,"key":"foo-1","value":"\"bar-1\"","headers":{}}`, hook.LastEntry().Message)
+				require.Equal(t, `{"offset":0,"key":"foo-1","value":"\"bar-1\"","headers":{"x-specification-message-id":"foo"}}`, hook.LastEntry().Message)
 
 				b, errCode := s.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
 				require.Equal(t, "mokapi", string(readBytes(b.Records[0].Value)))
-				require.Len(t, b.Records[0].Headers, 1)
-				require.Equal(t, "version", b.Records[0].Headers[0].Key)
-				require.Equal(t, []byte("1.0"), b.Records[0].Headers[0].Value)
+				require.Len(t, b.Records[0].Headers, 2)
+				version, found := getHeader("version", b.Records[0].Headers)
+				require.True(t, found, "version header not found")
+				require.Equal(t, []byte("1.0"), version.Value)
 			},
 		},
 		{
 			name: "add header",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *Engine) {
+			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
 				err := engine.AddScript(newScript("test.js", `
 					import { on } from 'mokapi'
 					export default function() {
@@ -160,7 +156,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 				sendMessage(s, map[string]string{"foo": "bar"})
 
 				b, _ := s.Topic("foo").Partition(0).Read(0, 1000)
-				require.Len(t, b.Records[0].Headers, 2)
+				require.Len(t, b.Records[0].Headers, 3)
 				require.Contains(t, b.Records[0].Headers, kafka.RecordHeader{
 					Key:   "foo",
 					Value: []byte("bar"),
@@ -173,7 +169,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 		},
 		{
 			name: "remove all headers",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *Engine) {
+			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
 				err := engine.AddScript(newScript("test.js", `
 					import { on } from 'mokapi'
 					export default function() {
@@ -192,24 +188,31 @@ func TestKafkaClient_Produce(t *testing.T) {
 		},
 		{
 			name: "validation error",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *Engine) {
+			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
+				logrus.SetOutput(io.Discard)
+				hook := test.NewGlobal()
+
 				err := engine.AddScript(newScript("test.js", `
 					import { produce } from 'mokapi/kafka'
 					export default function() {
 						produce({ topic: 'foo', messages: [{ data: 12 }] })
 					}
 				`))
-				require.EqualError(t, err, "produce kafka message to 'foo' failed: marshal data to 'application/json' failed: validation error on int64, expected schema type=string at reflect.methodValueCall (native)")
+				require.EqualError(t, err, "produce kafka message to 'foo' failed: encoding data to 'application/json' failed: found 1 error:\ninvalid type, expected string but got integer\nschema path #/type at mokapi/js/kafka.(*Module).Produce-fm (native)")
 
 				b, errCode := s.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
 				require.Len(t, b.Records, 0, "no record should be written")
+
+				// logs
+				require.Len(t, hook.Entries, 2)
+				require.Equal(t, "js error: produce kafka message to 'foo' failed: encoding data to 'application/json' failed: found 1 error:\ninvalid type, expected string but got integer\nschema path #/type in test.js", hook.LastEntry().Message)
 			},
 		},
 		{
 			name: "using value instead of data (skip validation)",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *Engine) {
+			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
 				err := engine.AddScript(newScript("test.js", `
 					import { produce } from 'mokapi/kafka'
 					export default function() {
@@ -227,7 +230,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 		},
 		{
 			name: "test retry",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *Engine) {
+			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
 				logrus.SetOutput(io.Discard)
 				logrus.SetLevel(logrus.DebugLevel)
 				hook := test.NewGlobal()
@@ -235,14 +238,13 @@ func TestKafkaClient_Produce(t *testing.T) {
 				go func() {
 					time.Sleep(time.Second * 1)
 
-					config := asyncapitest.NewConfig(
-						asyncapitest.WithInfo("foo", "", ""),
-						asyncapitest.WithChannel("retry",
-							asyncapitest.WithSubscribeAndPublish(
-								asyncapitest.WithMessage(
-									asyncapitest.WithContentType("application/json"),
-									asyncapitest.WithPayload(schematest.New("string")),
-									asyncapitest.WithKey(schematest.New("string"))))),
+					config := asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "", ""),
+						asyncapi3test.WithChannel("retry",
+							asyncapi3test.WithMessage("foo",
+								asyncapi3test.WithContentType("application/json"),
+								asyncapi3test.WithPayload(schematest.New("string")),
+								asyncapi3test.WithKey(schematest.New("string")))),
 					)
 					app.AddKafka(getConfig(config), nil)
 				}()
@@ -262,6 +264,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 				require.Equal(t, "12", kafka.BytesToString(b.Records[0].Value))
 				require.Equal(t, []string([]string{
 					"parsing script test.js",
+					"executing script test.js",
 					"kafka topic 'retry' not found. Retry in 200ms",
 					"kafka topic 'retry' not found. Retry in 800ms",
 				}), getMessages(hook))
@@ -274,41 +277,45 @@ func TestKafkaClient_Produce(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			gofakeit.Seed(11)
 
-			config := asyncapitest.NewConfig(
-				asyncapitest.WithInfo("foo", "", ""),
-				asyncapitest.WithChannel("foo",
-					asyncapitest.WithSubscribeAndPublish(
-						asyncapitest.WithMessage(
-							asyncapitest.WithContentType("application/json"),
-							asyncapitest.WithPayload(schematest.New("string")),
-							asyncapitest.WithKey(schematest.New("string")),
-						),
+			config := asyncapi3test.NewConfig(
+				asyncapi3test.WithInfo("foo", "", ""),
+				asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithMessage("foo",
+						asyncapi3test.WithContentType("application/json"),
+						asyncapi3test.WithPayload(schematest.New("string")),
+						asyncapi3test.WithKey(schematest.New("string")),
 					),
-					asyncapitest.WithTopicBinding(bindings.TopicBindings{ValueSchemaValidation: true}),
 				),
-				asyncapitest.WithChannel("bar",
-					asyncapitest.WithChannelKafka(bindings.TopicBindings{Partitions: 10}),
-					asyncapitest.WithSubscribeAndPublish(
-						asyncapitest.WithMessage(
-							asyncapitest.WithContentType("application/json"),
-							asyncapitest.WithPayload(schematest.New("string")),
-							asyncapitest.WithKey(schematest.New("string"))))),
+				asyncapi3test.WithChannel("bar",
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 10}),
+					asyncapi3test.WithMessage("foo",
+						asyncapi3test.WithContentType("application/json"),
+						asyncapi3test.WithPayload(schematest.New("string")),
+						asyncapi3test.WithKey(schematest.New("string")))),
 			)
 			app := runtime.New()
-			engine := New(reader, app, static.JsConfig{}, false)
-			info := app.AddKafka(getConfig(config), engine)
-			tc.test(t, app, info.Store, engine)
+			e := enginetest.NewEngine(
+				engine.WithKafkaClient(engine.NewKafkaClient(app)),
+				engine.WithLogger(logrus.StandardLogger()),
+			)
+
+			info, err := app.AddKafka(getConfig(config), e)
+			require.NoError(t, err)
+			tc.test(t, app, info.Store, e)
 		})
 	}
 }
 
 func readBytes(b kafka.Bytes) []byte {
 	buf := new(bytes.Buffer)
-	buf.ReadFrom(b)
+	_, err := buf.ReadFrom(b)
+	if err != nil {
+		panic(err)
+	}
 	return buf.Bytes()
 }
 
-func getConfig(c *asyncApi.Config) *dynamic.Config {
+func getConfig(c *asyncapi3.Config) *dynamic.Config {
 	u, _ := url.Parse("foo.bar")
 	cfg := &dynamic.Config{Data: c}
 	cfg.Info.Url = u
@@ -330,7 +337,7 @@ func sendMessage(s *store.Store, headers map[string]string) {
 			{Name: "foo", Partitions: []produce.RequestPartition{
 				{
 					Record: kafka.RecordBatch{
-						Records: []kafka.Record{
+						Records: []*kafka.Record{
 							{
 								Offset:  0,
 								Time:    time.Now(),
@@ -354,4 +361,13 @@ func getMessages(hook *test.Hook) []string {
 		result = append(result, e.Message)
 	}
 	return result
+}
+
+func getHeader(name string, headers []kafka.RecordHeader) (kafka.RecordHeader, bool) {
+	for _, h := range headers {
+		if h.Key == name {
+			return h, true
+		}
+	}
+	return kafka.RecordHeader{}, false
 }

@@ -13,12 +13,13 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 	for _, testcase := range []struct {
 		name string
 		s    string
-		fn   func(t *testing.T, r *schema.Ref)
+		test func(t *testing.T, r *schema.Ref, err error)
 	}{
 		{
 			name: "default",
 			s:    `{ "type": "string" }`,
-			fn: func(t *testing.T, r *schema.Ref) {
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
 				require.Nil(t, r.Value.MinLength)
 				require.Nil(t, r.Value.MaxLength)
 				require.Nil(t, r.Value.Minimum)
@@ -34,83 +35,94 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 		{
 			name: "type",
 			s:    `{ "type": "string" }`,
-			fn: func(t *testing.T, r *schema.Ref) {
-				require.Equal(t, "string", r.Value.Type)
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "string", r.Value.Type.String())
 			},
 		},
 		{
 			name: "description",
 			s:    `{ "description": "foo" }`,
-			fn: func(t *testing.T, r *schema.Ref) {
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
 				require.Equal(t, "foo", r.Value.Description)
 			},
 		},
 		{
 			name: "anyOf",
 			s:    `{ "anyOf": [ { "type": "string" }, { "type": "number" } ] }`,
-			fn: func(t *testing.T, r *schema.Ref) {
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
 				require.Len(t, r.Value.AnyOf, 2)
-				require.Equal(t, "string", r.Value.AnyOf[0].Value.Type)
-				require.Equal(t, "number", r.Value.AnyOf[1].Value.Type)
+				require.Equal(t, "string", r.Value.AnyOf[0].Value.Type.String())
+				require.Equal(t, "number", r.Value.AnyOf[1].Value.Type.String())
 			},
 		},
 		{
 			name: "allOf",
 			s:    `{ "allOf": [ { "type": "string" }, { "type": "number" } ] }`,
-			fn: func(t *testing.T, r *schema.Ref) {
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
 				require.Len(t, r.Value.AllOf, 2)
-				require.Equal(t, "string", r.Value.AllOf[0].Value.Type)
-				require.Equal(t, "number", r.Value.AllOf[1].Value.Type)
+				require.Equal(t, "string", r.Value.AllOf[0].Value.Type.String())
+				require.Equal(t, "number", r.Value.AllOf[1].Value.Type.String())
 			},
 		},
 		{
 			name: "oneOf",
 			s:    `{ "oneOf": [ { "type": "string" }, { "type": "number" } ] }`,
-			fn: func(t *testing.T, r *schema.Ref) {
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
 				require.Len(t, r.Value.OneOf, 2)
-				require.Equal(t, "string", r.Value.OneOf[0].Value.Type)
-				require.Equal(t, "number", r.Value.OneOf[1].Value.Type)
+				require.Equal(t, "string", r.Value.OneOf[0].Value.Type.String())
+				require.Equal(t, "number", r.Value.OneOf[1].Value.Type.String())
 			},
 		},
 		{
 			name: "deprecated",
 			s:    `{ "deprecated": true }`,
-			fn: func(t *testing.T, r *schema.Ref) {
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
 				require.True(t, r.Value.Deprecated)
 			},
 		},
 		{
 			name: "example value",
 			s:    `{ "example": 12 }`,
-			fn: func(t *testing.T, r *schema.Ref) {
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
 				require.Equal(t, float64(12), r.Value.Example)
 			},
 		},
 		{
 			name: "example array",
 			s:    `{ "example": [1,2,3] }`,
-			fn: func(t *testing.T, r *schema.Ref) {
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
 				require.Equal(t, []interface{}{float64(1), float64(2), float64(3)}, r.Value.Example)
 			},
 		},
 		{
 			name: "example object",
 			s:    `{ "example": { "id": 1, "name": "Jessica Smith" } }`,
-			fn: func(t *testing.T, r *schema.Ref) {
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{"id": float64(1), "name": "Jessica Smith"}, r.Value.Example)
 			},
 		},
 		{
 			name: "enum value",
 			s:    `{ "enum": [ 12 ] }`,
-			fn: func(t *testing.T, r *schema.Ref) {
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
 				require.Equal(t, []interface{}{float64(12)}, r.Value.Enum)
 			},
 		},
 		{
 			name: "enum array",
 			s:    `{ "enum": [ [1,2,3], [9,8,7] ] }`,
-			fn: func(t *testing.T, r *schema.Ref) {
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
 				require.Equal(t, []interface{}{
 					[]interface{}{float64(1), float64(2), float64(3)},
 					[]interface{}{float64(9), float64(8), float64(7)},
@@ -120,7 +132,8 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 		{
 			name: "enum object",
 			s:    `{ "enum": [ { "id": 1, "name": "Jessica Smith" }, { "id": 2, "name": "Ron Stewart" } ] }`,
-			fn: func(t *testing.T, r *schema.Ref) {
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
 				require.Equal(t, []interface{}{
 					map[string]interface{}{"id": float64(1), "name": "Jessica Smith"},
 					map[string]interface{}{"id": float64(2), "name": "Ron Stewart"},
@@ -130,7 +143,8 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 		{
 			name: "xml",
 			s:    `{ "xml": { "wrapped": true, "name": "foo", "attribute": true, "prefix": "bar", "namespace": "ns1"} }`,
-			fn: func(t *testing.T, r *schema.Ref) {
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
 				require.Equal(t, &schema.Xml{
 					Wrapped:   true,
 					Name:      "foo",
@@ -143,140 +157,182 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 		{
 			name: "format",
 			s:    `{ "format": "foo" }`,
-			fn: func(t *testing.T, r *schema.Ref) {
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
 				require.Equal(t, "foo", r.Value.Format)
 			},
 		},
 		{
 			name: "nullable",
 			s:    `{ "nullable": true }`,
-			fn: func(t *testing.T, r *schema.Ref) {
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
 				require.True(t, r.Value.Nullable)
 			},
 		},
 		{
 			name: "pattern",
 			s:    `{ "pattern": "[A-Z]{4}" }`,
-			fn: func(t *testing.T, r *schema.Ref) {
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
 				require.Equal(t, "[A-Z]{4}", r.Value.Pattern)
 			},
 		},
 		{
 			name: "minLength",
 			s:    `{ "minLength": 3 }`,
-			fn: func(t *testing.T, r *schema.Ref) {
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
 				require.Equal(t, 3, *r.Value.MinLength)
 			},
 		},
 		{
 			name: "maxLength",
 			s:    `{ "maxLength": 3 }`,
-			fn: func(t *testing.T, r *schema.Ref) {
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
 				require.Equal(t, 3, *r.Value.MaxLength)
 			},
 		},
 		{
 			name: "minimum",
 			s:    `{ "minimum": 3 }`,
-			fn: func(t *testing.T, r *schema.Ref) {
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
 				require.Equal(t, float64(3), *r.Value.Minimum)
 			},
 		},
 		{
 			name: "maximum",
 			s:    `{ "maximum": 3 }`,
-			fn: func(t *testing.T, r *schema.Ref) {
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
 				require.Equal(t, float64(3), *r.Value.Maximum)
 			},
 		},
 		{
-			name: "exclusiveMinimum",
+			name: "exclusiveMinimum bool",
 			s:    `{ "exclusiveMinimum": true }`,
-			fn: func(t *testing.T, r *schema.Ref) {
-				require.True(t, *r.Value.ExclusiveMinimum)
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
+				require.Equal(t, true, r.Value.ExclusiveMinimum.Value())
 			},
 		},
 		{
-			name: "exclusiveMaximum",
+			name: "exclusiveMinimum float",
+			s:    `{ "exclusiveMinimum": 1.5 }`,
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 1.5, r.Value.ExclusiveMinimum.Value())
+			},
+		},
+		{
+			name: "exclusiveMaximum bool",
 			s:    `{ "exclusiveMaximum": true }`,
-			fn: func(t *testing.T, r *schema.Ref) {
-				require.True(t, *r.Value.ExclusiveMaximum)
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
+				require.Equal(t, true, r.Value.ExclusiveMaximum.Value())
+			},
+		},
+		{
+			name: "exclusiveMaximum float",
+			s:    `{ "exclusiveMaximum": 1.5 }`,
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 1.5, r.Value.ExclusiveMaximum.Value())
 			},
 		},
 		{
 			name: "items",
 			s:    `{ "items": { "type": "object" } }`,
-			fn: func(t *testing.T, r *schema.Ref) {
-				require.Equal(t, "object", r.Value.Items.Value.Type)
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "object", r.Value.Items.Value.Type.String())
 			},
 		},
 		{
 			name: "uniqueItems",
 			s:    `{ "uniqueItems": true }`,
-			fn: func(t *testing.T, r *schema.Ref) {
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
 				require.True(t, r.Value.UniqueItems)
 			},
 		},
 		{
 			name: "minItems",
 			s:    `{ "minItems": 3 }`,
-			fn: func(t *testing.T, r *schema.Ref) {
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
 				require.Equal(t, 3, *r.Value.MinItems)
 			},
 		},
 		{
 			name: "maxItems",
 			s:    `{ "maxItems": 3 }`,
-			fn: func(t *testing.T, r *schema.Ref) {
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
 				require.Equal(t, 3, *r.Value.MaxItems)
 			},
 		},
 		{
 			name: "properties true",
 			s:    `{ "type": "object", "properties": { "name": { "type": "string" } } }`,
-			fn: func(t *testing.T, r *schema.Ref) {
-				require.Equal(t, "object", r.Value.Type)
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "object", r.Value.Type.String())
 				require.Equal(t, 1, r.Value.Properties.Len())
 				name := r.Value.Properties.Get("name")
 				require.NotNil(t, name)
-				require.Equal(t, "string", name.Value.Type)
+				require.Equal(t, "string", name.Value.Type.String())
 			},
 		},
 		{
 			name: "required",
 			s:    `{ "required": ["name"] }`,
-			fn: func(t *testing.T, r *schema.Ref) {
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
 				require.Equal(t, []string{"name"}, r.Value.Required)
 			},
 		},
 		{
 			name: "additional properties true",
 			s:    `{ "type": "object", "additionalProperties": true }`,
-			fn: func(t *testing.T, r *schema.Ref) {
-				require.Equal(t, "object", r.Value.Type)
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "object", r.Value.Type.String())
 				require.NotNil(t, r.Value.AdditionalProperties)
 			},
 		},
 		{
 			name: "additional properties {}",
 			s:    `{ "type": "object", "additionalProperties": {} }`,
-			fn: func(t *testing.T, r *schema.Ref) {
-				require.Equal(t, "object", r.Value.Type)
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "object", r.Value.Type.String())
 				require.NotNil(t, r.Value.AdditionalProperties)
 			},
 		},
 		{
 			name: "minProperties",
 			s:    `{ "minProperties": 3 }`,
-			fn: func(t *testing.T, r *schema.Ref) {
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
 				require.Equal(t, 3, *r.Value.MinProperties)
 			},
 		},
 		{
 			name: "maxProperties",
 			s:    `{ "maxProperties": 3 }`,
-			fn: func(t *testing.T, r *schema.Ref) {
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.NoError(t, err)
 				require.Equal(t, 3, *r.Value.MaxProperties)
+			},
+		},
+		{
+			name: "items: wrong type",
+			s:    `{ "items": [] }`,
+			test: func(t *testing.T, r *schema.Ref, err error) {
+				require.EqualError(t, err, "structural error at items: expected object but received an array")
 			},
 		},
 	} {
@@ -284,8 +340,7 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			r := &schema.Ref{}
 			err := json.Unmarshal([]byte(test.s), r)
-			require.NoError(t, err)
-			test.fn(t, r)
+			test.test(t, r, err)
 		})
 	}
 }
@@ -300,7 +355,7 @@ func TestSchema_UnmarshalYAML(t *testing.T) {
 			"empty",
 			"",
 			func(t *testing.T, schema *schema.Schema) {
-				require.Equal(t, "", schema.Type)
+				require.Equal(t, "", schema.Type.String())
 			},
 		},
 		{
@@ -373,7 +428,7 @@ items:
   type: object
 `,
 			fn: func(t *testing.T, r *schema.Schema) {
-				require.Equal(t, "object", r.Items.Value.Type)
+				require.Equal(t, "object", r.Items.Value.Type.String())
 			},
 		},
 		{
@@ -404,21 +459,39 @@ maxItems: 3
 			},
 		},
 		{
-			name: "exclusiveMinimum",
+			name: "exclusiveMinimum bool",
 			s: `
 exclusiveMinimum: true
 `,
 			fn: func(t *testing.T, r *schema.Schema) {
-				require.True(t, *r.ExclusiveMinimum)
+				require.Equal(t, true, r.ExclusiveMinimum.Value())
 			},
 		},
 		{
-			name: "exclusiveMaximum",
+			name: "exclusiveMinimum float",
+			s: `
+exclusiveMinimum: 1.5
+`,
+			fn: func(t *testing.T, r *schema.Schema) {
+				require.Equal(t, 1.5, r.ExclusiveMinimum.Value())
+			},
+		},
+		{
+			name: "exclusiveMaximum bool",
 			s: `
 exclusiveMaximum: true
 `,
 			fn: func(t *testing.T, r *schema.Schema) {
-				require.True(t, *r.ExclusiveMaximum)
+				require.Equal(t, true, r.ExclusiveMaximum.Value())
+			},
+		},
+		{
+			name: "exclusiveMaximum float",
+			s: `
+exclusiveMaximum: 1.5
+`,
+			fn: func(t *testing.T, r *schema.Schema) {
+				require.Equal(t, 1.5, r.ExclusiveMaximum.Value())
 			},
 		},
 		{
@@ -430,11 +503,11 @@ properties:
     type: string
 `,
 			fn: func(t *testing.T, r *schema.Schema) {
-				require.Equal(t, "object", r.Type)
+				require.Equal(t, "object", r.Type.String())
 				require.Equal(t, 1, r.Properties.Len())
 				name := r.Properties.Get("name")
 				require.NotNil(t, name)
-				require.Equal(t, "string", name.Value.Type)
+				require.Equal(t, "string", name.Value.Type.String())
 			},
 		},
 		{
@@ -447,7 +520,7 @@ properties:
     type: string
 `,
 			func(t *testing.T, schema *schema.Schema) {
-				require.Equal(t, "object", schema.Type)
+				require.Equal(t, "object", schema.Type.String())
 				require.False(t, schema.IsFreeForm(), "object should not be free form")
 				require.False(t, schema.IsDictionary())
 			},
@@ -462,7 +535,7 @@ properties:
     type: string
 `,
 			func(t *testing.T, schema *schema.Schema) {
-				require.Equal(t, "object", schema.Type)
+				require.Equal(t, "object", schema.Type.String())
 				require.True(t, schema.IsFreeForm(), "object should be free form")
 				require.False(t, schema.IsDictionary())
 			},
@@ -474,7 +547,7 @@ type: object
 additionalProperties: {}
 `,
 			func(t *testing.T, schema *schema.Schema) {
-				require.Equal(t, "object", schema.Type)
+				require.Equal(t, "object", schema.Type.String())
 				require.True(t, schema.IsFreeForm(), "object should be free form")
 			},
 		},
@@ -489,9 +562,9 @@ properties:
     type: string
 `,
 			func(t *testing.T, schema *schema.Schema) {
-				require.Equal(t, "object", schema.Type)
+				require.Equal(t, "object", schema.Type.String())
 				require.False(t, schema.IsFreeForm())
-				require.Equal(t, "string", schema.AdditionalProperties.Value.Type)
+				require.Equal(t, "string", schema.AdditionalProperties.Value.Type.String())
 			},
 		},
 		{
@@ -503,8 +576,8 @@ anyOf:
 `,
 			fn: func(t *testing.T, r *schema.Schema) {
 				require.Len(t, r.AnyOf, 2)
-				require.Equal(t, "string", r.AnyOf[0].Value.Type)
-				require.Equal(t, "number", r.AnyOf[1].Value.Type)
+				require.Equal(t, "string", r.AnyOf[0].Value.Type.String())
+				require.Equal(t, "number", r.AnyOf[1].Value.Type.String())
 			},
 		},
 
@@ -517,8 +590,8 @@ oneOf:
 `,
 			fn: func(t *testing.T, r *schema.Schema) {
 				require.Len(t, r.OneOf, 2)
-				require.Equal(t, "string", r.OneOf[0].Value.Type)
-				require.Equal(t, "number", r.OneOf[1].Value.Type)
+				require.Equal(t, "string", r.OneOf[0].Value.Type.String())
+				require.Equal(t, "number", r.OneOf[1].Value.Type.String())
 			},
 		},
 		{
@@ -530,8 +603,8 @@ allOf:
 `,
 			fn: func(t *testing.T, r *schema.Schema) {
 				require.Len(t, r.AllOf, 2)
-				require.Equal(t, "string", r.AllOf[0].Value.Type)
-				require.Equal(t, "number", r.AllOf[1].Value.Type)
+				require.Equal(t, "string", r.AllOf[0].Value.Type.String())
+				require.Equal(t, "number", r.AllOf[1].Value.Type.String())
 			},
 		},
 		{
@@ -593,7 +666,7 @@ enum:
     age: 29
 `,
 			func(t *testing.T, schema *schema.Schema) {
-				require.Equal(t, "object", schema.Type)
+				require.Equal(t, "object", schema.Type.String())
 				require.Len(t, schema.Enum, 1)
 				require.Equal(t, map[string]interface{}{"name": "alice", "age": 29}, schema.Enum[0])
 			},
@@ -698,7 +771,7 @@ func TestSchema_IsFreeForm(t *testing.T) {
 			"object with empty additional properties",
 			func(t *testing.T) {
 				s := schematest.New("object")
-				s.AdditionalProperties = &schema.AdditionalProperties{}
+				s.AdditionalProperties = &schema.Ref{}
 				require.True(t, s.IsFreeForm())
 			},
 		},

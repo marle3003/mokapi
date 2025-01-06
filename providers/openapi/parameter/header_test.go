@@ -5,6 +5,7 @@ import (
 	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
+	jsonSchema "mokapi/schema/json/schema"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -22,7 +23,7 @@ func TestFromRequest_Header(t *testing.T) {
 			params: parameter.Parameters{{Value: &parameter.Parameter{
 				Type:   parameter.Header,
 				Name:   "debug",
-				Schema: &schema.Ref{Value: &schema.Schema{Type: "integer", Enum: []interface{}{0, 1}}},
+				Schema: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}, Enum: []interface{}{0, 1}}},
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
@@ -33,7 +34,7 @@ func TestFromRequest_Header(t *testing.T) {
 				require.NoError(t, err)
 				cookie := result[parameter.Header]["debug"]
 				require.Equal(t, int64(1), cookie.Value)
-				require.Equal(t, "1", cookie.Raw)
+				require.Equal(t, "1", *cookie.Raw)
 			},
 		},
 		{
@@ -51,7 +52,7 @@ func TestFromRequest_Header(t *testing.T) {
 				require.NoError(t, err)
 				cookie := result[parameter.Header]["debug"]
 				require.Equal(t, "1", cookie.Value)
-				require.Equal(t, "1", cookie.Raw)
+				require.Equal(t, "1", *cookie.Raw)
 			},
 		},
 		{
@@ -60,7 +61,7 @@ func TestFromRequest_Header(t *testing.T) {
 				Type:     parameter.Header,
 				Name:     "debug",
 				Required: false,
-				Schema:   &schema.Ref{Value: &schema.Schema{Type: "integer", Enum: []interface{}{0, 1}}},
+				Schema:   &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}, Enum: []interface{}{0, 1}}},
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
@@ -77,7 +78,7 @@ func TestFromRequest_Header(t *testing.T) {
 				Type:     parameter.Header,
 				Name:     "debug",
 				Required: true,
-				Schema:   &schema.Ref{Value: &schema.Schema{Type: "integer", Enum: []interface{}{0, 1}}},
+				Schema:   &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}, Enum: []interface{}{0, 1}}},
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
@@ -94,7 +95,7 @@ func TestFromRequest_Header(t *testing.T) {
 				Type:     parameter.Header,
 				Name:     "debug",
 				Required: true,
-				Schema:   &schema.Ref{Value: &schema.Schema{Type: "integer", Enum: []interface{}{0, 1}}},
+				Schema:   &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}, Enum: []interface{}{0, 1}}},
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
@@ -111,7 +112,7 @@ func TestFromRequest_Header(t *testing.T) {
 			params: parameter.Parameters{{Value: &parameter.Parameter{
 				Type:   parameter.Header,
 				Name:   "debug",
-				Schema: &schema.Ref{Value: &schema.Schema{Type: "integer", Enum: []interface{}{0, 1}}},
+				Schema: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}, Enum: []interface{}{0, 1}}},
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
@@ -119,7 +120,7 @@ func TestFromRequest_Header(t *testing.T) {
 				return r
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
-				require.EqualError(t, err, "parse header parameter 'debug' failed: parse 'foo' failed, expected schema type=integer")
+				require.EqualError(t, err, "parse header parameter 'debug' failed: found 1 error:\ninvalid type, expected integer but got string\nschema path #/type")
 				require.Len(t, result[parameter.Header], 0)
 			},
 		},
@@ -130,9 +131,10 @@ func TestFromRequest_Header(t *testing.T) {
 				Name: "foo",
 				Schema: &schema.Ref{
 					Value: &schema.Schema{
-						Type: "array",
+						Type: jsonSchema.Types{"array"},
 						Items: &schema.Ref{Value: &schema.Schema{
-							Type: "integer"}},
+							Type: jsonSchema.Types{"integer"},
+						}},
 					}},
 			}}},
 			request: func() *http.Request {
@@ -144,7 +146,7 @@ func TestFromRequest_Header(t *testing.T) {
 				require.NoError(t, err)
 				cookie := result[parameter.Header]["foo"]
 				require.Equal(t, []interface{}{int64(1), int64(2), int64(3)}, cookie.Value)
-				require.Equal(t, "1,2,3", cookie.Raw)
+				require.Equal(t, "1,2,3", *cookie.Raw)
 			},
 		},
 		{
@@ -154,9 +156,10 @@ func TestFromRequest_Header(t *testing.T) {
 				Name: "foo",
 				Schema: &schema.Ref{
 					Value: &schema.Schema{
-						Type: "array",
+						Type: jsonSchema.Types{"array"},
 						Items: &schema.Ref{Value: &schema.Schema{
-							Type: "integer"}},
+							Type: jsonSchema.Types{"integer"},
+						}},
 					}},
 			}}},
 			request: func() *http.Request {
@@ -165,7 +168,7 @@ func TestFromRequest_Header(t *testing.T) {
 				return r
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
-				require.EqualError(t, err, "parse header parameter 'foo' failed: parse 'foo' failed, expected schema type=integer")
+				require.EqualError(t, err, "parse header parameter 'foo' failed: found 1 error:\ninvalid type, expected integer but got string\nschema path #/items/type")
 				require.Len(t, result[parameter.Header], 0)
 			},
 		},
@@ -189,7 +192,7 @@ func TestFromRequest_Header(t *testing.T) {
 				require.NoError(t, err)
 				cookie := result[parameter.Header]["foo"]
 				require.Equal(t, map[string]interface{}{"firstName": "Alex", "role": "admin"}, cookie.Value)
-				require.Equal(t, "role,admin,firstName,Alex", cookie.Raw)
+				require.Equal(t, "role,admin,firstName,Alex", *cookie.Raw)
 			},
 		},
 		{
@@ -211,7 +214,7 @@ func TestFromRequest_Header(t *testing.T) {
 				require.NoError(t, err)
 				cookie := result[parameter.Header]["foo"]
 				require.Equal(t, map[string]interface{}{"role": "admin"}, cookie.Value)
-				require.Equal(t, "role,admin,firstName,Alex", cookie.Raw)
+				require.Equal(t, "role,admin,firstName,Alex", *cookie.Raw)
 			},
 		},
 		{
@@ -252,7 +255,7 @@ func TestFromRequest_Header(t *testing.T) {
 				return r
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
-				require.EqualError(t, err, "parse header parameter 'foo' failed: parse property 'age' failed: parse 'Alex' failed, expected schema type=number")
+				require.EqualError(t, err, "parse header parameter 'foo' failed: parse property 'age' failed: found 1 error:\ninvalid type, expected number but got string\nschema path #/type")
 				require.Len(t, result[parameter.Header], 0)
 			},
 		},

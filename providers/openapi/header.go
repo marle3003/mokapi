@@ -5,14 +5,13 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
-	"mokapi/json/ref"
 	"mokapi/providers/openapi/parameter"
 )
 
 type Headers map[string]*HeaderRef
 
 type HeaderRef struct {
-	ref.Reference
+	dynamic.Reference
 	Value *Header
 }
 

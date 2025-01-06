@@ -5,6 +5,7 @@ import (
 	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
+	jsonSchema "mokapi/schema/json/schema"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -23,7 +24,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:   "id",
 					Type:   parameter.Query,
-					Schema: &schema.Ref{Value: &schema.Schema{Type: "integer"}},
+					Schema: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}},
 					Style:  "form",
 				}},
 			},
@@ -41,7 +42,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:   "foo",
 					Type:   parameter.Query,
-					Schema: &schema.Ref{Value: &schema.Schema{Type: "string"}},
+					Schema: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"string"}}},
 					Style:  "form",
 				}},
 			},
@@ -59,7 +60,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:    "id",
 					Type:    parameter.Query,
-					Schema:  &schema.Ref{Value: &schema.Schema{Type: "integer"}},
+					Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}},
 					Style:   "form",
 					Explode: explode(false),
 				}},
@@ -69,7 +70,9 @@ func TestParseQuery(t *testing.T) {
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
 				require.NoError(t, err)
-				require.Len(t, result[parameter.Query], 0)
+				require.Len(t, result[parameter.Query], 1)
+				require.Nil(t, result[parameter.Query]["id"].Value)
+				require.Nil(t, result[parameter.Query]["id"].Raw)
 			},
 		},
 		{
@@ -78,7 +81,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:     "id",
 					Type:     parameter.Query,
-					Schema:   &schema.Ref{Value: &schema.Schema{Type: "integer"}},
+					Schema:   &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}},
 					Required: true,
 					Style:    "form",
 				}},
@@ -97,7 +100,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:    "id",
 					Type:    parameter.Query,
-					Schema:  &schema.Ref{Value: &schema.Schema{Type: "array", Items: &schema.Ref{Value: &schema.Schema{Type: "integer"}}}},
+					Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"array"}, Items: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}}}},
 					Style:   "form",
 					Explode: explode(true),
 				}},
@@ -116,7 +119,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:    "id",
 					Type:    parameter.Query,
-					Schema:  &schema.Ref{Value: &schema.Schema{Type: "array", Items: &schema.Ref{Value: &schema.Schema{Type: "integer"}}}},
+					Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"array"}, Items: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}}}},
 					Style:   "form",
 					Explode: explode(false),
 				}},
@@ -135,7 +138,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:    "id",
 					Type:    parameter.Query,
-					Schema:  &schema.Ref{Value: &schema.Schema{Type: "array", Items: &schema.Ref{Value: &schema.Schema{Type: "integer"}}}},
+					Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"array"}, Items: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}}}},
 					Style:   "spaceDelimited",
 					Explode: explode(true),
 				}},
@@ -154,7 +157,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:    "id",
 					Type:    parameter.Query,
-					Schema:  &schema.Ref{Value: &schema.Schema{Type: "array", Items: &schema.Ref{Value: &schema.Schema{Type: "integer"}}}},
+					Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"array"}, Items: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}}}},
 					Style:   "spaceDelimited",
 					Explode: explode(false),
 				}},
@@ -173,7 +176,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:    "id",
 					Type:    parameter.Query,
-					Schema:  &schema.Ref{Value: &schema.Schema{Type: "array", Items: &schema.Ref{Value: &schema.Schema{Type: "integer"}}}},
+					Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"array"}, Items: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}}}},
 					Style:   "pipeDelimited",
 					Explode: explode(true),
 				}},
@@ -192,7 +195,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:    "id",
 					Type:    parameter.Query,
-					Schema:  &schema.Ref{Value: &schema.Schema{Type: "array", Items: &schema.Ref{Value: &schema.Schema{Type: "integer"}}}},
+					Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"array"}, Items: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}}}},
 					Style:   "pipeDelimited",
 					Explode: explode(false),
 				}},
@@ -421,7 +424,7 @@ func TestParseQuery(t *testing.T) {
 				return httptest.NewRequest(http.MethodGet, "https://foo.bar?id[role]=admin&id[age]=foo&id[lastName]=Smith", nil)
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
-				require.EqualError(t, err, "parse query parameter 'id' failed: parse 'foo' failed, expected schema type=integer")
+				require.EqualError(t, err, "parse query parameter 'id' failed: found 1 error:\ninvalid type, expected integer but got string\nschema path #/type")
 				require.Len(t, result[parameter.Query], 0)
 			},
 		},
@@ -446,6 +449,25 @@ func TestParseQuery(t *testing.T) {
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
 				require.EqualError(t, err, "parse query parameter 'id' failed: parameter is required")
 				require.Len(t, result[parameter.Query], 0)
+			},
+		},
+		{
+			name: "boolean value true",
+			params: parameter.Parameters{
+				{Value: &parameter.Parameter{
+					Name:     "enabled",
+					Type:     parameter.Query,
+					Schema:   &schema.Ref{Value: schematest.New("boolean")},
+					Required: true,
+				}},
+			},
+			request: func() *http.Request {
+				return httptest.NewRequest(http.MethodGet, "https://foo.bar?enabled=true", nil)
+			},
+			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+				require.NoError(t, err)
+				require.Equal(t, true, result[parameter.Query]["enabled"].Value)
+				require.Equal(t, "true", *(result[parameter.Query]["enabled"].Raw))
 			},
 		},
 	}

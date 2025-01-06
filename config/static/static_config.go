@@ -1,26 +1,34 @@
 package static
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"mokapi/config/tls"
 	"strings"
 )
 
 type Config struct {
-	Log        *MokApiLog
-	ConfigFile string
-	Providers  Providers
-	Api        Api
-	RootCaCert tls.FileOrContent
-	RootCaKey  tls.FileOrContent
-	Services   Services
-	Js         JsConfig
+	Log              *MokApiLog        `json:"log" yaml:"log"`
+	ConfigFile       string            `json:"-" yaml:"-"`
+	Providers        Providers         `json:"providers" yaml:"providers"`
+	Api              Api               `json:"api" yaml:"api"`
+	RootCaCert       tls.FileOrContent `json:"rootCaCert" yaml:"rootCaCert"`
+	RootCaKey        tls.FileOrContent `json:"rootCaKey" yaml:"rootCaKey"`
+	Services         Services          `json:"-" yaml:"-"`
+	Js               JsConfig          `json:"js" yaml:"js"`
+	Configs          Configs           `json:"configs" yaml:"configs" explode:"config"`
+	Help             bool              `json:"-" yaml:"-"`
+	GenerateSkeleton interface{}       `json:"-" yaml:"-" flag:"generate-cli-skeleton"`
+	Features         []string          `json:"-" yaml:"-" explode:"feature"`
 }
 
 func NewConfig() *Config {
 	cfg := &Config{}
-	cfg.Log = &MokApiLog{Level: "info", Format: "default"}
+	cfg.Log = &MokApiLog{Level: "info", Format: "text"}
 	cfg.Api.Port = "8080"
 	cfg.Api.Dashboard = true
+	cfg.Providers.File.SkipPrefix = []string{"_"}
 	return cfg
 }
 
@@ -44,17 +52,18 @@ type Api struct {
 }
 
 type FileProvider struct {
-	Filename   string
-	Directory  string
-	SkipPrefix []string
+	Filenames   []string `explode:"filename"`
+	Directories []string `explode:"directory"`
+	SkipPrefix  []string `flag:"skip-prefix"`
+	Include     []string
 }
 
 type GitProvider struct {
-	Url          string
-	Urls         []string
-	PullInterval string `yaml:"pullInterval"`
+	Urls         []string `explode:"url"`
+	PullInterval string   `yaml:"pullInterval" name:"pull-interval"`
+	TempDir      string   `yaml:"tempDir" name:"temp-dir"`
 
-	Repositories []GitRepo
+	Repositories []GitRepo `explode:"repository"`
 }
 
 type GitRepo struct {
@@ -68,7 +77,7 @@ type GitRepo struct {
 }
 
 type GitAuth struct {
-	GitHub *GitHubAuth
+	GitHub *GitHubAuth `yaml:"gitHub,github"`
 }
 
 type GitHubAuth struct {
@@ -78,24 +87,23 @@ type GitHubAuth struct {
 }
 
 type HttpProvider struct {
-	Url           string
-	Urls          []string
-	PollInterval  string `yaml:"pollInterval"`
-	PollTimeout   string `yaml:"pollTimeout"`
+	Urls          []string `explode:"url"`
+	PollInterval  string   `yaml:"pollInterval" flag:"poll-interval"`
+	PollTimeout   string   `yaml:"pollTimeout" flag:"poll-timeout"`
 	Proxy         string
-	TlsSkipVerify bool              `yaml:"tlsSkipVerify"`
+	TlsSkipVerify bool              `yaml:"tlsSkipVerify" flag:"tls-skip-verify"`
 	Ca            tls.FileOrContent `yaml:"ca"`
 }
 
 type NpmProvider struct {
-	GlobalFolders []string `yaml:"globalFolders"`
-	Packages      []NpmPackage
+	GlobalFolders []string     `yaml:"globalFolders" flag:"global-folders"`
+	Packages      []NpmPackage `explode:"package"`
 }
 
 type NpmPackage struct {
 	Name string
 	// Specifies an allow list of files to include in mokapi
-	Files []string
+	Files []string `explode:"file"`
 	// Specifies an array of filenames pr pattern to include in mokapi
 	Include []string
 }
@@ -128,4 +136,34 @@ type HttpServer struct {
 
 type JsConfig struct {
 	GlobalFolders []string
+}
+
+type Configs []string
+
+func (c *Configs) UnmarshalJSON(b []byte) error {
+	dec := json.NewDecoder(bytes.NewReader(b))
+	token, err := dec.Token()
+	if err != nil {
+		return err
+	}
+	if delim, ok := token.(json.Delim); ok && delim != '[' {
+		return fmt.Errorf("unexpected token %s; expected '['", token)
+	}
+	for {
+		msg := json.RawMessage{}
+		err = dec.Decode(&msg)
+		if err != nil {
+			return err
+		}
+		*c = append(*c, string(msg))
+
+		token, err = dec.Token()
+		if err != nil {
+			return err
+		}
+		if delim, ok := token.(json.Delim); ok && delim == ']' {
+			return nil
+		}
+
+	}
 }

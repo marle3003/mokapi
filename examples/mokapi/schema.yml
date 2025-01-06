@@ -2,11 +2,14 @@ components:
   schemas:
     Schema:
       type: object
+      nullable: true
       properties:
         ref:
           type: string
         type:
-          type: string
+          type: [string, array]
+          items:
+            type: string
         format:
           type: string
         pattern:

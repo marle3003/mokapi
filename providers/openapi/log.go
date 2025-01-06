@@ -37,10 +37,10 @@ type HttpResponseLog struct {
 }
 
 type HttpParameter struct {
-	Name  string `json:"name"`
-	Type  string `json:"type"`
-	Value string `json:"value"`
-	Raw   string `json:"raw"`
+	Name  string  `json:"name"`
+	Type  string  `json:"type"`
+	Value string  `json:"value"`
+	Raw   *string `json:"raw"`
 }
 
 func NewLogEventContext(r *http.Request, deprecated bool, traits events.Traits) (context.Context, error) {
@@ -70,10 +70,11 @@ func NewLogEventContext(r *http.Request, deprecated bool, traits events.Traits) 
 			}
 		}
 		for k, v := range r.Header {
+			raw := strings.Join(v, ",")
 			p := HttpParameter{
 				Name: k,
 				Type: string(parameter.Header),
-				Raw:  strings.Join(v, ","),
+				Raw:  &raw,
 			}
 			if params != nil {
 				if pp, ok := params[parameter.Header][k]; ok {

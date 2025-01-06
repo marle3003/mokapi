@@ -1,9 +1,11 @@
-package js
+package js_test
 
 import (
 	r "github.com/stretchr/testify/require"
-	"mokapi/config/static"
 	"mokapi/engine/common"
+	"mokapi/engine/enginetest"
+	"mokapi/js"
+	"mokapi/js/jstest"
 	"testing"
 	"time"
 )
@@ -11,23 +13,23 @@ import (
 func TestScript_Kafka_Produce(t *testing.T) {
 	testcases := []struct {
 		name string
-		test func(t *testing.T, host *testHost)
+		test func(t *testing.T, host *enginetest.Host)
 	}{
 		{
 			name: "set topic",
-			test: func(t *testing.T, host *testHost) {
-				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.KafkaClientTest.ProduceFunc = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					r.Equal(t, "foo", args.Topic)
 					r.Equal(t, "", args.Cluster)
 					return &common.KafkaProduceResult{}, nil
 				}
 
-				s, err := New(newScript("",
+				s, err := jstest.New(jstest.WithSource(
 					`import { produce } from 'mokapi/kafka'
 						 export default function() {
 						  	return produce({ topic: 'foo' })
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
@@ -35,19 +37,19 @@ func TestScript_Kafka_Produce(t *testing.T) {
 		},
 		{
 			name: "set topic and cluster",
-			test: func(t *testing.T, host *testHost) {
-				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.KafkaClientTest.ProduceFunc = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					r.Equal(t, "foo", args.Topic)
 					r.Equal(t, "bar", args.Cluster)
 					return &common.KafkaProduceResult{}, nil
 				}
 
-				s, err := New(newScript("",
+				s, err := jstest.New(jstest.WithSource(
 					`import { produce } from 'mokapi/kafka'
 						 export default function() {
   							return produce({ topic: 'foo', cluster: 'bar' })
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
@@ -55,18 +57,18 @@ func TestScript_Kafka_Produce(t *testing.T) {
 		},
 		{
 			name: "set cluster to null",
-			test: func(t *testing.T, host *testHost) {
-				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.KafkaClientTest.ProduceFunc = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					r.Equal(t, "", args.Cluster)
 					return &common.KafkaProduceResult{}, nil
 				}
 
-				s, err := New(newScript("",
+				s, err := jstest.New(jstest.WithSource(
 					`import { produce } from 'mokapi/kafka'
 						 export default function() {
   							return produce({ cluster: null })
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
@@ -74,8 +76,8 @@ func TestScript_Kafka_Produce(t *testing.T) {
 		},
 		{
 			name: "set key, value and partition",
-			test: func(t *testing.T, host *testHost) {
-				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.KafkaClientTest.ProduceFunc = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					msg := args.Messages[0]
 					r.Equal(t, "key", msg.Key)
 					r.Equal(t, "value", msg.Data)
@@ -83,12 +85,12 @@ func TestScript_Kafka_Produce(t *testing.T) {
 					return &common.KafkaProduceResult{}, nil
 				}
 
-				s, err := New(newScript("",
+				s, err := jstest.New(jstest.WithSource(
 					`import { produce } from 'mokapi/kafka'
 						 export default function() {
 						  	return produce({ value: 'value', key: 'key', partition: 2 })
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
@@ -96,8 +98,8 @@ func TestScript_Kafka_Produce(t *testing.T) {
 		},
 		{
 			name: "set key, value and partition",
-			test: func(t *testing.T, host *testHost) {
-				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.KafkaClientTest.ProduceFunc = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					msg := args.Messages[0]
 					r.Equal(t, "key", msg.Key)
 					r.Equal(t, "value", msg.Data)
@@ -105,12 +107,12 @@ func TestScript_Kafka_Produce(t *testing.T) {
 					return &common.KafkaProduceResult{}, nil
 				}
 
-				s, err := New(newScript("",
+				s, err := jstest.New(jstest.WithSource(
 					`import { produce } from 'mokapi/kafka'
 						 export default function() {
 						  	return produce({ value: 'value', key: 'key', partition: 2 })
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
@@ -118,19 +120,19 @@ func TestScript_Kafka_Produce(t *testing.T) {
 		},
 		{
 			name: "set headers",
-			test: func(t *testing.T, host *testHost) {
-				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.KafkaClientTest.ProduceFunc = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					msg := args.Messages[0]
 					r.Equal(t, map[string]interface{}{"foo": "bar"}, msg.Headers)
 					return &common.KafkaProduceResult{}, nil
 				}
 
-				s, err := New(newScript("",
+				s, err := jstest.New(jstest.WithSource(
 					`import { produce } from 'mokapi/kafka'
 						 export default function() {
 						  	return produce({ headers: { foo: 'bar' } })
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
@@ -138,8 +140,8 @@ func TestScript_Kafka_Produce(t *testing.T) {
 		},
 		{
 			name: "use messages",
-			test: func(t *testing.T, host *testHost) {
-				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.KafkaClientTest.ProduceFunc = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					msg := args.Messages[0]
 					r.Equal(t, "key1", msg.Key)
 					r.Equal(t, []byte("hello world"), msg.Value)
@@ -148,12 +150,12 @@ func TestScript_Kafka_Produce(t *testing.T) {
 					return &common.KafkaProduceResult{}, nil
 				}
 
-				s, err := New(newScript("",
+				s, err := jstest.New(jstest.WithSource(
 					`import { produce } from 'mokapi/kafka'
 						 export default function() {
 						  	return produce({ messages: [{ key: 'key1', value: 'hello world', headers: { 'system-id': 'foo' }, partition: 12 }] })
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
@@ -161,19 +163,19 @@ func TestScript_Kafka_Produce(t *testing.T) {
 		},
 		{
 			name: "use messages with data",
-			test: func(t *testing.T, host *testHost) {
-				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.KafkaClientTest.ProduceFunc = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					msg := args.Messages[0]
 					r.Equal(t, "hello world", msg.Data)
 					return &common.KafkaProduceResult{}, nil
 				}
 
-				s, err := New(newScript("",
+				s, err := jstest.New(jstest.WithSource(
 					`import { produce } from 'mokapi/kafka'
 						 export default function() {
 						  	return produce({ messages: [{ data: 'hello world' }] })
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
@@ -181,8 +183,8 @@ func TestScript_Kafka_Produce(t *testing.T) {
 		},
 		{
 			name: "result",
-			test: func(t *testing.T, host *testHost) {
-				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.KafkaClientTest.ProduceFunc = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					return &common.KafkaProduceResult{
 						Cluster: "Cluster",
 						Topic:   "Topic",
@@ -197,12 +199,12 @@ func TestScript_Kafka_Produce(t *testing.T) {
 					}, nil
 				}
 
-				s, err := New(newScript("",
+				s, err := jstest.New(jstest.WithSource(
 					`import { produce } from 'mokapi/kafka'
 						 export default function() {
 						  	return produce()
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
@@ -216,41 +218,21 @@ func TestScript_Kafka_Produce(t *testing.T) {
 			},
 		},
 		{
-			name: "using deprecated module",
-			test: func(t *testing.T, host *testHost) {
-				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
-					r.Equal(t, "foo", args.Topic)
-					r.Equal(t, "", args.Cluster)
-					return &common.KafkaProduceResult{}, nil
-				}
-
-				s, err := New(newScript("",
-					`import { produce } from 'kafka'
-						 export default function() {
-						  	return produce({ topic: 'foo' })
-						 }`),
-					host, static.JsConfig{})
-				r.NoError(t, err)
-				err = s.Run()
-				r.NoError(t, err)
-			},
-		},
-		{
 			name: "default retry",
-			test: func(t *testing.T, host *testHost) {
-				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.KafkaClientTest.ProduceFunc = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					r.Equal(t, 30000*time.Millisecond, args.Retry.MaxRetryTime)
 					r.Equal(t, 200*time.Millisecond, args.Retry.InitialRetryTime)
 					r.Equal(t, 5, args.Retry.Retries)
 					return &common.KafkaProduceResult{}, nil
 				}
 
-				s, err := New(newScript("",
+				s, err := jstest.New(jstest.WithSource(
 					`import { produce } from 'mokapi/kafka'
 						 export default function() {
 						  	return produce({})
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
@@ -258,20 +240,20 @@ func TestScript_Kafka_Produce(t *testing.T) {
 		},
 		{
 			name: "set retry using number",
-			test: func(t *testing.T, host *testHost) {
-				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.KafkaClientTest.ProduceFunc = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					r.Equal(t, 1000*time.Millisecond, args.Retry.MaxRetryTime)
 					r.Equal(t, time.Duration(0), args.Retry.InitialRetryTime)
 					r.Equal(t, 100, args.Retry.Retries)
 					return &common.KafkaProduceResult{}, nil
 				}
 
-				s, err := New(newScript("",
+				s, err := jstest.New(jstest.WithSource(
 					`import { produce } from 'mokapi/kafka'
 						 export default function() {
 						  	return produce({ retry: { maxRetryTime: 1000, initialRetryTime: 0, retries: 100 } })
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
@@ -279,20 +261,20 @@ func TestScript_Kafka_Produce(t *testing.T) {
 		},
 		{
 			name: "set retry using string",
-			test: func(t *testing.T, host *testHost) {
-				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.KafkaClientTest.ProduceFunc = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					r.Equal(t, 30*time.Second, args.Retry.MaxRetryTime)
 					r.Equal(t, 200*time.Millisecond, args.Retry.InitialRetryTime)
 					r.Equal(t, 100, args.Retry.Retries)
 					return &common.KafkaProduceResult{}, nil
 				}
 
-				s, err := New(newScript("",
+				s, err := jstest.New(jstest.WithSource(
 					`import { produce } from 'mokapi/kafka'
 						 export default function() {
 						  	return produce({ retry: { maxRetryTime: '30s', initialRetryTime: '200ms', retries: 100 } })
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
@@ -300,20 +282,20 @@ func TestScript_Kafka_Produce(t *testing.T) {
 		},
 		{
 			name: "set retry using invalid type",
-			test: func(t *testing.T, host *testHost) {
-				host.kafkaClient.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.KafkaClientTest.ProduceFunc = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					return &common.KafkaProduceResult{}, nil
 				}
 
-				s, err := New(newScript("",
+				s, err := jstest.New(jstest.WithSource(
 					`import { produce } from 'mokapi/kafka'
 						 export default function() {
 						  	return produce({ retry: { maxRetryTime: [12], initialRetryTime: '200ms', retries: 100 } })
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 				err = s.Run()
-				r.EqualError(t, err, "type []interface {} for maxRetryTime not supported at reflect.methodValueCall (native)")
+				r.EqualError(t, err, "type []interface {} for maxRetryTime not supported at mokapi/js/kafka.(*Module).Produce-fm (native)")
 			},
 		},
 	}
@@ -324,8 +306,122 @@ func TestScript_Kafka_Produce(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			host := &testHost{
-				kafkaClient: &kafkaClient{},
+			host := &enginetest.Host{
+				KafkaClientTest: &enginetest.KafkaClient{},
+			}
+
+			tc.test(t, host)
+		})
+	}
+}
+
+func TestKafkaModule_Produce_DeprecatedAttributes(t *testing.T) {
+	testcases := []struct {
+		name string
+		test func(t *testing.T, host *enginetest.Host)
+	}{
+		{
+			name: "key",
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.KafkaClientTest.ProduceFunc = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					return &common.KafkaProduceResult{}, nil
+				}
+				var warn string
+				host.WarnFunc = func(args ...interface{}) {
+					warn = args[0].(string)
+				}
+
+				s, err := jstest.New(jstest.WithSource(
+					`import { produce } from 'mokapi/kafka'
+						 export default function() {
+						  	return produce({ key: 'foo' })
+						 }`),
+					js.WithHost(host))
+				r.NoError(t, err)
+				err = s.Run()
+				r.NoError(t, err)
+				r.Equal(t, "DEPRECATED: 'key' should not be used anymore: check https://mokapi.io/docs/javascript-api/mokapi-kafka/produceargs for more info in test host", warn)
+			},
+		},
+		{
+			name: "value",
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.KafkaClientTest.ProduceFunc = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					return &common.KafkaProduceResult{}, nil
+				}
+				var warn string
+				host.WarnFunc = func(args ...interface{}) {
+					warn = args[0].(string)
+				}
+
+				s, err := jstest.New(jstest.WithSource(
+					`import { produce } from 'mokapi/kafka'
+						 export default function() {
+						  	return produce({ value: 'foo' })
+						 }`),
+					js.WithHost(host))
+				r.NoError(t, err)
+				err = s.Run()
+				r.NoError(t, err)
+				r.Equal(t, "DEPRECATED: 'value' should not be used anymore: check https://mokapi.io/docs/javascript-api/mokapi-kafka/produceargs for more info in test host", warn)
+			},
+		},
+		{
+			name: "headers",
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.KafkaClientTest.ProduceFunc = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					return &common.KafkaProduceResult{}, nil
+				}
+				var warn string
+				host.WarnFunc = func(args ...interface{}) {
+					warn = args[0].(string)
+				}
+
+				s, err := jstest.New(jstest.WithSource(
+					`import { produce } from 'mokapi/kafka'
+						 export default function() {
+						  	return produce({ headers: { 'foo': 'bar' } })
+						 }`),
+					js.WithHost(host))
+				r.NoError(t, err)
+				err = s.Run()
+				r.NoError(t, err)
+				r.Equal(t, "DEPRECATED: 'headers' should not be used anymore: check https://mokapi.io/docs/javascript-api/mokapi-kafka/produceargs for more info in test host", warn)
+			},
+		},
+		{
+			name: "partition",
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.KafkaClientTest.ProduceFunc = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					return &common.KafkaProduceResult{}, nil
+				}
+				var warn string
+				host.WarnFunc = func(args ...interface{}) {
+					warn = args[0].(string)
+				}
+
+				s, err := jstest.New(jstest.WithSource(
+					`import { produce } from 'mokapi/kafka'
+						 export default function() {
+						  	return produce({ partition: 1 })
+						 }`),
+					js.WithHost(host))
+				r.NoError(t, err)
+				err = s.Run()
+				r.NoError(t, err)
+				r.Equal(t, "DEPRECATED: 'partition' should not be used anymore: check https://mokapi.io/docs/javascript-api/mokapi-kafka/produceargs for more info in test host", warn)
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			host := &enginetest.Host{
+				KafkaClientTest: &enginetest.KafkaClient{},
 			}
 
 			tc.test(t, host)

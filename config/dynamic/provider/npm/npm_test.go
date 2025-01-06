@@ -38,17 +38,17 @@ func TestNpmProvider(t *testing.T) {
 			name: "node_modules in current directory and one file",
 			fs: &filetest.MockFS{
 				WorkingDir: root,
-				Entries: map[string]*filetest.Entry{
-					"/node_modules": {
-						Name:  "node_modules",
+				Entries: []*filetest.Entry{
+					{
+						Name:  "/node_modules",
 						IsDir: true,
 					},
-					"/node_modules/foo": {
-						Name:  "foo",
+					{
+						Name:  "/node_modules/foo",
 						IsDir: true,
 					},
-					"/node_modules/foo/foo.txt": {
-						Name:    "foo.txt",
+					{
+						Name:    "/node_modules/foo/foo.txt",
 						IsDir:   false,
 						Data:    []byte("foobar"),
 						ModTime: mustTime("2024-01-02T15:04:05Z"),
@@ -65,17 +65,17 @@ func TestNpmProvider(t *testing.T) {
 			name: "node_modules in parent directory and one file",
 			fs: &filetest.MockFS{
 				WorkingDir: root + "foo",
-				Entries: map[string]*filetest.Entry{
-					"/node_modules": {
-						Name:  "node_modules",
+				Entries: []*filetest.Entry{
+					{
+						Name:  "/node_modules",
 						IsDir: true,
 					},
-					"/node_modules/foo": {
-						Name:  "foo",
+					{
+						Name:  "/node_modules/foo",
 						IsDir: true,
 					},
-					"/node_modules/foo/foo.txt": {
-						Name:  "foo.txt",
+					{
+						Name:  "/node_modules/foo/foo.txt",
 						IsDir: false,
 						Data:  []byte("foobar"),
 					}}},
@@ -90,17 +90,17 @@ func TestNpmProvider(t *testing.T) {
 			name: "with global folder",
 			fs: &filetest.MockFS{
 				WorkingDir: root + "foo",
-				Entries: map[string]*filetest.Entry{
-					"/bar/node_modules": {
-						Name:  "node_modules",
+				Entries: []*filetest.Entry{
+					{
+						Name:  "/bar/node_modules",
 						IsDir: true,
 					},
-					"/bar/node_modules/foo": {
-						Name:  "foo",
+					{
+						Name:  "/bar/node_modules/foo",
 						IsDir: true,
 					},
-					"/bar/node_modules/foo/foo.txt": {
-						Name:  "foo.txt",
+					{
+						Name:  "/bar/node_modules/foo/foo.txt",
 						IsDir: false,
 						Data:  []byte("foobar"),
 					}}},
@@ -118,26 +118,26 @@ func TestNpmProvider(t *testing.T) {
 			name: "node_modules in parent directory and two packages",
 			fs: &filetest.MockFS{
 				WorkingDir: root + "foo",
-				Entries: map[string]*filetest.Entry{
-					"/node_modules": {
-						Name:  "node_modules",
+				Entries: []*filetest.Entry{
+					{
+						Name:  "/node_modules",
 						IsDir: true,
 					},
-					"/node_modules/foo": {
-						Name:  "foo",
+					{
+						Name:  "/node_modules/foo",
 						IsDir: true,
 					},
-					"/node_modules/foo/foo.txt": {
-						Name:  "foo.txt",
+					{
+						Name:  "/node_modules/foo/foo.txt",
 						IsDir: false,
 						Data:  []byte("foobar"),
 					},
-					"/node_modules/bar": {
-						Name:  "foo",
+					{
+						Name:  "/node_modules/bar",
 						IsDir: true,
 					},
-					"/node_modules/bar/bar.txt": {
-						Name:  "bar.txt",
+					{
+						Name:  "/node_modules/bar/bar.txt",
 						IsDir: false,
 						Data:  []byte("bar"),
 					},
@@ -159,26 +159,26 @@ func TestNpmProvider(t *testing.T) {
 			name: "one module in current and one in parent",
 			fs: &filetest.MockFS{
 				WorkingDir: root + "foo",
-				Entries: map[string]*filetest.Entry{
-					"/node_modules": {
-						Name:  "node_modules",
+				Entries: []*filetest.Entry{
+					{
+						Name:  "/node_modules",
 						IsDir: true,
 					},
-					"/node_modules/foo": {
-						Name:  "foo",
+					{
+						Name:  "/node_modules/foo",
 						IsDir: true,
 					},
-					"/node_modules/foo/foo.txt": {
-						Name:  "foo.txt",
+					{
+						Name:  "/node_modules/foo/foo.txt",
 						IsDir: false,
 						Data:  []byte("foobar"),
 					},
-					"/foo/node_modules/bar": {
-						Name:  "foo",
+					{
+						Name:  "/foo/node_modules/bar",
 						IsDir: true,
 					},
-					"/foo/node_modules/bar/bar.txt": {
-						Name:  "bar.txt",
+					{
+						Name:  "/foo/node_modules/bar/bar.txt",
 						IsDir: false,
 						Data:  []byte("bar"),
 					},
@@ -200,22 +200,22 @@ func TestNpmProvider(t *testing.T) {
 			name: "with allow list",
 			fs: &filetest.MockFS{
 				WorkingDir: root + "foo",
-				Entries: map[string]*filetest.Entry{
-					"/node_modules": {
-						Name:  "node_modules",
+				Entries: []*filetest.Entry{
+					{
+						Name:  "/node_modules",
 						IsDir: true,
 					},
-					"/node_modules/foo": {
-						Name:  "foo",
+					{
+						Name:  "/node_modules/foo",
 						IsDir: true,
 					},
-					"/node_modules/foo/foo.txt": {
-						Name:  "foo.txt",
+					{
+						Name:  "/node_modules/foo/foo.txt",
 						IsDir: false,
 						Data:  []byte("foobar"),
 					},
-					"/node_modules/foo/bar.txt": {
-						Name:  "bar.txt",
+					{
+						Name:  "/node_modules/foo/bar.txt",
 						IsDir: false,
 						Data:  []byte("bar"),
 					},
@@ -237,35 +237,35 @@ func TestNpmProvider(t *testing.T) {
 			name: "with include",
 			fs: &filetest.MockFS{
 				WorkingDir: root + "foo",
-				Entries: map[string]*filetest.Entry{
-					"/node_modules": {
-						Name:  "node_modules",
+				Entries: []*filetest.Entry{
+					{
+						Name:  "/node_modules",
 						IsDir: true,
 					},
-					"/node_modules/foo": {
-						Name:  "foo",
+					{
+						Name:  "/node_modules/foo",
 						IsDir: true,
 					},
-					"/node_modules/foo/foo.txt": {
-						Name:  "foo.txt",
+					{
+						Name:  "/node_modules/foo/foo.txt",
 						IsDir: false,
 						Data:  []byte("foobar"),
 					},
-					"/node_modules/foo/dist": {
-						Name:  "dist",
+					{
+						Name:  "/node_modules/foo/dist",
 						IsDir: true,
 					},
-					"/node_modules/foo/dist/openapi": {
-						Name:  "openapi",
+					{
+						Name:  "/node_modules/foo/dist/openapi",
 						IsDir: true,
 					},
-					"/node_modules/foo/dist/openapi/foo.json": {
-						Name:  "foo.json",
+					{
+						Name:  "/node_modules/foo/dist/openapi/foo.json",
 						IsDir: false,
 						Data:  []byte("{}"),
 					},
-					"/node_modules/foo/dist/openapi/foo.txt": {
-						Name:  "foo.txt",
+					{
+						Name:  "/node_modules/foo/dist/openapi/foo.txt",
 						IsDir: false,
 						Data:  []byte("bar"),
 					},
@@ -339,17 +339,17 @@ func TestProvider_Read(t *testing.T) {
 			name: "simple npm package name",
 			fs: &filetest.MockFS{
 				WorkingDir: root,
-				Entries: map[string]*filetest.Entry{
-					"/node_modules": {
-						Name:  "node_modules",
+				Entries: []*filetest.Entry{
+					{
+						Name:  "/node_modules",
 						IsDir: true,
 					},
-					"/node_modules/foo": {
-						Name:  "foo",
+					{
+						Name:  "/node_modules/foo",
 						IsDir: true,
 					},
-					"/node_modules/foo/foo.txt": {
-						Name:  "foo.txt",
+					{
+						Name:  "/node_modules/foo/foo.txt",
 						IsDir: false,
 						Data:  []byte("foobar"),
 					}}},
@@ -364,21 +364,21 @@ func TestProvider_Read(t *testing.T) {
 			name: "scoped npm package name",
 			fs: &filetest.MockFS{
 				WorkingDir: root,
-				Entries: map[string]*filetest.Entry{
-					"/node_modules": {
-						Name:  "node_modules",
+				Entries: []*filetest.Entry{
+					{
+						Name:  "/node_modules",
 						IsDir: true,
 					},
-					"/node_modules/@foo": {
-						Name:  "foo",
+					{
+						Name:  "/node_modules/@foo",
 						IsDir: true,
 					},
-					"/node_modules/@foo/bar": {
-						Name:  "foo",
+					{
+						Name:  "/node_modules/@foo/bar",
 						IsDir: true,
 					},
-					"/node_modules/@foo/bar/foo.txt": {
-						Name:  "foo.txt",
+					{
+						Name:  "/node_modules/@foo/bar/foo.txt",
 						IsDir: false,
 						Data:  []byte("foobar"),
 					}}},

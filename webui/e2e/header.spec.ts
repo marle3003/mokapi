@@ -15,6 +15,6 @@ test('header in dashboard', async ({ dashboard }) => {
     })
 
     await test.step('version number', async() => {
-        await expect(dashboard.header.version).toHaveText('Version 0.5.0')
+        await expect(dashboard.header.version).toHaveText('Version 0.11.0')
     })
 })

@@ -1,7 +1,7 @@
 package api
 
 import (
-	"mokapi/json/generator"
+	"mokapi/schema/json/generator"
 	"net/http"
 )
 

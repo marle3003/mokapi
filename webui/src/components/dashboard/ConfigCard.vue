@@ -7,7 +7,7 @@ import { useRoute } from 'vue-router'
 const { format } = usePrettyDates()
 
 const props = defineProps<{
-    configs: Config[] | ConfigRef[],
+    configs: Config[] | ConfigRef[] | undefined,
     title?: string,
 }>()
 

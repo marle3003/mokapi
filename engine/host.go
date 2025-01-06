@@ -2,15 +2,11 @@ package engine
 
 import (
 	"fmt"
-	"github.com/go-co-op/gocron"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/provider/file"
-	"mokapi/config/dynamic/script"
 	"mokapi/engine/common"
-	"mokapi/js"
-	"mokapi/json/generator"
-	"mokapi/lua"
+	"mokapi/schema/json/generator"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -24,31 +20,26 @@ type eventHandler struct {
 }
 
 type scriptHost struct {
-	id         int
-	name       string
-	engine     *Engine
-	script     common.Script
-	jobs       map[int]*gocron.Job
-	events     map[string][]*eventHandler
-	cwd        string
-	file       *dynamic.Config
-	checksum   []byte
-	fakerNodes []*fakerTree
+	name string
+
+	engine *Engine
+
+	script common.Script
+	jobs   map[int]Job
+	events map[string][]*eventHandler
+	file   *dynamic.Config
+
+	fakerNodes []*common.FakerTree
 	m          sync.Mutex
 }
 
-func newScriptHost(file *dynamic.Config, e *Engine) *scriptHost {
-	path := getScriptPath(file.Info.Url)
-
+func newScriptHost(file *dynamic.Config, engine *Engine) *scriptHost {
 	sh := &scriptHost{
-		id:       1,
-		name:     file.Info.Path(),
-		engine:   e,
-		jobs:     make(map[int]*gocron.Job),
-		events:   make(map[string][]*eventHandler),
-		cwd:      filepath.Dir(path),
-		file:     file,
-		checksum: file.Info.Checksum,
+		name:   file.Info.Path(),
+		jobs:   make(map[int]Job),
+		events: make(map[string][]*eventHandler),
+		file:   file,
+		engine: engine,
 	}
 
 	return sh
@@ -58,16 +49,16 @@ func (sh *scriptHost) Name() string {
 	return sh.name
 }
 
-func (sh *scriptHost) Compile() error {
-	s, err := sh.compile()
-	if err != nil {
-		return err
+func (sh *scriptHost) Run() (err error) {
+	if sh.engine.loader == nil {
+		return fmt.Errorf("loader not defined")
 	}
-	sh.script = s
-	return nil
-}
-
-func (sh *scriptHost) Run() error {
+	if sh.script == nil {
+		sh.script, err = sh.engine.loader.Load(sh.file, sh)
+		if err != nil {
+			return
+		}
+	}
 	return sh.script.Run()
 }
 
@@ -94,16 +85,7 @@ func (sh *scriptHost) RunEvent(event string, args ...interface{}) []*common.Acti
 }
 
 func (sh *scriptHost) Every(every string, handler func(), opt common.JobOptions) (int, error) {
-	sh.engine.cron.Every(every)
-
-	if opt.Times > 0 {
-		sh.engine.cron.LimitRunsTo(opt.Times)
-	}
-	if opt.SkipImmediateFirstRun {
-		sh.engine.cron.WaitForSchedule()
-	}
-
-	j, err := sh.engine.cron.Do(func() {
+	do := func() {
 		defer func() {
 			r := recover()
 			if r != nil {
@@ -111,34 +93,38 @@ func (sh *scriptHost) Every(every string, handler func(), opt common.JobOptions)
 			}
 		}()
 		handler()
-	})
+	}
+
+	job, err := sh.engine.scheduler.Every(every, do, opt)
+
 	if err != nil {
 		return -1, err
 	}
 
 	id := len(sh.jobs)
-	sh.jobs[id] = j
+	sh.jobs[id] = job
 
 	return id, nil
 }
 
 func (sh *scriptHost) Cron(expr string, handler func(), opt common.JobOptions) (int, error) {
-	sh.engine.cron.Cron(expr)
-
-	if opt.Times >= 0 {
-		sh.engine.cron.LimitRunsTo(opt.Times)
+	do := func() {
+		defer func() {
+			r := recover()
+			if r != nil {
+				log.Errorf("script error %v: %v", sh.Name(), r)
+			}
+		}()
+		handler()
 	}
-	if opt.SkipImmediateFirstRun {
-		sh.engine.cron.WaitForSchedule()
-	}
 
-	j, err := sh.engine.cron.Do(handler)
+	job, err := sh.engine.scheduler.Cron(expr, do, opt)
 	if err != nil {
 		return -1, err
 	}
 
 	id := len(sh.jobs)
-	sh.jobs[id] = j
+	sh.jobs[id] = job
 
 	return id, nil
 }
@@ -147,7 +133,7 @@ func (sh *scriptHost) Cancel(jobId int) error {
 	if j, ok := sh.jobs[jobId]; !ok {
 		return fmt.Errorf("job not defined")
 	} else {
-		sh.engine.cron.RemoveByReference(j)
+		sh.engine.scheduler.Remove(j)
 		return nil
 	}
 }
@@ -176,7 +162,7 @@ func (sh *scriptHost) close() {
 
 	if sh.jobs != nil {
 		for _, j := range sh.jobs {
-			sh.engine.cron.RemoveByReference(j)
+			sh.engine.scheduler.Remove(j)
 		}
 		sh.jobs = nil
 	}
@@ -211,12 +197,13 @@ func (sh *scriptHost) Debug(args ...interface{}) {
 
 func (sh *scriptHost) OpenFile(path string, hint string) (*dynamic.Config, error) {
 	u, err := url.Parse(path)
-	if err != nil || len(u.Scheme) == 0 {
+	if err != nil || len(u.Scheme) == 0 || len(u.Opaque) > 0 {
 		if !filepath.IsAbs(path) {
 			if len(hint) > 0 {
 				path = filepath.Join(hint, path)
 			} else {
-				path = filepath.Join(sh.cwd, path)
+				p := getScriptPath(sh.file.Info.Kernel().Url)
+				path = filepath.Join(filepath.Dir(p), path)
 			}
 		}
 
@@ -234,7 +221,6 @@ func (sh *scriptHost) OpenFile(path string, hint string) (*dynamic.Config, error
 		return nil, err
 	}
 
-	dynamic.AddRef(sh.file, f)
 	return f, nil
 }
 
@@ -242,19 +228,26 @@ func (sh *scriptHost) KafkaClient() common.KafkaClient {
 	return sh.engine.kafkaClient
 }
 
-func (sh *scriptHost) HttpClient() common.HttpClient {
-	return &http.Client{Timeout: time.Second * 30}
+func (sh *scriptHost) HttpClient(opts common.HttpClientOptions) common.HttpClient {
+	return &http.Client{
+		Timeout: time.Second * 30,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if l := len(via); l > opts.MaxRedirects {
+				log.Warnf("Stopped after %d redirects, original URL was %s", opts.MaxRedirects, via[0].URL)
+				return http.ErrUseLastResponse
+			}
+			return nil
+		},
+	}
 }
 
 func (sh *scriptHost) CanClose() bool {
-	return len(sh.events) == 0 && len(sh.jobs) == 0 && len(sh.fakerNodes) == 0
+	return len(sh.events) == 0 && len(sh.jobs) == 0 && len(sh.fakerNodes) == 0 && sh.script.CanClose()
 }
 
-func (sh *scriptHost) FindFakerTree(name string) common.FakerTree {
+func (sh *scriptHost) FindFakerTree(name string) *common.FakerTree {
 	t := generator.FindByName(name)
-	ft := &fakerTree{
-		t: t,
-	}
+	ft := common.NewFakerTree(t)
 	sh.fakerNodes = append(sh.fakerNodes, ft)
 	return ft
 }
@@ -265,18 +258,6 @@ func (sh *scriptHost) Lock() {
 
 func (sh *scriptHost) Unlock() {
 	sh.m.Unlock()
-}
-
-func (sh *scriptHost) compile() (common.Script, error) {
-	s := sh.file.Data.(*script.Script)
-	switch filepath.Ext(s.Filename) {
-	case ".js":
-		return js.New(sh.file, sh, sh.engine.jsConfig)
-	case ".lua":
-		return lua.New(getScriptPath(sh.file.Info.Url), s.Code, sh)
-	default:
-		return nil, fmt.Errorf("unsupported script %v", s.Filename)
-	}
 }
 
 func getScriptPath(u *url.URL) string {

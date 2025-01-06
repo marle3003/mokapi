@@ -7,38 +7,47 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"math/big"
+	"net"
 	"time"
 )
 
 func (store *Store) GetCertificate(info *tls.ClientHelloInfo) (*tls.Certificate, error) {
-	return store.GetOrCreate(info.ServerName)
+	return store.GetOrCreate(info)
 }
 
-func (store *Store) GetOrCreate(domain string) (*tls.Certificate, error) {
-	if c, ok := store.Certificates[domain]; ok {
+func (store *Store) GetOrCreate(info *tls.ClientHelloInfo) (*tls.Certificate, error) {
+	if c, ok := store.Certificates[info.ServerName]; ok {
 		return c, nil
 	}
-	c, err := store.createTlsCertficate(domain)
+	c, err := store.createTlsCertificate(info)
 	if err != nil {
 		return nil, err
 	}
-	store.Certificates[domain] = c
+	store.Certificates[info.ServerName] = c
 
 	return c, nil
 }
 
-func (store *Store) createTlsCertficate(domain string) (*tls.Certificate, error) {
+func (store *Store) createTlsCertificate(info *tls.ClientHelloInfo) (*tls.Certificate, error) {
+	serverName := info.ServerName
+	host, _, _ := net.SplitHostPort(info.Conn.LocalAddr().String())
+	if len(serverName) == 0 {
+		serverName = host
+	}
+
+	info.Conn.LocalAddr().String()
 	cert, key, err := store.CreateCertificate(x509.Certificate{
 		SerialNumber: big.NewInt(1658),
 		Subject: pkix.Name{
-			CommonName: domain,
+			CommonName: serverName,
 		},
-		DNSNames:              []string{domain},
+		DNSNames:              []string{info.ServerName},
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().AddDate(10, 0, 0),
 		SubjectKeyId:          []byte{1, 2, 3, 4, 5, 6},
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 		KeyUsage:              x509.KeyUsageDigitalSignature,
+		IPAddresses:           []net.IP{net.ParseIP(host)},
 		BasicConstraintsValid: true,
 	})
 	if err != nil {

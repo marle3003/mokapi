@@ -2,16 +2,17 @@ package api
 
 import (
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/asyncApi"
-	"mokapi/config/dynamic/asyncApi/asyncapitest"
-	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/engine/enginetest"
 	kafka2 "mokapi/kafka"
-	"mokapi/providers/openapi/schema/schematest"
+	"mokapi/providers/asyncapi3"
+	"mokapi/providers/asyncapi3/asyncapi3test"
+	"mokapi/providers/asyncapi3/kafka/store"
+	schematest2 "mokapi/providers/openapi/schema/schematest"
 	"mokapi/runtime"
 	"mokapi/runtime/monitor"
+	"mokapi/schema/json/schematest"
 	"mokapi/try"
 	"net/http"
 	"testing"
@@ -39,8 +40,8 @@ func TestHandler_Kafka(t *testing.T) {
 				return &runtime.App{
 					Monitor: monitor.New(),
 					Kafka: map[string]*runtime.KafkaInfo{
-						"foo": getKafkaInfo(asyncapitest.NewConfig(
-							asyncapitest.WithInfo("foo", "bar", "1.0"),
+						"foo": getKafkaInfo(asyncapi3test.NewConfig(
+							asyncapi3test.WithInfo("foo", "bar", "1.0"),
 						)),
 					},
 				}
@@ -54,8 +55,8 @@ func TestHandler_Kafka(t *testing.T) {
 				return &runtime.App{
 					Monitor: monitor.New(),
 					Kafka: map[string]*runtime.KafkaInfo{
-						"foo": getKafkaInfo(asyncapitest.NewConfig(
-							asyncapitest.WithContact("foo", "https://foo.bar", "foo@bar.com"),
+						"foo": getKafkaInfo(asyncapi3test.NewConfig(
+							asyncapi3test.WithContact("foo", "https://foo.bar", "foo@bar.com"),
 						)),
 					},
 				}
@@ -69,8 +70,8 @@ func TestHandler_Kafka(t *testing.T) {
 				app := runtime.New()
 				cfg := &dynamic.Config{
 					Info: dynamictest.NewConfigInfo(),
-					Data: asyncapitest.NewConfig(
-						asyncapitest.WithInfo("foo", "bar", "1.0"),
+					Data: asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "bar", "1.0"),
 					),
 				}
 				cfg.Info.Time = mustTime("2023-12-27T13:01:30+00:00")
@@ -87,9 +88,9 @@ func TestHandler_Kafka(t *testing.T) {
 				return &runtime.App{
 					Monitor: monitor.New(),
 					Kafka: map[string]*runtime.KafkaInfo{
-						"foo": getKafkaInfo(asyncapitest.NewConfig(
-							asyncapitest.WithInfo("foo", "bar", "1.0"),
-							asyncapitest.WithContact("foo", "https://foo.bar", "foo@bar.com"),
+						"foo": getKafkaInfo(asyncapi3test.NewConfig(
+							asyncapi3test.WithInfo("foo", "bar", "1.0"),
+							asyncapi3test.WithContact("foo", "https://foo.bar", "foo@bar.com"),
 						)),
 					},
 				}
@@ -103,15 +104,15 @@ func TestHandler_Kafka(t *testing.T) {
 				return &runtime.App{
 					Monitor: monitor.New(),
 					Kafka: map[string]*runtime.KafkaInfo{
-						"foo": getKafkaInfo(asyncapitest.NewConfig(
-							asyncapitest.WithInfo("foo", "bar", "1.0"),
-							asyncapitest.WithServer("foo", "kafka", "foo.bar", asyncapitest.WithServerDescription("bar")),
+						"foo": getKafkaInfo(asyncapi3test.NewConfig(
+							asyncapi3test.WithInfo("foo", "bar", "1.0"),
+							asyncapi3test.WithServer("foo", "kafka", "foo.bar", asyncapi3test.WithServerDescription("bar")),
 						)),
 					},
 				}
 			},
 			requestUrl:   "http://foo.api/api/services/kafka/foo",
-			responseBody: `{"name":"foo","description":"bar","version":"1.0","servers":[{"name":"foo","url":"foo.bar","description":"bar"}]}`,
+			responseBody: `{"name":"foo","description":"bar","version":"1.0","servers":[{"name":"foo","host":"foo.bar","description":"bar"}]}`,
 		},
 		{
 			name: "server with tags",
@@ -119,11 +120,11 @@ func TestHandler_Kafka(t *testing.T) {
 				return &runtime.App{
 					Monitor: monitor.New(),
 					Kafka: map[string]*runtime.KafkaInfo{
-						"foo": getKafkaInfo(asyncapitest.NewConfig(
-							asyncapitest.WithInfo("foo", "bar", "1.0"),
-							asyncapitest.WithServer("foo", "kafka", "foo.bar",
-								asyncapitest.WithServerDescription("bar"),
-								asyncapitest.WithServerTags(asyncApi.ServerTag{
+						"foo": getKafkaInfo(asyncapi3test.NewConfig(
+							asyncapi3test.WithInfo("foo", "bar", "1.0"),
+							asyncapi3test.WithServer("foo", "kafka", "foo.bar",
+								asyncapi3test.WithServerDescription("bar"),
+								asyncapi3test.WithServerTags(asyncapi3.Tag{
 									Name:        "env:test",
 									Description: "This environment is for running internal tests",
 								}),
@@ -132,7 +133,7 @@ func TestHandler_Kafka(t *testing.T) {
 				}
 			},
 			requestUrl:   "http://foo.api/api/services/kafka/foo",
-			responseBody: `{"name":"foo","description":"bar","version":"1.0","servers":[{"name":"foo","url":"foo.bar","description":"bar","tags":[{"name":"env:test","description":"This environment is for running internal tests"}]}]}`,
+			responseBody: `{"name":"foo","description":"bar","version":"1.0","servers":[{"name":"foo","host":"foo.bar","description":"bar","tags":[{"name":"env:test","description":"This environment is for running internal tests"}]}]}`,
 		},
 		{
 			name: "get specific with topic",
@@ -140,22 +141,43 @@ func TestHandler_Kafka(t *testing.T) {
 				return &runtime.App{
 					Monitor: monitor.New(),
 					Kafka: map[string]*runtime.KafkaInfo{
-						"foo": getKafkaInfo(asyncapitest.NewConfig(
-							asyncapitest.WithInfo("foo", "bar", "1.0"),
-							asyncapitest.WithChannel("foo",
-								asyncapitest.WithChannelDescription("bar"),
-								asyncapitest.WithSubscribeAndPublish(
-									asyncapitest.WithMessage(
-										asyncapitest.WithPayload(schematest.New("string")),
-										asyncapitest.WithContentType("application/json"),
-									),
-								)),
+						"foo": getKafkaInfo(asyncapi3test.NewConfig(
+							asyncapi3test.WithInfo("foo", "bar", "1.0"),
+							asyncapi3test.WithChannel("foo",
+								asyncapi3test.WithChannelDescription("bar"),
+								asyncapi3test.WithMessage("foo",
+									asyncapi3test.WithPayload(schematest.New("string")),
+									asyncapi3test.WithContentType("application/json"),
+								),
+							),
 						)),
 					},
 				}
 			},
 			requestUrl:   "http://foo.api/api/services/kafka/foo",
-			responseBody: `{"name":"foo","description":"bar","version":"1.0","topics":[{"name":"foo","description":"bar","partitions":[{"id":0,"startOffset":0,"offset":0,"leader":{"name":"","addr":""},"segments":0}],"configs":{"message":{"type":"string"},"messageType":"application/json"}}]}`,
+			responseBody: `{"name":"foo","description":"bar","version":"1.0","topics":[{"name":"foo","description":"bar","partitions":[{"id":0,"startOffset":0,"offset":0,"leader":{"name":"","addr":""},"segments":0}],"messages":{"foo":{"payload":{"schema":{"type":"string"}},"contentType":"application/json"}}}]}`,
+		},
+		{
+			name: "get specific with topic and multi schema format",
+			app: func() *runtime.App {
+				return &runtime.App{
+					Monitor: monitor.New(),
+					Kafka: map[string]*runtime.KafkaInfo{
+						"foo": getKafkaInfo(asyncapi3test.NewConfig(
+							asyncapi3test.WithInfo("foo", "bar", "1.0"),
+							asyncapi3test.WithChannel("foo",
+								asyncapi3test.WithChannelDescription("bar"),
+								asyncapi3test.WithMessage("foo",
+									asyncapi3test.WithPayloadMulti("foo", schematest.New("string")),
+									asyncapi3test.WithContentType("application/json"),
+								),
+							),
+						)),
+					},
+				}
+			},
+			requestUrl:   "http://foo.api/api/services/kafka/foo",
+			responseBody: `{"name":"foo","description":"bar","version":"1.0","topics":[{"name":"foo","description":"bar","partitions":[{"id":0,"startOffset":0,"offset":0,"leader":{"name":"","addr":""},"segments":0}],"messages":{"foo":{"payload":{"format":"foo","schema":{"type":"string"}},"contentType":"application/json"}}}]}`,
 		},
 		{
 			name: "get specific with group",
@@ -163,9 +185,9 @@ func TestHandler_Kafka(t *testing.T) {
 				return &runtime.App{
 					Monitor: monitor.New(),
 					Kafka: map[string]*runtime.KafkaInfo{
-						"foo": getKafkaInfoWithGroup(asyncapitest.NewConfig(
-							asyncapitest.WithInfo("foo", "bar", "1.0"),
-							asyncapitest.WithServer("foo", "kafka", "foo.bar"),
+						"foo": getKafkaInfoWithGroup(asyncapi3test.NewConfig(
+							asyncapi3test.WithInfo("foo", "bar", "1.0"),
+							asyncapi3test.WithServer("foo", "kafka", "foo.bar"),
 						),
 							&store.Group{
 								Name:  "foo",
@@ -183,7 +205,7 @@ func TestHandler_Kafka(t *testing.T) {
 				}
 			},
 			requestUrl:   "http://foo.api/api/services/kafka/foo",
-			responseBody: `{"name":"foo","description":"bar","version":"1.0","servers":[{"name":"foo","url":"foo.bar","description":""}],"groups":[{"name":"foo","members":null,"coordinator":"foo.bar:9092","leader":"","state":"PreparingRebalance","protocol":"range","topics":null}]}`,
+			responseBody: `{"name":"foo","description":"bar","version":"1.0","servers":[{"name":"foo","host":"foo.bar","description":""}],"groups":[{"name":"foo","members":null,"coordinator":"foo.bar:9092","leader":"","state":"PreparingRebalance","protocol":"range","topics":null}]}`,
 		},
 		{
 			name: "get specific with group containing members",
@@ -199,9 +221,9 @@ func TestHandler_Kafka(t *testing.T) {
 				return &runtime.App{
 					Monitor: monitor.New(),
 					Kafka: map[string]*runtime.KafkaInfo{
-						"foo": getKafkaInfoWithGroup(asyncapitest.NewConfig(
-							asyncapitest.WithInfo("foo", "bar", "1.0"),
-							asyncapitest.WithServer("foo", "kafka", "foo.bar"),
+						"foo": getKafkaInfoWithGroup(asyncapi3test.NewConfig(
+							asyncapi3test.WithInfo("foo", "bar", "1.0"),
+							asyncapi3test.WithServer("foo", "kafka", "foo.bar"),
 						),
 							&store.Group{
 								Name:  "foo",
@@ -241,7 +263,29 @@ func TestHandler_Kafka(t *testing.T) {
 				}
 			},
 			requestUrl:   "http://foo.api/api/services/kafka/foo",
-			responseBody: `{"name":"foo","description":"bar","version":"1.0","servers":[{"name":"foo","url":"foo.bar","description":""}],"groups":[{"name":"foo","members":[{"name":"m1","addr":"192.168.0.100","clientSoftwareName":"mokapi","clientSoftwareVersion":"1.0","heartbeat":"2024-04-22T15:04:05+07:00","partitions":{"topic":[1,2,5]}},{"name":"m2","addr":"192.168.0.200","clientSoftwareName":"mokapi","clientSoftwareVersion":"1.0","heartbeat":"2024-04-22T15:04:10+07:00","partitions":{"topic":[3,4,6]}}],"coordinator":"foo.bar:9092","leader":"m1","state":"PreparingRebalance","protocol":"range","topics":null}]}`,
+			responseBody: `{"name":"foo","description":"bar","version":"1.0","servers":[{"name":"foo","host":"foo.bar","description":""}],"groups":[{"name":"foo","members":[{"name":"m1","addr":"192.168.0.100","clientSoftwareName":"mokapi","clientSoftwareVersion":"1.0","heartbeat":"2024-04-22T15:04:05+07:00","partitions":{"topic":[1,2,5]}},{"name":"m2","addr":"192.168.0.200","clientSoftwareName":"mokapi","clientSoftwareVersion":"1.0","heartbeat":"2024-04-22T15:04:10+07:00","partitions":{"topic":[3,4,6]}}],"coordinator":"foo.bar:9092","leader":"m1","state":"PreparingRebalance","protocol":"range","topics":null}]}`,
+		},
+		{
+			name: "get specific with topic and openapi schema",
+			app: func() *runtime.App {
+				return &runtime.App{
+					Monitor: monitor.New(),
+					Kafka: map[string]*runtime.KafkaInfo{
+						"foo": getKafkaInfo(asyncapi3test.NewConfig(
+							asyncapi3test.WithInfo("foo", "bar", "1.0"),
+							asyncapi3test.WithChannel("foo",
+								asyncapi3test.WithChannelDescription("bar"),
+								asyncapi3test.WithMessage("foo",
+									asyncapi3test.WithPayloadMulti("foo", schematest2.New("string")),
+									asyncapi3test.WithContentType("application/json"),
+								),
+							),
+						)),
+					},
+				}
+			},
+			requestUrl:   "http://foo.api/api/services/kafka/foo",
+			responseBody: `{"name":"foo","description":"bar","version":"1.0","topics":[{"name":"foo","description":"bar","partitions":[{"id":0,"startOffset":0,"offset":0,"leader":{"name":"","addr":""},"segments":0}],"messages":{"foo":{"payload":{"format":"foo","schema":{"type":"string"}},"contentType":"application/json"}}}]}`,
 		},
 	}
 
@@ -291,7 +335,7 @@ func TestHandler_Kafka_Metrics(t *testing.T) {
 			app: &runtime.App{
 				Monitor: monitor.New(),
 				Kafka: map[string]*runtime.KafkaInfo{
-					"foo": getKafkaInfo(asyncapitest.NewConfig(asyncapitest.WithTitle("foo"))),
+					"foo": getKafkaInfo(asyncapi3test.NewConfig(asyncapi3test.WithTitle("foo"))),
 				},
 			},
 			requestUrl:   "http://foo.api/api/services",
@@ -305,7 +349,7 @@ func TestHandler_Kafka_Metrics(t *testing.T) {
 			app: &runtime.App{
 				Monitor: monitor.New(),
 				Kafka: map[string]*runtime.KafkaInfo{
-					"foo": getKafkaInfo(asyncapitest.NewConfig(asyncapitest.WithTitle("foo"))),
+					"foo": getKafkaInfo(asyncapi3test.NewConfig(asyncapi3test.WithTitle("foo"))),
 				},
 			},
 			requestUrl:   "http://foo.api/api/services/kafka/foo",
@@ -338,14 +382,14 @@ func TestHandler_Kafka_Metrics(t *testing.T) {
 	}
 }
 
-func getKafkaInfo(config *asyncApi.Config) *runtime.KafkaInfo {
+func getKafkaInfo(config *asyncapi3.Config) *runtime.KafkaInfo {
 	return &runtime.KafkaInfo{
 		Config: config,
 		Store:  store.New(config, enginetest.NewEngine()),
 	}
 }
 
-func getKafkaInfoWithGroup(config *asyncApi.Config, group *store.Group) *runtime.KafkaInfo {
+func getKafkaInfoWithGroup(config *asyncapi3.Config, group *store.Group) *runtime.KafkaInfo {
 	s := store.New(config, enginetest.NewEngine())
 	g := s.GetOrCreateGroup(group.Name, 0)
 	group.Coordinator, _ = s.Broker(0)

@@ -9,7 +9,7 @@ func init() {
 		kafka.ApiReg{
 			ApiKey:     kafka.Offset,
 			MinVersion: 0,
-			MaxVersion: 7},
+			MaxVersion: 8},
 		&Request{},
 		&Response{},
 		6,
@@ -20,13 +20,13 @@ func init() {
 type Request struct {
 	ReplicaId      int32            `kafka:""`
 	IsolationLevel int8             `kafka:"min=2"`
-	Topics         []RequestTopic   `kafka:""`
+	Topics         []RequestTopic   `kafka:"compact=6"`
 	TagFields      map[int64]string `kafka:"type=TAG_BUFFER,min=6"`
 }
 
 type RequestTopic struct {
-	Name       string             `kafka:""`
-	Partitions []RequestPartition `kafka:""`
+	Name       string             `kafka:"compact=6"`
+	Partitions []RequestPartition `kafka:"compact=6"`
 	TagFields  map[int64]string   `kafka:"type=TAG_BUFFER,min=6"`
 }
 
@@ -40,13 +40,13 @@ type RequestPartition struct {
 
 type Response struct {
 	ThrottleTimeMs int32            `kafka:"min=2"`
-	Topics         []ResponseTopic  `kafka:""`
+	Topics         []ResponseTopic  `kafka:"compact=6"`
 	TagFields      map[int64]string `kafka:"type=TAG_BUFFER,min=6"`
 }
 
 type ResponseTopic struct {
-	Name       string              `kafka:""`
-	Partitions []ResponsePartition `kafka:""`
+	Name       string              `kafka:"compact=6"`
+	Partitions []ResponsePartition `kafka:"compact=6"`
 	TagFields  map[int64]string    `kafka:"type=TAG_BUFFER,min=6"`
 }
 

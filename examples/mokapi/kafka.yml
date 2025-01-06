@@ -36,7 +36,7 @@ components:
             properties:
               name:
                 type: string
-              url:
+              host:
                 type: string
               description:
                 type: string
@@ -61,8 +61,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Partition'
-        configs:
-          $ref: '#/components/schemas/TopicConfig'
+        messages:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/MessageConfig'
     Partition:
       type: object
       properties:
@@ -123,7 +125,7 @@ components:
           type: string
         addr:
           type: string
-    TopicConfig:
+    MessageConfig:
       type: object
       properties:
         name:
@@ -136,9 +138,9 @@ components:
           type: string
         key:
           $ref: 'schema.yml#/components/schemas/Schema'
-        message:
+        payload:
           $ref: 'schema.yml#/components/schemas/Schema'
         header:
           $ref: 'schema.yml#/components/schemas/Schema'
-        messageType:
+        contentType:
           type: string

@@ -3,6 +3,7 @@ package try
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -70,7 +71,7 @@ func Handler(t *testing.T, method string, url string, headers map[string]string,
 
 func HasStatusCode(status int) ResponseCondition {
 	return func(t *testing.T, tr *TestResponse) {
-		require.Equal(t, status, tr.res.StatusCode)
+		require.Equal(t, status, tr.res.StatusCode, string(tr.GetBody()))
 	}
 }
 
@@ -94,49 +95,63 @@ func HasHeaderXor(name string, values ...string) ResponseCondition {
 			}
 		}
 		if matched == "" {
-			require.Fail(t, fmt.Sprintf("header '%v' does not match one of: %v", name, values))
+			require.Fail(t, fmt.Sprintf("header '%v' value '%v' does not match one of: %v", name, v, values))
 		}
 	}
 }
 
 func HasBody(expected string) ResponseCondition {
 	return func(t *testing.T, tr *TestResponse) {
-		if tr.body == nil {
-			var err error
-			tr.body, err = io.ReadAll(tr.res.Body)
-			require.NoError(t, err)
-		}
-
-		body := string(tr.body)
-
+		body := string(tr.GetBody())
 		require.Equal(t, expected, body)
 	}
 }
 
 func BodyContains(s string) ResponseCondition {
 	return func(t *testing.T, tr *TestResponse) {
-		if tr.body == nil {
-			var err error
-			tr.body, err = io.ReadAll(tr.res.Body)
-			require.NoError(t, err)
-		}
-
-		body := string(tr.body)
-
+		body := string(tr.GetBody())
 		require.Contains(t, body, s)
 	}
 }
 
 func BodyMatch(regexp string) ResponseCondition {
 	return func(t *testing.T, tr *TestResponse) {
-		if tr.body == nil {
-			var err error
-			tr.body, err = io.ReadAll(tr.res.Body)
-			require.NoError(t, err)
-		}
-
-		body := string(tr.body)
-
+		body := string(tr.GetBody())
 		require.Regexp(t, regexp, body)
 	}
+}
+
+func HasBodyData(expected interface{}) ResponseCondition {
+	return func(t *testing.T, tr *TestResponse) {
+		body := tr.GetBody()
+		var actual map[string]interface{}
+		err := json.Unmarshal(body, &actual)
+		require.NoError(t, err)
+		require.Equal(t, expected, actual)
+	}
+}
+
+func BodyContainsData(expected map[string]interface{}) ResponseCondition {
+	return func(t *testing.T, tr *TestResponse) {
+		body := tr.GetBody()
+		var actual map[string]interface{}
+		err := json.Unmarshal(body, &actual)
+		require.NoError(t, err)
+		for k, v := range expected {
+			require.Contains(t, actual, k)
+			require.Equal(t, v, actual[k])
+		}
+	}
+}
+
+func (tr *TestResponse) GetBody() []byte {
+	if tr.body != nil {
+		return tr.body
+	}
+	var err error
+	tr.body, err = io.ReadAll(tr.res.Body)
+	if err != nil {
+		return []byte(err.Error())
+	}
+	return tr.body
 }

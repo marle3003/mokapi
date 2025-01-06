@@ -161,7 +161,7 @@ func (p *Provider) getPackageDir(name string, workDir string) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("module %v not found", name)
+	return "", fmt.Errorf("module %v not found. Mokapi does not install NPM packages itself. You need to make sure the packages are available", name)
 }
 
 func skip(path string, pkg static.NpmPackage) bool {

@@ -23,14 +23,14 @@ test.describe('Dashboard', () => {
         await test.step("metric Memory Usage", async () => {
             const metricMemoryUsage = dashboard.metricMemoryUsage
             await expect(metricMemoryUsage.title).toHaveText('Memory Usage')
-            await expect(metricMemoryUsage.value).toHaveText('124.51 MB')
+            await expect(metricMemoryUsage.value).toHaveText('52.45 MB')
             await expect(metricMemoryUsage.additional).not.toBeVisible()
         })
 
         await test.step("metric HTTP Requests", async () => {
             const metricHttpRequests = dashboard.http.metricHttpRequests
             await expect(metricHttpRequests.title).toHaveText('HTTP Requests / Errors')
-            await expect(metricHttpRequests.value).toHaveText('3 / 1')
+            await expect(metricHttpRequests.value).toHaveText('4 / 1')
             await expect(metricHttpRequests.value.locator('.text-danger')).toBeVisible()
             await expect(metricHttpRequests.additional).not.toBeVisible()
         })
@@ -41,7 +41,7 @@ test.describe('Dashboard', () => {
             await expect(httpCells.nth(1)).toHaveText('This is a sample server Petstore server. You can find out more about at http://swagger.io')
             await expect(httpCells.nth(1).locator('a')).toHaveAttribute('href', 'http://swagger.io')
             await expect(httpCells.nth(2)).toHaveText(formatTimestamp(1652237690))
-            await expect(httpCells.nth(3)).toHaveText('3 / 1')
+            await expect(httpCells.nth(3)).toHaveText('4 / 1')
             await expect(httpCells.nth(3).locator('.text-danger')).toBeVisible()
         })
 

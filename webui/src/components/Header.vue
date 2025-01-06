@@ -28,17 +28,6 @@ router.beforeEach(() => {
     document.getElementById('navbar')!.classList.remove('show');
 })
 
-onMounted(() => {
-  document.addEventListener("click", function (event) {
-    if (event.target instanceof Element){
-      const target = event.target as Element
-      if (!target.closest("#navbar") && document.getElementById("navbar")?.classList.contains("show")) {
-          document.getElementById("hamburger_menu_button")?.click();
-      }
-    }
-  })
-})
-
 function showInHeader(item: any): Boolean{
   return typeof item !== 'string'
 }
@@ -49,11 +38,17 @@ function formatParam(label: any): string {
 
 <template>
   <header>
-    <nav class="navbar navbar-expand-md">
+    <nav class="navbar navbar-expand-lg">
       <div class="container-fluid">
-        <a class="navbar-brand" href="./"><img src="/logo-header.svg" height="30" alt="mokapi"/></a>
-        <button id="hamburger_menu_button" class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
+        <a class="navbar-brand" href="./"><img src="/logo-header.svg" height="30" alt="Mokapi home"/></a>
+        <div class="d-flex ms-auto tools d-none">
+            <a href="https://github.com/marle3003/mokapi" class="version" v-if="appInfo?.data">Version {{appInfo.data.version}}</a>
+            <i class="bi bi-brightness-high-fill" @click="switchTheme" v-if="isDark"></i>
+            <i class="bi bi-moon-fill" @click="switchTheme" v-if="!isDark"></i>
+          </div>
+        <button class="navbar-toggler collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+          <i class="bi bi-list"></i>
+          <i class="bi bi-x"></i>
         </button>
         <div class="collapse navbar-collapse" id="navbar">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
@@ -88,14 +83,54 @@ header {
     height: 4rem;
     display: block;
 }
+header .container-fluid {
+  padding: 0;
+}
 .navbar {
-  margin-left: 0.5rem;
-  margin-right: 1rem;
   background-color: var(--color-background);
 }
-.navbar-collapse.show{
+.navbar-brand {
+  margin-left: 0.5rem;
+}
+.navbar-toggler {
+  margin-right: 1rem;
+}
+.navbar-collapse.show {
+  width: 100vw;
   height: 100vh;
   z-index: 100;
+}
+@media only screen and (max-width: 992px)  {
+  .navbar-collapse {
+    margin: 2rem;
+    font-size: 1.25rem;
+  }
+  .navbar-collapse li a {
+    padding-bottom: 0px;
+  }
+  .navbar-collapse li:not(:first-child) a {
+    padding-top: 16px;
+  }
+  .navbar-collapse li a.nav-link.router-link-active {
+    padding-bottom: 4px;
+  }
+  .navbar .tools {
+    margin-right: 2rem;
+    display: flex !important;
+  }
+  .navbar .collapse .tools {
+    display: none !important;
+  }
+}
+@media only screen and (max-width: 400px)  {
+  .navbar .tools {
+    display: none !important;
+  }
+  .navbar .collapse .tools {
+    display: flex !important;
+    position: absolute;
+    bottom: 140px;
+  }
 }
 .version{
     text-decoration: none;
@@ -116,11 +151,29 @@ header {
   margin-bottom: -4px;
   text-shadow: var(--shadow-nav-link-active);
 }
-.tools{
+.tools {
   line-height: 1.2rem;
+  margin-right: 1rem;
 }
 .tools i {
   margin-left: 6px;
   cursor: pointer;
+  font-size: 1.3rem;
+}
+
+.navbar-toggler {
+  font-size: 2rem;
+  color: var(--color-text);
+  border: 0;
+  padding: 0;
+}
+.navbar-toggler:focus {
+  box-shadow: none;
+}
+.navbar-toggler:not(.collapsed) .bi-list {
+  display: none;
+}
+.navbar-toggler.collapsed .bi-x {
+  display: none;
 }
 </style>

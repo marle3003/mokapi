@@ -2,7 +2,7 @@ package schema_test
 
 import (
 	"github.com/stretchr/testify/require"
-	"mokapi/json/ref"
+	"mokapi/config/dynamic"
 	"mokapi/media"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
@@ -25,7 +25,7 @@ func TestMarshal_Xml(t *testing.T) {
 			},
 			schema: nil,
 			test: func(t *testing.T, s string, err error) {
-				require.EqualError(t, err, "marshal data to 'application/xml' failed: no schema provided")
+				require.EqualError(t, err, "encoding data to 'application/xml' failed: no schema provided")
 			},
 		},
 		{
@@ -35,7 +35,7 @@ func TestMarshal_Xml(t *testing.T) {
 			},
 			schema: schematest.NewRef("integer"),
 			test: func(t *testing.T, s string, err error) {
-				require.EqualError(t, err, "marshal data to 'application/xml' failed: root element name is undefined: reference name of schema and attribute xml.name is empty")
+				require.EqualError(t, err, "encoding data to 'application/xml' failed: root element name is undefined: reference name of schema and attribute xml.name is empty")
 			},
 		},
 		{
@@ -54,7 +54,7 @@ func TestMarshal_Xml(t *testing.T) {
 			data: func() interface{} {
 				return 4
 			},
-			schema: &schema.Ref{Reference: ref.Reference{Ref: "#/components/schemas/foo"}, Value: schematest.New("integer")},
+			schema: &schema.Ref{Reference: dynamic.Reference{Ref: "#/components/schemas/foo"}, Value: schematest.New("integer")},
 			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "<foo>4</foo>", s)
@@ -239,7 +239,7 @@ func TestMarshal_Xml(t *testing.T) {
 					Wrapped: true,
 				})),
 			test: func(t *testing.T, s string, err error) {
-				require.EqualError(t, err, "marshal data to 'application/xml' failed: expected array but got int")
+				require.EqualError(t, err, "encoding data to 'application/xml' failed: found 1 error:\nexpected array but got: 4")
 			},
 		},
 		{
@@ -263,7 +263,7 @@ func TestMarshal_Xml(t *testing.T) {
 				return []interface{}{"bar", nil}
 			},
 			schema: schematest.NewRef("array",
-				schematest.WithItems("string"),
+				schematest.WithItems("string", schematest.IsNullable(true)),
 				schematest.WithXml(&schema.Xml{
 					Name:    "foo",
 					Wrapped: true, // without wrapped results in invalid xml when on root
@@ -335,6 +335,7 @@ func TestMarshal_Xml(t *testing.T) {
 				return nil
 			},
 			schematest.NewRef("object",
+				schematest.IsNullable(true),
 				schematest.WithXml(&schema.Xml{Name: "book"}),
 				schematest.WithProperty("id", schematest.New("integer", schematest.WithXml(&schema.Xml{Attribute: true}))),
 				schematest.WithProperty("title", schematest.New("string",
@@ -361,13 +362,13 @@ func TestMarshal_Xml(t *testing.T) {
 			schematest.NewRef("object",
 				schematest.WithXml(&schema.Xml{Name: "book"}),
 				schematest.WithProperty("id", schematest.New("integer", schematest.WithXml(&schema.Xml{Attribute: true}))),
-				schematest.WithProperty("title", schematest.New("string",
+				schematest.WithProperty("title", schematest.New("string", schematest.IsNullable(true),
 					schematest.WithXml(&schema.Xml{
 						Attribute: true,
 						Prefix:    "ns",
 					}),
 				)),
-				schematest.WithProperty("author", schematest.New("string"))),
+				schematest.WithProperty("author", schematest.New("string", schematest.IsNullable(true)))),
 			func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, `<book id="123"></book>`, s)

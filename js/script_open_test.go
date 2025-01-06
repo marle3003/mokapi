@@ -1,28 +1,30 @@
-package js
+package js_test
 
 import (
 	"fmt"
 	r "github.com/stretchr/testify/require"
-	"mokapi/config/static"
+	"mokapi/engine/enginetest"
+	"mokapi/js"
+	"mokapi/js/jstest"
 	"testing"
 )
 
 func TestScript_Open(t *testing.T) {
 	testcases := []struct {
 		name string
-		f    func(t *testing.T, host *testHost)
+		test func(t *testing.T, host *enginetest.Host)
 	}{
 		{
-			"open",
-			func(t *testing.T, host *testHost) {
-				host.openFile = func(file, hint string) (string, string, error) {
+			name: "open",
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.OpenFileFunc = func(file, hint string) (string, string, error) {
 					return "", "bar", nil
 				}
-				s, err := New(newScript("",
+				s, err := jstest.New(jstest.WithSource(
 					`export default function() {
 						  	return open('foo')
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
@@ -30,32 +32,32 @@ func TestScript_Open(t *testing.T) {
 			},
 		},
 		{
-			"file not found",
-			func(t *testing.T, host *testHost) {
-				host.openFile = func(file, hint string) (string, string, error) {
+			name: "file not found",
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.OpenFileFunc = func(file, hint string) (string, string, error) {
 					return "", "", fmt.Errorf("test error")
 				}
-				s, err := New(newScript("",
+				s, err := jstest.New(jstest.WithSource(
 					`export default function() {
 						  	return open('foo')
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 				_, err = s.RunDefault()
 				r.Error(t, err)
 			},
 		},
 		{
-			"file as binary",
-			func(t *testing.T, host *testHost) {
-				host.openFile = func(file, hint string) (string, string, error) {
+			name: "file as binary",
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.OpenFileFunc = func(file, hint string) (string, string, error) {
 					return "", "foo", nil
 				}
-				s, err := New(newScript("",
+				s, err := jstest.New(jstest.WithSource(
 					`export default function() {
 						  	return open('foo', { as: 'binary' })
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
@@ -69,10 +71,7 @@ func TestScript_Open(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-
-			host := &testHost{}
-
-			tc.f(t, host)
+			tc.test(t, &enginetest.Host{})
 		})
 	}
 }

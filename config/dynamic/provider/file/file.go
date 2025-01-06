@@ -22,7 +22,7 @@ import (
 
 const mokapiIgnoreFile = ".mokapiignore"
 
-var bom = []byte{0xEF, 0xBB, 0xBF}
+var Bom = []byte{0xEF, 0xBB, 0xBF}
 
 type Provider struct {
 	cfg        static.FileProvider
@@ -77,27 +77,26 @@ func (p *Provider) Read(u *url.URL) (*dynamic.Config, error) {
 		return nil, err
 	}
 
-	err = p.watcher.Add(file)
-	if err != nil {
-		log.Warnf("unable to add watcher on file %v: %v", file, err)
-	}
+	p.watchPath(file)
 	return config, nil
 }
 
 func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
 	p.ch = ch
-	var path string
-	if len(p.cfg.Directory) > 0 {
-		path = p.cfg.Directory
+	var path []string
+	if len(p.cfg.Directories) > 0 {
+		path = p.cfg.Directories
 
-	} else if len(p.cfg.Filename) > 0 {
-		path = p.cfg.Filename
+	} else if len(p.cfg.Filenames) > 0 {
+		path = p.cfg.Filenames
 	}
 	if len(path) > 0 {
 		pool.Go(func(ctx context.Context) {
-			for _, i := range strings.Split(path, string(os.PathListSeparator)) {
-				if err := p.walk(i); err != nil {
-					log.Errorf("file provider: %v", err)
+			for _, pathItem := range path {
+				for _, i := range strings.Split(pathItem, string(os.PathListSeparator)) {
+					if err := p.walk(i); err != nil {
+						log.Errorf("file provider: %v", err)
+					}
 				}
 			}
 			p.isInit = false
@@ -131,7 +130,7 @@ func (p *Provider) watch(pool *safe.Pool) error {
 			case evt := <-p.watcher.Events:
 				// temporary files ends with '~' in name
 				if len(evt.Name) > 0 && !strings.HasSuffix(evt.Name, "~") {
-					fileInfo, err := os.Stat(evt.Name)
+					fileInfo, err := p.fs.Stat(evt.Name)
 					if err != nil {
 						// skip
 						continue
@@ -156,22 +155,26 @@ func (p *Provider) watch(pool *safe.Pool) error {
 					m[evt.Name] = struct{}{}
 
 					dir, file := filepath.Split(evt.Name)
-					if dir == evt.Name && !p.skip(dir) {
+					if dir == evt.Name && !p.skip(dir, true) {
 						p.watchPath(dir)
-					} else if p.cfg.Filename != "" {
-						if _, configFile := filepath.Split(p.cfg.Filename); file == configFile {
+					} else if len(p.cfg.Filenames) > 0 {
+						for _, filename := range p.cfg.Filenames {
+							if _, configFile := filepath.Split(filename); file == configFile {
+								c, err := p.readFile(evt.Name)
+								if err != nil {
+									log.Errorf("unable to read file %v", evt.Name)
+								}
+								p.ch <- c
+							}
+						}
+					} else {
+						if !p.skip(evt.Name, false) {
 							c, err := p.readFile(evt.Name)
 							if err != nil {
 								log.Errorf("unable to read file %v", evt.Name)
 							}
 							p.ch <- c
 						}
-					} else if !p.skip(evt.Name) {
-						c, err := p.readFile(evt.Name)
-						if err != nil {
-							log.Errorf("unable to read file %v", evt.Name)
-						}
-						p.ch <- c
 					}
 				}
 				events = make([]fsnotify.Event, 0)
@@ -181,7 +184,15 @@ func (p *Provider) watch(pool *safe.Pool) error {
 	return nil
 }
 
-func (p *Provider) skip(path string) bool {
+func (p *Provider) skip(path string, isDir bool) bool {
+	if p.isWatchPath(path) {
+		return false
+	}
+
+	if !isDir && len(p.cfg.Include) > 0 {
+		return !include(p.cfg.Include, path)
+	}
+
 	name := filepath.Base(path)
 	if name == mokapiIgnoreFile {
 		return true
@@ -201,7 +212,7 @@ func (p *Provider) readFile(path string) (*dynamic.Config, error) {
 	}
 
 	// remove bom sequence if present
-	if len(data) >= 4 && bytes.Equal(data[0:3], bom) {
+	if len(data) >= 4 && bytes.Equal(data[0:3], Bom) {
 		data = data[3:]
 	}
 
@@ -238,13 +249,13 @@ func (p *Provider) walk(root string) error {
 			return err
 		}
 		if fi.IsDir() {
-			if p.skip(path) {
+			if p.skip(path, true) && path != root {
 				log.Debugf("skip dir: %v", path)
 				return filepath.SkipDir
 			}
-			p.readMokapiIgnore(root)
+			p.readMokapiIgnore(path)
 			p.watchPath(path)
-		} else if !p.skip(path) {
+		} else if !p.skip(path, false) {
 			if c, err := p.readFile(path); err != nil {
 				log.Error(err)
 			} else if len(c.Raw) > 0 {
@@ -283,5 +294,36 @@ func (p *Provider) watchPath(path string) {
 		return
 	}
 	p.watched[path] = struct{}{}
+
+	// add watcher to file does not work, see watcher.Add
+	fileInfo, err := p.fs.Stat(path)
+	if err != nil {
+		return
+	}
+	if !fileInfo.IsDir() {
+		path = filepath.Dir(path)
+
+		if _, ok := p.watched[path]; ok {
+			return
+		}
+	}
+
 	p.watcher.Add(path)
+}
+
+func (p *Provider) isWatchPath(path string) bool {
+	p.m.Lock()
+	defer p.m.Unlock()
+
+	_, ok := p.watched[path]
+	return ok
+}
+
+func include(s []string, v string) bool {
+	for _, i := range s {
+		if Match(i, v) {
+			return true
+		}
+	}
+	return false
 }

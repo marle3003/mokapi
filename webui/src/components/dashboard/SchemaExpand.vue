@@ -4,7 +4,7 @@ import SourceView from './SourceView.vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage';
 
 defineProps<{
-    schema: Schema
+    schema: Schema | SchemaFormat
     title?: string
     source?: {
         filename: string

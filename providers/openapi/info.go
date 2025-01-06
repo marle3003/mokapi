@@ -12,6 +12,15 @@ type Info struct {
 
 	// The version of the service
 	Version string `yaml:"version" json:"version"`
+
+	TermsOfService string `yaml:"termsOfService,omitempty" json:"termsOfService,omitempty"`
+
+	License *License `yaml:"license" json:"license"`
+}
+
+type License struct {
+	Name string `yaml:"name" json:"name"`
+	Url  string `yaml:"url" json:"url"`
 }
 
 func (c *Info) patch(patch Info) {

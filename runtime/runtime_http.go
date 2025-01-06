@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/engine/common"
 	"mokapi/providers/openapi"
@@ -54,6 +55,7 @@ func (c *HttpInfo) update() {
 	r := getHttpConfig(c.configs[keys[0]])
 	for _, k := range keys[1:] {
 		p := getHttpConfig(c.configs[k])
+		log.Infof("applying patch for %s: %s", c.Info.Name, k)
 		r.Patch(p)
 	}
 

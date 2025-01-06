@@ -2,9 +2,14 @@ package openapi
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"mokapi/config/dynamic"
+	"mokapi/media"
 	"mokapi/providers/openapi/parameter"
+	"net/http"
 )
+
+var NoSuccessResponse = errors.New("no success response (HTTP 2xx) in configuration")
 
 type Operation struct {
 	// A list of tags for API documentation control. Tags can be used for
@@ -40,6 +45,8 @@ type Operation struct {
 	// operation.
 	Responses *Responses[int] `yaml:"responses" json:"responses"`
 
+	Security []SecurityRequirement `yaml:"security" json:"security"`
+
 	Path *Path `yaml:"-" json:"-"`
 }
 
@@ -55,7 +62,20 @@ func (o *Operation) getFirstSuccessResponse() (int, *Response, error) {
 		}
 	}
 
-	return 0, nil, fmt.Errorf("no success response (HTTP 2xx) in configuration")
+	return 0, nil, NoSuccessResponse
+}
+
+func getDefaultResponse() (int, *Response) {
+	r := &Response{
+		Content: Content{
+			"application/json": &MediaType{
+				Schema:      nil,
+				ContentType: media.ParseContentType("application/json"),
+			},
+		},
+	}
+
+	return http.StatusOK, r
 }
 
 func (o *Operation) getResponse(statusCode int) *Response {
@@ -74,7 +94,7 @@ func (o *Operation) parse(p *Path, config *dynamic.Config, reader dynamic.Reader
 	}
 
 	if err := o.RequestBody.parse(config, reader); err != nil {
-		return err
+		return fmt.Errorf("parse request body failed: %w", err)
 	}
 
 	return o.Responses.parse(config, reader)
@@ -107,4 +127,6 @@ func (o *Operation) patch(patch *Operation) {
 	} else {
 		o.Responses.patch(patch.Responses)
 	}
+
+	o.Parameters.Patch(patch.Parameters)
 }

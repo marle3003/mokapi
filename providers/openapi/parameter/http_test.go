@@ -3,6 +3,7 @@ package parameter
 import (
 	"github.com/stretchr/testify/require"
 	"mokapi/providers/openapi/schema"
+	jsonSchema "mokapi/schema/json/schema"
 	"net/http"
 	"net/url"
 	"testing"
@@ -25,7 +26,7 @@ func TestParseParam(t *testing.T) {
 					Name: "channel",
 					Type: Path,
 					Schema: &schema.Ref{
-						Value: &schema.Schema{Type: "string"},
+						Value: &schema.Schema{Type: jsonSchema.Types{"string"}},
 					},
 					Required: true,
 				}},
@@ -33,7 +34,7 @@ func TestParseParam(t *testing.T) {
 					Name: "id",
 					Type: Path,
 					Schema: &schema.Ref{
-						Value: &schema.Schema{Type: "integer", Format: "int64"},
+						Value: &schema.Schema{Type: jsonSchema.Types{"integer"}, Format: "int64"},
 					},
 					Required: true,
 				}},
@@ -55,7 +56,7 @@ func TestParseParam(t *testing.T) {
 						Name: "limit",
 						Type: Query,
 						Schema: &schema.Ref{
-							Value: &schema.Schema{Type: "integer"},
+							Value: &schema.Schema{Type: jsonSchema.Types{"integer"}},
 						},
 					},
 				},

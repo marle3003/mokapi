@@ -34,7 +34,14 @@ type Listeners struct {
 }
 
 func AddRef(parent, ref *Config) {
-	parent.Refs.Add(ref)
+	if parent.Info.Key() == ref.Info.Key() {
+		return
+	}
+
+	added := parent.Refs.Add(ref)
+	if !added {
+		return
+	}
 	ref.Listeners.Add(parent.Info.Url.String(), func(config *Config) {
 		parent.Info.Time = ref.Info.Time
 		parent.Listeners.Invoke(parent)
@@ -43,7 +50,7 @@ func AddRef(parent, ref *Config) {
 
 func (l *Listeners) Add(key string, fn ConfigListener) {
 	l.m.Lock()
-	l.m.Unlock()
+	defer l.m.Unlock()
 
 	if l.list == nil {
 		l.list = &sortedmap.LinkedHashMap[string, ConfigListener]{}
@@ -77,16 +84,28 @@ func Validate(c *Config) error {
 	return nil
 }
 
-func (r *Refs) List() []*Config {
+func (r *Refs) List(recursive bool) []*Config {
+	max := 20
+	if !recursive {
+		max = 1
+	}
+	return r.list(max)
+}
+
+func (r *Refs) list(max int) []*Config {
+	if max == 0 {
+		return nil
+	}
+
 	var refs []*Config
 	for _, v := range r.refs {
 		refs = append(refs, v)
-		refs = append(refs, v.Refs.List()...)
+		refs = append(refs, v.Refs.list(max-1)...)
 	}
 	return refs
 }
 
-func (r *Refs) Add(ref *Config) {
+func (r *Refs) Add(ref *Config) bool {
 	r.m.Lock()
 	defer r.m.Unlock()
 
@@ -96,9 +115,10 @@ func (r *Refs) Add(ref *Config) {
 
 	key := ref.Info.Path()
 	if _, ok := r.refs[key]; ok {
-		return
+		return false
 	}
 	r.refs[key] = ref
+	return true
 }
 
 func renderTemplate(b []byte) ([]byte, error) {

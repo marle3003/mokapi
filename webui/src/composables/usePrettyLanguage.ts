@@ -18,7 +18,16 @@ export function usePrettyLanguage() {
             case 'xml':
             case 'rss+xml':
                 return XmlFormatter(s, {collapseContent: true})
+        }
 
+        switch (contentType) {
+            case 'avro/binary':
+                try{ 
+                    return JSON.stringify(JSON.parse(s), null, 2)
+                }catch {
+                    console.error("unable to parse json: "+s)
+                    return s
+                }
         }
 
         return s
@@ -33,9 +42,16 @@ export function usePrettyLanguage() {
                 return 'text'
             case 'javascript':
                 return 'javascript'
-            default:
-                return mimeType.subtype
+            case 'typescript':
+                return 'javascript'
+        }
 
+        switch (contentType) {
+            case 'avro/binary':
+                // display avro content as JSON
+                return "javascript"
+            default:
+                return 'text'
         }
     }
 
@@ -53,14 +69,20 @@ export function usePrettyLanguage() {
                 return 'application/yaml'
             case '.js':
                 return 'text/javascript'
+            case '.ts':
+                return 'text/typescript'
             default:
                 return null
         }
     }
 
-    function formatSchema(s: Schema | undefined): string {
+    function formatSchema(s: Schema | SchemaFormat | undefined): string {
         if (!s) {
             return ''
+        }
+        const sf = s as SchemaFormat
+        if (sf && sf.schema) {
+            return formatLanguage(JSON.stringify(sf.schema), 'application/json')
         }
         return formatLanguage(JSON.stringify(s), 'application/json')
     }

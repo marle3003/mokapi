@@ -148,8 +148,8 @@ func TestRecord_ReadFrom(t *testing.T) {
 				6, 'f', 'o', 'o', // first header value
 				24, 'x', '-', 'm', 'e', 's', 's', 'a', 'g', 'e', '-', 'i', 'd', // 2nd header name
 				6, 'b', 'a', 'r', // 2nd header value
-				28, 'x', '-', 'm', 'e', 's', 's', 'a', 'g', 'e', '-', 't', 'y', 'p', 'e', // 2nd header name
-				6, 'o', 'n', 'e', // 2nd header value
+				28, 'x', '-', 'm', 'e', 's', 's', 'a', 'g', 'e', '-', 't', 'y', 'p', 'e', // 3. header name
+				6, 'o', 'n', 'e', // 3. header value
 			},
 			test: func(t *testing.T, d *Decoder) {
 				batch := RecordBatch{}
@@ -190,7 +190,7 @@ func TestRecordBatch_WriteTo(t *testing.T) {
 		},
 		{
 			"single record",
-			RecordBatch{Records: []Record{
+			RecordBatch{Records: []*Record{
 				{
 					Time:    ToTime(Timestamp(time.Now())),
 					Key:     NewBytes([]byte("foo")),
@@ -201,7 +201,7 @@ func TestRecordBatch_WriteTo(t *testing.T) {
 		},
 		{
 			"two records",
-			RecordBatch{Records: []Record{
+			RecordBatch{Records: []*Record{
 				{
 					Offset:  2,
 					Time:    ToTime(Timestamp(time.Now())),
@@ -262,7 +262,7 @@ func TestRecord_Size(t *testing.T) {
 		{
 			"single record",
 			6,
-			RecordBatch{Records: []Record{
+			RecordBatch{Records: []*Record{
 				{
 					Time:    ToTime(Timestamp(time.Now())),
 					Key:     NewBytes([]byte("foo")),
@@ -274,7 +274,7 @@ func TestRecord_Size(t *testing.T) {
 		{
 			"two records",
 			24,
-			RecordBatch{Records: []Record{
+			RecordBatch{Records: []*Record{
 				{
 					Time:    ToTime(Timestamp(time.Now())),
 					Key:     NewBytes([]byte("key-1")),
@@ -300,7 +300,7 @@ func TestRecord_Size(t *testing.T) {
 }
 
 func TestRecordBatch_WriteTo_Bytes_Compare(t *testing.T) {
-	records := RecordBatch{Records: []Record{
+	records := RecordBatch{Records: []*Record{
 		{
 			Offset:  0,
 			Time:    ToTime(1657010762684),

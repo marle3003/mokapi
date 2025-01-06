@@ -56,18 +56,14 @@ func TestHandler_Response(t *testing.T) {
 			},
 			test: func(t *testing.T, rr *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, rr.Code)
-				require.Equal(t, "marshal data to 'application/json' failed: value 'foo' does not match format 'date' (RFC3339), expected schema type=string format=date\n", rr.Body.String())
+				require.Equal(t, "encoding data to 'application/json' failed: found 1 error:\nstring 'foo' does not match format 'date'\nschema path #/format\n", rr.Body.String())
 			},
 		},
 		{
 			name:   "object with null property",
 			config: getConfig(schematest.New("object", schematest.WithProperty("foo", schematest.New("string", schematest.IsNullable(true)))), "application/json"),
 			handler: func(event string, req *common.EventRequest, res *common.EventResponse) {
-				res.Data = &struct {
-					Foo interface{}
-				}{
-					Foo: nil,
-				}
+				res.Data = map[string]interface{}{"foo": nil}
 			},
 			req: func() *http.Request {
 				return httptest.NewRequest("get", "http://localhost/foo", nil)
@@ -90,6 +86,34 @@ func TestHandler_Response(t *testing.T) {
 				require.Equal(t, http.StatusOK, rr.Code)
 				require.Equal(t, "application/json", rr.Header().Get("Content-Type"))
 				require.Equal(t, `{"foo":"bar"}`, rr.Body.String())
+			},
+		},
+		{
+			name:   "application/octet-stream with string",
+			config: getConfig(schematest.New("string"), "application/octet-stream"),
+			handler: func(event string, req *common.EventRequest, res *common.EventResponse) {
+				res.Data = "foo"
+			},
+			req: func() *http.Request {
+				return httptest.NewRequest("get", "http://localhost/foo", nil)
+			},
+			test: func(t *testing.T, rr *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.Equal(t, "foo", rr.Body.String())
+			},
+		},
+		{
+			name:   "application/octet-stream with object",
+			config: getConfig(schematest.New("object"), "application/octet-stream"),
+			handler: func(event string, req *common.EventRequest, res *common.EventResponse) {
+				res.Data = map[string]interface{}{"foo": "bar"}
+			},
+			req: func() *http.Request {
+				return httptest.NewRequest("get", "http://localhost/foo", nil)
+			},
+			test: func(t *testing.T, rr *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusInternalServerError, rr.Code)
+				require.Equal(t, "encoding data to 'application/octet-stream' failed: not supported encoding of content types 'application/octet-stream', except simple data types\n", rr.Body.String())
 			},
 		},
 	}

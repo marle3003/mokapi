@@ -4,28 +4,29 @@ import (
 	"fmt"
 	"mokapi/providers/openapi/schema"
 	"net/http"
+	"strings"
 )
 
-func parseHeader(p *Parameter, r *http.Request) (*RequestParameterValue, error) {
-	header := r.Header.Get(p.Name)
+func parseHeader(param *Parameter, r *http.Request) (*RequestParameterValue, error) {
+	header := r.Header.Get(param.Name)
 
 	if len(header) == 0 {
-		if p.Required {
+		if param.Required {
 			return nil, fmt.Errorf("parameter is required")
 		}
 		return nil, nil
 	}
 
-	rp := &RequestParameterValue{Raw: header, Value: header}
+	rp := &RequestParameterValue{Raw: &header, Value: header}
 	var err error
-	if p.Schema != nil {
-		switch p.Schema.Value.Type {
-		case "array":
-			rp.Value, err = parseArray(p, header, ",")
-		case "object":
-			rp.Value, err = parseObject(p, header, ",", p.IsExplode(), defaultDecode)
+	if param.Schema != nil {
+		switch {
+		case param.Schema.Value.Type.IsArray():
+			rp.Value, err = parseArray(param, strings.Split(header, ","))
+		case param.Schema.Value.Type.IsObject():
+			rp.Value, err = parseObject(param, header, ",", param.IsExplode(), defaultDecode)
 		default:
-			rp.Value, err = schema.ParseString(header, p.Schema)
+			rp.Value, err = p.ParseWith(header, schema.ConvertToJsonSchema(param.Schema))
 		}
 	}
 

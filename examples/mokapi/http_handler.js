@@ -1,24 +1,31 @@
-import { on, marshal } from 'mokapi'
+import { on, env } from 'mokapi'
 import { clusters, events as kafkaEvents, configs as kafkaConfigs } from 'kafka.js'
 import { apps as httpServices, events as httpEvents, configs as httpConfigs } from 'services_http.js'
 import { server as smtpServers, mails, mailEvents, getMail, getAttachment } from 'smtp.js'
 import { server as ldapServers, searches } from 'ldap.js'
 import { metrics } from 'metrics.js'
-import { fake } from 'mokapi/faker'
-import { get, post } from 'mokapi/http'
+import { get, post, fetch } from 'mokapi/http'
 
 const configs = {}
 
-export default function() {
+export default async function() {
+    const apiBaseUrl = `http://localhost:8091/mokapi`
+    const res = get(`${apiBaseUrl}/api/info`)
+    const { version, buildTime } = res.json()
+
     on('http', function(request, response) {
         response.headers["Access-Control-Allow-Methods"] = "*"
         response.headers["Access-Control-Allow-Headers"] = "*"
         response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers['Mokapi-Version'] = version
+        response.headers['Mokapi-Build-Time'] = buildTime
 
         switch (request.operationId) {
-            case 'info':
-                response.data = {version: "0.5.0", activeServices: ["http", "kafka", "ldap", "smtp"]}
+            case 'info': {
+
+                response.data = {version: "0.11.0", activeServices: ["http", "kafka", "ldap", "smtp"]}
                 return true
+            }
             case 'services':
                 response.data = getServices()
                 return true
@@ -72,12 +79,15 @@ export default function() {
                     response.data = e
                 }
                 return true
-            case 'example':
-                const data = fake(request.body)
-                response.body = marshal(data, { schema: request.body.schema, contentType: request.header.Accept })
+            case 'example': {
+                const res = post(`${apiBaseUrl}/api/schema/example`, request.body, {headers: {'Accept': request.header['Accept']}})
+                response.statusCode = res.statusCode
+                response.headers = res.headers
+                response.body = res.body
                 return true
+            }
             case 'validate':
-                const res = post('http://localhost:8091/mokapi/api/schema/validate', request.body, { headers: { 'Data-Content-Type': request.header['Data-Content-Type']}})
+                const res = post(`${apiBaseUrl}/api/schema/validate`, request.body, { headers: { 'Data-Content-Type': request.header['Data-Content-Type']}})
                 response.statusCode = res.statusCode
                 response.headers = res.headers
                 if (res.statusCode !== 200) {
@@ -109,13 +119,14 @@ export default function() {
                     return true
                 }
             case 'fakertree':
-                const resp = get('http://localhost:8091/mokapi/api/faker/tree')
+                const resp = get(`http://localhost:${port}/mokapi/api/faker/tree`)
                 response.body = resp.body
+                return true
         }
     }, {tags: {name: "dashboard"}})
 
     for (const config of [...Object.values(httpConfigs),...Object.values(kafkaConfigs)]) {
-        const r = get(config.data)
+        const r = await fetch(config.data)
         configs[config.id] = {
             data:   r.body,
             headers: {

@@ -16,14 +16,22 @@ func TestLoad(t *testing.T) {
 			name: "args",
 			f: func(t *testing.T) {
 				s := &struct {
-					Name string
-				}{}
+					Name  string
+					Flag1 bool
+					Flag2 bool
+				}{
+					Flag2: true,
+				}
 				os.Args = append(os.Args, "mokapi.exe")
 				os.Args = append(os.Args, "--name=bar")
+				os.Args = append(os.Args, "--flag1")
+				os.Args = append(os.Args, "--no-flag2")
 
 				err := Load([]ConfigDecoder{&FlagDecoder{}}, s)
 				require.NoError(t, err)
 				require.Equal(t, "bar", s.Name)
+				require.Equal(t, true, s.Flag1)
+				require.Equal(t, false, s.Flag2)
 			},
 		},
 		{
@@ -42,19 +50,81 @@ func TestLoad(t *testing.T) {
 			},
 		},
 		{
+			name: "array explode",
+			f: func(t *testing.T) {
+				s := &struct {
+					Names []string `explode:"name"`
+				}{}
+				os.Args = append(os.Args, "mokapi.exe")
+				os.Args = append(os.Args, "--name", "foo", "--name", "bar")
+
+				err := Load([]ConfigDecoder{&FlagDecoder{}}, s)
+				require.NoError(t, err)
+				require.Equal(t, []string{"foo", "bar"}, s.Names)
+			},
+		},
+		{
+			name: "array list",
+			f: func(t *testing.T) {
+				s := &struct {
+					Names []string `explode:"name"`
+				}{}
+				os.Args = append(os.Args, "mokapi.exe")
+				os.Args = append(os.Args, "--name", "foo", "bar")
+
+				err := Load([]ConfigDecoder{&FlagDecoder{}}, s)
+				require.NoError(t, err)
+				require.Equal(t, []string{"foo", "bar"}, s.Names)
+			},
+		},
+		{
+			name: "array with item contains a space",
+			f: func(t *testing.T) {
+				s := &struct {
+					Names []string
+				}{}
+				os.Args = append(os.Args, "mokapi.exe")
+				os.Args = append(os.Args, "--names")
+				os.Args = append(os.Args, "bar", "foo", "foo bar")
+
+				err := Load([]ConfigDecoder{&FlagDecoder{}}, s)
+				require.NoError(t, err)
+				require.Equal(t, []string{"bar", "foo", "foo bar"}, s.Names)
+			},
+		},
+		{
+			name: "array override with index operator",
+			f: func(t *testing.T) {
+				s := &struct {
+					Names []string `explode:"name"`
+				}{}
+				os.Args = append(os.Args, "mokapi.exe")
+				os.Args = append(os.Args, "--name", "foo", "--name", "bar", "--names[0]", "x")
+
+				err := Load([]ConfigDecoder{&FlagDecoder{}}, s)
+				require.NoError(t, err)
+				require.Equal(t, []string{"x", "bar"}, s.Names)
+			},
+		},
+		{
 			name: "env var",
 			f: func(t *testing.T) {
 				s := &struct {
-					Name string
+					Name     string
+					SkipName string `flag:"skip-name"`
 				}{}
 				os.Args = append(os.Args, "mokapi.exe")
 				err := os.Setenv("MOKAPI_name", "bar")
 				defer os.Unsetenv("MOKAPI_name")
 				require.NoError(t, err)
+				err = os.Setenv("MOKAPI_SKIP_NAME", "bar")
+				defer os.Unsetenv("MOKAPI_SKIP_NAME")
+				require.NoError(t, err)
 
 				err = Load([]ConfigDecoder{&FlagDecoder{}}, s)
 				require.NoError(t, err)
 				require.Equal(t, "bar", s.Name)
+				require.Equal(t, "bar", s.SkipName)
 			},
 		},
 		{
@@ -72,6 +142,23 @@ func TestLoad(t *testing.T) {
 				err = Load([]ConfigDecoder{&FlagDecoder{}}, s)
 				require.NoError(t, err)
 				require.Equal(t, "barr", s.Name)
+			},
+		},
+		{
+			name: "env var overrides cli array",
+			f: func(t *testing.T) {
+				s := &struct {
+					Name []string
+				}{}
+				os.Args = append(os.Args, "mokapi.exe")
+				os.Args = append(os.Args, "--name", "foo", "--name", "bar")
+				err := os.Setenv("MOKAPI_name", "barr")
+				defer os.Unsetenv("MOKAPI_name")
+				require.NoError(t, err)
+
+				err = Load([]ConfigDecoder{&FlagDecoder{}}, s)
+				require.NoError(t, err)
+				require.Equal(t, []string{"barr"}, s.Name)
 			},
 		},
 		{
@@ -180,9 +267,12 @@ func TestLoad(t *testing.T) {
 					}
 				}{}
 				os.Args = append(os.Args, "mokapi.exe")
-				err := os.Setenv("MOKAPI_items.0.name", "mokapi")
-				defer os.Unsetenv("MOKAPI_items.0.name")
+				err := os.Setenv("MOKAPI_items_0_name", "mokapi")
+				defer os.Unsetenv("MOKAPI_items_0_name")
 				require.NoError(t, err)
+				err = os.Setenv("MOKAPI_ITEMS_0_VALUE", "123")
+				require.NoError(t, err)
+				defer os.Unsetenv("MOKAPI_ITEMS_0_VALUE.0.value")
 				err = os.Setenv("MOKAPI_items.0.value", "123")
 				require.NoError(t, err)
 				defer os.Unsetenv("MOKAPI_items.0.value")
@@ -204,7 +294,7 @@ func TestLoad(t *testing.T) {
 				os.Args = append(os.Args, "--foo=bar")
 
 				err := Load([]ConfigDecoder{&FlagDecoder{}}, s)
-				require.EqualError(t, err, "configuration error foo: configuration not found")
+				require.EqualError(t, err, "configuration error foo: not found")
 			},
 		},
 	}
@@ -227,7 +317,6 @@ func TestLoad_Invalid(t *testing.T) {
 		{args: "--"},
 		{args: "-=bar"},
 		{args: "---name=bar"},
-		{args: "--name"},
 	}
 
 	for _, tc := range testcases {

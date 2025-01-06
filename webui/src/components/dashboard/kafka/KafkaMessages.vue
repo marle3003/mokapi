@@ -4,7 +4,6 @@ import { onMounted, ref, onUnmounted } from 'vue'
 import { usePrettyDates } from '@/composables/usePrettyDate'
 import { Modal, Tab } from 'bootstrap'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
-import hljs from 'highlight.js'
 import SourceView from '../SourceView.vue'
 
 const props = defineProps<{
@@ -45,7 +44,7 @@ interface DialogData {
     message: string
     headers: { [name: string]: string }
     contentType: string
-    keyType: string
+    keyType: string | string[]
     partition: number
     offset: number
     time: string
@@ -58,19 +57,25 @@ function showMessage(event: ServiceEvent){
         return
     }
 
-    const topicName = event.traits["topic"]
-    const topic = getTopic(topicName)
-
     const data = eventData(event)
     if (!data){
         return
     }
+
+    const topicName = event.traits["topic"]
+    const topic = getTopic(topicName)
+    const messageConfig = getMessageConfig(data?.headers['x-specification-message-id'], topic)
+    if (!messageConfig) {
+        console.error('x-specification-message-id: '+ data?.headers['x-specification-message-id'])
+        return
+    }
+
     message.value = {
         key: data.key,
-        message: formatLanguage(data.message, topic.configs.messageType),
+        message: formatLanguage(data.message, messageConfig.contentType),
         headers: data.headers,
-        contentType: topic.configs.messageType,
-        keyType: topic.configs.key.type,
+        contentType: messageConfig.contentType,
+        keyType: messageConfig.key?.schema?.type,
         partition: data.partition,
         offset: data.offset,
         time: format(event.time),
@@ -89,6 +94,19 @@ function getTopic(name: string): KafkaTopic {
         }
     }
     throw new Error(`topic ${name} not found`)
+}
+function getMessageConfig(messageId: string | undefined, topic: KafkaTopic): KafkaMessage | undefined {
+    const keys = Object.keys(topic.messages)
+    if (keys.length === 1) {
+        return topic.messages[keys[0]]
+    }
+
+    for (const id in topic.messages){
+        if (id === messageId) {
+            return topic.messages[id]
+        }
+    }
+    return undefined
 }
 </script>
 
@@ -135,10 +153,10 @@ function getTopic(name: string): KafkaTopic {
                                                     <p aria-labelledby="dialog-message-key">{{ message.key }}</p>
                                                 </div>
                                             </div>
-                                            <source-view :source="message.message" :content-type="message.contentType" />
+                                            <source-view :source="formatLanguage(message.message, message.contentType)" :content-type="message.contentType" />
                                         </div>
                                         <div class="tab-pane fade" id="detail-header" role="tabpanel">
-                                            <table class="table dataTable selectable">
+                                            <table class="table dataTable">
                                                 <caption class="visually-hidden">Message Headers</caption>
                                                 <thead>
                                                     <tr>

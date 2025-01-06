@@ -1,4 +1,4 @@
-package engine
+package engine_test
 
 import (
 	"fmt"
@@ -6,33 +6,49 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/dynamic/script"
-	"mokapi/config/static"
-	"mokapi/runtime"
+	"mokapi/engine"
+	"mokapi/engine/common"
+	"mokapi/engine/enginetest"
+	"mokapi/js"
+	"mokapi/js/jstest"
+	"mokapi/js/require"
 	"net/url"
 	"strings"
 	"testing"
 	"time"
 )
 
-var reader = dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
-	return nil, nil
-})
-
 func TestJsScriptEngine(t *testing.T) {
 	t.Parallel()
 	t.Run("valid", func(t *testing.T) {
 		t.Parallel()
-		engine := New(reader, runtime.New(), static.JsConfig{}, false)
-		err := engine.AddScript(newScript("test.js", "export default function(){}"))
+		e := enginetest.NewEngine()
+		err := e.AddScript(newScript("test.js", "export default function(){}"))
 		r.NoError(t, err)
-		r.Len(t, engine.scripts, 0, "no events and jobs, script should be closed")
+		r.Equal(t, 0, e.Scripts(), "no events and jobs, script should be closed")
 	})
 	t.Run("blank", func(t *testing.T) {
 		t.Parallel()
-		engine := New(reader, runtime.New(), static.JsConfig{}, false)
-		err := engine.AddScript(newScript("test.js", ""))
+		e := enginetest.NewEngine()
+		err := e.AddScript(newScript("test.js", ""))
 		r.NoError(t, err)
-		r.Len(t, engine.scripts, 0, "no events and jobs, script should be closed")
+		r.Equal(t, 0, e.Scripts(), "no events and jobs, script should be closed")
+	})
+	t.Run("typescript", func(t *testing.T) {
+		t.Parallel()
+		e := enginetest.NewEngine()
+		err := e.AddScript(newScript("test.ts", "const msg: string = 'Hello World';"))
+		r.NoError(t, err)
+		r.Equal(t, 0, e.Scripts(), "no events and jobs, script should be closed")
+	})
+	t.Run("typescript async default function", func(t *testing.T) {
+		t.Parallel()
+		e := enginetest.NewEngine()
+		err := e.AddScript(newScript("test.js", "import { every } from 'mokapi'; export default async function(){ setTimeout(() => { every('1m', function() {}) }, 500)}"))
+		r.NoError(t, err)
+		r.Equal(t, 1, e.Scripts())
+		time.Sleep(2 * time.Second)
+		e.Close()
 	})
 }
 
@@ -44,56 +60,69 @@ func TestJsEvery(t *testing.T) {
 		{
 			name: "job is registered",
 			test: func(t *testing.T) {
-				engine := New(reader, runtime.New(), static.JsConfig{}, false)
-				err := engine.AddScript(newScript("test.js", `
+				registered := false
+				scheduler := &enginetest.Scheduler{
+					EveryFunc: func(every string, handler func(), opt common.JobOptions) (engine.Job, error) {
+						registered = true
+						r.Equal(t, "1m", every)
+						return nil, nil
+					},
+				}
+				e := enginetest.NewEngine(engine.WithScheduler(scheduler))
+				err := e.AddScript(newScript("test.js", `
 					import mokapi from 'mokapi'
 					export default function() {
 						mokapi.every('1m', function() {});
 					}
 				`))
 				r.NoError(t, err)
-				r.Len(t, engine.scripts, 1, "script length not 1")
+				r.Equal(t, 1, e.Scripts(), "script length not 1")
 
-				r.Len(t, engine.scripts["test.js"].jobs, 1, "job not defined")
-				r.Len(t, engine.cron.Jobs(), 1, "job not defined")
+				r.True(t, registered)
 			},
 		},
 		{
 			name: "job runs immediately",
 			test: func(t *testing.T) {
-				engine := New(reader, runtime.New(), static.JsConfig{}, false)
-				go engine.Start()
-				defer engine.Close()
-				err := engine.AddScript(newScript("test.js", `
+				registered := false
+				scheduler := &enginetest.Scheduler{
+					EveryFunc: func(every string, handler func(), opt common.JobOptions) (engine.Job, error) {
+						registered = true
+						r.Equal(t, false, opt.SkipImmediateFirstRun)
+						return nil, nil
+					},
+				}
+				e := enginetest.NewEngine(engine.WithScheduler(scheduler))
+				err := e.AddScript(newScript("test.js", `
 					import mokapi from 'mokapi'
 					export default function() {
 						mokapi.every('1h', function() {});
 					}
 				`))
 				r.NoError(t, err)
-				r.Len(t, engine.scripts, 1, "script length not 1")
-
-				time.Sleep(500 * time.Millisecond)
-
-				r.Equal(t, 1, engine.scripts["test.js"].jobs[0].RunCount(), "job run count")
+				r.True(t, registered)
 			},
 		},
 		{
 			name: "job runs only 2 times",
 			test: func(t *testing.T) {
-				engine := New(reader, runtime.New(), static.JsConfig{}, false)
-				go engine.Start()
-				defer engine.Close()
-				err := engine.AddScript(newScript("test.js", `
+				registered := false
+				scheduler := &enginetest.Scheduler{
+					EveryFunc: func(every string, handler func(), opt common.JobOptions) (engine.Job, error) {
+						registered = true
+						r.Equal(t, 2, opt.Times)
+						return nil, nil
+					},
+				}
+				e := enginetest.NewEngine(engine.WithScheduler(scheduler))
+				err := e.AddScript(newScript("test.js", `
 					import mokapi from 'mokapi'
 					export default function() {
 						mokapi.every('100ms', function() {}, { times: 2 });
 					}
 				`))
 				r.NoError(t, err)
-				time.Sleep(500 * time.Millisecond)
-
-				r.Equal(t, 2, engine.scripts["test.js"].jobs[0].RunCount(), "job run count")
+				r.True(t, registered)
 			},
 		},
 	}
@@ -112,18 +141,18 @@ func TestJsOn(t *testing.T) {
 	t.Parallel()
 	t.Run("noEvent", func(t *testing.T) {
 		t.Parallel()
-		engine := New(reader, runtime.New(), static.JsConfig{}, false)
-		err := engine.AddScript(newScript("test.js", `
+		e := enginetest.NewEngine()
+		err := e.AddScript(newScript("test.js", `
 			import {on, sleep} from 'mokapi'
 			export default function() {}
 		`))
 		r.NoError(t, err)
-		r.Len(t, engine.scripts, 0, "script length not 1")
+		r.Equal(t, 0, e.Scripts(), "script length not 1")
 	})
 	t.Run("withoutSummary", func(t *testing.T) {
 		t.Parallel()
-		engine := New(reader, runtime.New(), static.JsConfig{}, false)
-		err := engine.AddScript(newScript("test.js", `
+		e := enginetest.NewEngine()
+		err := e.AddScript(newScript("test.js", `
 			import {on, sleep} from 'mokapi'
 			export default function() {
 				on('http', function() {
@@ -132,17 +161,16 @@ func TestJsOn(t *testing.T) {
 			}
 		`))
 		r.NoError(t, err)
-		r.Len(t, engine.scripts, 1, "script length not 1")
-		r.Len(t, engine.scripts["test.js"].events["http"], 1, "event not defined")
+		r.Equal(t, 1, e.Scripts(), "script length not 1")
 
-		summaries := engine.Run("http")
+		summaries := e.Run("http")
 
 		r.Len(t, summaries, 0, "summary length not 0")
 	})
 	t.Run("simple", func(t *testing.T) {
 		t.Parallel()
-		engine := New(reader, runtime.New(), static.JsConfig{}, false)
-		err := engine.AddScript(newScript("test.js", `
+		e := enginetest.NewEngine()
+		err := e.AddScript(newScript("test.js", `
 			import {on, sleep} from 'mokapi'
 			export default function() {
 				on('http', function(request, response) {
@@ -151,10 +179,9 @@ func TestJsOn(t *testing.T) {
 			}
 		`))
 		r.NoError(t, err)
-		r.Len(t, engine.scripts, 1, "script length not 1")
-		r.Len(t, engine.scripts["test.js"].events["http"], 1, "event not defined")
+		r.Equal(t, 1, e.Scripts(), "script length not 1")
 
-		summaries := engine.Run("http", &struct{}{}, &struct{}{})
+		summaries := e.Run("http", &struct{}{}, &struct{}{})
 
 		r.Len(t, summaries, 1, "summary length not 1")
 		summary := summaries[0]
@@ -164,8 +191,8 @@ func TestJsOn(t *testing.T) {
 	})
 	t.Run("duration", func(t *testing.T) {
 		t.Parallel()
-		engine := New(reader, runtime.New(), static.JsConfig{}, false)
-		err := engine.AddScript(newScript("test.js", `
+		e := enginetest.NewEngine()
+		err := e.AddScript(newScript("test.js", `
 			import {on, sleep} from 'mokapi'
 			export default function() {
 				on('http', function() {
@@ -176,7 +203,7 @@ func TestJsOn(t *testing.T) {
 		`))
 		r.NoError(t, err)
 
-		summaries := engine.Run("http")
+		summaries := e.Run("http")
 
 		r.Len(t, summaries, 1, "summary length not 1")
 		summary := summaries[0]
@@ -184,8 +211,8 @@ func TestJsOn(t *testing.T) {
 	})
 	t.Run("duration as string", func(t *testing.T) {
 		t.Parallel()
-		engine := New(reader, runtime.New(), static.JsConfig{}, false)
-		err := engine.AddScript(newScript("test.js", `
+		e := enginetest.NewEngine()
+		err := e.AddScript(newScript("test.js", `
 			import {on, sleep} from 'mokapi'
 			export default function() {
 				on('http', function() {
@@ -196,7 +223,7 @@ func TestJsOn(t *testing.T) {
 		`))
 		r.NoError(t, err)
 
-		summaries := engine.Run("http")
+		summaries := e.Run("http")
 
 		r.Len(t, summaries, 1, "summary length not 1")
 		summary := summaries[0]
@@ -204,8 +231,8 @@ func TestJsOn(t *testing.T) {
 	})
 	t.Run("tag name", func(t *testing.T) {
 		t.Parallel()
-		engine := New(reader, runtime.New(), static.JsConfig{}, false)
-		err := engine.AddScript(newScript("test.js", `
+		e := enginetest.NewEngine()
+		err := e.AddScript(newScript("test.js", `
 			import {on} from 'mokapi'
 			export default function() {
 				on('http', function() {return true}, {tags: {'name': 'foobar'}});
@@ -213,15 +240,15 @@ func TestJsOn(t *testing.T) {
 		`))
 		r.NoError(t, err)
 
-		summaries := engine.Run("http")
+		summaries := e.Run("http")
 
 		r.Len(t, summaries, 1, "summary length not 1")
 		r.Equal(t, "foobar", summaries[0].Tags["name"], "tag name not correct")
 	})
 	t.Run("custom tag", func(t *testing.T) {
 		t.Parallel()
-		engine := New(reader, runtime.New(), static.JsConfig{}, false)
-		err := engine.AddScript(newScript("test.js", `
+		e := enginetest.NewEngine()
+		err := e.AddScript(newScript("test.js", `
 			import {on} from 'mokapi'
 			export default function() {
 				on('http', function() {return true}, {tags: {'foo': 'bar'}});
@@ -229,7 +256,7 @@ func TestJsOn(t *testing.T) {
 		`))
 		r.NoError(t, err)
 
-		summaries := engine.Run("http")
+		summaries := e.Run("http")
 
 		r.Len(t, summaries, 1, "summary length not 1")
 		r.Equal(t, "bar", summaries[0].Tags["foo"], "tag name not correct")
@@ -244,15 +271,14 @@ func TestJsOn(t *testing.T) {
 		}
 
 		var msg string
-		logger := &testLogger{
-			info: func(args ...interface{}) {
+		logger := &enginetest.Logger{
+			InfoFunc: func(args ...interface{}) {
 				msg = fmt.Sprintf("%v", args[0])
 			},
 		}
 
-		engine := New(reader, runtime.New(), static.JsConfig{}, false)
-		engine.logger = logger
-		err := engine.AddScript(newScript("test.js", `
+		e := enginetest.NewEngine(engine.WithLogger(logger))
+		err := e.AddScript(newScript("test.js", `
 			import {on} from 'mokapi'
 			export default function() {
 				on(
@@ -265,7 +291,7 @@ func TestJsOn(t *testing.T) {
 		`))
 		r.NoError(t, err)
 
-		engine.Run("http", p)
+		e.Run("http", p)
 
 		r.Equal(t, "bar", msg)
 	})
@@ -276,8 +302,8 @@ func TestJsOpen(t *testing.T) {
 	t.Run("fileExists", func(t *testing.T) {
 		t.Parallel()
 		var msg string
-		logger := &testLogger{
-			info: func(args ...interface{}) {
+		logger := &enginetest.Logger{
+			InfoFunc: func(args ...interface{}) {
 				msg = fmt.Sprintf("%v", args[0])
 			},
 		}
@@ -286,9 +312,8 @@ func TestJsOpen(t *testing.T) {
 			return &dynamic.Config{Raw: []byte("foobar")}, nil
 		})
 
-		engine := New(reader, runtime.New(), static.JsConfig{}, false)
-		engine.logger = logger
-		err := engine.AddScript(newScript("./test.js", `
+		e := enginetest.NewEngine(engine.WithLogger(logger), engine.WithReader(reader))
+		err := e.AddScript(newScript("./test.js", `
 			let file = open('test.txt');
 			console.log(file);
 			export default function() {}
@@ -303,8 +328,8 @@ func TestJsOpen(t *testing.T) {
 			return nil, fmt.Errorf("file not found")
 		})
 
-		engine := New(reader, runtime.New(), static.JsConfig{}, false)
-		err := engine.AddScript(newScript("./test.js", `
+		e := enginetest.NewEngine(engine.WithReader(reader))
+		err := e.AddScript(newScript("./test.js", `
 			let file = open('test.txt');
 			export default function() {}
 		`))
@@ -312,7 +337,7 @@ func TestJsOpen(t *testing.T) {
 	})
 	t.Run("require nested with change file", func(t *testing.T) {
 		t.Parallel()
-		foo := `const {bar} = require('bar'); export let foo = bar`
+		foo := `const { bar } = require('bar'); export let foo = bar`
 		bar := `export let bar = 'bar'; export let xy = 'xy'`
 		var barFile *dynamic.Config
 
@@ -330,22 +355,30 @@ func TestJsOpen(t *testing.T) {
 			return nil, fmt.Errorf("file not found")
 		})
 
-		engine := New(reader, runtime.New(), static.JsConfig{}, false)
+		e := enginetest.NewEngine(engine.WithReader(reader), engine.WithScriptLoader(
+			engine.ScriptLoaderFunc(func(file *dynamic.Config, host common.Host) (common.Script, error) {
+				registry, err := require.NewRegistry()
+				r.NoError(t, err)
+				js.RegisterNativeModules(registry)
+
+				return jstest.New(js.WithFile(file), js.WithHost(host), js.WithRegistry(registry))
+			}),
+		))
 		s := newScript("./test.js", `
-			import {foo} from 'foo'
-			import {on} from 'mokapi'
+			import { foo } from 'foo'
+			import { on } from 'mokapi'
 			export default function() {
-				on('http', function() {return true}, {tags: {name: foo}});
+				on('http', function() { return true }, { tags: { name: foo } });
 			}
 		`)
 		s.Listeners.Add("", func(config *dynamic.Config) {
-			err := engine.AddScript(config)
+			err := e.AddScript(config)
 			r.NoError(t, err)
 		})
-		err := engine.AddScript(s)
+		err := e.AddScript(s)
 		r.NoError(t, err)
 
-		summaries := engine.Run("http")
+		summaries := e.Run("http")
 
 		r.Len(t, summaries, 1, "summary length not 1")
 		summary := summaries[0]
@@ -355,7 +388,7 @@ func TestJsOpen(t *testing.T) {
 		barFile.Info.Checksum = []byte("foobar")
 		barFile.Listeners.Invoke(barFile)
 
-		summaries = engine.Run("http")
+		summaries = e.Run("http")
 
 		r.Len(t, summaries, 1, "summary length not 1")
 		summary = summaries[0]
@@ -371,25 +404,10 @@ func newScript(path, src string) *dynamic.Config {
 	}
 }
 
-type testLogger struct {
-	info  func(args ...interface{})
-	warn  func(args ...interface{})
-	error func(args ...interface{})
-	debug func(args ...interface{})
-}
-
-func (tl *testLogger) Info(args ...interface{}) {
-	tl.info(args...)
-}
-
-func (tl *testLogger) Warn(args ...interface{}) {
-	tl.info(args...)
-}
-
-func (tl *testLogger) Error(args ...interface{}) {
-	tl.info(args...)
-}
-
-func (tl *testLogger) Debug(args ...interface{}) {
-	tl.debug(args...)
+func mustParse(s string) *url.URL {
+	u, err := url.Parse(s)
+	if err != nil {
+		panic(err)
+	}
+	return u
 }

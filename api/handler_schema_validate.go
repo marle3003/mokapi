@@ -1,17 +1,21 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
-	"mokapi/decoding"
 	"mokapi/media"
 	"mokapi/providers/openapi/schema"
+	"mokapi/schema/encoding"
+	"mokapi/schema/json/parser"
+	jsonSchema "mokapi/schema/json/schema"
 	"net/http"
 )
 
 type validateRequest struct {
-	Schema *schemaInfo
+	Format string
+	Schema interface{}
 	Data   string
 }
 
@@ -22,24 +26,24 @@ func (h *handler) validate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s, data, err := parseValidationRequestBody(r)
+	valReq, err := parseValidationRequestBody(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	v, err := decoding.Decode(data, ct, nil)
+	switch s := valReq.Schema.(type) {
+	case *schema.Ref:
+		err = parseByOpenApi([]byte(valReq.Data), s, ct)
+	default:
+		err = parseByJson([]byte(valReq.Data), s.(*jsonSchema.Ref), ct)
+	}
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	p := schema.Parser{}
-	v, err = p.Parse(v, s)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -58,19 +62,92 @@ func getValidationDataContentType(r *http.Request) (media.ContentType, error) {
 	return ct, nil
 }
 
-func parseValidationRequestBody(r *http.Request) (*schema.Ref, []byte, error) {
+func parseValidationRequestBody(r *http.Request) (validateRequest, error) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		return nil, nil, err
+		return validateRequest{}, err
 	}
 
 	validateData := validateRequest{}
 	err = json.Unmarshal(body, &validateData)
 	if err != nil {
-		s := err.Error()
-		_ = s
-		return nil, nil, err
+		return validateData, err
 	}
 
-	return &schema.Ref{Value: toSchema(validateData.Schema)}, []byte(validateData.Data), nil
+	return validateData, nil
+}
+
+func parseByOpenApi(data []byte, s *schema.Ref, ct media.ContentType) error {
+	var v interface{}
+	var err error
+	if ct.IsXml() {
+		v, err = schema.UnmarshalXML(bytes.NewReader(data), s)
+	} else {
+		v, err = encoding.Decode(data, encoding.WithContentType(ct))
+	}
+	if err != nil {
+		return err
+	}
+
+	p := parser.Parser{ValidateAdditionalProperties: true}
+	_, err = p.ParseWith(v, schema.ConvertToJsonSchema(s))
+	return err
+}
+
+func parseByJson(data []byte, s *jsonSchema.Ref, ct media.ContentType) error {
+	v, err := encoding.Decode(data, encoding.WithContentType(ct))
+	if err != nil {
+		return err
+	}
+
+	p := parser.Parser{ValidateAdditionalProperties: true}
+	_, err = p.ParseWith(v, s)
+	return err
+}
+
+func (r *validateRequest) UnmarshalJSON(data []byte) error {
+	d := json.NewDecoder(bytes.NewReader(data))
+	t, err := d.Token()
+	if err != nil {
+		return err
+	}
+	if delim, ok := t.(json.Delim); ok && delim != '{' {
+		return fmt.Errorf("unexpected token %s; expected '{'", t)
+	}
+
+	var raw json.RawMessage
+	for {
+		t, err = d.Token()
+		if err != nil {
+			return err
+		}
+
+		if delim, ok := t.(json.Delim); ok && delim == '}' {
+			break
+		}
+
+		switch t.(string) {
+		case "data":
+			t, err = d.Token()
+			if err != nil {
+				return err
+			}
+			r.Data = t.(string)
+		case "format":
+			t, err = d.Token()
+			if err != nil {
+				return err
+			}
+			r.Format = t.(string)
+		case "schema":
+			err = d.Decode(&raw)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	r.Schema, err = unmarshal(raw, r.Format)
+
+	return err
 }

@@ -4,7 +4,9 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
+	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
+	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
 	"mokapi/runtime"
 	"mokapi/runtime/monitor"
@@ -129,7 +131,7 @@ func TestHandler_Http(t *testing.T) {
 						"foo": {
 							Config: openapitest.NewConfig("3.0.0",
 								openapitest.WithPath("/foo/{bar}", openapitest.NewPath(
-									openapitest.WithPathParam("bar", "path", true, openapitest.WithParamSchema(schematest.New("string"))),
+									openapitest.WithPathParam("bar", openapitest.WithParamSchema(schematest.New("string"))),
 									openapitest.WithOperation("get", openapitest.NewOperation()),
 								))),
 						},
@@ -187,6 +189,137 @@ func TestHandler_Http(t *testing.T) {
 			},
 			requestUrl:   "http://foo.api/api/services/http/foo",
 			responseBody: `{"name":"","paths":[{"path":"/foo/{bar}","operations":[{"method":"get","deprecated":false,"responses":[{"statusCode":200,"description":"foo description","contents":[{"type":"application/json","schema":{"type":"string"}}],"headers":[{"name":"foo","description":"bar","schema":{"type":"string"}}]}]}]}]}`,
+		},
+		{
+			name: "reference override summary/description",
+			app: func() *runtime.App {
+				c := openapitest.NewConfig("3.0.0",
+					openapitest.WithPathRef("/foo/{bar}", &openapi.PathRef{
+						Reference: dynamic.Reference{
+							Ref:         "#/components/pathItems/foo",
+							Summary:     "Summary",
+							Description: "Description",
+						},
+						Value: openapitest.NewPath(
+							openapitest.WithPathInfo("foo", "bar"),
+							openapitest.WithOperation("get", openapitest.NewOperation(
+								openapitest.WithResponseRef(http.StatusOK,
+									&openapi.ResponseRef{
+										Reference: dynamic.Reference{
+											Ref:         "#/components/pathItems/foo",
+											Description: "Description",
+										},
+										Value: openapitest.NewResponse(openapitest.WithResponseDescription("foo description"),
+											openapitest.WithContent(
+												"application/json",
+												openapitest.NewContent(
+													openapitest.WithSchema(schematest.New("string")),
+												),
+											),
+											openapitest.WithResponseHeader("foo", "bar", schematest.New("string")),
+										),
+									},
+								),
+							)),
+						),
+					}),
+				)
+
+				return &runtime.App{
+					Http: map[string]*runtime.HttpInfo{
+						"foo": {
+							Config: c,
+						},
+					},
+				}
+			},
+			requestUrl:   "http://foo.api/api/services/http/foo",
+			responseBody: `{"name":"","paths":[{"path":"/foo/{bar}","summary":"Summary","description":"Description","operations":[{"method":"get","deprecated":false,"responses":[{"statusCode":200,"description":"Description","contents":[{"type":"application/json","schema":{"type":"string"}}],"headers":[{"name":"foo","description":"bar","schema":{"type":"string"}}]}]}]}]}`,
+		},
+		{
+			name: "schema with string or number",
+			app: func() *runtime.App {
+				return &runtime.App{
+					Http: map[string]*runtime.HttpInfo{
+						"foo": {
+							Config: openapitest.NewConfig("3.0.0",
+								openapitest.WithPath("/foo/{bar}", openapitest.NewPath(
+									openapitest.WithOperation("get", openapitest.NewOperation(
+										openapitest.WithResponse(http.StatusOK,
+											openapitest.WithResponseDescription("foo description"),
+											openapitest.WithContent(
+												"application/json",
+												openapitest.NewContent(
+													openapitest.WithSchema(schematest.New("string", schematest.And("number"))),
+												),
+											),
+										),
+									)),
+								))),
+						},
+					},
+				}
+			},
+			requestUrl:   "http://foo.api/api/services/http/foo",
+			responseBody: `{"name":"","paths":[{"path":"/foo/{bar}","operations":[{"method":"get","deprecated":false,"responses":[{"statusCode":200,"description":"foo description","contents":[{"type":"application/json","schema":{"type":["string","number"]}}]}]}]}]}`,
+		},
+		{
+			name: "schema with reference loop",
+			app: func() *runtime.App {
+				s := schematest.New("object")
+				s.Properties = &schema.Schemas{}
+				s.Properties.Set("loop", &schema.Ref{Reference: dynamic.Reference{Ref: "#/components/schemas/loop"}, Value: s})
+
+				return &runtime.App{
+					Http: map[string]*runtime.HttpInfo{
+						"foo": {
+							Config: openapitest.NewConfig("3.0.0",
+								openapitest.WithPath("/foo/{bar}", openapitest.NewPath(
+									openapitest.WithOperation("get", openapitest.NewOperation(
+										openapitest.WithResponse(http.StatusOK,
+											openapitest.WithResponseDescription("foo description"),
+											openapitest.WithContent(
+												"application/json",
+												openapitest.NewContent(
+													openapitest.WithSchema(s),
+												),
+											),
+										),
+									)),
+								))),
+						},
+					},
+				}
+			},
+			requestUrl:   "http://foo.api/api/services/http/foo",
+			responseBody: `{"name":"","paths":[{"path":"/foo/{bar}","operations":[{"method":"get","deprecated":false,"responses":[{"statusCode":200,"description":"foo description","contents":[{"type":"application/json","schema":{"type":"object","properties":{"loop":{"ref":"#/components/schemas/loop","type":"object","properties":{"loop":{"ref":"#/components/schemas/loop"}}}}}}]}]}]}]}`,
+		},
+		{
+			name: "schema with default",
+			app: func() *runtime.App {
+				return &runtime.App{
+					Http: map[string]*runtime.HttpInfo{
+						"foo": {
+							Config: openapitest.NewConfig("3.0.0",
+								openapitest.WithPath("/foo/{bar}", openapitest.NewPath(
+									openapitest.WithOperation("get", openapitest.NewOperation(
+										openapitest.WithResponse(http.StatusOK,
+											openapitest.WithResponseDescription("foo description"),
+											openapitest.WithContent(
+												"application/json",
+												openapitest.NewContent(
+													openapitest.WithSchema(schematest.New("string", schematest.WithDefault("foobar"))),
+												),
+											),
+										),
+									)),
+								))),
+						},
+					},
+				}
+			},
+			requestUrl:   "http://foo.api/api/services/http/foo",
+			responseBody: `{"name":"","paths":[{"path":"/foo/{bar}","operations":[{"method":"get","deprecated":false,"responses":[{"statusCode":200,"description":"foo description","contents":[{"type":"application/json","schema":{"type":"string","default":"foobar"}}]}]}]}]}`,
 		},
 	}
 

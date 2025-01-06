@@ -150,7 +150,7 @@ func TestHandler_Config(t *testing.T) {
 			test: []try.ResponseCondition{
 				try.HasStatusCode(http.StatusOK),
 				try.HasHeader("Last-Modified", "Wed, 27 Dec 2023 13:01:30 GMT"),
-				try.HasHeaderXor("Content-Type", "text/plain", "application/x-yaml"),
+				try.HasHeaderXor("Content-Type", "text/plain", "application/yaml"),
 				try.HasHeader("Cache-Control", "no-cache"),
 				try.HasBody(""),
 			},
@@ -275,6 +275,38 @@ func TestHandler_Config(t *testing.T) {
 				try.HasStatusCode(http.StatusOK),
 				try.HasHeader("Content-Type", "application/json"),
 				try.HasBody(`{"foo": "bar"}`),
+			},
+		},
+		{
+			name: "request ref file",
+			app: func() *runtime.App {
+				bar := &dynamic.Config{
+					Info: dynamic.ConfigInfo{
+						Url:      mustUrl("https://foo.bar/bar.yaml"),
+						Time:     mustTime("2023-12-27T13:01:30+00:00"),
+						Provider: "file",
+					},
+					Raw: nil,
+				}
+
+				foo := &dynamic.Config{
+					Info: dynamic.ConfigInfo{
+						Url:      mustUrl("https://foo.bar/foo.yaml"),
+						Time:     mustTime("2023-12-27T13:01:30+00:00"),
+						Provider: "file",
+					},
+					Raw: nil,
+				}
+				dynamic.AddRef(foo, bar)
+
+				return &runtime.App{Configs: map[string]*dynamic.Config{
+					"foo": foo,
+				}}
+			},
+			requestUrl: "http://foo.api/api/configs/66643630-6636-6536-6634-303165316161",
+			test: []try.ResponseCondition{
+				try.HasStatusCode(http.StatusOK),
+				try.HasBody(`{"id":"66643630-6636-6536-6634-303165316161","url":"https://foo.bar/bar.yaml","provider":"file","time":"2023-12-27T13:01:30Z"}`),
 			},
 		},
 	}

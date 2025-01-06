@@ -8,6 +8,7 @@ import (
 	"mokapi/config/dynamic/provider/file/filetest"
 	"mokapi/config/static"
 	"mokapi/safe"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
@@ -33,27 +34,27 @@ func TestProvider(t *testing.T) {
 	}{
 		{
 			name: "not in same dir",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				"bar/foo.txt": {
-					Name:  "foo.txt",
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
+					Name:  "bar/foo.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				}}},
-			cfg: static.FileProvider{Directory: "./foo"},
+			cfg: static.FileProvider{Directories: []string{"./foo"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 0)
 			},
 		},
 		{
 			name: "one file",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				"foo.txt": {
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
 					Name:    "foo.txt",
 					IsDir:   false,
 					Data:    []byte("foobar"),
 					ModTime: mustTime("2024-01-02T15:04:05Z"),
 				}}},
-			cfg: static.FileProvider{Directory: "./"},
+			cfg: static.FileProvider{Directories: []string{"./"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 1)
 				require.Equal(t, "foo.txt", filepath.Base(configs[0].Info.Path()))
@@ -63,13 +64,13 @@ func TestProvider(t *testing.T) {
 		},
 		{
 			name: "file no UTF-8-BOM",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				"foo.txt": {
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
 					Name:  "foo.txt",
 					IsDir: false,
 					Data:  []byte("fo"),
 				}}},
-			cfg: static.FileProvider{Directory: "./"},
+			cfg: static.FileProvider{Directories: []string{"./"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 1)
 				require.Equal(t, "foo.txt", filepath.Base(configs[0].Info.Path()))
@@ -78,13 +79,13 @@ func TestProvider(t *testing.T) {
 		},
 		{
 			name: "file UTF-8-BOM",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				"foo.txt": {
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
 					Name:  "foo.txt",
 					IsDir: false,
 					Data:  []byte{0xEF, 0xBB, 0xBF, 'f', 'o', 'o', 'b', 'a', 'r'},
 				}}},
-			cfg: static.FileProvider{Directory: "./"},
+			cfg: static.FileProvider{Directories: []string{"./"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 1)
 				require.Equal(t, "foo.txt", filepath.Base(configs[0].Info.Path()))
@@ -93,32 +94,32 @@ func TestProvider(t *testing.T) {
 		},
 		{
 			name: "skipped file",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				"_foo.txt": {
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
 					Name:  "_foo.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				}}},
-			cfg: static.FileProvider{Directory: "./"},
+			cfg: static.FileProvider{Directories: []string{"./"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 0)
 			},
 		},
 		{
 			name: "custom skip file overwrites default skip",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				"$foo.txt": {
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
 					Name:  "$foo.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
-				"_foo.txt": {
+				{
 					Name:  "_foo.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
 			}},
-			cfg: static.FileProvider{Directory: "./", SkipPrefix: []string{"$"}},
+			cfg: static.FileProvider{Directories: []string{"./"}, SkipPrefix: []string{"$"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 1)
 				require.Equal(t, "_foo.txt", filepath.Base(configs[0].Info.Path()))
@@ -126,18 +127,18 @@ func TestProvider(t *testing.T) {
 		},
 		{
 			name: "file in directory",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				"dir": {
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
 					Name:  "dir",
 					IsDir: true,
 				},
-				"dir/foo.txt": {
-					Name:  "foo.txt",
+				{
+					Name:  "dir/foo.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
 			}},
-			cfg: static.FileProvider{Directory: "./"},
+			cfg: static.FileProvider{Directories: []string{"./"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 1)
 				require.Equal(t, "foo.txt", filepath.Base(configs[0].Info.Path()))
@@ -145,163 +146,251 @@ func TestProvider(t *testing.T) {
 		},
 		{
 			name: "file in skipped directory",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				"_dir": {
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
 					Name:  "_dir",
 					IsDir: true,
 				},
-				"_dir/foo.txt": {
-					Name:  "foo.txt",
+				{
+					Name:  "_dir/foo.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
 			}},
-			cfg: static.FileProvider{Directory: "./"},
+			cfg: static.FileProvider{Directories: []string{"./"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 0)
 			},
 		},
 		{
 			name: "mokapiignore",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				".mokapiignore": {
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
 					Name:  ".mokapiignore",
 					IsDir: false,
 					Data:  []byte("foo.txt"),
 				},
-				"foo.txt": {
+				{
 					Name:  "foo.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
 			}},
-			cfg: static.FileProvider{Directory: "./"},
+			cfg: static.FileProvider{Directories: []string{"./"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 0)
 			},
 		},
 		{
-			name: "mokapiignore but re-include",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				".mokapiignore": {
-					Name:  ".mokapiignore",
-					IsDir: false,
-					Data:  []byte("*.txt\n!dir/foo.txt"),
+			name: "mokapiignore in subfolder",
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
+					Name:  "dir",
+					IsDir: true,
 				},
-				"dir/foo.txt": {
-					Name:  "foo.txt",
+				{
+					Name:  "dir/.mokapiignore",
+					IsDir: false,
+					Data:  []byte("foo.txt"),
+				},
+				{
+					Name:  "dir/foo.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
 			}},
-			cfg: static.FileProvider{Directory: "./"},
+			cfg: static.FileProvider{Directories: []string{"./"}},
+			test: func(t *testing.T, configs []*dynamic.Config) {
+				require.Len(t, configs, 0)
+			},
+		},
+		{
+			name: "mokapiignore in subfolder overrides parent",
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
+					Name:  ".mokapiignore",
+					IsDir: false,
+					Data:  []byte("foo.txt"),
+				},
+				{
+					Name:  "dir",
+					IsDir: true,
+				},
+				{
+					Name:  "dir/.mokapiignore",
+					IsDir: false,
+					Data:  []byte(""),
+				},
+				{
+					Name:  "dir/foo.txt",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+			}},
+			cfg: static.FileProvider{Directories: []string{"./"}},
+			test: func(t *testing.T, configs []*dynamic.Config) {
+				require.Len(t, configs, 1)
+				require.Equal(t, "foobar", string(configs[0].Raw))
+			},
+		},
+		{
+			name: "mokapiignore but re-include",
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
+					Name:  ".mokapiignore",
+					IsDir: false,
+					Data:  []byte("*.txt\n!dir/foo.txt"),
+				},
+				{
+					Name:  "dir/foo.txt",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+			}},
+			cfg: static.FileProvider{Directories: []string{"./"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 1)
 			},
 		},
 		{
 			name: "mokapiignore with re-include but excluding again",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				".mokapiignore": {
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
 					Name:  ".mokapiignore",
 					IsDir: false,
 					Data:  []byte("dir\n!dir/foo.txt\ndir"),
 				},
-				"dir/foo.txt": {
-					Name:  "foo.txt",
+				{
+					Name:  "dir/foo.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
 			}},
-			cfg: static.FileProvider{Directory: "./"},
+			cfg: static.FileProvider{Directories: []string{"./"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 0)
 			},
 		},
 		{
 			name: "ignoring all files but re-include some",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				".mokapiignore": {
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
 					Name:  ".mokapiignore",
 					IsDir: false,
 					Data:  []byte("/*\n!/dir/bar"),
 				},
-				"/bar.txt": {
-					Name:  "bar.txt",
+				{
+					Name:  "/bar.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
-				"/dir/bar/foo.txt": {
-					Name:  "foo.txt",
+				{
+					Name:  "/dir/bar/foo.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
 			}},
-			cfg: static.FileProvider{Directory: "./"},
+			cfg: static.FileProvider{Directories: []string{"./"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 1)
 			},
 		},
 		{
-			name: "mokapiignore only js files",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				".mokapiignore": {
+			name: "mokapiignore ignore all but js files",
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
 					Name:  ".mokapiignore",
 					IsDir: false,
 					Data:  []byte("**/*.*\n!*.js"),
 				},
-				"/bar.txt": {
-					Name:  "foo.txt",
+				{
+					Name:  "/bar.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
-				"dir/bar.txt": {
-					Name:  "foo.txt",
+				{
+					Name:  "dir/bar.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
-				"dir/foo.js": {
-					Name:  "foo.js",
+				{
+					Name:  "dir/foo.js",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
 			}},
-			cfg: static.FileProvider{Directory: "./"},
+			cfg: static.FileProvider{Directories: []string{"./"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 1)
 				require.True(t, strings.HasSuffix(configs[0].Info.Path(), filepath.Join("dir", "foo.js")))
 			},
 		},
 		{
-			name: "mokapiignore all files but specific sub folder",
-			fs: &filetest.MockFS{Entries: map[string]*filetest.Entry{
-				".mokapiignore": {
+			name: "mokapiignore ignore all but js and ts files",
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
 					Name:  ".mokapiignore",
 					IsDir: false,
-					Data:  []byte("**/*.*\n!/foo/bar/**"),
+					Data:  []byte("**/*.*\n!*.js\n!mokapi.ts"),
 				},
-				"/bar.txt": {
-					Name:  "foo.txt",
+				{
+					Name:  "/bar.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
-				"dir/bar.txt": {
-					Name:  "foo.txt",
+				{
+					Name:  "dir/bar.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
-				"foo/bar/foo.js": {
-					Name:  "foo.js",
+				{
+					Name:  "dir/foo.js",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
-				"foo/bar/dir/foo.js": {
-					Name:  "foo.js",
+				{
+					Name:  "dir/mokapi.ts",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
 			}},
-			cfg: static.FileProvider{Directory: "./"},
+			cfg: static.FileProvider{Directories: []string{"./"}},
+			test: func(t *testing.T, configs []*dynamic.Config) {
+				require.Len(t, configs, 2)
+				require.True(t, strings.HasSuffix(configs[0].Info.Path(), filepath.Join("dir", "foo.js")))
+				require.True(t, strings.HasSuffix(configs[1].Info.Path(), filepath.Join("dir", "mokapi.ts")))
+			},
+		},
+		{
+			name: "mokapiignore all files but specific sub folder",
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
+					Name:  ".mokapiignore",
+					IsDir: false,
+					Data:  []byte("**/*.*\n!/foo/bar/**"),
+				},
+				{
+					Name:  "/bar.txt",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+				{
+					Name:  "dir/bar.txt",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+				{
+					Name:  "foo/bar/foo.js",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+				{
+					Name:  "foo/bar/dir/foo.js",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+			}},
+			cfg: static.FileProvider{Directories: []string{"./"}},
 			test: func(t *testing.T, configs []*dynamic.Config) {
 				require.Len(t, configs, 2)
 				sort.Slice(configs, func(i, j int) bool {
@@ -311,10 +400,96 @@ func TestProvider(t *testing.T) {
 				require.True(t, strings.HasSuffix(configs[1].Info.Path(), filepath.Join("bar", "foo.js")), "%v does not match suffix %v", configs[0].Info.Path(), filepath.Join("bar", "foo.js"))
 			},
 		},
+		{
+			name: ".git",
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
+					Name:  ".mokapiignore",
+					IsDir: false,
+					Data:  []byte(".git/"),
+				},
+				{
+					Name:  ".git/foo",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+			}},
+			cfg: static.FileProvider{Directories: []string{"./"}},
+			test: func(t *testing.T, configs []*dynamic.Config) {
+				require.Len(t, configs, 0)
+			},
+		},
+		{
+			name: "include",
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
+					Name:  "foo",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+				{
+					Name:  "bar",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+			}},
+			cfg: static.FileProvider{Directories: []string{"./"}, Include: []string{"foo"}},
+			test: func(t *testing.T, configs []*dynamic.Config) {
+				require.Len(t, configs, 1)
+			},
+		},
+		{
+			name: "include with folders",
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
+					Name:  "foo.js",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+				{
+					Name:  "foo",
+					IsDir: true,
+					Data:  []byte("foobar"),
+				},
+				{
+					Name:  "foo/foo.js",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+				{
+					Name:  "foo/bar.js",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+				{
+					Name:  "bar",
+					IsDir: true,
+					Data:  []byte("foobar"),
+				},
+				{
+					Name:  "bar/foo.js",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+				{
+					Name:  "bar/test.txt",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+			}},
+			cfg: static.FileProvider{Directories: []string{"./"}, Include: []string{"*.js"}},
+			test: func(t *testing.T, configs []*dynamic.Config) {
+				require.Len(t, configs, 4)
+			},
+		},
 	}
+
+	t.Parallel()
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			p := NewWithWalker(tc.cfg, tc.fs)
 			pool := safe.NewPool(context.Background())
 			t.Cleanup(func() {
@@ -329,11 +504,12 @@ func TestProvider(t *testing.T) {
 				select {
 				case c := <-ch:
 					configs = append(configs, c)
-				case <-time.After(time.Second):
+				case <-time.After(2 * time.Second):
 					break Collect
 				}
 			}
 			tc.test(t, configs)
+			close(ch)
 		})
 	}
 }
@@ -420,7 +596,7 @@ func TestWatch_AddFile(t *testing.T) {
 	ch := make(chan *dynamic.Config)
 	tempDir := t.TempDir()
 	t.Cleanup(func() { os.RemoveAll(tempDir) })
-	p := New(static.FileProvider{Directory: tempDir})
+	p := New(static.FileProvider{Directories: []string{tempDir}})
 	pool := safe.NewPool(context.Background())
 	defer pool.Stop()
 
@@ -428,7 +604,7 @@ func TestWatch_AddFile(t *testing.T) {
 	require.NoError(t, err)
 
 	time.Sleep(500 * time.Millisecond)
-	err = createTempFile("./test/openapi.yml", p.cfg.Directory)
+	err = createTempFile("./test/openapi.yml", p.cfg.Directories[0])
 	require.NoError(t, err)
 
 	timeout := time.After(5 * time.Second)
@@ -445,7 +621,7 @@ func TestWatch_Create_SubFolder_And_Add_File(t *testing.T) {
 	ch := make(chan *dynamic.Config)
 	tempDir := t.TempDir()
 	t.Cleanup(func() { os.RemoveAll(tempDir) })
-	p := New(static.FileProvider{Directory: tempDir})
+	p := New(static.FileProvider{Directories: []string{tempDir}})
 	pool := safe.NewPool(context.Background())
 	defer pool.Stop()
 
@@ -453,7 +629,7 @@ func TestWatch_Create_SubFolder_And_Add_File(t *testing.T) {
 	require.NoError(t, err)
 
 	time.Sleep(500 * time.Millisecond)
-	err = createTempFile("./test/openapi.yml", filepath.Join(p.cfg.Directory, "foo"))
+	err = createTempFile("./test/openapi.yml", filepath.Join(p.cfg.Directories[0], "foo"))
 	require.NoError(t, err)
 
 	timeout := time.After(5 * time.Second)
@@ -464,6 +640,38 @@ func TestWatch_Create_SubFolder_And_Add_File(t *testing.T) {
 	case <-timeout:
 		t.Fatal("timeout while waiting for file event")
 	}
+}
+
+func TestWatch_UpdateFile_When_Skipped_But_Referenced(t *testing.T) {
+	ch := make(chan *dynamic.Config)
+	defer close(ch)
+
+	tempDir := t.TempDir()
+	t.Cleanup(func() { os.RemoveAll(tempDir) })
+
+	p := New(static.FileProvider{Directories: []string{tempDir}})
+	pool := safe.NewPool(context.Background())
+	defer pool.Stop()
+
+	err := p.Start(ch, pool)
+	require.NoError(t, err)
+	time.Sleep(500 * time.Millisecond)
+
+	err = createFile(filepath.Join(tempDir, "foo.js"), "foo")
+	require.NoError(t, err)
+	waitFileUpdate(t, ch)
+	err = createFile(filepath.Join(tempDir, "_bar.skip"), "bar")
+	u, err := url.Parse("file:" + filepath.Join(tempDir, "_bar.skip"))
+	require.NoError(t, err)
+	_, err = p.Read(u)
+	require.NoError(t, err)
+
+	err = os.WriteFile(filepath.Join(tempDir, "_bar.skip"), []byte("update"), 0700)
+	require.NoError(t, err)
+
+	file := waitFileUpdate(t, ch)
+	require.NotNil(t, file)
+	require.Equal(t, "_bar.skip", filepath.Base(file.Info.Path()))
 }
 
 func createAndStartFileProvider(t *testing.T, files ...string) (*Provider, chan *dynamic.Config) {
@@ -477,7 +685,7 @@ func createAndStartFileProvider(t *testing.T, files ...string) (*Provider, chan 
 		}
 	}
 
-	p := New(static.FileProvider{Filename: strings.Join(files, string(os.PathListSeparator))})
+	p := New(static.FileProvider{Filenames: []string{strings.Join(files, string(os.PathListSeparator))}})
 	pool := safe.NewPool(context.Background())
 	t.Cleanup(func() {
 		pool.Stop()
@@ -501,7 +709,7 @@ func createDirectoryProvider(t *testing.T, files ...string) *Provider {
 		}
 	}
 
-	p := New(static.FileProvider{Directory: strings.Join(dirs, string(os.PathListSeparator))})
+	p := New(static.FileProvider{Directories: []string{strings.Join(dirs, string(os.PathListSeparator))}})
 	return p
 }
 
@@ -524,4 +732,31 @@ func createTempFile(srcPath string, destPath string) error {
 	_, err = io.Copy(file, src)
 
 	return err
+}
+
+func createFile(path, content string) error {
+	err := os.MkdirAll(filepath.Dir(path), 0700)
+	if err != nil {
+		return err
+	}
+	file, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	file.Write([]byte(content))
+	file.Close()
+
+	return err
+}
+
+func waitFileUpdate(t *testing.T, ch chan *dynamic.Config) *dynamic.Config {
+	timeout := time.After(5 * time.Second)
+	select {
+	case c := <-ch:
+		return c
+	case <-timeout:
+		t.Fatal("timeout while waiting for file event")
+	}
+
+	return nil
 }

@@ -1,4 +1,4 @@
-package runtime
+package runtime_test
 
 import (
 	"github.com/stretchr/testify/require"
@@ -7,6 +7,7 @@ import (
 	"mokapi/engine/enginetest"
 	"mokapi/ldap"
 	"mokapi/ldap/ldaptest"
+	"mokapi/runtime"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"net/url"
@@ -16,11 +17,11 @@ import (
 func TestApp_AddLdap(t *testing.T) {
 	testcases := []struct {
 		name string
-		test func(t *testing.T, app *App)
+		test func(t *testing.T, app *runtime.App)
 	}{
 		{
 			name: "event store available",
-			test: func(t *testing.T, app *App) {
+			test: func(t *testing.T, app *runtime.App) {
 				app.AddLdap(newLdapConfig("https://mokapi.io", &directory.Config{Info: directory.Info{Name: "foo"}}), enginetest.NewEngine())
 
 				require.Contains(t, app.Ldap, "foo")
@@ -30,7 +31,7 @@ func TestApp_AddLdap(t *testing.T) {
 		},
 		{
 			name: "bind request is counted in monitor",
-			test: func(t *testing.T, app *App) {
+			test: func(t *testing.T, app *runtime.App) {
 				info := app.AddLdap(newLdapConfig("https://mokapi.io", &directory.Config{Info: directory.Info{Name: "foo"}}), enginetest.NewEngine())
 				m := monitor.NewLdap()
 				h := info.Handler(m)
@@ -44,7 +45,7 @@ func TestApp_AddLdap(t *testing.T) {
 		},
 		{
 			name: "retrieve configs",
-			test: func(t *testing.T, app *App) {
+			test: func(t *testing.T, app *runtime.App) {
 				info := app.AddLdap(newLdapConfig("https://mokapi.io", &directory.Config{}), enginetest.NewEngine())
 
 				configs := info.Configs()
@@ -58,7 +59,7 @@ func TestApp_AddLdap(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			defer events.Reset()
 
-			app := New()
+			app := runtime.New()
 			tc.test(t, app)
 		})
 	}
@@ -68,7 +69,7 @@ func TestApp_AddLdap_Patching(t *testing.T) {
 	testcases := []struct {
 		name    string
 		configs []*dynamic.Config
-		test    func(t *testing.T, app *App)
+		test    func(t *testing.T, app *runtime.App)
 	}{
 		{
 			name: "overwrite value",
@@ -76,7 +77,7 @@ func TestApp_AddLdap_Patching(t *testing.T) {
 				newLdapConfig("https://mokapi.io/a", &directory.Config{Info: directory.Info{Name: "foo", Description: "foo"}}),
 				newLdapConfig("https://mokapi.io/b", &directory.Config{Info: directory.Info{Name: "foo", Description: "bar"}}),
 			},
-			test: func(t *testing.T, app *App) {
+			test: func(t *testing.T, app *runtime.App) {
 				info := app.Ldap["foo"]
 				require.Equal(t, "bar", info.Info.Description)
 				configs := info.Configs()
@@ -89,7 +90,7 @@ func TestApp_AddLdap_Patching(t *testing.T) {
 				newLdapConfig("https://mokapi.io/b", &directory.Config{Info: directory.Info{Name: "foo", Description: "foo"}}),
 				newLdapConfig("https://mokapi.io/a", &directory.Config{Info: directory.Info{Name: "foo", Description: "bar"}}),
 			},
-			test: func(t *testing.T, app *App) {
+			test: func(t *testing.T, app *runtime.App) {
 				info := app.Ldap["foo"]
 				require.Equal(t, "foo", info.Info.Description)
 			},
@@ -100,7 +101,7 @@ func TestApp_AddLdap_Patching(t *testing.T) {
 				newLdapConfig("https://a.io/b", &directory.Config{Info: directory.Info{Name: "foo", Description: "foo"}}),
 				newLdapConfig("https://mokapi.io/a", &directory.Config{Info: directory.Info{Name: "foo", Description: "bar"}}),
 			},
-			test: func(t *testing.T, app *App) {
+			test: func(t *testing.T, app *runtime.App) {
 				info := app.Ldap["foo"]
 				require.Equal(t, "foo", info.Info.Description)
 			},
@@ -111,7 +112,7 @@ func TestApp_AddLdap_Patching(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			defer events.Reset()
 
-			app := New()
+			app := runtime.New()
 			for _, c := range tc.configs {
 				app.AddLdap(c, enginetest.NewEngine())
 			}
@@ -121,8 +122,8 @@ func TestApp_AddLdap_Patching(t *testing.T) {
 }
 
 func TestIsLdapConfig(t *testing.T) {
-	require.True(t, IsLdapConfig(&dynamic.Config{Data: &directory.Config{}}))
-	require.False(t, IsLdapConfig(&dynamic.Config{Data: "foo"}))
+	require.True(t, runtime.IsLdapConfig(&dynamic.Config{Data: &directory.Config{}}))
+	require.False(t, runtime.IsLdapConfig(&dynamic.Config{Data: "foo"}))
 }
 
 func newLdapConfig(name string, config *directory.Config) *dynamic.Config {

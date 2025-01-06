@@ -3,7 +3,6 @@ import { usePrettyHttp } from '@/composables/http'
 import { reactive, computed } from 'vue'
 import HeaderTable from './HeaderTable.vue'
 import SchemaExpand from '../../SchemaExpand.vue'
-import SchemaExample from '../../SchemaExample.vue'
 import SchemaValidate from '../../SchemaValidate.vue'
 import Markdown from 'vue3-markdown-it'
 import SourceView from '../../SourceView.vue'
@@ -69,7 +68,7 @@ const name = computed(() => {
                 <div class="tab-content ms-3 ps-3 responses-tab" style="width: 100%" id="v-pills-tabContent">
                     <div v-for="(response, index) of responses" class="tab-pane fade" :class="index==0 ? 'show active' : ''" :id="'v-pills-'+response.statusCode" role="tabpanel" :aria-labelledby="'v-pills-'+response.statusCode+'-tab'">
                         <p class="label">Description</p>
-                        <p><markdown :source="response.description" :data-testid="'response-description-'+response.statusCode" aria-label="Response body description"></markdown></p>
+                        <p><markdown :source="response.description" :data-testid="'response-description-'+response.statusCode" aria-label="Response body description" :html="true"></markdown></p>
                         <div v-if="response.contents || response.headers">
                             <ul class="nav nav-pills response-tab" role="tabList">
                                 <li class="nav-link" id="pills-body-tab" :class="response.contents ? 'active' : 'disabled'" data-bs-toggle="pill" data-bs-target="#pills-body" type="button" role="tab" aria-controls="pills-body" aria-selected="true">Body</li>
@@ -89,10 +88,7 @@ const name = computed(() => {
                                             <schema-expand :schema="selected.contents[response.statusCode].schema" />
                                         </div>
                                         <div class="col-auto px-2 mt-1">
-                                            <schema-example :content-type="selected.contents[response.statusCode].type" :schema="selected.contents[response.statusCode].schema"/>
-                                        </div>
-                                        <div class="col-auto px-2 mt-1">
-                                            <schema-validate :schema="selected.contents[response.statusCode].schema" :content-type="selected.contents[response.statusCode].type" :name="name" />
+                                            <schema-validate :schema="{schema: selected.contents[response.statusCode].schema, format: 'application/vnd.oai.openapi+json;version=3.0.0'}" :content-type="selected.contents[response.statusCode].type" :name="name" />
                                         </div>
                                         <div class="col-auto px-2 mt-1">
                                             <select v-if="response.contents.length > 0" class="form-select form-select-sm" aria-label="Response content type" @change="selectedContentChange($event, response.statusCode)">

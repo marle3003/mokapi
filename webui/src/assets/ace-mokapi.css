@@ -89,6 +89,12 @@
 .javascript .ace-mokapi-light .ace_function {
     color: rgb(102, 57, 186)
 }
+.javascript .ace-mokapi-dark .ace_comment {
+    color: rgb(139, 148, 158)
+}
+.javascript .ace-mokapi-light .ace_comment {
+    color: rgb(87, 96, 106)
+}
 .javascript .ace-mokapi-dark .ace_punctuation.ace_operator + .ace_identifier,
 .javascript .ace-mokapi-dark .ace_identifier:has(+ .ace_punctuation.ace_operator::content(':'))
 {

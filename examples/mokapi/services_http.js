@@ -29,7 +29,7 @@ const tag = {
 }
 
 const pet = {
-    type: "object",
+    type: ["object"],
     properties: {
         id: {
             type: "integer",
@@ -502,6 +502,50 @@ export let events = [
         }
     },
     {
+        id: "a5348a42-b69d-409f-8600-044d2ba845a3",
+        traits: {
+            namespace: "http",
+            name: "Swagger Petstore",
+            path: "/pet/findByStatus",
+            method: 'GET'
+        },
+        time: '2023-02-13T09:49:25.482366+01:00',
+        data: {
+            request: {
+                method: "GET",
+                url: "http://127.0.0.1:18080/pet/findByStatus",
+                parameters: [
+                    {
+                        name: "foo",
+                        type: "query",
+                        value: "bar",
+                        raw: "bar"
+                    }
+                ]
+            },
+            response: {
+                statusCode: 201,
+                headers: {
+                    "Content-Type": "application/json",
+                    "Set-Cookie": "sessionId=38afes7a8"
+                },
+                size: 512
+            },
+            duration: 133,
+            actions: [
+                {
+                    duration: 20,
+                    tags: {
+                        name: "dashboard",
+                        file: "/Users/maesi/GolandProjects/mokapi/examples/mokapi/http_handler.js",
+                        fileKey: "b6fea8ac-56c7-4e73-a9c0-4487640bdca8",
+                        event: "http"
+                    }
+                }
+            ]
+        }
+    },
+    {
         id: "ac509b4f-9254-4bb7-abbb-90c100310ad7",
         traits: {
             namespace: "http",
@@ -518,7 +562,7 @@ export let events = [
                 body: `{"id": 0,"category": {"id": 0,"name": "string"},"name": "doggie","photoUrls": ["string"],"tags":[{"id": 0,"name": "string"}],"status": "available"}`,
             },
             response: {
-                statusCode: 200,
+                statusCode: 500,
                 headers: {
                     "Content-Type": "application/json",
                 },

@@ -25,6 +25,7 @@ type handler struct {
 
 type info struct {
 	Version        string   `json:"version"`
+	BuildTime      string   `json:"buildTime"`
 	ActiveServices []string `json:"activeServices,omitempty"`
 }
 
@@ -125,6 +126,10 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case strings.HasPrefix(p, "/api/faker/tree"):
 		h.handleFakerTree(w, r)
 	case h.fileServer != nil:
+		if r.Method != "GET" {
+			http.Error(w, fmt.Sprintf("method %v is not allowed", r.Method), http.StatusMethodNotAllowed)
+			return
+		}
 		if isAsset(r.URL.Path) {
 			r.URL.Path = "/assets/" + filepath.Base(r.URL.Path)
 		} else if filepath.Ext(r.URL.Path) == ".svg" || filepath.Ext(r.URL.Path) == ".png" {
@@ -177,7 +182,7 @@ func writeError(w http.ResponseWriter, err error, status int) {
 func (h *handler) getInfo(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	i := info{Version: h.app.Version}
+	i := info{Version: h.app.Version, BuildTime: h.app.BuildTime}
 	if len(h.app.Http) > 0 {
 		i.ActiveServices = append(i.ActiveServices, "http")
 	}

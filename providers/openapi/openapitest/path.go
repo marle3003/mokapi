@@ -60,10 +60,10 @@ func WithOperation(method string, op *openapi.Operation) PathOptions {
 	}
 }
 
-func WithPathParam(name string, in string, required bool, opts ...ParamOptions) PathOptions {
+func WithPathParam(name string, opts ...ParamOptions) PathOptions {
 	return func(e *openapi.Path) {
 		e.Parameters = append(e.Parameters, &parameter.Ref{
-			Value: newParam(name, required, parameter.Location(in), opts...)})
+			Value: newParam(name, true, "path", opts...)})
 	}
 }
 

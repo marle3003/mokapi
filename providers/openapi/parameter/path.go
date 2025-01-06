@@ -7,16 +7,16 @@ import (
 	"strings"
 )
 
-func parsePath(p *Parameter, route string, r *http.Request) (*RequestParameterValue, error) {
-	path := findPathValue(p, route, r)
+func parsePath(param *Parameter, route string, r *http.Request) (*RequestParameterValue, error) {
+	path := findPathValue(param, route, r)
 	if len(path) == 0 {
 		// path parameters are always required
 		return nil, fmt.Errorf("parameter is required")
 	}
 
-	rp := &RequestParameterValue{Raw: path, Value: path}
+	rp := &RequestParameterValue{Raw: &path, Value: path}
 
-	switch p.Style {
+	switch param.Style {
 	case "label":
 		if path[0] != '.' {
 			return nil, fmt.Errorf("expected label parameter, got at index 0: '%v'", path[0])
@@ -30,14 +30,14 @@ func parsePath(p *Parameter, route string, r *http.Request) (*RequestParameterVa
 	}
 
 	var err error
-	if p.Schema != nil {
-		switch p.Schema.Value.Type {
-		case "array":
-			rp.Value, err = parseArray(p, path, ",")
-		case "object":
-			rp.Value, err = parseObject(p, path, ",", p.IsExplode(), defaultDecode)
+	if param.Schema != nil {
+		switch {
+		case param.Schema.Value.Type.IsArray():
+			rp.Value, err = parseArray(param, strings.Split(path, ","))
+		case param.Schema.Value.Type.IsObject():
+			rp.Value, err = parseObject(param, path, ",", param.IsExplode(), defaultDecode)
 		default:
-			rp.Value, err = schema.ParseString(path, p.Schema)
+			rp.Value, err = p.ParseWith(path, schema.ConvertToJsonSchema(param.Schema))
 		}
 	}
 

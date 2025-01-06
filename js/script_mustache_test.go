@@ -1,27 +1,29 @@
-package js
+package js_test
 
 import (
 	"github.com/brianvoe/gofakeit/v6"
 	r "github.com/stretchr/testify/require"
-	"mokapi/config/static"
+	"mokapi/engine/enginetest"
+	"mokapi/js"
+	"mokapi/js/jstest"
 	"testing"
 )
 
 func Test_Mustache(t *testing.T) {
-	host := &testHost{}
+	host := &enginetest.Host{}
 	testcases := []struct {
 		name string
-		f    func(t *testing.T)
+		test func(t *testing.T)
 	}{
 		{
-			"render",
-			func(t *testing.T) {
-				s, err := New(newScript("test",
+			name: "render",
+			test: func(t *testing.T) {
+				s, err := jstest.New(jstest.WithSource(
 					`import {render} from 'mokapi/mustache';
 						 export default function() {
 						 	return render('foo{{x}}', {x: 'bar'})
 						}`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 
 				v, err := s.RunDefault()
@@ -30,9 +32,9 @@ func Test_Mustache(t *testing.T) {
 			},
 		},
 		{
-			"render with fake and function",
-			func(t *testing.T) {
-				s, err := New(newScript("test",
+			name: "render with fake and function",
+			test: func(t *testing.T) {
+				s, err := jstest.New(jstest.WithSource(
 					`import { render } from 'mokapi/mustache';
 						 import { fake } from 'mokapi/faker'
 
@@ -47,7 +49,7 @@ func Test_Mustache(t *testing.T) {
 						
 							return render("{{firstname}} has {{calc}} apples", scope);
 						}`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 
 				v, err := s.RunDefault()
@@ -55,28 +57,13 @@ func Test_Mustache(t *testing.T) {
 				r.Equal(t, "Markus has 7 apples", v.String())
 			},
 		},
-		{
-			"using deprecated module",
-			func(t *testing.T) {
-				s, err := New(newScript("test",
-					`import {render} from 'mustache';
-						 export default function() {
-						 	return render('foo{{x}}', {x: 'bar'})
-						}`),
-					host, static.JsConfig{})
-				r.NoError(t, err)
-
-				v, err := s.RunDefault()
-				r.NoError(t, err)
-				r.Equal(t, "foobar", v.String())
-			},
-		},
 	}
+
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			gofakeit.Seed(11)
-			tc.f(t)
+			tc.test(t)
 		})
 	}
 }

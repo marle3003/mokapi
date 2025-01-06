@@ -28,7 +28,17 @@ export let mails = [
         messageId: '20230223-084925.763-4196@mokapi.io',
         inReplyTo: '20230222-084925.763-4196@mokapi.io',
         subject: 'A test mail',
-        body: '<html><body><h1>Hello</h1>Mail message from Alice<img src="cid:icon.png" /></body></html>',
+        body: `<style>
+                    .container {color: black; }
+                    @media (prefers-color-scheme: dark ) {
+                        .container {color: white; }
+                    }
+                    
+                </style>
+                <div class="container">
+                    <h1>Hello</h1>
+                    Mail message from Alice<img src="cid:icon.png" />
+                </div>`,
         attachments: [
             {
                 name: 'foo.txt',
@@ -56,7 +66,7 @@ export let mails = [
                 }
             }
         ]
-    }
+    },
 ]
 
 export let mailEvents = [

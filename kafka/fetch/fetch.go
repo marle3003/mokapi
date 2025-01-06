@@ -1,7 +1,6 @@
 package fetch
 
 import (
-	"math"
 	"mokapi/kafka"
 )
 
@@ -10,11 +9,11 @@ func init() {
 		kafka.ApiReg{
 			ApiKey:     kafka.Fetch,
 			MinVersion: 0,
-			MaxVersion: 11},
+			MaxVersion: 12},
 		&Request{},
 		&Response{},
 		12,
-		math.MaxInt16,
+		12,
 	)
 }
 
@@ -43,8 +42,9 @@ type RequestPartition struct {
 	CurrentLeaderEpoch int32 `kafka:"min=9"`
 	FetchOffset        int64 `kafka:""`
 	// only used by followers
-	LogStartOffset int64 `kafka:"min=5"`
-	MaxBytes       int32 `kafka:""`
+	LastFetchedEpoch int32 `kafka:"min=12"`
+	LogStartOffset   int64 `kafka:"min=5"`
+	MaxBytes         int32 `kafka:""`
 }
 
 type Response struct {

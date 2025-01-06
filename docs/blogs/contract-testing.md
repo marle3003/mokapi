@@ -1,8 +1,8 @@
 ---
-title: Contract Testing - An Introduction
-description: Take a closer look at why you can achieve better time to market with contract testing.
+title: Enhance Software Quality with Contract Testing
+description: Discover the benefits of contract testing to ensure fake interactions under test control between your software and systems that it collaborates with. Improve collaboration and reliability with this effective quality assurance technique.
 ---
-# Contract Testing
+# Enhance Software Quality with Contract Testing
 
 **Why invest in testing if you can't ensure the service you rely on is providing the right data? 
 Without mocks, you can't gain confidence in automated testing over systems you don't control. 

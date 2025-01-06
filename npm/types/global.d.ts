@@ -20,8 +20,7 @@ declare global {
 
     interface Args {
         /**
-         * By default, contents of the file are read as string, but with binary the file will be read as binary.
-         * @default binary
+         * By default contents of the file are read as string, but with binary the file will be read as binary.
          */
         as: "binary" | "string";
     }

@@ -57,7 +57,7 @@ onUnmounted(() => {
                 <tbody>
                     <tr v-for="service in services" key="service.name" @click="goToService(service)">
                         <td>{{ service.name }}</td>
-                        <td><markdown :source="service.description" class="description"></markdown></td>
+                        <td><markdown :source="service.description" class="description" :html="true"></markdown></td>
                         <td class="text-center">{{ lastRequest(service) }}</td>
                         <td class="text-center">
                             <span>{{ requests(service) }}</span>

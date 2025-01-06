@@ -52,18 +52,18 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
     await test.step('Check config', async () => {
         await tabList.getByRole('tab', { name: 'Configs' }).click()
         const configs = page.getByRole('tabpanel', { name: 'Configs' })
-        await expect(configs.getByLabel('Title')).toHaveText(topic.configs.title)
-        await expect(configs.getByLabel('Name')).toHaveText(topic.configs.name)
-        await expect(configs.getByLabel('Summary')).toHaveText(topic.configs.summary)
-        await expect(configs.getByLabel('Description')).toHaveText(topic.configs.description)
-        await expect(configs.getByLabel('Content Type')).toHaveText(topic.configs.contentType)
+        await expect(configs.getByLabel('Title')).toHaveText(topic.messageConfigs[0].title)
+        await expect(configs.getByLabel('Name')).toHaveText(topic.messageConfigs[0].name)
+        await expect(configs.getByLabel('Summary')).toHaveText(topic.messageConfigs[0].summary)
+        await expect(configs.getByLabel('Description')).toHaveText(topic.messageConfigs[0].description)
+        await expect(configs.getByLabel('Content Type')).toHaveText(topic.messageConfigs[0].contentType)
 
         
 
         const { test: testSourceView } = useSourceView(configs.getByRole('tabpanel', { name: 'Value' }))
         await testSourceView({
-            lines: topic.configs.value.lines,
-            size: topic.configs.value.size,
+            lines: topic.messageConfigs[0].value.lines,
+            size: topic.messageConfigs[0].value.size,
             content: /"features"/,
             filename: 'mokapi.shop.products-message.json',
             clipboard: '"features"'
@@ -74,8 +74,8 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
             const dialog = page.getByRole('dialog', { name: 'Value - mokapi.shop.products' })
             const { test: testSourceView } = useSourceView(dialog)
             await testSourceView({
-                lines: topic.configs.value.lines,
-                size: topic.configs.value.size,
+                lines: topic.messageConfigs[0].value.lines,
+                size: topic.messageConfigs[0].value.size,
                 content: /"features"/,
                 filename: 'mokapi.shop.products-message.json',
                 clipboard: '"features"'
@@ -84,8 +84,9 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
         })
 
         await test.step('Check schema example', async () => {
-            await configs.getByRole('button', { name: 'Example' }).click()
-            const dialog = page.getByRole('dialog', { name: 'Value Example - mokapi.shop.products' })
+            await configs.getByRole('button', { name: 'Example & Validate' }).click()
+            const dialog = page.getByRole('dialog', { name: 'Value Validator - mokapi.shop.products' })
+            await dialog.getByRole('button', { name: 'Example' }).click()
             const { test: testSourceView } = useSourceView(dialog)
             await testSourceView({
                 lines: /\d+ lines/,

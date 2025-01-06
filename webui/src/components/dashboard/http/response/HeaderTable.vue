@@ -26,7 +26,7 @@ const { formatSchema } = usePrettyLanguage()
             <tr v-for="header in headers!" :key="header.name" data-bs-toggle="modal" :data-bs-target="'#modal-'+header.name">
                 <td>{{ header.name }}</td>
                 <td>{{ printType(header.schema) }}</td>
-                <td><markdown :source="header.description" class="description"></markdown></td>
+                <td><markdown :source="header.description" class="description" :html="true"></markdown></td>
             </tr>
         </tbody>
     </table>

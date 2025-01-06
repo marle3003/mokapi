@@ -89,13 +89,8 @@ func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
 		return nil
 	}
 
-	urls := p.config.Urls
-	if len(p.config.Url) > 0 {
-		urls = append(urls, p.config.Url)
-	}
-
 	var err error
-	for _, u := range urls {
+	for _, u := range p.config.Urls {
 		if err = checkUrl(u); err != nil {
 			log.Errorf("invalid url: %v", err)
 			continue

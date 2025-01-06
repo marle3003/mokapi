@@ -1,5 +1,5 @@
 ---
-title: "every( interval, handler, [args] )
+title: every( interval, handler, [args] )
 description: Schedules a new periodic job with an interval
 ---
 # every( interval, handler, [args] )

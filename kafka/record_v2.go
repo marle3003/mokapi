@@ -29,9 +29,10 @@ func (rb *RecordBatch) readFromV2(d *Decoder) error {
 
 	pb := newPageBuffer()
 	defer pb.unref()
-	rb.Records = make([]Record, numRecords)
+	rb.Records = make([]*Record, numRecords)
 	for i := range rb.Records {
-		r := &rb.Records[i]
+		r := &Record{}
+		rb.Records[i] = r
 		l := d.ReadVarInt() // length
 		_ = l
 		d.ReadInt8() // attributes

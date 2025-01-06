@@ -4,16 +4,15 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
-	"mokapi/json/ref"
 	"mokapi/providers/openapi/parameter"
 	"net/http"
 	"strings"
 )
 
-type Paths map[string]*PathRef
+type PathItems map[string]*PathRef
 
 type PathRef struct {
-	ref.Reference
+	dynamic.Reference
 	Value *Path
 }
 
@@ -117,14 +116,17 @@ func (p *Path) Operation(method string) *Operation {
 	return nil
 }
 
-func (p Paths) Resolve(token string) (interface{}, error) {
+func (p PathItems) Resolve(token string) (interface{}, error) {
 	if v, ok := p["/"+token]; ok {
+		return v, nil
+	}
+	if v, ok := p[token]; ok {
 		return v, nil
 	}
 	return nil, nil
 }
 
-func (p Paths) parse(config *dynamic.Config, reader dynamic.Reader) error {
+func (p PathItems) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	for name, e := range p {
 		if err := e.parse(config, reader); err != nil {
 			return fmt.Errorf("parse path '%v' failed: %w", name, err)
@@ -184,7 +186,7 @@ func (p *Path) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	return nil
 }
 
-func (p Paths) patch(patch Paths) {
+func (p PathItems) patch(patch PathItems) {
 	for path, v := range patch {
 		if e, ok := p[path]; ok {
 			e.patch(v)

@@ -4,13 +4,14 @@ import (
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/schema"
+	"mokapi/version"
 )
 
 type ConfigOptions func(c *openapi.Config)
 
-func NewConfig(version string, opts ...ConfigOptions) *openapi.Config {
+func NewConfig(versionString string, opts ...ConfigOptions) *openapi.Config {
 	c := &openapi.Config{
-		OpenApi: version,
+		OpenApi: version.New(versionString),
 		Servers: nil,
 		Paths:   make(map[string]*openapi.PathRef),
 	}
@@ -135,5 +136,18 @@ func WithComponentHeaderRef(name string, r *openapi.HeaderRef) ConfigOptions {
 			c.Components.Headers = openapi.Headers{}
 		}
 		c.Components.Headers[name] = r
+	}
+}
+
+func WithComponentPathItem(name string, r *openapi.Path) ConfigOptions {
+	return WithComponentPathItemRef(name, &openapi.PathRef{Value: r})
+}
+
+func WithComponentPathItemRef(name string, r *openapi.PathRef) ConfigOptions {
+	return func(c *openapi.Config) {
+		if c.Components.PathItems == nil {
+			c.Components.PathItems = openapi.PathItems{}
+		}
+		c.Components.PathItems[name] = r
 	}
 }

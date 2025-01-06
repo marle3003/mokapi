@@ -134,3 +134,9 @@ func WithParamSchema(s *schema.Schema) ParamOptions {
 		p.Schema = &schema.Ref{Value: s}
 	}
 }
+
+func WithSecurity(s map[string][]string) OperationOptions {
+	return func(o *openapi.Operation) {
+		o.Security = append(o.Security, s)
+	}
+}

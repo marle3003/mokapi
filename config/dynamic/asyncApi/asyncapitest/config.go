@@ -2,8 +2,8 @@ package asyncapitest
 
 import (
 	"mokapi/config/dynamic/asyncApi"
-	binding "mokapi/config/dynamic/asyncApi/kafka"
-	"mokapi/providers/openapi/schema"
+	"mokapi/providers/asyncapi3"
+	"mokapi/schema/json/schema"
 )
 
 type ConfigOptions func(c *asyncApi.Config)
@@ -69,9 +69,11 @@ func WithSchemas(name string, s *schema.Schema) ConfigOptions {
 			c.Components = &asyncApi.Components{}
 		}
 		if c.Components.Schemas == nil {
-			c.Components.Schemas = &schema.Schemas{}
+			c.Components.Schemas = map[string]*asyncapi3.SchemaRef{}
 		}
-		c.Components.Schemas.Set(name, &schema.Ref{Value: s})
+		c.Components.Schemas[name] = &asyncapi3.SchemaRef{
+			Value: &asyncapi3.MultiSchemaFormat{Schema: &schema.Ref{Value: s}},
+		}
 	}
 }
 
@@ -99,7 +101,7 @@ func AssignToServer(server string) ChannelOptions {
 	}
 }
 
-func WithTopicBinding(bindings binding.TopicBindings) ChannelOptions {
+func WithTopicBinding(bindings asyncApi.TopicBindings) ChannelOptions {
 	return func(c *asyncApi.Channel) {
 		c.Bindings.Kafka = bindings
 	}

@@ -6,7 +6,7 @@ declare interface KafkaService extends Service {
 
 declare interface KafkaServer {
   name: string;
-  url: string;
+  host: string;
   description: string;
   tags: KafkaServerTag[]
 }
@@ -20,18 +20,18 @@ declare interface KafkaTopic {
   name: string;
   description: string;
   partitions: KafkaPartition[];
-  configs: KafkaTopicConfig;
+  messages: { [messageId: string]: KafkaMessage }
 }
 
-declare interface KafkaTopicConfig {
+declare interface KafkaMessage {
   name: string
   title: string
   summary: string
   description: string
-  key: Schema;
-  message: Schema;
-  header: Schema
-  messageType: string;
+  key: SchemaFormat;
+  payload: SchemaFormat;
+  header: SchemaFormat
+  contentType: string;
 }
 
 declare interface KafkaPartition {

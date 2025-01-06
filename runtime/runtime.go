@@ -2,11 +2,10 @@ package runtime
 
 import (
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/asyncApi"
-	"mokapi/config/dynamic/asyncApi/kafka/store"
 	"mokapi/config/dynamic/directory"
 	"mokapi/config/dynamic/mail"
 	"mokapi/engine/common"
+	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/providers/openapi"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
@@ -17,11 +16,12 @@ import (
 const sizeEventStore = 20
 
 type App struct {
-	Version string
-	Http    map[string]*HttpInfo
-	Ldap    map[string]*LdapInfo
-	Kafka   map[string]*KafkaInfo
-	Smtp    map[string]*SmtpInfo
+	Version   string
+	BuildTime string
+	Http      map[string]*HttpInfo
+	Ldap      map[string]*LdapInfo
+	Kafka     map[string]*KafkaInfo
+	Smtp      map[string]*SmtpInfo
 
 	Monitor *monitor.Monitor
 	m       sync.Mutex
@@ -31,9 +31,10 @@ type App struct {
 
 func New() *App {
 	return &App{
-		Version: version.BuildVersion,
-		Monitor: monitor.New(),
-		Configs: map[string]*dynamic.Config{},
+		Version:   version.BuildVersion,
+		BuildTime: version.BuildTime,
+		Monitor:   monitor.New(),
+		Configs:   map[string]*dynamic.Config{},
 	}
 }
 
@@ -63,7 +64,7 @@ func (a *App) AddHttp(c *dynamic.Config) *HttpInfo {
 	return hc
 }
 
-func (a *App) AddKafka(c *dynamic.Config, emitter common.EventEmitter) *KafkaInfo {
+func (a *App) AddKafka(c *dynamic.Config, emitter common.EventEmitter) (*KafkaInfo, error) {
 	a.m.Lock()
 	defer a.m.Unlock()
 
@@ -71,7 +72,11 @@ func (a *App) AddKafka(c *dynamic.Config, emitter common.EventEmitter) *KafkaInf
 		a.Kafka = make(map[string]*KafkaInfo)
 	}
 
-	cfg := c.Data.(*asyncApi.Config)
+	cfg, err := getKafkaConfig(c)
+	if err != nil {
+		return nil, err
+	}
+
 	name := cfg.Info.Name
 	hc, ok := a.Kafka[name]
 	if !ok {
@@ -88,7 +93,7 @@ func (a *App) AddKafka(c *dynamic.Config, emitter common.EventEmitter) *KafkaInf
 		a.Monitor.Kafka.LastMessage.WithLabel(cfg.Info.Name, name).Set(0)
 		events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name).With("topic", name))
 	}
-	return hc
+	return hc, nil
 }
 
 func (a *App) AddSmtp(c *dynamic.Config) *SmtpInfo {
@@ -144,7 +149,24 @@ func (a *App) AddConfig(c *dynamic.Config) {
 	defer a.m.Unlock()
 
 	a.Configs[c.Info.Key()] = c
-	for _, r := range c.Refs.List() {
+	for _, r := range c.Refs.List(true) {
 		a.Configs[r.Info.Key()] = r
 	}
+}
+
+func (a *App) FindConfig(key string) *dynamic.Config {
+	c, ok := a.Configs[key]
+	if ok {
+		return c
+	}
+
+	for _, c = range a.Configs {
+		for _, ref := range c.Refs.List(true) {
+			if ref.Info.Key() == key {
+				return ref
+			}
+		}
+	}
+
+	return nil
 }

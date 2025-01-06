@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+const StartPrecedence = -1
+
 type IgnoreFiles map[string]*IgnoreFile
 
 type IgnoreFile struct {
@@ -20,7 +22,11 @@ func newIgnoreFile(path string, b []byte) (*IgnoreFile, error) {
 }
 
 func (i *IgnoreFile) Match(path string) bool {
-	path = strings.TrimPrefix(path, filepath.Dir(i.path))
+	base := filepath.Dir(i.path)
+	if base != "." {
+		path = strings.TrimPrefix(path, base)
+	}
+
 	result := false
 	for _, e := range i.entries {
 		e = strings.TrimSpace(e)
@@ -42,16 +48,20 @@ func (i *IgnoreFile) Match(path string) bool {
 
 func (m IgnoreFiles) Match(path string) bool {
 	var file *IgnoreFile
-	precedence := -1
+	precedence := StartPrecedence
 	for k, v := range m {
 		if path == k {
 			// path is folder containing this ignore file, skip
 			continue
 		}
-		p := len(k)
-		if k == "." || strings.HasPrefix(path, k) && p > precedence {
+		p := len(strings.Split(k, string(filepath.Separator)))
+		if k == "." && precedence == StartPrecedence {
 			file = v
-			precedence = len(k)
+			precedence = 0
+		}
+		if strings.HasPrefix(path, k) && p > precedence {
+			file = v
+			precedence = len(strings.Split(k, string(filepath.Separator)))
 		}
 	}
 	if file != nil {

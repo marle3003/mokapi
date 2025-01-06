@@ -17,7 +17,7 @@ type LdapSuite struct {
 
 func (suite *LdapSuite) SetupSuite() {
 	cfg := static.NewConfig()
-	cfg.Providers.File.Directory = "./ldap"
+	cfg.Providers.File.Directories = []string{"./ldap"}
 	suite.initCmd(cfg)
 	// ensure scripts are executed
 	time.Sleep(2 * time.Second)

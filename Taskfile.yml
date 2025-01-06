@@ -32,6 +32,7 @@ tasks:
     cmds:
       - npm run clean
       - npm run copy-docs
+      - npm version {{.VERSION}}
       - npm run build
   build-npm-package:
     deps: [build-vue-app]

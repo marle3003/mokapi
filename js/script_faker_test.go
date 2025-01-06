@@ -1,29 +1,30 @@
-package js
+package js_test
 
 import (
 	"encoding/json"
 	"github.com/brianvoe/gofakeit/v6"
 	r "github.com/stretchr/testify/require"
-	"mokapi/config/static"
 	"mokapi/engine/common"
-	"mokapi/json/generator"
+	"mokapi/engine/enginetest"
+	"mokapi/js"
+	"mokapi/js/jstest"
+	"mokapi/schema/json/generator"
 	"testing"
 )
 
 func TestScript_Faker(t *testing.T) {
 	testcases := []struct {
 		name string
-		f    func(t *testing.T, host *testHost)
+		test func(t *testing.T, host *enginetest.Host)
 	}{
 		{
-			"fake string",
-			func(t *testing.T, host *testHost) {
-				s, err := New(newScript("",
-					`import {fake} from 'mokapi/faker'
+			name: "fake string",
+			test: func(t *testing.T, host *enginetest.Host) {
+				s, err := jstest.New(jstest.WithSource(`import faker from 'mokapi/faker'
 						 export default function() {
-						 	return fake({type: 'string'})
+						 	return faker.fake({ type: 'string' })
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
@@ -31,14 +32,95 @@ func TestScript_Faker(t *testing.T) {
 			},
 		},
 		{
-			"fake enum",
-			func(t *testing.T, host *testHost) {
-				s, err := New(newScript("",
-					`import {fake} from 'mokapi/faker'
+			name: "fake string or number",
+			test: func(t *testing.T, host *enginetest.Host) {
+				s, err := jstest.New(jstest.WithSource(`import faker from 'mokapi/faker'
 						 export default function() {
-						 	return fake({type: 'string', enum: ['foo', 'bar']})
+						 	return faker.fake({ type: ['string', 'number'] })
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
+				r.NoError(t, err)
+				v, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, "1.644484108270445e+307", v.String())
+			},
+		},
+		{
+			name: "invalid type for type",
+			test: func(t *testing.T, host *enginetest.Host) {
+				s, err := jstest.New(jstest.WithSource(`import faker from 'mokapi/faker'
+						 export default function() {
+						 	return faker.fake({ type: {} })
+						 }`),
+					js.WithHost(host))
+				r.NoError(t, err)
+				_, err = s.RunDefault()
+				r.EqualError(t, err, "unexpected type for 'type': Object at mokapi/js/faker.(*Faker).Fake-fm (native)")
+			},
+		},
+		{
+			name: "fake exclusiveMinimum",
+			test: func(t *testing.T, host *enginetest.Host) {
+				s, err := jstest.New(jstest.WithSource(`import faker from 'mokapi/faker'
+						 export default function() {
+						 	return faker.fake({ type: 'integer', exclusiveMinimum: 3, maximum: 10 })
+						 }`),
+					js.WithHost(host))
+				r.NoError(t, err)
+				v, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, "5", v.String())
+			},
+		},
+		{
+			name: "fake exclusiveMinimum but wrong type",
+			test: func(t *testing.T, host *enginetest.Host) {
+				s, err := jstest.New(jstest.WithSource(`import faker from 'mokapi/faker'
+						 export default function() {
+						 	return faker.fake({ type: 'integer', exclusiveMinimum: 'str', maximum: 10 })
+						 }`),
+					js.WithHost(host))
+				r.NoError(t, err)
+				_, err = s.RunDefault()
+				r.EqualError(t, err, "unexpected type for 'exclusiveMinimum': String at mokapi/js/faker.(*Faker).Fake-fm (native)")
+			},
+		},
+		{
+			name: "fake exclusiveMaximum",
+			test: func(t *testing.T, host *enginetest.Host) {
+				s, err := jstest.New(jstest.WithSource(`import faker from 'mokapi/faker'
+						 export default function() {
+						 	return faker.fake({ type: 'integer', exclusiveMaximum: 3, minimum: 2 })
+						 }`),
+					js.WithHost(host))
+				r.NoError(t, err)
+				v, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, "2", v.String())
+			},
+		},
+		{
+			name: "fake exclusiveMaximum but wrong type",
+			test: func(t *testing.T, host *enginetest.Host) {
+				s, err := jstest.New(jstest.WithSource(`import faker from 'mokapi/faker'
+						 export default function() {
+						 	return faker.fake({ type: 'integer', exclusiveMaximum: 'str', minimum: 10 })
+						 }`),
+					js.WithHost(host))
+				r.NoError(t, err)
+				_, err = s.RunDefault()
+				r.EqualError(t, err, "unexpected type for 'exclusiveMaximum': String at mokapi/js/faker.(*Faker).Fake-fm (native)")
+			},
+		},
+		{
+			name: "fake enum",
+			test: func(t *testing.T, host *enginetest.Host) {
+				s, err := jstest.New(jstest.WithSource(
+					`import { fake } from 'mokapi/faker'
+						 export default function() {
+						 	return fake({ type: 'string', enum: ['foo', 'bar'] })
+						 }`),
+					js.WithHost(host))
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
@@ -46,43 +128,28 @@ func TestScript_Faker(t *testing.T) {
 			},
 		},
 		{
-			"invalid format",
-			func(t *testing.T, host *testHost) {
-				s, err := New(newScript("",
-					`import {fake} from 'mokapi/faker'
+			name: "invalid format",
+			test: func(t *testing.T, host *enginetest.Host) {
+				s, err := jstest.New(jstest.WithSource(
+					`import { fake } from 'mokapi/faker'
 						 export default function() {
 						 	return fake("")
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
-				_, err = s.RunDefault()
-				r.Error(t, err)
+				err = s.Run()
+				r.EqualError(t, err, "expect object parameter but got: String at mokapi/js/faker.(*Faker).Fake-fm (native)")
 			},
 		},
 		{
-			"using deprecated module",
-			func(t *testing.T, host *testHost) {
-				s, err := New(newScript("",
-					`import {fake} from 'faker'
+			name: "object with properties",
+			test: func(t *testing.T, host *enginetest.Host) {
+				s, err := jstest.New(jstest.WithSource(
+					`import { fake } from 'mokapi/faker'
 						 export default function() {
-						 	return fake({type: 'string'})
+						 	return fake({ type: 'object', properties: { id: { type: 'integer', format: 'int64' } } })
 						 }`),
-					host, static.JsConfig{})
-				r.NoError(t, err)
-				v, err := s.RunDefault()
-				r.NoError(t, err)
-				r.Equal(t, "XidZuoWq ", v.String())
-			},
-		},
-		{
-			"object with properties",
-			func(t *testing.T, host *testHost) {
-				s, err := New(newScript("",
-					`import {fake} from 'faker'
-						 export default function() {
-						 	return fake({type: 'object', properties: {id: {type: 'integer', format: 'int64'}}})
-						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
@@ -92,14 +159,14 @@ func TestScript_Faker(t *testing.T) {
 			},
 		},
 		{
-			"find node",
-			func(t *testing.T, host *testHost) {
-				host.findFakerTree = func(name string) common.FakerTree {
-					return &fakerTree{t: generator.FindByName("Faker")}
+			name: "find node",
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.FindFakerTreeFunc = func(name string) *common.FakerTree {
+					return common.NewFakerTree(generator.FindByName("Faker"))
 				}
 
-				s, err := New(newScript("",
-					`import {fake, findByName} from 'mokapi/faker'
+				s, err := jstest.New(jstest.WithSource(
+					`import { fake, findByName } from 'mokapi/faker'
 						 export default function() {
 						 	let root = findByName('Faker')
 							root.insert(0, {
@@ -114,7 +181,7 @@ func TestScript_Faker(t *testing.T) {
 							})
 							return fake({ type: 'string' })
 						 }`),
-					host, static.JsConfig{})
+					js.WithHost(host))
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
@@ -134,52 +201,7 @@ func TestScript_Faker(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			gofakeit.Seed(11)
-			host := &testHost{}
-
-			tc.f(t, host)
+			tc.test(t, &enginetest.Host{})
 		})
 	}
-}
-
-type fakerTree struct {
-	t *generator.Tree
-}
-
-func (ft *fakerTree) Name() string {
-	return ft.t.Name
-}
-
-func (ft *fakerTree) Test(r *generator.Request) bool {
-	return ft.t.Test(r)
-}
-
-func (ft *fakerTree) Fake(r *generator.Request) (interface{}, error) {
-	return ft.t.Fake(r)
-}
-
-func (ft *fakerTree) Append(node common.FakerNode) {
-	t := &generator.Tree{
-		Name:   node.Name(),
-		Test:   node.Test,
-		Fake:   node.Fake,
-		Custom: true,
-	}
-	ft.t.Append(t)
-}
-
-func (ft *fakerTree) Insert(index int, node common.FakerNode) error {
-	return ft.t.Insert(index, &generator.Tree{
-		Name:   node.Name(),
-		Test:   node.Test,
-		Fake:   node.Fake,
-		Custom: true,
-	})
-}
-
-func (ft *fakerTree) RemoveAt(index int) error {
-	return ft.t.RemoveAt(index)
-}
-
-func (ft *fakerTree) Remove(name string) error {
-	return ft.t.Remove(name)
 }

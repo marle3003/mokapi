@@ -3,7 +3,7 @@ package common
 import (
 	"fmt"
 	"mokapi/config/dynamic"
-	"mokapi/json/generator"
+	"mokapi/schema/json/generator"
 	"net/http"
 	"strings"
 	"time"
@@ -16,6 +16,7 @@ type EventEmitter interface {
 type Script interface {
 	Run() error
 	Close()
+	CanClose() bool
 }
 
 type JobOptions struct {
@@ -35,11 +36,11 @@ type Host interface {
 	On(event string, do func(args ...interface{}) (bool, error), tags map[string]string)
 
 	KafkaClient() KafkaClient
-	HttpClient() HttpClient
+	HttpClient(HttpClientOptions) HttpClient
 
 	Name() string
 
-	FindFakerTree(name string) FakerTree
+	FindFakerTree(name string) *FakerTree
 
 	Lock()
 	Unlock()
@@ -97,6 +98,10 @@ type HttpClient interface {
 	Do(r *http.Request) (*http.Response, error)
 }
 
+type HttpClientOptions struct {
+	MaxRedirects int
+}
+
 type Action struct {
 	Duration int64             `json:"duration"`
 	Tags     map[string]string `json:"tags"`
@@ -119,17 +124,6 @@ func (a *Action) String() string {
 		sb.WriteString(fmt.Sprintf("%v=%v", k, v))
 	}
 	return sb.String()
-}
-
-type FakerTree interface {
-	Name() string
-	Test(r *generator.Request) bool
-	Fake(r *generator.Request) (interface{}, error)
-
-	Append(tree FakerNode)
-	Insert(index int, tree FakerNode) error
-	RemoveAt(index int) error
-	Remove(name string) error
 }
 
 type FakerNode interface {

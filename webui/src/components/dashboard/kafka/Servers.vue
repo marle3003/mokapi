@@ -27,15 +27,15 @@ onMounted(()=> {
         <thead>
             <tr>
                 <th scope="col" class="text-left">Name</th>
-                <th scope="col" class="text-left">URL</th>
+                <th scope="col" class="text-left">Host</th>
                 <th scope="col" class="text-left">Tags</th>
                 <th scope="col" class="text-left w-50">Description</th>
             </tr>
         </thead>
         <tbody>
-            <tr v-for="server in servers" :key="server.url">
+            <tr v-for="server in servers" :key="server.host">
                 <td>{{ server.name }}</td>
-                <td>{{ server.url }}</td>
+                <td>{{ server.host }}</td>
                 <td>
                     <ul class="tags">
                         <li v-for="tag in server.tags" class="has-popover">
@@ -45,7 +45,7 @@ onMounted(()=> {
                         
                     </ul>
                 </td>
-                <td><markdown :source="server.description" class="description"></markdown></td>
+                <td><markdown :source="server.description" class="description" :html="true"></markdown></td>
             </tr>
         </tbody>
     </table>

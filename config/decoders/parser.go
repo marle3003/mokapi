@@ -8,7 +8,7 @@ import (
 
 const DefaultEnvNamePrefix = "MOKAPI_"
 
-func parseFlags() (map[string]string, error) {
+func parseFlags() (map[string][]string, error) {
 	flags, err := parseArgs(os.Args[1:]) // first argument is the program path
 	if err != nil {
 		return nil, err
@@ -18,7 +18,7 @@ func parseFlags() (map[string]string, error) {
 
 	// merge maps. env flags overwrites cli flags
 	for k, v := range envs {
-		flags[k] = v
+		flags[k] = []string{v}
 	}
 
 	return flags, nil
@@ -31,7 +31,7 @@ func parseEnv(environ []string) map[string]string {
 		kv := strings.SplitN(s, "=", 2)
 		if strings.HasPrefix(strings.ToUpper(kv[0]), DefaultEnvNamePrefix) {
 			key := strings.Replace(kv[0], DefaultEnvNamePrefix, "", 1)
-			name := strings.ReplaceAll(strings.ToLower(key), "_", ".")
+			name := strings.ReplaceAll(strings.ToLower(key), "_", "-")
 			dictionary[name] = kv[1]
 		}
 	}
@@ -39,8 +39,8 @@ func parseEnv(environ []string) map[string]string {
 	return dictionary
 }
 
-func parseArgs(args []string) (map[string]string, error) {
-	dictionary := make(map[string]string)
+func parseArgs(args []string) (map[string][]string, error) {
+	dictionary := make(map[string][]string)
 	for i := 0; i < len(args); i++ {
 		s := args[i]
 		if len(s) < 2 || s[0] != '-' {
@@ -70,21 +70,29 @@ func parseArgs(args []string) (map[string]string, error) {
 				value = name[i+1:]
 				name = name[0:i]
 				hasValue = true
+				break
 			}
 		}
 
+		param := strings.ToLower(name)
 		if hasValue {
-			dictionary[strings.ToLower(name)] = value
+			dictionary[param] = append(dictionary[param], value)
 			continue
 		}
 
-		// value is next arg
-		i++
-		if i >= len(args) {
-			return nil, fmt.Errorf("argument %v need a value", name)
+		// value is next args
+		for i++; i < len(args); i++ {
+			if strings.HasPrefix(args[i], "--") {
+				i--
+				break
+			}
+			value = args[i]
+			dictionary[param] = append(dictionary[param], value)
 		}
-		value = args[i]
-		dictionary[strings.ToLower(name)] = value
+
+		if len(dictionary[param]) == 0 {
+			dictionary[param] = append(dictionary[param], "")
+		}
 	}
 
 	return dictionary, nil

@@ -7,7 +7,6 @@ import (
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
-	"mokapi/json/ref"
 	"mokapi/media"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
@@ -49,7 +48,8 @@ func TestResponse_UnmarshalJSON(t *testing.T) {
 			test: func(t *testing.T) {
 				res := openapi.Responses[int]{}
 				err := json.Unmarshal([]byte(`{ "foo": { "description": "foo" } }`), &res)
-				require.EqualError(t, err, "unable to parse http status foo")
+				// For JSON files, line and column position for error is handled in dynamic package
+				require.EqualError(t, err, "structural error at foo: unable to parse http status 'foo': only HTTP status codes are allowed")
 				require.Equal(t, 0, res.Len())
 			},
 		},
@@ -67,7 +67,7 @@ func TestResponse_UnmarshalJSON(t *testing.T) {
 			test: func(t *testing.T) {
 				res := openapi.Responses[int]{}
 				err := json.Unmarshal([]byte(`{ "200": [{ "description": "foo" }] }`), &res)
-				require.EqualError(t, err, "json: cannot unmarshal array into Go value of type openapi.Response")
+				require.EqualError(t, err, "structural error at 200: expected object but received an array")
 				require.Equal(t, 0, res.Len())
 			},
 		},
@@ -125,7 +125,7 @@ func TestResponse_UnmarshalYAML(t *testing.T) {
 			test: func(t *testing.T) {
 				res := openapi.Responses[int]{}
 				err := yaml.Unmarshal([]byte(`foo: { description: foo }`), &res)
-				require.EqualError(t, err, "unable to parse http status foo")
+				require.EqualError(t, err, "unable to parse http status 'foo': only HTTP status codes are allowed at line 1, column 1")
 				require.Equal(t, 0, res.Len())
 			},
 		},
@@ -335,7 +335,7 @@ func TestResponse_Parse(t *testing.T) {
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithPath("/foo", openapitest.NewPath(
 						openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
-							openapitest.WithResponseRef(http.StatusOK, &openapi.ResponseRef{Reference: ref.Reference{Ref: "foo.yml"}}),
+							openapitest.WithResponseRef(http.StatusOK, &openapi.ResponseRef{Reference: dynamic.Reference{Ref: "foo.yml"}}),
 						)),
 					)),
 				)
@@ -352,7 +352,7 @@ func TestResponse_Parse(t *testing.T) {
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithPath("/foo", openapitest.NewPath(
 						openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
-							openapitest.WithResponse(http.StatusOK, openapitest.WithResponseHeaderRef("foo", &openapi.HeaderRef{Reference: ref.Reference{Ref: "foo.yml"}})),
+							openapitest.WithResponse(http.StatusOK, openapitest.WithResponseHeaderRef("foo", &openapi.HeaderRef{Reference: dynamic.Reference{Ref: "foo.yml"}})),
 						)),
 					)),
 				)
@@ -525,7 +525,7 @@ func TestConfig_Patch_Response(t *testing.T) {
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
 				require.Len(t, res.Content, 1)
-				require.Equal(t, "number", res.Content["text/plain"].Schema.Value.Type)
+				require.Equal(t, "number", res.Content["text/plain"].Schema.Value.Type.String())
 			},
 		},
 		{
@@ -551,7 +551,7 @@ func TestConfig_Patch_Response(t *testing.T) {
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
 				require.Len(t, res.Content, 1)
-				require.Equal(t, "number", res.Content["text/plain"].Schema.Value.Type)
+				require.Equal(t, "number", res.Content["text/plain"].Schema.Value.Type.String())
 				require.Equal(t, "double", res.Content["text/plain"].Schema.Value.Format)
 			},
 		},

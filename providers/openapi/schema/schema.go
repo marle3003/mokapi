@@ -1,49 +1,85 @@
 package schema
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
+	"mokapi/schema/json/schema"
+	"reflect"
 	"strings"
 )
 
 type Schema struct {
-	Description string `yaml:"description" json:"description"`
+	Schema  string `yaml:"$schema,omitempty" json:"$schema,omitempty"`
+	Boolean *bool  `yaml:"-" json:"-"`
 
-	Type       string        `yaml:"type" json:"type"`
-	AnyOf      []*Ref        `yaml:"anyOf" json:"anyOf"`
-	AllOf      []*Ref        `yaml:"allOf" json:"allOf"`
-	OneOf      []*Ref        `yaml:"oneOf" json:"oneOf"`
-	Deprecated bool          `yaml:"deprecated" json:"deprecated"`
-	Example    interface{}   `yaml:"example" json:"example"`
-	Enum       []interface{} `yaml:"enum" json:"enum"`
-	Xml        *Xml          `yaml:"xml" json:"xml"`
-	Format     string        `yaml:"format" json:"format"`
-	Nullable   bool          `yaml:"nullable" json:"nullable"`
-
-	// String
-	Pattern   string `yaml:"pattern" json:"pattern"`
-	MinLength *int   `yaml:"minLength" json:"minLength"`
-	MaxLength *int   `yaml:"maxLength" json:"maxLength"`
+	Type  schema.Types  `yaml:"type,omitempty" json:"type,omitempty"`
+	Enum  []interface{} `yaml:"enum,omitempty" json:"enum,omitempty"`
+	Const *interface{}  `yaml:"const,omitempty" json:"const,omitempty"`
 
 	// Numbers
-	Minimum          *float64 `yaml:"minimum,omitempty" json:"minimum,omitempty"`
-	Maximum          *float64 `yaml:"maximum,omitempty" json:"maximum,omitempty"`
-	ExclusiveMinimum *bool    `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
-	ExclusiveMaximum *bool    `yaml:"exclusiveMaximum,omitempty" json:"exclusiveMaximum,omitempty"`
+	MultipleOf       *float64                         `yaml:"multipleOf,omitempty" json:"multipleOf,omitempty"`
+	Minimum          *float64                         `yaml:"minimum,omitempty" json:"minimum,omitempty"`
+	Maximum          *float64                         `yaml:"maximum,omitempty" json:"maximum,omitempty"`
+	ExclusiveMinimum *schema.UnionType[float64, bool] `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
+	ExclusiveMaximum *schema.UnionType[float64, bool] `yaml:"exclusiveMaximum,omitempty" json:"exclusiveMaximum,omitempty"`
+
+	// String
+	Pattern   string `yaml:"pattern,omitempty" json:"pattern,omitempty"`
+	MinLength *int   `yaml:"minLength,omitempty" json:"minLength,omitempty"`
+	MaxLength *int   `yaml:"maxLength,omitempty" json:"maxLength,omitempty"`
+	Format    string `yaml:"format,omitempty" json:"format,omitempty"`
 
 	// Array
-	Items        *Ref `yaml:"items" json:"items"`
-	UniqueItems  bool `yaml:"uniqueItems" json:"uniqueItems"`
-	MinItems     *int `yaml:"minItems" json:"minItems"`
-	MaxItems     *int `yaml:"maxItems" json:"maxItems"`
-	ShuffleItems bool `yaml:"x-shuffleItems" json:"x-shuffleItems"`
+	Items            *Ref   `yaml:"items,omitempty" json:"items,omitempty"`
+	PrefixItems      []*Ref `yaml:"prefixItems,omitempty" json:"prefixItems,omitempty"`
+	UnevaluatedItems *Ref   `yaml:"unevaluatedItems,omitempty" json:"unevaluatedItems,omitempty"`
+	Contains         *Ref   `yaml:"contains,omitempty" json:"contains,omitempty"`
+	MaxContains      *int   `yaml:"maxContains,omitempty" json:"maxContains,omitempty"`
+	MinContains      *int   `yaml:"minContains,omitempty" json:"minContains,omitempty"`
+	MinItems         *int   `yaml:"minItems,omitempty" json:"minItems,omitempty"`
+	MaxItems         *int   `yaml:"maxItems,omitempty" json:"maxItems,omitempty"`
+	UniqueItems      bool   `yaml:"uniqueItems,omitempty" json:"uniqueItems,omitempty"`
+	ShuffleItems     bool   `yaml:"x-shuffleItems,omitempty" json:"x-shuffleItems,omitempty"`
 
 	// Object
-	Properties           *Schemas              `yaml:"properties" json:"properties"`
-	Required             []string              `yaml:"required" json:"required"`
-	AdditionalProperties *AdditionalProperties `yaml:"additionalProperties,omitempty" json:"additionalProperties,omitempty"`
-	MinProperties        *int                  `yaml:"minProperties" json:"minProperties"`
-	MaxProperties        *int                  `yaml:"maxProperties" json:"maxProperties"`
+	Properties            *Schemas            `yaml:"properties,omitempty" json:"properties,omitempty"`
+	PatternProperties     map[string]*Ref     `yaml:"patternProperties,omitempty" json:"patternProperties,omitempty"`
+	MinProperties         *int                `yaml:"minProperties,omitempty" json:"minProperties,omitempty"`
+	MaxProperties         *int                `yaml:"maxProperties,omitempty" json:"maxProperties,omitempty"`
+	Required              []string            `yaml:"required,omitempty" json:"required,omitempty"`
+	DependentRequired     map[string][]string `yaml:"dependentRequired,omitempty" json:"dependentRequired,omitempty"`
+	DependentSchemas      map[string]*Ref     `yaml:"dependentSchemas,omitempty" json:"dependentSchemas,omitempty"`
+	AdditionalProperties  *Ref                `yaml:"additionalProperties,omitempty" json:"additionalProperties,omitempty"`
+	UnevaluatedProperties *Ref                `yaml:"unevaluatedProperties,omitempty" json:"unevaluatedProperties,omitempty"`
+	PropertyNames         *Ref                `yaml:"propertyNames,omitempty" json:"propertyNames,omitempty"`
+
+	AnyOf []*Ref `yaml:"anyOf,omitempty" json:"anyOf,omitempty"`
+	AllOf []*Ref `yaml:"allOf,omitempty" json:"allOf,omitempty"`
+	OneOf []*Ref `yaml:"oneOf,omitempty" json:"oneOf,omitempty"`
+	Not   *Ref   `yaml:"not,omitempty" json:"not,omitempty"`
+
+	If   *Ref `yaml:"if,omitempty" json:"if,omitempty"`
+	Then *Ref `yaml:"then,omitempty" json:"then,omitempty"`
+	Else *Ref `yaml:"else,omitempty" json:"else,omitempty"`
+
+	// Annotations
+	Title       string        `yaml:"title,omitempty" json:"title,omitempty"`
+	Description string        `yaml:"description,omitempty" json:"description,omitempty"`
+	Default     interface{}   `yaml:"default,omitempty" json:"default,omitempty"`
+	Deprecated  bool          `yaml:"deprecated,omitempty" json:"deprecated,omitempty"`
+	Examples    []interface{} `yaml:"examples,omitempty" json:"examples,omitempty"`
+	Example     interface{}   `yaml:"example,omitempty" json:"example,omitempty"`
+
+	// Media
+	ContentMediaType string `yaml:"contentMediaType,omitempty" json:"contentMediaType,omitempty"`
+	ContentEncoding  string `yaml:"contentEncoding,omitempty" json:"contentEncoding,omitempty"`
+
+	// OpenAPI
+	Xml      *Xml `yaml:"xml,omitempty" json:"xml,omitempty"`
+	Nullable bool `yaml:"nullable,omitempty" json:"nullable,omitempty"`
 }
 
 func (s *Schema) HasProperties() bool {
@@ -123,8 +159,9 @@ func (s *Schema) String() string {
 	}
 
 	if len(s.Type) > 0 {
-		sb.WriteString(fmt.Sprintf("schema type=%v", s.Type))
+		sb.WriteString(fmt.Sprintf("schema type=%v", s.Type.String()))
 	}
+
 	if len(s.Format) > 0 {
 		sb.WriteString(fmt.Sprintf(" format=%v", s.Format))
 	}
@@ -137,18 +174,27 @@ func (s *Schema) String() string {
 	if s.MaxLength != nil {
 		sb.WriteString(fmt.Sprintf(" maxLength=%v", *s.MaxLength))
 	}
-	if s.Minimum != nil {
+
+	if s.ExclusiveMinimum != nil {
+		if s.ExclusiveMinimum.IsA() {
+			sb.WriteString(fmt.Sprintf(" exclusiveMinimum=%v", s.ExclusiveMinimum.Value()))
+		} else if s.ExclusiveMinimum.B {
+			sb.WriteString(fmt.Sprintf(" exclusiveMinimum=%v", *s.Minimum))
+		}
+	} else if s.Minimum != nil {
 		sb.WriteString(fmt.Sprintf(" minimum=%v", *s.Minimum))
 	}
-	if s.Maximum != nil {
+
+	if s.ExclusiveMaximum != nil {
+		if s.ExclusiveMaximum.IsA() {
+			sb.WriteString(fmt.Sprintf(" exclusiveMaximum=%v", s.ExclusiveMaximum.Value()))
+		} else if s.ExclusiveMaximum.B {
+			sb.WriteString(fmt.Sprintf(" exclusiveMaximum=%v", *s.Maximum))
+		}
+	} else if s.Maximum != nil {
 		sb.WriteString(fmt.Sprintf(" maximum=%v", *s.Maximum))
 	}
-	if s.ExclusiveMinimum != nil && *s.ExclusiveMinimum {
-		sb.WriteString(" exclusiveMinimum")
-	}
-	if s.ExclusiveMaximum != nil && *s.ExclusiveMaximum {
-		sb.WriteString(" exclusiveMaximum")
-	}
+
 	if s.MinItems != nil {
 		sb.WriteString(fmt.Sprintf(" minItems=%v", *s.MinItems))
 	}
@@ -165,7 +211,7 @@ func (s *Schema) String() string {
 		sb.WriteString(" unique-items")
 	}
 
-	if s.Type == "object" && s.Properties != nil {
+	if s.Type.Includes("object") && s.Properties != nil {
 		var sbProp strings.Builder
 		for _, p := range s.Properties.Keys() {
 			if sbProp.Len() > 0 {
@@ -178,23 +224,29 @@ func (s *Schema) String() string {
 	if len(s.Required) > 0 {
 		sb.WriteString(fmt.Sprintf(" required=%v", s.Required))
 	}
-	if s.Type == "object" && !s.IsFreeForm() {
+	if s.Type.Includes("object") && !s.IsFreeForm() {
 		sb.WriteString(" free-form=false")
 	}
 
-	if s.Type == "array" && s.Items != nil {
+	if s.Type.Includes("array") && s.Items != nil {
 		sb.WriteString(" items=")
 		sb.WriteString(s.Items.String())
+	}
+
+	if len(s.Title) > 0 {
+		sb.WriteString(fmt.Sprintf(" title=%v", s.Title))
+	} else if len(s.Description) > 0 {
+		sb.WriteString(fmt.Sprintf(" description=%v", s.Description))
 	}
 
 	return sb.String()
 }
 
 func (s *Schema) IsFreeForm() bool {
-	if s.Type != "object" {
+	if !s.Type.Includes("object") {
 		return false
 	}
-	free := s.Type == "object" && (s.Properties == nil || s.Properties.Len() == 0)
+	free := s.Type.Includes("object") && (s.Properties == nil || s.Properties.Len() == 0)
 	if s.AdditionalProperties == nil || free {
 		return true
 	}
@@ -202,5 +254,155 @@ func (s *Schema) IsFreeForm() bool {
 }
 
 func (s *Schema) IsDictionary() bool {
-	return s.AdditionalProperties != nil && s.AdditionalProperties.Ref != nil && s.AdditionalProperties.Value != nil && s.AdditionalProperties.Value.Type != ""
+	return s.AdditionalProperties != nil && s.AdditionalProperties.Value != nil && len(s.AdditionalProperties.Value.Type) > 0
+}
+
+func (s *Schema) IsNullable() bool {
+	return s.Nullable || s.Type.IsNullable()
+}
+
+func (s *Schema) ConvertTo(i interface{}) (interface{}, error) {
+	if _, ok := i.(*schema.Schema); ok {
+		return ConvertToJsonSchema(&Ref{Value: s}).Value, nil
+	}
+	return nil, fmt.Errorf("cannot convert %v to json schema", i)
+}
+
+func (s *Schema) UnmarshalJSON(b []byte) error {
+	var boolVal bool
+	if err := json.Unmarshal(b, &boolVal); err == nil {
+		s.Boolean = &boolVal
+		return nil
+	}
+
+	type alias Schema
+	a := alias{}
+	err := dynamic.UnmarshalJSON(b, &a)
+	if err != nil {
+		return err
+	}
+	*s = Schema(a)
+	return nil
+}
+
+func (s *Schema) UnmarshalYAML(node *yaml.Node) error {
+	var boolVal bool
+	if err := node.Decode(&boolVal); err == nil {
+		s.Boolean = &boolVal
+		return nil
+	}
+
+	type alias Schema
+	a := alias{}
+	err := node.Decode(&a)
+	if err != nil {
+		return err
+	}
+	*s = Schema(a)
+	return nil
+}
+
+type encoder struct {
+	refs map[string]bool
+}
+
+func (e *encoder) encode(r *Ref) ([]byte, error) {
+	var b bytes.Buffer
+	if r.Boolean != nil {
+		b.Write([]byte(fmt.Sprintf("%v", *r.Boolean)))
+		return b.Bytes(), nil
+	}
+
+	b.WriteRune('{')
+
+	if r.Ref != "" {
+		b.Write([]byte(fmt.Sprintf(`"ref":"%v"`, r.Ref)))
+
+		// loop protection, only return reference
+		if _, ok := e.refs[r.Ref]; ok {
+			b.WriteRune('}')
+			return b.Bytes(), nil
+		}
+		e.refs[r.Ref] = true
+		defer func() {
+			delete(e.refs, r.Ref)
+		}()
+	}
+
+	if r.Value != nil {
+		v := reflect.ValueOf(r.Value).Elem()
+		t := v.Type()
+		var err error
+		for i := 0; i < v.NumField(); i++ {
+			f := v.Field(i)
+			if isEmptyValue(f) {
+				continue
+			}
+
+			fv := f.Interface()
+			var bVal []byte
+			switch val := fv.(type) {
+			case schema.Types:
+				if len(val) == 0 {
+					continue
+				}
+				bVal, err = val.MarshalJSON()
+			case *Ref:
+				if val == nil {
+					continue
+				}
+				bVal, err = e.encode(val)
+			case *Schemas:
+				var fields bytes.Buffer
+				fields.WriteRune('{')
+				for it := val.Iter(); it.Next(); {
+					if fields.Len() > 1 {
+						fields.WriteRune(',')
+					}
+					sField, err := e.encode(it.Value())
+					if err != nil {
+						return nil, err
+					}
+					fields.WriteString(fmt.Sprintf(`"%v":`, it.Key()))
+					fields.Write(sField)
+				}
+				fields.WriteRune('}')
+				bVal = fields.Bytes()
+			default:
+				bVal, err = json.Marshal(val)
+			}
+
+			if err != nil {
+				return nil, err
+			}
+
+			if b.Len() > 1 {
+				b.Write([]byte{','})
+			}
+
+			tag := t.Field(i).Tag.Get("json")
+			name := strings.Split(tag, ",")[0]
+
+			b.WriteString(fmt.Sprintf(`"%v":`, name))
+			b.Write(bVal)
+		}
+	}
+
+	b.WriteRune('}')
+	return b.Bytes(), nil
+}
+
+func isEmptyValue(v reflect.Value) bool {
+	switch v.Kind() {
+	case reflect.Array, reflect.Map, reflect.Slice, reflect.String:
+		return v.Len() == 0
+	case reflect.Bool,
+		reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,
+		reflect.Float32, reflect.Float64,
+		reflect.Interface, reflect.Pointer:
+		return v.IsZero()
+	default:
+		return false
+	}
 }

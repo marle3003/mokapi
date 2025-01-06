@@ -33,6 +33,7 @@ type repository struct {
 	pullOptions *git.PullOptions
 	hash        plumbing.Hash
 	config      static.GitRepo
+	init        bool
 }
 
 type Provider struct {
@@ -42,15 +43,7 @@ type Provider struct {
 }
 
 func New(config static.GitProvider) *Provider {
-	gitUrls := config.Urls
-	if len(config.Url) > 0 {
-		gitUrls = append(gitUrls, config.Url)
-	}
-
 	repoConfigs := config.Repositories
-	if len(config.Url) > 0 {
-		repoConfigs = append(repoConfigs, static.GitRepo{Url: config.Url})
-	}
 	for _, url := range config.Urls {
 		if len(url) > 0 {
 			repoConfigs = append(repoConfigs, static.GitRepo{Url: url})
@@ -59,14 +52,14 @@ func New(config static.GitProvider) *Provider {
 
 	var repos []*repository
 	for _, repoConfig := range repoConfigs {
-		path, err := os.MkdirTemp("", "mokapi_git_*")
+		path, err := os.MkdirTemp(config.TempDir, "mokapi_git_*")
 		if err != nil {
 			log.Errorf("unable to create temp dir for git provider: %v", err)
 		}
 
 		u, err := url.Parse(repoConfig.Url)
 		if err != nil {
-			log.Errorf("unable to parse git url %v: %v", config.Url, err)
+			log.Errorf("unable to parse git url %v: %v", repoConfig.Url, err)
 		}
 
 		var ref string
@@ -108,49 +101,24 @@ func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
 		return nil
 	}
 
-	var err error
-	interval := time.Second * 5
-	if len(p.pullInterval) > 0 {
-		interval, err = time.ParseDuration(p.pullInterval)
-		if err != nil {
-			return fmt.Errorf("unable to parse interval %q: %v", p.pullInterval, err)
-		}
-	}
-
-	ticker := time.NewTicker(interval)
-
 	for _, r := range p.repositories {
 		r := r
 		pool.Go(func(ctx context.Context) {
-			err = p.initRepository(r, ch, pool)
+			err := p.initRepository(r, ch, pool)
 			if err != nil {
 				log.Errorf("init git repository failed: %v", err)
 			}
 		})
 	}
 
-	pool.Go(func(ctx context.Context) {
-		defer func() {
-			ticker.Stop()
-			p.cleanup()
-		}()
-
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				for _, r := range p.repositories {
-					pull(r)
-				}
-			}
-		}
-	})
-
 	return nil
 }
 
 func (p *Provider) initRepository(r *repository, ch chan *dynamic.Config, pool *safe.Pool) error {
+	if len(r.config.PullInterval) == 0 {
+		r.config.PullInterval = p.pullInterval
+	}
+
 	err := p.transport.addAuth(r)
 	if err != nil {
 		return err
@@ -215,6 +183,7 @@ func (p *Provider) initRepository(r *repository, ch chan *dynamic.Config, pool *
 				}
 				relative := path[len(r.localPath)+1:]
 				if skip(relative, r) {
+					log.Debugf("skip file: %v", getUrl(r, c.Info.Url))
 					continue
 				}
 
@@ -227,7 +196,7 @@ func (p *Provider) initRepository(r *repository, ch chan *dynamic.Config, pool *
 }
 
 func (p *Provider) startFileProvider(dir string, ch chan *dynamic.Config, pool *safe.Pool) {
-	f := file.New(static.FileProvider{Directory: dir})
+	f := file.New(static.FileProvider{Directories: []string{dir}})
 	f.SkipPrefix = append(f.SkipPrefix, ".git")
 	err := f.Start(ch, pool)
 	if err != nil {

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
-	"mokapi/json/ref"
 	"mokapi/media"
 	"mokapi/sortedmap"
 	"strconv"
@@ -17,7 +16,7 @@ type Responses[K string | int] struct {
 } // map[HttpStatus]*ResponseRef
 
 type ResponseRef struct {
-	ref.Reference
+	dynamic.Reference
 	Value *Response
 }
 
@@ -57,10 +56,12 @@ func (r *Responses[K]) UnmarshalJSON(b []byte) error {
 			return nil
 		}
 		key := token.(string)
+		offset := dec.InputOffset()
 		val := &ResponseRef{}
 		err = dec.Decode(&val)
 		if err != nil {
-			return err
+			offset += dynamic.NextTokenIndex(b[offset:])
+			return dynamic.NewStructuralErrorWithField(err, offset, dec, key)
 		}
 		switch m := any(&r.LinkedHashMap).(type) {
 		case *sortedmap.LinkedHashMap[string, *ResponseRef]:
@@ -71,7 +72,8 @@ func (r *Responses[K]) UnmarshalJSON(b []byte) error {
 			} else {
 				statusCode, err := strconv.Atoi(key)
 				if err != nil {
-					return fmt.Errorf("unable to parse http status %v", key)
+					offset += dynamic.NextTokenIndex(b[offset:])
+					return dynamic.NewStructuralErrorWithField(fmt.Errorf("unable to parse http status '%v': only HTTP status codes are allowed", key), offset, dec, key)
 				}
 				m.Set(statusCode, val)
 			}
@@ -108,7 +110,7 @@ func (r *Responses[K]) UnmarshalYAML(value *yaml.Node) error {
 			} else {
 				statusCode, err := strconv.Atoi(key)
 				if err != nil {
-					return fmt.Errorf("unable to parse http status %v", key)
+					return fmt.Errorf("unable to parse http status '%v': only HTTP status codes are allowed at line %d, column %d", key, value.Line, value.Column)
 				}
 				m.Set(statusCode, val)
 			}

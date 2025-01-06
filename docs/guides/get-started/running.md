@@ -1,37 +1,59 @@
 ---
-title: How to start Running Mokapi - A Beginners Guide
-description: Here you will learn how to run Mokapi
+title: How to run your first mocked REST API
+description: Learn how to mock a REST API and analyze HTTP request and response in the dashboard.
 ---
-# Running Mokapi
+# How to run your first mocked REST API
 
-In this quick start we will run [Swagger](https://swagger.io/)'s Petstore in Mokapi
+This quick start shows you how to start Mokapi and mock an HTTP REST API. We will use [Swagger](https://swagger.io/)'s 
+Petstore specification to mock your first API with Mokapi. If you have not installed Mokapi yet, visit 
+[Installation](/docs/guides/get-started/installation.md).
 
-## Start Mokapi
-Start Mokapi with the following command
+## Mocking Petstore API
+Start Mokapi with the following command using Petstore OpenAPI specification directly from the web:
 
-```bash tab=Docker  
-docker run -it --rm -p 80:80 -p 8080:8080 -e MOKAPI_Providers_Http_Url=https://petstore3.swagger.io/api/v3/openapi.json mokapi/mokapi:latest
+```  
+mokapi --providers-http-url https://petstore3.swagger.io/api/v3/openapi.json
 ```
 
-```bash tab=NPM
-npm install go-mokapi
-npx mokapi --Providers.Http.Url=https://petstore3.swagger.io/api/v3/openapi.json
-```
-``` box=tip
-When you use Mokapi behind a corporate proxy, you probably need 
-to skip SSL verification: "-e MOKAPI_Providers_Http_TlsSkipVerify=true".
-```
+This starts Mokapi with the Petstore on port 80 and the dashboard on port 8080.
+Petstore is available on port 80 because the server URL is defined in the specification as `/api/v3` 
+and port 80 is default for HTTP. Mokapi supports many options that can be passed in multiple places, check 
+[options reference](/docs/configuration/reference.md) for more info.
 
-## Mokapi's Dashboard
+## Test your mock REST API
 
-You can now open a browser and go to Mokapi's Dashabord 
-(`http://localhost:8080`) to browse the Petstore's API.
-
-## Make HTTP request
-Now make a HTTP request to the Petstore's API and Mokapi 
-creates a response with randomly generated data.
+Let's check to see if it's working:
 
 ```
 curl --header "Accept: application/json" http://localhost/api/v3/pet/4
 ```
-In Mokapi's Dashboard you can see your request and the response.
+
+Mokapi will create a response with randomly generated data.
+Petstore API defines two content types for the response. Therefore, we specify which one 
+we want to receive in the response. Otherwise, Mokapi would randomly choose a content type 
+from the specification.
+
+``` box=tip
+When you use Mokapi behind a corporate proxy, you probably need 
+to skip SSL verification: "--providers-http-tls-skip-verify".
+```
+
+## Analyze API and HTTP Request/Response
+
+Mokapi provides a dashboard where you can see your mocked Petstore API and analyze your HTTP request.
+Open `http://localhost:8080` from your browser.
+
+After navigating to the Petstore REST API, you can see all mocked endpoints including your logged request.
+
+<img src="/petstore-rest-api-endpoints.jpg" width="700" alt="Dashboard shows all mocked Petstore's endpoints including logged requests." title="" />
+
+You can analyze your request and the corresponding response by clicking on the logged request in the *Recent Requests* table.
+
+<img src="/petstore-rest-api-request.jpg" width="700" alt="Logged request to the mocked Petstore REST API containing headers, body and metrics" title="" />
+
+## Read more
+
+- [Test-Data](/docs/guides/get-started/test-data.md)
+- [Dashboard](/docs/guides/get-started/dashboard.md)
+- [Mocking HTTP API](/docs/guides/http/overview.md)
+

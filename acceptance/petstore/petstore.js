@@ -1,11 +1,10 @@
 import {on} from 'mokapi'
 import kafka from 'mokapi/kafka'
 
-export default function() {
+export default async function() {
     on('kafka', function (record) {
         record.headers = { foo: 'bar' }
     })
-     kafka.produce({ topic: 'petstore.order-event' })
     on('http', function(request, response) {
         if (request.operationId === "getPetById") {
             switch (request.path.petId) {
@@ -30,4 +29,5 @@ export default function() {
         }
         return false
     });
+    await kafka.produceAsync({ topic: 'petstore.order-event', messages: [{partition: 0}] })
 }

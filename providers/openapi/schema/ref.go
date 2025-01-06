@@ -1,15 +1,16 @@
 package schema
 
 import (
+	"encoding/json"
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
-	"mokapi/json/ref"
 )
 
 type Ref struct {
-	ref.Reference
-	Value *Schema
+	dynamic.Reference
+	Boolean *bool
+	Value   *Schema
 }
 
 func (r *Ref) Parse(config *dynamic.Config, reader dynamic.Reader) error {
@@ -17,7 +18,8 @@ func (r *Ref) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		return nil
 	}
 	if len(r.Ref) > 0 {
-		if err := dynamic.Resolve(r.Ref, &r.Value, config, reader); err != nil {
+		err := dynamic.Resolve(r.Ref, &r.Value, config, reader)
+		if err != nil {
 			return fmt.Errorf("parse schema failed: %w", err)
 		}
 		return nil
@@ -31,10 +33,22 @@ func (r *Ref) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 }
 
 func (r *Ref) UnmarshalYAML(node *yaml.Node) error {
+	var boolVal bool
+	if err := node.Decode(&boolVal); err == nil {
+		r.Boolean = &boolVal
+		return nil
+	}
+
 	return r.UnmarshalYaml(node, &r.Value)
 }
 
 func (r *Ref) UnmarshalJSON(b []byte) error {
+	var boolVal bool
+	if err := json.Unmarshal(b, &boolVal); err == nil {
+		r.Boolean = &boolVal
+		return nil
+	}
+
 	return r.UnmarshalJson(b, &r.Value)
 }
 
@@ -76,4 +90,19 @@ func (r *Ref) getPropertyXml(name string) *Xml {
 
 func (r *Ref) IsXmlWrapped() bool {
 	return r.Value != nil && r.Value.Xml != nil && r.Value.Xml.Wrapped
+}
+
+func (r *Ref) IsFreeForm() bool {
+	if r == nil {
+		return true
+	}
+	if r.Boolean != nil {
+		return *r.Boolean
+	}
+	return r.Value.IsFreeForm()
+}
+
+func (r *Ref) MarshalJSON() ([]byte, error) {
+	e := encoder{refs: map[string]bool{}}
+	return e.encode(r)
 }

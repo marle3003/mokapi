@@ -1,5 +1,5 @@
 ---
-title: marshal( value, [encoding] )
+title: encoding( value, [encoding] )
 description: Returns marshalled string representation of value
 ---
 # marshal( value, [encoding] )

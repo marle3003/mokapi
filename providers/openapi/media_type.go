@@ -1,11 +1,13 @@
 package openapi
 
 import (
+	"bytes"
 	"fmt"
 	"mokapi/config/dynamic"
-	"mokapi/decoding"
 	"mokapi/media"
 	"mokapi/providers/openapi/schema"
+	"mokapi/schema/encoding"
+	"mokapi/schema/json/parser"
 )
 
 type MediaType struct {
@@ -59,15 +61,27 @@ func (m *MediaType) Parse(b []byte, contentType media.ContentType) (interface{},
 	if !contentType.IsDerivedFrom(m.ContentType) {
 		return nil, fmt.Errorf("content type '%v' does not match: %v", m.ContentType, contentType)
 	}
-	var decoder decoding.DecodeFunc
-	if contentType.String() == "application/x-www-form-urlencoded" {
-		decoder = urlValueDecoder{mt: m}.decode
+
+	if contentType.IsXml() {
+		return schema.UnmarshalXML(bytes.NewReader(b), m.Schema)
 	}
 
-	v, err := decoding.Decode(b, contentType, decoder)
-	if err != nil {
-		return nil, err
+	p := &parser.Parser{Schema: schema.ConvertToJsonSchema(m.Schema), ValidateAdditionalProperties: true}
+	opts := []encoding.DecodeOptions{
+		encoding.WithContentType(contentType),
+		encoding.WithParser(p),
 	}
-	p := getParser(contentType)
-	return p.Parse(v, m.Schema)
+
+	if contentType.Type == "text" {
+		p.ConvertStringToNumber = true
+	}
+	if contentType.String() == "application/x-www-form-urlencoded" {
+		p.ConvertStringToNumber = true
+		opts = append(opts, encoding.WithDecodeFormUrlParam(urlValueDecoder{mt: m}.decode))
+	}
+	if contentType.Key() == "multipart/form-data" {
+		opts = append(opts, encoding.WithDecodePart(multipartForm{mt: m}.decode))
+	}
+
+	return encoding.Decode(b, opts...)
 }

@@ -1,11 +1,11 @@
 package dynamic
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic/script"
+	"mokapi/version"
 	"net/url"
 	"path/filepath"
 	"reflect"
@@ -50,12 +50,12 @@ func Parse(c *Config, r Reader) error {
 		c.Data = d.data
 	case ".json":
 		d := &dynamicObject{data: c.Data}
-		err := json.Unmarshal(data, d)
+		err := UnmarshalJSON(data, d)
 		if err != nil {
 			return err
 		}
 		c.Data = d.data
-	case ".lua", ".js":
+	case ".lua", ".js", ".ts":
 		if c.Data == nil {
 			c.Data = script.New(name, data)
 		} else {
@@ -78,22 +78,24 @@ func Parse(c *Config, r Reader) error {
 
 func (d *dynamicObject) UnmarshalJSON(b []byte) error {
 	data := make(map[string]string)
-	_ = json.Unmarshal(b, &data)
+	_ = UnmarshalJSON(b, &data)
 
-	for _, ct := range configTypes {
-		if _, ok := data[ct.header]; ok {
-			d.data = reflect.New(ct.configType).Interface()
-			return json.Unmarshal(b, d.data)
+	if ct := getConfigType(data); ct != nil {
+		d.data = reflect.New(ct.configType).Interface()
+		err := UnmarshalJSON(b, d.data)
+		if err != nil {
+			return formatError(b, err)
 		}
+		return nil
 	}
 
 	if d.data == nil {
 		return nil
 	}
 
-	err := json.Unmarshal(b, d.data)
+	err := UnmarshalJSON(b, d.data)
 	if err != nil {
-		return err
+		return formatError(b, err)
 	}
 
 	return nil
@@ -103,11 +105,9 @@ func (d *dynamicObject) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	data := make(map[string]string)
 	_ = unmarshal(data)
 
-	for _, ct := range configTypes {
-		if _, ok := data[ct.header]; ok {
-			d.data = reflect.New(ct.configType).Interface()
-			return unmarshal(d.data)
-		}
+	if ct := getConfigType(data); ct != nil {
+		d.data = reflect.New(ct.configType).Interface()
+		return unmarshal(d.data)
 	}
 
 	if d.data == nil {
@@ -138,4 +138,45 @@ func getFileName(c *Config) string {
 	}
 	_, name := filepath.Split(path)
 	return name
+}
+
+func formatError(input []byte, err error) error {
+	var structErr *StructuralError
+	if !errors.As(err, &structErr) {
+		return err
+	}
+
+	newLine := byte(0x0A)
+	offset := int(structErr.Offset)
+
+	if offset > len(input) || offset < 0 {
+		return err
+	}
+
+	line := 1
+	column := 0
+	for i, b := range input {
+		if i == offset {
+			break
+		}
+		if b == newLine {
+			line++
+			column = 0
+		} else {
+			column++
+		}
+	}
+
+	return fmt.Errorf("%w at line %d, column %d", err, line, column)
+}
+
+func getConfigType(data map[string]string) *configType {
+	for _, ct := range configTypes {
+		if s, ok := data[ct.header]; ok {
+			if ct.checkVersion(version.New(s)) {
+				return ct
+			}
+		}
+	}
+	return nil
 }

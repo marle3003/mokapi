@@ -252,6 +252,17 @@ func TestMatch(t *testing.T) {
 				"/foo/bar/mokapi/api.json": true,
 			},
 		},
+		{
+			name:    ".git",
+			pattern: ".git/",
+			test: map[string]bool{
+				"/.git/test.json":          true,
+				"/.git/mokapi":             true,
+				"/.git/mokapi/hello.c":     true,
+				"/.git/bar/mokapi/hello.c": true,
+				"/foo/bar/mokapi/api.json": false,
+			},
+		},
 	}
 
 	for _, tc := range testcases {

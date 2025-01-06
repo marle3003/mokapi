@@ -11,12 +11,15 @@ import (
 	"mokapi/config/dynamic/mail"
 	"mokapi/config/static"
 	"mokapi/engine"
+	"mokapi/feature"
+	"mokapi/providers/asyncapi3"
 	"mokapi/providers/openapi"
 	"mokapi/providers/swagger"
 	"mokapi/runtime"
 	"mokapi/safe"
 	"mokapi/server"
 	"mokapi/server/cert"
+	"mokapi/version"
 )
 
 type Cmd struct {
@@ -33,6 +36,8 @@ func Start(cfg *static.Config) (*Cmd, error) {
 		return nil, errors.New("static configuration Services are no longer supported. Use patching instead.")
 	}
 
+	feature.Enable(cfg.Features)
+
 	registerDynamicTypes()
 	app := runtime.New()
 
@@ -42,7 +47,7 @@ func Start(cfg *static.Config) (*Cmd, error) {
 	if err != nil {
 		return nil, err
 	}
-	scriptEngine := engine.New(watcher, app, cfg.Js, true)
+	scriptEngine := engine.New(watcher, app, cfg, true)
 
 	http := server.NewHttpManager(scriptEngine, certStore, app)
 	kafka := server.NewKafkaManager(scriptEngine, app)
@@ -87,9 +92,22 @@ func (cmd *Cmd) Stop() {
 }
 
 func registerDynamicTypes() {
-	dynamic.Register("openapi", &openapi.Config{})
-	dynamic.Register("asyncapi", &asyncApi.Config{})
-	dynamic.Register("swagger", &swagger.Config{})
-	dynamic.Register("ldap", &directory.Config{})
-	dynamic.Register("smtp", &mail.Config{})
+	dynamic.Register("openapi", func(v version.Version) bool {
+		return true
+	}, &openapi.Config{})
+	dynamic.Register("asyncapi", func(v version.Version) bool {
+		return v.Major == 2
+	}, &asyncApi.Config{})
+	dynamic.Register("asyncapi", func(v version.Version) bool {
+		return v.Major == 3
+	}, &asyncapi3.Config{})
+	dynamic.Register("swagger", func(v version.Version) bool {
+		return true
+	}, &swagger.Config{})
+	dynamic.Register("ldap", func(v version.Version) bool {
+		return true
+	}, &directory.Config{})
+	dynamic.Register("smtp", func(v version.Version) bool {
+		return true
+	}, &mail.Config{})
 }

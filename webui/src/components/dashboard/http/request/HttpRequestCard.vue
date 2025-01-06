@@ -2,7 +2,6 @@
 import { computed, reactive, } from 'vue'
 import HttpParameters from './HttpParameters.vue'
 import SchemaExpand from '../../SchemaExpand.vue'
-import SchemaExample from '../../SchemaExample.vue'
 import SchemaValidate from '../../SchemaValidate.vue'
 import SourceView from '../../SourceView.vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
@@ -54,9 +53,12 @@ const name = computed(() => {
 
             <div class="tab-content" id="tabRequest">
               <div class="tab-pane fade" :class="operation.requestBody ? 'show active' : ''" id="body" role="tabpanel" aria-labelledby="body-tab" v-if="operation.requestBody">
-                    <p class="label">Description</p>
-                    <p>{{  operation.requestBody.description }}</p>
+                    <p class="label" v-if="operation.requestBody.description">Description</p>
+                    <p v-if="operation.requestBody.description">{{  operation.requestBody.description }}</p>
                     <p v-if="operation.requestBody.required">Required</p>
+
+                    <p class="label" v-if="operation.requestBody.contents.length == 1">Request content type</p>
+                    <p v-if="operation.requestBody.contents.length == 1">{{ operation.requestBody.contents[0].type }}</p>
                     
                     <source-view 
                         :source="formatSchema(selected.content?.schema)" 
@@ -71,10 +73,7 @@ const name = computed(() => {
                             <schema-expand :schema="selected.content.schema" />
                         </div>
                         <div class="col-auto px-2" v-if="selected.content">
-                            <schema-example :schema="selected.content.schema" :content-type="selected.content.type" />
-                        </div>
-                        <div class="col-auto px-2" v-if="selected.content">
-                            <schema-validate :schema="selected.content.schema" :content-type="selected.content.type" :name="name" />
+                            <schema-validate :schema="{schema: selected.content.schema, format: 'application/vnd.oai.openapi+json;version=3.0.0'}" :content-type="selected.content.type" :name="name" />
                         </div>
                         <div class="col-auto px-2">
                             <select v-if="operation.requestBody.contents.length > 1" class="form-select form-select-sm" aria-label="Request content type" @change="selectedContentChange">

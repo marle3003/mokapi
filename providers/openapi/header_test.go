@@ -7,11 +7,11 @@ import (
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
-	"mokapi/json/ref"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/schema"
+	jsonSchema "mokapi/schema/json/schema"
 	"net/http"
 	"net/url"
 	"testing"
@@ -264,7 +264,7 @@ func TestHeader_Parse(t *testing.T) {
 					openapitest.WithPath("/foo", openapitest.NewPath(
 						openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
 							openapitest.WithResponse(http.StatusOK,
-								openapitest.WithResponseHeader("foo", "foo description", &schema.Schema{Type: "string"}),
+								openapitest.WithResponseHeader("foo", "foo description", &schema.Schema{Type: jsonSchema.Types{"string"}}),
 							))),
 					)),
 				)
@@ -284,7 +284,7 @@ func TestHeader_Parse(t *testing.T) {
 					openapitest.WithPath("/foo", openapitest.NewPath(
 						openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
 							openapitest.WithResponse(http.StatusOK,
-								openapitest.WithResponseHeaderRef("foo", &openapi.HeaderRef{Reference: ref.Reference{Ref: "foo"}}),
+								openapitest.WithResponseHeaderRef("foo", &openapi.HeaderRef{Reference: dynamic.Reference{Ref: "foo"}}),
 							))),
 					)),
 				)

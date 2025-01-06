@@ -50,8 +50,10 @@ onUnmounted(() => {
                 <div class="card-body">
                     <div class="card-title text-center">Request</div>
                     <http-parameters :parameters="eventData().request.parameters!" v-if="eventData().request.parameters"></http-parameters>
-                    <p class="label">Body</p>
-                    <http-body :content-type="eventData().request.contentType" :body="eventData().request.body"></http-body>
+                    <div  v-if="eventData().request.body">
+                        <p class="label">Body</p>
+                        <http-body :content-type="eventData().request.contentType" :body="eventData().request.body"></http-body>
+                    </div>
                 </div>
             </div>
         </div>

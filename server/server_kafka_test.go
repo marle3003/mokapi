@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/asyncApi"
-	"mokapi/config/dynamic/asyncApi/asyncapitest"
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/metaData"
-	"mokapi/providers/openapi/schema"
+	"mokapi/providers/asyncapi3"
+	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/runtime"
 	"mokapi/runtime/events"
+	"mokapi/schema/json/schema"
 	"mokapi/try"
 	"testing"
 	"time"
@@ -19,15 +19,13 @@ import (
 func TestKafkaServer(t *testing.T) {
 	port := try.GetFreePort()
 	addr := fmt.Sprintf("127.0.0.1:%v", port)
-	c := asyncapitest.NewConfig(
-		asyncapitest.WithTitle("foo"),
-		asyncapitest.WithServer("kafka12", "kafka", addr),
-		asyncapitest.WithChannel("foo",
-			asyncapitest.WithSubscribeAndPublish(
-				asyncapitest.WithMessage(
-					asyncapitest.WithPayload(
-						&schema.Schema{Type: "string"},
-					),
+	c := asyncapi3test.NewConfig(
+		asyncapi3test.WithTitle("foo"),
+		asyncapi3test.WithServer("kafka12", "kafka", addr),
+		asyncapi3test.WithChannel("foo",
+			asyncapi3test.WithMessage("foo",
+				asyncapi3test.WithPayload(
+					&schema.Schema{Type: schema.Types{"string"}},
 				),
 			),
 		),
@@ -55,16 +53,16 @@ func TestKafkaServer_Update(t *testing.T) {
 			func(t *testing.T, m *KafkaManager) {
 				port := try.GetFreePort()
 				addr := fmt.Sprintf("127.0.0.1:%v", port)
-				cfg := asyncapitest.NewConfig(
-					asyncapitest.WithTitle("foo"),
-					asyncapitest.WithServer("add topic", "kafka", addr),
+				cfg := asyncapi3test.NewConfig(
+					asyncapi3test.WithTitle("foo"),
+					asyncapi3test.WithServer("add topic", "kafka", addr),
 				)
 				m.UpdateConfig(&dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}})
 
 				port = try.GetFreePort()
 				addr = fmt.Sprintf("127.0.0.1:%v", port)
-				cfg.Servers["broker"] = &asyncApi.ServerRef{Value: &asyncApi.Server{
-					Url:      addr,
+				cfg.Servers["broker"] = &asyncapi3.ServerRef{Value: &asyncapi3.Server{
+					Host:     addr,
 					Protocol: "kafka",
 				}}
 
@@ -86,13 +84,13 @@ func TestKafkaServer_Update(t *testing.T) {
 			func(t *testing.T, m *KafkaManager) {
 				port := try.GetFreePort()
 				addr := fmt.Sprintf("127.0.0.1:%v", port)
-				cfg := asyncapitest.NewConfig(
-					asyncapitest.WithTitle("foo"),
+				cfg := asyncapi3test.NewConfig(
+					asyncapi3test.WithTitle("foo"),
 				)
 				m.UpdateConfig(&dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}})
 
-				cfg.Servers["broker"] = &asyncApi.ServerRef{Value: &asyncApi.Server{
-					Url:      addr,
+				cfg.Servers["broker"] = &asyncapi3.ServerRef{Value: &asyncapi3.Server{
+					Host:     addr,
 					Protocol: "kafka",
 				}}
 
@@ -114,9 +112,9 @@ func TestKafkaServer_Update(t *testing.T) {
 			func(t *testing.T, m *KafkaManager) {
 				port := try.GetFreePort()
 				addr := fmt.Sprintf("127.0.0.1:%v", port)
-				cfg := asyncapitest.NewConfig(
-					asyncapitest.WithServer("", "kafka", addr),
-					asyncapitest.WithTitle("foo"),
+				cfg := asyncapi3test.NewConfig(
+					asyncapi3test.WithServer("", "kafka", addr),
+					asyncapi3test.WithTitle("foo"),
 				)
 				m.UpdateConfig(&dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}})
 
@@ -142,15 +140,15 @@ func TestKafkaServer_Update(t *testing.T) {
 			func(t *testing.T, m *KafkaManager) {
 				port := try.GetFreePort()
 				addr := fmt.Sprintf("127.0.0.1:%v", port)
-				cfg := asyncapitest.NewConfig(
-					asyncapitest.WithTitle("foo"),
-					asyncapitest.WithServer("kafka", "kafka", addr),
+				cfg := asyncapi3test.NewConfig(
+					asyncapi3test.WithTitle("foo"),
+					asyncapi3test.WithServer("kafka", "kafka", addr),
 				)
 				m.UpdateConfig(&dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}})
 
 				delete(cfg.Servers, "kafka")
-				cfg.Servers["broker"] = &asyncApi.ServerRef{Value: &asyncApi.Server{
-					Url:      addr,
+				cfg.Servers["broker"] = &asyncapi3.ServerRef{Value: &asyncapi3.Server{
+					Host:     addr,
 					Protocol: "kafka",
 				}}
 
@@ -175,28 +173,25 @@ func TestKafkaServer_Update(t *testing.T) {
 			func(t *testing.T, m *KafkaManager) {
 				port := try.GetFreePort()
 				addr := fmt.Sprintf("127.0.0.1:%v", port)
-				cfg := asyncapitest.NewConfig(
-					asyncapitest.WithTitle("foo"),
-					asyncapitest.WithServer("add topic", "kafka", addr),
-					asyncapitest.WithChannel("foo",
-						asyncapitest.WithSubscribeAndPublish(
-							asyncapitest.WithMessage(
-								asyncapitest.WithPayload(
-									&schema.Schema{Type: "string"},
-								),
+				cfg := asyncapi3test.NewConfig(
+					asyncapi3test.WithTitle("foo"),
+					asyncapi3test.WithServer("add topic", "kafka", addr),
+					asyncapi3test.WithChannel("foo",
+						asyncapi3test.WithMessage("foo",
+							asyncapi3test.WithPayload(
+								&schema.Schema{Type: schema.Types{"string"}},
 							),
 						),
 					),
 				)
 				m.UpdateConfig(&dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}})
 
-				cfg.Channels["bar"] = &asyncApi.ChannelRef{Value: asyncapitest.NewChannel(asyncapitest.WithSubscribeAndPublish(
-					asyncapitest.WithMessage(
-						asyncapitest.WithPayload(
-							&schema.Schema{Type: "string"},
+				cfg.Channels["bar"] = &asyncapi3.ChannelRef{Value: asyncapi3test.NewChannel(
+					asyncapi3test.WithMessage("foo",
+						asyncapi3test.WithPayload(
+							&schema.Schema{Type: schema.Types{"string"}},
 						),
-					),
-				))}
+					))}
 
 				m.UpdateConfig(&dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}})
 
@@ -216,15 +211,13 @@ func TestKafkaServer_Update(t *testing.T) {
 			func(t *testing.T, m *KafkaManager) {
 				port := try.GetFreePort()
 				addr := fmt.Sprintf("127.0.0.1:%v", port)
-				cfg := asyncapitest.NewConfig(
-					asyncapitest.WithTitle("foo"),
-					asyncapitest.WithServer("remove topic", "kafka", addr),
-					asyncapitest.WithChannel("foo",
-						asyncapitest.WithSubscribeAndPublish(
-							asyncapitest.WithMessage(
-								asyncapitest.WithPayload(
-									&schema.Schema{Type: "string"},
-								),
+				cfg := asyncapi3test.NewConfig(
+					asyncapi3test.WithTitle("foo"),
+					asyncapi3test.WithServer("remove topic", "kafka", addr),
+					asyncapi3test.WithChannel("foo",
+						asyncapi3test.WithMessage("foo",
+							asyncapi3test.WithPayload(
+								&schema.Schema{Type: schema.Types{"string"}},
 							),
 						),
 					),
