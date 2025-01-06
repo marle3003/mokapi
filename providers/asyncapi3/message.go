@@ -111,6 +111,13 @@ func (r *MessageRef) parse(config *dynamic.Config, reader dynamic.Reader) error 
 		}
 	}
 
+	if r.Value.Bindings.Kafka.Key != nil {
+		err := r.Value.Bindings.Kafka.Key.Parse(config, reader)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

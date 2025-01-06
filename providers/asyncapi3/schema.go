@@ -86,6 +86,7 @@ func (r *SchemaRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 			}
 			r.Value = &MultiSchemaFormat{Schema: &jsonSchema.Ref{Value: s.s}}
 		}
+		return nil
 	}
 
 	return r.Value.parse(config, reader)

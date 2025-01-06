@@ -37,6 +37,9 @@ func (t *Topic) delete() {
 
 func newTopic(name string, channel *asyncapi3.Channel, ops []*asyncapi3.Operation, s *Store) *Topic {
 	t := &Topic{Name: name, logger: s.log, s: s, channel: channel, operations: ops}
+	if channel.Address != "" {
+		t.Name = channel.Address
+	}
 
 	numPartitions := channel.Bindings.Kafka.Partitions
 	for i := 0; i < numPartitions; i++ {
