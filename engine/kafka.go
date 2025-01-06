@@ -178,70 +178,47 @@ func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[stri
 		return
 	}
 
+	keySchema := msg.Bindings.Kafka.Key
+	if keySchema == nil {
+		// use default key schema
+		keySchema = &asyncapi3.SchemaRef{
+			Value: &asyncapi3.MultiSchemaFormat{
+				Schema: &schema.Ref{Value: &schema.Schema{Type: schema.Types{"string"}, Pattern: "[a-z]{9}"}},
+			},
+		}
+	}
+
 	if key == nil {
-		key, err = createValue(msg.Bindings.Kafka.Key.Value.Schema.(*schema.Ref))
+		key, err = createValue(keySchema)
 		if err != nil {
 			return rb, fmt.Errorf("unable to generate kafka key: %v", err)
 		}
 	}
 
-	s := msg.Payload.Value.Schema
-	var jsSchema *schema.Ref
-	switch v := s.(type) {
-	case *schema.Ref:
-		if value == nil {
-			value, err = createValue(v)
-			if err != nil {
-				return rb, fmt.Errorf("unable to generate kafka data: %v", err)
-			}
+	if value == nil {
+		value, err = createValue(msg.Payload)
+		if err != nil {
+			return rb, fmt.Errorf("unable to generate kafka value: %v", err)
 		}
-		jsSchema = v
-	case *openapi.Ref:
-		if value == nil {
-			value, err = openapi.CreateValue(v)
-			if err != nil {
-				return rb, fmt.Errorf("unable to generate kafka data: %v", err)
-			}
-		}
-		jsSchema = openapi.ConvertToJsonSchema(v)
-	case *avro.Schema:
-		jsSchema = &schema.Ref{Value: v.Convert()}
-		if value == nil {
-			value, err = createValue(jsSchema)
-			if err != nil {
-				return rb, fmt.Errorf("unable to generate kafka data: %v", err)
-			}
-		}
-	default:
-		err = fmt.Errorf("schema format not supported: %v", msg.Payload.Value.Format)
-		return
 	}
 
 	var v []byte
 	if b, ok := value.([]byte); ok {
 		v = b
 	} else {
-		if sOpenApi, ok := msg.Payload.Value.Schema.(*openapi.Ref); ok {
-			v, err = sOpenApi.Marshal(value, media.ParseContentType(msg.ContentType))
-		} else {
-			v, err = encoding.NewEncoder(jsSchema).Write(value, media.ParseContentType(msg.ContentType))
-		}
+		v, err = marshal(value, msg.Payload, msg.ContentType)
 		if err != nil {
 			return
 		}
 	}
 
 	var k []byte
-	if msg.Bindings.Kafka.Key != nil {
-		s := msg.Bindings.Kafka.Key.Value.Schema.(*schema.Ref)
-		switch {
-		case s.IsOneOf("object", "array"):
-			k, err = encoding.NewEncoder(s).Write(key, media.ParseContentType("application/json"))
-			if err != nil {
-				return
-			}
-		default:
-			k = []byte(fmt.Sprintf("%v", key))
+	if b, ok := key.([]byte); ok {
+		k = b
+	} else {
+		k, err = marshalKey(key, keySchema)
+		if err != nil {
+			return
 		}
 	}
 
@@ -292,6 +269,79 @@ func getHeaders(headers map[string]interface{}, r *schema.Ref) ([]kafka.RecordHe
 	return result, nil
 }
 
-func createValue(s *schema.Ref) (interface{}, error) {
-	return generator.New(&generator.Request{Path: generator.Path{&generator.PathElement{Schema: s}}})
+func createValue(r *asyncapi3.SchemaRef) (value interface{}, err error) {
+	var s asyncapi3.Schema
+	if r != nil && r.Value != nil && r.Value.Schema != nil {
+		s = r.Value.Schema
+	} else {
+		s = &schema.Ref{}
+	}
+
+	switch v := s.(type) {
+	case *schema.Ref:
+		value, err = generator.New(&generator.Request{Path: generator.Path{&generator.PathElement{Schema: v}}})
+	case *openapi.Ref:
+		value, err = openapi.CreateValue(v)
+	case *avro.Schema:
+		jsSchema := &schema.Ref{Value: v.Convert()}
+		value, err = generator.New(&generator.Request{Path: generator.Path{&generator.PathElement{Schema: jsSchema}}})
+	default:
+		err = fmt.Errorf("schema format not supported: %v", r.Value.Format)
+	}
+
+	return
+}
+
+func marshal(value interface{}, r *asyncapi3.SchemaRef, contentType string) ([]byte, error) {
+	var s asyncapi3.Schema
+	if r != nil && r.Value != nil && r.Value.Schema != nil {
+		s = r.Value.Schema
+	} else {
+		s = &schema.Ref{}
+	}
+
+	switch v := s.(type) {
+	case *schema.Ref:
+		return encoding.NewEncoder(v).Write(value, media.ParseContentType(contentType))
+	case *openapi.Ref:
+		return v.Marshal(value, media.ParseContentType(contentType))
+	case *avro.Schema:
+		jsSchema := &schema.Ref{Value: v.Convert()}
+		return encoding.NewEncoder(jsSchema).Write(value, media.ParseContentType(contentType))
+	default:
+		return nil, fmt.Errorf("schema format not supported: %v", r.Value.Format)
+	}
+}
+
+func marshalKey(key interface{}, r *asyncapi3.SchemaRef) ([]byte, error) {
+	var s asyncapi3.Schema
+	if r != nil && r.Value != nil && r.Value.Schema != nil {
+		s = r.Value.Schema
+	} else {
+		s = &schema.Ref{}
+	}
+
+	switch v := s.(type) {
+	case *schema.Ref:
+		if v.IsObject() || v.IsArray() {
+			return encoding.NewEncoder(v).Write(key, media.ParseContentType("application/json"))
+		} else {
+			return []byte(fmt.Sprintf("%v", key)), nil
+		}
+	case *openapi.Ref:
+		if v.Value != nil && v.Value.Type.IsObject() || v.Value.Type.IsArray() {
+			return v.Marshal(key, media.ParseContentType("application/json"))
+		} else {
+			return []byte(fmt.Sprintf("%v", key)), nil
+		}
+	case *avro.Schema:
+		jsSchema := &schema.Ref{Value: v.Convert()}
+		if jsSchema.IsObject() || jsSchema.IsArray() {
+			return encoding.NewEncoder(jsSchema).Write(key, media.ParseContentType("application/json"))
+		} else {
+			return []byte(fmt.Sprintf("%v", key)), nil
+		}
+	default:
+		return nil, fmt.Errorf("schema format not supported: %v", r.Value.Format)
+	}
 }

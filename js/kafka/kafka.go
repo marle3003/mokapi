@@ -76,7 +76,9 @@ func (m *Module) ProduceAsync(v goja.Value) interface{} {
 		defer func() {
 			r := recover()
 			if r != nil {
-				reject(r)
+				m.loop.Run(func(vm *goja.Runtime) {
+					reject(r)
+				})
 			}
 		}()
 
