@@ -5,6 +5,8 @@ import (
 	"net/url"
 )
 
+type DecodeFormUrlParam func(name string, value interface{}) (interface{}, error)
+
 type FormUrlEncodeDecoder struct {
 }
 
@@ -16,8 +18,8 @@ func (d *FormUrlEncodeDecoder) Decode(b []byte, state *DecodeState) (i interface
 	values, err := url.ParseQuery(string(b))
 	m := map[string]interface{}{}
 	for k, v := range values {
-		if state.decodeProperty != nil {
-			i, err = state.decodeProperty(k, v)
+		if state.decodeFormUrlParam != nil {
+			i, err = state.decodeFormUrlParam(k, v)
 			if err != nil {
 				return nil, err
 			}

@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"io"
+	"mime/multipart"
 	"mokapi/config/dynamic"
 	"mokapi/media"
+	"mokapi/providers/openapi/schema"
+	"mokapi/schema/encoding"
 	"mokapi/schema/json/parser"
 	"net/http"
 	"strings"
@@ -201,16 +204,6 @@ func (r *RequestBody) patch(patch *RequestBody) {
 	r.Content.patch(patch.Content)
 }
 
-func getParser(ct media.ContentType) parser.Parser {
-	if ct.Type == "text" {
-		return parser.Parser{ConvertStringToNumber: true}
-	}
-	if ct.String() == "application/x-www-form-urlencoded" {
-		return parser.Parser{ConvertStringToNumber: true}
-	}
-	return parser.Parser{}
-}
-
 type urlValueDecoder struct {
 	mt *MediaType
 }
@@ -242,4 +235,61 @@ func (d urlValueDecoder) decodeArray(propName string, values []string) (interfac
 	default:
 		return strings.Split(values[0], ","), nil
 	}
+}
+
+type multipartForm struct {
+	mt *MediaType
+	p  parser.Parser
+}
+
+func (d multipartForm) decode(m map[string]interface{}, part *multipart.Part) error {
+	name := part.FormName()
+	b, err := io.ReadAll(part)
+	if err != nil {
+		return err
+	}
+	if d.mt.Schema == nil || d.mt.Schema.Value == nil {
+		m[name] = b
+		return nil
+	}
+
+	prop := d.mt.Schema.Value.Properties.Get(name)
+	if prop == nil || prop.Value == nil {
+		m[name] = b
+		return nil
+	}
+
+	p := &parser.Parser{}
+	if prop.Value.Type.IsArray() {
+		// Array properties are handled by applying the same name to multiple parts, as is recommended by RFC7578
+		p.Schema = schema.ConvertToJsonSchema(prop.Value.Items)
+	} else {
+		p.Schema = schema.ConvertToJsonSchema(prop)
+	}
+
+	ct := media.ParseContentType(part.Header.Get("Content-Type"))
+	if e, ok := d.mt.Encoding[name]; ok && e.ContentType != "" {
+		if !ct.Match(media.ParseContentType(e.ContentType)) {
+			return fmt.Errorf("part '%s' does not match content type: %v", name, e.ContentType)
+		}
+	}
+
+	v, err := encoding.Decode(b,
+		encoding.WithContentType(ct),
+		encoding.WithParser(p),
+	)
+
+	if prop.Value.Type.IsArray() {
+		var arr []interface{}
+		if m[name] == nil {
+			arr = make([]interface{}, 0)
+		} else {
+			arr = m[name].([]interface{})
+		}
+		m[name] = append(arr, v)
+	} else {
+		m[name] = v
+	}
+
+	return nil
 }

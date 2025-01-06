@@ -16,8 +16,6 @@ type Parser interface {
 	Parse(data interface{}) (interface{}, error)
 }
 
-type DecodeFunc func(propName string, val interface{}) (interface{}, error)
-
 var decoders []Decoder
 
 func init() {
@@ -71,9 +69,15 @@ func WithContentType(contentType media.ContentType) DecodeOptions {
 	}
 }
 
-func WithDecodeProperty(decodeFunc DecodeFunc) DecodeOptions {
+func WithDecodePart(decodeFunc DecodePart) DecodeOptions {
 	return func(state *DecodeState) {
-		state.decodeProperty = decodeFunc
+		state.decodePart = decodeFunc
+	}
+}
+
+func WithDecodeFormUrlParam(decodeFunc DecodeFormUrlParam) DecodeOptions {
+	return func(state *DecodeState) {
+		state.decodeFormUrlParam = decodeFunc
 	}
 }
 
@@ -83,10 +87,17 @@ func WithParser(p Parser) DecodeOptions {
 	}
 }
 
+func withState(s *DecodeState) DecodeOptions {
+	return func(state *DecodeState) {
+		*state = *s
+	}
+}
+
 type DecodeState struct {
-	contentType    media.ContentType
-	decodeProperty DecodeFunc
-	parser         Parser
+	contentType        media.ContentType
+	decodePart         DecodePart
+	decodeFormUrlParam DecodeFormUrlParam
+	parser             Parser
 }
 
 var decodeStatePool sync.Pool
@@ -104,6 +115,6 @@ func newDecodeState() *DecodeState {
 
 func (d *DecodeState) Reset() {
 	d.contentType = media.Empty
-	d.decodeProperty = nil
+	d.decodePart = nil
 	d.parser = &parser.Parser{}
 }

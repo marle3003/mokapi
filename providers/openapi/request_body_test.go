@@ -553,3 +553,156 @@ func TestBodyFromRequest_FormUrlEncoded(t *testing.T) {
 		})
 	}
 }
+
+func TestBodyFromRequest_MultiPartFormData(t *testing.T) {
+	// https://tools.ietf.org/html/rfc2046#section-5.1
+	//   The boundary delimiter line is then defined as a line
+	//   consisting entirely of two hyphen characters ("-",
+	//   decimal value 45) followed by the boundary parameter
+
+	testcases := []struct {
+		name     string
+		mt       *openapi.MediaType
+		boundary string
+		body     string
+		test     func(t *testing.T, result *openapi.Body, err error)
+	}{
+		{
+			name: "primitive fields",
+			mt: openapitest.NewContent(
+				openapitest.WithSchema(
+					schematest.New("object",
+						schematest.WithProperty("meta",
+							schematest.New("object",
+								schematest.WithProperty("name", schematest.New("string")),
+								schematest.WithProperty("fav_number", schematest.New("integer")),
+							),
+						),
+					),
+				),
+			),
+			boundary: "XXX",
+			body: `--XXX
+Content-Disposition: form-data; name="meta"
+Content-Type: application/json
+
+{ "name": "Amy Smith", "fav_number": 42 }
+--XXX--
+
+`,
+			test: func(t *testing.T, result *openapi.Body, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"meta": map[string]interface{}{"name": "Amy Smith", "fav_number": int64(42)}}, result.Value)
+			},
+		},
+		{
+
+			name: "array",
+			mt: openapitest.NewContent(
+				openapitest.WithSchema(
+					schematest.New("object",
+						schematest.WithProperty("names",
+							schematest.New("array", schematest.WithItems("string")),
+						),
+					),
+				),
+			),
+			boundary: "XXX",
+			body: `--XXX
+Content-Disposition: form-data; name="names"
+Content-Type: text/plain
+
+Alice
+--XXX
+Content-Disposition: form-data; name="names"
+Content-Type: text/plain
+
+Bob
+--XXX--
+
+`,
+			test: func(t *testing.T, result *openapi.Body, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"names": []interface{}{"Alice", "Bob"}}, result.Value)
+			},
+		},
+		{
+
+			name: "encoding",
+			mt: openapitest.NewContent(
+				openapitest.WithSchema(
+					schematest.New("object",
+						schematest.WithProperty("names",
+							schematest.New("array", schematest.WithItems("string")),
+						),
+					),
+				),
+				openapitest.WithEncoding("names", &openapi.Encoding{ContentType: "text/plain"}),
+			),
+			boundary: "XXX",
+			body: `--XXX
+Content-Disposition: form-data; name="names"
+Content-Type: text/plain
+
+Alice
+--XXX
+Content-Disposition: form-data; name="names"
+Content-Type: text/plain
+
+Bob
+--XXX--
+
+`,
+			test: func(t *testing.T, result *openapi.Body, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"names": []interface{}{"Alice", "Bob"}}, result.Value)
+			},
+		},
+		{
+
+			name: "encoding error",
+			mt: openapitest.NewContent(
+				openapitest.WithSchema(
+					schematest.New("object",
+						schematest.WithProperty("names",
+							schematest.New("array", schematest.WithItems("string")),
+						),
+					),
+				),
+				openapitest.WithEncoding("names", &openapi.Encoding{ContentType: "text/plain"}),
+			),
+			boundary: "XXX",
+			body: `--XXX
+Content-Disposition: form-data; name="names"
+Content-Type: text/plain; charset=utf-8
+
+Alice
+--XXX
+Content-Disposition: form-data; name="names"
+Content-Type: application/json
+
+Bob
+--XXX--
+
+`,
+			test: func(t *testing.T, result *openapi.Body, err error) {
+				require.EqualError(t, err, "read request body 'multipart/form-data; boundary=XXX' failed: part 'names' does not match content type: text/plain")
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			op := openapitest.NewOperation(
+				openapitest.WithRequestBody("foo", true,
+					openapitest.WithRequestContent("multipart/form-data", tc.mt),
+				))
+			r := httptest.NewRequest(http.MethodPost, "https://foo.bar", strings.NewReader(tc.body))
+			r.Header.Set("Content-Type", fmt.Sprintf("multipart/form-data; boundary=%s", tc.boundary))
+
+			b, err := openapi.BodyFromRequest(r, op)
+			tc.test(t, b, err)
+		})
+	}
+}

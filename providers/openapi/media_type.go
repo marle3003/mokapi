@@ -66,20 +66,22 @@ func (m *MediaType) Parse(b []byte, contentType media.ContentType) (interface{},
 		return schema.UnmarshalXML(bytes.NewReader(b), m.Schema)
 	}
 
-	var decoder encoding.DecodeFunc
 	p := &parser.Parser{Schema: schema.ConvertToJsonSchema(m.Schema), ValidateAdditionalProperties: true}
+	opts := []encoding.DecodeOptions{
+		encoding.WithContentType(contentType),
+		encoding.WithParser(p),
+	}
+
 	if contentType.Type == "text" {
 		p.ConvertStringToNumber = true
 	}
 	if contentType.String() == "application/x-www-form-urlencoded" {
 		p.ConvertStringToNumber = true
-		decoder = urlValueDecoder{mt: m}.decode
+		opts = append(opts, encoding.WithDecodeFormUrlParam(urlValueDecoder{mt: m}.decode))
+	}
+	if contentType.Key() == "multipart/form-data" {
+		opts = append(opts, encoding.WithDecodePart(multipartForm{mt: m}.decode))
 	}
 
-	return encoding.Decode(
-		b,
-		encoding.WithContentType(contentType),
-		encoding.WithDecodeProperty(decoder),
-		encoding.WithParser(p),
-	)
+	return encoding.Decode(b, opts...)
 }
