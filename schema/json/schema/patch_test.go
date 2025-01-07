@@ -9,6 +9,7 @@ import (
 
 func toFloatP(f float64) *float64 { return &f }
 func toIntP(i int) *int           { return &i }
+func toBoolP(b bool) *bool        { return &b }
 
 func TestSchema_Patch(t *testing.T) {
 	testcases := []struct {
@@ -16,6 +17,66 @@ func TestSchema_Patch(t *testing.T) {
 		schemas []*schema.Schema
 		test    func(t *testing.T, result *schema.Schema)
 	}{
+		{
+			name: "patch id",
+			schemas: []*schema.Schema{
+				{},
+				{Id: "foo"},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, "foo", result.Id)
+			},
+		},
+		{
+			name: "patch id pattern",
+			schemas: []*schema.Schema{
+				{Id: "bar"},
+				{Id: "foo"},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, "foo", result.Id)
+			},
+		},
+		{
+			name: "patch anchor",
+			schemas: []*schema.Schema{
+				{},
+				{Anchor: "foo"},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, "foo", result.Anchor)
+			},
+		},
+		{
+			name: "patch id anchor",
+			schemas: []*schema.Schema{
+				{Anchor: "bar"},
+				{Anchor: "foo"},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, "foo", result.Anchor)
+			},
+		},
+		{
+			name: "patch boolean",
+			schemas: []*schema.Schema{
+				{},
+				{Boolean: toBoolP(true)},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, true, *result.Boolean)
+			},
+		},
+		{
+			name: "patch id anchor",
+			schemas: []*schema.Schema{
+				{Boolean: toBoolP(true)},
+				{Boolean: toBoolP(false)},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, false, *result.Boolean)
+			},
+		},
 		{
 			name: "patch type",
 			schemas: []*schema.Schema{
@@ -648,6 +709,46 @@ func TestSchema_Patch(t *testing.T) {
 			},
 			test: func(t *testing.T, result *schema.Schema) {
 				require.Equal(t, "bar", result.ContentEncoding)
+			},
+		},
+		{
+			name: "patch definitions",
+			schemas: []*schema.Schema{
+				{},
+				{Definitions: map[string]*schema.Ref{"foo": schematest.NewRef("string")}},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, "string", result.Definitions["foo"].Value.Type.String())
+			},
+		},
+		{
+			name: "patch overwrite definitions",
+			schemas: []*schema.Schema{
+				{Definitions: map[string]*schema.Ref{"foo": schematest.NewRef("string")}},
+				{Definitions: map[string]*schema.Ref{"foo": schematest.NewRef("integer")}},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, "[string, integer]", result.Definitions["foo"].Value.Type.String())
+			},
+		},
+		{
+			name: "patch $defs",
+			schemas: []*schema.Schema{
+				{},
+				{Defs: map[string]*schema.Ref{"foo": schematest.NewRef("string")}},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, "string", result.Defs["foo"].Value.Type.String())
+			},
+		},
+		{
+			name: "patch overwrite $defs",
+			schemas: []*schema.Schema{
+				{Defs: map[string]*schema.Ref{"foo": schematest.NewRef("string")}},
+				{Defs: map[string]*schema.Ref{"foo": schematest.NewRef("integer")}},
+			},
+			test: func(t *testing.T, result *schema.Schema) {
+				require.Equal(t, "[string, integer]", result.Defs["foo"].Value.Type.String())
 			},
 		},
 	}

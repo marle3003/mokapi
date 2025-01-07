@@ -1,6 +1,7 @@
 package schematest
 
 import (
+	"mokapi/schema/json/ref"
 	"mokapi/schema/json/schema"
 )
 
@@ -51,6 +52,15 @@ func WithProperty(name string, ps *schema.Schema) SchemaOptions {
 	}
 }
 
+func WithPropertyRef(name string, r string) SchemaOptions {
+	return func(s *schema.Schema) {
+		if s.Properties == nil {
+			s.Properties = &schema.Schemas{}
+		}
+		s.Properties.Set(name, &schema.Ref{Reference: ref.Reference{Ref: r}})
+	}
+}
+
 func WithPatternProperty(pattern string, ps *schema.Schema) SchemaOptions {
 	return func(s *schema.Schema) {
 		if s.PatternProperties == nil {
@@ -69,6 +79,12 @@ func WithItems(typeName string, opts ...SchemaOptions) SchemaOptions {
 func WithItemsRef(ref *schema.Ref) SchemaOptions {
 	return func(s *schema.Schema) {
 		s.Items = ref
+	}
+}
+
+func WithItemsRefString(r string) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Items = &schema.Ref{Reference: ref.Reference{Ref: r}}
 	}
 }
 
@@ -404,5 +420,20 @@ func WithThen(condition *schema.Ref) SchemaOptions {
 func WithElse(condition *schema.Ref) SchemaOptions {
 	return func(s *schema.Schema) {
 		s.Else = condition
+	}
+}
+
+func WithAnchor(anchor string) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Anchor = anchor
+	}
+}
+
+func WithDef(name string, def *schema.Schema) SchemaOptions {
+	return func(s *schema.Schema) {
+		if s.Defs == nil {
+			s.Defs = map[string]*schema.Ref{}
+		}
+		s.Defs[name] = &schema.Ref{Value: def}
 	}
 }

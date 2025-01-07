@@ -126,6 +126,20 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 	js.ContentMediaType = s.ContentMediaType
 	js.ContentEncoding = s.ContentEncoding
 
+	if s.Definitions != nil {
+		js.Definitions = map[string]*schema.Ref{}
+		for k, v := range s.Definitions {
+			js.Definitions[k] = ConvertToJsonSchema(v)
+		}
+	}
+
+	if s.Defs != nil {
+		js.Defs = map[string]*schema.Ref{}
+		for k, v := range s.Defs {
+			js.Defs[k] = ConvertToJsonSchema(v)
+		}
+	}
+
 	return js
 }
 

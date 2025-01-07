@@ -12,8 +12,11 @@ import (
 )
 
 type Schema struct {
+	Id string `yaml:"$id,omitempty" json:"$id,omitempty"`
+
 	Schema  string `yaml:"$schema,omitempty" json:"$schema,omitempty"`
 	Boolean *bool  `yaml:"-" json:"-"`
+	Anchor  string `yaml:"$anchor,omitempty" json:"$anchor,omitempty"`
 
 	Type  schema.Types  `yaml:"type,omitempty" json:"type,omitempty"`
 	Enum  []interface{} `yaml:"enum,omitempty" json:"enum,omitempty"`
@@ -76,6 +79,9 @@ type Schema struct {
 	// Media
 	ContentMediaType string `yaml:"contentMediaType,omitempty" json:"contentMediaType,omitempty"`
 	ContentEncoding  string `yaml:"contentEncoding,omitempty" json:"contentEncoding,omitempty"`
+
+	Definitions map[string]*Ref `yaml:"definitions,omitempty" json:"definitions,omitempty"`
+	Defs        map[string]*Ref `yaml:"$defs,omitempty" json:"$defs,omitempty"`
 
 	// OpenAPI
 	Xml      *Xml `yaml:"xml,omitempty" json:"xml,omitempty"`

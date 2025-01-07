@@ -74,7 +74,7 @@ func TestResolve(t *testing.T) {
 				err := dynamic.Resolve("#/foo", &result, &dynamic.Config{Data: s}, &dynamictest.Reader{})
 
 				require.Error(t, err)
-				require.EqualError(t, err, "resolve reference '#/foo' failed: invalid token reference \"foo\"")
+				require.EqualError(t, err, "resolve reference '#/foo' failed: resolve fragment '/foo' failed: path element 'foo' not found")
 			},
 		},
 		{
@@ -136,7 +136,7 @@ func TestResolve(t *testing.T) {
 				err := dynamic.Resolve("#/foo", &result, &dynamic.Config{Data: s}, &dynamictest.Reader{})
 
 				require.Error(t, err)
-				require.EqualError(t, err, "resolve reference '#/foo' failed: invalid token reference \"foo\"")
+				require.EqualError(t, err, "resolve reference '#/foo' failed: resolve fragment '/foo' failed: path element 'foo' not found")
 			},
 		},
 		{
@@ -318,7 +318,7 @@ func TestResolve(t *testing.T) {
 				err := dynamic.Resolve("#/foo/bar", &result, &dynamic.Config{Data: s}, &dynamictest.Reader{})
 
 				require.Error(t, err)
-				require.EqualError(t, err, "resolve reference '#/foo/bar' failed: TEST ERROR")
+				require.EqualError(t, err, "resolve reference '#/foo/bar' failed: resolve fragment '/foo/bar' failed: TEST ERROR")
 			},
 		},
 		{
@@ -385,7 +385,7 @@ func TestResolve(t *testing.T) {
 				err := dynamic.Resolve("https://foo.bar#/bar", &result, cfg, reader)
 
 				require.Error(t, err)
-				require.EqualError(t, err, "resolve reference 'https://foo.bar#/bar' failed: invalid token reference \"bar\"")
+				require.EqualError(t, err, "resolve reference 'https://foo.bar#/bar' failed: resolve fragment '/bar' failed: path element 'bar' not found")
 			},
 		},
 	}

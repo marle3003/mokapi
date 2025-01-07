@@ -142,6 +142,13 @@ func (r *Responses[K]) Resolve(token string) (interface{}, error) {
 	return res.Value, nil
 }
 
+func (r *Responses[k]) ResolveAnchor(anchor string, resolve func(string, interface{}) (interface{}, error)) (interface{}, error) {
+	if r == nil {
+		return nil, fmt.Errorf("unable to resolve %v", anchor)
+	}
+	return r.LinkedHashMap.ResolveAnchor(anchor, resolve)
+}
+
 func (r *Responses[K]) GetResponse(httpStatus K) *Response {
 	res, _ := r.Get(httpStatus)
 	if res == nil {

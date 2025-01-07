@@ -6,17 +6,17 @@ import (
 	"net/url"
 )
 
-var NotFound = errors.New("config not found")
+var NotFound = errors.New("TestReader: config not found")
 
 type Reader struct {
-	Data map[*url.URL]*dynamic.Config
+	Data map[string]*dynamic.Config
 }
 
 func (r *Reader) Read(u *url.URL, v any) (*dynamic.Config, error) {
 	if r.Data == nil {
 		return nil, NotFound
 	}
-	if c, ok := r.Data[u]; ok {
+	if c, ok := r.Data[u.String()]; ok {
 		return c, nil
 	}
 	return nil, NotFound

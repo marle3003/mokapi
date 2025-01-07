@@ -32,7 +32,7 @@ components:
 				c := &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("/foo")}}
 
 				err := cfg.Parse(c, &dynamictest.Reader{})
-				require.EqualError(t, err, `resolve reference 'test.yaml#/components/servers/foo' failed: config not found`)
+				require.EqualError(t, err, `resolve reference 'test.yaml#/components/servers/foo' failed: TestReader: config not found`)
 
 				err = cfg.Parse(c, dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
 					require.Equal(t, "/test.yaml", u.String())
@@ -54,7 +54,7 @@ components:
 				c := &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("/foo")}}
 
 				err := cfg.Parse(c, &dynamictest.Reader{})
-				require.EqualError(t, err, `resolve reference 'test.yaml#/components/tags/foo' failed: config not found`)
+				require.EqualError(t, err, `resolve reference 'test.yaml#/components/tags/foo' failed: TestReader: config not found`)
 
 				err = cfg.Parse(c, dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
 					require.Equal(t, "/test.yaml", u.String())
@@ -76,7 +76,7 @@ components:
 				c := &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("/foo")}}
 
 				err := cfg.Parse(c, &dynamictest.Reader{})
-				require.EqualError(t, err, `resolve reference 'test.yaml#/components/channels/foo' failed: config not found`)
+				require.EqualError(t, err, `resolve reference 'test.yaml#/components/channels/foo' failed: TestReader: config not found`)
 
 				err = cfg.Parse(c, dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
 					require.Equal(t, "/test.yaml", u.String())
@@ -98,7 +98,7 @@ components:
 				c := &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("/foo")}}
 
 				err := cfg.Parse(c, &dynamictest.Reader{})
-				require.EqualError(t, err, `resolve reference 'test.yaml#/components/schemas/foo' failed: config not found`)
+				require.EqualError(t, err, `resolve reference 'test.yaml#/components/schemas/foo' failed: TestReader: config not found`)
 
 				err = cfg.Parse(c, dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
 					require.Equal(t, "/test.yaml", u.String())
@@ -120,7 +120,7 @@ components:
 				c := &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("/foo")}}
 
 				err := cfg.Parse(c, &dynamictest.Reader{})
-				require.EqualError(t, err, `resolve reference 'test.yaml#/components/messages/foo' failed: config not found`)
+				require.EqualError(t, err, `resolve reference 'test.yaml#/components/messages/foo' failed: TestReader: config not found`)
 
 				err = cfg.Parse(c, dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
 					require.Equal(t, "/test.yaml", u.String())
@@ -142,7 +142,7 @@ components:
 				c := &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("/foo")}}
 
 				err := cfg.Parse(c, &dynamictest.Reader{})
-				require.EqualError(t, err, `resolve reference 'test.yaml#/components/operations/foo' failed: config not found`)
+				require.EqualError(t, err, `resolve reference 'test.yaml#/components/operations/foo' failed: TestReader: config not found`)
 
 				err = cfg.Parse(c, dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
 					require.Equal(t, "/test.yaml", u.String())
@@ -164,7 +164,7 @@ components:
 				c := &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("/foo")}}
 
 				err := cfg.Parse(c, &dynamictest.Reader{})
-				require.EqualError(t, err, `resolve reference 'test.yaml#/components/parameters/foo' failed: config not found`)
+				require.EqualError(t, err, `resolve reference 'test.yaml#/components/parameters/foo' failed: TestReader: config not found`)
 
 				err = cfg.Parse(c, dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
 					require.Equal(t, "/test.yaml", u.String())
@@ -186,7 +186,7 @@ components:
 				c := &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("/foo")}}
 
 				err := cfg.Parse(c, &dynamictest.Reader{})
-				require.EqualError(t, err, `resolve reference 'test.yaml#/components/correlationIds/foo' failed: config not found`)
+				require.EqualError(t, err, `resolve reference 'test.yaml#/components/correlationIds/foo' failed: TestReader: config not found`)
 
 				err = cfg.Parse(c, dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
 					require.Equal(t, "/test.yaml", u.String())
@@ -208,7 +208,7 @@ components:
 				c := &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("/foo")}}
 
 				err := cfg.Parse(c, &dynamictest.Reader{})
-				require.EqualError(t, err, `resolve reference 'test.yaml#/components/externalDocs/foo' failed: config not found`)
+				require.EqualError(t, err, `resolve reference 'test.yaml#/components/externalDocs/foo' failed: TestReader: config not found`)
 
 				err = cfg.Parse(c, dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
 					require.Equal(t, "/test.yaml", u.String())
@@ -230,7 +230,7 @@ components:
 				c := &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("/foo")}}
 
 				err := cfg.Parse(c, &dynamictest.Reader{})
-				require.EqualError(t, err, `resolve reference 'test.yaml#/components/operationTraits/foo' failed: config not found`)
+				require.EqualError(t, err, `resolve reference 'test.yaml#/components/operationTraits/foo' failed: TestReader: config not found`)
 
 				err = cfg.Parse(c, dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
 					require.Equal(t, "/test.yaml", u.String())
@@ -252,7 +252,7 @@ components:
 				c := &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: try.MustUrl("/foo")}}
 
 				err := cfg.Parse(c, &dynamictest.Reader{})
-				require.EqualError(t, err, `resolve reference 'test.yaml#/components/messageTraits/foo' failed: config not found`)
+				require.EqualError(t, err, `resolve reference 'test.yaml#/components/messageTraits/foo' failed: TestReader: config not found`)
 
 				err = cfg.Parse(c, dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
 					require.Equal(t, "/test.yaml", u.String())

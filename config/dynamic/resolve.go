@@ -2,6 +2,7 @@ package dynamic
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"mokapi/sortedmap"
 	"net/url"
 	"path/filepath"
@@ -13,79 +14,62 @@ type PathResolver interface {
 	Resolve(token string) (interface{}, error)
 }
 
+type AnchorResolver interface {
+	ResolveAnchor(anchor string, resolve func(anchor string, v interface{}) (interface{}, error)) (interface{}, error)
+}
+
 type Converter interface {
 	ConvertTo(i interface{}) (interface{}, error)
 }
 
 func Resolve(ref string, element interface{}, config *Config, reader Reader) error {
-	u, err := url.Parse(ref)
-	if err != nil {
-		return err
-	}
+	var err error
 
-	if len(u.Path) > 0 || len(u.Host) > 0 {
-		if !u.IsAbs() {
-			info := config.Info.Kernel()
-			if len(info.Url.Opaque) > 0 {
-				p := filepath.Join(filepath.Dir(info.Url.Opaque), u.Path)
-				p = fmt.Sprintf("file:%v", p)
-				if len(u.Fragment) > 0 {
-					p = fmt.Sprintf("%v#%v", p, u.Fragment)
-				}
-				u, err = url.Parse(p)
-			} else {
-				u, err = info.Url.Parse(ref)
-			}
+	if strings.HasPrefix(ref, "#") {
+		err = resolveFragment(ref[1:], config.Data, element)
+	} else {
+		var u *url.URL
+		u, err = resolveUrl(ref, config)
+		if err != nil {
+			return err
 		}
 
 		var data interface{}
-		if len(u.Fragment) > 0 {
+		if len(u.Fragment) > 0 && strings.Contains(u.Fragment, "/") && config.Data != nil {
 			val := reflect.ValueOf(config.Data).Elem()
 			data = reflect.New(val.Type()).Interface()
 		} else {
 			data = element
 		}
 
-		f, err := reader.Read(removeFragment(u), data)
+		var sub *Config
+		sub, err = reader.Read(removeFragment(u), data)
 		if err != nil {
 			return fmt.Errorf("resolve reference '%v' failed: %w", ref, err)
 		}
-
-		err = resolvePath(u.Fragment, f.Data, element)
-		if err != nil {
-			return fmt.Errorf("resolve reference '%v' failed: %w", ref, err)
-		}
-		AddRef(config, f)
-		return nil
+		err = resolveFragment(u.Fragment, sub.Data, element)
+		AddRef(config, sub)
 	}
 
-	err = resolvePath(u.Fragment, config.Data, element)
 	if err != nil {
 		return fmt.Errorf("resolve reference '%v' failed: %w", ref, err)
 	}
 	return nil
 }
 
-func resolvePath(path string, root interface{}, resolved interface{}) (err error) {
-	tokens := strings.Split(path, "/")
-	cursor := root
-
-	for i, t := range tokens[1:] {
-		if r, ok := cursor.(PathResolver); ok {
-			cursor, err = r.Resolve(strings.Join(tokens[i+1:], "/"))
-			if err != nil {
-				return err
-			}
-			break
-		}
-
-		cursor, err = get(t, cursor)
-		if err != nil {
-			return err
-		}
+func resolveFragment(fragment string, val interface{}, resolved interface{}) (err error) {
+	if fragment == "" {
+		// resolve to current (root) element
+	} else if strings.HasPrefix(fragment, "/") {
+		val, err = resolvePath(fragment, val)
+	} else {
+		val, err = resolveAnchor(fragment, val)
+	}
+	if err != nil {
+		return fmt.Errorf("resolve fragment '%v' failed: %w", fragment, err)
 	}
 
-	v := reflect.ValueOf(cursor)
+	v := reflect.ValueOf(val)
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
@@ -93,21 +77,21 @@ func resolvePath(path string, root interface{}, resolved interface{}) (err error
 		fRef := v.FieldByName("Ref")
 		fValue := v.FieldByName("Value")
 		if fRef.IsValid() && fValue.IsValid() {
-			cursor = fValue.Interface()
+			val = fValue.Interface()
 		}
 	}
 
-	if cursor == nil {
-		return fmt.Errorf("path '%v' not found", path)
+	if val == nil {
+		return fmt.Errorf("path '%v' not found", fragment)
 	}
 
-	if r, ok := cursor.(PathResolver); ok {
-		if cursor, err = r.Resolve(""); err != nil {
+	if r, ok := val.(PathResolver); ok {
+		if val, err = r.Resolve(""); err != nil {
 			return
 		}
 	}
 
-	vCursor := reflect.ValueOf(cursor)
+	vCursor := reflect.ValueOf(val)
 	if reflect.Indirect(vCursor).Kind() == reflect.Map {
 		reflect.Indirect(reflect.ValueOf(resolved)).Set(reflect.Indirect(vCursor))
 		return
@@ -115,7 +99,7 @@ func resolvePath(path string, root interface{}, resolved interface{}) (err error
 
 	v2 := reflect.Indirect(reflect.ValueOf(resolved))
 	if !vCursor.Type().AssignableTo(v2.Type()) && vCursor.Kind() == reflect.Ptr {
-		if c, ok := cursor.(Converter); ok {
+		if c, ok := val.(Converter); ok {
 			if converted, err := c.ConvertTo(v2.Interface()); err == nil {
 				vCursor = reflect.ValueOf(converted)
 			}
@@ -154,6 +138,18 @@ func get(token string, node interface{}) (interface{}, error) {
 		if f := caseInsensitiveFieldByName(rValue, token); f.IsValid() {
 			return f.Interface(), nil
 		}
+		for i := 0; i < rValue.NumField(); i++ {
+			f := rValue.Field(i)
+			if !f.CanInterface() {
+				continue
+			}
+
+			json := rValue.Type().Field(i).Tag.Get("json")
+			if strings.Split(json, ",")[0] == token {
+				return f.Interface(), nil
+			}
+		}
+
 	case reflect.Map:
 		mv := rValue.MapIndex(reflect.ValueOf(token))
 		if mv.IsValid() {
@@ -170,7 +166,7 @@ func get(token string, node interface{}) (interface{}, error) {
 		break
 	}
 
-	return nil, fmt.Errorf("invalid token reference %q", token)
+	return nil, fmt.Errorf("path element '%v' not found", token)
 }
 
 func caseInsensitiveFieldByName(v reflect.Value, name string) reflect.Value {
@@ -184,4 +180,128 @@ func removeFragment(u *url.URL) *url.URL {
 	*c = *u
 	c.Fragment = ""
 	return c
+}
+
+func resolvePath(path string, v interface{}) (interface{}, error) {
+	tokens := strings.Split(path, "/")
+	cursor := v
+	var err error
+	for _, t := range tokens[1:] {
+		if r, ok := cursor.(PathResolver); ok {
+			cursor, err = r.Resolve(t)
+			if err != nil {
+				return nil, err
+			}
+			continue
+		}
+
+		cursor, err = get(t, cursor)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return cursor, nil
+}
+
+func resolveAnchor(anchor string, v interface{}) (interface{}, error) {
+	if r, ok := v.(AnchorResolver); ok {
+		return r.ResolveAnchor(anchor, resolveAnchor)
+	}
+
+	val := reflect.Indirect(reflect.ValueOf(v))
+	switch val.Kind() {
+	case reflect.Struct:
+		for i := 0; i < val.NumField(); i++ {
+			f := val.Field(i)
+			if !f.CanInterface() {
+				continue
+			}
+
+			json := val.Type().Field(i).Tag.Get("json")
+			if strings.Split(json, ",")[0] == "$anchor" {
+				if f.Interface() == anchor {
+					return v, nil
+				}
+			}
+
+			if r, err := resolveAnchor(anchor, f.Interface()); err == nil {
+				return r, nil
+			}
+		}
+	case reflect.Map:
+		if a := val.MapIndex(reflect.ValueOf("$anchor")); a.IsValid() {
+			if a.Interface() == anchor {
+				return v, nil
+			}
+		}
+
+		for _, k := range val.MapKeys() {
+			if r, err := resolveAnchor(anchor, val.MapIndex(k).Interface()); err == nil {
+				return r, nil
+			}
+		}
+	default:
+		return nil, fmt.Errorf("type '%v' not supported for anchor search", val.Kind())
+	}
+
+	return nil, fmt.Errorf("anchor '%v' not found", anchor)
+}
+
+func resolveUrl(ref string, cfg *Config) (*url.URL, error) {
+	u, err := url.Parse(ref)
+	if err != nil {
+		return nil, err
+	}
+
+	if !u.IsAbs() {
+		id := getId(cfg.Data)
+		if id != "" {
+			u, err = url.Parse(id)
+			if err != nil {
+				return nil, fmt.Errorf("parse URL from $id failed: %w", err)
+			}
+			return u.Parse(ref)
+		} else {
+			info := cfg.Info.Kernel()
+			if len(info.Url.Opaque) > 0 {
+				p := filepath.Join(filepath.Dir(info.Url.Opaque), u.Path)
+				p = fmt.Sprintf("file:%v", p)
+				if len(u.Fragment) > 0 {
+					p = fmt.Sprintf("%v#%v", p, u.Fragment)
+				}
+				return url.Parse(p)
+			} else {
+				return info.Url.Parse(ref)
+			}
+		}
+	}
+
+	return u, err
+}
+
+func getId(v interface{}) string {
+	if v == nil {
+		return ""
+	}
+
+	val := reflect.Indirect(reflect.ValueOf(v))
+	switch val.Kind() {
+	case reflect.Struct:
+		for i := 0; i < val.NumField(); i++ {
+			f := val.Field(i)
+			json := val.Type().Field(i).Tag.Get("json")
+			if strings.Split(json, ",")[0] == "$id" {
+				return f.Interface().(string)
+			}
+		}
+	case reflect.Map:
+		if a := val.MapIndex(reflect.ValueOf("$id")); a.IsValid() {
+			return a.Interface().(string)
+		}
+	default:
+		log.Warnf("resolve $id failed: type %v not supported", val.Kind())
+	}
+
+	return ""
 }

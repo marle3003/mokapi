@@ -87,3 +87,18 @@ func (s *Schemas) parse(config *dynamic.Config, reader dynamic.Reader) error {
 
 	return nil
 }
+
+func (s *Schemas) Resolve(token string) (interface{}, error) {
+	i := s.Get(token)
+	if i == nil {
+		return nil, fmt.Errorf("unable to resolve %v", token)
+	}
+	return i.Value, nil
+}
+
+func (s *Schemas) ResolveAnchor(anchor string, resolve func(string, interface{}) (interface{}, error)) (interface{}, error) {
+	if s == nil {
+		return nil, fmt.Errorf("unable to resolve %v", anchor)
+	}
+	return s.LinkedHashMap.ResolveAnchor(anchor, resolve)
+}
