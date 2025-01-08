@@ -137,13 +137,3 @@ func (m *LinkedHashMap[K, V]) Resolve(token string) (interface{}, error) {
 	}
 	return nil, fmt.Errorf("unable to resolve %v", token)
 }
-
-func (m *LinkedHashMap[K, V]) ResolveAnchor(anchor string, resolve func(string, interface{}) (interface{}, error)) (interface{}, error) {
-	for _, v := range m.pairs {
-		r, err := resolve(anchor, v.value)
-		if err == nil {
-			return r, nil
-		}
-	}
-	return nil, fmt.Errorf("unable to resolve %v", anchor)
-}

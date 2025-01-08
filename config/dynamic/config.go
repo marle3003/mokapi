@@ -2,6 +2,7 @@ package dynamic
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/Masterminds/sprig"
 	"mokapi/sortedmap"
 	"strings"
@@ -21,6 +22,7 @@ type Config struct {
 	Data      interface{}
 	Refs      Refs
 	Listeners Listeners
+	Scope     *Scope
 }
 
 type Refs struct {
@@ -46,6 +48,13 @@ func AddRef(parent, ref *Config) {
 		parent.Info.Time = ref.Info.Time
 		parent.Listeners.Invoke(parent)
 	})
+
+	if ref.Scope == nil {
+		ref.OpenScope("")
+	}
+	if parent.Scope != nil {
+		ref.Scope.dynamic = parent.Scope.dynamic
+	}
 }
 
 func (l *Listeners) Add(key string, fn ConfigListener) {
@@ -145,4 +154,83 @@ func renderTemplate(b []byte) ([]byte, error) {
 func extractUsername(s string) string {
 	slice := strings.Split(s, "\\")
 	return slice[len(slice)-1]
+}
+
+type Scope struct {
+	Name string
+
+	stack   []map[string]interface{}
+	dynamic *Scope
+}
+
+func NewScope(name string) *Scope {
+	return &Scope{Name: name, stack: []map[string]interface{}{
+		{},
+	}}
+}
+
+func (s *Scope) Get(name string) (interface{}, error) {
+	if s == nil {
+		return nil, fmt.Errorf("anchor '%s' not found: no scope present", name)
+	}
+
+	if len(s.stack) != 0 {
+		lexical := s.stack[len(s.stack)-1]
+		if v, ok := lexical[name]; ok {
+			return v, nil
+		}
+	}
+
+	return nil, fmt.Errorf("anchor '%s' not found in scope '%s", name, s.Name)
+}
+
+func (s *Scope) Set(name string, value interface{}) error {
+	if s == nil || len(s.stack) == 0 {
+		return fmt.Errorf("set anchor '%s' failed: no scope present", name)
+	}
+
+	lexical := s.stack[len(s.stack)-1]
+	if _, ok := lexical[name]; ok {
+		return fmt.Errorf("anchor '%s' already defined in scope '%s'", name, s.Name)
+	}
+	lexical[name] = value
+	return nil
+}
+
+func (s *Scope) GetDynamic(name string) (interface{}, error) {
+	return s.dynamic.Get(name)
+}
+
+func (s *Scope) SetDynamic(name string, value interface{}) error {
+	return s.dynamic.Set(name, value)
+}
+
+func (s *Scope) openScope(name string) {
+	s.stack = append(s.stack, map[string]interface{}{})
+}
+
+func (s *Scope) close() {
+	s.stack = s.stack[:len(s.stack)-1]
+}
+
+func (s *Scope) IsEmpty() bool {
+	return len(s.stack) == 0
+}
+
+func (c *Config) OpenScope(name string) {
+	if c.Scope == nil {
+		c.Scope = NewScope(name)
+	} else {
+		c.Scope.openScope(name)
+	}
+}
+
+func (c *Config) Close() {
+	if c.Scope != nil {
+		if c.Scope.IsEmpty() {
+			c.Scope = nil
+		} else {
+			c.Scope.close()
+		}
+	}
 }

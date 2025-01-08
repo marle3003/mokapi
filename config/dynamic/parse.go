@@ -42,19 +42,15 @@ func Parse(c *Config, r Reader) error {
 
 	switch filepath.Ext(name) {
 	case ".yml", ".yaml":
-		d := &dynamicObject{data: c.Data}
-		err := yaml.Unmarshal(data, d)
+		err := yaml.Unmarshal(data, c)
 		if err != nil {
 			return err
 		}
-		c.Data = d.data
 	case ".json":
-		d := &dynamicObject{data: c.Data}
-		err := UnmarshalJSON(data, d)
+		err := UnmarshalJSON(data, c)
 		if err != nil {
 			return err
 		}
-		c.Data = d.data
 	case ".lua", ".js", ".ts":
 		if c.Data == nil {
 			c.Data = script.New(name, data)
@@ -76,24 +72,24 @@ func Parse(c *Config, r Reader) error {
 	return nil
 }
 
-func (d *dynamicObject) UnmarshalJSON(b []byte) error {
+func (c *Config) UnmarshalJSON(b []byte) error {
 	data := make(map[string]string)
 	_ = UnmarshalJSON(b, &data)
 
 	if ct := getConfigType(data); ct != nil {
-		d.data = reflect.New(ct.configType).Interface()
-		err := UnmarshalJSON(b, d.data)
+		c.Data = reflect.New(ct.configType).Interface()
+		err := UnmarshalJSON(b, c.Data)
 		if err != nil {
 			return formatError(b, err)
 		}
 		return nil
 	}
 
-	if d.data == nil {
+	if c.Data == nil {
 		return nil
 	}
 
-	err := UnmarshalJSON(b, d.data)
+	err := UnmarshalJSON(b, c.Data)
 	if err != nil {
 		return formatError(b, err)
 	}
@@ -101,20 +97,20 @@ func (d *dynamicObject) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func (d *dynamicObject) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	data := make(map[string]string)
 	_ = unmarshal(data)
 
 	if ct := getConfigType(data); ct != nil {
-		d.data = reflect.New(ct.configType).Interface()
-		return unmarshal(d.data)
+		c.Data = reflect.New(ct.configType).Interface()
+		return unmarshal(c.Data)
 	}
 
-	if d.data == nil {
+	if c.Data == nil {
 		return nil
 	}
 
-	err := unmarshal(d.data)
+	err := unmarshal(c.Data)
 	if err != nil {
 		return err
 	}

@@ -14,10 +14,6 @@ type PathResolver interface {
 	Resolve(token string) (interface{}, error)
 }
 
-type AnchorResolver interface {
-	ResolveAnchor(anchor string, resolve func(anchor string, v interface{}) (interface{}, error)) (interface{}, error)
-}
-
 type Converter interface {
 	ConvertTo(i interface{}) (interface{}, error)
 }
@@ -26,7 +22,7 @@ func Resolve(ref string, element interface{}, config *Config, reader Reader) err
 	var err error
 
 	if strings.HasPrefix(ref, "#") {
-		err = resolveFragment(ref[1:], config.Data, element)
+		err = resolveFragment(ref[1:], config, element)
 	} else {
 		var u *url.URL
 		u, err = resolveUrl(ref, config)
@@ -47,7 +43,7 @@ func Resolve(ref string, element interface{}, config *Config, reader Reader) err
 		if err != nil {
 			return fmt.Errorf("resolve reference '%v' failed: %w", ref, err)
 		}
-		err = resolveFragment(u.Fragment, sub.Data, element)
+		err = resolveFragment(u.Fragment, sub, element)
 		AddRef(config, sub)
 	}
 
@@ -57,13 +53,14 @@ func Resolve(ref string, element interface{}, config *Config, reader Reader) err
 	return nil
 }
 
-func resolveFragment(fragment string, val interface{}, resolved interface{}) (err error) {
+func resolveFragment(fragment string, config *Config, resolved interface{}) (err error) {
+	val := config.Data
 	if fragment == "" {
 		// resolve to current (root) element
 	} else if strings.HasPrefix(fragment, "/") {
-		val, err = resolvePath(fragment, val)
+		val, err = resolvePath(fragment, config.Data)
 	} else {
-		val, err = resolveAnchor(fragment, val)
+		val, err = config.Scope.Get(fragment)
 	}
 	if err != nil {
 		return fmt.Errorf("resolve fragment '%v' failed: %w", fragment, err)
@@ -202,50 +199,6 @@ func resolvePath(path string, v interface{}) (interface{}, error) {
 	}
 
 	return cursor, nil
-}
-
-func resolveAnchor(anchor string, v interface{}) (interface{}, error) {
-	if r, ok := v.(AnchorResolver); ok {
-		return r.ResolveAnchor(anchor, resolveAnchor)
-	}
-
-	val := reflect.Indirect(reflect.ValueOf(v))
-	switch val.Kind() {
-	case reflect.Struct:
-		for i := 0; i < val.NumField(); i++ {
-			f := val.Field(i)
-			if !f.CanInterface() {
-				continue
-			}
-
-			json := val.Type().Field(i).Tag.Get("json")
-			if strings.Split(json, ",")[0] == "$anchor" {
-				if f.Interface() == anchor {
-					return v, nil
-				}
-			}
-
-			if r, err := resolveAnchor(anchor, f.Interface()); err == nil {
-				return r, nil
-			}
-		}
-	case reflect.Map:
-		if a := val.MapIndex(reflect.ValueOf("$anchor")); a.IsValid() {
-			if a.Interface() == anchor {
-				return v, nil
-			}
-		}
-
-		for _, k := range val.MapKeys() {
-			if r, err := resolveAnchor(anchor, val.MapIndex(k).Interface()); err == nil {
-				return r, nil
-			}
-		}
-	default:
-		return nil, fmt.Errorf("type '%v' not supported for anchor search", val.Kind())
-	}
-
-	return nil, fmt.Errorf("anchor '%v' not found", anchor)
 }
 
 func resolveUrl(ref string, cfg *Config) (*url.URL, error) {

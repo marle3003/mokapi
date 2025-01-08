@@ -97,6 +97,34 @@ func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		return nil
 	}
 
+	if s.Id != "" {
+		config.OpenScope(s.Id)
+	} else if config.Scope == nil {
+		if config.Info.Url != nil {
+			config.OpenScope(config.Info.Url.String())
+		} else if config.Scope == nil {
+			config.OpenScope("")
+		}
+	}
+
+	if s.Anchor != "" {
+		if err := config.Scope.Set(s.Anchor, s); err != nil {
+			return err
+		}
+	}
+
+	for _, d := range s.Definitions {
+		if err := d.Parse(config, reader); err != nil {
+			return err
+		}
+	}
+
+	for _, d := range s.Defs {
+		if err := d.Parse(config, reader); err != nil {
+			return err
+		}
+	}
+
 	if err := s.Items.Parse(config, reader); err != nil {
 		return err
 	}

@@ -17,6 +17,13 @@ func (r *Reader) Read(u *url.URL, v any) (*dynamic.Config, error) {
 		return nil, NotFound
 	}
 	if c, ok := r.Data[u.String()]; ok {
+		if p, isParser := c.Data.(dynamic.Parser); isParser {
+			if err := p.Parse(c, r); err != nil {
+				return nil, err
+			}
+			return c, nil
+		}
+
 		return c, nil
 	}
 	return nil, NotFound

@@ -95,10 +95,3 @@ func (s *Schemas) Resolve(token string) (interface{}, error) {
 	}
 	return i, nil
 }
-
-func (s *Schemas) ResolveAnchor(anchor string, resolve func(string, interface{}) (interface{}, error)) (interface{}, error) {
-	if s == nil {
-		return nil, fmt.Errorf("unable to resolve %v", anchor)
-	}
-	return s.LinkedHashMap.ResolveAnchor(anchor, resolve)
-}

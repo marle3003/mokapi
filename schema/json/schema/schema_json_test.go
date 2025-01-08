@@ -351,20 +351,30 @@ func TestJson_Structuring(t *testing.T) {
 		{
 			name: "$anchor",
 			test: func(t *testing.T) {
+				address := &dynamic.Config{
+					Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("https://example.com/schemas/address")),
+					Data: schematest.New("object",
+						schematest.WithProperty("street_address",
+							schematest.New("string", schematest.WithAnchor("street_address"))),
+					),
+				}
+
 				reader := &dynamictest.Reader{
 					Data: map[string]*dynamic.Config{
-						"https://example.com/schemas/address": {
-							Data: schematest.New("object",
-								schematest.WithProperty("street_address",
-									schematest.New("string", schematest.WithAnchor("street_address"))),
-							),
-						},
+						address.Info.Url.String(): address,
 					},
 				}
-				r := &schema.Schema{}
-				err := dynamic.Resolve("https://example.com/schemas/address#street_address", &r, &dynamic.Config{Data: &schema.Schema{}}, reader)
+
+				person := &dynamic.Config{
+					Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("https://example.com/schemas/person")),
+					Data: &schema.Schema{Ref: "https://example.com/schemas/address#street_address"},
+				}
+
+				err := person.Data.(*schema.Schema).Parse(person, reader)
 				require.NoError(t, err)
-				require.Equal(t, "string", r.Type.String())
+
+				require.NoError(t, err)
+				require.Equal(t, "string", person.Data.(*schema.Schema).Type.String())
 			},
 		},
 		{
