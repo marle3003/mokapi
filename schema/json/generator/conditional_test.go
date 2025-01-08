@@ -3,7 +3,7 @@ package generator
 import (
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 
@@ -20,12 +20,12 @@ func TestConditional(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name: "if",
-						Schema: schematest.NewRef("object",
+						Schema: schematest.New("object",
 							schematest.WithProperty("foo", schematest.New("string")),
-							schematest.WithIf(schematest.NewRef("object",
+							schematest.WithIf(schematest.New("object",
 								schematest.WithProperty("foo", schematest.New("string", schematest.WithConst("FqwCrwMfkOjojx"))),
 							)),
-							schematest.WithThen(schematest.NewRef("object",
+							schematest.WithThen(schematest.New("object",
 								schematest.WithProperty("bar", schematest.New("string")),
 							)),
 						),
@@ -43,12 +43,12 @@ func TestConditional(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name: "if",
-						Schema: schematest.NewRef("object",
+						Schema: schematest.New("object",
 							schematest.WithProperty("foo", schematest.New("string")),
-							schematest.WithIf(schematest.NewRef("object",
+							schematest.WithIf(schematest.New("object",
 								schematest.WithProperty("foo", schematest.New("string", schematest.WithConst(""))),
 							)),
-							schematest.WithElse(schematest.NewRef("object",
+							schematest.WithElse(schematest.New("object",
 								schematest.WithProperty("bar", schematest.New("string")),
 							)),
 						),

@@ -4,7 +4,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"mokapi/sortedmap"
 	"testing"
 )
@@ -314,12 +314,12 @@ func TestParser_ParseObject(t *testing.T) {
 			name: "if-then then error",
 			schema: schematest.New("object",
 				schematest.WithIf(
-					schematest.NewRefTypes(nil,
+					schematest.NewTypes(nil,
 						schematest.WithProperty("foo", schematest.NewTypes(nil, schematest.WithConst("bar"))),
 					),
 				),
 				schematest.WithThen(
-					schematest.NewRefTypes(nil,
+					schematest.NewTypes(nil,
 						schematest.WithProperty("bar", schematest.New("string", schematest.WithPattern("[0-9]+"))),
 					),
 				),
@@ -333,12 +333,12 @@ func TestParser_ParseObject(t *testing.T) {
 			name: "if-then if=false",
 			schema: schematest.New("object",
 				schematest.WithIf(
-					schematest.NewRefTypes(nil,
+					schematest.NewTypes(nil,
 						schematest.WithProperty("foo", schematest.NewTypes(nil, schematest.WithConst("bar"))),
 					),
 				),
 				schematest.WithThen(
-					schematest.NewRefTypes(nil,
+					schematest.NewTypes(nil,
 						schematest.WithProperty("bar", schematest.New("string", schematest.WithPattern("[0-9]+"))),
 					),
 				),
@@ -353,12 +353,12 @@ func TestParser_ParseObject(t *testing.T) {
 			name: "if-then",
 			schema: schematest.New("object",
 				schematest.WithIf(
-					schematest.NewRefTypes(nil,
+					schematest.NewTypes(nil,
 						schematest.WithProperty("foo", schematest.NewTypes(nil, schematest.WithConst("bar"))),
 					),
 				),
 				schematest.WithThen(
-					schematest.NewRefTypes(nil,
+					schematest.NewTypes(nil,
 						schematest.WithProperty("bar", schematest.New("string", schematest.WithPattern("[0-9]+"))),
 					),
 				),
@@ -373,12 +373,12 @@ func TestParser_ParseObject(t *testing.T) {
 			name: "if-else else error",
 			schema: schematest.New("object",
 				schematest.WithIf(
-					schematest.NewRefTypes(nil,
+					schematest.NewTypes(nil,
 						schematest.WithProperty("foo", schematest.NewTypes(nil, schematest.WithConst("bar"))),
 					),
 				),
 				schematest.WithElse(
-					schematest.NewRefTypes(nil,
+					schematest.NewTypes(nil,
 						schematest.WithProperty("zzz", schematest.New("string", schematest.WithPattern("[0-9]+"))),
 					),
 				),
@@ -392,12 +392,12 @@ func TestParser_ParseObject(t *testing.T) {
 			name: "if-then if=true",
 			schema: schematest.New("object",
 				schematest.WithIf(
-					schematest.NewRefTypes(nil,
+					schematest.NewTypes(nil,
 						schematest.WithProperty("foo", schematest.NewTypes(nil, schematest.WithConst("bar"))),
 					),
 				),
 				schematest.WithElse(
-					schematest.NewRefTypes(nil,
+					schematest.NewTypes(nil,
 						schematest.WithProperty("bar", schematest.New("string", schematest.WithPattern("[0-9]+"))),
 					),
 				),
@@ -412,12 +412,12 @@ func TestParser_ParseObject(t *testing.T) {
 			name: "if-else if=true",
 			schema: schematest.New("object",
 				schematest.WithIf(
-					schematest.NewRefTypes(nil,
+					schematest.NewTypes(nil,
 						schematest.WithProperty("foo", schematest.NewTypes(nil, schematest.WithConst("bar"))),
 					),
 				),
 				schematest.WithElse(
-					schematest.NewRefTypes(nil,
+					schematest.NewTypes(nil,
 						schematest.WithProperty("bar", schematest.New("string", schematest.WithPattern("[0-9]+"))),
 					),
 				),
@@ -436,7 +436,7 @@ func TestParser_ParseObject(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			p := &parser.Parser{Schema: &schema.Ref{Value: tc.schema}, ValidateAdditionalProperties: true}
+			p := &parser.Parser{Schema: tc.schema, ValidateAdditionalProperties: true}
 
 			// test as map and as sorted map if data is a map
 			if m, ok := tc.data.(map[string]interface{}); ok {

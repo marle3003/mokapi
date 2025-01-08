@@ -180,7 +180,7 @@ func (s *Schema) IsFreeForm() bool {
 		return *s.AdditionalProperties.Boolean
 	}
 
-	return s.AdditionalProperties.Value == nil
+	return s.AdditionalProperties == nil
 }
 
 func (s *Schema) IsAnyString() bool {

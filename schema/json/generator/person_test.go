@@ -3,7 +3,7 @@ package generator
 import (
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 
@@ -38,7 +38,7 @@ func TestPerson(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name:   "person",
-						Schema: schematest.NewRef("object", schematest.WithProperty("name", nil)),
+						Schema: schematest.New("object", schematest.WithProperty("name", nil)),
 					},
 				},
 			},
@@ -53,7 +53,7 @@ func TestPerson(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name: "person",
-						Schema: schematest.NewRef("object",
+						Schema: schematest.New("object",
 							schematest.WithProperty("firstname", schematest.New("string")),
 							schematest.WithProperty("lastname", schematest.New("string")),
 							schematest.WithProperty("gender", schematest.New("string")),
@@ -151,7 +151,7 @@ func TestPerson(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name:   "phone",
-						Schema: schematest.NewRef("string"),
+						Schema: schematest.New("string"),
 					},
 				},
 			},
@@ -166,7 +166,7 @@ func TestPerson(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name:   "phone",
-						Schema: schematest.NewRef("object"),
+						Schema: schematest.New("object"),
 					},
 				},
 			},
@@ -181,7 +181,7 @@ func TestPerson(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name:   "windowsUserName",
-						Schema: schematest.NewRef("string"),
+						Schema: schematest.New("string"),
 					},
 				},
 			},
@@ -196,7 +196,7 @@ func TestPerson(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name: "individual",
-						Schema: schematest.NewRef("object",
+						Schema: schematest.New("object",
 							schematest.WithProperty("firstname", schematest.New("string")),
 							schematest.WithProperty("lastname", schematest.New("string")),
 						),

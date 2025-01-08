@@ -11,10 +11,10 @@ import (
 )
 
 type Schemas struct {
-	sortedmap.LinkedHashMap[string, *Ref]
+	sortedmap.LinkedHashMap[string, *Schema]
 }
 
-func (s *Schemas) Get(name string) *Ref {
+func (s *Schemas) Get(name string) *Schema {
 	if s == nil {
 		return nil
 	}
@@ -26,14 +26,14 @@ func (s *Schemas) UnmarshalYAML(value *yaml.Node) error {
 	if value.Kind != yaml.MappingNode {
 		return errors.New("not a mapping node")
 	}
-	s.LinkedHashMap = sortedmap.LinkedHashMap[string, *Ref]{}
+	s.LinkedHashMap = sortedmap.LinkedHashMap[string, *Schema]{}
 	for i := 0; i < len(value.Content); i += 2 {
 		var key string
 		err := value.Content[i].Decode(&key)
 		if err != nil {
 			return err
 		}
-		val := &Ref{}
+		val := &Schema{}
 		err = value.Content[i+1].Decode(&val)
 		if err != nil {
 			return err
@@ -54,7 +54,7 @@ func (s *Schemas) UnmarshalJSON(b []byte) error {
 	if delim, ok := token.(json.Delim); ok && delim != '{' {
 		return fmt.Errorf("expected openapi.Responses map, got %s", token)
 	}
-	s.LinkedHashMap = sortedmap.LinkedHashMap[string, *Ref]{}
+	s.LinkedHashMap = sortedmap.LinkedHashMap[string, *Schema]{}
 	for {
 		token, err = dec.Token()
 		if err != nil {
@@ -64,7 +64,7 @@ func (s *Schemas) UnmarshalJSON(b []byte) error {
 			return nil
 		}
 		key := token.(string)
-		val := &Ref{}
+		val := &Schema{}
 		err = dec.Decode(&val)
 		if err != nil {
 			return err
@@ -93,7 +93,7 @@ func (s *Schemas) Resolve(token string) (interface{}, error) {
 	if i == nil {
 		return nil, fmt.Errorf("unable to resolve %v", token)
 	}
-	return i.Value, nil
+	return i, nil
 }
 
 func (s *Schemas) ResolveAnchor(anchor string, resolve func(string, interface{}) (interface{}, error)) (interface{}, error) {

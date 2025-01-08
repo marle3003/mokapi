@@ -119,9 +119,6 @@ func object(d *decoder, v reflect.Value) error {
 		return fmt.Errorf("expected %s but received an object", toTypeName(v))
 	}
 
-	i := v.Interface()
-	_ = i
-
 	// The first byte of the object '{' has been read already.
 	for {
 		offset := d.d.InputOffset()
@@ -412,7 +409,7 @@ func newValueForToken(token json.Token) reflect.Value {
 			return reflect.New(reflect.TypeOf([]interface{}{}))
 		}
 	case string:
-		return reflect.ValueOf("")
+		return reflect.New(reflect.TypeOf(""))
 	case float64:
 		return reflect.New(reflect.TypeOf(float64(0)))
 	}

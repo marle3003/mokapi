@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
-	"mokapi/schema/json/ref"
 )
 
 type Examples map[string]*ExampleRef
 
 type ExampleRef struct {
-	ref.Reference
+	dynamic.Reference
 	Value *Example
 }
 

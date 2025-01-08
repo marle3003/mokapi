@@ -4,9 +4,8 @@ import (
 	"encoding/json"
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
-	"mokapi/schema/json/ref"
 	"mokapi/schema/json/schema"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 
@@ -20,7 +19,7 @@ func TestPet(t *testing.T) {
 			name: "pet-name",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "pet", Schema: schematest.NewRef("object",
+					&PathElement{Name: "pet", Schema: schematest.New("object",
 						schematest.WithProperty("name", nil),
 					)},
 				},
@@ -34,7 +33,7 @@ func TestPet(t *testing.T) {
 			name: "pet-name as string",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "pet", Schema: schematest.NewRef("object",
+					&PathElement{Name: "pet", Schema: schematest.New("object",
 						schematest.WithProperty("name", schematest.New("string")),
 					)},
 				},
@@ -48,8 +47,8 @@ func TestPet(t *testing.T) {
 			name: "pets-name",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "pets", Schema: schematest.NewRef("array", schematest.WithItemsRef(
-						&schema.Ref{Reference: ref.Reference{Ref: "#/components/schemas/Pet"}, Value: schematest.New("string")},
+					&PathElement{Name: "pets", Schema: schematest.New("array", schematest.WithItemsNew(
+						&schema.Schema{Ref: "#/components/schemas/Pet", Type: schema.Types{"string"}},
 					))},
 				},
 			},
@@ -62,7 +61,7 @@ func TestPet(t *testing.T) {
 			name: "pets-name within object",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "pets", Schema: schematest.NewRef("array", schematest.WithItems(
+					&PathElement{Name: "pets", Schema: schematest.New("array", schematest.WithItems(
 						"object", schematest.WithProperty("name", nil),
 					))},
 				},
@@ -79,7 +78,7 @@ func TestPet(t *testing.T) {
 			name: "pet-category",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "pet", Schema: schematest.NewRef("object", schematest.WithProperty("category", nil))},
+					&PathElement{Name: "pet", Schema: schematest.New("object", schematest.WithProperty("category", nil))},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -92,7 +91,7 @@ func TestPet(t *testing.T) {
 			req: &Request{
 				Path: Path{
 					&PathElement{
-						Name: "pet", Schema: schematest.NewRef("object",
+						Name: "pet", Schema: schematest.New("object",
 							schematest.WithProperty("category", schematest.New("object",
 								schematest.WithProperty("name", nil)),
 							),
@@ -109,8 +108,8 @@ func TestPet(t *testing.T) {
 			name: "pet-categories",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "pet", Schema: schematest.NewRef("array", schematest.WithItemsRef(
-						&schema.Ref{Reference: ref.Reference{Ref: "#/components/schemas/Category"}, Value: schematest.New("string")},
+					&PathElement{Name: "pet", Schema: schematest.New("array", schematest.WithItemsNew(
+						&schema.Schema{Ref: "#/components/schemas/Category", Type: schema.Types{"string"}},
 					))},
 				},
 			},
@@ -125,7 +124,7 @@ func TestPet(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name: "pet",
-						Schema: schematest.NewRef("object",
+						Schema: schematest.New("object",
 							schematest.WithProperty("category", schematest.New("object",
 								schematest.WithProperty("name", schematest.New("string")),
 								schematest.WithProperty("id", schematest.New("integer")),

@@ -3,11 +3,11 @@ package generator
 import (
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 
-var pet = schematest.NewRef("object",
+var pet = schematest.New("object",
 	schematest.WithProperty("id", schematest.New("integer")),
 	schematest.WithProperty("category", schematest.New("object",
 		schematest.WithProperty("id", schematest.New("integer")),

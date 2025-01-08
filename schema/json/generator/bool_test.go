@@ -3,7 +3,7 @@ package generator
 import (
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 
@@ -17,7 +17,7 @@ func TestBool(t *testing.T) {
 			name: "boolean",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "valid", Schema: schematest.NewRef("boolean")},
+					&PathElement{Name: "valid", Schema: schematest.New("boolean")},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {

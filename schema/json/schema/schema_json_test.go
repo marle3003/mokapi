@@ -6,7 +6,7 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/schema/json/schema"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 
@@ -342,11 +342,10 @@ func TestJson_Structuring(t *testing.T) {
 						},
 					},
 				}
-				r := &schema.Ref{}
-				err := dynamic.Resolve("https://example.com/schemas/address#/properties/street_address", &r.Value, &dynamic.Config{Data: &schema.Schema{}}, reader)
+				r := &schema.Schema{}
+				err := dynamic.Resolve("https://example.com/schemas/address#/properties/street_address", &r, &dynamic.Config{Data: &schema.Schema{}}, reader)
 				require.NoError(t, err)
-				require.NotNil(t, r.Value)
-				require.Equal(t, "string", r.Value.Type.String())
+				require.Equal(t, "string", r.Type.String())
 			},
 		},
 		{
@@ -362,11 +361,10 @@ func TestJson_Structuring(t *testing.T) {
 						},
 					},
 				}
-				r := &schema.Ref{}
-				err := dynamic.Resolve("https://example.com/schemas/address#street_address", &r.Value, &dynamic.Config{Data: &schema.Schema{}}, reader)
+				r := &schema.Schema{}
+				err := dynamic.Resolve("https://example.com/schemas/address#street_address", &r, &dynamic.Config{Data: &schema.Schema{}}, reader)
 				require.NoError(t, err)
-				require.NotNil(t, r.Value)
-				require.Equal(t, "string", r.Value.Type.String())
+				require.Equal(t, "string", r.Type.String())
 			},
 		},
 		{
@@ -384,11 +382,11 @@ func TestJson_Structuring(t *testing.T) {
 
 				cfg := &dynamic.Config{Data: &schema.Schema{Id: "https://example.com/schemas/customer"}}
 
-				r := &schema.Ref{}
-				err := dynamic.Resolve("/schemas/address", &r.Value, cfg, reader)
+				r := &schema.Schema{}
+				err := dynamic.Resolve("/schemas/address", &r, cfg, reader)
 				require.NoError(t, err)
-				require.NotNil(t, r.Value)
-				require.Equal(t, "object", r.Value.Type.String())
+				require.NotNil(t, r)
+				require.Equal(t, "object", r.Type.String())
 			},
 		},
 		{
@@ -402,7 +400,7 @@ func TestJson_Structuring(t *testing.T) {
 				err := s.Parse(&dynamic.Config{Data: s}, &dynamictest.Reader{})
 
 				require.NoError(t, err)
-				require.Equal(t, "string", s.Properties.Get("first_name").Value.Type.String())
+				require.Equal(t, "string", s.Properties.Get("first_name").Type.String())
 			},
 		},
 		{
@@ -418,7 +416,8 @@ func TestJson_Structuring(t *testing.T) {
 				err := s.Parse(&dynamic.Config{Data: s}, &dynamictest.Reader{})
 
 				require.NoError(t, err)
-				require.Equal(t, s, s.Properties.Get("children").Value.Items.Value)
+				children := s.Properties.Get("children")
+				require.Equal(t, s, children.Items)
 			},
 		},
 	}

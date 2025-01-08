@@ -3,7 +3,7 @@ package generator
 import (
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 
@@ -31,7 +31,7 @@ func TestNumber(t *testing.T) {
 			name: "id with max",
 			request: &Request{
 				Path: Path{
-					&PathElement{Name: "id", Schema: schematest.NewRef("integer", schematest.WithMaximum(10000))},
+					&PathElement{Name: "id", Schema: schematest.New("integer", schematest.WithMaximum(10000))},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -45,7 +45,7 @@ func TestNumber(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name: "id",
-						Schema: schematest.NewRef("integer",
+						Schema: schematest.New("integer",
 							schematest.WithMinimum(10),
 							schematest.WithMaximum(20),
 						),
@@ -63,7 +63,7 @@ func TestNumber(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name:   "ids",
-						Schema: schematest.NewRef("array"),
+						Schema: schematest.New("array"),
 					},
 				},
 			},
@@ -92,7 +92,7 @@ func TestNumber(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name:   "year",
-						Schema: schematest.NewRef("integer"),
+						Schema: schematest.New("integer"),
 					},
 				},
 			},
@@ -107,7 +107,7 @@ func TestNumber(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name:   "year",
-						Schema: schematest.NewRef("integer", schematest.WithMinimum(1990)),
+						Schema: schematest.New("integer", schematest.WithMinimum(1990)),
 					},
 				},
 			},
@@ -122,7 +122,7 @@ func TestNumber(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name: "year",
-						Schema: schematest.NewRef("integer",
+						Schema: schematest.New("integer",
 							schematest.WithMinimum(1990),
 							schematest.WithMaximum(2049),
 						),
@@ -140,7 +140,7 @@ func TestNumber(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name:   "quantity",
-						Schema: schematest.NewRef("integer"),
+						Schema: schematest.New("integer"),
 					},
 				},
 			},
@@ -155,7 +155,7 @@ func TestNumber(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name: "year",
-						Schema: schematest.NewRef("integer",
+						Schema: schematest.New("integer",
 							schematest.WithMinimum(0),
 							schematest.WithMaximum(50),
 						),
@@ -191,7 +191,7 @@ func TestInt32(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name:   "size",
-						Schema: schematest.NewRef("integer", schematest.WithFormat("int32")),
+						Schema: schematest.New("integer", schematest.WithFormat("int32")),
 					},
 				},
 			},
@@ -206,7 +206,7 @@ func TestInt32(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name: "size",
-						Schema: schematest.NewRef("integer",
+						Schema: schematest.New("integer",
 							schematest.WithFormat("int32"),
 							schematest.WithMaximum(15),
 						),
@@ -224,7 +224,7 @@ func TestInt32(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name: "size",
-						Schema: schematest.NewRef("integer",
+						Schema: schematest.New("integer",
 							schematest.WithFormat("int32"),
 							schematest.WithMinimum(0),
 							schematest.WithMaximum(15),
@@ -243,7 +243,7 @@ func TestInt32(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name: "size",
-						Schema: schematest.NewRef("integer",
+						Schema: schematest.New("integer",
 							schematest.WithFormat("int32"),
 							schematest.WithExclusiveMinimum(0),
 							schematest.WithExclusiveMaximum(15),
@@ -280,7 +280,7 @@ func TestInteger(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name:   "size",
-						Schema: schematest.NewRef("integer"),
+						Schema: schematest.New("integer"),
 					},
 				},
 			},
@@ -295,7 +295,7 @@ func TestInteger(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name: "size",
-						Schema: schematest.NewRef("integer",
+						Schema: schematest.New("integer",
 							schematest.WithMaximum(15),
 						),
 					},
@@ -312,7 +312,7 @@ func TestInteger(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name: "size",
-						Schema: schematest.NewRef("integer",
+						Schema: schematest.New("integer",
 							schematest.WithMinimum(0),
 							schematest.WithMaximum(15),
 						),
@@ -348,7 +348,7 @@ func TestFloat32(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name:   "size",
-						Schema: schematest.NewRef("number", schematest.WithFormat("float")),
+						Schema: schematest.New("number", schematest.WithFormat("float")),
 					},
 				},
 			},
@@ -382,7 +382,7 @@ func TestFloat32(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name: "size",
-						Schema: schematest.NewRef("number",
+						Schema: schematest.New("number",
 							schematest.WithFormat("float"),
 							schematest.WithMinimum(0),
 							schematest.WithMaximum(15),
@@ -419,7 +419,7 @@ func TestFloat(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name:   "size",
-						Schema: schematest.NewRef("number"),
+						Schema: schematest.New("number"),
 					},
 				},
 			},
@@ -452,7 +452,7 @@ func TestFloat(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name: "size",
-						Schema: schematest.NewRef("number",
+						Schema: schematest.New("number",
 							schematest.WithMinimum(0),
 							schematest.WithMaximum(15),
 						),

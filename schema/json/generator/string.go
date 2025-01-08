@@ -213,12 +213,12 @@ func String() *Tree {
 	}
 }
 
-func hasPattern(r *schema.Ref) bool {
-	return r != nil && r.Value != nil && r.Value.Pattern != ""
+func hasPattern(s *schema.Schema) bool {
+	return s != nil && s.Pattern != ""
 }
 
-func hasFormat(r *schema.Ref) bool {
-	return r != nil && r.Value != nil && r.Value.Format != ""
+func hasFormat(s *schema.Schema) bool {
+	return s != nil && s.Format != ""
 }
 
 func newId(s *schema.Schema) (string, error) {

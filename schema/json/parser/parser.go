@@ -7,7 +7,7 @@ import (
 )
 
 type Parser struct {
-	Schema *schema.Ref
+	Schema *schema.Schema
 
 	ConvertStringToNumber  bool
 	ConvertStringToBoolean bool
@@ -19,7 +19,7 @@ type Parser struct {
 	SkipValidationFormatKeyword bool
 }
 
-func (p *Parser) ParseWith(data interface{}, schema *schema.Ref) (interface{}, error) {
+func (p *Parser) ParseWith(data interface{}, schema *schema.Schema) (interface{}, error) {
 	v, err := p.parse(data, schema)
 	if err != nil {
 		return v, &Error{
@@ -43,27 +43,24 @@ func (p *Parser) Parse(data interface{}) (interface{}, error) {
 	return v, nil
 }
 
-func (p *Parser) parse(data interface{}, ref *schema.Ref) (interface{}, error) {
-	if ref == nil {
+func (p *Parser) parse(data interface{}, s *schema.Schema) (interface{}, error) {
+	if s == nil {
 		return data, nil
 	}
-	if ref.Boolean != nil {
-		if *ref.Boolean {
+	if s.Boolean != nil {
+		if *s.Boolean {
 			return data, nil
 		}
 		return data, Errorf("valid", "schema always fails validation")
 	}
-	if ref.Value == nil {
-		return data, nil
-	}
 
 	if data == nil {
-		if ref.Value.IsNullable() {
+		if s.IsNullable() {
 			return nil, nil
-		} else if ref.Value.Default != nil {
-			data = ref.Value.Default
+		} else if s.Default != nil {
+			data = s.Default
 		} else {
-			return nil, Errorf("type", "invalid type, expected %v but got null", ref.Type())
+			return nil, Errorf("type", "invalid type, expected %v but got null", s.Type.String())
 		}
 	}
 
@@ -72,16 +69,16 @@ func (p *Parser) parse(data interface{}, ref *schema.Ref) (interface{}, error) {
 
 	var v interface{}
 	var err error
-	if len(ref.Value.Type) == 0 {
+	if len(s.Type) == 0 {
 		t := toType(data)
-		v, err = p.parseType(data, ref.Value, t, evaluatedProperties, evaluatedItems)
+		v, err = p.parseType(data, s, t, evaluatedProperties, evaluatedItems)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	for _, typeName := range ref.Value.Type {
-		v, err = p.parseType(data, ref.Value, typeName, evaluatedProperties, evaluatedItems)
+	for _, typeName := range s.Type {
+		v, err = p.parseType(data, s, typeName, evaluatedProperties, evaluatedItems)
 		if err != nil {
 			continue
 		}
@@ -93,28 +90,28 @@ func (p *Parser) parse(data interface{}, ref *schema.Ref) (interface{}, error) {
 	}
 
 	switch {
-	case len(ref.Value.AnyOf) > 0:
-		v, err = p.ParseAny(ref.Value, v, evaluatedProperties)
+	case len(s.AnyOf) > 0:
+		v, err = p.ParseAny(s, v, evaluatedProperties)
 		if err != nil {
 			return nil, err
 		}
-	case len(ref.Value.AllOf) > 0:
-		v, err = p.ParseAll(ref.Value, v, evaluatedProperties)
+	case len(s.AllOf) > 0:
+		v, err = p.ParseAll(s, v, evaluatedProperties)
 		if err != nil {
 			return nil, err
 		}
-	case len(ref.Value.OneOf) > 0:
-		v, err = p.ParseOne(ref.Value, v, evaluatedProperties)
+	case len(s.OneOf) > 0:
+		v, err = p.ParseOne(s, v, evaluatedProperties)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	v, err = p.evaluateUnevaluatedProperties(v, ref.Value, evaluatedProperties)
+	v, err = p.evaluateUnevaluatedProperties(v, s, evaluatedProperties)
 	if err != nil {
 		return nil, err
 	}
-	v, err = p.evaluateUnevaluatedItems(v, ref.Value, evaluatedItems)
+	v, err = p.evaluateUnevaluatedItems(v, s, evaluatedItems)
 	if err != nil {
 		return nil, err
 	}
@@ -166,7 +163,7 @@ func (p *Parser) parseType(data interface{}, s *schema.Schema, typeName string, 
 		s2 := *s
 		s2.Const = nil
 		p2 := Parser{ConvertToSortedMap: true}
-		c, constErr := p2.parse(*s.Const, &schema.Ref{Value: &s2})
+		c, constErr := p2.parse(*s.Const, &s2)
 		if constErr != nil {
 			return data, Errorf("const", "const value does not match schema: %v", constErr)
 		}

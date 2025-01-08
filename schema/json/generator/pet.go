@@ -76,7 +76,7 @@ func PetCategory() *Tree {
 			}
 			if last.Schema.HasProperties() {
 				m := map[string]interface{}{}
-				for it := last.Schema.Value.Properties.Iter(); it.Next(); {
+				for it := last.Schema.Properties.Iter(); it.Next(); {
 					if it.Key() == "name" {
 						m["name"] = gofakeit.Animal()
 					} else {

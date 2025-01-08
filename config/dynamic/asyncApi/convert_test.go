@@ -56,13 +56,13 @@ func TestConfig_Convert(t *testing.T) {
 
 	// traits
 	require.Len(t, msg.Traits, 1)
-	require.IsType(t, &schema.Ref{}, msg.Traits[0].Value.Headers.Value.Schema)
-	headers := msg.Traits[0].Value.Headers.Value.Schema.(*schema.Ref)
-	require.Equal(t, float64(100), *headers.Value.Properties.Get("my-app-header").Value.Maximum)
+	require.IsType(t, &schema.Schema{}, msg.Traits[0].Value.Headers.Value.Schema)
+	headers := msg.Traits[0].Value.Headers.Value.Schema.(*schema.Schema)
+	require.Equal(t, float64(100), *headers.Properties.Get("my-app-header").Maximum)
 
 	// payload
 	payload := msg.Payload.Value
-	require.IsType(t, &schema.Ref{}, payload.Schema)
-	s := payload.Schema.(*schema.Ref)
-	require.Equal(t, "object", s.Value.Type[0])
+	require.IsType(t, &schema.Schema{}, payload.Schema)
+	s := payload.Schema.(*schema.Schema)
+	require.Equal(t, "object", s.Type[0])
 }

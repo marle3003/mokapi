@@ -16,7 +16,7 @@ import (
 	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 	"time"
 )

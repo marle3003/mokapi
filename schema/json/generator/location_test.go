@@ -3,7 +3,7 @@ package generator
 import (
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 
@@ -19,7 +19,7 @@ func TestLocation(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name:   "country",
-						Schema: schematest.NewRef("string"),
+						Schema: schematest.New("string"),
 					},
 				},
 			},
@@ -34,7 +34,7 @@ func TestLocation(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name: "country",
-						Schema: schematest.NewRef("string",
+						Schema: schematest.New("string",
 							schematest.WithPattern("[A-Z]{2}")),
 					},
 				},
@@ -50,7 +50,7 @@ func TestLocation(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name: "country",
-						Schema: schematest.NewRef("string",
+						Schema: schematest.New("string",
 							schematest.WithPattern("[a-z]{2}")),
 					},
 				},
@@ -66,7 +66,7 @@ func TestLocation(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name: "country",
-						Schema: schematest.NewRef("string",
+						Schema: schematest.New("string",
 							schematest.WithPattern("[a-z]{4}")),
 					},
 				},
@@ -82,7 +82,7 @@ func TestLocation(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name:   "country",
-						Schema: schematest.NewRef("string", schematest.WithMaxLength(15)),
+						Schema: schematest.New("string", schematest.WithMaxLength(15)),
 					},
 				},
 			},
@@ -97,7 +97,7 @@ func TestLocation(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name:   "countryName",
-						Schema: schematest.NewRef("string"),
+						Schema: schematest.New("string"),
 					},
 				},
 			},

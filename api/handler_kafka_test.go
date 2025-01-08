@@ -12,7 +12,7 @@ import (
 	schematest2 "mokapi/providers/openapi/schema/schematest"
 	"mokapi/runtime"
 	"mokapi/runtime/monitor"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"mokapi/try"
 	"net/http"
 	"testing"

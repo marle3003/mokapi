@@ -3,7 +3,7 @@ package generator
 import (
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 
@@ -19,7 +19,7 @@ func TestProduct(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name:   "product",
-						Schema: schematest.NewRef("object", schematest.WithProperty("name", nil)),
+						Schema: schematest.New("object", schematest.WithProperty("name", nil)),
 					},
 				},
 			},
@@ -34,7 +34,7 @@ func TestProduct(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name:   "product",
-						Schema: schematest.NewRef("object", schematest.WithProperty("description", nil)),
+						Schema: schematest.New("object", schematest.WithProperty("description", nil)),
 					},
 				},
 			},
@@ -59,7 +59,7 @@ func TestProduct(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name:   "product",
-						Schema: schematest.NewRef("object", schematest.WithProperty("category", nil)),
+						Schema: schematest.New("object", schematest.WithProperty("category", nil)),
 					},
 				},
 			},

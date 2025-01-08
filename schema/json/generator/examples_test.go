@@ -4,7 +4,7 @@ import (
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/schema"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 
@@ -19,11 +19,9 @@ func TestExamples(t *testing.T) {
 			req: &Request{
 				Path: Path{
 					&PathElement{
-						Schema: &schema.Ref{
-							Value: &schema.Schema{
-								Examples: []interface{}{
-									"Anything", 4035,
-								},
+						Schema: &schema.Schema{
+							Examples: []interface{}{
+								"Anything", 4035,
 							},
 						},
 					},
@@ -39,9 +37,7 @@ func TestExamples(t *testing.T) {
 			req: &Request{
 				Path: Path{
 					&PathElement{
-						Schema: &schema.Ref{
-							Value: schematest.New("integer", schematest.WithExample("foo")),
-						},
+						Schema: schematest.New("integer", schematest.WithExample("foo")),
 					},
 				},
 			},
@@ -55,9 +51,7 @@ func TestExamples(t *testing.T) {
 			req: &Request{
 				Path: Path{
 					&PathElement{
-						Schema: &schema.Ref{
-							Value: schematest.New("integer", schematest.WithExamples("foo", "bar", "test")),
-						},
+						Schema: schematest.New("integer", schematest.WithExamples("foo", "bar", "test")),
 					},
 				},
 			},
@@ -71,9 +65,7 @@ func TestExamples(t *testing.T) {
 			req: &Request{
 				Path: Path{
 					&PathElement{
-						Schema: &schema.Ref{
-							Value: schematest.New("integer", schematest.WithExamples("foo", "bar", "test", int64(1234))),
-						},
+						Schema: schematest.New("integer", schematest.WithExamples("foo", "bar", "test", int64(1234))),
 					},
 				},
 			},

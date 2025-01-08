@@ -269,7 +269,7 @@ func (s *Schema) IsNullable() bool {
 
 func (s *Schema) ConvertTo(i interface{}) (interface{}, error) {
 	if _, ok := i.(*schema.Schema); ok {
-		return ConvertToJsonSchema(&Ref{Value: s}).Value, nil
+		return ConvertToJsonSchema(&Ref{Value: s}), nil
 	}
 	return nil, fmt.Errorf("cannot convert %v to json schema", i)
 }

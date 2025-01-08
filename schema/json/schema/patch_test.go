@@ -3,7 +3,7 @@ package schema_test
 import (
 	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/schema"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 
@@ -337,7 +337,7 @@ func TestSchema_Patch(t *testing.T) {
 			},
 			test: func(t *testing.T, result *schema.Schema) {
 				require.Equal(t, "array", result.Type.String())
-				require.Equal(t, "string", result.Items.Value.Type.String())
+				require.Equal(t, "string", result.Items.Type.String())
 			},
 		},
 		{
@@ -350,8 +350,8 @@ func TestSchema_Patch(t *testing.T) {
 			},
 			test: func(t *testing.T, result *schema.Schema) {
 				require.Equal(t, "array", result.Type.String())
-				require.Equal(t, "string", result.Items.Value.Type.String())
-				require.Equal(t, "foo", result.Items.Value.Format)
+				require.Equal(t, "string", result.Items.Type.String())
+				require.Equal(t, "foo", result.Items.Format)
 			},
 		},
 		{
@@ -458,10 +458,10 @@ func TestSchema_Patch(t *testing.T) {
 				require.Equal(t, 2, result.Properties.Len())
 				foo := result.Properties.Get("foo")
 				require.NotNil(t, foo)
-				require.Equal(t, "string", foo.Value.Type.String())
+				require.Equal(t, "string", foo.Type.String())
 				bar := result.Properties.Get("bar")
 				require.NotNil(t, bar)
-				require.Equal(t, "number", bar.Value.Type.String())
+				require.Equal(t, "number", bar.Type.String())
 			},
 		},
 		{
@@ -476,7 +476,7 @@ func TestSchema_Patch(t *testing.T) {
 				require.Equal(t, 1, result.Properties.Len())
 				foo := result.Properties.Get("foo")
 				require.NotNil(t, foo)
-				require.Equal(t, "[string, number]", foo.Value.Type.String())
+				require.Equal(t, "[string, number]", foo.Type.String())
 			},
 		},
 		{
@@ -507,7 +507,7 @@ func TestSchema_Patch(t *testing.T) {
 			},
 			test: func(t *testing.T, result *schema.Schema) {
 				require.NotNil(t, result.AdditionalProperties)
-				require.Equal(t, false, result.AdditionalProperties.IsFreeForm())
+				require.Equal(t, false, result.IsFreeForm())
 			},
 		},
 		{
@@ -528,7 +528,7 @@ func TestSchema_Patch(t *testing.T) {
 			},
 			test: func(t *testing.T, result *schema.Schema) {
 				require.NotNil(t, result.AdditionalProperties.Ref)
-				require.Equal(t, schema.Types{"string", "integer"}, result.AdditionalProperties.Value.Type)
+				require.Equal(t, schema.Types{"string", "integer"}, result.AdditionalProperties.Type)
 			},
 		},
 		{
@@ -715,80 +715,40 @@ func TestSchema_Patch(t *testing.T) {
 			name: "patch definitions",
 			schemas: []*schema.Schema{
 				{},
-				{Definitions: map[string]*schema.Ref{"foo": schematest.NewRef("string")}},
+				{Definitions: map[string]*schema.Schema{"foo": schematest.New("string")}},
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, "string", result.Definitions["foo"].Value.Type.String())
+				require.Equal(t, "string", result.Definitions["foo"].Type.String())
 			},
 		},
 		{
 			name: "patch overwrite definitions",
 			schemas: []*schema.Schema{
-				{Definitions: map[string]*schema.Ref{"foo": schematest.NewRef("string")}},
-				{Definitions: map[string]*schema.Ref{"foo": schematest.NewRef("integer")}},
+				{Definitions: map[string]*schema.Schema{"foo": schematest.New("string")}},
+				{Definitions: map[string]*schema.Schema{"foo": schematest.New("integer")}},
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, "[string, integer]", result.Definitions["foo"].Value.Type.String())
+				require.Equal(t, "[string, integer]", result.Definitions["foo"].Type.String())
 			},
 		},
 		{
 			name: "patch $defs",
 			schemas: []*schema.Schema{
 				{},
-				{Defs: map[string]*schema.Ref{"foo": schematest.NewRef("string")}},
+				{Defs: map[string]*schema.Schema{"foo": schematest.New("string")}},
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, "string", result.Defs["foo"].Value.Type.String())
+				require.Equal(t, "string", result.Defs["foo"].Type.String())
 			},
 		},
 		{
 			name: "patch overwrite $defs",
 			schemas: []*schema.Schema{
-				{Defs: map[string]*schema.Ref{"foo": schematest.NewRef("string")}},
-				{Defs: map[string]*schema.Ref{"foo": schematest.NewRef("integer")}},
+				{Defs: map[string]*schema.Schema{"foo": schematest.New("string")}},
+				{Defs: map[string]*schema.Schema{"foo": schematest.New("integer")}},
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, "[string, integer]", result.Defs["foo"].Value.Type.String())
-			},
-		},
-	}
-
-	for _, tc := range testcases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			s := tc.schemas[0]
-			for _, p := range tc.schemas[1:] {
-				s.Patch(p)
-			}
-			tc.test(t, s)
-		})
-	}
-}
-
-func TestRef_Patch(t *testing.T) {
-	testcases := []struct {
-		name    string
-		schemas []*schema.Ref
-		test    func(t *testing.T, result *schema.Ref)
-	}{
-		{
-			name: "patch is nil",
-			schemas: []*schema.Ref{
-				{Value: schematest.New("object")},
-				{},
-			},
-			test: func(t *testing.T, result *schema.Ref) {
-				require.Equal(t, "object", result.Value.Type.String())
-			},
-		},
-		{
-			name: "source is nil",
-			schemas: []*schema.Ref{
-				{},
-				{Value: schematest.New("object")},
-			},
-			test: func(t *testing.T, result *schema.Ref) {
-				require.Equal(t, "object", result.Value.Type.String())
+				require.Equal(t, "[string, integer]", result.Defs["foo"].Type.String())
 			},
 		},
 	}

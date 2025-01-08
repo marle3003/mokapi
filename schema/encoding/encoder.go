@@ -13,10 +13,10 @@ const marshalError = "encoding data to '%v' failed: %w"
 const marshalErrorList = "encoding data to '%v' failed:\n%w"
 
 type Encoder struct {
-	r *schema.Ref
+	r *schema.Schema
 }
 
-func NewEncoder(r *schema.Ref) *Encoder {
+func NewEncoder(r *schema.Schema) *Encoder {
 	return &Encoder{
 		r: r,
 	}

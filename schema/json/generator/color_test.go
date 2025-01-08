@@ -3,7 +3,7 @@ package generator
 import (
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 
@@ -17,7 +17,7 @@ func TestColor(t *testing.T) {
 			name: "color name",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "color", Schema: schematest.NewRef("string")},
+					&PathElement{Name: "color", Schema: schematest.New("string")},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -29,7 +29,7 @@ func TestColor(t *testing.T) {
 			name: "hex color",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "color", Schema: schematest.NewRef("string", schematest.WithMaxLength(7))},
+					&PathElement{Name: "color", Schema: schematest.New("string", schematest.WithMaxLength(7))},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -41,7 +41,7 @@ func TestColor(t *testing.T) {
 			name: "rgb color",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "color", Schema: schematest.NewRef("array",
+					&PathElement{Name: "color", Schema: schematest.New("array",
 						schematest.WithItems("integer"),
 					)},
 				},

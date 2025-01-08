@@ -8,6 +8,10 @@ import (
 func (s *Schema) String() string {
 	var sb strings.Builder
 
+	if s.Boolean != nil {
+		return fmt.Sprintf("%v", s.Boolean)
+	}
+
 	if len(s.AnyOf) > 0 {
 		sb.WriteString("any of ")
 		for _, i := range s.AnyOf {
@@ -113,7 +117,7 @@ func (s *Schema) String() string {
 
 	if s.IsArray() && s.Items != nil {
 		sb.WriteString(" items=")
-		sb.WriteString(fmt.Sprintf("%v", s.Items.Value))
+		sb.WriteString(fmt.Sprintf("%v", s.Items))
 	}
 
 	if len(s.Title) > 0 {

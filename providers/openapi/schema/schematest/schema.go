@@ -164,7 +164,11 @@ func Any(schemas ...*schema.Schema) SchemaOptions {
 func NewAny(schemas ...*schema.Schema) *schema.Schema {
 	s := &schema.Schema{}
 	for _, any := range schemas {
-		s.AnyOf = append(s.AnyOf, &schema.Ref{Value: any})
+		if any == nil {
+			s.AnyOf = append(s.AnyOf, nil)
+		} else {
+			s.AnyOf = append(s.AnyOf, &schema.Ref{Value: any})
+		}
 	}
 	return s
 }
@@ -188,7 +192,11 @@ func OneOf(schemas ...*schema.Schema) SchemaOptions {
 func NewOneOf(schemas ...*schema.Schema) *schema.Schema {
 	s := &schema.Schema{}
 	for _, one := range schemas {
-		s.OneOf = append(s.OneOf, &schema.Ref{Value: one})
+		if one == nil {
+			s.OneOf = append(s.OneOf, nil)
+		} else {
+			s.OneOf = append(s.OneOf, &schema.Ref{Value: one})
+		}
 	}
 	return s
 }
@@ -212,7 +220,11 @@ func AllOf(schemas ...*schema.Schema) SchemaOptions {
 func NewAllOf(schemas ...*schema.Schema) *schema.Schema {
 	s := &schema.Schema{}
 	for _, all := range schemas {
-		s.AllOf = append(s.AllOf, &schema.Ref{Value: all})
+		if all == nil {
+			s.AllOf = append(s.AllOf, nil)
+		} else {
+			s.AllOf = append(s.AllOf, &schema.Ref{Value: all})
+		}
 	}
 	return s
 }

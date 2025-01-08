@@ -3,9 +3,8 @@ package generator
 import (
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
-	"mokapi/schema/json/ref"
 	"mokapi/schema/json/schema"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 
@@ -20,7 +19,7 @@ func TestObject(t *testing.T) {
 			req: func() *Request {
 				return &Request{
 					Path: Path{
-						&PathElement{Schema: schematest.NewRef("object", schematest.WithProperty("name", nil))},
+						&PathElement{Schema: schematest.New("object", schematest.WithProperty("name", nil))},
 					},
 				}
 			},
@@ -34,11 +33,11 @@ func TestObject(t *testing.T) {
 			req: func() *Request {
 				s := schematest.New("object")
 				s.Properties = &schema.Schemas{}
-				s.Properties.Set("loop", &schema.Ref{Reference: ref.Reference{Ref: "#/components/schemas/loop"}, Value: s})
+				s.Properties.Set("loop", s)
 
 				return &Request{
 					Path: Path{
-						&PathElement{Schema: &schema.Ref{Value: s}},
+						&PathElement{Schema: s},
 					},
 				}
 			},
@@ -51,11 +50,11 @@ func TestObject(t *testing.T) {
 			req: func() *Request {
 				s := schematest.NewTypes([]string{"object", "null"})
 				s.Properties = &schema.Schemas{}
-				s.Properties.Set("loop", &schema.Ref{Reference: ref.Reference{Ref: "#/components/schemas/loop"}, Value: s})
+				s.Properties.Set("loop", s)
 
 				return &Request{
 					Path: Path{
-						&PathElement{Schema: &schema.Ref{Value: s}},
+						&PathElement{Schema: s},
 					},
 				}
 			},
@@ -69,7 +68,7 @@ func TestObject(t *testing.T) {
 			req: func() *Request {
 				loop := schematest.NewTypes([]string{"object", "null"})
 				loop.Properties = &schema.Schemas{}
-				loop.Properties.Set("loop", &schema.Ref{Reference: ref.Reference{Ref: "#/components/schemas/loop"}, Value: loop})
+				loop.Properties.Set("loop", loop)
 				s := schematest.New("object",
 					schematest.WithProperty("loop1", loop),
 					schematest.WithProperty("loop2", loop),
@@ -78,16 +77,17 @@ func TestObject(t *testing.T) {
 
 				return &Request{
 					Path: Path{
-						&PathElement{Schema: &schema.Ref{Value: s}},
+						&PathElement{Schema: s},
 					},
 				}
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
+				// here first loop is already broken, because first level is not counted in the loop protection
 				require.Equal(t, map[string]interface{}{
-					"loop1": map[string]interface{}{"loop": map[string]interface{}{"loop": nil}},
-					"loop2": map[string]interface{}{"loop": map[string]interface{}{"loop": nil}},
-					"loop3": map[string]interface{}{"loop": map[string]interface{}{"loop": nil}},
+					"loop1": map[string]interface{}{"loop": nil},
+					"loop2": map[string]interface{}{"loop": nil},
+					"loop3": map[string]interface{}{"loop": nil},
 				},
 					v)
 			},
@@ -95,12 +95,12 @@ func TestObject(t *testing.T) {
 		{
 			name: "loop with array",
 			req: func() *Request {
-				loop := schematest.NewRef("object")
-				loop.Value.Properties = &schema.Schemas{}
-				loop.Value.Properties.Set("array", &schema.Ref{Value: &schema.Schema{
+				loop := schematest.New("object")
+				loop.Properties = &schema.Schemas{}
+				loop.Properties.Set("array", &schema.Schema{
 					Type:  schema.Types{"array"},
 					Items: loop,
-				}})
+				})
 
 				return &Request{
 					Path: Path{

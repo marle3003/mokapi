@@ -3,7 +3,7 @@ package generator
 import (
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 
@@ -17,7 +17,7 @@ func TestStringFormat(t *testing.T) {
 			name: "date",
 			req: &Request{
 				Path: Path{
-					&PathElement{Schema: schematest.NewRef("string", schematest.WithFormat("date"))},
+					&PathElement{Schema: schematest.New("string", schematest.WithFormat("date"))},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -29,7 +29,7 @@ func TestStringFormat(t *testing.T) {
 			name: "date-time",
 			req: &Request{
 				Path: Path{
-					&PathElement{Schema: schematest.NewRef("string", schematest.WithFormat("date-time"))},
+					&PathElement{Schema: schematest.New("string", schematest.WithFormat("date-time"))},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -41,7 +41,7 @@ func TestStringFormat(t *testing.T) {
 			name: "password",
 			req: &Request{
 				Path: Path{
-					&PathElement{Schema: schematest.NewRef("string", schematest.WithFormat("password"))},
+					&PathElement{Schema: schematest.New("string", schematest.WithFormat("password"))},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -53,7 +53,7 @@ func TestStringFormat(t *testing.T) {
 			name: "email",
 			req: &Request{
 				Path: Path{
-					&PathElement{Schema: schematest.NewRef("string", schematest.WithFormat("email"))},
+					&PathElement{Schema: schematest.New("string", schematest.WithFormat("email"))},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -65,7 +65,7 @@ func TestStringFormat(t *testing.T) {
 			name: "uuid",
 			req: &Request{
 				Path: Path{
-					&PathElement{Schema: schematest.NewRef("string", schematest.WithFormat("uuid"))},
+					&PathElement{Schema: schematest.New("string", schematest.WithFormat("uuid"))},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -77,7 +77,7 @@ func TestStringFormat(t *testing.T) {
 			name: "{url}",
 			req: &Request{
 				Path: Path{
-					&PathElement{Schema: schematest.NewRef("string", schematest.WithFormat("{url}"))},
+					&PathElement{Schema: schematest.New("string", schematest.WithFormat("{url}"))},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -89,7 +89,7 @@ func TestStringFormat(t *testing.T) {
 			name: "uri",
 			req: &Request{
 				Path: Path{
-					&PathElement{Schema: schematest.NewRef("string", schematest.WithFormat("uri"))},
+					&PathElement{Schema: schematest.New("string", schematest.WithFormat("uri"))},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -101,7 +101,7 @@ func TestStringFormat(t *testing.T) {
 			name: "hostname",
 			req: &Request{
 				Path: Path{
-					&PathElement{Schema: schematest.NewRef("string", schematest.WithFormat("hostname"))},
+					&PathElement{Schema: schematest.New("string", schematest.WithFormat("hostname"))},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -113,7 +113,7 @@ func TestStringFormat(t *testing.T) {
 			name: "ipv4",
 			req: &Request{
 				Path: Path{
-					&PathElement{Schema: schematest.NewRef("string", schematest.WithFormat("ipv4"))},
+					&PathElement{Schema: schematest.New("string", schematest.WithFormat("ipv4"))},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -125,7 +125,7 @@ func TestStringFormat(t *testing.T) {
 			name: "ipv6",
 			req: &Request{
 				Path: Path{
-					&PathElement{Schema: schematest.NewRef("string", schematest.WithFormat("ipv6"))},
+					&PathElement{Schema: schematest.New("string", schematest.WithFormat("ipv6"))},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -137,7 +137,7 @@ func TestStringFormat(t *testing.T) {
 			name: "{beername}",
 			req: &Request{
 				Path: Path{
-					&PathElement{Schema: schematest.NewRef("string", schematest.WithFormat("{beername}"))},
+					&PathElement{Schema: schematest.New("string", schematest.WithFormat("{beername}"))},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -149,7 +149,7 @@ func TestStringFormat(t *testing.T) {
 			name: "{zip} {city}",
 			req: &Request{
 				Path: Path{
-					&PathElement{Schema: schematest.NewRef("string", schematest.WithFormat("{zip} {city}"))},
+					&PathElement{Schema: schematest.New("string", schematest.WithFormat("{zip} {city}"))},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -186,7 +186,7 @@ func TestName(t *testing.T) {
 		{
 			name: "name as string",
 			req: &Request{Path: Path{
-				&PathElement{Name: "name", Schema: schematest.NewRef("string")},
+				&PathElement{Name: "name", Schema: schematest.New("string")},
 			}},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -204,7 +204,7 @@ func TestName(t *testing.T) {
 		{
 			name: "campaignName",
 			req: &Request{Path: Path{
-				&PathElement{Name: "campaignName", Schema: schematest.NewRef("string")},
+				&PathElement{Name: "campaignName", Schema: schematest.New("string")},
 			}},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -216,7 +216,7 @@ func TestName(t *testing.T) {
 			req: &Request{Path: Path{
 				&PathElement{
 					Name: "name",
-					Schema: schematest.NewRef("string",
+					Schema: schematest.New("string",
 						schematest.WithMaxLength(3),
 					),
 				},
@@ -231,7 +231,7 @@ func TestName(t *testing.T) {
 			req: &Request{Path: Path{
 				&PathElement{
 					Name: "name",
-					Schema: schematest.NewRef("string",
+					Schema: schematest.New("string",
 						schematest.WithMinLength(4),
 						schematest.WithMaxLength(4),
 					),
@@ -247,7 +247,7 @@ func TestName(t *testing.T) {
 			req: &Request{Path: Path{
 				&PathElement{
 					Name: "name",
-					Schema: schematest.NewRef("string",
+					Schema: schematest.New("string",
 						schematest.WithMinLength(4),
 					),
 				},
@@ -262,7 +262,7 @@ func TestName(t *testing.T) {
 			req: &Request{Path: Path{
 				&PathElement{
 					Name: "name",
-					Schema: schematest.NewRef("string",
+					Schema: schematest.New("string",
 						schematest.WithMinLength(5),
 						schematest.WithMaxLength(5),
 					),
@@ -278,7 +278,7 @@ func TestName(t *testing.T) {
 			req: &Request{Path: Path{
 				&PathElement{
 					Name: "name",
-					Schema: schematest.NewRef("string",
+					Schema: schematest.New("string",
 						schematest.WithMinLength(6),
 						schematest.WithMaxLength(6),
 					),
@@ -294,7 +294,7 @@ func TestName(t *testing.T) {
 			req: &Request{Path: Path{
 				&PathElement{
 					Name: "name",
-					Schema: schematest.NewRef("string",
+					Schema: schematest.New("string",
 						schematest.WithMinLength(7),
 					),
 				},
@@ -326,7 +326,7 @@ func TestStringId(t *testing.T) {
 			name: "id",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "id", Schema: schematest.NewRef("string")},
+					&PathElement{Name: "id", Schema: schematest.New("string")},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -340,7 +340,7 @@ func TestStringId(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name:   "id",
-						Schema: schematest.NewRef("string", schematest.WithMaxLength(30)),
+						Schema: schematest.New("string", schematest.WithMaxLength(30)),
 					},
 				},
 			},
@@ -355,7 +355,7 @@ func TestStringId(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name:   "id",
-						Schema: schematest.NewRef("string", schematest.WithMinLength(4)),
+						Schema: schematest.New("string", schematest.WithMinLength(4)),
 					},
 				},
 			},
@@ -370,7 +370,7 @@ func TestStringId(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name: "id",
-						Schema: schematest.NewRef("string",
+						Schema: schematest.New("string",
 							schematest.WithMinLength(4),
 							schematest.WithMaxLength(10),
 						),
@@ -404,7 +404,7 @@ func TestStringNumber(t *testing.T) {
 			name: "partyNumber",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "partyNumber", Schema: schematest.NewRef("string")},
+					&PathElement{Name: "partyNumber", Schema: schematest.New("string")},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -418,7 +418,7 @@ func TestStringNumber(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name:   "partyNumbers",
-						Schema: schematest.NewRef("array", schematest.WithItems("string"))},
+						Schema: schematest.New("array", schematest.WithItems("string"))},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -432,7 +432,7 @@ func TestStringNumber(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name: "id",
-						Schema: schematest.NewRef("string",
+						Schema: schematest.New("string",
 							schematest.WithMinLength(8),
 							schematest.WithMaxLength(8),
 						),
@@ -451,7 +451,7 @@ func TestStringNumber(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name:   "id",
-						Schema: schematest.NewRef("string", schematest.WithMinLength(4)),
+						Schema: schematest.New("string", schematest.WithMinLength(4)),
 					},
 				},
 			},
@@ -466,7 +466,7 @@ func TestStringNumber(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name: "id",
-						Schema: schematest.NewRef("string",
+						Schema: schematest.New("string",
 							schematest.WithMinLength(4),
 							schematest.WithMaxLength(10),
 						),
@@ -500,7 +500,7 @@ func TestStringKey(t *testing.T) {
 			name: "businessKey",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "businessKey", Schema: schematest.NewRef("string")},
+					&PathElement{Name: "businessKey", Schema: schematest.New("string")},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -514,7 +514,7 @@ func TestStringKey(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name: "businessKey",
-						Schema: schematest.NewRef("string",
+						Schema: schematest.New("string",
 							schematest.WithPattern("[a-z]{3}"),
 						),
 					},
@@ -531,7 +531,7 @@ func TestStringKey(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name:   "key",
-						Schema: schematest.NewRef("string", schematest.WithMinLength(4)),
+						Schema: schematest.New("string", schematest.WithMinLength(4)),
 					},
 				},
 			},
@@ -546,7 +546,7 @@ func TestStringKey(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name: "key",
-						Schema: schematest.NewRef("string",
+						Schema: schematest.New("string",
 							schematest.WithMinLength(4),
 							schematest.WithMaxLength(10),
 						),
@@ -581,7 +581,7 @@ func TestStringEmail(t *testing.T) {
 			name: "email",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "email", Schema: schematest.NewRef("string")},
+					&PathElement{Name: "email", Schema: schematest.New("string")},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -624,7 +624,7 @@ func TestStringUrl(t *testing.T) {
 			name: "uri",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "uri", Schema: schematest.NewRef("string")},
+					&PathElement{Name: "uri", Schema: schematest.New("string")},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -648,7 +648,7 @@ func TestStringUrl(t *testing.T) {
 			name: "url",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "uri", Schema: schematest.NewRef("string")},
+					&PathElement{Name: "uri", Schema: schematest.New("string")},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -684,7 +684,7 @@ func TestStringUrl(t *testing.T) {
 			name: "updateUrl",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "curl", Schema: schematest.NewRef("string")},
+					&PathElement{Name: "curl", Schema: schematest.New("string")},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -696,7 +696,7 @@ func TestStringUrl(t *testing.T) {
 			name: "updateURL",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "curl", Schema: schematest.NewRef("string")},
+					&PathElement{Name: "curl", Schema: schematest.New("string")},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -708,7 +708,7 @@ func TestStringUrl(t *testing.T) {
 			name: "url",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "url", Schema: schematest.NewRef("array", schematest.WithItems("string"))},
+					&PathElement{Name: "url", Schema: schematest.New("array", schematest.WithItems("string"))},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -723,7 +723,7 @@ func TestStringUrl(t *testing.T) {
 			name: "urls",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "url", Schema: schematest.NewRef("array", schematest.WithItems("string"))},
+					&PathElement{Name: "url", Schema: schematest.New("array", schematest.WithItems("string"))},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -738,7 +738,7 @@ func TestStringUrl(t *testing.T) {
 			name: "photoUrls",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "url", Schema: schematest.NewRef("array", schematest.WithItems("string"))},
+					&PathElement{Name: "url", Schema: schematest.New("array", schematest.WithItems("string"))},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -787,7 +787,7 @@ func TestStringError(t *testing.T) {
 			name: "error",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "error", Schema: schematest.NewRef("string")},
+					&PathElement{Name: "error", Schema: schematest.New("string")},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -830,7 +830,7 @@ func TestStringHash(t *testing.T) {
 			name: "hash",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "hash", Schema: schematest.NewRef("string")},
+					&PathElement{Name: "hash", Schema: schematest.New("string")},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -873,7 +873,7 @@ func TestStringDescription(t *testing.T) {
 			name: "description",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "description", Schema: schematest.NewRef("string")},
+					&PathElement{Name: "description", Schema: schematest.New("string")},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {

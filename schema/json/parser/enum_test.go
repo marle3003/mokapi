@@ -4,7 +4,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 
@@ -137,7 +137,7 @@ func TestParse_Enum(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			p := parser.Parser{Schema: &schema.Ref{Value: tc.s}}
+			p := parser.Parser{Schema: tc.s}
 			v, err := p.Parse(tc.d)
 			tc.test(t, v, err)
 		})

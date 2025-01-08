@@ -59,7 +59,7 @@ func newMessageValidator(messageId string, msg *asyncapi3.Message) *messageValid
 
 	var msgParser encoding.Parser
 	switch s := msg.Payload.Value.Schema.(type) {
-	case *schema.Ref:
+	case *schema.Schema:
 		msgParser = &parser.Parser{Schema: s, ConvertToSortedMap: true}
 	case *openapi.Ref:
 		mt := media.ParseContentType(msg.ContentType)
@@ -84,7 +84,7 @@ func newMessageValidator(messageId string, msg *asyncapi3.Message) *messageValid
 	if msg.Bindings.Kafka.Key != nil {
 		var keyParser encoding.Parser
 		switch s := msg.Bindings.Kafka.Key.Value.Schema.(type) {
-		case *schema.Ref:
+		case *schema.Schema:
 			keyParser = &parser.Parser{Schema: s}
 		case *avro.Schema:
 			keyParser = &avro.Parser{Schema: s}

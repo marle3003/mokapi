@@ -4,7 +4,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 
@@ -109,7 +109,7 @@ func TestParser_Array(t *testing.T) {
 			schema: schematest.New("array", schematest.WithPrefixItems(
 				schematest.New("integer"),
 				schematest.New("integer"),
-			), schematest.WithItemsRef(&schema.Ref{Boolean: toBoolP(false)})),
+			), schematest.WithItemsNew(schematest.NewBool(false))),
 			data: []interface{}{1, 2, "foo"},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.EqualError(t, err, "found 1 error:\nschema always fails validation\nschema path #/items/valid")
@@ -120,7 +120,7 @@ func TestParser_Array(t *testing.T) {
 			schema: schematest.New("array", schematest.WithPrefixItems(
 				schematest.New("integer"),
 				schematest.New("integer"),
-			), schematest.WithUnevaluatedItems(&schema.Ref{Boolean: toBoolP(false)})),
+			), schematest.WithUnevaluatedItems(&schema.Schema{Boolean: toBoolP(false)})),
 			data: []interface{}{1, 2, "foo"},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.EqualError(t, err, "found 1 error:\nitem at index 2 has not been successfully evaluated and the schema does not allow unevaluated items.\nschema path #/unevaluatedItems")
@@ -131,7 +131,7 @@ func TestParser_Array(t *testing.T) {
 			schema: schematest.New("array", schematest.WithPrefixItems(
 				schematest.New("integer"),
 				schematest.New("integer"),
-			), schematest.WithUnevaluatedItems(schematest.NewRef("string"))),
+			), schematest.WithUnevaluatedItems(schematest.New("string"))),
 			data: []interface{}{1, 2, "foo"},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -140,7 +140,7 @@ func TestParser_Array(t *testing.T) {
 		},
 		{
 			name:   "contains error",
-			schema: schematest.New("array", schematest.WithContains(schematest.NewRef("integer"))),
+			schema: schematest.New("array", schematest.WithContains(schematest.New("integer"))),
 			data:   []interface{}{"foo"},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.EqualError(t, err, "found 1 error:\nno items match contains\nschema path #/contains")
@@ -148,7 +148,7 @@ func TestParser_Array(t *testing.T) {
 		},
 		{
 			name:   "contains",
-			schema: schematest.New("array", schematest.WithContains(schematest.NewRef("integer"))),
+			schema: schematest.New("array", schematest.WithContains(schematest.New("integer"))),
 			data:   []interface{}{"foo", 1},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -158,7 +158,7 @@ func TestParser_Array(t *testing.T) {
 		{
 			name: "minContains error",
 			schema: schematest.New("array",
-				schematest.WithContains(schematest.NewRef("integer")),
+				schematest.WithContains(schematest.New("integer")),
 				schematest.WithMinContains(2),
 			),
 			data: []interface{}{1},
@@ -169,7 +169,7 @@ func TestParser_Array(t *testing.T) {
 		{
 			name: "minContains",
 			schema: schematest.New("array",
-				schematest.WithContains(schematest.NewRef("integer")),
+				schematest.WithContains(schematest.New("integer")),
 				schematest.WithMinContains(2),
 			),
 			data: []interface{}{"foo", 1, 2},
@@ -181,7 +181,7 @@ func TestParser_Array(t *testing.T) {
 		{
 			name: "maxContains error",
 			schema: schematest.New("array",
-				schematest.WithContains(schematest.NewRef("integer")),
+				schematest.WithContains(schematest.New("integer")),
 				schematest.WithMaxContains(1),
 			),
 			data: []interface{}{1, 2},
@@ -192,7 +192,7 @@ func TestParser_Array(t *testing.T) {
 		{
 			name: "maxContains",
 			schema: schematest.New("array",
-				schematest.WithContains(schematest.NewRef("integer")),
+				schematest.WithContains(schematest.New("integer")),
 				schematest.WithMaxContains(2),
 			),
 			data: []interface{}{"foo", 1, 2},
@@ -293,7 +293,7 @@ func TestParser_Array(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			p := &parser.Parser{Schema: &schema.Ref{Value: tc.schema}}
+			p := &parser.Parser{Schema: tc.schema}
 			v, err := p.Parse(tc.data)
 			tc.test(t, v, err)
 		})

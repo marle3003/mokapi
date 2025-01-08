@@ -3,8 +3,7 @@ package generator
 import (
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
-	"mokapi/schema/json/schema"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 
@@ -18,7 +17,7 @@ func TestComposition(t *testing.T) {
 			name: "anyOf empty",
 			req: &Request{
 				Path: Path{
-					&PathElement{Schema: &schema.Ref{Value: schematest.NewAny()}},
+					&PathElement{Schema: schematest.NewAny()},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -31,12 +30,10 @@ func TestComposition(t *testing.T) {
 			req: &Request{
 				Path: Path{
 					&PathElement{
-						Schema: &schema.Ref{
-							Value: schematest.NewAny(
-								schematest.New("string", schematest.WithMaxLength(5)),
-								schematest.New("number", schematest.WithMinimum(0)),
-							),
-						},
+						Schema: schematest.NewAny(
+							schematest.New("string", schematest.WithMaxLength(5)),
+							schematest.New("number", schematest.WithMinimum(0)),
+						),
 					},
 				},
 			},
@@ -50,14 +47,12 @@ func TestComposition(t *testing.T) {
 			req: &Request{
 				Path: Path{
 					&PathElement{
-						Schema: &schema.Ref{
-							Value: schematest.NewAllOf(
-								schematest.New("object",
-									schematest.WithProperty("foo", schematest.New("string"))),
-								schematest.New("object",
-									schematest.WithProperty("bar", schematest.New("number"))),
-							),
-						},
+						Schema: schematest.NewAllOf(
+							schematest.New("object",
+								schematest.WithProperty("foo", schematest.New("string"))),
+							schematest.New("object",
+								schematest.WithProperty("bar", schematest.New("number"))),
+						),
 					},
 				},
 			},
@@ -72,12 +67,10 @@ func TestComposition(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name: "price",
-						Schema: &schema.Ref{
-							Value: schematest.NewOneOf(
-								schematest.New("number", schematest.WithMultipleOf(5)),
-								schematest.New("number", schematest.WithMultipleOf(3)),
-							),
-						},
+						Schema: schematest.NewOneOf(
+							schematest.New("number", schematest.WithMultipleOf(5)),
+							schematest.New("number", schematest.WithMultipleOf(3)),
+						),
 					},
 				},
 			},

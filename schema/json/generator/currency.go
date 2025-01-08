@@ -33,7 +33,7 @@ func ISO4217() *Tree {
 				if hasPattern(last.Schema) || hasFormat(last.Schema) {
 					return false
 				}
-				if last.Schema.Value != nil && last.Schema.Value.MaxLength != nil && *last.Schema.Value.MaxLength > 3 {
+				if last.Schema.MaxLength != nil && *last.Schema.MaxLength > 3 {
 					return false
 				}
 				return true

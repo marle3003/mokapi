@@ -4,7 +4,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 
@@ -118,7 +118,7 @@ func TestParser_ParseOne(t *testing.T) {
 		{
 			name: "unevaluatedProperty",
 			s: schematest.NewOneOf(
-				schematest.New("object", schematest.WithUnevaluatedProperties(&schema.Ref{Boolean: toBoolP(false)})),
+				schematest.New("object", schematest.WithUnevaluatedProperties(&schema.Schema{Boolean: toBoolP(false)})),
 			),
 			data: map[string]interface{}{"foo": "bar"},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -133,7 +133,7 @@ func TestParser_ParseOne(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			p := parser.Parser{Schema: &schema.Ref{Value: tc.s}, ValidateAdditionalProperties: true}
+			p := parser.Parser{Schema: tc.s, ValidateAdditionalProperties: true}
 			v, err := p.Parse(tc.data)
 			tc.test(t, v, err)
 		})

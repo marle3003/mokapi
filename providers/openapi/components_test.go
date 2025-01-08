@@ -11,7 +11,6 @@ import (
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/schema"
-	jsonRef "mokapi/schema/json/ref"
 	jsonSchema "mokapi/schema/json/schema"
 	"net/url"
 	"testing"
@@ -342,7 +341,7 @@ func TestComponents_Parse(t *testing.T) {
 					return cfg, nil
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithComponentExampleRef("foo", &openapi.ExampleRef{Reference: jsonRef.Reference{Ref: "foo.yml#/components/examples/foo"}}),
+					openapitest.WithComponentExampleRef("foo", &openapi.ExampleRef{Reference: dynamic.Reference{Ref: "foo.yml#/components/examples/foo"}}),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
@@ -356,7 +355,7 @@ func TestComponents_Parse(t *testing.T) {
 					return nil, fmt.Errorf("TESTING ERROR")
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithComponentExampleRef("foo", &openapi.ExampleRef{Reference: jsonRef.Reference{Ref: "foo.yml#/components/parameters/foo"}}),
+					openapitest.WithComponentExampleRef("foo", &openapi.ExampleRef{Reference: dynamic.Reference{Ref: "foo.yml#/components/parameters/foo"}}),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse components failed: parse example 'foo' failed: resolve reference 'foo.yml#/components/parameters/foo' failed: TESTING ERROR")

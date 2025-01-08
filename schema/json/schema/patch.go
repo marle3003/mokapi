@@ -1,19 +1,5 @@
 package schema
 
-func (r *Ref) Patch(patch *Ref) {
-	if patch == nil {
-		return
-	}
-	if patch.Boolean != nil {
-		r.Boolean = patch.Boolean
-	}
-	if r.Value == nil {
-		r.Value = patch.Value
-	} else {
-		r.Value.Patch(patch.Value)
-	}
-}
-
 func (s *Schema) Patch(patch *Schema) {
 	if patch == nil {
 		return

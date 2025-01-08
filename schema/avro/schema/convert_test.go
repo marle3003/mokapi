@@ -3,7 +3,7 @@ package schema
 import (
 	"github.com/stretchr/testify/require"
 	json "mokapi/schema/json/schema"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 

@@ -74,9 +74,9 @@ func (h *handler) getExampleData(w http.ResponseWriter, r *http.Request) {
 	case *schema.Ref:
 		data, err = getRandomByOpenApi(re.Name, s, ct)
 	case *avro.Schema:
-		data, err = getRandomByJson(re.Name, &jsonSchema.Ref{Value: s.Convert()}, ct)
+		data, err = getRandomByJson(re.Name, s.Convert(), ct)
 	default:
-		data, err = getRandomByJson(re.Name, s.(*jsonSchema.Ref), ct)
+		data, err = getRandomByJson(re.Name, s.(*jsonSchema.Schema), ct)
 	}
 
 	if err != nil {
@@ -103,7 +103,7 @@ func getRandomByOpenApi(name string, r *schema.Ref, ct media.ContentType) ([]byt
 	return r.Marshal(data, ct)
 }
 
-func getRandomByJson(name string, r *jsonSchema.Ref, ct media.ContentType) ([]byte, error) {
+func getRandomByJson(name string, r *jsonSchema.Schema, ct media.ContentType) ([]byte, error) {
 	data, err := generator.New(&generator.Request{
 		Path: generator.Path{
 			&generator.PathElement{Name: name, Schema: r},
@@ -215,7 +215,7 @@ func unmarshal(raw json.RawMessage, format string) (interface{}, error) {
 			err := json.Unmarshal(raw, &a)
 			return a, err
 		default:
-			var r *jsonSchema.Ref
+			var r *jsonSchema.Schema
 			err := json.Unmarshal(raw, &r)
 			return r, err
 		}
