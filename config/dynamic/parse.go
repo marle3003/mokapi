@@ -16,9 +16,14 @@ type dynamicObject struct {
 }
 
 type Reader interface {
-	// Read reads data from the given url. If v is not nil
-	// Read tries to store the data in the value pointed to by v
+	// Read reads data from the given url. If v is not nil then
+	// read tries to store the data in the value pointed to by v
 	Read(u *url.URL, v any) (*Config, error)
+}
+
+type Context struct {
+	Config *Config
+	Reader Reader
 }
 
 type Parser interface {
@@ -26,44 +31,14 @@ type Parser interface {
 }
 
 func Parse(c *Config, r Reader) error {
-	name := getFileName(c)
-
-	var data []byte
-	if filepath.Ext(name) == ".tmpl" {
-		var err error
-		data, err = renderTemplate(c.Raw)
-		if err != nil {
-			return fmt.Errorf("unable to render template %v: %v", c.Info.Path(), err)
-		}
-		name = name[0 : len(name)-len(filepath.Ext(name))]
-	} else {
-		data = c.Raw
-	}
-
-	switch filepath.Ext(name) {
-	case ".yml", ".yaml":
-		err := yaml.Unmarshal(data, c)
-		if err != nil {
-			return err
-		}
-	case ".json":
-		err := UnmarshalJSON(data, c)
-		if err != nil {
-			return err
-		}
-	case ".lua", ".js", ".ts":
-		if c.Data == nil {
-			c.Data = script.New(name, data)
-		} else {
-			script := c.Data.(*script.Script)
-			script.Code = string(data)
-		}
-	default:
-		c.Data = string(data)
+	var err error
+	c.Data, err = parse(c)
+	if err != nil {
+		return err
 	}
 
 	if p, ok := c.Data.(Parser); ok {
-		err := p.Parse(c, r)
+		err = p.Parse(c, r)
 		if err != nil {
 			return errors.Wrapf(err, "parsing file %v", c.Info.Path())
 		}
@@ -72,24 +47,103 @@ func Parse(c *Config, r Reader) error {
 	return nil
 }
 
-func (c *Config) UnmarshalJSON(b []byte) error {
+func parse(c *Config) (interface{}, error) {
+	name := getFileName(c)
+	reset(c)
+
+	b := c.Raw
+	var err error
+	if filepath.Ext(name) == ".tmpl" {
+		b, err = renderTemplate(b)
+		if err != nil {
+			return nil, fmt.Errorf("unable to render template %v: %v", c.Info.Path(), err)
+		}
+		name = name[0 : len(name)-len(filepath.Ext(name))]
+	}
+
+	result := c.Data
+	switch filepath.Ext(name) {
+	case ".yml", ".yaml":
+		result, err = parseYaml(b, result)
+	case ".json":
+		result, err = parseJson(b, result)
+	case ".lua", ".js", ".ts":
+		if result == nil {
+			result = script.New(name, b)
+		} else {
+			s := result.(*script.Script)
+			s.Code = string(b)
+		}
+	default:
+		if result != nil {
+			rv := reflect.ValueOf(result)
+			if rv.Kind() == reflect.Pointer || rv.Kind() == reflect.Struct || rv.Kind() == reflect.Slice || rv.Kind() == reflect.Array || rv.Kind() == reflect.Map {
+				// try parse from json and yaml
+				var v interface{}
+				v, err = parseJson(b, result)
+				if err == nil {
+					return v, nil
+				}
+				v, err = parseYaml(b, result)
+				if err == nil {
+					return v, nil
+				}
+			}
+		}
+		result = string(b)
+	}
+
+	return result, err
+}
+
+func parseJson(b []byte, v any) (interface{}, error) {
+	d := &dynamicObject{data: v}
+	err := UnmarshalJSON(b, d)
+	if err != nil {
+		return nil, err
+	}
+	return d.data, nil
+}
+
+func parseYaml(b []byte, v any) (interface{}, error) {
+	d := &dynamicObject{data: v}
+	err := yaml.Unmarshal(b, d)
+	if err != nil {
+		return nil, err
+	}
+	return d.data, nil
+}
+
+func (d *dynamicObject) UnmarshalJSON(b []byte) error {
 	data := make(map[string]string)
 	_ = UnmarshalJSON(b, &data)
 
 	if ct := getConfigType(data); ct != nil {
-		c.Data = reflect.New(ct.configType).Interface()
-		err := UnmarshalJSON(b, c.Data)
+		d.data = reflect.New(ct.configType).Interface()
+		err := UnmarshalJSON(b, d.data)
 		if err != nil {
 			return formatError(b, err)
 		}
 		return nil
 	}
 
-	if c.Data == nil {
+	if d.data == nil {
 		return nil
 	}
 
-	err := UnmarshalJSON(b, c.Data)
+	// resolve pointer of pointer for example: **schema.Schema
+	rt := reflect.TypeOf(d.data)
+	for rt.Kind() == reflect.Ptr {
+		rt = rt.Elem()
+	}
+	rv := reflect.ValueOf(d.data)
+	if rv.Elem().CanSet() {
+		rv.Elem().Set(reflect.New(rt).Elem())
+	} else {
+		d.data = reflect.New(rt).Interface()
+	}
+
+	err := UnmarshalJSON(b, &d.data)
 	if err != nil {
 		return formatError(b, err)
 	}
@@ -97,20 +151,32 @@ func (c *Config) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (d *dynamicObject) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	data := make(map[string]string)
 	_ = unmarshal(data)
 
 	if ct := getConfigType(data); ct != nil {
-		c.Data = reflect.New(ct.configType).Interface()
-		return unmarshal(c.Data)
+		d.data = reflect.New(ct.configType).Interface()
+		return unmarshal(d.data)
 	}
 
-	if c.Data == nil {
+	if d.data == nil {
 		return nil
 	}
 
-	err := unmarshal(c.Data)
+	// resolve pointer of pointer for example: **schema.Schema
+	rt := reflect.TypeOf(d.data)
+	for rt.Kind() == reflect.Ptr {
+		rt = rt.Elem()
+	}
+	rv := reflect.ValueOf(d.data)
+	if rv.Elem().CanSet() {
+		rv.Elem().Set(reflect.New(rt).Elem())
+	} else {
+		d.data = reflect.New(rt).Interface()
+	}
+
+	err := unmarshal(d.data)
 	if err != nil {
 		return err
 	}
@@ -126,6 +192,10 @@ func getFileName(c *Config) string {
 			break
 		}
 		info = *inner
+	}
+
+	if info.Url == nil {
+		return ""
 	}
 
 	path := info.Url.Path
@@ -175,4 +245,14 @@ func getConfigType(data map[string]string) *configType {
 		}
 	}
 	return nil
+}
+
+func reset(c *Config) {
+	v := reflect.ValueOf(c.Data)
+	if v.Kind() != reflect.Ptr || v.IsZero() {
+		return
+	}
+
+	p := v.Elem()
+	p.Set(reflect.Zero(p.Type()))
 }
