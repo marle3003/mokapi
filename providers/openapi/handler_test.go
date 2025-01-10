@@ -77,7 +77,7 @@ func TestResolveEndpoint(t *testing.T) {
 		{
 			name: "no success response specified",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
-				op := openapitest.NewOperation()
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusNotFound, openapitest.WithContent("application/json", openapitest.NewContent())))
 				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
 				r := httptest.NewRequest("GET", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
@@ -96,6 +96,18 @@ func TestResolveEndpoint(t *testing.T) {
 				h(rr, r)
 				require.Equal(t, 500, rr.Code)
 				require.Equal(t, "neither success response (HTTP 2xx) nor 'default' response found\n", rr.Body.String())
+			},
+		},
+		{
+			name: "no success response specified but default",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+				// 0 = default
+				op := openapitest.NewOperation(openapitest.WithResponse(0, openapitest.WithContent("application/json", openapitest.NewContent())))
+				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				r := httptest.NewRequest("GET", "http://localhost/foo", nil)
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, 200, rr.Code)
 			},
 		},
 		{
