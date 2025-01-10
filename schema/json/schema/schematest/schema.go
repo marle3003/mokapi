@@ -48,6 +48,15 @@ func WithPropertyRef(name string, r string) SchemaOptions {
 	}
 }
 
+func WithPropertyNew(name string, prop *schema.Schema) SchemaOptions {
+	return func(s *schema.Schema) {
+		if s.Properties == nil {
+			s.Properties = &schema.Schemas{}
+		}
+		s.Properties.Set(name, prop)
+	}
+}
+
 func WithPatternProperty(pattern string, ps *schema.Schema) SchemaOptions {
 	return func(s *schema.Schema) {
 		if s.PatternProperties == nil {
@@ -386,9 +395,21 @@ func WithElse(condition *schema.Schema) SchemaOptions {
 	}
 }
 
+func WithId(id string) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Id = id
+	}
+}
+
 func WithAnchor(anchor string) SchemaOptions {
 	return func(s *schema.Schema) {
 		s.Anchor = anchor
+	}
+}
+
+func WithDynamicAnchor(anchor string) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.DynamicAnchor = anchor
 	}
 }
 

@@ -1,7 +1,6 @@
 package openapi_test
 
 import (
-	"encoding/json"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
@@ -36,8 +35,6 @@ func TestConfig_v31(t *testing.T) {
 func readJsonTestFile(t *testing.T, path string, data interface{}, url string) *dynamic.Config {
 	b, err := os.ReadFile(path)
 	require.NoError(t, err)
-	err = json.Unmarshal(b, &data)
-	require.NoError(t, err)
 
 	return &dynamic.Config{
 		Info: dynamic.ConfigInfo{
@@ -46,6 +43,8 @@ func readJsonTestFile(t *testing.T, path string, data interface{}, url string) *
 			Checksum: nil,
 			Time:     time.Time{},
 		},
-		Data: data,
+		Raw:   b,
+		Data:  data,
+		Scope: dynamic.Scope{Name: url},
 	}
 }

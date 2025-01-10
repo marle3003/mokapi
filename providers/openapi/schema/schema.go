@@ -99,16 +99,11 @@ func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 
 	if s.Id != "" {
 		config.OpenScope(s.Id)
-	} else if config.Scope == nil {
-		if config.Info.Url != nil {
-			config.OpenScope(config.Info.Url.String())
-		} else if config.Scope == nil {
-			config.OpenScope("")
-		}
+		defer config.CloseScope()
 	}
 
 	if s.Anchor != "" {
-		if err := config.Scope.Set(s.Anchor, s); err != nil {
+		if err := config.Scope.SetLexical(s.Anchor, s); err != nil {
 			return err
 		}
 	}

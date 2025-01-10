@@ -17,12 +17,17 @@ type decoder struct {
 }
 
 func UnmarshalJSON(b []byte, v interface{}) error {
+	rv := reflect.ValueOf(v)
+	if rv.Kind() != reflect.Pointer || rv.IsNil() {
+		return &json.InvalidUnmarshalError{Type: reflect.TypeOf(v)}
+	}
+
 	d := &decoder{
 		d: json.NewDecoder(bytes.NewReader(b)),
 		b: b,
 	}
 
-	err := unmarshalJSON(d, reflect.ValueOf(v))
+	err := unmarshalJSON(d, rv)
 	if errors.Is(err, io.ErrUnexpectedEOF) {
 		return fmt.Errorf("unexpected end of JSON input")
 	}
@@ -41,15 +46,19 @@ func NextTokenIndex(b []byte) int64 {
 }
 
 func unmarshalJSON(d *decoder, v reflect.Value) error {
-	if unmarshaler(v) {
-		v = indirect(v, false)
+	i2 := v.Interface()
+	_ = i2
+
+	if u, _ := indirect(v); u != nil {
 		p := reflect.New(v.Type())
 		p.Elem().Set(v)
 		err := d.d.Decode(p.Interface())
 		if err != nil {
 			return err
 		}
-		v.Set(p.Elem())
+		if v.CanSet() {
+			v.Set(p.Elem())
+		}
 		return nil
 	}
 
@@ -70,7 +79,7 @@ func value(token json.Token, d *decoder, v reflect.Value) error {
 			return array(d, v)
 		}
 	case string:
-		v = indirect(v, false)
+		_, v = indirect(v)
 		switch v.Kind() {
 		case reflect.String:
 			v.SetString(t)
@@ -84,7 +93,7 @@ func value(token json.Token, d *decoder, v reflect.Value) error {
 	case float64:
 		return number(t, v)
 	case bool:
-		v = indirect(v, false)
+		_, v = indirect(v)
 		if v.Type().AssignableTo(reflect.TypeOf(t)) {
 			v.Set(reflect.ValueOf(t))
 		} else {
@@ -94,7 +103,6 @@ func value(token json.Token, d *decoder, v reflect.Value) error {
 	case nil:
 		switch v.Kind() {
 		case reflect.Interface, reflect.Pointer, reflect.Map, reflect.Slice:
-			v = indirect(v, true)
 			v.Set(reflect.Zero(v.Type()))
 			return nil
 		default:
@@ -107,7 +115,7 @@ func value(token json.Token, d *decoder, v reflect.Value) error {
 }
 
 func object(d *decoder, v reflect.Value) error {
-	v = indirect(v, false)
+	_, v = indirect(v)
 	// check type
 	switch v.Kind() {
 	case reflect.Struct, reflect.Map:
@@ -157,7 +165,7 @@ func object(d *decoder, v reflect.Value) error {
 }
 
 func array(d *decoder, v reflect.Value) error {
-	v = indirect(v, false)
+	_, v = indirect(v)
 	isAny := false
 	// check type
 	switch v.Kind() {
@@ -198,7 +206,7 @@ func array(d *decoder, v reflect.Value) error {
 			v.Set(reflect.Append(v.Elem(), p.Elem()))
 		} else {
 			p := reflect.New(v.Type().Elem())
-			if unmarshaler(p) {
+			if u, _ := indirect(p); u != nil {
 				err = d.d.Decode(p.Interface())
 				if err != nil {
 					return err
@@ -222,7 +230,7 @@ func array(d *decoder, v reflect.Value) error {
 }
 
 func number(f float64, v reflect.Value) error {
-	v = indirect(v, false)
+	_, v = indirect(v)
 	switch v.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		n := int64(f)
@@ -257,47 +265,49 @@ func number(f float64, v reflect.Value) error {
 	return nil
 }
 
-func unmarshaler(v reflect.Value) bool {
+func indirect(v reflect.Value) (json.Unmarshaler, reflect.Value) {
+	v0 := v
+	haveAddr := false
+
 	// If v is a named type and is addressable,
 	// start with its address, so that if the type has pointer methods,
 	// we find them.
 	if v.Kind() != reflect.Pointer && v.Type().Name() != "" && v.CanAddr() {
 		v = v.Addr()
+		haveAddr = true
 	}
 
 	for {
+		// Load value from interface, but only if the result will be
+		// usefully addressable.
+		if v.Kind() == reflect.Interface && !v.IsNil() {
+			e := v.Elem()
+			if e.Kind() == reflect.Pointer && !e.IsNil() {
+				v = e
+				continue
+			}
+		}
+
 		if v.Kind() != reflect.Pointer {
 			break
 		}
 
-		if _, ok := v.Interface().(json.Unmarshaler); ok {
-			return true
+		if u, ok := v.Interface().(json.Unmarshaler); ok {
+			return u, v
 		}
 
 		if v.IsNil() {
 			v.Set(reflect.New(v.Type().Elem()))
 		}
-		v = v.Elem()
+
+		if haveAddr {
+			v = v0 // restore original value after round-trip Value.Addr().Elem()
+			haveAddr = false
+		} else {
+			v = v.Elem()
+		}
 	}
-	return false
-}
-
-func indirect(v reflect.Value, isNil bool) reflect.Value {
-	for {
-		if v.Kind() != reflect.Pointer {
-			break
-		}
-
-		if isNil && v.CanSet() {
-			break
-		}
-
-		if v.IsNil() {
-			v.Set(reflect.New(v.Type().Elem()))
-		}
-		v = v.Elem()
-	}
-	return v
+	return nil, v
 }
 
 func getField(v reflect.Value, name string) (reflect.Value, error) {

@@ -27,5 +27,6 @@ func (r *Reference) UnmarshalJson(b []byte, val interface{}) error {
 		return UnmarshalJSON(b, r)
 	}
 
-	return UnmarshalJSON(b, val)
+	err := UnmarshalJSON(b, val)
+	return err
 }

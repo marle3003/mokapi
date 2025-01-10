@@ -181,10 +181,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 					},
 				}
 
-				c, err := w.Read(configPath, &data{
-					parse: func(config *dynamic.Config, reader dynamic.Reader) error {
-						return fmt.Errorf("TEST ERROR")
-					}})
+				c, err := w.Read(configPath, &parseError{})
 				require.EqualError(t, err, "parsing file foo://file.yml: TEST ERROR")
 				require.Nil(t, c)
 			},
@@ -198,13 +195,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 				w.providers["foo"] = &testprovider{
 					read: func(u *url.URL) (*dynamic.Config, error) {
 						require.Equal(t, configPath, u)
-						return &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}, Data: &data{
-							parse: func(config *dynamic.Config, reader dynamic.Reader) error {
-								config.Data = "foo"
-								time.Sleep(5 * time.Second)
-								return nil
-							},
-						}}, nil
+						return &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}, Data: &slow{}}, nil
 					},
 				}
 
@@ -485,19 +476,32 @@ func TestConfigWatcher_Wrapping(t *testing.T) {
 }
 
 type data struct {
-	parse func(config *dynamic.Config, reader dynamic.Reader) error
+	User        string
+	calledParse bool
+}
+
+func (d *data) Parse(_ *dynamic.Config, _ dynamic.Reader) error {
+	d.calledParse = true
+	return nil
+}
+
+type parseError struct{}
+
+func (d *parseError) Parse(_ *dynamic.Config, _ dynamic.Reader) error {
+	return fmt.Errorf("TEST ERROR")
+}
+
+type slow struct{}
+
+func (d *slow) Parse(config *dynamic.Config, _ dynamic.Reader) error {
+	config.Data = "foo"
+	time.Sleep(5 * time.Second)
+	return nil
 }
 
 type testprovider struct {
 	read  func(u *url.URL) (*dynamic.Config, error)
 	start func(chan *dynamic.Config, *safe.Pool) error
-}
-
-func (d *data) Parse(config *dynamic.Config, reader dynamic.Reader) error {
-	if d.parse != nil {
-		return d.parse(config, reader)
-	}
-	return nil
 }
 
 func (p *testprovider) Read(u *url.URL) (*dynamic.Config, error) {

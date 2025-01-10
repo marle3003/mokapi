@@ -127,7 +127,7 @@ func TestStreetlightKafka(t *testing.T) {
 
 func TestConfig_ReferenceSwagger(t *testing.T) {
 	cr := dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
-		return &dynamic.Config{Data: swagger.Config{Definitions: map[string]*schema.Ref{"foo": schematest.NewRef("string")}}}, nil
+		return &dynamic.Config{Data: &swagger.Config{Definitions: map[string]*schema.Ref{"foo": schematest.NewRef("string")}}}, nil
 	})
 
 	cfg := &asyncapi3.Config{

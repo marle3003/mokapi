@@ -1,16 +1,15 @@
 package schema_test
 
 import (
-	"encoding/json"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/schema/json/schema"
-	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 
-func TestSchemaJson(t *testing.T) {
+func TestSchemaYaml(t *testing.T) {
 	testcases := []struct {
 		name string
 		data string
@@ -18,7 +17,7 @@ func TestSchemaJson(t *testing.T) {
 	}{
 		{
 			name: "schema",
-			data: `{"$schema": "http://json-schema.org/draft-07/schema#"}`,
+			data: `$schema: http://json-schema.org/draft-07/schema#`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "http://json-schema.org/draft-07/schema#", s.Schema)
@@ -26,7 +25,7 @@ func TestSchemaJson(t *testing.T) {
 		},
 		{
 			name: "single type",
-			data: `{"type": "string"}`,
+			data: `type: string`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, schema.Types{"string"}, s.Type)
@@ -34,7 +33,7 @@ func TestSchemaJson(t *testing.T) {
 		},
 		{
 			name: "two types",
-			data: `{"type": ["string", "integer"] }`,
+			data: `type: [string, integer]`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, schema.Types{"string", "integer"}, s.Type)
@@ -42,7 +41,7 @@ func TestSchemaJson(t *testing.T) {
 		},
 		{
 			name: "type null",
-			data: `{"type": "null" }`,
+			data: `type: "null"`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, schema.Types{"null"}, s.Type)
@@ -50,14 +49,14 @@ func TestSchemaJson(t *testing.T) {
 		},
 		{
 			name: "type is not a string value",
-			data: `{"type": ["string", 123] }`,
+			data: `type: [string, 123]`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.EqualError(t, err, "cannot unmarshal 123 into field type of type schema")
 			},
 		},
 		{
 			name: "one enum value",
-			data: `{"enum": ["foo"]}`,
+			data: `enum: [foo]`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []interface{}{"foo"}, s.Enum)
@@ -65,15 +64,15 @@ func TestSchemaJson(t *testing.T) {
 		},
 		{
 			name: "two enum values",
-			data: `{"enum": ["foo", 123] }`,
+			data: `enum: [foo, 123]`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{"foo", float64(123)}, s.Enum)
+				require.Equal(t, []interface{}{"foo", int(123)}, s.Enum)
 			},
 		},
 		{
 			name: "const value",
-			data: `{"const": "foo"}`,
+			data: `const: foo`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "foo", *s.Const)
@@ -84,7 +83,7 @@ func TestSchemaJson(t *testing.T) {
 		 */
 		{
 			name: "multipleOf",
-			data: `{"multipleOf": 12}`,
+			data: `multipleOf: 12`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 12.0, *s.MultipleOf)
@@ -92,7 +91,7 @@ func TestSchemaJson(t *testing.T) {
 		},
 		{
 			name: "multipleOf can be a floating point number",
-			data: `{"multipleOf": 12.5}`,
+			data: `multipleOf: 12.5`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 12.5, *s.MultipleOf)
@@ -100,7 +99,7 @@ func TestSchemaJson(t *testing.T) {
 		},
 		{
 			name: "maximum",
-			data: `{"maximum": 12}`,
+			data: `maximum: 12`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, float64(12), *s.Maximum)
@@ -108,7 +107,7 @@ func TestSchemaJson(t *testing.T) {
 		},
 		{
 			name: "exclusiveMaximum",
-			data: `{"exclusiveMaximum": 12}`,
+			data: `exclusiveMaximum: 12`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, float64(12), s.ExclusiveMaximum.A)
@@ -116,7 +115,7 @@ func TestSchemaJson(t *testing.T) {
 		},
 		{
 			name: "minimum",
-			data: `{"minimum": 12}`,
+			data: `minimum: 12`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, float64(12), *s.Minimum)
@@ -124,7 +123,7 @@ func TestSchemaJson(t *testing.T) {
 		},
 		{
 			name: "exclusiveMinimum",
-			data: `{"exclusiveMinimum": 12}`,
+			data: `exclusiveMinimum: 12`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, float64(12), s.ExclusiveMinimum.A)
@@ -135,7 +134,7 @@ func TestSchemaJson(t *testing.T) {
 		 */
 		{
 			name: "maxLength",
-			data: `{"maxLength": 12}`,
+			data: `maxLength: 12`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 12, *s.MaxLength)
@@ -143,7 +142,7 @@ func TestSchemaJson(t *testing.T) {
 		},
 		{
 			name: "minLength",
-			data: `{"minLength": 12}`,
+			data: `minLength: 12`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 12, *s.MinLength)
@@ -151,7 +150,7 @@ func TestSchemaJson(t *testing.T) {
 		},
 		{
 			name: "pattern",
-			data: `{"pattern": "[a-z]"}`,
+			data: `pattern: "[a-z]"`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "[a-z]", s.Pattern)
@@ -159,7 +158,7 @@ func TestSchemaJson(t *testing.T) {
 		},
 		{
 			name: "format",
-			data: `{"format": "date"}`,
+			data: `format: date`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "date", s.Format)
@@ -170,7 +169,7 @@ func TestSchemaJson(t *testing.T) {
 		 */
 		{
 			name: "maxItems",
-			data: `{"maxItems": 12}`,
+			data: `maxItems: 12`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 12, *s.MaxItems)
@@ -178,7 +177,7 @@ func TestSchemaJson(t *testing.T) {
 		},
 		{
 			name: "minItems",
-			data: `{"minItems": 12}`,
+			data: `minItems: 12`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 12, *s.MinItems)
@@ -186,7 +185,7 @@ func TestSchemaJson(t *testing.T) {
 		},
 		{
 			name: "uniqueItems",
-			data: `{"uniqueItems": true}`,
+			data: `uniqueItems: true`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, true, s.UniqueItems)
@@ -194,7 +193,7 @@ func TestSchemaJson(t *testing.T) {
 		},
 		{
 			name: "maxContains",
-			data: `{"maxContains": 12}`,
+			data: `maxContains: 12`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 12, *s.MaxContains)
@@ -202,7 +201,7 @@ func TestSchemaJson(t *testing.T) {
 		},
 		{
 			name: "minContains",
-			data: `{"minContains": 12}`,
+			data: `minContains: 12`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 12, *s.MinContains)
@@ -213,7 +212,10 @@ func TestSchemaJson(t *testing.T) {
 		 */
 		{
 			name: "properties",
-			data: `{"properties": {"name": {"type": "string"} }}`,
+			data: `
+properties: 
+  name: 
+    type: string`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 1, s.Properties.Len())
@@ -221,7 +223,7 @@ func TestSchemaJson(t *testing.T) {
 		},
 		{
 			name: "maxProperties",
-			data: `{"maxProperties": 12}`,
+			data: `maxProperties: 12`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 12, *s.MaxProperties)
@@ -229,7 +231,7 @@ func TestSchemaJson(t *testing.T) {
 		},
 		{
 			name: "minProperties",
-			data: `{"minProperties": 12}`,
+			data: `minProperties: 12`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 12, *s.MinProperties)
@@ -237,7 +239,7 @@ func TestSchemaJson(t *testing.T) {
 		},
 		{
 			name: "required",
-			data: `{"required": ["foo", "bar"]}`,
+			data: `required: ["foo", "bar"]`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []string{"foo", "bar"}, s.Required)
@@ -245,7 +247,7 @@ func TestSchemaJson(t *testing.T) {
 		},
 		{
 			name: "dependentRequired",
-			data: `{"dependentRequired": {"foo": ["bar"]} }`,
+			data: `dependentRequired: {foo: [bar]}`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string][]string{"foo": {"bar"}}, s.DependentRequired)
@@ -254,7 +256,7 @@ func TestSchemaJson(t *testing.T) {
 		// Media
 		{
 			name: "contentMediaType",
-			data: `{"contentMediaType": "text/html" }`,
+			data: `contentMediaType: text/html`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "text/html", s.ContentMediaType)
@@ -262,7 +264,7 @@ func TestSchemaJson(t *testing.T) {
 		},
 		{
 			name: "contentMediaType",
-			data: `{"contentEncoding": "base64" }`,
+			data: `contentEncoding: base64`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "base64", s.ContentEncoding)
@@ -270,7 +272,7 @@ func TestSchemaJson(t *testing.T) {
 		},
 		{
 			name: "not false",
-			data: `{"not": false }`,
+			data: `not: false`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, false, *s.Not.Boolean)
@@ -284,182 +286,18 @@ func TestSchemaJson(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			var s *schema.Schema
-			err := json.Unmarshal([]byte(tc.data), &s)
+			err := yaml.Unmarshal([]byte(tc.data), &s)
 			tc.test(t, s, err)
 		})
 	}
 }
 
-func TestSchema_MarshalJSON(t *testing.T) {
-	testcases := []struct {
-		name string
-		s    *schema.Schema
-		test func(t *testing.T, s string, err error)
-	}{
-		{
-			name: "empty type",
-			s:    &schema.Schema{},
-			test: func(t *testing.T, s string, err error) {
-				require.NoError(t, err)
-				require.Equal(t, "{}", s)
-			},
-		},
-		{
-			name: "one type",
-			s:    &schema.Schema{Type: schema.Types{"string"}},
-			test: func(t *testing.T, s string, err error) {
-				require.NoError(t, err)
-				require.Equal(t, `{"type":"string"}`, s)
-			},
-		},
-		{
-			name: "two types",
-			s:    &schema.Schema{Type: schema.Types{"string", "number"}},
-			test: func(t *testing.T, s string, err error) {
-				require.NoError(t, err)
-				require.Equal(t, `{"type":["string","number"]}`, s)
-			},
-		},
-	}
-
-	t.Parallel()
-	for _, tc := range testcases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			b, err := json.Marshal(tc.s)
-			tc.test(t, string(b), err)
-		})
-	}
-}
-
-func TestJson_Structuring(t *testing.T) {
+func TestYaml_Structuring(t *testing.T) {
 	testcases := []struct {
 		name string
 		test func(t *testing.T)
 	}{
-		{
-			name: "JSON pointer",
-			test: func(t *testing.T) {
-				reader := &dynamictest.Reader{
-					Data: map[string]*dynamic.Config{
-						"https://example.com/schemas/address": {
-							Data: schematest.New("object",
-								schematest.WithProperty("street_address", schematest.New("string")),
-							),
-						},
-					},
-				}
-				r := &schema.Schema{}
-				err := dynamic.Resolve("https://example.com/schemas/address#/properties/street_address", &r, &dynamic.Config{Data: &schema.Schema{}}, reader)
-				require.NoError(t, err)
-				require.Equal(t, "string", r.Type.String())
-			},
-		},
-		{
-			name: "$anchor",
-			test: func(t *testing.T) {
-				reader := &dynamictest.Reader{
-					Data: map[string]*dynamic.Config{
-						"https://example.com/schemas/address": {
-							Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("https://example.com/schemas/address")),
-							Data: schematest.New("object",
-								schematest.WithProperty("street_address",
-									schematest.New("string", schematest.WithAnchor("street_address"))),
-							),
-						},
-					},
-				}
 
-				person := &dynamic.Config{
-					Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("https://example.com/schemas/person")),
-					Data: &schema.Schema{Ref: "https://example.com/schemas/address#street_address"},
-				}
-
-				err := person.Data.(*schema.Schema).Parse(person, reader)
-				require.NoError(t, err)
-
-				require.NoError(t, err)
-				require.Equal(t, "string", person.Data.(*schema.Schema).Type.String())
-			},
-		},
-		{
-			name: "$anchor not in same scope",
-			test: func(t *testing.T) {
-				reader := &dynamictest.Reader{}
-
-				person := &dynamic.Config{
-					Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("https://example.com/schemas/person")),
-					Data: schematest.New("object",
-						schematest.WithId("https://example.com/schemas/person"),
-						schematest.WithPropertyRef("foo", "#foo"),
-						schematest.WithDef("foo",
-							schematest.New("string",
-								schematest.WithId("https://example.com/schemas/foo"),
-								schematest.WithAnchor("foo"),
-							),
-						),
-					),
-				}
-
-				err := person.Data.(*schema.Schema).Parse(person, reader)
-
-				require.EqualError(t, err, "parse schema 'foo' failed: resolve reference '#foo' failed: name 'foo' not found in scope 'https://example.com/schemas/person'")
-			},
-		},
-		{
-			name: "relative to $id",
-			test: func(t *testing.T) {
-				reader := &dynamictest.Reader{
-					Data: map[string]*dynamic.Config{
-						"https://example.com/schemas/address": {
-							Data: schematest.New("object",
-								schematest.WithProperty("street_address", schematest.New("string")),
-							),
-						},
-					},
-				}
-
-				cfg := &dynamic.Config{Data: &schema.Schema{Id: "https://example.com/schemas/customer"}}
-
-				r := &schema.Schema{}
-				err := dynamic.Resolve("/schemas/address", &r, cfg, reader)
-				require.NoError(t, err)
-				require.NotNil(t, r)
-				require.Equal(t, "object", r.Type.String())
-			},
-		},
-		{
-			name: "$defs",
-			test: func(t *testing.T) {
-				s := schematest.New("object",
-					schematest.WithPropertyRef("first_name", "#/$defs/name"),
-					schematest.WithDef("name", schematest.New("string")),
-				)
-
-				err := s.Parse(&dynamic.Config{Data: s}, &dynamictest.Reader{})
-
-				require.NoError(t, err)
-				require.Equal(t, "string", s.Properties.Get("first_name").Type.String())
-			},
-		},
-		{
-			name: "recursion",
-			test: func(t *testing.T) {
-				s := schematest.New("object",
-					schematest.WithProperty("name", schematest.New("string")),
-					schematest.WithProperty("children",
-						schematest.New("array", schematest.WithItemsRefString("#")),
-					),
-				)
-
-				err := s.Parse(&dynamic.Config{Data: s}, &dynamictest.Reader{})
-
-				require.NoError(t, err)
-				children := s.Properties.Get("children")
-				require.Equal(t, s, children.Items)
-			},
-		},
 		{
 			name: "generic list of strings",
 			test: func(t *testing.T) {
@@ -467,11 +305,15 @@ func TestJson_Structuring(t *testing.T) {
 					Data: map[string]*dynamic.Config{
 						"https://example.com/schemas/list-of-t": {
 							Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("https://example.com/schemas/list-of-t")),
-							Raw: []byte(`{
-"$defs": { "content": { "$dynamicAnchor": "T", "not": true } },
-"type": "array",
-"items": { "$dynamicRef": "#T" }
-}`),
+							Raw: []byte(`
+$defs: 
+  content: 
+    $dynamicAnchor: T 
+    not: true
+type: array
+items: 
+  $dynamicRef: '#T'
+`),
 						},
 					},
 				}

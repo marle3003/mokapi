@@ -10,12 +10,14 @@ import (
 type Schema struct {
 	m map[string]bool
 
-	Id  string `yaml:"$id,omitempty" json:"$id,omitempty"`
-	Ref string `yaml:"$ref,omitempty" json:"$ref,omitempty"`
+	Id         string `yaml:"$id,omitempty" json:"$id,omitempty"`
+	Ref        string `yaml:"$ref,omitempty" json:"$ref,omitempty"`
+	DynamicRef string `yaml:"$dynamicRef,omitempty" json:"$dynamicRef,omitempty"`
 
-	Schema  string `yaml:"$schema,omitempty" json:"$schema,omitempty"`
-	Boolean *bool  `yaml:"-" json:"-"`
-	Anchor  string `yaml:"$anchor,omitempty" json:"$anchor,omitempty"`
+	Schema        string `yaml:"$schema,omitempty" json:"$schema,omitempty"`
+	Boolean       *bool  `yaml:"-" json:"-"`
+	Anchor        string `yaml:"$anchor,omitempty" json:"$anchor,omitempty"`
+	DynamicAnchor string `yaml:"$dynamicAnchor,omitempty" json:"$dynamicAnchor,omitempty"`
 
 	Type  Types         `yaml:"type,omitempty" json:"type,omitempty"`
 	Enum  []interface{} `yaml:"enum,omitempty" json:"enum,omitempty"`
@@ -204,16 +206,17 @@ func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 
 	if s.Id != "" {
 		config.OpenScope(s.Id)
-	} else if config.Scope == nil {
-		if config.Info.Url != nil {
-			config.OpenScope(config.Info.Url.String())
-		} else if config.Scope == nil {
-			config.OpenScope("")
-		}
+		defer config.CloseScope()
 	}
 
 	if s.Anchor != "" {
-		if err := config.Scope.Set(s.Anchor, s); err != nil {
+		if err := config.Scope.SetLexical(s.Anchor, s); err != nil {
+			return err
+		}
+	}
+
+	if s.DynamicAnchor != "" {
+		if err := config.Scope.SetDynamic(s.DynamicAnchor, s); err != nil {
 			return err
 		}
 	}
@@ -267,6 +270,15 @@ func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if s.Ref != "" {
 		r := &ref{}
 		err := dynamic.Resolve(s.Ref, &r.Schema, config, reader)
+		if err != nil {
+			return err
+		}
+		s.apply(r.Schema)
+	}
+
+	if s.DynamicRef != "" {
+		r := &ref{}
+		err := dynamic.ResolveDynamic(s.DynamicRef, &r.Schema, config, reader)
 		if err != nil {
 			return err
 		}
