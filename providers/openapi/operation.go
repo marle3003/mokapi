@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"mokapi/config/dynamic"
-	"mokapi/media"
 	"mokapi/providers/openapi/parameter"
 	"net/http"
 )
 
-var NoSuccessResponse = errors.New("no success response (HTTP 2xx) in configuration")
+var NoSuccessResponse = errors.New("neither success response (HTTP 2xx) nor 'default' response found")
 
 type Operation struct {
 	// A list of tags for API documentation control. Tags can be used for
@@ -62,20 +61,11 @@ func (o *Operation) getFirstSuccessResponse() (int, *Response, error) {
 		}
 	}
 
-	return 0, nil, NoSuccessResponse
-}
-
-func getDefaultResponse() (int, *Response) {
-	r := &Response{
-		Content: Content{
-			"application/json": &MediaType{
-				Schema:      nil,
-				ContentType: media.ParseContentType("application/json"),
-			},
-		},
+	if r := o.getResponse(0); r != nil {
+		return http.StatusOK, r, nil
 	}
 
-	return http.StatusOK, r
+	return 0, nil, NoSuccessResponse
 }
 
 func (o *Operation) getResponse(statusCode int) *Response {

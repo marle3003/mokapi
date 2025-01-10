@@ -100,6 +100,8 @@ func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if s.Id != "" {
 		config.OpenScope(s.Id)
 		defer config.CloseScope()
+	} else {
+		config.Scope.OpenIfNeeded(config.Info.Path())
 	}
 
 	if s.Anchor != "" {

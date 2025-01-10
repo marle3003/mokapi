@@ -166,30 +166,33 @@ func resolveUrl(ref string, cfg *Config) (*url.URL, error) {
 		return nil, err
 	}
 
-	if !u.IsAbs() {
-		id := getId(cfg.Data)
-		if id != "" {
-			u, err = url.Parse(id)
-			if err != nil {
-				return nil, fmt.Errorf("parse URL from $id failed: %w", err)
-			}
-			return u.Parse(ref)
-		} else {
-			info := cfg.Info.Kernel()
-			if len(info.Url.Opaque) > 0 {
-				p := filepath.Join(filepath.Dir(info.Url.Opaque), u.Path)
-				p = fmt.Sprintf("file:%v", p)
-				if len(u.Fragment) > 0 {
-					p = fmt.Sprintf("%v#%v", p, u.Fragment)
-				}
-				return url.Parse(p)
-			} else {
-				return info.Url.Parse(ref)
-			}
-		}
+	if u.IsAbs() {
+		return u, nil
 	}
 
-	return u, err
+	id := getId(cfg.Data)
+	if id != "" {
+		u, err = url.Parse(id)
+		if err != nil {
+			return nil, fmt.Errorf("parse URL from $id failed: %w", err)
+		}
+		if u.IsAbs() {
+			return u.Parse(ref)
+		}
+		log.Infof("relative reference '%s' was defined as base URI, fallback to retrieval URI '%s'", id, cfg.Info.Path())
+	}
+
+	info := cfg.Info.Kernel()
+	if len(info.Url.Opaque) > 0 {
+		p := filepath.Join(filepath.Dir(info.Url.Opaque), u.Path)
+		p = fmt.Sprintf("file:%v", p)
+		if len(u.Fragment) > 0 {
+			p = fmt.Sprintf("%v#%v", p, u.Fragment)
+		}
+		return url.Parse(p)
+	} else {
+		return info.Url.Parse(ref)
+	}
 }
 
 func getId(v interface{}) string {
@@ -236,8 +239,9 @@ func resolveResource(ref string, element interface{}, config *Config, reader Rea
 	if err == nil {
 		AddRef(config, sub)
 		if _, ok := sub.Data.(Parser); ok && len(sub.Raw) > 0 {
-			// parse again with parent scope
-			sub = &Config{Raw: sub.Raw, Data: sub.Data, Info: sub.Info, Scope: config.Scope}
+			// parse again with parent scope hierarchy
+			sub = &Config{Raw: sub.Raw, Data: sub.Data, Info: sub.Info}
+			sub.Scope.SetParent(config.Scope)
 			err = Parse(sub, reader)
 			if err != nil {
 				return "", nil, err

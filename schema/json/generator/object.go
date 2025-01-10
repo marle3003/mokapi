@@ -18,7 +18,7 @@ func Object() *Tree {
 				Name:  "Object",
 				Test: func(r *Request) bool {
 					return r.Path.MatchLast(ComparerFunc(func(p *PathElement) bool {
-						return p.Schema.IsObject() && p.Schema.HasProperties()
+						return (p.Schema.IsObject() || p.Schema.IsAny()) && p.Schema.HasProperties()
 					}))
 				},
 				Fake: func(r *Request) (interface{}, error) {

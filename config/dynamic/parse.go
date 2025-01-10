@@ -37,6 +37,8 @@ func Parse(c *Config, r Reader) error {
 		return err
 	}
 
+	c.Scope.SetName(c.Info.Url.Path)
+
 	if p, ok := c.Data.(Parser); ok {
 		err = p.Parse(c, r)
 		if err != nil {

@@ -45,6 +45,6 @@ func readJsonTestFile(t *testing.T, path string, data interface{}, url string) *
 		},
 		Raw:   b,
 		Data:  data,
-		Scope: dynamic.Scope{Name: url},
+		Scope: *dynamic.NewScope(url),
 	}
 }

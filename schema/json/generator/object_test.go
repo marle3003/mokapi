@@ -29,6 +29,20 @@ func TestObject(t *testing.T) {
 			},
 		},
 		{
+			name: "no type but properties",
+			req: func() *Request {
+				return &Request{
+					Path: Path{
+						&PathElement{Schema: schematest.NewTypes(nil, schematest.WithProperty("name", nil))},
+					},
+				}
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"name": "Ink"}, v)
+			},
+		},
+		{
 			name: "object with loop",
 			req: func() *Request {
 				s := schematest.New("object")

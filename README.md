@@ -36,27 +36,38 @@ Its core feature are:
 - **Multiple Provider support**: File, HTTP, GIT, NPM to gather configurations and scripts.
 - **Dashboard** to see what's going on.
 
-&nbsp;
-<p align="center">
-<a href="https://www.buymeacoffee.com/mokapi" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
-<p align="center">
+## Usage
+
+Windows
+```shell
+chcco install mokapi
+mokapi --providers-http-url https://petstore31.swagger.io/api/v31/openapi.json
+```
+
+MacOS
+```shell
+brew tap marle3003/tap 
+brew install mokapi
+mokapi --providers-http-url https://petstore31.swagger.io/api/v31/openapi.json
+```
+
+Docker
+```shell
+docker run --env 'MOKAPI_Providers_Http_URL'='https://petstore31.swagger.io/api/v31/openapi.json' -p 80:80 -p 8080:8080 mokapi/mokapi:latest
+```
+
+Run a request
+```shell
+curl http://localhost/api/v31/pet/2 -H 'Accept: application/json'
+```
 
 ## Example
 
-<img src="webui/public/everythingcode.png" alt="Mokapi Web UI" title="Mokapi Web UI" />
+<img src="webui/public/control-mock-api-everything.png" alt="Mokapi Web UI" title="Mokapi Web UI" />
 
-## Web UI
+## Dashboard
 
 <img src="webui.png" alt="Mokapi Web UI" title="Mokapi Web UI" />
-
-## Usage
-
-```shell
-docker run --env 'MOKAPI_Services_Swagger-Petstore_Config_Url'='https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/examples/v3.0/petstore.yaml' \
-  --env 'MOKAPI_Services_Swagger-Petstore_Http_Servers[0]_Url'='http://:80' \
-  -p 80:80 -p 8080:8080 \
-  mokapi/mokapi:latest
-```
 
 ## Documentation
 
@@ -68,3 +79,8 @@ docker run --env 'MOKAPI_Services_Swagger-Petstore_Config_Url'='https://raw.gith
 - [Javascript API](https://mokapi.io/docs/javascript-api)
 - [Examples & Tutorials](https://mokapi.io/docs/examples)
 - [Blogs](https://mokapi.io/docs/blogs)
+
+&nbsp;
+<p align="center">
+<a href="https://www.buymeacoffee.com/mokapi" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
+<p align="center">
