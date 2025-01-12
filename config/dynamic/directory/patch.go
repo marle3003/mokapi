@@ -11,8 +11,6 @@ func (c *Config) Patch(patch *Config) {
 		c.Address = patch.Address
 	}
 
-	c.Root.patch(patch.Root)
-
 	if patch.SizeLimit > 0 {
 		c.SizeLimit = patch.SizeLimit
 	}

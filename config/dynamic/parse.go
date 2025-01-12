@@ -37,7 +37,7 @@ func Parse(c *Config, r Reader) error {
 		return err
 	}
 
-	c.Scope.SetName(c.Info.Url.Path)
+	c.Scope.SetName(c.Info.Path())
 
 	if p, ok := c.Data.(Parser); ok {
 		err = p.Parse(c, r)
@@ -90,6 +90,7 @@ func parse(c *Config) (interface{}, error) {
 				if err == nil {
 					return v, nil
 				}
+				err = nil
 			}
 		}
 		result = string(b)

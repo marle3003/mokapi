@@ -1,6 +1,7 @@
 package directory_test
 
 import (
+	"context"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/directory"
 	"mokapi/engine/enginetest"
@@ -112,17 +113,18 @@ func TestDirectory_ServeSearch(t *testing.T) {
 					Filter: "(objectClass=*)",
 				}))
 				res := rr.Message.(*ldap.SearchResponse)
-				_ = res
 
 				require.Equal(t, ldap.Success, res.Status)
-				require.Len(t, res.Results, 1)
-				require.Equal(t, "", res.Message)
+				require.Len(t, res.Results, 0)
+				require.Equal(t, "Success", res.Message)
 			},
 		},
 		{
 			name: "base object",
 			config: &directory.Config{Info: directory.Info{Name: "foo"},
-				Root: directory.Entry{Dn: "root", Attributes: map[string][]string{"foo": {"bar"}}}},
+				Entries: map[string]directory.Entry{
+					"": {Dn: "", Attributes: map[string][]string{"foo": {"bar"}}}},
+			},
 			fn: func(t *testing.T, h ldap.Handler) {
 				rr := ldaptest.NewRecorder()
 				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
@@ -130,13 +132,12 @@ func TestDirectory_ServeSearch(t *testing.T) {
 					Filter: "(objectClass=*)",
 				}))
 				res := rr.Message.(*ldap.SearchResponse)
-				_ = res
 
 				require.Equal(t, ldap.Success, res.Status)
 				require.Len(t, res.Results, 1)
-				require.Equal(t, "root", res.Results[0].Dn)
+				require.Equal(t, "", res.Results[0].Dn)
 				require.Equal(t, []string{"bar"}, res.Results[0].Attributes["foo"])
-				require.Equal(t, "", res.Message)
+				require.Equal(t, "Success", res.Message)
 			},
 		},
 		{
@@ -160,7 +161,6 @@ func TestDirectory_ServeSearch(t *testing.T) {
 					Filter: "(objectClass=*)",
 				}))
 				res := rr.Message.(*ldap.SearchResponse)
-				_ = res
 
 				require.Equal(t, ldap.Success, res.Status)
 				require.Len(t, res.Results, 1)
@@ -179,7 +179,6 @@ func TestDirectory_ServeSearch(t *testing.T) {
 					Filter: "(objectClass=*)",
 				}))
 				res := rr.Message.(*ldap.SearchResponse)
-				_ = res
 
 				require.Equal(t, ldap.Success, res.Status)
 				require.Len(t, res.Results, 2)
@@ -199,7 +198,6 @@ func TestDirectory_ServeSearch(t *testing.T) {
 					Filter: "(mail=user2@foo.bar)",
 				}))
 				res := rr.Message.(*ldap.SearchResponse)
-				_ = res
 
 				require.Equal(t, ldap.Success, res.Status)
 				require.Len(t, res.Results, 1)
@@ -218,7 +216,6 @@ func TestDirectory_ServeSearch(t *testing.T) {
 					Filter: "(mail=user2*)",
 				}))
 				res := rr.Message.(*ldap.SearchResponse)
-				_ = res
 
 				require.Equal(t, ldap.Success, res.Status)
 				require.Len(t, res.Results, 1)
@@ -237,7 +234,6 @@ func TestDirectory_ServeSearch(t *testing.T) {
 					Filter: "(mail=*@foo.bar)",
 				}))
 				res := rr.Message.(*ldap.SearchResponse)
-				_ = res
 
 				require.Equal(t, ldap.Success, res.Status)
 				require.Len(t, res.Results, 2)
@@ -257,7 +253,6 @@ func TestDirectory_ServeSearch(t *testing.T) {
 					Filter: "(mail=us*1*@*f*b*)",
 				}))
 				res := rr.Message.(*ldap.SearchResponse)
-				_ = res
 
 				require.Equal(t, ldap.Success, res.Status)
 				require.Len(t, res.Results, 1)
@@ -276,7 +271,6 @@ func TestDirectory_ServeSearch(t *testing.T) {
 					Filter: "(&(mail=user1*)(objectclass=foo))",
 				}))
 				res := rr.Message.(*ldap.SearchResponse)
-				_ = res
 
 				require.Equal(t, ldap.Success, res.Status)
 				require.Len(t, res.Results, 1)
@@ -295,7 +289,6 @@ func TestDirectory_ServeSearch(t *testing.T) {
 					Filter: "(&(mail=user1*)(objectclass=bar))",
 				}))
 				res := rr.Message.(*ldap.SearchResponse)
-				_ = res
 
 				require.Equal(t, ldap.Success, res.Status)
 				require.Len(t, res.Results, 0)
@@ -313,7 +306,6 @@ func TestDirectory_ServeSearch(t *testing.T) {
 					Filter: "(|(mail=user1*)(objectclass=bar))",
 				}))
 				res := rr.Message.(*ldap.SearchResponse)
-				_ = res
 
 				require.Equal(t, ldap.Success, res.Status)
 				require.Len(t, res.Results, 1)
@@ -351,7 +343,6 @@ func TestDirectory_ServeSearch(t *testing.T) {
 					Filter: "(number>=6)",
 				}))
 				res := rr.Message.(*ldap.SearchResponse)
-				_ = res
 
 				require.Equal(t, ldap.Success, res.Status)
 				require.Len(t, res.Results, 1)
@@ -370,7 +361,6 @@ func TestDirectory_ServeSearch(t *testing.T) {
 					Filter: "(number>=5)",
 				}))
 				res := rr.Message.(*ldap.SearchResponse)
-				_ = res
 
 				require.Equal(t, ldap.Success, res.Status)
 				require.Len(t, res.Results, 2)
@@ -390,7 +380,6 @@ func TestDirectory_ServeSearch(t *testing.T) {
 					Filter: "(mail>=5)",
 				}))
 				res := rr.Message.(*ldap.SearchResponse)
-				_ = res
 
 				require.Equal(t, ldap.Success, res.Status)
 				require.Len(t, res.Results, 0)
@@ -408,7 +397,6 @@ func TestDirectory_ServeSearch(t *testing.T) {
 					Filter: "(number<=5)",
 				}))
 				res := rr.Message.(*ldap.SearchResponse)
-				_ = res
 
 				require.Equal(t, ldap.Success, res.Status)
 				require.Len(t, res.Results, 1)
@@ -427,7 +415,6 @@ func TestDirectory_ServeSearch(t *testing.T) {
 					Filter: "(number<=4)",
 				}))
 				res := rr.Message.(*ldap.SearchResponse)
-				_ = res
 
 				require.Equal(t, ldap.Success, res.Status)
 				require.Len(t, res.Results, 0)
@@ -446,7 +433,6 @@ func TestDirectory_ServeSearch(t *testing.T) {
 					Attributes: []string{"mail"},
 				}))
 				res := rr.Message.(*ldap.SearchResponse)
-				_ = res
 
 				require.Equal(t, ldap.Success, res.Status)
 				require.Len(t, res.Results, 1)
@@ -466,7 +452,6 @@ func TestDirectory_ServeSearch(t *testing.T) {
 					SizeLimit: 1,
 				}))
 				res := rr.Message.(*ldap.SearchResponse)
-				_ = res
 
 				require.Equal(t, ldap.Success, res.Status)
 				require.Len(t, res.Results, 1)
@@ -478,7 +463,6 @@ func TestDirectory_ServeSearch(t *testing.T) {
 			config: &directory.Config{
 				Info:      testConfig.Info,
 				Address:   testConfig.Address,
-				Root:      testConfig.Root,
 				SizeLimit: 1,
 				Entries:   testConfig.Entries,
 			},
@@ -491,11 +475,94 @@ func TestDirectory_ServeSearch(t *testing.T) {
 					SizeLimit: 1000,
 				}))
 				res := rr.Message.(*ldap.SearchResponse)
-				_ = res
 
 				require.Equal(t, ldap.SizeLimitExceeded, res.Status)
 				require.Len(t, res.Results, 1)
 				require.Equal(t, "SizeLimitExceeded", res.Message)
+			},
+		},
+		{
+			name: "options (cn;lang-en=John Doe)",
+			config: &directory.Config{
+				Entries: map[string]directory.Entry{
+					"user2": {
+						Dn: "cn=john,dc=foo,dc=com",
+						Attributes: map[string][]string{
+							"cn;lang-en": {"John Doe"},
+						},
+					},
+				}},
+			fn: func(t *testing.T, h ldap.Handler) {
+				rr := ldaptest.NewRecorder()
+				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
+					BaseDN: "dc=foo,dc=com",
+					Scope:  ldap.ScopeSingleLevel,
+					Filter: "(cn;lang-en=John Doe)",
+				}))
+				res := rr.Message.(*ldap.SearchResponse)
+
+				require.Equal(t, ldap.Success, res.Status)
+				require.Len(t, res.Results, 1)
+				require.True(t, hasResult(res.Results, "cn=john,dc=foo,dc=com"), "search result should contain user2")
+				require.Equal(t, "Success", res.Message)
+			},
+		},
+		{
+			name: "paging",
+			config: &directory.Config{
+				Entries: map[string]directory.Entry{
+					"user1": {
+						Dn: "cn=john,dc=foo,dc=com",
+						Attributes: map[string][]string{
+							"cn": {"John Doe"},
+						},
+					},
+					"user2": {
+						Dn: "cn=carol,dc=foo,dc=com",
+						Attributes: map[string][]string{
+							"cn": {"Carol Doe"},
+						},
+					},
+				}},
+			fn: func(t *testing.T, h ldap.Handler) {
+				ctx := ldap.NewPagingFromContext(context.Background())
+
+				rr := ldaptest.NewRecorder()
+				h.ServeLDAP(rr, ldaptest.NewRequestWithContext(0, &ldap.SearchRequest{
+					BaseDN: "dc=foo,dc=com",
+					Scope:  ldap.ScopeSingleLevel,
+					Filter: "(objectClass=*)",
+					Controls: []ldap.Control{
+						&ldap.PagedResultsControl{
+							PageSize: 1,
+						},
+					},
+				}, ctx))
+				res := rr.Message.(*ldap.SearchResponse)
+
+				require.Equal(t, ldap.Success, res.Status)
+				require.Len(t, res.Results, 1)
+				require.Equal(t, "Success", res.Message)
+				require.NotNil(t, res.Controls[0].(*ldap.PagedResultsControl).Cookie)
+				result := res.Results[0].Dn
+
+				rr = ldaptest.NewRecorder()
+				h.ServeLDAP(rr, ldaptest.NewRequestWithContext(0, &ldap.SearchRequest{
+					BaseDN: "dc=foo,dc=com",
+					Scope:  ldap.ScopeSingleLevel,
+					Filter: "(objectClass=*)",
+					Controls: []ldap.Control{
+						&ldap.PagedResultsControl{
+							PageSize: 1,
+							Cookie:   res.Controls[0].(*ldap.PagedResultsControl).Cookie,
+						},
+					},
+				}, ctx))
+				res = rr.Message.(*ldap.SearchResponse)
+				require.Equal(t, ldap.Success, res.Status)
+				require.Len(t, res.Results, 1)
+				require.Equal(t, "Success", res.Message)
+				require.NotEqual(t, result, res.Results[0].Dn, "should return next page")
 			},
 		},
 	}

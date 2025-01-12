@@ -52,6 +52,34 @@ func TestSearch(t *testing.T) {
 				require.Equal(t, "", r.Message)
 			},
 		},
+		{
+			name: "search paged results",
+			handler: func(t *testing.T, rw ResponseWriter, req *Request) {
+				msg, ok := req.Message.(*SearchRequest)
+				require.True(t, ok)
+				err := rw.Write(&SearchResponse{
+					Status: Success,
+					Results: []SearchResult{
+						{
+							Dn:         "foo",
+							Attributes: map[string][]string{"foo": {"bar"}},
+						},
+					},
+					Controls: msg.Controls,
+				})
+				require.NoError(t, err)
+			},
+			test: func(t *testing.T, c Client) {
+				r, err := c.Search(&SearchRequest{
+					Filter: "(objectClass=foo)",
+					Controls: []Control{
+						&PagedResultsControl{PageSize: 100},
+					},
+				})
+				require.NoError(t, err)
+				require.Len(t, r.Controls, 1)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

@@ -46,28 +46,6 @@ func TestConfig_Patch(t *testing.T) {
 			},
 		},
 		{
-			name: "root dn",
-			configs: []*Config{
-				{},
-				{Root: Entry{Dn: "foo"}},
-			},
-			test: func(t *testing.T, result *Config) {
-				require.Equal(t, "foo", result.Root.Dn)
-			},
-		},
-		{
-			name: "add attribute",
-			configs: []*Config{
-				{Root: Entry{Attributes: map[string][]string{"foo": {"bar"}}}},
-				{Root: Entry{Attributes: map[string][]string{"bar": {"foo"}}}},
-			},
-			test: func(t *testing.T, result *Config) {
-				require.Len(t, result.Root.Attributes, 2)
-				require.Equal(t, []string{"bar"}, result.Root.Attributes["foo"])
-				require.Equal(t, []string{"foo"}, result.Root.Attributes["bar"])
-			},
-		},
-		{
 			name: "size limit",
 			configs: []*Config{
 				{},

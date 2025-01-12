@@ -1,6 +1,8 @@
 package directory
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"strings"
@@ -10,6 +12,7 @@ type config struct {
 	Info    Info
 	Server  server
 	Entries []map[string]interface{}
+	Files   []string
 }
 
 type server struct {
@@ -28,21 +31,20 @@ func (c *Config) UnmarshalYAML(value *yaml.Node) error {
 		return err
 	}
 
-	c.Info = tmp.Info
-	c.Address = tmp.Server.Address
-	c.Root = Entry{
-		Attributes: map[string][]string{
-			"rootDomainNamingContext": {tmp.Server.RootDomainNamingContext},
-			"subSchemaSubentry":       {tmp.Server.SubSchemaSubentry},
-			"namingContexts":          tmp.Server.NamingContexts,
-		},
-	}
-	c.Entries = make(map[string]Entry)
+	c.init(tmp)
 
-	for _, e := range tmp.Entries {
-		entry := buildEntry(e)
-		c.Entries[entry.Dn] = entry
+	return nil
+}
+
+func (c *Config) UnmarshalJSON(b []byte) error {
+	dec := json.NewDecoder(bytes.NewReader(b))
+	tmp := &config{}
+	err := dec.Decode(&tmp)
+	if err != nil {
+		return err
 	}
+
+	c.init(tmp)
 
 	return nil
 }
@@ -82,4 +84,30 @@ func buildEntry(e entry) (r Entry) {
 		}
 	}
 	return
+}
+
+func (c *Config) init(raw *config) {
+	c.Info = raw.Info
+	c.Address = raw.Server.Address
+
+	c.root = map[string][]string{}
+	if raw.Server.RootDomainNamingContext != "" {
+		c.root["rootDomainNamingContext"] = []string{raw.Server.RootDomainNamingContext}
+	}
+	if raw.Server.SubSchemaSubentry != "" {
+		c.root["subSchemaSubentry"] = []string{raw.Server.SubSchemaSubentry}
+	}
+	if raw.Server.NamingContexts != nil {
+		c.root["namingContexts"] = raw.Server.NamingContexts
+	}
+
+	c.Files = raw.Files
+
+	if raw.Entries != nil {
+		c.oldEntries = map[string]Entry{}
+		for _, e := range raw.Entries {
+			entry := buildEntry(e)
+			c.oldEntries[entry.Dn] = entry
+		}
+	}
 }

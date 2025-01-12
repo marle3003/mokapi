@@ -13,6 +13,14 @@ func NewRequest(messageId int64, msg ldap.Message) *ldap.Request {
 	}
 }
 
+func NewRequestWithContext(messageId int64, msg ldap.Message, ctx context.Context) *ldap.Request {
+	return &ldap.Request{
+		Context:   ctx,
+		MessageId: messageId,
+		Message:   msg,
+	}
+}
+
 type ResponseRecorder struct {
 	Message ldap.Message
 }
