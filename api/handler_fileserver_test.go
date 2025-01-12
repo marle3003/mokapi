@@ -37,11 +37,6 @@ func TestHandler_FileServer(t *testing.T) {
 					try.HasHeader("Content-Type", "application/json"),
 					try.HasBody(`{"version":"","buildTime":""}`))
 			},
-			fileServer: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-				if request.URL.Path != "/index.html" {
-					writer.WriteHeader(404)
-				}
-			}),
 		},
 		{
 			name:   "request web app",
@@ -55,11 +50,6 @@ func TestHandler_FileServer(t *testing.T) {
 					h,
 					try.HasStatusCode(200))
 			},
-			fileServer: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-				if request.URL.Path != "/index.html" {
-					writer.WriteHeader(404)
-				}
-			}),
 		},
 		{
 			name:   "request web app",
@@ -73,11 +63,6 @@ func TestHandler_FileServer(t *testing.T) {
 					h,
 					try.HasStatusCode(200), try.BodyContains(`<base href="/mokapi/dashboard/" />`))
 			},
-			fileServer: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-				if request.URL.Path != "/index.html" {
-					writer.WriteHeader(404)
-				}
-			}),
 		},
 		{
 			name:   "request asset",
@@ -97,11 +82,6 @@ func TestHandler_FileServer(t *testing.T) {
 					h,
 					try.HasStatusCode(200))
 			},
-			fileServer: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-				if request.URL.Path != "/assets/index.js" {
-					writer.WriteHeader(404)
-				}
-			}),
 		},
 		{
 			name:   "request svg",
@@ -115,11 +95,6 @@ func TestHandler_FileServer(t *testing.T) {
 					h,
 					try.HasStatusCode(200))
 			},
-			fileServer: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-				if request.URL.Path != "/logo.svg" {
-					writer.WriteHeader(404)
-				}
-			}),
 		},
 		{
 			name:   "request png",
@@ -133,11 +108,19 @@ func TestHandler_FileServer(t *testing.T) {
 					h,
 					try.HasStatusCode(200))
 			},
-			fileServer: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-				if request.URL.Path != "/mail.png" {
-					writer.WriteHeader(404)
-				}
-			}),
+		},
+		{
+			name:   "request jpg",
+			config: static.Api{Path: "/mokapi/dashboard", Dashboard: true},
+			fn: func(t *testing.T, h http.Handler) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/mokapi/dashboard/petstore-rest-api-endpoints.jpg",
+					nil,
+					"",
+					h,
+					try.HasStatusCode(200))
+			},
 		},
 		{
 			name:   "url rewrite (proxy)",
@@ -152,11 +135,6 @@ func TestHandler_FileServer(t *testing.T) {
 					try.HasStatusCode(200),
 					try.BodyContains(`<base href="/foo/mokapi/dashboard/" />`))
 			},
-			fileServer: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-				if request.URL.Path != "/index.html" {
-					writer.WriteHeader(404)
-				}
-			}),
 		},
 	}
 

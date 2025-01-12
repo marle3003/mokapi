@@ -44,6 +44,7 @@ func (m LdapDirectoryManager) UpdateConfig(c *dynamic.Config) {
 	} else {
 		s := &ldap.Server{Addr: li.Config.Address, Handler: li.Handler(m.app.Monitor.Ldap)}
 		m.servers[li.Info.Name] = s
+		log.Infof("ldap server '%v' starting on %v", li.Info.Name, s.Addr)
 		go func() {
 			err := s.ListenAndServe()
 			if !errors.Is(err, ldap.ErrServerClosed) {

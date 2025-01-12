@@ -1,64 +1,145 @@
 ---
 title: LDAP Documentation
-description: Integrate your App with a fake LDAP server
+description: Integrate your App with a mock LDAP server
 ---
-# LDAP
-Use Mokapi to mock an LDAP server
+# Mocking LDAP server
 
-## Example
-Following example mocks a Microsoft Active Directory Server
+Mokapi simplifies the process of creating a basic read-only LDAP server mock, enabling you to efficiently test and debug your LDAP interactions. Whether your goal is to validate query accuracy or simulate specific LDAP entry scenarios, Mokapi provides a flexible and developer-friendly solution.
 
-```yaml
-ldap: 1.0.0
-server:
-address: "0.0.0.0:389"
-rootDomainNamingContext: DC=mokapi,DC=ch
-subSchemaSubentry: CN=schema,DC=mokapi,DC=io
-namingContexts:
-- DC=mokapi,DC=io
-- CN=schema,DC=mokapi,DC=io
-entries:
-- dn: DC=mokapi,DC=io
-  objectClass: top
-- dn: CN=users,DC=mokapi,DC=io
-  objectClass: top
-- dn: CN=farnsworthh,CN=users,DC=mokapi,DC=io
-  objectClass: user
-  memberOf: CN=Z-Mokapi-Group,DC=mokapi,DC=io
-  thumbnailphoto:
-  file: ./farnsworth.png
-- dn: CN=turangal,CN=users,DC=mokapi,DC=io
-  objectClass: user
-  memberOf: CN=Z-Mokapi-Group,DC=mokapi,DC=io
-  thumbnailphoto:
-  file: ./leela.png
-- dn: CN=fryp,CN=users,DC=mokapi,DC=io
-  objectClass: user
-  memberOf: CN=Z-Mokapi-Group,DC=mokapi,DC=io
-  thumbnailphoto:
-  file: ./philip.png
-- dn: CN=wonga,CN=users,DC=mokapi,DC=io
-  objectClass: user
-  memberOf: CN=Z-Mokapi-Group,DC=mokapi,DC=io
-  thumbnailphoto:
-  file: ./amy.png
-- dn: CN=Z-Mokapi-Group,DC=mokapi,DC=io
-  objectClass: group
-  objectCategory: group
-- dn: CN=schema,DC=mokapi,DC=io
-  objectClass:
-    - subSchema
-    - subEntry
-    - top
-      objectClasses:
-    - ( 2.5.6.0 NAME ( 'top' ) ABSTRACT MUST ( objectClass ) )
-    - ( 1.2.840.113556.1.5.9 NAME ( 'user' ) SUP ( top ) MUST ( CN ) MAY ( memberOf ) )
-    - ( 1.2.840.113556.1.5.8 NAME ( 'group' ) SUP ( top ) MUST ( CN ) )
-      attributeTypes:
-    - ( 2.5.21.6 NAME ( 'objectClass' ) DESC 'LDAP object classes' SYNTAX 1.3.6.1.4.1.1466.115.121.1.37 USAGE directoryOperation )
-    - ( 1.2.840.113556.1.4.782 NAME ( 'objectCategory' ) SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 USAGE userApplications SINGLE-VALUE )
-    - ( 2.5.21.5 NAME ( 'attributeTypes' ) DESC 'LDAP attribute types' SYNTAX 1.3.6.1.4.1.1466.115.121.1.3 USAGE directoryOperation )
-    - ( 2.5.4.3 NAME ( 'CN' ) SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 USAGE userApplications )
-    - ( 1.2.840.113556.1.2.102 NAME ( 'memberOf' ) SYNTAX 1.3.6.1.4.1.1466.115.121.1.12 USAGE userApplications )
-    - ( 2.16.840.1.113730.3.1.35 NAME ( 'thumbnailphoto' ) SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 USAGE userApplications SINGLE-VALUE )
+Designed with integration in mind, Mokapi makes LDAP directories accessible and seamlessly integrates into your existing codebases and projects. It empowers developers to experiment, prototype, and troubleshoot without relying on a live LDAP environment.
+
+With custom Mokapi scripts, you gain full control over the responses sent to search requests. This flexibility allows you to tailor the behavior of your mock server to suit your testing needs. Additionally, Mokapi supports the import of LDAP entries through LDIF files, streamlining the setup process and enabling you to test with real or representative data effortlessly.
+
+By leveraging Mokapi, you can enhance your development workflow, reduce dependencies on external systems, and create a smoother path to delivering robust LDAP integrations.
+
+Learn how to create your first LDAP mock with Mokapi and begin ensuring the reliability and robustness of your application.
+
+## Before you start
+
+There are various ways to run Mokapi depending on your needs. For detailed instructions on how to get Mokapi running on your workstation, refer to the information provided [here](/docs/guides/get-started/running.md).
+
+## Basic structure of an LDAP server configuration
+
+To run an LDAP server with Mokapi, the minimum requirement is specifying a host address. This allows Mokapi to bind to the correct network interface and start serving requests.
+
+Below is an example of the simplest configuration, which does not include any custom LDAP entries. In this configuration, Mokapi automatically generates a basic Root DSE entry, which provides essential information about the server, such as the supported LDAP versions, the vendor name and vendor version.
+
+This basic setup is ideal for testing and development purposes, where the focus is on simulating server behavior rather than interacting with actual LDAP entries. You can later extend this configuration by adding LDAP entries and more advanced server settings as needed.
+
+```yaml tab=ldap.yaml
+ldap: 1.0 # file configuration version not LDAP protocol version 
+host: :389
+```
+
+To start Mokapi with a specific configuration file, you can use the --provider-file-filename option in the command line. This tells Mokapi to load the specified configuration file when it starts.
+
+```bash
+mokapi --provider-file-filename ldap.yaml
+```
+
+## Setup a Simple LDAP Entry Structure
+
+Mokapi allows you to configure your LDAP mock server using LDIF files. It supports a wide range of LDIF operations, 
+such as adding new entries, modifying attributes, and even deleting attributes. This flexibility makes it 
+easy to simulate real-world LDAP scenarios and test different interactions with your server.
+
+In your configuration file, you can reference multiple LDIF files. Mokapi will continuously monitor these files and 
+automatically update the LDAP server whenever a change is detected. This dynamic reloading of LDIF files helps streamline 
+the testing and development process, ensuring that your mock server always reflects the latest configurations.
+
+In the following example, we define an LDAP entry `dc=example,dc=com` and assign it the `top` object class.
+This entry is added to the `namingContexts` in the Root DSE. Additionally, we include a user entry for `cn=alice,dc=example,dc=com?`.
+This LDIF file can be referenced in the LDAP configuration file using a relative path.
+
+``` box=tip
+You can also reference an LDIF file using an HTTP or GIT URL, allowing you to source configuration data from remote 
+locations or version-controlled repositories for better integration and versioning.
+```
+
+```ldif tab=example.ldif
+# Root DSE
+dn:
+namingContext: dc=example,dc=com
+
+dn: dc=example,dc=com
+objectClass: top
+
+dn: cn=alice,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: alice
+```
+
+In the LDAP configuration, you would reference this LDIF file as follows:
+
+```yaml tab=ldap.yaml
+ldap: 1.0 # file configuration version not LDAP protocol version 
+host: :389
+files:
+  - ./example.ldif
+```
+
+This setup provides a foundational LDAP structure, which you can build upon by adding more entries and customizing attributes to meet your testing requirements.
+
+To query the example LDAP setup, you can use the ldapsearch command, which is a common tool for querying LDAP directories from the command line.
+
+```bash
+ldapsearch -x -h localhost -p 389 -b "dc=example,dc=com" "(objectClass=*)"
+# extended LDIF
+#
+# LDAPv3
+# base <dc=example,dc=com> with scope subtree
+# filter: (objectClass=*)
+# requesting: ALL
+#
+
+#
+dn:
+namingContext: dc=example,dc=com
+supportedLDAPVersion: 3
+vendorName: Mokapi
+vendorVersion: v0.11.2
+
+# example.com
+dn: dc=example,dc=com
+objectClass: top
+
+# alice, example.com
+dn: cn=alice,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: alice
+
+# search result
+search: 2
+result: 0 Success
+text: Success
+
+# numResponses: 4
+# numEntries: 3
+```
+
+To query for the `cn=alice,dc=example,dc=com` user entry, use a command like.
+This command will return the details of the alice entry under dc=example,dc=com.
+
+```bash
+ldapsearch -x -h localhost -p 389 -b "dc=example,dc=com" "(cn=alice)"
+# extended LDIF
+#
+# LDAPv3
+# base <dc=example,dc=com> with scope subtree
+# filter: (cn=alice)
+# requesting: ALL
+#
+
+# alice, example.com
+dn: cn=alice,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: alice
+
+# search result
+search: 2
+result: 0 Success
+text: Success
+
+# numResponses: 2
+# numEntries: 1
 ```

@@ -11,6 +11,7 @@ import (
 type config struct {
 	Info    Info
 	Server  server
+	Host    string
 	Entries []map[string]interface{}
 	Files   []string
 }
@@ -89,6 +90,9 @@ func buildEntry(e entry) (r Entry) {
 func (c *Config) init(raw *config) {
 	c.Info = raw.Info
 	c.Address = raw.Server.Address
+	if raw.Host != "" {
+		c.Address = raw.Host
+	}
 
 	c.root = map[string][]string{}
 	if raw.Server.RootDomainNamingContext != "" {

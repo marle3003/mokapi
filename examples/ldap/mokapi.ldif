@@ -1,18 +1,10 @@
+# Root DSE
 dn:
-namingContexts: dc=mokapi,dc=io
+namingContext: dc=example,dc=com
+
+dn: dc=example,dc=com
 objectClass: top
 
-dn: dc=mokapi,dc=io
-description: A LDAP example domain
-objectClass: top
-
-dn: cn=schema,dc=mokapi,dc=io
-objectClass: subSchema
-objectClass: top
-
-dn: cn=users,dc=mokapi,dc=io
-objectClass: top
-
-dn: cn=farnsworthh,cn=users,dc=mokapi,dc=io
-objectClass: user
-memberOf: CN=Z-Mokapi-Group,DC=mokapi,DC=io
+dn: cn=alice,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: alice

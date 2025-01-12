@@ -132,7 +132,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		if isAsset(r.URL.Path) {
 			r.URL.Path = "/assets/" + filepath.Base(r.URL.Path)
-		} else if filepath.Ext(r.URL.Path) == ".svg" || filepath.Ext(r.URL.Path) == ".png" {
+		} else if isImage(r.URL.Path) {
 			// don't change url
 		} else {
 			if len(h.path) > 0 || len(h.base) > 0 {
@@ -212,4 +212,14 @@ func writeJsonBody(w http.ResponseWriter, i interface{}) {
 
 func isAsset(path string) bool {
 	return strings.Contains(path, "/assets/")
+}
+
+func isImage(path string) bool {
+	str := filepath.Ext(path)
+	switch str {
+	case ".jpg", ".jpeg", ".png", ".svg":
+		return true
+	default:
+		return false
+	}
 }

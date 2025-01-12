@@ -101,6 +101,8 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 				"supportedLDAPVersion": {"3"},
 				"vendorName":           {"Mokapi"},
 				"vendorVersion":        {version.BuildVersion},
+				"dsServiceName":        {c.Info.Name},
+				"description":          {c.Info.Description},
 				/*"control": {
 					"1.2.840.113556.1.4.319 true", // Paged Results Control
 				},*/
@@ -117,6 +119,12 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 
 		if _, ok := root.Attributes["vendorVersion"]; !ok {
 			root.Attributes["vendorVersion"] = []string{version.BuildVersion}
+		}
+		if _, ok := root.Attributes["dsServiceName"]; !ok && c.Info.Name != "" {
+			root.Attributes["dsServiceName"] = []string{c.Info.Name}
+		}
+		if _, ok := root.Attributes["description"]; !ok && c.Info.Description != "" {
+			root.Attributes["description"] = []string{c.Info.Description}
 		}
 	}
 
