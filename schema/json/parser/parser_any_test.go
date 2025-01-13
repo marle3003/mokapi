@@ -4,7 +4,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 
@@ -170,7 +170,7 @@ func TestParser_ParseAny(t *testing.T) {
 			schema: schematest.NewAny(
 				schematest.New("object",
 					schematest.WithProperty("foo", schematest.New("string")),
-					schematest.WithUnevaluatedProperties(schematest.NewRef("boolean")),
+					schematest.WithUnevaluatedProperties(schematest.New("boolean")),
 				),
 			),
 			test: func(t *testing.T, i interface{}, err error) {
@@ -190,7 +190,7 @@ func TestParser_ParseAny(t *testing.T) {
 						schematest.WithProperty("bar", schematest.New("integer")),
 					),
 				),
-				schematest.WithUnevaluatedProperties(schematest.NewRef("boolean")),
+				schematest.WithUnevaluatedProperties(schematest.New("boolean")),
 			),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
@@ -205,7 +205,7 @@ func TestParser_ParseAny(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			p := &parser.Parser{Schema: &schema.Ref{Value: tc.schema}}
+			p := &parser.Parser{Schema: tc.schema}
 			r, err := p.Parse(tc.data)
 
 			tc.test(t, r, err)

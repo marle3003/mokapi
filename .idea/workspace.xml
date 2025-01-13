@@ -4,24 +4,19 @@
     <option name="autoReloadType" value="ALL" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1a9601df-4cac-4bc9-9e3a-1ba0e84e507f" name="Default Changelist" comment="fix doc">
-      <change afterPath="$PROJECT_DIR$/docs/javascript-api/mokapi/eventhandler/eventargs.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/providers/openapi/schema/union_type.go" afterDir="false" />
+    <list default="true" id="1a9601df-4cac-4bc9-9e3a-1ba0e84e507f" name="Default Changelist" comment="fix paging LDAP does not work with a map">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/javascript-api/mokapi/eventhandler/scheduledeventargs.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/javascript-api/mokapi/eventhandler/scheduledeventargs.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/engine/common/host.go" beforeDir="false" afterPath="$PROJECT_DIR$/engine/common/host.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/engine/host.go" beforeDir="false" afterPath="$PROJECT_DIR$/engine/host.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/engine/host_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/engine/host_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/js/mokapi.go" beforeDir="false" afterPath="$PROJECT_DIR$/js/mokapi.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/js/script_mokapi_test.go" beforeDir="false" afterPath="$PROJECT_DIR$/js/script_mokapi_test.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/lua/modules/mokapi.go" beforeDir="false" afterPath="$PROJECT_DIR$/lua/modules/mokapi.go" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/npm/types/mokapi.d.ts" beforeDir="false" afterPath="$PROJECT_DIR$/npm/types/mokapi.d.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/providers/openapi/schema/schema.go" beforeDir="false" afterPath="$PROJECT_DIR$/providers/openapi/schema/schema.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/guides/http/overview.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/guides/http/overview.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/guides/kafka/overview.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/guides/kafka/overview.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="CoverageOptionsProvider">
+    <option name="myAddOrReplace" value="0" />
+    <option name="myActivateViewOnRun" value="false" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -33,7 +28,7 @@
       </list>
     </option>
   </component>
-  <component name="GOROOT" url="file:///usr/local/go" />
+  <component name="GOROOT" url="file://$USER_HOME$/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.23.4.darwin-arm64" />
   <component name="Git.Settings">
     <option name="PUSH_TAGS">
       <GitPushTagMode>
@@ -48,6 +43,12 @@
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;marle3003&quot;
+  }
+}</component>
   <component name="GitSEFilterConfiguration">
     <file-type-list>
       <filtered-out-file-type name="LOCAL_BRANCH" />
@@ -56,6 +57,20 @@
       <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
     </file-type-list>
   </component>
+  <component name="GithubProjectSettings">
+    <option name="branchProtectionPatterns">
+      <list>
+        <option value="main" />
+        <option value="v.*" />
+      </list>
+    </option>
+  </component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/marle3003/mokapi.git&quot;,
+    &quot;accountId&quot;: &quot;8215a5d5-387a-4493-b326-ea1c4a7f80b1&quot;
+  }
+}</component>
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/js/script_kafka_test.go" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/js/compiler/compiler.go" root0="FORCE_HIGHLIGHTING" />
@@ -67,49 +82,689 @@
     <setting file="file://$PROJECT_DIR$/js/script_test.go" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/js/script.go" root0="FORCE_HIGHLIGHTING" />
   </component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 3
+}</component>
   <component name="ProjectId" id="1m40RSdtdDAxQq3OJ6eyNX6aqtz" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;DefaultGoTemplateProperty&quot;: &quot;Go File&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.go.formatter.settings.were.checked&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.go.migrated.go.modules.settings&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.go.modules.go.list.on.any.changes.was.set&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;go.import.settings.migrated&quot;: &quot;true&quot;,
-    &quot;go.sdk.automatically.set&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/Users/maesi/GolandProjects/mokapi/json&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;go.vgo&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;/Users/maesi/GolandProjects/mokapi/webui/node_modules/typescript/lib&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "DefaultGoTemplateProperty": "Go File",
+    "Go Build.Avro.executor": "Run",
+    "Go Build.Examples.executor": "Run",
+    "Go Build.LDAP.executor": "Run",
+    "Go Build.Petstore 3.1.executor": "Debug",
+    "Go Build.go build mokapi/schema/json/parser.executor": "Coverage",
+    "Go Test.Test2 in mokapi/schema/json/schema.executor": "Debug",
+    "Go Test.TestAdditionalProperties_Unmarshal in mokapi/schema/json/schema.executor": "Run",
+    "Go Test.TestAdditionalProperties_Unmarshal/additional_properties_false in mokapi/schema/json/schema.executor": "Run",
+    "Go Test.TestAdditionalProperties_Unmarshal/additional_properties_true in mokapi/schema/json/schema.executor": "Debug",
+    "Go Test.TestAdditionalProperties_Unmarshal2 in mokapi/schema/json/schema.executor": "Run",
+    "Go Test.TestApi in mokapi/acceptance (1).executor": "Run",
+    "Go Test.TestApi in mokapi/acceptance.executor": "Debug",
+    "Go Test.TestAttributeType/cn in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestAttributeType/multiple_names in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestAttributeType/string in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestBodyFromRequest/multipart/form-data in mokapi/providers/openapi.executor": "Run",
+    "Go Test.TestClient in mokapi/ldap.executor": "Debug",
+    "Go Test.TestComponents_UnmarshalJSON in mokapi/providers/openapi.executor": "Run",
+    "Go Test.TestConditional/if-else in mokapi/schema/json/generator.executor": "Run",
+    "Go Test.TestConditional/if-then in mokapi/schema/json/generator.executor": "Run",
+    "Go Test.TestConfig/component_schema in mokapi/providers/openapi.executor": "Debug",
+    "Go Test.TestConfig/host_overwrites_server_address in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestConfig/set_Root_DSE_by_config in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestConfig3_Schema in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestConfig_Convert in mokapi/config/dynamic/asyncApi.executor": "Run",
+    "Go Test.TestConfig_LDIF in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestConfig_LDIF/modify_Root_DSE in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestConfig_LDIF/one_ldif_file in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestConfig_LDIF/two_files_modify in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestConfig_LDIF/two_files_modify_delete in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestConfig_LDIF/two_files_modify_replace in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestConfig_Patch_Channel/add_channel_GroupId in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestConfig_Patch_Channel/add_channel_Partition_overwrite in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestConfig_Patch_Channel/add_channel_RetentionMs in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestConfig_Patch_Channel/add_channel_RetentionMs_overwrite in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestConfig_Patch_Channel/add_channel_SegmentBytes in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestConfig_Patch_Channel/add_channel_SegmentBytes_overwrite in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestConfig_Patch_Channel/add_channel_SegmentMs in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestConfig_Patch_Channel/add_channel_SegmentMs_overwrite in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestConfig_Patch_Channel/add_channel_ValueSchemaValidation in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestConfig_Patch_Channel/add_channel_ValueSchemaValidation_overwrite in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestConfig_Patch_Components/patch_schema in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestConfig_Patch_Server/patch_server_bindings in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestConfig_Patch_Server/patch_server_bindings_GroupInitialRebalanceDelayMs in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestConfig_Patch_Server/patch_server_bindings_GroupInitialRebalanceDelayMs_overwrite in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestConfig_Patch_Server/patch_server_bindings_GroupMinSessionTimeoutMs in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestConfig_Patch_Server/patch_server_bindings_GroupMinSessionTimeoutMs_overwrite in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestConfig_Patch_Server/patch_server_bindings_LogRetentionBytes_overwrite in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestConfig_Patch_Server/patch_server_bindings_LogRetentionCheckIntervalMs in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestConfig_Patch_Server/patch_server_bindings_LogRetentionCheckIntervalMs_overwrite in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestConfig_Patch_Server/patch_server_bindings_LogRetentionMs in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestConfig_Patch_Server/patch_server_bindings_LogRetentionMs_overwrite in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestConfig_Patch_Server/patch_server_bindings_LogRollMs in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestConfig_Patch_Server/patch_server_bindings_LogRollMs_overwrite in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestConfig_Patch_Server/patch_server_bindings_LogSegmentBytes in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestConfig_Patch_Server/patch_server_bindings_LogSegmentBytes_overwrite in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestConfig_Patch_Server/patch_server_bindings_LogSegmentDeleteDelayMs in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestConfig_Patch_Server/patch_server_bindings_LogSegmentDeleteDelayMs_overwrite in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestConfig_ReferenceSwagger in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestConfig_v31 in mokapi/providers/openapi.executor": "Run",
+    "Go Test.TestConvert in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestConvert/UniqueItems in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/additionalProperties in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/additionalProperties_forbidden in mokapi/providers/openapi/schema.executor": "Debug",
+    "Go Test.TestConvert/additionalProperties_free-form in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/allOf in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/anyOf in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/array in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestConvert/const in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/contains in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/contentEncoding in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/contentMediaType in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/default in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/dependentRequired in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/dependentSchemas in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/deprecated in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/description in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/else in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/empty in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestConvert/enum in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/enum in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestConvert/examples in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/exclusiveMaximum in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/exclusiveMinimum in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/fields in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestConvert/fixed#01 in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestConvert/format in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/if in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/items in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/items in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestConvert/map in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestConvert/maxContains in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/maxItems in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/maxLength in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/maxProperties in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/maximum in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/minContains in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/minItems in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/minLength in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/minimum in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/multipleOf in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/nil_schema in mokapi/providers/openapi/schema.executor": "Debug",
+    "Go Test.TestConvert/not in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/oneOf in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/pattern in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/patternProperties in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/prefixItems in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/properties in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/propertyNames in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/record in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestConvert/required in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/schema in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/shuffleItems in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/shuffleItems#01 in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/string in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestConvert/symbols in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestConvert/then in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/title in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/type in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/types in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/unevaluatedItems in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/unevaluatedProperties in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/unevaluatedProperties_false in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvert/union in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestConvert/union_schema in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestConvert/values in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestConvertToJsonSchema_Ref in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvertToJsonSchema_Ref/bool_false in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvertToJsonSchema_Ref/bool_true in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestConvertToJsonSchema_Ref/schema in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestDirectory_ServeSearch/base_object in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestDirectory_ServeSearch/empty_base_object in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestDirectory_ServeSearch/objectclass=*_scope=ScopeBaseObject in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestDirectory_ServeSearch/objectclass=*_scope=ScopeSingleLevel in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestDirectory_ServeSearch/options_(cn;lang-en=John_Doe) in mokapi/config/dynamic/directory.executor": "Debug",
+    "Go Test.TestDirectory_ServeSearch/paging in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestFromRequest_Header/array_invalid_value in mokapi/providers/openapi/parameter.executor": "Run",
+    "Go Test.TestGeneratorString/date in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestGeneratorString/date-time in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestGetOrderById in mokapi/acceptance.executor": "Run",
+    "Go Test.TestGitConfig/file_provider_directory in mokapi/config/static.executor": "Debug",
+    "Go Test.TestHandler_Config/config_data:_yaml_file_empty in mokapi/api.executor": "Debug",
+    "Go Test.TestHandler_FileServer in mokapi/api.executor": "Run",
+    "Go Test.TestHandler_FileServer/request_jpg in mokapi/api.executor": "Run",
+    "Go Test.TestHandler_FileServer/request_png in mokapi/api.executor": "Debug",
+    "Go Test.TestHandler_Http/get_http_service_with_parameters in mokapi/api.executor": "Run",
+    "Go Test.TestHandler_Http/get_http_service_with_requestBody in mokapi/api.executor": "Run",
+    "Go Test.TestHandler_Http/get_http_service_with_response in mokapi/api.executor": "Run",
+    "Go Test.TestHandler_Http/reference_override_summary/description in mokapi/api.executor": "Run",
+    "Go Test.TestHandler_Http/schema_with_default in mokapi/api.executor": "Run",
+    "Go Test.TestHandler_Http/schema_with_reference_loop in mokapi/api.executor": "Run",
+    "Go Test.TestHandler_Http/schema_with_string_or_number in mokapi/api.executor": "Run",
+    "Go Test.TestHandler_Kafka in mokapi/api.executor": "Run",
+    "Go Test.TestHandler_Kafka/get_specific_with_topic in mokapi/api.executor": "Run",
+    "Go Test.TestHandler_Kafka/get_specific_with_topic_and_multi_schema_format in mokapi/api.executor": "Run",
+    "Go Test.TestHandler_Kafka/get_specific_with_topic_and_openapi_schema in mokapi/api.executor": "Run",
+    "Go Test.TestHandler_Schema in mokapi/api.executor": "Run",
+    "Go Test.TestHandler_Schema/string in mokapi/api.executor": "Run",
+    "Go Test.TestHandler_Schema/string_accept_application/xml in mokapi/api.executor": "Run",
+    "Go Test.TestHandler_Schema_Example/OpenAPI_schema:_string in mokapi/api.executor": "Debug",
+    "Go Test.TestHandler_Schema_Example/avro_schema:_string in mokapi/api.executor": "Run",
+    "Go Test.TestHandler_Schema_Example/schema_without_format in mokapi/api.executor": "Run",
+    "Go Test.TestHandler_Schema_Example/string#01 in mokapi/api.executor": "Debug",
+    "Go Test.TestHandler_Schema_Example/string_accept_application/* in mokapi/api.executor": "Run",
+    "Go Test.TestHandler_Schema_Validate/object_xml in mokapi/api.executor": "Run",
+    "Go Test.TestHandler_Schema_Validate/string in mokapi/api.executor": "Run",
+    "Go Test.TestHttpServer_AddOrUpdate/add_two_services_on_same_port_one_at_root_path_and_one_sub_path in mokapi/server/service.executor": "Debug",
+    "Go Test.TestJson_Structuring/$anchor in mokapi/schema/json/schema.executor": "Run",
+    "Go Test.TestJson_Structuring/$anchor_with_$id in mokapi/schema/json/schema.executor": "Run",
+    "Go Test.TestJson_Structuring/generic_list_of_strings in mokapi/schema/json/schema.executor": "Run",
+    "Go Test.TestJson_Structuring/local_to_$id in mokapi/schema/json/schema.executor": "Debug",
+    "Go Test.TestJson_Structuring/root_refs_to_$defs in mokapi/schema/json/schema.executor": "Debug",
+    "Go Test.TestKafkaBindingsServer_Yaml/schemaRegistryUrl in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestKafkaBindingsServer_Yaml/schemaRegistryVendor in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestKafkaClient_Produce in mokapi/engine.executor": "Run",
+    "Go Test.TestKafkaClient_Produce/non_random_values in mokapi/engine.executor": "Run",
+    "Go Test.TestKafkaClient_Produce/random_message in mokapi/engine.executor": "Run",
+    "Go Test.TestKafkaClient_Produce/remove_all_headers in mokapi/engine.executor": "Run",
+    "Go Test.TestKafkaEventAndMetrics in mokapi/acceptance.executor": "Run",
+    "Go Test.TestKafka_Produce_InvalidFormat in mokapi/acceptance.executor": "Debug",
+    "Go Test.TestLdif_Parse in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestLdif_Parse/base64 in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestLdif_Parse/change_type:_delete in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestLdif_Parse/change_type:_modify in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestLdif_Parse/change_type:_modify#01 in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestLdif_Parse/comment in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestLdif_Parse/dn in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestLdif_Parse/empty_record in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestLdif_Parse/empty_value in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestLdif_Parse/empty_value#01 in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestLdif_Parse/file in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestLdif_Parse/modify:_delete in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestLdif_Parse/modify:_replace in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestLdif_Parse/multi_line in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestLdif_Parse/multi_line_key in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestLdif_Parse/multi_line_value in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestLdif_Parse/multiple_line_breaks_between_records in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestLdif_Parse/one_record_with_dn in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestLdif_Parse/two_records_with_dn in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestLdif_Parse/version_set in mokapi/config/dynamic/directory.executor": "Run",
+    "Go Test.TestLog in mokapi/acceptance.executor": "Run",
+    "Go Test.TestMessage_UnmarshalJSON/payload_OpenAPI_ref in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestMessage_UnmarshalJSON/payload_ref in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestMessage_UnmarshalJSON/payload_schema in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestMessage_UnmarshalYAML/payload_OpenAPI_ref in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestMessage_UnmarshalYAML/payload_schema in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestObject/no_type_but_properties in mokapi/schema/json/generator.executor": "Run",
+    "Go Test.TestOffsetCommit in mokapi/providers/asyncapi3/kafka/store.executor": "Run",
+    "Go Test.TestOffsetCommit_Validation in mokapi/providers/asyncapi3/kafka/store.executor": "Run",
+    "Go Test.TestOffsetCommit_Validation/invalid_clientId in mokapi/providers/asyncapi3/kafka/store.executor": "Debug",
+    "Go Test.TestParse/text in mokapi/config/dynamic.executor": "Run",
+    "Go Test.TestParseString/int in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestParse_Enum/array:_value_in_enum in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Enum/array:_value_not_in_enum in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Enum/boolean:_value_in_enum in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Enum/boolean:_value_not_in_enum in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Enum/integer:_value_in_enum in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Enum/integer:_value_not_in_enum in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Enum/null:_value_in_enum in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Enum/null:_value_not_in_enum in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Enum/number:_value_in_enum in mokapi/schema/json/parser.executor": "Debug",
+    "Go Test.TestParse_Enum/number:_value_not_in_enum in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Enum/object:_value_in_enum in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Enum/object:_value_not_in_enum in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Enum/string:_value_in_enum in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Enum/string:_value_not_in_enum in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Integer in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Integer/const in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Integer/const_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Integer/convert_from_string in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Integer/convert_from_string_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Integer/convert_from_string_to_int32 in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Integer/convert_from_string_to_int32_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Integer/float in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Integer/float_but_with_fraction in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Integer/int in mokapi/schema/json/parser.executor": "Debug",
+    "Go Test.TestParse_Integer/int32 in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Integer/int32_and_greater_as_max_value_but_disabled in mokapi/schema/json/parser.executor": "Coverage",
+    "Go Test.TestParse_Integer/int32_but_int64 in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Integer/int32_but_lower_as_max_value in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Integer/integer_but_map in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Integer/integer_exclusive_maximum_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Integer/integer_exclusive_minimum in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Integer/integer_exclusive_minimum_and_minimum in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Integer/integer_exclusive_minimum_and_minimum_error in mokapi/schema/json/parser.executor": "Debug",
+    "Go Test.TestParse_Integer/integer_exclusive_minimum_error in mokapi/schema/json/parser.executor": "Debug",
+    "Go Test.TestParse_Integer/integer_exclusive_minimum_less_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Integer/integer_maximum in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Integer/integer_maximum_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Integer/integer_minimum in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Integer/integer_minimum_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Integer/integer_multipleOf_ in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Integer/integer_multipleOf_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Integer/multipleOf_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Integer/multiplyOf_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Integer/not_integer in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Integer/number_multipleOf_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Number in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Number/const in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Number/const_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Number/convert_from_string in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Number/convert_from_string_to_float in mokapi/schema/json/parser.executor": "Debug",
+    "Go Test.TestParse_Number/convert_from_string_to_float_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Number/float in mokapi/schema/json/parser.executor": "Debug",
+    "Go Test.TestParse_Number/float_but_double_but_disabled in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Number/float_but_greater_as_max_value in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Number/int in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_Number/number_but_map in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/const in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/const_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/disable_format_validation in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/empty_schema in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/format_date in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/format_date#01 in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/format_date-time_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/format_date_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/format_duration in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/format_duration_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/format_email in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/format_email_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/format_ipv4 in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/format_ipv4_but_ipv6 in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/format_ipv4_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/format_ipv6 in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/format_ipv6_but_ipv4 in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/format_ipv6_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/format_time in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/format_time_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/format_uuid in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/format_uuid_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/maxLength in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/maxLength_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/minLength in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/minLength_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/nil_schema in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/pattern in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/pattern_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/pattern_syntax_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParse_String/pattern_valid_but_not_maxLength in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_AllOf_If_Then/Canada in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_AllOf_If_Then/Canada_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_AllOf_If_Then/Netherlands in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_AllOf_If_Then/USA in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_AllOf_If_Then/USA#01 in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_AllOf_If_Then/default_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_Array in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_Array/array in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_Array/array_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_Array/array_items in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_Array/array_items_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_Array/const_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_Array/contains in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_Array/contains_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_Array/empty_array in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_Array/maxContains in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_Array/maxContains#01 in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_Array/maxContains_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_Array/maxItems_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_Array/minContains in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_Array/minContains_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_Array/minItems in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_Array/minItems_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_Array/minLength_error in mokapi/schema/json/parser.executor": "Debug",
+    "Go Test.TestParser_Array/nil in mokapi/schema/json/parser.executor": "Debug",
+    "Go Test.TestParser_Array/prefixItems_but_longer in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_Array/prefixItems_error in mokapi/schema/json/parser.executor": "Debug",
+    "Go Test.TestParser_Array/prefixItems_with_items=false in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_Array/prefixItems_with_items_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_Array/prefixItems_with_unevaluatedItems=false in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_Array/prefixItems_with_unevaluatedItems=string in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_Array/uniqueItems in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_Array/uniqueItems#01 in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_Array/uniqueItems_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_NoType/const_does_not_match_schema in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_NoType/const_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_NoType/no_type_with_property_and_maxLength;_data_is_string_but_too_long in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_NoType/not_string in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_NoType/not_string_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_Parse in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse/array in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse/boolean_false in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse/boolean_true in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse/double_3.14163 in mokapi/schema/avro/schema.executor": "Debug",
+    "Go Test.TestParser_Parse/enum in mokapi/schema/avro/schema.executor": "Debug",
+    "Go Test.TestParser_Parse/enum_index_out_of_range in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse/enum_out_of_index in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse/fixed in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse/float_3.14159 in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse/float_3.14163 in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse/integer_-64 in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse/integer_1 in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse/integer_64 in mokapi/schema/avro/schema.executor": "Debug",
+    "Go Test.TestParser_Parse/map in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse/null in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse/record in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse/record_with_array_and_string in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse/string in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse/union_[null,_string]_with_value_NULL in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse/union_[null,_string]_with_value_foo in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse/union_schema_[null,_string]_with_value_foo in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_ParseAll in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseAll/AllOf_example_from_Spec:_UnevaluatedProperties in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseAll/AllOf_example_from_Spec:_UnevaluatedProperties_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseAll/AllOf_example_from_Spec:_extending_closed_schema in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseAll/AllOf_example_from_Spec:_extending_closed_schema#01 in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseAll/AllOf_with_two_NOT_matching_type in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseAll/AllOf_with_two_matching_type_but_not_valid in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseAll/AllOf_with_two_objects in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseAll/AllOf_with_two_objects_free-form_false in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseAll/AllOf_with_two_objects_free-form_false_and_errors_-_error_message_should_contain_free-form=false in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseAll/UnevaluatedProperties_must_be_string in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseAll/empty_schema in mokapi/schema/json/parser.executor": "Debug",
+    "Go Test.TestParser_ParseAll/object_and_integer in mokapi/schema/json/parser.executor": "Debug",
+    "Go Test.TestParser_ParseAll/object_with_empty_schema in mokapi/schema/json/parser.executor": "Debug",
+    "Go Test.TestParser_ParseAll/object_with_nil_schema in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseAll/unevaluatedProperties in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseAny in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseAny/anyOf in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseAny/any_object in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseAny/evaluatedProperties_should_only_considered_on_valid_ones in mokapi/schema/json/parser.executor": "Debug",
+    "Go Test.TestParser_ParseAny/evaluatedProperties_should_only_considered_on_valid_ones_-_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseAny/first_is_not_free-form in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseAny/free-form_and_second_object_defines_no_property in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseAny/free-form_but_not_override in mokapi/schema/json/parser.executor": "Debug",
+    "Go Test.TestParser_ParseAny/merge in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseAny/not_match_any in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseAny/one_with_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseAny/unevaluatedProperties in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseAny/unevaluatedProperties_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseAny/unevaluatedProperties_should_only_considered_on_valid_ones in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseAny/unevaluatedProperties_should_only_considered_on_valid_ones_-_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseBoolean/0 in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseBoolean/1 in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseBoolean/const in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseBoolean/const_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseBoolean/true_as_string_with_convert in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject in mokapi/schema/json/parser.executor": "Coverage",
+    "Go Test.TestParser_ParseObject/additional_properties_combination_with_properties_and_patternProperties in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/additional_properties_combination_with_properties_and_patternProperties,_must_be_a_string in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/additional_properties_combination_with_properties_and_patternProperties,_not_match_regex in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/additional_properties_combination_with_properties_and_patternProperties,_not_match_regex_but_string in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/additional_properties_false in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/additional_properties_false_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/additional_properties_string in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/additional_properties_string_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/additional_properties_true in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/const in mokapi/schema/json/parser.executor": "Debug",
+    "Go Test.TestParser_ParseObject/const_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/dependentRequired in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/dependentRequired_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/dependentSchemas in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/dependentSchemas_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/expect_object_but_got_integer in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/free-form_but_has_additional_properties in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/if-else_else_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/if-else_if=false in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/if-then in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/if-then_if=false in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/if-then_if=true in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/if-then_then_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/maxProperties in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/maxProperties_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/minProperties in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/minProperties_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/pattern_properties in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/pattern_properties_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/propertyNames in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/propertyNames_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/property_invalid_type in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/property_with_default in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/required_string_but_it_is_empty in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/required_string_but_missing in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/required_string_error in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseObject/two_properties_invalid_type in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseOne/empty_object_match_both in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseOne/example_from_swagger.io_but_cat_does_not_allow_additional_properties in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseOne/not_valid_against_one_schema in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseOne/oneOf_integer in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseOne/oneOf_integer_valid_both in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseOne/oneOf_integer_valid_first in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseOne/oneOf_integer_valid_second in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseOne/oneOf_is_empty in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseOne/oneOf_is_null in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseOne/unevaluatedProperty in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseString/not_string in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseString/null in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseString/string in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_ParseString/version in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestParser_Parse_Json/array in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse_Json/boolean in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse_Json/double in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse_Json/enum in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse_Json/enum_but_not_in_symbols in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse_Json/float in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse_Json/int in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse_Json/long in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse_Json/not_int in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse_Json/not_long in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse_Json/not_string in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse_Json/record in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse_Json/string in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestParser_Parse_Json/wrapped in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestPartition_Write in mokapi/providers/asyncapi3/kafka/store.executor": "Run",
+    "Go Test.TestPatch_AnyOf/append_anyOf in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestPatch_AnyOf/patch_anyOf in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestPatch_Composition in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestProduce/default in mokapi/providers/asyncapi3/kafka/store.executor": "Run",
+    "Go Test.TestProduce/invalid_message_value_format in mokapi/providers/asyncapi3/kafka/store.executor": "Run",
+    "Go Test.TestRecord in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestRef_HasProperties in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_MarshalJSON in mokapi/providers/openapi/schema.executor": "Debug",
+    "Go Test.TestRef_MarshalJSON/with_properties in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_MarshalJSON/with_type in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_MarshalJSON/with_type in mokapi/schema/json/schema.executor": "Run",
+    "Go Test.TestRef_Marshal_Json_AllOf/allOf_missing_required_property in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_Marshal_Json_AllOf/must_be_type_of_object in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_Marshal_Json_AnyOf in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_Marshal_Json_AnyOf/any in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_Marshal_Json_AnyOf/anyOf_both_invalid in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_Marshal_Json_AnyOf/anyOf_with_additional_field_with_free-form in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_Marshal_Json_AnyOf/any_matches_both in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_Marshal_Json_AnyOf/any_with_free-form in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_Marshal_Json_AnyOf/any_with_one_error_should_be_skipped in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_Marshal_Json_Invalid/exclusiveMinimum in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_Marshal_Json_Invalid/map_missing_required_property in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_Marshal_Json_Invalid/max_array in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_Marshal_Json_Invalid/min_array in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_Marshal_Json_Object/dictionary in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_Marshal_Json_Object/map_not_free-form in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_Marshal_Json_Object/struct_but_property_matches_not_schema in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_Marshal_Json_OneOf/example_from_swagger.io_but_cat_does_not_allow_additional_properties in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_Marshal_Json_OneOf/one_reference_is_nil in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_Marshal_Json_OneOf/one_schema_is_nil in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_Marshal_Json_OneOf/schema_is_nil_=_free_form in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_UnmarshalYAML/ref in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_Unmarshal_Json_AllOf/{\"foo\":_12,_\"bar\":_true} in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_Unmarshal_Json_AllOf/{\"foo\":_12} in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_Unmarshal_Json_Any/any_object in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_Unmarshal_Json_Any/missing_required_property_should_not_error in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_Unmarshal_Json_Integer/not_int32 in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_Unmarshal_Json_Object/in_enum in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_Unmarshal_Json_Object/not_maxProperties in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_Unmarshal_Json_Object/property_is_not_valid in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_Unmarshal_Json_OneOf/{\"foo\":_\"bar\",_\"bar\":_12} in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestRef_Unmarshal_Json_OneOf/{\"foo\":_12} in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestResolveEndpoint/no_response_specified in mokapi/providers/openapi.executor": "Run",
+    "Go Test.TestResolveEndpoint/no_success_response_specified in mokapi/providers/openapi.executor": "Run",
+    "Go Test.TestResolveEndpoint/no_success_response_specified_but_default in mokapi/providers/openapi.executor": "Run",
+    "Go Test.TestSchema in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestSchema/file_reference_direct in mokapi/config/dynamic/asyncApi.executor": "Run",
+    "Go Test.TestSchema/modify_file_reference_direct in mokapi/config/dynamic/asyncApi.executor": "Run",
+    "Go Test.TestSchema/reference_inside in mokapi/config/dynamic/asyncApi.executor": "Run",
+    "Go Test.TestSchemaInfo_MarshalJSON/avro in mokapi/api.executor": "Run",
+    "Go Test.TestSchemaInfo_MarshalJSON/empty in mokapi/api.executor": "Run",
+    "Go Test.TestSchemaInfo_MarshalJSON/format in mokapi/api.executor": "Run",
+    "Go Test.TestSchemaInfo_MarshalJSON/json_schema in mokapi/api.executor": "Run",
+    "Go Test.TestSchemaInfo_MarshalJSON/json_schema_ref_and_value in mokapi/api.executor": "Run",
+    "Go Test.TestSchemaInfo_UnmarshalJSON/empty in mokapi/api.executor": "Run",
+    "Go Test.TestSchemaInfo_UnmarshalJSON/format in mokapi/api.executor": "Run",
+    "Go Test.TestSchemaInfo_UnmarshalJSON/json_schema in mokapi/api.executor": "Run",
+    "Go Test.TestSchemaInfo_UnmarshalJSON/json_schema_with_format in mokapi/api.executor": "Run",
+    "Go Test.TestSchema_MarshalJSON/empty in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestSchema_MarshalJSON/empty_type in mokapi/schema/json/schema.executor": "Run",
+    "Go Test.TestSchema_MarshalJSON/one_type in mokapi/schema/json/schema.executor": "Run",
+    "Go Test.TestSchema_MarshalJSON/two_types in mokapi/schema/json/schema.executor": "Run",
+    "Go Test.TestSchema_MarshalJSON/type_record_with_field in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestSchema_MarshalJSON/type_schema in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestSchema_MarshalJSON/type_schema_and_string in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestSchema_MarshalJSON/type_string in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestSchema_MarshalJSON/type_string,int in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestSchema_Patch in mokapi/schema/json/schema.executor": "Run",
+    "Go Test.TestSchema_Patch/patch_additionalProperties in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestSchema_Patch/patch_additionalProperties in mokapi/schema/json/schema.executor": "Run",
+    "Go Test.TestSchema_Patch/patch_const in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestSchema_Patch/patch_contentEncoding in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestSchema_Patch/patch_contentMediaType in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestSchema_Patch/patch_deprecated in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestSchema_Patch/patch_examples in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestSchema_Patch/patch_exclusive_shuffleItems in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestSchema_Patch/patch_exclusive_uniqueItems in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestSchema_Patch/patch_multipleOf in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestSchema_Patch/patch_nullable in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestSchema_Patch/patch_overwrite_additionalProperties in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestSchema_Patch/patch_overwrite_additionalProperties#01 in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestSchema_Patch/patch_overwrite_const in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestSchema_Patch/patch_overwrite_contentMediaType in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestSchema_Patch/patch_overwrite_default#01 in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestSchema_Patch/patch_overwrite_format#01 in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestSchema_Patch/patch_overwrite_multipleOf in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestSchema_Patch/patch_overwrite_title in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestSchema_Patch/patch_overwrite_uniqueItems in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestSchema_Patch/patch_title in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestSchema_UnmarshalJSON in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestSchema_UnmarshalJSON/JSON_object_with_array_field in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestSchema_UnmarshalJSON/a_JSON_array in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestSchema_UnmarshalJSON/a_JSON_object in mokapi/schema/avro/schema.executor": "Debug",
+    "Go Test.TestSchema_UnmarshalJSON/a_JSON_string,_naming_a_defined_type. in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestSchema_UnmarshalJSON/empty in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestSchema_UnmarshalJSON/items:_wrong_type in mokapi/providers/openapi/schema.executor": "Run",
+    "Go Test.TestSchema_UnmarshalJSON/nested_JSON_object in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestSchema_UnmarshalJSON/null in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestSchema_UnmarshalJSON/type_null in mokapi/schema/avro/schema.executor": "Debug",
+    "Go Test.TestSchema_UnmarshalJSON/union in mokapi/schema/avro/schema.executor": "Run",
+    "Go Test.TestSearch/search_no_results in mokapi/ldap.executor": "Run",
+    "Go Test.TestSearch/search_paged_results in mokapi/ldap.executor": "Debug",
+    "Go Test.TestServer_Validate/server_without_url in mokapi/providers/openapi.executor": "Run",
+    "Go Test.TestStore/update_topic_add_partition in mokapi/providers/asyncapi3/kafka/store.executor": "Run",
+    "Go Test.TestStore/update_topic_change_schema in mokapi/providers/asyncapi3/kafka/store.executor": "Run",
+    "Go Test.TestStore/update_topic_remove_partition in mokapi/providers/asyncapi3/kafka/store.executor": "Run",
+    "Go Test.TestStreetlightKafka in mokapi/providers/asyncapi3.executor": "Run",
+    "Go Test.TestStringFormat/date in mokapi/schema/json/generator.executor": "Run",
+    "Go Test.TestToString/array in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestToString/boolean in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestToString/integer in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestToString/interface_array in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestToString/nil in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestToString/number in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestToString/object_as_map in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestToString/object_as_pointer in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestToString/object_as_struct in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestToString/string in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestToString/time.Time in mokapi/schema/json/parser.executor": "Run",
+    "Go Test.TestTypeScript/async in mokapi/js.executor": "Run",
+    "Go Test.Test_ParseAndPatch/patch_property_nullable in mokapi/providers/openapi.executor": "Run",
+    "Go Test.Test_ParseAndPatch/response_schema_reference_should_point_to_same_objects in mokapi/providers/openapi.executor": "Run",
+    "Go Test.Test_ParseAndPatch/schemas_reference in mokapi/providers/openapi.executor": "Run",
+    "Go Test.Test_UnmarshalYAML/response_schema_reference_should_point_to_same_objects in mokapi/providers/openapi.executor": "Run",
+    "Go Test.Test_UnmarshalYAML/schemas_reference in mokapi/providers/openapi.executor": "Run",
+    "Go Test.additional_properties_test.go.executor": "Run",
+    "Go Test.go test api.executor": "Run",
+    "Go Test.go test asyncApi.executor": "Run",
+    "Go Test.go test asyncapi3.executor": "Run",
+    "Go Test.go test directory.executor": "Run",
+    "Go Test.go test dynamic.executor": "Run",
+    "Go Test.go test ldap.executor": "Run",
+    "Go Test.go test mokapi.executor": "Run",
+    "Go Test.go test openapi.executor": "Run",
+    "Go Test.go test parser.executor": "Run",
+    "Go Test.go test schema (1).executor": "Run",
+    "Go Test.go test schema.executor": "Run",
+    "Go Test.go test store.executor": "Run",
+    "Go Test.handler_http_test.go.executor": "Run",
+    "Go Test.handler_schema_test.go.executor": "Run",
+    "Go Test.helpers_test.go.executor": "Run",
+    "Go Test.parse_one_test.go.executor": "Run",
+    "Go Test.parser_any_test.go.executor": "Run",
+    "Go Test.parser_array_test.go.executor": "Coverage",
+    "Go Test.parser_integer_test.go.executor": "Run",
+    "Go Test.parser_number_test.go.executor": "Run",
+    "Go Test.parser_object_test.go.executor": "Run",
+    "Go Test.parser_string_test.go.executor": "Run",
+    "Go Test.patch_test.go.executor": "Run",
+    "Go Test.schema_json_test.go.executor": "Run",
+    "Go Test.schema_test.go.executor": "Run",
+    "Go Test.typescript_test.go.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.go.formatter.settings.were.checked": "true",
+    "RunOnceActivity.go.migrated.go.modules.settings": "true",
+    "RunOnceActivity.go.modules.go.list.on.any.changes.was.set": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "git-widget-placeholder": "v0.11",
+    "go.import.settings.migrated": "true",
+    "go.sdk.automatically.set": "true",
+    "last_opened_file_path": "/Users/maesi/GolandProjects/mokapi/schema/json/parser",
+    "node.js.detected.package.eslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "settings.json.schema.catalog",
+    "ts.external.directory.path": "/Users/maesi/GolandProjects/mokapi/webui/node_modules/typescript/lib"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/schema/json/parser" />
+      <recent name="$PROJECT_DIR$/schema/encoding" />
       <recent name="$PROJECT_DIR$/json" />
       <recent name="$PROJECT_DIR$/providers/openapi/schema" />
       <recent name="$PROJECT_DIR$/docs/javascript-api/mokapi/eventhandler" />
-      <recent name="$PROJECT_DIR$/docs/javascript-api/mokapi" />
-      <recent name="$PROJECT_DIR$" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/schema/avro/schema" />
+      <recent name="$PROJECT_DIR$/schema" />
+      <recent name="$PROJECT_DIR$/schema/json/parser" />
+      <recent name="$PROJECT_DIR$/providers/openapi" />
       <recent name="$PROJECT_DIR$/examples/swagger" />
-      <recent name="$PROJECT_DIR$/docs/javascript-api/mokapi/eventhandler" />
-      <recent name="$PROJECT_DIR$/config/dynamic" />
-      <recent name="$PROJECT_DIR$/config/dynamic/dynamictest" />
-      <recent name="$PROJECT_DIR$/server" />
     </key>
   </component>
   <component name="RunManager" selected="Go Test.go test mokapi">
+    <configuration name="Avro" type="GoApplicationRunConfiguration" factoryName="Go Application">
+      <module name="mokapi" />
+      <working_directory value="$PROJECT_DIR$" />
+      <parameters value="--Api.Port=8080 --Log.Level=Debug" />
+      <envs>
+        <env name="MOKAPI_Providers.File.Directory" value="examples/avro" />
+        <env name="MOKAPI_RootCaCert" value="D:\Projekte\mokapi\assets\mokapiCert.pem" />
+        <env name="MOKAPI_RootCaKey" value="D:\Projekte\mokapi\assets\mokapiKey.pem" />
+      </envs>
+      <kind value="PACKAGE" />
+      <package value="mokapi/cmd/mokapi" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
     <configuration name="Examples (1)" type="GoApplicationRunConfiguration" factoryName="Go Application">
       <module name="mokapi" />
       <working_directory value="$PROJECT_DIR$" />
@@ -131,14 +786,43 @@
     <configuration name="Examples" type="GoApplicationRunConfiguration" factoryName="Go Application">
       <module name="mokapi" />
       <working_directory value="$PROJECT_DIR$" />
-      <parameters value="--Log.Format=json --Api.Port=8091 --Log.Level=Debug --Api.Path=/mokapi" />
+      <parameters value="--Log.Format=json --Log.Level=Debug" />
       <envs>
         <env name="DEVUSER" value="lehmannmar" />
+        <env name="MOKAPI_Api_Path" value="/mokapi" />
+        <env name="MOKAPI_Api_Port" value="8091" />
         <env name="MOKAPI_Log.Level" value="debug" />
         <env name="MOKAPI_Providers.File.Directory" value="examples/mokapi" />
         <env name="MOKAPI_Providers.Http.PollInterval" value="1m" />
         <env name="MOKAPI_RootCaCert" value="D:\Projekte\mokapi\assets\mokapiCert.pem" />
         <env name="MOKAPI_RootCaKey" value="D:\Projekte\mokapi\assets\mokapiKey.pem" />
+      </envs>
+      <kind value="PACKAGE" />
+      <package value="mokapi/cmd/mokapi" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="LDAP" type="GoApplicationRunConfiguration" factoryName="Go Application">
+      <module name="mokapi" />
+      <working_directory value="$PROJECT_DIR$" />
+      <parameters value="--Api.Port=8080 --Log.Level=Debug" />
+      <envs>
+        <env name="MOKAPI_Providers.File.Directory" value="examples/ldap" />
+        <env name="MOKAPI_RootCaCert" value="D:\Projekte\mokapi\assets\mokapiCert.pem" />
+        <env name="MOKAPI_RootCaKey" value="D:\Projekte\mokapi\assets\mokapiKey.pem" />
+      </envs>
+      <kind value="PACKAGE" />
+      <package value="mokapi/cmd/mokapi" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Petstore 3.1" type="GoApplicationRunConfiguration" factoryName="Go Application">
+      <module name="mokapi" />
+      <working_directory value="$PROJECT_DIR$" />
+      <envs>
+        <env name="MOKAPI_Providers_Http_Url" value="https://petstore31.swagger.io/api/v31/openapi.json" />
       </envs>
       <kind value="PACKAGE" />
       <package value="mokapi/cmd/mokapi" />
@@ -197,52 +881,40 @@
       <filePath value="$PROJECT_DIR$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestGeneratorInt/int64_min_max_positive_exclusive in mokapi/providers/openapi/schema" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestConfig/set_Root_DSE_by_config in mokapi/config/dynamic/directory" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="mokapi" />
-      <working_directory value="$PROJECT_DIR$/providers/openapi/schema" />
+      <working_directory value="$PROJECT_DIR$/config/dynamic/directory" />
       <root_directory value="$PROJECT_DIR$" />
       <kind value="PACKAGE" />
-      <package value="mokapi/providers/openapi/schema" />
+      <package value="mokapi/config/dynamic/directory" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
       <framework value="gotest" />
-      <pattern value="^\QTestGeneratorInt\E$/^\Qint64_min_max_positive_exclusive\E$" />
+      <pattern value="^\QTestConfig\E$/^\Qset_Root_DSE_by_config\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestHost_Every/every_but_one_time_and_not_immediately in mokapi/engine" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestDirectory_ServeSearch/paging in mokapi/config/dynamic/directory" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="mokapi" />
-      <working_directory value="$PROJECT_DIR$/engine" />
+      <working_directory value="$PROJECT_DIR$/config/dynamic/directory" />
       <root_directory value="$PROJECT_DIR$" />
       <kind value="PACKAGE" />
-      <package value="mokapi/engine" />
+      <package value="mokapi/config/dynamic/directory" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
       <framework value="gotest" />
-      <pattern value="^\QTestHost_Every\E$/^\Qevery_but_one_time_and_not_immediately\E$" />
+      <pattern value="^\QTestDirectory_ServeSearch\E$/^\Qpaging\E$" />
       <method v="2" />
     </configuration>
-    <configuration name="TestScript_Mokapi_Cron/skip_immediate_first_run in mokapi/js" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+    <configuration name="TestHandler_FileServer/request_jpg in mokapi/api" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
       <module name="mokapi" />
-      <working_directory value="$PROJECT_DIR$/js" />
+      <working_directory value="$PROJECT_DIR$/api" />
       <root_directory value="$PROJECT_DIR$" />
       <kind value="PACKAGE" />
-      <package value="mokapi/js" />
+      <package value="mokapi/api" />
       <directory value="$PROJECT_DIR$" />
       <filePath value="$PROJECT_DIR$" />
       <framework value="gotest" />
-      <pattern value="^\QTestScript_Mokapi_Cron\E$/^\Qskip_immediate_first_run\E$" />
-      <method v="2" />
-    </configuration>
-    <configuration name="TestScript_Mokapi_Every/skip_immediate_first_run_ in mokapi/js" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
-      <module name="mokapi" />
-      <working_directory value="$PROJECT_DIR$/js" />
-      <root_directory value="$PROJECT_DIR$" />
-      <kind value="PACKAGE" />
-      <package value="mokapi/js" />
-      <directory value="$PROJECT_DIR$" />
-      <filePath value="$PROJECT_DIR$" />
-      <framework value="gotest" />
-      <pattern value="^\QTestScript_Mokapi_Every\E$/^\Qskip_immediate_first_run_\E$" />
+      <pattern value="^\QTestHandler_FileServer\E$/^\Qrequest_jpg\E$" />
       <method v="2" />
     </configuration>
     <configuration default="true" type="GoTestRunConfiguration" factoryName="Go Test">
@@ -251,6 +923,17 @@
       <kind value="DIRECTORY" />
       <package value="mokapi" />
       <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <method v="2" />
+    </configuration>
+    <configuration name="go test directory" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="mokapi" />
+      <working_directory value="$PROJECT_DIR$/config/dynamic/directory" />
+      <root_directory value="$PROJECT_DIR$" />
+      <kind value="DIRECTORY" />
+      <package value="mokapi" />
+      <directory value="$PROJECT_DIR$/config/dynamic/directory" />
       <filePath value="$PROJECT_DIR$" />
       <framework value="gotest" />
       <method v="2" />
@@ -265,19 +948,20 @@
       <framework value="gotest" />
       <method v="2" />
     </configuration>
-    <configuration default="true" type="SwaggerCodegen">
-      <option name="activeConfigurationType" value="FILE" />
-      <option name="configurationPath" value="" />
-      <option name="customJreEnabled" value="false" />
+    <configuration default="true" type="SwaggerCodegen" show_console_on_std_err="false" show_console_on_std_out="false">
+      <option name="allowRunningInParallel" value="false" />
       <option name="customTemplatesPath" value="" />
-      <option name="enableDebugLogging" value="false" />
       <option name="generateToPath" value="C:\Work\mokapi\gen" />
       <option name="generationParameters">
         <list />
       </option>
-      <option name="generatorPath" value="https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/5.0.0/openapi-generator-cli-5.0.0.jar" />
+      <option name="generatorType" value="OPENAPI_GENERATOR_V7" />
       <option name="jdkPath" value="" />
       <option name="language" value="java" />
+      <option name="projectPathOnTarget" />
+      <option name="selectedOptions">
+        <list />
+      </option>
       <option name="specificationPath" value="C:\Work\mokapi\examples\mokapi\common.yml" />
       <method v="2" />
     </configuration>
@@ -293,24 +977,35 @@
     <list>
       <item itemvalue="Go Build.go build mokapi/cmd/mokapi" />
       <item itemvalue="Go Build.Examples" />
+      <item itemvalue="Go Build.Avro" />
+      <item itemvalue="Go Build.LDAP" />
       <item itemvalue="Go Build.Swagger" />
+      <item itemvalue="Go Build.Petstore 3.1" />
       <item itemvalue="Go Build.Test Campaign" />
       <item itemvalue="Go Build.Examples (1)" />
-      <item itemvalue="Go Test.TestHost_Every/every_but_one_time_and_not_immediately in mokapi/engine" />
-      <item itemvalue="Go Test.TestScript_Mokapi_Cron/skip_immediate_first_run in mokapi/js" />
-      <item itemvalue="Go Test.TestScript_Mokapi_Every/skip_immediate_first_run_ in mokapi/js" />
-      <item itemvalue="Go Test.TestGeneratorInt/int64_min_max_positive_exclusive in mokapi/providers/openapi/schema" />
+      <item itemvalue="Go Test.TestConfig/set_Root_DSE_by_config in mokapi/config/dynamic/directory" />
+      <item itemvalue="Go Test.TestDirectory_ServeSearch/paging in mokapi/config/dynamic/directory" />
+      <item itemvalue="Go Test.TestHandler_FileServer/request_jpg in mokapi/api" />
       <item itemvalue="Go Test.go test mokapi" />
+      <item itemvalue="Go Test.go test directory" />
     </list>
     <recent_temporary>
       <list>
         <item itemvalue="Go Test.go test mokapi" />
-        <item itemvalue="Go Test.TestScript_Mokapi_Cron/skip_immediate_first_run in mokapi/js" />
-        <item itemvalue="Go Test.TestScript_Mokapi_Every/skip_immediate_first_run_ in mokapi/js" />
-        <item itemvalue="Go Test.TestHost_Every/every_but_one_time_and_not_immediately in mokapi/engine" />
-        <item itemvalue="Go Test.TestGeneratorInt/int64_min_max_positive_exclusive in mokapi/providers/openapi/schema" />
+        <item itemvalue="Go Test.go test directory" />
+        <item itemvalue="Go Test.TestDirectory_ServeSearch/paging in mokapi/config/dynamic/directory" />
+        <item itemvalue="Go Test.TestConfig/set_Root_DSE_by_config in mokapi/config/dynamic/directory" />
+        <item itemvalue="Go Test.TestHandler_FileServer/request_jpg in mokapi/api" />
       </list>
     </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-gosdk-d297c17c1fbd-d82d926f19eb-org.jetbrains.plugins.go.sharedIndexes.bundled-GO-243.22562.186" />
+        <option value="bundled-js-predefined-d6986cc7102b-deb605915726-JavaScript-GO-243.22562.186" />
+      </set>
+    </attachedChunks>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TypeScriptGeneratedFilesManager">
@@ -344,6 +1039,11 @@
         <entry key="Branch">
           <value>
             <list>
+              <RecentGroup>
+                <option name="FILTER_VALUES">
+                  <option value="v0.11" />
+                </option>
+              </RecentGroup>
               <RecentGroup>
                 <option name="FILTER_VALUES">
                   <option value="v0.9" />
@@ -389,7 +1089,7 @@
                   <entry key="branch">
                     <value>
                       <list>
-                        <option value="v0.9" />
+                        <option value="v0.11" />
                       </list>
                     </value>
                   </entry>
@@ -427,32 +1127,32 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="add support asyncapi v2.4.0, v2.5.0 and v2.6.0" />
-    <MESSAGE value="fix asyncapi if only subscribe is defined&#10;imrpove validation" />
-    <MESSAGE value="add bool validation&#10;fix test" />
-    <MESSAGE value="add validation allOf" />
-    <MESSAGE value="fix error" />
-    <MESSAGE value="fix package-lock" />
-    <MESSAGE value="update blog" />
-    <MESSAGE value="remove console.log" />
-    <MESSAGE value="fix dashboard mock" />
-    <MESSAGE value="improve data generator&#10;improve dashboard" />
-    <MESSAGE value="fix build error" />
+    <MESSAGE value="improve kafka record validation&#10;add kafka key validation&#10;add webui support for avro" />
+    <MESSAGE value="add support conditional json schema in generator&#10;fix panic in JS async&#10;fix gofakeit uses current year for date and date-time&#10;add support multi schema format in webui" />
+    <MESSAGE value="fix build error in webui" />
+    <MESSAGE value="add test message" />
+    <MESSAGE value="fix e2e test" />
+    <MESSAGE value="improve json unmarshal schema ref" />
+    <MESSAGE value="add build time to /api/info" />
     <MESSAGE value="fix test" />
-    <MESSAGE value="add faker-tree image" />
-    <MESSAGE value="extend faker tree&#10;update doc" />
-    <MESSAGE value="fix image-url" />
-    <MESSAGE value="fix content-type when wrapped" />
-    <MESSAGE value="update doc" />
-    <MESSAGE value="update readme and dashboard image" />
-    <MESSAGE value="fix order of responses in swagger 2.0 operation" />
-    <MESSAGE value="fix converting to json schema with exclusive min and max" />
-    <MESSAGE value="remove debug message" />
-    <MESSAGE value="fix config view content-type and filename" />
-    <MESSAGE value="fix url" />
-    <MESSAGE value="fix lines" />
-    <MESSAGE value="fix doc" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix doc" />
+    <MESSAGE value="fix e2e port for api&#10;fix JS engine log error&#10;fix JS async on error&#10;set buildtime" />
+    <MESSAGE value="debug e2e" />
+    <MESSAGE value="fix e2e" />
+    <MESSAGE value="add avro parser for json data" />
+    <MESSAGE value="improve test stability" />
+    <MESSAGE value="fix unmarshal json multi schema format" />
+    <MESSAGE value="fix unmarshal json without schemaformat" />
+    <MESSAGE value="refactor schema reuse from asyncapi3" />
+    <MESSAGE value="add support multi schema in JS produce" />
+    <MESSAGE value="update goreleaser" />
+    <MESSAGE value="update golang" />
+    <MESSAGE value="refactor json $anchor using scope" />
+    <MESSAGE value="refactor json $anchor using scope&#10;fix OpenAPI default response&#10;fix generator when type is omitted but properties is present" />
+    <MESSAGE value="add test for default response" />
+    <MESSAGE value="add LDIF support&#10;add LDAP paging supporting&#10;fix LDAP objectClass=* filter and case insensitive&#10;add avro example" />
+    <MESSAGE value="fix http file server for jpg image&#10;add info log starting ldap server&#10;add ldap host config&#10;add ldap info to Root DSE entry&#10;replace ldap documentation" />
+    <MESSAGE value="fix paging LDAP does not work with a map" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix paging LDAP does not work with a map" />
   </component>
   <component name="VgoProject">
     <settings-migrated>true</settings-migrated>
@@ -461,415 +1161,149 @@
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/kafka/record_test.go</url>
-          <line>346</line>
-          <option name="timeStamp" value="882" />
+          <url>file://$PROJECT_DIR$/api/handler_schema.go</url>
+          <line>206</line>
+          <option name="timeStamp" value="2212" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/kafka/record_test.go</url>
-          <line>312</line>
-          <option name="timeStamp" value="884" />
+          <url>file://$PROJECT_DIR$/acceptance/petstore_test.go</url>
+          <line>112</line>
+          <option name="timeStamp" value="2213" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/asyncApi/kafka/store/partition_test.go</url>
-          <line>58</line>
-          <option name="timeStamp" value="888" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/js/modules/smtp/smtp.go</url>
-          <line>41</line>
-          <option name="timeStamp" value="906" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/mail/server.go</url>
-          <line>49</line>
-          <option name="timeStamp" value="924" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/asyncApi/kafka/store/group_balancer.go</url>
-          <line>90</line>
-          <option name="timeStamp" value="927" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/js/require.go</url>
-          <line>115</line>
-          <option name="timeStamp" value="953" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/asyncApi/patch.go</url>
-          <line>119</line>
-          <option name="timeStamp" value="1080" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/asyncApi/kafka/patch.go</url>
-          <line>11</line>
-          <option name="timeStamp" value="1085" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/asyncApi/patch_test.go</url>
-          <line>384</line>
-          <option name="timeStamp" value="1088" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/openapi/schema/patch.go</url>
-          <line>123</line>
-          <option name="timeStamp" value="1091" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/directory/patch.go</url>
-          <line>36</line>
-          <option name="timeStamp" value="1092" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/mail/patch.go</url>
-          <line>58</line>
-          <option name="timeStamp" value="1093" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/smtp/conn.go</url>
-          <line>157</line>
-          <option name="timeStamp" value="1153" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/imap/server_auth_test.go</url>
-          <line>71</line>
-          <option name="timeStamp" value="1170" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/imap/imaptest/parse.go</url>
-          <line>287</line>
-          <option name="timeStamp" value="1196" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/mail/imap_handler.go</url>
-          <line>24</line>
-          <option name="timeStamp" value="1222" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/imap/imap_test.go</url>
-          <line>39</line>
-          <option name="timeStamp" value="1223" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/asyncApi/kafka/store/offset_fetch.go</url>
-          <line>44</line>
-          <option name="timeStamp" value="1234" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/asyncApi/kafka/store/offset_commit.go</url>
-          <line>53</line>
-          <option name="timeStamp" value="1236" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/asyncApi/kafka/store/offset_commit.go</url>
-          <line>31</line>
-          <option name="timeStamp" value="1237" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/asyncApi/kafka/store/offset_commit.go</url>
-          <line>35</line>
-          <option name="timeStamp" value="1239" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/openapi/schema/validator.go</url>
-          <line>307</line>
-          <option name="timeStamp" value="1248" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/openapi/parameter/cookie.go</url>
-          <line>26</line>
-          <option name="timeStamp" value="1285" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/openapi/schema/unmarshal.go</url>
-          <line>164</line>
-          <option name="timeStamp" value="1327" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/openapi/schema/unmarshal.go</url>
-          <line>155</line>
-          <option name="timeStamp" value="1328" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/openapi/schema/unmarshal.go</url>
-          <line>146</line>
-          <option name="timeStamp" value="1329" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/openapi/schema/unmarshal.go</url>
-          <line>37</line>
-          <option name="timeStamp" value="1331" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/openapi/schema/generator_test.go</url>
-          <line>990</line>
-          <option name="timeStamp" value="1337" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/sortedmap/sortedmap.go</url>
-          <line>87</line>
-          <option name="timeStamp" value="1348" />
+          <url>file://$PROJECT_DIR$/js/eventloop/eventloop.go</url>
+          <line>77</line>
+          <option name="timeStamp" value="2223" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
           <url>file://$PROJECT_DIR$/js/script.go</url>
-          <line>215</line>
-          <option name="timeStamp" value="1349" />
+          <line>75</line>
+          <option name="timeStamp" value="2230" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/openapi/schema/generator_test.go</url>
-          <line>823</line>
-          <option name="timeStamp" value="1358" />
+          <url>file://$PROJECT_DIR$/schema/avro/schema/parser_json.go</url>
+          <line>11</line>
+          <option name="timeStamp" value="2235" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/openapi/schema/unmarshal.go</url>
-          <line>361</line>
-          <option name="timeStamp" value="1360" />
+          <url>file://$PROJECT_DIR$/schema/avro/schema/parser_json.go</url>
+          <line>30</line>
+          <option name="timeStamp" value="2237" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/openapi/schema/generator.go</url>
-          <line>76</line>
-          <option name="timeStamp" value="1362" />
+          <url>file://$PROJECT_DIR$/providers/asyncapi3/config_test.go</url>
+          <line>148</line>
+          <option name="timeStamp" value="2241" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/openapi/handler.go</url>
-          <line>143</line>
-          <option name="timeStamp" value="1363" />
+          <url>file://$PROJECT_DIR$/providers/asyncapi3/message_test.go</url>
+          <line>22</line>
+          <option name="timeStamp" value="2242" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/provider/npm/npm_test.go</url>
-          <line>273</line>
-          <option name="timeStamp" value="1398" />
+          <url>file://$PROJECT_DIR$/providers/asyncapi3/message_test.go</url>
+          <line>33</line>
+          <option name="timeStamp" value="2243" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <condition expression="o == nil || patch  == nil" language="go" />
-          <url>file://$PROJECT_DIR$/config/dynamic/openapi/operation.go</url>
-          <line>90</line>
-          <option name="timeStamp" value="1407" />
+          <url>file://$PROJECT_DIR$/providers/asyncapi3/schema.go</url>
+          <line>29</line>
+          <option name="timeStamp" value="2244" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/provider/http/http_test.go</url>
-          <line>167</line>
-          <option name="timeStamp" value="1425" />
+          <url>file://$PROJECT_DIR$/providers/asyncapi3/schema.go</url>
+          <line>155</line>
+          <option name="timeStamp" value="2246" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/provider/http/http.go</url>
-          <line>165</line>
-          <option name="timeStamp" value="1431" />
+          <url>file://$PROJECT_DIR$/schema/json/schema/schema_json_test.go</url>
+          <line>454</line>
+          <option name="timeStamp" value="2251" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file:///usr/local/go/src/mime/type.go</url>
-          <line>138</line>
-          <option name="timeStamp" value="1445" />
+          <url>file://$PROJECT_DIR$/schema/json/schema/additional_properties_test.go</url>
+          <line>26</line>
+          <option name="timeStamp" value="2256" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/openapi/response_test.go</url>
-          <line>229</line>
-          <option name="timeStamp" value="1464" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/openapi/handler.go</url>
-          <line>133</line>
-          <option name="timeStamp" value="1466" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/providers/openapi/schema/marshal_xml_test.go</url>
-          <line>321</line>
-          <option name="timeStamp" value="1476" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/engine/kafka_test.go</url>
-          <line>42</line>
-          <option name="timeStamp" value="1519" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/asyncApi/kafka/store/partition.go</url>
-          <line>145</line>
-          <option name="timeStamp" value="1531" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/api/handler_metrics.go</url>
-          <line>9</line>
-          <option name="timeStamp" value="1541" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/provider/git/git_test.go</url>
-          <line>99</line>
-          <option name="timeStamp" value="1546" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/static/static_config_test.go</url>
-          <line>44</line>
-          <option name="timeStamp" value="1548" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/provider/file/match.go</url>
-          <line>16</line>
-          <option name="timeStamp" value="1549" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/provider/file/match.go</url>
-          <line>77</line>
-          <option name="timeStamp" value="1550" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/providers/openapi/schema/unmarshal_form-urlencoded.go</url>
-          <line>20</line>
-          <option name="timeStamp" value="1551" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/providers/openapi/schema/unmarshal_form-urlencoded.go</url>
-          <line>10</line>
-          <option name="timeStamp" value="1552" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/providers/swagger/convert.go</url>
-          <line>219</line>
-          <option name="timeStamp" value="1556" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/providers/swagger/convert.go</url>
-          <line>192</line>
-          <option name="timeStamp" value="1558" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/try/http.go</url>
-          <line>131</line>
-          <option name="timeStamp" value="1561" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/providers/openapi/request_body_test.go</url>
-          <line>234</line>
-          <option name="timeStamp" value="1565" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/decoding/multipart.go</url>
-          <line>17</line>
-          <option name="timeStamp" value="1566" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/providers/openapi/request_body.go</url>
-          <line>238</line>
-          <option name="timeStamp" value="1570" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/providers/openapi/request_body.go</url>
-          <line>226</line>
-          <option name="timeStamp" value="1574" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/providers/openapi/schema/unmarshal.go</url>
-          <line>266</line>
-          <option name="timeStamp" value="1578" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/providers/openapi/event.go</url>
-          <line>98</line>
-          <option name="timeStamp" value="1588" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/json/generator/pet_test.go</url>
-          <line>147</line>
-          <option name="timeStamp" value="1591" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/json/schema/schema_json_test.go</url>
-          <line>76</line>
-          <option name="timeStamp" value="1594" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/json/generator/person.go</url>
-          <line>157</line>
-          <option name="timeStamp" value="1601" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/providers/openapi/schema/marshal.go</url>
-          <line>178</line>
-          <option name="timeStamp" value="1612" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/providers/openapi/schema/schemas.go</url>
-          <line>48</line>
-          <option name="timeStamp" value="1616" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/json/generator/petstore_test.go</url>
-          <line>49</line>
-          <option name="timeStamp" value="1617" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/json/generator/address.go</url>
-          <line>91</line>
-          <option name="timeStamp" value="1623" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/asyncApi/kafka/store/find_coordinator.go</url>
-          <line>23</line>
-          <option name="timeStamp" value="1625" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/asyncApi/kafka/store/metadata.go</url>
-          <line>28</line>
-          <option name="timeStamp" value="1626" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/resolve.go</url>
-          <line>154</line>
-          <option name="timeStamp" value="1627" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/config/dynamic/asyncApi/patch.go</url>
-          <line>216</line>
-          <option name="timeStamp" value="1632" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/json/schema/validation.go</url>
-          <line>301</line>
-          <option name="timeStamp" value="1644" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/json/schema/validation.go</url>
-          <line>246</line>
-          <option name="timeStamp" value="1645" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/api/handler_schema.go</url>
-          <line>122</line>
-          <option name="timeStamp" value="1650" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/api/handler_schema.go</url>
-          <line>101</line>
-          <option name="timeStamp" value="1651" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/json/schema/schema.go</url>
-          <line>108</line>
-          <option name="timeStamp" value="1658" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/json/schema/type.go</url>
+          <url>file://$PROJECT_DIR$/schema/json/schema/additional_properties_test.go</url>
           <line>8</line>
-          <option name="timeStamp" value="1659" />
+          <option name="timeStamp" value="2257" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/js/console.go</url>
-          <line>67</line>
-          <option name="timeStamp" value="1693" />
+          <url>file://$PROJECT_DIR$/schema/json/schema/schema_json_test.go</url>
+          <line>379</line>
+          <option name="timeStamp" value="2273" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/providers/openapi/schema/generator.go</url>
-          <line>62</line>
-          <option name="timeStamp" value="1695" />
+          <url>file://$PROJECT_DIR$/providers/openapi/config_v31_test.go</url>
+          <line>30</line>
+          <option name="timeStamp" value="2278" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/json/generator/number.go</url>
-          <line>143</line>
-          <option name="timeStamp" value="1698" />
+          <url>file://$PROJECT_DIR$/schema/json/schema/schema_json_test.go</url>
+          <line>520</line>
+          <option name="timeStamp" value="2298" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="DlvLineBreakpoint">
-          <url>file://$PROJECT_DIR$/json/generator/number.go</url>
-          <line>260</line>
-          <option name="timeStamp" value="1701" />
+          <url>file://$PROJECT_DIR$/config/dynamic/directory/directory_test.go</url>
+          <line>508</line>
+          <option name="timeStamp" value="2312" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/config/dynamic/directory/object_class.go</url>
+          <line>28</line>
+          <option name="timeStamp" value="2316" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/config/dynamic/directory/search.go</url>
+          <line>226</line>
+          <option name="timeStamp" value="2385" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/ldap/search_test.go</url>
+          <line>57</line>
+          <option name="timeStamp" value="2398" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/config/dynamic/directory/directory_test.go</url>
+          <line>186</line>
+          <option name="timeStamp" value="2414" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/config/dynamic/dynamictest/reader.go</url>
+          <line>19</line>
+          <option name="timeStamp" value="2434" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/config/dynamic/directory/search.go</url>
+          <line>40</line>
+          <option name="timeStamp" value="2443" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/config/dynamic/directory/search.go</url>
+          <line>58</line>
+          <option name="timeStamp" value="2445" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/api/handler.go</url>
+          <line>132</line>
+          <option name="timeStamp" value="2446" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/config/dynamic/directory/config.go</url>
+          <line>102</line>
+          <option name="timeStamp" value="2449" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/config/dynamic/directory/config.go</url>
+          <line>45</line>
+          <option name="timeStamp" value="2450" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/config/dynamic/directory/config_test.go</url>
+          <line>43</line>
+          <option name="timeStamp" value="2451" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -882,70 +1316,83 @@
       </configuration>
       <configuration name="GoTestRunConfiguration">
         <watch expression="*(*&quot;mokapi/sortedmap.pair&quot;)(824636046560)" />
+        <watch expression="*(*&quot;regexp.Regexp&quot;)(1374394110816)" />
       </configuration>
     </watches-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/mokapi$TestProduce_default_in_mokapi_kafka.out" NAME="TestProduce/default in mokapi/kafka Coverage Results" MODIFIED="1640100018573" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_store.out" NAME="go test store Coverage Results" MODIFIED="1649007179504" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_metrics.out" NAME="go test metrics Coverage Results" MODIFIED="1651059471392" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$TestHandler_FileServer_request_svg_in_mokapi_api.out" NAME="TestHandler_FileServer/request_svg in mokapi/api Coverage Results" MODIFIED="1703693718641" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$configreader_test_go.out" NAME="configreader_test.go Coverage Results" MODIFIED="1666426216001" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_imap.out" NAME="go test imap Coverage Results" MODIFIED="1688800265543" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$find_coordinator_test_go.out" NAME="find_coordinator_test.go Coverage Results" MODIFIED="1694183453881" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$cookie_test_go.out" NAME="cookie_test.go Coverage Results" MODIFIED="1694973849536" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_utils.out" NAME="go test utils Coverage Results" MODIFIED="1648039391559" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$refs_test_go.out" NAME="refs_test.go Coverage Results" MODIFIED="1638569597393" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_openapi.out" NAME="go test openapi Coverage Results" MODIFIED="1699196835609" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_modules.out" NAME="go test modules Coverage Results" MODIFIED="1641222793404" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_js.out" NAME="go test js Coverage Results" MODIFIED="1699107839608" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_common.out" NAME="go test common Coverage Results" MODIFIED="1665940418400" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$TestParse_in_mokapi_config_dynamic.out" NAME="TestParse in mokapi/config/dynamic Coverage Results" MODIFIED="1703946067106" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$TestRef_Marshal_Invalid_map_not_free_form_in_mokapi_config_dynamic_openapi_schema.out" NAME="TestRef_Marshal_Invalid/map_not_free-form in mokapi/config/dynamic/openapi/schema Coverage Results" MODIFIED="1645284109817" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$TestProduce_in_mokapi_server_kafka.out" NAME="TestProduce in mokapi/server/kafka Coverage Results" MODIFIED="1639036643943" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_ldap.out" NAME="go test ldap Coverage Results" MODIFIED="1643834917894" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$serve_test_go.out" NAME="serve_test.go Coverage Results" MODIFIED="1638786896064" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$directory_test_go.out" NAME="directory_test.go Coverage Results" MODIFIED="1643734021720" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$TestHandler_Body_object_with_null_property_in_mokapi_config_dynamic_openapi.out" NAME="TestHandler_Body/object_with_null_property in mokapi/config/dynamic/openapi Coverage Results" MODIFIED="1699027036020" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_api.out" NAME="go test api Coverage Results" MODIFIED="1703694064988" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
     <SUITE FILE_PATH="coverage/mokapi$go_test_engine.out" NAME="go test engine Coverage Results" MODIFIED="1708764717167" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_dynamic.out" NAME="go test dynamic Coverage Results" MODIFIED="1702144818602" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$TestJsFile_in_mokapi_acceptance.out" NAME="TestJsFile in mokapi/acceptance Coverage Results" MODIFIED="1649710193573" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$record_test_go.out" NAME="record_test.go Coverage Results" MODIFIED="1639051886975" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_config.out" NAME="go test config Coverage Results" MODIFIED="1641042450460" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_mokapi_lua_convert.out" NAME="go test mokapi/lua/convert Coverage Results" MODIFIED="1652008784502" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_kafka.out" NAME="go test kafka Coverage Results" MODIFIED="1686380283780" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
     <SUITE FILE_PATH="coverage/mokapi$gocheck_kafka.out" NAME="gocheck kafka Coverage Results" MODIFIED="1640188259887" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_http.out" NAME="go test http Coverage Results" MODIFIED="1702206712476" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_service.out" NAME="go test service Coverage Results" MODIFIED="1649184251978" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$TestReadWritePage_in_mokapi_kafka_protocol.out" NAME="TestReadWritePage in mokapi/kafka/protocol Coverage Results" MODIFIED="1640196578790" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_smtp.out" NAME="go test smtp Coverage Results" MODIFIED="1688106332257" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$response_test_go.out" NAME="response_test.go Coverage Results" MODIFIED="1694961743737" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$serve_test_go.out" NAME="serve_test.go Coverage Results" MODIFIED="1638786896064" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_mokapi_config_dynamic_openapi.out" NAME="go test mokapi/config/dynamic/openapi Coverage Results" MODIFIED="1639132388555" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$parser_string_test_go.out" NAME="parser_string_test.go Coverage Results" MODIFIED="1734856891102" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$directory_test_go.out" NAME="directory_test.go Coverage Results" MODIFIED="1643734021720" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_decoders.out" NAME="go test decoders Coverage Results" MODIFIED="1676725807766" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$generator_test_go.out" NAME="generator_test.go Coverage Results" MODIFIED="1697748509225" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$TestRef_Marshal_Invalid_map_not_free_form_in_mokapi_config_dynamic_openapi_schema.out" NAME="TestRef_Marshal_Invalid/map_not_free-form in mokapi/config/dynamic/openapi/schema Coverage Results" MODIFIED="1645284109817" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_readers.out" NAME="go test readers Coverage Results" MODIFIED="1640880206556" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_metrics.out" NAME="go test metrics Coverage Results" MODIFIED="1651059471392" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$header_test_go.out" NAME="header_test.go Coverage Results" MODIFIED="1694961760985" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_common.out" NAME="go test common Coverage Results" MODIFIED="1665940418400" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$TestProduce_default_in_mokapi_kafka.out" NAME="TestProduce/default in mokapi/kafka Coverage Results" MODIFIED="1640100018573" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
     <SUITE FILE_PATH="coverage/mokapi$go_test_lua.out" NAME="go test lua Coverage Results" MODIFIED="1697787336289" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
     <SUITE FILE_PATH="coverage/mokapi$go_test_web.out" NAME="go test web Coverage Results" MODIFIED="1641479065402" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_media.out" NAME="go test media Coverage Results" MODIFIED="1645181157573" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_server.out" NAME="go test server Coverage Results" MODIFIED="1642605787109" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_protocol.out" NAME="go test protocol Coverage Results" MODIFIED="1646470455316" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_mokapi.out" NAME="go test mokapi Coverage Results" MODIFIED="1702546991928" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_mokapi_lua_convert.out" NAME="go test mokapi/lua/convert Coverage Results" MODIFIED="1652008784502" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$TestParse_Integer_in_mokapi_schema_json_parser.out" NAME="TestParse_Integer in mokapi/schema/json/parser Coverage Results" MODIFIED="1734876737507" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$TestHandler_Body_object_with_null_property_in_mokapi_config_dynamic_openapi.out" NAME="TestHandler_Body/object_with_null_property in mokapi/config/dynamic/openapi Coverage Results" MODIFIED="1699027036020" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
     <SUITE FILE_PATH="coverage/mokapi$TestGenerator_OneOf_one_of_object_in_mokapi_config_dynamic_openapi_schema.out" NAME="TestGenerator_OneOf/one_of_object in mokapi/config/dynamic/openapi/schema Coverage Results" MODIFIED="1699108350378" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_encoding.out" NAME="go test encoding Coverage Results" MODIFIED="1640638561356" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_providers.out" NAME="go test providers Coverage Results" MODIFIED="1641205832396" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_mail.out" NAME="go test mail Coverage Results" MODIFIED="1682857891325" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_readers.out" NAME="go test readers Coverage Results" MODIFIED="1640880206556" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_schema.out" NAME="go test schema Coverage Results" MODIFIED="1699002358004" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$header_test_go.out" NAME="header_test.go Coverage Results" MODIFIED="1694961760985" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_parameter.out" NAME="go test parameter Coverage Results" MODIFIED="1694965350935" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_decoders.out" NAME="go test decoders Coverage Results" MODIFIED="1676725807766" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_kafka.out" NAME="go test kafka Coverage Results" MODIFIED="1686380283780" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$file_test_go.out" NAME="file_test.go Coverage Results" MODIFIED="1638629511213" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$TestFetch_in_mokapi_server_kafka.out" NAME="TestFetch in mokapi/server/kafka Coverage Results" MODIFIED="1639041926592" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_mokapi_config_dynamic_openapi.out" NAME="go test mokapi/config/dynamic/openapi Coverage Results" MODIFIED="1639132388555" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_file.out" NAME="go test file Coverage Results" MODIFIED="1679761871534" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$generator_test_go.out" NAME="generator_test.go Coverage Results" MODIFIED="1697748509225" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_convert.out" NAME="go test convert Coverage Results" MODIFIED="1652008805359" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$response_test_go.out" NAME="response_test.go Coverage Results" MODIFIED="1694961743737" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$TestRecord_ReadFrom_in_mokapi_server_kafka_protocol.out" NAME="TestRecord_ReadFrom in mokapi/server/kafka/protocol Coverage Results" MODIFIED="1639046426159" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$patch_test_go.out" NAME="patch_test.go Coverage Results" MODIFIED="1686398116781" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$go_test_api.out" NAME="go test api Coverage Results" MODIFIED="1703694064988" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
-    <SUITE FILE_PATH="coverage/mokapi$table_test_go.out" NAME="table_test.go Coverage Results" MODIFIED="1652008825581" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$TestParser_ParseObject_in_mokapi_schema_json_parser.out" NAME="TestParser_ParseObject in mokapi/schema/json/parser Coverage Results" MODIFIED="1734910835740" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$refs_test_go.out" NAME="refs_test.go Coverage Results" MODIFIED="1638569597393" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
     <SUITE FILE_PATH="coverage/mokapi$marshal_xml_test_go.out" NAME="marshal_xml_test.go Coverage Results" MODIFIED="1697827883336" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_schema.out" NAME="go test schema Coverage Results" MODIFIED="1734734222214" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$record_test_go.out" NAME="record_test.go Coverage Results" MODIFIED="1639051886975" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_build_mokapi_schema_json_parser.out" NAME="go build mokapi/schema/json/parser Coverage Results" MODIFIED="1734890682058" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_server.out" NAME="go test server Coverage Results" MODIFIED="1642605787109" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_asyncapi3.out" NAME="go test asyncapi3 Coverage Results" MODIFIED="1735481568533" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_smtp.out" NAME="go test smtp Coverage Results" MODIFIED="1688106332257" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_store.out" NAME="go test store Coverage Results" MODIFIED="1735639425963" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_utils.out" NAME="go test utils Coverage Results" MODIFIED="1648039391559" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_providers.out" NAME="go test providers Coverage Results" MODIFIED="1641205832396" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_dynamic.out" NAME="go test dynamic Coverage Results" MODIFIED="1702144818602" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_service.out" NAME="go test service Coverage Results" MODIFIED="1649184251978" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$TestReadWritePage_in_mokapi_kafka_protocol.out" NAME="TestReadWritePage in mokapi/kafka/protocol Coverage Results" MODIFIED="1640196578790" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$TestParse_Integer_int32_and_greater_as_max_value_but_disabled_in_mokapi_schema_json_parser.out" NAME="TestParse_Integer/int32_and_greater_as_max_value_but_disabled in mokapi/schema/json/parser Coverage Results" MODIFIED="1734877613958" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_config.out" NAME="go test config Coverage Results" MODIFIED="1641042450460" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$TestJsFile_in_mokapi_acceptance.out" NAME="TestJsFile in mokapi/acceptance Coverage Results" MODIFIED="1649710193573" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_parameter.out" NAME="go test parameter Coverage Results" MODIFIED="1694965350935" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$TestParse_in_mokapi_config_dynamic.out" NAME="TestParse in mokapi/config/dynamic Coverage Results" MODIFIED="1703946067106" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$find_coordinator_test_go.out" NAME="find_coordinator_test.go Coverage Results" MODIFIED="1694183453881" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_mail.out" NAME="go test mail Coverage Results" MODIFIED="1682857891325" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$table_test_go.out" NAME="table_test.go Coverage Results" MODIFIED="1652008825581" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_modules.out" NAME="go test modules Coverage Results" MODIFIED="1641222793404" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_openapi.out" NAME="go test openapi Coverage Results" MODIFIED="1699196835609" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_encoding.out" NAME="go test encoding Coverage Results" MODIFIED="1640638561356" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$file_test_go.out" NAME="file_test.go Coverage Results" MODIFIED="1638629511213" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$parser_integer_test_go.out" NAME="parser_integer_test.go Coverage Results" MODIFIED="1734887698335" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
     <SUITE FILE_PATH="coverage/mokapi$go_test_faker.out" NAME="go test faker Coverage Results" MODIFIED="1677568256522" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_file.out" NAME="go test file Coverage Results" MODIFIED="1679761871534" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$patch_test_go.out" NAME="patch_test.go Coverage Results" MODIFIED="1686398116781" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_ldap.out" NAME="go test ldap Coverage Results" MODIFIED="1736677612626" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_protocol.out" NAME="go test protocol Coverage Results" MODIFIED="1646470455316" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_mokapi.out" NAME="go test mokapi Coverage Results" MODIFIED="1736548629666" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_convert.out" NAME="go test convert Coverage Results" MODIFIED="1652008805359" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$parser_number_test_go.out" NAME="parser_number_test.go Coverage Results" MODIFIED="1734890833597" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$cookie_test_go.out" NAME="cookie_test.go Coverage Results" MODIFIED="1694973849536" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$TestRecord_ReadFrom_in_mokapi_server_kafka_protocol.out" NAME="TestRecord_ReadFrom in mokapi/server/kafka/protocol Coverage Results" MODIFIED="1639046426159" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$TestProduce_in_mokapi_server_kafka.out" NAME="TestProduce in mokapi/server/kafka Coverage Results" MODIFIED="1639036643943" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_http.out" NAME="go test http Coverage Results" MODIFIED="1702206712476" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$TestSchema_file_reference_direct_in_mokapi_config_dynamic_asyncApi.out" NAME="TestSchema/file_reference_direct in mokapi/config/dynamic/asyncApi Coverage Results" MODIFIED="1735565790372" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_js.out" NAME="go test js Coverage Results" MODIFIED="1699107839608" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$configreader_test_go.out" NAME="configreader_test.go Coverage Results" MODIFIED="1666426216001" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_parser.out" NAME="go test parser Coverage Results" MODIFIED="1735233197705" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$parser_array_test_go.out" NAME="parser_array_test.go Coverage Results" MODIFIED="1736073480259" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_imap.out" NAME="go test imap Coverage Results" MODIFIED="1688800265543" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$TestHandler_FileServer_request_svg_in_mokapi_api.out" NAME="TestHandler_FileServer/request_svg in mokapi/api Coverage Results" MODIFIED="1703693718641" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$TestFetch_in_mokapi_server_kafka.out" NAME="TestFetch in mokapi/server/kafka Coverage Results" MODIFIED="1639041926592" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$go_test_media.out" NAME="go test media Coverage Results" MODIFIED="1645181157573" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/mokapi$parser_object_test_go.out" NAME="parser_object_test.go Coverage Results" MODIFIED="1734895842860" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
   </component>
 </project>

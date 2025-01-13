@@ -38,10 +38,10 @@ func (p *Parser) parseOneObject(m *sortedmap.LinkedHashMap[string, interface{}],
 	var err error
 	validIndex := -1
 	index := 0
-	var one *schema.Ref
+	var one *schema.Schema
 
 	for index, one = range s.OneOf {
-		if one == nil || one.Value == nil {
+		if one == nil {
 			if result != nil {
 				return nil, Errorf("oneOf", "valid against more than one schema from 'oneOf': valid schema indexes: %v, %v", validIndex, index)
 			}
@@ -52,13 +52,13 @@ func (p *Parser) parseOneObject(m *sortedmap.LinkedHashMap[string, interface{}],
 
 		eval := map[string]bool{}
 		var next *sortedmap.LinkedHashMap[string, interface{}]
-		next, err = p.parseObject(m, one.Value, eval)
+		next, err = p.parseObject(m, one, eval)
 		if err != nil {
 			continue
 		}
 
 		var v interface{}
-		v, err = p.evaluateUnevaluatedProperties(next, one.Value, eval)
+		v, err = p.evaluateUnevaluatedProperties(next, one, eval)
 		if err != nil {
 			continue
 		}

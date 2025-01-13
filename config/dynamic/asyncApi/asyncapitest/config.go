@@ -72,7 +72,7 @@ func WithSchemas(name string, s *schema.Schema) ConfigOptions {
 			c.Components.Schemas = map[string]*asyncapi3.SchemaRef{}
 		}
 		c.Components.Schemas[name] = &asyncapi3.SchemaRef{
-			Value: &asyncapi3.MultiSchemaFormat{Schema: &schema.Ref{Value: s}},
+			Value: &asyncapi3.MultiSchemaFormat{Schema: s},
 		}
 	}
 }

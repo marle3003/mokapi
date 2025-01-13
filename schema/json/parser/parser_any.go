@@ -31,23 +31,23 @@ func (p *Parser) parseAnyObject(m *sortedmap.LinkedHashMap[string, interface{}],
 	p2.ValidateAdditionalProperties = true
 	var err error
 	index := 0
-	var one *schema.Ref
+	var one *schema.Schema
 
 	for index, one = range s.AnyOf {
-		if one == nil || one.Value == nil {
+		if one == nil {
 			result = m
 			continue
 		}
 
 		eval := map[string]bool{}
 		var obj *sortedmap.LinkedHashMap[string, interface{}]
-		obj, err = p2.parseObject(m, one.Value, eval)
+		obj, err = p2.parseObject(m, one, eval)
 		if err != nil {
 			continue
 		}
 
 		var v interface{}
-		v, err = p.evaluateUnevaluatedProperties(obj, one.Value, eval)
+		v, err = p.evaluateUnevaluatedProperties(obj, one, eval)
 		if err != nil {
 			continue
 		}

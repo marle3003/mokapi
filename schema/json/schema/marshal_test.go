@@ -9,12 +9,12 @@ import (
 func TestRef_MarshalJSON(t *testing.T) {
 	testcases := []struct {
 		name string
-		s    *Ref
+		s    *Schema
 		test func(t *testing.T, s string, err error)
 	}{
 		{
 			name: "empty type",
-			s:    &Ref{},
+			s:    &Schema{},
 			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "{}", s)
@@ -22,7 +22,7 @@ func TestRef_MarshalJSON(t *testing.T) {
 		},
 		{
 			name: "with type",
-			s:    &Ref{Value: &Schema{Type: Types{"string"}}},
+			s:    &Schema{Type: Types{"string"}},
 			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, `{"type":"string"}`, s)

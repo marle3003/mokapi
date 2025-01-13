@@ -4,7 +4,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 
@@ -181,7 +181,7 @@ func TestParser_ParseAll(t *testing.T) {
 			schema: schematest.NewAllOf(
 				schematest.New("object",
 					schematest.WithProperty("name", schematest.New("string")),
-					schematest.WithUnevaluatedProperties(&schema.Ref{Boolean: toBoolP(false)}),
+					schematest.WithUnevaluatedProperties(&schema.Schema{Boolean: toBoolP(false)}),
 				),
 				schematest.New("object", schematest.WithProperty("age", schematest.New("integer"))),
 			),
@@ -227,7 +227,7 @@ func TestParser_ParseAll(t *testing.T) {
 				),
 				schematest.WithProperty("type", schematest.NewTypes(nil, schematest.WithEnum([]interface{}{"residential", "business"}))),
 				schematest.WithRequired("type"),
-				schematest.WithUnevaluatedProperties(&schema.Ref{Boolean: toBoolP(false)}),
+				schematest.WithUnevaluatedProperties(&schema.Schema{Boolean: toBoolP(false)}),
 			),
 			data: map[string]interface{}{
 				"street_address":                "1600 Pennsylvania Avenue NW",
@@ -253,7 +253,7 @@ func TestParser_ParseAll(t *testing.T) {
 				),
 				schematest.WithProperty("type", schematest.NewTypes(nil, schematest.WithEnum([]interface{}{"residential", "business"}))),
 				schematest.WithRequired("type"),
-				schematest.WithUnevaluatedProperties(&schema.Ref{Boolean: toBoolP(false)}),
+				schematest.WithUnevaluatedProperties(&schema.Schema{Boolean: toBoolP(false)}),
 			),
 			data: map[string]interface{}{
 				"street_address": "1600 Pennsylvania Avenue NW",
@@ -278,7 +278,7 @@ func TestParser_ParseAll(t *testing.T) {
 				),
 				schematest.WithProperty("type", schematest.NewTypes(nil, schematest.WithEnum([]interface{}{"residential", "business"}))),
 				schematest.WithRequired("type"),
-				schematest.WithUnevaluatedProperties(schematest.NewRef("string")),
+				schematest.WithUnevaluatedProperties(schematest.New("string")),
 			),
 			data: map[string]interface{}{
 				"street_address":                "1600 Pennsylvania Avenue NW",
@@ -300,7 +300,7 @@ func TestParser_ParseAll(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			p := &parser.Parser{Schema: &schema.Ref{Value: tc.schema}, ValidateAdditionalProperties: true}
+			p := &parser.Parser{Schema: tc.schema, ValidateAdditionalProperties: true}
 			v, err := p.Parse(tc.data)
 			tc.test(t, v, err)
 		})
@@ -317,26 +317,26 @@ func TestParser_AllOf_If_Then(t *testing.T) {
 		)),
 		schematest.WithAllOf(
 			schematest.NewTypes(nil,
-				schematest.WithIf(schematest.NewRefTypes(nil,
+				schematest.WithIf(schematest.NewTypes(nil,
 					schematest.WithProperty("country", schematest.NewTypes(nil, schematest.WithConst("United States of America"))),
 				)),
-				schematest.WithThen(schematest.NewRefTypes(nil,
+				schematest.WithThen(schematest.NewTypes(nil,
 					schematest.WithProperty("postal_code", schematest.NewTypes(nil, schematest.WithPattern("[0-9]{5}(-[0-9]{4})?"))),
 				)),
 			),
 			schematest.NewTypes(nil,
-				schematest.WithIf(schematest.NewRefTypes(nil,
+				schematest.WithIf(schematest.NewTypes(nil,
 					schematest.WithProperty("country", schematest.NewTypes(nil, schematest.WithConst("Canada"))),
 				)),
-				schematest.WithThen(schematest.NewRefTypes(nil,
+				schematest.WithThen(schematest.NewTypes(nil,
 					schematest.WithProperty("postal_code", schematest.NewTypes(nil, schematest.WithPattern("[A-Z][0-9][A-Z] [0-9][A-Z][0-9]"))),
 				)),
 			),
 			schematest.NewTypes(nil,
-				schematest.WithIf(schematest.NewRefTypes(nil,
+				schematest.WithIf(schematest.NewTypes(nil,
 					schematest.WithProperty("country", schematest.NewTypes(nil, schematest.WithConst("Netherlands"))),
 				)),
-				schematest.WithThen(schematest.NewRefTypes(nil,
+				schematest.WithThen(schematest.NewTypes(nil,
 					schematest.WithProperty("postal_code", schematest.NewTypes(nil, schematest.WithPattern("[0-9]{4} [A-Z]{2}"))),
 				)),
 			),
@@ -420,7 +420,7 @@ func TestParser_AllOf_If_Then(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			p := &parser.Parser{Schema: &schema.Ref{Value: s}, ValidateAdditionalProperties: true}
+			p := &parser.Parser{Schema: s, ValidateAdditionalProperties: true}
 			v, err := p.Parse(tc.d)
 			tc.test(t, v, err)
 		})

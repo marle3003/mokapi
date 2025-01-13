@@ -12,8 +12,11 @@ import (
 )
 
 type Schema struct {
+	Id string `yaml:"$id,omitempty" json:"$id,omitempty"`
+
 	Schema  string `yaml:"$schema,omitempty" json:"$schema,omitempty"`
 	Boolean *bool  `yaml:"-" json:"-"`
+	Anchor  string `yaml:"$anchor,omitempty" json:"$anchor,omitempty"`
 
 	Type  schema.Types  `yaml:"type,omitempty" json:"type,omitempty"`
 	Enum  []interface{} `yaml:"enum,omitempty" json:"enum,omitempty"`
@@ -77,6 +80,9 @@ type Schema struct {
 	ContentMediaType string `yaml:"contentMediaType,omitempty" json:"contentMediaType,omitempty"`
 	ContentEncoding  string `yaml:"contentEncoding,omitempty" json:"contentEncoding,omitempty"`
 
+	Definitions map[string]*Ref `yaml:"definitions,omitempty" json:"definitions,omitempty"`
+	Defs        map[string]*Ref `yaml:"$defs,omitempty" json:"$defs,omitempty"`
+
 	// OpenAPI
 	Xml      *Xml `yaml:"xml,omitempty" json:"xml,omitempty"`
 	Nullable bool `yaml:"nullable,omitempty" json:"nullable,omitempty"`
@@ -89,6 +95,31 @@ func (s *Schema) HasProperties() bool {
 func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if s == nil {
 		return nil
+	}
+
+	if s.Id != "" {
+		config.OpenScope(s.Id)
+		defer config.CloseScope()
+	} else {
+		config.Scope.OpenIfNeeded(config.Info.Path())
+	}
+
+	if s.Anchor != "" {
+		if err := config.Scope.SetLexical(s.Anchor, s); err != nil {
+			return err
+		}
+	}
+
+	for _, d := range s.Definitions {
+		if err := d.Parse(config, reader); err != nil {
+			return err
+		}
+	}
+
+	for _, d := range s.Defs {
+		if err := d.Parse(config, reader); err != nil {
+			return err
+		}
 	}
 
 	if err := s.Items.Parse(config, reader); err != nil {
@@ -263,7 +294,7 @@ func (s *Schema) IsNullable() bool {
 
 func (s *Schema) ConvertTo(i interface{}) (interface{}, error) {
 	if _, ok := i.(*schema.Schema); ok {
-		return ConvertToJsonSchema(&Ref{Value: s}).Value, nil
+		return ConvertToJsonSchema(&Ref{Value: s}), nil
 	}
 	return nil, fmt.Errorf("cannot convert %v to json schema", i)
 }

@@ -166,29 +166,29 @@ func newPostCode(s *schema.Schema) interface{} {
 	if s == nil || s.IsAny() {
 		s = &schema.Schema{Type: []string{"string"}}
 	}
-	min := 4
-	max := 6
+	minLength := 4
+	maxLength := 6
 	if s.IsInteger() {
 		if s.Minimum != nil {
-			min = len(fmt.Sprintf("%v", *s.Minimum))
+			minLength = len(fmt.Sprintf("%v", *s.Minimum))
 		}
 		if s.Maximum != nil {
-			max = len(fmt.Sprintf("%v", *s.Maximum))
+			maxLength = len(fmt.Sprintf("%v", *s.Maximum))
 		}
 	} else if s.IsString() {
 		if s.MinLength != nil {
-			min = *s.MinLength
+			minLength = *s.MinLength
 		}
 		if s.MaxLength != nil {
-			max = *s.MaxLength
+			maxLength = *s.MaxLength
 		}
 	}
 
 	var n int
-	if min == max {
-		n = min
+	if minLength == maxLength {
+		n = minLength
 	} else {
-		n = gofakeit.Number(min, max)
+		n = gofakeit.Number(minLength, maxLength)
 	}
 
 	code := gofakeit.Numerify(strings.Repeat("#", n))

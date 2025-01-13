@@ -4,7 +4,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 
@@ -102,7 +102,7 @@ func TestParser_NoType(t *testing.T) {
 		{
 			name:   "not string error",
 			data:   "foo",
-			schema: schematest.NewTypes(nil, schematest.WithNot(schematest.NewRef("string"))),
+			schema: schematest.NewTypes(nil, schematest.WithNot(schematest.New("string"))),
 			test: func(t *testing.T, v interface{}, err error) {
 				require.EqualError(t, err, "found 1 error:\nis valid against schema from 'not'\nschema path #/not")
 			},
@@ -110,7 +110,7 @@ func TestParser_NoType(t *testing.T) {
 		{
 			name:   "not string",
 			data:   12,
-			schema: schematest.NewTypes(nil, schematest.WithNot(schematest.NewRef("string"))),
+			schema: schematest.NewTypes(nil, schematest.WithNot(schematest.New("string"))),
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, int64(12), v)
@@ -124,7 +124,7 @@ func TestParser_NoType(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			p := &parser.Parser{Schema: &schema.Ref{Value: tc.schema}}
+			p := &parser.Parser{Schema: tc.schema}
 			v, err := p.Parse(tc.data)
 			tc.test(t, v, err)
 		})

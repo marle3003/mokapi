@@ -9,15 +9,15 @@ import (
 type Path []*PathElement
 
 type PathElement struct {
-	Name   string      `json:"name"`
-	Schema *schema.Ref `json:"schema"`
+	Name   string         `json:"name"`
+	Schema *schema.Schema `json:"schema"`
 }
 
 type Request struct {
 	Path Path `json:"path"`
 
 	g       *generator
-	history []*schema.Ref
+	history []*schema.Schema
 	context map[string]interface{}
 }
 
@@ -52,10 +52,10 @@ func (r *Request) LastName() string {
 
 func (r *Request) LastSchema() *schema.Schema {
 	last := r.Last()
-	if last == nil || last.Schema == nil {
+	if last == nil {
 		return nil
 	}
-	return last.Schema.Value
+	return last.Schema
 }
 
 func (r *Request) Last() *PathElement {
@@ -156,11 +156,11 @@ func (p *PathElement) RefName() string {
 	return RefName(p.Schema)
 }
 
-func RefName(r *schema.Ref) string {
-	if r == nil || r.Ref == "" {
+func RefName(s *schema.Schema) string {
+	if s == nil || s.Ref == "" {
 		return ""
 	}
-	u, err := url.Parse(r.Ref)
+	u, err := url.Parse(s.Ref)
 	if err != nil {
 		return ""
 	}
@@ -169,7 +169,7 @@ func RefName(r *schema.Ref) string {
 
 type RequestOption func(r *Request)
 
-func UsePathElement(name string, schema *schema.Ref) RequestOption {
+func UsePathElement(name string, schema *schema.Schema) RequestOption {
 	return func(r *Request) {
 		r.Path = append(r.Path, &PathElement{Name: name, Schema: schema})
 		r.history = append(r.history, schema)

@@ -1,7 +1,6 @@
 package schema
 
 import (
-	jsonRef "mokapi/schema/json/ref"
 	"mokapi/schema/json/schema"
 )
 
@@ -10,7 +9,7 @@ type JsonSchemaConverter struct {
 	useXml  bool
 }
 
-func ConvertToJsonSchema(ref *Ref) *schema.Ref {
+func ConvertToJsonSchema(ref *Ref) *schema.Schema {
 	c := &JsonSchemaConverter{}
 	return c.ConvertToJsonRef(ref)
 }
@@ -86,14 +85,14 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 
 	for k, ref := range s.PatternProperties {
 		if js.PatternProperties == nil {
-			js.PatternProperties = map[string]*schema.Ref{}
+			js.PatternProperties = map[string]*schema.Schema{}
 		}
 		js.PatternProperties[k] = c.ConvertToJsonRef(ref)
 	}
 
 	for k, ref := range s.DependentSchemas {
 		if js.DependentSchemas == nil {
-			js.DependentSchemas = map[string]*schema.Ref{}
+			js.DependentSchemas = map[string]*schema.Schema{}
 		}
 		js.DependentSchemas[k] = c.ConvertToJsonRef(ref)
 	}
@@ -126,17 +125,32 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 	js.ContentMediaType = s.ContentMediaType
 	js.ContentEncoding = s.ContentEncoding
 
+	if s.Definitions != nil {
+		js.Definitions = map[string]*schema.Schema{}
+		for k, v := range s.Definitions {
+			js.Definitions[k] = ConvertToJsonSchema(v)
+		}
+	}
+
+	if s.Defs != nil {
+		js.Defs = map[string]*schema.Schema{}
+		for k, v := range s.Defs {
+			js.Defs[k] = ConvertToJsonSchema(v)
+		}
+	}
+
 	return js
 }
 
-func (c *JsonSchemaConverter) ConvertToJsonRef(r *Ref) *schema.Ref {
-	if r == nil {
+func (c *JsonSchemaConverter) ConvertToJsonRef(r *Ref) *schema.Schema {
+	if r == nil || (r.Ref == "" && r.Boolean == nil && r.Value == nil) {
 		return nil
 	}
-	js := &schema.Ref{Reference: jsonRef.Reference{Ref: r.Ref}, Boolean: r.Boolean}
+	js := &schema.Schema{Ref: r.Ref, Boolean: r.Boolean}
 	if r.Value == nil {
 		return js
 	}
-	js.Value = c.Convert(r.Value)
+	js = c.Convert(r.Value)
+	js.Ref = r.Ref
 	return js
 }

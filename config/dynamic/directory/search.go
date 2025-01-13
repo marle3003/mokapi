@@ -2,7 +2,9 @@ package directory
 
 import (
 	"bytes"
+	"context"
 	"fmt"
+	"github.com/brianvoe/gofakeit/v6"
 	log "github.com/sirupsen/logrus"
 	"mokapi/ldap"
 	"mokapi/runtime/events"
@@ -34,30 +36,13 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 		m.LastSearch.WithLabel(d.config.Info.Name).Set(float64(time.Now().Unix()))
 	}
 
-	if msg.BaseDN == "" && msg.Scope == ldap.ScopeBaseObject {
-		res := ldap.NewSearchResult(d.config.Root.Dn)
-		for k, v := range d.config.Root.Attributes {
-			res.Attributes[k] = v
-		}
-
-		log.Infof("found result for message %v: %v", r.MessageId, res.Dn)
-		if err := rw.Write(&ldap.SearchResponse{
-			Status:  ldap.Success,
-			Results: []ldap.SearchResult{res},
-		}); err != nil {
-			log.Errorf("ldap: send search done: %v", err)
-		}
-		return
-	}
-
 	n := int64(0)
 	sizeLimit := msg.SizeLimit
-	if sizeLimit == 0 {
-		sizeLimit = d.config.getSizeLimit()
-	}
+	pageLimit, pagedStoredIndex := getPageInfo(msg.Controls, r.Context)
+	skipPageIndex := int64(0)
 	maxSizeLimit := d.config.getSizeLimit()
 	var results []ldap.SearchResult
-	predicate, pos, err := compileFilter(strings.ToLower(msg.Filter))
+	predicate, pos, err := compileFilter(msg.Filter)
 	if pos != len(msg.Filter) || err != nil {
 		if err != nil {
 			log.Errorf("ldap: filter syntax error: %v", err)
@@ -68,63 +53,75 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 		return
 	}
 	status := ldap.Success
-	for _, e := range d.config.Entries {
-		if !predicate(e) {
-			continue
-		}
-
-		switch msg.Scope {
-		case ldap.ScopeBaseObject:
-			if e.Dn != msg.BaseDN {
+	if d.config.Entries != nil {
+		for it := d.config.Entries.Iter(); it.Next(); {
+			e := it.Value()
+			if !predicate(e) {
 				continue
 			}
-		case ldap.ScopeSingleLevel:
-			parts := strings.Split(e.Dn, ",")
-			if len(parts) < 2 && e.Dn != msg.BaseDN {
-				continue
-			}
-			if dn := strings.Join(parts[1:], ","); dn != msg.BaseDN {
-				continue
-			}
-		}
 
-		if n >= sizeLimit {
-			break
-		}
-		if n >= maxSizeLimit {
-			log.Errorf("ldap search query %v: size limit exceeded", msg.Filter)
-			status = ldap.SizeLimitExceeded
-			break
-		}
-		n++
-
-		res := ldap.NewSearchResult(e.Dn)
-		res.Attributes["objectClass"] = e.Attributes["objectClass"]
-
-		if len(msg.Attributes) > 0 {
-			for _, a := range msg.Attributes {
-				for k, v := range e.Attributes {
-					if strings.ToLower(a) == strings.ToLower(k) {
-						res.Attributes[a] = v
-					}
+			switch msg.Scope {
+			case ldap.ScopeBaseObject:
+				if e.Dn != msg.BaseDN {
+					continue
+				}
+			case ldap.ScopeSingleLevel:
+				parts := strings.Split(e.Dn, ",")
+				if len(parts) < 2 && e.Dn != msg.BaseDN {
+					continue
+				}
+				if dn := strings.Join(parts[1:], ","); dn != msg.BaseDN {
+					continue
 				}
 			}
-		} else {
-			res.Attributes = e.Attributes
-		}
 
-		log.Debugf("found result for message %v: %v", r.MessageId, res.Dn)
-		results = append(results, res)
-		event.Response.Results = append(event.Response.Results, LdapSearchResult{
-			Dn:         res.Dn,
-			Attributes: res.Attributes,
-		})
+			if pagedStoredIndex != 0 && skipPageIndex < pagedStoredIndex {
+				skipPageIndex++
+				continue
+			}
+			if sizeLimit != 0 && n >= sizeLimit {
+				break
+			}
+			if pageLimit > 0 && n >= pageLimit {
+				setPageCookie(msg.Controls, n, r.Context)
+				break
+			}
+			if maxSizeLimit > 0 && n >= maxSizeLimit {
+				log.Errorf("ldap search query %v: size limit exceeded", msg.Filter)
+				status = ldap.SizeLimitExceeded
+				break
+			}
+			n++
+
+			res := ldap.NewSearchResult(e.Dn)
+			res.Attributes["objectClass"] = e.Attributes["objectClass"]
+
+			if len(msg.Attributes) > 0 {
+				for _, a := range msg.Attributes {
+					for k, v := range e.Attributes {
+						if strings.ToLower(a) == strings.ToLower(k) {
+							res.Attributes[a] = v
+						}
+					}
+				}
+			} else {
+				res.Attributes = e.Attributes
+			}
+
+			log.Debugf("found result for message %v: %v", r.MessageId, res.Dn)
+			results = append(results, res)
+			event.Response.Results = append(event.Response.Results, LdapSearchResult{
+				Dn:         res.Dn,
+				Attributes: res.Attributes,
+			})
+		}
 	}
 
 	res := &ldap.SearchResponse{
-		Status:  status,
-		Results: results,
-		Message: ldap.StatusText[status],
+		Status:   status,
+		Results:  results,
+		Message:  ldap.StatusText[status],
+		Controls: msg.Controls,
 	}
 
 	event.Response.Status = ldap.StatusText[status]
@@ -216,9 +213,17 @@ func newPredicate(op int, name, value string) predicate {
 }
 
 func substring(name, value string) predicate {
+	name = strings.ToLower(name)
+
 	if value == "*" {
 		return func(e Entry) bool {
 			for k := range e.Attributes {
+				// special case for objectClass
+				// Matches all entries, even if objectClass is not explicitly present,
+				// because objectClass is fundamental to every LDAP entry by definition.
+				if name == "objectclass" {
+					return true
+				}
 				if strings.ToLower(k) == name {
 					return true
 				}
@@ -335,7 +340,7 @@ func lessOrEqual(name, value string) predicate {
 func check(name string, f func(string) bool) predicate {
 	return func(e Entry) bool {
 		for k, attrs := range e.Attributes {
-			if name != strings.ToLower(k) {
+			if strings.ToLower(name) != strings.ToLower(k) {
 				continue
 			}
 			for _, attr := range attrs {
@@ -345,5 +350,32 @@ func check(name string, f func(string) bool) predicate {
 			}
 		}
 		return false
+	}
+}
+
+func getPageInfo(controls []ldap.Control, ctx context.Context) (int64, int64) {
+	for _, control := range controls {
+		switch ctrl := control.(type) {
+		case *ldap.PagedResultsControl:
+			page := ldap.PagingFromContext(ctx)
+			pagedIndex, ok := page.Cookies[ctrl.Cookie]
+			if !ok {
+				pagedIndex = 0
+			}
+			return ctrl.PageSize, pagedIndex
+		}
+	}
+	return -1, 0
+}
+
+func setPageCookie(controls []ldap.Control, pageIndex int64, ctx context.Context) {
+	for _, control := range controls {
+		switch ctrl := control.(type) {
+		case *ldap.PagedResultsControl:
+			name := gofakeit.LetterN(6)
+			ctrl.Cookie = name
+			page := ldap.PagingFromContext(ctx)
+			page.Cookies[name] = pageIndex
+		}
 	}
 }

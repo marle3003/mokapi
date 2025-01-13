@@ -36,7 +36,7 @@ func (h *handler) validate(w http.ResponseWriter, r *http.Request) {
 	case *schema.Ref:
 		err = parseByOpenApi([]byte(valReq.Data), s, ct)
 	default:
-		err = parseByJson([]byte(valReq.Data), s.(*jsonSchema.Ref), ct)
+		err = parseByJson([]byte(valReq.Data), s.(*jsonSchema.Schema), ct)
 	}
 
 	if err != nil {
@@ -94,7 +94,7 @@ func parseByOpenApi(data []byte, s *schema.Ref, ct media.ContentType) error {
 	return err
 }
 
-func parseByJson(data []byte, s *jsonSchema.Ref, ct media.ContentType) error {
+func parseByJson(data []byte, s *jsonSchema.Schema, ct media.ContentType) error {
 	v, err := encoding.Decode(data, encoding.WithContentType(ct))
 	if err != nil {
 		return err

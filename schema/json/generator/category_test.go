@@ -3,7 +3,7 @@ package generator
 import (
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 
@@ -17,7 +17,7 @@ func TestCategory(t *testing.T) {
 			name: "category",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "category", Schema: schematest.NewRef("string")},
+					&PathElement{Name: "category", Schema: schematest.New("string")},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {

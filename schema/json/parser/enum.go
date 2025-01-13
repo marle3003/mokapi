@@ -9,7 +9,7 @@ func checkValueIsInEnum(i interface{}, enum []interface{}, entrySchema *schema.S
 	found := false
 	p := Parser{ConvertToSortedMap: true}
 	for _, e := range enum {
-		v, err := p.parse(e, &schema.Ref{Value: entrySchema})
+		v, err := p.parse(e, entrySchema)
 		if err != nil {
 			log.Errorf("unable to parse enum value %v to %v: %v", ToString(e), entrySchema, err)
 			continue

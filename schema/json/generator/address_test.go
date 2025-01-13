@@ -3,7 +3,7 @@ package generator
 import (
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 
@@ -33,7 +33,7 @@ func TestAddress(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name:   "city",
-						Schema: schematest.NewRef("integer"),
+						Schema: schematest.New("integer"),
 					},
 				},
 			},
@@ -89,7 +89,7 @@ func TestAddress(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name:   "postcode",
-						Schema: schematest.NewRef("integer"),
+						Schema: schematest.New("integer"),
 					},
 				},
 			},
@@ -104,7 +104,7 @@ func TestAddress(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name:   "postcode",
-						Schema: schematest.NewRef("number"),
+						Schema: schematest.New("number"),
 					},
 				},
 			},
@@ -119,7 +119,7 @@ func TestAddress(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name:   "postcode",
-						Schema: schematest.NewRef("string", schematest.WithMinLength(5), schematest.WithMaxLength(5)),
+						Schema: schematest.New("string", schematest.WithMinLength(5), schematest.WithMaxLength(5)),
 					},
 				},
 			},
@@ -134,7 +134,7 @@ func TestAddress(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name: "postcode",
-						Schema: schematest.NewRef("integer",
+						Schema: schematest.New("integer",
 							schematest.WithMinimum(1000),
 							schematest.WithMaximum(9999),
 						),
@@ -203,7 +203,7 @@ func TestAddress(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name:   "coAddress",
-						Schema: schematest.NewRef("string"),
+						Schema: schematest.New("string"),
 					},
 				},
 			},
@@ -218,7 +218,7 @@ func TestAddress(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name:   "street",
-						Schema: schematest.NewRef("string"),
+						Schema: schematest.New("string"),
 					},
 				},
 			},
@@ -233,7 +233,7 @@ func TestAddress(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name: "address",
-						Schema: schematest.NewRef("object",
+						Schema: schematest.New("object",
 							schematest.WithProperty("country", schematest.New("string"))),
 					},
 				},
@@ -249,7 +249,7 @@ func TestAddress(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Name: "address",
-						Schema: schematest.NewRef("object",
+						Schema: schematest.New("object",
 							schematest.WithProperty("line1", schematest.New("string")),
 							schematest.WithProperty("line2", schematest.New("string")),
 							schematest.WithProperty("line3", schematest.New("string")),

@@ -8,7 +8,6 @@ import (
 	"mokapi/runtime/monitor"
 	"mokapi/schema/encoding"
 	"mokapi/schema/json/parser"
-	"mokapi/schema/json/schema"
 )
 
 func (s *Store) produce(rw kafka.ResponseWriter, req *kafka.Request) error {
@@ -77,7 +76,7 @@ func validateProducer(t *Topic, ctx *kafka.ClientContext) error {
 			continue
 		}
 		if op.Bindings.Kafka.ClientId != nil {
-			_, err = encoding.Decode([]byte(ctx.ClientId), encoding.WithParser(&parser.Parser{Schema: &schema.Ref{Value: op.Bindings.Kafka.ClientId}}))
+			_, err = encoding.Decode([]byte(ctx.ClientId), encoding.WithParser(&parser.Parser{Schema: op.Bindings.Kafka.ClientId}))
 			if err != nil {
 				last = err
 			} else {

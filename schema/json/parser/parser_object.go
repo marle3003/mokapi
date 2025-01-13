@@ -65,8 +65,8 @@ func (p *Parser) parseLinkedMap(m *sortedmap.LinkedHashMap[string, interface{}],
 			prop := it.Value()
 			v, ok := m.Get(it.Key())
 			if !ok {
-				if prop.Value != nil && prop.Value.Default != nil {
-					obj.Set(name, prop.Value.Default)
+				if prop != nil && prop.Default != nil {
+					obj.Set(name, prop.Default)
 					evaluated[name] = true
 				}
 				continue
@@ -175,8 +175,8 @@ func (p *Parser) parseMap(v reflect.Value, s *schema.Schema, evaluated map[strin
 			prop := it.Value()
 			o := v.MapIndex(reflect.ValueOf(name))
 			if !o.IsValid() {
-				if prop.Value != nil && prop.Value.Default != nil {
-					obj.Set(name, prop.Value.Default)
+				if prop != nil && prop.Default != nil {
+					obj.Set(name, prop.Default)
 					evaluated[name] = true
 				}
 				continue
@@ -346,7 +346,7 @@ func (p *Parser) validateObject(obj *sortedmap.LinkedHashMap[string, interface{}
 	return nil
 }
 
-func (p *Parser) ValidatePatternProperty(name string, value interface{}, patternProperties map[string]*schema.Ref) error {
+func (p *Parser) ValidatePatternProperty(name string, value interface{}, patternProperties map[string]*schema.Schema) error {
 	for pattern, s := range patternProperties {
 		regex, err := regexp.Compile(pattern)
 		if err != nil {

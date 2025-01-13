@@ -12,7 +12,7 @@ func (s *Schema) Convert() *json.Schema {
 		if str, ok := s.Type[0].(string); ok {
 			js.Type = append(js.Type, getJsonType(str))
 		} else if wrapped, ok := s.Type[0].(*Schema); ok {
-			js.AnyOf = append(js.AnyOf, &json.Ref{Value: wrapped.Convert()})
+			js.AnyOf = append(js.AnyOf, wrapped.Convert())
 		}
 	} else {
 		for _, t := range s.Type {
@@ -20,15 +20,15 @@ func (s *Schema) Convert() *json.Schema {
 			case string:
 				js.Type = append(js.Type, getJsonType(v))
 			case *Schema:
-				js.AnyOf = append(js.AnyOf, &json.Ref{Value: v.Convert()})
+				js.AnyOf = append(js.AnyOf, v.Convert())
 			}
 		}
 	}
 
 	if len(s.Fields) > 0 {
-		js.Properties = &json.Schemas{LinkedHashMap: sortedmap.LinkedHashMap[string, *json.Ref]{}}
+		js.Properties = &json.Schemas{LinkedHashMap: sortedmap.LinkedHashMap[string, *json.Schema]{}}
 		for _, f := range s.Fields {
-			js.Properties.Set(f.Name, &json.Ref{Value: f.Convert()})
+			js.Properties.Set(f.Name, f.Convert())
 		}
 	}
 
@@ -37,11 +37,11 @@ func (s *Schema) Convert() *json.Schema {
 	}
 
 	if s.Items != nil {
-		js.Items = &json.Ref{Value: s.Items.Convert()}
+		js.Items = s.Items.Convert()
 	}
 
 	if s.Values != nil {
-		js.AdditionalProperties = &json.Ref{Value: s.Values.Convert()}
+		js.AdditionalProperties = s.Values.Convert()
 	}
 
 	if len(s.Type) == 1 && s.Type[0] == "fixed" {

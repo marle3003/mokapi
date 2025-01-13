@@ -8,7 +8,7 @@ import (
 
 func AllOf() *Tree {
 	p := parser.Parser{}
-	validate := func(data interface{}, schemas []*schema.Ref) error {
+	validate := func(data interface{}, schemas []*schema.Schema) error {
 		for _, s := range schemas {
 			if _, err := p.ParseWith(data, s); err != nil {
 				return err
@@ -27,20 +27,20 @@ func AllOf() *Tree {
 			s := r.LastSchema()
 
 			var result interface{}
-			var worked []*schema.Ref
+			var worked []*schema.Schema
 			sharedType, err := getShareTypes(s.AllOf)
 			if err != nil {
 				return nil, fmt.Errorf("generate random data for schema failed: %v: %v", s.String(), err)
 			}
 
 			for _, one := range s.AllOf {
-				if one == nil || one.Value == nil {
+				if one == nil {
 					continue
 				}
 
 				var err error
 				copySchema := *one
-				copySchema.Value.Type = sharedType
+				copySchema.Type = sharedType
 
 				// We can skip this schema if current result is valid for it but
 				// for an object all properties are expected even if the existing result is already valid
@@ -64,7 +64,7 @@ func AllOf() *Tree {
 						return nil, fmt.Errorf("generate random data for schema failed: types in allOf does not match")
 					}
 
-					for it := copySchema.Value.Properties.Iter(); it.Next(); {
+					for it := copySchema.Properties.Iter(); it.Next(); {
 						if v, found := obj[it.Key()]; found {
 							if _, err = p.ParseWith(v, it.Value()); err != nil {
 								obj[it.Key()] = nextObj[it.Key()]
@@ -88,27 +88,27 @@ func AllOf() *Tree {
 	}
 }
 
-func getShareTypes(sets []*schema.Ref) (schema.Types, error) {
+func getShareTypes(sets []*schema.Schema) (schema.Types, error) {
 	m := map[string]struct{}{}
 
 	countNoSchemaDefined := 0
 	for _, set := range sets {
-		if set == nil || set.Value == nil {
+		if set == nil {
 			countNoSchemaDefined++
 			continue
 		}
-		if set.Value.Type == nil {
+		if set.Type == nil {
 			// JSON schema does not require a type
 			continue
 		}
 
 		if len(m) == 0 {
-			for _, t := range set.Value.Type {
+			for _, t := range set.Type {
 				m[t] = struct{}{}
 			}
 		} else {
 			for k := range m {
-				if !set.Value.Type.Includes(k) {
+				if !set.Type.Includes(k) {
 					delete(m, k)
 				}
 			}

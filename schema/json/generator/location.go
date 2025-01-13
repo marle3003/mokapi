@@ -30,15 +30,15 @@ func Country() *Tree {
 			if last.Name == "country" &&
 				(last.Schema.IsAny() || last.Schema.IsString()) {
 				if hasPattern(last.Schema) {
-					p := last.Schema.Value.Pattern
+					p := last.Schema.Pattern
 					return p == "[A-Z]{2}" || p == "[a-z]{2}"
 				}
 				if hasFormat(last.Schema) {
 					return false
 				}
 				if last.Schema.IsString() {
-					return (last.Schema.Value.MaxLength == nil || *last.Schema.Value.MaxLength >= 56) &&
-						(last.Schema.Value.MinLength == nil || *last.Schema.Value.MinLength <= 4)
+					return (last.Schema.MaxLength == nil || *last.Schema.MaxLength >= 56) &&
+						(last.Schema.MinLength == nil || *last.Schema.MinLength <= 4)
 				}
 			}
 			return false

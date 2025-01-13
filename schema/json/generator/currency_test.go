@@ -3,7 +3,7 @@ package generator
 import (
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 
@@ -17,7 +17,7 @@ func TestCurrency(t *testing.T) {
 			name: "currency",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "currency", Schema: schematest.NewRef("string")},
+					&PathElement{Name: "currency", Schema: schematest.New("string")},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -29,7 +29,7 @@ func TestCurrency(t *testing.T) {
 			name: "price",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "price", Schema: schematest.NewRef("number")},
+					&PathElement{Name: "price", Schema: schematest.New("number")},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -41,7 +41,7 @@ func TestCurrency(t *testing.T) {
 			name: "price with max=99",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "price", Schema: schematest.NewRef("number", schematest.WithMaximum(99))},
+					&PathElement{Name: "price", Schema: schematest.New("number", schematest.WithMaximum(99))},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -53,7 +53,7 @@ func TestCurrency(t *testing.T) {
 			name: "price object",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "price", Schema: schematest.NewRef("object",
+					&PathElement{Name: "price", Schema: schematest.New("object",
 						schematest.WithProperty("value", schematest.New("integer")),
 						schematest.WithProperty("currency", schematest.New("string")),
 						schematest.WithProperty("name", schematest.New("string")),

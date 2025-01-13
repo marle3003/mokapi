@@ -30,24 +30,24 @@ func (p *Parser) parseAllObject(m *sortedmap.LinkedHashMap[string, interface{}],
 
 	for index, one := range s.AllOf {
 		path := fmt.Sprintf("%v", index)
-		if one == nil || one.Value == nil {
+		if one == nil {
 			continue
 		}
 
 		if !one.IsObject() && !one.IsAny() {
-			typeErr := Errorf("type", "invalid type, expected %v but got %v", one.Type(), toType(m))
+			typeErr := Errorf("type", "invalid type, expected %v but got %v", one.Type.String(), toType(m))
 			err.append(wrapError(path, typeErr))
 			continue
 		}
 
 		eval := map[string]bool{}
-		obj, oneErr := p.parseObject(m, one.Value, eval)
+		obj, oneErr := p.parseObject(m, one, eval)
 		if oneErr != nil {
 			err.append(wrapError(path, oneErr))
 			continue
 		}
 
-		v, unEvalErr := p.evaluateUnevaluatedProperties(obj, one.Value, eval)
+		v, unEvalErr := p.evaluateUnevaluatedProperties(obj, one, eval)
 		if unEvalErr != nil {
 			err.append(wrapError(path, unEvalErr))
 			continue

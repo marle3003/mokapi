@@ -67,7 +67,7 @@ func RGBColor() *Tree {
 				return false
 			}
 			s := r.LastSchema()
-			if s.Items.IsAny() || (s.Items.IsInteger() && s.Items.Value.MaxItems == nil || *s.Items.Value.MaxItems == 3) {
+			if s.Items.IsAny() || (s.Items.IsInteger() && s.Items.MaxItems == nil || *s.Items.MaxItems == 3) {
 				return true
 			}
 			return false

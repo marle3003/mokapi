@@ -24,8 +24,17 @@ func (s *Schema) Patch(patch *Schema) {
 	if patch == nil {
 		return
 	}
+
+	if patch.Id != "" {
+		s.Id = patch.Id
+	}
+
 	if patch.Boolean != nil {
 		s.Boolean = patch.Boolean
+	}
+
+	if patch.Anchor != "" {
+		s.Anchor = patch.Anchor
 	}
 
 	if len(patch.Type) > 0 {
@@ -154,6 +163,30 @@ func (s *Schema) Patch(patch *Schema) {
 	}
 	if len(patch.ContentEncoding) > 0 {
 		s.ContentEncoding = patch.ContentEncoding
+	}
+
+	if s.Definitions == nil {
+		s.Definitions = patch.Definitions
+	} else {
+		for k, v := range patch.Definitions {
+			if def, ok := s.Definitions[k]; ok {
+				def.Patch(v)
+			} else {
+				s.Definitions[k] = v
+			}
+		}
+	}
+
+	if s.Defs == nil {
+		s.Defs = patch.Defs
+	} else {
+		for k, v := range patch.Defs {
+			if def, ok := s.Defs[k]; ok {
+				def.Patch(v)
+			} else {
+				s.Defs[k] = v
+			}
+		}
 	}
 }
 

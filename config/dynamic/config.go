@@ -21,6 +21,7 @@ type Config struct {
 	Data      interface{}
 	Refs      Refs
 	Listeners Listeners
+	Scope     Scope
 }
 
 type Refs struct {
@@ -145,4 +146,12 @@ func renderTemplate(b []byte) ([]byte, error) {
 func extractUsername(s string) string {
 	slice := strings.Split(s, "\\")
 	return slice[len(slice)-1]
+}
+
+func (c *Config) OpenScope(name string) {
+	c.Scope.Open(name)
+}
+
+func (c *Config) CloseScope() {
+	c.Scope.Close()
 }

@@ -117,6 +117,7 @@ func (s *Server) Close() {
 
 func (s *Server) serve(conn net.Conn, ctx context.Context) {
 	ctx, cancel := context.WithCancel(ctx)
+	ctx = NewPagingFromContext(ctx)
 	defer func() {
 		r := recover()
 		if r != nil {
@@ -151,6 +152,14 @@ func (s *Server) serve(conn net.Conn, ctx context.Context) {
 			return
 		}
 
+		var controls []Control
+		if len(packet.Children) > 2 {
+			controls, err = decodeControls(packet.Children[2])
+			if err != nil {
+				log.Infof("parse controls failed: %v", err)
+			}
+		}
+
 		var msg Message
 		switch body.Tag {
 		case bindRequest:
@@ -159,7 +168,7 @@ func (s *Server) serve(conn net.Conn, ctx context.Context) {
 			log.Debugf("ldap: received unbind request")
 			return
 		case searchRequest:
-			msg, err = readSearchRequest(body)
+			msg, err = decodeSearchRequest(body, controls)
 		case abandonRequest:
 			msg = &SearchResponse{Status: CannotCancel}
 		default:
@@ -214,16 +223,24 @@ func (s *Server) getCloseChan() chan bool {
 }
 
 func (r *response) Write(msg Message) error {
+	envelope := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "LDAP Response")
+	envelope.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimitive, ber.TagInteger, r.messageId, "Message ID"))
+
 	switch res := msg.(type) {
 	case *BindResponse:
 		return r.write(res.toPacket())
 	case *SearchResponse:
-		for _, p := range res.toPacket() {
-			if err := r.write(p); err != nil {
+		for _, p := range res.Results {
+			env := r.getEnvelope()
+			p.appendTo(env)
+			if _, err := r.conn.Write(env.Bytes()); err != nil {
 				return err
 			}
 		}
-		return nil
+		env := r.getEnvelope()
+		res.appendSearchDone(env)
+		_, err := r.conn.Write(env.Bytes())
+		return err
 	default:
 		return fmt.Errorf("unsupported message: %t", msg)
 	}
@@ -235,4 +252,10 @@ func (r *response) write(body *ber.Packet) error {
 	p.AppendChild(body)
 	_, err := r.conn.Write(p.Bytes())
 	return err
+}
+
+func (r *response) getEnvelope() *ber.Packet {
+	p := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "LDAP Response")
+	p.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimitive, ber.TagInteger, r.messageId, "Message ID"))
+	return p
 }

@@ -19,7 +19,7 @@ import (
 	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/runtime"
 	"mokapi/runtime/monitor"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"net/url"
 	"testing"
 	"time"

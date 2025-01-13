@@ -133,7 +133,7 @@ func TestConvert(t *testing.T) {
 			s:    schematest.New("array", schematest.WithItems("string")),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
 				require.NotNil(t, s.Items)
-				require.Equal(t, jsonSchema.Types{"string"}, s.Items.Value.Type)
+				require.Equal(t, jsonSchema.Types{"string"}, s.Items.Type)
 			},
 		},
 		{
@@ -141,8 +141,8 @@ func TestConvert(t *testing.T) {
 			s:    schematest.New("array", schematest.WithPrefixItems(schematest.New("string"), schematest.New("integer"))),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
 				require.NotNil(t, s.PrefixItems)
-				require.Equal(t, "string", s.PrefixItems[0].Value.Type.String())
-				require.Equal(t, "integer", s.PrefixItems[1].Value.Type.String())
+				require.Equal(t, "string", s.PrefixItems[0].Type.String())
+				require.Equal(t, "integer", s.PrefixItems[1].Type.String())
 			},
 		},
 		{
@@ -150,14 +150,14 @@ func TestConvert(t *testing.T) {
 			s:    schematest.New("array", schematest.WithUnevaluatedItems(schematest.NewRef("string"))),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
 				require.NotNil(t, s.UnevaluatedItems)
-				require.Equal(t, "string", s.UnevaluatedItems.Value.Type.String())
+				require.Equal(t, "string", s.UnevaluatedItems.Type.String())
 			},
 		},
 		{
 			name: "contains",
 			s:    schematest.New("array", schematest.WithContains(schematest.NewRef("string"))),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
-				require.Equal(t, "string", s.Contains.Value.Type.String())
+				require.Equal(t, "string", s.Contains.Type.String())
 			},
 		},
 		{
@@ -211,7 +211,7 @@ func TestConvert(t *testing.T) {
 				require.NotNil(t, s.Properties)
 				foo := s.Properties.Get("foo")
 				require.NotNil(t, foo)
-				require.Equal(t, jsonSchema.Types{"string"}, foo.Value.Type)
+				require.Equal(t, jsonSchema.Types{"string"}, foo.Type)
 			},
 		},
 		{
@@ -219,7 +219,7 @@ func TestConvert(t *testing.T) {
 			s:    schematest.New("object", schematest.WithPatternProperty("[a-z]*", schematest.New("string"))),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
 				require.Contains(t, s.PatternProperties, "[a-z]*")
-				require.Equal(t, "string", s.PatternProperties["[a-z]*"].Value.Type.String())
+				require.Equal(t, "string", s.PatternProperties["[a-z]*"].Type.String())
 			},
 		},
 		{
@@ -243,22 +243,22 @@ func TestConvert(t *testing.T) {
 			s:    schematest.New("object", schematest.WithDependentSchemas("foo", schematest.New("string"))),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
 				require.Len(t, s.DependentSchemas, 1)
-				require.Equal(t, "string", s.DependentSchemas["foo"].Value.Type.String())
+				require.Equal(t, "string", s.DependentSchemas["foo"].Type.String())
 			},
 		},
 		{
 			name: "additionalProperties",
 			s:    schematest.New("object", schematest.WithAdditionalProperties(schematest.New("string"))),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
-				require.NotNil(t, s.AdditionalProperties.Value)
-				require.Equal(t, jsonSchema.Types{"string"}, s.AdditionalProperties.Value.Type)
+				require.NotNil(t, s.AdditionalProperties)
+				require.Equal(t, jsonSchema.Types{"string"}, s.AdditionalProperties.Type)
 			},
 		},
 		{
 			name: "unevaluatedProperties",
 			s:    schematest.New("object", schematest.WithUnevaluatedProperties(schematest.NewRef("string"))),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
-				require.Equal(t, "string", s.UnevaluatedProperties.Value.Type.String())
+				require.Equal(t, "string", s.UnevaluatedProperties.Type.String())
 			},
 		},
 		{
@@ -272,7 +272,7 @@ func TestConvert(t *testing.T) {
 			name: "additionalProperties forbidden",
 			s:    schematest.New("object", schematest.WithFreeForm(false)),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
-				require.Nil(t, s.AdditionalProperties.Value)
+				require.NotNil(t, s.AdditionalProperties)
 				require.Equal(t, false, *s.AdditionalProperties.Boolean)
 			},
 		},
@@ -280,7 +280,7 @@ func TestConvert(t *testing.T) {
 			name: "additionalProperties free-form",
 			s:    schematest.New("object", schematest.WithFreeForm(true)),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
-				require.Nil(t, s.AdditionalProperties.Value)
+				require.NotNil(t, s.AdditionalProperties)
 				require.Equal(t, true, *s.AdditionalProperties.Boolean)
 			},
 		},
@@ -288,7 +288,7 @@ func TestConvert(t *testing.T) {
 			name: "propertyNames",
 			s:    schematest.New("object", schematest.WithPropertyNames(schematest.New("string"))),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
-				require.Equal(t, "string", s.PropertyNames.Value.Type.String())
+				require.Equal(t, "string", s.PropertyNames.Type.String())
 			},
 		},
 		{
@@ -312,8 +312,8 @@ func TestConvert(t *testing.T) {
 			s:    schematest.NewAny(schematest.New("string"), schematest.New("integer")),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
 				require.NotNil(t, s.AnyOf)
-				require.Equal(t, jsonSchema.Types{"string"}, s.AnyOf[0].Value.Type)
-				require.Equal(t, jsonSchema.Types{"integer"}, s.AnyOf[1].Value.Type)
+				require.Equal(t, jsonSchema.Types{"string"}, s.AnyOf[0].Type)
+				require.Equal(t, jsonSchema.Types{"integer"}, s.AnyOf[1].Type)
 			},
 		},
 		{
@@ -321,8 +321,8 @@ func TestConvert(t *testing.T) {
 			s:    schematest.NewAllOf(schematest.New("string"), schematest.New("integer")),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
 				require.NotNil(t, s.AllOf)
-				require.Equal(t, jsonSchema.Types{"string"}, s.AllOf[0].Value.Type)
-				require.Equal(t, jsonSchema.Types{"integer"}, s.AllOf[1].Value.Type)
+				require.Equal(t, jsonSchema.Types{"string"}, s.AllOf[0].Type)
+				require.Equal(t, jsonSchema.Types{"integer"}, s.AllOf[1].Type)
 			},
 		},
 		{
@@ -330,8 +330,8 @@ func TestConvert(t *testing.T) {
 			s:    schematest.NewOneOf(schematest.New("string"), schematest.New("integer")),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
 				require.NotNil(t, s.OneOf)
-				require.Equal(t, jsonSchema.Types{"string"}, s.OneOf[0].Value.Type)
-				require.Equal(t, jsonSchema.Types{"integer"}, s.OneOf[1].Value.Type)
+				require.Equal(t, jsonSchema.Types{"string"}, s.OneOf[0].Type)
+				require.Equal(t, jsonSchema.Types{"integer"}, s.OneOf[1].Type)
 			},
 		},
 		{
@@ -339,7 +339,7 @@ func TestConvert(t *testing.T) {
 			s:    schematest.NewTypes(nil, schematest.WithNot(schematest.NewRef("integer"))),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
 				require.NotNil(t, s.Not)
-				require.Equal(t, jsonSchema.Types{"integer"}, s.Not.Value.Type)
+				require.Equal(t, jsonSchema.Types{"integer"}, s.Not.Type)
 			},
 		},
 		{
@@ -347,7 +347,7 @@ func TestConvert(t *testing.T) {
 			s:    schematest.NewTypes(nil, schematest.WithIf(schematest.NewRef("integer"))),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
 				require.NotNil(t, s.If)
-				require.Equal(t, jsonSchema.Types{"integer"}, s.If.Value.Type)
+				require.Equal(t, jsonSchema.Types{"integer"}, s.If.Type)
 			},
 		},
 		{
@@ -355,7 +355,7 @@ func TestConvert(t *testing.T) {
 			s:    schematest.NewTypes(nil, schematest.WithThen(schematest.NewRef("integer"))),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
 				require.NotNil(t, s.Then)
-				require.Equal(t, jsonSchema.Types{"integer"}, s.Then.Value.Type)
+				require.Equal(t, jsonSchema.Types{"integer"}, s.Then.Type)
 			},
 		},
 		{
@@ -363,7 +363,7 @@ func TestConvert(t *testing.T) {
 			s:    schematest.NewTypes(nil, schematest.WithElse(schematest.NewRef("integer"))),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
 				require.NotNil(t, s.Else)
-				require.Equal(t, jsonSchema.Types{"integer"}, s.Else.Value.Type)
+				require.Equal(t, jsonSchema.Types{"integer"}, s.Else.Type)
 			},
 		},
 		{
@@ -437,8 +437,13 @@ func TestConvert(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			r := schema.ConvertToJsonSchema(&schema.Ref{Value: tc.s})
-			tc.test(t, r.Value)
+			var r *schema.Ref
+			if tc.s != nil {
+				r = &schema.Ref{Value: tc.s}
+			}
+
+			js := schema.ConvertToJsonSchema(r)
+			tc.test(t, js)
 		})
 	}
 }
@@ -447,36 +452,35 @@ func TestConvertToJsonSchema_Ref(t *testing.T) {
 	testcases := []struct {
 		name string
 		r    *schema.Ref
-		test func(t *testing.T, r *jsonSchema.Ref)
+		test func(t *testing.T, r *jsonSchema.Schema)
 	}{
 		{
 			name: "nil",
 			r:    nil,
-			test: func(t *testing.T, r *jsonSchema.Ref) {
+			test: func(t *testing.T, r *jsonSchema.Schema) {
 				require.Nil(t, r)
 			},
 		},
 		{
 			name: "bool true",
 			r:    &schema.Ref{Boolean: toBoolP(true)},
-			test: func(t *testing.T, r *jsonSchema.Ref) {
+			test: func(t *testing.T, r *jsonSchema.Schema) {
 				require.Equal(t, true, *r.Boolean)
 			},
 		},
 		{
 			name: "bool false",
 			r:    &schema.Ref{Boolean: toBoolP(false)},
-			test: func(t *testing.T, r *jsonSchema.Ref) {
+			test: func(t *testing.T, r *jsonSchema.Schema) {
 				require.Equal(t, false, *r.Boolean)
 			},
 		},
 		{
 			name: "schema",
 			r:    &schema.Ref{Value: schematest.New("string")},
-			test: func(t *testing.T, r *jsonSchema.Ref) {
+			test: func(t *testing.T, r *jsonSchema.Schema) {
 				require.Nil(t, r.Boolean)
-				require.NotNil(t, r.Value)
-				require.Equal(t, "string", r.Value.Type.String())
+				require.Equal(t, "string", r.Type.String())
 			},
 		},
 	}

@@ -4,7 +4,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 
@@ -306,7 +306,7 @@ func TestParse_Number(t *testing.T) {
 			t.Parallel()
 
 			p := parser.Parser{
-				Schema:                      &schema.Ref{Value: tc.s},
+				Schema:                      tc.s,
 				SkipValidationFormatKeyword: tc.skipValidationFormat,
 				ConvertStringToNumber:       tc.convertStringToNumber,
 			}

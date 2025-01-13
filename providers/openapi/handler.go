@@ -10,7 +10,6 @@ import (
 	"mokapi/providers/openapi/parameter"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
-	"mokapi/version"
 	"net/http"
 	"regexp"
 	"strings"
@@ -60,12 +59,8 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	status, res, err := op.getFirstSuccessResponse()
 	if err != nil {
-		if errors.Is(err, NoSuccessResponse) && !h.config.OpenApi.IsLower(version.New("3.1")) {
-			status, res = getDefaultResponse()
-		} else {
-			writeError(rw, r, err, h.config.Info.Name)
-			return
-		}
+		writeError(rw, r, err, h.config.Info.Name)
+		return
 	}
 
 	contentType, mediaType, err := ContentTypeFromRequest(r, res)
@@ -122,12 +117,16 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	if status != response.StatusCode {
 		res = op.getResponse(response.StatusCode)
 		if res == nil {
-			writeError(rw, r,
-				fmt.Errorf(
-					"no configuration was found for HTTP status code %v, https://swagger.io/docs/specification/describing-responses",
-					response.StatusCode),
-				h.config.Info.Name)
-			return
+			// try to get "default" response
+			res = op.getResponse(0)
+			if res == nil {
+				writeError(rw, r,
+					fmt.Errorf(
+						"no configuration was found for HTTP status code %v, https://swagger.io/docs/specification/describing-responses",
+						response.StatusCode),
+					h.config.Info.Name)
+				return
+			}
 		}
 	}
 

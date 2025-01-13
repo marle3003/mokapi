@@ -9,7 +9,6 @@ import (
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
-	"mokapi/schema/json/ref"
 	"net/http"
 	"net/url"
 	"testing"
@@ -197,7 +196,7 @@ func TestExample_Parse(t *testing.T) {
 						openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
 							openapitest.WithResponse(http.StatusOK,
 								openapitest.WithContent("application/json", &openapi.MediaType{
-									Examples: map[string]*openapi.ExampleRef{"foo": {Reference: ref.Reference{Ref: "foo.yml"}}},
+									Examples: map[string]*openapi.ExampleRef{"foo": {Reference: dynamic.Reference{Ref: "foo.yml"}}},
 								}),
 							))),
 					)),

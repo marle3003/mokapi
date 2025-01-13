@@ -33,7 +33,7 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 			test: func(t *testing.T, cfg *asyncapi3.Message, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "", cfg.Payload.Value.Format)
-				require.Equal(t, "string", cfg.Payload.Value.Schema.(*jsonSchema.Ref).Type())
+				require.Equal(t, "string", cfg.Payload.Value.Schema.(*jsonSchema.Schema).Type.String())
 			},
 		},
 	}
@@ -82,7 +82,7 @@ payload:
 			test: func(t *testing.T, cfg *asyncapi3.Message, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "", cfg.Payload.Value.Format)
-				require.Equal(t, "string", cfg.Payload.Value.Schema.(*jsonSchema.Ref).Type())
+				require.Equal(t, "string", cfg.Payload.Value.Schema.(*jsonSchema.Schema).Type.String())
 			},
 		},
 	}

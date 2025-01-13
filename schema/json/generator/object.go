@@ -18,7 +18,7 @@ func Object() *Tree {
 				Name:  "Object",
 				Test: func(r *Request) bool {
 					return r.Path.MatchLast(ComparerFunc(func(p *PathElement) bool {
-						return p.Schema.IsObject() && p.Schema.HasProperties()
+						return (p.Schema.IsObject() || p.Schema.IsAny()) && p.Schema.HasProperties()
 					}))
 				},
 				Fake: func(r *Request) (interface{}, error) {
@@ -39,7 +39,7 @@ func AnyObject() *Tree {
 		},
 		Fake: func(r *Request) (interface{}, error) {
 			s := r.LastSchema()
-			s.Properties = &schema.Schemas{LinkedHashMap: sortedmap.LinkedHashMap[string, *schema.Ref]{}}
+			s.Properties = &schema.Schemas{LinkedHashMap: sortedmap.LinkedHashMap[string, *schema.Schema]{}}
 
 			minProps := 1
 			maxProps := 10
@@ -73,7 +73,7 @@ func Dictionary() *Tree {
 			if s == nil {
 				return false
 			}
-			return s.AdditionalProperties != nil && s.AdditionalProperties.Value != nil
+			return s.AdditionalProperties != nil && !s.AdditionalProperties.IsAny()
 		},
 		Fake: func(r *Request) (interface{}, error) {
 			s := r.LastSchema()
@@ -110,11 +110,11 @@ func createObject(r *Request) (interface{}, error) {
 
 	m := map[string]interface{}{}
 
-	if s.Value.Properties == nil {
+	if s.Properties == nil {
 		return m, nil
 	}
 
-	for it := s.Value.Properties.Iter(); it.Next(); {
+	for it := s.Properties.Iter(); it.Next(); {
 		prop := r.With(UsePathElement(it.Key(), it.Value()))
 		v, err := r.g.tree.Resolve(prop)
 		if err != nil {
@@ -123,14 +123,14 @@ func createObject(r *Request) (interface{}, error) {
 		m[it.Key()] = v
 	}
 
-	if s.Value != nil && s.Value.If != nil {
+	if s.If != nil {
 		p := parser.Parser{}
-		_, err := p.ParseWith(m, s.Value.If)
-		var cond *schema.Ref
-		if err == nil && s.Value.Then != nil {
-			cond = s.Value.Then
-		} else if err != nil && s.Value.Else != nil {
-			cond = s.Value.Else
+		_, err := p.ParseWith(m, s.If)
+		var cond *schema.Schema
+		if err == nil && s.Then != nil {
+			cond = s.Then
+		} else if err != nil && s.Else != nil {
+			cond = s.Else
 		}
 		if cond != nil {
 			v, err := r.g.tree.Resolve(r.With(UsePathElement(r.LastName(), cond)))

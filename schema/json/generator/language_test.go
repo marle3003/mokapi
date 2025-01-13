@@ -3,7 +3,7 @@ package generator
 import (
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 
@@ -17,7 +17,7 @@ func TestLanguage(t *testing.T) {
 			name: "language",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "language", Schema: schematest.NewRef("string")},
+					&PathElement{Name: "language", Schema: schematest.New("string")},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -29,7 +29,7 @@ func TestLanguage(t *testing.T) {
 			name: "language with max=2",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "language", Schema: schematest.NewRef("string", schematest.WithMaxLength(2))},
+					&PathElement{Name: "language", Schema: schematest.New("string", schematest.WithMaxLength(2))},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -41,7 +41,7 @@ func TestLanguage(t *testing.T) {
 			name: "language with max=5",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "language", Schema: schematest.NewRef("string", schematest.WithMaxLength(5))},
+					&PathElement{Name: "language", Schema: schematest.New("string", schematest.WithMaxLength(5))},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -53,7 +53,7 @@ func TestLanguage(t *testing.T) {
 			name: "language with max=15",
 			req: &Request{
 				Path: Path{
-					&PathElement{Name: "language", Schema: schematest.NewRef("string", schematest.WithMaxLength(15))},
+					&PathElement{Name: "language", Schema: schematest.New("string", schematest.WithMaxLength(15))},
 				},
 			},
 			test: func(t *testing.T, v interface{}, err error) {

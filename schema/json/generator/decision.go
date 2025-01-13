@@ -129,10 +129,8 @@ func AnyType() *Tree {
 		Fake: func(r *Request) (interface{}, error) {
 			t := getRandomType(r)
 			r = r.With(PathElements(&PathElement{
-				Schema: &schema.Ref{
-					Value: &schema.Schema{
-						Type: []string{t},
-					},
+				Schema: &schema.Schema{
+					Type: []string{t},
 				},
 			}))
 			if _, ok := r.context["any"]; !ok {
@@ -145,7 +143,7 @@ func AnyType() *Tree {
 }
 
 type RecursionGuard struct {
-	s *schema.Ref
+	s *schema.Schema
 }
 
 func (e *RecursionGuard) Error() string {

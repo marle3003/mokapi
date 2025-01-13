@@ -40,12 +40,16 @@ func (c *Client) Bind(username, password string) (*BindResponse, error) {
 		return nil, err
 	}
 
-	_, err = c.conn.Write(r.Bytes())
+	b := r.Bytes()
+	_, err = c.conn.Write(b)
 	if err != nil {
 		return nil, err
 	}
 
 	p, err := ber.ReadPacket(c.conn)
+	if err != nil {
+		return nil, err
+	}
 
 	return readBindResponse(p.Children[1])
 }
@@ -72,19 +76,32 @@ func (c *Client) Search(request *SearchRequest) (*SearchResponse, error) {
 	}
 
 	var packets []*ber.Packet
+	var controls []Control
 	for {
-		p, err := ber.ReadPacket(c.conn)
+		var p *ber.Packet
+		p, err = ber.ReadPacket(c.conn)
 		if err != nil {
 			return nil, err
 		}
 		body := p.Children[1]
 		packets = append(packets, body)
 		if body.Tag == searchDone {
+			if len(p.Children) > 2 {
+				controls, err = decodeControls(p.Children[2])
+				if err != nil {
+					return nil, err
+				}
+			}
 			break
 		}
 	}
 
-	return readSearchResponse(packets)
+	res, err := decodeSearchResponse(packets)
+	if err != nil {
+		return nil, err
+	}
+	res.Controls = controls
+	return res, nil
 }
 
 func (c *Client) AbandonSearch(messageId int64) error {
@@ -99,7 +116,7 @@ func (c *Client) AbandonSearch(messageId int64) error {
 
 func (c *Client) newRequest(msg Message) (*ber.Packet, error) {
 	c.messageId++
-	p := ber.Encode(ber.ClassApplication, ber.TypeConstructed, ber.TagSequence, nil, "LDAP Request")
+	p := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "LDAP Request")
 	p.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimitive, ber.TagInteger, c.messageId, "Message ID"))
 	switch b := msg.(type) {
 	case *BindRequest:
@@ -109,11 +126,10 @@ func (c *Client) newRequest(msg Message) (*ber.Packet, error) {
 	case *AbandonRequest:
 		p.AppendChild(b.toPacket())
 	case *SearchRequest:
-		body, err := b.toPacket()
+		err := b.encode(p)
 		if err != nil {
 			return nil, err
 		}
-		p.AppendChild(body)
 	default:
 		return nil, fmt.Errorf("unsupported request type %t", msg)
 	}
@@ -131,6 +147,7 @@ func (c *Client) Dial() error {
 				time.Sleep(backoff)
 				continue
 			}
+			return nil
 		}
 		if err != nil {
 			return err

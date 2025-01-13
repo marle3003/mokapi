@@ -3,8 +3,7 @@ package generator
 import (
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
-	"mokapi/schema/json/schema"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 
@@ -19,11 +18,9 @@ func TestComposition_AllOf(t *testing.T) {
 			req: &Request{
 				Path: Path{
 					&PathElement{
-						Schema: &schema.Ref{
-							Value: schematest.NewAllOf(
-								schematest.New("integer"),
-							),
-						},
+						Schema: schematest.NewAllOf(
+							schematest.New("integer"),
+						),
 					},
 				},
 			},
@@ -37,12 +34,10 @@ func TestComposition_AllOf(t *testing.T) {
 			req: &Request{
 				Path: Path{
 					&PathElement{
-						Schema: &schema.Ref{
-							Value: schematest.NewAllOf(
-								schematest.New("integer"),
-								schematest.New("integer", schematest.WithMinimum(0), schematest.WithMaximum(10)),
-							),
-						},
+						Schema: schematest.NewAllOf(
+							schematest.New("integer"),
+							schematest.New("integer", schematest.WithMinimum(0), schematest.WithMaximum(10)),
+						),
 					},
 				},
 			},
@@ -56,12 +51,10 @@ func TestComposition_AllOf(t *testing.T) {
 			req: &Request{
 				Path: Path{
 					&PathElement{
-						Schema: &schema.Ref{
-							Value: schematest.NewAllOf(
-								schematest.New("integer", schematest.WithMinimum(0), schematest.WithMaximum(10)),
-								schematest.New("integer"),
-							),
-						},
+						Schema: schematest.NewAllOf(
+							schematest.New("integer", schematest.WithMinimum(0), schematest.WithMaximum(10)),
+							schematest.New("integer"),
+						),
 					},
 				},
 			},
@@ -75,12 +68,10 @@ func TestComposition_AllOf(t *testing.T) {
 			req: &Request{
 				Path: Path{
 					&PathElement{
-						Schema: &schema.Ref{
-							Value: schematest.NewAllOf(
-								schematest.NewAny(),
-								schematest.New("integer"),
-							),
-						},
+						Schema: schematest.NewAllOf(
+							schematest.NewAny(),
+							schematest.New("integer"),
+						),
 					},
 				},
 			},
@@ -94,11 +85,9 @@ func TestComposition_AllOf(t *testing.T) {
 			req: &Request{
 				Path: Path{
 					&PathElement{
-						Schema: &schema.Ref{
-							Value: schematest.NewAllOf(
-								schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
-							),
-						},
+						Schema: schematest.NewAllOf(
+							schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
+						),
 					},
 				},
 			},
@@ -112,12 +101,10 @@ func TestComposition_AllOf(t *testing.T) {
 			req: &Request{
 				Path: Path{
 					&PathElement{
-						Schema: &schema.Ref{
-							Value: schematest.NewAllOf(
-								schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
-								schematest.New("object", schematest.WithProperty("bar", schematest.New("string"))),
-							),
-						},
+						Schema: schematest.NewAllOf(
+							schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
+							schematest.New("object", schematest.WithProperty("bar", schematest.New("string"))),
+						),
 					},
 				},
 			},
@@ -131,18 +118,16 @@ func TestComposition_AllOf(t *testing.T) {
 			req: &Request{
 				Path: Path{
 					&PathElement{
-						Schema: &schema.Ref{
-							Value: schematest.NewAllOf(
-								schematest.New("object",
-									schematest.WithProperty("foo", schematest.New("string")),
-									schematest.WithRequired("foo"),
-								),
-								schematest.New("object",
-									schematest.WithProperty("bar", schematest.New("string")),
-									schematest.WithRequired("bar"),
-								),
+						Schema: schematest.NewAllOf(
+							schematest.New("object",
+								schematest.WithProperty("foo", schematest.New("string")),
+								schematest.WithRequired("foo"),
 							),
-						},
+							schematest.New("object",
+								schematest.WithProperty("bar", schematest.New("string")),
+								schematest.WithRequired("bar"),
+							),
+						),
 					},
 				},
 			},
@@ -156,18 +141,16 @@ func TestComposition_AllOf(t *testing.T) {
 			req: &Request{
 				Path: Path{
 					&PathElement{
-						Schema: &schema.Ref{
-							Value: schematest.NewAllOf(
-								schematest.NewTypes([]string{"integer", "object"},
-									schematest.WithProperty("foo", schematest.New("string")),
-									schematest.WithRequired("foo"),
-								),
-								schematest.New("object",
-									schematest.WithProperty("bar", schematest.New("string")),
-									schematest.WithRequired("bar"),
-								),
+						Schema: schematest.NewAllOf(
+							schematest.NewTypes([]string{"integer", "object"},
+								schematest.WithProperty("foo", schematest.New("string")),
+								schematest.WithRequired("foo"),
 							),
-						},
+							schematest.New("object",
+								schematest.WithProperty("bar", schematest.New("string")),
+								schematest.WithRequired("bar"),
+							),
+						),
 					},
 				},
 			},
@@ -181,12 +164,10 @@ func TestComposition_AllOf(t *testing.T) {
 			req: &Request{
 				Path: Path{
 					&PathElement{
-						Schema: &schema.Ref{
-							Value: schematest.NewAllOf(
-								schematest.NewTypes([]string{"integer", "string"}),
-								schematest.NewTypes([]string{"number", "boolean"}),
-							),
-						},
+						Schema: schematest.NewAllOf(
+							schematest.NewTypes([]string{"integer", "string"}),
+							schematest.NewTypes([]string{"number", "boolean"}),
+						),
 					},
 				},
 			},

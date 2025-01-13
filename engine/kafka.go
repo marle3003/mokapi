@@ -183,7 +183,7 @@ func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[stri
 		// use default key schema
 		keySchema = &asyncapi3.SchemaRef{
 			Value: &asyncapi3.MultiSchemaFormat{
-				Schema: &schema.Ref{Value: &schema.Schema{Type: schema.Types{"string"}, Pattern: "[a-z]{9}"}},
+				Schema: &schema.Schema{Type: schema.Types{"string"}, Pattern: "[a-z]{9}"},
 			},
 		}
 	}
@@ -223,10 +223,10 @@ func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[stri
 	}
 
 	var recordHeaders []kafka.RecordHeader
-	var hs *schema.Ref
+	var hs *schema.Schema
 	if msg.Headers != nil {
 		var ok bool
-		hs, ok = msg.Headers.Value.Schema.(*schema.Ref)
+		hs, ok = msg.Headers.Value.Schema.(*schema.Schema)
 		if !ok {
 			err = fmt.Errorf("currently only json schema supported")
 			return
@@ -248,12 +248,12 @@ func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[stri
 }
 
 // todo: only specified headers should be written
-func getHeaders(headers map[string]interface{}, r *schema.Ref) ([]kafka.RecordHeader, error) {
+func getHeaders(headers map[string]interface{}, r *schema.Schema) ([]kafka.RecordHeader, error) {
 	var result []kafka.RecordHeader
 	for k, v := range headers {
-		var headerSchema *schema.Ref
-		if r != nil && r.Value != nil && r.Value.Type.IsObject() {
-			headerSchema = r.Value.Properties.Get(k)
+		var headerSchema *schema.Schema
+		if r != nil && r.Type.IsObject() {
+			headerSchema = r.Properties.Get(k)
 
 		}
 
@@ -274,16 +274,16 @@ func createValue(r *asyncapi3.SchemaRef) (value interface{}, err error) {
 	if r != nil && r.Value != nil && r.Value.Schema != nil {
 		s = r.Value.Schema
 	} else {
-		s = &schema.Ref{}
+		s = &schema.Schema{}
 	}
 
 	switch v := s.(type) {
-	case *schema.Ref:
+	case *schema.Schema:
 		value, err = generator.New(&generator.Request{Path: generator.Path{&generator.PathElement{Schema: v}}})
 	case *openapi.Ref:
 		value, err = openapi.CreateValue(v)
 	case *avro.Schema:
-		jsSchema := &schema.Ref{Value: v.Convert()}
+		jsSchema := v.Convert()
 		value, err = generator.New(&generator.Request{Path: generator.Path{&generator.PathElement{Schema: jsSchema}}})
 	default:
 		err = fmt.Errorf("schema format not supported: %v", r.Value.Format)
@@ -297,16 +297,16 @@ func marshal(value interface{}, r *asyncapi3.SchemaRef, contentType string) ([]b
 	if r != nil && r.Value != nil && r.Value.Schema != nil {
 		s = r.Value.Schema
 	} else {
-		s = &schema.Ref{}
+		s = &schema.Schema{}
 	}
 
 	switch v := s.(type) {
-	case *schema.Ref:
+	case *schema.Schema:
 		return encoding.NewEncoder(v).Write(value, media.ParseContentType(contentType))
 	case *openapi.Ref:
 		return v.Marshal(value, media.ParseContentType(contentType))
 	case *avro.Schema:
-		jsSchema := &schema.Ref{Value: v.Convert()}
+		jsSchema := v.Convert()
 		return encoding.NewEncoder(jsSchema).Write(value, media.ParseContentType(contentType))
 	default:
 		return nil, fmt.Errorf("schema format not supported: %v", r.Value.Format)
@@ -318,11 +318,11 @@ func marshalKey(key interface{}, r *asyncapi3.SchemaRef) ([]byte, error) {
 	if r != nil && r.Value != nil && r.Value.Schema != nil {
 		s = r.Value.Schema
 	} else {
-		s = &schema.Ref{}
+		s = &schema.Schema{}
 	}
 
 	switch v := s.(type) {
-	case *schema.Ref:
+	case *schema.Schema:
 		if v.IsObject() || v.IsArray() {
 			return encoding.NewEncoder(v).Write(key, media.ParseContentType("application/json"))
 		} else {
@@ -335,7 +335,7 @@ func marshalKey(key interface{}, r *asyncapi3.SchemaRef) ([]byte, error) {
 			return []byte(fmt.Sprintf("%v", key)), nil
 		}
 	case *avro.Schema:
-		jsSchema := &schema.Ref{Value: v.Convert()}
+		jsSchema := v.Convert()
 		if jsSchema.IsObject() || jsSchema.IsArray() {
 			return encoding.NewEncoder(jsSchema).Write(key, media.ParseContentType("application/json"))
 		} else {

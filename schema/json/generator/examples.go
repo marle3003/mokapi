@@ -11,7 +11,7 @@ func Examples() *Tree {
 	p := parser.Parser{}
 
 	validate := func(v interface{}, s *schema.Schema) error {
-		_, err := p.ParseWith(v, &schema.Ref{Value: s})
+		_, err := p.ParseWith(v, s)
 		if err != nil {
 			log.Warnf("skip using example from schema: %v: example is not valid: %v", s, parser.ToString(v))
 			return ErrUnsupported

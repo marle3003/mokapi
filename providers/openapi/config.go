@@ -23,7 +23,7 @@ var (
 
 	//go:embed schema.yaml
 	validation_schema_raw []byte
-	validation_schema     *jsonSchema.Ref
+	validation_schema     *jsonSchema.Schema
 )
 
 func init() {

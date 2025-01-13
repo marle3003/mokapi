@@ -58,7 +58,7 @@ func UriList() *Tree {
 			last := r.Last()
 			s := last.Schema
 			if s.IsAny() {
-				s = &schema.Ref{Value: &schema.Schema{Type: []string{"array"}}}
+				s = &schema.Schema{Type: []string{"array"}}
 			}
 
 			next := r.With()

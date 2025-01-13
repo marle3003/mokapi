@@ -8,7 +8,7 @@ import (
 	"reflect"
 )
 
-func ToJsonSchema(v goja.Value, rt *goja.Runtime) (*jsonSchema.Ref, error) {
+func ToJsonSchema(v goja.Value, rt *goja.Runtime) (*jsonSchema.Schema, error) {
 	s := &jsonSchema.Schema{}
 
 	if v.ExportType().Kind() != reflect.Map {
@@ -140,5 +140,5 @@ func ToJsonSchema(v goja.Value, rt *goja.Runtime) (*jsonSchema.Ref, error) {
 			}
 		}
 	}
-	return &jsonSchema.Ref{Value: s}, nil
+	return s, nil
 }

@@ -3,12 +3,21 @@ package schema
 import (
 	"encoding/json"
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 )
 
 type Schema struct {
-	Schema  string `yaml:"$schema,omitempty" json:"$schema,omitempty"`
-	Boolean *bool  `yaml:"-" json:"-"`
+	m map[string]bool
+
+	Id         string `yaml:"$id,omitempty" json:"$id,omitempty"`
+	Ref        string `yaml:"$ref,omitempty" json:"$ref,omitempty"`
+	DynamicRef string `yaml:"$dynamicRef,omitempty" json:"$dynamicRef,omitempty"`
+
+	Schema        string `yaml:"$schema,omitempty" json:"$schema,omitempty"`
+	Boolean       *bool  `yaml:"-" json:"-"`
+	Anchor        string `yaml:"$anchor,omitempty" json:"$anchor,omitempty"`
+	DynamicAnchor string `yaml:"$dynamicAnchor,omitempty" json:"$dynamicAnchor,omitempty"`
 
 	Type  Types         `yaml:"type,omitempty" json:"type,omitempty"`
 	Enum  []interface{} `yaml:"enum,omitempty" json:"enum,omitempty"`
@@ -28,37 +37,37 @@ type Schema struct {
 	Format    string `yaml:"format,omitempty" json:"format,omitempty"`
 
 	// Arrays
-	Items            *Ref   `yaml:"items,omitempty" json:"items,omitempty"`
-	PrefixItems      []*Ref `yaml:"prefixItems,omitempty" json:"prefixItems,omitempty"`
-	UnevaluatedItems *Ref   `yaml:"unevaluatedItems,omitempty" json:"unevaluatedItems,omitempty"`
-	Contains         *Ref   `yaml:"contains,omitempty" json:"contains,omitempty"`
-	MaxContains      *int   `yaml:"maxContains,omitempty" json:"maxContains,omitempty"`
-	MinContains      *int   `yaml:"minContains,omitempty" json:"minContains,omitempty"`
-	MaxItems         *int   `yaml:"maxItems,omitempty" json:"maxItems,omitempty"`
-	MinItems         *int   `yaml:"minItems,omitempty" json:"minItems,omitempty"`
-	UniqueItems      bool   `yaml:"uniqueItems,omitempty" json:"uniqueItems,omitempty"`
-	ShuffleItems     bool   `yaml:"x-shuffleItems,omitempty" json:"x-shuffleItems,omitempty"`
+	Items            *Schema   `yaml:"items,omitempty" json:"items,omitempty"`
+	PrefixItems      []*Schema `yaml:"prefixItems,omitempty" json:"prefixItems,omitempty"`
+	UnevaluatedItems *Schema   `yaml:"unevaluatedItems,omitempty" json:"unevaluatedItems,omitempty"`
+	Contains         *Schema   `yaml:"contains,omitempty" json:"contains,omitempty"`
+	MaxContains      *int      `yaml:"maxContains,omitempty" json:"maxContains,omitempty"`
+	MinContains      *int      `yaml:"minContains,omitempty" json:"minContains,omitempty"`
+	MaxItems         *int      `yaml:"maxItems,omitempty" json:"maxItems,omitempty"`
+	MinItems         *int      `yaml:"minItems,omitempty" json:"minItems,omitempty"`
+	UniqueItems      bool      `yaml:"uniqueItems,omitempty" json:"uniqueItems,omitempty"`
+	ShuffleItems     bool      `yaml:"x-shuffleItems,omitempty" json:"x-shuffleItems,omitempty"`
 
 	// Objects
 	Properties            *Schemas            `yaml:"properties,omitempty" json:"properties,omitempty"`
-	PatternProperties     map[string]*Ref     `yaml:"patternProperties,omitempty" json:"patternProperties,omitempty"`
+	PatternProperties     map[string]*Schema  `yaml:"patternProperties,omitempty" json:"patternProperties,omitempty"`
 	MaxProperties         *int                `yaml:"maxProperties,omitempty" json:"maxProperties,omitempty"`
 	MinProperties         *int                `yaml:"minProperties,omitempty" json:"minProperties,omitempty"`
 	Required              []string            `yaml:"required,omitempty" json:"required,omitempty"`
 	DependentRequired     map[string][]string `yaml:"dependentRequired,omitempty" json:"dependentRequired,omitempty"`
-	DependentSchemas      map[string]*Ref     `yaml:"dependentSchemas,omitempty" json:"dependentSchemas,omitempty"`
-	AdditionalProperties  *Ref                `yaml:"additionalProperties,omitempty" json:"additionalProperties,omitempty"`
-	UnevaluatedProperties *Ref                `yaml:"unevaluatedProperties,omitempty" json:"unevaluatedProperties,omitempty"`
-	PropertyNames         *Ref                `yaml:"propertyNames,omitempty" json:"propertyNames,omitempty"`
+	DependentSchemas      map[string]*Schema  `yaml:"dependentSchemas,omitempty" json:"dependentSchemas,omitempty"`
+	AdditionalProperties  *Schema             `yaml:"additionalProperties,omitempty" json:"additionalProperties,omitempty"`
+	UnevaluatedProperties *Schema             `yaml:"unevaluatedProperties,omitempty" json:"unevaluatedProperties,omitempty"`
+	PropertyNames         *Schema             `yaml:"propertyNames,omitempty" json:"propertyNames,omitempty"`
 
-	AllOf []*Ref `yaml:"allOf,omitempty" json:"allOf,omitempty"`
-	AnyOf []*Ref `yaml:"anyOf,omitempty" json:"anyOf,omitempty"`
-	OneOf []*Ref `yaml:"oneOf,omitempty" json:"oneOf,omitempty"`
-	Not   *Ref   `yaml:"not,omitempty" json:"not,omitempty"`
+	AllOf []*Schema `yaml:"allOf,omitempty" json:"allOf,omitempty"`
+	AnyOf []*Schema `yaml:"anyOf,omitempty" json:"anyOf,omitempty"`
+	OneOf []*Schema `yaml:"oneOf,omitempty" json:"oneOf,omitempty"`
+	Not   *Schema   `yaml:"not,omitempty" json:"not,omitempty"`
 
-	If   *Ref `yaml:"if,omitempty" json:"if,omitempty"`
-	Then *Ref `yaml:"then,omitempty" json:"then,omitempty"`
-	Else *Ref `yaml:"else,omitempty" json:"else,omitempty"`
+	If   *Schema `yaml:"if,omitempty" json:"if,omitempty"`
+	Then *Schema `yaml:"then,omitempty" json:"then,omitempty"`
+	Else *Schema `yaml:"else,omitempty" json:"else,omitempty"`
 
 	// Annotations
 	Title       string        `yaml:"title,omitempty" json:"title,omitempty"`
@@ -71,7 +80,9 @@ type Schema struct {
 	ContentMediaType string `yaml:"contentMediaType,omitempty" json:"contentMediaType,omitempty"`
 	ContentEncoding  string `yaml:"contentEncoding,omitempty" json:"contentEncoding,omitempty"`
 
+	// both are valid: https://json-schema.org/draft/2019-09/release-notes#semi-incompatible-changes
 	Definitions map[string]*Schema `yaml:"definitions,omitempty" json:"definitions,omitempty"`
+	Defs        map[string]*Schema `yaml:"$defs,omitempty" json:"$defs,omitempty"`
 }
 
 type UnmarshalError struct {
@@ -140,6 +151,8 @@ func (s *Schema) Validate() error {
 }
 
 func (s *Schema) UnmarshalJSON(b []byte) error {
+	_ = json.Unmarshal(b, &s.m)
+
 	var boolVal bool
 	if err := json.Unmarshal(b, &boolVal); err == nil {
 		s.Boolean = &boolVal
@@ -157,8 +170,33 @@ func (s *Schema) UnmarshalJSON(b []byte) error {
 	} else if err != nil {
 		return err
 	}
+	a.m = s.m
 	*s = Schema(a)
 	return nil
+}
+
+func (s *Schema) UnmarshalYAML(node *yaml.Node) error {
+	_ = node.Decode(&s.m)
+
+	var boolVal bool
+	if err := node.Decode(&boolVal); err == nil {
+		s.Boolean = &boolVal
+		return nil
+	}
+
+	type alias Schema
+	a := alias{}
+	err := node.Decode(&a)
+	if err != nil {
+		return err
+	}
+	a.m = s.m
+	*s = Schema(a)
+	return nil
+}
+
+type ref struct {
+	Schema *Schema
 }
 
 func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
@@ -166,8 +204,39 @@ func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		return nil
 	}
 
+	if s.Id != "" {
+		config.OpenScope(s.Id)
+		defer config.CloseScope()
+	} else {
+		config.Scope.OpenIfNeeded(config.Info.Path())
+	}
+
+	if s.Anchor != "" {
+		if err := config.Scope.SetLexical(s.Anchor, s); err != nil {
+			return err
+		}
+	}
+
+	if s.DynamicAnchor != "" {
+		if err := config.Scope.SetDynamic(s.DynamicAnchor, s); err != nil {
+			return err
+		}
+	}
+
 	if err := s.Validate(); err != nil {
 		return err
+	}
+
+	for _, d := range s.Definitions {
+		if err := d.Parse(config, reader); err != nil {
+			return err
+		}
+	}
+
+	for _, d := range s.Defs {
+		if err := d.Parse(config, reader); err != nil {
+			return err
+		}
 	}
 
 	if err := s.Items.Parse(config, reader); err != nil {
@@ -198,6 +267,24 @@ func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		if err := r.Parse(config, reader); err != nil {
 			return err
 		}
+	}
+
+	if s.Ref != "" {
+		r := &ref{}
+		err := dynamic.Resolve(s.Ref, &r.Schema, config, reader)
+		if err != nil {
+			return err
+		}
+		s.apply(r.Schema)
+	}
+
+	if s.DynamicRef != "" {
+		r := &ref{}
+		err := dynamic.ResolveDynamic(s.DynamicRef, &r.Schema, config, reader)
+		if err != nil {
+			return err
+		}
+		s.apply(r.Schema)
 	}
 
 	return nil

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
-	"mokapi/schema/json/schematest"
+	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
 
@@ -19,7 +19,7 @@ func TestPattern(t *testing.T) {
 			req: &Request{
 				Path: Path{
 					&PathElement{
-						Schema: schematest.NewRef("string",
+						Schema: schematest.New("string",
 							schematest.WithPattern("[0-9]+"),
 							schematest.WithMinLength(10),
 							schematest.WithMaxLength(15),
@@ -37,7 +37,7 @@ func TestPattern(t *testing.T) {
 			req: &Request{
 				Path: Path{
 					&PathElement{
-						Schema: schematest.NewRef("string",
+						Schema: schematest.New("string",
 							schematest.WithPattern("[0-5]{1,4}"),
 							schematest.WithMinLength(10),
 							schematest.WithMaxLength(15),
@@ -54,7 +54,7 @@ func TestPattern(t *testing.T) {
 			req: &Request{
 				Path: Path{
 					&PathElement{
-						Schema: schematest.NewRef("string",
+						Schema: schematest.New("string",
 							schematest.WithPattern("^[a-z]+[A-Z0-9_]+$"),
 							schematest.WithMinLength(8),
 							schematest.WithMaxLength(20),
@@ -72,7 +72,7 @@ func TestPattern(t *testing.T) {
 			req: &Request{
 				Path: Path{
 					&PathElement{
-						Schema: schematest.NewRef("string",
+						Schema: schematest.New("string",
 							schematest.WithPattern("[[0-5]{1,4}"),
 							schematest.WithMinLength(4),
 							schematest.WithMaxLength(4),
@@ -90,7 +90,7 @@ func TestPattern(t *testing.T) {
 			req: &Request{
 				Path: Path{
 					&PathElement{
-						Schema: schematest.NewRef("string",
+						Schema: schematest.New("string",
 							schematest.WithPattern("[0-5]{1,4}"),
 							schematest.WithMinLength(5),
 							schematest.WithMaxLength(4),
@@ -107,7 +107,7 @@ func TestPattern(t *testing.T) {
 			req: &Request{
 				Path: Path{
 					&PathElement{
-						Schema: schematest.NewRef("string",
+						Schema: schematest.New("string",
 							schematest.WithPattern("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"),
 						),
 					},
@@ -123,7 +123,7 @@ func TestPattern(t *testing.T) {
 			req: &Request{
 				Path: Path{
 					&PathElement{
-						Schema: schematest.NewRef("string",
+						Schema: schematest.New("string",
 							schematest.WithPattern("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"),
 							schematest.WithMinLength(50),
 						),
@@ -141,7 +141,7 @@ func TestPattern(t *testing.T) {
 			req: &Request{
 				Path: Path{
 					&PathElement{
-						Schema: schematest.NewRef("string",
+						Schema: schematest.New("string",
 							schematest.WithPattern("\\d{16}"),
 						),
 					},

@@ -8,7 +8,6 @@ import (
 	"mokapi/runtime"
 	"mokapi/runtime/monitor"
 	avro "mokapi/schema/avro/schema"
-	"mokapi/schema/json/ref"
 	jsonSchema "mokapi/schema/json/schema"
 	"mokapi/try"
 	"net/http"
@@ -260,8 +259,8 @@ func TestSchemaInfo_UnmarshalJSON(t *testing.T) {
 			test: func(t *testing.T, s *schemaInfo, err error) {
 				require.NoError(t, err)
 				require.NotNil(t, s.Schema)
-				require.IsType(t, &jsonSchema.Ref{}, s.Schema)
-				require.Equal(t, "object", s.Schema.(*jsonSchema.Ref).Value.Type[0])
+				require.IsType(t, &jsonSchema.Schema{}, s.Schema)
+				require.Equal(t, "object", s.Schema.(*jsonSchema.Schema).Type[0])
 			},
 		},
 		{
@@ -271,8 +270,8 @@ func TestSchemaInfo_UnmarshalJSON(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, "foo", s.Format)
 				require.NotNil(t, s.Schema)
-				require.IsType(t, &jsonSchema.Ref{}, s.Schema)
-				require.Equal(t, "object", s.Schema.(*jsonSchema.Ref).Value.Type[0])
+				require.IsType(t, &jsonSchema.Schema{}, s.Schema)
+				require.Equal(t, "object", s.Schema.(*jsonSchema.Schema).Type[0])
 			},
 		},
 	}
@@ -314,21 +313,21 @@ func TestSchemaInfo_MarshalJSON(t *testing.T) {
 		},
 		{
 			name: "json schema only ref",
-			s:    &schemaInfo{Schema: &jsonSchema.Ref{Reference: ref.Reference{Ref: "foo/bar"}}},
+			s:    &schemaInfo{Schema: &jsonSchema.Schema{Ref: "foo/bar"}},
 			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
-				require.Equal(t, `{"schema":{"ref":"foo/bar"}}`, s)
+				require.Equal(t, `{"schema":{"$ref":"foo/bar"}}`, s)
 			},
 		},
 		{
 			name: "json schema ref and value",
-			s: &schemaInfo{Schema: &jsonSchema.Ref{
-				Reference: ref.Reference{Ref: "foo/bar"},
-				Value:     &jsonSchema.Schema{Type: jsonSchema.Types{"string"}},
+			s: &schemaInfo{Schema: &jsonSchema.Schema{
+				Ref:  "foo/bar",
+				Type: jsonSchema.Types{"string"},
 			}},
 			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
-				require.Equal(t, `{"schema":{"ref":"foo/bar","type":"string"}}`, s)
+				require.Equal(t, `{"schema":{"$ref":"foo/bar","type":"string"}}`, s)
 			},
 		},
 		{

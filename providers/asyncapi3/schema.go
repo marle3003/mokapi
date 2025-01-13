@@ -39,7 +39,7 @@ func (r *SchemaRef) UnmarshalYAML(node *yaml.Node) error {
 		return nil
 	}
 
-	var s *jsonSchema.Ref
+	var s *jsonSchema.Schema
 	err = node.Decode(&s)
 	if err == nil {
 		r.Value = &MultiSchemaFormat{Schema: s}
@@ -64,7 +64,7 @@ func (r *SchemaRef) UnmarshalJSON(b []byte) error {
 	}
 
 	d = json.NewDecoder(bytes.NewReader(b))
-	var s *jsonSchema.Ref
+	var s *jsonSchema.Schema
 	err = d.Decode(&s)
 	if err == nil {
 		r.Value = &MultiSchemaFormat{Schema: s}
@@ -84,7 +84,7 @@ func (r *SchemaRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 			if err != nil {
 				return err
 			}
-			r.Value = &MultiSchemaFormat{Schema: &jsonSchema.Ref{Value: s.s}}
+			r.Value = &MultiSchemaFormat{Schema: s.s}
 		}
 		return nil
 	}
@@ -101,8 +101,8 @@ func (m *MultiSchemaFormat) parse(config *dynamic.Config, reader dynamic.Reader)
 
 func (m *MultiSchemaFormat) Resolve(token string) (interface{}, error) {
 	if token == "" {
-		if js, ok := m.Schema.(*jsonSchema.Ref); ok {
-			return js.Value, nil
+		if js, ok := m.Schema.(*jsonSchema.Schema); ok {
+			return js, nil
 		}
 		return m.Schema, nil
 	}
@@ -184,7 +184,7 @@ func (m *MultiSchemaFormat) UnmarshalYAML(node *yaml.Node) error {
 		}
 		m.Schema = s
 	default:
-		var s *jsonSchema.Ref
+		var s *jsonSchema.Schema
 		err := node.Decode(&s)
 		if err != nil {
 			return err
@@ -229,8 +229,8 @@ func (m *MultiSchemaFormat) patch(patch *MultiSchemaFormat) {
 		} else {
 			switch s := m.Schema.(type) {
 			case *avro.Schema:
-			case *jsonSchema.Ref:
-				s.Patch(patch.Schema.(*jsonSchema.Ref))
+			case *jsonSchema.Schema:
+				s.Patch(patch.Schema.(*jsonSchema.Schema))
 			}
 		}
 	}
@@ -248,7 +248,7 @@ func unmarshal(raw json.RawMessage, format string) (Schema, error) {
 			err := json.Unmarshal(raw, &a)
 			return a, err
 		default:
-			var r *jsonSchema.Ref
+			var r *jsonSchema.Schema
 			err := json.Unmarshal(raw, &r)
 			return r, err
 		}
