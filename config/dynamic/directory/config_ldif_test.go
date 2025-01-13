@@ -282,10 +282,9 @@ func TestConfig_LDIF(t *testing.T) {
 			}},
 			test: func(t *testing.T, c *Config, err error) {
 				require.NoError(t, err)
-				require.Len(t, c.Entries, 2)
-				require.Contains(t, c.Entries, "dc=mokapi,dc=io")
-				require.Equal(t, "dc=mokapi,dc=io", c.Entries["dc=mokapi,dc=io"].Dn)
-				require.Equal(t, []string{"bar"}, c.Entries["dc=mokapi,dc=io"].Attributes["foo"])
+				require.Equal(t, 2, c.Entries.Len())
+				require.Equal(t, "dc=mokapi,dc=io", c.Entries.Lookup("dc=mokapi,dc=io").Dn)
+				require.Equal(t, []string{"bar"}, c.Entries.Lookup("dc=mokapi,dc=io").Attributes["foo"])
 			},
 		},
 		{
@@ -297,9 +296,8 @@ func TestConfig_LDIF(t *testing.T) {
 			}},
 			test: func(t *testing.T, c *Config, err error) {
 				require.NoError(t, err)
-				require.Len(t, c.Entries, 2)
-				require.Contains(t, c.Entries, "dc=mokapi,dc=io")
-				require.Equal(t, []string{"bar", "yuh"}, c.Entries["dc=mokapi,dc=io"].Attributes["foo"])
+				require.Equal(t, 2, c.Entries.Len())
+				require.Equal(t, []string{"bar", "yuh"}, c.Entries.Lookup("dc=mokapi,dc=io").Attributes["foo"])
 			},
 		},
 		{
@@ -311,9 +309,8 @@ func TestConfig_LDIF(t *testing.T) {
 			}},
 			test: func(t *testing.T, c *Config, err error) {
 				require.NoError(t, err)
-				require.Len(t, c.Entries, 2)
-				require.Contains(t, c.Entries, "dc=mokapi,dc=io")
-				require.Len(t, c.Entries["dc=mokapi,dc=io"].Attributes, 0)
+				require.Equal(t, 2, c.Entries.Len())
+				require.Len(t, c.Entries.Lookup("dc=mokapi,dc=io").Attributes, 0)
 			},
 		},
 		{
@@ -325,9 +322,8 @@ func TestConfig_LDIF(t *testing.T) {
 			}},
 			test: func(t *testing.T, c *Config, err error) {
 				require.NoError(t, err)
-				require.Len(t, c.Entries, 2)
-				require.Contains(t, c.Entries, "dc=mokapi,dc=io")
-				require.Equal(t, []string{"yuh"}, c.Entries["dc=mokapi,dc=io"].Attributes["foo"])
+				require.Equal(t, 2, c.Entries.Len())
+				require.Equal(t, []string{"yuh"}, c.Entries.Lookup("dc=mokapi,dc=io").Attributes["foo"])
 			},
 		},
 		{
@@ -338,9 +334,8 @@ func TestConfig_LDIF(t *testing.T) {
 			}},
 			test: func(t *testing.T, c *Config, err error) {
 				require.NoError(t, err)
-				require.Len(t, c.Entries, 1)
-				require.Contains(t, c.Entries, "")
-				require.Equal(t, []string{"foo"}, c.Entries[""].Attributes["vendorName"])
+				require.Equal(t, 1, c.Entries.Len())
+				require.Equal(t, []string{"foo"}, c.Entries.Lookup("").Attributes["vendorName"])
 			},
 		},
 	}

@@ -53,65 +53,68 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 		return
 	}
 	status := ldap.Success
-	for _, e := range d.config.Entries {
-		if !predicate(e) {
-			continue
-		}
-
-		switch msg.Scope {
-		case ldap.ScopeBaseObject:
-			if e.Dn != msg.BaseDN {
+	if d.config.Entries != nil {
+		for it := d.config.Entries.Iter(); it.Next(); {
+			e := it.Value()
+			if !predicate(e) {
 				continue
 			}
-		case ldap.ScopeSingleLevel:
-			parts := strings.Split(e.Dn, ",")
-			if len(parts) < 2 && e.Dn != msg.BaseDN {
-				continue
-			}
-			if dn := strings.Join(parts[1:], ","); dn != msg.BaseDN {
-				continue
-			}
-		}
 
-		if pagedStoredIndex != 0 && skipPageIndex < pagedStoredIndex {
-			skipPageIndex++
-			continue
-		}
-		if sizeLimit != 0 && n >= sizeLimit {
-			break
-		}
-		if pageLimit > 0 && n >= pageLimit {
-			setPageCookie(msg.Controls, n, r.Context)
-			break
-		}
-		if maxSizeLimit > 0 && n >= maxSizeLimit {
-			log.Errorf("ldap search query %v: size limit exceeded", msg.Filter)
-			status = ldap.SizeLimitExceeded
-			break
-		}
-		n++
-
-		res := ldap.NewSearchResult(e.Dn)
-		res.Attributes["objectClass"] = e.Attributes["objectClass"]
-
-		if len(msg.Attributes) > 0 {
-			for _, a := range msg.Attributes {
-				for k, v := range e.Attributes {
-					if strings.ToLower(a) == strings.ToLower(k) {
-						res.Attributes[a] = v
-					}
+			switch msg.Scope {
+			case ldap.ScopeBaseObject:
+				if e.Dn != msg.BaseDN {
+					continue
+				}
+			case ldap.ScopeSingleLevel:
+				parts := strings.Split(e.Dn, ",")
+				if len(parts) < 2 && e.Dn != msg.BaseDN {
+					continue
+				}
+				if dn := strings.Join(parts[1:], ","); dn != msg.BaseDN {
+					continue
 				}
 			}
-		} else {
-			res.Attributes = e.Attributes
-		}
 
-		log.Debugf("found result for message %v: %v", r.MessageId, res.Dn)
-		results = append(results, res)
-		event.Response.Results = append(event.Response.Results, LdapSearchResult{
-			Dn:         res.Dn,
-			Attributes: res.Attributes,
-		})
+			if pagedStoredIndex != 0 && skipPageIndex < pagedStoredIndex {
+				skipPageIndex++
+				continue
+			}
+			if sizeLimit != 0 && n >= sizeLimit {
+				break
+			}
+			if pageLimit > 0 && n >= pageLimit {
+				setPageCookie(msg.Controls, n, r.Context)
+				break
+			}
+			if maxSizeLimit > 0 && n >= maxSizeLimit {
+				log.Errorf("ldap search query %v: size limit exceeded", msg.Filter)
+				status = ldap.SizeLimitExceeded
+				break
+			}
+			n++
+
+			res := ldap.NewSearchResult(e.Dn)
+			res.Attributes["objectClass"] = e.Attributes["objectClass"]
+
+			if len(msg.Attributes) > 0 {
+				for _, a := range msg.Attributes {
+					for k, v := range e.Attributes {
+						if strings.ToLower(a) == strings.ToLower(k) {
+							res.Attributes[a] = v
+						}
+					}
+				}
+			} else {
+				res.Attributes = e.Attributes
+			}
+
+			log.Debugf("found result for message %v: %v", r.MessageId, res.Dn)
+			results = append(results, res)
+			event.Response.Results = append(event.Response.Results, LdapSearchResult{
+				Dn:         res.Dn,
+				Attributes: res.Attributes,
+			})
+		}
 	}
 
 	res := &ldap.SearchResponse{
