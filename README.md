@@ -40,7 +40,7 @@ Its core feature are:
 
 Windows
 ```shell
-chcco install mokapi
+choco install mokapi
 mokapi --providers-http-url https://petstore31.swagger.io/api/v31/openapi.json
 ```
 
