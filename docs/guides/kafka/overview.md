@@ -1,6 +1,6 @@
 ---
-title: How to mock Apache Kafka with Mokapi
-description: Mock your Kafka topics with AsyncAPI specification
+title: Mock Kafka Topics for Testing and Development
+description: Mock Kafka Topics Using AsyncAPI Specification for Seamless Testing and Development
 ---
 # Mocking a Kafka Topic with Mokapi
 Mokapi simplifies the process of mocking Kafka topics, enabling you to efficiently test and debug your event-driven applications without the need for a live Kafka environment. Whether you’re validating message schemas, simulating producer-consumer workflows, or testing error-handling scenarios, Mokapi offers a flexible and developer-friendly solution.
