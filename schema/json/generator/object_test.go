@@ -137,6 +137,93 @@ func TestObject(t *testing.T) {
 					v)
 			},
 		},
+		{
+			name: "no additional properties",
+			req: func() *Request {
+				return &Request{
+					Path: Path{
+						&PathElement{Schema: schematest.New("object",
+							schematest.WithProperty("name", schematest.New("string")),
+							schematest.WithFreeForm(false),
+						)},
+					},
+				}
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"name": "Ink"}, v)
+			},
+		},
+		{
+			name: "with additional properties",
+			req: func() *Request {
+				return &Request{
+					Path: Path{
+						&PathElement{Schema: schematest.New("object",
+							schematest.WithProperty("name", schematest.New("string")),
+							schematest.WithFreeForm(true),
+						)},
+					},
+				}
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"name": "Ink"}, v)
+			},
+		},
+		{
+			name: "with additional properties specific",
+			req: func() *Request {
+				return &Request{
+					Path: Path{
+						&PathElement{Schema: schematest.New("object",
+							schematest.WithAdditionalProperties(
+								schematest.New("object",
+									schematest.WithProperty("age", schematest.New("integer")),
+									schematest.WithProperty("gender", schematest.New("string")),
+									schematest.WithRequired("age", "gender"),
+								),
+							),
+						)},
+					},
+				}
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t,
+					map[string]interface{}{
+						"brace": map[string]interface{}{
+							"age":    int64(-2231804065324102411),
+							"gender": "female",
+						},
+						"child": map[string]interface{}{
+							"age":    int64(-5996906719781834924),
+							"gender": "male",
+						},
+						"comb": map[string]interface{}{
+							"age":    int64(298783498632242168),
+							"gender": "male",
+						},
+						"life": map[string]interface{}{
+							"age":    int64(-7574890634918414754),
+							"gender": "male",
+						},
+						"person": map[string]interface{}{
+							"age":    int64(-5048116001741826297),
+							"gender": "female",
+						},
+						"string": map[string]interface{}{
+							"age":    int64(-7377528278928660358),
+							"gender": "female",
+						},
+						"sunshine": map[string]interface{}{
+							"age":    int64(-3652171958352792229),
+							"gender": "male",
+						},
+					},
+					v)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

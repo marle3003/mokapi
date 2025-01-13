@@ -73,7 +73,7 @@ func Dictionary() *Tree {
 			if s == nil {
 				return false
 			}
-			return s.AdditionalProperties != nil
+			return s.AdditionalProperties != nil && !s.AdditionalProperties.IsAny()
 		},
 		Fake: func(r *Request) (interface{}, error) {
 			s := r.LastSchema()

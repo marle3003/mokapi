@@ -117,8 +117,7 @@ text: Success
 # numEntries: 3
 ```
 
-To query for the `cn=alice,dc=example,dc=com` user entry, use a command like.
-This command will return the details of the alice entry under dc=example,dc=com.
+To query the cn=alice,dc=example,dc=com user entry, you can use a command like the following:
 
 ```bash
 ldapsearch -x -h localhost -p 389 -b "dc=example,dc=com" "(cn=alice)"

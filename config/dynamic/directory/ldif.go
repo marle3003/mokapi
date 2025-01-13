@@ -19,7 +19,8 @@ type LdifRecord interface {
 
 func (l *Ldif) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	l.Records = nil
-	lines := strings.Split(string(config.Raw), "\n")
+	s := strings.ReplaceAll(string(config.Raw), "\r\n", "\n")
+	lines := strings.Split(s, "\n")
 
 	if len(lines) > 0 {
 		kv := strings.SplitN(lines[0], ":", 2)

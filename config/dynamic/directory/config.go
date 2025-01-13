@@ -63,7 +63,11 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		if !u.IsAbs() {
 			if config.Info.Url != nil && config.Info.Url.Scheme == "file" {
 				if !filepath.IsAbs(file) {
-					dir := filepath.Dir(config.Info.Url.Path)
+					path := config.Info.Url.Path
+					if config.Info.Url.Opaque != "" {
+						path = config.Info.Url.Opaque
+					}
+					dir := filepath.Dir(path)
 					file = filepath.Join(dir, file)
 				}
 				file = filepath.Clean(file)
