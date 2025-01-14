@@ -53,12 +53,12 @@ func (c *Config) patchEntries(patch *Config) {
 		return
 	}
 
-	for k, p := range patch.Entries {
-		if v, ok := c.Entries[k]; ok {
-			v.patch(p)
-			c.Entries[k] = v
+	for it := patch.Entries.Iter(); it.Next(); {
+		if v, ok := c.Entries.Get(it.Key()); ok {
+			v.patch(it.Value())
+			c.Entries.Set(it.Key(), v)
 		} else {
-			c.Entries[k] = p
+			c.Entries.Set(it.Key(), it.Value())
 		}
 	}
 }

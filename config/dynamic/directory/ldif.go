@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"mokapi/config/dynamic"
+	"mokapi/sortedmap"
 	"net/url"
 	"strings"
 )
@@ -13,7 +14,7 @@ type Ldif struct {
 }
 
 type LdifRecord interface {
-	Apply(entries map[string]Entry) error
+	Apply(entries *sortedmap.LinkedHashMap[string, Entry]) error
 	append(name string, value string)
 }
 
@@ -136,14 +137,14 @@ type AddRecord struct {
 	Attributes map[string][]string
 }
 
-func (add *AddRecord) Apply(entries map[string]Entry) error {
-	if _, ok := entries[add.Dn]; ok {
+func (add *AddRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry]) error {
+	if _, ok := entries.Get(add.Dn); ok {
 		return fmt.Errorf("record dn='%s' already exists", add.Dn)
 	}
-	entries[add.Dn] = Entry{
+	entries.Set(add.Dn, Entry{
 		Dn:         add.Dn,
 		Attributes: add.Attributes,
-	}
+	})
 	return nil
 }
 
@@ -158,7 +159,7 @@ type DeleteRecord struct {
 	Dn string
 }
 
-func (del *DeleteRecord) Apply(entries map[string]Entry) error {
+func (del *DeleteRecord) Apply(_ *sortedmap.LinkedHashMap[string, Entry]) error {
 	return nil
 }
 
@@ -175,11 +176,11 @@ type ModifyAction struct {
 	Attributes map[string][]string
 }
 
-func (mod *ModifyRecord) Apply(entries map[string]Entry) error {
-	if _, ok := entries[mod.Dn]; !ok {
+func (mod *ModifyRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry]) error {
+	e, ok := entries.Get(mod.Dn)
+	if !ok {
 		return fmt.Errorf("apply change record failed: entry '%v' not found", mod.Dn)
 	}
-	e := entries[mod.Dn]
 
 	for _, action := range mod.Actions {
 		switch action.Type {

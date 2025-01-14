@@ -3,6 +3,7 @@ package directory
 import (
 	"fmt"
 	"mokapi/config/dynamic"
+	"mokapi/sortedmap"
 	"mokapi/version"
 	"net/url"
 	"path/filepath"
@@ -19,7 +20,7 @@ type Config struct {
 	Info       Info
 	Address    string
 	SizeLimit  int64
-	Entries    map[string]Entry
+	Entries    *sortedmap.LinkedHashMap[string, Entry]
 	Files      []string
 
 	root       map[string][]string
@@ -42,13 +43,14 @@ type Entry struct {
 }
 
 func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
-	c.Entries = map[string]Entry{}
+	c.Entries = &sortedmap.LinkedHashMap[string, Entry]{}
 	// copy from old format
 	for k, v := range c.oldEntries {
-		c.Entries[k] = v
+		c.Entries.Set(k, v)
 	}
 
-	for _, entry := range c.Entries {
+	for it := c.Entries.Iter(); it.Next(); {
+		entry := it.Value()
 		err := entry.Parse(config, reader)
 		if err != nil {
 			return err
@@ -98,7 +100,7 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		}
 	}
 
-	root, ok := c.Entries[""]
+	root, ok := c.Entries.Get("")
 	if !ok {
 		root = Entry{
 			Attributes: map[string][]string{
@@ -142,7 +144,7 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if v, ok = c.root["NamingContexts"]; ok {
 		root.Attributes["namingContexts"] = v
 	}
-	c.Entries[""] = root
+	c.Entries.Set("", root)
 
 	return nil
 }

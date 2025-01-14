@@ -53,6 +53,11 @@ func (m *LinkedHashMap[K, V]) Get(key K) (V, bool) {
 	return *new(V), false
 }
 
+func (m *LinkedHashMap[K, V]) Lookup(key K) V {
+	v, _ := m.Get(key)
+	return v
+}
+
 func (m *LinkedHashMap[K, V]) Iter() *Iterator[K, V] {
 	if m.list == nil {
 		return &Iterator[K, V]{}

@@ -7,12 +7,13 @@ import (
 	"mokapi/engine/enginetest"
 	"mokapi/ldap"
 	"mokapi/ldap/ldaptest"
+	"mokapi/sortedmap"
 	"testing"
 )
 
 var testConfig = &directory.Config{
 	Info: directory.Info{Name: "foo"},
-	Entries: map[string]directory.Entry{
+	Entries: convert(map[string]directory.Entry{
 		"": {
 			Dn: "dc=foo,dc=com",
 			Attributes: map[string][]string{
@@ -35,7 +36,8 @@ var testConfig = &directory.Config{
 				"number":      {"10"},
 			},
 		},
-	}}
+	}),
+}
 
 func TestDirectory_ServeBind(t *testing.T) {
 	testcases := []struct {
@@ -122,8 +124,9 @@ func TestDirectory_ServeSearch(t *testing.T) {
 		{
 			name: "base object",
 			config: &directory.Config{Info: directory.Info{Name: "foo"},
-				Entries: map[string]directory.Entry{
-					"": {Dn: "", Attributes: map[string][]string{"foo": {"bar"}}}},
+				Entries: convert(map[string]directory.Entry{
+					"": {Dn: "", Attributes: map[string][]string{"foo": {"bar"}}},
+				}),
 			},
 			fn: func(t *testing.T, h ldap.Handler) {
 				rr := ldaptest.NewRecorder()
@@ -143,7 +146,7 @@ func TestDirectory_ServeSearch(t *testing.T) {
 		{
 			name: "objectclass=* scope=ScopeBaseObject",
 			config: &directory.Config{Info: directory.Info{Name: "foo"},
-				Entries: map[string]directory.Entry{
+				Entries: convert(map[string]directory.Entry{
 					"": {
 						Dn: "dc=foo,dc=com",
 						Attributes: map[string][]string{
@@ -153,7 +156,7 @@ func TestDirectory_ServeSearch(t *testing.T) {
 					"not": {
 						Dn: "not",
 					},
-				}},
+				})},
 			fn: func(t *testing.T, h ldap.Handler) {
 				rr := ldaptest.NewRecorder()
 				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
@@ -484,14 +487,14 @@ func TestDirectory_ServeSearch(t *testing.T) {
 		{
 			name: "options (cn;lang-en=John Doe)",
 			config: &directory.Config{
-				Entries: map[string]directory.Entry{
+				Entries: convert(map[string]directory.Entry{
 					"user2": {
 						Dn: "cn=john,dc=foo,dc=com",
 						Attributes: map[string][]string{
 							"cn;lang-en": {"John Doe"},
 						},
 					},
-				}},
+				})},
 			fn: func(t *testing.T, h ldap.Handler) {
 				rr := ldaptest.NewRecorder()
 				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
@@ -510,20 +513,20 @@ func TestDirectory_ServeSearch(t *testing.T) {
 		{
 			name: "paging",
 			config: &directory.Config{
-				Entries: map[string]directory.Entry{
-					"user1": {
+				Entries: convertArray([]directory.Entry{
+					{
 						Dn: "cn=john,dc=foo,dc=com",
 						Attributes: map[string][]string{
 							"cn": {"John Doe"},
 						},
 					},
-					"user2": {
+					{
 						Dn: "cn=carol,dc=foo,dc=com",
 						Attributes: map[string][]string{
 							"cn": {"Carol Doe"},
 						},
 					},
-				}},
+				})},
 			fn: func(t *testing.T, h ldap.Handler) {
 				ctx := ldap.NewPagingFromContext(context.Background())
 
@@ -582,4 +585,12 @@ func hasResult(results []ldap.SearchResult, dn string) bool {
 		}
 	}
 	return false
+}
+
+func convertArray(entries []directory.Entry) *sortedmap.LinkedHashMap[string, directory.Entry] {
+	r := &sortedmap.LinkedHashMap[string, directory.Entry]{}
+	for _, entry := range entries {
+		r.Set(entry.Dn, entry)
+	}
+	return r
 }
