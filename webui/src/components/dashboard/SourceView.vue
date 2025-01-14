@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, getCurrentInstance } from 'vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 import { usePrettyBytes } from '@/composables/usePrettyBytes'
 import { VAceEditor } from 'vue3-ace-editor'
@@ -99,6 +99,7 @@ function copyToClipboard(event: MouseEvent) {
     </div>
     <section class="source" aria-label="Content" :class="getLanguage(contentType)">
       <v-ace-editor
+        :id="getCurrentInstance()?.uid"
         :value="source"
         @update:value="emit('update', $event)"
         :lang="getLanguage(contentType)"

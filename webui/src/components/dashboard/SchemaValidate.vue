@@ -47,7 +47,8 @@ function setExample() {
 
 function validate() {
     const body = {
-        schema: props.schema,
+        format: props.schema.format,
+        schema: props.schema.schema,
         data: state.content
     }
     fetch(transformPath('/api/schema/validate'), { method: 'POST', body: JSON.stringify(body), headers: { 'Data-Content-Type': props.contentType, 'Content-Type': 'application/json' } })
@@ -89,7 +90,7 @@ function validate() {
                     </div>
                     <div class="modal-footer justify-content-between">
                         <span class="float-start">
-                            <span v-if="state.errors.length == 0 && state.validated" class="status">
+                            <span v-if="state.errors.length == 0 && state.validated" class="status" role="status">
                                 <i class="bi bi-check-circle-fill"> Valid</i>
                             </span>
                         </span>
