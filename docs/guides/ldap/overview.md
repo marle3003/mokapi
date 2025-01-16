@@ -2,6 +2,7 @@
 title: LDAP Documentation
 description: Integrate your App with a mock LDAP server
 ---
+
 # Mocking LDAP server
 
 Mokapi simplifies the process of creating a basic read-only LDAP server mock, enabling you to efficiently test and debug your LDAP interactions. Whether your goal is to validate query accuracy or simulate specific LDAP entry scenarios, Mokapi provides a flexible and developer-friendly solution.
@@ -27,32 +28,32 @@ Below is an example of the simplest configuration, which does not include any cu
 This basic setup is ideal for testing and development purposes, where the focus is on simulating server behavior rather than interacting with actual LDAP entries. You can later extend this configuration by adding LDAP entries and more advanced server settings as needed.
 
 ```yaml tab=ldap.yaml
-ldap: 1.0 # file configuration version not LDAP protocol version 
+ldap: 1.0 # file configuration version not LDAP protocol version
 host: :389
 ```
 
 To start Mokapi with a specific configuration file, you can use the --provider-file-filename option in the command line. This tells Mokapi to load the specified configuration file when it starts.
 
 ```bash
-mokapi --provider-file-filename ldap.yaml
+mokapi --providers-file-filename ldap.yaml
 ```
 
 ## Setup a Simple LDAP Entry Structure
 
-Mokapi allows you to configure your LDAP mock server using LDIF files. It supports a wide range of LDIF operations, 
-such as adding new entries, modifying attributes, and even deleting attributes. This flexibility makes it 
+Mokapi allows you to configure your LDAP mock server using LDIF files. It supports a wide range of LDIF operations,
+such as adding new entries, modifying attributes, and even deleting attributes. This flexibility makes it
 easy to simulate real-world LDAP scenarios and test different interactions with your server.
 
-In your configuration file, you can reference multiple LDIF files. Mokapi will continuously monitor these files and 
-automatically update the LDAP server whenever a change is detected. This dynamic reloading of LDIF files helps streamline 
+In your configuration file, you can reference multiple LDIF files. Mokapi will continuously monitor these files and
+automatically update the LDAP server whenever a change is detected. This dynamic reloading of LDIF files helps streamline
 the testing and development process, ensuring that your mock server always reflects the latest configurations.
 
 In the following example, we define an LDAP entry `dc=example,dc=com` and assign it the `top` object class.
 This entry is added to the `namingContexts` in the Root DSE. Additionally, we include a user entry for `cn=alice,dc=example,dc=com?`.
 This LDIF file can be referenced in the LDAP configuration file using a relative path.
 
-``` box=tip
-You can also reference an LDIF file using an HTTP or GIT URL, allowing you to source configuration data from remote 
+```box=tip
+You can also reference an LDIF file using an HTTP or GIT URL, allowing you to source configuration data from remote
 locations or version-controlled repositories for better integration and versioning.
 ```
 
@@ -72,7 +73,7 @@ cn: alice
 In the LDAP configuration, you would reference this LDIF file as follows:
 
 ```yaml tab=ldap.yaml
-ldap: 1.0 # file configuration version not LDAP protocol version 
+ldap: 1.0 # file configuration version not LDAP protocol version
 host: :389
 files:
   - ./example.ldif
@@ -83,7 +84,7 @@ This setup provides a foundational LDAP structure, which you can build upon by a
 To query the example LDAP setup, you can use the ldapsearch command, which is a common tool for querying LDAP directories from the command line.
 
 ```bash
-ldapsearch -x -h localhost -p 389 -b "dc=example,dc=com" "(objectClass=*)"
+ldapsearch -x -H ldap://localhost:389 -b "dc=example,dc=com" "(objectClass=*)"
 # extended LDIF
 #
 # LDAPv3
@@ -97,7 +98,7 @@ dn:
 namingContext: dc=example,dc=com
 supportedLDAPVersion: 3
 vendorName: Mokapi
-vendorVersion: v0.11.2
+vendorVersion: 0.11.4
 
 # example.com
 dn: dc=example,dc=com
