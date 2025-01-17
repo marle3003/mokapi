@@ -58,7 +58,7 @@ type ResponseTopic struct {
 }
 
 type ResponsePartition struct {
-	ErrorCode       int16            `kafka:""`
+	ErrorCode       kafka.ErrorCode  `kafka:""`
 	PartitionIndex  int32            `kafka:""`
 	LeaderId        int32            `kafka:""`
 	LeaderEpoch     int32            `kafka:"min=7"`

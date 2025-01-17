@@ -10,7 +10,7 @@ import (
 type decodeFunc func(*Decoder, reflect.Value)
 
 type ReaderFrom interface {
-	ReadFrom(e *Decoder) error
+	ReadFrom(e *Decoder, version int16, tag kafkaTag) error
 }
 
 type Decoder struct {
@@ -32,7 +32,7 @@ func newDecodeFunc(t reflect.Type, version int16, tag kafkaTag) decodeFunc {
 	if reflect.PtrTo(t).Implements(readerFrom) {
 		return func(d *Decoder, v reflect.Value) {
 			i := v.Addr().Interface()
-			i.(ReaderFrom).ReadFrom(d)
+			i.(ReaderFrom).ReadFrom(d, version, tag)
 		}
 	}
 

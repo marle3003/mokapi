@@ -1,7 +1,6 @@
 package produce
 
 import (
-	"math"
 	"mokapi/kafka"
 )
 
@@ -10,11 +9,11 @@ func init() {
 		kafka.ApiReg{
 			ApiKey:     kafka.Produce,
 			MinVersion: 0,
-			MaxVersion: 8},
+			MaxVersion: 9},
 		&Request{},
 		&Response{},
-		math.MaxInt16,
-		math.MaxInt16,
+		9,
+		9,
 	)
 }
 
@@ -22,13 +21,13 @@ type Request struct {
 	TransactionalId string           `kafka:"min=3,compact=9,nullable"`
 	Acks            int16            `kafka:""`
 	TimeoutMs       int32            `kafka:""`
-	Topics          []RequestTopic   `kafka:""`
+	Topics          []RequestTopic   `kafka:"compact=9"`
 	TagFields       map[int64]string `kafka:"type=TAG_BUFFER,min=9"`
 }
 
 type RequestTopic struct {
 	Name       string             `kafka:"compact=9"`
-	Partitions []RequestPartition `kafka:""`
+	Partitions []RequestPartition `kafka:"compact=9"`
 	TagFields  map[int64]string   `kafka:"type=TAG_BUFFER,min=9"`
 }
 
@@ -39,13 +38,14 @@ type RequestPartition struct {
 }
 
 type Response struct {
-	Topics         []ResponseTopic `kafka:""`
-	ThrottleTimeMs int32           `kafka:"min=1"`
+	Topics         []ResponseTopic  `kafka:"compact=9"`
+	ThrottleTimeMs int32            `kafka:"min=1"`
+	TagFields      map[int64]string `kafka:"type=TAG_BUFFER,min=9"`
 }
 
 type ResponseTopic struct {
 	Name       string              `kafka:"compact=9"`
-	Partitions []ResponsePartition `kafka:""`
+	Partitions []ResponsePartition `kafka:"compact=9"`
 	TagFields  map[int64]string    `kafka:"type=TAG_BUFFER,min=9"`
 }
 
@@ -55,7 +55,7 @@ type ResponsePartition struct {
 	BaseOffset     int64            `kafka:""`
 	LogAppendTime  int64            `kafka:"min=2"`
 	LogStartOffset int64            `kafka:"min=5"`
-	RecordErrors   []RecordError    `kafka:"min=8"`
+	RecordErrors   []RecordError    `kafka:"min=8,compact=9"`
 	ErrorMessage   string           `kafka:"min=8,compact=9,nullable"`
 	TagFields      map[int64]string `kafka:"type=TAG_BUFFER,min=9"`
 }

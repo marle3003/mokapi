@@ -300,7 +300,13 @@ func (s *Store) trigger(record *kafka.Record) {
 		r.Value = kafka.BytesToString(record.Value)
 	}
 
-	s.eventEmitter.Emit("kafka", r)
+	actions := s.eventEmitter.Emit("kafka", r)
+	if len(actions) == 0 {
+		return
+	}
+
+	record.Key.Close()
+	record.Value.Close()
 
 	record.Key = kafka.NewBytes([]byte(r.Key))
 	record.Value = kafka.NewBytes([]byte(r.Value))

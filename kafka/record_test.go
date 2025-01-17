@@ -25,7 +25,7 @@ func TestRecord_ReadFrom(t *testing.T) {
 			data: []byte{},
 			test: func(t *testing.T, d *Decoder) {
 				record := RecordBatch{}
-				err := record.ReadFrom(d)
+				err := record.ReadFrom(d, 0, kafkaTag{})
 				require.NoError(t, err)
 			},
 		},
@@ -34,7 +34,7 @@ func TestRecord_ReadFrom(t *testing.T) {
 			data: []byte{0, 0, 0, 0},
 			test: func(t *testing.T, d *Decoder) {
 				batch := RecordBatch{}
-				err := batch.ReadFrom(d)
+				err := batch.ReadFrom(d, 0, kafkaTag{})
 				require.NoError(t, err)
 			},
 		},
@@ -65,7 +65,7 @@ func TestRecord_ReadFrom(t *testing.T) {
 			},
 			test: func(t *testing.T, d *Decoder) {
 				batch := RecordBatch{}
-				err := batch.ReadFrom(d)
+				err := batch.ReadFrom(d, 0, kafkaTag{})
 				require.NoError(t, err)
 				require.Len(t, batch.Records, 1)
 				record := batch.Records[0]
@@ -115,7 +115,7 @@ func TestRecord_ReadFrom(t *testing.T) {
 			},
 			test: func(t *testing.T, d *Decoder) {
 				batch := RecordBatch{}
-				err := batch.ReadFrom(d)
+				err := batch.ReadFrom(d, 0, kafkaTag{})
 				require.NoError(t, err)
 				require.Len(t, batch.Records, 2)
 			},
@@ -153,7 +153,7 @@ func TestRecord_ReadFrom(t *testing.T) {
 			},
 			test: func(t *testing.T, d *Decoder) {
 				batch := RecordBatch{}
-				err := batch.ReadFrom(d)
+				err := batch.ReadFrom(d, 0, kafkaTag{})
 				require.NoError(t, err)
 				require.Len(t, batch.Records[0].Headers, 3)
 				require.Equal(t, "traceparent", batch.Records[0].Headers[0].Key)
@@ -225,7 +225,7 @@ func TestRecordBatch_WriteTo(t *testing.T) {
 			pb := newPageBuffer()
 
 			e := NewEncoder(pb)
-			data.batch.WriteTo(e)
+			data.batch.WriteTo(e, 0, kafkaTag{})
 			var buf bytes.Buffer
 			n, err := pb.WriteTo(&buf)
 			require.NoError(t, err)
@@ -234,7 +234,7 @@ func TestRecordBatch_WriteTo(t *testing.T) {
 			r := bufio.NewReader(bytes.NewReader(buf.Bytes()))
 			d := NewDecoder(r, pb.Size())
 			batch := RecordBatch{}
-			err = batch.ReadFrom(d)
+			err = batch.ReadFrom(d, 0, kafkaTag{})
 			require.NoError(t, err)
 
 			require.Equal(t, len(data.batch.Records), len(batch.Records))
@@ -261,10 +261,10 @@ func TestRecord_Size(t *testing.T) {
 		},
 		{
 			"single record",
-			6,
+			72,
 			RecordBatch{Records: []*Record{
 				{
-					Time:    ToTime(Timestamp(time.Now())),
+					Time:    time.Now().UTC(),
 					Key:     NewBytes([]byte("foo")),
 					Value:   NewBytes([]byte("bar")),
 					Headers: nil,
@@ -273,17 +273,17 @@ func TestRecord_Size(t *testing.T) {
 		},
 		{
 			"two records",
-			24,
+			96,
 			RecordBatch{Records: []*Record{
 				{
-					Time:    ToTime(Timestamp(time.Now())),
+					Time:    time.Now().UTC(),
 					Key:     NewBytes([]byte("key-1")),
 					Value:   NewBytes([]byte("value-1")),
 					Headers: nil,
 				},
 				{
 					Offset:  1,
-					Time:    ToTime(Timestamp(time.Now())),
+					Time:    time.Now().UTC(),
 					Key:     NewBytes([]byte("key-2")),
 					Value:   NewBytes([]byte("value-2")),
 					Headers: nil,
@@ -313,7 +313,7 @@ func TestRecordBatch_WriteTo_Bytes_Compare(t *testing.T) {
 	pb := newPageBuffer()
 
 	e := NewEncoder(pb)
-	records.WriteTo(e)
+	records.WriteTo(e, 0, kafkaTag{})
 	var buf bytes.Buffer
 	_, err := pb.WriteTo(&buf)
 	require.NoError(t, err)

@@ -82,8 +82,9 @@ func (b *groupBalancer) run() {
 	for {
 		select {
 		case <-time.After(time.Duration(timeoutMs) * time.Millisecond):
-			if b.group.Generation == nil || b.group.State != Stable {
-				continue
+			if b.group.Generation == nil {
+				b.group.State = Empty
+				return
 			}
 			now := time.Now()
 			for _, m := range b.group.Generation.Members {

@@ -4,6 +4,7 @@ import kafka from 'mokapi/kafka'
 export default async function() {
     on('kafka', function (record) {
         record.headers = { foo: 'bar' }
+        return true
     })
     on('http', function(request, response) {
         if (request.operationId === "getPetById") {

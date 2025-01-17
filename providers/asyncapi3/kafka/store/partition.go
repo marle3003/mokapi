@@ -78,6 +78,8 @@ func (p *Partition) Read(offset int64, maxBytes int) (kafka.RecordBatch, kafka.E
 	}
 
 	size := 0
+	var baseOffset int64
+	var baseTime time.Time
 	for {
 		if offset >= p.Tail || size > maxBytes {
 			return batch, kafka.None
@@ -89,12 +91,18 @@ func (p *Partition) Read(offset int64, maxBytes int) (kafka.RecordBatch, kafka.E
 
 		for seg.contains(offset) {
 			r := seg.record(offset)
+			if baseOffset == 0 {
+				baseOffset = r.Offset
+				baseTime = r.Time
+			}
+
+			size += r.Size(baseOffset, baseTime)
+			batch.Records = append(batch.Records, r)
+			offset++
+
 			if size > maxBytes {
 				return batch, kafka.None
 			}
-			size += r.Size()
-			batch.Records = append(batch.Records, r)
-			offset++
 		}
 	}
 }
@@ -112,6 +120,7 @@ func (p *Partition) Write(batch kafka.RecordBatch, options ...WriteOptions) (bas
 
 	now := time.Now()
 	baseOffset = p.Tail
+	var baseTime time.Time
 	for _, r := range batch.Records {
 
 		key, payload, err := p.validator.Validate(r)
@@ -125,6 +134,9 @@ func (p *Partition) Write(batch kafka.RecordBatch, options ...WriteOptions) (bas
 
 		if r.Time.IsZero() {
 			r.Time = now
+		}
+		if baseTime.IsZero() {
+			baseTime = r.Time
 		}
 
 		writeFuncs = append(writeFuncs, func() {
@@ -143,7 +155,7 @@ func (p *Partition) Write(batch kafka.RecordBatch, options ...WriteOptions) (bas
 			segment.Log = append(segment.Log, r)
 			segment.Tail++
 			segment.LastWritten = now
-			segment.Size += r.Size()
+			segment.Size += r.Size(baseOffset, baseTime)
 			p.Tail++
 
 			p.logger(key, payload, r.Headers, p.Index, r.Offset, events.NewTraits().With("partition", strconv.Itoa(p.Index)))

@@ -43,8 +43,8 @@ func TestKafkaClient_Produce(t *testing.T) {
 				b, errCode := s.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
-				require.Equal(t, "XidZuoWq ", string(readBytes(b.Records[0].Key)))
-				require.Equal(t, "\"\"", string(readBytes(b.Records[0].Value)))
+				require.Equal(t, "XidZuoWq ", kafka.BytesToString(b.Records[0].Key))
+				require.Equal(t, "\"\"", kafka.BytesToString(b.Records[0].Value))
 			},
 		},
 		{
@@ -67,8 +67,8 @@ func TestKafkaClient_Produce(t *testing.T) {
 				b, errCode := s.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
-				require.Equal(t, "foo", string(readBytes(b.Records[0].Key)))
-				require.Equal(t, `"bar"`, string(readBytes(b.Records[0].Value)))
+				require.Equal(t, "foo", kafka.BytesToString(b.Records[0].Key))
+				require.Equal(t, `"bar"`, kafka.BytesToString(b.Records[0].Value))
 				require.Equal(t, "version", b.Records[0].Headers[0].Key)
 				require.Equal(t, []byte("1.0"), b.Records[0].Headers[0].Value)
 			},
@@ -120,6 +120,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 							console.log(message)
 							message.value = 'mokapi'
 							message.headers = { version: '1.0' }
+							return true
 						})
 					}
 				`))
@@ -148,6 +149,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 					export default function() {
 						on('kafka', function(message) {
 							message.headers = { version: '1.0' }
+							return true
 						})
 					}
 				`))
@@ -175,6 +177,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 					export default function() {
 						on('kafka', function(message) {
 							message.headers = null
+							return true
 						})
 					}
 				`))

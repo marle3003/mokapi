@@ -42,9 +42,10 @@ type RequestPartition struct {
 	CurrentLeaderEpoch int32 `kafka:"min=9"`
 	FetchOffset        int64 `kafka:""`
 	// only used by followers
-	LastFetchedEpoch int32 `kafka:"min=12"`
-	LogStartOffset   int64 `kafka:"min=5"`
-	MaxBytes         int32 `kafka:""`
+	LastFetchedEpoch int32            `kafka:"min=12"`
+	LogStartOffset   int64            `kafka:"min=5"`
+	MaxBytes         int32            `kafka:""`
+	TagFields        map[int64]string `kafka:"type=TAG_BUFFER,min=12"`
 }
 
 type Response struct {
@@ -69,11 +70,12 @@ type ResponsePartition struct {
 	LogStartOffset       int64                `kafka:"min=5"`
 	AbortedTransactions  []AbortedTransaction `kafka:"min=4,compact=12"`
 	PreferredReadReplica int32                `kafka:"min=11"`
-	RecordSet            kafka.RecordBatch    `kafka:""`
+	RecordSet            kafka.RecordBatch    `kafka:"compact=12"`
 	TagFields            map[int64]string     `kafka:"type=TAG_BUFFER,min=12"`
 }
 
 type AbortedTransaction struct {
-	ProducerId  int64 `kafka:"min=4"`
-	FirstOffset int64 `kafka:"min=4"`
+	ProducerId  int64            `kafka:"min=4"`
+	FirstOffset int64            `kafka:"min=4"`
+	TagFields   map[int64]string `kafka:"type=TAG_BUFFER,min=12"`
 }
