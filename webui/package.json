@@ -20,7 +20,7 @@
     "@ssthouse/vue3-tree-chart": "^0.2.6",
     "@types/bootstrap": "^5.2.10",
     "@types/whatwg-mimetype": "^3.0.2",
-    "ace-builds": "^1.37.4",
+    "ace-builds": "^1.37.5",
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",
     "dayjs": "^1.11.13",
