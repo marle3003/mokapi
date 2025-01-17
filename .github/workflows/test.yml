@@ -48,7 +48,7 @@ jobs:
 
   publish-report:
     name: Publish Playwright Report
-    if: "success() || needs.test.result == 'failure'"
+    if: "(success() || needs.test.result == 'failure') &&  github.repository == ‘marle3003/mokapi’"
     needs: [ test ]
     runs-on: ubuntu-latest
     continue-on-error: true
