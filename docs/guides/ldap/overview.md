@@ -59,7 +59,7 @@ locations or version-controlled repositories for better integration and versioni
 ```ldif tab=example.ldif
 # Root DSE
 dn:
-namingContext: dc=example,dc=com
+namingContexts: dc=example,dc=com
 
 dn: dc=example,dc=com
 objectClass: top
@@ -94,7 +94,7 @@ ldapsearch -x -h localhost -p 389 -b "dc=example,dc=com" "(objectClass=*)"
 
 #
 dn:
-namingContext: dc=example,dc=com
+namingContexts: dc=example,dc=com
 supportedLDAPVersion: 3
 vendorName: Mokapi
 vendorVersion: v0.11.2
