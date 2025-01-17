@@ -72,6 +72,10 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
             clipboard: '"features"'
         })
 
+        await test.step('Check editor features', async () => {
+            await expect(configs.getByText('"properties"')).toHaveCSS('color', 'rgb(126, 231, 135)')
+        })
+
         await test.step('Check expand schema', async () => {
             await configs.getByRole('button', { name: 'Expand' }).click()
             const dialog = page.getByRole('dialog', { name: 'Value - mokapi.shop.products' })

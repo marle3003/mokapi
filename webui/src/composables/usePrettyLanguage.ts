@@ -36,6 +36,8 @@ export function usePrettyLanguage() {
     function getLanguage(contentType: string) {
         const mimeType = new MIMEType(contentType)
         switch (mimeType.subtype){
+            case 'xml':
+            case 'problem+xml':
             case 'rss+xml':
                 return 'xml'
             case 'plain':
@@ -44,12 +46,15 @@ export function usePrettyLanguage() {
                 return 'javascript'
             case 'typescript':
                 return 'javascript'
+            case 'json':
+            case 'problem+json':
+                return 'json'
         }
 
         switch (contentType) {
             case 'avro/binary':
                 // display avro content as JSON
-                return "javascript"
+                return 'json'
             default:
                 return 'text'
         }

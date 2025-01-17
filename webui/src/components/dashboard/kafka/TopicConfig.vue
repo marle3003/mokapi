@@ -111,11 +111,11 @@ function getContentType(msg: KafkaMessage): string {
 
             <div class="tab-content" id="tab-config-schemas">
                 <div class="tab-pane fade" id="tabpanel-config-schemas-key" role="tabpanel" v-if="selected.key" aria-labelledby="tab-config-schemas-key">
-                    <source-view :source="JSON.stringify(selected.key)" :content-type="getContentType(selected)" :hide-content-type="true" :show-avro-info="showAvroInfo" />
+                    <source-view :source="JSON.stringify(selected.key)" content-type="application/json" :hide-content-type="true" :show-avro-info="showAvroInfo" />
                 </div>
                 <div class="tab-pane fade show active" id="tabpanel-config-schemas-message" role="tabpanel" aria-labelledby="tab-config-schemas-message">
                     <section aria-label="Schema">
-                        <source-view :source="formatSchema(selected.payload)" :content-type="getContentType(selected)" :hide-content-type="true" :height="500" class="mb-2" :filename="topic.name+'-message.json'" />
+                        <source-view :source="formatSchema(selected.payload)" content-type="application/json" :hide-content-type="true" :height="500" class="mb-2" :filename="topic.name+'-message.json'" />
                         <div class="row">
                             <div class="col-auto pe-2 mt-1">
                                 <schema-expand :schema="selected.payload" :title="'Value - '+topic.name" :source="{filename: topic.name+'-message.json'}" />
