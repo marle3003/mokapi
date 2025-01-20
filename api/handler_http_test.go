@@ -188,7 +188,7 @@ func TestHandler_Http(t *testing.T) {
 				}
 			},
 			requestUrl:   "http://foo.api/api/services/http/foo",
-			responseBody: `{"name":"","paths":[{"path":"/foo/{bar}","operations":[{"method":"get","deprecated":false,"responses":[{"statusCode":200,"description":"foo description","contents":[{"type":"application/json","schema":{"type":"string"}}],"headers":[{"name":"foo","description":"bar","schema":{"type":"string"}}]}]}]}]}`,
+			responseBody: `{"name":"","paths":[{"path":"/foo/{bar}","operations":[{"method":"get","deprecated":false,"responses":[{"statusCode":"200","description":"foo description","contents":[{"type":"application/json","schema":{"type":"string"}}],"headers":[{"name":"foo","description":"bar","schema":{"type":"string"}}]}]}]}]}`,
 		},
 		{
 			name: "reference override summary/description",
@@ -234,7 +234,7 @@ func TestHandler_Http(t *testing.T) {
 				}
 			},
 			requestUrl:   "http://foo.api/api/services/http/foo",
-			responseBody: `{"name":"","paths":[{"path":"/foo/{bar}","summary":"Summary","description":"Description","operations":[{"method":"get","deprecated":false,"responses":[{"statusCode":200,"description":"Description","contents":[{"type":"application/json","schema":{"type":"string"}}],"headers":[{"name":"foo","description":"bar","schema":{"type":"string"}}]}]}]}]}`,
+			responseBody: `{"name":"","paths":[{"path":"/foo/{bar}","summary":"Summary","description":"Description","operations":[{"method":"get","deprecated":false,"responses":[{"statusCode":"200","description":"Description","contents":[{"type":"application/json","schema":{"type":"string"}}],"headers":[{"name":"foo","description":"bar","schema":{"type":"string"}}]}]}]}]}`,
 		},
 		{
 			name: "schema with string or number",
@@ -261,7 +261,7 @@ func TestHandler_Http(t *testing.T) {
 				}
 			},
 			requestUrl:   "http://foo.api/api/services/http/foo",
-			responseBody: `{"name":"","paths":[{"path":"/foo/{bar}","operations":[{"method":"get","deprecated":false,"responses":[{"statusCode":200,"description":"foo description","contents":[{"type":"application/json","schema":{"type":["string","number"]}}]}]}]}]}`,
+			responseBody: `{"name":"","paths":[{"path":"/foo/{bar}","operations":[{"method":"get","deprecated":false,"responses":[{"statusCode":"200","description":"foo description","contents":[{"type":"application/json","schema":{"type":["string","number"]}}]}]}]}]}`,
 		},
 		{
 			name: "schema with reference loop",
@@ -292,7 +292,7 @@ func TestHandler_Http(t *testing.T) {
 				}
 			},
 			requestUrl:   "http://foo.api/api/services/http/foo",
-			responseBody: `{"name":"","paths":[{"path":"/foo/{bar}","operations":[{"method":"get","deprecated":false,"responses":[{"statusCode":200,"description":"foo description","contents":[{"type":"application/json","schema":{"type":"object","properties":{"loop":{"ref":"#/components/schemas/loop","type":"object","properties":{"loop":{"ref":"#/components/schemas/loop"}}}}}}]}]}]}]}`,
+			responseBody: `{"name":"","paths":[{"path":"/foo/{bar}","operations":[{"method":"get","deprecated":false,"responses":[{"statusCode":"200","description":"foo description","contents":[{"type":"application/json","schema":{"type":"object","properties":{"loop":{"ref":"#/components/schemas/loop","type":"object","properties":{"loop":{"ref":"#/components/schemas/loop"}}}}}}]}]}]}]}`,
 		},
 		{
 			name: "schema with default",
@@ -319,7 +319,7 @@ func TestHandler_Http(t *testing.T) {
 				}
 			},
 			requestUrl:   "http://foo.api/api/services/http/foo",
-			responseBody: `{"name":"","paths":[{"path":"/foo/{bar}","operations":[{"method":"get","deprecated":false,"responses":[{"statusCode":200,"description":"foo description","contents":[{"type":"application/json","schema":{"type":"string","default":"foobar"}}]}]}]}]}`,
+			responseBody: `{"name":"","paths":[{"path":"/foo/{bar}","operations":[{"method":"get","deprecated":false,"responses":[{"statusCode":"200","description":"foo description","contents":[{"type":"application/json","schema":{"type":"string","default":"foobar"}}]}]}]}]}`,
 		},
 	}
 

@@ -55,7 +55,7 @@ type param struct {
 }
 
 type response struct {
-	StatusCode  int         `json:"statusCode"`
+	StatusCode  string      `json:"statusCode"`
 	Description string      `json:"description"`
 	Contents    []mediaType `json:"contents,omitempty"`
 	Headers     []header    `json:"headers,omitempty"`

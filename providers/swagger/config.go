@@ -43,20 +43,20 @@ type PathItem struct {
 }
 
 type Operation struct {
-	Summary     string          `yaml:"summary,omitempty" json:"summary,omitempty"`
-	Description string          `yaml:"description,omitempty" json:"description,omitempty"`
-	Tags        []string        `yaml:"tags,omitempty" json:"tags,omitempty"`
-	OperationID string          `yaml:"operationId,omitempty" json:"operationId,omitempty"`
-	Deprecated  bool            `yaml:"deprecated" json:"deprecated"`
-	Parameters  Parameters      `yaml:"parameters,omitempty" json:"parameters,omitempty"`
-	Responses   *Responses[int] `yaml:"responses" json:"responses"`
-	Consumes    []string        `yaml:"consumes,omitempty" json:"consumes,omitempty"`
-	Produces    []string        `yaml:"produces,omitempty" json:"produces,omitempty"`
-	Schemes     []string        `yaml:"schemes,omitempty" json:"schemes,omitempty"`
+	Summary     string     `yaml:"summary,omitempty" json:"summary,omitempty"`
+	Description string     `yaml:"description,omitempty" json:"description,omitempty"`
+	Tags        []string   `yaml:"tags,omitempty" json:"tags,omitempty"`
+	OperationID string     `yaml:"operationId,omitempty" json:"operationId,omitempty"`
+	Deprecated  bool       `yaml:"deprecated" json:"deprecated"`
+	Parameters  Parameters `yaml:"parameters,omitempty" json:"parameters,omitempty"`
+	Responses   *Responses `yaml:"responses" json:"responses"`
+	Consumes    []string   `yaml:"consumes,omitempty" json:"consumes,omitempty"`
+	Produces    []string   `yaml:"produces,omitempty" json:"produces,omitempty"`
+	Schemes     []string   `yaml:"schemes,omitempty" json:"schemes,omitempty"`
 }
 
-type Responses[K string | int] struct {
-	sortedmap.LinkedHashMap[K, *Response]
+type Responses struct {
+	sortedmap.LinkedHashMap[string, *Response]
 } // map[HttpStatus]*ResponseRef
 
 type Response struct {
@@ -137,7 +137,7 @@ func (p PathItems) Resolve(token string) (interface{}, error) {
 	return nil, nil
 }
 
-func (r *Responses[K]) UnmarshalJSON(b []byte) error {
+func (r *Responses) UnmarshalJSON(b []byte) error {
 	dec := json.NewDecoder(bytes.NewReader(b))
 	token, err := dec.Token()
 	if err != nil {
@@ -146,7 +146,7 @@ func (r *Responses[K]) UnmarshalJSON(b []byte) error {
 	if delim, ok := token.(json.Delim); ok && delim != '{' {
 		return fmt.Errorf("expected openapi.Responses map, got %s", token)
 	}
-	r.LinkedHashMap = sortedmap.LinkedHashMap[K, *Response]{}
+	r.LinkedHashMap = sortedmap.LinkedHashMap[string, *Response]{}
 	for {
 		token, err = dec.Token()
 		if err != nil {
@@ -178,11 +178,11 @@ func (r *Responses[K]) UnmarshalJSON(b []byte) error {
 	}
 }
 
-func (r *Responses[K]) UnmarshalYAML(value *yaml.Node) error {
+func (r *Responses) UnmarshalYAML(value *yaml.Node) error {
 	if value.Kind != yaml.MappingNode {
 		return fmt.Errorf("expected openapi.Responses map, got %v", value.Tag)
 	}
-	r.LinkedHashMap = sortedmap.LinkedHashMap[K, *Response]{}
+	r.LinkedHashMap = sortedmap.LinkedHashMap[string, *Response]{}
 	for i := 0; i < len(value.Content); i += 2 {
 		var key string
 		err := value.Content[i].Decode(&key)

@@ -116,7 +116,7 @@ func (c *converter) convertOperation(o *Operation) (*openapi.Operation, error) {
 		Summary:     o.Summary,
 		Description: o.Description,
 		OperationId: o.OperationID,
-		Responses:   &openapi.Responses[int]{},
+		Responses:   &openapi.Responses{},
 		Deprecated:  o.Deprecated,
 	}
 
