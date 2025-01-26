@@ -397,10 +397,10 @@ blockquote span{
   font-weight: 400;
   font-size: 1rem;
 }
-li {
+.content li {
   padding: 8px 6px 8px 6px
 }
-li > p {
+.content li > p {
   margin-bottom: 0;
 }
 </style>
