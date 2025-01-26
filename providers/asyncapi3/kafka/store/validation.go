@@ -1,8 +1,11 @@
 package store
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"io"
 	"mokapi/kafka"
 	"mokapi/media"
 	"mokapi/providers/asyncapi3"
@@ -18,7 +21,7 @@ type validator struct {
 }
 
 type recordValidator interface {
-	Validate(record *kafka.Record) (interface{}, interface{}, error)
+	Validate(record *kafka.Record) (*KafkaLog, error)
 }
 
 func newValidator(c *asyncapi3.Channel) *validator {
@@ -34,28 +37,35 @@ func newValidator(c *asyncapi3.Channel) *validator {
 	return v
 }
 
-func (v *validator) Validate(record *kafka.Record) (key interface{}, payload interface{}, err error) {
+func (v *validator) Validate(record *kafka.Record) (l *KafkaLog, err error) {
 	if v == nil {
-		return record.Key, record.Value, nil
+		return &KafkaLog{
+			Key:     LogValue{Binary: kafka.Read(record.Key)},
+			Message: LogValue{Binary: kafka.Read(record.Value)},
+		}, nil
 	}
 
 	for _, val := range v.validators {
-		key, payload, err = val.Validate(record)
+		l, err = val.Validate(record)
 		if err == nil {
 			return
 		}
 	}
-	return record.Key, record.Value, err
+	return &KafkaLog{
+		Key:     LogValue{Binary: kafka.Read(record.Key)},
+		Message: LogValue{Binary: kafka.Read(record.Value)},
+	}, err
 }
 
 type messageValidator struct {
 	messageId string
+	msg       *asyncapi3.Message
 	key       *schemaValidator
 	payload   *schemaValidator
 }
 
 func newMessageValidator(messageId string, msg *asyncapi3.Message) *messageValidator {
-	v := &messageValidator{messageId: messageId}
+	v := &messageValidator{messageId: messageId, msg: msg}
 
 	var msgParser encoding.Parser
 	switch s := msg.Payload.Value.Schema.(type) {
@@ -102,31 +112,61 @@ func newMessageValidator(messageId string, msg *asyncapi3.Message) *messageValid
 	return v
 }
 
-func (mv *messageValidator) Validate(record *kafka.Record) (key interface{}, payload interface{}, err error) {
+func (mv *messageValidator) Validate(record *kafka.Record) (*KafkaLog, error) {
+	r := &KafkaLog{Key: LogValue{}, Message: LogValue{}, Headers: make(map[string]string), MessageId: mv.messageId}
+
 	if mv.payload != nil {
-		if payload, err = mv.payload.Validate(record.Value); err != nil {
+		if v, err := mv.payload.Validate(record.Value); err != nil {
 			err = fmt.Errorf("invalid message: %w", err)
-			return
+			return r, err
+		} else {
+			b, _ := json.Marshal(v)
+			r.Message.Value = string(b)
 		}
 	} else {
-		payload = kafka.BytesToString(record.Value)
+		r.Message.Binary = kafka.Read(record.Value)
 	}
 
 	if mv.key != nil {
-		if key, err = mv.key.Validate(record.Key); err != nil {
+		if k, err := mv.key.Validate(record.Key); err != nil {
 			err = fmt.Errorf("invalid key: %w", err)
-			return
+			return r, err
+		} else {
+			b, _ := json.Marshal(k)
+			r.Message.Value = string(b)
 		}
 	} else {
-		key = kafka.BytesToString(record.Key)
+		r.Key.Binary = kafka.Read(record.Key)
 	}
 
-	record.Headers = append(record.Headers, kafka.RecordHeader{
-		Key:   "x-specification-message-id",
-		Value: []byte(mv.messageId),
-	})
+	if mv.msg != nil && mv.msg.Bindings.Kafka.SchemaIdLocation != "" {
+		switch mv.msg.Bindings.Kafka.SchemaIdLocation {
+		case "header":
 
-	return
+			// nothing to do
+			break
+		case "payload":
+
+		default:
+			switch mv.msg.ContentType {
+			case "avro/binary", "application/octet-stream":
+				b := make([]byte, 5)
+				_, _ = record.Value.Seek(0, io.SeekStart)
+				_, err := record.Value.Read(b)
+				if err == nil {
+					p := avro.Parser{}
+					r.SchemaId, err = p.ParseSchemaId(b)
+					if !errors.Is(err, avro.NoSchemaId) {
+						return r, err
+					}
+				}
+			default:
+				return r, fmt.Errorf("schema id location '%v' not supported", mv.msg.Bindings.Kafka.SchemaIdLocation)
+			}
+		}
+	}
+
+	return r, nil
 }
 
 type schemaValidator struct {

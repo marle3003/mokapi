@@ -129,13 +129,13 @@ func TestKafkaClient_Produce(t *testing.T) {
 				hook := test.NewGlobal()
 
 				sendMessage(s, nil)
-				require.Equal(t, `{"offset":0,"key":"foo-1","value":"\"bar-1\"","headers":{"x-specification-message-id":"foo"}}`, hook.LastEntry().Message)
+				require.Equal(t, `{"offset":0,"key":"foo-1","value":"\"bar-1\"","schemaId":0,"headers":{}}`, hook.LastEntry().Message)
 
 				b, errCode := s.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
 				require.Equal(t, "mokapi", string(readBytes(b.Records[0].Value)))
-				require.Len(t, b.Records[0].Headers, 2)
+				require.Len(t, b.Records[0].Headers, 1)
 				version, found := getHeader("version", b.Records[0].Headers)
 				require.True(t, found, "version header not found")
 				require.Equal(t, []byte("1.0"), version.Value)
@@ -158,7 +158,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 				sendMessage(s, map[string]string{"foo": "bar"})
 
 				b, _ := s.Topic("foo").Partition(0).Read(0, 1000)
-				require.Len(t, b.Records[0].Headers, 3)
+				require.Len(t, b.Records[0].Headers, 2)
 				require.Contains(t, b.Records[0].Headers, kafka.RecordHeader{
 					Key:   "foo",
 					Value: []byte("bar"),
@@ -214,24 +214,6 @@ func TestKafkaClient_Produce(t *testing.T) {
 			},
 		},
 		{
-			name: "using value instead of data (skip validation)",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
-				err := engine.AddScript(newScript("test.js", `
-					import { produce } from 'mokapi/kafka'
-					export default function() {
-						produce({ topic: 'foo', messages: [{ value: 12 }] })
-					}
-				`))
-				require.NoError(t, err)
-
-				b, errCode := s.Topic("foo").Partition(0).Read(0, 1000)
-				require.Equal(t, kafka.None, errCode)
-				require.NotNil(t, b)
-				require.Len(t, b.Records, 1, "message should be written despite validation error")
-				require.Equal(t, "12", kafka.BytesToString(b.Records[0].Value))
-			},
-		},
-		{
 			name: "test retry",
 			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
 				logrus.SetOutput(io.Discard)
@@ -255,7 +237,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 				err := engine.AddScript(newScript("test.js", `
 					import { produce } from 'mokapi/kafka'
 					export default function() {
-						produce({ topic: 'retry', messages: [{ value: 12 }] })
+						produce({ topic: 'retry', messages: [{ data: 'foo' }] })
 					}
 				`))
 				require.NoError(t, err)
@@ -264,13 +246,13 @@ func TestKafkaClient_Produce(t *testing.T) {
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
 				require.Len(t, b.Records, 1, "message should be written despite validation error")
-				require.Equal(t, "12", kafka.BytesToString(b.Records[0].Value))
-				require.Equal(t, []string([]string{
+				require.Equal(t, `"foo"`, kafka.BytesToString(b.Records[0].Value))
+				require.Equal(t, []string{
 					"parsing script test.js",
 					"executing script test.js",
 					"kafka topic 'retry' not found. Retry in 200ms",
 					"kafka topic 'retry' not found. Retry in 800ms",
-				}), getMessages(hook))
+				}, getMessages(hook))
 			},
 		},
 	}

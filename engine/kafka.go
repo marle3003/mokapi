@@ -42,13 +42,6 @@ func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 
 	var produced []common.KafkaMessageResult
 	for _, r := range args.Messages {
-		var options []store.WriteOptions
-		if r.Value != nil {
-			options = append(options, func(args *store.WriteArgs) {
-				args.SkipValidation = true
-			})
-		}
-
 		p, err := c.getPartition(t, r.Partition)
 		if err != nil {
 			return nil, err
@@ -64,7 +57,7 @@ func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 			return nil, fmt.Errorf("produce kafka message to '%v' failed: %w", t.Name, err)
 		}
 
-		_, records, err := p.Write(rb, options...)
+		_, records, err := p.Write(rb)
 		if err != nil {
 			var sb strings.Builder
 			for _, r := range records {

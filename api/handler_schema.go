@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"io"
 	"mokapi/media"
-	"mokapi/providers/openapi/schema"
+	openApiSchema "mokapi/providers/openapi/schema"
 	avro "mokapi/schema/avro/schema"
 	"mokapi/schema/encoding"
 	"mokapi/schema/json/generator"
@@ -20,21 +21,19 @@ type schemaInfo struct {
 }
 
 type requestExample struct {
-	Name   string      `json:"name,omitempty"`
-	Format string      `json:"format"`
-	Schema interface{} `json:"schema"`
+	Name         string
+	Format       string
+	Schema       interface{}
+	ContentTypes []string
+}
+
+type example struct {
+	ContentType string      `json:"contentType"`
+	Value       interface{} `json:"value"`
+	Error       string      `json:"error,omitempty"`
 }
 
 func (h *handler) getExampleData(w http.ResponseWriter, r *http.Request) {
-	accept := r.Header.Get("Accept")
-	if len(accept) == 0 {
-		accept = "application/json"
-	}
-	ct := media.ParseContentType(accept)
-	if ct.IsAny() {
-		ct = media.ParseContentType("application/json")
-	}
-
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -50,69 +49,106 @@ func (h *handler) getExampleData(w http.ResponseWriter, r *http.Request) {
 	if re.Format == "" {
 		re.Format = "application/schema+json;version=2020-12"
 	}
-
-	switch {
-	case ct.Subtype == "json":
-		break
-	case ct.Subtype == "xml":
-		break
-	case ct.Key() == "text/plain":
-		break
-	case ct.Key() == "avro/binary" && isAvro(re.Format):
-		break
-	case ct.Key() == "application/octet-stream" && isAvro(re.Format):
-		break
-	default:
-		http.Error(w, fmt.Sprintf("Content type %s with schema format %s is not supported", ct, re.Format), http.StatusBadRequest)
-		return
+	if len(re.ContentTypes) == 0 {
+		re.ContentTypes = []string{"application/json"}
 	}
 
-	w.Header().Set("Content-Type", ct.String())
-
-	var data []byte
-	switch s := re.Schema.(type) {
-	case *schema.Ref:
-		data, err = getRandomByOpenApi(re.Name, s, ct)
+	var s *jsonSchema.Schema
+	switch t := re.Schema.(type) {
+	case *openApiSchema.Ref:
+		s = openApiSchema.ConvertToJsonSchema(t)
 	case *avro.Schema:
-		data, err = getRandomByJson(re.Name, s.Convert(), ct)
+		s = t.Convert()
 	default:
-		data, err = getRandomByJson(re.Name, s.(*jsonSchema.Schema), ct)
+		var ok bool
+		s, ok = t.(*jsonSchema.Schema)
+		if !ok {
+			http.Error(w, fmt.Sprintf("unsupported schema type: %T", t), http.StatusBadRequest)
+			return
+		}
 	}
+
+	rnd, err := generator.New(&generator.Request{
+		Path: generator.Path{
+			&generator.PathElement{Name: re.Name, Schema: s},
+		},
+	})
+
+	examples, err := encodeExample(rnd, re.Schema, re.Format, re.ContentTypes)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	_, err = w.Write(data)
-	if err != nil {
-		writeError(w, err, http.StatusInternalServerError)
-	}
+	w.Header().Set("Content-Type", "application/json")
+
+	writeJsonBody(w, examples)
 }
 
-func getRandomByOpenApi(name string, r *schema.Ref, ct media.ContentType) ([]byte, error) {
-	j := schema.ConvertToJsonSchema(r)
-	data, err := generator.New(&generator.Request{
-		Path: generator.Path{
-			&generator.PathElement{Name: name, Schema: j},
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-	return r.Marshal(data, ct)
-}
+func encodeExample(v interface{}, schema interface{}, schemaFormat string, contentTypes []string) ([]example, error) {
+	var examples []example
+	for _, str := range contentTypes {
+		ct := media.ParseContentType(str)
 
-func getRandomByJson(name string, r *jsonSchema.Schema, ct media.ContentType) ([]byte, error) {
-	data, err := generator.New(&generator.Request{
-		Path: generator.Path{
-			&generator.PathElement{Name: name, Schema: r},
-		},
-	})
-	if err != nil {
-		return nil, err
+		switch {
+		case ct.Subtype == "json":
+		case ct.Subtype == "xml":
+		case ct.Key() == "text/plain":
+		case ct.Key() == "avro/binary" && isAvro(schemaFormat):
+		case ct.Key() == "application/octet-stream" && isAvro(schemaFormat):
+		case ct.IsAny():
+			ct = media.ParseContentType("application/json")
+		default:
+			examples = append(examples, example{
+				ContentType: ct.String(),
+				Error:       fmt.Sprintf("Content type %s with schema format %s is not supported", ct, schemaFormat),
+			})
+			continue
+		}
+
+		var data []byte
+		var err error
+		switch t := schema.(type) {
+		case *openApiSchema.Ref:
+			data, err = t.Marshal(v, ct)
+		case *avro.Schema:
+			switch {
+			case ct.Subtype == "json":
+				data, err = encoding.NewEncoder(t.Convert()).Write(v, ct)
+			case ct.Key() == "avro/binary" || ct.Key() == "application/octet-stream":
+				data, err = t.Marshal(v)
+				log.Infof("string: %v", string(data))
+				log.Infof("bits: %v", data)
+			default:
+				examples = append(examples, example{
+					ContentType: ct.String(),
+					Error:       fmt.Sprintf("unsupported schema type: %T", t),
+				})
+				continue
+			}
+		default:
+			s, ok := schema.(*jsonSchema.Schema)
+			if !ok {
+				return nil, fmt.Errorf("unsupported schema type: %T", t)
+			}
+			data, err = encoding.NewEncoder(s).Write(v, ct)
+
+		}
+
+		if err != nil {
+			examples = append(examples, example{
+				ContentType: ct.String(),
+				Error:       err.Error(),
+			})
+		} else {
+			examples = append(examples, example{
+				ContentType: ct.String(),
+				Value:       data,
+			})
+		}
 	}
-	return encoding.NewEncoder(r).Write(data, ct)
+	return examples, nil
 }
 
 func (s *schemaInfo) UnmarshalJSON(data []byte) error {
@@ -195,6 +231,11 @@ func (r *requestExample) UnmarshalJSON(data []byte) error {
 			if err != nil {
 				return err
 			}
+		case "contentTypes":
+			err = d.Decode(&r.ContentTypes)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -207,7 +248,7 @@ func unmarshal(raw json.RawMessage, format string) (interface{}, error) {
 	if raw != nil {
 		switch {
 		case isOpenApi(format):
-			var r *schema.Ref
+			var r *openApiSchema.Ref
 			err := json.Unmarshal(raw, &r)
 			return r, err
 		case isAvro(format):

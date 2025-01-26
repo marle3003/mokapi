@@ -217,18 +217,34 @@ paths:
         required: true
         content:
           application/json:
-            schema: {}
-      parameters:
-        - in: header
-          name: Accept
-          schema:
-            type: string
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                format:
+                  type: string
+                schema: {}
+                contentTypes:
+                  type: array
+                  items:
+                    type: string
       responses:
         "200":
           description: an example for given schema
           content:
-            '*':
-              schema: {}
+            'application/json':
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    contentType:
+                      type: string
+                    value:
+                      type: string
+                    error:
+                      type: string
         "400":
           description: failed to generate example
           content:
@@ -260,14 +276,31 @@ paths:
                 schema: {}
                 data:
                   type: string
+                contentType:
+                  type: string
       parameters:
-        - in: header
-          name: Data-Content-Type
+        - in: query
+          name: outputFormat
           schema:
             type: string
       responses:
         "200":
           description: data is valid
+          content:
+            "application/json":
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    contentType:
+                      type: string
+                    value:
+                      type: string
+                    error:
+                      type: string
+        "204":
+          description: valid without content
         "400":
           description: data is not valid
           content:

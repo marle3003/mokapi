@@ -20,16 +20,6 @@ export function usePrettyLanguage() {
                 return XmlFormatter(s, {collapseContent: true})
         }
 
-        switch (contentType) {
-            case 'avro/binary':
-                try{ 
-                    return JSON.stringify(JSON.parse(s), null, 2)
-                }catch {
-                    console.error("unable to parse json: "+s)
-                    return s
-                }
-        }
-
         return s
     }
 
@@ -54,7 +44,7 @@ export function usePrettyLanguage() {
         switch (contentType) {
             case 'avro/binary':
                 // display avro content as JSON
-                return 'json'
+                return 'hex'
             default:
                 return 'text'
         }
@@ -94,3 +84,11 @@ export function usePrettyLanguage() {
 
     return { formatLanguage, getLanguage, getContentType, formatSchema }
 }
+
+function toBinary(s: string) {
+    const codeUnits = new Uint16Array(s.length);
+    for (let i = 0; i < codeUnits.length; i++) {
+      codeUnits[i] = s.charCodeAt(i);
+    }
+    return btoa(String.fromCharCode(...new Uint8Array(codeUnits.buffer)));
+  }

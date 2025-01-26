@@ -42,7 +42,8 @@ type KafkaOperationBinding struct {
 }
 
 type KafkaMessageBinding struct {
-	Key *SchemaRef
+	Key              *SchemaRef
+	SchemaIdLocation string
 }
 
 type TopicBindings struct {

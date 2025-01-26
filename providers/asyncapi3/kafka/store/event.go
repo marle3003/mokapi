@@ -4,11 +4,12 @@ import (
 	"mokapi/kafka"
 )
 
-type Trigger func(record *kafka.Record)
+type Trigger func(record *kafka.Record, schemaId int)
 
 type EventRecord struct {
-	Offset  int64
-	Key     string
-	Value   string
-	Headers map[string]string
+	Offset   int64
+	Key      string
+	Value    string
+	SchemaId int
+	Headers  map[string]string
 }

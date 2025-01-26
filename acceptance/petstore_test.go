@@ -272,6 +272,7 @@ func (suite *PetStoreSuite) TestKafkaEventAndMetrics() {
 
 	// test kafka events, header added by JavaScript event handler
 	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%s/api/events?namespace=kafka", suite.cfg.Api.Port), nil,
-		try.BodyContains(`"headers":{"foo":"bar","x-specification-message-id":`),
+		try.BodyContains(`"headers":{"foo":"bar"}`),
+		try.BodyContains(`"messageId":"#/components/messages/order"`),
 	)
 }

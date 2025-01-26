@@ -2,33 +2,36 @@ import { watchEffect, reactive } from 'vue'
 import { useFetch } from './fetch'
 import { usePrettyLanguage } from './usePrettyLanguage'
 
-export interface Example {
-    data: string
+export interface Response {
+    data: Example[]
     error: string | null
     next:  () => void
+}
+
+export interface Example {
+    contentType: string
+    value: string
+    error?: string
 }
 
 export interface Request {
     name?: string
     schema: SchemaFormat
-    contentType?: string
+    contentTypes?: string[]
 }
 
 export function useExample() {
     const { formatLanguage } = usePrettyLanguage()
 
     function fetchExample(request: Request) {
-        if (!request.contentType) {
-            request.contentType = 'application/json'
-        }
-        
+      
         const response = useFetch('/api/schema/example', {
             method: 'POST', 
-            body: JSON.stringify({name: request.name, schema: request.schema.schema, format: request.schema.format}), 
-            headers: {'Content-Type': 'application/json', 'Accept': request.contentType}},
+            body: JSON.stringify({name: request.name, schema: request.schema.schema, format: request.schema.format, contentTypes: request.contentTypes}), 
+            headers: {'Content-Type': 'application/json', 'Accept': 'application/json'}},
             false, false)
-        const example: Example =  reactive({
-            data: '',
+        const res: Response =  reactive({
+            data: [],
             next: () => response.refresh(),
             error: null
         })
@@ -38,19 +41,18 @@ export function useExample() {
                 return
             }
             if (response.error) {
-                example.error = response.error
-                example.data = ''
+                res.error = response.error
+                res.data = []
+                return
             }
 
-            let data = ''
-            if (typeof response.data === 'string') {
-                data = response.data
-            } else {
-                data = JSON.stringify(response.data)
+            res.data = response.data
+            for (const example of res.data) {
+                example.value = atob(example.value)
+                example.value = formatLanguage(example.value, example.contentType!)
             }
-            example.data = formatLanguage(data, request.contentType!)
         })
-        return example
+        return res
     }
 
     return { fetchExample }

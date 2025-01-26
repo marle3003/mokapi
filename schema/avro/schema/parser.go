@@ -7,6 +7,8 @@ import (
 	"io"
 )
 
+var NoSchemaId = fmt.Errorf("no schema id")
+
 type Parser struct {
 	Schema *Schema
 }
@@ -18,24 +20,37 @@ func (p *Parser) Parse(data interface{}) (interface{}, error) {
 	return p.parseFromInterface(data)
 }
 
+func (p *Parser) ParseSchemaId(b []byte) (int, error) {
+	if len(b) < 5 || b[0] != 0 {
+		return 0, NoSchemaId
+	}
+
+	var version int32
+	_, err := binary.Decode(b[1:], binary.BigEndian, &version)
+	return int(version), err
+}
+
 func (p *Parser) parseFromByte(b []byte) (interface{}, error) {
 	r := bytes.NewReader(b)
 
-	magic, err := r.Seek(0, io.SeekCurrent)
+	_, err := r.Seek(0, io.SeekCurrent)
 	if err != nil {
 		return nil, err
 	}
 
 	// Check magic byte, if set, read version
+	magic, err := r.ReadByte()
+	if err != nil {
+		return nil, err
+	}
 	if magic == 0 {
-		// read magic byte
-		_, _ = r.ReadByte()
-
 		var version int32
 		err = binary.Read(r, binary.BigEndian, &version)
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		_ = r.UnreadByte()
 	}
 
 	return p.parse(r, p.Schema)
@@ -47,6 +62,9 @@ func (p *Parser) parse(r *bytes.Reader, s *Schema) (interface{}, error) {
 		n, err := binary.ReadVarint(r)
 		if err != nil {
 			return nil, err
+		}
+		if int(n) >= len(s.Type) {
+			return nil, fmt.Errorf("index %v out of range in union at offset %v", r.Size()-int64(r.Len()), n)
 		}
 		t = s.Type[n]
 	}
@@ -91,7 +109,9 @@ func (p *Parser) parse(r *bytes.Reader, s *Schema) (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
-		_ = n
+		if n < 0 {
+			return nil, fmt.Errorf("invalid byte length at offset %v: %d", r.Size()-int64(r.Len()), n)
+		}
 		b := make([]byte, n)
 		_, err = r.Read(b)
 		if err != nil {
@@ -114,6 +134,9 @@ func (p *Parser) parse(r *bytes.Reader, s *Schema) (interface{}, error) {
 		if err != nil {
 			return nil, err
 		}
+		if n < 0 {
+			return nil, fmt.Errorf("invalid array length at offset %v: %v", r.Size()-int64(r.Len()), n)
+		}
 		for i := 0; i < int(n); i++ {
 			var item interface{}
 			item, err = p.parse(r, s.Items)
@@ -127,7 +150,7 @@ func (p *Parser) parse(r *bytes.Reader, s *Schema) (interface{}, error) {
 			return nil, err
 		}
 		if b != byte(0) {
-			return nil, fmt.Errorf("invalid array end")
+			return nil, fmt.Errorf("invalid array end at offset %v", r.Size()-int64(r.Len()))
 		}
 		return a, nil
 	case "enum":
@@ -136,7 +159,7 @@ func (p *Parser) parse(r *bytes.Reader, s *Schema) (interface{}, error) {
 			return nil, err
 		}
 		if n < 0 || int(n) > len(s.Symbols) {
-			return nil, fmt.Errorf("index %v out of enum range", n)
+			return nil, fmt.Errorf("index %v out of enum range at offset %v", n, r.Size()-int64(r.Len()))
 		}
 		return s.Symbols[n], nil
 	case "map":
@@ -144,6 +167,9 @@ func (p *Parser) parse(r *bytes.Reader, s *Schema) (interface{}, error) {
 		n, err := binary.ReadVarint(r)
 		if err != nil {
 			return nil, err
+		}
+		if n < 0 {
+			return nil, fmt.Errorf("invalid map length at offset %v: %v", r.Size()-int64(r.Len()), n)
 		}
 		for i := 0; i < int(n); i++ {
 			key, err := readString(r)
@@ -158,18 +184,24 @@ func (p *Parser) parse(r *bytes.Reader, s *Schema) (interface{}, error) {
 		}
 		return m, nil
 	case "fixed":
+		if s.Size < 0 {
+			return nil, fmt.Errorf("invalid fixed size at offset %v: %v", r.Size()-int64(r.Len()), s.Size)
+		}
 		b := make([]byte, s.Size)
 		_, err := r.Read(b)
 		return b, err
 	}
 
-	return nil, fmt.Errorf("unknown schema type: %s", s.Type)
+	return nil, fmt.Errorf("unknown schema type at offset %v: %s", r.Size()-int64(r.Len()), s.Type)
 }
 
 func readString(r *bytes.Reader) (string, error) {
 	n, err := binary.ReadVarint(r)
 	if err != nil {
 		return "", err
+	}
+	if n < 0 {
+		return "", fmt.Errorf("invalid string length at offset %v: %d", r.Size()-int64(r.Len()), n)
 	}
 	b := make([]byte, n)
 	_, err = r.Read(b)
