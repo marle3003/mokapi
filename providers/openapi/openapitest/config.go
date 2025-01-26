@@ -81,9 +81,9 @@ func WithComponentResponse(name string, r *openapi.Response) ConfigOptions {
 func WithComponentResponseRef(name string, r *openapi.ResponseRef) ConfigOptions {
 	return func(c *openapi.Config) {
 		if c.Components.Responses == nil {
-			c.Components.Responses = &openapi.Responses[string]{}
+			c.Components.Responses = openapi.ResponseBodies{}
 		}
-		c.Components.Responses.Set(name, r)
+		c.Components.Responses[name] = r
 	}
 }
 

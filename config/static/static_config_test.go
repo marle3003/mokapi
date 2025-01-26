@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func TestGitConfig(t *testing.T) {
+func TestStaticConfig(t *testing.T) {
 	testcases := []struct {
 		name string
 		test func(t *testing.T)
@@ -40,7 +40,7 @@ func TestGitConfig(t *testing.T) {
 			},
 		},
 		{
-			name: "help",
+			name: "--help",
 			test: func(t *testing.T) {
 				os.Args = append(os.Args, "mokapi.exe")
 				os.Args = append(os.Args, `--help`)
@@ -49,6 +49,42 @@ func TestGitConfig(t *testing.T) {
 				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
 				require.NoError(t, err)
 				require.Equal(t, true, cfg.Help)
+			},
+		},
+		{
+			name: "-h",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe")
+				os.Args = append(os.Args, `-h`)
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
+				require.NoError(t, err)
+				require.Equal(t, true, cfg.Help)
+			},
+		},
+		{
+			name: "--version",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe")
+				os.Args = append(os.Args, `--version`)
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
+				require.NoError(t, err)
+				require.Equal(t, true, cfg.Version)
+			},
+		},
+		{
+			name: "-v",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe")
+				os.Args = append(os.Args, `-v`)
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
+				require.NoError(t, err)
+				require.Equal(t, true, cfg.Version)
 			},
 		},
 		{

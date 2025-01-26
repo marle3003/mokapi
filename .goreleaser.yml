@@ -18,8 +18,6 @@ archives:
     format: tar.gz
 checksum:
   name_template: "{{ .ProjectName }}_v{{ .Version }}_linux_checksums.txt"
-snapshot:
-  name_template: "{{ .Version }}"
 
 dockers:
   - goos: linux
@@ -31,6 +29,13 @@ dockers:
     use: buildx
   - goos: linux
     goarch: amd64
+    image_templates:
+      - "mokapi/mokapi:noble"
+      - "mokapi/mokapi:{{ .Tag }}-noble"
+    dockerfile: images/release-ubuntu.Dockerfile
+    use: buildx
+  - goos: darwin
+    goarch: arm64
     image_templates:
       - "mokapi/mokapi:noble"
       - "mokapi/mokapi:{{ .Tag }}-noble"

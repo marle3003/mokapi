@@ -37,8 +37,8 @@ func TestComponents_UnmarshalJSON(t *testing.T) {
 				c := openapi.Components{}
 				err := json.Unmarshal([]byte(`{ "responses": {"foo": {"description": "foo"}} }`), &c)
 				require.NoError(t, err)
-				require.Equal(t, 1, c.Responses.Len())
-				r, _ := c.Responses.Get("foo")
+				require.Len(t, c.Responses, 1)
+				r, _ := c.Responses["foo"]
 				require.Equal(t, "foo", r.Value.Description)
 			},
 		},
@@ -124,8 +124,8 @@ func TestComponents_UnmarshalYAML(t *testing.T) {
 				c := openapi.Components{}
 				err := yaml.Unmarshal([]byte(`responses: {foo: {description: foo}}`), &c)
 				require.NoError(t, err)
-				require.Equal(t, 1, c.Responses.Len())
-				r, _ := c.Responses.Get("foo")
+				require.Len(t, c.Responses, 1)
+				r, _ := c.Responses["foo"]
 				require.Equal(t, "foo", r.Value.Description)
 			},
 		},
@@ -245,7 +245,7 @@ func TestComponents_Parse(t *testing.T) {
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
-				r, _ := config.Components.Responses.Get("foo")
+				r, _ := config.Components.Responses["foo"]
 				require.Equal(t, "foo", r.Value.Description)
 			},
 		},
@@ -440,7 +440,7 @@ func TestConfig_Patch_Components(t *testing.T) {
 				openapitest.NewConfig("1.0", openapitest.WithComponentResponse("foo", &openapi.Response{Description: "foo"})),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				r, _ := result.Components.Responses.Get("foo")
+				r, _ := result.Components.Responses["foo"]
 				require.Equal(t, "foo", r.Value.Description)
 			},
 		},
@@ -451,7 +451,7 @@ func TestConfig_Patch_Components(t *testing.T) {
 				openapitest.NewConfig("1.0", openapitest.WithComponentResponse("foo", &openapi.Response{Description: "bar"})),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				r, _ := result.Components.Responses.Get("foo")
+				r, _ := result.Components.Responses["foo"]
 				require.Equal(t, "bar", r.Value.Description)
 			},
 		},

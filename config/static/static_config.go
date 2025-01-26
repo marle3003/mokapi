@@ -18,9 +18,10 @@ type Config struct {
 	Services         Services          `json:"-" yaml:"-"`
 	Js               JsConfig          `json:"js" yaml:"js"`
 	Configs          Configs           `json:"configs" yaml:"configs" explode:"config"`
-	Help             bool              `json:"-" yaml:"-"`
+	Help             bool              `json:"-" yaml:"-" aliases:"h"`
 	GenerateSkeleton interface{}       `json:"-" yaml:"-" flag:"generate-cli-skeleton"`
 	Features         []string          `json:"-" yaml:"-" explode:"feature"`
+	Version          bool              `json:"-" yaml:"-" aliases:"v"`
 }
 
 func NewConfig() *Config {

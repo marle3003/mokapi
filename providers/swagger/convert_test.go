@@ -333,7 +333,7 @@ func TestConvert(t *testing.T) {
 				p := config.Paths["/foo"]
 				require.NotNil(t, p.Value.Get)
 				get := p.Value.Get
-				res, ok := get.Responses.Get(0)
+				res, ok := get.Responses.Get("default")
 				require.True(t, ok)
 				require.NotNil(t, res)
 				require.Equal(t, "default", res.Value.Description)
@@ -349,7 +349,7 @@ func TestConvert(t *testing.T) {
 				get := p.Value.Get
 				res := get.Responses
 				require.Equal(t, 5, res.Len())
-				require.Equal(t, []int{200, 204, 202, 301, 404}, res.Keys())
+				require.Equal(t, []string{"200", "204", "202", "301", "404"}, res.Keys())
 			},
 		},
 		{

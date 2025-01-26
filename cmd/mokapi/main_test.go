@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"github.com/stretchr/testify/require"
 	"io"
+	"mokapi/version"
 	"os"
 	"testing"
 )
@@ -14,6 +15,13 @@ func TestMain_Skeleton(t *testing.T) {
 		args []string
 		test func(t *testing.T, out string)
 	}{
+		{
+			name: "version",
+			args: []string{"--version"},
+			test: func(t *testing.T, out string) {
+				require.Equal(t, "1.0\n", out)
+			},
+		},
 		{
 			name: "generate-cli-skeleton",
 			args: []string{"--generate-cli-skeleton"},
@@ -93,6 +101,12 @@ npm:
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
+			v := version.BuildVersion
+			version.BuildVersion = "1.0"
+			defer func() {
+				version.BuildVersion = v
+			}()
+
 			reader, writer, err := os.Pipe()
 			require.NoError(t, err)
 			os.Stdout = writer

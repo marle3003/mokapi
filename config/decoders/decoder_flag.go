@@ -8,6 +8,7 @@ import (
 	"mokapi/config/dynamic/provider/file"
 	"net/url"
 	"reflect"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -401,20 +402,31 @@ func (c *context) setFieldFromStruct() error {
 	for i := 0; i < c.element.NumField(); i++ {
 		f := c.element.Type().Field(i)
 
+		var names []string
 		tag := f.Tag.Get("flag")
 		if len(tag) == 0 {
 			tag = f.Tag.Get("name")
-			if len(tag) == 0 {
-				continue
+			if len(tag) > 0 {
+				names = append(names, tag)
+			} else {
+				tag = f.Tag.Get("aliases")
+				if len(tag) > 0 {
+					names = append(names, strings.Split(tag, ",")...)
+				} else {
+					continue
+				}
 			}
+		} else {
+			names = append(names, tag)
 		}
+
 		name = ""
 		for j := 0; j < len(c.paths); j++ {
 			if len(name) > 0 {
 				name += "-"
 			}
 			name += c.paths[j]
-			if tag == name {
+			if slices.Contains(names, name) {
 				c.element = c.element.Field(i)
 				c.paths = c.paths[j+1:]
 				return nil

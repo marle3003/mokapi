@@ -43,11 +43,15 @@ func main() {
 		return
 	}
 
-	if cfg.Help {
+	switch {
+	case cfg.Help:
 		printHelp()
 		return
-	} else if cfg.GenerateSkeleton != nil {
+	case cfg.GenerateSkeleton != nil:
 		writeSkeleton(cfg)
+		return
+	case cfg.Version:
+		fmt.Println(versionString)
 		return
 	}
 

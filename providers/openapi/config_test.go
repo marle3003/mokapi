@@ -137,14 +137,14 @@ func TestResponses(t *testing.T) {
 	testdata := []struct {
 		name    string
 		content string
-		fn      func(t *testing.T, c *openapi.Responses[int])
+		fn      func(t *testing.T, c *openapi.Responses)
 	}{
 		{
 			name: "default httpstatus",
 			content: `
 default: {}
 `,
-			fn: func(t *testing.T, res *openapi.Responses[int]) {
+			fn: func(t *testing.T, res *openapi.Responses) {
 				r := res.GetResponse(200)
 				require.NotNil(t, r)
 			},
@@ -154,7 +154,7 @@ default: {}
 			content: `
 401: {}
 `,
-			fn: func(t *testing.T, res *openapi.Responses[int]) {
+			fn: func(t *testing.T, res *openapi.Responses) {
 				r := res.GetResponse(401)
 				require.NotNil(t, r)
 			},
@@ -164,7 +164,7 @@ default: {}
 			content: `
 401: {}
 `,
-			fn: func(t *testing.T, res *openapi.Responses[int]) {
+			fn: func(t *testing.T, res *openapi.Responses) {
 				r := res.GetResponse(200)
 				require.Nil(t, r)
 			},
@@ -175,7 +175,7 @@ default: {}
 401: {}
 default: {description: default}
 `,
-			fn: func(t *testing.T, res *openapi.Responses[int]) {
+			fn: func(t *testing.T, res *openapi.Responses) {
 				r := res.GetResponse(200)
 				require.NotNil(t, r)
 				require.Equal(t, "default", r.Description)
@@ -186,7 +186,7 @@ default: {description: default}
 	for _, data := range testdata {
 		d := data
 		t.Run(d.name, func(t *testing.T) {
-			res := &openapi.Responses[int]{}
+			res := &openapi.Responses{}
 			err := yaml.Unmarshal([]byte(d.content), res)
 			require.NoError(t, err)
 			data.fn(t, res)
@@ -241,7 +241,7 @@ components:
 			f: func(t *testing.T, c *openapi.Config) {
 				require.NoError(t, c.Validate())
 				require.Len(t, c.Paths, 1)
-				exp := []int{http.StatusNoContent, http.StatusOK}
+				exp := []string{"204", "200"}
 				keys := c.Paths["/foo"].Value.Get.Responses.Keys()
 				require.Equal(t, exp, keys)
 				r := c.Paths["/foo"].Value.Get.Responses.GetResponse(http.StatusOK)
@@ -344,8 +344,8 @@ func TestConfig_PetStore_Path(t *testing.T) {
 	require.Equal(t, []string{"name", "photoUrls"}, schema.Required)
 
 	require.True(t, put.Responses.Len() == 3)
-	r, _ := put.Responses.Get(http.StatusBadRequest)
-	require.Len(t, r.Value.Content, 0)
+	r := put.Responses.GetResponse(http.StatusBadRequest)
+	require.Len(t, r.Content, 0)
 
 }
 
