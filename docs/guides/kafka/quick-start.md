@@ -2,7 +2,7 @@
 title: Producing Orders to AsyncAPI Kafka with Mokapi
 description: Learn how to set up Mokapi to produce orders to an AsyncAPI-defined Kafka instance, including message production, validation, and monitoring.
 ---
-# Producing Orders to AsyncAPI Kafka with Mokapi
+# Producing Orders to AsyncAPI Kafka
 
 ## Overview
 
