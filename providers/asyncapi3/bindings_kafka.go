@@ -130,9 +130,13 @@ func (t *TopicBindings) UnmarshalYAML(value *yaml.Node) error {
 		return err
 	}
 
-	t.Partitions, err = getInt(m, "partitions")
-	if err != nil {
-		return fmt.Errorf("invalid partition: %w", err)
+	if _, ok := m["partitions"]; !ok {
+		t.Partitions = 1
+	} else {
+		t.Partitions, err = getInt(m, "partitions")
+		if err != nil {
+			return fmt.Errorf("invalid partition: %w", err)
+		}
 	}
 	t.RetentionBytes, err = getInt64(m, "retention.bytes")
 	if err != nil {

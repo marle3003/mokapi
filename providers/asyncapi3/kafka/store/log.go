@@ -1,8 +1,6 @@
 package store
 
 import (
-	"encoding/json"
-	"mokapi/kafka"
 	"mokapi/runtime/events"
 )
 
@@ -21,35 +19,4 @@ type KafkaLog struct {
 type LogValue struct {
 	Value  string `json:"value"`
 	Binary []byte `json:"binary"`
-}
-
-func NewKafkaLog(record *kafka.Record, key, payload interface{}, schemaId int, partition int) *KafkaLog {
-	log := &KafkaLog{
-		Offset:    record.Offset,
-		Key:       toValue(record.Key, key),
-		Message:   toValue(record.Value, payload),
-		SchemaId:  schemaId,
-		Partition: partition,
-		Headers:   make(map[string]string),
-	}
-	for _, h := range record.Headers {
-		log.Headers[h.Key] = string(h.Value)
-	}
-	return log
-}
-
-func toValue(b kafka.Bytes, v interface{}) LogValue {
-	lv := LogValue{
-		Binary: kafka.Read(b),
-	}
-
-	switch val := v.(type) {
-	case string:
-		lv.Value = val
-	default:
-		b, _ := json.Marshal(val)
-		lv.Value = string(b)
-	}
-
-	return lv
 }

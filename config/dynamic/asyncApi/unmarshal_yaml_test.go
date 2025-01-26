@@ -44,4 +44,20 @@ channels:
 	require.Equal(t, 1, c.Channels["message"].Value.Bindings.Kafka.Partitions)
 	require.Equal(t, int64(30000), c.Channels["message"].Value.Bindings.Kafka.SegmentMs)
 	require.Equal(t, int64(1000000000), c.Channels["message"].Value.Bindings.Kafka.RetentionBytes)
+
+	src = `asyncapi: '2.0.0'
+info:
+  title: Kafka Testserver
+channels:
+  message:
+    bindings:
+      kafka:
+        segment.ms: 30000
+        topicConfiguration:
+          retention.bytes: 1000000000
+`
+	c = &Config{}
+	err = yaml.Unmarshal([]byte(src), &c)
+	require.NoError(t, err)
+	require.Equal(t, 1, c.Channels["message"].Value.Bindings.Kafka.Partitions)
 }

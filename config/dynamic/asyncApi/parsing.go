@@ -1,6 +1,7 @@
 package asyncApi
 
 import (
+	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 )
 
@@ -85,6 +86,17 @@ func (r *MessageRef) Parse(config *dynamic.Config, reader dynamic.Reader) error 
 			return err
 		}
 		r.Value.applyTrait(trait.Value)
+	}
+
+	if r.Value.ContentType == "" {
+		cfg, ok := config.Data.(*Config)
+		if ok {
+			r.Value.ContentType = cfg.DefaultContentType
+		}
+		if r.Value.ContentType == "" {
+			log.Warn("content type is missing, using application/json ")
+			r.Value.ContentType = "application/json"
+		}
 	}
 
 	return nil

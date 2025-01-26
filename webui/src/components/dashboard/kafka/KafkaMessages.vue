@@ -100,7 +100,7 @@ function showMessage(event: ServiceEvent){
     }
 
     message.value = {
-        key: data.key.value ?? data.key.binary!,
+        key: key(data),
         message: formatLanguage(data.message.value ?? data.message.binary!, messageConfig.contentType),
         source: source,
         headers: data.headers,
@@ -176,6 +176,15 @@ function raw(s: string): string {
     }
     return raw;
 }
+function key(data: KafkaEventData): string {
+    if (data?.key.value !== '') {
+        return data.key.value!
+    }
+    if (data?.key.binary) {
+        return atob(data.key.binary)
+    }
+    return ''
+}
 </script>
 
 <template>
@@ -192,7 +201,7 @@ function raw(s: string): string {
         </thead>
         <tbody>
             <tr v-for="event in events" :key="event.id" @click="showMessage(event)" :set="data = eventData(event)">
-                <td class="key" >{{ data?.key.value ?? data?.key.binary }}</td>
+                <td class="key" >{{ key(data) }}</td>
                 <td class="message" :title="isAvro(event)? 'Avro content displayed as JSON' : ''">{{ data?.message.value ?? data?.message.binary }}</td>
                 <td v-if="!topicName">{{ event.traits["topic"] }}</td>
                 <td class="text-center">{{ format(event.time) }}</td>
@@ -267,7 +276,7 @@ function raw(s: string): string {
                                                 </div>
                                                 <div class="col">
                                                     <p id="dialog-meta-key-type" class="label">Key Type</p>
-                                                    <p aria-labelledby="dialog-meta-key-type">{{ message.keyType }}</p>
+                                                    <p aria-labelledby="dialog-meta-key-type">{{ message.keyType ?? 'not specified' }}</p>
                                                 </div>
                                             </div>
                                             <div class="row mb-3">
