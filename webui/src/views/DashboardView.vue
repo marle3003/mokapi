@@ -29,7 +29,7 @@ import ConfigCard from '@/components/dashboard/ConfigCard.vue'
 import FakerTree from '@/components/dashboard/FakerTree.vue'
 
 import '@/assets/dashboard.css'
-import { onMounted, onUnmounted, watch, ref, type Ref } from 'vue'
+import { onMounted, onUnmounted, ref, type Ref } from 'vue'
 
 import { useMeta } from '@/composables/meta'
 import Config from '@/components/dashboard/Config.vue'

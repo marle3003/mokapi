@@ -127,8 +127,8 @@ func TestProduce(t *testing.T) {
 
 				logs := events.GetEvents(events.NewTraits().WithNamespace("kafka").WithName("test").With("topic", "foo"))
 				require.Len(t, logs, 2)
-				require.Equal(t, "foo-2", logs[0].Data.(*store.KafkaLog).Key)
-				require.Equal(t, "bar-2", logs[0].Data.(*store.KafkaLog).Message)
+				require.Equal(t, []byte("foo-2"), logs[0].Data.(*store.KafkaLog).Key.Binary)
+				require.Equal(t, []byte("bar-2"), logs[0].Data.(*store.KafkaLog).Message.Binary)
 				require.Equal(t, int64(1), logs[0].Data.(*store.KafkaLog).Offset)
 
 				require.Equal(t, int64(0), logs[1].Data.(*store.KafkaLog).Offset)

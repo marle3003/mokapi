@@ -400,6 +400,20 @@ channels:
 			},
 		},
 		{
+			name: "partition not set",
+			config: `
+channels:
+  test:
+    bindings:
+      kafka:
+        retention.bytes: 10
+`,
+			test: func(t *testing.T, config *asyncapi3.Config, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 1, config.Channels["test"].Value.Bindings.Kafka.Partitions)
+			},
+		},
+		{
 			name: "partitions error",
 			config: `
 channels:

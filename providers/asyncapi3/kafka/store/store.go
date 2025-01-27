@@ -278,19 +278,23 @@ func (s *Store) getBrokerByHost(addr string) *Broker {
 	return nil
 }
 
-func (s *Store) log(key, payload interface{}, headers []kafka.RecordHeader, partition int, offset int64, traits events.Traits) {
-	events.Push(NewKafkaLog(key, payload, headers, partition, offset), traits.WithNamespace("kafka").WithName(s.cluster))
+func (s *Store) log(log *KafkaLog, traits events.Traits) {
+	events.Push(
+		log,
+		traits.WithNamespace("kafka").WithName(s.cluster),
+	)
 }
 
-func (s *Store) trigger(record *kafka.Record) {
+func (s *Store) trigger(record *kafka.Record, schemaId int) {
 	h := map[string]string{}
 	for _, v := range record.Headers {
 		h[v.Key] = string(v.Value)
 	}
 
 	r := &EventRecord{
-		Offset:  record.Offset,
-		Headers: h,
+		Offset:   record.Offset,
+		Headers:  h,
+		SchemaId: schemaId,
 	}
 
 	if record.Key != nil {

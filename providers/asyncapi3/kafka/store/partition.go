@@ -107,12 +107,7 @@ func (p *Partition) Read(offset int64, maxBytes int) (kafka.RecordBatch, kafka.E
 	}
 }
 
-func (p *Partition) Write(batch kafka.RecordBatch, options ...WriteOptions) (baseOffset int64, records []produce.RecordError, err error) {
-	args := WriteArgs{}
-	for _, opt := range options {
-		opt(&args)
-	}
-
+func (p *Partition) Write(batch kafka.RecordBatch) (baseOffset int64, records []produce.RecordError, err error) {
 	p.m.Lock()
 	defer p.m.Unlock()
 
@@ -122,14 +117,14 @@ func (p *Partition) Write(batch kafka.RecordBatch, options ...WriteOptions) (bas
 	baseOffset = p.Tail
 	var baseTime time.Time
 	for _, r := range batch.Records {
-
-		key, payload, err := p.validator.Validate(r)
+		var result *KafkaLog
+		result, err = p.validator.Validate(r)
 		if err != nil {
 			records = append(records, produce.RecordError{BatchIndex: int32(r.Offset), BatchIndexErrorMessage: err.Error()})
 		}
 
-		if len(records) > 0 && p.Topic.channel.Bindings.Kafka.ValueSchemaValidation && !args.SkipValidation {
-			return p.Tail, records, fmt.Errorf("validation error")
+		if len(records) > 0 && p.Topic.channel.Bindings.Kafka.ValueSchemaValidation {
+			return p.Tail, records, fmt.Errorf("validation error: %w", err)
 		}
 
 		if r.Time.IsZero() {
@@ -141,7 +136,7 @@ func (p *Partition) Write(batch kafka.RecordBatch, options ...WriteOptions) (bas
 
 		writeFuncs = append(writeFuncs, func() {
 			r.Offset = p.Tail
-			p.trigger(r)
+			p.trigger(r, result.SchemaId)
 
 			if len(p.Segments) == 0 {
 				p.Segments[p.ActiveSegment] = newSegment(p.Tail)
@@ -158,7 +153,12 @@ func (p *Partition) Write(batch kafka.RecordBatch, options ...WriteOptions) (bas
 			segment.Size += r.Size(baseOffset, baseTime)
 			p.Tail++
 
-			p.logger(key, payload, r.Headers, p.Index, r.Offset, events.NewTraits().With("partition", strconv.Itoa(p.Index)))
+			result.Partition = p.Index
+			result.Offset = r.Offset
+			for _, h := range r.Headers {
+				result.Headers[h.Key] = string(h.Value)
+			}
+			p.logger(result, events.NewTraits().With("partition", strconv.Itoa(p.Index)))
 		})
 	}
 

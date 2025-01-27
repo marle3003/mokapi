@@ -1,86 +1,121 @@
 ---
-title: Apache Kafka Quick Start - Mock a topic in seconds with AsyncAPI
-description: A simple Use Case to use Mokapi to produce orders into a Kafka topic
+title: Producing Orders to AsyncAPI Kafka with Mokapi
+description: Learn how to set up Mokapi to produce orders to an AsyncAPI-defined Kafka instance, including message production, validation, and monitoring.
 ---
-# Quick Start
+# Producing Orders to AsyncAPI Kafka
 
-A simple Use Case to use Mokapi to produce orders into an [AsyncAPI](https://www.asyncapi.com/) Kafka instance
+## Overview
 
-## Create a Kafka Topic
-First, create an AsyncAPI specification `orders.yaml` for your Kafka instance that defines the topic and messages you want to produce and consume.
+In this guide, you will:
+
+1. Define a Kafka instance and topics using [AsyncAPI](https://www.asyncapi.com/).
+2. Use Mokapi to simulate the Kafka broker and validate messages against the schema.
+3. Simulate a producer that sends order messages into the Kafka topic.
+4. Simulate a consumer to verify the flow of messages.
+
+## Define the AsyncAPI Specification
+
+Create an AsyncAPI file (asyncapi.yaml) to define the Kafka instance and orders topic.
 
 ```yaml
-asyncapi: '2.0.0'
+asyncapi: '2.6.0'
 info:
-  title: Orders API
+  title: Orders Kafka Service
   version: 1.0.0
+  description: This AsyncAPI document defines the Kafka instance for producing and consuming orders.
 servers:
   mokapi:
     url: localhost:9092
     protocol: kafka
+    description: Mock Kafka broker provided by Mokapi.
 channels:
   orders:
+    description: Kafka topic for order messages.
     publish:
+      summary: Publish an order to the topic.
       message: 
         $ref: '#/components/messages/Order'
     subscribe:
+      summary: Subscribe to orders from the topic.
       message:
         $ref: '#/components/messages/Order'
 components:
   messages:
     Order:
+      name: OrderMessage
+      title: An order message
       payload:
         type: object
         properties:
           orderId:
-            type: integer
-          customer:
             type: string
+            description: Unique identifier for the order.
+          customerId:
+            type: string
+            description: Unique identifier for the customer.
+          totalAmount:
+            type: number
+            format: float
+            description: Total order amount.
           items:
             type: array
+            description: List of items in the order.
             items:
               type: object
               properties:
-                itemId:
-                  type: integer
+                productId:
+                  type: string
+                  description: Unique identifier for the product.
                 quantity:
                   type: integer
-```
-This specification defines a topic called "orders" that accepts messages in the format of an "Order" object which has an orderId, a customer name, and an array of items, each with an itemId and a quantity.
-
-## Create a Producer
-Next, create a JavaScript file `orders.js` to generate messages for your topic
-
-```javascript
-import { produce } from 'mokapi/kafka'
-
-export default function () {
-    produce({ topic: 'orders' })
-    produce({ topic: 'orders', value: {orderId: 1, customer: 'Alice', items: [{itemId: 200, quantity: 3}]} })
-}
-```
-This script creates two messages to the "orders" topic. With the first call, Mokapi creates a random message.
-
-## Create a Dockerfile
-Next create a `Dockerfile` to configure Mokapi
-```dockerfile
-FROM mokapi/mokapi:latest
-
-COPY ./orders.yaml /demo/
-
-COPY ./orders.js /demo/
-
-CMD ["--Providers.File.Directory=/demo"]
+                  description: Quantity of the product.
+        required: 
+          - orderId
 ```
 
-## Start Mokapi
+## Simulate the Kafka Instance with Mokapi
 
-```
-docker run -p 8080:8080 -p 9092:9092 --rm -it $(docker build -q .)
-```
-You can now open a browser and go to Mokapi's Dashboard (`http://localhost:8080`) to see the Mokapi's Kafka Topic and the produced messages.
+Start the Mokapi server with the AsyncAPI file to simulate the Kafka broker.
 
-## Use a Kafka Consumer
+```bash
+mokapi --providers-file-filename asyncapi.yaml
+```
+You should see output confirming that Mokapi is running a Kafka broker at localhost:9092.
+
+
+## Produce Orders to the Kafka Instance
+Use a Kafka producer to send messages to the orders topic.
+
+```c#
+using System.Text.Json;
+using Confluent.Kafka;
+
+const string topic = "orders";
+var config = new ProducerConfig
+{
+    BootstrapServers = "localhost:9092",
+};
+
+using var producer = new ProducerBuilder<string, string>(config).Build();
+
+Order order = new() {
+    OrderId = "12345",
+    CustomerId = "0001",
+    TotalAmount = 250.75F,
+    Items = new() { 
+        new Item{ProductId = "101", Quantity = 2},
+        new Item{ProductId = "102", Quantity = 1}
+    }
+};
+
+await producer.ProduceAsync(topic, new Message<string, string> { Key = "foo", Value = JsonSerializer.Serialize(order) });
+
+Console.WriteLine("Order sent successfully!");
+```
+
+## Consume Orders from the Kafka Instance
+
+To verify the messages, use a Kafka consumer to subscribe to the `orders` topic.
 
 ```c#
 using Confluent.Kafka;
@@ -100,4 +135,32 @@ while (true)
     Console.WriteLine($"Message: {result.Message.Value}");
 }
 ```
-You can see the group and consumer on Mokapi's Dashboard. You can find more information about Kafka Consumers [here](https://docs.confluent.io/home/clients/overview.html#clients)  
+
+While the consumer application can process messages programmatically, Mokapi provides 
+a web-based dashboard to easily monitor and inspect the messages produced to Kafka topics. 
+This can be helpful during development or debugging to ensure that messages are reaching the intended topic.
+
+1. Open the dashboard in your browser, typically available at [http://localhost:8080](http://localhost:8080)
+2. Go to the Kafka tab
+3. Here, you'll see all Kafka topics defined in your AsyncAPI file
+
+## Schema Validation
+
+When using Mokapi, messages produced to the orders topic are validated against the OrderMessage schema defined in the asyncapi.yaml. If a message doesn’t conform to the schema:
+
+- The message is rejected.
+- Errors are logged by Mokapi.
+
+### Test Invalid Message
+
+Try sending an invalid message (e.g., missing orderId):
+
+```c#
+await producer.ProduceAsync(
+    topic, 
+    new Message<string, string> { 
+        Key = "foo", 
+        Value = @"{ ""customerId"": ""0001"", ""TotalAmount"": 250.75 }"
+     }
+ );
+```

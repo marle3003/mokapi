@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { computed, getCurrentInstance } from 'vue'
+import { computed, getCurrentInstance, ref, watch } from 'vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 import { usePrettyBytes } from '@/composables/usePrettyBytes'
 import { VAceEditor } from 'vue3-ace-editor'
 import '@/ace-editor/ace-config'
+import HexEditor from '../HexEditor.vue'
 
 const props = withDefaults(defineProps<{
-  source: string
-  contentType: string
+  source: Source
   filename?: string
   url?: string
   deprecated?: boolean
@@ -15,29 +15,53 @@ const props = withDefaults(defineProps<{
   maxHeight?: number
   hideContentType?: boolean
   readonly?: boolean
-  showAvroInfo?: boolean
 }>(), { readonly: true })
 
+const editor = ref()
+const preview = ref<HTMLElement>()
+const binary = ref<HTMLElement>()
+
 const emit = defineEmits<{
-  (e: 'update', value: string): void
+  (e: 'update', value: { content: string, type: string}): void,
+  (e: 'switch', value: string): void
 }>()
 
 const { getLanguage } = usePrettyLanguage()
 const { format } = usePrettyBytes()
 
+let current = ref<{data: Data, type: string}>()
+if (props.source.preview) {
+  current.value = { data: props.source.preview, type: 'preview' }
+} else if (props.source.binary) {
+  current.value = { data: props.source.binary, type: 'binary' }
+} else {
+  throw new Error('preview and binary not defined')
+}
+watch(() => props.source, (source) => {
+    if (!current.value) {
+      return
+    }
+    if (current.value?.type === 'preview') {
+      current.value.data = source.preview!
+    } else {
+      current.value.data = source.binary!
+    }
+})
 
 const lines = computed(() => {
-  if (!props.source) {
-    return 0
+  let content = props.source.preview?.content
+  if (props.source.binary) {
+    content = props.source.binary.content
   }
-  return props.source.split('\n').length
+  return content!.split('\n').length
 })
 
 const size = computed(() => {
-  if (!props.source) {
-    return format(0)
+  let content = props.source.preview?.content
+  if (props.source.binary) {
+    content = props.source.binary.content
   }
-  return format(new Blob([props.source]).size)
+  return format(new Blob([content!]).size)
 })
 
 const viewHeight = computed(() => {
@@ -45,11 +69,11 @@ const viewHeight = computed(() => {
     return props.height
   }
   if (props.readonly) {
-    let height = lines.value * 20 + 10
+    let height = lines.value * 23 + 10
     if (props.maxHeight && height > props.maxHeight) {
       return props.maxHeight
     }
-    return height
+    return Math.max(height, 250)
   }
   return 500
 })
@@ -61,7 +85,7 @@ const theme = computed(() => {
 
 function download(event: MouseEvent) {
   var element = document.createElement('a')
-  element.setAttribute('href', `data:${props.contentType};charset=utf-8,${encodeURIComponent(props.source)}`)
+  element.setAttribute('href', `data:${current.value?.data.contentType};charset=utf-8,${encodeURIComponent(current.value?.data.content!)}`)
   let filename = props.filename
   if (!filename) {
     filename = 'file.dat'
@@ -76,20 +100,37 @@ function download(event: MouseEvent) {
 }
 
 function copyToClipboard(event: MouseEvent) {
-  navigator.clipboard.writeText(props.source)
+  navigator.clipboard.writeText(current.value?.data.content!)
   event.preventDefault()
+}
+
+function switchPreview() {
+  current.value = { data: props.source.preview!, type: 'preview' }
+  preview.value?.classList.add('active')
+  binary.value?.classList.remove('active')
+  emit('switch', 'preview')
+}
+function switchCode() {
+  current.value = { data: props.source.binary!, type: 'binary' }
+  binary.value?.classList.add('active')
+  preview.value?.classList.remove('active')
+  emit('switch', 'binary')
 }
 </script>
 
 <template>
   <section aria-label="Source">
     <div class="header">
+      <div class="view controls" v-if="source.preview && source.binary">
+        <button ref="preview" type="button" class="btn btn-link" @click="switchPreview()">JSON</button>
+        <button ref="binary" type="button" class="btn btn-link" @click="switchCode()">Binary</button>
+      </div>
       <div class="info">
-        <span v-if="!hideContentType">{{ contentType }}</span>
+        <span v-if="!hideContentType">{{ current?.data.contentTypeTitle ?? current?.data.contentType }}</span>
         <span aria-label="Lines of Code">{{ lines }} lines</span>
         <span aria-label="Size of Code">{{ size }}</span>
         <span v-if="deprecated"><i class="bi bi-exclamation-triangle-fill yellow"></i> deprecated</span>
-        <span v-if="showAvroInfo">Avro content in JSON format</span>
+        <span v-if="current?.data.description">{{ current?.data.description }}</span>
       </div>
       <div class="controls">
         <a  v-if="url" :href="url">Raw</a>
@@ -97,12 +138,13 @@ function copyToClipboard(event: MouseEvent) {
         <button type="button" class="btn btn-link" @click="download" title="Download raw content" aria-label="Download raw content"><i class="bi bi-download"></i></button>
       </div>
     </div>
-    <section class="source" aria-label="Content" :class="getLanguage(contentType)">
+    <section class="source" aria-label="Content" :class="getLanguage(current?.data.contentType!)" v-if="current?.type == 'preview'">
       <v-ace-editor
+        ref="editor"
         :id="getCurrentInstance()?.uid"
-        :value="source"
-        @update:value="emit('update', $event)"
-        :lang="getLanguage(contentType)"
+        :value="current?.data.content!"
+        @update:value="emit('update', { content: $event, type: current?.type! })"
+        :lang="getLanguage(current?.data.contentType!)"
         :theme="theme"
         style="font-size: 16px;"
         :style="`height: ${viewHeight}px`"
@@ -110,6 +152,9 @@ function copyToClipboard(event: MouseEvent) {
           readOnly: props.readonly
         }"
       />
+    </section>
+    <section class="source" v-else-if="current?.type == 'binary' && source.binary" :class="'ace-'+theme">
+      <HexEditor :data="source.binary.content" :style="`height: ${viewHeight}px`" @update="emit('update', { content: $event, type: 'binary'})" />
     </section>
   </section>
 </template>
@@ -121,48 +166,58 @@ function copyToClipboard(event: MouseEvent) {
   border-radius: 6px 6px 0 0;
   color: var(--color-text-light);
   display: flex;
-  justify-content: space-between;
+
 }
 .header .info span {
   vertical-align: middle;
 }
-.header  button {
+.header .controls {
+  border: 1px solid var(--color-tabs-border);
+  border-radius: 6px;
+}
+.header .view {
+  margin-right: 7px;
+}
+.header .controls:not(.view) {
+  margin-left: auto;
+}
+.header button {
   background: none !important;
   font-size: 0.9rem;
-  border-radius: 0;
   vertical-align: middle;
   color: var(--color-link);
   display: inline-grid;
   place-content: center;
+  border-right: 1px solid var(--color-tabs-border);
+}
+.header button.active {
+  background-color: black !important;
+  outline: 1px solid var(--color-tabs-border);
+  border-radius: 6px;
 }
 .header .controls > button, .header .controls > a {
-  border: 1px solid var(--color-tabs-border);
   padding: 5px 8px;
   height: 28px;
   line-height: 18px;
   margin-inline-end: -1px;
   position: relative;
+  text-decoration: none;
 }
 .header .controls a {
   display: inline-block;
   box-sizing: border-box;
   vertical-align: middle;
 }
-.header .controls > *:hover {
-  border-color: var(--color-text-light);
-  color: var(--color-link);
-  z-index: 1;
-}
-.header .controls > *:first-child {
-  border-top-left-radius: 6px;
-  border-bottom-left-radius: 6px;
-}
 .header .controls > *:last-child {
-  border-top-right-radius: 6px;
-  border-bottom-right-radius: 6px;
+  border-right: 0;
 }
 .header span + span::before {
   content: ' · ';
+}
+.header .controls > *:hover:not(.active) {
+  border-color: var(--color-text-light);
+  color: var(--color-link);
+  z-index: 1;
 }
 .source {
   border: 1px solid var(--color-tabs-border);

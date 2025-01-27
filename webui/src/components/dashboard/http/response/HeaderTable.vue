@@ -42,9 +42,8 @@ const { formatSchema } = usePrettyLanguage()
                         <p class="label">Schema</p>
                         <div class="codeBlock">
                             <source-view 
-                                :source="formatSchema(header.schema)" 
+                                :source="{ preview: { content: formatSchema(header.schema), contentType: 'application/json' }}" 
                                 :deprecated="header.schema.deprecated" 
-                                content-type="application/json"
                                 :hide-content-type="true"
                                 :height="250" class="mb-2">
                             </source-view>

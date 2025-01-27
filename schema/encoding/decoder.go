@@ -54,10 +54,7 @@ func Decode(b []byte, opts ...DecodeOptions) (interface{}, error) {
 	for _, d := range decoders {
 		if d.IsSupporting(state.contentType) {
 			v, err := d.Decode(b, state)
-			if err != nil {
-				return nil, err
-			}
-			return state.parser.Parse(v)
+			return v, err
 		}
 	}
 	return state.parser.Parse(string(b))

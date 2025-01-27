@@ -34,11 +34,11 @@ func TestHandler_Schema_Example(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`"XidZuoWq "`))
+					try.HasBody(`[{"contentType":"application/json","value":"IlhpZFp1b1dxICI="}]`))
 			},
 		},
 		{
-			name: "parameter with type: string",
+			name: "text/plain",
 			app: &runtime.App{
 				Monitor: monitor.New(),
 			},
@@ -46,12 +46,12 @@ func TestHandler_Schema_Example(t *testing.T) {
 				try.Handler(t,
 					http.MethodGet,
 					"http://foo.api/api/schema/example",
-					map[string]string{"Accept": "text/plain"},
-					`{"name": "", "schema": {"type": ["string"]}}`,
+					nil,
+					`{"name": "", "schema": {"type": ["string"]}, "contentTypes": ["application/json"]}`,
 					h,
 					try.HasStatusCode(200),
-					try.HasHeader("Content-Type", "text/plain"),
-					try.HasBody("XidZuoWq "))
+					try.HasHeader("Content-Type", "application/json"),
+					try.HasBody(`[{"contentType":"application/json","value":"IlhpZFp1b1dxICI="}]`))
 			},
 		},
 		{
@@ -68,7 +68,7 @@ func TestHandler_Schema_Example(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody("1.644484108270445e+307"))
+					try.HasBody(`[{"contentType":"application/json","value":"MS42NDQ0ODQxMDgyNzA0NDVlKzMwNw=="}]`))
 			},
 		},
 		{
@@ -85,7 +85,7 @@ func TestHandler_Schema_Example(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"foo":"XidZuoWq "}`))
+					try.HasBody(`[{"contentType":"application/json","value":"eyJmb28iOiJYaWRadW9XcSAifQ=="}]`))
 			},
 		},
 		{
@@ -97,12 +97,12 @@ func TestHandler_Schema_Example(t *testing.T) {
 				try.Handler(t,
 					http.MethodGet,
 					"http://foo.api/api/schema/example",
-					map[string]string{"Accept": "application/xml"},
-					`{"name": "", "schema": { "type": ["string"], "xml": { "name": "text" } }, "format": "application/vnd.oai.openapi;version=3.0.0"}`,
+					nil,
+					`{"name": "", "schema": { "type": ["string"], "xml": { "name": "text" } }, "format": "application/vnd.oai.openapi;version=3.0.0", "contentTypes": ["application/xml"]}`,
 					h,
 					try.HasStatusCode(200),
-					try.HasHeader("Content-Type", "application/xml"),
-					try.HasBody(`<text>XidZuoWq </text>`))
+					try.HasHeader("Content-Type", "application/json"),
+					try.HasBody(`[{"contentType":"application/xml","value":"PHRleHQ+WGlkWnVvV3EgPC90ZXh0Pg=="}]`))
 			},
 		},
 		{
@@ -114,12 +114,12 @@ func TestHandler_Schema_Example(t *testing.T) {
 				try.Handler(t,
 					http.MethodGet,
 					"http://foo.api/api/schema/example",
-					map[string]string{"Accept": "*/*"},
-					`{"name": "", "schema": { "type": ["string"], "xml": { "name": "text" } }}`,
+					nil,
+					`{"name": "", "schema": { "type": ["string"], "xml": { "name": "text" } }, "contentTypes": ["*/*"]}`,
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`"XidZuoWq "`))
+					try.HasBody(`[{"contentType":"application/json","value":"IlhpZFp1b1dxICI="}]`))
 			},
 		},
 		{
@@ -131,12 +131,12 @@ func TestHandler_Schema_Example(t *testing.T) {
 				try.Handler(t,
 					http.MethodGet,
 					"http://foo.api/api/schema/example",
-					map[string]string{"Accept": "application/*"},
-					`{"name": "", "schema": { "type": "string", "xml": { "name": "text" } }}`,
+					nil,
+					`{"name": "", "schema": { "type": "string", "xml": { "name": "text" } }, "contentTypes": ["application/*"]}`,
 					h,
-					try.HasStatusCode(400),
-					try.HasHeader("Content-Type", "text/plain; charset=utf-8"),
-					try.HasBody("Content type application/* with schema format application/schema+json;version=2020-12 is not supported\n"))
+					try.HasStatusCode(200),
+					try.HasHeader("Content-Type", "application/json"),
+					try.HasBody(`[{"contentType":"application/*","value":null,"error":"Content type application/* with schema format application/schema+json;version=2020-12 is not supported"}]`))
 			},
 		},
 		{
@@ -153,7 +153,7 @@ func TestHandler_Schema_Example(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`"XidZuoWq "`))
+					try.HasBody(`[{"contentType":"application/json","value":"IlhpZFp1b1dxICI="}]`))
 			},
 		},
 		{
@@ -166,11 +166,11 @@ func TestHandler_Schema_Example(t *testing.T) {
 					http.MethodGet,
 					"http://foo.api/api/schema/example",
 					nil,
-					`{"name": "", "schema": {"type": ["string"]}, "format": "application/vnd.apache.avro;version=1.9.0"}`,
+					`{"name": "", "schema": {"type": ["string"]}, "format": "application/vnd.apache.avro;version=1.9.0", "contentTypes": ["avro/binary","application/json"]}`,
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`"XidZuoWq "`))
+					try.HasBody(`[{"contentType":"avro/binary","value":"ElhpZFp1b1dxIA=="},{"contentType":"application/json","value":"IlhpZFp1b1dxICI="}]`))
 			},
 		},
 		{
@@ -214,7 +214,7 @@ func TestHandler_Schema_Example(t *testing.T) {
 }`,
 					h,
 					try.HasStatusCode(200),
-					try.BodyContainsData(map[string]interface{}{"id": "eed4888d-99c1-4e10-85d6-8fce0adeb762"}),
+					try.HasBody(`[{"contentType":"application/json","value":"eyJjYXRlZ29yeSI6IkxpdGVyYXR1cmUiLCJkZXNjcmlwdGlvbiI6Ik91cnNlbHZlcyBleGFsdGF0aW9uIHdob20gdGhpcyBtZSBmYXIgc21pbGUgd2hlcmUgd2FzIGJ5IGFybXkgcGFydHkgcmljaGVzIHRoZWlycyBpbnN0ZWFkLiIsImZlYXR1cmVzIjoiRDRlemxZZWhDSUEwTyIsImlkIjoiZWVkNDg4OGQtOTljMS00ZTEwLTg1ZDYtOGZjZTBhZGViNzYyIiwia2V5d29yZHMiOiJXZ1NmaVlzZmZsbnpiIiwibmFtZSI6Ilplbml0aExpZ2h0IiwicHJpY2UiOjIzMTcyOC44Niwic3ViY2F0ZWdvcnkiOiJ4Q0t1eVkiLCJ1cmwiOiJodHRwczovL3d3dy5jaGllZnZpc3VhbGl6ZS5pby9zeW5kaWNhdGUifQ=="}]`),
 				)
 			},
 		},
