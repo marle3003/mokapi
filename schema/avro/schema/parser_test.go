@@ -94,6 +94,14 @@ func TestParser_Parse(t *testing.T) {
 			},
 		},
 		{
+			name: "string invalid length",
+			s:    &Schema{Type: []interface{}{"string"}},
+			b:    []byte{0, 0, 0, 0, 1, 0x1, 0x66, 0x6f, 0x6f},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "invalid string length at offset 6: -1")
+			},
+		},
+		{
 			name: "record",
 			s: &Schema{
 				Type: []interface{}{"record"},
@@ -117,6 +125,17 @@ func TestParser_Parse(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []interface{}{int64(1), int64(2), int64(3)}, v)
+			},
+		},
+		{
+			name: "array invalid length",
+			s: &Schema{
+				Type:  []interface{}{"array"},
+				Items: &Schema{Type: []interface{}{"int"}},
+			},
+			b: []byte{0, 0, 0, 0, 1, 0x01, 0x2, 0x4, 0x6, 0x0},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "invalid array length at offset 6: -1")
 			},
 		},
 		{
@@ -154,7 +173,7 @@ func TestParser_Parse(t *testing.T) {
 			},
 			b: []byte{0, 0, 0, 0, 1, 0x1},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "index -1 out of enum range")
+				require.EqualError(t, err, "index -1 out of enum range at offset 6")
 			},
 		},
 		{
@@ -165,7 +184,7 @@ func TestParser_Parse(t *testing.T) {
 			},
 			b: []byte{0, 0, 0, 0, 1, 0x8},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "index 4 out of enum range")
+				require.EqualError(t, err, "index 4 out of enum range at offset 6")
 			},
 		},
 		{
@@ -178,6 +197,17 @@ func TestParser_Parse(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{"foo": int64(9)}, v)
+			},
+		},
+		{
+			name: "map invalid length",
+			s: &Schema{
+				Type:   []interface{}{"map"},
+				Values: &Schema{Type: []interface{}{"long"}},
+			},
+			b: []byte{0, 0, 0, 0, 1, 0x1, 0x06, 0x66, 0x6f, 0x6f, 0x12},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "invalid map length at offset 6: -1")
 			},
 		},
 		{
@@ -214,6 +244,19 @@ func TestParser_Parse(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "foo", v)
+			},
+		},
+		{
+			name: "union index out of range",
+			s: &Schema{
+				Type: []interface{}{
+					&Schema{Type: []interface{}{"null"}},
+					&Schema{Type: []interface{}{"string"}},
+				},
+			},
+			b: []byte{0, 0, 0, 0, 1, 0x4, 0x06, 0x66, 0x6f, 0x6f},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "index 6 out of range in union at offset 2")
 			},
 		},
 		{

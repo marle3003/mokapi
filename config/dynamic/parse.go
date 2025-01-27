@@ -75,6 +75,7 @@ func parse(c *Config) (interface{}, error) {
 		} else {
 			s := result.(*script.Script)
 			s.Code = string(b)
+			s.Filename = name
 		}
 	default:
 		if result != nil {

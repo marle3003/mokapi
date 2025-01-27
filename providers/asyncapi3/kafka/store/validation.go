@@ -1,8 +1,11 @@
 package store
 
 import (
+	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"io"
 	"mokapi/kafka"
 	"mokapi/media"
 	"mokapi/providers/asyncapi3"
@@ -11,6 +14,7 @@ import (
 	"mokapi/schema/encoding"
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
+	"strconv"
 )
 
 type validator struct {
@@ -18,70 +22,79 @@ type validator struct {
 }
 
 type recordValidator interface {
-	Validate(record *kafka.Record) (interface{}, interface{}, error)
+	Validate(record *kafka.Record) (*KafkaLog, error)
 }
 
 func newValidator(c *asyncapi3.Channel) *validator {
 	v := &validator{}
 
 	for id, msg := range c.Messages {
-		if msg.Value == nil || msg.Value.Payload == nil {
+		if msg.Value == nil {
 			continue
 		}
-		v.validators = append(v.validators, newMessageValidator(id, msg.Value))
+		v.validators = append(v.validators, newMessageValidator(id, msg.Value, c))
 	}
 
 	return v
 }
 
-func (v *validator) Validate(record *kafka.Record) (key interface{}, payload interface{}, err error) {
+func (v *validator) Validate(record *kafka.Record) (l *KafkaLog, err error) {
 	if v == nil {
-		return record.Key, record.Value, nil
+		return &KafkaLog{
+			Key:     LogValue{Binary: kafka.Read(record.Key)},
+			Message: LogValue{Binary: kafka.Read(record.Value)},
+		}, nil
 	}
 
 	for _, val := range v.validators {
-		key, payload, err = val.Validate(record)
+		l, err = val.Validate(record)
 		if err == nil {
 			return
 		}
 	}
-	return record.Key, record.Value, err
+	return &KafkaLog{
+		Key:     LogValue{Binary: kafka.Read(record.Key)},
+		Message: LogValue{Binary: kafka.Read(record.Value)},
+	}, err
 }
 
 type messageValidator struct {
 	messageId string
+	msg       *asyncapi3.Message
 	key       *schemaValidator
 	payload   *schemaValidator
 }
 
-func newMessageValidator(messageId string, msg *asyncapi3.Message) *messageValidator {
-	v := &messageValidator{messageId: messageId}
+func newMessageValidator(messageId string, msg *asyncapi3.Message, channel *asyncapi3.Channel) *messageValidator {
+	v := &messageValidator{messageId: messageId, msg: msg}
 
 	var msgParser encoding.Parser
-	switch s := msg.Payload.Value.Schema.(type) {
-	case *schema.Schema:
-		msgParser = &parser.Parser{Schema: s, ConvertToSortedMap: true}
-	case *openapi.Ref:
-		mt := media.ParseContentType(msg.ContentType)
-		if mt.IsXml() {
-			log.Warnf("unsupported payload type: %T", msg.Payload.Value)
-		} else {
-			msgParser = &parser.Parser{Schema: openapi.ConvertToJsonSchema(s), ConvertToSortedMap: true}
+	if channel.Bindings.Kafka.ValueSchemaValidation {
+		switch s := msg.Payload.Value.Schema.(type) {
+		case *schema.Schema:
+			msgParser = &parser.Parser{Schema: s, ConvertToSortedMap: true}
+		case *openapi.Ref:
+			mt := media.ParseContentType(msg.ContentType)
+			if mt.IsXml() {
+				log.Warnf("unsupported payload type: %T", msg.Payload.Value)
+			} else {
+				msgParser = &parser.Parser{Schema: openapi.ConvertToJsonSchema(s), ConvertToSortedMap: true}
+			}
+		case *avro.Schema:
+			msgParser = &avro.Parser{Schema: s}
+		default:
+			log.Errorf("unsupported payload type: %T", msg.Payload.Value)
 		}
-	case *avro.Schema:
-		msgParser = &avro.Parser{Schema: s}
-	default:
-		log.Errorf("unsupported payload type: %T", msg.Payload.Value)
+
+		if msgParser != nil {
+			v.payload = &schemaValidator{
+				parser:      msgParser,
+				contentType: msg.ContentType,
+			}
+		}
 	}
 
-	if msgParser != nil {
-		v.payload = &schemaValidator{
-			parser:      msgParser,
-			contentType: msg.ContentType,
-		}
-	}
-
-	if msg.Bindings.Kafka.Key != nil {
+	if msg.Bindings.Kafka.Key != nil && channel.Bindings.Kafka.KeySchemaValidation {
 		var keyParser encoding.Parser
 		switch s := msg.Bindings.Kafka.Key.Value.Schema.(type) {
 		case *schema.Schema:
@@ -102,31 +115,42 @@ func newMessageValidator(messageId string, msg *asyncapi3.Message) *messageValid
 	return v
 }
 
-func (mv *messageValidator) Validate(record *kafka.Record) (key interface{}, payload interface{}, err error) {
+func (mv *messageValidator) Validate(record *kafka.Record) (*KafkaLog, error) {
+	r := &KafkaLog{Key: LogValue{}, Message: LogValue{}, Headers: make(map[string]string), MessageId: mv.messageId}
+
+	if mv.msg != nil && mv.msg.Bindings.Kafka.SchemaIdLocation == "payload" {
+		var err error
+		r.SchemaId, err = readSchemaId(record.Value, mv.msg.Bindings.Kafka.SchemaIdPayloadEncoding)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if mv.payload != nil {
-		if payload, err = mv.payload.Validate(record.Value); err != nil {
+		if v, err := mv.payload.Validate(record.Value); err != nil {
 			err = fmt.Errorf("invalid message: %w", err)
-			return
+			return r, err
+		} else {
+			b, _ := json.Marshal(v)
+			r.Message.Value = string(b)
 		}
 	} else {
-		payload = kafka.BytesToString(record.Value)
+		r.Message.Binary = kafka.Read(record.Value)
 	}
 
 	if mv.key != nil {
-		if key, err = mv.key.Validate(record.Key); err != nil {
+		if k, err := mv.key.Validate(record.Key); err != nil {
 			err = fmt.Errorf("invalid key: %w", err)
-			return
+			return r, err
+		} else {
+			b, _ := json.Marshal(k)
+			r.Message.Value = string(b)
 		}
 	} else {
-		key = kafka.BytesToString(record.Key)
+		r.Key.Binary = kafka.Read(record.Key)
 	}
 
-	record.Headers = append(record.Headers, kafka.RecordHeader{
-		Key:   "x-specification-message-id",
-		Value: []byte(mv.messageId),
-	})
-
-	return
+	return r, nil
 }
 
 type schemaValidator struct {
@@ -134,6 +158,39 @@ type schemaValidator struct {
 	contentType string
 }
 
-func (v *schemaValidator) Validate(data kafka.Bytes) (interface{}, error) {
+func (v *schemaValidator) Validate(data io.Reader) (interface{}, error) {
 	return encoding.DecodeFrom(data, encoding.WithContentType(media.ParseContentType(v.contentType)), encoding.WithParser(v.parser))
+}
+
+func readSchemaId(payload kafka.Bytes, encoding string) (int, error) {
+	var schemaIdLen int
+	var err error
+	switch encoding {
+	case "confluent":
+		schemaIdLen = 4
+	default:
+		schemaIdLen, err = strconv.Atoi(encoding)
+		if err != nil {
+			return -1, fmt.Errorf("unsupported schemaIdPayloadEncoding '%v'", encoding)
+		}
+	}
+
+	// read magic byte
+	_, err = payload.Read(make([]byte, 1))
+	if err != nil {
+		return -1, err
+	}
+
+	b := make([]byte, schemaIdLen)
+	n, err := payload.Read(b)
+	if err != nil {
+		return -1, fmt.Errorf("read schemaId failed: %w", err)
+	} else if n != schemaIdLen {
+		return -1, fmt.Errorf("read schemaId failed; expected %v bytes but read %v bytes", schemaIdLen, n)
+	}
+
+	var version int32
+	_, err = binary.Decode(b, binary.BigEndian, &version)
+
+	return int(version), err
 }

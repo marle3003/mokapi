@@ -1,0 +1,53 @@
+asyncapi: '2.6.0'
+info:
+  title: Orders Kafka Service
+  version: 1.0.0
+  description: This AsyncAPI document defines the Kafka instance for producing and consuming orders.
+servers:
+  mokapi:
+    url: localhost:9092
+    protocol: kafka
+    description: Mock Kafka broker provided by Mokapi.
+channels:
+  orders:
+    description: Kafka topic for order messages.
+    publish:
+      summary: Publish an order to the topic.
+      message:
+        $ref: '#/components/messages/Order'
+    subscribe:
+      summary: Subscribe to orders from the topic.
+      message:
+        $ref: '#/components/messages/Order'
+components:
+  messages:
+    Order:
+      name: OrderMessage
+      title: An order message
+      payload:
+        type: object
+        properties:
+          orderId:
+            type: string
+            description: Unique identifier for the order.
+          customerId:
+            type: string
+            description: Unique identifier for the customer.
+          totalAmount:
+            type: number
+            format: float
+            description: Total order amount.
+          items:
+            type: array
+            description: List of items in the order.
+            items:
+              type: object
+              properties:
+                productId:
+                  type: string
+                  description: Unique identifier for the product.
+                quantity:
+                  type: integer
+                  description: Quantity of the product.
+        required:
+          - orderId

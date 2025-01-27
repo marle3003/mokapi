@@ -139,6 +139,8 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(res.Content) == 0 {
+		rw.Header().Del("Content-Type")
+		rw.Header().Set("Content-Length", "0")
 		// no response content is defined which means body is empty
 		if response.StatusCode > 0 {
 			rw.WriteHeader(response.StatusCode)

@@ -42,6 +42,9 @@ func BytesToString(bytes Bytes) string {
 }
 
 func Read(bytes Bytes) []byte {
+	if bytes == nil {
+		return nil
+	}
 	bytes.Seek(0, io.SeekStart)
 	b := make([]byte, bytes.Size())
 	bytes.Read(b)
