@@ -80,19 +80,23 @@ export default async function() {
                 }
                 return true
             case 'example': {
-                const res = post(`${apiBaseUrl}/api/schema/example`, request.body, {headers: {'Accept': request.header['Accept']}})
+                const res = post(`${apiBaseUrl}/api/schema/example`, request.body)
                 response.statusCode = res.statusCode
                 response.headers = res.headers
                 response.body = res.body
                 return true
             }
             case 'validate':
-                const res = post(`${apiBaseUrl}/api/schema/validate`, request.body, { headers: { 'Data-Content-Type': request.header['Data-Content-Type']}})
+                let url = `${apiBaseUrl}/api/schema/validate`
+                if (request.query['outputFormat']) {
+                    url += '?outputFormat=' + request.query['outputFormat']
+                }
+                const res = post(url, request.body)
+                console.log(res.statusCode)
                 response.statusCode = res.statusCode
                 response.headers = res.headers
-                if (res.statusCode !== 200) {
-                    response.body = res.body
-                }
+                response.body = res.body
+                response.data = null
                 return true
             case 'configs':
                 response.data = getConfigs()

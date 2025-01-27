@@ -6,9 +6,7 @@
     background-color: #0d1117;
     color: rgb(132, 141, 151);
 }
-.ace_scroller {
-    left: 61px !important;
-}
+
 .ace-mokapi-dark .ace_marker-layer .ace_selected-word, .ace-mokapi-dark  .ace_marker-layer .ace_selection {
     background: #1e4173;
 }
@@ -109,4 +107,8 @@
 }
 .javascript .ace-mokapi-light .ace_identifier:has(+ .ace_paren.ace_lparen) {
     color: rgb(102, 57, 186)
+}
+
+.hex .ace_hex, .hex .ace_hex-alt {
+    padding-right: 8px;
 }

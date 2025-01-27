@@ -7,10 +7,10 @@ test('Visit Guides', async ({ page, home }) => {
 
     await test.step('meta information are available', async () => {
         await expect(page).toHaveURL('/docs/guides')
-        await expect(page).toHaveTitle('Mocking APIs with Mokapi | Mokapi Guides')
+        await expect(page).toHaveTitle('Getting Started with Mokapi: Mock APIs and Validate Against Schemas | Mokapi Guides')
         await expect(page.locator('meta[name="description"]')).toHaveAttribute(
             'content',
-            'These guides covers everything you need to know about Mokapi and mocking APIs.'
+            'Learn to set up Mokapi for mocking APIs, no account required, free and open-source.'
         )
         await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://mokapi.io/docs/guides/get-started/welcome')
     })
@@ -38,7 +38,7 @@ test('Visit Guides', async ({ page, home }) => {
 
     await test.step('navigation collapse works', async () => {
         await page.getByRole('button', { name: 'HTTP' }).click()
-        await expect(page.getByRole('link', { name: 'Overview' })).toBeVisible()
+        await expect(page.getByRole('link', { name: 'Overview', exact: true })).toBeVisible()
 
         await page.getByRole('button', { name: 'Kafka' }).click()
         await expect(page.getByRole('region', { name: 'Kafka' }).getByRole('link', { name: 'Overview' })).toBeVisible()

@@ -77,7 +77,10 @@ func (r *Record) Size(baseOffSet int64, base time.Time) int {
 	if r.Key != nil {
 		keyLength = r.Key.Size()
 	}
-	valueLength := r.Value.Size()
+	valueLength := 0
+	if r.Value != nil {
+		valueLength = r.Value.Size()
+	}
 	size := 1 + // attribute
 		sizeVarInt(deltaTimestamp) +
 		sizeVarInt(deltaOffset) +

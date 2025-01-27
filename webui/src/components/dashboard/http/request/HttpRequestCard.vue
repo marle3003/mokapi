@@ -61,9 +61,8 @@ const name = computed(() => {
                     <p v-if="operation.requestBody.contents.length == 1">{{ operation.requestBody.contents[0].type }}</p>
                     
                     <source-view 
-                        :source="formatSchema(selected.content?.schema)" 
+                        :source="{ preview: { content: formatSchema(selected.content?.schema), contentType: 'application/json' }}" 
                         :deprecated="selected.content?.schema.deprecated" 
-                        content-type="application/json"
                         :hide-content-type="true"
                         :height="250" class="mb-2">
                     </source-view>
@@ -73,7 +72,7 @@ const name = computed(() => {
                             <schema-expand :schema="selected.content.schema" />
                         </div>
                         <div class="col-auto px-2" v-if="selected.content">
-                            <schema-validate :schema="{schema: selected.content.schema, format: 'application/vnd.oai.openapi+json;version=3.0.0'}" :content-type="selected.content.type" :name="name" />
+                            <schema-validate :source="{ preview: { content: '', contentType: selected.content.type} }" :schema="{schema: selected.content.schema, format: 'application/vnd.oai.openapi+json;version=3.0.0'}" :name="name" />
                         </div>
                         <div class="col-auto px-2">
                             <select v-if="operation.requestBody.contents.length > 1" class="form-select form-select-sm" aria-label="Request content type" @change="selectedContentChange">

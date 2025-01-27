@@ -44,6 +44,16 @@ func TestParser_ParseObject(t *testing.T) {
 			},
 		},
 		{
+			name: "string property not present",
+			data: map[string]interface{}{},
+			schema: schematest.New("object",
+				schematest.WithProperty("foo", schematest.New("string")),
+			),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+			},
+		},
+		{
 			name: "property with default",
 			data: map[string]interface{}{},
 			schema: schematest.New("object",

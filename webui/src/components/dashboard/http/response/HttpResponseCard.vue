@@ -77,9 +77,8 @@ const name = computed(() => {
                             <div class="tab-content" id="pills-tabContent">
                                 <div v-if="response.contents" class="tab-pane fade" :class="response.contents ? 'show active' : ''" id="pills-body" role="tabpanel" aria-labelledby="pills-body-tab">
                                     <source-view 
-                                        :source="formatSchema(selected.contents[response.statusCode].schema)" 
+                                        :source="{ preview: { content: formatSchema(selected.contents[response.statusCode].schema), contentType: 'application/json' }}" 
                                         :deprecated="selected.contents[response.statusCode].schema.deprecated" 
-                                        content-type="application/json"
                                         :hide-content-type="true"
                                         :height="250" class="mb-2">
                                     </source-view>
@@ -88,7 +87,7 @@ const name = computed(() => {
                                             <schema-expand :schema="selected.contents[response.statusCode].schema" />
                                         </div>
                                         <div class="col-auto px-2 mt-1">
-                                            <schema-validate :schema="{schema: selected.contents[response.statusCode].schema, format: 'application/vnd.oai.openapi+json;version=3.0.0'}" :content-type="selected.contents[response.statusCode].type" :name="name" />
+                                            <schema-validate :source="{ preview: { content: '', contentType: selected.contents[response.statusCode].type }}" :schema="{schema: selected.contents[response.statusCode].schema, format: 'application/vnd.oai.openapi+json;version=3.0.0'}" :name="name" />
                                         </div>
                                         <div class="col-auto px-2 mt-1">
                                             <select v-if="response.contents.length > 0" class="form-select form-select-sm" aria-label="Response content type" @change="selectedContentChange($event, response.statusCode)">

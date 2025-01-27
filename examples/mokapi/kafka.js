@@ -255,8 +255,12 @@ export let events = [
          time: '2023-02-13T09:49:25.482366+01:00',
          data: {
              offset: 0,
-             key: 'GGOEWXXX0827',
-             message: JSON.stringify({
+             key: {
+                 value: 'GGOEWXXX0827'
+             },
+             message: {
+                 value: JSON.stringify(
+                     {
                          id: 'GGOEWXXX0827',
                          name: 'Waze Women\'s Short Sleeve Tee',
                          description: 'Made of soft tri-blend jersey fabric, this great t-shirt will help you find your Waze. Made in USA.',
@@ -266,11 +270,12 @@ export let events = [
                          url: 'Waze+Womens+Short+Sleeve+Tee',
                          category: 'apparel',
                          subcategory: 'apparel'
-                         }),
+                     })
+             },
              partition: 0,
+             messageId: 'shopOrder',
              headers: {
                  foo: 'bar',
-                 'x-specification-message-id': 'shopOrder'
              }
          }
      },
@@ -284,8 +289,12 @@ export let events = [
         time: '2023-02-13T09:49:25.482366+01:00',
         data: {
             offset: 1,
-            key: 'GGOEWXXX0828',
-            message: JSON.stringify({
+            key: {
+                value: 'GGOEWXXX0828'
+            },
+            message: {
+                value: JSON.stringify(
+                    {
                         id: 'GGOEWXXX0828',
                         name: 'Waze Men\'s Short Sleeve Tee',
                         description: 'Made of soft tri-blend jersey fabric, this great t-shirt will help you find your Waze. Made in USA.',
@@ -295,11 +304,10 @@ export let events = [
                         url: 'Waze+Mens+Short+Sleeve+Tee',
                         category: 'apparel',
                         subcategory: 'apparel'
-                      }),
+                    })
+            },
             partition: 1,
-            headers: {
-                'x-specification-message-id': 'shopOrder'
-            }
+            messageId: 'shopOrder'
         }
     }
  ]

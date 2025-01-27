@@ -1,7 +1,6 @@
 package store
 
 import (
-	"mokapi/kafka"
 	"mokapi/providers/asyncapi3"
 	"mokapi/runtime/events"
 	"mokapi/schema/json/schema"
@@ -71,8 +70,8 @@ func (t *Topic) update(config *asyncapi3.Channel, s *Store) {
 	t.Partitions = t.Partitions[:numPartitions]
 }
 
-func (t *Topic) log(key, payload interface{}, headers []kafka.RecordHeader, partition int, offset int64, traits events.Traits) {
-	t.logger(key, payload, headers, partition, offset, traits.With("topic", t.Name))
+func (t *Topic) log(r *KafkaLog, traits events.Traits) {
+	t.logger(r, traits.With("topic", t.Name))
 }
 
 func (t *Topic) Store() *Store {

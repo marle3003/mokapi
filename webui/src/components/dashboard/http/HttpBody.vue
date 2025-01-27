@@ -16,7 +16,7 @@ const source = computed(() => {
 </script>
 
 <template>
-  <source-view v-if="body" :source="source" :content-type="contentType" :max-height="500"></source-view>
+  <source-view v-if="body" :source="{ preview: { content: source, contentType: contentType }}" :max-height="500"></source-view>
   <div v-else>No body returned for response</div>
 </template>
 
