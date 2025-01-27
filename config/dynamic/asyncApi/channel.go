@@ -19,6 +19,7 @@ type ChannelTrait struct {
 func (c *Channel) UnmarshalYAML(node *yaml.Node) error {
 	// set default
 	c.Bindings.Kafka.ValueSchemaValidation = true
+	c.Bindings.Kafka.KeySchemaValidation = true
 	c.Bindings.Kafka.Partitions = 1
 
 	type alias Channel

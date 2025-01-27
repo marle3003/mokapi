@@ -561,6 +561,67 @@ channels:
 				require.EqualError(t, err, "invalid confluent.value.schema.validation: cannot unmarshal string to bool: foo")
 			},
 		},
+		{
+			name: "confluent.key.schema.validation",
+			config: `
+channels:
+  test:
+    bindings:
+      kafka:
+        confluent.key.schema.validation: false
+`,
+			test: func(t *testing.T, config *asyncapi3.Config, err error) {
+				require.NoError(t, err)
+				require.False(t, config.Channels["test"].Value.Bindings.Kafka.KeySchemaValidation)
+			},
+		},
+		{
+			name: "confluent.key.schema.validation error",
+			config: `
+channels:
+  test:
+    bindings:
+      kafka:
+        confluent.key.schema.validation: foo
+`,
+			test: func(t *testing.T, config *asyncapi3.Config, err error) {
+				require.EqualError(t, err, "invalid confluent.key.schema.validation: cannot unmarshal string to bool: foo")
+			},
+		},
+		{
+			name: "schemaIdLocation",
+			config: `
+channels:
+  test:
+    address: test-topic
+    messages:
+      testMessage:
+        bindings:
+          kafka:
+            schemaIdLocation: payload
+`,
+			test: func(t *testing.T, config *asyncapi3.Config, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "payload", config.Channels["test"].Value.Messages["testMessage"].Value.Bindings.Kafka.SchemaIdLocation)
+			},
+		},
+		{
+			name: "schemaIdPayloadEncoding",
+			config: `
+channels:
+  test:
+    address: test-topic
+    messages:
+      testMessage:
+        bindings:
+          kafka:
+            schemaIdPayloadEncoding: '4'
+`,
+			test: func(t *testing.T, config *asyncapi3.Config, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "4", config.Channels["test"].Value.Messages["testMessage"].Value.Bindings.Kafka.SchemaIdPayloadEncoding)
+			},
+		},
 	}
 
 	t.Parallel()

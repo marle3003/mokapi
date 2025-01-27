@@ -42,8 +42,12 @@ type KafkaOperationBinding struct {
 }
 
 type KafkaMessageBinding struct {
-	Key              *SchemaRef
-	SchemaIdLocation string
+	Key              *SchemaRef `yaml:"key" json:"key"`
+	SchemaIdLocation string     `yaml:"schemaIdLocation" json:"schemaIdLocation"`
+
+	// Number of bytes or vendor specific values when schema id is encoded in payload
+	// (e.g. confluent/ apicurio-legacy / apicurio-new).
+	SchemaIdPayloadEncoding string `yaml:"schemaIdPayloadEncoding" json:"schemaIdPayloadEncoding"`
 }
 
 type TopicBindings struct {
@@ -69,6 +73,7 @@ type TopicBindings struct {
 	SegmentMs int64
 
 	ValueSchemaValidation bool
+	KeySchemaValidation   bool
 }
 
 func (b *BrokerBindings) UnmarshalYAML(value *yaml.Node) error {
@@ -123,6 +128,7 @@ func (b *BrokerBindings) UnmarshalYAML(value *yaml.Node) error {
 
 func (t *TopicBindings) UnmarshalYAML(value *yaml.Node) error {
 	t.ValueSchemaValidation = true
+	t.KeySchemaValidation = true
 
 	m := make(map[string]interface{})
 	err := value.Decode(m)
@@ -157,6 +163,10 @@ func (t *TopicBindings) UnmarshalYAML(value *yaml.Node) error {
 	t.ValueSchemaValidation, err = getBool(m, "confluent.value.schema.validation")
 	if err != nil {
 		return fmt.Errorf("invalid confluent.value.schema.validation: %w", err)
+	}
+	t.KeySchemaValidation, err = getBool(m, "confluent.key.schema.validation")
+	if err != nil {
+		return fmt.Errorf("invalid confluent.key.schema.validation: %w", err)
 	}
 
 	return nil

@@ -108,6 +108,10 @@ func (p *Partition) Read(offset int64, maxBytes int) (kafka.RecordBatch, kafka.E
 }
 
 func (p *Partition) Write(batch kafka.RecordBatch) (baseOffset int64, records []produce.RecordError, err error) {
+	if p == nil {
+		return 0, nil, fmt.Errorf("partition is nil")
+	}
+
 	p.m.Lock()
 	defer p.m.Unlock()
 

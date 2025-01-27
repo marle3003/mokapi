@@ -34,6 +34,10 @@ func RegisterDecoder(d Decoder) {
 type DecodeOptions func(state *DecodeState)
 
 func DecodeFrom(r io.Reader, opts ...DecodeOptions) (interface{}, error) {
+	if r == nil {
+		return Decode(nil, opts...)
+	}
+
 	b, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err

@@ -317,6 +317,38 @@ func TestProduce(t *testing.T) {
 				require.Equal(t, 0, len(hook.Entries))
 			},
 		},
+		{
+			"no partitions",
+			func(t *testing.T, s *store.Store) {
+				ch := asyncapi3test.NewChannel(
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 0}))
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.AddChannel("foo", ch),
+					asyncapi3test.WithOperation("foo",
+						asyncapi3test.WithOperationAction("send"),
+						asyncapi3test.WithOperationChannel(ch),
+					),
+				))
+				rr := kafkatest.NewRecorder()
+				s.ServeMessage(rr, kafkatest.NewRequest("MOKAPITEST1", 3, &produce.Request{
+					Topics: []produce.RequestTopic{
+						{Name: "foo", Partitions: []produce.RequestPartition{
+							{
+								Index: 0,
+								Record: kafka.RecordBatch{
+									Records: []*kafka.Record{{}},
+								},
+							},
+						},
+						}},
+				}))
+
+				res, ok := rr.Message.(*produce.Response)
+				require.True(t, ok)
+				require.Equal(t, "foo", res.Topics[0].Name)
+				require.Equal(t, kafka.UnknownTopicOrPartition, res.Topics[0].Partitions[0].ErrorCode, "expected no kafka error")
+			},
+		},
 	}
 
 	for _, tc := range testcases {

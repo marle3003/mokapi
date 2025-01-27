@@ -20,16 +20,6 @@ func (p *Parser) Parse(data interface{}) (interface{}, error) {
 	return p.parseFromInterface(data)
 }
 
-func (p *Parser) ParseSchemaId(b []byte) (int, error) {
-	if len(b) < 5 || b[0] != 0 {
-		return 0, NoSchemaId
-	}
-
-	var version int32
-	_, err := binary.Decode(b[1:], binary.BigEndian, &version)
-	return int(version), err
-}
-
 func (p *Parser) parseFromByte(b []byte) (interface{}, error) {
 	r := bytes.NewReader(b)
 
