@@ -168,6 +168,8 @@ func readSchemaId(payload kafka.Bytes, encoding string) (int, error) {
 	switch encoding {
 	case "confluent":
 		schemaIdLen = 4
+	case "":
+		schemaIdLen = 4
 	default:
 		schemaIdLen, err = strconv.Atoi(encoding)
 		if err != nil {
