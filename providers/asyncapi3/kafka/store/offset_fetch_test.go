@@ -297,7 +297,7 @@ func TestOffsetFetch_Validation(t *testing.T) {
 				require.Equal(t, kafka.UnknownServerError, p.ErrorCode)
 				require.Equal(t, int64(-1), p.CommittedOffset)
 
-				require.Equal(t, 7, len(hook.Entries))
+				require.Equal(t, 6, len(hook.Entries))
 				require.Equal(t, logrus.ErrorLevel, hook.LastEntry().Level)
 				require.Equal(t, "kafka OffsetFetch: invalid consumer 'kafkatest' for topic foo: invalid clientId: found 1 error:\nstring 'kafkatest' does not match regex pattern '^[A-Z]{10}[0-5]$'\nschema path #/pattern", hook.LastEntry().Message)
 			},
@@ -338,7 +338,7 @@ func TestOffsetFetch_Validation(t *testing.T) {
 				require.Equal(t, kafka.InvalidGroupId, p.ErrorCode)
 				require.Equal(t, int64(-1), p.CommittedOffset)
 
-				require.Equal(t, 7, len(hook.Entries))
+				require.Equal(t, 6, len(hook.Entries))
 				require.Equal(t, logrus.ErrorLevel, hook.LastEntry().Level)
 				require.Equal(t, "kafka OffsetFetch: invalid consumer 'kafkatest' for topic foo: invalid groupId: found 1 error:\nstring 'bar' does not match regex pattern '^[A-Z]{10}[0-5]$'\nschema path #/pattern", hook.LastEntry().Message)
 			},
@@ -383,7 +383,7 @@ func TestOffsetFetch_Validation(t *testing.T) {
 				require.Equal(t, kafka.None, p.ErrorCode)
 				require.Equal(t, int64(-1), p.CommittedOffset)
 
-				require.Equal(t, 6, len(hook.Entries))
+				require.Equal(t, 5, len(hook.Entries))
 				require.Equal(t, logrus.InfoLevel, hook.LastEntry().Level)
 			},
 		},

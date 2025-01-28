@@ -63,6 +63,7 @@ type messageValidator struct {
 	msg       *asyncapi3.Message
 	key       *schemaValidator
 	payload   *schemaValidator
+	header    *schemaValidator
 }
 
 func newMessageValidator(messageId string, msg *asyncapi3.Message, channel *asyncapi3.Channel) *messageValidator {
@@ -108,6 +109,24 @@ func newMessageValidator(messageId string, msg *asyncapi3.Message, channel *asyn
 		if keyParser != nil {
 			v.key = &schemaValidator{
 				parser: keyParser,
+			}
+		}
+	}
+
+	if msg.Headers != nil {
+		var headerParser encoding.Parser
+		switch s := msg.Headers.Value.Schema.(type) {
+		case *schema.Schema:
+			headerParser = &parser.Parser{Schema: s}
+		case *avro.Schema:
+			headerParser = &avro.Parser{Schema: s}
+		default:
+			log.Errorf("unsupported header type: %T", msg.Headers.Value)
+		}
+
+		if headerParser != nil {
+			v.header = &schemaValidator{
+				parser: headerParser,
 			}
 		}
 	}
