@@ -18,7 +18,6 @@ func (s *Store) offsetFetch(rw kafka.ResponseWriter, req *kafka.Request) error {
 	ctx := kafka.ClientFromContext(req)
 
 	for _, rt := range r.Topics {
-		log.Infof("kafka OffsetFetch: topic %v, API Version=%v, client %v", rt.Name, req.Header.ApiVersion, ctx.ClientId)
 		topic := s.Topic(rt.Name)
 		resTopic := offsetFetch.ResponseTopic{Name: rt.Name, Partitions: make([]offsetFetch.Partition, 0, len(rt.PartitionIndexes))}
 
