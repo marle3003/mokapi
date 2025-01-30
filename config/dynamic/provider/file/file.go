@@ -6,9 +6,11 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"github.com/fsnotify/fsnotify"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"io"
 	"io/fs"
+	"math"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/safe"
@@ -101,6 +103,8 @@ func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
 			}
 			p.isInit = false
 		})
+	} else {
+		p.isInit = false
 	}
 	return p.watch(pool)
 }
@@ -114,70 +118,112 @@ func (p *Provider) Watch(dir string, pool *safe.Pool) {
 }
 
 func (p *Provider) watch(pool *safe.Pool) error {
-	ticker := time.NewTicker(time.Second)
-	var events []fsnotify.Event
+	var (
+		waitFor      = 1 * time.Second
+		mu           sync.Mutex
+		timers       = make(map[string]*time.Timer)
+		processEvent = func(evt fsnotify.Event) {
+			defer func() {
+				mu.Lock()
+				delete(timers, evt.Name)
+				mu.Unlock()
+			}()
+
+			fileInfo, err := p.fs.Stat(evt.Name)
+			if err != nil {
+				return
+			}
+
+			if evt.Has(fsnotify.Remove) || evt.Has(fsnotify.Rename) {
+				p.m.Lock()
+				defer p.m.Unlock()
+
+				if !fileInfo.IsDir() {
+					delete(p.watched, evt.Name)
+					return
+				}
+				for watched := range p.watched {
+					if strings.HasPrefix(watched, evt.Name) {
+						delete(p.watched, watched)
+						if watched == evt.Name {
+							err = p.watcher.Remove(watched)
+							if err != nil && !errors.Is(err, fsnotify.ErrNonExistentWatch) {
+								log.Errorf("remove watcher '%v' failed: %v", evt.Name, err)
+							}
+						}
+					}
+				}
+				return
+			}
+
+			if fileInfo.IsDir() && !p.isInit {
+				pool.Go(func(ctx context.Context) {
+					err := p.walk(evt.Name)
+					if err != nil {
+						log.Errorf("unable to process dir %v: %v", evt.Name, err)
+					}
+				})
+				return
+			}
+
+			dir, file := filepath.Split(evt.Name)
+			if dir == evt.Name && !p.skip(dir, true) {
+				p.watchPath(dir)
+			} else if len(p.cfg.Filenames) > 0 {
+				for _, filename := range p.cfg.Filenames {
+					if _, configFile := filepath.Split(filename); file == configFile {
+						c, err := p.readFile(evt.Name)
+						if err != nil {
+							log.Errorf("unable to read file %v", evt.Name)
+						}
+						p.ch <- c
+					}
+				}
+			} else {
+				if !p.skip(evt.Name, false) {
+					c, err := p.readFile(evt.Name)
+					if err != nil {
+						log.Errorf("unable to read file %v", evt.Name)
+					}
+					p.ch <- c
+				}
+			}
+		}
+	)
 
 	pool.Go(func(ctx context.Context) {
 		defer func() {
 			p.watcher.Close()
-			ticker.Stop()
 		}()
 
 		for {
 			select {
 			case <-ctx.Done():
 				return
-			case evt := <-p.watcher.Events:
-				// temporary files ends with '~' in name
-				if len(evt.Name) > 0 && !strings.HasSuffix(evt.Name, "~") {
-					fileInfo, err := p.fs.Stat(evt.Name)
-					if err != nil {
-						// skip
-						continue
-					}
-					if !fileInfo.IsDir() {
-						events = append(events, evt)
-					} else if _, ok := p.watched[evt.Name]; !p.isInit && !ok {
-						pool.Go(func(ctx context.Context) {
-							err := p.walk(evt.Name)
-							if err != nil {
-								log.Errorf("unable to process dir %v: %v", evt.Name, err)
-							}
-						})
-					}
+			case err, ok := <-p.watcher.Errors:
+				if !ok {
+					return
 				}
-			case <-ticker.C:
-				m := make(map[string]struct{})
-				for _, evt := range events {
-					if _, ok := m[evt.Name]; ok {
-						continue
-					}
-					m[evt.Name] = struct{}{}
+				log.Errorf("file watcher error: %s", err)
+			case evt, ok := <-p.watcher.Events:
+				if !ok {
+					return
+				}
 
-					dir, file := filepath.Split(evt.Name)
-					if dir == evt.Name && !p.skip(dir, true) {
-						p.watchPath(dir)
-					} else if len(p.cfg.Filenames) > 0 {
-						for _, filename := range p.cfg.Filenames {
-							if _, configFile := filepath.Split(filename); file == configFile {
-								c, err := p.readFile(evt.Name)
-								if err != nil {
-									log.Errorf("unable to read file %v", evt.Name)
-								}
-								p.ch <- c
-							}
-						}
-					} else {
-						if !p.skip(evt.Name, false) {
-							c, err := p.readFile(evt.Name)
-							if err != nil {
-								log.Errorf("unable to read file %v", evt.Name)
-							}
-							p.ch <- c
-						}
-					}
+				mu.Lock()
+				t, ok := timers[evt.Name]
+				mu.Unlock()
+
+				if !ok {
+					t = time.AfterFunc(math.MaxInt64, func() { processEvent(evt) })
+					t.Stop()
+
+					mu.Lock()
+					timers[evt.Name] = t
+					mu.Unlock()
 				}
-				events = make([]fsnotify.Event, 0)
+
+				t.Reset(waitFor)
 			}
 		}
 	})
