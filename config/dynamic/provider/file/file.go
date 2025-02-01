@@ -6,7 +6,6 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"github.com/fsnotify/fsnotify"
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"io"
 	"io/fs"
@@ -17,6 +16,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -26,16 +26,20 @@ const mokapiIgnoreFile = ".mokapiignore"
 
 var Bom = []byte{0xEF, 0xBB, 0xBF}
 
+type watch struct {
+	isDir bool
+}
+
 type Provider struct {
 	cfg        static.FileProvider
 	SkipPrefix []string
-	watched    map[string]struct{}
+	watched    map[string]watch
 	isInit     bool
 	ignores    IgnoreFiles
 
 	watcher *fsnotify.Watcher
 	fs      FSReader
-	ch      chan<- *dynamic.Config
+	ch      chan<- dynamic.ConfigEvent
 
 	m sync.Mutex
 }
@@ -48,7 +52,7 @@ func NewWithWalker(cfg static.FileProvider, fs FSReader) *Provider {
 	p := &Provider{
 		cfg:        cfg,
 		SkipPrefix: []string{"_"},
-		watched:    make(map[string]struct{}),
+		watched:    make(map[string]watch),
 		isInit:     true,
 		ignores:    make(IgnoreFiles),
 		fs:         fs,
@@ -83,7 +87,7 @@ func (p *Provider) Read(u *url.URL) (*dynamic.Config, error) {
 	return config, nil
 }
 
-func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
+func (p *Provider) Start(ch chan dynamic.ConfigEvent, pool *safe.Pool) error {
 	p.ch = ch
 	var path []string
 	if len(p.cfg.Directories) > 0 {
@@ -119,76 +123,9 @@ func (p *Provider) Watch(dir string, pool *safe.Pool) {
 
 func (p *Provider) watch(pool *safe.Pool) error {
 	var (
-		waitFor      = 1 * time.Second
-		mu           sync.Mutex
-		timers       = make(map[string]*time.Timer)
-		processEvent = func(evt fsnotify.Event) {
-			defer func() {
-				mu.Lock()
-				delete(timers, evt.Name)
-				mu.Unlock()
-			}()
-
-			fileInfo, err := p.fs.Stat(evt.Name)
-			if err != nil {
-				return
-			}
-
-			if evt.Has(fsnotify.Remove) || evt.Has(fsnotify.Rename) {
-				p.m.Lock()
-				defer p.m.Unlock()
-
-				if !fileInfo.IsDir() {
-					delete(p.watched, evt.Name)
-					return
-				}
-				for watched := range p.watched {
-					if strings.HasPrefix(watched, evt.Name) {
-						delete(p.watched, watched)
-						if watched == evt.Name {
-							err = p.watcher.Remove(watched)
-							if err != nil && !errors.Is(err, fsnotify.ErrNonExistentWatch) {
-								log.Errorf("remove watcher '%v' failed: %v", evt.Name, err)
-							}
-						}
-					}
-				}
-				return
-			}
-
-			if fileInfo.IsDir() && !p.isInit {
-				pool.Go(func(ctx context.Context) {
-					err := p.walk(evt.Name)
-					if err != nil {
-						log.Errorf("unable to process dir %v: %v", evt.Name, err)
-					}
-				})
-				return
-			}
-
-			dir, file := filepath.Split(evt.Name)
-			if dir == evt.Name && !p.skip(dir, true) {
-				p.watchPath(dir)
-			} else if len(p.cfg.Filenames) > 0 {
-				for _, filename := range p.cfg.Filenames {
-					if _, configFile := filepath.Split(filename); file == configFile {
-						c, err := p.readFile(evt.Name)
-						if err != nil {
-							log.Errorf("unable to read file %v", evt.Name)
-						}
-						p.ch <- c
-					}
-				}
-			} else {
-				if !p.skip(evt.Name, false) {
-					c, err := p.readFile(evt.Name)
-					if err != nil {
-						log.Errorf("unable to read file %v", evt.Name)
-					}
-					p.ch <- c
-				}
-			}
-		}
+		mu     sync.Mutex
+		t      *time.Timer
+		events []fsnotify.Event
 	)
 
 	pool.Go(func(ctx context.Context) {
@@ -211,19 +148,19 @@ func (p *Provider) watch(pool *safe.Pool) error {
 				}
 
 				mu.Lock()
-				t, ok := timers[evt.Name]
-				mu.Unlock()
-
-				if !ok {
-					t = time.AfterFunc(math.MaxInt64, func() { processEvent(evt) })
-					t.Stop()
-
-					mu.Lock()
-					timers[evt.Name] = t
-					mu.Unlock()
+				events = append(events, evt)
+				if t == nil {
+					t = time.AfterFunc(math.MaxInt64, func() {
+						mu.Lock()
+						e := events
+						events = nil
+						t = nil
+						mu.Unlock()
+						p.processEvents(e)
+					})
 				}
-
-				t.Reset(waitFor)
+				t.Reset(time.Second)
+				mu.Unlock()
 			}
 		}
 	})
@@ -306,7 +243,7 @@ func (p *Provider) walk(root string) error {
 				log.Error(err)
 			} else if len(c.Raw) > 0 {
 				p.watchPath(path)
-				p.ch <- c
+				p.ch <- dynamic.ConfigEvent{Event: dynamic.Create, Config: c, Name: path}
 			}
 		} else {
 			log.Debugf("skip file: %v", path)
@@ -336,25 +273,118 @@ func (p *Provider) watchPath(path string) {
 	p.m.Lock()
 	defer p.m.Unlock()
 
-	if _, ok := p.watched[path]; ok {
-		return
-	}
-	p.watched[path] = struct{}{}
-
 	// add watcher to file does not work, see watcher.Add
 	fileInfo, err := p.fs.Stat(path)
 	if err != nil {
 		return
 	}
 	if !fileInfo.IsDir() {
-		path = filepath.Dir(path)
+		p.watched[path] = watch{isDir: false}
 
-		if _, ok := p.watched[path]; ok {
-			return
+		path = filepath.Dir(path)
+		p.watched[path] = watch{isDir: true}
+	} else {
+		p.watched[path] = watch{isDir: true}
+	}
+
+	err = p.watcher.Add(path)
+	if err != nil {
+		log.Errorf("add watcher to path '%v' failed: %v", path, err)
+	}
+}
+
+func (p *Provider) processEvents(events []fsnotify.Event) {
+	done := map[string]bool{}
+	walkList := []string{}
+
+	for _, evt := range events {
+		key := fmt.Sprintf("%v:%v", evt.Op, evt.Name)
+		if _, ok := done[key]; ok {
+			continue
+		}
+		if evt.Op == fsnotify.Write {
+			// skip write event if we have already a create event.
+			key = fmt.Sprintf("%v:%v", fsnotify.Create, evt.Name)
+			if _, ok := done[key]; ok {
+				continue
+			}
+		}
+		done[key] = true
+
+		if evt.Has(fsnotify.Remove) || evt.Has(fsnotify.Rename) {
+			p.m.Lock()
+			p.m.Unlock()
+
+			if w, ok := p.watched[evt.Name]; ok {
+				if !w.isDir {
+					e := dynamic.ConfigEvent{Event: dynamic.Delete, Name: evt.Name}
+					p.ch <- e
+				}
+
+				delete(p.watched, evt.Name)
+			}
+			continue
+		}
+
+		fileInfo, err := p.fs.Stat(evt.Name)
+		if err != nil {
+			continue
+		}
+
+		if fileInfo.IsDir() && !p.isInit {
+			walkList = append(walkList, evt.Name)
+			continue
+		}
+
+		e := dynamic.ConfigEvent{Name: evt.Name}
+		if evt.Has(fsnotify.Create) {
+			e.Event = dynamic.Create
+		} else if evt.Has(fsnotify.Write) {
+			e.Event = dynamic.Update
+		}
+
+		dir, file := filepath.Split(evt.Name)
+		if dir == evt.Name && !p.skip(dir, true) {
+			p.watchPath(dir)
+		} else if len(p.cfg.Filenames) > 0 {
+			for _, filename := range p.cfg.Filenames {
+				if _, configFile := filepath.Split(filename); file == configFile {
+					e.Config, err = p.readFile(evt.Name)
+					if err != nil {
+						log.Errorf("unable to read file %v", evt.Name)
+					}
+					p.ch <- e
+				}
+			}
+		} else {
+			if !p.skip(evt.Name, false) {
+				e.Config, err = p.readFile(evt.Name)
+				if err != nil {
+					log.Errorf("unable to read file %v", evt.Name)
+				}
+				p.ch <- e
+			}
 		}
 	}
 
-	p.watcher.Add(path)
+	slices.SortFunc(walkList, func(a, b string) int {
+		return len(a) - len(b)
+	})
+	var doneWalk []string
+Walk:
+	for _, dir := range walkList {
+		for _, d := range doneWalk {
+			if strings.HasPrefix(dir, d) {
+				continue Walk
+			}
+		}
+		doneWalk = append(doneWalk, dir)
+
+		err := p.walk(dir)
+		if err != nil {
+			log.Errorf("unable to process dir %v: %v", dir, err)
+		}
+	}
 }
 
 func (p *Provider) isWatchPath(path string) bool {

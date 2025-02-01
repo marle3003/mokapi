@@ -62,3 +62,9 @@ func WithKafkaMessageBinding(b asyncapi3.KafkaMessageBinding) MessageOptions {
 		m.Bindings.Kafka = b
 	}
 }
+
+func WithHeaders(s *schema.Schema) MessageOptions {
+	return func(m *asyncapi3.Message) {
+		m.Headers = &asyncapi3.SchemaRef{Value: &asyncapi3.MultiSchemaFormat{Schema: s}}
+	}
+}

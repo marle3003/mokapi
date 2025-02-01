@@ -126,6 +126,10 @@ func (p *Partition) Write(batch kafka.RecordBatch) (baseOffset int64, records []
 		if err != nil {
 			records = append(records, produce.RecordError{BatchIndex: int32(r.Offset), BatchIndexErrorMessage: err.Error()})
 		}
+		if p.trigger(r, result.SchemaId) {
+			// validate again
+			result, err = p.validator.Validate(r)
+		}
 
 		if len(records) > 0 && p.Topic.channel.Bindings.Kafka.ValueSchemaValidation {
 			return p.Tail, records, fmt.Errorf("validation error: %w", err)
@@ -140,7 +144,6 @@ func (p *Partition) Write(batch kafka.RecordBatch) (baseOffset int64, records []
 
 		writeFuncs = append(writeFuncs, func() {
 			r.Offset = p.Tail
-			p.trigger(r, result.SchemaId)
 
 			if len(p.Segments) == 0 {
 				p.Segments[p.ActiveSegment] = newSegment(p.Tail)
@@ -159,9 +162,6 @@ func (p *Partition) Write(batch kafka.RecordBatch) (baseOffset int64, records []
 
 			result.Partition = p.Index
 			result.Offset = r.Offset
-			for _, h := range r.Headers {
-				result.Headers[h.Key] = string(h.Value)
-			}
 			p.logger(result, events.NewTraits().With("partition", strconv.Itoa(p.Index)))
 		})
 	}

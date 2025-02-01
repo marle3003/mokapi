@@ -13,7 +13,7 @@ var (
 
 type Provider interface {
 	Read(u *url.URL) (*Config, error)
-	Start(chan *Config, *safe.Pool) error
+	Start(chan ConfigEvent, *safe.Pool) error
 }
 
 type configType struct {

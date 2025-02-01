@@ -83,7 +83,12 @@ components:
         headers:
           type: object
           additionalProperties:
-            type: string
+            type: object
+            properties:
+              value:
+                type: string
+              binary:
+                type: string
     KafkaValue:
       type: object
       properties:

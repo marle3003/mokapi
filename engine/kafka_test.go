@@ -118,7 +118,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 					export default function() {
 						on('kafka', function(message) {
 							console.log(message)
-							message.value = 'mokapi'
+							message.value = '"mokapi"'
 							message.headers = { version: '1.0' }
 							return true
 						})
@@ -134,7 +134,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 				b, errCode := s.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
-				require.Equal(t, "mokapi", string(readBytes(b.Records[0].Value)))
+				require.Equal(t, "\"mokapi\"", string(readBytes(b.Records[0].Value)))
 				require.Len(t, b.Records[0].Headers, 1)
 				version, found := getHeader("version", b.Records[0].Headers)
 				require.True(t, found, "version header not found")
@@ -292,6 +292,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 }
 
 func readBytes(b kafka.Bytes) []byte {
+	b.Seek(0, io.SeekStart)
 	buf := new(bytes.Buffer)
 	_, err := buf.ReadFrom(b)
 	if err != nil {

@@ -47,24 +47,24 @@ func NewEngine(opts ...Options) *Engine {
 	return e
 }
 
-func (e *Engine) AddScript(file *dynamic.Config) error {
-	if _, ok := file.Data.(*script.Script); !ok {
+func (e *Engine) AddScript(evt dynamic.ConfigEvent) error {
+	if _, ok := evt.Config.Data.(*script.Script); !ok {
 		return nil
 	}
 
 	e.m.Lock()
 	defer e.m.Unlock()
 
-	host := newScriptHost(file, e)
+	host := newScriptHost(evt.Config, e)
 	e.addOrUpdate(host)
 	e.scripts[host.name] = host
 
-	log.Infof("executing script %v", file.Info.Url)
+	log.Infof("executing script %v", evt.Config.Info.Url)
 	if e.parallel {
 		go func() {
 			err := e.run(host)
 			if err != nil {
-				log.Errorf("error executing script %v: %v", file.Info.Url, err)
+				log.Errorf("error executing script %v: %v", evt.Config.Info.Url, err)
 			}
 		}()
 	} else {

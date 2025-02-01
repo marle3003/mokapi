@@ -18,6 +18,10 @@ func NewKafkaBroker(port string, handler kafka.Handler) *KafkaBroker {
 	return b
 }
 
+func (b *KafkaBroker) Addr() string {
+	return b.server.Addr
+}
+
 func (b *KafkaBroker) Start() {
 	go func() {
 		err := b.server.ListenAndServe()

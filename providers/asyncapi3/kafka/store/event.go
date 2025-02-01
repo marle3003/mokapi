@@ -4,7 +4,7 @@ import (
 	"mokapi/kafka"
 )
 
-type Trigger func(record *kafka.Record, schemaId int)
+type Trigger func(record *kafka.Record, schemaId int) bool
 
 type EventRecord struct {
 	Offset   int64

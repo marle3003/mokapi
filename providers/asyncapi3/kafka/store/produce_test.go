@@ -310,7 +310,7 @@ func TestProduce(t *testing.T) {
 				res, ok := rr.Message.(*produce.Response)
 				require.True(t, ok)
 				require.Equal(t, "foo", res.Topics[0].Name)
-				require.Equal(t, kafka.None, res.Topics[0].Partitions[0].ErrorCode, "expected no kafka error")
+				require.Equal(t, kafka.None, res.Topics[0].Partitions[0].ErrorCode, res.Topics[0].Partitions[0].ErrorMessage)
 				require.Equal(t, int64(0), res.Topics[0].Partitions[0].BaseOffset)
 				require.Equal(t, "", res.Topics[0].Partitions[0].ErrorMessage)
 

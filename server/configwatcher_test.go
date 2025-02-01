@@ -35,8 +35,8 @@ func TestConfigWatcher_Read(t *testing.T) {
 				dynamic.Register("openapi", dynamic.AnyVersion, &openapi.Config{})
 				w := NewConfigWatcher(&static.Config{Configs: []string{`{"openapi":"3.0","info":{"title":"foo"}}`}})
 
-				ch := make(chan *dynamic.Config, 1)
-				w.AddListener(func(config *dynamic.Config) {
+				ch := make(chan dynamic.ConfigEvent, 1)
+				w.AddListener(func(config dynamic.ConfigEvent) {
 					ch <- config
 				})
 
@@ -114,14 +114,14 @@ func TestConfigWatcher_Read(t *testing.T) {
 			test: func(t *testing.T) {
 				w := NewConfigWatcher(&static.Config{})
 				configPath := mustParse("foo://file.yml")
-				var ch chan *dynamic.Config
+				var ch chan dynamic.ConfigEvent
 				w.providers["foo"] = &testprovider{
 					read: func(u *url.URL) (*dynamic.Config, error) {
 						c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}}
 						c.Info.Checksum = []byte{1}
 						return c, nil
 					},
-					start: func(configs chan *dynamic.Config, pool *safe.Pool) error {
+					start: func(configs chan dynamic.ConfigEvent, pool *safe.Pool) error {
 						ch = configs
 						return nil
 					},
@@ -135,7 +135,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 				require.NotNil(t, c)
 
 				time.Sleep(500 * time.Millisecond)
-				ch <- &dynamic.Config{Info: dynamic.ConfigInfo{Url: configPath, Checksum: []byte{10}}, Raw: []byte("foobar")}
+				ch <- dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: configPath, Checksum: []byte{10}}, Raw: []byte("foobar")}}
 				time.Sleep(5 * time.Millisecond)
 				require.Equal(t, "foobar", c.Data)
 			},
@@ -145,12 +145,12 @@ func TestConfigWatcher_Read(t *testing.T) {
 			test: func(t *testing.T) {
 				w := NewConfigWatcher(&static.Config{})
 				configPath := mustParse("foo://file.yml")
-				var ch chan *dynamic.Config
+				var ch chan dynamic.ConfigEvent
 				w.providers["foo"] = &testprovider{
 					read: func(u *url.URL) (*dynamic.Config, error) {
 						return &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}}, nil
 					},
-					start: func(configs chan *dynamic.Config, pool *safe.Pool) error {
+					start: func(configs chan dynamic.ConfigEvent, pool *safe.Pool) error {
 						ch = configs
 						return nil
 					},
@@ -159,7 +159,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 				w.Start(pool)
 				defer pool.Stop()
 
-				ch <- &dynamic.Config{Info: dynamic.ConfigInfo{Url: configPath}, Raw: []byte("foobar")}
+				ch <- dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: configPath}, Raw: []byte("foobar")}}
 				time.Sleep(time.Duration(100) * time.Millisecond)
 
 				c, err := w.Read(configPath, nil)
@@ -227,10 +227,10 @@ func TestConfigWatcher_Read(t *testing.T) {
 				w := NewConfigWatcher(&static.Config{})
 				configPath := mustParse("file.yml")
 				configPath.Scheme = "foo"
-				var chWatcher chan *dynamic.Config
+				var chWatcher chan dynamic.ConfigEvent
 				w.providers["foo"] = &testprovider{
-					start: func(configs chan *dynamic.Config, pool *safe.Pool) error {
-						chWatcher = configs
+					start: func(ch chan dynamic.ConfigEvent, pool *safe.Pool) error {
+						chWatcher = ch
 						return nil
 					},
 				}
@@ -239,11 +239,11 @@ func TestConfigWatcher_Read(t *testing.T) {
 				w.Start(pool)
 				defer pool.Stop()
 
-				ch := make(chan *dynamic.Config, 1)
-				w.AddListener(func(config *dynamic.Config) {
-					ch <- config
+				ch := make(chan dynamic.ConfigEvent, 1)
+				w.AddListener(func(c dynamic.ConfigEvent) {
+					ch <- c
 				})
-				chWatcher <- &dynamic.Config{Info: dynamic.ConfigInfo{Url: configPath}}
+				chWatcher <- dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: configPath}}}
 
 			Wait:
 				for {
@@ -254,6 +254,46 @@ func TestConfigWatcher_Read(t *testing.T) {
 						break Wait
 					}
 				}
+			},
+		},
+		{
+			name: "file delete event",
+			test: func(t *testing.T) {
+				w := NewConfigWatcher(&static.Config{})
+				configPath := mustParse("foo://file.yml")
+				var ch chan dynamic.ConfigEvent
+				w.providers["foo"] = &testprovider{
+					read: func(u *url.URL) (*dynamic.Config, error) {
+						c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}}
+						c.Info.Checksum = []byte{1}
+						return c, nil
+					},
+					start: func(configs chan dynamic.ConfigEvent, pool *safe.Pool) error {
+						ch = configs
+						return nil
+					},
+				}
+				pool := safe.NewPool(context.Background())
+				w.Start(pool)
+				defer pool.Stop()
+
+				c, err := w.Read(configPath, nil)
+				require.NoError(t, err)
+				require.NotNil(t, c)
+
+				var deleted *dynamic.Config
+				w.AddListener(func(e dynamic.ConfigEvent) {
+					if e.Event == dynamic.Delete {
+						deleted = e.Config
+					}
+				})
+
+				time.Sleep(500 * time.Millisecond)
+				ch <- dynamic.ConfigEvent{Name: configPath.String(), Event: dynamic.Delete}
+				time.Sleep(5 * time.Millisecond)
+				require.NotNil(t, deleted)
+				require.Equal(t, c, deleted)
+
 			},
 		},
 	}
@@ -287,7 +327,7 @@ func TestConfigWatcher_Start(t *testing.T) {
 			f: func(t *testing.T) {
 				w := NewConfigWatcher(&static.Config{})
 				pool := safe.NewPool(context.Background())
-				w.providers["foo"] = &testprovider{start: func(configs chan *dynamic.Config, pool *safe.Pool) error {
+				w.providers["foo"] = &testprovider{start: func(configs chan dynamic.ConfigEvent, pool *safe.Pool) error {
 					return fmt.Errorf("TEST ERROR")
 				}}
 
@@ -303,11 +343,11 @@ func TestConfigWatcher_Start(t *testing.T) {
 
 				w := NewConfigWatcher(&static.Config{})
 				var listenerReceived []*dynamic.Config
-				w.AddListener(func(config *dynamic.Config) {
-					listenerReceived = append(listenerReceived, config)
+				w.AddListener(func(e dynamic.ConfigEvent) {
+					listenerReceived = append(listenerReceived, e.Config)
 				})
-				var ch chan *dynamic.Config
-				w.providers["foo"] = &testprovider{start: func(configs chan *dynamic.Config, pool *safe.Pool) error {
+				var ch chan dynamic.ConfigEvent
+				w.providers["foo"] = &testprovider{start: func(configs chan dynamic.ConfigEvent, pool *safe.Pool) error {
 					ch = configs
 					return nil
 				}}
@@ -315,7 +355,7 @@ func TestConfigWatcher_Start(t *testing.T) {
 				err := w.Start(pool)
 				require.NoError(t, err)
 
-				ch <- &dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("foo.json")}, Raw: []byte(`{"openapi": "3.0","info":{"title":"Foo"}}`)}
+				ch <- dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("foo.json")}, Raw: []byte(`{"openapi": "3.0","info":{"title":"Foo"}}`)}}
 				time.Sleep(time.Duration(100) * time.Millisecond)
 
 				require.Len(t, listenerReceived, 1)
@@ -326,7 +366,7 @@ func TestConfigWatcher_Start(t *testing.T) {
 						err := recover()
 						require.Equal(t, err.(error).Error(), "send on closed channel")
 					}()
-					ch <- &dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("foo.yml")}}
+					ch <- dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("foo.yml")}}}
 				}()
 			},
 		},
@@ -428,17 +468,17 @@ func TestConfigWatcher_Wrapping(t *testing.T) {
 					read: func(u *url.URL) (*dynamic.Config, error) {
 						return &dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("foo://foo.yml")}, Raw: []byte("foo")}, nil
 					},
-					start: func(configs chan *dynamic.Config, pool *safe.Pool) error {
+					start: func(configs chan dynamic.ConfigEvent, pool *safe.Pool) error {
 						return nil
 					},
 				}
-				var ch chan *dynamic.Config
+				var ch chan dynamic.ConfigEvent
 				w.providers["bar"] = &testprovider{
 					read: func(u *url.URL) (*dynamic.Config, error) {
 						t.Fatal("read should not be called")
 						return nil, nil
 					},
-					start: func(configs chan *dynamic.Config, pool *safe.Pool) error {
+					start: func(configs chan dynamic.ConfigEvent, pool *safe.Pool) error {
 						ch = configs
 						return nil
 					},
@@ -456,7 +496,7 @@ func TestConfigWatcher_Wrapping(t *testing.T) {
 				err = w.Start(pool)
 				require.NoError(t, err)
 
-				ch <- wrapped
+				ch <- dynamic.ConfigEvent{Config: wrapped}
 
 				time.Sleep(2 * time.Second)
 
@@ -501,7 +541,7 @@ func (d *slow) Parse(config *dynamic.Config, _ dynamic.Reader) error {
 
 type testprovider struct {
 	read  func(u *url.URL) (*dynamic.Config, error)
-	start func(chan *dynamic.Config, *safe.Pool) error
+	start func(chan dynamic.ConfigEvent, *safe.Pool) error
 }
 
 func (p *testprovider) Read(u *url.URL) (*dynamic.Config, error) {
@@ -511,7 +551,7 @@ func (p *testprovider) Read(u *url.URL) (*dynamic.Config, error) {
 	return nil, nil
 }
 
-func (p *testprovider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
+func (p *testprovider) Start(ch chan dynamic.ConfigEvent, pool *safe.Pool) error {
 	if p.start != nil {
 		return p.start(ch, pool)
 	}
