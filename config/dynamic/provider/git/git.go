@@ -96,7 +96,7 @@ func (p *Provider) Read(_ *url.URL) (*dynamic.Config, error) {
 	return nil, fmt.Errorf("not supported")
 }
 
-func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
+func (p *Provider) Start(ch chan dynamic.ConfigEvent, pool *safe.Pool) error {
 	if len(p.repositories) == 0 {
 		return nil
 	}
@@ -114,7 +114,7 @@ func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
 	return nil
 }
 
-func (p *Provider) initRepository(r *repository, ch chan *dynamic.Config, pool *safe.Pool) error {
+func (p *Provider) initRepository(r *repository, ch chan dynamic.ConfigEvent, pool *safe.Pool) error {
 	if len(r.config.PullInterval) == 0 {
 		r.config.PullInterval = p.pullInterval
 	}
@@ -164,7 +164,7 @@ func (p *Provider) initRepository(r *repository, ch chan *dynamic.Config, pool *
 	ref, err := r.repo.Head()
 	r.hash = ref.Hash()
 
-	chFile := make(chan *dynamic.Config)
+	chFile := make(chan dynamic.ConfigEvent)
 	p.startFileProvider(r.localPath, chFile, pool)
 
 	err = startPullInterval(r, pool)
@@ -176,26 +176,27 @@ func (p *Provider) initRepository(r *repository, ch chan *dynamic.Config, pool *
 			select {
 			case <-ctx.Done():
 				return
-			case c := <-chFile:
-				path := c.Info.Url.Path
-				if len(c.Info.Url.Opaque) > 0 {
-					path = c.Info.Url.Opaque
-				}
+			case e := <-chFile:
+				path := e.Name
 				relative := path[len(r.localPath)+1:]
 				if skip(relative, r) {
-					log.Debugf("skip file: %v", getUrl(r, c.Info.Url))
+					if e.Event != dynamic.Delete {
+						log.Debugf("skip file: %v", getUrl(r, e.Config.Info.Url))
+					}
 					continue
 				}
 
-				wrapConfig(c, r)
-				ch <- c
+				if e.Event != dynamic.Delete {
+					wrapConfig(e.Config, r)
+				}
+				ch <- e
 			}
 		}
 	})
 	return nil
 }
 
-func (p *Provider) startFileProvider(dir string, ch chan *dynamic.Config, pool *safe.Pool) {
+func (p *Provider) startFileProvider(dir string, ch chan dynamic.ConfigEvent, pool *safe.Pool) {
 	f := file.New(static.FileProvider{Directories: []string{dir}})
 	f.SkipPrefix = append(f.SkipPrefix, ".git")
 	err := f.Start(ch, pool)

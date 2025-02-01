@@ -41,6 +41,11 @@ func (c *HttpInfo) Handler(http *monitor.Http, emitter common.EventEmitter) http
 }
 
 func (c *HttpInfo) update() {
+	if len(c.configs) == 0 {
+		c.Config = nil
+		return
+	}
+
 	var keys []string
 	for k := range c.configs {
 		keys = append(keys, k)
@@ -52,7 +57,8 @@ func (c *HttpInfo) update() {
 		return filepath.Base(x) < filepath.Base(y)
 	})
 
-	r := getHttpConfig(c.configs[keys[0]])
+	r := &openapi.Config{}
+	*r = *getHttpConfig(c.configs[keys[0]])
 	for _, k := range keys[1:] {
 		p := getHttpConfig(c.configs[k])
 		log.Infof("applying patch for %s: %s", c.Info.Name, k)
@@ -72,6 +78,11 @@ func (c *HttpInfo) Configs() []*dynamic.Config {
 		r = append(r, config)
 	}
 	return r
+}
+
+func (c *HttpInfo) Remove(cfg *dynamic.Config) {
+	delete(c.configs, cfg.Info.Url.String())
+	c.update()
 }
 
 func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {

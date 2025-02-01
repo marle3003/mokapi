@@ -33,17 +33,31 @@ func NewKafkaManager(emitter common.EventEmitter, app *runtime.App) *KafkaManage
 	}
 }
 
-func (m *KafkaManager) UpdateConfig(c *dynamic.Config) {
-	if !runtime.IsKafkaConfig(c) {
+func (m *KafkaManager) UpdateConfig(e dynamic.ConfigEvent) {
+	if !runtime.IsKafkaConfig(e.Config) {
 		return
 	}
-	cfg, err := m.app.AddKafka(c, m.emitter)
-	if err != nil {
-		log.Errorf("add kafka config %v failed: %v", c.Info.Url, err)
+
+	name, cfg := m.app.GetKafka(e.Config)
+	if e.Event == dynamic.Delete {
+		m.app.RemoveKafka(e.Config)
+		if cfg.Config == nil {
+			m.removeCluster(name)
+			return
+		}
+	} else if cfg == nil {
+		var err error
+		cfg, err = m.app.AddKafka(e.Config, m.emitter)
+		if err != nil {
+			log.Errorf("add kafka config %v failed: %v", e.Config.Info.Url, err)
+			return
+		}
+	} else {
+		cfg.AddConfig(e.Config)
 	}
 
 	m.addOrUpdateCluster(cfg)
-	log.Debugf("processed %v", c.Info.Path())
+	log.Debugf("processed %v", e.Config.Info.Path())
 }
 
 func (m *KafkaManager) addOrUpdateCluster(cfg *runtime.KafkaInfo) {
@@ -62,6 +76,19 @@ func (m *KafkaManager) getOrCreateCluster(cfg *runtime.KafkaInfo) *cluster {
 		m.clusters[cfg.Info.Name] = c
 	}
 	return c
+}
+
+func (m *KafkaManager) removeCluster(name string) {
+	m.m.Lock()
+	defer m.m.Unlock()
+
+	c, ok := m.clusters[name]
+	if !ok {
+		return
+	}
+	log.Infof("removing kafka cluster '%v'", name)
+	c.close()
+	delete(m.clusters, name)
 }
 
 func (c *cluster) update(cfg *runtime.KafkaInfo, kafkaMonitor *monitor.Kafka) {
@@ -85,7 +112,7 @@ func (c *cluster) updateBrokers(cfg *runtime.KafkaInfo, kafkaMonitor *monitor.Ka
 		if found {
 			delete(brokers, port)
 		} else {
-			log.Infof("adding new kafka broker '%v' on port %v", name, port)
+			log.Infof("adding new kafka broker '%v' on port %v to cluster '%v'", name, port, cfg.Info.Name)
 			broker = service.NewKafkaBroker(port, cfg.Handler(kafkaMonitor))
 			broker.Start()
 		}
@@ -93,7 +120,7 @@ func (c *cluster) updateBrokers(cfg *runtime.KafkaInfo, kafkaMonitor *monitor.Ka
 	}
 
 	for name, broker := range brokers {
-		log.Infof("removing kafka broker '%v'", name)
+		log.Infof("removing kafka broker '%v' on port %v from cluster '%v'", name, broker.Addr(), cfg.Info.Name)
 		broker.Stop()
 	}
 }

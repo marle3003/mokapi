@@ -16,8 +16,9 @@ type LinkedHashMap[K comparable, V any] struct {
 }
 
 type pair[K comparable, V any] struct {
-	key   K
-	value V
+	key     K
+	value   V
+	element *list.Element
 }
 
 func NewLinkedHashMap() *LinkedHashMap[string, interface{}] {
@@ -30,7 +31,7 @@ func (m *LinkedHashMap[K, V]) Set(key K, value V) {
 	if !ok {
 		p = &pair[K, V]{key: key, value: value}
 		m.pairs[key] = p
-		m.list.PushBack(p)
+		p.element = m.list.PushBack(p)
 	} else {
 		p.value = value
 	}
@@ -51,6 +52,18 @@ func (m *LinkedHashMap[K, V]) Get(key K) (V, bool) {
 		}
 	}
 	return *new(V), false
+}
+
+func (m *LinkedHashMap[K, V]) Del(key K) {
+	if m.pairs == nil {
+		return
+	}
+	p, ok := m.pairs[key]
+	if !ok {
+		return
+	}
+	delete(m.pairs, key)
+	m.list.Remove(p.element)
 }
 
 func (m *LinkedHashMap[K, V]) Lookup(key K) V {

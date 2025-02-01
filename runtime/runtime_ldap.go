@@ -39,6 +39,11 @@ func (c *LdapInfo) AddConfig(config *dynamic.Config) {
 }
 
 func (c *LdapInfo) update() {
+	if len(c.configs) == 0 {
+		c.Config = nil
+		return
+	}
+
 	var keys []string
 	for k := range c.configs {
 		keys = append(keys, k)
@@ -50,14 +55,15 @@ func (c *LdapInfo) update() {
 		return filepath.Base(x) < filepath.Base(y)
 	})
 
-	cfg := getLdapConfig(c.configs[keys[0]])
+	r := &directory.Config{}
+	*r = *getLdapConfig(c.configs[keys[0]])
 	for _, k := range keys[1:] {
 		p := getLdapConfig(c.configs[k])
 		log.Infof("applying patch for %s: %s", c.Info.Name, k)
-		cfg.Patch(p)
+		r.Patch(p)
 	}
 
-	c.Config = cfg
+	c.Config = r
 }
 
 func (c *LdapInfo) Handler(ldap *monitor.Ldap) ldap.Handler {
@@ -78,6 +84,11 @@ func (h *ldapHandler) ServeLDAP(rw ldap.ResponseWriter, r *ldap.Request) {
 
 	h.next.ServeLDAP(rw, r)
 
+}
+
+func (c *LdapInfo) Remove(cfg *dynamic.Config) {
+	delete(c.configs, cfg.Info.Url.String())
+	c.update()
 }
 
 func IsLdapConfig(c *dynamic.Config) bool {

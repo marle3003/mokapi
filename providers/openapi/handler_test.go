@@ -886,12 +886,12 @@ func (e *engine) Emit(event string, args ...interface{}) []*common.Action {
 	return nil
 }
 
-func newScript(path, src string) *dynamic.Config {
-	return &dynamic.Config{
+func newScript(path, src string) dynamic.ConfigEvent {
+	return dynamic.ConfigEvent{Config: &dynamic.Config{
 		Info: dynamic.ConfigInfo{Url: mustParse(path)},
 		Raw:  []byte(src),
 		Data: &script.Script{Code: src, Filename: path},
-	}
+	}}
 }
 
 func mustParse(s string) *url.URL {

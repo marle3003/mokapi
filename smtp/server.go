@@ -12,7 +12,7 @@ import (
 	"sync/atomic"
 )
 
-var ErrServerClosed = errors.New("ldap: Server closed")
+var ErrServerClosed = errors.New("SMTP: Server closed")
 
 type atomicBool int32
 
@@ -68,7 +68,9 @@ func (s *Server) ListenAndServe() error {
 	}
 
 	var err error
+	s.mu.Lock()
 	s.listener, err = net.Listen("tcp", s.Addr)
+	s.mu.Unlock()
 	if err != nil {
 		return err
 	}
@@ -81,7 +83,9 @@ func (s *Server) ListenAndServeTLS() error {
 	}
 
 	var err error
+	s.mu.Lock()
 	s.listener, err = tls.Listen("tcp", s.Addr, s.TLSConfig)
+	s.mu.Unlock()
 	if err != nil {
 		return err
 	}
@@ -97,7 +101,7 @@ func (s *Server) Serve(l net.Listener) error {
 			case <-closeCh:
 				return ErrServerClosed
 			default:
-				log.Errorf("smtp: Accept error: %v", err)
+				log.Errorf("smtp: accept error: %v", err)
 				continue
 			}
 		}
@@ -112,6 +116,9 @@ func (s *Server) Serve(l net.Listener) error {
 }
 
 func (s *Server) Close() {
+	if s.inShutdown.isSet() {
+		return
+	}
 	s.inShutdown.setTrue()
 
 	s.mu.Lock()

@@ -211,13 +211,14 @@ endpointLoop:
 			continue
 		}
 
-		routePath := ""
-		if path != "/" {
-			routePath = path
-		}
 		servicePath, ok := r.Context().Value("servicePath").(string)
+
+		routePath := path
 		if ok && servicePath != "/" {
 			routePath = servicePath + routePath
+		}
+		if len(routePath) > 1 {
+			routePath = strings.TrimRight(routePath, "/")
 		}
 		routeSeg := strings.Split(routePath, "/")
 

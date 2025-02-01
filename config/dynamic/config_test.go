@@ -62,7 +62,7 @@ func TestAddRef(t *testing.T) {
 				ref.Info.Time = d
 
 				dynamic.AddRef(parent, ref)
-				ref.Listeners.Invoke(ref)
+				ref.Listeners.Invoke(dynamic.ConfigEvent{Config: ref})
 
 				require.Equal(t, d, parent.Info.Time)
 			},

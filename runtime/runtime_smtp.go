@@ -39,6 +39,12 @@ func (c *SmtpInfo) AddConfig(config *dynamic.Config) {
 }
 
 func (c *SmtpInfo) update() {
+	if len(c.configs) == 0 {
+		c.Config = nil
+		c.Store = nil
+		return
+	}
+
 	var keys []string
 	for k := range c.configs {
 		keys = append(keys, k)
@@ -50,11 +56,17 @@ func (c *SmtpInfo) update() {
 		return filepath.Base(x) < filepath.Base(y)
 	})
 
-	cfg := getSmtpConfig(c.configs[keys[0]])
+	cfg := &mail.Config{}
+	*cfg = *getSmtpConfig(c.configs[keys[0]])
 	for _, k := range keys[1:] {
 		p := getSmtpConfig(c.configs[k])
 		log.Infof("applying patch for %s: %s", c.Info.Name, k)
 		cfg.Patch(p)
+	}
+
+	if len(cfg.Server) > 0 {
+		log.Warnf("deprecated server configuration. Please use servers configuration")
+		cfg.Servers = append(cfg.Servers, mail.Server{Url: cfg.Server})
 	}
 
 	c.Config = cfg
@@ -78,6 +90,11 @@ func (c *SmtpInfo) Configs() []*dynamic.Config {
 		r = append(r, config)
 	}
 	return r
+}
+
+func (c *SmtpInfo) Remove(cfg *dynamic.Config) {
+	delete(c.configs, cfg.Info.Url.String())
+	c.update()
 }
 
 type mailHandler struct {

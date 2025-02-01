@@ -29,7 +29,9 @@ func (s *Server) ListenAndServe() error {
 	}
 
 	var err error
+	s.mu.Lock()
 	s.listener, err = net.Listen("tcp", s.Addr)
+	s.mu.Unlock()
 	if err != nil {
 		return err
 	}
@@ -60,6 +62,9 @@ func (s *Server) Serve(l net.Listener) error {
 }
 
 func (s *Server) Close() {
+	if s.inShutdown.IsSet() {
+		return
+	}
 	s.inShutdown.SetTrue()
 
 	s.mu.Lock()
