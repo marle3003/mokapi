@@ -213,7 +213,7 @@ func TestHttp(t *testing.T) {
 
 				c := http.Client{}
 				_, err := c.Get(fmt.Sprintf("http://127.0.0.1:%v/foo", server.DefaultHttpPort))
-				require.EqualError(t, err, fmt.Sprintf(`Get "http://127.0.0.1:%v/foo": dial tcp 127.0.0.1:%v: connectex: No connection could be made because the target machine actively refused it.`, server.DefaultHttpPort, server.DefaultHttpPort))
+				require.Error(t, err)
 			},
 		},
 	}

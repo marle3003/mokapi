@@ -268,7 +268,7 @@ func TestKafkaServer_Update(t *testing.T) {
 				defer client.Close()
 
 				_, err := client.Metadata(0, &metaData.Request{})
-				require.EqualError(t, err, fmt.Sprintf("dial tcp 127.0.0.1:%v: connectex: No connection could be made because the target machine actively refused it.", port))
+				require.Error(t, err)
 			},
 		},
 	}

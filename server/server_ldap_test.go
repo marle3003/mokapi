@@ -107,7 +107,7 @@ func TestLdapDirectory(t *testing.T) {
 
 				c := ldap.NewClient(addr)
 				err := c.Dial()
-				require.EqualError(t, err, fmt.Sprintf("dial tcp %v: connectex: No connection could be made because the target machine actively refused it.", addr))
+				require.Error(t, err)
 			},
 		},
 	}
