@@ -278,6 +278,9 @@ func (d multipartForm) decode(m map[string]interface{}, part *multipart.Part) er
 		encoding.WithContentType(ct),
 		encoding.WithParser(p),
 	)
+	if err != nil {
+		return err
+	}
 
 	if prop.Value.Type.IsArray() {
 		var arr []interface{}

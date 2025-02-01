@@ -38,9 +38,9 @@ func NewConfigWatcher(cfg *static.Config) *ConfigWatcher {
 	}
 
 	w.providers["file"] = file.New(cfg.Providers.File)
-	http := http.New(cfg.Providers.Http)
-	w.providers["http"] = http
-	w.providers["https"] = http
+	h := http.New(cfg.Providers.Http)
+	w.providers["http"] = h
+	w.providers["https"] = h
 	w.providers["git"] = git.New(cfg.Providers.Git)
 	w.providers["npm"] = npm.New(cfg.Providers.Npm)
 

@@ -73,7 +73,7 @@ declare interface KafkaEventData {
   schemaId: number;
   messageId: string
   partition: number;
-  headers: { [name: string]: string }
+  headers: { [name: string]: { value: string, binary: string} }
 }
 
 declare interface KafkaValue {

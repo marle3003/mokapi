@@ -61,7 +61,7 @@ func Decode(b []byte, opts ...DecodeOptions) (interface{}, error) {
 			return v, err
 		}
 	}
-	return state.parser.Parse(string(b))
+	return state.parser.Parse(b)
 }
 
 func WithContentType(contentType media.ContentType) DecodeOptions {

@@ -14,7 +14,9 @@ import (
 	"mokapi/schema/encoding"
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
+	"slices"
 	"strconv"
+	"unicode/utf8"
 )
 
 type validator struct {
@@ -43,6 +45,7 @@ func (v *validator) Validate(record *kafka.Record) (l *KafkaLog, err error) {
 		return &KafkaLog{
 			Key:     LogValue{Binary: kafka.Read(record.Key)},
 			Message: LogValue{Binary: kafka.Read(record.Value)},
+			Headers: convertHeader(record.Headers),
 		}, nil
 	}
 
@@ -55,6 +58,7 @@ func (v *validator) Validate(record *kafka.Record) (l *KafkaLog, err error) {
 	return &KafkaLog{
 		Key:     LogValue{Binary: kafka.Read(record.Key)},
 		Message: LogValue{Binary: kafka.Read(record.Value)},
+		Headers: convertHeader(record.Headers),
 	}, err
 }
 
@@ -63,14 +67,14 @@ type messageValidator struct {
 	msg       *asyncapi3.Message
 	key       *schemaValidator
 	payload   *schemaValidator
-	header    *schemaValidator
+	header    *headerValidator
 }
 
 func newMessageValidator(messageId string, msg *asyncapi3.Message, channel *asyncapi3.Channel) *messageValidator {
 	v := &messageValidator{messageId: messageId, msg: msg}
 
 	var msgParser encoding.Parser
-	if channel.Bindings.Kafka.ValueSchemaValidation {
+	if msg.Payload != nil && channel.Bindings.Kafka.ValueSchemaValidation {
 		switch s := msg.Payload.Value.Schema.(type) {
 		case *schema.Schema:
 			msgParser = &parser.Parser{Schema: s, ConvertToSortedMap: true}
@@ -125,17 +129,19 @@ func newMessageValidator(messageId string, msg *asyncapi3.Message, channel *asyn
 		}
 
 		if headerParser != nil {
-			v.header = &schemaValidator{
-				parser: headerParser,
+			v.header = &headerValidator{
+				schema: msg.Headers,
 			}
 		}
+	} else {
+		v.header = &headerValidator{}
 	}
 
 	return v
 }
 
 func (mv *messageValidator) Validate(record *kafka.Record) (*KafkaLog, error) {
-	r := &KafkaLog{Key: LogValue{}, Message: LogValue{}, Headers: make(map[string]string), MessageId: mv.messageId}
+	r := &KafkaLog{Key: LogValue{}, Message: LogValue{}, Headers: make(map[string]LogValue), MessageId: mv.messageId}
 
 	if mv.msg != nil && mv.msg.Bindings.Kafka.SchemaIdLocation == "payload" {
 		var err error
@@ -169,6 +175,17 @@ func (mv *messageValidator) Validate(record *kafka.Record) (*KafkaLog, error) {
 		r.Key.Binary = kafka.Read(record.Key)
 	}
 
+	if mv.header != nil {
+		if h, err := mv.header.Validate(record.Headers); err != nil {
+			err = fmt.Errorf("invalid key: %w", err)
+			return r, err
+		} else {
+			r.Headers = h
+		}
+	} else {
+		r.Key.Binary = kafka.Read(record.Key)
+	}
+
 	return r, nil
 }
 
@@ -179,6 +196,14 @@ type schemaValidator struct {
 
 func (v *schemaValidator) Validate(data io.Reader) (interface{}, error) {
 	return encoding.DecodeFrom(data, encoding.WithContentType(media.ParseContentType(v.contentType)), encoding.WithParser(v.parser))
+}
+
+type headerValidator struct {
+	schema *asyncapi3.SchemaRef
+}
+
+func (v *headerValidator) Validate(headers []kafka.RecordHeader) (map[string]LogValue, error) {
+	return parseHeader(headers, v.schema)
 }
 
 func readSchemaId(payload kafka.Bytes, encoding string) (int, error) {
@@ -214,4 +239,109 @@ func readSchemaId(payload kafka.Bytes, encoding string) (int, error) {
 	_, err = binary.Decode(b, binary.BigEndian, &version)
 
 	return int(version), err
+}
+
+func convertHeader(headers []kafka.RecordHeader) map[string]LogValue {
+	result := map[string]LogValue{}
+	for _, header := range headers {
+		result[header.Key] = LogValue{Binary: header.Value}
+	}
+	return result
+}
+
+func parseHeader(headers []kafka.RecordHeader, sr *asyncapi3.SchemaRef) (map[string]LogValue, error) {
+	if sr == nil || sr.Value == nil || sr.Value.Schema == nil {
+		return convertHeader(headers), nil
+	}
+	m := map[string][]byte{}
+	for _, header := range headers {
+		m[header.Key] = header.Value
+	}
+
+	result := map[string]LogValue{}
+	switch s := sr.Value.Schema.(type) {
+	case *schema.Schema:
+		if s.Properties == nil {
+			return result, fmt.Errorf("invalid header definition: expected object with properties")
+		}
+		done := map[string]bool{}
+		p := parser.Parser{}
+		for it := s.Properties.Iter(); it.Next(); {
+			if b, ok := m[it.Key()]; ok {
+				t := it.Value().Type
+				var v interface{}
+				var err error
+				switch {
+				case t.IsString():
+					v = string(b)
+				case t.IsInteger():
+					switch len(b) {
+					case 1:
+						var i int8
+						_, err = binary.Decode(b, binary.LittleEndian, &i)
+						v = int(i)
+					case 2:
+						var i int16
+						_, err = binary.Decode(b, binary.LittleEndian, &i)
+						v = int(i)
+					case 4:
+						var i int32
+						_, err = binary.Decode(b, binary.LittleEndian, &i)
+						v = int(i)
+					case 8:
+						var i int64
+						_, err = binary.Decode(b, binary.LittleEndian, &i)
+						v = int(i)
+					default:
+						return nil, fmt.Errorf("invalid header %v: expected integer got: %v", it.Key(), b)
+					}
+				case t.IsNumber():
+					var f float32
+					_, err = binary.Decode(b, binary.LittleEndian, &f)
+					v = float64(f)
+				}
+				if err != nil {
+					return nil, err
+				}
+				v, err = p.ParseWith(v, it.Value())
+				if err != nil {
+					return nil, err
+				}
+				result[it.Key()] = LogValue{Value: fmt.Sprintf("%v", v)}
+				done[it.Key()] = true
+			} else if slices.Contains(s.Required, it.Key()) {
+				return nil, fmt.Errorf("required property '%s' is missing in header", it.Key())
+			}
+		}
+		if len(done) != len(headers) && !s.IsFreeForm() {
+			var additional []string
+			for _, h := range headers {
+				if _, ok := done[h.Key]; !ok {
+					additional = append(additional, h.Key)
+				}
+			}
+			return nil, fmt.Errorf("additional headers not allowed: %v", additional)
+		}
+		for _, h := range headers {
+			if _, ok := done[h.Key]; !ok {
+				if utf8.Valid(h.Value) {
+					result[h.Key] = LogValue{Value: string(h.Value), Binary: h.Value}
+				} else {
+					result[h.Key] = LogValue{Binary: h.Value}
+				}
+			}
+		}
+	case *avro.Schema:
+		for _, f := range s.Fields {
+			if v, ok := m[f.Name]; ok {
+				val, err := encoding.Decode(v, encoding.WithParser(&avro.Parser{Schema: s}))
+				if err != nil {
+					return nil, err
+				}
+				b, _ := json.Marshal(val)
+				result[f.Name] = LogValue{Value: string(b)}
+			}
+		}
+	}
+	return result, nil
 }

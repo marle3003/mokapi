@@ -285,7 +285,7 @@ func (s *Store) log(log *KafkaLog, traits events.Traits) {
 	)
 }
 
-func (s *Store) trigger(record *kafka.Record, schemaId int) {
+func (s *Store) trigger(record *kafka.Record, schemaId int) bool {
 	h := map[string]string{}
 	for _, v := range record.Headers {
 		h[v.Key] = string(v.Value)
@@ -306,7 +306,7 @@ func (s *Store) trigger(record *kafka.Record, schemaId int) {
 
 	actions := s.eventEmitter.Emit("kafka", r)
 	if len(actions) == 0 {
-		return
+		return false
 	}
 
 	record.Key.Close()
@@ -336,6 +336,7 @@ func (s *Store) trigger(record *kafka.Record, schemaId int) {
 		}
 	}
 
+	return true
 }
 
 func parseHostAndPort(s string) (host string, port int) {

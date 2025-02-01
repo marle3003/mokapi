@@ -275,7 +275,7 @@ export let events = [
              partition: 0,
              messageId: 'shopOrder',
              headers: {
-                 foo: 'bar',
+                 foo: { value: 'bar', binary: '' },
              }
          }
      },

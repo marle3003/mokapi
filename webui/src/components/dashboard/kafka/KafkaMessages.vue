@@ -51,7 +51,7 @@ interface DialogData {
     key: string
     message: string
     source: Source
-    headers: { [name: string]: string }
+    headers: { [name: string]: { value: string, binary: string} }
     contentType: string
     contentTypeTitle: string
     isAvro: boolean
@@ -185,6 +185,9 @@ function key(data: KafkaEventData): string {
     }
     return ''
 }
+function formatBinary(s: string): string {
+    return atob(s)
+}
 </script>
 
 <template>
@@ -248,7 +251,7 @@ function key(data: KafkaEventData): string {
                                                 <tbody>
                                                     <tr v-for="(value, name) of message.headers" :key="name">
                                                         <td>{{ name }}</td>
-                                                        <td>{{ value }}</td>
+                                                        <td>{{ value.value ?? formatBinary(value.binary) }}</td>
                                                     </tr>
                                                 </tbody>
                                             </table>
