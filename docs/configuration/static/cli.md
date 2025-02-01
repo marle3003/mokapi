@@ -99,7 +99,7 @@ This is equivalent to the following JSON example.
 
 ``` box=warning title=PowerShell
 When using PowerShell, you must place the stop-parsing symbol (--%) before any arguments and escape quotation marks.
---parameter --% "{\"key1\":\"value1\",\"key2\",\"value2\",\"key3\"=\"value3\"}" 
+--parameter --% "{\"key1\":\"value1\",\"key2\",\"value2\",\"key3\":\"value3\"}" 
 ```
 
 This corresponds to the following example, where each parameter is defined separately.

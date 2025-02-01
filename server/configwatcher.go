@@ -67,9 +67,7 @@ func (w *ConfigWatcher) Read(u *url.URL, v any) (*dynamic.Config, error) {
 		}
 		e = &entry{config: c}
 		w.configs[u.String()] = e
-		c.Listeners.Add("ConfigWatcher", func(cfg *dynamic.Config) {
-			w.configChanged(cfg)
-		})
+		c.Listeners.Add("ConfigWatcher", w.configChanged)
 		parse = true
 	} else {
 		c = e.config
@@ -99,7 +97,7 @@ func (w *ConfigWatcher) Read(u *url.URL, v any) (*dynamic.Config, error) {
 }
 
 func (w *ConfigWatcher) Start(pool *safe.Pool) error {
-	ch := make(chan *dynamic.Config)
+	ch := make(chan dynamic.ConfigEvent)
 	for _, p := range w.providers {
 		err := p.Start(ch, pool)
 		if err != nil {
@@ -119,7 +117,7 @@ func (w *ConfigWatcher) Start(pool *safe.Pool) error {
 				},
 				Raw: []byte(cfg),
 			}
-			if err := w.addOrUpdate(c); err != nil {
+			if err := w.addOrUpdate(dynamic.ConfigEvent{Name: u.String(), Config: c, Event: dynamic.Create}); err != nil {
 				log.Error(err)
 			}
 		}
@@ -129,9 +127,20 @@ func (w *ConfigWatcher) Start(pool *safe.Pool) error {
 			case <-ctx.Done():
 				close(ch)
 				return
-			case c := <-ch:
-				if err := w.addOrUpdate(c); err != nil {
-					log.Error(err)
+			case evt := <-ch:
+				if evt.Event == dynamic.Delete {
+					w.m.Lock()
+					e, ok := w.configs[evt.Name]
+					w.m.Unlock()
+					if !ok {
+						continue
+					}
+					evt.Config = e.config
+					go e.config.Listeners.Invoke(evt)
+				} else {
+					if err := w.addOrUpdate(evt); err != nil {
+						log.Error(err)
+					}
 				}
 			}
 		}
@@ -139,13 +148,14 @@ func (w *ConfigWatcher) Start(pool *safe.Pool) error {
 	return nil
 }
 
-func (w *ConfigWatcher) AddListener(f func(config *dynamic.Config)) {
+func (w *ConfigWatcher) AddListener(f func(e dynamic.ConfigEvent)) {
 	w.listener = append(w.listener, f)
 }
 
-func (w *ConfigWatcher) addOrUpdate(c *dynamic.Config) error {
+func (w *ConfigWatcher) addOrUpdate(evt dynamic.ConfigEvent) error {
 	w.m.Lock()
 
+	c := evt.Config
 	e, ok := w.getConfig(c.Info.Url)
 	if !ok && c.Info.Inner() != nil {
 		current := c.Info.Inner()
@@ -167,11 +177,9 @@ func (w *ConfigWatcher) addOrUpdate(c *dynamic.Config) error {
 	if !ok {
 		e = &entry{config: c}
 		w.configs[c.Info.Url.String()] = e
-		c.Listeners.Add("ConfigWatcher", func(cfg *dynamic.Config) {
-			w.configChanged(cfg)
-		})
+		c.Listeners.Add("ConfigWatcher", w.configChanged)
 	} else if bytes.Equal(e.config.Info.Checksum, c.Info.Checksum) {
-		log.Debugf("Checksum not changed. Skip reloading %v", e.config.Info.Url.String())
+		log.Debugf("Checksum not changed. Skip reloading %v (%v)", e.config.Info.Url.String(), evt.Event)
 		w.m.Unlock()
 		return nil
 	} else {
@@ -181,17 +189,23 @@ func (w *ConfigWatcher) addOrUpdate(c *dynamic.Config) error {
 	}
 
 	w.m.Unlock()
-	go e.config.Listeners.Invoke(e.config)
+	go e.config.Listeners.Invoke(evt)
 
 	return nil
 }
 
-func (w *ConfigWatcher) configChanged(c *dynamic.Config) {
+func (w *ConfigWatcher) configChanged(evt dynamic.ConfigEvent) {
+	if evt.Event == dynamic.Delete {
+		w.remove(evt)
+		return
+	}
+
 	w.m.Lock()
-	e := w.configs[c.Info.Url.String()]
+	e := w.configs[evt.Config.Info.Url.String()]
 	e.m.Lock()
 	w.m.Unlock()
 
+	c := e.config
 	err := dynamic.Parse(c, w)
 	if err != nil {
 		log.Errorf("parse error %v: %v", c.Info.Path(), err)
@@ -214,8 +228,22 @@ func (w *ConfigWatcher) configChanged(c *dynamic.Config) {
 	log.Debugf("processing %v", c.Info.Path())
 
 	for _, l := range w.listener {
-		go l(e.config)
+		go l(evt)
 	}
+}
+
+func (w *ConfigWatcher) remove(evt dynamic.ConfigEvent) {
+	w.m.Lock()
+	e := w.configs[evt.Config.Info.Url.String()]
+	e.m.Lock()
+	delete(w.configs, evt.Config.Info.Url.String())
+	w.m.Unlock()
+
+	log.Debugf("removing %v", evt.Config.Info.Url.String())
+	for _, l := range w.listener {
+		go l(evt)
+	}
+	return
 }
 
 func (w *ConfigWatcher) getConfig(u *url.URL) (*entry, bool) {

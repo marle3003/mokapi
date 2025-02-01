@@ -38,6 +38,17 @@ func New() *App {
 	}
 }
 
+func (a *App) GetHttp(c *dynamic.Config) (string, *HttpInfo) {
+	a.m.Lock()
+	defer a.m.Unlock()
+
+	if len(a.Http) == 0 {
+		return "", nil
+	}
+	cfg := c.Data.(*openapi.Config)
+	return cfg.Info.Name, a.Http[cfg.Info.Name]
+}
+
 func (a *App) AddHttp(c *dynamic.Config) *HttpInfo {
 	a.m.Lock()
 	defer a.m.Unlock()
@@ -62,6 +73,20 @@ func (a *App) AddHttp(c *dynamic.Config) *HttpInfo {
 	}
 
 	return hc
+}
+
+func (a *App) GetKafka(c *dynamic.Config) (string, *KafkaInfo) {
+	a.m.Lock()
+	defer a.m.Unlock()
+
+	if len(a.Kafka) == 0 {
+		return "", nil
+	}
+	cfg, err := getKafkaConfig(c)
+	if err != nil {
+		return "", nil
+	}
+	return cfg.Info.Name, a.Kafka[cfg.Info.Name]
 }
 
 func (a *App) AddKafka(c *dynamic.Config, emitter common.EventEmitter) (*KafkaInfo, error) {
@@ -96,6 +121,17 @@ func (a *App) AddKafka(c *dynamic.Config, emitter common.EventEmitter) (*KafkaIn
 	return hc, nil
 }
 
+func (a *App) GetSmtp(c *dynamic.Config) (string, *SmtpInfo) {
+	a.m.Lock()
+	defer a.m.Unlock()
+
+	if len(a.Smtp) == 0 {
+		return "", nil
+	}
+	cfg := c.Data.(*mail.Config)
+	return cfg.Info.Name, a.Smtp[cfg.Info.Name]
+}
+
 func (a *App) AddSmtp(c *dynamic.Config) *SmtpInfo {
 	a.m.Lock()
 	defer a.m.Unlock()
@@ -118,6 +154,17 @@ func (a *App) AddSmtp(c *dynamic.Config) *SmtpInfo {
 	events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("smtp").WithName(cfg.Info.Name))
 
 	return hc
+}
+
+func (a *App) GetLdap(c *dynamic.Config) (string, *LdapInfo) {
+	a.m.Lock()
+	defer a.m.Unlock()
+
+	if len(a.Ldap) == 0 {
+		return "", nil
+	}
+	cfg := c.Data.(*directory.Config)
+	return cfg.Info.Name, a.Ldap[cfg.Info.Name]
 }
 
 func (a *App) AddLdap(c *dynamic.Config, emitter common.EventEmitter) *LdapInfo {
@@ -144,13 +191,17 @@ func (a *App) AddLdap(c *dynamic.Config, emitter common.EventEmitter) *LdapInfo 
 	return hc
 }
 
-func (a *App) AddConfig(c *dynamic.Config) {
+func (a *App) UpdateConfig(e dynamic.ConfigEvent) {
 	a.m.Lock()
 	defer a.m.Unlock()
 
-	a.Configs[c.Info.Key()] = c
-	for _, r := range c.Refs.List(true) {
-		a.Configs[r.Info.Key()] = r
+	if e.Event == dynamic.Delete {
+		delete(a.Configs, e.Config.Info.Key())
+	} else {
+		a.Configs[e.Config.Info.Key()] = e.Config
+		for _, r := range e.Config.Refs.List(true) {
+			a.Configs[r.Info.Key()] = r
+		}
 	}
 }
 
@@ -169,4 +220,65 @@ func (a *App) FindConfig(key string) *dynamic.Config {
 	}
 
 	return nil
+}
+
+func (a *App) RemoveHttp(c *dynamic.Config) {
+	a.m.Lock()
+	defer a.m.Unlock()
+
+	cfg := c.Data.(*openapi.Config)
+	name := cfg.Info.Name
+	hc := a.Http[name]
+	hc.Remove(c)
+	if len(hc.configs) == 0 {
+		delete(a.Http, name)
+		events.ResetStores(events.NewTraits().WithNamespace("http").WithName(name))
+	}
+}
+
+func (a *App) RemoveKafka(c *dynamic.Config) {
+	a.m.Lock()
+	defer a.m.Unlock()
+
+	cfg, err := getKafkaConfig(c)
+	if err != nil {
+		return
+	}
+
+	name := cfg.Info.Name
+	hc := a.Kafka[name]
+	hc.Remove(c)
+
+	if len(hc.configs) == 0 {
+		delete(a.Kafka, name)
+		events.ResetStores(events.NewTraits().WithNamespace("kafka").WithName(name))
+	}
+}
+
+func (a *App) RemoveLdap(c *dynamic.Config) {
+	a.m.Lock()
+	defer a.m.Unlock()
+
+	cfg := c.Data.(*directory.Config)
+	name := cfg.Info.Name
+	hc := a.Ldap[name]
+	hc.Remove(c)
+	if len(hc.configs) == 0 {
+		delete(a.Ldap, name)
+		events.ResetStores(events.NewTraits().WithNamespace("ldap").WithName(name))
+	}
+}
+
+func (a *App) RemoveSmtp(c *dynamic.Config) {
+	a.m.Lock()
+	defer a.m.Unlock()
+
+	cfg := c.Data.(*mail.Config)
+	name := cfg.Info.Name
+	hc := a.Smtp[name]
+	hc.Remove(c)
+	if len(hc.configs) == 0 {
+		delete(a.Smtp, name)
+		events.ResetStores(events.NewTraits().WithNamespace("smtp").WithName(name))
+	}
 }

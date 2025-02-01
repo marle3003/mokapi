@@ -6,13 +6,18 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/engine/common"
+	"mokapi/providers/openapi"
 	"mokapi/runtime"
 	"mokapi/server/cert"
 	"mokapi/server/service"
 	"net/http"
 	"net/url"
+	"slices"
 	"sync"
 )
+
+var DefaultHttpPort = 80
+var DefaultHttpsPort = 443
 
 type HttpManager struct {
 	servers map[string]*service.HttpServer
@@ -47,16 +52,40 @@ func (m *HttpManager) AddService(name string, u *url.URL, h http.Handler, isInte
 	return nil
 }
 
-func (m *HttpManager) Update(c *dynamic.Config) {
-	if !runtime.IsHttpConfig(c) {
+func (m *HttpManager) removeService(name string) {
+	m.m.Lock()
+	defer m.m.Unlock()
+
+	for _, server := range m.servers {
+		server.Remove(name)
+	}
+}
+
+func (m *HttpManager) Update(e dynamic.ConfigEvent) {
+	if !runtime.IsHttpConfig(e.Config) {
 		return
 	}
-	cfg := m.app.AddHttp(c)
+
+	name, cfg := m.app.GetHttp(e.Config)
+	if e.Event == dynamic.Delete {
+		m.app.RemoveHttp(e.Config)
+		if cfg.Config == nil {
+			m.removeService(name)
+			m.stopEmptyServers()
+			return
+		}
+	} else if cfg == nil {
+		cfg = m.app.AddHttp(e.Config)
+	} else {
+		oldServers := cfg.Servers
+		cfg.AddConfig(e.Config)
+		m.cleanupRemovedServers(cfg, oldServers)
+	}
 
 	for _, s := range cfg.Servers {
 		u, err := parseUrl(s.Url)
 		if err != nil {
-			log.Errorf("url syntax error %v: %v", c.Info.Url, err.Error())
+			log.Errorf("url syntax error %v: %v", e.Config.Info.Url, err.Error())
 			continue
 		}
 
@@ -66,7 +95,9 @@ func (m *HttpManager) Update(c *dynamic.Config) {
 			continue
 		}
 	}
-	log.Debugf("processed %v", c.Info.Path())
+
+	m.stopEmptyServers()
+	log.Debugf("processed %v", e.Config.Info.Path())
 }
 
 func (m *HttpManager) Stop() {
@@ -108,12 +139,45 @@ func parseUrl(s string) (u *url.URL, err error) {
 	if len(port) == 0 {
 		switch u.Scheme {
 		case "https":
-			port = "443"
+			port = fmt.Sprintf("%d", DefaultHttpsPort)
 		default:
-			port = "80"
+			port = fmt.Sprintf("%d", DefaultHttpPort)
 		}
 		u.Host = fmt.Sprintf("%v:%v", u.Hostname(), port)
 	}
 
 	return
+}
+
+func (m *HttpManager) cleanupRemovedServers(cfg *runtime.HttpInfo, old []*openapi.Server) {
+	for _, server := range old {
+		if !slices.ContainsFunc(cfg.Servers, func(s *openapi.Server) bool {
+			return s.Url == server.Url
+		}) {
+			u, err := parseUrl(server.Url)
+			if err != nil {
+				continue
+			}
+			s, ok := m.servers[u.Port()]
+			if !ok {
+				continue
+			}
+			path := u.Path
+			if path == "" {
+				path = "/"
+			}
+			log.Infof("removing '%v' on binding %v on path %v", cfg.Info.Name, u.Port(), path)
+			s.RemoveUrl(u)
+		}
+	}
+}
+
+func (m *HttpManager) stopEmptyServers() {
+	for port, server := range m.servers {
+		if server.CanClose() {
+			log.Infof("stopping HTTP server on binding :%v", port)
+			server.Stop()
+			delete(m.servers, port)
+		}
+	}
 }

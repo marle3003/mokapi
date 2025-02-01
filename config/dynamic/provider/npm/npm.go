@@ -15,7 +15,7 @@ import (
 
 type Provider struct {
 	cfg    static.NpmProvider
-	ch     chan *dynamic.Config
+	ch     chan dynamic.ConfigEvent
 	config map[string]static.NpmPackage
 
 	reader file.FSReader
@@ -70,13 +70,13 @@ func (p *Provider) Read(u *url.URL) (*dynamic.Config, error) {
 	return c, nil
 }
 
-func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
+func (p *Provider) Start(ch chan dynamic.ConfigEvent, pool *safe.Pool) error {
 	workDir, err := p.reader.GetWorkingDir()
 	if err != nil {
 		return err
 	}
 
-	p.ch = make(chan *dynamic.Config)
+	p.ch = make(chan dynamic.ConfigEvent)
 	p.config = map[string]static.NpmPackage{}
 
 	pool.Go(func(ctx context.Context) {
@@ -101,15 +101,18 @@ func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
 	return nil
 }
 
-func (p *Provider) forward(ch chan *dynamic.Config, ctx context.Context) {
+func (p *Provider) forward(ch chan dynamic.ConfigEvent, ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case c := <-p.ch:
-			path := c.Info.Url.Path
-			if len(c.Info.Url.Opaque) > 0 {
-				path = c.Info.Url.Opaque
+		case e := <-p.ch:
+			path := e.Name
+			if e.Config != nil {
+				path = e.Config.Info.Url.Path
+				if len(e.Config.Info.Url.Opaque) > 0 {
+					path = e.Config.Info.Url.Opaque
+				}
 			}
 
 			for dir, pkg := range p.config {
@@ -121,18 +124,22 @@ func (p *Provider) forward(ch chan *dynamic.Config, ctx context.Context) {
 
 					u, err := toUrl(pkg.Name, relative)
 					if err != nil {
-						log.Errorf("unable to parse npm url %v: %v", c.Info.Url, err)
-						u = c.Info.Url
+						log.Errorf("unable to parse npm url %v: %v", e.Name, err)
+						u = e.Config.Info.Url
 					}
 
-					info := dynamic.ConfigInfo{
-						Provider: "npm",
-						Url:      u,
-						Time:     c.Info.Time,
+					if e.Event != dynamic.Delete {
+						info := dynamic.ConfigInfo{
+							Provider: "npm",
+							Url:      u,
+							Time:     e.Config.Info.Time,
+						}
+						dynamic.Wrap(info, e.Config)
+					} else {
+						e.Name = u.String()
 					}
-					dynamic.Wrap(info, c)
 
-					ch <- c
+					ch <- e
 				}
 			}
 		}

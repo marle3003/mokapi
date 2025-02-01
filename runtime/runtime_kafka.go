@@ -39,6 +39,12 @@ func (c *KafkaInfo) AddConfig(config *dynamic.Config) {
 }
 
 func (c *KafkaInfo) update() {
+	if len(c.configs) == 0 {
+		c.Config = nil
+		c.Store = nil
+		return
+	}
+
 	var keys []string
 	for k := range c.configs {
 		keys = append(keys, k)
@@ -50,16 +56,16 @@ func (c *KafkaInfo) update() {
 		return filepath.Base(x) < filepath.Base(y)
 	})
 
-	var cfg *asyncapi3.Config
-	for _, k := range keys {
+	cfg := &asyncapi3.Config{}
+	for i, k := range keys {
 		p, err := getKafkaConfig(c.configs[k])
 		if err != nil {
 			log.Errorf("patch %v failed: %v", c.configs[k].Info.Url, err)
 		}
-		if cfg == nil {
-			cfg = p
+		if i == 0 {
+			*cfg = *p
 		} else {
-			log.Infof("applying patch for %s: %s", c.Info.Name, k)
+			log.Infof("applying patch for %s: %s", cfg.Info.Name, k)
 			cfg.Patch(p)
 		}
 	}
@@ -95,6 +101,11 @@ func IsKafkaConfig(c *dynamic.Config) bool {
 		return true
 	}
 	return false
+}
+
+func (c *KafkaInfo) Remove(cfg *dynamic.Config) {
+	delete(c.configs, cfg.Info.Url.String())
+	c.update()
 }
 
 func getKafkaConfig(c *dynamic.Config) (*asyncapi3.Config, error) {

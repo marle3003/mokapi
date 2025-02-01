@@ -30,7 +30,7 @@ func TestProvider(t *testing.T) {
 		name string
 		fs   *filetest.MockFS
 		cfg  static.FileProvider
-		test func(t *testing.T, configs []*dynamic.Config)
+		test func(t *testing.T, events []dynamic.ConfigEvent)
 	}{
 		{
 			name: "not in same dir",
@@ -41,8 +41,8 @@ func TestProvider(t *testing.T) {
 					Data:  []byte("foobar"),
 				}}},
 			cfg: static.FileProvider{Directories: []string{"./foo"}},
-			test: func(t *testing.T, configs []*dynamic.Config) {
-				require.Len(t, configs, 0)
+			test: func(t *testing.T, events []dynamic.ConfigEvent) {
+				require.Len(t, events, 0)
 			},
 		},
 		{
@@ -55,11 +55,11 @@ func TestProvider(t *testing.T) {
 					ModTime: mustTime("2024-01-02T15:04:05Z"),
 				}}},
 			cfg: static.FileProvider{Directories: []string{"./"}},
-			test: func(t *testing.T, configs []*dynamic.Config) {
-				require.Len(t, configs, 1)
-				require.Equal(t, "foo.txt", filepath.Base(configs[0].Info.Path()))
-				require.Equal(t, []byte("foobar"), configs[0].Raw)
-				require.Equal(t, mustTime("2024-01-02T15:04:05Z"), configs[0].Info.Time)
+			test: func(t *testing.T, events []dynamic.ConfigEvent) {
+				require.Len(t, events, 1)
+				require.Equal(t, "foo.txt", filepath.Base(events[0].Config.Info.Path()))
+				require.Equal(t, []byte("foobar"), events[0].Config.Raw)
+				require.Equal(t, mustTime("2024-01-02T15:04:05Z"), events[0].Config.Info.Time)
 			},
 		},
 		{
@@ -71,10 +71,10 @@ func TestProvider(t *testing.T) {
 					Data:  []byte("fo"),
 				}}},
 			cfg: static.FileProvider{Directories: []string{"./"}},
-			test: func(t *testing.T, configs []*dynamic.Config) {
-				require.Len(t, configs, 1)
-				require.Equal(t, "foo.txt", filepath.Base(configs[0].Info.Path()))
-				require.Equal(t, []byte("fo"), configs[0].Raw)
+			test: func(t *testing.T, events []dynamic.ConfigEvent) {
+				require.Len(t, events, 1)
+				require.Equal(t, "foo.txt", filepath.Base(events[0].Config.Info.Path()))
+				require.Equal(t, []byte("fo"), events[0].Config.Raw)
 			},
 		},
 		{
@@ -86,10 +86,10 @@ func TestProvider(t *testing.T) {
 					Data:  []byte{0xEF, 0xBB, 0xBF, 'f', 'o', 'o', 'b', 'a', 'r'},
 				}}},
 			cfg: static.FileProvider{Directories: []string{"./"}},
-			test: func(t *testing.T, configs []*dynamic.Config) {
-				require.Len(t, configs, 1)
-				require.Equal(t, "foo.txt", filepath.Base(configs[0].Info.Path()))
-				require.Equal(t, []byte("foobar"), configs[0].Raw)
+			test: func(t *testing.T, events []dynamic.ConfigEvent) {
+				require.Len(t, events, 1)
+				require.Equal(t, "foo.txt", filepath.Base(events[0].Config.Info.Path()))
+				require.Equal(t, []byte("foobar"), events[0].Config.Raw)
 			},
 		},
 		{
@@ -101,8 +101,8 @@ func TestProvider(t *testing.T) {
 					Data:  []byte("foobar"),
 				}}},
 			cfg: static.FileProvider{Directories: []string{"./"}},
-			test: func(t *testing.T, configs []*dynamic.Config) {
-				require.Len(t, configs, 0)
+			test: func(t *testing.T, events []dynamic.ConfigEvent) {
+				require.Len(t, events, 0)
 			},
 		},
 		{
@@ -120,9 +120,9 @@ func TestProvider(t *testing.T) {
 				},
 			}},
 			cfg: static.FileProvider{Directories: []string{"./"}, SkipPrefix: []string{"$"}},
-			test: func(t *testing.T, configs []*dynamic.Config) {
-				require.Len(t, configs, 1)
-				require.Equal(t, "_foo.txt", filepath.Base(configs[0].Info.Path()))
+			test: func(t *testing.T, events []dynamic.ConfigEvent) {
+				require.Len(t, events, 1)
+				require.Equal(t, "_foo.txt", filepath.Base(events[0].Config.Info.Path()))
 			},
 		},
 		{
@@ -139,9 +139,9 @@ func TestProvider(t *testing.T) {
 				},
 			}},
 			cfg: static.FileProvider{Directories: []string{"./"}},
-			test: func(t *testing.T, configs []*dynamic.Config) {
-				require.Len(t, configs, 1)
-				require.Equal(t, "foo.txt", filepath.Base(configs[0].Info.Path()))
+			test: func(t *testing.T, events []dynamic.ConfigEvent) {
+				require.Len(t, events, 1)
+				require.Equal(t, "foo.txt", filepath.Base(events[0].Config.Info.Path()))
 			},
 		},
 		{
@@ -158,8 +158,8 @@ func TestProvider(t *testing.T) {
 				},
 			}},
 			cfg: static.FileProvider{Directories: []string{"./"}},
-			test: func(t *testing.T, configs []*dynamic.Config) {
-				require.Len(t, configs, 0)
+			test: func(t *testing.T, events []dynamic.ConfigEvent) {
+				require.Len(t, events, 0)
 			},
 		},
 		{
@@ -177,8 +177,8 @@ func TestProvider(t *testing.T) {
 				},
 			}},
 			cfg: static.FileProvider{Directories: []string{"./"}},
-			test: func(t *testing.T, configs []*dynamic.Config) {
-				require.Len(t, configs, 0)
+			test: func(t *testing.T, events []dynamic.ConfigEvent) {
+				require.Len(t, events, 0)
 			},
 		},
 		{
@@ -200,8 +200,8 @@ func TestProvider(t *testing.T) {
 				},
 			}},
 			cfg: static.FileProvider{Directories: []string{"./"}},
-			test: func(t *testing.T, configs []*dynamic.Config) {
-				require.Len(t, configs, 0)
+			test: func(t *testing.T, events []dynamic.ConfigEvent) {
+				require.Len(t, events, 0)
 			},
 		},
 		{
@@ -228,9 +228,9 @@ func TestProvider(t *testing.T) {
 				},
 			}},
 			cfg: static.FileProvider{Directories: []string{"./"}},
-			test: func(t *testing.T, configs []*dynamic.Config) {
-				require.Len(t, configs, 1)
-				require.Equal(t, "foobar", string(configs[0].Raw))
+			test: func(t *testing.T, events []dynamic.ConfigEvent) {
+				require.Len(t, events, 1)
+				require.Equal(t, "foobar", string(events[0].Config.Raw))
 			},
 		},
 		{
@@ -248,8 +248,8 @@ func TestProvider(t *testing.T) {
 				},
 			}},
 			cfg: static.FileProvider{Directories: []string{"./"}},
-			test: func(t *testing.T, configs []*dynamic.Config) {
-				require.Len(t, configs, 1)
+			test: func(t *testing.T, events []dynamic.ConfigEvent) {
+				require.Len(t, events, 1)
 			},
 		},
 		{
@@ -267,8 +267,8 @@ func TestProvider(t *testing.T) {
 				},
 			}},
 			cfg: static.FileProvider{Directories: []string{"./"}},
-			test: func(t *testing.T, configs []*dynamic.Config) {
-				require.Len(t, configs, 0)
+			test: func(t *testing.T, events []dynamic.ConfigEvent) {
+				require.Len(t, events, 0)
 			},
 		},
 		{
@@ -291,8 +291,8 @@ func TestProvider(t *testing.T) {
 				},
 			}},
 			cfg: static.FileProvider{Directories: []string{"./"}},
-			test: func(t *testing.T, configs []*dynamic.Config) {
-				require.Len(t, configs, 1)
+			test: func(t *testing.T, events []dynamic.ConfigEvent) {
+				require.Len(t, events, 1)
 			},
 		},
 		{
@@ -320,9 +320,9 @@ func TestProvider(t *testing.T) {
 				},
 			}},
 			cfg: static.FileProvider{Directories: []string{"./"}},
-			test: func(t *testing.T, configs []*dynamic.Config) {
-				require.Len(t, configs, 1)
-				require.True(t, strings.HasSuffix(configs[0].Info.Path(), filepath.Join("dir", "foo.js")))
+			test: func(t *testing.T, events []dynamic.ConfigEvent) {
+				require.Len(t, events, 1)
+				require.True(t, strings.HasSuffix(events[0].Config.Info.Path(), filepath.Join("dir", "foo.js")))
 			},
 		},
 		{
@@ -355,10 +355,10 @@ func TestProvider(t *testing.T) {
 				},
 			}},
 			cfg: static.FileProvider{Directories: []string{"./"}},
-			test: func(t *testing.T, configs []*dynamic.Config) {
-				require.Len(t, configs, 2)
-				require.True(t, strings.HasSuffix(configs[0].Info.Path(), filepath.Join("dir", "foo.js")))
-				require.True(t, strings.HasSuffix(configs[1].Info.Path(), filepath.Join("dir", "mokapi.ts")))
+			test: func(t *testing.T, events []dynamic.ConfigEvent) {
+				require.Len(t, events, 2)
+				require.True(t, strings.HasSuffix(events[0].Config.Info.Path(), filepath.Join("dir", "foo.js")))
+				require.True(t, strings.HasSuffix(events[1].Config.Info.Path(), filepath.Join("dir", "mokapi.ts")))
 			},
 		},
 		{
@@ -391,13 +391,13 @@ func TestProvider(t *testing.T) {
 				},
 			}},
 			cfg: static.FileProvider{Directories: []string{"./"}},
-			test: func(t *testing.T, configs []*dynamic.Config) {
-				require.Len(t, configs, 2)
-				sort.Slice(configs, func(i, j int) bool {
-					return configs[i].Info.Path() < configs[j].Info.Path()
+			test: func(t *testing.T, events []dynamic.ConfigEvent) {
+				require.Len(t, events, 2)
+				sort.Slice(events, func(i, j int) bool {
+					return events[i].Config.Info.Path() < events[j].Config.Info.Path()
 				})
-				require.True(t, strings.HasSuffix(configs[0].Info.Path(), filepath.Join("bar", "dir", "foo.js")), "%v does not match suffix %v", configs[1].Info.Path(), filepath.Join("bar", "dir", "foo.js"))
-				require.True(t, strings.HasSuffix(configs[1].Info.Path(), filepath.Join("bar", "foo.js")), "%v does not match suffix %v", configs[0].Info.Path(), filepath.Join("bar", "foo.js"))
+				require.True(t, strings.HasSuffix(events[0].Config.Info.Path(), filepath.Join("bar", "dir", "foo.js")), "%v does not match suffix %v", events[1].Config.Info.Path(), filepath.Join("bar", "dir", "foo.js"))
+				require.True(t, strings.HasSuffix(events[1].Config.Info.Path(), filepath.Join("bar", "foo.js")), "%v does not match suffix %v", events[0].Config.Info.Path(), filepath.Join("bar", "foo.js"))
 			},
 		},
 		{
@@ -415,8 +415,8 @@ func TestProvider(t *testing.T) {
 				},
 			}},
 			cfg: static.FileProvider{Directories: []string{"./"}},
-			test: func(t *testing.T, configs []*dynamic.Config) {
-				require.Len(t, configs, 0)
+			test: func(t *testing.T, events []dynamic.ConfigEvent) {
+				require.Len(t, events, 0)
 			},
 		},
 		{
@@ -434,8 +434,8 @@ func TestProvider(t *testing.T) {
 				},
 			}},
 			cfg: static.FileProvider{Directories: []string{"./"}, Include: []string{"foo"}},
-			test: func(t *testing.T, configs []*dynamic.Config) {
-				require.Len(t, configs, 1)
+			test: func(t *testing.T, events []dynamic.ConfigEvent) {
+				require.Len(t, events, 1)
 			},
 		},
 		{
@@ -478,8 +478,8 @@ func TestProvider(t *testing.T) {
 				},
 			}},
 			cfg: static.FileProvider{Directories: []string{"./"}, Include: []string{"*.js"}},
-			test: func(t *testing.T, configs []*dynamic.Config) {
-				require.Len(t, configs, 4)
+			test: func(t *testing.T, events []dynamic.ConfigEvent) {
+				require.Len(t, events, 4)
 			},
 		},
 	}
@@ -495,10 +495,10 @@ func TestProvider(t *testing.T) {
 			t.Cleanup(func() {
 				pool.Stop()
 			})
-			ch := make(chan *dynamic.Config)
+			ch := make(chan dynamic.ConfigEvent)
 			err := p.Start(ch, pool)
 			require.NoError(t, err)
-			var configs []*dynamic.Config
+			var configs []dynamic.ConfigEvent
 		Collect:
 			for {
 				select {
@@ -526,8 +526,8 @@ func TestProvider_File(t *testing.T) {
 				timeout := time.After(time.Second)
 				select {
 				case c := <-ch:
-					require.True(t, len(c.Info.Url.String()) > 0, "url is set")
-					require.True(t, len(c.Raw) > 0, "got data")
+					require.True(t, len(c.Config.Info.Url.String()) > 0, "url is set")
+					require.True(t, len(c.Config.Raw) > 0, "got data")
 				case <-timeout:
 					t.Fatal("timeout while waiting for file event")
 				}
@@ -544,9 +544,9 @@ func TestProvider_File(t *testing.T) {
 				for i := 0; i < 2; i++ {
 					select {
 					case c := <-ch:
-						got = append(got, c.Info.Url.String())
-						require.True(t, len(c.Info.Url.String()) > 0, "url is set")
-						require.True(t, len(c.Raw) > 0, "got data")
+						got = append(got, c.Config.Info.Url.String())
+						require.True(t, len(c.Config.Info.Url.String()) > 0, "url is set")
+						require.True(t, len(c.Config.Raw) > 0, "got data")
 					case <-timeout:
 						t.Fatal("timeout while waiting for file event")
 					}
@@ -558,7 +558,7 @@ func TestProvider_File(t *testing.T) {
 		{
 			"two dirs",
 			func(t *testing.T) {
-				ch := make(chan *dynamic.Config)
+				ch := make(chan dynamic.ConfigEvent)
 				files := []string{"./test/openapi.yml", "./test/openapi2.yml"}
 				p := createDirectoryProvider(t, files...)
 				pool := safe.NewPool(context.Background())
@@ -571,9 +571,9 @@ func TestProvider_File(t *testing.T) {
 				for i := 0; i < 2; i++ {
 					select {
 					case c := <-ch:
-						got = append(got, c.Info.Url.String())
-						require.True(t, len(c.Info.Url.String()) > 0, "url is set")
-						require.True(t, len(c.Raw) > 0, "got data")
+						got = append(got, c.Config.Info.Url.String())
+						require.True(t, len(c.Config.Info.Url.String()) > 0, "url is set")
+						require.True(t, len(c.Config.Raw) > 0, "got data")
 					case <-timeout:
 						t.Fatal("timeout while waiting for file event")
 					}
@@ -593,7 +593,7 @@ func TestProvider_File(t *testing.T) {
 }
 
 func TestWatch_AddFile(t *testing.T) {
-	ch := make(chan *dynamic.Config)
+	ch := make(chan dynamic.ConfigEvent)
 	tempDir := t.TempDir()
 	t.Cleanup(func() { os.RemoveAll(tempDir) })
 	p := New(static.FileProvider{Directories: []string{tempDir}})
@@ -610,15 +610,15 @@ func TestWatch_AddFile(t *testing.T) {
 	timeout := time.After(5 * time.Second)
 	select {
 	case c := <-ch:
-		require.True(t, len(c.Info.Url.String()) > 0, "url is set")
-		require.True(t, len(c.Raw) > 0, "got data")
+		require.True(t, len(c.Config.Info.Url.String()) > 0, "url is set")
+		require.True(t, len(c.Config.Raw) > 0, "got data")
 	case <-timeout:
 		t.Fatal("timeout while waiting for file event")
 	}
 }
 
 func TestWatch_Create_SubFolder_And_Add_File(t *testing.T) {
-	ch := make(chan *dynamic.Config)
+	ch := make(chan dynamic.ConfigEvent)
 	tempDir := t.TempDir()
 	t.Cleanup(func() { os.RemoveAll(tempDir) })
 	p := New(static.FileProvider{Directories: []string{tempDir}})
@@ -635,15 +635,15 @@ func TestWatch_Create_SubFolder_And_Add_File(t *testing.T) {
 	timeout := time.After(5 * time.Second)
 	select {
 	case c := <-ch:
-		require.True(t, len(c.Info.Url.String()) > 0, "url is set")
-		require.True(t, len(c.Raw) > 0, "got data")
+		require.True(t, len(c.Config.Info.Url.String()) > 0, "url is set")
+		require.True(t, len(c.Config.Raw) > 0, "got data")
 	case <-timeout:
 		t.Fatal("timeout while waiting for file event")
 	}
 }
 
 func TestWatch_UpdateFile_When_Skipped_But_Referenced(t *testing.T) {
-	ch := make(chan *dynamic.Config)
+	ch := make(chan dynamic.ConfigEvent)
 	defer close(ch)
 
 	tempDir := t.TempDir()
@@ -674,7 +674,7 @@ func TestWatch_UpdateFile_When_Skipped_But_Referenced(t *testing.T) {
 	require.Equal(t, "_bar.skip", filepath.Base(file.Info.Path()))
 }
 
-func createAndStartFileProvider(t *testing.T, files ...string) (*Provider, chan *dynamic.Config) {
+func createAndStartFileProvider(t *testing.T, files ...string) (*Provider, chan dynamic.ConfigEvent) {
 	tempDir := t.TempDir()
 	t.Cleanup(func() { os.RemoveAll(tempDir) })
 
@@ -690,7 +690,7 @@ func createAndStartFileProvider(t *testing.T, files ...string) (*Provider, chan 
 	t.Cleanup(func() {
 		pool.Stop()
 	})
-	ch := make(chan *dynamic.Config)
+	ch := make(chan dynamic.ConfigEvent)
 	err := p.Start(ch, pool)
 	require.NoError(t, err)
 	return p, ch
@@ -749,11 +749,11 @@ func createFile(path, content string) error {
 	return err
 }
 
-func waitFileUpdate(t *testing.T, ch chan *dynamic.Config) *dynamic.Config {
+func waitFileUpdate(t *testing.T, ch chan dynamic.ConfigEvent) *dynamic.Config {
 	timeout := time.After(5 * time.Second)
 	select {
 	case c := <-ch:
-		return c
+		return c.Config
 	case <-timeout:
 		t.Fatal("timeout while waiting for file event")
 	}

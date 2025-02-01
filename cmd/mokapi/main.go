@@ -110,15 +110,15 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 	smtp := server.NewSmtpManager(app, scriptEngine, certStore)
 	ldap := server.NewLdapDirectoryManager(scriptEngine, certStore, app)
 
-	watcher.AddListener(func(cfg *dynamic.Config) {
-		kafka.UpdateConfig(cfg)
-		http.Update(cfg)
-		smtp.UpdateConfig(cfg)
-		ldap.UpdateConfig(cfg)
-		if err := scriptEngine.AddScript(cfg); err != nil {
+	watcher.AddListener(func(e dynamic.ConfigEvent) {
+		kafka.UpdateConfig(e)
+		http.Update(e)
+		smtp.UpdateConfig(e)
+		ldap.UpdateConfig(e)
+		if err := scriptEngine.AddScript(e); err != nil {
 			log.Error(err)
 		}
-		app.AddConfig(cfg)
+		app.UpdateConfig(e)
 	})
 
 	if u, err := api.BuildUrl(cfg.Api); err == nil {

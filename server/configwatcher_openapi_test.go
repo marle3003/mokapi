@@ -64,17 +64,17 @@ paths:
 				defer pool.Stop()
 				w.Start(pool)
 				ch := make(chan *openapi.Config)
-				w.AddListener(func(c *dynamic.Config) {
-					require.NotNil(t, c)
-					cfg := c.Data.(*openapi.Config)
+				w.AddListener(func(e dynamic.ConfigEvent) {
+					require.NotNil(t, e.Config)
+					cfg := e.Config.Data.(*openapi.Config)
 					require.NotNil(t, cfg)
-					refs := c.Refs.List(false)
+					refs := e.Config.Refs.List(false)
 					require.Len(t, refs, 1)
 					require.Equal(t, "/paths.yml", refs[0].Info.Url.Path)
 					ch <- cfg
 				})
 
-				p.ch <- p.files["/root.yml"]
+				p.ch <- dynamic.ConfigEvent{Config: p.files["/root.yml"]}
 				select {
 				case c := <-ch:
 					require.Equal(t, "foo", c.Paths["/users"].Value.Get.Summary)
@@ -88,7 +88,7 @@ paths:
 					Raw:  []byte(path),
 					Data: nil,
 				}
-				p.ch <- f
+				p.ch <- dynamic.ConfigEvent{Config: f}
 
 				select {
 				case c := <-ch:
@@ -143,7 +143,7 @@ paths:
 				logrus.SetOutput(io.Discard)
 				hook := logtest.NewGlobal()
 
-				p.ch <- p.files["/root.yml"]
+				p.ch <- dynamic.ConfigEvent{Config: p.files["/root.yml"]}
 
 				time.Sleep(1 * time.Second)
 
@@ -162,7 +162,7 @@ paths:
 
 type testproviderMap struct {
 	files map[string]*dynamic.Config
-	ch    chan *dynamic.Config
+	ch    chan dynamic.ConfigEvent
 }
 
 func (p *testproviderMap) Read(u *url.URL) (*dynamic.Config, error) {
@@ -172,7 +172,7 @@ func (p *testproviderMap) Read(u *url.URL) (*dynamic.Config, error) {
 	return nil, fmt.Errorf("not found: %v", u.String())
 }
 
-func (p *testproviderMap) Start(ch chan *dynamic.Config, _ *safe.Pool) error {
+func (p *testproviderMap) Start(ch chan dynamic.ConfigEvent, _ *safe.Pool) error {
 	p.ch = ch
 	return nil
 }
