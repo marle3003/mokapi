@@ -72,7 +72,7 @@ curl http://localhost/api/v31/pet/2 -H 'Accept: application/json'
 ## Documentation
 
 - [Get Started](https://mokapi.io/docs/guides/get-started/welcome)
-- [HTTP](https://mokapi.io/docs/guides/http/overview)
+- [HTTP](https://mokapi.io/docs/guides/http)
 - [Kafka](https://mokapi.io/docs/guides/kafka/overview)
 - [LDAP](https://mokapi.io/docs/guides/ldap/overview)
 - [SMTP](https://mokapi.io/docs/guides/smtp/overview)

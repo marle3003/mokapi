@@ -7,13 +7,13 @@ cards:
       href: /docs/guides/get-started/running
       description: Learn how to quickly set up and run your first mock REST API and view the results in the Mokapi dashboard.
     - title: Using Mokapi
-      href: /docs/configuration/configuration/introduction
+      href: /docs/configuration/introduction
       description: Get an overview of Mokapi’s core features, configuration options, and how to patch and use configuration providers effectively.
     - title: Mock Event-Driven APIs with Apache Kafka
       href: /docs/guides/kafka/quick-start
       description: Learn how to mock Kafka topics and simulate event-driven architectures for realistic API testing.
     - title: Mokapi JavaScript API
-      href: /docs/javascript-api/javascript-api/overview
+      href: /docs/javascript-api/overview
       description: Discover how to control and customize your mocked APIs programmatically with Mokapi’s JavaScript API.
     - title: Random Data Generator
       href: /docs/guides/get-started/test-data

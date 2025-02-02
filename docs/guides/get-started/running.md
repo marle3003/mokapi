@@ -55,5 +55,5 @@ You can analyze your request and the corresponding response by clicking on the l
 
 - [Test-Data](/docs/guides/get-started/test-data.md)
 - [Dashboard](/docs/guides/get-started/dashboard.md)
-- [Mocking HTTP API](/docs/guides/http/overview.md)
+- [Mocking HTTP API](/docs/guides/http)
 

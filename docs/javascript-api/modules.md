@@ -22,7 +22,7 @@ changed, the script S is also reloaded.
 
 These modules are provided by Mokapi. For example the `faker` module
 used to generate random data for a given JSON schema. For 
-a full list, see [the API documentation](/docs/javascript-api/javascript-api/overview.md).
+a full list, see [the API documentation](/docs/javascript-api/overview.md).
 
 ```javascript
 import { fake } from 'faker'

@@ -183,7 +183,7 @@ function hasTouchSupport() {
             <div class="text-lg-start text-center">
               <h2>Patch Configuration</h2>
               <p>Discover how patching enables effortless, environment-dependent adaptations to specifications without changing the original document.</p>
-              <router-link :to="{ path: '/docs/configuration/configuration/patching' }">
+              <router-link :to="{ path: '/docs/configuration/patching' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Discover Patching</button>
               </router-link>
             </div>

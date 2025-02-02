@@ -5,7 +5,7 @@ description: Provides the documentation of the Mokapi JavaScript API.
 # JavaScript API
 
 The list of Mokapi's JavaScript modules usable to extend Mokapi's behavior.
-To learn how Mokapi imports modules, see [Modules](/docs/javascript-api/javascript-api/modules.md).
+To learn how Mokapi imports modules, see [Modules](/docs/javascript-api/modules.md).
 
 ``` box=tip
 There is a TypeScript definition package for Mokapi. Use "npm install @types/mokapi --save-dev"
