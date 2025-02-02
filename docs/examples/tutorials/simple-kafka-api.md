@@ -5,9 +5,9 @@ description: Learn how to mock a Kafka Topic and verify that your producer gener
 
 # Get started with Kafka
 
-In Mokapi, we can create a Kafka topic with an AsyncAPI specification file. This example is
-intended as a starters guide so that you can quickly and easily create your own mocked Kafka 
-topic.
+This tutorial provides a step-by-step guide to mocking a Kafka topic using Mokapi 
+and verifying that a producer generates valid messages based on an AsyncAPI specification. 
+This approach enables the simulation of Kafka environments without requiring a live Kafka cluster.
 
 ## Create AsyncAPI file
 
@@ -97,8 +97,7 @@ docker run -p 9092:9092 -p 8080:8080 --rm -it $(docker build -q .)
 
 ## Create a Kafka Producer
 
-In this example we create a .NET Producer and send a message to our Kafka topic. After execution,
-you can see the message in Mokapi's Dashboard.
+You can now produce messages to the mocked Kafka topic. Below is an example using C#.
 
 ```csharp
 public class Producer
@@ -126,6 +125,16 @@ public class Producer
     }
 }
 ```
+
+## Verifying Messages with Mokapi
+
+Mokapi provides a dashboard to monitor and verify messages sent to the mocked Kafka topics.
+
+1. <p><strong>Access the Mokapi Dashboard:</strong><br />Open your browser and navigate to http://localhost:8080/dashboard.
+
+2. <p><strong>Navigate to the Kafka Section:</strong><br />In the dashboard, select the Kafka section to view the topics and messages.
+
+3. <p><strong>Verify the Message:</strong><br />Locate the users topic and verify that the message sent by your producer appears as expected. Mokapi will validate the message against the AsyncAPI specification.
 
 <img src="/docs/examples/tutorials/simple-kafka-example.png" alt="Mokapi Kafka Dashboard" title="Mokapi Kafka Dashboard" />
 
