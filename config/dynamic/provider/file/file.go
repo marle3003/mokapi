@@ -287,10 +287,7 @@ func (p *Provider) watchPath(path string) {
 		p.watched[path] = watch{isDir: true}
 	}
 
-	err = p.watcher.Add(path)
-	if err != nil {
-		log.Errorf("add watcher to path '%v' failed: %v", path, err)
-	}
+	_ = p.watcher.Add(path)
 }
 
 func (p *Provider) processEvents(events []fsnotify.Event) {
