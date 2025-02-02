@@ -6,6 +6,7 @@ description: Learn how to use Mokapi in CI/CD pipelines to mock APIs, automate t
 
 Integrating Mokapi into a CI/CD pipeline ensures API contracts and Kafka topics interactions are validated before deployment. 
 This helps catch issues early, making the development process more reliable and reducing the risk of breaking changes in production.
+If you haven't installed Mokapi yet, follow the [Installation Guide](/docs/guides/get-started/installation.md) to get started.
 
 This guide explains how to:
  
@@ -76,6 +77,7 @@ paths:
 ### Use Mokapi Script to Set Response
 
 Mokapi allows customizing API responses dynamically using scripts. The following example shows how to intercept HTTP requests and return different responses based on the request path.
+For a complete list of all available API endpoints, refer to our [API Reference](/docs/javascript-api/overview.md).
 
 ```javascript tab=users.js
 import { on } from 'mokapi'

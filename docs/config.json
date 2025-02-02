@@ -1,9 +1,9 @@
 {
   "Guides": {
     "items": {
+      "Welcome": "guides/get-started/welcome.md",
       "Get Started": {
         "items": {
-          "Welcome": "guides/get-started/welcome.md",
           "Installation": "guides/get-started/installation.md",
           "Running": "guides/get-started/running.md",
           "Test Data": "guides/get-started/test-data.md",
@@ -11,28 +11,24 @@
         }
       },
       "HTTP": {
+        "index": "guides/http/overview.md",
         "items": {
-          "Overview": "guides/http/overview.md",
           "Quick Start": "guides/http/quick-start.md",
           "HTTPS & TLS": "guides/http/tls.md",
           "Dashboard": "guides/http/dashboard.md"
         }
       },
       "Kafka": {
+        "index": "guides/kafka/overview.md",
         "items": {
-          "Overview": "guides/kafka/overview.md",
           "Quick Start": "guides/kafka/quick-start.md",
           "Config": "guides/kafka/config.md"
         }
       },
-      "LDAP": {
-        "items": {
-          "Overview": "guides/ldap/overview.md"
-        }
-      },
+      "LDAP": "guides/ldap/overview.md",
       "SMTP": {
+        "index": "guides/smtp/overview.md",
         "items": {
-          "Overview": "guides/smtp/overview.md",
           "Quick Start": "guides/smtp/quick-start.md",
           "Rules": "guides/smtp/rules.md"
         }
@@ -41,13 +37,8 @@
   },
   "Configuration": {
     "items": {
-      "Configuration": {
-        "expanded": true,
-        "items": {
-          "Introduction": "configuration/introduction.md",
-          "Patching": "configuration/patching.md"
-        }
-      },
+      "Introduction": "configuration/introduction.md",
+      "Patching": "configuration/patching.md",
       "Static": {
         "expanded": true,
         "items": {
@@ -69,15 +60,11 @@
   },
   "JavaScript API": {
     "items": {
-      "JavaScript API": {
-        "items": {
-          "Overview": "javascript-api/javascript-api/overview.md",
-          "Modules": "javascript-api/javascript-api/modules.md"
-        }
-      },
+      "Overview": "javascript-api/overview.md",
+      "Modules": "javascript-api/modules.md",
       "globals": {
         "items": {
-          "open": "javascript-api/javascript-api/open.md"
+          "open": "javascript-api/open.md"
         }
       },
       "mokapi": {

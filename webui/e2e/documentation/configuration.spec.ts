@@ -11,7 +11,7 @@ test('Visit Configuration', async ({ page, home }) => {
             'content',
             'This page will introduce you to the startup and dynamic configurations.'
         )
-        await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://mokapi.io/docs/configuration/configuration/introduction')
+        await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://mokapi.io/docs/configuration/introduction')
     })
 
     await test.step('navigation section providers', async () => {

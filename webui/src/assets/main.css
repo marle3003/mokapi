@@ -11,7 +11,6 @@
 body {
   color: var(--color-text);
   background: var(--color-background);
-  line-height: 1.6;
   font-family: -apple-system, "system-ui", Inter, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI emoji";
   font-size: 1.0rem;
   text-rendering: optimizeLegibility;

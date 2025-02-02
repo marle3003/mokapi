@@ -101,7 +101,7 @@ function hasTouchSupport() {
       </div>
       <div class="d-flex">
         <div class="text-white sidebar d-none d-md-block" :class="openSidebar ? 'open' : ''" id="sidebar">
-          <DocNav :config="nav" :levels="levels" :title="levels[3] || levels[2] || levels[1] || levels[0]"/>
+          <DocNav :config="nav" :levels="levels" :title="levels[0]"/>
         </div>
         <div style="flex: 1;max-width:760px;margin-bottom: 3rem;">
           <div v-if="content" v-html="content" class="content" @click="showImage($event.target)"></div>

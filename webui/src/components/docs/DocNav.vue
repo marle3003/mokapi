@@ -61,30 +61,41 @@ function isExpanded(item: DocEntry | string) {
 </script>
 
 <template>
-    <nav>
-    <ul class="nav nav-pills root flex-column mb-auto pe-3" v-if="root && root.items">
+    <nav class="p-4 ps-2">
+    <span v-if="root && root.items" class="px-3">{{ title }}</span>
+    <hr class="m-2" />
+    <ul class="nav nav-pills root flex-column mb-auto px-3" v-if="root && root.items">
         <li class="nav-item" v-for="(level1, k1) of root.items">
 
             <div v-if="hasChildren(level1)" class="chapter">
-                <button type="button" class="btn btn-link" :class="isActive(k1) ? 'child-active' : ''" data-bs-toggle="collapse" :data-bs-target="'#'+getId(k1)" :aria-expanded="isActive(k1) || isExpanded(level1)" :aria-controls="getId(k1)" :id="'btn'+getId(k1)">
-                    <i class="bi bi-chevron-right"></i> 
-                    <i class="bi bi-chevron-down"></i> 
-                    {{ k1 }}
+              <div class="d-flex align-items-center justify-content-between">
+                <router-link v-if="(<DocEntry>level1).index" class="nav-link" :class="levels[1] == k1 && levels.length == 2 ? 'active' : ''" :to="{ name: 'docs', params: {level2: formatParam(k1)} }" :id="'btn'+getId(k1)">{{ k1 }}</router-link>
+                <button type="button" v-else class="btn btn-link w-100 text-start" :class="isActive(k1) ? 'child-active' : ''" data-bs-toggle="collapse" :data-bs-target="'#'+getId(k1)" :aria-expanded="isActive(k1) || isExpanded(level1)" :aria-controls="getId(k1)" :id="'btn'+getId(k1)">
+                  {{ k1 }}
                 </button>
+                <button type="button" class="btn btn-link" :class="isActive(k1) ? 'child-active' : ''" data-bs-toggle="collapse" :data-bs-target="'#'+getId(k1)" :aria-expanded="isActive(k1) || isExpanded(level1)" :aria-controls="getId(k1)">
+                  <i class="bi bi-caret-up-fill"></i> 
+                  <i class="bi bi-caret-down-fill"></i> 
+                </button>
+              </div>
 
                 <section class="collapse" :class="isActive(k1) || isExpanded(level1) ? 'show' : ''" :id="getId(<string>k1)" :aria-labelledby="'btn'+getId(k1)">
-                    <ul v-if="hasChildren(level1)" class="nav nav-pills flex-column mb-auto pe-3">
-                        <li class="nav-item" v-for="(level2, k2) of (<DocEntry>level1).items">
+                    <ul v-if="hasChildren(level1)" class="nav nav-pills flex-column mb-auto">
+                        <li class="nav-item ps-3" v-for="(level2, k2) of (<DocEntry>level1).items">
                             
                             <div v-if="hasChildren(level2)" class="subchapter">
-                                <button type="button" class="btn btn-link" :class="isActive(k1, k2) ? 'child-active' : ''" data-bs-toggle="collapse" :data-bs-target="'#'+getId(k2)" :aria-expanded="isActive(k1, k2)" :aria-controls="getId(k2)">
-                                    <i class="bi bi-chevron-right"></i> 
-                                    <i class="bi bi-chevron-down"></i> 
+                              <div class="d-flex align-items-center justify-content-between">
+                                <button type="button" class="btn btn-link w-100 text-start" :class="isActive(k1, k2) ? 'child-active' : ''" data-bs-toggle="collapse" :data-bs-target="'#'+getId(k2)" :aria-expanded="isActive(k1, k2)" :aria-controls="getId(k2)">
                                     {{ k2 }}
                                 </button>
+                                <button type="button" class="btn btn-link" :class="isActive(k1, k2) ? 'child-active' : ''" data-bs-toggle="collapse" :data-bs-target="'#'+getId(k2)" :aria-expanded="isActive(k1, k2)" :aria-controls="getId(k2)">
+                                    <i class="bi bi-caret-up-fill"></i> 
+                                    <i class="bi bi-caret-down-fill"></i> 
+                                </button>
+                              </div>
                             
                                 <div class="collapse" :class="isActive(k1, k2) ? 'show' : ''" :id="getId(k2)">
-                                    <ul class="nav nav-pills flex-column mb-auto pe-3">
+                                    <ul class="nav nav-pills flex-column mb-auto">
                                         <li class="nav-item" v-for="(_, k3) of (<DocEntry>level2).items">
                                             <router-link v-if="k2 != k3" class="nav-link" :class="isActive(k1, k2, k3) ? 'active' : ''" :to="{ name: 'docs', params: {level2: formatParam(k1), level3: formatParam(k2), level4: formatParam(k3)} }">{{ k3 }}</router-link>
                                         </li>
@@ -99,7 +110,7 @@ function isExpanded(item: DocEntry | string) {
             </div>
 
             
-            <router-link v-if="!hasChildren(level1) && showItem(k1, level1)" class="nav-link chapter-text" :to="{ name: 'docs', params: {level2: formatParam(k1)} }">{{ k1 }}</router-link>
+            <router-link v-if="!hasChildren(level1) && showItem(k1, level1)" :class="isActive(k1) ? 'active' : ''"  class="nav-link chapter-text" :to="{ name: 'docs', params: {level2: formatParam(k1)} }">{{ k1 }}</router-link>
         </li>
     </ul>   
   </nav>
@@ -118,28 +129,20 @@ function isExpanded(item: DocEntry | string) {
   border-bottom-style: solid;
   border-bottom-width: 1px;
 }
-.nav {
-  line-height: 1.6;
-  font-size: 1.1rem;
-  font-weight: 500;
-
+nav {
+  font-size: 1rem;
 }
-.nav.root {
-  padding-top: 1rem;
+.nav, .nav .btn {
+  font-size: 0.95rem;
 }
 
-.sidebar.open .nav.root {
-  padding-top: 0.6rem;;
-}
-
-.nav-item {
-  margin-left: 16px;
+.nav-item a, .nav-item .chapter > div {
+  padding-top: 7px;
+  padding-bottom: 7px;
 }
 
 .nav .nav-link {
-  padding: 0;
-  padding-top: 4px;
-  font-size: 0.93rem;
+  padding-left: 0;
 }
 
 @media only screen and (max-width: 768px)  {
@@ -148,47 +151,26 @@ function isExpanded(item: DocEntry | string) {
   }
 }
 
-.nav .router-link-active, .nav .router-link-exact-active {
+.nav .active {
   color: var(--color-nav-link-active);
-  font-weight: 600;
-}
-
-.nav .child-active {
-  color: var(--color-nav-link-active);
-}
-
-.chapter {
-  margin-bottom: 0.5rem;
-}
-
-.chapter > section, .subchapter section {
-  border-left: solid 1px var(--color-tabs-border);
-  margin-left: 5px;
 }
 
 .nav button {
   color: var(--color-text);
   padding: 0;
-  padding-top: 4px;
-  padding-bottom: 0px;
-  font-size: 0.94rem;
   text-decoration: none;
   border: 0;
-}
-
-.chapter > button {
-  font-weight: 700;
 }
 
 .nav button:hover {
   color: var(--color-nav-link-active);
 }
 
-.nav button[aria-expanded=false] .bi-chevron-down {
+.nav button[aria-expanded=false] .bi-caret-up-fill {
   display: none;
 }
 
-.nav button[aria-expanded=true] .bi-chevron-right {
+.nav button[aria-expanded=true] .bi-caret-down-fill {
   display: none;
 }
 </style>

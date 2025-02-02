@@ -74,6 +74,11 @@ function source() {
     }
     return source
 }
+function messages(topic: KafkaTopic): string[] {
+    return Object.keys(topic.messages).sort((a, b) => {
+        return a.localeCompare(b)
+    })
+}
 </script>
 
 <template>
@@ -91,7 +96,7 @@ function source() {
             <div class="col-auto" v-if="selected.name">
                 <p id="message-name" class="label">Name</p>
                 <select class="form-select form-select-sm mb-2" aria-labelledby="message-name" @change="selectedMessageChange" v-if="Object.keys(topic.messages).length > 1">
-                    <option v-for="msg in topic.messages">{{ msg.name }}</option>
+                    <option v-for="msg in messages(topic)">{{ msg }}</option>
                 </select>
                 <p aria-labelledby="message-name" v-else>{{ selected.name }}</p>
             </div>
