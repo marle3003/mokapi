@@ -1,3 +1,7 @@
+---
+title: "Running Mokapi in CI/CD: Mock APIs for Automated Testing"
+description: Learn how to use Mokapi in CI/CD pipelines to mock APIs, automate tests, and ensure reliable backend validation without live dependencies.
+---
 # Running Mokapi in a CI/CD Pipeline
 
 Integrating Mokapi into a CI/CD pipeline ensures API contracts and Kafka topics interactions are validated before deployment. 
@@ -6,8 +10,8 @@ This helps catch issues early, making the development process more reliable and 
 This guide explains how to:
  
 - Run Mokapi in a CI/CD pipeline (GitHub Actions).
-- Mock a HTTP API during automated tests.
-- Validate OpenAPI contracts before deployment.
+- Mock an HTTP API during automated tests.
+- Make sure the API is used according to the OpenAPI contract.
 
 The source code for this tutorial is available in the GitHub repository [mokapi-ci-nodejs](https://github.com/marle3003/mokapi-ci-nodejs).
 
@@ -19,7 +23,7 @@ The source code for this tutorial is available in the GitHub repository [mokapi-
 
 ## Project Structure
 
-```bash
+```
 /my-node-app
  ├── .github/
  │   ├── workflows/
@@ -73,7 +77,7 @@ paths:
 
 Mokapi allows customizing API responses dynamically using scripts. The following example shows how to intercept HTTP requests and return different responses based on the request path.
 
-```javascript
+```javascript tab=users.js
 import { on } from 'mokapi'
 
 export default function() {
