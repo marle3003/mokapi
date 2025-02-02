@@ -169,7 +169,8 @@
         "expanded": true,
         "items": {
           "Get started with REST API": "examples/tutorials/simple-http-api.md",
-          "Get started with Kafka": "examples/tutorials/simple-kafka-api.md"
+          "Get started with Kafka": "examples/tutorials/simple-kafka-api.md",
+          "Running Mokapi in a CI/CD Pipeline": "examples/tutorials/running-mokapi-github-action.md"
         }
       }
     }
