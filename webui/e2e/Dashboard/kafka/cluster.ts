@@ -73,6 +73,16 @@ export const cluster = {
             ],
             messageConfigs: [
                 {
+                    name: 'second',
+                    summary: '',
+                    description: '',
+                    contentType: 'application/json',
+                    value: {
+                        lines: '11 lines',
+                        size: '131 B'
+                    }
+                },
+                {
                     name: 'userSignedUp',
                     title: 'title',
                     summary: '',
@@ -83,16 +93,6 @@ export const cluster = {
                         size: '357 B'
                     }
                 },
-                {
-                    name: 'second',
-                    summary: '',
-                    description: '',
-                    contentType: 'application/json',
-                    value: {
-                        lines: '11 lines',
-                        size: '131 B'
-                    }
-                }
             ]
         }
     ],
