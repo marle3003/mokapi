@@ -180,8 +180,8 @@ function hasTouchSupport() {
   margin-left: 1.2rem;
   margin-right: 1.2rem;
   padding-top: 2rem;
-  line-height: 1.6;
-  font-size: 1.1rem;
+  line-height: 1.75;
+  font-size: 1rem;
 }
 
 .content h1 {
@@ -276,7 +276,7 @@ pre {
 }
 
 .content ul li h3 {
-  font-size: 1.1rem;
+  font-size: 1rem;
   margin-bottom: 0.5rem;
 }
 
@@ -295,7 +295,7 @@ pre {
   border-left-width: 0.2rem ;
   border-left-style: solid;
   border-radius: 0.2rem;
-  font-size: 1.1rem;
+  font-size: 1rem;
   box-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.2), 0 0.25rem 0.5rem rgba(0, 0, 0, 0.2);
 }
 .box.no-title {
@@ -355,7 +355,7 @@ blockquote {
   font-family: Open Sans;
   font-style: italic;
   padding: 1.2em 30px 1.2em 70px;
-  line-height: 1.6;
+  line-height: 1.75;
   font-size: 1.2rem;
   border-left: 8px solid #eabaabff;
   position: relative;

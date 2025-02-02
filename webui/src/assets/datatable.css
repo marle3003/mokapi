@@ -41,7 +41,7 @@ table.dataTable.selectable tr:hover td {
 table.dataTable .description p {
     font-size: 0.9rem !important;
     margin: 0 !important;
-    line-height: 1.6 !important;
+    line-height: 1.75 !important;
 }
 table .badge {
     vertical-align: middle;

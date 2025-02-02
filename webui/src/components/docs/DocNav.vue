@@ -131,6 +131,7 @@ function isExpanded(item: DocEntry | string) {
 }
 nav {
   font-size: 1rem;
+  line-height: 1.5;
 }
 .nav, .nav .btn {
   font-size: 0.95rem;
@@ -139,6 +140,11 @@ nav {
 .nav-item a, .nav-item .chapter > div {
   padding-top: 7px;
   padding-bottom: 7px;
+}
+
+.nav-item .chapter > div a {
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .nav .nav-link {
