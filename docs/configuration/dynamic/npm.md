@@ -2,7 +2,7 @@
 title: NPM Provider for dynamic configuration
 description: The NPM provider reads dynamic configuration from a NPM module
 ---
-# File
+# NPM
 
 The NPM provider reads dynamic configuration from a NPM module.
 
