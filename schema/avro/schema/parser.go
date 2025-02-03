@@ -119,13 +119,18 @@ func (p *Parser) parse(r *bytes.Reader, s *Schema) (interface{}, error) {
 		}
 		return m, nil
 	case "array":
-		var a []interface{}
 		n, err := binary.ReadVarint(r)
 		if err != nil {
 			return nil, err
 		}
 		if n < 0 {
+			// todo: If a block’s count is negative, its absolute value is used, and the count is followed immediately
+			// by a long block size indicating the number of bytes in the block.
 			return nil, fmt.Errorf("invalid array length at offset %v: %v", r.Size()-int64(r.Len()), n)
+		}
+		a := make([]interface{}, 0, n)
+		if n == 0 {
+			return a, nil
 		}
 		for i := 0; i < int(n); i++ {
 			var item interface{}

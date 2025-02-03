@@ -116,6 +116,18 @@ func TestParser_Parse(t *testing.T) {
 			},
 		},
 		{
+			name: "array zero length",
+			s: &Schema{
+				Type:  []interface{}{"array"},
+				Items: &Schema{Type: []interface{}{"int"}},
+			},
+			b: []byte{0, 0, 0, 0, 1, 0},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []interface{}{}, v)
+			},
+		},
+		{
 			name: "array",
 			s: &Schema{
 				Type:  []interface{}{"array"},
