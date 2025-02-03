@@ -85,8 +85,8 @@ func newMessageValidator(messageId string, msg *asyncapi3.Message, channel *asyn
 			} else {
 				msgParser = &parser.Parser{Schema: openapi.ConvertToJsonSchema(s), ConvertToSortedMap: true}
 			}
-		case *avro.Schema:
-			msgParser = &avro.Parser{Schema: s}
+		case *asyncapi3.AvroRef:
+			msgParser = &avro.Parser{Schema: s.Schema}
 		default:
 			log.Errorf("unsupported payload type: %T", msg.Payload.Value)
 		}
@@ -104,8 +104,8 @@ func newMessageValidator(messageId string, msg *asyncapi3.Message, channel *asyn
 		switch s := msg.Bindings.Kafka.Key.Value.Schema.(type) {
 		case *schema.Schema:
 			keyParser = &parser.Parser{Schema: s}
-		case *avro.Schema:
-			keyParser = &avro.Parser{Schema: s}
+		case *asyncapi3.AvroRef:
+			keyParser = &avro.Parser{Schema: s.Schema}
 		default:
 			log.Errorf("unsupported key type: %T", msg.Bindings.Kafka.Key.Value)
 		}
@@ -122,8 +122,8 @@ func newMessageValidator(messageId string, msg *asyncapi3.Message, channel *asyn
 		switch s := msg.Headers.Value.Schema.(type) {
 		case *schema.Schema:
 			headerParser = &parser.Parser{Schema: s}
-		case *avro.Schema:
-			headerParser = &avro.Parser{Schema: s}
+		case *asyncapi3.AvroRef:
+			headerParser = &avro.Parser{Schema: s.Schema}
 		default:
 			log.Errorf("unsupported header type: %T", msg.Headers.Value)
 		}
@@ -331,10 +331,10 @@ func parseHeader(headers []kafka.RecordHeader, sr *asyncapi3.SchemaRef) (map[str
 				}
 			}
 		}
-	case *avro.Schema:
+	case *asyncapi3.AvroRef:
 		for _, f := range s.Fields {
 			if v, ok := m[f.Name]; ok {
-				val, err := encoding.Decode(v, encoding.WithParser(&avro.Parser{Schema: s}))
+				val, err := encoding.Decode(v, encoding.WithParser(&avro.Parser{Schema: s.Schema}))
 				if err != nil {
 					return nil, err
 				}

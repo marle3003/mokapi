@@ -9,7 +9,6 @@ import (
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
 	"mokapi/providers/swagger"
-	avro "mokapi/schema/avro/schema"
 	json "mokapi/schema/json/schema"
 	"net/url"
 	"os"
@@ -25,6 +24,10 @@ components:
       schemaFormat: 'application/vnd.apache.avro;version=1.9.0'
       schema:
         type: record
+    FooRef:
+      schemaFormat: 'application/vnd.apache.avro;version=1.9.0'
+      schema:
+        $ref: 'npm://foo.bar'
     Bar:
       type: object
 `)
@@ -34,8 +37,13 @@ components:
 
 	multi := cfg.Components.Schemas["Foo"].Value
 	require.Equal(t, "application/vnd.apache.avro;version=1.9.0", multi.Format)
-	avroSchema := multi.Schema.(*avro.Schema)
+	avroSchema := multi.Schema.(*asyncapi3.AvroRef)
 	require.Equal(t, "record", avroSchema.Type[0])
+
+	multi = cfg.Components.Schemas["FooRef"].Value
+	require.Equal(t, "application/vnd.apache.avro;version=1.9.0", multi.Format)
+	avroSchema = multi.Schema.(*asyncapi3.AvroRef)
+	require.Equal(t, "npm://foo.bar", avroSchema.Ref)
 
 	jsonSchema := cfg.Components.Schemas["Bar"].Value.Schema.(*json.Schema)
 	require.Equal(t, "object", jsonSchema.Type.String())
