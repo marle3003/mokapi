@@ -25,7 +25,7 @@ used to generate random data for a given JSON schema. For
 a full list, see [the API documentation](/docs/javascript-api/overview.md).
 
 ```javascript
-import { fake } from 'faker'
+import { fake } from 'mokapi/faker'
 ```
 
 ## Local filesystem modules
