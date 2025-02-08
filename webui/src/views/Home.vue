@@ -76,7 +76,7 @@ function hasTouchSupport() {
         <div class="col-sm-4 mb-3 mb-sm0 ps-1 pe-1">
           <div class="card">
               <div class="card-body">
-                <h2 class="card-title align-middle"><i class="bi bi-rocket-takeoff me-2 align-middle d-inline-block" style="font-size:24px; color: #7e708bff"></i><span class="align-middle d-inline-block" >Speed Up Development</span></h2>
+                <h2 class="card-title align-middle"><i class="bi bi-rocket-takeoff me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Speed Up Development</span></h2>
                 No more waiting for APIs - develop and test your solution instantly.
               </div>
           </div>
@@ -84,7 +84,7 @@ function hasTouchSupport() {
         <div class="col-sm-4 mb-3 mb-sm0 ps-1 pe-1">
           <div class="card">
               <div class="card-body">
-                <h2 class="card-title align-middle"><i class="bi bi-gear me-2 align-middle d-inline-block" style="font-size:24px; color: #7e708bff"></i><span class="align-middle d-inline-block" >Automate Testing</span></h2>
+                <h2 class="card-title align-middle"><i class="bi bi-gear me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Automate Testing</span></h2>
                 Integrate Mokapi into your CI/CD pipeline for reliable, automated testing.
               </div>
           </div>
@@ -92,7 +92,7 @@ function hasTouchSupport() {
         <div class="col-sm-4 mb-3 mb-sm0 ps-1 pe-1">
           <div class="card">
               <div class="card-body">
-                <h2 class="card-title align-middle"><i class="bi bi-tools me-2 align-middle d-inline-block" style="font-size:24px; color: #7e708bff"></i><span class="align-middle d-inline-block">Easy Customization</span></h2>
+                <h2 class="card-title align-middle"><i class="bi bi-tools me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block">Easy Customization</span></h2>
                 Create custom mock behaviors matching production environments closely.
               </div>
           </div>

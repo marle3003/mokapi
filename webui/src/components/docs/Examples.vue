@@ -37,7 +37,7 @@ function formatParam(label: any): string {
                 <router-link :to="{ name: 'docs', params: {level2: 'tutorials', level3: formatParam(tutorial.key)} }">
                     <div class="card">
                         <div class="card-body">
-                            <h3 class="card-title align-middle"><i class="bi me-2 align-middle d-inline-block" :class="tutorial.meta.icon" style="font-size:20px; color: #7e708bff"></i><span class="align-middle d-inline-block" >{{ tutorial.meta.title }}</span></h3>
+                            <h3 class="card-title align-middle"><i class="bi me-2 align-middle d-inline-block icon" :class="tutorial.meta.icon" style="font-size:20px;"></i><span class="align-middle d-inline-block" >{{ tutorial.meta.title }}</span></h3>
                             {{ tutorial.meta.description }}
                         </div>
                     </div>
@@ -51,7 +51,7 @@ function formatParam(label: any): string {
                 <router-link :to="{ name: 'docs', params: {level2: 'examples', level3: formatParam(example.key)} }">
                     <div class="card">
                         <div class="card-body">
-                            <h3 class="card-title align-middle"><i class="bi me-2 align-middle d-inline-block" :class="example.meta.icon" style="font-size:20px; color: #7e708bff"></i><span class="align-middle d-inline-block" >{{ example.meta.title }}</span></h3>
+                            <h3 class="card-title align-middle"><i class="bi me-2 align-middle d-inline-block icon" :class="example.meta.icon" style="font-size:20px;"></i><span class="align-middle d-inline-block" >{{ example.meta.title }}</span></h3>
                             {{ example.meta.description }}
                         </div>
                     </div>

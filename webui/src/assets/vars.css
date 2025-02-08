@@ -51,7 +51,7 @@
     --header-link-color: var(--header-color);
     --header-link-color-active: #eabaabff;
 
-    --icon-color: #7e708bff;
+    --icon-color: #eabaabff;
 
     --link-color: #eabaabff;;
     --link-color-active: #eabaabff;
@@ -116,6 +116,8 @@
     --header-color: rgb(36, 36, 36);
     --header-link-color: var(--header-color);
     --header-link-color-active: rgb(8, 109, 215);
+
+    --icon-color: #7e708bff;
 
     --link-color: rgb(8, 109, 215);
     --link-color-active: rgb(8, 109, 215);
