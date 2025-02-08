@@ -24,7 +24,7 @@ function formatParam(label: any): string {
 
 <template>
     <div v-if="blogs.length > 0" class="blogs">
-        <h2>Blogs</h2>
+        <h1>Blogs</h1>
         <div class="row row-cols-1 row-cols-md-2 g-3">
             <div v-for="blog of blogs" class="col">
                 <router-link :to="{ name: 'docs', params: { level2: formatParam(blog.key)} }">

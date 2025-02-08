@@ -137,7 +137,7 @@
       }
     }
   },
-  "Tutorials": {
+  "Examples": {
     "index": {
       "component": "examples",
       "hideInNavigation": true,
