@@ -1,49 +1,42 @@
 ---
 title: JavaScript Modules
-description: When writing scripts, it is common to separate code in different files or to use third-party modules. In Mokapi Scripts you can import three different kinds of modules.
+description: Learn how to organize Mokapi scripts with built-in, local, and JSON/YAML modules for better maintainability and flexibility.
 ---
-# Modules
+# JavaScript Modules
 
-When writing scripts, it is common to separate code in
-different files or to use third-party modules. In Mokapi Scripts you
-can import three different kinds of modules:
+When writing scripts, it is common to split code  into multiple files or to use third-party modules.
+Mokapi supports importing three types of modules:
 
-- Built-in modules
-- Local filesystem modules
-- JSON module
+- **Built-in modules**: Provided by Mokapi for various functionalities.
+- **Local filesystem modules**: Custom scripts and Node.js packages.
+- **JSON & YAML modules**: Configuration files converted into JavaScript objects.
 
 ``` box=tip
-Mokapi watches all imported modules for changes using fsnotify.
-If the script S imports the module A and the module A is
-changed, the script S is also reloaded.
+Mokapi monitors all imported modules with `fsnotify`. If a module is modified, any dependent script is automatically reloaded.
 ```
 
-## Built-in modules
+## Built-in Modules
 
-These modules are provided by Mokapi. For example the `faker` module
-used to generate random data for a given JSON schema. For 
-a full list, see [the API documentation](/docs/javascript-api/overview.md).
+Mokapi offers built-in modules like `faker`, which generates realistic test data from JSON schemas. 
+See the [API documentation](/docs/javascript-api/overview.md) for a complete list.
 
 ```javascript
 import { fake } from 'mokapi/faker'
 ```
 
-## Local filesystem modules
+## Local Filesystem Modules
 
-You can import modules on the local file system either 
-through relative or absolute paths. Mokapi also supports NodeJS
-modules.
+You can import files using relative or absolute paths, and Mokapi supports Node.js modules.
 
 ```javascript
 import { someFunc } from './helpers.js'
 import { otherFunc } from '../lib'
-import dateTime from 'date-time' // npm install date-time
+import dateTime from 'date-time' // Requires: npm install date-time
 ```
 
-## JSON & YAML file
+## JSON & YAML Modules
 
-You can import JSON and YAML file and Mokapi converts the data to a
-Javascript object.
+Mokapi allows importing JSON and YAML files, automatically converting them into JavaScript objects.
 
 ```javascript tab=Javascript
 import users from './users.json'
@@ -63,3 +56,5 @@ console.log(envs[0])
 - integration
 - production
 ```
+
+By leveraging these module types, you can create flexible, maintainable, and scalable Mokapi scripts.

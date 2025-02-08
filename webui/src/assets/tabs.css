@@ -91,6 +91,9 @@
     border-bottom-style: solid;
     margin-bottom: -3px;
 }
+.code-tabs button.active:only-child {
+    border: 0;
+}
 .code-tabs button.disabled {
     color: var(--color-disabled);
 }
