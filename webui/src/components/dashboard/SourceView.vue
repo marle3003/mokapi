@@ -162,7 +162,7 @@ function switchCode() {
 <style scoped>
 .header {
   padding: 8px;
-  border: 1px solid var(--color-tabs-border);
+  border: 1px solid var(--source-border);
   border-radius: 6px 6px 0 0;
   color: var(--color-text-light);
   display: flex;
@@ -170,9 +170,10 @@ function switchCode() {
 }
 .header .info span {
   vertical-align: middle;
+  line-height: 30px;
 }
 .header .controls {
-  border: 1px solid var(--color-tabs-border);
+  border: 1px solid var(--source-border);
   border-radius: 6px;
 }
 .header .view {
@@ -185,23 +186,32 @@ function switchCode() {
   background: none !important;
   font-size: 0.9rem;
   vertical-align: middle;
-  color: var(--color-link);
+  color: var(--source-header-color);
   display: inline-grid;
   place-content: center;
-  border-right: 1px solid var(--color-tabs-border);
+  border-right: 1px solid var(--source-border);
 }
 .header button.active {
   background-color: black !important;
-  outline: 1px solid var(--color-tabs-border);
+  outline: 1px solid var(--source-border);
   border-radius: 6px;
 }
 .header .controls > button, .header .controls > a {
   padding: 5px 8px;
   height: 28px;
   line-height: 18px;
-  margin-inline-end: -1px;
   position: relative;
   text-decoration: none;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.header .controls > button + button, .header .controls > a + a {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.header .controls > button:last-child, .header .controls > a:last-child {
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
 }
 .header .controls a {
   display: inline-block;
@@ -215,15 +225,14 @@ function switchCode() {
   content: ' · ';
 }
 .header .controls > *:hover:not(.active) {
-  border-color: var(--color-text-light);
-  color: var(--color-link);
-  z-index: 1;
+  background-color: var(--source-header-background-active) !important;
 }
 .source {
-  border: 1px solid var(--color-tabs-border);
+  border: 1px solid var(--source-border);
   border-top: 0;
   border-radius: 0 0 6px 6px;
   overflow: hidden;
+  color: rgb(31, 35, 40);
 }
 .source pre {
   margin-bottom: 0;

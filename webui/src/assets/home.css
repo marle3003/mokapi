@@ -40,8 +40,8 @@
 }
 .home .hero-title .badge {
   margin-left: 0.5rem;
-  background-color: #eabaabff;
-  color: black;
+  background-color: rgb(8, 109, 215);
+  color: white;
 }
 .home .tab {
   max-width: 700px;
@@ -90,29 +90,27 @@
   margin-top: 0;
   text-align: center;
 }
-.home .card-group .card {
-  color: var(--color-nav-link);
-  border-color: var(--color-border);
-  background-color: var(--color-background-soft);
+.home .card {
+  color: var(--color-text);
+  border-color: var(--card-border);
+  background-color: var(--card-background);
   margin: 7px;
-  margin-left: 0;
 }
 .home .card a {
-  color: var(--color-nav-link);
+  color: var(--card-color);
   text-decoration: none;
 }
-.home a .card:hover {
-  background-color: var(--color-background-light);
-  border-color: var(--color-background-light);
-  color: var(--color-nav-link-active) !important;
+.home .card:hover:has(a) {
+  border-color: var(--card-border-active);
   cursor: pointer;
-}
-.home .card:hover a {
-  color: var(--color-nav-link-active);
 }
 .home .card-title {
   font-size: 1.3rem;
   font-weight: 600;
+  color: var(--header-color)
+}
+.home h2.card-title {
+  text-align: left;
 }
 .home section {
   padding-bottom: 6rem;
@@ -138,7 +136,7 @@ section.feature button {
 footer {
   padding-top: 3rem;
   padding-bottom: 2rem;
-  background-color: var(--color-background-soft);
+  background-color: var(--footer-background);
   opacity: 0.8;
   font-size: 0.9rem;
 }

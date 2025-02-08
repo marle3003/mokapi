@@ -12,11 +12,6 @@ if (localStorage.getItem('theme')) {
 document.documentElement.setAttribute('data-theme', theme);
 document.documentElement.setAttribute('style', 'color-scheme:'+theme)
 document.documentElement.setAttribute('data-bs-theme', theme)
-if (theme == 'light' ) {
-  import('@/assets/github.css')
-} else{
-  import('@/assets/github-dark.css')
-}
 </script>
 
 <template>

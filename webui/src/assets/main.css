@@ -7,6 +7,7 @@
 @import './nav.css';
 @import './home.css';
 @import 'ace-mokapi.css';
+@import 'github-dark.css';
 
 body {
   color: var(--color-text);
@@ -56,14 +57,16 @@ h4 {
   font-size: 1.1rem;
   font-weight: 600;
 }
-
+h6 {
+  color: var(--color-text);
+}
 a {
-  color: var(--color-link);
+  color: var(--link-color);
   text-decoration: none;
 }
 
 a:hover{
-  color: var(--color-link-active);
+  color: var(--link-color-active);
 }
 pre{
   font-size: 1rem;
@@ -93,4 +96,12 @@ pre{
 
 pre {
   box-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.05), 0 0.25rem 0.5rem rgba(0, 0, 0, 0.05);
+}
+
+i.icon {
+  color: var(--icon-color)
+}
+
+.api {
+  background-color: #7e708bff !important;
 }

@@ -651,7 +651,17 @@ func TestWatch_UpdateFile_When_Skipped_But_Referenced(t *testing.T) {
 
 	p := New(static.FileProvider{Directories: []string{tempDir}})
 	pool := safe.NewPool(context.Background())
-	defer pool.Stop()
+	defer func() {
+		pool.Stop()
+		// todo refactor channel handling to prevent "send on closed channel"
+		timeout := time.After(1 * time.Second)
+		select {
+		case <-ch:
+			return
+		case <-timeout:
+			return
+		}
+	}()
 
 	err := p.Start(ch, pool)
 	require.NoError(t, err)
@@ -661,6 +671,7 @@ func TestWatch_UpdateFile_When_Skipped_But_Referenced(t *testing.T) {
 	require.NoError(t, err)
 	waitFileUpdate(t, ch)
 	err = createFile(filepath.Join(tempDir, "_bar.skip"), "bar")
+	require.NoError(t, err)
 	u, err := url.Parse("file:" + filepath.Join(tempDir, "_bar.skip"))
 	require.NoError(t, err)
 	_, err = p.Read(u)

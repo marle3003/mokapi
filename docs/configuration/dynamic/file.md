@@ -29,7 +29,7 @@ You also can use CLI JSON or shorthand syntax to, see [CLI](/docs/configuration/
 A list of all options that can be used with the file provider, refer to
 the [reference page](/docs/configuration/reference.md).
 
-``` box=limitation
+``` box=warning title=Limitation
 Mokapi uses fsnotify to listen to file system notification. There
 are issues with if Mokapi runs in a Linux Docker container on Windows
 WSL2 host system.
@@ -38,7 +38,7 @@ WSL2 host system.
 ### Filename
 Defines the path to the configuration file. 
 
-``` box=warning noTitle
+``` box=info noTitle
 <mark>Filename</mark> and <mark>Directory</mark> are mutually exclusive and <mark>Directory</mark> is weighted higher.
 ```
 

@@ -20,10 +20,6 @@ The dashboard displays key metrics like request logs,
 response times, and error rates, offering a comprehensive 
 overview of how the mock API behaves under different conditions.
 
-Below you can find the list of API types in the dashboard:
-
-- [HTTP](/docs/guides/http/dashboard.md)
-
 ### Generate sample data from the specification
 
 Some API types support generating sample data and validating data against the specification 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useAppInfo, type AppInfoResponse } from '../composables/appInfo'
 import { RouterLink, useRouter } from 'vue-router'
-import { onMounted, onUnmounted, inject } from 'vue';
+import { onUnmounted, inject } from 'vue';
 
 const isDashboardEnabled = import.meta.env.VITE_DASHBOARD == 'true'
 let appInfo: AppInfoResponse | null = null
@@ -53,10 +53,10 @@ function formatParam(label: any): string {
         <div class="collapse navbar-collapse" id="navbar">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
             <li class="nav-item" v-if="isDashboardEnabled">
-              <router-link class="nav-link" :to="{ name: 'dashboard', query: {refresh: 20} }">Dashboard</router-link>
+              <router-link class="nav-link pb-1" :to="{ name: 'dashboard', query: {refresh: 20} }">Dashboard</router-link>
             </li>
             <li class="nav-item" v-for="(item, label) of nav">
-              <router-link class="nav-link" :to="{ name: 'docs', params: {level1: formatParam(label)} }" v-if="showInHeader(item)">{{ label }}</router-link>
+              <router-link class="nav-link pb-1" :to="{ name: 'docs', params: {level1: formatParam(label)} }" v-if="showInHeader(item)">{{ label }}</router-link>
             </li>
           </ul>
 
@@ -137,19 +137,18 @@ header .container-fluid {
     font-size: 0.8rem;
 }
 .nav-link {
-    color: var(--color-header-link);
+    color: var(--header-link-color);
 }
 .nav-link:hover {
-    color: var(--color-header-link-active);
-    border-bottom: 4px solid var(--color-header-link-active);
+    color: var(--header-link-color-active);
+    border-bottom: 4px solid var(--header-link-color-active);
     margin-bottom: -4px;
     text-decoration: none;
 }
 .nav-link.router-link-active{
-  color: var(--color-header-link-active);
-  border-bottom: 4px solid var(--color-header-link-active);
+  color: var(--header-link-color-active);
+  border-bottom: 4px solid var(--header-link-color-active);
   margin-bottom: -4px;
-  text-shadow: var(--shadow-nav-link-active);
 }
 .tools {
   line-height: 1.2rem;

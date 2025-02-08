@@ -17,6 +17,8 @@ func It() *Tree {
 			Uri(),
 			Username(),
 			Error(),
+			UserObject(),
+			UserAny(),
 		},
 	}
 }
@@ -73,6 +75,51 @@ func StringHash() *Tree {
 			s := gofakeit.SentenceSimple()
 			b := hash.Sum([]byte(s))
 			return fmt.Sprintf("%x", b), nil
+		},
+	}
+}
+
+func UserObject() *Tree {
+	return &Tree{
+		Name: "PetObject",
+		Test: func(r *Request) bool {
+			return r.Path.MatchLast(NameIgnoreCase("users", "user"), Any())
+		},
+		Nodes: []*Tree{
+			UserObjectName(),
+		},
+	}
+}
+
+func UserObjectName() *Tree {
+	return &Tree{
+		Name: "UserName",
+		Test: func(r *Request) bool {
+			return r.LastName() == "name"
+		},
+		Fake: func(r *Request) (interface{}, error) {
+			return gofakeit.Username(), nil
+		},
+	}
+}
+
+func UserAny() *Tree {
+	return &Tree{
+		Name: "AnyPerson",
+		Test: func(r *Request) bool {
+			last := r.Last()
+			if last == nil {
+				return false
+			}
+			return last.Name == "user" && last.Schema.IsAny()
+		},
+		Fake: func(r *Request) (interface{}, error) {
+			return map[string]interface{}{
+				"firstname": gofakeit.FirstName(),
+				"lastname":  gofakeit.LastName(),
+				"gender":    gofakeit.Gender(),
+				"email":     gofakeit.Email(),
+			}, nil
 		},
 	}
 }

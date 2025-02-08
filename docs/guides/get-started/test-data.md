@@ -141,7 +141,7 @@ export default function() {
 }
 ```
 
-``` box=warning title="Warning: JavaScript file is not thread-safe"
+``` box=warning title="JavaScript file is not thread-safe"
 A JavaScript file cannot have 
 an event handler and a faker extension. You need to have these in different files.
 ```

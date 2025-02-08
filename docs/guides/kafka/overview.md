@@ -9,13 +9,13 @@ Designed to integrate seamlessly into your projects, Mokapi allows you to mock K
 
 ## Key Features
 
-**Mock Kafka Topics:** Use an AsyncAPI specification to mock Kafka topics by contract, ensuring consistency and adherence to expected behavior.
+- <p><strong>Mock Kafka Topics:</strong><br/> Use an AsyncAPI specification to mock Kafka topics by contract, ensuring consistency and adherence to expected behavior.</p>
 
-**Schema Validation:** Mokapi validates message against the schemas to ensure compatibility and compliance between services, reducing runtime issues.
+- <p><strong>Schema Validation:</strong><br/> Mokapi validates message against the schemas to ensure compatibility and compliance between services, reducing runtime issues.</p>
 
-**Realistic Test Data:** Import message payloads or generate representative data to test edge cases, workflows, and error conditions.
+- <p><strong>Realistic Test Data:</strong><br/> Import message payloads or generate representative data to test edge cases, workflows, and error conditions.</p>
 
-**Streamlined Setup:** Avoid the complexity of setting up and maintaining a full Kafka environment, simplifying your development and testing process.
+- <p><strong>Streamlined Setup:</strong><br/> Avoid the complexity of setting up and maintaining a full Kafka environment, simplifying your development and testing process.</p>
 
 ## Why Use Mokapi for Kafka?
 By leveraging Mokapi, you can enhance your development workflow and reduce dependencies on external systems, while ensuring the reliability and robustness of your Kafka-based applications. The ability to simulate real-world scenarios and validate messages against contracts reduces the risk of issues in production, accelerates development, and supports a smooth CI/CD pipeline.

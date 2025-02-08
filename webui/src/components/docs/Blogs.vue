@@ -23,41 +23,38 @@ function formatParam(label: any): string {
 </script>
 
 <template>
-    <div v-if="blogs.length > 0">
-        <h1>Blogs</h1>
-        <ul class="link-list">
-            <li v-for="blog of blogs">
-                <router-link :to="{ name: 'docs', params: {level2: formatParam(blog.key)} }">
-                    <p class="link-list-title">{{ blog.meta.title }}</p>
-                    <p class="link-list-description">{{ blog.meta.description }}</p>
+    <div v-if="blogs.length > 0" class="blogs">
+        <h2>Blogs</h2>
+        <div class="row row-cols-1 row-cols-md-2 g-3">
+            <div v-for="blog of blogs" class="col">
+                <router-link :to="{ name: 'docs', params: { level2: formatParam(blog.key)} }">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h3 class="card-title align-middle"><span class="align-middle d-inline-block" >{{ blog.meta.title }}</span></h3>
+                            {{ blog.meta.description }}
+                        </div>
+                    </div>
                 </router-link>
-            </li>
-        </ul>
+            </div>
+        </div>
     </div>
 </template>
 
 <style scoped>
-.link-list {
-    list-style-type: none;
-    margin-bottom: 50px;
-    padding: 0;
+.blogs .card h3 {
+    margin-top: 0;
+    line-height: 1.4
 }
-.link-list > li{
-    border-width: 1px;
-    border-style: solid;
-    border-color: var(--color-tabs-border);
-    margin-bottom:-1px;
+.blogs a .card:hover {
+  border-color: var(--card-border-active);
+  cursor: pointer;
 }
-.link-list > li > a{
-    padding: 20px;
-    text-decoration: none;
-    display: block;
-}
-.link-list-title {
-    font-size: 1.3rem;
-    margin-bottom: 5px;
-}
-.link-list-description {
-    color: var(--color-text);
+.blogs .card {
+  color: var(--color-text);
+  border-color: var(--card-border);
+  background-color: var(--card-background);
+  margin: 7px;
+  padding: 24px;
+  line-height: 1.4;
 }
 </style>

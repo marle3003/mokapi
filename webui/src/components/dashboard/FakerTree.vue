@@ -105,10 +105,10 @@ function handleScroll(event: WheelEvent) {
     top: 10px;
     right: 10px;
     cursor: pointer;
-    color: var(--color-link);
+    color: var(--link-color);
   }
   .decisionTree > .info:hover {
-    color: var(--color-link-active);
+    color: var(--link-color-active);
   }
   .rich-media-node {
     width: 150px;
@@ -120,7 +120,7 @@ function handleScroll(event: WheelEvent) {
     justify-content: center;
     text-align: center;
     color: white;
-    background-color: var(--color-link);
+    background-color: var(--link-color);
     color: var(--color-button-text-hover);
     border-radius: 4px;
     position: relative;

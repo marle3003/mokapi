@@ -100,7 +100,7 @@ function hasTouchSupport() {
         <span class="ms-2">{{ levels[3] || levels[2] || levels[1] || levels[0] }}</span>
       </div>
       <div class="d-flex">
-        <div class="text-white sidebar d-none d-md-block" :class="openSidebar ? 'open' : ''" id="sidebar">
+        <div class="sidebar d-none d-md-block" :class="openSidebar ? 'open' : ''" id="sidebar">
           <DocNav :config="nav" :levels="levels" :title="levels[0]"/>
         </div>
         <div style="flex: 1;max-width:760px;margin-bottom: 3rem;">
@@ -199,7 +199,7 @@ function hasTouchSupport() {
 }
 
 .content h2 > svg path {
-  fill: var(--color-link);
+  fill: var(--link-color);
 }
 
 .content h3 {
@@ -232,25 +232,22 @@ table {
 table.selectable td {
     cursor: pointer;
 }
-table thead tr {
-    color: var(--color-datatable-header-text);
-}
 table thead th {
+    color: var(--table-header-color);
     padding: 3px 0 3px 12px;
-    border-color: var(--color-datatable-border);
+    border-color: var(--table-border-color);
     border-top-width: 0px;
     border-bottom-width: 2px;
-    font-weight: 500;
+    font-weight: bold;
 }
 table td {
-    border-top-width: 2px;
-    border-bottom-width: 2px;
-    border-color: var(--color-datatable-border);
+    border-bottom-width: 1px;
+    border-color: var(--table-border-color);
     border-style: solid;
-    padding: 7px 20px 12px 12px;
+    padding: 8px;
     border-left-style: hidden;
     border-right-style: hidden;
-    font-size: 0.9rem;
+    line-height: 1.4;
 }
 
 table tbody tr:hover {
@@ -268,11 +265,17 @@ pre {
   white-space: pre-wrap;
   word-break: break-all;
   border-radius: 6px;
+  line-height: 1.4;
+  font-family: Menlo,Monaco,Consolas,"Courier New",monospace !important;
+  font-size: 0.85rem;
 }
 @media only screen and (max-width: 600px)  {
   pre {
     max-width: 350px !important;
   }
+}
+code {
+  font-family: Menlo,Monaco,Consolas,"Courier New",monospace !important;
 }
 
 .content ul li h3 {
@@ -314,9 +317,10 @@ pre {
   margin: 0;
 }
 .box mark {
-  background-color: #a0a1a7;
-  padding: 0 0.1rem 0 0.1rem;
-  border-radius: 0.1rem;
+  background-color: var(--color-yellow);
+  color: rgb(3,6,11);
+  padding: 0.1em;
+  border-radius: 0.3em;
 }
 .box.info{
   border-color: var(--color-blue);
@@ -380,24 +384,19 @@ blockquote span{
 }
 
 .content a.card {
-  background-color: var(--color-tabs-background);
+  background-color: var(--card-background);
   color: var(--color-text);
-  border-color: var(--color-tabs-border);
-  cursor: pointer;
+  border-color: var(--card-border);
   border-radius: 10px;
 }
 .content a.card:hover {
-  border-color: var(--color-background-mute);
-  box-shadow: 0 2px 5px rgba(82,85,93,.7);
+  border-color: var(--card-border-active);
+  cursor: pointer;
 }
 .content a.card .card-title {
-  font-weight: 500;
+  font-weight: bold;
 }
-.content a.card .card-text {
-  font-weight: 400;
-  font-size: 1rem;
-}
-.content li {
+.content li:has(p) {
   padding: 8px 6px 8px 6px
 }
 .content li > p {

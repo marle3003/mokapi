@@ -7,7 +7,8 @@ import type Renderer from "markdown-it/lib/renderer"
 export function MarkdownItTabs(md: MarkdownIt, opts: Options) {
     var defaultRender = md.renderer.rules.fence!,
         unescapeAll = md.utils.unescapeAll,
-        re = /tab=([^\s]*)/,
+        simple = /tab=([^\s]*)/,
+        quote = /tab="([^"]*)/,
         counter = 0
 
     function getInfo(token: Token) {
@@ -15,8 +16,13 @@ export function MarkdownItTabs(md: MarkdownIt, opts: Options) {
     }
 
     function getTabName(token: Token) {
-        var info = getInfo(token)   
-        return re.exec(info)?.slice(1).toString() ?? ''
+        var info = getInfo(token)
+        const r = quote.exec(info)
+        if (r && r.length > 1) {
+            return r.slice(1).toString()
+        }
+
+        return simple.exec(info)?.slice(1).toString() ?? ''
     }
 
     function fenceGroup(tokens: Token[], idx: number, options: Options, env: any, slf: Renderer): string {
@@ -36,7 +42,7 @@ export function MarkdownItTabs(md: MarkdownIt, opts: Options) {
                 break;
             }
 
-            token.info = token.info.replace(re, '')
+            token.info = token.info.replace(quote, '').replace(simple, '')
             token.hidden = true
 
             const tabId = `tab-${counter}-${tabName.toString().replace('.', '-')}`

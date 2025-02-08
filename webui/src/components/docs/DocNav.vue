@@ -158,7 +158,7 @@ nav {
 }
 
 .nav .active {
-  color: var(--color-nav-link-active);
+  color: var(--nav-color-active);
 }
 
 .nav button {
@@ -169,7 +169,7 @@ nav {
 }
 
 .nav button:hover {
-  color: var(--color-nav-link-active);
+  color: var(--nav-color-active);
 }
 
 .nav button[aria-expanded=false] .bi-caret-up-fill {
