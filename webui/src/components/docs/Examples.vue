@@ -34,7 +34,7 @@ function formatParam(label: any): string {
         <h2>Tutorials</h2>
         <div class="row row-cols-1 row-cols-md-1 g-3">
             <div v-for="tutorial of tutorials" class="col">
-                <router-link :to="{ name: 'docs', params: {level2: 'examples', level3: formatParam(tutorial.key)} }">
+                <router-link :to="{ name: 'docs', params: {level2: 'tutorials', level3: formatParam(tutorial.key)} }">
                     <div class="card">
                         <div class="card-body">
                             <h3 class="card-title align-middle"><i class="bi me-2 align-middle d-inline-block" :class="tutorial.meta.icon" style="font-size:20px; color: #7e708bff"></i><span class="align-middle d-inline-block" >{{ tutorial.meta.title }}</span></h3>
