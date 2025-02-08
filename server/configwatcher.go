@@ -206,6 +206,8 @@ func (w *ConfigWatcher) configChanged(evt dynamic.ConfigEvent) {
 	w.m.Unlock()
 
 	c := e.config
+	// set config on evt
+	evt.Config = c
 	err := dynamic.Parse(c, w)
 	if err != nil {
 		log.Errorf("parse error %v: %v", c.Info.Path(), err)

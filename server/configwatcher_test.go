@@ -126,6 +126,10 @@ func TestConfigWatcher_Read(t *testing.T) {
 						return nil
 					},
 				}
+				w.AddListener(func(e dynamic.ConfigEvent) {
+					require.NotNil(t, e.Config.Data)
+				})
+
 				pool := safe.NewPool(context.Background())
 				w.Start(pool)
 				defer pool.Stop()

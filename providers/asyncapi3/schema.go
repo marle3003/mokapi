@@ -177,12 +177,12 @@ func (m *MultiSchemaFormat) UnmarshalYAML(node *yaml.Node) error {
 		}
 		m.Schema = s
 	case isAvro(format):
-		var s *avro.Schema
-		err := schemaNode.Decode(&s)
+		var ref *AvroRef
+		err := schemaNode.Decode(&ref)
 		if err != nil {
 			return err
 		}
-		m.Schema = s
+		m.Schema = ref
 	default:
 		var s *jsonSchema.Schema
 		err := node.Decode(&s)
@@ -274,4 +274,21 @@ func isOpenApi(format string) bool {
 	default:
 		return false
 	}
+}
+
+type AvroRef struct {
+	*avro.Schema
+	dynamic.Reference
+}
+
+func (r *AvroRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
+	return dynamic.Resolve(r.Ref, &r.Schema, config, reader)
+}
+
+func (r *AvroRef) UnmarshalYAML(node *yaml.Node) error {
+	return r.Reference.UnmarshalYaml(node, &r.Schema)
+}
+
+func (r *AvroRef) UnmarshalJSON(b []byte) error {
+	return r.Reference.UnmarshalJson(b, &r.Schema)
 }
