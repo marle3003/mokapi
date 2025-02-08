@@ -40,7 +40,7 @@ func TestPetStore(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{
-					"category":  map[string]interface{}{"id": 83580, "name": "fish"},
+					"category":  map[string]interface{}{"id": 83580, "name": "rabbit"},
 					"id":        37727,
 					"photoUrls": []interface{}{"https://www.principalapplications.biz/cultivate/e-enable/integrated"},
 					"status":    "sold",

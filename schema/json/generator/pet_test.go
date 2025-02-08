@@ -83,7 +83,7 @@ func TestPet(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"category": "bat"}, v)
+				require.Equal(t, map[string]interface{}{"category": "canary"}, v)
 			},
 		},
 		{
@@ -101,7 +101,7 @@ func TestPet(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"category": map[string]interface{}{"name": "bat"}}, v)
+				require.Equal(t, map[string]interface{}{"category": map[string]interface{}{"name": "canary"}}, v)
 			},
 		},
 		{
@@ -115,7 +115,7 @@ func TestPet(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{"elk", "fish"}, v)
+				require.Equal(t, []interface{}{"ferret", "rabbit"}, v)
 			},
 		},
 		{
@@ -135,7 +135,7 @@ func TestPet(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"category": map[string]interface{}{"id": 83580, "name": "bat"}}, v)
+				require.Equal(t, map[string]interface{}{"category": map[string]interface{}{"id": 83580, "name": "canary"}}, v)
 			},
 		},
 	}
