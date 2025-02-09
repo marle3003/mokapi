@@ -2,6 +2,8 @@ package schema
 
 import (
 	"github.com/stretchr/testify/require"
+	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	json "mokapi/schema/json/schema"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
@@ -31,7 +33,16 @@ func TestConvert(t *testing.T) {
 			name: "int",
 			s:    &Schema{Type: []interface{}{"int"}},
 			test: func(t *testing.T, js *json.Schema) {
-				require.Equal(t, schematest.New("integer"), js)
+				require.Equal(t, schematest.New("integer", schematest.WithFormat("int32")), js)
+			},
+		},
+		{
+			name: "int wrapped",
+			s: &Schema{Type: []interface{}{
+				&Schema{Type: []interface{}{"int"}},
+			}},
+			test: func(t *testing.T, js *json.Schema) {
+				require.Equal(t, schematest.NewAny(schematest.New("integer", schematest.WithFormat("int32"))), js)
 			},
 		},
 		{
@@ -87,8 +98,9 @@ func TestConvert(t *testing.T) {
 			name: "union",
 			s:    &Schema{Type: []interface{}{"string", "int"}},
 			test: func(t *testing.T, js *json.Schema) {
-				require.Equal(t, schematest.NewTypes([]string{"string", "integer"}), js,
-					js)
+				require.Len(t, js.AnyOf, 2)
+				require.Equal(t, "string", js.AnyOf[0].Type.String())
+				require.Equal(t, "integer", js.AnyOf[1].Type.String())
 			},
 		},
 		{
@@ -98,10 +110,9 @@ func TestConvert(t *testing.T) {
 				&Schema{Type: []interface{}{"int"}},
 			}},
 			test: func(t *testing.T, js *json.Schema) {
-				require.Equal(t, schematest.NewAny(
-					schematest.New("string"),
-					schematest.New("integer")),
-					js)
+				require.Len(t, js.AnyOf, 2)
+				require.Equal(t, "string", js.AnyOf[0].Type.String())
+				require.Equal(t, "integer", js.AnyOf[1].Type.String())
 			},
 		},
 		{
@@ -120,10 +131,11 @@ func TestConvert(t *testing.T) {
 		},
 		{
 			name: "fields",
-			s:    &Schema{Fields: []Schema{{Name: "foo", Type: []interface{}{"string"}}}},
+			s:    &Schema{Fields: []*Schema{{Name: "foo", Type: []interface{}{"string"}}}},
 			test: func(t *testing.T, js *json.Schema) {
 				require.Equal(t, schematest.NewTypes(nil,
-					schematest.WithProperty("foo", schematest.New("string"))),
+					schematest.WithProperty("foo",
+						schematest.New("string", schematest.WithTitle("foo")))),
 					js)
 			},
 		},
@@ -164,13 +176,66 @@ func TestConvert(t *testing.T) {
 					js)
 			},
 		},
+		{
+			name: "enum wrapped",
+			s: &Schema{Type: []interface{}{
+				&Schema{
+					Type:    []interface{}{"enum"},
+					Symbols: []string{"foo", "bar"},
+				},
+			}},
+			test: func(t *testing.T, js *json.Schema) {
+				require.Len(t, js.AnyOf, 1)
+				require.Equal(t, "string", js.AnyOf[0].Type.String())
+				require.Equal(t, []interface{}{"foo", "bar"}, js.AnyOf[0].Enum)
+			},
+		},
+		{
+			name: "named enum",
+			s: &Schema{
+				Type: []interface{}{"record"},
+				Fields: []*Schema{
+					{
+						Name: "f1",
+						Type: []interface{}{
+							&Schema{
+								Name:    "foo",
+								Type:    []interface{}{"enum"},
+								Symbols: []string{"foo", "bar", "yuh"},
+							},
+						},
+					},
+					{
+						Name: "f2",
+						Type: []interface{}{"foo"},
+					},
+				},
+			},
+			test: func(t *testing.T, js *json.Schema) {
+				require.Equal(t, "object", js.Type.String())
+
+				f1 := js.Properties.Get("f1")
+				require.Equal(t, "", f1.Type.String())
+				require.Len(t, f1.AnyOf, 1)
+				require.Equal(t, "string", f1.AnyOf[0].Type.String())
+				require.Equal(t, []interface{}{"foo", "bar", "yuh"}, f1.AnyOf[0].Enum)
+
+				f2 := js.Properties.Get("f2")
+				require.Equal(t, "", f2.Type.String())
+				require.Len(t, f2.AnyOf, 1)
+				require.Equal(t, "string", f2.AnyOf[0].Type.String())
+				require.Equal(t, []interface{}{"foo", "bar", "yuh"}, f2.AnyOf[0].Enum)
+			},
+		},
 	}
 
-	t.Parallel()
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
+
+			err := tc.s.Parse(&dynamic.Config{Info: dynamictest.NewConfigInfo(), Data: tc.s}, &dynamictest.Reader{})
+			require.NoError(t, err)
+
 			js := tc.s.Convert()
 			tc.test(t, js)
 		})

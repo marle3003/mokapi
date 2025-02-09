@@ -25,6 +25,14 @@ func TestParser_ParseObject(t *testing.T) {
 			},
 		},
 		{
+			name:   "null but not nullable",
+			data:   nil,
+			schema: schematest.New("object"),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "found 1 error:\ninvalid type, expected object but got null\nschema path #/type")
+			},
+		},
+		{
 			name:   "property invalid type",
 			data:   map[string]interface{}{"foo": 1234},
 			schema: schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),

@@ -11,6 +11,10 @@ import (
 )
 
 func ToType(i interface{}) string {
+	if i == nil {
+		return "null"
+	}
+
 	v := reflect.ValueOf(i)
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"io"
+	"mokapi/config/dynamic"
 	"mokapi/media"
 	openApiSchema "mokapi/providers/openapi/schema"
 	avro "mokapi/schema/avro/schema"
@@ -73,6 +74,10 @@ func (h *handler) getExampleData(w http.ResponseWriter, r *http.Request) {
 			&generator.PathElement{Name: re.Name, Schema: s},
 		},
 	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	examples, err := encodeExample(rnd, re.Schema, re.Format, re.ContentTypes)
 
@@ -118,8 +123,6 @@ func encodeExample(v interface{}, schema interface{}, schemaFormat string, conte
 				data, err = encoding.NewEncoder(t.Convert()).Write(v, ct)
 			case ct.Key() == "avro/binary" || ct.Key() == "application/octet-stream":
 				data, err = t.Marshal(v)
-				log.Infof("string: %v", string(data))
-				log.Infof("bits: %v", data)
 			default:
 				examples = append(examples, example{
 					ContentType: ct.String(),
@@ -250,14 +253,23 @@ func unmarshal(raw json.RawMessage, format string) (interface{}, error) {
 		case isOpenApi(format):
 			var r *openApiSchema.Ref
 			err := json.Unmarshal(raw, &r)
+			err = r.Parse(&dynamic.Config{Data: r}, &dynamic.EmptyReader{})
 			return r, err
 		case isAvro(format):
 			var a *avro.Schema
 			err := json.Unmarshal(raw, &a)
+			if err != nil {
+				return nil, err
+			}
+			err = a.Parse(&dynamic.Config{Data: a}, &dynamic.EmptyReader{})
 			return a, err
 		default:
 			var r *jsonSchema.Schema
 			err := json.Unmarshal(raw, &r)
+			if err != nil {
+				return nil, err
+			}
+			err = r.Parse(&dynamic.Config{Data: r}, &dynamic.EmptyReader{})
 			return r, err
 		}
 	}

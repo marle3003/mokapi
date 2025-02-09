@@ -155,6 +155,10 @@ func compareStruct(a, b reflect.Value) bool {
 }
 
 func toType(i interface{}) string {
+	if i == nil {
+		return "null"
+	}
+
 	v := reflect.ValueOf(i)
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
@@ -175,7 +179,7 @@ func toType(i interface{}) string {
 		return "boolean"
 	default:
 		log.Errorf("unable to resolve JSON type from value %v kind %v", ToString(i), v.Kind())
-		return "string"
+		return fmt.Sprintf("%T", i)
 	}
 }
 

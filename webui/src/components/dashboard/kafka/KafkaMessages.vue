@@ -86,7 +86,7 @@ function showMessage(event: ServiceEvent){
     const source: Source = {}
     if (data.message.value) {
         source.preview = {
-                content: formatLanguage(data.message.value ?? data.message.binary, messageConfig.contentType),
+                content: formatLanguage(data.message.value, isAvro ? 'application/json' : messageConfig.contentType),
                 contentType: contentType,
                 contentTypeTitle: messageConfig.contentType,
                 description: isAvro ? 'Avro content in JSON format' : undefined
@@ -94,7 +94,7 @@ function showMessage(event: ServiceEvent){
     }
     if (data.message.binary) {
        source.binary = {
-                content: raw(data.message.binary),
+                content: atob(data.message.binary),
                 contentType: messageConfig.contentType
             }
     }
@@ -162,19 +162,6 @@ function getContentType(msg: KafkaMessage): [string, boolean] {
     }
 
     return [ msg.contentType, false ]
-}
-function raw(s: string): string {
-    if (!s || s == '') {
-        return ''
-    }
-
-    // converts a base64 encoded string to bytes
-    const binaryString = atob(s);
-    let raw = ""
-    for (var i = 0; i < binaryString.length; i++) {
-        raw += binaryString.charCodeAt(i).toString();
-    }
-    return raw;
 }
 function key(data: KafkaEventData): string {
     if (data?.key.value !== '') {

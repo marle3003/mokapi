@@ -59,8 +59,6 @@ func (p *Parser) parse(data interface{}, s *schema.Schema) (interface{}, error) 
 			return nil, nil
 		} else if s.Default != nil {
 			data = s.Default
-		} else {
-			return nil, Errorf("type", "invalid type, expected %v but got null", s.Type.String())
 		}
 	}
 

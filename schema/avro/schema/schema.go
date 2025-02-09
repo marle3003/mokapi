@@ -8,24 +8,84 @@ import (
 	"strings"
 )
 
+var table = map[string]*Schema{}
+
 type Schema struct {
-	Type []interface{} `yaml:"-" json:"-"`
+	Type       []interface{}      `yaml:"-" json:"-"`
+	NamedTypes map[string]*Schema `yaml:"-" json:"-"`
 
 	Name      string   `yaml:"name,omitempty" json:"name,omitempty"`
 	Namespace string   `yaml:"namespace,omitempty" json:"namespace,omitempty"`
 	Doc       string   `yaml:"doc,omitempty" json:"doc,omitempty"`
 	Aliases   []string `yaml:"aliases,omitempty" json:"aliases,omitempty"`
 
-	Fields  []Schema `yaml:"fields,omitempty" json:"fields,omitempty"`
-	Symbols []string `yaml:"symbols,omitempty" json:"symbols,omitempty"`
-	Items   *Schema  `yaml:"items,omitempty" json:"items,omitempty"`
-	Values  *Schema  `yaml:"values,omitempty" json:"values,omitempty"`
+	Fields  []*Schema `yaml:"fields,omitempty" json:"fields,omitempty"`
+	Symbols []string  `yaml:"symbols,omitempty" json:"symbols,omitempty"`
+	Items   *Schema   `yaml:"items,omitempty" json:"items,omitempty"`
+	Values  *Schema   `yaml:"values,omitempty" json:"values,omitempty"`
 
 	Order []string `yaml:"order,omitempty" json:"order,omitempty"`
 	Size  int      `yaml:"size,omitempty" json:"size,omitempty"`
+
+	fullname  string
+	namespace string
 }
 
 func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
+	ns := s.Namespace
+	name := s.Name
+	if strings.Contains(name, ".") {
+		i := strings.LastIndex(name, ".")
+		ns = name[:i]
+		name = name[i+1:]
+	}
+	if ns == "" {
+		ns = config.Scope.Name()
+	} else {
+		config.OpenScope(ns)
+		defer config.CloseScope()
+	}
+	s.namespace = ns
+
+	if s.Name != "" {
+		if ns != "" {
+			s.fullname = fmt.Sprintf("%s.%s", ns, name)
+		} else {
+			s.fullname = name
+		}
+		table[s.fullname] = s
+	}
+
+	for i, t := range s.Type {
+		switch v := t.(type) {
+		case string:
+			nt, err := config.Scope.GetDynamic(v)
+			if err == nil {
+				s.Type[i] = nt
+			}
+		case *Schema:
+			err := v.Parse(config, reader)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	for _, f := range s.Fields {
+		err := f.Parse(config, reader)
+		if err != nil {
+			return err
+		}
+	}
+
+	if s.Items != nil {
+		return s.Items.Parse(config, reader)
+	}
+
+	if s.Values != nil {
+		return s.Values.Parse(config, reader)
+	}
+
 	return nil
 }
 
@@ -135,7 +195,7 @@ func (s *Schema) fromMap(m map[string]interface{}) error {
 				if err != nil {
 					return err
 				}
-				s.Fields = append(s.Fields, *fieldSchema)
+				s.Fields = append(s.Fields, fieldSchema)
 			}
 		case "symbols":
 			for _, symbol := range v.([]interface{}) {
@@ -209,4 +269,22 @@ func (s *Schema) MarshalJSON() ([]byte, error) {
 		return []byte(fmt.Sprintf(`{%s,%s}`, typeValue.String(), content)), nil
 	}
 	return []byte(fmt.Sprintf(`{%s}`, typeValue.String())), nil
+}
+
+func getFullname(s *Schema, typeName string) string {
+	if !strings.Contains(typeName, ".") && s.namespace != "" {
+		typeName = fmt.Sprintf("%s.%s", s.namespace, typeName)
+	}
+	return typeName
+}
+
+func (s *Schema) String() string {
+	var sb strings.Builder
+	if len(s.fullname) > 0 {
+		sb.WriteString(fmt.Sprintf("%s: ", s.fullname))
+	}
+
+	sb.WriteString(fmt.Sprintf("types: %v", s.Type))
+
+	return sb.String()
 }

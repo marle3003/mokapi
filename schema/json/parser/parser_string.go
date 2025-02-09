@@ -23,8 +23,11 @@ func (p *Parser) ParseString(data interface{}, schema *schema.Schema) (interface
 	case []byte:
 		s = string(v)
 	default:
-		if v == nil && schema.IsNullable() {
-			return nil, nil
+		if v == nil {
+			if schema.IsNullable() {
+				return nil, nil
+			}
+			return nil, Errorf("type", "invalid type, expected string but got null")
 		}
 		return nil, Errorf("type", "invalid type, expected %v but got %v", schema.Type, toType(data))
 	}
