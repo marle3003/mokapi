@@ -144,11 +144,7 @@ func (s *HttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if service != nil {
 		if !service.IsInternal {
-			log.WithFields(log.Fields{
-				"url":    r.URL.String(),
-				"host":   r.Host,
-				"method": r.Method,
-			}).Info("processing http request")
+			log.Infof("processing http request %v %s", r.Method, r.URL)
 		}
 
 		if service.Handler == nil {
