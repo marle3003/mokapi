@@ -7,8 +7,6 @@ import (
 	"io"
 )
 
-var NoSchemaId = fmt.Errorf("no schema id")
-
 type Parser struct {
 	Schema *Schema
 }
@@ -63,7 +61,12 @@ func (p *Parser) parse(r *bytes.Reader, s *Schema) (interface{}, error) {
 		return p.parse(r, wrapped)
 	}
 
-	switch t {
+	typeName, ok := t.(string)
+	if !ok {
+		return nil, fmt.Errorf("unexpected type: %v", t)
+	}
+
+	switch typeName {
 	case "null":
 		return nil, nil
 	case "boolean":
@@ -111,7 +114,7 @@ func (p *Parser) parse(r *bytes.Reader, s *Schema) (interface{}, error) {
 	case "record":
 		m := make(map[string]interface{})
 		for _, f := range s.Fields {
-			v, err := p.parse(r, &f)
+			v, err := p.parse(r, f)
 			if err != nil {
 				return nil, err
 			}
@@ -185,9 +188,20 @@ func (p *Parser) parse(r *bytes.Reader, s *Schema) (interface{}, error) {
 		b := make([]byte, s.Size)
 		_, err := r.Read(b)
 		return b, err
+	default:
+		name := getFullname(s, typeName)
+		if named, ok := table[name]; ok {
+			return p.parse(r, named)
+		}
 	}
 
-	return nil, fmt.Errorf("unknown schema type at offset %v: %s", r.Size()-int64(r.Len()), s.Type)
+	if s.fullname != "" {
+		return nil, fmt.Errorf("unknown schema type '%v' at '%v'", typeName, s.fullname)
+	} else if s.namespace != "" {
+		return nil, fmt.Errorf("unknown schema type '%v' in '%v'", typeName, s.Namespace)
+	} else {
+		return nil, fmt.Errorf("unknown schema type '%v'", typeName)
+	}
 }
 
 func readString(r *bytes.Reader) (string, error) {

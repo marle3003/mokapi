@@ -1,4 +1,5 @@
 import { metrics } from 'metrics.js'
+import { base64} from 'mokapi/encoding';
 
 const Product = {
     type: 'object',
@@ -181,8 +182,8 @@ export let clusters = [
                         payload: {
                             schema: {
                                 type: 'record', fields: [
-                                    { name: 'foo', type: 'string' },
-                                    { name: 'bar', type: 'int' }
+                                    { name: 'Name', type: 'string' },
+                                    { name: 'Age', type: 'int' }
                                 ]
                             }, format: 'application/vnd.apache.avro;version=1.9.0'
                         },
@@ -305,6 +306,31 @@ export let events = [
                         category: 'apparel',
                         subcategory: 'apparel'
                     })
+            },
+            partition: 1,
+            messageId: 'shopOrder'
+        }
+    },
+    {
+        id: '123602',
+        traits: {
+            namespace: 'kafka',
+            name: 'Kafka World',
+            topic: 'mokapi.shop.avro'
+        },
+        time: '2025-02-13T09:49:25.482366+01:00',
+        data: {
+            offset: 1,
+            key: {
+                value: 'TEST1'
+            },
+            message: {
+                value: JSON.stringify(
+                    {
+                        Name: 'Carol',
+                        Age: 29,
+                    }),
+                binary: base64.encode([0xa, 0x43, 0x61, 0x72, 0x6f, 0x6c, 0x3a].map(x => String.fromCharCode(x)).join(''))
             },
             partition: 1,
             messageId: 'shopOrder'

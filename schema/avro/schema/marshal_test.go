@@ -99,11 +99,23 @@ func TestMarshal(t *testing.T) {
 			input: map[string]interface{}{"foo": "bar"},
 			schema: &schema.Schema{
 				Type:   []interface{}{"record"},
-				Fields: []schema.Schema{{Type: []interface{}{"string"}, Name: "foo"}},
+				Fields: []*schema.Schema{{Type: []interface{}{"string"}, Name: "foo"}},
 			},
 			test: func(t *testing.T, b []byte, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []byte{0x06, 0x62, 0x61, 0x72}, b)
+			},
+		},
+		{
+			name:  "map",
+			input: map[string]interface{}{"foo": 9},
+			schema: &schema.Schema{
+				Type:   []interface{}{"map"},
+				Values: &schema.Schema{Type: []interface{}{"long"}},
+			},
+			test: func(t *testing.T, b []byte, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []byte{0x2, 0x06, 0x66, 0x6f, 0x6f, 0x12}, b)
 			},
 		},
 		{
@@ -115,7 +127,7 @@ func TestMarshal(t *testing.T) {
 			},
 			test: func(t *testing.T, b []byte, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []byte{0x4, 0x6, 0x66, 0x6f, 0x6f, 0x6, 0x62, 0x61, 0x72}, b)
+				require.Equal(t, []byte{0x4, 0x6, 0x66, 0x6f, 0x6f, 0x6, 0x62, 0x61, 0x72, 0x0}, b)
 			},
 		},
 		{
@@ -132,19 +144,21 @@ func TestMarshal(t *testing.T) {
 			input:  "bar",
 			schema: &schema.Schema{Type: []interface{}{"enum"}, Symbols: []string{"foo"}},
 			test: func(t *testing.T, b []byte, err error) {
-				require.EqualError(t, err, "value 'bar' does not match one in the symbols [foo]\nschema path #/enum")
+				require.EqualError(t, err, "value 'bar' does not match schema types: [enum]")
 			},
 		},
 		{
-			name:  "map",
-			input: map[string]interface{}{"foo": 9},
+			name:  "union enum and string",
+			input: "bar",
 			schema: &schema.Schema{
-				Type:   []interface{}{"map"},
-				Values: &schema.Schema{Type: []interface{}{"long"}},
+				Type: []interface{}{
+					&schema.Schema{Type: []interface{}{"enum"}, Symbols: []string{"foo"}},
+					&schema.Schema{Type: []interface{}{"string"}},
+				},
 			},
 			test: func(t *testing.T, b []byte, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []byte{0x2, 0x06, 0x66, 0x6f, 0x6f, 0x12}, b)
+				require.Equal(t, []byte{0x2, 0x6, 0x62, 0x61, 0x72}, b)
 			},
 		},
 		{
@@ -192,7 +206,7 @@ func TestMarshal(t *testing.T) {
 			},
 			test: func(t *testing.T, b []byte, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []byte{0x6, 0x66, 0x6f, 0x6f}, b)
+				require.Equal(t, []byte{0x66, 0x6f, 0x6f}, b)
 			},
 		},
 		{
@@ -203,7 +217,39 @@ func TestMarshal(t *testing.T) {
 				Size: 2,
 			},
 			test: func(t *testing.T, b []byte, err error) {
-				require.EqualError(t, err, "invalid fixed size, expected 2 but got 3\nschema path #/fixed")
+				require.EqualError(t, err, "value 'foo' does not match schema types: [fixed]")
+			},
+		},
+		{
+			name:  "wrapped",
+			input: "foo",
+			schema: &schema.Schema{
+				Type: []interface{}{
+					&schema.Schema{
+						Type: []interface{}{"fixed"},
+						Size: 3,
+					},
+				},
+			},
+			test: func(t *testing.T, b []byte, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []byte{0x66, 0x6f, 0x6f}, b)
+			},
+		},
+		{
+			name:  "wrapped and union",
+			input: "foo",
+			schema: &schema.Schema{
+				Type: []interface{}{
+					&schema.Schema{
+						Type: []interface{}{"integer", "fixed"},
+						Size: 3,
+					},
+				},
+			},
+			test: func(t *testing.T, b []byte, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []byte{0x2, 0x66, 0x6f, 0x6f}, b)
 			},
 		},
 	}
@@ -214,8 +260,9 @@ func TestMarshal(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			b, err := tc.schema.Marshal(tc.input)
-			tc.test(t, b, err)
+			w := schema.NewWriter()
+			err := w.Write(tc.input, tc.schema)
+			tc.test(t, w.Bytes(), err)
 		})
 	}
 }

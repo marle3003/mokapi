@@ -134,7 +134,7 @@ func TestSchema_MarshalJSON(t *testing.T) {
 		},
 		{
 			name: "type record with field",
-			s:    &schema.Schema{Type: []interface{}{"record"}, Fields: []schema.Schema{{Name: "foo", Type: []interface{}{"string"}}}},
+			s:    &schema.Schema{Type: []interface{}{"record"}, Fields: []*schema.Schema{{Name: "foo", Type: []interface{}{"string"}}}},
 			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, `{"type":"record","fields":[{"type":"string","name":"foo"}]}`, s)

@@ -1,7 +1,11 @@
 package schema
 
 import (
+	"encoding/base64"
+	"encoding/hex"
 	"github.com/stretchr/testify/require"
+	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"testing"
 )
 
@@ -105,7 +109,7 @@ func TestParser_Parse(t *testing.T) {
 			name: "record",
 			s: &Schema{
 				Type: []interface{}{"record"},
-				Fields: []Schema{
+				Fields: []*Schema{
 					{Type: []interface{}{"string"}, Name: "foo"},
 				},
 			},
@@ -154,7 +158,7 @@ func TestParser_Parse(t *testing.T) {
 			name: "record with array and string - make sure last 0 is read from array",
 			s: &Schema{
 				Type: []interface{}{"record"},
-				Fields: []Schema{
+				Fields: []*Schema{
 					{Name: "list", Type: []interface{}{"array"}, Items: &Schema{Type: []interface{}{"int"}}},
 					{Name: "foo", Type: []interface{}{"string"}},
 				},
@@ -283,17 +287,177 @@ func TestParser_Parse(t *testing.T) {
 				require.Equal(t, []byte{1, 2, 3}, v)
 			},
 		},
+		{
+			name: "named enum empty namespace",
+			s: &Schema{
+				Type: []interface{}{"record"},
+				Fields: []*Schema{
+					{
+						Name: "f1",
+						Type: []interface{}{
+							&Schema{
+								Name:    "foo",
+								Type:    []interface{}{"enum"},
+								Symbols: []string{"foo", "bar", "yuh"},
+							},
+						},
+					},
+					{
+						Name: "f2",
+						Type: []interface{}{"foo"},
+					},
+				},
+			},
+			b: []byte{0, 0, 0, 0, 1, 0, 0x2},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"f1": "foo", "f2": "bar"}, v)
+			},
+		},
+		{
+			name: "named enum with namespace",
+			s: &Schema{
+				Type: []interface{}{"record"},
+				Fields: []*Schema{
+					{
+						Namespace: "ns1",
+						Name:      "f1",
+						Type: []interface{}{
+							&Schema{
+								Name:    "foo",
+								Type:    []interface{}{"enum"},
+								Symbols: []string{"foo", "bar", "yuh"},
+							},
+						},
+					},
+					{
+						Name: "f2",
+						Type: []interface{}{"ns1.foo"},
+					},
+				},
+			},
+			b: []byte{0, 0, 0, 0, 1, 0, 0x2},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"f1": "foo", "f2": "bar"}, v)
+			},
+		},
+		{
+			name: "named enum with namespace in name",
+			s: &Schema{
+				Type: []interface{}{"record"},
+				Fields: []*Schema{
+					{
+						Namespace: "ns1",
+						Name:      "f1",
+						Type: []interface{}{
+							&Schema{
+								Name:    "ns2.foo",
+								Type:    []interface{}{"enum"},
+								Symbols: []string{"foo", "bar", "yuh"},
+							},
+						},
+					},
+					{
+						Name: "f2",
+						Type: []interface{}{"ns2.foo"},
+					},
+				},
+			},
+			b: []byte{0, 0, 0, 0, 1, 0, 0x2},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"f1": "foo", "f2": "bar"}, v)
+			},
+		},
+		{
+			name: "named enum not found",
+			s: &Schema{
+				Type: []interface{}{"record"},
+				Fields: []*Schema{
+					{
+						Namespace: "ns1",
+						Name:      "f1",
+						Type: []interface{}{
+							&Schema{
+								Name:    "foo",
+								Type:    []interface{}{"enum"},
+								Symbols: []string{"foo", "bar", "yuh"},
+							},
+						},
+					},
+					{
+						Name: "f2",
+						Type: []interface{}{"ns2.foo"},
+					},
+				},
+			},
+			b: []byte{0, 0, 0, 0, 1, 0, 0x2},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "unknown schema type 'ns2.foo' at 'ns1.f2'")
+			},
+		},
+		{
+			name: "named enum with root namespace",
+			s: &Schema{
+				Namespace: "ns",
+				Type:      []interface{}{"record"},
+				Fields: []*Schema{
+					{
+						Name: "f1",
+						Type: []interface{}{
+							&Schema{
+								Name:    "foo",
+								Type:    []interface{}{"enum"},
+								Symbols: []string{"foo", "bar", "yuh"},
+							},
+						},
+					},
+					{
+						Name: "f2",
+						Type: []interface{}{"foo"},
+					},
+				},
+			},
+			b: []byte{0, 0, 0, 0, 1, 0, 0x2},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"f1": "foo", "f2": "bar"}, v)
+			},
+		},
 	}
 
-	t.Parallel()
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
+			defer func() {
+				table = map[string]*Schema{}
+			}()
+
+			err := tc.s.Parse(&dynamic.Config{Info: dynamictest.NewConfigInfo()}, &dynamictest.Reader{})
+			if err != nil {
+				tc.test(t, nil, err)
+			}
 
 			p := Parser{Schema: tc.s}
 			v, err := p.Parse(tc.b)
 			tc.test(t, v, err)
 		})
 	}
+}
+
+func Test(t *testing.T) {
+	s := &Schema{
+		Type: []interface{}{"record"},
+		Fields: []*Schema{
+			{Name: "Name", Type: []interface{}{"string"}},
+			{Name: "Age", Type: []interface{}{"int"}},
+		},
+	}
+	b, err := s.Marshal(map[string]interface{}{"Name": "Carol", "Age": 29})
+	require.NoError(t, err)
+	str := hex.EncodeToString(b)
+	_ = str
+	str = base64.StdEncoding.EncodeToString(b)
+	_ = str
 }

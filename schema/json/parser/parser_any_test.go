@@ -37,6 +37,27 @@ func TestParser_ParseAny(t *testing.T) {
 			},
 		},
 		{
+			name: "nil but not nullable",
+			data: nil,
+			schema: schematest.NewAny(
+				schematest.New("string"),
+				schematest.New("integer")),
+			test: func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, "found 1 error:\ndoes not match any schemas of 'anyOf'\nschema path #/anyOf")
+			},
+		},
+		{
+			name: "nil and nullable",
+			data: nil,
+			schema: schematest.NewAny(
+				schematest.NewTypes([]string{"string", "null"}),
+				schematest.New("integer")),
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Nil(t, i)
+			},
+		},
+		{
 			name: "any object",
 			data: map[string]interface{}{"foo": "bar"},
 			schema: schematest.NewAny(

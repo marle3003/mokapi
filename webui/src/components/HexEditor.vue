@@ -4,6 +4,7 @@ import { computed, onBeforeUpdate, ref } from 'vue';
 
 const props = defineProps<{
     data: string
+    readonly?: boolean
 }>()
 const emit = defineEmits(['update'])
 
@@ -111,6 +112,11 @@ function mouseup(e: MouseEvent) {
         selection.end = target
         return
     }
+
+    if (props.readonly) {
+        return
+    }
+
     selection.start = undefined
 
     clearSelected()
@@ -135,8 +141,16 @@ function keydown(e: KeyboardEvent) {
         navigator.clipboard.writeText(getSelection());
         return
     }
+
+    if (props.readonly) {
+        return
+    }
     
     let selected = <HTMLElement>document.querySelector('.hexedit .selected')
+    if (!selected) {
+        return
+    }
+
     // only 0-9 and A-F
     if (ch.match(/^[0-9a-fA-F]+$/)) {
         if (selected.classList.contains('last')) {
@@ -330,7 +344,7 @@ onBeforeUpdate(() => {
         </div>
         <div class="hex" ref="hex">
             <span v-for="(hex, index) in data()" :data-offset="index">{{ hex }}</span>
-            <span class="last" :data-offset="data().length">+</span>
+            <span v-if="!readonly" class="last" :data-offset="data().length">+</span>
         </div>
         <div class="text" ref="text">
             <span v-for="(s, index) in string()" :data-offset="index">{{ s }}</span>
@@ -346,16 +360,18 @@ onBeforeUpdate(() => {
     caret-color: transparent;
     -webkit-user-select: none;
     user-select: none; 
+    overflow-y: scroll;
 }
 .hexedit > div {
     display: inline-block;
-    padding-left: 7px;
-    padding-right: 7px;
+    padding-left: 8px;
+    padding-right: 8px;
     vertical-align: top;
     font-family: monospace;
 }
 .hexedit .hex {
     min-width: 405px;
+    padding-left: 10px;
 }
 .hexedit .hex span {
     padding: 3px 4px 3px 4px;
@@ -379,7 +395,7 @@ onBeforeUpdate(() => {
     background-color: #eabaabff;
     text-shadow: 1px 1px 1px black;
 }
-.hexedit .hex span:nth-child(16)::after {
+.hexedit .hex span:nth-child(16n)::after {
     content: "\a";
 }
 .hexedit .text {
@@ -388,7 +404,7 @@ onBeforeUpdate(() => {
 .hexedit .text span {
     white-space: pre;
 }
-.hexedit .text span:nth-child(16)::after {
+.hexedit .text span:nth-child(16n)::after {
     content: "\a";
 }
 @keyframes blink {

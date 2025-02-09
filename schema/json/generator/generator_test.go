@@ -23,6 +23,14 @@ func TestNew(t *testing.T) {
 			},
 		},
 		{
+			name:    "schema null",
+			request: generator.NewRequest(generator.UsePathElement("", schematest.New("null"))),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, nil, v)
+			},
+		},
+		{
 			name: "user with id in context",
 			request: generator.NewRequest(
 				generator.UsePathElement("user",

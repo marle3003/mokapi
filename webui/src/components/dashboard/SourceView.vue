@@ -122,12 +122,12 @@ function switchCode() {
   <section aria-label="Source">
     <div class="header">
       <div class="view controls" v-if="source.preview && source.binary">
-        <button ref="preview" type="button" class="btn btn-link" @click="switchPreview()">JSON</button>
+        <button ref="preview" type="button" class="btn btn-link active" @click="switchPreview()">JSON</button>
         <button ref="binary" type="button" class="btn btn-link" @click="switchCode()">Binary</button>
       </div>
       <div class="info">
-        <span v-if="!hideContentType">{{ current?.data.contentTypeTitle ?? current?.data.contentType }}</span>
-        <span aria-label="Lines of Code">{{ lines }} lines</span>
+        <span style="" v-if="!hideContentType">{{ current?.data.contentTypeTitle ?? current?.data.contentType }}</span>
+        <span aria-label="Lines of Code" v-if="!source.binary">{{ lines }} lines</span>
         <span aria-label="Size of Code">{{ size }}</span>
         <span v-if="deprecated"><i class="bi bi-exclamation-triangle-fill yellow"></i> deprecated</span>
         <span v-if="current?.data.description">{{ current?.data.description }}</span>
@@ -154,7 +154,7 @@ function switchCode() {
       />
     </section>
     <section class="source" v-else-if="current?.type == 'binary' && source.binary" :class="'ace-'+theme">
-      <HexEditor :data="source.binary.content" :style="`height: ${viewHeight}px`" @update="emit('update', { content: $event, type: 'binary'})" />
+      <HexEditor :data="source.binary.content" :style="`height: ${viewHeight}px`" @update="emit('update', { content: $event, type: 'binary'})" :readonly="readonly" />
     </section>
   </section>
 </template>

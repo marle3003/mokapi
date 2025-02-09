@@ -44,7 +44,7 @@ func parseType(v interface{}, s *Schema, typeName string) (interface{}, error) {
 		}
 	case "int":
 		switch val := v.(type) {
-		case int, int64:
+		case int, int8, int16, int32, int64:
 			return val, nil
 		case float64:
 			if math.Trunc(val) != val {
@@ -54,7 +54,7 @@ func parseType(v interface{}, s *Schema, typeName string) (interface{}, error) {
 		}
 	case "long":
 		switch val := v.(type) {
-		case int:
+		case int, int8, int16, int32, int64:
 			return val, nil
 		case float64:
 			if math.Trunc(val) != val {
@@ -120,16 +120,21 @@ func parseType(v interface{}, s *Schema, typeName string) (interface{}, error) {
 			}
 		}
 		return nil, nil
+	default:
+		name := getFullname(s, typeName)
+		if named, ok := table[name]; ok {
+			return parseFromInterface(v, named)
+		}
 	}
 
-	return nil, Errorf("type", "invalid type, expected %v but got %v", typeName, ToType(v))
+	return nil, Errorf("type", "invalid type, expected type %v but got %v (%T)", typeName, ToType(v), v)
 }
 
 func parseRecord(m map[string]interface{}, s *Schema) (interface{}, error) {
 	result := make(map[string]interface{})
 	for _, field := range s.Fields {
 		if v, ok := m[field.Name]; ok {
-			vf, err := parseFromInterface(v, &field)
+			vf, err := parseFromInterface(v, field)
 			if err != nil {
 				return nil, wrapError(field.Name, err)
 			}
