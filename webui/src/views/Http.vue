@@ -23,7 +23,7 @@ export default function() {
 function time(d: dayjs.Dayjs) {
   return d.format('YYYY-MM-DDTHH:mm:ssZ')
 }
-const text = `mokapi --providers-http-url https://petstore3.swagger.io/api/v3/openapi.json
+const text = `mokapi https://petstore3.swagger.io/api/v3/openapi.json
 888b     d888          888             d8888          d8b
 8888b   d8888          888            d88888          Y8P
 88888b.d88888          888           d88P888
@@ -107,11 +107,11 @@ function getConsoleContent() {
       </div>
     </section>
     <section>
-      <div class="row row-cols-2 g-4">
+      <div class="row row-cols-1 row-cols-md-2 g-4">
         <div class="col">
           <div class="card h-100 position-relative">
               <div class="card-body">
-                <h3 class="card-title align-middle"><i class="bi bi-code-slash me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Configuration as Code</span></h3>
+                <h2 class="card-title align-middle"><i class="bi bi-code-slash me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Configuration as Code</span></h2>
                 <p class="card-text pb-4">Mock any HTTP API using OpenAPI, ensuring consistency, version control, and seamless automation.</p>
                 <a href="/docs/configuration" class="card-link position-absolute" style="bottom: 15px;">Overview</a>
               </div>
@@ -120,7 +120,7 @@ function getConsoleContent() {
         <div class="col">
           <div class="card h-100">
               <div class="card-body">
-                <h3 class="card-title align-middle"><i class="bi bi-arrow-repeat me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Test Without Dependencies</span></h3>
+                <h2 class="card-title align-middle"><i class="bi bi-arrow-repeat me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Test Without Dependencies</span></h2>
                 <p class="card-text pb-4">Focus on testing your system while simulating external dependencies, enabling faster, more reliable test scenarios.</p>
                 <a href="/docs/examples/tutorials/running-mokapi-in-a-ci-cd-pipeline" class="card-link position-absolute" style="bottom: 15px;">Run Mokapi in GitHub Actions</a>
               </div>
@@ -129,7 +129,7 @@ function getConsoleContent() {
         <div class="col">
           <div class="card h-100">
               <div class="card-body">
-                <h3 class="card-title align-middle"><i class="bi bi-box me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Realistic Test Data</span></h3>
+                <h2 class="card-title align-middle"><i class="bi bi-box me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Realistic Test Data</span></h2>
                 <p class="card-text pb-4">Easily intercept HTTP requests with Mokapi Scripts to simulate latencies, timeouts, and edge cases, optimizing your workflow for real-world scenarios.</p>
                 <a href="/docs/guides/get-started/test-data" class="card-link position-absolute" style="bottom: 15px;">Start Mocking with Real Data</a>
               </div>
@@ -138,7 +138,7 @@ function getConsoleContent() {
         <div class="col">
           <div class="card h-100">
               <div class="card-body">
-                <h3 class="card-title align-middle"><i class="bi bi-heart-pulse me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Debugging & Monitoring</span></h3>
+                <h2 class="card-title align-middle"><i class="bi bi-heart-pulse me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Debugging & Monitoring</span></h2>
                 <p class="card-text pb-4">Inspect and analyze every request and response. Validate data against the specification and generate random data to enhance your testing process.</p>
                 <a href="/docs/guides/get-started/dashboard" class="card-link position-absolute" style="bottom: 15px;">Explore Mokapi Dashboard</a>
               </div>

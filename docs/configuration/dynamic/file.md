@@ -36,11 +36,7 @@ WSL2 host system.
 ```
 
 ### Filename
-Defines the path to the configuration file. 
-
-``` box=info noTitle
-<mark>Filename</mark> and <mark>Directory</mark> are mutually exclusive and <mark>Directory</mark> is weighted higher.
-```
+Defines the path to the configuration file.
 
 ```yaml tab=File (YAML)
 providers:
@@ -56,11 +52,7 @@ MOKAPI_PROVIDERS_FILE_FILENAME=foobar.yaml
 
 ### Directory
 Defines the path to the directory that contains the configuration files.
-You can also organize your configuration files in subdirectories. 
-
-``` box=warning noTitle
-<mark>Filename</mark> and <mark>Directory</mark> are mutually exclusive and <mark>Directory</mark> is weighted higher.
-```
+You can also organize your configuration files in subdirectories.
 
 ```yaml tab=File (YAML)
 providers:

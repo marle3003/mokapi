@@ -511,6 +511,89 @@ providers:
 				require.Equal(t, []string{"foo"}, cfg.Providers.File.Directories)
 			},
 		},
+		{
+			name: "shorthand file",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe", "foo.json")
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{decoders.NewFlagDecoder()}, &cfg)
+				require.NoError(t, err)
+				err = cfg.Parse()
+				require.NoError(t, err)
+
+				require.Equal(t, []string{"foo.json"}, cfg.Args)
+				require.Equal(t, "foo.json", cfg.Providers.File.Filenames[0])
+			},
+		},
+		{
+			name: "shorthand http",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe", "http://foo.io/foo.json")
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{decoders.NewFlagDecoder()}, &cfg)
+				require.NoError(t, err)
+				err = cfg.Parse()
+				require.NoError(t, err)
+
+				require.Equal(t, "http://foo.io/foo.json", cfg.Providers.Http.Urls[0])
+			},
+		},
+		{
+			name: "shorthand https",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe", "https://foo.io/foo.json")
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{decoders.NewFlagDecoder()}, &cfg)
+				require.NoError(t, err)
+				err = cfg.Parse()
+				require.NoError(t, err)
+
+				require.Equal(t, "https://foo.io/foo.json", cfg.Providers.Http.Urls[0])
+			},
+		},
+		{
+			name: "shorthand git with https",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe", "git+https://foo.io/foo.json")
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{decoders.NewFlagDecoder()}, &cfg)
+				require.NoError(t, err)
+				err = cfg.Parse()
+				require.NoError(t, err)
+
+				require.Equal(t, "https://foo.io/foo.json", cfg.Providers.Git.Urls[0])
+			},
+		},
+		{
+			name: "shorthand npm",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe", "npm://bar/foo.txt?scope=@foo")
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{decoders.NewFlagDecoder()}, &cfg)
+				require.NoError(t, err)
+				err = cfg.Parse()
+				require.NoError(t, err)
+
+				require.Equal(t, "npm://bar/foo.txt?scope=@foo", cfg.Providers.Npm.Packages[0].Name)
+			},
+		},
+		{
+			name: "shorthand not supported",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe", "foo://bar")
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{decoders.NewFlagDecoder()}, &cfg)
+				require.NoError(t, err)
+				err = cfg.Parse()
+				require.EqualError(t, err, "positional argument is not supported: foo://bar")
+			},
+		},
 	}
 
 	for _, tc := range testcases {

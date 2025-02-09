@@ -41,10 +41,15 @@ func parseEnv(environ []string) map[string]string {
 
 func parseArgs(args []string) (map[string][]string, error) {
 	dictionary := make(map[string][]string)
+	inPositionalArgs := false
 	for i := 0; i < len(args); i++ {
 		s := args[i]
 		if len(s) < 2 || s[0] != '-' {
-			return nil, fmt.Errorf("invalid argument %v", s)
+			inPositionalArgs = true
+			dictionary["args"] = append(dictionary["args"], s)
+			continue
+		} else if inPositionalArgs {
+			return nil, fmt.Errorf("unexpected %v after positional argument", s)
 		}
 
 		index := 1

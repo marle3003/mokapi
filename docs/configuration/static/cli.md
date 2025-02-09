@@ -77,6 +77,39 @@ mokapi --providers-git-rootCaCert=/path/to/caCert.pem
 mokapi ---cli-input=/path/to/config.json
 ```
 
+## Positional Arguments
+
+Mokapi CLI supports positional arguments, which are used specifically to provide:
+- a configuration URL
+- a directory path
+- a file path
+
+These arguments must be placed at the end, after all options.
+
+```bash
+mokapi [OPTIONS] [config-url|directory|file]
+```
+
+- Positional arguments are optional (0-N).
+- You can specify multiple files, directories, or URLs.
+
+Using a single configuration file:
+```bash
+mokapi config.yaml
+```
+Using multiple configuration files:
+```bash
+mokapi config1.yaml config2.yaml
+```
+Using remote configurations:
+```bash
+mokapi https://example.com/config.yaml
+```
+Using GIT configurations:
+```bash
+mokapi git+https://github.com/foo/bar.git
+```
+
 ## Shorthand Syntax
 
 Mokapi's parameters can accept values in JSON format to simplify the configuration.
