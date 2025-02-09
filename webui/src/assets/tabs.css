@@ -44,20 +44,19 @@
 .card-tabs button {
     font-size: 0.9rem;
     padding-bottom: 8px;
-    padding-right: 20px;
-    padding-left: 20px;
+    padding-left: 10px;
+    padding-right: 10px;
     color: var(--color-text);
     background-color: transparent;
     border: 0;
-    margin-right: 20px;
+    border-bottom: 4px solid transparent;
+
+    margin-bottom: -3px;
 }
-.card-tabs button.active {
-    font-size: 0.9rem;
-    border: 0;
-    color: var(--color-blue-cold);
-    border-bottom-width: 3px;
-    border-bottom-style: solid;
-    margin-bottom: -2px;
+.card-tabs button.active, .card-tabs button:hover {
+    color: var(--link-color-active);
+    border-bottom: 4px solid;
+    
 }
 .card-tabs button.disabled {
     color: var(--color-disabled);
@@ -65,19 +64,21 @@
 .card-tabs {
     border-bottom: 2px;
     border-bottom-style: solid;
-    border-bottom-color: var(--color-tabs-border);
+    border-bottom-color: var(--dashboard-nav-border);
 }
 .tab-pane {
     padding: 0.8rem;
     padding-top: 1.6rem;
  }
-
+ .code-tabs {
+    margin-left: 5px;
+ }
  .code-tabs button {
     font-size: 0.9rem;
-    padding-bottom: 8px;
+    padding-bottom: 5px;
     padding-right: 10px;
     padding-left: 10px;
-    color: var(--color-text);
+    color: var(--code-tabs-color);
     background-color: transparent;
     border: 0;
     margin-right: 5px;
@@ -85,18 +86,16 @@
 .code-tabs button.active {
     font-size: 0.9rem;
     border: 0;
-    color: var(--color-blue-cold);
+    color: var(--code-tabs-color-active);
     border-bottom-width: 3px;
     border-bottom-style: solid;
-    margin-bottom: -2px;
+    margin-bottom: -3px;
+}
+.code-tabs button.active:only-child {
+    border: 0;
 }
 .code-tabs button.disabled {
     color: var(--color-disabled);
-}
-.code-tabs {
-    border-bottom: 2px;
-    border-bottom-style: solid;
-    border-bottom-color: var(--color-tabs-border);
 }
 .tab-content.code .tab-pane {
     padding: 0;

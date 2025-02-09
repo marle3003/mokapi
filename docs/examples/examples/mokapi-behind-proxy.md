@@ -1,6 +1,7 @@
 ---
 title: Mokapi behind Reverse Proxy
 description: How to use Mokapi behind a reverse proxy with CORS header
+icon: bi-diagram-3-fill
 ---
 
 # Mokapi behind Reverse Proxy

@@ -100,7 +100,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	response := NewEventResponse(status, contentType)
 
-	err = setResponseData(response, mediaType, request.Key)
+	err = setResponseData(response, mediaType, request)
 	if err != nil {
 		writeError(rw, r, err, h.config.Info.Name)
 		return

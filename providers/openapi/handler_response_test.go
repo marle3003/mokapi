@@ -3,6 +3,7 @@ package openapi_test
 import (
 	"github.com/stretchr/testify/require"
 	"mokapi/engine/common"
+	"mokapi/engine/enginetest"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/providers/openapi/schema"
@@ -130,6 +131,110 @@ func TestHandler_Response(t *testing.T) {
 			}}
 
 			h := openapi.NewHandler(tc.config, e)
+			rr := httptest.NewRecorder()
+			h.ServeHTTP(rr, tc.req())
+
+			tc.test(t, rr)
+		})
+	}
+}
+
+func TestHandler_Response_Context(t *testing.T) {
+	testcases := []struct {
+		name string
+		opt  openapitest.ConfigOptions
+		req  func() *http.Request
+		test func(t *testing.T, rr *httptest.ResponseRecorder)
+	}{
+		{
+			name: "use query data in random response",
+			opt: openapitest.WithPath("/foo",
+				openapitest.NewPath(openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
+					openapitest.WithQueryParam("name", false, openapitest.WithParamSchema(schematest.New("string"))),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json",
+						openapitest.NewContent(openapitest.WithSchema(
+							schematest.New("object", schematest.WithProperty("name", schematest.New("string")))),
+						),
+					)),
+				)))),
+			req: func() *http.Request {
+				return httptest.NewRequest("get", "http://localhost/foo?name=foo", nil)
+			},
+			test: func(t *testing.T, rr *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.Equal(t, `{"name":"foo"}`, rr.Body.String())
+			},
+		},
+		{
+			name: "use from path parameter",
+			opt: openapitest.WithPath("/users/{id}",
+				openapitest.NewPath(
+					openapitest.WithPathParam("id", openapitest.WithParamSchema(schematest.New("integer"))),
+					openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
+						openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json",
+							openapitest.NewContent(openapitest.WithSchema(
+								schematest.New("object", schematest.WithProperty("id", schematest.New("integer")))),
+							),
+						)),
+					))),
+			),
+			req: func() *http.Request {
+				return httptest.NewRequest("get", "http://localhost/users/123", nil)
+			},
+			test: func(t *testing.T, rr *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.Equal(t, `{"id":123}`, rr.Body.String())
+			},
+		},
+		{
+			name: "parameter does not match response type",
+			opt: openapitest.WithPath("/users/{id}",
+				openapitest.NewPath(
+					openapitest.WithPathParam("id", openapitest.WithParamSchema(schematest.New("integer"))),
+					openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
+						openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json",
+							openapitest.NewContent(openapitest.WithSchema(
+								schematest.New("object", schematest.WithProperty("id", schematest.New("string")))),
+							),
+						)),
+					))),
+			),
+			req: func() *http.Request {
+				return httptest.NewRequest("get", "http://localhost/users/123", nil)
+			},
+			test: func(t *testing.T, rr *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.Equal(t, `{"id":"cc2f70ec-0dc1-4d9b-86a0-9982dea3bc8f"}`, rr.Body.String())
+			},
+		},
+		{
+			name: "parameter does not match response type but string to int",
+			opt: openapitest.WithPath("/users/{id}",
+				openapitest.NewPath(
+					openapitest.WithPathParam("id", openapitest.WithParamSchema(schematest.New("string"))),
+					openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
+						openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json",
+							openapitest.NewContent(openapitest.WithSchema(
+								schematest.New("object", schematest.WithProperty("id", schematest.New("integer")))),
+							),
+						)),
+					))),
+			),
+			req: func() *http.Request {
+				return httptest.NewRequest("get", "http://localhost/users/123", nil)
+			},
+			test: func(t *testing.T, rr *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.Equal(t, `{"id":123}`, rr.Body.String())
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			config := openapitest.NewConfig("3.0", tc.opt)
+
+			h := openapi.NewHandler(config, enginetest.NewEngine())
 			rr := httptest.NewRecorder()
 			h.ServeHTTP(rr, tc.req())
 

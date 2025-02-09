@@ -1,71 +1,89 @@
 ---
-title: JavaScript API
-description: Provides the documentation of the Mokapi JavaScript API.
+title: JavaScript API Documentation
+description: Explore Mokapi’s JavaScript API to extend its functionality. Learn how to use modules for HTTP, Kafka, YAML, Mustache, and more.
 ---
-# JavaScript API
+# Mokapi JavaScript API
 
-The list of Mokapi's JavaScript modules usable to extend Mokapi's behavior.
-To learn how Mokapi imports modules, see [Modules](/docs/javascript-api/modules.md).
+Mokapi provides a powerful JavaScript API that allows you to extend its functionality. 
+This documentation outlines the available modules and their capabilities.
+To learn how Mokapi handles module imports, see [Modules](/docs/javascript-api/modules.md).
 
-``` box=tip
-There is a TypeScript definition package for Mokapi. Use "npm install @types/mokapi --save-dev"
+``` box=tip url=[@types/mokapi on npm](https://www.npmjs.com/package/@types/mokapi)
+Mokapi offers a TypeScript definition package. Install it using:  
+`npm install @types/mokapi --save-dev` 
 ```
 
-## mokapi
+## Available Modules
 
-| Functions                                                                    | Description                                                   |
-|------------------------------------------------------------------------------|---------------------------------------------------------------|
-| [cron( expression, handler, \[args\] )](/docs/javascript-api/mokapi/cron.md) | Schedules a new periodic job using cron expression.           |
-| [date( \[args\] )](/docs/javascript-api/mokapi/date.md)                      | Returns a textual representation of the date.                 |
-| [env( name )](/docs/javascript-api/mokapi/env.md)                            | Gets the value of an environment variable.                    |
-| [every( interval, handler, \[args\] )](/docs/javascript-api/mokapi/every.md) | Schedules a new periodic job with interval.                   |
-| [on( event, handler, \[args\]](/docs/javascript-api/mokapi/on.md) )          | Attaches an event handler for the given event.                |
-| [sleep( time )](/docs/javascript-api/mokapi/sleep.md)                        | Suspends the execution for the specified duration.            |
-| [marshal( value, \[encoding\] )](/docs/javascript-api/mokapi/marshal.md)     | Returns marshalled string representation of value (>= v0.9.7) |
+### mokapi (Core API)
 
-## mokapi/http
+Provides core functions for scheduling jobs, handling events, and accessing environment variables.
 
-| Functions                                                                         | Description                    |
-|-----------------------------------------------------------------------------------|--------------------------------|
-| [get( url, \[args\] )](/docs/javascript-api/mokapi-http/get.md)                   | Issues an HTTP GET request     |
-| [post( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/post.md)       | Issues an HTTP POST request    |
-| [put( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/put.md)         | Issues an HTTP PUT request     |
-| [head( url, \[args\] )](/docs/javascript-api/mokapi-http/head.md)                 | Issues an HTTP HEAD request    |
-| [patch( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/patch.md)     | Issues an HTTP PATCH request   |
-| [delete( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/delete.md)   | Issues an HTTP DELETE request  |
-| [options( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/options.md) | Issues an HTTP OPTIONS request |
+| Functions                                                                    | Description                                           |
+|------------------------------------------------------------------------------|-------------------------------------------------------|
+| [cron( expression, handler, \[args\] )](/docs/javascript-api/mokapi/cron.md) | Schedules a new periodic job using a cron expression. |
+| [date( \[args\] )](/docs/javascript-api/mokapi/date.md)                      | Returns a formatted date string.                      |
+| [env( name )](/docs/javascript-api/mokapi/env.md)                            | Gets the value of an environment variable.            |
+| [every( interval, handler, \[args\] )](/docs/javascript-api/mokapi/every.md) | Runs a periodic job at a fixed interval.              |
+| [on( event, handler, \[args\]](/docs/javascript-api/mokapi/on.md) )          | Registers an event handler.                           |
+| [sleep( time )](/docs/javascript-api/mokapi/sleep.md)                        | Pauses execution for a specified duration.            |
+| [marshal( value, \[encoding\] )](/docs/javascript-api/mokapi/marshal.md)     | Converts a value to a marshaled string.               |
 
-## mokapi/faker
+### mokapi/http (HTTP Requests)
 
-| Functions                                                   | Description                                |
-|-------------------------------------------------------------|--------------------------------------------|
-| [fake( schema )](/docs/javascript-api/mokapi-faker/fake.md) | Creates a fake based on the given schema.  |
+Functions to send HTTP requests within Mokapi scripts.
 
-## mokapi/kafka
+| Functions                                                                         | Description                   |
+|-----------------------------------------------------------------------------------|-------------------------------|
+| [get( url, \[args\] )](/docs/javascript-api/mokapi-http/get.md)                   | Sends an HTTP GET request.    |
+| [post( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/post.md)       | Sends an HTTP POST request    |
+| [put( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/put.md)         | Sends an HTTP PUT request     |
+| [head( url, \[args\] )](/docs/javascript-api/mokapi-http/head.md)                 | Sends an HTTP HEAD request    |
+| [patch( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/patch.md)     | Sends an HTTP PATCH request   |
+| [delete( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/delete.md)   | Sends an HTTP DELETE request  |
+| [options( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/options.md) | Sends an HTTP OPTIONS request |
 
-| Functions                                                           | Description                               |
-|---------------------------------------------------------------------|-------------------------------------------|
-| [produce( \[args\] )](/docs/javascript-api/mokapi-kafka/produce.md) | Sends a single message to a Kafka topic.  |
+### mokapi/faker (Mock Data Generator)
 
-## mokapi/mustache
+Generates random test data based on a schema.
 
-| Functions                                                                   | Description                                              |
-|-----------------------------------------------------------------------------|----------------------------------------------------------|
-| [render( template, scope )](/docs/javascript-api/mokapi-mustache/render.md) | Renders the given mustache template with the given data  |
+| Functions                                                   | Description                             |
+|-------------------------------------------------------------|-----------------------------------------|
+| [fake( schema )](/docs/javascript-api/mokapi-faker/fake.md) | Generates mock data based on a schema.  |
 
-## mokapi/yaml
+### mokapi/kafka (Kafka Messaging)
 
-| Functions                                                           | Description                                                                                |
-|---------------------------------------------------------------------|--------------------------------------------------------------------------------------------|
-| [parse( text )](/docs/javascript-api/mokapi-yaml/parse.md)          | Parses a YAML string, constructing the JavaScript value or object described by the string. |
-| [stringify( value )](/docs/javascript-api/mokapi-yaml/stringify.md) | Converts a JavaScript value to a YAML string.                                              |
+Functions for interacting with Kafka topics.
 
-## mokapi/encoding
+| Functions                                                           | Description                            |
+|---------------------------------------------------------------------|----------------------------------------|
+| [produce( \[args\] )](/docs/javascript-api/mokapi-kafka/produce.md) | Publishes a message to a Kafka topic.  |
 
-| Functions                                                                       | Description                                                                                            |
-|---------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
-| [base64.encode( input )](/docs/javascript-api/mokapi-encoding/base64-encode.md) | Encodes a string value to its equivalent string representation that is encoded with base-64.           |
-| [base64.decode( input )](/docs/javascript-api/mokapi-encoding/base64-decode.md) | Decodes a string value that is encoded with base-64 to its equivalent unencoded string representation. |
+### mokapi/mustache (Template Engine)
+
+Processes Mustache templates with dynamic data.
+
+| Functions                                                                   | Description                                      |
+|-----------------------------------------------------------------------------|--------------------------------------------------|
+| [render( template, scope )](/docs/javascript-api/mokapi-mustache/render.md) | Renders a Mustache template with provided data.  |
+
+### mokapi/yaml (YAML Parsing & Serialization)
+
+Handles YAML data parsing and conversion.
+
+| Functions                                                           | Description                                     |
+|---------------------------------------------------------------------|-------------------------------------------------|
+| [parse( text )](/docs/javascript-api/mokapi-yaml/parse.md)          | Parses a YAML string into a JavaScript object.  |
+| [stringify( value )](/docs/javascript-api/mokapi-yaml/stringify.md) | Converts a JavaScript object into YAML format.  |
+
+### mokapi/encoding (Encoding Utilities)
+
+Functions for encoding and decoding data.
+
+| Functions                                                                       | Description                       |
+|---------------------------------------------------------------------------------|-----------------------------------|
+| [base64.encode( input )](/docs/javascript-api/mokapi-encoding/base64-encode.md) | Encodes a string using Base64.    |
+| [base64.decode( input )](/docs/javascript-api/mokapi-encoding/base64-decode.md) | Decodes a Base64-encoded string.  |
 
 
 

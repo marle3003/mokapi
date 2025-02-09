@@ -76,30 +76,32 @@ useMeta('Dashboard | mokapi.io', description, "https://mokapi.io/smtp")
         <div class="dashboard">
             <h1 class="visually-hidden">Dashboard</h1>
             <div class="dashboard-tabs" v-if="appInfo.data">
-                <nav class="navbar navbar-expand-lg" aria-label="Services">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li class="nav-item">
-                            <router-link class="nav-link overview" :to="{ name: 'dashboard', query: {refresh: $route.query.refresh} }">Overview</router-link>
-                        </li>
-                        <li class="nav-item">
-                            <router-link class="nav-link" :to="{ name: 'http', query: {refresh: $route.query.refresh} }" v-if="isServiceAvailable('http')">HTTP</router-link>
-                        </li>
-                        <li class="nav-item">
-                            <router-link class="nav-link" :to="{ name: 'kafka', query: {refresh: $route.query.refresh} }" v-if="isServiceAvailable('kafka')">Kafka</router-link>
-                        </li>
-                        <li class="nav-item">
-                            <router-link class="nav-link" :to="{ name: 'smtp', query: {refresh: $route.query.refresh} }" v-if="isServiceAvailable('smtp')">SMTP</router-link>
-                        </li>
-                        <li class="nav-item">
-                            <router-link class="nav-link" :to="{ name: 'ldap', query: {refresh: $route.query.refresh} }" v-if="isServiceAvailable('ldap')">LDAP</router-link>
-                        </li>
-                        <li class="nav-item">
-                            <router-link class="nav-link" :to="{ name: 'configs', query: {refresh: $route.query.refresh} }">Configs</router-link>
-                        </li>
-                        <li class="nav-item">
-                            <router-link class="nav-link" :to="{ name: 'tree', query: {refresh: $route.query.refresh} }">Faker</router-link>
-                        </li>
-                    </ul>
+                <nav class="navbar navbar-expand-lg pb-1" aria-label="Services">
+                    <div>
+                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                            <li class="nav-item">
+                                <router-link class="nav-link overview" :to="{ name: 'dashboard', query: {refresh: $route.query.refresh} }">Overview</router-link>
+                            </li>
+                            <li class="nav-item">
+                                <router-link class="nav-link" :to="{ name: 'http', query: {refresh: $route.query.refresh} }" v-if="isServiceAvailable('http')">HTTP</router-link>
+                            </li>
+                            <li class="nav-item">
+                                <router-link class="nav-link" :to="{ name: 'kafka', query: {refresh: $route.query.refresh} }" v-if="isServiceAvailable('kafka')">Kafka</router-link>
+                            </li>
+                            <li class="nav-item">
+                                <router-link class="nav-link" :to="{ name: 'smtp', query: {refresh: $route.query.refresh} }" v-if="isServiceAvailable('smtp')">SMTP</router-link>
+                            </li>
+                            <li class="nav-item">
+                                <router-link class="nav-link" :to="{ name: 'ldap', query: {refresh: $route.query.refresh} }" v-if="isServiceAvailable('ldap')">LDAP</router-link>
+                            </li>
+                            <li class="nav-item">
+                                <router-link class="nav-link" :to="{ name: 'configs', query: {refresh: $route.query.refresh} }">Configs</router-link>
+                            </li>
+                            <li class="nav-item">
+                                <router-link class="nav-link" :to="{ name: 'tree', query: {refresh: $route.query.refresh} }">Faker</router-link>
+                            </li>
+                        </ul>
+                    </div>
                 </nav>
             </div>
             <div v-if="appInfo.data" class="dashboard-content">
@@ -199,15 +201,3 @@ useMeta('Dashboard | mokapi.io', description, "https://mokapi.io/smtp")
         <loading v-if="isInitLoading()"></loading>
     </main>
 </template>
-
-<style scoped>
-.router-link-active.overview {
-    background-color: rgba(0,0,0,0);
-    color: var(--color-text);
-    opacity: 1;
-}
-.router-link-exact-active.overview {
-    background-color: var(--color-background-mute);
-    color: var(--color-nav-link-active);
-}
-</style>

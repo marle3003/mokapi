@@ -1,129 +1,67 @@
 ---
-title: Learn how to mock your API with realistic test data
-description: Mokapi can randomly mock realistic test data or you can control it with JavaScript to create responses that fit your use case.
+title: Mocking APIs with Realistic Test Data
+description: Mokapi generates random realistic test data or lets you customize responses with JavaScript to match your specific use case and scenarios.
 ---
 
-# Learn how to mock your API with realistic test data
+# Mocking APIs with Realistic Test Data
 
-By default, Mokapi generates test data randomly depending on 
-the data types and structure with a tree algorithm. You can extend and 
-modify this tree for your individual needs. If you need more dynamic 
-responses, you can use Mokapi JavaScript to have more control over responses based on your specific
-conditions or parameters. Mokapi Scripts allows you to create responses that can simulate a wide 
-range of scenarios and edge cases.
+Creating reliable test data is essential for accurate API testing and development.
+Mokapi provides a powerful data generation engine that creates realistic test data
+based on API specifications. You can customize and control the generated data using
+JavaScript scripts or declarative configurations to adapt it to real-world scenarios.
 
-``` box=tip
-Additionally, the dashboard allows you to quickly generate realistic test data for any mocked API.
-```
+## Automatic Test Data Generation
 
-## Faker Tree
+By default, Mokapi analyzes your API’s data structure and types to generate meaningful responses.
+Additionally, Mokapi tailors responses based on request parameters, ensuring relevant data is returned.
+For example, if a request filters for available pets, the response will include only pets with the status *available*.
 
-<img src="/mock-realistic-test-data.png" width="700" alt="Mokapi provides a powerful data generator" title="Visible in Mokapi's Dashboard" />
-<br />
-
-Mokapi analysis the data structure and data types using a tree to generate meaningful random data.
-A possible response from the mocked Swaggers Petstore could be as follows
-
-```json tab=Data
+```bash tab=/pet/4
+GET http://localhost/api/v3/pet/4
+HTTP/1.1 200 OK
+Content-Type: application/json
 {
-  "id": 26601,
-  "name": "Hercules",
-  "category": {
-    "id": 83009,
-    "name": "cheetah"
-  },
-  "photoUrls": [
-    "https://www.chiefniches.com/monetize/systems/markets",
-    "http://www.globalholistic.com/rich"
-  ],
-  "tags": [
-    {
-      "id": 39278,
-      "name": "BerylBay"
-    },
-    {
-      "id": 51507,
-      "name": "OrionTrail"
-    }
-  ],
-  "status": "available"
-}
-```
-
-```yaml tab=Schema
-{
-  "type": "object",
-  "properties": {
-    "tags": {
-      "type": "array",
-      "items": {
-        "ref": "#/components/schemas/Tag",
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "name": {
-            "type": "string"
-          }
-        },
-        "xml": {
-          "name": "Tag"
-        }
-      },
-      "xml": {
-        "name": "tag",
-        "wrapped": true
-      }
-    },
-    "status": {
-      "type": "string",
-      "description": "pet status in the store",
-      "enum": ["available", "pending", "sold"]
-    },
-    "id": {
-      "type": "integer",
-      "format": "int64"
-    },
+    "id": 10,
+    "name": "Larry",
     "category": {
-      "ref": "#/components/schemas/Category",
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "integer",
-          "format": "int64"
-        },
-        "name": {
-          "type": "string"
+        "id": 1,
+        "name":"dog"
+    },
+    "photoUrls": [ 
+        "https://www.dynamicsyndicate.biz/reintermediate/models"
+    ],
+    "tags": [
+        {
+            "id": 46110,
+            "name": "Lux"
         }
-      },
-      "xml": {
-        "name": "Category"
-      }
-    },
-    "name": {
-      "type": "string",
-      "example": "doggie"
-    },
-    "photoUrls": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "xml": {
-        "name": "photoUrl",
-        "wrapped": true
-      }
-    }
-  },
-  "xml": {
-    "name": "Pet"
-  }
+    ],
+    "status": "pending"
 }
 ```
+```bash tab=/pet/findByStatus
+GET http://localhost/api/v3/pet/findByStatus?status=available
+HTTP/1.1 200 OK
+Content-Type: application/json
+[
+    {
+        "name": "Yoda",
+        "photoUrls": [
+            "http://www.internalbandwidth.com/b2c/magnetic/dot-com/collaborative"
+        ],
+        "status": "available"
+    }
+]
+```
 
-You can extend and modify this tree, and see it in the dashboard at runtime.
+## Extending Test Data with JavaScript
+
+Mokapi’s test data engine is highly extensible using JavaScript, allowing you to customize responses 
+based on specific attributes. In the example below, a random value from a predefined list is assigned to the frequency attribute.
+
+``` box=info
+It's recommended to define possible values as an enum within the API specification. This example illustrates the flexibility Mokapi offers.
+```
 
 ```javascript
 export default function() {
@@ -141,48 +79,12 @@ export default function() {
 }
 ```
 
-``` box=warning title="Warning: JavaScript file is not thread-safe"
-A JavaScript file cannot have 
-an event handler and a faker extension. You need to have these in different files.
-```
+## Scripting API Behavior
 
-## Declarative Test Data
+Mokapi Script allows you to customize API responses and simulate various behaviors, such as returning specific HTTP 
+statuses or producing Kafka messages.
 
-Providing a detailed specification for data types can greatly
-enhance the usefulness and accuracy of randomly generated
-data by ensuring that the generated data aligns with real-word
-scenarios and is consistent and error-free. 
-
-A list of more options that can be used, refer to
-the [reference page](/docs/references/declarative-data.md).
-
-```yaml
-schema:
-  type: object
-  properties:
-    date:
-      type: string
-      format: date # 2017-07-21
-    time:
-      type: string
-      format: date-time # 2017-07-21T17:32:28Z
-    email:
-      type: string
-      format: email # demetrisdach@yost.org
-    guid:
-      type: string
-      format: uuid # dd5742d1-82ad-4d42-8960-cb21bd02f3e7
-```
-
-## Mokapi Script
-You can provide custom behavior for your API, such as
-returning an 404 HTTP respond to a specific HTTP request,
-transmitting data from a resource or producing data for a
-Kafka topic. Mokapi reads your custom scripts from 
-[providers](/docs/configuration/dynamic/overview.md).
-
-A simple Time API might look like the script below. To learn more about how to write Mokapi Script, see [JavaScript API](/docs/javascript-api/overview.md).
-
+Example: A simple time API returning the current timestamp:
 ```javascript tab=time.js
 import {on} from 'mokapi'
 
@@ -218,3 +120,36 @@ paths:
                 type: string
                 format: date-time
 ```
+
+## Declarative Test Data Definition
+
+If you prefer a declarative approach, Mokapi uses formats like dates, emails, or UUIDs directly in your schema:
+
+```yaml
+schema:
+  type: object
+  properties:
+    date:
+      type: string
+      format: date # 2017-07-21
+    time:
+      type: string
+      format: date-time # 2017-07-21T17:32:28Z
+    email:
+      type: string
+      format: email # demetrisdach@yost.org
+    guid:
+      type: string
+      format: uuid # dd5742d1-82ad-4d42-8960-cb21bd02f3e7
+```
+
+## Test and Validate in the Dashboard
+In the dashboard, you can easily generate sample data and validate it against your API’s specification. 
+This allows you to ensure your mock data matches the expected structure and behavior. The following chapter will 
+guide you through the process in more detail.
+
+## Next Steps
+
+- [Using Mokapi's Dashboard](dashboard.md)
+- [Explore Mokapi Scripts](../../javascript-api/overview.md)
+- [Learn More About Declarative Test Data](../../references/declarative-data.md)

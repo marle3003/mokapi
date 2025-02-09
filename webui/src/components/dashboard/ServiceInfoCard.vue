@@ -39,10 +39,10 @@ const developer = computed(() => {
                                     <i class="bi bi-envelope"></i>
                                 </a>
                             </li>
-                        </ul>  
+                        </ul>
                     </div>
-                    <div class="col-1 text-end" style="width:70px">
-                        <span class="badge bg-secondary" title="Type of API" aria-label="Type of API" data-testid="service-type">{{ type ? type : service.type }}</span>
+                    <div class="col-1 text-end" style="width:70px;">
+                        <span class="badge bg-secondary api" title="Type of API" aria-label="Type of API" data-testid="service-type">{{ type ? type : service.type }}</span>
                     </div>
                 </div>
                 <div class="row">

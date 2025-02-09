@@ -1,6 +1,7 @@
 ---
 title: "Running Mokapi in CI/CD: Mock APIs for Automated Testing"
 description: Learn how to use Mokapi in CI/CD pipelines to mock APIs, automate tests, and ensure reliable backend validation without live dependencies.
+icon: bi-gear-wide-connected
 ---
 # Running Mokapi in a CI/CD Pipeline
 

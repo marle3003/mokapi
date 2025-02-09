@@ -72,13 +72,13 @@ func PetCategory() *Tree {
 		Fake: func(r *Request) (interface{}, error) {
 			last := r.Last()
 			if last.Schema.IsString() || last.Schema.IsAny() {
-				return gofakeit.Animal(), nil
+				return petCategory[gofakeit.Number(0, len(petCategory)-1)], nil
 			}
 			if last.Schema.HasProperties() {
 				m := map[string]interface{}{}
 				for it := last.Schema.Properties.Iter(); it.Next(); {
 					if it.Key() == "name" {
-						m["name"] = gofakeit.Animal()
+						m["name"] = petCategory[gofakeit.Number(0, len(petCategory)-1)]
 					} else {
 						prop := r.With(UsePathElement(it.Key(), it.Value()))
 						v, err := r.g.tree.Resolve(prop)
@@ -94,3 +94,5 @@ func PetCategory() *Tree {
 		},
 	}
 }
+
+var petCategory = []string{"dog", "cat", "rabbit", "guinea pig", "hamster", "ferret", "hedgehog", "parrot", "canary", "turtle", "goldfish"}

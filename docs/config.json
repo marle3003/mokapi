@@ -145,19 +145,19 @@
       "description": "Learn how to get started with Mokapi and simulate APIs that don't even exist yet."
     },
     "items": {
-      "Examples": {
-        "expanded": true,
-        "items": {
-          "Mokapi behind Reverse Proxy": "examples/examples/mokapi-behind-proxy.md",
-          "Mokapi with custom base image": "examples/examples/mokapi-with-custom-base-image.md"
-        }
-      },
       "Tutorials": {
         "expanded": true,
         "items": {
           "Get started with REST API": "examples/tutorials/simple-http-api.md",
           "Get started with Kafka": "examples/tutorials/simple-kafka-api.md",
           "Running Mokapi in a CI/CD Pipeline": "examples/tutorials/running-mokapi-github-action.md"
+        }
+      },
+      "Examples": {
+        "expanded": true,
+        "items": {
+          "Mokapi behind Reverse Proxy": "examples/examples/mokapi-behind-proxy.md",
+          "Mokapi with custom base image": "examples/examples/mokapi-with-custom-base-image.md"
         }
       }
     }

@@ -1,6 +1,7 @@
 ---
 title: Get started with Kafka
 description: Learn how to mock a Kafka Topic and verify that your producer generates valid messages according your AsyncAPI specification.
+icon: bi-lightning
 ---
 
 # Get started with Kafka

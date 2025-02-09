@@ -380,7 +380,7 @@ export interface DateArgs {
     /**
      * The format of the textual representation, default is RFC3339
      */
-    layout?: DateLayout;
+    layout?: DateLayout | string;
 
     /**
      * The timestamp of the date, default is current UTC time

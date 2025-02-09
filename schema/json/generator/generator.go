@@ -23,7 +23,9 @@ func Seed(seed int64) {
 
 func New(r *Request) (interface{}, error) {
 	r.g = g
-	r.context = map[string]interface{}{}
+	if r.context == nil {
+		r.context = map[string]interface{}{}
+	}
 	return r.g.tree.Resolve(r)
 }
 

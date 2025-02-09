@@ -4,14 +4,15 @@ description: Opens an existing file and reads its entire contents.
 ---
 # open( filePath, [args] )
 
-Opens an existing file and reads its entire contents.
+Reads the entire contents of an existing file.
 
 ``` box=tip
-`open()` uses Mokapi's providers to access a file. When the 
-file is changed, the script is reloaded and executed again.
+`open()` uses Mokapi's providers to access a file. If the file changes, the script automatically reloads and executes again.
 ```
 
-| Parameter       | Type   | Description                                                        |
+## Parameters
+
+| Name            | Type   | Description                                                        |
 |-----------------|--------|--------------------------------------------------------------------|
 | filePath        | string | The path to the file, absolute or relative, as file path or as URL |
 | args (optional) | object | Args object containing additional arguments                        |
@@ -30,11 +31,11 @@ file is changed, the script is reloaded and executed again.
 
 ## Example Reading JSON File
 
-``` box=tip
-You can also import a json file directly, check Modules page.
+``` box=tip url=[See Modules](../modules.md)
+JSON files can also be imported directly.
 ```
 
-```json file=orders.json
+```json tab=orders.json
 [
   {
     "orderId": 1234512345,
@@ -56,7 +57,7 @@ export default function() {
 }
 ```
 
-## Example Reading Binary File
+## Example: Reading a Binary File
 
 ```javascript
 export default function() {
@@ -64,7 +65,7 @@ export default function() {
 }
 ```
 
-## Example Reading From HTTP Resource
+## Example: Reading from an HTTP Resource
 
 ```javascript
 import { parse } from 'mokapi/yaml'
