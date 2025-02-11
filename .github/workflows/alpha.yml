@@ -12,18 +12,13 @@ env:
 
 jobs:
   build-alpha:
-    runs-on: ubuntu-latest
-    env:
-      image-name: ${{ env.image-name }}
-    steps:
-      - name: Run test
-        uses: ./.github/workflows/test.yml
-        with:
-          image-name: ${{ env.image-name }}
-          image-artifact-name: mokapi-image
-          artifact-test-report: playwright-report
-          report-publish-path: reports/${{ github.ref_name }}
-          version: ${GITHUB_REF##*/v}
+    uses: ./.github/workflows/test.yml
+    with:
+      image-name: mokapi/mokapi:${GITHUB_REF##*/#v}-alpha
+      image-artifact-name: mokapi-image
+      artifact-test-report: playwright-report
+      report-publish-path: reports/${{ github.ref_name }}
+      version: ${GITHUB_REF##*/v}
 
   publish-image:
     name: Publish docker image
