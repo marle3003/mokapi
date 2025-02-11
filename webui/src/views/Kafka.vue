@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useMeta } from '@/composables/meta'
+import Footer from '@/components/Footer.vue'
 
 const script = `import { every } from 'mokapi'
 import { produce } from 'mokapi/kafka'
@@ -166,4 +167,5 @@ useMeta(title, description, "https://mokapi.io/kafka")
       </div>
     </div>
   </main>
+  <Footer></Footer>
 </template>
