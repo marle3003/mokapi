@@ -5,7 +5,7 @@ on:
       - v*
 
 env:
-  image-name: mokapi/mokapi:${GITHUB_REF##*/#v}-alpha
+  image-name: mokapi/mokapi:${GITHUB_REF##*/v}-alpha
   image-artifact-name: mokapi-image
   artifact-test-report: playwright-report
   report-publish-path: reports/${{ github.ref_name }}
@@ -14,7 +14,7 @@ jobs:
   build-alpha:
     uses: ./.github/workflows/test.yml
     with:
-      image-name: mokapi/mokapi:${GITHUB_REF##*/#v}-alpha
+      image-name: mokapi/mokapi:${GITHUB_REF##*/v}-alpha
       image-artifact-name: mokapi-image
       artifact-test-report: playwright-report
       report-publish-path: reports/${{ github.ref_name }}
