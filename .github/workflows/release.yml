@@ -37,7 +37,7 @@ jobs:
             -company="Mokapi OpenSource" `
             -copyright="© Marcel Lehmann. Licensed under MIT." `
             -description="Your API Mocking Tool for Agile Development, using Go and JavaScript" `
-            -icon=i../../con.ico `
+            -icon=../../con.ico `
             -internal-name="mokapi" `
             -original-name="mokapi.exe" `
             -product-name="mokapi" `
