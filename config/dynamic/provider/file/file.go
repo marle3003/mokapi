@@ -340,19 +340,9 @@ func (p *Provider) processEvents(events []fsnotify.Event) {
 			e.Event = dynamic.Update
 		}
 
-		dir, file := filepath.Split(evt.Name)
+		dir, _ := filepath.Split(evt.Name)
 		if dir == evt.Name && !p.skip(dir, true) {
 			p.watchPath(dir)
-		} else if len(p.cfg.Filenames) > 0 {
-			for _, filename := range p.cfg.Filenames {
-				if _, configFile := filepath.Split(filename); file == configFile {
-					e.Config, err = p.readFile(evt.Name)
-					if err != nil {
-						log.Errorf("unable to read file %v", evt.Name)
-					}
-					p.ch <- e
-				}
-			}
 		} else {
 			if !p.skip(evt.Name, false) {
 				e.Config, err = p.readFile(evt.Name)
