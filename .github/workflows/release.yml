@@ -74,20 +74,20 @@ jobs:
         run: |
           $versionParts = ($env:GITHUB_REF -replace '.*/v', '').Split('.')
           echo '{}' > versioninfo.json
-          goversioninfo -64 \
-            -platform-specific=true \
-            -charset="1200" \
-            -company="Mokapi OpenSource" \
-            -copyright="© Marcel Lehmann. Licensed under MIT." \
-            -description="Your API Mocking Tool for Agile Development, using Go and JavaScript" \
-            -icon=icon.ico \
-            -internal-name="mokapi" \
-            -original-name="mokapi.exe" \
-            -product-name="mokapi" \
-            -translation="0x0409" \
-            -ver-major="$($versionParts[0])" \
-            -ver-minor="$($versionParts[1])" \
-            -ver-patch="$($versionParts[2])" \
+          goversioninfo -64 `
+            -platform-specific=true `
+            -charset="1200" `
+            -company="Mokapi OpenSource" `
+            -copyright="© Marcel Lehmann. Licensed under MIT." `
+            -description="Your API Mocking Tool for Agile Development, using Go and JavaScript" `
+            -icon=icon.ico `
+            -internal-name="mokapi" `
+            -original-name="mokapi.exe" `
+            -product-name="mokapi" `
+            -translation="0x0409" `
+            -ver-major="$($versionParts[0])" `
+            -ver-minor="$($versionParts[1])" `
+            -ver-patch="$($versionParts[2])" `
             -product-version="${GITHUB_REF##*/v}"
 
       - name: Run GoReleaser
