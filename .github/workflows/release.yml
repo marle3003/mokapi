@@ -66,6 +66,29 @@ jobs:
         run: task build-vue-app
         env:
           CGO_ENABLED: 0
+      - name: Install goversioninfo
+        run: go install github.com/josephspurrier/goversioninfo/cmd/goversioninfo@v1.4.0
+      - name: Generate Windows metadata (.syso)
+        working-directory: ./cmd/mokapi
+        run: |
+          IFS=. read -a version_parts <<< "${GITHUB_REF##*/v}"
+          echo '{}' > versioninfo.json
+          goversioninfo -64 \
+            -platform-specific=true \
+            -charset="1200" \
+            -company="Mokapi OpenSource" \
+            -copyright="© Marcel Lehmann. Licensed under MIT." \
+            -description="Your API Mocking Tool for Agile Development, using Go and JavaScript" \
+            -icon=icon.ico \
+            -internal-name="mokapi" \
+            -original-name="mokapi.exe" \
+            -product-name="mokapi" \
+            -translation="0x0409" \
+            -ver-major="${version_parts[0]}" \
+            -ver-minor="${version_parts[1]}" \
+            -ver-patch="${version_patch[0]}" \
+            -product-version="${GITHUB_REF##*/v}"
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
