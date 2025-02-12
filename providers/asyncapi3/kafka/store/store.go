@@ -2,6 +2,7 @@ package store
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"mokapi/engine/common"
 	"mokapi/kafka"
@@ -204,7 +205,7 @@ func (s *Store) ServeMessage(rw kafka.ResponseWriter, req *kafka.Request) {
 		err = fmt.Errorf("kafka: unsupported api key: %v", req.Header.ApiKey)
 	}
 
-	if err != nil && err.Error() != "use of closed network connection" {
+	if err != nil && !errors.Is(err, net.ErrClosed) {
 		panic(fmt.Sprintf("kafka broker: %v", err))
 	}
 }
