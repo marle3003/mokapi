@@ -62,6 +62,48 @@ func TestResolveEndpoint(t *testing.T) {
 				require.Equal(t, "application/json", rr.Header().Get("Content-Type"))
 			},
 		},
+		{
+			// there is no official specification for trailing slash. For ease of use, mokapi considers it equivalent
+			name: "spec define suffix / but request does not",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+				c.Servers[0].Url = "http://localhost"
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
+				openapitest.AppendPath("/foo/", c, openapitest.WithOperation("get", op))
+				r := httptest.NewRequest("get", "http://localhost/foo", nil)
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, 200, rr.Code)
+				require.Equal(t, "application/json", rr.Header().Get("Content-Type"))
+			},
+		},
+		{
+			// there is no official specification for trailing slash. For ease of use, mokapi considers it equivalent
+			name: "spec define suffix no / but request does",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+				c.Servers[0].Url = "http://localhost"
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
+				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				r := httptest.NewRequest("get", "http://localhost/foo/", nil)
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, 200, rr.Code)
+				require.Equal(t, "application/json", rr.Header().Get("Content-Type"))
+			},
+		},
+		{
+			// there is no official specification for trailing slash. For ease of use, mokapi considers it equivalent
+			name: "both uses trailing slash",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+				c.Servers[0].Url = "http://localhost"
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
+				openapitest.AppendPath("/foo/", c, openapitest.WithOperation("get", op))
+				r := httptest.NewRequest("get", "http://localhost/foo/", nil)
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, 200, rr.Code)
+				require.Equal(t, "application/json", rr.Header().Get("Content-Type"))
+			},
+		},
 		//
 		// GET
 		//

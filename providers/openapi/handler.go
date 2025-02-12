@@ -197,7 +197,11 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	regex := regexp.MustCompile(`\{(?P<name>.+)\}`) // parameter format "/{param}/"
-	reqSeg := strings.Split(r.URL.Path, "/")
+	requestPath := r.URL.Path
+	if len(requestPath) > 1 {
+		requestPath = strings.TrimRight(requestPath, "/")
+	}
+	reqSeg := strings.Split(requestPath, "/")
 	var lastError error
 
 endpointLoop:
