@@ -42,6 +42,11 @@ func main() {
 		log.Errorf("load config failed: %v", err)
 		return
 	}
+	err = cfg.Parse()
+	if err != nil {
+		log.Errorf("parse config failed: %v", err)
+		return
+	}
 
 	switch {
 	case cfg.Help:
