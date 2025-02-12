@@ -70,6 +70,7 @@ jobs:
         run: go install github.com/josephspurrier/goversioninfo/cmd/goversioninfo@v1.4.0
       - name: Generate Windows metadata (.syso)
         working-directory: ./cmd/mokapi
+        shell: pwsh
         run: |
           $versionParts = ($env:GITHUB_REF -replace '.*/v', '').Split('.')
           echo '{}' > versioninfo.json
