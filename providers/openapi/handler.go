@@ -264,7 +264,7 @@ endpointLoop:
 		return
 	}
 
-	if ctx, err := NewLogEventContext(r, false, events.NewTraits().WithName(h.config.Info.Name)); err != nil {
+	if ctx, err := NewLogEventContext(r, false, events.NewTraits().WithName(h.config.Info.Name).With("path", r.URL.Path).With("method", r.Method)); err != nil {
 		log.Errorf("unable to log http event: %v", err)
 	} else {
 		r = r.WithContext(ctx)
