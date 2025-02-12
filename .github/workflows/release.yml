@@ -71,7 +71,7 @@ jobs:
       - name: Generate Windows metadata (.syso)
         working-directory: ./cmd/mokapi
         run: |
-          IFS=. read -a version_parts <<< "${GITHUB_REF##*/v}"
+          $versionParts = ($env:GITHUB_REF -replace '.*/v', '').Split('.')
           echo '{}' > versioninfo.json
           goversioninfo -64 \
             -platform-specific=true \
@@ -84,9 +84,9 @@ jobs:
             -original-name="mokapi.exe" \
             -product-name="mokapi" \
             -translation="0x0409" \
-            -ver-major="${version_parts[0]}" \
-            -ver-minor="${version_parts[1]}" \
-            -ver-patch="${version_patch[0]}" \
+            -ver-major="$($versionParts[0])" \
+            -ver-minor="$($versionParts[1])" \
+            -ver-patch="$($versionParts[2])" \
             -product-version="${GITHUB_REF##*/v}"
 
       - name: Run GoReleaser
