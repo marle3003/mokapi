@@ -2,7 +2,7 @@
 <img src="https://github.com/marle3003/mokapi/raw/v0.5.0/logo.svg" alt="Mokapi" title="Mokapi" width="300" />
 </p>
 
-<h3 align="center">Easy and flexible API mocking</h3>
+<h3 align="center">Your API Mocking Tool for Agile Development</h3>
 
 **Mokapi** is an open-source tool that allows Agile, DevOps and Continuous Deployment teams
 to create and test API designs before actually building them.

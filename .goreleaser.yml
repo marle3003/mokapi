@@ -63,13 +63,13 @@ brews:
       name: homebrew-tap
       token: "{{ .Env.TAP_GITHUB_TOKEN }}"
     homepage: https://mokapi.io
-    description: "Easy and flexible API mocking using Go and Javascript - https://mokapi.io"
+    description: "Your API Mocking Tool for Agile Development using Go and Javascript - https://mokapi.io"
 
 nfpms:
   - license: MIT
     maintainer: Marcel Lehmann
     homepage: https://mokapi.io
-    description: "Easy and flexible API mocking using Go and Javascript - https://mokapi.io"
+    description: "Your API Mocking Tool for Agile Development using Go and Javascript - https://mokapi.io"
     formats:
       - rpm
       - deb

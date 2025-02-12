@@ -34,7 +34,7 @@ chocolateys:
     docs_url: https://mokapi.io/docs/guides
     bug_tracker_url: https://github.com/marle3003/mokapi/issues
     tags: "cross-platform testing devops api mock http kafka rest smtp ldap contract openapi asyncapi"
-    summary: Easy and flexible API mocking using Go and Javascript
+    summary: Your API Mocking Tool for Agile Development using Go and Javascript
     description: |
       **Mokapi** is an open-source tool that allows Agile, DevOps and Continuous Deployment teams
       to create and test API designs before actually building them.

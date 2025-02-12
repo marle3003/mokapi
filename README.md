@@ -4,7 +4,7 @@
 </a>
 </p>
 
-<h3 align="center">Easy and flexible API mocking</h3>
+<h3 align="center">Your API Mocking Tool for Agile Development</h3>
 
 <p align="center">
 <a href="https://github.com/marle3003/mokapi/releases"><img src="https://img.shields.io/github/release/marle3003/mokapi.svg" alt="Github release"></a>
