@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -165,6 +166,9 @@ func (h *handler) getServices(w http.ResponseWriter, _ *http.Request) {
 	services = append(services, getKafkaServices(h.app.Kafka, h.app.Monitor)...)
 	services = append(services, getMailServices(h.app.Smtp, h.app.Monitor)...)
 	services = append(services, getLdapServices(h.app.Ldap, h.app.Monitor)...)
+	slices.SortFunc(services, func(a interface{}, b interface{}) int {
+		return compareService(a, b)
+	})
 	w.Header().Set("Content-Type", "application/json")
 	writeJsonBody(w, services)
 }
@@ -222,4 +226,22 @@ func isImage(path string) bool {
 	default:
 		return false
 	}
+}
+
+func compareService(a, b interface{}) int {
+	return strings.Compare(getServiceName(a), getServiceName(b))
+}
+
+func getServiceName(a interface{}) string {
+	switch v := a.(type) {
+	case *httpSummary:
+		return v.Name
+	case *kafkaSummary:
+		return v.Name
+	case *ldapSummary:
+		return v.Name
+	case *mailSummary:
+		return v.Name
+	}
+	return ""
 }
