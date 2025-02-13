@@ -30,8 +30,8 @@ jobs:
         working-directory: ./cmd/mokapi
         shell: pwsh
         run: |
-          $versionParts = ($env:GITHUB_REF -replace '.*/v', '').Split('.') `
-          '{}' | Out-File versioninfo.json -NoNewline ascii `
+          $versionParts = ($env:GITHUB_REF -replace '.*/v', '').Split('.')
+          '{}' | Out-File versioninfo.json -NoNewline ascii
           goversioninfo -64 `
             -platform-specific='true' `
             -charset="1200" `
