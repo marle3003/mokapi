@@ -13,11 +13,11 @@ builds:
       - amd64
 archives:
   - name_template: '{{ .ProjectName }}_v{{ .Version }}_{{ .Os }}_{{ .Arch }}'
-    format: zip
+    formats: [ 'zip' ]
 checksum:
   name_template: "{{ .ProjectName }}_v{{ .Version }}_windows_checksums.txt"
 snapshot:
-  name_template: "{{ .Version }}"
+  version_template: "{{ .Version }}"
 
 chocolateys:
   - name: mokapi
