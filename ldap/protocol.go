@@ -39,6 +39,7 @@ const (
 	ProtocolError          uint8 = 2
 	SizeLimitExceeded      uint8 = 4
 	AuthMethodNotSupported uint8 = 7
+	InvalidCredentials     uint8 = 49
 	CannotCancel           uint8 = 121
 )
 

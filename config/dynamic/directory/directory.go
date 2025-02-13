@@ -45,9 +45,34 @@ func (d *Directory) serveBind(rw ldap.ResponseWriter, r *ldap.Request) {
 		if m, ok := monitor.LdapFromContext(r.Context); ok {
 			m.Bind.WithLabel(d.config.Info.Name).Add(1)
 		}
-		rw.Write(&ldap.BindResponse{
-			Result: ldap.Success,
-		})
+
+		if msg.Name != "" {
+			e := d.getEntry(msg.Name)
+			if e == nil {
+				rw.Write(&ldap.BindResponse{
+					Result: ldap.InvalidCredentials,
+				})
+				return
+			}
+			pw, ok := e.Attributes["userPassword"]
+			if !ok {
+				rw.Write(&ldap.BindResponse{
+					Result: ldap.Success,
+				})
+			} else if pw[0] == msg.Password {
+				rw.Write(&ldap.BindResponse{
+					Result: ldap.Success,
+				})
+			} else {
+				rw.Write(&ldap.BindResponse{
+					Result: ldap.InvalidCredentials,
+				})
+			}
+		} else {
+			rw.Write(&ldap.BindResponse{
+				Result: ldap.Success,
+			})
+		}
 	default:
 		rw.Write(&ldap.BindResponse{
 			Result:  ldap.AuthMethodNotSupported,
@@ -67,4 +92,14 @@ func (d *Directory) skip(e *Entry, baseDN string) bool {
 		return false
 	}
 	return e.Dn == name[0] && baseDN != fmt.Sprintf("cn=%s", name[0])
+}
+
+func (d *Directory) getEntry(dn string) *Entry {
+	for it := d.config.Entries.Iter(); it.Next(); {
+		e := it.Value()
+		if e.Dn == dn {
+			return &e
+		}
+	}
+	return nil
 }

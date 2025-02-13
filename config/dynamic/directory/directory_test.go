@@ -89,6 +89,84 @@ func TestDirectory_ServeBind(t *testing.T) {
 				require.Equal(t, "server supports only ldap version 3", res.Message)
 			},
 		},
+		{
+			name: "user not found",
+			config: &directory.Config{
+				Info: directory.Info{Name: "foo"},
+				Entries: convert(map[string]directory.Entry{
+					"user1": {
+						Dn: "cn=user1,dc=foo,dc=com",
+						Attributes: map[string][]string{
+							"userPassword": {"foo"},
+						},
+					},
+				})},
+			fn: func(t *testing.T, h ldap.Handler) {
+				rr := ldaptest.NewRecorder()
+				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.BindRequest{
+					Version:  3,
+					Auth:     ldap.Simple,
+					Name:     "cn=user2,dc=foo,dc=com",
+					Password: "bar",
+				}))
+				res := rr.Message.(*ldap.BindResponse)
+				require.Equal(t, ldap.InvalidCredentials, res.Result)
+				require.Equal(t, "", res.MatchedDN)
+				require.Equal(t, "", res.Message)
+			},
+		},
+		{
+			name: "user bind wrong password",
+			config: &directory.Config{
+				Info: directory.Info{Name: "foo"},
+				Entries: convert(map[string]directory.Entry{
+					"user1": {
+						Dn: "cn=user1,dc=foo,dc=com",
+						Attributes: map[string][]string{
+							"userPassword": {"foo"},
+						},
+					},
+				})},
+			fn: func(t *testing.T, h ldap.Handler) {
+				rr := ldaptest.NewRecorder()
+				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.BindRequest{
+					Version:  3,
+					Auth:     ldap.Simple,
+					Name:     "cn=user1,dc=foo,dc=com",
+					Password: "bar",
+				}))
+				res := rr.Message.(*ldap.BindResponse)
+				require.Equal(t, ldap.InvalidCredentials, res.Result)
+				require.Equal(t, "", res.MatchedDN)
+				require.Equal(t, "", res.Message)
+			},
+		},
+		{
+			name: "user bind successful",
+			config: &directory.Config{
+				Info: directory.Info{Name: "foo"},
+				Entries: convert(map[string]directory.Entry{
+					"user1": {
+						Dn: "cn=user1,dc=foo,dc=com",
+						Attributes: map[string][]string{
+							"userPassword": {"foo"},
+						},
+					},
+				})},
+			fn: func(t *testing.T, h ldap.Handler) {
+				rr := ldaptest.NewRecorder()
+				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.BindRequest{
+					Version:  3,
+					Auth:     ldap.Simple,
+					Name:     "cn=user1,dc=foo,dc=com",
+					Password: "foo",
+				}))
+				res := rr.Message.(*ldap.BindResponse)
+				require.Equal(t, ldap.Success, res.Result)
+				require.Equal(t, "", res.MatchedDN)
+				require.Equal(t, "", res.Message)
+			},
+		},
 	}
 
 	for _, test := range testcases {
