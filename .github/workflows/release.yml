@@ -5,6 +5,7 @@ on:
       - 'v*'
       - '!v*-beta'
 
+jobs:
   release-windows:
     runs-on: windows-latest
     steps:
