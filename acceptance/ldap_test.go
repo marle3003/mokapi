@@ -55,7 +55,7 @@ func (suite *LdapSuite) TestSearch() {
 	require.Equal(suite.T(), ldap.Success, res.Status)
 	require.Len(suite.T(), res.Results, 4)
 	require.True(suite.T(), hasResult(res.Results, "CN=farnsworthh,CN=users,DC=mokapi,DC=io"))
-	require.Len(suite.T(), res.Results[0].Attributes, 2, "mail and objectClass")
+	require.Len(suite.T(), res.Results[0].Attributes, 1, "mail")
 }
 
 func (suite *LdapSuite) TestLog() {
