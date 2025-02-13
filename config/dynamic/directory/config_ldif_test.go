@@ -282,7 +282,7 @@ func TestConfig_LDIF(t *testing.T) {
 			}},
 			test: func(t *testing.T, c *Config, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 2, c.Entries.Len())
+				require.Equal(t, 3, c.Entries.Len())
 				require.Equal(t, "dc=mokapi,dc=io", c.Entries.Lookup("dc=mokapi,dc=io").Dn)
 				require.Equal(t, []string{"bar"}, c.Entries.Lookup("dc=mokapi,dc=io").Attributes["foo"])
 			},
@@ -296,7 +296,7 @@ func TestConfig_LDIF(t *testing.T) {
 			}},
 			test: func(t *testing.T, c *Config, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 2, c.Entries.Len())
+				require.Equal(t, 3, c.Entries.Len())
 				require.Equal(t, []string{"bar", "yuh"}, c.Entries.Lookup("dc=mokapi,dc=io").Attributes["foo"])
 			},
 		},
@@ -309,7 +309,7 @@ func TestConfig_LDIF(t *testing.T) {
 			}},
 			test: func(t *testing.T, c *Config, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 2, c.Entries.Len())
+				require.Equal(t, 3, c.Entries.Len())
 				require.Len(t, c.Entries.Lookup("dc=mokapi,dc=io").Attributes, 0)
 			},
 		},
@@ -322,7 +322,7 @@ func TestConfig_LDIF(t *testing.T) {
 			}},
 			test: func(t *testing.T, c *Config, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 2, c.Entries.Len())
+				require.Equal(t, 3, c.Entries.Len())
 				require.Equal(t, []string{"yuh"}, c.Entries.Lookup("dc=mokapi,dc=io").Attributes["foo"])
 			},
 		},
@@ -334,7 +334,7 @@ func TestConfig_LDIF(t *testing.T) {
 			}},
 			test: func(t *testing.T, c *Config, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 1, c.Entries.Len())
+				require.Equal(t, 2, c.Entries.Len())
 				require.Equal(t, []string{"foo"}, c.Entries.Lookup("").Attributes["vendorName"])
 			},
 		},

@@ -109,11 +109,18 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 				"vendorVersion":        {version.BuildVersion},
 				"dsServiceName":        {c.Info.Name},
 				"description":          {c.Info.Description},
-				/*"control": {
-					"1.2.840.113556.1.4.319 true", // Paged Results Control
-				},*/
+				"namingContexts":       {"dc=mokapi,dc=io"},
+				"subschemaSubentry":    {"cn=subschema"},
 			},
 		}
+		schema := Entry{
+			Dn: "cn=subschema",
+			Attributes: map[string][]string{
+				"cn":          {"subschema"},
+				"objectClass": {"subschema"},
+			},
+		}
+		c.Entries.Set("cn=subschema", schema)
 	} else {
 		if _, ok := root.Attributes["supportedLDAPVersion"]; !ok {
 			root.Attributes["supportedLDAPVersion"] = []string{"3"}
@@ -131,6 +138,20 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		}
 		if _, ok := root.Attributes["description"]; !ok && c.Info.Description != "" {
 			root.Attributes["description"] = []string{c.Info.Description}
+		}
+		if _, ok := root.Attributes["namingContexts"]; !ok {
+			root.Attributes["namingContexts"] = []string{"dc=mokapi,dc=io"}
+		}
+		if _, ok := root.Attributes["subschemaSubentry"]; !ok {
+			root.Attributes["subschemaSubentry"] = []string{"cn=subschema"}
+			schema := Entry{
+				Dn: "cn=subschema",
+				Attributes: map[string][]string{
+					"cn":          {"subschema"},
+					"objectClass": {"subschema"},
+				},
+			}
+			c.Entries.Set("cn=subschema", schema)
 		}
 	}
 
