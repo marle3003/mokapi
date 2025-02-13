@@ -1,6 +1,7 @@
 package directory
 
 import (
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	engine "mokapi/engine/common"
 	"mokapi/ldap"
@@ -53,4 +54,17 @@ func (d *Directory) serveBind(rw ldap.ResponseWriter, r *ldap.Request) {
 			Message: "server supports only simple auth method",
 		})
 	}
+}
+
+func (d *Directory) skip(e *Entry, baseDN string) bool {
+	if baseDN != "" && e.Dn == "" {
+		return true
+	}
+
+	root, _ := d.config.Entries.Get("")
+	name, ok := root.Attributes["subschemaSubentry"]
+	if !ok || len(name) == 0 {
+		return false
+	}
+	return e.Dn == name[0] && baseDN != fmt.Sprintf("cn=%s", name[0])
 }

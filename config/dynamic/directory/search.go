@@ -9,6 +9,7 @@ import (
 	"mokapi/ldap"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -74,6 +75,9 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 					continue
 				}
 			}
+			if d.skip(&e, msg.BaseDN) {
+				continue
+			}
 
 			if pagedStoredIndex != 0 && skipPageIndex < pagedStoredIndex {
 				skipPageIndex++
@@ -94,19 +98,7 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 			n++
 
 			res := ldap.NewSearchResult(e.Dn)
-			res.Attributes["objectClass"] = e.Attributes["objectClass"]
-
-			if len(msg.Attributes) > 0 {
-				for _, a := range msg.Attributes {
-					for k, v := range e.Attributes {
-						if strings.ToLower(a) == strings.ToLower(k) {
-							res.Attributes[a] = v
-						}
-					}
-				}
-			} else {
-				res.Attributes = e.Attributes
-			}
+			res.Attributes = getAttributes(msg.Attributes, &e)
 
 			log.Debugf("found result for message %v: %v", r.MessageId, res.Dn)
 			results = append(results, res)
@@ -130,6 +122,34 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 	if err := rw.Write(res); err != nil {
 		log.Errorf("ldap: send search done: %v", err)
 	}
+}
+
+func getAttributes(attr []string, e *Entry) map[string][]string {
+	result := make(map[string][]string)
+	plus := slices.Contains(attr, "+")
+	star := slices.Contains(attr, "*") || len(attr) == 0
+
+	if slices.Contains(attr, "1.1") {
+		result["dn"] = []string{e.Dn}
+		return result
+	}
+
+	for k, v := range e.Attributes {
+		switch k {
+		case "subschemaSubentry",
+			"namingContexts",
+			"objectClasses":
+			if plus || slices.Contains(attr, k) {
+				result[k] = v
+			}
+		default:
+			if star || slices.Contains(attr, k) {
+				result[k] = v
+			}
+		}
+	}
+
+	return result
 }
 
 func compileFilter(filter string) (predicate, int, error) {
