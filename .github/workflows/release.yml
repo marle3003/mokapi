@@ -30,14 +30,14 @@ on:
         shell: pwsh
         run: |
           $versionParts = ($env:GITHUB_REF -replace '.*/v', '').Split('.')
-          echo '{}' > versioninfo.json
+          '{}' | Out-File versioninfo.json -NoNewline ascii
           goversioninfo -64 `
-            -platform-specific=true `
+            -platform-specific='true' `
             -charset="1200" `
             -company="Mokapi OpenSource" `
             -copyright="© Marcel Lehmann. Licensed under MIT." `
             -description="Your API Mocking Tool for Agile Development, using Go and JavaScript" `
-            -icon=icon.ico `
+            -icon="../../icon.ico" `
             -internal-name="mokapi" `
             -original-name="mokapi.exe" `
             -product-name="mokapi" `
