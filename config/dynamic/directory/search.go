@@ -29,8 +29,8 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 		}
 	}()
 
-	log.Infof("ldap search request: messageId=%v BaseDN=%v Filter=%v",
-		r.MessageId, msg.BaseDN, msg.Filter)
+	log.Infof("ldap search request: messageId=%v, Scope=%v BaseDN=%v Filter=%v",
+		r.MessageId, msg.Scope, msg.BaseDN, msg.Filter)
 
 	if doMonitor {
 		m.Search.WithLabel(d.config.Info.Name).Add(1)
@@ -237,13 +237,14 @@ func substring(name, value string) predicate {
 
 	if value == "*" {
 		return func(e Entry) bool {
+			// special case for objectClass
+			// Matches all entries, even if objectClass is not explicitly present,
+			// because objectClass is fundamental to every LDAP entry by definition.
+			if name == "objectclass" {
+				return true
+			}
+
 			for k := range e.Attributes {
-				// special case for objectClass
-				// Matches all entries, even if objectClass is not explicitly present,
-				// because objectClass is fundamental to every LDAP entry by definition.
-				if name == "objectclass" {
-					return true
-				}
 				if strings.ToLower(k) == name {
 					return true
 				}

@@ -177,7 +177,7 @@ func (s *Server) serve(conn net.Conn, ctx context.Context) {
 		case abandonRequest:
 			msg = &SearchResponse{Status: CannotCancel}
 		default:
-			log.Errorf("ldap: unknown operation %v, %v", packet.Tag, packet.Description)
+			log.Errorf("ldap: server does not support %v", body.Tag)
 		}
 
 		if err != nil {

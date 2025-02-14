@@ -150,7 +150,8 @@
         "items": {
           "Get started with REST API": "examples/tutorials/simple-http-api.md",
           "Get started with Kafka": "examples/tutorials/simple-kafka-api.md",
-          "Running Mokapi in a CI/CD Pipeline": "examples/tutorials/running-mokapi-github-action.md"
+          "Running Mokapi in a CI/CD Pipeline": "examples/tutorials/running-mokapi-github-action.md",
+          "Mock LDAP Authentication in Node.js": "examples/tutorials/mock-ldap-authentication.md"
         }
       },
       "Examples": {
