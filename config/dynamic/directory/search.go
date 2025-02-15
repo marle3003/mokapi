@@ -180,24 +180,14 @@ func (p *parser) parse(filter string) (predicate, int, error) {
 			op = ldap.FilterEqualityMatch
 			attr = v
 			v = bytes.NewBuffer(nil)
-		case c == '>' && op == 0:
-			if filter[pos+1] == '=' {
-				pos++
-				op = ldap.FilterGreaterOrEqual
-			} else {
-				op = ldap.FilterGreaterThan
-			}
-
+		case c == '>' && filter[pos+1] == '=' && op == 0:
+			pos++
+			op = ldap.FilterGreaterOrEqual
 			attr = v
 			v = bytes.NewBuffer(nil)
-		case c == '<' && op == 0:
-			if filter[pos+1] == '=' {
-				pos++
-				op = ldap.FilterLessOrEqual
-			} else {
-				op = ldap.FilterLessThan
-			}
-
+		case c == '<' && filter[pos+1] == '=' && op == 0:
+			pos++
+			op = ldap.FilterLessOrEqual
 			attr = v
 			v = bytes.NewBuffer(nil)
 		case c == '~' && filter[pos+1] == '=' && op == 0:
@@ -246,13 +236,9 @@ func (p *parser) predicate(op int, name, value string) (predicate, error) {
 		}
 		return p.equal(name, value)
 	case ldap.FilterGreaterOrEqual:
-		return p.greater(name, value, true), nil
-	case ldap.FilterGreaterThan:
-		return p.greater(name, value, false), nil
+		return p.greaterOrEqual(name, value), nil
 	case ldap.FilterLessOrEqual:
-		return p.less(name, value, true), nil
-	case ldap.FilterLessThan:
-		return p.less(name, value, false), nil
+		return p.lessOrEqual(name, value), nil
 	case ldap.FilterApproxMatch:
 		return p.check(name, func(s string) bool {
 			n := len(s)
@@ -423,15 +409,12 @@ func not(f predicate) predicate {
 	}
 }
 
-func (p *parser) greater(name, value string, orEqual bool) predicate {
+func (p *parser) greaterOrEqual(name, value string) predicate {
 	n, err := strconv.ParseFloat(value, 64)
 	var f func(string) bool
 	if err != nil {
 		f = func(s string) bool {
-			if orEqual {
-				return s >= value
-			}
-			return s > value
+			return s >= value
 		}
 	} else {
 		f = func(s string) bool {
@@ -439,24 +422,18 @@ func (p *parser) greater(name, value string, orEqual bool) predicate {
 			if err != nil {
 				return false
 			}
-			if orEqual {
-				return toCompare >= n
-			}
-			return toCompare > n
+			return toCompare >= n
 		}
 	}
 	return p.check(name, f)
 }
 
-func (p *parser) less(name, value string, orEqual bool) predicate {
+func (p *parser) lessOrEqual(name, value string) predicate {
 	n, err := strconv.ParseFloat(value, 64)
 	var f func(string) bool
 	if err != nil {
 		f = func(s string) bool {
-			if orEqual {
-				return s <= value
-			}
-			return s < value
+			return s <= value
 		}
 	} else {
 		f = func(s string) bool {
@@ -464,10 +441,7 @@ func (p *parser) less(name, value string, orEqual bool) predicate {
 			if err != nil {
 				return false
 			}
-			if orEqual {
-				return toCompare <= n
-			}
-			return toCompare < n
+			return toCompare <= n
 		}
 	}
 	return p.check(name, f)

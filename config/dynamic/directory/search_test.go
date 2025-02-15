@@ -267,44 +267,6 @@ func TestSearch(t *testing.T) {
 			},
 		},
 		{
-			name:  "greater than",
-			input: `{ "files": [ "./users.ldif" ] }`,
-			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
-				"file:/users.ldif": {Raw: []byte("dn: cn=user\nage: 30")},
-			}},
-			test: func(t *testing.T, h ldap.Handler, err error) {
-				require.NoError(t, err)
-
-				rr := ldaptest.NewRecorder()
-				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
-					Scope:  ldap.ScopeWholeSubtree,
-					Filter: "(age>10)",
-				}))
-				res := rr.Message.(*ldap.SearchResponse)
-
-				require.Len(t, res.Results, 1)
-			},
-		},
-		{
-			name:  "less than",
-			input: `{ "files": [ "./users.ldif" ] }`,
-			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
-				"file:/users.ldif": {Raw: []byte("dn: cn=user\nage: 30")},
-			}},
-			test: func(t *testing.T, h ldap.Handler, err error) {
-				require.NoError(t, err)
-
-				rr := ldaptest.NewRecorder()
-				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
-					Scope:  ldap.ScopeWholeSubtree,
-					Filter: "(age<31)",
-				}))
-				res := rr.Message.(*ldap.SearchResponse)
-
-				require.Len(t, res.Results, 1)
-			},
-		},
-		{
 			name:  "approximate match",
 			input: `{ "files": [ "./users.ldif" ] }`,
 			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{

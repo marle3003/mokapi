@@ -29,11 +29,9 @@ const (
 	FilterEqualityMatch  = 3
 	FilterSubstrings     = 4
 	FilterGreaterOrEqual = 5
-	FilterGreaterThan    = 6
-	FilterLessOrEqual    = 7
-	FilterLessThan       = 8
-	FilterPresent        = 9
-	FilterApproxMatch    = 10
+	FilterLessOrEqual    = 6
+	FilterPresent        = 7
+	FilterApproxMatch    = 8
 
 	FilterSubstringsStartWith uint8 = 0
 	FilterSubstringsAny       uint8 = 1

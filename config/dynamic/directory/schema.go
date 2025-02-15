@@ -26,7 +26,7 @@ type AttributeType struct {
 }
 
 func NewSchema(e Entry) (*Schema, error) {
-	s := &Schema{e: e, AttributeTypes: make(map[string]*AttributeType)}
+	s := &Schema{e: e, AttributeTypes: make(map[string]*AttributeType), ObjectClasses: make(map[string]*ObjectClass)}
 	for _, v := range e.Attributes["attributeTypes"] {
 		a, err := parseAttributeType(v)
 		if err != nil {
