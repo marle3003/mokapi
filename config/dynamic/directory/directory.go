@@ -1,6 +1,7 @@
 package directory
 
 import (
+	"errors"
 	log "github.com/sirupsen/logrus"
 	engine "mokapi/engine/common"
 	"mokapi/ldap"
@@ -133,14 +134,11 @@ func (d *Directory) serveModify(rw ldap.ResponseWriter, r *ldap.ModifyRequest) {
 		modify.Actions = append(modify.Actions, &a)
 	}
 
-	if err := modify.Validate(d.config.Schema); err != nil {
-		rw.Write(&ldap.ModifyResponse{ResultCode: ldap.ConstraintViolation, MatchedDn: r.Dn, Message: err.Error()})
-		return
-	}
-
-	err := modify.Apply(d.config.Entries)
+	err := modify.Apply(d.config.Entries, d.config.Schema)
 	if err != nil {
-		rw.Write(&ldap.ModifyResponse{ResultCode: ldap.NoSuchObject})
+		var ee *EntryError
+		errors.As(err, &ee)
+		rw.Write(&ldap.ModifyResponse{ResultCode: ee.Code, MatchedDn: r.Dn, Message: err.Error()})
 	} else {
 		rw.Write(&ldap.ModifyResponse{ResultCode: ldap.Success, MatchedDn: r.Dn})
 	}
@@ -156,14 +154,11 @@ func (d *Directory) serveAdd(rw ldap.ResponseWriter, r *ldap.AddRequest) {
 		add.Attributes[attr.Type] = attr.Values
 	}
 
-	if err := add.Validate(d.config.Schema); err != nil {
-		rw.Write(&ldap.AddResponse{ResultCode: ldap.ConstraintViolation, MatchedDn: r.Dn, Message: err.Error()})
-		return
-	}
-
-	err := add.Apply(d.config.Entries)
+	err := add.Apply(d.config.Entries, d.config.Schema)
 	if err != nil {
-		rw.Write(&ldap.AddResponse{ResultCode: ldap.EntryAlreadyExists, MatchedDn: r.Dn})
+		var ee *EntryError
+		errors.As(err, &ee)
+		rw.Write(&ldap.AddResponse{ResultCode: ee.Code, Message: err.Error()})
 	} else {
 		rw.Write(&ldap.AddResponse{ResultCode: ldap.Success, MatchedDn: r.Dn})
 	}
@@ -173,9 +168,11 @@ func (d *Directory) serveDelete(rw ldap.ResponseWriter, r *ldap.DeleteRequest) {
 	del := &DeleteRecord{
 		Dn: r.Dn,
 	}
-	err := del.Apply(d.config.Entries)
+	err := del.Apply(d.config.Entries, d.config.Schema)
 	if err != nil {
-		rw.Write(&ldap.DeleteResponse{ResultCode: ldap.NoSuchObject, MatchedDn: del.Dn})
+		var ee *EntryError
+		errors.As(err, &ee)
+		rw.Write(&ldap.DeleteResponse{ResultCode: ee.Code, MatchedDn: del.Dn, Message: err.Error()})
 	} else {
 		rw.Write(&ldap.DeleteResponse{ResultCode: ldap.Success, MatchedDn: del.Dn})
 	}
@@ -188,9 +185,11 @@ func (d *Directory) serveModifyDn(rw ldap.ResponseWriter, r *ldap.ModifyDNReques
 		NewSuperiorDn: r.NewSuperiorDn,
 		DeleteOldDn:   r.DeleteOldDn,
 	}
-	err := del.Apply(d.config.Entries)
+	err := del.Apply(d.config.Entries, d.config.Schema)
 	if err != nil {
-		rw.Write(&ldap.ModifyDNResponse{ResultCode: ldap.NoSuchObject, MatchedDn: r.Dn})
+		var ee *EntryError
+		errors.As(err, &ee)
+		rw.Write(&ldap.ModifyDNResponse{ResultCode: ee.Code, MatchedDn: r.Dn, Message: err.Error()})
 	} else {
 		rw.Write(&ldap.ModifyDNResponse{ResultCode: ldap.Success, MatchedDn: r.Dn})
 	}

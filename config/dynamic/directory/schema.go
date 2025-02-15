@@ -12,6 +12,7 @@ import (
 
 type Schema struct {
 	AttributeTypes map[string]*AttributeType
+	ObjectClasses  map[string]*ObjectClass
 
 	e Entry
 }
@@ -33,6 +34,15 @@ func NewSchema(e Entry) (*Schema, error) {
 		}
 		for _, name := range a.Name {
 			s.AttributeTypes[name] = a
+		}
+	}
+	for _, v := range e.Attributes["objectClasses"] {
+		c, err := parseObjectClass(v)
+		if err != nil {
+			return nil, err
+		}
+		for _, name := range c.Name {
+			s.ObjectClasses[name] = c
 		}
 	}
 	return s, nil
@@ -136,6 +146,88 @@ func parseAttributeType(s string) (*AttributeType, error) {
 	}
 
 	return attr, nil
+}
+
+type ObjectClass struct {
+	Id          string
+	Name        []string
+	Description string
+	SuperClass  []string
+	Type        string
+	Must        []string
+	May         []string
+}
+
+func parseObjectClass(input string) (*ObjectClass, error) {
+	re := regexp.MustCompile(`\s*\(\s*([\d\.]+)\s*` +
+		`(?:NAME\s+(?:'([^']+)'|\(\s*'([^']+(?:'\s+'[^']+)*)'\s*\)))?\s*` +
+		`(?:DESC\s+'([^']+)')?\s*` +
+		`(?:SUP\s+(?:([\w\-]+)|\(\s*([^)]+(?:\s+'[^)]+)*)\s*\)))?\s*` +
+		`(STRUCTURAL|ABSTRACT|AUXILIARY)?\s*` +
+		`(?:MUST\s+\(\s*([^()]+)\s*\))?\s*` +
+		`(?:MAY\s+\(\s*([^()]+)\s*\))?\s*` +
+		`\)`)
+	matches := re.FindStringSubmatch(input)
+
+	if matches == nil {
+		return nil, fmt.Errorf("invalid objectClass format")
+	}
+
+	id := matches[1]
+	var names []string
+	if matches[2] != "" {
+		names = []string{matches[2]}
+	} else if matches[3] != "" {
+		names = strings.Fields(strings.ReplaceAll(matches[3], "'", ""))
+	}
+	description := matches[4]
+
+	var superClasses []string
+	if matches[5] != "" {
+		superClasses = []string{matches[5]}
+	} else if matches[6] != "" {
+		superClasses = strings.Fields(strings.ReplaceAll(matches[6], "$", " "))
+	}
+
+	classType := matches[7]
+
+	// Create and return struct
+	c := &ObjectClass{
+		Id:          id,
+		Name:        names,
+		Description: description,
+		SuperClass:  superClasses,
+		Type:        classType,
+	}
+
+	if matches[8] != "" {
+		c.Must = strings.Fields(strings.ReplaceAll(matches[8], "$", " "))
+	}
+	if matches[9] != "" {
+		c.May = strings.Fields(strings.ReplaceAll(matches[9], "$", " "))
+	}
+
+	return c, nil
+}
+
+func extractFirstMatch(re *regexp.Regexp, input string) string {
+	matches := re.FindStringSubmatch(input)
+	if len(matches) > 1 {
+		return matches[1]
+	}
+	return ""
+}
+
+func extractList(re *regexp.Regexp, input string) []string {
+	matches := re.FindStringSubmatch(input)
+	if len(matches) > 1 {
+		attrs := strings.Split(matches[1], " $ ")
+		for i := range attrs {
+			attrs[i] = strings.TrimSpace(attrs[i])
+		}
+		return attrs
+	}
+	return nil
 }
 
 func isPrintable(s string) bool {

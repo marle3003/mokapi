@@ -12,5 +12,5 @@ attributeTypes: ( 1.3.6.1.4.1.1466.115.121.1.49 NAME 'userPassword' DESC 'User P
 attributeTypes: ( 1.3.6.1.4.1.1466.115.121.1.26 NAME 'mail' DESC 'Email Address' EQUALITY caseIgnoreMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )
 # Define object classes using the attributes
 objectClasses: ( 2.5.6.0 NAME 'top' SUP NO-USER-MODIFICATION )
-objectClasses: ( 2.5.6.1 NAME 'person' SUP top MUST ( cn $ sn ) )
+objectClasses: ( 2.5.6.1 NAME 'person' SUP top MUST ( cn ) )
 objectClasses: ( 2.5.6.42 NAME 'user' SUP person MAY ( userPassword $ uid ) )

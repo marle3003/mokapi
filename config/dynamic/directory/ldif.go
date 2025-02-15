@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"mokapi/config/dynamic"
+	"mokapi/ldap"
 	"mokapi/sortedmap"
 	"net/url"
 	"slices"
@@ -15,8 +16,7 @@ type Ldif struct {
 }
 
 type LdifRecord interface {
-	Apply(entries *sortedmap.LinkedHashMap[string, Entry]) error
-	Validate(s *Schema) error
+	Apply(entries *sortedmap.LinkedHashMap[string, Entry], s *Schema) error
 	append(name string, value string)
 }
 
@@ -141,32 +141,19 @@ type AddRecord struct {
 	Attributes map[string][]string
 }
 
-func (add *AddRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry]) error {
+func (add *AddRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry], s *Schema) error {
 	if _, ok := entries.Get(add.Dn); ok {
-		return fmt.Errorf("record dn='%s' already exists", add.Dn)
+		return NewEntryError(ldap.EntryAlreadyExists, "record dn='%s' already exists", add.Dn)
 	}
-	entries.Set(add.Dn, Entry{
+	e := Entry{
 		Dn:         add.Dn,
 		Attributes: add.Attributes,
-	})
-	return nil
-}
-
-func (add *AddRecord) Validate(s *Schema) error {
-	if s == nil {
-		return nil
 	}
-
-	for name, values := range add.Attributes {
-		if a, ok := s.AttributeTypes[name]; ok {
-			for _, value := range values {
-				if !a.Validate(value) {
-					return fmt.Errorf("invalid value for attribute %s=%s: SYNTAX: %v", name, value, a.Syntax)
-				}
-			}
-
-		}
+	err := e.validate(s)
+	if err != nil {
+		return err
 	}
+	entries.Set(e.Dn, e)
 	return nil
 }
 
@@ -181,16 +168,12 @@ type DeleteRecord struct {
 	Dn string
 }
 
-func (del *DeleteRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry]) error {
+func (del *DeleteRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry], _ *Schema) error {
 	_, ok := entries.Get(del.Dn)
 	if !ok {
-		return fmt.Errorf("apply delete record failed: entry '%v' not found", del.Dn)
+		return NewEntryError(ldap.NoSuchObject, "apply delete record failed: entry '%v' not found", del.Dn)
 	}
 	entries.Del(del.Dn)
-	return nil
-}
-
-func (del *DeleteRecord) Validate(s *Schema) error {
 	return nil
 }
 
@@ -207,15 +190,15 @@ type ModifyAction struct {
 	Attributes map[string][]string
 }
 
-func (mod *ModifyRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry]) error {
+func (mod *ModifyRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry], s *Schema) error {
 	e, ok := entries.Get(mod.Dn)
 	if !ok {
-		return fmt.Errorf("apply change record failed: entry '%v' not found", mod.Dn)
+		return NewEntryError(ldap.NoSuchObject, "apply change record failed: entry '%v' not found", mod.Dn)
 	}
+	e = e.copy()
 
 	if e.Attributes == nil {
 		e.Attributes = make(map[string][]string)
-		entries.Set(mod.Dn, e)
 	}
 
 	for _, action := range mod.Actions {
@@ -249,25 +232,11 @@ func (mod *ModifyRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry]) 
 		}
 	}
 
-	return nil
-}
-
-func (mod *ModifyRecord) Validate(s *Schema) error {
-	if s == nil {
-		return nil
+	if err := e.validate(s); err != nil {
+		return err
 	}
+	entries.Set(e.Dn, e)
 
-	for _, action := range mod.Actions {
-		for name, values := range action.Attributes {
-			if a, ok := s.AttributeTypes[name]; ok {
-				for _, value := range values {
-					if !a.Validate(value) {
-						return fmt.Errorf("invalid value for attribute %s=%s: SYNTAX: %v", name, value, a.Syntax)
-					}
-				}
-			}
-		}
-	}
 	return nil
 }
 
@@ -307,10 +276,10 @@ type ModifyDnRecord struct {
 	NewSuperiorDn string
 }
 
-func (m *ModifyDnRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry]) error {
+func (m *ModifyDnRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry], _ *Schema) error {
 	e, ok := entries.Get(m.Dn)
 	if !ok {
-		return fmt.Errorf("apply modify DN failed: entry '%v' not found", m.Dn)
+		return NewEntryError(ldap.NoSuchObject, "apply modify DN failed: entry '%v' not found", m.Dn)
 	}
 
 	parts := strings.Split(e.Dn, ",")

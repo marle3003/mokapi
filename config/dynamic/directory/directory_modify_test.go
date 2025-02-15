@@ -222,8 +222,8 @@ func TestDirectory_ServeModify(t *testing.T) {
 				}))
 				res := rr.Message.(*ldap.ModifyResponse)
 				require.Equal(t, ldap.NoSuchObject, res.ResultCode)
-				require.Equal(t, "", res.MatchedDn)
-				require.Equal(t, "", res.Message)
+				require.Equal(t, "cn=bar", res.MatchedDn)
+				require.Equal(t, "apply change record failed: entry 'cn=bar' not found", res.Message)
 			},
 		},
 		{
@@ -255,7 +255,7 @@ func TestDirectory_ServeModify(t *testing.T) {
 				res := rr.Message.(*ldap.ModifyResponse)
 				require.Equal(t, ldap.ConstraintViolation, res.ResultCode)
 				require.Equal(t, "cn=foo", res.MatchedDn)
-				require.Equal(t, "invalid value for attribute foo=bar: SYNTAX: 1.3.6.1.4.1.1466.115.121.1.7", res.Message)
+				require.Equal(t, "invalid value 'bar' for attribute 'foo': does not conform to required syntax (1.3.6.1.4.1.1466.115.121.1.7)", res.Message)
 			},
 		},
 	}

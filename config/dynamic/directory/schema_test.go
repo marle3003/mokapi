@@ -49,6 +49,82 @@ func TestAttributeType(t *testing.T) {
 	}
 }
 
+func TestObjectClass(t *testing.T) {
+	testcases := []struct {
+		name  string
+		input string
+		test  func(t *testing.T, class *ObjectClass, err error)
+	}{
+		{
+			name:  "top",
+			input: "( 2.5.6.0 NAME 'top' SUP NO-USER-MODIFICATION )",
+			test: func(t *testing.T, class *ObjectClass, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "2.5.6.0", class.Id)
+				require.Equal(t, []string{"top"}, class.Name)
+				require.Equal(t, "", class.Description)
+				require.Equal(t, []string{"NO-USER-MODIFICATION"}, class.SuperClass)
+				require.Equal(t, "", class.Type)
+				require.Nil(t, class.Must)
+				require.Nil(t, class.May)
+			},
+		},
+		{
+			name:  "person",
+			input: "( 2.5.6.1 NAME 'person' SUP top MUST ( cn $ sn ) )",
+			test: func(t *testing.T, class *ObjectClass, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "2.5.6.1", class.Id)
+				require.Equal(t, []string{"person"}, class.Name)
+				require.Equal(t, "", class.Description)
+				require.Equal(t, []string{"top"}, class.SuperClass)
+				require.Equal(t, "", class.Type)
+				require.Equal(t, []string{"cn", "sn"}, class.Must)
+				require.Nil(t, class.May)
+			},
+		},
+		{
+			name:  "person",
+			input: "( 2.5.6.6 NAME 'person' DESC 'Standard Person Object' SUP top STRUCTURAL MUST ( sn $ cn ) MAY ( userPassword $ telephoneNumber $ seeAlso $ description ) )",
+			test: func(t *testing.T, class *ObjectClass, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "2.5.6.6", class.Id)
+				require.Equal(t, []string{"person"}, class.Name)
+				require.Equal(t, "Standard Person Object", class.Description)
+				require.Equal(t, []string{"top"}, class.SuperClass)
+				require.Equal(t, "STRUCTURAL", class.Type)
+				require.Equal(t, []string{"sn", "cn"}, class.Must)
+				require.Equal(t, []string{"userPassword", "telephoneNumber", "seeAlso", "description"}, class.May)
+			},
+		},
+		{
+			name:  "multiple super",
+			input: "( 1.3.6.1.4.1.99999.1.1    NAME 'customPerson'    SUP ( inetOrgPerson $ device )    STRUCTURAL    MUST ( customID )    MAY ( description ))",
+			test: func(t *testing.T, class *ObjectClass, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "1.3.6.1.4.1.99999.1.1", class.Id)
+				require.Equal(t, []string{"customPerson"}, class.Name)
+				require.Equal(t, "", class.Description)
+				require.Equal(t, []string{"inetOrgPerson", "device"}, class.SuperClass)
+				require.Equal(t, "STRUCTURAL", class.Type)
+				require.Equal(t, []string{"customID"}, class.Must)
+				require.Equal(t, []string{"description"}, class.May)
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			class, err := parseObjectClass(tc.input)
+			tc.test(t, class, err)
+		})
+	}
+}
+
 func TestAttributeType_Validate(t *testing.T) {
 	testcases := []struct {
 		name     string

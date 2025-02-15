@@ -38,11 +38,6 @@ type Info struct {
 	Version     string `yaml:"version"`
 }
 
-type Entry struct {
-	Dn         string
-	Attributes map[string][]string
-}
-
 func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	c.Entries = &sortedmap.LinkedHashMap[string, Entry]{}
 	// copy from old format
@@ -94,7 +89,7 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 			return fmt.Errorf("parse file %s failed: %v", file, err)
 		}
 		for _, record := range d.Records {
-			err = record.Apply(c.Entries)
+			err = record.Apply(c.Entries, nil)
 			if err != nil {
 				return fmt.Errorf("apply file '%s' failed: %w", file, err)
 			}
