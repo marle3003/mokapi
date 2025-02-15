@@ -16,6 +16,7 @@ type Ldif struct {
 
 type LdifRecord interface {
 	Apply(entries *sortedmap.LinkedHashMap[string, Entry]) error
+	Validate(s *Schema) error
 	append(name string, value string)
 }
 
@@ -151,6 +152,24 @@ func (add *AddRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry]) err
 	return nil
 }
 
+func (add *AddRecord) Validate(s *Schema) error {
+	if s == nil {
+		return nil
+	}
+
+	for name, values := range add.Attributes {
+		if a, ok := s.AttributeTypes[name]; ok {
+			for _, value := range values {
+				if !a.Validate(value) {
+					return fmt.Errorf("invalid value for attribute %s=%s: SYNTAX: %v", name, value, a.Syntax)
+				}
+			}
+
+		}
+	}
+	return nil
+}
+
 func (add *AddRecord) append(name string, value string) {
 	if add.Attributes == nil {
 		add.Attributes = make(map[string][]string)
@@ -168,6 +187,10 @@ func (del *DeleteRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry]) 
 		return fmt.Errorf("apply delete record failed: entry '%v' not found", del.Dn)
 	}
 	entries.Del(del.Dn)
+	return nil
+}
+
+func (del *DeleteRecord) Validate(s *Schema) error {
 	return nil
 }
 
@@ -226,6 +249,25 @@ func (mod *ModifyRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry]) 
 		}
 	}
 
+	return nil
+}
+
+func (mod *ModifyRecord) Validate(s *Schema) error {
+	if s == nil {
+		return nil
+	}
+
+	for _, action := range mod.Actions {
+		for name, values := range action.Attributes {
+			if a, ok := s.AttributeTypes[name]; ok {
+				for _, value := range values {
+					if !a.Validate(value) {
+						return fmt.Errorf("invalid value for attribute %s=%s: SYNTAX: %v", name, value, a.Syntax)
+					}
+				}
+			}
+		}
+	}
 	return nil
 }
 
@@ -288,6 +330,10 @@ func (m *ModifyDnRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry]) 
 
 	entries.Set(e.Dn, e)
 
+	return nil
+}
+
+func (m *ModifyDnRecord) Validate(s *Schema) error {
 	return nil
 }
 

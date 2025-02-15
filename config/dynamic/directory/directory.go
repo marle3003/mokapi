@@ -1,7 +1,6 @@
 package directory
 
 import (
-	"fmt"
 	log "github.com/sirupsen/logrus"
 	engine "mokapi/engine/common"
 	"mokapi/ldap"
@@ -101,7 +100,7 @@ func (d *Directory) skip(e *Entry, baseDN string) bool {
 	if !ok || len(name) == 0 {
 		return false
 	}
-	return e.Dn == name[0] && baseDN != fmt.Sprintf("cn=%s", name[0])
+	return e.Dn == name[0] && baseDN != name[0]
 }
 
 func (d *Directory) getEntry(dn string) *Entry {
@@ -133,6 +132,12 @@ func (d *Directory) serveModify(rw ldap.ResponseWriter, r *ldap.ModifyRequest) {
 		}
 		modify.Actions = append(modify.Actions, &a)
 	}
+
+	if err := modify.Validate(d.config.Schema); err != nil {
+		rw.Write(&ldap.ModifyResponse{ResultCode: ldap.ConstraintViolation, MatchedDn: r.Dn, Message: err.Error()})
+		return
+	}
+
 	err := modify.Apply(d.config.Entries)
 	if err != nil {
 		rw.Write(&ldap.ModifyResponse{ResultCode: ldap.NoSuchObject})
@@ -150,6 +155,12 @@ func (d *Directory) serveAdd(rw ldap.ResponseWriter, r *ldap.AddRequest) {
 	for _, attr := range r.Attributes {
 		add.Attributes[attr.Type] = attr.Values
 	}
+
+	if err := add.Validate(d.config.Schema); err != nil {
+		rw.Write(&ldap.AddResponse{ResultCode: ldap.ConstraintViolation, MatchedDn: r.Dn, Message: err.Error()})
+		return
+	}
+
 	err := add.Apply(d.config.Entries)
 	if err != nil {
 		rw.Write(&ldap.AddResponse{ResultCode: ldap.EntryAlreadyExists, MatchedDn: r.Dn})

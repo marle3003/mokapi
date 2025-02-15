@@ -56,6 +56,13 @@ func TestLdif_Parse(t *testing.T) {
 			},
 		},
 		{
+			name:  "multiple line-breaks inside record",
+			input: "dn: dc=mokapi, dc=io\n\n\n\n\ncn: foo",
+			test: func(t *testing.T, ld *Ldif, err error) {
+				require.EqualError(t, err, "no DN set at line 5: cn: foo")
+			},
+		},
+		{
 			name:  "multi line value",
 			input: "dn: dc=mokapi, dc=io\ndescription: foo \n bar",
 			test: func(t *testing.T, ld *Ldif, err error) {

@@ -29,9 +29,11 @@ const (
 	FilterEqualityMatch  = 3
 	FilterSubstrings     = 4
 	FilterGreaterOrEqual = 5
-	FilterLessOrEqual    = 6
-	FilterPresent        = 7
-	FilterApproxMatch    = 8
+	FilterGreaterThan    = 6
+	FilterLessOrEqual    = 7
+	FilterLessThan       = 8
+	FilterPresent        = 9
+	FilterApproxMatch    = 10
 
 	FilterSubstringsStartWith uint8 = 0
 	FilterSubstringsAny       uint8 = 1
@@ -51,6 +53,7 @@ const (
 	CompareFalse           uint8 = 5
 	CompareTrue            uint8 = 6
 	AuthMethodNotSupported uint8 = 7
+	ConstraintViolation    uint8 = 19
 	NoSuchObject           uint8 = 32
 	InvalidCredentials     uint8 = 49
 	EntryAlreadyExists     uint8 = 68
