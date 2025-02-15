@@ -5,13 +5,23 @@ package ldap
 // https://datatracker.ietf.org/doc/html/rfc4511
 
 const (
-	bindRequest    = 0
-	bindResponse   = 1
-	unbindRequest  = 2
-	searchRequest  = 3
-	searchResult   = 4
-	searchDone     = 5
-	abandonRequest = 16
+	bindRequest      = 0
+	bindResponse     = 1
+	unbindRequest    = 2
+	searchRequest    = 3
+	searchResult     = 4
+	searchDone       = 5
+	modifyRequest    = 6
+	modifyResponse   = 7
+	addRequest       = 8
+	addResponse      = 9
+	deleteRequest    = 10
+	deleteResponse   = 11
+	modifyDNRequest  = 12
+	modifyDNResponse = 13
+	compareRequest   = 14
+	compareResponse  = 15
+	abandonRequest   = 16
 
 	FilterAnd            = 0
 	FilterOr             = 1
@@ -38,8 +48,12 @@ const (
 	OperationsError        uint8 = 1
 	ProtocolError          uint8 = 2
 	SizeLimitExceeded      uint8 = 4
+	CompareFalse           uint8 = 5
+	CompareTrue            uint8 = 6
 	AuthMethodNotSupported uint8 = 7
+	NoSuchObject           uint8 = 32
 	InvalidCredentials     uint8 = 49
+	EntryAlreadyExists     uint8 = 68
 	CannotCancel           uint8 = 121
 )
 

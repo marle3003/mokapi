@@ -6,6 +6,7 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/sortedmap"
 	"net/url"
+	"slices"
 	"strings"
 )
 
@@ -91,6 +92,8 @@ func (l *Ldif) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 				rec = &DeleteRecord{Dn: dn}
 			case "modify":
 				rec = &ModifyRecord{Dn: dn}
+			case "modrdn":
+				rec = &ModifyDnRecord{Dn: dn, DeleteOldDn: true}
 			default:
 				return fmt.Errorf("changetype %s not supported", val)
 			}
@@ -159,7 +162,12 @@ type DeleteRecord struct {
 	Dn string
 }
 
-func (del *DeleteRecord) Apply(_ *sortedmap.LinkedHashMap[string, Entry]) error {
+func (del *DeleteRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry]) error {
+	_, ok := entries.Get(del.Dn)
+	if !ok {
+		return fmt.Errorf("apply delete record failed: entry '%v' not found", del.Dn)
+	}
+	entries.Del(del.Dn)
 	return nil
 }
 
@@ -182,6 +190,11 @@ func (mod *ModifyRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry]) 
 		return fmt.Errorf("apply change record failed: entry '%v' not found", mod.Dn)
 	}
 
+	if e.Attributes == nil {
+		e.Attributes = make(map[string][]string)
+		entries.Set(mod.Dn, e)
+	}
+
 	for _, action := range mod.Actions {
 		switch action.Type {
 		case "add":
@@ -192,7 +205,21 @@ func (mod *ModifyRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry]) 
 			}
 		case "delete":
 			if _, ok := e.Attributes[action.Name]; ok {
-				delete(e.Attributes, action.Name)
+				if len(action.Attributes[action.Name]) == 0 {
+					delete(e.Attributes, action.Name)
+				} else {
+					values := e.Attributes[action.Name]
+					for _, val := range action.Attributes[action.Name] {
+						values = slices.DeleteFunc(values, func(s string) bool {
+							return s == val
+						})
+					}
+					if len(values) == 0 {
+						delete(e.Attributes, action.Name)
+					} else {
+						e.Attributes[action.Name] = values
+					}
+				}
 			}
 		case "replace":
 			e.Attributes[action.Name] = action.Attributes[action.Name]
@@ -228,5 +255,49 @@ func (mod *ModifyRecord) append(name string, value string) {
 			action.Attributes = make(map[string][]string)
 		}
 		action.Attributes[name] = append(action.Attributes[name], value)
+	}
+}
+
+type ModifyDnRecord struct {
+	Dn            string
+	NewRdn        string
+	DeleteOldDn   bool
+	NewSuperiorDn string
+}
+
+func (m *ModifyDnRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry]) error {
+	e, ok := entries.Get(m.Dn)
+	if !ok {
+		return fmt.Errorf("apply modify DN failed: entry '%v' not found", m.Dn)
+	}
+
+	parts := strings.Split(e.Dn, ",")
+	if m.NewRdn != "" {
+		parts[0] = m.NewRdn
+	}
+
+	if m.NewSuperiorDn != "" {
+		parts = append(parts[0:1], m.NewSuperiorDn)
+	}
+
+	e.Dn = strings.Join(parts, ",")
+
+	if m.DeleteOldDn {
+		entries.Del(m.Dn)
+	}
+
+	entries.Set(e.Dn, e)
+
+	return nil
+}
+
+func (m *ModifyDnRecord) append(name string, value string) {
+	switch name {
+	case "newrdn":
+		m.NewRdn = value
+	case "deleteoldrdn":
+		m.DeleteOldDn = value == "1"
+	case "newsuperior":
+		m.NewSuperiorDn = value
 	}
 }

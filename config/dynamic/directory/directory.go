@@ -6,6 +6,7 @@ import (
 	engine "mokapi/engine/common"
 	"mokapi/ldap"
 	"mokapi/runtime/monitor"
+	"slices"
 )
 
 type Directory struct {
@@ -18,13 +19,22 @@ func NewHandler(config *Config, emitter engine.EventEmitter) ldap.Handler {
 }
 
 func (d *Directory) ServeLDAP(res ldap.ResponseWriter, r *ldap.Request) {
-	switch r.Message.(type) {
+	switch m := r.Message.(type) {
 	case *ldap.BindRequest:
 		d.serveBind(res, r)
 	case *ldap.SearchRequest:
 		d.serveSearch(res, r)
+	case *ldap.ModifyRequest:
+		d.serveModify(res, m)
+	case *ldap.AddRequest:
+		d.serveAdd(res, m)
+	case *ldap.DeleteRequest:
+		d.serveDelete(res, m)
+	case *ldap.ModifyDNRequest:
+		d.serveModifyDn(res, m)
+	case *ldap.CompareRequest:
+		d.serveCompare(res, m)
 	}
-
 }
 
 func (d *Directory) serveBind(rw ldap.ResponseWriter, r *ldap.Request) {
@@ -102,4 +112,89 @@ func (d *Directory) getEntry(dn string) *Entry {
 		}
 	}
 	return nil
+}
+
+func (d *Directory) serveModify(rw ldap.ResponseWriter, r *ldap.ModifyRequest) {
+	modify := &ModifyRecord{Dn: r.Dn}
+	for _, m := range r.Items {
+		var t string
+		switch m.Operation {
+		case ldap.DeleteOperation:
+			t = "delete"
+		case ldap.AddOperation:
+			t = "add"
+		case ldap.ReplaceOperation:
+			t = "replace"
+		}
+		a := ModifyAction{
+			Type:       t,
+			Name:       m.Modification.Type,
+			Attributes: map[string][]string{m.Modification.Type: m.Modification.Values},
+		}
+		modify.Actions = append(modify.Actions, &a)
+	}
+	err := modify.Apply(d.config.Entries)
+	if err != nil {
+		rw.Write(&ldap.ModifyResponse{ResultCode: ldap.NoSuchObject})
+	} else {
+		rw.Write(&ldap.ModifyResponse{ResultCode: ldap.Success, MatchedDn: r.Dn})
+	}
+
+}
+
+func (d *Directory) serveAdd(rw ldap.ResponseWriter, r *ldap.AddRequest) {
+	add := &AddRecord{
+		Dn:         r.Dn,
+		Attributes: map[string][]string{},
+	}
+	for _, attr := range r.Attributes {
+		add.Attributes[attr.Type] = attr.Values
+	}
+	err := add.Apply(d.config.Entries)
+	if err != nil {
+		rw.Write(&ldap.AddResponse{ResultCode: ldap.EntryAlreadyExists, MatchedDn: r.Dn})
+	} else {
+		rw.Write(&ldap.AddResponse{ResultCode: ldap.Success, MatchedDn: r.Dn})
+	}
+}
+
+func (d *Directory) serveDelete(rw ldap.ResponseWriter, r *ldap.DeleteRequest) {
+	del := &DeleteRecord{
+		Dn: r.Dn,
+	}
+	err := del.Apply(d.config.Entries)
+	if err != nil {
+		rw.Write(&ldap.DeleteResponse{ResultCode: ldap.NoSuchObject, MatchedDn: del.Dn})
+	} else {
+		rw.Write(&ldap.DeleteResponse{ResultCode: ldap.Success, MatchedDn: del.Dn})
+	}
+}
+
+func (d *Directory) serveModifyDn(rw ldap.ResponseWriter, r *ldap.ModifyDNRequest) {
+	del := &ModifyDnRecord{
+		Dn:            r.Dn,
+		NewRdn:        r.NewRdn,
+		NewSuperiorDn: r.NewSuperiorDn,
+		DeleteOldDn:   r.DeleteOldDn,
+	}
+	err := del.Apply(d.config.Entries)
+	if err != nil {
+		rw.Write(&ldap.ModifyDNResponse{ResultCode: ldap.NoSuchObject, MatchedDn: r.Dn})
+	} else {
+		rw.Write(&ldap.ModifyDNResponse{ResultCode: ldap.Success, MatchedDn: r.Dn})
+	}
+}
+
+func (d *Directory) serveCompare(rw ldap.ResponseWriter, r *ldap.CompareRequest) {
+	e := d.getEntry(r.Dn)
+	if e != nil {
+		if a, ok := e.Attributes[r.Attribute]; ok {
+			if slices.Contains(a, r.Value) {
+				rw.Write(&ldap.CompareResponse{ResultCode: ldap.CompareTrue})
+				return
+			}
+		}
+	}
+
+	rw.Write(&ldap.CompareResponse{ResultCode: ldap.CompareFalse})
 }
