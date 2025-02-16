@@ -16,14 +16,14 @@ type DeleteResponse struct {
 
 func decodeDeleteRequest(body *ber.Packet) (*DeleteRequest, error) {
 	r := &DeleteRequest{
-		Dn: body.Children[0].Value.(string),
+		Dn: body.Data.String(),
 	}
 	return r, nil
 }
 
 func (r *DeleteRequest) encode(envelope *ber.Packet) {
-	body := ber.Encode(ber.ClassApplication, ber.TypeConstructed, deleteRequest, nil, "delete request")
-	body.AppendChild(ber.NewString(ber.ClassUniversal, ber.TypePrimitive, ber.TagOctetString, r.Dn, "DN"))
+	body := ber.Encode(ber.ClassApplication, ber.TypePrimitive, deleteRequest, r.Dn, "delete request")
+	body.Data.Write([]byte(r.Dn))
 	envelope.AppendChild(body)
 }
 

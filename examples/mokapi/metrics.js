@@ -63,11 +63,11 @@ export let metrics = [
         value: 1652635690
     },
     {
-        name: 'ldap_search_total{service="LDAP Testserver"}"',
-        value: 1
+        name: 'ldap_requests_total{service="LDAP Testserver"}"',
+        value: 6
     },
     {
-        name: 'ldap_search_timestamp{service="LDAP Testserver"}"',
+        name: 'ldap_request_timestamp{service="LDAP Testserver"}"',
         value: 1652635690
     },
 ]

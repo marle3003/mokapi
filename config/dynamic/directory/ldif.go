@@ -171,7 +171,7 @@ type DeleteRecord struct {
 func (del *DeleteRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry], _ *Schema) error {
 	_, ok := entries.Get(del.Dn)
 	if !ok {
-		return NewEntryError(ldap.NoSuchObject, "apply delete record failed: entry '%v' not found", del.Dn)
+		return NewEntryError(ldap.NoSuchObject, "delete operation failed: the specified entry does not exist: %v", del.Dn)
 	}
 	entries.Del(del.Dn)
 	return nil
@@ -193,7 +193,7 @@ type ModifyAction struct {
 func (mod *ModifyRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry], s *Schema) error {
 	e, ok := entries.Get(mod.Dn)
 	if !ok {
-		return NewEntryError(ldap.NoSuchObject, "apply change record failed: entry '%v' not found", mod.Dn)
+		return NewEntryError(ldap.NoSuchObject, "modify operation failed: the specified entry does not exist: %v", mod.Dn)
 	}
 	e = e.copy()
 
@@ -279,7 +279,7 @@ type ModifyDnRecord struct {
 func (m *ModifyDnRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry], _ *Schema) error {
 	e, ok := entries.Get(m.Dn)
 	if !ok {
-		return NewEntryError(ldap.NoSuchObject, "apply modify DN failed: entry '%v' not found", m.Dn)
+		return NewEntryError(ldap.NoSuchObject, "modifyDN operation failed: the specified entry does not exist: %v", m.Dn)
 	}
 
 	parts := strings.Split(e.Dn, ",")

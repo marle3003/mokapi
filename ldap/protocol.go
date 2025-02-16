@@ -77,7 +77,13 @@ var StatusText = map[uint8]string{
 	OperationsError:        "OperationsError",
 	ProtocolError:          "ProtocolError",
 	SizeLimitExceeded:      "SizeLimitExceeded",
+	CompareFalse:           "CompareFalse",
+	CompareTrue:            "CompareTrue",
 	AuthMethodNotSupported: "AuthMethodNotSupported",
+	ConstraintViolation:    "ConstraintViolation",
+	NoSuchObject:           "NoSuchObject",
+	InvalidCredentials:     "InvalidCredentials",
+	EntryAlreadyExists:     "EntryAlreadyExists",
 	CannotCancel:           "CannotCancel",
 }
 

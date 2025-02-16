@@ -1,12 +1,15 @@
 package directory
 
 import (
+	"context"
 	"errors"
 	log "github.com/sirupsen/logrus"
 	engine "mokapi/engine/common"
 	"mokapi/ldap"
+	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"slices"
+	"time"
 )
 
 type Directory struct {
@@ -25,15 +28,15 @@ func (d *Directory) ServeLDAP(res ldap.ResponseWriter, r *ldap.Request) {
 	case *ldap.SearchRequest:
 		d.serveSearch(res, r)
 	case *ldap.ModifyRequest:
-		d.serveModify(res, m)
+		d.serveModify(res, m, r.Context)
 	case *ldap.AddRequest:
-		d.serveAdd(res, m)
+		d.serveAdd(res, m, r.Context)
 	case *ldap.DeleteRequest:
-		d.serveDelete(res, m)
+		d.serveDelete(res, m, r.Context)
 	case *ldap.ModifyDNRequest:
-		d.serveModifyDn(res, m)
+		d.serveModifyDn(res, m, r.Context)
 	case *ldap.CompareRequest:
-		d.serveCompare(res, m)
+		d.serveCompare(res, m, r.Context)
 	}
 }
 
@@ -53,7 +56,7 @@ func (d *Directory) serveBind(rw ldap.ResponseWriter, r *ldap.Request) {
 	case ldap.Simple:
 		log.Debugf("received bind request with messageId %v, version %v. auth: %v", r.MessageId, msg.Version, msg.Name)
 		if m, ok := monitor.LdapFromContext(r.Context); ok {
-			m.Bind.WithLabel(d.config.Info.Name).Add(1)
+			m.RequestCounter.WithLabel(d.config.Info.Name, "bind").Add(1)
 		}
 
 		if msg.Name != "" {
@@ -114,7 +117,7 @@ func (d *Directory) getEntry(dn string) *Entry {
 	return nil
 }
 
-func (d *Directory) serveModify(rw ldap.ResponseWriter, r *ldap.ModifyRequest) {
+func (d *Directory) serveModify(rw ldap.ResponseWriter, r *ldap.ModifyRequest, ctx context.Context) {
 	modify := &ModifyRecord{Dn: r.Dn}
 	for _, m := range r.Items {
 		var t string
@@ -135,17 +138,33 @@ func (d *Directory) serveModify(rw ldap.ResponseWriter, r *ldap.ModifyRequest) {
 	}
 
 	err := modify.Apply(d.config.Entries, d.config.Schema)
+	var res *ldap.ModifyResponse
 	if err != nil {
 		var ee *EntryError
 		errors.As(err, &ee)
-		rw.Write(&ldap.ModifyResponse{ResultCode: ee.Code, MatchedDn: r.Dn, Message: err.Error()})
+		res = &ldap.ModifyResponse{ResultCode: ee.Code, MatchedDn: r.Dn, Message: err.Error()}
 	} else {
-		rw.Write(&ldap.ModifyResponse{ResultCode: ldap.Success, MatchedDn: r.Dn})
+		res = &ldap.ModifyResponse{ResultCode: ldap.Success, MatchedDn: r.Dn}
 	}
 
+	m, doMonitor := monitor.LdapFromContext(ctx)
+	if doMonitor {
+		l := NewModifyLogEvent(r, res, events.NewTraits().WithName(d.config.Info.Name))
+		defer func() {
+			i := ctx.Value("time")
+			if i != nil {
+				t := i.(time.Time)
+				l.Duration = time.Now().Sub(t).Milliseconds()
+			}
+		}()
+		m.RequestCounter.WithLabel(d.config.Info.Name, "modify").Add(1)
+		m.LastRequest.WithLabel(d.config.Info.Name).Set(float64(time.Now().Unix()))
+	}
+
+	rw.Write(res)
 }
 
-func (d *Directory) serveAdd(rw ldap.ResponseWriter, r *ldap.AddRequest) {
+func (d *Directory) serveAdd(rw ldap.ResponseWriter, r *ldap.AddRequest, ctx context.Context) {
 	add := &AddRecord{
 		Dn:         r.Dn,
 		Attributes: map[string][]string{},
@@ -155,30 +174,64 @@ func (d *Directory) serveAdd(rw ldap.ResponseWriter, r *ldap.AddRequest) {
 	}
 
 	err := add.Apply(d.config.Entries, d.config.Schema)
+	var res *ldap.AddResponse
 	if err != nil {
 		var ee *EntryError
 		errors.As(err, &ee)
-		rw.Write(&ldap.AddResponse{ResultCode: ee.Code, Message: err.Error()})
+		res = &ldap.AddResponse{ResultCode: ee.Code, Message: err.Error()}
 	} else {
-		rw.Write(&ldap.AddResponse{ResultCode: ldap.Success, MatchedDn: r.Dn})
+		res = &ldap.AddResponse{ResultCode: ldap.Success, MatchedDn: r.Dn}
 	}
+
+	m, doMonitor := monitor.LdapFromContext(ctx)
+	if doMonitor {
+		l := NewAddLogEvent(r, res, events.NewTraits().WithName(d.config.Info.Name))
+		defer func() {
+			i := ctx.Value("time")
+			if i != nil {
+				t := i.(time.Time)
+				l.Duration = time.Now().Sub(t).Milliseconds()
+			}
+		}()
+		m.RequestCounter.WithLabel(d.config.Info.Name, "add").Add(1)
+		m.LastRequest.WithLabel(d.config.Info.Name).Set(float64(time.Now().Unix()))
+	}
+
+	rw.Write(res)
 }
 
-func (d *Directory) serveDelete(rw ldap.ResponseWriter, r *ldap.DeleteRequest) {
+func (d *Directory) serveDelete(rw ldap.ResponseWriter, r *ldap.DeleteRequest, ctx context.Context) {
 	del := &DeleteRecord{
 		Dn: r.Dn,
 	}
 	err := del.Apply(d.config.Entries, d.config.Schema)
+	var res *ldap.DeleteResponse
 	if err != nil {
 		var ee *EntryError
 		errors.As(err, &ee)
-		rw.Write(&ldap.DeleteResponse{ResultCode: ee.Code, MatchedDn: del.Dn, Message: err.Error()})
+		res = &ldap.DeleteResponse{ResultCode: ee.Code, MatchedDn: del.Dn, Message: err.Error()}
 	} else {
-		rw.Write(&ldap.DeleteResponse{ResultCode: ldap.Success, MatchedDn: del.Dn})
+		res = &ldap.DeleteResponse{ResultCode: ldap.Success, MatchedDn: del.Dn}
 	}
+
+	m, doMonitor := monitor.LdapFromContext(ctx)
+	if doMonitor {
+		l := NewDeleteLogEvent(r, res, events.NewTraits().WithName(d.config.Info.Name))
+		defer func() {
+			i := ctx.Value("time")
+			if i != nil {
+				t := i.(time.Time)
+				l.Duration = time.Now().Sub(t).Milliseconds()
+			}
+		}()
+		m.RequestCounter.WithLabel(d.config.Info.Name, "delete").Add(1)
+		m.LastRequest.WithLabel(d.config.Info.Name).Set(float64(time.Now().Unix()))
+	}
+
+	rw.Write(res)
 }
 
-func (d *Directory) serveModifyDn(rw ldap.ResponseWriter, r *ldap.ModifyDNRequest) {
+func (d *Directory) serveModifyDn(rw ldap.ResponseWriter, r *ldap.ModifyDNRequest, ctx context.Context) {
 	del := &ModifyDnRecord{
 		Dn:            r.Dn,
 		NewRdn:        r.NewRdn,
@@ -186,16 +239,33 @@ func (d *Directory) serveModifyDn(rw ldap.ResponseWriter, r *ldap.ModifyDNReques
 		DeleteOldDn:   r.DeleteOldDn,
 	}
 	err := del.Apply(d.config.Entries, d.config.Schema)
+	var res *ldap.ModifyDNResponse
 	if err != nil {
 		var ee *EntryError
 		errors.As(err, &ee)
-		rw.Write(&ldap.ModifyDNResponse{ResultCode: ee.Code, MatchedDn: r.Dn, Message: err.Error()})
+		res = &ldap.ModifyDNResponse{ResultCode: ee.Code, MatchedDn: r.Dn, Message: err.Error()}
 	} else {
-		rw.Write(&ldap.ModifyDNResponse{ResultCode: ldap.Success, MatchedDn: r.Dn})
+		res = &ldap.ModifyDNResponse{ResultCode: ldap.Success, MatchedDn: r.Dn}
 	}
+
+	m, doMonitor := monitor.LdapFromContext(ctx)
+	if doMonitor {
+		l := NewModifyDNLogEvent(r, res, events.NewTraits().WithName(d.config.Info.Name))
+		defer func() {
+			i := ctx.Value("time")
+			if i != nil {
+				t := i.(time.Time)
+				l.Duration = time.Now().Sub(t).Milliseconds()
+			}
+		}()
+		m.RequestCounter.WithLabel(d.config.Info.Name, "modifyDN").Add(1)
+		m.LastRequest.WithLabel(d.config.Info.Name).Set(float64(time.Now().Unix()))
+	}
+
+	rw.Write(res)
 }
 
-func (d *Directory) serveCompare(rw ldap.ResponseWriter, r *ldap.CompareRequest) {
+func (d *Directory) serveCompare(rw ldap.ResponseWriter, r *ldap.CompareRequest, ctx context.Context) {
 	e := d.getEntry(r.Dn)
 	if e != nil {
 		if a, ok := e.Attributes[r.Attribute]; ok {
@@ -206,5 +276,21 @@ func (d *Directory) serveCompare(rw ldap.ResponseWriter, r *ldap.CompareRequest)
 		}
 	}
 
-	rw.Write(&ldap.CompareResponse{ResultCode: ldap.CompareFalse})
+	res := &ldap.CompareResponse{ResultCode: ldap.CompareFalse}
+
+	m, doMonitor := monitor.LdapFromContext(ctx)
+	if doMonitor {
+		l := NewCompareLogEvent(r, res, events.NewTraits().WithName(d.config.Info.Name))
+		defer func() {
+			i := ctx.Value("time")
+			if i != nil {
+				t := i.(time.Time)
+				l.Duration = time.Now().Sub(t).Milliseconds()
+			}
+		}()
+		m.RequestCounter.WithLabel(d.config.Info.Name, "compare").Add(1)
+		m.LastRequest.WithLabel(d.config.Info.Name).Set(float64(time.Now().Unix()))
+	}
+
+	rw.Write(res)
 }

@@ -8,43 +8,37 @@ import (
 var ldapKey = contextKey("ldap")
 
 type Ldap struct {
-	Bind       *metrics.CounterMap
-	Search     *metrics.CounterMap
-	Errors     *metrics.CounterMap
-	LastSearch *metrics.GaugeMap
+	Errors         *metrics.CounterMap
+	RequestCounter *metrics.CounterMap
+	LastRequest    *metrics.GaugeMap
 }
 
 func NewLdap() *Ldap {
-	bind := metrics.NewCounterMap(
-		metrics.WithFQName("ldap", "bind_total"),
-		metrics.WithLabelNames("service"))
-	search := metrics.NewCounterMap(
-		metrics.WithFQName("ldap", "search_total"),
-		metrics.WithLabelNames("service"))
+	requests := metrics.NewCounterMap(
+		metrics.WithFQName("ldap", "request_total"),
+		metrics.WithLabelNames("service", "operation"))
 	errors := metrics.NewCounterMap(
 		metrics.WithFQName("ldap", "search_errors_total"),
 		metrics.WithLabelNames("service"))
-	lastSearch := metrics.NewGaugeMap(
-		metrics.WithFQName("ldap", "search_timestamp"),
+	lastRequest := metrics.NewGaugeMap(
+		metrics.WithFQName("ldap", "request_timestamp"),
 		metrics.WithLabelNames("service"))
 
 	return &Ldap{
-		Bind:       bind,
-		Search:     search,
-		Errors:     errors,
-		LastSearch: lastSearch,
+		RequestCounter: requests,
+		Errors:         errors,
+		LastRequest:    lastRequest,
 	}
 }
 
 func (l *Ldap) Metrics() []metrics.Metric {
-	return []metrics.Metric{l.Bind, l.Search, l.Errors, l.LastSearch}
+	return []metrics.Metric{l.RequestCounter, l.Errors, l.LastRequest}
 }
 
 func (l *Ldap) Reset() {
-	l.Bind.Reset()
-	l.Search.Reset()
+	l.RequestCounter.Reset()
 	l.Errors.Reset()
-	l.LastSearch.Reset()
+	l.LastRequest.Reset()
 }
 
 func NewLdapContext(ctx context.Context, ldap *Ldap) context.Context {

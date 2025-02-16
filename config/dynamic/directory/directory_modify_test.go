@@ -223,7 +223,7 @@ func TestDirectory_ServeModify(t *testing.T) {
 				res := rr.Message.(*ldap.ModifyResponse)
 				require.Equal(t, ldap.NoSuchObject, res.ResultCode)
 				require.Equal(t, "cn=bar", res.MatchedDn)
-				require.Equal(t, "apply change record failed: entry 'cn=bar' not found", res.Message)
+				require.Equal(t, "modify operation failed: the specified entry does not exist: cn=bar", res.Message)
 			},
 		},
 		{

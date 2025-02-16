@@ -18,6 +18,8 @@ data/*
 dist/
 bin/*
 
+node_modules
+
 server/api/dashboard.go
 coverage.txt
 versioninfo.json

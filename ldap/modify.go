@@ -13,25 +13,31 @@ const (
 	ReplaceOperation Operation = 2
 )
 
+var ModifyOperationText = map[Operation]string{
+	AddOperation:     "Add",
+	DeleteOperation:  "Delete",
+	ReplaceOperation: "Replace",
+}
+
 type ModifyRequest struct {
-	Dn    string             `json:"dn"`
-	Items []ModificationItem `json:"changes"`
+	Dn    string
+	Items []ModificationItem
 }
 
 type ModificationItem struct {
-	Operation    Operation    `json:"operation"`
-	Modification Modification `json:"modification"`
+	Operation    Operation
+	Modification Modification
 }
 
 type Modification struct {
-	Type   string   `json:"type"`
-	Values []string `json:"values"`
+	Type   string
+	Values []string
 }
 
 type ModifyResponse struct {
-	ResultCode uint8  `json:"resultCode"`
-	MatchedDn  string `json:"matchedDn"`
-	Message    string `json:"message"`
+	ResultCode uint8
+	MatchedDn  string
+	Message    string
 }
 
 func decodeModifyRequest(body *ber.Packet) (*ModifyRequest, error) {

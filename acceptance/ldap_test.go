@@ -68,7 +68,7 @@ func (suite *LdapSuite) TestLog() {
 	require.NoError(suite.T(), err)
 	e := events.GetEvents(events.NewTraits().WithNamespace("ldap"))
 	require.Len(suite.T(), e, 1)
-	data := e[0].Data.(*directory.LdapSearchLog)
+	data := e[0].Data.(*directory.SearchLog)
 	require.Equal(suite.T(), "WholeSubtree", data.Request.Scope)
 	require.Equal(suite.T(), "(objectClass=user)", data.Request.Filter)
 	require.Equal(suite.T(), []string{"mail"}, data.Request.Attributes)
@@ -84,9 +84,9 @@ func (suite *LdapSuite) TestMetric() {
 	}
 	_, err := suite.Client.Search(search)
 	require.NoError(suite.T(), err)
-	require.Equal(suite.T(), float64(1), suite.cmd.App.Monitor.Ldap.Search.Sum())
-	q := metrics.NewQuery(metrics.ByNamespace("ldap"), metrics.ByName("search_timestamp"))
-	require.Greater(suite.T(), suite.cmd.App.Monitor.Ldap.LastSearch.Value(q), float64(1))
+	require.Equal(suite.T(), float64(1), suite.cmd.App.Monitor.Ldap.RequestCounter.Sum())
+	q := metrics.NewQuery(metrics.ByNamespace("ldap"), metrics.ByName("request_timestamp"))
+	require.Greater(suite.T(), suite.cmd.App.Monitor.Ldap.LastRequest.Value(q), float64(1))
 }
 
 func (suite *LdapSuite) TestJsEvent() {

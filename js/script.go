@@ -121,7 +121,9 @@ func (s *Script) RunFunc(fn func(vm *goja.Runtime)) error {
 }
 
 func (s *Script) Close() {
-	s.loop.Stop()
+	if s.loop != nil {
+		s.loop.Stop()
+	}
 	if s.runtime != nil {
 		s.runtime.Interrupt(fmt.Errorf("closing"))
 		s.runtime = nil

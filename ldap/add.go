@@ -5,19 +5,19 @@ import (
 )
 
 type AddRequest struct {
-	Dn         string      `json:"dn"`
-	Attributes []Attribute `json:"changes"`
+	Dn         string
+	Attributes []Attribute
 }
 
 type Attribute struct {
-	Type   string   `json:"type"`
-	Values []string `json:"values"`
+	Type   string
+	Values []string
 }
 
 type AddResponse struct {
-	ResultCode uint8  `json:"resultCode"`
-	MatchedDn  string `json:"matchedDn"`
-	Message    string `json:"message"`
+	ResultCode uint8
+	MatchedDn  string
+	Message    string
 }
 
 func decodeAddRequest(body *ber.Packet) (*AddRequest, error) {

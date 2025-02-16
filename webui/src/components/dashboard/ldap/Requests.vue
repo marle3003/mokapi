@@ -16,17 +16,30 @@ if (props.service){
 const router = useRouter()
 const { fetch } = useEvents()
 const { events, close } = fetch('ldap', ...labels)
-const { duration } = usePrettyDates()
+const { format, duration } = usePrettyDates()
 let data: LdapEventData
 
-function goToSearch(data: ServiceEvent){
+function goToEvent(event: ServiceEvent){
     router.push({
-        name: 'ldapSearch',
-        params: {id: data.id},
+        name: 'ldapRequest',
+        params: {id: event.id},
     })
 }
 function eventData(event: ServiceEvent): LdapEventData{
     return <LdapEventData>event.data
+}
+
+function targetDn(data: LdapEventData) {
+    switch (data.request.operation) {
+        case 'Search':
+            return data.request.baseDN
+        case 'Modify':
+        case 'Add':
+        case 'Delete':
+        case 'ModifyDN':
+        case 'Compare':
+            return data.request.dn
+    }
 }
 
 onUnmounted(() => {
@@ -41,29 +54,27 @@ onUnmounted(() => {
             <table class="table dataTable selectable">
                 <thead>
                     <tr>
-                        <th scope="col" class="text-left" style="width: 20%">Filter</th>
-                        <th scope="col" class="text-left" style="width: 20%">Base DN</th>
-                        <th scope="col" class="text-left" style="width: 20%">Scope</th>
-                        <th scope="col" class="text-center" style="width:15%">Size Limit</th>
-                        <th scope="col" class="text-center" style="width:15%">Results</th>
-                        <th scope="col" class="text-center" style="width:15%">Status Code</th>
-                        <th scope="col" class="text-center">Duration</th>
+                        <th scope="col" class="text-left" style="width: 10%">Operation</th>
+                        <th scope="col" class="text-left" style="width: 25%">Target DN</th>
+                        <th scope="col" class="text-left" style="width: 30%">Filter</th>
+                        <th scope="col" class="text-center"  style="width: 10%">Status Code</th>
+                        <th scope="col" class="text-center" style="width:15%">Time</th>
+                        <th scope="col" class="text-center" style="width: 10%">Duration</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="event in events!" :key="event.id" @click="goToSearch(event)" :set="data = eventData(event)">
+                    <tr v-for="event in events!" :key="event.id" @click="goToEvent(event)" :set="data = eventData(event)">
                         <td>
-                            {{ data.request.filter }}
+                            {{ data.request.operation }}
                         </td>
                         <td>
-                            {{ data.request.baseDN }}
+                            {{ targetDn(data) }}
                         </td>
                         <td>
-                            {{ data.request.scope }}
+                            {{ data.request.operation === 'Search' ? data.request.filter : '' }}
                         </td>
-                        <td class="text-center">{{ data.request.sizeLimit }}</td>
-                        <td class="text-center">{{ data.response.results?.length ?? 0 }}</td>
                         <td class="text-center">{{ data.response.status }}</td>
+                        <td class="text-center">{{ format(event.time) }}</td>
                         <td class="text-center">{{ duration(data.duration) }}</td>
                     </tr>
                 </tbody>

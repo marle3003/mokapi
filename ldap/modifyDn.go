@@ -3,16 +3,16 @@ package ldap
 import ber "gopkg.in/go-asn1-ber/asn1-ber.v1"
 
 type ModifyDNRequest struct {
-	Dn            string `json:"dn"`
-	NewRdn        string `json:"newRdn"`
-	DeleteOldDn   bool   `json:"deleteOldDn"`
-	NewSuperiorDn string `json:"newSuperiorDn"`
+	Dn            string
+	NewRdn        string
+	DeleteOldDn   bool
+	NewSuperiorDn string
 }
 
 type ModifyDNResponse struct {
-	ResultCode uint8  `json:"resultCode"`
-	MatchedDn  string `json:"matchedDn"`
-	Message    string `json:"message"`
+	ResultCode uint8
+	MatchedDn  string
+	Message    string
 }
 
 func decodeModifyDNRequest(body *ber.Packet) (*ModifyDNRequest, error) {
