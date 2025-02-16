@@ -16,9 +16,9 @@ watchEffect(() =>{
     messages.value = 0
     for (let service of services.value){
         if (props.labels){
-            messages.value += sum(service.metrics, 'ldap_search_total', ...props.labels)
+            messages.value += sum(service.metrics, 'ldap_requests_total', ...props.labels)
         }else {
-            messages.value += sum(service.metrics, 'ldap_search_total')
+            messages.value += sum(service.metrics, 'ldap_requests_total')
         }
     }
 })

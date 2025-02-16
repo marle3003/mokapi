@@ -167,8 +167,8 @@ const router = createRouter({
               meta: { service: 'ldap' },
             },
             {
-              path: '/dashboard/ldap/searches/:id',
-              name: 'ldapSearch',
+              path: '/dashboard/ldap/requests/:id',
+              name: 'ldapRequest',
               component: dashboardView,
               meta: { service: 'ldap' }
             },

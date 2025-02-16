@@ -56,6 +56,13 @@ func TestLdif_Parse(t *testing.T) {
 			},
 		},
 		{
+			name:  "multiple line-breaks inside record",
+			input: "dn: dc=mokapi, dc=io\n\n\n\n\ncn: foo",
+			test: func(t *testing.T, ld *Ldif, err error) {
+				require.EqualError(t, err, "no DN set at line 5: cn: foo")
+			},
+		},
+		{
 			name:  "multi line value",
 			input: "dn: dc=mokapi, dc=io\ndescription: foo \n bar",
 			test: func(t *testing.T, ld *Ldif, err error) {
@@ -301,7 +308,23 @@ func TestConfig_LDIF(t *testing.T) {
 			},
 		},
 		{
-			name:  "two files modify delete",
+			name:  "modify delete specific value",
+			input: `{ "files": [ "./config1.ldif", "./config2.ldif" ] }`,
+			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
+				"file:/config1.ldif": {Raw: []byte("dn: dc=mokapi,dc=io\nfoo: bar1\nfoo: bar2")},
+				"file:/config2.ldif": {Raw: []byte("dn: dc=mokapi,dc=io\nchangetype: modify\ndelete: foo\nfoo: bar2")},
+			}},
+			test: func(t *testing.T, c *Config, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 3, c.Entries.Len())
+				e, ok := c.Entries.Get("dc=mokapi,dc=io")
+				require.True(t, ok)
+				require.Contains(t, e.Attributes, "foo")
+				require.Equal(t, "bar1", e.Attributes["foo"][0])
+			},
+		},
+		{
+			name:  "modify delete",
 			input: `{ "files": [ "./config1.ldif", "./config2.ldif" ] }`,
 			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
 				"file:/config1.ldif": {Raw: []byte("dn: dc=mokapi,dc=io\nfoo: bar")},
@@ -336,6 +359,52 @@ func TestConfig_LDIF(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, 2, c.Entries.Len())
 				require.Equal(t, []string{"foo"}, c.Entries.Lookup("").Attributes["vendorName"])
+			},
+		},
+		{
+			name:  "delete entry",
+			input: `{ "files": [ "./config1.ldif", "./config2.ldif" ] }`,
+			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
+				"file:/config1.ldif": {Raw: []byte("dn: cn=foo")},
+				"file:/config2.ldif": {Raw: []byte("dn: cn=foo\nchangetype: delete")},
+			}},
+			test: func(t *testing.T, c *Config, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 2, c.Entries.Len())
+				_, ok := c.Entries.Get("cn=foo")
+				require.False(t, ok)
+			},
+		},
+		{
+			name:  "copy entry",
+			input: `{ "files": [ "./config1.ldif", "./config2.ldif" ] }`,
+			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
+				"file:/config1.ldif": {Raw: []byte("dn: cn=foo")},
+				"file:/config2.ldif": {Raw: []byte("dn: cn=foo\nchangetype: modrdn\nnewrdn: cn=bar\ndeleteoldrdn: 0")},
+			}},
+			test: func(t *testing.T, c *Config, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 4, c.Entries.Len())
+				_, ok := c.Entries.Get("cn=foo")
+				require.True(t, ok, "cn=foo")
+				_, ok = c.Entries.Get("cn=bar")
+				require.True(t, ok, "cn=bar")
+			},
+		},
+		{
+			name:  "rename entry",
+			input: `{ "files": [ "./config1.ldif", "./config2.ldif" ] }`,
+			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
+				"file:/config1.ldif": {Raw: []byte("dn: cn=foo")},
+				"file:/config2.ldif": {Raw: []byte("dn: cn=foo\nchangetype: modrdn\nnewrdn: cn=bar\ndeleteoldrdn: 1")},
+			}},
+			test: func(t *testing.T, c *Config, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 3, c.Entries.Len())
+				_, ok := c.Entries.Get("cn=foo")
+				require.False(t, ok, "cn=foo")
+				_, ok = c.Entries.Get("cn=bar")
+				require.True(t, ok, "cn=bar")
 			},
 		},
 	}

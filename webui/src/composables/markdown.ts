@@ -13,23 +13,28 @@ export function useMarkdown(content: string | undefined) {
     if (!content) {
         return {content, metadata: {}}
     }
-    const metadata = parseMetadata(content)
-    content = replaceImageUrls(content).replace(metadataRegex, '')
+    try {
+        const metadata = parseMetadata(content)
+        content = replaceImageUrls(content).replace(metadataRegex, '')
 
-    content = content.replaceAll(/__APP_VERSION__/g, APP_VERSION)
+        content = content.replaceAll(/__APP_VERSION__/g, APP_VERSION)
 
-    if (content) {
-        content = new MarkdownIt()
-          .use(MarkdownItHighlightjs)
-          .use(MarkdownItTabs)
-          .use(MarkdownItBox)
-          .use(MarkdownItLinks)
-          .use(MarkdownItCard(metadata))
-          .set({html: true})
-          .render(content)
+        if (content) {
+            content = new MarkdownIt()
+            .use(MarkdownItHighlightjs)
+            .use(MarkdownItTabs)
+            .use(MarkdownItBox)
+            .use(MarkdownItLinks)
+            .use(MarkdownItCard(metadata))
+            .set({html: true})
+            .render(content)
+        }
+
+        return {content, metadata}
+    } catch (e) {
+        console.error('invalid markdown: '+content)
+        return { content: '', metadata: {} }
     }
-
-    return {content, metadata}
 }
 
 function replaceImageUrls(data: string) {

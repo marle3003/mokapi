@@ -1,52 +1,32 @@
 <script setup lang="ts">
-import { useEvents } from '@/composables/events'
-import { useRoute } from 'vue-router'
-import Loading from '@/components/Loading.vue'
-import Message from '@/components/Message.vue'
-import { onUnmounted, computed } from 'vue'
+import { computed } from 'vue'
 import Actions from '../Actions.vue'
 import { usePrettyDates } from '@/composables/usePrettyDate';
 
-const { fetchById } = useEvents()
-const eventId = useRoute().params.id as string
-const { event, isLoading, close } = fetchById(eventId)
-const { duration } = usePrettyDates()
+const props = defineProps<{
+   event: ServiceEvent
+}>()
 
-function eventData() {
-    return <LdapEventData>event.value?.data
-}
+const { format, duration } = usePrettyDates()
 
-function isInitLoading() {
-    return isLoading.value && !event.value
-}
+const data = computed((): {data: LdapEventData, request: LdapSearchRequest, response: LdapSearchResponse} => {
+    const data = <LdapEventData>props.event.data
+    return { data: data, request: <LdapSearchRequest>data.request, response: <LdapSearchResponse>data.response }
+})
 
 function attributes() {
-  return eventData().request.attributes.join(', ')
-}
-
-function scopeToString(scope: SearchScope): string {
-    switch (scope) {
-        case 3: return 'WholeSubtree'
-        case 2: return 'SingleLevel'
-        case 1: return 'BaseObject'
-        default: return 'invalid'
+    if (!data.value.request.attributes) {
+    return ''
     }
-}
-
-function codeToString(code: LdapResultStatus): string {
-    switch (code) {
-        case 0: return 'Success'
-        case 1: return 'OperationsError'
-        case 2: return 'ProtocolError'
-        case 3: return 'SizeLimitExceeded'
-        case 4: return 'AuthMethodNotSupported'
-        case 121: return 'CannotCancel'
-        default: return 'invalid'
-    }
+    return data.value.request.attributes.join(', ')
 }
 
 const searchResults = computed(() => {
-  return eventData().response.results.sort(compareResult)
+    const response = <LdapSearchResponse>data.value.response
+    if (!response.results) {
+    return []
+    }
+    return response.results.sort(compareResult)
 })
 
 function compareResult(r1: LdapSearchResult, r2: LdapSearchResult) {
@@ -56,68 +36,67 @@ function compareResult(r1: LdapSearchResult, r2: LdapSearchResult) {
 }
 
 const hasActions = computed(() => {
-    return eventData().actions?.length > 0
-})
-onUnmounted(() => {
-    close()
+    return data.value.data.actions?.length > 0
 })
 </script>
 
 <template>
-    <div v-if="event">
-        <div class="card-group">
-            <div class="card">
-                <div class="card-body">
-                  <div class="row">
+    <div class="card-group">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
                     <div class="col header">
                         <p class="label">Filter</p>
-                        <p>{{ eventData().request.filter }}</p>
+                        <p>{{ data.request.filter }}</p>
                     </div>
-                  </div>
-                  <div class="row">
+                    <div class="col-2">
+                        <p class="label">Time</p>
+                        <p>{{ format(event.time) }}</p>
+                    </div>
+                    <div class="col-2">
+                        <p class="label">Duration</p>
+                        <p>{{ duration(data.data.duration) }}</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-2">
+                        <p class="label">Scope</p>
+                        <p>{{ data.request.scope }}</p>
+                    </div>
+                    <div class="col-2">
+                        <p class="label">Size Limit</p>
+                        <p>{{ data.request.sizeLimit > 0 ? data.request.sizeLimit : 'no limit' }}</p>
+                    </div>
+                    <div class="col-2">
+                        <p class="label">Time Limit</p>
+                        <p>{{ data.request.timeLimit > 0 ? data.request.timeLimit + ' [s]' : 'no limit' }}</p>
+                    </div>
                     <div class="col">
                         <p class="label">Base DN</p>
-                        <p>{{ eventData().request.baseDN }}</p>
+                        <p>{{ data.request.baseDN }}</p>
                     </div>
+                </div>
+                <div class="row">
                     <div class="col">
-                        <p class="label">Scope</p>
-                        <p>{{ scopeToString(eventData().request.scope) }}</p>
+                        <p class="label">Attributes</p>
+                        <p>{{ attributes() }}</p>
                     </div>
-                    <div class="col">
-                        <p class="label">Size Limit</p>
-                        <p>{{ eventData().request.sizeLimit }}</p>
+                </div>
+                <div class="row">
+                    <div class="col-2">
+                        <p class="label">Status</p>
+                        <p>{{ data.response.status }}</p>
                     </div>
-                    <div class="col">
-                        <p class="label">Time Limit</p>
-                        <p>{{ eventData().request.timeLimit }}</p>
+                    <div class="col" v-if="data.response.message">
+                        <p class="label">Message</p>
+                        <p>{{ data.response.message }}</p>
                     </div>
-                  </div>
-                  <div>
-                    <p class="label">Attributes</p>
-                    <p>{{ attributes() }}</p>
-                  </div>
-              </div>
+                </div>
             </div>
         </div>
-        <div class="card-group">
-          <div class="card">
-            <div class="card-body">
-              <div class="card-title text-center">Response</div>
-              <div class="row">
-                <div class="col">
-                  <p class="label">Status</p>
-                  <p>{{ codeToString(eventData().response.status) }}</p>
-                </div>
-                <div class="col">
-                  <p class="label">Duration</p>
-                  <p>{{ duration(eventData().duration) }}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="card-group">
-          <div class="card">
+    </div>
+    <div class="card-group">
+        <div class="card">
             <div class="card-body">
                 <div class="card-title text-center">Results</div>
                 <table class="table dataTable">
@@ -135,19 +114,20 @@ onUnmounted(() => {
                     </tbody>
                 </table>
             </div>
-          </div>
-      </div>
-      <div class="card-group" v-if="hasActions">
-            <div class="card">
-                <div class="card-body">
-                    <div class="card-title text-center">Actions</div>
-                    <actions :actions="eventData().actions" />
-                </div>
+        </div>
+    </div>
+    <div class="card-group" v-if="hasActions">
+        <div class="card">
+            <div class="card-body">
+                <div class="card-title text-center">Actions</div>
+                <actions :actions="data.data.actions" />
             </div>
         </div>
     </div>
-    <loading v-if="isInitLoading()"></loading>
-    <div v-if="!event && !isLoading">
-        <message message="Search request not found"></message>
-    </div>
 </template>
+
+<style scoped>
+.row {
+    padding-bottom: 10px;
+}
+</style>

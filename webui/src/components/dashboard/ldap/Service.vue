@@ -4,9 +4,12 @@ import { useService } from '@/composables/services'
 import { useRoute } from 'vue-router'
 import Servers from './Server.vue'
 import ServiceInfoCard from '../ServiceInfoCard.vue'
-import Searches from './Searches.vue'
+import Searches from './Requests.vue'
 import Search from './Search.vue'
 import ConfigCard from '../ConfigCard.vue'
+import Modify from './Modify.vue'
+import Add from './Add.vue'
+import Request from './Request.vue'
 
 const {fetchService} = useService()
 const route = useRoute()
@@ -36,5 +39,5 @@ if (serviceName){
         <searches :service="service" />
       </div>
   </div>
-  <search v-if="$route.name == 'ldapSearch'"></search>
+  <request v-if="$route.name == 'ldapRequest'"></request>
 </template>

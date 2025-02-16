@@ -18,8 +18,12 @@ for (const key in exampleFiles) {
 const tutorials: any[] = []
 for (const key in tutorialsFiles) {
     const file = tutorialsFiles[key]
-    const meta = parseMetadata(files[`/src/assets/docs/${file}`])
-    tutorials.push({ key: key, meta: meta})
+    try {
+        const meta = parseMetadata(files[`/src/assets/docs/${file}`])
+        tutorials.push({ key: key, meta: meta})
+    } catch (e) {
+        console.error('invalid markdown: '+file )
+    }
 }
 
 function formatParam(label: any): string {

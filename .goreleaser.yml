@@ -38,7 +38,7 @@ dockers:
       - "--platform=linux/amd64"
     dockerfile: images/release-ubuntu.Dockerfile
     use: buildx
-  - goos: darwin
+  - goos: linux
     goarch: arm64
     image_templates:
       - "mokapi/mokapi:noble-arm64v8"
