@@ -12,41 +12,26 @@ const eventId = useRoute().params.id as string
 const { event, isLoading, close } = fetchById(eventId)
 const { duration } = usePrettyDates()
 
-function eventData() {
+const data = computed(() => {
     return <LdapEventData>event.value?.data
-}
+})
 
 function isInitLoading() {
     return isLoading.value && !event.value
 }
 
 function attributes() {
-  return eventData().request.attributes.join(', ')
-}
-
-function scopeToString(scope: SearchScope): string {
-    switch (scope) {
-        case 3: return 'WholeSubtree'
-        case 2: return 'SingleLevel'
-        case 1: return 'BaseObject'
-        default: return 'invalid'
-    }
-}
-
-function codeToString(code: LdapResultStatus): string {
-    switch (code) {
-        case 0: return 'Success'
-        case 1: return 'OperationsError'
-        case 2: return 'ProtocolError'
-        case 3: return 'SizeLimitExceeded'
-        case 4: return 'AuthMethodNotSupported'
-        case 121: return 'CannotCancel'
-        default: return 'invalid'
-    }
+  if (!data.value.request.attributes) {
+    return ''
+  }
+  return data.value.request.attributes.join(', ')
 }
 
 const searchResults = computed(() => {
-  return eventData().response.results.sort(compareResult)
+  if (!data.value.response.results) {
+    return []
+  }
+  return data.value.response.results.sort(compareResult)
 })
 
 function compareResult(r1: LdapSearchResult, r2: LdapSearchResult) {
@@ -56,7 +41,7 @@ function compareResult(r1: LdapSearchResult, r2: LdapSearchResult) {
 }
 
 const hasActions = computed(() => {
-    return eventData().actions?.length > 0
+    return data.value.actions?.length > 0
 })
 onUnmounted(() => {
     close()
@@ -71,25 +56,25 @@ onUnmounted(() => {
                   <div class="row">
                     <div class="col header">
                         <p class="label">Filter</p>
-                        <p>{{ eventData().request.filter }}</p>
+                        <p>{{ data.request.filter }}</p>
                     </div>
                   </div>
                   <div class="row">
                     <div class="col">
                         <p class="label">Base DN</p>
-                        <p>{{ eventData().request.baseDN }}</p>
+                        <p>{{ data.request.baseDN }}</p>
                     </div>
                     <div class="col">
                         <p class="label">Scope</p>
-                        <p>{{ scopeToString(eventData().request.scope) }}</p>
+                        <p>{{ data.request.scope }}</p>
                     </div>
                     <div class="col">
                         <p class="label">Size Limit</p>
-                        <p>{{ eventData().request.sizeLimit }}</p>
+                        <p>{{ data.request.sizeLimit }}</p>
                     </div>
                     <div class="col">
                         <p class="label">Time Limit</p>
-                        <p>{{ eventData().request.timeLimit }}</p>
+                        <p>{{ data.request.timeLimit }}</p>
                     </div>
                   </div>
                   <div>
@@ -106,11 +91,11 @@ onUnmounted(() => {
               <div class="row">
                 <div class="col">
                   <p class="label">Status</p>
-                  <p>{{ codeToString(eventData().response.status) }}</p>
+                  <p>{{ data.response.status }}</p>
                 </div>
                 <div class="col">
                   <p class="label">Duration</p>
-                  <p>{{ duration(eventData().duration) }}</p>
+                  <p>{{ duration(data.duration) }}</p>
                 </div>
               </div>
             </div>
@@ -141,7 +126,7 @@ onUnmounted(() => {
             <div class="card">
                 <div class="card-body">
                     <div class="card-title text-center">Actions</div>
-                    <actions :actions="eventData().actions" />
+                    <actions :actions="data.actions" />
                 </div>
             </div>
         </div>

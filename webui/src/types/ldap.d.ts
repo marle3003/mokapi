@@ -11,7 +11,7 @@ declare interface LdapEventData {
 
 declare interface LdapSearchRequest {
     baseDN: string
-	scope: SearchScope
+	scope: string
 	dereferencePolicy: number
 	sizeLimit: number
 	timeLimit: number
@@ -22,26 +22,11 @@ declare interface LdapSearchRequest {
 
 declare interface LdapSearchResponse {
     results: LdapSearchResult[]
-    status: number
+    status: string
     message: string
 }
 
 declare interface LdapSearchResult {
     dn: string
     attributes: { [name: string]: string }
-}
-
-declare enum SearchScope {
-    BaseObject,
-    SingleLevel,
-    WholeSubtree
-}
-
-declare enum LdapResultStatus {
-    Success = 0,
-    OperationsError = 1,
-    ProtocolError = 2,
-    SizeLimitExceeded = 3,
-    AuthMethodNotSupported = 4,
-    CannotCancel = 121
 }

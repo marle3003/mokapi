@@ -17,6 +17,7 @@ const router = useRouter()
 const { fetch } = useEvents()
 const { events, close } = fetch('ldap', ...labels)
 const { duration } = usePrettyDates()
+let data: LdapEventData
 
 function goToSearch(data: ServiceEvent){
     router.push({
@@ -26,15 +27,6 @@ function goToSearch(data: ServiceEvent){
 }
 function eventData(event: ServiceEvent): LdapEventData{
     return <LdapEventData>event.data
-}
-
-function scopeToString(scope: SearchScope): string {
-    switch (scope) {
-        case 3: return 'WholeSubtree'
-        case 2: return 'SingleLevel'
-        case 1: return 'BaseObject'
-        default: return 'invalid'
-    }
 }
 
 onUnmounted(() => {
@@ -53,22 +45,26 @@ onUnmounted(() => {
                         <th scope="col" class="text-left" style="width: 20%">Base DN</th>
                         <th scope="col" class="text-left" style="width: 20%">Scope</th>
                         <th scope="col" class="text-center" style="width:15%">Size Limit</th>
+                        <th scope="col" class="text-center" style="width:15%">Results</th>
+                        <th scope="col" class="text-center" style="width:15%">Status Code</th>
                         <th scope="col" class="text-center">Duration</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="event in events!" :key="event.id" @click="goToSearch(event)">
+                    <tr v-for="event in events!" :key="event.id" @click="goToSearch(event)" :set="data = eventData(event)">
                         <td>
-                            {{ eventData(event).request.filter }}
+                            {{ data.request.filter }}
                         </td>
                         <td>
-                            {{ eventData(event).request.baseDN }}
+                            {{ data.request.baseDN }}
                         </td>
                         <td>
-                            {{ scopeToString(eventData(event).request.scope) }}
+                            {{ data.request.scope }}
                         </td>
-                        <td class="text-center">{{ eventData(event).request.sizeLimit }}</td>
-                        <td class="text-center">{{ duration(eventData(event).duration) }}</td>
+                        <td class="text-center">{{ data.request.sizeLimit }}</td>
+                        <td class="text-center">{{ data.response.results?.length ?? 0 }}</td>
+                        <td class="text-center">{{ data.response.status }}</td>
+                        <td class="text-center">{{ duration(data.duration) }}</td>
                     </tr>
                 </tbody>
             </table>

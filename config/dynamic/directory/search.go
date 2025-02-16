@@ -106,7 +106,7 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 
 			log.Debugf("found result for message %v: %v", r.MessageId, res.Dn)
 			results = append(results, res)
-			event.Response.Results = append(event.Response.Results, LdapSearchResult{
+			event.Response.Results = append(event.Response.Results, SearchResult{
 				Dn:         res.Dn,
 				Attributes: res.Attributes,
 			})

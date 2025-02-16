@@ -22,7 +22,7 @@ export const searches = [
         data: {
             request: {
                 baseDN: 'dc=mokapi,dc=io',
-                scope: SearchScope.WholeSubtree,
+                scope: 2    ,
                 sizeLimit: 10,
                 filter: '(objectClass=user)',
                 attributes: [
@@ -30,7 +30,7 @@ export const searches = [
                 ]
             },
             response: {
-                status: ResultCode.Success,
+                status: 'Success',
                 results: [
                     {
                         dn: 'CN=turangal,CN=users,DC=mokapi,DC=io',

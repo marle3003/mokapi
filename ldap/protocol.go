@@ -80,3 +80,9 @@ var StatusText = map[uint8]string{
 	AuthMethodNotSupported: "AuthMethodNotSupported",
 	CannotCancel:           "CannotCancel",
 }
+
+var ScopeText = map[uint8]string{
+	ScopeSingleLevel:  "SingleLevel",
+	ScopeWholeSubtree: "WholeSubtree",
+	ScopeBaseObject:   "BaseObject",
+}
