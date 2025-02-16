@@ -69,7 +69,9 @@ func (suite *LdapSuite) TestLog() {
 	e := events.GetEvents(events.NewTraits().WithNamespace("ldap"))
 	require.Len(suite.T(), e, 1)
 	data := e[0].Data.(*directory.LdapSearchLog)
-	require.Equal(suite.T(), search, data.Request)
+	require.Equal(suite.T(), "WholeSubtree", data.Request.Scope)
+	require.Equal(suite.T(), "(objectClass=user)", data.Request.Filter)
+	require.Equal(suite.T(), []string{"mail"}, data.Request.Attributes)
 	require.Len(suite.T(), data.Response.Results, 4)
 	require.Equal(suite.T(), "Success", data.Response.Status)
 }
