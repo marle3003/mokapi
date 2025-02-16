@@ -1,0 +1,11 @@
+dn: dc=mokapi,dc=io
+
+dn: uid=awilliams,dc=mokapi,dc=io
+cn: Alice Williams
+uid: awilliams
+userPassword: foo123
+
+dn: uid=bmiller,dc=mokapi,dc=io
+cn: Bob Miller
+uid: bmiller
+userPassword: bar123

@@ -24,6 +24,7 @@ type Config struct {
 	Files      []string
 
 	root       map[string][]string
+	Schema     *Schema
 	oldEntries map[string]Entry
 }
 
@@ -35,11 +36,6 @@ type Info struct {
 	Name        string `yaml:"title"`
 	Description string `yaml:"description"`
 	Version     string `yaml:"version"`
-}
-
-type Entry struct {
-	Dn         string
-	Attributes map[string][]string
 }
 
 func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
@@ -93,7 +89,7 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 			return fmt.Errorf("parse file %s failed: %v", file, err)
 		}
 		for _, record := range d.Records {
-			err = record.Apply(c.Entries)
+			err = record.Apply(c.Entries, nil)
 			if err != nil {
 				return fmt.Errorf("apply file '%s' failed: %w", file, err)
 			}
@@ -156,16 +152,26 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	}
 
 	var v []string
-	if v, ok = c.root["RootDomainNamingContext"]; ok {
+	if v, ok = c.root["rootDomainNamingContext"]; ok {
 		root.Attributes["rootDomainNamingContext"] = v
 	}
-	if v, ok = c.root["SubSchemaSubentry"]; ok {
-		root.Attributes["subSchemaSubentry"] = v
+	if v, ok = c.root["subschemaSubentry"]; ok {
+		root.Attributes["subschemaSubentry"] = v
 	}
-	if v, ok = c.root["NamingContexts"]; ok {
+	if v, ok = c.root["namingContexts"]; ok {
 		root.Attributes["namingContexts"] = v
 	}
 	c.Entries.Set("", root)
+
+	dn := root.Attributes["subschemaSubentry"]
+	s, ok := c.Entries.Get(dn[0])
+	if ok {
+		var err error
+		c.Schema, err = NewSchema(s)
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }

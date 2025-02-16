@@ -4,4 +4,5 @@ info:
   description: An example configuration to mock an LDAP server
 host: :389
 files:
-  - ./mokapi.ldif
+  - ./schema.ldif
+  - ./users.ldif
