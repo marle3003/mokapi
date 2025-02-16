@@ -18,7 +18,7 @@ export const searches = [
             namespace: "ldap",
             name: "LDAP Testserver"
         },
-        time:  '2023-02-27T11:49:25.482366+01:00',
+        time:  '2025-02-27T11:52:25.482366+01:00',
         data: {
             duration: 30,
             request: {
@@ -61,7 +61,7 @@ export const searches = [
             namespace: "ldap",
             name: "LDAP Testserver"
         },
-        time:  '2025-02-15T11:49:25.482366+01:00',
+        time:  '2025-02-27T11:50:50.482366+01:00',
         data: {
             duration: 5,
             request: {
@@ -88,7 +88,7 @@ export const searches = [
             namespace: "ldap",
             name: "LDAP Testserver"
         },
-        time:  '2025-02-27T11:49:25.482366+01:00',
+        time:  '2025-02-27T11:50:25.482366+01:00',
         data: {
             duration: 1,
             request: {
@@ -112,7 +112,7 @@ export const searches = [
             namespace: "ldap",
             name: "LDAP Testserver"
         },
-        time:  '2025-02-27T11:49:25.482366+01:00',
+        time:  '2025-02-27T11:50:10.482366+01:00',
         data: {
             duration: 1,
             request: {
@@ -152,7 +152,7 @@ export const searches = [
             namespace: "ldap",
             name: "LDAP Testserver"
         },
-        time:  '2025-02-27T11:49:25.482366+01:00',
+        time:  '2025-02-27T11:49:10.482366+01:00',
         data: {
             duration: 1,
             request: {
