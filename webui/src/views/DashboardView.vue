@@ -14,8 +14,8 @@ import KafkaService from '../components/dashboard/kafka/KafkaService.vue'
 
 import LdapServicesCard from '@/components/dashboard/ldap/LdapServicesCard.vue'
 import LdapService from '../components/dashboard/ldap/Service.vue'
-import LdapSearchMetricCard from '../components/dashboard/ldap/LdapSearchMetricCard.vue'
-import Searches from '@/components/dashboard/ldap/Searches.vue'
+import LdapSearchMetricCard from '../components/dashboard/ldap/LdapRequestMetricCard.vue'
+import Searches from '@/components/dashboard/ldap/Requests.vue'
 
 import SmtpMessageMetricCard from '../components/dashboard/smtp/SmtpMessageMetricCard.vue'
 import SmtpServicesCard from '../components/dashboard/smtp/SmtpServicesCard.vue'

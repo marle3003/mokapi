@@ -69,8 +69,7 @@ func (c *Client) Search(request *SearchRequest) (*SearchResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	n, err := c.conn.Write(r.Bytes())
-	_ = n
+	_, err = c.conn.Write(r.Bytes())
 	if err != nil {
 		return nil, err
 	}
@@ -118,6 +117,8 @@ func (c *Client) newRequest(msg Message) (*ber.Packet, error) {
 	c.messageId++
 	p := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "LDAP Request")
 	p.AppendChild(ber.NewInteger(ber.ClassUniversal, ber.TypePrimitive, ber.TagInteger, c.messageId, "Message ID"))
+
+	var err error
 	switch b := msg.(type) {
 	case *BindRequest:
 		p.AppendChild(b.toPacket())
@@ -126,14 +127,21 @@ func (c *Client) newRequest(msg Message) (*ber.Packet, error) {
 	case *AbandonRequest:
 		p.AppendChild(b.toPacket())
 	case *SearchRequest:
-		err := b.encode(p)
-		if err != nil {
-			return nil, err
-		}
+		err = b.encode(p)
+	case *AddRequest:
+		b.encode(p)
+	case *ModifyRequest:
+		b.encode(p)
+	case *DeleteRequest:
+		b.encode(p)
+	case *ModifyDNRequest:
+		b.encode(p)
+	case *CompareRequest:
+		b.encode(p)
 	default:
 		return nil, fmt.Errorf("unsupported request type %t", msg)
 	}
-	return p, nil
+	return p, err
 }
 
 func (c *Client) Dial() error {
@@ -155,4 +163,99 @@ func (c *Client) Dial() error {
 	}
 
 	return err
+}
+
+func (c *Client) Modify(request *ModifyRequest) (*ModifyResponse, error) {
+	r, err := c.newRequest(request)
+	if err != nil {
+		return nil, err
+	}
+	_, err = c.conn.Write(r.Bytes())
+	if err != nil {
+		return nil, err
+	}
+
+	p, err := ber.ReadPacket(c.conn)
+	if err != nil {
+		return nil, err
+	}
+
+	body := p.Children[1]
+	return decodeModifyResponse(body)
+}
+
+func (c *Client) Add(request *AddRequest) (*AddResponse, error) {
+	r, err := c.newRequest(request)
+	if err != nil {
+		return nil, err
+	}
+	_, err = c.conn.Write(r.Bytes())
+	if err != nil {
+		return nil, err
+	}
+
+	p, err := ber.ReadPacket(c.conn)
+	if err != nil {
+		return nil, err
+	}
+
+	body := p.Children[1]
+	return decodeAddResponse(body)
+}
+
+func (c *Client) Delete(request *DeleteRequest) (*DeleteResponse, error) {
+	r, err := c.newRequest(request)
+	if err != nil {
+		return nil, err
+	}
+	_, err = c.conn.Write(r.Bytes())
+	if err != nil {
+		return nil, err
+	}
+
+	p, err := ber.ReadPacket(c.conn)
+	if err != nil {
+		return nil, err
+	}
+
+	body := p.Children[1]
+	return decodeDeleteResponse(body)
+}
+
+func (c *Client) ModifyDn(request *ModifyDNRequest) (*ModifyDNResponse, error) {
+	r, err := c.newRequest(request)
+	if err != nil {
+		return nil, err
+	}
+	_, err = c.conn.Write(r.Bytes())
+	if err != nil {
+		return nil, err
+	}
+
+	p, err := ber.ReadPacket(c.conn)
+	if err != nil {
+		return nil, err
+	}
+
+	body := p.Children[1]
+	return decodeModifyDnResponse(body)
+}
+
+func (c *Client) Compare(request *CompareRequest) (*CompareResponse, error) {
+	r, err := c.newRequest(request)
+	if err != nil {
+		return nil, err
+	}
+	_, err = c.conn.Write(r.Bytes())
+	if err != nil {
+		return nil, err
+	}
+
+	p, err := ber.ReadPacket(c.conn)
+	if err != nil {
+		return nil, err
+	}
+
+	body := p.Children[1]
+	return decodeCompareResponse(body)
 }

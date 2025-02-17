@@ -40,7 +40,7 @@ func TestApp_AddLdap(t *testing.T) {
 				rr := ldaptest.NewRecorder()
 				h.ServeLDAP(rr, r)
 
-				require.Equal(t, float64(1), m.Bind.Sum())
+				require.Equal(t, float64(1), m.RequestCounter.Sum())
 			},
 		},
 		{

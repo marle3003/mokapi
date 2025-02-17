@@ -4,8 +4,10 @@ import (
 	"encoding/base64"
 	"fmt"
 	"mokapi/config/dynamic"
+	"mokapi/ldap"
 	"mokapi/sortedmap"
 	"net/url"
+	"slices"
 	"strings"
 )
 
@@ -14,7 +16,7 @@ type Ldif struct {
 }
 
 type LdifRecord interface {
-	Apply(entries *sortedmap.LinkedHashMap[string, Entry]) error
+	Apply(entries *sortedmap.LinkedHashMap[string, Entry], s *Schema) error
 	append(name string, value string)
 }
 
@@ -91,6 +93,8 @@ func (l *Ldif) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 				rec = &DeleteRecord{Dn: dn}
 			case "modify":
 				rec = &ModifyRecord{Dn: dn}
+			case "modrdn":
+				rec = &ModifyDnRecord{Dn: dn, DeleteOldDn: true}
 			default:
 				return fmt.Errorf("changetype %s not supported", val)
 			}
@@ -137,14 +141,19 @@ type AddRecord struct {
 	Attributes map[string][]string
 }
 
-func (add *AddRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry]) error {
+func (add *AddRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry], s *Schema) error {
 	if _, ok := entries.Get(add.Dn); ok {
-		return fmt.Errorf("record dn='%s' already exists", add.Dn)
+		return NewEntryError(ldap.EntryAlreadyExists, "record dn='%s' already exists", add.Dn)
 	}
-	entries.Set(add.Dn, Entry{
+	e := Entry{
 		Dn:         add.Dn,
 		Attributes: add.Attributes,
-	})
+	}
+	err := e.validate(s)
+	if err != nil {
+		return err
+	}
+	entries.Set(e.Dn, e)
 	return nil
 }
 
@@ -159,7 +168,12 @@ type DeleteRecord struct {
 	Dn string
 }
 
-func (del *DeleteRecord) Apply(_ *sortedmap.LinkedHashMap[string, Entry]) error {
+func (del *DeleteRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry], _ *Schema) error {
+	_, ok := entries.Get(del.Dn)
+	if !ok {
+		return NewEntryError(ldap.NoSuchObject, "delete operation failed: the specified entry does not exist: %v", del.Dn)
+	}
+	entries.Del(del.Dn)
 	return nil
 }
 
@@ -176,10 +190,15 @@ type ModifyAction struct {
 	Attributes map[string][]string
 }
 
-func (mod *ModifyRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry]) error {
+func (mod *ModifyRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry], s *Schema) error {
 	e, ok := entries.Get(mod.Dn)
 	if !ok {
-		return fmt.Errorf("apply change record failed: entry '%v' not found", mod.Dn)
+		return NewEntryError(ldap.NoSuchObject, "modify operation failed: the specified entry does not exist: %v", mod.Dn)
+	}
+	e = e.copy()
+
+	if e.Attributes == nil {
+		e.Attributes = make(map[string][]string)
 	}
 
 	for _, action := range mod.Actions {
@@ -192,12 +211,31 @@ func (mod *ModifyRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry]) 
 			}
 		case "delete":
 			if _, ok := e.Attributes[action.Name]; ok {
-				delete(e.Attributes, action.Name)
+				if len(action.Attributes[action.Name]) == 0 {
+					delete(e.Attributes, action.Name)
+				} else {
+					values := e.Attributes[action.Name]
+					for _, val := range action.Attributes[action.Name] {
+						values = slices.DeleteFunc(values, func(s string) bool {
+							return s == val
+						})
+					}
+					if len(values) == 0 {
+						delete(e.Attributes, action.Name)
+					} else {
+						e.Attributes[action.Name] = values
+					}
+				}
 			}
 		case "replace":
 			e.Attributes[action.Name] = action.Attributes[action.Name]
 		}
 	}
+
+	if err := e.validate(s); err != nil {
+		return err
+	}
+	entries.Set(e.Dn, e)
 
 	return nil
 }
@@ -228,5 +266,53 @@ func (mod *ModifyRecord) append(name string, value string) {
 			action.Attributes = make(map[string][]string)
 		}
 		action.Attributes[name] = append(action.Attributes[name], value)
+	}
+}
+
+type ModifyDnRecord struct {
+	Dn            string
+	NewRdn        string
+	DeleteOldDn   bool
+	NewSuperiorDn string
+}
+
+func (m *ModifyDnRecord) Apply(entries *sortedmap.LinkedHashMap[string, Entry], _ *Schema) error {
+	e, ok := entries.Get(m.Dn)
+	if !ok {
+		return NewEntryError(ldap.NoSuchObject, "modifyDN operation failed: the specified entry does not exist: %v", m.Dn)
+	}
+
+	parts := strings.Split(e.Dn, ",")
+	if m.NewRdn != "" {
+		parts[0] = m.NewRdn
+	}
+
+	if m.NewSuperiorDn != "" {
+		parts = append(parts[0:1], m.NewSuperiorDn)
+	}
+
+	e.Dn = strings.Join(parts, ",")
+
+	if m.DeleteOldDn {
+		entries.Del(m.Dn)
+	}
+
+	entries.Set(e.Dn, e)
+
+	return nil
+}
+
+func (m *ModifyDnRecord) Validate(s *Schema) error {
+	return nil
+}
+
+func (m *ModifyDnRecord) append(name string, value string) {
+	switch name {
+	case "newrdn":
+		m.NewRdn = value
+	case "deleteoldrdn":
+		m.DeleteOldDn = value == "1"
+	case "newsuperior":
+		m.NewSuperiorDn = value
 	}
 }

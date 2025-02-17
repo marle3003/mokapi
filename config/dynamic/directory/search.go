@@ -3,15 +3,19 @@ package directory
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
 	log "github.com/sirupsen/logrus"
+	"math"
 	"mokapi/ldap"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 )
 
 type predicate func(entry Entry) bool
@@ -19,7 +23,7 @@ type predicate func(entry Entry) bool
 func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 	msg := r.Message.(*ldap.SearchRequest)
 	m, doMonitor := monitor.LdapFromContext(r.Context)
-	event := NewLogEvent(msg, events.NewTraits().WithName(d.config.Info.Name))
+	event := NewSearchLogEvent(msg, events.NewTraits().WithName(d.config.Info.Name))
 	defer func() {
 		i := r.Context.Value("time")
 		if i != nil {
@@ -28,12 +32,12 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 		}
 	}()
 
-	log.Infof("ldap search request: messageId=%v BaseDN=%v Filter=%v",
-		r.MessageId, msg.BaseDN, msg.Filter)
+	log.Infof("ldap search request: messageId=%v, Scope=%v BaseDN=%v Filter=%v",
+		r.MessageId, msg.Scope, msg.BaseDN, msg.Filter)
 
 	if doMonitor {
-		m.Search.WithLabel(d.config.Info.Name).Add(1)
-		m.LastSearch.WithLabel(d.config.Info.Name).Set(float64(time.Now().Unix()))
+		m.RequestCounter.WithLabel(d.config.Info.Name, "search").Add(1)
+		m.LastRequest.WithLabel(d.config.Info.Name).Set(float64(time.Now().Unix()))
 	}
 
 	n := int64(0)
@@ -42,7 +46,8 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 	skipPageIndex := int64(0)
 	maxSizeLimit := d.config.getSizeLimit()
 	var results []ldap.SearchResult
-	predicate, pos, err := compileFilter(msg.Filter)
+	p := &parser{s: d.config.Schema}
+	predicate, pos, err := p.parse(msg.Filter)
 	if pos != len(msg.Filter) || err != nil {
 		if err != nil {
 			log.Errorf("ldap: filter syntax error: %v", err)
@@ -74,6 +79,9 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 					continue
 				}
 			}
+			if d.skip(&e, msg.BaseDN) {
+				continue
+			}
 
 			if pagedStoredIndex != 0 && skipPageIndex < pagedStoredIndex {
 				skipPageIndex++
@@ -94,23 +102,11 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 			n++
 
 			res := ldap.NewSearchResult(e.Dn)
-			res.Attributes["objectClass"] = e.Attributes["objectClass"]
-
-			if len(msg.Attributes) > 0 {
-				for _, a := range msg.Attributes {
-					for k, v := range e.Attributes {
-						if strings.ToLower(a) == strings.ToLower(k) {
-							res.Attributes[a] = v
-						}
-					}
-				}
-			} else {
-				res.Attributes = e.Attributes
-			}
+			res.Attributes = getAttributes(msg.Attributes, &e)
 
 			log.Debugf("found result for message %v: %v", r.MessageId, res.Dn)
 			results = append(results, res)
-			event.Response.Results = append(event.Response.Results, LdapSearchResult{
+			event.Response.Results = append(event.Response.Results, SearchResult{
 				Dn:         res.Dn,
 				Attributes: res.Attributes,
 			})
@@ -132,7 +128,39 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 	}
 }
 
-func compileFilter(filter string) (predicate, int, error) {
+func getAttributes(attr []string, e *Entry) map[string][]string {
+	result := make(map[string][]string)
+	plus := slices.Contains(attr, "+")
+	star := slices.Contains(attr, "*") || len(attr) == 0
+
+	if slices.Contains(attr, "1.1") {
+		result["dn"] = []string{e.Dn}
+		return result
+	}
+
+	for k, v := range e.Attributes {
+		switch k {
+		case "subschemaSubentry",
+			"namingContexts",
+			"objectClasses":
+			if plus || slices.Contains(attr, k) {
+				result[k] = v
+			}
+		default:
+			if star || slices.Contains(attr, k) {
+				result[k] = v
+			}
+		}
+	}
+
+	return result
+}
+
+type parser struct {
+	s *Schema
+}
+
+func (p *parser) parse(filter string) (predicate, int, error) {
 	if len(filter) == 0 || filter[0] != '(' {
 		return nil, 0, fmt.Errorf("filter syntax error: expected starting with ( got %v", filter)
 	}
@@ -146,30 +174,37 @@ func compileFilter(filter string) (predicate, int, error) {
 		case c == '(':
 			v = bytes.NewBuffer(nil)
 		case c == ')':
-			return newPredicate(op, attr.String(), v.String()), pos + 1, nil
-		case c == '=':
+			p, err := p.predicate(op, attr.String(), v.String())
+			return p, pos + 1, err
+		case c == '=' && op == 0:
 			op = ldap.FilterEqualityMatch
 			attr = v
 			v = bytes.NewBuffer(nil)
-		case c == '>' && filter[pos+1] == '=':
+		case c == '>' && filter[pos+1] == '=' && op == 0:
 			pos++
 			op = ldap.FilterGreaterOrEqual
 			attr = v
 			v = bytes.NewBuffer(nil)
-		case c == '<' && filter[pos+1] == '=':
+		case c == '<' && filter[pos+1] == '=' && op == 0:
 			pos++
 			op = ldap.FilterLessOrEqual
 			attr = v
 			v = bytes.NewBuffer(nil)
+		case c == '~' && filter[pos+1] == '=' && op == 0:
+			pos++
+			op = ldap.FilterApproxMatch
+			attr = v
+			v = bytes.NewBuffer(nil)
 		case c == '!':
-			f, n, err := compileFilter(filter[pos+1:])
+			f, n, err := p.parse(filter[pos+1:])
 			return not(f), pos + n + 2, err
 		case c == '&':
-			fs, n, err := compileFilterSet(filter[pos+1:])
+			fs, n, err := p.parseSet(filter[pos+1:])
 			return and(fs), pos + n + 2, err
 		case c == '|':
-			fs, n, err := compileFilterSet(filter[pos+1:])
+			fs, n, err := p.parseSet(filter[pos+1:])
 			return or(fs), pos + n + 2, err
+
 		default:
 			v.WriteRune(c)
 		}
@@ -178,11 +213,11 @@ func compileFilter(filter string) (predicate, int, error) {
 	return nil, 0, fmt.Errorf("unexpected filter end: %v", filter)
 }
 
-func compileFilterSet(filter string) ([]predicate, int, error) {
+func (p *parser) parseSet(filter string) ([]predicate, int, error) {
 	pos := 0
 	var fs []predicate
 	for pos < len(filter) && filter[pos] != ')' {
-		f, n, err := compileFilter(filter[pos:])
+		f, n, err := p.parse(filter[pos:])
 
 		if err != nil {
 			return nil, 0, err
@@ -193,37 +228,46 @@ func compileFilterSet(filter string) ([]predicate, int, error) {
 	return fs, pos, nil
 }
 
-func newPredicate(op int, name, value string) predicate {
+func (p *parser) predicate(op int, name, value string) (predicate, error) {
 	switch op {
 	case ldap.FilterEqualityMatch:
 		if strings.Contains(value, "*") {
-			return substring(name, value)
+			return p.substring(name, value), nil
 		}
-		return equal(name, value)
+		return p.equal(name, value)
 	case ldap.FilterGreaterOrEqual:
-		return greaterOrEqual(name, value)
+		return p.greaterOrEqual(name, value), nil
 	case ldap.FilterLessOrEqual:
-		return lessOrEqual(name, value)
+		return p.lessOrEqual(name, value), nil
+	case ldap.FilterApproxMatch:
+		return p.check(name, func(s string) bool {
+			n := len(s)
+
+			if n > 5 && strings.Contains(s, value) {
+				return true
+			}
+			distance := levenshtein(value, s)
+			threshold := n / 5
+			return distance <= threshold
+		}), nil
 	default:
-		log.Errorf("unsupported filter operation for attribute %v: %v", name, op)
-		return func(e Entry) bool {
-			return false
-		}
+		return nil, fmt.Errorf("unsupported filter operation for attribute %v: %v", name, op)
 	}
 }
 
-func substring(name, value string) predicate {
+func (p *parser) substring(name, value string) predicate {
 	name = strings.ToLower(name)
 
 	if value == "*" {
 		return func(e Entry) bool {
+			// special case for objectClass
+			// Matches all entries, even if objectClass is not explicitly present,
+			// because objectClass is fundamental to every LDAP entry by definition.
+			if name == "objectclass" {
+				return true
+			}
+
 			for k := range e.Attributes {
-				// special case for objectClass
-				// Matches all entries, even if objectClass is not explicitly present,
-				// because objectClass is fundamental to every LDAP entry by definition.
-				if name == "objectclass" {
-					return true
-				}
 				if strings.ToLower(k) == name {
 					return true
 				}
@@ -261,14 +305,80 @@ func substring(name, value string) predicate {
 		return true
 	}
 
-	return check(name, match)
+	return p.check(name, match)
 }
 
-func equal(name, value string) predicate {
+func (p *parser) equal(name, value string) (predicate, error) {
 	f := func(s string) bool {
 		return value == s
 	}
-	return check(name, f)
+
+	if p.s != nil {
+		t, ok := p.s.AttributeTypes[name]
+		if ok {
+			switch t.Equality {
+			case "caseIgnoreMatch", "2.5.13.2":
+				f = func(s string) bool {
+					return strings.EqualFold(value, s)
+				}
+			case "caseExactMatch", "2.5.13.5":
+				f = func(s string) bool {
+					return value == s
+				}
+			case "integerMatch", "2.5.13.14":
+				v, err := strconv.ParseInt(value, 10, 64)
+				if err != nil {
+					return nil, fmt.Errorf("invalid integer value %v: %v", value, err)
+				}
+				f = func(s string) bool {
+					i, err := strconv.ParseInt(s, 10, 64)
+					if err != nil {
+						return false
+					}
+					return i == v
+				}
+			case "octetStringMatch", "2.5.13.17":
+				v, err := base64.StdEncoding.DecodeString(value)
+				if err != nil {
+					return nil, fmt.Errorf("invalid octet value %v: %v", value, err)
+				}
+				f = func(s string) bool {
+					b := []byte(s)
+					return bytes.Equal(b, v)
+				}
+			case "booleanMatch", "2.5.13.13":
+				f = func(s string) bool {
+					return value == s
+				}
+			case "numericStringMatch", "2.5.13.8":
+				if !isNumericString(value) {
+					f = func(s string) bool { return false }
+				} else {
+					f = func(s string) bool {
+						if !isNumericString(s) {
+							return false
+						}
+						return value == s
+					}
+				}
+			case "distinguishedNameMatch", "2.5.13.1":
+				f = func(s string) bool {
+					return strings.EqualFold(value, s)
+				}
+			case "telephoneNumberMatch", "2.5.13.20":
+				v := strings.ReplaceAll(value, " ", "")
+				v = strings.ReplaceAll(v, "-", "")
+				f = func(s string) bool {
+					s = strings.ReplaceAll(value, " ", "")
+					s = strings.ReplaceAll(v, "-", "")
+					return v == s
+				}
+			default:
+				return nil, fmt.Errorf("unsupported equality type: %v", t)
+			}
+		}
+	}
+	return p.check(name, f), nil
 }
 
 func and(fs []predicate) predicate {
@@ -299,7 +409,7 @@ func not(f predicate) predicate {
 	}
 }
 
-func greaterOrEqual(name, value string) predicate {
+func (p *parser) greaterOrEqual(name, value string) predicate {
 	n, err := strconv.ParseFloat(value, 64)
 	var f func(string) bool
 	if err != nil {
@@ -315,10 +425,10 @@ func greaterOrEqual(name, value string) predicate {
 			return toCompare >= n
 		}
 	}
-	return check(name, f)
+	return p.check(name, f)
 }
 
-func lessOrEqual(name, value string) predicate {
+func (p *parser) lessOrEqual(name, value string) predicate {
 	n, err := strconv.ParseFloat(value, 64)
 	var f func(string) bool
 	if err != nil {
@@ -334,10 +444,10 @@ func lessOrEqual(name, value string) predicate {
 			return toCompare <= n
 		}
 	}
-	return check(name, f)
+	return p.check(name, f)
 }
 
-func check(name string, f func(string) bool) predicate {
+func (p *parser) check(name string, f func(string) bool) predicate {
 	return func(e Entry) bool {
 		for k, attrs := range e.Attributes {
 			if strings.ToLower(name) != strings.ToLower(k) {
@@ -378,4 +488,51 @@ func setPageCookie(controls []ldap.Control, pageIndex int64, ctx context.Context
 			page.Cookies[name] = pageIndex
 		}
 	}
+}
+
+func isNumericString(s string) bool {
+	for _, ch := range s {
+		if !unicode.IsNumber(ch) {
+			return false
+		}
+	}
+	return true
+}
+
+// Levenshtein function calculates the Levenshtein distance between two strings.
+func levenshtein(a, b string) int {
+	// Create a matrix to hold the distances
+	matrix := make([][]int, len(a)+1)
+	for i := range matrix {
+		matrix[i] = make([]int, len(b)+1)
+	}
+
+	// Initialize the first row and column
+	for i := 0; i <= len(a); i++ {
+		matrix[i][0] = i
+	}
+	for j := 0; j <= len(b); j++ {
+		matrix[0][j] = j
+	}
+
+	// Fill in the rest of the matrix
+	for i := 1; i <= len(a); i++ {
+		for j := 1; j <= len(b); j++ {
+			substitutionCost := 0
+			if a[i-1] != b[j-1] {
+				substitutionCost = 1
+			}
+			// get the smallest of three numbers
+			matrix[i][j] = int(math.Min(
+				float64(matrix[i-1][j]+1), // Deletion
+				math.Min(
+					float64(matrix[i][j-1]+1), // Insertion
+					float64(matrix[i-1][j-1]+substitutionCost),
+				), // Substitution
+			))
+		}
+	}
+
+	// Return the final Levenshtein distance
+	return matrix[len(a)][len(b)]
 }
