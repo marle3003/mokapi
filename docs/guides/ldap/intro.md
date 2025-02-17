@@ -10,7 +10,7 @@ cards:
       href: /docs/examples/tutorials/mock-ldap-authentication-in-node
       description: Learn how to mock LDAP authentication using Mokapi and a Node.js backend. Step-by-step guide with code examples for testing LDAP login without a real server!
     - title: Mocking LDAP using Group Permission
-      href: /docs/examples/tutorials/mock-ldap-authentication-in-node
+      href: /docs/examples/tutorials/mock-ldap-group-permission-in-node
       description: Learn how to mock LDAP authentication and group permission using a Node.js backend.
 ---
 
