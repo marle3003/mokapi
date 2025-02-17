@@ -25,7 +25,12 @@
           "Config": "guides/kafka/config.md"
         }
       },
-      "LDAP": "guides/ldap/overview.md",
+      "LDAP": {
+        "index": "guides/ldap/intro.md",
+        "items": {
+          "Quick Start": "guides/ldap/quick-start.md"
+        }
+      },
       "SMTP": {
         "index": "guides/smtp/overview.md",
         "items": {
@@ -151,7 +156,8 @@
           "Get started with REST API": "examples/tutorials/simple-http-api.md",
           "Get started with Kafka": "examples/tutorials/simple-kafka-api.md",
           "Running Mokapi in a CI/CD Pipeline": "examples/tutorials/running-mokapi-github-action.md",
-          "Mock LDAP Authentication in Node": "examples/tutorials/mock-ldap-authentication.md"
+          "Mock LDAP Authentication in Node": "examples/tutorials/mock-ldap-authentication.md",
+          "Mock LDAP Group Permission in Node": "examples/tutorials/mock-ldap-group-permission.md"
         }
       },
       "Examples": {

@@ -9,3 +9,14 @@ dn: uid=bmiller,dc=mokapi,dc=io
 cn: Bob Miller
 uid: bmiller
 userPassword: bar123
+
+dn: uid=csmith,dc=mokapi,dc=io
+cn: Carol Smith
+uid: csmith
+userPassword: secret123
+memberOf: cn=Admins,ou=groups,dc=mokapi,dc=io
+
+dn: ou=groups,dc=mokapi,dc=io
+
+dn: cn=Admins,ou=groups,dc=mokapi,dc=io
+cn: "Admins"

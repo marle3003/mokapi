@@ -117,7 +117,7 @@ const BASE_DN = 'dc=mokapi,dc=io';
 
 function authenticate(username, password, callback) {
     const client = ldap.createClient({ url: LDAP_URL });
-    const userDn = `uid=${username},ou=users,${BASE_DN}`;
+    const userDn = `uid=${username},${BASE_DN}`;
 
     client.bind(userDn, password, (err) => {
         client.unbind();
