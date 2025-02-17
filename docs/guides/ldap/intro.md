@@ -42,12 +42,12 @@ Key Features:
 
 Supported Operations:
 
-- Bind - Supports only simple authentication.
-- Search - Includes paging for large datasets.
-- Add - Create new LDAP entries.
-- Modify - Update existing LDAP entries.
-- Delete - Remove LDAP entries.
-- ModifyDN - Rename, copy or move an LDAP entry.
-- Compare - Check attribute values against directory entries.
+- **Bind** - Supports only simple authentication.
+- **Search** - Includes paging for large datasets.
+- **Add** - Create new LDAP entries.
+- **Modify** - Update existing LDAP entries.
+- **Delete** - Remove LDAP entries.
+- **ModifyDN** - Rename, copy or move an LDAP entry.
+- **Compare** - Check attribute values against directory entries.
 
 {{ card-grid key="cards" }}
