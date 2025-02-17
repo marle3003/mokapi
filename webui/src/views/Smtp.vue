@@ -52,6 +52,9 @@ function hasTouchSupport() {
         <div class="row hero-title">
           <div class="col-12 col-lg-6">
             <h1>End-to-end email testing for a smooth email experience</h1>
+            <div class="mb-3">
+              <span class="badge">SMTP</span>
+            </div>
             <p class="description">Test SMTP emails safely and no risk of spamming mailboxes</p>
             <p class="d-none d-md-block">
               <router-link :to="{ path: '/docs/guides' }">

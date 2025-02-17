@@ -26,6 +26,9 @@ useMeta(title, description, "https://mokapi.io/ldap")
         <div class="row hero-title">
           <div class="col-12 col-lg-6">
             <h1>Use Mokapi to Mock an LDAP Server</h1>
+            <div class="mb-3">
+              <span class="badge">LDAP</span>
+            </div>
             <p class="description">Simulate LDAP directories for testing and development without setting up a real LDAP server.</p>
             <p class="d-none d-md-block">
               <router-link :to="{ path: '/docs/guides' }">
