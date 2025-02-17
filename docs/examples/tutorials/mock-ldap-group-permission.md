@@ -62,6 +62,10 @@ cn: "Admins"
 
 Here, we define a user Carol Smith, who is member of the Admins group.
 
+Using [LDAP Browser](https://marketplace.visualstudio.com/items?itemName=fengtan.ldap-explorer) in VSCode the directory would look like this:
+
+<img src="./vscode-ldap-browse-example.png" alt="Screenshot of VSCode displaying an LDAP directory structure." />
+
 ## 2. Implementing Backend in Node.js
 
 Create a file `auth.js` and add:
