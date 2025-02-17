@@ -1,8 +1,8 @@
 ---
-title: LDAP Documentation
-description: Integrate your App with a mock LDAP server
+title: Quick Start to Mock a LDAP Server
+description: Learn how to create your first LDAP mock with Mokapi and begin ensuring the reliability and robustness of your application.
 ---
-# Mocking LDAP server
+# Quick Start to Mock an LDAP Server
 
 Learn how to create your first LDAP mock with Mokapi and begin ensuring the reliability and robustness of your application.
 
