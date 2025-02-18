@@ -512,7 +512,7 @@ providers:
 			},
 		},
 		{
-			name: "shorthand file",
+			name: "positional parameter file",
 			test: func(t *testing.T) {
 				os.Args = append(os.Args, "mokapi.exe", "foo.json")
 
@@ -527,7 +527,7 @@ providers:
 			},
 		},
 		{
-			name: "shorthand http",
+			name: "positional parameter http",
 			test: func(t *testing.T) {
 				os.Args = append(os.Args, "mokapi.exe", "http://foo.io/foo.json")
 
@@ -541,7 +541,7 @@ providers:
 			},
 		},
 		{
-			name: "shorthand https",
+			name: "positional parameter https",
 			test: func(t *testing.T) {
 				os.Args = append(os.Args, "mokapi.exe", "https://foo.io/foo.json")
 
@@ -555,7 +555,7 @@ providers:
 			},
 		},
 		{
-			name: "shorthand git with https",
+			name: "positional parameter git with https",
 			test: func(t *testing.T) {
 				os.Args = append(os.Args, "mokapi.exe", "git+https://foo.io/foo.json")
 
@@ -569,7 +569,7 @@ providers:
 			},
 		},
 		{
-			name: "shorthand npm",
+			name: "positional parameter npm",
 			test: func(t *testing.T) {
 				os.Args = append(os.Args, "mokapi.exe", "npm://bar/foo.txt?scope=@foo")
 
@@ -583,7 +583,7 @@ providers:
 			},
 		},
 		{
-			name: "shorthand not supported",
+			name: "positional parameter not supported",
 			test: func(t *testing.T) {
 				os.Args = append(os.Args, "mokapi.exe", "foo://bar")
 
@@ -592,6 +592,18 @@ providers:
 				require.NoError(t, err)
 				err = cfg.Parse()
 				require.EqualError(t, err, "positional argument is not supported: foo://bar")
+			},
+		},
+		{
+			name: "positional parameter Windows path",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe", "C:\\bar")
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{decoders.NewFlagDecoder()}, &cfg)
+				require.NoError(t, err)
+				err = cfg.Parse()
+				require.Equal(t, "C:\\bar", cfg.Providers.File.Filenames[0])
 			},
 		},
 	}

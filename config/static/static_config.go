@@ -187,7 +187,11 @@ func (c *Config) Parse() error {
 		case "":
 			c.Providers.File.Filenames = append(c.Providers.File.Filenames, arg)
 		default:
-			return fmt.Errorf("positional argument is not supported: %v", arg)
+			if u.Opaque != "" {
+				c.Providers.File.Filenames = append(c.Providers.File.Filenames, arg)
+			} else {
+				return fmt.Errorf("positional argument is not supported: %v", arg)
+			}
 		}
 	}
 	return nil
