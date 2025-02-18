@@ -8,15 +8,24 @@ icon: bi-shield-lock
 
 ## Introduction
 
-In this tutorial, you'll learn how to use Mokapi to mock an LDAP server for authentication and group-based access 
-control in a Node.js backend. This is useful for testing without relying on a real LDAP 
-server.
+LDAP authentication is widely used for managing user access in enterprise applications. However, setting up a real LDAP 
+server for testing can be complex and time-consuming. In this tutorial, you will learn how to use Mokapi to mock an 
+LDAP server and implement group-based authentication in a Node.js backend.
 
 ### What You'll Learn
 
-- Set up a mock LDAP server using Mokapi
-- Authenticate users via LDAP in a Node.js backend
-- Implement group-based permissions
+- ✅ Setting up a mock LDAP server with Mokapi
+- ✅ Authenticating users via LDAP in a Node.js backend
+- ✅ Implementing group-based permissions
+- ✅ Testing authentication using cURL
+
+## Prerequisites
+
+Before starting, ensure you have the following:
+
+- Node.js installed
+- Mokapi installed [Installation Guide](/docs/guides/get-started/installation.md)
+- Basic knowledge of LDAP authentication
 
 ## 1. Create an LDAP Mock Configuration
 
@@ -66,9 +75,15 @@ Using [LDAP Browser](https://marketplace.visualstudio.com/items?itemName=fengtan
 
 <img src="./vscode-ldap-browse-example.png" alt="Screenshot of VSCode displaying an LDAP directory structure." />
 
-## 2. Implementing Backend in Node.js
+## 2. Implement LDAP Authentication in Node.js
 
-Create a file `auth.js` and add:
+Run the following command in install required dependencies:
+
+```shell
+npm install ldapjs express
+```
+
+Create a file `auth.js` and add the following code:
 
 ```javascript
 const ldap = require('ldapjs');
@@ -101,6 +116,9 @@ function checkGroup(username, groupName, callback) {
 module.exports = { authenticate, checkGroup };
 ```
 
+- **authenticate**: This function binds the provided username and password to the mock LDAP server to verify authentication.
+- **checkGroup**: This function searches for the user to determine if they are a member of the Admins group.
+
 In 'server.js' we use the LDAP authentication and group-based access control:
 
 ```javascript tab=server.js
@@ -128,6 +146,8 @@ app.post('/login', (req, res) => {
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 ```
+
+This Express.js server handles authentication and ensures only users in the Admins group can access protected resources.
 
 ## 3. Testing the Mock LDAP Authentication 
 
@@ -171,3 +191,5 @@ If the username and/or password is not correct, the response will be:
 
 You’ve successfully mocked an LDAP server with Mokapi, authenticated users, and 
 implemented group-based permissions in a Node.js backend!
+
+This setup allows you to test LDAP authentication and group permissions without needing a real LDAP server.
