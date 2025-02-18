@@ -45,7 +45,7 @@ npx mokapi --Providers.File.Directory=./mokapi
 
 ## Documentation
 
-- [Get Started](https://mokapi.io/docs/guides/get-started/welcome)
+- [Get Started](https://mokapi.io/docs/guides/welcome)
 - [HTTP](https://mokapi.io/docs/guides/http/overview)
 - [Kafka](https://mokapi.io/docs/guides/kafka/overview)
 - [LDAP](https://mokapi.io/docs/guides/ldap/overview)
