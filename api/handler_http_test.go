@@ -292,7 +292,7 @@ func TestHandler_Http(t *testing.T) {
 				}
 			},
 			requestUrl:   "http://foo.api/api/services/http/foo",
-			responseBody: `{"name":"","paths":[{"path":"/foo/{bar}","operations":[{"method":"get","deprecated":false,"responses":[{"statusCode":"200","description":"foo description","contents":[{"type":"application/json","schema":{"type":"object","properties":{"loop":{"ref":"#/components/schemas/loop","type":"object","properties":{"loop":{"ref":"#/components/schemas/loop"}}}}}}]}]}]}]}`,
+			responseBody: `{"name":"","paths":[{"path":"/foo/{bar}","operations":[{"method":"get","deprecated":false,"responses":[{"statusCode":"200","description":"foo description","contents":[{"type":"application/json","schema":{"type":"object","properties":{"loop":{"$ref":"#/components/schemas/loop","type":"object","properties":{"loop":{"$ref":"#/components/schemas/loop"}}}}}}]}]}]}]}`,
 		},
 		{
 			name: "schema with default",

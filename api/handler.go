@@ -207,6 +207,7 @@ func writeJsonBody(w http.ResponseWriter, i interface{}) {
 	b, err := json.Marshal(i)
 	if err != nil {
 		writeError(w, err, http.StatusInternalServerError)
+		return
 	}
 	_, err = w.Write(b)
 	if err != nil {
