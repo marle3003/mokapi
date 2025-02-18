@@ -1,37 +1,36 @@
 ---
-title: LDAP Documentation
-description: Integrate your App with a mock LDAP server
+title: Quick Start to Mock a LDAP Server
+description: Learn how to create your first LDAP mock with Mokapi and begin ensuring the reliability and robustness of your application.
 ---
-# Mocking LDAP server
-
-Mokapi simplifies the process of creating a basic read-only LDAP server mock, enabling you to efficiently test and debug your LDAP interactions. Whether your goal is to validate query accuracy or simulate specific LDAP entry scenarios, Mokapi provides a flexible and developer-friendly solution.
-
-Designed with integration in mind, Mokapi makes LDAP directories accessible and seamlessly integrates into your existing codebases and projects. It empowers developers to experiment, prototype, and troubleshoot without relying on a live LDAP environment.
-
-With custom Mokapi scripts, you gain full control over the responses sent to search requests. This flexibility allows you to tailor the behavior of your mock server to suit your testing needs. Additionally, Mokapi supports the import of LDAP entries through LDIF files, streamlining the setup process and enabling you to test with real or representative data effortlessly.
-
-By leveraging Mokapi, you can enhance your development workflow, reduce dependencies on external systems, and create a smoother path to delivering robust LDAP integrations.
+# Quick Start to Mock an LDAP Server
 
 Learn how to create your first LDAP mock with Mokapi and begin ensuring the reliability and robustness of your application.
 
 ## Before you start
 
-There are various ways to run Mokapi depending on your needs. For detailed instructions on how to get Mokapi running on your workstation, refer to the information provided [here](/docs/guides/get-started/running.md).
+There are various ways to run Mokapi depending on your needs. For detailed instructions on how to get Mokapi running on 
+your workstation, refer to the information provided [here](/docs/guides/get-started/running.md).
 
 ## Basic structure of an LDAP server configuration
 
-To run an LDAP server with Mokapi, the minimum requirement is specifying a host address. This allows Mokapi to bind to the correct network interface and start serving requests.
+To run an LDAP server with Mokapi, the minimum requirement is specifying a host address. This allows Mokapi to bind to 
+the correct network interface and start serving requests.
 
-Below is an example of the simplest configuration, which does not include any custom LDAP entries. In this configuration, Mokapi automatically generates a basic Root DSE entry, which provides essential information about the server, such as the supported LDAP versions, the vendor name and vendor version.
+Below is an example of the simplest configuration, which does not include any custom LDAP entries. In this configuration, 
+Mokapi automatically generates a basic Root DSE entry, which provides essential information about the server, such as 
+the supported LDAP versions, the vendor name and vendor version.
 
-This basic setup is ideal for testing and development purposes, where the focus is on simulating server behavior rather than interacting with actual LDAP entries. You can later extend this configuration by adding LDAP entries and more advanced server settings as needed.
+This basic setup is ideal for testing and development purposes, where the focus is on simulating server behavior rather
+than interacting with actual LDAP entries. You can later extend this configuration by adding LDAP entries and more 
+advanced server settings as needed.
 
 ```yaml tab=ldap.yaml
 ldap: 1.0 # file configuration version not LDAP protocol version 
 host: :389
 ```
 
-To start Mokapi with a specific configuration file, you can use the --provider-file-filename option in the command line. This tells Mokapi to load the specified configuration file when it starts.
+To start Mokapi with a specific configuration file, you can use the --provider-file-filename option in the command 
+line. This tells Mokapi to load the specified configuration file when it starts.
 
 ```bash
 mokapi --provider-file-filename ldap.yaml
@@ -42,6 +41,11 @@ mokapi --provider-file-filename ldap.yaml
 Mokapi allows you to configure your LDAP mock server using LDIF files. It supports a wide range of LDIF operations, 
 such as adding new entries, modifying attributes, and even deleting attributes. This flexibility makes it 
 easy to simulate real-world LDAP scenarios and test different interactions with your server.
+
+``` box=info
+Mokapi does not include predefined LDAP entries except for a simple Root DSE and a basic schema. By default, Mokapi’s 
+Root DSE includes the namingContexts 'dc=mokapi,dc=io'
+```
 
 In your configuration file, you can reference multiple LDIF files. Mokapi will continuously monitor these files and 
 automatically update the LDAP server whenever a change is detected. This dynamic reloading of LDIF files helps streamline 

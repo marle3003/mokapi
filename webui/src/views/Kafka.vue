@@ -41,6 +41,9 @@ useMeta(title, description, "https://mokapi.io/kafka")
         <div class="row hero-title">
           <div class="col-12 col-lg-6 px-0">
             <h1>Mock and Validate Kafka Messages with Ease</h1>
+            <div class="mb-3">
+              <span class="badge">Kafka</span>
+            </div>
             <p class="description">Test and develop Kafka-based applications faster with Mokapi's powerful mocking and validation tools.</p>
             <p class="d-none d-md-block">
               <router-link :to="{ path: '/docs/guides' }">
@@ -112,7 +115,7 @@ useMeta(title, description, "https://mokapi.io/kafka")
     <section>
       <div class="container">
         <h2>Use Cases</h2>
-    <div class="row row-cols-1 row-cols-md-3 g-4">
+      <div class="row row-cols-1 row-cols-md-3 g-4">
         <div class="col">
           <div class="card h-100 position-relative">
               <div class="card-body">
