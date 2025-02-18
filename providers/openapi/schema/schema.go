@@ -347,7 +347,7 @@ func (e *encoder) encode(r *Ref) ([]byte, error) {
 	b.WriteRune('{')
 
 	if r.Ref != "" {
-		b.Write([]byte(fmt.Sprintf(`"ref":"%v"`, r.Ref)))
+		b.Write([]byte(fmt.Sprintf(`"$ref":"%v"`, r.Ref)))
 
 		// loop protection, only return reference
 		if _, ok := e.refs[r.Ref]; ok {

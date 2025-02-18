@@ -116,7 +116,7 @@ useMeta(title, description, "https://mokapi.io/ldap")
               <div class="card-body">
                 <h3 class="card-title align-middle"><i class="bi bi-check2-circle me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Use LDIF to build your directory</span></h3>
                 <p class="card-text pb-4">Easily import LDIF files to create a set of users in your mock LDAP server, streamlining testing with preconfigured data.</p>
-                <a href="docs/guides/ldap" class="card-link position-absolute" style="bottom: 15px;">Try No</a>
+                <a href="docs/guides/ldap/quick-start" class="card-link position-absolute" style="bottom: 15px;">Try Now</a>
               </div>
           </div>
         </div>

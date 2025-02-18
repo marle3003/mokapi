@@ -29,6 +29,8 @@ func (e *encoder) encode(r *Schema) ([]byte, error) {
 	if r.Ref != "" {
 		// loop protection, only return reference
 		if _, ok := e.refs[r.Ref]; ok {
+			b.Write([]byte(fmt.Sprintf(`"$ref":"%v"`, r.Ref)))
+
 			b.WriteRune('}')
 			return b.Bytes(), nil
 		}
@@ -72,6 +74,8 @@ func (e *encoder) encode(r *Schema) ([]byte, error) {
 				}
 				fields.WriteRune('}')
 				bVal = fields.Bytes()
+			case *Schema:
+				bVal, err = e.encode(val)
 			default:
 				bVal, err = json.Marshal(val)
 			}
