@@ -61,8 +61,8 @@ function isExpanded(item: DocEntry | string) {
 </script>
 
 <template>
-    <nav class="p-4 ps-2">
-    <span v-if="root && root.items" class="px-3">{{ title }}</span>
+    <nav class="p-4 ps-2 pt-0">
+    <span v-if="root && root.items" class="nav-title px-3">{{ title }}</span>
     <hr class="m-2" />
     <ul class="nav nav-pills root flex-column mb-auto px-3" v-if="root && root.items">
         <li class="nav-item" v-for="(level1, k1) of root.items">
@@ -130,11 +130,13 @@ function isExpanded(item: DocEntry | string) {
   border-bottom-width: 1px;
 }
 nav {
-  font-size: 1rem;
   line-height: 1.5;
 }
 .nav, .nav .btn {
-  font-size: 0.95rem;
+  font-size: var(--bs-nav-link-font-size)
+}
+.nav-title {
+  font-size: var(--bs-nav-link-font-size)
 }
 
 .nav-item a, .nav-item .chapter > div {
@@ -152,8 +154,9 @@ nav {
 }
 
 @media only screen and (max-width: 768px)  {
-  .nav {
-    font-size: 1.7rem;
+  .nav a {
+    padding-top: 10px;
+    padding-bottom: 10px;
   }
 }
 

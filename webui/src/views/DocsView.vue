@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { onMounted, ref, inject  } from 'vue';
-import { useRoute } from 'vue-router';
+import { onMounted, ref, inject, computed  } from 'vue';
+import { useRoute, type RouteParamsRawGeneric } from 'vue-router';
 import { useMarkdown } from '@/composables/markdown'
 import { useMeta } from '@/composables/meta'
 import PageNotFound from './PageNotFound.vue';
@@ -37,6 +37,38 @@ if (typeof file === 'string'){
   }
 }
 
+const breadcrumb = computed(() => {
+  const list = new Array()
+  let current: DocConfig | DocEntry = nav
+  const params: RouteParamsRawGeneric = {}
+  for (const [index, name] of levels.entries()) {
+    if (index === 0) {
+      current = (<DocConfig>current)[name]
+    }
+    else  {
+      const e: DocEntry | string = (<DocEntry>current).items![name]
+      if (typeof e === 'string') {
+        list.push({ label: name, isLast: false })
+        break
+      } else {
+        current = e
+      }
+    }
+
+    params['level'+(index+1)] = formatParam(name)
+    const item: { label: string, params?: RouteParamsRawGeneric, isLast: boolean, class?: string } = { 
+      label: name, 
+      isLast: index == levels.length - 1
+    }
+    
+    if (index === 0|| (current && current.index)) {
+      item.params = params
+    }
+    list.push(item)
+  }
+  return list
+})
+
 const title = ref<string>('')
 onMounted(() => {
   setTimeout(() => {
@@ -58,7 +90,7 @@ onMounted(() => {
       }
     }
   })
-  title.value = (metadata.title || levels[3] || levels[2] || levels[1] || levels[0]) + ' | Mokapi ' + levels[0]
+  title.value = getTitle() + ' | Mokapi ' + levels[0]
   useMeta(title.value, metadata.description, getCanonicalUrl(levels))
   dialog.value = new Modal('#imageDialog', {})
 })
@@ -87,6 +119,12 @@ function showImage(target: EventTarget | null) {
 function hasTouchSupport() {
   return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 }
+function getTitle() {
+  return metadata.title || levels[3] || levels[2] || levels[1] || levels[0]
+}
+function formatParam(label: any): string {
+  return label.toString().toLowerCase().split(' ').join('-').split('/').join('-')
+}
 </script>
 
 <template>
@@ -104,6 +142,14 @@ function hasTouchSupport() {
           <DocNav :config="nav" :levels="levels" :title="levels[0]"/>
         </div>
         <div style="flex: 1;max-width:50em;margin-bottom: 3rem;">
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb flex-nowrap">
+              <li class="breadcrumb-item text-truncate" v-for="item of breadcrumb" :class="item.class + (item.isLast ? 'active' : '')">
+                <router-link v-if="item.params && !item.isLast" class="breadcrumb-item" :to="{ name: 'docs', params: item.params }">{{ item.label }}</router-link>
+                <span v-else class="text-truncate" :class="item.class">{{ item.label }}</span>
+              </li>
+            </ol>
+          </nav>
           <div v-if="content" v-html="content" class="content" @click="showImage($event.target)"></div>
           <div v-else-if="component" class="content"><component :is="component" /></div>
           <page-not-found v-else />
@@ -176,10 +222,14 @@ function hasTouchSupport() {
   padding-top: 0;
   overflow-y: scroll;
 }
+.breadcrumb {
+  padding-top: 2rem;
+  margin-left: 1.2rem;
+  margin-right: 1.2rem;
+}
 .content {
   margin-left: 1.2rem;
   margin-right: 1.2rem;
-  padding-top: 2rem;
   line-height: 1.75;
   font-size: 1rem;
 }
