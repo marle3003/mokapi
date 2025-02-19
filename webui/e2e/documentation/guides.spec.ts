@@ -62,7 +62,7 @@ test('Visit Guides', async ({ page, home }) => {
         })
 
         await test.step('navigation is open', async () => {
-            await expect(page.getByRole('link', { name: 'HTTP', exact: true })).not.toHaveCSS('color', config.colorLinkActive)
+            await expect(page.getByRole('navigation', { name: 'sidebar' }).getByRole('link', { name: 'HTTP', exact: true })).not.toHaveCSS('color', config.colorLinkActive)
             const link = page.getByRole('link', { name: 'Quick Start' })
             await expect(link).toBeVisible()
             await expect(link).toHaveCSS('color', config.colorLinkActive)
