@@ -31,7 +31,7 @@ Reads the entire contents of an existing file.
 
 ## Example Reading JSON File
 
-``` box=tip url=[See Modules](../modules.md)
+``` box=tip url=[See Modules](/docs/javascript-api/modules.md)
 JSON files can also be imported directly.
 ```
 

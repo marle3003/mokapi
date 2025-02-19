@@ -73,7 +73,7 @@ const Server = require('./server');
       await crawl(u)
       } catch (err) {
         if (err.message && err.message.startsWith('page ')) { 
-          throw new Error(`crawl link on page ${u.href} failed: ${err}`)
+          throw new Error(`crawl link on page ${url} failed: ${err}`)
         }
         throw err
       }
