@@ -1,0 +1,35 @@
+openapi: 3.1.0
+info:
+  title: Secure API
+  version: 1.0.0
+paths:
+  /protected/apikey:
+    get:
+      summary: Protected with API Key
+      security:
+        - apiKeyAuth: [] # use the same name as under securitySchemes
+      responses:
+        "204":
+          description: Successful response for API Key authentication
+        "401":
+          description: Unauthorized
+  /protected/bearer:
+    get:
+      summary: Protected with Bearer Token
+      security:
+        - bearerAuth: [] # use the same name as under securitySchemes
+      responses:
+        "204":
+          description: Successful response for Bearer authentication
+        "401":
+          description: Unauthorized
+components:
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: header
+      name: API-Key
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

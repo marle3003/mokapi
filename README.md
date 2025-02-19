@@ -14,7 +14,7 @@
 </p>
 <p align="center">
     <a href="https://github.com/marle3003/mokapi/releases">Download</a> ·
-    <a href="https://mokapi.io/docs/guides/get-started/welcome">Documentation</a>
+    <a href="https://mokapi.io/docs/guides/welcome">Documentation</a>
 </p>
 
 **Mokapi** is an open-source tool that allows Agile, DevOps and Continuous Deployment teams
@@ -71,7 +71,7 @@ curl http://localhost/api/v31/pet/2 -H 'Accept: application/json'
 
 ## Documentation
 
-- [Get Started](https://mokapi.io/docs/guides/get-started/welcome)
+- [Get Started](https://mokapi.io/docs/guides/welcome)
 - [HTTP](https://mokapi.io/docs/guides/http)
 - [Kafka](https://mokapi.io/docs/guides/kafka/overview)
 - [LDAP](https://mokapi.io/docs/guides/ldap/overview)
