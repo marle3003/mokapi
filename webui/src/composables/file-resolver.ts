@@ -6,6 +6,9 @@ export function useFileResolver() {
     
     function resolve(config: DocConfig, route: RouteLocationNormalizedLoaded) {
         let level1 = <string>route.params.level1
+        if (!level1) {
+            return { file: null, levels: [] }
+        }
         let file: DocEntry | string
         ({ name: level1, file} = select(config, level1))
         if (!file) {

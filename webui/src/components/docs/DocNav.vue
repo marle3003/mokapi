@@ -61,7 +61,7 @@ function isExpanded(item: DocEntry | string) {
 </script>
 
 <template>
-    <nav class="p-4 ps-2 pt-0" aria-label="sidebar">
+    <nav class="p-4 ps-2 pt-3 pt-md-0" aria-label="sidebar">
     <span v-if="root && root.items" class="nav-title px-3">{{ title }}</span>
     <hr class="m-2" />
     <ul class="nav nav-pills root flex-column mb-auto px-3" v-if="root && root.items">

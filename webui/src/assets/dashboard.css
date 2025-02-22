@@ -69,7 +69,7 @@
   width: 100%;
   position: fixed;
   top: 4rem;
-  z-index: 99;
+  z-index: 10;
 }
 .dashboard-tabs nav > div {
   border-bottom: 2px solid;
