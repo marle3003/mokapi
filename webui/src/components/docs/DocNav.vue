@@ -85,7 +85,8 @@ function isExpanded(item: DocEntry | string) {
                             
                             <div v-if="hasChildren(level2)" class="subchapter">
                               <div class="d-flex align-items-center justify-content-between">
-                                <button type="button" class="btn btn-link w-100 text-start" :class="isActive(k1, k2) ? 'child-active' : ''" data-bs-toggle="collapse" :data-bs-target="'#'+getId(k2)" :aria-expanded="isActive(k1, k2)" :aria-controls="getId(k2)">
+                                <router-link v-if="(<DocEntry>level2).index" class="nav-link" :class="levels[1] == k2 && levels.length == 2 ? 'active' : ''" :to="{ name: 'docs', params: {level2: formatParam(k1), level3: formatParam(k2)} }" :id="'btn'+getId(k2)">{{ k2 }}</router-link>
+                                <button v-else type="button" class="btn btn-link w-100 text-start" :class="isActive(k1, k2) ? 'child-active' : ''" data-bs-toggle="collapse" :data-bs-target="'#'+getId(k2)" :aria-expanded="isActive(k1, k2)" :aria-controls="getId(k2)">
                                     {{ k2 }}
                                 </button>
                                 <button type="button" class="btn btn-link" :class="isActive(k1, k2) ? 'child-active' : ''" data-bs-toggle="collapse" :data-bs-target="'#'+getId(k2)" :aria-expanded="isActive(k1, k2)" :aria-controls="getId(k2)">
@@ -96,7 +97,7 @@ function isExpanded(item: DocEntry | string) {
                             
                                 <div class="collapse" :class="isActive(k1, k2) ? 'show' : ''" :id="getId(k2)">
                                     <ul class="nav nav-pills flex-column mb-auto">
-                                        <li class="nav-item" v-for="(_, k3) of (<DocEntry>level2).items">
+                                        <li class="nav-item ps-3" v-for="(_, k3) of (<DocEntry>level2).items">
                                             <router-link v-if="k2 != k3" class="nav-link" :class="isActive(k1, k2, k3) ? 'active' : ''" :to="{ name: 'docs', params: {level2: formatParam(k1), level3: formatParam(k2), level4: formatParam(k3)} }">{{ k3 }}</router-link>
                                         </li>
                                     </ul>
@@ -139,7 +140,7 @@ nav {
   font-size: var(--bs-nav-link-font-size)
 }
 
-.nav-item a, .nav-item .chapter > div {
+.nav-item a, .subchapter .btn-link, .nav-item .chapter > div {
   padding-top: 7px;
   padding-bottom: 7px;
 }

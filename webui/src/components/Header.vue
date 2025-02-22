@@ -43,7 +43,7 @@ function showInHeader(item: any): Boolean{
   return typeof item !== 'string'
 }
 function formatParam(label: any): string {
-  return label.toString().toLowerCase().split(' ').join('-')
+  return label.toString().toLowerCase().split(' ').join('-').split('/').join('-')
 }
 function hasChildren(item: DocEntry | string) {
     if (typeof item === 'string') {
@@ -133,7 +133,8 @@ function showItem(name: string | number, item: DocConfig | DocEntry | string) {
 
                       <div v-if="hasChildren(level2)" class="subchapter">
                         <div class="d-flex align-items-center justify-content-between">
-                          <button type="button" class="btn btn-link w-100 text-start" :class="isActive(label, k2) ? 'child-active' : ''" data-bs-toggle="collapse" :data-bs-target="'#'+getId(k2)" :aria-expanded="isActive(label, k2)" :aria-controls="getId(k2)">
+                          <router-link v-if="(<DocEntry>level2).index" class="nav-link" :class="levels[1] == k2 && levels.length == 2 ? 'active' : ''" :to="{ name: 'docs', params: {level1: formatParam(label), level2: formatParam(k2)} }" :id="'btn'+getId(k2)">{{ k2 }}</router-link>
+                          <button v-else type="button" class="btn btn-link w-100 text-start" :class="isActive(label, k2) ? 'child-active' : ''" data-bs-toggle="collapse" :data-bs-target="'#'+getId(k2)" :aria-expanded="isActive(label, k2)" :aria-controls="getId(k2)">
                               {{ k2 }}
                           </button>
                           <button type="button" class="btn btn-link" :class="isActive(label, k2) ? 'child-active' : ''" data-bs-toggle="collapse" :data-bs-target="'#'+getId(k2)" :aria-expanded="isActive(label, k2)" :aria-controls="getId(k2)">
@@ -144,8 +145,30 @@ function showItem(name: string | number, item: DocConfig | DocEntry | string) {
                       
                           <div class="collapse" :class="isActive(label, k2) ? 'show' : ''" :id="getId(k2)">
                               <ul class="nav nav-pills flex-column mb-auto">
-                                  <li class="nav-item ps-3" v-for="(_, k3) of (<DocEntry>level2).items">
-                                      <router-link v-if="k2 != k3" class="nav-link" :class="isActive(label, k2, k3) ? 'active' : ''" :to="{ name: 'docs', params: {level1: formatParam(label), level2: formatParam(k2), level3: formatParam(k3)} }">{{ k3 }} - {{ label }} - {{ k2 }}</router-link>
+                                  <li class="nav-item ps-3" v-for="(level3, k3) of (<DocEntry>level2).items">
+
+                                    <div v-if="hasChildren(level3)" class="subchapter">
+                                      <div class="d-flex align-items-center justify-content-between">
+                                        <router-link v-if="(<DocEntry>level3).index" class="nav-link" :class="levels[2] == k3 && levels.length == 3 ? 'active' : ''" :to="{ name: 'docs', params: {level1: formatParam(label), level2: formatParam(k2), level3: formatParam(k3) } }" :id="'btn'+getId(k3)">{{ k3 }}</router-link>
+                                        <button v-else type="button" class="btn btn-link w-100 text-start" :class="isActive(label, k2, k3) ? 'child-active' : ''" data-bs-toggle="collapse" :data-bs-target="'#'+getId(k3)" :aria-expanded="isActive(label, k2, k3)" :aria-controls="getId(k3)">
+                                            {{ k3 }}
+                                        </button>
+                                        <button type="button" class="btn btn-link" :class="isActive(label, k2, k3) ? 'child-active' : ''" data-bs-toggle="collapse" :data-bs-target="'#'+getId(k3)" :aria-expanded="isActive(label, k2, k3)" :aria-controls="getId(k3)">
+                                            <i class="bi bi-caret-up-fill"></i> 
+                                            <i class="bi bi-caret-down-fill"></i> 
+                                        </button>
+                                      </div>
+                                    
+                                        <div class="collapse" :class="isActive(label, k2, k3) ? 'show' : ''" :id="getId(k3)">
+                                            <ul class="nav nav-pills flex-column mb-auto">
+                                                <li class="nav-item ps-3" v-for="(_, k4) of (<DocEntry>level3).items">
+                                                    <router-link v-if="k3 != k4" class="nav-link" :class="isActive(label, k2, k3, k4) ? 'active' : ''" :to="{ name: 'docs', params: {level1: formatParam(label), level2: formatParam(k2), level3: formatParam(k3), level4: formatParam(k4)} }">{{ k4 }}</router-link>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                      
+                                    <router-link v-if="k2 != k3 && !hasChildren(level3) && showItem(k3, level3)" class="nav-link" :class="isActive(label, k2, k3) ? 'active' : ''" :to="{ name: 'docs', params: {level1: formatParam(label), level2: formatParam(k2), level3: formatParam(k3)} }">{{ k3 }}</router-link>
                                   </li>
                               </ul>
                           </div>

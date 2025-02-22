@@ -82,8 +82,8 @@
           "sleep": "javascript-api/mokapi/sleep.md",
           "marshal": "javascript-api/mokapi/marshal.md",
           "EventHandler": {
+            "index": "javascript-api/mokapi/eventhandler/eventhandler.md",
             "items": {
-              "EventHandler": "javascript-api/mokapi/eventhandler/eventhandler.md",
               "EventArgs": "javascript-api/mokapi/eventhandler/eventargs.md",
               "HttpEventHandler": "javascript-api/mokapi/eventhandler/httpeventhandler.md",
               "HttpRequest": "javascript-api/mokapi/eventhandler/httprequest.md",
