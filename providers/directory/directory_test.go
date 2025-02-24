@@ -3,10 +3,10 @@ package directory_test
 import (
 	"context"
 	"github.com/stretchr/testify/require"
-	"mokapi/config/dynamic/directory"
 	"mokapi/engine/enginetest"
 	"mokapi/ldap"
 	"mokapi/ldap/ldaptest"
+	"mokapi/providers/directory"
 	"mokapi/sortedmap"
 	"testing"
 )

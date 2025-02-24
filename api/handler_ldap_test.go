@@ -2,10 +2,10 @@ package api
 
 import (
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/directory"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/engine/enginetest"
+	"mokapi/providers/directory"
 	"mokapi/runtime"
 	"mokapi/try"
 	"net/http"

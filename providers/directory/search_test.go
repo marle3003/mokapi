@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/directory"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/engine/enginetest"
 	"mokapi/ldap"
 	"mokapi/ldap/ldaptest"
+	"mokapi/providers/directory"
 	"mokapi/try"
 	"testing"
 )

@@ -2,10 +2,10 @@ package runtime
 
 import (
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/directory"
 	"mokapi/config/dynamic/mail"
 	"mokapi/engine/common"
 	"mokapi/providers/asyncapi3/kafka/store"
+	"mokapi/providers/directory"
 	"mokapi/providers/openapi"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
