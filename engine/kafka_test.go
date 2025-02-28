@@ -252,6 +252,8 @@ func TestKafkaClient_Produce(t *testing.T) {
 					"executing script test.js",
 					"kafka topic 'retry' not found. Retry in 200ms",
 					"kafka topic 'retry' not found. Retry in 800ms",
+					"removing topic 'bar' from 'foo'",
+					"removing topic 'foo' from 'foo'",
 				}, getMessages(hook))
 			},
 		},
