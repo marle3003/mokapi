@@ -50,6 +50,10 @@ func New(config static.GitProvider) *Provider {
 		}
 	}
 
+	if config.PullInterval == "" {
+		config.PullInterval = "3m"
+	}
+
 	var repos []*repository
 	for _, repoConfig := range repoConfigs {
 		path, err := os.MkdirTemp(config.TempDir, "mokapi_git_*")
@@ -275,7 +279,7 @@ func startPullInterval(r *repository, pool *safe.Pool) error {
 }
 
 func pull(r *repository) {
-	if r.repo == nil || r.config.PullInterval != "" {
+	if r.repo == nil {
 		return
 	}
 	err := r.repo.Fetch(&git.FetchOptions{RefSpecs: []config.RefSpec{"refs/*:refs/*", "HEAD:refs/heads/HEAD"}})

@@ -157,7 +157,7 @@ providers:
       - https://foo.bar/file2.yaml
 ```
 
-Polling interval for URL (default is 5s)
+Polling interval for URL (default is 3m)
 ```bash tab=CLI
 --providers-http-poll-interval 10s
 --providers-http-poll-interval 5m
@@ -240,7 +240,7 @@ providers:
     url: https://github.com/foo/foo.git
 ```
 
-Pulling interval for URL in seconds (default 5s)
+Pulling interval for URL in seconds (default 3m)
 ```bash tab=CLI
 --providers-git-pull-interval=10s
 ```
@@ -253,7 +253,7 @@ providers:
     pullInterval: 10s
 ```
 
-Pulling interval for URL in seconds (default 5s)
+Pulling interval for URL in seconds (default 3m)
 ```bash tab=CLI
 --providers-git-pul-interval=10s
 ```
@@ -266,17 +266,17 @@ providers:
     pullInterval: 10s
 ```
 
-Specifies the folder to checkout all GIT repositories
+Specifies the folder to check out all GIT repositories (default uses the default directory for temporary files)
 ```bash tab=CLI
---providers-git-pull-interval=10s
+--providers-git-temp-dir=/tempdir
 ```
 ```bash tab=Env
-MOKAPI_PROVIDERS_GIT_PULL_INTERVAL=10s
+MOKAPI_PROVIDERS_GIT_TEMP_DIR=/tempdir
 ```
 ```yaml tab=File (YAML)
 providers:
   git:
-    pullInterval: 10s
+    tempDir: /tempdir
 ```
 
 ## NPM Provider

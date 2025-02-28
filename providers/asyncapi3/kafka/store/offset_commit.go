@@ -20,6 +20,10 @@ func (s *Store) offsetCommit(rw kafka.ResponseWriter, req *kafka.Request) error 
 	for _, rt := range r.Topics {
 		log.Infof("kafa OffsetCommit: topic %v, client=%v", rt.Name, ctx.ClientId)
 		topic := s.Topic(rt.Name)
+		if topic == nil {
+			log.Errorf("kafka OffsetCommit: unknown topic %v, client=%v", rt.Name, ctx.ClientId)
+		}
+
 		resTopic := offsetCommit.ResponseTopic{
 			Name:       rt.Name,
 			Partitions: make([]offsetCommit.ResponsePartition, 0, len(rt.Partitions)),
@@ -30,7 +34,6 @@ func (s *Store) offsetCommit(rw kafka.ResponseWriter, req *kafka.Request) error 
 			}
 
 			if topic == nil {
-				log.Errorf("kafka OffsetCommit: unknown topic %v, client=%v", topic, ctx.ClientId)
 				resPartition.ErrorCode = kafka.UnknownTopicOrPartition
 			} else {
 				p := topic.Partition(int(rp.Index))

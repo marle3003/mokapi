@@ -87,7 +87,8 @@ func TestProvider_Start(t *testing.T) {
 				}))
 
 				cfg := static.HttpProvider{
-					Urls: []string{server.URL},
+					Urls:         []string{server.URL},
+					PollInterval: "3s",
 				}
 
 				return cfg, server
