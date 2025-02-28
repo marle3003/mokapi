@@ -5,7 +5,7 @@ description: ScheduledEventArgs is an object used by every and cron function.
 # ScheduledEventArgs
 
 ScheduledEventArgs is an object used by [every](/docs/javascript-api/mokapi/every.md) and
-[cron](/docs/javascript-api/mokapi/every.md) function.
+[cron](/docs/javascript-api/mokapi/cron.md) function.
 
 | Name                  | Type    | Description                                                                                                                     |
 |-----------------------|---------|---------------------------------------------------------------------------------------------------------------------------------|

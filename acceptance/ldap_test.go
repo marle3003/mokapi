@@ -2,9 +2,9 @@ package acceptance
 
 import (
 	"github.com/stretchr/testify/require"
-	"mokapi/config/dynamic/directory"
 	"mokapi/config/static"
 	"mokapi/ldap"
+	"mokapi/providers/directory"
 	"mokapi/runtime/events"
 	"mokapi/runtime/metrics"
 	"time"

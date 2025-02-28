@@ -2,7 +2,7 @@ package directory_test
 
 import (
 	"github.com/stretchr/testify/require"
-	"mokapi/config/dynamic/directory"
+	"mokapi/providers/directory"
 	"mokapi/sortedmap"
 	"testing"
 )

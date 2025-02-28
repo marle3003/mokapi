@@ -12,7 +12,6 @@ import DocNav from '@/components/docs/DocNav.vue';
 const files = inject<Record<string, string>>('files')!
 
 const nav = inject<DocConfig>('nav')!
-const openSidebar = ref(false);
 const dialog = ref<Modal>()
 const imageUrl = ref<string>()
 const imageDescription = ref<string>()
@@ -48,7 +47,7 @@ const breadcrumb = computed(() => {
     else  {
       const e: DocEntry | string = (<DocEntry>current).items![name]
       if (typeof e === 'string') {
-        list.push({ label: name, isLast: false })
+        list.push({ label: name, isLast: true })
         break
       } else {
         current = e
@@ -58,7 +57,7 @@ const breadcrumb = computed(() => {
     params['level'+(index+1)] = formatParam(name)
     const item: { label: string, params?: RouteParamsRawGeneric, isLast: boolean, class?: string } = { 
       label: name, 
-      isLast: index == levels.length - 1
+      isLast: false
     }
     
     if (index === 0|| (current && current.index)) {
@@ -69,7 +68,6 @@ const breadcrumb = computed(() => {
   return list
 })
 
-const title = ref<string>('')
 onMounted(() => {
   setTimeout(() => {
     for (var pre of document.querySelectorAll('pre')) {
@@ -82,21 +80,10 @@ onMounted(() => {
       })
     }
   }, 1000)
-  document.addEventListener("click", function (event) {
-    if (event.target instanceof Element){
-      const target = event.target as Element
-      if (!target.closest("#sidebarToggler") && document.getElementById("sidebar")?.classList.contains("open")) {
-          openSidebar.value = false
-      }
-    }
-  })
-  title.value = getTitle() + ' | Mokapi ' + levels[0]
-  useMeta(title.value, metadata.description, getCanonicalUrl(levels))
+  const title = (metadata.title || levels[3] || levels[2] || levels[1] || levels[0]) + ' | Mokapi ' + levels[0]
+  useMeta(title, metadata.description, getCanonicalUrl(levels))
   dialog.value = new Modal('#imageDialog', {})
 })
-function toggleSidebar() {
-  openSidebar.value = !openSidebar.value
-}
 function toUrlPath(s: string): string {
   return s.replaceAll(/[\s\/]/g, '-').replace('&', '%26')
 }
@@ -119,9 +106,6 @@ function showImage(target: EventTarget | null) {
 function hasTouchSupport() {
   return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 }
-function getTitle() {
-  return metadata.title || levels[3] || levels[2] || levels[1] || levels[0]
-}
 function formatParam(label: any): string {
   return label.toString().toLowerCase().split(' ').join('-').split('/').join('-')
 }
@@ -130,23 +114,16 @@ function formatParam(label: any): string {
 <template>
   <main class="d-flex">
     <div style="width: 100%; height: 100%;display: flex;flex-direction: column;">
-      <div class="subheader d-flex d-md-none">
-        <button @click="toggleSidebar" id="sidebarToggler" :class="openSidebar ? '' : 'collapsed'">
-          <i class="bi bi-list"></i> 
-          <i class="bi bi-x"></i>       
-        </button>
-        <span class="ms-2">{{ levels[3] || levels[2] || levels[1] || levels[0] }}</span>
-      </div>
       <div class="d-flex">
-        <div class="sidebar d-none d-md-block" :class="openSidebar ? 'open' : ''" id="sidebar">
+        <div class="sidebar d-none d-md-block">
           <DocNav :config="nav" :levels="levels" :title="levels[0]"/>
         </div>
         <div style="flex: 1;max-width:50em;margin-bottom: 3rem;">
           <nav aria-label="breadcrumb">
             <ol class="breadcrumb flex-nowrap">
-              <li class="breadcrumb-item text-truncate" v-for="item of breadcrumb" :class="item.class + (item.isLast ? 'active' : '')">
-                <router-link v-if="item.params && !item.isLast" class="breadcrumb-item" :to="{ name: 'docs', params: item.params }">{{ item.label }}</router-link>
-                <span v-else class="text-truncate" :class="item.class">{{ item.label }}</span>
+              <li class="breadcrumb-item text-truncate" v-for="item of breadcrumb" :class="item.isLast ? 'active' : ''">
+                <router-link v-if="item.params && !item.isLast" class="" :to="{ name: 'docs', params: item.params }">{{ item.label }}</router-link>
+                <template v-else class="" :class="item.class">{{ item.label }}</template>
               </li>
             </ol>
           </nav>
@@ -173,36 +150,6 @@ function formatParam(label: any): string {
 </template>
 
 <style>
-.subheader {
-  background-color: var(--color-background);
-  position:sticky;
-  top:4rem;
-  left: 0;
-  z-index:10;
-  width: 100%;
-  display: flex;
-  border-bottom: 1px solid;
-  border-top: 1px solid;
-  border-color: var(--color-datatable-border);
-  align-items: center;
-  font-weight: 700;
-}
-.subheader button {
-  background-color: var(--color-background);
-  border: 0;
-  color: var(--color-text);
-  font-size: 1.3rem;
-  opacity: 0.8;
-}
-.subheader button:not(.collapsed) .bi-list {
-  display: none;
-}
-.subheader button.collapsed .bi-x {
-  display: none;
-}
-.subheader span {
-  opacity: 0.8;
-}
 .sidebar {
   position: sticky;
   top: 4rem;
@@ -210,22 +157,11 @@ function formatParam(label: any): string {
   width: 270px;
   padding-top: 2rem;
 }
-.sidebar.open {
-  background-color: var(--color-background);
-  z-index: 100;
-  display: block !important;
-  position:fixed;
-  top: 102px;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  padding-top: 0;
-  overflow-y: scroll;
-}
 .breadcrumb {
   padding-top: 2rem;
   margin-left: 1.2rem;
   margin-right: 1.2rem;
+  width: calc(100vw - 2rem);
 }
 .content {
   margin-left: 1.2rem;
