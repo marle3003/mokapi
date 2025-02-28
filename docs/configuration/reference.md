@@ -266,17 +266,17 @@ providers:
     pullInterval: 10s
 ```
 
-Specifies the folder to checkout all GIT repositories
+Specifies the folder to check out all GIT repositories (default uses the default directory for temporary files)
 ```bash tab=CLI
---providers-git-pull-interval=10s
+--providers-git-temp-dir=/tempdir
 ```
 ```bash tab=Env
-MOKAPI_PROVIDERS_GIT_PULL_INTERVAL=10s
+MOKAPI_PROVIDERS_GIT_TEMP_DIR=/tempdir
 ```
 ```yaml tab=File (YAML)
 providers:
   git:
-    pullInterval: 10s
+    tempDir: /tempdir
 ```
 
 ## NPM Provider
