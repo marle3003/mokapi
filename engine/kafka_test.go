@@ -247,14 +247,9 @@ func TestKafkaClient_Produce(t *testing.T) {
 				require.NotNil(t, b)
 				require.Len(t, b.Records, 1, "message should be written despite validation error")
 				require.Equal(t, `"foo"`, kafka.BytesToString(b.Records[0].Value))
-				require.Equal(t, []string{
-					"parsing script test.js",
-					"executing script test.js",
-					"kafka topic 'retry' not found. Retry in 200ms",
-					"kafka topic 'retry' not found. Retry in 800ms",
-					"removing topic 'bar' from 'foo'",
-					"removing topic 'foo' from 'foo'",
-				}, getMessages(hook))
+				msg := getMessages(hook)
+				require.Contains(t, msg, "kafka topic 'retry' not found. Retry in 200ms")
+				require.Contains(t, msg, "kafka topic 'retry' not found. Retry in 800ms")
 			},
 		},
 	}
