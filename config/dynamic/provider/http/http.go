@@ -98,7 +98,7 @@ func (p *Provider) Start(ch chan dynamic.ConfigEvent, pool *safe.Pool) error {
 		p.files[u] = 0
 	}
 
-	interval := time.Second * 5
+	interval := time.Minute * 3
 	if len(p.config.PollInterval) > 0 {
 		interval, err = time.ParseDuration(p.config.PollInterval)
 		if err != nil {

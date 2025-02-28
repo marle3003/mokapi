@@ -157,7 +157,7 @@ providers:
       - https://foo.bar/file2.yaml
 ```
 
-Polling interval for URL (default is 5s)
+Polling interval for URL (default is 3m)
 ```bash tab=CLI
 --providers-http-poll-interval 10s
 --providers-http-poll-interval 5m
@@ -240,7 +240,7 @@ providers:
     url: https://github.com/foo/foo.git
 ```
 
-Pulling interval for URL in seconds (default 5s)
+Pulling interval for URL in seconds (default 3m)
 ```bash tab=CLI
 --providers-git-pull-interval=10s
 ```
@@ -253,7 +253,7 @@ providers:
     pullInterval: 10s
 ```
 
-Pulling interval for URL in seconds (default 5s)
+Pulling interval for URL in seconds (default 3m)
 ```bash tab=CLI
 --providers-git-pul-interval=10s
 ```
