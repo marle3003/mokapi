@@ -14,7 +14,10 @@ type MessageWriter interface {
 	WriteUID(uid uint32)
 	WriteInternalDate(date time.Time)
 	WriteRFC822Size(size int64)
+	WriteFlags(flags ...Flag)
 	WriteEnvelope(env *Envelope)
+	WriteBody(body map[string]string)
+	WriteBodyStructure(body BodyStructure)
 }
 
 type Envelope struct {
@@ -50,6 +53,16 @@ type Address struct {
 }
 
 type BodyStructure struct {
+	Type        string
+	Subtype     string
+	Params      map[string]string
+	Encoding    string
+	Size        uint32
+	MD5         *string
+	Disposition map[string]map[string]string
+	Language    *string
+	Location    *string
+	Parts       []BodyStructure
 }
 
 type fetchResponse struct {
@@ -72,11 +85,18 @@ func (m *message) WriteUID(uid uint32) {
 }
 
 func (m *message) WriteInternalDate(date time.Time) {
-	m.sb.WriteString(fmt.Sprintf(" INTERNALDATE \"%v\"", date.Format(DateTimeLayout)))
+	m.sb.WriteString(fmt.Sprintf(" INTERNALDATE "))
+	m.sb.WriteByte('"')
+	m.sb.WriteString(date.Format(DateTimeLayout))
+	m.sb.WriteByte('"')
 }
 
 func (m *message) WriteRFC822Size(size int64) {
 	m.sb.WriteString(fmt.Sprintf(" RFC822.SIZE %v", size))
+}
+
+func (m *message) WriteFlags(flags ...Flag) {
+	m.sb.WriteString(fmt.Sprintf(" FLAGS (%v)", joinFlags(flags)))
 }
 
 func (m *message) WriteEnvelope(env *Envelope) {
@@ -107,19 +127,28 @@ func (m *message) WriteEnvelope(env *Envelope) {
 		m.sb.WriteString(fmt.Sprintf(" \"%v\"", env.InReplyTo))
 	}
 	m.sb.WriteString(fmt.Sprintf(" \"%v\"", env.MessageId))
+
+	if len(env.InReplyTo) == 0 {
+		m.sb.WriteString(" NIL")
+	} else {
+		m.sb.WriteString(fmt.Sprintf(" \"%v\"", env.InReplyTo))
+	}
+
 	m.sb.WriteString(")")
 }
 
-func (m *message) WriteBody(body *FetchBody, values []string) {
+func (m *message) WriteBody(body map[string]string) {
 	m.sb.WriteString(" BODY[HEADER.FIELDS (")
 	var sb strings.Builder
-	for i, field := range body.HeaderFields {
+	i := 0
+	for k, v := range body {
 		if i > 0 {
 			m.sb.WriteString(" ")
 		}
-		m.sb.WriteString(field)
+		m.sb.WriteString(k)
 
-		sb.WriteString(fmt.Sprintf("%s=%s\r\n", field, values[i]))
+		sb.WriteString(fmt.Sprintf("%s\r\n", v))
+		i++
 	}
 	m.sb.WriteString(")]")
 	m.sb.WriteString(fmt.Sprintf(" {%v}\r\n", sb.Len()))
@@ -137,4 +166,60 @@ func (m *message) writeAddress(addrList []Address) {
 		m.sb.WriteString(s)
 	}
 	m.sb.WriteString(")")
+}
+
+func (m *message) WriteBodyStructure(b BodyStructure) {
+	m.sb.WriteString(" BODYSTRUCTURE (")
+
+	m.sb.WriteString(fmt.Sprintf("\"%v\" ", b.Type))
+	m.sb.WriteString(fmt.Sprintf("\"%v\" ", b.Subtype))
+	var params []string
+	for k, v := range b.Params {
+		params = append(params,
+			fmt.Sprintf("\"%v\"", k),
+			fmt.Sprintf("\"%v\"", v),
+		)
+	}
+	m.sb.WriteString("(")
+	m.sb.WriteString(strings.Join(params, " "))
+	m.sb.WriteString(") ")
+
+	m.sb.WriteString("NIL ") // body id
+	m.sb.WriteString("NIL ") // body description
+
+	m.sb.WriteString(fmt.Sprintf("\"%v\" ", b.Encoding))
+	m.sb.WriteString(fmt.Sprintf("%v ", b.Size))
+
+	m.sb.WriteString(toNilString(b.MD5) + " ")
+
+	if len(b.Disposition) > 0 {
+		var dispositions []string
+		for k, v := range b.Disposition {
+			var attr []string
+			for name, val := range v {
+				attr = append(attr, fmt.Sprintf("\"%v\"", name), fmt.Sprintf("\"%v\"", val))
+			}
+			dispositions = append(dispositions,
+				fmt.Sprintf("\"%v\"", k),
+				fmt.Sprintf("(%v)", strings.Join(attr, " ")),
+			)
+		}
+		m.sb.WriteString("(")
+		m.sb.WriteString(strings.Join(dispositions, " "))
+		m.sb.WriteString(") ")
+	} else {
+		m.sb.WriteString("NIL ")
+	}
+
+	m.sb.WriteString(toNilString(b.Language) + " ")
+	m.sb.WriteString(toNilString(b.Location))
+
+	m.sb.WriteString(") ")
+}
+
+func toNilString(s *string) string {
+	if s == nil {
+		return "NIL"
+	}
+	return fmt.Sprintf("\"%v\"", s)
 }

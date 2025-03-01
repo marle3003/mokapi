@@ -13,17 +13,20 @@ import (
 type newHandler func(t *testing.T) imap.Handler
 
 func TestServer_Fetch(t *testing.T) {
+	date, err := time.Parse(time.RFC3339, "2025-03-01T13:07:04+01:00")
+	require.NoError(t, err)
+
 	testcases := []struct {
 		name    string
 		handler newHandler
-		test    func(t *testing.T, c *imaptest.Client)
+		test    func(t *testing.T, c *imap.Client)
 	}{
 		{
 			name: "fetch UID",
 			handler: func(t *testing.T) imap.Handler {
 				h := &imaptest.Handler{
 					FetchFunc: func(request *imap.FetchRequest, response imap.FetchResponse, session map[string]interface{}) error {
-						require.True(t, request.Attributes.Has(imap.FetchUID), "has flag UID")
+						require.True(t, request.Options.UID, "UID is set")
 
 						msg := response.NewMessage(1)
 						msg.WriteUID(11)
@@ -32,63 +35,102 @@ func TestServer_Fetch(t *testing.T) {
 				}
 				return h
 			},
-			test: func(t *testing.T, c *imaptest.Client) {
+			test: func(t *testing.T, c *imap.Client) {
 				_, err := c.Dial()
 				require.NoError(t, err)
 				err = c.PlainAuth("", "bob", "password")
 				require.NoError(t, err)
-				lines, err := c.Send("FETCH 1 (UID)")
+				cmd, err := c.Fetch(1, imap.FetchOptions{UID: true})
 				require.NoError(t, err)
-				require.Equal(t, "* 1 FETCH (UID 11)", lines[0])
+				require.Equal(t, uint32(1), cmd.Messages[0].SeqNumber)
+				require.Equal(t, uint32(11), cmd.Messages[0].UID)
 			},
 		},
 		{
-			name: "fetch like macos mail",
+			name: "fetch FLAGS",
 			handler: func(t *testing.T) imap.Handler {
 				h := &imaptest.Handler{
 					FetchFunc: func(request *imap.FetchRequest, response imap.FetchResponse, session map[string]interface{}) error {
-						require.True(t, request.Attributes.Has(imap.FetchInternalDate), "has flag InternalDate")
-						require.True(t, request.Attributes.Has(imap.FetchUID), "has flag UID")
-						require.True(t, request.Attributes.Has(imap.FetchRFC822Size), "has flag RFC822Size")
-						require.True(t, request.Attributes.Has(imap.FetchFlags), "has flag FLAGS")
-						require.Equal(t, []string{
-							"date",
-							"subject",
-							"from",
-							"to",
-							"cc",
-							"message-id",
-							"in-reply-to",
-							"references",
-							"content-type",
-							"x-priority",
-							"x-uniform-type-identifier",
-							"x-universally-unique-identifier",
-							"list-id",
-							"list-unsubscribe",
-							"bimi-indicator",
-							"bimi-location",
-							"x-bimi-indicator-hash",
-							"authentication-results",
-							"dkim-signature",
-						}, request.Body.HeaderFields)
+						require.True(t, request.Options.Flags, "FLAGS is set")
 
 						msg := response.NewMessage(1)
-						msg.WriteUID(11)
-
+						msg.WriteFlags(imap.FlagSeen)
 						return nil
 					},
 				}
 				return h
 			},
-			test: func(t *testing.T, c *imaptest.Client) {
+			test: func(t *testing.T, c *imap.Client) {
 				_, err := c.Dial()
 				require.NoError(t, err)
 				err = c.PlainAuth("", "bob", "password")
 				require.NoError(t, err)
-				lines, err := c.Send("FETCH 1 (INTERNALDATE UID RFC822.SIZE FLAGS BODY.PEEK[HEADER.FIELDS (date subject from to cc message-id in-reply-to references content-type x-priority x-uniform-type-identifier x-universally-unique-identifier list-id list-unsubscribe bimi-indicator bimi-location x-bimi-indicator-hash authentication-results dkim-signature)]))")
+				cmd, err := c.Fetch(1, imap.FetchOptions{Flags: true})
 				require.NoError(t, err)
-				require.Equal(t, "* 1 FETCH (UID 11)", lines[0])
+				require.Equal(t, uint32(1), cmd.Messages[0].SeqNumber)
+				require.Equal(t, []imap.Flag{imap.FlagSeen}, cmd.Messages[0].Flags)
+			},
+		},
+		{
+			name: "fetch internal date",
+			handler: func(t *testing.T) imap.Handler {
+				h := &imaptest.Handler{
+					FetchFunc: func(request *imap.FetchRequest, response imap.FetchResponse, session map[string]interface{}) error {
+						require.True(t, request.Options.InternalDate, "internal date is set")
+
+						msg := response.NewMessage(1)
+						msg.WriteInternalDate(date)
+						return nil
+					},
+				}
+				return h
+			},
+			test: func(t *testing.T, c *imap.Client) {
+				_, err := c.Dial()
+				require.NoError(t, err)
+				err = c.PlainAuth("", "bob", "password")
+				require.NoError(t, err)
+				cmd, err := c.Fetch(1, imap.FetchOptions{InternalDate: true})
+				require.NoError(t, err)
+				require.Equal(t, uint32(1), cmd.Messages[0].SeqNumber)
+				require.Equal(t, date, cmd.Messages[0].InternalDate)
+			},
+		},
+		{
+			name: "fetch body structure",
+			handler: func(t *testing.T) imap.Handler {
+				h := &imaptest.Handler{
+					FetchFunc: func(request *imap.FetchRequest, response imap.FetchResponse, session map[string]interface{}) error {
+						require.True(t, request.Options.BodyStructure, "body structure is set")
+
+						msg := response.NewMessage(1)
+						msg.WriteBodyStructure(imap.BodyStructure{
+							Type:     "text",
+							Subtype:  "plain",
+							Params:   map[string]string{"CHARSET": "UTF-8"},
+							Encoding: "7BIT",
+							Size:     384,
+						})
+						return nil
+					},
+				}
+				return h
+			},
+			test: func(t *testing.T, c *imap.Client) {
+				_, err := c.Dial()
+				require.NoError(t, err)
+				err = c.PlainAuth("", "bob", "password")
+				require.NoError(t, err)
+				cmd, err := c.Fetch(1, imap.FetchOptions{BodyStructure: true})
+				require.NoError(t, err)
+				require.Equal(t, uint32(1), cmd.Messages[0].SeqNumber)
+				require.Equal(t, imap.BodyStructure{
+					Type:     "text",
+					Subtype:  "plain",
+					Params:   map[string]string{"CHARSET": "UTF-8"},
+					Encoding: "7BIT",
+					Size:     384,
+				}, cmd.Messages[0].BodyStructure)
 			},
 		},
 	}
@@ -106,7 +148,7 @@ func TestServer_Fetch(t *testing.T) {
 				require.ErrorIs(t, err, imap.ErrServerClosed)
 			}()
 
-			c := imaptest.NewClient(fmt.Sprintf("localhost:%v", p))
+			c := imap.NewClient(fmt.Sprintf("localhost:%v", p))
 
 			tc.test(t, c)
 		})
@@ -117,18 +159,18 @@ func TestServer_Fetch_Macros(t *testing.T) {
 	testcases := []struct {
 		name    string
 		handler newHandler
-		test    func(t *testing.T, c *imaptest.Client)
+		test    func(t *testing.T, c *imap.Client)
 	}{
 		{
 			name: "fetch one FAST",
 			handler: func(t *testing.T) imap.Handler {
 				h := &imaptest.Handler{
 					FetchFunc: func(request *imap.FetchRequest, response imap.FetchResponse, session map[string]interface{}) error {
-						require.Equal(t, 1, request.Sequence[0].Start)
-						require.Equal(t, 1, request.Sequence[0].End)
-						require.True(t, request.Attributes.Has(imap.FetchFlags), "has FetchFlags")
-						require.True(t, request.Attributes.Has(imap.FetchInternalDate), "has FetchInternalDate")
-						require.True(t, request.Attributes.Has(imap.FetchRFC822Size), "has FetchRFC822Size")
+						require.Equal(t, uint32(1), request.Sequence[0].Start)
+						require.Equal(t, uint32(1), request.Sequence[0].End)
+						require.True(t, request.Options.Flags, "flag is set")
+						require.True(t, request.Options.InternalDate, "internal date is set")
+						require.True(t, request.Options.RFC822Size, "RFC822Size is set")
 
 						date, err := time.Parse(time.RFC3339, "2023-03-16T13:07:04+01:00")
 						require.NoError(t, err)
@@ -140,7 +182,7 @@ func TestServer_Fetch_Macros(t *testing.T) {
 				}
 				return h
 			},
-			test: func(t *testing.T, c *imaptest.Client) {
+			test: func(t *testing.T, c *imap.Client) {
 				_, err := c.Dial()
 				require.NoError(t, err)
 				err = c.PlainAuth("", "bob", "password")
@@ -155,8 +197,8 @@ func TestServer_Fetch_Macros(t *testing.T) {
 			handler: func(t *testing.T) imap.Handler {
 				h := &imaptest.Handler{
 					FetchFunc: func(request *imap.FetchRequest, response imap.FetchResponse, session map[string]interface{}) error {
-						require.Equal(t, 1, request.Sequence[0].Start)
-						require.Equal(t, 2, request.Sequence[0].End)
+						require.Equal(t, uint32(1), request.Sequence[0].Start)
+						require.Equal(t, uint32(2), request.Sequence[0].End)
 
 						date, err := time.Parse(time.RFC3339, "2023-03-16T13:07:04+01:00")
 						require.NoError(t, err)
@@ -171,7 +213,7 @@ func TestServer_Fetch_Macros(t *testing.T) {
 				}
 				return h
 			},
-			test: func(t *testing.T, c *imaptest.Client) {
+			test: func(t *testing.T, c *imap.Client) {
 				_, err := c.Dial()
 				require.NoError(t, err)
 				err = c.PlainAuth("", "bob", "password")
@@ -187,10 +229,10 @@ func TestServer_Fetch_Macros(t *testing.T) {
 			handler: func(t *testing.T) imap.Handler {
 				h := &imaptest.Handler{
 					FetchFunc: func(request *imap.FetchRequest, response imap.FetchResponse, session map[string]interface{}) error {
-						require.True(t, request.Attributes.Has(imap.FetchFlags), "has FetchFlags")
-						require.True(t, request.Attributes.Has(imap.FetchInternalDate), "has FetchInternalDate")
-						require.True(t, request.Attributes.Has(imap.FetchRFC822Size), "has FetchRFC822Size")
-						require.True(t, request.Attributes.Has(imap.FetchEnvelope), "has FetchEnvelope")
+						require.True(t, request.Options.Flags, "flag is set")
+						require.True(t, request.Options.InternalDate, "internal date is set")
+						require.True(t, request.Options.RFC822Size, "RFC822Size is set")
+						require.True(t, request.Options.Envelope, "envelope is set")
 
 						date, err := time.Parse(time.RFC3339, "2023-03-16T13:07:04+01:00")
 						require.NoError(t, err)
@@ -217,7 +259,7 @@ func TestServer_Fetch_Macros(t *testing.T) {
 				}
 				return h
 			},
-			test: func(t *testing.T, c *imaptest.Client) {
+			test: func(t *testing.T, c *imap.Client) {
 				_, err := c.Dial()
 				require.NoError(t, err)
 				err = c.PlainAuth("", "bob", "password")
@@ -251,11 +293,11 @@ func TestServer_Fetch_Macros(t *testing.T) {
 			handler: func(t *testing.T) imap.Handler {
 				h := &imaptest.Handler{
 					FetchFunc: func(request *imap.FetchRequest, response imap.FetchResponse, session map[string]interface{}) error {
-						require.True(t, request.Attributes.Has(imap.FetchFlags), "has FetchFlags")
-						require.True(t, request.Attributes.Has(imap.FetchInternalDate), "has FetchInternalDate")
-						require.True(t, request.Attributes.Has(imap.FetchRFC822Size), "has FetchRFC822Size")
-						require.True(t, request.Attributes.Has(imap.FetchEnvelope), "has FetchEnvelope")
-						require.True(t, request.Attributes.Has(imap.FetchBodyStructure), "has FetchBodyStructure")
+						require.True(t, request.Options.Flags, "flag is set")
+						require.True(t, request.Options.InternalDate, "internal date is set")
+						require.True(t, request.Options.RFC822Size, "RFC822Size is set")
+						require.True(t, request.Options.Envelope, "envelope is set")
+						require.True(t, request.Options.BodyStructure, "body structure is set")
 
 						date, err := time.Parse(time.RFC3339, "2023-03-16T13:07:04+01:00")
 						require.NoError(t, err)
@@ -282,7 +324,7 @@ func TestServer_Fetch_Macros(t *testing.T) {
 				}
 				return h
 			},
-			test: func(t *testing.T, c *imaptest.Client) {
+			test: func(t *testing.T, c *imap.Client) {
 				_, err := c.Dial()
 				require.NoError(t, err)
 				err = c.PlainAuth("", "bob", "password")
@@ -307,66 +349,7 @@ func TestServer_Fetch_Macros(t *testing.T) {
 				require.ErrorIs(t, err, imap.ErrServerClosed)
 			}()
 
-			c := imaptest.NewClient(fmt.Sprintf("localhost:%v", p))
-
-			tc.test(t, c)
-		})
-	}
-}
-
-func TestServer_Fetch_Body(t *testing.T) {
-	testcases := []struct {
-		name    string
-		handler newHandler
-		test    func(t *testing.T, c *imaptest.Client)
-	}{
-		{
-			name: "fetch one FAST",
-			handler: func(t *testing.T) imap.Handler {
-				h := &imaptest.Handler{
-					FetchFunc: func(request *imap.FetchRequest, response imap.FetchResponse, session map[string]interface{}) error {
-						require.Equal(t, 1, request.Sequence[0].Start)
-						require.Equal(t, 1, request.Sequence[0].End)
-						require.True(t, request.Attributes.Has(imap.FetchFlags), "has FetchFlags")
-						require.True(t, request.Attributes.Has(imap.FetchInternalDate), "has FetchInternalDate")
-						require.True(t, request.Attributes.Has(imap.FetchRFC822Size), "has FetchRFC822Size")
-
-						date, err := time.Parse(time.RFC3339, "2023-03-16T13:07:04+01:00")
-						require.NoError(t, err)
-						msg := response.NewMessage(1)
-						msg.WriteInternalDate(date)
-						msg.WriteRFC822Size(43078)
-						return nil
-					},
-				}
-				return h
-			},
-			test: func(t *testing.T, c *imaptest.Client) {
-				_, err := c.Dial()
-				require.NoError(t, err)
-				err = c.PlainAuth("", "bob", "password")
-				require.NoError(t, err)
-				lines, err := c.Send("FETCH 1 FAST")
-				require.NoError(t, err)
-				require.Equal(t, "* 1 FETCH (INTERNALDATE \"16-Mar-2023 13:07:04 +0100\" RFC822.SIZE 43078)", lines[0])
-			},
-		},
-	}
-	for _, tc := range testcases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			p := try.GetFreePort()
-			s := &imap.Server{
-				Addr:    fmt.Sprintf(":%v", p),
-				Handler: tc.handler(t),
-			}
-			defer s.Close()
-			go func() {
-				err := s.ListenAndServe()
-				require.ErrorIs(t, err, imap.ErrServerClosed)
-			}()
-
-			c := imaptest.NewClient(fmt.Sprintf("localhost:%v", p))
+			c := imap.NewClient(fmt.Sprintf("localhost:%v", p))
 
 			tc.test(t, c)
 		})

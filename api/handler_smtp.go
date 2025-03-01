@@ -30,9 +30,13 @@ type mailInfo struct {
 }
 
 type mailbox struct {
-	Name     string     `json:"name"`
-	Username string     `json:"username,omitempty"`
-	Password string     `json:"password,omitempty"`
+	Name     string            `json:"name"`
+	Username string            `json:"username,omitempty"`
+	Password string            `json:"password,omitempty"`
+	Folders  map[string]folder `json:"folders,omitempty"`
+}
+
+type folder struct {
 	Messages []*message `json:"mails,omitempty"`
 }
 
@@ -225,8 +229,15 @@ func (h *handler) getMailbox(w http.ResponseWriter, r *http.Request, service, na
 		Password: mb.Password,
 	}
 
-	for _, m := range mb.Messages {
-		result.Messages = append(result.Messages, toMessage(m.Message))
+	for fName, f := range mb.Folders {
+		var messages []*message
+		for _, m := range f.Messages {
+			messages = append(messages, toMessage(m.Message))
+		}
+		if result.Folders == nil {
+			result.Folders = make(map[string]folder)
+		}
+		result.Folders[fName] = folder{Messages: messages}
 	}
 
 	w.Header().Set("Content-Type", "application/json")

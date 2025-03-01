@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/require"
 	"mokapi/imap"
-	"mokapi/imap/imaptest"
 	"mokapi/try"
 	"testing"
 )
@@ -12,34 +11,33 @@ import (
 func TestServer(t *testing.T) {
 	testcases := []struct {
 		name string
-		test func(t *testing.T, c *imaptest.Client)
+		test func(t *testing.T, c *imap.Client)
 	}{
 		{
 			name: "expect greeting",
-			test: func(t *testing.T, c *imaptest.Client) {
-				g, err := c.Dial()
+			test: func(t *testing.T, c *imap.Client) {
+				caps, err := c.Dial()
 				require.NoError(t, err)
-				require.Equal(t, "* OK [CAPABILITY IMAP4rev1 SASL-IR AUTH=PLAIN] Mokapi Ready", g)
+				require.Equal(t, []string{"IMAP4rev1", "SASL-IR", "AUTH=PLAIN"}, caps)
 			},
 		},
 		{
 			name: "unknown command",
-			test: func(t *testing.T, c *imaptest.Client) {
+			test: func(t *testing.T, c *imap.Client) {
 				mustDial(t, c)
 				r, err := c.Send("foo")
 				require.NoError(t, err)
-				require.Equal(t, "A1 BAD Unknown command", r[0])
+				require.Equal(t, "A0001 BAD Unknown command FOO", r[0])
 			},
 		},
 		{
 			name: "capability",
-			test: func(t *testing.T, c *imaptest.Client) {
+			test: func(t *testing.T, c *imap.Client) {
 				_, err := c.Dial()
 				require.NoError(t, err)
-				lines, err := c.Send("CAPABILITY")
+				caps, err := c.Capability()
 				require.NoError(t, err)
-				require.Equal(t, "* CAPABILITY IMAP4rev1 SASL-IR AUTH=PLAIN", lines[0])
-				require.Equal(t, "A1 OK CAPABILITY completed", lines[1])
+				require.Equal(t, []string{"IMAP4rev1", "SASL-IR", "AUTH=PLAIN"}, caps)
 			},
 		},
 	}
@@ -54,14 +52,14 @@ func TestServer(t *testing.T) {
 				require.ErrorIs(t, err, imap.ErrServerClosed)
 			}()
 
-			c := imaptest.NewClient(fmt.Sprintf("localhost:%v", p))
+			c := imap.NewClient(fmt.Sprintf("localhost:%v", p))
 
 			tc.test(t, c)
 		})
 	}
 }
 
-func mustDial(t *testing.T, c *imaptest.Client) {
+func mustDial(t *testing.T, c *imap.Client) {
 	_, err := c.Dial()
 	require.NoError(t, err)
 }

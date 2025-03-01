@@ -8,7 +8,7 @@ import (
 	"mokapi/config/dynamic/mail"
 	"mokapi/config/static"
 	"mokapi/engine/enginetest"
-	"mokapi/imap/imaptest"
+	"mokapi/imap"
 	"mokapi/runtime"
 	"mokapi/server"
 	"mokapi/server/cert"
@@ -128,7 +128,7 @@ func TestSmtp(t *testing.T) {
 					},
 				})
 
-				c := imaptest.NewClient(fmt.Sprintf("smtp://localhost:%d", port))
+				c := imap.NewClient(fmt.Sprintf("smtp://localhost:%d", port))
 				_, err := c.Dial()
 				require.Error(t, err)
 			},

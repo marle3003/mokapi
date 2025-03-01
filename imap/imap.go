@@ -23,7 +23,7 @@ type Handler interface {
 	Login(username, password string, ctx context.Context) error
 	Select(mailbox string, ctx context.Context) (*Selected, error)
 	Unselect(ctx context.Context) error
-	List(ref, pattern string, ctx context.Context) ([]ListEntry, error)
+	List(ref, pattern string, flags []MailboxFlags, ctx context.Context) ([]ListEntry, error)
 	Fetch(req *FetchRequest, res FetchResponse, ctx context.Context) error
 }
 
@@ -79,4 +79,32 @@ const (
 	// UnMarked The mailbox does not contain any additional messages since the
 	// last time the mailbox was selected.
 	UnMarked MailboxFlags = "\\Unmarked"
+
+	HasNoChildren MailboxFlags = "\\HasNoChildren"
+
+	Subscribed MailboxFlags = "\\Subscribed"
+
+	Trash MailboxFlags = "\\Trash"
 )
+
+func joinMailboxFlags(flags []MailboxFlags) string {
+	var sb strings.Builder
+	for _, f := range flags {
+		if sb.Len() > 0 {
+			sb.WriteString(" ")
+		}
+		sb.WriteString(string(f))
+	}
+	return sb.String()
+}
+
+func joinFlags(flags []Flag) string {
+	var sb strings.Builder
+	for _, f := range flags {
+		if sb.Len() > 0 {
+			sb.WriteString(" ")
+		}
+		sb.WriteString(string(f))
+	}
+	return sb.String()
+}

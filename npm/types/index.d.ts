@@ -8,7 +8,8 @@ import "./global";
 import "./http";
 import "./mustache";
 import "./yaml";
-import "./encoding"
+import "./encoding";
+import "./mail";
 
 /**
  * Attaches an event handler for the given event.

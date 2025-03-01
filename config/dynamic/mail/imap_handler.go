@@ -3,6 +3,7 @@ package mail
 import (
 	"context"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"mokapi/imap"
 )
 
@@ -22,7 +23,13 @@ func (h *Handler) Select(mailbox string, ctx context.Context) (*imap.Selected, e
 	mb := c.Session["mailbox"].(*Mailbox)
 	c.Session["selected"] = mailbox
 
-	firstUnseen := mb.FirstUnseen()
+	mb.EnsureInbox()
+	f, ok := mb.Folders[mailbox]
+	if !ok {
+		return nil, fmt.Errorf("mailbox not found")
+	}
+
+	firstUnseen := f.FirstUnseen()
 	unseen := uint32(0)
 	if firstUnseen != nil {
 		unseen = firstUnseen.SeqNum
@@ -30,11 +37,11 @@ func (h *Handler) Select(mailbox string, ctx context.Context) (*imap.Selected, e
 
 	return &imap.Selected{
 		Flags:       []imap.Flag{imap.FlagAnswered, imap.FlagFlagged, imap.FlagDeleted, imap.FlagSeen, imap.FlagDraft},
-		NumMessages: uint32(len(mb.Messages)),
-		NumRecent:   uint32(mb.NumRecent()),
+		NumMessages: uint32(len(f.Messages)),
+		NumRecent:   uint32(f.NumRecent()),
 		FirstUnseen: unseen,
-		UIDValidity: mb.uidValidity,
-		UIDNext:     mb.messageSequenceNumber,
+		UIDValidity: f.uidValidity,
+		UIDNext:     f.uidNext,
 	}, nil
 }
 
@@ -44,7 +51,7 @@ func (h *Handler) Unselect(ctx context.Context) error {
 	return nil
 }
 
-func (h *Handler) List(ref, pattern string, ctx context.Context) ([]imap.ListEntry, error) {
+func (h *Handler) List(ref, pattern string, flags []imap.MailboxFlags, ctx context.Context) ([]imap.ListEntry, error) {
 	return []imap.ListEntry{
 		{
 			Flags: []imap.MailboxFlags{imap.UnMarked},
@@ -56,28 +63,41 @@ func (h *Handler) List(ref, pattern string, ctx context.Context) ([]imap.ListEnt
 func (h *Handler) Fetch(req *imap.FetchRequest, res imap.FetchResponse, ctx context.Context) error {
 	c := imap.ClientFromContext(ctx)
 	mb := c.Session["mailbox"].(*Mailbox)
-	m := mb.Messages[0]
+	selected := c.Session["selected"].(string)
+	f, ok := mb.Folders[selected]
+	if !ok {
+		return fmt.Errorf("mailbox not found")
+	}
+	m := f.Messages[0]
 
-	w := res.NewMessage(1)
-	w.WriteInternalDate(m.Time)
-	w.WriteRFC822Size(m.Size())
-	w.WriteUID(1)
-	var values []string
-	for _, field := range req.Body.HeaderFields {
-		switch field {
-		case "date":
-			values = append(values, m.Time.Format(imap.DateTimeLayout))
-		case "subject":
-			values = append(values, m.Subject)
-		//case "from":
-		//	values = append(values, fmt.Sprintf("%s <%s>", m.From))
-		case "to":
-		case "cc":
-		case "message-id":
-		case "in-reply-to":
-		default:
-			continue
+	seqNum, ok := c.Session["sequence_number"].(uint32)
+	if !ok {
+		seqNum = uint32(1)
+		c.Session["sequence_number"] = seqNum
+	}
+
+	for _, msg := range f.Messages {
+		w := res.NewMessage(seqNum)
+		w.WriteInternalDate(msg.Time)
+		w.WriteRFC822Size(msg.Size())
+		w.WriteUID(msg.UId)
+		w.WriteFlags()
+
+		body := map[string]string{}
+		for _, field := range req.Body.HeaderFields {
+			switch field {
+			case "date":
+				body["date"] = m.Time.Format(imap.DateTimeLayout)
+			case "subject":
+				body["subject"] = m.Subject
+			case "from":
+
+			default:
+				log.Warnf("imap header field '%s' not supported", field)
+			}
 		}
+		w.WriteBody(body)
+
 	}
 
 	return nil

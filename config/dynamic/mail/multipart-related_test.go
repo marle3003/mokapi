@@ -20,7 +20,7 @@ func TestMultipartRelated(t *testing.T) {
 	err = netsmtp.SendMail(server.Addr, nil, "foo@foo.bar", []string{"bar@foo.bar"}, []byte(body))
 	require.NoError(t, err)
 
-	require.Len(t, s.Mailboxes["bar@foo.bar"].Messages, 1)
+	require.Len(t, s.Mailboxes["bar@foo.bar"].Folders["INBOX"].Messages, 1)
 }
 
 const body = `Mime-Version: 1.0

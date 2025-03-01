@@ -126,8 +126,8 @@ func (h *mailHandler) Unselect(ctx context.Context) error {
 	return h.next.Unselect(ctx)
 }
 
-func (h *mailHandler) List(ref, pattern string, ctx context.Context) ([]imap.ListEntry, error) {
-	return h.next.List(ref, pattern, ctx)
+func (h *mailHandler) List(ref, pattern string, flags []imap.MailboxFlags, ctx context.Context) ([]imap.ListEntry, error) {
+	return h.next.List(ref, pattern, flags, ctx)
 }
 
 func (h *mailHandler) Fetch(req *imap.FetchRequest, res imap.FetchResponse, ctx context.Context) error {

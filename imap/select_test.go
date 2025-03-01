@@ -13,7 +13,7 @@ func TestServer_Select(t *testing.T) {
 	testcases := []struct {
 		name    string
 		handler imap.Handler
-		test    func(t *testing.T, c *imaptest.Client)
+		test    func(t *testing.T, c *imap.Client)
 	}{
 		{
 			name: "select inbox",
@@ -29,20 +29,19 @@ func TestServer_Select(t *testing.T) {
 					}, nil
 				},
 			},
-			test: func(t *testing.T, c *imaptest.Client) {
+			test: func(t *testing.T, c *imap.Client) {
 				_, err := c.Dial()
 				require.NoError(t, err)
 				err = c.PlainAuth("", "bob", "password")
 				require.NoError(t, err)
-				lines, err := c.Send("SELECT INBOX")
+				selected, err := c.Select("INBOX")
 				require.NoError(t, err)
-				require.Equal(t, "* 172 EXISTS", lines[0])
-				require.Equal(t, "* 1 RECENT", lines[1])
-				require.Equal(t, "* OK [UNSEEN 12] Message 12 is first unseen", lines[2])
-				require.Equal(t, "* OK [UIDVALIDITY 3857529045] UIDs valid", lines[3])
-				require.Equal(t, "* OK [UIDNEXT 4392] Predicted next UID", lines[4])
-				require.Equal(t, "* FLAGS (\\Answered \\Flagged \\Deleted \\Seen \\Draft)", lines[5])
-				require.Equal(t, "A2 OK [READ-WRITE] SELECT completed", lines[6])
+				require.Equal(t, uint32(172), selected.NumMessages)
+				require.Equal(t, uint32(1), selected.NumRecent)
+				require.Equal(t, []imap.Flag{imap.FlagAnswered, imap.FlagFlagged, imap.FlagDeleted, imap.FlagSeen, imap.FlagDraft}, selected.Flags)
+				require.Equal(t, uint32(12), selected.FirstUnseen)
+				require.Equal(t, uint32(3857529045), selected.UIDValidity)
+				require.Equal(t, uint32(4392), selected.UIDNext)
 			},
 		},
 		{
@@ -62,16 +61,15 @@ func TestServer_Select(t *testing.T) {
 					return nil
 				},
 			},
-			test: func(t *testing.T, c *imaptest.Client) {
+			test: func(t *testing.T, c *imap.Client) {
 				_, err := c.Dial()
 				require.NoError(t, err)
 				err = c.PlainAuth("", "bob", "password")
 				require.NoError(t, err)
-				_, err = c.Send("SELECT INBOX")
+				_, err = c.Select("INBOX")
 				require.NoError(t, err)
-				lines, err := c.Send("CLOSE")
+				err = c.Close()
 				require.NoError(t, err)
-				require.Equal(t, "A3 OK CLOSE completed", lines[0])
 			},
 		},
 		{
@@ -88,12 +86,11 @@ func TestServer_Select(t *testing.T) {
 					}, nil
 				},
 			},
-			test: func(t *testing.T, c *imaptest.Client) {
+			test: func(t *testing.T, c *imap.Client) {
 				_, err := c.Dial()
 				require.NoError(t, err)
-				lines, err := c.Send("SELECT INBOX")
-				require.NoError(t, err)
-				require.Equal(t, "A1 BAD Command is only valid in authenticated state", lines[0])
+				_, err = c.Select("INBOX")
+				require.EqualError(t, err, "imap status [BAD]: Command is only valid in authenticated state")
 			},
 		},
 		{
@@ -103,14 +100,13 @@ func TestServer_Select(t *testing.T) {
 					return nil, fmt.Errorf("no mailbox")
 				},
 			},
-			test: func(t *testing.T, c *imaptest.Client) {
+			test: func(t *testing.T, c *imap.Client) {
 				_, err := c.Dial()
 				require.NoError(t, err)
 				err = c.PlainAuth("", "bob", "password")
 				require.NoError(t, err)
-				lines, err := c.Send("SELECT INBOX")
-				require.NoError(t, err)
-				require.Equal(t, "A2 NO No such mailbox, can't access mailbox", lines[0])
+				_, err = c.Select("INBOX")
+				require.EqualError(t, err, "imap status [NO]: No such mailbox, can't access mailbox")
 			},
 		},
 		{
@@ -128,16 +124,15 @@ func TestServer_Select(t *testing.T) {
 					return nil
 				},
 			},
-			test: func(t *testing.T, c *imaptest.Client) {
+			test: func(t *testing.T, c *imap.Client) {
 				_, err := c.Dial()
 				require.NoError(t, err)
 				err = c.PlainAuth("", "bob", "password")
 				require.NoError(t, err)
-				lines, err := c.Send("SELECT INBOX")
+				_, err = c.Select("INBOX")
 				require.NoError(t, err)
-				lines, err = c.Send("SELECT FOO")
+				_, err = c.Select("FOO")
 				require.NoError(t, err)
-				require.Equal(t, "A3 OK [READ-WRITE] SELECT completed", lines[len(lines)-1])
 			},
 		},
 	}
@@ -155,7 +150,7 @@ func TestServer_Select(t *testing.T) {
 				require.ErrorIs(t, err, imap.ErrServerClosed)
 			}()
 
-			c := imaptest.NewClient(fmt.Sprintf("localhost:%v", p))
+			c := imap.NewClient(fmt.Sprintf("localhost:%v", p))
 
 			tc.test(t, c)
 		})

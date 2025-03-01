@@ -17,46 +17,57 @@ type fetchParser struct {
 	r *bufio.Reader
 }
 
-func parseFetch(s string) (*FetchRequest, error) {
-	switch s {
-	case "FAST":
-		return &FetchRequest{Attributes: FetchFlags | FetchInternalDate | FetchRFC822Size}, nil
-	case "ALL":
-		return &FetchRequest{Attributes: FetchFlags | FetchInternalDate | FetchRFC822Size | FetchEnvelope}, nil
-	case "FULL":
-		return &FetchRequest{Attributes: FetchFlags | FetchInternalDate | FetchRFC822Size | FetchEnvelope | FetchBodyStructure}, nil
+func parseFetch(d *Decoder) (*FetchRequest, error) {
+	r := &FetchRequest{}
+	var err error
+
+	r.Sequence, err = d.Sequence()
+	if err != nil {
+		return r, err
 	}
 
-	r := &FetchRequest{}
-	s = strings.Trim(s, " ")
-	p := fetchParser{r: bufio.NewReader(strings.NewReader(s))}
-
-	err := p.parseList(func() error {
-		name, err := p.consume(isFetchAttrNameChar)
+	if !d.SP().is("(") {
+		macro, err := d.String()
 		if err != nil {
-			return err
+			return nil, err
 		}
-		if len(name) == 0 {
-			return nil
+		switch macro {
+		case "FAST":
+			r.Options.Flags = true
+			r.Options.InternalDate = true
+			r.Options.RFC822Size = true
+		case "ALL":
+			r.Options.Flags = true
+			r.Options.InternalDate = true
+			r.Options.RFC822Size = true
+			r.Options.Envelope = true
+		case "FULL":
+			r.Options.Flags = true
+			r.Options.InternalDate = true
+			r.Options.RFC822Size = true
+			r.Options.Envelope = true
+			r.Options.BodyStructure = true
 		}
-		switch name {
-		case "UID":
-			r.Attributes = r.Attributes | FetchUID
-		case "INTERNALDATE":
-			r.Attributes = r.Attributes | FetchInternalDate
-		case "RFC822.SIZE":
-			r.Attributes = r.Attributes | FetchRFC822Size
-		case "FLAGS":
-			r.Attributes = r.Attributes | FetchFlags
-		case "BODY.PEEK":
-			fb, err := parseFetchBody(&p)
+	} else {
+		err = d.List(func() error {
+			var key string
+			key, err = d.String()
 			if err != nil {
 				return err
 			}
-			r.Body = fb
-		}
-		return nil
-	}, listTypeList)
+			switch strings.ToUpper(key) {
+			case "UID":
+				r.Options.UID = true
+			case "FLAGS":
+				r.Options.Flags = true
+			case "INTERNALDATE":
+				r.Options.InternalDate = true
+			case "BODYSTRUCTURE":
+				r.Options.BodyStructure = true
+			}
+			return nil
+		})
+	}
 
 	return r, err
 }
