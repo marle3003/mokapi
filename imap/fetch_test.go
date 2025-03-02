@@ -133,6 +133,39 @@ func TestServer_Fetch(t *testing.T) {
 				}, cmd.Messages[0].BodyStructure)
 			},
 		},
+		{
+			name: "fetch body peek with one header field",
+			handler: func(t *testing.T) imap.Handler {
+				h := &imaptest.Handler{
+					FetchFunc: func(request *imap.FetchRequest, response imap.FetchResponse, session map[string]interface{}) error {
+						require.NotNil(t, request.Options.Body, "body is set")
+
+						msg := response.NewMessage(1)
+						msg.WriteBody(map[string]string{"date": date.Format(imap.DateTimeLayout)})
+						return nil
+					},
+				}
+				return h
+			},
+			test: func(t *testing.T, c *imap.Client) {
+				_, err := c.Dial()
+				require.NoError(t, err)
+				err = c.PlainAuth("", "bob", "password")
+				require.NoError(t, err)
+				cmd, err := c.Fetch(1, imap.FetchOptions{
+					Body: []imap.FetchBodySection{
+						{
+							Type:   "header",
+							Fields: []string{"date"},
+							Peek:   true,
+						},
+					},
+				})
+				require.NoError(t, err)
+				require.Equal(t, uint32(1), cmd.Messages[0].SeqNumber)
+				require.Equal(t, " 1-Mar-2025 13:07:04 +0100\r\n", cmd.Messages[0].Body[0].Data)
+			},
+		},
 	}
 	for _, tc := range testcases {
 		tc := tc

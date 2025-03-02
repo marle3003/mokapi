@@ -13,6 +13,14 @@ type FetchOptions struct {
 	RFC822Size    bool
 	Envelope      bool
 	BodyStructure bool
+	Body          []FetchBodySection
+}
+
+type FetchBodySection struct {
+	Type   string
+	Fields []string
+	Parts  []int
+	Peek   bool
 }
 
 type SequenceSet []Sequence
@@ -88,11 +96,17 @@ type Message struct {
 	InternalDate  time.Time
 	Size          uint32
 	BodyStructure BodyStructure
+	Body          []FetchData
 }
 
 func (c *Client) Fetch(id int, options FetchOptions) (*FetchCommand, error) {
 	tag := c.nextTag()
-	err := c.tpc.PrintfLine("%s FETCH %v (%s)", tag, id, options.list())
+
+	e := &Encoder{}
+	e.Atom(tag).SP().Atom("FETCH").SP().Number(id)
+	options.write(e.SP())
+
+	err := e.WriteTo(c.tpc)
 	if err != nil {
 		return nil, err
 	}
@@ -160,6 +174,58 @@ func (c *Client) Fetch(id int, options FetchOptions) (*FetchCommand, error) {
 				msg.BodyStructure = b
 			case "RFC822Size":
 				msg.Size, err = d.SP().Number()
+			case "BODY":
+				body := FetchData{}
+				if err = d.expect("["); err != nil {
+					return err
+				}
+				key, err = d.String()
+				if err != nil {
+					return err
+				}
+				switch key {
+				case "HEADER.FIELDS":
+					body.Def.Type = "header"
+					err = d.SP().List(func() error {
+						var field string
+						field, err = d.String()
+						body.Def.Fields = append(body.Def.Fields, field)
+						return nil
+					})
+					if err != nil {
+						return err
+					}
+					if err = d.expect("]"); err != nil {
+						return err
+					}
+					if d.SP().is("{") {
+						_ = d.expect("{")
+						var size uint32
+						size, err = d.Number()
+						if err != nil {
+							return err
+						}
+						if err = d.expect("}"); err != nil {
+							return err
+						}
+						b := make([]byte, size)
+						_, err = c.tpc.R.Read(b)
+						if err != nil {
+							return err
+						}
+						body.Data = string(b)
+						d.msg, err = c.tpc.ReadLine()
+						if err != nil {
+							return err
+						}
+					} else {
+						body.Data, err = d.String()
+						if err != nil {
+							return err
+						}
+					}
+					msg.Body = append(msg.Body, body)
+				}
 			}
 
 			return err
@@ -173,27 +239,51 @@ func (c *Client) Fetch(id int, options FetchOptions) (*FetchCommand, error) {
 	}
 }
 
-func (o *FetchOptions) list() string {
-	var r []string
+func (o *FetchOptions) write(e *Encoder) {
+	e.BeginList()
 	if o.UID {
-		r = append(r, "UID")
+		e.ListItem("UID")
 	}
 	if o.Flags {
-		r = append(r, "FLAGS")
+		e.ListItem("FLAGS")
 	}
 	if o.InternalDate {
-		r = append(r, "INTERNALDATE")
+		e.ListItem("INTERNALDATE")
 	}
 	if o.BodyStructure {
-		r = append(r, "BODYSTRUCTURE")
+		e.ListItem("BODYSTRUCTURE")
 	}
 	if o.Envelope {
-		r = append(r, "ENVELOPE")
+		e.ListItem("ENVELOPE")
 	}
 	if o.RFC822Size {
-		r = append(r, "RFC822Size")
+		e.ListItem("RFC822Size")
 	}
-	return strings.Join(r, " ")
+	for _, body := range o.Body {
+		b := Encoder{}
+		b.Atom("BODY")
+		if body.Peek {
+			b.Atom(".PEEK")
+		}
+		b.Byte('[')
+		switch strings.ToLower(body.Type) {
+		case "header":
+			b.Atom("HEADER")
+			if len(body.Fields) > 0 {
+				b.Atom(".FIELDS").SP().BeginList()
+				for _, field := range body.Fields {
+					b.ListItem(field)
+				}
+				b.EndList()
+			}
+
+		}
+		b.Byte(']')
+
+		e.ListItem(b.String())
+	}
+
+	e.EndList()
 }
 
 func (b *BodyStructure) readPart(d *Decoder) error {

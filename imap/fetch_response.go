@@ -65,6 +65,11 @@ type BodyStructure struct {
 	Parts       []BodyStructure
 }
 
+type FetchData struct {
+	Def  FetchBodySection
+	Data string
+}
+
 type fetchResponse struct {
 	messages []*message
 }
@@ -151,7 +156,7 @@ func (m *message) WriteBody(body map[string]string) {
 		i++
 	}
 	m.sb.WriteString(")]")
-	m.sb.WriteString(fmt.Sprintf(" {%v}\r\n", sb.Len()))
+	m.sb.WriteString(fmt.Sprintf("{%v}\r\n", sb.Len()))
 	m.sb.WriteString(sb.String())
 }
 

@@ -64,12 +64,51 @@ func parseFetch(d *Decoder) (*FetchRequest, error) {
 				r.Options.InternalDate = true
 			case "BODYSTRUCTURE":
 				r.Options.BodyStructure = true
+			case "BODY.PEEK":
+				body := FetchBodySection{Peek: true}
+				err = body.read(d)
+				if err != nil {
+					return err
+				}
+				r.Options.Body = append(r.Options.Body, body)
+			case "BODY":
+				body := FetchBodySection{}
+				err = body.read(d)
+				if err != nil {
+					return err
+				}
+				r.Options.Body = append(r.Options.Body, body)
 			}
 			return nil
 		})
 	}
 
 	return r, err
+}
+
+func (b *FetchBodySection) read(d *Decoder) error {
+	var err error
+	if err = d.expect("["); err != nil {
+		return err
+	}
+	var typeName string
+	typeName, err = d.String()
+	switch strings.ToUpper(typeName) {
+	case "HEADER.FIELDS":
+		err = d.SP().List(func() error {
+			var field string
+			field, err = d.String()
+			b.Fields = append(b.Fields, field)
+			return err
+		})
+		if err != nil {
+			return err
+		}
+	}
+	if err = d.expect("]"); err != nil {
+		return err
+	}
+	return nil
 }
 
 func parseFetchBody(p *fetchParser) (*FetchBody, error) {

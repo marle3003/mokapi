@@ -64,6 +64,9 @@ func (d *Decoder) List(f func() error) error {
 		}
 
 		d.SP()
+		if d.err != nil {
+			return d.err
+		}
 	}
 }
 
@@ -275,7 +278,7 @@ func (d *Decoder) Error() error {
 
 func isAtom(b byte) bool {
 	switch b {
-	case '(', ')', '{', ' ', '%', '*', '"', '\\', ']':
+	case '(', ')', '{', '}', ' ', '%', '*', '"', '\\', '[', ']':
 		return false
 	default:
 		return !unicode.IsControl(rune(b))
