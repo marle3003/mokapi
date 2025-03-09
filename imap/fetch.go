@@ -201,37 +201,38 @@ func (c *Client) Fetch(set IdSet, options FetchOptions) (*FetchCommand, error) {
 					if err != nil {
 						return err
 					}
-					if err = d.expect("]"); err != nil {
+				}
+
+				if err = d.expect("]"); err != nil {
+					return err
+				}
+				if d.SP().is("{") {
+					_ = d.expect("{")
+					var size uint32
+					size, err = d.Number()
+					if err != nil {
 						return err
 					}
-					if d.SP().is("{") {
-						_ = d.expect("{")
-						var size uint32
-						size, err = d.Number()
-						if err != nil {
-							return err
-						}
-						if err = d.expect("}"); err != nil {
-							return err
-						}
-						b := make([]byte, size)
-						_, err = c.tpc.R.Read(b)
-						if err != nil {
-							return err
-						}
-						body.Data = string(b)
-						d.msg, err = c.tpc.ReadLine()
-						if err != nil {
-							return err
-						}
-					} else {
-						body.Data, err = d.String()
-						if err != nil {
-							return err
-						}
+					if err = d.expect("}"); err != nil {
+						return err
 					}
-					msg.Body = append(msg.Body, body)
+					b := make([]byte, size)
+					_, err = c.tpc.R.Read(b)
+					if err != nil {
+						return err
+					}
+					body.Data = string(b)
+					d.msg, err = c.tpc.ReadLine()
+					if err != nil {
+						return err
+					}
+				} else {
+					body.Data, err = d.String()
+					if err != nil {
+						return err
+					}
 				}
+				msg.Body = append(msg.Body, body)
 			}
 
 			return err

@@ -16,8 +16,7 @@ type MessageWriter interface {
 	WriteRFC822Size(size uint32)
 	WriteFlags(flags ...Flag)
 	WriteEnvelope(env *Envelope)
-	WriteBody(body map[string]string)
-	WriteBody2(section FetchBodySection) *BodyWriter
+	WriteBody(section FetchBodySection) *BodyWriter
 	WriteBodyStructure(body BodyStructure)
 }
 
@@ -143,28 +142,7 @@ func (m *message) WriteEnvelope(env *Envelope) {
 	m.sb.WriteString(")")
 }
 
-func (m *message) WriteBody(body map[string]string) {
-	m.sb.WriteString(" BODY[HEADER.FIELDS (")
-	var sb strings.Builder
-	i := 0
-	for k, v := range body {
-		if i > 0 {
-			m.sb.WriteString(" ")
-		}
-		m.sb.WriteString(k)
-
-		sb.WriteString(fmt.Sprintf("%s: %s\r\n", k, v))
-		i++
-	}
-	// field must end with a blank line
-	sb.WriteString("\r\n")
-
-	m.sb.WriteString(")]")
-	m.sb.WriteString(fmt.Sprintf(" {%v}\r\n", sb.Len()))
-	m.sb.WriteString(sb.String())
-}
-
-func (m *message) WriteBody2(section FetchBodySection) *BodyWriter {
+func (m *message) WriteBody(section FetchBodySection) *BodyWriter {
 	section.Peek = false
 	w := &BodyWriter{section: section, m: m}
 	return w

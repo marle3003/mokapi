@@ -12,6 +12,7 @@ type Handler struct {
 	UnselectFunc func(session map[string]interface{}) error
 	ListFunc     func(ref, pattern string, flags []imap.MailboxFlags, session map[string]interface{}) ([]imap.ListEntry, error)
 	FetchFunc    func(request *imap.FetchRequest, response imap.FetchResponse, session map[string]interface{}) error
+	StoreFunc    func(request *imap.StoreRequest, response imap.FetchResponse, session map[string]interface{}) error
 }
 
 func (h *Handler) Login(username, password string, _ context.Context) error {
@@ -52,6 +53,14 @@ func (h *Handler) Fetch(request *imap.FetchRequest, response imap.FetchResponse,
 		return h.FetchFunc(request, response, h.session)
 	}
 	panic("fetch not implemented")
+}
+
+func (h *Handler) Store(request *imap.StoreRequest, response imap.FetchResponse, _ context.Context) error {
+	if h.StoreFunc != nil {
+		h.ensureSession()
+		return h.StoreFunc(request, response, h.session)
+	}
+	panic("STORE not implemented")
 }
 
 func (h *Handler) ensureSession() {

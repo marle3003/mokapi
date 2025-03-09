@@ -194,8 +194,8 @@ func TestHandler_ServeSMTP(t *testing.T) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendData(t, h, ctx)
 				require.Equal(t, smtp.Ok, r.Result)
-				require.Contains(t, h.Store.Mailboxes, "bob@foo.bar")
-				box := h.Store.Mailboxes["bob@foo.bar"]
+				require.Contains(t, h.MailStore.Mailboxes, "bob@foo.bar")
+				box := h.MailStore.Mailboxes["bob@foo.bar"]
 				require.Equal(t, "bob@foo.bar", box.Name)
 				require.Len(t, box.Folders["INBOX"].Messages, 1)
 			},

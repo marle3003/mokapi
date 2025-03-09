@@ -28,7 +28,7 @@ func (m *Mail) HasFlag(flag imap.Flag) bool {
 }
 
 func (m *Mail) RemoveFlag(flag imap.Flag) {
-	slices.DeleteFunc(m.Flags, func(f imap.Flag) bool {
+	m.Flags = slices.DeleteFunc(m.Flags, func(f imap.Flag) bool {
 		return f == flag
 	})
 }

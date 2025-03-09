@@ -3,7 +3,6 @@ package mail
 import (
 	"context"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"mokapi/imap"
 	"strings"
 )
@@ -18,24 +17,29 @@ func (h *Handler) Fetch(req *imap.FetchRequest, res imap.FetchResponse, ctx cont
 	}
 
 	if req.Sequence.IsUid {
-		return collectMessagesByUid(req, res, f)
+		doMessagesByUid(&req.Sequence, f, func(m *Mail) {
+			w := res.NewMessage(m.UId)
+			writeMessage(m, req.Options, w)
+		})
+	} else {
+		doMessagesByMsn(&req.Sequence, f, func(msn int, m *Mail) {
+			w := res.NewMessage(uint32(msn))
+			writeMessage(m, req.Options, w)
+		})
 	}
-	return collectMessagesByMsn(req, res, f)
-}
-
-func collectMessagesByUid(req *imap.FetchRequest, res imap.FetchResponse, folder *Folder) error {
-	for _, msg := range folder.Messages {
-		if req.Sequence.Contains(msg.UId) {
-			w := res.NewMessage(msg.UId)
-			writeMessage(msg, req.Options, w)
-		}
-	}
-
 	return nil
 }
 
-func collectMessagesByMsn(req *imap.FetchRequest, res imap.FetchResponse, folder *Folder) error {
-	for _, r := range req.Sequence.Ranges {
+func doMessagesByUid(set *imap.IdSet, folder *Folder, action func(m *Mail)) {
+	for _, msg := range folder.Messages {
+		if set.Contains(msg.UId) {
+			action(msg)
+		}
+	}
+}
+
+func doMessagesByMsn(set *imap.IdSet, folder *Folder, action func(msn int, m *Mail)) {
+	for _, r := range set.Ranges {
 		start := 0
 		end := int(r.End.Value)
 		if r.Start.Value > 0 {
@@ -46,12 +50,9 @@ func collectMessagesByMsn(req *imap.FetchRequest, res imap.FetchResponse, folder
 		}
 
 		for i, msg := range folder.Messages[start:end] {
-			w := res.NewMessage(uint32(i + 1))
-			writeMessage(msg, req.Options, w)
+			action(i+1, msg)
 		}
 	}
-
-	return nil
 }
 
 func writeMessage(msg *Mail, opt imap.FetchOptions, w imap.MessageWriter) {
@@ -69,7 +70,7 @@ func writeMessage(msg *Mail, opt imap.FetchOptions, w imap.MessageWriter) {
 	}
 
 	for _, body := range opt.Body {
-		bw := w.WriteBody2(body)
+		bw := w.WriteBody(body)
 		if body.Type == "header" {
 			for _, field := range body.Fields {
 				switch strings.ToLower(field) {
@@ -90,7 +91,9 @@ func writeMessage(msg *Mail, opt imap.FetchOptions, w imap.MessageWriter) {
 				case "content-type":
 					bw.WriteHeader("content-type", msg.ContentType)
 				default:
-					log.Warnf("imap header field '%s' not supported", field)
+					if v, ok := msg.Headers[field]; ok {
+						bw.WriteHeader(field, v)
+					}
 				}
 			}
 		} else if body.Type == "text" {

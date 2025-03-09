@@ -19,7 +19,7 @@ type Mailbox struct {
 
 type Folder struct {
 	Name       string
-	Flags      []imap.Flag
+	Flags      []imap.MailboxFlags
 	Messages   []*Mail
 	Subscribed bool
 

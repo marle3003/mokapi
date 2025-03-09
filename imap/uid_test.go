@@ -23,6 +23,8 @@ func TestUid_Response(t *testing.T) {
 			},
 			handler: &imaptest.Handler{
 				FetchFunc: func(request *imap.FetchRequest, response imap.FetchResponse, session map[string]interface{}) error {
+					require.True(t, request.Sequence.IsUid)
+
 					msg := response.NewMessage(1403)
 					msg.WriteFlags(imap.FlagSeen)
 					return nil
@@ -43,7 +45,7 @@ func TestUid_Response(t *testing.T) {
 			handler: &imaptest.Handler{
 				FetchFunc: func(request *imap.FetchRequest, response imap.FetchResponse, session map[string]interface{}) error {
 					msg := response.NewMessage(1103)
-					w := msg.WriteBody2(request.Options.Body[0])
+					w := msg.WriteBody(request.Options.Body[0])
 					w.WriteHeader("From", "bob@foo.bar")
 					w.WriteBody("Hello World")
 					w.Close()

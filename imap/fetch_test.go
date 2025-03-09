@@ -172,8 +172,7 @@ func TestServer_Fetch(t *testing.T) {
 						require.NotNil(t, request.Options.Body, "body is set")
 
 						msg := response.NewMessage(1)
-						//msg.WriteBody(map[string]string{"date": date.Format(imap.DateTimeLayout)})
-						w := msg.WriteBody2(request.Options.Body[0])
+						w := msg.WriteBody(request.Options.Body[0])
 						w.WriteHeader("date", date.Format(imap.DateTimeLayout))
 						w.Close()
 						return nil
@@ -211,7 +210,9 @@ func TestServer_Fetch(t *testing.T) {
 						require.True(t, request.Options.Body[0].Peek, "peek is set")
 
 						msg := response.NewMessage(1)
-						msg.WriteBody(map[string]string{"date": date.Format(imap.DateTimeLayout)})
+						w := msg.WriteBody(request.Options.Body[0])
+						w.WriteHeader("date", date.Format(imap.DateTimeLayout))
+						w.Close()
 						return nil
 					},
 				}
@@ -246,7 +247,9 @@ func TestServer_Fetch(t *testing.T) {
 						require.True(t, request.Options.Body[0].Peek, "peek is set")
 
 						msg := response.NewMessage(1)
-						msg.WriteBody(map[string]string{"date": date.Format(imap.DateTimeLayout)})
+						w := msg.WriteBody(request.Options.Body[0])
+						w.WriteHeader("date", date.Format(imap.DateTimeLayout))
+						w.Close()
 						return nil
 					},
 				}
@@ -495,13 +498,11 @@ func TestServer_Fetch_Macros(t *testing.T) {
 
 func TestFetch_Response(t *testing.T) {
 	testcases := []struct {
-		name     string
 		request  string
 		response []string
 		handler  imap.Handler
 	}{
 		{
-			name:    "fetch uid",
 			request: "FETCH 1 (UID)",
 			response: []string{
 				"* 1 FETCH (UID 11)",
@@ -516,7 +517,6 @@ func TestFetch_Response(t *testing.T) {
 			},
 		},
 		{
-			name:    "fetch uid and body.peek",
 			request: "FETCH 1 (UID BODY.PEEK[])",
 			response: []string{
 				"* 1 FETCH (UID 11 BODY[] {36}",
@@ -531,7 +531,7 @@ func TestFetch_Response(t *testing.T) {
 				FetchFunc: func(request *imap.FetchRequest, response imap.FetchResponse, session map[string]interface{}) error {
 					msg := response.NewMessage(1)
 					msg.WriteUID(11)
-					w := msg.WriteBody2(request.Options.Body[0])
+					w := msg.WriteBody(request.Options.Body[0])
 					w.WriteHeader("From", "bob@foo.bar")
 					w.WriteBody("Hello World")
 					w.Close()
@@ -544,7 +544,7 @@ func TestFetch_Response(t *testing.T) {
 	t.Parallel()
 	for _, tc := range testcases {
 		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
+		t.Run(tc.request, func(t *testing.T) {
 			p := try.GetFreePort()
 			s := &imap.Server{
 				Addr:    fmt.Sprintf(":%v", p),

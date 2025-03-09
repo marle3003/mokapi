@@ -63,7 +63,7 @@ func (c *conn) readCmd() error {
 	}
 
 	tag, cmd, param := parseLine(line)
-	log.Debugf("tag=%q cmd=%q param=%q", tag, cmd, param)
+
 	var res *response
 	switch cmd {
 	case "AUTHENTICATE":
@@ -89,6 +89,8 @@ func (c *conn) readCmd() error {
 	case "LOGOUT":
 		c.tpc.PrintfLine("BYE logout")
 		return nil
+	case "STORE":
+		err = c.handleStore(tag, param)
 	case "NOOP":
 		res = &response{
 			status: ok,
@@ -101,6 +103,10 @@ func (c *conn) readCmd() error {
 		}
 	}
 	if err != nil {
+		res = &response{
+			status: bad,
+			text:   fmt.Sprintf("error %v", err.Error()),
+		}
 		return err
 	}
 	if res != nil {
