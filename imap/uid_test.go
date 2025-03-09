@@ -22,7 +22,7 @@ func TestUid_Response(t *testing.T) {
 				"A0002 OK FETCH completed",
 			},
 			handler: &imaptest.Handler{
-				UidFetchFunc: func(request *imap.FetchRequest, response imap.FetchResponse, session map[string]interface{}) error {
+				FetchFunc: func(request *imap.FetchRequest, response imap.FetchResponse, session map[string]interface{}) error {
 					msg := response.NewMessage(1403)
 					msg.WriteFlags(imap.FlagSeen)
 					return nil
@@ -41,7 +41,7 @@ func TestUid_Response(t *testing.T) {
 				"A0002 OK FETCH completed",
 			},
 			handler: &imaptest.Handler{
-				UidFetchFunc: func(request *imap.FetchRequest, response imap.FetchResponse, session map[string]interface{}) error {
+				FetchFunc: func(request *imap.FetchRequest, response imap.FetchResponse, session map[string]interface{}) error {
 					msg := response.NewMessage(1103)
 					w := msg.WriteBody2(request.Options.Body[0])
 					w.WriteHeader("From", "bob@foo.bar")

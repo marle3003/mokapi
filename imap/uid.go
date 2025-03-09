@@ -29,7 +29,7 @@ func (c *conn) handleUidFetch(tag string, d *Decoder) error {
 	req.Options.UID = true
 
 	res := fetchResponse{}
-	if err = c.handler.UidFetch(req, &res, c.ctx); err != nil {
+	if err = c.handler.Fetch(req, &res, c.ctx); err != nil {
 		return err
 	}
 

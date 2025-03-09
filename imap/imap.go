@@ -25,7 +25,6 @@ type Handler interface {
 	Unselect(ctx context.Context) error
 	List(ref, pattern string, flags []MailboxFlags, ctx context.Context) ([]ListEntry, error)
 	Fetch(req *FetchRequest, res FetchResponse, ctx context.Context) error
-	UidFetch(req *FetchRequest, res FetchResponse, ctx context.Context) error
 }
 
 type Flag string
