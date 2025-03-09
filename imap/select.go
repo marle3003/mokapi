@@ -18,8 +18,14 @@ type Selected struct {
 	tag  string
 }
 
-func (c *conn) handleSelect(tag, mailbox string) error {
-	if mailbox == "\"\"" {
+func (c *conn) handleSelect(tag, param string) error {
+	d := Decoder{msg: param}
+	mailbox, err := d.String()
+	if err != nil {
+		return err
+	}
+
+	if mailbox == "" {
 		return c.writeResponse(tag, &response{
 			status: no,
 			code:   cannot,

@@ -134,6 +134,10 @@ func (h *mailHandler) Fetch(req *imap.FetchRequest, res imap.FetchResponse, ctx 
 	return h.next.Fetch(req, res, ctx)
 }
 
+func (h *mailHandler) UidFetch(req *imap.FetchRequest, res imap.FetchResponse, ctx context.Context) error {
+	return h.next.UidFetch(req, res, ctx)
+}
+
 func getSmtpConfig(c *dynamic.Config) *mail.Config {
 	return c.Data.(*mail.Config)
 }

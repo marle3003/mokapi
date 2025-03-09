@@ -62,18 +62,20 @@ func parseFetch(d *Decoder) (*FetchRequest, error) {
 				r.Options.Flags = true
 			case "INTERNALDATE":
 				r.Options.InternalDate = true
+			case "RFC822.SIZE":
+				r.Options.RFC822Size = true
 			case "BODYSTRUCTURE":
 				r.Options.BodyStructure = true
 			case "BODY.PEEK":
 				body := FetchBodySection{Peek: true}
-				err = body.read(d)
+				err = body.decode(d)
 				if err != nil {
 					return err
 				}
 				r.Options.Body = append(r.Options.Body, body)
 			case "BODY":
 				body := FetchBodySection{}
-				err = body.read(d)
+				err = body.decode(d)
 				if err != nil {
 					return err
 				}
@@ -86,7 +88,7 @@ func parseFetch(d *Decoder) (*FetchRequest, error) {
 	return r, err
 }
 
-func (b *FetchBodySection) read(d *Decoder) error {
+func (s *FetchBodySection) decode(d *Decoder) error {
 	var err error
 	if err = d.expect("["); err != nil {
 		return err
@@ -95,15 +97,18 @@ func (b *FetchBodySection) read(d *Decoder) error {
 	typeName, err = d.String()
 	switch strings.ToUpper(typeName) {
 	case "HEADER.FIELDS":
+		s.Type = "header"
 		err = d.SP().List(func() error {
 			var field string
 			field, err = d.String()
-			b.Fields = append(b.Fields, field)
+			s.Fields = append(s.Fields, field)
 			return err
 		})
 		if err != nil {
 			return err
 		}
+	case "TEXT":
+		s.Type = "text"
 	}
 	if err = d.expect("]"); err != nil {
 		return err

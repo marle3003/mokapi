@@ -87,3 +87,25 @@ func (c *conn) handleAuth(_, param string) *response {
 		text:   "Authenticated",
 	}
 }
+
+func (c *conn) handleLogin(tag, param string) error {
+	d := Decoder{msg: param}
+	user, err := d.SP().String()
+	if err != nil {
+		return err
+	}
+	var password string
+	password, err = d.SP().String()
+	if err != nil {
+		return err
+	}
+	err = c.handler.Login(user, password, c.ctx)
+	if err != nil {
+		return err
+	}
+	return c.writeResponse(tag, &response{
+		status: ok,
+		code:   readWrite,
+		text:   "SELECT completed",
+	})
+}

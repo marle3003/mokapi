@@ -63,10 +63,13 @@ func (c *conn) readCmd() error {
 	}
 
 	tag, cmd, param := parseLine(line)
+	log.Debugf("tag=%q cmd=%q param=%q", tag, cmd, param)
 	var res *response
 	switch cmd {
 	case "AUTHENTICATE":
 		res = c.handleAuth(tag, param)
+	case "LOGIN":
+		err = c.handleLogin(tag, param)
 	case "CAPABILITY":
 		res = c.handleCapability()
 	case "STARTTLS":
@@ -81,6 +84,15 @@ func (c *conn) readCmd() error {
 		err = c.handleFetch(tag, param)
 	case "CLOSE":
 		err = c.handleClose(tag)
+	case "UID":
+		err = c.handleUid(tag, param)
+	case "LOGOUT":
+		c.tpc.PrintfLine("BYE logout")
+		return nil
+	case "NOOP":
+		res = &response{
+			status: ok,
+		}
 	default:
 		log.Errorf("imap: unknown command: %v", line)
 		res = &response{

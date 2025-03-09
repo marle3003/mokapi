@@ -46,7 +46,7 @@ function formatParam(label: any): string {
   return label.toString().toLowerCase().split(' ').join('-').split('/').join('-')
 }
 function hasChildren(item: DocEntry | string) {
-    if (typeof item === 'string') {
+    if (typeof item === 'string') { 
         return false
     }
     const entry = <DocEntry>item

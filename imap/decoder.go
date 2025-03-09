@@ -215,35 +215,48 @@ func (d *Decoder) EndCmd(tag string) error {
 	}
 }
 
-func (d *Decoder) Sequence() (SequenceSet, error) {
-	set := SequenceSet{}
-	s, err := d.String()
+func (d *Decoder) Sequence() (IdSet, error) {
+	set := IdSet{}
+	s, err := d.Read(func(r byte) bool { return r == '*' || isAtom(r) })
 	if err != nil {
-		return nil, d.returnErr(err)
+		return set, d.returnErr(err)
 	}
 
 	for _, v := range strings.Split(s, ",") {
-		seq := Sequence{}
+		seq := Range{}
+
 		if i := strings.IndexRune(v, ':'); i >= 0 {
-			seq.Start, err = parseNum(v[:i])
+			seq.Start, err = parseNumSet(v[:i])
 			if err != nil {
-				return nil, d.returnErr(err)
+				return set, d.returnErr(err)
 			}
-			seq.End, err = parseNum(v[i+1:])
+			seq.End, err = parseNumSet(v[i+1:])
 			if err != nil {
-				return nil, d.returnErr(err)
+				return set, d.returnErr(err)
 			}
 		} else {
-			seq.Start, err = parseNum(v)
+			seq.Start, err = parseNumSet(v)
 			if err != nil {
-				return nil, d.returnErr(err)
+				return set, d.returnErr(err)
 			}
 			seq.End = seq.Start
 		}
-		set = append(set, seq)
+		set.Ranges = append(set.Ranges, seq)
 	}
 
 	return set, nil
+}
+
+func parseNumSet(s string) (SeqNum, error) {
+	numSet := SeqNum{}
+	if s == "*" {
+		numSet.Star = true
+	} else {
+		var err error
+		numSet.Value, err = parseNum(s)
+		return numSet, err
+	}
+	return numSet, nil
 }
 
 func (d *Decoder) Date() (time.Time, error) {

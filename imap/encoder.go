@@ -46,6 +46,26 @@ func (e *Encoder) ListItem(s string) *Encoder {
 	return e
 }
 
+func (e *Encoder) SequenceSet(set IdSet) *Encoder {
+	for i, seq := range set.Ranges {
+		if i > 0 {
+			e.buf = append(e.buf, ',')
+		}
+		if seq.Start.Value == seq.End.Value {
+			e.Number(int(seq.Start.Value))
+		} else if seq.End.Star {
+			e.Number(int(seq.Start.Value))
+			e.Byte(':')
+			e.Byte('*')
+		} else {
+			e.Number(int(seq.Start.Value))
+			e.Byte(':')
+			e.Number(int(seq.End.Value))
+		}
+	}
+	return e
+}
+
 func (e *Encoder) WriteTo(tpc *textproto.Conn) error {
 	return tpc.PrintfLine(string(e.buf))
 }

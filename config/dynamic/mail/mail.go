@@ -3,6 +3,7 @@ package mail
 import (
 	"mokapi/imap"
 	"mokapi/smtp"
+	"slices"
 )
 
 type Mail struct {
@@ -24,4 +25,10 @@ func (m *Mail) HasFlag(flag imap.Flag) bool {
 		}
 	}
 	return false
+}
+
+func (m *Mail) RemoveFlag(flag imap.Flag) {
+	slices.DeleteFunc(m.Flags, func(f imap.Flag) bool {
+		return f == flag
+	})
 }

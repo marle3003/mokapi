@@ -20,22 +20,27 @@ import (
 	"time"
 )
 
+const DateTimeLayout = "02-Jan-2006 15:04:05 -0700"
+
 type Message struct {
-	Server      string       `json:"server"`
-	Sender      *Address     `json:"sender"`
-	From        []Address    `json:"from"`
-	To          []Address    `json:"to"`
-	ReplyTo     []Address    `json:"replyTo"`
-	Cc          []Address    `json:"cc"`
-	Bcc         []Address    `json:"bcc"`
-	MessageId   string       `json:"messageId"`
-	InReplyTo   string       `json:"inReplyTo"`
-	Time        time.Time    `json:"time"`
-	Subject     string       `json:"subject"`
-	ContentType string       `json:"contentType"`
-	Encoding    string       `json:"encoding"`
-	Body        string       `json:"body"`
-	Attachments []Attachment `json:"attachments"`
+	Server                  string       `json:"server"`
+	Sender                  *Address     `json:"sender"`
+	From                    []Address    `json:"from"`
+	To                      []Address    `json:"to"`
+	ReplyTo                 []Address    `json:"replyTo"`
+	Cc                      []Address    `json:"cc"`
+	Bcc                     []Address    `json:"bcc"`
+	MessageId               string       `json:"messageId"`
+	InReplyTo               string       `json:"inReplyTo"`
+	Time                    time.Time    `json:"time"`
+	Subject                 string       `json:"subject"`
+	ContentType             string       `json:"contentType"`
+	Encoding                string       `json:"encoding"`
+	ContentTransferEncoding string       `json:"contentTransferEncoding"`
+	Body                    string       `json:"body"`
+	Attachments             []Attachment `json:"attachments"`
+	Size                    int
+	Headers                 map[string]string
 }
 
 type Address struct {
@@ -49,14 +54,7 @@ type Attachment struct {
 	Disposition string `json:"disposition"`
 	Data        []byte `json:"data"`
 	ContentId   string `json:"contentId"`
-}
-
-func (m *Message) Size() int64 {
-	size := int64(len(m.Body))
-	for _, a := range m.Attachments {
-		size += int64(len(a.Data))
-	}
-	return size
+	Header      map[string]string
 }
 
 func (m *Message) readFrom(tc textproto.Reader) error {
@@ -65,53 +63,45 @@ func (m *Message) readFrom(tc textproto.Reader) error {
 		return err
 	}
 
-	if sender := header.Get("Sender"); sender != "" {
-		m.Sender, err = parseAddress(sender)
-		if err != nil {
-			return err
+	m.Headers = map[string]string{}
+	for key, val := range header {
+		switch strings.ToLower(key) {
+		case "sender":
+			m.Sender, err = parseAddress(val[0])
+		case "from":
+			m.From, err = parseAddressList(val[0])
+		case "to":
+			m.To, err = parseAddressList(val[0])
+		case "reply-to":
+			m.ReplyTo, err = parseAddressList(val[0])
+		case "cc":
+			m.Cc, err = parseAddressList(val[0])
+		case "bcc":
+			m.Bcc, err = parseAddressList(val[0])
+		case "message-id":
+			m.MessageId = val[0]
+		case "in-reply-to":
+			m.InReplyTo = val[0]
+		case "date":
+			m.Time, err = mail.ParseDate(val[0])
+		case "subject":
+			m.Subject = val[0]
+		case "content-type":
+			m.ContentType = val[0]
+		case "encoding":
+			m.Encoding = val[0]
+		case "content-transfer-encoding":
+			m.ContentTransferEncoding = val[0]
 		}
-	}
-
-	if from := header.Get("From"); from != "" {
-		m.From, err = parseAddressList(header.Get("From"))
-		if err != nil {
-			return err
-		}
-	}
-
-	if to := header.Get("To"); to != "" {
-		m.To, err = parseAddressList(to)
-		if err != nil {
-			return err
-		}
-	}
-
-	if replyTo := header.Get("Reply-To"); replyTo != "" {
-		m.ReplyTo, err = parseAddressList(replyTo)
-		if err != nil {
-			return err
-		}
-	}
-
-	if cc := header.Get("Cc"); cc != "" {
-		m.Cc, err = parseAddressList(cc)
-		if err != nil {
-			return err
-		}
-	}
-
-	if bcc := header.Get("Bcc"); bcc != "" {
-		m.Bcc, err = parseAddressList(bcc)
-		if err != nil {
-			return err
-		}
+		m.Headers[key] = val[0]
+		m.Size += len(key) + 2 + len(val) + 2 // "Key: Value\r\n"
 	}
 
 	m.MessageId = header.Get("Message-ID")
 	if len(m.MessageId) == 0 {
 		m.MessageId = newMessageId()
+		m.Size += len("Message-ID") + 2 + len(m.MessageId) + 2
 	}
-	m.InReplyTo = header.Get("In-Reply-To")
 
 	if date := header.Get("Date"); date != "" {
 		m.Time, err = mail.ParseDate(date)
@@ -121,10 +111,9 @@ func (m *Message) readFrom(tc textproto.Reader) error {
 	} else {
 		m.Time = time.Now()
 	}
+	m.Size += len("Date") + 2 + len(m.Time.Format(DateTimeLayout)) + 2
 
-	m.Subject = header.Get("Subject")
-	m.ContentType = header.Get("Content-Type")
-	m.Encoding = header.Get("Content-Transfer-Encoding")
+	m.Size += 2 // Extra CRLF before body
 
 	mime := media.ParseContentType(m.ContentType)
 	switch {
@@ -201,6 +190,7 @@ func (m *Message) readFrom(tc textproto.Reader) error {
 		if len(b) > 0 {
 			m.Body = string(b[0 : len(b)-1]) // remove last \n
 		}
+		m.Size += len(b)
 	}
 
 	return nil

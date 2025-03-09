@@ -13,10 +13,11 @@ type FetchResponse interface {
 type MessageWriter interface {
 	WriteUID(uid uint32)
 	WriteInternalDate(date time.Time)
-	WriteRFC822Size(size int64)
+	WriteRFC822Size(size uint32)
 	WriteFlags(flags ...Flag)
 	WriteEnvelope(env *Envelope)
 	WriteBody(body map[string]string)
+	WriteBody2(section FetchBodySection) *BodyWriter
 	WriteBodyStructure(body BodyStructure)
 }
 
@@ -96,7 +97,7 @@ func (m *message) WriteInternalDate(date time.Time) {
 	m.sb.WriteByte('"')
 }
 
-func (m *message) WriteRFC822Size(size int64) {
+func (m *message) WriteRFC822Size(size uint32) {
 	m.sb.WriteString(fmt.Sprintf(" RFC822.SIZE %v", size))
 }
 
@@ -152,12 +153,46 @@ func (m *message) WriteBody(body map[string]string) {
 		}
 		m.sb.WriteString(k)
 
-		sb.WriteString(fmt.Sprintf("%s\r\n", v))
+		sb.WriteString(fmt.Sprintf("%s: %s\r\n", k, v))
 		i++
 	}
+	// field must end with a blank line
+	sb.WriteString("\r\n")
+
 	m.sb.WriteString(")]")
-	m.sb.WriteString(fmt.Sprintf("{%v}\r\n", sb.Len()))
+	m.sb.WriteString(fmt.Sprintf(" {%v}\r\n", sb.Len()))
 	m.sb.WriteString(sb.String())
+}
+
+func (m *message) WriteBody2(section FetchBodySection) *BodyWriter {
+	section.Peek = false
+	w := &BodyWriter{section: section, m: m}
+	return w
+}
+
+type BodyWriter struct {
+	section FetchBodySection
+	header  strings.Builder
+	body    strings.Builder
+	m       *message
+}
+
+func (w *BodyWriter) WriteHeader(name, value string) {
+	w.header.WriteString(fmt.Sprintf("%s: %s\r\n", name, value))
+}
+
+func (w *BodyWriter) WriteBody(s string) {
+	w.body.WriteString(s)
+	w.body.WriteString("\r\n\r\n")
+}
+
+func (w *BodyWriter) Close() {
+	w.m.sb.WriteString(" " + w.section.encode())
+	w.m.sb.WriteString(fmt.Sprintf(" {%v}\r\n", w.header.Len()+w.body.Len()+2))
+	w.m.sb.WriteString(w.header.String())
+	// header must end with a blank line
+	w.m.sb.WriteString("\r\n")
+	w.m.sb.WriteString(w.body.String())
 }
 
 func (m *message) writeAddress(addrList []Address) {

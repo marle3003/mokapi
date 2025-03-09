@@ -23,11 +23,19 @@ type FetchBodySection struct {
 	Peek   bool
 }
 
-type SequenceSet []Sequence
+type IdSet struct {
+	Ranges []Range
+	IsUid  bool
+}
 
-type Sequence struct {
-	Start uint32
-	End   uint32
+type Range struct {
+	Start SeqNum
+	End   SeqNum
+}
+
+type SeqNum struct {
+	Value uint32
+	Star  bool
 }
 
 type FetchBody struct {
@@ -36,10 +44,8 @@ type FetchBody struct {
 }
 
 type FetchRequest struct {
-	Sequence SequenceSet
+	Sequence IdSet
 	Options  FetchOptions
-	// nil means everything
-	Body *FetchBody
 }
 
 func (c *conn) handleFetch(tag, param string) error {
@@ -62,7 +68,7 @@ func (c *conn) handleFetch(tag, param string) error {
 		return err
 	}
 
-	if err := c.writeFetchResponse(&res); err != nil {
+	if err = c.writeFetchResponse(&res); err != nil {
 		return err
 	}
 
@@ -99,11 +105,11 @@ type Message struct {
 	Body          []FetchData
 }
 
-func (c *Client) Fetch(id int, options FetchOptions) (*FetchCommand, error) {
+func (c *Client) Fetch(set IdSet, options FetchOptions) (*FetchCommand, error) {
 	tag := c.nextTag()
 
 	e := &Encoder{}
-	e.Atom(tag).SP().Atom("FETCH").SP().Number(id)
+	e.Atom(tag).SP().Atom("FETCH").SP().SequenceSet(set)
 	options.write(e.SP())
 
 	err := e.WriteTo(c.tpc)
@@ -260,30 +266,33 @@ func (o *FetchOptions) write(e *Encoder) {
 		e.ListItem("RFC822Size")
 	}
 	for _, body := range o.Body {
-		b := Encoder{}
-		b.Atom("BODY")
-		if body.Peek {
-			b.Atom(".PEEK")
-		}
-		b.Byte('[')
-		switch strings.ToLower(body.Type) {
-		case "header":
-			b.Atom("HEADER")
-			if len(body.Fields) > 0 {
-				b.Atom(".FIELDS").SP().BeginList()
-				for _, field := range body.Fields {
-					b.ListItem(field)
-				}
-				b.EndList()
-			}
-
-		}
-		b.Byte(']')
-
-		e.ListItem(b.String())
+		e.ListItem(body.encode())
 	}
 
 	e.EndList()
+}
+
+func (s *FetchBodySection) encode() string {
+	b := Encoder{}
+	b.Atom("BODY")
+	if s.Peek {
+		b.Atom(".PEEK")
+	}
+	b.Byte('[')
+	switch strings.ToLower(s.Type) {
+	case "header":
+		b.Atom("HEADER")
+		if len(s.Fields) > 0 {
+			b.Atom(".FIELDS").SP().BeginList()
+			for _, field := range s.Fields {
+				b.ListItem(field)
+			}
+			b.EndList()
+		}
+
+	}
+	b.Byte(']')
+	return b.String()
 }
 
 func (b *BodyStructure) readPart(d *Decoder) error {
@@ -350,4 +359,24 @@ func (b *BodyStructure) readPart(d *Decoder) error {
 	}
 
 	return d.Error()
+}
+
+func (s *IdSet) Contains(num uint32) bool {
+	for _, set := range s.Ranges {
+		if set.Contains(num) {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *Range) Contains(num uint32) bool {
+	if num < s.Start.Value {
+		return false
+	}
+	if s.End.Star {
+		return true
+	} else {
+		return s.Start.Value <= num && s.End.Value >= num
+	}
 }

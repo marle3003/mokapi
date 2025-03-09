@@ -4,6 +4,7 @@ import (
 	"mokapi/imap"
 	"mokapi/smtp"
 	"sync"
+	"time"
 )
 
 type Mailbox struct {
@@ -28,6 +29,8 @@ type Folder struct {
 	// It helps IMAP clients determine whether previously stored UIDs are still valid.
 	// If UIDVALIDITY changes, it means that all existing UIDs in that folder are no longer valid, and the client must discard any cached UIDs.
 	uidValidity uint32
+
+	recentUid uint32
 }
 
 func (mb *Mailbox) Append(m *smtp.Message) {
@@ -46,15 +49,19 @@ func (mb *Mailbox) Append(m *smtp.Message) {
 		Message: m,
 		UId:     uid,
 		SeqNum:  uid,
+		Flags:   []imap.Flag{imap.FlagRecent},
 	})
 }
+
+// Offset to start UID from year 2000 instead of 1970 (Unix epoch)
+const epochOffset = 1740937638
 
 func (mb *Mailbox) EnsureInbox() {
 	if mb.Folders == nil {
 		mb.Folders = make(map[string]*Folder)
 	}
 	if _, ok := mb.Folders["INBOX"]; !ok {
-		f := &Folder{Name: "INBOX", Subscribed: true}
+		f := &Folder{Name: "INBOX", Subscribed: true, uidNext: uint32(time.Now().Unix() - epochOffset)}
 		f.uidValidity = mb.nextUidValidity
 		mb.nextUidValidity++
 
@@ -65,18 +72,22 @@ func (mb *Mailbox) EnsureInbox() {
 func (f *Folder) NumRecent() int {
 	c := 0
 	for _, m := range f.Messages {
-		if m.HasFlag(imap.FlagRecent) {
-			c += 1
+		if m.UId <= f.recentUid {
+			m.RemoveFlag(imap.FlagRecent)
+		} else if m.HasFlag(imap.FlagRecent) {
+			c++
+			f.recentUid = m.UId
 		}
 	}
+
 	return c
 }
 
-func (f *Folder) FirstUnseen() *Mail {
-	for _, m := range f.Messages {
+func (f *Folder) FirstUnseen() int {
+	for i, m := range f.Messages {
 		if !m.HasFlag(imap.FlagSeen) {
-			return m
+			return i + 1
 		}
 	}
-	return nil
+	return -1
 }
