@@ -274,10 +274,9 @@ func TestServer_Fetch(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			//p := try.GetFreePort()
+			p := try.GetFreePort()
 			s := &imap.Server{
-				//Addr:    fmt.Sprintf(":%v", p),
-				Addr:    ":143",
+				Addr:    fmt.Sprintf(":%v", p),
 				Handler: tc.handler(t),
 			}
 			defer s.Close()
