@@ -9,14 +9,6 @@ const (
 	startTLSCap  capability = "STARTTLS"
 	authPlainCap capability = "AUTH=PLAIN"
 	saslIrCap    capability = "SASL-IR"
-	logoutCap    capability = "LOGOUT"
-
-	selectCap capability = "SELECT"
-	listCap   capability = "LIST"
-	lSubCap   capability = "LSUB"
-	fetchCap  capability = "FETCH"
-	closeCap  capability = "CLOSE"
-	uidCap    capability = "UID"
 )
 
 type capabilities []capability
@@ -62,7 +54,7 @@ func (c *conn) getCapabilities() capabilities {
 	}
 
 	if c.state == AuthenticatedState || c.state == SelectedState {
-		caps = append(caps, selectCap, listCap, fetchCap, closeCap, logoutCap, lSubCap, uidCap)
+		caps = append(caps)
 	}
 
 	return caps

@@ -105,7 +105,7 @@ func TestServer_Auth(t *testing.T) {
 				require.NoError(t, err)
 				lines, err := c.Send("CAPABILITY")
 				require.NoError(t, err)
-				require.Equal(t, "* CAPABILITY IMAP4rev1 SASL-IR SELECT LIST FETCH CLOSE LOGOUT LSUB UID", lines[0])
+				require.Equal(t, "* CAPABILITY IMAP4rev1 SASL-IR", lines[0])
 				require.Equal(t, "A0002 OK CAPABILITY completed", lines[1])
 			},
 		},
