@@ -111,7 +111,7 @@ function showItem(name: string | number, item: DocConfig | DocEntry | string) {
           <i class="bi bi-x"></i>
         </button>
         <div class="collapse navbar-collapse" id="navbar">
-          <div class="overflow-auto navbar-container">
+          <div class="navbar-container">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
             <li class="nav-item" v-if="isDashboardEnabled">
               <router-link class="nav-link" :to="{ name: 'dashboard', query: {refresh: 20} }">Dashboard</router-link>            
@@ -319,6 +319,7 @@ header .container-fluid {
 @media only screen and (max-width: 400px)  {
   .navbar-container {
     min-height: calc(100vh - 10rem);
+    overflow: auto !important;
   }
   .navbar .tools {
     display: none !important;

@@ -232,7 +232,7 @@ function switchCode() {
   border-top: 0;
   border-radius: 0 0 6px 6px;
   overflow: hidden;
-  color: rgb(31, 35, 40);
+  color: var(--color-text);
 }
 .source pre {
   margin-bottom: 0;

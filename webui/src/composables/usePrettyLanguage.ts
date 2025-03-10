@@ -36,6 +36,8 @@ export function usePrettyLanguage() {
                 return 'javascript'
             case 'typescript':
                 return 'javascript'
+            case 'yaml':
+                return 'yaml'
             case 'json':
             case 'problem+json':
                 return 'json'
@@ -46,7 +48,7 @@ export function usePrettyLanguage() {
                 // display avro content as JSON
                 return 'hex'
             default:
-                return 'text'
+                return mimeType.subtype
         }
     }
 
