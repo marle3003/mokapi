@@ -68,7 +68,11 @@ func FromRequest(params Parameters, route string, r *http.Request) (RequestParam
 			v, err = parsePath(p, route, r)
 			store = parameters[Path]
 			if err != nil {
-				err = fmt.Errorf("parse path parameter '%v' failed: %w", p.Name, err)
+				if strings.Contains(route, "?") {
+					err = fmt.Errorf("parse path parameter '%v' failed: %w. the path contains a quotation mark ('?'), which suggests query parameters are incorrectly included in the path. query parameters should be defined separately in the 'parameters' section", p.Name, err)
+				} else {
+					err = fmt.Errorf("parse path parameter '%v' failed: %w", p.Name, err)
+				}
 			}
 		case Query:
 			v, err = parseQuery(p, r.URL)

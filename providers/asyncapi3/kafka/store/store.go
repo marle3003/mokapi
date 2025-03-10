@@ -226,8 +226,6 @@ func (s *Store) deleteTopic(name string) {
 	s.m.Lock()
 	defer s.m.Unlock()
 
-	log.Infof("removing topic '%s' from '%s'", name, s.cluster)
-
 	t, ok := s.topics[name]
 	if !ok {
 		return
