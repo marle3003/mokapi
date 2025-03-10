@@ -63,7 +63,7 @@ interface DialogData {
     schemaId: number
 }
 let message = ref<DialogData | null>(null)
-let data: KafkaEventData
+let data: KafkaEventData | null
 
 function showMessage(event: ServiceEvent){
     if (getSelection()?.toString()) {
@@ -163,7 +163,10 @@ function getContentType(msg: KafkaMessage): [string, boolean] {
 
     return [ msg.contentType, false ]
 }
-function key(data: KafkaEventData): string {
+function key(data: KafkaEventData | null): string {
+    if (!data) {
+        return ''
+    }
     if (data?.key.value !== '') {
         return data.key.value!
     }
